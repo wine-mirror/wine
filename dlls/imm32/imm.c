@@ -139,8 +139,7 @@ static inline WCHAR *strdupAtoW( const char *str )
     if (str)
     {
         DWORD len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
-        if ((ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
-            MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len );
+        if ((ret = malloc( len * sizeof(WCHAR) ))) MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len );
     }
     return ret;
 }
@@ -151,8 +150,7 @@ static inline CHAR *strdupWtoA( const WCHAR *str )
     if (str)
     {
         DWORD len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
-        if ((ret = HeapAlloc( GetProcessHeap(), 0, len )))
-            WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
+        if ((ret = malloc( len ))) WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
     }
     return ret;
 }
@@ -300,7 +298,7 @@ static ULONG WINAPI InitializeSpy_Release(IInitializeSpy *iface)
     LONG ref = InterlockedDecrement(&spy->ref);
     if (!ref)
     {
-        HeapFree(GetProcessHeap(), 0, spy);
+        free( spy );
         NtUserGetThreadInfo()->client_imm = 0;
     }
     return ref;
@@ -379,7 +377,7 @@ static void imm_coinit_thread(void)
 
     if (!(spy = get_thread_coinit_spy()))
     {
-        if (!(spy = HeapAlloc(GetProcessHeap(), 0, sizeof(*spy)))) return;
+        if (!(spy = malloc( sizeof(*spy) ))) return;
         spy->IInitializeSpy_iface.lpVtbl = &InitializeSpyVtbl;
         spy->ref = 1;
         spy->cookie.QuadPart = 0;
@@ -596,7 +594,7 @@ static BOOL free_input_context_data( HIMC hIMC )
     ImmDestroyIMCC( data->IMC.hMsgBuf );
 
     ime_release( data->ime );
-    HeapFree( GetProcessHeap(), 0, data );
+    free( data );
 
     return TRUE;
 }
@@ -822,8 +820,8 @@ BOOL WINAPI ImmConfigureIMEA( HKL hkl, HWND hwnd, DWORD mode, void *data )
         wordW.lpWord = strdupAtoW( wordA->lpWord );
         wordW.lpReading = strdupAtoW( wordA->lpReading );
         ret = ime->pImeConfigure( hkl, hwnd, mode, &wordW );
-        HeapFree( GetProcessHeap(), 0, wordW.lpReading );
-        HeapFree( GetProcessHeap(), 0, wordW.lpWord );
+        free( wordW.lpReading );
+        free( wordW.lpWord );
     }
 
     ime_release( ime );
@@ -852,8 +850,8 @@ BOOL WINAPI ImmConfigureIMEW( HKL hkl, HWND hwnd, DWORD mode, void *data )
         wordA.lpWord = strdupWtoA( wordW->lpWord );
         wordA.lpReading = strdupWtoA( wordW->lpReading );
         ret = ime->pImeConfigure( hkl, hwnd, mode, &wordA );
-        HeapFree( GetProcessHeap(), 0, wordA.lpReading );
-        HeapFree( GetProcessHeap(), 0, wordA.lpWord );
+        free( wordA.lpReading );
+        free( wordA.lpWord );
     }
 
     ime_release( ime );
@@ -867,14 +865,14 @@ static InputContextData *create_input_context(HIMC default_imc)
     LPCANDIDATEINFO ci;
     int i;
 
-    new_context = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(InputContextData));
+    new_context = calloc( 1, sizeof(InputContextData) );
 
     /* Load the IME */
     new_context->threadDefault = !!default_imc;
     if (!(new_context->ime = ime_acquire( GetKeyboardLayout( 0 ) )))
     {
         TRACE("IME dll could not be loaded\n");
-        HeapFree(GetProcessHeap(),0,new_context);
+        free( new_context );
         return 0;
     }
 
@@ -981,8 +979,8 @@ UINT WINAPI ImmEnumRegisterWordA( HKL hkl, REGISTERWORDENUMPROCA procA, const ch
     {
         WCHAR *readingW = strdupAtoW( readingA ), *stringW = strdupAtoW( stringA );
         ret = ime->pImeEnumRegisterWord( procA, readingW, style, stringW, user );
-        HeapFree( GetProcessHeap(), 0, readingW );
-        HeapFree( GetProcessHeap(), 0, stringW );
+        free( readingW );
+        free( stringW );
     }
 
     ime_release( ime );
@@ -1009,8 +1007,8 @@ UINT WINAPI ImmEnumRegisterWordW( HKL hkl, REGISTERWORDENUMPROCW procW, const WC
     {
         char *readingA = strdupWtoA( readingW ), *stringA = strdupWtoA( stringW );
         ret = ime->pImeEnumRegisterWord( procW, readingA, style, stringA, user );
-        HeapFree( GetProcessHeap(), 0, readingA );
-        HeapFree( GetProcessHeap(), 0, stringA );
+        free( readingA );
+        free( stringA );
     }
 
     ime_release( ime );
@@ -1648,14 +1646,14 @@ DWORD WINAPI ImmGetConversionListA( HKL hkl, HIMC himc, const char *srcA, CANDID
         WCHAR *srcW = strdupAtoW( srcA );
         DWORD lengthW = ime->pImeConversionList( himc, srcW, NULL, 0, flags );
 
-        if (!(listW = HeapAlloc( GetProcessHeap(), 0, lengthW ))) ret = 0;
+        if (!(listW = malloc( lengthW ))) ret = 0;
         else
         {
             ime->pImeConversionList( himc, srcW, listW, lengthW, flags );
             ret = convert_candidatelist_WtoA( listW, listA, lengthA );
-            HeapFree( GetProcessHeap(), 0, listW );
+            free( listW );
         }
-        HeapFree( GetProcessHeap(), 0, srcW );
+        free( srcW );
     }
 
     ime_release( ime );
@@ -1684,14 +1682,14 @@ DWORD WINAPI ImmGetConversionListW( HKL hkl, HIMC himc, const WCHAR *srcW, CANDI
         char *srcA = strdupWtoA( srcW );
         DWORD lengthA = ime->pImeConversionList( himc, srcA, NULL, 0, flags );
 
-        if (!(listA = HeapAlloc( GetProcessHeap(), 0, lengthA ))) ret = 0;
+        if (!(listA = malloc( lengthA ))) ret = 0;
         else
         {
             ime->pImeConversionList( himc, srcA, listA, lengthA, flags );
             ret = convert_candidatelist_AtoW( listA, listW, lengthW );
-            HeapFree( GetProcessHeap(), 0, listA );
+            free( listA );
         }
-        HeapFree( GetProcessHeap(), 0, srcA );
+        free( srcA );
     }
 
     ime_release( ime );
@@ -1989,23 +1987,17 @@ UINT WINAPI ImmGetVirtualKey(HWND hWnd)
 /***********************************************************************
  *		ImmInstallIMEA (IMM32.@)
  */
-HKL WINAPI ImmInstallIMEA(
-  LPCSTR lpszIMEFileName, LPCSTR lpszLayoutText)
+HKL WINAPI ImmInstallIMEA( const char *filenameA, const char *descriptionA )
 {
-    LPWSTR lpszwIMEFileName;
-    LPWSTR lpszwLayoutText;
+    WCHAR *filenameW = strdupAtoW( filenameA ), *descriptionW = strdupAtoW( descriptionA );
     HKL hkl;
 
-    TRACE ("(%s, %s)\n", debugstr_a(lpszIMEFileName),
-                         debugstr_a(lpszLayoutText));
+    TRACE( "filenameA %s, descriptionA %s\n", debugstr_a(filenameA), debugstr_a(descriptionA) );
 
-    lpszwIMEFileName = strdupAtoW(lpszIMEFileName);
-    lpszwLayoutText = strdupAtoW(lpszLayoutText);
+    hkl = ImmInstallIMEW( filenameW, descriptionW );
+    free( descriptionW );
+    free( filenameW );
 
-    hkl = ImmInstallIMEW(lpszwIMEFileName, lpszwLayoutText);
-
-    HeapFree(GetProcessHeap(),0,lpszwIMEFileName);
-    HeapFree(GetProcessHeap(),0,lpszwLayoutText);
     return hkl;
 }
 
@@ -2023,6 +2015,12 @@ HKL WINAPI ImmInstallIMEW( const WCHAR *filename, const WCHAR *description )
     HKL hkl;
 
     TRACE( "filename %s, description %s\n", debugstr_w(filename), debugstr_w(description) );
+
+    if (!filename || !description)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
 
     while (count < 0xfff)
     {
@@ -2166,8 +2164,8 @@ BOOL WINAPI ImmRegisterWordA( HKL hkl, const char *readingA, DWORD style, const 
     {
         WCHAR *readingW = strdupAtoW( readingA ), *stringW = strdupAtoW( stringA );
         ret = ime->pImeRegisterWord( readingW, style, stringW );
-        HeapFree( GetProcessHeap(), 0, readingW );
-        HeapFree( GetProcessHeap(), 0, stringW );
+        free( readingW );
+        free( stringW );
     }
 
     ime_release( ime );
@@ -2192,8 +2190,8 @@ BOOL WINAPI ImmRegisterWordW( HKL hkl, const WCHAR *readingW, DWORD style, const
     {
         char *readingA = strdupWtoA( readingW ), *stringA = strdupWtoA( stringW );
         ret = ime->pImeRegisterWord( readingA, style, stringA );
-        HeapFree( GetProcessHeap(), 0, readingA );
-        HeapFree( GetProcessHeap(), 0, stringA );
+        free( readingA );
+        free( stringA );
     }
 
     ime_release( ime );
@@ -2362,22 +2360,22 @@ BOOL WINAPI ImmSetCompositionStringA(
     comp_len = MultiByteToWideChar(CP_ACP, 0, lpComp, dwCompLen, NULL, 0);
     if (comp_len)
     {
-        CompBuffer = HeapAlloc(GetProcessHeap(),0,comp_len * sizeof(WCHAR));
+        CompBuffer = malloc( comp_len * sizeof(WCHAR) );
         MultiByteToWideChar(CP_ACP, 0, lpComp, dwCompLen, CompBuffer, comp_len);
     }
 
     read_len = MultiByteToWideChar(CP_ACP, 0, lpRead, dwReadLen, NULL, 0);
     if (read_len)
     {
-        ReadBuffer = HeapAlloc(GetProcessHeap(),0,read_len * sizeof(WCHAR));
+        ReadBuffer = malloc( read_len * sizeof(WCHAR) );
         MultiByteToWideChar(CP_ACP, 0, lpRead, dwReadLen, ReadBuffer, read_len);
     }
 
     rc =  ImmSetCompositionStringW(hIMC, dwIndex, CompBuffer, comp_len,
                                    ReadBuffer, read_len);
 
-    HeapFree(GetProcessHeap(), 0, CompBuffer);
-    HeapFree(GetProcessHeap(), 0, ReadBuffer);
+    free( CompBuffer );
+    free( ReadBuffer );
 
     return rc;
 }
@@ -2420,7 +2418,7 @@ BOOL WINAPI ImmSetCompositionStringW(
                                    NULL);
     if (comp_len)
     {
-        CompBuffer = HeapAlloc(GetProcessHeap(),0,comp_len);
+        CompBuffer = malloc( comp_len );
         WideCharToMultiByte(CP_ACP, 0, lpComp, dwCompLen, CompBuffer, comp_len,
                             NULL, NULL);
     }
@@ -2429,7 +2427,7 @@ BOOL WINAPI ImmSetCompositionStringW(
                                    NULL);
     if (read_len)
     {
-        ReadBuffer = HeapAlloc(GetProcessHeap(),0,read_len);
+        ReadBuffer = malloc( read_len );
         WideCharToMultiByte(CP_ACP, 0, lpRead, dwReadLen, ReadBuffer, read_len,
                             NULL, NULL);
     }
@@ -2437,8 +2435,8 @@ BOOL WINAPI ImmSetCompositionStringW(
     rc =  ImmSetCompositionStringA(hIMC, dwIndex, CompBuffer, comp_len,
                                    ReadBuffer, read_len);
 
-    HeapFree(GetProcessHeap(), 0, CompBuffer);
-    HeapFree(GetProcessHeap(), 0, ReadBuffer);
+    free( CompBuffer );
+    free( ReadBuffer );
 
     return rc;
 }
@@ -2643,8 +2641,8 @@ BOOL WINAPI ImmUnregisterWordA( HKL hkl, const char *readingA, DWORD style, cons
     {
         WCHAR *readingW = strdupAtoW( readingA ), *stringW = strdupAtoW( stringA );
         ret = ime->pImeUnregisterWord( readingW, style, stringW );
-        HeapFree( GetProcessHeap(), 0, readingW );
-        HeapFree( GetProcessHeap(), 0, stringW );
+        free( readingW );
+        free( stringW );
     }
 
     ime_release( ime );
@@ -2669,8 +2667,8 @@ BOOL WINAPI ImmUnregisterWordW( HKL hkl, const WCHAR *readingW, DWORD style, con
     {
         char *readingA = strdupWtoA( readingW ), *stringA = strdupWtoA( stringW );
         ret = ime->pImeUnregisterWord( readingA, style, stringA );
-        HeapFree( GetProcessHeap(), 0, readingA );
-        HeapFree( GetProcessHeap(), 0, stringA );
+        free( readingA );
+        free( stringA );
     }
 
     ime_release( ime );
@@ -2706,7 +2704,7 @@ DWORD WINAPI ImmGetImeMenuItemsA( HIMC himc, DWORD flags, DWORD type, IMEMENUITE
         {
             int count = size / sizeof(LPIMEMENUITEMINFOA);
             size = count * sizeof(IMEMENUITEMINFOW);
-            menuW = HeapAlloc( GetProcessHeap(), 0, size );
+            menuW = malloc( size );
         }
 
         ret = data->ime->pImeGetImeMenuItems( himc, flags, type, parentW, menuW, size );
@@ -2729,7 +2727,7 @@ DWORD WINAPI ImmGetImeMenuItemsA( HIMC himc, DWORD flags, DWORD type, IMEMENUITE
                                      IMEMENUITEM_STRING_SIZE, NULL, NULL );
             }
         }
-        HeapFree( GetProcessHeap(), 0, menuW );
+        free( menuW );
     }
 
     return ret;
@@ -2764,7 +2762,7 @@ DWORD WINAPI ImmGetImeMenuItemsW( HIMC himc, DWORD flags, DWORD type, IMEMENUITE
         {
             int count = size / sizeof(LPIMEMENUITEMINFOW);
             size = count * sizeof(IMEMENUITEMINFOA);
-            menuA = HeapAlloc( GetProcessHeap(), 0, size );
+            menuA = malloc( size );
         }
 
         ret = data->ime->pImeGetImeMenuItems( himc, flags, type, parentA, menuA, size );
@@ -2785,7 +2783,7 @@ DWORD WINAPI ImmGetImeMenuItemsW( HIMC himc, DWORD flags, DWORD type, IMEMENUITE
                 MultiByteToWideChar( CP_ACP, 0, menuA[i].szString, -1, menuW[i].szString, IMEMENUITEM_STRING_SIZE );
             }
         }
-        HeapFree( GetProcessHeap(), 0, menuA );
+        free( menuA );
     }
 
     return ret;
@@ -2947,7 +2945,7 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
     GetKeyboardState(state);
     scancode = lKeyData >> 0x10 & 0xff;
 
-    list = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, list_count * sizeof(TRANSMSG) + sizeof(DWORD));
+    list = calloc( list_count, sizeof(TRANSMSG) + sizeof(DWORD) );
     list->uMsgCount = list_count;
 
     if (data->ime->info.fdwProperty & IME_PROP_KBD_CHAR_FIRST)
@@ -2976,7 +2974,7 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
     else if (msg_count > list_count)
         ImmGenerateMessage(imc);
 
-    HeapFree(GetProcessHeap(),0,list);
+    free( list );
 
     data->lastVK = VK_PROCESSKEY;
 
