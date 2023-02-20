@@ -77,7 +77,7 @@ static void fatal_error(const WCHAR *msg, DWORD error_code, const WCHAR *filenam
     output(L": ");
     args[0] = (DWORD_PTR)filename;
     status = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ARGUMENT_ARRAY,
-                            NULL, error_code, 0, (LPWSTR)&lpMsgBuf, 0, (__ms_va_list *)args );
+                            NULL, error_code, 0, (LPWSTR)&lpMsgBuf, 0, (va_list *)args );
     if (!status)
     {
         WINE_ERR("FormatMessage failed\n");
@@ -99,7 +99,7 @@ static void fatal_string_error(int which, DWORD error_code, const WCHAR *filenam
 
 	fatal_error(msg, error_code, filename);
 }
-	
+
 static void fatal_string(int which)
 {
 	WCHAR msg[2048];
