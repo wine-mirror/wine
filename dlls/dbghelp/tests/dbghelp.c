@@ -537,7 +537,8 @@ static BOOL CALLBACK aggregate_cb(PCWSTR imagename, DWORD64 base, ULONG sz, PVOI
     {
         ok(!ret, "Module %ls shouldn't be loaded\n", imagename);
         ret = SymLoadModuleExW(aggregation->proc, NULL, imagename, NULL, base, sz, NULL, 0);
-        ok(ret, "SymLoadModuleExW failed on %ls: %lu\n", imagename, GetLastError());
+        ok(ret || broken(GetLastError() == ERROR_SUCCESS) /* Win10/64 v1607 return this on bcryptPrimitives.DLL */,
+           "SymLoadModuleExW failed on %ls: %lu\n", imagename, GetLastError());
         ret = SymGetModuleInfoW64(aggregation->proc, base, &im);
         ok(ret, "SymGetModuleInfoW64 failed: %lu\n", GetLastError());
     }
