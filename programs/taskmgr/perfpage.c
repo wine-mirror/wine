@@ -188,8 +188,7 @@ static DWORD WINAPI PerformancePageRefreshThread(void *lpParameter)
 			args[0] = CommitChargeTotal;
 			args[1] = CommitChargeLimit;
 			FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
-			               wszMemUsage, 0, 0, Text,
-                                       ARRAY_SIZE(Text), (__ms_va_list*)args);
+			               wszMemUsage, 0, 0, Text, ARRAY_SIZE(Text), (va_list *)args);
 			SendMessageW(hStatusWnd, SB_SETTEXTW, 2, (LPARAM)Text);
 
 			/* 
