@@ -169,7 +169,7 @@ static int AlertUnicodeCharactersLost(LPCWSTR szFileName)
     load_encoding_name(ENCODING_ANSI, szEnc, ARRAY_SIZE(szEnc));
     args[0] = (DWORD_PTR)szFileName;
     args[1] = (DWORD_PTR)szEnc;
-    FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_ARGUMENT_ARRAY, szMsgFormat, 0, 0, (LPWSTR)&szMsg, 0, (__ms_va_list*)args);
+    FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_ARGUMENT_ARRAY, szMsgFormat, 0, 0, (LPWSTR)&szMsg, 0, (va_list *)args);
     rc = MessageBoxW(Globals.hMainWnd, szMsg, szCaption,
                      MB_OKCANCEL|MB_ICONEXCLAMATION);
     LocalFree(szMsg);
