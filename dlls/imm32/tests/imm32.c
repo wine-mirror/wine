@@ -2693,7 +2693,6 @@ static HKL ime_install(void)
     memset( buffer, 0xcd, sizeof(buffer) );
     ret = RegQueryValueExW( hkey, L"Ime File", NULL, NULL, (BYTE *)buffer, &len );
     ok( !ret, "RegQueryValueExW returned %#lx, error %lu\n", ret, GetLastError() );
-    todo_wine
     ok( !wcsicmp( buffer, wcsrchr( ime_path, '\\' ) + 1 ), "got Ime File %s\n", debugstr_w(buffer) );
 
     len = sizeof(buffer);
@@ -2996,13 +2995,11 @@ static void test_ImmGetIMEFileName(void)
     ret = ImmGetIMEFileNameW( hkl, bufferW, 13 );
     todo_wine
     ok( ret == 12, "ImmGetIMEFileNameW returned %lu\n", ret );
-    todo_wine
     ok( !wcscmp( bufferW, expectW ), "got bufferW %s\n", debugstr_w(bufferW) );
     memset( bufferA, 0xcd, sizeof(bufferA) );
     ret = ImmGetIMEFileNameA( hkl, bufferA, 13 );
     todo_wine
     ok( ret == 12, "ImmGetIMEFileNameA returned %lu\n", ret );
-    todo_wine
     ok( !strcmp( bufferA, expectA ), "got bufferA %s\n", debugstr_a(bufferA) );
 
     ime_cleanup( hkl );

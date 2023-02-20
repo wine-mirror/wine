@@ -2048,34 +2048,30 @@ HKL WINAPI ImmInstallIMEA(
 /***********************************************************************
  *		ImmInstallIMEW (IMM32.@)
  */
-HKL WINAPI ImmInstallIMEW(
-  LPCWSTR lpszIMEFileName, LPCWSTR lpszLayoutText)
+HKL WINAPI ImmInstallIMEW( const WCHAR *filename, const WCHAR *description )
 {
-    INT lcid = GetUserDefaultLCID();
-    INT count;
-    HKL hkl;
-    DWORD rc;
+    WCHAR path[ARRAY_SIZE(layouts_formatW)+8], buffer[MAX_PATH];
+    LCID lcid = GetUserDefaultLCID();
+    WORD count = 0x20;
+    const WCHAR *tmp;
+    DWORD length;
     HKEY hkey;
-    WCHAR regKey[ARRAY_SIZE(layouts_formatW)+8];
+    HKL hkl;
 
-    TRACE ("(%s, %s):\n", debugstr_w(lpszIMEFileName),
-                          debugstr_w(lpszLayoutText));
-
-    /* Start with 2.  e001 will be blank and so default to the wine internal IME */
-    count = 2;
+    TRACE( "filename %s, description %s\n", debugstr_w(filename), debugstr_w(description) );
 
     while (count < 0xfff)
     {
         DWORD disposition = 0;
 
         hkl = (HKL)MAKELPARAM( lcid, 0xe000 | count );
-        wsprintfW( regKey, layouts_formatW, (ULONG_PTR)hkl);
-
-        rc = RegCreateKeyExW(HKEY_LOCAL_MACHINE, regKey, 0, NULL, 0, KEY_WRITE, NULL, &hkey, &disposition);
-        if (rc == ERROR_SUCCESS && disposition == REG_CREATED_NEW_KEY)
-            break;
-        else if (rc == ERROR_SUCCESS)
-            RegCloseKey(hkey);
+        swprintf( path, ARRAY_SIZE(path), layouts_formatW, (ULONG_PTR)hkl);
+        if (!RegCreateKeyExW( HKEY_LOCAL_MACHINE, path, 0, NULL, 0,
+                              KEY_WRITE, NULL, &hkey, &disposition ))
+        {
+            if (disposition == REG_CREATED_NEW_KEY) break;
+            RegCloseKey( hkey );
+        }
 
         count++;
     }
@@ -2086,21 +2082,22 @@ HKL WINAPI ImmInstallIMEW(
         return 0;
     }
 
-    if (rc == ERROR_SUCCESS)
+    if ((tmp = wcsrchr( filename, '\\' ))) tmp++;
+    else tmp = filename;
+
+    length = LCMapStringW( LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, tmp, -1, buffer, ARRAY_SIZE(buffer) );
+
+    if (RegSetValueExW( hkey, L"Ime File", 0, REG_SZ, (const BYTE *)buffer, length * sizeof(WCHAR) ) ||
+        RegSetValueExW( hkey, L"Layout Text", 0, REG_SZ, (const BYTE *)description,
+                        (wcslen(description) + 1) * sizeof(WCHAR) ))
     {
-        rc = RegSetValueExW(hkey, L"Ime File", 0, REG_SZ, (const BYTE*)lpszIMEFileName,
-                            (lstrlenW(lpszIMEFileName) + 1) * sizeof(WCHAR));
-        if (rc == ERROR_SUCCESS)
-            rc = RegSetValueExW(hkey, L"Layout Text", 0, REG_SZ, (const BYTE*)lpszLayoutText,
-                                (lstrlenW(lpszLayoutText) + 1) * sizeof(WCHAR));
-        RegCloseKey(hkey);
-        return hkl;
+        WARN( "Unable to write registry to install IME\n");
+        hkl = 0;
     }
-    else
-    {
-        WARN("Unable to set IME registry values\n");
-        return 0;
-    }
+    RegCloseKey( hkey );
+
+    if (!hkl) RegDeleteKeyW( HKEY_LOCAL_MACHINE, path );
+    return hkl;
 }
 
 /***********************************************************************
