@@ -2098,6 +2098,7 @@ static void test_kill_on_exit(const char *argv0)
     HANDLE event, debug, thread;
     DWORD exit_code, tid;
     ULONG val;
+    BOOL ret;
 
     event = CreateEventW(&sa, FALSE, FALSE, NULL);
     ok(event != NULL, "CreateEvent failed: %lu\n", GetLastError());
@@ -2169,29 +2170,46 @@ static void test_kill_on_exit(const char *argv0)
     CloseHandle( pi.hThread );
     CloseHandle( thread );
 
-    /* but not on forced exit */
+    /* checking on forced exit */
     status = pNtCreateDebugObject( &debug, DEBUG_ALL_ACCESS, &attr, DEBUG_KILL_ON_CLOSE );
     ok( !status, "NtCreateDebugObject failed %lx\n", status );
     thread = CreateThread(NULL, 0, debug_and_wait, &debug, 0, &tid);
     Sleep( 100 );
     ok( debug != 0, "no debug port\n" );
-    val = 1;
+    val = DEBUG_KILL_ON_CLOSE;
     status = pNtSetInformationDebugObject( debug, DebugObjectKillProcessOnExitInformation,
                                            &val, sizeof(val), NULL );
     ok( status == STATUS_SUCCESS, "NtSetInformationDebugObject failed %lx\n", status );
     TerminateThread( thread, 0 );
-    status = pNtSetInformationDebugObject( debug, DebugObjectKillProcessOnExitInformation,
-                                           &val, sizeof(val), NULL );
-    ok( status == STATUS_SUCCESS, "NtSetInformationDebugObject failed %lx\n", status );
-    WaitForSingleObject( pi.hProcess, 300 );
-    GetExitCodeProcess( pi.hProcess, &exit_code );
-    todo_wine
-    ok( exit_code == STATUS_DEBUGGER_INACTIVE || broken(exit_code == STILL_ACTIVE), /* wow64 */
-        "exit code = %08lx\n", exit_code);
+
+    status = WaitForSingleObject( pi.hProcess, 1500 );
+    if (status != WAIT_OBJECT_0)
+    {
+        todo_wine /* Wine doesn't handle debug port of TerminateThread */
+        ok(broken(sizeof(void*) == sizeof(int)), /* happens consistently on 32bit on Win7, 10 & 11 */
+           "Terminating thread should terminate debuggee\n");
+
+        ret = TerminateProcess( pi.hProcess, 0 );
+        ok(ret, "TerminateProcess failed: %lu\n", GetLastError());
+        CloseHandle( debug );
+    }
+    else
+    {
+        ok(status == WAIT_OBJECT_0, "debuggee didn't terminate %lx\n", status);
+        ret = GetExitCodeProcess( pi.hProcess, &exit_code );
+        ok(ret, "No exit code: %lu\n", GetLastError());
+        todo_wine
+        ok( exit_code == STATUS_DEBUGGER_INACTIVE || broken(exit_code == STILL_ACTIVE), /* wow64 */
+            "exit code = %08lx\n", exit_code);
+        status = pNtSetInformationDebugObject( debug, DebugObjectKillProcessOnExitInformation,
+                                               &val, sizeof(val), NULL );
+        todo_wine
+        ok( status == STATUS_INVALID_HANDLE, "NtSetInformationDebugObject failed %lx\n", status );
+    }
+
     CloseHandle( pi.hProcess );
     CloseHandle( pi.hThread );
     CloseHandle( thread );
-    CloseHandle( debug );
 
     debug = 0;
     thread = CreateThread(NULL, 0, create_debug_port, &debug, 0, &tid);
@@ -2202,10 +2220,13 @@ static void test_kill_on_exit(const char *argv0)
                                            &val, sizeof(val), NULL );
     ok( status == STATUS_SUCCESS, "NtSetInformationDebugObject failed %lx\n", status );
     TerminateThread( thread, 0 );
+    Sleep( 200 );
     status = pNtSetInformationDebugObject( debug, DebugObjectKillProcessOnExitInformation,
                                            &val, sizeof(val), NULL );
-    ok( status == STATUS_SUCCESS, "NtSetInformationDebugObject failed %lx\n", status );
-    CloseHandle( debug );
+    todo_wine
+    ok( status == STATUS_INVALID_HANDLE  || broken( status == STATUS_SUCCESS ),
+        "NtSetInformationDebugObject failed %lx\n", status );
+    if (status != STATUS_INVALID_HANDLE) CloseHandle( debug );
     CloseHandle( thread );
 
     CloseHandle( event );
