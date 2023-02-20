@@ -572,7 +572,7 @@ HRESULT wined3d_swapchain_desc_from_dxgi(struct wined3d_swapchain_desc *wined3d_
 
     if (dxgi_desc->Scaling != DXGI_SCALING_STRETCH)
         FIXME("Ignoring scaling %#x.\n", dxgi_desc->Scaling);
-    if (dxgi_desc->AlphaMode != DXGI_ALPHA_MODE_IGNORE)
+    if (dxgi_desc->AlphaMode != DXGI_ALPHA_MODE_UNSPECIFIED && dxgi_desc->AlphaMode != DXGI_ALPHA_MODE_IGNORE)
         FIXME("Ignoring alpha mode %#x.\n", dxgi_desc->AlphaMode);
     if (dxgi_fullscreen_desc && dxgi_fullscreen_desc->ScanlineOrdering)
         FIXME("Unhandled scanline ordering %#x.\n", dxgi_fullscreen_desc->ScanlineOrdering);
