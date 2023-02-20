@@ -2405,8 +2405,7 @@ static void set_space_status(void)
 		args[1] = (DWORD_PTR)StrFormatByteSizeW(ulTotalBytes.QuadPart, b2, ARRAY_SIZE(b2));
 
 		FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
-				RS(fmt,IDS_FREE_SPACE_FMT), 0, 0, buffer, ARRAY_SIZE(buffer),
-				(__ms_va_list*)args);
+				RS(fmt,IDS_FREE_SPACE_FMT), 0, 0, buffer, ARRAY_SIZE(buffer), (va_list *)args);
 	} else
 		lstrcpyW(buffer, sQMarks);
 
