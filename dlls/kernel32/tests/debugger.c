@@ -1001,6 +1001,17 @@ static void test_debug_loop(int argc, char **argv)
         win_skip("CheckRemoteDebuggerPresent not available, skipping test.\n");
         return;
     }
+    if (sizeof(void *) > sizeof(int))
+    {
+        WCHAR buffer[MAX_PATH];
+        GetSystemWow64DirectoryW( buffer, MAX_PATH );
+        wcscat( buffer, L"\\oleacc.dll" );
+        if (GetFileAttributesW( buffer ) == INVALID_FILE_ATTRIBUTES)
+        {
+            skip("Skipping test on 64bit only configuration\n");
+            return;
+        }
+    }
 
     pid = GetCurrentProcessId();
     ret = DebugActiveProcess(pid);
