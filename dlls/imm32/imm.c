@@ -60,12 +60,12 @@ struct ime
     HMODULE module;
     struct list entry;
 
-    IMEINFO     imeInfo;
-    WCHAR       imeClassName[17]; /* 16 character max */
-    ULONG       uSelected;
-    HWND        UIWnd;
+    IMEINFO info;
+    WCHAR ui_class[17];
+    HWND ui_hwnd;
 
-    /* Function Pointers */
+    ULONG uSelected;
+
     BOOL (WINAPI *pImeInquire)(IMEINFO *, void *, DWORD);
     BOOL (WINAPI *pImeConfigure)(HKL, HWND, DWORD, void *);
     BOOL (WINAPI *pImeDestroy)(UINT);
@@ -129,12 +129,12 @@ static const WCHAR szImeRegFmt[] = L"System\\CurrentControlSet\\Control\\Keyboar
 
 static inline BOOL is_himc_ime_unicode(const InputContextData *data)
 {
-    return !!(data->ime->imeInfo.fdwProperty & IME_PROP_UNICODE);
+    return !!(data->ime->info.fdwProperty & IME_PROP_UNICODE);
 }
 
 static inline BOOL is_kbd_ime_unicode( const struct ime *hkl )
 {
-    return !!(hkl->imeInfo.fdwProperty & IME_PROP_UNICODE);
+    return !!(hkl->info.fdwProperty & IME_PROP_UNICODE);
 }
 
 static BOOL IMM_DestroyContext(HIMC hIMC);
@@ -532,10 +532,10 @@ BOOL WINAPI ImmLoadIME( HKL hkl )
     LOAD_FUNCPTR( ImeGetImeMenuItems );
 #undef LOAD_FUNCPTR
 
-    if (!ime->pImeInquire( &ime->imeInfo, buffer, 0 )) goto failed;
+    if (!ime->pImeInquire( &ime->info, buffer, 0 )) goto failed;
 
-    if (is_kbd_ime_unicode( ime )) lstrcpynW( ime->imeClassName, buffer, ARRAY_SIZE(ime->imeClassName) );
-    else MultiByteToWideChar( CP_ACP, 0, (char *)buffer, -1, ime->imeClassName, ARRAY_SIZE(ime->imeClassName) );
+    if (is_kbd_ime_unicode( ime )) lstrcpynW( ime->ui_class, buffer, ARRAY_SIZE(ime->ui_class) );
+    else MultiByteToWideChar( CP_ACP, 0, (char *)buffer, -1, ime->ui_class, ARRAY_SIZE(ime->ui_class) );
 
     EnterCriticalSection( &ime_cs );
     list_add_tail( &ime_list, &ime->entry );
@@ -579,7 +579,7 @@ static void ime_release( struct ime *ime )
     ref = --ime->refcount;
     TRACE( "ime %p decreasing refcount to %lu.\n", ime, ref );
 
-    if (!ref && (ime->imeInfo.fdwProperty & IME_PROP_END_UNLOAD))
+    if (!ref && (ime->info.fdwProperty & IME_PROP_END_UNLOAD))
         ImmFreeLayout( ime->hkl );
 
     LeaveCriticalSection( &ime_cs );
@@ -628,7 +628,7 @@ static void IMM_FreeAllImmHkl(void)
         ime->pImeDestroy( 1 );
         FreeLibrary( ime->module );
 
-        if (ime->UIWnd) DestroyWindow( ime->UIWnd );
+        if (ime->ui_hwnd) DestroyWindow( ime->ui_hwnd );
         free( ime );
     }
 }
@@ -904,10 +904,10 @@ static InputContextData *create_input_context(HIMC default_imc)
         new_context->IMC.cfCandForm[i].dwIndex = ~0u;
 
     /* Initialize the IME Private */
-    new_context->IMC.hPrivate = ImmCreateIMCC( new_context->ime->imeInfo.dwPrivateDataSize );
+    new_context->IMC.hPrivate = ImmCreateIMCC( new_context->ime->info.dwPrivateDataSize );
 
-    new_context->IMC.fdwConversion = new_context->ime->imeInfo.fdwConversionCaps;
-    new_context->IMC.fdwSentence = new_context->ime->imeInfo.fdwSentenceCaps;
+    new_context->IMC.fdwConversion = new_context->ime->info.fdwConversionCaps;
+    new_context->IMC.fdwSentence = new_context->ime->info.fdwSentenceCaps;
 
     if (!default_imc)
         new_context->handle = NtUserCreateInputContext((UINT_PTR)new_context);
@@ -1922,11 +1922,11 @@ DWORD WINAPI ImmGetProperty( HKL hkl, DWORD index )
 
     switch (index)
     {
-    case IGP_PROPERTY: ret = ime->imeInfo.fdwProperty; break;
-    case IGP_CONVERSION: ret = ime->imeInfo.fdwConversionCaps; break;
-    case IGP_SENTENCE: ret = ime->imeInfo.fdwSentenceCaps; break;
-    case IGP_SETCOMPSTR: ret = ime->imeInfo.fdwSCSCaps; break;
-    case IGP_SELECT: ret = ime->imeInfo.fdwSelectCaps; break;
+    case IGP_PROPERTY: ret = ime->info.fdwProperty; break;
+    case IGP_CONVERSION: ret = ime->info.fdwConversionCaps; break;
+    case IGP_SENTENCE: ret = ime->info.fdwSentenceCaps; break;
+    case IGP_SETCOMPSTR: ret = ime->info.fdwSCSCaps; break;
+    case IGP_SELECT: ret = ime->info.fdwSelectCaps; break;
     case IGP_GETIMEVERSION: ret = IMEVER_0400; break;
     case IGP_UI: ret = 0; break;
     default: ret = 0; break;
@@ -2517,15 +2517,15 @@ BOOL WINAPI ImmSetCompositionWindow(
 
     data->IMC.cfCompForm = *lpCompForm;
 
-    if (IsWindowVisible( data->ime->UIWnd ))
+    if (IsWindowVisible( data->ime->ui_hwnd ))
     {
         reshow = TRUE;
-        ShowWindow( data->ime->UIWnd, SW_HIDE );
+        ShowWindow( data->ime->ui_hwnd, SW_HIDE );
     }
 
     /* FIXME: this is a partial stub */
 
-    if (reshow) ShowWindow( data->ime->UIWnd, SW_SHOWNOACTIVATE );
+    if (reshow) ShowWindow( data->ime->ui_hwnd, SW_SHOWNOACTIVATE );
 
     ImmInternalSendIMENotify(data, IMN_SETCOMPOSITIONWINDOW, 0);
     return TRUE;
@@ -2587,14 +2587,14 @@ BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
     if (IMM_IsCrossThreadAccess(NULL, hIMC))
         return FALSE;
 
-    if (data->ime->UIWnd == NULL)
+    if (data->ime->ui_hwnd == NULL)
     {
         /* create the ime window */
-        data->ime->UIWnd = CreateWindowExW( WS_EX_TOOLWINDOW, data->ime->imeClassName, NULL,
+        data->ime->ui_hwnd = CreateWindowExW( WS_EX_TOOLWINDOW, data->ime->ui_class, NULL,
                                             WS_POPUP, 0, 0, 1, 1, 0, 0, data->ime->module, 0 );
-        SetWindowLongPtrW( data->ime->UIWnd, IMMGWL_IMC, (LONG_PTR)data );
+        SetWindowLongPtrW( data->ime->ui_hwnd, IMMGWL_IMC, (LONG_PTR)data );
     }
-    else if (fOpen) SetWindowLongPtrW( data->ime->UIWnd, IMMGWL_IMC, (LONG_PTR)data );
+    else if (fOpen) SetWindowLongPtrW( data->ime->ui_hwnd, IMMGWL_IMC, (LONG_PTR)data );
 
     if (!fOpen != !data->IMC.fOpen)
     {
@@ -2998,7 +2998,7 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
     list = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, list_count * sizeof(TRANSMSG) + sizeof(DWORD));
     list->uMsgCount = list_count;
 
-    if (data->ime->imeInfo.fdwProperty & IME_PROP_KBD_CHAR_FIRST)
+    if (data->ime->info.fdwProperty & IME_PROP_KBD_CHAR_FIRST)
     {
         WCHAR chr;
 
@@ -3116,7 +3116,7 @@ static HWND get_ui_window(HKL hkl)
     HWND hwnd;
 
     if (!(ime = ime_acquire( hkl ))) return 0;
-    hwnd = ime->UIWnd;
+    hwnd = ime->ui_hwnd;
     ime_release( ime );
 
     return hwnd;
@@ -3189,7 +3189,7 @@ static void init_messages(void)
 
 LRESULT WINAPI __wine_ime_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi)
 {
-    HWND uiwnd;
+    HWND ui_hwnd;
 
     switch (msg)
     {
@@ -3211,12 +3211,12 @@ LRESULT WINAPI __wine_ime_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
 
     if (is_ime_ui_msg(msg))
     {
-        if ((uiwnd = get_ui_window(NtUserGetKeyboardLayout(0))))
+        if ((ui_hwnd = get_ui_window(NtUserGetKeyboardLayout(0))))
         {
             if (ansi)
-                return SendMessageA(uiwnd, msg, wparam, lparam);
+                return SendMessageA(ui_hwnd, msg, wparam, lparam);
             else
-                return SendMessageW(uiwnd, msg, wparam, lparam);
+                return SendMessageW(ui_hwnd, msg, wparam, lparam);
         }
         return FALSE;
     }
