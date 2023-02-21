@@ -239,7 +239,7 @@ static void detect_locale(void)
                   PRIMARYLANGID(GetUserDefaultUILanguage()) == LANG_ENGLISH &&
                   PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH);
 
-    GetCPInfoExA( CP_ACP, 0, &cpinfo );
+    GetCPInfoExA( CP_THREAD_ACP, 0, &cpinfo );
     MaxCharSize = cpinfo.MaxCharSize;
 
     GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK | LOCALE_RETURN_NUMBER,
