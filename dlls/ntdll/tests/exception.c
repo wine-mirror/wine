@@ -8068,7 +8068,7 @@ static void test_debug_registers(void)
 
 static void test_debug_registers_wow64(void)
 {
-    char cmdline[] = "C:\\windows\\syswow64\\notepad.exe";
+    char cmdline[] = "C:\\windows\\syswow64\\msinfo32.exe";
     PROCESS_INFORMATION pi;
     STARTUPINFOA si = {0};
     WOW64_CONTEXT wow64_ctx;
