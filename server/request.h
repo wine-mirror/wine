@@ -1459,6 +1459,7 @@ C_ASSERT( FIELD_OFFSET(struct create_named_pipe_request, timeout) == 40 );
 C_ASSERT( FIELD_OFFSET(struct create_named_pipe_request, flags) == 48 );
 C_ASSERT( sizeof(struct create_named_pipe_request) == 56 );
 C_ASSERT( FIELD_OFFSET(struct create_named_pipe_reply, handle) == 8 );
+C_ASSERT( FIELD_OFFSET(struct create_named_pipe_reply, created) == 12 );
 C_ASSERT( sizeof(struct create_named_pipe_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct set_named_pipe_info_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_named_pipe_info_request, flags) == 16 );

@@ -2279,6 +2279,7 @@ enum message_type
     VARARG(objattr,object_attributes); /* object attributes */
 @REPLY
     obj_handle_t   handle;       /* handle to the pipe */
+    int            created;
 @END
 
 /* flags in create_named_pipe and get_named_pipe_info */

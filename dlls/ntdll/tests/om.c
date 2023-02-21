@@ -379,7 +379,6 @@ static void test_name_collisions(void)
                                      FILE_OPEN_IF, FILE_PIPE_FULL_DUPLEX,
                                      FALSE, FALSE, FALSE, 10, 256, 256, &timeout );
     ok(status == STATUS_SUCCESS, "failed to create pipe %08lx\n", status);
-    todo_wine
     ok( iosb.Information == FILE_CREATED, "wrong info %Ix\n", iosb.Information );
     pNtClose( h );
 
@@ -389,7 +388,6 @@ static void test_name_collisions(void)
                                      FILE_CREATE, FILE_PIPE_FULL_DUPLEX,
                                      FALSE, FALSE, FALSE, 10, 256, 256, &timeout );
     ok(status == STATUS_SUCCESS, "failed to create pipe %08lx\n", status);
-    todo_wine
     ok( iosb.Information == FILE_CREATED, "wrong info %Ix\n", iosb.Information );
 
     memset( &iosb, 0xcc, sizeof(iosb) );
@@ -398,7 +396,6 @@ static void test_name_collisions(void)
                                      FILE_OPEN, FILE_PIPE_FULL_DUPLEX,
                                      FALSE, FALSE, FALSE, 10, 256, 256, &timeout );
     ok(status == STATUS_SUCCESS, "failed to create pipe %08lx\n", status);
-    todo_wine
     ok( iosb.Information == FILE_OPENED, "wrong info %Ix\n", iosb.Information );
     pNtClose(h1);
 
@@ -408,7 +405,6 @@ static void test_name_collisions(void)
                                      FILE_OPEN_IF, FILE_PIPE_FULL_DUPLEX,
                                      FALSE, FALSE, FALSE, 10, 256, 256, &timeout );
     ok(status == STATUS_SUCCESS, "failed to create pipe %08lx\n", status);
-    todo_wine
     ok( iosb.Information == FILE_OPENED, "wrong info %Ix\n", iosb.Information );
     pNtClose(h1);
 

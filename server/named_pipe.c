@@ -1437,6 +1437,7 @@ DECL_HANDLER(create_named_pipe)
                                                 GROUP_SECURITY_INFORMATION |
                                                 DACL_SECURITY_INFORMATION |
                                                 SACL_SECURITY_INFORMATION );
+        reply->created = 1;
     }
     else
     {

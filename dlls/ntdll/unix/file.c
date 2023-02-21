@@ -4144,7 +4144,11 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( HANDLE *handle, ULONG access, OBJECT_ATTR
         req->insize  = inbound_quota;
         req->timeout = timeout->QuadPart;
         wine_server_add_data( req, objattr, len );
-        if (!(status = wine_server_call( req ))) *handle = wine_server_ptr_handle( reply->handle );
+        if (!(status = wine_server_call( req )))
+        {
+            *handle = wine_server_ptr_handle( reply->handle );
+            io->Information = reply->created ? FILE_CREATED : FILE_OPENED;
+        }
     }
     SERVER_END_REQ;
 

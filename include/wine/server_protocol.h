@@ -3086,7 +3086,7 @@ struct create_named_pipe_reply
 {
     struct reply_header __header;
     obj_handle_t   handle;
-    char __pad_12[4];
+    int            created;
 };
 
 
@@ -6356,7 +6356,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 759
+#define SERVER_PROTOCOL_VERSION 760
 
 /* ### protocol_version end ### */
 
