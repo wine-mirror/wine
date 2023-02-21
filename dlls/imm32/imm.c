@@ -1620,39 +1620,36 @@ DWORD WINAPI ImmGetConversionListA( HKL hkl, HIMC himc, const char *srcA, CANDID
 /***********************************************************************
  *		ImmGetConversionListW (IMM32.@)
  */
-DWORD WINAPI ImmGetConversionListW(
-  HKL hKL, HIMC hIMC,
-  LPCWSTR pSrc, LPCANDIDATELIST lpDst,
-  DWORD dwBufLen, UINT uFlag)
+DWORD WINAPI ImmGetConversionListW( HKL hkl, HIMC himc, const WCHAR *srcW, CANDIDATELIST *listW,
+                                    DWORD lengthW, UINT flags )
 {
-    struct ime *immHkl = IMM_GetImmHkl( hKL );
-    TRACE("(%p, %p, %s, %p, %ld, %d):\n", hKL, hIMC, debugstr_w(pSrc), lpDst,
-                dwBufLen, uFlag);
-    if (immHkl->hIME && immHkl->pImeConversionList)
+    struct ime *ime = IMM_GetImmHkl( hkl );
+    DWORD ret;
+
+    TRACE( "hkl %p, himc %p, srcW %s, listW %p, lengthW %lu, flags %#x.\n", hkl, himc,
+           debugstr_w(srcW), listW, lengthW, flags );
+
+    if (!ime->hIME || !ime->pImeConversionList) return 0;
+
+    if (is_kbd_ime_unicode( ime ))
+        ret = ime->pImeConversionList( himc, srcW, listW, lengthW, flags );
+    else
     {
-        if (is_kbd_ime_unicode(immHkl))
-            return immHkl->pImeConversionList(hIMC,pSrc,lpDst,dwBufLen,uFlag);
+        CANDIDATELIST *listA;
+        char *srcA = strdupWtoA( srcW );
+        DWORD lengthA = ime->pImeConversionList( himc, (const WCHAR *)srcA, NULL, 0, flags );
+
+        if (!(listA = HeapAlloc( GetProcessHeap(), 0, lengthA ))) ret = 0;
         else
         {
-            LPCANDIDATELIST lpaDst;
-            DWORD ret = 0, len;
-            LPSTR paSrc = strdupWtoA(pSrc);
-
-            len = immHkl->pImeConversionList(hIMC, (LPCWSTR)paSrc, NULL, 0, uFlag);
-            lpaDst = HeapAlloc(GetProcessHeap(), 0, len);
-            if ( lpaDst )
-            {
-                immHkl->pImeConversionList(hIMC, (LPCWSTR)paSrc, lpaDst, len, uFlag);
-                ret = convert_candidatelist_AtoW( lpaDst, lpDst, dwBufLen);
-                HeapFree(GetProcessHeap(), 0, lpaDst);
-            }
-            HeapFree(GetProcessHeap(), 0, paSrc);
-
-            return ret;
+            ime->pImeConversionList( himc, (const WCHAR *)srcA, listA, lengthA, flags );
+            ret = convert_candidatelist_AtoW( listA, listW, lengthW );
+            HeapFree( GetProcessHeap(), 0, listA );
         }
+        HeapFree( GetProcessHeap(), 0, srcA );
     }
-    else
-        return 0;
+
+    return ret;
 }
 
 /***********************************************************************
