@@ -2270,6 +2270,7 @@ enum message_type
     unsigned int   access;
     unsigned int   options;
     unsigned int   sharing;
+    unsigned int   disposition;
     unsigned int   maxinstances;
     unsigned int   outsize;
     unsigned int   insize;

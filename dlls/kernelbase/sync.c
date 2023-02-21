@@ -1307,7 +1307,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateNamedPipeW( LPCWSTR name, DWORD open_mode,
     time.QuadPart = (ULONGLONG)timeout * -10000;
     SetLastError( 0 );
     status = NtCreateNamedPipeFile( &handle, access, &attr, &iosb, sharing,
-                                    FILE_OVERWRITE_IF, options, pipe_type,
+                                    FILE_OPEN_IF, options, pipe_type,
                                     read_mode, non_block, instances, in_buff, out_buff, &time );
     RtlFreeUnicodeString( &nt_name );
     if (!set_ntstatus( status )) return INVALID_HANDLE_VALUE;
@@ -1348,7 +1348,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreatePipe( HANDLE *read_pipe, HANDLE *write_pipe,
                   GetCurrentProcessId(), ++index );
         RtlInitUnicodeString( &nt_name, name );
         if (!NtCreateNamedPipeFile( read_pipe, GENERIC_READ | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE,
-                                    &attr, &iosb, FILE_SHARE_WRITE, FILE_OVERWRITE_IF,
+                                    &attr, &iosb, FILE_SHARE_WRITE, FILE_OPEN_IF,
                                     FILE_SYNCHRONOUS_IO_NONALERT,
                                     FALSE, FALSE, FALSE, 1, size, size, &timeout ))
             break;

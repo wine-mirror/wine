@@ -2861,6 +2861,7 @@ static void dump_create_named_pipe_request( const struct create_named_pipe_reque
     fprintf( stderr, " access=%08x", req->access );
     fprintf( stderr, ", options=%08x", req->options );
     fprintf( stderr, ", sharing=%08x", req->sharing );
+    fprintf( stderr, ", disposition=%08x", req->disposition );
     fprintf( stderr, ", maxinstances=%08x", req->maxinstances );
     fprintf( stderr, ", outsize=%08x", req->outsize );
     fprintf( stderr, ", insize=%08x", req->insize );

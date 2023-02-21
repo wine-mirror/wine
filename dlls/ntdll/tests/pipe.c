@@ -260,14 +260,14 @@ static void test_create_invalid(void)
 /* create a pipe with FILE_OVERWRITE */
     res = pNtCreateNamedPipeFile(&handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr, &iosb, FILE_SHARE_READ, 4 /*FILE_OVERWRITE*/,
                                  0, 1, 0, 0, 0xFFFFFFFF, 500, 500, &timeout);
-    todo_wine ok(res == STATUS_INVALID_PARAMETER, "NtCreateNamedPipeFile returned %lx\n", res);
+    ok(res == STATUS_INVALID_PARAMETER, "NtCreateNamedPipeFile returned %lx\n", res);
     if (!res)
         CloseHandle(handle);
 
 /* create a pipe with FILE_OVERWRITE_IF */
     res = pNtCreateNamedPipeFile(&handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr, &iosb, FILE_SHARE_READ, 5 /*FILE_OVERWRITE_IF*/,
                                  0, 1, 0, 0, 0xFFFFFFFF, 500, 500, &timeout);
-    todo_wine ok(res == STATUS_INVALID_PARAMETER, "NtCreateNamedPipeFile returned %lx\n", res);
+    ok(res == STATUS_INVALID_PARAMETER, "NtCreateNamedPipeFile returned %lx\n", res);
     if (!res)
         CloseHandle(handle);
 
@@ -289,7 +289,7 @@ static void test_create_invalid(void)
 /* test FILE_CREATE creation disposition */
     res = pNtCreateNamedPipeFile(&handle2, SYNCHRONIZE, &attr, &iosb, FILE_SHARE_READ | FILE_SHARE_WRITE, 2 /*FILE_CREATE*/,
                                  0, 1, 0, 0, 0xFFFFFFFF, 500, 500, &timeout);
-    todo_wine ok(res == STATUS_ACCESS_DENIED, "NtCreateNamedPipeFile returned %lx\n", res);
+    ok(res == STATUS_ACCESS_DENIED, "NtCreateNamedPipeFile returned %lx\n", res);
     if (!res)
         CloseHandle(handle2);
 

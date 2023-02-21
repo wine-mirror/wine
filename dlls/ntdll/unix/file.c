@@ -4138,6 +4138,7 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( HANDLE *handle, ULONG access, OBJECT_ATTR
             (pipe_type ? NAMED_PIPE_MESSAGE_STREAM_WRITE   : 0) |
             (read_mode ? NAMED_PIPE_MESSAGE_STREAM_READ    : 0) |
             (completion_mode ? NAMED_PIPE_NONBLOCKING_MODE : 0);
+        req->disposition  = dispo;
         req->maxinstances = max_inst;
         req->outsize = outbound_quota;
         req->insize  = inbound_quota;

@@ -3073,10 +3073,10 @@ struct create_named_pipe_request
     unsigned int   access;
     unsigned int   options;
     unsigned int   sharing;
+    unsigned int   disposition;
     unsigned int   maxinstances;
     unsigned int   outsize;
     unsigned int   insize;
-    char __pad_36[4];
     timeout_t      timeout;
     unsigned int   flags;
     /* VARARG(objattr,object_attributes); */
@@ -6356,7 +6356,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 758
+#define SERVER_PROTOCOL_VERSION 759
 
 /* ### protocol_version end ### */
 
