@@ -381,7 +381,7 @@ static BOOL test_modules(void)
     ok(ret, "SymInitialize failed: %lu\n", GetLastError());
 
     GetSystemWow64DirectoryA(file_wow64, MAX_PATH);
-    strcat(file_wow64, "\\notepad.exe");
+    strcat(file_wow64, "\\msinfo32.exe");
 
     /* not always present */
     machine_wow = get_module_machine(file_wow64);
@@ -397,7 +397,7 @@ static BOOL test_modules(void)
     }
 
     GetSystemDirectoryA(file_system, MAX_PATH);
-    strcat(file_system, "\\notepad.exe");
+    strcat(file_system, "\\msinfo32.exe");
 
     base = SymLoadModule(GetCurrentProcess(), NULL, file_system, NULL, base1, 0);
     ok(base == base1, "SymLoadModule failed: %lu\n", GetLastError());
@@ -676,7 +676,7 @@ static void test_loaded_modules(void)
 
     ret = GetSystemDirectoryA(buffer, sizeof(buffer));
     ok(ret, "got error %lu\n", GetLastError());
-    strcat(buffer, "\\notepad.exe");
+    strcat(buffer, "\\msinfo32.exe");
 
     /* testing with child process of different machines */
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
@@ -744,7 +744,7 @@ static void test_loaded_modules(void)
     {
         ret = GetSystemWow64DirectoryA(buffer, sizeof(buffer));
         ok(ret, "got error %lu\n", GetLastError());
-        strcat(buffer, "\\notepad.exe");
+        strcat(buffer, "\\msinfo32.exe");
 
         SymSetOptions(SymGetOptions() & ~SYMOPT_INCLUDE_32BIT_MODULES);
 
