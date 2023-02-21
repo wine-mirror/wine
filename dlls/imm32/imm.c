@@ -123,7 +123,7 @@ static CRITICAL_SECTION_DEBUG ime_cs_debug =
 static CRITICAL_SECTION ime_cs = { &ime_cs_debug, -1, 0, 0, 0, 0 };
 static struct list ime_list = LIST_INIT( ime_list );
 
-static const WCHAR szImeRegFmt[] = L"System\\CurrentControlSet\\Control\\Keyboard Layouts\\%08lx";
+static const WCHAR layouts_formatW[] = L"System\\CurrentControlSet\\Control\\Keyboard Layouts\\%08lx";
 
 static BOOL ime_is_unicode( const struct ime *ime )
 {
@@ -1842,9 +1842,9 @@ UINT WINAPI ImmGetIMEFileNameW(HKL hKL, LPWSTR lpszFileName, UINT uBufLen)
     HKEY hkey;
     DWORD length;
     DWORD rc;
-    WCHAR regKey[ARRAY_SIZE(szImeRegFmt)+8];
+    WCHAR regKey[ARRAY_SIZE(layouts_formatW)+8];
 
-    wsprintfW( regKey, szImeRegFmt, (ULONG_PTR)hKL );
+    wsprintfW( regKey, layouts_formatW, (ULONG_PTR)hKL );
     rc = RegOpenKeyW( HKEY_LOCAL_MACHINE, regKey, &hkey);
     if (rc != ERROR_SUCCESS)
     {
@@ -2056,7 +2056,7 @@ HKL WINAPI ImmInstallIMEW(
     HKL hkl;
     DWORD rc;
     HKEY hkey;
-    WCHAR regKey[ARRAY_SIZE(szImeRegFmt)+8];
+    WCHAR regKey[ARRAY_SIZE(layouts_formatW)+8];
 
     TRACE ("(%s, %s):\n", debugstr_w(lpszIMEFileName),
                           debugstr_w(lpszLayoutText));
@@ -2069,7 +2069,7 @@ HKL WINAPI ImmInstallIMEW(
         DWORD disposition = 0;
 
         hkl = (HKL)MAKELPARAM( lcid, 0xe000 | count );
-        wsprintfW( regKey, szImeRegFmt, (ULONG_PTR)hkl);
+        wsprintfW( regKey, layouts_formatW, (ULONG_PTR)hkl);
 
         rc = RegCreateKeyExW(HKEY_LOCAL_MACHINE, regKey, 0, NULL, 0, KEY_WRITE, NULL, &hkey, &disposition);
         if (rc == ERROR_SUCCESS && disposition == REG_CREATED_NEW_KEY)
