@@ -478,6 +478,18 @@ static HMODULE load_graphics_driver(void)
     return ret;
 }
 
+BOOL WINAPI ImmFreeLayout( HKL hkl )
+{
+    FIXME( "hkl %p stub!\n", hkl );
+    return FALSE;
+}
+
+BOOL WINAPI ImmLoadIME( HKL hkl )
+{
+    FIXME( "hkl %p stub!\n", hkl );
+    return FALSE;
+}
+
 /* ImmHkl loading and freeing */
 #define LOAD_FUNCPTR(f) if((ptr->p##f = (LPVOID)GetProcAddress(ptr->hIME, #f)) == NULL){WARN("Can't find function %s in ime\n", #f);}
 static ImmHkl *IMM_GetImmHkl(HKL hkl)

@@ -18,7 +18,7 @@
 @ stdcall ImmEnumRegisterWordW(long ptr wstr long wstr ptr)
 @ stdcall ImmEscapeA(long long long ptr)
 @ stdcall ImmEscapeW(long long long ptr)
-@ stub ImmFreeLayout
+@ stdcall ImmFreeLayout(long)
 @ stdcall ImmGenerateMessage(ptr)
 @ stdcall ImmGetCandidateListA(long long ptr long)
 @ stdcall ImmGetCandidateListCountA(long ptr)
@@ -66,7 +66,7 @@
 @ stdcall ImmIsIME(long)
 @ stdcall ImmIsUIMessageA(long long long long)
 @ stdcall ImmIsUIMessageW(long long long long)
-@ stub ImmLoadIME
+@ stdcall ImmLoadIME(long)
 @ stub ImmLoadLayout
 @ stub ImmLockClientImc
 @ stdcall ImmLockIMC(long)
