@@ -1884,29 +1884,26 @@ DWORD WINAPI ImmGetProperty( HKL hkl, DWORD index )
 /***********************************************************************
  *		ImmGetRegisterWordStyleA (IMM32.@)
  */
-UINT WINAPI ImmGetRegisterWordStyleA(
-  HKL hKL, UINT nItem, LPSTYLEBUFA lpStyleBuf)
+UINT WINAPI ImmGetRegisterWordStyleA( HKL hkl, UINT count, STYLEBUFA *styleA )
 {
-    struct ime *immHkl = IMM_GetImmHkl( hKL );
-    TRACE("(%p, %d, %p):\n", hKL, nItem, lpStyleBuf);
-    if (immHkl->hIME && immHkl->pImeGetRegisterWordStyle)
-    {
-        if (!is_kbd_ime_unicode(immHkl))
-            return immHkl->pImeGetRegisterWordStyle(nItem,(LPSTYLEBUFW)lpStyleBuf);
-        else
-        {
-            STYLEBUFW sbw;
-            UINT rc;
+    struct ime *ime = IMM_GetImmHkl( hkl );
+    UINT ret;
 
-            rc = immHkl->pImeGetRegisterWordStyle(nItem,&sbw);
-            WideCharToMultiByte(CP_ACP, 0, sbw.szDescription, -1,
-                lpStyleBuf->szDescription, 32, NULL, NULL);
-            lpStyleBuf->dwStyle = sbw.dwStyle;
-            return rc;
-        }
-    }
+    TRACE( "hkl %p, count %u, styleA %p.\n", hkl, count, styleA );
+
+    if (!ime->hIME || !ime->pImeGetRegisterWordStyle) return 0;
+
+    if (!is_kbd_ime_unicode( ime ))
+        ret = ime->pImeGetRegisterWordStyle( count, (STYLEBUFW *)styleA );
     else
-        return 0;
+    {
+        STYLEBUFW styleW;
+        ret = ime->pImeGetRegisterWordStyle( count, &styleW );
+        WideCharToMultiByte( CP_ACP, 0, styleW.szDescription, -1, styleA->szDescription, 32, NULL, NULL );
+        styleA->dwStyle = styleW.dwStyle;
+    }
+
+    return ret;
 }
 
 /***********************************************************************
