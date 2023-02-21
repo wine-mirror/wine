@@ -789,36 +789,30 @@ BOOL WINAPI ImmConfigureIMEA( HKL hkl, HWND hwnd, DWORD mode, void *data )
 /***********************************************************************
  *		ImmConfigureIMEW (IMM32.@)
  */
-BOOL WINAPI ImmConfigureIMEW(
-  HKL hKL, HWND hWnd, DWORD dwMode, LPVOID lpData)
+BOOL WINAPI ImmConfigureIMEW( HKL hkl, HWND hwnd, DWORD mode, void *data )
 {
-    struct ime *immHkl = IMM_GetImmHkl( hKL );
+    struct ime *ime = IMM_GetImmHkl( hkl );
+    BOOL ret;
 
-    TRACE("(%p, %p, %ld, %p):\n", hKL, hWnd, dwMode, lpData);
+    TRACE( "hkl %p, hwnd %p, mode %lu, data %p.\n", hkl, hwnd, mode, data );
 
-    if (dwMode == IME_CONFIG_REGISTERWORD && !lpData)
-        return FALSE;
+    if (mode == IME_CONFIG_REGISTERWORD && !data) return FALSE;
+    if (!ime->hIME || !ime->pImeConfigure) return FALSE;
 
-    if (immHkl->hIME && immHkl->pImeConfigure)
-    {
-        if (dwMode != IME_CONFIG_REGISTERWORD || is_kbd_ime_unicode(immHkl))
-            return immHkl->pImeConfigure(hKL,hWnd,dwMode,lpData);
-        else
-        {
-            REGISTERWORDW *rww = lpData;
-            REGISTERWORDA rwa;
-            BOOL rc;
-
-            rwa.lpReading = strdupWtoA(rww->lpReading);
-            rwa.lpWord = strdupWtoA(rww->lpWord);
-            rc = immHkl->pImeConfigure(hKL,hWnd,dwMode,&rwa);
-            HeapFree(GetProcessHeap(),0,rwa.lpReading);
-            HeapFree(GetProcessHeap(),0,rwa.lpWord);
-            return rc;
-        }
-    }
+    if (mode != IME_CONFIG_REGISTERWORD || is_kbd_ime_unicode( ime ))
+        ret = ime->pImeConfigure( hkl, hwnd, mode, data );
     else
-        return FALSE;
+    {
+        REGISTERWORDW *wordW = data;
+        REGISTERWORDA wordA;
+        wordA.lpWord = strdupWtoA( wordW->lpWord );
+        wordA.lpReading = strdupWtoA( wordW->lpReading );
+        ret = ime->pImeConfigure( hkl, hwnd, mode, &wordA );
+        HeapFree( GetProcessHeap(), 0, wordA.lpReading );
+        HeapFree( GetProcessHeap(), 0, wordA.lpWord );
+    }
+
+    return ret;
 }
 
 static InputContextData *create_input_context(HIMC default_imc)
