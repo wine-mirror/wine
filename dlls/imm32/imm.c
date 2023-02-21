@@ -1856,29 +1856,29 @@ BOOL WINAPI ImmGetOpenStatus(HIMC hIMC)
 /***********************************************************************
  *		ImmGetProperty (IMM32.@)
  */
-DWORD WINAPI ImmGetProperty(HKL hKL, DWORD fdwIndex)
+DWORD WINAPI ImmGetProperty( HKL hkl, DWORD index )
 {
-    DWORD rc = 0;
-    struct ime *kbd;
+    struct ime *ime;
+    DWORD ret;
 
-    TRACE("(%p, %ld)\n", hKL, fdwIndex);
-    kbd = IMM_GetImmHkl(hKL);
+    TRACE( "hkl %p, index %lu.\n", hkl, index );
 
-    if (kbd && kbd->hIME)
+    ime = IMM_GetImmHkl( hkl );
+    if (!ime || !ime->hIME) return 0;
+
+    switch (index)
     {
-        switch (fdwIndex)
-        {
-            case IGP_PROPERTY: rc = kbd->imeInfo.fdwProperty; break;
-            case IGP_CONVERSION: rc = kbd->imeInfo.fdwConversionCaps; break;
-            case IGP_SENTENCE: rc = kbd->imeInfo.fdwSentenceCaps; break;
-            case IGP_SETCOMPSTR: rc = kbd->imeInfo.fdwSCSCaps; break;
-            case IGP_SELECT: rc = kbd->imeInfo.fdwSelectCaps; break;
-            case IGP_GETIMEVERSION: rc = IMEVER_0400; break;
-            case IGP_UI: rc = 0; break;
-            default: rc = 0;
-        }
+    case IGP_PROPERTY: ret = ime->imeInfo.fdwProperty; break;
+    case IGP_CONVERSION: ret = ime->imeInfo.fdwConversionCaps; break;
+    case IGP_SENTENCE: ret = ime->imeInfo.fdwSentenceCaps; break;
+    case IGP_SETCOMPSTR: ret = ime->imeInfo.fdwSCSCaps; break;
+    case IGP_SELECT: ret = ime->imeInfo.fdwSelectCaps; break;
+    case IGP_GETIMEVERSION: ret = IMEVER_0400; break;
+    case IGP_UI: ret = 0; break;
+    default: ret = 0; break;
     }
-    return rc;
+
+    return ret;
 }
 
 /***********************************************************************
