@@ -2618,31 +2618,26 @@ BOOL WINAPI ImmSimulateHotKey(HWND hWnd, DWORD dwHotKeyID)
 /***********************************************************************
  *		ImmUnregisterWordA (IMM32.@)
  */
-BOOL WINAPI ImmUnregisterWordA(
-  HKL hKL, LPCSTR lpszReading, DWORD dwStyle, LPCSTR lpszUnregister)
+BOOL WINAPI ImmUnregisterWordA( HKL hkl, const char *readingA, DWORD style, const char *stringA )
 {
-    struct ime *immHkl = IMM_GetImmHkl( hKL );
-    TRACE("(%p, %s, %ld, %s):\n", hKL, debugstr_a(lpszReading), dwStyle,
-            debugstr_a(lpszUnregister));
-    if (immHkl->hIME && immHkl->pImeUnregisterWord)
-    {
-        if (!is_kbd_ime_unicode(immHkl))
-            return immHkl->pImeUnregisterWord((LPCWSTR)lpszReading,dwStyle,
-                                              (LPCWSTR)lpszUnregister);
-        else
-        {
-            LPWSTR lpszwReading = strdupAtoW(lpszReading);
-            LPWSTR lpszwUnregister = strdupAtoW(lpszUnregister);
-            BOOL rc;
+    struct ime *ime = IMM_GetImmHkl( hkl );
+    BOOL ret;
 
-            rc = immHkl->pImeUnregisterWord(lpszwReading,dwStyle,lpszwUnregister);
-            HeapFree(GetProcessHeap(),0,lpszwReading);
-            HeapFree(GetProcessHeap(),0,lpszwUnregister);
-            return rc;
-        }
-    }
+    TRACE( "hkl %p, readingA %s, style %lu, stringA %s.\n", hkl, debugstr_a(readingA), style, debugstr_a(stringA) );
+
+    if (!ime->hIME || !ime->pImeUnregisterWord) return FALSE;
+
+    if (!is_kbd_ime_unicode( ime ))
+        ret = ime->pImeUnregisterWord( (const WCHAR *)readingA, style, (const WCHAR *)stringA );
     else
-        return FALSE;
+    {
+        WCHAR *readingW = strdupAtoW( readingA ), *stringW = strdupAtoW( stringA );
+        ret = ime->pImeUnregisterWord( readingW, style, stringW );
+        HeapFree( GetProcessHeap(), 0, readingW );
+        HeapFree( GetProcessHeap(), 0, stringW );
+    }
+
+    return ret;
 }
 
 /***********************************************************************
