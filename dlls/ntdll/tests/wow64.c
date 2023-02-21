@@ -244,7 +244,7 @@ static void test_peb_teb(void)
 
     Wow64DisableWow64FsRedirection( &redir );
 
-    if (CreateProcessA( "C:\\windows\\syswow64\\notepad.exe", NULL, NULL, NULL,
+    if (CreateProcessA( "C:\\windows\\syswow64\\msinfo32.exe", NULL, NULL, NULL,
                         FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi ))
     {
         memset( &info, 0xcc, sizeof(info) );
@@ -344,7 +344,7 @@ static void test_peb_teb(void)
         CloseHandle( pi.hThread );
     }
 
-    if (CreateProcessA( "C:\\windows\\system32\\notepad.exe", NULL, NULL, NULL,
+    if (CreateProcessA( "C:\\windows\\system32\\msinfo32.exe", NULL, NULL, NULL,
                         FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi ))
     {
         memset( &info, 0xcc, sizeof(info) );
