@@ -387,8 +387,6 @@ static BOOL CDECL PSDRV_CreateDC( PHYSDEV *pdev, LPCWSTR device, LPCWSTR output,
 
     if (!(physDev = create_psdrv_physdev( pi ))) return FALSE;
 
-    if (output && *output) physDev->job.output = strdupW( output );
-
     if(initData)
     {
         dump_devmode(initData);
@@ -432,7 +430,6 @@ static BOOL CDECL PSDRV_DeleteDC( PHYSDEV dev )
     TRACE("\n");
 
     HeapFree( GetProcessHeap(), 0, physDev->Devmode );
-    HeapFree( GetProcessHeap(), 0, physDev->job.output );
     HeapFree( GetProcessHeap(), 0, physDev );
 
     return TRUE;

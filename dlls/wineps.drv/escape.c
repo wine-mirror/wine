@@ -459,16 +459,8 @@ INT CDECL PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc )
     }
 
     di.pDocName = (LPWSTR) doc->lpszDocName;
+    di.pOutputFile = (LPWSTR) doc->lpszOutput;
     di.pDatatype = NULL;
-
-    if(doc->lpszOutput)
-        di.pOutputFile = (LPWSTR) doc->lpszOutput;
-    else if(physDev->job.output)
-        di.pOutputFile = physDev->job.output;
-    else
-        di.pOutputFile = NULL;
-
-    TRACE("using output: %s\n", debugstr_w(di.pOutputFile));
 
     /* redirection located in HKCU\Software\Wine\Printing\Spooler
        is done during winspool.drv,ScheduleJob */
