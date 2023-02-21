@@ -411,7 +411,6 @@ static void test_name_collisions(void)
     h1 = CreateNamedPipeA( "\\\\.\\pipe\\named_pipe", PIPE_ACCESS_DUPLEX,
                           PIPE_READMODE_BYTE, 10, 256, 256, 1000, NULL );
     winerr = GetLastError();
-    todo_wine
     ok(h1 != 0 && winerr == ERROR_ALREADY_EXISTS, "CreateNamedPipeA got ret=%p (%ld)\n", h1, winerr);
     pNtClose(h1);
     pNtClose(h);
