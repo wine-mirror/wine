@@ -3697,7 +3697,7 @@ static BOOL WINAPI fpScheduleJob(HANDLE hprinter, DWORD job_id)
     }
 
     port = job->port;
-    if (!port)
+    if (!port || !*port)
         port = printer->info->port;
     TRACE("need to schedule job %ld filename %s to port %s\n", job->id,
             debugstr_w(job->filename), debugstr_w(port));
