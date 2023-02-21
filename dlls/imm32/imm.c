@@ -421,39 +421,6 @@ static InputContextData *query_imc_data(HIMC handle)
     return ret && ret->handle == handle ? ret : NULL;
 }
 
-static BOOL free_input_context_data(HIMC hIMC)
-{
-    InputContextData *data = query_imc_data(hIMC);
-
-    if (!data)
-        return FALSE;
-
-    TRACE("Destroying %p\n", hIMC);
-
-    data->immKbd->uSelected--;
-    data->immKbd->pImeSelect(hIMC, FALSE);
-    SendMessageW(data->IMC.hWnd, WM_IME_SELECT, FALSE, (LPARAM)data->immKbd);
-
-    ImmDestroyIMCC(data->IMC.hCompStr);
-    ImmDestroyIMCC(data->IMC.hCandInfo);
-    ImmDestroyIMCC(data->IMC.hGuideLine);
-    ImmDestroyIMCC(data->IMC.hPrivate);
-    ImmDestroyIMCC(data->IMC.hMsgBuf);
-
-    HeapFree(GetProcessHeap(), 0, data);
-
-    return TRUE;
-}
-
-static void IMM_FreeThreadData(void)
-{
-    struct coinit_spy *spy;
-
-    free_input_context_data(UlongToHandle(NtUserGetThreadInfo()->default_imc));
-    if ((spy = get_thread_coinit_spy()))
-        IInitializeSpy_Release(&spy->IInitializeSpy_iface);
-}
-
 static HMODULE load_graphics_driver(void)
 {
     static const WCHAR key_pathW[] = L"System\\CurrentControlSet\\Control\\Video\\{";
@@ -556,6 +523,36 @@ failed:
     return NULL;
 }
 
+static BOOL free_input_context_data( HIMC hIMC )
+{
+    InputContextData *data = query_imc_data( hIMC );
+
+    if (!data) return FALSE;
+
+    TRACE( "Destroying %p\n", hIMC );
+
+    data->immKbd->uSelected--;
+    data->immKbd->pImeSelect( hIMC, FALSE );
+    SendMessageW( data->IMC.hWnd, WM_IME_SELECT, FALSE, (LPARAM)data->immKbd );
+
+    ImmDestroyIMCC( data->IMC.hCompStr );
+    ImmDestroyIMCC( data->IMC.hCandInfo );
+    ImmDestroyIMCC( data->IMC.hGuideLine );
+    ImmDestroyIMCC( data->IMC.hPrivate );
+    ImmDestroyIMCC( data->IMC.hMsgBuf );
+
+    HeapFree( GetProcessHeap(), 0, data );
+
+    return TRUE;
+}
+
+static void IMM_FreeThreadData(void)
+{
+    struct coinit_spy *spy;
+
+    free_input_context_data( UlongToHandle( NtUserGetThreadInfo()->default_imc ) );
+    if ((spy = get_thread_coinit_spy())) IInitializeSpy_Release( &spy->IInitializeSpy_iface );
+}
 
 static void IMM_FreeAllImmHkl(void)
 {
