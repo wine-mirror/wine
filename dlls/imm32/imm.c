@@ -63,7 +63,7 @@ struct ime
     HWND        UIWnd;
 
     /* Function Pointers */
-    BOOL (WINAPI *pImeInquire)(IMEINFO *, WCHAR *, DWORD);
+    BOOL (WINAPI *pImeInquire)(IMEINFO *, void *, DWORD);
     BOOL (WINAPI *pImeConfigure)(HKL, HWND, DWORD, void *);
     BOOL (WINAPI *pImeDestroy)(UINT);
     LRESULT (WINAPI *pImeEscape)(HIMC, UINT, void *);
@@ -71,14 +71,14 @@ struct ime
     BOOL (WINAPI *pImeSetActiveContext)(HIMC, BOOL);
     UINT (WINAPI *pImeToAsciiEx)(UINT, UINT, const BYTE *, TRANSMSGLIST *, UINT, HIMC);
     BOOL (WINAPI *pNotifyIME)(HIMC, DWORD, DWORD, DWORD);
-    BOOL (WINAPI *pImeRegisterWord)(const WCHAR *, DWORD, const WCHAR *);
-    BOOL (WINAPI *pImeUnregisterWord)(const WCHAR *, DWORD, const WCHAR *);
-    UINT (WINAPI *pImeEnumRegisterWord)(REGISTERWORDENUMPROCW, const WCHAR *, DWORD, const WCHAR *, void *);
-    BOOL (WINAPI *pImeSetCompositionString)(HIMC, DWORD, const void *, DWORD, const void *, DWORD);
-    DWORD (WINAPI *pImeConversionList)(HIMC, const WCHAR *, CANDIDATELIST *, DWORD, UINT);
-    BOOL (WINAPI *pImeProcessKey)(HIMC, UINT, LPARAM, const BYTE *);
-    UINT (WINAPI *pImeGetRegisterWordStyle)(UINT, STYLEBUFW *);
-    DWORD (WINAPI *pImeGetImeMenuItems)(HIMC, DWORD, DWORD, IMEMENUITEMINFOW *, IMEMENUITEMINFOW *, DWORD);
+    BOOL (WINAPI *pImeRegisterWord)(const void/*TCHAR*/*, DWORD, const void/*TCHAR*/*);
+    BOOL (WINAPI *pImeUnregisterWord)(const void/*TCHAR*/*, DWORD, const void/*TCHAR*/*);
+    UINT (WINAPI *pImeEnumRegisterWord)(void */*REGISTERWORDENUMPROCW*/, const void/*TCHAR*/*, DWORD, const void/*TCHAR*/*, void *);
+    BOOL (WINAPI *pImeSetCompositionString)(HIMC, DWORD, const void/*TCHAR*/*, DWORD, const void/*TCHAR*/*, DWORD);
+    DWORD (WINAPI *pImeConversionList)(HIMC, const void/*TCHAR*/*, CANDIDATELIST*, DWORD, UINT);
+    UINT (WINAPI *pImeGetRegisterWordStyle)(UINT, void/*STYLEBUFW*/*);
+    BOOL (WINAPI *pImeProcessKey)(HIMC, UINT, LPARAM, const BYTE*);
+    DWORD (WINAPI *pImeGetImeMenuItems)(HIMC, DWORD, DWORD, void/*IMEMENUITEMINFOW*/*, void/*IMEMENUITEMINFOW*/*, DWORD);
 };
 
 static HRESULT (WINAPI *pCoRevokeInitializeSpy)(ULARGE_INTEGER cookie);
@@ -934,12 +934,11 @@ UINT WINAPI ImmEnumRegisterWordA( HKL hkl, REGISTERWORDENUMPROCA procA, const ch
     if (!ime->hIME || !ime->pImeEnumRegisterWord) return 0;
 
     if (!is_kbd_ime_unicode( ime ))
-        ret = ime->pImeEnumRegisterWord( (REGISTERWORDENUMPROCW)procA, (const WCHAR *)readingA,
-                                         style, (const WCHAR *)stringA, user );
+        ret = ime->pImeEnumRegisterWord( procA, readingA, style, stringA, user );
     else
     {
         WCHAR *readingW = strdupAtoW( readingA ), *stringW = strdupAtoW( stringA );
-        ret = ime->pImeEnumRegisterWord( (REGISTERWORDENUMPROCW)procA, readingW, style, stringW, user );
+        ret = ime->pImeEnumRegisterWord( procA, readingW, style, stringW, user );
         HeapFree( GetProcessHeap(), 0, readingW );
         HeapFree( GetProcessHeap(), 0, stringW );
     }
@@ -966,8 +965,7 @@ UINT WINAPI ImmEnumRegisterWordW( HKL hkl, REGISTERWORDENUMPROCW procW, const WC
     else
     {
         char *readingA = strdupWtoA( readingW ), *stringA = strdupWtoA( stringW );
-        ret = ime->pImeEnumRegisterWord( procW, (const WCHAR *)readingA, style,
-                                         (const WCHAR *)stringA, user );
+        ret = ime->pImeEnumRegisterWord( procW, readingA, style, stringA, user );
         HeapFree( GetProcessHeap(), 0, readingA );
         HeapFree( GetProcessHeap(), 0, stringA );
     }
@@ -1597,7 +1595,7 @@ DWORD WINAPI ImmGetConversionListA( HKL hkl, HIMC himc, const char *srcA, CANDID
     if (!ime->hIME || !ime->pImeConversionList) return 0;
 
     if (!is_kbd_ime_unicode( ime ))
-        ret = ime->pImeConversionList( himc, (const WCHAR *)srcA, listA, lengthA, flags );
+        ret = ime->pImeConversionList( himc, srcA, listA, lengthA, flags );
     else
     {
         CANDIDATELIST *listW;
@@ -1637,12 +1635,12 @@ DWORD WINAPI ImmGetConversionListW( HKL hkl, HIMC himc, const WCHAR *srcW, CANDI
     {
         CANDIDATELIST *listA;
         char *srcA = strdupWtoA( srcW );
-        DWORD lengthA = ime->pImeConversionList( himc, (const WCHAR *)srcA, NULL, 0, flags );
+        DWORD lengthA = ime->pImeConversionList( himc, srcA, NULL, 0, flags );
 
         if (!(listA = HeapAlloc( GetProcessHeap(), 0, lengthA ))) ret = 0;
         else
         {
-            ime->pImeConversionList( himc, (const WCHAR *)srcA, listA, lengthA, flags );
+            ime->pImeConversionList( himc, srcA, listA, lengthA, flags );
             ret = convert_candidatelist_AtoW( listA, listW, lengthW );
             HeapFree( GetProcessHeap(), 0, listA );
         }
@@ -1894,7 +1892,7 @@ UINT WINAPI ImmGetRegisterWordStyleA( HKL hkl, UINT count, STYLEBUFA *styleA )
     if (!ime->hIME || !ime->pImeGetRegisterWordStyle) return 0;
 
     if (!is_kbd_ime_unicode( ime ))
-        ret = ime->pImeGetRegisterWordStyle( count, (STYLEBUFW *)styleA );
+        ret = ime->pImeGetRegisterWordStyle( count, styleA );
     else
     {
         STYLEBUFW styleW;
@@ -1923,7 +1921,7 @@ UINT WINAPI ImmGetRegisterWordStyleW( HKL hkl, UINT count, STYLEBUFW *styleW )
     else
     {
         STYLEBUFA styleA;
-        ret = ime->pImeGetRegisterWordStyle( count, (STYLEBUFW *)&styleA );
+        ret = ime->pImeGetRegisterWordStyle( count, &styleA );
         MultiByteToWideChar( CP_ACP, 0, styleA.szDescription, -1, styleW->szDescription, 32 );
         styleW->dwStyle = styleA.dwStyle;
     }
@@ -2148,7 +2146,7 @@ BOOL WINAPI ImmRegisterWordA( HKL hkl, const char *readingA, DWORD style, const 
     if (!ime->hIME || !ime->pImeRegisterWord) return FALSE;
 
     if (!is_kbd_ime_unicode( ime ))
-        ret = ime->pImeRegisterWord( (const WCHAR *)readingA, style, (const WCHAR *)stringA );
+        ret = ime->pImeRegisterWord( readingA, style, stringA );
     else
     {
         WCHAR *readingW = strdupAtoW( readingA ), *stringW = strdupAtoW( stringA );
@@ -2177,7 +2175,7 @@ BOOL WINAPI ImmRegisterWordW( HKL hkl, const WCHAR *readingW, DWORD style, const
     else
     {
         char *readingA = strdupWtoA( readingW ), *stringA = strdupWtoA( stringW );
-        ret = ime->pImeRegisterWord( (const WCHAR *)readingA, style, (const WCHAR *)stringA );
+        ret = ime->pImeRegisterWord( readingA, style, stringA );
         HeapFree( GetProcessHeap(), 0, readingA );
         HeapFree( GetProcessHeap(), 0, stringA );
     }
@@ -2628,7 +2626,7 @@ BOOL WINAPI ImmUnregisterWordA( HKL hkl, const char *readingA, DWORD style, cons
     if (!ime->hIME || !ime->pImeUnregisterWord) return FALSE;
 
     if (!is_kbd_ime_unicode( ime ))
-        ret = ime->pImeUnregisterWord( (const WCHAR *)readingA, style, (const WCHAR *)stringA );
+        ret = ime->pImeUnregisterWord( readingA, style, stringA );
     else
     {
         WCHAR *readingW = strdupAtoW( readingA ), *stringW = strdupAtoW( stringA );
@@ -2657,7 +2655,7 @@ BOOL WINAPI ImmUnregisterWordW( HKL hkl, const WCHAR *readingW, DWORD style, con
     else
     {
         char *readingA = strdupWtoA( readingW ), *stringA = strdupWtoA( stringW );
-        ret = ime->pImeUnregisterWord( (const WCHAR *)readingA, style, (const WCHAR *)stringA );
+        ret = ime->pImeUnregisterWord( readingA, style, stringA );
         HeapFree( GetProcessHeap(), 0, readingA );
         HeapFree( GetProcessHeap(), 0, stringA );
     }
@@ -2686,8 +2684,7 @@ DWORD WINAPI ImmGetImeMenuItemsA( HIMC himc, DWORD flags, DWORD type, IMEMENUITE
     if (!data->immKbd->hIME || !data->immKbd->pImeGetImeMenuItems) return 0;
 
     if (!is_himc_ime_unicode( data ) || (!parentA && !menuA))
-        ret = data->immKbd->pImeGetImeMenuItems( himc, flags, type, (IMEMENUITEMINFOW *)parentA,
-                                                 (IMEMENUITEMINFOW *)menuA, size );
+        ret = data->immKbd->pImeGetImeMenuItems( himc, flags, type, parentA, menuA, size );
     else
     {
         IMEMENUITEMINFOW tmpW, *menuW, *parentW = parentA ? &tmpW : NULL;
@@ -2760,8 +2757,7 @@ DWORD WINAPI ImmGetImeMenuItemsW( HIMC himc, DWORD flags, DWORD type, IMEMENUITE
             menuA = HeapAlloc( GetProcessHeap(), 0, size );
         }
 
-        ret = data->immKbd->pImeGetImeMenuItems( himc, flags, type, (IMEMENUITEMINFOW *)parentA,
-                                                 (IMEMENUITEMINFOW *)menuA, size );
+        ret = data->immKbd->pImeGetImeMenuItems( himc, flags, type, parentA, menuA, size );
 
         if (parentW)
         {
