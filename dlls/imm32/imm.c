@@ -988,36 +988,33 @@ static inline BOOL EscapeRequiresWA(UINT uEscape)
 /***********************************************************************
  *		ImmEscapeA (IMM32.@)
  */
-LRESULT WINAPI ImmEscapeA(
-  HKL hKL, HIMC hIMC,
-  UINT uEscape, LPVOID lpData)
+LRESULT WINAPI ImmEscapeA( HKL hkl, HIMC himc, UINT code, void *data )
 {
-    struct ime *immHkl = IMM_GetImmHkl( hKL );
-    TRACE("(%p, %p, %d, %p):\n", hKL, hIMC, uEscape, lpData);
+    struct ime *ime = IMM_GetImmHkl( hkl );
+    LRESULT ret;
 
-    if (immHkl->hIME && immHkl->pImeEscape)
+    TRACE( "hkl %p, himc %p, code %u, data %p.\n", hkl, himc, code, data );
+
+    if (!ime->hIME || !ime->pImeEscape) return 0;
+
+    if (!EscapeRequiresWA( code ) || !is_kbd_ime_unicode( ime ))
+        ret = ime->pImeEscape( himc, code, data );
+    else
     {
-        if (!EscapeRequiresWA(uEscape) || !is_kbd_ime_unicode(immHkl))
-            return immHkl->pImeEscape(hIMC,uEscape,lpData);
+        WCHAR buffer[81]; /* largest required buffer should be 80 */
+        if (code == IME_ESC_SET_EUDC_DICTIONARY)
+        {
+            MultiByteToWideChar( CP_ACP, 0, data, -1, buffer, 81 );
+            ret = ime->pImeEscape( himc, code, buffer );
+        }
         else
         {
-            WCHAR buffer[81]; /* largest required buffer should be 80 */
-            LRESULT rc;
-            if (uEscape == IME_ESC_SET_EUDC_DICTIONARY)
-            {
-                MultiByteToWideChar(CP_ACP,0,lpData,-1,buffer,81);
-                rc = immHkl->pImeEscape(hIMC,uEscape,buffer);
-            }
-            else
-            {
-                rc = immHkl->pImeEscape(hIMC,uEscape,buffer);
-                WideCharToMultiByte(CP_ACP,0,buffer,-1,lpData,80, NULL, NULL);
-            }
-            return rc;
+            ret = ime->pImeEscape( himc, code, buffer );
+            WideCharToMultiByte( CP_ACP, 0, buffer, -1, data, 80, NULL, NULL );
         }
     }
-    else
-        return 0;
+
+    return ret;
 }
 
 /***********************************************************************
