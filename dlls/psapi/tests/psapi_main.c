@@ -76,7 +76,7 @@ static void test_EnumProcesses(void)
 
 static void test_EnumProcessModules(void)
 {
-    char buffer[200] = "C:\\windows\\system32\\notepad.exe";
+    char buffer[200] = "C:\\windows\\system32\\msinfo32.exe";
     PROCESS_INFORMATION pi = {0};
     STARTUPINFOA si = {0};
     void *cookie;
@@ -143,7 +143,7 @@ static void test_EnumProcessModules(void)
         char name[40];
         HMODULE hmods[3];
 
-        strcpy(buffer, "C:\\windows\\syswow64\\notepad.exe");
+        strcpy(buffer, "C:\\windows\\syswow64\\msinfo32.exe");
         ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
         if (ret)
         {
@@ -160,7 +160,7 @@ static void test_EnumProcessModules(void)
 
             ret = GetModuleBaseNameA(pi.hProcess, hmods[0], name, sizeof(name));
             ok(ret, "got error %lu\n", GetLastError());
-            ok(!strcmp(name, "notepad.exe"), "got %s\n", name);
+            ok(!strcmp(name, "msinfo32.exe"), "got %s\n", name);
 
             ret = GetModuleFileNameExA(pi.hProcess, hmods[0], name, sizeof(name));
             ok(ret, "got error %lu\n", GetLastError());
@@ -341,7 +341,7 @@ static unsigned int snapshot_count_in_dir(const struct moduleex_snapshot* snap, 
 
 static void test_EnumProcessModulesEx(void)
 {
-    char buffer[200] = "C:\\windows\\system32\\notepad.exe";
+    char buffer[200] = "C:\\windows\\system32\\msinfo32.exe";
     PROCESS_INFORMATION pi = {0};
     STARTUPINFOA si = {0};
     void *cookie;
@@ -449,9 +449,9 @@ static void test_EnumProcessModulesEx(void)
 
         ok(snapshot_is_subset(&snap[0], &snap[2]), "32bit and default module lists should match\n");
         ok(snapshot_is_subset(&snap[2], &snap[3]), "default and all module lists should match\n");
-        snapshot_check_first_main_module(&snap[0], pi.hProcess, "c:\\windows\\syswow64\\notepad.exe");
-        snapshot_check_first_main_module(&snap[2], pi.hProcess, "c:\\windows\\syswow64\\notepad.exe");
-        snapshot_check_first_main_module(&snap[3], pi.hProcess, "c:\\windows\\syswow64\\notepad.exe");
+        snapshot_check_first_main_module(&snap[0], pi.hProcess, "c:\\windows\\syswow64\\msinfo32.exe");
+        snapshot_check_first_main_module(&snap[2], pi.hProcess, "c:\\windows\\syswow64\\msinfo32.exe");
+        snapshot_check_first_main_module(&snap[3], pi.hProcess, "c:\\windows\\syswow64\\msinfo32.exe");
         winetest_pop_context();
     }
 
@@ -461,7 +461,7 @@ static void test_EnumProcessModulesEx(void)
     {
         unsigned int count;
 
-        strcpy(buffer, "C:\\windows\\syswow64\\notepad.exe");
+        strcpy(buffer, "C:\\windows\\syswow64\\msinfo32.exe");
         ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
         if (ret)
         {
@@ -492,7 +492,7 @@ static void test_EnumProcessModulesEx(void)
             ok(ret, "GetSystemWow64DirectoryA failed: %lu\n", GetLastError());
             count = snapshot_count_in_dir(snap, pi.hProcess, buffer);
             todo_wine
-            ok(count <= 1, "Wrong count %u in %s\n", count, buffer); /* notepad can be from system wow64 */
+            ok(count <= 1, "Wrong count %u in %s\n", count, buffer); /* msinfo32 can be from system wow64 */
             ret = GetSystemDirectoryA(buffer, sizeof(buffer));
             ok(ret, "GetSystemDirectoryA failed: %lu\n", GetLastError());
             count = snapshot_count_in_dir(snap, pi.hProcess, buffer);
