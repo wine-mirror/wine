@@ -760,36 +760,30 @@ BOOL WINAPI ImmAssociateContextEx(HWND hwnd, HIMC imc, DWORD flags)
 /***********************************************************************
  *		ImmConfigureIMEA (IMM32.@)
  */
-BOOL WINAPI ImmConfigureIMEA(
-  HKL hKL, HWND hWnd, DWORD dwMode, LPVOID lpData)
+BOOL WINAPI ImmConfigureIMEA( HKL hkl, HWND hwnd, DWORD mode, void *data )
 {
-    struct ime *immHkl = IMM_GetImmHkl( hKL );
+    struct ime *ime = IMM_GetImmHkl( hkl );
+    BOOL ret;
 
-    TRACE("(%p, %p, %ld, %p):\n", hKL, hWnd, dwMode, lpData);
+    TRACE( "hkl %p, hwnd %p, mode %lu, data %p.\n", hkl, hwnd, mode, data );
 
-    if (dwMode == IME_CONFIG_REGISTERWORD && !lpData)
-        return FALSE;
+    if (mode == IME_CONFIG_REGISTERWORD && !data) return FALSE;
+    if (!ime->hIME || !ime->pImeConfigure) return FALSE;
 
-    if (immHkl->hIME && immHkl->pImeConfigure)
-    {
-        if (dwMode != IME_CONFIG_REGISTERWORD || !is_kbd_ime_unicode(immHkl))
-            return immHkl->pImeConfigure(hKL,hWnd,dwMode,lpData);
-        else
-        {
-            REGISTERWORDW rww;
-            REGISTERWORDA *rwa = lpData;
-            BOOL rc;
-
-            rww.lpReading = strdupAtoW(rwa->lpReading);
-            rww.lpWord = strdupAtoW(rwa->lpWord);
-            rc = immHkl->pImeConfigure(hKL,hWnd,dwMode,&rww);
-            HeapFree(GetProcessHeap(),0,rww.lpReading);
-            HeapFree(GetProcessHeap(),0,rww.lpWord);
-            return rc;
-        }
-    }
+    if (mode != IME_CONFIG_REGISTERWORD || !is_kbd_ime_unicode( ime ))
+        ret = ime->pImeConfigure( hkl, hwnd, mode, data );
     else
-        return FALSE;
+    {
+        REGISTERWORDA *wordA = data;
+        REGISTERWORDW wordW;
+        wordW.lpWord = strdupAtoW( wordA->lpWord );
+        wordW.lpReading = strdupAtoW( wordA->lpReading );
+        ret = ime->pImeConfigure( hkl, hwnd, mode, &wordW );
+        HeapFree( GetProcessHeap(), 0, wordW.lpReading );
+        HeapFree( GetProcessHeap(), 0, wordW.lpWord );
+    }
+
+    return ret;
 }
 
 /***********************************************************************
