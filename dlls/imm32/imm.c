@@ -950,35 +950,29 @@ UINT WINAPI ImmEnumRegisterWordA( HKL hkl, REGISTERWORDENUMPROCA procA, const ch
 /***********************************************************************
  *		ImmEnumRegisterWordW (IMM32.@)
  */
-UINT WINAPI ImmEnumRegisterWordW(
-  HKL hKL, REGISTERWORDENUMPROCW lpfnEnumProc,
-  LPCWSTR lpszReading, DWORD dwStyle,
-  LPCWSTR lpszRegister, LPVOID lpData)
+UINT WINAPI ImmEnumRegisterWordW( HKL hkl, REGISTERWORDENUMPROCW procW, const WCHAR *readingW,
+                                  DWORD style, const WCHAR *stringW, void *user )
 {
-    struct ime *immHkl = IMM_GetImmHkl( hKL );
-    TRACE("(%p, %p, %s, %ld, %s, %p):\n", hKL, lpfnEnumProc,
-        debugstr_w(lpszReading), dwStyle, debugstr_w(lpszRegister), lpData);
-    if (immHkl->hIME && immHkl->pImeEnumRegisterWord)
-    {
-        if (is_kbd_ime_unicode(immHkl))
-            return immHkl->pImeEnumRegisterWord(lpfnEnumProc, lpszReading, dwStyle,
-                                            lpszRegister, lpData);
-        else
-        {
-            LPSTR lpszaReading = strdupWtoA(lpszReading);
-            LPSTR lpszaRegister = strdupWtoA(lpszRegister);
-            BOOL rc;
+    struct ime *ime = IMM_GetImmHkl( hkl );
+    UINT ret;
 
-            rc = immHkl->pImeEnumRegisterWord(lpfnEnumProc, (LPCWSTR)lpszaReading,
-                                              dwStyle, (LPCWSTR)lpszaRegister, lpData);
+    TRACE( "hkl %p, procW %p, readingW %s, style %lu, stringW %s, user %p.\n", hkl, procW,
+           debugstr_w(readingW), style, debugstr_w(stringW), user );
 
-            HeapFree(GetProcessHeap(),0,lpszaReading);
-            HeapFree(GetProcessHeap(),0,lpszaRegister);
-            return rc;
-        }
-    }
+    if (!ime->hIME || !ime->pImeEnumRegisterWord) return 0;
+
+    if (is_kbd_ime_unicode( ime ))
+        ret = ime->pImeEnumRegisterWord( procW, readingW, style, stringW, user );
     else
-        return 0;
+    {
+        char *readingA = strdupWtoA( readingW ), *stringA = strdupWtoA( stringW );
+        ret = ime->pImeEnumRegisterWord( procW, (const WCHAR *)readingA, style,
+                                         (const WCHAR *)stringA, user );
+        HeapFree( GetProcessHeap(), 0, readingA );
+        HeapFree( GetProcessHeap(), 0, stringA );
+    }
+
+    return ret;
 }
 
 static inline BOOL EscapeRequiresWA(UINT uEscape)
