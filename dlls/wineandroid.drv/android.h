@@ -89,9 +89,7 @@ extern SHORT ANDROID_VkKeyScanEx( WCHAR ch, HKL hkl ) DECLSPEC_HIDDEN;
 extern void ANDROID_SetCursor( HCURSOR handle ) DECLSPEC_HIDDEN;
 extern BOOL ANDROID_CreateWindow( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void ANDROID_DestroyWindow( HWND hwnd ) DECLSPEC_HIDDEN;
-extern NTSTATUS ANDROID_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
-                                                     const LARGE_INTEGER *timeout,
-                                                     DWORD mask, DWORD flags ) DECLSPEC_HIDDEN;
+extern BOOL ANDROID_ProcessEvents( DWORD mask ) DECLSPEC_HIDDEN;
 extern LRESULT ANDROID_DesktopWindowProc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ) DECLSPEC_HIDDEN;
 extern void ANDROID_SetCursor( HCURSOR handle ) DECLSPEC_HIDDEN;
 extern void ANDROID_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha,

@@ -750,8 +750,7 @@ BOOL WINAPI NtUserGetCursorInfo( CURSORINFO *info )
 
 static void check_for_events( UINT flags )
 {
-    LARGE_INTEGER zero = { .QuadPart = 0 };
-    if (user_driver->pMsgWaitForMultipleObjectsEx( 0, NULL, &zero, flags, 0 ) == WAIT_TIMEOUT)
+    if (!user_driver->pProcessEvents( flags ))
         flush_window_surfaces( TRUE );
 }
 

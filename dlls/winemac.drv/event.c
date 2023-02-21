@@ -510,24 +510,16 @@ static int process_events(macdrv_event_queue queue, macdrv_event_mask mask)
 
 
 /***********************************************************************
- *              MsgWaitForMultipleObjectsEx   (MACDRV.@)
+ *              ProcessEvents   (MACDRV.@)
  */
-NTSTATUS macdrv_MsgWaitForMultipleObjectsEx(DWORD count, const HANDLE *handles,
-                                            const LARGE_INTEGER *timeout, DWORD mask, DWORD flags)
+NTSTATUS macdrv_ProcessEvents(DWORD mask)
 {
-    DWORD ret;
     struct macdrv_thread_data *data = macdrv_thread_data();
     macdrv_event_mask event_mask = get_event_mask(mask);
 
-    TRACE("count %d, handles %p, timeout %p, mask %x, flags %x\n", (unsigned int)count,
-          handles, timeout, (unsigned int)mask, (unsigned int)flags);
+    TRACE("mask %x\n", (unsigned int)mask);
 
-    if (!data)
-    {
-        if (!count && timeout && !timeout->QuadPart) return WAIT_TIMEOUT;
-        return NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
-                                         !!(flags & MWMO_ALERTABLE), timeout );
-    }
+    if (!data) return FALSE;
 
     if (data->current_event && data->current_event->type != QUERY_EVENT &&
         data->current_event->type != QUERY_EVENT_NO_PREEMPT_WAIT &&
@@ -535,14 +527,5 @@ NTSTATUS macdrv_MsgWaitForMultipleObjectsEx(DWORD count, const HANDLE *handles,
         data->current_event->type != WINDOW_DRAG_BEGIN)
         event_mask = 0;  /* don't process nested events */
 
-    if (process_events(data->queue, event_mask)) ret = count - 1;
-    else if (count || !timeout || timeout->QuadPart)
-    {
-        ret = NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
-                                        !!(flags & MWMO_ALERTABLE), timeout );
-        if (ret == count - 1) process_events(data->queue, event_mask);
-    }
-    else ret = WAIT_TIMEOUT;
-
-    return ret;
+    return process_events(data->queue, event_mask);
 }

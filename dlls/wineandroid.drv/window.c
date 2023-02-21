@@ -1200,20 +1200,17 @@ LRESULT ANDROID_DesktopWindowProc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 
 
 /***********************************************************************
- *           ANDROID_MsgWaitForMultipleObjectsEx
+ *           ANDROID_ProcessEvents
  */
-NTSTATUS ANDROID_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
-                                              const LARGE_INTEGER *timeout,
-                                              DWORD mask, DWORD flags )
+BOOL ANDROID_ProcessEvents( DWORD mask )
 {
     if (GetCurrentThreadId() == desktop_tid)
     {
         /* don't process nested events */
         if (current_event) mask = 0;
-        if (process_events( mask )) return count - 1;
+        return process_events( mask );
     }
-    return NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
-                                     !!(flags & MWMO_ALERTABLE), timeout );
+    return FALSE;
 }
 
 /**********************************************************************

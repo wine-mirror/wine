@@ -2086,9 +2086,8 @@ static inline void check_for_driver_events( UINT msg )
 {
     if (get_user_thread_info()->message_count > 200)
     {
-        LARGE_INTEGER zero = { .QuadPart = 0 };
         flush_window_surfaces( FALSE );
-        user_driver->pMsgWaitForMultipleObjectsEx( 0, NULL, &zero, QS_ALLINPUT, 0 );
+        user_driver->pProcessEvents( QS_ALLINPUT );
     }
     else if (msg == WM_TIMER || msg == WM_SYSTIMER)
     {
@@ -2117,13 +2116,20 @@ static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DW
     if (enable_thunk_lock)
         lock = KeUserModeCallback( NtUserThunkLock, NULL, 0, &ret_ptr, &ret_len );
 
-    ret = user_driver->pMsgWaitForMultipleObjectsEx( count, handles, get_nt_timeout( &time, timeout ),
-                                                     mask, flags );
-    if (HIWORD(ret))  /* is it an error code? */
+    if (user_driver->pProcessEvents( mask )) ret = count ? count - 1 : 0;
+    else if (count)
     {
-        RtlSetLastWin32Error( RtlNtStatusToDosError(ret) );
-        ret = WAIT_FAILED;
+        ret = NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
+                                        !!(flags & MWMO_ALERTABLE), get_nt_timeout( &time, timeout ));
+        if (ret == count - 1) user_driver->pProcessEvents( mask );
+        else if (HIWORD(ret)) /* is it an error code? */
+        {
+            RtlSetLastWin32Error( RtlNtStatusToDosError(ret) );
+            ret = WAIT_FAILED;
+        }
     }
+    else ret = WAIT_TIMEOUT;
+
     if (ret == WAIT_TIMEOUT && !count && !timeout) NtYieldExecution();
     if ((mask & QS_INPUT) == QS_INPUT) get_user_thread_info()->message_count = 0;
 

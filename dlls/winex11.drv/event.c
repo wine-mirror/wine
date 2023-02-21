@@ -472,33 +472,16 @@ static BOOL process_events( Display *display, Bool (*filter)(Display*, XEvent*,X
 
 
 /***********************************************************************
- *           MsgWaitForMultipleObjectsEx   (X11DRV.@)
+ *           ProcessEvents   (X11DRV.@)
  */
-NTSTATUS X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
-                                             const LARGE_INTEGER *timeout, DWORD mask, DWORD flags )
+BOOL X11DRV_ProcessEvents( DWORD mask )
 {
     struct x11drv_thread_data *data = x11drv_thread_data();
-    NTSTATUS ret;
 
-    if (!data)
-    {
-        if (!count && timeout && !timeout->QuadPart) return WAIT_TIMEOUT;
-        return NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
-                                         !!(flags & MWMO_ALERTABLE), timeout );
-    }
-
+    if (!data) return FALSE;
     if (data->current_event) mask = 0;  /* don't process nested events */
 
-    if (process_events( data->display, filter_event, mask )) ret = count - 1;
-    else if (count || !timeout || timeout->QuadPart)
-    {
-        ret = NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
-                                        !!(flags & MWMO_ALERTABLE), timeout );
-        if (ret == count - 1) process_events( data->display, filter_event, mask );
-    }
-    else ret = WAIT_TIMEOUT;
-
-    return ret;
+    return process_events( data->display, filter_event, mask );
 }
 
 /***********************************************************************
