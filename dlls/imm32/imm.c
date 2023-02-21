@@ -2668,72 +2668,62 @@ BOOL WINAPI ImmUnregisterWordW( HKL hkl, const WCHAR *readingW, DWORD style, con
 /***********************************************************************
  *		ImmGetImeMenuItemsA (IMM32.@)
  */
-DWORD WINAPI ImmGetImeMenuItemsA( HIMC hIMC, DWORD dwFlags, DWORD dwType,
-   LPIMEMENUITEMINFOA lpImeParentMenu, LPIMEMENUITEMINFOA lpImeMenu,
-    DWORD dwSize)
+DWORD WINAPI ImmGetImeMenuItemsA( HIMC himc, DWORD flags, DWORD type, IMEMENUITEMINFOA *parentA,
+                                  IMEMENUITEMINFOA *menuA, DWORD size )
 {
-    InputContextData *data = get_imc_data(hIMC);
-    TRACE("(%p, %li, %li, %p, %p, %li):\n", hIMC, dwFlags, dwType,
-        lpImeParentMenu, lpImeMenu, dwSize);
+    InputContextData *data = get_imc_data( himc );
+    DWORD ret;
+
+    TRACE( "himc %p, flags %#lx, type %lu, parentA %p, menuA %p, size %lu.\n",
+           himc, flags, type, parentA, menuA, size );
 
     if (!data)
     {
-        SetLastError(ERROR_INVALID_HANDLE);
+        SetLastError( ERROR_INVALID_HANDLE );
         return 0;
     }
 
-    if (data->immKbd->hIME && data->immKbd->pImeGetImeMenuItems)
+    if (!data->immKbd->hIME || !data->immKbd->pImeGetImeMenuItems) return 0;
+
+    if (!is_himc_ime_unicode( data ) || (!parentA && !menuA))
+        ret = data->immKbd->pImeGetImeMenuItems( himc, flags, type, (IMEMENUITEMINFOW *)parentA,
+                                                 (IMEMENUITEMINFOW *)menuA, size );
+    else
     {
-        if (!is_himc_ime_unicode(data) || (!lpImeParentMenu && !lpImeMenu))
-            return data->immKbd->pImeGetImeMenuItems(hIMC, dwFlags, dwType,
-                                (IMEMENUITEMINFOW*)lpImeParentMenu,
-                                (IMEMENUITEMINFOW*)lpImeMenu, dwSize);
+        IMEMENUITEMINFOW tmpW, *menuW, *parentW = parentA ? &tmpW : NULL;
+
+        if (!menuA) menuW = NULL;
         else
         {
-            IMEMENUITEMINFOW lpImeParentMenuW;
-            IMEMENUITEMINFOW *lpImeMenuW, *parent = NULL;
-            DWORD rc;
-
-            if (lpImeParentMenu)
-                parent = &lpImeParentMenuW;
-            if (lpImeMenu)
-            {
-                int count = dwSize / sizeof(LPIMEMENUITEMINFOA);
-                dwSize = count * sizeof(IMEMENUITEMINFOW);
-                lpImeMenuW = HeapAlloc(GetProcessHeap(), 0, dwSize);
-            }
-            else
-                lpImeMenuW = NULL;
-
-            rc = data->immKbd->pImeGetImeMenuItems(hIMC, dwFlags, dwType,
-                                parent, lpImeMenuW, dwSize);
-
-            if (lpImeParentMenu)
-            {
-                memcpy(lpImeParentMenu,&lpImeParentMenuW,sizeof(IMEMENUITEMINFOA));
-                lpImeParentMenu->hbmpItem = lpImeParentMenuW.hbmpItem;
-                WideCharToMultiByte(CP_ACP, 0, lpImeParentMenuW.szString,
-                    -1, lpImeParentMenu->szString, IMEMENUITEM_STRING_SIZE,
-                    NULL, NULL);
-            }
-            if (lpImeMenu && rc)
-            {
-                unsigned int i;
-                for (i = 0; i < rc; i++)
-                {
-                    memcpy(&lpImeMenu[i],&lpImeMenuW[1],sizeof(IMEMENUITEMINFOA));
-                    lpImeMenu[i].hbmpItem = lpImeMenuW[i].hbmpItem;
-                    WideCharToMultiByte(CP_ACP, 0, lpImeMenuW[i].szString,
-                        -1, lpImeMenu[i].szString, IMEMENUITEM_STRING_SIZE,
-                        NULL, NULL);
-                }
-            }
-            HeapFree(GetProcessHeap(),0,lpImeMenuW);
-            return rc;
+            int count = size / sizeof(LPIMEMENUITEMINFOA);
+            size = count * sizeof(IMEMENUITEMINFOW);
+            menuW = HeapAlloc( GetProcessHeap(), 0, size );
         }
+
+        ret = data->immKbd->pImeGetImeMenuItems( himc, flags, type, parentW, menuW, size );
+
+        if (parentA)
+        {
+            memcpy( parentA, parentW, sizeof(IMEMENUITEMINFOA) );
+            parentA->hbmpItem = parentW->hbmpItem;
+            WideCharToMultiByte( CP_ACP, 0, parentW->szString, -1, parentA->szString,
+                                 IMEMENUITEM_STRING_SIZE, NULL, NULL );
+        }
+        if (menuA && ret)
+        {
+            unsigned int i;
+            for (i = 0; i < ret; i++)
+            {
+                memcpy( &menuA[i], &menuW[1], sizeof(IMEMENUITEMINFOA) );
+                menuA[i].hbmpItem = menuW[i].hbmpItem;
+                WideCharToMultiByte( CP_ACP, 0, menuW[i].szString, -1, menuA[i].szString,
+                                     IMEMENUITEM_STRING_SIZE, NULL, NULL );
+            }
+        }
+        HeapFree( GetProcessHeap(), 0, menuW );
     }
-    else
-        return 0;
+
+    return ret;
 }
 
 /***********************************************************************
