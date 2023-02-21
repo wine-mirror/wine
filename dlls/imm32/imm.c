@@ -64,8 +64,6 @@ struct ime
     WCHAR ui_class[17];
     HWND ui_hwnd;
 
-    ULONG uSelected;
-
     BOOL (WINAPI *pImeInquire)(IMEINFO *, void *, DWORD);
     BOOL (WINAPI *pImeConfigure)(HKL, HWND, DWORD, void *);
     BOOL (WINAPI *pImeDestroy)(UINT);
@@ -593,7 +591,6 @@ static BOOL free_input_context_data( HIMC hIMC )
 
     TRACE( "Destroying %p\n", hIMC );
 
-    data->ime->uSelected--;
     data->ime->pImeSelect( hIMC, FALSE );
     SendMessageW( data->IMC.hWnd, WM_IME_SELECT, FALSE, (LPARAM)data->ime );
 
@@ -928,7 +925,6 @@ static InputContextData *create_input_context(HIMC default_imc)
     new_context->threadID = GetCurrentThreadId();
     SendMessageW( GetFocus(), WM_IME_SELECT, TRUE, (LPARAM)new_context->ime );
 
-    new_context->ime->uSelected++;
     TRACE("Created context %p\n", new_context);
     return new_context;
 }
@@ -3053,12 +3049,10 @@ BOOL WINAPI ImmProcessKey(HWND hwnd, HKL hKL, UINT vKey, LPARAM lKeyData, DWORD 
         if (!(new_hkl = ime_acquire( hKL ))) return FALSE;
 
         data->ime->pImeSelect( imc, FALSE );
-        data->ime->uSelected--;
         ime_release( data->ime );
 
         data->ime = new_hkl;
         data->ime->pImeSelect( imc, TRUE );
-        data->ime->uSelected++;
     }
 
     GetKeyboardState(state);
