@@ -2163,31 +2163,26 @@ BOOL WINAPI ImmRegisterWordA( HKL hkl, const char *readingA, DWORD style, const 
 /***********************************************************************
  *		ImmRegisterWordW (IMM32.@)
  */
-BOOL WINAPI ImmRegisterWordW(
-  HKL hKL, LPCWSTR lpszReading, DWORD dwStyle, LPCWSTR lpszRegister)
+BOOL WINAPI ImmRegisterWordW( HKL hkl, const WCHAR *readingW, DWORD style, const WCHAR *stringW )
 {
-    struct ime *immHkl = IMM_GetImmHkl( hKL );
-    TRACE("(%p, %s, %ld, %s):\n", hKL, debugstr_w(lpszReading), dwStyle,
-                    debugstr_w(lpszRegister));
-    if (immHkl->hIME && immHkl->pImeRegisterWord)
-    {
-        if (is_kbd_ime_unicode(immHkl))
-            return immHkl->pImeRegisterWord(lpszReading,dwStyle,lpszRegister);
-        else
-        {
-            LPSTR lpszaReading = strdupWtoA(lpszReading);
-            LPSTR lpszaRegister = strdupWtoA(lpszRegister);
-            BOOL rc;
+    struct ime *ime = IMM_GetImmHkl( hkl );
+    BOOL ret;
 
-            rc = immHkl->pImeRegisterWord((LPCWSTR)lpszaReading,dwStyle,
-                                          (LPCWSTR)lpszaRegister);
-            HeapFree(GetProcessHeap(),0,lpszaReading);
-            HeapFree(GetProcessHeap(),0,lpszaRegister);
-            return rc;
-        }
-    }
+    TRACE( "hkl %p, readingW %s, style %lu, stringW %s.\n", hkl, debugstr_w(readingW), style, debugstr_w(stringW) );
+
+    if (!ime->hIME || !ime->pImeRegisterWord) return FALSE;
+
+    if (is_kbd_ime_unicode( ime ))
+        ret = ime->pImeRegisterWord( readingW, style, stringW );
     else
-        return FALSE;
+    {
+        char *readingA = strdupWtoA( readingW ), *stringA = strdupWtoA( stringW );
+        ret = ime->pImeRegisterWord( (const WCHAR *)readingA, style, (const WCHAR *)stringA );
+        HeapFree( GetProcessHeap(), 0, readingA );
+        HeapFree( GetProcessHeap(), 0, stringA );
+    }
+
+    return ret;
 }
 
 /***********************************************************************
