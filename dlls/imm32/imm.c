@@ -922,36 +922,29 @@ BOOL WINAPI ImmDestroyContext(HIMC hIMC)
 /***********************************************************************
  *		ImmEnumRegisterWordA (IMM32.@)
  */
-UINT WINAPI ImmEnumRegisterWordA(
-  HKL hKL, REGISTERWORDENUMPROCA lpfnEnumProc,
-  LPCSTR lpszReading, DWORD dwStyle,
-  LPCSTR lpszRegister, LPVOID lpData)
+UINT WINAPI ImmEnumRegisterWordA( HKL hkl, REGISTERWORDENUMPROCA procA, const char *readingA,
+                                  DWORD style, const char *stringA, void *user )
 {
-    struct ime *immHkl = IMM_GetImmHkl( hKL );
-    TRACE("(%p, %p, %s, %ld, %s, %p):\n", hKL, lpfnEnumProc,
-        debugstr_a(lpszReading), dwStyle, debugstr_a(lpszRegister), lpData);
-    if (immHkl->hIME && immHkl->pImeEnumRegisterWord)
-    {
-        if (!is_kbd_ime_unicode(immHkl))
-            return immHkl->pImeEnumRegisterWord((REGISTERWORDENUMPROCW)lpfnEnumProc,
-                (LPCWSTR)lpszReading, dwStyle, (LPCWSTR)lpszRegister, lpData);
-        else
-        {
-            LPWSTR lpszwReading = strdupAtoW(lpszReading);
-            LPWSTR lpszwRegister = strdupAtoW(lpszRegister);
-            BOOL rc;
+    struct ime *ime = IMM_GetImmHkl( hkl );
+    UINT ret;
 
-            rc = immHkl->pImeEnumRegisterWord((REGISTERWORDENUMPROCW)lpfnEnumProc,
-                                              lpszwReading, dwStyle, lpszwRegister,
-                                              lpData);
+    TRACE( "hkl %p, procA %p, readingA %s, style %lu, stringA %s, user %p.\n", hkl, procA,
+           debugstr_a(readingA), style, debugstr_a(stringA), user );
 
-            HeapFree(GetProcessHeap(),0,lpszwReading);
-            HeapFree(GetProcessHeap(),0,lpszwRegister);
-            return rc;
-        }
-    }
+    if (!ime->hIME || !ime->pImeEnumRegisterWord) return 0;
+
+    if (!is_kbd_ime_unicode( ime ))
+        ret = ime->pImeEnumRegisterWord( (REGISTERWORDENUMPROCW)procA, (const WCHAR *)readingA,
+                                         style, (const WCHAR *)stringA, user );
     else
-        return 0;
+    {
+        WCHAR *readingW = strdupAtoW( readingA ), *stringW = strdupAtoW( stringA );
+        ret = ime->pImeEnumRegisterWord( (REGISTERWORDENUMPROCW)procA, readingW, style, stringW, user );
+        HeapFree( GetProcessHeap(), 0, readingW );
+        HeapFree( GetProcessHeap(), 0, stringW );
+    }
+
+    return ret;
 }
 
 /***********************************************************************
