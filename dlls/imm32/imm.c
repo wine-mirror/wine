@@ -125,14 +125,9 @@ static struct list ime_list = LIST_INIT( ime_list );
 
 static const WCHAR szImeRegFmt[] = L"System\\CurrentControlSet\\Control\\Keyboard Layouts\\%08lx";
 
-static inline BOOL is_himc_ime_unicode(const InputContextData *data)
+static BOOL ime_is_unicode( const struct ime *ime )
 {
-    return !!(data->ime->info.fdwProperty & IME_PROP_UNICODE);
-}
-
-static inline BOOL is_kbd_ime_unicode( const struct ime *hkl )
-{
-    return !!(hkl->info.fdwProperty & IME_PROP_UNICODE);
+    return !!(ime->info.fdwProperty & IME_PROP_UNICODE);
 }
 
 static BOOL IMM_DestroyContext(HIMC hIMC);
@@ -532,7 +527,7 @@ BOOL WINAPI ImmLoadIME( HKL hkl )
 
     if (!ime->pImeInquire( &ime->info, buffer, 0 )) goto failed;
 
-    if (is_kbd_ime_unicode( ime )) lstrcpynW( ime->ui_class, buffer, ARRAY_SIZE(ime->ui_class) );
+    if (ime_is_unicode( ime )) lstrcpynW( ime->ui_class, buffer, ARRAY_SIZE(ime->ui_class) );
     else MultiByteToWideChar( CP_ACP, 0, (char *)buffer, -1, ime->ui_class, ARRAY_SIZE(ime->ui_class) );
 
     EnterCriticalSection( &ime_cs );
@@ -818,7 +813,7 @@ BOOL WINAPI ImmConfigureIMEA( HKL hkl, HWND hwnd, DWORD mode, void *data )
     if (mode == IME_CONFIG_REGISTERWORD && !data) return FALSE;
     if (!(ime = ime_acquire( hkl ))) return FALSE;
 
-    if (mode != IME_CONFIG_REGISTERWORD || !is_kbd_ime_unicode( ime ))
+    if (mode != IME_CONFIG_REGISTERWORD || !ime_is_unicode( ime ))
         ret = ime->pImeConfigure( hkl, hwnd, mode, data );
     else
     {
@@ -848,7 +843,7 @@ BOOL WINAPI ImmConfigureIMEW( HKL hkl, HWND hwnd, DWORD mode, void *data )
     if (mode == IME_CONFIG_REGISTERWORD && !data) return FALSE;
     if (!(ime = ime_acquire( hkl ))) return FALSE;
 
-    if (mode != IME_CONFIG_REGISTERWORD || is_kbd_ime_unicode( ime ))
+    if (mode != IME_CONFIG_REGISTERWORD || ime_is_unicode( ime ))
         ret = ime->pImeConfigure( hkl, hwnd, mode, data );
     else
     {
@@ -980,7 +975,7 @@ UINT WINAPI ImmEnumRegisterWordA( HKL hkl, REGISTERWORDENUMPROCA procA, const ch
 
     if (!(ime = ime_acquire( hkl ))) return 0;
 
-    if (!is_kbd_ime_unicode( ime ))
+    if (!ime_is_unicode( ime ))
         ret = ime->pImeEnumRegisterWord( procA, readingA, style, stringA, user );
     else
     {
@@ -1008,7 +1003,7 @@ UINT WINAPI ImmEnumRegisterWordW( HKL hkl, REGISTERWORDENUMPROCW procW, const WC
 
     if (!(ime = ime_acquire( hkl ))) return 0;
 
-    if (is_kbd_ime_unicode( ime ))
+    if (ime_is_unicode( ime ))
         ret = ime->pImeEnumRegisterWord( procW, readingW, style, stringW, user );
     else
     {
@@ -1044,7 +1039,7 @@ LRESULT WINAPI ImmEscapeA( HKL hkl, HIMC himc, UINT code, void *data )
 
     if (!(ime = ime_acquire( hkl ))) return 0;
 
-    if (!EscapeRequiresWA( code ) || !is_kbd_ime_unicode( ime ))
+    if (!EscapeRequiresWA( code ) || !ime_is_unicode( ime ))
         ret = ime->pImeEscape( himc, code, data );
     else
     {
@@ -1077,7 +1072,7 @@ LRESULT WINAPI ImmEscapeW( HKL hkl, HIMC himc, UINT code, void *data )
 
     if (!(ime = ime_acquire( hkl ))) return 0;
 
-    if (!EscapeRequiresWA( code ) || is_kbd_ime_unicode( ime ))
+    if (!EscapeRequiresWA( code ) || ime_is_unicode( ime ))
         ret = ime->pImeEscape( himc, code, data );
     else
     {
@@ -1123,7 +1118,7 @@ DWORD WINAPI ImmGetCandidateListA(
     if ( !candlist->dwSize || !candlist->dwCount )
         goto done;
 
-    if ( !is_himc_ime_unicode(data) )
+    if (!ime_is_unicode( data->ime ))
     {
         ret = candlist->dwSize;
         if ( lpCandList && dwBufLen >= ret )
@@ -1156,7 +1151,7 @@ DWORD WINAPI ImmGetCandidateListCountA(
 
     *lpdwListCount = count = candinfo->dwCount;
 
-    if ( !is_himc_ime_unicode(data) )
+    if (!ime_is_unicode( data->ime ))
         ret = candinfo->dwSize;
     else
     {
@@ -1188,7 +1183,7 @@ DWORD WINAPI ImmGetCandidateListCountW(
 
     *lpdwListCount = count = candinfo->dwCount;
 
-    if ( is_himc_ime_unicode(data) )
+    if (ime_is_unicode( data->ime ))
         ret = candinfo->dwSize;
     else
     {
@@ -1226,7 +1221,7 @@ DWORD WINAPI ImmGetCandidateListW(
     if ( !candlist->dwSize || !candlist->dwCount )
         goto done;
 
-    if ( is_himc_ime_unicode(data) )
+    if (ime_is_unicode( data->ime ))
     {
         ret = candlist->dwSize;
         if ( lpCandList && dwBufLen >= ret )
@@ -1312,7 +1307,7 @@ static INT CopyCompStringIMEtoClient(const InputContextData *data, const void *s
     int char_size = unicode ? sizeof(WCHAR) : sizeof(char);
     INT ret;
 
-    if (is_himc_ime_unicode(data) ^ unicode)
+    if (ime_is_unicode( data->ime ) ^ unicode)
     {
         if (unicode)
             ret = MultiByteToWideChar(CP_ACP, 0, src, src_len, dst, dst_len / sizeof(WCHAR));
@@ -1349,7 +1344,7 @@ static INT CopyCompAttrIMEtoClient(const InputContextData *data, const BYTE *src
 
     string.str = comp_string;
 
-    if (is_himc_ime_unicode(data) && !unicode)
+    if (ime_is_unicode( data->ime ) && !unicode)
     {
         rc = WideCharToMultiByte(CP_ACP, 0, string.strW, str_len, NULL, 0, NULL, NULL);
         if (dst_len)
@@ -1376,7 +1371,7 @@ static INT CopyCompAttrIMEtoClient(const InputContextData *data, const BYTE *src
             rc = j;
         }
     }
-    else if (!is_himc_ime_unicode(data) && unicode)
+    else if (!ime_is_unicode( data->ime ) && unicode)
     {
         rc = MultiByteToWideChar(CP_ACP, 0, string.strA, str_len, NULL, 0);
         if (dst_len)
@@ -1412,7 +1407,7 @@ static INT CopyCompClauseIMEtoClient(InputContextData *data, LPBYTE source, INT 
 {
     INT rc;
 
-    if (is_himc_ime_unicode(data) && !unicode)
+    if (ime_is_unicode( data->ime ) && !unicode)
     {
         if (tlen)
         {
@@ -1433,7 +1428,7 @@ static INT CopyCompClauseIMEtoClient(InputContextData *data, LPBYTE source, INT 
         else
             rc = slen;
     }
-    else if (!is_himc_ime_unicode(data) && unicode)
+    else if (!ime_is_unicode( data->ime ) && unicode)
     {
         if (tlen)
         {
@@ -1466,11 +1461,11 @@ static INT CopyCompOffsetIMEtoClient(InputContextData *data, DWORD offset, LPBYT
 {
     int rc;
 
-    if (is_himc_ime_unicode(data) && !unicode)
+    if (ime_is_unicode( data->ime ) && !unicode)
     {
         rc = WideCharToMultiByte(CP_ACP, 0, (LPWSTR)ssource, offset, NULL, 0, NULL, NULL);
     }
-    else if (!is_himc_ime_unicode(data) && unicode)
+    else if (!ime_is_unicode( data->ime ) && unicode)
     {
         rc = MultiByteToWideChar(CP_ACP, 0, (LPSTR)ssource, offset, NULL, 0);
     }
@@ -1645,7 +1640,7 @@ DWORD WINAPI ImmGetConversionListA( HKL hkl, HIMC himc, const char *srcA, CANDID
 
     if (!(ime = ime_acquire( hkl ))) return 0;
 
-    if (!is_kbd_ime_unicode( ime ))
+    if (!ime_is_unicode( ime ))
         ret = ime->pImeConversionList( himc, srcA, listA, lengthA, flags );
     else
     {
@@ -1681,7 +1676,7 @@ DWORD WINAPI ImmGetConversionListW( HKL hkl, HIMC himc, const WCHAR *srcW, CANDI
 
     if (!(ime = ime_acquire( hkl ))) return 0;
 
-    if (is_kbd_ime_unicode( ime ))
+    if (ime_is_unicode( ime ))
         ret = ime->pImeConversionList( himc, srcW, listW, lengthW, flags );
     else
     {
@@ -1944,7 +1939,7 @@ UINT WINAPI ImmGetRegisterWordStyleA( HKL hkl, UINT count, STYLEBUFA *styleA )
 
     if (!(ime = ime_acquire( hkl ))) return 0;
 
-    if (!is_kbd_ime_unicode( ime ))
+    if (!ime_is_unicode( ime ))
         ret = ime->pImeGetRegisterWordStyle( count, styleA );
     else
     {
@@ -1970,7 +1965,7 @@ UINT WINAPI ImmGetRegisterWordStyleW( HKL hkl, UINT count, STYLEBUFW *styleW )
 
     if (!(ime = ime_acquire( hkl ))) return 0;
 
-    if (is_kbd_ime_unicode( ime ))
+    if (ime_is_unicode( ime ))
         ret = ime->pImeGetRegisterWordStyle( count, styleW );
     else
     {
@@ -2204,7 +2199,7 @@ BOOL WINAPI ImmRegisterWordA( HKL hkl, const char *readingA, DWORD style, const 
 
     if (!(ime = ime_acquire( hkl ))) return FALSE;
 
-    if (!is_kbd_ime_unicode( ime ))
+    if (!ime_is_unicode( ime ))
         ret = ime->pImeRegisterWord( readingA, style, stringA );
     else
     {
@@ -2230,7 +2225,7 @@ BOOL WINAPI ImmRegisterWordW( HKL hkl, const WCHAR *readingW, DWORD style, const
 
     if (!(ime = ime_acquire( hkl ))) return FALSE;
 
-    if (is_kbd_ime_unicode( ime ))
+    if (ime_is_unicode( ime ))
         ret = ime->pImeRegisterWord( readingW, style, stringW );
     else
     {
@@ -2400,7 +2395,7 @@ BOOL WINAPI ImmSetCompositionStringA(
           dwIndex == SCS_QUERYRECONVERTSTRING))
         return FALSE;
 
-    if (!is_himc_ime_unicode( data ))
+    if (!ime_is_unicode( data->ime ))
         return data->ime->pImeSetCompositionString( hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen );
 
     comp_len = MultiByteToWideChar(CP_ACP, 0, lpComp, dwCompLen, NULL, 0);
@@ -2457,7 +2452,7 @@ BOOL WINAPI ImmSetCompositionStringW(
           dwIndex == SCS_QUERYRECONVERTSTRING))
         return FALSE;
 
-    if (is_himc_ime_unicode( data ))
+    if (ime_is_unicode( data->ime ))
         return data->ime->pImeSetCompositionString( hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen );
 
     comp_len = WideCharToMultiByte(CP_ACP, 0, lpComp, dwCompLen, NULL, 0, NULL,
@@ -2681,7 +2676,7 @@ BOOL WINAPI ImmUnregisterWordA( HKL hkl, const char *readingA, DWORD style, cons
 
     if (!(ime = ime_acquire( hkl ))) return FALSE;
 
-    if (!is_kbd_ime_unicode( ime ))
+    if (!ime_is_unicode( ime ))
         ret = ime->pImeUnregisterWord( readingA, style, stringA );
     else
     {
@@ -2707,7 +2702,7 @@ BOOL WINAPI ImmUnregisterWordW( HKL hkl, const WCHAR *readingW, DWORD style, con
 
     if (!(ime = ime_acquire( hkl ))) return FALSE;
 
-    if (is_kbd_ime_unicode( ime ))
+    if (ime_is_unicode( ime ))
         ret = ime->pImeUnregisterWord( readingW, style, stringW );
     else
     {
@@ -2739,7 +2734,7 @@ DWORD WINAPI ImmGetImeMenuItemsA( HIMC himc, DWORD flags, DWORD type, IMEMENUITE
         return 0;
     }
 
-    if (!is_himc_ime_unicode( data ) || (!parentA && !menuA))
+    if (!ime_is_unicode( data->ime ) || (!parentA && !menuA))
         ret = data->ime->pImeGetImeMenuItems( himc, flags, type, parentA, menuA, size );
     else
     {
@@ -2797,7 +2792,7 @@ DWORD WINAPI ImmGetImeMenuItemsW( HIMC himc, DWORD flags, DWORD type, IMEMENUITE
         return 0;
     }
 
-    if (is_himc_ime_unicode( data ) || (!parentW && !menuW))
+    if (ime_is_unicode( data->ime ) || (!parentW && !menuW))
         ret = data->ime->pImeGetImeMenuItems( himc, flags, type, parentW, menuW, size );
     else
     {
@@ -2998,8 +2993,8 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
     {
         WCHAR chr;
 
-        if (!is_himc_ime_unicode(data))
-            ToAscii(data->lastVK, scancode, state, &chr, 0);
+        if (!ime_is_unicode( data->ime ))
+            ToAscii( data->lastVK, scancode, state, &chr, 0 );
         else
             ToUnicodeEx(data->lastVK, scancode, state, &chr, 1, 0, GetKeyboardLayout(0));
         uVirtKey = MAKELONG(data->lastVK,chr);
