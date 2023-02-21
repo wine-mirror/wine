@@ -492,7 +492,6 @@ BOOL WINAPI ImmLoadIME( HKL hkl )
 }
 
 /* struct ime loading and freeing */
-#define LOAD_FUNCPTR(f) if((ptr->p##f = (LPVOID)GetProcAddress(ptr->hIME, #f)) == NULL){WARN("Can't find function %s in ime\n", #f);}
 static struct ime *IMM_GetImmHkl( HKL hkl )
 {
     struct ime *ptr;
@@ -512,54 +511,52 @@ static struct ime *IMM_GetImmHkl( HKL hkl )
     ptr->hkl = hkl;
     if (ImmGetIMEFileNameW(hkl, filename, MAX_PATH)) ptr->hIME = LoadLibraryW(filename);
     if (!ptr->hIME) ptr->hIME = load_graphics_driver();
-    if (ptr->hIME)
-    {
-        LOAD_FUNCPTR(ImeInquire);
-        if (!ptr->pImeInquire || !ptr->pImeInquire(&ptr->imeInfo, ptr->imeClassName, 0))
-        {
-            FreeLibrary(ptr->hIME);
-            ptr->hIME = NULL;
-        }
-        else
-        {
-            LOAD_FUNCPTR(ImeDestroy);
-            LOAD_FUNCPTR(ImeSelect);
-            if (!ptr->pImeSelect || !ptr->pImeDestroy)
-            {
-                FreeLibrary(ptr->hIME);
-                ptr->hIME = NULL;
-            }
-            else
-            {
-                LOAD_FUNCPTR(ImeConfigure);
-                LOAD_FUNCPTR(ImeEscape);
-                LOAD_FUNCPTR(ImeSetActiveContext);
-                LOAD_FUNCPTR(ImeToAsciiEx);
-                LOAD_FUNCPTR(NotifyIME);
-                LOAD_FUNCPTR(ImeRegisterWord);
-                LOAD_FUNCPTR(ImeUnregisterWord);
-                LOAD_FUNCPTR(ImeEnumRegisterWord);
-                LOAD_FUNCPTR(ImeSetCompositionString);
-                LOAD_FUNCPTR(ImeConversionList);
-                LOAD_FUNCPTR(ImeProcessKey);
-                LOAD_FUNCPTR(ImeGetRegisterWordStyle);
-                LOAD_FUNCPTR(ImeGetImeMenuItems);
-                /* make sure our classname is WCHAR */
-                if (!is_kbd_ime_unicode(ptr))
-                {
-                    WCHAR bufW[17];
-                    MultiByteToWideChar(CP_ACP, 0, (LPSTR)ptr->imeClassName,
-                                        -1, bufW, 17);
-                    lstrcpyW(ptr->imeClassName, bufW);
-                }
-            }
-        }
-    }
-    list_add_head(&ImmHklList,&ptr->entry);
+    if (!ptr->hIME) goto failed;
 
+#define LOAD_FUNCPTR( f )                                                                          \
+    if (!(ptr->p##f = (void *)GetProcAddress( ptr->hIME, #f )))                                    \
+    {                                                                                              \
+        WARN( "Can't find function %s in ime\n", #f );                                             \
+        goto failed;                                                                               \
+    }
+    LOAD_FUNCPTR( ImeInquire );
+    LOAD_FUNCPTR( ImeDestroy );
+    LOAD_FUNCPTR( ImeSelect );
+    LOAD_FUNCPTR( ImeConfigure );
+    LOAD_FUNCPTR( ImeEscape );
+    LOAD_FUNCPTR( ImeSetActiveContext );
+    LOAD_FUNCPTR( ImeToAsciiEx );
+    LOAD_FUNCPTR( NotifyIME );
+    LOAD_FUNCPTR( ImeRegisterWord );
+    LOAD_FUNCPTR( ImeUnregisterWord );
+    LOAD_FUNCPTR( ImeEnumRegisterWord );
+    LOAD_FUNCPTR( ImeSetCompositionString );
+    LOAD_FUNCPTR( ImeConversionList );
+    LOAD_FUNCPTR( ImeProcessKey );
+    LOAD_FUNCPTR( ImeGetRegisterWordStyle );
+    LOAD_FUNCPTR( ImeGetImeMenuItems );
+#undef LOAD_FUNCPTR
+
+    if (!ptr->pImeInquire( &ptr->imeInfo, ptr->imeClassName, 0 )) goto failed;
+
+    /* make sure our classname is WCHAR */
+    if (!is_kbd_ime_unicode( ptr ))
+    {
+        WCHAR bufW[17];
+        MultiByteToWideChar( CP_ACP, 0, (LPSTR)ptr->imeClassName, -1, bufW, 17 );
+        lstrcpyW( ptr->imeClassName, bufW );
+    }
+
+    list_add_head(&ImmHklList,&ptr->entry);
+    return ptr;
+
+failed:
+    if (ptr->hIME) FreeLibrary( ptr->hIME );
+    ptr->hIME = NULL;
+
+    list_add_head( &ImmHklList, &ptr->entry );
     return ptr;
 }
-#undef LOAD_FUNCPTR
 
 
 static void IMM_FreeAllImmHkl(void)
@@ -684,8 +681,7 @@ BOOL WINAPI ImmSetActiveContext(HWND hwnd, HIMC himc, BOOL activate)
     {
         data->IMC.hWnd = activate ? hwnd : NULL;
 
-        if (data->immKbd->hIME && data->immKbd->pImeSetActiveContext)
-            data->immKbd->pImeSetActiveContext(himc, activate);
+        if (data->immKbd->hIME) data->immKbd->pImeSetActiveContext(himc, activate);
     }
 
     if (IsWindow(hwnd))
@@ -768,7 +764,7 @@ BOOL WINAPI ImmConfigureIMEA( HKL hkl, HWND hwnd, DWORD mode, void *data )
     TRACE( "hkl %p, hwnd %p, mode %lu, data %p.\n", hkl, hwnd, mode, data );
 
     if (mode == IME_CONFIG_REGISTERWORD && !data) return FALSE;
-    if (!ime->hIME || !ime->pImeConfigure) return FALSE;
+    if (!ime->hIME) return FALSE;
 
     if (mode != IME_CONFIG_REGISTERWORD || !is_kbd_ime_unicode( ime ))
         ret = ime->pImeConfigure( hkl, hwnd, mode, data );
@@ -797,7 +793,7 @@ BOOL WINAPI ImmConfigureIMEW( HKL hkl, HWND hwnd, DWORD mode, void *data )
     TRACE( "hkl %p, hwnd %p, mode %lu, data %p.\n", hkl, hwnd, mode, data );
 
     if (mode == IME_CONFIG_REGISTERWORD && !data) return FALSE;
-    if (!ime->hIME || !ime->pImeConfigure) return FALSE;
+    if (!ime->hIME) return FALSE;
 
     if (mode != IME_CONFIG_REGISTERWORD || is_kbd_ime_unicode( ime ))
         ret = ime->pImeConfigure( hkl, hwnd, mode, data );
@@ -931,7 +927,7 @@ UINT WINAPI ImmEnumRegisterWordA( HKL hkl, REGISTERWORDENUMPROCA procA, const ch
     TRACE( "hkl %p, procA %p, readingA %s, style %lu, stringA %s, user %p.\n", hkl, procA,
            debugstr_a(readingA), style, debugstr_a(stringA), user );
 
-    if (!ime->hIME || !ime->pImeEnumRegisterWord) return 0;
+    if (!ime->hIME) return 0;
 
     if (!is_kbd_ime_unicode( ime ))
         ret = ime->pImeEnumRegisterWord( procA, readingA, style, stringA, user );
@@ -958,7 +954,7 @@ UINT WINAPI ImmEnumRegisterWordW( HKL hkl, REGISTERWORDENUMPROCW procW, const WC
     TRACE( "hkl %p, procW %p, readingW %s, style %lu, stringW %s, user %p.\n", hkl, procW,
            debugstr_w(readingW), style, debugstr_w(stringW), user );
 
-    if (!ime->hIME || !ime->pImeEnumRegisterWord) return 0;
+    if (!ime->hIME) return 0;
 
     if (is_kbd_ime_unicode( ime ))
         ret = ime->pImeEnumRegisterWord( procW, readingW, style, stringW, user );
@@ -993,7 +989,7 @@ LRESULT WINAPI ImmEscapeA( HKL hkl, HIMC himc, UINT code, void *data )
 
     TRACE( "hkl %p, himc %p, code %u, data %p.\n", hkl, himc, code, data );
 
-    if (!ime->hIME || !ime->pImeEscape) return 0;
+    if (!ime->hIME) return 0;
 
     if (!EscapeRequiresWA( code ) || !is_kbd_ime_unicode( ime ))
         ret = ime->pImeEscape( himc, code, data );
@@ -1025,7 +1021,7 @@ LRESULT WINAPI ImmEscapeW( HKL hkl, HIMC himc, UINT code, void *data )
 
     TRACE( "hkl %p, himc %p, code %u, data %p.\n", hkl, himc, code, data );
 
-    if (!ime->hIME || !ime->pImeEscape) return 0;
+    if (!ime->hIME) return 0;
 
     if (!EscapeRequiresWA( code ) || is_kbd_ime_unicode( ime ))
         ret = ime->pImeEscape( himc, code, data );
@@ -1592,7 +1588,7 @@ DWORD WINAPI ImmGetConversionListA( HKL hkl, HIMC himc, const char *srcA, CANDID
     TRACE( "hkl %p, himc %p, srcA %s, listA %p, lengthA %lu, flags %#x.\n", hkl, himc,
            debugstr_a(srcA), listA, lengthA, flags );
 
-    if (!ime->hIME || !ime->pImeConversionList) return 0;
+    if (!ime->hIME) return 0;
 
     if (!is_kbd_ime_unicode( ime ))
         ret = ime->pImeConversionList( himc, srcA, listA, lengthA, flags );
@@ -1627,7 +1623,7 @@ DWORD WINAPI ImmGetConversionListW( HKL hkl, HIMC himc, const WCHAR *srcW, CANDI
     TRACE( "hkl %p, himc %p, srcW %s, listW %p, lengthW %lu, flags %#x.\n", hkl, himc,
            debugstr_w(srcW), listW, lengthW, flags );
 
-    if (!ime->hIME || !ime->pImeConversionList) return 0;
+    if (!ime->hIME) return 0;
 
     if (is_kbd_ime_unicode( ime ))
         ret = ime->pImeConversionList( himc, srcW, listW, lengthW, flags );
@@ -1889,7 +1885,7 @@ UINT WINAPI ImmGetRegisterWordStyleA( HKL hkl, UINT count, STYLEBUFA *styleA )
 
     TRACE( "hkl %p, count %u, styleA %p.\n", hkl, count, styleA );
 
-    if (!ime->hIME || !ime->pImeGetRegisterWordStyle) return 0;
+    if (!ime->hIME) return 0;
 
     if (!is_kbd_ime_unicode( ime ))
         ret = ime->pImeGetRegisterWordStyle( count, styleA );
@@ -1914,7 +1910,7 @@ UINT WINAPI ImmGetRegisterWordStyleW( HKL hkl, UINT count, STYLEBUFW *styleW )
 
     TRACE( "hkl %p, count %u, styleW %p.\n", hkl, count, styleW );
 
-    if (!ime->hIME || !ime->pImeGetRegisterWordStyle) return 0;
+    if (!ime->hIME) return 0;
 
     if (is_kbd_ime_unicode( ime ))
         ret = ime->pImeGetRegisterWordStyle( count, styleW );
@@ -2125,7 +2121,7 @@ BOOL WINAPI ImmNotifyIME(
         return FALSE;
     }
 
-    if (!data || ! data->immKbd->pNotifyIME)
+    if (!data)
     {
         return FALSE;
     }
@@ -2143,7 +2139,7 @@ BOOL WINAPI ImmRegisterWordA( HKL hkl, const char *readingA, DWORD style, const 
 
     TRACE( "hkl %p, readingA %s, style %lu, stringA %s.\n", hkl, debugstr_a(readingA), style, debugstr_a(stringA) );
 
-    if (!ime->hIME || !ime->pImeRegisterWord) return FALSE;
+    if (!ime->hIME) return FALSE;
 
     if (!is_kbd_ime_unicode( ime ))
         ret = ime->pImeRegisterWord( readingA, style, stringA );
@@ -2168,7 +2164,7 @@ BOOL WINAPI ImmRegisterWordW( HKL hkl, const WCHAR *readingW, DWORD style, const
 
     TRACE( "hkl %p, readingW %s, style %lu, stringW %s.\n", hkl, debugstr_w(readingW), style, debugstr_w(stringW) );
 
-    if (!ime->hIME || !ime->pImeRegisterWord) return FALSE;
+    if (!ime->hIME) return FALSE;
 
     if (is_kbd_ime_unicode( ime ))
         ret = ime->pImeRegisterWord( readingW, style, stringW );
@@ -2623,7 +2619,7 @@ BOOL WINAPI ImmUnregisterWordA( HKL hkl, const char *readingA, DWORD style, cons
 
     TRACE( "hkl %p, readingA %s, style %lu, stringA %s.\n", hkl, debugstr_a(readingA), style, debugstr_a(stringA) );
 
-    if (!ime->hIME || !ime->pImeUnregisterWord) return FALSE;
+    if (!ime->hIME) return FALSE;
 
     if (!is_kbd_ime_unicode( ime ))
         ret = ime->pImeUnregisterWord( readingA, style, stringA );
@@ -2648,7 +2644,7 @@ BOOL WINAPI ImmUnregisterWordW( HKL hkl, const WCHAR *readingW, DWORD style, con
 
     TRACE( "hkl %p, readingW %s, style %lu, stringW %s.\n", hkl, debugstr_w(readingW), style, debugstr_w(stringW) );
 
-    if (!ime->hIME || !ime->pImeUnregisterWord) return FALSE;
+    if (!ime->hIME) return FALSE;
 
     if (is_kbd_ime_unicode( ime ))
         ret = ime->pImeUnregisterWord( readingW, style, stringW );
@@ -2681,7 +2677,7 @@ DWORD WINAPI ImmGetImeMenuItemsA( HIMC himc, DWORD flags, DWORD type, IMEMENUITE
         return 0;
     }
 
-    if (!data->immKbd->hIME || !data->immKbd->pImeGetImeMenuItems) return 0;
+    if (!data->immKbd->hIME) return 0;
 
     if (!is_himc_ime_unicode( data ) || (!parentA && !menuA))
         ret = data->immKbd->pImeGetImeMenuItems( himc, flags, type, parentA, menuA, size );
@@ -2741,7 +2737,7 @@ DWORD WINAPI ImmGetImeMenuItemsW( HIMC himc, DWORD flags, DWORD type, IMEMENUITE
         return 0;
     }
 
-    if (!data->immKbd->hIME || !data->immKbd->pImeGetImeMenuItems) return 0;
+    if (!data->immKbd->hIME) return 0;
 
     if (is_himc_ime_unicode( data ) || (!parentW && !menuW))
         ret = data->immKbd->pImeGetImeMenuItems( himc, flags, type, parentW, menuW, size );
@@ -2933,7 +2929,7 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
 
     if (!(data = get_imc_data( imc ))) return FALSE;
 
-    if (!data->immKbd->hIME || !data->immKbd->pImeToAsciiEx || data->lastVK == VK_PROCESSKEY)
+    if (!data->immKbd->hIME || data->lastVK == VK_PROCESSKEY)
         return FALSE;
 
     GetKeyboardState(state);
@@ -3005,7 +3001,7 @@ BOOL WINAPI ImmProcessKey(HWND hwnd, HKL hKL, UINT vKey, LPARAM lKeyData, DWORD 
             return FALSE;
     }
 
-    if (!data->immKbd->hIME || !data->immKbd->pImeProcessKey)
+    if (!data->immKbd->hIME)
         return FALSE;
 
     GetKeyboardState(state);
