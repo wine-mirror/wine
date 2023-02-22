@@ -3558,6 +3558,11 @@ static void output_test_module( struct makefile *make, unsigned int arch )
     output( "\t%secho \"%s_test.exe TESTRES \\\"%s\\\"\" | %s -u -o $@\n", cmd_prefix( "WRC" ),
             basemodule, obj_dir_path( make, stripped ), tools_path( make, "wrc" ));
 
+    if (make->disabled[arch] || (parent && parent->disabled[arch]))
+    {
+        make->ok_files = empty_strarray;
+        return;
+    }
     output_filenames_obj_dir( make, make->ok_files );
     output( ": %s", obj_dir_path( make, testmodule ));
     if (parent)
@@ -3568,8 +3573,7 @@ static void output_test_module( struct makefile *make, unsigned int arch )
     }
     output( "\n" );
     output( "%s %s:", obj_dir_path( make, "check" ), obj_dir_path( make, "test" ));
-    if (!make->disabled[arch] && parent && !parent->disabled[arch])
-        output_filenames_obj_dir( make, make->ok_files );
+    output_filenames_obj_dir( make, make->ok_files );
     output( "\n" );
     strarray_add_uniq( &make->phony_targets, obj_dir_path( make, "check" ));
     strarray_add_uniq( &make->phony_targets, obj_dir_path( make, "test" ));
