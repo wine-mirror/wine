@@ -116,6 +116,8 @@ static DWORD WINAPI monitor_thread_proc( void *param )
     HWND hwnd;
     MSG msg;
 
+    SetThreadDescription( GetCurrentThread(), L"wine_wginput_worker" );
+
     GetModuleHandleExW( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (void *)windows_gaming_input, &module );
     RegisterClassExW( &wndclass );
     hwnd = CreateWindowExW( 0, wndclass.lpszClassName, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL );
