@@ -327,11 +327,14 @@ static void init_dmo_media_type_video(DMO_MEDIA_TYPE *media_type,
 {
     VIDEOINFOHEADER *header = (VIDEOINFOHEADER *)(media_type + 1);
     BOOL compressed = is_compressed_subtype(subtype);
+    ULONG codec_data_size = compressed ? 4 : 0;
 
-    memset(header, 0, sizeof(*header));
+    memset(media_type, 0, sizeof(*media_type) + sizeof(*header) + codec_data_size);
+
     header->bmiHeader.biSize = sizeof(header->bmiHeader);
     header->bmiHeader.biWidth = width;
     header->bmiHeader.biHeight = height;
+    header->bmiHeader.biPlanes = 1;
     header->bmiHeader.biBitCount = subtype_to_bpp(subtype);
     header->bmiHeader.biCompression = subtype_to_compression(subtype);
 
@@ -342,7 +345,7 @@ static void init_dmo_media_type_video(DMO_MEDIA_TYPE *media_type,
     media_type->lSampleSize = 0;
     media_type->formattype = FORMAT_VideoInfo;
     media_type->pUnk = NULL;
-    media_type->cbFormat = sizeof(*header) + 4; /* 4 bytes codec data. */
+    media_type->cbFormat = sizeof(*header) + codec_data_size;
     media_type->pbFormat = (BYTE *)header;
 }
 
