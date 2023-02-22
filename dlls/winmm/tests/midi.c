@@ -39,8 +39,9 @@ extern const char* mmsys_error(MMRESULT error); /* from wave.c */
 
 static BOOL spurious_message(LPMSG msg)
 {
-  /* WM_DEVICECHANGE 0x0219 appears randomly */
-  if(msg->message == WM_DEVICECHANGE) {
+  /* These messages appear randomly */
+  if(msg->message == WM_DEVICECHANGE ||
+     msg->message == WM_DWMCOLORIZATIONCOLORCHANGED) {
     trace("skipping spurious message %04x\n", msg->message);
     return TRUE;
   }
