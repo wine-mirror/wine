@@ -5682,40 +5682,15 @@ static void test_UiaGetRuntimeId(void)
     CoUninitialize();
 }
 
-static LONG Object_ref = 1;
-static HRESULT WINAPI Object_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
-{
-    *ppv = NULL;
-    if (IsEqualIID(riid, &IID_IUnknown))
-    {
-        *ppv = iface;
-        IUnknown_AddRef(iface);
-        return S_OK;
-    }
-
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI Object_AddRef(IUnknown *iface)
-{
-    return InterlockedIncrement(&Object_ref);
-}
-
-static ULONG WINAPI Object_Release(IUnknown *iface)
-{
-    return InterlockedDecrement(&Object_ref);
-}
-
-static IUnknownVtbl ObjectVtbl = {
-    Object_QueryInterface,
-    Object_AddRef,
-    Object_Release
+static const struct prov_method_sequence node_from_var_seq[] = {
+    NODE_CREATE_SEQ(&Provider),
+    { 0 },
 };
 
-static IUnknown Object = {&ObjectVtbl};
 static void test_UiaHUiaNodeFromVariant(void)
 {
-    HUIANODE node;
+    HUIANODE node, node2;
+    ULONG node_ref;
     HRESULT hr;
     VARIANT v;
 
@@ -5731,44 +5706,57 @@ static void test_UiaHUiaNodeFromVariant(void)
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(!node, "node != NULL\n");
 
-    node = (void *)0xdeadbeef;
-    V_VT(&v) = VT_UNKNOWN;
-    V_UNKNOWN(&v) = &Object;
-    hr = UiaHUiaNodeFromVariant(&v, &node);
+    node = NULL;
+    initialize_provider(&Provider, ProviderOptions_ServerSideProvider, NULL, FALSE);
+    hr = UiaNodeFromProvider(&Provider.IRawElementProviderSimple_iface, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(node == (void *)&Object, "node != NULL\n");
-    ok(Object_ref == 2, "Unexpected Object_ref %ld\n", Object_ref);
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+    ok(!!node, "node == NULL\n");
+    ok_method_sequence(node_from_var_seq, "node_from_var_seq");
+
+    node2 = (void *)0xdeadbeef;
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = (IUnknown *)node;
+    hr = UiaHUiaNodeFromVariant(&v, &node2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(node == node2, "node != NULL\n");
+
+    node_ref = IUnknown_AddRef((IUnknown *)node);
+    ok(node_ref == 3, "Unexpected node_ref %ld\n", node_ref);
     VariantClear(&v);
+    IUnknown_Release((IUnknown *)node);
 
 #ifdef _WIN64
-    node = (void *)0xdeadbeef;
+    node2 = (void *)0xdeadbeef;
     V_VT(&v) = VT_I4;
     V_I4(&v) = 0xbeefdead;
-    hr = UiaHUiaNodeFromVariant(&v, &node);
+    hr = UiaHUiaNodeFromVariant(&v, &node2);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
-    ok(!node, "node != NULL\n");
+    ok(!node2, "node2 != NULL\n");
 
-    node = (void *)0xdeadbeef;
+    node2 = (void *)0xdeadbeef;
     V_VT(&v) = VT_I8;
-    V_I8(&v) = 0xbeefdead;
-    hr = UiaHUiaNodeFromVariant(&v, &node);
+    V_I8(&v) = (UINT64)node;
+    hr = UiaHUiaNodeFromVariant(&v, &node2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(node == (void *)V_I8(&v), "node != V_I8\n");
+    ok(node2 == (void *)V_I8(&v), "node2 != V_I8\n");
 #else
-    node = (void *)0xdeadbeef;
+    node2 = (void *)0xdeadbeef;
     V_VT(&v) = VT_I8;
     V_I8(&v) = 0xbeefdead;
-    hr = UiaHUiaNodeFromVariant(&v, &node);
+    hr = UiaHUiaNodeFromVariant(&v, &node2);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
-    ok(!node, "node != NULL\n");
+    ok(!node2, "node2 != NULL\n");
 
-    node = (void *)0xdeadbeef;
+    node2 = (void *)0xdeadbeef;
     V_VT(&v) = VT_I4;
-    V_I4(&v) = 0xbeefdead;
-    hr = UiaHUiaNodeFromVariant(&v, &node);
+    V_I4(&v) = (UINT32)node;
+    hr = UiaHUiaNodeFromVariant(&v, &node2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(node == (void *)V_I4(&v), "node != V_I8\n");
+    ok(node2 == (void *)V_I4(&v), "node2 != V_I4\n");
 #endif
+
+    UiaNodeRelease(node);
 }
 
 static const struct prov_method_sequence node_from_hwnd1[] = {
