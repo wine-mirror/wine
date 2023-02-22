@@ -363,6 +363,8 @@ static DWORD WINAPI dinput_thread_proc( void *params )
     DWORD ret;
     MSG msg;
 
+    SetThreadDescription( GetCurrentThread(), L"wine_dinput_worker" );
+
     di_em_win = CreateWindowW( L"DIEmWin", L"DIEmWin", 0, 0, 0, 0, 0, HWND_MESSAGE, 0, DINPUT_instance, NULL );
     input_thread_state = &state;
     SetEvent( start_event );
