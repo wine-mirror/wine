@@ -1261,6 +1261,12 @@ static struct prov_method_sequence *sequence;
     { prov , FRAG_NAVIGATE }, /* NavigateDirection_Parent */ \
     { prov , PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL } \
 
+#define NODE_CREATE_SEQ2_OPTIONAL(prov) \
+    { prov , PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL }, \
+    { prov , PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL }, \
+    { prov , FRAG_NAVIGATE, METHOD_OPTIONAL }, /* NavigateDirection_Parent */ \
+    { prov , PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL } \
+
 static void flush_method_sequence(void)
 {
     HeapFree(GetProcessHeap(), 0, sequence);
@@ -5780,13 +5786,13 @@ static const struct prov_method_sequence node_from_hwnd2[] = {
 };
 
 static const struct prov_method_sequence node_from_hwnd3[] = {
+    NODE_CREATE_SEQ2(&Provider),
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
-    /* Win10v1507 and below call this. */
-    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
-    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
-    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
-    { &Provider, PROV_GET_PROVIDER_OPTIONS },
-    { &Provider, PROV_GET_PROVIDER_OPTIONS },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL }, /* Only done on Win11+ */
+    /* Windows 11 sends WM_GETOBJECT twice on nested nodes. */
+    NODE_CREATE_SEQ2_OPTIONAL(&Provider),
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId */
     { 0 }
 };
@@ -5865,18 +5871,19 @@ static const struct prov_method_sequence node_from_hwnd7[] = {
     { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL }, /* Only done on Win11+ */
     { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId */
     { 0 }
 };
 
 static const struct prov_method_sequence node_from_hwnd8[] = {
+    NODE_CREATE_SEQ2(&Provider),
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
-    /* Win10v1507 and below call this. */
-    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
-    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
-    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
-    { &Provider, PROV_GET_PROVIDER_OPTIONS },
-    { &Provider, PROV_GET_PROVIDER_OPTIONS },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL }, /* Only done on Win11+ */
+    /* Windows 11 sends WM_GETOBJECT twice on nested nodes. */
+    NODE_CREATE_SEQ2_OPTIONAL(&Provider),
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { &Provider, PROV_GET_PROPERTY_VALUE }, /* UIA_ProviderDescriptionPropertyId */
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ControlTypePropertyId */
     { 0 }
@@ -6028,7 +6035,8 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
-    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    /* Only sent twice on Windows 11. */
+    SET_EXPECT_MULTI(winproc_GETOBJECT_UiaRoot, 2);
     /* Only sent on Win7. */
     SET_EXPECT(winproc_GETOBJECT_CLIENT);
     prov_root = &Provider.IRawElementProviderSimple_iface;
@@ -6040,7 +6048,7 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
     Provider.ignore_hwnd_prop = TRUE;
     hr = UiaNodeFromHandle(hwnd, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+    ok(Provider.ref >= 2, "Unexpected refcnt %ld\n", Provider.ref);
     CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
     called_winproc_GETOBJECT_CLIENT = expect_winproc_GETOBJECT_CLIENT = 0;
 
@@ -6190,7 +6198,8 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
     /*
      * UiaDisconnectProvider tests.
      */
-    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    /* Only sent twice on Windows 11. */
+    SET_EXPECT_MULTI(winproc_GETOBJECT_UiaRoot, 2);
     prov_root = &Provider.IRawElementProviderSimple_iface;
     Provider.prov_opts = ProviderOptions_ServerSideProvider;
     Provider.hwnd = hwnd;
@@ -6200,7 +6209,7 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
     Provider.prov_opts = ProviderOptions_ServerSideProvider;
     hr = UiaNodeFromHandle(hwnd, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+    ok(Provider.ref >= 2, "Unexpected refcnt %ld\n", Provider.ref);
     CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
 
     hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
@@ -6378,9 +6387,12 @@ static void test_UiaNodeFromHandle(const char *name)
     /* Only sent twice on Win7. */
     SET_EXPECT_MULTI(winproc_GETOBJECT_CLIENT, 2);
     hr = UiaNodeFromHandle(hwnd, &node);
-    todo_wine ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    /* Windows 10 and below return E_FAIL, Windows 11 returns S_OK. */
+    todo_wine ok(hr == S_OK || broken(hr == E_FAIL), "Unexpected hr %#lx.\n", hr);
     CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
     todo_wine CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    if (SUCCEEDED(hr))
+        UiaNodeRelease(node);
 
     /*
      * COM initialized, no provider returned by UiaReturnRawElementProvider.
@@ -6610,7 +6622,8 @@ static void test_UiaNodeFromHandle(const char *name)
     sprintf(cmdline, "\"%s\" uiautomation UiaNodeFromHandle_client_proc", name);
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
-    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    /* Only called twice on Windows 11. */
+    SET_EXPECT_MULTI(winproc_GETOBJECT_UiaRoot, 2);
     /* Only sent on Win7. */
     SET_EXPECT(winproc_GETOBJECT_CLIENT);
     CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &proc);
