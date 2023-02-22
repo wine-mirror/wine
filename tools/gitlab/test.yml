@@ -30,7 +30,7 @@
         VideoRam 32768
       EndSection
       EOF
-    - echo 'exec /usr/bin/fvwm -f config -c "Style * MwmDecor" 2>/dev/null' >$HOME/.xinitrc
+    - echo 'exec /usr/bin/fvwm -f config -c "Style * MwmDecor" -c "Style * UsePPosition" 2>/dev/null' >$HOME/.xinitrc
     - startx -- -config $HOME/xorg.conf $DISPLAY &
     - test -f wine-gecko-$GECKO_VER-x86.msi || curl -o wine-gecko-$GECKO_VER-x86.msi https://dl.winehq.org/wine/wine-gecko/$GECKO_VER/wine-gecko-$GECKO_VER-x86.msi
     - test -f wine-gecko-$GECKO_VER-x86_64.msi || curl -o wine-gecko-$GECKO_VER-x86_64.msi https://dl.winehq.org/wine/wine-gecko/$GECKO_VER/wine-gecko-$GECKO_VER-x86_64.msi
