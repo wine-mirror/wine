@@ -183,7 +183,9 @@ static void test_setvalue_on_wow64(IPropertyStore *store)
 
     /* should NOT find the key in 32-bit view */
     ret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, software_renderW, 0, KEY_READ, &root);
-    ok(ret == ERROR_FILE_NOT_FOUND, "Wrong error when opening mmdevices Render key: %lu\n", ret);
+    todo_wine
+    ok(ret == 0 || broken(ret == ERROR_FILE_NOT_FOUND /* win10 < 2004 */),
+       "Wrong error when opening mmdevices Render key: %lu\n", ret);
 }
 
 START_TEST(propstore)
