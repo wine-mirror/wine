@@ -4068,7 +4068,7 @@ static void subtest_InsertObject(struct reolecb_obj *callback)
   expected_stringA = "abc d efg";
   memset(bufferA, 0, sizeof(bufferA));
   SendMessageA(hwnd, EM_SETSEL, 0, -1);
-  result = SendMessageA(hwnd, EM_GETSELTEXT, (WPARAM)sizeof(bufferA), (LPARAM)bufferA);
+  result = SendMessageA(hwnd, EM_GETSELTEXT, 0, (LPARAM)bufferA);
   ok(result == strlen(expected_stringA), "Got wrong length: %ld.\n", result);
   ok(!strcmp(bufferA, expected_stringA), "Got wrong content: %s.\n", bufferA);
 
@@ -4151,7 +4151,7 @@ static void subtest_InsertObject(struct reolecb_obj *callback)
   expected_stringA = "abc d efg";
   memset(bufferA, 0, sizeof(bufferA));
   SendMessageA(hwnd, EM_SETSEL, 0, -1);
-  result = SendMessageA(hwnd, EM_GETSELTEXT, (WPARAM)sizeof(bufferA), (LPARAM)bufferA);
+  result = SendMessageA(hwnd, EM_GETSELTEXT, 0, (LPARAM)bufferA);
   ok(result == strlen(expected_stringA), "Got wrong length: %ld.\n", result);
   ok(!strcmp(bufferA, expected_stringA), "Got wrong content: %s.\n", bufferA);
 

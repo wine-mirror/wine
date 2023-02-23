@@ -5094,7 +5094,7 @@ static void test_EM_EXSETSEL(void)
         cr.cpMin = 4; cr.cpMax = 8;
         result =  SendMessageA(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM)&cr);
         ok(result == 8, "EM_EXSETSEL return %Id expected 8\n", result);
-        result = SendMessageA(hwndRichEdit, EM_GETSELTEXT, sizeof(bufA), (LPARAM)bufA);
+        result = SendMessageA(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)bufA);
         ok(!strcmp(bufA, "ef\x8e\xf0g"), "EM_GETSELTEXT return incorrect string\n");
         SendMessageA(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
         ok(cr.cpMin == 4, "Selection start incorrectly: %ld expected 4\n", cr.cpMin);
@@ -5169,7 +5169,7 @@ static void test_EM_SETSEL(void)
         /*                                                 012345     6  78901 */
         result =  SendMessageA(hwndRichEdit, EM_SETSEL, 4, 8);
         ok(result == 8, "EM_SETSEL return %Id expected 8\n", result);
-        result = SendMessageA(hwndRichEdit, EM_GETSELTEXT, sizeof(buffA), (LPARAM)buffA);
+        result = SendMessageA(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)buffA);
         ok(!strcmp(buffA, "ef\x8e\xf0g"), "EM_GETSELTEXT return incorrect string\n");
         result = SendMessageA(hwndRichEdit, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
         ok(sel_start == 4, "Selection start incorrectly: %d expected 4\n", sel_start);
