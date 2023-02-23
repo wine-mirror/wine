@@ -48,6 +48,7 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid )
 static void test_ObserverStatics(void)
 {
     static const WCHAR *observer_statics_name = L"Windows.Perception.Spatial.Surfaces.SpatialSurfaceObserver";
+    ISpatialSurfaceObserverStatics2 *observer_statics2;
     IActivationFactory *factory;
     HSTRING str;
     HRESULT hr;
@@ -70,6 +71,11 @@ static void test_ObserverStatics(void)
     check_interface( factory, &IID_IAgileObject );
     check_interface( factory, &IID_ISpatialSurfaceObserverStatics );
 
+    hr = IActivationFactory_QueryInterface( factory, &IID_ISpatialSurfaceObserverStatics2, (void **)&observer_statics2 );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = ISpatialSurfaceObserverStatics2_Release( observer_statics2 );
+    ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }
