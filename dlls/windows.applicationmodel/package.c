@@ -115,6 +115,163 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+struct storage_folder
+{
+    IStorageFolder IStorageFolder_iface;
+    LONG ref;
+};
+
+static inline struct storage_folder *impl_from_IStorageFolder( IStorageFolder *iface )
+{
+    return CONTAINING_RECORD( iface, struct storage_folder, IStorageFolder_iface );
+}
+
+static HRESULT WINAPI storage_folder_QueryInterface( IStorageFolder *iface, REFIID iid, void **out )
+{
+    struct storage_folder *impl = impl_from_IStorageFolder( iface );
+
+    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IInspectable ) ||
+        IsEqualGUID( iid, &IID_IStorageFolder ))
+    {
+        *out = &impl->IStorageFolder_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI storage_folder_AddRef( IStorageFolder *iface )
+{
+    struct storage_folder *impl = impl_from_IStorageFolder( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p increasing refcount to %lu.\n", iface, ref );
+    return ref;
+}
+
+static ULONG WINAPI storage_folder_Release( IStorageFolder *iface )
+{
+    struct storage_folder *impl = impl_from_IStorageFolder( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+
+    TRACE( "iface %p decreasing refcount to %lu.\n", iface, ref );
+
+    if (!ref) free( impl );
+    return ref;
+}
+
+static HRESULT WINAPI storage_folder_GetIids( IStorageFolder *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_folder_GetRuntimeClassName( IStorageFolder *iface, HSTRING *class_name )
+{
+    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_folder_GetTrustLevel( IStorageFolder *iface, TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_folder_CreateFileAsyncOverloadDefaultOptions( IStorageFolder *iface, HSTRING name,
+                                                                            IAsyncOperation_StorageFile **operation )
+{
+    FIXME( "iface %p, name %s, operation %p stub!\n", iface, debugstr_hstring(name), operation );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_folder_CreateFileAsync( IStorageFolder *iface, HSTRING name, CreationCollisionOption options,
+                                                      IAsyncOperation_StorageFile **operation )
+{
+    FIXME( "iface %p, name %s, options %d, operation %p stub!\n", iface, debugstr_hstring(name), options, operation );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_folder_CreateFolderAsyncOverloadDefaultOptions( IStorageFolder *iface, HSTRING name,
+                                                                              IAsyncOperation_StorageFolder **operation )
+{
+    FIXME( "iface %p, name %s, operation %p stub!\n", iface, debugstr_hstring(name), operation );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_folder_CreateFolderAsync( IStorageFolder *iface, HSTRING name, CreationCollisionOption options,
+                                                        IAsyncOperation_StorageFolder **operation )
+{
+    FIXME( "iface %p, name %s, options %d, operation %p stub!\n", iface, debugstr_hstring(name), options, operation );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_folder_GetFileAsync( IStorageFolder *iface, HSTRING name, IAsyncOperation_StorageFile **operation )
+{
+    FIXME( "iface %p, name %s, operation %p stub!\n", iface, debugstr_hstring(name), operation );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_folder_GetFolderAsync( IStorageFolder *iface, HSTRING name, IAsyncOperation_StorageFolder **operation )
+{
+    FIXME( "iface %p, name %s, operation %p stub!\n", iface, debugstr_hstring(name), operation );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_folder_GetItemAsync( IStorageFolder *iface, HSTRING name, IAsyncOperation_IStorageItem **operation )
+{
+    FIXME( "iface %p, name %s, operation %p stub!\n", iface, debugstr_hstring(name), operation );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_folder_GetFilesAsyncOverloadDefaultOptionsStartAndCount( IStorageFolder *iface,
+                                                                                       IAsyncOperation_IVectorView_StorageFile **operation )
+{
+    FIXME( "iface %p, operation %p stub!\n", iface, operation );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_folder_GetFoldersAsyncOverloadDefaultOptionsStartAndCount( IStorageFolder *iface,
+                                                                                         IAsyncOperation_IVectorView_StorageFolder **operation )
+{
+    FIXME( "iface %p, operation %p stub!\n", iface, operation );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_folder_GetItemsAsyncOverloadDefaultStartAndCount( IStorageFolder *iface,
+                                                                                IAsyncOperation_IVectorView_IStorageItem **operation )
+{
+    FIXME( "iface %p, operation %p stub!\n", iface, operation );
+    return E_NOTIMPL;
+}
+
+static const struct IStorageFolderVtbl storage_folder_vtbl =
+{
+    storage_folder_QueryInterface,
+    storage_folder_AddRef,
+    storage_folder_Release,
+    /* IInspectable methods */
+    storage_folder_GetIids,
+    storage_folder_GetRuntimeClassName,
+    storage_folder_GetTrustLevel,
+    /* IStorageFolder methods */
+    storage_folder_CreateFileAsyncOverloadDefaultOptions,
+    storage_folder_CreateFileAsync,
+    storage_folder_CreateFolderAsyncOverloadDefaultOptions,
+    storage_folder_CreateFolderAsync,
+    storage_folder_GetFileAsync,
+    storage_folder_GetFolderAsync,
+    storage_folder_GetItemAsync,
+    storage_folder_GetFilesAsyncOverloadDefaultOptionsStartAndCount,
+    storage_folder_GetFoldersAsyncOverloadDefaultOptionsStartAndCount,
+    storage_folder_GetItemsAsyncOverloadDefaultStartAndCount,
+};
+
 struct package
 {
     IPackage IPackage_iface;
@@ -192,8 +349,19 @@ static HRESULT WINAPI package_get_Id( IPackage *iface, IPackageId **value )
 
 static HRESULT WINAPI package_get_InstalledLocation( IPackage *iface, IStorageFolder **value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct storage_folder *impl;
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    if (!value) return E_INVALIDARG;
+    if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
+
+    impl->IStorageFolder_iface.lpVtbl = &storage_folder_vtbl;
+    impl->ref = 1;
+
+    *value = &impl->IStorageFolder_iface;
+    TRACE( "created IStorageFolder %p.\n", *value );
+    return S_OK;
 }
 
 static HRESULT WINAPI package_get_IsFramework( IPackage *iface, boolean *value )

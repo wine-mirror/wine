@@ -35,6 +35,7 @@
 #define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
 #define WIDL_using_Windows_ApplicationModel
+#define WIDL_using_Windows_Storage
 #include "windows.applicationmodel.h"
 
 #define WINE_WINRT_TEST
@@ -57,6 +58,7 @@ static void test_PackageStatics(void)
 {
     static const WCHAR *package_statics_name = L"Windows.ApplicationModel.Package";
     IPackageStatics *package_statics;
+    IStorageFolder *storage_folder;
     IActivationFactory *factory;
     IPackage *package;
     HSTRING str;
@@ -92,6 +94,17 @@ static void test_PackageStatics(void)
     check_interface( package, &IID_IAgileObject );
     check_interface( package, &IID_IPackage );
 
+    hr = IPackage_get_InstalledLocation( package, NULL );
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    hr = IPackage_get_InstalledLocation( package, &storage_folder );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    check_interface( storage_folder, &IID_IUnknown );
+    check_interface( storage_folder, &IID_IInspectable );
+    check_interface( storage_folder, &IID_IStorageFolder );
+
+    ref = IStorageFolder_Release( storage_folder );
+    ok( !ref, "got ref %ld.\n", ref );
     ref = IPackage_Release( package );
     ok( !ref, "got ref %ld.\n", ref );
     ref = IPackageStatics_Release( package_statics );
