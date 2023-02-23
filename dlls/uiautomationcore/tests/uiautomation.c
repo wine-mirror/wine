@@ -12357,9 +12357,8 @@ static void test_node_hwnd_provider_(HUIANODE node, HWND hwnd, const char *file,
     winetest_push_context("UIA_ProcessIdPropertyId");
     hr = UiaGetPropertyValue(node, UIA_ProcessIdPropertyId, &v);
     ok_(file, line)(hr == S_OK, "Unexpected hr %#lx\n", hr);
-    todo_wine ok_(file, line)(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
-    if (V_VT(&v) == VT_I4)
-        ok_(file, line)(V_I4(&v) == pid, "V_I4(&v) = %#lx, expected %#lx\n", V_I4(&v), pid);
+    ok_(file, line)(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
+    ok_(file, line)(V_I4(&v) == pid, "V_I4(&v) = %#lx, expected %#lx\n", V_I4(&v), pid);
     VariantClear(&v);
     winetest_pop_context();
 }

@@ -1292,6 +1292,18 @@ static HRESULT WINAPI base_hwnd_provider_GetPropertyValue(IRawElementProviderSim
         V_I4(ret_val) = HandleToUlong(base_hwnd_prov->hwnd);
         break;
 
+    case UIA_ProcessIdPropertyId:
+    {
+        DWORD pid;
+
+        if (!GetWindowThreadProcessId(base_hwnd_prov->hwnd, &pid))
+            return UIA_E_ELEMENTNOTAVAILABLE;
+
+        V_VT(ret_val) = VT_I4;
+        V_I4(ret_val) = pid;
+        break;
+    }
+
     default:
         break;
     }
