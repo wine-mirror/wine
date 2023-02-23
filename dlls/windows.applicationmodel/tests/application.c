@@ -111,15 +111,15 @@ static void test_PackageStatics(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
     hr = IStorageItem_get_Path( storage_item, &str );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
     GetModuleFileNameW( NULL, buffer, MAX_PATH );
     hr = PathCchRemoveFileSpec( buffer, ARRAY_SIZE(buffer) );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = WindowsCreateString( buffer, wcslen(buffer), &wine_str );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = WindowsCompareStringOrdinal( str, wine_str, &res );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( !res, "got string %s.\n", debugstr_hstring(str) );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( !res, "got string %s.\n", debugstr_hstring(str) );
     WindowsDeleteString( str );
     WindowsDeleteString( wine_str );
 

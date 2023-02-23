@@ -1,5 +1,5 @@
 MODULE  = windows.applicationmodel.dll
-IMPORTS = combase
+IMPORTS = combase kernelbase
 
 C_SRCS = \
 	main.c \

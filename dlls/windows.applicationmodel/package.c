@@ -20,6 +20,8 @@
 #include "private.h"
 #include "wine/debug.h"
 
+#include "pathcch.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(model);
 
 struct package_statics
@@ -320,8 +322,15 @@ static HRESULT WINAPI storage_item_get_Name( IStorageItem *iface, HSTRING *value
 
 static HRESULT WINAPI storage_item_get_Path( IStorageItem *iface, HSTRING *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    WCHAR buffer[MAX_PATH];
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    if (!GetModuleFileNameW( NULL, buffer, MAX_PATH )) return HRESULT_FROM_WIN32( GetLastError() );
+    if (FAILED( hr = PathCchRemoveFileSpec( buffer, ARRAY_SIZE(buffer) ) )) return hr;
+
+    return WindowsCreateString( buffer, wcslen(buffer), value );
 }
 
 static HRESULT WINAPI storage_item_get_Attributes( IStorageItem *iface, FileAttributes *value )
