@@ -210,6 +210,9 @@ static size_t append_type_signature(char **buf, size_t *len, size_t pos, type_t 
     case TYPE_BASIC:
         switch (type_basic_get_type(type))
         {
+        case TYPE_BASIC_INT16:
+            n += strappend(buf, len, pos + n, type_basic_get_sign(type) <= 0 ? "i2" : "u2");
+            return n;
         case TYPE_BASIC_INT:
         case TYPE_BASIC_INT32:
         case TYPE_BASIC_LONG:
@@ -231,7 +234,6 @@ static size_t append_type_signature(char **buf, size_t *len, size_t pos, type_t 
         case TYPE_BASIC_BYTE:
             n += strappend(buf, len, pos + n, "u1");
             return n;
-        case TYPE_BASIC_INT16:
         case TYPE_BASIC_INT3264:
         case TYPE_BASIC_CHAR:
         case TYPE_BASIC_HYPER:
