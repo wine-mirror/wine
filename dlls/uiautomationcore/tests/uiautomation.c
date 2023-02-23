@@ -12347,9 +12347,8 @@ static void test_node_hwnd_provider_(HUIANODE node, HWND hwnd, const char *file,
     GetClassNameW(hwnd, buf, ARRAY_SIZE(buf));
     hr = UiaGetPropertyValue(node, UIA_ClassNamePropertyId, &v);
     ok_(file, line)(hr == S_OK, "Unexpected hr %#lx\n", hr);
-    todo_wine ok_(file, line)(V_VT(&v) == VT_BSTR, "Unexpected VT %d\n", V_VT(&v));
-    if (V_VT(&v) == VT_BSTR)
-        ok(!lstrcmpW(V_BSTR(&v), buf), "Unexpected BSTR %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok_(file, line)(V_VT(&v) == VT_BSTR, "Unexpected VT %d\n", V_VT(&v));
+    ok(!lstrcmpW(V_BSTR(&v), buf), "Unexpected BSTR %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
     winetest_pop_context();
 

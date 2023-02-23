@@ -1202,6 +1202,16 @@ HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, long child_id, DWORD
     return S_OK;
 }
 
+static HRESULT uia_get_hr_for_last_error(void)
+{
+    DWORD last_err = GetLastError();
+
+    if (last_err == ERROR_INVALID_WINDOW_HANDLE)
+        return UIA_E_ELEMENTNOTAVAILABLE;
+
+    return E_FAIL;
+}
+
 /*
  * Default ProviderType_BaseHwnd IRawElementProviderSimple interface.
  */
@@ -1301,6 +1311,20 @@ static HRESULT WINAPI base_hwnd_provider_GetPropertyValue(IRawElementProviderSim
 
         V_VT(ret_val) = VT_I4;
         V_I4(ret_val) = pid;
+        break;
+    }
+
+    case UIA_ClassNamePropertyId:
+    {
+        WCHAR buf[256] = { 0 };
+
+        if (!GetClassNameW(base_hwnd_prov->hwnd, buf, ARRAY_SIZE(buf)))
+            hr = uia_get_hr_for_last_error();
+        else
+        {
+            V_VT(ret_val) = VT_BSTR;
+            V_BSTR(ret_val) = SysAllocString(buf);
+        }
         break;
     }
 
