@@ -249,7 +249,12 @@ int CDECL _dupenv_s(char **buffer, size_t *numberOfElements, const char *varname
     if (!MSVCRT_CHECK_PMT(buffer != NULL)) return EINVAL;
     if (!MSVCRT_CHECK_PMT(varname != NULL)) return EINVAL;
 
-    if (!(e = getenv(varname))) return *_errno() = EINVAL;
+    if (!(e = getenv(varname)))
+    {
+        *buffer = NULL;
+        if (numberOfElements) *numberOfElements = 0;
+        return 0;
+    }
 
     sz = strlen(e) + 1;
     if (!(*buffer = malloc(sz)))

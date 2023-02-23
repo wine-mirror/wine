@@ -197,11 +197,8 @@ static void test_dupenv_s(void)
     len = 0xdeadbeef;
     tmp = (void *)0xdeadbeef;
     ret = p_dupenv_s( &tmp, &len, "nonexistent" );
-    todo_wine
     ok( !ret, "_dupenv_s returned %d\n", ret );
-    todo_wine
     ok( !len, "_dupenv_s returned length is %Id\n", len );
-    todo_wine
     ok( !tmp, "_dupenv_s returned pointer is %p\n", tmp );
 }
 
