@@ -148,7 +148,7 @@ static BOOL runtime_is_usable(void)
     si.cb = sizeof(si);
 
     ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-    ok(ret, "CreateProcessA failed\n");
+    ok(ret, "Could not create process: %lu\n", GetLastError());
     if (!ret)
         return FALSE;
 
@@ -159,7 +159,7 @@ static BOOL runtime_is_usable(void)
     ret = GetExitCodeProcess(pi.hProcess, &exitcode);
     CloseHandle(pi.hProcess);
 
-    ok(ret, "GetExitCodeProcess failed\n");
+    ok(ret, "GetExitCodeProcess failed: %lu\n", GetLastError());
 
     if (!ret || exitcode != 0)
     {
@@ -424,7 +424,7 @@ static void create_xml_file(LPCWSTR filename)
     DWORD dwNumberOfBytesWritten;
     HANDLE hfile = CreateFileW(filename, GENERIC_WRITE, 0, NULL,
                               CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(hfile != INVALID_HANDLE_VALUE, "File creation failed\n");
+    ok(hfile != INVALID_HANDLE_VALUE, "Could not open %s for writing: %lu\n", wine_dbgstr_w(filename), GetLastError());
     WriteFile(hfile, xmldata, sizeof(xmldata) - 1, &dwNumberOfBytesWritten, NULL);
     CloseHandle(hfile);
 }

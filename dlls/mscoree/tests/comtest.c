@@ -102,7 +102,7 @@ static BOOL compile_cs_to_dll(char *source_path, char *dest_path)
     ok(ret, "Compilation failed\n");
 
     ret = MoveFileA(path_temp, dest_path);
-    ok(ret, "Moving temporary file failed\n");
+    ok(ret, "Could not move %s to %s: %lu\n", path_temp, dest_path, GetLastError());
     return ret;
 }
 
