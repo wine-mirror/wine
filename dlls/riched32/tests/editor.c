@@ -1361,7 +1361,7 @@ static void test_EM_EXSETSEL(void)
         cr.cpMin = 4; cr.cpMax = 8;
         result =  SendMessageA(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM)&cr);
         todo_wine ok(result == 7, "EM_EXSETSEL return %Id expected 7\n", result);
-        result = SendMessageA(hwndRichEdit, EM_GETSELTEXT, sizeof(bufA), (LPARAM)bufA);
+        result = SendMessageA(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)bufA);
         ok(!strcmp(bufA, "ef\x8e\xf0"), "EM_GETSELTEXT return incorrect string\n");
         SendMessageA(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
         ok(cr.cpMin == 4, "Selection start incorrectly: %ld expected 4\n", cr.cpMin);
@@ -1420,7 +1420,7 @@ static void test_EM_SETSEL(void)
         /*                                                 012345  6   7 8901 */
         result =  SendMessageA(hwndRichEdit, EM_SETSEL, 4, 8);
         todo_wine ok(result == 7, "EM_SETSEL return %Id expected 7\n", result);
-        result = SendMessageA(hwndRichEdit, EM_GETSELTEXT, sizeof(buffA), (LPARAM)buffA);
+        result = SendMessageA(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)buffA);
         ok(!strcmp(buffA, "ef\x8e\xf0"), "EM_GETSELTEXT return incorrect string\n");
         result = SendMessageA(hwndRichEdit, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
         ok(sel_start == 4, "Selection start incorrectly: %d expected 4\n", sel_start);
