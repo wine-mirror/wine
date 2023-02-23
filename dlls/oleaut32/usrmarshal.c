@@ -506,7 +506,10 @@ unsigned char * WINAPI VARIANT_UserUnmarshal(ULONG *pFlags, unsigned char *Buffe
         ULONG mem_size;
         Pos += 4;
 
-        switch (header->vt & ~VT_BYREF)
+        /* byref array needs to allocate a SAFEARRAY pointer */
+        if (header->vt & VT_ARRAY)
+            mem_size = sizeof(void *);
+        else switch (header->vt & ~VT_BYREF)
         {
         /* these types have a different memory size compared to wire size */
         case VT_UNKNOWN:

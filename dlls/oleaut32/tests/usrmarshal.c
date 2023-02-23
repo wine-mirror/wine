@@ -1514,7 +1514,6 @@ static void test_marshal_VARIANT(void)
     SafeArrayGetVartype(*V_ARRAYREF(&v2), &vt2);
     ok(vt == vt2, "array vts differ %x %x\n", vt, vt2);
     size = IMalloc_GetSize(allocator, V_BYREF(&v2));
-    todo_wine_if(sizeof(void *) == 8)
     ok(size == sizeof(V_ARRAY(&v2)), "got size %#Ix\n", size);
     VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
