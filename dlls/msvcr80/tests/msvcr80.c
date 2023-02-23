@@ -63,6 +63,7 @@ static intptr_t (__cdecl *p__get_osfhandle)(int);
 static int (__cdecl *p_strcmp)(const char *, const char *);
 static int (__cdecl *p_strncmp)(const char *, const char *, size_t);
 static int (__cdecl *p_dupenv_s)(char **, size_t *, const char *);
+static int (__cdecl *p_wdupenv_s)(wchar_t **, size_t *, const wchar_t *);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hcrt,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -85,6 +86,7 @@ static BOOL init(void)
     SET(p_strcmp, "strcmp");
     SET(p_strncmp, "strncmp");
     SET(p_dupenv_s, "_dupenv_s");
+    SET(p_wdupenv_s, "_wdupenv_s");
 
     return TRUE;
 }
@@ -203,6 +205,23 @@ static void test_dupenv_s(void)
     ok( !tmp, "_dupenv_s returned pointer is %p\n", tmp );
 }
 
+static void test_wdupenv_s(void)
+{
+    wchar_t *tmp;
+    size_t len;
+    int ret;
+
+    len = 0xdeadbeef;
+    tmp = (void *)0xdeadbeef;
+    ret = p_wdupenv_s( &tmp, &len, L"nonexistent" );
+    todo_wine
+    ok( !ret, "_wdupenv_s returned %d\n", ret );
+    todo_wine
+    ok( !len, "_wdupenv_s returned length is %Id\n", len );
+    todo_wine
+    ok( !tmp, "_wdupenv_s returned pointer is %p\n", tmp );
+}
+
 START_TEST(msvcr80)
 {
     if(!init())
@@ -211,4 +230,5 @@ START_TEST(msvcr80)
     test_ioinfo_flags();
     test_strcmp();
     test_dupenv_s();
+    test_wdupenv_s();
 }
