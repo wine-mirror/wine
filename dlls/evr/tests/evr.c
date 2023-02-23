@@ -1249,6 +1249,11 @@ static void test_default_mixer_type_negotiation(void)
         goto done;
     }
 
+    hr = IMFTransform_SetInputType(transform, 0, NULL, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTransform_SetInputType(transform, 0, NULL, MFT_SET_TYPE_TEST_ONLY);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
     hr = DXVA2CreateDirect3DDeviceManager9(&token, &manager);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -1469,8 +1474,47 @@ static void test_default_mixer_type_negotiation(void)
     hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(media_type == media_type2, "Unexpected media type instance.\n");
+
+    IMFMediaType_Release(media_type);
+
+    /* Clear input types */
+    hr = IMFTransform_SetInputType(transform, 0, NULL, MFT_SET_TYPE_TEST_ONLY);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFTransform_SetInputType(transform, 0, NULL, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#lx.\n", hr);
+
+    /* Restore types */
+    hr = IMFTransform_SetOutputType(transform, 0, media_type2, 0);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFTransform_SetInputType(transform, 0, video_type, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(media_type == video_type, "Unexpected media type instance.\n");
+    IMFMediaType_Release(media_type);
+
+    hr = IMFTransform_SetOutputType(transform, 0, media_type2, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(media_type2 == media_type, "Unexpected media type instance.\n");
+
     IMFMediaType_Release(media_type2);
     IMFMediaType_Release(media_type);
+
+    /* Resetting type twice */
+    hr = IMFTransform_SetInputType(transform, 0, NULL, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTransform_SetInputType(transform, 0, NULL, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IMFVideoProcessor_Release(processor);
 
