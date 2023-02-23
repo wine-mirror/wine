@@ -118,6 +118,7 @@ static const struct IActivationFactoryVtbl factory_vtbl =
 struct storage_folder
 {
     IStorageFolder IStorageFolder_iface;
+    IStorageItem IStorageItem_iface;
     LONG ref;
 };
 
@@ -137,6 +138,13 @@ static HRESULT WINAPI storage_folder_QueryInterface( IStorageFolder *iface, REFI
         IsEqualGUID( iid, &IID_IStorageFolder ))
     {
         *out = &impl->IStorageFolder_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IStorageItem ))
+    {
+        *out = &impl->IStorageItem_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -272,6 +280,90 @@ static const struct IStorageFolderVtbl storage_folder_vtbl =
     storage_folder_GetItemsAsyncOverloadDefaultStartAndCount,
 };
 
+DEFINE_IINSPECTABLE( storage_item, IStorageItem, struct storage_folder, IStorageFolder_iface )
+
+static HRESULT WINAPI storage_item_RenameAsyncOverloadDefaultOptions( IStorageItem *iface, HSTRING name, IAsyncAction **operation )
+{
+    FIXME( "iface %p, name %s, operation %p stub!\n", iface, debugstr_hstring(name), operation );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_item_RenameAsync( IStorageItem *iface, HSTRING name, NameCollisionOption option, IAsyncAction **operation )
+{
+    FIXME( "iface %p, name %s, option %d, operation %p stub!\n", iface, debugstr_hstring(name), option, operation );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_item_DeleteAsyncOverloadDefaultOptions( IStorageItem *iface, IAsyncAction **operation )
+{
+    FIXME( "iface %p, operation %p stub!\n", iface, operation );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_item_DeleteAsync( IStorageItem *iface, StorageDeleteOption option, IAsyncAction **operation )
+{
+    FIXME( "iface %p, option %d, operation %p stub!\n", iface, option, operation );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_item_GetBasicPropertiesAsync( IStorageItem *iface, IAsyncOperation_BasicProperties **operation )
+{
+    FIXME( "iface %p, operation %p stub!\n", iface, operation );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_item_get_Name( IStorageItem *iface, HSTRING *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_item_get_Path( IStorageItem *iface, HSTRING *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_item_get_Attributes( IStorageItem *iface, FileAttributes *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_item_get_DateCreated( IStorageItem *iface, DateTime *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI storage_item_IsOfType( IStorageItem *iface, StorageItemTypes type, boolean *value )
+{
+    FIXME( "iface %p, type %d, value %p stub!\n", iface, type, value );
+    return E_NOTIMPL;
+}
+
+static const struct IStorageItemVtbl storage_item_vtbl =
+{
+    storage_item_QueryInterface,
+    storage_item_AddRef,
+    storage_item_Release,
+    /* IInspectable methods */
+    storage_item_GetIids,
+    storage_item_GetRuntimeClassName,
+    storage_item_GetTrustLevel,
+    /* IStorageItem methods */
+    storage_item_RenameAsyncOverloadDefaultOptions,
+    storage_item_RenameAsync,
+    storage_item_DeleteAsyncOverloadDefaultOptions,
+    storage_item_DeleteAsync,
+    storage_item_GetBasicPropertiesAsync,
+    storage_item_get_Name,
+    storage_item_get_Path,
+    storage_item_get_Attributes,
+    storage_item_get_DateCreated,
+    storage_item_IsOfType,
+};
+
 struct package
 {
     IPackage IPackage_iface;
@@ -357,6 +449,7 @@ static HRESULT WINAPI package_get_InstalledLocation( IPackage *iface, IStorageFo
     if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
 
     impl->IStorageFolder_iface.lpVtbl = &storage_folder_vtbl;
+    impl->IStorageItem_iface.lpVtbl = &storage_item_vtbl;
     impl->ref = 1;
 
     *value = &impl->IStorageFolder_iface;

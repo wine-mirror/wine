@@ -60,6 +60,7 @@ static void test_PackageStatics(void)
     IPackageStatics *package_statics;
     IStorageFolder *storage_folder;
     IActivationFactory *factory;
+    IStorageItem *storage_item;
     IPackage *package;
     HSTRING str;
     HRESULT hr;
@@ -103,6 +104,11 @@ static void test_PackageStatics(void)
     check_interface( storage_folder, &IID_IInspectable );
     check_interface( storage_folder, &IID_IStorageFolder );
 
+    hr = IStorageFolder_QueryInterface( storage_folder, &IID_IStorageItem, (void **)&storage_item );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IStorageItem_Release( storage_item );
+    ok( ref == 1, "got ref %ld.\n", ref );
     ref = IStorageFolder_Release( storage_folder );
     ok( !ref, "got ref %ld.\n", ref );
     ref = IPackage_Release( package );
