@@ -62,6 +62,7 @@ static int (__cdecl *p__close)(int);
 static intptr_t (__cdecl *p__get_osfhandle)(int);
 static int (__cdecl *p_strcmp)(const char *, const char *);
 static int (__cdecl *p_strncmp)(const char *, const char *, size_t);
+static int (__cdecl *p_dupenv_s)(char **, size_t *, const char *);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hcrt,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -83,6 +84,7 @@ static BOOL init(void)
 
     SET(p_strcmp, "strcmp");
     SET(p_strncmp, "strncmp");
+    SET(p_dupenv_s, "_dupenv_s");
 
     return TRUE;
 }
@@ -184,6 +186,23 @@ static void test_strcmp(void)
     ok( ret == 0, "wrong ret %d\n", ret );
 }
 
+static void test_dupenv_s(void)
+{
+    size_t len;
+    char *tmp;
+    int ret;
+
+    len = 0xdeadbeef;
+    tmp = (void *)0xdeadbeef;
+    ret = p_dupenv_s( &tmp, &len, "nonexistent" );
+    todo_wine
+    ok( !ret, "_dupenv_s returned %d\n", ret );
+    todo_wine
+    ok( !len, "_dupenv_s returned length is %Id\n", len );
+    todo_wine
+    ok( !tmp, "_dupenv_s returned pointer is %p\n", tmp );
+}
+
 START_TEST(msvcr80)
 {
     if(!init())
@@ -191,4 +210,5 @@ START_TEST(msvcr80)
 
     test_ioinfo_flags();
     test_strcmp();
+    test_dupenv_s();
 }
