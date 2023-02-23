@@ -279,7 +279,12 @@ int CDECL _wdupenv_s(wchar_t **buffer, size_t *numberOfElements,
     if (!MSVCRT_CHECK_PMT(buffer != NULL)) return EINVAL;
     if (!MSVCRT_CHECK_PMT(varname != NULL)) return EINVAL;
 
-    if (!(e = _wgetenv(varname))) return *_errno() = EINVAL;
+    if (!(e = _wgetenv(varname)))
+    {
+        *buffer = NULL;
+        if (numberOfElements) *numberOfElements = 0;
+        return 0;
+    }
 
     sz = wcslen(e) + 1;
     if (!(*buffer = malloc(sz * sizeof(wchar_t))))

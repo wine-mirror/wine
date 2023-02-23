@@ -211,11 +211,8 @@ static void test_wdupenv_s(void)
     len = 0xdeadbeef;
     tmp = (void *)0xdeadbeef;
     ret = p_wdupenv_s( &tmp, &len, L"nonexistent" );
-    todo_wine
     ok( !ret, "_wdupenv_s returned %d\n", ret );
-    todo_wine
     ok( !len, "_wdupenv_s returned length is %Id\n", len );
-    todo_wine
     ok( !tmp, "_wdupenv_s returned pointer is %p\n", tmp );
 }
 
