@@ -1603,7 +1603,7 @@
 @ stdcall -import WaitForMultipleObjectsEx(long ptr long long long)
 @ stdcall -import WaitForSingleObject(long long)
 @ stdcall -import WaitForSingleObjectEx(long long long)
-@ stdcall WaitForThreadpoolIoCallbacks(ptr) NTDLL.TpWaitForIoCompletion
+@ stdcall WaitForThreadpoolIoCallbacks(ptr long) NTDLL.TpWaitForIoCompletion
 @ stdcall WaitForThreadpoolTimerCallbacks(ptr long) NTDLL.TpWaitForTimer
 @ stdcall WaitForThreadpoolWaitCallbacks(ptr long) NTDLL.TpWaitForWait
 @ stdcall WaitForThreadpoolWorkCallbacks(ptr long) NTDLL.TpWaitForWork
