@@ -1206,10 +1206,27 @@ static HRESULT uia_get_hr_for_last_error(void)
 {
     DWORD last_err = GetLastError();
 
-    if (last_err == ERROR_INVALID_WINDOW_HANDLE)
+    switch (last_err)
+    {
+    case ERROR_INVALID_WINDOW_HANDLE:
         return UIA_E_ELEMENTNOTAVAILABLE;
 
-    return E_FAIL;
+    case ERROR_TIMEOUT:
+        return UIA_E_TIMEOUT;
+
+    default:
+        return E_FAIL;
+    }
+}
+
+#define UIA_DEFAULT_MSG_TIMEOUT 10000
+static HRESULT uia_send_message_timeout(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT timeout, LRESULT *lres)
+{
+    *lres = 0;
+    if (!SendMessageTimeoutW(hwnd, msg, wparam, lparam, SMTO_NORMAL, timeout, (PDWORD_PTR)lres))
+        return uia_get_hr_for_last_error();
+
+    return S_OK;
 }
 
 /*
@@ -1325,6 +1342,27 @@ static HRESULT WINAPI base_hwnd_provider_GetPropertyValue(IRawElementProviderSim
             V_VT(ret_val) = VT_BSTR;
             V_BSTR(ret_val) = SysAllocString(buf);
         }
+        break;
+    }
+
+    case UIA_NamePropertyId:
+    {
+        LRESULT lres;
+
+        V_VT(ret_val) = VT_BSTR;
+        V_BSTR(ret_val) = SysAllocString(L"");
+        hr = uia_send_message_timeout(base_hwnd_prov->hwnd, WM_GETTEXTLENGTH, 0, 0, UIA_DEFAULT_MSG_TIMEOUT, &lres);
+        if (FAILED(hr) || !lres)
+            break;
+
+        if (!SysReAllocStringLen(&V_BSTR(ret_val), NULL, lres))
+        {
+            hr = E_OUTOFMEMORY;
+            break;
+        }
+
+        hr = uia_send_message_timeout(base_hwnd_prov->hwnd, WM_GETTEXT, SysStringLen(V_BSTR(ret_val)) + 1,
+                (LPARAM)V_BSTR(ret_val), UIA_DEFAULT_MSG_TIMEOUT, &lres);
         break;
     }
 
