@@ -240,7 +240,7 @@ static void video_mixer_clear_types(struct video_mixer *mixer)
     free(mixer->output.rt_formats);
     if (mixer->output.media_type)
         IMFMediaType_Release(mixer->output.media_type);
-    mixer->output.media_type = NULL;
+    memset(&mixer->output, 0, sizeof(mixer->output));
 }
 
 static HRESULT WINAPI video_mixer_inner_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
@@ -855,12 +855,17 @@ static HRESULT WINAPI video_mixer_transform_SetInputType(IMFTransform *iface, DW
 
     TRACE("%p, %lu, %p, %#lx.\n", iface, id, media_type, flags);
 
+    if (!media_type && (flags & MFT_SET_TYPE_TEST_ONLY))
+        return E_INVALIDARG;
+
     EnterCriticalSection(&mixer->cs);
 
     if (!(flags & MFT_SET_TYPE_TEST_ONLY))
         video_mixer_clear_types(mixer);
 
-    if (!mixer->device_manager)
+    if (!media_type)
+        hr = S_OK;
+    else if (!mixer->device_manager)
         hr = MF_E_NOT_INITIALIZED;
     else
     {
