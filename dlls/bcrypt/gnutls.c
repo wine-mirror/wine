@@ -2305,6 +2305,7 @@ struct key32
 union padding
 {
     BCRYPT_PKCS1_PADDING_INFO pkcs1;
+    BCRYPT_PSS_PADDING_INFO pss;
 };
 
 union padding32
@@ -2313,6 +2314,11 @@ union padding32
     {
         PTR32 pszAlgId;
     } pkcs1;
+    struct
+    {
+        PTR32 pszAlgId;
+        ULONG cbSalt;
+    } pss;
 };
 
 static union padding *get_padding( union padding32 *padding32, union padding *padding, ULONG flags)
@@ -2323,6 +2329,10 @@ static union padding *get_padding( union padding32 *padding32, union padding *pa
     {
     case BCRYPT_PAD_PKCS1:
         padding->pkcs1.pszAlgId = ULongToPtr( padding32->pkcs1.pszAlgId );
+        return padding;
+    case BCRYPT_PAD_PSS:
+        padding->pss.pszAlgId = ULongToPtr( padding32->pss.pszAlgId );
+        padding->pss.cbSalt = padding32->pss.cbSalt;
         return padding;
     default:
         break;
