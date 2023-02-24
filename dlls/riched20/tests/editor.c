@@ -1891,20 +1891,41 @@ static void test_EM_GETSELTEXT(void)
     const char * expect = "bar\rfoo";
     char buffer[1024] = {0};
     LRESULT result;
+    BOOL bad_getsel;
+    DWORD gle;
+
+    SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"a");
+    SendMessageA(hwndRichEdit, EM_SETSEL, 0, -1);
+    SetLastError(0xdeadbeef);
+    result = SendMessageA(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)buffer);
+    gle = GetLastError();
+    ok((result > 0 && gle == 0xdeadbeef) ||
+       broken(result == 0 && gle == ERROR_INVALID_PARAMETER /* Hindi */),
+       "EM_GETSELTEXT returned %Id gle=%lu\n", result, gle);
+    bad_getsel = (gle != 0xdeadbeef);
+    if (bad_getsel)
+        trace("EM_GETSELTEXT is broken, some tests will be ignored\n");
 
     SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text1);
 
     SendMessageA(hwndRichEdit, EM_SETSEL, 4, 11);
+    SetLastError(0xdeadbeef);
     result = SendMessageA(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)buffer);
-    ok(result == 7, "EM_GETSELTEXT returned %Id\n", result);
-    ok(!strcmp(expect, buffer), "EM_GETSELTEXT filled %s\n", buffer);
+    gle = GetLastError();
+    ok(result == 7 || broken(bad_getsel && result == 0),
+       "EM_GETSELTEXT returned %Id gle=%lu\n", result, gle);
+    ok(!strcmp(expect, buffer) || broken(bad_getsel &&  !*buffer),
+       "EM_GETSELTEXT filled %s gle=%lu\n", buffer, gle);
 
     SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text2);
 
     SendMessageA(hwndRichEdit, EM_SETSEL, 4, 11);
+    SetLastError(0xdeadbeef);
     result = SendMessageA(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)buffer);
-    ok(result == 7, "EM_GETSELTEXT returned %Id\n", result);
-    ok(!strcmp(expect, buffer), "EM_GETSELTEXT filled %s\n", buffer);
+    ok(result == 7 || broken(bad_getsel && result == 0),
+       "EM_GETSELTEXT returned %Id gle=%lu\n", result, gle);
+    ok(!strcmp(expect, buffer) || broken(bad_getsel &&  !*buffer),
+       "EM_GETSELTEXT filled %s gle=%lu\n", buffer, gle);
 
     /* Test with multibyte character */
     if (!is_lang_japanese)

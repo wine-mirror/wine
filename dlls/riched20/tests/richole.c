@@ -3881,6 +3881,8 @@ static void subtest_InsertObject(struct reolecb_obj *callback)
   struct testoleobj *testobj;
   IOleClientSite *clientsite;
   REOBJECT reobj;
+  BOOL bad_getsel;
+  DWORD gle;
 
   create_interfaces(&hwnd, &reole, &doc, &selection);
   if (callback)
@@ -3888,6 +3890,19 @@ static void subtest_InsertObject(struct reolecb_obj *callback)
     LRESULT sendres = SendMessageA(hwnd, EM_SETOLECALLBACK, 0, (LPARAM)&callback->IRichEditOleCallback_iface);
     ok( !!sendres, "EM_SETOLECALLBACK should succeed\n" );
   }
+
+  SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"a");
+  SendMessageA(hwnd, EM_SETSEL, 0, -1);
+  *bufferA = '\0';
+  SetLastError(0xdeadbeef);
+  result = SendMessageA(hwnd, EM_GETSELTEXT, 0, (LPARAM)bufferA);
+  gle = GetLastError();
+  ok((result > 0 && gle == 0xdeadbeef) ||
+     broken(result == 0 && gle == ERROR_INVALID_PARAMETER /* Hindi */),
+     "EM_GETSELTEXT returned %ld gle=%lu\n", result, gle);
+  bad_getsel = (gle != 0xdeadbeef);
+  if (bad_getsel)
+      trace("EM_GETSELTEXT is broken, some tests will be ignored\n");
 
   SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)test_text1);
 
@@ -4068,9 +4083,13 @@ static void subtest_InsertObject(struct reolecb_obj *callback)
   expected_stringA = "abc d efg";
   memset(bufferA, 0, sizeof(bufferA));
   SendMessageA(hwnd, EM_SETSEL, 0, -1);
+  SetLastError(0xdeadbeef);
   result = SendMessageA(hwnd, EM_GETSELTEXT, 0, (LPARAM)bufferA);
-  ok(result == strlen(expected_stringA), "Got wrong length: %ld.\n", result);
-  ok(!strcmp(bufferA, expected_stringA), "Got wrong content: %s.\n", bufferA);
+  gle = GetLastError();
+  ok(result == strlen(expected_stringA) || broken(bad_getsel && result == 0),
+     "Got wrong length: %ld (gle %lu)\n", result, gle);
+  ok(!strcmp(bufferA, expected_stringA) || broken(bad_getsel && !*bufferA),
+     "Got wrong content: %s (gle %lu)\n", bufferA, gle);
 
   memset(bufferA, 0, sizeof(bufferA));
   textrange.lpstrText = bufferA;
@@ -4151,9 +4170,13 @@ static void subtest_InsertObject(struct reolecb_obj *callback)
   expected_stringA = "abc d efg";
   memset(bufferA, 0, sizeof(bufferA));
   SendMessageA(hwnd, EM_SETSEL, 0, -1);
+  SetLastError(0xdeadbeef);
   result = SendMessageA(hwnd, EM_GETSELTEXT, 0, (LPARAM)bufferA);
-  ok(result == strlen(expected_stringA), "Got wrong length: %ld.\n", result);
-  ok(!strcmp(bufferA, expected_stringA), "Got wrong content: %s.\n", bufferA);
+  gle = GetLastError();
+  ok(result == strlen(expected_stringA) || broken(bad_getsel && result == 0),
+     "Got wrong length: %ld (gle %lu)\n", result, gle);
+  ok(!strcmp(bufferA, expected_stringA) || broken(bad_getsel && !*bufferA),
+     "Got wrong content: %s (gle %lu)\n", bufferA, gle);
 
   memset(bufferA, 0, sizeof(bufferA));
   textrange.lpstrText = bufferA;
