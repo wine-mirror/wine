@@ -1084,6 +1084,7 @@ typedef struct _TEB64
 #define WOW64_TLS_TEMPLIST         3
 #define WOW64_TLS_USERCALLBACKDATA 5
 #define WOW64_TLS_FILESYSREDIR     8
+#define WOW64_TLS_MAX_NUMBER       19
 
 
 /***********************************************************************
