@@ -69,19 +69,11 @@ if [ "`uname -s`" = "Darwin" ]
 then
   if [ -n "$DYLD_LIBRARY_PATH" ]
   then
-    DYLD_LIBRARY_PATH="$topdir/libs/wine:$topdir/dlls/ntdll:$topdir/dlls/win32u:$DYLD_LIBRARY_PATH"
+    DYLD_LIBRARY_PATH="$topdir/dlls/ntdll:$topdir/dlls/win32u:$DYLD_LIBRARY_PATH"
   else
-    DYLD_LIBRARY_PATH="$topdir/libs/wine:$topdir/dlls/ntdll:$topdir/dlls/win32u"
+    DYLD_LIBRARY_PATH="$topdir/dlls/ntdll:$topdir/dlls/win32u"
   fi
   export DYLD_LIBRARY_PATH
-else
-  if [ -n "$LD_LIBRARY_PATH" ]
-  then
-    LD_LIBRARY_PATH="$topdir/libs/wine:$LD_LIBRARY_PATH"
-  else
-    LD_LIBRARY_PATH="$topdir/libs/wine"
-  fi
-  export LD_LIBRARY_PATH
 fi
 
 if [ -x "$topdir/loader/$name" ]
