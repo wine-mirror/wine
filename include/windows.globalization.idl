@@ -40,7 +40,11 @@ namespace Windows {
         interface ILanguageStatics;
         interface ILanguageStatics2;
         interface ILanguageStatics3;
+        interface IGeographicRegion;
+        interface IGeographicRegionFactory;
+        interface IGeographicRegionStatics;
         runtimeclass Language;
+        runtimeclass GeographicRegion;
     }
 }
 
@@ -164,6 +168,42 @@ namespace Windows {
         }
 
         [
+            contract(Windows.Foundation.UniversalApiContract, 1.0),
+            exclusiveto(Windows.Globalization.GeographicRegion),
+            uuid(01e9a621-4a64-4ed9-954f-9edeb07bd903)
+        ]
+        interface IGeographicRegion : IInspectable
+        {
+            [propget] HRESULT Code([out, retval] HSTRING *value);
+            [propget] HRESULT CodeTwoLetter([out, retval] HSTRING *value);
+            [propget] HRESULT CodeThreeLetter([out, retval] HSTRING *value);
+            [propget] HRESULT CodeThreeDigit([out, retval] HSTRING *value);
+            [propget] HRESULT DisplayName([out, retval] HSTRING *value);
+            [propget] HRESULT NativeName([out, retval] HSTRING *value);
+            [propget] HRESULT CurrenciesInUse([out, retval] Windows.Foundation.Collections.IVectorView<HSTRING> **value);
+        }
+
+        [
+            contract(Windows.Foundation.UniversalApiContract, 1.0),
+            exclusiveto(Windows.Globalization.GeographicRegion),
+            uuid(53425270-77b4-426b-859f-81e19d512546)
+        ]
+        interface IGeographicRegionFactory : IInspectable
+        {
+            HRESULT CreateGeographicRegion([in] HSTRING region_code, [out, retval] Windows.Globalization.GeographicRegion **result);
+        }
+
+        [
+            contract(Windows.Foundation.UniversalApiContract, 1.0),
+            exclusiveto(Windows.Globalization.GeographicRegion),
+            uuid(29e28974-7ad9-4ef4-8799-b3b44fadec08)
+        ]
+        interface IGeographicRegionStatics : IInspectable
+        {
+            HRESULT IsSupported([in] HSTRING region_code, [out, retval] boolean *result);
+        }
+
+        [
             activatable(Windows.Globalization.ILanguageFactory, Windows.Foundation.UniversalApiContract, 1.0),
             contract(Windows.Foundation.UniversalApiContract, 1.0),
             marshaling_behavior(agile),
@@ -178,6 +218,19 @@ namespace Windows {
             [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Globalization.ILanguageExtensionSubtags;
             [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Globalization.ILanguage2;
             [contract(Windows.Foundation.UniversalApiContract, 10.0)] interface Windows.Globalization.ILanguage3;
+        }
+
+        [
+            activatable(Windows.Foundation.UniversalApiContract, 1.0),
+            activatable(Windows.Globalization.IGeographicRegionFactory, Windows.Foundation.UniversalApiContract, 1.0),
+            contract(Windows.Foundation.UniversalApiContract, 1.0),
+            marshaling_behavior(agile),
+            static(Windows.Globalization.IGeographicRegionStatics, Windows.Foundation.UniversalApiContract, 1.0),
+            threading(both)
+        ]
+        runtimeclass GeographicRegion
+        {
+            [contract(Windows.Foundation.UniversalApiContract, 1.0), default] interface Windows.Globalization.IGeographicRegion;
         }
     }
 }
