@@ -3186,7 +3186,7 @@ static void test_ToAscii(void)
     ok(character == '\r', "ToAscii for Return was %i (expected 13)\n", character);
 
     wstr[0] = 0;
-    ret = ToUnicode('A', SC_A, state, wstr, sizeof(wstr), 0);
+    ret = ToUnicode('A', SC_A, state, wstr, ARRAY_SIZE(wstr), 0);
     ok(ret == 1, "ToUnicode(A) returned %i, expected 1\n", ret);
 
     str[0] = '\0';
