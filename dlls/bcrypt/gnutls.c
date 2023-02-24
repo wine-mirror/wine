@@ -2302,6 +2302,34 @@ struct key32
     } u;
 };
 
+union padding
+{
+    BCRYPT_PKCS1_PADDING_INFO pkcs1;
+};
+
+union padding32
+{
+    struct
+    {
+        PTR32 pszAlgId;
+    } pkcs1;
+};
+
+static union padding *get_padding( union padding32 *padding32, union padding *padding, ULONG flags)
+{
+    if (!padding32) return NULL;
+
+    switch (flags)
+    {
+    case BCRYPT_PAD_PKCS1:
+        padding->pkcs1.pszAlgId = ULongToPtr( padding32->pkcs1.pszAlgId );
+        return padding;
+    default:
+        break;
+    }
+    return NULL;
+}
+
 static struct key *get_symmetric_key( struct key32 *key32, struct key *key )
 {
     key->hdr            = key32->hdr;
@@ -2576,12 +2604,12 @@ static NTSTATUS wow64_key_asymmetric_sign( void *args )
 
     NTSTATUS ret;
     struct key key;
-    BCRYPT_PKCS1_PADDING_INFO padding;
+    union padding padding;
     struct key32 *key32 = ULongToPtr( params32->key );
     struct key_asymmetric_sign_params params =
     {
         get_asymmetric_key( key32, &key ),
-        NULL, /* padding */
+        get_padding(ULongToPtr( params32->padding ), &padding, params32->flags),
         ULongToPtr(params32->input),
         params32->input_len,
         ULongToPtr(params32->output),
@@ -2589,14 +2617,6 @@ static NTSTATUS wow64_key_asymmetric_sign( void *args )
         ULongToPtr(params32->ret_len),
         params32->flags
     };
-
-    if (params32->flags & BCRYPT_PAD_PKCS1)
-    {
-        PTR32 *info = ULongToPtr( params32->padding );
-        if (!info) return STATUS_INVALID_PARAMETER;
-        padding.pszAlgId = ULongToPtr( *info );
-        params.padding = &padding;
-    }
 
     ret = key_asymmetric_sign( &params );
     put_asymmetric_key32( &key, key32 );
@@ -2618,26 +2638,18 @@ static NTSTATUS wow64_key_asymmetric_verify( void *args )
 
     NTSTATUS ret;
     struct key key;
-    BCRYPT_PKCS1_PADDING_INFO padding;
+    union padding padding;
     struct key32 *key32 = ULongToPtr( params32->key );
     struct key_asymmetric_verify_params params =
     {
         get_asymmetric_key( key32, &key ),
-        NULL, /* padding */
+        get_padding(ULongToPtr( params32->padding ), &padding, params32->flags),
         ULongToPtr(params32->hash),
         params32->hash_len,
         ULongToPtr(params32->signature),
         params32->signature_len,
         params32->flags
     };
-
-    if (params32->flags & BCRYPT_PAD_PKCS1)
-    {
-        PTR32 *info = ULongToPtr( params32->padding );
-        if (!info) return STATUS_INVALID_PARAMETER;
-        padding.pszAlgId = ULongToPtr( *info );
-        params.padding = &padding;
-    }
 
     ret = key_asymmetric_verify( &params );
     put_asymmetric_key32( &key, key32 );
