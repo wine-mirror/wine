@@ -1415,6 +1415,89 @@ static void test_desktop_window(void)
     destroy_test_context(&context);
 }
 
+static void test_invalid_command_queue_types(void)
+{
+    static const enum D3D12_COMMAND_LIST_TYPE queue_types[] =
+    {
+        D3D12_COMMAND_LIST_TYPE_DIRECT,
+        D3D12_COMMAND_LIST_TYPE_COMPUTE,
+        D3D12_COMMAND_LIST_TYPE_COPY,
+    };
+
+    DXGI_SWAP_CHAIN_DESC swapchain_desc;
+    ID3D12CommandQueue *queue;
+    IDXGISwapChain *swapchain;
+    IDXGIFactory *factory;
+    ID3D12Device *device;
+    HRESULT hr, expected;
+    IUnknown *queue_unk;
+    RECT client_rect;
+    ULONG refcount;
+    unsigned int i;
+    HWND window;
+    BOOL ret;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create Direct3D 12 device.\n");
+        return;
+    }
+
+    window = create_window(WS_VISIBLE);
+    ret = GetClientRect(window, &client_rect);
+    ok(ret, "Failed to get client rect.\n");
+
+    for (i = 0; i < ARRAY_SIZE(queue_types); ++i)
+    {
+        queue = create_command_queue(device, queue_types[i]);
+        hr = ID3D12CommandQueue_QueryInterface(queue, &IID_IUnknown, (void **)&queue_unk);
+        ok(hr == S_OK, "Got unexpected hr %lx.\n", hr);
+
+        hr = CreateDXGIFactory(&IID_IDXGIFactory, (void **)&factory);
+        ok(hr == S_OK, "Got unexpected hr %lx.\n", hr);
+
+        swapchain_desc.BufferDesc.Width = 640;
+        swapchain_desc.BufferDesc.Height = 480;
+        swapchain_desc.BufferDesc.RefreshRate.Numerator = 60;
+        swapchain_desc.BufferDesc.RefreshRate.Denominator = 1;
+        swapchain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        swapchain_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+        swapchain_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+        swapchain_desc.SampleDesc.Count = 1;
+        swapchain_desc.SampleDesc.Quality = 0;
+        swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        swapchain_desc.BufferCount = 2;
+        swapchain_desc.OutputWindow = window;
+        swapchain_desc.Windowed = TRUE;
+        swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+        swapchain_desc.Flags = 0;
+
+        hr = IDXGIFactory_CreateSwapChain(factory, queue_unk, &swapchain_desc, &swapchain);
+        expected = queue_types[i] == D3D12_COMMAND_LIST_TYPE_DIRECT ? S_OK : DXGI_ERROR_INVALID_CALL;
+        todo_wine_if(queue_types[i] != D3D12_COMMAND_LIST_TYPE_DIRECT)
+        ok(hr == expected, "Got unexpected hr %#lx.\n", hr);
+
+        if (hr == S_OK)
+        {
+            refcount = IDXGISwapChain_Release(swapchain);
+            ok(!refcount, "Swapchain has %lu references left.\n", refcount);
+        }
+
+        wait_queue_idle(device, queue);
+
+        IDXGIFactory_Release(factory);
+
+        IUnknown_Release(queue_unk);
+        refcount = ID3D12CommandQueue_Release(queue);
+        ok(!refcount, "Command queue has %lu references left.\n", refcount);
+    }
+
+    DestroyWindow(window);
+
+    refcount = ID3D12Device_Release(device);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+}
+
 START_TEST(d3d12)
 {
     BOOL enable_debug_layer = FALSE;
@@ -1450,4 +1533,5 @@ START_TEST(d3d12)
     test_swapchain_size_mismatch();
     test_swapchain_backbuffer_index();
     test_desktop_window();
+    test_invalid_command_queue_types();
 }
