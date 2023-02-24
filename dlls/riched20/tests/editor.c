@@ -7348,7 +7348,6 @@ static void test_word_movement_multiline(void)
     sel_start = sel_end = 0xdeadbeefUL;
     SendMessageA(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "expected sel length to be 0, got %lu.\n", sel_end - sel_start);
-    todo_wine
     ok(sel_start == 11, "expected sel_start to be %u, got %lu.\n", 11, sel_start);
 
     send_ctrl_key(hwnd, VK_RIGHT);
@@ -7356,7 +7355,6 @@ static void test_word_movement_multiline(void)
     sel_start = sel_end = 0xdeadbeefUL;
     SendMessageA(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "expected sel length to be 0, got %lu.\n", sel_end - sel_start);
-    todo_wine
     ok(sel_start == 12, "expected sel_start to be %u, got %lu.\n", 12, sel_start);
 
     send_ctrl_key(hwnd, VK_LEFT);
@@ -7364,7 +7362,6 @@ static void test_word_movement_multiline(void)
     sel_start = sel_end = 0xdeadbeefUL;
     SendMessageA(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "expected sel length to be 0, got %lu.\n", sel_end - sel_start);
-    todo_wine
     ok(sel_start == 11, "expected sel_start to be %u, got %lu.\n", 11, sel_start);
 
     DestroyWindow(hwnd);

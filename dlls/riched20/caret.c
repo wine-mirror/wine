@@ -802,15 +802,18 @@ ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
       }
       else
       {
-        para = para_next( para );
-        if (!para_next( para ))
+        ME_Paragraph *other_para = para_next( para );
+        if (!para_next( other_para ))
         {
           if (cursor->run == run) return FALSE;
           nOffset = 0;
           break;
         }
-        if (para->nFlags & MEPF_ROWSTART) para = para_next( para );
-        if (cursor->run == run) run = para_first_run( para );
+        if (other_para->nFlags & MEPF_ROWSTART) other_para = para_next( other_para );
+        if (cursor->run == run) {
+          para = other_para;
+          run = para_first_run( para );
+        }
         nOffset = 0;
         break;
       }
