@@ -1390,12 +1390,41 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     struct arm64_thread_data *thread_data = (struct arm64_thread_data *)&teb->GdiTebBatch;
     struct syscall_frame *frame = thread_data->syscall_frame;
     CONTEXT *ctx, context = { CONTEXT_ALL };
+    I386_CONTEXT *i386_context;
+    ARM_CONTEXT *arm_context;
 
     context.u.s.X0  = (DWORD64)entry;
     context.u.s.X1  = (DWORD64)arg;
     context.u.s.X18 = (DWORD64)teb;
     context.Sp      = (DWORD64)teb->Tib.StackBase;
     context.Pc      = (DWORD64)pRtlUserThreadStart;
+
+    if ((i386_context = get_cpu_area( IMAGE_FILE_MACHINE_I386 )))
+    {
+        i386_context->ContextFlags = CONTEXT_I386_ALL;
+        i386_context->Eax = (ULONG_PTR)entry;
+        i386_context->Ebx = (arg == peb ? get_wow_teb( teb )->Peb : (ULONG_PTR)arg);
+        i386_context->Esp = get_wow_teb( teb )->Tib.StackBase - 16;
+        i386_context->Eip = pLdrSystemDllInitBlock->pRtlUserThreadStart;
+        i386_context->SegCs = 0x23;
+        i386_context->SegDs = 0x2b;
+        i386_context->SegEs = 0x2b;
+        i386_context->SegFs = 0x53;
+        i386_context->SegGs = 0x2b;
+        i386_context->SegSs = 0x2b;
+        i386_context->EFlags = 0x202;
+        i386_context->FloatSave.ControlWord = 0x27f;
+        ((XSAVE_FORMAT *)i386_context->ExtendedRegisters)->MxCsr = 0x1f80;
+    }
+    else if ((arm_context = get_cpu_area( IMAGE_FILE_MACHINE_ARMNT )))
+    {
+        arm_context->ContextFlags = CONTEXT_ARM_ALL;
+        arm_context->R0 = (ULONG_PTR)entry;
+        arm_context->R1 = (arg == peb ? get_wow_teb( teb )->Peb : (ULONG_PTR)arg);
+        arm_context->Sp = get_wow_teb( teb )->Tib.StackBase;
+        arm_context->Pc = pLdrSystemDllInitBlock->pRtlUserThreadStart;
+        if (arm_context->Pc & 1) arm_context->Cpsr |= 0x20; /* thumb mode */
+    }
 
     if (suspend) wait_suspend( &context );
 
