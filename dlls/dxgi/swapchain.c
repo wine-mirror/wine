@@ -1184,11 +1184,6 @@ static BOOL d3d12_swapchain_is_present_mode_supported(struct d3d12_swapchain *sw
     return supported;
 }
 
-static BOOL d3d12_swapchain_has_user_images(struct d3d12_swapchain *swapchain)
-{
-    return !!swapchain->vk_images[0];
-}
-
 static HRESULT d3d12_swapchain_create_user_buffers(struct d3d12_swapchain *swapchain, VkFormat vk_format)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
@@ -1203,7 +1198,7 @@ static HRESULT d3d12_swapchain_create_user_buffers(struct d3d12_swapchain *swapc
     VkResult vr;
     HRESULT hr;
 
-    if (d3d12_swapchain_has_user_images(swapchain))
+    if (swapchain->vk_images[0])
         return S_OK;
 
     memset(&image_info, 0, sizeof(image_info));
@@ -1455,7 +1450,6 @@ static HRESULT d3d12_swapchain_create_buffers(struct d3d12_swapchain *swapchain,
     VkDevice vk_device = swapchain->vk_device;
     ID3D12Device *device = swapchain->device;
     uint32_t image_count, queue_family_index;
-    D3D12_COMMAND_QUEUE_DESC queue_desc;
     unsigned int i;
     VkResult vr;
     HRESULT hr;
@@ -1478,6 +1472,17 @@ static HRESULT d3d12_swapchain_create_buffers(struct d3d12_swapchain *swapchain,
         return hresult_from_vk_result(vr);
     }
 
+    queue_family_index = vkd3d_get_vk_queue_family_index(queue);
+
+    if (FAILED(hr = d3d12_swapchain_create_user_buffers(swapchain, vk_format)))
+        return hr;
+
+    if (FAILED(hr = d3d12_swapchain_prepare_command_buffers(swapchain, queue_family_index)))
+        return hr;
+
+    if (swapchain->buffers[0])
+        return S_OK;
+
     resource_info.type = VKD3D_STRUCTURE_TYPE_IMAGE_RESOURCE_CREATE_INFO;
     resource_info.next = NULL;
     resource_info.desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -1492,48 +1497,11 @@ static HRESULT d3d12_swapchain_create_buffers(struct d3d12_swapchain *swapchain,
     resource_info.desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
     resource_info.desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
     resource_info.flags = VKD3D_RESOURCE_INITIAL_STATE_TRANSITION | VKD3D_RESOURCE_PRESENT_STATE_TRANSITION;
-
-    queue_desc = ID3D12CommandQueue_GetDesc(queue);
-    if (queue_desc.Type != D3D12_COMMAND_LIST_TYPE_DIRECT)
-    {
-        /* vkCmdBlitImage() is only supported for graphics queues. */
-        FIXME("Swapchain blit not implemented for command queue type %#x.\n", queue_desc.Type);
-        if (vk_swapchain_format != vk_format)
-            return E_NOTIMPL;
-        if (image_count != swapchain->desc.BufferCount)
-        {
-            FIXME("Got %u swapchain images, expected %u.\n", image_count, swapchain->desc.BufferCount);
-            return E_NOTIMPL;
-        }
-    }
-    queue_family_index = vkd3d_get_vk_queue_family_index(queue);
-
-    if (queue_desc.Type == D3D12_COMMAND_LIST_TYPE_DIRECT)
-    {
-        TRACE("Creating user swapchain buffers.\n");
-
-        if (FAILED(hr = d3d12_swapchain_create_user_buffers(swapchain, vk_format)))
-            return hr;
-
-        if (FAILED(hr = d3d12_swapchain_prepare_command_buffers(swapchain, queue_family_index)))
-            return hr;
-    }
-
-    if (swapchain->buffers[0])
-        return S_OK;
+    resource_info.present_state = D3D12_RESOURCE_STATE_COPY_SOURCE;
 
     for (i = 0; i < swapchain->desc.BufferCount; ++i)
     {
-        if (swapchain->vk_images[i])
-        {
-            resource_info.vk_image = swapchain->vk_images[i];
-            resource_info.present_state = D3D12_RESOURCE_STATE_COPY_SOURCE;
-        }
-        else
-        {
-            resource_info.vk_image = swapchain->vk_swapchain_images[i];
-            resource_info.present_state = D3D12_RESOURCE_STATE_PRESENT;
-        }
+        resource_info.vk_image = swapchain->vk_images[i];
 
         if (FAILED(hr = vkd3d_create_image_resource(device, &resource_info, &swapchain->buffers[i])))
         {
@@ -1575,23 +1543,6 @@ static VkResult d3d12_swapchain_acquire_next_vulkan_image(struct d3d12_swapchain
     return vr;
 }
 
-static VkResult d3d12_swapchain_acquire_next_back_buffer(struct d3d12_swapchain *swapchain)
-{
-    VkResult vr;
-
-    /* If we don't have user images, we need to acquire a Vulkan image in order
-     * to get the correct value for the current back buffer index. */
-    if (d3d12_swapchain_has_user_images(swapchain))
-        return VK_SUCCESS;
-
-    if ((vr = d3d12_swapchain_acquire_next_vulkan_image(swapchain)) >= 0)
-        swapchain->current_buffer_index = swapchain->vk_image_index;
-    else
-        ERR("Failed to acquire Vulkan image, vr %d.\n", vr);
-
-    return vr;
-}
-
 static void d3d12_swapchain_destroy_buffers(struct d3d12_swapchain *swapchain, BOOL destroy_user_buffers)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
@@ -1614,7 +1565,7 @@ static void d3d12_swapchain_destroy_buffers(struct d3d12_swapchain *swapchain, B
 
     for (i = 0; i < swapchain->desc.BufferCount; ++i)
     {
-        if (swapchain->buffers[i] && (destroy_user_buffers || !d3d12_swapchain_has_user_images(swapchain)))
+        if (swapchain->buffers[i] && (destroy_user_buffers || !swapchain->vk_images[0]))
         {
             vkd3d_resource_decref(swapchain->buffers[i]);
             swapchain->buffers[i] = NULL;
@@ -1755,24 +1706,6 @@ static HRESULT d3d12_swapchain_create_vulkan_swapchain(struct d3d12_swapchain *s
     swapchain->vk_image_index = INVALID_VK_IMAGE_INDEX;
 
     return d3d12_swapchain_create_buffers(swapchain, vk_swapchain_format, vk_format);
-}
-
-static HRESULT d3d12_swapchain_recreate_vulkan_swapchain(struct d3d12_swapchain *swapchain)
-{
-    VkResult vr;
-    HRESULT hr;
-
-    if (SUCCEEDED(hr = d3d12_swapchain_create_vulkan_swapchain(swapchain)))
-    {
-        vr = d3d12_swapchain_acquire_next_back_buffer(swapchain);
-        hr = hresult_from_vk_result(vr);
-    }
-    else
-    {
-        ERR("Failed to recreate Vulkan swapchain, hr %#lx.\n", hr);
-    }
-
-    return hr;
 }
 
 static inline struct d3d12_swapchain *d3d12_swapchain_from_IDXGISwapChain4(IDXGISwapChain4 *iface)
@@ -1950,12 +1883,6 @@ static HRESULT d3d12_swapchain_set_sync_interval(struct d3d12_swapchain *swapcha
     if (swapchain->present_mode == present_mode)
         return S_OK;
 
-    if (!d3d12_swapchain_has_user_images(swapchain))
-    {
-        FIXME("Cannot recreate swapchain without user images.\n");
-        return S_OK;
-    }
-
     if (!d3d12_swapchain_is_present_mode_supported(swapchain, present_mode))
     {
         FIXME("Vulkan present mode %#x is not supported.\n", present_mode);
@@ -1964,14 +1891,17 @@ static HRESULT d3d12_swapchain_set_sync_interval(struct d3d12_swapchain *swapcha
 
     d3d12_swapchain_destroy_buffers(swapchain, FALSE);
     swapchain->present_mode = present_mode;
-    return d3d12_swapchain_recreate_vulkan_swapchain(swapchain);
+    return d3d12_swapchain_create_vulkan_swapchain(swapchain);
 }
 
 static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain, VkQueue vk_queue)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
     VkPresentInfoKHR present_info;
+    VkCommandBuffer vk_cmd_buffer;
     VkSubmitInfo submit_info;
+    VkImage vk_dst_image;
+    VkImage vk_src_image;
     VkResult vr;
 
     if (swapchain->vk_image_index == INVALID_VK_IMAGE_INDEX)
@@ -1982,6 +1912,36 @@ static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain,
 
     assert(swapchain->vk_image_index < swapchain->buffer_count);
 
+    vk_cmd_buffer = swapchain->vk_cmd_buffers[swapchain->vk_image_index];
+    vk_dst_image = swapchain->vk_swapchain_images[swapchain->vk_image_index];
+    vk_src_image = swapchain->vk_images[swapchain->current_buffer_index];
+
+    if ((vr = vk_funcs->p_vkResetCommandBuffer(vk_cmd_buffer, 0)) < 0)
+    {
+        ERR("Failed to reset command buffer, vr %d.\n", vr);
+        return vr;
+    }
+
+    if ((vr = d3d12_swapchain_record_swapchain_blit(swapchain,
+            vk_cmd_buffer, vk_dst_image, vk_src_image)) < 0 )
+        return vr;
+
+    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit_info.pNext = NULL;
+    submit_info.waitSemaphoreCount = 0;
+    submit_info.pWaitSemaphores = NULL;
+    submit_info.pWaitDstStageMask = NULL;
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers = &vk_cmd_buffer;
+    submit_info.signalSemaphoreCount = 1;
+    submit_info.pSignalSemaphores = &swapchain->vk_semaphores[swapchain->vk_image_index];
+
+    if ((vr = vk_funcs->p_vkQueueSubmit(vk_queue, 1, &submit_info, VK_NULL_HANDLE)) < 0)
+    {
+        ERR("Failed to blit swapchain buffer, vr %d.\n", vr);
+        return vr;
+    }
+
     present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     present_info.pNext = NULL;
     present_info.waitSemaphoreCount = 0;
@@ -1990,43 +1950,8 @@ static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain,
     present_info.pSwapchains = &swapchain->vk_swapchain;
     present_info.pImageIndices = &swapchain->vk_image_index;
     present_info.pResults = NULL;
-
-    if (d3d12_swapchain_has_user_images(swapchain))
-    {
-        /* blit */
-        VkCommandBuffer vk_cmd_buffer = swapchain->vk_cmd_buffers[swapchain->vk_image_index];
-        VkImage vk_dst_image = swapchain->vk_swapchain_images[swapchain->vk_image_index];
-        VkImage vk_src_image = swapchain->vk_images[swapchain->current_buffer_index];
-
-        if ((vr = vk_funcs->p_vkResetCommandBuffer(vk_cmd_buffer, 0)) < 0)
-        {
-            ERR("Failed to reset command buffer, vr %d.\n", vr);
-            return vr;
-        }
-
-        if ((vr = d3d12_swapchain_record_swapchain_blit(swapchain,
-                vk_cmd_buffer, vk_dst_image, vk_src_image)) < 0 )
-            return vr;
-
-        submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submit_info.pNext = NULL;
-        submit_info.waitSemaphoreCount = 0;
-        submit_info.pWaitSemaphores = NULL;
-        submit_info.pWaitDstStageMask = NULL;
-        submit_info.commandBufferCount = 1;
-        submit_info.pCommandBuffers = &vk_cmd_buffer;
-        submit_info.signalSemaphoreCount = 1;
-        submit_info.pSignalSemaphores = &swapchain->vk_semaphores[swapchain->vk_image_index];
-
-        if ((vr = vk_funcs->p_vkQueueSubmit(vk_queue, 1, &submit_info, VK_NULL_HANDLE)) < 0)
-        {
-            ERR("Failed to blit swapchain buffer, vr %d.\n", vr);
-            return vr;
-        }
-
-        present_info.waitSemaphoreCount = 1;
-        present_info.pWaitSemaphores = &swapchain->vk_semaphores[swapchain->vk_image_index];
-    }
+    present_info.waitSemaphoreCount = 1;
+    present_info.pWaitSemaphores = &swapchain->vk_semaphores[swapchain->vk_image_index];
 
     if ((vr = vk_funcs->p_vkQueuePresentKHR(vk_queue, &present_info)) >= 0)
         swapchain->vk_image_index = INVALID_VK_IMAGE_INDEX;
@@ -2070,16 +1995,10 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
     {
         vkd3d_release_vk_queue(swapchain->command_queue);
 
-        if (!d3d12_swapchain_has_user_images(swapchain))
-        {
-            FIXME("Cannot recreate swapchain without user images.\n");
-            return DXGI_STATUS_MODE_CHANGED;
-        }
-
         TRACE("Recreating Vulkan swapchain.\n");
 
         d3d12_swapchain_destroy_buffers(swapchain, FALSE);
-        if (FAILED(hr = d3d12_swapchain_recreate_vulkan_swapchain(swapchain)))
+        if (FAILED(hr = d3d12_swapchain_create_vulkan_swapchain(swapchain)))
             return hr;
 
         if (!(vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue)))
@@ -2119,23 +2038,7 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
     }
 
     swapchain->current_buffer_index = (swapchain->current_buffer_index + 1) % swapchain->desc.BufferCount;
-    vr = d3d12_swapchain_acquire_next_back_buffer(swapchain);
-    if (vr == VK_ERROR_OUT_OF_DATE_KHR)
-    {
-        if (!d3d12_swapchain_has_user_images(swapchain))
-        {
-            FIXME("Cannot recreate swapchain without user images.\n");
-            return DXGI_STATUS_MODE_CHANGED;
-        }
-
-        TRACE("Recreating Vulkan swapchain.\n");
-
-        d3d12_swapchain_destroy_buffers(swapchain, FALSE);
-        return d3d12_swapchain_recreate_vulkan_swapchain(swapchain);
-    }
-    if (vr < 0)
-        ERR("Failed to acquire next Vulkan image, vr %d.\n", vr);
-    return hresult_from_vk_result(vr);
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_Present(IDXGISwapChain4 *iface, UINT sync_interval, UINT flags)
@@ -2352,7 +2255,7 @@ static HRESULT d3d12_swapchain_resize_buffers(struct d3d12_swapchain *swapchain,
 
     d3d12_swapchain_destroy_buffers(swapchain, TRUE);
     swapchain->desc = new_desc;
-    return d3d12_swapchain_recreate_vulkan_swapchain(swapchain);
+    return d3d12_swapchain_create_vulkan_swapchain(swapchain);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_ResizeBuffers(IDXGISwapChain4 *iface,
@@ -3033,11 +2936,6 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     swapchain->vk_fence = vk_fence;
 
     swapchain->current_buffer_index = 0;
-    if ((vr = d3d12_swapchain_acquire_next_back_buffer(swapchain)) < 0)
-    {
-        d3d12_swapchain_destroy(swapchain);
-        return hresult_from_vk_result(vr);
-    }
 
     if (swapchain_desc->Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
     {
