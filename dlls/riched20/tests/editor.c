@@ -7322,6 +7322,54 @@ static void test_word_movement(void)
     DestroyWindow(hwnd);
 }
 
+static void test_word_movement_multiline(void)
+{
+    DWORD sel_start, sel_end;
+    LRESULT result;
+    HWND hwnd;
+
+    /* multi-line control inserts CR normally */
+    hwnd = new_richedit(NULL);
+
+    result = SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"Lorem ipsum\rdolor sit\rnamet");
+    ok(result == TRUE, "WM_SETTEXT returned %Iu.\n", result);
+    SendMessageA(hwnd, EM_SETSEL, 0, 0);
+    /* [|Lorem ipsum] [dolor sit] [amet] */
+
+    send_ctrl_key(hwnd, VK_RIGHT);
+    /* [Lorem |ipsum] [dolor sit] [amet] */
+    sel_start = sel_end = 0xdeadbeefUL;
+    SendMessageA(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
+    ok(sel_start == sel_end, "expected sel length to be 0, got %lu.\n", sel_end - sel_start);
+    ok(sel_start == 6, "expected sel_start to be %u, got %lu.\n", 6, sel_start);
+
+    send_ctrl_key(hwnd, VK_RIGHT);
+    /* [Lorem ipsum|] [dolor sit] [amet] */
+    sel_start = sel_end = 0xdeadbeefUL;
+    SendMessageA(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
+    ok(sel_start == sel_end, "expected sel length to be 0, got %lu.\n", sel_end - sel_start);
+    todo_wine
+    ok(sel_start == 11, "expected sel_start to be %u, got %lu.\n", 11, sel_start);
+
+    send_ctrl_key(hwnd, VK_RIGHT);
+    /* [Lorem ipsum] [|dolor sit] [amet] */
+    sel_start = sel_end = 0xdeadbeefUL;
+    SendMessageA(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
+    ok(sel_start == sel_end, "expected sel length to be 0, got %lu.\n", sel_end - sel_start);
+    todo_wine
+    ok(sel_start == 12, "expected sel_start to be %u, got %lu.\n", 12, sel_start);
+
+    send_ctrl_key(hwnd, VK_LEFT);
+    /* [Lorem ipsum|] [dolor sit] [amet] */
+    sel_start = sel_end = 0xdeadbeefUL;
+    SendMessageA(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
+    ok(sel_start == sel_end, "expected sel length to be 0, got %lu.\n", sel_end - sel_start);
+    todo_wine
+    ok(sel_start == 11, "expected sel_start to be %u, got %lu.\n", 11, sel_start);
+
+    DestroyWindow(hwnd);
+}
+
 static void test_EM_CHARFROMPOS(void)
 {
     HWND hwnd;
@@ -9230,6 +9278,7 @@ START_TEST( editor )
   test_eventMask();
   test_undo_coalescing();
   test_word_movement();
+  test_word_movement_multiline();
   test_EM_CHARFROMPOS();
   test_SETPARAFORMAT();
   test_word_wrap();
