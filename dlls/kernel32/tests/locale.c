@@ -1816,8 +1816,12 @@ static void test_GetNumberFormatEx(void)
   /* Test French formatting */
   if (pIsValidLocaleName(frW))
   {
+    const WCHAR *expected;
     ret = pGetNumberFormatEx(frW, NUO, L"-12345", NULL, buffer, ARRAY_SIZE(buffer));
-    expect_wstr(ret, buffer, L"-12\xa0\x33\x34\x35,00"); /* Non breaking space */
+    expected = (ret && wcschr(buffer, 0x202f)) ?
+               L"-12\x202f\x33\x34\x35,00" : /* Same but narrow (win11) */
+               L"-12\xa0\x33\x34\x35,00"; /* Non breaking space */
+    expect_wstr(ret, buffer, expected);
   }
 }
 
