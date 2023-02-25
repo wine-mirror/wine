@@ -1205,6 +1205,8 @@ static void close_recordset( struct recordset *recordset )
     if ( recordset->row_set ) IRowset_Release( recordset->row_set );
     recordset->row_set = NULL;
 
+    VariantClear( &recordset->filter );
+
     if (!recordset->fields) return;
     col_count = get_column_count( recordset );
 
