@@ -2285,8 +2285,6 @@ struct key_asymmetric32
 {
     ULONG             bitlen;     /* ignored for ECC keys */
     ULONG             flags;
-    PTR32             pubkey;
-    ULONG             pubkey_len;
     DSSSEED           dss_seed;
 };
 
