@@ -1474,7 +1474,6 @@ static void test_invalid_command_queue_types(void)
 
         hr = IDXGIFactory_CreateSwapChain(factory, queue_unk, &swapchain_desc, &swapchain);
         expected = queue_types[i] == D3D12_COMMAND_LIST_TYPE_DIRECT ? S_OK : DXGI_ERROR_INVALID_CALL;
-        todo_wine_if(queue_types[i] != D3D12_COMMAND_LIST_TYPE_DIRECT)
         ok(hr == expected, "Got unexpected hr %#lx.\n", hr);
 
         if (hr == S_OK)

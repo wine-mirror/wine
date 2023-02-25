@@ -3071,11 +3071,16 @@ HRESULT d3d12_swapchain_create(IWineDXGIFactory *factory, ID3D12CommandQueue *qu
         IDXGISwapChain1 **swapchain)
 {
     DXGI_SWAP_CHAIN_FULLSCREEN_DESC default_fullscreen_desc;
+    struct D3D12_COMMAND_QUEUE_DESC queue_desc;
     struct d3d12_swapchain *object;
     ID3D12Device *device;
     HRESULT hr;
 
     if (swapchain_desc->Format == DXGI_FORMAT_UNKNOWN)
+        return DXGI_ERROR_INVALID_CALL;
+
+    queue_desc = ID3D12CommandQueue_GetDesc(queue);
+    if (queue_desc.Type != D3D12_COMMAND_LIST_TYPE_DIRECT)
         return DXGI_ERROR_INVALID_CALL;
 
     if (!fullscreen_desc)
