@@ -206,6 +206,23 @@ static BOOL ends_withW(const WCHAR* str, const WCHAR* suffix)
     return strlen >= sfxlen && !wcsicmp(str + strlen - sfxlen, suffix);
 }
 
+static unsigned get_machine_bitness(USHORT machine)
+{
+    switch (machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:
+    case IMAGE_FILE_MACHINE_ARM:
+    case IMAGE_FILE_MACHINE_ARMNT:
+        return 32;
+    case IMAGE_FILE_MACHINE_AMD64:
+    case IMAGE_FILE_MACHINE_ARM64:
+        return 64;
+    default:
+        ok(0, "Unsupported machine %x\n", machine);
+        return 0;
+    }
+}
+
 static USHORT get_module_machine(const char* path)
 {
     HANDLE hFile, hMap;
@@ -570,22 +587,11 @@ static BOOL CALLBACK aggregate_cb(PCWSTR imagename, DWORD64 base, ULONG sz, PVOI
         ok(ret, "SymGetModuleInfoW64 failed: %lu\n", GetLastError());
     }
 
-    switch (im.MachineType)
+    switch (get_machine_bitness(im.MachineType))
     {
-    case IMAGE_FILE_MACHINE_UNKNOWN:
-        break;
-    case IMAGE_FILE_MACHINE_I386:
-    case IMAGE_FILE_MACHINE_ARM:
-    case IMAGE_FILE_MACHINE_ARMNT:
-        aggregation->count_32bit++;
-        break;
-    case IMAGE_FILE_MACHINE_AMD64:
-    case IMAGE_FILE_MACHINE_ARM64:
-        aggregation->count_64bit++;
-        break;
-    default:
-        ok(0, "Unsupported machine %lx\n", im.MachineType);
-        break;
+    case 32: aggregation->count_32bit++; break;
+    case 64: aggregation->count_64bit++; break;
+    default: break;
     }
     if (ends_withW(imagename, L".exe"))
         aggregation->count_exe++;
