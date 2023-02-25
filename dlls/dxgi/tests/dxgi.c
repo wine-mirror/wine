@@ -4988,7 +4988,6 @@ static void test_swapchain_backbuffer_index(IUnknown *device, BOOL is_d3d12)
         {
             index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain3);
             expected_index = is_d3d12 ? j % swapchain_desc.BufferCount : 0;
-            todo_wine_if(is_d3d12)
             ok(index == expected_index, "Got back buffer index %u, expected %u.\n", index, expected_index);
             hr = IDXGISwapChain3_Present(swapchain3, 0, 0);
             ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -5003,7 +5002,6 @@ static void test_swapchain_backbuffer_index(IUnknown *device, BOOL is_d3d12)
         {
             index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain3);
             expected_index = is_d3d12 ? j % swapchain_desc.BufferCount : 0;
-            todo_wine_if(is_d3d12)
             ok(index == expected_index, "Got back buffer index %u, expected %u.\n", index, expected_index);
             hr = IDXGISwapChain3_Present(swapchain3, 0, 0);
             ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -5017,7 +5015,6 @@ static void test_swapchain_backbuffer_index(IUnknown *device, BOOL is_d3d12)
         {
             index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain3);
             expected_index = is_d3d12 ? j % swapchain_desc.BufferCount : 0;
-            todo_wine_if(is_d3d12)
             ok(index == expected_index, "Got back buffer index %u, expected %u.\n", index, expected_index);
             hr = IDXGISwapChain3_Present(swapchain3, 0, 0);
             ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);

@@ -2249,6 +2249,8 @@ static HRESULT d3d12_swapchain_resize_buffers(struct d3d12_swapchain *swapchain,
     if (!dxgi_validate_swapchain_desc(&new_desc))
         return DXGI_ERROR_INVALID_CALL;
 
+    swapchain->current_buffer_index = 0;
+
     if (desc->Width == new_desc.Width && desc->Height == new_desc.Height
             && desc->Format == new_desc.Format && desc->BufferCount == new_desc.BufferCount)
         return S_OK;
