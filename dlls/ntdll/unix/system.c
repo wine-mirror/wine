@@ -57,8 +57,7 @@
 #ifdef __APPLE__
 # include <CoreFoundation/CoreFoundation.h>
 # include <IOKit/IOKitLib.h>
-# include <IOKit/pwr_mgt/IOPM.h>
-# include <IOKit/pwr_mgt/IOPMLib.h>
+# include <IOKit/ps/IOPSKeys.h>
 # include <IOKit/ps/IOPowerSources.h>
 # include <mach/mach.h>
 # include <mach/machine.h>
@@ -3580,66 +3579,106 @@ static NTSTATUS fill_battery_state( SYSTEM_BATTERY_STATE *bs )
 
 static NTSTATUS fill_battery_state( SYSTEM_BATTERY_STATE *bs )
 {
-    CFArrayRef batteries;
-    CFDictionaryRef battery;
-    CFNumberRef prop;
-    uint32_t value, voltage;
-    CFTimeInterval remain;
+    CFTypeRef blob = IOPSCopyPowerSourcesInfo();
+    CFArrayRef sources = IOPSCopyPowerSourcesList( blob );
+    CFIndex count, i;
+    CFDictionaryRef source = NULL;
+    CFTypeRef prop;
+    Boolean is_charging, is_internal, is_present;
+    int32_t value, voltage;
 
-    if (IOPMCopyBatteryInfo( 0, &batteries ) != kIOReturnSuccess)
-        return STATUS_ACCESS_DENIED;
-
-    if (CFArrayGetCount( batteries ) == 0)
+    if (!sources)
     {
-        /* Just assume we're on AC with no battery. */
+        if (blob) CFRelease( blob );
+        return STATUS_ACCESS_DENIED;
+    }
+
+    count = CFArrayGetCount( sources );
+
+    for (i = 0; i < count; i++)
+    {
+        source = IOPSGetPowerSourceDescription( blob, CFArrayGetValueAtIndex( sources, i ) );
+
+        if (!source)
+            continue;
+
+        prop = CFDictionaryGetValue( source, CFSTR(kIOPSTransportTypeKey) );
+        is_internal = !CFStringCompare( prop, CFSTR(kIOPSInternalType), 0 );
+
+        prop = CFDictionaryGetValue( source, CFSTR(kIOPSIsPresentKey) );
+        is_present = CFBooleanGetValue( prop );
+
+        if (is_internal && is_present)
+            break;
+    }
+
+    CFRelease( blob );
+
+    if (!source)
+    {
+        /* Just assume we're on AC with no internal power source. */
         bs->AcOnLine = TRUE;
+        CFRelease( sources );
         return STATUS_SUCCESS;
     }
-    /* Just use the first battery. */
-    battery = CFArrayGetValueAtIndex( batteries, 0 );
 
-    prop = CFDictionaryGetValue( battery, CFSTR(kIOBatteryFlagsKey) );
-    CFNumberGetValue( prop, kCFNumberSInt32Type, &value );
+    bs->BatteryPresent = TRUE;
 
-    if (value & kIOBatteryInstalled)
-        bs->BatteryPresent = TRUE;
-    else
-        /* Since we are executing code, we must have AC power. */
-        bs->AcOnLine = TRUE;
-    if (value & kIOBatteryChargerConnect)
+    prop = CFDictionaryGetValue( source, CFSTR(kIOPSIsChargingKey) );
+    is_charging = CFBooleanGetValue( prop );
+
+    prop = CFDictionaryGetValue( source, CFSTR(kIOPSPowerSourceStateKey) );
+
+    if (!CFStringCompare( prop, CFSTR(kIOPSACPowerValue), 0 ))
     {
         bs->AcOnLine = TRUE;
-        if (value & kIOBatteryCharge)
+        if (is_charging)
             bs->Charging = TRUE;
     }
     else
         bs->Discharging = TRUE;
 
     /* We'll need the voltage to be able to interpret the other values. */
-    prop = CFDictionaryGetValue( battery, CFSTR(kIOBatteryVoltageKey) );
-    CFNumberGetValue( prop, kCFNumberSInt32Type, &voltage );
+    prop = CFDictionaryGetValue( source, CFSTR(kIOPSVoltageKey) );
+    if (prop)
+        CFNumberGetValue( prop, kCFNumberIntType, &voltage );
+    else
+        /* kIOPSVoltageKey is optional and might not be populated.
+         * Assume 11.4 V then, which is a common value for Apple laptops. */
+        voltage = 11400;
 
-    prop = CFDictionaryGetValue( battery, CFSTR(kIOBatteryCapacityKey) );
-    CFNumberGetValue( prop, kCFNumberSInt32Type, &value );
+    prop = CFDictionaryGetValue( source, CFSTR(kIOPSMaxCapacityKey) );
+    CFNumberGetValue( prop, kCFNumberIntType, &value );
     bs->MaxCapacity = value * voltage;
     /* Apple uses "estimated time < 10:00" and "22%" for these, but we'll follow
      * Windows for now (5% and 33%). */
     bs->DefaultAlert1 = bs->MaxCapacity / 20;
     bs->DefaultAlert2 = bs->MaxCapacity / 3;
 
-    prop = CFDictionaryGetValue( battery, CFSTR(kIOBatteryCurrentChargeKey) );
-    CFNumberGetValue( prop, kCFNumberSInt32Type, &value );
+    prop = CFDictionaryGetValue( source, CFSTR(kIOPSCurrentCapacityKey) );
+    CFNumberGetValue( prop, kCFNumberIntType, &value );
     bs->RemainingCapacity = value * voltage;
 
-    prop = CFDictionaryGetValue( battery, CFSTR(kIOBatteryAmperageKey) );
-    CFNumberGetValue( prop, kCFNumberSInt32Type, &value );
-    bs->Rate = value * voltage;
+    prop = CFDictionaryGetValue( source, CFSTR(kIOPSCurrentKey) );
+    if (prop)
+        CFNumberGetValue( prop, kCFNumberIntType, &value );
+    else
+        /* kIOPSCurrentKey is optional and might not be populated. */
+        value = 0;
 
-    remain = IOPSGetTimeRemainingEstimate();
-    if (remain != kIOPSTimeRemainingUnknown && remain != kIOPSTimeRemainingUnlimited)
-        bs->EstimatedTime = (ULONG)remain;
+    bs->Rate = value * voltage / 1000;
 
-    CFRelease( batteries );
+    prop = CFDictionaryGetValue( source, CFSTR(kIOPSTimeToEmptyKey) );
+    if (prop)
+    {
+        CFNumberGetValue( prop, kCFNumberIntType, &value );
+        if (value > 0)
+            /*  A value of -1 indicates "Still Calculating the Time",
+             * otherwise estimated minutes left on the battery. */
+            bs->EstimatedTime = value * 60;
+    }
+
+    CFRelease( sources );
     return STATUS_SUCCESS;
 }
 
