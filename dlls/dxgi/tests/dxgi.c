@@ -4941,7 +4941,6 @@ static void test_swapchain_backbuffer_index(IUnknown *device, BOOL is_d3d12)
     swapchain_desc.SampleDesc.Count = 1;
     swapchain_desc.SampleDesc.Quality = 0;
     swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapchain_desc.BufferCount = 4;
     swapchain_desc.OutputWindow = create_window();
     swapchain_desc.Windowed = TRUE;
     swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
@@ -4954,6 +4953,7 @@ static void test_swapchain_backbuffer_index(IUnknown *device, BOOL is_d3d12)
 
     for (i = 0; i < ARRAY_SIZE(swap_effects); ++i)
     {
+        swapchain_desc.BufferCount = 4;
         swapchain_desc.SwapEffect = swap_effects[i];
         expected_hr = is_d3d12 && !is_flip_model(swap_effects[i]) ? DXGI_ERROR_INVALID_CALL : S_OK;
         hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
@@ -4969,10 +4969,55 @@ static void test_swapchain_backbuffer_index(IUnknown *device, BOOL is_d3d12)
             goto done;
         }
 
-        for (j = 0; j < 2 * swapchain_desc.BufferCount; ++j)
+        for (j = 0; j < 2 * swapchain_desc.BufferCount + 2; ++j)
         {
             index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain3);
             expected_index = is_d3d12 ? j % swapchain_desc.BufferCount : 0;
+            ok(index == expected_index, "Got back buffer index %u, expected %u.\n", index, expected_index);
+            hr = IDXGISwapChain3_Present(swapchain3, 0, 0);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        }
+
+        swapchain_desc.BufferCount = 3;
+        hr = IDXGISwapChain_ResizeBuffers(swapchain, swapchain_desc.BufferCount,
+                rect.right, rect.bottom, DXGI_FORMAT_UNKNOWN, swapchain_desc.Flags);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        /* The back buffer index restarts from 0. */
+        for (j = 0; j < swapchain_desc.BufferCount + 2; ++j)
+        {
+            index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain3);
+            expected_index = is_d3d12 ? j % swapchain_desc.BufferCount : 0;
+            todo_wine_if(is_d3d12)
+            ok(index == expected_index, "Got back buffer index %u, expected %u.\n", index, expected_index);
+            hr = IDXGISwapChain3_Present(swapchain3, 0, 0);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        }
+
+        hr = IDXGISwapChain_ResizeBuffers(swapchain, swapchain_desc.BufferCount,
+                rect.right, rect.bottom, DXGI_FORMAT_UNKNOWN, swapchain_desc.Flags);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        /* Even when not really changing the buffer count. */
+        for (j = 0; j < swapchain_desc.BufferCount + 1; ++j)
+        {
+            index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain3);
+            expected_index = is_d3d12 ? j % swapchain_desc.BufferCount : 0;
+            todo_wine_if(is_d3d12)
+            ok(index == expected_index, "Got back buffer index %u, expected %u.\n", index, expected_index);
+            hr = IDXGISwapChain3_Present(swapchain3, 0, 0);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        }
+
+        hr = IDXGISwapChain_ResizeBuffers(swapchain, 0,
+                rect.right, rect.bottom, DXGI_FORMAT_UNKNOWN, swapchain_desc.Flags);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        for (j = 0; j < swapchain_desc.BufferCount + 2; ++j)
+        {
+            index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain3);
+            expected_index = is_d3d12 ? j % swapchain_desc.BufferCount : 0;
+            todo_wine_if(is_d3d12)
             ok(index == expected_index, "Got back buffer index %u, expected %u.\n", index, expected_index);
             hr = IDXGISwapChain3_Present(swapchain3, 0, 0);
             ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
