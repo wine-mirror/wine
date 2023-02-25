@@ -553,6 +553,46 @@ static void test_modules_overlap(void)
     }
 }
 
+enum process_kind
+{
+    PCSKIND_ERROR,
+    PCSKIND_64BIT,          /* 64 bit process */
+    PCSKIND_32BIT,          /* 32 bit only configuration (Wine, some Win 7...) */
+    PCSKIND_WINE_OLD_WOW64, /* Wine "old" wow64 configuration */
+    PCSKIND_WOW64,          /* Wine "new" wow64 configuration, and Windows with wow64 support */
+};
+
+static enum process_kind get_process_kind(HANDLE process)
+{
+    const BOOL is_win64 = sizeof(void*) == 8;
+    USHORT m1, m2;
+
+    if (!IsWow64Process2(process, &m1, &m2)) return PCSKIND_ERROR;
+    if (m1 == IMAGE_FILE_MACHINE_UNKNOWN && get_machine_bitness(m2) == 32) return PCSKIND_32BIT;
+    if (m1 == IMAGE_FILE_MACHINE_UNKNOWN && get_machine_bitness(m2) == 64) return PCSKIND_64BIT;
+    if (get_machine_bitness(m1) == 32 && get_machine_bitness(m2) == 64)
+    {
+        enum process_kind pcskind = PCSKIND_WOW64;
+        if (!strcmp(winetest_platform, "wine"))
+        {
+            PROCESS_BASIC_INFORMATION pbi;
+            PEB32 peb32;
+            const char* peb_addr;
+
+            if (NtQueryInformationProcess(process, ProcessBasicInformation, &pbi, sizeof(pbi), NULL))
+                return PCSKIND_ERROR;
+
+            peb_addr = (const char*)pbi.PebBaseAddress;
+            if (is_win64) peb_addr += 0x1000;
+            if (!ReadProcessMemory(process, peb_addr, &peb32, sizeof(peb32), NULL)) return PCSKIND_ERROR;
+            if (*(const DWORD*)((const char*)&peb32 + 0x460 /* CloudFileFlags */))
+                pcskind = PCSKIND_WINE_OLD_WOW64;
+        }
+        return pcskind;
+    }
+    return PCSKIND_ERROR;
+}
+
 struct loaded_module_aggregation
 {
     HANDLE       proc;
@@ -599,7 +639,7 @@ static BOOL CALLBACK aggregate_cb(PCWSTR imagename, DWORD64 base, ULONG sz, PVOI
         aggregation->count_ntdll++;
     if (!wcsnicmp(imagename, system_directory, wcslen(system_directory)))
         aggregation->count_systemdir++;
-    if (is_win64 && IsWow64Process(aggregation->proc, &wow64) && wow64 &&
+    if (IsWow64Process(aggregation->proc, &wow64) && wow64 &&
         !wcsnicmp(imagename, wow64_directory, wcslen(wow64_directory)))
         aggregation->count_wowdir++;
 
@@ -653,9 +693,26 @@ static void test_loaded_modules(void)
            aggregation.count_32bit, aggregation.count_64bit);
         ok(aggregation.count_exe == 1 && aggregation.count_ntdll == 1, "Wrong kind aggregation count %u %u\n",
            aggregation.count_exe, aggregation.count_ntdll);
-        todo_wine_if(is_wow64)
-        ok(aggregation.count_systemdir > 2 && !aggregation.count_wowdir, "Wrong directory aggregation count %u %u\n",
-           aggregation.count_systemdir, aggregation.count_wowdir);
+        switch (get_process_kind(pi.hProcess))
+        {
+        case PCSKIND_ERROR:
+            ok(0, "Unknown process kind\n");
+            break;
+        case PCSKIND_64BIT:
+        case PCSKIND_WOW64:
+            todo_wine
+            ok(aggregation.count_systemdir > 2 && aggregation.count_wowdir == 1, "Wrong directory aggregation count %u %u\n",
+               aggregation.count_systemdir, aggregation.count_wowdir);
+            break;
+        case PCSKIND_32BIT:
+            ok(aggregation.count_systemdir > 2 && aggregation.count_wowdir == 0, "Wrong directory aggregation count %u %u\n",
+               aggregation.count_systemdir, aggregation.count_wowdir);
+            break;
+        case PCSKIND_WINE_OLD_WOW64:
+            ok(aggregation.count_systemdir == 1 && aggregation.count_wowdir > 2, "Wrong directory aggregation count %u %u\n",
+               aggregation.count_systemdir, aggregation.count_wowdir);
+            break;
+        }
     }
 
     SymCleanup(pi.hProcess);
