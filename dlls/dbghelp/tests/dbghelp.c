@@ -196,6 +196,14 @@ static void test_search_path(void)
     ok(!strcmp(search_path, "."), "Got search path '%s', expected '.'\n", search_path);
 }
 
+static BOOL ends_withW(const WCHAR* str, const WCHAR* suffix)
+{
+    size_t strlen = wcslen(str);
+    size_t sfxlen = wcslen(suffix);
+
+    return strlen >= sfxlen && !wcsicmp(str + strlen - sfxlen, suffix);
+}
+
 static USHORT get_module_machine(const char* path)
 {
     HANDLE hFile, hMap;
@@ -541,18 +549,15 @@ static BOOL CALLBACK aggregate_cb(PCWSTR imagename, DWORD64 base, ULONG sz, PVOI
 {
     struct loaded_module_aggregation* aggregation = usr;
     IMAGEHLP_MODULEW64 im;
-    size_t image_len;
     BOOL ret, wow64;
     WCHAR buffer[MAX_PATH];
 
     memset(&im, 0, sizeof(im));
     im.SizeOfStruct = sizeof(im);
 
-    image_len = wcslen(imagename);
-
     ret = SymGetModuleInfoW64(aggregation->proc, base, &im);
     if (ret)
-        ok(aggregation->count_exe && image_len >= 4 && !wcscmp(imagename + image_len - 4, L".exe"),
+        ok(aggregation->count_exe && ends_withW(imagename, L".exe"),
            "%ls shouldn't already be loaded\n", imagename);
     else
     {
@@ -581,7 +586,7 @@ static BOOL CALLBACK aggregate_cb(PCWSTR imagename, DWORD64 base, ULONG sz, PVOI
         ok(0, "Unsupported machine %lx\n", im.MachineType);
         break;
     }
-    if (image_len >= 4 && !wcsicmp(imagename + image_len - 4, L".exe"))
+    if (ends_withW(imagename, L".exe"))
         aggregation->count_exe++;
     if (!wcsicmp(im.ModuleName, L"ntdll"))
         aggregation->count_ntdll++;
