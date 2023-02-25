@@ -4974,6 +4974,11 @@ static void test_GetCPInfo(void)
             case 12:  /* normalization */
                 ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "%u: failed %lx\n", i, status );
                 break;
+            case 14: /* unknown */
+                ok( status == STATUS_INVALID_PARAMETER_1 ||
+                    status == STATUS_SUCCESS, /* win11 */
+                    "%u: failed %lx\n", i, status );
+                break;
             default:
                 ok( status == STATUS_INVALID_PARAMETER_1, "%u: failed %lx\n", i, status );
                 break;
