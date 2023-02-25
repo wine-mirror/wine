@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windows.h"
 #include "psapi.h"
 #include "verrsrc.h"
@@ -306,6 +308,24 @@ static BOOL CALLBACK nth_module_cb(const char* name, DWORD64 base, void* usr)
         ok(nth->module.BaseOfImage == base, "Wrong base\n");
     }
     return FALSE;
+}
+
+/* wrapper around EnumerateLoadedModuleW64 which sometimes fails for unknown reasons on Win11,
+ * with STATUS_INFO_LENGTH_MISMATCH as GetLastError()!
+ */
+static BOOL wrapper_EnumerateLoadedModulesW64(HANDLE proc, PENUMLOADED_MODULES_CALLBACKW64 cb, void* usr)
+{
+    BOOL ret;
+    int retry;
+
+    for (retry = !strcmp(winetest_platform, "wine") ? 1 : 5; retry >= 0; retry--)
+    {
+        ret = EnumerateLoadedModulesW64(proc, cb, usr);
+        if (ret || GetLastError() != STATUS_INFO_LENGTH_MISMATCH)
+            break;
+        Sleep(10);
+    }
+    return ret;
 }
 
 static BOOL test_modules(void)
@@ -600,7 +620,7 @@ static void test_loaded_modules(void)
     memset(&aggregation, 0, sizeof(aggregation));
     aggregation.proc = pi.hProcess;
 
-    ret = EnumerateLoadedModulesW64(pi.hProcess, aggregate_cb, &aggregation);
+    ret = wrapper_EnumerateLoadedModulesW64(pi.hProcess, aggregate_cb, &aggregation);
     ok(ret, "EnumerateLoadedModulesW64 failed: %lu\n", GetLastError());
 
     if (is_win64)
@@ -649,7 +669,7 @@ static void test_loaded_modules(void)
             memset(&aggregation, 0, sizeof(aggregation));
             aggregation.proc = pi.hProcess;
 
-            ret = EnumerateLoadedModulesW64(pi.hProcess, aggregate_cb, &aggregation);
+            ret = wrapper_EnumerateLoadedModulesW64(pi.hProcess, aggregate_cb, &aggregation);
             ok(ret, "EnumerateLoadedModulesW64 failed: %lu\n", GetLastError());
 
             todo_wine
@@ -687,7 +707,7 @@ static void test_loaded_modules(void)
             ok(ret, "SymInitialize failed: %lu\n", GetLastError());
             memset(&aggregation2, 0, sizeof(aggregation2));
             aggregation2.proc = pi.hProcess;
-            ret = EnumerateLoadedModulesW64(pi.hProcess, aggregate_cb, &aggregation2);
+            ret = wrapper_EnumerateLoadedModulesW64(pi.hProcess, aggregate_cb, &aggregation2);
             ok(ret, "EnumerateLoadedModulesW64 failed: %lu\n", GetLastError());
 
             ok(aggregation2.count_32bit && aggregation2.count_64bit, "Wrong bitness aggregation count %u %u\n",
