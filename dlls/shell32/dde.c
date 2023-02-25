@@ -261,7 +261,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
     }
     else if (!wcsicmp(command, L"AddItem"))
     {
-        WCHAR *path, *name;
+        WCHAR *target, *space = NULL, *path, *name;
         IShellLinkW *link;
         IPersistFile *file;
         HRESULT hres;
@@ -272,15 +272,24 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
                                 &IID_IShellLinkW, (void **)&link);
         if (FAILED(hres)) return DDE_FNOTPROCESSED;
 
-        len = SearchPathW(NULL, argv[0], L".exe", 0, NULL, NULL);
-        if (len == 0)
+        target = wcsdup(argv[0]);
+        while (!(len = SearchPathW(NULL, target, L".exe", 0, NULL, NULL)))
         {
-            IShellLinkW_Release(link);
-            return DDE_FNOTPROCESSED;
+            /* progressively remove words from the end of the command line until we get a valid file name */
+            space = wcsrchr(target, ' ');
+            if (!space)
+            {
+                IShellLinkW_Release(link);
+                free(target);
+                return DDE_FNOTPROCESSED;
+            }
+            *space = 0;
         }
         path = malloc(len * sizeof(WCHAR));
-        SearchPathW(NULL, argv[0], L".exe", len, path, NULL);
+        SearchPathW(NULL, target, L".exe", len, path, NULL);
         IShellLinkW_SetPath(link, path);
+        if (space) IShellLinkW_SetArguments(link, argv[0] + (space - target) + 1);
+        free(target);
         free(path);
 
         if (argc >= 2) IShellLinkW_SetDescription(link, argv[1]);
