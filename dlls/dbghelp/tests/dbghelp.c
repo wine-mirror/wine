@@ -26,6 +26,8 @@
 #include "winternl.h"
 
 static const BOOL is_win64 = sizeof(void*) > sizeof(int);
+static WCHAR system_directory[MAX_PATH];
+static WCHAR wow64_directory[MAX_PATH];
 
 #if defined(__i386__) || defined(__x86_64__)
 
@@ -550,7 +552,6 @@ static BOOL CALLBACK aggregate_cb(PCWSTR imagename, DWORD64 base, ULONG sz, PVOI
     struct loaded_module_aggregation* aggregation = usr;
     IMAGEHLP_MODULEW64 im;
     BOOL ret, wow64;
-    WCHAR buffer[MAX_PATH];
 
     memset(&im, 0, sizeof(im));
     im.SizeOfStruct = sizeof(im);
@@ -590,12 +591,10 @@ static BOOL CALLBACK aggregate_cb(PCWSTR imagename, DWORD64 base, ULONG sz, PVOI
         aggregation->count_exe++;
     if (!wcsicmp(im.ModuleName, L"ntdll"))
         aggregation->count_ntdll++;
-    if (GetSystemDirectoryW(buffer, ARRAY_SIZE(buffer)) &&
-        !wcsnicmp(imagename, buffer, wcslen(buffer)))
+    if (!wcsnicmp(imagename, system_directory, wcslen(system_directory)))
         aggregation->count_systemdir++;
     if (is_win64 && IsWow64Process(aggregation->proc, &wow64) && wow64 &&
-        GetSystemWow64DirectoryW(buffer, ARRAY_SIZE(buffer)) &&
-        !wcsnicmp(imagename, buffer, wcslen(buffer)))
+        !wcsnicmp(imagename, wow64_directory, wcslen(wow64_directory)))
         aggregation->count_wowdir++;
 
     return TRUE;
@@ -755,6 +754,12 @@ START_TEST(dbghelp)
 
     ret = SymCleanup(GetCurrentProcess());
     ok(ret, "got error %lu\n", GetLastError());
+
+    ret = GetSystemDirectoryW(system_directory, ARRAY_SIZE(system_directory));
+    ok(ret, "GetSystemDirectoryW failed: %lu\n", GetLastError());
+    /* failure happens on a 32bit only wine setup */
+    if (!GetSystemWow64DirectoryW(wow64_directory, ARRAY_SIZE(wow64_directory)))
+        wow64_directory[0] = L'\0';
 
     if (test_modules())
     {
