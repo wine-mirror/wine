@@ -737,7 +737,7 @@ HRESULT WINAPI SHMapIDListToImageListIndexAsync(IUnknown *pts, IShellFolder *psf
  * Shell_GetCachedImageIndex		[SHELL32.72]
  *
  */
-static INT Shell_GetCachedImageIndexA(LPCSTR szPath, INT nIndex, BOOL bSimulateDoc)
+INT WINAPI Shell_GetCachedImageIndexA(LPCSTR szPath, INT nIndex, BOOL bSimulateDoc)
 {
 	INT ret, len;
 	LPWSTR szTemp;
@@ -755,7 +755,7 @@ static INT Shell_GetCachedImageIndexA(LPCSTR szPath, INT nIndex, BOOL bSimulateD
 	return ret;
 }
 
-static INT Shell_GetCachedImageIndexW(LPCWSTR szPath, INT nIndex, BOOL bSimulateDoc)
+INT WINAPI Shell_GetCachedImageIndexW(LPCWSTR szPath, INT nIndex, BOOL bSimulateDoc)
 {
 	WARN("(%s,%08x,%08x) semi-stub.\n",debugstr_w(szPath), nIndex, bSimulateDoc);
 

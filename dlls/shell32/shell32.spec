@@ -453,6 +453,8 @@
 @ stdcall ShellExecuteExW (long)
 @ stdcall ShellExecuteW (long wstr wstr wstr wstr long)
 @ stdcall ShellHookProc(long long long)
+@ stdcall Shell_GetCachedImageIndexA(str long long)
+@ stdcall Shell_GetCachedImageIndexW(wstr long long)
 @ stdcall Shell_NotifyIcon(long ptr) Shell_NotifyIconA
 @ stdcall Shell_NotifyIconA(long ptr)
 @ stdcall Shell_NotifyIconW(long ptr)
