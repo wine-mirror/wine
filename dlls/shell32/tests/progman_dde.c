@@ -231,9 +231,24 @@ static void test_parser(DWORD instance, HCONV hConv)
     ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
     ok(check_exists("test/foobar.lnk"), "link not created\n");
 
-    error = dde_execute(instance, hConv, "[AddItem(notepad,foo bar)]");
+    error = dde_execute(instance, hConv, "[AddItem(notepad\tfoo.txt,foo)]");
+    ok(error == DMLERR_NOTPROCESSED, "expected DMLERR_NOTPROCESSED, got %u\n", error);
+
+    error = dde_execute(instance, hConv, "[AddItem(notepad foo.txt,foo)]");
+    ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
+    ok(check_exists("test/foo.lnk"), "link not created\n");
+
+    error = dde_execute(instance, hConv, "[AddItem(notepad foo.txt bar.txt,foo bar)]");
     ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
     ok(check_exists("test/foo bar.lnk"), "link not created\n");
+
+    error = dde_execute(instance, hConv, "[AddItem(C:\\Program Files\\Internet Explorer\\iexplore.exe,IE)]");
+    ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
+    ok(check_exists("test/IE.lnk"), "link not created\n");
+
+    error = dde_execute(instance, hConv, "[AddItem(C:\\Program Files\\Internet Explorer\\iexplore.exe https://www.winehq.org/,WineHQ)]");
+    ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
+    ok(check_exists("test/WineHQ.lnk"), "link not created\n");
 
     error = dde_execute(instance, hConv, "[AddItem(notepad,a[b,c]d)]");
     ok(error == DMLERR_NOTPROCESSED, "expected DMLERR_NOTPROCESSED, got %u\n", error);
