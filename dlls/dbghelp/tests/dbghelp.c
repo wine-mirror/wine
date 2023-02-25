@@ -285,7 +285,7 @@ struct nth_module
 {
     HANDLE              proc;
     unsigned int        index;
-    BOOL                will_fail;
+    BOOL                could_fail;
     IMAGEHLP_MODULE64   module;
 };
 
@@ -297,9 +297,10 @@ static BOOL CALLBACK nth_module_cb(const char* name, DWORD64 base, void* usr)
     if (nth->index--) return TRUE;
     nth->module.SizeOfStruct = sizeof(nth->module);
     ret = SymGetModuleInfo64(nth->proc, base, &nth->module);
-    if (nth->will_fail)
+    if (nth->could_fail)
     {
-        ok(!ret, "SymGetModuleInfo64 should have failed\n");
+        /* Windows11 succeeds into loading the overlapped module */
+        ok(!ret || broken(base == nth->module.BaseOfImage), "SymGetModuleInfo64 should have failed\n");
         nth->module.BaseOfImage = base;
     }
     else
@@ -497,7 +498,7 @@ static void test_modules_overlap(void)
             }
             ok(nth.index == -1, "Expecting more modules\n");
             ok(nth.module.BaseOfImage == tests[i].outputs[j].base, "Wrong base\n");
-            if (!nth.will_fail)
+            if (!nth.could_fail)
             {
                 ok(nth.module.ImageSize == tests[i].outputs[j].size, "Wrong size\n");
                 ok(!strcasecmp(nth.module.ModuleName, tests[i].outputs[j].name), "Wrong name\n");
