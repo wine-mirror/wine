@@ -5,15 +5,15 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-10-30 12:44+0100\n"
-"Last-Translator: Can Taşan <betax34@hotmail.com>\n"
+"PO-Revision-Date: 2023-02-26 20:04+0300\n"
+"Last-Translator: Serkan ÖNDER <serkanonder@outlook.com>\n"
 "Language-Team: Turkish <kde-l10n-tr@kde.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Lokalize 1.5\n"
+"X-Generator: Poedit 3.0.1\n"
 
 #: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
 #: programs/winefile/winefile.rc:114
@@ -21,26 +21,20 @@ msgid "Security"
 msgstr "Güvenlik"
 
 #: dlls/aclui/aclui.rc:32
-#, fuzzy
-#| msgid "&User name:"
 msgid "&Group or user names:"
-msgstr "&Kullanıcı adı:"
+msgstr "&Grup veya kullanıcı adları:"
 
 #: dlls/aclui/aclui.rc:38
-#, fuzzy
-#| msgid "Yellow"
 msgid "Allow"
-msgstr "Sarı"
+msgstr "İzin ver"
 
 #: dlls/aclui/aclui.rc:39
 msgid "Deny"
-msgstr ""
+msgstr "Reddet"
 
 #: dlls/aclui/aclui.rc:47
-#, fuzzy
-#| msgid "Permission denied"
 msgid "Permissions for %1"
-msgstr "İzin engellendi."
+msgstr "%1 için izinler"
 
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
@@ -1340,10 +1334,8 @@ msgid "Options"
 msgstr "Seçenekler"
 
 #: dlls/compstui/compstui.rc:31
-#, fuzzy
-#| msgid "Defaults"
 msgid "Default"
-msgstr "Varsayılanlar"
+msgstr "Öntanımlı"
 
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
@@ -2656,7 +2648,7 @@ msgstr "Geçerlilik başlangıcı "
 
 #: dlls/cryptui/cryptui.rc:41
 msgid " to "
-msgstr " bitişi: "
+msgstr " bitişi "
 
 #: dlls/cryptui/cryptui.rc:42
 msgid "This certificate has an invalid signature."
@@ -2690,7 +2682,7 @@ msgstr "Değer"
 #: dlls/cryptui/cryptui.rc:49 dlls/cryptui/cryptui.rc:102
 #: dlls/cryptui/cryptui.rc:108
 msgid "<All>"
-msgstr "<Tüm>"
+msgstr "<All>"
 
 #: dlls/cryptui/cryptui.rc:50
 msgid "Version 1 Fields Only"
@@ -3135,7 +3127,7 @@ msgstr "Not: Bu sertifika için özel anahtar aktarılamaz."
 
 #: dlls/cryptui/cryptui.rc:177
 msgid "Intended Use"
-msgstr "İstenen Kullanım:"
+msgstr "Kullanım Amacı"
 
 #: dlls/cryptui/cryptui.rc:178 dlls/shell32/shell32.rc:150
 msgid "Location"
@@ -3725,30 +3717,24 @@ msgid "&Disable"
 msgstr "&Devre Dışı Bırak"
 
 #: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "Reset"
 msgid "&Reset"
-msgstr "Sıfırla"
+msgstr "&Sıfırla"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Enable"
 msgstr "&Etkinleştir"
 
 #: dlls/joy.cpl/joy.rc:43
-#, fuzzy
-#| msgid "Edit Override"
 msgid "&Override"
-msgstr "Öncelik Düzenle"
+msgstr "&Geçersiz kıl"
 
 #: dlls/joy.cpl/joy.rc:44
 msgid "Connected"
 msgstr "Bağlı"
 
 #: dlls/joy.cpl/joy.rc:46
-#, fuzzy
-#| msgid "Voice input device:"
 msgid "Connected (xinput device)"
-msgstr "Ses girdi aygıtı:"
+msgstr "Bağlandı (xgiriş aygıtı)"
 
 #: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
@@ -3764,25 +3750,23 @@ msgstr ""
 
 #: dlls/joy.cpl/joy.rc:55
 msgid "DInput"
-msgstr ""
+msgstr "DGirişi"
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Axes"
-msgstr ""
+msgstr "Eksenler"
 
 #: dlls/joy.cpl/joy.rc:60
 msgid "POVs"
-msgstr ""
+msgstr "POVs"
 
 #: dlls/joy.cpl/joy.rc:61
 msgid "Buttons"
 msgstr "Düğmeler"
 
 #: dlls/joy.cpl/joy.rc:62
-#, fuzzy
-#| msgid "Test Force Feedback"
 msgid "Force Feedback Effect"
-msgstr "Zorunlu Geri Beslemeyi Kontrol Et"
+msgstr "Zorunlu Geri Besleme Etkisi"
 
 #: dlls/joy.cpl/joy.rc:64
 msgid ""
@@ -3794,60 +3778,64 @@ msgstr ""
 
 #: dlls/joy.cpl/joy.rc:70
 msgid "XInput"
-msgstr ""
+msgstr "XGirişi"
 
 #: dlls/joy.cpl/joy.rc:73
-#, fuzzy
-#| msgid "User"
 msgid "User #0"
-msgstr "Kullanıcı"
+msgstr "Kullanıcı #0"
 
 #: dlls/joy.cpl/joy.rc:74
-#, fuzzy
-#| msgid "User"
 msgid "User #1"
-msgstr "Kullanıcı"
+msgstr "Kullanıcı #1"
 
 #: dlls/joy.cpl/joy.rc:75
-#, fuzzy
-#| msgid "User"
 msgid "User #2"
-msgstr "Kullanıcı"
+msgstr "Kullanıcı #2"
 
 #: dlls/joy.cpl/joy.rc:76
-#, fuzzy
-#| msgid "User"
 msgid "User #3"
-msgstr "Kullanıcı"
+msgstr "Kullanıcı #3"
 
 #: dlls/joy.cpl/joy.rc:78
 msgid ""
 "No user detected on slot #0, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
+"#0 numaralı yuvada kullanıcı algılanmadı, oyun kumandanızın takılı "
+"olduğundan ve Oyun Çubukları sekmesinde DGirişi için geçersiz "
+"kılınmadığından emin olun."
 
 #: dlls/joy.cpl/joy.rc:82
 msgid ""
 "No user detected on slot #1, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
+"#1 numaralı yuvada kullanıcı algılanmadı, oyun kumandanızın takılı "
+"olduğundan ve Oyun Çubukları sekmesinde DGirişi için geçersiz "
+"kılınmadığından emin olun."
 
 #: dlls/joy.cpl/joy.rc:86
 msgid ""
 "No user detected on slot #2, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
+"#2 numaralı yuvada kullanıcı algılanmadı, oyun kumandanızın takılı "
+"olduğundan ve Oyun Çubukları sekmesinde DGirişi için geçersiz "
+"kılınmadığından emin olun."
 
 #: dlls/joy.cpl/joy.rc:90
 msgid ""
 "No user detected on slot #3, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
+"#3 numaralı yuvada kullanıcı algılanmadı, oyun kumandanızın takılı "
+"olduğundan ve Oyun Çubukları sekmesinde DGirişi için geçersiz "
+"kılınmadığından emin olun."
 
 #: dlls/joy.cpl/joy.rc:95 dlls/joy.cpl/joy.rc:96 dlls/joy.cpl/joy.rc:97
 #: dlls/joy.cpl/joy.rc:98
 msgid "Rumble"
-msgstr ""
+msgstr "Gürlemek"
 
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
@@ -4059,15 +4047,15 @@ msgstr ""
 
 #: dlls/jscript/jscript.rc:74
 msgid "Cyclic __proto__ value"
-msgstr ""
+msgstr "Döngüsel __protokol__ değeri"
 
 #: dlls/jscript/jscript.rc:75
 msgid "Cannot create property for a non-extensible object"
-msgstr ""
+msgstr "Genişletilemez bir nesne için özellik oluşturulamaz"
 
 #: dlls/jscript/jscript.rc:76
 msgid "Cannot define property '|': object is not extensible"
-msgstr ""
+msgstr "'|' özelliği tanımlanamıyor: nesne genişletilebilir değil"
 
 #: dlls/jscript/jscript.rc:77
 msgid "Cannot redefine non-configurable property '|'"
@@ -4078,10 +4066,8 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "'|' yazılamayan nesnesi değiştirilemiyor"
 
 #: dlls/jscript/jscript.rc:79
-#, fuzzy
-#| msgid "'[object]' is not a date object"
 msgid "'this' is not a | object"
-msgstr "'[object]' bir tarih nesnesi değil"
+msgstr "'bu' bir | nesne değil"
 
 #: dlls/jscript/jscript.rc:80
 msgid "Property cannot have both accessors and a value"
@@ -4098,45 +4084,39 @@ msgstr "Wine"
 
 #: dlls/kernelbase/kernelbase.rc:29
 msgid "Western Europe and United States"
-msgstr ""
+msgstr "Batı Avrupa ve Amerika Birleşik Devletleri"
 
 #: dlls/kernelbase/kernelbase.rc:30
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe"
 msgstr "Orta Avrupa"
 
 #: dlls/kernelbase/kernelbase.rc:34
-#, fuzzy
-#| msgid "Turkish"
 msgid "Turkic"
 msgstr "Türkçe"
 
 #: dlls/kernelbase/kernelbase.rc:36
 msgid "Korean"
-msgstr ""
+msgstr "Korece"
 
 #: dlls/kernelbase/kernelbase.rc:37
-#, fuzzy
-#| msgid "Operation Ceased"
 msgid "Traditional Chinese"
-msgstr "İşlem Durduruldu"
+msgstr "Geleneksel Çince"
 
 #: dlls/kernelbase/kernelbase.rc:38
 msgid "Simplified Chinese"
-msgstr ""
+msgstr "Basitleştirilmiş Çince"
 
 #: dlls/kernelbase/kernelbase.rc:43
 msgid "Indic"
-msgstr ""
+msgstr "Hintçe"
 
 #: dlls/kernelbase/kernelbase.rc:44
 msgid "Georgian"
-msgstr ""
+msgstr "Gürcüce"
 
 #: dlls/kernelbase/kernelbase.rc:45
 msgid "Armenian"
-msgstr ""
+msgstr "Ermenice"
 
 #: dlls/kernelbase/winerror.mc:28
 msgid "Success.\n"
@@ -4280,7 +4260,7 @@ msgstr "Yanlış disk.\n"
 
 #: dlls/kernelbase/winerror.mc:203
 msgid "Sharing buffer exceeded.\n"
-msgstr "Paylaşma tamponu doldu.\n"
+msgstr "Paylaşım arabelleği aşıldı.\n"
 
 #: dlls/kernelbase/winerror.mc:208
 msgid "End of file.\n"
@@ -4464,7 +4444,7 @@ msgstr "Açılamadı.\n"
 
 #: dlls/kernelbase/winerror.mc:433
 msgid "Buffer overflow.\n"
-msgstr "Tampon bellek taşması.\n"
+msgstr "Arabellek aşıldı.\n"
 
 #: dlls/kernelbase/winerror.mc:443
 msgid "No more search handles.\n"
@@ -4496,7 +4476,7 @@ msgstr "Bayrak işareti zaman aşımı.\n"
 
 #: dlls/kernelbase/winerror.mc:478
 msgid "Insufficient buffer.\n"
-msgstr "Yetersiz tampon.\n"
+msgstr "Yetersiz arabellek.\n"
 
 #: dlls/kernelbase/winerror.mc:483 dlls/mferror/mferror.mc:109
 msgid "Invalid name.\n"
@@ -6764,7 +6744,7 @@ msgstr "Bozuk taslak verisi.\n"
 
 #: dlls/kernelbase/winerror.mc:3333
 msgid "Invalid user buffer.\n"
-msgstr "Geçersiz kullanıcı tamponu.\n"
+msgstr "Geçersiz kullanıcı arabelleği.\n"
 
 #: dlls/kernelbase/winerror.mc:3338
 msgid "Unrecognized media.\n"
@@ -7095,58 +7075,44 @@ msgid "This network connection does not exist.\n"
 msgstr "Ağ bağlantısı mevcut değil.\n"
 
 #: dlls/kernelbase/winerror.mc:3748
-#, fuzzy
-#| msgid "Invalid at interrupt time.\n"
 msgid "Call interrupted.\n"
-msgstr "Kesme zamanında geçersiz.\n"
+msgstr "Çağrı kesildi.\n"
 
 #: dlls/kernelbase/winerror.mc:3753
-#, fuzzy
-#| msgid "Invalid handle.\n"
 msgid "Invalid file handle.\n"
-msgstr "Geçersiz işleme.\n"
+msgstr "Geçersiz dosya tanıtıcısı.\n"
 
 #: dlls/kernelbase/winerror.mc:3763
-#, fuzzy
-#| msgid "Invalid network address.\n"
 msgid "Invalid pointer address.\n"
-msgstr "Geçersiz ağ adresi.\n"
+msgstr "Geçersiz işaretçi adresi.\n"
 
 #: dlls/kernelbase/winerror.mc:3768
-#, fuzzy
-#| msgid "Invalid name.\n"
 msgid "Invalid argument.\n"
-msgstr "Geçersiz ad.\n"
+msgstr "Geçersiz argüman.\n"
 
 #: dlls/kernelbase/winerror.mc:3778
 msgid "Connection reset by peer.\n"
 msgstr "Bağlantı eş tarafından sıfırlandı.\n"
 
 #: dlls/kernelbase/winerror.mc:3788
-#, fuzzy
-#| msgid "Point not found.\n"
 msgid "Host not found.\n"
-msgstr "İşaret bulunamadı.\n"
+msgstr "Ana bilgisayar bulunamadı.\n"
 
 #: dlls/kernelbase/winerror.mc:3793
-#, fuzzy
-#| msgid "Attribute is not found.\n"
 msgid "Nonauthoritative host not found.\n"
-msgstr "Özellik bulunamadı.\n"
+msgstr "Yetkili olmayan ana bilgisayar bulunamadı.\n"
 
 #: dlls/kernelbase/winerror.mc:3798
-#, fuzzy
-#| msgid "Unrecoverable error occurred.\n"
 msgid "Nonrecoverable error.\n"
-msgstr "Kurtarılamaz hata oluştu.\n"
+msgstr "Kurtarılamaz hata.\n"
 
 #: dlls/kernelbase/winerror.mc:3803
 msgid "Name valid, no data record.\n"
-msgstr ""
+msgstr "İsim geçerli, veri kaydı yok.\n"
 
 #: dlls/kernelbase/winerror.mc:3817
 msgid "Not implemented.\n"
-msgstr "Eklenmedi/Geliştirilmedi\n"
+msgstr "Eklenmedi/Geliştirilmedi.\n"
 
 #: dlls/kernelbase/winerror.mc:3838
 msgid "Call failed.\n"
@@ -7170,569 +7136,468 @@ msgid "Normal"
 msgstr "Normal"
 
 #: dlls/localspl/localspl.rc:37
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter"
-msgstr "Sürücü Harfi"
+msgstr "Mektup"
 
 #: dlls/localspl/localspl.rc:38
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Small"
-msgstr "Sürücü Harfi"
+msgstr "Küçük Zarf"
 
 #: dlls/localspl/localspl.rc:39
-#, fuzzy
-#| msgid "&Table"
 msgid "Tabloid"
-msgstr "&Tablo"
+msgstr "Sıkıştırılmış"
 
 #: dlls/localspl/localspl.rc:40
 msgid "Ledger"
-msgstr ""
+msgstr "Defter"
 
 #: dlls/localspl/localspl.rc:41
 msgid "Legal"
-msgstr ""
+msgstr "Resmi"
 
 #: dlls/localspl/localspl.rc:42
-#, fuzzy
-#| msgid "State"
 msgid "Statement"
-msgstr "Durum"
+msgstr "İfade"
 
 #: dlls/localspl/localspl.rc:43
-#, fuzzy
-#| msgid "&Execute..."
 msgid "Executive"
-msgstr "Çalı&ştır..."
+msgstr "Yönetici"
 
 #: dlls/localspl/localspl.rc:44
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A3"
-msgstr "T"
+msgstr "A3"
 
 #: dlls/localspl/localspl.rc:45
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A4"
-msgstr "T"
+msgstr "A4"
 
 #: dlls/localspl/localspl.rc:46
-#, fuzzy
-#| msgid "Small"
 msgid "A4 Small"
-msgstr "Küçük"
+msgstr "A4 Küçük"
 
 #: dlls/localspl/localspl.rc:47
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A5"
-msgstr "T"
+msgstr "A5"
 
 #: dlls/localspl/localspl.rc:48
 msgid "B4 (JIS)"
-msgstr ""
+msgstr "B4 (JIS)"
 
 #: dlls/localspl/localspl.rc:49
 msgid "B5 (JIS)"
-msgstr ""
+msgstr "B5 (JIS)"
 
 #: dlls/localspl/localspl.rc:50
 msgid "Folio"
-msgstr ""
+msgstr "Yaprak"
 
 #: dlls/localspl/localspl.rc:51
 msgid "Quarto"
-msgstr ""
+msgstr "4 yaprak"
 
 #: dlls/localspl/localspl.rc:52
 msgid "10x14"
-msgstr ""
+msgstr "10x14"
 
 #: dlls/localspl/localspl.rc:53
 msgid "11x17"
-msgstr ""
+msgstr "11x17"
 
 #: dlls/localspl/localspl.rc:54
-#, fuzzy
-#| msgid "Notepad"
 msgid "Note"
-msgstr "Not Defteri"
+msgstr "Not"
 
 #: dlls/localspl/localspl.rc:55
 msgid "Envelope #9"
-msgstr ""
+msgstr "Zarf #9"
 
 #: dlls/localspl/localspl.rc:56
 msgid "Envelope #10"
-msgstr ""
+msgstr "Zarf #10"
 
 #: dlls/localspl/localspl.rc:57
 msgid "Envelope #11"
-msgstr ""
+msgstr "Zarf #11"
 
 #: dlls/localspl/localspl.rc:58
 msgid "Envelope #12"
-msgstr ""
+msgstr "Zarf #12"
 
 #: dlls/localspl/localspl.rc:59
 msgid "Envelope #14"
-msgstr ""
+msgstr "Zarf #14"
 
 #: dlls/localspl/localspl.rc:60
 msgid "C size sheet"
-msgstr ""
+msgstr "C boyut sayfası"
 
 #: dlls/localspl/localspl.rc:61
 msgid "D size sheet"
-msgstr ""
+msgstr "D boyut sayfası"
 
 #: dlls/localspl/localspl.rc:62
 msgid "E size sheet"
-msgstr ""
+msgstr "E boyut sayfası"
 
 #: dlls/localspl/localspl.rc:63
 msgid "Envelope DL"
-msgstr ""
+msgstr "Zarf DL"
 
 #: dlls/localspl/localspl.rc:64
 msgid "Envelope C5"
-msgstr ""
+msgstr "Zarf C5"
 
 #: dlls/localspl/localspl.rc:65
 msgid "Envelope C3"
-msgstr ""
+msgstr "Zarf C3"
 
 #: dlls/localspl/localspl.rc:66
 msgid "Envelope C4"
-msgstr ""
+msgstr "Zarf C4"
 
 #: dlls/localspl/localspl.rc:67
 msgid "Envelope C6"
-msgstr ""
+msgstr "Zarf C6"
 
 #: dlls/localspl/localspl.rc:68
 msgid "Envelope C65"
-msgstr ""
+msgstr "Zarf C65"
 
 #: dlls/localspl/localspl.rc:69
 msgid "Envelope B4"
-msgstr ""
+msgstr "Zarf B4"
 
 #: dlls/localspl/localspl.rc:70
 msgid "Envelope B5"
-msgstr ""
+msgstr "Zarf B5"
 
 #: dlls/localspl/localspl.rc:71
 msgid "Envelope B6"
-msgstr ""
+msgstr "Zarf B6"
 
 #: dlls/localspl/localspl.rc:72
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "Envelope"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "Zarf"
 
 #: dlls/localspl/localspl.rc:73
 msgid "Envelope Monarch"
-msgstr ""
+msgstr "Zarf Monarş"
 
 #: dlls/localspl/localspl.rc:74
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "6 3/4 Envelope"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "6 3/4 Zarf"
 
 #: dlls/localspl/localspl.rc:75
 msgid "US Std Fanfold"
-msgstr ""
+msgstr "ABD Std Yelpazesi"
 
 #: dlls/localspl/localspl.rc:76
 msgid "German Std Fanfold"
-msgstr ""
+msgstr "Alman Std Yelpazesi"
 
 #: dlls/localspl/localspl.rc:77
 msgid "German Legal Fanfold"
-msgstr ""
+msgstr "Alman Yasal Yelpazesi"
 
 #: dlls/localspl/localspl.rc:78
 msgid "B4 (ISO)"
-msgstr ""
+msgstr "B4 (ISO)"
 
 #: dlls/localspl/localspl.rc:79
-#, fuzzy
-#| msgid "Japanese"
 msgid "Japanese Postcard"
-msgstr "Japonca"
+msgstr "Japon Kartpostalı"
 
 #: dlls/localspl/localspl.rc:80
 msgid "9x11"
-msgstr ""
+msgstr "9x11"
 
 #: dlls/localspl/localspl.rc:81
 msgid "10x11"
-msgstr ""
+msgstr "10x11"
 
 #: dlls/localspl/localspl.rc:82
 msgid "15x11"
-msgstr ""
+msgstr "15x11"
 
 #: dlls/localspl/localspl.rc:83
 msgid "Envelope Invite"
-msgstr ""
+msgstr "Zarf Davetiyesi"
 
 #: dlls/localspl/localspl.rc:84
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Extra"
-msgstr "Sürücü Harfi"
+msgstr "Ekstra Mektup"
 
 #: dlls/localspl/localspl.rc:85
 msgid "Legal Extra"
-msgstr ""
+msgstr "Ekstra Yasal"
 
 #: dlls/localspl/localspl.rc:86
 msgid "Tabloid Extra"
-msgstr ""
+msgstr "Gazete Ekstra"
 
 #: dlls/localspl/localspl.rc:87
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A4 Extra"
-msgstr "D&iğerleri"
+msgstr "A4 Ekstra"
 
 #: dlls/localspl/localspl.rc:88
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "Letter Transverse"
-msgstr "çapraz"
+msgstr "Mektup Enine"
 
 #: dlls/localspl/localspl.rc:89
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A4 Transverse"
-msgstr "çapraz"
+msgstr "A4 Enine"
 
 #: dlls/localspl/localspl.rc:90
 msgid "Letter Extra Transverse"
-msgstr ""
+msgstr "Harf Ekstra Enine"
 
 #: dlls/localspl/localspl.rc:91
 msgid "Super A"
-msgstr ""
+msgstr "Süper A"
 
 #: dlls/localspl/localspl.rc:92
 msgid "Super B"
-msgstr ""
+msgstr "Süper B"
 
 #: dlls/localspl/localspl.rc:93
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Plus"
-msgstr "Sürücü Harfi"
+msgstr "Artı Mektup"
 
 #: dlls/localspl/localspl.rc:94
 msgid "A4 Plus"
-msgstr ""
+msgstr "At Artı"
 
 #: dlls/localspl/localspl.rc:95
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A5 Transverse"
-msgstr "çapraz"
+msgstr "A5 Enine"
 
 #: dlls/localspl/localspl.rc:96
 msgid "B5 (JIS) Transverse"
-msgstr ""
+msgstr "B5 (JIS) Enine"
 
 #: dlls/localspl/localspl.rc:97
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A3 Extra"
-msgstr "D&iğerleri"
+msgstr "A3 Ekstra"
 
 #: dlls/localspl/localspl.rc:98
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A5 Extra"
-msgstr "D&iğerleri"
+msgstr "A5 Ekstra"
 
 #: dlls/localspl/localspl.rc:99
 msgid "B5 (ISO) Extra"
-msgstr ""
+msgstr "B5 (ISO) Ekstra"
 
 #: dlls/localspl/localspl.rc:100
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A2"
-msgstr "T"
+msgstr "A2"
 
 #: dlls/localspl/localspl.rc:101
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A3 Transverse"
-msgstr "çapraz"
+msgstr "A3 Enine"
 
 #: dlls/localspl/localspl.rc:102
 msgid "A3 Extra Transverse"
-msgstr ""
+msgstr "A3 Ekstra Enine"
 
 #: dlls/localspl/localspl.rc:103
 msgid "Japanese Double Postcard"
-msgstr ""
+msgstr "Japon Çift Kartpostal"
 
 #: dlls/localspl/localspl.rc:104
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A6"
-msgstr "T"
+msgstr "A6"
 
 #: dlls/localspl/localspl.rc:105
 msgid "Japanese Envelope Kaku #2"
-msgstr ""
+msgstr "Japon Zarfı Kaku #2"
 
 #: dlls/localspl/localspl.rc:106
 msgid "Japanese Envelope Kaku #3"
-msgstr ""
+msgstr "Japon Zarfı Kaku #3"
 
 #: dlls/localspl/localspl.rc:107
 msgid "Japanese Envelope Chou #3"
-msgstr ""
+msgstr "Japon Zarfı Chou # 3"
 
 #: dlls/localspl/localspl.rc:108
 msgid "Japanese Envelope Chou #4"
-msgstr ""
+msgstr "Japon Zarfı Chou # 4"
 
 #: dlls/localspl/localspl.rc:109
 msgid "Letter Rotated"
-msgstr ""
+msgstr "Mektup Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:110
 msgid "A3 Rotated"
-msgstr ""
+msgstr "A3 Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:111
 msgid "A4 Rotated"
-msgstr ""
+msgstr "A4 Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:112
 msgid "A5 Rotated"
-msgstr ""
+msgstr "A5 Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:113
 msgid "B4 (JIS) Rotated"
-msgstr ""
+msgstr "B4 (JIS) Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:114
 msgid "B5 (JIS) Rotated"
-msgstr ""
+msgstr "B5 (JIS) Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:115
 msgid "Japanese Postcard Rotated"
-msgstr ""
+msgstr "Döndürülmüş Japon Kartpostalı"
 
 #: dlls/localspl/localspl.rc:116
 msgid "Double Japan Postcard Rotated"
-msgstr ""
+msgstr "Döndürülmüş Çift Japon Kartpostalı"
 
 #: dlls/localspl/localspl.rc:117
 msgid "A6 Rotated"
-msgstr ""
+msgstr "A6 Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:118
 msgid "Japan Envelope Kaku #2 Rotated"
-msgstr ""
+msgstr "Japon Zarfı Kaku #2 Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:119
 msgid "Japan Envelope Kaku #3 Rotated"
-msgstr ""
+msgstr "Japon Zarfı Kaku #3 Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:120
 msgid "Japan Envelope Chou #3 Rotated"
-msgstr ""
+msgstr "Japon Zarfı Chou #3 Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:121
 msgid "Japan Envelope Chou #4 Rotated"
-msgstr ""
+msgstr "Japon Zarfı Chou #4 Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:122
 msgid "B6 (JIS)"
-msgstr ""
+msgstr "B6 (JIS)"
 
 #: dlls/localspl/localspl.rc:123
 msgid "B6 (JIS) Rotated"
-msgstr ""
+msgstr "B6 (JIS) Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:124
 msgid "12x11"
-msgstr ""
+msgstr "12x11"
 
 #: dlls/localspl/localspl.rc:125
 msgid "Japan Envelope You #4"
-msgstr ""
+msgstr "Japon Size Zarf #4"
 
 #: dlls/localspl/localspl.rc:126
 msgid "Japan Envelope You #4 Rotated"
-msgstr ""
+msgstr "Japon Zarfı You #4 Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:127
 msgid "PRC 16K"
-msgstr ""
+msgstr "PRC 16K"
 
 #: dlls/localspl/localspl.rc:128
 msgid "PRC 32K"
-msgstr ""
+msgstr "PRC 32K"
 
 #: dlls/localspl/localspl.rc:129
 msgid "PRC 32K(Big)"
-msgstr ""
+msgstr "ÇHC 32K(Büyük)"
 
 #: dlls/localspl/localspl.rc:130
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #1"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "PRC Zarf #1"
 
 #: dlls/localspl/localspl.rc:131
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #2"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "PRC Zarf #2"
 
 #: dlls/localspl/localspl.rc:132
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #3"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "PRC Zarf #3"
 
 #: dlls/localspl/localspl.rc:133
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #4"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "PRC Zarf #4"
 
 #: dlls/localspl/localspl.rc:134
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #5"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "PRC Zarf #5"
 
 #: dlls/localspl/localspl.rc:135
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #6"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "PRC Zarf #6"
 
 #: dlls/localspl/localspl.rc:136
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #7"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "PRC Zarf #7"
 
 #: dlls/localspl/localspl.rc:137
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #8"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "PRC Zarf #8"
 
 #: dlls/localspl/localspl.rc:138
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #9"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "PRC Zarf #9"
 
 #: dlls/localspl/localspl.rc:139
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #10"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "PRC Zarf #10"
 
 #: dlls/localspl/localspl.rc:140
 msgid "PRC 16K Rotated"
-msgstr ""
+msgstr "ÇHC 16K Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:141
 msgid "PRC 32K Rotated"
-msgstr ""
+msgstr "ÇHC 32K Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:142
 msgid "PRC 32K(Big) Rotated"
-msgstr ""
+msgstr "ÇHC 32K(Büyük) Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:143
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #1 Rotated"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "PRC Zarf #1 Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:144
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #2 Rotated"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "PRC Zarf #2 Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:145
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #3 Rotated"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "PRC Zarf #3 Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:146
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #4 Rotated"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "PRC Zarf #4 Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:147
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #5 Rotated"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "PRC Zarf #5 Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:148
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #6 Rotated"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "PRC Zarf #6 Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:149
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #7 Rotated"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "PRC Zarf #7 Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:150
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #8 Rotated"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "PRC Zarf #8 Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:151
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #9 Rotated"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "PRC Zarf #9 Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:152
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #10 Rotated"
-msgstr "PKCS 7 Zarflanmış"
+msgstr "PRC Zarf #10 Döndürülmüş"
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
@@ -7801,7 +7666,7 @@ msgstr "Media Foundation platformu başlatılmadı.\n"
 
 #: dlls/mferror/mferror.mc:39
 msgid "Buffer is too small.\n"
-msgstr "Tampon çok küçük.\n"
+msgstr "Arabellek çok küçük.\n"
 
 #: dlls/mferror/mferror.mc:46
 msgid "Invalid request.\n"
@@ -7933,7 +7798,7 @@ msgstr "Kurtarılamaz hata oluştu.\n"
 
 #: dlls/mferror/mferror.mc:298
 msgid "Sample has too many buffers.\n"
-msgstr "Örnekte çok fazla tampon var.\n"
+msgstr "Örnekte çok fazla arabellek var.\n"
 
 #: dlls/mferror/mferror.mc:305
 msgid "Sample is not writable.\n"
@@ -8822,7 +8687,7 @@ msgstr "&Veri Oranı"
 
 #: dlls/msvfw32/msvfw32.rc:55
 msgid "kB/s"
-msgstr "KB/sn"
+msgstr "kB/s"
 
 #: dlls/msvfw32/msvfw32.rc:28
 msgid "Full Frames (Uncompressed)"
@@ -8870,7 +8735,7 @@ msgstr "uyarı"
 
 #: dlls/oleacc/oleacc.rc:40
 msgid "window"
-msgstr "Pencere"
+msgstr "pencere"
 
 #: dlls/oleacc/oleacc.rc:41
 msgid "client"
@@ -9074,7 +8939,7 @@ msgstr "boşluk"
 
 #: dlls/oleacc/oleacc.rc:91
 msgid "page tab list"
-msgstr "Sayfa sekme listesi"
+msgstr "sayfa sekme listesi"
 
 #: dlls/oleacc/oleacc.rc:92
 msgid "clock"
@@ -9346,7 +9211,7 @@ msgstr "Ko&ruma seviyesi:"
 
 #: dlls/oledb32/version.rc:101
 msgid "Connect:"
-msgstr "Bağlan"
+msgstr "Bağlan:"
 
 #: dlls/oledb32/version.rc:103
 msgid "seconds."
@@ -9889,7 +9754,7 @@ msgstr "Yığın GörüntülemeAğacı"
 
 #: dlls/shdoclc/shdoclc.rc:207
 msgid "Dump FormatCaches"
-msgstr "Yığın BiçimTamponları"
+msgstr "Döküm Biçimi Önbellekleri"
 
 #: dlls/shdoclc/shdoclc.rc:208
 msgid "Dump LayoutRects"
@@ -10597,7 +10462,7 @@ msgstr "Çin Yaz Saati"
 
 #: dlls/tzres/tzres.rc:110
 msgid "(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi"
-msgstr ""
+msgstr "(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi"
 
 #: dlls/tzres/tzres.rc:249
 msgctxt "maximum 31 characters"
@@ -10611,7 +10476,7 @@ msgstr "Kuzey Asya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:251
 msgid "(UTC+07:00) Krasnoyarsk"
-msgstr ""
+msgstr "(UTC+07:00) Krasnoyarsk"
 
 #: dlls/tzres/tzres.rc:150
 msgctxt "maximum 31 characters"
@@ -10625,18 +10490,16 @@ msgstr "Gürcistan Yaz Saati"
 
 #: dlls/tzres/tzres.rc:152
 msgid "(UTC+04:00) Tbilisi"
-msgstr ""
+msgstr "(UTC+04:00) Tbilisi"
 
 #: dlls/tzres/tzres.rc:375 dlls/tzres/tzres.rc:376
 msgctxt "maximum 31 characters"
 msgid "UTC+12"
-msgstr ""
+msgstr "UTC+12"
 
 #: dlls/tzres/tzres.rc:377
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC+12:00) Coordinated Universal Time+12"
-msgstr "Eşgüdümlü Evrensel Saat"
+msgstr "(UTC+12:00) Eşgüdümlü Evrensel Saat+12"
 
 #: dlls/tzres/tzres.rc:234
 msgctxt "maximum 31 characters"
@@ -10650,14 +10513,12 @@ msgstr "Nepal Yaz Saati"
 
 #: dlls/tzres/tzres.rc:236
 msgid "(UTC+05:45) Kathmandu"
-msgstr ""
+msgstr "(UTC+05:45) Kathmandu"
 
 #: dlls/tzres/tzres.rc:72
-#, fuzzy
-#| msgid "Cape Verde Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Cape Verde Standard Time"
-msgstr "Yeşil Burun Adaları Standart Saati"
+msgstr "Yeşil Burun Standart Saati"
 
 #: dlls/tzres/tzres.rc:73
 msgctxt "maximum 31 characters"
@@ -10666,7 +10527,7 @@ msgstr "Yeşil Burun Adaları Yaz Saati"
 
 #: dlls/tzres/tzres.rc:74
 msgid "(UTC-01:00) Cabo Verde Is."
-msgstr ""
+msgstr "(UTC-01:00) Cabo Verde Is."
 
 #: dlls/tzres/tzres.rc:165
 msgctxt "maximum 31 characters"
@@ -10680,7 +10541,7 @@ msgstr "Haiti Yaz Saati"
 
 #: dlls/tzres/tzres.rc:167
 msgid "(UTC-05:00) Haiti"
-msgstr ""
+msgstr "(UTC-05:00) Haiti"
 
 #: dlls/tzres/tzres.rc:93
 msgctxt "maximum 31 characters"
@@ -10694,7 +10555,7 @@ msgstr "Orta Avrupa Yaz Saati"
 
 #: dlls/tzres/tzres.rc:95
 msgid "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb"
-msgstr ""
+msgstr "UTC+01:00) Saraybosna, Üsküp, Varşova, Zagreb"
 
 #: dlls/tzres/tzres.rc:216
 msgctxt "maximum 31 characters"
@@ -10708,36 +10569,30 @@ msgstr "Fas Yaz Saati"
 
 #: dlls/tzres/tzres.rc:218
 msgid "(UTC+01:00) Casablanca"
-msgstr ""
+msgstr "(UTC+01:00) Kazablanka"
 
 #: dlls/tzres/tzres.rc:384 dlls/tzres/tzres.rc:385
 msgctxt "maximum 31 characters"
 msgid "UTC-08"
-msgstr ""
+msgstr "UTC-08"
 
 #: dlls/tzres/tzres.rc:386
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-08:00) Coordinated Universal Time-08"
-msgstr "Eşgüdümlü Evrensel Saat"
+msgstr "(UTC-08:00) Eşgüdümlü Evrensel Saat-08"
 
 #: dlls/tzres/tzres.rc:21
-#, fuzzy
-#| msgid "Atlantic Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Altai Standard Time"
-msgstr "Atlas Okyanusu Standart Saati"
+msgstr "Altay Standart Saati"
 
 #: dlls/tzres/tzres.rc:22
-#, fuzzy
-#| msgid "Atlantic Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Altai Daylight Time"
-msgstr "Atlas Okyanusu Yaz Saati"
+msgstr "Altay Yaz Saati"
 
 #: dlls/tzres/tzres.rc:23
 msgid "(UTC+07:00) Barnaul, Gorno-Altaysk"
-msgstr ""
+msgstr "(UTC+07:00) Barnaul, Gorno-Altaysk"
 
 #: dlls/tzres/tzres.rc:90
 msgctxt "maximum 31 characters"
@@ -10751,7 +10606,7 @@ msgstr "Orta Avrupa Yaz Saati"
 
 #: dlls/tzres/tzres.rc:92
 msgid "(UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague"
-msgstr ""
+msgstr "(UTC+01:00) Belgrad, Bratislava, Budapeşte, Ljubljana, Prag"
 
 #: dlls/tzres/tzres.rc:174
 msgctxt "maximum 31 characters"
@@ -10765,7 +10620,7 @@ msgstr "İran Yaz Saati"
 
 #: dlls/tzres/tzres.rc:176
 msgid "(UTC+03:30) Tehran"
-msgstr ""
+msgstr "(UTC+03:30) Tahran"
 
 #: dlls/tzres/tzres.rc:300
 msgctxt "maximum 31 characters"
@@ -10778,28 +10633,22 @@ msgid "Saint Pierre Daylight Time"
 msgstr "Saint Pierre Yaz Saati"
 
 #: dlls/tzres/tzres.rc:302
-#, fuzzy
-#| msgid "Saint Pierre Standard Time"
 msgid "(UTC-03:00) Saint Pierre and Miquelon"
-msgstr "Saint Pierre Standart Saati"
+msgstr "(UTC-03:00) Saint Pierre ve Miquelon"
 
 #: dlls/tzres/tzres.rc:309
-#, fuzzy
-#| msgid "Samoa Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Sao Tome Standard Time"
-msgstr "Samoa Standart Saati"
+msgstr "Sao Tome Standart Saati"
 
 #: dlls/tzres/tzres.rc:310
-#, fuzzy
-#| msgid "Samoa Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Sao Tome Daylight Time"
-msgstr "Samoa Yaz Saati"
+msgstr "Sao Tome Yaz Saati"
 
 #: dlls/tzres/tzres.rc:311
 msgid "(UTC+00:00) Sao Tome"
-msgstr ""
+msgstr "(UTC+00:00) Sao Tome"
 
 #: dlls/tzres/tzres.rc:231
 msgctxt "maximum 31 characters"
@@ -10813,7 +10662,7 @@ msgstr "Namibya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:233
 msgid "(UTC+02:00) Windhoek"
-msgstr ""
+msgstr "(UTC+02:00) Windhoek"
 
 #: dlls/tzres/tzres.rc:351
 msgctxt "maximum 31 characters"
@@ -10827,7 +10676,7 @@ msgstr "Tonga Yaz Saati"
 
 #: dlls/tzres/tzres.rc:353
 msgid "(UTC+13:00) Nuku'alofa"
-msgstr ""
+msgstr "(UTC+13:00) Nuku'alofa"
 
 #: dlls/tzres/tzres.rc:222
 msgctxt "maximum 31 characters"
@@ -10841,7 +10690,7 @@ msgstr "Dağ Yaz Saati (Meksika)"
 
 #: dlls/tzres/tzres.rc:224
 msgid "(UTC-07:00) Chihuahua, La Paz, Mazatlan"
-msgstr ""
+msgstr "(UTC-07:00) Chihuahua, La Paz, Mazatlan"
 
 #: dlls/tzres/tzres.rc:153
 msgctxt "maximum 31 characters"
@@ -10855,25 +10704,21 @@ msgstr "GMT Yaz Saati"
 
 #: dlls/tzres/tzres.rc:155
 msgid "(UTC+00:00) Dublin, Edinburgh, Lisbon, London"
-msgstr ""
+msgstr "(UTC+00:00) Dublin, Edinburg, Lizbon, Londra"
 
 #: dlls/tzres/tzres.rc:324
-#, fuzzy
-#| msgid "Jordan Standard Time"
 msgctxt "maximum 31 characters"
 msgid "South Sudan Standard Time"
-msgstr "Ürdün Standart Saati"
+msgstr "Güney Sudan Standart Saati"
 
 #: dlls/tzres/tzres.rc:325
-#, fuzzy
-#| msgid "Jordan Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "South Sudan Daylight Time"
-msgstr "Ürdün Yaz Saati"
+msgstr "Güney Sudan Yaz Saati"
 
 #: dlls/tzres/tzres.rc:326
 msgid "(UTC+02:00) Juba"
-msgstr ""
+msgstr "(UTC+02:00) Juba"
 
 #: dlls/tzres/tzres.rc:84
 msgctxt "maximum 31 characters"
@@ -10887,7 +10732,7 @@ msgstr "Orta Asya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:86
 msgid "(UTC+06:00) Astana"
-msgstr ""
+msgstr "(UTC+06:00) Astana"
 
 #: dlls/tzres/tzres.rc:195
 msgctxt "maximum 31 characters"
@@ -10901,7 +10746,7 @@ msgstr "Lord Howe Yaz Saati"
 
 #: dlls/tzres/tzres.rc:197
 msgid "(UTC+10:30) Lord Howe Island"
-msgstr ""
+msgstr "(UTC+10:30) Lord Howe Adası"
 
 #: dlls/tzres/tzres.rc:30
 msgctxt "maximum 31 characters"
@@ -10915,18 +10760,16 @@ msgstr "Arabistan Yaz Saati"
 
 #: dlls/tzres/tzres.rc:32
 msgid "(UTC+03:00) Baghdad"
-msgstr ""
+msgstr "(UTC+03:00) Bağdat"
 
 #: dlls/tzres/tzres.rc:378 dlls/tzres/tzres.rc:379
 msgctxt "maximum 31 characters"
 msgid "UTC+13"
-msgstr ""
+msgstr "UTC+13"
 
 #: dlls/tzres/tzres.rc:380
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC+13:00) Coordinated Universal Time+13"
-msgstr "Eşgüdümlü Evrensel Saat"
+msgstr "(UTC+13:00) Eşgüdümlü Evrensel Saat+13"
 
 #: dlls/tzres/tzres.rc:198
 msgctxt "maximum 31 characters"
@@ -10940,7 +10783,7 @@ msgstr "Magadan Yaz Saati"
 
 #: dlls/tzres/tzres.rc:200
 msgid "(UTC+11:00) Magadan"
-msgstr ""
+msgstr "(UTC+11:00) Magadan"
 
 #: dlls/tzres/tzres.rc:240
 msgctxt "maximum 31 characters"
@@ -10954,25 +10797,21 @@ msgstr "Newfoundland Yaz Saati"
 
 #: dlls/tzres/tzres.rc:242
 msgid "(UTC-03:30) Newfoundland"
-msgstr ""
+msgstr "(UTC-03:30) Newfoundland"
 
 #: dlls/tzres/tzres.rc:330
-#, fuzzy
-#| msgid "Jordan Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Sudan Standard Time"
-msgstr "Ürdün Standart Saati"
+msgstr "Sudan Standart Saati"
 
 #: dlls/tzres/tzres.rc:331
-#, fuzzy
-#| msgid "Jordan Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Sudan Daylight Time"
-msgstr "Ürdün Yaz Saati"
+msgstr "Sudan Yaz Saati"
 
 #: dlls/tzres/tzres.rc:332
 msgid "(UTC+02:00) Khartoum"
-msgstr ""
+msgstr "(UTC+02:00) Khartoum"
 
 #: dlls/tzres/tzres.rc:420
 msgctxt "maximum 31 characters"
@@ -10986,7 +10825,7 @@ msgstr "Batı Pasifik Yaz Saati"
 
 #: dlls/tzres/tzres.rc:422
 msgid "(UTC+10:00) Guam, Port Moresby"
-msgstr ""
+msgstr "(UTC+10:00) Guam, Port Moresby"
 
 #: dlls/tzres/tzres.rc:261
 msgctxt "maximum 31 characters"
@@ -11000,7 +10839,7 @@ msgstr "Pasifik Yaz Saati"
 
 #: dlls/tzres/tzres.rc:263
 msgid "(UTC-08:00) Pacific Time (US & Canada)"
-msgstr ""
+msgstr "(UTC-08:00) Pasifik Saati (ABD ve Kanada)"
 
 #: dlls/tzres/tzres.rc:51
 msgctxt "maximum 31 characters"
@@ -11014,7 +10853,7 @@ msgstr "Azerbaycan Yaz Saati"
 
 #: dlls/tzres/tzres.rc:53
 msgid "(UTC+04:00) Baku"
-msgstr ""
+msgstr "(UTC+04:00) Bakü"
 
 #: dlls/tzres/tzres.rc:201
 msgctxt "maximum 31 characters"
@@ -11028,7 +10867,7 @@ msgstr "Macellan Yaz Saati"
 
 #: dlls/tzres/tzres.rc:203
 msgid "(UTC-03:00) Punta Arenas"
-msgstr ""
+msgstr "(UTC-03:00) Punta Arenas"
 
 #: dlls/tzres/tzres.rc:306
 msgctxt "maximum 31 characters"
@@ -11042,7 +10881,7 @@ msgstr "Samoa Yaz Saati"
 
 #: dlls/tzres/tzres.rc:308
 msgid "(UTC+13:00) Samoa"
-msgstr ""
+msgstr "(UTC+13:00) Samoa"
 
 #: dlls/tzres/tzres.rc:183
 msgctxt "maximum 31 characters"
@@ -11056,11 +10895,9 @@ msgstr "Kaliningrad Yaz Saati"
 
 #: dlls/tzres/tzres.rc:185
 msgid "(UTC+02:00) Kaliningrad"
-msgstr ""
+msgstr "(UTC+02:00) Kaliningrad"
 
 #: dlls/tzres/tzres.rc:264
-#, fuzzy
-#| msgid "Pacific Standard Time (Mexico)"
 msgctxt "maximum 31 characters"
 msgid "Pacific Standard Time (Mexico)"
 msgstr "Pasifik Standart Saati (Meksika)"
@@ -11072,7 +10909,7 @@ msgstr "Pasifik Yaz Saati (Meksika)"
 
 #: dlls/tzres/tzres.rc:266
 msgid "(UTC-08:00) Baja California"
-msgstr ""
+msgstr "(UTC-08:00) Baja California"
 
 #: dlls/tzres/tzres.rc:210
 msgctxt "maximum 31 characters"
@@ -11086,7 +10923,7 @@ msgstr "Ortadoğu Yaz Saati"
 
 #: dlls/tzres/tzres.rc:212
 msgid "(UTC+02:00) Beirut"
-msgstr ""
+msgstr "(UTC+02:00) Beyrut"
 
 #: dlls/tzres/tzres.rc:345
 msgctxt "maximum 31 characters"
@@ -11100,7 +10937,7 @@ msgstr "Tokyo Yaz Saati"
 
 #: dlls/tzres/tzres.rc:347
 msgid "(UTC+09:00) Osaka, Sapporo, Tokyo"
-msgstr ""
+msgstr "(UTC+09:00) Osaka, Sapporo, Tokyo"
 
 #: dlls/tzres/tzres.rc:192
 msgctxt "maximum 31 characters"
@@ -11114,7 +10951,7 @@ msgstr "Line Adaları Yaz Saati"
 
 #: dlls/tzres/tzres.rc:194
 msgid "(UTC+14:00) Kiritimati Island"
-msgstr ""
+msgstr "(UTC+14:00) Kiritimati Adası"
 
 #: dlls/tzres/tzres.rc:111
 msgctxt "maximum 31 characters"
@@ -11128,7 +10965,7 @@ msgstr "Küba Yaz Saati"
 
 #: dlls/tzres/tzres.rc:113
 msgid "(UTC-05:00) Havana"
-msgstr ""
+msgstr "(UTC-05:00) Havana"
 
 #: dlls/tzres/tzres.rc:180
 msgctxt "maximum 31 characters"
@@ -11142,7 +10979,7 @@ msgstr "Ürdün Yaz Saati"
 
 #: dlls/tzres/tzres.rc:182
 msgid "(UTC+02:00) Amman"
-msgstr ""
+msgstr "(UTC+02:00) Amman"
 
 #: dlls/tzres/tzres.rc:99
 msgctxt "maximum 31 characters"
@@ -11156,34 +10993,30 @@ msgstr "Orta Amerika Yaz Saati"
 
 #: dlls/tzres/tzres.rc:101
 msgid "(UTC-06:00) Central Time (US & Canada)"
-msgstr ""
+msgstr "(UTC-06:00) Merkezi Saat (ABD ve Kanada)"
 
 #: dlls/tzres/tzres.rc:285 dlls/tzres/tzres.rc:286
 msgctxt "maximum 31 characters"
 msgid "Russia Time Zone 3"
-msgstr ""
+msgstr "Rusya Saat Dilimi 3"
 
 #: dlls/tzres/tzres.rc:287
 msgid "(UTC+04:00) Izhevsk, Samara"
-msgstr ""
+msgstr "(UTC+04:00) Izhevsk, Samara"
 
 #: dlls/tzres/tzres.rc:399
-#, fuzzy
-#| msgid "Tonga Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Volgograd Standard Time"
-msgstr "Tonga Standart Saati"
+msgstr "Volgograd Standart Saati"
 
 #: dlls/tzres/tzres.rc:400
-#, fuzzy
-#| msgid "Tonga Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Volgograd Daylight Time"
-msgstr "Tonga Yaz Saati"
+msgstr "Volgograd Yaz Saati"
 
 #: dlls/tzres/tzres.rc:401
 msgid "(UTC+04:00) Volgograd"
-msgstr ""
+msgstr "(UTC+04:00) Volgograd"
 
 #: dlls/tzres/tzres.rc:54
 msgctxt "maximum 31 characters"
@@ -11197,7 +11030,7 @@ msgstr "Azor Adaları Yaz Saati"
 
 #: dlls/tzres/tzres.rc:56
 msgid "(UTC-01:00) Azores"
-msgstr ""
+msgstr "(UTC-01:00) Azores"
 
 #: dlls/tzres/tzres.rc:246
 msgctxt "maximum 31 characters"
@@ -11211,18 +11044,16 @@ msgstr "Kuzey Asya Doğu Yaz Saati"
 
 #: dlls/tzres/tzres.rc:248
 msgid "(UTC+08:00) Irkutsk"
-msgstr ""
+msgstr "UTC+08:00) Irkutsk"
 
 #: dlls/tzres/tzres.rc:390 dlls/tzres/tzres.rc:391
 msgctxt "maximum 31 characters"
 msgid "UTC-11"
-msgstr ""
+msgstr "UTC-11"
 
 #: dlls/tzres/tzres.rc:392
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-11:00) Coordinated Universal Time-11"
-msgstr "Eşgüdümlü Evrensel Saat"
+msgstr "(UTC-11:00) Eşgüdümlü Evrensel Saat-11"
 
 #: dlls/tzres/tzres.rc:33
 msgctxt "maximum 31 characters"
@@ -11236,25 +11067,21 @@ msgstr "Arjantin Yaz Saati"
 
 #: dlls/tzres/tzres.rc:35
 msgid "(UTC-03:00) City of Buenos Aires"
-msgstr ""
+msgstr "(UTC-03:00) Buenos Aires Şehri"
 
 #: dlls/tzres/tzres.rc:360
-#, fuzzy
-#| msgid "Turkey Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Turks And Caicos Standard Time"
-msgstr "Türkiye Standart Saati"
+msgstr "Turks ve Caicos Standart Saati"
 
 #: dlls/tzres/tzres.rc:361
-#, fuzzy
-#| msgid "Turkey Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Turks And Caicos Daylight Time"
-msgstr "Türkiye Yaz Saati"
+msgstr "Turks ve Caicos Yaz Saati"
 
 #: dlls/tzres/tzres.rc:362
 msgid "(UTC-05:00) Turks and Caicos"
-msgstr ""
+msgstr "(UTC-05:00) Turks ve Caicos Adaları"
 
 #: dlls/tzres/tzres.rc:204
 msgctxt "maximum 31 characters"
@@ -11268,7 +11095,7 @@ msgstr "Markiz Adaları Yaz Saati"
 
 #: dlls/tzres/tzres.rc:206
 msgid "(UTC-09:30) Marquesas Islands"
-msgstr ""
+msgstr "(UTC-09:30) Markiz Adaları"
 
 #: dlls/tzres/tzres.rc:225
 msgctxt "maximum 31 characters"
@@ -11282,7 +11109,7 @@ msgstr "Myanmar Yaz Saati"
 
 #: dlls/tzres/tzres.rc:227
 msgid "(UTC+06:30) Yangon (Rangoon)"
-msgstr ""
+msgstr "(UTC+06:30) Yangon (Rangoon)"
 
 #: dlls/tzres/tzres.rc:372 dlls/tzres/tzres.rc:373
 msgctxt "maximum 31 characters"
@@ -11290,10 +11117,8 @@ msgid "Coordinated Universal Time"
 msgstr "Eşgüdümlü Evrensel Saat"
 
 #: dlls/tzres/tzres.rc:374
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC) Coordinated Universal Time"
-msgstr "Eşgüdümlü Evrensel Saat"
+msgstr "(UTC) Eşgüdümlü Evrensel Saat"
 
 #: dlls/tzres/tzres.rc:171
 msgctxt "maximum 31 characters"
@@ -11307,7 +11132,7 @@ msgstr "Hindistan Yaz Saati"
 
 #: dlls/tzres/tzres.rc:173
 msgid "(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi"
-msgstr ""
+msgstr "(UTC+05:30) Chennai, Kalküta, Bombay, Yeni Delhi"
 
 #: dlls/tzres/tzres.rc:162
 msgctxt "maximum 31 characters"
@@ -11321,7 +11146,7 @@ msgstr "GTB Yaz Saati"
 
 #: dlls/tzres/tzres.rc:164
 msgid "(UTC+02:00) Athens, Bucharest"
-msgstr ""
+msgstr "(UTC+02:00) Atina, Bükreş"
 
 #: dlls/tzres/tzres.rc:357
 msgctxt "maximum 31 characters"
@@ -11335,25 +11160,21 @@ msgstr "Türkiye Yaz Saati"
 
 #: dlls/tzres/tzres.rc:359
 msgid "(UTC+03:00) Istanbul"
-msgstr ""
+msgstr "(UTC+03:00) Istanbul"
 
 #: dlls/tzres/tzres.rc:36
-#, fuzzy
-#| msgid "Arabian Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Astrakhan Standard Time"
-msgstr "Arabistan Standart Saati"
+msgstr "Astrahan Standart Saati"
 
 #: dlls/tzres/tzres.rc:37
-#, fuzzy
-#| msgid "Arabian Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Astrakhan Daylight Time"
-msgstr "Arabistan Yaz Saati"
+msgstr "Astrahan Yaz Saati"
 
 #: dlls/tzres/tzres.rc:38
 msgid "(UTC+04:00) Astrakhan, Ulyanovsk"
-msgstr ""
+msgstr "(UTC+04:00) Astrakhan, Ulyanovsk"
 
 #: dlls/tzres/tzres.rc:144
 msgctxt "maximum 31 characters"
@@ -11367,7 +11188,7 @@ msgstr "Fiji Yaz Saati"
 
 #: dlls/tzres/tzres.rc:146
 msgid "(UTC+12:00) Fiji"
-msgstr ""
+msgstr "(UTC+12:00) Fiji"
 
 #: dlls/tzres/tzres.rc:69
 msgctxt "maximum 31 characters"
@@ -11381,25 +11202,21 @@ msgstr "Orta Kanada Yaz Saati"
 
 #: dlls/tzres/tzres.rc:71
 msgid "(UTC-06:00) Saskatchewan"
-msgstr ""
+msgstr "(UTC-06:00) Saskatchewan"
 
 #: dlls/tzres/tzres.rc:426
-#, fuzzy
-#| msgid "Yakutsk Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Yukon Standard Time"
-msgstr "Yakutsk Standart Saati"
+msgstr "Yukon Standart Saati"
 
 #: dlls/tzres/tzres.rc:427
-#, fuzzy
-#| msgid "Yakutsk Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Yukon Daylight Time"
-msgstr "Yakutsk Yaz Saati"
+msgstr "Yukon Yaz Saati"
 
 #: dlls/tzres/tzres.rc:428
 msgid "(UTC-07:00) Yukon"
-msgstr ""
+msgstr "(UTC-07:00) Yukon"
 
 #: dlls/tzres/tzres.rc:336
 msgctxt "maximum 31 characters"
@@ -11413,7 +11230,7 @@ msgstr "Taipei Yaz Saati"
 
 #: dlls/tzres/tzres.rc:338
 msgid "(UTC+08:00) Taipei"
-msgstr ""
+msgstr "(UTC+08:00) Taipei"
 
 #: dlls/tzres/tzres.rc:408
 msgctxt "maximum 31 characters"
@@ -11427,7 +11244,7 @@ msgstr "Batı Avrupa Yaz Saati"
 
 #: dlls/tzres/tzres.rc:410
 msgid "(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna"
-msgstr ""
+msgstr "(UTC+01:00) Amsterdam, Berlin, Bern, Roma, Stockholm, Viyana"
 
 #: dlls/tzres/tzres.rc:213
 msgctxt "maximum 31 characters"
@@ -11441,7 +11258,7 @@ msgstr "Montevideo Yaz Saati"
 
 #: dlls/tzres/tzres.rc:215
 msgid "(UTC-03:00) Montevideo"
-msgstr ""
+msgstr "(UTC-03:00) Montevideo"
 
 #: dlls/tzres/tzres.rc:267
 msgctxt "maximum 31 characters"
@@ -11455,25 +11272,21 @@ msgstr "Pakistan Yaz Saati"
 
 #: dlls/tzres/tzres.rc:269
 msgid "(UTC+05:00) Islamabad, Karachi"
-msgstr ""
+msgstr "(UTC+05:00) İslamabad, Karaçi"
 
 #: dlls/tzres/tzres.rc:348
-#, fuzzy
-#| msgid "Tokyo Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Tomsk Standard Time"
-msgstr "Tokyo Standart Saati"
+msgstr "Tomsk Standart Saati"
 
 #: dlls/tzres/tzres.rc:349
-#, fuzzy
-#| msgid "Tokyo Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Tomsk Daylight Time"
-msgstr "Tokyo Yaz Saati"
+msgstr "Tomsk Yaz Saati"
 
 #: dlls/tzres/tzres.rc:350
 msgid "(UTC+07:00) Tomsk"
-msgstr ""
+msgstr "UTC+07:00) Tomsk"
 
 #: dlls/tzres/tzres.rc:75
 msgctxt "maximum 31 characters"
@@ -11487,7 +11300,7 @@ msgstr "Kanarya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:77
 msgid "(UTC+04:00) Yerevan"
-msgstr ""
+msgstr "(UTC+04:00) Erivan"
 
 #: dlls/tzres/tzres.rc:48
 msgctxt "maximum 31 characters"
@@ -11501,7 +11314,7 @@ msgstr "Doğu Avustralya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:50
 msgid "(UTC+10:00) Canberra, Melbourne, Sydney"
-msgstr ""
+msgstr "(UTC+10:00) Canberra, Melbourne, Sidney"
 
 #: dlls/tzres/tzres.rc:228
 msgctxt "maximum 31 characters"
@@ -11515,7 +11328,7 @@ msgstr "Kuzey Orta Asya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:230
 msgid "(UTC+07:00) Novosibirsk"
-msgstr ""
+msgstr "(UTC+07:00) Novosibirsk"
 
 #: dlls/tzres/tzres.rc:132
 msgctxt "maximum 31 characters"
@@ -11529,79 +11342,63 @@ msgstr "Doğu Amerika Yaz Saati"
 
 #: dlls/tzres/tzres.rc:134
 msgid "(UTC-05:00) Eastern Time (US & Canada)"
-msgstr ""
+msgstr "(UTC-05:00) Doğu Saati (ABD ve Kanada)"
 
 #: dlls/tzres/tzres.rc:354
-#, fuzzy
-#| msgid "Tasmania Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Transbaikal Standard Time"
-msgstr "Tazmanya Standart Saati"
+msgstr "Transbaikal Standart Saati"
 
 #: dlls/tzres/tzres.rc:355
-#, fuzzy
-#| msgid "Tasmania Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Transbaikal Daylight Time"
-msgstr "Tazmanya Yaz Saati"
+msgstr "Transbaikal Yaz Saati"
 
 #: dlls/tzres/tzres.rc:356
 msgid "(UTC+09:00) Chita"
-msgstr ""
+msgstr "(UTC+09:00) Chita"
 
 #: dlls/tzres/tzres.rc:123
-#, fuzzy
-#| msgid "W. Europe Standard Time"
 msgctxt "maximum 31 characters"
 msgid "E. Europe Standard Time"
-msgstr "Batı Avrupa Standart Saati"
+msgstr "E. Avrupa Standart Saati"
 
 #: dlls/tzres/tzres.rc:124
-#, fuzzy
-#| msgid "W. Europe Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "E. Europe Daylight Time"
-msgstr "Batı Avrupa Yaz Saati"
+msgstr "E. Avrupa Yaz Saati"
 
 #: dlls/tzres/tzres.rc:125
 msgid "(UTC+02:00) Chisinau"
-msgstr ""
+msgstr "(UTC+02:00) Kişinev"
 
 #: dlls/tzres/tzres.rc:102
-#, fuzzy
-#| msgid "Central Standard Time (Mexico)"
 msgctxt "maximum 31 characters"
 msgid "Central Standard Time (Mexico)"
 msgstr "Orta Amerika Standart Saati (Meksika)"
 
 #: dlls/tzres/tzres.rc:103
-#, fuzzy
-#| msgid "Central Daylight Time (Mexico)"
 msgctxt "maximum 31 characters"
 msgid "Central Daylight Time (Mexico)"
 msgstr "Orta Amerika Yaz Saati (Meksika)"
 
 #: dlls/tzres/tzres.rc:104
 msgid "(UTC-06:00) Guadalajara, Mexico City, Monterrey"
-msgstr ""
+msgstr "(UTC-06:00) Guadalajara, Meksika Şehri, Monterrey"
 
 #: dlls/tzres/tzres.rc:312
-#, fuzzy
-#| msgid "Samoa Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Saratov Standard Time"
-msgstr "Samoa Standart Saati"
+msgstr "Saratov Standart Saati"
 
 #: dlls/tzres/tzres.rc:313
-#, fuzzy
-#| msgid "Samoa Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Saratov Daylight Time"
-msgstr "Samoa Yaz Saati"
+msgstr "Saratov Yaz Saati"
 
 #: dlls/tzres/tzres.rc:314
 msgid "(UTC+04:00) Saratov"
-msgstr ""
+msgstr "(UTC+04:00) Saratov"
 
 #: dlls/tzres/tzres.rc:39
 msgctxt "maximum 31 characters"
@@ -11615,7 +11412,7 @@ msgstr "Atlas Okyanusu Yaz Saati"
 
 #: dlls/tzres/tzres.rc:41
 msgid "(UTC-04:00) Atlantic Time (Canada)"
-msgstr ""
+msgstr "(UTC-04:00) Atlantik Saati (Kanada)"
 
 #: dlls/tzres/tzres.rc:219
 msgctxt "maximum 31 characters"
@@ -11629,7 +11426,7 @@ msgstr "Dağlık Amerika Yaz Saati"
 
 #: dlls/tzres/tzres.rc:221
 msgid "(UTC-07:00) Mountain Time (US & Canada)"
-msgstr ""
+msgstr "(UTC-07:00) Dağ Saati (ABD ve Kanada)"
 
 #: dlls/tzres/tzres.rc:366
 msgctxt "maximum 31 characters"
@@ -11643,25 +11440,21 @@ msgstr "Doğu Amerika Yaz Saati"
 
 #: dlls/tzres/tzres.rc:368
 msgid "(UTC-05:00) Indiana (East)"
-msgstr ""
+msgstr "(UTC-05:00) Indiana (Doğu)"
 
 #: dlls/tzres/tzres.rc:303
-#, fuzzy
-#| msgid "Alaskan Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Sakhalin Standard Time"
-msgstr "Alaska Standart Saati"
+msgstr "Sakhalin Standart Saati"
 
 #: dlls/tzres/tzres.rc:304
-#, fuzzy
-#| msgid "Alaskan Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Sakhalin Daylight Time"
-msgstr "Alaska Yaz Saati"
+msgstr "Sakhalin Yaz Saati"
 
 #: dlls/tzres/tzres.rc:305
 msgid "(UTC+11:00) Sakhalin"
-msgstr ""
+msgstr "(UTC+11:00) Sakhalin"
 
 #: dlls/tzres/tzres.rc:252
 msgctxt "maximum 31 characters"
@@ -11675,7 +11468,7 @@ msgstr "Kuzey Kore Yaz Saati"
 
 #: dlls/tzres/tzres.rc:254
 msgid "(UTC+09:00) Pyongyang"
-msgstr ""
+msgstr "(UTC+09:00) Pyongyang"
 
 #: dlls/tzres/tzres.rc:339
 msgctxt "maximum 31 characters"
@@ -11689,7 +11482,7 @@ msgstr "Tazmanya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:341
 msgid "(UTC+10:00) Hobart"
-msgstr ""
+msgstr "(UTC+10:00) Hobart"
 
 #: dlls/tzres/tzres.rc:81
 msgctxt "maximum 31 characters"
@@ -11703,18 +11496,16 @@ msgstr "Orta Amerika Yaz Saati"
 
 #: dlls/tzres/tzres.rc:83
 msgid "(UTC-06:00) Central America"
-msgstr ""
+msgstr "(UTC-06:00) Orta Amerika"
 
 #: dlls/tzres/tzres.rc:381 dlls/tzres/tzres.rc:382
 msgctxt "maximum 31 characters"
 msgid "UTC-02"
-msgstr ""
+msgstr "UTC-02"
 
 #: dlls/tzres/tzres.rc:383
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-02:00) Coordinated Universal Time-02"
-msgstr "Eşgüdümlü Evrensel Saat"
+msgstr "(UTC-02:00) Eşgüdümlü Evrensel Saat-02"
 
 #: dlls/tzres/tzres.rc:369
 msgctxt "maximum 31 characters"
@@ -11728,7 +11519,7 @@ msgstr "Dağlık Amerika Yaz Saati"
 
 #: dlls/tzres/tzres.rc:371
 msgid "(UTC-07:00) Arizona"
-msgstr ""
+msgstr "(UTC-07:00) Arizona"
 
 #: dlls/tzres/tzres.rc:321
 msgctxt "maximum 31 characters"
@@ -11742,7 +11533,7 @@ msgstr "Güney Afrika Yaz Saati"
 
 #: dlls/tzres/tzres.rc:323
 msgid "(UTC+02:00) Harare, Pretoria"
-msgstr ""
+msgstr "(UTC+02:00) Harare, Pretoria"
 
 #: dlls/tzres/tzres.rc:78
 msgctxt "maximum 31 characters"
@@ -11756,18 +11547,16 @@ msgstr "Orta Avustralya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:80
 msgid "(UTC+09:30) Adelaide"
-msgstr ""
+msgstr "(UTC+09:30) Adelaide"
 
 #: dlls/tzres/tzres.rc:387 dlls/tzres/tzres.rc:388
 msgctxt "maximum 31 characters"
 msgid "UTC-09"
-msgstr ""
+msgstr "UTC-09"
 
 #: dlls/tzres/tzres.rc:389
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-09:00) Coordinated Universal Time-09"
-msgstr "Eşgüdümlü Evrensel Saat"
+msgstr "(UTC-09:00) Eşgüdümlü Evrensel Saat-09"
 
 #: dlls/tzres/tzres.rc:327
 msgctxt "maximum 31 characters"
@@ -11781,7 +11570,7 @@ msgstr "Sri Lanka Yaz Saati"
 
 #: dlls/tzres/tzres.rc:329
 msgid "(UTC+05:30) Sri Jayawardenepura"
-msgstr ""
+msgstr "(UTC+05:30) Sri Jayawardenepura"
 
 #: dlls/tzres/tzres.rc:12
 msgctxt "maximum 31 characters"
@@ -11795,7 +11584,7 @@ msgstr "Afganistan Yaz Saati"
 
 #: dlls/tzres/tzres.rc:14
 msgid "(UTC+04:30) Kabul"
-msgstr ""
+msgstr "UTC+04:30) Kabul"
 
 #: dlls/tzres/tzres.rc:423
 msgctxt "maximum 31 characters"
@@ -11809,14 +11598,12 @@ msgstr "Yakutsk Yaz Saati"
 
 #: dlls/tzres/tzres.rc:425
 msgid "(UTC+09:00) Yakutsk"
-msgstr ""
+msgstr "(UTC+09:00) Yakutsk"
 
 #: dlls/tzres/tzres.rc:291
-#, fuzzy
-#| msgid "SA Eastern Standard Time"
 msgctxt "maximum 31 characters"
 msgid "SA Eastern Standard Time"
-msgstr "Güney Amerika Doğu Standart Saati"
+msgstr "SA Doğu Standart Saati"
 
 #: dlls/tzres/tzres.rc:292
 msgctxt "maximum 31 characters"
@@ -11825,7 +11612,7 @@ msgstr "Güney Amerika Doğu Yaz Saati"
 
 #: dlls/tzres/tzres.rc:293
 msgid "(UTC-03:00) Cayenne, Fortaleza"
-msgstr ""
+msgstr "(UTC-03:00) Cayenne, Fortaleza"
 
 #: dlls/tzres/tzres.rc:24
 msgctxt "maximum 31 characters"
@@ -11839,7 +11626,7 @@ msgstr "Arap Yaz Saati"
 
 #: dlls/tzres/tzres.rc:26
 msgid "(UTC+03:00) Kuwait, Riyadh"
-msgstr ""
+msgstr "(UTC+03:00) Kuveyt, Riyad"
 
 #: dlls/tzres/tzres.rc:27
 msgctxt "maximum 31 characters"
@@ -11853,7 +11640,7 @@ msgstr "Arabistan Yaz Saati"
 
 #: dlls/tzres/tzres.rc:29
 msgid "(UTC+04:00) Abu Dhabi, Muscat"
-msgstr ""
+msgstr "(UTC+04:00) Abu Dabi, Maskat"
 
 #: dlls/tzres/tzres.rc:342
 msgctxt "maximum 31 characters"
@@ -11867,7 +11654,7 @@ msgstr "Tocantins Yaz Saati"
 
 #: dlls/tzres/tzres.rc:344
 msgid "(UTC-03:00) Araguaina"
-msgstr ""
+msgstr "(UTC-03:00) Araguaina"
 
 #: dlls/tzres/tzres.rc:288
 msgctxt "maximum 31 characters"
@@ -11881,14 +11668,12 @@ msgstr "Rusya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:290
 msgid "(UTC+03:00) Moscow, St. Petersburg"
-msgstr ""
+msgstr "(UTC+03:00) Moskova, St. Petersburg"
 
 #: dlls/tzres/tzres.rc:45
-#, fuzzy
-#| msgid "Aus Central W. Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Aus Central W. Standard Time"
-msgstr "Orta Batı Avustralya Standart Saati"
+msgstr "Aus Merkezi W. Standart Saat"
 
 #: dlls/tzres/tzres.rc:46
 msgctxt "maximum 31 characters"
@@ -11897,7 +11682,7 @@ msgstr "Orta Batı Avustralya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:47
 msgid "(UTC+08:45) Eucla"
-msgstr ""
+msgstr "(UTC+08:45) Ökla"
 
 #: dlls/tzres/tzres.rc:276
 msgctxt "maximum 31 characters"
@@ -11911,7 +11696,7 @@ msgstr "Romanya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:278
 msgid "(UTC+01:00) Brussels, Copenhagen, Madrid, Paris"
-msgstr ""
+msgstr "(UTC+01:00) Brüksel, Kopenhag, Madrid, Paris"
 
 #: dlls/tzres/tzres.rc:141
 msgctxt "maximum 31 characters"
@@ -11925,34 +11710,30 @@ msgstr "Ekaterinburg Yaz Saati"
 
 #: dlls/tzres/tzres.rc:143
 msgid "(UTC+05:00) Ekaterinburg"
-msgstr ""
+msgstr "(UTC+05:00) Ekaterinburg"
 
 #: dlls/tzres/tzres.rc:282 dlls/tzres/tzres.rc:283
 msgctxt "maximum 31 characters"
 msgid "Russia Time Zone 11"
-msgstr ""
+msgstr "Rusya Saat Dilimi 11"
 
 #: dlls/tzres/tzres.rc:284
 msgid "(UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky"
-msgstr ""
+msgstr "(UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky"
 
 #: dlls/tzres/tzres.rc:417
-#, fuzzy
-#| msgid "West Asia Standard Time"
 msgctxt "maximum 31 characters"
 msgid "West Bank Standard Time"
-msgstr "Batı Asya Standart Saati"
+msgstr "Batı Şeria Standart Saati"
 
 #: dlls/tzres/tzres.rc:418
-#, fuzzy
-#| msgid "West Asia Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "West Bank Daylight Time"
-msgstr "Batı Asya Yaz Saati"
+msgstr "Batı Şeria Yaz Saati"
 
 #: dlls/tzres/tzres.rc:419
 msgid "(UTC+02:00) Gaza, Hebron"
-msgstr ""
+msgstr "(UTC+02:00) Gazze, El Halil"
 
 #: dlls/tzres/tzres.rc:333
 msgctxt "maximum 31 characters"
@@ -11966,7 +11747,7 @@ msgstr "Suriye Yaz Saati"
 
 #: dlls/tzres/tzres.rc:335
 msgid "(UTC+02:00) Damascus"
-msgstr ""
+msgstr "(UTC+02:00) Şam"
 
 #: dlls/tzres/tzres.rc:42
 msgctxt "maximum 31 characters"
@@ -11980,7 +11761,7 @@ msgstr "Orta Avustralya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:44
 msgid "(UTC+09:30) Darwin"
-msgstr ""
+msgstr "(UTC+09:30) Darwin"
 
 #: dlls/tzres/tzres.rc:159
 msgctxt "maximum 31 characters"
@@ -11994,7 +11775,7 @@ msgstr "Greenwich Yaz Saati"
 
 #: dlls/tzres/tzres.rc:161
 msgid "(UTC+00:00) Monrovia, Reykjavik"
-msgstr ""
+msgstr "(UTC+00:00) Monrovia, Reykjavik"
 
 #: dlls/tzres/tzres.rc:363
 msgctxt "maximum 31 characters"
@@ -12008,25 +11789,21 @@ msgstr "Ulan Bator Yaz Saati"
 
 #: dlls/tzres/tzres.rc:365
 msgid "(UTC+08:00) Ulaanbaatar"
-msgstr ""
+msgstr "(UTC+08:00) Ulan Batur"
 
 #: dlls/tzres/tzres.rc:243
-#, fuzzy
-#| msgid "Morocco Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Norfolk Standard Time"
-msgstr "Fas Standart Saati"
+msgstr "Norfolk Standart Saati"
 
 #: dlls/tzres/tzres.rc:244
-#, fuzzy
-#| msgid "Morocco Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Norfolk Daylight Time"
-msgstr "Fas Yaz Saati"
+msgstr "Norfolk  Yaz Saati"
 
 #: dlls/tzres/tzres.rc:245
 msgid "(UTC+11:00) Norfolk Island"
-msgstr ""
+msgstr "(UTC+11:00) Norfolk Adası"
 
 #: dlls/tzres/tzres.rc:177
 msgctxt "maximum 31 characters"
@@ -12040,7 +11817,7 @@ msgstr "İsrail Yaz Saati"
 
 #: dlls/tzres/tzres.rc:179
 msgid "(UTC+02:00) Jerusalem"
-msgstr ""
+msgstr "(UTC+02:00) Kudüs"
 
 #: dlls/tzres/tzres.rc:60
 msgctxt "maximum 31 characters"
@@ -12054,14 +11831,12 @@ msgstr "Bangladeş Yaz Saati"
 
 #: dlls/tzres/tzres.rc:62
 msgid "(UTC+06:00) Dhaka"
-msgstr ""
+msgstr "(UTC+06:00) Dhaka"
 
 #: dlls/tzres/tzres.rc:294
-#, fuzzy
-#| msgid "SA Pacific Standard Time"
 msgctxt "maximum 31 characters"
 msgid "SA Pacific Standard Time"
-msgstr "Güney Amerika Pasifik Standart Saati"
+msgstr "SA Pacific Standart Saati"
 
 #: dlls/tzres/tzres.rc:295
 msgctxt "maximum 31 characters"
@@ -12070,7 +11845,7 @@ msgstr "Güney Amerika Pasifik Yaz Saati"
 
 #: dlls/tzres/tzres.rc:296
 msgid "(UTC-05:00) Bogota, Lima, Quito, Rio Branco"
-msgstr ""
+msgstr "(UTC-05:00) Bogota, Lima, Quito, Rio Branco"
 
 #: dlls/tzres/tzres.rc:414
 msgctxt "maximum 31 characters"
@@ -12084,7 +11859,7 @@ msgstr "Batı Asya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:416
 msgid "(UTC+05:00) Ashgabat, Tashkent"
-msgstr ""
+msgstr "(UTC+05:00) Aşkabat, Taşkent"
 
 #: dlls/tzres/tzres.rc:15
 msgctxt "maximum 31 characters"
@@ -12098,7 +11873,7 @@ msgstr "Alaska Yaz Saati"
 
 #: dlls/tzres/tzres.rc:17
 msgid "(UTC-09:00) Alaska"
-msgstr ""
+msgstr "(UTC-09:00) Alaska"
 
 #: dlls/tzres/tzres.rc:270
 msgctxt "maximum 31 characters"
@@ -12112,25 +11887,21 @@ msgstr "Paraguay Yaz Saati"
 
 #: dlls/tzres/tzres.rc:272
 msgid "(UTC-04:00) Asuncion"
-msgstr ""
+msgstr "(UTC-04:00) Gündoğumu"
 
 #: dlls/tzres/tzres.rc:114
-#, fuzzy
-#| msgid "Dateline Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Dateline Standard Time"
 msgstr "Tarih Değiştirme Çizgisi Standart Saati"
 
 #: dlls/tzres/tzres.rc:115
-#, fuzzy
-#| msgid "Dateline Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Dateline Daylight Time"
 msgstr "Tarih Değiştirme Çizgisi Yaz Saati"
 
 #: dlls/tzres/tzres.rc:116
 msgid "(UTC-12:00) International Date Line West"
-msgstr ""
+msgstr "(UTC-12:00) Uluslararası Tarih Çizgisi Batı"
 
 #: dlls/tzres/tzres.rc:189
 msgctxt "maximum 31 characters"
@@ -12144,7 +11915,7 @@ msgstr "Libya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:191
 msgid "(UTC+02:00) Tripoli"
-msgstr ""
+msgstr "(UTC+02:00) Tripoli"
 
 #: dlls/tzres/tzres.rc:57
 msgctxt "maximum 31 characters"
@@ -12158,7 +11929,7 @@ msgstr "Bahia Yaz Saati"
 
 #: dlls/tzres/tzres.rc:59
 msgid "(UTC-03:00) Salvador"
-msgstr ""
+msgstr "(UTC-03:00) Salvador"
 
 #: dlls/tzres/tzres.rc:393
 msgctxt "maximum 31 characters"
@@ -12172,7 +11943,7 @@ msgstr "Venezuela Yaz Saati"
 
 #: dlls/tzres/tzres.rc:395
 msgid "(UTC-04:00) Caracas"
-msgstr ""
+msgstr "(UTC-04:00) Caracas"
 
 #: dlls/tzres/tzres.rc:66
 msgctxt "maximum 31 characters"
@@ -12186,7 +11957,7 @@ msgstr "Bougainville Yaz Saati"
 
 #: dlls/tzres/tzres.rc:68
 msgid "(UTC+11:00) Bougainville Island"
-msgstr ""
+msgstr "(UTC+11:00) Bougainville Adası"
 
 #: dlls/tzres/tzres.rc:168
 msgctxt "maximum 31 characters"
@@ -12200,7 +11971,7 @@ msgstr "Hawaii Yaz Saati"
 
 #: dlls/tzres/tzres.rc:170
 msgid "(UTC-10:00) Hawaii"
-msgstr ""
+msgstr "(UTC-10:00) Hawaii"
 
 #: dlls/tzres/tzres.rc:315
 msgctxt "maximum 31 characters"
@@ -12214,43 +11985,35 @@ msgstr "Güneydoğu Asya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:317
 msgid "(UTC+07:00) Bangkok, Hanoi, Jakarta"
-msgstr ""
+msgstr "(UTC+07:00) Bangkok, Hanoi, Jakarta"
 
 #: dlls/tzres/tzres.rc:273
-#, fuzzy
-#| msgid "Jordan Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Qyzylorda Standard Time"
-msgstr "Ürdün Standart Saati"
+msgstr "Qyzylorda Standart Saati"
 
 #: dlls/tzres/tzres.rc:274
-#, fuzzy
-#| msgid "Jordan Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Qyzylorda Daylight Time"
-msgstr "Ürdün Yaz Saati"
+msgstr "Qyzylorda Yaz Saati"
 
 #: dlls/tzres/tzres.rc:275
 msgid "(UTC+05:00) Qyzylorda"
-msgstr ""
+msgstr "(UTC+05:00) Qyzylorda"
 
 #: dlls/tzres/tzres.rc:411
-#, fuzzy
-#| msgid "Tonga Standard Time"
 msgctxt "maximum 31 characters"
 msgid "W. Mongolia Standard Time"
-msgstr "Tonga Standart Saati"
+msgstr "W. Moğolistan Standart Saati"
 
 #: dlls/tzres/tzres.rc:412
-#, fuzzy
-#| msgid "Tonga Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "W. Mongolia Daylight Time"
-msgstr "Tonga Yaz Saati"
+msgstr "W. Moğolistan Yaz Saati"
 
 #: dlls/tzres/tzres.rc:413
 msgid "(UTC+07:00) Hovd"
-msgstr ""
+msgstr "(UTC+07:00) Hovd"
 
 #: dlls/tzres/tzres.rc:237
 msgctxt "maximum 31 characters"
@@ -12264,7 +12027,7 @@ msgstr "Yeni Zelanda Yaz Saati"
 
 #: dlls/tzres/tzres.rc:239
 msgid "(UTC+12:00) Auckland, Wellington"
-msgstr ""
+msgstr "(UTC+12:00) Auckland, Wellington"
 
 #: dlls/tzres/tzres.rc:18
 msgctxt "maximum 31 characters"
@@ -12278,25 +12041,21 @@ msgstr "Aleut Adaları Yaz Saati"
 
 #: dlls/tzres/tzres.rc:20
 msgid "(UTC-10:00) Aleutian Islands"
-msgstr ""
+msgstr "(UTC-10:00) Aleut Adaları"
 
 #: dlls/tzres/tzres.rc:255
-#, fuzzy
-#| msgid "Yakutsk Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Omsk Standard Time"
-msgstr "Yakutsk Standart Saati"
+msgstr "Omsk Standart Saati"
 
 #: dlls/tzres/tzres.rc:256
-#, fuzzy
-#| msgid "Yakutsk Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Omsk Daylight Time"
-msgstr "Yakutsk Yaz Saati"
+msgstr "Omsk Yaz Saati"
 
 #: dlls/tzres/tzres.rc:257
 msgid "(UTC+06:00) Omsk"
-msgstr ""
+msgstr "(UTC+06:00) Omsk"
 
 #: dlls/tzres/tzres.rc:87
 msgctxt "maximum 31 characters"
@@ -12310,7 +12069,7 @@ msgstr "Orta Brezilya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:89
 msgid "(UTC-04:00) Cuiaba"
-msgstr ""
+msgstr "(UTC-04:00) Cuiaba"
 
 #: dlls/tzres/tzres.rc:63
 msgctxt "maximum 31 characters"
@@ -12324,11 +12083,9 @@ msgstr "Belarus Yaz Saati"
 
 #: dlls/tzres/tzres.rc:65
 msgid "(UTC+03:00) Minsk"
-msgstr ""
+msgstr "(UTC+03:00) Minsk"
 
 #: dlls/tzres/tzres.rc:297
-#, fuzzy
-#| msgid "SA Western Standard Time"
 msgctxt "maximum 31 characters"
 msgid "SA Western Standard Time"
 msgstr "Güney Amerika Batı Standart Saati"
@@ -12340,7 +12097,7 @@ msgstr "Güney Amerika Batı Yaz Saati"
 
 #: dlls/tzres/tzres.rc:299
 msgid "(UTC-04:00) Georgetown, La Paz, Manaus, San Juan"
-msgstr ""
+msgstr "(UTC-04:00) Georgetown, La Paz, Manaus, San Juan"
 
 #: dlls/tzres/tzres.rc:156
 msgctxt "maximum 31 characters"
@@ -12354,7 +12111,7 @@ msgstr "Grönland Yaz Saati"
 
 #: dlls/tzres/tzres.rc:158
 msgid "(UTC-03:00) Greenland"
-msgstr ""
+msgstr "(UTC-03:00) Grönland"
 
 #: dlls/tzres/tzres.rc:129
 msgctxt "maximum 31 characters"
@@ -12368,16 +12125,16 @@ msgstr "Paskalya Adası Yaz Saati"
 
 #: dlls/tzres/tzres.rc:131
 msgid "(UTC-06:00) Easter Island"
-msgstr ""
+msgstr "(UTC-06:00) Paskalya Adası"
 
 #: dlls/tzres/tzres.rc:279 dlls/tzres/tzres.rc:280
 msgctxt "maximum 31 characters"
 msgid "Russia Time Zone 10"
-msgstr ""
+msgstr "Rusya Saat Dilimi 10"
 
 #: dlls/tzres/tzres.rc:281
 msgid "(UTC+11:00) Chokurdakh"
-msgstr ""
+msgstr "(UTC+11:00) Chokurdakh"
 
 #: dlls/tzres/tzres.rc:138
 msgctxt "maximum 31 characters"
@@ -12391,25 +12148,21 @@ msgstr "Mısır Yaz Saati"
 
 #: dlls/tzres/tzres.rc:140
 msgid "(UTC+02:00) Cairo"
-msgstr ""
+msgstr "(UTC+02:00) Kahire"
 
 #: dlls/tzres/tzres.rc:135
-#, fuzzy
-#| msgid "Eastern Standard Time (Mexico)"
 msgctxt "maximum 31 characters"
 msgid "Eastern Standard Time (Mexico)"
-msgstr "Doğu Amerika Standart Saati (Meksika)"
+msgstr "Doğu Standart Saati (Meksika)"
 
 #: dlls/tzres/tzres.rc:136
-#, fuzzy
-#| msgid "Eastern Daylight Time (Mexico)"
 msgctxt "maximum 31 characters"
 msgid "Eastern Daylight Time (Mexico)"
-msgstr "Doğu Amerika Yaz Saati (Meksika)"
+msgstr "Doğu Yaz Saati (Meksika)"
 
 #: dlls/tzres/tzres.rc:137
 msgid "(UTC-05:00) Chetumal"
-msgstr ""
+msgstr "(UTC-05:00) Chetumal"
 
 #: dlls/tzres/tzres.rc:207
 msgctxt "maximum 31 characters"
@@ -12423,7 +12176,7 @@ msgstr "Mauritius Yaz Saati"
 
 #: dlls/tzres/tzres.rc:209
 msgid "(UTC+04:00) Port Louis"
-msgstr ""
+msgstr "(UTC+04:00) Louis Limanı"
 
 #: dlls/tzres/tzres.rc:396
 msgctxt "maximum 31 characters"
@@ -12437,7 +12190,7 @@ msgstr "Vladivostok Yaz Saati"
 
 #: dlls/tzres/tzres.rc:398
 msgid "(UTC+10:00) Vladivostok"
-msgstr ""
+msgstr "(UTC+10:00) Vladivostok"
 
 #: dlls/tzres/tzres.rc:318
 msgctxt "maximum 31 characters"
@@ -12451,7 +12204,7 @@ msgstr "Singapur Yaz Saati"
 
 #: dlls/tzres/tzres.rc:320
 msgid "(UTC+08:00) Kuala Lumpur, Singapore"
-msgstr ""
+msgstr "(UTC+08:00) Kuala Lumpur, Singapur"
 
 #: dlls/tzres/tzres.rc:186
 msgctxt "maximum 31 characters"
@@ -12465,7 +12218,7 @@ msgstr "Kore Yaz Saati"
 
 #: dlls/tzres/tzres.rc:188
 msgid "(UTC+09:00) Seoul"
-msgstr ""
+msgstr "(UTC+09:00) Seul"
 
 #: dlls/tzres/tzres.rc:105
 msgctxt "maximum 31 characters"
@@ -12479,7 +12232,7 @@ msgstr "Chatham Adaları Yaz Saati"
 
 #: dlls/tzres/tzres.rc:107
 msgid "(UTC+12:45) Chatham Islands"
-msgstr ""
+msgstr "(UTC+12:45) Chatham Adaları"
 
 #: dlls/tzres/tzres.rc:117
 msgctxt "maximum 31 characters"
@@ -12493,32 +12246,26 @@ msgstr "Doğu Afrika Yaz Saati"
 
 #: dlls/tzres/tzres.rc:119
 msgid "(UTC+03:00) Nairobi"
-msgstr ""
+msgstr "(UTC+03:00) Nairobi"
 
 #: dlls/tzres/tzres.rc:147
-#, fuzzy
-#| msgid "FLE Standard Time"
 msgctxt "maximum 31 characters"
 msgid "FLE Standard Time"
-msgstr "Finlandiya-Litvanya-Estonya Standart Saati"
+msgstr "FLE Standart Saati"
 
 #: dlls/tzres/tzres.rc:148
-#, fuzzy
-#| msgid "FLE Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "FLE Daylight Time"
-msgstr "Finlandiya-Litvanya-Estonya Yaz Saati"
+msgstr "FLE Yaz Saati"
 
 #: dlls/tzres/tzres.rc:149
 msgid "(UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius"
-msgstr ""
+msgstr "(UTC+02:00) Helsinki, Kiev, Riga, Sofya, Tallinn, Vilnius"
 
 #: dlls/tzres/tzres.rc:126
-#, fuzzy
-#| msgid "E. South America Standard Time"
 msgctxt "maximum 31 characters"
 msgid "E. South America Standard Time"
-msgstr "Güney Amerika Doğu Standart Saati"
+msgstr "E. Güney Amerika Standart Saati"
 
 #: dlls/tzres/tzres.rc:127
 msgctxt "maximum 31 characters"
@@ -12527,7 +12274,7 @@ msgstr "Güney Amerika Doğu Yaz Saati"
 
 #: dlls/tzres/tzres.rc:128
 msgid "(UTC-03:00) Brasilia"
-msgstr ""
+msgstr "(UTC-03:00) Brezilya"
 
 #: dlls/tzres/tzres.rc:96
 msgctxt "maximum 31 characters"
@@ -12541,7 +12288,7 @@ msgstr "Orta Pasifik Yaz Saati"
 
 #: dlls/tzres/tzres.rc:98
 msgid "(UTC+11:00) Solomon Is., New Caledonia"
-msgstr ""
+msgstr "(UTC+11:00) Solomon Is., Yeni Kaledonya"
 
 #: dlls/tzres/tzres.rc:405
 msgctxt "maximum 31 characters"
@@ -12555,14 +12302,12 @@ msgstr "Orta Afrika Batı Yaz Saati"
 
 #: dlls/tzres/tzres.rc:407
 msgid "(UTC+01:00) West Central Africa"
-msgstr ""
+msgstr "(UTC+01:00) Batı Orta Afrika"
 
 #: dlls/tzres/tzres.rc:258
-#, fuzzy
-#| msgid "Pacific SA Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Pacific SA Standard Time"
-msgstr "Güney Amerika Pasifik Standart Saati"
+msgstr "Pacific SA Standart Saati"
 
 #: dlls/tzres/tzres.rc:259
 msgctxt "maximum 31 characters"
@@ -12571,7 +12316,7 @@ msgstr "Güney Amerika Batı Yaz Saati"
 
 #: dlls/tzres/tzres.rc:260
 msgid "(UTC-04:00) Santiago"
-msgstr ""
+msgstr "(UTC-04:00) Santiago"
 
 #: dlls/tzres/tzres.rc:120
 msgctxt "maximum 31 characters"
@@ -12585,7 +12330,7 @@ msgstr "Doğu Avustralya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:122
 msgid "(UTC+10:00) Brisbane"
-msgstr ""
+msgstr "(UTC+10:00) Brisbane"
 
 #: dlls/tzres/tzres.rc:402
 msgctxt "maximum 31 characters"
@@ -12599,7 +12344,7 @@ msgstr "Batı Avustralya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:404
 msgid "(UTC+08:00) Perth"
-msgstr ""
+msgstr "(UTC+08:00) Perth"
 
 #: dlls/urlmon/urlmon.rc:32 dlls/wininet/wininet.rc:88
 msgid "Security Warning"
@@ -13889,13 +13634,11 @@ msgstr ""
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"
-msgstr ""
+msgstr "Etkin kod sayfası: %1!u!\n"
 
 #: programs/chcp.com/chcp.rc:29
-#, fuzzy
-#| msgid "Invalid message.\n"
 msgid "Invalid code page\n"
-msgstr "Geçersiz mesaj.\n"
+msgstr "Geçersiz kod sayfası\n"
 
 #: programs/chcp.com/chcp.rc:33
 msgid ""
@@ -13908,6 +13651,14 @@ msgid ""
 "  Type CHCP without a number to display the active console code page.\n"
 "\n"
 msgstr ""
+"CHCP [sayı]\n"
+"\n"
+"  Etkin konsol kod sayfasını ayarlar veya görüntüler.\n"
+"\n"
+"  numara Etkinleştirilecek konsol kod sayfası.\n"
+"\n"
+"  Etkin konsol kod sayfasını görüntülemek için numara olmadan CHCP yazın.\n"
+"\n"
 
 #: programs/clock/clock.rc:32
 msgid "Ana&log"
@@ -14807,7 +14558,7 @@ msgstr "Komut geçmişi"
 
 #: programs/conhost/conhost.rc:60
 msgid "&Buffer size:"
-msgstr "Tampon boyutu:"
+msgstr "&Önbellek boyutu:"
 
 #: programs/conhost/conhost.rc:63
 msgid "&Remove duplicates"
@@ -14827,7 +14578,7 @@ msgstr "K&aydır"
 
 #: programs/conhost/conhost.rc:69
 msgid "Console"
-msgstr "Ko&nsol"
+msgstr "Konsol"
 
 #: programs/conhost/conhost.rc:70
 msgid "&Quick Edit mode"
@@ -14851,7 +14602,7 @@ msgstr "Yapılandırma"
 
 #: programs/conhost/conhost.rc:95
 msgid "Buffer zone"
-msgstr "Tampon bölge"
+msgstr "Önbellek bölgesi"
 
 #: programs/conhost/conhost.rc:96
 msgid "&Width:"
@@ -14927,7 +14678,9 @@ msgstr "Yapılandırma hatası"
 msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
-msgstr "Ekran tamponunun boyutu en az pencereninki kadar büyük olmalıdır."
+msgstr ""
+"Ekran arabelleğinin boyutu, pencerenin boyutundan büyük veya ona eşit "
+"olmalıdır."
 
 #: programs/conhost/conhost.rc:41
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
@@ -15069,7 +14822,7 @@ msgstr "IPv6 adresi"
 
 #: programs/ipconfig/ipconfig.rc:38
 msgid "Primary DNS suffix"
-msgstr ""
+msgstr "Birincil DNS soneki"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
@@ -15389,10 +15142,8 @@ msgid "&Replace...\tCtrl+H"
 msgstr "&Değiştir...\tCtrl+H"
 
 #: programs/notepad/notepad.rc:59
-#, fuzzy
-#| msgid "&New...\tCtrl+N"
 msgid "&Go To...\tCtrl+G"
-msgstr "&Yeni...\tCtrl+N"
+msgstr "&Git...\tCtrl+G"
 
 #: programs/notepad/notepad.rc:63 programs/oleview/oleview.rc:68
 #: programs/oleview/oleview.rc:90 programs/winefile/winefile.rc:67
@@ -15435,17 +15186,15 @@ msgstr "&Üst:"
 
 #: programs/notepad/notepad.rc:132
 msgid "Go To Line"
-msgstr ""
+msgstr "Satıra Git"
 
 #: programs/notepad/notepad.rc:134
-#, fuzzy
-#| msgid "CRL Number"
 msgid "&Line Number:"
-msgstr "CRL Numarası"
+msgstr "&Satır Numarası:"
 
 #: programs/notepad/notepad.rc:137
 msgid "Go To"
-msgstr ""
+msgstr "Git"
 
 #: programs/notepad/notepad.rc:145
 msgid "Encoding:"
@@ -15511,7 +15260,7 @@ msgstr "Z"
 #: programs/notepad/notepad.rc:162
 msgctxt "accelerator GoTo"
 msgid "G"
-msgstr ""
+msgstr "G"
 
 #: programs/notepad/notepad.rc:74
 msgid "Page &p"
@@ -15588,7 +15337,7 @@ msgstr ""
 
 #: programs/notepad/notepad.rc:90
 msgid "Ln %ld, Col %ld"
-msgstr ""
+msgstr "Ln %ld, Col %ld"
 
 #: programs/oleview/oleview.rc:32
 msgid "&Bind to file..."
@@ -15872,7 +15621,7 @@ msgstr "Tür Kitaplıkları"
 
 #: programs/oleview/oleview.rc:137
 msgid "ver."
-msgstr "Sürüm"
+msgstr "sürüm."
 
 #: programs/oleview/oleview.rc:138
 msgid "Interfaces"
@@ -16145,40 +15894,26 @@ msgid "Type \"REG %1 /?\" for help.\n"
 msgstr "Yardım için \"REG %1 /?\" yazın.\n"
 
 #: programs/reg/reg.rc:181
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid "reg: Unable to access or create the specified registry key\n"
 msgstr ""
-"reg: Sistem belirtilen kayıt defteri anahtarını veya değerini bulamadı\n"
+"kayıt: Belirtilen kayıt defteri anahtarına erişilemiyor veya "
+"oluşturulamıyor\n"
 
 #: programs/reg/reg.rc:116
-#, fuzzy
-#| msgid "The operation completed successfully\n"
 msgid "reg: The operation completed successfully\n"
-msgstr "İşlem başarıyla tamamlandı\n"
+msgstr "kayıt:İşlem başarıyla tamamlandı\n"
 
 #: programs/reg/reg.rc:131
-#, fuzzy
-#| msgid "The registry operation was cancelled\n"
 msgid "reg: The registry operation was cancelled\n"
-msgstr "Kayıt defteri işlemi iptal edildi\n"
+msgstr "kayıt: Kayıt işlemi iptal edildi\n"
 
 #: programs/reg/reg.rc:174
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid "reg: Unable to find the specified registry key\n"
-msgstr ""
-"reg: Sistem belirtilen kayıt defteri anahtarını veya değerini bulamadı\n"
+msgstr "kayıt: Belirtilen kayıt defteri anahtarı bulunamadı\n"
 
 #: programs/reg/reg.rc:120
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid "reg: Unable to find the specified registry value\n"
-msgstr ""
-"reg: Sistem belirtilen kayıt defteri anahtarını veya değerini bulamadı\n"
+msgstr "kayıt: Belirtilen kayıt defteri değeri bulunamadı\n"
 
 #: programs/reg/reg.rc:132 programs/regedit/regedit.rc:244
 msgid "(Default)"
@@ -16189,17 +15924,6 @@ msgid "Type \"REG /?\" for help.\n"
 msgstr "Yardım için \"REG /?\" yazın.\n"
 
 #: programs/reg/reg.rc:35
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  REG [operation] [parameters]\n"
-#| "\n"
-#| "Supported operations:\n"
-#| "  ADD | DELETE | IMPORT | EXPORT | QUERY\n"
-#| "\n"
-#| "For help on a specific operation, type:\n"
-#| "  REG [operation] /?\n"
-#| "\n"
 msgid ""
 "Usage:\n"
 "  REG [operation] [parameters]\n"
@@ -16212,13 +15936,13 @@ msgid ""
 "\n"
 msgstr ""
 "Kullanım:\n"
-"  REG [işlem] [parametreler]\n"
+"  KAYIT [işlem] [parametreler]\n"
 "\n"
 "Desteklenen işlemler:\n"
-"  ADD | DELETE | IMPORT | EXPORT | QUERY\n"
+"  EKLE | SİL | İÇE AKTAR | DIŞA AKTAR | SORGU\n"
 "\n"
-"Herhangi bir işlem hakkında yardım için, şunu yazınız:\n"
-"  REG [işlem] /?\n"
+"Belirli bir işlemle ilgili yardım için şunu yazın:\n"
+"  KAYIT [işlem] /?\n"
 "\n"
 
 #: programs/reg/reg.rc:67
@@ -16270,6 +15994,56 @@ msgid ""
 "     Modify the registry without prompting for confirmation.\n"
 "\n"
 msgstr ""
+"KAYIT EKLE <key> [/v değer_adı | /ve] [/t türü] [/s ayırıcı] [/d verisi] [/"
+"f]\n"
+"\n"
+"  Kayıt defterine bir anahtar ekler veya belirli bir kayıt defteri "
+"anahtarına yeni bir değer ekler.\n"
+"\n"
+"  <key>\n"
+"     Eklenecek kayıt defteri anahtarı veya [/v] veya [/ve] belirtilmişse,\n"
+"     yeni kayıt defteri verilerinin ekleneceği anahtar.\n"
+"\n"
+"     Biçim: KÖK\\Alt anahtar\n"
+"\n"
+"     KÖK: Önceden tanımlanmış bir kayıt defteri anahtarı. Bu, "
+"aşağıdakilerden biri olmalıdır:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE | HKLM\n"
+"         HKEY_CURRENT_USER | HKCU\n"
+"         HKEY_CLASSES_ROOT | HKCR\n"
+"         HKEY_USERS | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Alt Anahtar: Belirli bir KÖK anahtarı altındaki bir kayıt defteri "
+"anahtarının tam yolu.\n"
+"\n"
+"  /v <değer_adı>\n"
+"     Eklenecek kayıt defteri değerinin adı.\n"
+"\n"
+"  / ve\n"
+"     Adsız bir kayıt defteri değeri ekleyin. Bu seçenek, (Varsayılan)\n"
+"     kayıt değeri.\n"
+"\n"
+"  /t <type>\n"
+"     Kayıt defterine eklenecek veri türü. [/t] belirtilirse,\n"
+"     <type> aşağıdakilerden biri olmalıdır:\n"
+"\n"
+"        REG_SZ | REG_MULTI_SZ | REG_EXPAND_SZ\n"
+"         REG_DWORD | REG_QWORD | REG_BINARY | REG_NONE\n"
+"\n"
+"     [/t] belirtilmezse, varsayılan veri türü REG_SZ'dir.\n"
+"\n"
+"  /s <separator>\n"
+"     REG_MULTI_SZ verilerinde dizileri ayırmak için kullanılan karakter.\n"
+"     [/s] belirtilmezse, varsayılan ayırıcı \\0'dır.\n"
+"\n"
+"  /d <data>\n"
+"     Yeni kayıt defteri değerine eklenecek veriler.\n"
+"\n"
+"  /F\n"
+"     Onay istemeden kayıt defterini değiştirin.\n"
+"\n"
 
 #: programs/reg/reg.rc:202
 msgid ""
@@ -16305,6 +16079,41 @@ msgid ""
 "<key2>.\n"
 "\n"
 msgstr ""
+"KAYIT KOPYALAMA <key1> <key2> [/s] [/f]\n"
+"\n"
+"  Belirli bir kayıt defteri anahtarının içeriğini başka bir konuma "
+"kopyalar.\n"
+"  Varsayılan olarak, bu işlem yalnızca kayıt defteri değerlerini kopyalar. "
+"Için kullanır\n"
+"  tüm alt anahtarları ve değerleri yinelemeli olarak kopyalayın.\n"
+"\n"
+"  <key1>, <key2>\n"
+"     Kaynağı (<key1>) ve hedefi (<key2>) belirten kayıt defteri anahtarları\n"
+"     verilerin <key2> yoksa, oluşturulur.\n"
+"\n"
+"     Biçim: KÖK\\Alt anahtar\n"
+"\n"
+"     KÖK: Önceden tanımlanmış bir kayıt defteri anahtarı. Bu, "
+"aşağıdakilerden biri olmalıdır:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE | HKLM\n"
+"         HKEY_CURRENT_USER | HKCU\n"
+"         HKEY_CLASSES_ROOT | HKCR\n"
+"         HKEY_USERS | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Alt Anahtar: Belirli bir KÖK anahtarı altındaki bir kayıt defteri "
+"anahtarının tam yolu.\n"
+"\n"
+"  /S\n"
+"     <key1>'den <key2>'ye tüm alt anahtarları ve değerleri kopyalayın.\n"
+"\n"
+"   /F\n"
+"     Onay istemeden <key2> içindeki tüm kayıt defteri verilerinin üzerine "
+"yazın.\n"
+"     Bu seçenek, yalnızca <key2> içinde bulunan alt anahtarları ve değerleri "
+"değiştirmez.\n"
+"\n"
 
 #: programs/reg/reg.rc:92
 msgid ""
@@ -16344,6 +16153,47 @@ msgid ""
 "     prompting for confirmation.\n"
 "\n"
 msgstr ""
+"REG DELETE <key> [/v değer_adı | /ve | /va] [/f]\n"
+"\n"
+"  Bir kayıt defteri anahtarını (tüm alt anahtarlar ve değerler dahil) siler "
+"veya siler\n"
+"  belirli bir kayıt defteri anahtarından bir veya daha fazla değer.\n"
+"\n"
+"  <key>\n"
+"     Silinecek kayıt defteri anahtarı veya [/v], [/ve] veya [/va] "
+"anahtarlarından biri\n"
+"     belirtilen, bir veya daha fazla değerin silineceği kayıt defteri "
+"anahtarı.\n"
+"\n"
+"     Biçim: KÖK\\Alt anahtar\n"
+"\n"
+"     KÖK: Önceden tanımlanmış bir kayıt defteri anahtarı. Bu, "
+"aşağıdakilerden biri olmalıdır:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE | HKLM\n"
+"         HKEY_CURRENT_USER | HKCU\n"
+"         HKEY_CLASSES_ROOT | HKCR\n"
+"         HKEY_USERS | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Alt Anahtar: Belirli bir KÖK anahtarı altındaki bir kayıt defteri "
+"anahtarının tam yolu.\n"
+"\n"
+"  /v <value_name>\n"
+"     Silinecek kayıt defteri değerinin adı.\n"
+"\n"
+"  / ve\n"
+"     Adsız bir kayıt defteri değerini silin. Bu seçenek, (Varsayılan)\n"
+"     kayıt değeri.\n"
+"\n"
+"  / va\n"
+"     Bir kayıt defteri anahtarından tüm değerleri silin.\n"
+"\n"
+"  /F\n"
+"     olmadan bir kayıt defteri anahtarını (tüm alt anahtarlar ve değerler "
+"dahil) silin.\n"
+"     onay istemek.\n"
+"\n"
 
 #: programs/reg/reg.rc:170
 msgid ""
@@ -16375,6 +16225,36 @@ msgid ""
 "     Overwrite <file> without prompting for confirmation.\n"
 "\n"
 msgstr ""
+"KAYIT DIŞA AKTARMA <key> <file> [/y]\n"
+"\n"
+"  Belirli bir kayıt defteri anahtarını dışa aktarır (tüm alt anahtarlar ve "
+"değerler dahil)\n"
+"  bir dosyaya.\n"
+"\n"
+"  <key>\n"
+"     Dışa aktarılacak kayıt defteri anahtarı.\n"
+"\n"
+"     Biçim: KÖK\\Alt anahtar\n"
+"\n"
+"     KÖK: Önceden tanımlanmış bir kayıt defteri anahtarı. Bu, "
+"aşağıdakilerden biri olmalıdır:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE | HKLM\n"
+"         HKEY_CURRENT_USER | HKCU\n"
+"         HKEY_CLASSES_ROOT | HKCR\n"
+"         HKEY_USERS | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Alt Anahtar: Belirli bir KÖK anahtarı altındaki bir kayıt defteri "
+"anahtarının tam yolu.\n"
+"\n"
+"  <file>\n"
+"     Oluşturulacak kayıt defteri dosyasının adı ve yolu.\n"
+"     Bu dosyanın bir .reg uzantısı olmalıdır.\n"
+"\n"
+"  /y\n"
+"     Onay istemeden <file> dosyasının üzerine yaz.\n"
+"\n"
 
 #: programs/reg/reg.rc:148
 msgid ""
@@ -16386,6 +16266,14 @@ msgid ""
 "     The name and path of the registry file to import.\n"
 "\n"
 msgstr ""
+"KAYIT İÇE AKTARMA <file>\n"
+"\n"
+"  Belirli bir dosyadaki anahtarları, değerleri ve verileri kayıt defterine "
+"aktarır.\n"
+"\n"
+"  <file>\n"
+"     İçe aktarılacak kayıt defteri dosyasının adı ve yolu.\n"
+"\n"
 
 #: programs/reg/reg.rc:114
 msgid ""
@@ -16421,6 +16309,42 @@ msgid ""
 "     List all registry entries under <key> and its subkeys.\n"
 "\n"
 msgstr ""
+"KAYIT SORGUSU <key> [/v değer_adı | /ve] [/s]\n"
+"\n"
+"  Belirli bir kayıt defteri anahtarını sorgular ve tüm anlık alt "
+"anahtarları, değerleri listeler\n"
+"   ve bu anahtarın içindeki veriler. Her bir alt anahtarı yinelemeli olarak "
+"sorgulamak için [/s] kullanın.\n"
+"\n"
+"   <key>\n"
+"     Sorgulanacak kayıt defteri anahtarı.\n"
+"\n"
+"     Biçim: KÖK\\Alt anahtar\n"
+"\n"
+"     KÖK: Önceden tanımlanmış bir kayıt defteri anahtarı. Bu, "
+"aşağıdakilerden biri olmalıdır:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE | HKLM\n"
+"         HKEY_CURRENT_USER | HKCU\n"
+"         HKEY_CLASSES_ROOT | HKCR\n"
+"         HKEY_USERS | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Alt Anahtar: Belirli bir KÖK anahtarı altındaki bir kayıt defteri "
+"anahtarının tam yolu.\n"
+"\n"
+"  /v <değer_adı>\n"
+"     Sorgulanacak kayıt defteri değerinin adı. Ne [/v] ne de [/ve] değilse\n"
+"     belirtilen, <key> altındaki tüm değerler listelenir.\n"
+"\n"
+"  / ve\n"
+"     Adsız bir kayıt defteri değerini sorgulayın. Bu seçenek, (Varsayılan)\n"
+"     kayıt değeri.\n"
+"\n"
+"  /S\n"
+"     <key> ve alt anahtarları altındaki tüm kayıt defteri girdilerini "
+"listeleyin.\n"
+"\n"
 
 #: programs/reg/reg.rc:180
 msgid ""
@@ -16431,34 +16355,33 @@ msgid ""
 "     Access the registry using the 64-bit view.\n"
 "\n"
 msgstr ""
+"  /kayıt:32\n"
+"      32 bit görünümü kullanarak kayıt defterine erişin.\n"
+"\n"
+"  /kayıt:64\n"
+"      64 bit görünümü kullanarak kayıt defterine erişin.\n"
+"\n"
 
 #: programs/reg/reg.rc:117
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "reg: Invalid registry key\n"
-msgstr "reg: Geçersiz anahtar adı\n"
+msgstr "kayıt: Geçersiz kayıt defteri anahtarı\n"
 
 #: programs/reg/reg.rc:119
 msgid "reg: Unable to access remote machine\n"
 msgstr "reg: Uzak makineye erişilemiyor\n"
 
 #: programs/reg/reg.rc:172
-#, fuzzy
-#| msgid "reg: Invalid system key [%1]\n"
 msgid "reg: Invalid system key\n"
-msgstr "reg: Geçersiz anahtar adı [%1]\n"
+msgstr "kayıt: Geçersiz sistem anahtarı\n"
 
 #: programs/reg/reg.rc:140
 msgid "reg: Invalid option [%1]. "
-msgstr "reg: [%1] seçeneği geçersiz."
+msgstr "kayıt: Geçersiz seçenek [%1]. "
 
 #: programs/reg/reg.rc:122
-#, fuzzy
-#| msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
 msgid "reg: The option [/d] must be followed by a valid numeric value\n"
 msgstr ""
-"uninstaller: [/d] seçeneğinden sonra geçerli bir onaltılık değer "
-"girilmelidir\n"
+"kayıt: [/d] seçeneğinin ardından geçerli bir sayısal değer gelmelidir\n"
 
 #: programs/reg/reg.rc:123
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
@@ -16476,7 +16399,7 @@ msgstr "reg: İşlenmeyen [/t 0x%1!x!, /d %2] kayıt defteri veri türü\n"
 
 #: programs/reg/reg.rc:121
 msgid "reg: Unsupported registry data type [%1]\n"
-msgstr "Hata: Desteklenmeyen [%1] veri türü\n"
+msgstr "kayıt: Desteklenmeyen kayıt veri türü [%1]\n"
 
 #: programs/reg/reg.rc:125
 msgid "The registry value '%1' already exists. Do you want to overwrite it?"
@@ -16488,15 +16411,14 @@ msgstr "reg: Geçersiz komut satırı parametreleri\n"
 
 #: programs/reg/reg.rc:204
 msgid "reg: The source and destination keys cannot be the same\n"
-msgstr ""
+msgstr "kayıt: Kaynak ve hedef anahtarlar aynı olamaz\n"
 
 #: programs/reg/reg.rc:205
-#, fuzzy
-#| msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgid ""
 "The value '%1\\%2' already exists in the destination key. Do you want to "
 "overwrite it?"
-msgstr "Belirtilen '%1' dosyası zaten var. Üzerine yazılsın mı?"
+msgstr ""
+"Hedef anahtarında '%1\\%2' değeri zaten var. Üzerine yazmak istiyor musunuz?"
 
 #: programs/reg/reg.rc:133
 msgid "Are you sure you want to delete the registry value '%1'?"
@@ -16513,10 +16435,8 @@ msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr "'%1' kayıt defteri anahtarını silmek istediğinizden emin misiniz?"
 
 #: programs/reg/reg.rc:137
-#, fuzzy
-#| msgid "regedit: Unable to delete the registry key '%1'.\n"
 msgid "reg: Unable to delete all registry values in '%1'\n"
-msgstr "regedit: '%1' kayıt anahtarı silinemiyor.\n"
+msgstr "kayıt: '%1' içindeki tüm kayıt defteri değerleri silinemiyor\n"
 
 #: programs/reg/reg.rc:173
 msgid "The file '%1' already exists. Do you want to overwrite it?"
@@ -16527,10 +16447,8 @@ msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr "reg: Bilinmeyen kaçış sırası [\\%1!c!]\n"
 
 #: programs/reg/reg.rc:175
-#, fuzzy
-#| msgid "reg: Unable to open the registry key '%1'.\n"
 msgid "reg: Unable to import the registry key '%1'\n"
-msgstr "reg: '%1' kayıt defteri anahtarı açılamıyor.\n"
+msgstr "kayıt: '%1' kayıt defteri anahtarı içe aktarılamıyor\n"
 
 #: programs/reg/reg.rc:150
 msgid "reg: The file '%1' was not found.\n"
@@ -16578,10 +16496,8 @@ msgstr "&DWORD Değeri"
 
 #: programs/regedit/regedit.rc:52 programs/regedit/regedit.rc:105
 #: programs/regedit/regedit.rc:128
-#, fuzzy
-#| msgid "&DWORD Value"
 msgid "&QWORD Value"
-msgstr "&DWORD Değeri"
+msgstr "&QWORD Değeri"
 
 #: programs/regedit/regedit.rc:53 programs/regedit/regedit.rc:106
 #: programs/regedit/regedit.rc:129
@@ -16621,7 +16537,7 @@ msgstr "A&yır"
 
 #: programs/regedit/regedit.rc:76
 msgid "&Remove Favorite..."
-msgstr "Sık Kullanılanlardan Sil..."
+msgstr "&Sık Kullanılanlardan Sil..."
 
 #: programs/regedit/regedit.rc:81
 msgid "&About Registry Editor"
@@ -17145,16 +17061,12 @@ msgid "Collapse"
 msgstr "Daralt"
 
 #: programs/regedit/regedit.rc:178
-#, fuzzy
-#| msgid "Adds a new 32-bit value"
 msgid "Adds a new 64-bit value"
-msgstr "Yeni bir 32-bit değer ekler"
+msgstr "64 bitlik yeni bir değer ekler"
 
 #: programs/regedit/regedit.rc:221
-#, fuzzy
-#| msgid "Edit DWORD"
 msgid "Edit QWORD"
-msgstr "DWORD Düzenle"
+msgstr "QWORD'ü düzenle"
 
 #: programs/regsvr32/regsvr32.rc:33
 msgid ""
@@ -17241,37 +17153,6 @@ msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
 msgstr "regsvr32: '%1' DLL dosyası başarıyla kaldırıldı\n"
 
 #: programs/start/start.rc:57
-#, fuzzy
-#| msgid ""
-#| "Start a program, or open a document in the program normally used for "
-#| "files\n"
-#| "with that suffix.\n"
-#| "Usage:\n"
-#| "start [options] program_filename [...]\n"
-#| "start [options] document_filename\n"
-#| "\n"
-#| "Options:\n"
-#| "\"title\"        Specifies the title of the child windows.\n"
-#| "/d directory   Start the program in the specified directory.\n"
-#| "/b             Don't create a new console for the program.\n"
-#| "/i             Start the program with fresh environment variables.\n"
-#| "/min           Start the program minimized.\n"
-#| "/max           Start the program maximized.\n"
-#| "/low           Start the program in the idle priority class.\n"
-#| "/normal        Start the program in the normal priority class.\n"
-#| "/high          Start the program in the high priority class.\n"
-#| "/realtime      Start the program in the realtime priority class.\n"
-#| "/abovenormal   Start the program in the abovenormal priority class.\n"
-#| "/belownormal   Start the program in the belownormal priority class.\n"
-#| "/node n        Start the program on the specified NUMA node.\n"
-#| "/affinity mask Start the program with the specified affinity mask.\n"
-#| "/wait          Wait for the started program to finish, then exit with "
-#| "its\n"
-#| "exit code.\n"
-#| "/unix          Use a Unix filename and start the file like Windows\n"
-#| "Explorer.\n"
-#| "/ProgIDOpen    Open a document using the specified progID.\n"
-#| "/?             Display this help and exit.\n"
 msgid ""
 "Start a program, or open a document in the program normally used for files\n"
 "with that suffix.\n"
@@ -17302,11 +17183,12 @@ msgid ""
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
-"Bir uygulama başlatır, veya bir dosyayı, uzantısı için normalde kullanılan\n"
-"uygulamayla açar.\n"
+"Bir program başlatın veya normalde dosyalar için kullanılan programda bir "
+"belge açın\n"
+"bu sonek ile.\n"
 "Kullanım:\n"
-"start [seçenekler] program_dosyaadı [...]\n"
-"start [seçenekler] belge_dosyaadı\n"
+"[seçenekler] program dosya adını başlat [...]\n"
+"[seçenekler] belge dosya adını başlat\n"
 "\n"
 "Seçenekler:\n"
 "\"başlık\"        Alt pencerelerin başlığını belirtir.\n"
@@ -18378,15 +18260,15 @@ msgstr "Pencere yöneticisinin pencereleri &düzenlemesine izin ver"
 
 #: programs/winecfg/winecfg.rc:171
 msgid "Allow the &window manager to control the windows"
-msgstr "Pencere yöneticisinin pencereleri yönetmesine izin ver"
+msgstr "Pencere yöneticisinin &pencereleri yönetmesine izin ver"
 
 #: programs/winecfg/winecfg.rc:172
 msgid "&Emulate a virtual desktop"
-msgstr "Sanal masaüstü kullan"
+msgstr "Sanal &masaüstü kullan"
 
 #: programs/winecfg/winecfg.rc:174
 msgid "Desktop &size:"
-msgstr "Masaüstü büyüklüğü:"
+msgstr "Masaüstü &boyutu:"
 
 #: programs/winecfg/winecfg.rc:179
 msgid "Screen resolution"
@@ -18412,7 +18294,7 @@ msgstr ""
 
 #: programs/winecfg/winecfg.rc:193
 msgid "&New override for library:"
-msgstr "Kitaplık için yeni öncelik:"
+msgstr "Kitaplık için &yeni öncelik:"
 
 #: programs/winecfg/winecfg.rc:195
 msgid "A&dd"
@@ -18420,7 +18302,7 @@ msgstr "Ek&le"
 
 #: programs/winecfg/winecfg.rc:196
 msgid "Existing &overrides:"
-msgstr "Var olan öncelikler:"
+msgstr "Var olan &öncelikler:"
 
 #: programs/winecfg/winecfg.rc:198
 msgid "&Edit..."
@@ -18539,11 +18421,11 @@ msgstr "Görünüm"
 
 #: programs/winecfg/winecfg.rc:287
 msgid "&Theme:"
-msgstr "Tema:"
+msgstr "&Tema:"
 
 #: programs/winecfg/winecfg.rc:289
 msgid "&Install theme..."
-msgstr "Tema yükle..."
+msgstr "&Tema yükle..."
 
 #: programs/winecfg/winecfg.rc:294
 msgid "It&em:"
@@ -19790,7 +19672,7 @@ msgstr "%1 üzerine yazılsın mı? (Evet|Hayır|Tümü)\n"
 
 #: programs/xcopy/xcopy.rc:40
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr "'%1', '%2' konumuna kopyalanırken r/c %3!d! hatası oluştu\n"
+msgstr "'%1', '%2' konumuna kopyalanırken r/c %3!d! hatası oluştu!\n"
 
 #: programs/xcopy/xcopy.rc:42
 msgid "Failed during reading of '%1'\n"
