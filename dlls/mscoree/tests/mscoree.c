@@ -157,9 +157,8 @@ static BOOL runtime_is_usable(void)
     WaitForSingleObject(pi.hProcess, INFINITE);
 
     ret = GetExitCodeProcess(pi.hProcess, &exitcode);
-    CloseHandle(pi.hProcess);
-
     ok(ret, "GetExitCodeProcess failed: %lu\n", GetLastError());
+    CloseHandle(pi.hProcess);
 
     if (!ret || exitcode != 0)
     {
