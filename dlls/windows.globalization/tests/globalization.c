@@ -314,6 +314,8 @@ static void test_Language(void)
 static void test_GeographicRegion(void)
 {
     static const WCHAR *class_name = RuntimeClass_Windows_Globalization_GeographicRegion;
+    IGeographicRegionFactory *geographic_region_factory;
+    IGeographicRegion *geographic_region;
     IActivationFactory *factory;
     HSTRING str;
     HRESULT hr;
@@ -334,7 +336,34 @@ static void test_GeographicRegion(void)
     check_interface( factory, &IID_IUnknown );
     check_interface( factory, &IID_IInspectable );
     check_interface( factory, &IID_IAgileObject );
-    check_interface( factory, &IID_IGeographicRegionFactory );
+
+    hr = IActivationFactory_ActivateInstance( factory, (IInspectable **)&geographic_region );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    check_interface( geographic_region, &IID_IUnknown );
+    check_interface( geographic_region, &IID_IInspectable );
+    check_interface( geographic_region, &IID_IAgileObject );
+
+    ref = IGeographicRegion_Release( geographic_region );
+    ok( ref == 0, "got ref %ld.\n", ref );
+
+    hr = IActivationFactory_QueryInterface( factory, &IID_IGeographicRegionFactory, (void **)&geographic_region_factory );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = WindowsCreateString( L"US", wcslen( L"US" ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IGeographicRegionFactory_CreateGeographicRegion( geographic_region_factory, str, &geographic_region );
+    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    WindowsDeleteString( str );
+
+    if (hr == S_OK)
+    {
+    ref = IGeographicRegion_Release( geographic_region );
+    ok( ref == 0, "got ref %ld.\n", ref );
+    }
+
+    ref = IGeographicRegionFactory_Release( geographic_region_factory );
+    ok( ref == 2, "got ref %ld.\n", ref );
 
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );

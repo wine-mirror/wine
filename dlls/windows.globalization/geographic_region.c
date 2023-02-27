@@ -21,6 +21,133 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(locale);
 
+struct geographic_region
+{
+    IGeographicRegion IGeographicRegion_iface;
+    LONG ref;
+};
+
+static inline struct geographic_region *impl_from_IGeographicRegion( IGeographicRegion *iface )
+{
+    return CONTAINING_RECORD( iface, struct geographic_region, IGeographicRegion_iface );
+}
+
+static HRESULT WINAPI geographic_region_QueryInterface( IGeographicRegion *iface, REFIID iid, void **out )
+{
+    struct geographic_region *impl = impl_from_IGeographicRegion( iface );
+
+    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IInspectable ) ||
+        IsEqualGUID( iid, &IID_IAgileObject ) ||
+        IsEqualGUID( iid, &IID_IGeographicRegion ))
+    {
+        IInspectable_AddRef( (*out = &impl->IGeographicRegion_iface) );
+        return S_OK;
+    }
+
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI geographic_region_AddRef( IGeographicRegion *iface )
+{
+    struct geographic_region *impl = impl_from_IGeographicRegion( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p, ref %lu.\n", iface, ref );
+    return ref;
+}
+
+static ULONG WINAPI geographic_region_Release( IGeographicRegion *iface )
+{
+    struct geographic_region *impl = impl_from_IGeographicRegion( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+    TRACE( "iface %p, ref %lu.\n", iface, ref );
+    if (!ref) free( impl );
+    return ref;
+}
+
+static HRESULT WINAPI geographic_region_GetIids( IGeographicRegion *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI geographic_region_GetRuntimeClassName( IGeographicRegion *iface, HSTRING *class_name )
+{
+    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI geographic_region_GetTrustLevel( IGeographicRegion *iface, TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI geographic_region_get_Code( IGeographicRegion *iface, HSTRING *value )
+{
+    FIXME( "iface %p stub!\n", iface );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI geographic_region_get_CodeTwoLetter( IGeographicRegion *iface, HSTRING *value )
+{
+    FIXME( "iface %p stub!\n", iface );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI geographic_region_get_CodeThreeLetter( IGeographicRegion *iface, HSTRING *value )
+{
+    FIXME( "iface %p stub!\n", iface );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI geographic_region_get_CodeThreeDigit( IGeographicRegion *iface, HSTRING *value )
+{
+    FIXME( "iface %p stub!\n", iface );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI geographic_region_get_DisplayName( IGeographicRegion *iface, HSTRING *value )
+{
+    FIXME( "iface %p stub!\n", iface );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI geographic_region_get_NativeName( IGeographicRegion *iface, HSTRING *value )
+{
+    FIXME( "iface %p stub!\n", iface );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI geographic_region_get_CurrenciesInUse( IGeographicRegion *iface, IVectorView_HSTRING **value )
+{
+    FIXME( "iface %p stub!\n", iface );
+    return E_NOTIMPL;
+}
+
+static const struct IGeographicRegionVtbl geographic_region_vtbl =
+{
+    geographic_region_QueryInterface,
+    geographic_region_AddRef,
+    geographic_region_Release,
+    /* IInspectable methods */
+    geographic_region_GetIids,
+    geographic_region_GetRuntimeClassName,
+    geographic_region_GetTrustLevel,
+    /* IGeographicRegion methods */
+    geographic_region_get_Code,
+    geographic_region_get_CodeTwoLetter,
+    geographic_region_get_CodeThreeLetter,
+    geographic_region_get_CodeThreeDigit,
+    geographic_region_get_DisplayName,
+    geographic_region_get_NativeName,
+    geographic_region_get_CurrenciesInUse,
+};
+
 struct geographic_region_factory
 {
     IActivationFactory IActivationFactory_iface;
@@ -95,8 +222,16 @@ static HRESULT WINAPI activation_factory_GetTrustLevel( IActivationFactory *ifac
 
 static HRESULT WINAPI activation_factory_ActivateInstance( IActivationFactory *iface, IInspectable **out )
 {
-    FIXME( "iface %p, out %p stub!\n", iface, out );
-    return E_NOTIMPL;
+    struct geographic_region *region;
+
+    TRACE( "iface %p, out %p.\n", iface, out );
+
+    if (!(region = calloc( 1, sizeof(*region) ))) return E_OUTOFMEMORY;
+    region->IGeographicRegion_iface.lpVtbl = &geographic_region_vtbl;
+    region->ref = 1;
+
+    *out = (IInspectable *)&region->IGeographicRegion_iface;
+    return S_OK;
 }
 
 static const struct IActivationFactoryVtbl activation_factory_vtbl =
