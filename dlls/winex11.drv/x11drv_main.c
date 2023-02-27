@@ -36,9 +36,7 @@
 #include <dlfcn.h>
 #include <X11/cursorfont.h>
 #include <X11/Xlib.h>
-#ifdef HAVE_XKB
 #include <X11/XKBlib.h>
-#endif
 #ifdef HAVE_X11_EXTENSIONS_XRENDER_H
 #include <X11/extensions/Xrender.h>
 #endif
@@ -72,7 +70,6 @@ Window root_window;
 BOOL usexvidmode = TRUE;
 BOOL usexrandr = TRUE;
 BOOL usexcomposite = TRUE;
-BOOL use_xkb = TRUE;
 BOOL use_take_focus = TRUE;
 BOOL use_primary_selection = FALSE;
 BOOL use_system_cursors = TRUE;
@@ -708,9 +705,7 @@ static NTSTATUS x11drv_init( void *arg )
 #endif
     X11DRV_XInput2_Init();
 
-#ifdef HAVE_XKB
-    if (use_xkb) use_xkb = XkbUseExtension( gdi_display, NULL, NULL );
-#endif
+    XkbUseExtension( gdi_display, NULL, NULL );
     X11DRV_InitKeyboard( gdi_display );
     if (use_xim) use_xim = X11DRV_InitXIM( input_style );
 
@@ -789,11 +784,8 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
 
     fcntl( ConnectionNumber(data->display), F_SETFD, 1 ); /* set close on exec flag */
 
-#ifdef HAVE_XKB
-    if (use_xkb && XkbUseExtension( data->display, NULL, NULL ))
-        XkbSetDetectableAutoRepeat( data->display, True, NULL );
-#endif
-
+    XkbUseExtension( data->display, NULL, NULL );
+    XkbSetDetectableAutoRepeat( data->display, True, NULL );
     if (TRACE_ON(synchronous)) XSynchronize( data->display, True );
 
     set_queue_display_fd( data->display );

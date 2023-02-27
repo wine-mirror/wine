@@ -1174,13 +1174,6 @@ then
 # include <X11/Xutil.h>
 #endif])
 
-        dnl *** Check for X keyboard extension
-        if test "$ac_cv_header_X11_XKBlib_h" = "yes"
-        then
-              AC_CHECK_LIB(X11, XkbQueryExtension,
-              AC_DEFINE(HAVE_XKB, 1, [Define if you have the XKB extension]),,[$X_LIBS $X_EXTRA_LIBS])
-        fi
-
         dnl *** Check for X cursor
         if test "$ac_cv_header_X11_Xcursor_Xcursor_h" = "yes"
         then

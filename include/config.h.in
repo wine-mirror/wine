@@ -696,9 +696,6 @@
 /* Define to 1 if `callback' is a member of `XICCallback'. */
 #undef HAVE_XICCALLBACK_CALLBACK
 
-/* Define if you have the XKB extension */
-#undef HAVE_XKB
-
 /* Define if Xrender has the XRenderCreateLinearGradient function */
 #undef HAVE_XRENDERCREATELINEARGRADIENT
 

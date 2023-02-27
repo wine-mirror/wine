@@ -14465,52 +14465,6 @@ then :
 fi
 
 
-                if test "$ac_cv_header_X11_XKBlib_h" = "yes"
-        then
-              { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for XkbQueryExtension in -lX11" >&5
-printf %s "checking for XkbQueryExtension in -lX11... " >&6; }
-if test ${ac_cv_lib_X11_XkbQueryExtension+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lX11 $X_LIBS $X_EXTRA_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-char XkbQueryExtension ();
-int
-main (void)
-{
-return XkbQueryExtension ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_lib_X11_XkbQueryExtension=yes
-else $as_nop
-  ac_cv_lib_X11_XkbQueryExtension=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_X11_XkbQueryExtension" >&5
-printf "%s\n" "$ac_cv_lib_X11_XkbQueryExtension" >&6; }
-if test "x$ac_cv_lib_X11_XkbQueryExtension" = xyes
-then :
-
-printf "%s\n" "#define HAVE_XKB 1" >>confdefs.h
-
-fi
-
-        fi
-
                 if test "$ac_cv_header_X11_Xcursor_Xcursor_h" = "yes"
         then
             { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lXcursor" >&5
