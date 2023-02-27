@@ -36,10 +36,20 @@
 
 #include "wine/test.h"
 
-
 /* kernel32.dll */
 static INT (WINAPI *pGetUserDefaultGeoName)(LPWSTR, int);
 
+#define check_interface( obj, iid ) check_interface_( __LINE__, obj, iid )
+static void check_interface_( unsigned int line, void *obj, const IID *iid )
+{
+    IUnknown *iface = obj;
+    IUnknown *unk;
+    HRESULT hr;
+
+    hr = IUnknown_QueryInterface( iface, iid, (void **)&unk );
+    ok_(__FILE__, line)( hr == S_OK, "got hr %#lx.\n", hr );
+    IUnknown_Release( unk );
+}
 
 static void test_GlobalizationPreferences(void)
 {
@@ -60,9 +70,6 @@ static void test_GlobalizationPreferences(void)
 
     GetUserDefaultLocaleName(locale, LOCALE_NAME_MAX_LENGTH);
 
-    hr = RoInitialize(RO_INIT_MULTITHREADED);
-    ok(hr == S_OK, "RoInitialize failed, hr %#lx\n", hr);
-
     hr = WindowsCreateString(class_name, wcslen(class_name), &str);
     ok(hr == S_OK, "WindowsCreateString failed, hr %#lx\n", hr);
 
@@ -72,7 +79,6 @@ static void test_GlobalizationPreferences(void)
     {
         win_skip("%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w(class_name));
         WindowsDeleteString(str);
-        RoUninitialize();
         return;
     }
 
@@ -225,8 +231,6 @@ static void test_GlobalizationPreferences(void)
     IActivationFactory_Release(factory);
 
     WindowsDeleteString(str);
-
-    RoUninitialize();
 }
 
 static void test_Language(void)
@@ -243,9 +247,6 @@ static void test_Language(void)
     const WCHAR *buf;
     HRESULT hr;
 
-    hr = RoInitialize(RO_INIT_MULTITHREADED);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
     hr = WindowsCreateString(class_name, wcslen(class_name), &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -255,7 +256,6 @@ static void test_Language(void)
     if (hr == REGDB_E_CLASSNOTREG)
     {
         win_skip("%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w(class_name));
-        RoUninitialize();
         return;
     }
 
@@ -309,17 +309,51 @@ static void test_Language(void)
     IAgileObject_Release(agile_object);
     IInspectable_Release(inspectable);
     IActivationFactory_Release(factory);
+}
 
-    RoUninitialize();
+static void test_GeographicRegion(void)
+{
+    static const WCHAR *class_name = RuntimeClass_Windows_Globalization_GeographicRegion;
+    IActivationFactory *factory;
+    HSTRING str;
+    HRESULT hr;
+    LONG ref;
+
+    hr = WindowsCreateString( class_name, wcslen( class_name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
+    WindowsDeleteString( str );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( class_name ) );
+        return;
+    }
+
+    check_interface( factory, &IID_IUnknown );
+    check_interface( factory, &IID_IInspectable );
+    check_interface( factory, &IID_IAgileObject );
+    check_interface( factory, &IID_IGeographicRegionFactory );
+
+    ref = IActivationFactory_Release( factory );
+    ok( ref == 1, "got ref %ld.\n", ref );
 }
 
 START_TEST(globalization)
 {
     HMODULE kernel32;
+    HRESULT hr;
 
     kernel32 = GetModuleHandleA("kernel32");
     pGetUserDefaultGeoName = (void*)GetProcAddress(kernel32, "GetUserDefaultGeoName");
 
+    hr = RoInitialize( RO_INIT_MULTITHREADED );
+    ok( hr == S_OK, "RoInitialize failed, hr %#lx\n", hr );
+
     test_GlobalizationPreferences();
     test_Language();
+    test_GeographicRegion();
+
+    RoUninitialize();
 }

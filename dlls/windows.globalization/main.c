@@ -17,25 +17,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
-
-#define COBJMACROS
-#include "windef.h"
-#include "winbase.h"
-#include "winstring.h"
-#include "wine/debug.h"
-#include "objbase.h"
-
 #include "initguid.h"
-#include "activation.h"
-
-#define WIDL_using_Windows_Foundation
-#define WIDL_using_Windows_Foundation_Collections
-#include "windows.foundation.h"
-#define WIDL_using_Windows_Globalization
-#include "windows.globalization.h"
-#define WIDL_using_Windows_System_UserProfile
-#include "windows.system.userprofile.h"
+#include "private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(locale);
 
@@ -754,6 +737,11 @@ HRESULT WINAPI DllGetActivationFactory(HSTRING classid, IActivationFactory **fac
     else if (!wcscmp(name, RuntimeClass_Windows_Globalization_Language))
     {
         *factory = &language_factory.IActivationFactory_iface;
+        IUnknown_AddRef(*factory);
+    }
+    else if (!wcscmp(name, RuntimeClass_Windows_Globalization_GeographicRegion))
+    {
+        *factory = geographic_region_factory;
         IUnknown_AddRef(*factory);
     }
 
