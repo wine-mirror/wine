@@ -188,7 +188,6 @@ struct options
     const char* lib_suffix;
     const char* subsystem;
     const char* entry_point;
-    const char* prelink;
     const char* debug_file;
     const char* out_implib;
     struct strarray prefix;
@@ -480,8 +479,6 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
         {
             if (!try_link( opts->prefix, link_args, strmake("-Wl,-Ttext-segment=%s", opts->image_base)) )
                 strarray_add( &flags, strmake("-Wl,-Ttext-segment=%s", opts->image_base) );
-            else
-                opts->prelink = PRELINK;
         }
         if (!try_link( opts->prefix, link_args, "-Wl,-z,max-page-size=0x1000"))
             strarray_add( &flags, "-Wl,-z,max-page-size=0x1000");
@@ -1383,20 +1380,6 @@ static void build(struct options* opts)
         strarray_add(&implib_args, spec_file);
 
         spawn(opts->prefix, implib_args, 0);
-    }
-
-    /* set the base address with prelink if linker support is not present */
-    if (opts->prelink && !opts->target_alias)
-    {
-        if (opts->prelink[0] && strcmp(opts->prelink,"false"))
-        {
-            struct strarray prelink_args = empty_strarray;
-            strarray_add(&prelink_args, opts->prelink);
-            strarray_add(&prelink_args, "--reloc-only");
-            strarray_add(&prelink_args, opts->image_base);
-            strarray_add(&prelink_args, output_path);
-            spawn(opts->prefix, prelink_args, 1);
-        }
     }
 
     if (!is_pe) fixup_constructors( opts, output_path );

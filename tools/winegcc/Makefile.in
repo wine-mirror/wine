@@ -16,7 +16,6 @@ winegcc_EXTRADEFS = \
 	-DCC="\"$(CC)\"" \
 	-DCPP="\"$(CPPBIN)\"" \
 	-DCXX="\"$(CXX)\"" \
-	-DLD="\"$(LD)\"" \
-	-DPRELINK="\"$(PRELINK)\""
+	-DLD="\"$(LD)\""
 
 INSTALL_DEV = $(PROGRAMS) $(winegcc_SYMLINKS)

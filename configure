@@ -737,7 +737,6 @@ FAUDIO_PE_LIBS
 FAUDIO_PE_CFLAGS
 MINGW_PKG_CONFIG
 PE_ARCHS
-PRELINK
 WINELOADER_DEPENDS
 ac_ct_OBJC
 OBJCFLAGS
@@ -10266,56 +10265,6 @@ then :
                                             *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x7d000400" ;;
                                          esac
 fi
-                         # Extract the first word of "prelink", so it can be a program name with args.
-set dummy prelink; ac_word=$2
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-printf %s "checking for $ac_word... " >&6; }
-if test ${ac_cv_path_PRELINK+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  case $PRELINK in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PRELINK="$PRELINK" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in /sbin /usr/sbin $PATH
-do
-  IFS=$as_save_IFS
-  case $as_dir in #(((
-    '') as_dir=./ ;;
-    */) ;;
-    *) as_dir=$as_dir/ ;;
-  esac
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
-    ac_cv_path_PRELINK="$as_dir$ac_word$ac_exec_ext"
-    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_path_PRELINK" && ac_cv_path_PRELINK="false"
-  ;;
-esac
-fi
-PRELINK=$ac_cv_path_PRELINK
-if test -n "$PRELINK"; then
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $PRELINK" >&5
-printf "%s\n" "$PRELINK" >&6; }
-else
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
-printf "%s\n" "no" >&6; }
-fi
-
-
-                         if test "x$PRELINK" = xfalse
-                         then
-                             as_fn_append wine_warnings "|prelink not found and linker does not support relocation, base address of core dlls won't be set correctly."
-                         fi
 fi
         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-z,max-page-size=0x1000" >&5
 printf %s "checking whether the compiler supports -Wl,-z,max-page-size=0x1000... " >&6; }
@@ -23065,7 +23014,6 @@ OBJC = $OBJC
 OBJCFLAGS = $OBJCFLAGS
 ac_ct_OBJC = $ac_ct_OBJC
 WINELOADER_DEPENDS = $WINELOADER_DEPENDS
-PRELINK = $PRELINK
 PE_ARCHS = $PE_ARCHS
 MINGW_PKG_CONFIG = $MINGW_PKG_CONFIG
 FAUDIO_PE_CFLAGS = $FAUDIO_PE_CFLAGS

@@ -779,12 +779,7 @@ case $host_os in
                                          [case $host_os in
                                             freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x60000400" ;;
                                             *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x7d000400" ;;
-                                         esac])
-                         AC_PATH_PROG(PRELINK, prelink, false, [/sbin /usr/sbin $PATH])
-                         if test "x$PRELINK" = xfalse
-                         then
-                             WINE_WARNING([prelink not found and linker does not support relocation, base address of core dlls won't be set correctly.])
-                         fi])
+                                         esac])])
         WINE_TRY_CFLAGS([-Wl,-z,max-page-size=0x1000],
                         [WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-z,max-page-size=0x1000"])
         ;;
