@@ -1193,6 +1193,7 @@ HKL WINAPI NtUserActivateKeyboardLayout( HKL layout, UINT flags )
 {
     struct user_thread_info *info = get_user_thread_info();
     HKL old_layout;
+    LCID locale;
     HWND focus;
 
     TRACE_(keyboard)( "layout %p, flags %x\n", layout, flags );
@@ -1203,6 +1204,13 @@ HKL WINAPI NtUserActivateKeyboardLayout( HKL layout, UINT flags )
     {
         RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
         FIXME_(keyboard)( "HKL_NEXT and HKL_PREV not supported\n" );
+        return 0;
+    }
+
+    if (NtQueryDefaultLocale( TRUE, &locale ) || LOWORD(layout) != locale)
+    {
+        RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
+        FIXME_(keyboard)( "Changing user locale is not supported\n" );
         return 0;
     }
 
