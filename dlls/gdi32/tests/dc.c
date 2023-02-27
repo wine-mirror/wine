@@ -1288,16 +1288,11 @@ static void test_gamma(void)
     ok(!ret, "SetDeviceGammaRamp succeeded\n");
 
     /* try ramps which are not uniform */
-    ramp[0][0] = 0;
-    for (i = 1; i < 256; i++) ramp[0][i] = ramp[0][i - 1] + 512;
+    for (i = 0; i < 256; i++) ramp[0][i] = 512 * i; /* wraps midway */
     ret = SetDeviceGammaRamp(hdc, &ramp);
     ok(ret, "SetDeviceGammaRamp failed\n");
-    ramp[0][0] = 0;
-    for (i = 2; i < 256; i+=2)
-    {
-        ramp[0][i - 1] = ramp[0][i - 2];
-        ramp[0][i] = ramp[0][i - 2] + 512;
-    }
+    for (i = 0; i < 256; i += 2)
+         ramp[0][i] = ramp[0][i + 1] = 256 * i; /* stairs */
     ret = SetDeviceGammaRamp(hdc, &ramp);
     ok(ret, "SetDeviceGammaRamp failed\n");
 
