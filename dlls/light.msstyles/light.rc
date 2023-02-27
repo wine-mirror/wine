@@ -128,6 +128,17 @@ BLUE_INI TEXTFILE
 "MenuHilight = 48 150 250\r\n"
 "MenuBar = 255 255 255\r\n"
 
+"\r\n; Nonclient metrics\r\n"
+"CaptionFont = Tahoma, 10, bold\r\n"
+"CaptionBarHeight = 25\r\n"
+"SmallCaptionFont = Tahoma, 8, bold\r\n"
+"SMCaptionBarHeight = 17\r\n"
+"SMCaptionBarWidth = 17\r\n"
+"MenuFont = Tahoma, 8\r\n"
+"StatusFont = Tahoma, 8\r\n"
+"MsgBoxFont = Tahoma, 8\r\n"
+"IconTitleFont = Tahoma, 8\r\n"
+
 "\r\n; Flat menus\r\n"
 "FlatMenus = true\r\n"
 
