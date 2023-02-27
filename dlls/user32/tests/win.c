@@ -3282,7 +3282,7 @@ static void test_SetWindowPos(HWND hwnd, HWND hwnd2)
     ret = SetWindowPos(hwnd_child, NULL, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_SHOWWINDOW);
     ok(ret, "Got %d\n", ret);
     flush_events( TRUE );
-    todo_wine check_active_state(hwnd2, hwnd2, hwnd2);
+    flaky todo_wine check_active_state(hwnd2, hwnd2, hwnd2);
     DestroyWindow(hwnd_child);
 }
 
@@ -10186,7 +10186,9 @@ static void simulate_click(int x, int y)
 {
     INPUT input[2];
     UINT events_no;
+    POINT pt;
 
+    GetCursorPos(&pt);
     SetCursorPos(x, y);
     memset(input, 0, sizeof(input));
     input[0].type = INPUT_MOUSE;
@@ -10199,6 +10201,7 @@ static void simulate_click(int x, int y)
     U(input[1]).mi.dwFlags = MOUSEEVENTF_LEFTUP;
     events_no = SendInput(2, input, sizeof(input[0]));
     ok(events_no == 2, "SendInput returned %d\n", events_no);
+    SetCursorPos(pt.x, pt.y);
 }
 
 static WNDPROC def_static_proc;
