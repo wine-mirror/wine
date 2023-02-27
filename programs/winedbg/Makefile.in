@@ -1,5 +1,6 @@
 MODULE    = winedbg.exe
-IMPORTS   = dbghelp advapi32
+IMPORTS   = $(ZYDIS_PE_LIBS) dbghelp advapi32
+EXTRAINCL = $(ZYDIS_PE_CFLAGS)
 DELAYIMPORTS = comdlg32 shell32 comctl32 user32 gdi32 ws2_32
 
 EXTRADLLFLAGS = -mconsole
@@ -11,8 +12,6 @@ C_SRCS = \
 	be_x86_64.c \
 	break.c \
 	crashdlg.c \
-	db_disasm.c \
-	db_disasm64.c \
 	display.c \
 	expr.c \
 	gdbproxy.c \

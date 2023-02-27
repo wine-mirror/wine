@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <Zydis/Zydis.h>
 
 #include "debugger.h"
 #include "wine/debug.h"
@@ -696,12 +697,7 @@ void print_bare_address(const ADDRESS64* addr)
     }
 }
 
-/***********************************************************************
- *           print_address
- *
- * Print an 16- or 32-bit address, with the nearest symbol if any.
- */
-void print_address(const ADDRESS64* addr, BOOLEAN with_line)
+static void print_address_symbol(const ADDRESS64* addr, BOOL with_line, const char *sep)
 {
     char                buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*        si = (SYMBOL_INFO*)buffer;
@@ -710,21 +706,19 @@ void print_address(const ADDRESS64* addr, BOOLEAN with_line)
     DWORD               disp;
     IMAGEHLP_MODULE     im;
 
-    print_bare_address(addr);
-
     si->SizeOfStruct = sizeof(*si);
     si->MaxNameLen   = 256;
     im.SizeOfStruct  = 0;
     if (SymFromAddr(dbg_curr_process->handle, lin, &disp64, si) && disp64 < si->Size)
     {
-        dbg_printf(" %s", si->Name);
+        dbg_printf("%s %s", sep, si->Name);
         if (disp64) dbg_printf("+0x%I64x", disp64);
     }
     else
     {
         im.SizeOfStruct = sizeof(im);
         if (!SymGetModuleInfo(dbg_curr_process->handle, lin, &im)) return;
-        dbg_printf(" %s", im.ModuleName);
+        dbg_printf("%s %s", sep, im.ModuleName);
         if (lin > im.BaseOfImage)
             dbg_printf("+0x%Ix", lin - (DWORD_PTR)im.BaseOfImage);
     }
@@ -742,6 +736,89 @@ void print_address(const ADDRESS64* addr, BOOLEAN with_line)
                 dbg_printf(" in %s", im.ModuleName);
         }
     }
+}
+
+/***********************************************************************
+ *           print_address
+ *
+ * Print an 16- or 32-bit address, with the nearest symbol if any.
+ */
+void print_address(const ADDRESS64* addr, BOOLEAN with_line)
+{
+    print_bare_address(addr);
+    print_address_symbol(addr, with_line, "");
+}
+
+void memory_disasm_one_x86_insn(ADDRESS64 *addr, int display)
+{
+    ZydisDisassembledInstruction instr = { .runtime_address = addr->Offset };
+    ZydisDecoder decoder;
+    ZydisDecoderContext ctx;
+    unsigned char buffer[16];
+    SIZE_T len;
+    int i;
+
+    if (!dbg_curr_process->process_io->read( dbg_curr_process->handle, memory_to_linear_addr(addr),
+                                             buffer, sizeof(buffer), &len )) return;
+
+    switch (addr->Mode)
+    {
+    case AddrModeReal:
+    case AddrMode1616:
+        ZydisDecoderInit( &decoder, ZYDIS_MACHINE_MODE_LEGACY_16, ZYDIS_STACK_WIDTH_16 );
+        break;
+    default:
+        if (ADDRSIZE == 4)
+            ZydisDecoderInit( &decoder, ZYDIS_MACHINE_MODE_LEGACY_32, ZYDIS_STACK_WIDTH_32 );
+        else
+            ZydisDecoderInit( &decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_STACK_WIDTH_64 );
+        break;
+    }
+    ZydisDecoderDecodeInstruction( &decoder, &ctx, buffer, len, &instr.info );
+    ZydisDecoderDecodeOperands( &decoder, &ctx, &instr.info,
+                                instr.operands, instr.info.operand_count );
+
+    if (display)
+    {
+        ZydisFormatter formatter;
+        ZydisFormatterInit( &formatter, ZYDIS_FORMATTER_STYLE_ATT );
+        ZydisFormatterSetProperty( &formatter, ZYDIS_FORMATTER_PROP_HEX_UPPERCASE, 0 );
+        ZydisFormatterFormatInstruction( &formatter, &instr.info, instr.operands,
+                                         instr.info.operand_count_visible, instr.text,
+                                         sizeof(instr.text), instr.runtime_address, NULL );
+        dbg_printf( "%s", instr.text );
+        for (i = 0; i < instr.info.operand_count_visible; i++)
+        {
+            ADDRESS64 a = { .Mode = AddrModeFlat };
+            ZyanU64 addr;
+
+            if (!ZYAN_SUCCESS(ZydisCalcAbsoluteAddress( &instr.info, &instr.operands[i],
+                                                        instr.runtime_address, &addr )))
+                continue;
+
+            if (instr.info.meta.branch_type == ZYDIS_BRANCH_TYPE_NEAR &&
+                instr.operands[i].type == ZYDIS_OPERAND_TYPE_MEMORY &&
+                instr.operands[i].mem.disp.has_displacement &&
+                instr.operands[i].mem.index == ZYDIS_REGISTER_NONE &&
+                (instr.operands[i].mem.base == ZYDIS_REGISTER_NONE ||
+                 instr.operands[i].mem.base == ZYDIS_REGISTER_EIP ||
+                 instr.operands[i].mem.base == ZYDIS_REGISTER_RIP))
+            {
+                unsigned char dest[8];
+                if (dbg_read_memory( (void *)(ULONG_PTR)addr, dest, ADDRSIZE ))
+                {
+                    dbg_printf( " -> " );
+                    a.Offset = ADDRSIZE == 4 ? *(DWORD *)dest : *(DWORD64 *)dest;
+                    print_address( &a, TRUE );
+                    break;
+                }
+            }
+            a.Offset = addr;
+            print_address_symbol( &a, TRUE, instr.info.operand_count_visible > 1 ? " ;" : "" );
+            break;
+        }
+    }
+    addr->Offset += instr.info.length;
 }
 
 BOOL memory_disasm_one_insn(ADDRESS64* addr)

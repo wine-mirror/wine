@@ -25,9 +25,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
-  /* db_disasm.c */
-extern void             be_i386_disasm_one_insn(ADDRESS64* addr, int display);
-
 #define STEP_FLAG 0x00000100 /* single step flag */
 #define V86_FLAG  0x00020000
 
@@ -852,7 +849,7 @@ struct backend_cpu be_i386 =
     be_i386_is_break_insn,
     be_i386_is_func_call,
     be_i386_is_jump,
-    be_i386_disasm_one_insn,
+    memory_disasm_one_x86_insn,
     be_i386_insert_Xpoint,
     be_i386_remove_Xpoint,
     be_i386_is_watchpoint_set,
