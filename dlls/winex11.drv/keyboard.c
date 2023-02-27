@@ -1514,39 +1514,6 @@ X11DRV_KEYBOARD_DetectLayout( Display *display )
   TRACE("detected layout is \"%s\"\n", main_key_tab[kbd_layout].comment);
 }
 
-static HKL get_locale_kbd_layout(void)
-{
-    LCID layout;
-    LANGID langid;
-
-    /* FIXME:
-     *
-     * layout = main_key_tab[kbd_layout].lcid;
-     *
-     * Winword uses return value of GetKeyboardLayout as a codepage
-     * to translate ANSI keyboard messages to unicode. But we have
-     * a problem with it: for instance Polish keyboard layout is
-     * identical to the US one, and therefore instead of the Polish
-     * locale id we return the US one.
-     */
-
-    NtQueryDefaultLocale( TRUE, &layout );
-
-    /*
-     * Microsoft Office expects this value to be something specific
-     * for Japanese and Korean Windows with an IME the value is 0xe001
-     * We should probably check to see if an IME exists and if so then
-     * set this word properly.
-     */
-    langid = PRIMARYLANGID(LANGIDFROMLCID(layout));
-    if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
-        layout = MAKELONG( layout, 0xe001 ); /* IME */
-    else
-        layout |= layout << 16;
-
-    return (HKL)(UINT_PTR)layout;
-}
-
 
 /**********************************************************************
  *		X11DRV_InitKeyboard
@@ -1818,18 +1785,6 @@ void X11DRV_InitKeyboard( Display *display )
     pthread_mutex_unlock( &kbd_mutex );
 }
 
-static BOOL match_x11_keyboard_layout(HKL hkl)
-{
-    const DWORD isIME = 0xE0000000;
-    HKL xHkl = get_locale_kbd_layout();
-
-    /* if the layout is an IME, only match the low word (LCID) */
-    if (((ULONG_PTR)hkl & isIME) == isIME)
-        return (LOWORD(hkl) == LOWORD(xHkl));
-    else
-        return (hkl == xHkl);
-}
-
 
 /***********************************************************************
  *		ActivateKeyboardLayout (X11DRV.@)
@@ -1842,13 +1797,6 @@ BOOL X11DRV_ActivateKeyboardLayout(HKL hkl, UINT flags)
     {
         RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
         FIXME("KLF_SETFORPROCESS not supported\n");
-        return FALSE;
-    }
-
-    if (!match_x11_keyboard_layout(hkl))
-    {
-        RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
-        FIXME("setting keyboard of different locales not supported\n");
         return FALSE;
     }
 
@@ -1968,8 +1916,6 @@ UINT X11DRV_MapVirtualKeyEx( UINT wCode, UINT wMapType, HKL hkl )
     Display *display = thread_init_display();
 
     TRACE("wCode=0x%x, wMapType=%d, hkl %p\n", wCode, wMapType, hkl);
-    if (!match_x11_keyboard_layout(hkl))
-        FIXME("keyboard layout %p is not supported\n", hkl);
 
     pthread_mutex_lock( &kbd_mutex );
 
@@ -2337,9 +2283,6 @@ INT X11DRV_ToUnicodeEx( UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
         TRACE_(key)("Key UP, doing nothing\n" );
         return 0;
     }
-
-    if (!match_x11_keyboard_layout(hkl))
-        FIXME_(key)("keyboard layout %p is not supported\n", hkl);
 
     if ((lpKeyState[VK_MENU] & 0x80) && (lpKeyState[VK_CONTROL] & 0x80))
     {
