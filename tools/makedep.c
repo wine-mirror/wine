@@ -193,7 +193,6 @@ struct makefile
     const char     *module;
     const char     *testdll;
     const char     *extlib;
-    const char     *sharedlib;
     const char     *staticlib;
     const char     *importlib;
     const char     *unixlib;
@@ -2317,39 +2316,6 @@ static const char *get_include_install_path( const char *name )
 
 
 /*******************************************************************
- *         get_shared_library_name
- *
- * Determine possible names for a shared library with a version number.
- */
-static struct strarray get_shared_lib_names( const char *libname )
-{
-    struct strarray ret = empty_strarray;
-    const char *ext, *p;
-    char *name, *first, *second;
-    size_t len = 0;
-
-    strarray_add( &ret, libname );
-
-    for (p = libname; (p = strchr( p, '.' )); p++)
-        if ((len = strspn( p + 1, "0123456789." ))) break;
-
-    if (!len) return ret;
-    ext = p + 1 + len;
-    if (*ext && ext[-1] == '.') ext--;
-
-    /* keep only the first group of digits */
-    name = xstrdup( libname );
-    first = name + (p - libname);
-    if ((second = strchr( first + 1, '.' )))
-    {
-        strcpy( second, ext );
-        strarray_add( &ret, xstrdup( name ));
-    }
-    return ret;
-}
-
-
-/*******************************************************************
  *         get_source_defines
  */
 static struct strarray get_source_defines( struct makefile *make, struct incl_file *source,
@@ -3169,7 +3135,7 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
     output_filenames( make->extlib ? extra_cflags_extlib[arch] : extra_cflags[arch] );
     if (!arch)
     {
-        if (make->sharedlib || (source->file->flags & FLAG_C_UNIX))
+        if (source->file->flags & FLAG_C_UNIX)
         {
             output_filenames( unix_dllflags );
         }
@@ -3461,48 +3427,6 @@ static void output_static_lib( struct makefile *make, unsigned int arch )
     if (!make->extlib)
         add_install_rule( make, make->staticlib, arch, name,
                           strmake( "d%s%s", arch_install_dirs[arch], make->staticlib ));
-}
-
-
-/*******************************************************************
- *         output_shared_lib
- */
-static void output_shared_lib( struct makefile *make )
-{
-    unsigned int i;
-    char *basename, *p;
-    struct strarray names = get_shared_lib_names( make->sharedlib );
-    struct strarray all_libs = empty_strarray;
-    struct strarray dep_libs = empty_strarray;
-    unsigned int arch = 0;  /* shared libs are always native */
-
-    basename = xstrdup( make->sharedlib );
-    if ((p = strchr( basename, '.' ))) *p = 0;
-
-    strarray_addall( &dep_libs, get_local_dependencies( make, basename, make->in_files ));
-    strarray_addall( &all_libs, get_expanded_file_local_var( make, basename, "LDFLAGS" ));
-    strarray_addall( &all_libs, get_expanded_make_var_array( make, "UNIX_LIBS" ));
-    strarray_addall( &all_libs, libs );
-
-    output( "%s:", obj_dir_path( make, make->sharedlib ));
-    output_filenames_obj_dir( make, make->object_files[arch] );
-    output_filenames( dep_libs );
-    output( "\n" );
-    output( "\t%s$(CC) -o $@", cmd_prefix( "CCLD" ));
-    output_filenames_obj_dir( make, make->object_files[arch] );
-    output_filenames( all_libs );
-    output_filename( "$(LDFLAGS)" );
-    output( "\n" );
-    add_install_rule( make, make->sharedlib, arch, make->sharedlib,
-                      strmake( "p%s%s", arch_install_dirs[arch], make->sharedlib ));
-    for (i = 1; i < names.count; i++)
-    {
-        output( "%s: %s\n", obj_dir_path( make, names.str[i] ), obj_dir_path( make, names.str[i-1] ));
-        output_symlink_rule( names.str[i-1], obj_dir_path( make, names.str[i] ), 0 );
-        add_install_rule( make, names.str[i], arch, names.str[i-1],
-                          strmake( "y%s%s", arch_install_dirs[arch], names.str[i] ));
-    }
-    strarray_addall( &make->all_targets[arch], names );
 }
 
 
@@ -3831,7 +3755,6 @@ static void output_sources( struct makefile *make )
         for (arch = 0; arch < archs.count; arch++)
             if (is_multiarch( arch )) output_test_module( make, arch );
     }
-    else if (make->sharedlib) output_shared_lib( make );
     else if (make->programs.count) output_programs( make );
 
     for (i = 0; i < make->scripts.count; i++)
@@ -4233,7 +4156,6 @@ static void load_sources( struct makefile *make )
     make->parent_dir    = get_expanded_make_variable( make, "PARENTSRC" );
     make->module        = get_expanded_make_variable( make, "MODULE" );
     make->testdll       = get_expanded_make_variable( make, "TESTDLL" );
-    make->sharedlib     = get_expanded_make_variable( make, "SHAREDLIB" );
     make->staticlib     = get_expanded_make_variable( make, "STATICLIB" );
     make->importlib     = get_expanded_make_variable( make, "IMPORTLIB" );
     make->extlib        = get_expanded_make_variable( make, "EXTLIB" );
