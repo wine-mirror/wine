@@ -546,8 +546,9 @@ static HRESULT HTMLXMLHttpRequest_open_hook(DispatchEx *dispex, WORD flags,
 static HRESULT WINAPI HTMLXMLHttpRequest_open(IHTMLXMLHttpRequest *iface, BSTR bstrMethod, BSTR bstrUrl, VARIANT varAsync, VARIANT varUser, VARIANT varPassword)
 {
     HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-    nsACString method, url;
     nsAString user, password;
+    nsACString method, url;
+    unsigned opt_argc = 1;
     nsresult nsres;
     HRESULT hres;
 
@@ -594,8 +595,11 @@ static HRESULT WINAPI HTMLXMLHttpRequest_open(IHTMLXMLHttpRequest *iface, BSTR b
         return hres;
     }
 
-    nsres = nsIXMLHttpRequest_Open(This->nsxhr, &method, &url, TRUE,
-            &user, &password, 0);
+    if(V_VT(&varPassword) != VT_EMPTY && V_VT(&varPassword) != VT_ERROR)
+        opt_argc += 2;
+    else if(V_VT(&varUser) != VT_EMPTY && V_VT(&varUser) != VT_ERROR)
+        opt_argc += 1;
+    nsres = nsIXMLHttpRequest_Open(This->nsxhr, &method, &url, !!V_BOOL(&varAsync), &user, &password, opt_argc);
 
     nsACString_Finish(&method);
     nsACString_Finish(&url);
