@@ -410,12 +410,11 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d11_swapchain_SetFullscreen
     swapchain_desc.output = dxgi_output->wined3d_output;
     swapchain_desc.windowed = !fullscreen;
     hr = wined3d_swapchain_state_set_fullscreen(state, &swapchain_desc, NULL);
-    wined3d_mutex_unlock();
     if (FAILED(hr))
     {
         IDXGIOutput_Release(target);
-
-        return DXGI_ERROR_NOT_CURRENTLY_AVAILABLE;
+        hr = DXGI_ERROR_NOT_CURRENTLY_AVAILABLE;
+        goto done;
     }
 
     if (!fullscreen)
@@ -428,7 +427,9 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d11_swapchain_SetFullscreen
         IDXGIOutput_Release(swapchain->target);
     swapchain->target = target;
 
-    return S_OK;
+done:
+    wined3d_mutex_unlock();
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetFullscreenState(IDXGISwapChain1 *iface,
@@ -2098,13 +2099,20 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d12_swapchain_SetFullscreen
 
     if (FAILED(hr = wined3d_swapchain_desc_from_dxgi(&wined3d_desc, target, window, swapchain_desc,
             fullscreen_desc)))
-        goto fail;
+    {
+        IDXGIOutput_Release(target);
+        return hr;
+    }
+
     wined3d_mutex_lock();
     wined3d_desc.windowed = !fullscreen;
     hr = wined3d_swapchain_state_set_fullscreen(swapchain->state, &wined3d_desc, NULL);
-    wined3d_mutex_unlock();
     if (FAILED(hr))
-        goto fail;
+    {
+        IDXGIOutput_Release(target);
+        hr = DXGI_ERROR_NOT_CURRENTLY_AVAILABLE;
+        goto done;
+    }
 
     fullscreen_desc->Windowed = wined3d_desc.windowed;
     if (!fullscreen)
@@ -2117,12 +2125,9 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d12_swapchain_SetFullscreen
         IDXGIOutput_Release(swapchain->target);
     swapchain->target = target;
 
-    return S_OK;
-
-fail:
-    IDXGIOutput_Release(target);
-
-    return DXGI_ERROR_NOT_CURRENTLY_AVAILABLE;
+done:
+    wined3d_mutex_unlock();
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetFullscreenState(IDXGISwapChain4 *iface,
