@@ -673,17 +673,11 @@ static void test_sync_xhr(IHTMLDocument2 *doc, const WCHAR *xml_url, const WCHAR
 
     SET_EXPECT(xmlhttprequest_onreadystatechange_opened);
     hres = IHTMLXMLHttpRequest_open(xhr, method, url, vbool, vempty, vempty);
-    todo_wine ok(hres == S_OK, "open failed: %08lx\n", hres); /* Gecko 30+ only supports async */
-    todo_wine CHECK_CALLED(xmlhttprequest_onreadystatechange_opened);
+    ok(hres == S_OK, "open failed: %08lx\n", hres);
+    CHECK_CALLED(xmlhttprequest_onreadystatechange_opened);
 
     SysFreeString(method);
     SysFreeString(url);
-
-    if(FAILED(hres)) {
-        IHTMLXMLHttpRequest_Release(xhr);
-        xhr = NULL;
-        return;
-    }
 
     text = (BSTR)0xdeadbeef;
     hres = IHTMLXMLHttpRequest_getAllResponseHeaders(xhr, &text);
@@ -718,11 +712,11 @@ static void test_sync_xhr(IHTMLDocument2 *doc, const WCHAR *xml_url, const WCHAR
     loading_cnt = 0;
     hres = IHTMLXMLHttpRequest_send(xhr, vempty);
     ok(hres == S_OK, "send failed: %08lx\n", hres);
-    CHECK_CALLED(xmlhttprequest_onreadystatechange_opened);
-    CHECK_CALLED(xmlhttprequest_onreadystatechange_headers_received);
-    CHECK_CALLED(xmlhttprequest_onreadystatechange_loading);
+    todo_wine CHECK_CALLED(xmlhttprequest_onreadystatechange_opened);
+    todo_wine CHECK_CALLED(xmlhttprequest_onreadystatechange_headers_received);
+    todo_wine CHECK_CALLED(xmlhttprequest_onreadystatechange_loading);
     CHECK_CALLED(xmlhttprequest_onreadystatechange_done);
-    ok(loading_cnt == 1, "loading_cnt = %d\n", loading_cnt);
+    todo_wine ok(loading_cnt == 1, "loading_cnt = %d\n", loading_cnt);
 
     text = NULL;
     hres = IHTMLXMLHttpRequest_getResponseHeader(xhr, content_type, &text);

@@ -607,6 +607,7 @@ struct HTMLInnerWindow {
     VARIANT performance;
     HTMLPerformanceTiming *performance_timing;
 
+    unsigned blocking_depth;
     unsigned parser_callback_cnt;
     struct list script_queue;
 
@@ -1288,6 +1289,7 @@ typedef void (*event_task_proc_t)(event_task_t*);
 
 struct event_task_t {
     LONG target_magic;
+    BOOL thread_blocked;
     event_task_proc_t proc;
     event_task_proc_t destr;
     struct list entry;
@@ -1304,11 +1306,14 @@ typedef struct {
     struct list task_list;
     struct list event_task_list;
     struct list timer_list;
+    struct list *pending_xhr_events_tail;
     struct wine_rb_tree session_storage_map;
+    void *blocking_xhr;
 } thread_data_t;
 
 thread_data_t *get_thread_data(BOOL) DECLSPEC_HIDDEN;
 HWND get_thread_hwnd(void) DECLSPEC_HIDDEN;
+void unblock_tasks_and_timers(thread_data_t*) DECLSPEC_HIDDEN;
 int session_storage_map_cmp(const void*,const struct wine_rb_entry*) DECLSPEC_HIDDEN;
 void destroy_session_storage(thread_data_t*) DECLSPEC_HIDDEN;
 

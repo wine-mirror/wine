@@ -96,6 +96,13 @@ HRESULT push_event_task(event_task_t *task, HTMLInnerWindow *window, event_task_
     return S_OK;
 }
 
+static void unlink_event_task(event_task_t *task, thread_data_t *thread_data)
+{
+    if(thread_data->pending_xhr_events_tail == &task->entry)
+        thread_data->pending_xhr_events_tail = task->entry.prev;
+    list_remove(&task->entry);
+}
+
 static void release_task_timer(HWND thread_hwnd, task_timer_t *timer)
 {
     list_remove(&timer->entry);
@@ -140,7 +147,7 @@ void remove_target_tasks(LONG target)
     LIST_FOR_EACH_SAFE(liter, ltmp, &thread_data->event_task_list) {
         event_task_t *task = LIST_ENTRY(liter, event_task_t, entry);
         if(task->target_magic == target) {
-            list_remove(&task->entry);
+            unlink_event_task(task, thread_data);
             release_event_task(task);
         }
     }
@@ -303,7 +310,7 @@ static LRESULT process_timer(void)
     thread_data = get_thread_data(FALSE);
     assert(thread_data != NULL);
 
-    if(list_empty(&thread_data->timer_list)) {
+    if(list_empty(&thread_data->timer_list) || thread_data->blocking_xhr) {
         KillTimer(thread_data->thread_hwnd, TIMER_ID);
         return 0;
     }
@@ -338,7 +345,7 @@ static LRESULT process_timer(void)
         call_timer_disp(disp, timer_type);
 
         IDispatch_Release(disp);
-    }while(!list_empty(&thread_data->timer_list));
+    }while(!list_empty(&thread_data->timer_list) && !thread_data->blocking_xhr);
 
     KillTimer(thread_data->thread_hwnd, TIMER_ID);
     return 0;
@@ -366,16 +373,19 @@ static LRESULT WINAPI hidden_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                 continue;
             }
 
-            head = list_head(&thread_data->event_task_list);
-            if(head) {
+            head = &thread_data->event_task_list;
+            while((head = list_next(&thread_data->event_task_list, head))) {
                 event_task_t *task = LIST_ENTRY(head, event_task_t, entry);
-                list_remove(&task->entry);
-                task->proc(task);
-                release_event_task(task);
-                continue;
-            }
 
-            break;
+                if((!task->thread_blocked || !thread_data->blocking_xhr) && !task->window->blocking_depth) {
+                    unlink_event_task(task, thread_data);
+                    task->proc(task);
+                    release_event_task(task);
+                    break;
+                }
+            }
+            if(!head)
+                break;
         }
         return 0;
     case WM_TIMER:
@@ -451,6 +461,7 @@ thread_data_t *get_thread_data(BOOL create)
         list_init(&thread_data->task_list);
         list_init(&thread_data->event_task_list);
         list_init(&thread_data->timer_list);
+        thread_data->pending_xhr_events_tail = &thread_data->event_task_list;
         wine_rb_init(&thread_data->session_storage_map, session_storage_map_cmp);
     }
 
@@ -466,4 +477,17 @@ ULONGLONG get_time_stamp(void)
 
     GetSystemTimeAsFileTime(&time);
     return (((ULONGLONG)time.dwHighDateTime << 32) + time.dwLowDateTime) / 10000 - time_epoch;
+}
+
+void unblock_tasks_and_timers(thread_data_t *thread_data)
+{
+    if(!list_empty(&thread_data->event_task_list))
+        PostMessageW(thread_data->thread_hwnd, WM_PROCESSTASK, 0, 0);
+
+    if(!thread_data->blocking_xhr && !list_empty(&thread_data->timer_list)) {
+        task_timer_t *timer = LIST_ENTRY(list_head(&thread_data->timer_list), task_timer_t, entry);
+        DWORD tc = GetTickCount();
+
+        SetTimer(thread_data->thread_hwnd, TIMER_ID, timer->time > tc ? timer->time - tc : 0, NULL);
+    }
 }

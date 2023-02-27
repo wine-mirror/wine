@@ -76,6 +76,145 @@ function test_xhr() {
     xhr.send(xml);
 }
 
+function test_sync_xhr() {
+    var async_xhr, async_xhr2, sync_xhr, sync_xhr_in_async, sync_xhr_nested, a = [ 0 ];
+    var async_xhr_clicked = false, doc_dblclicked = false;
+    function onmsg(e) { a.push("msg" + e.data); }
+    document.ondblclick = function() { doc_dblclicked = true; };
+    window.addEventListener("message", onmsg);
+    window.postMessage("1", "*");
+    window.setTimeout(function() { a.push("timeout"); }, 0);
+    window.postMessage("2", "*");
+    a.push(1);
+
+    async_xhr = new XMLHttpRequest();
+    async_xhr.open("POST", "echo.php", true);
+    async_xhr.onreadystatechange = function() {
+        if(async_xhr.readyState < 3)
+            return;
+        a.push("async_xhr(" + async_xhr.readyState + ")");
+        ok(async_xhr2.readyState === 1, "async_xhr2.readyState = " + async_xhr2.readyState);
+        if(async_xhr.readyState == 4) {
+            window.postMessage("_async", "*");
+
+            sync_xhr_in_async = new XMLHttpRequest();
+            sync_xhr_in_async.open("POST", "echo.php", false);
+            sync_xhr_in_async.onreadystatechange = function() { if(sync_xhr_in_async.readyState == 4) a.push("sync_xhr_in_async"); };
+            sync_xhr_in_async.setRequestHeader("X-Test", "True");
+            sync_xhr_in_async.send("sync_in_async");
+        }
+    };
+    async_xhr.addEventListener("click", function() { async_xhr_clicked = true; });
+    async_xhr.setRequestHeader("X-Test", "True");
+    async_xhr.send("1234");
+    a.push(2);
+
+    async_xhr2 = new XMLHttpRequest();
+    async_xhr2.open("POST", "echo.php?delay_with_signal", true);
+    async_xhr2.onreadystatechange = function() {
+        if(async_xhr2.readyState < 3)
+            return;
+        a.push("async_xhr2(" + async_xhr2.readyState + ")");
+        ok(async_xhr.readyState === 4, "async_xhr.readyState = " + async_xhr.readyState);
+    };
+    async_xhr2.setRequestHeader("X-Test", "True");
+    async_xhr2.send("foobar");
+    a.push(3);
+
+    sync_xhr = new XMLHttpRequest();
+    sync_xhr.open("POST", "echo.php?delay_with_signal", false);
+    sync_xhr.onreadystatechange = function() {
+        a.push("sync_xhr(" + sync_xhr.readyState + ")");
+        ok(async_xhr.readyState === 1, "async_xhr.readyState in sync_xhr handler = " + async_xhr.readyState);
+        ok(async_xhr2.readyState === 1, "async_xhr2.readyState in sync_xhr handler = " + async_xhr2.readyState);
+        if(sync_xhr.readyState < 4)
+            return;
+        window.setTimeout(function() { a.push("timeout_sync"); }, 0);
+        window.postMessage("_sync", "*");
+
+        sync_xhr_nested = new XMLHttpRequest();
+        sync_xhr_nested.open("POST", "echo.php", false);
+        sync_xhr_nested.onreadystatechange = function() {
+            a.push("nested(" + sync_xhr_nested.readyState + ")");
+            if(sync_xhr_nested.readyState == 4) {
+                window.setTimeout(function() { a.push("timeout_nested"); }, 0);
+                window.postMessage("_nested", "*");
+
+                var e = document.createEvent("Event");
+                e.initEvent("click", true, false);
+                ok(async_xhr_clicked === false, "async_xhr click fired before dispatch");
+                async_xhr.dispatchEvent(e);
+                ok(async_xhr_clicked === true, "async_xhr click not fired immediately");
+                if(document.fireEvent) {
+                    ok(doc_dblclicked === false, "document dblclick fired before dispatch");
+                    document.fireEvent("ondblclick", document.createEventObject());
+                    ok(doc_dblclicked === true, "document dblclick not fired immediately");
+                }
+            }
+        };
+        sync_xhr_nested.setRequestHeader("X-Test", "True");
+        sync_xhr_nested.send("nested");
+    };
+    sync_xhr.setRequestHeader("X-Test", "True");
+    sync_xhr.send("abcd");
+    a.push(4);
+
+    window.setTimeout(function() {
+        var r = a.join(",");
+        todo_wine_if(document.documentMode < 10).
+        ok(r === "0,1,2,3," + (document.documentMode < 10 ? "sync_xhr(1),sync_xhr(2),sync_xhr(3)," : "") +
+                 "sync_xhr(4)," + (document.documentMode < 10 ? "nested(1),nested(2),nested(3)," : "") +
+                 "nested(4),4,async_xhr(3),async_xhr(4),sync_xhr_in_async,async_xhr2(3),async_xhr2(4)," +
+                 "msg1,msg2,msg_sync,msg_nested,msg_async,timeout,timeout_sync,timeout_nested",
+           "unexpected order: " + r);
+        window.removeEventListener("message", onmsg);
+        document.ondblclick = null;
+        a = [ 0 ];
+
+        // Events dispatched to other iframes are not blocked by a send() in another context,
+        // except for async XHR events (which are a special case again), messages, and timeouts.
+        var iframe = document.createElement("iframe"), iframe2 = document.createElement("iframe");
+        iframe.onload = function() {
+            iframe2.onload = function() {
+                function onmsg(e) {
+                    a.push(e.data);
+                    if(e.data === "echo")
+                        iframe2.contentWindow.postMessage("sync_xhr", "*");
+                };
+
+                window.setTimeout(function() {
+                    var r = a.join(",");
+                    ok(r === "0,1,async_xhr,echo,sync_xhr(pre-send),sync_xhr(DONE),sync_xhr,async_xhr(DONE)",
+                       "[iframes 1] unexpected order: " + r);
+                    a = [ 0 ];
+
+                    window.setTimeout(function() {
+                        var r = a.join(",");
+                        ok(r === "0,1,echo,blank(DONE),sync_xhr(pre-send),sync_xhr(DONE),sync_xhr",
+                           "[iframes 2] unexpected order: " + r);
+                        window.removeEventListener("message", onmsg);
+                        next_test();
+                    }, 0);
+
+                    iframe.onload = function() { a.push("blank(DONE)"); };
+                    iframe.src = "blank.html?delay_with_signal";
+                    iframe2.contentWindow.postMessage("echo", "*");
+                    a.push(1);
+                }, 0);
+
+                window.addEventListener("message", onmsg);
+                iframe.contentWindow.postMessage("async_xhr", "*");
+                iframe2.contentWindow.postMessage("echo", "*");
+                a.push(1);
+            };
+            iframe2.src = "xhr_iframe.html";
+            document.body.appendChild(iframe2);
+        };
+        iframe.src = "xhr_iframe.html";
+        document.body.appendChild(iframe);
+    }, 0);
+}
+
 function test_content_types() {
     var xhr = new XMLHttpRequest(), types, i = 0, override = false;
     var v = document.documentMode;
@@ -291,6 +430,7 @@ function test_response() {
 
 var tests = [
     test_xhr,
+    test_sync_xhr,
     test_content_types,
     test_abort,
     test_timeout,

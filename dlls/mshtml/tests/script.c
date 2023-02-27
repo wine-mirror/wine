@@ -3675,6 +3675,7 @@ typedef struct {
     IInternetProtocolSink *sink;
     BINDINFO bind_info;
 
+    HANDLE delay_event;
     BSTR content_type;
     IStream *stream;
     char *data;
@@ -3685,12 +3686,17 @@ typedef struct {
     IUri *uri;
 } ProtocolHandler;
 
+static ProtocolHandler *delay_with_signal_handler;
+
 static DWORD WINAPI delay_proc(void *arg)
 {
     PROTOCOLDATA protocol_data = {PI_FORCE_ASYNC};
     ProtocolHandler *protocol_handler = arg;
 
-    Sleep(protocol_handler->delay);
+    if(protocol_handler->delay_event)
+        WaitForSingleObject(protocol_handler->delay_event, INFINITE);
+    else
+        Sleep(protocol_handler->delay);
     protocol_handler->delay = -1;
     IInternetProtocolSink_Switch(protocol_handler->sink, &protocol_data);
     return 0;
@@ -3735,7 +3741,7 @@ static void report_data(ProtocolHandler *This)
 
         IHttpNegotiate_Release(http_negotiate);
 
-        if(This->delay) {
+        if(This->delay || This->delay_event) {
             IInternetProtocolEx_AddRef(&This->IInternetProtocolEx_iface);
             QueueUserWorkItem(delay_proc, This, 0);
             return;
@@ -3880,6 +3886,8 @@ static ULONG WINAPI Protocol_Release(IInternetProtocolEx *iface)
     LONG ref = InterlockedDecrement(&This->ref);
 
     if(!ref) {
+        if(This->delay_event)
+            CloseHandle(This->delay_event);
         if(This->sink)
             IInternetProtocolSink_Release(This->sink);
         if(This->stream)
@@ -4061,8 +4069,20 @@ static HRESULT WINAPI ProtocolEx_StartEx(IInternetProtocolEx *iface, IUri *uri, 
 
     hres = IUri_GetQuery(uri, &query);
     if(SUCCEEDED(hres)) {
-        if(!lstrcmpW(query, L"?delay"))
+        if(!wcscmp(query, L"?delay"))
             This->delay = 1000;
+        else if(!wcscmp(query, L"?delay_with_signal")) {
+            if(delay_with_signal_handler) {
+                ProtocolHandler *delayed = delay_with_signal_handler;
+                delay_with_signal_handler = NULL;
+                SetEvent(delayed->delay_event);
+                This->delay = 30;
+            }else {
+                delay_with_signal_handler = This;
+                This->delay_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+                ok(This->delay_event != NULL, "CreateEvent failed: %08lx\n", GetLastError());
+            }
+        }
         else if(!wcsncmp(query, L"?content-type=", sizeof("?content-type=")-1))
             This->content_type = SysAllocString(query + sizeof("?content-type=")-1);
         SysFreeString(query);

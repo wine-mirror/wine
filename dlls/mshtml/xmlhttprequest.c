@@ -137,10 +137,16 @@ struct HTMLXMLHttpRequest {
     IWineXMLHttpRequestPrivate IWineXMLHttpRequestPrivate_iface;
     IProvideClassInfo2 IProvideClassInfo2_iface;
     LONG ref;
+    LONG task_magic;
     LONG ready_state;
     response_type_t response_type;
+    BOOLEAN synchronous;
+    DWORD magic;
+    DWORD pending_events_magic;
+    HTMLInnerWindow *window;
     nsIXMLHttpRequest *nsxhr;
     XMLHttpReqEventListener *event_listener;
+    DOMEvent *pending_progress_event;
 };
 
 static void detach_xhr_event_listener(XMLHttpReqEventListener *event_listener)
@@ -164,6 +170,157 @@ static void detach_xhr_event_listener(XMLHttpReqEventListener *event_listener)
 
     event_listener->xhr = NULL;
     nsIDOMEventListener_Release(&event_listener->nsIDOMEventListener_iface);
+}
+
+static void synthesize_pending_events(HTMLXMLHttpRequest *xhr)
+{
+    DWORD magic = xhr->pending_events_magic;
+    UINT16 ready_state = xhr->ready_state;
+    BOOLEAN send_load, send_loadend;
+    DOMEvent *event;
+    HRESULT hres;
+
+    if(xhr->magic != magic)
+        return;
+
+    /* Make sure further events are synthesized with a new task */
+    xhr->pending_events_magic = magic - 1;
+
+    /* Synthesize the necessary events that led us to this current state */
+    nsIXMLHttpRequest_GetReadyState(xhr->nsxhr, &ready_state);
+    if(ready_state == READYSTATE_UNINITIALIZED)
+        return;
+
+    /* Synchronous XHRs only send readyState changes before DONE in IE9 and below */
+    if(xhr->synchronous && dispex_compat_mode(&xhr->event_target.dispex) > COMPAT_MODE_IE9) {
+        if(ready_state < READYSTATE_INTERACTIVE) {
+            xhr->ready_state = ready_state;
+            return;
+        }
+        xhr->ready_state = max(xhr->ready_state, READYSTATE_INTERACTIVE);
+    }
+
+    IHTMLXMLHttpRequest_AddRef(&xhr->IHTMLXMLHttpRequest_iface);
+
+    send_loadend = send_load = (xhr->ready_state != ready_state && ready_state == READYSTATE_COMPLETE);
+    for(;;) {
+        if(xhr->pending_progress_event &&
+           xhr->ready_state == (xhr->pending_progress_event->event_id == EVENTID_PROGRESS ? READYSTATE_INTERACTIVE : READYSTATE_COMPLETE))
+        {
+            DOMEvent *pending_progress_event = xhr->pending_progress_event;
+            xhr->pending_progress_event = NULL;
+
+            if(pending_progress_event->event_id != EVENTID_PROGRESS) {
+                send_load = FALSE;
+                send_loadend = TRUE;
+            }
+
+            dispatch_event(&xhr->event_target, pending_progress_event);
+            IDOMEvent_Release(&pending_progress_event->IDOMEvent_iface);
+            if(xhr->magic != magic)
+                goto ret;
+        }
+
+        if(xhr->ready_state >= ready_state)
+            break;
+
+        xhr->ready_state++;
+        hres = create_document_event(xhr->window->doc, EVENTID_READYSTATECHANGE, &event);
+        if(SUCCEEDED(hres)) {
+            dispatch_event(&xhr->event_target, event);
+            IDOMEvent_Release(&event->IDOMEvent_iface);
+            if(xhr->magic != magic)
+                goto ret;
+        }
+    }
+
+    if(send_load) {
+        hres = create_document_event(xhr->window->doc, EVENTID_LOAD, &event);
+        if(SUCCEEDED(hres)) {
+            dispatch_event(&xhr->event_target, event);
+            IDOMEvent_Release(&event->IDOMEvent_iface);
+            if(xhr->magic != magic)
+                goto ret;
+        }
+    }
+
+    if(send_loadend) {
+        hres = create_document_event(xhr->window->doc, EVENTID_LOADEND, &event);
+        if(SUCCEEDED(hres)) {
+            dispatch_event(&xhr->event_target, event);
+            IDOMEvent_Release(&event->IDOMEvent_iface);
+            if(xhr->magic != magic)
+                goto ret;
+        }
+    }
+
+ret:
+    IHTMLXMLHttpRequest_Release(&xhr->IHTMLXMLHttpRequest_iface);
+}
+
+static nsresult sync_xhr_send(HTMLXMLHttpRequest *xhr, nsIVariant *nsbody)
+{
+    thread_data_t *thread_data = get_thread_data(TRUE);
+    HTMLXMLHttpRequest *prev_blocking_xhr;
+    HTMLInnerWindow *window = xhr->window;
+    nsresult nsres;
+
+    if(!thread_data)
+        return NS_ERROR_OUT_OF_MEMORY;
+    prev_blocking_xhr = thread_data->blocking_xhr;
+
+    /* Note: Starting with Gecko 30.0 (Firefox 30.0 / Thunderbird 30.0 / SeaMonkey 2.27),
+     * synchronous requests on the main thread have been deprecated due to the negative
+     * effects to the user experience. However, they still work. The larger issue is that
+     * it is broken because it still dispatches async XHR and some other events, while all
+     * other major browsers don't, including IE, so we have to filter them out during Send.
+     *
+     * They will need to be queued and dispatched later, after Send returns, otherwise it
+     * breaks JavaScript single-threaded expectations (JS code will switch from blocking in
+     * Send to executing some event handler, then returning back to Send, messing its state).
+     *
+     * Of course we can't just delay dispatching the events, because the state won't match
+     * for each event later on, to what it's supposed to be (most notably, XHR's readyState).
+     * We'll keep snapshots and synthesize them when unblocked for async XHR events.
+     *
+     * Note that while queuing an event this way would not work correctly with their default
+     * behavior in Gecko (preventDefault() can't be called because we need to *delay* the
+     * default, rather than prevent it completely), Gecko does suppress events reaching the
+     * document during the sync XHR event loop, so those we do not handle manually. If we
+     * find an event that has defaults on Gecko's side and isn't delayed by Gecko, we need
+     * to figure out a way to handle it...
+     *
+     * For details (and bunch of problems to consider) see: https://bugzil.la/697151
+     */
+    window->base.outer_window->readystate_locked++;
+    window->blocking_depth++;
+    thread_data->blocking_xhr = xhr;
+    nsres = nsIXMLHttpRequest_Send(xhr->nsxhr, nsbody);
+    thread_data->blocking_xhr = prev_blocking_xhr;
+    window->base.outer_window->readystate_locked--;
+
+    if(!--window->blocking_depth)
+        unblock_tasks_and_timers(thread_data);
+
+    /* Process any pending events now since they were part of the blocked send() above */
+    synthesize_pending_events(xhr);
+
+    return nsres;
+}
+
+struct pending_xhr_events_task {
+    event_task_t header;
+    HTMLXMLHttpRequest *xhr;
+};
+
+static void pending_xhr_events_proc(event_task_t *_task)
+{
+    struct pending_xhr_events_task *task = (struct pending_xhr_events_task*)_task;
+    synthesize_pending_events(task->xhr);
+}
+
+static void pending_xhr_events_destr(event_task_t *_task)
+{
 }
 
 
@@ -221,23 +378,92 @@ static nsrefcnt NSAPI XMLHttpReqEventListener_Release(nsIDOMEventListener *iface
 static nsresult NSAPI XMLHttpReqEventListener_HandleEvent(nsIDOMEventListener *iface, nsIDOMEvent *nsevent)
 {
     XMLHttpReqEventListener *This = impl_from_nsIDOMEventListener(iface);
-    UINT16 ready_state;
+    HTMLXMLHttpRequest *blocking_xhr = NULL;
+    thread_data_t *thread_data;
+    LONG ready_state;
     DOMEvent *event;
     HRESULT hres;
+    UINT16 val;
 
     TRACE("(%p)\n", This);
 
     if(!This->xhr)
         return NS_OK;
 
-    if(NS_SUCCEEDED(nsIXMLHttpRequest_GetReadyState(This->xhr->nsxhr, &ready_state)))
-        This->xhr->ready_state = ready_state;
+    ready_state = This->xhr->ready_state;
+    if(NS_SUCCEEDED(nsIXMLHttpRequest_GetReadyState(This->xhr->nsxhr, &val)))
+        ready_state = val;
+
+    if((thread_data = get_thread_data(FALSE)))
+        blocking_xhr = thread_data->blocking_xhr;
 
     hres = create_event_from_nsevent(nsevent, dispex_compat_mode(&This->xhr->event_target.dispex), &event);
-    if(SUCCEEDED(hres) ){
-        dispatch_event(&This->xhr->event_target, event);
-        IDOMEvent_Release(&event->IDOMEvent_iface);
+    if(FAILED(hres)) {
+        if(!blocking_xhr || This->xhr == blocking_xhr)
+            This->xhr->ready_state = ready_state;
+        return NS_ERROR_OUT_OF_MEMORY;
     }
+
+    if(blocking_xhr) {
+        BOOL has_pending_events = (This->xhr->magic == This->xhr->pending_events_magic);
+
+        if(has_pending_events || This->xhr != blocking_xhr) {
+            switch(event->event_id) {
+            case EVENTID_PROGRESS:
+            case EVENTID_ABORT:
+            case EVENTID_ERROR:
+            case EVENTID_TIMEOUT:
+                if(This->xhr->pending_progress_event)
+                    IDOMEvent_Release(&This->xhr->pending_progress_event->IDOMEvent_iface);
+                This->xhr->pending_progress_event = event;
+                break;
+            default:
+                IDOMEvent_Release(&event->IDOMEvent_iface);
+                break;
+            }
+
+            if(!has_pending_events) {
+                if(!This->xhr->synchronous) {
+                    struct pending_xhr_events_task *task;
+
+                    remove_target_tasks(This->xhr->task_magic);
+
+                    if(!(task = malloc(sizeof(*task))))
+                        return NS_ERROR_OUT_OF_MEMORY;
+
+                    task->header.target_magic = This->xhr->task_magic;
+                    task->header.thread_blocked = TRUE;
+                    task->header.proc = pending_xhr_events_proc;
+                    task->header.destr = pending_xhr_events_destr;
+                    task->header.window = This->xhr->window;
+                    task->xhr = This->xhr;
+                    IHTMLWindow2_AddRef(&This->xhr->window->base.IHTMLWindow2_iface);
+
+                    list_add_after(thread_data->pending_xhr_events_tail, &task->header.entry);
+                    thread_data->pending_xhr_events_tail = &task->header.entry;
+                }
+                This->xhr->pending_events_magic = This->xhr->magic;
+                return NS_OK;
+            }
+
+            /* Synthesize pending events that a nested sync XHR might have blocked us on */
+            if(This->xhr == blocking_xhr)
+                synthesize_pending_events(This->xhr);
+            return NS_OK;
+        }
+
+        /* Workaround weird Gecko behavior with nested sync XHRs, where it sends readyState changes
+           for OPENED (or possibly other states than DONE), unlike IE10+ and non-nested sync XHRs... */
+        if(ready_state < READYSTATE_COMPLETE && event->event_id == EVENTID_READYSTATECHANGE) {
+            IDOMEvent_Release(&event->IDOMEvent_iface);
+            This->xhr->ready_state = ready_state;
+            return NS_OK;
+        }
+    }
+
+    This->xhr->ready_state = ready_state;
+    dispatch_event(&This->xhr->event_target, event);
+    IDOMEvent_Release(&event->IDOMEvent_iface);
     return NS_OK;
 }
 
@@ -299,7 +525,11 @@ static ULONG WINAPI HTMLXMLHttpRequest_Release(IHTMLXMLHttpRequest *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
+        remove_target_tasks(This->task_magic);
         detach_xhr_event_listener(This->event_listener);
+        if(This->pending_progress_event)
+            IDOMEvent_Release(&This->pending_progress_event->IDOMEvent_iface);
+        IHTMLWindow2_Release(&This->window->base.IHTMLWindow2_iface);
         release_event_target(&This->event_target);
         release_dispex(&This->event_target.dispex);
         nsIXMLHttpRequest_Release(This->nsxhr);
@@ -510,14 +740,17 @@ static HRESULT WINAPI HTMLXMLHttpRequest_get_onreadystatechange(IHTMLXMLHttpRequ
 static HRESULT WINAPI HTMLXMLHttpRequest_abort(IHTMLXMLHttpRequest *iface)
 {
     HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
+    DWORD prev_magic = This->magic;
     UINT16 ready_state;
     nsresult nsres;
 
     TRACE("(%p)->()\n", This);
 
+    This->magic++;
     nsres = nsIXMLHttpRequest_SlowAbort(This->nsxhr);
     if(NS_FAILED(nsres)) {
         ERR("nsIXMLHttpRequest_SlowAbort failed: %08lx\n", nsres);
+        This->magic = prev_magic;
         return E_FAIL;
     }
 
@@ -553,9 +786,11 @@ static HRESULT HTMLXMLHttpRequest_open_hook(DispatchEx *dispex, WORD flags,
 static HRESULT WINAPI HTMLXMLHttpRequest_open(IHTMLXMLHttpRequest *iface, BSTR bstrMethod, BSTR bstrUrl, VARIANT varAsync, VARIANT varUser, VARIANT varPassword)
 {
     HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
+    BOOLEAN prev_synchronous;
     nsAString user, password;
     nsACString method, url;
     unsigned opt_argc = 1;
+    DWORD prev_magic;
     nsresult nsres;
     HRESULT hres;
 
@@ -568,15 +803,6 @@ static HRESULT WINAPI HTMLXMLHttpRequest_open(IHTMLXMLHttpRequest *iface, BSTR b
             WARN("Failed to convert varAsync to BOOL: %#lx\n", hres);
             return hres;
         }
-    }
-
-    /* Note: Starting with Gecko 30.0 (Firefox 30.0 / Thunderbird 30.0 / SeaMonkey 2.27),
-     * synchronous requests on the main thread have been deprecated due to the negative
-     * effects to the user experience.
-     */
-    if(!V_BOOL(&varAsync)) {
-        FIXME("Synchronous request is not supported yet\n");
-        return E_FAIL;
     }
 
     hres = variant_to_nsastr(varUser, &user);
@@ -602,6 +828,12 @@ static HRESULT WINAPI HTMLXMLHttpRequest_open(IHTMLXMLHttpRequest *iface, BSTR b
         return hres;
     }
 
+    /* Set this here, Gecko dispatches nested sync XHR readyState changes for OPENED (see HandleEvent) */
+    prev_magic = This->magic;
+    prev_synchronous = This->synchronous;
+    This->synchronous = !V_BOOL(&varAsync);
+    This->magic++;
+
     if(V_VT(&varPassword) != VT_EMPTY && V_VT(&varPassword) != VT_ERROR)
         opt_argc += 2;
     else if(V_VT(&varUser) != VT_EMPTY && V_VT(&varUser) != VT_ERROR)
@@ -615,6 +847,8 @@ static HRESULT WINAPI HTMLXMLHttpRequest_open(IHTMLXMLHttpRequest *iface, BSTR b
 
     if(NS_FAILED(nsres)) {
         ERR("nsIXMLHttpRequest_Open failed: %08lx\n", nsres);
+        This->magic = prev_magic;
+        This->synchronous = prev_synchronous;
         return E_FAIL;
     }
 
@@ -651,13 +885,18 @@ static HRESULT WINAPI HTMLXMLHttpRequest_send(IHTMLXMLHttpRequest *iface, VARIAN
         return E_NOTIMPL;
     }
 
-    if(NS_SUCCEEDED(nsres))
-        nsres = nsIXMLHttpRequest_Send(This->nsxhr, (nsIVariant*)nsbody);
+    if(NS_SUCCEEDED(nsres)) {
+        if(This->synchronous)
+            nsres = sync_xhr_send(This, (nsIVariant*)nsbody);
+        else
+            nsres = nsIXMLHttpRequest_Send(This->nsxhr, (nsIVariant*)nsbody);
+    }
+
     if(nsbody)
         nsIWritableVariant_Release(nsbody);
     if(NS_FAILED(nsres)) {
         ERR("nsIXMLHttpRequest_Send failed: %08lx\n", nsres);
-        return E_FAIL;
+        return map_nsresult(nsres);
     }
 
     return S_OK;
@@ -1445,6 +1684,9 @@ static HRESULT WINAPI HTMLXMLHttpRequestFactory_create(IHTMLXMLHttpRequestFactor
     }
 
     ret->nsxhr = nsxhr;
+    ret->window = This->window;
+    ret->task_magic = get_task_target_magic();
+    IHTMLWindow2_AddRef(&This->window->base.IHTMLWindow2_iface);
 
     ret->IHTMLXMLHttpRequest_iface.lpVtbl = &HTMLXMLHttpRequestVtbl;
     ret->IHTMLXMLHttpRequest2_iface.lpVtbl = &HTMLXMLHttpRequest2Vtbl;
