@@ -315,9 +315,9 @@ static int parse_spec_arguments( ORDDEF *odp, DLLSPEC *spec, int optional )
     }
     if (odp->flags & FLAG_SYSCALL)
     {
-        if (odp->type != TYPE_STDCALL && odp->type != TYPE_CDECL)
+        if (odp->type != TYPE_STDCALL)
         {
-            error( "A syscall function must use either the stdcall or the cdecl convention\n" );
+            error( "A syscall function must use the stdcall convention\n" );
             return 0;
         }
     }
