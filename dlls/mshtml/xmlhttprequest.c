@@ -380,6 +380,7 @@ static nsresult NSAPI XMLHttpReqEventListener_HandleEvent(nsIDOMEventListener *i
     XMLHttpReqEventListener *This = impl_from_nsIDOMEventListener(iface);
     HTMLXMLHttpRequest *blocking_xhr = NULL;
     thread_data_t *thread_data;
+    compat_mode_t compat_mode;
     LONG ready_state;
     DOMEvent *event;
     HRESULT hres;
@@ -397,7 +398,8 @@ static nsresult NSAPI XMLHttpReqEventListener_HandleEvent(nsIDOMEventListener *i
     if((thread_data = get_thread_data(FALSE)))
         blocking_xhr = thread_data->blocking_xhr;
 
-    hres = create_event_from_nsevent(nsevent, dispex_compat_mode(&This->xhr->event_target.dispex), &event);
+    compat_mode = dispex_compat_mode(&This->xhr->event_target.dispex);
+    hres = create_event_from_nsevent(nsevent, compat_mode, &event);
     if(FAILED(hres)) {
         if(!blocking_xhr || This->xhr == blocking_xhr)
             This->xhr->ready_state = ready_state;
@@ -458,6 +460,30 @@ static nsresult NSAPI XMLHttpReqEventListener_HandleEvent(nsIDOMEventListener *i
             IDOMEvent_Release(&event->IDOMEvent_iface);
             This->xhr->ready_state = ready_state;
             return NS_OK;
+        }
+
+        /* IE10+ only send readystatechange event when it is DONE for sync XHRs, but older modes
+           send all the others here, including OPENED state change (even if it was opened earlier). */
+        if(compat_mode < COMPAT_MODE_IE10 && This->xhr->ready_state < READYSTATE_COMPLETE && (
+            event->event_id == EVENTID_READYSTATECHANGE || event->event_id == EVENTID_PROGRESS || event->event_id == EVENTID_LOADSTART)) {
+            DOMEvent *readystatechange_event;
+            DWORD magic = This->xhr->magic;
+            unsigned i;
+
+            for(i = READYSTATE_LOADING; i < READYSTATE_COMPLETE; i++) {
+                hres = create_document_event(This->xhr->window->doc, EVENTID_READYSTATECHANGE, &readystatechange_event);
+                if(FAILED(hres))
+                    break;
+
+                This->xhr->ready_state = i;
+                dispatch_event(&This->xhr->event_target, readystatechange_event);
+                IDOMEvent_Release(&readystatechange_event->IDOMEvent_iface);
+
+                if(This->xhr->magic != magic) {
+                    IDOMEvent_Release(&event->IDOMEvent_iface);
+                    return NS_OK;
+                }
+            }
         }
     }
 

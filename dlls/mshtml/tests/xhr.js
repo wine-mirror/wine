@@ -161,7 +161,6 @@ function test_sync_xhr() {
 
     window.setTimeout(function() {
         var r = a.join(",");
-        todo_wine_if(document.documentMode < 10).
         ok(r === "0,1,2,3," + (document.documentMode < 10 ? "sync_xhr(1),sync_xhr(2),sync_xhr(3)," : "") +
                  "sync_xhr(4)," + (document.documentMode < 10 ? "nested(1),nested(2),nested(3)," : "") +
                  "nested(4),4,async_xhr(3),async_xhr(4),sync_xhr_in_async,async_xhr2(3),async_xhr2(4)," +

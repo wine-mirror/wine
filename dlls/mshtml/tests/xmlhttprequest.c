@@ -712,11 +712,11 @@ static void test_sync_xhr(IHTMLDocument2 *doc, const WCHAR *xml_url, const WCHAR
     loading_cnt = 0;
     hres = IHTMLXMLHttpRequest_send(xhr, vempty);
     ok(hres == S_OK, "send failed: %08lx\n", hres);
-    todo_wine CHECK_CALLED(xmlhttprequest_onreadystatechange_opened);
-    todo_wine CHECK_CALLED(xmlhttprequest_onreadystatechange_headers_received);
-    todo_wine CHECK_CALLED(xmlhttprequest_onreadystatechange_loading);
+    CHECK_CALLED(xmlhttprequest_onreadystatechange_opened);
+    CHECK_CALLED(xmlhttprequest_onreadystatechange_headers_received);
+    CHECK_CALLED(xmlhttprequest_onreadystatechange_loading);
     CHECK_CALLED(xmlhttprequest_onreadystatechange_done);
-    todo_wine ok(loading_cnt == 1, "loading_cnt = %d\n", loading_cnt);
+    ok(loading_cnt == 1, "loading_cnt = %d\n", loading_cnt);
 
     text = NULL;
     hres = IHTMLXMLHttpRequest_getResponseHeader(xhr, content_type, &text);
