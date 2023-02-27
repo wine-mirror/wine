@@ -46,27 +46,20 @@ typedef struct {
     struct list entry;
 } task_timer_t;
 
-static void default_task_destr(task_t *task)
-{
-    free(task);
-}
-
 HRESULT push_task(task_t *task, task_proc_t proc, task_proc_t destr, LONG magic)
 {
     thread_data_t *thread_data;
 
     thread_data = get_thread_data(TRUE);
     if(!thread_data) {
-        if(destr)
-            destr(task);
-        else
-            free(task);
+        destr(task);
+        free(task);
         return E_OUTOFMEMORY;
     }
 
     task->target_magic = magic;
     task->proc = proc;
-    task->destr = destr ? destr : default_task_destr;
+    task->destr = destr;
 
     list_add_tail(&thread_data->task_list, &task->entry);
 
@@ -128,6 +121,7 @@ void remove_target_tasks(LONG target)
         if(task->target_magic == target) {
             list_remove(&task->entry);
             task->destr(task);
+            free(task);
         }
     }
 }
@@ -341,6 +335,7 @@ static LRESULT WINAPI hidden_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
             task->proc(task);
             task->destr(task);
+            free(task);
         }
 
         return 0;

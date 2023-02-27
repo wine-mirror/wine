@@ -446,7 +446,6 @@ static void refresh_destr(task_t *_task)
     refresh_task_t *task = (refresh_task_t*)_task;
 
     IHTMLWindow2_Release(&task->window->base.IHTMLWindow2_iface);
-    free(task);
 }
 
 HRESULT reload_page(HTMLOuterWindow *window)

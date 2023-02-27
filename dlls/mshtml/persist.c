@@ -240,6 +240,10 @@ static void set_progress_proc(task_t *_task)
     }
 }
 
+static void set_progress_destr(task_t *_task)
+{
+}
+
 static void set_downloading_proc(task_t *_task)
 {
     download_proc_task_t *task = (download_proc_task_t*)_task;
@@ -275,7 +279,6 @@ static void set_downloading_task_destr(task_t *_task)
     download_proc_task_t *task = (download_proc_task_t*)_task;
 
     CoTaskMemFree(task->url);
-    free(task);
 }
 
 void prepare_for_binding(HTMLDocumentObj *This, IMoniker *mon, DWORD flags)
@@ -406,7 +409,7 @@ HRESULT set_moniker(HTMLOuterWindow *window, IMoniker *mon, IUri *nav_uri, IBind
 
             task = malloc(sizeof(docobj_task_t));
             task->doc = doc_obj;
-            hres = push_task(&task->header, set_progress_proc, NULL, doc_obj->task_magic);
+            hres = push_task(&task->header, set_progress_proc, set_progress_destr, doc_obj->task_magic);
             if(FAILED(hres)) {
                 CoTaskMemFree(url);
                 return hres;

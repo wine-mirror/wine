@@ -986,7 +986,6 @@ static void start_binding_task_destr(task_t *_task)
     start_binding_task_t *task = (start_binding_task_t*)_task;
 
     IBindStatusCallback_Release(&task->bscallback->bsc.IBindStatusCallback_iface);
-    free(task);
 }
 
 static nsresult async_open(nsChannel *This, HTMLOuterWindow *window, BOOL is_doc_channel, UINT32 load_type,
