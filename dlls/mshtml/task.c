@@ -67,21 +67,33 @@ HRESULT push_task(task_t *task, task_proc_t proc, task_proc_t destr, LONG magic)
     return S_OK;
 }
 
-static task_t *pop_task(void)
+static void release_event_task(event_task_t *task)
+{
+    task->destr(task);
+    IHTMLWindow2_Release(&task->window->base.IHTMLWindow2_iface);
+    free(task);
+}
+
+HRESULT push_event_task(event_task_t *task, HTMLInnerWindow *window, event_task_proc_t proc, event_task_proc_t destr, LONG magic)
 {
     thread_data_t *thread_data;
-    task_t *task;
 
-    thread_data = get_thread_data(FALSE);
-    if(!thread_data)
-        return NULL;
+    task->target_magic = magic;
+    task->proc = proc;
+    task->destr = destr;
+    task->window = window;
+    IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
 
-    if(list_empty(&thread_data->task_list))
-        return NULL;
+    thread_data = get_thread_data(TRUE);
+    if(!thread_data) {
+        release_event_task(task);
+        return E_OUTOFMEMORY;
+    }
 
-    task = LIST_ENTRY(thread_data->task_list.next, task_t, entry);
-    list_remove(&task->entry);
-    return task;
+    list_add_tail(&thread_data->event_task_list, &task->entry);
+
+    PostMessageW(thread_data->thread_hwnd, WM_PROCESSTASK, 0, 0);
+    return S_OK;
 }
 
 static void release_task_timer(HWND thread_hwnd, task_timer_t *timer)
@@ -122,6 +134,14 @@ void remove_target_tasks(LONG target)
             list_remove(&task->entry);
             task->destr(task);
             free(task);
+        }
+    }
+
+    LIST_FOR_EACH_SAFE(liter, ltmp, &thread_data->event_task_list) {
+        event_task_t *task = LIST_ENTRY(liter, event_task_t, entry);
+        if(task->target_magic == target) {
+            list_remove(&task->entry);
+            release_event_task(task);
         }
     }
 }
@@ -326,18 +346,37 @@ static LRESULT process_timer(void)
 
 static LRESULT WINAPI hidden_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    thread_data_t *thread_data;
+
     switch(msg) {
     case WM_PROCESSTASK:
+        thread_data = get_thread_data(FALSE);
+        if(!thread_data)
+            return 0;
+
         while(1) {
-            task_t *task = pop_task();
-            if(!task)
-                break;
+            struct list *head = list_head(&thread_data->task_list);
 
-            task->proc(task);
-            task->destr(task);
-            free(task);
+            if(head) {
+                task_t *task = LIST_ENTRY(head, task_t, entry);
+                list_remove(&task->entry);
+                task->proc(task);
+                task->destr(task);
+                free(task);
+                continue;
+            }
+
+            head = list_head(&thread_data->event_task_list);
+            if(head) {
+                event_task_t *task = LIST_ENTRY(head, event_task_t, entry);
+                list_remove(&task->entry);
+                task->proc(task);
+                release_event_task(task);
+                continue;
+            }
+
+            break;
         }
-
         return 0;
     case WM_TIMER:
         return process_timer();
@@ -410,6 +449,7 @@ thread_data_t *get_thread_data(BOOL create)
 
         TlsSetValue(mshtml_tls, thread_data);
         list_init(&thread_data->task_list);
+        list_init(&thread_data->event_task_list);
         list_init(&thread_data->timer_list);
         wine_rb_init(&thread_data->session_storage_map, session_storage_map_cmp);
     }

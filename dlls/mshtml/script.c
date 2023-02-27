@@ -773,11 +773,11 @@ static void dispatch_script_readystatechange_event(HTMLScriptElement *script)
 }
 
 typedef struct {
-    task_t header;
+    event_task_t header;
     HTMLScriptElement *elem;
 } fire_readystatechange_task_t;
 
-static void fire_readystatechange_proc(task_t *_task)
+static void fire_readystatechange_proc(event_task_t *_task)
 {
     fire_readystatechange_task_t *task = (fire_readystatechange_task_t*)_task;
 
@@ -788,7 +788,7 @@ static void fire_readystatechange_proc(task_t *_task)
     dispatch_script_readystatechange_event(task->elem);
 }
 
-static void fire_readystatechange_task_destr(task_t *_task)
+static void fire_readystatechange_task_destr(event_task_t *_task)
 {
     fire_readystatechange_task_t *task = (fire_readystatechange_task_t*)_task;
 
@@ -818,8 +818,8 @@ static void set_script_elem_readystate(HTMLScriptElement *script_elem, READYSTAT
             IHTMLScriptElement_AddRef(&script_elem->IHTMLScriptElement_iface);
             task->elem = script_elem;
 
-            hres = push_task(&task->header, fire_readystatechange_proc, fire_readystatechange_task_destr,
-                    script_elem->element.node.doc->window->task_magic);
+            hres = push_event_task(&task->header, script_elem->element.node.doc->window, fire_readystatechange_proc,
+                    fire_readystatechange_task_destr, script_elem->element.node.doc->window->task_magic);
             if(SUCCEEDED(hres))
                 script_elem->pending_readystatechange_event = TRUE;
         }else {

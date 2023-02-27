@@ -200,15 +200,14 @@ static inline HTMLStorage *impl_from_IHTMLStorage(IHTMLStorage *iface)
 static HRESULT build_session_origin(IUri*,BSTR,BSTR*);
 
 struct storage_event_task {
-    task_t header;
-    HTMLInnerWindow *window;
+    event_task_t header;
     DOMEvent *event;
 };
 
-static void storage_event_proc(task_t *_task)
+static void storage_event_proc(event_task_t *_task)
 {
     struct storage_event_task *task = (struct storage_event_task*)_task;
-    HTMLInnerWindow *window = task->window;
+    HTMLInnerWindow *window = task->header.window;
     DOMEvent *event = task->event;
     VARIANT_BOOL cancelled;
 
@@ -221,11 +220,10 @@ static void storage_event_proc(task_t *_task)
     }
 }
 
-static void storage_event_destr(task_t *_task)
+static void storage_event_destr(event_task_t *_task)
 {
     struct storage_event_task *task = (struct storage_event_task*)_task;
     IDOMEvent_Release(&task->event->IDOMEvent_iface);
-    IHTMLWindow2_Release(&task->window->base.IHTMLWindow2_iface);
 }
 
 struct send_storage_event_ctx {
@@ -254,9 +252,7 @@ static HRESULT push_storage_event_task(struct send_storage_event_ctx *ctx, HTMLI
     }
 
     task->event = event;
-    task->window = window;
-    IHTMLWindow2_AddRef(&task->window->base.IHTMLWindow2_iface);
-    return push_task(&task->header, storage_event_proc, storage_event_destr, window->task_magic);
+    return push_event_task(&task->header, window, storage_event_proc, storage_event_destr, window->task_magic);
 }
 
 static HRESULT send_storage_event_impl(struct send_storage_event_ctx *ctx, HTMLInnerWindow *window)

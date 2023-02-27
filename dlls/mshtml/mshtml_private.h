@@ -1283,6 +1283,17 @@ struct task_t {
     struct list entry;
 };
 
+typedef struct event_task_t event_task_t;
+typedef void (*event_task_proc_t)(event_task_t*);
+
+struct event_task_t {
+    LONG target_magic;
+    event_task_proc_t proc;
+    event_task_proc_t destr;
+    struct list entry;
+    HTMLInnerWindow *window;
+};
+
 typedef struct {
     task_t header;
     HTMLDocumentObj *doc;
@@ -1291,6 +1302,7 @@ typedef struct {
 typedef struct {
     HWND thread_hwnd;
     struct list task_list;
+    struct list event_task_list;
     struct list timer_list;
     struct wine_rb_tree session_storage_map;
 } thread_data_t;
@@ -1302,6 +1314,7 @@ void destroy_session_storage(thread_data_t*) DECLSPEC_HIDDEN;
 
 LONG get_task_target_magic(void) DECLSPEC_HIDDEN;
 HRESULT push_task(task_t*,task_proc_t,task_proc_t,LONG) DECLSPEC_HIDDEN;
+HRESULT push_event_task(event_task_t*,HTMLInnerWindow*,event_task_proc_t,event_task_proc_t,LONG) DECLSPEC_HIDDEN;
 void remove_target_tasks(LONG) DECLSPEC_HIDDEN;
 ULONGLONG get_time_stamp(void) DECLSPEC_HIDDEN;
 

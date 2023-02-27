@@ -455,21 +455,13 @@ static void notif_readystate(HTMLOuterWindow *window)
     }
 }
 
-typedef struct {
-    task_t header;
-    HTMLOuterWindow *window;
-} readystate_task_t;
-
-static void notif_readystate_proc(task_t *_task)
+static void notif_readystate_proc(event_task_t *task)
 {
-    readystate_task_t *task = (readystate_task_t*)_task;
-    notif_readystate(task->window);
+    notif_readystate(task->window->base.outer_window);
 }
 
-static void notif_readystate_destr(task_t *_task)
+static void notif_readystate_destr(event_task_t *task)
 {
-    readystate_task_t *task = (readystate_task_t*)_task;
-    IHTMLWindow2_Release(&task->window->base.IHTMLWindow2_iface);
 }
 
 void set_ready_state(HTMLOuterWindow *window, READYSTATE readystate)
@@ -479,7 +471,7 @@ void set_ready_state(HTMLOuterWindow *window, READYSTATE readystate)
     window->readystate = readystate;
 
     if(window->readystate_locked) {
-        readystate_task_t *task;
+        event_task_t *task;
         HRESULT hres;
 
         if(window->readystate_pending || prev_state == readystate)
@@ -489,10 +481,7 @@ void set_ready_state(HTMLOuterWindow *window, READYSTATE readystate)
         if(!task)
             return;
 
-        IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
-        task->window = window;
-
-        hres = push_task(&task->header, notif_readystate_proc, notif_readystate_destr, window->task_magic);
+        hres = push_event_task(task, window->base.inner_window, notif_readystate_proc, notif_readystate_destr, window->task_magic);
         if(SUCCEEDED(hres))
             window->readystate_pending = TRUE;
         return;

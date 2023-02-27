@@ -2201,22 +2201,20 @@ static HRESULT WINAPI HTMLWindow6_get_maxConnectionsPerServer(IHTMLWindow6 *ifac
 }
 
 struct post_message_task {
-    task_t header;
-    HTMLInnerWindow *window;
+    event_task_t header;
     DOMEvent *event;
-} ;
+};
 
-static void post_message_proc(task_t *_task)
+static void post_message_proc(event_task_t *_task)
 {
     struct post_message_task *task = (struct post_message_task *)_task;
-    dispatch_event(&task->window->event_target, task->event);
+    dispatch_event(&task->header.window->event_target, task->event);
 }
 
-static void post_message_destr(task_t *_task)
+static void post_message_destr(event_task_t *_task)
 {
     struct post_message_task *task = (struct post_message_task *)_task;
     IDOMEvent_Release(&task->event->IDOMEvent_iface);
-    IHTMLWindow2_Release(&task->window->base.IHTMLWindow2_iface);
 }
 
 static HRESULT WINAPI HTMLWindow6_postMessage(IHTMLWindow6 *iface, BSTR msg, VARIANT targetOrigin)
@@ -3297,9 +3295,7 @@ static HRESULT WINAPI window_private_postMessage(IWineHTMLWindowPrivate *iface, 
         }
 
         task->event = event;
-        task->window = window;
-        IHTMLWindow2_AddRef(&task->window->base.IHTMLWindow2_iface);
-        return push_task(&task->header, post_message_proc, post_message_destr, window->task_magic);
+        return push_event_task(&task->header, window, post_message_proc, post_message_destr, window->task_magic);
     }
 
     dispatch_event(&window->event_target, event);
