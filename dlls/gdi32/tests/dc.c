@@ -1268,12 +1268,14 @@ static void test_gamma(void)
     /* set one color ramp to zeros */
     memset(ramp[0], 0, sizeof(ramp[0]));
     ret = SetDeviceGammaRamp(hdc, &ramp);
-    ok(!ret, "SetDeviceGammaRamp(zeroes) succeeded\n");
+    ok(!ret || broken(ret /* win1909 */),
+       "SetDeviceGammaRamp(zeroes) succeeded\n");
 
     /* set one color ramp to a flat straight rising line */
     for (i = 0; i < 256; i++) ramp[0][i] = i;
     ret = SetDeviceGammaRamp(hdc, &ramp);
-    todo_wine ok(!ret, "SetDeviceGammaRamp(low) succeeded\n");
+    todo_wine ok(!ret || broken(ret /* win1909 */),
+       "SetDeviceGammaRamp(low) succeeded\n");
 
     /* set one color ramp to a steep straight rising line */
     for (i = 0; i < 256; i++) ramp[0][i] = i * 256;
@@ -1285,7 +1287,8 @@ static void test_gamma(void)
     ramp[0][1] = 0x7FFF;
     for (i = 2; i < 256; i++) ramp[0][i] = 0xFFFF;
     ret = SetDeviceGammaRamp(hdc, &ramp);
-    ok(!ret, "SetDeviceGammaRam(bright) succeeded\n");
+    ok(!ret || broken(ret /* win1909 */),
+       "SetDeviceGammaRam(bright) succeeded\n");
 
     /* try ramps which are not uniform */
     for (i = 0; i < 256; i++) ramp[0][i] = 512 * i; /* wraps midway */
