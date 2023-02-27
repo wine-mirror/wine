@@ -1268,37 +1268,37 @@ static void test_gamma(void)
     /* set one color ramp to zeros */
     memset(ramp[0], 0, sizeof(ramp[0]));
     ret = SetDeviceGammaRamp(hdc, &ramp);
-    ok(!ret, "SetDeviceGammaRamp succeeded\n");
+    ok(!ret, "SetDeviceGammaRamp(zeroes) succeeded\n");
 
     /* set one color ramp to a flat straight rising line */
     for (i = 0; i < 256; i++) ramp[0][i] = i;
     ret = SetDeviceGammaRamp(hdc, &ramp);
-    todo_wine ok(!ret, "SetDeviceGammaRamp succeeded\n");
+    todo_wine ok(!ret, "SetDeviceGammaRamp(low) succeeded\n");
 
     /* set one color ramp to a steep straight rising line */
     for (i = 0; i < 256; i++) ramp[0][i] = i * 256;
     ret = SetDeviceGammaRamp(hdc, &ramp);
-    ok(ret, "SetDeviceGammaRamp failed\n");
+    ok(ret, "SetDeviceGammaRamp(steep) failed\n");
 
     /* try a bright gamma ramp */
     ramp[0][0] = 0;
     ramp[0][1] = 0x7FFF;
     for (i = 2; i < 256; i++) ramp[0][i] = 0xFFFF;
     ret = SetDeviceGammaRamp(hdc, &ramp);
-    ok(!ret, "SetDeviceGammaRamp succeeded\n");
+    ok(!ret, "SetDeviceGammaRam(bright) succeeded\n");
 
     /* try ramps which are not uniform */
     for (i = 0; i < 256; i++) ramp[0][i] = 512 * i; /* wraps midway */
     ret = SetDeviceGammaRamp(hdc, &ramp);
-    ok(ret, "SetDeviceGammaRamp failed\n");
+    ok(ret, "SetDeviceGammaRamp(wrap) failed\n");
     for (i = 0; i < 256; i += 2)
          ramp[0][i] = ramp[0][i + 1] = 256 * i; /* stairs */
     ret = SetDeviceGammaRamp(hdc, &ramp);
-    ok(ret, "SetDeviceGammaRamp failed\n");
+    ok(ret, "SetDeviceGammaRamp(stairs) failed\n");
 
     /* cleanup: set old ramp again */
     ret = SetDeviceGammaRamp(hdc, &oldramp);
-    ok(ret, "SetDeviceGammaRamp failed\n");
+    ok(ret, "SetDeviceGammaRamp(old) failed\n");
 
 done:
     ReleaseDC(NULL, hdc);
