@@ -568,8 +568,8 @@ struct HTMLOuterWindow {
     struct list browser_entry;
 
     READYSTATE readystate;
-    BOOL readystate_locked;
-    unsigned readystate_pending;
+    unsigned readystate_locked;
+    BOOL readystate_pending;
 
     HTMLInnerWindow *pending_window;
     HTMLLocation location;
