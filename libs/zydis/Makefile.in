@@ -1,0 +1,18 @@
+EXTLIB    = libzydis.a
+EXTRAINCL = $(ZYDIS_PE_CFLAGS) -I$(srcdir)/src
+
+SOURCES = \
+	src/Decoder.c \
+	src/DecoderData.c \
+	src/Disassembler.c \
+	src/Formatter.c \
+	src/FormatterATT.c \
+	src/FormatterBase.c \
+	src/FormatterBuffer.c \
+	src/FormatterIntel.c \
+	src/Mnemonic.c \
+	src/Register.c \
+	src/SharedData.c \
+	src/String.c \
+	src/Utils.c \
+	src/Zydis.c
