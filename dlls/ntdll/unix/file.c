@@ -4153,7 +4153,7 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( HANDLE *handle, ULONG access, OBJECT_ATTR
     SERVER_END_REQ;
 
     free( objattr );
-    return status;
+    return io->u.Status = status;
 }
 
 
