@@ -198,6 +198,7 @@ static size_t append_type_signature(char **buf, size_t *len, size_t pos, type_t 
         return n;
     case TYPE_ALIAS:
         if (!strcmp(type->name, "boolean")) n += strappend(buf, len, pos + n, "b1");
+        else if (!strcmp(type->name, "GUID")) n += strappend(buf, len, pos + n, "g16");
         else if (!strcmp(type->name, "HSTRING")) n += strappend(buf, len, pos + n, "string");
         else n += append_type_signature(buf, len, pos + n, type->details.alias.aliasee.type);
         return n;
