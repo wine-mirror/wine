@@ -2662,7 +2662,6 @@ static void dump_send_hardware_message_reply( const struct send_hardware_message
     fprintf( stderr, ", prev_y=%d", req->prev_y );
     fprintf( stderr, ", new_x=%d", req->new_x );
     fprintf( stderr, ", new_y=%d", req->new_y );
-    dump_varargs_bytes( ", keystate=", cur_size );
 }
 
 static void dump_get_message_request( const struct get_message_request *req )

@@ -2585,13 +2585,11 @@ LRESULT send_internal_message_timeout( DWORD dest_pid, DWORD dest_tid,
  */
 NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput, UINT flags )
 {
-    struct user_key_state_info *key_state_info = get_user_thread_info()->key_state;
     struct send_message_info info;
     int prev_x, prev_y, new_x, new_y;
-    INT counter = global_key_state_counter;
     USAGE hid_usage_page, hid_usage;
     NTSTATUS ret;
-    BOOL wait;
+    BOOL wait, affects_key_state = FALSE;
 
     info.type     = MSG_HARDWARE;
     info.dest_tid = 0;
@@ -2629,6 +2627,10 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *r
             req->input.mouse.flags = input->mi.dwFlags;
             req->input.mouse.time  = input->mi.time;
             req->input.mouse.info  = input->mi.dwExtraInfo;
+            affects_key_state = !!(input->mi.dwFlags & (MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP |
+                                                        MOUSEEVENTF_RIGHTDOWN | MOUSEEVENTF_RIGHTUP |
+                                                        MOUSEEVENTF_MIDDLEDOWN | MOUSEEVENTF_MIDDLEUP |
+                                                        MOUSEEVENTF_XDOWN | MOUSEEVENTF_XUP));
             break;
         case INPUT_KEYBOARD:
             req->input.kbd.vkey  = input->ki.wVk;
@@ -2636,6 +2638,7 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *r
             req->input.kbd.flags = input->ki.dwFlags;
             req->input.kbd.time  = input->ki.time;
             req->input.kbd.info  = input->ki.dwExtraInfo;
+            affects_key_state = TRUE;
             break;
         case INPUT_HARDWARE:
             req->input.hw.msg    = input->hi.uMsg;
@@ -2664,8 +2667,6 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *r
             }
             break;
         }
-        if (key_state_info) wine_server_set_reply( req, key_state_info->state,
-                                                   sizeof(key_state_info->state) );
         ret = wine_server_call( req );
         wait = reply->wait;
         prev_x = reply->prev_x;
@@ -2677,11 +2678,8 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *r
 
     if (!ret)
     {
-        if (key_state_info)
-        {
-            key_state_info->time    = NtGetTickCount();
-            key_state_info->counter = counter;
-        }
+        if (affects_key_state)
+            InterlockedIncrement( &global_key_state_counter ); /* force refreshing the key state cache */
         if ((flags & SEND_HWMSG_INJECTED) && (prev_x != new_x || prev_y != new_y))
             user_driver->pSetCursorPos( new_x, new_y );
     }

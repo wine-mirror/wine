@@ -2078,7 +2078,6 @@ enum message_type
     int             prev_y;
     int             new_x;     /* new cursor position */
     int             new_y;
-    VARARG(keystate,bytes);    /* global state array for all the keys */
 @END
 #define SEND_HWMSG_INJECTED    0x01
 
