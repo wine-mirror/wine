@@ -358,11 +358,6 @@ HRESULT wg_transform_read_mf(struct wg_transform *transform, IMFSample *sample,
         return hr;
 
     wg_sample->size = 0;
-    if (wg_sample->max_size < sample_size)
-    {
-        wg_sample_release(wg_sample);
-        return MF_E_BUFFERTOOSMALL;
-    }
 
     if (FAILED(hr = wg_transform_read_data(transform, wg_sample, format)))
     {
