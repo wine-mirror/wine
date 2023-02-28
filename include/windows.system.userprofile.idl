@@ -29,44 +29,37 @@ import "windows.foundation.idl";
 import "windows.globalization.idl";
 #endif
 
-namespace Windows {
-    namespace System {
-        namespace UserProfile {
-            interface IGlobalizationPreferencesStatics;
-            interface IGlobalizationPreferencesStatics2;
-            interface IGlobalizationPreferencesStatics3;
-            runtimeclass GlobalizationPreferences;
-        }
+namespace Windows.System.UserProfile {
+
+    interface IGlobalizationPreferencesStatics;
+    interface IGlobalizationPreferencesStatics2;
+    interface IGlobalizationPreferencesStatics3;
+    runtimeclass GlobalizationPreferences;
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.System.UserProfile.GlobalizationPreferences),
+        uuid(01bf4326-ed37-4e96-b0e9-c1340d1ea158)
+    ]
+    interface IGlobalizationPreferencesStatics : IInspectable
+    {
+        [propget] HRESULT Calendars([out, retval] Windows.Foundation.Collections.IVectorView<HSTRING> **value);
+        [propget] HRESULT Clocks([out, retval] Windows.Foundation.Collections.IVectorView<HSTRING> **value);
+        [propget] HRESULT Currencies([out, retval] Windows.Foundation.Collections.IVectorView<HSTRING> **value);
+        [propget] HRESULT Languages([out, retval] Windows.Foundation.Collections.IVectorView<HSTRING> **value);
+        [propget] HRESULT HomeGeographicRegion([out, retval] HSTRING *value);
+        [propget] HRESULT WeekStartsOn([out, retval] Windows.Globalization.DayOfWeek *value);
     }
-}
 
-namespace Windows {
-    namespace System {
-        namespace UserProfile {
-
-            [
-                contract(Windows.Foundation.UniversalApiContract, 1.0),
-                exclusiveto(Windows.System.UserProfile.GlobalizationPreferences),
-                uuid(01bf4326-ed37-4e96-b0e9-c1340d1ea158)
-            ]
-            interface IGlobalizationPreferencesStatics : IInspectable
-            {
-                [propget] HRESULT Calendars([out, retval] Windows.Foundation.Collections.IVectorView<HSTRING>** value);
-                [propget] HRESULT Clocks([out, retval] Windows.Foundation.Collections.IVectorView<HSTRING>** value);
-                [propget] HRESULT Currencies([out, retval] Windows.Foundation.Collections.IVectorView<HSTRING>** value);
-                [propget] HRESULT Languages([out, retval] Windows.Foundation.Collections.IVectorView<HSTRING>** value);
-                [propget] HRESULT HomeGeographicRegion([out, retval] HSTRING* value);
-                [propget] HRESULT WeekStartsOn([out, retval] Windows.Globalization.DayOfWeek* value);
-            }
-
-            [contract(Windows.Foundation.UniversalApiContract, 1.0)]
-            [marshaling_behavior(agile)]
-            [static(Windows.System.UserProfile.IGlobalizationPreferencesStatics, Windows.Foundation.UniversalApiContract, 1.0)]
-            [static(Windows.System.UserProfile.IGlobalizationPreferencesStatics2, Windows.Foundation.UniversalApiContract, 5.0)]
-            [static(Windows.System.UserProfile.IGlobalizationPreferencesStatics3, Windows.Foundation.UniversalApiContract, 6.0)]
-            runtimeclass GlobalizationPreferences
-            {
-            }
-        }
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.System.UserProfile.IGlobalizationPreferencesStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.System.UserProfile.IGlobalizationPreferencesStatics2, Windows.Foundation.UniversalApiContract, 5.0),
+        static(Windows.System.UserProfile.IGlobalizationPreferencesStatics3, Windows.Foundation.UniversalApiContract, 6.0),
+    ]
+    runtimeclass GlobalizationPreferences
+    {
     }
+
 }
