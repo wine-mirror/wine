@@ -48,6 +48,7 @@
 #include "wine/asm.h"
 #include "main.h"
 
+#if defined(__x86_64__)
 /* Rosetta on Apple Silicon allocates memory starting at 0x100000000 (the 4GB line)
  * before the preloader runs, which prevents any nonrelocatable EXEs with that
  * base address from running.
@@ -55,8 +56,18 @@
  * This empty linker section forces Rosetta's allocations (currently ~132 MB)
  * to start at 0x114000000, and they should end below 0x120000000.
  */
-#if defined(__x86_64__)
 __asm__(".zerofill WINE_4GB_RESERVE,WINE_4GB_RESERVE,___wine_4gb_reserve,0x14000000");
+
+static const struct wine_preload_info zerofill_sections[] =
+{
+    { (void *)0x000100000000, 0x14000000 },  /* WINE_4GB_RESERVE section */
+    { 0, 0 }                                 /* end of list */
+};
+#else
+static const struct wine_preload_info zerofill_sections[] =
+{
+    { 0, 0 }                                 /* end of list */
+};
 #endif
 
 #ifndef LC_MAIN
@@ -144,7 +155,6 @@ void __stack_chk_fail(void) { return; }
 
 #ifdef __i386__
 
-static const size_t page_size = 0x1000;
 static const size_t page_mask = 0xfff;
 #define target_mach_header      mach_header
 #define target_segment_command  segment_command
@@ -219,7 +229,6 @@ __ASM_GLOBAL_FUNC( start,
 
 #elif defined(__x86_64__)
 
-static const size_t page_size = 0x1000;
 static const size_t page_mask = 0xfff;
 #define target_mach_header      mach_header_64
 #define target_segment_command  segment_command_64
@@ -301,9 +310,6 @@ SYSCALL_FUNC( wld_mmap, 197 /* SYS_mmap */ );
 
 void *wld_munmap( void *start, size_t len );
 SYSCALL_FUNC( wld_munmap, 73 /* SYS_munmap */ );
-
-int wld_mincore( void *addr, size_t length, unsigned char *vec );
-SYSCALL_FUNC( wld_mincore, 78 /* SYS_mincore */ );
 
 static intptr_t (*p_dyld_get_image_slide)( const struct target_mach_header* mh );
 
@@ -556,28 +562,17 @@ static void *get_entry_point( struct target_mach_header *mh, intptr_t slide, int
     return NULL;
 };
 
-static int is_region_empty( struct wine_preload_info *info )
+static int is_zerofill( struct wine_preload_info *info )
 {
-    unsigned char vec[1024];
-    size_t pos, size, block = 1024 * page_size;
     int i;
 
-    for (pos = 0; pos < info->size; pos += size)
+    for (i = 0; zerofill_sections[i].size; i++)
     {
-        size = (pos + block <= info->size) ? block : (info->size - pos);
-        if (wld_mincore( (char *)info->addr + pos, size, vec ) == -1)
-        {
-            if (size <= page_size) continue;
-            block = page_size; size = 0;  /* retry with smaller block size */
-        }
-        else
-        {
-            for (i = 0; i < size / page_size; i++)
-                if (vec[i] & 1) return 0;
-        }
+        if ((zerofill_sections[i].addr == info->addr) &&
+            (zerofill_sections[i].size == info->size))
+            return 1;
     }
-
-    return 1;
+    return 0;
 }
 
 static int map_region( struct wine_preload_info *info )
@@ -585,20 +580,11 @@ static int map_region( struct wine_preload_info *info )
     int flags = MAP_PRIVATE | MAP_ANON;
     void *ret;
 
-    if (!info->addr) flags |= MAP_FIXED;
+    if (!info->addr || is_zerofill( info )) flags |= MAP_FIXED;
 
-    for (;;)
-    {
-        ret = wld_mmap( info->addr, info->size, PROT_NONE, flags, -1, 0 );
-        if (ret == info->addr) return 1;
-        if (ret != (void *)-1) wld_munmap( ret, info->size );
-        if (flags & MAP_FIXED) break;
-
-        /* Some versions of macOS ignore the address hint passed to mmap -
-         * use mincore() to check if its empty and then use MAP_FIXED */
-        if (!is_region_empty( info )) break;
-        flags |= MAP_FIXED;
-    }
+    ret = wld_mmap( info->addr, info->size, PROT_NONE, flags, -1, 0 );
+    if (ret == info->addr) return 1;
+    if (ret != (void *)-1) wld_munmap( ret, info->size );
 
     /* don't warn for zero page */
     if (info->addr >= (void *)0x1000)
