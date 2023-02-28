@@ -13090,6 +13090,36 @@ static void stream_test(void)
         hr = IDirect3DDevice9_SetStreamSource(device, act.strInstance, vb3, 0, sizeof(instancepos[0]));
         ok(SUCCEEDED(hr), "Failed to set stream source, hr %#lx.\n", hr);
 
+        /* Non-indexed draw test. Only a single instance should be drawn. */
+        hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLELIST, 0, 1);
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#lx.\n", hr);
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#lx.\n", hr);
+
+        /* Check that only single triangle instance has beed drawn with non-indexed draw. */
+        color = getPixelColor(device, 200, 340);
+        ok(color == act.color1, "has color 0x%08x, expected 0x%08x (case %i)\n", color, act.color1, i);
+        color = getPixelColor(device, 400, 340);
+        todo_wine_if(color != 0x00ffffff)
+            ok(color == 0x00ffffff, "has color 0x%08x, expected 0x%08x (case %i)\n", color, 0x00ffffff, i);
+        color = getPixelColor(device, 400, 180);
+        todo_wine_if(color != 0x00ffffff)
+            ok(color == 0x00ffffff, "has color 0x%08x, expected 0x%08x (case %i)\n", color, 0x00ffffff, i);
+        color = getPixelColor(device, 200, 180);
+        todo_wine_if(color != 0x00ffffff)
+            ok(color == 0x00ffffff, "has color 0x%08x, expected 0x%08x (case %i)\n", color, 0x00ffffff, i);
+
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0f, 0);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#lx.\n", hr);
+
+        /* Indexed draw test. */
         hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
         ok(SUCCEEDED(hr), "Failed to draw, hr %#lx.\n", hr);
         hr = IDirect3DDevice9_EndScene(device);
