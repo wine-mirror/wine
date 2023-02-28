@@ -227,8 +227,8 @@ static LONG X11DRV_desktop_set_current_mode( ULONG_PTR id, const DEVMODEW *mode 
 
 static void query_desktop_work_area( RECT *rc_work )
 {
-    static const WCHAR trayW[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d'};
-    UNICODE_STRING str = { sizeof(trayW), sizeof(trayW), (WCHAR *)trayW };
+    static const WCHAR trayW[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
+    UNICODE_STRING str = RTL_CONSTANT_STRING( trayW );
     RECT rect;
     HWND hwnd = NtUserFindWindowEx( 0, 0, &str, NULL, 0 );
 

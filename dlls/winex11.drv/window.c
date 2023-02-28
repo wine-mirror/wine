@@ -2744,8 +2744,8 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
 /* check if the window icon should be hidden (i.e. moved off-screen) */
 static BOOL hide_icon( struct x11drv_win_data *data )
 {
-    static const WCHAR trayW[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d'};
-    UNICODE_STRING str = { sizeof(trayW), sizeof(trayW), (WCHAR *)trayW };
+    static const WCHAR trayW[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
+    UNICODE_STRING str = RTL_CONSTANT_STRING( trayW );
 
     if (data->managed) return TRUE;
     /* hide icons in desktop mode when the taskbar is active */
