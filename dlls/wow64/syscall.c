@@ -100,6 +100,7 @@ static void     (WINAPI *pBTCpuThreadInit)(void);
 static void     (WINAPI *pBTCpuSimulate)(void);
 static NTSTATUS (WINAPI *pBTCpuResetToConsistentState)( EXCEPTION_POINTERS * );
 static void *   (WINAPI *p__wine_get_unix_opcode)(void);
+static void *   (WINAPI *pKiRaiseUserExceptionDispatcher)(void);
 
 
 void *dummy = RtlUnwind;
@@ -242,6 +243,40 @@ static void call_user_exception_dispatcher( EXCEPTION_RECORD32 *rec, void *ctx32
 
             TRACE( "exception %08lx dispatcher %08lx stack %08lx pc %08lx\n",
                    rec->ExceptionCode, ctx.Pc, ctx.Sp, stack->context.Sp );
+        }
+        break;
+    }
+}
+
+
+/**********************************************************************
+ *           call_raise_user_exception_dispatcher
+ */
+static void call_raise_user_exception_dispatcher( ULONG code )
+{
+    TEB32 *teb32 = (TEB32 *)((char *)NtCurrentTeb() + NtCurrentTeb()->WowTebOffset);
+
+    teb32->ExceptionCode = code;
+
+    switch (current_machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:
+        {
+            I386_CONTEXT ctx = { CONTEXT_I386_ALL };
+
+            pBTCpuGetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx );
+            ctx.Eip = (ULONG_PTR)pKiRaiseUserExceptionDispatcher;
+            pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx );
+        }
+        break;
+
+    case IMAGE_FILE_MACHINE_ARMNT:
+        {
+            ARM_CONTEXT ctx = { CONTEXT_ARM_ALL };
+
+            pBTCpuGetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx );
+            ctx.Pc = (ULONG_PTR)pKiRaiseUserExceptionDispatcher;
+            pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx );
         }
         break;
     }
@@ -731,6 +766,7 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
     init_syscall_table( module, 0, &ntdll_syscall_table );
     *(void **)RtlFindExportedRoutineByName( module, "__wine_syscall_dispatcher" ) = pBTCpuGetBopCode();
     *(void **)RtlFindExportedRoutineByName( module, "__wine_unix_call_dispatcher" ) = p__wine_get_unix_opcode();
+    GET_PTR( KiRaiseUserExceptionDispatcher );
 
     init_file_redirects();
     return TRUE;
@@ -817,7 +853,7 @@ static LONG CALLBACK syscall_filter( EXCEPTION_POINTERS *ptrs )
     switch (ptrs->ExceptionRecord->ExceptionCode)
     {
     case STATUS_INVALID_HANDLE:
-        Wow64PassExceptionToGuest( ptrs );
+        call_raise_user_exception_dispatcher( ptrs->ExceptionRecord->ExceptionCode );
         break;
     }
     return EXCEPTION_EXECUTE_HANDLER;
@@ -847,7 +883,7 @@ NTSTATUS WINAPI Wow64SystemServiceEx( UINT num, UINT *args )
     {
         status = GetExceptionCode();
     }
-    __ENDTRY;
+    __ENDTRY
     free_temp_data();
     return status;
 }
