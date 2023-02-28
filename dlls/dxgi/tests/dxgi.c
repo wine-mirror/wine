@@ -7590,7 +7590,6 @@ static void test_swapchain_present_count(IUnknown *device, BOOL is_d3d12)
         present_count = ~0u;
         hr = IDXGISwapChain_GetLastPresentCount(swapchain, &present_count);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-        todo_wine_if(flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
         ok(!present_count, "Got unexpected present count %u.\n", present_count);
 
         hr = IDXGISwapChain_Present(swapchain, 0, 0);
