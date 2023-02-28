@@ -2010,6 +2010,15 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
             leave_handler( ucontext );
             return;
         }
+        if (rec.ExceptionCode == EXCEPTION_ACCESS_VIOLATION &&
+            rec.ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT)
+        {
+            ULONG flags;
+            NtQueryInformationProcess( GetCurrentProcess(), ProcessExecuteFlags,
+                                       &flags, sizeof(flags), NULL );
+            /* send EXCEPTION_EXECUTE_FAULT only if data execution prevention is enabled */
+            if (!(flags & MEM_EXECUTE_OPTION_DISABLE)) rec.ExceptionInformation[0] = EXCEPTION_READ_FAULT;
+        }
         break;
     case TRAP_x86_ALIGNFLT:  /* Alignment check exception */
         if (EFL_sig(ucontext) & 0x00040000)
