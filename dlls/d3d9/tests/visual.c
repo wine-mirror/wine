@@ -13101,14 +13101,11 @@ static void stream_test(void)
         color = getPixelColor(device, 200, 340);
         ok(color == act.color1, "has color 0x%08x, expected 0x%08x (case %i)\n", color, act.color1, i);
         color = getPixelColor(device, 400, 340);
-        todo_wine_if(color != 0x00ffffff)
-            ok(color == 0x00ffffff, "has color 0x%08x, expected 0x%08x (case %i)\n", color, 0x00ffffff, i);
+        ok(color == 0x00ffffff, "has color 0x%08x, expected 0x%08x (case %i)\n", color, 0x00ffffff, i);
         color = getPixelColor(device, 400, 180);
-        todo_wine_if(color != 0x00ffffff)
-            ok(color == 0x00ffffff, "has color 0x%08x, expected 0x%08x (case %i)\n", color, 0x00ffffff, i);
+        ok(color == 0x00ffffff, "has color 0x%08x, expected 0x%08x (case %i)\n", color, 0x00ffffff, i);
         color = getPixelColor(device, 200, 180);
-        todo_wine_if(color != 0x00ffffff)
-            ok(color == 0x00ffffff, "has color 0x%08x, expected 0x%08x (case %i)\n", color, 0x00ffffff, i);
+        ok(color == 0x00ffffff, "has color 0x%08x, expected 0x%08x (case %i)\n", color, 0x00ffffff, i);
 
         hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);

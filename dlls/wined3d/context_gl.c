@@ -5321,8 +5321,6 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     else
     {
         unsigned int instance_count = parameters->u.direct.instance_count;
-        if (context->instance_count)
-            instance_count = context->instance_count;
 
         if (context->use_immediate_mode_draw || emulation)
             draw_primitive_immediate_mode(wined3d_context_gl(context), state, stream_info, idx_data,
@@ -5466,7 +5464,6 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
 
     /* This is used for the fixed-function pipeline only, and the
      * fixed-function pipeline doesn't do instancing. */
-    context_gl->c.instance_count = 0;
     current_bo = gl_info->supported[ARB_VERTEX_BUFFER_OBJECT] ? ~0u : 0;
 
     /* Blend data */
@@ -5680,7 +5677,6 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
     unsigned int i;
 
     /* Default to no instancing. */
-    context->instance_count = 0;
     current_bo = gl_info->supported[ARB_VERTEX_BUFFER_OBJECT] ? ~0u : 0;
 
     if (stream_info->use_map & ~wined3d_mask_from_size(gl_info->limits.vertex_attribs))
@@ -5726,8 +5722,6 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
         stream = &state->streams[element->stream_idx];
         stream->buffer->bo_user.valid = true;
 
-        if ((stream->flags & WINED3DSTREAMSOURCE_INSTANCEDATA) && !context->instance_count)
-            context->instance_count = state->streams[0].frequency;
 
         if (gl_info->supported[ARB_INSTANCED_ARRAYS])
         {

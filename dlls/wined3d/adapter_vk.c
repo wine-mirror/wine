@@ -1821,8 +1821,6 @@ static void adapter_vk_draw_primitive(struct wined3d_device *device,
     else
     {
         instance_count = parameters->u.direct.instance_count;
-        if (context_vk->c.instance_count)
-            instance_count = context_vk->c.instance_count;
         if (!instance_count)
             instance_count = 1;
 
