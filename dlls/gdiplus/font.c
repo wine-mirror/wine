@@ -1110,7 +1110,7 @@ GpStatus WINGDIPAPI GdipPrivateAddFontFile(GpFontCollection *collection, GDIPCON
 
     if (!collection || !name) return InvalidParameter;
 
-    file = CreateFileW(name, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+    file = CreateFileW(name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
     if (file == INVALID_HANDLE_VALUE) return InvalidParameter;
 
     if (!GetFileSizeEx(file, &size) || size.u.HighPart)

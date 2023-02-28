@@ -91,7 +91,7 @@ static void test_long_name(void)
     ok(file != INVALID_HANDLE_VALUE, "CreateFileW failed: %ld\n", GetLastError());
 
     stat = GdipPrivateAddFontFile(fonts, path);
-    todo_wine ok(stat == Ok, "GdipPrivateAddFontFile failed with open file handle: %d\n", stat);
+    ok(stat == Ok, "GdipPrivateAddFontFile failed with open file handle: %d\n", stat);
 
     CloseHandle(file);
 
