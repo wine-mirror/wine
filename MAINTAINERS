@@ -37,6 +37,7 @@ F:	programs/winedbg/be_arm*
 
 Audio I/O
 P:	Andrew Eikum <coldpie@fastmail.com>
+P:	Huw Davies <huw@codeweavers.com>
 F:	dlls/dsound/
 F:	dlls/mmdevapi/
 F:	dlls/winealsa.drv/
