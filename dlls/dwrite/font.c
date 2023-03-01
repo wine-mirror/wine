@@ -98,7 +98,7 @@ static struct cache_entry * fontface_get_cache_entry(struct dwrite_fontface *fon
             fontface_release_cache_entry(old_entry);
         }
 
-        if (wine_rb_put(&fontface->cache.tree, &key, &entry->entry) == -1)
+        if (wine_rb_put(&fontface->cache.tree, key, &entry->entry) == -1)
         {
             WARN("Failed to add cache entry.\n");
             free(entry);
