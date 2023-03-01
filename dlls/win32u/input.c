@@ -1115,17 +1115,16 @@ INT WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size )
     INT code = ((lparam >> 16) & 0x1ff), vkey, len;
     const KBDTABLES *kbd_tables = &kbdus_tables;
     VSC_LPWSTR *key_name;
-    BYTE vsc2vk[0x300];
 
     TRACE_(keyboard)( "lparam %#x, buffer %p, size %d.\n", (int)lparam, buffer, size );
 
     if (!buffer || !size) return 0;
     if ((len = user_driver->pGetKeyNameText( lparam, buffer, size )) >= 0) return len;
 
-    kbd_tables_init_vsc2vk( kbd_tables, vsc2vk );
-
     if (lparam & 0x2000000)
     {
+        BYTE vsc2vk[0x300];
+        kbd_tables_init_vsc2vk( kbd_tables, vsc2vk );
         switch ((vkey = vsc2vk[code]))
         {
         case VK_RSHIFT:
