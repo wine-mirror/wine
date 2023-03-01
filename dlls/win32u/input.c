@@ -1016,13 +1016,16 @@ BOOL WINAPI NtUserSetKeyboardState( BYTE *state )
  */
 WORD WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout )
 {
-    const KBDTABLES *kbd_tables = &kbdus_tables;
+    const KBDTABLES *kbd_tables;
     SHORT ret;
 
     TRACE_(keyboard)( "chr %s, layout %p\n", debugstr_wn(&chr, 1), layout );
 
     if ((ret = user_driver->pVkKeyScanEx( chr, layout )) != -256) return ret;
+
+    if (!(kbd_tables = user_driver->pKbdLayerDescriptor( layout ))) kbd_tables = &kbdus_tables;
     ret = kbd_tables_wchar_to_vkey( kbd_tables, chr );
+    if (kbd_tables != &kbdus_tables) user_driver->pReleaseKbdTables( kbd_tables );
 
     TRACE_(keyboard)( "ret %04x\n", ret );
     return ret;
@@ -1034,13 +1037,15 @@ WORD WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout )
  */
 UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
 {
-    const KBDTABLES *kbd_tables = &kbdus_tables;
     BYTE vsc2vk[0x300], vk2char[0x100];
-    UINT ret;
+    const KBDTABLES *kbd_tables;
+    UINT ret = 0;
 
     TRACE_(keyboard)( "code %u, type %u, layout %p.\n", code, type, layout );
 
     if ((ret = user_driver->pMapVirtualKeyEx( code, type, layout )) != -1) return ret;
+
+    if (!(kbd_tables = user_driver->pKbdLayerDescriptor( layout ))) kbd_tables = &kbdus_tables;
 
     switch (type)
     {
@@ -1101,8 +1106,10 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
         break;
     default:
         FIXME_(keyboard)( "unknown type %d\n", type );
-        return 0;
+        break;
     }
+
+    if (kbd_tables != &kbdus_tables) user_driver->pReleaseKbdTables( kbd_tables );
 
     TRACE_(keyboard)( "returning 0x%04x\n", ret );
     return ret;
@@ -1114,13 +1121,16 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
 INT WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size )
 {
     INT code = ((lparam >> 16) & 0x1ff), vkey, len;
-    const KBDTABLES *kbd_tables = &kbdus_tables;
+    HKL layout = NtUserGetKeyboardLayout( 0 );
+    const KBDTABLES *kbd_tables;
     VSC_LPWSTR *key_name;
 
     TRACE_(keyboard)( "lparam %#x, buffer %p, size %d.\n", (int)lparam, buffer, size );
 
     if (!buffer || !size) return 0;
     if ((len = user_driver->pGetKeyNameText( lparam, buffer, size )) >= 0) return len;
+
+    if (!(kbd_tables = user_driver->pKbdLayerDescriptor( layout ))) kbd_tables = &kbdus_tables;
 
     if (lparam & 0x2000000)
     {
@@ -1155,6 +1165,8 @@ INT WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size )
     }
     buffer[len] = 0;
 
+    if (kbd_tables != &kbdus_tables) user_driver->pReleaseKbdTables( kbd_tables );
+
     TRACE_(keyboard)( "ret %d, str %s.\n", len, debugstr_w(buffer) );
     return len;
 }
@@ -1165,7 +1177,7 @@ INT WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size )
 INT WINAPI NtUserToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
                               WCHAR *str, int size, UINT flags, HKL layout )
 {
-    const KBDTABLES *kbd_tables = &kbdus_tables;
+    const KBDTABLES *kbd_tables;
     WCHAR buffer[2] = {0};
     INT len;
 
@@ -1173,9 +1185,9 @@ INT WINAPI NtUserToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
                       virt, scan, state, str, size, flags, layout );
 
     if (!state) return 0;
-    if ((len = user_driver->pToUnicodeEx( virt, scan, state, str, size, flags, layout )) >= -1)
-        return len;
+    if ((len = user_driver->pToUnicodeEx( virt, scan, state, str, size, flags, layout )) >= -1) return len;
 
+    if (!(kbd_tables = user_driver->pKbdLayerDescriptor( layout ))) kbd_tables = &kbdus_tables;
     if (scan & 0x8000) buffer[0] = 0; /* key up */
     else buffer[0] = kbd_tables_vkey_to_wchar( kbd_tables, virt, state );
 
@@ -1183,6 +1195,8 @@ INT WINAPI NtUserToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
     else buffer[0] = len = 0;
 
     lstrcpynW( str, buffer, size );
+
+    if (kbd_tables != &kbdus_tables) user_driver->pReleaseKbdTables( kbd_tables );
 
     TRACE_(keyboard)( "ret %d, str %s.\n", len, debugstr_w(str) );
     return len;

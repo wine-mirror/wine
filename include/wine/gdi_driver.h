@@ -29,6 +29,7 @@
 #include "ntuser.h"
 #include "immdev.h"
 #include "ddk/d3dkmthk.h"
+#include "kbd.h"
 #include "wine/list.h"
 
 struct gdi_dc_funcs;
@@ -292,6 +293,8 @@ struct user_driver_funcs
     INT     (*pToUnicodeEx)(UINT,UINT,const BYTE *,LPWSTR,int,UINT,HKL);
     void    (*pUnregisterHotKey)(HWND, UINT, UINT);
     SHORT   (*pVkKeyScanEx)(WCHAR, HKL);
+    const KBDTABLES *(*pKbdLayerDescriptor)(HKL);
+    void    (*pReleaseKbdTables)(const KBDTABLES *);
     /* IME functions */
     UINT    (*pImeProcessKey)(HIMC,UINT,UINT,const BYTE*);
     UINT    (*pImeToAsciiEx)(UINT,UINT,const BYTE*,COMPOSITIONSTRING*,HIMC);
