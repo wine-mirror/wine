@@ -1372,6 +1372,7 @@ static void test_reader_d3d9(void)
     HWND window;
     HRESULT hr;
     UINT token;
+    ULONG refcount;
 
     window = create_window();
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
@@ -1404,7 +1405,9 @@ static void test_reader_d3d9(void)
 
     IMFSourceReader_Release(reader);
 
-    IDirect3DDeviceManager9_Release(d3d9_manager);
+    refcount = IDirect3DDeviceManager9_Release(d3d9_manager);
+    todo_wine ok(!refcount, "Unexpected refcount %lu.\n", refcount);
+
     IDirect3DDevice9_Release(d3d9_device);
 
 done:
