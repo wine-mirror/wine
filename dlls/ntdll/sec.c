@@ -1478,20 +1478,29 @@ NTSTATUS WINAPI RtlAddMandatoryAce(
     IN DWORD dwAceType,
     IN PSID pSid)
 {
-    static const DWORD valid_flags = SYSTEM_MANDATORY_LABEL_NO_WRITE_UP |
-                                     SYSTEM_MANDATORY_LABEL_NO_READ_UP |
-                                     SYSTEM_MANDATORY_LABEL_NO_EXECUTE_UP;
-
     TRACE("(%p, %lu, 0x%08lx, 0x%08lx, %lu, %p)\n",
           pAcl, dwAceRevision, dwAceFlags, dwMandatoryFlags, dwAceType, pSid);
 
     if (dwAceType != SYSTEM_MANDATORY_LABEL_ACE_TYPE)
         return STATUS_INVALID_PARAMETER;
-
-    if (dwMandatoryFlags & ~valid_flags)
+    if (dwMandatoryFlags & ~SYSTEM_MANDATORY_LABEL_VALID_MASK)
         return STATUS_INVALID_PARAMETER;
 
     return add_access_ace(pAcl, dwAceRevision, dwAceFlags, dwMandatoryFlags, pSid, dwAceType);
+}
+
+/**************************************************************************
+ *  RtlAddProcessTrustLabelAce		[NTDLL.@]
+ */
+NTSTATUS WINAPI RtlAddProcessTrustLabelAce( ACL *acl, DWORD revision, DWORD flags,
+                                            PSID sid, DWORD type, DWORD mask )
+{
+    TRACE( "%p %lx %lx %p %lx %lx\n", acl, revision, flags, sid, type, mask );
+
+    if (type != SYSTEM_PROCESS_TRUST_LABEL_ACE_TYPE) return STATUS_INVALID_PARAMETER;
+    if (mask & ~SYSTEM_PROCESS_TRUST_LABEL_VALID_MASK) return STATUS_INVALID_PARAMETER;
+
+    return add_access_ace( acl, revision, flags, mask, sid, type );
 }
 
 /******************************************************************************

@@ -482,10 +482,11 @@
 @ stdcall RtlAddAuditAccessAceEx(ptr long long long ptr long long)
 @ stdcall RtlAddAuditAccessObjectAce(ptr long long long ptr ptr ptr long long)
 # @ stub RtlAddCompoundAce
-@ stdcall RtlAddMandatoryAce(ptr long long long long ptr)
-# @ stub RtlAddRange
 @ cdecl -arch=arm,arm64,x86_64 RtlAddFunctionTable(ptr long long)
 @ stdcall -arch=arm,arm64,x86_64 RtlAddGrowableFunctionTable(ptr ptr long long long long)
+@ stdcall RtlAddMandatoryAce(ptr long long long long ptr)
+@ stdcall RtlAddProcessTrustLabelAce(ptr long long ptr long long)
+# @ stub RtlAddRange
 @ stdcall RtlAddRefActivationContext(ptr)
 # @ stub RtlAddRefMemoryStream
 @ stdcall RtlAddVectoredContinueHandler(long ptr)
