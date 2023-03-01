@@ -203,7 +203,6 @@ struct makefile
 
     /* values generated at output time */
     struct strarray in_files;
-    struct strarray ok_files;
     struct strarray pot_files;
     struct strarray test_files;
     struct strarray clean_files;
@@ -218,6 +217,7 @@ struct makefile
     struct strarray dependencies;
     struct strarray object_files[MAX_ARCHS];
     struct strarray implib_files[MAX_ARCHS];
+    struct strarray ok_files[MAX_ARCHS];
     struct strarray res_files[MAX_ARCHS];
     struct strarray all_targets[MAX_ARCHS];
     struct strarray install_rules[NB_INSTALL_RULES];
@@ -3163,7 +3163,7 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
 
         ok_file = strmake( "%s%s.ok", arch_dirs[arch], obj );
         test_exe = replace_extension( make->testdll, ".dll", "_test.exe" );
-        strarray_add( &make->ok_files, ok_file );
+        strarray_add( &make->ok_files[arch], ok_file );
         output( "%s:\n", obj_dir_path( make, ok_file ));
         output( "\t%s%s $(RUNTESTFLAGS) -T . -M %s -p %s %s && touch $@\n",
                 cmd_prefix( "TEST" ),
@@ -3484,10 +3484,10 @@ static void output_test_module( struct makefile *make, unsigned int arch )
 
     if (make->disabled[arch] || (parent && parent->disabled[arch]))
     {
-        make->ok_files = empty_strarray;
+        make->ok_files[arch] = empty_strarray;
         return;
     }
-    output_filenames_obj_dir( make, make->ok_files );
+    output_filenames_obj_dir( make, make->ok_files[arch] );
     output( ": %s", obj_dir_path( make, testmodule ));
     if (parent)
     {
@@ -3497,15 +3497,15 @@ static void output_test_module( struct makefile *make, unsigned int arch )
     }
     output( "\n" );
     output( "%s %s:", obj_dir_path( make, "check" ), obj_dir_path( make, "test" ));
-    output_filenames_obj_dir( make, make->ok_files );
+    output_filenames_obj_dir( make, make->ok_files[arch] );
     output( "\n" );
     strarray_add_uniq( &make->phony_targets, obj_dir_path( make, "check" ));
     strarray_add_uniq( &make->phony_targets, obj_dir_path( make, "test" ));
     output( "%s::\n", obj_dir_path( make, "testclean" ));
     output( "\trm -f" );
-    output_filenames_obj_dir( make, make->ok_files );
+    output_filenames_obj_dir( make, make->ok_files[arch] );
     output( "\n" );
-    strarray_addall( &make->clean_files, make->ok_files );
+    strarray_addall( &make->clean_files, make->ok_files[arch] );
     strarray_add_uniq( &make->phony_targets, obj_dir_path( make, "testclean" ));
 }
 
@@ -3594,13 +3594,13 @@ static void output_subdirs( struct makefile *make )
         strarray_addall_path( &distclean_files, submakes[i]->obj_dir, submakes[i]->distclean_files );
         strarray_addall_path( &distclean_dirs, submakes[i]->obj_dir, subclean );
         strarray_addall_path( &make->maintainerclean_files, submakes[i]->obj_dir, submakes[i]->maintainerclean_files );
-        strarray_addall_path( &testclean_files, submakes[i]->obj_dir, submakes[i]->ok_files );
         strarray_addall_path( &make->pot_files, submakes[i]->obj_dir, submakes[i]->pot_files );
 
         for (arch = 0; arch < archs.count; arch++)
         {
             if (submakes[i]->disabled[arch]) continue;
             strarray_addall_path( &all_targets, submakes[i]->obj_dir, submakes[i]->all_targets[arch] );
+            strarray_addall_path( &testclean_files, submakes[i]->obj_dir, submakes[i]->ok_files[arch] );
         }
         if (submakes[i]->disabled[0]) continue;
 
