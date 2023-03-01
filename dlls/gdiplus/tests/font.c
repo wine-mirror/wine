@@ -76,6 +76,7 @@ static void test_long_name(void)
     WCHAR path[MAX_PATH];
     GpStatus stat;
     GpFontCollection *fonts;
+    HANDLE file;
     INT num_families;
     GpFontFamily *family, *cloned_family;
     WCHAR family_name[LF_FACESIZE];
@@ -86,8 +87,19 @@ static void test_long_name(void)
 
     create_testfontfile(L"wine_longname.ttf", 1, path);
 
+    file = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileW failed: %ld\n", GetLastError());
+
     stat = GdipPrivateAddFontFile(fonts, path);
-    ok(stat == Ok, "GdipPrivateAddFontFile failed: %d\n", stat);
+    todo_wine ok(stat == Ok, "GdipPrivateAddFontFile failed with open file handle: %d\n", stat);
+
+    CloseHandle(file);
+
+    if (stat != Ok) {
+        /* try again without opened file handle */
+        stat = GdipPrivateAddFontFile(fonts, path);
+        ok(stat == Ok, "GdipPrivateAddFontFile failed: %d\n", stat);
+    }
 
     stat = GdipGetFontCollectionFamilyCount(fonts, &num_families);
     ok(stat == Ok, "GdipGetFontCollectionFamilyCount failed: %d\n", stat);
