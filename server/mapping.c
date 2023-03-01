@@ -1192,7 +1192,6 @@ DECL_HANDLER(map_view)
 {
     struct mapping *mapping = NULL;
     struct memory_view *view;
-    data_size_t namelen = 0;
 
     if (!req->size || (req->base & page_mask) || req->base + req->size < req->base)  /* overflow */
     {
@@ -1211,6 +1210,8 @@ DECL_HANDLER(map_view)
 
     if (!req->mapping)  /* image mapping for a .so dll */
     {
+        data_size_t namelen = 0;
+
         if (get_req_data_size() > sizeof(view->image)) namelen = get_req_data_size() - sizeof(view->image);
         if (!(view = mem_alloc( sizeof(struct memory_view) + namelen * sizeof(WCHAR) ))) return;
         memset( view, 0, sizeof(*view) );
@@ -1243,13 +1244,13 @@ DECL_HANDLER(map_view)
         goto done;
     }
 
-    if ((view = mem_alloc( offsetof( struct memory_view, name[namelen] ))))
+    if ((view = mem_alloc( sizeof(*view) )))
     {
         view->base      = req->base;
         view->size      = req->size;
         view->start     = req->start;
         view->flags     = mapping->flags;
-        view->namelen   = namelen;
+        view->namelen   = 0;
         view->fd        = !is_fd_removable( mapping->fd ) ? (struct fd *)grab_object( mapping->fd ) : NULL;
         view->committed = mapping->committed ? (struct ranges *)grab_object( mapping->committed ) : NULL;
         view->shared    = mapping->shared ? (struct shared_map *)grab_object( mapping->shared ) : NULL;
