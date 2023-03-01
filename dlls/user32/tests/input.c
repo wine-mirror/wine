@@ -3393,6 +3393,178 @@ static void test_keyboard_layout_name(void)
     free(layouts_preload);
 }
 
+static HKL expect_hkl;
+static HKL change_hkl;
+static int got_setfocus;
+
+static LRESULT CALLBACK test_ActivateKeyboardLayout_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    ok( msg != WM_INPUTLANGCHANGEREQUEST, "got WM_INPUTLANGCHANGEREQUEST\n" );
+
+    if (msg == WM_SETFOCUS) got_setfocus = 1;
+    if (msg == WM_INPUTLANGCHANGE)
+    {
+        HKL layout = GetKeyboardLayout( 0 );
+        CHARSETINFO info;
+        WCHAR klidW[64];
+        UINT codepage;
+        LCID lcid;
+
+        /* get keyboard layout lcid from its name, as the HKL might be aliased */
+        GetKeyboardLayoutNameW( klidW );
+        swscanf( klidW, L"%x", &lcid );
+        lcid = LOWORD(lcid);
+
+        if (!(HIWORD(layout) & 0x8000)) ok( lcid == HIWORD(layout), "got lcid %#lx\n", lcid );
+
+        GetLocaleInfoA( lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
+                        (char *)&codepage, sizeof(codepage) );
+        TranslateCharsetInfo( UlongToPtr( codepage ), &info, TCI_SRCCODEPAGE );
+
+        ok( !got_setfocus, "got WM_SETFOCUS before WM_INPUTLANGCHANGE\n" );
+        ok( layout == expect_hkl, "got layout %p\n", layout );
+        ok( wparam == info.ciCharset || broken(wparam == 0 && (HIWORD(layout) & 0x8000)),
+            "got wparam %#Ix\n", wparam );
+        ok( lparam == (LPARAM)expect_hkl, "got lparam %#Ix\n", lparam );
+        change_hkl = (HKL)lparam;
+    }
+
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+static DWORD CALLBACK test_ActivateKeyboardLayout_thread_proc( void *arg )
+{
+    ActivateKeyboardLayout( arg, 0 );
+    return 0;
+}
+
+static void test_ActivateKeyboardLayout( char **argv )
+{
+    HKL layout, tmp_layout, *layouts;
+    HWND hwnd1, hwnd2;
+    HANDLE thread;
+    UINT i, count;
+    DWORD ret;
+
+    layout = GetKeyboardLayout( 0 );
+    count = GetKeyboardLayoutList( 0, NULL );
+    ok( count > 0, "GetKeyboardLayoutList returned %d\n", count );
+    layouts = malloc( count * sizeof(HKL) );
+    ok( layouts != NULL, "Could not allocate memory\n" );
+    count = GetKeyboardLayoutList( count, layouts );
+    ok( count > 0, "GetKeyboardLayoutList returned %d\n", count );
+
+    hwnd1 = CreateWindowA( "static", "static", WS_VISIBLE | WS_POPUP,
+                           100, 100, 100, 100, 0, NULL, NULL, NULL );
+    ok( !!hwnd1, "CreateWindow failed, error %lu\n", GetLastError() );
+    empty_message_queue();
+
+    SetWindowLongPtrA( hwnd1, GWLP_WNDPROC, (LONG_PTR)test_ActivateKeyboardLayout_window_proc );
+
+    for (i = 0; i < count; ++i)
+    {
+        BOOL broken_focus_activate = FALSE;
+        HKL other_layout = layouts[i];
+
+        winetest_push_context( "%08x / %08x", (UINT)(UINT_PTR)layout, (UINT)(UINT_PTR)other_layout );
+
+        /* test WM_INPUTLANGCHANGE message */
+
+        change_hkl = 0;
+        expect_hkl = other_layout;
+        got_setfocus = 0;
+        ActivateKeyboardLayout( other_layout, 0 );
+        if (other_layout == layout) ok( change_hkl == 0, "got change_hkl %p\n", change_hkl );
+        else todo_wine ok( change_hkl == other_layout, "got change_hkl %p\n", change_hkl );
+        change_hkl = expect_hkl = 0;
+
+        tmp_layout = GetKeyboardLayout( 0 );
+        todo_wine_if(layout != other_layout)
+        ok( tmp_layout == other_layout, "got tmp_layout %p\n", tmp_layout );
+
+        /* changing the layout from another thread doesn't send the message */
+
+        thread = CreateThread( NULL, 0, test_ActivateKeyboardLayout_thread_proc, layout, 0, 0 );
+        ret = WaitForSingleObject( thread, 1000 );
+        ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+        CloseHandle( thread );
+
+        /* and has no immediate effect */
+
+        empty_message_queue();
+        tmp_layout = GetKeyboardLayout( 0 );
+        todo_wine_if(layout != other_layout)
+        ok( tmp_layout == other_layout, "got tmp_layout %p\n", tmp_layout );
+
+        /* but the change only takes effect after focus changes */
+
+        hwnd2 = CreateWindowA( "static", "static", WS_VISIBLE | WS_POPUP,
+                               100, 100, 100, 100, 0, NULL, NULL, NULL );
+        ok( !!hwnd2, "CreateWindow failed, error %lu\n", GetLastError() );
+
+        tmp_layout = GetKeyboardLayout( 0 );
+        todo_wine_if(layout != other_layout)
+        ok( tmp_layout == layout || broken(layout != other_layout && tmp_layout == other_layout) /* w7u */,
+            "got tmp_layout %p\n", tmp_layout );
+        if (broken(layout != other_layout && tmp_layout == other_layout))
+        {
+            win_skip( "Broken layout activation on focus change, skipping some tests\n" );
+            broken_focus_activate = TRUE;
+        }
+        empty_message_queue();
+
+        /* only the focused window receives the WM_INPUTLANGCHANGE message */
+
+        ActivateKeyboardLayout( other_layout, 0 );
+        ok( change_hkl == 0, "got change_hkl %p\n", change_hkl );
+
+        tmp_layout = GetKeyboardLayout( 0 );
+        todo_wine_if(layout != other_layout)
+        ok( tmp_layout == other_layout, "got tmp_layout %p\n", tmp_layout );
+
+        thread = CreateThread( NULL, 0, test_ActivateKeyboardLayout_thread_proc, layout, 0, 0 );
+        ret = WaitForSingleObject( thread, 1000 );
+        ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+        CloseHandle( thread );
+
+        tmp_layout = GetKeyboardLayout( 0 );
+        todo_wine_if(layout != other_layout)
+        ok( tmp_layout == other_layout, "got tmp_layout %p\n", tmp_layout );
+
+        /* changing focus is enough for the layout change to take effect */
+
+        change_hkl = 0;
+        expect_hkl = layout;
+        got_setfocus = 0;
+        SetFocus( hwnd1 );
+
+        if (broken_focus_activate)
+        {
+            ok( got_setfocus == 1, "got got_setfocus %d\n", got_setfocus );
+            ok( change_hkl == 0, "got change_hkl %p\n", change_hkl );
+            got_setfocus = 0;
+            ActivateKeyboardLayout( layout, 0 );
+        }
+
+        if (other_layout == layout) ok( change_hkl == 0, "got change_hkl %p\n", change_hkl );
+        else todo_wine ok( change_hkl == layout, "got change_hkl %p\n", change_hkl );
+        change_hkl = expect_hkl = 0;
+
+        tmp_layout = GetKeyboardLayout( 0 );
+        todo_wine_if(layout != other_layout)
+        ok( tmp_layout == layout, "got tmp_layout %p\n", tmp_layout );
+
+        DestroyWindow( hwnd2 );
+        empty_message_queue();
+
+        winetest_pop_context();
+    }
+
+    DestroyWindow( hwnd1 );
+
+    free( layouts );
+}
+
 static void test_key_names(void)
 {
     char buffer[40];
@@ -4961,6 +5133,7 @@ START_TEST(input)
     test_ToAscii();
     test_get_async_key_state();
     test_keyboard_layout_name();
+    test_ActivateKeyboardLayout( argv );
     test_key_names();
     test_attach_input();
     test_GetKeyState();
