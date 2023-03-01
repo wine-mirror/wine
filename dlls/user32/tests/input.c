@@ -3331,7 +3331,20 @@ static void test_keyboard_layout_name(void)
     for (i = len - 1; i >= 0; --i)
     {
         id = (DWORD_PTR)layouts[i];
+
+        winetest_push_context( "%08lx", id );
+
         ActivateKeyboardLayout(layouts[i], 0);
+
+        tmplayout = GetKeyboardLayout(0);
+        todo_wine_if(tmplayout != layouts[i])
+        ok( tmplayout == layouts[i], "Failed to activate keyboard layout\n");
+        if (tmplayout != layouts[i])
+        {
+            winetest_pop_context();
+            continue;
+        }
+
         GetKeyboardLayoutNameW(klid);
 
         for (j = 0; j < len; ++j)
@@ -3370,6 +3383,8 @@ static void test_keyboard_layout_name(void)
         /* The layout name only depends on the keyboard layout: the high word of HKL. */
         GetKeyboardLayoutNameW(tmpklid);
         ok(!wcsicmp(klid, tmpklid), "GetKeyboardLayoutNameW returned %s, expected %s\n", debugstr_w(tmpklid), debugstr_w(klid));
+
+        winetest_pop_context();
     }
 
     ActivateKeyboardLayout(layout, 0);
