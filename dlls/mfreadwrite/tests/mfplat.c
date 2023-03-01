@@ -1406,7 +1406,7 @@ static void test_reader_d3d9(void)
     IMFSourceReader_Release(reader);
 
     refcount = IDirect3DDeviceManager9_Release(d3d9_manager);
-    todo_wine ok(!refcount, "Unexpected refcount %lu.\n", refcount);
+    ok(!refcount, "Unexpected refcount %lu.\n", refcount);
 
     IDirect3DDevice9_Release(d3d9_device);
 
