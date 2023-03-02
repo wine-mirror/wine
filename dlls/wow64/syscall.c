@@ -712,16 +712,39 @@ static HMODULE load_64bit_module( const WCHAR *name )
  */
 static const WCHAR *get_cpu_dll_name(void)
 {
+    static ULONG buffer[32];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    const WCHAR *ret;
+    HANDLE key;
+    ULONG size;
+
     switch (current_machine)
     {
     case IMAGE_FILE_MACHINE_I386:
-        return (native_machine == IMAGE_FILE_MACHINE_ARM64 ? L"xtajit.dll" : L"wow64cpu.dll");
+        RtlInitUnicodeString( &nameW, L"\\Registry\\Machine\\Software\\Microsoft\\Wow64\\x86" );
+        ret = (native_machine == IMAGE_FILE_MACHINE_ARM64 ? L"xtajit.dll" : L"wow64cpu.dll");
+        break;
     case IMAGE_FILE_MACHINE_ARMNT:
-        return L"wowarmhw.dll";
+        RtlInitUnicodeString( &nameW, L"\\Registry\\Machine\\Software\\Microsoft\\Wow64\\arm" );
+        ret = L"wowarmhw.dll";
+        break;
     default:
         ERR( "unsupported machine %04x\n", current_machine );
         RtlExitUserProcess( 1 );
     }
+    InitializeObjectAttributes( &attr, &nameW, OBJ_CASE_INSENSITIVE, 0, NULL );
+    if (NtOpenKey( &key, KEY_READ | KEY_WOW64_64KEY, &attr )) return ret;
+    RtlInitUnicodeString( &nameW, L"" );
+    size = sizeof(buffer) - sizeof(WCHAR);
+    if (!NtQueryValueKey( key, &nameW, KeyValuePartialInformation, buffer, size, &size ) && info->Type == REG_SZ)
+    {
+        ((WCHAR *)info->Data)[info->DataLength / sizeof(WCHAR)] = 0;
+        ret = (WCHAR *)info->Data;
+    }
+    NtClose( key );
+    return ret;
 }
 
 
