@@ -535,6 +535,46 @@ static WCHAR kbd_tables_vkey_to_wchar( const KBDTABLES *tables, UINT vkey, const
 
 #undef NEXT_ENTRY
 
+/*******************************************************************
+ *           NtUserGetForegroundWindow  (win32u.@)
+ */
+HWND WINAPI NtUserGetForegroundWindow(void)
+{
+    HWND ret = 0;
+
+    SERVER_START_REQ( get_thread_input )
+    {
+        req->tid = 0;
+        if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->foreground );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+/* see GetActiveWindow */
+HWND get_active_window(void)
+{
+    GUITHREADINFO info;
+    info.cbSize = sizeof(info);
+    return NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info ) ? info.hwndActive : 0;
+}
+
+/* see GetCapture */
+HWND get_capture(void)
+{
+    GUITHREADINFO info;
+    info.cbSize = sizeof(info);
+    return NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info ) ? info.hwndCapture : 0;
+}
+
+/* see GetFocus */
+HWND get_focus(void)
+{
+    GUITHREADINFO info;
+    info.cbSize = sizeof(info);
+    return NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info ) ? info.hwndFocus : 0;
+}
+
 /**********************************************************************
  *	     NtUserAttachThreadInput    (win32u.@)
  */
@@ -1710,46 +1750,6 @@ BOOL WINAPI release_capture(void)
     }
 
     return ret;
-}
-
-/*******************************************************************
- *           NtUserGetForegroundWindow  (win32u.@)
- */
-HWND WINAPI NtUserGetForegroundWindow(void)
-{
-    HWND ret = 0;
-
-    SERVER_START_REQ( get_thread_input )
-    {
-        req->tid = 0;
-        if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->foreground );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-/* see GetActiveWindow */
-HWND get_active_window(void)
-{
-    GUITHREADINFO info;
-    info.cbSize = sizeof(info);
-    return NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info ) ? info.hwndActive : 0;
-}
-
-/* see GetCapture */
-HWND get_capture(void)
-{
-    GUITHREADINFO info;
-    info.cbSize = sizeof(info);
-    return NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info ) ? info.hwndCapture : 0;
-}
-
-/* see GetFocus */
-HWND get_focus(void)
-{
-    GUITHREADINFO info;
-    info.cbSize = sizeof(info);
-    return NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info ) ? info.hwndFocus : 0;
 }
 
 /*****************************************************************
