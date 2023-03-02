@@ -1731,14 +1731,14 @@ static void test_SHFormatDateTimeA(void)
     flags = FDTF_NOAUTOREADINGORDER | FDTF_SHORTTIME;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
-    ret = GetTimeFormatA(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &st, NULL, buff2, sizeof(buff2));
+    ret = GetTimeFormatA(LOCALE_USER_DEFAULT, TIME_NOSECONDS | LOCALE_USE_CP_ACP, &st, NULL, buff2, sizeof(buff2));
     ok(ret == lstrlenA(buff2)+1, "got %d\n", ret);
     ok(lstrcmpA(buff, buff2) == 0, "expected (%s), got (%s)\n", buff2, buff);
 
     flags = FDTF_NOAUTOREADINGORDER | FDTF_LONGTIME;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
-    ret = GetTimeFormatA(LOCALE_USER_DEFAULT, 0, &st, NULL, buff2, sizeof(buff2));
+    ret = GetTimeFormatA(LOCALE_USER_DEFAULT, LOCALE_USE_CP_ACP, &st, NULL, buff2, sizeof(buff2));
     ok(ret == lstrlenA(buff2)+1, "got %d\n", ret);
     ok(lstrcmpA(buff, buff2) == 0, "expected (%s), got (%s)\n", buff2, buff);
 
@@ -1746,21 +1746,21 @@ static void test_SHFormatDateTimeA(void)
     flags = FDTF_NOAUTOREADINGORDER | FDTF_LONGTIME | FDTF_SHORTTIME;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
-    ret = GetTimeFormatA(LOCALE_USER_DEFAULT, 0, &st, NULL, buff2, sizeof(buff2));
+    ret = GetTimeFormatA(LOCALE_USER_DEFAULT, LOCALE_USE_CP_ACP, &st, NULL, buff2, sizeof(buff2));
     ok(ret == lstrlenA(buff2)+1, "got %d\n", ret);
     ok(lstrcmpA(buff, buff2) == 0, "expected (%s), got (%s)\n", buff2, buff);
 
     flags = FDTF_NOAUTOREADINGORDER | FDTF_SHORTDATE;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
-    ret = GetDateFormatA(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &st, NULL, buff2, sizeof(buff2));
+    ret = GetDateFormatA(LOCALE_USER_DEFAULT, DATE_SHORTDATE | LOCALE_USE_CP_ACP, &st, NULL, buff2, sizeof(buff2));
     ok(ret == lstrlenA(buff2)+1, "got %d\n", ret);
     ok(lstrcmpA(buff, buff2) == 0, "expected (%s), got (%s)\n", buff2, buff);
 
     flags = FDTF_NOAUTOREADINGORDER | FDTF_LONGDATE;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
-    ret = GetDateFormatA(LOCALE_USER_DEFAULT, DATE_LONGDATE, &st, NULL, buff2, sizeof(buff2));
+    ret = GetDateFormatA(LOCALE_USER_DEFAULT, DATE_LONGDATE | LOCALE_USE_CP_ACP, &st, NULL, buff2, sizeof(buff2));
     ok(ret == lstrlenA(buff2)+1, "got %d\n", ret);
     ok(lstrcmpA(buff, buff2) == 0, "expected (%s), got (%s)\n", buff2, buff);
 
@@ -1768,7 +1768,7 @@ static void test_SHFormatDateTimeA(void)
     flags = FDTF_NOAUTOREADINGORDER | FDTF_LONGDATE | FDTF_SHORTDATE;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
-    ret = GetDateFormatA(LOCALE_USER_DEFAULT, DATE_LONGDATE, &st, NULL, buff2, sizeof(buff2));
+    ret = GetDateFormatA(LOCALE_USER_DEFAULT, DATE_LONGDATE | LOCALE_USE_CP_ACP, &st, NULL, buff2, sizeof(buff2));
     ok(ret == lstrlenA(buff2)+1, "got %d\n", ret);
     ok(lstrcmpA(buff, buff2) == 0, "expected (%s), got (%s)\n", buff2, buff);
 
@@ -1776,12 +1776,12 @@ static void test_SHFormatDateTimeA(void)
     flags = FDTF_NOAUTOREADINGORDER | FDTF_LONGDATE | FDTF_SHORTTIME;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d, length %d\n", ret, lstrlenA(buff)+1);
-    ret = GetTimeFormatA(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &st, NULL, buff3, sizeof(buff3));
+    ret = GetTimeFormatA(LOCALE_USER_DEFAULT, TIME_NOSECONDS | LOCALE_USE_CP_ACP, &st, NULL, buff3, sizeof(buff3));
     ok(ret == lstrlenA(buff3)+1, "got %d\n", ret);
     ok(lstrcmpA(buff3, buff + lstrlenA(buff) - lstrlenA(buff3)) == 0,
        "expected (%s), got (%s) for time part\n",
        buff3, buff + lstrlenA(buff) - lstrlenA(buff3));
-    ret = GetDateFormatA(LOCALE_USER_DEFAULT, DATE_LONGDATE, &st, NULL, buff2, sizeof(buff2));
+    ret = GetDateFormatA(LOCALE_USER_DEFAULT, DATE_LONGDATE | LOCALE_USE_CP_ACP, &st, NULL, buff2, sizeof(buff2));
     ok(ret == lstrlenA(buff2)+1, "got %d\n", ret);
     buff[lstrlenA(buff2)] = '\0';
     ok(lstrcmpA(buff2, buff) == 0, "expected (%s) got (%s) for date part\n",
@@ -1790,12 +1790,12 @@ static void test_SHFormatDateTimeA(void)
     flags = FDTF_NOAUTOREADINGORDER | FDTF_LONGDATE | FDTF_LONGTIME;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
-    ret = GetTimeFormatA(LOCALE_USER_DEFAULT, 0, &st, NULL, buff3, sizeof(buff3));
+    ret = GetTimeFormatA(LOCALE_USER_DEFAULT, LOCALE_USE_CP_ACP, &st, NULL, buff3, sizeof(buff3));
     ok(ret == lstrlenA(buff3)+1, "got %d\n", ret);
     ok(lstrcmpA(buff3, buff + lstrlenA(buff) - lstrlenA(buff3)) == 0,
        "expected (%s), got (%s) for time part\n",
        buff3, buff + lstrlenA(buff) - lstrlenA(buff3));
-    ret = GetDateFormatA(LOCALE_USER_DEFAULT, DATE_LONGDATE, &st, NULL, buff2, sizeof(buff2));
+    ret = GetDateFormatA(LOCALE_USER_DEFAULT, DATE_LONGDATE | LOCALE_USE_CP_ACP, &st, NULL, buff2, sizeof(buff2));
     ok(ret == lstrlenA(buff2)+1, "got %d\n", ret);
     buff[lstrlenA(buff2)] = '\0';
     ok(lstrcmpA(buff2, buff) == 0, "expected (%s) got (%s) for date part\n",
@@ -1804,10 +1804,10 @@ static void test_SHFormatDateTimeA(void)
     flags = FDTF_NOAUTOREADINGORDER | FDTF_SHORTDATE | FDTF_SHORTTIME;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
-    ret = GetDateFormatA(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &st, NULL, buff2, sizeof(buff2));
+    ret = GetDateFormatA(LOCALE_USER_DEFAULT, DATE_SHORTDATE | LOCALE_USE_CP_ACP, &st, NULL, buff2, sizeof(buff2));
     ok(ret == lstrlenA(buff2)+1, "got %d\n", ret);
     strcat(buff2, " ");
-    ret = GetTimeFormatA(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &st, NULL, buff3, sizeof(buff3));
+    ret = GetTimeFormatA(LOCALE_USER_DEFAULT, TIME_NOSECONDS | LOCALE_USE_CP_ACP, &st, NULL, buff3, sizeof(buff3));
     ok(ret == lstrlenA(buff3)+1, "got %d\n", ret);
     strcat(buff2, buff3);
     ok(lstrcmpA(buff, buff2) == 0, "expected (%s), got (%s)\n", buff2, buff);
@@ -1815,10 +1815,10 @@ static void test_SHFormatDateTimeA(void)
     flags = FDTF_NOAUTOREADINGORDER | FDTF_SHORTDATE | FDTF_LONGTIME;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
-    ret = GetDateFormatA(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &st, NULL, buff2, sizeof(buff2));
+    ret = GetDateFormatA(LOCALE_USER_DEFAULT, DATE_SHORTDATE | LOCALE_USE_CP_ACP, &st, NULL, buff2, sizeof(buff2));
     ok(ret == lstrlenA(buff2)+1, "got %d\n", ret);
     strcat(buff2, " ");
-    ret = GetTimeFormatA(LOCALE_USER_DEFAULT, 0, &st, NULL, buff3, sizeof(buff3));
+    ret = GetTimeFormatA(LOCALE_USER_DEFAULT, LOCALE_USE_CP_ACP, &st, NULL, buff3, sizeof(buff3));
     ok(ret == lstrlenA(buff3)+1, "got %d\n", ret);
     strcat(buff2, buff3);
     ok(lstrcmpA(buff, buff2) == 0, "expected (%s), got (%s)\n", buff2, buff);
