@@ -62,10 +62,13 @@ namespace Windows.Foundation {
     typedef struct TimeSpan TimeSpan;
     interface IAsyncAction;
     interface IClosable;
+    interface IDeferral;
+    interface IDeferralFactory;
     interface IMemoryBuffer;
     interface IMemoryBufferFactory;
     interface IMemoryBufferReference;
     interface IStringable;
+    runtimeclass Deferral;
     runtimeclass MemoryBuffer;
 
     declare {
@@ -93,6 +96,12 @@ namespace Windows.Foundation {
         uuid(a4ed5c81-76c9-40bd-8be6-b1d90fb20ae7)
     ]
     delegate HRESULT AsyncActionCompletedHandler([in] Windows.Foundation.IAsyncAction *action, [in] AsyncStatus status);
+
+    [
+        contract(Windows.Foundation.FoundationContract, 1.0),
+        uuid(ed32a372-f3c8-4faa-9cfb-470148da3888)
+    ]
+    delegate HRESULT DeferralCompletedHandler();
 
     [contract(Windows.Foundation.FoundationContract, 1.0)]
     enum PropertyType
@@ -195,6 +204,27 @@ namespace Windows.Foundation {
 
     [
         contract(Windows.Foundation.FoundationContract, 1.0),
+        exclusiveto(Windows.Foundation.Deferral),
+        uuid(d6269732-3b7f-46a7-b40b-4fdca2a2c693)
+    ]
+    interface IDeferral : IInspectable
+        requires Windows.Foundation.IClosable
+    {
+        HRESULT Complete();
+    }
+
+    [
+        contract(Windows.Foundation.FoundationContract, 1.0),
+        exclusiveto(Windows.Foundation.Deferral),
+        uuid(65a1ecc5-3fb5-4832-8ca9-f061b281d13a)
+    ]
+    interface IDeferralFactory : IInspectable
+    {
+        HRESULT Create([in] Windows.Foundation.DeferralCompletedHandler *handler, [out, retval] Windows.Foundation.Deferral **result);
+    }
+
+    [
+        contract(Windows.Foundation.FoundationContract, 1.0),
         uuid(5a648006-843a-4da9-865b-9d26e5dfad7b)
     ]
     interface IAsyncAction : IInspectable
@@ -237,6 +267,17 @@ namespace Windows.Foundation {
         [eventadd] HRESULT Closed([in] Windows.Foundation.TypedEventHandler<Windows.Foundation.IMemoryBufferReference *, IInspectable *> *handler,
                                   [out, retval] EventRegistrationToken *cookie);
         [eventremove] HRESULT Closed([in] EventRegistrationToken cookie);
+    }
+
+    [
+        activatable(Windows.Foundation.IDeferralFactory, Windows.Foundation.FoundationContract, 1.0),
+        contract(Windows.Foundation.FoundationContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass Deferral
+    {
+        [default] interface Windows.Foundation.IDeferral;
+        interface Windows.Foundation.IClosable;
     }
 
     [
