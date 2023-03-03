@@ -3881,20 +3881,10 @@ static DWORD get_gif_background_color(GpBitmap *bitmap)
     UINT i;
 
     for(i=0; i<bitmap->prop_count; i++) {
-        if(bitmap->prop_item[i].id == PropertyTagIndexBackground) {
+        if(bitmap->prop_item[i].id == PropertyTagIndexBackground)
             bgcolor_idx = *(BYTE*)bitmap->prop_item[i].value;
-            break;
-        }
-    }
-
-    for(i=0; i<bitmap->prop_count; i++) {
-        if(bitmap->prop_item[i].id == PropertyTagIndexTransparent) {
-            BYTE transparent_idx;
-            transparent_idx = *(BYTE*)bitmap->prop_item[i].value;
-
-            if(transparent_idx == bgcolor_idx)
-                return 0;
-        }
+        else if(bitmap->prop_item[i].id == PropertyTagIndexTransparent)
+            return 0;
     }
 
     for(i=0; i<bitmap->prop_count; i++) {
