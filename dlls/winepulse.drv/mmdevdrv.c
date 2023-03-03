@@ -87,14 +87,12 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
         DisableThreadLibraryCalls(dll);
         if (__wine_init_unix_call())
             return FALSE;
-        if (WINE_UNIX_CALL(process_attach, NULL))
-            return FALSE;
     } else if (reason == DLL_PROCESS_DETACH) {
         struct device_cache *device, *device_next;
 
         LIST_FOR_EACH_ENTRY_SAFE(device, device_next, &g_devices_cache, struct device_cache, entry)
             free(device);
-        WINE_UNIX_CALL(process_detach, NULL);
+
         if (pulse_thread) {
             WaitForSingleObject(pulse_thread, INFINITE);
             CloseHandle(pulse_thread);

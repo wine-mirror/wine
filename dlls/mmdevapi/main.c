@@ -19,7 +19,9 @@
 
 #include <stdarg.h>
 
+#include "ntstatus.h"
 #define COBJMACROS
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -84,6 +86,11 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
     if ((status = NtQueryVirtualMemory(GetCurrentProcess(), driver->module, MemoryWineUnixFuncs,
         &driver->module_unixlib, sizeof(driver->module_unixlib), NULL))) {
         ERR("Unable to load UNIX functions: %lx\n", status);
+        goto fail;
+    }
+
+    if ((status = __wine_unix_call(driver->module_unixlib, process_attach, NULL))) {
+        ERR("Unable to initialize library: %lx\n", status);
         goto fail;
     }
 
@@ -177,9 +184,14 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             DisableThreadLibraryCalls(hinstDLL);
             break;
         case DLL_PROCESS_DETACH:
-            if(lpvReserved)
-                break;
-            MMDevEnum_Free();
+            if (drvs.module_unixlib) {
+                const NTSTATUS status = __wine_unix_call(drvs.module_unixlib, process_detach, NULL);
+                if (status)
+                    WARN("Unable to deinitialize library: %lx\n", status);
+            }
+
+            if (!lpvReserved)
+                MMDevEnum_Free();
             break;
     }
 
