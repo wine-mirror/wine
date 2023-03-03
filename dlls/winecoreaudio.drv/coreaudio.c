@@ -96,6 +96,11 @@ struct coreaudio_stream
     BYTE *local_buffer, *cap_buffer, *wrap_buffer, *resamp_buffer, *tmp_buffer;
 };
 
+static NTSTATUS unix_not_implemented(void *args)
+{
+    return STATUS_SUCCESS;
+}
+
 static HRESULT osstatus_to_hresult(OSStatus sc)
 {
     switch(sc){
@@ -1647,23 +1652,23 @@ static NTSTATUS unix_set_volumes(void *args)
 
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
-    NULL,
-    NULL,
-    NULL,
+    unix_not_implemented,
+    unix_not_implemented,
+    unix_not_implemented,
     unix_get_endpoint_ids,
     unix_create_stream,
     unix_release_stream,
     unix_start,
     unix_stop,
     unix_reset,
-    NULL,
+    unix_not_implemented,
     unix_get_render_buffer,
     unix_release_render_buffer,
     unix_get_capture_buffer,
     unix_release_capture_buffer,
     unix_is_format_supported,
     unix_get_mix_format,
-    NULL,
+    unix_not_implemented,
     unix_get_buffer_size,
     unix_get_latency,
     unix_get_current_padding,
@@ -1671,16 +1676,16 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     unix_get_frequency,
     unix_get_position,
     unix_set_volumes,
-    NULL,
-    NULL,
+    unix_not_implemented,
+    unix_not_implemented,
     unix_is_started,
-    NULL,
+    unix_not_implemented,
     unix_midi_init,
     unix_midi_release,
     unix_midi_out_message,
     unix_midi_in_message,
     unix_midi_notify_wait,
-    NULL,
+    unix_not_implemented,
 };
 
 #ifdef _WIN64
@@ -1991,23 +1996,23 @@ static NTSTATUS unix_wow64_set_volumes(void *args)
 
 unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
-    NULL,
-    NULL,
-    NULL,
+    unix_not_implemented,
+    unix_not_implemented,
+    unix_not_implemented,
     unix_wow64_get_endpoint_ids,
     unix_wow64_create_stream,
     unix_wow64_release_stream,
     unix_start,
     unix_stop,
     unix_reset,
-    NULL,
+    unix_not_implemented,
     unix_wow64_get_render_buffer,
     unix_release_render_buffer,
     unix_wow64_get_capture_buffer,
     unix_release_capture_buffer,
     unix_wow64_is_format_supported,
     unix_wow64_get_mix_format,
-    NULL,
+    unix_not_implemented,
     unix_wow64_get_buffer_size,
     unix_wow64_get_latency,
     unix_wow64_get_current_padding,
@@ -2015,16 +2020,16 @@ unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     unix_wow64_get_frequency,
     unix_wow64_get_position,
     unix_wow64_set_volumes,
-    NULL,
-    NULL,
+    unix_not_implemented,
+    unix_not_implemented,
     unix_is_started,
-    NULL,
+    unix_not_implemented,
     unix_wow64_midi_init,
     unix_midi_release,
     unix_wow64_midi_out_message,
     unix_wow64_midi_in_message,
     unix_wow64_midi_notify_wait,
-    NULL,
+    unix_not_implemented,
 };
 
 #endif /* _WIN64 */
