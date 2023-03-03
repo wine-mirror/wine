@@ -119,6 +119,11 @@ static const REFERENCE_TIME DefaultPeriod = 100000;
 static pthread_mutex_t pulse_mutex;
 static pthread_cond_t pulse_cond = PTHREAD_COND_INITIALIZER;
 
+static NTSTATUS pulse_not_implemented(void *args)
+{
+    return STATUS_SUCCESS;
+}
+
 static void pulse_lock(void)
 {
     pthread_mutex_lock(&pulse_mutex);
@@ -2373,7 +2378,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     pulse_release_render_buffer,
     pulse_get_capture_buffer,
     pulse_release_capture_buffer,
-    NULL,
+    pulse_not_implemented,
     pulse_get_mix_format,
     pulse_get_device_period,
     pulse_get_buffer_size,
@@ -2387,12 +2392,12 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     pulse_test_connect,
     pulse_is_started,
     pulse_get_prop_value,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
+    pulse_not_implemented,
+    pulse_not_implemented,
+    pulse_not_implemented,
+    pulse_not_implemented,
+    pulse_not_implemented,
+    pulse_not_implemented,
 };
 
 #ifdef _WIN64
@@ -2820,7 +2825,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     pulse_release_render_buffer,
     pulse_wow64_get_capture_buffer,
     pulse_release_capture_buffer,
-    NULL,
+    pulse_not_implemented,
     pulse_wow64_get_mix_format,
     pulse_wow64_get_device_period,
     pulse_wow64_get_buffer_size,
@@ -2834,12 +2839,12 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     pulse_wow64_test_connect,
     pulse_is_started,
     pulse_wow64_get_prop_value,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
+    pulse_not_implemented,
+    pulse_not_implemented,
+    pulse_not_implemented,
+    pulse_not_implemented,
+    pulse_not_implemented,
+    pulse_not_implemented,
 };
 
 #endif /* _WIN64 */
