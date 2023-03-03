@@ -476,7 +476,7 @@ static void test_enum_value(void)
 {
     DWORD res;
     HKEY test_key;
-    char value[20], data[20];
+    char value[20], data[30];
     WCHAR valueW[20], dataW[20];
     DWORD val_count, data_count, type;
 
@@ -542,39 +542,50 @@ static void test_enum_value(void)
 
     /* overflow name */
     val_count = 3;
-    data_count = 20;
+    data_count = 16;
     type = 1234;
     strcpy( value, "xxxxxxxxxx" );
     memset( data, 'x', sizeof(data) );
+    data[sizeof(data)-1] = '\0';
     res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, (LPBYTE)data, &data_count );
     ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld\n", res );
     ok( val_count == 3, "val_count set to %ld\n", val_count );
-    /* Chinese, Japanese, and Korean editions of Windows 10 sometimes set data_count to a higher value */
+    /* In double-byte and UTF-8 locales Windows 10 may set data_count > 7,
+     * potentially even more than the declared buffer size, in which case the
+     * buffer is not NUL-terminated.
+     */
     ok( data_count == 7 || broken( data_count > 7 ), "data_count set to %ld instead of 7\n", data_count );
     ok( type == REG_SZ, "type %ld is not REG_SZ\n", type );
-    /* v5.1.2600.0 (XP Home and Professional) does not touch value or data in this case */
+    /* v5.1.2600.0 (XP Home and Professional) does not touch value or data in
+     * this case. Neither does Windows 10 21H1 in UTF-8 locales.
+     */
     ok( !strcmp( value, "Te" ) || !strcmp( value, "xxxxxxxxxx" ), 
         "value set to '%s' instead of 'Te' or 'xxxxxxxxxx'\n", value );
     ok( !strcmp( data, "foobar" ) || !strcmp( data, "xxxxxxx" ) ||
-        broken( data_count > 7 && strspn( data, "x" ) == data_count && data[data_count] == 0 ),
+        broken( data_count > 7 && data_count < 16 &&
+                strspn( data, "x" ) == data_count && data[data_count] == 0 ) ||
+        broken( data_count >= 16 && strspn( data, "x" ) == sizeof(data) - 1 ),
         "data set to '%s' instead of 'foobar' or x's, data_count=%lu\n", data, data_count );
 
     /* overflow empty name */
     val_count = 0;
-    data_count = 20;
+    data_count = 16;
     type = 1234;
     strcpy( value, "xxxxxxxxxx" );
     memset( data, 'x', sizeof(data) );
+    data[sizeof(data)-1] = '\0';
     res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, (LPBYTE)data, &data_count );
     ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld\n", res );
     ok( val_count == 0, "val_count set to %ld\n", val_count );
-    /* Chinese, Japanese, and Korean editions of Windows 10 sometimes set data_count to a higher value */
+    /* See comment in 'overflow name' section */
     ok( data_count == 7 || broken( data_count > 7 ), "data_count set to %ld instead of 7\n", data_count );
     ok( type == REG_SZ, "type %ld is not REG_SZ\n", type );
     ok( !strcmp( value, "xxxxxxxxxx" ), "value set to '%s'\n", value );
-    /* v5.1.2600.0 (XP Home and Professional) does not touch data in this case */
+    /* See comment in 'overflow name' section */
     ok( !strcmp( data, "foobar" ) || !strcmp( data, "xxxxxxx" ) ||
-        broken( data_count > 7 && strspn( data, "x" ) == data_count && data[data_count] == 0 ),
+        broken( data_count > 7 && data_count < 16 &&
+                strspn( data, "x" ) == data_count && data[data_count] == 0 ) ||
+        broken( data_count >= 16 && strspn( data, "x" ) == sizeof(data) - 1 ),
         "data set to '%s' instead of 'foobar' or x's, data_count=%lu\n", data, data_count );
 
     /* overflow data */
