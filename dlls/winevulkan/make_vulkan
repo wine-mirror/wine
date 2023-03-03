@@ -3584,6 +3584,8 @@ class VkRegistry(object):
         """ Parse the feature section, which describes Core commands and types needed. """
 
         for feature in root.findall("./feature"):
+            if not api_is_vulkan(feature):
+                continue
             feature_name = feature.attrib["name"]
             for require in feature.findall("require"):
                 LOGGER.info("Including features for {0}".format(require.attrib.get("comment")))
