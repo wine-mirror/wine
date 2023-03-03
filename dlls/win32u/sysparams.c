@@ -2727,6 +2727,7 @@ static unsigned int active_monitor_count(void)
 INT get_display_depth( UNICODE_STRING *name )
 {
     struct display_device *device;
+    BOOL is_primary;
     INT depth;
 
     if (!lock_display_devices())
@@ -2743,8 +2744,16 @@ INT get_display_depth( UNICODE_STRING *name )
         return 32;
     }
 
-    depth = user_driver->pGetDisplayDepth( device->device_name,
-                                           !!(device->state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE) );
+    is_primary = !!(device->state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE);
+    if ((depth = user_driver->pGetDisplayDepth( device->device_name, is_primary )) < 0)
+    {
+        struct adapter *adapter = CONTAINING_RECORD( device, struct adapter, dev );
+        DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
+
+        if (!adapter_get_current_settings( adapter, &current_mode )) depth = 32;
+        else depth = current_mode.dmBitsPerPel;
+    }
+
     unlock_display_devices();
     return depth;
 }

@@ -761,7 +761,7 @@ static BOOL nulldrv_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, LP
 
 static INT nulldrv_GetDisplayDepth( LPCWSTR name, BOOL is_primary )
 {
-    return 32;
+    return -1; /* use default implementation */
 }
 
 static BOOL nulldrv_UpdateDisplayDevices( const struct gdi_device_manager *manager, BOOL force, void *param )
