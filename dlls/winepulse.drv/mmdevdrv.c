@@ -23,6 +23,7 @@
 
 #include <stdarg.h>
 #include <assert.h>
+#include <wchar.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -247,11 +248,9 @@ static BOOL query_productname(void *data, LANGANDCODEPAGE *lang, LPVOID *buffer,
     return VerQueryValueW(data, pn, buffer, len) && *len;
 }
 
-static char *get_application_name(BOOL query_app_name)
+static WCHAR *get_application_name(BOOL query_app_name)
 {
     WCHAR path[MAX_PATH], *name;
-    char *str = NULL;
-    size_t len;
 
     GetModuleFileNameW(NULL, path, ARRAY_SIZE(path));
 
@@ -327,15 +326,9 @@ static char *get_application_name(BOOL query_app_name)
             }
         }
 
-        if (found) {
-            len = WideCharToMultiByte(CP_UTF8, 0, productname, -1, NULL, 0, NULL, NULL);
-            str = malloc(len);
-            if (str) WideCharToMultiByte(CP_UTF8, 0, productname, -1, str, len, NULL, NULL);
-        }
-
     skip:
         free(data);
-        if (str) return str;
+        if (found) return wcsdup(productname);
     }
 
     name = wcsrchr(path, '\\');
@@ -343,11 +336,7 @@ static char *get_application_name(BOOL query_app_name)
         name = path;
     else
         name++;
-    len = WideCharToMultiByte(CP_UTF8, 0, name, -1, NULL, 0, NULL, NULL);
-    if (!(str = malloc(len)))
-        return NULL;
-    WideCharToMultiByte(CP_UNIXCP, 0, name, -1, str, len, NULL, NULL);
-    return str;
+    return wcsdup(name);
 }
 
 static DWORD WINAPI pulse_timer_cb(void *user)
@@ -481,7 +470,7 @@ end:
 int WINAPI AUDDRV_GetPriority(void)
 {
     struct test_connect_params params;
-    char *name;
+    WCHAR *name;
 
     params.name = name = get_application_name(FALSE);
     pulse_call(test_connect, &params);
@@ -817,7 +806,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     struct create_stream_params params;
     unsigned int i, channel_count;
     stream_handle stream;
-    char *name;
+    WCHAR *name;
     HRESULT hr;
 
     TRACE("(%p)->(%x, %lx, %s, %s, %p, %s)\n", This, mode, flags,

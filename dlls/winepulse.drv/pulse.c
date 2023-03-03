@@ -196,6 +196,14 @@ static int muldiv(int a, int b, int c)
     return ret;
 }
 
+static char *wstr_to_str(const WCHAR *wstr)
+{
+    const int len = wcslen(wstr);
+    char *str = malloc(len * 3 + 1);
+    ntdll_wcstoumbs(wstr, len + 1, str, len * 3 + 1, FALSE);
+    return str;
+}
+
 /* Following pulseaudio design here, mainloop has the lock taken whenever
  * it is handling something for pulse, and the lock is required whenever
  * doing any pa_* call that can affect the state in any way
@@ -765,13 +773,17 @@ static NTSTATUS pulse_test_connect(void *args)
     PhysDevice *dev;
     pa_operation *o;
     int ret;
+    char *name = wstr_to_str(params->name);
 
     pulse_lock();
     pulse_ml = pa_mainloop_new();
 
     pa_mainloop_set_poll_func(pulse_ml, pulse_poll_func, NULL);
 
-    pulse_ctx = pa_context_new(pa_mainloop_get_api(pulse_ml), params->name);
+    pulse_ctx = pa_context_new(pa_mainloop_get_api(pulse_ml), name);
+
+    free(name);
+
     if (!pulse_ctx) {
         ERR("Failed to create context\n");
         pa_mainloop_free(pulse_ml);
@@ -1104,10 +1116,15 @@ static NTSTATUS pulse_create_stream(void *args)
     struct pulse_stream *stream;
     unsigned int i, bufsize_bytes;
     HRESULT hr;
+    char *name = wstr_to_str(params->name);
 
     pulse_lock();
 
-    if (FAILED(params->result = pulse_connect(params->name)))
+    params->result = pulse_connect(name);
+
+    free(name);
+
+    if (FAILED(params->result))
     {
         pulse_unlock();
         return STATUS_SUCCESS;

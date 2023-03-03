@@ -53,7 +53,7 @@ struct get_endpoint_ids_params
 
 struct create_stream_params
 {
-    const char *name;
+    const WCHAR *name;
     const char *device;
     EDataFlow flow;
     AUDCLNT_SHAREMODE share;
@@ -219,7 +219,7 @@ struct set_event_handle_params
 
 struct test_connect_params
 {
-    const char *name;
+    const WCHAR *name;
     enum driver_priority priority;
 };
 
