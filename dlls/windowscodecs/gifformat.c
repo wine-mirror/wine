@@ -947,7 +947,10 @@ static HRESULT WINAPI GifFrameDecode_Block_GetReaderByIndex(IWICMetadataBlockRea
     UINT index, IWICMetadataReader **reader)
 {
     GifFrameDecode *This = frame_from_IWICMetadataBlockReader(iface);
-    int i, gce_index = -1, gce_skipped = 0;
+    class_constructor constructor;
+    ExtensionBlock *ext;
+    const void *data;
+    int data_size;
 
     TRACE("(%p,%u,%p)\n", iface, index, reader);
 
@@ -959,40 +962,27 @@ static HRESULT WINAPI GifFrameDecode_Block_GetReaderByIndex(IWICMetadataBlockRea
     if (index >= This->frame->Extensions.ExtensionBlockCount + 1)
         return E_INVALIDARG;
 
-    for (i = 0; i < This->frame->Extensions.ExtensionBlockCount; i++)
+    ext = This->frame->Extensions.ExtensionBlocks + index - 1;
+    if (ext->Function == GRAPHICS_EXT_FUNC_CODE)
     {
-        class_constructor constructor;
-        const void *data;
-        int data_size;
-
-        if (index != i + 1 - gce_skipped) continue;
-
-        if (This->frame->Extensions.ExtensionBlocks[i].Function == GRAPHICS_EXT_FUNC_CODE)
-        {
-            gce_index = i;
-            gce_skipped = 1;
-            continue;
-        }
-        else if (This->frame->Extensions.ExtensionBlocks[i].Function == COMMENT_EXT_FUNC_CODE)
-        {
-            constructor = GifCommentReader_CreateInstance;
-            data = This->frame->Extensions.ExtensionBlocks[i].Bytes;
-            data_size = This->frame->Extensions.ExtensionBlocks[i].ByteCount;
-        }
-        else
-        {
-            constructor = UnknownMetadataReader_CreateInstance;
-            data = This->frame->Extensions.ExtensionBlocks[i].Bytes;
-            data_size = This->frame->Extensions.ExtensionBlocks[i].ByteCount;
-        }
-        return create_metadata_reader(data, data_size, constructor, reader);
+        constructor = GCEReader_CreateInstance;
+        data = ext->Bytes + 3;
+        data_size = ext->ByteCount - 4;
+    }
+    else if (ext->Function == COMMENT_EXT_FUNC_CODE)
+    {
+        constructor = GifCommentReader_CreateInstance;
+        data = ext->Bytes;
+        data_size = ext->ByteCount;
+    }
+    else
+    {
+        constructor = UnknownMetadataReader_CreateInstance;
+        data = ext->Bytes;
+        data_size = ext->ByteCount;
     }
 
-    if (gce_index == -1) return E_INVALIDARG;
-
-    return create_metadata_reader(This->frame->Extensions.ExtensionBlocks[gce_index].Bytes + 3,
-                                  This->frame->Extensions.ExtensionBlocks[gce_index].ByteCount - 4,
-                                  GCEReader_CreateInstance, reader);
+    return create_metadata_reader(data, data_size, constructor, reader);
 }
 
 static HRESULT WINAPI GifFrameDecode_Block_GetEnumerator(IWICMetadataBlockReader *iface,

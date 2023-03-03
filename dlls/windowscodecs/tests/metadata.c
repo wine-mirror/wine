@@ -188,10 +188,10 @@ static const char animatedgif[] = {
 0x00,0x00,0x00,0x00,0x01,0x00,0x01,0x00,0x81,
 0xDE,0xDE,0xDE,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x02,0x4C,0x01,0x00,
+0x21,0xF9,0x04,0x01,0x0A,0x00,0x01,0x00,
 0x21,0xFE,0x08,'i','m','a','g','e',' ','#','1',0x00,
 0x21,0x01,0x0C,'p','l','a','i','n','t','e','x','t',' ','#','1',0x00,
-0x21,0xF9,0x04,0x01,0x0A,0x00,0x01,0x00,0x2C,
-0x00,0x00,0x00,0x00,0x01,0x00,0x01,0x00,0x81,
+0x2C,0x00,0x00,0x00,0x00,0x01,0x00,0x01,0x00,0x81,
 0x4D,0x4D,0x4D,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x02,0x44,0x01,0x00,
 0x21,0xFE,0x08,'i','m','a','g','e',' ','#','2',0x00,
@@ -1517,6 +1517,25 @@ static void test_metadata_gif(void)
         {
             hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
             ok(hr == S_OK, "GetMetadataFormat failed, hr=%#lx\n", hr);
+            ok(IsEqualGUID(&format, &GUID_MetadataFormatGCE), /* Graphic Control Extension */
+               "wrong metadata format %s\n", wine_dbgstr_guid(&format));
+
+            hr = IWICMetadataReader_GetCount(reader, &count);
+            ok(hr == S_OK, "GetCount error %#lx\n", hr);
+            ok(count == ARRAY_SIZE(animated_gif_GCE), "unexpected count %u\n", count);
+
+            compare_metadata(reader, animated_gif_GCE, count);
+
+            IWICMetadataReader_Release(reader);
+        }
+
+        hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 2, &reader);
+        ok(hr == S_OK, "GetReaderByIndex error %#lx\n", hr);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+            ok(hr == S_OK, "GetMetadataFormat failed, hr=%#lx\n", hr);
             ok(IsEqualGUID(&format, &GUID_MetadataFormatGifComment), /* Comment Extension */
                 "wrong metadata format %s\n", wine_dbgstr_guid(&format));
 
@@ -1530,7 +1549,7 @@ static void test_metadata_gif(void)
             IWICMetadataReader_Release(reader);
         }
 
-        hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 2, &reader);
+        hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 3, &reader);
         ok(hr == S_OK, "GetReaderByIndex error %#lx\n", hr);
 
         if (SUCCEEDED(hr))
@@ -1545,25 +1564,6 @@ static void test_metadata_gif(void)
             ok(count == ARRAY_SIZE(animated_gif_plain_2), "unexpected count %u\n", count);
 
             compare_metadata(reader, animated_gif_plain_2, count);
-
-            IWICMetadataReader_Release(reader);
-        }
-
-        hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 3, &reader);
-        ok(hr == S_OK, "GetReaderByIndex error %#lx\n", hr);
-
-        if (SUCCEEDED(hr))
-        {
-            hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
-            ok(hr == S_OK, "GetMetadataFormat failed, hr=%#lx\n", hr);
-            ok(IsEqualGUID(&format, &GUID_MetadataFormatGCE), /* Graphic Control Extension */
-               "wrong metadata format %s\n", wine_dbgstr_guid(&format));
-
-            hr = IWICMetadataReader_GetCount(reader, &count);
-            ok(hr == S_OK, "GetCount error %#lx\n", hr);
-            ok(count == ARRAY_SIZE(animated_gif_GCE), "unexpected count %u\n", count);
-
-            compare_metadata(reader, animated_gif_GCE, count);
 
             IWICMetadataReader_Release(reader);
         }
