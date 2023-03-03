@@ -3490,8 +3490,9 @@ class VkRegistry(object):
                 if cmd_name in self.funcs:
                     self.funcs[cmd_name].extensions.add(ext_name)
 
-            # Some extensions are not ready or have numbers reserved as a place holder.
-            if ext.attrib["supported"] == "disabled":
+            # Some extensions are not ready or have numbers reserved as a place holder
+            # or are only supported for VulkanSC.
+            if not "vulkan" in ext.attrib["supported"].split(","):
                 LOGGER.debug("Skipping disabled extension: {0}".format(ext_name))
                 skipped_exts.append(ext_name)
                 return
