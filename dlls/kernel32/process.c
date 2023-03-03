@@ -740,6 +740,18 @@ BOOL WINAPI SetFirmwareEnvironmentVariableW(const WCHAR *name, const WCHAR *guid
     return FALSE;
 }
 
+/***********************************************************************
+ *           GetFirmwareType     (KERNEL32.@)
+ */
+BOOL WINAPI GetFirmwareType(FIRMWARE_TYPE *type)
+{
+    if (!type)
+        return FALSE;
+
+    *type = FirmwareTypeUnknown;
+    return TRUE;
+}
+
 /**********************************************************************
  *           GetNumaNodeProcessorMask     (KERNEL32.@)
  */
