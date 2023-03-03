@@ -3,7 +3,7 @@
  * This file is generated from Vulkan vk.xml file covered
  * by the following copyright and permission notice:
  *
- * Copyright 2015-2022 The Khronos Group Inc.
+ * Copyright 2015-2023 The Khronos Group Inc.
  *
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
@@ -233,9 +233,12 @@ struct vulkan_device_funcs
     void (*p_vkCmdSetDeviceMask)(VkCommandBuffer, uint32_t);
     void (*p_vkCmdSetDeviceMaskKHR)(VkCommandBuffer, uint32_t);
     void (*p_vkCmdSetDiscardRectangleEXT)(VkCommandBuffer, uint32_t, uint32_t, const VkRect2D *);
+    void (*p_vkCmdSetDiscardRectangleEnableEXT)(VkCommandBuffer, VkBool32);
+    void (*p_vkCmdSetDiscardRectangleModeEXT)(VkCommandBuffer, VkDiscardRectangleModeEXT);
     void (*p_vkCmdSetEvent)(VkCommandBuffer, VkEvent, VkPipelineStageFlags);
     void (*p_vkCmdSetEvent2)(VkCommandBuffer, VkEvent, const VkDependencyInfo *);
     void (*p_vkCmdSetEvent2KHR)(VkCommandBuffer, VkEvent, const VkDependencyInfo *);
+    void (*p_vkCmdSetExclusiveScissorEnableNV)(VkCommandBuffer, uint32_t, uint32_t, const VkBool32 *);
     void (*p_vkCmdSetExclusiveScissorNV)(VkCommandBuffer, uint32_t, uint32_t, const VkRect2D *);
     void (*p_vkCmdSetExtraPrimitiveOverestimationSizeEXT)(VkCommandBuffer, float);
     void (*p_vkCmdSetFragmentShadingRateEnumNV)(VkCommandBuffer, VkFragmentShadingRateNV, const VkFragmentShadingRateCombinerOpKHR[2]);
@@ -761,9 +764,12 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCmdSetDeviceMask) \
     USE_VK_FUNC(vkCmdSetDeviceMaskKHR) \
     USE_VK_FUNC(vkCmdSetDiscardRectangleEXT) \
+    USE_VK_FUNC(vkCmdSetDiscardRectangleEnableEXT) \
+    USE_VK_FUNC(vkCmdSetDiscardRectangleModeEXT) \
     USE_VK_FUNC(vkCmdSetEvent) \
     USE_VK_FUNC(vkCmdSetEvent2) \
     USE_VK_FUNC(vkCmdSetEvent2KHR) \
+    USE_VK_FUNC(vkCmdSetExclusiveScissorEnableNV) \
     USE_VK_FUNC(vkCmdSetExclusiveScissorNV) \
     USE_VK_FUNC(vkCmdSetExtraPrimitiveOverestimationSizeEXT) \
     USE_VK_FUNC(vkCmdSetFragmentShadingRateEnumNV) \

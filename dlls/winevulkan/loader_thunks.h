@@ -3,7 +3,7 @@
  * This file is generated from Vulkan vk.xml file covered
  * by the following copyright and permission notice:
  *
- * Copyright 2015-2022 The Khronos Group Inc.
+ * Copyright 2015-2023 The Khronos Group Inc.
  *
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
@@ -190,9 +190,12 @@ enum unix_call
     unix_vkCmdSetDeviceMask,
     unix_vkCmdSetDeviceMaskKHR,
     unix_vkCmdSetDiscardRectangleEXT,
+    unix_vkCmdSetDiscardRectangleEnableEXT,
+    unix_vkCmdSetDiscardRectangleModeEXT,
     unix_vkCmdSetEvent,
     unix_vkCmdSetEvent2,
     unix_vkCmdSetEvent2KHR,
+    unix_vkCmdSetExclusiveScissorEnableNV,
     unix_vkCmdSetExclusiveScissorNV,
     unix_vkCmdSetExtraPrimitiveOverestimationSizeEXT,
     unix_vkCmdSetFragmentShadingRateEnumNV,
@@ -1893,6 +1896,18 @@ struct vkCmdSetDiscardRectangleEXT_params
     const VkRect2D *pDiscardRectangles;
 };
 
+struct vkCmdSetDiscardRectangleEnableEXT_params
+{
+    VkCommandBuffer commandBuffer;
+    VkBool32 discardRectangleEnable;
+};
+
+struct vkCmdSetDiscardRectangleModeEXT_params
+{
+    VkCommandBuffer commandBuffer;
+    VkDiscardRectangleModeEXT discardRectangleMode;
+};
+
 struct vkCmdSetEvent_params
 {
     VkCommandBuffer commandBuffer;
@@ -1912,6 +1927,14 @@ struct vkCmdSetEvent2KHR_params
     VkCommandBuffer commandBuffer;
     VkEvent DECLSPEC_ALIGN(8) event;
     const VkDependencyInfo *pDependencyInfo;
+};
+
+struct vkCmdSetExclusiveScissorEnableNV_params
+{
+    VkCommandBuffer commandBuffer;
+    uint32_t firstExclusiveScissor;
+    uint32_t exclusiveScissorCount;
+    const VkBool32 *pExclusiveScissorEnables;
 };
 
 struct vkCmdSetExclusiveScissorNV_params

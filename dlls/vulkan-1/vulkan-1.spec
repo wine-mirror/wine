@@ -3,7 +3,7 @@
 # This file is generated from Vulkan vk.xml file covered
 # by the following copyright and permission notice:
 #
-# Copyright 2015-2022 The Khronos Group Inc.
+# Copyright 2015-2023 The Khronos Group Inc.
 #
 # SPDX-License-Identifier: Apache-2.0 OR MIT
 #
@@ -169,6 +169,7 @@
 @ stdcall vkGetBufferMemoryRequirements(ptr int64 ptr) winevulkan.vkGetBufferMemoryRequirements
 @ stdcall vkGetBufferMemoryRequirements2(ptr ptr ptr) winevulkan.vkGetBufferMemoryRequirements2
 @ stdcall vkGetBufferOpaqueCaptureAddress(ptr ptr) winevulkan.vkGetBufferOpaqueCaptureAddress
+@ stub vkGetCommandPoolMemoryConsumption
 @ stdcall vkGetDescriptorSetLayoutSupport(ptr ptr ptr) winevulkan.vkGetDescriptorSetLayoutSupport
 @ stdcall vkGetDeviceBufferMemoryRequirements(ptr ptr ptr) winevulkan.vkGetDeviceBufferMemoryRequirements
 @ stdcall vkGetDeviceGroupPeerMemoryFeatures(ptr long long long ptr) winevulkan.vkGetDeviceGroupPeerMemoryFeatures
@@ -185,6 +186,7 @@
 @ stub vkGetDisplayPlaneCapabilitiesKHR
 @ stub vkGetDisplayPlaneSupportedDisplaysKHR
 @ stdcall vkGetEventStatus(ptr int64) winevulkan.vkGetEventStatus
+@ stub vkGetFaultData
 @ stdcall vkGetFenceStatus(ptr int64) winevulkan.vkGetFenceStatus
 @ stdcall vkGetImageMemoryRequirements(ptr int64 ptr) winevulkan.vkGetImageMemoryRequirements
 @ stdcall vkGetImageMemoryRequirements2(ptr ptr ptr) winevulkan.vkGetImageMemoryRequirements2

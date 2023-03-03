@@ -3,7 +3,7 @@
  * This file is generated from Vulkan vk.xml file covered
  * by the following copyright and permission notice:
  *
- * Copyright 2015-2022 The Khronos Group Inc.
+ * Copyright 2015-2023 The Khronos Group Inc.
  *
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
@@ -1726,6 +1726,22 @@ void WINAPI vkCmdSetDiscardRectangleEXT(VkCommandBuffer commandBuffer, uint32_t 
     UNIX_CALL(vkCmdSetDiscardRectangleEXT, &params);
 }
 
+void WINAPI vkCmdSetDiscardRectangleEnableEXT(VkCommandBuffer commandBuffer, VkBool32 discardRectangleEnable)
+{
+    struct vkCmdSetDiscardRectangleEnableEXT_params params;
+    params.commandBuffer = commandBuffer;
+    params.discardRectangleEnable = discardRectangleEnable;
+    UNIX_CALL(vkCmdSetDiscardRectangleEnableEXT, &params);
+}
+
+void WINAPI vkCmdSetDiscardRectangleModeEXT(VkCommandBuffer commandBuffer, VkDiscardRectangleModeEXT discardRectangleMode)
+{
+    struct vkCmdSetDiscardRectangleModeEXT_params params;
+    params.commandBuffer = commandBuffer;
+    params.discardRectangleMode = discardRectangleMode;
+    UNIX_CALL(vkCmdSetDiscardRectangleModeEXT, &params);
+}
+
 void WINAPI vkCmdSetEvent(VkCommandBuffer commandBuffer, VkEvent event, VkPipelineStageFlags stageMask)
 {
     struct vkCmdSetEvent_params params;
@@ -1751,6 +1767,16 @@ void WINAPI vkCmdSetEvent2KHR(VkCommandBuffer commandBuffer, VkEvent event, cons
     params.event = event;
     params.pDependencyInfo = pDependencyInfo;
     UNIX_CALL(vkCmdSetEvent2KHR, &params);
+}
+
+void WINAPI vkCmdSetExclusiveScissorEnableNV(VkCommandBuffer commandBuffer, uint32_t firstExclusiveScissor, uint32_t exclusiveScissorCount, const VkBool32 *pExclusiveScissorEnables)
+{
+    struct vkCmdSetExclusiveScissorEnableNV_params params;
+    params.commandBuffer = commandBuffer;
+    params.firstExclusiveScissor = firstExclusiveScissor;
+    params.exclusiveScissorCount = exclusiveScissorCount;
+    params.pExclusiveScissorEnables = pExclusiveScissorEnables;
+    UNIX_CALL(vkCmdSetExclusiveScissorEnableNV, &params);
 }
 
 void WINAPI vkCmdSetExclusiveScissorNV(VkCommandBuffer commandBuffer, uint32_t firstExclusiveScissor, uint32_t exclusiveScissorCount, const VkRect2D *pExclusiveScissors)
@@ -5856,9 +5882,12 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdSetDeviceMask", vkCmdSetDeviceMask},
     {"vkCmdSetDeviceMaskKHR", vkCmdSetDeviceMaskKHR},
     {"vkCmdSetDiscardRectangleEXT", vkCmdSetDiscardRectangleEXT},
+    {"vkCmdSetDiscardRectangleEnableEXT", vkCmdSetDiscardRectangleEnableEXT},
+    {"vkCmdSetDiscardRectangleModeEXT", vkCmdSetDiscardRectangleModeEXT},
     {"vkCmdSetEvent", vkCmdSetEvent},
     {"vkCmdSetEvent2", vkCmdSetEvent2},
     {"vkCmdSetEvent2KHR", vkCmdSetEvent2KHR},
+    {"vkCmdSetExclusiveScissorEnableNV", vkCmdSetExclusiveScissorEnableNV},
     {"vkCmdSetExclusiveScissorNV", vkCmdSetExclusiveScissorNV},
     {"vkCmdSetExtraPrimitiveOverestimationSizeEXT", vkCmdSetExtraPrimitiveOverestimationSizeEXT},
     {"vkCmdSetFragmentShadingRateEnumNV", vkCmdSetFragmentShadingRateEnumNV},

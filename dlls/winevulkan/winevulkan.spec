@@ -3,7 +3,7 @@
 # This file is generated from Vulkan vk.xml file covered
 # by the following copyright and permission notice:
 #
-# Copyright 2015-2022 The Khronos Group Inc.
+# Copyright 2015-2023 The Khronos Group Inc.
 #
 # SPDX-License-Identifier: Apache-2.0 OR MIT
 #
@@ -172,6 +172,7 @@
 @ stdcall vkGetBufferMemoryRequirements(ptr int64 ptr)
 @ stdcall vkGetBufferMemoryRequirements2(ptr ptr ptr)
 @ stdcall vkGetBufferOpaqueCaptureAddress(ptr ptr)
+@ stub vkGetCommandPoolMemoryConsumption
 @ stdcall vkGetDescriptorSetLayoutSupport(ptr ptr ptr)
 @ stdcall vkGetDeviceBufferMemoryRequirements(ptr ptr ptr)
 @ stdcall vkGetDeviceGroupPeerMemoryFeatures(ptr long long long ptr)
@@ -188,6 +189,7 @@
 @ stub vkGetDisplayPlaneCapabilitiesKHR
 @ stub vkGetDisplayPlaneSupportedDisplaysKHR
 @ stdcall vkGetEventStatus(ptr int64)
+@ stub vkGetFaultData
 @ stdcall vkGetFenceStatus(ptr int64)
 @ stdcall vkGetImageMemoryRequirements(ptr int64 ptr)
 @ stdcall vkGetImageMemoryRequirements2(ptr ptr ptr)

@@ -3,7 +3,7 @@
  * This file is generated from Vulkan vk.xml file covered
  * by the following copyright and permission notice:
  *
- * Copyright 2015-2022 The Khronos Group Inc.
+ * Copyright 2015-2023 The Khronos Group Inc.
  *
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
@@ -480,6 +480,14 @@ typedef struct VkRenderPassTransformBeginInfoQCOM32
     PTR32 pNext;
     VkSurfaceTransformFlagBitsKHR transform;
 } VkRenderPassTransformBeginInfoQCOM32;
+
+typedef struct VkMultiviewPerViewRenderAreasRenderPassBeginInfoQCOM32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t perViewRenderAreaCount;
+    PTR32 pPerViewRenderAreas;
+} VkMultiviewPerViewRenderAreasRenderPassBeginInfoQCOM32;
 
 typedef struct VkRenderPassBeginInfo32
 {
@@ -2452,6 +2460,13 @@ typedef struct VkPhysicalDeviceImage2DViewOf3DFeaturesEXT32
     VkBool32 sampler2DViewOf3D;
 } VkPhysicalDeviceImage2DViewOf3DFeaturesEXT32;
 
+typedef struct VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 imageSlicedViewOf3D;
+} VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT32;
+
 typedef struct VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT32
 {
     VkStructureType sType;
@@ -2779,6 +2794,13 @@ typedef struct VkPhysicalDeviceMultiviewPerViewViewportsFeaturesQCOM32
     PTR32 pNext;
     VkBool32 multiviewPerViewViewports;
 } VkPhysicalDeviceMultiviewPerViewViewportsFeaturesQCOM32;
+
+typedef struct VkPhysicalDeviceMultiviewPerViewRenderAreasFeaturesQCOM32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 multiviewPerViewRenderAreas;
+} VkPhysicalDeviceMultiviewPerViewRenderAreasFeaturesQCOM32;
 
 typedef struct VkDeviceCreateInfo32
 {
@@ -3312,6 +3334,14 @@ typedef struct VkImageViewUsageCreateInfo32
     VkImageUsageFlags usage;
 } VkImageViewUsageCreateInfo32;
 typedef VkImageViewUsageCreateInfo32 VkImageViewUsageCreateInfoKHR32;
+
+typedef struct VkImageViewSlicedCreateInfoEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t sliceOffset;
+    uint32_t sliceCount;
+} VkImageViewSlicedCreateInfoEXT32;
 
 typedef struct VkSamplerYcbcrConversionInfo32
 {
@@ -3847,6 +3877,13 @@ typedef struct VkSemaphoreTypeCreateInfo32
     uint64_t DECLSPEC_ALIGN(8) initialValue;
 } VkSemaphoreTypeCreateInfo32;
 typedef VkSemaphoreTypeCreateInfo32 VkSemaphoreTypeCreateInfoKHR32;
+
+typedef struct VkQueryLowLatencySupportNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    PTR32 pQueriedLowLatencyData;
+} VkQueryLowLatencySupportNV32;
 
 typedef struct VkSemaphoreCreateInfo32
 {
@@ -5599,6 +5636,15 @@ typedef struct VkPhysicalDeviceRayTracingInvocationReorderPropertiesNV32
     VkRayTracingInvocationReorderModeNV rayTracingInvocationReorderReorderingHint;
 } VkPhysicalDeviceRayTracingInvocationReorderPropertiesNV32;
 
+typedef struct VkPhysicalDeviceShaderCorePropertiesARM32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t pixelRate;
+    uint32_t texelRate;
+    uint32_t fmaRate;
+} VkPhysicalDeviceShaderCorePropertiesARM32;
+
 typedef struct VkPhysicalDeviceProperties232
 {
     VkStructureType sType;
@@ -7190,6 +7236,18 @@ static inline void convert_VkRenderPassBeginInfo_win32_to_host(struct conversion
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_MULTIVIEW_PER_VIEW_RENDER_AREAS_RENDER_PASS_BEGIN_INFO_QCOM:
+        {
+            VkMultiviewPerViewRenderAreasRenderPassBeginInfoQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkMultiviewPerViewRenderAreasRenderPassBeginInfoQCOM32 *in_ext = (const VkMultiviewPerViewRenderAreasRenderPassBeginInfoQCOM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_MULTIVIEW_PER_VIEW_RENDER_AREAS_RENDER_PASS_BEGIN_INFO_QCOM;
+            out_ext->pNext = NULL;
+            out_ext->perViewRenderAreaCount = in_ext->perViewRenderAreaCount;
+            out_ext->pPerViewRenderAreas = (const VkRect2D *)UlongToPtr(in_ext->pPerViewRenderAreas);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -7322,6 +7380,18 @@ static inline void convert_VkRenderingInfo_win32_to_host(struct conversion_conte
             out_ext->pNext = NULL;
             out_ext->perViewAttributes = in_ext->perViewAttributes;
             out_ext->perViewAttributesPositionXOnly = in_ext->perViewAttributesPositionXOnly;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_MULTIVIEW_PER_VIEW_RENDER_AREAS_RENDER_PASS_BEGIN_INFO_QCOM:
+        {
+            VkMultiviewPerViewRenderAreasRenderPassBeginInfoQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkMultiviewPerViewRenderAreasRenderPassBeginInfoQCOM32 *in_ext = (const VkMultiviewPerViewRenderAreasRenderPassBeginInfoQCOM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_MULTIVIEW_PER_VIEW_RENDER_AREAS_RENDER_PASS_BEGIN_INFO_QCOM;
+            out_ext->pNext = NULL;
+            out_ext->perViewRenderAreaCount = in_ext->perViewRenderAreaCount;
+            out_ext->pPerViewRenderAreas = (const VkRect2D *)UlongToPtr(in_ext->pPerViewRenderAreas);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -10999,6 +11069,17 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_SLICED_VIEW_OF_3D_FEATURES_EXT:
+        {
+            VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT *in_ext = (const VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_SLICED_VIEW_OF_3D_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->imageSlicedViewOf3D = in_ext->imageSlicedViewOf3D;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT:
         {
             VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -11493,6 +11574,17 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_VIEWPORTS_FEATURES_QCOM;
             out_ext->pNext = NULL;
             out_ext->multiviewPerViewViewports = in_ext->multiviewPerViewViewports;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_RENDER_AREAS_FEATURES_QCOM:
+        {
+            VkPhysicalDeviceMultiviewPerViewRenderAreasFeaturesQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceMultiviewPerViewRenderAreasFeaturesQCOM *in_ext = (const VkPhysicalDeviceMultiviewPerViewRenderAreasFeaturesQCOM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_RENDER_AREAS_FEATURES_QCOM;
+            out_ext->pNext = NULL;
+            out_ext->multiviewPerViewRenderAreas = in_ext->multiviewPerViewRenderAreas;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -12872,6 +12964,17 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_SLICED_VIEW_OF_3D_FEATURES_EXT:
+        {
+            VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT32 *in_ext = (const VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_SLICED_VIEW_OF_3D_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->imageSlicedViewOf3D = in_ext->imageSlicedViewOf3D;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT:
         {
             VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -13366,6 +13469,17 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_VIEWPORTS_FEATURES_QCOM;
             out_ext->pNext = NULL;
             out_ext->multiviewPerViewViewports = in_ext->multiviewPerViewViewports;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_RENDER_AREAS_FEATURES_QCOM:
+        {
+            VkPhysicalDeviceMultiviewPerViewRenderAreasFeaturesQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceMultiviewPerViewRenderAreasFeaturesQCOM32 *in_ext = (const VkPhysicalDeviceMultiviewPerViewRenderAreasFeaturesQCOM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_RENDER_AREAS_FEATURES_QCOM;
+            out_ext->pNext = NULL;
+            out_ext->multiviewPerViewRenderAreas = in_ext->multiviewPerViewRenderAreas;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -14824,6 +14938,18 @@ static inline void convert_VkImageViewCreateInfo_win32_to_host(struct conversion
             out_ext->sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_USAGE_CREATE_INFO;
             out_ext->pNext = NULL;
             out_ext->usage = in_ext->usage;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_IMAGE_VIEW_SLICED_CREATE_INFO_EXT:
+        {
+            VkImageViewSlicedCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkImageViewSlicedCreateInfoEXT32 *in_ext = (const VkImageViewSlicedCreateInfoEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_SLICED_CREATE_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->sliceOffset = in_ext->sliceOffset;
+            out_ext->sliceCount = in_ext->sliceCount;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -16287,6 +16413,17 @@ static inline void convert_VkSemaphoreCreateInfo_win32_to_host(struct conversion
             out_ext->pNext = NULL;
             out_ext->semaphoreType = in_ext->semaphoreType;
             out_ext->initialValue = in_ext->initialValue;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_QUERY_LOW_LATENCY_SUPPORT_NV:
+        {
+            VkQueryLowLatencySupportNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkQueryLowLatencySupportNV32 *in_ext = (const VkQueryLowLatencySupportNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_QUERY_LOW_LATENCY_SUPPORT_NV;
+            out_ext->pNext = NULL;
+            out_ext->pQueriedLowLatencyData = (void *)UlongToPtr(in_ext->pQueriedLowLatencyData);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -19257,6 +19394,17 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_SLICED_VIEW_OF_3D_FEATURES_EXT:
+        {
+            VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT32 *in_ext = (const VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_SLICED_VIEW_OF_3D_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->imageSlicedViewOf3D = in_ext->imageSlicedViewOf3D;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT:
         {
             VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -19751,6 +19899,17 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_VIEWPORTS_FEATURES_QCOM;
             out_ext->pNext = NULL;
             out_ext->multiviewPerViewViewports = in_ext->multiviewPerViewViewports;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_RENDER_AREAS_FEATURES_QCOM:
+        {
+            VkPhysicalDeviceMultiviewPerViewRenderAreasFeaturesQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceMultiviewPerViewRenderAreasFeaturesQCOM32 *in_ext = (const VkPhysicalDeviceMultiviewPerViewRenderAreasFeaturesQCOM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_RENDER_AREAS_FEATURES_QCOM;
+            out_ext->pNext = NULL;
+            out_ext->multiviewPerViewRenderAreas = in_ext->multiviewPerViewRenderAreas;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -20866,6 +21025,15 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_SLICED_VIEW_OF_3D_FEATURES_EXT:
+        {
+            VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_SLICED_VIEW_OF_3D_FEATURES_EXT);
+            const VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT *in_ext = (const VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_SLICED_VIEW_OF_3D_FEATURES_EXT;
+            out_ext->imageSlicedViewOf3D = in_ext->imageSlicedViewOf3D;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT:
         {
             VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT);
@@ -21273,6 +21441,15 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             const VkPhysicalDeviceMultiviewPerViewViewportsFeaturesQCOM *in_ext = (const VkPhysicalDeviceMultiviewPerViewViewportsFeaturesQCOM *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_VIEWPORTS_FEATURES_QCOM;
             out_ext->multiviewPerViewViewports = in_ext->multiviewPerViewViewports;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_RENDER_AREAS_FEATURES_QCOM:
+        {
+            VkPhysicalDeviceMultiviewPerViewRenderAreasFeaturesQCOM32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_RENDER_AREAS_FEATURES_QCOM);
+            const VkPhysicalDeviceMultiviewPerViewRenderAreasFeaturesQCOM *in_ext = (const VkPhysicalDeviceMultiviewPerViewRenderAreasFeaturesQCOM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_RENDER_AREAS_FEATURES_QCOM;
+            out_ext->multiviewPerViewRenderAreas = in_ext->multiviewPerViewRenderAreas;
             out_header = (void *)out_ext;
             break;
         }
@@ -22557,6 +22734,15 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceShaderCorePropertiesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_ARM;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -23571,6 +23757,17 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
             const VkPhysicalDeviceRayTracingInvocationReorderPropertiesNV *in_ext = (const VkPhysicalDeviceRayTracingInvocationReorderPropertiesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_NV;
             out_ext->rayTracingInvocationReorderReorderingHint = in_ext->rayTracingInvocationReorderReorderingHint;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceShaderCorePropertiesARM32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_ARM);
+            const VkPhysicalDeviceShaderCorePropertiesARM *in_ext = (const VkPhysicalDeviceShaderCorePropertiesARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_ARM;
+            out_ext->pixelRate = in_ext->pixelRate;
+            out_ext->texelRate = in_ext->texelRate;
+            out_ext->fmaRate = in_ext->fmaRate;
             out_header = (void *)out_ext;
             break;
         }
@@ -29757,6 +29954,46 @@ static void thunk32_vkCmdSetDiscardRectangleEXT(void *args)
 }
 
 #ifdef _WIN64
+static void thunk64_vkCmdSetDiscardRectangleEnableEXT(void *args)
+{
+    struct vkCmdSetDiscardRectangleEnableEXT_params *params = args;
+
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetDiscardRectangleEnableEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->discardRectangleEnable);
+}
+#endif /* _WIN64 */
+
+static void thunk32_vkCmdSetDiscardRectangleEnableEXT(void *args)
+{
+    struct
+    {
+        PTR32 commandBuffer;
+        VkBool32 discardRectangleEnable;
+    } *params = args;
+
+    wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->funcs.p_vkCmdSetDiscardRectangleEnableEXT(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->command_buffer, params->discardRectangleEnable);
+}
+
+#ifdef _WIN64
+static void thunk64_vkCmdSetDiscardRectangleModeEXT(void *args)
+{
+    struct vkCmdSetDiscardRectangleModeEXT_params *params = args;
+
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetDiscardRectangleModeEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->discardRectangleMode);
+}
+#endif /* _WIN64 */
+
+static void thunk32_vkCmdSetDiscardRectangleModeEXT(void *args)
+{
+    struct
+    {
+        PTR32 commandBuffer;
+        VkDiscardRectangleModeEXT discardRectangleMode;
+    } *params = args;
+
+    wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->funcs.p_vkCmdSetDiscardRectangleModeEXT(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->command_buffer, params->discardRectangleMode);
+}
+
+#ifdef _WIN64
 static void thunk64_vkCmdSetEvent(void *args)
 {
     struct vkCmdSetEvent_params *params = args;
@@ -29827,6 +30064,28 @@ static void thunk32_vkCmdSetEvent2KHR(void *args)
     convert_VkDependencyInfo_win32_to_host(&ctx, (const VkDependencyInfo32 *)UlongToPtr(params->pDependencyInfo), &pDependencyInfo_host);
     wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->funcs.p_vkCmdSetEvent2KHR(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->command_buffer, params->event, &pDependencyInfo_host);
     free_conversion_context(&ctx);
+}
+
+#ifdef _WIN64
+static void thunk64_vkCmdSetExclusiveScissorEnableNV(void *args)
+{
+    struct vkCmdSetExclusiveScissorEnableNV_params *params = args;
+
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetExclusiveScissorEnableNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->firstExclusiveScissor, params->exclusiveScissorCount, params->pExclusiveScissorEnables);
+}
+#endif /* _WIN64 */
+
+static void thunk32_vkCmdSetExclusiveScissorEnableNV(void *args)
+{
+    struct
+    {
+        PTR32 commandBuffer;
+        uint32_t firstExclusiveScissor;
+        uint32_t exclusiveScissorCount;
+        PTR32 pExclusiveScissorEnables;
+    } *params = args;
+
+    wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->funcs.p_vkCmdSetExclusiveScissorEnableNV(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->command_buffer, params->firstExclusiveScissor, params->exclusiveScissorCount, (const VkBool32 *)UlongToPtr(params->pExclusiveScissorEnables));
 }
 
 #ifdef _WIN64
@@ -40251,6 +40510,7 @@ static const char * const vk_device_extensions[] =
     "VK_AMD_texture_gather_bias_lod",
     "VK_ARM_rasterization_order_attachment_access",
     "VK_ARM_shader_core_builtins",
+    "VK_ARM_shader_core_properties",
     "VK_EXT_4444_formats",
     "VK_EXT_astc_decode_mode",
     "VK_EXT_attachment_feedback_loop_layout",
@@ -40289,6 +40549,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_image_compression_control",
     "VK_EXT_image_compression_control_swapchain",
     "VK_EXT_image_robustness",
+    "VK_EXT_image_sliced_view_of_3d",
     "VK_EXT_image_view_min_lod",
     "VK_EXT_index_type_uint8",
     "VK_EXT_inline_uniform_block",
@@ -40442,6 +40703,7 @@ static const char * const vk_device_extensions[] =
     "VK_NV_glsl_shader",
     "VK_NV_inherited_viewport_scissor",
     "VK_NV_linear_color_attachment",
+    "VK_NV_low_latency",
     "VK_NV_memory_decompression",
     "VK_NV_mesh_shader",
     "VK_NV_optical_flow",
@@ -40460,6 +40722,7 @@ static const char * const vk_device_extensions[] =
     "VK_NV_viewport_swizzle",
     "VK_QCOM_fragment_density_map_offset",
     "VK_QCOM_image_processing",
+    "VK_QCOM_multiview_per_view_render_areas",
     "VK_QCOM_multiview_per_view_viewports",
     "VK_QCOM_render_pass_shader_resolve",
     "VK_QCOM_render_pass_store_ops",
@@ -40706,9 +40969,12 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     (void *)thunk64_vkCmdSetDeviceMask,
     (void *)thunk64_vkCmdSetDeviceMaskKHR,
     (void *)thunk64_vkCmdSetDiscardRectangleEXT,
+    (void *)thunk64_vkCmdSetDiscardRectangleEnableEXT,
+    (void *)thunk64_vkCmdSetDiscardRectangleModeEXT,
     (void *)thunk64_vkCmdSetEvent,
     (void *)thunk64_vkCmdSetEvent2,
     (void *)thunk64_vkCmdSetEvent2KHR,
+    (void *)thunk64_vkCmdSetExclusiveScissorEnableNV,
     (void *)thunk64_vkCmdSetExclusiveScissorNV,
     (void *)thunk64_vkCmdSetExtraPrimitiveOverestimationSizeEXT,
     (void *)thunk64_vkCmdSetFragmentShadingRateEnumNV,
@@ -41250,9 +41516,12 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     (void *)thunk32_vkCmdSetDeviceMask,
     (void *)thunk32_vkCmdSetDeviceMaskKHR,
     (void *)thunk32_vkCmdSetDiscardRectangleEXT,
+    (void *)thunk32_vkCmdSetDiscardRectangleEnableEXT,
+    (void *)thunk32_vkCmdSetDiscardRectangleModeEXT,
     (void *)thunk32_vkCmdSetEvent,
     (void *)thunk32_vkCmdSetEvent2,
     (void *)thunk32_vkCmdSetEvent2KHR,
+    (void *)thunk32_vkCmdSetExclusiveScissorEnableNV,
     (void *)thunk32_vkCmdSetExclusiveScissorNV,
     (void *)thunk32_vkCmdSetExtraPrimitiveOverestimationSizeEXT,
     (void *)thunk32_vkCmdSetFragmentShadingRateEnumNV,

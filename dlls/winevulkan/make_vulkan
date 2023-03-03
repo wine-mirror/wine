@@ -65,7 +65,7 @@ from enum import Enum
 LOGGER = logging.Logger("vulkan")
 LOGGER.addHandler(logging.StreamHandler())
 
-VK_XML_VERSION = "1.3.240"
+VK_XML_VERSION = "1.3.242"
 WINE_VK_VERSION = (1, 3)
 
 # Filenames to create.
@@ -1713,7 +1713,7 @@ class VkParam(VkVariable):
                 self.format_conv = "wine_dbgstr_longlong({0})"
             elif self.type == "HANDLE":
                 self.format_str = "%p"
-            elif self.type in ["VisualID", "xcb_visualid_t", "RROutput", "zx_handle_t"]:
+            elif self.type in ["VisualID", "xcb_visualid_t", "RROutput", "zx_handle_t", "NvSciBufObj", "NvSciBufAttrList", "NvSciSyncAttrList"]:
                 # Don't care about specific types for non-Windows platforms.
                 self.format_str = ""
             else:
