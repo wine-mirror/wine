@@ -88,6 +88,11 @@ static const WCHAR drv_keyW[] = {'S','o','f','t','w','a','r','e','\\',
     'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
     'w','i','n','e','a','l','s','a','.','d','r','v'};
 
+static NTSTATUS alsa_not_implemented(void *args)
+{
+    return STATUS_SUCCESS;
+}
+
 static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
 {
     while (len--) *dst++ = (unsigned char)*src++;
@@ -2431,9 +2436,9 @@ static NTSTATUS alsa_get_prop_value(void *args)
 
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
-    NULL,
-    NULL,
-    NULL,
+    alsa_not_implemented,
+    alsa_not_implemented,
+    alsa_not_implemented,
     alsa_get_endpoint_ids,
     alsa_create_stream,
     alsa_release_stream,
@@ -2447,7 +2452,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     alsa_release_capture_buffer,
     alsa_is_format_supported,
     alsa_get_mix_format,
-    NULL,
+    alsa_not_implemented,
     alsa_get_buffer_size,
     alsa_get_latency,
     alsa_get_current_padding,
@@ -2456,15 +2461,15 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     alsa_get_position,
     alsa_set_volumes,
     alsa_set_event_handle,
-    NULL,
+    alsa_not_implemented,
     alsa_is_started,
     alsa_get_prop_value,
-    NULL,
+    alsa_not_implemented,
     alsa_midi_release,
     alsa_midi_out_message,
     alsa_midi_in_message,
     alsa_midi_notify_wait,
-    NULL,
+    alsa_not_implemented,
 };
 
 #ifdef _WIN64
@@ -2852,9 +2857,9 @@ static NTSTATUS alsa_wow64_get_prop_value(void *args)
 
 unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
-    NULL,
-    NULL,
-    NULL,
+    alsa_not_implemented,
+    alsa_not_implemented,
+    alsa_not_implemented,
     alsa_wow64_get_endpoint_ids,
     alsa_wow64_create_stream,
     alsa_wow64_release_stream,
@@ -2868,7 +2873,7 @@ unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     alsa_release_capture_buffer,
     alsa_wow64_is_format_supported,
     alsa_wow64_get_mix_format,
-    NULL,
+    alsa_not_implemented,
     alsa_wow64_get_buffer_size,
     alsa_wow64_get_latency,
     alsa_wow64_get_current_padding,
@@ -2877,15 +2882,15 @@ unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     alsa_wow64_get_position,
     alsa_wow64_set_volumes,
     alsa_wow64_set_event_handle,
-    NULL,
+    alsa_not_implemented,
     alsa_is_started,
     alsa_wow64_get_prop_value,
-    NULL,
+    alsa_not_implemented,
     alsa_midi_release,
     alsa_wow64_midi_out_message,
     alsa_wow64_midi_in_message,
     alsa_wow64_midi_notify_wait,
-    NULL,
+    alsa_not_implemented,
 };
 
 #endif /* _WIN64 */
