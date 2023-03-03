@@ -226,17 +226,6 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
     return TRUE;
 }
 
-int WINAPI AUDDRV_GetPriority(void)
-{
-    struct test_connect_params params;
-
-    params.name = NULL;
-
-    OSS_CALL(test_connect, &params);
-
-    return params.priority;
-}
-
 static HRESULT stream_release(stream_handle stream, HANDLE timer_thread)
 {
     struct release_stream_params params;

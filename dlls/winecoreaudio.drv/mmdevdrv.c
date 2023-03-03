@@ -213,11 +213,6 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
     return TRUE;
 }
 
-int WINAPI AUDDRV_GetPriority(void)
-{
-    return Priority_Neutral;
-}
-
 static void set_device_guid(EDataFlow flow, HKEY drv_key, const WCHAR *key_name,
         GUID *guid)
 {

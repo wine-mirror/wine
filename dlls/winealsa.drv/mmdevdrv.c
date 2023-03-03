@@ -212,11 +212,6 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
     return TRUE;
 }
 
-int WINAPI AUDDRV_GetPriority(void)
-{
-    return Priority_Neutral;
-}
-
 static HRESULT alsa_stream_release(stream_handle stream, HANDLE timer_thread)
 {
     struct release_stream_params params;

@@ -30,13 +30,12 @@ typedef struct _DriverFuncs {
     HMODULE module;
     unixlib_handle_t module_unixlib;
     WCHAR module_name[64];
-    int priority;
 
-    /* Returns a "priority" value for the driver. Highest priority wins.
+    /* Highest priority wins.
      * If multiple drivers think they are valid, they will return a
      * priority value reflecting the likelihood that they are actually
      * valid. See enum _DriverPriority. */
-    int (WINAPI *pGetPriority)(void);
+    int priority;
 
     /* ids gets an array of human-friendly endpoint names
      * keys gets an array of driver-specific stuff that is used

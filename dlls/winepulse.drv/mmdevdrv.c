@@ -467,17 +467,6 @@ end:
     return params.result;
 }
 
-int WINAPI AUDDRV_GetPriority(void)
-{
-    struct test_connect_params params;
-    WCHAR *name;
-
-    params.name = name = get_application_name(FALSE);
-    pulse_call(test_connect, &params);
-    free(name);
-    return params.priority;
-}
-
 static BOOL get_pulse_name_by_guid(const GUID *guid, char pulse_name[MAX_PULSE_NAME_LEN], EDataFlow *flow)
 {
     struct device_cache *device;

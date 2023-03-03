@@ -18,6 +18,7 @@
  */
 
 #include <stdarg.h>
+#include <wchar.h>
 
 #include "ntstatus.h"
 #define COBJMACROS
@@ -68,7 +69,8 @@ static const char *get_priority_string(int prio)
 static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
 {
     NTSTATUS status;
-    WCHAR driver_module[264];
+    WCHAR driver_module[264], path[MAX_PATH];
+    struct test_connect_params params;
 
     lstrcpyW(driver_module, L"wine");
     lstrcatW(driver_module, name);
@@ -96,7 +98,6 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
 
 #define LDFC(n) do { driver->p##n = (void*)GetProcAddress(driver->module, #n);\
         if(!driver->p##n) { goto fail; } } while(0)
-    LDFC(GetPriority);
     LDFC(GetEndpointIDs);
     LDFC(GetAudioEndpoint);
     LDFC(GetAudioSessionManager);
@@ -105,7 +106,18 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
     /* optional - do not fail if not found */
     driver->pGetPropValue = (void*)GetProcAddress(driver->module, "GetPropValue");
 
-    driver->priority = driver->pGetPriority();
+    GetModuleFileNameW(NULL, path, ARRAY_SIZE(path));
+    params.name     = wcsrchr(path, '\\');
+    params.name     = params.name ? params.name + 1 : path;
+    params.priority = Priority_Neutral;
+
+    if ((status = __wine_unix_call(driver->module_unixlib, test_connect, &params))) {
+        ERR("Unable to retrieve driver priority: %lx\n", status);
+        goto fail;
+    }
+
+    driver->priority = params.priority;
+
     lstrcpyW(driver->module_name, driver_module);
 
     TRACE("Successfully loaded %s with priority %s\n",
