@@ -2853,7 +2853,6 @@ static void ok_sequence_(const struct message *expected_list, const char *contex
                 }
             }
 	    expected++;
-            goto done;
         }
 	else if (todo)
 	{
@@ -2888,9 +2887,9 @@ static void ok_sequence_(const struct message *expected_list, const char *contex
                 ok_( file, line) (FALSE, "%s: %u: the msg sequence is not complete: expected 0x%04x - actual 0x%04x\n",
                                 context, count, expected->message, actual->message);
             }
+            goto done;
         }
 	expected++;
-        goto done;
     }
 
     if (todo)
@@ -5794,7 +5793,7 @@ static void test_messages(void)
     test_WM_SETREDRAW(hchild);
 
     ShowWindow(hchild, SW_SHOW);
-    ok_sequence(WmShowChildSeq, "ShowWindow(SW_SHOW):child", FALSE);
+    ok_sequence(WmShowChildSeq, "ShowWindow(SW_SHOW):child", TRUE);
 
     /* check parent messages too */
     log_all_parent_messages++;
