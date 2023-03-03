@@ -183,8 +183,12 @@ F:	dlls/win32u/rawinput.c
 F:	server/queue.c
 
 Input methods
-M:	Aric Stewart <aric@codeweavers.com>
+M:	Rémi Bernon <rbernon@codeweavers.com>
+P:	Aric Stewart <aric@codeweavers.com>
 F:	dlls/imm32/
+F:	dlls/win32u/imm.c
+F:	dlls/winemac.drv/ime.c
+F:	dlls/winex11.drv/ime.c
 
 JavaScript
 M:	Jacek Caban <jacek@codeweavers.com>
