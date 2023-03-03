@@ -1273,10 +1273,10 @@ UINT WINAPI NtUserGetKeyboardLayoutList( INT size, HKL *layouts )
             tmp = wcstoul( key_info->Name, NULL, 16 );
             if (query_reg_ascii_value( subkey, "Layout Id", value_info, sizeof(buffer) ) &&
                 value_info->Type == REG_SZ)
-                tmp = MAKELONG( LOWORD( tmp ),
-                                0xf000 | (wcstoul( (const WCHAR *)value_info->Data, NULL, 16 ) & 0xfff) );
+                tmp = 0xf000 | (wcstoul( (const WCHAR *)value_info->Data, NULL, 16 ) & 0xfff);
             NtClose( subkey );
 
+            tmp = MAKELONG( LOWORD( layout ), LOWORD( tmp ) );
             if (layout == UlongToHandle( tmp )) continue;
 
             count++;
