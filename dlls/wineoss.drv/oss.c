@@ -69,6 +69,11 @@ struct oss_stream
 
 WINE_DEFAULT_DEBUG_CHANNEL(oss);
 
+static NTSTATUS oss_not_implemented(void *args)
+{
+    return STATUS_SUCCESS;
+}
+
 /* copied from kernelbase */
 static int muldiv( int a, int b, int c )
 {
@@ -1612,9 +1617,9 @@ static NTSTATUS oss_aux_message(void *args)
 
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
-    NULL,
-    NULL,
-    NULL,
+    oss_not_implemented,
+    oss_not_implemented,
+    oss_not_implemented,
     oss_get_endpoint_ids,
     oss_create_stream,
     oss_release_stream,
@@ -1628,7 +1633,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     oss_release_capture_buffer,
     oss_is_format_supported,
     oss_get_mix_format,
-    NULL,
+    oss_not_implemented,
     oss_get_buffer_size,
     oss_get_latency,
     oss_get_current_padding,
@@ -1639,8 +1644,8 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     oss_set_event_handle,
     oss_test_connect,
     oss_is_started,
-    NULL,
-    NULL,
+    oss_not_implemented,
+    oss_not_implemented,
     oss_midi_release,
     oss_midi_out_message,
     oss_midi_in_message,
@@ -2016,9 +2021,9 @@ static NTSTATUS oss_wow64_aux_message(void *args)
 
 unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
-    NULL,
-    NULL,
-    NULL,
+    oss_not_implemented,
+    oss_not_implemented,
+    oss_not_implemented,
     oss_wow64_get_endpoint_ids,
     oss_wow64_create_stream,
     oss_wow64_release_stream,
@@ -2032,7 +2037,7 @@ unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     oss_release_capture_buffer,
     oss_wow64_is_format_supported,
     oss_wow64_get_mix_format,
-    NULL,
+    oss_not_implemented,
     oss_wow64_get_buffer_size,
     oss_wow64_get_latency,
     oss_wow64_get_current_padding,
@@ -2043,8 +2048,8 @@ unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     oss_wow64_set_event_handle,
     oss_wow64_test_connect,
     oss_is_started,
-    NULL,
-    NULL,
+    oss_not_implemented,
+    oss_not_implemented,
     oss_midi_release,
     oss_wow64_midi_out_message,
     oss_wow64_midi_in_message,
