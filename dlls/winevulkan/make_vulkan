@@ -3533,6 +3533,11 @@ class VkRegistry(object):
                 if len(set(requires).intersection(skipped_exts)) > 0:
                     skipped_exts.append(ext_name)
                     return
+            elif "depends" in ext.attrib:
+                # The syntax for this is more complex, but this is good enough for now.
+                if any([sext in ext.attrib["depends"] for sext in skipped_exts]):
+                    skipped_exts.append(ext_name)
+                    return
 
             LOGGER.debug("Loading extension: {0}".format(ext_name))
 
