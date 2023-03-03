@@ -1193,6 +1193,7 @@ HKL WINAPI NtUserActivateKeyboardLayout( HKL layout, UINT flags )
 {
     struct user_thread_info *info = get_user_thread_info();
     HKL old_layout;
+    HWND focus;
 
     TRACE_(keyboard)( "layout %p, flags %x\n", layout, flags );
 
@@ -1210,7 +1211,22 @@ HKL WINAPI NtUserActivateKeyboardLayout( HKL layout, UINT flags )
 
     old_layout = info->kbd_layout;
     info->kbd_layout = layout;
-    if (old_layout != layout) info->kbd_layout_id = 0;
+    if (old_layout != layout)
+    {
+        const NLS_LOCALE_DATA *data;
+        CHARSETINFO cs = {0};
+
+        if (HIWORD(layout) & 0x8000)
+            FIXME( "Aliased keyboard layout not yet implemented\n" );
+        else if (!(data = get_locale_data( HIWORD(layout) )))
+            WARN( "Failed to find locale data for %04x\n", HIWORD(layout) );
+        else
+            translate_charset_info( ULongToPtr(data->idefaultansicodepage), &cs, TCI_SRCCODEPAGE );
+
+        info->kbd_layout_id = 0;
+        if ((focus = get_focus()) && get_window_thread( focus, NULL ) == GetCurrentThreadId())
+            send_message( focus, WM_INPUTLANGCHANGE, cs.ciCharset, (LPARAM)layout );
+    }
 
     if (!old_layout) return get_locale_kbd_layout();
     return old_layout;

@@ -456,6 +456,7 @@ extern CPTABLEINFO ansi_cp DECLSPEC_HIDDEN;
 
 CPTABLEINFO *get_cptable( WORD cp ) DECLSPEC_HIDDEN;
 const NLS_LOCALE_DATA *get_locale_data( LCID lcid ) DECLSPEC_HIDDEN;
+extern BOOL translate_charset_info( DWORD *src, CHARSETINFO *cs, DWORD flags ) DECLSPEC_HIDDEN;
 DWORD win32u_mbtowc( CPTABLEINFO *info, WCHAR *dst, DWORD dstlen, const char *src,
                      DWORD srclen ) DECLSPEC_HIDDEN;
 DWORD win32u_wctomb( CPTABLEINFO *info, char *dst, DWORD dstlen, const WCHAR *src,
