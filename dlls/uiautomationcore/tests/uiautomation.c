@@ -1140,6 +1140,8 @@ static struct Provider
 } Provider, Provider2, Provider_child, Provider_child2;
 static struct Provider Provider_hwnd, Provider_nc, Provider_proxy, Provider_proxy2, Provider_override;
 static void initialize_provider(struct Provider *prov, int prov_opts, HWND hwnd, BOOL initialize_nav_links);
+static void set_provider_prop_override(struct Provider *prov, struct Provider_prop_override *override, int count);
+static void set_property_override(struct Provider_prop_override *override, int prop_id, VARIANT *val);
 
 static const WCHAR *uia_bstr_prop_str = L"uia-string";
 static const ULONG uia_i4_prop_val = 0xdeadbeef;
@@ -7577,25 +7579,37 @@ static const struct prov_method_sequence cache_req_seq6[] = {
     { 0 }
 };
 
+static const struct prov_method_sequence cache_req_seq7[] = {
+    { &Provider, FRAG_GET_RUNTIME_ID },
+    { &Provider, PROV_GET_PROPERTY_VALUE }, /* UIA_IsControlElementPropertyId. */
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId. */
+    { 0 }
+};
+
 static const struct UiaCondition UiaTrueCondition  = { ConditionType_True };
 static const struct UiaCondition UiaFalseCondition = { ConditionType_False };
 static void test_UiaGetUpdatedCache(void)
 {
+    LONG exp_lbound[2], exp_elems[2], idx[2], i;
     struct Provider_prop_override prop_override;
     struct node_provider_desc exp_node_desc[2];
     struct UiaPropertyCondition prop_cond;
     struct UiaAndOrCondition and_or_cond;
-    LONG exp_lbound[2], exp_elems[2], i;
     struct UiaCacheRequest cache_req;
     struct UiaCondition *cond_arr[2];
     struct UiaNotCondition not_cond;
+    VARIANT v, v_arr[2];
     SAFEARRAY *out_req;
+    IUnknown *unk_ns;
     BSTR tree_struct;
+    int prop_ids[2];
     HUIANODE node;
     HRESULT hr;
-    VARIANT v;
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    hr = UiaGetReservedNotSupportedValue(&unk_ns);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(exp_node_desc); i++)
         init_node_provider_desc(&exp_node_desc[i], GetCurrentProcessId(), NULL);
@@ -8018,9 +8032,112 @@ static void test_UiaGetUpdatedCache(void)
     Provider.prop_override = NULL;
     Provider.prop_override_count = 0;
 
+    /*
+     * Tests for property value caching.
+     */
+    prop_ids[0] = UIA_RuntimeIdPropertyId;
+    /* Invalid property ID, no work will be done. */
+    prop_ids[1] = 1;
+    tree_struct = NULL; out_req = NULL;
+    set_cache_request(&cache_req, NULL, TreeScope_Element, prop_ids, ARRAY_SIZE(prop_ids), NULL, 0, AutomationElementMode_Full);
+    hr = UiaGetUpdatedCache(node, &cache_req, NormalizeState_None, NULL, &out_req, &tree_struct);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(!out_req, "out_req != NULL\n");
+    ok(!tree_struct, "tree_struct != NULL\n");
+
+    /*
+     * Retrieve values for UIA_RuntimeIdPropertyId and
+     * UIA_IsControlElementPropertyId in the returned cache.
+     */
+    prop_ids[0] = UIA_RuntimeIdPropertyId;
+    prop_ids[1] = UIA_IsControlElementPropertyId;
+    initialize_provider(&Provider, ProviderOptions_ServerSideProvider, NULL, FALSE);
+    init_node_provider_desc(&exp_node_desc[0], GetCurrentProcessId(), NULL);
+    add_provider_desc(&exp_node_desc[0], L"Main", L"Provider", TRUE);
+
+    tree_struct = NULL; out_req = NULL;
+    set_cache_request(&cache_req, NULL, TreeScope_Element, prop_ids, ARRAY_SIZE(prop_ids), NULL, 0, AutomationElementMode_Full);
+    hr = UiaGetUpdatedCache(node, &cache_req, NormalizeState_None, NULL, &out_req, &tree_struct);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!out_req, "out_req == NULL\n");
+    ok(!!tree_struct, "tree_struct == NULL\n");
+
+    exp_lbound[0] = exp_lbound[1] = 0;
+    exp_elems[0] = 1;
+    exp_elems[1] = 3;
+    test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+    ok(!wcscmp(tree_struct, L"P)"), "tree structure %s\n", debugstr_w(tree_struct));
+
+    idx[0] = 0;
+    for (i = 0; i < ARRAY_SIZE(prop_ids); i++)
+    {
+        idx[1] = 1 + i;
+        VariantInit(&v_arr[i]);
+        hr = SafeArrayGetElement(out_req, idx, &v_arr[i]);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    }
+
+    ok(V_VT(&v_arr[0]) == VT_UNKNOWN, "Unexpected vt %d\n", V_VT(&v));
+    ok(V_UNKNOWN(&v_arr[0]) == unk_ns, "unexpected IUnknown %p\n", V_UNKNOWN(&v_arr[0]));
+    VariantClear(&v_arr[0]);
+
+    ok(check_variant_bool(&v_arr[1], TRUE), "V_BOOL(&v) = %#x\n", V_BOOL(&v_arr[1]));
+    VariantClear(&v_arr[1]);
+
+    ok_method_sequence(cache_req_seq7, "cache_req_seq7");
+    SafeArrayDestroy(out_req);
+    SysFreeString(tree_struct);
+
+    /*
+     * Again, but return a valid runtime ID and a different value for
+     * UIA_IsControlElementPropertyId.
+     */
+    V_VT(&v) = VT_BOOL;
+    V_BOOL(&v) = VARIANT_FALSE;
+    set_property_override(&prop_override, UIA_IsControlElementPropertyId, &v);
+    set_provider_prop_override(&Provider, &prop_override, 1);
+    Provider.runtime_id[0] = Provider.runtime_id[1] = 0xdeadbeef;
+    init_node_provider_desc(&exp_node_desc[0], GetCurrentProcessId(), NULL);
+    add_provider_desc(&exp_node_desc[0], L"Main", L"Provider", TRUE);
+
+    tree_struct = NULL; out_req = NULL;
+    set_cache_request(&cache_req, NULL, TreeScope_Element, prop_ids, ARRAY_SIZE(prop_ids), NULL, 0, AutomationElementMode_Full);
+    hr = UiaGetUpdatedCache(node, &cache_req, NormalizeState_None, NULL, &out_req, &tree_struct);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!out_req, "out_req == NULL\n");
+    ok(!!tree_struct, "tree_struct == NULL\n");
+
+    exp_lbound[0] = exp_lbound[1] = 0;
+    exp_elems[0] = 1;
+    exp_elems[1] = 3;
+    test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+    ok(!wcscmp(tree_struct, L"P)"), "tree structure %s\n", debugstr_w(tree_struct));
+
+    idx[0] = 0;
+    for (i = 0; i < ARRAY_SIZE(prop_ids); i++)
+    {
+        idx[1] = 1 + i;
+        VariantInit(&v_arr[i]);
+        hr = SafeArrayGetElement(out_req, idx, &v_arr[i]);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    }
+
+    ok(V_VT(&v_arr[0]) == (VT_I4 | VT_ARRAY), "Unexpected vt %d\n", V_VT(&v_arr[0]));
+    check_runtime_id(Provider.runtime_id, ARRAY_SIZE(Provider.runtime_id), V_ARRAY(&v_arr[0]));
+    VariantClear(&v_arr[0]);
+
+    ok(check_variant_bool(&v_arr[1], FALSE), "V_BOOL(&v) = %#x\n", V_BOOL(&v_arr[1]));
+    VariantClear(&v_arr[1]);
+
+    ok_method_sequence(cache_req_seq7, "cache_req_seq7");
+    SafeArrayDestroy(out_req);
+    SysFreeString(tree_struct);
+
     ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
     ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
+    initialize_provider(&Provider, ProviderOptions_ServerSideProvider, NULL, FALSE);
 
+    IUnknown_Release(unk_ns);
     CoUninitialize();
 }
 
