@@ -3962,8 +3962,21 @@ static void test_wndproc(void)
         {WM_SYSCOMMAND,         FOCUS_WINDOW,   TRUE,   SC_MAXIMIZE},
         {WM_WINDOWPOSCHANGING,  FOCUS_WINDOW,   FALSE,  0},
         {WM_WINDOWPOSCHANGED,   FOCUS_WINDOW,   FALSE,  0},
-        {WM_MOVE,               FOCUS_WINDOW,   FALSE,  0},
-        /* WM_SIZE(SIZE_MAXIMIZED) is unreliable on native. */
+        /* Windows always sends WM_MOVE here.
+         *
+         * In the first case, we are maximizing from a minimized state, and
+         * hence the client rect moves from the minimized position to (0, 0).
+         *
+         * In the second case, we are maximizing from an on-screen restored
+         * state. The window is at (0, 0), but it has a caption, so the client
+         * rect is offset, and the *client* will move to (0, 0) when maximized.
+         *
+         * Wine doesn't send WM_MOVE here because it messes with the window
+         * styles when switching to fullscreen, and hence the client rect is
+         * already at (0, 0). Obviously Wine shouldn't do this, but it's hard to
+         * fix, and the WM_MOVE is not particularly interesting, so just ignore
+         * it. */
+        {WM_SIZE,               FOCUS_WINDOW,   TRUE,   SIZE_MAXIMIZED},
         {0,                     0,              FALSE,  0},
     };
     static const struct message mode_change_messages[] =
@@ -4376,6 +4389,9 @@ static void test_wndproc(void)
         ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
                 expect_messages->message, expect_messages->window, i);
         expect_messages = NULL;
+        /* Needed to make the next test reliably send WM_SIZE(SIZE_MAXIMIZED). Without
+         * this call it sends WM_SIZE(SIZE_RESTORED). */
+        ShowWindow(focus_window, SW_RESTORE);
         flush_events();
 
         expect_messages = sc_maximize_messages;
