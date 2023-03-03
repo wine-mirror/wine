@@ -690,6 +690,20 @@ static void restore_fpregs( int reg, int count, int pos, CONTEXT *context,
 }
 
 
+static void do_pac_auth( CONTEXT *context )
+{
+    register DWORD64 x17 __asm__( "x17" ) = context->u.s.Lr;
+    register DWORD64 x16 __asm__( "x16" ) = context->Sp;
+
+    /* This is the autib1716 instruction. The hint instruction is used here
+     * as gcc does not assemble autib1716 for pre armv8.3a targets. For
+     * pre-armv8.3a targets, this is just treated as a hint instruction, which
+     * is ignored. */
+    __asm__( "hint 0xe" : "+r"(x17) : "r"(x16) );
+
+    context->u.s.Lr = x17;
+}
+
 /***********************************************************************
  *           process_unwind_codes
  */
@@ -773,6 +787,10 @@ static void process_unwind_codes( BYTE *ptr, BYTE *end, CONTEXT *context,
         {
             memcpy( context, (DWORD64 *)context->Sp, sizeof(CONTEXT) );
         }
+        else if (*ptr == 0xfc)  /* pac_sign_lr */
+        {
+            do_pac_auth( context );
+        }
         else
         {
             WARN( "unsupported code %02x\n", *ptr );
@@ -820,6 +838,9 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, RUNTIME_FUNCTION 
             len = (int_size + 8) / 16 + (fp_size + 8) / 16;
             switch (func->u.s.CR)
             {
+            case 2:
+                len++; /* pacibsp */
+                /* fall through */
             case 3:
                 len++; /* mov x29,sp */
                 len++; /* stp x29,lr,[sp,0] */
@@ -845,7 +866,7 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, RUNTIME_FUNCTION 
 
     if (!skip)
     {
-        if (func->u.s.CR == 3)
+        if (func->u.s.CR == 3 || func->u.s.CR == 2)
         {
             DWORD64 *fp = (DWORD64 *) context->u.s.Fp; /* u.X[29] */
             context->Sp = context->u.s.Fp;
@@ -864,6 +885,7 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, RUNTIME_FUNCTION 
         switch (func->u.s.CR)
         {
         case 3:
+        case 2:
             /* mov x29,sp */
             if (pos++ >= skip) context->Sp = context->u.s.Fp;
             if (local_size <= 512)
@@ -932,6 +954,7 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, RUNTIME_FUNCTION 
                 restore_regs( 19, 2, -saved_regs, context, ptrs );
         }
     }
+    if (func->u.s.CR == 2) do_pac_auth( context );
     return NULL;
 }
 
