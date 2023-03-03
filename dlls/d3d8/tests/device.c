@@ -2973,7 +2973,20 @@ static void test_wndproc(void)
         {WM_SYSCOMMAND,         FOCUS_WINDOW,   TRUE,   SC_MAXIMIZE},
         {WM_WINDOWPOSCHANGING,  FOCUS_WINDOW,   FALSE,  0},
         {WM_WINDOWPOSCHANGED,   FOCUS_WINDOW,   FALSE,  0},
-        {WM_MOVE,               FOCUS_WINDOW,   FALSE,  0},
+        /* Windows always sends WM_MOVE here.
+         *
+         * In the first case, we are maximizing from a minimized state, and
+         * hence the client rect moves from the minimized position to (0, 0).
+         *
+         * In the second case, we are maximizing from an on-screen restored
+         * state. The window is at (0, 0), but it has a caption, so the client
+         * rect is offset, and the *client* will move to (0, 0) when maximized.
+         *
+         * Wine doesn't send WM_MOVE here because it messes with the window
+         * styles when switching to fullscreen, and hence the client rect is
+         * already at (0, 0). Obviously Wine shouldn't do this, but it's hard to
+         * fix, and the WM_MOVE is not particularly interesting, so just ignore
+         * it. */
         {WM_SIZE,               FOCUS_WINDOW,   TRUE,   SIZE_MAXIMIZED},
         {0,                     0,              FALSE,  0},
     };
