@@ -923,6 +923,8 @@ static const WCHAR guid_key_suffixW[] = {'}','\\','0','0','0','0'};
 
 static BOOL load_desktop_driver( HWND hwnd )
 {
+    static const WCHAR guid_nullW[] = {'0','0','0','0','0','0','0','0','-','0','0','0','0','-','0','0','0','0','-',
+                                       '0','0','0','0','-','0','0','0','0','0','0','0','0','0','0','0','0',0};
     WCHAR key[ARRAYSIZE(guid_key_prefixW) + 40 + ARRAYSIZE(guid_key_suffixW)], *ptr;
     char buf[4096];
     KEY_VALUE_PARTIAL_INFORMATION *info = (void *)buf;
@@ -946,9 +948,15 @@ static BOOL load_desktop_driver( HWND hwnd )
     memcpy( key, guid_key_prefixW, sizeof(guid_key_prefixW) );
     ptr = key + ARRAYSIZE(guid_key_prefixW);
     if (NtQueryInformationAtom( guid_atom, AtomBasicInformation, buf, sizeof(buf), NULL ))
-        return FALSE;
-    memcpy( ptr, abi->Name, abi->NameLength );
-    ptr += abi->NameLength / sizeof(WCHAR);
+    {
+        wcscpy( ptr, guid_nullW );
+        ptr += ARRAY_SIZE(guid_nullW) - 1;
+    }
+    else
+    {
+        memcpy( ptr, abi->Name, abi->NameLength );
+        ptr += abi->NameLength / sizeof(WCHAR);
+    }
     memcpy( ptr, guid_key_suffixW, sizeof(guid_key_suffixW) );
     ptr += ARRAY_SIZE(guid_key_suffixW);
 
