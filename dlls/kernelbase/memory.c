@@ -53,6 +53,19 @@ BOOLEAN WINAPI RtlSetUserValueHeap( HANDLE handle, ULONG flags, void *ptr, void 
 
 
 /***********************************************************************
+ *             DiscardVirtualMemory   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH DiscardVirtualMemory( void *addr, SIZE_T size )
+{
+    NTSTATUS status;
+    LPVOID ret = addr;
+
+    status = NtAllocateVirtualMemory( GetCurrentProcess(), &ret, 0, &size, MEM_RESET, PAGE_NOACCESS );
+    return RtlNtStatusToDosError( status );
+}
+
+
+/***********************************************************************
  *             FlushViewOfFile   (kernelbase.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH FlushViewOfFile( const void *base, SIZE_T size )
