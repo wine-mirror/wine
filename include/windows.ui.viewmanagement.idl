@@ -28,7 +28,7 @@ import "windows.foundation.idl";
 import "windows.devices.enumeration.idl";
 /* import "windows.phone.idl"; */
 import "windows.ui.idl";
-/* import "windows.ui.core.idl"; */
+import "windows.ui.core.idl";
 /* import "windows.ui.popups.idl"; */
 /* import "windows.ui.windowmanagement.idl"; */
 

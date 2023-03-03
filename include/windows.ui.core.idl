@@ -1,0 +1,130 @@
+/*
+ * Copyright (C) 2023 Mohamad Al-Jaf
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.system.idl";
+import "windows.ui.idl";
+/* import "windows.ui.composition.idl"; */
+/* import "windows.ui.input.idl"; */
+/* import "windows.ui.input.inking.idl"; */
+/* import "windows.ui.input.inking.core.idl"; */
+/* import "windows.ui.popups.idl"; */
+
+namespace Windows.UI.Core {
+    typedef enum CoreDispatcherPriority CoreDispatcherPriority;
+    typedef enum CoreProcessEventsOption CoreProcessEventsOption;
+
+    interface ICoreAcceleratorKeys;
+    interface ICoreDispatcher;
+    interface ICoreDispatcher2;
+    interface ICoreDispatcherWithTaskPriority;
+    interface IIdleDispatchedHandlerArgs;
+
+    runtimeclass AcceleratorKeyEventArgs;
+    runtimeclass CoreDispatcher;
+    runtimeclass IdleDispatchedHandlerArgs;
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum CoreDispatcherPriority
+    {
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        Idle   = -2,
+        Low    = -1,
+        Normal =  0,
+        High   =  1,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum CoreProcessEventsOption
+    {
+        ProcessOneAndAllPending = 0,
+        ProcessOneIfPresent     = 1,
+        ProcessUntilQuit        = 2,
+        ProcessAllIfPresent     = 3,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(d1f276c4-98d8-4636-bf49-eb79507548e9)
+    ]
+    delegate HRESULT DispatchedHandler();
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(a42b0c24-7f21-4abc-99c1-8f01007f0880)
+    ]
+    delegate HRESULT IdleDispatchedHandler([in] Windows.UI.Core.IdleDispatchedHandlerArgs *e);
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.Core.CoreDispatcher),
+        uuid(60db2fa8-b705-4fde-a7d6-ebbb1891d39e)
+    ]
+    interface ICoreDispatcher : IInspectable
+        requires Windows.UI.Core.ICoreAcceleratorKeys
+    {
+        [propget] HRESULT HasThreadAccess([out, retval] boolean *value);
+        HRESULT ProcessEvents([in] Windows.UI.Core.CoreProcessEventsOption options);
+        HRESULT RunAsync([in] Windows.UI.Core.CoreDispatcherPriority priority, [in] Windows.UI.Core.DispatchedHandler *callback,
+                         [out, retval] Windows.Foundation.IAsyncAction **action);
+        HRESULT RunIdleAsync([in] Windows.UI.Core.IdleDispatchedHandler *callback, [out, retval] Windows.Foundation.IAsyncAction **action);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.Core.IdleDispatchedHandlerArgs),
+        uuid(98bb6a24-dc1c-43cb-b4ed-d1c0eb2391f3)
+    ]
+    interface IIdleDispatchedHandlerArgs : IInspectable
+    {
+        [propget] HRESULT IsDispatcherIdle([out, retval] boolean *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass CoreDispatcher
+    {
+        [default] interface Windows.UI.Core.ICoreDispatcher;
+        interface Windows.UI.Core.ICoreAcceleratorKeys;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.Core.ICoreDispatcherWithTaskPriority;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.Core.ICoreDispatcher2;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(standard)
+    ]
+    runtimeclass IdleDispatchedHandlerArgs
+    {
+        [default] interface Windows.UI.Core.IIdleDispatchedHandlerArgs;
+    }
+}

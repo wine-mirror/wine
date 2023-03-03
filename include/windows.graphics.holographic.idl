@@ -30,7 +30,7 @@ import "windows.graphics.directx.idl";
 import "windows.graphics.directx.direct3d11.idl";
 /* import "windows.perception.idl"; */
 import "windows.perception.spatial.idl";
-/* import "windows.ui.core.idl"; */
+import "windows.ui.core.idl";
 
 namespace Windows.Graphics.Holographic {
     typedef struct HolographicAdapterId HolographicAdapterId;
