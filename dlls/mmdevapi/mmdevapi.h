@@ -18,13 +18,17 @@
 
 #include "unixlib.h"
 
+#include <winternl.h>
+
 #include <wine/list.h>
+#include <wine/unixlib.h>
 
 extern HRESULT MMDevEnum_Create(REFIID riid, void **ppv) DECLSPEC_HIDDEN;
 extern void MMDevEnum_Free(void) DECLSPEC_HIDDEN;
 
 typedef struct _DriverFuncs {
     HMODULE module;
+    unixlib_handle_t module_unixlib;
     WCHAR module_name[64];
     int priority;
 

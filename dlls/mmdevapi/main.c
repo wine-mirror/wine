@@ -65,6 +65,7 @@ static const char *get_priority_string(int prio)
 
 static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
 {
+    NTSTATUS status;
     WCHAR driver_module[264];
 
     lstrcpyW(driver_module, L"wine");
@@ -80,8 +81,14 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
         return FALSE;
     }
 
+    if ((status = NtQueryVirtualMemory(GetCurrentProcess(), driver->module, MemoryWineUnixFuncs,
+        &driver->module_unixlib, sizeof(driver->module_unixlib), NULL))) {
+        ERR("Unable to load UNIX functions: %lx\n", status);
+        goto fail;
+    }
+
 #define LDFC(n) do { driver->p##n = (void*)GetProcAddress(driver->module, #n);\
-        if(!driver->p##n) { FreeLibrary(driver->module); return FALSE; } } while(0)
+        if(!driver->p##n) { goto fail; } } while(0)
     LDFC(GetPriority);
     LDFC(GetEndpointIDs);
     LDFC(GetAudioEndpoint);
@@ -98,6 +105,9 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
             wine_dbgstr_w(driver_module), get_priority_string(driver->priority));
 
     return TRUE;
+fail:
+    FreeLibrary(driver->module);
+    return FALSE;
 }
 
 static BOOL WINAPI init_driver(INIT_ONCE *once, void *param, void **context)
