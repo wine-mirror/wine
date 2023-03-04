@@ -815,14 +815,19 @@ static void test_TxGetNaturalSize(void)
 static void test_TxDraw(void)
 {
     ITextServices *txtserv;
+    ITextDocument *txtdoc;
     ITextHost *host;
     HRESULT hr;
     RECT client = {0, 0, 100, 100};
     ITextHostTestImpl *host_impl;
+    LONG freeze_count;
     HDC hdc;
 
     if (!init_texthost(&txtserv, &host))
         return;
+
+    hr = ITextServices_QueryInterface( txtserv, &IID_ITextDocument, (void **)&txtdoc );
+    ok( hr == S_OK, "ITextServices_QueryInterface (ITextDocument) returned %#lx\n", hr );
 
     host_impl = impl_from_ITextHost( host );
     host_impl->window = CreateWindowExA( 0, "static", NULL, WS_POPUP | WS_VISIBLE,
@@ -856,9 +861,32 @@ static void test_TxDraw(void)
                                NULL, NULL, 0, TXTVIEW_INACTIVE );
     ok( hr == S_OK, "got %08lx\n", hr );
 
+    freeze_count = 0xdeadbeef;
+    hr = ITextDocument_Freeze( txtdoc, &freeze_count );
+    todo_wine
+    ok( hr == S_OK, "ITextDocument_Freeze returned %#lx\n", hr );
+    todo_wine
+    ok( freeze_count == 1, "expected count to be %d, got %ld\n", 1, freeze_count );
+
+    hr = ITextServices_TxDraw( txtserv, DVASPECT_CONTENT, 0, NULL, NULL, hdc, NULL, (RECTL *)&client, NULL,
+                               NULL, NULL, 0, TXTVIEW_INACTIVE );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    hr = ITextServices_TxDraw( txtserv, DVASPECT_CONTENT, 0, NULL, NULL, hdc, NULL, (RECTL *)&client, NULL,
+                               NULL, NULL, 0, TXTVIEW_ACTIVE );
+    todo_wine
+    ok( hr == E_UNEXPECTED, "got %08lx\n", hr );
+
+    freeze_count = 0xdeadbeef;
+    hr = ITextDocument_Unfreeze( txtdoc, &freeze_count );
+    todo_wine
+    ok( hr == S_OK, "ITextDocument_Unfreeze returned %#lx\n", hr );
+    todo_wine
+    ok( freeze_count == 0, "expected count to be %d, got %ld\n", 0, freeze_count );
+
     hr = ITextServices_OnTxInPlaceDeactivate( txtserv );
 
     ReleaseDC( host_impl->window, hdc );
+    ITextDocument_Release(txtdoc);
     ITextServices_Release(txtserv);
     DestroyWindow( host_impl->window );
     ITextHost_Release(host);

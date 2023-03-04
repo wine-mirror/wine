@@ -31,6 +31,8 @@
 #include <richedit.h>
 #include <richole.h>
 #include <tom.h>
+#include <imm.h>
+#include <textserv.h>
 #include <wine/test.h>
 
 #define EXPECT_TODO_WINE 0x80000000UL
@@ -605,6 +607,7 @@ static HRESULT testoleobj_Create( struct testoleobj **objptr )
 static HMODULE hmoduleRichEdit;
 
 DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+DEFINE_GUID(IID_ITextServices, 0x8d33f740, 0xcf58, 0x11ce, 0xa8, 0x9d, 0x00, 0xaa, 0x00, 0x6c, 0xad, 0xc5);
 
 static const WCHAR sysW[] = {'S','y','s','t','e','m',0};
 
@@ -5444,6 +5447,88 @@ static void test_undo_control(void)
   release_interfaces(&inst.hwnd, &reole, &inst.doc, &selection);
 }
 
+static void test_freeze(void)
+{
+  ITextSelection *selection = NULL;
+  DWORD lasterr, style1, style2;
+  IRichEditOle *reole = NULL;
+  ITextDocument *doc = NULL;
+  HRESULT hr;
+  LONG count;
+  HWND hwnd;
+
+  create_interfaces(&hwnd, &reole, &doc, &selection);
+
+  SetLastError(0xdeadbeef);
+  style1 = GetWindowLongW(hwnd, GWL_STYLE);
+  lasterr = GetLastError();
+  ok(lasterr == 0xdeadbeefUL, "GetLastError() returned %#lx\n", lasterr);
+
+  count = 0xdeadbeef;
+  hr = ITextDocument_Freeze(doc, &count);
+  todo_wine
+  ok(hr == S_OK, "ITextDocument_Freeze returned %#lx\n", hr);
+  todo_wine
+  ok(count == 1, "expected count to be %d, got %ld\n", 1, count);
+
+  style2 = GetWindowLongW(hwnd, GWL_STYLE);
+  ok(style2 == style1, "expected window style to not change from %#lx, got %#lx\n", style1, style2);
+
+  count = 0xdeadbeef;
+  hr = ITextDocument_Freeze(doc, &count);
+  todo_wine
+  ok(hr == S_OK, "ITextDocument_Freeze returned %#lx\n", hr);
+  todo_wine
+  ok(count == 2, "expected count to be %d, got %ld\n", 2, count);
+
+  count = 0xdeadbeef;
+  hr = ITextDocument_Unfreeze(doc, &count);
+  todo_wine
+  ok(hr == S_FALSE, "ITextDocument_Unfreeze returned %#lx\n", hr);
+  todo_wine
+  ok(count == 1, "expected count to be %d, got %ld\n", 1, count);
+
+  count = 0xdeadbeef;
+  hr = ITextDocument_Unfreeze(doc, &count);
+  todo_wine
+  ok(hr == S_OK, "ITextDocument_Unfreeze returned %#lx\n", hr);
+  todo_wine
+  ok(count == 0, "expected count to be %d, got %ld\n", 0, count);
+
+  count = 0xdeadbeef;
+  hr = ITextDocument_Unfreeze(doc, &count);
+  todo_wine
+  ok(hr == S_OK, "ITextDocument_Unfreeze returned %#lx\n", hr);
+  todo_wine
+  ok(count == 0, "expected count to be %d, got %ld\n", 0, count);
+
+  count = 0xdeadbeef;
+  hr = ITextDocument_Freeze(doc, &count);
+  todo_wine
+  ok(hr == S_OK, "ITextDocument_Freeze returned %#lx\n", hr);
+  todo_wine
+  ok(count == 1, "expected count to be %d, got %ld\n", 1, count);
+
+  count = 0xdeadbeef;
+  hr = ITextDocument_Unfreeze(doc, &count);
+  todo_wine
+  ok(hr == S_OK, "ITextDocument_Unfreeze returned %#lx\n", hr);
+  todo_wine
+  ok(count == 0, "expected count to be %d, got %ld\n", 0, count);
+
+  count = 0xdeadbeef;
+  hr = ITextDocument_Freeze(doc, NULL);
+  todo_wine
+  ok(hr == S_OK, "ITextDocument_Freeze returned %#lx\n", hr);
+
+  count = 0xdeadbeef;
+  hr = ITextDocument_Unfreeze(doc, NULL);
+  todo_wine
+  ok(hr == S_OK, "ITextDocument_Unfreeze returned %#lx\n", hr);
+
+  release_interfaces(&hwnd, &reole, &doc, &selection);
+}
+
 START_TEST(richole)
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -5487,4 +5572,5 @@ START_TEST(richole)
   test_clipboard();
   test_undo();
   test_undo_control();
+  test_freeze();
 }
