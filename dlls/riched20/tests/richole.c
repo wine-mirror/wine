@@ -5518,9 +5518,7 @@ static void test_freeze(void)
 
   count = 0xdeadbeef;
   hr = ITextDocument_Freeze(doc, &count);
-  todo_wine
   ok(hr == S_OK, "ITextDocument_Freeze returned %#lx\n", hr);
-  todo_wine
   ok(count == 1, "expected count to be %d, got %ld\n", 1, count);
 
   style2 = GetWindowLongW(hwnd, GWL_STYLE);
@@ -5528,54 +5526,40 @@ static void test_freeze(void)
 
   count = 0xdeadbeef;
   hr = ITextDocument_Freeze(doc, &count);
-  todo_wine
   ok(hr == S_OK, "ITextDocument_Freeze returned %#lx\n", hr);
-  todo_wine
   ok(count == 2, "expected count to be %d, got %ld\n", 2, count);
 
   count = 0xdeadbeef;
   hr = ITextDocument_Unfreeze(doc, &count);
-  todo_wine
   ok(hr == S_FALSE, "ITextDocument_Unfreeze returned %#lx\n", hr);
-  todo_wine
   ok(count == 1, "expected count to be %d, got %ld\n", 1, count);
 
   count = 0xdeadbeef;
   hr = ITextDocument_Unfreeze(doc, &count);
-  todo_wine
   ok(hr == S_OK, "ITextDocument_Unfreeze returned %#lx\n", hr);
-  todo_wine
   ok(count == 0, "expected count to be %d, got %ld\n", 0, count);
 
   count = 0xdeadbeef;
   hr = ITextDocument_Unfreeze(doc, &count);
-  todo_wine
   ok(hr == S_OK, "ITextDocument_Unfreeze returned %#lx\n", hr);
-  todo_wine
   ok(count == 0, "expected count to be %d, got %ld\n", 0, count);
 
   count = 0xdeadbeef;
   hr = ITextDocument_Freeze(doc, &count);
-  todo_wine
   ok(hr == S_OK, "ITextDocument_Freeze returned %#lx\n", hr);
-  todo_wine
   ok(count == 1, "expected count to be %d, got %ld\n", 1, count);
 
   count = 0xdeadbeef;
   hr = ITextDocument_Unfreeze(doc, &count);
-  todo_wine
   ok(hr == S_OK, "ITextDocument_Unfreeze returned %#lx\n", hr);
-  todo_wine
   ok(count == 0, "expected count to be %d, got %ld\n", 0, count);
 
   count = 0xdeadbeef;
   hr = ITextDocument_Freeze(doc, NULL);
-  todo_wine
   ok(hr == S_OK, "ITextDocument_Freeze returned %#lx\n", hr);
 
   count = 0xdeadbeef;
   hr = ITextDocument_Unfreeze(doc, NULL);
-  todo_wine
   ok(hr == S_OK, "ITextDocument_Unfreeze returned %#lx\n", hr);
 
   release_interfaces(&hwnd, &reole, &doc, &selection);

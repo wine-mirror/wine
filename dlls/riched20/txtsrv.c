@@ -168,6 +168,8 @@ DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_TxDraw( ITextServices *iface, DWORD
     if (aspect != DVASPECT_CONTENT || aspect_info || td || target || mf_bounds || continue_fn )
         FIXME( "Many arguments are ignored\n" );
 
+    if (view_id == TXTVIEW_ACTIVE && services->editor->freeze_count) return E_UNEXPECTED;
+
     hr = update_client_rect( services, (RECT *)bounds );
     if (FAILED( hr )) return hr;
     if (hr == S_OK) rewrap = TRUE;

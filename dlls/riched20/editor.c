@@ -2994,6 +2994,7 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->mode |= (ed->props & TXTBIT_RICHTEXT) ? TM_RICHTEXT : TM_PLAINTEXT;
   ed->AutoURLDetect_bEnable = FALSE;
   ed->bHaveFocus = FALSE;
+  ed->freeze_count = 0;
   ed->bMouseCaptured = FALSE;
   ed->caret_hidden = FALSE;
   ed->caret_height = 0;

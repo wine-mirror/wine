@@ -1313,18 +1313,22 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         RECT rc, client, update;
         PAINTSTRUCT ps;
         HBRUSH brush, old_brush;
+        LONG view_id;
 
         ITextHost_TxGetClientRect( &host->ITextHost_iface, &client );
 
         if (msg == WM_PAINT)
         {
+            /* TODO retrieve if the text document is frozen */
             hdc = BeginPaint( hwnd, &ps );
             update = ps.rcPaint;
+            view_id = TXTVIEW_ACTIVE;
         }
         else
         {
             hdc = (HDC)wparam;
             update = client;
+            view_id = TXTVIEW_INACTIVE;
         }
 
         brush = CreateSolidBrush( ITextHost_TxGetSysColor( &host->ITextHost_iface, COLOR_WINDOW ) );
@@ -1361,7 +1365,7 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         }
 
         ITextServices_TxDraw( host->text_srv, DVASPECT_CONTENT, 0, NULL, NULL, hdc, NULL, NULL, NULL,
-                              &update, NULL, 0, TXTVIEW_ACTIVE );
+                              &update, NULL, 0, view_id );
         SelectObject( hdc, old_brush );
         DeleteObject( brush );
         if (msg == WM_PAINT) EndPaint( hwnd, &ps );

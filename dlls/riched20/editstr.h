@@ -429,6 +429,7 @@ typedef struct tagME_TextEditor
   BOOL AutoURLDetect_bEnable;
   WCHAR password_char;
   BOOL bHaveFocus;
+  DWORD freeze_count;
   /*for IME */
   int imeStartIndex;
   DWORD selofs; /* The size of the selection bar on the left side of control */
