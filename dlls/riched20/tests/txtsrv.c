@@ -863,9 +863,7 @@ static void test_TxDraw(void)
 
     freeze_count = 0xdeadbeef;
     hr = ITextDocument_Freeze( txtdoc, &freeze_count );
-    todo_wine
     ok( hr == S_OK, "ITextDocument_Freeze returned %#lx\n", hr );
-    todo_wine
     ok( freeze_count == 1, "expected count to be %d, got %ld\n", 1, freeze_count );
 
     hr = ITextServices_TxDraw( txtserv, DVASPECT_CONTENT, 0, NULL, NULL, hdc, NULL, (RECTL *)&client, NULL,
@@ -873,14 +871,11 @@ static void test_TxDraw(void)
     ok( hr == S_OK, "got %08lx\n", hr );
     hr = ITextServices_TxDraw( txtserv, DVASPECT_CONTENT, 0, NULL, NULL, hdc, NULL, (RECTL *)&client, NULL,
                                NULL, NULL, 0, TXTVIEW_ACTIVE );
-    todo_wine
     ok( hr == E_UNEXPECTED, "got %08lx\n", hr );
 
     freeze_count = 0xdeadbeef;
     hr = ITextDocument_Unfreeze( txtdoc, &freeze_count );
-    todo_wine
     ok( hr == S_OK, "ITextDocument_Unfreeze returned %#lx\n", hr );
-    todo_wine
     ok( freeze_count == 0, "expected count to be %d, got %ld\n", 0, freeze_count );
 
     hr = ITextServices_OnTxInPlaceDeactivate( txtserv );

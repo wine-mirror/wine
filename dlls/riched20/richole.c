@@ -4217,15 +4217,22 @@ static HRESULT WINAPI ITextDocument2Old_fnSave(ITextDocument2Old *iface, VARIANT
 static HRESULT WINAPI ITextDocument2Old_fnFreeze(ITextDocument2Old *iface, LONG *pCount)
 {
     struct text_services *services = impl_from_ITextDocument2Old(iface);
-    FIXME("stub %p\n", services);
-    return E_NOTIMPL;
+
+    if (services->editor->freeze_count < LONG_MAX) services->editor->freeze_count++;
+
+    if (pCount) *pCount = services->editor->freeze_count;
+    return services->editor->freeze_count != 0 ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI ITextDocument2Old_fnUnfreeze(ITextDocument2Old *iface, LONG *pCount)
 {
     struct text_services *services = impl_from_ITextDocument2Old(iface);
-    FIXME("stub %p\n", services);
-    return E_NOTIMPL;
+
+    if (services->editor->freeze_count && !--services->editor->freeze_count)
+        ME_RewrapRepaint(services->editor);
+
+    if (pCount) *pCount = services->editor->freeze_count;
+    return services->editor->freeze_count == 0 ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI ITextDocument2Old_fnBeginEditCollection(ITextDocument2Old *iface)
