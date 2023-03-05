@@ -338,25 +338,50 @@ static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
 	  physDev->horzRes, physDev->vertRes);
 }
 
-static PSDRV_PDEVICE *create_psdrv_physdev( PRINTERINFO *pi )
+static PSDRV_PDEVICE *create_psdrv_physdev( HDC hdc, const WCHAR *device,
+                                            const PSDRV_DEVMODE *devmode )
 {
-    PSDRV_PDEVICE *physDev;
+    PRINTERINFO *pi = PSDRV_FindPrinterInfo( device );
+    PSDRV_PDEVICE *pdev;
 
-    physDev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physDev) );
-    if (!physDev) return NULL;
-
-    physDev->Devmode = HeapAlloc( GetProcessHeap(), 0, sizeof(PSDRV_DEVMODE) );
-    if (!physDev->Devmode)
+    if (!pi) return NULL;
+    if (!pi->Fonts)
     {
-        HeapFree( GetProcessHeap(), 0, physDev );
+        RASTERIZER_STATUS status;
+        if (!GetRasterizerCaps( &status, sizeof(status) ) ||
+                !(status.wFlags & TT_AVAILABLE) ||
+                !(status.wFlags & TT_ENABLED))
+        {
+            MESSAGE( "Disabling printer %s since it has no builtin fonts and "
+                    "there are no TrueType fonts available.\n", debugstr_w(device) );
+            return FALSE;
+        }
+    }
+
+    pdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pdev) );
+    if (!pdev) return NULL;
+
+    pdev->Devmode = HeapAlloc( GetProcessHeap(), 0, sizeof(PSDRV_DEVMODE) );
+    if (!pdev->Devmode)
+    {
+        HeapFree( GetProcessHeap(), 0, pdev );
 	return NULL;
     }
 
-    *physDev->Devmode = *pi->Devmode;
-    physDev->pi = pi;
-    physDev->logPixelsX = pi->ppd->DefaultResolution;
-    physDev->logPixelsY = pi->ppd->DefaultResolution;
-    return physDev;
+    *pdev->Devmode = *pi->Devmode;
+    pdev->pi = pi;
+    pdev->logPixelsX = pi->ppd->DefaultResolution;
+    pdev->logPixelsY = pi->ppd->DefaultResolution;
+
+    if (devmode)
+    {
+        dump_devmode( &devmode->dmPublic );
+        PSDRV_MergeDevmodes( pdev->Devmode, devmode, pi );
+    }
+
+    PSDRV_UpdateDevCaps( pdev );
+    SelectObject( hdc, PSDRV_DefaultFont );
+    return pdev;
 }
 
 /**********************************************************************
@@ -366,35 +391,12 @@ static BOOL CDECL PSDRV_CreateDC( PHYSDEV *pdev, LPCWSTR device, LPCWSTR output,
                                   const DEVMODEW *initData )
 {
     PSDRV_PDEVICE *physDev;
-    PRINTERINFO *pi;
 
     TRACE("(%s %s %p)\n", debugstr_w(device), debugstr_w(output), initData);
 
     if (!device) return FALSE;
-    pi = PSDRV_FindPrinterInfo( device );
-    if(!pi) return FALSE;
-
-    if(!pi->Fonts) {
-        RASTERIZER_STATUS status;
-        if(!GetRasterizerCaps(&status, sizeof(status)) ||
-           !(status.wFlags & TT_AVAILABLE) ||
-           !(status.wFlags & TT_ENABLED)) {
-            MESSAGE("Disabling printer %s since it has no builtin fonts and there are no TrueType fonts available.\n",
-                    debugstr_w(device));
-            return FALSE;
-        }
-    }
-
-    if (!(physDev = create_psdrv_physdev( pi ))) return FALSE;
-
-    if(initData)
-    {
-        dump_devmode(initData);
-        PSDRV_MergeDevmodes(physDev->Devmode, (const PSDRV_DEVMODE *)initData, pi);
-    }
-
-    PSDRV_UpdateDevCaps(physDev);
-    SelectObject( (*pdev)->hdc, PSDRV_DefaultFont );
+    if (!(physDev = create_psdrv_physdev( (*pdev)->hdc, device,
+                    (const PSDRV_DEVMODE *)initData ))) return FALSE;
     push_dc_driver( pdev, &physDev->dev, &psdrv_funcs );
     return TRUE;
 }
@@ -405,15 +407,10 @@ static BOOL CDECL PSDRV_CreateDC( PHYSDEV *pdev, LPCWSTR device, LPCWSTR output,
  */
 static BOOL CDECL PSDRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 {
-    HDC hdc = (*pdev)->hdc;
     PSDRV_PDEVICE *physDev, *orig_dev = get_psdrv_dev( orig );
-    PRINTERINFO *pi = PSDRV_FindPrinterInfo( orig_dev->pi->friendly_name );
 
-    if (!pi) return FALSE;
-    if (!(physDev = create_psdrv_physdev( pi ))) return FALSE;
-    PSDRV_MergeDevmodes( physDev->Devmode, orig_dev->Devmode, pi );
-    PSDRV_UpdateDevCaps(physDev);
-    SelectObject( hdc, PSDRV_DefaultFont );
+    if (!(physDev = create_psdrv_physdev( (*pdev)->hdc, orig_dev->pi->friendly_name,
+                    orig_dev->Devmode ))) return FALSE;
     push_dc_driver( pdev, &physDev->dev, &psdrv_funcs );
     return TRUE;
 }
