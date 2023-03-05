@@ -34,6 +34,7 @@ static PDH_STATUS   (WINAPI *pPdhAddEnglishCounterW)(PDH_HQUERY, LPCWSTR, DWORD_
 static PDH_STATUS   (WINAPI *pPdhCollectQueryDataWithTime)(PDH_HQUERY, LONGLONG *);
 static PDH_STATUS   (WINAPI *pPdhValidatePathExA)(PDH_HLOG, LPCSTR);
 static PDH_STATUS   (WINAPI *pPdhValidatePathExW)(PDH_HLOG, LPCWSTR);
+static double       (WINAPI *pPdhVbGetDoubleCounterValue)(PDH_HCOUNTER, PDH_STATUS *);
 
 #define GETFUNCPTR(func) p##func = (void *)GetProcAddress( pdh, #func );
 
@@ -69,6 +70,7 @@ static void init_function_ptrs( void )
     GETFUNCPTR( PdhCollectQueryDataWithTime )
     GETFUNCPTR( PdhValidatePathExA )
     GETFUNCPTR( PdhValidatePathExW )
+    GETFUNCPTR( PdhVbGetDoubleCounterValue )
 }
 
 static const WCHAR processor_time[] = L"% Processor Time";
@@ -422,6 +424,46 @@ static void test_PdhGetRawCounterValue( void )
 
     ret = PdhCloseQuery( query );
     ok(ret == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08lx\n", ret);
+}
+
+static void test_PdhVbGetDoubleCounterValue(void)
+{
+    PDH_FMT_COUNTERVALUE value;
+    PDH_HCOUNTER counter;
+    PDH_STATUS status;
+    PDH_HQUERY query;
+    double ret;
+
+    status = PdhOpenQueryA( NULL, 0, &query );
+    ok(status == ERROR_SUCCESS, "PdhOpenQueryA failed 0x%08lx\n", status);
+
+    status = PdhAddCounterA( query, "\\System\\System Up Time", 0, &counter );
+    ok(status == ERROR_SUCCESS, "PdhAddCounterA failed 0x%08lx\n", status);
+
+    status = PdhCollectQueryData(query);
+    ok(status == ERROR_SUCCESS, "PdhCollectQueryData failed 0x%08lx\n", status);
+
+    status = PdhGetFormattedCounterValue( counter, PDH_FMT_DOUBLE, NULL, &value );
+    ok(status == ERROR_SUCCESS, "PdhGetFormattedCounterValue failed 0x%08lx\n", status);
+
+    ret = pPdhVbGetDoubleCounterValue( NULL, NULL );
+    ok(ret == 0.0, "Unexpected value %f\n", ret);
+
+    status = PDH_FUNCTION_NOT_FOUND;
+    ret = pPdhVbGetDoubleCounterValue( NULL, &status );
+    ok(status == PDH_INVALID_HANDLE, "PdhVbGetDoubleCounterValue failed 0x%08lx\n", status);
+    ok(ret == 0.0, "Unexpected value %f\n", ret);
+
+    ret = pPdhVbGetDoubleCounterValue( counter, NULL );
+    ok(ret == value.doubleValue, "Unexpected value %f\n", ret);
+
+    status = PDH_FUNCTION_NOT_FOUND;
+    ret = pPdhVbGetDoubleCounterValue( counter, &status );
+    ok(status == ERROR_SUCCESS, "PdhVbGetDoubleCounterValue failed 0x%08lx\n", status);
+    ok(ret == value.doubleValue, "Unexpected value %f\n", ret);
+
+    status = PdhCloseQuery(query);
+    ok(status == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08lx\n", status);
 }
 
 static void test_PdhSetCounterScaleFactor( void )
@@ -997,6 +1039,8 @@ START_TEST(pdh)
     test_PdhGetRawCounterValue();
     test_PdhSetCounterScaleFactor();
     test_PdhGetCounterTimeBase();
+
+    test_PdhVbGetDoubleCounterValue();
 
     test_PdhGetCounterInfoA();
     test_PdhGetCounterInfoW();
