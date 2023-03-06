@@ -1689,7 +1689,7 @@ BOOL CDECL X11DRV_GetICMProfile( PHYSDEV dev, BOOL allow_default, LPDWORD size, 
     else if ((buffer = get_icm_profile( &buflen )))
     {
         static const WCHAR icm[] = {'.','i','c','m',0};
-        IO_STATUS_BLOCK io;
+        IO_STATUS_BLOCK io = {{0}};
         UINT64 hash = 0;
         HANDLE file;
         int status;
