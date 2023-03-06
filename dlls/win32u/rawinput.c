@@ -218,11 +218,11 @@ static struct device *add_device( HKEY key, DWORD type )
     static const RID_DEVICE_INFO_MOUSE mouse_info = {1, 5, 0, FALSE};
     struct hid_preparsed_data *preparsed = NULL;
     HID_COLLECTION_INFORMATION hid_info;
+    IO_STATUS_BLOCK io = {{0}};
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING string;
     struct device *device;
     RID_DEVICE_INFO info;
-    IO_STATUS_BLOCK io;
     unsigned int status;
     UINT32 handle;
     void *buffer;
