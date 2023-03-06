@@ -10089,16 +10089,46 @@ static void test_CUIAutomation_value_conversion(IUIAutomation *uia_iface)
     SafeArrayDestroy(sa);
 }
 
+static HRESULT WINAPI Object_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUnknown))
+        *ppv = iface;
+    else
+        return E_NOINTERFACE;
+
+    return S_OK;
+}
+
+static ULONG WINAPI Object_AddRef(IUnknown *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI Object_Release(IUnknown *iface)
+{
+    return 1;
+}
+
+static IUnknownVtbl ObjectVtbl = {
+    Object_QueryInterface,
+    Object_AddRef,
+    Object_Release
+};
+static IUnknown Object = {&ObjectVtbl};
+
 static void test_CUIAutomation_condition_ifaces(IUIAutomation *uia_iface)
 {
     IUIAutomationPropertyCondition *prop_cond;
     enum PropertyConditionFlags prop_flags;
     IUIAutomationBoolCondition *bool_cond;
+    IUIAutomationNotCondition *not_cond;
     IUIAutomationCondition *cond;
     PROPERTYID prop_id;
     BOOL tmp_b;
     HRESULT hr;
     VARIANT v;
+    ULONG ref;
 
     hr = IUIAutomation_CreateTrueCondition(uia_iface, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
@@ -10202,7 +10232,53 @@ static void test_CUIAutomation_condition_ifaces(IUIAutomation *uia_iface)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(prop_flags == PropertyConditionFlags_None, "Unexpected flags %#x.\n", prop_flags);
 
-    IUIAutomationPropertyCondition_Release(prop_cond);
+    /*
+     * IUIAutomationNotCondition tests.
+     */
+    cond = (void *)0xdeadbeef;
+
+    /*
+     * Passing in an interface that isn't a valid IUIAutomationCondition
+     * interface.
+     */
+    hr = IUIAutomation_CreateNotCondition(uia_iface, (IUIAutomationCondition *)&Object, &cond);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    ok(!cond, "cond != NULL\n");
+
+    /* NULL input argument tests. */
+    cond = (void *)0xdeadbeef;
+    hr = IUIAutomation_CreateNotCondition(uia_iface, NULL, &cond);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    ok(!cond, "cond != NULL\n");
+
+    hr = IUIAutomation_CreateNotCondition(uia_iface, (IUIAutomationCondition *)prop_cond, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    /* Create the IUIAutomationNotCondition with our property condition. */
+    cond = NULL;
+    hr = IUIAutomation_CreateNotCondition(uia_iface, (IUIAutomationCondition *)prop_cond, &cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cond, "cond == NULL\n");
+
+    /* IUIAutomationNotCondition holds a reference to the passed in condition. */
+    ref = IUIAutomationPropertyCondition_Release(prop_cond);
+    ok(ref == 1, "Unexpected ref %ld\n", ref);
+
+    hr = IUIAutomationCondition_QueryInterface(cond, &IID_IUIAutomationNotCondition, (void **)&not_cond);
+    IUIAutomationCondition_Release(cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!not_cond, "not_cond == NULL\n");
+
+    hr = IUIAutomationNotCondition_GetChild(not_cond, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    cond = NULL;
+    hr = IUIAutomationNotCondition_GetChild(not_cond, &cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(iface_cmp((IUnknown *)cond, (IUnknown *)prop_cond), "cond != prop_cond\n");
+    IUIAutomationCondition_Release(cond);
+
+    IUIAutomationNotCondition_Release(not_cond);
 }
 
 struct uia_com_classes {
