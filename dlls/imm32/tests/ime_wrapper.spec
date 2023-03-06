@@ -14,3 +14,4 @@
 @ stdcall ImeToAsciiEx(long long ptr ptr long long)
 @ stdcall ImeUnregisterWord(wstr long wstr)
 @ stdcall NotifyIME(long long long long)
+@ extern -private ime_functions

@@ -2483,15 +2483,218 @@ static void test_ImmDisableIME(void)
     ok(!def, "ImmGetDefaultIMEWnd(hwnd) returned %p\n", def);
 }
 
+#define ime_trace( msg, ... ) if (winetest_debug > 1) trace( "%04lx:%s " msg, GetCurrentThreadId(), __func__, ## __VA_ARGS__ )
+
+static LRESULT CALLBACK ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    ime_trace( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
+    ok( 0, "unexpected call\n" );
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+static WNDCLASSEXW ime_ui_class =
+{
+    .cbSize = sizeof(WNDCLASSEXW),
+    .style = CS_IME,
+    .lpfnWndProc = ime_ui_window_proc,
+    .cbWndExtra = 2 * sizeof(LONG_PTR),
+    .lpszClassName = L"WineTestIME",
+};
+
+static BOOL WINAPI ime_ImeConfigure( HKL hkl, HWND hwnd, DWORD mode, void *data )
+{
+    ime_trace( "hkl %p, hwnd %p, mode %lu, data %p\n", hkl, hwnd, mode, data );
+    ok( 0, "unexpected call\n" );
+    return FALSE;
+}
+
+static DWORD WINAPI ime_ImeConversionList( HIMC himc, const WCHAR *source, CANDIDATELIST *dest,
+                                           DWORD dest_len, UINT flag )
+{
+    ime_trace( "himc %p, source %s, dest %p, dest_len %lu, flag %#x\n",
+               himc, debugstr_w(source), dest, dest_len, flag );
+    ok( 0, "unexpected call\n" );
+    return 0;
+}
+
+static BOOL WINAPI ime_ImeDestroy( UINT force )
+{
+    ime_trace( "force %u\n", force );
+    ok( 0, "unexpected call\n" );
+    return TRUE;
+}
+
+static UINT WINAPI ime_ImeEnumRegisterWord( REGISTERWORDENUMPROCW proc, const WCHAR *reading, DWORD style,
+                                            const WCHAR *string, void *data )
+{
+    ime_trace( "proc %p, reading %s, style %lu, string %s, data %p\n",
+               proc, debugstr_w(reading), style, debugstr_w(string), data );
+    ok( 0, "unexpected call\n" );
+    return 0;
+}
+
+static LRESULT WINAPI ime_ImeEscape( HIMC himc, UINT escape, void *data )
+{
+    ime_trace( "himc %p, escape %#x, data %p\n", himc, escape, data );
+    ok( 0, "unexpected call\n" );
+    return TRUE;
+}
+
+static DWORD WINAPI ime_ImeGetImeMenuItems( HIMC himc, DWORD flags, DWORD type, IMEMENUITEMINFOW *parent,
+                                            IMEMENUITEMINFOW *menu, DWORD size )
+{
+    ime_trace( "himc %p, flags %#lx, type %lu, parent %p, menu %p, size %#lx\n",
+               himc, flags, type, parent, menu, size );
+    ok( 0, "unexpected call\n" );
+    return 0;
+}
+
+static UINT WINAPI ime_ImeGetRegisterWordStyle( UINT item, STYLEBUFW *style )
+{
+    ime_trace( "item %u, style %p\n", item, style );
+    ok( 0, "unexpected call\n" );
+    return 0;
+}
+
+static BOOL WINAPI ime_ImeInquire( IMEINFO *info, WCHAR *ui_class, DWORD flags )
+{
+    ime_trace( "info %p, ui_class %p, flags %#lx\n", info, ui_class, flags );
+    ok( 0, "unexpected call\n" );
+    return TRUE;
+}
+
+static BOOL WINAPI ime_ImeProcessKey( HIMC himc, UINT vkey, LPARAM key_data, BYTE *key_state )
+{
+    ime_trace( "himc %p, vkey %u, key_data %#Ix, key_state %p\n",
+               himc, vkey, key_data, key_state );
+    ok( 0, "unexpected call\n" );
+    return FALSE;
+}
+
+static BOOL WINAPI ime_ImeRegisterWord( const WCHAR *reading, DWORD style, const WCHAR *string )
+{
+    ime_trace( "reading %s, style %lu, string %s\n", debugstr_w(reading), style, debugstr_w(string) );
+    ok( 0, "unexpected call\n" );
+    return FALSE;
+}
+
+static BOOL WINAPI ime_ImeSelect( HIMC himc, BOOL select )
+{
+    ime_trace( "himc %p, select %d\n", himc, select );
+    ok( 0, "unexpected call\n" );
+    return FALSE;
+}
+
+static BOOL WINAPI ime_ImeSetActiveContext( HIMC himc, BOOL flag )
+{
+    ime_trace( "himc %p, flag %#x\n", himc, flag );
+    ok( 0, "unexpected call\n" );
+    return FALSE;
+}
+
+static BOOL WINAPI ime_ImeSetCompositionString( HIMC himc, DWORD index, const void *comp, DWORD comp_len,
+                                                const void *read, DWORD read_len )
+{
+    ime_trace( "himc %p, index %lu, comp %p, comp_len %lu, read %p, read_len %lu\n",
+               himc, index, comp, comp_len, read, read_len );
+    ok( 0, "unexpected call\n" );
+    return FALSE;
+}
+
+static UINT WINAPI ime_ImeToAsciiEx( UINT vkey, UINT scan_code, BYTE *key_state, TRANSMSGLIST *msgs, UINT state, HIMC himc )
+{
+    ime_trace( "vkey %u, scan_code %u, key_state %p, msgs %p, state %u, himc %p\n",
+           vkey, scan_code, key_state, msgs, state, himc );
+    ok( 0, "unexpected call\n" );
+    return 0;
+}
+
+static BOOL WINAPI ime_ImeUnregisterWord( const WCHAR *reading, DWORD style, const WCHAR *string )
+{
+    ime_trace( "reading %s, style %lu, string %s\n", debugstr_w(reading), style, debugstr_w(string) );
+    ok( 0, "unexpected call\n" );
+    return FALSE;
+}
+
+static BOOL WINAPI ime_NotifyIME( HIMC himc, DWORD action, DWORD index, DWORD value )
+{
+    ime_trace( "himc %p, action %lu, index %lu, value %lu\n", himc, action, index, value );
+    ok( 0, "unexpected call\n" );
+    return FALSE;
+}
+
+static BOOL WINAPI ime_DllMain( HINSTANCE instance, DWORD reason, LPVOID reserved )
+{
+    ime_trace( "instance %p, reason %lu, reserved %p.\n", instance, reason, reserved );
+
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls( instance );
+        ime_ui_class.hInstance = instance;
+        RegisterClassExW( &ime_ui_class );
+        break;
+
+    case DLL_PROCESS_DETACH:
+        UnregisterClassW( ime_ui_class.lpszClassName, instance );
+        break;
+    }
+
+    return TRUE;
+}
+
+static struct ime_functions ime_functions =
+{
+    ime_ImeConfigure,
+    ime_ImeConversionList,
+    ime_ImeDestroy,
+    ime_ImeEnumRegisterWord,
+    ime_ImeEscape,
+    ime_ImeGetImeMenuItems,
+    ime_ImeGetRegisterWordStyle,
+    ime_ImeInquire,
+    ime_ImeProcessKey,
+    ime_ImeRegisterWord,
+    ime_ImeSelect,
+    ime_ImeSetActiveContext,
+    ime_ImeSetCompositionString,
+    ime_ImeToAsciiEx,
+    ime_ImeUnregisterWord,
+    ime_NotifyIME,
+    ime_DllMain,
+};
+
 static UINT ime_count;
 static WCHAR ime_path[MAX_PATH];
 
 static HKL ime_install(void)
 {
     WCHAR buffer[MAX_PATH];
+    HMODULE module;
     DWORD len, ret;
     HKEY hkey;
     HKL hkl;
+
+    /* IME module gets cached and won't reload from disk as soon as a window has
+     * loaded it. To workaround the issue we load the module first as a DLL,
+     * set its function pointers from the test, and later when the cached IME
+     * gets loaded, read the function pointers from the separately loaded DLL.
+     */
+
+    load_resource( L"ime_wrapper.dll", buffer );
+
+    SetLastError( 0xdeadbeef );
+    ret = MoveFileW( buffer, L"c:\\windows\\system32\\winetest_ime.dll" );
+    if (!ret)
+    {
+        ok( GetLastError() == ERROR_ACCESS_DENIED, "got error %lu\n", GetLastError() );
+        win_skip( "Failed to copy DLL to system directory\n" );
+        return 0;
+    }
+
+    module = LoadLibraryW( L"c:\\windows\\system32\\winetest_ime.dll" );
+    ok( !!module, "LoadLibraryW failed, error %lu\n", GetLastError() );
+    *(struct ime_functions *)GetProcAddress( module, "ime_functions" ) = ime_functions;
 
     /* install the actual IME module, it will lookup the functions from the DLL */
     load_resource( L"ime_wrapper.dll", buffer );
@@ -2540,6 +2743,7 @@ static HKL ime_install(void)
 
 static void ime_cleanup( HKL hkl )
 {
+    HMODULE module = GetModuleHandleW( L"winetest_ime.dll" );
     WCHAR buffer[MAX_PATH], value[MAX_PATH];
     DWORD i, buffer_len, value_len, ret;
     HKEY hkey;
@@ -2573,6 +2777,12 @@ static void ime_cleanup( HKL hkl )
     todo_wine_if( GetLastError() == ERROR_ACCESS_DENIED )
     ok( ret || broken( !ret ) /* sometimes still in use */,
         "DeleteFileW failed, error %lu\n", GetLastError() );
+
+    ret = FreeLibrary( module );
+    ok( ret, "FreeLibrary failed, error %lu\n", GetLastError() );
+
+    ret = DeleteFileW( L"c:\\windows\\system32\\winetest_ime.dll" );
+    ok( ret, "DeleteFileW failed, error %lu\n", GetLastError() );
 }
 
 static void test_ImmInstallIME(void)

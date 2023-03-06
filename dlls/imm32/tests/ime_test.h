@@ -32,4 +32,25 @@
 #include "imm.h"
 #include "immdev.h"
 
+struct ime_functions
+{
+    BOOL (*WINAPI pImeConfigure)(HKL,HWND,DWORD,void *);
+    DWORD (*WINAPI pImeConversionList)(HIMC,const WCHAR *,CANDIDATELIST *,DWORD,UINT);
+    BOOL (*WINAPI pImeDestroy)(UINT);
+    UINT (*WINAPI pImeEnumRegisterWord)(REGISTERWORDENUMPROCW,const WCHAR *,DWORD,const WCHAR *,void *);
+    LRESULT (*WINAPI pImeEscape)(HIMC,UINT,void *);
+    DWORD (*WINAPI pImeGetImeMenuItems)(HIMC,DWORD,DWORD,IMEMENUITEMINFOW *,IMEMENUITEMINFOW *,DWORD);
+    UINT (*WINAPI pImeGetRegisterWordStyle)(UINT,STYLEBUFW *);
+    BOOL (*WINAPI pImeInquire)(IMEINFO *,WCHAR *,DWORD);
+    BOOL (*WINAPI pImeProcessKey)(HIMC,UINT,LPARAM,BYTE *);
+    BOOL (*WINAPI pImeRegisterWord)(const WCHAR *,DWORD,const WCHAR *);
+    BOOL (*WINAPI pImeSelect)(HIMC,BOOL);
+    BOOL (*WINAPI pImeSetActiveContext)(HIMC,BOOL);
+    BOOL (*WINAPI pImeSetCompositionString)(HIMC,DWORD,const void *,DWORD,const void *,DWORD);
+    UINT (*WINAPI pImeToAsciiEx)(UINT,UINT,BYTE *,TRANSMSGLIST *,UINT,HIMC);
+    BOOL (*WINAPI pImeUnregisterWord)(const WCHAR *,DWORD,const WCHAR *);
+    BOOL (*WINAPI pNotifyIME)(HIMC,DWORD,DWORD,DWORD);
+    BOOL (*WINAPI pDllMain)(HINSTANCE,DWORD,void *);
+};
+
 #endif /* __WINE_IME_TEST_H */
