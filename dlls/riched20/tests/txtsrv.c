@@ -753,7 +753,7 @@ static void _check_txgetnaturalsize(HRESULT res, LONG width, LONG height, HDC hd
     RECT expected_rect = rect;
     LONG expected_width, expected_height;
 
-    DrawTextW(hdc, string, -1, &expected_rect, DT_LEFT | DT_CALCRECT | DT_NOCLIP | DT_EDITCONTROL | DT_WORDBREAK);
+    DrawTextW(hdc, string, -1, &expected_rect, DT_LEFT | DT_CALCRECT | DT_NOCLIP | DT_EDITCONTROL);
     expected_width = expected_rect.right - expected_rect.left;
     expected_height = expected_rect.bottom - expected_rect.top;
     ok_(__FILE__,line)(res == S_OK, "ITextServices_TxGetNaturalSize failed: 0x%08lx.\n", res);
