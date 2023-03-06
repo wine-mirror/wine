@@ -10091,10 +10091,14 @@ static void test_CUIAutomation_value_conversion(IUIAutomation *uia_iface)
 
 static void test_CUIAutomation_condition_ifaces(IUIAutomation *uia_iface)
 {
+    IUIAutomationPropertyCondition *prop_cond;
+    enum PropertyConditionFlags prop_flags;
     IUIAutomationBoolCondition *bool_cond;
     IUIAutomationCondition *cond;
+    PROPERTYID prop_id;
     BOOL tmp_b;
     HRESULT hr;
+    VARIANT v;
 
     hr = IUIAutomation_CreateTrueCondition(uia_iface, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
@@ -10139,6 +10143,66 @@ static void test_CUIAutomation_condition_ifaces(IUIAutomation *uia_iface)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(tmp_b == FALSE, "tmp_b != FALSE\n");
     IUIAutomationBoolCondition_Release(bool_cond);
+
+    /*
+     * IUIAutomationPropertyCondition tests.
+     */
+    cond = (void *)0xdeadbeef;
+    VariantInit(&v);
+    /* Invalid property ID. */
+    hr = IUIAutomation_CreatePropertyCondition(uia_iface, 0, v, &cond);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(!cond, "cond != NULL\n");
+
+    /* Invalid variant type for property ID. */
+    cond = (void *)0xdeadbeef;
+    VariantInit(&v);
+    hr = IUIAutomation_CreatePropertyCondition(uia_iface, UIA_RuntimeIdPropertyId, v, &cond);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(!cond, "cond != NULL\n");
+
+    /* NULL Condition argument. */
+    V_VT(&v) = VT_I4 | VT_ARRAY;
+    V_ARRAY(&v) = create_i4_safearray();
+    hr = IUIAutomation_CreatePropertyCondition(uia_iface, UIA_RuntimeIdPropertyId, v, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    /* Finally, create property condition interface. */
+    cond = NULL;
+    hr = IUIAutomation_CreatePropertyCondition(uia_iface, UIA_RuntimeIdPropertyId, v, &cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cond, "cond == NULL\n");
+
+    hr = IUIAutomationCondition_QueryInterface(cond, &IID_IUIAutomationPropertyCondition, (void **)&prop_cond);
+    IUIAutomationCondition_Release(cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!prop_cond, "prop_cond == NULL\n");
+
+    hr = IUIAutomationPropertyCondition_get_PropertyId(prop_cond, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IUIAutomationPropertyCondition_get_PropertyId(prop_cond, &prop_id);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(prop_id == UIA_RuntimeIdPropertyId, "Unexpected prop_id %d.\n", prop_id);
+
+    hr = IUIAutomationPropertyCondition_get_PropertyValue(prop_cond, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    VariantClear(&v);
+    hr = IUIAutomationPropertyCondition_get_PropertyValue(prop_cond, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == (VT_I4 | VT_ARRAY), "Unexpected vt %d.\n", V_VT(&v));
+    ok(!!V_ARRAY(&v), "V_ARRAY(&v) == NULL\n");
+    VariantClear(&v);
+
+    hr = IUIAutomationPropertyCondition_get_PropertyConditionFlags(prop_cond, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IUIAutomationPropertyCondition_get_PropertyConditionFlags(prop_cond, &prop_flags);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(prop_flags == PropertyConditionFlags_None, "Unexpected flags %#x.\n", prop_flags);
+
+    IUIAutomationPropertyCondition_Release(prop_cond);
 }
 
 struct uia_com_classes {

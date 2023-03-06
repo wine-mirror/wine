@@ -24,6 +24,156 @@
 WINE_DEFAULT_DEBUG_CHANNEL(uiautomation);
 
 /*
+ * IUIAutomationPropertyCondition interface.
+ */
+struct uia_property_condition {
+    IUIAutomationPropertyCondition IUIAutomationPropertyCondition_iface;
+    LONG ref;
+
+    struct UiaPropertyCondition condition;
+};
+
+static inline struct uia_property_condition *impl_from_IUIAutomationPropertyCondition(IUIAutomationPropertyCondition *iface)
+{
+    return CONTAINING_RECORD(iface, struct uia_property_condition, IUIAutomationPropertyCondition_iface);
+}
+
+static HRESULT WINAPI uia_property_condition_QueryInterface(IUIAutomationPropertyCondition *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUIAutomationPropertyCondition) || IsEqualIID(riid, &IID_IUIAutomationCondition) ||
+            IsEqualIID(riid, &IID_IUnknown))
+        *ppv = iface;
+    else
+        return E_NOINTERFACE;
+
+    IUIAutomationPropertyCondition_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI uia_property_condition_AddRef(IUIAutomationPropertyCondition *iface)
+{
+    struct uia_property_condition *uia_property_condition = impl_from_IUIAutomationPropertyCondition(iface);
+    ULONG ref = InterlockedIncrement(&uia_property_condition->ref);
+
+    TRACE("%p, refcount %ld\n", uia_property_condition, ref);
+    return ref;
+}
+
+static ULONG WINAPI uia_property_condition_Release(IUIAutomationPropertyCondition *iface)
+{
+    struct uia_property_condition *uia_property_condition = impl_from_IUIAutomationPropertyCondition(iface);
+    ULONG ref = InterlockedDecrement(&uia_property_condition->ref);
+
+    TRACE("%p, refcount %ld\n", uia_property_condition, ref);
+
+    if (!ref)
+    {
+        VariantClear(&uia_property_condition->condition.Value);
+        heap_free(uia_property_condition);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI uia_property_condition_get_PropertyId(IUIAutomationPropertyCondition *iface, PROPERTYID *prop_id)
+{
+    struct uia_property_condition *uia_property_condition = impl_from_IUIAutomationPropertyCondition(iface);
+
+    TRACE("%p, %p\n", iface, prop_id);
+
+    if (!prop_id)
+        return E_POINTER;
+
+    *prop_id = uia_property_condition->condition.PropertyId;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI uia_property_condition_get_PropertyValue(IUIAutomationPropertyCondition *iface, VARIANT *val)
+{
+    struct uia_property_condition *uia_property_condition = impl_from_IUIAutomationPropertyCondition(iface);
+
+    TRACE("%p, %p\n", iface, val);
+
+    if (!val)
+        return E_POINTER;
+
+    VariantCopy(val, &uia_property_condition->condition.Value);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI uia_property_condition_get_PropertyConditionFlags(IUIAutomationPropertyCondition *iface,
+        enum PropertyConditionFlags *flags)
+{
+    struct uia_property_condition *uia_property_condition = impl_from_IUIAutomationPropertyCondition(iface);
+
+    TRACE("%p, %p\n", iface, flags);
+
+    if (!flags)
+        return E_POINTER;
+
+    *flags = uia_property_condition->condition.Flags;
+
+    return S_OK;
+}
+
+static const IUIAutomationPropertyConditionVtbl uia_property_condition_vtbl = {
+    uia_property_condition_QueryInterface,
+    uia_property_condition_AddRef,
+    uia_property_condition_Release,
+    uia_property_condition_get_PropertyId,
+    uia_property_condition_get_PropertyValue,
+    uia_property_condition_get_PropertyConditionFlags,
+};
+
+static HRESULT create_uia_property_condition_iface(IUIAutomationCondition **out_cond, PROPERTYID prop_id, VARIANT val,
+        enum PropertyConditionFlags prop_flags)
+{
+    const struct uia_prop_info *prop_info = uia_prop_info_from_id(prop_id);
+    struct uia_property_condition *uia_property_condition;
+
+    if (!out_cond)
+        return E_POINTER;
+
+    *out_cond = NULL;
+    if (!prop_info)
+        return E_INVALIDARG;
+
+    switch (prop_info->type)
+    {
+    case UIAutomationType_Bool:
+        if (V_VT(&val) != VT_BOOL)
+            return E_INVALIDARG;
+        break;
+
+    case UIAutomationType_IntArray:
+        if (V_VT(&val) != (VT_I4 | VT_ARRAY))
+            return E_INVALIDARG;
+        break;
+
+    default:
+        FIXME("Property condition evaluation for property type %#x unimplemented\n", prop_info->type);
+        return E_NOTIMPL;
+    }
+
+    uia_property_condition = heap_alloc_zero(sizeof(*uia_property_condition));
+    if (!uia_property_condition)
+        return E_OUTOFMEMORY;
+
+    uia_property_condition->IUIAutomationPropertyCondition_iface.lpVtbl = &uia_property_condition_vtbl;
+    uia_property_condition->condition.ConditionType = ConditionType_Property;
+    uia_property_condition->condition.PropertyId = prop_id;
+    VariantCopy(&uia_property_condition->condition.Value, &val);
+    uia_property_condition->condition.Flags = prop_flags;
+    uia_property_condition->ref = 1;
+
+    *out_cond = (IUIAutomationCondition *)&uia_property_condition->IUIAutomationPropertyCondition_iface;
+    return S_OK;
+}
+
+/*
  * IUIAutomationBoolCondition interface.
  */
 struct uia_bool_condition {
@@ -1324,8 +1474,9 @@ static HRESULT WINAPI uia_iface_CreateFalseCondition(IUIAutomation6 *iface, IUIA
 static HRESULT WINAPI uia_iface_CreatePropertyCondition(IUIAutomation6 *iface, PROPERTYID prop_id, VARIANT val,
         IUIAutomationCondition **out_condition)
 {
-    FIXME("%p, %d, %s, %p: stub\n", iface, prop_id, debugstr_variant(&val), out_condition);
-    return E_NOTIMPL;
+    TRACE("%p, %d, %s, %p\n", iface, prop_id, debugstr_variant(&val), out_condition);
+
+    return create_uia_property_condition_iface(out_condition, prop_id, val, PropertyConditionFlags_None);
 }
 
 static HRESULT WINAPI uia_iface_CreatePropertyConditionEx(IUIAutomation6 *iface, PROPERTYID prop_id, VARIANT val,
