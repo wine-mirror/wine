@@ -6530,9 +6530,9 @@ static void load_system_bitmap_fonts(void)
 
 static void load_directory_fonts( WCHAR *path, UINT flags )
 {
+    IO_STATUS_BLOCK io = {{0}};
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nt_name;
-    IO_STATUS_BLOCK io;
     HANDLE handle;
     char buf[8192];
     size_t len;
