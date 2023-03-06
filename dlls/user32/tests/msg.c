@@ -2914,7 +2914,7 @@ static void ok_sequence_(const struct message *expected_list, const char *contex
                               context, count, expected->message, actual->message);
         }
     }
-    if( todo && !failcount) /* succeeded yet marked todo */
+    if (todo && !failcount && !strcmp(winetest_platform, "wine")) /* succeeded yet marked todo */
         todo_wine {
             dump++;
             ok_( file, line)( TRUE, "%s: marked \"todo_wine\" but succeeds\n", context);
