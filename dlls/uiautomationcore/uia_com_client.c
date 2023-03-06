@@ -24,6 +24,98 @@
 WINE_DEFAULT_DEBUG_CHANNEL(uiautomation);
 
 /*
+ * IUIAutomationBoolCondition interface.
+ */
+struct uia_bool_condition {
+    IUIAutomationBoolCondition IUIAutomationBoolCondition_iface;
+    LONG ref;
+
+    struct UiaCondition condition;
+};
+
+static inline struct uia_bool_condition *impl_from_IUIAutomationBoolCondition(IUIAutomationBoolCondition *iface)
+{
+    return CONTAINING_RECORD(iface, struct uia_bool_condition, IUIAutomationBoolCondition_iface);
+}
+
+static HRESULT WINAPI uia_bool_condition_QueryInterface(IUIAutomationBoolCondition *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUIAutomationBoolCondition) || IsEqualIID(riid, &IID_IUIAutomationCondition) ||
+            IsEqualIID(riid, &IID_IUnknown))
+        *ppv = iface;
+    else
+        return E_NOINTERFACE;
+
+    IUIAutomationBoolCondition_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI uia_bool_condition_AddRef(IUIAutomationBoolCondition *iface)
+{
+    struct uia_bool_condition *uia_bool_condition = impl_from_IUIAutomationBoolCondition(iface);
+    ULONG ref = InterlockedIncrement(&uia_bool_condition->ref);
+
+    TRACE("%p, refcount %ld\n", uia_bool_condition, ref);
+    return ref;
+}
+
+static ULONG WINAPI uia_bool_condition_Release(IUIAutomationBoolCondition *iface)
+{
+    struct uia_bool_condition *uia_bool_condition = impl_from_IUIAutomationBoolCondition(iface);
+    ULONG ref = InterlockedDecrement(&uia_bool_condition->ref);
+
+    TRACE("%p, refcount %ld\n", uia_bool_condition, ref);
+    if (!ref)
+        heap_free(uia_bool_condition);
+
+    return ref;
+}
+
+static HRESULT WINAPI uia_bool_condition_get_BooleanValue(IUIAutomationBoolCondition *iface, BOOL *ret_val)
+{
+    struct uia_bool_condition *uia_bool_condition = impl_from_IUIAutomationBoolCondition(iface);
+
+    TRACE("%p, %p\n", iface, ret_val);
+
+    if (!ret_val)
+        return E_POINTER;
+
+    if (uia_bool_condition->condition.ConditionType == ConditionType_True)
+        *ret_val = TRUE;
+    else
+        *ret_val = FALSE;
+
+    return S_OK;
+}
+
+static const IUIAutomationBoolConditionVtbl uia_bool_condition_vtbl = {
+    uia_bool_condition_QueryInterface,
+    uia_bool_condition_AddRef,
+    uia_bool_condition_Release,
+    uia_bool_condition_get_BooleanValue,
+};
+
+static HRESULT create_uia_bool_condition_iface(IUIAutomationCondition **out_cond, enum ConditionType cond_type)
+{
+    struct uia_bool_condition *uia_bool_condition;
+
+    if (!out_cond)
+        return E_POINTER;
+
+    uia_bool_condition = heap_alloc_zero(sizeof(*uia_bool_condition));
+    if (!uia_bool_condition)
+        return E_OUTOFMEMORY;
+
+    uia_bool_condition->IUIAutomationBoolCondition_iface.lpVtbl = &uia_bool_condition_vtbl;
+    uia_bool_condition->condition.ConditionType = cond_type;
+    uia_bool_condition->ref = 1;
+
+    *out_cond = (IUIAutomationCondition *)&uia_bool_condition->IUIAutomationBoolCondition_iface;
+    return S_OK;
+}
+
+/*
  * IUIAutomationElement interface.
  */
 struct uia_element {
@@ -1217,14 +1309,16 @@ static HRESULT WINAPI uia_iface_CreateCacheRequest(IUIAutomation6 *iface, IUIAut
 
 static HRESULT WINAPI uia_iface_CreateTrueCondition(IUIAutomation6 *iface, IUIAutomationCondition **out_condition)
 {
-    FIXME("%p, %p: stub\n", iface, out_condition);
-    return E_NOTIMPL;
+    TRACE("%p, %p\n", iface, out_condition);
+
+    return create_uia_bool_condition_iface(out_condition, ConditionType_True);
 }
 
 static HRESULT WINAPI uia_iface_CreateFalseCondition(IUIAutomation6 *iface, IUIAutomationCondition **out_condition)
 {
-    FIXME("%p, %p: stub\n", iface, out_condition);
-    return E_NOTIMPL;
+    TRACE("%p, %p\n", iface, out_condition);
+
+    return create_uia_bool_condition_iface(out_condition, ConditionType_False);
 }
 
 static HRESULT WINAPI uia_iface_CreatePropertyCondition(IUIAutomation6 *iface, PROPERTYID prop_id, VARIANT val,

@@ -10089,6 +10089,58 @@ static void test_CUIAutomation_value_conversion(IUIAutomation *uia_iface)
     SafeArrayDestroy(sa);
 }
 
+static void test_CUIAutomation_condition_ifaces(IUIAutomation *uia_iface)
+{
+    IUIAutomationBoolCondition *bool_cond;
+    IUIAutomationCondition *cond;
+    BOOL tmp_b;
+    HRESULT hr;
+
+    hr = IUIAutomation_CreateTrueCondition(uia_iface, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    cond = NULL;
+    hr = IUIAutomation_CreateTrueCondition(uia_iface, &cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cond, "cond == NULL\n");
+
+    hr = IUIAutomationCondition_QueryInterface(cond, &IID_IUIAutomationBoolCondition, (void **)&bool_cond);
+    IUIAutomationCondition_Release(cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!bool_cond, "bool_cond == NULL\n");
+
+    hr = IUIAutomationBoolCondition_get_BooleanValue(bool_cond, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    tmp_b = FALSE;
+    hr = IUIAutomationBoolCondition_get_BooleanValue(bool_cond, &tmp_b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(tmp_b == TRUE, "tmp_b != TRUE\n");
+    IUIAutomationBoolCondition_Release(bool_cond);
+
+    hr = IUIAutomation_CreateFalseCondition(uia_iface, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    cond = NULL;
+    hr = IUIAutomation_CreateFalseCondition(uia_iface, &cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cond, "cond == NULL\n");
+
+    hr = IUIAutomationCondition_QueryInterface(cond, &IID_IUIAutomationBoolCondition, (void **)&bool_cond);
+    IUIAutomationCondition_Release(cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!bool_cond, "bool_cond == NULL\n");
+
+    hr = IUIAutomationBoolCondition_get_BooleanValue(bool_cond, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    tmp_b = TRUE;
+    hr = IUIAutomationBoolCondition_get_BooleanValue(bool_cond, &tmp_b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(tmp_b == FALSE, "tmp_b != FALSE\n");
+    IUIAutomationBoolCondition_Release(bool_cond);
+}
+
 struct uia_com_classes {
     const GUID *clsid;
     const GUID *iid;
@@ -10187,6 +10239,7 @@ static void test_CUIAutomation(void)
     IUnknown_Release(unk1);
     IUnknown_Release(unk2);
 
+    test_CUIAutomation_condition_ifaces(uia_iface);
     test_CUIAutomation_value_conversion(uia_iface);
     test_ElementFromHandle(uia_iface, has_cui8);
     test_Element_GetPropertyValue(uia_iface);
