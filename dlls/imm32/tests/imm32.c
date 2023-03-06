@@ -42,6 +42,9 @@ static UINT (WINAPI *pNtUserAssociateInputContext)(HWND,HIMC,ULONG);
 static BOOL (WINAPI *pImmIsUIMessageA)(HWND,UINT,WPARAM,LPARAM);
 static UINT (WINAPI *pSendInput) (UINT, INPUT*, size_t);
 
+extern BOOL WINAPI ImmFreeLayout(HKL);
+extern BOOL WINAPI ImmLoadIME(HKL);
+
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE, enabled_ ## func = FALSE
 
@@ -2430,6 +2433,13 @@ static void test_ImmDisableIME(void)
 
 #define ime_trace( msg, ... ) if (winetest_debug > 1) trace( "%04lx:%s " msg, GetCurrentThreadId(), __func__, ## __VA_ARGS__ )
 
+DEFINE_EXPECT( ImeInquire );
+DEFINE_EXPECT( ImeDestroy );
+DEFINE_EXPECT( IME_DLL_PROCESS_ATTACH );
+DEFINE_EXPECT( IME_DLL_PROCESS_DETACH );
+
+static IMEINFO ime_info;
+
 static LRESULT CALLBACK ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     ime_trace( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
@@ -2465,7 +2475,11 @@ static DWORD WINAPI ime_ImeConversionList( HIMC himc, const WCHAR *source, CANDI
 static BOOL WINAPI ime_ImeDestroy( UINT force )
 {
     ime_trace( "force %u\n", force );
-    ok( 0, "unexpected call\n" );
+
+    CHECK_EXPECT( ImeDestroy );
+
+    ok( !force, "got force %u\n", force );
+
     return TRUE;
 }
 
@@ -2504,7 +2518,21 @@ static UINT WINAPI ime_ImeGetRegisterWordStyle( UINT item, STYLEBUFW *style )
 static BOOL WINAPI ime_ImeInquire( IMEINFO *info, WCHAR *ui_class, DWORD flags )
 {
     ime_trace( "info %p, ui_class %p, flags %#lx\n", info, ui_class, flags );
-    ok( 0, "unexpected call\n" );
+
+    CHECK_EXPECT( ImeInquire );
+
+    ok( !!info, "got info %p\n", info );
+    ok( !!ui_class, "got ui_class %p\n", ui_class );
+    ok( !flags, "got flags %#lx\n", flags );
+
+    *info = ime_info;
+
+    if (ime_info.fdwProperty & IME_PROP_UNICODE)
+        wcscpy( ui_class, ime_ui_class.lpszClassName );
+    else
+        WideCharToMultiByte( CP_ACP, 0, ime_ui_class.lpszClassName, -1,
+                             (char *)ui_class, 17, NULL, NULL );
+
     return TRUE;
 }
 
@@ -2578,10 +2606,12 @@ static BOOL WINAPI ime_DllMain( HINSTANCE instance, DWORD reason, LPVOID reserve
         DisableThreadLibraryCalls( instance );
         ime_ui_class.hInstance = instance;
         RegisterClassExW( &ime_ui_class );
+        CHECK_EXPECT( IME_DLL_PROCESS_ATTACH );
         break;
 
     case DLL_PROCESS_DETACH:
         UnregisterClassW( ime_ui_class.lpszClassName, instance );
+        todo_wine CHECK_EXPECT( IME_DLL_PROCESS_DETACH );
         break;
     }
 
@@ -2732,11 +2762,88 @@ static void ime_cleanup( HKL hkl )
 
 static void test_ImmInstallIME(void)
 {
+    UINT ret;
     HKL hkl;
 
-    if (!(hkl = ime_install())) return;
+    SET_ENABLE( IME_DLL_PROCESS_ATTACH, TRUE );
+    SET_ENABLE( ImeInquire, TRUE );
+    SET_ENABLE( ImeDestroy, TRUE );
+    SET_ENABLE( IME_DLL_PROCESS_DETACH, TRUE );
+
+    /* IME_PROP_END_UNLOAD for the IME to unload / reload. */
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD;
+
+    if (!(hkl = ime_install())) goto cleanup;
+
+    SET_EXPECT( IME_DLL_PROCESS_ATTACH );
+    SET_EXPECT( ImeInquire );
+    ret = ImmLoadIME( hkl );
+    todo_wine
+    ok( ret, "ImmLoadIME returned %#x\n", ret );
+    todo_wine
+    CHECK_CALLED( IME_DLL_PROCESS_ATTACH );
+    todo_wine
+    CHECK_CALLED( ImeInquire );
+
+    ret = ImmLoadIME( hkl );
+    todo_wine
+    ok( ret, "ImmLoadIME returned %#x\n", ret );
+
+    SET_EXPECT( ImeDestroy );
+    SET_EXPECT( IME_DLL_PROCESS_DETACH );
+    ret = ImmFreeLayout( hkl );
+    todo_wine
+    ok( ret, "ImmFreeLayout returned %#x\n", ret );
+    todo_wine
+    CHECK_CALLED( ImeDestroy );
+    todo_wine
+    CHECK_CALLED( IME_DLL_PROCESS_DETACH );
+
+    ret = ImmFreeLayout( hkl );
+    todo_wine
+    ok( ret, "ImmFreeLayout returned %#x\n", ret );
 
     ime_cleanup( hkl );
+
+    ime_info.fdwProperty = 0;
+
+    if (!(hkl = ime_install())) goto cleanup;
+
+    SET_EXPECT( IME_DLL_PROCESS_ATTACH );
+    SET_EXPECT( ImeInquire );
+    ret = ImmLoadIME( hkl );
+    todo_wine
+    ok( ret, "ImmLoadIME returned %#x\n", ret );
+    todo_wine
+    CHECK_CALLED( IME_DLL_PROCESS_ATTACH );
+    todo_wine
+    CHECK_CALLED( ImeInquire );
+
+    ret = ImmLoadIME( hkl );
+    todo_wine
+    ok( ret, "ImmLoadIME returned %#x\n", ret );
+
+    SET_EXPECT( ImeDestroy );
+    SET_EXPECT( IME_DLL_PROCESS_DETACH );
+    ret = ImmFreeLayout( hkl );
+    todo_wine
+    ok( ret, "ImmFreeLayout returned %#x\n", ret );
+    todo_wine
+    CHECK_CALLED( ImeDestroy );
+    todo_wine
+    CHECK_CALLED( IME_DLL_PROCESS_DETACH );
+
+    ret = ImmFreeLayout( hkl );
+    todo_wine
+    ok( ret, "ImmFreeLayout returned %#x\n", ret );
+
+    ime_cleanup( hkl );
+
+cleanup:
+    SET_ENABLE( IME_DLL_PROCESS_ATTACH, FALSE );
+    SET_ENABLE( ImeInquire, FALSE );
+    SET_ENABLE( ImeDestroy, FALSE );
+    SET_ENABLE( IME_DLL_PROCESS_DETACH, FALSE );
 }
 
 static void test_ImmGetDescription(void)
@@ -2745,6 +2852,11 @@ static void test_ImmGetDescription(void)
     WCHAR bufferW[MAX_PATH];
     char bufferA[MAX_PATH];
     DWORD ret;
+
+    SET_ENABLE( IME_DLL_PROCESS_ATTACH, TRUE );
+    SET_ENABLE( ImeInquire, TRUE );
+    SET_ENABLE( ImeDestroy, TRUE );
+    SET_ENABLE( IME_DLL_PROCESS_DETACH, TRUE );
 
     SetLastError( 0xdeadbeef );
     ret = ImmGetDescriptionW( NULL, NULL, 0 );
@@ -2764,7 +2876,7 @@ static void test_ImmGetDescription(void)
     ret = GetLastError();
     ok( ret == 0xdeadbeef, "got error %lu\n", ret );
 
-    if (!(hkl = ime_install())) return;
+    if (!(hkl = ime_install())) goto cleanup;
 
     memset( bufferW, 0xcd, sizeof(bufferW) );
     ret = ImmGetDescriptionW( hkl, bufferW, 2 );
@@ -2816,6 +2928,12 @@ static void test_ImmGetDescription(void)
     ok( !strcmp( bufferA, "WineTest IME" ), "got bufferA %s\n", debugstr_a(bufferA) );
 
     ime_cleanup( hkl );
+
+cleanup:
+    SET_ENABLE( IME_DLL_PROCESS_ATTACH, FALSE );
+    SET_ENABLE( ImeInquire, FALSE );
+    SET_ENABLE( ImeDestroy, FALSE );
+    SET_ENABLE( IME_DLL_PROCESS_DETACH, FALSE );
 }
 
 static void test_ImmGetIMEFileName(void)
@@ -2824,6 +2942,11 @@ static void test_ImmGetIMEFileName(void)
     WCHAR bufferW[MAX_PATH], expectW[16];
     char bufferA[MAX_PATH], expectA[16];
     DWORD ret;
+
+    SET_ENABLE( IME_DLL_PROCESS_ATTACH, TRUE );
+    SET_ENABLE( ImeInquire, TRUE );
+    SET_ENABLE( ImeDestroy, TRUE );
+    SET_ENABLE( IME_DLL_PROCESS_DETACH, TRUE );
 
     SetLastError( 0xdeadbeef );
     ret = ImmGetIMEFileNameW( NULL, NULL, 0 );
@@ -2842,7 +2965,7 @@ static void test_ImmGetIMEFileName(void)
     todo_wine
     ok( ret == 0xdeadbeef, "got error %lu\n", ret );
 
-    if (!(hkl = ime_install())) return;
+    if (!(hkl = ime_install())) goto cleanup;
 
     memset( bufferW, 0xcd, sizeof(bufferW) );
     ret = ImmGetIMEFileNameW( hkl, bufferW, 2 );
@@ -2899,6 +3022,12 @@ static void test_ImmGetIMEFileName(void)
     ok( !strcmp( bufferA, expectA ), "got bufferA %s\n", debugstr_a(bufferA) );
 
     ime_cleanup( hkl );
+
+cleanup:
+    SET_ENABLE( IME_DLL_PROCESS_ATTACH, FALSE );
+    SET_ENABLE( ImeInquire, FALSE );
+    SET_ENABLE( ImeDestroy, FALSE );
+    SET_ENABLE( IME_DLL_PROCESS_DETACH, FALSE );
 }
 
 START_TEST(imm32)
