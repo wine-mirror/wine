@@ -1194,61 +1194,6 @@ static void test_ImmGetContext(void)
     ok(ImmReleaseContext(hwnd, himc), "ImmReleaseContext failed\n");
 }
 
-static void test_ImmGetDescription(void)
-{
-    HKL hkl;
-    WCHAR descW[100];
-    CHAR descA[100];
-    UINT ret, lret;
-
-    /* FIXME: invalid keyboard layouts should not pass */
-    ret = ImmGetDescriptionW(NULL, NULL, 0);
-    ok(!ret, "ImmGetDescriptionW failed, expected 0 received %d.\n", ret);
-    ret = ImmGetDescriptionA(NULL, NULL, 0);
-    ok(!ret, "ImmGetDescriptionA failed, expected 0 received %d.\n", ret);
-
-    /* load a language with valid IMM descriptions */
-    hkl = GetKeyboardLayout(0);
-    ok(hkl != 0, "GetKeyboardLayout failed, expected != 0.\n");
-
-    ret = ImmGetDescriptionW(hkl, NULL, 0);
-    if(!ret)
-    {
-        win_skip("ImmGetDescriptionW is not working for current loaded keyboard.\n");
-        return;
-    }
-
-    SetLastError(0xdeadcafe);
-    ret = ImmGetDescriptionW(0, NULL, 100);
-    ok (ret == 0, "ImmGetDescriptionW with 0 hkl should return 0\n");
-    ret = GetLastError();
-    ok (ret == 0xdeadcafe, "Last Error should remain unchanged\n");
-
-    ret = ImmGetDescriptionW(hkl, descW, 0);
-    ok(ret, "ImmGetDescriptionW failed, expected != 0 received 0.\n");
-
-    lret = ImmGetDescriptionW(hkl, descW, ret + 1);
-    ok(lret, "ImmGetDescriptionW failed, expected != 0 received 0.\n");
-    ok(lret == ret, "ImmGetDescriptionW failed to return the correct amount of data. Expected %d, got %d.\n", ret, lret);
-
-    lret = ImmGetDescriptionA(hkl, descA, ret + 1);
-    ok(lret, "ImmGetDescriptionA failed, expected != 0 received 0.\n");
-    ok(lret == ret, "ImmGetDescriptionA failed to return the correct amount of data. Expected %d, got %d.\n", ret, lret);
-
-    ret /= 2; /* try to copy partially */
-    lret = ImmGetDescriptionW(hkl, descW, ret + 1);
-    ok(lret, "ImmGetDescriptionW failed, expected != 0 received 0.\n");
-    ok(lret == ret, "ImmGetDescriptionW failed to return the correct amount of data. Expected %d, got %d.\n", ret, lret);
-
-    lret = ImmGetDescriptionA(hkl, descA, ret + 1);
-    ok(!lret, "ImmGetDescriptionA should fail\n");
-
-    ret = ImmGetDescriptionW(hkl, descW, 1);
-    ok(!ret, "ImmGetDescriptionW failed, expected 0 received %d.\n", ret);
-
-    UnloadKeyboardLayout(hkl);
-}
-
 static LRESULT (WINAPI *old_imm_wnd_proc)(HWND, UINT, WPARAM, LPARAM);
 static LRESULT WINAPI imm_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -2794,6 +2739,85 @@ static void test_ImmInstallIME(void)
     ime_cleanup( hkl );
 }
 
+static void test_ImmGetDescription(void)
+{
+    HKL hkl = GetKeyboardLayout( 0 );
+    WCHAR bufferW[MAX_PATH];
+    char bufferA[MAX_PATH];
+    DWORD ret;
+
+    SetLastError( 0xdeadbeef );
+    ret = ImmGetDescriptionW( NULL, NULL, 0 );
+    ok( !ret, "ImmGetDescriptionW returned %lu\n", ret );
+    ret = ImmGetDescriptionA( NULL, NULL, 0 );
+    ok( !ret, "ImmGetDescriptionA returned %lu\n", ret );
+    ret = ImmGetDescriptionW( NULL, NULL, 100 );
+    ok( !ret, "ImmGetDescriptionW returned %lu\n", ret );
+    ret = ImmGetDescriptionA( NULL, NULL, 100 );
+    ok( !ret, "ImmGetDescriptionA returned %lu\n", ret );
+    ret = ImmGetDescriptionW( hkl, bufferW, 100 );
+    todo_wine
+    ok( !ret, "ImmGetDescriptionW returned %lu\n", ret );
+    ret = ImmGetDescriptionA( hkl, bufferA, 100 );
+    todo_wine
+    ok( !ret, "ImmGetDescriptionA returned %lu\n", ret );
+    ret = GetLastError();
+    ok( ret == 0xdeadbeef, "got error %lu\n", ret );
+
+    if (!(hkl = ime_install())) return;
+
+    memset( bufferW, 0xcd, sizeof(bufferW) );
+    ret = ImmGetDescriptionW( hkl, bufferW, 2 );
+    ok( ret == 1, "ImmGetDescriptionW returned %lu\n", ret );
+    ok( !wcscmp( bufferW, L"W" ), "got bufferW %s\n", debugstr_w(bufferW) );
+    memset( bufferA, 0xcd, sizeof(bufferA) );
+    ret = ImmGetDescriptionA( hkl, bufferA, 2 );
+    ok( ret == 0, "ImmGetDescriptionA returned %lu\n", ret );
+    todo_wine
+    ok( !strcmp( bufferA, "" ), "got bufferA %s\n", debugstr_a(bufferA) );
+
+    memset( bufferW, 0xcd, sizeof(bufferW) );
+    ret = ImmGetDescriptionW( hkl, bufferW, 11 );
+    todo_wine
+    ok( ret == 10, "ImmGetDescriptionW returned %lu\n", ret );
+    todo_wine
+    ok( !wcscmp( bufferW, L"WineTest I" ), "got bufferW %s\n", debugstr_w(bufferW) );
+    memset( bufferA, 0xcd, sizeof(bufferA) );
+    ret = ImmGetDescriptionA( hkl, bufferA, 11 );
+    todo_wine
+    ok( ret == 0, "ImmGetDescriptionA returned %lu\n", ret );
+    todo_wine
+    ok( !strcmp( bufferA, "" ), "got bufferA %s\n", debugstr_a(bufferA) );
+
+    memset( bufferW, 0xcd, sizeof(bufferW) );
+    ret = ImmGetDescriptionW( hkl, bufferW, 12 );
+    todo_wine
+    ok( ret == 11, "ImmGetDescriptionW returned %lu\n", ret );
+    todo_wine
+    ok( !wcscmp( bufferW, L"WineTest IM" ), "got bufferW %s\n", debugstr_w(bufferW) );
+    memset( bufferA, 0xcd, sizeof(bufferA) );
+    ret = ImmGetDescriptionA( hkl, bufferA, 12 );
+    todo_wine
+    ok( ret == 12, "ImmGetDescriptionA returned %lu\n", ret );
+    todo_wine
+    ok( !strcmp( bufferA, "WineTest IME" ), "got bufferA %s\n", debugstr_a(bufferA) );
+
+    memset( bufferW, 0xcd, sizeof(bufferW) );
+    ret = ImmGetDescriptionW( hkl, bufferW, 13 );
+    todo_wine
+    ok( ret == 12, "ImmGetDescriptionW returned %lu\n", ret );
+    todo_wine
+    ok( !wcscmp( bufferW, L"WineTest IME" ), "got bufferW %s\n", debugstr_w(bufferW) );
+    memset( bufferA, 0xcd, sizeof(bufferA) );
+    ret = ImmGetDescriptionA( hkl, bufferA, 13 );
+    todo_wine
+    ok( ret == 12, "ImmGetDescriptionA returned %lu\n", ret );
+    todo_wine
+    ok( !strcmp( bufferA, "WineTest IME" ), "got bufferA %s\n", debugstr_a(bufferA) );
+
+    ime_cleanup( hkl );
+}
+
 START_TEST(imm32)
 {
     if (!is_ime_enabled())
@@ -2805,6 +2829,7 @@ START_TEST(imm32)
     test_com_initialization();
 
     test_ImmInstallIME();
+    test_ImmGetDescription();
 
     if (init())
     {
@@ -2817,7 +2842,6 @@ START_TEST(imm32)
         test_ImmThreads();
         test_ImmIsUIMessage();
         test_ImmGetContext();
-        test_ImmGetDescription();
         test_ImmDefaultHwnd();
         test_default_ime_window_creation();
         test_ImmGetIMCLockCount();
