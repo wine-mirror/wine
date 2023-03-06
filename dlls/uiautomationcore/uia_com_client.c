@@ -26,6 +26,188 @@ WINE_DEFAULT_DEBUG_CHANNEL(uiautomation);
 static HRESULT get_uia_condition_struct_from_iface(IUIAutomationCondition *condition, struct UiaCondition **cond_struct);
 
 /*
+ * IUIAutomationOrCondition interface.
+ */
+struct uia_or_condition {
+    IUIAutomationOrCondition IUIAutomationOrCondition_iface;
+    LONG ref;
+
+    IUIAutomationCondition **child_ifaces;
+    int child_count;
+
+    struct UiaAndOrCondition condition;
+};
+
+static inline struct uia_or_condition *impl_from_IUIAutomationOrCondition(IUIAutomationOrCondition *iface)
+{
+    return CONTAINING_RECORD(iface, struct uia_or_condition, IUIAutomationOrCondition_iface);
+}
+
+static HRESULT WINAPI uia_or_condition_QueryInterface(IUIAutomationOrCondition *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUIAutomationOrCondition) || IsEqualIID(riid, &IID_IUIAutomationCondition) ||
+            IsEqualIID(riid, &IID_IUnknown))
+        *ppv = iface;
+    else
+        return E_NOINTERFACE;
+
+    IUIAutomationOrCondition_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI uia_or_condition_AddRef(IUIAutomationOrCondition *iface)
+{
+    struct uia_or_condition *uia_or_condition = impl_from_IUIAutomationOrCondition(iface);
+    ULONG ref = InterlockedIncrement(&uia_or_condition->ref);
+
+    TRACE("%p, refcount %ld\n", uia_or_condition, ref);
+    return ref;
+}
+
+static ULONG WINAPI uia_or_condition_Release(IUIAutomationOrCondition *iface)
+{
+    struct uia_or_condition *uia_or_condition = impl_from_IUIAutomationOrCondition(iface);
+    ULONG ref = InterlockedDecrement(&uia_or_condition->ref);
+
+    TRACE("%p, refcount %ld\n", uia_or_condition, ref);
+
+    if (!ref)
+    {
+        if (uia_or_condition->child_ifaces)
+        {
+            int i;
+
+            for (i = 0; i < uia_or_condition->child_count; i++)
+            {
+                if (uia_or_condition->child_ifaces[i])
+                    IUIAutomationCondition_Release(uia_or_condition->child_ifaces[i]);
+            }
+        }
+
+        heap_free(uia_or_condition->child_ifaces);
+        heap_free(uia_or_condition->condition.ppConditions);
+        heap_free(uia_or_condition);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI uia_or_condition_get_ChildCount(IUIAutomationOrCondition *iface, int *child_count)
+{
+    struct uia_or_condition *uia_or_condition = impl_from_IUIAutomationOrCondition(iface);
+
+    TRACE("%p, %p\n", iface, child_count);
+
+    if (!child_count)
+        return E_POINTER;
+
+    *child_count = uia_or_condition->child_count;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI uia_or_condition_GetChildrenAsNativeArray(IUIAutomationOrCondition *iface,
+        IUIAutomationCondition ***out_children, int *out_children_count)
+{
+    struct uia_or_condition *uia_or_condition = impl_from_IUIAutomationOrCondition(iface);
+    IUIAutomationCondition **children;
+    int i;
+
+    TRACE("%p, %p, %p\n", iface, out_children, out_children_count);
+
+    if (!out_children)
+        return E_POINTER;
+
+    *out_children = NULL;
+
+    if (!out_children_count)
+        return E_POINTER;
+
+    if (!(children = CoTaskMemAlloc(uia_or_condition->child_count * sizeof(*children))))
+        return E_OUTOFMEMORY;
+
+    for (i = 0; i < uia_or_condition->child_count; i++)
+    {
+        children[i] = uia_or_condition->child_ifaces[i];
+        IUIAutomationCondition_AddRef(uia_or_condition->child_ifaces[i]);
+    }
+
+    *out_children = children;
+    *out_children_count = uia_or_condition->child_count;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI uia_or_condition_GetChildren(IUIAutomationOrCondition *iface, SAFEARRAY **out_children)
+{
+    FIXME("%p, %p: stub\n", iface, out_children);
+    return E_NOTIMPL;
+}
+
+static const IUIAutomationOrConditionVtbl uia_or_condition_vtbl = {
+    uia_or_condition_QueryInterface,
+    uia_or_condition_AddRef,
+    uia_or_condition_Release,
+    uia_or_condition_get_ChildCount,
+    uia_or_condition_GetChildrenAsNativeArray,
+    uia_or_condition_GetChildren,
+};
+
+static HRESULT create_uia_or_condition_iface(IUIAutomationCondition **out_cond, IUIAutomationCondition **in_conds,
+        int in_cond_count)
+{
+    struct uia_or_condition *uia_or_condition;
+    int i;
+
+    if (!out_cond)
+        return E_POINTER;
+
+    *out_cond = NULL;
+
+    uia_or_condition = heap_alloc_zero(sizeof(*uia_or_condition));
+    if (!uia_or_condition)
+        return E_OUTOFMEMORY;
+
+    uia_or_condition->IUIAutomationOrCondition_iface.lpVtbl = &uia_or_condition_vtbl;
+    uia_or_condition->ref = 1;
+
+    uia_or_condition->child_ifaces = heap_alloc_zero(sizeof(*in_conds) * in_cond_count);
+    if (!uia_or_condition->child_ifaces)
+    {
+        IUIAutomationOrCondition_Release(&uia_or_condition->IUIAutomationOrCondition_iface);
+        return E_OUTOFMEMORY;
+    }
+
+    uia_or_condition->condition.ppConditions = heap_alloc_zero(sizeof(*uia_or_condition->condition.ppConditions) * in_cond_count);
+    if (!uia_or_condition->condition.ppConditions)
+    {
+        IUIAutomationOrCondition_Release(&uia_or_condition->IUIAutomationOrCondition_iface);
+        return E_OUTOFMEMORY;
+    }
+
+    uia_or_condition->condition.ConditionType = ConditionType_Or;
+    uia_or_condition->child_count = uia_or_condition->condition.cConditions = in_cond_count;
+    for (i = 0; i < in_cond_count; i++)
+    {
+        HRESULT hr;
+
+        hr = get_uia_condition_struct_from_iface(in_conds[i], &uia_or_condition->condition.ppConditions[i]);
+        if (FAILED(hr))
+        {
+            IUIAutomationOrCondition_Release(&uia_or_condition->IUIAutomationOrCondition_iface);
+            return hr;
+        }
+
+        uia_or_condition->child_ifaces[i] = in_conds[i];
+        IUIAutomationCondition_AddRef(in_conds[i]);
+    }
+
+    *out_cond = (IUIAutomationCondition *)&uia_or_condition->IUIAutomationOrCondition_iface;
+    return S_OK;
+}
+
+/*
  * IUIAutomationNotCondition interface.
  */
 struct uia_not_condition {
@@ -396,6 +578,13 @@ static HRESULT get_uia_condition_struct_from_iface(IUIAutomationCondition *condi
         struct uia_not_condition *cond;
 
         cond = impl_from_IUIAutomationNotCondition((IUIAutomationNotCondition *)condition);
+        *cond_struct = (struct UiaCondition *)&cond->condition;
+    }
+    else if (condition->lpVtbl == (IUIAutomationConditionVtbl *)&uia_or_condition_vtbl)
+    {
+        struct uia_or_condition *cond;
+
+        cond = impl_from_IUIAutomationOrCondition((IUIAutomationOrCondition *)condition);
         *cond_struct = (struct UiaCondition *)&cond->condition;
     }
     else
@@ -1649,8 +1838,11 @@ static HRESULT WINAPI uia_iface_CreateAndConditionFromNativeArray(IUIAutomation6
 static HRESULT WINAPI uia_iface_CreateOrCondition(IUIAutomation6 *iface, IUIAutomationCondition *cond1,
         IUIAutomationCondition *cond2, IUIAutomationCondition **out_condition)
 {
-    FIXME("%p, %p, %p, %p: stub\n", iface, cond1, cond2, out_condition);
-    return E_NOTIMPL;
+    IUIAutomationCondition *cond_arr[2] = { cond1, cond2 };
+
+    TRACE("%p, %p, %p, %p\n", iface, cond1, cond2, out_condition);
+
+    return create_uia_or_condition_iface(out_condition, cond_arr, ARRAY_SIZE(cond_arr));
 }
 
 static HRESULT WINAPI uia_iface_CreateOrConditionFromArray(IUIAutomation6 *iface, SAFEARRAY *conds,

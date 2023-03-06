@@ -10119,12 +10119,14 @@ static IUnknown Object = {&ObjectVtbl};
 
 static void test_CUIAutomation_condition_ifaces(IUIAutomation *uia_iface)
 {
-    IUIAutomationPropertyCondition *prop_cond;
+    IUIAutomationPropertyCondition *prop_cond, *prop_cond2;
+    IUIAutomationCondition *cond, **cond_arr;
     enum PropertyConditionFlags prop_flags;
     IUIAutomationBoolCondition *bool_cond;
     IUIAutomationNotCondition *not_cond;
-    IUIAutomationCondition *cond;
+    IUIAutomationOrCondition *or_cond;
     PROPERTYID prop_id;
+    int child_count;
     BOOL tmp_b;
     HRESULT hr;
     VARIANT v;
@@ -10279,6 +10281,111 @@ static void test_CUIAutomation_condition_ifaces(IUIAutomation *uia_iface)
     IUIAutomationCondition_Release(cond);
 
     IUIAutomationNotCondition_Release(not_cond);
+
+    /*
+     * IUIAutomationOrCondition tests.
+     */
+    cond = NULL;
+    VariantInit(&v);
+    V_VT(&v) = VT_BOOL;
+    V_BOOL(&v) = VARIANT_FALSE;
+    /* Create two condition interfaces to use for our IUIAutomationOrCondition. */
+    hr = IUIAutomation_CreatePropertyCondition(uia_iface, UIA_IsControlElementPropertyId, v, &cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cond, "cond == NULL\n");
+
+    hr = IUIAutomationCondition_QueryInterface(cond, &IID_IUIAutomationPropertyCondition, (void **)&prop_cond);
+    IUIAutomationCondition_Release(cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!prop_cond, "prop_cond == NULL\n");
+
+    cond = NULL;
+    VariantInit(&v);
+    V_VT(&v) = VT_BOOL;
+    V_BOOL(&v) = VARIANT_TRUE;
+    hr = IUIAutomation_CreatePropertyCondition(uia_iface, UIA_IsContentElementPropertyId, v, &cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cond, "cond == NULL\n");
+
+    hr = IUIAutomationCondition_QueryInterface(cond, &IID_IUIAutomationPropertyCondition, (void **)&prop_cond2);
+    IUIAutomationCondition_Release(cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!prop_cond2, "prop_cond2 == NULL\n");
+
+    /* NULL input argument tests. */
+    hr = IUIAutomation_CreateOrCondition(uia_iface, (IUIAutomationCondition *)prop_cond,
+            (IUIAutomationCondition *)prop_cond2, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    cond = (void *)0xdeadbeef;
+    hr = IUIAutomation_CreateOrCondition(uia_iface, NULL, (IUIAutomationCondition *)prop_cond2, &cond);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    ok(!cond, "cond != NULL\n");
+
+    cond = (void *)0xdeadbeef;
+    hr = IUIAutomation_CreateOrCondition(uia_iface, (IUIAutomationCondition *)prop_cond, NULL, &cond);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    ok(!cond, "cond != NULL\n");
+
+    /* One of the IUIAutomationCondition interfaces are invalid. */
+    cond = (void *)0xdeadbeef;
+    hr = IUIAutomation_CreateOrCondition(uia_iface, (IUIAutomationCondition *)prop_cond,
+            (IUIAutomationCondition *)&Object, &cond);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    ok(!cond, "cond != NULL\n");
+
+    cond = NULL;
+    hr = IUIAutomation_CreateOrCondition(uia_iface, (IUIAutomationCondition *)prop_cond,
+            (IUIAutomationCondition *)prop_cond2, &cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cond, "cond == NULL\n");
+
+    or_cond = NULL;
+    hr = IUIAutomationCondition_QueryInterface(cond, &IID_IUIAutomationOrCondition, (void **)&or_cond);
+    IUIAutomationCondition_Release(cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!or_cond, "or_cond == NULL\n");
+
+    /* References held to both passed in interfaces. */
+    ref = IUIAutomationPropertyCondition_Release(prop_cond);
+    ok(ref == 1, "Unexpected ref %ld\n", ref);
+
+    ref = IUIAutomationPropertyCondition_Release(prop_cond2);
+    ok(ref == 1, "Unexpected ref %ld\n", ref);
+
+    hr = IUIAutomationOrCondition_get_ChildCount(or_cond, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    child_count = 0;
+    hr = IUIAutomationOrCondition_get_ChildCount(or_cond, &child_count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(child_count == 2, "Unexpected child_count %d.\n", child_count);
+
+    child_count = 10;
+    hr = IUIAutomationOrCondition_GetChildrenAsNativeArray(or_cond, NULL, &child_count);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    ok(child_count == 10, "Unexpected child_count %d.\n", child_count);
+
+    cond_arr = (void *)0xdeadbeef;
+    hr = IUIAutomationOrCondition_GetChildrenAsNativeArray(or_cond, &cond_arr, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    ok(!cond_arr, "cond_arr != NULL\n");
+
+    child_count = 0;
+    cond_arr = NULL;
+    hr = IUIAutomationOrCondition_GetChildrenAsNativeArray(or_cond, &cond_arr, &child_count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(child_count == 2, "Unexpected child_count %d.\n", child_count);
+    ok(!!cond_arr, "cond_arr == NULL\n");
+
+    ok(iface_cmp((IUnknown *)cond_arr[0], (IUnknown *)prop_cond), "cond_arr[0] != prop_cond\n");
+    IUIAutomationCondition_Release(cond_arr[0]);
+
+    ok(iface_cmp((IUnknown *)cond_arr[1], (IUnknown *)prop_cond2), "cond_arr[1] != prop_cond2\n");
+    IUIAutomationCondition_Release(cond_arr[1]);
+
+    CoTaskMemFree(cond_arr);
+    IUIAutomationOrCondition_Release(or_cond);
 }
 
 struct uia_com_classes {
