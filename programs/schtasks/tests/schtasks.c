@@ -266,8 +266,10 @@ START_TEST(schtasks)
     r = DeleteFileA("test.xml");
     ok(r, "DeleteFileA failed: %lu\n", GetLastError());
 
-    ITaskFolder_DeleteFolder(root, wine_testW, 0);
-    ITaskFolder_DeleteFolder(root, wineW, 0);
+    r = ITaskFolder_DeleteFolder(root, wine_testW, 0);
+    ok(r == S_OK, "DeleteFolder(\\wine\\test) failed: %lx\n", r);
+    r = ITaskFolder_DeleteFolder(root, wineW, 0);
+    ok(r == S_OK, "DeleteFolder(\\wine) failed: %lx\n", r);
 
     ITaskFolder_Release(root);
     ITaskService_Release(service);
