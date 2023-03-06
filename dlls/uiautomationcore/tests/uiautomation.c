@@ -10430,6 +10430,29 @@ static void test_CUIAutomation_condition_ifaces(IUIAutomation *uia_iface)
 
     IUIAutomationPropertyCondition_Release(prop_cond);
     IUIAutomationNotCondition_Release(not_cond);
+
+    /*
+     * Condition used to get the raw TreeView. Equivalent to:
+     * if (1)
+     */
+    hr = IUIAutomation_get_RawViewCondition(uia_iface, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    cond = NULL;
+    hr = IUIAutomation_get_RawViewCondition(uia_iface, &cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cond, "cond == NULL\n");
+
+    hr = IUIAutomationCondition_QueryInterface(cond, &IID_IUIAutomationBoolCondition, (void **)&bool_cond);
+    IUIAutomationCondition_Release(cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!bool_cond, "bool_cond == NULL\n");
+
+    tmp_b = FALSE;
+    hr = IUIAutomationBoolCondition_get_BooleanValue(bool_cond, &tmp_b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(tmp_b == TRUE, "tmp_b != TRUE\n");
+    IUIAutomationBoolCondition_Release(bool_cond);
 }
 
 struct uia_com_classes {

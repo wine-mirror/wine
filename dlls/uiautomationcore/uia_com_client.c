@@ -1763,8 +1763,9 @@ static HRESULT WINAPI uia_iface_get_RawViewWalker(IUIAutomation6 *iface, IUIAuto
 
 static HRESULT WINAPI uia_iface_get_RawViewCondition(IUIAutomation6 *iface, IUIAutomationCondition **out_condition)
 {
-    FIXME("%p, %p: stub\n", iface, out_condition);
-    return E_NOTIMPL;
+    TRACE("%p, %p\n", iface, out_condition);
+
+    return create_uia_bool_condition_iface(out_condition, ConditionType_True);
 }
 
 static HRESULT WINAPI uia_iface_get_ControlViewCondition(IUIAutomation6 *iface, IUIAutomationCondition **out_condition)
