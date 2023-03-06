@@ -1769,8 +1769,34 @@ static HRESULT WINAPI uia_iface_get_RawViewCondition(IUIAutomation6 *iface, IUIA
 
 static HRESULT WINAPI uia_iface_get_ControlViewCondition(IUIAutomation6 *iface, IUIAutomationCondition **out_condition)
 {
-    FIXME("%p, %p: stub\n", iface, out_condition);
-    return E_NOTIMPL;
+    IUIAutomationCondition *prop_cond, *not_cond;
+    HRESULT hr;
+    VARIANT v;
+
+    TRACE("%p, %p\n", iface, out_condition);
+
+    if (!out_condition)
+        return E_POINTER;
+
+    *out_condition = NULL;
+
+    VariantInit(&v);
+    V_VT(&v) = VT_BOOL;
+    V_BOOL(&v) = VARIANT_FALSE;
+    hr = create_uia_property_condition_iface(&prop_cond, UIA_IsControlElementPropertyId, v, PropertyConditionFlags_None);
+    if (FAILED(hr))
+        return hr;
+
+    hr = create_uia_not_condition_iface(&not_cond, prop_cond);
+    if (FAILED(hr))
+    {
+        IUIAutomationCondition_Release(prop_cond);
+        return hr;
+    }
+
+    *out_condition = not_cond;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI uia_iface_get_ContentViewCondition(IUIAutomation6 *iface, IUIAutomationCondition **out_condition)

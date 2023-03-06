@@ -10386,6 +10386,50 @@ static void test_CUIAutomation_condition_ifaces(IUIAutomation *uia_iface)
 
     CoTaskMemFree(cond_arr);
     IUIAutomationOrCondition_Release(or_cond);
+
+    /*
+     * Condition used to get the control TreeView. Equivalent to:
+     * if (!(UIA_IsControlElementPropertyId == VARIANT_FALSE))
+     */
+    hr = IUIAutomation_get_ControlViewCondition(uia_iface, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    cond = NULL;
+    hr = IUIAutomation_get_ControlViewCondition(uia_iface, &cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cond, "cond == NULL\n");
+
+    hr = IUIAutomationCondition_QueryInterface(cond, &IID_IUIAutomationNotCondition, (void **)&not_cond);
+    IUIAutomationCondition_Release(cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!not_cond, "not_cond == NULL\n");
+
+    cond = NULL;
+    hr = IUIAutomationNotCondition_GetChild(not_cond, &cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cond, "cond == NULL\n");
+
+    hr = IUIAutomationCondition_QueryInterface(cond, &IID_IUIAutomationPropertyCondition, (void **)&prop_cond);
+    IUIAutomationCondition_Release(cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!prop_cond, "prop_cond == NULL\n");
+
+    hr = IUIAutomationPropertyCondition_get_PropertyId(prop_cond, &prop_id);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(prop_id == UIA_IsControlElementPropertyId, "Unexpected prop_id %d.\n", prop_id);
+
+    VariantInit(&v);
+    hr = IUIAutomationPropertyCondition_get_PropertyValue(prop_cond, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(check_variant_bool(&v, FALSE), "Unexpected BOOL %#x\n", V_BOOL(&v));
+    VariantClear(&v);
+
+    hr = IUIAutomationPropertyCondition_get_PropertyConditionFlags(prop_cond, &prop_flags);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(prop_flags == PropertyConditionFlags_None, "Unexpected flags %#x.\n", prop_flags);
+
+    IUIAutomationPropertyCondition_Release(prop_cond);
+    IUIAutomationNotCondition_Release(not_cond);
 }
 
 struct uia_com_classes {
