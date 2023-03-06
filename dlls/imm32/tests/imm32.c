@@ -55,6 +55,18 @@ static const char *debugstr_ok( const char *cond )
         t v = (r);                                                                                 \
         ok( v == (e), "%s " f "\n", debugstr_ok( #r ), v, ##__VA_ARGS__ );                         \
     } while (0)
+#define ok_wcs( e, r )                                                                             \
+    do                                                                                             \
+    {                                                                                              \
+        const WCHAR *v = (r);                                                                      \
+        ok( !wcscmp( v, (e) ), "%s %s\n", debugstr_ok(#r), debugstr_w(v) );                        \
+    } while (0)
+#define ok_str( e, r )                                                                             \
+    do                                                                                             \
+    {                                                                                              \
+        const char *v = (r);                                                                       \
+        ok( !strcmp( v, (e) ), "%s %s\n", debugstr_ok(#r), debugstr_a(v) );                        \
+    } while (0)
 #define ok_ret( e, r ) ok_eq( e, r, UINT_PTR, "%Iu, error %ld", GetLastError() )
 
 BOOL WINAPI ImmSetActiveContext(HWND, HIMC, BOOL);
@@ -2459,6 +2471,7 @@ static BOOL todo_ImeInquire;
 DEFINE_EXPECT( ImeInquire );
 static BOOL todo_ImeDestroy;
 DEFINE_EXPECT( ImeDestroy );
+DEFINE_EXPECT( ImeEscape );
 static BOOL todo_IME_DLL_PROCESS_ATTACH;
 DEFINE_EXPECT( IME_DLL_PROCESS_ATTACH );
 static BOOL todo_IME_DLL_PROCESS_DETACH;
@@ -2522,7 +2535,40 @@ static UINT WINAPI ime_ImeEnumRegisterWord( REGISTERWORDENUMPROCW proc, const WC
 static LRESULT WINAPI ime_ImeEscape( HIMC himc, UINT escape, void *data )
 {
     ime_trace( "himc %p, escape %#x, data %p\n", himc, escape, data );
-    ok( 0, "unexpected call\n" );
+
+    CHECK_EXPECT( ImeEscape );
+
+    switch (escape)
+    {
+    case IME_ESC_SET_EUDC_DICTIONARY:
+        if (!data) return 4;
+        if (ime_info.fdwProperty & IME_PROP_UNICODE)
+        {
+            todo_wine_if(*(WCHAR *)data != 'E')
+            ok_wcs( L"EscapeIme", data );
+        }
+        else
+        {
+            todo_wine_if(*(char *)data != 'E')
+            ok_str( "EscapeIme", data );
+        }
+        /* fallthrough */
+    case IME_ESC_QUERY_SUPPORT:
+    case IME_ESC_SEQUENCE_TO_INTERNAL:
+    case IME_ESC_GET_EUDC_DICTIONARY:
+    case IME_ESC_MAX_KEY:
+    case IME_ESC_IME_NAME:
+    case IME_ESC_HANJA_MODE:
+    case IME_ESC_GETHELPFILENAME:
+        if (!data) return 4;
+        if (ime_info.fdwProperty & IME_PROP_UNICODE) wcscpy( data, L"ImeEscape" );
+        else strcpy( data, "ImeEscape" );
+        return 4;
+    }
+
+    ok_eq( 0xdeadbeef, escape, UINT, "%#x" );
+    ok_eq( NULL, data, void *, "%p" );
+
     return TRUE;
 }
 
@@ -3144,6 +3190,116 @@ cleanup:
     SET_ENABLE( IME_DLL_PROCESS_DETACH, FALSE );
 }
 
+static void test_ImmEscape( BOOL unicode )
+{
+    HKL hkl = GetKeyboardLayout( 0 );
+    DWORD i, codes[] =
+    {
+        IME_ESC_QUERY_SUPPORT,
+        IME_ESC_SEQUENCE_TO_INTERNAL,
+        IME_ESC_GET_EUDC_DICTIONARY,
+        IME_ESC_SET_EUDC_DICTIONARY,
+        IME_ESC_MAX_KEY,
+        IME_ESC_IME_NAME,
+        IME_ESC_HANJA_MODE,
+        IME_ESC_GETHELPFILENAME,
+    };
+    WCHAR bufferW[512];
+    char bufferA[512];
+
+    SET_ENABLE( ImeEscape, TRUE );
+
+    winetest_push_context( unicode ? "unicode" : "ansi" );
+
+    SetLastError( 0xdeadbeef );
+    ok_ret( 0, ImmEscapeW( hkl, 0, 0, NULL ) );
+    ok_ret( 0, ImmEscapeA( hkl, 0, 0, NULL ) );
+    todo_wine
+    ok_ret( 0xdeadbeef, GetLastError() );
+
+    /* IME_PROP_END_UNLOAD for the IME to unload / reload. */
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD;
+    if (unicode) ime_info.fdwProperty |= IME_PROP_UNICODE;
+
+    if (!(hkl = ime_install())) goto cleanup;
+
+    for (i = 0; i < ARRAY_SIZE(codes); ++i)
+    {
+        winetest_push_context( "esc %#lx", codes[i] );
+
+        SET_EXPECT( ImeEscape );
+        ok_ret( 4, ImmEscapeW( hkl, 0, codes[i], NULL ) );
+        CHECK_CALLED( ImeEscape );
+
+        SET_EXPECT( ImeEscape );
+        memset( bufferW, 0xcd, sizeof(bufferW) );
+        if (codes[i] == IME_ESC_SET_EUDC_DICTIONARY) wcscpy( bufferW, L"EscapeIme" );
+        ok_ret( 4, ImmEscapeW( hkl, 0, codes[i], bufferW ) );
+        if (unicode || codes[i] == IME_ESC_GET_EUDC_DICTIONARY || codes[i] == IME_ESC_IME_NAME ||
+            codes[i] == IME_ESC_GETHELPFILENAME)
+        {
+            ok_wcs( L"ImeEscape", bufferW );
+            ok_eq( 0xcdcd, bufferW[10], WORD, "%#x" );
+        }
+        else if (codes[i] == IME_ESC_SET_EUDC_DICTIONARY)
+        {
+            ok_wcs( L"EscapeIme", bufferW );
+            ok_eq( 0xcdcd, bufferW[10], WORD, "%#x" );
+        }
+        else if (codes[i] == IME_ESC_HANJA_MODE)
+        {
+            todo_wine
+            ok_eq( 0xcdcd, bufferW[0], WORD, "%#x" );
+        }
+        else
+        {
+            ok( !memcmp( bufferW, "ImeEscape", 10 ), "got bufferW %s\n", debugstr_w(bufferW) );
+            ok_eq( 0xcdcd, bufferW[5], WORD, "%#x" );
+        }
+        CHECK_CALLED( ImeEscape );
+
+        SET_EXPECT( ImeEscape );
+        ok_ret( 4, ImmEscapeA( hkl, 0, codes[i], NULL ) );
+        CHECK_CALLED( ImeEscape );
+
+        SET_EXPECT( ImeEscape );
+        memset( bufferA, 0xcd, sizeof(bufferA) );
+        if (codes[i] == IME_ESC_SET_EUDC_DICTIONARY) strcpy( bufferA, "EscapeIme" );
+        ok_ret( 4, ImmEscapeA( hkl, 0, codes[i], bufferA ) );
+        if (!unicode || codes[i] == IME_ESC_GET_EUDC_DICTIONARY || codes[i] == IME_ESC_IME_NAME ||
+            codes[i] == IME_ESC_GETHELPFILENAME)
+        {
+            ok_str( "ImeEscape", bufferA );
+            ok_eq( 0xcd, bufferA[10], BYTE, "%#x" );
+        }
+        else if (codes[i] == IME_ESC_SET_EUDC_DICTIONARY)
+        {
+            ok_str( "EscapeIme", bufferA );
+            ok_eq( 0xcd, bufferA[10], BYTE, "%#x" );
+        }
+        else if (codes[i] == IME_ESC_HANJA_MODE)
+        {
+            todo_wine
+            ok_eq( 0xcd, bufferA[0], BYTE, "%#x" );
+        }
+        else
+        {
+            ok( !memcmp( bufferA, L"ImeEscape", 10 * sizeof(WCHAR) ), "got bufferA %s\n", debugstr_a(bufferA) );
+            ok_eq( 0xcd, bufferA[20], BYTE, "%#x" );
+        }
+        CHECK_CALLED( ImeEscape );
+
+        winetest_pop_context();
+    }
+
+    ime_cleanup( hkl );
+
+cleanup:
+    SET_ENABLE( ImeEscape, FALSE );
+
+    winetest_pop_context();
+}
+
 START_TEST(imm32)
 {
     if (!is_ime_enabled())
@@ -3159,6 +3315,9 @@ START_TEST(imm32)
     test_ImmGetIMEFileName();
     test_ImmIsIME();
     test_ImmGetProperty();
+
+    test_ImmEscape( FALSE );
+    test_ImmEscape( TRUE );
 
     if (init())
     {
