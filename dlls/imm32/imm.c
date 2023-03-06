@@ -467,6 +467,7 @@ BOOL WINAPI ImmFreeLayout( HKL hkl )
 BOOL WINAPI ImmLoadIME( HKL hkl )
 {
     WCHAR buffer[MAX_PATH] = {0};
+    BOOL use_default_ime;
     struct ime *ime;
 
     TRACE( "hkl %p\n", hkl );
@@ -479,17 +480,19 @@ BOOL WINAPI ImmLoadIME( HKL hkl )
     if (!(ime = calloc( 1, sizeof(*ime) ))) return FALSE;
     ime->hkl = hkl;
 
-    if (!ImmGetIMEFileNameW( hkl, buffer, MAX_PATH )) ime->module = NULL;
-    else ime->module = LoadLibraryW( buffer );
+    if (!ImmGetIMEFileNameW( hkl, buffer, MAX_PATH )) use_default_ime = TRUE;
+    else if (!(ime->module = LoadLibraryW( buffer ))) use_default_ime = TRUE;
+    else use_default_ime = FALSE;
 
-    if (!ime->module)
+    if (use_default_ime)
     {
         if (*buffer) WARN( "Failed to load %s, falling back to default.\n", debugstr_w(buffer) );
-        if (!(ime->module = load_graphics_driver())) goto failed;
+        if (!(ime->module = load_graphics_driver())) ime->module = LoadLibraryW( L"imm32" );
     }
 
 #define LOAD_FUNCPTR( f )                                                \
-    if (!(ime->p##f = (void *)GetProcAddress( ime->module, #f )))        \
+    if (!(ime->p##f = (void *)GetProcAddress( ime->module, #f )) &&      \
+        !(ime->p##f = use_default_ime ? (void *)f : NULL))               \
     {                                                                    \
         WARN( "Can't find function %s in HKL %p IME\n", #f, hkl );       \
         goto failed;                                                     \
