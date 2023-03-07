@@ -26,6 +26,7 @@
 #endif
 
 #include <wayland-client.h>
+#include "xdg-output-unstable-v1-client-protocol.h"
 
 #include "windef.h"
 #include "winbase.h"
@@ -49,6 +50,7 @@ struct wayland
 {
     struct wl_event_queue *wl_event_queue;
     struct wl_registry *wl_registry;
+    struct zxdg_output_manager_v1 *zxdg_output_manager_v1;
     struct wl_list output_list;
 };
 
@@ -64,9 +66,10 @@ struct wayland_output
 {
     struct wl_list link;
     struct wl_output *wl_output;
+    struct zxdg_output_v1 *zxdg_output_v1;
     struct rb_tree modes;
     struct wayland_output_mode *current_mode;
-    char name[20];
+    char *name;
     uint32_t global_id;
 };
 
@@ -83,6 +86,7 @@ void wayland_init_display_devices(void) DECLSPEC_HIDDEN;
 
 BOOL wayland_output_create(uint32_t id, uint32_t version) DECLSPEC_HIDDEN;
 void wayland_output_destroy(struct wayland_output *output) DECLSPEC_HIDDEN;
+void wayland_output_use_xdg_extension(struct wayland_output *output) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  *          USER driver functions

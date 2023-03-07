@@ -50,6 +50,18 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
         if (!wayland_output_create(id, version))
             ERR("Failed to create wayland_output for global id=%u\n", id);
     }
+    else if (strcmp(interface, "zxdg_output_manager_v1") == 0)
+    {
+        struct wayland_output *output;
+
+        process_wayland->zxdg_output_manager_v1 =
+            wl_registry_bind(registry, id, &zxdg_output_manager_v1_interface,
+                             version < 3 ? version : 3);
+
+        /* Add zxdg_output_v1 to existing outputs. */
+        wl_list_for_each(output, &process_wayland->output_list, link)
+            wayland_output_use_xdg_extension(output);
+    }
 }
 
 static void registry_handle_global_remove(void *data, struct wl_registry *registry,
