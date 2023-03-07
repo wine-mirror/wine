@@ -1344,6 +1344,7 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
 
     IMFPresentationDescriptor_Release(source->pres_desc);
     IMFMediaEventQueue_Shutdown(source->event_queue);
+    IMFByteStream_Close(source->byte_stream);
     IMFByteStream_Release(source->byte_stream);
 
     for (i = 0; i < source->stream_count; i++)

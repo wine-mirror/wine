@@ -1080,7 +1080,6 @@ static void test_source_resolver(void)
     hr = IMFMediaSource_Shutdown(mediasource);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    todo_wine
     ok(bytestream_closed, "Missing IMFByteStream::Close call\n");
 
     hr = IMFMediaSource_CreatePresentationDescriptor(mediasource, NULL);
