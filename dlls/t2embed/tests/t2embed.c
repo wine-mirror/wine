@@ -20,6 +20,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "t2embapi.h"
@@ -100,12 +101,15 @@ static void test_TTGetEmbeddingType(void)
     hdc = CreateCompatibleDC(0);
 
     ret = TTGetEmbeddingType(hdc, NULL);
-    ok(ret == E_NOTATRUETYPEFONT, "Unexpected retval %#lx.\n", ret);
+    ok(ret == E_NOTATRUETYPEFONT || (ret == E_PERMISSIONSINVALID && GetACP() == CP_UTF8),
+       "Unexpected retval %#lx.\n", ret);
 
     status = 0xdeadbeef;
     ret = TTGetEmbeddingType(hdc, &status);
-    ok(ret == E_NOTATRUETYPEFONT, "Unexpected retval %#lx.\n", ret);
-    ok(status == 0xdeadbeef, "Unexpected status %#lx.\n", status);
+    ok(ret == E_NOTATRUETYPEFONT || (ret == E_NONE && GetACP() == CP_UTF8),
+       "Unexpected retval %#lx.\n", ret);
+    ok(status == 0xdeadbeef || (status == EMBED_EDITABLE && GetACP() == CP_UTF8),
+       "Unexpected status %#lx.\n", status);
 
     memset(&logfont, 0, sizeof(logfont));
     logfont.lfHeight = 12;
