@@ -19,7 +19,6 @@
 #include "uia_private.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(uiautomation);
 
@@ -632,6 +631,10 @@ struct uia_cache_request {
 
     IUIAutomationCondition *view_condition;
     struct UiaCacheRequest cache_req;
+
+    int *prop_ids;
+    int prop_ids_count;
+    SIZE_T prop_ids_arr_size;
 };
 
 static inline struct uia_cache_request *impl_from_IUIAutomationCacheRequest(IUIAutomationCacheRequest *iface)
@@ -670,6 +673,7 @@ static ULONG WINAPI uia_cache_request_Release(IUIAutomationCacheRequest *iface)
     if (!ref)
     {
         IUIAutomationCondition_Release(uia_cache_request->view_condition);
+        heap_free(uia_cache_request->prop_ids);
         heap_free(uia_cache_request);
     }
 
@@ -678,8 +682,33 @@ static ULONG WINAPI uia_cache_request_Release(IUIAutomationCacheRequest *iface)
 
 static HRESULT WINAPI uia_cache_request_AddProperty(IUIAutomationCacheRequest *iface, PROPERTYID prop_id)
 {
-    FIXME("%p, %d: stub\n", iface, prop_id);
-    return E_NOTIMPL;
+    struct uia_cache_request *uia_cache_request = impl_from_IUIAutomationCacheRequest(iface);
+    const struct uia_prop_info *prop_info = uia_prop_info_from_id(prop_id);
+    int i;
+
+    TRACE("%p, %d\n", iface, prop_id);
+
+    if (!prop_info)
+        return E_INVALIDARG;
+
+    /* Don't add a duplicate property to the cache request. */
+    for (i = 0; i < uia_cache_request->prop_ids_count; i++)
+    {
+        if (uia_cache_request->prop_ids[i] == prop_id)
+            return S_OK;
+    }
+
+    if (!uia_array_reserve((void **)&uia_cache_request->prop_ids, &uia_cache_request->prop_ids_arr_size,
+                uia_cache_request->prop_ids_count + 1, sizeof(*uia_cache_request->prop_ids)))
+        return E_OUTOFMEMORY;
+
+    uia_cache_request->prop_ids[uia_cache_request->prop_ids_count] = prop_id;
+    uia_cache_request->prop_ids_count++;
+
+    uia_cache_request->cache_req.pProperties = uia_cache_request->prop_ids;
+    uia_cache_request->cache_req.cProperties = uia_cache_request->prop_ids_count;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI uia_cache_request_AddPattern(IUIAutomationCacheRequest *iface, PATTERNID pattern_id)
@@ -846,6 +875,14 @@ static HRESULT create_uia_cache_request_iface(IUIAutomationCacheRequest **out_ca
     get_uia_condition_struct_from_iface(view_condition, &uia_cache_request->cache_req.pViewCondition);
     uia_cache_request->cache_req.Scope = TreeScope_Element;
     uia_cache_request->cache_req.automationElementMode = AutomationElementMode_Full;
+
+    hr = IUIAutomationCacheRequest_AddProperty(&uia_cache_request->IUIAutomationCacheRequest_iface,
+            UIA_RuntimeIdPropertyId);
+    if (FAILED(hr))
+    {
+        IUIAutomationCacheRequest_Release(&uia_cache_request->IUIAutomationCacheRequest_iface);
+        return hr;
+    }
 
     *out_cache_req = &uia_cache_request->IUIAutomationCacheRequest_iface;
     return S_OK;

@@ -10839,6 +10839,16 @@ static void test_CUIAutomation_cache_request_iface(IUIAutomation *uia_iface)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     todo_wine ok(elem_mode == AutomationElementMode_None, "Unexpected element mode %#x\n", elem_mode);
 
+    /*
+     * AddProperty tests.
+     */
+    hr = IUIAutomationCacheRequest_AddProperty(cache_req, UIA_IsContentElementPropertyId);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Invalid property ID. */
+    hr = IUIAutomationCacheRequest_AddProperty(cache_req, 1);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
     IUIAutomationCacheRequest_Release(cache_req);
 }
 
@@ -10849,13 +10859,13 @@ static const struct prov_method_sequence get_elem_cache_seq[] = {
 };
 
 static const struct prov_method_sequence get_cached_prop_val_seq[] = {
-    { &Provider_child, FRAG_GET_RUNTIME_ID, METHOD_TODO },
+    { &Provider_child, FRAG_GET_RUNTIME_ID },
     { 0 },
 };
 
 static const struct prov_method_sequence get_cached_prop_val_seq2[] = {
-    { &Provider_child, FRAG_GET_RUNTIME_ID, METHOD_TODO },
-    { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_IsControlElementPropertyId */
+    { &Provider_child, FRAG_GET_RUNTIME_ID },
+    { &Provider_child, PROV_GET_PROPERTY_VALUE }, /* UIA_IsControlElementPropertyId */
     { 0 },
 };
 
@@ -10963,7 +10973,7 @@ static void test_Element_cache_methods(IUIAutomation *uia_iface)
      * values.
      */
     hr = IUIAutomationCacheRequest_AddProperty(cache_req, UIA_IsControlElementPropertyId);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     Provider_child.runtime_id[0] = Provider_child.runtime_id[1] = 0xdeadb33f;
     element2 = NULL;

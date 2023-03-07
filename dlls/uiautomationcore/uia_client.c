@@ -19,41 +19,10 @@
 #include "uia_private.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(uiautomation);
 
 static const struct UiaCondition UiaFalseCondition = { ConditionType_False };
-
-static BOOL uia_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, SIZE_T size)
-{
-    SIZE_T max_capacity, new_capacity;
-    void *new_elements;
-
-    if (count <= *capacity)
-        return TRUE;
-
-    max_capacity = ~(SIZE_T)0 / size;
-    if (count > max_capacity)
-        return FALSE;
-
-    new_capacity = max(1, *capacity);
-    while (new_capacity < count && new_capacity <= max_capacity / 2)
-        new_capacity *= 2;
-    if (new_capacity < count)
-        new_capacity = count;
-
-    if (!*elements)
-        new_elements = heap_alloc_zero(new_capacity * size);
-    else
-        new_elements = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *elements, new_capacity * size);
-    if (!new_elements)
-        return FALSE;
-
-    *elements = new_elements;
-    *capacity = new_capacity;
-    return TRUE;
-}
 
 struct uia_node_array {
     HUIANODE *nodes;
