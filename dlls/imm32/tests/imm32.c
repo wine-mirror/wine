@@ -3332,6 +3332,7 @@ static void test_ImmGetProperty(void)
     ok_ret( expect->fdwSelectCaps,     ImmGetProperty( hkl, IGP_SELECT ) );
     ok_ret( IMEVER_0400,               ImmGetProperty( hkl, IGP_GETIMEVERSION ) );
     ok_ret( expect->fdwUICaps,         ImmGetProperty( hkl, IGP_UI ) );
+    todo_wine
     ok_ret( 0xdeadbeef, GetLastError() );
 
     /* IME_PROP_END_UNLOAD for the IME to unload / reload. */

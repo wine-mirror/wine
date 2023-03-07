@@ -46,16 +46,15 @@ BOOL WINAPI ImeDestroy( UINT force )
 
 BOOL WINAPI ImeSelect( HIMC himc, BOOL select )
 {
-    FIXME( "himc %p, select %d stub!\n", himc, select );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    FIXME( "himc %p, select %d semi-stub!\n", himc, select );
+    return TRUE;
 }
 
 BOOL WINAPI ImeSetActiveContext( HIMC himc, BOOL flag )
 {
-    FIXME( "himc %p, flag %#x stub!\n", himc, flag );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    static int once;
+    if (!once++) FIXME( "himc %p, flag %#x stub!\n", himc, flag );
+    return TRUE;
 }
 
 BOOL WINAPI ImeProcessKey( HIMC himc, UINT vkey, LPARAM key_data, BYTE *key_state )

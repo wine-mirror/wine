@@ -525,23 +525,6 @@ BOOL WINAPI ImeInquire(LPIMEINFO lpIMEInfo, LPWSTR lpszUIClass, DWORD flags)
     return TRUE;
 }
 
-BOOL WINAPI ImeConfigure(HKL hKL,HWND hWnd, DWORD dwMode, LPVOID lpData)
-{
-    FIXME("(%p, %p, %ld, %p): stub\n", hKL, hWnd, dwMode, lpData);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-DWORD WINAPI ImeConversionList(HIMC hIMC, LPCWSTR lpSource,
-                LPCANDIDATELIST lpCandList, DWORD dwBufLen, UINT uFlag)
-
-{
-    FIXME("(%p, %s, %p, %ld, %d): stub\n", hIMC, debugstr_w(lpSource),
-                                          lpCandList, dwBufLen, uFlag);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
-}
-
 BOOL WINAPI ImeDestroy(UINT uForce)
 {
     TRACE("\n");
@@ -549,13 +532,6 @@ BOOL WINAPI ImeDestroy(UINT uForce)
     hSelectedFrom = NULL;
     hSelectedCount = 0;
     return TRUE;
-}
-
-LRESULT WINAPI ImeEscape(HIMC hIMC, UINT uSubFunc, LPVOID lpData)
-{
-    FIXME("(%p, %d, %p): stub\n", hIMC, uSubFunc, lpData);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
 }
 
 BOOL WINAPI ImeProcessKey(HIMC hIMC, UINT vKey, LPARAM lKeyData, const LPBYTE lpbKeyState)
@@ -599,15 +575,6 @@ BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
         UnlockRealIMC(hIMC);
     }
 
-    return TRUE;
-}
-
-BOOL WINAPI ImeSetActiveContext(HIMC hIMC,BOOL fFlag)
-{
-    static int once;
-
-    if (!once++)
-        FIXME("(%p, %x): stub\n", hIMC, fFlag);
     return TRUE;
 }
 
@@ -777,42 +744,6 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
     return bRet;
 }
 
-BOOL WINAPI ImeRegisterWord(LPCWSTR lpszReading, DWORD dwStyle,
-                            LPCWSTR lpszRegister)
-{
-    FIXME("(%s, %ld, %s): stub\n", debugstr_w(lpszReading), dwStyle,
-                                  debugstr_w(lpszRegister));
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-BOOL WINAPI ImeUnregisterWord(LPCWSTR lpszReading, DWORD dwStyle,
-                              LPCWSTR lpszUnregister)
-{
-    FIXME("(%s, %ld, %s): stub\n", debugstr_w(lpszReading), dwStyle,
-                                  debugstr_w(lpszUnregister));
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-UINT WINAPI ImeGetRegisterWordStyle(UINT nItem, LPSTYLEBUFW lpStyleBuf)
-{
-    FIXME("(%d, %p): stub\n", nItem, lpStyleBuf);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
-}
-
-UINT WINAPI ImeEnumRegisterWord(REGISTERWORDENUMPROCW lpfnEnumProc,
-                                LPCWSTR lpszReading, DWORD dwStyle,
-                                LPCWSTR lpszRegister, LPVOID lpData)
-{
-    FIXME("(%p, %s, %ld, %s, %p): stub\n", lpfnEnumProc,
-            debugstr_w(lpszReading), dwStyle, debugstr_w(lpszRegister),
-            lpData);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
-}
-
 BOOL WINAPI ImeSetCompositionString(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp,
                                     DWORD dwCompLen, LPCVOID lpRead,
                                     DWORD dwReadLen)
@@ -886,16 +817,6 @@ BOOL WINAPI ImeSetCompositionString(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp,
     UnlockRealIMC(hIMC);
 
     return TRUE;
-}
-
-DWORD WINAPI ImeGetImeMenuItems(HIMC hIMC,  DWORD dwFlags,  DWORD dwType,
-            LPIMEMENUITEMINFOW lpImeParentMenu, LPIMEMENUITEMINFOW lpImeMenu,
-            DWORD dwSize)
-{
-    FIXME("(%p, %lx %lx %p %p %lx): stub\n", hIMC, dwFlags, dwType,
-                                lpImeParentMenu, lpImeMenu, dwSize);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
 }
 
 /* Interfaces to XIM and other parts of winex11drv */
