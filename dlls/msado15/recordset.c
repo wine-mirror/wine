@@ -1798,7 +1798,7 @@ static HRESULT WINAPI recordset_put_Filter( _Recordset *iface, VARIANT criteria 
 
     if (V_VT(&criteria) == VT_BSTR && recordset->state == adStateOpen)
     {
-        FIXME("Validating fields not preformed\n");
+        FIXME("Validating fields not performed\n");
     }
 
     VariantCopy(&recordset->filter, &criteria);
