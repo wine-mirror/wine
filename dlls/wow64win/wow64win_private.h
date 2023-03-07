@@ -30,10 +30,6 @@ ALL_WIN32_SYSCALLS
 typedef NTSTATUS (WINAPI *user_callback)( void *params, ULONG size );
 extern user_callback user_callbacks[] DECLSPEC_HIDDEN;
 
-void * WINAPI Wow64AllocateTemp( SIZE_T size );
-NTSTATUS WINAPI Wow64KiUserCallbackDispatcher( ULONG id, void *args, ULONG len,
-                                               void **ret_ptr, ULONG *ret_len );
-
 struct object_attr64
 {
     OBJECT_ATTRIBUTES   attr;

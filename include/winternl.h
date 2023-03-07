@@ -3855,6 +3855,14 @@ typedef struct _WOW64_CPU_AREA_INFO
     USHORT             Machine;
 } WOW64_CPU_AREA_INFO, *PWOW64_CPU_AREA_INFO;
 
+/* wow64.dll functions */
+void *    WINAPI Wow64AllocateTemp(SIZE_T);
+void      WINAPI Wow64ApcRoutine(ULONG_PTR,ULONG_PTR,ULONG_PTR,CONTEXT*);
+NTSTATUS  WINAPI Wow64KiUserCallbackDispatcher(ULONG,void*,ULONG,void**,ULONG*);
+void      WINAPI Wow64PassExceptionToGuest(EXCEPTION_POINTERS*);
+void      WINAPI Wow64PrepareForException(EXCEPTION_RECORD*,CONTEXT*);
+NTSTATUS  WINAPI Wow64SystemServiceEx(UINT,UINT*);
+
 #ifdef __WINESRC__
 /* undocumented layout of LdrSystemDllInitBlock */
 /* this varies across Windows version; we are using the win10-2004 layout */
