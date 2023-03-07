@@ -84,6 +84,13 @@ struct user_callback_frame
     __wine_jmp_buf              jmpbuf;
 };
 
+/* stack frame for user APCs */
+struct user_apc_frame
+{
+    struct user_apc_frame *prev_frame;
+    CONTEXT               *context;
+    void                  *wow_context;
+};
 
 SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock = NULL;
 
@@ -416,8 +423,14 @@ NTSTATUS WINAPI wow64_NtContinue( UINT *args )
     BOOLEAN alertable = get_ulong( &args );
 
     NTSTATUS status = get_context_return_value( context );
+    struct user_apc_frame *frame = NtCurrentTeb()->TlsSlots[WOW64_TLS_APCLIST];
 
     pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, context );
+
+    while (frame && frame->wow_context != context) frame = frame->prev_frame;
+    NtCurrentTeb()->TlsSlots[WOW64_TLS_APCLIST] = frame ? frame->prev_frame : NULL;
+    if (frame) NtContinue( frame->context, alertable );
+
     if (alertable) NtTestAlert();
     return status;
 }
@@ -981,13 +994,11 @@ void * WINAPI Wow64AllocateTemp( SIZE_T size )
  */
 void WINAPI Wow64ApcRoutine( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3, CONTEXT *context )
 {
-    NTSTATUS retval;
+    struct user_apc_frame frame;
 
-#ifdef __x86_64__
-    retval = context->Rax;
-#elif defined(__aarch64__)
-    retval = context->X0;
-#endif
+    frame.prev_frame = NtCurrentTeb()->TlsSlots[WOW64_TLS_APCLIST];
+    frame.context    = context;
+    NtCurrentTeb()->TlsSlots[WOW64_TLS_APCLIST] = &frame;
 
     /* cf. 32-bit call_user_apc_dispatcher */
     switch (current_machine)
@@ -1014,10 +1025,11 @@ void WINAPI Wow64ApcRoutine( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3, CON
             stack->arg2 = arg2;
             stack->arg3 = arg3;
             stack->context = ctx;
-            stack->context.Eax = retval;
             ctx.Esp = PtrToUlong( stack );
             ctx.Eip = pLdrSystemDllInitBlock->pKiUserApcDispatcher;
+            frame.wow_context = &stack->context;
             pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx );
+            cpu_simulate();
         }
         break;
 
@@ -1035,14 +1047,15 @@ void WINAPI Wow64ApcRoutine( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3, CON
             stack = (struct apc_stack_layout *)ULongToPtr( ctx.Sp & ~15 ) - 1;
             stack->func = arg1 >> 32;
             stack->context = ctx;
-            stack->context.R0 = retval;
             ctx.Sp = PtrToUlong( stack );
             ctx.Pc = pLdrSystemDllInitBlock->pKiUserApcDispatcher;
             ctx.R0 = PtrToUlong( &stack->context );
             ctx.R1 = arg1;
             ctx.R2 = arg2;
             ctx.R3 = arg3;
+            frame.wow_context = &stack->context;
             pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx );
+            cpu_simulate();
         }
         break;
     }
@@ -1112,7 +1125,7 @@ NTSTATUS WINAPI Wow64KiUserCallbackDispatcher( ULONG id, void *args, ULONG len,
             memcpy( args_data, args, len );
 
             ctx.R0 = id;
-            ctx.R1 = PtrToUlong( args );
+            ctx.R1 = PtrToUlong( args_data );
             ctx.R2 = len;
             ctx.Sp = PtrToUlong( args_data );
             ctx.Pc = pLdrSystemDllInitBlock->pKiUserCallbackDispatcher;
