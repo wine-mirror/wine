@@ -2580,6 +2580,11 @@ static void test_query_directory(void)
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING string;
     NTSTATUS status;
+    BOOL is_wow64 = FALSE;
+
+#ifndef _WIN64
+    if (!IsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
+#endif
 
     RtlInitUnicodeString( &string, L"\\BaseNamedObjects\\winetest" );
     InitializeObjectAttributes( &attr, &string, 0, 0, NULL );
@@ -2591,14 +2596,14 @@ static void test_query_directory(void)
     status = NtQueryDirectoryObject( dir, info, 0, TRUE, TRUE, &context, &size );
     ok( status == STATUS_NO_MORE_ENTRIES, "got %#lx\n", status );
     ok( context == 0xdeadbeef, "got context %#lx\n", context );
-    ok( size == sizeof(*info) || broken(!size) /* WoW64 */, "got size %lu\n", size );
+    ok( size == sizeof(*info) || (is_wow64 && !size), "got size %lu\n", size );
 
     context = 0xdeadbeef;
     size = 0xdeadbeef;
     status = NtQueryDirectoryObject( dir, info, 0, FALSE, TRUE, &context, &size );
     todo_wine ok( status == STATUS_NO_MORE_ENTRIES, "got %#lx\n", status );
     ok( context == 0xdeadbeef, "got context %#lx\n", context );
-    todo_wine ok( size == sizeof(*info) || broken(!size) /* WoW64 */, "got size %lu\n", size );
+    todo_wine ok( size == sizeof(*info) || (is_wow64 && !size), "got size %lu\n", size );
 
     context = 0xdeadbeef;
     size = 0xdeadbeef;
@@ -2606,7 +2611,7 @@ static void test_query_directory(void)
     status = NtQueryDirectoryObject( dir, info, sizeof(buffer), TRUE, TRUE, &context, &size );
     ok( status == STATUS_NO_MORE_ENTRIES, "got %#lx\n", status );
     ok( context == 0xdeadbeef, "got context %#lx\n", context );
-    ok( size == sizeof(*info) || broken(!size) /* WoW64 */, "got size %lu\n", size );
+    ok( size == sizeof(*info) || (is_wow64 && !size), "got size %lu\n", size );
     if (size == sizeof(*info))
         ok( !memcmp( &info[0], &empty_info, sizeof(*info) ), "entry was not cleared\n" );
 
@@ -2616,7 +2621,7 @@ static void test_query_directory(void)
     status = NtQueryDirectoryObject( dir, info, sizeof(buffer), FALSE, TRUE, &context, &size );
     todo_wine ok( status == STATUS_NO_MORE_ENTRIES, "got %#lx\n", status );
     ok( context == 0xdeadbeef, "got context %#lx\n", context );
-    todo_wine ok( size == sizeof(*info) || broken(!size) /* WoW64 */, "got size %lu\n", size );
+    todo_wine ok( size == sizeof(*info) || (is_wow64 && !size), "got size %lu\n", size );
     if (size == sizeof(*info))
         ok( !memcmp( &info[0], &empty_info, sizeof(*info) ), "entry was not cleared\n" );
 
@@ -2673,7 +2678,7 @@ static void test_query_directory(void)
     status = NtQueryDirectoryObject( dir, info, sizeof(buffer), TRUE, FALSE, &context, &size );
     ok( status == STATUS_NO_MORE_ENTRIES, "got %#lx\n", status );
     ok( context == 2, "got context %#lx\n", context );
-    ok( size == sizeof(*info) || broken(!size) /* WoW64 */, "got size %lu\n", size );
+    ok( size == sizeof(*info) || (is_wow64 && !size), "got size %lu\n", size );
 
     memset( buffer, 0xcc, sizeof(buffer) );
     status = NtQueryDirectoryObject( dir, info, sizeof(buffer), TRUE, TRUE, &context, &size );
