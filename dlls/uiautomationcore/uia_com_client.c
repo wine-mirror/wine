@@ -1029,6 +1029,11 @@ static HRESULT create_uia_element_array_iface(IUIAutomationElementArray **iface,
     return S_OK;
 }
 
+struct uia_cache_property {
+    int prop_id;
+    VARIANT prop_val;
+};
+
 /*
  * IUIAutomationElement interface.
  */
@@ -1038,6 +1043,9 @@ struct uia_element {
 
     BOOL from_cui8;
     HUIANODE node;
+
+    struct uia_cache_property *cached_props;
+    int cached_props_count;
 };
 
 static inline struct uia_element *impl_from_IUIAutomationElement9(IUIAutomationElement9 *iface)
@@ -1079,6 +1087,15 @@ static ULONG WINAPI uia_element_Release(IUIAutomationElement9 *iface)
     TRACE("%p, refcount %ld\n", element, ref);
     if (!ref)
     {
+        if (element->cached_props_count)
+        {
+            int i;
+
+            for (i = 0; i < element->cached_props_count; i++)
+                VariantClear(&element->cached_props[i].prop_val);
+        }
+
+        heap_free(element->cached_props);
         UiaNodeRelease(element->node);
         heap_free(element);
     }
@@ -1126,8 +1143,8 @@ static HRESULT WINAPI uia_element_FindAllBuildCache(IUIAutomationElement9 *iface
     return E_NOTIMPL;
 }
 
-static HRESULT create_uia_element_from_cache_req(IUIAutomationElement **iface, BOOL from_cui8, SAFEARRAY *req_data,
-        BSTR tree_struct);
+static HRESULT create_uia_element_from_cache_req(IUIAutomationElement **iface, BOOL from_cui8,
+        struct UiaCacheRequest *cache_req, SAFEARRAY *req_data, BSTR tree_struct);
 static HRESULT WINAPI uia_element_BuildUpdatedCache(IUIAutomationElement9 *iface, IUIAutomationCacheRequest *cache_req,
         IUIAutomationElement **updated_elem)
 {
@@ -1152,7 +1169,7 @@ static HRESULT WINAPI uia_element_BuildUpdatedCache(IUIAutomationElement9 *iface
     if (FAILED(hr))
         return hr;
 
-    hr = create_uia_element_from_cache_req(&cache_elem, element->from_cui8, sa, tree_struct);
+    hr = create_uia_element_from_cache_req(&cache_elem, element->from_cui8, cache_req_struct, sa, tree_struct);
     if (SUCCEEDED(hr))
         *updated_elem = cache_elem;
 
@@ -1168,45 +1185,78 @@ static HRESULT WINAPI uia_element_GetCurrentPropertyValue(IUIAutomationElement9 
 }
 
 static HRESULT create_uia_element(IUIAutomationElement **iface, BOOL from_cui8, HUIANODE node);
-static HRESULT create_element_array_from_node_array(SAFEARRAY *sa, BOOL from_cui8,
-        IUIAutomationElementArray **out_elem_arr)
+static HRESULT get_element_variant_from_node_variant(VARIANT *var, BOOL from_cui8, int prop_type)
 {
-    struct uia_element_array *elem_arr_data;
-    IUIAutomationElementArray *elem_arr;
-    LONG idx, lbound, elems, i;
+    HUIANODE node;
     HRESULT hr;
 
-    *out_elem_arr = NULL;
-    hr = get_safearray_bounds(sa, &lbound, &elems);
-    if (FAILED(hr))
-        return hr;
+    /* ReservedNotSupported interface, just return it. */
+    if (V_VT(var) == VT_UNKNOWN)
+        return S_OK;
 
-    hr = create_uia_element_array_iface(&elem_arr, elems);
-    if (FAILED(hr))
-        return hr;
-
-    elem_arr_data = impl_from_IUIAutomationElementArray(elem_arr);
-    for (i = 0; i < elems; i++)
+    if (prop_type & UIAutomationType_Array)
     {
-        HUIANODE node;
+        struct uia_element_array *elem_arr_data;
+        IUIAutomationElementArray *elem_arr;
+        LONG idx, lbound, elems, i;
 
-        idx = lbound + i;
-        hr = SafeArrayGetElement(sa, &idx, &node);
-        if (FAILED(hr))
-            break;
-
-        hr = create_uia_element(&elem_arr_data->elements[i], from_cui8, node);
+        hr = get_safearray_bounds(V_ARRAY(var), &lbound, &elems);
         if (FAILED(hr))
         {
-            UiaNodeRelease(node);
-            break;
+            VariantClear(var);
+            return hr;
         }
-    }
 
-    if (SUCCEEDED(hr))
-        *out_elem_arr = elem_arr;
+        hr = create_uia_element_array_iface(&elem_arr, elems);
+        if (FAILED(hr))
+        {
+            VariantClear(var);
+            return hr;
+        }
+
+        elem_arr_data = impl_from_IUIAutomationElementArray(elem_arr);
+        for (i = 0; i < elems; i++)
+        {
+            idx = lbound + i;
+            hr = SafeArrayGetElement(V_ARRAY(var), &idx, &node);
+            if (FAILED(hr))
+                break;
+
+            hr = create_uia_element(&elem_arr_data->elements[i], from_cui8, node);
+            if (FAILED(hr))
+            {
+                UiaNodeRelease(node);
+                break;
+            }
+        }
+
+        VariantClear(var);
+        if (SUCCEEDED(hr))
+        {
+            V_VT(var) = VT_UNKNOWN;
+            V_UNKNOWN(var) = (IUnknown *)elem_arr;
+        }
+        else
+            IUIAutomationElementArray_Release(elem_arr);
+    }
     else
-        IUIAutomationElementArray_Release(elem_arr);
+    {
+        IUIAutomationElement *out_elem;
+
+        hr = UiaHUiaNodeFromVariant(var, &node);
+        VariantClear(var);
+        if (FAILED(hr))
+            return hr;
+
+        hr = create_uia_element(&out_elem, from_cui8, node);
+        if (SUCCEEDED(hr))
+        {
+            V_VT(var) = VT_UNKNOWN;
+            V_UNKNOWN(var) = (IUnknown *)out_elem;
+        }
+        else
+            UiaNodeRelease(node);
+    }
 
     return hr;
 }
@@ -1234,53 +1284,8 @@ static HRESULT WINAPI uia_element_GetCurrentPropertyValueEx(IUIAutomationElement
     if (FAILED(hr))
         return hr;
 
-    switch (prop_info->type)
-    {
-    case UIAutomationType_Element:
-    {
-        IUIAutomationElement *out_elem;
-        HUIANODE node;
-
-        if (V_VT(ret_val) == VT_UNKNOWN)
-            break;
-
-        hr = UiaHUiaNodeFromVariant(ret_val, &node);
-        VariantClear(ret_val);
-        if (FAILED(hr))
-            return hr;
-
-        hr = create_uia_element(&out_elem, element->from_cui8, node);
-        if (SUCCEEDED(hr))
-        {
-            V_VT(ret_val) = VT_UNKNOWN;
-            V_UNKNOWN(ret_val) = (IUnknown *)out_elem;
-        }
-        else
-            UiaNodeRelease(node);
-
-        break;
-    }
-
-    case UIAutomationType_ElementArray:
-    {
-        IUIAutomationElementArray *out_elem_arr;
-
-        if (V_VT(ret_val) == VT_UNKNOWN)
-            break;
-
-        hr = create_element_array_from_node_array(V_ARRAY(ret_val), element->from_cui8, &out_elem_arr);
-        VariantClear(ret_val);
-        if (SUCCEEDED(hr))
-        {
-            V_VT(ret_val) = VT_UNKNOWN;
-            V_UNKNOWN(ret_val) = (IUnknown *)out_elem_arr;
-        }
-        break;
-    }
-
-    default:
-        break;
-    }
+    if ((prop_info->type == UIAutomationType_Element) || (prop_info->type == UIAutomationType_ElementArray))
+        hr = get_element_variant_from_node_variant(ret_val, element->from_cui8, prop_info->type);
 
     return hr;
 }
@@ -1292,11 +1297,38 @@ static HRESULT WINAPI uia_element_GetCachedPropertyValue(IUIAutomationElement9 *
     return E_NOTIMPL;
 }
 
+static int __cdecl uia_cached_property_id_compare(const void *a, const void *b)
+{
+    const PROPERTYID *prop_id = a;
+    const struct uia_cache_property *cache_prop = b;
+
+    return ((*prop_id) > cache_prop->prop_id) - ((*prop_id) < cache_prop->prop_id);
+}
+
 static HRESULT WINAPI uia_element_GetCachedPropertyValueEx(IUIAutomationElement9 *iface, PROPERTYID prop_id,
         BOOL ignore_default, VARIANT *ret_val)
 {
-    FIXME("%p: stub\n", iface);
-    return E_NOTIMPL;
+    struct uia_element *element = impl_from_IUIAutomationElement9(iface);
+    struct uia_cache_property *cache_prop = NULL;
+
+    TRACE("%p, %d, %d, %p\n", iface, prop_id, ignore_default, ret_val);
+
+    if (!ret_val)
+        return E_POINTER;
+
+    VariantInit(ret_val);
+    if (!uia_prop_info_from_id(prop_id) || !element->cached_props)
+        return E_INVALIDARG;
+
+    if (!ignore_default)
+        FIXME("Default values currently unimplemented\n");
+
+    if (!(cache_prop = bsearch(&prop_id, element->cached_props, element->cached_props_count, sizeof(*cache_prop),
+            uia_cached_property_id_compare)))
+        return E_INVALIDARG;
+
+    VariantCopy(ret_val, &cache_prop->prop_val);
+    return S_OK;
 }
 
 static HRESULT WINAPI uia_element_GetCurrentPatternAs(IUIAutomationElement9 *iface, PATTERNID pattern_id,
@@ -2144,9 +2176,19 @@ static HRESULT create_uia_element(IUIAutomationElement **iface, BOOL from_cui8, 
     return S_OK;
 }
 
-static HRESULT create_uia_element_from_cache_req(IUIAutomationElement **iface, BOOL from_cui8, SAFEARRAY *req_data,
-        BSTR tree_struct)
+static int __cdecl uia_compare_cache_props(const void *a, const void *b)
 {
+    struct uia_cache_property *prop1 = (struct uia_cache_property *)a;
+    struct uia_cache_property *prop2 = (struct uia_cache_property *)b;
+
+    return (prop1->prop_id > prop2->prop_id) - (prop1->prop_id < prop2->prop_id);
+}
+
+static HRESULT create_uia_element_from_cache_req(IUIAutomationElement **iface, BOOL from_cui8,
+        struct UiaCacheRequest *cache_req, SAFEARRAY *req_data, BSTR tree_struct)
+{
+    IUIAutomationElement *element = NULL;
+    struct uia_element *elem_data;
     HUIANODE node;
     LONG idx[2];
     HRESULT hr;
@@ -2165,11 +2207,61 @@ static HRESULT create_uia_element_from_cache_req(IUIAutomationElement **iface, B
         goto exit;
     VariantClear(&v);
 
-    hr = create_uia_element(iface, from_cui8, node);
+    hr = create_uia_element(&element, from_cui8, node);
+    if (FAILED(hr))
+        goto exit;
+
+    elem_data = impl_from_IUIAutomationElement9((IUIAutomationElement9 *)element);
+    if (cache_req->cProperties)
+    {
+        LONG i;
+
+        elem_data->cached_props = heap_alloc_zero(sizeof(*elem_data->cached_props) * cache_req->cProperties);
+        if (!elem_data->cached_props)
+        {
+            hr = E_OUTOFMEMORY;
+            goto exit;
+        }
+
+        elem_data->cached_props_count = cache_req->cProperties;
+        for (i = 0; i < cache_req->cProperties; i++)
+        {
+            const struct uia_prop_info *prop_info = uia_prop_info_from_id(cache_req->pProperties[i]);
+
+            elem_data->cached_props[i].prop_id = prop_info->prop_id;
+
+            idx[0] = 0;
+            idx[1] = 1 + i;
+            hr = SafeArrayGetElement(req_data, idx, &elem_data->cached_props[i].prop_val);
+            if (FAILED(hr))
+                goto exit;
+
+            if ((prop_info->type == UIAutomationType_Element) || (prop_info->type == UIAutomationType_ElementArray))
+            {
+                hr = get_element_variant_from_node_variant(&elem_data->cached_props[i].prop_val, from_cui8,
+                        prop_info->type);
+                if (FAILED(hr))
+                    goto exit;
+            }
+        }
+
+        /*
+         * Sort the array of cached properties by property ID so that we can
+         * access the values with bsearch.
+         */
+        qsort(elem_data->cached_props, elem_data->cached_props_count, sizeof(*elem_data->cached_props),
+                uia_compare_cache_props);
+    }
+
+    *iface = element;
 
 exit:
     if (FAILED(hr))
+    {
         WARN("Failed to create element from cache request, hr %#lx\n", hr);
+        if (element)
+            IUIAutomationElement_Release(element);
+    }
 
     SysFreeString(tree_struct);
     return hr;

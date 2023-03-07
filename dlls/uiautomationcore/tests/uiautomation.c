@@ -10869,11 +10869,25 @@ static const struct prov_method_sequence get_cached_prop_val_seq2[] = {
     { 0 },
 };
 
+static const struct prov_method_sequence get_cached_prop_val_seq3[] = {
+    { &Provider, PROV_GET_PROPERTY_VALUE },
+    NODE_CREATE_SEQ(&Provider_child),
+    { &Provider, PROV_GET_PROPERTY_VALUE },
+    NODE_CREATE_SEQ(&Provider_child),
+    NODE_CREATE_SEQ(&Provider_child2),
+    { &Provider_child, PROV_GET_PROPERTY_VALUE }, /* UIA_IsControlElementPropertyId */
+    { &Provider_child, PROV_GET_PROPERTY_VALUE }, /* UIA_ControlTypePropertyId */
+    { &Provider_child2, PROV_GET_PROPERTY_VALUE }, /* UIA_ControlTypePropertyId */
+    { 0 },
+};
+
 static void test_Element_cache_methods(IUIAutomation *uia_iface)
 {
     HWND hwnd = create_test_hwnd("test_Element_cache_methods class");
-    IUIAutomationElement *element, *element2;
+    IUIAutomationElement *element, *element2, *element3;
     IUIAutomationCacheRequest *cache_req;
+    IUIAutomationElementArray *elem_arr;
+    int tmp_rt_id[2], i, len;
     IUnknown *unk_ns;
     HRESULT hr;
     VARIANT v;
@@ -10938,15 +10952,14 @@ static void test_Element_cache_methods(IUIAutomation *uia_iface)
 
     /* RuntimeId is currently unset, so we'll get the NotSupported value. */
     hr = IUIAutomationElement_GetCachedPropertyValueEx(element2, UIA_RuntimeIdPropertyId, TRUE, &v);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(V_VT(&v) == VT_UNKNOWN, "Unexpected vt %d\n", V_VT(&v));
-    if (SUCCEEDED(hr))
-        ok(V_UNKNOWN(&v) == unk_ns, "unexpected IUnknown %p\n", V_UNKNOWN(&v));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_UNKNOWN, "Unexpected vt %d\n", V_VT(&v));
+    ok(V_UNKNOWN(&v) == unk_ns, "unexpected IUnknown %p\n", V_UNKNOWN(&v));
     VariantClear(&v);
 
     /* Attempting to get a cached value for a non-cached property. */
     hr = IUIAutomationElement_GetCachedPropertyValueEx(element2, UIA_IsControlElementPropertyId, TRUE, &v);
-    todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(V_VT(&v) == VT_EMPTY, "Unexpected vt %d\n", V_VT(&v));
     VariantClear(&v);
 
@@ -10961,10 +10974,9 @@ static void test_Element_cache_methods(IUIAutomation *uia_iface)
     ok_method_sequence(get_cached_prop_val_seq, "get_cached_prop_val_seq");
 
     hr = IUIAutomationElement_GetCachedPropertyValueEx(element2, UIA_RuntimeIdPropertyId, TRUE, &v);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(V_VT(&v) == (VT_I4 | VT_ARRAY), "Unexpected vt %d\n", V_VT(&v));
-    if (SUCCEEDED(hr))
-        check_runtime_id(Provider_child.runtime_id, ARRAY_SIZE(Provider_child.runtime_id), V_ARRAY(&v));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == (VT_I4 | VT_ARRAY), "Unexpected vt %d\n", V_VT(&v));
+    check_runtime_id(Provider_child.runtime_id, ARRAY_SIZE(Provider_child.runtime_id), V_ARRAY(&v));
     VariantClear(&v);
     IUIAutomationElement_Release(element2);
 
@@ -10983,22 +10995,116 @@ static void test_Element_cache_methods(IUIAutomation *uia_iface)
     ok_method_sequence(get_cached_prop_val_seq2, "get_cached_prop_val_seq2");
 
     hr = IUIAutomationElement_GetCachedPropertyValueEx(element2, UIA_RuntimeIdPropertyId, TRUE, &v);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(V_VT(&v) == (VT_I4 | VT_ARRAY), "Unexpected vt %d\n", V_VT(&v));
-    if (SUCCEEDED(hr))
-        check_runtime_id(Provider_child.runtime_id, ARRAY_SIZE(Provider_child.runtime_id), V_ARRAY(&v));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == (VT_I4 | VT_ARRAY), "Unexpected vt %d\n", V_VT(&v));
+    check_runtime_id(Provider_child.runtime_id, ARRAY_SIZE(Provider_child.runtime_id), V_ARRAY(&v));
     VariantClear(&v);
 
     hr = IUIAutomationElement_GetCachedPropertyValueEx(element2, UIA_IsControlElementPropertyId, TRUE, &v);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(check_variant_bool(&v, TRUE), "V_BOOL(&v) = %#x\n", V_BOOL(&v));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(check_variant_bool(&v, TRUE), "V_BOOL(&v) = %#x\n", V_BOOL(&v));
     VariantClear(&v);
 
     IUIAutomationElement_Release(element2);
+    IUIAutomationCacheRequest_Release(cache_req);
 
     IUIAutomationElement_Release(element);
     ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
+
+    /* Test cached UIAutomationType_Element properties. */
+    element = create_test_element_from_hwnd(uia_iface, hwnd, TRUE);
+
+    cache_req = NULL;
+    hr = IUIAutomation_CreateCacheRequest(uia_iface, &cache_req);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cache_req, "cache_req == NULL\n");
+
+    /* UIAutomationType_Element property. */
+    hr = IUIAutomationCacheRequest_AddProperty(cache_req, UIA_LabeledByPropertyId);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* UIAutomationType_ElementArray property. */
+    hr = IUIAutomationCacheRequest_AddProperty(cache_req, UIA_ControllerForPropertyId);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    element2 = NULL;
+    hr = IUIAutomationElement_BuildUpdatedCache(element, cache_req, &element2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!element2, "element2 == NULL\n");
+    ok(Provider_child.ref == 3, "Unexpected refcnt %ld\n", Provider_child.ref);
+    ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
+
+    tmp_rt_id[0] = UIA_RUNTIME_ID_PREFIX;
+    tmp_rt_id[1] = HandleToULong(hwnd);
+    hr = IUIAutomationElement_GetCachedPropertyValueEx(element2, UIA_RuntimeIdPropertyId, TRUE, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == (VT_I4 | VT_ARRAY), "Unexpected vt %d\n", V_VT(&v));
+    check_runtime_id(tmp_rt_id, ARRAY_SIZE(tmp_rt_id), V_ARRAY(&v));
+    VariantClear(&v);
+
+    /* Cached IUIAutomationElement. */
+    hr = IUIAutomationElement_GetCachedPropertyValueEx(element2, UIA_LabeledByPropertyId, TRUE, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_UNKNOWN, "Unexpected vt %d\n", V_VT(&v));
+
+    element3 = NULL;
+    hr = IUnknown_QueryInterface(V_UNKNOWN(&v), &IID_IUIAutomationElement, (void **)&element3);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!element3, "element3 == NULL\n");
+    VariantClear(&v);
+
+    hr = IUIAutomationElement_GetCurrentPropertyValueEx(element3, UIA_IsControlElementPropertyId, TRUE, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(check_variant_bool(&v, TRUE), "V_BOOL(&v) = %#x\n", V_BOOL(&v));
+    IUIAutomationElement_Release(element3);
+    VariantClear(&v);
+
+    /* Cached IUIAutomationElementArray. */
+    hr = IUIAutomationElement_GetCachedPropertyValueEx(element2, UIA_ControllerForPropertyId, TRUE, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_UNKNOWN, "Unexpected vt %d\n", V_VT(&v));
+
+    hr = IUnknown_QueryInterface(V_UNKNOWN(&v), &IID_IUIAutomationElementArray, (void **)&elem_arr);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(!!elem_arr, "elem_arr == NULL\n");
+    VariantClear(&v);
+
+    hr = IUIAutomationElementArray_get_Length(elem_arr, &len);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(len == ARRAY_SIZE(uia_unk_arr_prop_val), "Unexpected length %d\n", len);
+
+    for (i = 0; i < ARRAY_SIZE(uia_unk_arr_prop_val); i++)
+    {
+        hr = IUIAutomationElementArray_GetElement(elem_arr, i, &element3);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        ok(!!element3, "element3 == NULL\n");
+
+        hr = IUIAutomationElement_GetCurrentPropertyValueEx(element3, UIA_ControlTypePropertyId, TRUE, &v);
+        ok(hr == S_OK, "elem[%d] Unexpected hr %#lx\n", i, hr);
+        ok(V_VT(&v) == VT_I4, "elem[%d] Unexpected VT %d\n", i, V_VT(&v));
+        ok(V_I4(&v) == uia_i4_prop_val, "elem[%d] Unexpected I4 %#lx\n", i, V_I4(&v));
+
+        IUIAutomationElement_Release(element3);
+        VariantClear(&v);
+    }
+
+    IUIAutomationElementArray_Release(elem_arr);
     IUIAutomationCacheRequest_Release(cache_req);
+
+    /*
+     * Reference isn't released until the element holding the cache is
+     * destroyed.
+     */
+    ok(Provider_child.ref == 3, "Unexpected refcnt %ld\n", Provider_child.ref);
+    ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
+
+    IUIAutomationElement_Release(element2);
+    ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
+    ok(Provider_child2.ref == 1, "Unexpected refcnt %ld\n", Provider_child2.ref);
+    ok_method_sequence(get_cached_prop_val_seq3, "get_cached_prop_val_seq3");
+
+    IUIAutomationElement_Release(element);
+    ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
     IUnknown_Release(unk_ns);
 
     DestroyWindow(hwnd);
