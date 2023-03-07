@@ -720,9 +720,19 @@ static BOOL get_event(IMFMediaEventGenerator *generator, MediaEventType expected
     return ret;
 }
 
+static const IMFByteStreamVtbl *bytestream_vtbl_orig;
+
+static int bytestream_closed = 0;
+static HRESULT WINAPI bytestream_wrapper_Close(IMFByteStream *iface)
+{
+    bytestream_closed = 1;
+    return bytestream_vtbl_orig->Close(iface);
+}
+
 static void test_source_resolver(void)
 {
     struct test_callback *callback, *callback2;
+    IMFByteStreamVtbl bytestream_vtbl_wrapper;
     IMFSourceResolver *resolver, *resolver2;
     IMFPresentationDescriptor *descriptor;
     IMFSchemeHandler *scheme_handler;
@@ -825,6 +835,12 @@ static void test_source_resolver(void)
      * calls to CreateObjectFromByteStream will fail. */
     hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, filename, &stream);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Wrap ::Close to test when the media source calls it */
+    bytestream_vtbl_orig = stream->lpVtbl;
+    bytestream_vtbl_wrapper = *bytestream_vtbl_orig;
+    bytestream_vtbl_wrapper.Close = bytestream_wrapper_Close;
+    stream->lpVtbl = &bytestream_vtbl_wrapper;
 
     hr = IMFByteStream_QueryInterface(stream, &IID_IMFAttributes, (void **)&attributes);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -1059,8 +1075,13 @@ static void test_source_resolver(void)
     IMFMediaTypeHandler_Release(handler);
     IMFPresentationDescriptor_Release(descriptor);
 
+    ok(!bytestream_closed, "IMFByteStream::Close called unexpectedly\n");
+
     hr = IMFMediaSource_Shutdown(mediasource);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    todo_wine
+    ok(bytestream_closed, "Missing IMFByteStream::Close call\n");
 
     hr = IMFMediaSource_CreatePresentationDescriptor(mediasource, NULL);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
