@@ -564,10 +564,21 @@ enum process_kind
 
 static enum process_kind get_process_kind(HANDLE process)
 {
-    const BOOL is_win64 = sizeof(void*) == 8;
+    HMODULE mod;
     USHORT m1, m2;
+    BOOL (WINAPI *pIsWow64Process2)(HANDLE,USHORT*,USHORT*);
+    const BOOL is_win64 = sizeof(void*) == 8;
 
-    if (!IsWow64Process2(process, &m1, &m2)) return PCSKIND_ERROR;
+    mod = GetModuleHandleA("kernel32");
+    pIsWow64Process2 = (void*)GetProcAddress(mod, "IsWow64Process2");
+    if (!pIsWow64Process2)
+    {
+        BOOL is_wow64;
+        return is_win64 ? PCSKIND_64BIT :
+               IsWow64Process(process, &is_wow64) && is_wow64 ? PCSKIND_WOW64 :
+               PCSKIND_32BIT;
+    }
+    if (!pIsWow64Process2(process, &m1, &m2)) return PCSKIND_ERROR;
     if (m1 == IMAGE_FILE_MACHINE_UNKNOWN && get_machine_bitness(m2) == 32) return PCSKIND_32BIT;
     if (m1 == IMAGE_FILE_MACHINE_UNKNOWN && get_machine_bitness(m2) == 64) return PCSKIND_64BIT;
     if (get_machine_bitness(m1) == 32 && get_machine_bitness(m2) == 64)
