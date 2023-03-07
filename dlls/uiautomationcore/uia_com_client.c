@@ -851,6 +851,24 @@ static HRESULT create_uia_cache_request_iface(IUIAutomationCacheRequest **out_ca
     return S_OK;
 }
 
+static HRESULT get_uia_cache_request_struct_from_iface(IUIAutomationCacheRequest *cache_request,
+        struct UiaCacheRequest **cache_req_struct)
+{
+    struct uia_cache_request *cache_req_data;
+
+    *cache_req_struct = NULL;
+    if (!cache_request)
+        return E_POINTER;
+
+    if (cache_request->lpVtbl != &uia_cache_request_vtbl)
+        return E_FAIL;
+
+    cache_req_data = impl_from_IUIAutomationCacheRequest(cache_request);
+    *cache_req_struct = &cache_req_data->cache_req;
+
+    return S_OK;
+}
+
 /*
  * IUIAutomationElementArray interface.
  */
@@ -1071,11 +1089,38 @@ static HRESULT WINAPI uia_element_FindAllBuildCache(IUIAutomationElement9 *iface
     return E_NOTIMPL;
 }
 
+static HRESULT create_uia_element_from_cache_req(IUIAutomationElement **iface, BOOL from_cui8, SAFEARRAY *req_data,
+        BSTR tree_struct);
 static HRESULT WINAPI uia_element_BuildUpdatedCache(IUIAutomationElement9 *iface, IUIAutomationCacheRequest *cache_req,
         IUIAutomationElement **updated_elem)
 {
-    FIXME("%p: stub\n", iface);
-    return E_NOTIMPL;
+    struct uia_element *element = impl_from_IUIAutomationElement9(iface);
+    struct UiaCacheRequest *cache_req_struct;
+    IUIAutomationElement *cache_elem;
+    BSTR tree_struct;
+    SAFEARRAY *sa;
+    HRESULT hr;
+
+    TRACE("%p, %p, %p\n", iface, cache_req, updated_elem);
+
+    if (!updated_elem)
+        return E_POINTER;
+
+    *updated_elem = NULL;
+    hr = get_uia_cache_request_struct_from_iface(cache_req, &cache_req_struct);
+    if (FAILED(hr))
+        return hr;
+
+    hr = UiaGetUpdatedCache(element->node, cache_req_struct, NormalizeState_None, NULL, &sa, &tree_struct);
+    if (FAILED(hr))
+        return hr;
+
+    hr = create_uia_element_from_cache_req(&cache_elem, element->from_cui8, sa, tree_struct);
+    if (SUCCEEDED(hr))
+        *updated_elem = cache_elem;
+
+    SafeArrayDestroy(sa);
+    return S_OK;
 }
 
 static HRESULT WINAPI uia_element_GetCurrentPropertyValue(IUIAutomationElement9 *iface, PROPERTYID prop_id,
@@ -2060,6 +2105,37 @@ static HRESULT create_uia_element(IUIAutomationElement **iface, BOOL from_cui8, 
 
     *iface = (IUIAutomationElement *)&element->IUIAutomationElement9_iface;
     return S_OK;
+}
+
+static HRESULT create_uia_element_from_cache_req(IUIAutomationElement **iface, BOOL from_cui8, SAFEARRAY *req_data,
+        BSTR tree_struct)
+{
+    HUIANODE node;
+    LONG idx[2];
+    HRESULT hr;
+    VARIANT v;
+
+    *iface = NULL;
+
+    VariantInit(&v);
+    idx[0] = idx[1] = 0;
+    hr = SafeArrayGetElement(req_data, idx, &v);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = UiaHUiaNodeFromVariant(&v, &node);
+    if (FAILED(hr))
+        goto exit;
+    VariantClear(&v);
+
+    hr = create_uia_element(iface, from_cui8, node);
+
+exit:
+    if (FAILED(hr))
+        WARN("Failed to create element from cache request, hr %#lx\n", hr);
+
+    SysFreeString(tree_struct);
+    return hr;
 }
 
 /*
