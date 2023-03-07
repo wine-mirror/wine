@@ -278,6 +278,8 @@ static void call_raise_user_exception_dispatcher( ULONG code )
             I386_CONTEXT ctx = { CONTEXT_I386_ALL };
 
             pBTCpuGetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx );
+            ctx.Esp -= sizeof(ULONG);
+            *(ULONG *)ULongToPtr( ctx.Esp ) = ctx.Eip;
             ctx.Eip = (ULONG_PTR)pKiRaiseUserExceptionDispatcher;
             pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx );
         }
