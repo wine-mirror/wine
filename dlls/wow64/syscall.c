@@ -143,6 +143,19 @@ static EXCEPTION_RECORD *exception_record_32to64( const EXCEPTION_RECORD32 *rec3
 }
 
 
+static NTSTATUS get_context_return_value( void *wow_context )
+{
+    switch (current_machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:
+        return ((I386_CONTEXT *)wow_context)->Eax;
+    case IMAGE_FILE_MACHINE_ARMNT:
+        return ((ARM_CONTEXT *)wow_context)->R0;
+    }
+    return 0;
+}
+
+
 /**********************************************************************
  *           call_user_exception_dispatcher
  */
@@ -400,9 +413,11 @@ NTSTATUS WINAPI wow64_NtContinue( UINT *args )
     void *context = get_ptr( &args );
     BOOLEAN alertable = get_ulong( &args );
 
+    NTSTATUS status = get_context_return_value( context );
+
     pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, context );
     if (alertable) NtTestAlert();
-    return STATUS_SUCCESS;
+    return status;
 }
 
 

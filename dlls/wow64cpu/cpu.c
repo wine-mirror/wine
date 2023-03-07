@@ -192,6 +192,7 @@ __ASM_GLOBAL_FUNC( syscall_32to64,
                    "movq %rax,%rcx\n\t"         /* syscall number */
                    "leaq 8(%r14),%rdx\n\t"      /* parameters */
                    "call " __ASM_NAME("Wow64SystemServiceEx") "\n\t"
+                   "movl %eax,0xb0(%r13)\n\t"   /* context->Eax */
 
                    "syscall_32to64_return:\n\t"
                    "movl 0x9c(%r13),%edi\n\t"   /* context->Edi */
