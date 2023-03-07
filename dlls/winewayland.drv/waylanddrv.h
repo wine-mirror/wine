@@ -27,6 +27,10 @@
 
 #include <wayland-client.h>
 
+#include "windef.h"
+#include "winbase.h"
+#include "wine/gdi_driver.h"
+
 #include "unixlib.h"
 
 /**********************************************************************
@@ -34,11 +38,54 @@
  */
 
 extern struct wl_display *process_wl_display DECLSPEC_HIDDEN;
+extern struct wayland *process_wayland DECLSPEC_HIDDEN;
+
+/**********************************************************************
+ *          Definitions for wayland types
+ */
+
+struct wayland
+{
+    struct wl_event_queue *wl_event_queue;
+    struct wl_registry *wl_registry;
+    struct wl_list output_list;
+};
+
+struct wayland_output_mode
+{
+    int32_t width;
+    int32_t height;
+    int32_t refresh;
+};
+
+struct wayland_output
+{
+    struct wl_list link;
+    struct wl_output *wl_output;
+    struct wayland_output_mode current_mode;
+    char name[20];
+    uint32_t global_id;
+};
 
 /**********************************************************************
  *          Wayland initialization
  */
 
 BOOL wayland_process_init(void) DECLSPEC_HIDDEN;
+void wayland_init_display_devices(void) DECLSPEC_HIDDEN;
+
+/**********************************************************************
+ *          Wayland output
+ */
+
+BOOL wayland_output_create(uint32_t id, uint32_t version) DECLSPEC_HIDDEN;
+void wayland_output_destroy(struct wayland_output *output) DECLSPEC_HIDDEN;
+
+/**********************************************************************
+ *          USER driver functions
+ */
+
+BOOL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manager,
+                                  BOOL force, void *param) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_WAYLANDDRV_H */

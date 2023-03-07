@@ -29,11 +29,24 @@
 
 #include "waylanddrv.h"
 
+static const struct user_driver_funcs waylanddrv_funcs =
+{
+    .pUpdateDisplayDevices = WAYLAND_UpdateDisplayDevices,
+};
+
 static NTSTATUS waylanddrv_unix_init(void *arg)
 {
-    if (!wayland_process_init()) return STATUS_UNSUCCESSFUL;
+    /* Set the user driver functions now so that they are available during
+     * our initialization. We clear them on error. */
+    __wine_set_user_driver(&waylanddrv_funcs, WINE_GDI_DRIVER_VERSION);
+
+    if (!wayland_process_init()) goto err;
 
     return 0;
+
+err:
+    __wine_set_user_driver(NULL, WINE_GDI_DRIVER_VERSION);
+    return STATUS_UNSUCCESSFUL;
 }
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
