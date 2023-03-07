@@ -713,7 +713,7 @@ LONG WINAPI SCardConnectW( SCARDCONTEXT context, const WCHAR *reader, DWORD shar
     return ret;
 }
 
-LONG WINAPI SCardReconnect( SCARDHANDLE connect, DWORD share_mode, DWORD preferred_protocols, DWORD initalization,
+LONG WINAPI SCardReconnect( SCARDHANDLE connect, DWORD share_mode, DWORD preferred_protocols, DWORD initialization,
                             DWORD *protocol )
 {
     struct handle *handle = (struct handle *)connect;
@@ -721,14 +721,14 @@ LONG WINAPI SCardReconnect( SCARDHANDLE connect, DWORD share_mode, DWORD preferr
     UINT64 protocol64;
     LONG ret;
 
-    TRACE( "%Ix, %#lx, %#lx, %#lx, %p\n", connect, share_mode, preferred_protocols, initalization, protocol );
+    TRACE( "%Ix, %#lx, %#lx, %#lx, %p\n", connect, share_mode, preferred_protocols, initialization, protocol );
 
     if (!handle || handle->magic != CONNECT_MAGIC) return ERROR_INVALID_HANDLE;
 
     params.handle = handle->unix_handle;
     params.share_mode = share_mode;
     params.preferred_protocols = preferred_protocols;
-    params.initialization = initalization;
+    params.initialization = initialization;
     params.protocol = &protocol64;
     if (!(ret = UNIX_CALL( scard_reconnect, &params )) && protocol) *protocol = protocol64;
     TRACE( "returning %#lx\n", ret );
