@@ -71,6 +71,7 @@ struct wayland_output
     struct wayland_output_mode *current_mode;
     char *name;
     int logical_x, logical_y;
+    int logical_w, logical_h;
     uint32_t global_id;
 };
 
