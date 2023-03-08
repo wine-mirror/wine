@@ -481,8 +481,6 @@ int WINAPI GetCurrencyFormatA( LCID lcid, DWORD flags, const char *value,
     }
     MultiByteToWideChar( cp, 0, value, -1, input, ARRAY_SIZE(input) );
 
-    if (len > (int)ARRAY_SIZE(output)) len = ARRAY_SIZE(output);
-
     if (format)
     {
         CURRENCYFMTW fmt;
@@ -509,9 +507,9 @@ int WINAPI GetCurrencyFormatA( LCID lcid, DWORD flags, const char *value,
         fmt.lpDecimalSep = fmt_decimal;
         fmt.lpThousandSep = fmt_thousand;
         fmt.lpCurrencySymbol = fmt_symbol;
-        ret = GetCurrencyFormatW( lcid, flags, input, &fmt, output, len );
+        ret = GetCurrencyFormatW( lcid, flags, input, &fmt, output, ARRAY_SIZE(output) );
     }
-    else ret = GetCurrencyFormatW( lcid, flags, input, NULL, output, len );
+    else ret = GetCurrencyFormatW( lcid, flags, input, NULL, output, ARRAY_SIZE(output) );
 
     if (ret) ret = WideCharToMultiByte( cp, 0, output, -1, buffer, len, 0, 0 );
     return ret;
