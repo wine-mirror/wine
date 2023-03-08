@@ -3314,7 +3314,8 @@ enum wined3d_pci_device
     CARD_INTEL_HD620                = 0x5916,
     CARD_INTEL_HD630_1              = 0x5912,
     CARD_INTEL_HD630_2              = 0x591b,
-    CARD_INTEL_UHD630               = 0x3e9b,
+    CARD_INTEL_UHD630_1             = 0x3e9b,
+    CARD_INTEL_UHD630_2             = 0x3e91,
 };
 
 struct wined3d_fbo_ops
