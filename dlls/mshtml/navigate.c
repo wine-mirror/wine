@@ -1419,8 +1419,11 @@ static void stop_request_task_destr(task_t *_task)
 
 static HRESULT async_stop_request(nsChannelBSC *This)
 {
+    HTMLInnerWindow *window = This->bsc.window;
     stop_request_task_t *task;
+    HRESULT hres;
 
+    IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
     if(!This->bsc.read) {
         TRACE("No data read, calling OnStartRequest\n");
         on_start_nsrequest(This);
@@ -1433,7 +1436,9 @@ static HRESULT async_stop_request(nsChannelBSC *This)
     IBindStatusCallback_AddRef(&This->bsc.IBindStatusCallback_iface);
     task->bsc = This;
 
-    return push_task(&task->header, stop_request_proc, stop_request_task_destr, This->bsc.window->task_magic);
+    hres = push_task(&task->header, stop_request_proc, stop_request_task_destr, window->task_magic);
+    IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
+    return hres;
 }
 
 static void handle_navigation_error(nsChannelBSC *This, DWORD result)
@@ -2069,6 +2074,7 @@ typedef struct {
 static void navigate_javascript_proc(task_t *_task)
 {
     navigate_javascript_task_t *task = (navigate_javascript_task_t*)_task;
+    HTMLInnerWindow *inner_window = task->window->base.inner_window;
     HTMLOuterWindow *window = task->window;
     HTMLDocumentObj *doc = NULL;
     BSTR code = NULL;
@@ -2080,6 +2086,7 @@ static void navigate_javascript_proc(task_t *_task)
         doc = window->browser->doc;
         IUnknown_AddRef(doc->outer_unk);
     }
+    IHTMLWindow2_AddRef(&inner_window->base.IHTMLWindow2_iface);
 
     hres = IUri_GetPath(task->uri, &code);
     if(hres != S_OK) {
@@ -2097,7 +2104,7 @@ static void navigate_javascript_proc(task_t *_task)
         set_download_state(doc, 1);
 
     V_VT(&v) = VT_EMPTY;
-    hres = exec_script(window->base.inner_window, code, L"jscript", &v);
+    hres = exec_script(inner_window, code, L"jscript", &v);
     SysFreeString(code);
     if(SUCCEEDED(hres) && V_VT(&v) != VT_EMPTY) {
         FIXME("javascirpt URL returned %s\n", debugstr_variant(&v));
@@ -2112,6 +2119,7 @@ static void navigate_javascript_proc(task_t *_task)
     }
 
 done:
+    IHTMLWindow2_Release(&inner_window->base.IHTMLWindow2_iface);
     if(doc)
         IUnknown_Release(doc->outer_unk);
 }

@@ -437,20 +437,24 @@ HRESULT set_moniker(HTMLOuterWindow *window, IMoniker *mon, IUri *nav_uri, IBind
 
 static void notif_readystate(HTMLOuterWindow *window)
 {
+    HTMLInnerWindow *inner_window = window->base.inner_window;
     DOMEvent *event;
     HRESULT hres;
 
     window->readystate_pending = FALSE;
 
+    IHTMLWindow2_AddRef(&inner_window->base.IHTMLWindow2_iface);
+
     if(is_main_content_window(window))
         call_property_onchanged(&window->browser->doc->cp_container, DISPID_READYSTATE);
 
-    hres = create_document_event(window->base.inner_window->doc, EVENTID_READYSTATECHANGE, &event);
+    hres = create_document_event(inner_window->doc, EVENTID_READYSTATECHANGE, &event);
     if(SUCCEEDED(hres)) {
         event->no_event_obj = TRUE;
-        dispatch_event(&window->base.inner_window->doc->node.event_target, event);
+        dispatch_event(&inner_window->doc->node.event_target, event);
         IDOMEvent_Release(&event->IDOMEvent_iface);
     }
+    IHTMLWindow2_Release(&inner_window->base.IHTMLWindow2_iface);
 
     if(window->frame_element) {
         hres = create_document_event(window->frame_element->element.node.doc, EVENTID_READYSTATECHANGE, &event);
