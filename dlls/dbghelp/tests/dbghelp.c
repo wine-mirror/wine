@@ -424,6 +424,9 @@ static BOOL test_modules(void)
     ret = SymInitialize(dummy, NULL, FALSE);
     ok(ret, "got error %lu\n", GetLastError());
 
+    ret = SymRefreshModuleList(dummy);
+    ok(!ret, "SymRefreshModuleList should have failed\n");
+
     count = get_module_count(dummy);
     ok(count == 0, "Unexpected count (%u instead of 0)\n", count);
 
@@ -731,6 +734,10 @@ static void test_loaded_modules(void)
         }
     }
 
+    ret = SymRefreshModuleList(pi.hProcess);
+    todo_wine_if(get_process_kind(pi.hProcess) == PCSKIND_WOW64)
+    ok(ret || broken(GetLastError() == STATUS_PARTIAL_COPY /* Win11 in some cases */), "SymRefreshModuleList failed: %lu\n", GetLastError());
+
     SymCleanup(pi.hProcess);
     TerminateProcess(pi.hProcess, 0);
 
@@ -765,6 +772,9 @@ static void test_loaded_modules(void)
             ok(aggregation.count_systemdir > 2 && aggregation.count_64bit == aggregation.count_systemdir && aggregation.count_wowdir == 1,
                "Wrong directory aggregation count %u %u\n",
                aggregation.count_systemdir, aggregation.count_wowdir);
+
+            ret = SymRefreshModuleList(pi.hProcess);
+            ok(ret, "SymRefreshModuleList failed: %lu\n", GetLastError());
 
             SymCleanup(pi.hProcess);
             TerminateProcess(pi.hProcess, 0);
@@ -803,6 +813,9 @@ static void test_loaded_modules(void)
             ok(aggregation2.count_systemdir > 2 && aggregation2.count_64bit == aggregation2.count_systemdir && aggregation2.count_wowdir > 2,
                "Wrong directory aggregation count %u %u\n",
                aggregation2.count_systemdir, aggregation2.count_wowdir);
+
+            ret = SymRefreshModuleList(pi.hProcess);
+            ok(ret, "SymRefreshModuleList failed: %lu\n", GetLastError());
 
             SymCleanup(pi.hProcess);
             TerminateProcess(pi.hProcess, 0);
