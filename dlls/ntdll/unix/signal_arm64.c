@@ -590,7 +590,7 @@ void *get_native_context( CONTEXT *context )
  */
 void *get_wow_context( CONTEXT *context )
 {
-    return NULL;
+    return get_cpu_area( main_image_info.Machine );
 }
 
 
@@ -877,6 +877,15 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
         {
             memcpy( &context->FloatSave, &wow_frame->FloatSave, sizeof(context->FloatSave) );
             context->ContextFlags |= CONTEXT_I386_FLOATING_POINT;
+        }
+        if (needed_flags & CONTEXT_I386_DEBUG_REGISTERS)
+        {
+            context->Dr0 = wow_frame->Dr0;
+            context->Dr1 = wow_frame->Dr1;
+            context->Dr2 = wow_frame->Dr2;
+            context->Dr3 = wow_frame->Dr3;
+            context->Dr6 = wow_frame->Dr6;
+            context->Dr7 = wow_frame->Dr7;
         }
         /* FIXME: CONTEXT_I386_XSTATE */
         break;

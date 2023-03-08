@@ -214,8 +214,15 @@ static unsigned int get_server_context_flags( const void *context, USHORT machin
  */
 static unsigned int get_native_context_flags( USHORT native_machine, USHORT wow_machine )
 {
-    if (native_machine == wow_machine) return 0;
-    return SERVER_CTX_DEBUG_REGISTERS | SERVER_CTX_FLOATING_POINT | SERVER_CTX_YMM_REGISTERS;
+    switch (MAKELONG( native_machine, wow_machine ))
+    {
+    case MAKELONG( IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_I386 ):
+        return SERVER_CTX_DEBUG_REGISTERS | SERVER_CTX_FLOATING_POINT | SERVER_CTX_YMM_REGISTERS;
+    case MAKELONG( IMAGE_FILE_MACHINE_ARM64, IMAGE_FILE_MACHINE_ARMNT ):
+        return SERVER_CTX_DEBUG_REGISTERS | SERVER_CTX_FLOATING_POINT;
+    default:
+        return 0;
+    }
 }
 
 
@@ -594,6 +601,10 @@ static NTSTATUS context_to_server( context_t *to, USHORT to_machine, const void 
         }
         return STATUS_SUCCESS;
     }
+
+    case MAKELONG( IMAGE_FILE_MACHINE_ARM64, IMAGE_FILE_MACHINE_I386 ):
+    case MAKELONG( IMAGE_FILE_MACHINE_I386, IMAGE_FILE_MACHINE_ARM64 ):
+        return STATUS_SUCCESS;
 
     default:
         return STATUS_INVALID_PARAMETER;
@@ -974,7 +985,6 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
         ARM64_NT_CONTEXT *to = dst;
 
         to_flags = to->ContextFlags & ~CONTEXT_ARM64;
-        to->ContextFlags = CONTEXT_ARM64;
         if ((from->flags & SERVER_CTX_CONTROL) && (to_flags & CONTEXT_ARM64_CONTROL))
         {
             to->ContextFlags |= CONTEXT_ARM64_CONTROL;
@@ -1010,6 +1020,10 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
         }
         return STATUS_SUCCESS;
     }
+
+    case MAKELONG( IMAGE_FILE_MACHINE_ARM64, IMAGE_FILE_MACHINE_I386 ):
+    case MAKELONG( IMAGE_FILE_MACHINE_I386, IMAGE_FILE_MACHINE_ARM64 ):
+        return STATUS_SUCCESS;
 
     default:
         return STATUS_INVALID_PARAMETER;
