@@ -594,6 +594,129 @@ static HRESULT get_uia_condition_struct_from_iface(IUIAutomationCondition *condi
 }
 
 /*
+ * IUIAutomationElementArray interface.
+ */
+struct uia_element_array {
+    IUIAutomationElementArray IUIAutomationElementArray_iface;
+    LONG ref;
+
+    IUIAutomationElement **elements;
+    int elements_count;
+};
+
+static inline struct uia_element_array *impl_from_IUIAutomationElementArray(IUIAutomationElementArray *iface)
+{
+    return CONTAINING_RECORD(iface, struct uia_element_array, IUIAutomationElementArray_iface);
+}
+
+static HRESULT WINAPI uia_element_array_QueryInterface(IUIAutomationElementArray *iface, REFIID riid, void **ppv)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IUIAutomationElementArray))
+        *ppv = iface;
+    else
+        return E_NOINTERFACE;
+
+    IUIAutomationElementArray_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI uia_element_array_AddRef(IUIAutomationElementArray *iface)
+{
+    struct uia_element_array *element = impl_from_IUIAutomationElementArray(iface);
+    ULONG ref = InterlockedIncrement(&element->ref);
+
+    TRACE("%p, refcount %ld\n", element, ref);
+    return ref;
+}
+
+static ULONG WINAPI uia_element_array_Release(IUIAutomationElementArray *iface)
+{
+    struct uia_element_array *element_arr = impl_from_IUIAutomationElementArray(iface);
+    ULONG ref = InterlockedDecrement(&element_arr->ref);
+
+    TRACE("%p, refcount %ld\n", element_arr, ref);
+    if (!ref)
+    {
+        if (element_arr->elements_count)
+        {
+            int i;
+
+            for (i = 0; i < element_arr->elements_count; i++)
+            {
+                if (element_arr->elements[i])
+                    IUIAutomationElement_Release(element_arr->elements[i]);
+            }
+        }
+        heap_free(element_arr->elements);
+        heap_free(element_arr);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI uia_element_array_get_Length(IUIAutomationElementArray *iface, int *out_length)
+{
+    struct uia_element_array *element_arr = impl_from_IUIAutomationElementArray(iface);
+
+    TRACE("%p, %p\n", iface, out_length);
+
+    if (!out_length)
+        return E_POINTER;
+
+    *out_length = element_arr->elements_count;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI uia_element_array_GetElement(IUIAutomationElementArray *iface, int idx,
+        IUIAutomationElement **out_elem)
+{
+    struct uia_element_array *element_arr = impl_from_IUIAutomationElementArray(iface);
+
+    TRACE("%p, %p\n", iface, out_elem);
+
+    if (!out_elem)
+        return E_POINTER;
+
+    if ((idx < 0) || (idx >= element_arr->elements_count))
+        return E_INVALIDARG;
+
+    *out_elem = element_arr->elements[idx];
+    IUIAutomationElement_AddRef(element_arr->elements[idx]);
+
+    return S_OK;
+}
+
+static const IUIAutomationElementArrayVtbl uia_element_array_vtbl = {
+    uia_element_array_QueryInterface,
+    uia_element_array_AddRef,
+    uia_element_array_Release,
+    uia_element_array_get_Length,
+    uia_element_array_GetElement,
+};
+
+static HRESULT create_uia_element_array_iface(IUIAutomationElementArray **iface, int elements_count)
+{
+    struct uia_element_array *element_arr = heap_alloc_zero(sizeof(*element_arr));
+
+    *iface = NULL;
+    if (!element_arr)
+        return E_OUTOFMEMORY;
+
+    element_arr->IUIAutomationElementArray_iface.lpVtbl = &uia_element_array_vtbl;
+    element_arr->ref = 1;
+    element_arr->elements_count = elements_count;
+    if (!(element_arr->elements = heap_alloc_zero(sizeof(*element_arr->elements) * elements_count)))
+    {
+        heap_free(element_arr);
+        return E_OUTOFMEMORY;
+    }
+
+    *iface = &element_arr->IUIAutomationElementArray_iface;
+    return S_OK;
+}
+
+/*
  * IUIAutomationElement interface.
  */
 struct uia_element {
@@ -705,6 +828,49 @@ static HRESULT WINAPI uia_element_GetCurrentPropertyValue(IUIAutomationElement9 
 }
 
 static HRESULT create_uia_element(IUIAutomationElement **iface, BOOL from_cui8, HUIANODE node);
+static HRESULT create_element_array_from_node_array(SAFEARRAY *sa, BOOL from_cui8,
+        IUIAutomationElementArray **out_elem_arr)
+{
+    struct uia_element_array *elem_arr_data;
+    IUIAutomationElementArray *elem_arr;
+    LONG idx, lbound, elems, i;
+    HRESULT hr;
+
+    *out_elem_arr = NULL;
+    hr = get_safearray_bounds(sa, &lbound, &elems);
+    if (FAILED(hr))
+        return hr;
+
+    hr = create_uia_element_array_iface(&elem_arr, elems);
+    if (FAILED(hr))
+        return hr;
+
+    elem_arr_data = impl_from_IUIAutomationElementArray(elem_arr);
+    for (i = 0; i < elems; i++)
+    {
+        HUIANODE node;
+
+        idx = lbound + i;
+        hr = SafeArrayGetElement(sa, &idx, &node);
+        if (FAILED(hr))
+            break;
+
+        hr = create_uia_element(&elem_arr_data->elements[i], from_cui8, node);
+        if (FAILED(hr))
+        {
+            UiaNodeRelease(node);
+            break;
+        }
+    }
+
+    if (SUCCEEDED(hr))
+        *out_elem_arr = elem_arr;
+    else
+        IUIAutomationElementArray_Release(elem_arr);
+
+    return hr;
+}
+
 static HRESULT WINAPI uia_element_GetCurrentPropertyValueEx(IUIAutomationElement9 *iface, PROPERTYID prop_id,
         BOOL ignore_default, VARIANT *ret_val)
 {
@@ -724,17 +890,19 @@ static HRESULT WINAPI uia_element_GetCurrentPropertyValueEx(IUIAutomationElement
     if (!ignore_default)
         FIXME("Default values currently unimplemented\n");
 
-    if (prop_info->type == UIAutomationType_ElementArray)
-    {
-        FIXME("ElementArray property types currently unsupported for IUIAutomationElement\n");
-        return E_NOTIMPL;
-    }
-
     hr = UiaGetPropertyValue(element->node, prop_id, ret_val);
-    if ((prop_info->type == UIAutomationType_Element) && (V_VT(ret_val) != VT_UNKNOWN))
+    if (FAILED(hr))
+        return hr;
+
+    switch (prop_info->type)
+    {
+    case UIAutomationType_Element:
     {
         IUIAutomationElement *out_elem;
         HUIANODE node;
+
+        if (V_VT(ret_val) == VT_UNKNOWN)
+            break;
 
         hr = UiaHUiaNodeFromVariant(ret_val, &node);
         VariantClear(ret_val);
@@ -747,6 +915,31 @@ static HRESULT WINAPI uia_element_GetCurrentPropertyValueEx(IUIAutomationElement
             V_VT(ret_val) = VT_UNKNOWN;
             V_UNKNOWN(ret_val) = (IUnknown *)out_elem;
         }
+        else
+            UiaNodeRelease(node);
+
+        break;
+    }
+
+    case UIAutomationType_ElementArray:
+    {
+        IUIAutomationElementArray *out_elem_arr;
+
+        if (V_VT(ret_val) == VT_UNKNOWN)
+            break;
+
+        hr = create_element_array_from_node_array(V_ARRAY(ret_val), element->from_cui8, &out_elem_arr);
+        VariantClear(ret_val);
+        if (SUCCEEDED(hr))
+        {
+            V_VT(ret_val) = VT_UNKNOWN;
+            V_UNKNOWN(ret_val) = (IUnknown *)out_elem_arr;
+        }
+        break;
+    }
+
+    default:
+        break;
     }
 
     return hr;

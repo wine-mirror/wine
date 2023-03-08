@@ -5184,27 +5184,70 @@ static void check_uia_prop_val(PROPERTYID prop_id, enum UIAutomationType type, V
     }
 
     case UIAutomationType_ElementArray:
-        ok(V_VT(v) == (VT_ARRAY | VT_UNKNOWN), "Unexpected VT %d\n", V_VT(v));
-        if (V_VT(v) != (VT_ARRAY | VT_UNKNOWN))
-            break;
-
         ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
         ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
-        for (idx = 0; idx < ARRAY_SIZE(uia_unk_arr_prop_val); idx++)
+        if (from_com)
         {
-            HUIANODE tmp_node;
+            IUIAutomationElementArray *elem_arr = NULL;
             HRESULT hr;
-            VARIANT v1;
+            int len;
 
-            SafeArrayGetElement(V_ARRAY(v), &idx, &tmp_node);
+            ok(V_VT(v) == VT_UNKNOWN, "Unexpected VT %d\n", V_VT(v));
+            hr = IUnknown_QueryInterface(V_UNKNOWN(v), &IID_IUIAutomationElementArray, (void **)&elem_arr);
+            ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+            ok(!!elem_arr, "elem_arr == NULL\n");
+            if (!elem_arr)
+            {
+                VariantClear(v);
+                break;
+            }
 
-            hr = UiaGetPropertyValue(tmp_node, UIA_ControlTypePropertyId, &v1);
-            ok(hr == S_OK, "node[%ld] Unexpected hr %#lx\n", idx, hr);
-            ok(V_VT(&v1) == VT_I4, "node[%ld] Unexpected VT %d\n", idx, V_VT(&v1));
-            ok(V_I4(&v1) == uia_i4_prop_val, "node[%ld] Unexpected I4 %#lx\n", idx, V_I4(&v1));
+            hr = IUIAutomationElementArray_get_Length(elem_arr, &len);
+            ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+            ok(len == ARRAY_SIZE(uia_unk_arr_prop_val), "Unexpected length %d\n", len);
 
-            ok(UiaNodeRelease(tmp_node), "Failed to release node[%ld]\n", idx);
-            VariantClear(&v1);
+            for (idx = 0; idx < ARRAY_SIZE(uia_unk_arr_prop_val); idx++)
+            {
+                IUIAutomationElement *tmp_elem = NULL;
+                VARIANT v1;
+
+                hr = IUIAutomationElementArray_GetElement(elem_arr, idx, &tmp_elem);
+                ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+                ok(!!tmp_elem, "tmp_elem == NULL\n");
+
+                hr = IUIAutomationElement_GetCurrentPropertyValueEx(tmp_elem, UIA_ControlTypePropertyId, TRUE, &v1);
+                ok(hr == S_OK, "elem[%ld] Unexpected hr %#lx\n", idx, hr);
+                ok(V_VT(&v1) == VT_I4, "elem[%ld] Unexpected VT %d\n", idx, V_VT(&v1));
+                ok(V_I4(&v1) == uia_i4_prop_val, "elem[%ld] Unexpected I4 %#lx\n", idx, V_I4(&v1));
+
+                IUIAutomationElement_Release(tmp_elem);
+                VariantClear(&v1);
+            }
+
+            IUIAutomationElementArray_Release(elem_arr);
+        }
+        else
+        {
+            ok(V_VT(v) == (VT_ARRAY | VT_UNKNOWN), "Unexpected VT %d\n", V_VT(v));
+            if (V_VT(v) != (VT_ARRAY | VT_UNKNOWN))
+                break;
+
+            for (idx = 0; idx < ARRAY_SIZE(uia_unk_arr_prop_val); idx++)
+            {
+                HUIANODE tmp_node;
+                HRESULT hr;
+                VARIANT v1;
+
+                SafeArrayGetElement(V_ARRAY(v), &idx, &tmp_node);
+
+                hr = UiaGetPropertyValue(tmp_node, UIA_ControlTypePropertyId, &v1);
+                ok(hr == S_OK, "node[%ld] Unexpected hr %#lx\n", idx, hr);
+                ok(V_VT(&v1) == VT_I4, "node[%ld] Unexpected VT %d\n", idx, V_VT(&v1));
+                ok(V_I4(&v1) == uia_i4_prop_val, "node[%ld] Unexpected I4 %#lx\n", idx, V_I4(&v1));
+
+                ok(UiaNodeRelease(tmp_node), "Failed to release node[%ld]\n", idx);
+                VariantClear(&v1);
+            }
         }
 
         VariantClear(v);
@@ -9835,7 +9878,8 @@ static void test_Element_GetPropertyValue(IUIAutomation *uia_iface)
     const struct uia_element_property *elem_prop;
     struct Provider_prop_override prop_override;
     IUIAutomationElement *element, *element2;
-    int i, prop_id, tmp_int;
+    IUIAutomationElementArray *element_arr;
+    int i, len, prop_id, tmp_int;
     struct UiaRect uia_rect;
     IUnknown *unk_ns;
     BSTR tmp_bstr;
@@ -9863,10 +9907,6 @@ static void test_Element_GetPropertyValue(IUIAutomation *uia_iface)
     for (i = 0; i < ARRAY_SIZE(element_properties); i++)
     {
         elem_prop = &element_properties[i];
-
-        /* Skip ElementArray properties for now. */
-        if (elem_prop->type == UIAutomationType_ElementArray)
-            continue;
 
         Provider.ret_invalid_prop_type = FALSE;
         VariantClear(&v);
@@ -9901,6 +9941,63 @@ static void test_Element_GetPropertyValue(IUIAutomation *uia_iface)
 
         winetest_pop_context();
     }
+
+    /* Test IUIAutomationElementArray interface behavior. */
+    Provider.ret_invalid_prop_type = FALSE;
+    hr = IUIAutomationElement_GetCurrentPropertyValueEx(element, UIA_ControllerForPropertyId, TRUE, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_UNKNOWN, "Unexpected vt %d\n", V_VT(&v));
+    ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+    ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
+
+    element_arr = NULL;
+    hr = IUnknown_QueryInterface(V_UNKNOWN(&v), &IID_IUIAutomationElementArray, (void **)&element_arr);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(!!element_arr, "element_arr == NULL\n");
+    VariantClear(&v);
+
+    hr = IUIAutomationElementArray_get_Length(element_arr, &len);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(len == ARRAY_SIZE(uia_unk_arr_prop_val), "Unexpected length %d\n", len);
+
+    /* Invalid argument tests. */
+    hr = IUIAutomationElementArray_get_Length(element_arr, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx\n", hr);
+
+    element2 = (void *)0xdeadbeef;
+    hr = IUIAutomationElementArray_GetElement(element_arr, len, &element2);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx\n", hr);
+    /* Pointer isn't cleared. */
+    ok(!!element2, "element2 == NULL\n");
+
+    hr = IUIAutomationElementArray_GetElement(element_arr, -1, &element2);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx\n", hr);
+    /* Pointer isn't cleared. */
+    ok(!!element2, "element2 == NULL\n");
+
+    hr = IUIAutomationElementArray_GetElement(element_arr, 0, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx\n", hr);
+
+    for (i = 0; i < len; i++)
+    {
+        element2 = NULL;
+        hr = IUIAutomationElementArray_GetElement(element_arr, i, &element2);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        ok(!!element2, "element2 == NULL\n");
+
+        hr = IUIAutomationElement_GetCurrentPropertyValueEx(element2, UIA_ControlTypePropertyId, TRUE, &v);
+        ok(hr == S_OK, "element[%d] Unexpected hr %#lx\n", i, hr);
+        ok(V_VT(&v) == VT_I4, "element[%d] Unexpected VT %d\n", i, V_VT(&v));
+        ok(V_I4(&v) == uia_i4_prop_val, "element[%d] Unexpected I4 %#lx\n", i, V_I4(&v));
+
+        IUIAutomationElement_Release(element2);
+        VariantClear(&v);
+    }
+
+    IUIAutomationElementArray_Release(element_arr);
+    ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
+    ok(Provider_child2.ref == 1, "Unexpected refcnt %ld\n", Provider_child2.ref);
+    ok_method_sequence(get_elem_arr_prop_seq, NULL);
 
     /*
      * IUIAutomationElement_get_CurrentControlType tests. If the value
