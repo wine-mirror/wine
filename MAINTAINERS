@@ -29,7 +29,8 @@ Maintainers List
 		-----------------------------------
 
 ARM, ARM64
-M:	André Zwing <nerv@dawncrow.de>
+M:	Alexandre Julliard <julliard@winehq.org>
+P:	André Zwing <nerv@dawncrow.de>
 F:	dlls/dbghelp/cpu_arm*
 F:	dlls/msvcrt/except_arm.c
 F:	dlls/ntdll/signal_arm*
