@@ -29,6 +29,8 @@ static const BOOL is_win64 = sizeof(void*) > sizeof(int);
 static WCHAR system_directory[MAX_PATH];
 static WCHAR wow64_directory[MAX_PATH];
 
+static BOOL (*WINAPI pIsWow64Process2)(HANDLE, USHORT*, USHORT*);
+
 #if defined(__i386__) || defined(__x86_64__)
 
 static DWORD CALLBACK stack_walk_thread(void *arg)
@@ -564,13 +566,8 @@ enum process_kind
 
 static enum process_kind get_process_kind(HANDLE process)
 {
-    HMODULE mod;
     USHORT m1, m2;
-    BOOL (WINAPI *pIsWow64Process2)(HANDLE,USHORT*,USHORT*);
-    const BOOL is_win64 = sizeof(void*) == 8;
 
-    mod = GetModuleHandleA("kernel32");
-    pIsWow64Process2 = (void*)GetProcAddress(mod, "IsWow64Process2");
     if (!pIsWow64Process2)
     {
         BOOL is_wow64;
@@ -819,6 +816,8 @@ START_TEST(dbghelp)
     /* Don't let the user's environment influence our symbol path */
     SetEnvironmentVariableA("_NT_SYMBOL_PATH", NULL);
     SetEnvironmentVariableA("_NT_ALT_SYMBOL_PATH", NULL);
+
+    pIsWow64Process2 = (void*)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process2");
 
     ret = SymInitialize(GetCurrentProcess(), NULL, TRUE);
     ok(ret, "got error %lu\n", GetLastError());
