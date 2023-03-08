@@ -494,6 +494,8 @@ NTSTATUS WINAPI KiUserExceptionDispatcher( EXCEPTION_RECORD *rec, CONTEXT *conte
     NTSTATUS status;
     DWORD c;
 
+    if (pWow64PrepareForException) pWow64PrepareForException( rec, context );
+
     TRACE( "code=%lx flags=%lx addr=%p pc=%016I64x\n",
            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, context->Pc );
     for (c = 0; c < rec->NumberParameters; c++)

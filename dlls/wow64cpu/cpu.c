@@ -375,6 +375,8 @@ NTSTATUS WINAPI BTCpuResetToConsistentState( EXCEPTION_POINTERS *ptrs )
     CONTEXT *context = ptrs->ContextRecord;
     I386_CONTEXT wow_context;
 
+    if (context->SegCs == cs64_sel) return STATUS_SUCCESS;  /* exception in 64-bit code, nothing to do */
+
     copy_context_64to32( &wow_context, CONTEXT_I386_ALL, context );
     wow_context.EFlags &= ~(0x100|0x40000);
     BTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &wow_context );

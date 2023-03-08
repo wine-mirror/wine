@@ -508,6 +508,8 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
     NTSTATUS status;
     DWORD c;
 
+    if (pWow64PrepareForException) pWow64PrepareForException( rec, context );
+
     TRACE_(seh)( "code=%lx flags=%lx addr=%p ip=%Ix\n",
                  rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, context->Rip );
     for (c = 0; c < min( EXCEPTION_MAXIMUM_PARAMETERS, rec->NumberParameters ); c++)
@@ -584,7 +586,6 @@ NTSTATUS WINAPI dispatch_wow_exception( EXCEPTION_RECORD *rec_ptr, CONTEXT *cont
     RtlInitializeExtendedContext( buffer, context_ptr->ContextFlags, &context_ex );
     context = RtlLocateLegacyContext( context_ex, NULL );
     RtlCopyContext( context, context_ptr->ContextFlags, context_ptr );
-    pWow64PrepareForException( &rec, context );
     return dispatch_exception( &rec, context );
 }
 
