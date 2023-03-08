@@ -127,8 +127,6 @@ struct context
 
 /* flags for registers that always need to be set from the server side */
 static const unsigned int system_flags = SERVER_CTX_DEBUG_REGISTERS;
-/* flags for registers that are set from the native context even in WoW mode */
-static const unsigned int always_native_flags = SERVER_CTX_DEBUG_REGISTERS | SERVER_CTX_FLOATING_POINT | SERVER_CTX_YMM_REGISTERS;
 
 static void dump_context( struct object *obj, int verbose );
 static int context_signaled( struct object *obj, struct wait_queue_entry *entry );
@@ -1866,8 +1864,8 @@ DECL_HANDLER(get_thread_context)
 
         if (req->machine == thread_context->regs[CTX_WOW].machine)
         {
-            native_flags = req->flags & always_native_flags;
-            wow_flags = req->flags & ~always_native_flags;
+            native_flags = req->native_flags;
+            wow_flags = req->flags & ~native_flags;
         }
         if ((context = set_reply_data_size( (!!native_flags + !!wow_flags) * sizeof(context_t) )))
         {
@@ -1922,7 +1920,7 @@ DECL_HANDLER(set_thread_context)
         unsigned int ctx = CTX_NATIVE;
         const context_t *context = &contexts[CTX_NATIVE];
         unsigned int flags = system_flags & context->flags;
-        unsigned int native_flags = always_native_flags & context->flags;
+        unsigned int native_flags = context->flags & req->native_flags;
 
         if (thread != current) stop_thread( thread );
         else if (flags) set_thread_context( thread, context, flags );

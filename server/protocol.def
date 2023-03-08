@@ -1931,6 +1931,7 @@ struct process_info
     obj_handle_t handle;       /* thread handle */
     obj_handle_t context;      /* context handle */
     unsigned int flags;        /* context flags */
+    unsigned int native_flags; /* flags for native context if WoW present */
     unsigned short machine;    /* context architecture */
 @REPLY
     int          self;         /* was it a handle to the current thread? */
@@ -1942,6 +1943,7 @@ struct process_info
 /* Set the current context of a thread */
 @REQ(set_thread_context)
     obj_handle_t handle;       /* thread handle */
+    unsigned int native_flags; /* flags for native context if WoW present */
     VARARG(contexts,contexts); /* thread context(s) */
 @REPLY
     int          self;         /* was it a handle to the current thread? */

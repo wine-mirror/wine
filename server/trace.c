@@ -2509,6 +2509,7 @@ static void dump_get_thread_context_request( const struct get_thread_context_req
     fprintf( stderr, " handle=%04x", req->handle );
     fprintf( stderr, ", context=%04x", req->context );
     fprintf( stderr, ", flags=%08x", req->flags );
+    fprintf( stderr, ", native_flags=%08x", req->native_flags );
     fprintf( stderr, ", machine=%04x", req->machine );
 }
 
@@ -2522,6 +2523,7 @@ static void dump_get_thread_context_reply( const struct get_thread_context_reply
 static void dump_set_thread_context_request( const struct set_thread_context_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
+    fprintf( stderr, ", native_flags=%08x", req->native_flags );
     dump_varargs_contexts( ", contexts=", cur_size );
 }
 
