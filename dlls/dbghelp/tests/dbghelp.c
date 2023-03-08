@@ -564,7 +564,7 @@ enum process_kind
     PCSKIND_WOW64,          /* Wine "new" wow64 configuration, and Windows with wow64 support */
 };
 
-static enum process_kind get_process_kind(HANDLE process)
+static enum process_kind get_process_kind_internal(HANDLE process)
 {
     USHORT m1, m2;
 
@@ -599,6 +599,14 @@ static enum process_kind get_process_kind(HANDLE process)
         return pcskind;
     }
     return PCSKIND_ERROR;
+}
+
+static enum process_kind get_process_kind(HANDLE process)
+{
+    DWORD gle = GetLastError();
+    enum process_kind pcskind = get_process_kind_internal(process);
+    SetLastError(gle);
+    return pcskind;
 }
 
 struct loaded_module_aggregation
