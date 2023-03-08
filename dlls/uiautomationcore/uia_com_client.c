@@ -714,10 +714,16 @@ static HRESULT WINAPI uia_element_GetCurrentPropertyValueEx(IUIAutomationElement
 
     TRACE("%p, %d, %d, %p\n", iface, prop_id, ignore_default, ret_val);
 
+    if (!ret_val)
+        return E_POINTER;
+
+    VariantInit(ret_val);
+    if (!prop_info)
+        return E_INVALIDARG;
+
     if (!ignore_default)
         FIXME("Default values currently unimplemented\n");
 
-    VariantInit(ret_val);
     if (prop_info->type == UIAutomationType_ElementArray)
     {
         FIXME("ElementArray property types currently unsupported for IUIAutomationElement\n");

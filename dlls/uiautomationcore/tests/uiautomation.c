@@ -9851,7 +9851,15 @@ static void test_Element_GetPropertyValue(IUIAutomation *uia_iface)
     hr = UiaGetReservedNotSupportedValue(&unk_ns);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    hr = IUIAutomationElement_GetCurrentPropertyValueEx(element, UIA_ControlTypePropertyId, TRUE, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
     VariantInit(&v);
+    V_VT(&v) = VT_BOOL;
+    hr = IUIAutomationElement_GetCurrentPropertyValueEx(element, 1, TRUE, &v);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_EMPTY, "Unexpected vt %d\n", V_VT(&v));
+
     for (i = 0; i < ARRAY_SIZE(element_properties); i++)
     {
         elem_prop = &element_properties[i];
