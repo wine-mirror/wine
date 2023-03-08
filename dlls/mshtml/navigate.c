@@ -1948,8 +1948,12 @@ typedef struct {
 static void start_doc_binding_proc(task_t *_task)
 {
     start_doc_binding_task_t *task = (start_doc_binding_task_t*)_task;
+    HTMLOuterWindow *window = task->window;
 
-    set_current_mon(task->window, task->pending_window->bscallback->bsc.mon, task->flags);
+    IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
+    set_current_mon(window, task->pending_window->bscallback->bsc.mon, task->flags);
+    IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
+
     start_binding(task->pending_window, &task->pending_window->bscallback->bsc, NULL);
 }
 
@@ -2016,6 +2020,7 @@ void abort_window_bindings(HTMLInnerWindow *window)
 
 HRESULT channelbsc_load_stream(HTMLInnerWindow *pending_window, IMoniker *mon, IStream *stream)
 {
+    HTMLOuterWindow *window = pending_window->base.outer_window;
     nsChannelBSC *bscallback = pending_window->bscallback;
     HRESULT hres = S_OK;
 
@@ -2028,7 +2033,9 @@ HRESULT channelbsc_load_stream(HTMLInnerWindow *pending_window, IMoniker *mon, I
     if(!bscallback->nschannel->content_type)
         return E_OUTOFMEMORY;
 
-    set_current_mon(pending_window->base.outer_window, mon, 0);
+    IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
+    set_current_mon(window, mon, 0);
+    IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
 
     bscallback->bsc.window = pending_window;
     if(stream)
@@ -2143,14 +2150,19 @@ typedef struct {
 static void navigate_proc(task_t *_task)
 {
     navigate_task_t *task = (navigate_task_t*)_task;
+    HTMLOuterWindow *window = task->window;
     HRESULT hres;
 
-    hres = set_moniker(task->window, task->mon, task->uri, NULL, task->bscallback, TRUE);
+    IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
+
+    hres = set_moniker(window, task->mon, task->uri, NULL, task->bscallback, TRUE);
     if(SUCCEEDED(hres)) {
-        set_current_mon(task->window, task->bscallback->bsc.mon, task->flags);
-        set_current_uri(task->window, task->uri);
-        start_binding(task->window->pending_window, &task->bscallback->bsc, NULL);
+        set_current_mon(window, task->bscallback->bsc.mon, task->flags);
+        set_current_uri(window, task->uri);
+        start_binding(window->pending_window, &task->bscallback->bsc, NULL);
     }
+
+    IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
 }
 
 static void navigate_task_destr(task_t *_task)
@@ -2676,14 +2688,16 @@ HRESULT navigate_url(HTMLOuterWindow *window, const WCHAR *new_url, IUri *base_u
         hres = create_uri(new_url, 0, &nav_uri);
     if(FAILED(hres))
         return hres;
+    IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
 
     hres = translate_uri(window, nav_uri, &display_uri, &uri);
     IUri_Release(nav_uri);
-    if(FAILED(hres))
-        return hres;
+    if(SUCCEEDED(hres)) {
+        hres = navigate_uri(window, uri, display_uri, NULL, flags);
+        IUri_Release(uri);
+        SysFreeString(display_uri);
+    }
 
-    hres = navigate_uri(window, uri, display_uri, NULL, flags);
-    IUri_Release(uri);
-    SysFreeString(display_uri);
+    IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
     return hres;
 }
