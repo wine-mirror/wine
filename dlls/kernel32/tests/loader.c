@@ -2134,14 +2134,38 @@ static void test_import_resolution(void)
         char module[16];
         struct { WORD hint; char name[32]; } function;
         IMAGE_TLS_DIRECTORY tls;
+        UINT_PTR tls_init_fn_list[2];
         char tls_data[16];
         SHORT tls_index;
+        SHORT tls_index_hi;
+        UCHAR tls_init_fn[64]; /* Note: Uses rip-relative address of tls_index, don't separate */
     } data, *ptr;
     IMAGE_NT_HEADERS nt;
     IMAGE_SECTION_HEADER section;
     int test;
+#if defined(__i386__)
+    static const UCHAR tls_init_code[] = {
+        0xE8, 0x00, 0x00, 0x00, 0x00,             /* call 1f */
+        0x59,                                     /* 1: pop ecx */
+        0x8B, 0x49, 0xF7,                         /* mov ecx, [ecx - 9] ; mov ecx, [tls_index] */
+        0x64, 0x8B, 0x15, 0x2C, 0x00, 0x00, 0x00, /* mov edx, fs:0x2c */
+        0x8B, 0x14, 0x8A,                         /* mov edx, [edx + edx * 4] */
+        0xC6, 0x42, 0x05, 0x21,                   /* mov byte [edx + 5], 0x21 */
+        0xC2, 0x0C, 0x00,                         /* ret 12 */
+    };
+#elif defined(__x86_64__)
+    static const UCHAR tls_init_code[] = {
+        0x8B, 0x0D, 0xF6, 0xFF, 0xFF, 0xFF,                   /* mov ecx, [rip + tls_index] */
+        0x65, 0x48, 0x8B, 0x14, 0x25, 0x58, 0x00, 0x00, 0x00, /* mov rdx, gs:0x58 */
+        0x48, 0x8B, 0x14, 0xCA,                               /* mov rdx, [rdx + rcx * 8] */
+        0xC6, 0x42, 0x05, 0x21,                               /* mov byte [rdx + 5], 0x21 */
+        0xC3,                                                 /* ret */
+    };
+#else
+    static const UCHAR tls_init_code[] = { 0x00 };
+#endif
 
-    for (test = 0; test < 3; test++)
+    for (test = 0; test < 4; test++)
     {
 #define DATA_RVA(ptr) (page_size + ((char *)(ptr) - (char *)&data))
         nt = nt_header_template;
@@ -2175,6 +2199,15 @@ static void test_import_resolution(void)
         data.tls.AddressOfIndex = nt.OptionalHeader.ImageBase + DATA_RVA( &data.tls_index );
         strcpy( data.tls_data, "hello world" );
         data.tls_index = 9999;
+        data.tls_index_hi = 9999;
+
+        if (test == 3 && sizeof(tls_init_code) > 1)
+        {
+            assert(sizeof(tls_init_code) <= sizeof(data.tls_init_fn));
+            memcpy(data.tls_init_fn, tls_init_code, sizeof(tls_init_code));
+            data.tls_init_fn_list[0] = nt.OptionalHeader.ImageBase + DATA_RVA(&data.tls_init_fn);
+            data.tls.AddressOfCallBacks = nt.OptionalHeader.ImageBase + DATA_RVA(&data.tls_init_fn_list);
+        }
 
         GetTempPathA(MAX_PATH, temp_path);
         GetTempFileNameA(temp_path, "ldr", 0, dll_name);
@@ -2189,6 +2222,7 @@ static void test_import_resolution(void)
         section.Misc.VirtualSize = sizeof(data);
         section.SizeOfRawData = sizeof(data);
         section.Characteristics = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE;
+        if (test == 3) section.Characteristics |= IMAGE_SCN_MEM_EXECUTE;
 
         WriteFile(hfile, &dos_header, sizeof(dos_header), &dummy, NULL);
         WriteFile(hfile, &nt, sizeof(nt), &dummy, NULL);
@@ -2215,6 +2249,7 @@ static void test_import_resolution(void)
             {
                 str = ((char **)NtCurrentTeb()->ThreadLocalStoragePointer)[ptr->tls_index];
                 ok( !strcmp( str, "hello world" ), "wrong tls data '%s' at %p\n", str, str );
+                ok(ptr->tls_index_hi == 0, "TLS Index written as a short, high half: %d\n", ptr->tls_index_hi);
             }
             FreeLibrary( mod );
             break;
@@ -2245,6 +2280,20 @@ static void test_import_resolution(void)
             ok( ptr->tls_index == 9999, "wrong tls index %d\n", ptr->tls_index );
             FreeLibrary( mod );
             break;
+        case 3:  /* load with tls init function */
+            mod = LoadLibraryA( dll_name );
+            ok( mod != NULL, "failed to load err %lu\n", GetLastError() );
+            if (!mod) break;
+            ptr = (struct imports *)((char *)mod + page_size);
+            ok( ptr->tls_index < 32 || broken(ptr->tls_index == 9999), /* before vista */
+                "wrong tls index %d\n", ptr->tls_index );
+            if (ptr->tls_index != 9999 && sizeof(tls_init_code) > 1)
+            {
+                /* tls init function will write an '!' over the space in "hello world" */
+                str = ((char **)NtCurrentTeb()->ThreadLocalStoragePointer)[ptr->tls_index];
+                ok( !strcmp( str, "hello!world" ), "wrong tls data '%s' at %p\n", str, str );
+            }
+            FreeLibrary( mod );
         }
         DeleteFileA( dll_name );
 #undef DATA_RVA
