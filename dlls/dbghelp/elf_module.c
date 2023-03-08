@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 struct elf_info
 {
     unsigned                    flags;          /* IN  one (or several) of the ELF_INFO constants */
-    DWORD_PTR                   dbg_hdr_addr;   /* OUT address of debug header (if ELF_INFO_DEBUG_HEADER is set) */
+    DWORD64                     dbg_hdr_addr;   /* OUT address of debug header (if ELF_INFO_DEBUG_HEADER is set) */
     struct module*              module;         /* OUT loaded module (if ELF_INFO_MODULE is set) */
     const WCHAR*                module_name;    /* OUT found module name (if ELF_INFO_NAME is set) */
 };
@@ -1769,8 +1769,14 @@ BOOL elf_read_wine_loader_dbg_info(struct process* pcs, ULONG_PTR addr)
         HeapFree(GetProcessHeap(), 0, loader);
     }
     if (!ret || !elf_info.dbg_hdr_addr) return FALSE;
-
-    TRACE("Found ELF debug header %#Ix\n", elf_info.dbg_hdr_addr);
+    if (elf_info.dbg_hdr_addr != (ULONG_PTR)elf_info.dbg_hdr_addr)
+    {
+        ERR("Unable to access ELF libraries (outside 32bit limit)\n");
+        module_remove(pcs, elf_info.module);
+        pcs->loader = &empty_loader_ops;
+        return FALSE;
+    }
+    TRACE("Found ELF debug header %#I64x\n", elf_info.dbg_hdr_addr);
     elf_info.module->format_info[DFI_ELF]->u.elf_info->elf_loader = 1;
     module_set_module(elf_info.module, S_WineLoaderW);
     pcs->dbg_hdr_addr = elf_info.dbg_hdr_addr;

@@ -1548,11 +1548,6 @@ PVOID WINAPI SymFunctionTableAccess64(HANDLE hProcess, DWORD64 AddrBase)
     return module->cpu->find_runtime_function(module, AddrBase);
 }
 
-static BOOL native_synchronize_module_list(struct process* pcs)
-{
-    return FALSE;
-}
-
 static struct module* native_load_module(struct process* pcs, const WCHAR* name, ULONG_PTR addr)
 {
     return NULL;
@@ -1564,22 +1559,48 @@ static BOOL native_load_debug_info(struct process* process, struct module* modul
     return FALSE;
 }
 
-static BOOL native_enum_modules(struct process *process, enum_modules_cb cb, void* user)
-{
-    return FALSE;
-}
-
 static BOOL native_fetch_file_info(struct process* process, const WCHAR* name, ULONG_PTR load_addr, DWORD_PTR* base,
                                    DWORD* size, DWORD* checksum)
 {
     return FALSE;
 }
 
+static BOOL noloader_synchronize_module_list(struct process* pcs)
+{
+    return FALSE;
+}
+
+static BOOL noloader_enum_modules(struct process *process, enum_modules_cb cb, void* user)
+{
+    return FALSE;
+}
+
+static BOOL empty_synchronize_module_list(struct process* pcs)
+{
+    return TRUE;
+}
+
+static BOOL empty_enum_modules(struct process *process, enum_modules_cb cb, void* user)
+{
+    return TRUE;
+}
+
+/* to be used when debuggee isn't a live target */
 const struct loader_ops no_loader_ops =
 {
-    native_synchronize_module_list,
+    noloader_synchronize_module_list,
     native_load_module,
     native_load_debug_info,
-    native_enum_modules,
+    noloader_enum_modules,
+    native_fetch_file_info,
+};
+
+/* to be used when debuggee is a live target, but which system information isn't available */
+const struct loader_ops empty_loader_ops =
+{
+    empty_synchronize_module_list,
+    native_load_module,
+    native_load_debug_info,
+    empty_enum_modules,
     native_fetch_file_info,
 };

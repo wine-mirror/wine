@@ -735,7 +735,6 @@ static void test_loaded_modules(void)
     }
 
     ret = SymRefreshModuleList(pi.hProcess);
-    todo_wine_if(get_process_kind(pi.hProcess) == PCSKIND_WOW64)
     ok(ret || broken(GetLastError() == STATUS_PARTIAL_COPY /* Win11 in some cases */), "SymRefreshModuleList failed: %lu\n", GetLastError());
 
     SymCleanup(pi.hProcess);
