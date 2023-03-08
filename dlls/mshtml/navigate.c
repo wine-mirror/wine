@@ -2559,6 +2559,9 @@ static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *dis
             }
         }
 
+        if(!window->browser)
+            return S_OK;
+
         if(is_main_content_window(window))
             return super_navigate(window, uri, flags, headers, post_data, post_data_len);
     }
