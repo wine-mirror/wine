@@ -523,6 +523,15 @@ static inline BOOL read_process_memory(const struct process *process, UINT64 add
     return ReadProcessMemory(process->handle, (void*)(UINT_PTR)addr, buf, size, NULL);
 }
 
+static inline BOOL read_process_integral_value(const struct process* process, UINT64 addr, UINT64* pvalue, size_t size)
+{
+    /* Assuming that debugger and debuggee are little endian. */
+    UINT64 value = 0;
+    if (size > sizeof(value) || !read_process_memory(process, addr, &value, size)) return FALSE;
+    *pvalue = value;
+    return TRUE;
+}
+
 struct line_info
 {
     ULONG_PTR                   is_first : 1,
