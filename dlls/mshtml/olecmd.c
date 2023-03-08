@@ -687,12 +687,19 @@ static HRESULT exec_browsemode(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT 
 
 static HRESULT exec_editmode(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
+    HTMLDocumentObj *doc_obj;
+    HRESULT hres;
+
     TRACE("(%p)->(%08lx %p %p)\n", doc, cmdexecopt, in, out);
 
     if(in || out)
         FIXME("unsupported args\n");
 
-    return setup_edit_mode(doc->browser->doc);
+    doc_obj = doc->browser->doc;
+    IUnknown_AddRef(doc_obj->outer_unk);
+    hres = setup_edit_mode(doc_obj);
+    IUnknown_Release(doc_obj->outer_unk);
+    return hres;
 }
 
 static HRESULT exec_htmleditmode(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)

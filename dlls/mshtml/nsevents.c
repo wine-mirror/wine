@@ -339,9 +339,10 @@ static nsresult handle_load(HTMLDocumentNode *doc, nsIDOMEvent *event)
 
     if(!doc->outer_window)
         return NS_ERROR_FAILURE;
-    if(doc->doc_obj && doc->doc_obj->doc_node == doc)
+    if(doc->doc_obj && doc->doc_obj->doc_node == doc) {
         doc_obj = doc->doc_obj;
-
+        IUnknown_AddRef(doc_obj->outer_unk);
+    }
     connect_scripts(doc->window);
 
     if(doc_obj)
@@ -357,11 +358,13 @@ static nsresult handle_load(HTMLDocumentNode *doc, nsIDOMEvent *event)
         set_statustext(doc_obj, IDS_STATUS_DONE, NULL);
 
         update_title(doc_obj);
-    }
 
-    if(doc_obj && doc_obj->doc_object_service && !(doc->outer_window->load_flags & BINDING_REFRESH))
-        IDocObjectService_FireDocumentComplete(doc_obj->doc_object_service,
-                &doc->outer_window->base.IHTMLWindow2_iface, 0);
+        if(doc_obj->doc_object_service && !(doc->outer_window->load_flags & BINDING_REFRESH))
+            IDocObjectService_FireDocumentComplete(doc_obj->doc_object_service,
+                    &doc->outer_window->base.IHTMLWindow2_iface, 0);
+
+        IUnknown_Release(doc_obj->outer_unk);
+    }
 
     doc->window->performance_timing->load_event_start_time = get_time_stamp();
 

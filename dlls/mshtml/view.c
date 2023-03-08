@@ -117,6 +117,7 @@ static LRESULT on_timer(HTMLDocumentObj *This)
 
     if(!This->update)
         return 0;
+    IUnknown_AddRef(This->outer_unk);
 
     if(This->update & UPDATE_UI) {
         if(This->hostui)
@@ -138,6 +139,8 @@ static LRESULT on_timer(HTMLDocumentObj *This)
 
     update_title(This);
     This->update = 0;
+
+    IUnknown_Release(This->outer_unk);
     return 0;
 }
 

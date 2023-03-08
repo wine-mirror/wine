@@ -208,6 +208,8 @@ static void set_progress_proc(task_t *_task)
 
     TRACE("(%p)\n", doc);
 
+    IUnknown_AddRef(doc->outer_unk);
+
     if(doc->client)
         IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
 
@@ -238,6 +240,8 @@ static void set_progress_proc(task_t *_task)
                     hostinfo.cbSize, hostinfo.dwFlags, hostinfo.dwDoubleClick,
                     debugstr_w(hostinfo.pchHostCss), debugstr_w(hostinfo.pchHostNS));
     }
+
+    IUnknown_Release(doc->outer_unk);
 }
 
 static void set_progress_destr(task_t *_task)
@@ -252,13 +256,14 @@ static void set_downloading_proc(task_t *_task)
 
     TRACE("(%p)\n", doc);
 
+    IUnknown_AddRef(doc->outer_unk);
     set_statustext(doc, IDS_STATUS_DOWNLOADINGFROM, task->url);
 
     if(task->set_download)
         set_download_state(doc, 1);
 
     if(!doc->client)
-        return;
+        goto done;
 
     if(doc->view_sink)
         IAdviseSink_OnViewChange(doc->view_sink, DVASPECT_CONTENT, -1);
@@ -272,6 +277,9 @@ static void set_downloading_proc(task_t *_task)
             IDropTarget_Release(drop_target);
         }
     }
+
+done:
+    IUnknown_Release(doc->outer_unk);
 }
 
 static void set_downloading_task_destr(task_t *_task)
@@ -341,15 +349,11 @@ HRESULT set_moniker(HTMLOuterWindow *window, IMoniker *mon, IUri *nav_uri, IBind
         BOOL set_download)
 {
     download_proc_task_t *download_task;
-    HTMLDocumentObj *doc_obj = NULL;
     nsChannelBSC *bscallback;
     nsWineURI *nsuri;
     LPOLESTR url;
     IUri *uri;
     HRESULT hres;
-
-    if(is_main_content_window(window))
-        doc_obj = window->browser->doc;
 
     hres = IMoniker_GetDisplayName(mon, pibc, NULL, &url);
     if(FAILED(hres)) {
@@ -401,7 +405,9 @@ HRESULT set_moniker(HTMLOuterWindow *window, IMoniker *mon, IUri *nav_uri, IBind
         return hres;
     }
 
-    if(doc_obj) {
+    if(is_main_content_window(window)) {
+        HTMLDocumentObj *doc_obj = window->browser->doc;
+
         HTMLDocument_LockContainer(doc_obj, TRUE);
 
         if(doc_obj->frame) {

@@ -291,17 +291,21 @@ static void parse_complete(HTMLDocumentObj *doc)
 
 static nsresult run_end_load(HTMLDocumentNode *This, nsISupports *arg1, nsISupports *arg2)
 {
+    HTMLDocumentObj *doc_obj = This->doc_obj;
+
     TRACE("(%p)\n", This);
 
-    if(!This->doc_obj)
+    if(!doc_obj)
         return NS_OK;
 
-    if(This == This->doc_obj->doc_node) {
+    if(This == doc_obj->doc_node) {
         /*
          * This should be done in the worker thread that parses HTML,
          * but we don't have such thread (Gecko parses HTML for us).
          */
-        parse_complete(This->doc_obj);
+        IUnknown_AddRef(doc_obj->outer_unk);
+        parse_complete(doc_obj);
+        IUnknown_Release(doc_obj->outer_unk);
     }
 
     bind_event_scripts(This);

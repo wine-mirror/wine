@@ -217,6 +217,9 @@ static BOOL exec_shldocvw_67(HTMLDocumentObj *doc, BSTR url)
     IOleCommandTarget *cmdtrg = NULL;
     HRESULT hres;
 
+    if(!doc->client)
+        return TRUE;
+
     hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&cmdtrg);
     if(SUCCEEDED(hres)) {
         VARIANT varUrl, varRes;
@@ -252,6 +255,7 @@ static nsresult before_async_open(nsChannel *channel, GeckoBrowser *container, B
     hres = IUri_GetDisplayUri(channel->uri->uri, &display_uri);
     if(FAILED(hres))
         return NS_ERROR_FAILURE;
+    IUnknown_AddRef(doc->outer_unk);
 
     if(doc->hostui) {
         OLECHAR *new_url;
@@ -261,7 +265,7 @@ static nsresult before_async_open(nsChannel *channel, GeckoBrowser *container, B
                 FIXME("TranslateUrl returned new URL %s -> %s\n", debugstr_w(display_uri), debugstr_w(new_url));
                 CoTaskMemFree(new_url);
                 *cancel = TRUE;
-                return NS_OK;
+                goto done;
             }
             CoTaskMemFree(new_url);
         }
@@ -270,13 +274,16 @@ static nsresult before_async_open(nsChannel *channel, GeckoBrowser *container, B
     if(!exec_shldocvw_67(doc, display_uri)) {
         SysFreeString(display_uri);
         *cancel = FALSE;
-        return NS_OK;
+        goto done;
     }
 
     hres = hlink_frame_navigate(doc, display_uri, channel, 0, cancel);
     SysFreeString(display_uri);
     if(FAILED(hres))
         *cancel = TRUE;
+
+done:
+    IUnknown_Release(doc->outer_unk);
     return NS_OK;
 }
 

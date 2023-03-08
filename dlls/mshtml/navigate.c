@@ -1651,6 +1651,7 @@ static void handle_extern_mime_navigation(nsChannelBSC *This)
         return;
 
     doc_obj = This->bsc.window->base.outer_window->browser->doc;
+    IUnknown_AddRef(doc_obj->outer_unk);
 
     hres = IOleClientSite_QueryInterface(doc_obj->client, &IID_IOleCommandTarget, (void**)&cmdtrg);
     if(SUCCEEDED(hres)) {
@@ -1662,17 +1663,17 @@ static void handle_extern_mime_navigation(nsChannelBSC *This)
 
     if(!doc_obj->webbrowser) {
         FIXME("unimplemented in non-webbrowser mode\n");
-        return;
+        goto done;
     }
 
     uri = get_moniker_uri(This->bsc.mon);
     if(!uri)
-        return;
+        goto done;
 
     hres = CreateBindCtx(0, &bind_ctx);
     if(FAILED(hres)) {
         IUri_Release(uri);
-        return;
+        goto done;
     }
 
     V_VT(&flags) = VT_I4;
@@ -1701,6 +1702,9 @@ static void handle_extern_mime_navigation(nsChannelBSC *This)
     }
 
     IUri_Release(uri);
+
+done:
+    IUnknown_Release(doc_obj->outer_unk);
 }
 
 static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG progress, ULONG total, ULONG status_code, LPCWSTR status_text)
@@ -2066,25 +2070,31 @@ static void navigate_javascript_proc(task_t *_task)
 {
     navigate_javascript_task_t *task = (navigate_javascript_task_t*)_task;
     HTMLOuterWindow *window = task->window;
+    HTMLDocumentObj *doc = NULL;
     BSTR code = NULL;
     VARIANT v;
     HRESULT hres;
 
-    task->window->readystate = READYSTATE_COMPLETE;
+    window->readystate = READYSTATE_COMPLETE;
+    if(window->browser) {
+        doc = window->browser->doc;
+        IUnknown_AddRef(doc->outer_unk);
+    }
 
     hres = IUri_GetPath(task->uri, &code);
     if(hres != S_OK) {
         SysFreeString(code);
-        return;
+        goto done;
     }
 
     hres = UrlUnescapeW(code, NULL, NULL, URL_UNESCAPE_INPLACE);
     if(FAILED(hres)) {
         SysFreeString(code);
-        return;
+        goto done;
     }
 
-    set_download_state(window->browser->doc, 1);
+    if(doc)
+        set_download_state(doc, 1);
 
     V_VT(&v) = VT_EMPTY;
     hres = exec_script(window->base.inner_window, code, L"jscript", &v);
@@ -2094,10 +2104,16 @@ static void navigate_javascript_proc(task_t *_task)
         VariantClear(&v);
     }
 
-    if(window->browser->doc->view_sink)
-        IAdviseSink_OnViewChange(window->browser->doc->view_sink, DVASPECT_CONTENT, -1);
+    if(doc) {
+        if(doc->view_sink)
+            IAdviseSink_OnViewChange(doc->view_sink, DVASPECT_CONTENT, -1);
 
-    set_download_state(window->browser->doc, 0);
+        set_download_state(doc, 0);
+    }
+
+done:
+    if(doc)
+        IUnknown_Release(doc->outer_unk);
 }
 
 static void navigate_javascript_task_destr(task_t *_task)
@@ -2199,9 +2215,12 @@ static HRESULT navigate_fragment(HTMLOuterWindow *window, IUri *uri)
     SysFreeString(frag);
 
     if(window->browser->doc->doc_object_service) {
-        IDocObjectService_FireNavigateComplete2(window->browser->doc->doc_object_service, &window->base.IHTMLWindow2_iface, 0x10);
-        IDocObjectService_FireDocumentComplete(window->browser->doc->doc_object_service, &window->base.IHTMLWindow2_iface, 0);
+        HTMLDocumentObj *doc_obj = window->browser->doc;
 
+        IUnknown_AddRef(doc_obj->outer_unk);
+        IDocObjectService_FireNavigateComplete2(doc_obj->doc_object_service, &window->base.IHTMLWindow2_iface, 0x10);
+        IDocObjectService_FireDocumentComplete(doc_obj->doc_object_service, &window->base.IHTMLWindow2_iface, 0);
+        IUnknown_Release(doc_obj->outer_unk);
     }
 
     return S_OK;
@@ -2209,6 +2228,7 @@ static HRESULT navigate_fragment(HTMLOuterWindow *window, IUri *uri)
 
 HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WCHAR *headers, BYTE *post_data, DWORD post_data_size)
 {
+    HTMLDocumentObj *doc_obj;
     nsChannelBSC *bsc;
     IUri *uri_nofrag;
     IMoniker *mon;
@@ -2219,10 +2239,13 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
     if(!uri_nofrag)
         return E_FAIL;
 
-    if(window->browser->doc->client && !(flags & BINDING_REFRESH)) {
+    doc_obj = window->browser->doc;
+    IUnknown_AddRef(doc_obj->outer_unk);
+
+    if(doc_obj->client && !(flags & BINDING_REFRESH)) {
         IOleCommandTarget *cmdtrg;
 
-        hres = IOleClientSite_QueryInterface(window->browser->doc->client, &IID_IOleCommandTarget, (void**)&cmdtrg);
+        hres = IOleClientSite_QueryInterface(doc_obj->client, &IID_IOleCommandTarget, (void**)&cmdtrg);
         if(SUCCEEDED(hres)) {
             VARIANT in, out;
             BSTR url_str;
@@ -2249,14 +2272,15 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
         if(SUCCEEDED(hres) && eq) {
             IUri_Release(uri_nofrag);
             TRACE("fragment navigate\n");
-            return navigate_fragment(window, uri);
+            hres = navigate_fragment(window, uri);
+            goto done;
         }
     }
 
     hres = CreateURLMonikerEx2(NULL, uri_nofrag, &mon, URL_MK_UNIFORM);
     IUri_Release(uri_nofrag);
     if(FAILED(hres))
-        return hres;
+        goto done;
 
     /* FIXME: Why not set_ready_state? */
     window->readystate = READYSTATE_UNINITIALIZED;
@@ -2264,10 +2288,10 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
     hres = create_channelbsc(mon, headers, post_data, post_data_size, TRUE, &bsc);
     if(FAILED(hres)) {
         IMoniker_Release(mon);
-        return hres;
+        goto done;
     }
 
-    prepare_for_binding(window->browser->doc, mon, flags);
+    prepare_for_binding(doc_obj, mon, flags);
 
     hres = IUri_GetScheme(uri, &scheme);
     if(hres == S_OK && scheme == URL_SCHEME_JAVASCRIPT) {
@@ -2277,13 +2301,15 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
         IMoniker_Release(mon);
 
         task = malloc(sizeof(*task));
-        if(!task)
-            return E_OUTOFMEMORY;
+        if(!task) {
+            hres = E_OUTOFMEMORY;
+            goto done;
+        }
 
         /* Why silently? */
         window->readystate = READYSTATE_COMPLETE;
         if(!(flags & BINDING_FROMHIST))
-            call_docview_84(window->browser->doc);
+            call_docview_84(doc_obj);
 
         IUri_AddRef(uri);
         task->window = window;
@@ -2302,13 +2328,14 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
         if(!task) {
             IBindStatusCallback_Release(&bsc->bsc.IBindStatusCallback_iface);
             IMoniker_Release(mon);
-            return E_OUTOFMEMORY;
+            hres = E_OUTOFMEMORY;
+            goto done;
         }
 
         /* Silently and repeated when real loading starts? */
         window->readystate = READYSTATE_LOADING;
         if(!(flags & (BINDING_FROMHIST|BINDING_REFRESH)))
-            call_docview_84(window->browser->doc);
+            call_docview_84(doc_obj);
 
         task->window = window;
         task->bscallback = bsc;
@@ -2320,6 +2347,8 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
         hres = push_task(&task->header, navigate_proc, navigate_task_destr, window->task_magic);
     }
 
+done:
+    IUnknown_Release(doc_obj->outer_unk);
     return hres;
 }
 

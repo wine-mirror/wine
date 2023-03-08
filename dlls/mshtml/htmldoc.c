@@ -854,6 +854,7 @@ static HRESULT WINAPI HTMLDocument_get_scripts(IHTMLDocument2 *iface, IHTMLEleme
 static HRESULT WINAPI HTMLDocument_put_designMode(IHTMLDocument2 *iface, BSTR v)
 {
     HTMLDocumentNode *This = impl_from_IHTMLDocument2(iface);
+    HTMLDocumentObj *doc_obj;
     HRESULT hres;
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
@@ -863,7 +864,10 @@ static HRESULT WINAPI HTMLDocument_put_designMode(IHTMLDocument2 *iface, BSTR v)
         return E_NOTIMPL;
     }
 
-    hres = setup_edit_mode(This->doc_obj);
+    doc_obj = This->doc_obj;
+    IUnknown_AddRef(doc_obj->outer_unk);
+    hres = setup_edit_mode(doc_obj);
+    IUnknown_Release(doc_obj->outer_unk);
     if(FAILED(hres))
         return hres;
 
