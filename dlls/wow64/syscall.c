@@ -215,6 +215,9 @@ static void call_user_exception_dispatcher( EXCEPTION_RECORD32 *rec, void *ctx32
             context = RtlLocateLegacyContext( context_ex, NULL );
             *context = ctx;
             context->ContextFlags = flags;
+            /* adjust Eip for breakpoints in software emulation (hardware exceptions already adjust Rip) */
+            if (rec->ExceptionCode == EXCEPTION_BREAKPOINT && (wow64info->CpuFlags & WOW64_CPUFLAGS_SOFTWARE))
+                context->Eip--;
             stack->context_ptr = PtrToUlong( context );
 
             if (src_ex)
