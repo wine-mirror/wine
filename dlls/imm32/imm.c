@@ -85,7 +85,7 @@ struct ime
 static HRESULT (WINAPI *pCoRevokeInitializeSpy)(ULARGE_INTEGER cookie);
 static void (WINAPI *pCoUninitialize)(void);
 
-typedef struct tagInputContextData
+struct imc
 {
         HIMC            handle;
         DWORD           dwLock;
@@ -93,7 +93,7 @@ typedef struct tagInputContextData
 
         struct ime     *ime;
         UINT            lastVK;
-} InputContextData;
+};
 
 #define WINE_IMC_VALID_MAGIC 0x56434D49
 
@@ -129,7 +129,7 @@ static BOOL ime_is_unicode( const struct ime *ime )
 }
 
 static BOOL IMM_DestroyContext(HIMC hIMC);
-static InputContextData* get_imc_data(HIMC hIMC);
+static struct imc *get_imc_data( HIMC hIMC );
 
 static inline WCHAR *strdupAtoW( const char *str )
 {
@@ -402,9 +402,9 @@ static void imm_coinit_thread(void)
     InitOnceExecuteOnce(&init_ole32_once, init_ole32_funcs, NULL, NULL);
 }
 
-static InputContextData *query_imc_data(HIMC handle)
+static struct imc *query_imc_data( HIMC handle )
 {
-    InputContextData *ret;
+    struct imc *ret;
 
     if (!handle) return NULL;
     ret = (void *)NtUserQueryInputContext(handle, NtUserInputContextClientPtr);
@@ -566,7 +566,7 @@ static void ime_release( struct ime *ime )
 
 static BOOL free_input_context_data( HIMC hIMC )
 {
-    InputContextData *data = query_imc_data( hIMC );
+    struct imc *data = query_imc_data( hIMC );
 
     if (!data) return FALSE;
 
@@ -637,7 +637,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
 }
 
 /* for posting messages as the IME */
-static void ImmInternalPostIMEMessage(InputContextData *data, UINT msg, WPARAM wParam, LPARAM lParam)
+static void ImmInternalPostIMEMessage( struct imc *data, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     HWND target = GetFocus();
     if (!target)
@@ -647,7 +647,7 @@ static void ImmInternalPostIMEMessage(InputContextData *data, UINT msg, WPARAM w
 }
 
 /* for sending messages as the IME */
-static void ImmInternalSendIMEMessage(InputContextData *data, UINT msg, WPARAM wParam, LPARAM lParam)
+static void ImmInternalSendIMEMessage( struct imc *data, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     HWND target = GetFocus();
     if (!target)
@@ -656,7 +656,7 @@ static void ImmInternalSendIMEMessage(InputContextData *data, UINT msg, WPARAM w
        SendMessageW(target, msg, wParam, lParam);
 }
 
-static LRESULT ImmInternalSendIMENotify(InputContextData *data, WPARAM notify, LPARAM lParam)
+static LRESULT ImmInternalSendIMENotify( struct imc *data, WPARAM notify, LPARAM lParam )
 {
     HWND target;
 
@@ -686,7 +686,7 @@ static HIMCC ImmCreateBlankCompStr(void)
  */
 BOOL WINAPI ImmSetActiveContext(HWND hwnd, HIMC himc, BOOL activate)
 {
-    InputContextData *data = get_imc_data(himc);
+    struct imc *data = get_imc_data( himc );
 
     TRACE("(%p, %p, %x)\n", hwnd, himc, activate);
 
@@ -830,14 +830,14 @@ BOOL WINAPI ImmConfigureIMEW( HKL hkl, HWND hwnd, DWORD mode, void *data )
     return ret;
 }
 
-static InputContextData *create_input_context(HIMC default_imc)
+static struct imc *create_input_context( HIMC default_imc )
 {
-    InputContextData *new_context;
+    struct imc *new_context;
     LPGUIDELINE gl;
     LPCANDIDATEINFO ci;
     int i;
 
-    new_context = calloc( 1, sizeof(InputContextData) );
+    new_context = calloc( 1, sizeof(*new_context) );
 
     /* Load the IME */
     if (!(new_context->ime = ime_acquire( GetKeyboardLayout( 0 ) )))
@@ -892,9 +892,9 @@ static InputContextData *create_input_context(HIMC default_imc)
     return new_context;
 }
 
-static InputContextData* get_imc_data(HIMC handle)
+static struct imc *get_imc_data( HIMC handle )
 {
-    InputContextData *ret;
+    struct imc *ret;
 
     if ((ret = query_imc_data(handle)) || !handle) return ret;
     return create_input_context(handle);
@@ -905,7 +905,7 @@ static InputContextData* get_imc_data(HIMC handle)
  */
 HIMC WINAPI ImmCreateContext(void)
 {
-    InputContextData *new_context;
+    struct imc *new_context;
 
     if (!(new_context = create_input_context(0))) return 0;
     return new_context->handle;
@@ -1067,7 +1067,7 @@ DWORD WINAPI ImmGetCandidateListA(
   HIMC hIMC, DWORD dwIndex,
   LPCANDIDATELIST lpCandList, DWORD dwBufLen)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
     LPCANDIDATEINFO candinfo;
     LPCANDIDATELIST candlist;
     DWORD ret = 0;
@@ -1105,7 +1105,7 @@ done:
 DWORD WINAPI ImmGetCandidateListCountA(
   HIMC hIMC, LPDWORD lpdwListCount)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
     LPCANDIDATEINFO candinfo;
     DWORD ret, count;
 
@@ -1137,7 +1137,7 @@ DWORD WINAPI ImmGetCandidateListCountA(
 DWORD WINAPI ImmGetCandidateListCountW(
   HIMC hIMC, LPDWORD lpdwListCount)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
     LPCANDIDATEINFO candinfo;
     DWORD ret, count;
 
@@ -1170,7 +1170,7 @@ DWORD WINAPI ImmGetCandidateListW(
   HIMC hIMC, DWORD dwIndex,
   LPCANDIDATELIST lpCandList, DWORD dwBufLen)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
     LPCANDIDATEINFO candinfo;
     LPCANDIDATELIST candlist;
     DWORD ret = 0;
@@ -1208,7 +1208,7 @@ done:
 BOOL WINAPI ImmGetCandidateWindow(
   HIMC hIMC, DWORD dwIndex, LPCANDIDATEFORM lpCandidate)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
 
     TRACE("%p, %ld, %p\n", hIMC, dwIndex, lpCandidate);
 
@@ -1251,7 +1251,7 @@ BOOL WINAPI ImmGetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
  */
 BOOL WINAPI ImmGetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
 
     TRACE("(%p, %p):\n", hIMC, lplf);
 
@@ -1268,8 +1268,8 @@ BOOL WINAPI ImmGetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
 
 /* Source encoding is defined by context, source length is always given in respective characters. Destination buffer
    length is always in bytes. */
-static INT CopyCompStringIMEtoClient(const InputContextData *data, const void *src, INT src_len, void *dst,
-        INT dst_len, BOOL unicode)
+static INT CopyCompStringIMEtoClient( const struct imc *data, const void *src, INT src_len,
+                                      void *dst, INT dst_len, BOOL unicode )
 {
     int char_size = unicode ? sizeof(WCHAR) : sizeof(char);
     INT ret;
@@ -1298,8 +1298,8 @@ static INT CopyCompStringIMEtoClient(const InputContextData *data, const void *s
 
 /* Composition string encoding is defined by context, returned attributes correspond to string, converted according to
    passed mode. String length is in characters, attributes are in byte arrays. */
-static INT CopyCompAttrIMEtoClient(const InputContextData *data, const BYTE *src, INT src_len, const void *comp_string,
-        INT str_len, BYTE *dst, INT dst_len, BOOL unicode)
+static INT CopyCompAttrIMEtoClient( const struct imc *data, const BYTE *src, INT src_len, const void *comp_string,
+                                    INT str_len, BYTE *dst, INT dst_len, BOOL unicode )
 {
     union
     {
@@ -1369,8 +1369,8 @@ static INT CopyCompAttrIMEtoClient(const InputContextData *data, const BYTE *src
     return rc;
 }
 
-static INT CopyCompClauseIMEtoClient(InputContextData *data, LPBYTE source, INT slen, LPBYTE ssource,
-                                     LPBYTE target, INT tlen, BOOL unicode )
+static INT CopyCompClauseIMEtoClient( struct imc *data, LPBYTE source, INT slen, LPBYTE ssource,
+                                      LPBYTE target, INT tlen, BOOL unicode )
 {
     INT rc;
 
@@ -1424,7 +1424,7 @@ static INT CopyCompClauseIMEtoClient(InputContextData *data, LPBYTE source, INT 
     return rc;
 }
 
-static INT CopyCompOffsetIMEtoClient(InputContextData *data, DWORD offset, LPBYTE ssource, BOOL unicode)
+static INT CopyCompOffsetIMEtoClient( struct imc *data, DWORD offset, LPBYTE ssource, BOOL unicode )
 {
     int rc;
 
@@ -1446,7 +1446,7 @@ static LONG ImmGetCompositionStringT( HIMC hIMC, DWORD dwIndex, LPVOID lpBuf,
                                       DWORD dwBufLen, BOOL unicode)
 {
     LONG rc = 0;
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
     LPCOMPOSITIONSTRING compstr;
     LPBYTE compdata;
 
@@ -1558,7 +1558,7 @@ LONG WINAPI ImmGetCompositionStringW(
  */
 BOOL WINAPI ImmGetCompositionWindow(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
 
     TRACE("(%p, %p)\n", hIMC, lpCompForm);
 
@@ -1583,7 +1583,7 @@ HIMC WINAPI ImmGetContext(HWND hWnd)
 
     if (rc)
     {
-        InputContextData *data = get_imc_data(rc);
+        struct imc *data = get_imc_data( rc );
         if (data) data->IMC.hWnd = hWnd;
         else rc = 0;
     }
@@ -1671,7 +1671,7 @@ DWORD WINAPI ImmGetConversionListW( HKL hkl, HIMC himc, const WCHAR *srcW, CANDI
 BOOL WINAPI ImmGetConversionStatus(
   HIMC hIMC, LPDWORD lpfdwConversion, LPDWORD lpfdwSentence)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
 
     TRACE("%p %p %p\n", hIMC, lpfdwConversion, lpfdwSentence);
 
@@ -1816,8 +1816,8 @@ UINT WINAPI ImmGetIMEFileNameW( HKL hkl, WCHAR *buffer, UINT length )
  */
 BOOL WINAPI ImmGetOpenStatus(HIMC hIMC)
 {
-  InputContextData *data = get_imc_data(hIMC);
-  static int i;
+    struct imc *data = get_imc_data( hIMC );
+    static int i;
 
     if (!data)
         return FALSE;
@@ -1915,7 +1915,7 @@ UINT WINAPI ImmGetRegisterWordStyleW( HKL hkl, UINT count, STYLEBUFW *styleW )
  */
 BOOL WINAPI ImmGetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
 
     TRACE("(%p, %p)\n", hIMC, lpptPos);
 
@@ -1933,7 +1933,7 @@ BOOL WINAPI ImmGetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
 UINT WINAPI ImmGetVirtualKey(HWND hWnd)
 {
   OSVERSIONINFOA version;
-  InputContextData *data = get_imc_data( ImmGetContext( hWnd ));
+  struct imc *data = get_imc_data( ImmGetContext( hWnd ) );
   TRACE("%p\n", hWnd);
 
   if ( data )
@@ -2096,7 +2096,7 @@ BOOL WINAPI ImmIsUIMessageW(
 BOOL WINAPI ImmNotifyIME(
   HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
 
     TRACE("(%p, %ld, %ld, %ld)\n",
         hIMC, dwAction, dwIndex, dwValue);
@@ -2186,7 +2186,7 @@ BOOL WINAPI ImmReleaseContext(HWND hWnd, HIMC hIMC)
 */
 LRESULT WINAPI ImmRequestMessageA(HIMC hIMC, WPARAM wParam, LPARAM lParam)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
 
     TRACE("%p %Id %Id\n", hIMC, wParam, wParam);
 
@@ -2201,7 +2201,7 @@ LRESULT WINAPI ImmRequestMessageA(HIMC hIMC, WPARAM wParam, LPARAM lParam)
 */
 LRESULT WINAPI ImmRequestMessageW(HIMC hIMC, WPARAM wParam, LPARAM lParam)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
 
     TRACE("%p %Id %Id\n", hIMC, wParam, wParam);
 
@@ -2217,7 +2217,7 @@ LRESULT WINAPI ImmRequestMessageW(HIMC hIMC, WPARAM wParam, LPARAM lParam)
 BOOL WINAPI ImmSetCandidateWindow(
   HIMC hIMC, LPCANDIDATEFORM lpCandidate)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
 
     TRACE("(%p, %p)\n", hIMC, lpCandidate);
 
@@ -2246,7 +2246,7 @@ BOOL WINAPI ImmSetCandidateWindow(
  */
 BOOL WINAPI ImmSetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
     TRACE("(%p, %p)\n", hIMC, lplf);
 
     if (!data || !lplf)
@@ -2271,7 +2271,7 @@ BOOL WINAPI ImmSetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
  */
 BOOL WINAPI ImmSetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
     TRACE("(%p, %p)\n", hIMC, lplf);
 
     if (!data || !lplf)
@@ -2302,7 +2302,7 @@ BOOL WINAPI ImmSetCompositionStringA(
     WCHAR *CompBuffer = NULL;
     WCHAR *ReadBuffer = NULL;
     BOOL rc;
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
 
     TRACE("(%p, %ld, %p, %ld, %p, %ld):\n",
             hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen);
@@ -2358,7 +2358,7 @@ BOOL WINAPI ImmSetCompositionStringW(
     CHAR *CompBuffer = NULL;
     CHAR *ReadBuffer = NULL;
     BOOL rc;
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
 
     TRACE("(%p, %ld, %p, %ld, %p, %ld):\n",
             hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen);
@@ -2412,7 +2412,7 @@ BOOL WINAPI ImmSetCompositionWindow(
   HIMC hIMC, LPCOMPOSITIONFORM lpCompForm)
 {
     BOOL reshow = FALSE;
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
 
     TRACE("(%p, %p)\n", hIMC, lpCompForm);
     if (lpCompForm)
@@ -2451,7 +2451,7 @@ BOOL WINAPI ImmSetConversionStatus(
   HIMC hIMC, DWORD fdwConversion, DWORD fdwSentence)
 {
     DWORD oldConversion, oldSentence;
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
 
     TRACE("%p %ld %ld\n", hIMC, fdwConversion, fdwSentence);
 
@@ -2486,7 +2486,7 @@ BOOL WINAPI ImmSetConversionStatus(
  */
 BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
 
     TRACE("%p %d\n", hIMC, fOpen);
 
@@ -2522,7 +2522,7 @@ BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
  */
 BOOL WINAPI ImmSetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
 
     TRACE("(%p, %p)\n", hIMC, lpptPos);
 
@@ -2641,7 +2641,7 @@ BOOL WINAPI ImmUnregisterWordW( HKL hkl, const WCHAR *readingW, DWORD style, con
 DWORD WINAPI ImmGetImeMenuItemsA( HIMC himc, DWORD flags, DWORD type, IMEMENUITEMINFOA *parentA,
                                   IMEMENUITEMINFOA *menuA, DWORD size )
 {
-    InputContextData *data = get_imc_data( himc );
+    struct imc *data = get_imc_data( himc );
     DWORD ret;
 
     TRACE( "himc %p, flags %#lx, type %lu, parentA %p, menuA %p, size %lu.\n",
@@ -2699,7 +2699,7 @@ DWORD WINAPI ImmGetImeMenuItemsA( HIMC himc, DWORD flags, DWORD type, IMEMENUITE
 DWORD WINAPI ImmGetImeMenuItemsW( HIMC himc, DWORD flags, DWORD type, IMEMENUITEMINFOW *parentW,
                                   IMEMENUITEMINFOW *menuW, DWORD size )
 {
-    InputContextData *data = get_imc_data( himc );
+    struct imc *data = get_imc_data( himc );
     DWORD ret;
 
     TRACE( "himc %p, flags %#lx, type %lu, parentW %p, menuW %p, size %lu.\n",
@@ -2754,7 +2754,7 @@ DWORD WINAPI ImmGetImeMenuItemsW( HIMC himc, DWORD flags, DWORD type, IMEMENUITE
 */
 LPINPUTCONTEXT WINAPI ImmLockIMC(HIMC hIMC)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
 
     if (!data)
         return NULL;
@@ -2767,7 +2767,7 @@ LPINPUTCONTEXT WINAPI ImmLockIMC(HIMC hIMC)
 */
 BOOL WINAPI ImmUnlockIMC(HIMC hIMC)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
 
     if (!data)
         return FALSE;
@@ -2781,7 +2781,7 @@ BOOL WINAPI ImmUnlockIMC(HIMC hIMC)
 */
 DWORD WINAPI ImmGetIMCLockCount(HIMC hIMC)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
     if (!data)
         return 0;
     return data->dwLock;
@@ -2848,7 +2848,7 @@ DWORD WINAPI ImmGetIMCCSize(HIMCC imcc)
 */
 BOOL WINAPI ImmGenerateMessage(HIMC hIMC)
 {
-    InputContextData *data = get_imc_data(hIMC);
+    struct imc *data = get_imc_data( hIMC );
 
     if (!data)
     {
@@ -2888,7 +2888,7 @@ BOOL WINAPI ImmGenerateMessage(HIMC hIMC)
 */
 BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyData)
 {
-    InputContextData *data;
+    struct imc *data;
     HIMC imc = ImmGetContext(hwnd);
     BYTE state[256];
     UINT scancode;
@@ -2947,7 +2947,7 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
 */
 BOOL WINAPI ImmProcessKey(HWND hwnd, HKL hKL, UINT vKey, LPARAM lKeyData, DWORD unknown)
 {
-    InputContextData *data;
+    struct imc *data;
     HIMC imc = ImmGetContext(hwnd);
     BYTE state[256];
 
