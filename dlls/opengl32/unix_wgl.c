@@ -2043,14 +2043,20 @@ static NTSTATUS wow64_gl_unmap_buffer( void *args, NTSTATUS (*gl_unmap_buffer64)
         GLenum target;
         GLboolean ret;
     } *params32 = args;
+    struct glUnmapBuffer_params params =
+    {
+        .teb = get_teb64(params32->teb),
+        .target = params32->target,
+        .ret = TRUE,
+    };
     NTSTATUS status;
-    TEB *teb = get_teb64( params32->teb );
 
-    if (!(ptr = get_buffer_pointer( teb, params32->target ))) return STATUS_SUCCESS;
+    if (!(ptr = get_buffer_pointer( params.teb, params.target ))) return STATUS_SUCCESS;
 
-    status = wow64_unmap_buffer( ptr, get_buffer_param( teb, params32->target, GL_BUFFER_MAP_LENGTH ),
-                                 get_buffer_param( teb, params32->target, GL_BUFFER_ACCESS_FLAGS ) );
-    gl_unmap_buffer64( args );
+    status = wow64_unmap_buffer( ptr, get_buffer_param( params.teb, params.target, GL_BUFFER_MAP_LENGTH ),
+                                 get_buffer_param( params.teb, params.target, GL_BUFFER_ACCESS_FLAGS ) );
+    gl_unmap_buffer64( &params );
+    params32->ret = params.ret;
 
     return status;
 }
