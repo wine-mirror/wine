@@ -2117,6 +2117,33 @@ nt4_is_broken:
     }
 }
 
+static void check_tls_index(HANDLE dll, BOOL tls_initialized)
+{
+    BOOL found_dll = FALSE;
+    LIST_ENTRY *root = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
+    for (LIST_ENTRY *entry = root->Flink; entry != root; entry = entry->Flink)
+    {
+        LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
+        if (wcsicmp(L"ntdll.dll", mod->BaseDllName.Buffer) == 0)
+        {
+            /* Pick ntdll as a dll that definitely won't have TLS */
+            ok(mod->TlsIndex == 0, "ntdll.dll TlsIndex: %d instead of 0\n", mod->TlsIndex);
+        }
+        else if (mod->DllBase == dll)
+        {
+            SHORT expected = tls_initialized ? -1 : 0;
+            ok(mod->TlsIndex == expected, "Test exe TlsIndex: %d instead of %d\n", mod->TlsIndex, expected);
+            found_dll = TRUE;
+        }
+        else
+        {
+            ok(mod->TlsIndex == 0 || mod->TlsIndex == -1, "%s TlsIndex: %d\n",
+               debugstr_w(mod->BaseDllName.Buffer), mod->TlsIndex);
+        }
+    }
+    ok(found_dll, "Couldn't find dll %p in module list\n", dll);
+}
+
 static void test_import_resolution(void)
 {
     char temp_path[MAX_PATH];
@@ -2251,6 +2278,7 @@ static void test_import_resolution(void)
                 ok( !strcmp( str, "hello world" ), "wrong tls data '%s' at %p\n", str, str );
                 ok(ptr->tls_index_hi == 0, "TLS Index written as a short, high half: %d\n", ptr->tls_index_hi);
             }
+            check_tls_index(mod, ptr->tls_index != 9999);
             FreeLibrary( mod );
             break;
         case 1:  /* load with DONT_RESOLVE_DLL_REFERENCES doesn't resolve imports */
@@ -2267,6 +2295,7 @@ static void test_import_resolution(void)
             ok( ptr->thunks[0].u1.Function == 0xdeadbeef, "thunk resolved to %p for %s.%s\n",
                 (void *)ptr->thunks[0].u1.Function, data.module, data.function.name );
             ok( ptr->tls_index == 9999, "wrong tls index %d\n", ptr->tls_index );
+            check_tls_index(mod, ptr->tls_index != 9999);
             FreeLibrary( mod2 );
             FreeLibrary( mod );
             break;
@@ -2278,6 +2307,7 @@ static void test_import_resolution(void)
             ok( ptr->thunks[0].u1.Function == 0xdeadbeef, "thunk resolved to %p for %s.%s\n",
                 (void *)ptr->thunks[0].u1.Function, data.module, data.function.name );
             ok( ptr->tls_index == 9999, "wrong tls index %d\n", ptr->tls_index );
+            check_tls_index(mod, ptr->tls_index != 9999);
             FreeLibrary( mod );
             break;
         case 3:  /* load with tls init function */
@@ -2293,6 +2323,7 @@ static void test_import_resolution(void)
                 str = ((char **)NtCurrentTeb()->ThreadLocalStoragePointer)[ptr->tls_index];
                 ok( !strcmp( str, "hello!world" ), "wrong tls data '%s' at %p\n", str, str );
             }
+            check_tls_index(mod, ptr->tls_index != 9999);
             FreeLibrary( mod );
         }
         DeleteFileA( dll_name );

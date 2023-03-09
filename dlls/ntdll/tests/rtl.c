@@ -3608,31 +3608,6 @@ static void test_RtlFirstFreeAce(void)
     HeapFree(GetProcessHeap(), 0, acl);
 }
 
-static void test_TlsIndex(void)
-{
-    LIST_ENTRY *root = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
-    for (LIST_ENTRY *entry = root->Flink; entry != root; entry = entry->Flink)
-    {
-        LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
-        if (lstrcmpiW(L"ntdll.dll", mod->BaseDllName.Buffer) == 0)
-        {
-            /* Pick ntdll as a dll that definitely won't have TLS */
-            ok(mod->TlsIndex == 0, "ntdll.dll TlsIndex: %d instead of 0\n", mod->TlsIndex);
-        }
-        else if (mod->DllBase == GetModuleHandleA(NULL))
-        {
-            /* mingw gcc doesn't support MSVC-style TLS */
-            /* If we do get a way to add tls to this exe, uncomment the following test: */
-            /* ok(mod->TlsIndex == -1, "Test exe TlsIndex: %d instead of -1\n", mod->TlsIndex); */
-        }
-        else
-        {
-            ok(mod->TlsIndex == 0 || mod->TlsIndex == -1, "%s TlsIndex: %d\n",
-               debugstr_w(mod->BaseDllName.Buffer), mod->TlsIndex);
-        }
-    }
-}
-
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -3677,5 +3652,4 @@ START_TEST(rtl)
     test_DbgPrint();
     test_RtlDestroyHeap();
     test_RtlFirstFreeAce();
-    test_TlsIndex();
 }
