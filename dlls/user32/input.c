@@ -439,7 +439,8 @@ BOOL WINAPI BlockInput(BOOL fBlockIt)
 HKL WINAPI LoadKeyboardLayoutW( const WCHAR *name, UINT flags )
 {
     WCHAR layout_path[MAX_PATH], value[5];
-    DWORD value_size, tmp;
+    LCID locale = GetUserDefaultLCID();
+    DWORD id, value_size, tmp;
     HKEY hkey;
     HKL layout;
 
@@ -449,6 +450,9 @@ HKL WINAPI LoadKeyboardLayoutW( const WCHAR *name, UINT flags )
     if (HIWORD( tmp )) layout = UlongToHandle( tmp );
     else layout = UlongToHandle( MAKELONG( LOWORD( tmp ), LOWORD( tmp ) ) );
 
+    if (!((UINT_PTR)layout >> 28)) id = LOWORD( tmp );
+    else id = HIWORD( layout ); /* IME or aliased layout */
+
     wcscpy( layout_path, L"System\\CurrentControlSet\\Control\\Keyboard Layouts\\" );
     wcscat( layout_path, name );
 
@@ -456,11 +460,12 @@ HKL WINAPI LoadKeyboardLayoutW( const WCHAR *name, UINT flags )
     {
         value_size = sizeof(value);
         if (!RegGetValueW( hkey, NULL, L"Layout Id", RRF_RT_REG_SZ, NULL, (void *)&value, &value_size ))
-            layout = UlongToHandle( MAKELONG( LOWORD( tmp ), 0xf000 | (wcstoul( value, NULL, 16 ) & 0xfff) ) );
+            id = 0xf000 | (wcstoul( value, NULL, 16 ) & 0xfff);
 
         RegCloseKey( hkey );
     }
 
+    layout = UlongToHandle( MAKELONG( locale, id ) );
     if ((flags & KLF_ACTIVATE) && NtUserActivateKeyboardLayout( layout, 0 )) return layout;
 
     /* FIXME: semi-stub: returning default layout */
