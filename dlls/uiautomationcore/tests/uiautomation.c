@@ -11701,8 +11701,37 @@ static void test_Element_Find(IUIAutomation *uia_iface)
     UnregisterClassA("test_Element_Find class", NULL);
 }
 
+static const struct prov_method_sequence treewalker_seq1[] = {
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_FirstChild */
+    NODE_CREATE_SEQ(&Provider_child),
+    { 0 }
+};
+
+static const struct prov_method_sequence treewalker_seq2[] = {
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_FirstChild */
+    NODE_CREATE_SEQ(&Provider_child),
+    { &Provider_child, FRAG_GET_RUNTIME_ID },
+    { 0 }
+};
+
+static const struct prov_method_sequence treewalker_seq3[] = {
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_LastChild */
+    NODE_CREATE_SEQ(&Provider_child2),
+    { 0 }
+};
+
+static const struct prov_method_sequence treewalker_seq4[] = {
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_LastChild */
+    NODE_CREATE_SEQ(&Provider_child2),
+    { &Provider_child2, FRAG_GET_RUNTIME_ID },
+    { 0 }
+};
+
 static void test_CUIAutomation_TreeWalker_ifaces(IUIAutomation *uia_iface)
 {
+    HWND hwnd = create_test_hwnd("test_CUIAutomation_TreeWalker_ifaces class");
+    IUIAutomationElement *element, *element2;
+    IUIAutomationCacheRequest *cache_req;
     IUIAutomationCondition *cond, *cond2;
     IUIAutomationTreeWalker *walker;
     HRESULT hr;
@@ -11735,7 +11764,68 @@ static void test_CUIAutomation_TreeWalker_ifaces(IUIAutomation *uia_iface)
     IUIAutomationCondition_Release(cond);
     IUIAutomationCondition_Release(cond2);
 
+    cache_req = NULL;
+    hr = IUIAutomation_CreateCacheRequest(uia_iface, &cache_req);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cache_req, "cache_req == NULL\n");
+
+    element = create_test_element_from_hwnd(uia_iface, hwnd, TRUE);
+    initialize_provider(&Provider_child, ProviderOptions_ServerSideProvider, NULL, TRUE);
+    initialize_provider(&Provider_child2, ProviderOptions_ServerSideProvider, NULL, TRUE);
+    Provider.frag_root = &Provider.IRawElementProviderFragmentRoot_iface;
+    provider_add_child(&Provider, &Provider_child);
+    provider_add_child(&Provider, &Provider_child2);
+
+    /* NavigateDirection_FirstChild. */
+    element2 = NULL;
+    hr = IUIAutomationTreeWalker_GetFirstChildElement(walker, element, &element2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+    ok(!!element2, "element2 == NULL\n");
+    ok_method_sequence(treewalker_seq1, "treewalker_seq1");
+
+    IUIAutomationElement_Release(element2);
+    ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
+
+    element2 = NULL;
+    hr = IUIAutomationTreeWalker_GetFirstChildElementBuildCache(walker, element, cache_req, &element2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+    ok(!!element2, "element2 == NULL\n");
+    ok_method_sequence(treewalker_seq2, "treewalker_seq2");
+
+    IUIAutomationElement_Release(element2);
+    ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
+
+    /* NavigateDirection_LastChild. */
+    element2 = NULL;
+    hr = IUIAutomationTreeWalker_GetLastChildElement(walker, element, &element2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
+    ok(!!element2, "element2 == NULL\n");
+    ok_method_sequence(treewalker_seq3, "treewalker_seq3");
+
+    IUIAutomationElement_Release(element2);
+    ok(Provider_child2.ref == 1, "Unexpected refcnt %ld\n", Provider_child2.ref);
+
+    element2 = NULL;
+    hr = IUIAutomationTreeWalker_GetLastChildElementBuildCache(walker, element, cache_req, &element2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
+    ok(!!element2, "element2 == NULL\n");
+    ok_method_sequence(treewalker_seq4, "treewalker_seq4");
+
+    IUIAutomationElement_Release(element2);
+    ok(Provider_child2.ref == 1, "Unexpected refcnt %ld\n", Provider_child2.ref);
+
+    IUIAutomationElement_Release(element);
+    ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
+
+    IUIAutomationCacheRequest_Release(cache_req);
     IUIAutomationTreeWalker_Release(walker);
+
+    DestroyWindow(hwnd);
+    UnregisterClassA("test_CUIAutomation_TreeWalker_ifaces class", NULL);
 }
 
 struct uia_com_classes {
