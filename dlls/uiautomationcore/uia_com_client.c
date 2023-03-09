@@ -2499,8 +2499,11 @@ static ULONG WINAPI uia_tree_walker_Release(IUIAutomationTreeWalker *iface)
 static HRESULT WINAPI uia_tree_walker_GetParentElement(IUIAutomationTreeWalker *iface, IUIAutomationElement *elem,
         IUIAutomationElement **parent)
 {
-    FIXME("%p, %p, %p: stub\n", iface, elem, parent);
-    return E_NOTIMPL;
+    struct uia_tree_walker *tree_walker = impl_from_IUIAutomationTreeWalker(iface);
+
+    TRACE("%p, %p, %p\n", iface, elem, parent);
+
+    return IUIAutomationTreeWalker_GetParentElementBuildCache(iface, elem, tree_walker->default_cache_req, parent);
 }
 
 static HRESULT WINAPI uia_tree_walker_GetFirstChildElement(IUIAutomationTreeWalker *iface, IUIAutomationElement *elem,
@@ -2587,8 +2590,9 @@ static HRESULT uia_tree_walker_navigate(IUIAutomationTreeWalker *walker, IUIAuto
 static HRESULT WINAPI uia_tree_walker_GetParentElementBuildCache(IUIAutomationTreeWalker *iface,
         IUIAutomationElement *elem, IUIAutomationCacheRequest *cache_req, IUIAutomationElement **parent)
 {
-    FIXME("%p, %p, %p, %p: stub\n", iface, elem, cache_req, parent);
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p, %p\n", iface, elem, cache_req, parent);
+
+    return uia_tree_walker_navigate(iface, cache_req, elem, NavigateDirection_Parent, parent);
 }
 
 static HRESULT WINAPI uia_tree_walker_GetFirstChildElementBuildCache(IUIAutomationTreeWalker *iface,

@@ -11753,6 +11753,19 @@ static const struct prov_method_sequence treewalker_seq8[] = {
     { 0 }
 };
 
+static const struct prov_method_sequence treewalker_seq9[] = {
+    { &Provider_child2, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    NODE_CREATE_SEQ(&Provider),
+    { 0 }
+};
+
+static const struct prov_method_sequence treewalker_seq10[] = {
+    { &Provider_child2, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    NODE_CREATE_SEQ(&Provider),
+    { &Provider, FRAG_GET_RUNTIME_ID },
+    { 0 }
+};
+
 static void test_CUIAutomation_TreeWalker_ifaces(IUIAutomation *uia_iface)
 {
     HWND hwnd = create_test_hwnd("test_CUIAutomation_TreeWalker_ifaces class");
@@ -11878,6 +11891,26 @@ static void test_CUIAutomation_TreeWalker_ifaces(IUIAutomation *uia_iface)
     ok_method_sequence(treewalker_seq8, "treewalker_seq8");
     IUIAutomationElement_Release(element3);
     ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
+
+    /* NavigateDirection_Parent. */
+    element3 = NULL;
+    Provider.hwnd = NULL;
+    hr = IUIAutomationTreeWalker_GetParentElement(walker, element2, &element3);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
+    ok(!!element3, "element3 == NULL\n");
+    ok_method_sequence(treewalker_seq9, "treewalker_seq9");
+    IUIAutomationElement_Release(element3);
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+
+    element3 = NULL;
+    hr = IUIAutomationTreeWalker_GetParentElementBuildCache(walker, element2, cache_req, &element3);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
+    ok(!!element3, "element3 == NULL\n");
+    ok_method_sequence(treewalker_seq10, "treewalker_seq10");
+    IUIAutomationElement_Release(element3);
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
 
     IUIAutomationElement_Release(element2);
     ok(Provider_child2.ref == 1, "Unexpected refcnt %ld\n", Provider_child2.ref);
