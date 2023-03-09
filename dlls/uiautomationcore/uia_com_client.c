@@ -876,14 +876,6 @@ static HRESULT create_uia_cache_request_iface(IUIAutomationCacheRequest **out_ca
     uia_cache_request->cache_req.Scope = TreeScope_Element;
     uia_cache_request->cache_req.automationElementMode = AutomationElementMode_Full;
 
-    hr = IUIAutomationCacheRequest_AddProperty(&uia_cache_request->IUIAutomationCacheRequest_iface,
-            UIA_RuntimeIdPropertyId);
-    if (FAILED(hr))
-    {
-        IUIAutomationCacheRequest_Release(&uia_cache_request->IUIAutomationCacheRequest_iface);
-        return hr;
-    }
-
     *out_cache_req = &uia_cache_request->IUIAutomationCacheRequest_iface;
     return S_OK;
 }
@@ -1125,10 +1117,27 @@ static HRESULT WINAPI uia_element_FindFirst(IUIAutomationElement9 *iface, enum T
 static HRESULT WINAPI uia_element_FindAll(IUIAutomationElement9 *iface, enum TreeScope scope,
         IUIAutomationCondition *condition, IUIAutomationElementArray **found)
 {
-    FIXME("%p: stub\n", iface);
-    return E_NOTIMPL;
+    IUIAutomationCacheRequest *cache_req;
+    HRESULT hr;
+
+    TRACE("%p, %#x, %p, %p\n", iface, scope, condition, found);
+
+    if (!found)
+        return E_POINTER;
+
+    *found = NULL;
+    hr = create_uia_cache_request_iface(&cache_req);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IUIAutomationElement9_FindAllBuildCache(iface, scope, condition, cache_req, found);
+    IUIAutomationCacheRequest_Release(cache_req);
+
+    return hr;
 }
 
+static HRESULT create_uia_element_from_cache_req(IUIAutomationElement **iface, BOOL from_cui8,
+        struct UiaCacheRequest *cache_req, LONG start_idx, SAFEARRAY *req_data, BSTR tree_struct);
 static HRESULT WINAPI uia_element_FindFirstBuildCache(IUIAutomationElement9 *iface, enum TreeScope scope,
         IUIAutomationCondition *condition, IUIAutomationCacheRequest *cache_req, IUIAutomationElement **found)
 {
@@ -1139,12 +1148,97 @@ static HRESULT WINAPI uia_element_FindFirstBuildCache(IUIAutomationElement9 *ifa
 static HRESULT WINAPI uia_element_FindAllBuildCache(IUIAutomationElement9 *iface, enum TreeScope scope,
         IUIAutomationCondition *condition, IUIAutomationCacheRequest *cache_req, IUIAutomationElementArray **found)
 {
-    FIXME("%p: stub\n", iface);
-    return E_NOTIMPL;
+    struct uia_element *element = impl_from_IUIAutomationElement9(iface);
+    LONG lbound_offsets, lbound_tree_structs, elems_count;
+    struct uia_element_array *element_array_data;
+    struct UiaFindParams find_params = { 0 };
+    struct UiaCacheRequest *cache_req_struct;
+    SAFEARRAY *sa, *tree_structs, *offsets;
+    IUIAutomationElementArray *array;
+    HRESULT hr;
+    int i;
+
+    TRACE("%p, %#x, %p, %p, %p\n", iface, scope, condition, cache_req, found);
+
+    if (!found)
+        return E_POINTER;
+
+    *found = array = NULL;
+    hr = get_uia_cache_request_struct_from_iface(cache_req, &cache_req_struct);
+    if (FAILED(hr))
+        return hr;
+
+    hr = get_uia_condition_struct_from_iface(condition, &find_params.pFindCondition);
+    if (FAILED(hr))
+        return hr;
+
+    if (!scope || (scope & (~TreeScope_SubTree)))
+        return E_INVALIDARG;
+
+    if (scope & TreeScope_Element)
+        find_params.ExcludeRoot = FALSE;
+    else
+        find_params.ExcludeRoot = TRUE;
+
+    if (scope & TreeScope_Descendants)
+        find_params.MaxDepth = -1;
+    else if (scope & TreeScope_Children)
+        find_params.MaxDepth = 1;
+    else
+        find_params.MaxDepth = 0;
+
+    sa = offsets = tree_structs = NULL;
+    hr = UiaFind(element->node, &find_params, cache_req_struct, &sa, &offsets, &tree_structs);
+    if (FAILED(hr) || !sa)
+        goto exit;
+
+    hr = get_safearray_bounds(tree_structs, &lbound_tree_structs, &elems_count);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = get_safearray_bounds(offsets, &lbound_offsets, &elems_count);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = create_uia_element_array_iface(&array, elems_count);
+    if (FAILED(hr))
+        goto exit;
+
+    element_array_data = impl_from_IUIAutomationElementArray(array);
+    for (i = 0; i < elems_count; i++)
+    {
+        BSTR tree_struct_str;
+        LONG offset_idx, idx;
+
+        idx = lbound_offsets + i;
+        hr = SafeArrayGetElement(offsets, &idx, &offset_idx);
+        if (FAILED(hr))
+            goto exit;
+
+        idx = lbound_tree_structs + i;
+        hr = SafeArrayGetElement(tree_structs, &idx, &tree_struct_str);
+        if (FAILED(hr))
+            goto exit;
+
+        hr = create_uia_element_from_cache_req(&element_array_data->elements[i], element->from_cui8,
+                cache_req_struct, offset_idx, sa, tree_struct_str);
+        if (FAILED(hr))
+            goto exit;
+    }
+
+    *found = array;
+
+exit:
+    if (FAILED(hr) && array)
+        IUIAutomationElementArray_Release(array);
+
+    SafeArrayDestroy(tree_structs);
+    SafeArrayDestroy(offsets);
+    SafeArrayDestroy(sa);
+
+    return hr;
 }
 
-static HRESULT create_uia_element_from_cache_req(IUIAutomationElement **iface, BOOL from_cui8,
-        struct UiaCacheRequest *cache_req, SAFEARRAY *req_data, BSTR tree_struct);
 static HRESULT WINAPI uia_element_BuildUpdatedCache(IUIAutomationElement9 *iface, IUIAutomationCacheRequest *cache_req,
         IUIAutomationElement **updated_elem)
 {
@@ -1169,7 +1263,7 @@ static HRESULT WINAPI uia_element_BuildUpdatedCache(IUIAutomationElement9 *iface
     if (FAILED(hr))
         return hr;
 
-    hr = create_uia_element_from_cache_req(&cache_elem, element->from_cui8, cache_req_struct, sa, tree_struct);
+    hr = create_uia_element_from_cache_req(&cache_elem, element->from_cui8, cache_req_struct, 0, sa, tree_struct);
     if (SUCCEEDED(hr))
         *updated_elem = cache_elem;
 
@@ -2185,7 +2279,7 @@ static int __cdecl uia_compare_cache_props(const void *a, const void *b)
 }
 
 static HRESULT create_uia_element_from_cache_req(IUIAutomationElement **iface, BOOL from_cui8,
-        struct UiaCacheRequest *cache_req, SAFEARRAY *req_data, BSTR tree_struct)
+        struct UiaCacheRequest *cache_req, LONG start_idx, SAFEARRAY *req_data, BSTR tree_struct)
 {
     IUIAutomationElement *element = NULL;
     struct uia_element *elem_data;
@@ -2197,7 +2291,8 @@ static HRESULT create_uia_element_from_cache_req(IUIAutomationElement **iface, B
     *iface = NULL;
 
     VariantInit(&v);
-    idx[0] = idx[1] = 0;
+    idx[0] = start_idx;
+    idx[1] = 0;
     hr = SafeArrayGetElement(req_data, idx, &v);
     if (FAILED(hr))
         goto exit;
@@ -2230,7 +2325,7 @@ static HRESULT create_uia_element_from_cache_req(IUIAutomationElement **iface, B
 
             elem_data->cached_props[i].prop_id = prop_info->prop_id;
 
-            idx[0] = 0;
+            idx[0] = start_idx;
             idx[1] = 1 + i;
             hr = SafeArrayGetElement(req_data, idx, &elem_data->cached_props[i].prop_val);
             if (FAILED(hr))
@@ -2445,9 +2540,22 @@ static HRESULT WINAPI uia_iface_get_ContentViewCondition(IUIAutomation6 *iface, 
 
 static HRESULT WINAPI uia_iface_CreateCacheRequest(IUIAutomation6 *iface, IUIAutomationCacheRequest **out_cache_req)
 {
+    HRESULT hr;
+
     TRACE("%p, %p\n", iface, out_cache_req);
 
-    return create_uia_cache_request_iface(out_cache_req);
+    hr = create_uia_cache_request_iface(out_cache_req);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IUIAutomationCacheRequest_AddProperty(*out_cache_req, UIA_RuntimeIdPropertyId);
+    if (FAILED(hr))
+    {
+        IUIAutomationCacheRequest_Release(*out_cache_req);
+        *out_cache_req = NULL;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI uia_iface_CreateTrueCondition(IUIAutomation6 *iface, IUIAutomationCondition **out_condition)
