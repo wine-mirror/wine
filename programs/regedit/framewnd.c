@@ -500,7 +500,7 @@ static BOOL ExportRegistryFile(HWND hWnd)
         BOOL result;
         result = export_registry_key(ofn.lpstrFile, (LPWSTR)ofn.lCustData, ofn.nFilterIndex);
         if (!result) {
-            /*printf("Can't open file \"%s\"\n", ofn.lpstrFile);*/
+            FIXME("Registry export failed.\n");
             return FALSE;
         }
     } else {
