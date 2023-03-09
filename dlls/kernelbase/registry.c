@@ -140,12 +140,12 @@ static HKEY get_perflib_key( HANDLE key )
 }
 
 /* wrapper for NtCreateKey that creates the key recursively if necessary */
-static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+static NTSTATUS create_key( HKEY *retkey, HKEY root, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
                             const UNICODE_STRING *class, ULONG options, PULONG dispos )
 {
     BOOL force_wow32 = is_win64 && (access & KEY_WOW64_32KEY);
     NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
-    HANDLE subkey, root = attr->RootDirectory;
+    HANDLE subkey;
 
     if (!force_wow32) status = NtCreateKey( &subkey, access, attr, 0, class, options, dispos );
 
@@ -316,7 +316,7 @@ static HKEY create_special_root_hkey( HKEY hkey, DWORD access )
         attr.SecurityDescriptor = NULL;
         attr.SecurityQualityOfService = NULL;
         RtlInitUnicodeString( &name, root_key_names[idx] );
-        if (create_key( &hkey, access, &attr, NULL, 0, NULL )) return 0;
+        if (create_key( &hkey, 0, access, &attr, NULL, 0, NULL )) return 0;
         TRACE( "%s -> %p\n", debugstr_w(attr.ObjectName->Buffer), hkey );
     }
 
@@ -444,7 +444,7 @@ LSTATUS WINAPI DECLSPEC_HOTPATCH RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD
     RtlInitUnicodeString( &nameW, name );
     RtlInitUnicodeString( &classW, class );
 
-    return RtlNtStatusToDosError( create_key( retkey, access, &attr, &classW, options, dispos ) );
+    return RtlNtStatusToDosError( create_key( retkey, hkey, access, &attr, &classW, options, dispos ) );
 }
 
 
@@ -503,7 +503,7 @@ LSTATUS WINAPI DECLSPEC_HOTPATCH RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD 
     {
         if (!(status = RtlAnsiStringToUnicodeString( &classW, &classA, TRUE )))
         {
-            status = create_key( retkey, access, &attr, &classW, options, dispos );
+            status = create_key( retkey, hkey, access, &attr, &classW, options, dispos );
             RtlFreeUnicodeString( &classW );
         }
     }
