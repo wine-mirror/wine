@@ -84,6 +84,7 @@ static UINT (WINAPI *pSendInput) (UINT, INPUT*, size_t);
 
 extern BOOL WINAPI ImmFreeLayout(HKL);
 extern BOOL WINAPI ImmLoadIME(HKL);
+extern BOOL WINAPI ImmActivateLayout(HKL);
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE, enabled_ ## func = FALSE
@@ -2489,6 +2490,104 @@ DEFINE_EXPECT( IME_DLL_PROCESS_DETACH );
 
 static IMEINFO ime_info;
 
+enum ime_function
+{
+    IME_SELECT = 1,
+    IME_NOTIFY,
+};
+
+struct ime_call
+{
+    enum ime_function func;
+    HIMC himc;
+
+    union
+    {
+        int select;
+        struct
+        {
+            int action;
+            int index;
+            int value;
+        } notify;
+    };
+
+    BOOL todo;
+};
+
+struct ime_call empty_sequence[] = {{0}};
+static struct ime_call ime_calls[1024];
+static ULONG ime_call_count;
+
+#define ok_call( a, b ) ok_call_( __FILE__, __LINE__, a, b )
+static void ok_call_( const char *file, int line, const struct ime_call *expected, const struct ime_call *received )
+{
+    int ret;
+
+    if ((ret = expected->func - received->func)) goto done;
+    if ((ret = (UINT_PTR)expected->himc - (UINT_PTR)received->himc)) goto done;
+    switch (expected->func)
+    {
+    case IME_SELECT:
+        if ((ret = expected->select - received->select)) goto done;
+        break;
+    case IME_NOTIFY:
+        if ((ret = expected->notify.action - received->notify.action)) goto done;
+        if ((ret = expected->notify.index - received->notify.index)) goto done;
+        if ((ret = expected->notify.value - received->notify.value)) goto done;
+        break;
+    }
+
+done:
+    switch (received->func)
+    {
+    case IME_SELECT:
+        todo_wine_if( expected->todo )
+        ok_(file, line)( !ret, "got IME_SELECT himc %p, select %u\n", received->himc, received->select );
+        return;
+    case IME_NOTIFY:
+        todo_wine_if( expected->todo )
+        ok_(file, line)( !ret, "got IME_NOTIFY himc %p, action %#x, index %#x, value %#x\n",
+                         received->himc, received->notify.action, received->notify.index,
+                         received->notify.value );
+        return;
+    }
+
+    switch (expected->func)
+    {
+    case IME_SELECT:
+        todo_wine_if( expected->todo )
+        ok_(file, line)( !ret, "IME_SELECT himc %p, select %u\n", expected->himc, expected->select );
+        break;
+    case IME_NOTIFY:
+        todo_wine_if( expected->todo )
+        ok_(file, line)( !ret, "IME_NOTIFY himc %p, action %#x, index %#x, value %#x\n",
+                         expected->himc, expected->notify.action, expected->notify.index,
+                         expected->notify.value );
+        break;
+    }
+}
+
+#define ok_seq( a ) ok_seq_( __FILE__, __LINE__, a, #a )
+static void ok_seq_( const char *file, int line, const struct ime_call *expected, const char *context )
+{
+    const struct ime_call *received = ime_calls;
+    UINT i = 0;
+
+    while (expected->func || received->func)
+    {
+        winetest_push_context( "%u%s%s", i++, !expected->func ? " (spurious)" : "",
+                               !received->func ? " (missing)" : "" );
+        ok_call_( file, line, expected, received );
+        if (expected->func) expected++;
+        if (received->func) received++;
+        winetest_pop_context();
+    }
+
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+}
+
 static LRESULT CALLBACK ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     ime_trace( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
@@ -2683,9 +2782,10 @@ static BOOL WINAPI ime_ImeRegisterWord( const WCHAR *reading, DWORD style, const
 
 static BOOL WINAPI ime_ImeSelect( HIMC himc, BOOL select )
 {
+    struct ime_call call = {.func = IME_SELECT, .himc = himc, .select = select};
     ime_trace( "himc %p, select %d\n", himc, select );
-    ok( 0, "unexpected call\n" );
-    return FALSE;
+    ime_calls[ime_call_count++] = call;
+    return TRUE;
 }
 
 static BOOL WINAPI ime_ImeSetActiveContext( HIMC himc, BOOL flag )
@@ -2735,8 +2835,9 @@ static BOOL WINAPI ime_ImeUnregisterWord( const WCHAR *reading, DWORD style, con
 
 static BOOL WINAPI ime_NotifyIME( HIMC himc, DWORD action, DWORD index, DWORD value )
 {
-    ime_trace( "himc %p, action %lu, index %lu, value %lu\n", himc, action, index, value );
-    ok( 0, "unexpected call\n" );
+    struct ime_call call = {.func = IME_NOTIFY, .himc = himc, .notify = {.action = action, .index = index, .value = value}};
+    ime_trace( "himc %p, action %#lx, index %lu, value %lu\n", himc, action, index, value );
+    ime_calls[ime_call_count++] = call;
     return FALSE;
 }
 
@@ -3672,6 +3773,78 @@ cleanup:
     winetest_pop_context();
 }
 
+static void test_ImmActivateLayout(void)
+{
+    const struct ime_call activate_seq[] =
+    {
+        {.func = IME_SELECT, .himc = default_himc, .select = 1, .todo = TRUE},
+        {0},
+    };
+    const struct ime_call deactivate_seq[] =
+    {
+        {.func = IME_NOTIFY, .himc = default_himc, .notify = {.action = NI_COMPOSITIONSTR, .index = CPS_CANCEL, .value = 0}, .todo = TRUE},
+        {.func = IME_SELECT, .himc = default_himc, .select = 0, .todo = TRUE},
+        {0},
+    };
+    HKL hkl, old_hkl = GetKeyboardLayout( 0 );
+    UINT ret;
+
+    SET_ENABLE( ImeInquire, TRUE );
+    SET_ENABLE( ImeDestroy, TRUE );
+
+    todo_wine
+    ok_ret( 1, ImmActivateLayout( old_hkl ) );
+
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
+
+    if (!(hkl = ime_install())) goto cleanup;
+
+    /* ActivateKeyboardLayout doesn't call ImeInquire / ImeDestroy */
+
+    ok_seq( empty_sequence );
+    ok_eq( old_hkl, ActivateKeyboardLayout( hkl, 0 ), HKL, "%p" );
+    ok_eq( hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
+    ok_eq( hkl, ActivateKeyboardLayout( old_hkl, 0 ), HKL, "%p" );
+    ok_seq( empty_sequence );
+    ok_eq( old_hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
+
+
+    /* ImmActivateLayout changes active HKL */
+
+    SET_EXPECT( ImeInquire );
+    todo_wine
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    ok_seq( activate_seq );
+    todo_wine
+    CHECK_CALLED( ImeInquire );
+
+    todo_wine
+    ok_eq( hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
+
+    todo_wine
+    ok_ret( 1, ImmActivateLayout( old_hkl ) );
+    ok_seq( deactivate_seq );
+
+    ok_eq( old_hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
+
+    ime_cleanup( hkl );
+    ok_seq( empty_sequence );
+
+
+    /* ImmActivateLayout leaks the IME, we need to free it manually */
+
+    SET_EXPECT( ImeDestroy );
+    ret = ImmFreeLayout( hkl );
+    ok( ret, "ImmFreeLayout returned %u\n", ret );
+    todo_wine
+    CHECK_CALLED( ImeDestroy );
+    ok_seq( empty_sequence );
+
+cleanup:
+    SET_ENABLE( ImeInquire, FALSE );
+    SET_ENABLE( ImeDestroy, FALSE );
+}
+
 START_TEST(imm32)
 {
     if (!is_ime_enabled())
@@ -3700,6 +3873,8 @@ START_TEST(imm32)
     test_ImmGetRegisterWordStyle( TRUE );
     test_ImmUnregisterWord( FALSE );
     test_ImmUnregisterWord( TRUE );
+
+    test_ImmActivateLayout();
 
     if (init())
     {
