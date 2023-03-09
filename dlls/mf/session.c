@@ -866,13 +866,13 @@ static void session_command_complete_with_event(struct media_session *session, M
     session_command_complete(session);
 }
 
-static void session_subscribe_sources(struct media_session *session)
+static HRESULT session_subscribe_sources(struct media_session *session)
 {
     struct media_source *source;
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     if (session->presentation.flags & SESSION_FLAG_SOURCES_SUBSCRIBED)
-        return;
+        return hr;
 
     LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
     {
@@ -880,10 +880,12 @@ static void session_subscribe_sources(struct media_session *session)
                 source->object)))
         {
             WARN("Failed to subscribe to source events, hr %#lx.\n", hr);
+            return hr;
         }
     }
 
     session->presentation.flags |= SESSION_FLAG_SOURCES_SUBSCRIBED;
+    return hr;
 }
 
 static void session_start(struct media_session *session, const GUID *time_format, const PROPVARIANT *start_position)
@@ -909,7 +911,11 @@ static void session_start(struct media_session *session, const GUID *time_format
             session->presentation.start_position.vt = VT_EMPTY;
             PropVariantCopy(&session->presentation.start_position, start_position);
 
-            session_subscribe_sources(session);
+            if (FAILED(hr = session_subscribe_sources(session)))
+            {
+                session_command_complete_with_event(session, MESessionStarted, hr, NULL);
+                return;
+            }
 
             LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
             {
@@ -1308,10 +1314,8 @@ static void session_set_rate(struct media_session *session, BOOL thin, float rat
     if (SUCCEEDED(hr))
         hr = IMFRateControl_GetRate(session->clock_rate_control, NULL, &clock_rate);
 
-    if (SUCCEEDED(hr) && (rate != clock_rate))
+    if (SUCCEEDED(hr) && (rate != clock_rate) && SUCCEEDED(hr = session_subscribe_sources(session)))
     {
-        session_subscribe_sources(session);
-
         LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
         {
             if (SUCCEEDED(hr = MFGetService(source->object, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateControl,
