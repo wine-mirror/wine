@@ -4183,6 +4183,38 @@ static void test_mf_PatternBrush(void)
     HeapFree (GetProcessHeap(), 0, orig_lb);
 }
 
+static int CALLBACK pattern_brush_emf_enum_proc(HDC hdc, HANDLETABLE *htable,
+        const ENHMETARECORD *rec, int n, LPARAM arg)
+{
+    LOGBRUSH brush;
+    BOOL ret;
+
+    switch (rec->iType)
+    {
+    case EMR_HEADER:
+    case EMR_SELECTOBJECT:
+    case EMR_EOF:
+    case EMR_CREATEMONOBRUSH:
+        return 1;
+    case EMR_CREATEDIBPATTERNBRUSHPT:
+        ok(!htable->objectHandle[2], "objectHandle[2] already used\n");
+        ret = PlayEnhMetaFileRecord(hdc, htable, rec, n);
+        ok(ret, "PlayEnhMetaFileRecord failed\n");
+        ok(htable->objectHandle[2] != NULL, "objectHandle[2] not created\n");
+
+        ret = GetObjectW(htable->objectHandle[2], sizeof(brush), &brush);
+        ok(ret, "GetObjectW failed\n");
+        ok(brush.lbStyle == BS_DIBPATTERN, "brush.lbStyle = %d\n", brush.lbStyle);
+        ok(brush.lbHatch > (ULONG_PTR)rec && brush.lbHatch < (ULONG_PTR)rec + rec->nSize,
+                "brush.lbHatch = %p, not in %p-%p range\n",
+                (void *)brush.lbHatch, rec, (const BYTE *)rec + rec->nSize);
+        return 1;
+    default:
+        ok(0, "unexpected record %lu\n", rec->iType);
+        return 0;
+    }
+}
+
 static void test_emf_pattern_brush(void)
 {
     char buffer[sizeof(BITMAPINFOHEADER) + (2 + 32 * 32 / 8) * sizeof(RGBQUAD)];
@@ -4237,8 +4269,6 @@ static void test_emf_pattern_brush(void)
         dump_emf_records(emf, "emf_pattern_brush");
     }
 
-    ret = DeleteEnhMetaFile(emf);
-    ok(ret, "DeleteMetaFile error %ld\n", GetLastError());
     ret = DeleteObject(bitmap_brush);
     ok(ret, "DeleteObject failed\n");
     ret = DeleteObject(dib_brush);
@@ -4246,6 +4276,11 @@ static void test_emf_pattern_brush(void)
     ret = DeleteObject((HBITMAP)orig_lb->lbHatch);
     ok(ret, "DeleteObject failed\n");
     HeapFree(GetProcessHeap(), 0, orig_lb);
+
+    ret = EnumEnhMetaFile(NULL, emf, pattern_brush_emf_enum_proc, NULL, NULL);
+    ok(ret, "EnumEnhMetaFile error %ld\n", GetLastError());
+    ret = DeleteEnhMetaFile(emf);
+    ok(ret, "DeleteMetaFile error %ld\n", GetLastError());
 }
 
 static void test_mf_palette_brush(void)
