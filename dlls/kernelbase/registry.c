@@ -214,11 +214,11 @@ static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES 
 }
 
 /* wrapper for NtOpenKeyEx to handle Wow6432 nodes */
-static NTSTATUS open_key( HKEY *retkey, DWORD options, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr )
+static NTSTATUS open_key( HKEY *retkey, HKEY root, DWORD options, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr )
 {
     NTSTATUS status;
     BOOL force_wow32 = is_win64 && (access & KEY_WOW64_32KEY);
-    HANDLE subkey, root = attr->RootDirectory;
+    HANDLE subkey;
     WCHAR *buffer = attr->ObjectName->Buffer;
     DWORD pos = 0, i = 0, len = attr->ObjectName->Length / sizeof(WCHAR);
     UNICODE_STRING str;
@@ -537,7 +537,7 @@ LSTATUS WINAPI DECLSPEC_HOTPATCH RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD o
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &nameW, name );
-    return RtlNtStatusToDosError( open_key( retkey, options, access, &attr ) );
+    return RtlNtStatusToDosError( open_key( retkey, hkey, options, access, &attr ) );
 }
 
 
@@ -595,7 +595,7 @@ LSTATUS WINAPI DECLSPEC_HOTPATCH RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD op
     if (!(status = RtlAnsiStringToUnicodeString( &NtCurrentTeb()->StaticUnicodeString,
                                                  &nameA, FALSE )))
     {
-        status = open_key( retkey, options, access, &attr );
+        status = open_key( retkey, hkey, options, access, &attr );
     }
     return RtlNtStatusToDosError( status );
 }
