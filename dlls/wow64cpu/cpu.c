@@ -290,12 +290,15 @@ NTSTATUS WINAPI BTCpuProcessInit(void)
     HMODULE module;
     UNICODE_STRING str;
     void **p__wine_unix_call_dispatcher;
+    WOW64INFO *wow64info = NtCurrentTeb()->TlsSlots[WOW64_TLS_WOW64INFO];
 
     if ((ULONG_PTR)syscall_32to64 >> 32)
     {
         ERR( "wow64cpu loaded above 4G, disabling\n" );
         return STATUS_INVALID_ADDRESS;
     }
+
+    wow64info->CpuFlags |= WOW64_CPUFLAGS_MSFT64;
 
     RtlInitUnicodeString( &str, L"ntdll.dll" );
     LdrGetDllHandle( NULL, 0, &str, &module );

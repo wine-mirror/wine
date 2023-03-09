@@ -97,6 +97,7 @@ SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock = NULL;
 /* wow64win syscall table */
 static const SYSTEM_SERVICE_TABLE *psdwhwin32;
 static HMODULE win32u_module;
+static WOW64INFO *wow64info;
 
 /* cpu backend dll functions */
 static void *   (WINAPI *pBTCpuGetBopCode)(void);
@@ -783,6 +784,7 @@ static const WCHAR *get_cpu_dll_name(void)
  */
 static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **context )
 {
+    TEB32 *teb32 = (TEB32 *)((char *)NtCurrentTeb() + NtCurrentTeb()->WowTebOffset);
     HMODULE module;
     UNICODE_STRING str = RTL_CONSTANT_STRING( L"ntdll.dll" );
     SYSTEM_BASIC_INFORMATION info;
@@ -793,6 +795,11 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
     NtQuerySystemInformation( SystemEmulationBasicInformation, &info, sizeof(info), NULL );
     highest_user_address = (ULONG_PTR)info.HighestUserAddress;
     default_zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
+    wow64info = (WOW64INFO *)((PEB32 *)ULongToPtr( teb32->Peb ) + 1);
+    wow64info->NativeSystemPageSize = 0x1000;
+    wow64info->NativeMachineType    = native_machine;
+    wow64info->EmulatedMachineType  = current_machine;
+    NtCurrentTeb()->TlsSlots[WOW64_TLS_WOW64INFO] = wow64info;
 
 #define GET_PTR(name) p ## name = RtlFindExportedRoutineByName( module, #name )
 
@@ -836,6 +843,7 @@ static void thread_init(void)
     void *cpu_area_ctx;
 
     RtlWow64GetCurrentCpuArea( NULL, &cpu_area_ctx, NULL );
+    NtCurrentTeb()->TlsSlots[WOW64_TLS_WOW64INFO] = wow64info;
     if (pBTCpuThreadInit) pBTCpuThreadInit();
 
     /* update initial context to jump to 32-bit LdrInitializeThunk (cf. 32-bit call_init_thunk) */

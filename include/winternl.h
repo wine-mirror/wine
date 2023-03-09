@@ -1085,6 +1085,7 @@ typedef struct _TEB64
 #define WOW64_TLS_USERCALLBACKDATA 5
 #define WOW64_TLS_APCLIST          7
 #define WOW64_TLS_FILESYSREDIR     8
+#define WOW64_TLS_WOW64INFO        10
 #define WOW64_TLS_MAX_NUMBER       19
 
 
@@ -3854,6 +3855,19 @@ typedef struct _WOW64_CPU_AREA_INFO
     ULONG              ContextFlag;
     USHORT             Machine;
 } WOW64_CPU_AREA_INFO, *PWOW64_CPU_AREA_INFO;
+
+typedef struct _WOW64INFO
+{
+    ULONG   NativeSystemPageSize;
+    ULONG   CpuFlags;
+    ULONG   Wow64ExecuteFlags;
+    ULONG   unknown[5];
+    USHORT  NativeMachineType;
+    USHORT  EmulatedMachineType;
+} WOW64INFO;
+
+#define WOW64_CPUFLAGS_MSFT64   0x01
+#define WOW64_CPUFLAGS_SOFTWARE 0x02
 
 /* wow64.dll functions */
 void *    WINAPI Wow64AllocateTemp(SIZE_T);
