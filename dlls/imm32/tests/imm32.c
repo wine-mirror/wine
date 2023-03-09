@@ -2611,7 +2611,7 @@ static BOOL WINAPI ime_DllMain( HINSTANCE instance, DWORD reason, LPVOID reserve
 
     case DLL_PROCESS_DETACH:
         UnregisterClassW( ime_ui_class.lpszClassName, instance );
-        todo_wine CHECK_EXPECT( IME_DLL_PROCESS_DETACH );
+        CHECK_EXPECT( IME_DLL_PROCESS_DETACH );
         break;
     }
 
@@ -2778,29 +2778,21 @@ static void test_ImmInstallIME(void)
     SET_EXPECT( IME_DLL_PROCESS_ATTACH );
     SET_EXPECT( ImeInquire );
     ret = ImmLoadIME( hkl );
-    todo_wine
     ok( ret, "ImmLoadIME returned %#x\n", ret );
-    todo_wine
     CHECK_CALLED( IME_DLL_PROCESS_ATTACH );
-    todo_wine
     CHECK_CALLED( ImeInquire );
 
     ret = ImmLoadIME( hkl );
-    todo_wine
     ok( ret, "ImmLoadIME returned %#x\n", ret );
 
     SET_EXPECT( ImeDestroy );
     SET_EXPECT( IME_DLL_PROCESS_DETACH );
     ret = ImmFreeLayout( hkl );
-    todo_wine
     ok( ret, "ImmFreeLayout returned %#x\n", ret );
-    todo_wine
     CHECK_CALLED( ImeDestroy );
-    todo_wine
     CHECK_CALLED( IME_DLL_PROCESS_DETACH );
 
     ret = ImmFreeLayout( hkl );
-    todo_wine
     ok( ret, "ImmFreeLayout returned %#x\n", ret );
 
     ime_cleanup( hkl );
@@ -2812,29 +2804,21 @@ static void test_ImmInstallIME(void)
     SET_EXPECT( IME_DLL_PROCESS_ATTACH );
     SET_EXPECT( ImeInquire );
     ret = ImmLoadIME( hkl );
-    todo_wine
     ok( ret, "ImmLoadIME returned %#x\n", ret );
-    todo_wine
     CHECK_CALLED( IME_DLL_PROCESS_ATTACH );
-    todo_wine
     CHECK_CALLED( ImeInquire );
 
     ret = ImmLoadIME( hkl );
-    todo_wine
     ok( ret, "ImmLoadIME returned %#x\n", ret );
 
     SET_EXPECT( ImeDestroy );
     SET_EXPECT( IME_DLL_PROCESS_DETACH );
     ret = ImmFreeLayout( hkl );
-    todo_wine
     ok( ret, "ImmFreeLayout returned %#x\n", ret );
-    todo_wine
     CHECK_CALLED( ImeDestroy );
-    todo_wine
     CHECK_CALLED( IME_DLL_PROCESS_DETACH );
 
     ret = ImmFreeLayout( hkl );
-    todo_wine
     ok( ret, "ImmFreeLayout returned %#x\n", ret );
 
     ime_cleanup( hkl );
