@@ -55,6 +55,12 @@ static const char *debugstr_ok( const char *cond )
         t v = (r);                                                                                 \
         ok( v == (e), "%s " f "\n", debugstr_ok( #r ), v, ##__VA_ARGS__ );                         \
     } while (0)
+#define ok_ne( e, r, t, f, ... )                                                                   \
+    do                                                                                             \
+    {                                                                                              \
+        t v = (r);                                                                                 \
+        ok( v != (e), "%s " f "\n", debugstr_ok( #r ), v, ##__VA_ARGS__ );                         \
+    } while (0)
 #define ok_wcs( e, r )                                                                             \
     do                                                                                             \
     {                                                                                              \
@@ -2787,6 +2793,7 @@ static struct ime_functions ime_functions =
 
 static UINT ime_count;
 static WCHAR ime_path[MAX_PATH];
+static HIMC default_himc;
 
 static HKL ime_install(void)
 {
@@ -2903,6 +2910,39 @@ static void ime_cleanup( HKL hkl )
 
     ret = DeleteFileW( L"c:\\windows\\system32\\winetest_ime.dll" );
     ok( ret, "DeleteFileW failed, error %lu\n", GetLastError() );
+}
+
+static BOOL CALLBACK enum_get_context( HIMC himc, LPARAM lparam )
+{
+    ime_trace( "himc %p\n", himc );
+    *(HIMC *)lparam = himc;
+    return TRUE;
+}
+
+static BOOL CALLBACK enum_find_context( HIMC himc, LPARAM lparam )
+{
+    ime_trace( "himc %p\n", himc );
+    if (lparam && lparam == (LPARAM)himc) return FALSE;
+    return TRUE;
+}
+
+static void test_ImmEnumInputContext(void)
+{
+    HIMC himc;
+
+    todo_wine
+    ok_ret( 1, ImmEnumInputContext( 0, enum_get_context, (LPARAM)&default_himc ) );
+    ok_ret( 0, ImmEnumInputContext( 1, enum_find_context, 0 ) );
+    todo_wine
+    ok_ret( 1, ImmEnumInputContext( GetCurrentThreadId(), enum_find_context, 0 ) );
+    ok_ret( 0, ImmEnumInputContext( GetCurrentProcessId(), enum_find_context, 0 ) );
+
+    himc = ImmCreateContext();
+    ok_ne( NULL, himc, HIMC, "%p" );
+    ok_ret( 0, ImmEnumInputContext( GetCurrentThreadId(), enum_find_context, (LPARAM)himc ) );
+    ok_ret( 1, ImmDestroyContext( himc ) );
+    todo_wine
+    ok_ret( 1, ImmEnumInputContext( GetCurrentThreadId(), enum_find_context, (LPARAM)himc ) );
 }
 
 static void test_ImmInstallIME(void)
@@ -3652,6 +3692,8 @@ START_TEST(imm32)
     }
 
     test_com_initialization();
+
+    test_ImmEnumInputContext();
 
     test_ImmInstallIME();
     test_ImmGetDescription();
