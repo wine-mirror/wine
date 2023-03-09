@@ -637,6 +637,50 @@ static BOOL free_input_context_data( HIMC hIMC )
     return TRUE;
 }
 
+static void input_context_init( INPUTCONTEXT *ctx )
+{
+    COMPOSITIONSTRING *str;
+    CANDIDATEINFO *info;
+    GUIDELINE *line;
+    UINT i;
+
+    if (!(ctx->hMsgBuf = ImmCreateIMCC( 0 )))
+        WARN( "Failed to allocate %p message buffer\n", ctx );
+
+    if (!(ctx->hCompStr = ImmCreateIMCC( sizeof(COMPOSITIONSTRING) )))
+        WARN( "Failed to allocate %p COMPOSITIONSTRING\n", ctx );
+    else if (!(str = ImmLockIMCC( ctx->hCompStr )))
+        WARN( "Failed to lock IMCC for COMPOSITIONSTRING\n" );
+    else
+    {
+        str->dwSize = sizeof(COMPOSITIONSTRING);
+        ImmUnlockIMCC( ctx->hCompStr );
+    }
+
+    if (!(ctx->hCandInfo = ImmCreateIMCC( sizeof(CANDIDATEINFO) )))
+        WARN( "Failed to allocate %p CANDIDATEINFO\n", ctx );
+    else if (!(info = ImmLockIMCC( ctx->hCandInfo )))
+        WARN( "Failed to lock IMCC for CANDIDATEINFO\n" );
+    else
+    {
+        info->dwSize = sizeof(CANDIDATEINFO);
+        ImmUnlockIMCC( ctx->hCandInfo );
+    }
+
+    if (!(ctx->hGuideLine = ImmCreateIMCC( sizeof(GUIDELINE) )))
+        WARN( "Failed to allocate %p GUIDELINE\n", ctx );
+    else if (!(line = ImmLockIMCC( ctx->hGuideLine )))
+        WARN( "Failed to lock IMCC for GUIDELINE\n" );
+    else
+    {
+        line->dwSize = sizeof(GUIDELINE);
+        ImmUnlockIMCC( ctx->hGuideLine );
+    }
+
+    for (i = 0; i < ARRAY_SIZE(ctx->cfCandForm); i++)
+        ctx->cfCandForm[i].dwIndex = ~0u;
+}
+
 static void IMM_FreeThreadData(void)
 {
     struct coinit_spy *spy;
@@ -716,18 +760,6 @@ static LRESULT ImmInternalSendIMENotify( struct imc *data, WPARAM notify, LPARAM
        return SendMessageW(target, WM_IME_NOTIFY, notify, lParam);
 
     return 0;
-}
-
-static HIMCC ImmCreateBlankCompStr(void)
-{
-    HIMCC rc;
-    LPCOMPOSITIONSTRING ptr;
-    rc = ImmCreateIMCC(sizeof(COMPOSITIONSTRING));
-    ptr = ImmLockIMCC(rc);
-    memset(ptr,0,sizeof(COMPOSITIONSTRING));
-    ptr->dwSize = sizeof(COMPOSITIONSTRING);
-    ImmUnlockIMCC(rc);
-    return rc;
 }
 
 /***********************************************************************
@@ -883,28 +915,9 @@ BOOL WINAPI ImmConfigureIMEW( HKL hkl, HWND hwnd, DWORD mode, void *data )
 static struct imc *create_input_context( HIMC default_imc )
 {
     struct imc *new_context;
-    LPGUIDELINE gl;
-    LPCANDIDATEINFO ci;
-    int i;
 
     if (!(new_context = calloc( 1, sizeof(*new_context) ))) return NULL;
-
-    /* the HIMCCs are never NULL */
-    new_context->IMC.hCompStr = ImmCreateBlankCompStr();
-    new_context->IMC.hMsgBuf = ImmCreateIMCC(0);
-    new_context->IMC.hCandInfo = ImmCreateIMCC(sizeof(CANDIDATEINFO));
-    ci = ImmLockIMCC(new_context->IMC.hCandInfo);
-    memset(ci,0,sizeof(CANDIDATEINFO));
-    ci->dwSize = sizeof(CANDIDATEINFO);
-    ImmUnlockIMCC(new_context->IMC.hCandInfo);
-    new_context->IMC.hGuideLine = ImmCreateIMCC(sizeof(GUIDELINE));
-    gl = ImmLockIMCC(new_context->IMC.hGuideLine);
-    memset(gl,0,sizeof(GUIDELINE));
-    gl->dwSize = sizeof(GUIDELINE);
-    ImmUnlockIMCC(new_context->IMC.hGuideLine);
-
-    for (i = 0; i < ARRAY_SIZE(new_context->IMC.cfCandForm); i++)
-        new_context->IMC.cfCandForm[i].dwIndex = ~0u;
+    input_context_init( &new_context->IMC );
 
     if (!default_imc)
         new_context->handle = NtUserCreateInputContext((UINT_PTR)new_context);
