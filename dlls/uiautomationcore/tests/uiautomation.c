@@ -11701,6 +11701,43 @@ static void test_Element_Find(IUIAutomation *uia_iface)
     UnregisterClassA("test_Element_Find class", NULL);
 }
 
+static void test_CUIAutomation_TreeWalker_ifaces(IUIAutomation *uia_iface)
+{
+    IUIAutomationCondition *cond, *cond2;
+    IUIAutomationTreeWalker *walker;
+    HRESULT hr;
+
+    cond = NULL;
+    hr = IUIAutomation_CreateTrueCondition(uia_iface, &cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cond, "cond == NULL\n");
+
+    /* NULL input argument tests. */
+    walker = (void *)0xdeadbeef;
+    hr = IUIAutomation_CreateTreeWalker(uia_iface, NULL, &walker);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    ok(!walker, "walker != NULL\n");
+
+    hr = IUIAutomation_CreateTreeWalker(uia_iface, cond, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    /* Actually create TreeWalker. */
+    walker = NULL;
+    hr = IUIAutomation_CreateTreeWalker(uia_iface, cond, &walker);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!walker, "walker == NULL\n");
+
+    hr = IUIAutomationTreeWalker_get_Condition(walker, &cond2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cond2, "cond2 == NULL\n");
+
+    ok(iface_cmp((IUnknown *)cond, (IUnknown *)cond2), "cond != cond2\n");
+    IUIAutomationCondition_Release(cond);
+    IUIAutomationCondition_Release(cond2);
+
+    IUIAutomationTreeWalker_Release(walker);
+}
+
 struct uia_com_classes {
     const GUID *clsid;
     const GUID *iid;
@@ -11802,6 +11839,7 @@ static void test_CUIAutomation(void)
     test_CUIAutomation_condition_ifaces(uia_iface);
     test_CUIAutomation_value_conversion(uia_iface);
     test_CUIAutomation_cache_request_iface(uia_iface);
+    test_CUIAutomation_TreeWalker_ifaces(uia_iface);
     test_ElementFromHandle(uia_iface, has_cui8);
     test_Element_GetPropertyValue(uia_iface);
     test_Element_cache_methods(uia_iface);

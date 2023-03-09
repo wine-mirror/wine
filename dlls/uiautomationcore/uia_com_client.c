@@ -2443,6 +2443,204 @@ exit:
 }
 
 /*
+ * IUIAutomationTreeWalker interface.
+ */
+struct uia_tree_walker {
+    IUIAutomationTreeWalker IUIAutomationTreeWalker_iface;
+    LONG ref;
+
+    IUIAutomationCondition *nav_cond;
+    struct UiaCondition *cond_struct;
+};
+
+static inline struct uia_tree_walker *impl_from_IUIAutomationTreeWalker(IUIAutomationTreeWalker *iface)
+{
+    return CONTAINING_RECORD(iface, struct uia_tree_walker, IUIAutomationTreeWalker_iface);
+}
+
+static HRESULT WINAPI uia_tree_walker_QueryInterface(IUIAutomationTreeWalker *iface, REFIID riid, void **ppv)
+{
+    if (IsEqualIID(riid, &IID_IUIAutomationTreeWalker) || IsEqualIID(riid, &IID_IUnknown))
+        *ppv = iface;
+    else
+        return E_NOINTERFACE;
+
+    IUIAutomationTreeWalker_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI uia_tree_walker_AddRef(IUIAutomationTreeWalker *iface)
+{
+    struct uia_tree_walker *tree_walker = impl_from_IUIAutomationTreeWalker(iface);
+    ULONG ref = InterlockedIncrement(&tree_walker->ref);
+
+    TRACE("%p, refcount %ld\n", tree_walker, ref);
+    return ref;
+}
+
+static ULONG WINAPI uia_tree_walker_Release(IUIAutomationTreeWalker *iface)
+{
+    struct uia_tree_walker *tree_walker = impl_from_IUIAutomationTreeWalker(iface);
+    ULONG ref = InterlockedDecrement(&tree_walker->ref);
+
+    TRACE("%p, refcount %ld\n", tree_walker, ref);
+    if (!ref)
+    {
+        IUIAutomationCondition_Release(tree_walker->nav_cond);
+        heap_free(tree_walker);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI uia_tree_walker_GetParentElement(IUIAutomationTreeWalker *iface, IUIAutomationElement *elem,
+        IUIAutomationElement **parent)
+{
+    FIXME("%p, %p, %p: stub\n", iface, elem, parent);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_tree_walker_GetFirstChildElement(IUIAutomationTreeWalker *iface, IUIAutomationElement *elem,
+        IUIAutomationElement **first)
+{
+    FIXME("%p, %p, %p: stub\n", iface, elem, first);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_tree_walker_GetLastChildElement(IUIAutomationTreeWalker *iface, IUIAutomationElement *elem,
+        IUIAutomationElement **last)
+{
+    FIXME("%p, %p, %p: stub\n", iface, elem, last);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_tree_walker_GetNextSiblingElement(IUIAutomationTreeWalker *iface, IUIAutomationElement *elem,
+        IUIAutomationElement **next)
+{
+    FIXME("%p, %p, %p: stub\n", iface, elem, next);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_tree_walker_GetPreviousSiblingElement(IUIAutomationTreeWalker *iface,
+        IUIAutomationElement *elem, IUIAutomationElement **prev)
+{
+    FIXME("%p, %p, %p: stub\n", iface, elem, prev);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_tree_walker_NormalizeElement(IUIAutomationTreeWalker *iface, IUIAutomationElement *elem,
+        IUIAutomationElement **normalized)
+{
+    FIXME("%p, %p, %p: stub\n", iface, elem, normalized);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_tree_walker_GetParentElementBuildCache(IUIAutomationTreeWalker *iface,
+        IUIAutomationElement *elem, IUIAutomationCacheRequest *cache_req, IUIAutomationElement **parent)
+{
+    FIXME("%p, %p, %p, %p: stub\n", iface, elem, cache_req, parent);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_tree_walker_GetFirstChildElementBuildCache(IUIAutomationTreeWalker *iface,
+        IUIAutomationElement *elem, IUIAutomationCacheRequest *cache_req, IUIAutomationElement **first)
+{
+    FIXME("%p, %p, %p, %p: stub\n", iface, elem, cache_req, first);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_tree_walker_GetLastChildElementBuildCache(IUIAutomationTreeWalker *iface,
+        IUIAutomationElement *elem, IUIAutomationCacheRequest *cache_req, IUIAutomationElement **last)
+{
+    FIXME("%p, %p, %p, %p: stub\n", iface, elem, cache_req, last);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_tree_walker_GetNextSiblingElementBuildCache(IUIAutomationTreeWalker *iface,
+        IUIAutomationElement *elem, IUIAutomationCacheRequest *cache_req, IUIAutomationElement **next)
+{
+    FIXME("%p, %p, %p, %p: stub\n", iface, elem, cache_req, next);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_tree_walker_GetPreviousSiblingElementBuildCache(IUIAutomationTreeWalker *iface,
+        IUIAutomationElement *elem, IUIAutomationCacheRequest *cache_req, IUIAutomationElement **prev)
+{
+    FIXME("%p, %p, %p, %p: stub\n", iface, elem, cache_req, prev);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_tree_walker_NormalizeElementBuildCache(IUIAutomationTreeWalker *iface,
+        IUIAutomationElement *elem, IUIAutomationCacheRequest *cache_req, IUIAutomationElement **normalized)
+{
+    FIXME("%p, %p, %p, %p: stub\n", iface, elem, cache_req, normalized);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_tree_walker_get_Condition(IUIAutomationTreeWalker *iface,
+        IUIAutomationCondition **condition)
+{
+    struct uia_tree_walker *tree_walker = impl_from_IUIAutomationTreeWalker(iface);
+
+    TRACE("%p, %p\n", iface, condition);
+
+    if (!condition)
+        return E_POINTER;
+
+    IUIAutomationCondition_AddRef(tree_walker->nav_cond);
+    *condition = tree_walker->nav_cond;
+
+    return S_OK;
+}
+
+static const IUIAutomationTreeWalkerVtbl uia_tree_walker_vtbl = {
+    uia_tree_walker_QueryInterface,
+    uia_tree_walker_AddRef,
+    uia_tree_walker_Release,
+    uia_tree_walker_GetParentElement,
+    uia_tree_walker_GetFirstChildElement,
+    uia_tree_walker_GetLastChildElement,
+    uia_tree_walker_GetNextSiblingElement,
+    uia_tree_walker_GetPreviousSiblingElement,
+    uia_tree_walker_NormalizeElement,
+    uia_tree_walker_GetParentElementBuildCache,
+    uia_tree_walker_GetFirstChildElementBuildCache,
+    uia_tree_walker_GetLastChildElementBuildCache,
+    uia_tree_walker_GetNextSiblingElementBuildCache,
+    uia_tree_walker_GetPreviousSiblingElementBuildCache,
+    uia_tree_walker_NormalizeElementBuildCache,
+    uia_tree_walker_get_Condition,
+};
+
+static HRESULT create_uia_tree_walker(IUIAutomationTreeWalker **out_tree_walker, IUIAutomationCondition *nav_cond)
+{
+    struct uia_tree_walker *tree_walker;
+    struct UiaCondition *cond_struct;
+    HRESULT hr;
+
+    if (!out_tree_walker)
+        return E_POINTER;
+
+    *out_tree_walker = NULL;
+    hr = get_uia_condition_struct_from_iface(nav_cond, &cond_struct);
+    if (FAILED(hr))
+        return hr;
+
+    tree_walker = heap_alloc_zero(sizeof(*tree_walker));
+    if (!tree_walker)
+        return E_OUTOFMEMORY;
+
+    tree_walker->IUIAutomationTreeWalker_iface.lpVtbl = &uia_tree_walker_vtbl;
+    tree_walker->ref = 1;
+    tree_walker->nav_cond = nav_cond;
+    IUIAutomationCondition_AddRef(nav_cond);
+    tree_walker->cond_struct = cond_struct;
+
+    *out_tree_walker = &tree_walker->IUIAutomationTreeWalker_iface;
+    return S_OK;
+}
+
+/*
  * IUIAutomation interface.
  */
 struct uia_iface {
@@ -2576,8 +2774,9 @@ static HRESULT WINAPI uia_iface_GetFocusedElementBuildCache(IUIAutomation6 *ifac
 static HRESULT WINAPI uia_iface_CreateTreeWalker(IUIAutomation6 *iface, IUIAutomationCondition *cond,
         IUIAutomationTreeWalker **out_walker)
 {
-    FIXME("%p, %p, %p: stub\n", iface, cond, out_walker);
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p\n", iface, cond, out_walker);
+
+    return create_uia_tree_walker(out_walker, cond);
 }
 
 static HRESULT WINAPI uia_iface_get_ControlViewWalker(IUIAutomation6 *iface, IUIAutomationTreeWalker **out_walker)
