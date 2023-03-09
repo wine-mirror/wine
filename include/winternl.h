@@ -3875,6 +3875,7 @@ void      WINAPI Wow64ApcRoutine(ULONG_PTR,ULONG_PTR,ULONG_PTR,CONTEXT*);
 NTSTATUS  WINAPI Wow64KiUserCallbackDispatcher(ULONG,void*,ULONG,void**,ULONG*);
 void      WINAPI Wow64PassExceptionToGuest(EXCEPTION_POINTERS*);
 void      WINAPI Wow64PrepareForException(EXCEPTION_RECORD*,CONTEXT*);
+NTSTATUS  WINAPI Wow64RaiseException(int,EXCEPTION_RECORD*);
 NTSTATUS  WINAPI Wow64SystemServiceEx(UINT,UINT*);
 
 #ifdef __WINESRC__

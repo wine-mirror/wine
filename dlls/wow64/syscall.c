@@ -151,6 +151,20 @@ static EXCEPTION_RECORD *exception_record_32to64( const EXCEPTION_RECORD32 *rec3
 }
 
 
+static void exception_record_64to32( EXCEPTION_RECORD32 *rec32, const EXCEPTION_RECORD *rec )
+{
+    unsigned int i;
+
+    rec32->ExceptionCode    = rec->ExceptionCode;
+    rec32->ExceptionFlags   = rec->ExceptionFlags;
+    rec32->ExceptionRecord  = PtrToUlong( rec->ExceptionRecord );
+    rec32->ExceptionAddress = PtrToUlong( rec->ExceptionAddress );
+    rec32->NumberParameters = rec->NumberParameters;
+    for (i = 0; i < rec->NumberParameters; i++)
+        rec32->ExceptionInformation[i] = rec->ExceptionInformation[i];
+}
+
+
 static NTSTATUS get_context_return_value( void *wow_context )
 {
     switch (current_machine)
@@ -1185,17 +1199,108 @@ void WINAPI Wow64PrepareForException( EXCEPTION_RECORD *rec, CONTEXT *context )
  */
 void WINAPI Wow64PassExceptionToGuest( EXCEPTION_POINTERS *ptrs )
 {
-    EXCEPTION_RECORD *rec = ptrs->ExceptionRecord;
     EXCEPTION_RECORD32 rec32;
-    ULONG i;
 
-    rec32.ExceptionCode    = rec->ExceptionCode;
-    rec32.ExceptionFlags   = rec->ExceptionFlags;
-    rec32.ExceptionRecord  = PtrToUlong( rec->ExceptionRecord );
-    rec32.ExceptionAddress = PtrToUlong( rec->ExceptionAddress );
-    rec32.NumberParameters = rec->NumberParameters;
-    for (i = 0; i < rec->NumberParameters; i++)
-        rec32.ExceptionInformation[i] = rec->ExceptionInformation[i];
-
+    exception_record_64to32( &rec32, ptrs->ExceptionRecord );
     call_user_exception_dispatcher( &rec32, NULL, ptrs->ContextRecord );
+}
+
+
+/**********************************************************************
+ *           Wow64RaiseException  (wow64.@)
+ */
+NTSTATUS WINAPI Wow64RaiseException( int code, EXCEPTION_RECORD *rec )
+{
+    EXCEPTION_RECORD32 rec32;
+    CONTEXT context;
+    BOOL first_chance = TRUE;
+    union
+    {
+        I386_CONTEXT i386;
+        ARM_CONTEXT arm;
+    } ctx32 = { 0 };
+
+    switch (current_machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:
+    {
+        EXCEPTION_RECORD int_rec = { 0 };
+
+        ctx32.i386.ContextFlags = CONTEXT_I386_ALL;
+        pBTCpuGetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx32.i386 );
+        if (code == -1) break;
+        int_rec.ExceptionAddress = (void *)(ULONG_PTR)ctx32.i386.Eip;
+        switch (code)
+        {
+        case 0x00:  /* division by zero */
+            int_rec.ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
+            break;
+        case 0x01:  /* single-step */
+            int_rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
+            break;
+        case 0x03:  /* breakpoint */
+            int_rec.ExceptionCode = EXCEPTION_BREAKPOINT;
+            int_rec.ExceptionAddress = (void *)(ULONG_PTR)(ctx32.i386.Eip + 1);
+            int_rec.NumberParameters = 1;
+            break;
+        case 0x04:  /* overflow */
+            int_rec.ExceptionCode = EXCEPTION_INT_OVERFLOW;
+            break;
+        case 0x05:  /* array bounds */
+            int_rec.ExceptionCode = EXCEPTION_ARRAY_BOUNDS_EXCEEDED;
+            break;
+        case 0x06:  /* invalid opcode */
+            int_rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+            break;
+        case 0x09:   /* coprocessor segment overrun */
+            int_rec.ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
+            break;
+        case 0x0c:  /* stack fault */
+            int_rec.ExceptionCode = EXCEPTION_STACK_OVERFLOW;
+            break;
+        case 0x29:  /* __fastfail */
+            int_rec.ExceptionCode = STATUS_STACK_BUFFER_OVERRUN;
+            int_rec.ExceptionFlags = EH_NONCONTINUABLE;
+            int_rec.NumberParameters = 1;
+            int_rec.ExceptionInformation[0] = ctx32.i386.Ecx;
+            first_chance = FALSE;
+            break;
+        case 0x2d:  /* debug service */
+            ctx32.i386.Eip++;
+            pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx32.i386 );
+            int_rec.ExceptionCode    = EXCEPTION_BREAKPOINT;
+            int_rec.ExceptionAddress = (void *)(ULONG_PTR)ctx32.i386.Eip;
+            int_rec.NumberParameters = 1;
+            int_rec.ExceptionInformation[0] = ctx32.i386.Eax;
+            break;
+        default:
+            ctx32.i386.Eip -= 2;
+            pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx32.i386 );
+            int_rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
+            int_rec.ExceptionAddress = (void *)(ULONG_PTR)ctx32.i386.Eip;
+            int_rec.NumberParameters = 2;
+            int_rec.ExceptionInformation[1] = 0xffffffff;
+            break;
+        }
+        *rec = int_rec;
+        break;
+    }
+
+    case IMAGE_FILE_MACHINE_ARMNT:
+        ctx32.arm.ContextFlags = CONTEXT_ARM_ALL;
+        pBTCpuGetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx32.arm );
+        break;
+    }
+
+    exception_record_64to32( &rec32, rec );
+    __TRY
+    {
+        raise_exception( rec, &context, first_chance );
+    }
+    __EXCEPT_ALL
+    {
+        call_user_exception_dispatcher( &rec32, &ctx32, NULL );
+    }
+    __ENDTRY
+    return STATUS_SUCCESS;
 }
