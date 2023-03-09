@@ -325,7 +325,6 @@ __ASM_GLOBAL_FUNC( raise_exception,
                    "movq (%rsp),%rcx\n\t"       /* original first parameter */
                    "movq 0x28(%rsp),%rax\n\t"   /* return address */
                    "movq %rax,0xf8(%rdx)\n\t"   /* context->Rip */
-                   "movq %rax,0x10(%rcx)\n\t"   /* rec->ExceptionAddress */
                    "call " __ASM_NAME("NtRaiseException") )
 #elif defined(__aarch64__)
 __ASM_GLOBAL_FUNC( raise_exception,
@@ -344,7 +343,6 @@ __ASM_GLOBAL_FUNC( raise_exception,
                    "stp x4, x5, [x1, #0xf0]\n\t"  /* context->Fp, Lr */
                    "add x4, sp, #32\n\t"          /* orig stack pointer */
                    "stp x4, x5, [x1, #0x100]\n\t" /* context->Sp, Pc */
-                   "str x5, [x0, #0x10]\n\t"      /* rec->ExceptionAddress */
                    "bl " __ASM_NAME("NtRaiseException") )
 #endif
 
