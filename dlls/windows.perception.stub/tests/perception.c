@@ -73,15 +73,20 @@ static void test_ObserverStatics(void)
     check_interface( factory, &IID_ISpatialSurfaceObserverStatics );
 
     hr = IActivationFactory_QueryInterface( factory, &IID_ISpatialSurfaceObserverStatics2, (void **)&observer_statics2 );
-    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    if (hr == E_NOINTERFACE /* win1607 */)
+        win_skip("ISpatialSurfaceObserverStatics2 is not supported\n");
+    else
+    {
+        ok( hr == S_OK, "got hr %#lx.\n", hr );
 
-    value = TRUE;
-    hr = ISpatialSurfaceObserverStatics2_IsSupported( observer_statics2, &value );
-    ok( hr == S_OK, "got hr %#lx.\n", hr );
-    ok( !value, "got %d.\n", value );
+        value = TRUE;
+        hr = ISpatialSurfaceObserverStatics2_IsSupported( observer_statics2, &value );
+        ok( hr == S_OK, "got hr %#lx.\n", hr );
+        ok( !value, "got %d.\n", value );
 
-    ref = ISpatialSurfaceObserverStatics2_Release( observer_statics2 );
-    ok( ref == 2, "got ref %ld.\n", ref );
+        ref = ISpatialSurfaceObserverStatics2_Release( observer_statics2 );
+        ok( ref == 2, "got ref %ld.\n", ref );
+    }
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }
