@@ -2794,6 +2794,7 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     VkBool32 supported;
     VkDevice vk_device;
     VkFence vk_fence;
+    bool fullscreen;
     VkResult vr;
     HRESULT hr;
 
@@ -2838,6 +2839,9 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
         return hr;
     }
 
+    fullscreen = !wined3d_desc.windowed;
+    wined3d_desc.windowed = TRUE;
+
     dxgi_factory = unsafe_impl_from_IDXGIFactory((IDXGIFactory *)factory);
     if (FAILED(hr = wined3d_swapchain_state_create(&wined3d_desc, window, dxgi_factory->wined3d,
             &swapchain->state_parent, &swapchain->state)))
@@ -2846,8 +2850,9 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
         return hr;
     }
 
-    if (!fullscreen_desc->Windowed)
+    if (fullscreen)
     {
+        wined3d_desc.windowed = FALSE;
         hr = wined3d_swapchain_state_set_fullscreen(swapchain->state, &wined3d_desc, NULL);
         if (FAILED(hr))
         {
