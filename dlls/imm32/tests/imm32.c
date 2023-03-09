@@ -2898,6 +2898,98 @@ cleanup:
     SET_ENABLE( IME_DLL_PROCESS_DETACH, FALSE );
 }
 
+static void test_ImmGetProperty(void)
+{
+    static const IMEINFO expect_ime_info =
+    {
+        .fdwProperty = IME_PROP_UNICODE | IME_PROP_AT_CARET,
+    };
+    static const IMEINFO expect_ime_info_0411 = /* MS Japanese IME */
+    {
+        .fdwProperty = IME_PROP_COMPLETE_ON_UNSELECT | IME_PROP_CANDLIST_START_FROM_1 | IME_PROP_UNICODE | IME_PROP_AT_CARET | 0xa,
+        .fdwConversionCaps = IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_KATAKANA,
+        .fdwSentenceCaps = IME_SMODE_PLAURALCLAUSE | IME_SMODE_CONVERSATION,
+        .fdwSCSCaps = SCS_CAP_COMPSTR | SCS_CAP_SETRECONVERTSTRING | SCS_CAP_MAKEREAD,
+        .fdwSelectCaps = SELECT_CAP_CONVERSION | SELECT_CAP_SENTENCE,
+        .fdwUICaps = UI_CAP_ROT90,
+    };
+    static const IMEINFO expect_ime_info_0412 = /* MS Korean IME */
+    {
+        .fdwProperty = IME_PROP_CANDLIST_START_FROM_1 | IME_PROP_UNICODE | IME_PROP_AT_CARET | 0xa,
+        .fdwConversionCaps = IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE,
+        .fdwSentenceCaps = IME_SMODE_NONE,
+        .fdwSCSCaps = SCS_CAP_COMPSTR | SCS_CAP_SETRECONVERTSTRING,
+        .fdwSelectCaps = SELECT_CAP_CONVERSION,
+        .fdwUICaps = UI_CAP_ROT90,
+    };
+    static const IMEINFO expect_ime_info_0804 = /* MS Chinese IME */
+    {
+        .fdwProperty = IME_PROP_CANDLIST_START_FROM_1 | IME_PROP_UNICODE | IME_PROP_AT_CARET | 0xa,
+        .fdwConversionCaps = IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE,
+        .fdwSentenceCaps = IME_SMODE_PLAURALCLAUSE,
+        .fdwSCSCaps = SCS_CAP_COMPSTR | SCS_CAP_SETRECONVERTSTRING | SCS_CAP_MAKEREAD,
+        .fdwUICaps = UI_CAP_ROT90,
+    };
+    HKL hkl = GetKeyboardLayout( 0 );
+    const IMEINFO *expect;
+
+    SET_ENABLE( ImeInquire, TRUE );
+    SET_ENABLE( ImeDestroy, TRUE );
+
+    SetLastError( 0xdeadbeef );
+    ok_ret( 0, ImmGetProperty( 0, 0 ) );
+    ok_ret( 0, ImmGetProperty( hkl, 0 ) );
+
+    if (hkl == (HKL)0x04110411) expect = &expect_ime_info_0411;
+    else if (hkl == (HKL)0x04120412) expect = &expect_ime_info_0412;
+    else if (hkl == (HKL)0x08040804) expect = &expect_ime_info_0804;
+    else expect = &expect_ime_info;
+
+    ok_ret( expect->fdwProperty,       ImmGetProperty( hkl, IGP_PROPERTY ) );
+    todo_wine
+    ok_ret( expect->fdwConversionCaps, ImmGetProperty( hkl, IGP_CONVERSION ) );
+    todo_wine
+    ok_ret( expect->fdwSentenceCaps,   ImmGetProperty( hkl, IGP_SENTENCE ) );
+    ok_ret( expect->fdwSCSCaps,        ImmGetProperty( hkl, IGP_SETCOMPSTR ) );
+    todo_wine
+    ok_ret( expect->fdwSelectCaps,     ImmGetProperty( hkl, IGP_SELECT ) );
+    ok_ret( IMEVER_0400,               ImmGetProperty( hkl, IGP_GETIMEVERSION ) );
+    ok_ret( expect->fdwUICaps,         ImmGetProperty( hkl, IGP_UI ) );
+    ok_ret( 0xdeadbeef, GetLastError() );
+
+    /* IME_PROP_END_UNLOAD for the IME to unload / reload. */
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD;
+
+    if (!(hkl = ime_install())) goto cleanup;
+
+    SET_EXPECT( ImeInquire );
+    SET_EXPECT( ImeDestroy );
+    ok_ret( 0, ImmGetProperty( hkl, 0 ) );
+    CHECK_CALLED( ImeInquire );
+    CHECK_CALLED( ImeDestroy );
+
+    expect = &ime_info;
+    todo_ImeInquire = TRUE;
+    todo_ImeDestroy = TRUE;
+    ok_ret( expect->fdwProperty,       ImmGetProperty( hkl, IGP_PROPERTY ) );
+    ok_ret( expect->fdwConversionCaps, ImmGetProperty( hkl, IGP_CONVERSION ) );
+    ok_ret( expect->fdwSentenceCaps,   ImmGetProperty( hkl, IGP_SENTENCE ) );
+    ok_ret( expect->fdwSCSCaps,        ImmGetProperty( hkl, IGP_SETCOMPSTR ) );
+    ok_ret( expect->fdwSelectCaps,     ImmGetProperty( hkl, IGP_SELECT ) );
+    ok_ret( IMEVER_0400,               ImmGetProperty( hkl, IGP_GETIMEVERSION ) );
+    ok_ret( expect->fdwUICaps,         ImmGetProperty( hkl, IGP_UI ) );
+    todo_ImeInquire = FALSE;
+    called_ImeInquire = FALSE;
+    todo_ImeDestroy = FALSE;
+    called_ImeDestroy = FALSE;
+
+    ime_cleanup( hkl );
+
+cleanup:
+    SET_ENABLE( ImeInquire, FALSE );
+    SET_ENABLE( ImeDestroy, FALSE );
+}
+
 static void test_ImmGetDescription(void)
 {
     HKL hkl = GetKeyboardLayout( 0 );
@@ -3066,6 +3158,7 @@ START_TEST(imm32)
     test_ImmGetDescription();
     test_ImmGetIMEFileName();
     test_ImmIsIME();
+    test_ImmGetProperty();
 
     if (init())
     {
