@@ -11727,10 +11727,36 @@ static const struct prov_method_sequence treewalker_seq4[] = {
     { 0 }
 };
 
+static const struct prov_method_sequence treewalker_seq5[] = {
+    { &Provider_child, FRAG_NAVIGATE }, /* NavigateDirection_NextSibling */
+    NODE_CREATE_SEQ(&Provider_child2),
+    { 0 }
+};
+
+static const struct prov_method_sequence treewalker_seq6[] = {
+    { &Provider_child, FRAG_NAVIGATE }, /* NavigateDirection_NextSibling */
+    NODE_CREATE_SEQ(&Provider_child2),
+    { &Provider_child2, FRAG_GET_RUNTIME_ID },
+    { 0 }
+};
+
+static const struct prov_method_sequence treewalker_seq7[] = {
+    { &Provider_child2, FRAG_NAVIGATE }, /* NavigateDirection_PreviousSibling */
+    NODE_CREATE_SEQ(&Provider_child),
+    { 0 }
+};
+
+static const struct prov_method_sequence treewalker_seq8[] = {
+    { &Provider_child2, FRAG_NAVIGATE }, /* NavigateDirection_PreviousSibling */
+    NODE_CREATE_SEQ(&Provider_child),
+    { &Provider_child, FRAG_GET_RUNTIME_ID },
+    { 0 }
+};
+
 static void test_CUIAutomation_TreeWalker_ifaces(IUIAutomation *uia_iface)
 {
     HWND hwnd = create_test_hwnd("test_CUIAutomation_TreeWalker_ifaces class");
-    IUIAutomationElement *element, *element2;
+    IUIAutomationElement *element, *element2, *element3;
     IUIAutomationCacheRequest *cache_req;
     IUIAutomationCondition *cond, *cond2;
     IUIAutomationTreeWalker *walker;
@@ -11794,6 +11820,25 @@ static void test_CUIAutomation_TreeWalker_ifaces(IUIAutomation *uia_iface)
     ok(!!element2, "element2 == NULL\n");
     ok_method_sequence(treewalker_seq2, "treewalker_seq2");
 
+    /* NavigateDirection_NextSibling. */
+    element3 = NULL;
+    hr = IUIAutomationTreeWalker_GetNextSiblingElement(walker, element2, &element3);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
+    ok(!!element3, "element3 == NULL\n");
+    ok_method_sequence(treewalker_seq5, "treewalker_seq5");
+    IUIAutomationElement_Release(element3);
+    ok(Provider_child2.ref == 1, "Unexpected refcnt %ld\n", Provider_child2.ref);
+
+    element3 = NULL;
+    hr = IUIAutomationTreeWalker_GetNextSiblingElementBuildCache(walker, element2, cache_req, &element3);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
+    ok(!!element3, "element3 == NULL\n");
+    ok_method_sequence(treewalker_seq6, "treewalker_seq6");
+    IUIAutomationElement_Release(element3);
+    ok(Provider_child2.ref == 1, "Unexpected refcnt %ld\n", Provider_child2.ref);
+
     IUIAutomationElement_Release(element2);
     ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
 
@@ -11814,6 +11859,25 @@ static void test_CUIAutomation_TreeWalker_ifaces(IUIAutomation *uia_iface)
     ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
     ok(!!element2, "element2 == NULL\n");
     ok_method_sequence(treewalker_seq4, "treewalker_seq4");
+
+    /* NavigateDirection_PreviousSibling. */
+    element3 = NULL;
+    hr = IUIAutomationTreeWalker_GetPreviousSiblingElement(walker, element2, &element3);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+    ok(!!element3, "element3 == NULL\n");
+    ok_method_sequence(treewalker_seq7, "treewalker_seq7");
+    IUIAutomationElement_Release(element3);
+    ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
+
+    element3 = NULL;
+    hr = IUIAutomationTreeWalker_GetPreviousSiblingElementBuildCache(walker, element2, cache_req, &element3);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+    ok(!!element3, "element3 == NULL\n");
+    ok_method_sequence(treewalker_seq8, "treewalker_seq8");
+    IUIAutomationElement_Release(element3);
+    ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
 
     IUIAutomationElement_Release(element2);
     ok(Provider_child2.ref == 1, "Unexpected refcnt %ld\n", Provider_child2.ref);
