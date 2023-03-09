@@ -35,6 +35,28 @@
 
 #include "ime_test.h"
 
+static const char *debugstr_ok( const char *cond )
+{
+    int c, n = 0;
+    /* skip possible casts */
+    while ((c = *cond++))
+    {
+        if (c == '(') n++;
+        if (!n) break;
+        if (c == ')') n--;
+    }
+    if (!strchr( cond - 1, '(' )) return wine_dbg_sprintf( "got %s", cond - 1 );
+    return wine_dbg_sprintf( "%.*s returned", (int)strcspn( cond - 1, "( " ), cond - 1 );
+}
+
+#define ok_eq( e, r, t, f, ... )                                                                   \
+    do                                                                                             \
+    {                                                                                              \
+        t v = (r);                                                                                 \
+        ok( v == (e), "%s " f "\n", debugstr_ok( #r ), v, ##__VA_ARGS__ );                         \
+    } while (0)
+#define ok_ret( e, r ) ok_eq( e, r, UINT_PTR, "%Iu, error %ld", GetLastError() )
+
 BOOL WINAPI ImmSetActiveContext(HWND, HIMC, BOOL);
 
 static BOOL (WINAPI *pImmAssociateContextEx)(HWND,HIMC,DWORD);
@@ -2433,9 +2455,13 @@ static void test_ImmDisableIME(void)
 
 #define ime_trace( msg, ... ) if (winetest_debug > 1) trace( "%04lx:%s " msg, GetCurrentThreadId(), __func__, ## __VA_ARGS__ )
 
+static BOOL todo_ImeInquire;
 DEFINE_EXPECT( ImeInquire );
+static BOOL todo_ImeDestroy;
 DEFINE_EXPECT( ImeDestroy );
+static BOOL todo_IME_DLL_PROCESS_ATTACH;
 DEFINE_EXPECT( IME_DLL_PROCESS_ATTACH );
+static BOOL todo_IME_DLL_PROCESS_DETACH;
 DEFINE_EXPECT( IME_DLL_PROCESS_DETACH );
 
 static IMEINFO ime_info;
@@ -2476,6 +2502,7 @@ static BOOL WINAPI ime_ImeDestroy( UINT force )
 {
     ime_trace( "force %u\n", force );
 
+    todo_wine_if( todo_ImeDestroy )
     CHECK_EXPECT( ImeDestroy );
 
     ok( !force, "got force %u\n", force );
@@ -2519,6 +2546,7 @@ static BOOL WINAPI ime_ImeInquire( IMEINFO *info, WCHAR *ui_class, DWORD flags )
 {
     ime_trace( "info %p, ui_class %p, flags %#lx\n", info, ui_class, flags );
 
+    todo_wine_if( todo_ImeInquire )
     CHECK_EXPECT( ImeInquire );
 
     ok( !!info, "got info %p\n", info );
@@ -2606,11 +2634,13 @@ static BOOL WINAPI ime_DllMain( HINSTANCE instance, DWORD reason, LPVOID reserve
         DisableThreadLibraryCalls( instance );
         ime_ui_class.hInstance = instance;
         RegisterClassExW( &ime_ui_class );
+        todo_wine_if(todo_IME_DLL_PROCESS_ATTACH)
         CHECK_EXPECT( IME_DLL_PROCESS_ATTACH );
         break;
 
     case DLL_PROCESS_DETACH:
         UnregisterClassW( ime_ui_class.lpszClassName, instance );
+        todo_wine_if(todo_IME_DLL_PROCESS_DETACH)
         CHECK_EXPECT( IME_DLL_PROCESS_DETACH );
         break;
     }
@@ -2829,6 +2859,45 @@ cleanup:
     SET_ENABLE( IME_DLL_PROCESS_DETACH, FALSE );
 }
 
+static void test_ImmIsIME(void)
+{
+    HKL hkl = GetKeyboardLayout( 0 );
+
+    SET_ENABLE( IME_DLL_PROCESS_ATTACH, TRUE );
+    SET_ENABLE( ImeInquire, TRUE );
+    SET_ENABLE( ImeDestroy, TRUE );
+    SET_ENABLE( IME_DLL_PROCESS_DETACH, TRUE );
+
+    SetLastError( 0xdeadbeef );
+    todo_wine
+    ok_ret( 0, ImmIsIME( 0 ) );
+    ok_ret( 0xdeadbeef, GetLastError() );
+    ok_ret( 1, ImmIsIME( hkl ) );
+
+    /* IME_PROP_END_UNLOAD for the IME to unload / reload. */
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD;
+
+    if (!(hkl = ime_install())) goto cleanup;
+
+    todo_ImeInquire = TRUE;
+    todo_ImeDestroy = TRUE;
+    todo_IME_DLL_PROCESS_ATTACH = TRUE;
+    todo_IME_DLL_PROCESS_DETACH = TRUE;
+    ok_ret( 1, ImmIsIME( hkl ) );
+    todo_IME_DLL_PROCESS_ATTACH = FALSE;
+    todo_IME_DLL_PROCESS_DETACH = FALSE;
+    todo_ImeInquire = FALSE;
+    todo_ImeDestroy = FALSE;
+
+    ime_cleanup( hkl );
+
+cleanup:
+    SET_ENABLE( IME_DLL_PROCESS_ATTACH, FALSE );
+    SET_ENABLE( ImeInquire, FALSE );
+    SET_ENABLE( ImeDestroy, FALSE );
+    SET_ENABLE( IME_DLL_PROCESS_DETACH, FALSE );
+}
+
 static void test_ImmGetDescription(void)
 {
     HKL hkl = GetKeyboardLayout( 0 );
@@ -2996,6 +3065,7 @@ START_TEST(imm32)
     test_ImmInstallIME();
     test_ImmGetDescription();
     test_ImmGetIMEFileName();
+    test_ImmIsIME();
 
     if (init())
     {
