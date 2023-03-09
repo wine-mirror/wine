@@ -1617,23 +1617,23 @@ static void check_dmo_set_output_type(IMediaObject *media_object, const GUID *su
     }
 }
 
-#define check_dmo_output_data_buffer(a, b, c) check_dmo_output_data_buffer_(__LINE__, a, b, c)
+#define check_dmo_output_data_buffer(a, b, c, d, e) check_dmo_output_data_buffer_(__LINE__, a, b, c, d, e)
 static DWORD check_dmo_output_data_buffer_(int line, DMO_OUTPUT_DATA_BUFFER *output_data_buffer,
-        const struct sample_desc *sample_desc, const WCHAR *expect_data_filename)
+        const struct buffer_desc *buffer_desc, const WCHAR *expect_data_filename,
+        REFERENCE_TIME time_stamp, REFERENCE_TIME time_length)
 {
-    const struct buffer_desc *buffer_desc = &sample_desc->buffers[0];
     DWORD diff, data_length, buffer_length, expect_length;
     BYTE *data, *buffer;
     HRESULT hr;
 
     if (output_data_buffer->dwStatus & DMO_OUTPUT_DATA_BUFFERF_TIME)
-        ok_(__FILE__, line)(output_data_buffer->rtTimestamp == sample_desc->sample_time,
-                "Unexpected time %I64d, expected %I64d.\n",
-                output_data_buffer->rtTimestamp, sample_desc->sample_time);
+        ok_(__FILE__, line)(output_data_buffer->rtTimestamp == time_stamp,
+                "Unexpected time stamp %I64d, expected %I64d.\n",
+                output_data_buffer->rtTimestamp, time_stamp);
     if (output_data_buffer->dwStatus & DMO_OUTPUT_DATA_BUFFERF_TIMELENGTH)
-        ok_(__FILE__, line)(output_data_buffer->rtTimelength == sample_desc->sample_duration,
-                "Unexpected duration %I64d, expected %I64d.\n",
-                output_data_buffer->rtTimelength, sample_desc->sample_duration);
+        ok_(__FILE__, line)(output_data_buffer->rtTimelength == time_length,
+                "Unexpected time length %I64d, expected %I64d.\n",
+                output_data_buffer->rtTimelength, time_length);
 
     load_resource(expect_data_filename, (const BYTE **)&data, &data_length);
 
@@ -5219,11 +5219,6 @@ static void test_wmv_decoder_media_object(void)
         .length = data_width * data_height * 3 / 2,
         .compare = compare_nv12, .dump = dump_nv12, .rect = {.right = 82, .bottom = 84},
     };
-    const struct sample_desc output_sample_desc_nv12 =
-    {
-        .sample_time = 0, .sample_duration = 333333,
-        .buffer_count = 1, .buffers = &output_buffer_desc_nv12,
-    };
     DWORD in_count, out_count, size, expected_size, alignment, wmv_data_length, status, expected_status, diff;
     struct media_buffer *input_media_buffer = NULL, *output_media_buffer = NULL;
     DMO_OUTPUT_DATA_BUFFER output_data_buffer;
@@ -5369,7 +5364,7 @@ static void test_wmv_decoder_media_object(void)
     hr = IMediaObject_SetOutputType(media_object, 0, type, 0);
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
 
-    hr = IMediaObject_ProcessInput(media_object, 0, &input_media_buffer->IMediaBuffer_iface, 0, 0, 333333);
+    hr = IMediaObject_ProcessInput(media_object, 0, &input_media_buffer->IMediaBuffer_iface, 0, 0, 0);
     todo_wine
     ok(hr == S_OK, "ProcessInput returned %#lx.\n", hr);
 
@@ -5390,7 +5385,38 @@ static void test_wmv_decoder_media_object(void)
     ok(output_data_buffer.dwStatus == expected_status, "Got unexpected dwStatus %#lx.\n", output_data_buffer.dwStatus);
     if (hr == S_OK)
     {
-    diff = check_dmo_output_data_buffer(&output_data_buffer, &output_sample_desc_nv12, L"nv12frame.bmp");
+    diff = check_dmo_output_data_buffer(&output_data_buffer, &output_buffer_desc_nv12, L"nv12frame.bmp", 0, 0);
+    ok(diff == 0, "Got %lu%% diff.\n", diff);
+    }
+
+    /* Test ProcessOutput with setting framerate. */
+    init_dmo_media_type_video(type, &MEDIASUBTYPE_WMV1, data_width, data_height);
+    ((VIDEOINFOHEADER *)type->pbFormat)->AvgTimePerFrame = 100000;
+    hr = IMediaObject_SetInputType(media_object, 0, type, 0);
+    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+    init_dmo_media_type_video(type, &MEDIASUBTYPE_NV12, data_width, data_height);
+    ((VIDEOINFOHEADER *)type->pbFormat)->AvgTimePerFrame = 200000;
+    hr = IMediaObject_SetOutputType(media_object, 0, type, 0);
+    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+
+    hr = IMediaObject_ProcessInput(media_object, 0, &input_media_buffer->IMediaBuffer_iface, 0, 0, 300000);
+    todo_wine
+    ok(hr == S_OK, "ProcessInput returned %#lx.\n", hr);
+
+    output_media_buffer->length = 0;
+    output_data_buffer.pBuffer = &output_media_buffer->IMediaBuffer_iface;
+    output_data_buffer.dwStatus = 0xdeadbeef;
+    output_data_buffer.rtTimestamp = 0xdeadbeef;
+    output_data_buffer.rtTimelength = 0xdeadbeef;
+    hr = IMediaObject_ProcessOutput(media_object, 0, 1, &output_data_buffer, &status);
+    todo_wine
+    ok(hr == S_OK, "ProcessOutput returned %#lx.\n", hr);
+    expected_status = DMO_OUTPUT_DATA_BUFFERF_SYNCPOINT | DMO_OUTPUT_DATA_BUFFERF_TIME | DMO_OUTPUT_DATA_BUFFERF_TIMELENGTH;
+    todo_wine
+    ok(output_data_buffer.dwStatus == expected_status, "Got unexpected dwStatus %#lx.\n", output_data_buffer.dwStatus);
+    if (hr == S_OK)
+    {
+    diff = check_dmo_output_data_buffer(&output_data_buffer, &output_buffer_desc_nv12, L"nv12frame.bmp", 0, 300000);
     ok(diff == 0, "Got %lu%% diff.\n", diff);
     }
 
