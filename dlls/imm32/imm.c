@@ -564,6 +564,12 @@ static void ime_release( struct ime *ime )
     LeaveCriticalSection( &ime_cs );
 }
 
+BOOL WINAPI ImmActivateLayout( HKL hkl )
+{
+    FIXME( "hkl %p stub!\n", hkl );
+    return FALSE;
+}
+
 static BOOL free_input_context_data( HIMC hIMC )
 {
     struct imc *data = query_imc_data( hIMC );

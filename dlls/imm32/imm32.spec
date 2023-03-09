@@ -1,4 +1,4 @@
-@ stub ImmActivateLayout
+@ stdcall ImmActivateLayout(long)
 @ stdcall ImmAssociateContext(long long)
 @ stdcall ImmAssociateContextEx(long long long)
 @ stdcall ImmConfigureIMEA(long long long ptr)
