@@ -3329,7 +3329,6 @@ struct wined3d_texture
     unsigned int sysmem_count;
     float pow2_matrix[16];
     unsigned int lod;
-    DWORD sampler;
     uint32_t flags;
     DWORD update_map_binding;
 

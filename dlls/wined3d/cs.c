@@ -1498,8 +1498,7 @@ static void wined3d_cs_exec_set_texture(struct wined3d_cs *cs, const void *data)
 
     if (op->texture)
     {
-        if (InterlockedIncrement(&op->texture->resource.bind_count) == 1)
-            op->texture->sampler = op->stage;
+        InterlockedIncrement(&op->texture->resource.bind_count);
 
         if (texture_binding_might_invalidate_ps(op->texture, prev, d3d_info))
             device_invalidate_state(cs->c.device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
@@ -1519,23 +1518,7 @@ static void wined3d_cs_exec_set_texture(struct wined3d_cs *cs, const void *data)
 
     if (prev)
     {
-        if (InterlockedDecrement(&prev->resource.bind_count) && prev->sampler == op->stage)
-        {
-            unsigned int i;
-
-            /* Search for other stages the texture is bound to. Shouldn't
-             * happen if applications bind textures to a single stage only. */
-            TRACE("Searching for other stages the texture is bound to.\n");
-            for (i = 0; i < WINED3D_MAX_COMBINED_SAMPLERS; ++i)
-            {
-                if (cs->state.textures[i] == prev)
-                {
-                    TRACE("Texture is also bound to stage %u.\n", i);
-                    prev->sampler = i;
-                    break;
-                }
-            }
-        }
+        InterlockedDecrement(&prev->resource.bind_count);
 
         if (!op->texture && op->stage < d3d_info->ffp_fragment_caps.max_blend_stages)
         {
