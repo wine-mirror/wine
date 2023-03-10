@@ -1358,6 +1358,539 @@ done:
     IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
 }
 
+struct passthrough_mft
+{
+    IMFTransform IMFTransform_iface;
+    LONG refcount;
+
+    IMFMediaType *media_type_in, *media_type_out;
+    IMFSample *sample;
+    LONG processing_count;
+    UINT32 index;
+
+    CRITICAL_SECTION cs;
+};
+
+static struct passthrough_mft *impl_from_IMFTransform(IMFTransform *iface)
+{
+    return CONTAINING_RECORD(iface, struct passthrough_mft, IMFTransform_iface);
+}
+
+static HRESULT WINAPI passthrough_mft_QueryInterface(IMFTransform *iface, REFIID iid, void **out)
+{
+    struct passthrough_mft *impl = impl_from_IMFTransform(iface);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IMFTransform))
+    {
+        *out = &impl->IMFTransform_iface;
+        IUnknown_AddRef((IUnknown *)*out);
+        return S_OK;
+    }
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI passthrough_mft_AddRef(IMFTransform *iface)
+{
+    struct passthrough_mft *impl = impl_from_IMFTransform(iface);
+    ULONG refcount = InterlockedIncrement(&impl->refcount);
+    return refcount;
+}
+
+static ULONG WINAPI passthrough_mft_Release(IMFTransform *iface)
+{
+    struct passthrough_mft *impl = impl_from_IMFTransform(iface);
+    ULONG refcount = InterlockedDecrement(&impl->refcount);
+
+    if (!refcount)
+    {
+        if (impl->media_type_out) IMFMediaType_Release(impl->media_type_out);
+        if (impl->media_type_in) IMFMediaType_Release(impl->media_type_in);
+        DeleteCriticalSection(&impl->cs);
+        free(impl);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI passthrough_mft_GetStreamLimits(IMFTransform *iface, DWORD *input_minimum,
+        DWORD *input_maximum, DWORD *output_minimum, DWORD *output_maximum)
+{
+    *input_minimum = *input_maximum = *output_minimum = *output_maximum = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI passthrough_mft_GetStreamCount(IMFTransform *iface, DWORD *inputs, DWORD *outputs)
+{
+    *inputs = *outputs = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI passthrough_mft_GetStreamIDs(IMFTransform *iface, DWORD input_size, DWORD *inputs,
+        DWORD output_size, DWORD *outputs)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI passthrough_mft_GetInputStreamInfo(IMFTransform *iface, DWORD id, MFT_INPUT_STREAM_INFO *info)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI passthrough_mft_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
+{
+    if (id)
+        return MF_E_INVALIDSTREAMNUMBER;
+
+    info->dwFlags =
+        MFT_OUTPUT_STREAM_PROVIDES_SAMPLES |
+        MFT_OUTPUT_STREAM_WHOLE_SAMPLES |
+        MFT_OUTPUT_STREAM_FIXED_SAMPLE_SIZE |
+        MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER;
+
+    info->cbAlignment = 0;
+    info->cbSize = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI passthrough_mft_GetAttributes(IMFTransform *iface, IMFAttributes **attributes)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI passthrough_mft_GetInputStreamAttributes(IMFTransform *iface, DWORD id, IMFAttributes **attributes)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI passthrough_mft_GetOutputStreamAttributes(IMFTransform *iface, DWORD id, IMFAttributes **attributes)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI passthrough_mft_DeleteInputStream(IMFTransform *iface, DWORD id)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI passthrough_mft_AddInputStreams(IMFTransform *iface, DWORD streams, DWORD *ids)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI passthrough_mft_GetInputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
+        IMFMediaType **type)
+{
+    static const GUID *types[] = { &MFMediaType_Video };
+    HRESULT hr;
+
+    if (id)
+        return MF_E_INVALIDSTREAMNUMBER;
+
+    if (index > ARRAY_SIZE(types) - 1)
+        return MF_E_NO_MORE_TYPES;
+
+    if (SUCCEEDED(hr = MFCreateMediaType(type)))
+        hr = IMFMediaType_SetGUID(*type, &MF_MT_MAJOR_TYPE, types[index]);
+
+    return hr;
+}
+
+static HRESULT WINAPI passthrough_mft_GetOutputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
+        IMFMediaType **type)
+{
+    struct passthrough_mft *impl = impl_from_IMFTransform(iface);
+    HRESULT hr = S_OK;
+
+    if (id)
+        return MF_E_INVALIDSTREAMNUMBER;
+
+    EnterCriticalSection(&impl->cs);
+
+    if (index)
+    {
+        hr = MF_E_NO_MORE_TYPES;
+    }
+    else if (impl->media_type_out)
+    {
+        *type = impl->media_type_out;
+        IMFMediaType_AddRef(*type);
+    }
+    else if (impl->media_type_in)
+    {
+        *type = impl->media_type_in;
+        IMFMediaType_AddRef(*type);
+    }
+    else
+    {
+        hr = MF_E_TRANSFORM_TYPE_NOT_SET;
+    }
+
+    LeaveCriticalSection(&impl->cs);
+
+    return hr;
+}
+
+static HRESULT WINAPI passthrough_mft_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
+{
+    struct passthrough_mft *impl = impl_from_IMFTransform(iface);
+    HRESULT hr = S_OK;
+
+    if (id)
+        return MF_E_INVALIDSTREAMNUMBER;
+
+    EnterCriticalSection(&impl->cs);
+
+    if (!(flags & MFT_SET_TYPE_TEST_ONLY))
+    {
+        if (impl->media_type_in)
+            IMFMediaType_Release(impl->media_type_in);
+
+        impl->media_type_in = type;
+        IMFMediaType_AddRef(impl->media_type_in);
+    }
+
+    LeaveCriticalSection(&impl->cs);
+
+    return hr;
+}
+
+static HRESULT WINAPI passthrough_mft_SetOutputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
+{
+    struct passthrough_mft *impl = impl_from_IMFTransform(iface);
+
+    if (id)
+        return MF_E_INVALIDSTREAMNUMBER;
+
+    EnterCriticalSection(&impl->cs);
+
+    if (impl->media_type_out)
+        IMFMediaType_Release(impl->media_type_out);
+
+    impl->media_type_out = type;
+    IMFMediaType_AddRef(impl->media_type_out);
+
+    LeaveCriticalSection(&impl->cs);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI passthrough_mft_GetInputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
+{
+    struct passthrough_mft *impl = impl_from_IMFTransform(iface);
+    HRESULT hr = S_OK;
+
+    if (id)
+        return MF_E_INVALIDSTREAMNUMBER;
+
+    EnterCriticalSection(&impl->cs);
+    if (impl->media_type_in)
+    {
+        *type = impl->media_type_in;
+        IMFMediaType_AddRef(*type);
+    }
+    else
+    {
+        hr = MF_E_TRANSFORM_TYPE_NOT_SET;
+    }
+    LeaveCriticalSection(&impl->cs);
+
+    return hr;
+}
+
+static HRESULT WINAPI passthrough_mft_GetOutputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
+{
+    struct passthrough_mft *impl = impl_from_IMFTransform(iface);
+    HRESULT hr = S_OK;
+
+    if (id)
+        return MF_E_INVALIDSTREAMNUMBER;
+
+    EnterCriticalSection(&impl->cs);
+
+    if (impl->media_type_out)
+    {
+        *type = impl->media_type_out;
+        IMFMediaType_AddRef(*type);
+    }
+    else
+    {
+        hr = MF_E_TRANSFORM_TYPE_NOT_SET;
+    }
+
+    LeaveCriticalSection(&impl->cs);
+
+    return hr;
+}
+
+static HRESULT WINAPI passthrough_mft_GetInputStatus(IMFTransform *iface, DWORD id, DWORD *flags)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI passthrough_mft_GetOutputStatus(IMFTransform *iface, DWORD *flags)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI passthrough_mft_SetOutputBounds(IMFTransform *iface, LONGLONG lower, LONGLONG upper)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI passthrough_mft_ProcessEvent(IMFTransform *iface, DWORD id, IMFMediaEvent *event)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI passthrough_mft_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_TYPE message, ULONG_PTR param)
+{
+    if (message == MFT_MESSAGE_COMMAND_FLUSH)
+        return E_NOTIMPL;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI passthrough_mft_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)
+{
+    struct passthrough_mft *impl = impl_from_IMFTransform(iface);
+    HRESULT hr = S_OK;
+
+    if (id)
+        return MF_E_INVALIDSTREAMNUMBER;
+
+    EnterCriticalSection(&impl->cs);
+    if (impl->sample)
+    {
+        hr = MF_E_NOTACCEPTING;
+    }
+    else
+    {
+        impl->sample = sample;
+        IMFSample_AddRef(impl->sample);
+    }
+
+    LeaveCriticalSection(&impl->cs);
+
+    return hr;
+}
+
+static HRESULT WINAPI passthrough_mft_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,
+        MFT_OUTPUT_DATA_BUFFER *samples, DWORD *status)
+{
+    struct passthrough_mft *impl = impl_from_IMFTransform(iface);
+    HRESULT hr = S_OK;
+    UINT32 val = 41;
+
+    if (count != 1)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&impl->cs);
+
+    if (impl->sample)
+    {
+        hr = IMFSample_GetUINT32(impl->sample, &IID_IMFSample, &val);
+
+        if (impl->index > 0)
+        {
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            ok(val == impl->index, "Got unexpected value %u.\n", val);
+        }
+        else
+        {
+            ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+        }
+
+        IMFSample_SetUINT32(impl->sample, &IID_IMFSample, impl->index + 1);
+
+        samples->pSample = impl->sample;
+        *status = samples[0].dwStatus = 0;
+        impl->processing_count++;
+
+        impl->sample = NULL;
+
+        hr = S_OK;
+    }
+    else
+    {
+        hr = MF_E_TRANSFORM_NEED_MORE_INPUT;
+    }
+
+    LeaveCriticalSection(&impl->cs);
+
+    return hr;
+}
+
+static const IMFTransformVtbl passthrough_mft_vtbl =
+{
+    passthrough_mft_QueryInterface,
+    passthrough_mft_AddRef,
+    passthrough_mft_Release,
+    passthrough_mft_GetStreamLimits,
+    passthrough_mft_GetStreamCount,
+    passthrough_mft_GetStreamIDs,
+    passthrough_mft_GetInputStreamInfo,
+    passthrough_mft_GetOutputStreamInfo,
+    passthrough_mft_GetAttributes,
+    passthrough_mft_GetInputStreamAttributes,
+    passthrough_mft_GetOutputStreamAttributes,
+    passthrough_mft_DeleteInputStream,
+    passthrough_mft_AddInputStreams,
+    passthrough_mft_GetInputAvailableType,
+    passthrough_mft_GetOutputAvailableType,
+    passthrough_mft_SetInputType,
+    passthrough_mft_SetOutputType,
+    passthrough_mft_GetInputCurrentType,
+    passthrough_mft_GetOutputCurrentType,
+    passthrough_mft_GetInputStatus,
+    passthrough_mft_GetOutputStatus,
+    passthrough_mft_SetOutputBounds,
+    passthrough_mft_ProcessEvent,
+    passthrough_mft_ProcessMessage,
+    passthrough_mft_ProcessInput,
+    passthrough_mft_ProcessOutput,
+};
+
+HRESULT passthrough_mft_create(UINT32 index, struct passthrough_mft **out)
+{
+    struct passthrough_mft *impl;
+
+    *out = NULL;
+
+    if (!(impl = calloc(1, sizeof(*impl))))
+        return E_OUTOFMEMORY;
+
+    impl->IMFTransform_iface.lpVtbl = &passthrough_mft_vtbl;
+    impl->index = index;
+    impl->refcount = 1;
+
+    InitializeCriticalSection(&impl->cs);
+
+    *out = impl;
+    return S_OK;
+}
+
+static void test_video_effect(void)
+{
+    struct passthrough_mft *video_effect = NULL, *video_effect2 = NULL;
+    struct test_transfer_notify *notify;
+    IMFMediaEngineEx *media_engine_ex = NULL;
+    ID3D11Texture2D *texture = NULL;
+    IMFDXGIDeviceManager *manager;
+    ID3D11Device *device = NULL;
+    D3D11_TEXTURE2D_DESC desc;
+    IMFByteStream *stream;
+    RECT dst_rect;
+    UINT token;
+    HRESULT hr;
+    DWORD res;
+    ULONG ref;
+    BSTR url;
+
+    stream = load_resource(L"i420-64x64.avi", L"video/avi");
+
+    notify = create_transfer_notify();
+
+    if (!(device = create_d3d11_device()))
+    {
+        skip("Failed to create a D3D11 device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = pMFCreateDXGIDeviceManager(&token, &manager);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFDXGIDeviceManager_ResetDevice(manager, (IUnknown *)device, token);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    media_engine_ex = create_media_engine_ex(&notify->IMFMediaEngineNotify_iface,
+            manager, DXGI_FORMAT_B8G8R8X8_UNORM);
+
+    IMFDXGIDeviceManager_Release(manager);
+
+    if (!(notify->media_engine = media_engine_ex))
+        goto done;
+
+    memset(&desc, 0, sizeof(desc));
+    desc.Width = 64;
+    desc.Height = 64;
+    desc.ArraySize = 1;
+    desc.Format = DXGI_FORMAT_B8G8R8X8_UNORM;
+    desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    desc.SampleDesc.Count = 1;
+    hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = passthrough_mft_create(0, &video_effect);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = passthrough_mft_create(1, &video_effect2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaEngineEx_InsertVideoEffect(media_engine_ex, (IUnknown *)&video_effect->IMFTransform_iface, FALSE);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine EXPECT_REF(&video_effect->IMFTransform_iface, 2);
+
+    hr = IMFMediaEngineEx_InsertVideoEffect(media_engine_ex, (IUnknown *)&video_effect2->IMFTransform_iface, FALSE);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine EXPECT_REF(&video_effect2->IMFTransform_iface, 2);
+
+    if (FAILED(hr))
+    {
+        goto done;
+    }
+
+    url = SysAllocString(L"i420-64x64.avi");
+    hr = IMFMediaEngineEx_SetSourceFromByteStream(media_engine_ex, stream, url);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(url);
+    IMFByteStream_Release(stream);
+
+    /* Wait for MediaEngine to be ready. */
+    res = WaitForSingleObject(notify->ready_event, 5000);
+    ok(!res, "Unexpected res %#lx.\n", res);
+
+    /* Wait for another update. This makes MediaEngine shutdown more consistent on Windows. */
+    res = WaitForSingleObject(notify->ready_event, 500);
+    /* Timeupdates are missing in Wine. */
+    todo_wine ok(!res, "Unexpected res %#lx.\n", res);
+
+    SetRect(&dst_rect, 0, 0, desc.Width, desc.Height);
+    hr = IMFMediaEngineEx_TransferVideoFrame(notify->media_engine, (IUnknown *)texture, NULL, &dst_rect, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    ok(video_effect->processing_count > 0, "Unexpected processing count %lu.\n", video_effect->processing_count);
+    ok(video_effect2->processing_count > 0, "Unexpected processing count %lu.\n", video_effect2->processing_count);
+
+done:
+    if (media_engine_ex)
+    {
+        IMFMediaEngineEx_Shutdown(media_engine_ex);
+
+        ref = IMFMediaEngineEx_Release(media_engine_ex);
+        ok(!ref, "Unexpected ref %lu.\n", ref);
+    }
+
+    if (texture)
+        ID3D11Texture2D_Release(texture);
+    if (device)
+        ID3D11Device_Release(device);
+
+    if (video_effect2)
+    {
+        ref = IMFTransform_Release(&video_effect2->IMFTransform_iface);
+        ok(!ref, "Unexpected ref %lu.\n", ref);
+    }
+    if (video_effect)
+    {
+        ref = IMFTransform_Release(&video_effect->IMFTransform_iface);
+        ok(!ref, "Unexpected ref %lu.\n", ref);
+    }
+
+    IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
+}
+
 START_TEST(mfmediaengine)
 {
     HRESULT hr;
@@ -1389,6 +1922,7 @@ START_TEST(mfmediaengine)
     test_SetSourceFromByteStream();
     test_audio_configuration();
     test_TransferVideoFrame();
+    test_video_effect();
 
     IMFMediaEngineClassFactory_Release(factory);
 
