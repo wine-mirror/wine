@@ -979,7 +979,7 @@ BOOL PSDRV_WriteDIBPatternDict(PHYSDEV dev, const BITMAPINFO *bmi, BYTE *bits, U
     for(y = h-1; y >= 0; y--) {
         for(x = 0; x < w/8; x++) {
 	    sprintf(ptr, "%02x", *(bits + x/8 + y *
-				   (bmi->bmiHeader.biWidth + 31) / 32 * 4));
+				   ((bmi->bmiHeader.biWidth + 31) / 32) * 4));
 	    ptr += 2;
 	}
     }
