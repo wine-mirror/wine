@@ -71,7 +71,7 @@ static GUID pulse_render_guid =
 static GUID pulse_capture_guid =
 { 0x25da76d0, 0x033c, 0x4235, { 0x90, 0x02, 0x19, 0xf4, 0x88, 0x94, 0xac, 0x6f } };
 
-static const WCHAR *drv_key_devicesW = L"Software\\Wine\\Drivers\\winepulse.drv\\devices";
+static WCHAR drv_key_devicesW[256];
 
 static CRITICAL_SECTION session_cs;
 static CRITICAL_SECTION_DEBUG session_cs_debug = {
@@ -85,9 +85,20 @@ static CRITICAL_SECTION session_cs = { &session_cs_debug, -1, 0, 0, 0, 0 };
 BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
 {
     if (reason == DLL_PROCESS_ATTACH) {
+        WCHAR buf[MAX_PATH];
+        WCHAR *filename;
+
         DisableThreadLibraryCalls(dll);
         if (__wine_init_unix_call())
             return FALSE;
+
+        GetModuleFileNameW(dll, buf, ARRAY_SIZE(buf));
+
+        filename = wcsrchr(buf, '\\');
+        filename = filename ? filename + 1 : buf;
+
+        swprintf(drv_key_devicesW, ARRAY_SIZE(drv_key_devicesW),
+                 L"Software\\Wine\\Drivers\\%s\\devices", filename);
     } else if (reason == DLL_PROCESS_DETACH) {
         struct device_cache *device, *device_next;
 
