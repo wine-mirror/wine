@@ -974,7 +974,7 @@ BOOL PSDRV_WriteDIBPatternDict(PHYSDEV dev, const BITMAPINFO *bmi, BYTE *bits, U
     w = bmi->bmiHeader.biWidth & ~0x7;
     h = abs_height & ~0x7;
 
-    buf = HeapAlloc( GetProcessHeap(), 0, sizeof(do_pattern) + 100 );
+    buf = HeapAlloc( GetProcessHeap(), 0, max(sizeof(do_pattern) + 100, 2 * w/8 * h + 1) );
     ptr = buf;
     for(y = h-1; y >= 0; y--) {
         for(x = 0; x < w/8; x++) {
