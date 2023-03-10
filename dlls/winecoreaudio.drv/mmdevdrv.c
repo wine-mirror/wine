@@ -18,6 +18,7 @@
 #define COBJMACROS
 
 #include <stdarg.h>
+#include <wchar.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -125,7 +126,7 @@ typedef struct _SessionMgr {
     IMMDevice *device;
 } SessionMgr;
 
-static const WCHAR *drv_key_devicesW = L"Software\\Wine\\Drivers\\winecoreaudio.drv\\devices";
+static WCHAR drv_key_devicesW[256];
 
 static HANDLE g_timer_q;
 
@@ -196,14 +197,27 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
+    {
+        WCHAR buf[MAX_PATH];
+        WCHAR *filename;
+
         DisableThreadLibraryCalls(dll);
         if (__wine_init_unix_call())
             return FALSE;
+
+        GetModuleFileNameW(dll, buf, ARRAY_SIZE(buf));
+
+        filename = wcsrchr(buf, '\\');
+        filename = filename ? filename + 1 : buf;
+
+        swprintf(drv_key_devicesW, ARRAY_SIZE(drv_key_devicesW),
+                 L"Software\\Wine\\Drivers\\%s\\devices", filename);
+
         g_timer_q = CreateTimerQueue();
         if(!g_timer_q)
             return FALSE;
         break;
-
+    }
     case DLL_PROCESS_DETACH:
         if (reserved) break;
         DeleteCriticalSection(&g_sessions_lock);
