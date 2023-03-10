@@ -1120,8 +1120,8 @@ struct wined3d_shader_reg_maps
     uint32_t resource_map[WINED3D_BITMAP_SIZE(MAX_SHADER_RESOURCE_VIEWS)];
     struct wined3d_shader_sampler_map sampler_map;
     DWORD sampler_comparison_mode;
-    BYTE bumpmat;                                   /* WINED3D_MAX_TEXTURES, 8 */
-    BYTE luminanceparams;                           /* WINED3D_MAX_TEXTURES, 8 */
+    BYTE bumpmat;                                   /* WINED3D_MAX_FFP_TEXTURES, 8 */
+    BYTE luminanceparams;                           /* WINED3D_MAX_FFP_TEXTURES, 8 */
     struct wined3d_shader_resource_info uav_resource_info[MAX_UNORDERED_ACCESS_VIEWS];
     DWORD uav_read_mask : 8;                        /* MAX_UNORDERED_ACCESS_VIEWS, 8 */
     DWORD uav_counter_mask : 8;                     /* MAX_UNORDERED_ACCESS_VIEWS, 8 */
@@ -1477,7 +1477,7 @@ struct ps_compile_args
        in D3D10 (unconditional NP2 support mandatory). */
     WORD                        np2_fixup;
     WORD shadow; /* WINED3D_MAX_FRAGMENT_SAMPLERS, 16 */
-    WORD texcoords_initialized; /* WINED3D_MAX_TEXTURES, 8 */
+    WORD texcoords_initialized; /* WINED3D_MAX_FFP_TEXTURES, 8 */
     WORD padding_to_dword;
     DWORD pointsprite : 1;
     DWORD flatshading : 1;
@@ -1725,10 +1725,10 @@ void dispatch_compute(struct wined3d_device *device, const struct wined3d_state 
 #define STATE_TEXTURESTAGE(stage, num) \
     (STATE_RENDER(WINEHIGHEST_RENDER_STATE) + 1 + (stage) * (WINED3D_HIGHEST_TEXTURE_STATE + 1) + (num))
 #define STATE_IS_TEXTURESTAGE(a) \
-    ((a) >= STATE_TEXTURESTAGE(0, 1) && (a) <= STATE_TEXTURESTAGE(WINED3D_MAX_TEXTURES - 1, WINED3D_HIGHEST_TEXTURE_STATE))
+    ((a) >= STATE_TEXTURESTAGE(0, 1) && (a) <= STATE_TEXTURESTAGE(WINED3D_MAX_FFP_TEXTURES - 1, WINED3D_HIGHEST_TEXTURE_STATE))
 
 /* + 1 because samplers start with 0 */
-#define STATE_SAMPLER(num) (STATE_TEXTURESTAGE(WINED3D_MAX_TEXTURES - 1, WINED3D_HIGHEST_TEXTURE_STATE) + 1 + (num))
+#define STATE_SAMPLER(num) (STATE_TEXTURESTAGE(WINED3D_MAX_FFP_TEXTURES - 1, WINED3D_HIGHEST_TEXTURE_STATE) + 1 + (num))
 #define STATE_IS_SAMPLER(num) ((num) >= STATE_SAMPLER(0) && (num) <= STATE_SAMPLER(WINED3D_MAX_COMBINED_SAMPLERS - 1))
 
 #define STATE_GRAPHICS_SHADER(a) (STATE_SAMPLER(WINED3D_MAX_COMBINED_SAMPLERS) + (a))
@@ -1931,11 +1931,11 @@ struct wined3d_context
     DWORD last_was_blit : 1;
     DWORD last_was_ckey : 1;
     DWORD last_was_dual_source_blend : 1;
-    DWORD texShaderBumpMap : 8;         /* WINED3D_MAX_TEXTURES, 8 */
-    DWORD lowest_disabled_stage : 4;    /* Max WINED3D_MAX_TEXTURES, 8 */
+    DWORD texShaderBumpMap : 8;         /* WINED3D_MAX_FFP_TEXTURES, 8 */
+    DWORD lowest_disabled_stage : 4;    /* Max WINED3D_MAX_FFP_TEXTURES, 8 */
 
-    DWORD lastWasPow2Texture : 8;       /* WINED3D_MAX_TEXTURES, 8 */
-    DWORD fixed_function_usage_map : 8; /* WINED3D_MAX_TEXTURES, 8 */
+    DWORD lastWasPow2Texture : 8;       /* WINED3D_MAX_FFP_TEXTURES, 8 */
+    DWORD fixed_function_usage_map : 8; /* WINED3D_MAX_FFP_TEXTURES, 8 */
     DWORD use_immediate_mode_draw : 1;
     DWORD uses_uavs : 1;
     DWORD uses_fbo_attached_resources : 1;
@@ -2695,7 +2695,7 @@ struct texture_stage_op
 
 struct ffp_frag_settings
 {
-    struct texture_stage_op op[WINED3D_MAX_TEXTURES];
+    struct texture_stage_op op[WINED3D_MAX_FFP_TEXTURES];
     enum wined3d_ffp_ps_fog_mode fog;
     unsigned char sRGB_write;
     unsigned char emul_clipplanes;
@@ -2760,14 +2760,14 @@ struct wined3d_ffp_vs_settings
     DWORD point_size      : 1;
     DWORD per_vertex_point_size : 1;
     DWORD fog_mode        : 2;
-    DWORD texcoords       : 8;  /* WINED3D_MAX_TEXTURES */
+    DWORD texcoords       : 8;  /* WINED3D_MAX_FFP_TEXTURES */
     DWORD ortho_fog       : 1;
     DWORD flatshading     : 1;
     DWORD padding         : 18;
 
     DWORD swizzle_map; /* MAX_ATTRIBS, 32 */
 
-    unsigned int texgen[WINED3D_MAX_TEXTURES];
+    unsigned int texgen[WINED3D_MAX_FFP_TEXTURES];
 };
 
 struct wined3d_ffp_vs_desc
@@ -2889,7 +2889,7 @@ struct wined3d_state
 
     struct wined3d_texture *textures[WINED3D_MAX_COMBINED_SAMPLERS];
     uint32_t sampler_states[WINED3D_MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
-    uint32_t texture_states[WINED3D_MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
+    uint32_t texture_states[WINED3D_MAX_FFP_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
 
     struct wined3d_matrix transforms[WINED3D_HIGHEST_TRANSFORM_STATE + 1];
     struct wined3d_vec4 clip_planes[WINED3D_MAX_CLIP_DISTANCES];

@@ -1590,7 +1590,7 @@ enum wined3d_memory_segment_group
 #define WINED3D_REGISTER_WINDOW_NO_PRINT_SCREEN                 0x00000004u
 
 #define WINED3D_MAX_STREAMS                                     16
-#define WINED3D_MAX_TEXTURES                                    8
+#define WINED3D_MAX_FFP_TEXTURES                                8
 #define WINED3D_MAX_FRAGMENT_SAMPLERS                           16
 #define WINED3D_MAX_VERTEX_SAMPLERS                             4
 #define WINED3D_MAX_COMBINED_SAMPLERS (WINED3D_MAX_FRAGMENT_SAMPLERS + WINED3D_MAX_VERTEX_SAMPLERS)
@@ -2182,7 +2182,7 @@ struct wined3d_stateblock_state
 
     struct wined3d_texture *textures[WINED3D_MAX_COMBINED_SAMPLERS];
     uint32_t sampler_states[WINED3D_MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
-    uint32_t texture_states[WINED3D_MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
+    uint32_t texture_states[WINED3D_MAX_FFP_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
 
     struct wined3d_matrix transforms[WINED3D_HIGHEST_TRANSFORM_STATE + 1];
     struct wined3d_vec4 clip_planes[WINED3D_MAX_CLIP_DISTANCES];

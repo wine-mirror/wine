@@ -50,7 +50,7 @@ struct atifs_ffp_desc
     struct ffp_frag_desc parent;
     GLuint shader;
     unsigned int num_textures_used;
-    enum atifs_constant_value constants[WINED3D_MAX_TEXTURES];
+    enum atifs_constant_value constants[WINED3D_MAX_FFP_TEXTURES];
 };
 
 struct atifs_private_data
@@ -320,15 +320,15 @@ static GLuint register_for_arg(unsigned int arg, const struct wined3d_gl_info *g
     return ret;
 }
 
-static GLuint find_tmpreg(const struct texture_stage_op op[WINED3D_MAX_TEXTURES])
+static GLuint find_tmpreg(const struct texture_stage_op op[WINED3D_MAX_FFP_TEXTURES])
 {
     int lowest_read = -1;
     int lowest_write = -1;
     int i;
-    BOOL tex_used[WINED3D_MAX_TEXTURES];
+    BOOL tex_used[WINED3D_MAX_FFP_TEXTURES];
 
     memset(tex_used, 0, sizeof(tex_used));
-    for (i = 0; i < WINED3D_MAX_TEXTURES; ++i)
+    for (i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
     {
         if (op[i].cop == WINED3D_TOP_DISABLE)
             break;
@@ -465,7 +465,7 @@ static BOOL op_reads_constant(const struct texture_stage_op *op)
             || (op->aarg2 & WINED3DTA_SELECTMASK) == WINED3DTA_CONSTANT;
 }
 
-static GLuint gen_ati_shader(const struct texture_stage_op op[WINED3D_MAX_TEXTURES],
+static GLuint gen_ati_shader(const struct texture_stage_op op[WINED3D_MAX_FFP_TEXTURES],
         const struct wined3d_gl_info *gl_info, enum atifs_constant_value *constants)
 {
     GLuint ret = GL_EXTCALL(glGenFragmentShadersATI(1));
@@ -602,7 +602,7 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[WINED3D_MAX_TEXTUR
     }
 
     /* Pass 4: Generate the arithmetic instructions */
-    for (stage = 0; stage < WINED3D_MAX_TEXTURES; ++stage)
+    for (stage = 0; stage < WINED3D_MAX_FFP_TEXTURES; ++stage)
     {
         if (op[stage].cop == WINED3D_TOP_DISABLE)
         {
@@ -934,7 +934,7 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[WINED3D_MAX_TEXTUR
     constants[ATIFS_CONST_TFACTOR - GL_CON_0_ATI] = ATIFS_CONSTANT_TFACTOR;
 
     /* Assign unused constants to avoid reloading due to unused <-> bump matrix switches. */
-    for (stage = 0; stage < WINED3D_MAX_TEXTURES; ++stage)
+    for (stage = 0; stage < WINED3D_MAX_FFP_TEXTURES; ++stage)
     {
         if (constants[stage] == ATIFS_CONSTANT_UNUSED)
             constants[stage] = ATIFS_CONSTANT_BUMP;
@@ -1064,7 +1064,7 @@ static void set_tex_op_atifs(struct wined3d_context *context, const struct wined
     GL_EXTCALL(glBindFragmentShaderATI(desc->shader));
     ctx_priv->last_shader = desc;
 
-    for (i = 0; i < WINED3D_MAX_TEXTURES; i++)
+    for (i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
     {
         if (last_shader && last_shader->constants[i] == desc->constants[i])
             continue;
@@ -1312,7 +1312,7 @@ static void atifs_get_caps(const struct wined3d_adapter *adapter, struct fragmen
      * The proper fix for this is not to use GL_ATI_fragment_shader on cards newer than the
      * r200 series and use an ARB or GLSL shader instead
      */
-    caps->MaxTextureBlendStages   = WINED3D_MAX_TEXTURES;
+    caps->MaxTextureBlendStages   = WINED3D_MAX_FFP_TEXTURES;
     caps->MaxSimultaneousTextures = 6;
 }
 
