@@ -21,6 +21,7 @@
     - export CCACHE_DIR="$BASEDIR/ccache"
     - export CCACHE_COMPILERCHECK=content
     - export PATH="/usr/lib/ccache:$PATH"
+    - git config --global --add safe.directory $CI_PROJECT_DIR
     - mkdir -p build32 build64
     - rm -fr .git/rebase-merge  # in case a previous CI run failed in git rebase
 
