@@ -2467,6 +2467,16 @@ START_TEST(itemdlg)
 
     if(test_instantiation())
     {
+        DWORD result_tmpdir;
+        BOOL result_set_dir;
+        WCHAR tmpdir[MAX_PATH];
+
+        /* Windows refuses to open a dialog for C:\Users\Public\Documents, so change to tmp */
+        result_tmpdir = GetTempPathW(MAX_PATH, tmpdir);
+        ok(result_tmpdir != 0, "got %ld\n", result_tmpdir);
+        result_set_dir = SetCurrentDirectoryW(tmpdir);
+        ok(result_set_dir, "failed to set dir\n");
+
         test_basics();
         test_advise();
         test_events();
