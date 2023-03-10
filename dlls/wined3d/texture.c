@@ -3509,6 +3509,7 @@ static void texture_resource_unload(struct wined3d_resource *resource)
 {
     struct wined3d_texture *texture = texture_from_resource(resource);
     struct wined3d_device *device = resource->device;
+    const struct wined3d_state *state = &device->cs->state;
     unsigned int location = resource->map_binding;
     struct wined3d_context *context;
     unsigned int sub_count, i;
@@ -3553,8 +3554,13 @@ static void texture_resource_unload(struct wined3d_resource *resource)
     context_release(context);
 
     wined3d_texture_force_reload(texture);
-    if (texture->resource.bind_count)
-        device_invalidate_state(device, STATE_SAMPLER(texture->sampler));
+
+    for (i = 0; i < ARRAY_SIZE(state->textures); ++i)
+    {
+        if (state->textures[i] == texture)
+            device_invalidate_state(device, STATE_SAMPLER(i));
+    }
+
     wined3d_texture_set_dirty(texture);
 
     resource_unload(&texture->resource);
