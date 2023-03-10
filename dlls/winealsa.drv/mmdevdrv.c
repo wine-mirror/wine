@@ -21,6 +21,7 @@
 #define COBJMACROS
 
 #include <stdarg.h>
+#include <wchar.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -128,9 +129,7 @@ static CRITICAL_SECTION_DEBUG g_sessions_lock_debug =
 static CRITICAL_SECTION g_sessions_lock = { &g_sessions_lock_debug, -1, 0, 0, 0, 0 };
 static struct list g_sessions = LIST_INIT(g_sessions);
 
-static const WCHAR drv_key_devicesW[] = {'S','o','f','t','w','a','r','e','\\',
-    'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
-    'w','i','n','e','a','l','s','a','.','d','r','v','\\','d','e','v','i','c','e','s',0};
+static WCHAR drv_key_devicesW[256];
 static const WCHAR guidW[] = {'g','u','i','d',0};
 
 static const IAudioClient3Vtbl AudioClient3_Vtbl;
@@ -201,9 +200,22 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
-        if(__wine_init_unix_call()) return FALSE;
-        break;
+    {
+        WCHAR buf[MAX_PATH];
+        WCHAR *filename;
 
+        if(__wine_init_unix_call()) return FALSE;
+
+        GetModuleFileNameW(dll, buf, ARRAY_SIZE(buf));
+
+        filename = wcsrchr(buf, '\\');
+        filename = filename ? filename + 1 : buf;
+
+        swprintf(drv_key_devicesW, ARRAY_SIZE(drv_key_devicesW),
+                 L"Software\\Wine\\Drivers\\%s\\devices", filename);
+
+        break;
+    }
     case DLL_PROCESS_DETACH:
         if (reserved) break;
         DeleteCriticalSection(&g_sessions_lock);
