@@ -30,6 +30,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/gdi_driver.h"
+#include "wine/rbtree.h"
 
 #include "unixlib.h"
 
@@ -53,6 +54,7 @@ struct wayland
 
 struct wayland_output_mode
 {
+    struct rb_entry entry;
     int32_t width;
     int32_t height;
     int32_t refresh;
@@ -62,7 +64,8 @@ struct wayland_output
 {
     struct wl_list link;
     struct wl_output *wl_output;
-    struct wayland_output_mode current_mode;
+    struct rb_tree modes;
+    struct wayland_output_mode *current_mode;
     char name[20];
     uint32_t global_id;
 };

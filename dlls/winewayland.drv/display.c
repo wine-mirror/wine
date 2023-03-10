@@ -90,8 +90,8 @@ static void wayland_add_device_monitor(const struct gdi_device_manager *device_m
     struct gdi_monitor monitor = {0};
 
     SetRect(&monitor.rc_monitor, 0, 0,
-            output->current_mode.width,
-            output->current_mode.height);
+            output->current_mode->width,
+            output->current_mode->height);
 
     /* We don't have a direct way to get the work area in Wayland. */
     monitor.rc_work = monitor.rc_monitor;
@@ -117,12 +117,17 @@ static void populate_devmode(struct wayland_output_mode *output_mode, DEVMODEW *
     mode->dmDisplayFrequency = output_mode->refresh / 1000;
 }
 
-static void wayland_add_device_mode(const struct gdi_device_manager *device_manager,
-                                    void *param, struct wayland_output *output)
+static void wayland_add_device_modes(const struct gdi_device_manager *device_manager,
+                                     void *param, struct wayland_output *output)
 {
-    DEVMODEW mode;
-    populate_devmode(&output->current_mode, &mode);
-    device_manager->add_mode(&mode, param);
+    struct wayland_output_mode *output_mode;
+
+    RB_FOR_EACH_ENTRY(output_mode, &output->modes, struct wayland_output_mode, entry)
+    {
+        DEVMODEW mode;
+        populate_devmode(output_mode, &mode);
+        device_manager->add_mode(&mode, param);
+    }
 }
 
 /***********************************************************************
@@ -144,10 +149,10 @@ BOOL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manage
 
     wl_list_for_each(output, &process_wayland->output_list, link)
     {
-        if (!output->current_mode.refresh) continue;
+        if (!output->current_mode) continue;
         wayland_add_device_adapter(device_manager, param, output_id);
         wayland_add_device_monitor(device_manager, param, output);
-        wayland_add_device_mode(device_manager, param, output);
+        wayland_add_device_modes(device_manager, param, output);
         output_id++;
     }
 
