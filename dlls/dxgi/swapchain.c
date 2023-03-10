@@ -2564,10 +2564,24 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetMaximumFrameLatency(IDXGISwa
 static HANDLE STDMETHODCALLTYPE d3d12_swapchain_GetFrameLatencyWaitableObject(IDXGISwapChain4 *iface)
 {
     struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain4(iface);
+    HANDLE dup;
+    BOOL ret;
 
     TRACE("iface %p.\n", iface);
 
-    return swapchain->frame_latency_event;
+    if (!swapchain->frame_latency_event)
+        return NULL;
+
+    ret = DuplicateHandle(GetCurrentProcess(), swapchain->frame_latency_event, GetCurrentProcess(),
+            &dup, 0, FALSE, DUPLICATE_SAME_ACCESS);
+
+    if (!ret)
+    {
+        ERR("Cannot duplicate handle, last error %lu.\n", GetLastError());
+        return NULL;
+    }
+
+    return dup;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_SetMatrixTransform(IDXGISwapChain4 *iface,

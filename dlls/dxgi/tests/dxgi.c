@@ -6981,13 +6981,14 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
     IDXGISwapChain1 *swapchain1;
     IDXGIFactory2 *factory2;
     IDXGIFactory *factory;
+    HANDLE event, event2;
     UINT frame_latency;
     DWORD wait_result;
     ULONG ref_count;
     unsigned int i;
-    HANDLE event;
     HWND window;
     HRESULT hr;
+    BOOL ret;
 
     get_factory(device, is_d3d12, &factory);
 
@@ -7052,7 +7053,20 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
     IDXGISwapChain1_Release(swapchain1);
 
     event = IDXGISwapChain2_GetFrameLatencyWaitableObject(swapchain2);
-    ok(!!event, "Got unexpected event %p.\n", event);
+    ok(!!event, "Got unexpected NULL event.\n");
+
+    /* a new duplicate handle is returned each time */
+    event2 = IDXGISwapChain2_GetFrameLatencyWaitableObject(swapchain2);
+    ok(!!event2, "Got unexpected NULL event.\n");
+    ok(event != event2, "Got the same event twice %p.\n", event);
+
+    ret = CloseHandle(event);
+    ok(!!ret, "Failed to close handle, last error %lu.\n", GetLastError());
+    ret = CloseHandle(event2);
+    ok(!!ret, "Failed to close handle, last error %lu.\n", GetLastError());
+
+    event = IDXGISwapChain2_GetFrameLatencyWaitableObject(swapchain2);
+    ok(!!event, "Got unexpected NULL event.\n");
 
     /* auto-reset event */
     wait_result = WaitForSingleObject(event, 0);
