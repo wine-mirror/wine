@@ -3073,7 +3073,7 @@ static void tex_colorop(struct wined3d_context *context, const struct wined3d_st
 
     if (mapped_stage != WINED3D_UNMAPPED_STAGE)
     {
-        if (tex_used && mapped_stage >= gl_info->limits.textures)
+        if (tex_used && mapped_stage >= gl_info->limits.ffp_textures)
         {
             FIXME("Attempt to enable unsupported stage!\n");
             return;
@@ -3131,7 +3131,7 @@ void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *st
     /* Do not care for enabled / disabled stages, just assign the settings. colorop disables / enables required stuff */
     if (mapped_stage != WINED3D_UNMAPPED_STAGE)
     {
-        if (tex_used && mapped_stage >= gl_info->limits.textures)
+        if (tex_used && mapped_stage >= gl_info->limits.ffp_textures)
         {
             FIXME("Attempt to enable unsupported stage!\n");
             return;
@@ -3232,7 +3232,7 @@ static void transform_texture(struct wined3d_context *context, const struct wine
     }
 
     if (mapped_stage == WINED3D_UNMAPPED_STAGE) return;
-    if (mapped_stage >= gl_info->limits.textures) return;
+    if (mapped_stage >= gl_info->limits.ffp_textures) return;
 
     wined3d_context_gl_active_texture(context_gl, gl_info, mapped_stage);
     gl_info->gl_ops.gl.p_glMatrixMode(GL_TEXTURE);
@@ -5185,8 +5185,8 @@ static void ffp_fragment_get_caps(const struct wined3d_adapter *adapter, struct 
     if (gl_info->supported[ARB_TEXTURE_ENV_DOT3])
         caps->TextureOpCaps |= WINED3DTEXOPCAPS_DOTPRODUCT3;
 
-    caps->MaxTextureBlendStages = gl_info->limits.textures;
-    caps->MaxSimultaneousTextures = gl_info->limits.textures;
+    caps->MaxTextureBlendStages = gl_info->limits.ffp_textures;
+    caps->MaxSimultaneousTextures = gl_info->limits.ffp_textures;
 }
 
 static unsigned int ffp_fragment_get_emul_mask(const struct wined3d_adapter *adapter)

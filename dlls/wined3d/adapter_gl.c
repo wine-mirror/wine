@@ -2890,7 +2890,7 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
     GLint gl_max;
 
     gl_info->limits.buffers = 1;
-    gl_info->limits.textures = 0;
+    gl_info->limits.ffp_textures = 0;
     gl_info->limits.texture_coords = 0;
     for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
     {
@@ -2954,8 +2954,8 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
         {
             gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
-            gl_info->limits.textures = min(WINED3D_MAX_FFP_TEXTURES, gl_max);
-            TRACE("Max textures: %d.\n", gl_info->limits.textures);
+            gl_info->limits.ffp_textures = min(WINED3D_MAX_FFP_TEXTURES, gl_max);
+            TRACE("Max textures: %d.\n", gl_info->limits.ffp_textures);
 
             if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
             {
@@ -2964,7 +2964,7 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
             }
             else
             {
-                gl_info->limits.texture_coords = gl_info->limits.textures;
+                gl_info->limits.texture_coords = gl_info->limits.ffp_textures;
             }
             TRACE("Max texture coords: %d.\n", gl_info->limits.texture_coords);
         }
@@ -2976,7 +2976,7 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         }
         else
         {
-            gl_info->limits.samplers[WINED3D_SHADER_TYPE_PIXEL] = gl_info->limits.textures;
+            gl_info->limits.samplers[WINED3D_SHADER_TYPE_PIXEL] = gl_info->limits.ffp_textures;
         }
         TRACE("Max fragment samplers: %d.\n", gl_info->limits.samplers[WINED3D_SHADER_TYPE_PIXEL]);
 
@@ -3034,7 +3034,7 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
     }
     else
     {
-        gl_info->limits.textures = 1;
+        gl_info->limits.ffp_textures = 1;
         gl_info->limits.texture_coords = 1;
     }
 

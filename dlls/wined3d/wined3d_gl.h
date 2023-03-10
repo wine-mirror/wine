@@ -276,7 +276,7 @@ struct wined3d_gl_limits
 {
     unsigned int buffers;
     unsigned int lights;
-    unsigned int textures;
+    unsigned int ffp_textures;
     unsigned int texture_coords;
     unsigned int uniform_blocks[WINED3D_SHADER_TYPE_COUNT];
     unsigned int samplers[WINED3D_SHADER_TYPE_COUNT];

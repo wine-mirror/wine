@@ -2252,7 +2252,7 @@ HRESULT wined3d_context_gl_init(struct wined3d_context_gl *context_gl, struct wi
         /* Set up the previous texture input for all shader units. This applies to bump mapping, and in d3d
          * the previous texture where to source the offset from is always unit - 1.
          */
-        for (i = 1; i < gl_info->limits.textures; ++i)
+        for (i = 1; i < gl_info->limits.ffp_textures; ++i)
         {
             wined3d_context_gl_active_texture(context_gl, gl_info, i);
             gl_info->gl_ops.gl.p_glTexEnvi(GL_TEXTURE_SHADER_NV,
@@ -2283,7 +2283,7 @@ HRESULT wined3d_context_gl_init(struct wined3d_context_gl *context_gl, struct wi
 
     if (gl_info->supported[ARB_POINT_SPRITE])
     {
-        for (i = 0; i < gl_info->limits.textures; ++i)
+        for (i = 0; i < gl_info->limits.ffp_textures; ++i)
         {
             wined3d_context_gl_active_texture(context_gl, gl_info, i);
             gl_info->gl_ops.gl.p_glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
@@ -3373,7 +3373,7 @@ void wined3d_context_gl_apply_ffp_blit_state(struct wined3d_context_gl *context_
 
     /* Disable all textures. The caller can then bind a texture it wants to blit
      * from. */
-    for (i = gl_info->limits.textures - 1; i > 0 ; --i)
+    for (i = gl_info->limits.ffp_textures - 1; i > 0 ; --i)
     {
         wined3d_context_gl_active_texture(context_gl, gl_info, i);
 
@@ -5409,7 +5409,7 @@ void wined3d_context_gl_load_tex_coords(const struct wined3d_context_gl *context
     if (gl_info->supported[NV_REGISTER_COMBINERS])
     {
         /* The number of the mapped stages increases monotonically, so it's fine to use the last used one. */
-        for (texture_idx = mapped_stage + 1; texture_idx < gl_info->limits.textures; ++texture_idx)
+        for (texture_idx = mapped_stage + 1; texture_idx < gl_info->limits.ffp_textures; ++texture_idx)
         {
             GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + texture_idx, 0, 0, 0, 1));
         }

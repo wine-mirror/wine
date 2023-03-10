@@ -496,7 +496,7 @@ static void nvrc_colorop(struct wined3d_context *context, const struct wined3d_s
 
     if (mapped_stage != WINED3D_UNMAPPED_STAGE)
     {
-        if (tex_used && mapped_stage >= gl_info->limits.textures)
+        if (tex_used && mapped_stage >= gl_info->limits.ffp_textures)
         {
             FIXME("Attempt to enable unsupported stage!\n");
             return;
@@ -533,7 +533,7 @@ static void nvrc_colorop(struct wined3d_context *context, const struct wined3d_s
                 gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_RECTANGLE_ARB);
                 checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
             }
-            if (gl_info->supported[NV_TEXTURE_SHADER2] && mapped_stage < gl_info->limits.textures)
+            if (gl_info->supported[NV_TEXTURE_SHADER2] && mapped_stage < gl_info->limits.ffp_textures)
             {
                 gl_info->gl_ops.gl.p_glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_NONE);
             }
@@ -609,7 +609,7 @@ static void nvts_texdim(struct wined3d_context *context, const struct wined3d_st
     /* No need to enable / disable anything here for unused samplers. The tex_colorop
     * handler takes care. Also no action is needed with pixel shaders, or if tex_colorop
     * will take care of this business. */
-    if (mapped_stage == WINED3D_UNMAPPED_STAGE || mapped_stage >= context_gl->gl_info->limits.textures)
+    if (mapped_stage == WINED3D_UNMAPPED_STAGE || mapped_stage >= context_gl->gl_info->limits.ffp_textures)
         return;
     if (sampler >= context->lowest_disabled_stage)
         return;
@@ -633,7 +633,7 @@ static void nvts_bumpenvmat(struct wined3d_context *context, const struct wined3
      * map is read from a specified source stage(always stage - 1 for d3d). Thus set the matrix
      * for stage + 1. Keep the nvrc tex unit mapping in mind too
      */
-    if (mapped_stage < gl_info->limits.textures)
+    if (mapped_stage < gl_info->limits.ffp_textures)
     {
         wined3d_context_gl_active_texture(context_gl, gl_info, mapped_stage);
 
@@ -748,7 +748,7 @@ static void nvrc_fragment_get_caps(const struct wined3d_adapter *adapter, struct
 #endif
 
     caps->MaxTextureBlendStages = min(WINED3D_MAX_FFP_TEXTURES, gl_info->limits.general_combiners);
-    caps->MaxSimultaneousTextures = gl_info->limits.textures;
+    caps->MaxSimultaneousTextures = gl_info->limits.ffp_textures;
 }
 
 static unsigned int nvrc_fragment_get_emul_mask(const struct wined3d_adapter *adapter)

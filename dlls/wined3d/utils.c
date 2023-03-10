@@ -6805,7 +6805,7 @@ void sampler_texdim(struct wined3d_context *context, const struct wined3d_state 
      * tex_colorop handler takes care. Also no action is needed with pixel
      * shaders, or if tex_colorop will take care of this business. */
     mapped_stage = context_gl->tex_unit_map[sampler];
-    if (mapped_stage == WINED3D_UNMAPPED_STAGE || mapped_stage >= context_gl->gl_info->limits.textures)
+    if (mapped_stage == WINED3D_UNMAPPED_STAGE || mapped_stage >= context_gl->gl_info->limits.ffp_textures)
         return;
     if (sampler >= context->lowest_disabled_stage)
         return;

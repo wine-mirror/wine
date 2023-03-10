@@ -490,7 +490,7 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[WINED3D_MAX_FFP_TE
     checkGLcall("GL_EXTCALL(glBeginFragmentShaderATI())");
 
     /* Pass 1: Generate sampling instructions for perturbation maps */
-    for (stage = 0; stage < gl_info->limits.textures; ++stage)
+    for (stage = 0; stage < gl_info->limits.ffp_textures; ++stage)
     {
         if (op[stage].cop == WINED3D_TOP_DISABLE)
             break;
@@ -517,7 +517,7 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[WINED3D_MAX_FFP_TE
     }
 
     /* Pass 2: Generate perturbation calculations */
-    for (stage = 0; stage < gl_info->limits.textures; ++stage)
+    for (stage = 0; stage < gl_info->limits.ffp_textures; ++stage)
     {
         GLuint argmodextra_x, argmodextra_y;
         struct color_fixup_desc fixup;
@@ -568,7 +568,7 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[WINED3D_MAX_FFP_TE
     }
 
     /* Pass 3: Generate sampling instructions for regular textures */
-    for (stage = 0; stage < gl_info->limits.textures; ++stage)
+    for (stage = 0; stage < gl_info->limits.ffp_textures; ++stage)
     {
         if (op[stage].cop == WINED3D_TOP_DISABLE)
             break;
