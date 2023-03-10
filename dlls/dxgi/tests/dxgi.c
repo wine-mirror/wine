@@ -6980,8 +6980,11 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
     HANDLE semaphore, semaphore2;
     IDXGISwapChain2 *swapchain2;
     IDXGISwapChain1 *swapchain1;
+    ID3D12Device *d3d12_device;
+    ID3D12CommandQueue *queue;
     IDXGIFactory2 *factory2;
     IDXGIFactory *factory;
+    ID3D12Fence *fence;
     UINT frame_latency;
     DWORD wait_result;
     ULONG ref_count;
@@ -7083,6 +7086,8 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(frame_latency == 1, "Got unexpected frame latency %#x.\n", frame_latency);
 
+    /* raising the maximum frame latency releases the semaphore the
+     * corresponding number of times */
     hr = IDXGISwapChain2_SetMaximumFrameLatency(swapchain2, 3);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGISwapChain2_GetMaximumFrameLatency(swapchain2, &frame_latency);
@@ -7093,6 +7098,17 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
     todo_wine ok(!wait_result, "Got unexpected wait result %#lx.\n", wait_result);
     wait_result = WaitForSingleObject(semaphore, 0);
     todo_wine ok(!wait_result, "Got unexpected wait result %#lx.\n", wait_result);
+    wait_result = WaitForSingleObject(semaphore, 100);
+    ok(wait_result == WAIT_TIMEOUT, "Got unexpected wait result %#lx.\n", wait_result);
+
+    /* lowering the maximum frame latency doesn't seem to impact the
+     * semaphore */
+    hr = IDXGISwapChain2_SetMaximumFrameLatency(swapchain2, 1);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDXGISwapChain2_GetMaximumFrameLatency(swapchain2, &frame_latency);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(frame_latency == 1, "Got unexpected frame latency %#x.\n", frame_latency);
+
     wait_result = WaitForSingleObject(semaphore, 100);
     ok(wait_result == WAIT_TIMEOUT, "Got unexpected wait result %#lx.\n", wait_result);
 
@@ -7107,6 +7123,84 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
 
     wait_result = WaitForSingleObject(semaphore, 100);
     ok(wait_result == WAIT_TIMEOUT, "Got unexpected wait result %#lx.\n", wait_result);
+
+    /* each frame presentation releases the semaphore */
+    for (i = 0; i < 5; i++)
+    {
+        hr = IDXGISwapChain2_Present(swapchain2, 0, 0);
+        ok(hr == S_OK, "Present %u failed with hr %#lx.\n", i, hr);
+    }
+
+    Sleep(100);
+
+    for (i = 0; i < 5; i++)
+    {
+        wait_result = WaitForSingleObject(semaphore, 100);
+        todo_wine_if(i != 0)
+        ok(!wait_result, "Got unexpected wait result %#lx.\n", wait_result);
+    }
+
+    wait_result = WaitForSingleObject(semaphore, 100);
+    ok(wait_result == WAIT_TIMEOUT, "Got unexpected wait result %#lx.\n", wait_result);
+
+    if (is_d3d12)
+    {
+        hr = IUnknown_QueryInterface(device, &IID_ID3D12CommandQueue, (void **)&queue);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID3D12CommandQueue_GetDevice(queue, &IID_ID3D12Device, (void **)&d3d12_device);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID3D12Device_CreateFence(d3d12_device, 0, 0, &IID_ID3D12Fence, (void **)&fence);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        /* the semaphore is released when the frame is really
+         * presented, not when Present() is called */
+        for (i = 0; i < 3; i++)
+        {
+            hr = IDXGISwapChain2_Present(swapchain2, 0, 0);
+            ok(hr == S_OK, "Present %u failed with hr %#lx.\n", i, hr);
+        }
+
+        hr = ID3D12CommandQueue_Wait(queue, fence, 1);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        for (i = 0; i < 4; i++)
+        {
+            hr = IDXGISwapChain2_Present(swapchain2, 0, 0);
+            ok(hr == S_OK, "Present %u failed with hr %#lx.\n", i, hr);
+        }
+
+        for (i = 0; i < 3; i++)
+        {
+            wait_result = WaitForSingleObject(semaphore, 100);
+            todo_wine_if(i != 0)
+            ok(!wait_result, "Got unexpected wait result %#lx.\n", wait_result);
+        }
+
+        wait_result = WaitForSingleObject(semaphore, 100);
+        ok(wait_result == WAIT_TIMEOUT, "Got unexpected wait result %#lx.\n", wait_result);
+
+        hr = ID3D12Fence_Signal(fence, 1);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        Sleep(100);
+
+        for (i = 0; i < 4; i++)
+        {
+            wait_result = WaitForSingleObject(semaphore, 100);
+            todo_wine_if(i != 0)
+            ok(!wait_result, "Got unexpected wait result %#lx.\n", wait_result);
+        }
+
+        wait_result = WaitForSingleObject(semaphore, 100);
+        ok(wait_result == WAIT_TIMEOUT, "Got unexpected wait result %#lx.\n", wait_result);
+
+        ref_count = ID3D12Fence_Release(fence);
+        ok(!ref_count, "Fence has %lu references left.\n", ref_count);
+        ID3D12Device_Release(d3d12_device);
+        ID3D12CommandQueue_Release(queue);
+    }
 
     ref_count = IDXGISwapChain2_Release(swapchain2);
     ok(!ref_count, "Swap chain has %lu references left.\n", ref_count);
