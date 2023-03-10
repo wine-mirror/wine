@@ -487,7 +487,7 @@ sub update_wine_inf()
 my $git_dir = $ENV{GIT_DIR} || ".git";
 die "needs to be run from a git checkout" unless -e $git_dir;
 
-my @all_files = split /\0/, `git ls-files -c -z`;
+my @all_files = split /\0/, `git ls-files -c -z` or die "cannot get files list";
 map { $ignored_source_files{$_} = 1; } split /\0/, `git ls-files -d -z`;
 @makefiles = grep /Makefile.in$/, @all_files;
 
