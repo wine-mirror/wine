@@ -132,7 +132,7 @@ static void test_HolographicSpaceStatics(void)
 
     value = 2;
     hr = IHolographicSpaceStatics2_get_IsSupported( holographicspace_statics2, &value );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
     todo_wine ok( value == TRUE, "got %d.\n", value );
 
     value = 2;

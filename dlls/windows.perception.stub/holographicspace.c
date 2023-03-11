@@ -119,8 +119,10 @@ DEFINE_IINSPECTABLE( holographicspace_statics2, IHolographicSpaceStatics2, struc
 
 static HRESULT WINAPI holographicspace_statics2_get_IsSupported( IHolographicSpaceStatics2 *iface, boolean *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    *value = FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI holographicspace_statics2_get_IsAvailable( IHolographicSpaceStatics2 *iface, boolean *value )
