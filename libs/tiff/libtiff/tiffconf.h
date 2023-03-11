@@ -12,6 +12,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <sys/types.h>
 
 
 /* Signed 16-bit type */
