@@ -26,6 +26,7 @@ struct holographicspace
 {
     IActivationFactory IActivationFactory_iface;
     IHolographicSpaceStatics2 IHolographicSpaceStatics2_iface;
+    IHolographicSpaceStatics3 IHolographicSpaceStatics3_iface;
     LONG ref;
 };
 
@@ -53,6 +54,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
     if (IsEqualGUID( iid, &IID_IHolographicSpaceStatics2 ))
     {
         *out = &impl->IHolographicSpaceStatics2_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IHolographicSpaceStatics3 ))
+    {
+        *out = &impl->IHolographicSpaceStatics3_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -162,10 +170,32 @@ static const struct IHolographicSpaceStatics2Vtbl holographicspace_statics2_vtbl
     holographicspace_statics2_remove_IsAvailableChanged,
 };
 
+DEFINE_IINSPECTABLE( holographicspace_statics3, IHolographicSpaceStatics3, struct holographicspace, IActivationFactory_iface )
+
+static HRESULT WINAPI holographicspace_statics3_get_IsConfigured( IHolographicSpaceStatics3 *iface, boolean *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static const struct IHolographicSpaceStatics3Vtbl holographicspace_statics3_vtbl =
+{
+    holographicspace_statics3_QueryInterface,
+    holographicspace_statics3_AddRef,
+    holographicspace_statics3_Release,
+    /* IInspectable methods */
+    holographicspace_statics3_GetIids,
+    holographicspace_statics3_GetRuntimeClassName,
+    holographicspace_statics3_GetTrustLevel,
+    /* IHolographicSpaceStatics3 methods */
+    holographicspace_statics3_get_IsConfigured,
+};
+
 static struct holographicspace holographicspace_statics =
 {
     {&factory_vtbl},
     {&holographicspace_statics2_vtbl},
+    {&holographicspace_statics3_vtbl},
     1,
 };
 

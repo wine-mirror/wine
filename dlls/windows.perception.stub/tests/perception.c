@@ -99,6 +99,7 @@ static void test_HolographicSpaceStatics(void)
 {
     static const WCHAR *holographicspace_statics_name = L"Windows.Graphics.Holographic.HolographicSpace";
     IHolographicSpaceStatics2 *holographicspace_statics2;
+    IHolographicSpaceStatics3 *holographicspace_statics3;
     IActivationFactory *factory;
     BOOLEAN value;
     HSTRING str;
@@ -141,6 +142,18 @@ static void test_HolographicSpaceStatics(void)
     ok( value == FALSE, "got %d.\n", value );
 
     ref = IHolographicSpaceStatics2_Release( holographicspace_statics2 );
+    ok( ref == 2, "got ref %ld.\n", ref );
+
+    hr = IActivationFactory_QueryInterface( factory, &IID_IHolographicSpaceStatics3, (void **)&holographicspace_statics3 );
+    if (hr == E_NOINTERFACE) /* win1703 */
+    {
+        win_skip( "IHolographicSpaceStatics3 is not supported, skipping tests.\n" );
+        goto done;
+    }
+
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IHolographicSpaceStatics3_Release( holographicspace_statics3 );
     ok( ref == 2, "got ref %ld.\n", ref );
 done:
     ref = IActivationFactory_Release( factory );
