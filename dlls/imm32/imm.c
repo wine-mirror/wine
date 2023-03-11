@@ -3033,10 +3033,25 @@ BOOL WINAPI ImmDisableTextFrameService(DWORD idThread)
  *              ImmEnumInputContext(IMM32.@)
  */
 
-BOOL WINAPI ImmEnumInputContext(DWORD idThread, IMCENUMPROC lpfn, LPARAM lParam)
+BOOL WINAPI ImmEnumInputContext( DWORD thread, IMCENUMPROC callback, LPARAM lparam )
 {
-    FIXME("Stub\n");
-    return FALSE;
+    HIMC buffer[256];
+    NTSTATUS status;
+    UINT i, size;
+
+    TRACE( "thread %lu, callback %p, lparam %#Ix\n", thread, callback, lparam );
+
+    if ((status = NtUserBuildHimcList( thread, ARRAY_SIZE(buffer), buffer, &size )))
+    {
+        RtlSetLastWin32Error( RtlNtStatusToDosError( status ) );
+        WARN( "NtUserBuildHimcList returned %#lx\n", status );
+        return FALSE;
+    }
+
+    if (size == ARRAY_SIZE(buffer)) FIXME( "NtUserBuildHimcList returned %u handles\n", size );
+    for (i = 0; i < size; i++) if (!callback( buffer[i], lparam )) return FALSE;
+
+    return TRUE;
 }
 
 /***********************************************************************

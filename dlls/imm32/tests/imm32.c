@@ -2930,18 +2930,19 @@ static void test_ImmEnumInputContext(void)
 {
     HIMC himc;
 
-    todo_wine
     ok_ret( 1, ImmEnumInputContext( 0, enum_get_context, (LPARAM)&default_himc ) );
+    ok_ret( 1, ImmEnumInputContext( -1, enum_find_context, 0 ) );
+    ok_ret( 1, ImmEnumInputContext( GetCurrentThreadId(), enum_find_context, 0 ) );
+
+    todo_wine
     ok_ret( 0, ImmEnumInputContext( 1, enum_find_context, 0 ) );
     todo_wine
-    ok_ret( 1, ImmEnumInputContext( GetCurrentThreadId(), enum_find_context, 0 ) );
     ok_ret( 0, ImmEnumInputContext( GetCurrentProcessId(), enum_find_context, 0 ) );
 
     himc = ImmCreateContext();
     ok_ne( NULL, himc, HIMC, "%p" );
     ok_ret( 0, ImmEnumInputContext( GetCurrentThreadId(), enum_find_context, (LPARAM)himc ) );
     ok_ret( 1, ImmDestroyContext( himc ) );
-    todo_wine
     ok_ret( 1, ImmEnumInputContext( GetCurrentThreadId(), enum_find_context, (LPARAM)himc ) );
 }
 
