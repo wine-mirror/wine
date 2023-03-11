@@ -102,6 +102,26 @@ void *get_user_handle_ptr( HANDLE handle, unsigned int type )
 }
 
 /***********************************************************************
+ *           next_process_user_handle_ptr
+ *
+ * user_lock must be held by caller.
+ */
+void *next_process_user_handle_ptr( HANDLE *handle, unsigned int type )
+{
+    struct user_object *ptr;
+    WORD index = *handle ? USER_HANDLE_TO_INDEX( *handle ) + 1 : 0;
+
+    while (index < NB_USER_HANDLES)
+    {
+        if (!(ptr = user_handles[index++])) continue;  /* OBJ_OTHER_PROCESS */
+        if (ptr->type != type) continue;
+        *handle = ptr->handle;
+        return ptr;
+    }
+    return NULL;
+}
+
+/***********************************************************************
  *           set_user_handle_ptr
  */
 static void set_user_handle_ptr( HANDLE handle, struct user_object *ptr )
@@ -140,27 +160,6 @@ void *free_user_handle( HANDLE handle, unsigned int type )
         user_unlock();
     }
     return ptr;
-}
-
-/***********************************************************************
- *           next_thread_window
- */
-static WND *next_thread_window_ptr( HWND *hwnd )
-{
-    struct user_object *ptr;
-    WND *win;
-    WORD index = *hwnd ? USER_HANDLE_TO_INDEX( *hwnd ) + 1 : 0;
-
-    while (index < NB_USER_HANDLES)
-    {
-        if (!(ptr = user_handles[index++])) continue;
-        if (ptr->type != NTUSER_OBJ_WINDOW) continue;
-        win = (WND *)ptr;
-        if (win->tid != GetCurrentThreadId()) continue;
-        *hwnd = ptr->handle;
-        return win;
-    }
-    return NULL;
 }
 
 /*******************************************************************
@@ -4846,13 +4845,14 @@ BOOL WINAPI NtUserDestroyWindow( HWND hwnd )
 void destroy_thread_windows(void)
 {
     WND *win, *free_list = NULL;
-    HWND hwnd = 0;
+    HANDLE handle = 0;
 
     user_lock();
-    while ((win = next_thread_window_ptr( &hwnd )))
+    while ((win = next_process_user_handle_ptr( &handle, NTUSER_OBJ_WINDOW )))
     {
+        if (win->tid != GetCurrentThreadId()) continue;
         free_dce( win->dce, win->obj.handle );
-        set_user_handle_ptr( hwnd, NULL );
+        set_user_handle_ptr( handle, NULL );
         win->obj.handle = free_list;
         free_list = win;
     }
