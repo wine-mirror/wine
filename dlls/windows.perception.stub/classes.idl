@@ -21,3 +21,4 @@
 #pragma makedep register
 
 #include "windows.perception.spatial.surfaces.idl"
+#include "windows.graphics.holographic.idl"

@@ -34,8 +34,11 @@
 #include "windows.foundation.h"
 #define WIDL_using_Windows_Perception_Spatial_Surfaces
 #include "windows.perception.spatial.surfaces.h"
+#define WIDL_using_Windows_Graphics_Holographic
+#include "windows.graphics.holographic.h"
 
 extern IActivationFactory *observer_factory;
+extern IActivationFactory *holographicspace_factory;
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \

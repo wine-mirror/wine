@@ -30,6 +30,8 @@
 #include "windows.foundation.h"
 #define WIDL_using_Windows_Perception_Spatial_Surfaces
 #include "windows.perception.spatial.surfaces.h"
+#define WIDL_using_Windows_Graphics_Holographic
+#include "windows.graphics.holographic.h"
 
 #include "wine/test.h"
 
@@ -73,20 +75,63 @@ static void test_ObserverStatics(void)
     check_interface( factory, &IID_ISpatialSurfaceObserverStatics );
 
     hr = IActivationFactory_QueryInterface( factory, &IID_ISpatialSurfaceObserverStatics2, (void **)&observer_statics2 );
-    if (hr == E_NOINTERFACE /* win1607 */)
-        win_skip("ISpatialSurfaceObserverStatics2 is not supported\n");
-    else
+    if (hr == E_NOINTERFACE) /* win1607 */
     {
-        ok( hr == S_OK, "got hr %#lx.\n", hr );
-
-        value = TRUE;
-        hr = ISpatialSurfaceObserverStatics2_IsSupported( observer_statics2, &value );
-        ok( hr == S_OK, "got hr %#lx.\n", hr );
-        ok( !value, "got %d.\n", value );
-
-        ref = ISpatialSurfaceObserverStatics2_Release( observer_statics2 );
-        ok( ref == 2, "got ref %ld.\n", ref );
+        win_skip( "ISpatialSurfaceObserverStatics2 is not supported, skipping tests.\n" );
+        goto done;
     }
+
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    value = TRUE;
+    hr = ISpatialSurfaceObserverStatics2_IsSupported( observer_statics2, &value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( !value, "got %d.\n", value );
+
+    ref = ISpatialSurfaceObserverStatics2_Release( observer_statics2 );
+    ok( ref == 2, "got ref %ld.\n", ref );
+done:
+    ref = IActivationFactory_Release( factory );
+    ok( ref == 1, "got ref %ld.\n", ref );
+}
+
+static void test_HolographicSpaceStatics(void)
+{
+    static const WCHAR *holographicspace_statics_name = L"Windows.Graphics.Holographic.HolographicSpace";
+    IHolographicSpaceStatics2 *holographicspace_statics2;
+    IActivationFactory *factory;
+    HSTRING str;
+    HRESULT hr;
+    LONG ref;
+
+    hr = WindowsCreateString( holographicspace_statics_name, wcslen( holographicspace_statics_name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
+    WindowsDeleteString( str );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( holographicspace_statics_name ) );
+        return;
+    }
+
+    check_interface( factory, &IID_IUnknown );
+    check_interface( factory, &IID_IInspectable );
+    check_interface( factory, &IID_IAgileObject );
+
+    hr = IActivationFactory_QueryInterface( factory, &IID_IHolographicSpaceStatics2, (void **)&holographicspace_statics2 );
+    if (hr == E_NOINTERFACE) /* win1607 */
+    {
+        win_skip( "IHolographicSpaceStatics2 is not supported, skipping tests.\n" );
+        goto done;
+    }
+
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IHolographicSpaceStatics2_Release( holographicspace_statics2 );
+    ok( ref == 2, "got ref %ld.\n", ref );
+done:
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }
@@ -99,6 +144,7 @@ START_TEST(perception)
     ok( hr == S_OK, "RoInitialize failed, hr %#lx\n", hr );
 
     test_ObserverStatics();
+    test_HolographicSpaceStatics();
 
     RoUninitialize();
 }
