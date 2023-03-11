@@ -423,6 +423,15 @@ ULONG CDECL WLDAP32_ldap_result( LDAP *ld, ULONG msgid, ULONG all, struct l_time
 }
 
 /***********************************************************************
+ *      ldap_set_dbg_flags     (WLDAP32.@)
+ */
+ULONG CDECL ldap_set_dbg_flags( ULONG flags )
+{
+    FIXME( "(0x%lx) stub\n", flags );
+    return 0;
+}
+
+/***********************************************************************
  *      LdapUnicodeToUTF8     (WLDAP32.@)
  */
 int CDECL LdapUnicodeToUTF8( const WCHAR *src, int srclen, char *dst, int dstlen )
