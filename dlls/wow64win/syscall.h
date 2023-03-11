@@ -92,6 +92,7 @@
     SYSCALL_ENTRY( NtUserAssociateInputContext ) \
     SYSCALL_ENTRY( NtUserAttachThreadInput ) \
     SYSCALL_ENTRY( NtUserBeginPaint ) \
+    SYSCALL_ENTRY( NtUserBuildHimcList ) \
     SYSCALL_ENTRY( NtUserBuildHwndList ) \
     SYSCALL_ENTRY( NtUserCallHwnd ) \
     SYSCALL_ENTRY( NtUserCallHwndParam ) \

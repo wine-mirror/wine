@@ -648,6 +648,7 @@ BOOL    WINAPI NtUserAddClipboardFormatListener( HWND hwnd );
 UINT    WINAPI NtUserAssociateInputContext( HWND hwnd, HIMC ctx, ULONG flags );
 BOOL    WINAPI NtUserAttachThreadInput( DWORD from, DWORD to, BOOL attach );
 HDC     WINAPI NtUserBeginPaint( HWND hwnd, PAINTSTRUCT *ps );
+NTSTATUS WINAPI NtUserBuildHimcList( UINT thread_id, UINT count, HIMC *buffer, UINT *size );
 NTSTATUS WINAPI NtUserBuildHwndList( HDESK desktop, ULONG unk2, ULONG unk3, ULONG unk4,
                                      ULONG thread_id, ULONG count, HWND *buffer, ULONG *size );
 ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code );

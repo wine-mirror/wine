@@ -106,6 +106,7 @@ static void * const syscalls[] =
     NtUserAssociateInputContext,
     NtUserAttachThreadInput,
     NtUserBeginPaint,
+    NtUserBuildHimcList,
     NtUserBuildHwndList,
     NtUserCallHwnd,
     NtUserCallHwndParam,
