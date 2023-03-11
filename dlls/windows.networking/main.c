@@ -18,12 +18,31 @@
 
 #include <windef.h>
 #include <winnt.h>
+#include <winstring.h>
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
+
+static const char *debugstr_hstring(HSTRING hstr)
+{
+    const WCHAR *str;
+    UINT32 len;
+    if (hstr && !((ULONG_PTR)hstr >> 16)) return "(invalid)";
+    str = WindowsGetStringRawBuffer(hstr, &len);
+    return wine_dbgstr_wn(str, len);
+}
 
 HRESULT WINAPI SetSocketMediaStreamingMode(BOOL value)
 {
     FIXME("value %d stub!\n", value);
     return S_OK;
+}
+
+HRESULT WINAPI DllGetActivationFactory(HSTRING classid, void **factory)
+{
+    FIXME("class %s, factory %p.\n", debugstr_hstring(classid), factory);
+
+    *factory = NULL;
+
+    return CLASS_E_CLASSNOTAVAILABLE;
 }
