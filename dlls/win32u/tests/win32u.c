@@ -318,6 +318,139 @@ static void test_NtUserCreateInputContext(void)
     ok( !!ret, "NtUserDestroyInputContext failed, error %lu\n", GetLastError() );
 }
 
+static int himc_compare( const void *a, const void *b )
+{
+    return (UINT_PTR)*(HIMC *)a - (UINT_PTR)*(HIMC *)b;
+}
+
+static DWORD CALLBACK test_NtUserBuildHimcList_thread( void *arg )
+{
+    HIMC buf[8], *himc = arg;
+    NTSTATUS status;
+    UINT size;
+
+    size = 0xdeadbeef;
+    memset( buf, 0xcd, sizeof(buf) );
+    status = NtUserBuildHimcList( GetCurrentThreadId(), ARRAYSIZE( buf ), buf, &size );
+    todo_wine
+    ok( !status, "NtUserBuildHimcList failed: %#lx\n", status );
+    todo_wine
+    ok( size == 1, "size = %u\n", size );
+    ok( !!buf[0], "buf[0] = %p\n", buf[0] );
+
+    todo_wine
+    ok( buf[0] != himc[0], "buf[0] = %p\n", buf[0] );
+    ok( buf[0] != himc[1], "buf[0] = %p\n", buf[0] );
+    himc[2] = buf[0];
+    qsort( himc, 3, sizeof(*himc), himc_compare );
+
+    size = 0xdeadbeef;
+    memset( buf, 0xcd, sizeof(buf) );
+    status = NtUserBuildHimcList( -1, ARRAYSIZE( buf ), buf, &size );
+    todo_wine
+    ok( !status, "NtUserBuildHimcList failed: %#lx\n", status );
+    todo_wine
+    ok( size == 3, "size = %u\n", size );
+
+    qsort( buf, size, sizeof(*buf), himc_compare );
+    ok( buf[0] == himc[0], "buf[0] = %p\n", buf[0] );
+    ok( buf[1] == himc[1], "buf[1] = %p\n", buf[1] );
+    todo_wine
+    ok( buf[2] == himc[2], "buf[2] = %p\n", buf[2] );
+
+    return 0;
+}
+
+static void test_NtUserBuildHimcList(void)
+{
+    HIMC buf[8], himc[3], new_himc;
+    NTSTATUS status;
+    UINT size, ret;
+    HANDLE thread;
+
+    size = 0xdeadbeef;
+    memset( buf, 0xcd, sizeof(buf) );
+    status = NtUserBuildHimcList( GetCurrentThreadId(), ARRAYSIZE( buf ), buf, &size );
+    todo_wine
+    ok( !status, "NtUserBuildHimcList failed: %#lx\n", status );
+    todo_wine
+    ok( size == 1, "size = %u\n", size );
+    ok( !!buf[0], "buf[0] = %p\n", buf[0] );
+    himc[0] = buf[0];
+
+
+    new_himc = NtUserCreateInputContext( 0xdeadbeef );
+    ok( !!new_himc, "NtUserCreateInputContext failed, error %lu\n", GetLastError() );
+
+    himc[1] = new_himc;
+    qsort( himc, 2, sizeof(*himc), himc_compare );
+
+    size = 0xdeadbeef;
+    memset( buf, 0xcd, sizeof(buf) );
+    status = NtUserBuildHimcList( GetCurrentThreadId(), ARRAYSIZE( buf ), buf, &size );
+    todo_wine
+    ok( !status, "NtUserBuildHimcList failed: %#lx\n", status );
+    todo_wine
+    ok( size == 2, "size = %u\n", size );
+
+    qsort( buf, size, sizeof(*buf), himc_compare );
+    ok( buf[0] == himc[0], "buf[0] = %p\n", buf[0] );
+    todo_wine
+    ok( buf[1] == himc[1], "buf[1] = %p\n", buf[1] );
+
+    size = 0xdeadbeef;
+    memset( buf, 0xcd, sizeof(buf) );
+    status = NtUserBuildHimcList( 0, ARRAYSIZE( buf ), buf, &size );
+    todo_wine
+    ok( !status, "NtUserBuildHimcList failed: %#lx\n", status );
+    todo_wine
+    ok( size == 2, "size = %u\n", size );
+
+    qsort( buf, size, sizeof(*buf), himc_compare );
+    ok( buf[0] == himc[0], "buf[0] = %p\n", buf[0] );
+    todo_wine
+    ok( buf[1] == himc[1], "buf[1] = %p\n", buf[1] );
+
+    size = 0xdeadbeef;
+    memset( buf, 0xcd, sizeof(buf) );
+    status = NtUserBuildHimcList( -1, ARRAYSIZE( buf ), buf, &size );
+    todo_wine
+    ok( !status, "NtUserBuildHimcList failed: %#lx\n", status );
+    todo_wine
+    ok( size == 2, "size = %u\n", size );
+
+    qsort( buf, size, sizeof(*buf), himc_compare );
+    ok( buf[0] == himc[0], "buf[0] = %p\n", buf[0] );
+    todo_wine
+    ok( buf[1] == himc[1], "buf[1] = %p\n", buf[1] );
+
+    thread = CreateThread( NULL, 0, test_NtUserBuildHimcList_thread, himc, 0, NULL );
+    ok( !!thread, "CreateThread failed, error %lu\n", GetLastError() );
+    ret = WaitForSingleObject( thread, 5000 );
+    ok( !ret, "WaitForSingleObject returned %#x\n", ret );
+
+    size = 0xdeadbeef;
+    status = NtUserBuildHimcList( 1, ARRAYSIZE( buf ), buf, &size );
+    todo_wine
+    ok( status == STATUS_INVALID_PARAMETER, "NtUserBuildHimcList returned %#lx\n", status );
+    size = 0xdeadbeef;
+    status = NtUserBuildHimcList( GetCurrentProcessId(), ARRAYSIZE( buf ), buf, &size );
+    todo_wine
+    ok( status == STATUS_INVALID_PARAMETER, "NtUserBuildHimcList returned %#lx\n", status );
+    size = 0xdeadbeef;
+    status = NtUserBuildHimcList( GetCurrentThreadId(), 1, NULL, &size );
+    todo_wine
+    ok( status == STATUS_UNSUCCESSFUL, "NtUserBuildHimcList returned %#lx\n", status );
+    size = 0xdeadbeef;
+    status = NtUserBuildHimcList( GetCurrentThreadId(), 0, buf, &size );
+    todo_wine
+    ok( !status, "NtUserBuildHimcList failed: %#lx\n", status );
+    ok( size == 0, "size = %u\n", size );
+
+    ret = NtUserDestroyInputContext( new_himc );
+    ok( !!ret, "NtUserDestroyInputContext failed, error %lu\n", GetLastError() );
+}
+
 static BOOL WINAPI count_win( HWND hwnd, LPARAM lparam )
 {
     ULONG *cnt = (ULONG *)lparam;
@@ -1246,6 +1379,7 @@ START_TEST(win32u)
     test_window_props();
     test_class();
     test_NtUserCreateInputContext();
+    test_NtUserBuildHimcList();
     test_NtUserBuildHwndList();
     test_cursoricon();
     test_message_call();
