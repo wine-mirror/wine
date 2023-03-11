@@ -3314,7 +3314,7 @@ static void test_connect_direct(void)
 
 static void test_sync_source(void)
 {
-    struct testfilter filter1, filter2;
+    struct testfilter filter1, filter2, filter3;
 
     IFilterGraph2 *graph = create_graph();
     IReferenceClock *systemclock, *clock;
@@ -3326,6 +3326,7 @@ static void test_sync_source(void)
 
     testfilter_init(&filter1, NULL, 0);
     testfilter_init(&filter2, NULL, 0);
+    testfilter_init(&filter3, NULL, 0);
 
     IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
     IFilterGraph2_AddFilter(graph, &filter2.IBaseFilter_iface, NULL);
@@ -3346,10 +3347,14 @@ static void test_sync_source(void)
     ok(clock == systemclock, "Got clock %p.\n", clock);
     IReferenceClock_Release(clock);
 
+    IFilterGraph2_AddFilter(graph, &filter3.IBaseFilter_iface, NULL);
+    ok(filter3.clock == systemclock, "Got clock %p.\n", filter3.clock);
+
     hr = IMediaFilter_SetSyncSource(filter, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!filter1.clock, "Got clock %p.\n", filter1.clock);
     ok(!filter2.clock, "Got clock %p.\n", filter2.clock);
+    ok(!filter3.clock, "Got clock %p.\n", filter3.clock);
 
     hr = IMediaFilter_GetSyncSource(filter, &clock);
     todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
@@ -3361,6 +3366,7 @@ static void test_sync_source(void)
     ok(!ref, "Got outstanding refcount %ld\n", ref);
     ok(filter1.ref == 1, "Got outstanding refcount %ld.\n", filter1.ref);
     ok(filter2.ref == 1, "Got outstanding refcount %ld.\n", filter2.ref);
+    ok(filter3.ref == 1, "Got outstanding refcount %ld.\n", filter3.ref);
 }
 
 #define check_filter_state(a, b) check_filter_state_(__LINE__, a, b)

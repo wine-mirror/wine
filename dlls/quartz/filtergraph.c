@@ -663,6 +663,8 @@ static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface,
         return hr;
     }
 
+    IBaseFilter_SetSyncSource(filter, graph->refClock);
+
     IBaseFilter_AddRef(entry->filter = filter);
 
     list_add_head(&graph->filters, &entry->entry);
