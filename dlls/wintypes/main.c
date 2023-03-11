@@ -355,6 +355,13 @@ HRESULT WINAPI DllGetActivationFactory(HSTRING classid, IActivationFactory **fac
     return S_OK;
 }
 
+HRESULT WINAPI RoIsApiContractMajorVersionPresent(const WCHAR *name, UINT16 major, BOOL *result)
+{
+    FIXME("name %s, major %u, result %p\n", debugstr_w(name), major, result);
+    *result = FALSE;
+    return S_OK;
+}
+
 HRESULT WINAPI RoResolveNamespace(HSTRING name, HSTRING windowsMetaDataDir,
                                   DWORD packageGraphDirsCount, const HSTRING *packageGraphDirs,
                                   DWORD *metaDataFilePathsCount, HSTRING **metaDataFilePaths,
