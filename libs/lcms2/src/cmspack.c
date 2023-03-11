@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------------
 //
 //  Little Color Management System
-//  Copyright (c) 1998-2022 Marti Maria Saguer
+//  Copyright (c) 1998-2023 Marti Maria Saguer
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the "Software"),
@@ -1707,7 +1707,7 @@ cmsUInt8Number* PackChunkyBytes(CMSREGISTER _cmsTRANSFORM* info,
         if (Reverse)
             v = REVERSE_FLAVOR_16(v);
 
-        if (Premul && alpha_factor != 0)
+        if (Premul)
         {
             v = (cmsUInt16Number)((cmsUInt32Number)((cmsUInt32Number)v * alpha_factor + 0x8000) >> 16);            
         }
@@ -1776,7 +1776,7 @@ cmsUInt8Number* PackChunkyWords(CMSREGISTER _cmsTRANSFORM* info,
         if (Reverse)
             v = REVERSE_FLAVOR_16(v);
 
-        if (Premul && alpha_factor != 0)
+        if (Premul)
         {
             v = (cmsUInt16Number)((cmsUInt32Number)((cmsUInt32Number)v * alpha_factor + 0x8000) >> 16);
         }
@@ -1843,7 +1843,7 @@ cmsUInt8Number* PackPlanarBytes(CMSREGISTER _cmsTRANSFORM* info,
         if (Reverse)
             v = REVERSE_FLAVOR_16(v);
 
-        if (Premul && alpha_factor != 0)
+        if (Premul)
         {
             v = (cmsUInt16Number)((cmsUInt32Number)((cmsUInt32Number)v * alpha_factor + 0x8000) >> 16);
         }
@@ -1903,7 +1903,7 @@ cmsUInt8Number* PackPlanarWords(CMSREGISTER _cmsTRANSFORM* info,
         if (Reverse)
             v =  REVERSE_FLAVOR_16(v);
 
-        if (Premul && alpha_factor != 0)
+        if (Premul)
         {
             v = (cmsUInt16Number)((cmsUInt32Number)((cmsUInt32Number)v * alpha_factor + 0x8000) >> 16);
         }
