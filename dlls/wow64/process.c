@@ -957,6 +957,7 @@ NTSTATUS WINAPI wow64_NtSetInformationThread( UINT *args )
         else return STATUS_INVALID_PARAMETER;
 
     case ThreadNameInformation:   /* THREAD_NAME_INFORMATION */
+    case ThreadWineNativeThreadName:
         if (len == sizeof(THREAD_NAME_INFORMATION32))
         {
             THREAD_NAME_INFORMATION32 *info32 = ptr;
