@@ -555,6 +555,8 @@ put_simple_filter(
 	Debug1( LDAP_DEBUG_TRACE, "put_simple_filter: \"%s\"\n",
 		str );
 
+	if ( str[0] == '=' ) return -1;
+
 	str = LDAP_STRDUP( str );
 	if( str == NULL ) return -1;
 

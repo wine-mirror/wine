@@ -961,7 +961,7 @@ ldap_do_free_request( void *arg )
 
 	Debug3( LDAP_DEBUG_TRACE, "ldap_do_free_request: "
 			"asked to free lr %p msgid %d refcnt %d\n",
-			lr, lr->lr_msgid, lr->lr_refcnt );
+			(void *) lr, lr->lr_msgid, lr->lr_refcnt );
 	/* if lr_refcnt > 0, the request has been looked up
 	 * by ldap_find_request_by_msgid(); if in the meanwhile
 	 * the request is free()'d by someone else, just decrease
@@ -1008,7 +1008,7 @@ ldap_free_request_int( LDAP *ld, LDAPRequest *lr )
 	assert( !removed || removed == lr );
 	Debug3( LDAP_DEBUG_TRACE, "ldap_free_request_int: "
 			"lr %p msgid %d%s removed\n",
-			lr, lr->lr_msgid, removed ? "" : " not" );
+			(void *) lr, lr->lr_msgid, removed ? "" : " not" );
 
 	ldap_do_free_request( lr );
 }
@@ -1673,12 +1673,12 @@ ldap_find_request_by_msgid( LDAP *ld, ber_int_t msgid )
 		lr->lr_refcnt++;
 		Debug3( LDAP_DEBUG_TRACE, "ldap_find_request_by_msgid: "
 				"msgid %d, lr %p lr->lr_refcnt = %d\n",
-				msgid, lr, lr->lr_refcnt );
+				msgid, (void *) lr, lr->lr_refcnt );
 		return lr;
 	}
 
 	Debug2( LDAP_DEBUG_TRACE, "ldap_find_request_by_msgid: "
-			"msgid %d, lr %p\n", msgid, lr );
+			"msgid %d, lr %p\n", msgid, (void *) lr );
 	return NULL;
 }
 
@@ -1690,7 +1690,7 @@ ldap_return_request( LDAP *ld, LDAPRequest *lrx, int freeit )
 
 	lr = ldap_tavl_find( ld->ld_requests, lrx, ldap_req_cmp );
 	Debug2( LDAP_DEBUG_TRACE, "ldap_return_request: "
-			"lrx %p, lr %p\n", lrx, lr );
+			"lrx %p, lr %p\n", (void *) lrx, (void *) lr );
 	if ( lr ) {
 		assert( lr == lrx );
 		if ( lr->lr_refcnt > 0 ) {

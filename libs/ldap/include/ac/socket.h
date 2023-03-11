@@ -63,7 +63,7 @@
 #ifdef HAVE_WINSOCK2
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#elif HAVE_WINSOCK
+#elif defined(HAVE_WINSOCK)
 #include <winsock.h>
 #endif
 
@@ -114,22 +114,20 @@
 
 LBER_F( char * ) ber_pvt_wsa_err2string LDAP_P((int));
 
-#elif MACOS
+#elif defined(MACOS)
 #	define tcp_close( s )		tcpclose( s )
 #	define tcp_read( s, buf, len )	tcpread( s, buf, len )
 #	define tcp_write( s, buf, len )	tcpwrite( s, buf, len )
 
-#elif DOS
-#	ifdef PCNFS
-#		define tcp_close( s )	close( s )
-#		define tcp_read( s, buf, len )	recv( s, buf, len, 0 )
-#		define tcp_write( s, buf, len )	send( s, buf, len, 0 )
-#	endif /* PCNFS */
-#	ifdef NCSA
-#		define tcp_close( s )	do { netclose( s ); netshut() } while(0)
-#		define tcp_read( s, buf, len )	nread( s, buf, len )
-#		define tcp_write( s, buf, len )	netwrite( s, buf, len )
-#	endif /* NCSA */
+#elif defined(HAVE_PCNFS)
+#	define tcp_close( s )	close( s )
+#	define tcp_read( s, buf, len )	recv( s, buf, len, 0 )
+#	define tcp_write( s, buf, len )	send( s, buf, len, 0 )
+
+#elif defined(HAVE_NCSA)
+#	define tcp_close( s )	do { netclose( s ); netshut() } while(0)
+#	define tcp_read( s, buf, len )	nread( s, buf, len )
+#	define tcp_write( s, buf, len )	netwrite( s, buf, len )
 
 #elif defined(HAVE_CLOSESOCKET)
 #	define tcp_close( s )		closesocket( s )
