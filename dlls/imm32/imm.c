@@ -90,7 +90,6 @@ typedef struct tagInputContextData
         HIMC            handle;
         DWORD           dwLock;
         INPUTCONTEXT    IMC;
-        DWORD           threadID;
 
         struct ime     *ime;
         UINT            lastVK;
@@ -682,17 +681,6 @@ static HIMCC ImmCreateBlankCompStr(void)
     return rc;
 }
 
-static BOOL IMM_IsCrossThreadAccess(HIMC hIMC)
-{
-    InputContextData *data;
-
-    data = get_imc_data(hIMC);
-    if (data && data->threadID != GetCurrentThreadId())
-        return TRUE;
-
-    return FALSE;
-}
-
 /***********************************************************************
  *		ImmSetActiveContext (IMM32.@)
  */
@@ -898,7 +886,6 @@ static InputContextData *create_input_context(HIMC default_imc)
         IMM_DestroyContext(new_context);
         return 0;
     }
-    new_context->threadID = GetCurrentThreadId();
     SendMessageW( GetFocus(), WM_IME_SELECT, TRUE, (LPARAM)new_context->ime );
 
     TRACE("Created context %p\n", new_context);
@@ -937,10 +924,8 @@ static BOOL IMM_DestroyContext(HIMC hIMC)
 BOOL WINAPI ImmDestroyContext(HIMC hIMC)
 {
     if ((UINT_PTR)hIMC == NtUserGetThreadInfo()->default_imc) return FALSE;
-    if (!IMM_IsCrossThreadAccess(hIMC))
-        return IMM_DestroyContext(hIMC);
-    else
-        return FALSE;
+    if (NtUserQueryInputContext( hIMC, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
+    return IMM_DestroyContext(hIMC);
 }
 
 /***********************************************************************
@@ -2239,8 +2224,7 @@ BOOL WINAPI ImmSetCandidateWindow(
     if (!data || !lpCandidate)
         return FALSE;
 
-    if (IMM_IsCrossThreadAccess(hIMC))
-        return FALSE;
+    if (NtUserQueryInputContext( hIMC, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
 
     TRACE("\t%lx, %lx, %s, %s\n",
           lpCandidate->dwIndex, lpCandidate->dwStyle,
@@ -2271,8 +2255,7 @@ BOOL WINAPI ImmSetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
         return FALSE;
     }
 
-    if (IMM_IsCrossThreadAccess(hIMC))
-        return FALSE;
+    if (NtUserQueryInputContext( hIMC, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
 
     memcpy(&data->IMC.lfFont.W,lplf,sizeof(LOGFONTA));
     MultiByteToWideChar(CP_ACP, 0, lplf->lfFaceName, -1, data->IMC.lfFont.W.lfFaceName,
@@ -2297,8 +2280,7 @@ BOOL WINAPI ImmSetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
         return FALSE;
     }
 
-    if (IMM_IsCrossThreadAccess(hIMC))
-        return FALSE;
+    if (NtUserQueryInputContext( hIMC, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
 
     data->IMC.lfFont.W = *lplf;
     ImmNotifyIME(hIMC, NI_CONTEXTUPDATED, 0, IMC_SETCOMPOSITIONFONT);
@@ -2328,8 +2310,7 @@ BOOL WINAPI ImmSetCompositionStringA(
     if (!data)
         return FALSE;
 
-    if (IMM_IsCrossThreadAccess(hIMC))
-        return FALSE;
+    if (NtUserQueryInputContext( hIMC, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
 
     if (!(dwIndex == SCS_SETSTR ||
           dwIndex == SCS_CHANGEATTR ||
@@ -2385,8 +2366,7 @@ BOOL WINAPI ImmSetCompositionStringW(
     if (!data)
         return FALSE;
 
-    if (IMM_IsCrossThreadAccess(hIMC))
-        return FALSE;
+    if (NtUserQueryInputContext( hIMC, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
 
     if (!(dwIndex == SCS_SETSTR ||
           dwIndex == SCS_CHANGEATTR ||
@@ -2446,8 +2426,7 @@ BOOL WINAPI ImmSetCompositionWindow(
         return FALSE;
     }
 
-    if (IMM_IsCrossThreadAccess(hIMC))
-        return FALSE;
+    if (NtUserQueryInputContext( hIMC, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
 
     data->IMC.cfCompForm = *lpCompForm;
 
@@ -2482,8 +2461,7 @@ BOOL WINAPI ImmSetConversionStatus(
         return FALSE;
     }
 
-    if (IMM_IsCrossThreadAccess(hIMC))
-        return FALSE;
+    if (NtUserQueryInputContext( hIMC, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
 
     if ( fdwConversion != data->IMC.fdwConversion )
     {
@@ -2518,8 +2496,7 @@ BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
         return FALSE;
     }
 
-    if (IMM_IsCrossThreadAccess(hIMC))
-        return FALSE;
+    if (NtUserQueryInputContext( hIMC, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
 
     if (data->ime->ui_hwnd == NULL)
     {
@@ -2555,8 +2532,7 @@ BOOL WINAPI ImmSetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
         return FALSE;
     }
 
-    if (IMM_IsCrossThreadAccess(hIMC))
-        return FALSE;
+    if (NtUserQueryInputContext( hIMC, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
 
     TRACE("\t%s\n", wine_dbgstr_point(lpptPos));
 
