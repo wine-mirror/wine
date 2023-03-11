@@ -94,7 +94,6 @@ typedef struct tagInputContextData
 
         struct ime     *ime;
         UINT            lastVK;
-        BOOL            threadDefault;
 } InputContextData;
 
 #define WINE_IMC_VALID_MAGIC 0x56434D49
@@ -402,16 +401,6 @@ static void imm_coinit_thread(void)
         spy->apt_flags |= IMM_APT_CREATED;
 
     InitOnceExecuteOnce(&init_ole32_once, init_ole32_funcs, NULL, NULL);
-}
-
-static BOOL IMM_IsDefaultContext(HIMC imc)
-{
-    InputContextData *data = get_imc_data(imc);
-
-    if (!data)
-        return FALSE;
-
-    return data->threadDefault;
 }
 
 static InputContextData *query_imc_data(HIMC handle)
@@ -868,7 +857,6 @@ static InputContextData *create_input_context(HIMC default_imc)
     new_context = calloc( 1, sizeof(InputContextData) );
 
     /* Load the IME */
-    new_context->threadDefault = !!default_imc;
     if (!(new_context->ime = ime_acquire( GetKeyboardLayout( 0 ) )))
     {
         TRACE("IME dll could not be loaded\n");
@@ -953,7 +941,8 @@ static BOOL IMM_DestroyContext(HIMC hIMC)
  */
 BOOL WINAPI ImmDestroyContext(HIMC hIMC)
 {
-    if (!IMM_IsDefaultContext(hIMC) && !IMM_IsCrossThreadAccess(NULL, hIMC))
+    if ((UINT_PTR)hIMC == NtUserGetThreadInfo()->default_imc) return FALSE;
+    if (!IMM_IsCrossThreadAccess(NULL, hIMC))
         return IMM_DestroyContext(hIMC);
     else
         return FALSE;
