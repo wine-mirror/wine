@@ -221,6 +221,103 @@ static void test_class(void)
 
 }
 
+static void test_NtUserCreateInputContext(void)
+{
+    UINT_PTR value, attr3;
+    HIMC himc;
+    UINT ret;
+
+    SetLastError( 0xdeadbeef );
+    himc = NtUserCreateInputContext( 0 );
+    todo_wine
+    ok( !himc, "NtUserCreateInputContext succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = NtUserDestroyInputContext( himc );
+    todo_wine
+    ok( !ret, "NtUserDestroyInputContext succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+
+
+    himc = NtUserCreateInputContext( 0xdeadbeef );
+    ok( !!himc, "NtUserCreateInputContext failed, error %lu\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    value = NtUserQueryInputContext( himc, 0 );
+    todo_wine
+    ok( value == GetCurrentProcessId(), "NtUserQueryInputContext 0 returned %#Ix\n", value );
+    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    value = NtUserQueryInputContext( himc, 1 );
+    ok( value == GetCurrentThreadId(), "NtUserQueryInputContext 1 returned %#Ix\n", value );
+    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    value = NtUserQueryInputContext( himc, 2 );
+    ok( value == 0, "NtUserQueryInputContext 2 returned %#Ix\n", value );
+    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    value = NtUserQueryInputContext( himc, 3 );
+    todo_wine
+    ok( !!value, "NtUserQueryInputContext 3 returned %#Ix\n", value );
+    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
+    attr3 = value;
+    SetLastError( 0xdeadbeef );
+    value = NtUserQueryInputContext( himc, 4 );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ret = NtUserUpdateInputContext( himc, 0, 0 );
+    todo_wine
+    ok( !ret, "NtUserUpdateInputContext 0 succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_ALREADY_INITIALIZED, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = NtUserUpdateInputContext( himc, 1, 0xdeadbeef );
+    todo_wine
+    ok( !!ret, "NtUserUpdateInputContext 1 failed\n" );
+    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = NtUserUpdateInputContext( himc, 2, 0xdeadbeef );
+    ok( !ret, "NtUserUpdateInputContext 2 succeeded\n" );
+    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = NtUserUpdateInputContext( himc, 3, 0x0badf00d );
+    ok( !ret, "NtUserUpdateInputContext 3 succeeded\n" );
+    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = NtUserUpdateInputContext( himc, 4, 0xdeadbeef );
+    ok( !ret, "NtUserUpdateInputContext 4 succeeded\n" );
+    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    value = NtUserQueryInputContext( himc, 0 );
+    todo_wine
+    ok( value == GetCurrentProcessId(), "NtUserQueryInputContext 0 returned %#Ix\n", value );
+    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    value = NtUserQueryInputContext( himc, 1 );
+    ok( value == GetCurrentThreadId(), "NtUserQueryInputContext 1 returned %#Ix\n", value );
+    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    value = NtUserQueryInputContext( himc, 2 );
+    ok( value == 0, "NtUserQueryInputContext 2 returned %#Ix\n", value );
+    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    value = NtUserQueryInputContext( himc, 3 );
+    ok( value == attr3, "NtUserQueryInputContext 3 returned %#Ix\n", value );
+    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    value = NtUserQueryInputContext( himc, 4 );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
+
+    ret = NtUserDestroyInputContext( himc );
+    ok( !!ret, "NtUserDestroyInputContext failed, error %lu\n", GetLastError() );
+}
+
 static BOOL WINAPI count_win( HWND hwnd, LPARAM lparam )
 {
     ULONG *cnt = (ULONG *)lparam;
@@ -1148,6 +1245,7 @@ START_TEST(win32u)
     test_NtUserEnumDisplayDevices();
     test_window_props();
     test_class();
+    test_NtUserCreateInputContext();
     test_NtUserBuildHwndList();
     test_cursoricon();
     test_message_call();
