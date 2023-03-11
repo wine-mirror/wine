@@ -23,6 +23,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wofutil);
 
+HRESULT WINAPI WofIsExternalFile( const WCHAR *path, BOOL *result, ULONG *provider, void *ptr, ULONG *length )
+{
+    FIXME( "%s, %p, %p, %p, %p", debugstr_w(path), result, provider, ptr, length );
+    if (result) *result = FALSE;
+    if (provider) *provider = 0;
+    if (length) *length = 0;
+    return S_OK;
+}
+
 BOOL WINAPI WofShouldCompressBinaries( const WCHAR *volume, ULONG *alg )
 {
     FIXME( "%s, %p\n", debugstr_w(volume), alg );
