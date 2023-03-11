@@ -155,8 +155,8 @@ static void test_HolographicSpaceStatics(void)
 
     value = 2;
     hr = IHolographicSpaceStatics3_get_IsConfigured( holographicspace_statics3, &value );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( value == FALSE, "got %d.\n", value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( value == FALSE, "got %d.\n", value );
 
     ref = IHolographicSpaceStatics3_Release( holographicspace_statics3 );
     ok( ref == 2, "got ref %ld.\n", ref );

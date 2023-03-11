@@ -174,8 +174,10 @@ DEFINE_IINSPECTABLE( holographicspace_statics3, IHolographicSpaceStatics3, struc
 
 static HRESULT WINAPI holographicspace_statics3_get_IsConfigured( IHolographicSpaceStatics3 *iface, boolean *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    *value = FALSE;
+    return S_OK;
 }
 
 static const struct IHolographicSpaceStatics3Vtbl holographicspace_statics3_vtbl =
