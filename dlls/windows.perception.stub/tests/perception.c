@@ -100,6 +100,7 @@ static void test_HolographicSpaceStatics(void)
     static const WCHAR *holographicspace_statics_name = L"Windows.Graphics.Holographic.HolographicSpace";
     IHolographicSpaceStatics2 *holographicspace_statics2;
     IActivationFactory *factory;
+    BOOLEAN value;
     HSTRING str;
     HRESULT hr;
     LONG ref;
@@ -128,6 +129,16 @@ static void test_HolographicSpaceStatics(void)
     }
 
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    value = 2;
+    hr = IHolographicSpaceStatics2_get_IsSupported( holographicspace_statics2, &value );
+    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    todo_wine ok( value == TRUE, "got %d.\n", value );
+
+    value = 2;
+    hr = IHolographicSpaceStatics2_get_IsAvailable( holographicspace_statics2, &value );
+    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    todo_wine ok( value == FALSE, "got %d.\n", value );
 
     ref = IHolographicSpaceStatics2_Release( holographicspace_statics2 );
     ok( ref == 2, "got ref %ld.\n", ref );
