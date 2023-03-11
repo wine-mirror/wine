@@ -185,7 +185,7 @@
 195 cdecl ldap_search_ext_s(ptr str long str ptr long ptr ptr ptr long ptr) ldap_search_ext_sA
 196 cdecl ldap_search_ext_sA(ptr str long str ptr long ptr ptr ptr long ptr)
 197 cdecl ldap_escape_filter_element(str long ptr long) ldap_escape_filter_elementA
-198 stub ldap_set_dbg_flags
+198 cdecl ldap_set_dbg_flags(long)
 199 stub ldap_set_dbg_routine
 200 cdecl ldap_memfree(ptr) ldap_memfreeA
 201 cdecl ldap_startup(ptr ptr)
