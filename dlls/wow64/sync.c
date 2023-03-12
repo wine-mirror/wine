@@ -1490,6 +1490,65 @@ NTSTATUS WINAPI wow64_NtWaitForAlertByThreadId( UINT *args )
 }
 
 
+/* helper to wow64_NtWaitForDebugEvent; retrive machine from PE image */
+static NTSTATUS get_image_machine( HANDLE handle, USHORT *machine )
+{
+    IMAGE_DOS_HEADER dos_hdr;
+    IMAGE_NT_HEADERS nt_hdr;
+    IO_STATUS_BLOCK iosb;
+    LARGE_INTEGER offset;
+    FILE_POSITION_INFORMATION pos_info;
+    NTSTATUS status;
+
+    offset.QuadPart = 0;
+    status = NtReadFile( handle, NULL, NULL, NULL,
+                         &iosb, &dos_hdr, sizeof(dos_hdr), &offset, NULL );
+    if (!status)
+    {
+        offset.QuadPart = dos_hdr.e_lfanew;
+        status = NtReadFile( handle, NULL, NULL, NULL, &iosb,
+                             &nt_hdr, FIELD_OFFSET(IMAGE_NT_HEADERS, OptionalHeader), &offset, NULL );
+        if (!status)
+            *machine = nt_hdr.FileHeader.Machine;
+        /* Reset file pos at beginning of file */
+        pos_info.CurrentByteOffset.QuadPart = 0;
+        NtSetInformationFile( handle, &iosb, &pos_info, sizeof(pos_info), FilePositionInformation );
+    }
+    return status;
+}
+
+/* helper to wow64_NtWaitForDebugEvent; only pass debug events for current machine */
+static BOOL filter_out_state_change( HANDLE handle, DBGUI_WAIT_STATE_CHANGE *state )
+{
+    BOOL filter_out;
+
+    switch (state->NewState)
+    {
+    case DbgLoadDllStateChange:
+        filter_out = ((ULONG64)state->StateInfo.LoadDll.BaseOfDll >> 32) != 0;
+        if (!filter_out)
+        {
+            USHORT machine;
+            filter_out = !get_image_machine( state->StateInfo.LoadDll.FileHandle, &machine) && machine != current_machine;
+        }
+        break;
+    case DbgUnloadDllStateChange:
+        filter_out = ((ULONG_PTR)state->StateInfo.UnloadDll.BaseAddress >> 32) != 0;
+        break;
+    default:
+        filter_out = FALSE;
+        break;
+    }
+    if (filter_out)
+    {
+        if (state->NewState == DbgLoadDllStateChange)
+            NtClose( state->StateInfo.LoadDll.FileHandle );
+        NtDebugContinue( handle, &state->AppClientId, DBG_CONTINUE );
+    }
+    return filter_out;
+}
+
+
 /**********************************************************************
  *           wow64_NtWaitForDebugEvent
  */
@@ -1502,7 +1561,12 @@ NTSTATUS WINAPI wow64_NtWaitForDebugEvent( UINT *args )
 
     ULONG i;
     DBGUI_WAIT_STATE_CHANGE state;
-    NTSTATUS status = NtWaitForDebugEvent( handle, alertable, timeout, &state );
+    NTSTATUS status;
+
+    do
+    {
+        status = NtWaitForDebugEvent( handle, alertable, timeout, &state );
+    } while (!status && filter_out_state_change( handle, &state ));
 
     if (!status)
     {

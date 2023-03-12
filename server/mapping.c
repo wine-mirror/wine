@@ -378,10 +378,7 @@ static void set_process_machine( struct process *process, struct memory_view *vi
 
 static int generate_dll_event( struct thread *thread, int code, struct memory_view *view )
 {
-    unsigned short process_machine = thread->process->machine;
-
     if (!(view->flags & SEC_IMAGE)) return 0;
-    if (process_machine != native_machine && process_machine != view->image.machine) return 0;
     generate_debug_event( thread, code, view );
     return 1;
 }

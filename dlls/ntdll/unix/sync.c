@@ -1008,14 +1008,47 @@ static NTSTATUS event_data_to_state_change( const debug_event_t *data, DBGUI_WAI
         info->DebugInfoFileOffset = data->load_dll.dbg_offset;
         info->DebugInfoSize       = data->load_dll.dbg_size;
         info->NamePointer         = wine_server_get_ptr( data->load_dll.name );
+        if ((DWORD_PTR)data->load_dll.base != data->load_dll.base)
+            return STATUS_PARTIAL_COPY;
         return STATUS_SUCCESS;
     }
     case DbgUnloadDllStateChange:
         state->StateInfo.UnloadDll.BaseAddress = wine_server_get_ptr( data->unload_dll.base );
+        if ((DWORD_PTR)data->unload_dll.base != data->unload_dll.base)
+            return STATUS_PARTIAL_COPY;
         return STATUS_SUCCESS;
     }
     return STATUS_INTERNAL_ERROR;
 }
+
+#ifndef _WIN64
+/* helper to NtWaitForDebugEvent; retrive machine from PE image */
+static NTSTATUS get_image_machine( HANDLE handle, USHORT *machine )
+{
+    IMAGE_DOS_HEADER dos_hdr;
+    IMAGE_NT_HEADERS nt_hdr;
+    IO_STATUS_BLOCK iosb;
+    LARGE_INTEGER offset;
+    FILE_POSITION_INFORMATION pos_info;
+    NTSTATUS status;
+
+    offset.QuadPart = 0;
+    status = NtReadFile( handle, NULL, NULL, NULL,
+                         &iosb, &dos_hdr, sizeof(dos_hdr), &offset, NULL );
+    if (!status)
+    {
+        offset.QuadPart = dos_hdr.e_lfanew;
+        status = NtReadFile( handle, NULL, NULL, NULL, &iosb,
+                             &nt_hdr, FIELD_OFFSET(IMAGE_NT_HEADERS, OptionalHeader), &offset, NULL );
+        if (!status)
+            *machine = nt_hdr.FileHeader.Machine;
+        /* Reset file pos at beginning of file */
+        pos_info.CurrentByteOffset.QuadPart = 0;
+        NtSetInformationFile( handle, &iosb, &pos_info, sizeof(pos_info), FilePositionInformation );
+    }
+    return status;
+}
+#endif
 
 /**********************************************************************
  *           NtWaitForDebugEvent  (NTDLL.@)
@@ -1034,8 +1067,9 @@ NTSTATUS WINAPI NtWaitForDebugEvent( HANDLE handle, BOOLEAN alertable, LARGE_INT
             req->debug = wine_server_obj_handle( handle );
             wine_server_set_reply( req, &data, sizeof(data) );
             ret = wine_server_call( req );
-            if (!ret && !(ret = event_data_to_state_change( &data, state )))
+            if (!ret)
             {
+                ret = event_data_to_state_change( &data, state );
                 state->NewState = data.code;
                 state->AppClientId.UniqueProcess = ULongToHandle( reply->pid );
                 state->AppClientId.UniqueThread  = ULongToHandle( reply->tid );
@@ -1043,6 +1077,24 @@ NTSTATUS WINAPI NtWaitForDebugEvent( HANDLE handle, BOOLEAN alertable, LARGE_INT
         }
         SERVER_END_REQ;
 
+#ifndef _WIN64
+        /* don't pass 64bit load events to 32bit callers */
+        if (!ret && state->NewState == DbgLoadDllStateChange)
+        {
+            USHORT machine;
+            if (!get_image_machine( state->StateInfo.LoadDll.FileHandle, &machine ) &&
+                machine != current_machine)
+                ret = STATUS_PARTIAL_COPY;
+        }
+        if (ret == STATUS_PARTIAL_COPY)
+        {
+            if (state->NewState == DbgLoadDllStateChange)
+                NtClose( state->StateInfo.LoadDll.FileHandle );
+            NtDebugContinue( handle, &state->AppClientId, DBG_CONTINUE );
+            wait = TRUE;
+            continue;
+        }
+#endif
         if (ret != STATUS_PENDING) return ret;
         if (!wait) return STATUS_TIMEOUT;
         wait = FALSE;
