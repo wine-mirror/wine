@@ -231,6 +231,7 @@ static const char *vt2a(VARIANT *v)
  */
 static void detect_locale(void)
 {
+    UINT cp;
     CPINFOEXA cpinfo;
     HMODULE kernel32 = GetModuleHandleA("kernel32.dll");
     LANGID (WINAPI *pGetThreadUILanguage)(void) = (void*)GetProcAddress(kernel32, "GetThreadUILanguage");
@@ -239,8 +240,17 @@ static void detect_locale(void)
                   PRIMARYLANGID(GetUserDefaultUILanguage()) == LANG_ENGLISH &&
                   PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH);
 
-    GetCPInfoExA( CP_THREAD_ACP, 0, &cpinfo );
-    MaxCharSize = cpinfo.MaxCharSize;
+    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER, (WCHAR*)&cp, sizeof(cp));
+    if (cp)
+    {
+        GetCPInfoExA( cp, 0, &cpinfo );
+        MaxCharSize = cpinfo.MaxCharSize;
+    }
+    else
+    {
+        /* No ANSI code page for that locale -> the fallback is UTF-8 */
+        MaxCharSize = 4;
+    }
 
     GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK | LOCALE_RETURN_NUMBER,
                    (void*)&first_day_of_week, sizeof(first_day_of_week));
