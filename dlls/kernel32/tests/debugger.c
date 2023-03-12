@@ -1077,6 +1077,158 @@ static void test_debug_loop(int argc, char **argv)
     ok(ret, "DeleteFileA failed, last error %#lx.\n", GetLastError());
 }
 
+struct find_main_window
+{
+    DWORD       pid;
+    unsigned    count;
+    HWND        windows[5];
+};
+
+static BOOL CALLBACK enum_windows_callback(HWND handle, LPARAM lParam)
+{
+    struct find_main_window* fmw = (struct find_main_window*)lParam;
+    DWORD pid = 0;
+
+    if (GetWindowThreadProcessId(handle, &pid) && fmw->pid == pid &&
+        !GetWindow(handle, GW_OWNER))
+    {
+        ok(fmw->count < ARRAY_SIZE(fmw->windows), "Too many windows\n");
+        if (fmw->count < ARRAY_SIZE(fmw->windows))
+            fmw->windows[fmw->count++] = handle;
+    }
+    return TRUE;
+}
+
+static void close_main_windows(DWORD pid)
+{
+    struct find_main_window fmw = {pid, 0};
+    unsigned i;
+
+    EnumWindows(enum_windows_callback, (LPARAM)&fmw);
+    ok(fmw.count, "no window found\n");
+    for (i = 0; i < fmw.count; i++)
+        PostMessageA(fmw.windows[i], WM_CLOSE, 0, 0);
+}
+
+static void test_debug_loop_wow64(void)
+{
+    WCHAR buffer[MAX_PATH], *p;
+    PROCESS_INFORMATION pi;
+    STARTUPINFOW si;
+    BOOL ret;
+    unsigned order = 0, bp_order = 0, bpwx_order = 0, num_ntdll = 0, num_wow64 = 0;
+
+    /* checking conditions for running this test */
+    if (GetSystemWow64DirectoryW( buffer, ARRAY_SIZE(buffer) ) && sizeof(void*) > sizeof(int) && pGetMappedFileNameW)
+    {
+        wcscat( buffer, L"\\msinfo32.exe" );
+        ret = GetFileAttributesW( buffer ) != INVALID_FILE_ATTRIBUTES;
+    }
+    else ret = FALSE;
+    if (!ret)
+    {
+        skip("Skipping test on incompatible config\n");
+        return;
+    }
+    memset( &si, 0, sizeof(si) );
+    si.cb = sizeof(si);
+    ret = CreateProcessW( NULL, buffer, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL, &si, &pi );
+    ok(ret, "CreateProcess failed, last error %#lx.\n", GetLastError());
+
+    for (;;)
+    {
+        DEBUG_EVENT ev;
+
+        ++order;
+        ret = WaitForDebugEvent( &ev, 2000 );
+        if (!ret) break;
+
+        switch (ev.dwDebugEventCode)
+        {
+        case CREATE_PROCESS_DEBUG_EVENT:
+            break;
+        case LOAD_DLL_DEBUG_EVENT:
+            if (!pGetMappedFileNameW( pi.hProcess, ev.u.LoadDll.lpBaseOfDll, buffer, ARRAY_SIZE(buffer) )) buffer[0] = L'\0';
+            if ((p = wcsrchr( buffer, '\\' ))) p++;
+            else p = buffer;
+            if (!memcmp( p, L"wow64", 5 * sizeof(WCHAR) ))
+            {
+                /* on Win10, wow64cpu's load dll event is received after first exception */
+                ok(bpwx_order == 0, "loaddll for wow64 DLLs should appear before exception\n");
+                num_wow64++;
+            }
+            else if (!wcsicmp( p, L"ntdll.dll" ))
+            {
+                ok(bp_order == 0 && bpwx_order == 0, "loaddll on ntdll should appear before exception\n");
+                num_ntdll++;
+            }
+            break;
+        case EXCEPTION_DEBUG_EVENT:
+            if (ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT)
+                bp_order = order;
+            else if (ev.u.Exception.ExceptionRecord.ExceptionCode == STATUS_WX86_BREAKPOINT)
+                bpwx_order = order;
+        }
+        ret = ContinueDebugEvent(ev.dwProcessId, ev.dwThreadId, DBG_CONTINUE);
+        ok(ret, "ContinueDebugEvent failed, last error %#lx.\n", GetLastError());
+        if (!ret) break;
+    }
+
+    /* gracefully terminates msinfo32 */
+    close_main_windows( pi.dwProcessId );
+
+    /* eat up the remaining events... not generating unload dll events in case of process termination */
+    for (;;)
+    {
+        DEBUG_EVENT ev;
+
+        ret = WaitForDebugEvent( &ev, 2000 );
+        if (!ret || ev.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT) break;
+        switch (ev.dwDebugEventCode)
+        {
+        default:
+            ok(0, "Unexpected event: %lu\n", ev.dwDebugEventCode);
+            /* fall through */
+        case EXIT_PROCESS_DEBUG_EVENT:
+        case EXIT_THREAD_DEBUG_EVENT:
+            ret = ContinueDebugEvent( ev.dwProcessId, ev.dwThreadId, DBG_CONTINUE );
+            ok(ret, "ContinueDebugEvent failed, last error %#lx.\n", GetLastError());
+            break;
+        }
+    }
+
+    ret = WaitForSingleObject( pi.hProcess, 2000 );
+    if (ret != WAIT_OBJECT_0)
+    {
+        DWORD ec;
+        ret = GetExitCodeProcess( pi.hProcess, &ec );
+        ok(ret, "GetExitCodeProcess failed: %lu\n", GetLastError());
+        ok(ec != STILL_ACTIVE, "GetExitCodeProcess still active\n");
+    }
+
+    ret = CloseHandle( pi.hThread );
+    ok(ret, "CloseHandle failed, last error %#lx.\n", GetLastError());
+    ret = CloseHandle( pi.hProcess );
+    ok(ret, "CloseHandle failed, last error %#lx.\n", GetLastError());
+
+    if (strcmp( winetest_platform, "wine" ) || num_wow64) /* windows or new wine wow */
+    {
+        ok(num_ntdll == 2, "Expecting two ntdll instances\n");
+        ok(num_wow64 >= 3, "Expecting more than 3 wow64*.dll\n");
+    }
+    else /* Wine's old wow, or 32/64 bit only configurations */
+    {
+        ok(num_ntdll == 1, "Expecting one ntdll instances\n");
+        ok(num_wow64 == 0, "Expecting more no wow64*.dll\n");
+    }
+    ok(bp_order, "Expecting 1 bp exceptions\n");
+    todo_wine
+    {
+        ok(bpwx_order, "Expecting 1 bpwx exceptions\n");
+        ok(bp_order < bpwx_order, "Out of order bp exceptions\n");
+    }
+}
+
 static void doChildren(int argc, char **argv)
 {
     const char *arguments = "debugger children last";
@@ -2284,6 +2436,7 @@ START_TEST(debugger)
         test_ExitCode();
         test_RemoteDebugger();
         test_debug_loop(myARGC, myARGV);
+        test_debug_loop_wow64();
         test_debug_children(myARGV[0], DEBUG_PROCESS, TRUE, FALSE);
         test_debug_children(myARGV[0], DEBUG_ONLY_THIS_PROCESS, FALSE, FALSE);
         test_debug_children(myARGV[0], DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS, FALSE, FALSE);
