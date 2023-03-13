@@ -279,11 +279,12 @@ static VkShaderModule shader_spirv_compile_shader(struct wined3d_context_vk *con
     ret = vkd3d_shader_compile(&info, &spirv, &messages);
     if (messages && *messages && FIXME_ON(d3d_shader))
     {
-        const char *ptr = messages;
-        const char *line;
+        const char *ptr, *end, *line;
 
         FIXME("Shader log:\n");
-        while ((line = get_line(&ptr)))
+        ptr = messages;
+        end = ptr + strlen(ptr);
+        while ((line = wined3d_get_line(&ptr, end)))
         {
             FIXME("    %.*s", (int)(ptr - line), line);
         }
