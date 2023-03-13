@@ -46,22 +46,6 @@ static BOOL shader_is_vshader_version(enum wined3d_shader_type type)
     return type == WINED3D_SHADER_TYPE_VERTEX;
 }
 
-static const char *get_line(const char **ptr)
-{
-    const char *p, *q;
-
-    p = *ptr;
-    if (!(q = strstr(p, "\n")))
-    {
-        if (!*p) return NULL;
-        *ptr += strlen(p);
-        return p;
-    }
-    *ptr = q + 1;
-
-    return p;
-}
-
 enum arb_helper_value
 {
     ARB_ZERO,
@@ -3315,13 +3299,17 @@ static void shader_hw_call(const struct wined3d_shader_instruction *ins)
 
 static BOOL shader_arb_compile(const struct wined3d_gl_info *gl_info, GLenum target, const char *src)
 {
-    const char *ptr, *line;
+    const char *ptr, *end, *line;
     GLint native, pos;
 
     if (TRACE_ON(d3d_shader))
     {
         ptr = src;
-        while ((line = get_line(&ptr))) TRACE_(d3d_shader)("    %.*s", (int)(ptr - line), line);
+        end = ptr + strlen(ptr);
+        while ((line = wined3d_get_line(&ptr, end)))
+        {
+            TRACE_(d3d_shader)("    %.*s", (int)(ptr - line), line);
+        }
     }
 
     GL_EXTCALL(glProgramStringARB(target, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(src), src));
@@ -3335,7 +3323,11 @@ static BOOL shader_arb_compile(const struct wined3d_gl_info *gl_info, GLenum tar
             FIXME_(d3d_shader)("Program error at position %d: %s\n\n", pos,
                     debugstr_a((const char *)gl_info->gl_ops.gl.p_glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
             ptr = src;
-            while ((line = get_line(&ptr))) FIXME_(d3d_shader)("    %.*s", (int)(ptr - line), line);
+            end = ptr + strlen(ptr);
+            while ((line = wined3d_get_line(&ptr, end)))
+            {
+                FIXME_(d3d_shader)("    %.*s", (int)(ptr - line), line);
+            }
             FIXME_(d3d_shader)("\n");
 
             return FALSE;
