@@ -544,12 +544,16 @@ static HRESULT WINAPI stream_props_GetType(IWMMediaProps *iface, GUID *major_typ
 static HRESULT WINAPI stream_props_GetMediaType(IWMMediaProps *iface, WM_MEDIA_TYPE *mt, DWORD *size)
 {
     struct stream_config *config = impl_from_IWMMediaProps(iface);
+    const struct wg_format *format;
+    struct wg_format codec_format;
     const DWORD req_size = *size;
     AM_MEDIA_TYPE stream_mt;
 
     TRACE("iface %p, mt %p, size %p.\n", iface, mt, size);
 
-    if (!amt_from_wg_format(&stream_mt, &config->stream->format, true))
+    wg_parser_stream_get_codec_format(config->stream->wg_stream, &codec_format);
+    format = (codec_format.major_type != WG_MAJOR_TYPE_UNKNOWN) ? &codec_format : &config->stream->format;
+    if (!amt_from_wg_format(&stream_mt, format, true))
         return E_OUTOFMEMORY;
 
     *size = sizeof(stream_mt) + stream_mt.cbFormat;
