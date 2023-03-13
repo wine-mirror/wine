@@ -107,7 +107,7 @@ struct wg_parser_stream
     GstPad *their_src, *my_sink;
     GstElement *flip, *decodebin;
     GstSegment segment;
-    struct wg_format preferred_format, current_format, stream_format;
+    struct wg_format preferred_format, current_format, codec_format;
 
     pthread_cond_t event_cond, event_empty_cond;
     GstBuffer *buffer;
@@ -213,6 +213,16 @@ static NTSTATUS wg_parser_stream_get_preferred_format(void *args)
     const struct wg_parser_stream_get_preferred_format_params *params = args;
 
     *params->format = params->stream->preferred_format;
+    return S_OK;
+}
+
+static NTSTATUS wg_parser_stream_get_codec_format(void *args)
+{
+    struct wg_parser_stream_get_codec_format_params *params = args;
+
+    *params->format = format_is_compressed(&params->stream->codec_format) ?
+            params->stream->codec_format :
+            params->stream->preferred_format;
     return S_OK;
 }
 
@@ -950,11 +960,11 @@ static void pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
         return;
 
     caps = gst_pad_query_caps(pad, NULL);
-    wg_format_from_caps(&stream->stream_format, caps);
+    wg_format_from_caps(&stream->codec_format, caps);
     gst_caps_unref(caps);
 
     /* For compressed stream, create an extra decodebin to decode it. */
-    if (format_is_compressed(&stream->stream_format))
+    if (format_is_compressed(&stream->codec_format))
     {
         if (!stream_decodebin_create(stream))
         {
@@ -1945,6 +1955,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     X(wg_parser_get_stream),
 
     X(wg_parser_stream_get_preferred_format),
+    X(wg_parser_stream_get_codec_format),
     X(wg_parser_stream_enable),
     X(wg_parser_stream_disable),
 

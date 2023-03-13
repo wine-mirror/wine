@@ -240,6 +240,12 @@ struct wg_parser_stream_get_preferred_format_params
     struct wg_format *format;
 };
 
+struct wg_parser_stream_get_codec_format_params
+{
+    struct wg_parser_stream *stream;
+    struct wg_format *format;
+};
+
 struct wg_parser_stream_enable_params
 {
     struct wg_parser_stream *stream;
@@ -350,6 +356,7 @@ enum unix_funcs
     unix_wg_parser_get_stream,
 
     unix_wg_parser_stream_get_preferred_format,
+    unix_wg_parser_stream_get_codec_format,
     unix_wg_parser_stream_enable,
     unix_wg_parser_stream_disable,
 

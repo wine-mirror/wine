@@ -185,6 +185,19 @@ void wg_parser_stream_get_preferred_format(struct wg_parser_stream *stream, stru
     WINE_UNIX_CALL(unix_wg_parser_stream_get_preferred_format, &params);
 }
 
+void wg_parser_stream_get_codec_format(struct wg_parser_stream *stream, struct wg_format *format)
+{
+    struct wg_parser_stream_get_codec_format_params params =
+    {
+        .stream = stream,
+        .format = format,
+    };
+
+    TRACE("stream %p, format %p.\n", stream, format);
+
+    WINE_UNIX_CALL(unix_wg_parser_stream_get_codec_format, &params);
+}
+
 void wg_parser_stream_enable(struct wg_parser_stream *stream, const struct wg_format *format)
 {
     struct wg_parser_stream_enable_params params =
