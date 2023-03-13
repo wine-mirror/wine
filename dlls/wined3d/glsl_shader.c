@@ -518,29 +518,35 @@ void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLuint id, BOOL 
      * that if there are errors. */
     if (length > 1)
     {
-        const char *ptr, *line;
+        const char *ptr, *end, *line;
 
         log = heap_alloc(length);
-        /* The info log is supposed to be zero-terminated, but at least some
-         * versions of fglrx don't terminate the string properly. The reported
-         * length does include the terminator, so explicitly set it to zero
-         * here. */
-        log[length - 1] = 0;
         if (program)
             GL_EXTCALL(glGetProgramInfoLog(id, length, NULL, log));
         else
             GL_EXTCALL(glGetShaderInfoLog(id, length, NULL, log));
 
         ptr = log;
+        /* The info log is supposed to be zero-terminated. Note that at least
+         * some versions of fglrx don't terminate the string properly. The
+         * reported length does include the supposed terminator though, so we
+         * don't care here. */
+        end = &ptr[length - 1];
         if (gl_info->quirks & WINED3D_QUIRK_INFO_LOG_SPAM)
         {
             WARN("Info log received from GLSL shader #%u:\n", id);
-            while ((line = get_info_log_line(&ptr))) WARN("    %.*s", (int)(ptr - line), line);
+            while ((line = wined3d_get_line(&ptr, end)))
+            {
+                WARN("    %.*s", (int)(ptr - line), line);
+            }
         }
         else
         {
             FIXME("Info log received from GLSL shader #%u:\n", id);
-            while ((line = get_info_log_line(&ptr))) FIXME("    %.*s", (int)(ptr - line), line);
+            while ((line = wined3d_get_line(&ptr, end)))
+            {
+                FIXME("    %.*s", (int)(ptr - line), line);
+            }
         }
         heap_free(log);
     }

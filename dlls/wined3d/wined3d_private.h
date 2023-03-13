@@ -74,6 +74,20 @@ static inline float int_to_float(uint32_t i)
     return u.f;
 }
 
+static inline const char *wined3d_get_line(const char **ptr, const char *end)
+{
+    const char *p, *q;
+
+    if ((p = *ptr) >= end)
+        return NULL;
+
+    if (!(q = memchr(p, '\n', end - p)))
+        *ptr = end;
+    else
+        *ptr = q + 1;
+    return p;
+}
+
 #define MAKEDWORD_VERSION(maj, min) (((maj & 0xffffu) << 16) | (min & 0xffffu))
 
 /* Driver quirks */
