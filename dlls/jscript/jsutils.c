@@ -947,6 +947,7 @@ HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTY
             break;
 
         hres = jsstr_to_bstr(str, &V_BSTR(dst));
+        jsstr_release(str);
         break;
     }
     case VT_EMPTY:
