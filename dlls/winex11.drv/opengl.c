@@ -1412,6 +1412,7 @@ static BOOL set_pixel_format( HDC hdc, int format, BOOL internal )
     const struct wgl_pixel_format *fmt;
     int value;
     HWND hwnd = NtUserWindowFromDC( hdc );
+    int prev;
 
     TRACE("(%p,%d)\n", hdc, format);
 
@@ -1435,14 +1436,12 @@ static BOOL set_pixel_format( HDC hdc, int format, BOOL internal )
         return FALSE;
     }
 
-    if (!internal)
-    {
-        /* cannot change it if already set */
-        int prev = win32u_get_window_pixel_format( hwnd );
-
-        if (prev)
-            return prev == format;
-    }
+    /* Even for internal pixel format fail setting it if the app has already set a
+     * different pixel format. Let wined3d create a backup GL context instead.
+     * Switching pixel format involves drawable recreation and is much more expensive
+     * than blitting from backup context. */
+    if ((prev = win32u_get_window_pixel_format( hwnd )))
+        return prev == format;
 
     return set_win_format( hwnd, fmt, internal );
 }
