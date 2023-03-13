@@ -51,6 +51,12 @@ typedef enum
 
 typedef BOOL (*init_gst_cb)(struct wg_parser *parser);
 
+struct input_cache_chunk
+{
+    guint64 position;
+    uint8_t *data;
+};
+
 struct wg_parser
 {
     init_gst_cb init_gst;
@@ -88,7 +94,10 @@ struct wg_parser
     bool unlimited_buffering;
 
     gchar *sink_caps;
+
+    struct input_cache_chunk input_cache_chunks[4];
 };
+static const unsigned int input_cache_chunk_size = 512 << 10;
 
 struct wg_parser_stream
 {
@@ -878,29 +887,9 @@ static void pad_removed_cb(GstElement *element, GstPad *pad, gpointer user)
     g_free(name);
 }
 
-static GstFlowReturn src_getrange_cb(GstPad *pad, GstObject *parent,
-        guint64 offset, guint size, GstBuffer **buffer)
+static GstFlowReturn issue_read_request(struct wg_parser *parser, guint64 offset, guint size, GstBuffer **buffer)
 {
-    struct wg_parser *parser = gst_pad_get_element_private(pad);
     GstFlowReturn ret;
-
-    GST_LOG("pad %p, offset %" G_GINT64_MODIFIER "u, size %u, buffer %p.", pad, offset, size, *buffer);
-
-    if (offset == GST_BUFFER_OFFSET_NONE)
-        offset = parser->next_pull_offset;
-    parser->next_pull_offset = offset + size;
-
-    if (!size)
-    {
-        /* asfreader occasionally asks for zero bytes. gst_buffer_map() will
-         * return NULL in this case. Avoid confusing the read thread by asking
-         * it for zero bytes. */
-        if (!*buffer)
-            *buffer = gst_buffer_new_and_alloc(0);
-        gst_buffer_set_size(*buffer, 0);
-        GST_LOG("Returning empty buffer.");
-        return GST_FLOW_OK;
-    }
 
     pthread_mutex_lock(&parser->mutex);
 
@@ -926,6 +915,140 @@ static GstFlowReturn src_getrange_cb(GstPad *pad, GstObject *parent,
     GST_LOG("Request returned %s.", gst_flow_get_name(ret));
 
     return ret;
+}
+
+static struct input_cache_chunk * get_cache_entry(struct wg_parser *parser, guint64 position)
+{
+    struct input_cache_chunk chunk;
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(parser->input_cache_chunks); i++)
+    {
+        chunk = parser->input_cache_chunks[i];
+
+        if (chunk.data && position == chunk.position)
+        {
+            if (i != 0)
+            {
+                memmove(&parser->input_cache_chunks[1], &parser->input_cache_chunks[0], i * sizeof(chunk));
+                parser->input_cache_chunks[0] = chunk;
+            }
+
+            return &parser->input_cache_chunks[0];
+        }
+    }
+
+    return NULL;
+}
+
+static GstFlowReturn read_cached_chunk(struct wg_parser *parser, guint64 chunk_position, unsigned int chunk_offset, GstBuffer *buffer, guint64 buffer_offset)
+{
+    struct input_cache_chunk *chunk;
+    GstBuffer *chunk_buffer;
+    void *chunk_data;
+    GstFlowReturn ret;
+
+    if ((chunk = get_cache_entry(parser, chunk_position)))
+    {
+        if (!!gst_buffer_fill(buffer, buffer_offset, chunk->data + chunk_offset, input_cache_chunk_size - chunk_offset))
+            return GST_FLOW_OK;
+        else
+            return GST_FLOW_ERROR;
+    }
+
+    chunk = &parser->input_cache_chunks[ ARRAY_SIZE(parser->input_cache_chunks) - 1 ];
+
+    if (!(chunk_data = chunk->data))
+        chunk_data = malloc(input_cache_chunk_size);
+
+    chunk_buffer = gst_buffer_new_wrapped_full(0, chunk_data, input_cache_chunk_size, 0, input_cache_chunk_size, NULL, NULL);
+    ret = issue_read_request(parser, chunk_position, input_cache_chunk_size, &chunk_buffer);
+    gst_buffer_unref(chunk_buffer);
+
+    if (ret != GST_FLOW_OK)
+    {
+        if (!chunk->data)
+            free(chunk_data);
+        return ret;
+    }
+
+    memmove(&parser->input_cache_chunks[1], &parser->input_cache_chunks[0], (ARRAY_SIZE(parser->input_cache_chunks) - 1) * sizeof(*chunk));
+    parser->input_cache_chunks[0].data = chunk_data;
+    parser->input_cache_chunks[0].position = chunk_position;
+
+    chunk = &parser->input_cache_chunks[0];
+    if (!!gst_buffer_fill(buffer, buffer_offset, chunk->data + chunk_offset, input_cache_chunk_size - chunk_offset))
+        return GST_FLOW_OK;
+    else
+        return GST_FLOW_ERROR;
+}
+
+static GstFlowReturn read_input_cache(struct wg_parser *parser, guint64 offset, guint size, GstBuffer **buffer)
+{
+    unsigned int i, chunk_count, chunk_offset, buffer_offset = 0;
+    GstBuffer *working_buffer;
+    guint64 chunk_position;
+    GstFlowReturn ret;
+
+    working_buffer = *buffer;
+    if (!working_buffer)
+        working_buffer = gst_buffer_new_and_alloc(size);
+
+    chunk_position = offset - (offset % input_cache_chunk_size);
+    chunk_count = (offset + size + input_cache_chunk_size - chunk_position - 1) / input_cache_chunk_size;
+    chunk_offset = offset - chunk_position;
+
+    for (i = 0; i < chunk_count; i++)
+    {
+        if ((ret = read_cached_chunk(parser, chunk_position, chunk_offset, working_buffer, buffer_offset)) != GST_FLOW_OK)
+        {
+            if (!*buffer)
+                gst_buffer_unref(working_buffer);
+            return ret;
+        }
+
+        chunk_position += input_cache_chunk_size;
+        buffer_offset += input_cache_chunk_size - chunk_offset;
+        chunk_offset = 0;
+    }
+
+    *buffer = working_buffer;
+    return GST_FLOW_OK;
+}
+
+static GstFlowReturn src_getrange_cb(GstPad *pad, GstObject *parent,
+        guint64 offset, guint size, GstBuffer **buffer)
+{
+    struct wg_parser *parser = gst_pad_get_element_private(pad);
+
+    GST_LOG("pad %p, offset %" G_GINT64_MODIFIER "u, size %u, buffer %p.", pad, offset, size, *buffer);
+
+    if (offset == GST_BUFFER_OFFSET_NONE)
+        offset = parser->next_pull_offset;
+    parser->next_pull_offset = offset + size;
+
+    if (!size)
+    {
+        /* asfreader occasionally asks for zero bytes. gst_buffer_map() will
+         * return NULL in this case. Avoid confusing the read thread by asking
+         * it for zero bytes. */
+        if (!*buffer)
+            *buffer = gst_buffer_new_and_alloc(0);
+        gst_buffer_set_size(*buffer, 0);
+        GST_LOG("Returning empty buffer.");
+        return GST_FLOW_OK;
+    }
+
+    if (size >= input_cache_chunk_size || sizeof(void*) == 4)
+        return issue_read_request(parser, offset, size, buffer);
+
+    if (offset >= parser->file_size)
+        return GST_FLOW_EOS;
+
+    if ((offset + size) >= parser->file_size)
+        size = parser->file_size - offset;
+
+    return read_input_cache(parser, offset, size, buffer);
 }
 
 static gboolean src_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
@@ -1472,6 +1595,15 @@ static NTSTATUS wg_parser_disconnect(void *args)
 
     g_free(parser->sink_caps);
     parser->sink_caps = NULL;
+
+    for (i = 0; i < ARRAY_SIZE(parser->input_cache_chunks); i++)
+    {
+        if (parser->input_cache_chunks[i].data)
+        {
+            free(parser->input_cache_chunks[i].data);
+            parser->input_cache_chunks[i].data = NULL;
+        }
+    }
 
     return S_OK;
 }
