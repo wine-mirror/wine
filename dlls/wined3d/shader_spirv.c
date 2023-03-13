@@ -202,22 +202,6 @@ static void shader_spirv_init_compile_args(struct wined3d_shader_spirv_compile_a
     }
 }
 
-static const char *get_line(const char **ptr)
-{
-    const char *p, *q;
-
-    p = *ptr;
-    if (!(q = strstr(p, "\n")))
-    {
-        if (!*p) return NULL;
-        *ptr += strlen(p);
-        return p;
-    }
-    *ptr = q + 1;
-
-    return p;
-}
-
 static void shader_spirv_init_shader_interface_vk(struct wined3d_shader_spirv_shader_interface *iface,
         const struct shader_spirv_resource_bindings *b, const struct wined3d_stream_output_desc *so_desc)
 {
@@ -720,11 +704,12 @@ static void shader_spirv_scan_shader(struct wined3d_shader *shader,
         ERR("Failed to scan shader, ret %d.\n", ret);
     if (messages && *messages && FIXME_ON(d3d_shader))
     {
-        const char *ptr = messages;
-        const char *line;
+        const char *ptr, *end, *line;
 
         FIXME("Shader log:\n");
-        while ((line = get_line(&ptr)))
+        ptr = messages;
+        end = ptr + strlen(ptr);
+        while ((line = wined3d_get_line(&ptr, end)))
         {
             FIXME("    %.*s", (int)(ptr - line), line);
         }
