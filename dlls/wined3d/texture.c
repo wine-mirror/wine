@@ -4906,7 +4906,20 @@ const VkDescriptorImageInfo *wined3d_texture_vk_get_default_image_info(struct wi
     TRACE("Created image view 0x%s.\n", wine_dbgstr_longlong(texture_vk->default_image_info.imageView));
 
     texture_vk->default_image_info.sampler = VK_NULL_HANDLE;
-    texture_vk->default_image_info.imageLayout = texture_vk->layout;
+
+    /* The default image view is used for SRVs, UAVs and RTVs when the d3d view encompasses the entire
+     * resource. Any UAV capable resource will always use VK_IMAGE_LAYOUT_GENERAL, so we can use the
+     * same image info for SRVs and UAVs. For render targets wined3d_rendertarget_view_vk_get_image_view
+     * only cares about the VkImageView, not entire image info. So using SHADER_READ_ONLY_OPTIMAL works,
+     * but relies on what the callers of the function do and don't do with the descriptor we return.
+     *
+     * Note that VkWriteDescriptorSet for SRV/UAV use takes a VkDescriptorImageInfo *, so we need a
+     * place to store the VkDescriptorImageInfo. So returning onlky a VkImageView from this function
+     * would bring its own problems. */
+    if (texture_vk->layout == VK_IMAGE_LAYOUT_GENERAL)
+        texture_vk->default_image_info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+    else
+        texture_vk->default_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
     return &texture_vk->default_image_info;
 }
@@ -5511,26 +5524,18 @@ BOOL wined3d_texture_vk_prepare_texture(struct wined3d_texture_vk *texture_vk,
     if (resource->bind_flags & WINED3D_BIND_UNORDERED_ACCESS)
         vk_usage |= VK_IMAGE_USAGE_STORAGE_BIT;
 
-    texture_vk->layout = VK_IMAGE_LAYOUT_GENERAL;
-    if (wined3d_popcount(resource->bind_flags) == 1)
+    if (resource->bind_flags & WINED3D_BIND_UNORDERED_ACCESS)
+        texture_vk->layout = VK_IMAGE_LAYOUT_GENERAL;
+    else if (resource->bind_flags & WINED3D_BIND_RENDER_TARGET)
+        texture_vk->layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    else if (resource->bind_flags & WINED3D_BIND_DEPTH_STENCIL)
+        texture_vk->layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    else if (resource->bind_flags & WINED3D_BIND_SHADER_RESOURCE)
+        texture_vk->layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    else
     {
-        switch (resource->bind_flags)
-        {
-            case WINED3D_BIND_RENDER_TARGET:
-                texture_vk->layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-                break;
-
-            case WINED3D_BIND_DEPTH_STENCIL:
-                texture_vk->layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-                break;
-
-            case WINED3D_BIND_SHADER_RESOURCE:
-                texture_vk->layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                break;
-
-            default:
-                break;
-        }
+        FIXME("unexpected bind flags %s, using VK_IMAGE_LAYOUT_GENERAL\n", wined3d_debug_bind_flags(resource->bind_flags));
+        texture_vk->layout = VK_IMAGE_LAYOUT_GENERAL;
     }
 
     if (!wined3d_context_vk_create_image(context_vk, vk_image_type, vk_usage, format_vk->vk_format,
@@ -5539,6 +5544,10 @@ BOOL wined3d_texture_vk_prepare_texture(struct wined3d_texture_vk *texture_vk,
     {
         return FALSE;
     }
+
+    /* We can't use a zero src access mask without synchronization2. Set the last-used bind mask to something
+     * non-zero to avoid this. */
+    texture_vk->bind_mask = resource->bind_flags;
 
     vk_range.aspectMask = vk_aspect_mask_from_format(&format_vk->f);
     vk_range.baseMipLevel = 0;
@@ -5706,15 +5715,48 @@ HRESULT wined3d_texture_vk_init(struct wined3d_texture_vk *texture_vk, struct wi
             flags, device, parent, parent_ops, &texture_vk[1], &wined3d_texture_vk_ops);
 }
 
+enum VkImageLayout wined3d_layout_from_bind_mask(const struct wined3d_texture_vk *texture_vk, const uint32_t bind_mask)
+{
+    assert(wined3d_popcount(bind_mask) == 1);
+
+    /* We want to avoid switching between LAYOUT_GENERAL and other layouts. In Radeon GPUs (and presumably
+     * others), this will trigger decompressing and recompressing the texture. We also hardcode the layout
+     * into views when they are created. */
+    if (texture_vk->layout == VK_IMAGE_LAYOUT_GENERAL)
+        return VK_IMAGE_LAYOUT_GENERAL;
+
+    switch (bind_mask)
+    {
+        case WINED3D_BIND_RENDER_TARGET:
+            return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+        case WINED3D_BIND_DEPTH_STENCIL:
+            return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+        case WINED3D_BIND_SHADER_RESOURCE:
+            return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+        default:
+            ERR("Unexpected bind mask %s.\n", wined3d_debug_bind_flags(bind_mask));
+            return VK_IMAGE_LAYOUT_GENERAL;
+    }
+}
+
 void wined3d_texture_vk_barrier(struct wined3d_texture_vk *texture_vk,
         struct wined3d_context_vk *context_vk, uint32_t bind_mask)
 {
+    enum VkImageLayout new_layout;
     uint32_t src_bind_mask = 0;
 
     TRACE("texture_vk %p, context_vk %p, bind_mask %s.\n",
             texture_vk, context_vk, wined3d_debug_bind_flags(bind_mask));
 
-    if (bind_mask & ~WINED3D_READ_ONLY_BIND_MASK)
+    new_layout = wined3d_layout_from_bind_mask(texture_vk, bind_mask);
+
+    /* A layout transition is potentially a read-write operation, so even if we
+     * prepare the texture to e.g. read only shader resource mode, we have to wait
+     * for past operations to finish. */
+    if (bind_mask & ~WINED3D_READ_ONLY_BIND_MASK || new_layout != texture_vk->layout)
     {
         src_bind_mask = texture_vk->bind_mask & WINED3D_READ_ONLY_BIND_MASK;
         if (!src_bind_mask)
@@ -5732,8 +5774,9 @@ void wined3d_texture_vk_barrier(struct wined3d_texture_vk *texture_vk,
     {
         VkImageSubresourceRange vk_range;
 
-        TRACE("    %s -> %s.\n",
-                wined3d_debug_bind_flags(src_bind_mask), wined3d_debug_bind_flags(bind_mask));
+        TRACE("    %s(%x) -> %s(%x).\n",
+                wined3d_debug_bind_flags(src_bind_mask), texture_vk->layout,
+                wined3d_debug_bind_flags(bind_mask), new_layout);
 
         vk_range.aspectMask = vk_aspect_mask_from_format(texture_vk->t.resource.format);
         vk_range.baseMipLevel = 0;
@@ -5745,7 +5788,9 @@ void wined3d_texture_vk_barrier(struct wined3d_texture_vk *texture_vk,
                 vk_pipeline_stage_mask_from_bind_flags(src_bind_mask),
                 vk_pipeline_stage_mask_from_bind_flags(bind_mask),
                 vk_access_mask_from_bind_flags(src_bind_mask), vk_access_mask_from_bind_flags(bind_mask),
-                texture_vk->layout, texture_vk->layout, texture_vk->image.vk_image, &vk_range);
+                texture_vk->layout, new_layout, texture_vk->image.vk_image, &vk_range);
+
+        texture_vk->layout = new_layout;
     }
 }
 

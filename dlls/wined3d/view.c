@@ -1190,7 +1190,10 @@ static void wined3d_shader_resource_view_vk_cs_init(void *object)
 
     srv_vk->view_vk.u.vk_image_info.imageView = vk_image_view;
     srv_vk->view_vk.u.vk_image_info.sampler = VK_NULL_HANDLE;
-    srv_vk->view_vk.u.vk_image_info.imageLayout = texture_vk->layout;
+    if (texture_vk->layout == VK_IMAGE_LAYOUT_GENERAL)
+        srv_vk->view_vk.u.vk_image_info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+    else
+        srv_vk->view_vk.u.vk_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }
 
 HRESULT wined3d_shader_resource_view_vk_init(struct wined3d_shader_resource_view_vk *view_vk,
