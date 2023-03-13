@@ -484,22 +484,6 @@ static void shader_glsl_append_imm_ivec(struct wined3d_string_buffer *buffer,
         shader_addline(buffer, ")");
 }
 
-static const char *get_info_log_line(const char **ptr)
-{
-    const char *p, *q;
-
-    p = *ptr;
-    if (!(q = strstr(p, "\n")))
-    {
-        if (!*p) return NULL;
-        *ptr += strlen(p);
-        return p;
-    }
-    *ptr = q + 1;
-
-    return p;
-}
-
 /* Context activation is done by the caller. */
 void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLuint id, BOOL program)
 {
@@ -593,7 +577,7 @@ static void shader_glsl_dump_program_source(const struct wined3d_gl_info *gl_inf
     GL_EXTCALL(glGetAttachedShaders(program, shader_count, NULL, shaders));
     for (i = 0; i < shader_count; ++i)
     {
-        const char *ptr, *line;
+        const char *ptr, *end, *line;
         GLint tmp;
 
         GL_EXTCALL(glGetShaderiv(shaders[i], GL_SHADER_SOURCE_LENGTH, &tmp));
@@ -602,7 +586,7 @@ static void shader_glsl_dump_program_source(const struct wined3d_gl_info *gl_inf
         {
             heap_free(source);
 
-            if (!(source = heap_alloc_zero(tmp)))
+            if (!(source = heap_alloc(tmp)))
             {
                 ERR("Failed to allocate %d bytes for shader source.\n", tmp);
                 heap_free(shaders);
@@ -611,16 +595,20 @@ static void shader_glsl_dump_program_source(const struct wined3d_gl_info *gl_inf
             source_size = tmp;
         }
 
+        GL_EXTCALL(glGetShaderSource(shaders[i], source_size, NULL, source));
+        ptr = source;
+        end = &ptr[tmp - 1];
+
         FIXME("Shader %u:\n", shaders[i]);
         GL_EXTCALL(glGetShaderiv(shaders[i], GL_SHADER_TYPE, &tmp));
         FIXME("    GL_SHADER_TYPE: %s.\n", debug_gl_shader_type(tmp));
         GL_EXTCALL(glGetShaderiv(shaders[i], GL_COMPILE_STATUS, &tmp));
         FIXME("    GL_COMPILE_STATUS: %d.\n", tmp);
         FIXME("\n");
-
-        ptr = source;
-        GL_EXTCALL(glGetShaderSource(shaders[i], source_size, NULL, source));
-        while ((line = get_info_log_line(&ptr))) FIXME("    %.*s", (int)(ptr - line), line);
+        while ((line = wined3d_get_line(&ptr, end)))
+        {
+            FIXME("    %.*s", (int)(ptr - line), line);
+        }
         FIXME("\n");
     }
 
