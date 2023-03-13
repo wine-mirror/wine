@@ -3758,7 +3758,6 @@ static void test_fpu_setup(void)
 #if defined(D3D8_TEST_SET_FPU_CW) && defined(D3D8_TEST_GET_FPU_CW)
     struct device_desc device_desc;
     IDirect3DDevice8 *device;
-    D3DDISPLAYMODE d3ddm;
     IDirect3D8 *d3d8;
     HWND window;
     HRESULT hr;
@@ -3770,9 +3769,6 @@ static void test_fpu_setup(void)
     ok(!!window, "Failed to create a window.\n");
     d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
     ok(!!d3d8, "Failed to create a D3D object.\n");
-
-    hr = IDirect3D8_GetAdapterDisplayMode(d3d8, D3DADAPTER_DEFAULT, &d3ddm);
-    ok(SUCCEEDED(hr), "GetAdapterDisplayMode failed, hr %#lx.\n", hr);
 
     device_desc.adapter_ordinal = D3DADAPTER_DEFAULT;
     device_desc.device_window = window;
