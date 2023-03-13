@@ -1110,8 +1110,23 @@ static HRESULT WINAPI uia_element_GetRuntimeId(IUIAutomationElement9 *iface, SAF
 static HRESULT WINAPI uia_element_FindFirst(IUIAutomationElement9 *iface, enum TreeScope scope,
         IUIAutomationCondition *condition, IUIAutomationElement **found)
 {
-    FIXME("%p: stub\n", iface);
-    return E_NOTIMPL;
+    IUIAutomationCacheRequest *cache_req;
+    HRESULT hr;
+
+    TRACE("%p, %#x, %p, %p\n", iface, scope, condition, found);
+
+    if (!found)
+        return E_POINTER;
+
+    *found = NULL;
+    hr = create_uia_cache_request_iface(&cache_req);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IUIAutomationElement9_FindFirstBuildCache(iface, scope, condition, cache_req, found);
+    IUIAutomationCacheRequest_Release(cache_req);
+
+    return hr;
 }
 
 static HRESULT WINAPI uia_element_FindAll(IUIAutomationElement9 *iface, enum TreeScope scope,
@@ -1136,13 +1151,93 @@ static HRESULT WINAPI uia_element_FindAll(IUIAutomationElement9 *iface, enum Tre
     return hr;
 }
 
+static HRESULT set_find_params_struct(struct UiaFindParams *params, IUIAutomationCondition *cond, int scope,
+        BOOL find_first)
+{
+    HRESULT hr;
+
+    hr = get_uia_condition_struct_from_iface(cond, &params->pFindCondition);
+    if (FAILED(hr))
+        return hr;
+
+    if (!scope || (scope & (~TreeScope_SubTree)))
+        return E_INVALIDARG;
+
+    params->FindFirst = find_first;
+    if (scope & TreeScope_Element)
+        params->ExcludeRoot = FALSE;
+    else
+        params->ExcludeRoot = TRUE;
+
+    if (scope & TreeScope_Descendants)
+        params->MaxDepth = -1;
+    else if (scope & TreeScope_Children)
+        params->MaxDepth = 1;
+    else
+        params->MaxDepth = 0;
+
+    return S_OK;
+}
+
 static HRESULT create_uia_element_from_cache_req(IUIAutomationElement **iface, BOOL from_cui8,
         struct UiaCacheRequest *cache_req, LONG start_idx, SAFEARRAY *req_data, BSTR tree_struct);
 static HRESULT WINAPI uia_element_FindFirstBuildCache(IUIAutomationElement9 *iface, enum TreeScope scope,
         IUIAutomationCondition *condition, IUIAutomationCacheRequest *cache_req, IUIAutomationElement **found)
 {
-    FIXME("%p: stub\n", iface);
-    return E_NOTIMPL;
+    struct uia_element *element = impl_from_IUIAutomationElement9(iface);
+    LONG lbound_offsets, lbound_tree_structs, elems_count, offset_idx;
+    struct UiaFindParams find_params = { 0 };
+    struct UiaCacheRequest *cache_req_struct;
+    SAFEARRAY *sa, *tree_structs, *offsets;
+    IUIAutomationElement *elem;
+    BSTR tree_struct_str;
+    HRESULT hr;
+
+    TRACE("%p, %#x, %p, %p, %p\n", iface, scope, condition, cache_req, found);
+
+    if (!found)
+        return E_POINTER;
+
+    *found = elem = NULL;
+    hr = get_uia_cache_request_struct_from_iface(cache_req, &cache_req_struct);
+    if (FAILED(hr))
+        return hr;
+
+    hr = set_find_params_struct(&find_params, condition, scope, TRUE);
+    if (FAILED(hr))
+        return hr;
+
+    sa = offsets = tree_structs = NULL;
+    hr = UiaFind(element->node, &find_params, cache_req_struct, &sa, &offsets, &tree_structs);
+    if (FAILED(hr) || !sa)
+        goto exit;
+
+    hr = get_safearray_bounds(tree_structs, &lbound_tree_structs, &elems_count);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = SafeArrayGetElement(tree_structs, &lbound_tree_structs, &tree_struct_str);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = get_safearray_bounds(offsets, &lbound_offsets, &elems_count);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = SafeArrayGetElement(offsets, &lbound_offsets, &offset_idx);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = create_uia_element_from_cache_req(&elem, element->from_cui8, cache_req_struct, offset_idx, sa, tree_struct_str);
+    if (SUCCEEDED(hr))
+        *found = elem;
+
+exit:
+    SafeArrayDestroy(tree_structs);
+    SafeArrayDestroy(offsets);
+    SafeArrayDestroy(sa);
+
+    return hr;
 }
 
 static HRESULT WINAPI uia_element_FindAllBuildCache(IUIAutomationElement9 *iface, enum TreeScope scope,
@@ -1168,24 +1263,9 @@ static HRESULT WINAPI uia_element_FindAllBuildCache(IUIAutomationElement9 *iface
     if (FAILED(hr))
         return hr;
 
-    hr = get_uia_condition_struct_from_iface(condition, &find_params.pFindCondition);
+    hr = set_find_params_struct(&find_params, condition, scope, FALSE);
     if (FAILED(hr))
         return hr;
-
-    if (!scope || (scope & (~TreeScope_SubTree)))
-        return E_INVALIDARG;
-
-    if (scope & TreeScope_Element)
-        find_params.ExcludeRoot = FALSE;
-    else
-        find_params.ExcludeRoot = TRUE;
-
-    if (scope & TreeScope_Descendants)
-        find_params.MaxDepth = -1;
-    else if (scope & TreeScope_Children)
-        find_params.MaxDepth = 1;
-    else
-        find_params.MaxDepth = 0;
 
     sa = offsets = tree_structs = NULL;
     hr = UiaFind(element->node, &find_params, cache_req_struct, &sa, &offsets, &tree_structs);

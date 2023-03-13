@@ -11418,62 +11418,53 @@ static void test_Element_Find(IUIAutomation *uia_iface)
      * root is TRUE. element2 now represents Provider_child.
      */
     hr = IUIAutomationElement_FindFirstBuildCache(element, TreeScope_Children, condition, cache_req, &element2);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+
+    hr = IUIAutomationElement_GetCurrentPropertyValueEx(element2, UIA_ProviderDescriptionPropertyId, TRUE, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
     if (SUCCEEDED(hr))
     {
-        hr = IUIAutomationElement_GetCurrentPropertyValueEx(element2, UIA_ProviderDescriptionPropertyId, TRUE, &v);
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        if (SUCCEEDED(hr))
-        {
-            check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
-            check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_child", TRUE);
-            VariantClear(&v);
-        }
-
-        ok_method_sequence(find_seq4, "find_seq4");
+        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
+        check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_child", TRUE);
+        VariantClear(&v);
     }
 
-    if (element2)
-    {
-        /*
-         * Equivalent to: Maximum find depth of 0, find first is FALSE, exclude
-         * root is FALSE. Provider_child doesn't have a runtime id for UI
-         * Automation to use as a way to check if it has navigated back to the
-         * node that began the search, so it will get siblings.
-         */
-        hr = IUIAutomationElement_FindAllBuildCache(element2, TreeScope_Element, condition, cache_req, &element_arr);
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        if (SUCCEEDED(hr))
-        {
-            set_elem_desc(&exp_elems[0], &Provider_child, NULL, GetCurrentProcessId(), 2, 2);
-            add_provider_desc(&exp_elems[0].prov_desc, L"Main", L"Provider_child", TRUE);
-            set_elem_desc(&exp_elems[1], &Provider_child2, NULL, GetCurrentProcessId(), 2, 1);
-            add_provider_desc(&exp_elems[1].prov_desc, L"Main", L"Provider_child2", TRUE);
+    ok_method_sequence(find_seq4, "find_seq4");
 
-            test_uia_element_arr(element_arr, exp_elems, 2);
-            ok_method_sequence(find_seq5, "find_seq5");
-        }
+    /*
+     * Equivalent to: Maximum find depth of 0, find first is FALSE, exclude
+     * root is FALSE. Provider_child doesn't have a runtime id for UI
+     * Automation to use as a way to check if it has navigated back to the
+     * node that began the search, so it will get siblings.
+     */
+    hr = IUIAutomationElement_FindAllBuildCache(element2, TreeScope_Element, condition, cache_req, &element_arr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-        /*
-         * Equivalent to: Maximum find depth of 0, find first is FALSE, exclude
-         * root is FALSE. Provider_child now has a runtime ID, so we don't get
-         * its sibling.
-         */
-        Provider_child.runtime_id[0] = Provider_child.runtime_id[1] = 0xdeadbeef;
-        hr = IUIAutomationElement_FindAllBuildCache(element2, TreeScope_Element, condition, cache_req, &element_arr);
-        IUIAutomationElement_Release(element2);
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        if (SUCCEEDED(hr))
-        {
-            set_elem_desc(&exp_elems[0], &Provider_child, NULL, GetCurrentProcessId(), 2, 1);
-            add_provider_desc(&exp_elems[0].prov_desc, L"Main", L"Provider_child", TRUE);
+    set_elem_desc(&exp_elems[0], &Provider_child, NULL, GetCurrentProcessId(), 2, 2);
+    add_provider_desc(&exp_elems[0].prov_desc, L"Main", L"Provider_child", TRUE);
+    set_elem_desc(&exp_elems[1], &Provider_child2, NULL, GetCurrentProcessId(), 2, 1);
+    add_provider_desc(&exp_elems[1].prov_desc, L"Main", L"Provider_child2", TRUE);
 
-            test_uia_element_arr(element_arr, exp_elems, 1);
-            ok_method_sequence(find_seq6, "find_seq6");
-        }
-        initialize_provider_tree(FALSE);
-    }
+    test_uia_element_arr(element_arr, exp_elems, 2);
+    ok_method_sequence(find_seq5, "find_seq5");
+
+    /*
+     * Equivalent to: Maximum find depth of 0, find first is FALSE, exclude
+     * root is FALSE. Provider_child now has a runtime ID, so we don't get
+     * its sibling.
+     */
+    Provider_child.runtime_id[0] = Provider_child.runtime_id[1] = 0xdeadbeef;
+    hr = IUIAutomationElement_FindAllBuildCache(element2, TreeScope_Element, condition, cache_req, &element_arr);
+    IUIAutomationElement_Release(element2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    set_elem_desc(&exp_elems[0], &Provider_child, NULL, GetCurrentProcessId(), 2, 1);
+    add_provider_desc(&exp_elems[0].prov_desc, L"Main", L"Provider_child", TRUE);
+
+    test_uia_element_arr(element_arr, exp_elems, 1);
+    ok_method_sequence(find_seq6, "find_seq6");
+    initialize_provider_tree(FALSE);
 
     IUIAutomationCondition_Release(condition);
 
@@ -11618,22 +11609,20 @@ static void test_Element_Find(IUIAutomation *uia_iface)
      * to match our condition.
      */
     hr = IUIAutomationElement_FindFirstBuildCache(element, TreeScope_SubTree, condition, cache_req, &element2);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(Provider_child_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child_child2.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child_child2.ref);
+
+    hr = IUIAutomationElement_GetCurrentPropertyValueEx(element2, UIA_ProviderDescriptionPropertyId, TRUE, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
     if (SUCCEEDED(hr))
     {
-        hr = IUIAutomationElement_GetCurrentPropertyValueEx(element2, UIA_ProviderDescriptionPropertyId, TRUE, &v);
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        if (SUCCEEDED(hr))
-        {
-            check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
-            check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_child_child2", TRUE);
-            VariantClear(&v);
-        }
-
-        IUIAutomationElement_Release(element2);
-        ok_method_sequence(find_seq11, "find_seq11");
+        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
+        check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_child_child2", TRUE);
+        VariantClear(&v);
     }
+
+    IUIAutomationElement_Release(element2);
+    ok_method_sequence(find_seq11, "find_seq11");
     initialize_provider_tree(FALSE);
 
     IUIAutomationCondition_Release(condition);
@@ -11688,23 +11677,20 @@ static void test_Element_Find(IUIAutomation *uia_iface)
     set_provider_prop_override(&Provider_child_child, &prop_override, 1);
 
     hr = IUIAutomationElement_FindFirst(element, TreeScope_SubTree, condition, &element2);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(Provider_child_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child_child2.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child_child2.ref);
+
+    hr = IUIAutomationElement_GetCurrentPropertyValueEx(element2, UIA_ProviderDescriptionPropertyId, TRUE, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
     if (SUCCEEDED(hr))
     {
-        hr = IUIAutomationElement_GetCurrentPropertyValueEx(element2, UIA_ProviderDescriptionPropertyId, TRUE, &v);
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        if (SUCCEEDED(hr))
-        {
-            check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
-            check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_child_child2", TRUE);
-            VariantClear(&v);
-        }
-
-        IUIAutomationElement_Release(element2);
-        ok_method_sequence(element_find_seq2, "element_find_seq2");
+        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
+        check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_child_child2", TRUE);
+        VariantClear(&v);
     }
 
+    IUIAutomationElement_Release(element2);
+    ok_method_sequence(element_find_seq2, "element_find_seq2");
     initialize_provider_tree(TRUE);
 
     IUIAutomationCondition_Release(condition);
