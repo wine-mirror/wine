@@ -541,6 +541,60 @@ static bool amt_from_wg_format_video_cinepak(AM_MEDIA_TYPE *mt, const struct wg_
     return true;
 }
 
+static bool amt_from_wg_format_video_wmv(AM_MEDIA_TYPE *mt, const struct wg_format *format)
+{
+    VIDEOINFO *video_format;
+    uint32_t frame_time;
+    const GUID *subtype;
+
+    if (!(video_format = CoTaskMemAlloc(sizeof(*video_format))))
+        return false;
+
+    switch (format->u.video_wmv.format)
+    {
+        case WG_WMV_VIDEO_FORMAT_WMV1:
+            subtype = &MEDIASUBTYPE_WMV1;
+            break;
+        case WG_WMV_VIDEO_FORMAT_WMV2:
+            subtype = &MEDIASUBTYPE_WMV2;
+            break;
+        case WG_WMV_VIDEO_FORMAT_WMV3:
+            subtype = &MEDIASUBTYPE_WMV3;
+            break;
+        case WG_WMV_VIDEO_FORMAT_WMVA:
+            subtype = &MEDIASUBTYPE_WMVA;
+            break;
+        case WG_WMV_VIDEO_FORMAT_WVC1:
+            subtype = &MEDIASUBTYPE_WVC1;
+            break;
+        default:
+            WARN("Invalid WMV format %u.\n", format->u.video_wmv.format);
+            return false;
+    }
+
+    mt->majortype = MEDIATYPE_Video;
+    mt->subtype = *subtype;
+    mt->bFixedSizeSamples = FALSE;
+    mt->bTemporalCompression = TRUE;
+    mt->lSampleSize = 0;
+    mt->formattype = FORMAT_VideoInfo;
+    mt->cbFormat = sizeof(VIDEOINFOHEADER);
+    mt->pbFormat = (BYTE *)video_format;
+
+    memset(video_format, 0, sizeof(*video_format));
+    SetRect(&video_format->rcSource, 0, 0, format->u.video_wmv.width, format->u.video_wmv.height);
+    video_format->rcTarget = video_format->rcSource;
+    if ((frame_time = MulDiv(10000000, format->u.video_wmv.fps_d, format->u.video_wmv.fps_n)) != -1)
+        video_format->AvgTimePerFrame = frame_time;
+    video_format->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    video_format->bmiHeader.biWidth = format->u.video_wmv.width;
+    video_format->bmiHeader.biHeight = format->u.video_wmv.height;
+    video_format->bmiHeader.biPlanes = 1;
+    video_format->bmiHeader.biCompression = mt->subtype.Data1;
+
+    return true;
+}
+
 bool amt_from_wg_format(AM_MEDIA_TYPE *mt, const struct wg_format *format, bool wm)
 {
     memset(mt, 0, sizeof(*mt));
@@ -550,7 +604,6 @@ bool amt_from_wg_format(AM_MEDIA_TYPE *mt, const struct wg_format *format, bool 
     case WG_MAJOR_TYPE_AUDIO_MPEG4:
     case WG_MAJOR_TYPE_AUDIO_WMA:
     case WG_MAJOR_TYPE_VIDEO_H264:
-    case WG_MAJOR_TYPE_VIDEO_WMV:
     case WG_MAJOR_TYPE_VIDEO_INDEO:
         FIXME("Format %u not implemented!\n", format->major_type);
         /* fallthrough */
@@ -568,6 +621,9 @@ bool amt_from_wg_format(AM_MEDIA_TYPE *mt, const struct wg_format *format, bool 
 
     case WG_MAJOR_TYPE_VIDEO_CINEPAK:
         return amt_from_wg_format_video_cinepak(mt, format);
+
+    case WG_MAJOR_TYPE_VIDEO_WMV:
+        return amt_from_wg_format_video_wmv(mt, format);
     }
 
     assert(0);
