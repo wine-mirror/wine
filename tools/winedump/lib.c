@@ -231,6 +231,20 @@ void lib_dump(void)
                 printf("\n");
             }
         }
+        else if (!strncmp((const char *)iamh->Name, "/<ECSYMBOLS>/   ", sizeof(iamh->Name)))
+        {
+            unsigned int i, *count = (unsigned int *)ioh;
+            unsigned short *offsets = (unsigned short *)(count + 1);
+            const char *name = (const char *)(offsets + *count);
+
+            printf("%u EC symbols\n", *count);
+            for (i = 0; i < *count; i++)
+            {
+                printf("%8x %s\n", offsets[i], name);
+                name += strlen(name) + 1;
+            }
+            printf("\n");
+        }
         else if (!strncmp((const char *)iamh->Name, IMAGE_ARCHIVE_LONGNAMES_MEMBER, sizeof(iamh->Name)))
         {
             long_names = PRD(cur_file_pos, size);
