@@ -229,6 +229,59 @@ static void wg_format_from_caps_video_cinepak(struct wg_format *format, const Gs
     format->u.video_cinepak.fps_d = fps_d;
 }
 
+static void wg_format_from_caps_video_wmv(struct wg_format *format, const GstCaps *caps)
+{
+    const GstStructure *structure = gst_caps_get_structure(caps, 0);
+    gint width, height, fps_n, fps_d, wmv_version = 0;
+    gchar format_buffer[5] = {'W','M','V','0',0};
+    enum wg_wmv_video_format wmv_format;
+    const gchar *wmv_format_str = NULL;
+
+    if (!gst_structure_get_int(structure, "width", &width))
+    {
+        GST_WARNING("Missing \"width\" value.");
+        return;
+    }
+    if (!gst_structure_get_int(structure, "height", &height))
+    {
+        GST_WARNING("Missing \"height\" value.");
+        return;
+    }
+
+    if (!(wmv_format_str = gst_structure_get_string(structure, "format")))
+    {
+        if (!gst_structure_get_int(structure, "wmvversion", &wmv_version))
+            GST_WARNING("Unable to get WMV format.");
+        format_buffer[3] += wmv_version;
+        wmv_format_str = format_buffer;
+    }
+    if (!strcmp(wmv_format_str, "WMV1"))
+        wmv_format = WG_WMV_VIDEO_FORMAT_WMV1;
+    else if (!strcmp(wmv_format_str, "WMV2"))
+        wmv_format = WG_WMV_VIDEO_FORMAT_WMV2;
+    else if (!strcmp(wmv_format_str, "WMV3"))
+        wmv_format = WG_WMV_VIDEO_FORMAT_WMV3;
+    else if (!strcmp(wmv_format_str, "WMVA"))
+        wmv_format = WG_WMV_VIDEO_FORMAT_WMVA;
+    else if (!strcmp(wmv_format_str, "WVC1"))
+        wmv_format = WG_WMV_VIDEO_FORMAT_WVC1;
+    else
+        wmv_format = WG_WMV_VIDEO_FORMAT_UNKNOWN;
+
+    if (!gst_structure_get_fraction(structure, "framerate", &fps_n, &fps_d))
+    {
+        fps_n = 0;
+        fps_d = 1;
+    }
+
+    format->major_type = WG_MAJOR_TYPE_VIDEO_WMV;
+    format->u.video_wmv.width = width;
+    format->u.video_wmv.height = height;
+    format->u.video_wmv.format = wmv_format;
+    format->u.video_wmv.fps_n = fps_n;
+    format->u.video_wmv.fps_d = fps_d;
+}
+
 void wg_format_from_caps(struct wg_format *format, const GstCaps *caps)
 {
     const GstStructure *structure = gst_caps_get_structure(caps, 0);
@@ -257,6 +310,10 @@ void wg_format_from_caps(struct wg_format *format, const GstCaps *caps)
     else if (!strcmp(name, "video/x-cinepak"))
     {
         wg_format_from_caps_video_cinepak(format, caps);
+    }
+    else if (!strcmp(name, "video/x-wmv"))
+    {
+        wg_format_from_caps_video_wmv(format, caps);
     }
     else
     {
