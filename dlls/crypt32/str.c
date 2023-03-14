@@ -965,11 +965,22 @@ static DWORD cert_get_name_from_rdn_attr(DWORD encodingType,
     if (CryptDecodeObjectEx(encodingType, X509_NAME, name->pbData,
      name->cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, &nameInfo, &bytes))
     {
-        PCERT_RDN_ATTR nameAttr;
+        PCERT_RDN_ATTR nameAttr = NULL;
 
-        if (!oid)
-            oid = szOID_RSA_emailAddr;
-        nameAttr = CertFindRDNAttr(oid, nameInfo);
+        if (oid)
+            nameAttr = CertFindRDNAttr(oid, nameInfo);
+        else
+        {
+            static const LPCSTR attributeOIDs[] =
+            {
+                szOID_RSA_emailAddr, szOID_COMMON_NAME,
+                szOID_ORGANIZATIONAL_UNIT_NAME, szOID_ORGANIZATION_NAME
+            };
+            DWORD i;
+
+            for (i = 0; !nameAttr && i < ARRAY_SIZE(attributeOIDs); i++)
+                nameAttr = CertFindRDNAttr(attributeOIDs[i], nameInfo);
+        }
         if (nameAttr)
             ret = rdn_value_to_strW(nameAttr->dwValueType, &nameAttr->Value,
              pszNameString, cchNameString, TRUE);
