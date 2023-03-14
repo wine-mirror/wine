@@ -386,29 +386,10 @@ static void get_vendorid( WCHAR *buf )
     regs_to_str( regs + 1, 12, buf );
 }
 
-static void get_namestring( WCHAR *buf )
-{
-    int regs[4] = {0, 0, 0, 0};
-    int i;
-
-    __cpuid( regs, 0x80000000 );
-    if (regs[0] >= 0x80000004)
-    {
-        __cpuid( regs, 0x80000002 );
-        regs_to_str( regs, 16, buf );
-        __cpuid( regs, 0x80000003 );
-        regs_to_str( regs, 16, buf + 16 );
-        __cpuid( regs, 0x80000004 );
-        regs_to_str( regs, 16, buf + 32 );
-    }
-    for (i = lstrlenW(buf) - 1; i >= 0 && buf[i] == ' '; i--) buf[i] = 0;
-}
-
 #else  /* __i386__ || __x86_64__ */
 
 static void get_identifier( WCHAR *buf, size_t size, const WCHAR *arch ) { }
 static void get_vendorid( WCHAR *buf ) { }
-static void get_namestring( WCHAR *buf ) { }
 
 #endif  /* __i386__ || __x86_64__ */
 
@@ -653,11 +634,13 @@ static void create_hardware_registry_keys(void)
     SYSTEM_CPU_INFORMATION sci;
     PROCESSOR_POWER_INFORMATION* power_info;
     ULONG sizeof_power_info = sizeof(PROCESSOR_POWER_INFORMATION) * NtCurrentTeb()->Peb->NumberOfProcessors;
-    WCHAR id[60], namestr[49], vendorid[13];
+    ULONG name_buffer[16];
+    WCHAR id[60], vendorid[13];
 
-    get_namestring( namestr );
     get_vendorid( vendorid );
     NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL );
+    if (NtQuerySystemInformation( SystemProcessorBrandString, name_buffer, sizeof(name_buffer), NULL ))
+        name_buffer[0] = 0;
 
     power_info = HeapAlloc( GetProcessHeap(), 0, sizeof_power_info );
     if (power_info == NULL)
@@ -724,7 +707,8 @@ static void create_hardware_registry_keys(void)
             RegSetValueExW( hkey, L"FeatureSet", 0, REG_DWORD, (BYTE *)&sci.ProcessorFeatureBits, sizeof(DWORD) );
             set_reg_value( hkey, L"Identifier", id );
             /* TODO: report ARM properly */
-            set_reg_value( hkey, L"ProcessorNameString", namestr );
+            RegSetValueExA( hkey, "ProcessorNameString", 0, REG_SZ, (const BYTE *)name_buffer,
+                            strlen( (char *)name_buffer ) + 1 );
             set_reg_value( hkey, L"VendorIdentifier", vendorid );
             RegSetValueExW( hkey, L"~MHz", 0, REG_DWORD, (BYTE *)&power_info[i].MaxMhz, sizeof(DWORD) );
             RegCloseKey( hkey );
