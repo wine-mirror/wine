@@ -305,6 +305,7 @@ static void test_query_cpu(void)
 {
     NTSTATUS status;
     ULONG len, buffer[16];
+    SYSTEM_PROCESSOR_FEATURES_INFORMATION features;
     SYSTEM_CPU_INFORMATION sci, sci2, sci3;
 
     memset(&sci, 0xcc, sizeof(sci));
@@ -373,6 +374,17 @@ static void test_query_cpu(void)
         sci.MaximumProcessors, sci3.MaximumProcessors );
     ok( sci.ProcessorFeatureBits == sci3.ProcessorFeatureBits, "ProcessorFeatureBits differs %lx / %lx\n",
         sci.ProcessorFeatureBits, sci3.ProcessorFeatureBits );
+
+    len = 0xdeadbeef;
+    status = pNtQuerySystemInformation( SystemProcessorFeaturesInformation, &features, sizeof(features), &len );
+    if (status != STATUS_NOT_SUPPORTED)
+    {
+        ok( !status, "SystemProcessorFeaturesInformation failed %lx\n", status );
+        ok( len == sizeof(features), "wrong len %lu\n", len );
+        ok( (ULONG)features.ProcessorFeatureBits == sci.ProcessorFeatureBits, "wrong bits %I64x / %lx\n",
+            features.ProcessorFeatureBits, sci.ProcessorFeatureBits );
+    }
+    else skip( "SystemProcessorFeaturesInformation is not supported\n" );
 
     len = 0xdeadbeef;
     status = pNtQuerySystemInformation( SystemProcessorBrandString, buffer, sizeof(buffer), &len );

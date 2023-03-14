@@ -2389,6 +2389,12 @@ typedef struct _SYSTEM_CPU_INFORMATION {
 #define CPU_FEATURE_ARM_V8_CRC32  0x00000004
 #define CPU_FEATURE_ARM_V8_CRYPTO 0x00000008
 
+typedef struct _SYSTEM_PROCESSOR_FEATURES_INFORMATION
+{
+    ULONGLONG ProcessorFeatureBits;
+    ULONGLONG Reserved[3];
+} SYSTEM_PROCESSOR_FEATURES_INFORMATION, *PSYSTEM_PROCESSOR_FEATURES_INFORMATION;
+
 /* System Information Class 0x02 */
 
 /* Documented in "Windows NT/2000 Native API Reference" by Gary Nebbett. */
