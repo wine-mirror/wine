@@ -2958,6 +2958,8 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
             {
 #ifdef __arm__
                 *((DWORD *)info) = 32;
+#elif defined __aarch64__
+                *((DWORD *)info) = 128;
 #else
                 *((DWORD *)info) = 64;
 #endif
