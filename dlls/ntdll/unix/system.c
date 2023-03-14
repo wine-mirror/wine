@@ -229,6 +229,7 @@ struct smbios_chassis_args
 #define RSMB 0x52534D42
 
 SYSTEM_CPU_INFORMATION cpu_info = { 0 };
+static char cpu_name[49];
 static SYSTEM_LOGICAL_PROCESSOR_INFORMATION *logical_proc_info;
 static unsigned int logical_proc_info_len, logical_proc_info_alloc_len;
 static SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *logical_proc_info_ex;
@@ -325,6 +326,22 @@ static inline BOOL have_sse_daz_mode(void)
 #endif
 }
 
+static void get_cpuid_name( char *buffer )
+{
+    unsigned int regs[4];
+
+    do_cpuid( 0x80000002, 0, regs );
+    memcpy( buffer, regs, sizeof(regs) );
+    buffer += sizeof(regs);
+    do_cpuid( 0x80000003, 0, regs );
+    memcpy( buffer, regs, sizeof(regs) );
+    buffer += sizeof(regs);
+    do_cpuid( 0x80000004, 0, regs );
+    memcpy( buffer, regs, sizeof(regs) );
+    buffer += sizeof(regs);
+    *buffer = 0;
+}
+
 static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
 {
     unsigned int regs[4], regs2[4], regs3[4];
@@ -399,6 +416,7 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
                 if (regs2[3] & (1 << 27))  info->ProcessorFeatureBits |= CPU_FEATURE_TSC;
                 if (regs2[3] & (1u << 31)) info->ProcessorFeatureBits |= CPU_FEATURE_3DNOW;
             }
+            if (regs[0] >= 0x80000004) get_cpuid_name( cpu_name );
         }
         else if (regs[1] == GENU && regs[3] == INEI && regs[2] == NTEL)
         {
@@ -420,6 +438,7 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
                 if (regs2[3] & (1 << 20)) info->ProcessorFeatureBits |= CPU_FEATURE_NX;
                 if (regs2[3] & (1 << 27)) info->ProcessorFeatureBits |= CPU_FEATURE_TSC;
             }
+            if (regs[0] >= 0x80000004) get_cpuid_name( cpu_name );
         }
         else
         {
@@ -3156,6 +3175,16 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
             ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
     }
+
+    case SystemProcessorBrandString:  /* 105 */
+        if (!cpu_name[0]) return STATUS_NOT_SUPPORTED;
+        if ((ULONG_PTR)info & 3) return STATUS_DATATYPE_MISALIGNMENT;
+        len = sizeof(cpu_name);
+        if (size >= len)
+            memcpy( info, cpu_name, len );
+        else
+            ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
 
     case SystemKernelDebuggerInformationEx:  /* 149 */
     {

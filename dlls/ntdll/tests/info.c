@@ -304,7 +304,7 @@ static void test_query_basic(void)
 static void test_query_cpu(void)
 {
     NTSTATUS status;
-    ULONG len;
+    ULONG len, buffer[16];
     SYSTEM_CPU_INFORMATION sci, sci2, sci3;
 
     memset(&sci, 0xcc, sizeof(sci));
@@ -373,6 +373,31 @@ static void test_query_cpu(void)
         sci.MaximumProcessors, sci3.MaximumProcessors );
     ok( sci.ProcessorFeatureBits == sci3.ProcessorFeatureBits, "ProcessorFeatureBits differs %lx / %lx\n",
         sci.ProcessorFeatureBits, sci3.ProcessorFeatureBits );
+
+    len = 0xdeadbeef;
+    status = pNtQuerySystemInformation( SystemProcessorBrandString, buffer, sizeof(buffer), &len );
+    if (status != STATUS_NOT_SUPPORTED)
+    {
+        ok( !status, "SystemProcessorBrandString failed %lx\n", status );
+        ok( len == 49, "wrong len %lu\n", len );
+        trace( "got %s len %u\n", debugstr_a( (char *)buffer ), lstrlenA( (char *)buffer ));
+
+        len = 0xdeadbeef;
+        status = pNtQuerySystemInformation( SystemProcessorBrandString, buffer, 49, &len );
+        ok( !status, "SystemProcessorBrandString failed %lx\n", status );
+        ok( len == 49, "wrong len %lu\n", len );
+
+        len = 0xdeadbeef;
+        status = pNtQuerySystemInformation( SystemProcessorBrandString, buffer, 48, &len );
+        ok( status == STATUS_INFO_LENGTH_MISMATCH, "SystemProcessorBrandString failed %lx\n", status );
+        ok( len == 49, "wrong len %lu\n", len );
+
+        len = 0xdeadbeef;
+        status = pNtQuerySystemInformation( SystemProcessorBrandString, (char *)buffer + 1, 49, &len );
+        ok( status == STATUS_DATATYPE_MISALIGNMENT, "SystemProcessorBrandString failed %lx\n", status );
+        ok( len == 0xdeadbeef, "wrong len %lu\n", len );
+    }
+    else skip( "SystemProcessorBrandString is not supported\n" );
 }
 
 static void test_query_performance(void)
