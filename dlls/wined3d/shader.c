@@ -404,18 +404,18 @@ static void shader_signature_from_usage(struct wined3d_shader_signature_element 
     e->mask = write_mask;
 }
 
-static const struct wined3d_shader_frontend *shader_select_frontend(enum wined3d_shader_byte_code_format format)
+static const struct wined3d_shader_frontend *shader_select_frontend(enum vkd3d_shader_source_type source_type)
 {
-    switch (format)
+    switch (source_type)
     {
-        case WINED3D_SHADER_BYTE_CODE_FORMAT_SM1:
+        case VKD3D_SHADER_SOURCE_D3D_BYTECODE:
             return &sm1_shader_frontend;
 
-        case WINED3D_SHADER_BYTE_CODE_FORMAT_SM4:
+        case VKD3D_SHADER_SOURCE_DXBC_TPF:
             return &sm4_shader_frontend;
 
         default:
-            WARN("Invalid byte code format %#x specified.\n", format);
+            WARN("Invalid source type %#x specified.\n", source_type);
             return NULL;
     }
 }
@@ -3628,7 +3628,7 @@ static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device 
         const DWORD *ptr;
         void *fe_data;
 
-        if (!(shader->frontend = shader_select_frontend(WINED3D_SHADER_BYTE_CODE_FORMAT_SM1)))
+        if (!(shader->frontend = shader_select_frontend(VKD3D_SHADER_SOURCE_D3D_BYTECODE)))
         {
             FIXME("Unable to find frontend for shader.\n");
             hr = WINED3DERR_INVALIDCALL;
@@ -3663,7 +3663,7 @@ static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device 
     }
     else
     {
-        enum wined3d_shader_byte_code_format format;
+        enum vkd3d_shader_source_type source_type;
         unsigned int max_version;
 
         if (!(shader->byte_code = heap_alloc(desc->byte_code_size)))
@@ -3675,10 +3675,10 @@ static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device 
         shader->byte_code_size = desc->byte_code_size;
 
         max_version = shader_max_version_from_feature_level(device->cs->c.state->feature_level);
-        if (FAILED(hr = shader_extract_from_dxbc(shader, max_version, &format)))
+        if (FAILED(hr = shader_extract_from_dxbc(shader, max_version, &source_type)))
             goto fail;
 
-        if (!(shader->frontend = shader_select_frontend(format)))
+        if (!(shader->frontend = shader_select_frontend(source_type)))
         {
             FIXME("Unable to find frontend for shader.\n");
             hr = WINED3DERR_INVALIDCALL;

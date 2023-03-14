@@ -1845,7 +1845,7 @@ struct aon9_header
 struct shader_handler_context
 {
     struct wined3d_shader *shader;
-    enum wined3d_shader_byte_code_format *format;
+    enum vkd3d_shader_source_type *source_type;
     unsigned int max_version;
 };
 
@@ -2094,7 +2094,7 @@ static HRESULT shader_dxbc_chunk_handler(const char *data, unsigned int data_siz
                 FIXME("Multiple shader code chunks.\n");
             shader->function = (const DWORD *)data;
             shader->functionLength = data_size;
-            *ctx->format = WINED3D_SHADER_BYTE_CODE_FORMAT_SM4;
+            *ctx->source_type = VKD3D_SHADER_SOURCE_DXBC_TPF;
             break;
 
         case TAG_AON9:
@@ -2123,7 +2123,7 @@ static HRESULT shader_dxbc_chunk_handler(const char *data, unsigned int data_siz
                     FIXME("Multiple shader code chunks.\n");
                 shader->function = (const DWORD *)byte_code;
                 shader->functionLength = data_size - header->byte_code_offset;
-                *ctx->format = WINED3D_SHADER_BYTE_CODE_FORMAT_SM1;
+                *ctx->source_type = VKD3D_SHADER_SOURCE_D3D_BYTECODE;
                 TRACE("Feature level 9 shader version 0%08x, 0%08lx.\n",
                         header->shader_version, *shader->function);
             }
@@ -2142,13 +2142,13 @@ static HRESULT shader_dxbc_chunk_handler(const char *data, unsigned int data_siz
 }
 
 HRESULT shader_extract_from_dxbc(struct wined3d_shader *shader,
-        unsigned int max_shader_version, enum wined3d_shader_byte_code_format *format)
+        unsigned int max_shader_version, enum vkd3d_shader_source_type *source_type)
 {
     struct shader_handler_context ctx;
     HRESULT hr;
 
     ctx.shader = shader;
-    ctx.format = format;
+    ctx.source_type = source_type;
     ctx.max_version = max_shader_version;
 
     hr = parse_dxbc(shader->byte_code, shader->byte_code_size, shader_dxbc_chunk_handler, &ctx);

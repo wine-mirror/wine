@@ -18,8 +18,6 @@
  */
 
 #include "wined3d_private.h"
-#define LIBVKD3D_SHADER_SOURCE
-#include <vkd3d_shader.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 

@@ -34,6 +34,8 @@
 #include <math.h>
 #include <limits.h>
 #include <float.h>
+#define LIBVKD3D_SHADER_SOURCE
+#include <vkd3d_shader.h>
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #define NONAMELESSUNION
@@ -559,12 +561,6 @@ struct wined3d_settings
 };
 
 extern struct wined3d_settings wined3d_settings DECLSPEC_HIDDEN;
-
-enum wined3d_shader_byte_code_format
-{
-    WINED3D_SHADER_BYTE_CODE_FORMAT_SM1,
-    WINED3D_SHADER_BYTE_CODE_FORMAT_SM4,
-};
 
 enum wined3d_shader_resource_type
 {
@@ -1470,7 +1466,7 @@ extern const struct wined3d_shader_frontend sm1_shader_frontend DECLSPEC_HIDDEN;
 extern const struct wined3d_shader_frontend sm4_shader_frontend DECLSPEC_HIDDEN;
 
 HRESULT shader_extract_from_dxbc(struct wined3d_shader *shader,
-        unsigned int max_shader_version, enum wined3d_shader_byte_code_format *format) DECLSPEC_HIDDEN;
+        unsigned int max_shader_version, enum vkd3d_shader_source_type *source_type) DECLSPEC_HIDDEN;
 BOOL shader_get_stream_output_register_info(const struct wined3d_shader *shader,
         const struct wined3d_stream_output_element *so_element, unsigned int *register_idx,
         unsigned int *component_idx) DECLSPEC_HIDDEN;
