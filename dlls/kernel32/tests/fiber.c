@@ -24,6 +24,7 @@
 #define WIN32_NO_STATUS
 #include <winternl.h>
 #include "wine/test.h"
+#include <winuser.h>
 
 static LPVOID (WINAPI *pCreateFiber)(SIZE_T,LPFIBER_START_ROUTINE,LPVOID);
 static LPVOID (WINAPI *pConvertThreadToFiber)(LPVOID);
@@ -791,6 +792,225 @@ static void test_FiberLocalStorageWithFibers(PFLS_CALLBACK_FUNCTION cbfunc)
     test_ConvertFiberToThread();
 }
 
+#define check_current_actctx_is(e,t) check_current_actctx_is_(__LINE__, e, t)
+static void check_current_actctx_is_(int line, HANDLE expected_actctx, BOOL todo)
+{
+    HANDLE cur_actctx;
+    BOOL ret;
+
+    cur_actctx = (void*)0xdeadbeef;
+    ret = GetCurrentActCtx(&cur_actctx);
+    ok_(__FILE__, line)(ret, "thread GetCurrentActCtx failed, %lu\n", GetLastError());
+
+    todo_wine_if(todo)
+    ok_(__FILE__, line)(cur_actctx == expected_actctx, "got %p, expected %p\n", cur_actctx, expected_actctx);
+
+    ReleaseActCtx(cur_actctx);
+}
+
+static DWORD WINAPI subthread_actctx_func(void *actctx)
+{
+    HANDLE fiber;
+    BOOL ret;
+
+    check_current_actctx_is(actctx, FALSE);
+
+    fiber = pConvertThreadToFiber(NULL);
+    ok(fiber != NULL, "ConvertThreadToFiber returned error %lu\n", GetLastError());
+    check_current_actctx_is(actctx, FALSE);
+    fibers[2] = fiber;
+
+    SwitchToFiber(fibers[0]);
+    check_current_actctx_is(actctx, FALSE);
+
+    ok(fibers[2] == fiber, "fibers[2]: expected %p, got %p\n", fiber, fibers[2]);
+    fibers[2] = NULL;
+    ret = pConvertFiberToThread();
+    ok(ret, "ConvertFiberToThread returned error %lu\n", GetLastError());
+    check_current_actctx_is(actctx, FALSE);
+
+    return 0;
+}
+
+static void WINAPI fiber_actctx_func(void *actctx)
+{
+    ULONG_PTR cookie;
+    DWORD tid, wait;
+    HANDLE thread;
+    BOOL ret;
+
+    check_current_actctx_is(NULL, TRUE);
+
+    ret = ActivateActCtx(actctx, &cookie);
+    ok(ret, "ActivateActCtx returned error %lu\n", GetLastError());
+    check_current_actctx_is(actctx, FALSE);
+
+    SwitchToFiber(fibers[0]);
+    check_current_actctx_is(actctx, FALSE);
+
+    thread = CreateThread(NULL, 0, subthread_actctx_func, actctx, 0, &tid);
+    ok(thread != NULL, "CreateThread returned error %lu\n", GetLastError());
+
+    wait = WaitForSingleObject(thread, INFINITE);
+    ok(wait == WAIT_OBJECT_0, "WaitForSingleObject returned %lu (last error: %lu)\n",
+       wait, GetLastError());
+    CloseHandle(thread);
+
+    ret = DeactivateActCtx(0, cookie);
+    ok(ret, "DeactivateActCtx returned error %lu\n", GetLastError());
+    check_current_actctx_is(NULL, TRUE);
+
+    SwitchToFiber(fibers[0]);
+    ok(0, "unreachable\n");
+}
+
+/* Test that activation context is switched on SwitchToFiber() call */
+static void subtest_fiber_actctx_switch(HANDLE current_actctx, HANDLE child_actctx)
+{
+    fibers[1] = pCreateFiber(0, fiber_actctx_func, child_actctx);
+    ok(fibers[1] != NULL, "CreateFiber returned error %lu\n", GetLastError());
+    check_current_actctx_is(current_actctx, FALSE);
+
+    SwitchToFiber(fibers[1]);
+    check_current_actctx_is(current_actctx, TRUE);
+
+    SwitchToFiber(fibers[1]);
+    check_current_actctx_is(current_actctx, TRUE);
+
+    SwitchToFiber(fibers[2]);
+    check_current_actctx_is(current_actctx, FALSE);
+    ok(fibers[2] == NULL, "expected fiber to be deleted (got %p)\n", fibers[2]);
+
+    DeleteFiber(fibers[1]);
+    fibers[1] = NULL;
+}
+
+static void WINAPI exit_thread_fiber_func(void *unused)
+{
+    BOOL ret;
+
+    ret = pConvertFiberToThread();
+    ok(ret, "ConvertFiberToThread returned error %lu\n", GetLastError());
+
+    ExitThread(16);
+}
+
+static DWORD WINAPI thread_actctx_func_early_exit(void *actctx)
+{
+    HANDLE exit_thread_fiber;
+
+    check_current_actctx_is(actctx, FALSE);
+
+    fibers[1] = pConvertThreadToFiber(NULL);
+    ok(fibers[1] != NULL, "ConvertThreadToFiber returned error %lu\n", GetLastError());
+    check_current_actctx_is(actctx, FALSE);
+
+    exit_thread_fiber = pCreateFiber(0, exit_thread_fiber_func, NULL);
+    ok(exit_thread_fiber != NULL, "CreateFiber returned error %lu\n", GetLastError());
+
+    /* exit thread, but keep current fiber */
+    SwitchToFiber(exit_thread_fiber);
+    check_current_actctx_is(actctx, TRUE);
+
+    SwitchToFiber(fibers[0]);
+    ok(0, "unreachable\n");
+    return 17;
+}
+
+/* Test that fiber activation context stack is preserved regardless of creator thread's lifetime */
+static void subtest_fiber_actctx_preservation(HANDLE current_actctx, HANDLE child_actctx)
+{
+    ULONG_PTR cookie;
+    DWORD tid, wait;
+    HANDLE thread;
+    BOOL ret;
+
+    ret = ActivateActCtx(child_actctx, &cookie);
+    ok(ret, "ActivateActCtx returned error %lu\n", GetLastError());
+    check_current_actctx_is(child_actctx, FALSE);
+
+    thread = CreateThread(NULL, 0, thread_actctx_func_early_exit, child_actctx, 0, &tid);
+    ok(thread != NULL, "CreateThread returned error %lu\n", GetLastError());
+
+    ret = DeactivateActCtx(0, cookie);
+    ok(ret, "DeactivateActCtx returned error %lu\n", GetLastError());
+    check_current_actctx_is(current_actctx, FALSE);
+
+    wait = WaitForSingleObject(thread, INFINITE);
+    ok(wait == WAIT_OBJECT_0, "WaitForSingleObject returned %lu (last error: %lu)\n",
+       wait, GetLastError());
+    CloseHandle(thread);
+
+    /* The exited thread has been converted to a fiber */
+    SwitchToFiber(fibers[1]);
+    check_current_actctx_is(current_actctx, FALSE);
+
+    DeleteFiber(fibers[1]);
+    fibers[1] = NULL;
+}
+
+static HANDLE create_actctx_from_module_manifest(void)
+{
+    ACTCTXW actctx;
+
+    memset(&actctx, 0, sizeof(ACTCTXW));
+    actctx.cbSize = sizeof(actctx);
+    actctx.dwFlags = ACTCTX_FLAG_HMODULE_VALID | ACTCTX_FLAG_RESOURCE_NAME_VALID;
+    actctx.lpResourceName = MAKEINTRESOURCEW(124);
+    actctx.hModule = GetModuleHandleW(NULL);
+
+    return CreateActCtxW(&actctx);
+}
+
+static void test_fiber_actctx(void)
+{
+    ULONG_PTR cookies[3];
+    HANDLE actctxs[3];
+    size_t i, j;
+    BOOL ret;
+
+    for (i = 0; i < ARRAY_SIZE(actctxs); i++)
+    {
+        actctxs[i] = create_actctx_from_module_manifest();
+        ok(actctxs[i] != INVALID_HANDLE_VALUE, "failed to create context, error %lu\n", GetLastError());
+        for (j = 0; j < i; j++)
+        {
+            ok(actctxs[i] != actctxs[j],
+               "actctxs[%Iu] (%p) and actctxs[%Iu] (%p) should not alias\n",
+               i, actctxs[i], j, actctxs[j]);
+        }
+    }
+
+    ret = ActivateActCtx(actctxs[0], &cookies[0]);
+    ok(ret, "ActivateActCtx returned error %lu\n", GetLastError());
+    check_current_actctx_is(actctxs[0], FALSE);
+
+    test_ConvertThreadToFiber();
+    check_current_actctx_is(actctxs[0], FALSE);
+
+    ret = ActivateActCtx(actctxs[1], &cookies[1]);
+    ok(ret, "ActivateActCtx returned error %lu\n", GetLastError());
+    check_current_actctx_is(actctxs[1], FALSE);
+
+    subtest_fiber_actctx_switch(actctxs[1], actctxs[2]);
+    subtest_fiber_actctx_preservation(actctxs[1], actctxs[2]);
+
+    ret = DeactivateActCtx(0, cookies[1]);
+    ok(ret, "DeactivateActCtx returned error %lu\n", GetLastError());
+    check_current_actctx_is(actctxs[0], FALSE);
+
+    test_ConvertFiberToThread();
+    check_current_actctx_is(actctxs[0], FALSE);
+
+    ret = DeactivateActCtx(0, cookies[0]);
+    ok(ret, "DeactivateActCtx returned error %lu\n", GetLastError());
+    check_current_actctx_is(NULL, FALSE);
+
+    for (i = ARRAY_SIZE(actctxs); i > 0; )
+        ReleaseActCtx(actctxs[--i]);
+}
+
+
 static void WINAPI fls_exit_deadlock_callback(void *arg)
 {
     if (arg == (void *)1)
@@ -873,5 +1093,6 @@ START_TEST(fiber)
     test_FiberLocalStorage();
     test_FiberLocalStorageCallback(FiberLocalStorageProc);
     test_FiberLocalStorageWithFibers(FiberLocalStorageProc);
+    test_fiber_actctx();
     test_fls_exit_deadlock();
 }
