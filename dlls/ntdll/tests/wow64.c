@@ -40,6 +40,7 @@ static NTSTATUS (WINAPI *pNtWow64WriteVirtualMemory64)(HANDLE,ULONG64,const void
 #endif
 
 static BOOL is_wow64;
+static BOOL old_wow64;  /* Wine old-style wow64 */
 static void *code_mem;
 
 #ifdef __i386__
@@ -99,6 +100,7 @@ static void init(void)
             native_machine = IMAGE_FILE_MACHINE_AMD64;
             break;
         case PROCESSOR_ARCHITECTURE_INTEL:
+            old_wow64 = TRUE;
             native_machine = IMAGE_FILE_MACHINE_AMD64;
             break;
         }
@@ -715,7 +717,7 @@ static void enum_modules64( void (*func)(ULONG64,const WCHAR *) )
     ok( process != 0, "failed to open current process %lu\n", GetLastError() );
     status = pNtWow64ReadVirtualMemory64( process, teb64->Peb, &peb64, sizeof(peb64), NULL );
     ok( !status, "NtWow64ReadVirtualMemory64 failed %lx\n", status );
-    todo_wine
+    todo_wine_if( old_wow64 )
     ok( peb64.LdrData, "LdrData not initialized\n" );
     if (!peb64.LdrData) goto done;
     status = pNtWow64ReadVirtualMemory64( process, peb64.LdrData, &ldr, sizeof(ldr), NULL );
@@ -816,7 +818,7 @@ static void test_modules(void)
     if (!is_wow64) return;
     if (!pNtWow64ReadVirtualMemory64) return;
     enum_modules64( check_module );
-    todo_wine
+    todo_wine_if( old_wow64 )
     {
     ok( main_module, "main module not found\n" );
     ok( ntdll_module, "64-bit ntdll not found\n" );
@@ -913,7 +915,7 @@ static void test_nt_wow64(void)
         ptr = 0x9876543210ull;
         status = pNtWow64AllocateVirtualMemory64( process, &ptr, 0, &size,
                                                   MEM_RESERVE | MEM_COMMIT, PAGE_READONLY );
-        todo_wine
+        todo_wine_if( !is_wow64 || old_wow64 )
         ok( !status || broken( status == STATUS_CONFLICTING_ADDRESSES ),
             "NtWow64AllocateVirtualMemory64 failed %lx\n", status );
         if (!status) ok( ptr == 0x9876540000ull || broken(ptr == 0x76540000), /* win 8.1 */
@@ -942,7 +944,7 @@ static void test_nt_wow64(void)
         ok( len == sizeof(sbi2), "wrong length %ld\n", len );
 
         ok( sbi.HighestUserAddress == (void *)0x7ffeffff, "wrong limit %p\n", sbi.HighestUserAddress);
-        todo_wine_if( is_wow64 )
+        todo_wine_if( old_wow64 )
         ok( sbi2.HighestUserAddress == (is_wow64 ? (void *)0xfffeffff : (void *)0x7ffeffff),
             "wrong limit %p\n", sbi.HighestUserAddress);
 
@@ -1093,7 +1095,8 @@ static void test_init_block(void)
             CHECK_FUNC( block64[6], "KiUserCallbackDispatcher" );
             CHECK_FUNC( block64[7], "RtlUserThreadStart" );
             CHECK_FUNC( block64[8], "RtlpQueryProcessDebugInformationRemote" );
-            todo_wine ok( block64[9] == (ULONG_PTR)ntdll, "got %p for ntdll %p\n",
+            todo_wine_if( old_wow64 )
+            ok( block64[9] == (ULONG_PTR)ntdll, "got %p for ntdll %p\n",
                 (void *)(ULONG_PTR)block64[9], ntdll );
             CHECK_FUNC( block64[10], "LdrSystemDllInitBlock" );
             CHECK_FUNC( block64[11], "RtlpFreezeTimeBias" );
