@@ -125,6 +125,52 @@ bool append_element(GstElement *container, GstElement *element, GstElement **fir
     return success;
 }
 
+bool link_src_to_element(GstPad *src_pad, GstElement *element)
+{
+    GstPadLinkReturn ret;
+    GstPad *sink_pad;
+
+    if (!(sink_pad = gst_element_get_static_pad(element, "sink")))
+    {
+        gchar *name = gst_element_get_name(element);
+        GST_ERROR("Failed to find sink pad on %s", name);
+        g_free(name);
+        return false;
+    }
+    if ((ret = gst_pad_link(src_pad, sink_pad)))
+    {
+        gchar *src_name = gst_pad_get_name(src_pad), *sink_name = gst_pad_get_name(sink_pad);
+        GST_ERROR("Failed to link element pad %s with pad %s", src_name, sink_name);
+        g_free(sink_name);
+        g_free(src_name);
+    }
+    gst_object_unref(sink_pad);
+    return !ret;
+}
+
+bool link_element_to_sink(GstElement *element, GstPad *sink_pad)
+{
+    GstPadLinkReturn ret;
+    GstPad *src_pad;
+
+    if (!(src_pad = gst_element_get_static_pad(element, "src")))
+    {
+        gchar *name = gst_element_get_name(element);
+        GST_ERROR("Failed to find src pad on %s", name);
+        g_free(name);
+        return false;
+    }
+    if ((ret = gst_pad_link(src_pad, sink_pad)))
+    {
+        gchar *src_name = gst_pad_get_name(src_pad), *sink_name = gst_pad_get_name(sink_pad);
+        GST_ERROR("Failed to link pad %s with element pad %s", src_name, sink_name);
+        g_free(sink_name);
+        g_free(src_name);
+    }
+    gst_object_unref(src_pad);
+    return !ret;
+}
+
 NTSTATUS wg_init_gstreamer(void *arg)
 {
     char arg0[] = "wine";

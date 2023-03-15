@@ -46,7 +46,6 @@ struct wg_transform
     GstElement *container;
     GstAllocator *allocator;
     GstPad *my_src, *my_sink;
-    GstPad *their_sink, *their_src;
     GstSegment segment;
     GstQuery *drain_query;
 
@@ -254,8 +253,6 @@ NTSTATUS wg_transform_destroy(void *args)
         gst_sample_unref(sample);
 
     wg_allocator_destroy(transform->allocator);
-    g_object_unref(transform->their_sink);
-    g_object_unref(transform->their_src);
     g_object_unref(transform->container);
     g_object_unref(transform->my_sink);
     g_object_unref(transform->my_src);
@@ -414,13 +411,9 @@ NTSTATUS wg_transform_create(void *args)
             goto out;
     }
 
-    if (!(transform->their_sink = gst_element_get_static_pad(first, "sink")))
+    if (!link_src_to_element(transform->my_src, first))
         goto out;
-    if (!(transform->their_src = gst_element_get_static_pad(last, "src")))
-        goto out;
-    if (gst_pad_link(transform->my_src, transform->their_sink) < 0)
-        goto out;
-    if (gst_pad_link(transform->their_src, transform->my_sink) < 0)
+    if (!link_element_to_sink(last, transform->my_sink))
         goto out;
     if (!gst_pad_set_active(transform->my_sink, 1))
         goto out;
@@ -454,10 +447,6 @@ NTSTATUS wg_transform_create(void *args)
     return STATUS_SUCCESS;
 
 out:
-    if (transform->their_sink)
-        gst_object_unref(transform->their_sink);
-    if (transform->their_src)
-        gst_object_unref(transform->their_src);
     if (transform->my_sink)
         gst_object_unref(transform->my_sink);
     if (transform->output_caps)

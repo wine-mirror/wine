@@ -35,6 +35,8 @@ extern NTSTATUS wg_init_gstreamer(void *args) DECLSPEC_HIDDEN;
 extern GstElement *create_element(const char *name, const char *plugin_set) DECLSPEC_HIDDEN;
 extern GstElement *find_element(GstElementFactoryListType type, GstCaps *src_caps, GstCaps *sink_caps) DECLSPEC_HIDDEN;
 extern bool append_element(GstElement *container, GstElement *element, GstElement **first, GstElement **last) DECLSPEC_HIDDEN;
+extern bool link_src_to_element(GstPad *src_pad, GstElement *element) DECLSPEC_HIDDEN;
+extern bool link_element_to_sink(GstElement *element, GstPad *sink_pad) DECLSPEC_HIDDEN;
 
 /* wg_format.c */
 

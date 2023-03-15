@@ -95,7 +95,7 @@ struct wg_parser_stream
     struct wg_parser *parser;
     uint32_t number;
 
-    GstPad *their_src, *post_sink, *post_src, *my_sink;
+    GstPad *their_src, *my_sink;
     GstElement *flip;
     GstSegment segment;
     struct wg_format preferred_format, current_format;
@@ -763,15 +763,7 @@ static void free_stream(struct wg_parser_stream *stream)
     unsigned int i;
 
     if (stream->their_src)
-    {
-        if (stream->post_sink)
-        {
-            gst_object_unref(stream->post_src);
-            gst_object_unref(stream->post_sink);
-            stream->post_src = stream->post_sink = NULL;
-        }
         gst_object_unref(stream->their_src);
-    }
     gst_object_unref(stream->my_sink);
 
     pthread_cond_destroy(&stream->event_cond);
@@ -832,8 +824,8 @@ static void pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
                 || !append_element(parser->container, element, &first, &last))
             goto out;
 
-        stream->post_sink = gst_element_get_static_pad(first, "sink");
-        stream->post_src = gst_element_get_static_pad(last, "src");
+        if (!link_src_to_element(pad, first) || !link_element_to_sink(last, stream->my_sink))
+            goto out;
     }
     else if (!strcmp(name, "audio/x-raw"))
     {
@@ -845,31 +837,8 @@ static void pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
                 || !append_element(parser->container, element, &first, &last))
             goto out;
 
-        stream->post_sink = gst_element_get_static_pad(first, "sink");
-        stream->post_src = gst_element_get_static_pad(last, "src");
-    }
-
-    if (stream->post_sink)
-    {
-        if ((ret = gst_pad_link(pad, stream->post_sink)) < 0)
-        {
-            GST_ERROR("Failed to link decodebin source pad to post-processing elements, error %s.",
-                    gst_pad_link_get_name(ret));
-            gst_object_unref(stream->post_sink);
-            stream->post_sink = NULL;
+        if (!link_src_to_element(pad, first) || !link_element_to_sink(last, stream->my_sink))
             goto out;
-        }
-
-        if ((ret = gst_pad_link(stream->post_src, stream->my_sink)) < 0)
-        {
-            GST_ERROR("Failed to link post-processing elements to our sink pad, error %s.",
-                    gst_pad_link_get_name(ret));
-            gst_object_unref(stream->post_src);
-            stream->post_src = NULL;
-            gst_object_unref(stream->post_sink);
-            stream->post_sink = NULL;
-            goto out;
-        }
     }
     else if ((ret = gst_pad_link(pad, stream->my_sink)) < 0)
     {
