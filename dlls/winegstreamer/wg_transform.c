@@ -267,13 +267,13 @@ NTSTATUS wg_transform_destroy(void *args)
     return STATUS_SUCCESS;
 }
 
-static bool transform_append_element(struct wg_transform *transform, GstElement *element,
-        GstElement **first, GstElement **last)
+static bool append_element(GstElement *container, GstElement *element, GstElement **first, GstElement **last)
 {
     gchar *name = gst_element_get_name(element);
     bool success = false;
 
-    if (!gst_bin_add(GST_BIN(transform->container), element) ||
+    if (!gst_bin_add(GST_BIN(container), element) ||
+            !gst_element_sync_state_with_parent(element) ||
             (*last && !gst_element_link(*last, element)))
     {
         GST_ERROR("Failed to link %s element.", name);
@@ -370,7 +370,7 @@ NTSTATUS wg_transform_create(void *args)
             transform->input_max_length = 16;
             transform->output_plane_align = 15;
             if (!(element = create_element("h264parse", "base"))
-                    || !transform_append_element(transform, element, &first, &last))
+                    || !append_element(transform->container, element, &first, &last))
                 goto out;
             /* fallthrough */
         case WG_MAJOR_TYPE_AUDIO_MPEG1:
@@ -380,7 +380,7 @@ NTSTATUS wg_transform_create(void *args)
         case WG_MAJOR_TYPE_VIDEO_INDEO:
         case WG_MAJOR_TYPE_VIDEO_WMV:
             if (!(element = find_element(GST_ELEMENT_FACTORY_TYPE_DECODER, src_caps, raw_caps))
-                    || !transform_append_element(transform, element, &first, &last))
+                    || !append_element(transform->container, element, &first, &last))
             {
                 gst_caps_unref(raw_caps);
                 goto out;
@@ -411,17 +411,17 @@ NTSTATUS wg_transform_create(void *args)
              * non-interleaved format.
              */
             if (!(element = create_element("audioconvert", "base"))
-                    || !transform_append_element(transform, element, &first, &last))
+                    || !append_element(transform->container, element, &first, &last))
                 goto out;
             if (!(element = create_element("audioresample", "base"))
-                    || !transform_append_element(transform, element, &first, &last))
+                    || !append_element(transform->container, element, &first, &last))
                 goto out;
             break;
 
         case WG_MAJOR_TYPE_VIDEO:
         case WG_MAJOR_TYPE_VIDEO_WMV:
             if (!(element = create_element("videoconvert", "base"))
-                    || !transform_append_element(transform, element, &first, &last))
+                    || !append_element(transform->container, element, &first, &last))
                 goto out;
             /* Let GStreamer choose a default number of threads. */
             gst_util_set_object_arg(G_OBJECT(element), "n-threads", "0");
