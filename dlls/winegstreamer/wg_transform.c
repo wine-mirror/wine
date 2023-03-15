@@ -267,30 +267,6 @@ NTSTATUS wg_transform_destroy(void *args)
     return STATUS_SUCCESS;
 }
 
-static bool append_element(GstElement *container, GstElement *element, GstElement **first, GstElement **last)
-{
-    gchar *name = gst_element_get_name(element);
-    bool success = false;
-
-    if (!gst_bin_add(GST_BIN(container), element) ||
-            !gst_element_sync_state_with_parent(element) ||
-            (*last && !gst_element_link(*last, element)))
-    {
-        GST_ERROR("Failed to link %s element.", name);
-    }
-    else
-    {
-        GST_DEBUG("Linked %s element %p.", name, element);
-        if (!*first)
-            *first = element;
-        *last = element;
-        success = true;
-    }
-
-    g_free(name);
-    return success;
-}
-
 static struct wg_sample *transform_request_sample(gsize size, void *context)
 {
     struct wg_transform *transform = context;
