@@ -2739,9 +2739,9 @@ static void test_uia_prov_from_acc_ia2(void)
     HRESULT hr;
 
     /* Only one exposes an IA2 interface, no match. */
-    set_accessible_props(&Accessible, 0, 0, 0, L"acc_name", 0, 0, 0, 0);
+    set_accessible_props(&Accessible, ROLE_SYSTEM_DOCUMENT, 0, 0, L"acc_name", 0, 0, 0, 0);
     set_accessible_ia2_props(&Accessible, TRUE, 0);
-    set_accessible_props(&Accessible2, 0, 0, 0, L"acc_name", 0, 0, 0, 0);
+    set_accessible_props(&Accessible2, ROLE_SYSTEM_TEXT, 0, 0, L"acc_name", 0, 0, 0, 0);
     set_accessible_ia2_props(&Accessible2, FALSE, 0);
 
     hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
@@ -2755,6 +2755,11 @@ static void test_uia_prov_from_acc_ia2(void)
 
     acc_client = &Accessible2.IAccessible_iface;
     SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    /* The four below are only called on Win10v1909. */
+    SET_EXPECT(Accessible_get_accRole);
+    SET_EXPECT(Accessible2_get_accRole);
+    SET_EXPECT(Accessible2_QI_IAccIdentity);
+    SET_EXPECT(Accessible2_get_accParent);
     elprov2 = (void *)0xdeadbeef;
     hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -2762,6 +2767,27 @@ static void test_uia_prov_from_acc_ia2(void)
     ok(Accessible2.ref == 1, "Unexpected refcnt %ld\n", Accessible2.ref);
     CHECK_CALLED(winproc_GETOBJECT_CLIENT);
 
+    /*
+     * Win10v1909 has IAccessible2 support, but it's not used for checking if
+     * two IAccessible interfaces match. Skip the comparison tests for this
+     * Windows version.
+     */
+    if (called_Accessible_get_accRole)
+    {
+        IRawElementProviderSimple_Release(elprov);
+        CHECK_CALLED(Accessible_get_accRole);
+        CHECK_CALLED(Accessible2_get_accRole);
+        CHECK_CALLED(Accessible2_QI_IAccIdentity);
+        CHECK_CALLED(Accessible2_get_accParent);
+        win_skip("Win10v1909 doesn't support IAccessible2 interface comparsion, skipping tests.\n");
+        return;
+    }
+    called_Accessible_get_accRole = expect_Accessible_get_accRole = 0;
+    called_Accessible2_get_accRole = expect_Accessible2_get_accRole = 0;
+    called_Accessible2_QI_IAccIdentity = expect_Accessible2_QI_IAccIdentity = 0;
+    called_Accessible2_get_accParent = expect_Accessible2_get_accParent = 0;
+
+    Accessible.role = Accessible2.role = 0;
     elprov2 = (void *)0xdeadbeef;
     acc_client = NULL;
     hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
