@@ -49,14 +49,6 @@ typedef enum
     GST_AUTOPLUG_SELECT_SKIP,
 } GstAutoplugSelectResult;
 
-/* GStreamer callbacks may be called on threads not created by Wine, and
- * therefore cannot access the Wine TEB. This means that we must use GStreamer
- * debug logging instead of Wine debug logging. In order to be safe we forbid
- * any use of Wine debug logging in this entire file. */
-
-GST_DEBUG_CATEGORY(wine);
-#define GST_CAT_DEFAULT wine
-
 typedef BOOL (*init_gst_cb)(struct wg_parser *parser);
 
 struct wg_parser
@@ -1680,35 +1672,6 @@ static BOOL wave_parser_init_gst(struct wg_parser *parser)
     return TRUE;
 }
 
-static void init_gstreamer_once(void)
-{
-    char arg0[] = "wine";
-    char arg1[] = "--gst-disable-registry-fork";
-    char *args[] = {arg0, arg1, NULL};
-    int argc = ARRAY_SIZE(args) - 1;
-    char **argv = args;
-    GError *err;
-
-    if (!gst_init_check(&argc, &argv, &err))
-    {
-        fprintf(stderr, "winegstreamer: failed to initialize GStreamer: %s\n", err->message);
-        g_error_free(err);
-        return;
-    }
-
-    GST_DEBUG_CATEGORY_INIT(wine, "WINE", GST_DEBUG_FG_RED, "Wine GStreamer support");
-
-    GST_INFO("GStreamer library version %s; wine built with %d.%d.%d.",
-            gst_version_string(), GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
-}
-
-bool init_gstreamer(void)
-{
-    static pthread_once_t init_once = PTHREAD_ONCE_INIT;
-
-    return !pthread_once(&init_once, init_gstreamer_once);
-}
-
 static NTSTATUS wg_parser_create(void *args)
 {
     static const init_gst_cb init_funcs[] =
@@ -1721,9 +1684,6 @@ static NTSTATUS wg_parser_create(void *args)
 
     struct wg_parser_create_params *params = args;
     struct wg_parser *parser;
-
-    if (!init_gstreamer())
-        return E_FAIL;
 
     if (!(parser = calloc(1, sizeof(*parser))))
         return E_OUTOFMEMORY;
@@ -1763,6 +1723,8 @@ static NTSTATUS wg_parser_destroy(void *args)
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
 #define X(name) [unix_ ## name] = name
+    X(wg_init_gstreamer),
+
     X(wg_parser_create),
     X(wg_parser_destroy),
 

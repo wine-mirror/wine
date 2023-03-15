@@ -40,9 +40,6 @@
 
 #include "unix_private.h"
 
-GST_DEBUG_CATEGORY_EXTERN(wine);
-#define GST_CAT_DEFAULT wine
-
 static enum wg_audio_format wg_audio_format_from_gst(GstAudioFormat format)
 {
     switch (format)

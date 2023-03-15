@@ -35,9 +35,6 @@
 
 #include "wine/list.h"
 
-GST_DEBUG_CATEGORY_EXTERN(wine);
-#define GST_CAT_DEFAULT wine
-
 typedef struct
 {
     GstMemory parent;

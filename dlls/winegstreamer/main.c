@@ -616,6 +616,9 @@ static BOOL CALLBACK init_gstreamer_proc(INIT_ONCE *once, void *param, void **ct
 {
     HINSTANCE handle;
 
+    if (WINE_UNIX_CALL(unix_wg_init_gstreamer, NULL))
+        return FALSE;
+
     /* Unloading glib is a bad idea.. it installs atexit handlers,
      * so never unload the dll after loading */
     GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_PIN,

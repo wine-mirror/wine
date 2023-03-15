@@ -2541,6 +2541,9 @@ HRESULT WINAPI winegstreamer_create_wm_sync_reader(IUnknown *outer, void **out)
 
     TRACE("out %p.\n", out);
 
+    if (!init_gstreamer())
+        return E_FAIL;
+
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
