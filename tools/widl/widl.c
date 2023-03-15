@@ -893,3 +893,30 @@ static void rm_tempfile(void)
     unlink(typelib_name);
   remove_temp_files();
 }
+
+char *find_input_file( const char *name, const char *parent )
+{
+    char *path;
+
+    /* don't search for a file name with a path in the include directories, for compatibility with MIDL */
+    if (strchr( name, '/' ) || strchr( name, '\\' )) path = xstrdup( name );
+    else if (!(path = wpp_find_include( name, parent ))) error_loc( "Unable to open include file %s\n", name );
+
+    return path;
+}
+
+FILE *open_input_file( const char *path )
+{
+    FILE *file;
+    char *name;
+    int ret;
+
+    name = make_temp_file( "widl", NULL );
+    if (!(file = fopen( name, "wt" ))) error_loc( "Could not open %s for writing\n", name );
+    ret = wpp_parse( path, file );
+    fclose( file );
+    if (ret) exit( 1 );
+
+    if (!(file = fopen( name, "r" ))) error_loc( "Unable to open %s\n", name );
+    return file;
+}

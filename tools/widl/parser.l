@@ -524,6 +524,7 @@ void pop_import(void)
     if (yyin) fclose( yyin );
     yy_delete_buffer( YY_CURRENT_BUFFER );
     yy_switch_to_buffer( state->buffer );
+    free( input_name );
     input_name = state->input_name;
     line_number = state->line_number;
     free( state );
@@ -532,10 +533,8 @@ void pop_import(void)
 void push_import( char *import_name )
 {
     struct import_state *state;
-    FILE *f;
-    char *path, *name;
     struct import *import;
-    int ret;
+    FILE *file;
 
     state = xmalloc( sizeof(struct import_state ));
     list_add_head( &import_stack, &state->entry );
@@ -556,55 +555,27 @@ void push_import( char *import_name )
     import->name = xstrdup( import_name );
     list_add_tail( &imports, &import->entry );
 
-    /* don't search for a file name with a path in the include directories,
-     * for compatibility with MIDL */
-    if (strchr( import_name, '/' ) || strchr( import_name, '\\' ))
-        path = xstrdup( import_name );
-    else if (!(path = wpp_find_include( import_name, input_name )))
-        error_loc( "Unable to open include file %s\n", import_name );
-
-    input_name = path;
+    input_name = find_input_file( import_name, input_name );
+    file = open_input_file( input_name );
     line_number = 1;
 
-    name = make_temp_file( "widl-pp", NULL );
-    if (!(f = fopen(name, "wt")))
-        error("Could not open fd %s for writing\n", name);
-
-    ret = wpp_parse( path, f );
-    fclose( f );
-    if (ret) exit(1);
-
-    if((f = fopen(name, "r")) == NULL)
-        error_loc("Unable to open %s\n", name);
-
-    yy_switch_to_buffer(yy_create_buffer(f, YY_BUF_SIZE));
+    yy_switch_to_buffer( yy_create_buffer( file, YY_BUF_SIZE ) );
 }
 
 static void switch_to_acf(void)
 {
-    char *name;
-    int ret;
-    FILE *f;
+    FILE *file;
 
     if (yyin) fclose( yyin );
     yy_delete_buffer( YY_CURRENT_BUFFER );
+    free( input_name );
 
-    input_name = acf_name;
-    acf_name = NULL;
+    input_name = xstrdup( acf_name );
+    file = open_input_file( input_name );
     line_number = 1;
+    acf_name = NULL;
 
-    name = make_temp_file( "widl-acf", NULL );
-    if (!(f = fopen(name, "wt")))
-        error("Could not open fd %s for writing\n", name);
-
-    ret = wpp_parse(input_name, f);
-    fclose(f);
-    if (ret) exit(1);
-
-    if((f = fopen(name, "r")) == NULL)
-        error_loc("Unable to open %s\n", name);
-
-    yy_switch_to_buffer(yy_create_buffer(f, YY_BUF_SIZE));
+    yy_switch_to_buffer( yy_create_buffer( file, YY_BUF_SIZE ) );
 }
 
 static void warning_disable(int warning)
