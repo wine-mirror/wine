@@ -102,6 +102,7 @@ static WOW64INFO *wow64info;
 /* cpu backend dll functions */
 static void *   (WINAPI *pBTCpuGetBopCode)(void);
 static NTSTATUS (WINAPI *pBTCpuGetContext)(HANDLE,HANDLE,void *,void *);
+static BOOLEAN  (WINAPI *pBTCpuIsProcessorFeaturePresent)(UINT);
 static void     (WINAPI *pBTCpuProcessInit)(void);
 static NTSTATUS (WINAPI *pBTCpuSetContext)(HANDLE,HANDLE,void *,void *);
 static void     (WINAPI *pBTCpuThreadInit)(void);
@@ -629,7 +630,7 @@ NTSTATUS WINAPI wow64_NtWow64IsProcessorFeaturePresent( UINT *args )
 {
     UINT feature = get_ulong( &args );
 
-    return RtlIsProcessorFeaturePresent( feature );
+    return pBTCpuIsProcessorFeaturePresent && pBTCpuIsProcessorFeaturePresent( feature );
 }
 
 
@@ -835,6 +836,7 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
     module = load_64bit_module( get_cpu_dll_name() );
     GET_PTR( BTCpuGetBopCode );
     GET_PTR( BTCpuGetContext );
+    GET_PTR( BTCpuIsProcessorFeaturePresent );
     GET_PTR( BTCpuProcessInit );
     GET_PTR( BTCpuThreadInit );
     GET_PTR( BTCpuResetToConsistentState );

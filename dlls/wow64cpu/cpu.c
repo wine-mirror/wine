@@ -353,6 +353,16 @@ void * WINAPI __wine_get_unix_opcode(void)
 
 
 /**********************************************************************
+ *           BTCpuIsProcessorFeaturePresent  (wow64cpu.@)
+ */
+BOOLEAN WINAPI BTCpuIsProcessorFeaturePresent( UINT feature )
+{
+    /* assume CPU features are the same for 32- and 64-bit */
+    return RtlIsProcessorFeaturePresent( feature );
+}
+
+
+/**********************************************************************
  *           BTCpuGetContext  (wow64cpu.@)
  */
 NTSTATUS WINAPI BTCpuGetContext( HANDLE thread, HANDLE process, void *unknown, I386_CONTEXT *ctx )
