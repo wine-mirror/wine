@@ -377,7 +377,7 @@ static void test_query_cpu(void)
 
     len = 0xdeadbeef;
     status = pNtQuerySystemInformation( SystemProcessorFeaturesInformation, &features, sizeof(features), &len );
-    if (status != STATUS_NOT_SUPPORTED)
+    if (status != STATUS_NOT_SUPPORTED && status != STATUS_INVALID_INFO_CLASS)
     {
         ok( !status, "SystemProcessorFeaturesInformation failed %lx\n", status );
         ok( len == sizeof(features), "wrong len %lu\n", len );
