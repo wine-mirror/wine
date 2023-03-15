@@ -3114,20 +3114,13 @@ TREEVIEW_Paint(TREEVIEW_INFO *infoPtr, HDC hdc_ref)
 static LRESULT
 TREEVIEW_PrintClient(TREEVIEW_INFO *infoPtr, HDC hdc, DWORD options)
 {
+    RECT rc;
+
     FIXME("Partial Stub: (hdc=%p options=%#lx)\n", hdc, options);
 
-    if ((options & PRF_CHECKVISIBLE) && !IsWindowVisible(infoPtr->hwnd))
-        return 0;
-
-    if (options & PRF_ERASEBKGND)
-        TREEVIEW_EraseBackground(infoPtr, hdc);
-
-    if (options & PRF_CLIENT)
-    {
-        RECT rc;
-        GetClientRect(infoPtr->hwnd, &rc);
-        TREEVIEW_Refresh(infoPtr, hdc, &rc);
-    }
+    TREEVIEW_EraseBackground(infoPtr, hdc);
+    GetClientRect(infoPtr->hwnd, &rc);
+    TREEVIEW_Refresh(infoPtr, hdc, &rc);
 
     return 0;
 }

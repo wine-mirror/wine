@@ -2181,6 +2181,66 @@ static void test_WM_PAINT(void)
     DestroyWindow(hTree);
 }
 
+static void test_WM_PRINTCLIENT(void)
+{
+    static const LPARAM params[] = {0, PRF_CHECKVISIBLE, PRF_NONCLIENT, PRF_CLIENT, PRF_ERASEBKGND,
+                                    PRF_CHILDREN, PRF_OWNED};
+    BOOL glyph_is_transparent;
+    HTHEME hTheme;
+    HWND hTree;
+    COLORREF clr;
+    LONG ret;
+    RECT rc;
+    HDC hdc;
+    int i;
+
+    hTree = create_treeview_control(0);
+
+    clr = SendMessageA(hTree, TVM_SETBKCOLOR, 0, RGB(255, 0, 0));
+    ok(clr == CLR_NONE, "got 0x%lx, expected 0x%lx\n", clr, CLR_NONE);
+
+    hdc = GetDC(hMainWnd);
+    GetClientRect(hMainWnd, &rc);
+
+    hTheme = pGetWindowTheme(hTree);
+    glyph_is_transparent = hTheme && pIsThemeBackgroundPartiallyTransparent(hTheme, TVP_GLYPH, 0);
+
+    /* test parameters when the treeview is visible */
+    for (i = 0; i < ARRAY_SIZE(params); i++)
+    {
+        winetest_push_context("lParam=0x%Ix", params[i]);
+        FillRect(hdc, &rc, GetStockObject(BLACK_BRUSH));
+        clr = GetPixel(hdc, 1, 1);
+        ok(clr == RGB(0, 0, 0), "got 0x%lx\n", clr);
+        ret = SendMessageA(hTree, WM_PRINTCLIENT, (WPARAM)hdc, params[i]);
+        ok(ret == 0, "got %ld\n", ret);
+        clr = GetPixel(hdc, 1, 1);
+        ok(clr == RGB(255, 0, 0) || (glyph_is_transparent && clr == GetSysColor(COLOR_WINDOW)),
+           "got 0x%lx\n", clr);
+        winetest_pop_context();
+    }
+
+    /* test parameters when the treeview is hidden */
+    ShowWindow(hTree, SW_HIDE);
+    for (i = 0; i < ARRAY_SIZE(params); i++)
+    {
+        winetest_push_context("lParam=0x%Ix", params[i]);
+        FillRect(hdc, &rc, GetStockObject(BLACK_BRUSH));
+        clr = GetPixel(hdc, 1, 1);
+        ok(clr == RGB(0, 0, 0), "got 0x%lx\n", clr);
+        ret = SendMessageA(hTree, WM_PRINTCLIENT, (WPARAM)hdc, params[i]);
+        ok(ret == 0, "got %ld\n", ret);
+        clr = GetPixel(hdc, 1, 1);
+        ok(clr == RGB(255, 0, 0) || (glyph_is_transparent && clr == GetSysColor(COLOR_WINDOW)),
+           "got 0x%lx\n", clr);
+        winetest_pop_context();
+    }
+    ShowWindow(hTree, SW_SHOW);
+
+    ReleaseDC(hMainWnd, hdc);
+    DestroyWindow(hTree);
+}
+
 static void test_delete_items(void)
 {
     const struct message *msg;
@@ -3042,6 +3102,7 @@ START_TEST(treeview)
     test_expandnotify();
     test_TVS_SINGLEEXPAND();
     test_WM_PAINT();
+    test_WM_PRINTCLIENT();
     test_delete_items();
     test_cchildren();
     test_htreeitem_layout(FALSE);
