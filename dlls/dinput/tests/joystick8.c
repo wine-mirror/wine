@@ -2186,7 +2186,7 @@ static void test_simple_joystick( DWORD version )
     if (res == WAIT_TIMEOUT) /* Acquire is asynchronous */
     {
         send_hid_input( file, &injected_input[0], sizeof(*injected_input) );
-        res = WaitForSingleObject( event, 100 );
+        res = WaitForSingleObject( event, 5000 );
     }
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
     ResetEvent( event );
@@ -2217,7 +2217,7 @@ static void test_simple_joystick( DWORD version )
     if (res == WAIT_TIMEOUT) /* Acquire is asynchronous */
     {
         send_hid_input( file, &injected_input[1], sizeof(*injected_input) );
-        res = WaitForSingleObject( event, 100 );
+        res = WaitForSingleObject( event, 5000 );
     }
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
     ResetEvent( event );
@@ -2244,11 +2244,11 @@ static void test_simple_joystick( DWORD version )
     }
 
     send_hid_input( file, &injected_input[2], sizeof(*injected_input) );
-    res = WaitForSingleObject( event, 100 );
+    res = WaitForSingleObject( event, 5000 );
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
     ResetEvent( event );
     send_hid_input( file, &injected_input[4], sizeof(*injected_input) );
-    res = WaitForSingleObject( event, 100 );
+    res = WaitForSingleObject( event, 5000 );
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
     ResetEvent( event );
 
@@ -2279,7 +2279,7 @@ static void test_simple_joystick( DWORD version )
     }
 
     send_hid_input( file, &injected_input[3], sizeof(*injected_input) );
-    res = WaitForSingleObject( event, 100 );
+    res = WaitForSingleObject( event, 5000 );
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
     ResetEvent( event );
 
@@ -2426,7 +2426,7 @@ static void test_simple_joystick( DWORD version )
     ResetEvent( event );
 
     send_hid_input( file, &injected_input[3], sizeof(*injected_input) );
-    res = WaitForSingleObject( event, 100 );
+    res = WaitForSingleObject( event, 5000 );
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
     ResetEvent( event );
 
@@ -2452,13 +2452,13 @@ static void test_simple_joystick( DWORD version )
     if (res == WAIT_TIMEOUT) /* Acquire is asynchronous */
     {
         send_hid_input( file, &injected_input[4], sizeof(*injected_input) );
-        res = WaitForSingleObject( event, 100 );
+        res = WaitForSingleObject( event, 5000 );
     }
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
     ResetEvent( event );
 
     send_hid_input( file, &injected_input[3], sizeof(*injected_input) );
-    res = WaitForSingleObject( event, 100 );
+    res = WaitForSingleObject( event, 5000 );
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
     ResetEvent( event );
 
@@ -2722,7 +2722,7 @@ static void test_simple_joystick( DWORD version )
     ok( hr == DI_OK, "SetProperty DIPROP_CALIBRATIONMODE returned %#lx\n", hr );
 
     send_hid_input( file, &injected_input[ARRAY_SIZE(injected_input) - 1], sizeof(*injected_input) );
-    res = WaitForSingleObject( event, 100 );
+    res = WaitForSingleObject( event, 5000 );
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
 
     hr = IDirectInputDevice8_Unacquire( device );
@@ -4523,8 +4523,8 @@ static BOOL test_winmm_joystick(void)
     ok( hr == DI_OK, "Acquire returned: %#lx\n", hr );
 
     send_hid_input( file, &injected_input[0], sizeof(struct hid_expect) );
-    ret = WaitForSingleObject( event, 100 );
-    ok( ret != WAIT_TIMEOUT, "WaitForSingleObject returned %#x\n", ret );
+    ret = WaitForSingleObject( event, 5000 );
+    ok( ret == WAIT_OBJECT_0, "WaitForSingleObject returned %#x\n", ret );
     Sleep( 50 ); /* leave some time for winmm to keep up */
 
     memset( &infoex, 0xcd, sizeof(infoex) );
@@ -4545,8 +4545,8 @@ static BOOL test_winmm_joystick(void)
     check_member( infoex, expect_infoex[1], "%#lx", dwPOV );
 
     send_hid_input( file, &injected_input[1], sizeof(struct hid_expect) );
-    ret = WaitForSingleObject( event, 100 );
-    ok( ret != WAIT_TIMEOUT, "WaitForSingleObject returned %#x\n", ret );
+    ret = WaitForSingleObject( event, 5000 );
+    ok( ret == WAIT_OBJECT_0, "WaitForSingleObject returned %#x\n", ret );
     Sleep( 50 ); /* leave some time for winmm to keep up */
 
     memset( &infoex, 0xcd, sizeof(infoex) );

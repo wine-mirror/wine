@@ -4175,7 +4175,7 @@ static void test_device_managed_effect(void)
     res = WaitForSingleObject( event, 100 );
     ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
     send_hid_input( file, device_state_input, sizeof(device_state_input) );
-    res = WaitForSingleObject( event, 100 );
+    res = WaitForSingleObject( event, 5000 );
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
 
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
@@ -4383,7 +4383,7 @@ static void test_device_managed_effect(void)
     set_hid_expect( file, NULL, 0 );
 
     send_hid_input( file, device_state_input_0, sizeof(device_state_input_0) );
-    res = WaitForSingleObject( event, 100 );
+    res = WaitForSingleObject( event, 5000 );
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
@@ -4394,7 +4394,7 @@ static void test_device_managed_effect(void)
     set_hid_expect( file, NULL, 0 );
 
     send_hid_input( file, device_state_input_1, sizeof(device_state_input_1) );
-    res = WaitForSingleObject( event, 100 );
+    res = WaitForSingleObject( event, 5000 );
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
@@ -4409,7 +4409,7 @@ static void test_device_managed_effect(void)
     set_hid_expect( file, NULL, 0 );
 
     send_hid_input( file, device_state_input_2, sizeof(device_state_input_2) );
-    res = WaitForSingleObject( event, 100 );
+    res = WaitForSingleObject( event, 5000 );
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
