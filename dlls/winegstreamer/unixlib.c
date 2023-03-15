@@ -47,6 +47,27 @@
 
 GST_DEBUG_CATEGORY(wine);
 
+GstStreamType stream_type_from_caps(GstCaps *caps)
+{
+    const gchar *media_type;
+
+    if (!caps || !gst_caps_get_size(caps))
+        return GST_STREAM_TYPE_UNKNOWN;
+
+    media_type = gst_structure_get_name(gst_caps_get_structure(caps, 0));
+    if (g_str_has_prefix(media_type, "video/")
+            || g_str_has_prefix(media_type, "image/"))
+        return GST_STREAM_TYPE_VIDEO;
+    if (g_str_has_prefix(media_type, "audio/"))
+        return GST_STREAM_TYPE_AUDIO;
+    if (g_str_has_prefix(media_type, "text/")
+            || g_str_has_prefix(media_type, "subpicture/")
+            || g_str_has_prefix(media_type, "closedcaption/"))
+        return GST_STREAM_TYPE_TEXT;
+
+    return GST_STREAM_TYPE_UNKNOWN;
+}
+
 GstElement *create_element(const char *name, const char *plugin_set)
 {
     GstElement *element;

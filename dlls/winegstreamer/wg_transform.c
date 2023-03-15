@@ -60,17 +60,6 @@ struct wg_transform
     GstCaps *output_caps;
 };
 
-static bool is_caps_video(GstCaps *caps)
-{
-    const gchar *media_type;
-
-    if (!caps || !gst_caps_get_size(caps))
-        return false;
-
-    media_type = gst_structure_get_name(gst_caps_get_structure(caps, 0));
-    return g_str_has_prefix(media_type, "video/");
-}
-
 static void align_video_info_planes(gsize plane_align, GstVideoInfo *info, GstVideoAlignment *align)
 {
     gst_video_alignment_reset(align);
@@ -127,7 +116,7 @@ static gboolean transform_sink_query_cb(GstPad *pad, GstObject *parent, GstQuery
             GstCaps *caps;
 
             gst_query_parse_allocation(query, &caps, &needs_pool);
-            if (!is_caps_video(caps) || !needs_pool)
+            if (stream_type_from_caps(caps) != GST_STREAM_TYPE_VIDEO || !needs_pool)
                 break;
 
             if (!gst_video_info_from_caps(&info, caps)
@@ -671,7 +660,7 @@ static NTSTATUS read_transform_output_data(GstBuffer *buffer, GstCaps *caps, gsi
 
     if ((ret = !needs_copy))
         total_size = sample->size = info.size;
-    else if (is_caps_video(caps))
+    else if (stream_type_from_caps(caps) == GST_STREAM_TYPE_VIDEO)
         ret = copy_video_buffer(buffer, caps, plane_align, sample, &total_size);
     else
         ret = copy_buffer(buffer, caps, sample, &total_size);
@@ -707,7 +696,7 @@ static NTSTATUS read_transform_output_data(GstBuffer *buffer, GstCaps *caps, gsi
 
     if (needs_copy)
     {
-        if (is_caps_video(caps))
+        if (stream_type_from_caps(caps) == GST_STREAM_TYPE_VIDEO)
             GST_WARNING("Copied %u bytes, sample %p, flags %#x", sample->size, sample, sample->flags);
         else
             GST_INFO("Copied %u bytes, sample %p, flags %#x", sample->size, sample, sample->flags);
