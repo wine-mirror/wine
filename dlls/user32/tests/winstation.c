@@ -121,7 +121,9 @@ static void test_handles(void)
     char buffer[29], default_name[29] = "";
     DWORD size;
     BOOL ret;
+    OBJECT_BASIC_INFORMATION info;
     TOKEN_STATISTICS token_stats;
+    NTSTATUS status;
 
     /* win stations */
 
@@ -132,6 +134,12 @@ static void test_handles(void)
     ok( !CloseHandle(w1), "closing process win station handle succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "bad last error %ld\n", GetLastError() );
     print_object( w1 );
+
+    status = NtQueryObject( w1, ObjectBasicInformation, &info, sizeof(info), NULL );
+    ok( !status, "NtQueryObject failed, status %#lx\n", status );
+    todo_wine
+    ok( info.GrantedAccess == (STANDARD_RIGHTS_REQUIRED | WINSTA_ALL_ACCESS),
+        "Got unexpected access %#lx\n", info.GrantedAccess );
 
     flags = 0;
     ok( GetHandleInformation( w1, &flags ), "GetHandleInformation failed\n" );
@@ -269,6 +277,12 @@ static void test_handles(void)
     flags = 0;
     ok( GetHandleInformation( d1, &flags ), "GetHandleInformation failed\n" );
     ok( !(flags & HANDLE_FLAG_PROTECT_FROM_CLOSE), "handle %p PROTECT_FROM_CLOSE set\n", d1 );
+
+    status = NtQueryObject( d1, ObjectBasicInformation, &info, sizeof(info), NULL );
+    ok( !status, "NtQueryObject failed, status %#lx\n", status );
+    todo_wine
+    ok( info.GrantedAccess == (STANDARD_RIGHTS_REQUIRED | DESKTOP_ALL_ACCESS),
+        "Got unexpected access %#lx\n", info.GrantedAccess );
 
     SetLastError( 0xdeadbeef );
     ok( !CloseDesktop(d1), "closing thread desktop succeeded\n" );
