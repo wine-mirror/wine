@@ -2128,7 +2128,11 @@ void WINAPI RtlGetCurrentProcessorNumberEx(PROCESSOR_NUMBER *processor)
  */
 BOOLEAN WINAPI RtlIsProcessorFeaturePresent( UINT feature )
 {
+#ifdef _WIN64
     return feature < PROCESSOR_FEATURE_MAX && user_shared_data->ProcessorFeatures[feature];
+#else
+    return NtWow64IsProcessorFeaturePresent( feature );
+#endif
 }
 
 /***********************************************************************

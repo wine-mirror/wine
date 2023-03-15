@@ -251,6 +251,7 @@
     SYSCALL_ENTRY( NtWaitForSingleObject ) \
     SYSCALL_ENTRY( NtWow64AllocateVirtualMemory64 ) \
     SYSCALL_ENTRY( NtWow64GetNativeSystemInformation ) \
+    SYSCALL_ENTRY( NtWow64IsProcessorFeaturePresent ) \
     SYSCALL_ENTRY( NtWow64ReadVirtualMemory64 ) \
     SYSCALL_ENTRY( NtWow64WriteVirtualMemory64 ) \
     SYSCALL_ENTRY( NtWriteFile ) \

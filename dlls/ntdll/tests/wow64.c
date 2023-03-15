@@ -35,6 +35,7 @@ static NTSTATUS (WINAPI *pRtlWow64GetThreadSelectorEntry)(HANDLE,THREAD_DESCRIPT
 #else
 static NTSTATUS (WINAPI *pNtWow64AllocateVirtualMemory64)(HANDLE,ULONG64*,ULONG64,ULONG64*,ULONG,ULONG);
 static NTSTATUS (WINAPI *pNtWow64GetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
+static NTSTATUS (WINAPI *pNtWow64IsProcessorFeaturePresent)(ULONG);
 static NTSTATUS (WINAPI *pNtWow64ReadVirtualMemory64)(HANDLE,ULONG64,void*,ULONG64,ULONG64*);
 static NTSTATUS (WINAPI *pNtWow64WriteVirtualMemory64)(HANDLE,ULONG64,const void *,ULONG64,ULONG64*);
 #endif
@@ -80,6 +81,7 @@ static void init(void)
 #else
     GET_PROC( NtWow64AllocateVirtualMemory64 );
     GET_PROC( NtWow64GetNativeSystemInformation );
+    GET_PROC( NtWow64IsProcessorFeaturePresent );
     GET_PROC( NtWow64ReadVirtualMemory64 );
     GET_PROC( NtWow64WriteVirtualMemory64 );
 #endif
@@ -990,6 +992,22 @@ static void test_nt_wow64(void)
         }
     }
     else win_skip( "NtWow64GetNativeSystemInformation not supported\n" );
+
+    if (pNtWow64IsProcessorFeaturePresent)
+    {
+        ULONG i;
+
+        for (i = 0; i < 64; i++)
+            ok( pNtWow64IsProcessorFeaturePresent( i ) == IsProcessorFeaturePresent( i ),
+                "mismatch %lu wow64 returned %lx\n", i, pNtWow64IsProcessorFeaturePresent( i ));
+
+        if (native_machine == IMAGE_FILE_MACHINE_ARM64)
+        {
+            ok( !pNtWow64IsProcessorFeaturePresent( PF_ARM_V8_INSTRUCTIONS_AVAILABLE ), "ARM_V8 present\n" );
+            ok( pNtWow64IsProcessorFeaturePresent( PF_MMX_INSTRUCTIONS_AVAILABLE ), "MMX not present\n" );
+        }
+    }
+    else win_skip( "NtWow64IsProcessorFeaturePresent not supported\n" );
 
     NtClose( process );
 }

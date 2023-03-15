@@ -350,6 +350,7 @@ static void * const syscalls[] =
 #ifndef _WIN64
     NtWow64AllocateVirtualMemory64,
     NtWow64GetNativeSystemInformation,
+    NtWow64IsProcessorFeaturePresent,
     NtWow64ReadVirtualMemory64,
     NtWow64WriteVirtualMemory64,
 #endif

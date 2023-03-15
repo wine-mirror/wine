@@ -623,6 +623,17 @@ NTSTATUS WINAPI wow64_NtSetDefaultUILanguage( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtWow64IsProcessorFeaturePresent
+ */
+NTSTATUS WINAPI wow64_NtWow64IsProcessorFeaturePresent( UINT *args )
+{
+    UINT feature = get_ulong( &args );
+
+    return RtlIsProcessorFeaturePresent( feature );
+}
+
+
+/**********************************************************************
  *           get_syscall_num
  */
 static DWORD get_syscall_num( const BYTE *syscall )

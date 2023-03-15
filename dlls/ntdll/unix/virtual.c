@@ -69,6 +69,7 @@
 #include "windef.h"
 #include "winnt.h"
 #include "winternl.h"
+#include "ddk/wdm.h"
 #include "wine/list.h"
 #include "wine/rbtree.h"
 #include "unix_private.h"
@@ -5332,6 +5333,15 @@ NTSTATUS WINAPI NtWow64GetNativeSystemInformation( SYSTEM_INFORMATION_CLASS clas
         if (is_wow64) return STATUS_INVALID_INFO_CLASS;
         return NtQuerySystemInformation( class, info, len, retlen );
     }
+}
+
+/***********************************************************************
+ *             NtWow64IsProcessorFeaturePresent   (NTDLL.@)
+ *             ZwWow64IsProcessorFeaturePresent   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtWow64IsProcessorFeaturePresent( UINT feature )
+{
+    return feature < PROCESSOR_FEATURE_MAX && user_shared_data->ProcessorFeatures[feature];
 }
 
 #endif  /* _WIN64 */
