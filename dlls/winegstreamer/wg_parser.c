@@ -898,10 +898,6 @@ static void pad_removed_cb(GstElement *element, GstPad *pad, gpointer user)
 
         if (stream->their_src == pad)
         {
-            if (stream->post_sink)
-                gst_pad_unlink(stream->their_src, stream->post_sink);
-            else
-                gst_pad_unlink(stream->their_src, stream->my_sink);
             gst_object_unref(stream->their_src);
             stream->their_src = NULL;
             return;
