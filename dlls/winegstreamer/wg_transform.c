@@ -267,50 +267,6 @@ NTSTATUS wg_transform_destroy(void *args)
     return STATUS_SUCCESS;
 }
 
-static GstElement *transform_find_element(GstElementFactoryListType type, GstCaps *src_caps, GstCaps *sink_caps)
-{
-    GstElement *element = NULL;
-    GList *tmp, *transforms;
-    const gchar *name;
-
-    if (!(transforms = gst_element_factory_list_get_elements(type, GST_RANK_MARGINAL)))
-        goto done;
-
-    tmp = gst_element_factory_list_filter(transforms, src_caps, GST_PAD_SINK, FALSE);
-    gst_plugin_feature_list_free(transforms);
-    if (!(transforms = tmp))
-        goto done;
-
-    tmp = gst_element_factory_list_filter(transforms, sink_caps, GST_PAD_SRC, FALSE);
-    gst_plugin_feature_list_free(transforms);
-    if (!(transforms = tmp))
-        goto done;
-
-    transforms = g_list_sort(transforms, gst_plugin_feature_rank_compare_func);
-    for (tmp = transforms; tmp != NULL && element == NULL; tmp = tmp->next)
-    {
-        name = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(tmp->data));
-        if (!(element = gst_element_factory_create(GST_ELEMENT_FACTORY(tmp->data), NULL)))
-            GST_WARNING("Failed to create %s element.", name);
-    }
-    gst_plugin_feature_list_free(transforms);
-
-done:
-    if (element)
-    {
-        GST_DEBUG("Created %s element %p.", name, element);
-    }
-    else
-    {
-        gchar *src_str = gst_caps_to_string(src_caps), *sink_str = gst_caps_to_string(sink_caps);
-        GST_WARNING("Failed to create transform matching caps %s / %s.", src_str, sink_str);
-        g_free(sink_str);
-        g_free(src_str);
-    }
-
-    return element;
-}
-
 static bool transform_append_element(struct wg_transform *transform, GstElement *element,
         GstElement **first, GstElement **last)
 {
@@ -423,7 +379,7 @@ NTSTATUS wg_transform_create(void *args)
         case WG_MAJOR_TYPE_VIDEO_CINEPAK:
         case WG_MAJOR_TYPE_VIDEO_INDEO:
         case WG_MAJOR_TYPE_VIDEO_WMV:
-            if (!(element = transform_find_element(GST_ELEMENT_FACTORY_TYPE_DECODER, src_caps, raw_caps))
+            if (!(element = find_element(GST_ELEMENT_FACTORY_TYPE_DECODER, src_caps, raw_caps))
                     || !transform_append_element(transform, element, &first, &last))
             {
                 gst_caps_unref(raw_caps);

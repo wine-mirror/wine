@@ -47,6 +47,60 @@
 
 GST_DEBUG_CATEGORY(wine);
 
+GstElement *create_element(const char *name, const char *plugin_set)
+{
+    GstElement *element;
+
+    if (!(element = gst_element_factory_make(name, NULL)))
+        fprintf(stderr, "winegstreamer: failed to create %s, are %u-bit GStreamer \"%s\" plugins installed?\n",
+                name, 8 * (unsigned int)sizeof(void *), plugin_set);
+    return element;
+}
+
+GstElement *find_element(GstElementFactoryListType type, GstCaps *src_caps, GstCaps *sink_caps)
+{
+    GstElement *element = NULL;
+    GList *tmp, *transforms;
+    const gchar *name;
+
+    if (!(transforms = gst_element_factory_list_get_elements(type, GST_RANK_MARGINAL)))
+        goto done;
+
+    tmp = gst_element_factory_list_filter(transforms, src_caps, GST_PAD_SINK, FALSE);
+    gst_plugin_feature_list_free(transforms);
+    if (!(transforms = tmp))
+        goto done;
+
+    tmp = gst_element_factory_list_filter(transforms, sink_caps, GST_PAD_SRC, FALSE);
+    gst_plugin_feature_list_free(transforms);
+    if (!(transforms = tmp))
+        goto done;
+
+    transforms = g_list_sort(transforms, gst_plugin_feature_rank_compare_func);
+    for (tmp = transforms; tmp != NULL && element == NULL; tmp = tmp->next)
+    {
+        name = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(tmp->data));
+        if (!(element = gst_element_factory_create(GST_ELEMENT_FACTORY(tmp->data), NULL)))
+            GST_WARNING("Failed to create %s element.", name);
+    }
+    gst_plugin_feature_list_free(transforms);
+
+done:
+    if (element)
+    {
+        GST_DEBUG("Created %s element %p.", name, element);
+    }
+    else
+    {
+        gchar *src_str = gst_caps_to_string(src_caps), *sink_str = gst_caps_to_string(sink_caps);
+        GST_WARNING("Failed to create element matching caps %s / %s.", src_str, sink_str);
+        g_free(sink_str);
+        g_free(src_str);
+    }
+
+    return element;
+}
+
 NTSTATUS wg_init_gstreamer(void *arg)
 {
     char arg0[] = "wine";

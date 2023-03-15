@@ -727,16 +727,6 @@ static gboolean sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
     }
 }
 
-GstElement *create_element(const char *name, const char *plugin_set)
-{
-    GstElement *element;
-
-    if (!(element = gst_element_factory_make(name, NULL)))
-        fprintf(stderr, "winegstreamer: failed to create %s, are %u-bit GStreamer \"%s\" plugins installed?\n",
-                name, 8 * (unsigned int)sizeof(void *), plugin_set);
-    return element;
-}
-
 static struct wg_parser_stream *create_stream(struct wg_parser *parser)
 {
     struct wg_parser_stream *stream, **new_array;

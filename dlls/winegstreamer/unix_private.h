@@ -32,9 +32,8 @@ GST_DEBUG_CATEGORY_EXTERN(wine) DECLSPEC_HIDDEN;
 
 extern NTSTATUS wg_init_gstreamer(void *args) DECLSPEC_HIDDEN;
 
-/* wg_parser.c */
-
 extern GstElement *create_element(const char *name, const char *plugin_set) DECLSPEC_HIDDEN;
+extern GstElement *find_element(GstElementFactoryListType type, GstCaps *src_caps, GstCaps *sink_caps) DECLSPEC_HIDDEN;
 
 /* wg_format.c */
 
