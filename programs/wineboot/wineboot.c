@@ -260,6 +260,8 @@ static void create_user_shared_data(void)
     UNICODE_STRING name = RTL_CONSTANT_STRING( L"\\KernelObjects\\__wine_user_shared_data" );
     NTSTATUS status;
     HANDLE handle;
+    ULONG i, machines[8];
+    HANDLE process = 0;
 
     InitializeObjectAttributes( &attr, &name, OBJ_OPENIF, NULL, NULL );
     if ((status = NtOpenSection( &handle, SECTION_ALL_ACCESS, &attr )))
@@ -320,15 +322,46 @@ static void create_user_shared_data(void)
         features[PF_AVX_INSTRUCTIONS_AVAILABLE]           = !!(sci.ProcessorFeatureBits & CPU_FEATURE_AVX);
         features[PF_AVX2_INSTRUCTIONS_AVAILABLE]          = !!(sci.ProcessorFeatureBits & CPU_FEATURE_AVX2);
         break;
+
     case PROCESSOR_ARCHITECTURE_ARM:
         features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]       = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_VFP_32);
         features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE]      = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_NEON);
         features[PF_ARM_V8_INSTRUCTIONS_AVAILABLE]        = (sci.ProcessorLevel >= 8);
         break;
+
     case PROCESSOR_ARCHITECTURE_ARM64:
         features[PF_ARM_V8_INSTRUCTIONS_AVAILABLE]        = TRUE;
         features[PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE]  = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_V8_CRC32);
         features[PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE] = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_V8_CRYPTO);
+        features[PF_COMPARE_EXCHANGE_DOUBLE]              = TRUE;
+        features[PF_NX_ENABLED]                           = TRUE;
+        features[PF_FASTFAIL_AVAILABLE]                   = TRUE;
+        /* add features for other architectures supported by wow64 */
+        if (!NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
+                                         machines, sizeof(machines), NULL ))
+        {
+            for (i = 0; machines[i]; i++)
+            {
+                switch (LOWORD(machines[i]))
+                {
+                case IMAGE_FILE_MACHINE_ARMNT:
+                    features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]  = TRUE;
+                    features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE] = TRUE;
+                    break;
+                case IMAGE_FILE_MACHINE_I386:
+                    features[PF_MMX_INSTRUCTIONS_AVAILABLE]    = TRUE;
+                    features[PF_XMMI_INSTRUCTIONS_AVAILABLE]   = TRUE;
+                    features[PF_RDTSC_INSTRUCTION_AVAILABLE]   = TRUE;
+                    features[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
+                    features[PF_SSE3_INSTRUCTIONS_AVAILABLE]   = TRUE;
+                    features[PF_RDTSCP_INSTRUCTION_AVAILABLE]  = TRUE;
+                    features[PF_SSSE3_INSTRUCTIONS_AVAILABLE]  = TRUE;
+                    features[PF_SSE4_1_INSTRUCTIONS_AVAILABLE] = TRUE;
+                    features[PF_SSE4_2_INSTRUCTIONS_AVAILABLE] = TRUE;
+                    break;
+                }
+            }
+        }
         break;
     }
     data->ActiveProcessorCount = NtCurrentTeb()->Peb->NumberOfProcessors;
