@@ -725,10 +725,28 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
         {.objid = TRUE},
         {.objid = TRUE, .how = TRUE},
     };
+    DIPROPSTRING prop_username =
+    {
+        .diph =
+        {
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwSize = sizeof(DIPROPSTRING),
+            .dwHow = DIPH_DEVICE,
+        }
+    };
     DIACTIONW actions[ARRAY_SIZE(expect_actions)];
     DIACTIONFORMATW action_format;
-    DWORD flags;
+    WCHAR username[256];
+    DWORD res, flags;
     HRESULT hr;
+
+    res = ARRAY_SIZE(username);
+    GetUserNameW( username, &res );
+
+    memset( prop_username.wsz, 0, sizeof(prop_username.wsz) );
+    hr = IDirectInputDevice_GetProperty( device, DIPROP_USERNAME, &prop_username.diph );
+    ok( hr == DI_NOEFFECT, "GetProperty returned %#lx\n", hr );
+    ok( !wcscmp( prop_username.wsz, L"" ), "got username %s\n", debugstr_w(prop_username.wsz) );
 
 
     hr = IDirectInputDevice8_BuildActionMap( device, NULL, L"username", DIDBAM_DEFAULT );
@@ -768,11 +786,25 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     todo_wine
     ok( hr == DI_SETTINGSNOTSAVED, "SetActionMap returned %#lx\n", hr );
 
+    memset( prop_username.wsz, 0, sizeof(prop_username.wsz) );
+    hr = IDirectInputDevice_GetProperty( device, DIPROP_USERNAME, &prop_username.diph );
+    todo_wine
+    ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
+    todo_wine
+    ok( !wcscmp( prop_username.wsz, username ), "got username %s\n", debugstr_w(prop_username.wsz) );
+
     hr = IDirectInputDevice8_SetActionMap( device, &voice_action_format, NULL, DIDSAM_DEFAULT );
     ok( hr == DI_NOEFFECT, "SetActionMap returned %#lx\n", hr );
     hr = IDirectInputDevice8_SetActionMap( device, &voice_action_format, NULL, DIDSAM_FORCESAVE );
     todo_wine
     ok( hr == DI_SETTINGSNOTSAVED, "SetActionMap returned %#lx\n", hr );
+
+    memset( prop_username.wsz, 0, sizeof(prop_username.wsz) );
+    hr = IDirectInputDevice_GetProperty( device, DIPROP_USERNAME, &prop_username.diph );
+    todo_wine
+    ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
+    todo_wine
+    ok( !wcscmp( prop_username.wsz, username ), "got username %s\n", debugstr_w(prop_username.wsz) );
 
 
     action_format = action_format_1;
@@ -891,6 +923,22 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     hr = IDirectInputDevice8_BuildActionMap( device, &action_format, L"username", DIDBAM_PRESERVE );
     ok( hr == DI_OK, "BuildActionMap returned %#lx\n", hr );
     check_diactionformatw_( __LINE__, &action_format, &expect_action_format_2, actions_todos_2 );
+
+
+    /* DIDSAM_NOUSER flag clears the device user property */
+
+    memset( prop_username.wsz, 0, sizeof(prop_username.wsz) );
+    hr = IDirectInputDevice_GetProperty( device, DIPROP_USERNAME, &prop_username.diph );
+    ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
+    ok( !wcscmp( prop_username.wsz, L"username" ), "got username %s\n", debugstr_w(prop_username.wsz) );
+
+    hr = IDirectInputDevice8_SetActionMap( device, &action_format, L"username", DIDSAM_NOUSER );
+    ok( hr == DI_OK, "SetActionMap returned %#lx\n", hr );
+
+    memset( prop_username.wsz, 0, sizeof(prop_username.wsz) );
+    hr = IDirectInputDevice_GetProperty( device, DIPROP_USERNAME, &prop_username.diph );
+    ok( hr == DI_NOEFFECT, "GetProperty returned %#lx\n", hr );
+    ok( !wcscmp( prop_username.wsz, L"" ), "got username %s\n", debugstr_w(prop_username.wsz) );
 }
 
 static void test_simple_joystick( DWORD version )
