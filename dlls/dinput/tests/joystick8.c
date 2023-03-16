@@ -725,6 +725,15 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
         {.objid = TRUE},
         {.objid = TRUE, .how = TRUE},
     };
+    DIPROPRANGE prop_range =
+    {
+        .diph =
+        {
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwSize = sizeof(DIPROPRANGE),
+            .dwHow = DIPH_DEVICE,
+        }
+    };
     DIPROPDWORD prop_dword =
     {
         .diph =
@@ -909,6 +918,24 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
     ok( prop_pointer.uData == 0, "got uData %#Ix\n", prop_pointer.uData );
 
+    prop_range.diph.dwHow = DIPH_BYID;
+    prop_range.diph.dwObj = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 2 );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
+    ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
+    todo_wine
+    ok( prop_range.lMin == +1000, "got lMin %+ld\n", prop_range.lMin );
+    todo_wine
+    ok( prop_range.lMax == +51000, "got lMax %+ld\n", prop_range.lMax );
+
+    prop_range.diph.dwHow = DIPH_BYUSAGE;
+    prop_range.diph.dwObj = MAKELONG(HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC);
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
+    ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
+    todo_wine
+    ok( prop_range.lMin == -14000, "got lMin %+ld\n", prop_range.lMin );
+    todo_wine
+    ok( prop_range.lMax == -4000, "got lMax %+ld\n", prop_range.lMax );
+
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_BUFFERSIZE, &prop_dword.diph );
     ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
     todo_wine
@@ -960,6 +987,20 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     todo_wine
     ok( prop_pointer.uData == 8, "got uData %#Ix\n", prop_pointer.uData );
 
+    prop_range.diph.dwHow = DIPH_BYID;
+    prop_range.diph.dwObj = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 2 );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
+    ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
+    ok( prop_range.lMin == -128, "got lMin %+ld\n", prop_range.lMin );
+    ok( prop_range.lMax == +128, "got lMax %+ld\n", prop_range.lMax );
+
+    prop_range.diph.dwHow = DIPH_BYUSAGE;
+    prop_range.diph.dwObj = MAKELONG(HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC);
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
+    ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
+    ok( prop_range.lMin == -128, "got lMin %+ld\n", prop_range.lMin );
+    ok( prop_range.lMax == +128, "got lMax %+ld\n", prop_range.lMax );
+
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_BUFFERSIZE, &prop_dword.diph );
     ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
     ok( prop_dword.dwData == 32, "got dwData %#lx\n", prop_dword.dwData );
@@ -1007,6 +1048,20 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
     todo_wine
     ok( prop_pointer.uData == -1, "got uData %#Ix\n", prop_pointer.uData );
+
+    prop_range.diph.dwHow = DIPH_BYID;
+    prop_range.diph.dwObj = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 2 );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
+    ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
+    ok( prop_range.lMin == -128, "got lMin %+ld\n", prop_range.lMin );
+    ok( prop_range.lMax == +128, "got lMax %+ld\n", prop_range.lMax );
+
+    prop_range.diph.dwHow = DIPH_BYUSAGE;
+    prop_range.diph.dwObj = MAKELONG(HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC);
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
+    ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
+    ok( prop_range.lMin == -128, "got lMin %+ld\n", prop_range.lMin );
+    ok( prop_range.lMax == +128, "got lMax %+ld\n", prop_range.lMax );
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_BUFFERSIZE, &prop_dword.diph );
     ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
