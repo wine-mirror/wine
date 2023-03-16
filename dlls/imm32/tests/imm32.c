@@ -2683,7 +2683,7 @@ static HKL ime_install(void)
 
     hkl = ImmInstallIMEW( ime_path, L"WineTest IME" );
     todo_wine
-    ok( hkl == (HKL)(int)0xe0200400, "ImmInstallIMEW returned %p, error %lu\n", hkl, GetLastError() );
+    ok( hkl == (HKL)(int)0xe020047f, "ImmInstallIMEW returned %p, error %lu\n", hkl, GetLastError() );
 
     swprintf( buffer, ARRAY_SIZE(buffer), L"System\\CurrentControlSet\\Control\\Keyboard Layouts\\%08x", hkl );
     ret = RegOpenKeyW( HKEY_LOCAL_MACHINE, buffer, &hkey );
