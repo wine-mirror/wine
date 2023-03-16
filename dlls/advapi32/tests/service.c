@@ -1420,10 +1420,30 @@ static void test_enum_svc(void)
          */
         if (status.dwServiceType & (SERVICE_WIN32_OWN_PROCESS | SERVICE_WIN32_SHARE_PROCESS))
         {
-            if (status.dwCurrentState == SERVICE_STOPPED)
-                servicecountinactive--;
-            else
+            switch (status.dwCurrentState)
+            {
+            case SERVICE_START_PENDING:
+            case SERVICE_STOP_PENDING:
+            case SERVICE_PAUSE_PENDING:
+            case SERVICE_PAUSED:
+            case SERVICE_CONTINUE_PENDING:
+                trace("Got state %lx for service %s\n", status.dwCurrentState,
+                      services[i].lpServiceName);
+                /* fall through */
+
+            case SERVICE_RUNNING:
                 servicecountactive--;
+                break;
+
+            case SERVICE_STOPPED:
+                servicecountinactive--;
+                break;
+
+            default:
+                ok(0, "Got unknown state %lx for service %s\n",
+                   status.dwCurrentState, services[i].lpServiceName);
+                break;
+            }
         }
     }
     HeapFree(GetProcessHeap(), 0, services);
@@ -1739,21 +1759,45 @@ static void test_enum_svc(void)
 
         if (status.dwServiceType & (SERVICE_WIN32_OWN_PROCESS | SERVICE_WIN32_SHARE_PROCESS))
         {
-            if (status.dwCurrentState != SERVICE_STOPPED)
+            switch (status.dwCurrentState)
             {
+            case SERVICE_START_PENDING:
+            case SERVICE_STOP_PENDING:
+                trace("Got state %lx (pid=%04lx) for service %s\n",
+                      status.dwCurrentState, status.dwProcessId,
+                      exservices[i].lpServiceName);
+                /* There may or may not be a process id */
+                servicecountactive--;
+                break;
+
+            case SERVICE_PAUSE_PENDING:
+            case SERVICE_PAUSED:
+            case SERVICE_CONTINUE_PENDING:
+                trace("Got state %lx (pid=%04lx) for service %s\n",
+                      status.dwCurrentState, status.dwProcessId,
+                      exservices[i].lpServiceName);
+                /* fall through */
+
+            case SERVICE_RUNNING:
                 /* We expect a process id for every running service */
                 ok(status.dwProcessId > 0, "Expected a process id for this running service (%s)\n",
                    exservices[i].lpServiceName);
-
                 servicecountactive--;
-            }
-            else
-            {
+                break;
+
+            case SERVICE_STOPPED:
                 /* We shouldn't have a process id for inactive services */
                 ok(status.dwProcessId == 0, "Service %s state %lu shouldn't have an associated process id\n",
                    exservices[i].lpServiceName, status.dwCurrentState);
 
                 servicecountinactive--;
+                break;
+
+            default:
+                ok(0, "Got unknown state %lx (pid=%04lx) for service %s\n",
+                   status.dwCurrentState, status.dwProcessId,
+                   exservices[i].lpServiceName);
+                break;
             }
         }
     }
