@@ -98,6 +98,7 @@ ULONG CDECL WLDAP32_ldap_count_entries( LDAP *ld, WLDAP32_LDAPMessage *res )
 {
     TRACE( "(%p, %p)\n", ld, res );
 
+    if (!res) return 0;
     if (!ld) return ~0u;
     return ldap_count_entries( CTX(ld), MSG(res) );
 }
