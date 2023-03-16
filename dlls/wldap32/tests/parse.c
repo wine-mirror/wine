@@ -68,6 +68,12 @@ static void test_ldap_parse_sort_control( LDAP *ld )
     ok( !ret, "ldap_search_ext_sA failed %#lx\n", ret );
     ok( res != NULL, "expected res != NULL\n" );
 
+    ret = ldap_parse_resultA( NULL, NULL, NULL, NULL, NULL, NULL, &server_ctrls, 0 );
+    ok( ret == LDAP_PARAM_ERROR, "ldap_parse_resultA should fail, got %#lx\n", ret );
+    ret = ldap_parse_resultA( NULL, res, NULL, NULL, NULL, NULL, &server_ctrls, 0 );
+    ok( ret == LDAP_PARAM_ERROR, "ldap_parse_resultA should fail, got %#lx\n", ret );
+    ret = ldap_parse_resultA( ld, NULL, NULL, NULL, NULL, NULL, &server_ctrls, 0 );
+    ok( ret == LDAP_NO_RESULTS_RETURNED, "ldap_parse_resultA should fail, got %#lx\n", ret );
     result = ~0u;
     ret = ldap_parse_resultA( ld, res, &result, NULL, NULL, NULL, &server_ctrls, 1 );
     ok( !ret, "ldap_parse_resultA failed %#lx\n", ret );
