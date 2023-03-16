@@ -570,6 +570,53 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
         .tszActionMap = L"Action Map Filled",
         .dwCRC = 0x3d98f717,
     };
+    struct hid_expect injected_input[] =
+    {
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0},
+        },
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x10,0x10,0x38,0x38,0x10,0x10,0x10,0xf8},
+        },
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x10,0x10,0x01,0x01,0x10,0x10,0x10,0x00},
+        },
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x10,0x10,0x01,0x01,0x10,0x10,0x10,0x00},
+        },
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x10,0x10,0x80,0x80,0x10,0x10,0x10,0xff},
+        },
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x10,0x10,0x10,0xee,0x10,0x10,0x10,0x54},
+        },
+    };
+    const DWORD expect_state[ARRAY_SIZE(injected_input)][ARRAY_SIZE(expect_actions)] =
+    {
+        {   0, 0, 0,     -1, 0, 0, 0,    0},
+        {   0, 0, 0,     -1, 0, 0, 0,    0},
+        {+128, 0, 0, +31500, 0, 0, 0, +128},
+        {   0, 0, 0,     -1, 0, 0, 0,  -43},
+        {   0, 0, 0,     -1, 0, 0, 0,  -43},
+        {+128, 0, 0,     -1, 0, 0, 0, -128},
+    };
+    const DIDEVICEOBJECTDATA expect_objdata[8] =
+    {
+        {.dwOfs = 0x1c, .dwData = +128, .uAppData = 8},
+        {.dwOfs = 0xc, .dwData = +31500, .uAppData = 4},
+        {.dwOfs = 0, .dwData = +128, .uAppData = 1},
+        {.dwOfs = 0x1c, .dwData = -43, .uAppData = 8},
+        {.dwOfs = 0xc, .dwData = -1, .uAppData = 4},
+        {.dwOfs = 0, .dwData = 0, .uAppData = 1},
+        {.dwOfs = 0x1c, .dwData = -128, .uAppData = 8},
+        {.dwOfs = 0, .dwData = +128, .uAppData = 1},
+    };
     DIACTIONW voice_actions[] =
     {
         {.dwSemantic = DIVOICE_CHANNEL1},
@@ -760,10 +807,12 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
             .dwSize = sizeof(DIPROPPOINTER),
         }
     };
+    DIDEVICEOBJECTDATA objdata[ARRAY_SIZE(expect_objdata)];
     DIACTIONW actions[ARRAY_SIZE(expect_actions)];
+    DWORD state[ARRAY_SIZE(expect_actions)];
     DIACTIONFORMATW action_format;
     WCHAR username[256];
-    DWORD res, flags;
+    DWORD i, res, flags;
     HRESULT hr;
 
     res = ARRAY_SIZE(username);
@@ -1026,6 +1075,87 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     hr = IDirectInputDevice8_BuildActionMap( device, &action_format, L"username", DIDBAM_PRESERVE );
     ok( hr == DI_OK, "BuildActionMap returned %#lx\n", hr );
     check_diactionformatw_( __LINE__, &action_format, &expect_action_format_2, actions_todos_2 );
+
+
+    hr = IDirectInputDevice8_Acquire( device );
+    todo_wine
+    ok( hr == DI_OK, "Acquire returned: %#lx\n", hr );
+    if (hr != DI_OK) goto skip_input;
+
+    hr = IDirectInputDevice8_SetActionMap( device, &action_format, L"username", DIDSAM_DEFAULT );
+    ok( hr == DIERR_ACQUIRED, "SetActionMap returned %#lx\n", hr );
+
+    send_hid_input( file, &injected_input[0], sizeof(*injected_input) );
+    res = WaitForSingleObject( event, 100 );
+    if (res == WAIT_TIMEOUT) /* Acquire is asynchronous */
+    {
+        send_hid_input( file, &injected_input[0], sizeof(*injected_input) );
+        res = WaitForSingleObject( event, 100 );
+    }
+    todo_wine
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+
+    for (i = 0; i < ARRAY_SIZE(injected_input); ++i)
+    {
+        winetest_push_context( "state[%ld]", i );
+
+        hr = IDirectInputDevice8_GetDeviceState( device, sizeof(state), state );
+        todo_wine
+        ok( hr == DI_OK, "GetDeviceState returned: %#lx\n", hr );
+        todo_wine_if( expect_state[i][0] )
+        ok( state[0] == expect_state[i][0], "got state[0] %+ld\n", state[0] );
+        todo_wine_if( expect_state[i][1] )
+        ok( state[1] == expect_state[i][1], "got state[1] %+ld\n", state[1] );
+        todo_wine_if( expect_state[i][2] )
+        ok( state[2] == expect_state[i][2], "got state[2] %+ld\n", state[2] );
+        todo_wine_if( expect_state[i][3] )
+        ok( state[3] == expect_state[i][3], "got state[3] %+ld\n", state[3] );
+        todo_wine_if( expect_state[i][4] )
+        ok( state[4] == expect_state[i][4], "got state[4] %+ld\n", state[4] );
+        todo_wine_if( expect_state[i][5] )
+        ok( state[5] == expect_state[i][5], "got state[5] %+ld\n", state[5] );
+        todo_wine_if( expect_state[i][6] )
+        ok( state[6] == expect_state[i][6], "got state[6] %+ld\n", state[6] );
+        todo_wine_if( expect_state[i][7] )
+        ok( state[7] == expect_state[i][7] ||
+            broken(state[7] == -45 && expect_state[i][7] == -43) /* 32-bit rounding */,
+            "got state[7] %+ld\n", state[7] );
+
+        send_hid_input( file, &injected_input[i], sizeof(*injected_input) );
+
+        res = WaitForSingleObject( event, 100 );
+        if (i == 0 || i == 3) ok( res == WAIT_TIMEOUT, "WaitForSingleObject succeeded\n" );
+        else todo_wine ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+        ResetEvent( event );
+        winetest_pop_context();
+    }
+
+    res = ARRAY_SIZE(objdata);
+    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(*objdata), objdata, &res, DIGDD_PEEK );
+    todo_wine
+    ok( hr == DI_BUFFEROVERFLOW, "GetDeviceData returned %#lx\n", hr );
+    ok( res == 8, "got %lu expected %u\n", res, 8 );
+    while (res--)
+    {
+        winetest_push_context( "%lu", res );
+        todo_wine_if( expect_objdata[res].dwOfs )
+        check_member( objdata[res], expect_objdata[res], "%#lx", dwOfs );
+        todo_wine_if( expect_objdata[res].dwData )
+        ok( objdata[res].dwData == expect_objdata[res].dwData ||
+            broken(objdata[res].dwData == -45 && expect_objdata[res].dwData == -43) /* 32-bit rounding */,
+            "got dwData %+ld\n", objdata[res].dwData );
+        todo_wine
+        check_member( objdata[res], expect_objdata[res], "%#Ix", uAppData );
+        winetest_pop_context();
+    }
+
+skip_input:
+    hr = IDirectInputDevice8_BuildActionMap( device, &action_format, L"username", DIDBAM_DEFAULT );
+    ok( hr == DI_OK, "BuildActionMap returned %#lx\n", hr );
+
+    hr = IDirectInputDevice8_Unacquire( device );
+    todo_wine
+    ok( hr == DI_OK, "Acquire returned: %#lx\n", hr );
 
 
     /* setting the data format resets action map */
