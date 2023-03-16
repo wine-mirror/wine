@@ -16543,6 +16543,12 @@ static const struct message wm_lb_addstring_sort_ownerdraw[] =
     { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 3 },
     { 0 }
 };
+static const struct message wm_lb_dblclick_0[] =
+{
+    { WM_LBUTTONDBLCLK, sent|wparam|lparam, 0, MAKELPARAM(1,1) },
+    { WM_LBUTTONUP, sent|wparam|lparam, 0, 0 },
+    { 0 }
+};
 
 #define check_lb_state(a1, a2, a3, a4, a5) check_lb_state_dbg(a1, a2, a3, a4, a5, __LINE__)
 
@@ -16687,6 +16693,25 @@ static void test_listbox_messages(void)
     check_lb_state(listbox, 0, -1, 0, 0);
     flush_sequence();
 
+    ret = SendMessageA(listbox, LB_DELETESTRING, 0, 0);
+    ok(ret == LB_ERR, "expected LB_ERR, got %Id\n", ret);
+    check_lb_state(listbox, 0, LB_ERR, 0, 0);
+    flush_sequence();
+
+    ret = SendMessageA(listbox, LB_RESETCONTENT, 0, 0);
+    ok(ret == LB_OKAY, "expected LB_OKAY, got %Id\n", ret);
+    check_lb_state(listbox, 0, LB_ERR, 0, 0);
+    flush_sequence();
+
+    if (winetest_debug > 1) trace("clicking on item 0\n");
+    ret = SendMessageA(listbox, WM_LBUTTONDBLCLK, 0, MAKELPARAM(1, 1));
+    ok(ret == LB_OKAY, "expected LB_OKAY, got %Id\n", ret);
+    ret = SendMessageA(listbox, WM_LBUTTONUP, 0, 0);
+    ok(ret == LB_OKAY, "expected LB_OKAY, got %Id\n", ret);
+    ok_sequence(wm_lb_dblclick_0, "WM_LBUTTONDBLCLK 0", FALSE );
+    check_lb_state(listbox, 0, LB_ERR, 0, 0);
+    flush_sequence();
+
     log_all_parent_messages--;
 
     DestroyWindow(listbox);
@@ -16712,6 +16737,21 @@ static void test_listbox_messages(void)
 
     ok_sequence(wm_lb_addstring_sort_ownerdraw, "LB_ADDSTRING", FALSE);
     check_lb_state(listbox, 3, LB_ERR, 0, 0);
+
+    ret = SendMessageA(listbox, LB_RESETCONTENT, 0, 0);
+    ok(ret == LB_OKAY, "expected LB_OKAY, got %Id\n", ret);
+    check_lb_state(listbox, 0, LB_ERR, 0, 0);
+    SetFocus(listbox); /* avoid focus messages */
+    flush_sequence();
+
+    if (winetest_debug > 1) trace("clicking on item 0\n");
+    ret = SendMessageA(listbox, WM_LBUTTONDBLCLK, 0, MAKELPARAM(1, 1));
+    ok(ret == LB_OKAY, "expected LB_OKAY, got %Id\n", ret);
+    ret = SendMessageA(listbox, WM_LBUTTONUP, 0, 0);
+    ok(ret == LB_OKAY, "expected LB_OKAY, got %Id\n", ret);
+    ok_sequence(wm_lb_dblclick_0, "WM_LBUTTONDBLCLK 0", FALSE );
+    check_lb_state(listbox, 0, LB_ERR, 0, 0);
+    flush_sequence();
 
     log_all_parent_messages--;
 
@@ -16739,6 +16779,21 @@ static void test_listbox_messages(void)
     ok_sequence(wm_lb_addstring, "LB_ADDSTRING", FALSE);
     check_lb_state(listbox, 3, LB_ERR, 0, 0);
 
+    ret = SendMessageA(listbox, LB_RESETCONTENT, 0, 0);
+    ok(ret == LB_OKAY, "expected LB_OKAY, got %Id\n", ret);
+    check_lb_state(listbox, 0, LB_ERR, 0, 0);
+    SetFocus(listbox); /* avoid focus messages */
+    flush_sequence();
+
+    if (winetest_debug > 1) trace("clicking on item 0\n");
+    ret = SendMessageA(listbox, WM_LBUTTONDBLCLK, 0, MAKELPARAM(1, 1));
+    ok(ret == LB_OKAY, "expected LB_OKAY, got %Id\n", ret);
+    ret = SendMessageA(listbox, WM_LBUTTONUP, 0, 0);
+    ok(ret == LB_OKAY, "expected LB_OKAY, got %Id\n", ret);
+    ok_sequence(wm_lb_dblclick_0, "WM_LBUTTONDBLCLK 0", FALSE );
+    check_lb_state(listbox, 0, LB_ERR, 0, 0);
+    flush_sequence();
+
     log_all_parent_messages--;
 
     DestroyWindow(listbox);
@@ -16764,6 +16819,21 @@ static void test_listbox_messages(void)
 
     ok_sequence(wm_lb_addstring, "LB_ADDSTRING", FALSE);
     check_lb_state(listbox, 3, LB_ERR, 0, 0);
+
+    ret = SendMessageA(listbox, LB_RESETCONTENT, 0, 0);
+    ok(ret == LB_OKAY, "expected LB_OKAY, got %Id\n", ret);
+    check_lb_state(listbox, 0, LB_ERR, 0, 0);
+    SetFocus(listbox); /* avoid focus messages */
+    flush_sequence();
+
+    if (winetest_debug > 1) trace("clicking on item 0\n");
+    ret = SendMessageA(listbox, WM_LBUTTONDBLCLK, 0, MAKELPARAM(1, 1));
+    ok(ret == LB_OKAY, "expected LB_OKAY, got %Id\n", ret);
+    ret = SendMessageA(listbox, WM_LBUTTONUP, 0, 0);
+    ok(ret == LB_OKAY, "expected LB_OKAY, got %Id\n", ret);
+    ok_sequence(wm_lb_dblclick_0, "WM_LBUTTONDBLCLK 0", FALSE );
+    check_lb_state(listbox, 0, LB_ERR, 0, 0);
+    flush_sequence();
 
     log_all_parent_messages--;
 
