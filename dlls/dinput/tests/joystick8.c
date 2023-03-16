@@ -734,6 +734,14 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
             .dwHow = DIPH_DEVICE,
         }
     };
+    DIPROPPOINTER prop_pointer =
+    {
+        .diph =
+        {
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwSize = sizeof(DIPROPPOINTER),
+        }
+    };
     DIACTIONW actions[ARRAY_SIZE(expect_actions)];
     DIACTIONFORMATW action_format;
     WCHAR username[256];
@@ -885,6 +893,14 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     ok( hr == DI_OK, "SetActionMap returned %#lx\n", hr );
 
 
+    prop_pointer.diph.dwHow = DIPH_BYUSAGE;
+    prop_pointer.diph.dwObj = MAKELONG(HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC);
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
+    todo_wine
+    ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
+    ok( prop_pointer.uData == 0, "got uData %#Ix\n", prop_pointer.uData );
+
+
     /* saving action map actually does nothing */
 
     action_format = action_format_2_filled;
@@ -901,6 +917,34 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     todo_wine
     ok( hr == DI_SETTINGSNOTSAVED, "SetActionMap returned %#lx\n", hr );
     check_diactionformatw_( __LINE__, &action_format, &expect_action_format_2_filled, actions_todos_2_filled );
+
+
+    prop_pointer.diph.dwHow = DIPH_DEVICE;
+    prop_pointer.diph.dwObj = 0;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty returned %#lx\n", hr );
+
+    prop_pointer.diph.dwHow = DIPH_BYID;
+    prop_pointer.diph.dwObj = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 3 );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
+    todo_wine
+    ok( hr == DIERR_NOTFOUND, "GetProperty returned %#lx\n", hr );
+
+    prop_pointer.diph.dwHow = DIPH_BYID;
+    prop_pointer.diph.dwObj = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 2 );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
+    todo_wine
+    ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
+    todo_wine
+    ok( prop_pointer.uData == 6, "got uData %#Ix\n", prop_pointer.uData );
+
+    prop_pointer.diph.dwHow = DIPH_BYUSAGE;
+    prop_pointer.diph.dwObj = MAKELONG(HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC);
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
+    todo_wine
+    ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
+    todo_wine
+    ok( prop_pointer.uData == 8, "got uData %#Ix\n", prop_pointer.uData );
 
 
     action_format = action_format_2;
@@ -923,6 +967,28 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     hr = IDirectInputDevice8_BuildActionMap( device, &action_format, L"username", DIDBAM_PRESERVE );
     ok( hr == DI_OK, "BuildActionMap returned %#lx\n", hr );
     check_diactionformatw_( __LINE__, &action_format, &expect_action_format_2, actions_todos_2 );
+
+
+    /* setting the data format resets action map */
+
+    prop_pointer.diph.dwHow = DIPH_BYUSAGE;
+    prop_pointer.diph.dwObj = MAKELONG(HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC);
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
+    todo_wine
+    ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
+    todo_wine
+    ok( prop_pointer.uData == 8, "got uData %#Ix\n", prop_pointer.uData );
+
+    hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIJoystick2 );
+    ok( hr == DI_OK, "SetDataFormat returned %#lx\n", hr );
+
+    prop_pointer.diph.dwHow = DIPH_BYUSAGE;
+    prop_pointer.diph.dwObj = MAKELONG(HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC);
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
+    todo_wine
+    ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
+    todo_wine
+    ok( prop_pointer.uData == -1, "got uData %#Ix\n", prop_pointer.uData );
 
 
     /* DIDSAM_NOUSER flag clears the device user property */
