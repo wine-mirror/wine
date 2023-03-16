@@ -1072,7 +1072,6 @@ static void test_enum_svc(void)
     DWORD servicecountactive, servicecountinactive;
     ENUM_SERVICE_STATUSA *services;
     ENUM_SERVICE_STATUSW *servicesW;
-    ENUM_SERVICE_STATUS_PROCESSA *exservices;
     UINT i;
 
     /* All NULL or wrong  */
@@ -1452,6 +1451,19 @@ static void test_enum_svc(void)
     ok(servicecountinactive == 0, "Inactive services mismatch %lu\n", servicecountinactive);
 
     CloseServiceHandle(scm_handle);
+}
+
+static void test_enum_svc_ex(void)
+{
+    SC_HANDLE scm_handle;
+    BOOL ret;
+    DWORD bufsize, needed, returned, resume;
+    DWORD neededW, returnedW;
+    DWORD tempneeded, tempreturned, missing;
+    DWORD servicecountactive, servicecountinactive;
+    ENUM_SERVICE_STATUSA *services;
+    ENUM_SERVICE_STATUS_PROCESSA *exservices;
+    UINT i;
 
     /* More or less the same for EnumServicesStatusExA */
     if (!pEnumServicesStatusExA)
@@ -1627,9 +1639,24 @@ static void test_enum_svc(void)
     /* Store the needed bytes */
     tempneeded = needed;
 
+    /* Show the Ex call returns the same service count as the regular enum */
+    EnumServicesStatusA(scm_handle, SERVICE_WIN32, SERVICE_STATE_ALL,
+                        NULL, 0, &needed, &returned, NULL);
+    services = HeapAlloc(GetProcessHeap(), 0, needed);
+    returned = 0xdeadbeef;
+    ret = EnumServicesStatusA(scm_handle, SERVICE_WIN32, SERVICE_STATE_ALL,
+                              services, needed, &needed, &returned, NULL);
+    ok(ret, "Expected success, got error %lu\n", GetLastError());
+    ok(needed == 0, "Expected needed buffer to be 0 as we are done\n");
+    ok(returned != 0xdeadbeef && returned > 0, "Expected some returned services\n");
+    HeapFree(GetProcessHeap(), 0, services);
+
+    /* Store the number of returned services */
+    tempreturned = returned;
+
     /* Allocate the correct needed bytes */
-    exservices = HeapAlloc(GetProcessHeap(), 0, needed);
-    bufsize = needed;
+    exservices = HeapAlloc(GetProcessHeap(), 0, tempneeded);
+    bufsize = tempneeded;
     needed = 0xdeadbeef;
     returned = 0xdeadbeef;
     SetLastError(0xdeadbeef);
@@ -2913,6 +2940,7 @@ START_TEST(service)
     test_get_servicekeyname();
     test_query_svc();
     test_enum_svc();
+    test_enum_svc_ex();
     test_close();
     test_wow64();
     /* Test the creation, querying and deletion of a service */
