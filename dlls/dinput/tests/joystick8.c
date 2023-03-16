@@ -725,6 +725,15 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
         {.objid = TRUE},
         {.objid = TRUE, .how = TRUE},
     };
+    DIPROPDWORD prop_dword =
+    {
+        .diph =
+        {
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwSize = sizeof(DIPROPDWORD),
+            .dwHow = DIPH_DEVICE,
+        }
+    };
     DIPROPSTRING prop_username =
     {
         .diph =
@@ -900,6 +909,11 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
     ok( prop_pointer.uData == 0, "got uData %#Ix\n", prop_pointer.uData );
 
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_BUFFERSIZE, &prop_dword.diph );
+    ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
+    todo_wine
+    ok( prop_dword.dwData == 0, "got dwData %#lx\n", prop_dword.dwData );
+
 
     /* saving action map actually does nothing */
 
@@ -946,6 +960,10 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     todo_wine
     ok( prop_pointer.uData == 8, "got uData %#Ix\n", prop_pointer.uData );
 
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_BUFFERSIZE, &prop_dword.diph );
+    ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
+    ok( prop_dword.dwData == 32, "got dwData %#lx\n", prop_dword.dwData );
+
 
     action_format = action_format_2;
     action_format.rgoAction = actions;
@@ -989,6 +1007,10 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
     todo_wine
     ok( prop_pointer.uData == -1, "got uData %#Ix\n", prop_pointer.uData );
+
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_BUFFERSIZE, &prop_dword.diph );
+    ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
+    ok( prop_dword.dwData == 32, "got dwData %#lx\n", prop_dword.dwData );
 
 
     /* DIDSAM_NOUSER flag clears the device user property */
