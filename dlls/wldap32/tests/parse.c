@@ -252,7 +252,13 @@ static void test_ldap_paged_search(void)
     ok( res != NULL, "expected res != NULL\n" );
     ok( count == 0, "got %lu\n", count );
 
-    count = ldap_count_entries( ld, res);
+    count = ldap_count_entries( NULL, NULL );
+    ok( count == 0, "got %lu\n", count );
+    count = ldap_count_entries( ld, NULL );
+    ok( count == 0, "got %lu\n", count );
+    count = ldap_count_entries( NULL, res );
+    todo_wine ok( count == 1, "got %lu\n", count );
+    count = ldap_count_entries( ld, res );
     ok( count == 1, "got %lu\n", count );
 
     entry = ldap_first_entry( ld, res);
