@@ -92,7 +92,7 @@ ULONG CDECL ldap_extended_operationW( LDAP *ld, WCHAR *oid, struct WLDAP32_berva
 
 exit:
     free( oidU );
-    bvfreeU( dataU );
+    free( dataU );
     controlarrayfreeU( serverctrlsU );
     controlarrayfreeU( clientctrlsU );
     return ret;
@@ -174,7 +174,7 @@ ULONG CDECL ldap_extended_operation_sW( LDAP *ld, WCHAR *oid, struct WLDAP32_ber
 
 exit:
     free( oidU );
-    bvfreeU( dataU );
+    free( dataU );
     controlarrayfreeU( serverctrlsU );
     controlarrayfreeU( clientctrlsU );
     return ret;

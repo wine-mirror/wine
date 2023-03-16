@@ -743,11 +743,6 @@ static inline struct WLDAP32_berval **bvarrayUtoW( struct berval **bv )
     return ret;
 }
 
-static inline void bvfreeU( struct berval *berval )
-{
-    free( berval );
-}
-
 static inline struct berval **bvarrayWtoU( struct WLDAP32_berval **bv )
 {
     struct berval **ret = NULL;

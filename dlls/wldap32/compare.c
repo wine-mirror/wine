@@ -141,7 +141,7 @@ exit:
     free( dnU );
     free( attrU );
     free( valueU );
-    bvfreeU( dataU );
+    free( dataU );
     controlarrayfreeU( serverctrlsU );
     controlarrayfreeU( clientctrlsU );
     return ret;
@@ -218,7 +218,7 @@ exit:
     free( dnU );
     free( attrU );
     free( valueU );
-    bvfreeU( dataU );
+    free( dataU );
     controlarrayfreeU( serverctrlsU );
     controlarrayfreeU( clientctrlsU );
     return ret;
