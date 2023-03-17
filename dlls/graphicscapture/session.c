@@ -119,8 +119,10 @@ DEFINE_IINSPECTABLE( session_statics, IGraphicsCaptureSessionStatics, struct ses
 
 static HRESULT WINAPI session_statics_IsSupported( IGraphicsCaptureSessionStatics *iface, boolean *result )
 {
-    FIXME( "iface %p, result %p stub!\n", iface, result );
-    return E_NOTIMPL;
+    TRACE( "iface %p, result %p\n", iface, result );
+
+    *result = FALSE;
+    return S_OK;
 }
 
 static const struct IGraphicsCaptureSessionStaticsVtbl session_statics_vtbl =

@@ -75,7 +75,7 @@ static void test_GraphicsCaptureSessionStatics(void)
 
     res = 2;
     hr = IGraphicsCaptureSessionStatics_IsSupported( session_statics, &res );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
     todo_wine ok( res == TRUE, "got %d.\n", res );
 
     ref = IGraphicsCaptureSessionStatics_Release( session_statics );
