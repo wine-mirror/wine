@@ -24,16 +24,10 @@
 %option noyywrap
 %option 8bit never-interactive prefix="parser_"
 
-nl	\r?\n
-ws	[ \f\t\r]
-hd	[0-9a-fA-F]
-cident	[a-zA-Z_][0-9a-zA-Z_]*
-u_suffix	(u|U)
-l_suffix	(l|L)
-int	[0-9]+({l_suffix}?{u_suffix}?|{u_suffix}?{l_suffix}?)?
-hex	0(x|X){hd}+({l_suffix}?{u_suffix}?|{u_suffix}?{l_suffix}?)?
-uuid	{hd}{8}-{hd}{4}-{hd}{4}-{hd}{4}-{hd}{12}
-double	[0-9]+\.[0-9]+([eE][+-]?[0-9]+)*
+ws    [ \f\t\r]
+hd    [0-9a-fA-F]
+uuid  {hd}{8}-{hd}{4}-{hd}{4}-{hd}{4}-{hd}{12}
+cident [a-zA-Z_][0-9a-zA-Z_]*
 
 %x ATTR
 %x PP_LINE
@@ -216,7 +210,7 @@ static int token_num( int token, const char *yytext, YYSTYPE *yylval )
     ^{ws}*\#{ws}*pragma{ws}+                    { yy_push_state( PP_PRAGMA ); }
     ^{ws}*midl_pragma{ws}+warning               { return tPRAGMA_WARNING; }
 
-    {double}                                    {
+    [0-9]+\.[0-9]+([eE][+-]?[0-9]+)*            {
                                                     yylval->dbl = strtod( yytext, NULL );
                                                     return aDOUBLE;
                                                 }
@@ -229,8 +223,8 @@ SAFEARRAY{ws}*/\(	return tSAFEARRAY;
     ^{ws}*\#{ws}*                               { yy_push_state(PP_LINE); }
     \[                                          { yy_push_state(ATTR); return '['; }
 
-    {hex}                                       { return token_num( aHEXNUM, yytext, yylval ); }
-    {int}                                       { return token_num( aNUM, yytext, yylval ); }
+    0[xX]{hd}+([lL][uU]?|[uU][lL]?)?            { return token_num( aHEXNUM, yytext, yylval ); }
+    [0-9]+([lL][uU]?|[uU][lL]?)?                { return token_num( aNUM, yytext, yylval ); }
 
     L\"(\\.|[^"\\])*\"                          { return token_str( aWSTRING, yytext + 1, yylval ); }
     \"(\\.|[^"\\])*\"                           { return token_str( aSTRING, yytext, yylval ); }
