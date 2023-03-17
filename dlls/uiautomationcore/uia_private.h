@@ -179,6 +179,9 @@ HRESULT create_msaa_provider(IAccessible *acc, long child_id, HWND hwnd, BOOL kn
         IRawElementProviderSimple **elprov) DECLSPEC_HIDDEN;
 
 /* uia_utils.c */
+HRESULT register_interface_in_git(IUnknown *iface, REFIID riid, DWORD *ret_cookie) DECLSPEC_HIDDEN;
+HRESULT unregister_interface_in_git(DWORD git_cookie) DECLSPEC_HIDDEN;
+HRESULT get_interface_in_git(REFIID riid, DWORD git_cookie, IUnknown **ret_iface) DECLSPEC_HIDDEN;
 HRESULT get_safearray_dim_bounds(SAFEARRAY *sa, UINT dim, LONG *lbound, LONG *elems) DECLSPEC_HIDDEN;
 HRESULT get_safearray_bounds(SAFEARRAY *sa, LONG *lbound, LONG *elems) DECLSPEC_HIDDEN;
 int uia_compare_safearrays(SAFEARRAY *sa1, SAFEARRAY *sa2, int prop_type) DECLSPEC_HIDDEN;

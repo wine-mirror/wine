@@ -22,6 +22,82 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(uiautomation);
 
+/*
+ * Global interface table helper functions.
+ */
+static HRESULT get_global_interface_table(IGlobalInterfaceTable **git)
+{
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_StdGlobalInterfaceTable, NULL,
+            CLSCTX_INPROC_SERVER, &IID_IGlobalInterfaceTable, (void **)git);
+    if (FAILED(hr))
+        WARN("Failed to get GlobalInterfaceTable, hr %#lx\n", hr);
+
+    return hr;
+}
+
+HRESULT register_interface_in_git(IUnknown *iface, REFIID riid, DWORD *ret_cookie)
+{
+    IGlobalInterfaceTable *git;
+    DWORD git_cookie;
+    HRESULT hr;
+
+    *ret_cookie = 0;
+    hr = get_global_interface_table(&git);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IGlobalInterfaceTable_RegisterInterfaceInGlobal(git, iface, riid, &git_cookie);
+    if (FAILED(hr))
+    {
+        WARN("Failed to register interface in GlobalInterfaceTable, hr %#lx\n", hr);
+        return hr;
+    }
+
+    *ret_cookie = git_cookie;
+
+    return S_OK;
+}
+
+HRESULT unregister_interface_in_git(DWORD git_cookie)
+{
+    IGlobalInterfaceTable *git;
+    HRESULT hr;
+
+    hr = get_global_interface_table(&git);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IGlobalInterfaceTable_RevokeInterfaceFromGlobal(git, git_cookie);
+    if (FAILED(hr))
+        WARN("Failed to revoke interface from GlobalInterfaceTable, hr %#lx\n", hr);
+
+    return hr;
+}
+
+HRESULT get_interface_in_git(REFIID riid, DWORD git_cookie, IUnknown **ret_iface)
+{
+    IGlobalInterfaceTable *git;
+    IUnknown *iface;
+    HRESULT hr;
+
+    hr = get_global_interface_table(&git);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IGlobalInterfaceTable_GetInterfaceFromGlobal(git, git_cookie, riid, (void **)&iface);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get interface from Global Interface Table, hr %#lx\n", hr);
+        return hr;
+    }
+
+    *ret_iface = iface;
+
+    return S_OK;
+}
+
 HRESULT get_safearray_dim_bounds(SAFEARRAY *sa, UINT dim, LONG *lbound, LONG *elems)
 {
     LONG ubound;
