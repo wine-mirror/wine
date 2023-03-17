@@ -37,6 +37,8 @@ DEFINE_GUID(CLSID_LDAP,0x228d9a81,0xc302,0x11cf,0x9a,0xa4,0x00,0xaa,0x00,0x4a,0x
 DEFINE_GUID(CLSID_LDAPNamespace,0x228d9a82,0xc302,0x11cf,0x9a,0xa4,0x00,0xaa,0x00,0x4a,0x56,0x91);
 DEFINE_OLEGUID(CLSID_PointerMoniker,0x306,0,0);
 
+static BOOL server_down;
+
 static const struct
 {
     const WCHAR *path;
@@ -74,6 +76,8 @@ static void test_LDAP(void)
     BSTR path, user, password;
     int i;
 
+    if (server_down) return;
+
     hr = CoCreateInstance(&CLSID_LDAPNamespace, 0, CLSCTX_INPROC_SERVER, &IID_IADs, (void **)&ads);
     ok(hr == S_OK, "got %#lx\n", hr);
     IADs_Release(ads);
@@ -99,6 +103,7 @@ static void test_LDAP(void)
         {
             SysFreeString(path);
             skip("server is down\n");
+            server_down = TRUE;
             break;
         }
         ok(hr == test[i].hr || hr == test[i].hr_ads_open, "%d: got %#lx, expected %#lx\n", i, hr, test[i].hr);
@@ -110,6 +115,7 @@ static void test_LDAP(void)
         {
             SysFreeString(path);
             skip("server is down\n");
+            server_down = TRUE;
             break;
         }
         ok(hr == test[i].hr || hr == test[i].hr_ads_get, "%d: got %#lx, expected %#lx\n", i, hr, test[i].hr);
@@ -121,6 +127,7 @@ static void test_LDAP(void)
         {
             SysFreeString(path);
             skip("server is down\n");
+            server_down = TRUE;
             break;
         }
         ok(hr == test[i].hr || hr == test[i].hr_ads_get, "%d: got %#lx, expected %#lx\n", i, hr, test[i].hr);
@@ -149,6 +156,8 @@ static void test_ParseDisplayName(void)
     ULONG count;
     int i;
 
+    if (server_down) return;
+
     hr = CoCreateInstance(&CLSID_LDAP, 0, CLSCTX_INPROC_SERVER, &IID_IParseDisplayName, (void **)&parse);
     ok(hr == S_OK, "got %#lx\n", hr);
     IParseDisplayName_Release(parse);
@@ -172,6 +181,7 @@ static void test_ParseDisplayName(void)
         {
             SysFreeString(path);
             skip("server is down\n");
+            server_down = TRUE;
             break;
         }
         ok(hr == test[i].hr || hr == test[i].hr_ads_open, "%d: got %#lx, expected %#lx\n", i, hr, test[i].hr);
@@ -193,6 +203,7 @@ static void test_ParseDisplayName(void)
         if (hr == HRESULT_FROM_WIN32(ERROR_DS_SERVER_DOWN))
         {
             skip("server is down\n");
+            server_down = TRUE;
             break;
         }
         todo_wine_if(i == 0 || i == 1 || i == 11 || i == 12)
@@ -237,12 +248,15 @@ static void do_search(const struct search *s)
     LPWSTR name;
     const struct result *res;
 
+    if (server_down) return;
+
     trace("search DN %s\n", wine_dbgstr_w(s->dn));
 
     hr = ADsGetObject(s->dn, &IID_IDirectorySearch, (void **)&ds);
     if (hr == HRESULT_FROM_WIN32(ERROR_DS_SERVER_DOWN))
     {
         skip("server is down\n");
+        server_down = TRUE;
         return;
     }
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -363,6 +377,8 @@ static void test_DirectorySearch(void)
     ADS_SEARCH_COLUMN col;
     LPWSTR name;
 
+    if (server_down) return;
+
     hr = ADsGetObject(L"LDAP:", &IID_IDirectorySearch, (void **)&ds);
     ok(hr == E_NOINTERFACE, "got %#lx\n", hr);
 
@@ -370,6 +386,7 @@ static void test_DirectorySearch(void)
     if (hr == HRESULT_FROM_WIN32(ERROR_DS_SERVER_DOWN))
     {
         skip("server is down\n");
+        server_down = TRUE;
         return;
     }
     ok(hr == E_NOINTERFACE, "got %#lx\n", hr);
@@ -378,6 +395,7 @@ static void test_DirectorySearch(void)
     if (hr == HRESULT_FROM_WIN32(ERROR_DS_SERVER_DOWN))
     {
         skip("server is down\n");
+        server_down = TRUE;
         return;
     }
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -492,10 +510,13 @@ static void test_DirectoryObject(void)
     ADS_SEARCH_HANDLE sh;
     ADS_SEARCH_COLUMN col;
 
+    if (server_down) return;
+
     hr = ADsGetObject(L"LDAP://ldap.forumsys.com/OU=scientists,DC=example,DC=com", &IID_IDirectoryObject, (void **)&dirobj);
     if (hr == HRESULT_FROM_WIN32(ERROR_DS_SERVER_DOWN))
     {
         skip("server is down\n");
+        server_down = TRUE;
         return;
     }
     ok(hr == S_OK, "got %#lx\n", hr);
