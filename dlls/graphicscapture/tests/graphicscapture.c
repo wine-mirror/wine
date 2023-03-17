@@ -47,6 +47,7 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid )
 static void test_GraphicsCaptureSessionStatics(void)
 {
     static const WCHAR *session_statics_name = L"Windows.Graphics.Capture.GraphicsCaptureSession";
+    IGraphicsCaptureSessionStatics *session_statics;
     IActivationFactory *factory;
     HSTRING str;
     HRESULT hr;
@@ -68,6 +69,11 @@ static void test_GraphicsCaptureSessionStatics(void)
     check_interface( factory, &IID_IInspectable );
     check_interface( factory, &IID_IAgileObject );
 
+    hr = IActivationFactory_QueryInterface( factory, &IID_IGraphicsCaptureSessionStatics, (void **)&session_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IGraphicsCaptureSessionStatics_Release( session_statics );
+    ok( ref == 1, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
     ok( ref == 0, "got ref %ld.\n", ref );
 }

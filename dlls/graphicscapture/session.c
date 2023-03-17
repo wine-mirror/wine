@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(graphicscapture);
 struct session
 {
     IActivationFactory IActivationFactory_iface;
+    IGraphicsCaptureSessionStatics IGraphicsCaptureSessionStatics_iface;
     LONG ref;
 };
 
@@ -45,6 +46,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
         *out = &impl->IActivationFactory_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IGraphicsCaptureSessionStatics ))
+    {
+        *out = &impl->IGraphicsCaptureSessionStatics_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -107,9 +115,31 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( session_statics, IGraphicsCaptureSessionStatics, struct session, IActivationFactory_iface )
+
+static HRESULT WINAPI session_statics_IsSupported( IGraphicsCaptureSessionStatics *iface, boolean *result )
+{
+    FIXME( "iface %p, result %p stub!\n", iface, result );
+    return E_NOTIMPL;
+}
+
+static const struct IGraphicsCaptureSessionStaticsVtbl session_statics_vtbl =
+{
+    session_statics_QueryInterface,
+    session_statics_AddRef,
+    session_statics_Release,
+    /* IInspectable methods */
+    session_statics_GetIids,
+    session_statics_GetRuntimeClassName,
+    session_statics_GetTrustLevel,
+    /* IGraphicsCaptureSessionStatics methods */
+    session_statics_IsSupported,
+};
+
 static struct session session_statics =
 {
     {&factory_vtbl},
+    {&session_statics_vtbl},
     0,
 };
 
