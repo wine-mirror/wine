@@ -1140,6 +1140,7 @@ enable_gdiplus
 enable_glu32
 enable_gphoto2_ds
 enable_gpkcsp
+enable_graphicscapture
 enable_hal
 enable_hhctrl_ocx
 enable_hid
@@ -21304,6 +21305,8 @@ wine_fn_config_makefile dlls/gdiplus/tests enable_tests
 wine_fn_config_makefile dlls/glu32 enable_glu32
 wine_fn_config_makefile dlls/gphoto2.ds enable_gphoto2_ds
 wine_fn_config_makefile dlls/gpkcsp enable_gpkcsp
+wine_fn_config_makefile dlls/graphicscapture enable_graphicscapture
+wine_fn_config_makefile dlls/graphicscapture/tests enable_tests
 wine_fn_config_makefile dlls/hal enable_hal
 wine_fn_config_makefile dlls/hhctrl.ocx enable_hhctrl_ocx
 wine_fn_config_makefile dlls/hid enable_hid

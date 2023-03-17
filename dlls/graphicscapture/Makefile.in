@@ -1,0 +1,9 @@
+MODULE  = graphicscapture.dll
+IMPORTS = combase
+
+C_SRCS = \
+	main.c \
+	session.c
+
+IDL_SRCS = \
+	classes.idl
