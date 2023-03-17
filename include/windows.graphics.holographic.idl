@@ -87,6 +87,19 @@ namespace Windows.Graphics.Holographic {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.Graphics.Holographic.HolographicSpace),
+        uuid(0e777088-75fc-48af-8758-0652f6f07c59)
+    ]
+    interface IHolographicSpaceStatics2 : IInspectable
+    {
+        [propget] HRESULT IsSupported([out, retval] boolean *value);
+        [propget] HRESULT IsAvailable([out, retval] boolean *value);
+        [eventadd] HRESULT IsAvailableChanged([in] Windows.Foundation.EventHandler<IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT IsAvailableChanged([in] EventRegistrationToken token);
+    }
+
+    [
         contract(Windows.Foundation.UniversalApiContract, 2.0),
         exclusiveto(Windows.Graphics.Holographic.HolographicSpaceCameraAddedEventArgs),
         uuid(58f1da35-bbb3-3c8f-993d-6c80e7feb99f)
