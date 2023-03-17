@@ -2919,19 +2919,25 @@ static void test_EventLog(void)
     ok(status.dwServiceType == SERVICE_WIN32_SHARE_PROCESS ||
        status.dwServiceType == (SERVICE_WIN32_SHARE_PROCESS | SERVICE_WIN32_OWN_PROCESS) /* Win10 */,
        "got %#lx\n", status.dwServiceType);
-    ok(status.dwCurrentState == SERVICE_RUNNING, "got %#lx\n", status.dwCurrentState);
-    todo_wine
-    ok(status.dwControlsAccepted == SERVICE_ACCEPT_SHUTDOWN /* XP */ ||
-       status.dwControlsAccepted == (SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN) /* 2008 */ ||
-       status.dwControlsAccepted == (SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_TIMECHANGE | SERVICE_ACCEPT_SHUTDOWN),
-       "got %#lx\n", status.dwControlsAccepted);
-    ok(status.dwWin32ExitCode == 0, "got %#lx\n", status.dwWin32ExitCode);
     ok(status.dwServiceSpecificExitCode == 0, "got %#lx\n", status.dwServiceSpecificExitCode);
     ok(status.dwCheckPoint == 0, "got %#lx\n", status.dwCheckPoint);
     ok(status.dwWaitHint == 0, "got %#lx\n", status.dwWaitHint);
-    ok(status.dwProcessId != 0, "got %#lx\n", status.dwProcessId);
     ok(status.dwServiceFlags == 0 || status.dwServiceFlags == SERVICE_RUNS_IN_SYSTEM_PROCESS /* XP */,
        "got %#lx\n", status.dwServiceFlags);
+    if (status.dwCurrentState == SERVICE_STOPPED &&
+        status.dwWin32ExitCode == ERROR_PROCESS_ABORTED)
+        win_skip("EventLog crashed!\n");
+    else
+    {
+        ok(status.dwCurrentState == SERVICE_RUNNING, "got %#lx\n", status.dwCurrentState);
+        todo_wine
+        ok(status.dwControlsAccepted == SERVICE_ACCEPT_SHUTDOWN /* XP */ ||
+           status.dwControlsAccepted == (SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN) /* 2008 */ ||
+           status.dwControlsAccepted == (SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_TIMECHANGE | SERVICE_ACCEPT_SHUTDOWN),
+           "got %#lx\n", status.dwControlsAccepted);
+        ok(status.dwWin32ExitCode == 0, "got %#lx\n", status.dwWin32ExitCode);
+        ok(status.dwProcessId != 0, "got %#lx\n", status.dwProcessId);
+    }
 
     CloseServiceHandle(svc_handle);
     CloseServiceHandle(scm_handle);
