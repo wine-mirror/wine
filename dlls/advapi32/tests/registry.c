@@ -1510,11 +1510,11 @@ static void test_reg_delete_key(void)
     ok(ret == ERROR_SUCCESS, "Could not open key, got %ld\n", ret);
 
     ret = RegDeleteKeyExA(key, "", KEY_WOW64_32KEY, 0);
-    todo_wine_if(ptr_size == 64) ok(ret == ERROR_SUCCESS, "RegDeleteKeyExA failed, got %ld\n", ret);
+    ok(ret == ERROR_SUCCESS, "RegDeleteKeyExA failed, got %ld\n", ret);
     RegCloseKey(key);
 
     ret = RegOpenKeyExA(hkey_main, "deleteme", 0, KEY_READ | KEY_WOW64_32KEY, &key);
-    todo_wine_if(ptr_size == 64) ok(ret == ERROR_FILE_NOT_FOUND, "Key was not deleted, got %ld\n", ret);
+    ok(ret == ERROR_FILE_NOT_FOUND, "Key was not deleted, got %ld\n", ret);
     RegCloseKey(key);
 }
 

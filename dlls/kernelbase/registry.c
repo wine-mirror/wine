@@ -155,7 +155,7 @@ static NTSTATUS open_subkey( HKEY *subkey, HKEY root, UNICODE_STRING *name, DWOR
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    if (buffer[0] == '\\') return STATUS_OBJECT_PATH_INVALID;
+    if (len > 0 && buffer[0] == '\\') return STATUS_OBJECT_PATH_INVALID;
     while (i < len && buffer[i] != '\\') i++;
 
     str.Buffer = name->Buffer;
@@ -202,7 +202,7 @@ static NTSTATUS open_subkey( HKEY *subkey, HKEY root, UNICODE_STRING *name, DWOR
 /* wrapper for NtOpenKeyEx to handle Wow6432 nodes */
 static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING name, DWORD options, ACCESS_MASK access )
 {
-    HKEY subkey, subkey_root = root;
+    HKEY subkey = 0, subkey_root = root;
     NTSTATUS status = 0;
 
     *retkey = NULL;
@@ -228,7 +228,7 @@ static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING name, DWORD op
         return status;
     }
 
-    while (!status && name.Length)
+    while (!status && (name.Length || !subkey))
     {
         status = open_subkey( &subkey, subkey_root, &name, options, access );
         if (subkey_root && subkey_root != root) NtClose( subkey_root );
