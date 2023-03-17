@@ -227,21 +227,17 @@ static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING *name, DWORD o
     return status;
 }
 
+static NTSTATUS create_key( HKEY *retkey, HKEY root, UNICODE_STRING name, ULONG options, ACCESS_MASK access,
+                            const UNICODE_STRING *class, PULONG dispos );
+
 static NTSTATUS create_subkey( HKEY *subkey, HKEY root, UNICODE_STRING *name, DWORD options, ACCESS_MASK access,
                                const UNICODE_STRING *class, PULONG dispos )
 {
+    ACCESS_MASK access_64 = access & ~KEY_WOW64_32KEY;
     DWORD i = 0, len = name->Length / sizeof(WCHAR);
     WCHAR *buffer = name->Buffer;
-    OBJECT_ATTRIBUTES attr;
     UNICODE_STRING str;
     NTSTATUS status;
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = root;
-    attr.ObjectName = &str;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
 
     if (i < len && buffer[i] == '\\') return STATUS_OBJECT_PATH_INVALID;
     while (i < len && buffer[i] != '\\') i++;
@@ -249,22 +245,10 @@ static NTSTATUS create_subkey( HKEY *subkey, HKEY root, UNICODE_STRING *name, DW
     str.Buffer = name->Buffer;
     str.Length = i * sizeof(WCHAR);
 
-    if (i == len)
-    {
-        if (options & REG_OPTION_OPEN_LINK) attr.Attributes |= OBJ_OPENLINK;
-    }
-    else
-    {
+    if (i < len)
         options &= ~REG_OPTION_CREATE_LINK;
-    }
 
-    status = NtCreateKey( (HANDLE *)subkey, access, &attr, 0, class, options, dispos );
-    if (status == STATUS_PREDEFINED_HANDLE)
-    {
-        *subkey = get_perflib_key( *subkey );
-        status = STATUS_SUCCESS;
-    }
-
+    status = create_key( subkey, root, str, options, access_64, class, dispos );
     if (!status)
     {
         while (i < len && buffer[i] == '\\') i++;
