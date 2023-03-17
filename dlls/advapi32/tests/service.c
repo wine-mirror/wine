@@ -1300,7 +1300,10 @@ static void test_enum_svc(void)
     ok(returnedW != 0xdeadbeef && returnedW > 0, "Expected some returned services\n");
     HeapFree(GetProcessHeap(), 0, servicesW);
 
-    /* Allocate less than the needed bytes and don't specify a resume handle */
+    /* Allocate less than the needed bytes and don't specify a resume handle.
+     * More than one service will be missing because of the space needed for
+     * the strings.
+     */
     services = HeapAlloc(GetProcessHeap(), 0, tempneeded);
     bufsize = (tempreturned - 1) * sizeof(ENUM_SERVICE_STATUSA);
     needed = 0xdeadbeef;
@@ -1309,7 +1312,11 @@ static void test_enum_svc(void)
     ret = EnumServicesStatusA(scm_handle, SERVICE_WIN32, SERVICE_STATE_ALL,
                               services, bufsize, &needed, &returned, NULL);
     ok(!ret, "Expected failure\n");
-    ok(needed != 0xdeadbeef && needed > 0, "Expected the needed buffer size for this one service\n");
+    ok(needed != 0xdeadbeef && needed > 0, "Expected the needed buffer size\n");
+    todo_wine ok(needed < tempneeded, "Expected a smaller needed buffer size for the missing services\n");
+    /* Experiments show bufsize + needed < tempneeded which proves the needed
+     * buffer size is an approximation. So it's best not to probe more.
+     */
     ok(returned < tempreturned, "Expected fewer services to be returned\n");
     ok(GetLastError() == ERROR_MORE_DATA,
        "Expected ERROR_MORE_DATA, got %ld\n", GetLastError());
@@ -1323,7 +1330,8 @@ static void test_enum_svc(void)
     ret = EnumServicesStatusA(scm_handle, SERVICE_WIN32, SERVICE_STATE_ALL,
                               services, bufsize, &needed, &returned, &resume);
     ok(!ret, "Expected failure\n");
-    ok(needed != 0xdeadbeef && needed > 0, "Expected the needed buffer size for this one service\n");
+    ok(needed != 0xdeadbeef && needed > 0, "Expected the needed buffer size for the missing services\n");
+    todo_wine ok(needed < tempneeded, "Expected a smaller needed buffer size for the missing services\n");
     ok(returned < tempreturned, "Expected fewer services to be returned\n");
     todo_wine ok(resume, "Expected a resume handle\n");
     ok(GetLastError() == ERROR_MORE_DATA,
@@ -1615,7 +1623,10 @@ static void test_enum_svc(void)
     /* Store the number of returned services */
     tempreturned = returned;
 
-    /* Allocate less than the needed bytes and don't specify a resume handle */
+    /* Allocate less than the needed bytes and don't specify a resume handle.
+     * More than one service will be missing because of the space needed for
+     * the strings.
+     */
     exservices = HeapAlloc(GetProcessHeap(), 0, tempneeded);
     bufsize = (tempreturned - 1) * sizeof(ENUM_SERVICE_STATUSA);
     needed = 0xdeadbeef;
@@ -1624,7 +1635,11 @@ static void test_enum_svc(void)
     ret = pEnumServicesStatusExA(scm_handle, 0, SERVICE_WIN32, SERVICE_STATE_ALL,
                                  (BYTE*)exservices, bufsize, &needed, &returned, NULL, NULL);
     ok(!ret, "Expected failure\n");
-    ok(needed != 0xdeadbeef && needed > 0, "Expected the needed buffer size\n");
+    ok(needed != 0xdeadbeef && needed > 0, "Expected the needed buffer size for the missing services\n");
+    todo_wine ok(needed < tempneeded, "Expected a smaller needed buffer size for the missing services\n");
+    /* Experiments show bufsize + needed < tempneeded which proves the needed
+     * buffer size is an approximation. So it's best not to probe more.
+     */
     ok(returned < tempreturned, "Expected fewer services to be returned\n");
     ok(GetLastError() == ERROR_MORE_DATA,
        "Expected ERROR_MORE_DATA, got %ld\n", GetLastError());
@@ -1638,13 +1653,14 @@ static void test_enum_svc(void)
     ret = pEnumServicesStatusExA(scm_handle, 0, SERVICE_WIN32, SERVICE_STATE_ALL,
                                  (BYTE*)exservices, bufsize, &needed, &returned, &resume, NULL);
     ok(!ret, "Expected failure\n");
-    ok(needed != 0xdeadbeef && needed > 0, "Expected the needed buffer size\n");
+    ok(needed != 0xdeadbeef && needed > 0, "Expected the needed buffer size for the missing services\n");
+    todo_wine ok(needed < tempneeded, "Expected a smaller needed buffer size for the missing services\n");
     ok(returned < tempreturned, "Expected fewer services to be returned\n");
     todo_wine ok(resume, "Expected a resume handle\n");
     ok(GetLastError() == ERROR_MORE_DATA,
        "Expected ERROR_MORE_DATA, got %ld\n", GetLastError());
 
-    /* Fetch that last service but pass a bigger buffer size */
+    /* Fetch the missing services but pass a bigger buffer size */
     missing = tempreturned - returned;
     bufsize = tempneeded;
     needed = 0xdeadbeef;
