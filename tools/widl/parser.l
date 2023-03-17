@@ -512,7 +512,7 @@ void pop_import(void)
     if (yyin) fclose( yyin );
     yy_delete_buffer( YY_CURRENT_BUFFER );
     yy_switch_to_buffer( state->buffer );
-    free( input_name );
+
     input_name = state->input_name;
     line_number = state->line_number;
     free( state );
@@ -556,7 +556,6 @@ static void switch_to_acf(void)
 
     if (yyin) fclose( yyin );
     yy_delete_buffer( YY_CURRENT_BUFFER );
-    free( input_name );
 
     input_name = xstrdup( acf_name );
     file = open_input_file( input_name );
