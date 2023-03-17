@@ -27,7 +27,6 @@
 ws    [ \f\t\r]
 hd    [0-9a-fA-F]
 uuid  {hd}{8}-{hd}{4}-{hd}{4}-{hd}{4}-{hd}{12}
-cident [a-zA-Z_][0-9a-zA-Z_]*
 
 %x ATTR
 %x PP_LINE
@@ -58,9 +57,6 @@ cident [a-zA-Z_][0-9a-zA-Z_]*
 #define yyerror parser_error
 
 #include "parser.tab.h"
-
-static int kw_token(const char *kw, YYSTYPE *yylval);
-static int attr_token(const char *kw, YYSTYPE *yylval);
 
 static void switch_to_acf(void);
 
@@ -154,6 +150,17 @@ static int token_num( int token, const char *yytext, YYSTYPE *yylval )
     return token;
 }
 
+static int token_ident( const char *str, YYSTYPE *yylval )
+{
+    return token_str( is_type( str ) ? aKNOWNTYPE : aIDENTIFIER, str, yylval );
+}
+
+static int token_winrt( int token, const char *str, YYSTYPE *yylval )
+{
+    if (winrt_mode) return token;
+    return token_ident( str, yylval );
+}
+
 static void winrt_enable( int ns_prefix )
 {
     if (!list_empty( &import_stack ) && !winrt_mode) error_loc( "WinRT IDL file imported in non-winrt mode." );
@@ -203,7 +210,131 @@ static void winrt_enable( int ns_prefix )
     \]                                          { yy_pop_state(); return ']'; }
 
     ({uuid}|\"{uuid}\")                         { return token_uuid( yytext, yylval ); }
-    {cident}                                    { return attr_token( yytext, yylval ); }
+    activatable                                 { return token_winrt( tACTIVATABLE, yytext, yylval ); }
+    aggregatable                                { return tAGGREGATABLE; }
+    agile                                       { return token_winrt( tAGILE, yytext, yylval ); }
+    all_nodes                                   { return tALLNODES; }
+    allocate                                    { return tALLOCATE; }
+    annotation                                  { return tANNOTATION; }
+    apartment                                   { return tAPARTMENT; }
+    appobject                                   { return tAPPOBJECT; }
+    async                                       { return tASYNC; }
+    async_uuid                                  { return tASYNCUUID; }
+    auto_handle                                 { return tAUTOHANDLE; }
+    bindable                                    { return tBINDABLE; }
+    both                                        { return tBOTH; }
+    broadcast                                   { return tBROADCAST; }
+    byte_count                                  { return tBYTECOUNT; }
+    call_as                                     { return tCALLAS; }
+    callback                                    { return tCALLBACK; }
+    code                                        { return tCODE; }
+    comm_status                                 { return tCOMMSTATUS; }
+    context_handle                              { return tCONTEXTHANDLE; }
+    context_handle_noserialize                  { return tCONTEXTHANDLENOSERIALIZE; }
+    context_handle_serialize                    { return tCONTEXTHANDLENOSERIALIZE; }
+    contract                                    { return token_winrt( tCONTRACT, yytext, yylval ); }
+    contractversion                             { return token_winrt( tCONTRACTVERSION, yytext, yylval ); }
+    control                                     { return tCONTROL; }
+    custom                                      { return tCUSTOM; }
+    decode                                      { return tDECODE; }
+    defaultbind                                 { return tDEFAULTBIND; }
+    defaultcollelem                             { return tDEFAULTCOLLELEM; }
+    defaultvalue                                { return tDEFAULTVALUE; }
+    defaultvtable                               { return tDEFAULTVTABLE; }
+    disable_consistency_check                   { return tDISABLECONSISTENCYCHECK; }
+    displaybind                                 { return tDISPLAYBIND; }
+    dllname                                     { return tDLLNAME; }
+    dont_free                                   { return tDONTFREE; }
+    dual                                        { return tDUAL; }
+    enable_allocate                             { return tENABLEALLOCATE; }
+    encode                                      { return tENCODE; }
+    endpoint                                    { return tENDPOINT; }
+    entry                                       { return tENTRY; }
+    eventadd                                    { return token_winrt( tEVENTADD, yytext, yylval ); }
+    eventremove                                 { return token_winrt( tEVENTREMOVE, yytext, yylval ); }
+    exclusiveto                                 { return token_winrt( tEXCLUSIVETO, yytext, yylval ); }
+    explicit_handle                             { return tEXPLICITHANDLE; }
+    fault_status                                { return tFAULTSTATUS; }
+    flags                                       { return token_winrt( tFLAGS, yytext, yylval ); }
+    force_allocate                              { return tFORCEALLOCATE; }
+    free                                        { return tFREE; }
+    handle                                      { return tHANDLE; }
+    helpcontext                                 { return tHELPCONTEXT; }
+    helpfile                                    { return tHELPFILE; }
+    helpstring                                  { return tHELPSTRING; }
+    helpstringcontext                           { return tHELPSTRINGCONTEXT; }
+    helpstringdll                               { return tHELPSTRINGDLL; }
+    hidden                                      { return tHIDDEN; }
+    id                                          { return tID; }
+    idempotent                                  { return tIDEMPOTENT; }
+    ignore                                      { return tIGNORE; }
+    iid_is                                      { return tIIDIS; }
+    immediatebind                               { return tIMMEDIATEBIND; }
+    implicit_handle                             { return tIMPLICITHANDLE; }
+    in                                          { return tIN; }
+    in_line                                     { return tIN_LINE; }
+    input_sync                                  { return tINPUTSYNC; }
+    lcid                                        { return tLCID; }
+    length_is                                   { return tLENGTHIS; }
+    licensed                                    { return tLICENSED; }
+    local                                       { return tLOCAL; }
+    marshaling_behavior                         { return token_winrt( tMARSHALINGBEHAVIOR, yytext, yylval ); }
+    maybe                                       { return tMAYBE; }
+    message                                     { return tMESSAGE; }
+    mta                                         { return tMTA; }
+    neutral                                     { return tNEUTRAL; }
+    nocode                                      { return tNOCODE; }
+    nonbrowsable                                { return tNONBROWSABLE; }
+    noncreatable                                { return tNONCREATABLE; }
+    none                                        { return token_winrt( tNONE, yytext, yylval ); }
+    nonextensible                               { return tNONEXTENSIBLE; }
+    notify                                      { return tNOTIFY; }
+    notify_flag                                 { return tNOTIFYFLAG; }
+    object                                      { return tOBJECT; }
+    odl                                         { return tODL; }
+    oleautomation                               { return tOLEAUTOMATION; }
+    optimize                                    { return tOPTIMIZE; }
+    optional                                    { return tOPTIONAL; }
+    out                                         { return tOUT; }
+    overload                                    { return tOVERLOAD; }
+    partial_ignore                              { return tPARTIALIGNORE; }
+    pointer_default                             { return tPOINTERDEFAULT; }
+    progid                                      { return tPROGID; }
+    propget                                     { return tPROPGET; }
+    propput                                     { return tPROPPUT; }
+    propputref                                  { return tPROPPUTREF; }
+    proxy                                       { return tPROXY; }
+    ptr                                         { return tPTR; }
+    public                                      { return tPUBLIC; }
+    range                                       { return tRANGE; }
+    readonly                                    { return tREADONLY; }
+    ref                                         { return tREF; }
+    represent_as                                { return tREPRESENTAS; }
+    requestedit                                 { return tREQUESTEDIT; }
+    restricted                                  { return tRESTRICTED; }
+    retval                                      { return tRETVAL; }
+    single                                      { return tSINGLE; }
+    single_node                                 { return tSINGLENODE; }
+    size_is                                     { return tSIZEIS; }
+    source                                      { return tSOURCE; }
+    standard                                    { return token_winrt( tSTANDARD, yytext, yylval ); }
+    static                                      { return token_winrt( tSTATIC, yytext, yylval ); }
+    strict_context_handle                       { return tSTRICTCONTEXTHANDLE; }
+    string                                      { return tSTRING; }
+    switch_is                                   { return tSWITCHIS; }
+    switch_type                                 { return tSWITCHTYPE; }
+    threading                                   { return tTHREADING; }
+    transmit_as                                 { return tTRANSMITAS; }
+    uidefault                                   { return tUIDEFAULT; }
+    unique                                      { return tUNIQUE; }
+    user_marshal                                { return tUSERMARSHAL; }
+    usesgetlasterror                            { return tUSESGETLASTERROR; }
+    uuid                                        { return tUUID; }
+    v1_enum                                     { return tV1ENUM; }
+    vararg                                      { return tVARARG; }
+    version                                     { return tVERSION; }
+    vi_progid                                   { return tVIPROGID; }
+    wire_marshal                                { return tWIREMARSHAL; }
 }
 
 <INITIAL>{
@@ -217,11 +348,75 @@ static void winrt_enable( int ns_prefix )
 }
 
 SAFEARRAY{ws}*/\(	return tSAFEARRAY;
-{cident}		return kw_token(yytext, yylval);
 
 <INITIAL,ATTR>{
     ^{ws}*\#{ws}*                               { yy_push_state(PP_LINE); }
     \[                                          { yy_push_state(ATTR); return '['; }
+
+    FALSE                                       { return tFALSE; }
+    NULL                                        { return tNULL; }
+    TRUE                                        { return tTRUE; }
+    __cdecl                                     { return tCDECL; }
+    __fastcall                                  { return tFASTCALL; }
+    __int32                                     { return tINT32; }
+    __int3264                                   { return tINT3264; }
+    __int64                                     { return tINT64; }
+    __pascal                                    { return tPASCAL; }
+    __stdcall                                   { return tSTDCALL; }
+    _cdecl                                      { return tCDECL; }
+    _fastcall                                   { return tFASTCALL; }
+    _pascal                                     { return tPASCAL; }
+    _stdcall                                    { return tSTDCALL; }
+    apicontract                                 { return token_winrt( tAPICONTRACT, yytext, yylval ); }
+    boolean                                     { return tBOOLEAN; }
+    byte                                        { return tBYTE; }
+    case                                        { return tCASE; }
+    cdecl                                       { return tCDECL; }
+    char                                        { return tCHAR; }
+    coclass                                     { return tCOCLASS; }
+    const                                       { return tCONST; }
+    cpp_quote                                   { return tCPPQUOTE; }
+    declare                                     { return token_winrt( tDECLARE, yytext, yylval ); }
+    default                                     { return tDEFAULT; }
+    delegate                                    { return token_winrt( tDELEGATE, yytext, yylval ); }
+    dispinterface                               { return tDISPINTERFACE; }
+    double                                      { return tDOUBLE; }
+    enum                                        { return tENUM; }
+    error_status_t                              { return tERRORSTATUST; }
+    extern                                      { return tEXTERN; }
+    float                                       { return tFLOAT; }
+    handle_t                                    { return tHANDLET; }
+    hyper                                       { return tHYPER; }
+    import                                      { return tIMPORT; }
+    importlib                                   { return tIMPORTLIB; }
+    inline                                      { return tINLINE; }
+    int                                         { return tINT; }
+    interface                                   { return tINTERFACE; }
+    library                                     { return tLIBRARY; }
+    long                                        { return tLONG; }
+    methods                                     { return tMETHODS; }
+    module                                      { return tMODULE; }
+    namespace                                   { return token_winrt( tNAMESPACE, yytext, yylval ); }
+    pascal                                      { return tPASCAL; }
+    properties                                  { return tPROPERTIES; }
+    register                                    { return tREGISTER; }
+    requires                                    { return token_winrt( tREQUIRES, yytext, yylval ); }
+    runtimeclass                                { return token_winrt( tRUNTIMECLASS, yytext, yylval ); }
+    short                                       { return tSHORT; }
+    signed                                      { return tSIGNED; }
+    sizeof                                      { return tSIZEOF; }
+    small                                       { return tSMALL; }
+    static                                      { return tSTATIC; }
+    stdcall                                     { return tSTDCALL; }
+    struct                                      { return tSTRUCT; }
+    switch                                      { return tSWITCH; }
+    typedef                                     { return tTYPEDEF; }
+    union                                       { return tUNION; }
+    unsigned                                    { return tUNSIGNED; }
+    void                                        { return tVOID; }
+    wchar_t                                     { return tWCHAR; }
+
+    [a-zA-Z_][0-9a-zA-Z_]*                      { return token_ident( yytext, yylval ); }
 
     0[xX]{hd}+([lL][uU]?|[uU][lL]?)?            { return token_num( aHEXNUM, yytext, yylval ); }
     [0-9]+([lL][uU]?|[uU][lL]?)?                { return token_num( aNUM, yytext, yylval ); }
@@ -256,251 +451,6 @@ SAFEARRAY{ws}*/\(	return tSAFEARRAY;
                             yyterminate();
 			}
 %%
-
-struct keyword {
-	const char *kw;
-	int token;
-	int winrt_only : 1;
-};
-
-/* This table MUST be alphabetically sorted on the kw field */
-static const struct keyword keywords[] = {
-	{"FALSE",           tFALSE,          0},
-	{"NULL",            tNULL,           0},
-	{"TRUE",            tTRUE,           0},
-	{"__cdecl",         tCDECL,          0},
-	{"__fastcall",      tFASTCALL,       0},
-	{"__int32",         tINT32,          0},
-	{"__int3264",       tINT3264,        0},
-	{"__int64",         tINT64,          0},
-	{"__pascal",        tPASCAL,         0},
-	{"__stdcall",       tSTDCALL,        0},
-	{"_cdecl",          tCDECL,          0},
-	{"_fastcall",       tFASTCALL,       0},
-	{"_pascal",         tPASCAL,         0},
-	{"_stdcall",        tSTDCALL,        0},
-	{"apicontract",     tAPICONTRACT,    1},
-	{"boolean",         tBOOLEAN,        0},
-	{"byte",            tBYTE,           0},
-	{"case",            tCASE,           0},
-	{"cdecl",           tCDECL,          0},
-	{"char",            tCHAR,           0},
-	{"coclass",         tCOCLASS,        0},
-	{"const",           tCONST,          0},
-	{"cpp_quote",       tCPPQUOTE,       0},
-	{"declare",         tDECLARE,        1},
-	{"default",         tDEFAULT,        0},
-	{"delegate",        tDELEGATE,       1},
-	{"dispinterface",   tDISPINTERFACE,  0},
-	{"double",          tDOUBLE,         0},
-	{"enum",            tENUM,           0},
-	{"error_status_t",  tERRORSTATUST,   0},
-	{"extern",          tEXTERN,         0},
-	{"float",           tFLOAT,          0},
-	{"handle_t",        tHANDLET,        0},
-	{"hyper",           tHYPER,          0},
-	{"import",          tIMPORT,         0},
-	{"importlib",       tIMPORTLIB,      0},
-	{"inline",          tINLINE,         0},
-	{"int",             tINT,            0},
-	{"interface",       tINTERFACE,      0},
-	{"library",         tLIBRARY,        0},
-	{"long",            tLONG,           0},
-	{"methods",         tMETHODS,        0},
-	{"module",          tMODULE,         0},
-	{"namespace",       tNAMESPACE,      1},
-	{"pascal",          tPASCAL,         0},
-	{"properties",      tPROPERTIES,     0},
-	{"register",        tREGISTER,       0},
-	{"requires",        tREQUIRES,       1},
-	{"runtimeclass",    tRUNTIMECLASS,   1},
-	{"short",           tSHORT,          0},
-	{"signed",          tSIGNED,         0},
-	{"sizeof",          tSIZEOF,         0},
-	{"small",           tSMALL,          0},
-	{"static",          tSTATIC,         0},
-	{"stdcall",         tSTDCALL,        0},
-	{"struct",          tSTRUCT,         0},
-	{"switch",          tSWITCH,         0},
-	{"typedef",         tTYPEDEF,        0},
-	{"union",           tUNION,          0},
-	{"unsigned",        tUNSIGNED,       0},
-	{"void",            tVOID,           0},
-	{"wchar_t",         tWCHAR,          0},
-};
-#define NKEYWORDS (sizeof(keywords)/sizeof(keywords[0]))
-
-/* keywords only recognized in attribute lists
- * This table MUST be alphabetically sorted on the kw field
- */
-static const struct keyword attr_keywords[] =
-{
-	{"activatable",                 tACTIVATABLE,               1},
-	{"aggregatable",                tAGGREGATABLE,              0},
-	{"agile",                       tAGILE,                     1},
-	{"all_nodes",                   tALLNODES,                  0},
-	{"allocate",                    tALLOCATE,                  0},
-	{"annotation",                  tANNOTATION,                0},
-	{"apartment",                   tAPARTMENT,                 0},
-	{"appobject",                   tAPPOBJECT,                 0},
-	{"async",                       tASYNC,                     0},
-	{"async_uuid",                  tASYNCUUID,                 0},
-	{"auto_handle",                 tAUTOHANDLE,                0},
-	{"bindable",                    tBINDABLE,                  0},
-	{"both",                        tBOTH,                      0},
-	{"broadcast",                   tBROADCAST,                 0},
-	{"byte_count",                  tBYTECOUNT,                 0},
-	{"call_as",                     tCALLAS,                    0},
-	{"callback",                    tCALLBACK,                  0},
-	{"code",                        tCODE,                      0},
-	{"comm_status",                 tCOMMSTATUS,                0},
-	{"context_handle",              tCONTEXTHANDLE,             0},
-	{"context_handle_noserialize",  tCONTEXTHANDLENOSERIALIZE,  0},
-	{"context_handle_serialize",    tCONTEXTHANDLENOSERIALIZE,  0},
-	{"contract",                    tCONTRACT,                  1},
-	{"contractversion",             tCONTRACTVERSION,           1},
-	{"control",                     tCONTROL,                   0},
-	{"custom",                      tCUSTOM,                    0},
-	{"decode",                      tDECODE,                    0},
-	{"defaultbind",                 tDEFAULTBIND,               0},
-	{"defaultcollelem",             tDEFAULTCOLLELEM,           0},
-	{"defaultvalue",                tDEFAULTVALUE,              0},
-	{"defaultvtable",               tDEFAULTVTABLE,             0},
-	{"disable_consistency_check",   tDISABLECONSISTENCYCHECK,   0},
-	{"displaybind",                 tDISPLAYBIND,               0},
-	{"dllname",                     tDLLNAME,                   0},
-	{"dont_free",                   tDONTFREE,                  0},
-	{"dual",                        tDUAL,                      0},
-	{"enable_allocate",             tENABLEALLOCATE,            0},
-	{"encode",                      tENCODE,                    0},
-	{"endpoint",                    tENDPOINT,                  0},
-	{"entry",                       tENTRY,                     0},
-	{"eventadd",                    tEVENTADD,                  1},
-	{"eventremove",                 tEVENTREMOVE,               1},
-	{"exclusiveto",                 tEXCLUSIVETO,               1},
-	{"explicit_handle",             tEXPLICITHANDLE,            0},
-	{"fault_status",                tFAULTSTATUS,               0},
-	{"flags",                       tFLAGS,                     1},
-	{"force_allocate",              tFORCEALLOCATE,             0},
-	{"free",                        tFREE,                      0},
-	{"handle",                      tHANDLE,                    0},
-	{"helpcontext",                 tHELPCONTEXT,               0},
-	{"helpfile",                    tHELPFILE,                  0},
-	{"helpstring",                  tHELPSTRING,                0},
-	{"helpstringcontext",           tHELPSTRINGCONTEXT,         0},
-	{"helpstringdll",               tHELPSTRINGDLL,             0},
-	{"hidden",                      tHIDDEN,                    0},
-	{"id",                          tID,                        0},
-	{"idempotent",                  tIDEMPOTENT,                0},
-	{"ignore",                      tIGNORE,                    0},
-	{"iid_is",                      tIIDIS,                     0},
-	{"immediatebind",               tIMMEDIATEBIND,             0},
-	{"implicit_handle",             tIMPLICITHANDLE,            0},
-	{"in",                          tIN,                        0},
-	{"in_line",                     tIN_LINE,                   0},
-	{"input_sync",                  tINPUTSYNC,                 0},
-	{"lcid",                        tLCID,                      0},
-	{"length_is",                   tLENGTHIS,                  0},
-	{"licensed",                    tLICENSED,                  0},
-	{"local",                       tLOCAL,                     0},
-	{"marshaling_behavior",         tMARSHALINGBEHAVIOR,        1},
-	{"maybe",                       tMAYBE,                     0},
-	{"message",                     tMESSAGE,                   0},
-	{"mta" ,                        tMTA,                       0},
-	{"neutral",                     tNEUTRAL,                   0},
-	{"nocode",                      tNOCODE,                    0},
-	{"nonbrowsable",                tNONBROWSABLE,              0},
-	{"noncreatable",                tNONCREATABLE,              0},
-	{"none",                        tNONE,                      1},
-	{"nonextensible",               tNONEXTENSIBLE,             0},
-	{"notify",                      tNOTIFY,                    0},
-	{"notify_flag",                 tNOTIFYFLAG,                0},
-	{"object",                      tOBJECT,                    0},
-	{"odl",                         tODL,                       0},
-	{"oleautomation",               tOLEAUTOMATION,             0},
-	{"optimize",                    tOPTIMIZE,                  0},
-	{"optional",                    tOPTIONAL,                  0},
-	{"out",                         tOUT,                       0},
-	{"overload",                    tOVERLOAD,                  0},
-	{"partial_ignore",              tPARTIALIGNORE,             0},
-	{"pointer_default",             tPOINTERDEFAULT,            0},
-	{"progid",                      tPROGID,                    0},
-	{"propget",                     tPROPGET,                   0},
-	{"propput",                     tPROPPUT,                   0},
-	{"propputref",                  tPROPPUTREF,                0},
-	{"proxy",                       tPROXY,                     0},
-	{"ptr",                         tPTR,                       0},
-	{"public",                      tPUBLIC,                    0},
-	{"range",                       tRANGE,                     0},
-	{"readonly",                    tREADONLY,                  0},
-	{"ref",                         tREF,                       0},
-	{"represent_as",                tREPRESENTAS,               0},
-	{"requestedit",                 tREQUESTEDIT,               0},
-	{"restricted",                  tRESTRICTED,                0},
-	{"retval",                      tRETVAL,                    0},
-	{"single",                      tSINGLE,                    0},
-	{"single_node",                 tSINGLENODE,                0},
-	{"size_is",                     tSIZEIS,                    0},
-	{"source",                      tSOURCE,                    0},
-	{"standard",                    tSTANDARD,                  1},
-	{"static",                      tSTATIC,                    1},
-	{"strict_context_handle",       tSTRICTCONTEXTHANDLE,       0},
-	{"string",                      tSTRING,                    0},
-	{"switch_is",                   tSWITCHIS,                  0},
-	{"switch_type",                 tSWITCHTYPE,                0},
-	{"threading",                   tTHREADING,                 0},
-	{"transmit_as",                 tTRANSMITAS,                0},
-	{"uidefault",                   tUIDEFAULT,                 0},
-	{"unique",                      tUNIQUE,                    0},
-	{"user_marshal",                tUSERMARSHAL,               0},
-	{"usesgetlasterror",            tUSESGETLASTERROR,          0},
-	{"uuid",                        tUUID,                      0},
-	{"v1_enum",                     tV1ENUM,                    0},
-	{"vararg",                      tVARARG,                    0},
-	{"version",                     tVERSION,                   0},
-	{"vi_progid",                   tVIPROGID,                  0},
-	{"wire_marshal",                tWIREMARSHAL,               0},
-};
-
-/* attributes TODO:
-    first_is
-    last_is
-    max_is
-    min_is
-*/
-
-#define KWP(p) ((const struct keyword *)(p))
-
-static int kw_cmp_func(const void *s1, const void *s2)
-{
-	return strcmp(KWP(s1)->kw, KWP(s2)->kw);
-}
-
-static int kw_token(const char *kw, YYSTYPE *yylval)
-{
-	struct keyword key, *kwp;
-	key.kw = kw;
-	kwp = bsearch(&key, keywords, NKEYWORDS, sizeof(keywords[0]), kw_cmp_func);
-	if (kwp && (!kwp->winrt_only || winrt_mode)) {
-		yylval->str = xstrdup(kwp->kw);
-		return kwp->token;
-	}
-	yylval->str = xstrdup(kw);
-	return is_type(kw) ? aKNOWNTYPE : aIDENTIFIER;
-}
-
-static int attr_token(const char *kw, YYSTYPE *yylval)
-{
-        struct keyword key, *kwp;
-        key.kw = kw;
-        kwp = bsearch(&key, attr_keywords, sizeof(attr_keywords)/sizeof(attr_keywords[0]),
-                      sizeof(attr_keywords[0]), kw_cmp_func);
-        if (kwp && (!kwp->winrt_only || winrt_mode)) {
-            yylval->str = xstrdup(kwp->kw);
-            return kwp->token;
-        }
-        return kw_token(kw, yylval);
-}
 
 void pop_import(void)
 {

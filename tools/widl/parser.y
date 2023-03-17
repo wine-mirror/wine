@@ -934,17 +934,17 @@ typename: aIDENTIFIER
 ident:	  typename				{ $$ = make_var($1); }
 	;
 
-base_type: tBYTE				{ $$ = find_type_or_error(NULL, $<str>1); }
-	| tWCHAR				{ $$ = find_type_or_error(NULL, $<str>1); }
+base_type: tBYTE				{ $$ = find_type_or_error( NULL, "byte" ); }
+	| tWCHAR				{ $$ = find_type_or_error( NULL, "wchar_t" ); }
 	| int_std
 	| tSIGNED int_std			{ $$ = type_new_int(type_basic_get_type($2), -1); }
 	| tUNSIGNED int_std			{ $$ = type_new_int(type_basic_get_type($2), 1); }
 	| tUNSIGNED				{ $$ = type_new_int(TYPE_BASIC_INT, 1); }
-	| tFLOAT				{ $$ = find_type_or_error(NULL, $<str>1); }
-	| tDOUBLE				{ $$ = find_type_or_error(NULL, $<str>1); }
-	| tBOOLEAN				{ $$ = find_type_or_error(NULL, $<str>1); }
-	| tERRORSTATUST				{ $$ = find_type_or_error(NULL, $<str>1); }
-	| tHANDLET				{ $$ = find_type_or_error(NULL, $<str>1); }
+	| tFLOAT				{ $$ = find_type_or_error( NULL, "float" ); }
+	| tDOUBLE				{ $$ = find_type_or_error( NULL, "double" ); }
+	| tBOOLEAN				{ $$ = find_type_or_error( NULL, "boolean" ); }
+	| tERRORSTATUST				{ $$ = find_type_or_error( NULL, "error_status_t" ); }
+	| tHANDLET				{ $$ = find_type_or_error( NULL, "handle_t" ); }
 	;
 
 m_int
