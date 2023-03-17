@@ -49,6 +49,7 @@ static void test_GraphicsCaptureSessionStatics(void)
     static const WCHAR *session_statics_name = L"Windows.Graphics.Capture.GraphicsCaptureSession";
     IGraphicsCaptureSessionStatics *session_statics;
     IActivationFactory *factory;
+    BOOLEAN res;
     HSTRING str;
     HRESULT hr;
     LONG ref;
@@ -71,6 +72,11 @@ static void test_GraphicsCaptureSessionStatics(void)
 
     hr = IActivationFactory_QueryInterface( factory, &IID_IGraphicsCaptureSessionStatics, (void **)&session_statics );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    res = 2;
+    hr = IGraphicsCaptureSessionStatics_IsSupported( session_statics, &res );
+    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    todo_wine ok( res == TRUE, "got %d.\n", res );
 
     ref = IGraphicsCaptureSessionStatics_Release( session_statics );
     ok( ref == 1, "got ref %ld.\n", ref );
