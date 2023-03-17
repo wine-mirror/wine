@@ -400,8 +400,25 @@ void cleanup_imm_thread(void)
  */
 NTSTATUS WINAPI NtUserBuildHimcList( UINT thread_id, UINT count, HIMC *buffer, UINT *size )
 {
-    FIXME( "thread_id %#x, count %u, buffer %p, size %p stub!\n", thread_id, count, buffer, size );
-    return STATUS_NOT_IMPLEMENTED;
+    HANDLE handle = 0;
+    struct imc *imc;
+
+    TRACE( "thread_id %#x, count %u, buffer %p, size %p\n", thread_id, count, buffer, size );
+
+    if (!buffer) return STATUS_UNSUCCESSFUL;
+    if (!thread_id) thread_id = GetCurrentThreadId();
+
+    *size = 0;
+    user_lock();
+    while (count && (imc = next_process_user_handle_ptr( &handle, NTUSER_OBJ_IMC )))
+    {
+        if (thread_id != -1 && imc->thread_id != thread_id) continue;
+        buffer[(*size)++] = handle;
+        count--;
+    }
+    user_unlock();
+
+    return STATUS_SUCCESS;
 }
 
 BOOL WINAPI DECLSPEC_HIDDEN ImmProcessKey( HWND hwnd, HKL hkl, UINT vkey, LPARAM key_data, DWORD unknown )

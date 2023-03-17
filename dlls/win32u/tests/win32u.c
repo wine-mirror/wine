@@ -332,13 +332,11 @@ static DWORD CALLBACK test_NtUserBuildHimcList_thread( void *arg )
     size = 0xdeadbeef;
     memset( buf, 0xcd, sizeof(buf) );
     status = NtUserBuildHimcList( GetCurrentThreadId(), ARRAYSIZE( buf ), buf, &size );
-    todo_wine
     ok( !status, "NtUserBuildHimcList failed: %#lx\n", status );
     todo_wine
     ok( size == 1, "size = %u\n", size );
     ok( !!buf[0], "buf[0] = %p\n", buf[0] );
 
-    todo_wine
     ok( buf[0] != himc[0], "buf[0] = %p\n", buf[0] );
     ok( buf[0] != himc[1], "buf[0] = %p\n", buf[0] );
     himc[2] = buf[0];
@@ -347,13 +345,15 @@ static DWORD CALLBACK test_NtUserBuildHimcList_thread( void *arg )
     size = 0xdeadbeef;
     memset( buf, 0xcd, sizeof(buf) );
     status = NtUserBuildHimcList( -1, ARRAYSIZE( buf ), buf, &size );
-    todo_wine
     ok( !status, "NtUserBuildHimcList failed: %#lx\n", status );
     todo_wine
     ok( size == 3, "size = %u\n", size );
 
     qsort( buf, size, sizeof(*buf), himc_compare );
+    /* FIXME: Wine only lazily creates a default thread IMC */
+    todo_wine
     ok( buf[0] == himc[0], "buf[0] = %p\n", buf[0] );
+    todo_wine
     ok( buf[1] == himc[1], "buf[1] = %p\n", buf[1] );
     todo_wine
     ok( buf[2] == himc[2], "buf[2] = %p\n", buf[2] );
@@ -371,9 +371,7 @@ static void test_NtUserBuildHimcList(void)
     size = 0xdeadbeef;
     memset( buf, 0xcd, sizeof(buf) );
     status = NtUserBuildHimcList( GetCurrentThreadId(), ARRAYSIZE( buf ), buf, &size );
-    todo_wine
     ok( !status, "NtUserBuildHimcList failed: %#lx\n", status );
-    todo_wine
     ok( size == 1, "size = %u\n", size );
     ok( !!buf[0], "buf[0] = %p\n", buf[0] );
     himc[0] = buf[0];
@@ -388,40 +386,31 @@ static void test_NtUserBuildHimcList(void)
     size = 0xdeadbeef;
     memset( buf, 0xcd, sizeof(buf) );
     status = NtUserBuildHimcList( GetCurrentThreadId(), ARRAYSIZE( buf ), buf, &size );
-    todo_wine
     ok( !status, "NtUserBuildHimcList failed: %#lx\n", status );
-    todo_wine
     ok( size == 2, "size = %u\n", size );
 
     qsort( buf, size, sizeof(*buf), himc_compare );
     ok( buf[0] == himc[0], "buf[0] = %p\n", buf[0] );
-    todo_wine
     ok( buf[1] == himc[1], "buf[1] = %p\n", buf[1] );
 
     size = 0xdeadbeef;
     memset( buf, 0xcd, sizeof(buf) );
     status = NtUserBuildHimcList( 0, ARRAYSIZE( buf ), buf, &size );
-    todo_wine
     ok( !status, "NtUserBuildHimcList failed: %#lx\n", status );
-    todo_wine
     ok( size == 2, "size = %u\n", size );
 
     qsort( buf, size, sizeof(*buf), himc_compare );
     ok( buf[0] == himc[0], "buf[0] = %p\n", buf[0] );
-    todo_wine
     ok( buf[1] == himc[1], "buf[1] = %p\n", buf[1] );
 
     size = 0xdeadbeef;
     memset( buf, 0xcd, sizeof(buf) );
     status = NtUserBuildHimcList( -1, ARRAYSIZE( buf ), buf, &size );
-    todo_wine
     ok( !status, "NtUserBuildHimcList failed: %#lx\n", status );
-    todo_wine
     ok( size == 2, "size = %u\n", size );
 
     qsort( buf, size, sizeof(*buf), himc_compare );
     ok( buf[0] == himc[0], "buf[0] = %p\n", buf[0] );
-    todo_wine
     ok( buf[1] == himc[1], "buf[1] = %p\n", buf[1] );
 
     thread = CreateThread( NULL, 0, test_NtUserBuildHimcList_thread, himc, 0, NULL );
@@ -439,11 +428,9 @@ static void test_NtUserBuildHimcList(void)
     ok( status == STATUS_INVALID_PARAMETER, "NtUserBuildHimcList returned %#lx\n", status );
     size = 0xdeadbeef;
     status = NtUserBuildHimcList( GetCurrentThreadId(), 1, NULL, &size );
-    todo_wine
     ok( status == STATUS_UNSUCCESSFUL, "NtUserBuildHimcList returned %#lx\n", status );
     size = 0xdeadbeef;
     status = NtUserBuildHimcList( GetCurrentThreadId(), 0, buf, &size );
-    todo_wine
     ok( !status, "NtUserBuildHimcList failed: %#lx\n", status );
     ok( size == 0, "size = %u\n", size );
 
