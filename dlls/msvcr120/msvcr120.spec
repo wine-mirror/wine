@@ -490,9 +490,9 @@
 @ stub -arch=arm ?_Cancel@_TaskCollection@details@Concurrency@@QAAXXZ
 @ stub -arch=i386 ?_Cancel@_TaskCollection@details@Concurrency@@QAEXXZ
 @ stub -arch=win64 ?_Cancel@_TaskCollection@details@Concurrency@@QEAAXXZ
-@ stub -arch=arm ?_CheckTaskCollection@_UnrealizedChore@details@Concurrency@@IAAXXZ
-@ stub -arch=i386 ?_CheckTaskCollection@_UnrealizedChore@details@Concurrency@@IAEXXZ
-@ stub -arch=win64 ?_CheckTaskCollection@_UnrealizedChore@details@Concurrency@@IEAAXXZ
+@ cdecl -arch=arm ?_CheckTaskCollection@_UnrealizedChore@details@Concurrency@@IAAXXZ(ptr) _UnrealizedChore__CheckTaskCollection
+@ thiscall -arch=i386 ?_CheckTaskCollection@_UnrealizedChore@details@Concurrency@@IAEXXZ(ptr) _UnrealizedChore__CheckTaskCollection
+@ cdecl -arch=win64 ?_CheckTaskCollection@_UnrealizedChore@details@Concurrency@@IEAAXXZ(ptr) _UnrealizedChore__CheckTaskCollection
 @ stub -arch=arm ?_CleanupToken@_StructuredTaskCollection@details@Concurrency@@AAAXXZ
 @ stub -arch=i386 ?_CleanupToken@_StructuredTaskCollection@details@Concurrency@@AAEXXZ
 @ stub -arch=win64 ?_CleanupToken@_StructuredTaskCollection@details@Concurrency@@AEAAXXZ

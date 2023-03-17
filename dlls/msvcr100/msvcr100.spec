@@ -313,8 +313,8 @@
 @ cdecl -arch=win64 ?_Cancel@_StructuredTaskCollection@details@Concurrency@@QEAAXXZ(ptr) _StructuredTaskCollection__Cancel
 @ stub -arch=win32 ?_Cancel@_TaskCollection@details@Concurrency@@QAEXXZ
 @ stub -arch=win64 ?_Cancel@_TaskCollection@details@Concurrency@@QEAAXXZ
-@ stub -arch=win32 ?_CheckTaskCollection@_UnrealizedChore@details@Concurrency@@IAEXXZ
-@ stub -arch=win64 ?_CheckTaskCollection@_UnrealizedChore@details@Concurrency@@IEAAXXZ
+@ thiscall -arch=win32 ?_CheckTaskCollection@_UnrealizedChore@details@Concurrency@@IAEXXZ(ptr) _UnrealizedChore__CheckTaskCollection
+@ cdecl -arch=win64 ?_CheckTaskCollection@_UnrealizedChore@details@Concurrency@@IEAAXXZ(ptr) _UnrealizedChore__CheckTaskCollection
 @ stub -arch=win32 ?_ConcRT_Assert@details@Concurrency@@YAXPBD0H@Z
 @ stub -arch=win64 ?_ConcRT_Assert@details@Concurrency@@YAXPEBD0H@Z
 @ stub -arch=win32 ?_ConcRT_CoreAssert@details@Concurrency@@YAXPBD0H@Z

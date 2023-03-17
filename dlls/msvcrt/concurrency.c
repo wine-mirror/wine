@@ -2224,6 +2224,14 @@ bool __thiscall _StructuredTaskCollection__IsCanceling(
     return FALSE;
 }
 
+/* ?_CheckTaskCollection@_UnrealizedChore@details@Concurrency@@IAEXXZ */
+/* ?_CheckTaskCollection@_UnrealizedChore@details@Concurrency@@IEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_UnrealizedChore__CheckTaskCollection, 4)
+void __thiscall _UnrealizedChore__CheckTaskCollection(_UnrealizedChore *this)
+{
+    FIXME("() stub\n");
+}
+
 /* ??0critical_section@Concurrency@@QAE@XZ */
 /* ??0critical_section@Concurrency@@QEAA@XZ */
 DEFINE_THISCALL_WRAPPER(critical_section_ctor, 4)
