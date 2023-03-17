@@ -1500,6 +1500,22 @@ static void test_reg_delete_key(void)
     ret = RegOpenKeyA(hkey_main, "deleteme", &key);
     ok(ret == ERROR_FILE_NOT_FOUND, "Key was not deleted, got %ld\n", ret);
     RegCloseKey(key);
+
+    /* Test deleting 32-bit keys */
+    ret = RegCreateKeyExA(hkey_main, "deleteme", 0, NULL, 0, KEY_ALL_ACCESS | KEY_WOW64_32KEY, NULL, &key, NULL);
+    ok(ret == ERROR_SUCCESS, "Could not create key, got %ld\n", ret);
+    RegCloseKey(key);
+
+    ret = RegOpenKeyExA(hkey_main, "deleteme", 0, KEY_READ | KEY_WOW64_32KEY, &key);
+    ok(ret == ERROR_SUCCESS, "Could not open key, got %ld\n", ret);
+
+    ret = RegDeleteKeyExA(key, "", KEY_WOW64_32KEY, 0);
+    todo_wine_if(ptr_size == 64) ok(ret == ERROR_SUCCESS, "RegDeleteKeyExA failed, got %ld\n", ret);
+    RegCloseKey(key);
+
+    ret = RegOpenKeyExA(hkey_main, "deleteme", 0, KEY_READ | KEY_WOW64_32KEY, &key);
+    todo_wine_if(ptr_size == 64) ok(ret == ERROR_FILE_NOT_FOUND, "Key was not deleted, got %ld\n", ret);
+    RegCloseKey(key);
 }
 
 static BOOL set_privileges(LPCSTR privilege, BOOL set)
