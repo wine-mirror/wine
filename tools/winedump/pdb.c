@@ -240,7 +240,7 @@ static void dump_string_table(const PDB_STRING_TABLE* strtable, const char* name
     end = ptr + strtable->length;
     while (ptr < end)
     {
-        printf("%s\t%zu]     %s\n", pfx, ptr - (const char*)(strtable + 1), ptr);
+        printf("%s\t%tu]     %s\n", pfx, ptr - (const char*)(strtable + 1), ptr);
         ptr += strlen(ptr) + 1;
     }
     table = (unsigned *)((char*)(strtable + 1) + strtable->length);
