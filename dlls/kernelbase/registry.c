@@ -303,19 +303,6 @@ static NTSTATUS create_key( HKEY *retkey, HKEY root, UNICODE_STRING name, ULONG 
             while (i < len && buffer[i] == '\\') i++;
             buffer += i;
             len -= i;
-
-            if (force_wow32)
-            {
-                name.Buffer = buffer;
-                name.Length = len * sizeof(WCHAR);
-                if (is_wow6432node( &name )) force_wow32 = FALSE;
-                else if ((subkey = open_wow6432node( attr.RootDirectory )))
-                {
-                    NtClose( attr.RootDirectory );
-                    attr.RootDirectory = subkey;
-                    force_wow32 = FALSE;
-                }
-            }
         }
     }
     if (status == STATUS_PREDEFINED_HANDLE)
