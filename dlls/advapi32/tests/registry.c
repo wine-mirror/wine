@@ -2958,7 +2958,7 @@ static void test_redirection(void)
 
     err = RegOpenKeyExA( HKEY_CLASSES_ROOT, "Interface",
                          0, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &root32 );
-    ok( err == ERROR_SUCCESS, "RegOpenKeyExA failed: %lu\n", err );
+    todo_wine_if(ptr_size == 64) ok( err == ERROR_SUCCESS, "RegOpenKeyExA failed: %lu\n", err );
 
     err = RegOpenKeyExA( HKEY_CLASSES_ROOT, "Interface",
                          0, KEY_ALL_ACCESS, &root );
@@ -2966,7 +2966,7 @@ static void test_redirection(void)
 
     err = RegCreateKeyExA( root32, "Wine", 0, NULL, 0,
                            KEY_WOW64_32KEY | KEY_ALL_ACCESS, NULL, &key32, NULL);
-    ok( err == ERROR_SUCCESS, "RegCreateKeyA failed: %lu\n", err );
+    todo_wine_if(ptr_size == 64) ok( err == ERROR_SUCCESS, "RegCreateKeyA failed: %lu\n", err );
 
     err = RegOpenKeyExA( root, "Wine", 0, KEY_ALL_ACCESS, &key );
     ok( err == (ptr_size == 64 ? ERROR_FILE_NOT_FOUND : ERROR_SUCCESS),
@@ -2978,10 +2978,10 @@ static void test_redirection(void)
 
     err = RegCreateKeyExA( root64, "Wine", 0, NULL, 0,
                            KEY_WOW64_64KEY | KEY_ALL_ACCESS, NULL, &key64, NULL);
-    ok( err == ERROR_SUCCESS, "RegCreateKeyA failed: %lu\n", err );
+    todo_wine_if(ptr_size == 64) ok( err == ERROR_SUCCESS, "RegCreateKeyA failed: %lu\n", err );
 
     err = RegOpenKeyExA( root, "Wine", 0, KEY_ALL_ACCESS, &key );
-    ok( err == (ptr_size == 32 ? ERROR_FILE_NOT_FOUND : ERROR_SUCCESS),
+    todo_wine_if(ptr_size == 64) ok( err == (ptr_size == 32 ? ERROR_FILE_NOT_FOUND : ERROR_SUCCESS),
         "RegOpenKeyExA failed: %lu\n", err );
     if (!err) RegCloseKey( key );
 

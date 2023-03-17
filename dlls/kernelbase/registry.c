@@ -144,13 +144,15 @@ static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING name, DWORD op
 
 static NTSTATUS open_subkey( HKEY *subkey, HKEY root, UNICODE_STRING *name, DWORD options, ACCESS_MASK access )
 {
+    BOOL is_wow64_key = (is_win64 && (access & KEY_WOW64_32KEY)) || (is_wow64 && !(access & KEY_WOW64_64KEY));
     ACCESS_MASK access_64 = access & ~KEY_WOW64_32KEY;
     DWORD i = 0, len = name->Length / sizeof(WCHAR);
     WCHAR *buffer = name->Buffer;
     UNICODE_STRING str;
     NTSTATUS status;
 
-    if (len > 0 && buffer[0] == '\\') return STATUS_OBJECT_PATH_INVALID;
+    if (!root && len > 10 && !wcsnicmp( buffer, L"\\Registry\\", 10 )) i += 10;
+    if (i < len && buffer[i] == '\\') return STATUS_OBJECT_PATH_INVALID;
     while (i < len && buffer[i] != '\\') i++;
 
     str.Buffer = name->Buffer;
@@ -167,7 +169,7 @@ static NTSTATUS open_subkey( HKEY *subkey, HKEY root, UNICODE_STRING *name, DWOR
         name->Buffer += i;
         name->Length -= i * sizeof(WCHAR);
 
-        if (!is_wow6432node( name ))
+        if (is_wow64_key && !is_wow6432node( name ))
         {
             HKEY wow6432node = open_wow6432node( *subkey );
             if (wow6432node)
@@ -230,7 +232,7 @@ static NTSTATUS create_key( HKEY *retkey, HKEY root, UNICODE_STRING name, ULONG 
     BOOL force_wow32 = is_win64 && (access & KEY_WOW64_32KEY);
     NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
     OBJECT_ATTRIBUTES attr;
-    HANDLE subkey;
+    HKEY subkey;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = root;
@@ -253,11 +255,25 @@ static NTSTATUS create_key( HKEY *retkey, HKEY root, UNICODE_STRING name, ULONG 
             return status;
     }
 
+    status = open_key( &subkey, root, name, options & REG_OPTION_OPEN_LINK, access );
+    if (!status && (options & REG_OPTION_CREATE_LINK))
+    {
+        NtClose( subkey );
+        status = STATUS_OBJECT_NAME_COLLISION;
+    }
+
+    if (!status)
+    {
+        if (dispos) *dispos = REG_OPENED_EXISTING_KEY;
+        attr.RootDirectory = subkey;
+    }
+
     if (status == STATUS_OBJECT_NAME_NOT_FOUND)
     {
         WCHAR *buffer = name.Buffer;
         DWORD attrs, i, len = name.Length / sizeof(WCHAR);
 
+        attr.RootDirectory = root;
         attrs = attr.Attributes;
 
         while (len)
@@ -274,12 +290,12 @@ static NTSTATUS create_key( HKEY *retkey, HKEY root, UNICODE_STRING name, ULONG 
             if (i == len)
             {
                 attr.Attributes = attrs;
-                status = NtCreateKey( &subkey, access, &attr, 0, class, options, dispos );
+                status = NtCreateKey( (HANDLE *)&subkey, access, &attr, 0, class, options, dispos );
             }
             else
             {
                 attr.Attributes = attrs & ~OBJ_OPENLINK;
-                status = NtCreateKey( &subkey, access, &attr, 0, class,
+                status = NtCreateKey( (HANDLE *)&subkey, access, &attr, 0, class,
                                       options & ~REG_OPTION_CREATE_LINK, dispos );
             }
             if (attr.RootDirectory != root) NtClose( attr.RootDirectory );
