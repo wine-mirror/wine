@@ -35,12 +35,9 @@ hex	0(x|X){hexd}+({l_suffix}?{u_suffix}?|{u_suffix}?{l_suffix}?)?
 uuid	{hexd}{8}-{hexd}{4}-{hexd}{4}-{hexd}{4}-{hexd}{12}
 double	[0-9]+\.[0-9]+([eE][+-]?[0-9]+)*
 
-%x QUOTE
-%x WSTRQUOTE
 %x ATTR
 %x PP_LINE
 %x PP_PRAGMA
-%x SQUOTE
 
 %{
 
@@ -66,13 +63,6 @@ double	[0-9]+\.[0-9]+([eE][+-]?[0-9]+)*
 #define yyerror parser_error
 
 #include "parser.tab.h"
-
-static void addcchar(char c);
-static char *get_buffered_cstring(void);
-
-static char *cbuffer;
-static int cbufidx;
-static int cbufalloc = 0;
 
 static int kw_token(const char *kw, YYSTYPE *yylval);
 static int attr_token(const char *kw, YYSTYPE *yylval);
@@ -131,6 +121,26 @@ struct uuid *parse_uuid(const char *u)
   return uuid;
 }
 
+static int token_str( int token, const char *str, YYSTYPE *yylval )
+{
+    char *tmp = xstrdup( str );
+
+    if (token == aWSTRING || token == aSTRING || token == aSQSTRING)
+    {
+        char *src, *dst;
+        src = dst = ++tmp; /* skip first quote */
+        while (*src)
+        {
+            if (*src == '\\') src++;
+            *dst++ = *src++;
+        }
+        dst[-1] = 0; /* strip last quote */
+    }
+
+    yylval->str = tmp;
+    return token;
+}
+
 static int token_num( int token, const char *yytext, YYSTYPE *yylval )
 {
     yylval->num = xstrtoul( yytext, NULL, 0 );
@@ -182,29 +192,6 @@ static int token_num( int token, const char *yytext, YYSTYPE *yylval )
                             yy_pop_state();
                         }
 <PP_PRAGMA>[^\n]*       yylval->str = xstrdup(yytext); yy_pop_state(); return aPRAGMA;
-<INITIAL,ATTR>\"	yy_push_state(QUOTE); cbufidx = 0;
-<QUOTE>\"		{
-				yy_pop_state();
-				yylval->str = get_buffered_cstring();
-				return aSTRING;
-			}
-<INITIAL,ATTR>L\"	yy_push_state(WSTRQUOTE); cbufidx = 0;
-<WSTRQUOTE>\"		{
-				yy_pop_state();
-				yylval->str = get_buffered_cstring();
-				return aWSTRING;
-			}
-<INITIAL,ATTR>\'	yy_push_state(SQUOTE); cbufidx = 0;
-<SQUOTE>\'		{
-				yy_pop_state();
-				yylval->str = get_buffered_cstring();
-				return aSQSTRING;
-			}
-<QUOTE,WSTRQUOTE,SQUOTE>\\\\	|
-<QUOTE,WSTRQUOTE>\\\"	addcchar(yytext[1]);
-<SQUOTE>\\\'	addcchar(yytext[1]);
-<QUOTE,WSTRQUOTE,SQUOTE>\\.	addcchar('\\'); addcchar(yytext[1]);
-<QUOTE,WSTRQUOTE,SQUOTE>.	addcchar(yytext[0]);
 
 <ATTR>{
     \]                                          { yy_pop_state(); return ']'; }
@@ -235,6 +222,10 @@ SAFEARRAY{ws}*/\(	return tSAFEARRAY;
 
     {hex}                                       { return token_num( aHEXNUM, yytext, yylval ); }
     {int}                                       { return token_num( aNUM, yytext, yylval ); }
+
+    L\"(\\.|[^"\\])*\"                          { return token_str( aWSTRING, yytext + 1, yylval ); }
+    \"(\\.|[^"\\])*\"                           { return token_str( aSTRING, yytext, yylval ); }
+    \'(\\.|[^'\\])*\'                           { return token_str( aSQSTRING, yytext, yylval ); }
 
     \n                                          { line_number++; }
     {ws}                                        {}
@@ -506,24 +497,6 @@ static int attr_token(const char *kw, YYSTYPE *yylval)
             return kwp->token;
         }
         return kw_token(kw, yylval);
-}
-
-static void addcchar(char c)
-{
-	if(cbufidx >= cbufalloc)
-	{
-		cbufalloc += 1024;
-		cbuffer = xrealloc(cbuffer, cbufalloc * sizeof(cbuffer[0]));
-		if(cbufalloc > 65536)
-			parser_warning("Reallocating string buffer larger than 64kB\n");
-	}
-	cbuffer[cbufidx++] = c;
-}
-
-static char *get_buffered_cstring(void)
-{
-	addcchar(0);
-	return xstrdup(cbuffer);
 }
 
 void pop_import(void)
