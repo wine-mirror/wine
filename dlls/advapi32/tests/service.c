@@ -1631,10 +1631,16 @@ static void test_enum_svc_ex(void)
 
     /* Test to show we get the same needed buffer size for the W-call */
     neededW = 0xdeadbeef;
+    returnedW = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
     ret = pEnumServicesStatusExW(scm_handle, 0, SERVICE_WIN32, SERVICE_STATE_ALL,
                                  NULL, 0, &neededW, &returnedW, NULL, NULL);
     ok(!ret, "Expected failure\n");
+    ok(returnedW == 0, "Expected no service returned, got %ld\n", returned);
+    ok(neededW != 0xdeadbeef && neededW > 0, "Expected the needed buffer size\n");
     ok(neededW == needed, "Expected needed buffersize to be the same for A- and W-calls\n");
+    ok(GetLastError() == ERROR_MORE_DATA,
+       "Expected ERROR_MORE_DATA, got %ld\n", GetLastError());
 
     /* Store the needed bytes */
     tempneeded = needed;
