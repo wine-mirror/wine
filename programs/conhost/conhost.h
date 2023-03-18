@@ -93,6 +93,7 @@ struct console
     unsigned int           key_state;
     struct console_window *window;
     WCHAR                 *title;               /* console title */
+    WCHAR                 *title_orig;          /* original console title */
     struct history_line  **history;             /* lines history */
     unsigned int           history_size;        /* number of entries in history array */
     unsigned int           history_index;       /* number of used entries in history array */

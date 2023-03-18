@@ -2461,20 +2461,37 @@ static NTSTATUS scroll_output( struct screen_buffer *screen_buffer, const struct
     return STATUS_SUCCESS;
 }
 
+static WCHAR *set_title( const WCHAR *in_title, size_t size )
+{
+    WCHAR *title = NULL;
+
+    title = malloc( size + sizeof(WCHAR) );
+    if (!title) return NULL;
+
+    memcpy( title, in_title, size );
+    title[ size / sizeof(WCHAR) ] = 0;
+
+    return title;
+}
+
 static NTSTATUS set_console_title( struct console *console, const WCHAR *in_title, size_t size )
 {
     WCHAR *title = NULL;
 
     TRACE( "%s\n", debugstr_wn(in_title, size / sizeof(WCHAR)) );
 
-    if (size)
-    {
-        if (!(title = malloc( size + sizeof(WCHAR) ))) return STATUS_NO_MEMORY;
-        memcpy( title, in_title, size );
-        title[size / sizeof(WCHAR)] = 0;
-    }
+    if (!(title = set_title( in_title, size )))
+        return STATUS_NO_MEMORY;
+
     free( console->title );
     console->title = title;
+
+    if (!console->title_orig && !(console->title_orig = set_title( in_title, size )))
+    {
+        free( console->title );
+        console->title = NULL;
+        return STATUS_NO_MEMORY;
+    }
 
     if (console->tty_output)
     {
