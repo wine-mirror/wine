@@ -1412,7 +1412,8 @@ static void test_fail(void)
     {
         for (i = 0; i < ARRAY_SIZE(tests); ++i)
         {
-            compiled = errors = NULL;
+            errors = NULL;
+            compiled = (void *)0xdeadbeef;
             hr = D3DCompile(tests[i], strlen(tests[i]), NULL, NULL, NULL, "test", targets[j], 0, 0, &compiled, &errors);
             ok(hr == E_FAIL, "Test %u, target %s: Got unexpected hr %#lx.\n", i, targets[j], hr);
             ok(!!errors, "Test %u, target %s, expected non-NULL error blob.\n", i, targets[j]);
