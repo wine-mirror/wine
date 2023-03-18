@@ -2917,7 +2917,6 @@ static void test_CreateActCtx_share_mode(void)
     actctx.lpSource = tmp_manifest_pathname;
 
     handle = CreateActCtxW(&actctx);
-    todo_wine
     ok(handle != INVALID_HANDLE_VALUE, "CreateActCtxW returned error %lu\n", GetLastError());
     ok(handle != NULL, "CreateActCtxW returned %p\n", handle);
 
