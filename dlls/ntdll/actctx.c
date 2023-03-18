@@ -5454,7 +5454,15 @@ void WINAPI RtlDeactivateActivationContext( ULONG flags, ULONG_PTR cookie )
  */
 void WINAPI RtlFreeThreadActivationContextStack(void)
 {
-    ACTIVATION_CONTEXT_STACK *actctx_stack = NtCurrentTeb()->ActivationContextStackPointer;
+    RtlFreeActivationContextStack( NtCurrentTeb()->ActivationContextStackPointer );
+}
+
+
+/******************************************************************
+ *		RtlFreeActivationContextStack (NTDLL.@)
+ */
+void WINAPI RtlFreeActivationContextStack( ACTIVATION_CONTEXT_STACK *actctx_stack )
+{
     RTL_ACTIVATION_CONTEXT_STACK_FRAME *frame;
 
     frame = actctx_stack->ActiveFrame;

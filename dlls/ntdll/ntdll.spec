@@ -700,6 +700,7 @@
 @ stdcall RtlFormatCurrentUserKeyPath(ptr)
 @ stdcall RtlFormatMessage(ptr long long long long ptr ptr long ptr)
 @ stdcall RtlFormatMessageEx(ptr long long long long ptr ptr long ptr long)
+@ stdcall RtlFreeActivationContextStack(ptr)
 @ stdcall RtlFreeAnsiString(ptr)
 @ stdcall RtlFreeHandle(ptr ptr)
 @ stdcall RtlFreeHeap(long long ptr)
