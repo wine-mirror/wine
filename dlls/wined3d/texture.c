@@ -5794,6 +5794,35 @@ void wined3d_texture_vk_barrier(struct wined3d_texture_vk *texture_vk,
     }
 }
 
+/* This is called when a texture is used as render target and shader resource
+ * or depth stencil and shader resource at the same time. This can either be
+ * read-only simultaneos use as depth stencil, but also for rendering to one
+ * subresource while reading from another. Without tracking of barriers and
+ * layouts per subresource VK_IMAGE_LAYOUT_GENERAL is the only thing we can do. */
+void wined3d_texture_vk_make_generic(struct wined3d_texture_vk *texture_vk,
+        struct wined3d_context_vk *context_vk)
+{
+    VkImageSubresourceRange vk_range;
+
+    if (texture_vk->layout == VK_IMAGE_LAYOUT_GENERAL)
+        return;
+
+    vk_range.aspectMask = vk_aspect_mask_from_format(texture_vk->t.resource.format);
+    vk_range.baseMipLevel = 0;
+    vk_range.levelCount = VK_REMAINING_MIP_LEVELS;
+    vk_range.baseArrayLayer = 0;
+    vk_range.layerCount = VK_REMAINING_ARRAY_LAYERS;
+
+    wined3d_context_vk_image_barrier(context_vk, wined3d_context_vk_get_command_buffer(context_vk),
+            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+            0, 0,
+            texture_vk->layout, VK_IMAGE_LAYOUT_GENERAL, texture_vk->image.vk_image, &vk_range);
+
+    texture_vk->layout = VK_IMAGE_LAYOUT_GENERAL;
+    texture_vk->default_image_info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+}
+
 static void ffp_blitter_destroy(struct wined3d_blitter *blitter, struct wined3d_context *context)
 {
     struct wined3d_blitter *next;

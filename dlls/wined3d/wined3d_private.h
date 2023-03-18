@@ -4878,6 +4878,8 @@ const VkDescriptorImageInfo *wined3d_texture_vk_get_default_image_info(struct wi
 HRESULT wined3d_texture_vk_init(struct wined3d_texture_vk *texture_vk, struct wined3d_device *device,
         const struct wined3d_resource_desc *desc, unsigned int layer_count, unsigned int level_count,
         uint32_t flags, void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+void wined3d_texture_vk_make_generic(struct wined3d_texture_vk *texture_vk,
+        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 BOOL wined3d_texture_vk_prepare_texture(struct wined3d_texture_vk *texture_vk,
         struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 
@@ -5595,8 +5597,10 @@ void wined3d_shader_resource_view_vk_generate_mipmap(struct wined3d_shader_resou
 HRESULT wined3d_shader_resource_view_vk_init(struct wined3d_shader_resource_view_vk *view_vk,
         const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
-void wined3d_shader_resource_view_vk_update(struct wined3d_shader_resource_view_vk *view_vk,
+void wined3d_shader_resource_view_vk_update_buffer(struct wined3d_shader_resource_view_vk *view_vk,
         struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
+void wined3d_shader_resource_view_vk_update_layout(struct wined3d_shader_resource_view_vk *srv_vk,
+        VkImageLayout layout) DECLSPEC_HIDDEN;
 
 struct wined3d_unordered_access_view
 {

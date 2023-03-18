@@ -2599,6 +2599,14 @@ static bool wined3d_context_vk_begin_render_pass(struct wined3d_context_vk *cont
             continue;
 
         rtv_vk = wined3d_rendertarget_view_vk(view);
+
+        if (rtv_vk->v.resource->bind_count)
+        {
+            struct wined3d_texture_vk *texture_vk;
+            texture_vk = wined3d_texture_vk(wined3d_texture_from_resource(rtv_vk->v.resource));
+            wined3d_texture_vk_make_generic(texture_vk, context_vk);
+        }
+
         vk_views[attachment_count] = wined3d_rendertarget_view_vk_get_image_view(rtv_vk, context_vk);
         wined3d_rendertarget_view_vk_barrier(rtv_vk, context_vk, WINED3D_BIND_RENDER_TARGET);
         wined3d_context_vk_reference_rendertarget_view(context_vk, rtv_vk);
@@ -2634,6 +2642,14 @@ static bool wined3d_context_vk_begin_render_pass(struct wined3d_context_vk *cont
     if ((view = state->fb.depth_stencil))
     {
         rtv_vk = wined3d_rendertarget_view_vk(view);
+
+        if (rtv_vk->v.resource->bind_count)
+        {
+            struct wined3d_texture_vk *texture_vk;
+            texture_vk = wined3d_texture_vk(wined3d_texture_from_resource(rtv_vk->v.resource));
+            wined3d_texture_vk_make_generic(texture_vk, context_vk);
+        }
+
         vk_views[attachment_count] = wined3d_rendertarget_view_vk_get_image_view(rtv_vk, context_vk);
         wined3d_rendertarget_view_vk_barrier(rtv_vk, context_vk, WINED3D_BIND_DEPTH_STENCIL);
         wined3d_context_vk_reference_rendertarget_view(context_vk, rtv_vk);
@@ -3023,7 +3039,11 @@ static bool wined3d_shader_descriptor_writes_vk_add_srv_write(struct wined3d_sha
         struct wined3d_texture_vk *texture_vk = wined3d_texture_vk(texture_from_resource(resource));
 
         if (view_vk->u.vk_image_info.imageView)
+        {
             image_info = &view_vk->u.vk_image_info;
+            if (image_info->imageLayout != texture_vk->layout)
+                wined3d_shader_resource_view_vk_update_layout(srv_vk, texture_vk->layout);
+        }
         else
             image_info = wined3d_texture_vk_get_default_image_info(texture_vk, context_vk);
         buffer_view = NULL;
@@ -3389,7 +3409,7 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
                 {
                     if (!srv_vk->view_vk.bo_user.valid)
                     {
-                        wined3d_shader_resource_view_vk_update(srv_vk, context_vk);
+                        wined3d_shader_resource_view_vk_update_buffer(srv_vk, context_vk);
                         if (pipeline == WINED3D_PIPELINE_GRAPHICS)
                             context_invalidate_state(&context_vk->c, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
                         else
