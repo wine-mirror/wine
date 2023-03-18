@@ -66,6 +66,27 @@ static BYTE bin12[] = { 0x20, 0x61, 0x62, 0x63, 0x20 };
 static BYTE bin13[] = { 0x22, 0x64, 0x65, 0x66, 0x22 };
 static BYTE bin14[] = { 0x31, 0x3b, 0x33 };
 
+/*
+Certificate:
+    Data:
+        Version: 1 (0x0)
+        Serial Number:
+            e3:5a:10:f1:fc:4b:f3:a2
+        Signature Algorithm: md5WithRSAEncryption
+        Issuer: C = US, ST = Minnesota, L = Minneapolis, O = CodeWeavers, OU = Wine Development, CN = localhost, emailAddress = aric@codeweavers.com
+        Validity
+            Not Before: Jan 25 13:57:24 2006 GMT
+            Not After : Feb 24 13:57:24 2006 GMT
+        Subject: C = US, ST = Minnesota, L = Minneapolis, O = CodeWeavers, OU = Wine Development, CN = localhost, emailAddress = aric@codeweavers.com
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (1024 bit)
+                Modulus:
+...
+                Exponent: 65537 (0x10001)
+    Signature Algorithm: md5WithRSAEncryption
+...
+*/
 static const BYTE cert[] = 
 {0x30,0x82,0x2,0xbb,0x30,0x82,0x2,0x24,0x2,0x9,0x0,0xe3,0x5a,0x10,0xf1,0xfc,
  0x4b,0xf3,0xa2,0x30,0xd,0x6,0x9,0x2a,0x86,0x48,0x86,0xf7,0xd,0x1,0x1,0x4,0x5,
