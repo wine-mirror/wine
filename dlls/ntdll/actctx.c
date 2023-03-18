@@ -3386,7 +3386,7 @@ static NTSTATUS parse_depend_manifests(struct actctx_loader* acl)
 
 static HANDLE get_current_actctx_no_addref(void)
 {
-    ACTIVATION_CONTEXT_STACK *actctx_stack = &NtCurrentTeb()->ActivationContextStack;
+    ACTIVATION_CONTEXT_STACK *actctx_stack = NtCurrentTeb()->ActivationContextStackPointer;
 
     if (actctx_stack->ActiveFrame)
         return actctx_stack->ActiveFrame->ActivationContext;
@@ -5397,7 +5397,7 @@ NTSTATUS WINAPI RtlActivateActivationContext( ULONG unknown, HANDLE handle, PULO
  */
 NTSTATUS WINAPI RtlActivateActivationContextEx( ULONG flags, TEB *teb, HANDLE handle, ULONG_PTR *cookie )
 {
-    ACTIVATION_CONTEXT_STACK *actctx_stack = &teb->ActivationContextStack;
+    ACTIVATION_CONTEXT_STACK *actctx_stack = teb->ActivationContextStackPointer;
     RTL_ACTIVATION_CONTEXT_STACK_FRAME *frame;
 
     if (!(frame = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*frame) )))
@@ -5420,7 +5420,7 @@ NTSTATUS WINAPI RtlActivateActivationContextEx( ULONG flags, TEB *teb, HANDLE ha
  */
 void WINAPI RtlDeactivateActivationContext( ULONG flags, ULONG_PTR cookie )
 {
-    ACTIVATION_CONTEXT_STACK *actctx_stack = &NtCurrentTeb()->ActivationContextStack;
+    ACTIVATION_CONTEXT_STACK *actctx_stack = NtCurrentTeb()->ActivationContextStackPointer;
     RTL_ACTIVATION_CONTEXT_STACK_FRAME *frame, *top;
 
     TRACE( "%lx cookie=%Ix\n", flags, cookie );
@@ -5454,7 +5454,7 @@ void WINAPI RtlDeactivateActivationContext( ULONG flags, ULONG_PTR cookie )
  */
 void WINAPI RtlFreeThreadActivationContextStack(void)
 {
-    ACTIVATION_CONTEXT_STACK *actctx_stack = &NtCurrentTeb()->ActivationContextStack;
+    ACTIVATION_CONTEXT_STACK *actctx_stack = NtCurrentTeb()->ActivationContextStackPointer;
     RTL_ACTIVATION_CONTEXT_STACK_FRAME *frame;
 
     frame = actctx_stack->ActiveFrame;
@@ -5484,7 +5484,7 @@ NTSTATUS WINAPI RtlGetActiveActivationContext( HANDLE *handle )
  */
 BOOLEAN WINAPI RtlIsActivationContextActive( HANDLE handle )
 {
-    ACTIVATION_CONTEXT_STACK *actctx_stack = &NtCurrentTeb()->ActivationContextStack;
+    ACTIVATION_CONTEXT_STACK *actctx_stack = NtCurrentTeb()->ActivationContextStackPointer;
     RTL_ACTIVATION_CONTEXT_STACK_FRAME *frame;
 
     for (frame = actctx_stack->ActiveFrame; frame; frame = frame->Previous)
