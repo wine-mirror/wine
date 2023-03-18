@@ -1975,11 +1975,40 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
                                                   const WCHAR *username, DWORD flags )
 {
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
-    DIDATAFORMAT data_format;
     DIOBJECTDATAFORMAT *obj_df = NULL;
-    DIPROPDWORD dp;
-    DIPROPRANGE dpr;
-    DIPROPSTRING dps;
+    DIDATAFORMAT data_format =
+    {
+        .dwSize = sizeof(DIDATAFORMAT),
+        .dwObjSize = sizeof(DIOBJECTDATAFORMAT),
+        .dwFlags = DIDF_RELAXIS,
+    };
+    DIPROPDWORD prop_buffer =
+    {
+        .diph =
+        {
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwSize = sizeof(DIPROPDWORD),
+            .dwHow = DIPH_DEVICE,
+        }
+    };
+    DIPROPRANGE prop_range =
+    {
+        .diph =
+        {
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwSize = sizeof(DIPROPRANGE),
+            .dwHow = DIPH_DEVICE,
+        }
+    };
+    DIPROPSTRING prop_username =
+    {
+        .diph =
+        {
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwSize = sizeof(DIPROPSTRING),
+            .dwHow = DIPH_DEVICE,
+        }
+    };
     WCHAR username_buf[MAX_PATH];
     DWORD username_len = MAX_PATH;
     int i, action = 0, num_actions = 0;
@@ -2009,11 +2038,6 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
 
     if (impl->status == STATUS_ACQUIRED) return DIERR_ACQUIRED;
 
-    data_format.dwSize = sizeof(data_format);
-    data_format.dwObjSize = sizeof(DIOBJECTDATAFORMAT);
-    data_format.dwFlags = DIDF_RELAXIS;
-    data_format.dwDataSize = format->dwDataSize;
-
     /* Count the actions */
     for (i = 0; i < format->dwNumActions; i++)
         if (IsEqualGUID( &impl->guid, &format->rgoAction[i].guidInstance ))
@@ -2024,7 +2048,7 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
     /* Construct the dataformat and actionmap */
     obj_df = malloc( sizeof(DIOBJECTDATAFORMAT) * num_actions );
     data_format.rgodf = (LPDIOBJECTDATAFORMAT)obj_df;
-    data_format.dwNumObjs = 0;
+    data_format.dwDataSize = format->dwDataSize;
 
     action_map = malloc( sizeof(ActionMap) * num_actions );
 
@@ -2060,38 +2084,20 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
 
     free( obj_df );
 
-    /* Set the device properties according to the action format */
-    dpr.diph.dwSize = sizeof(DIPROPRANGE);
-    dpr.lMin = format->lAxisMin;
-    dpr.lMax = format->lAxisMax;
-    dpr.diph.dwHeaderSize = sizeof(DIPROPHEADER);
-    dpr.diph.dwObj = 0;
-    dpr.diph.dwHow = DIPH_DEVICE;
-    IDirectInputDevice8_SetProperty( iface, DIPROP_RANGE, &dpr.diph );
+    prop_range.lMin = format->lAxisMin;
+    prop_range.lMax = format->lAxisMax;
+    IDirectInputDevice8_SetProperty( iface, DIPROP_RANGE, &prop_range.diph );
 
-    if (format->dwBufferSize > 0)
-    {
-        dp.diph.dwSize = sizeof(DIPROPDWORD);
-        dp.dwData = format->dwBufferSize;
-        dp.diph.dwHeaderSize = sizeof(DIPROPHEADER);
-        dp.diph.dwObj = 0;
-        dp.diph.dwHow = DIPH_DEVICE;
-        IDirectInputDevice8_SetProperty( iface, DIPROP_BUFFERSIZE, &dp.diph );
-    }
+    if ((prop_buffer.dwData = format->dwBufferSize))
+        IDirectInputDevice8_SetProperty( iface, DIPROP_BUFFERSIZE, &prop_buffer.diph );
 
-    /* Retrieve logged user name if necessary */
     if (username == NULL) GetUserNameW( username_buf, &username_len );
     else lstrcpynW( username_buf, username, MAX_PATH );
 
-    dps.diph.dwSize = sizeof(dps);
-    dps.diph.dwHeaderSize = sizeof(DIPROPHEADER);
-    dps.diph.dwObj = 0;
-    dps.diph.dwHow = DIPH_DEVICE;
-    if (flags & DIDSAM_NOUSER) dps.wsz[0] = '\0';
-    else lstrcpynW( dps.wsz, username_buf, ARRAY_SIZE(dps.wsz) );
-    dinput_device_set_username( impl, &dps );
+    if (flags & DIDSAM_NOUSER) prop_username.wsz[0] = '\0';
+    else lstrcpynW( prop_username.wsz, username_buf, ARRAY_SIZE(prop_username.wsz) );
+    dinput_device_set_username( impl, &prop_username );
 
-    /* Save the settings to disk */
     save_mapping_settings( iface, format, username_buf );
 
     return DI_OK;
