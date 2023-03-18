@@ -556,7 +556,7 @@ HRESULT WINAPI D3DCompile2(const void *data, SIZE_T data_size, const char *filen
             vkd3d_shader_free_messages(messages);
     }
 
-    if (!ret)
+    if (!ret && shader_blob)
     {
         if (FAILED(hr = D3DCreateBlob(byte_code.size, shader_blob)))
         {
