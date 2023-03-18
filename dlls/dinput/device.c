@@ -2088,8 +2088,8 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
     prop_range.lMax = format->lAxisMax;
     IDirectInputDevice8_SetProperty( iface, DIPROP_RANGE, &prop_range.diph );
 
-    if ((prop_buffer.dwData = format->dwBufferSize))
-        IDirectInputDevice8_SetProperty( iface, DIPROP_BUFFERSIZE, &prop_buffer.diph );
+    prop_buffer.dwData = format->dwBufferSize;
+    IDirectInputDevice8_SetProperty( iface, DIPROP_BUFFERSIZE, &prop_buffer.diph );
 
     if (username == NULL) GetUserNameW( username_buf, &username_len );
     else lstrcpynW( username_buf, username, MAX_PATH );

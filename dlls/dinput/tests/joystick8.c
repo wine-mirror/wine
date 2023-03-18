@@ -941,7 +941,6 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_BUFFERSIZE, &prop_dword.diph );
     ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
-    todo_wine
     ok( prop_dword.dwData == 0, "got dwData %#lx\n", prop_dword.dwData );
 
 
