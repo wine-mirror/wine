@@ -3386,8 +3386,10 @@ static NTSTATUS parse_depend_manifests(struct actctx_loader* acl)
 
 static HANDLE get_current_actctx_no_addref(void)
 {
-    if (NtCurrentTeb()->ActivationContextStack.ActiveFrame)
-        return NtCurrentTeb()->ActivationContextStack.ActiveFrame->ActivationContext;
+    ACTIVATION_CONTEXT_STACK *actctx_stack = &NtCurrentTeb()->ActivationContextStack;
+
+    if (actctx_stack->ActiveFrame)
+        return actctx_stack->ActiveFrame->ActivationContext;
 
     return NULL;
 }
@@ -5395,15 +5397,16 @@ NTSTATUS WINAPI RtlActivateActivationContext( ULONG unknown, HANDLE handle, PULO
  */
 NTSTATUS WINAPI RtlActivateActivationContextEx( ULONG flags, TEB *teb, HANDLE handle, ULONG_PTR *cookie )
 {
+    ACTIVATION_CONTEXT_STACK *actctx_stack = &teb->ActivationContextStack;
     RTL_ACTIVATION_CONTEXT_STACK_FRAME *frame;
 
     if (!(frame = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*frame) )))
         return STATUS_NO_MEMORY;
 
-    frame->Previous = teb->ActivationContextStack.ActiveFrame;
+    frame->Previous = actctx_stack->ActiveFrame;
     frame->ActivationContext = handle;
     frame->Flags = 0;
-    teb->ActivationContextStack.ActiveFrame = frame;
+    actctx_stack->ActiveFrame = frame;
     RtlAddRefActivationContext( handle );
 
     *cookie = (ULONG_PTR)frame;
@@ -5417,12 +5420,13 @@ NTSTATUS WINAPI RtlActivateActivationContextEx( ULONG flags, TEB *teb, HANDLE ha
  */
 void WINAPI RtlDeactivateActivationContext( ULONG flags, ULONG_PTR cookie )
 {
+    ACTIVATION_CONTEXT_STACK *actctx_stack = &NtCurrentTeb()->ActivationContextStack;
     RTL_ACTIVATION_CONTEXT_STACK_FRAME *frame, *top;
 
     TRACE( "%lx cookie=%Ix\n", flags, cookie );
 
     /* find the right frame */
-    top = NtCurrentTeb()->ActivationContextStack.ActiveFrame;
+    top = actctx_stack->ActiveFrame;
     for (frame = top; frame; frame = frame->Previous)
         if ((ULONG_PTR)frame == cookie) break;
 
@@ -5433,9 +5437,9 @@ void WINAPI RtlDeactivateActivationContext( ULONG flags, ULONG_PTR cookie )
         RtlRaiseStatus( STATUS_SXS_EARLY_DEACTIVATION );
 
     /* pop everything up to and including frame */
-    NtCurrentTeb()->ActivationContextStack.ActiveFrame = frame->Previous;
+    actctx_stack->ActiveFrame = frame->Previous;
 
-    while (top != NtCurrentTeb()->ActivationContextStack.ActiveFrame)
+    while (top != actctx_stack->ActiveFrame)
     {
         frame = top->Previous;
         RtlReleaseActivationContext( top->ActivationContext );
@@ -5450,9 +5454,10 @@ void WINAPI RtlDeactivateActivationContext( ULONG flags, ULONG_PTR cookie )
  */
 void WINAPI RtlFreeThreadActivationContextStack(void)
 {
+    ACTIVATION_CONTEXT_STACK *actctx_stack = &NtCurrentTeb()->ActivationContextStack;
     RTL_ACTIVATION_CONTEXT_STACK_FRAME *frame;
 
-    frame = NtCurrentTeb()->ActivationContextStack.ActiveFrame;
+    frame = actctx_stack->ActiveFrame;
     while (frame)
     {
         RTL_ACTIVATION_CONTEXT_STACK_FRAME *prev = frame->Previous;
@@ -5460,7 +5465,7 @@ void WINAPI RtlFreeThreadActivationContextStack(void)
         RtlFreeHeap( GetProcessHeap(), 0, frame );
         frame = prev;
     }
-    NtCurrentTeb()->ActivationContextStack.ActiveFrame = NULL;
+    actctx_stack->ActiveFrame = NULL;
 }
 
 
@@ -5479,9 +5484,10 @@ NTSTATUS WINAPI RtlGetActiveActivationContext( HANDLE *handle )
  */
 BOOLEAN WINAPI RtlIsActivationContextActive( HANDLE handle )
 {
+    ACTIVATION_CONTEXT_STACK *actctx_stack = &NtCurrentTeb()->ActivationContextStack;
     RTL_ACTIVATION_CONTEXT_STACK_FRAME *frame;
 
-    for (frame = NtCurrentTeb()->ActivationContextStack.ActiveFrame; frame; frame = frame->Previous)
+    for (frame = actctx_stack->ActiveFrame; frame; frame = frame->Previous)
         if (frame->ActivationContext == handle) return TRUE;
     return FALSE;
 }
