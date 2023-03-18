@@ -617,6 +617,50 @@ static BOOL create_wide_manifest(const char *filename, const char *manifest, BOO
     return ret;
 }
 
+static HANDLE create_temp_manifest_file(const char *manifest, WCHAR *pathname)
+{
+    WCHAR tmp_path[MAX_PATH];
+    DWORD size, tmp_path_len;
+    HANDLE file, file_w;
+    UINT unique;
+
+    tmp_path_len = GetTempPathW(ARRAY_SIZE(tmp_path), tmp_path);
+    ok(tmp_path_len != 0, "GetTempPathW returned error %lu\n", GetLastError());
+    ok(tmp_path_len < ARRAY_SIZE(tmp_path), "GetTempPathW return value %lu should be less than %Iu\n",
+       tmp_path_len, ARRAY_SIZE(tmp_path));
+
+    memset(pathname, 0, MAX_PATH * sizeof(WCHAR));
+    unique = GetTempFileNameW(tmp_path, L"tst", 0, pathname);
+    ok(unique != 0, "GetTempFileNameW returned error %lu\n", GetLastError());
+
+    /* Open file handle that will be deleted on close or process termination */
+    file = CreateFileW(pathname,
+                       GENERIC_READ | DELETE,
+                       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                       NULL,
+                       CREATE_ALWAYS,
+                       FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE,
+                       NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile returned error %lu\n", GetLastError());
+
+    /* Re-open file with write access */
+    file_w = CreateFileW(pathname,
+                         GENERIC_WRITE,
+                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                         NULL,
+                         TRUNCATE_EXISTING,
+                         FILE_ATTRIBUTE_NORMAL,
+                         NULL);
+    ok(file_w != INVALID_HANDLE_VALUE, "CreateFile returned error %lu\n", GetLastError());
+
+    WriteFile(file_w, manifest, strlen(manifest), &size, NULL);
+
+    /* Close file handle that was open for write to avoid sharing violation */
+    CloseHandle(file_w);
+
+    return file;
+}
+
 typedef struct {
     ULONG format_version;
     ULONG assembly_cnt_min;
@@ -2860,6 +2904,28 @@ todo_wine {
     }
 }
 
+static void test_CreateActCtx_share_mode(void)
+{
+    WCHAR tmp_manifest_pathname[MAX_PATH];
+    HANDLE handle, manifest_file;
+    ACTCTXW actctx;
+
+    manifest_file = create_temp_manifest_file(manifest1, tmp_manifest_pathname);
+
+    memset(&actctx, 0, sizeof(ACTCTXW));
+    actctx.cbSize = sizeof(ACTCTXW);
+    actctx.lpSource = tmp_manifest_pathname;
+
+    handle = CreateActCtxW(&actctx);
+    todo_wine
+    ok(handle != INVALID_HANDLE_VALUE, "CreateActCtxW returned error %lu\n", GetLastError());
+    ok(handle != NULL, "CreateActCtxW returned %p\n", handle);
+
+    ReleaseActCtx(handle);
+
+    CloseHandle(manifest_file);
+}
+
 static BOOL init_funcs(void)
 {
     HMODULE hLibrary = GetModuleHandleA("kernel32.dll");
@@ -3719,6 +3785,7 @@ START_TEST(actctx)
     test_actctx();
     test_create_fail();
     test_CreateActCtx();
+    test_CreateActCtx_share_mode();
     test_findsectionstring();
     test_ZombifyActCtx();
     run_child_process();
