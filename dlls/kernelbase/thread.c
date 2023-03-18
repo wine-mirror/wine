@@ -768,6 +768,12 @@ BOOL WINAPI DECLSPEC_HOTPATCH TlsSetValue( DWORD index, LPVOID value )
  ***********************************************************************/
 
 
+struct fiber_actctx
+{
+    ACTIVATION_CONTEXT_STACK stack_space;    /* activation context stack space */
+    ACTIVATION_CONTEXT_STACK *stack_ptr;     /* last value of ActivationContextStackPointer */
+};
+
 struct fiber_data
 {
     LPVOID                param;             /* 00/00 fiber param */
@@ -779,6 +785,7 @@ struct fiber_data
     DWORD                 flags;             /*       fiber flags */
     LPFIBER_START_ROUTINE start;             /*       start routine */
     void                 *fls_slots;         /*       fiber storage slots */
+    struct fiber_actctx   actctx;            /*       activation context state */
 };
 
 extern void WINAPI switch_fiber( CONTEXT *old, CONTEXT *new );
@@ -931,6 +938,38 @@ static void init_fiber_context( struct fiber_data *fiber )
 #endif
 }
 
+static void move_list( LIST_ENTRY *dest, LIST_ENTRY *src )
+{
+    LIST_ENTRY *head = src->Flink;
+    LIST_ENTRY *tail = src->Blink;
+
+    if (src != head)
+    {
+        dest->Flink = head;
+        dest->Blink = tail;
+        head->Blink = dest;
+        tail->Flink = dest;
+    }
+    else InitializeListHead( dest );
+}
+
+static void relocate_thread_actctx_stack( ACTIVATION_CONTEXT_STACK *dest )
+{
+    ACTIVATION_CONTEXT_STACK *src = NtCurrentTeb()->ActivationContextStackPointer;
+
+    C_ASSERT(sizeof(*dest) == sizeof(dest->ActiveFrame) + sizeof(dest->FrameListCache) +
+                              sizeof(dest->Flags) + sizeof(dest->NextCookieSequenceNumber) +
+                              sizeof(dest->StackId));
+
+    dest->ActiveFrame = src->ActiveFrame;
+    move_list( &dest->FrameListCache, &src->FrameListCache );
+    dest->Flags = src->Flags;
+    dest->NextCookieSequenceNumber = src->NextCookieSequenceNumber;
+    dest->StackId = src->StackId;
+
+    NtCurrentTeb()->ActivationContextStackPointer = dest;
+}
+
 
 /***********************************************************************
  *           CreateFiber   (kernelbase.@)
@@ -969,6 +1008,8 @@ LPVOID WINAPI DECLSPEC_HOTPATCH CreateFiberEx( SIZE_T stack_commit, SIZE_T stack
     fiber->except      = (void *)-1;
     fiber->start       = start;
     fiber->flags       = flags;
+    InitializeListHead( &fiber->actctx.stack_space.FrameListCache );
+    fiber->actctx.stack_ptr = &fiber->actctx.stack_space;
     init_fiber_context( fiber );
     return fiber;
 }
@@ -983,6 +1024,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH ConvertFiberToThread(void)
 
     if (fiber)
     {
+        relocate_thread_actctx_stack( &NtCurrentTeb()->ActivationContextStack );
         NtCurrentTeb()->Tib.u.FiberData = NULL;
         HeapFree( GetProcessHeap(), 0, fiber );
     }
@@ -1025,6 +1067,7 @@ LPVOID WINAPI DECLSPEC_HOTPATCH ConvertThreadToFiberEx( LPVOID param, DWORD flag
     fiber->start            = NULL;
     fiber->flags            = flags;
     fiber->fls_slots        = NtCurrentTeb()->FlsSlots;
+    relocate_thread_actctx_stack( &fiber->actctx.stack_space );
     NtCurrentTeb()->Tib.u.FiberData = fiber;
     return fiber;
 }
@@ -1040,11 +1083,13 @@ void WINAPI DECLSPEC_HOTPATCH DeleteFiber( LPVOID fiber_ptr )
     if (!fiber) return;
     if (fiber == NtCurrentTeb()->Tib.u.FiberData)
     {
+        relocate_thread_actctx_stack( &NtCurrentTeb()->ActivationContextStack );
         HeapFree( GetProcessHeap(), 0, fiber );
         RtlExitUserThread( 1 );
     }
     RtlFreeUserStack( fiber->stack_allocation );
     RtlProcessFlsData( fiber->fls_slots, 3 );
+    RtlFreeActivationContextStack( &fiber->actctx.stack_space );
     HeapFree( GetProcessHeap(), 0, fiber );
 }
 
@@ -1069,6 +1114,7 @@ void WINAPI DECLSPEC_HOTPATCH SwitchToFiber( LPVOID fiber )
     current_fiber->except      = NtCurrentTeb()->Tib.ExceptionList;
     current_fiber->stack_limit = NtCurrentTeb()->Tib.StackLimit;
     current_fiber->fls_slots   = NtCurrentTeb()->FlsSlots;
+    current_fiber->actctx.stack_ptr = NtCurrentTeb()->ActivationContextStackPointer;
     /* stack_allocation and stack_base never change */
 
     /* FIXME: should save floating point context if requested in fiber->flags */
@@ -1078,6 +1124,7 @@ void WINAPI DECLSPEC_HOTPATCH SwitchToFiber( LPVOID fiber )
     NtCurrentTeb()->Tib.StackLimit    = new_fiber->stack_limit;
     NtCurrentTeb()->DeallocationStack = new_fiber->stack_allocation;
     NtCurrentTeb()->FlsSlots          = new_fiber->fls_slots;
+    NtCurrentTeb()->ActivationContextStackPointer = new_fiber->actctx.stack_ptr;
     switch_fiber( &current_fiber->context, &new_fiber->context );
 }
 

@@ -839,7 +839,7 @@ static void WINAPI fiber_actctx_func(void *actctx)
     HANDLE thread;
     BOOL ret;
 
-    check_current_actctx_is(NULL, TRUE);
+    check_current_actctx_is(NULL, FALSE);
 
     ret = ActivateActCtx(actctx, &cookie);
     ok(ret, "ActivateActCtx returned error %lu\n", GetLastError());
@@ -858,7 +858,7 @@ static void WINAPI fiber_actctx_func(void *actctx)
 
     ret = DeactivateActCtx(0, cookie);
     ok(ret, "DeactivateActCtx returned error %lu\n", GetLastError());
-    check_current_actctx_is(NULL, TRUE);
+    check_current_actctx_is(NULL, FALSE);
 
     SwitchToFiber(fibers[0]);
     ok(0, "unreachable\n");
@@ -872,10 +872,10 @@ static void subtest_fiber_actctx_switch(HANDLE current_actctx, HANDLE child_actc
     check_current_actctx_is(current_actctx, FALSE);
 
     SwitchToFiber(fibers[1]);
-    check_current_actctx_is(current_actctx, TRUE);
+    check_current_actctx_is(current_actctx, FALSE);
 
     SwitchToFiber(fibers[1]);
-    check_current_actctx_is(current_actctx, TRUE);
+    check_current_actctx_is(current_actctx, FALSE);
 
     SwitchToFiber(fibers[2]);
     check_current_actctx_is(current_actctx, FALSE);
@@ -910,7 +910,7 @@ static DWORD WINAPI thread_actctx_func_early_exit(void *actctx)
 
     /* exit thread, but keep current fiber */
     SwitchToFiber(exit_thread_fiber);
-    check_current_actctx_is(actctx, TRUE);
+    check_current_actctx_is(actctx, FALSE);
 
     SwitchToFiber(fibers[0]);
     ok(0, "unreachable\n");
