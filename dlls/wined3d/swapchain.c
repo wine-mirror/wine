@@ -1163,6 +1163,7 @@ static void wined3d_swapchain_vk_rotate(struct wined3d_swapchain *swapchain, str
     struct wined3d_image_vk image0;
     VkDescriptorImageInfo vk_info0;
     VkImageLayout vk_layout0;
+    uint32_t bind_mask0;
     DWORD locations0;
     unsigned int i;
 
@@ -1176,6 +1177,7 @@ static void wined3d_swapchain_vk_rotate(struct wined3d_swapchain *swapchain, str
     /* Back buffer 0 is already in the draw binding. */
     image0 = texture_prev->image;
     vk_layout0 = texture_prev->layout;
+    bind_mask0 = texture_prev->bind_mask;
     vk_info0 = texture_prev->default_image_info;
     locations0 = texture_prev->t.sub_resources[0].locations;
 
@@ -1189,6 +1191,7 @@ static void wined3d_swapchain_vk_rotate(struct wined3d_swapchain *swapchain, str
 
         texture_prev->image = texture->image;
         texture_prev->layout = texture->layout;
+        texture_prev->bind_mask = texture->bind_mask;
         texture_prev->default_image_info = texture->default_image_info;
 
         wined3d_texture_validate_location(&texture_prev->t, 0, sub_resource->locations & supported_locations);
@@ -1199,6 +1202,7 @@ static void wined3d_swapchain_vk_rotate(struct wined3d_swapchain *swapchain, str
 
     texture_prev->image = image0;
     texture_prev->layout = vk_layout0;
+    texture_prev->bind_mask = bind_mask0;
     texture_prev->default_image_info = vk_info0;
 
     wined3d_texture_validate_location(&texture_prev->t, 0, locations0 & supported_locations);
