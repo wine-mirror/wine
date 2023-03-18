@@ -343,6 +343,19 @@ static void pres_div(float **args, unsigned int n, const struct preshader_instr 
         retval[i] = args[0][instr->scalar ? 0 : i] / args[1][i];
 }
 
+static void pres_imax(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    int *arg1 = (int *)args[0], *arg2 = (int *)args[1];
+    float *retval = args[2];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+    {
+        int v = max(arg1[instr->scalar ? 0 : i], arg2[i]);
+        retval[i] = *(float *)&v;
+    }
+}
+
 struct preshader_op_info
 {
     int opcode;
@@ -366,6 +379,7 @@ static const struct preshader_op_info preshader_ops[] =
     { 0x204, "add",  pres_add  },
     { 0x205, "mul",  pres_mul  },
     { 0x208, "div",  pres_div  },
+    { 0x21e, "imax", pres_imax },
 };
 
 static int __cdecl preshader_op_compare(const void *a, const void *b)
