@@ -252,6 +252,19 @@ static void pres_cos(float **args, unsigned int n, const struct preshader_instr 
         retval[i] = cos(args[0][i]);
 }
 
+static void pres_ineg(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    int *arg1 = (int *)args[0];
+    float *retval = args[1];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+    {
+        int v = -arg1[i];
+        retval[i] = *(float *)&v;
+    }
+}
+
 static void pres_itof(float **args, unsigned int n, const struct preshader_instr *instr)
 {
     float *retval = args[1];
@@ -344,6 +357,7 @@ static const struct preshader_op_info preshader_ops[] =
     { 0x104, "frc",  pres_frc  },
     { 0x108, "sin",  pres_sin  },
     { 0x109, "cos",  pres_cos  },
+    { 0x120, "ineg", pres_ineg },
     { 0x130, "itof", pres_itof },
     { 0x133, "ftou", pres_ftou },
     { 0x137, "ftob", pres_ftob },
