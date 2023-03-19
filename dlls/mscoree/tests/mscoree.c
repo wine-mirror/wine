@@ -592,25 +592,55 @@ static BOOL compile_cs(const WCHAR *source, const WCHAR *target, const WCHAR *ty
     return ret;
 }
 
+static BOOL create_new_dir(WCHAR newdir[MAX_PATH], const WCHAR* parent,
+                           const WCHAR* prefix)
+{
+    WCHAR path[MAX_PATH];
+    BOOL try_tmpdir = TRUE;
+    static unsigned i = 0;
+
+    if (!parent)
+    {
+        GetCurrentDirectoryW(ARRAY_SIZE(path), path);
+        parent = path;
+    }
+    while (1)
+    {
+        swprintf(newdir, MAX_PATH, L"%s\\%s%04d", path, prefix, i);
+        if (CreateDirectoryW(newdir, NULL))
+            return TRUE;
+        switch (GetLastError())
+        {
+        case ERROR_ACCESS_DENIED:
+            if (!try_tmpdir)
+                return FALSE;
+            try_tmpdir = FALSE;
+            GetTempPathW(ARRAY_SIZE(path), path);
+            path[wcslen(path) - 1] = 0; /* redundant trailing backslash */
+            parent = path;
+            break;
+        case ERROR_ALREADY_EXISTS:
+            i++;
+            break;
+        default:
+            return FALSE;
+        }
+    }
+}
+
 static void test_loadpaths_execute(const WCHAR *exe_name, const WCHAR *dll_name, const WCHAR *cfg_name,
                                    const WCHAR *dll_dest, BOOL expect_failure, BOOL todo)
 {
-    WCHAR tmp[MAX_PATH], tmpdir[MAX_PATH], tmpexe[MAX_PATH], tmpcfg[MAX_PATH], tmpdll[MAX_PATH];
+    WCHAR tmpdir[MAX_PATH], tmpexe[MAX_PATH], tmpcfg[MAX_PATH], tmpdll[MAX_PATH];
     PROCESS_INFORMATION pi;
     STARTUPINFOW si = { 0 };
     WCHAR *ptr, *end;
     DWORD exit_code = 0xdeadbeef;
-    LUID id;
     BOOL ret;
 
-    GetTempPathW(MAX_PATH, tmp);
-    ret = AllocateLocallyUniqueId(&id);
-    ok(ret, "AllocateLocallyUniqueId failed: %lu\n", GetLastError());
-    ret = GetTempFileNameW(tmp, L"loadpaths", id.LowPart, tmpdir);
-    ok(ret, "GetTempFileNameW failed: %lu\n", GetLastError());
-
-    ret = CreateDirectoryW(tmpdir, NULL);
-    ok(ret, "CreateDirectoryW(%s) failed: %lu\n", debugstr_w(tmpdir), GetLastError());
+    ok(create_new_dir(tmpdir, NULL, L"loadpaths"),
+       "failed to create a new dir %lu\n", GetLastError());
+    end = tmpdir + wcslen(tmpdir);
 
     wcscpy(tmpexe, tmpdir);
     PathAppendW(tmpexe, exe_name);
@@ -673,9 +703,8 @@ static void test_loadpaths_execute(const WCHAR *exe_name, const WCHAR *dll_name,
     ret = DeleteFileW(tmpexe);
     ok(ret, "DeleteFileW(%s) failed: %lu\n", debugstr_w(tmpexe), GetLastError());
 
-    end = tmpdir + wcslen(tmp);
-    ptr = tmpdir + wcslen(tmpdir) - 1;
-    while (ptr > end && (ptr = wcsrchr(tmpdir, '\\')))
+    ptr = end;
+    while (ptr >= end && (ptr = wcsrchr(tmpdir, '\\')))
     {
         ret = RemoveDirectoryW(tmpdir);
         ok(ret, "RemoveDirectoryW(%s) failed: %lu\n", debugstr_w(tmpdir), GetLastError());
