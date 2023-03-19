@@ -2183,34 +2183,38 @@ static const GUID *object_instance_guid( const DIDEVICEOBJECTINSTANCEW *instance
     return &GUID_Unknown;
 }
 
+static BOOL CALLBACK enum_objects_count( const DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    struct dinput_device *impl = impl_from_IDirectInputDevice8W( data );
+    DIDATAFORMAT *format = &impl->device_format;
+
+    format->dwDataSize = max( format->dwDataSize, instance->dwOfs + sizeof(LONG) );
+    if (instance->dwType & DIDFT_BUTTON) impl->caps.dwButtons++;
+    if (instance->dwType & DIDFT_AXIS) impl->caps.dwAxes++;
+    if (instance->dwType & DIDFT_POV) impl->caps.dwPOVs++;
+    if (instance->dwType & (DIDFT_BUTTON|DIDFT_AXIS|DIDFT_POV))
+    {
+        if (!impl->device_state_report_id)
+            impl->device_state_report_id = instance->wReportId;
+        else if (impl->device_state_report_id != instance->wReportId)
+            FIXME( "multiple device state reports found!\n" );
+    }
+
+    format->dwNumObjs++;
+    return DIENUM_CONTINUE;
+}
+
 static BOOL CALLBACK enum_objects_init( const DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( data );
     DIDATAFORMAT *format = &impl->device_format;
-    DIOBJECTDATAFORMAT *obj_format;
+    DIOBJECTDATAFORMAT *object_format;
 
-    if (!format->rgodf)
-    {
-        format->dwDataSize = max( format->dwDataSize, instance->dwOfs + sizeof(LONG) );
-        if (instance->dwType & DIDFT_BUTTON) impl->caps.dwButtons++;
-        if (instance->dwType & DIDFT_AXIS) impl->caps.dwAxes++;
-        if (instance->dwType & DIDFT_POV) impl->caps.dwPOVs++;
-        if (instance->dwType & (DIDFT_BUTTON|DIDFT_AXIS|DIDFT_POV))
-        {
-            if (!impl->device_state_report_id)
-                impl->device_state_report_id = instance->wReportId;
-            else if (impl->device_state_report_id != instance->wReportId)
-                FIXME( "multiple device state reports found!\n" );
-        }
-    }
-    else
-    {
-        obj_format = format->rgodf + format->dwNumObjs;
-        obj_format->pguid = object_instance_guid( instance );
-        obj_format->dwOfs = instance->dwOfs;
-        obj_format->dwType = instance->dwType;
-        obj_format->dwFlags = instance->dwFlags;
-    }
+    object_format = format->rgodf + format->dwNumObjs;
+    object_format->pguid = object_instance_guid( instance );
+    object_format->dwOfs = instance->dwOfs;
+    object_format->dwType = instance->dwType;
+    object_format->dwFlags = instance->dwFlags;
 
     if (impl->object_properties && (instance->dwType & (DIDFT_AXIS | DIDFT_POV)))
         reset_object_value( impl, format->dwNumObjs, NULL, instance, NULL );
@@ -2225,7 +2229,7 @@ HRESULT dinput_device_init_device_format( IDirectInputDevice8W *iface )
     DIDATAFORMAT *format = &impl->device_format;
     ULONG i, size;
 
-    IDirectInputDevice8_EnumObjects( iface, enum_objects_init, iface, DIDFT_ALL );
+    IDirectInputDevice8_EnumObjects( iface, enum_objects_count, iface, DIDFT_ALL );
     if (format->dwDataSize > DEVICE_STATE_MAX_SIZE)
     {
         FIXME( "unable to create device, state is too large\n" );
