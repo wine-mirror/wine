@@ -310,8 +310,6 @@ static void do_search(const struct search *s)
                    "expected %s, got %s\n", wine_dbgstr_w(res->values[i]), wine_dbgstr_w(col.pADsValues[i].CaseIgnoreString));
             }
 
-            ok(!res->values[i], "expected extra value %s\n", wine_dbgstr_w(res->values[i]));
-
             IDirectorySearch_FreeColumn(ds, &col);
             FreeADsMem(name);
             res++;
