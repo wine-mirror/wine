@@ -32,6 +32,7 @@
 #include "ntgdi_private.h"
 #include "ntuser_private.h"
 #include "devpropdef.h"
+#include "cfgmgr32.h"
 #include "wine/wingdi16.h"
 #include "wine/server.h"
 
@@ -107,6 +108,14 @@ static const WCHAR devpkey_device_bus_number[] =
     '\\','{','A','4','5','C','2','5','4','E','-','D','F','1','C','-','4','E','F','D',
     '-','8','0','2','0','-','6','7','D','1','4','6','A','8','5','0','E','0','}',
     '\\','0','0','1','7'
+};
+
+static const WCHAR devpkey_device_removal_policy[] =
+{
+    'P','r','o','p','e','r','t','i','e','s',
+    '\\','{','A','4','5','C','2','5','4','E','-','D','F','1','C','-','4','E','F','D',
+    '-','8','0','2','0','-','6','7','D','1','4','6','A','8','5','0','E','0','}',
+    '\\','0','0','2','1'
 };
 
 static const WCHAR devpropkey_device_ispresentW[] =
@@ -1254,6 +1263,16 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
                            &gpu_index, sizeof(gpu_index) );
             NtClose( subkey );
         }
+    }
+
+    if ((subkey = reg_create_key( hkey, devpkey_device_removal_policy,
+                                  sizeof(devpkey_device_removal_policy), 0, NULL )))
+    {
+        unsigned int removal_policy = CM_REMOVAL_POLICY_EXPECT_NO_REMOVAL;
+
+        set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_UINT32,
+                       &removal_policy, sizeof(removal_policy) );
+        NtClose( subkey );
     }
 
     desc = gpu->name;
