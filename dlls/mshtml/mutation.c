@@ -352,8 +352,11 @@ static nsresult run_insert_script(HTMLDocumentNode *doc, nsISupports *script_ifa
 
     hres = script_elem_from_nsscript(nsscript, &script_elem);
     nsIDOMHTMLScriptElement_Release(nsscript);
-    if(FAILED(hres))
+    if(FAILED(hres)) {
+        if(nsparser)
+            nsIParser_Release(nsparser);
         return NS_ERROR_FAILURE;
+    }
 
     if(nsparser) {
         nsIParser_BeginEvaluatingParserInsertedScript(nsparser);
