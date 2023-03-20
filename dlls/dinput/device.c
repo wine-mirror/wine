@@ -2183,10 +2183,14 @@ static const GUID *object_instance_guid( const DIDEVICEOBJECTINSTANCEW *instance
     return &GUID_Unknown;
 }
 
-static BOOL CALLBACK enum_objects_count( const DIDEVICEOBJECTINSTANCEW *instance, void *data )
+static BOOL enum_objects_count( struct dinput_device *impl, UINT index, struct hid_value_caps *caps,
+                                const DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
-    struct dinput_device *impl = impl_from_IDirectInputDevice8W( data );
     DIDATAFORMAT *format = &impl->device_format;
+
+    if (index == -1) return DIENUM_STOP;
+    format->dwNumObjs++;
+    if (instance->wUsagePage == HID_USAGE_PAGE_PID) return DIENUM_CONTINUE;
 
     format->dwDataSize = max( format->dwDataSize, instance->dwOfs + sizeof(LONG) );
     if (instance->dwType & DIDFT_BUTTON) impl->caps.dwButtons++;
@@ -2200,36 +2204,46 @@ static BOOL CALLBACK enum_objects_count( const DIDEVICEOBJECTINSTANCEW *instance
             FIXME( "multiple device state reports found!\n" );
     }
 
-    format->dwNumObjs++;
     return DIENUM_CONTINUE;
 }
 
-static BOOL CALLBACK enum_objects_init( const DIDEVICEOBJECTINSTANCEW *instance, void *data )
+static BOOL enum_objects_init( struct dinput_device *impl, UINT index, struct hid_value_caps *caps,
+                               const DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
-    struct dinput_device *impl = impl_from_IDirectInputDevice8W( data );
     DIDATAFORMAT *format = &impl->device_format;
     DIOBJECTDATAFORMAT *object_format;
 
-    object_format = format->rgodf + format->dwNumObjs;
+    if (index == -1) return DIENUM_STOP;
+    if (instance->wUsagePage == HID_USAGE_PAGE_PID) return DIENUM_CONTINUE;
+
+    object_format = format->rgodf + index;
     object_format->pguid = object_instance_guid( instance );
     object_format->dwOfs = instance->dwOfs;
     object_format->dwType = instance->dwType;
     object_format->dwFlags = instance->dwFlags;
 
     if (impl->object_properties && (instance->dwType & (DIDFT_AXIS | DIDFT_POV)))
-        reset_object_value( impl, format->dwNumObjs, NULL, instance, NULL );
+        reset_object_value( impl, index, caps, instance, NULL );
 
-    format->dwNumObjs++;
     return DIENUM_CONTINUE;
 }
 
 HRESULT dinput_device_init_device_format( IDirectInputDevice8W *iface )
 {
+    static const DIPROPHEADER filter =
+    {
+        .dwSize = sizeof(filter),
+        .dwHeaderSize = sizeof(filter),
+        .dwHow = DIPH_DEVICE,
+    };
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
     DIDATAFORMAT *format = &impl->device_format;
     ULONG i, size;
+    HRESULT hr;
 
-    IDirectInputDevice8_EnumObjects( iface, enum_objects_count, iface, DIDFT_ALL );
+    hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_ALL, enum_objects_count, NULL );
+    if (FAILED(hr)) return hr;
+
     if (format->dwDataSize > DEVICE_STATE_MAX_SIZE)
     {
         FIXME( "unable to create device, state is too large\n" );
@@ -2242,8 +2256,15 @@ HRESULT dinput_device_init_device_format( IDirectInputDevice8W *iface )
     format->dwSize = sizeof(*format);
     format->dwObjSize = sizeof(*format->rgodf);
     format->dwFlags = DIDF_ABSAXIS;
-    format->dwNumObjs = 0;
-    IDirectInputDevice8_EnumObjects( iface, enum_objects_init, iface, DIDFT_ALL );
+
+    hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_AXIS, enum_objects_init, NULL );
+    if (FAILED(hr)) return hr;
+    hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_POV, enum_objects_init, NULL );
+    if (FAILED(hr)) return hr;
+    hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_BUTTON, enum_objects_init, NULL );
+    if (FAILED(hr)) return hr;
+    hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_NODATA, enum_objects_init, NULL );
+    if (FAILED(hr)) return hr;
 
     if (TRACE_ON( dinput ))
     {
