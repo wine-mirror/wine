@@ -140,7 +140,7 @@ static HKEY get_perflib_key( HANDLE key )
     return key;
 }
 
-static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING *name, DWORD options, ACCESS_MASK access );
+static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING *name, DWORD options, ACCESS_MASK access, BOOL create );
 
 static NTSTATUS open_subkey( HKEY *subkey, HKEY root, UNICODE_STRING *name, DWORD options, ACCESS_MASK access )
 {
@@ -161,7 +161,7 @@ static NTSTATUS open_subkey( HKEY *subkey, HKEY root, UNICODE_STRING *name, DWOR
     if (i < len)
         options &= ~REG_OPTION_OPEN_LINK;
 
-    status = open_key( subkey, root, &str, options, access_64 );
+    status = open_key( subkey, root, &str, options, access_64, FALSE );
     if (!status)
     {
         while (i < len && buffer[i] == '\\') i++;
@@ -184,14 +184,14 @@ static NTSTATUS open_subkey( HKEY *subkey, HKEY root, UNICODE_STRING *name, DWOR
 }
 
 /* wrapper for NtOpenKeyEx to handle Wow6432 nodes */
-static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING *name, DWORD options, ACCESS_MASK access )
+static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING *name, DWORD options, ACCESS_MASK access, BOOL create )
 {
     HKEY subkey = 0, subkey_root = root;
     NTSTATUS status = 0;
 
     *retkey = NULL;
 
-    if (!(is_win64 && (access & KEY_WOW64_32KEY)))
+    if (!(is_win64 && (access & KEY_WOW64_32KEY)) && !create)
     {
         OBJECT_ATTRIBUTES attr;
 
@@ -215,12 +215,14 @@ static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING *name, DWORD o
     while (!status && (name->Length || !subkey))
     {
         status = open_subkey( &subkey, subkey_root, name, options, access );
-        if (subkey_root && subkey_root != root) NtClose( subkey_root );
-        subkey_root = subkey;
+        if (subkey && subkey_root && subkey_root != root) NtClose( subkey_root );
+        if (subkey) subkey_root = subkey;
     }
 
-    if (!status)
+    if (!status || (status == STATUS_OBJECT_NAME_NOT_FOUND && create))
         *retkey = subkey_root;
+    else if (subkey_root && subkey_root != root)
+        NtClose( subkey_root );
 
     return status;
 }
@@ -231,8 +233,6 @@ static NTSTATUS create_key( HKEY *retkey, HKEY root, UNICODE_STRING name, ULONG 
 {
     BOOL force_wow32 = is_win64 && (access & KEY_WOW64_32KEY);
     NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
-    DWORD len = name.Length / sizeof(WCHAR);
-    WCHAR *buffer = name.Buffer;
     OBJECT_ATTRIBUTES attr;
     HKEY subkey;
 
@@ -257,7 +257,7 @@ static NTSTATUS create_key( HKEY *retkey, HKEY root, UNICODE_STRING name, ULONG 
             return status;
     }
 
-    status = open_key( &subkey, root, &name, options & REG_OPTION_OPEN_LINK, access );
+    status = open_key( &subkey, root, &name, options & REG_OPTION_OPEN_LINK, access, TRUE );
     if (!status && (options & REG_OPTION_CREATE_LINK))
     {
         NtClose( subkey );
@@ -265,16 +265,14 @@ static NTSTATUS create_key( HKEY *retkey, HKEY root, UNICODE_STRING name, ULONG 
     }
 
     if (!status)
-    {
         if (dispos) *dispos = REG_OPENED_EXISTING_KEY;
-        attr.RootDirectory = subkey;
-    }
 
+    attr.RootDirectory = subkey;
     if (status == STATUS_OBJECT_NAME_NOT_FOUND)
     {
-        DWORD attrs, i;
+        DWORD attrs, i, len = name.Length / sizeof(WCHAR);
+        WCHAR *buffer = name.Buffer;
 
-        attr.RootDirectory = root;
         attrs = attr.Attributes;
 
         while (len)
@@ -549,7 +547,7 @@ LSTATUS WINAPI DECLSPEC_HOTPATCH RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD o
     if (!(hkey = get_special_root_hkey( hkey, access ))) return ERROR_INVALID_HANDLE;
 
     RtlInitUnicodeString( &nameW, name );
-    return RtlNtStatusToDosError( open_key( retkey, hkey, &nameW, options, access ) );
+    return RtlNtStatusToDosError( open_key( retkey, hkey, &nameW, options, access, FALSE ) );
 }
 
 
@@ -600,7 +598,7 @@ LSTATUS WINAPI DECLSPEC_HOTPATCH RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD op
                                                  &nameA, FALSE )))
     {
         UNICODE_STRING nameW = NtCurrentTeb()->StaticUnicodeString;
-        status = open_key( retkey, hkey, &nameW, options, access );
+        status = open_key( retkey, hkey, &nameW, options, access, FALSE );
     }
     return RtlNtStatusToDosError( status );
 }
