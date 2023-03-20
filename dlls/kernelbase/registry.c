@@ -140,7 +140,7 @@ static HKEY get_perflib_key( HANDLE key )
     return key;
 }
 
-static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING name, DWORD options, ACCESS_MASK access );
+static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING *name, DWORD options, ACCESS_MASK access );
 
 static NTSTATUS open_subkey( HKEY *subkey, HKEY root, UNICODE_STRING *name, DWORD options, ACCESS_MASK access )
 {
@@ -161,7 +161,7 @@ static NTSTATUS open_subkey( HKEY *subkey, HKEY root, UNICODE_STRING *name, DWOR
     if (i < len)
         options &= ~REG_OPTION_OPEN_LINK;
 
-    status = open_key( subkey, root, str, options, access_64 );
+    status = open_key( subkey, root, &str, options, access_64 );
     if (!status)
     {
         while (i < len && buffer[i] == '\\') i++;
@@ -184,7 +184,7 @@ static NTSTATUS open_subkey( HKEY *subkey, HKEY root, UNICODE_STRING *name, DWOR
 }
 
 /* wrapper for NtOpenKeyEx to handle Wow6432 nodes */
-static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING name, DWORD options, ACCESS_MASK access )
+static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING *name, DWORD options, ACCESS_MASK access )
 {
     HKEY subkey = 0, subkey_root = root;
     NTSTATUS status = 0;
@@ -197,7 +197,7 @@ static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING name, DWORD op
 
         attr.Length = sizeof(attr);
         attr.RootDirectory = root;
-        attr.ObjectName = &name;
+        attr.ObjectName = name;
         attr.Attributes = 0;
         attr.SecurityDescriptor = NULL;
         attr.SecurityQualityOfService = NULL;
@@ -212,9 +212,9 @@ static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING name, DWORD op
         return status;
     }
 
-    while (!status && (name.Length || !subkey))
+    while (!status && (name->Length || !subkey))
     {
-        status = open_subkey( &subkey, subkey_root, &name, options, access );
+        status = open_subkey( &subkey, subkey_root, name, options, access );
         if (subkey_root && subkey_root != root) NtClose( subkey_root );
         subkey_root = subkey;
     }
@@ -231,6 +231,8 @@ static NTSTATUS create_key( HKEY *retkey, HKEY root, UNICODE_STRING name, ULONG 
 {
     BOOL force_wow32 = is_win64 && (access & KEY_WOW64_32KEY);
     NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
+    DWORD len = name.Length / sizeof(WCHAR);
+    WCHAR *buffer = name.Buffer;
     OBJECT_ATTRIBUTES attr;
     HKEY subkey;
 
@@ -255,7 +257,7 @@ static NTSTATUS create_key( HKEY *retkey, HKEY root, UNICODE_STRING name, ULONG 
             return status;
     }
 
-    status = open_key( &subkey, root, name, options & REG_OPTION_OPEN_LINK, access );
+    status = open_key( &subkey, root, &name, options & REG_OPTION_OPEN_LINK, access );
     if (!status && (options & REG_OPTION_CREATE_LINK))
     {
         NtClose( subkey );
@@ -270,8 +272,7 @@ static NTSTATUS create_key( HKEY *retkey, HKEY root, UNICODE_STRING name, ULONG 
 
     if (status == STATUS_OBJECT_NAME_NOT_FOUND)
     {
-        WCHAR *buffer = name.Buffer;
-        DWORD attrs, i, len = name.Length / sizeof(WCHAR);
+        DWORD attrs, i;
 
         attr.RootDirectory = root;
         attrs = attr.Attributes;
@@ -548,7 +549,7 @@ LSTATUS WINAPI DECLSPEC_HOTPATCH RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD o
     if (!(hkey = get_special_root_hkey( hkey, access ))) return ERROR_INVALID_HANDLE;
 
     RtlInitUnicodeString( &nameW, name );
-    return RtlNtStatusToDosError( open_key( retkey, hkey, nameW, options, access ) );
+    return RtlNtStatusToDosError( open_key( retkey, hkey, &nameW, options, access ) );
 }
 
 
@@ -598,7 +599,8 @@ LSTATUS WINAPI DECLSPEC_HOTPATCH RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD op
     if (!(status = RtlAnsiStringToUnicodeString( &NtCurrentTeb()->StaticUnicodeString,
                                                  &nameA, FALSE )))
     {
-        status = open_key( retkey, hkey, NtCurrentTeb()->StaticUnicodeString, options, access );
+        UNICODE_STRING nameW = NtCurrentTeb()->StaticUnicodeString;
+        status = open_key( retkey, hkey, &nameW, options, access );
     }
     return RtlNtStatusToDosError( status );
 }
