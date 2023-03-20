@@ -314,31 +314,23 @@ static int id_to_offset( struct dinput_device *impl, int id )
     return -1;
 }
 
-static DWORD semantic_to_obj_id( struct dinput_device *This, DWORD dwSemantic )
+static BOOL object_matches_semantics( const DIOBJECTDATAFORMAT *object, DWORD semantic, BOOL exact )
 {
-    DWORD type = (0x0000ff00 & dwSemantic) >> 8;
-    BOOL byofs = (dwSemantic & 0x80000000) != 0;
-    DWORD value = (dwSemantic & 0x000000ff);
-    BOOL found = FALSE;
-    DWORD instance;
-    int i;
+    DWORD value = semantic & 0xff, axis = (semantic >> 15) & 3, type;
 
-    for (i = 0; i < This->device_format.dwNumObjs && !found; i++)
+    switch (semantic & 0x700)
     {
-        LPDIOBJECTDATAFORMAT odf = dataformat_to_odf( &This->device_format, i );
-
-        if (byofs && value != odf->dwOfs) continue;
-        if (!byofs && value != DIDFT_GETINSTANCE(odf->dwType)) continue;
-        instance = DIDFT_GETINSTANCE(odf->dwType);
-        found = TRUE;
+    case 0x200: type = DIDFT_ABSAXIS; break;
+    case 0x300: type = DIDFT_RELAXIS; break;
+    case 0x400: type = DIDFT_BUTTON; break;
+    case 0x600: type = DIDFT_POV; break;
+    default: return FALSE;
     }
 
-    if (!found) return 0;
-
-    if (type & DIDFT_AXIS)   type = DIDFT_RELAXIS;
-    if (type & DIDFT_BUTTON) type = DIDFT_PSHBUTTON;
-
-    return type | (0x0000ff00 & (instance << 8));
+    if (!(DIDFT_GETTYPE( object->dwType ) & type)) return FALSE;
+    if ((semantic & 0xf0000000) == 0x80000000) return object->dwOfs == value;
+    if (axis && (axis - 1) != DIDFT_GETINSTANCE( object->dwType )) return FALSE;
+    return !exact || !value || value == DIDFT_GETINSTANCE( object->dwType ) + 1;
 }
 
 /*
@@ -1857,34 +1849,34 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
                                                     const WCHAR *username, DWORD flags )
 {
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
-    BOOL load_success = FALSE, has_actions = FALSE;
-    DWORD genre, username_len = MAX_PATH;
+    DIOBJECTDATAFORMAT *object, *object_end;
+    DIACTIONW *action, *action_end;
+    DWORD i, username_len = MAX_PATH;
     WCHAR username_buf[MAX_PATH];
-    const DIDATAFORMAT *df;
-    DWORD devMask;
-    int i;
+    BOOL load_success = FALSE;
+    BOOL *mapped;
 
     FIXME( "iface %p, format %p, username %s, flags %#lx stub!\n", iface, format,
            debugstr_w(username), flags );
 
     if (!format) return DIERR_INVALIDPARAM;
+    if (flags != DIDBAM_DEFAULT && flags != DIDBAM_PRESERVE &&
+        flags != DIDBAM_INITIALIZE && flags != DIDBAM_HWDEFAULTS)
+        return DIERR_INVALIDPARAM;
+    if (format->dwNumActions * 4 != format->dwDataSize)
+        return DIERR_INVALIDPARAM;
 
-    switch (GET_DIDEVICE_TYPE( impl->instance.dwDevType ))
+    action_end = format->rgoAction + format->dwNumActions;
+    for (action = format->rgoAction; action < action_end; action++)
     {
-    case DIDEVTYPE_KEYBOARD:
-    case DI8DEVTYPE_KEYBOARD:
-        devMask = DIKEYBOARD_MASK;
-        df = &c_dfDIKeyboard;
-        break;
-    case DIDEVTYPE_MOUSE:
-    case DI8DEVTYPE_MOUSE:
-        devMask = DIMOUSE_MASK;
-        df = &c_dfDIMouse2;
-        break;
-    default:
-        devMask = DIGENRE_ANY;
-        df = &impl->device_format;
-        break;
+        if (!action->dwSemantic) return DIERR_INVALIDPARAM;
+        if (action->dwFlags & DIA_APPMAPPED) action->dwHow = DIAH_APPREQUESTED;
+        else if (action->dwFlags & DIA_APPNOMAP) continue;
+        else
+        {
+            action->dwHow = 0;
+            action->guidInstance = GUID_NULL;
+        }
     }
 
     /* Unless asked the contrary by these flags, try to load a previous mapping */
@@ -1897,46 +1889,51 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
     }
 
     if (load_success) return DI_OK;
+    if (!(mapped = calloc( impl->device_format.dwNumObjs, sizeof(*mapped) ))) return DIERR_OUTOFMEMORY;
 
-    for (i = 0; i < format->dwNumActions; i++)
+    action_end = format->rgoAction + format->dwNumActions;
+    for (action = format->rgoAction; action < action_end; action++)
     {
-        /* Don't touch a user configured action */
-        if (format->rgoAction[i].dwHow == DIAH_USERCONFIG) continue;
+        if (action->dwHow || (action->dwFlags & DIA_APPNOMAP)) continue; /* already mapped */
+        if (action->dwSemantic & 0x4000) continue; /* priority 1 */
 
-        genre = format->rgoAction[i].dwSemantic & DIGENRE_ANY;
-        if (devMask == genre || (devMask == DIGENRE_ANY && genre != DIMOUSE_MASK && genre != DIKEYBOARD_MASK))
+        object_end = impl->device_format.rgodf + impl->device_format.dwNumObjs;
+        for (object = impl->device_format.rgodf; object < object_end; object++)
         {
-            DWORD obj_id = semantic_to_obj_id( impl, format->rgoAction[i].dwSemantic );
-            DWORD type = DIDFT_GETTYPE( obj_id );
-            DWORD inst = DIDFT_GETINSTANCE( obj_id );
-
-            LPDIOBJECTDATAFORMAT odf;
-
-            if (type == DIDFT_PSHBUTTON) type = DIDFT_BUTTON;
-            if (type == DIDFT_RELAXIS) type = DIDFT_AXIS;
-
-            /* Make sure the object exists */
-            odf = dataformat_to_odf_by_type( df, inst, type );
-
-            if (odf != NULL)
-            {
-                format->rgoAction[i].dwObjID = obj_id;
-                format->rgoAction[i].guidInstance = impl->guid;
-                format->rgoAction[i].dwHow = DIAH_DEFAULT;
-                has_actions = TRUE;
-            }
-        }
-        else if (!(flags & DIDBAM_PRESERVE))
-        {
-            /* We must clear action data belonging to other devices */
-            memset( &format->rgoAction[i].guidInstance, 0, sizeof(GUID) );
-            format->rgoAction[i].dwHow = DIAH_UNMAPPED;
+            if (mapped[object - impl->device_format.rgodf]) continue;
+            if (!object_matches_semantics( object, action->dwSemantic, TRUE )) continue;
+            if ((action->dwFlags & DIA_FORCEFEEDBACK) && !(object->dwType & DIDFT_FFACTUATOR)) continue;
+            action->dwObjID = object->dwType;
+            action->guidInstance = impl->guid;
+            action->dwHow = DIAH_DEFAULT;
+            mapped[object - impl->device_format.rgodf] = TRUE;
+            break;
         }
     }
 
-    if (!has_actions) return DI_NOEFFECT;
-    if (flags & (DIDBAM_DEFAULT|DIDBAM_PRESERVE|DIDBAM_INITIALIZE|DIDBAM_HWDEFAULTS))
-        FIXME( "Unimplemented flags %#lx\n", flags );
+    for (action = format->rgoAction; action < action_end; action++)
+    {
+        if (action->dwHow || (action->dwFlags & DIA_APPNOMAP)) continue; /* already mapped */
+        if (!(action->dwSemantic & 0x4000)) continue; /* priority 2 */
+
+        object_end = impl->device_format.rgodf + impl->device_format.dwNumObjs;
+        for (object = impl->device_format.rgodf; object < object_end; object++)
+        {
+            if (mapped[object - impl->device_format.rgodf]) continue;
+            if (!object_matches_semantics( object, action->dwSemantic, FALSE )) continue;
+            if ((action->dwFlags & DIA_FORCEFEEDBACK) && !(object->dwType & DIDFT_FFACTUATOR)) continue;
+            action->dwObjID = object->dwType;
+            action->guidInstance = impl->guid;
+            action->dwHow = DIAH_DEFAULT;
+            mapped[object - impl->device_format.rgodf] = TRUE;
+            break;
+        }
+    }
+
+    for (i = 0; i < impl->device_format.dwNumObjs; ++i) if (mapped[i]) break;
+    free( mapped );
+
+    if (i == impl->device_format.dwNumObjs) return DI_NOEFFECT;
     return DI_OK;
 }
 
@@ -2008,7 +2005,7 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
             if (type == DIDFT_PSHBUTTON) type = DIDFT_BUTTON;
             if (type == DIDFT_RELAXIS) type = DIDFT_AXIS;
 
-            obj = dataformat_to_odf_by_type( df, inst, type );
+            if (!(obj = dataformat_to_odf_by_type( df, inst, type ))) continue;
 
             memcpy( &obj_df[action], obj, df->dwObjSize );
 
