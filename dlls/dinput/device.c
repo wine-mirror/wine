@@ -2052,7 +2052,7 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
 
     action_map = malloc( sizeof(ActionMap) * num_actions );
 
-    for (i = 0; i < format->dwNumActions; i++)
+    for (i = 0; i < format->dwNumActions; i++, offset += sizeof(ULONG))
     {
         if (IsEqualGUID( &impl->guid, &format->rgoAction[i].guidInstance ))
         {
@@ -2070,9 +2070,7 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
             action_map[action].uAppData = format->rgoAction[i].uAppData;
             action_map[action].offset = offset;
             obj_df[action].dwOfs = offset;
-            offset += (type & DIDFT_BUTTON) ? 1 : 4;
             data_format.dwNumObjs++;
-
             action++;
         }
     }
