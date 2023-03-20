@@ -102,57 +102,6 @@ static BOOL CALLBACK init_object_properties( const DIDEVICEOBJECTINSTANCEW *inst
     return DIENUM_CONTINUE;
 }
 
-HRESULT mouse_create_device( struct dinput *dinput, const GUID *guid, IDirectInputDevice8W **out )
-{
-    struct mouse *impl;
-    HKEY hkey, appkey;
-    WCHAR buffer[20];
-    HRESULT hr;
-
-    TRACE( "dinput %p, guid %s, out %p\n", dinput, debugstr_guid( guid ), out );
-
-    *out = NULL;
-    if (!IsEqualGUID( &GUID_SysMouse, guid )) return DIERR_DEVICENOTREG;
-
-    if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
-    dinput_device_init( &impl->base, &mouse_vtbl, guid, dinput );
-    impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": struct mouse*->base.crit");
-
-    mouse_enum_device( 0, 0, &impl->base.instance, dinput->dwVersion );
-    impl->base.caps.dwDevType = impl->base.instance.dwDevType;
-    impl->base.caps.dwFirmwareRevision = 100;
-    impl->base.caps.dwHardwareRevision = 100;
-    impl->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
-    if (dinput->dwVersion >= 0x0800) impl->base.use_raw_input = TRUE;
-
-    /* One object_properties per axis */
-    impl->base.object_properties = calloc( 3, sizeof(struct object_properties) );
-    if (!impl->base.object_properties)
-    {
-        IDirectInputDevice_Release( &impl->base.IDirectInputDevice8W_iface );
-        return E_OUTOFMEMORY;
-    }
-    IDirectInputDevice8_EnumObjects( &impl->base.IDirectInputDevice8W_iface, init_object_properties, impl, DIDFT_RELAXIS );
-
-    if (FAILED(hr = dinput_device_init_device_format( &impl->base.IDirectInputDevice8W_iface ))) goto failed;
-
-    get_app_key(&hkey, &appkey);
-    if (!get_config_key( hkey, appkey, L"MouseWarpOverride", buffer, sizeof(buffer) ))
-    {
-        if (!wcsnicmp( buffer, L"disable", -1 )) impl->warp_override = WARP_DISABLE;
-        else if (!wcsnicmp( buffer, L"force", -1 )) impl->warp_override = WARP_FORCE_ON;
-    }
-    if (appkey) RegCloseKey(appkey);
-    if (hkey) RegCloseKey(hkey);
-
-    *out = &impl->base.IDirectInputDevice8W_iface;
-    return DI_OK;
-
-failed:
-    IDirectInputDevice_Release( &impl->base.IDirectInputDevice8W_iface );
-    return hr;
-}
-
 void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam, RAWINPUT *ri )
 {
     struct mouse *impl = impl_from_IDirectInputDevice8W( iface );
@@ -557,6 +506,57 @@ static HRESULT mouse_enum_objects( IDirectInputDevice8W *iface, const DIPROPHEAD
     }
 
     return DIENUM_CONTINUE;
+}
+
+HRESULT mouse_create_device( struct dinput *dinput, const GUID *guid, IDirectInputDevice8W **out )
+{
+    struct mouse *impl;
+    HKEY hkey, appkey;
+    WCHAR buffer[20];
+    HRESULT hr;
+
+    TRACE( "dinput %p, guid %s, out %p\n", dinput, debugstr_guid( guid ), out );
+
+    *out = NULL;
+    if (!IsEqualGUID( &GUID_SysMouse, guid )) return DIERR_DEVICENOTREG;
+
+    if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
+    dinput_device_init( &impl->base, &mouse_vtbl, guid, dinput );
+    impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": struct mouse*->base.crit");
+
+    mouse_enum_device( 0, 0, &impl->base.instance, dinput->dwVersion );
+    impl->base.caps.dwDevType = impl->base.instance.dwDevType;
+    impl->base.caps.dwFirmwareRevision = 100;
+    impl->base.caps.dwHardwareRevision = 100;
+    impl->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
+    if (dinput->dwVersion >= 0x0800) impl->base.use_raw_input = TRUE;
+
+    /* One object_properties per axis */
+    impl->base.object_properties = calloc( 3, sizeof(struct object_properties) );
+    if (!impl->base.object_properties)
+    {
+        IDirectInputDevice_Release( &impl->base.IDirectInputDevice8W_iface );
+        return E_OUTOFMEMORY;
+    }
+    IDirectInputDevice8_EnumObjects( &impl->base.IDirectInputDevice8W_iface, init_object_properties, impl, DIDFT_RELAXIS );
+
+    if (FAILED(hr = dinput_device_init_device_format( &impl->base.IDirectInputDevice8W_iface ))) goto failed;
+
+    get_app_key(&hkey, &appkey);
+    if (!get_config_key( hkey, appkey, L"MouseWarpOverride", buffer, sizeof(buffer) ))
+    {
+        if (!wcsnicmp( buffer, L"disable", -1 )) impl->warp_override = WARP_DISABLE;
+        else if (!wcsnicmp( buffer, L"force", -1 )) impl->warp_override = WARP_FORCE_ON;
+    }
+    if (appkey) RegCloseKey(appkey);
+    if (hkey) RegCloseKey(hkey);
+
+    *out = &impl->base.IDirectInputDevice8W_iface;
+    return DI_OK;
+
+failed:
+    IDirectInputDevice_Release( &impl->base.IDirectInputDevice8W_iface );
+    return hr;
 }
 
 static const struct dinput_device_vtbl mouse_vtbl =
