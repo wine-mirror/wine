@@ -1972,6 +1972,7 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
            debugstr_w(username), flags );
 
     if (!format) return DIERR_INVALIDPARAM;
+    if (flags != DIDSAM_DEFAULT && flags != DIDSAM_FORCESAVE && flags != DIDSAM_NOUSER) return DIERR_INVALIDPARAM;
 
     if (!(data_format.rgodf = malloc( sizeof(DIOBJECTDATAFORMAT) * format->dwNumActions ))) return DIERR_OUTOFMEMORY;
     data_format.dwDataSize = format->dwDataSize;

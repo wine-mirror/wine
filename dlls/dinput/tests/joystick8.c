@@ -807,7 +807,6 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     ok( hr == DIERR_INVALIDPARAM, "SetActionMap returned %#lx\n", hr );
     flags = DIDSAM_FORCESAVE | DIDSAM_NOUSER;
     hr = IDirectInputDevice8_SetActionMap( device, &action_format_1, NULL, flags );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SetActionMap returned %#lx\n", hr );
 
 
