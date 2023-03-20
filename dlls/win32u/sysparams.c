@@ -93,6 +93,14 @@ static const WCHAR devpropkey_gpu_luidW[] =
     '\\','0','0','0','2'
 };
 
+static const WCHAR devpkey_device_matching_device_id[] =
+{
+    'P','r','o','p','e','r','t','i','e','s',
+    '\\','{','A','8','B','8','6','5','D','D','-','2','E','3','D','-','4','0','9','4',
+    '-','A','D','9','7','-','E','5','9','3','A','7','0','C','7','5','D','6','}',
+    '\\','0','0','0','8'
+};
+
 static const WCHAR devpropkey_device_ispresentW[] =
 {
     'P','r','o','p','e','r','t','i','e','s',
@@ -1217,6 +1225,17 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
     size = asciiz_to_unicode( bufferW, buffer );
     bufferW[size / sizeof(WCHAR)] = 0; /* for REG_MULTI_SZ */
     set_reg_value( hkey, hardware_idW, REG_MULTI_SZ, bufferW, size + sizeof(WCHAR) );
+
+    if ((subkey = reg_create_key( hkey, devpkey_device_matching_device_id,
+                                  sizeof(devpkey_device_matching_device_id), 0, NULL )))
+    {
+        if (gpu->vendor_id && gpu->device_id)
+            set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_STRING, bufferW, size );
+        else
+            set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_STRING, bufferW,
+                           asciiz_to_unicode( bufferW, "ROOT\\BasicRender" ));
+        NtClose( subkey );
+    }
 
     desc = gpu->name;
     if (!desc[0]) desc = wine_adapterW;

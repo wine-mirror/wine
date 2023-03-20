@@ -32,6 +32,7 @@
 #include "initguid.h"
 #include "setupapi.h"
 #include "ntddvdeo.h"
+#include "devpkey.h"
 
 #include "wine/test.h"
 
@@ -996,6 +997,54 @@ static void test_D3DKMTQueryVideoMemoryInfo(void)
     ok(status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status);
 }
 
+static void test_gpu_device_properties_guid(const GUID *devinterface_guid)
+{
+    BYTE iface_detail_buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + 256 * sizeof(WCHAR)];
+    SP_DEVINFO_DATA device_data = {sizeof(device_data)};
+    SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
+    SP_DEVICE_INTERFACE_DETAIL_DATA_W *iface_data;
+    WCHAR device_id[256];
+    DEVPROPTYPE type;
+    unsigned int i;
+    HDEVINFO set;
+    BOOL ret;
+
+    /* Make sure display devices are initialized. */
+    SendMessageW(GetDesktopWindow(), WM_NULL, 0, 0);
+
+    set = SetupDiGetClassDevsW(devinterface_guid, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
+    ok(set != INVALID_HANDLE_VALUE, "SetupDiGetClassDevs failed, error %lu.\n", GetLastError());
+
+    iface_data = (SP_DEVICE_INTERFACE_DETAIL_DATA_W *)iface_detail_buffer;
+    iface_data->cbSize = sizeof(*iface_data);
+
+    i = 0;
+    while (SetupDiEnumDeviceInterfaces(set, NULL, devinterface_guid, i, &iface))
+    {
+        ret = SetupDiGetDeviceInterfaceDetailW(set, &iface, iface_data,
+                sizeof(iface_detail_buffer), NULL, &device_data );
+        ok(ret, "Got unexpected ret %d, GetLastError() %lu.\n", ret, GetLastError());
+
+        ret = SetupDiGetDevicePropertyW(set, &device_data, &DEVPKEY_Device_MatchingDeviceId, &type,
+                (BYTE *)device_id, sizeof(device_id), NULL, 0);
+        ok(ret, "Got unexpected ret %d, GetLastError() %lu.\n", ret, GetLastError());
+        ok(type == DEVPROP_TYPE_STRING, "Got type %ld.\n", type);
+
+        ++i;
+    }
+    SetupDiDestroyDeviceInfoList(set);
+}
+
+static void test_gpu_device_properties(void)
+{
+    winetest_push_context("GUID_DEVINTERFACE_DISPLAY_ADAPTER");
+    test_gpu_device_properties_guid(&GUID_DEVINTERFACE_DISPLAY_ADAPTER);
+    winetest_pop_context();
+    winetest_push_context("GUID_DISPLAY_DEVICE_ARRIVAL");
+    test_gpu_device_properties_guid(&GUID_DISPLAY_DEVICE_ARRIVAL);
+    winetest_pop_context();
+}
+
 START_TEST(driver)
 {
     HMODULE gdi32 = GetModuleHandleA("gdi32.dll");
@@ -1025,6 +1074,7 @@ START_TEST(driver)
     test_D3DKMTCheckOcclusion();
     test_D3DKMTOpenAdapterFromDeviceName();
     test_D3DKMTQueryVideoMemoryInfo();
+    test_gpu_device_properties();
 
     FreeLibrary(dwmapi);
 }
