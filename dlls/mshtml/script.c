@@ -1654,6 +1654,7 @@ void bind_event_scripts(HTMLDocumentNode *doc)
         nsIDOMNode_Release(script_node);
 
         hres = script_elem_from_nsscript(nsscript, &script_elem);
+        nsIDOMHTMLScriptElement_Release(nsscript);
         if(FAILED(hres))
             continue;
 
