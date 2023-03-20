@@ -456,29 +456,30 @@ static HRESULT mouse_unacquire( IDirectInputDevice8W *iface )
     return DI_OK;
 }
 
-static BOOL try_enum_object( const DIPROPHEADER *filter, DWORD flags, LPDIENUMDEVICEOBJECTSCALLBACKW callback,
-                             DIDEVICEOBJECTINSTANCEW *instance, void *data )
+static BOOL try_enum_object( struct dinput_device *impl, const DIPROPHEADER *filter, DWORD flags, enum_object_callback callback,
+                             UINT index, DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
     if (flags != DIDFT_ALL && !(flags & DIDFT_GETTYPE( instance->dwType ))) return DIENUM_CONTINUE;
 
     switch (filter->dwHow)
     {
     case DIPH_DEVICE:
-        return callback( instance, data );
+        return callback( impl, index, NULL, instance, data );
     case DIPH_BYOFFSET:
         if (filter->dwObj != instance->dwOfs) return DIENUM_CONTINUE;
-        return callback( instance, data );
+        return callback( impl, index, NULL, instance, data );
     case DIPH_BYID:
         if ((filter->dwObj & 0x00ffffff) != (instance->dwType & 0x00ffffff)) return DIENUM_CONTINUE;
-        return callback( instance, data );
+        return callback( impl, index, NULL, instance, data );
     }
 
     return DIENUM_CONTINUE;
 }
 
 static HRESULT mouse_enum_objects( IDirectInputDevice8W *iface, const DIPROPHEADER *filter,
-                                   DWORD flags, LPDIENUMDEVICEOBJECTSCALLBACKW callback, void *context )
+                                   DWORD flags, enum_object_callback callback, void *context )
 {
+    struct mouse *impl = impl_from_IDirectInputDevice8W( iface );
     DIDEVICEOBJECTINSTANCEW instances[] =
     {
         {
@@ -546,7 +547,7 @@ static HRESULT mouse_enum_objects( IDirectInputDevice8W *iface, const DIPROPHEAD
 
     for (i = 0; i < ARRAY_SIZE(instances); ++i)
     {
-        ret = try_enum_object( filter, flags, callback, instances + i, context );
+        ret = try_enum_object( &impl->base, filter, flags, callback, i, instances + i, context );
         if (ret != DIENUM_CONTINUE) return DIENUM_STOP;
     }
 

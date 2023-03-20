@@ -792,8 +792,22 @@ static ULONG WINAPI dinput_device_AddRef( IDirectInputDevice8W *iface )
     return ref;
 }
 
-static HRESULT WINAPI dinput_device_EnumObjects( IDirectInputDevice8W *iface,
-                                                 LPDIENUMDEVICEOBJECTSCALLBACKW callback,
+struct enum_objects_params
+{
+    LPDIENUMDEVICEOBJECTSCALLBACKW callback;
+    void *context;
+};
+
+static BOOL enum_objects_callback( struct dinput_device *impl, UINT index, struct hid_value_caps *caps,
+                                   const DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    struct enum_objects_params *params = data;
+    if (instance->wUsagePage == HID_USAGE_PAGE_PID && !(instance->dwType & DIDFT_NODATA))
+        return DIENUM_CONTINUE;
+    return params->callback( instance, params->context );
+}
+
+static HRESULT WINAPI dinput_device_EnumObjects( IDirectInputDevice8W *iface, LPDIENUMDEVICEOBJECTSCALLBACKW callback,
                                                  void *context, DWORD flags )
 {
     static const DIPROPHEADER filter =
@@ -802,6 +816,7 @@ static HRESULT WINAPI dinput_device_EnumObjects( IDirectInputDevice8W *iface,
         .dwHeaderSize = sizeof(filter),
         .dwHow = DIPH_DEVICE,
     };
+    struct enum_objects_params params = {.callback = callback, .context = context};
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
     HRESULT hr;
 
@@ -813,25 +828,25 @@ static HRESULT WINAPI dinput_device_EnumObjects( IDirectInputDevice8W *iface,
 
     if (flags == DIDFT_ALL || (flags & DIDFT_AXIS))
     {
-        hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_AXIS, callback, context );
+        hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_AXIS, enum_objects_callback, &params );
         if (FAILED(hr)) return hr;
         if (hr != DIENUM_CONTINUE) return DI_OK;
     }
     if (flags == DIDFT_ALL || (flags & DIDFT_POV))
     {
-        hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_POV, callback, context );
+        hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_POV, enum_objects_callback, &params );
         if (FAILED(hr)) return hr;
         if (hr != DIENUM_CONTINUE) return DI_OK;
     }
     if (flags == DIDFT_ALL || (flags & DIDFT_BUTTON))
     {
-        hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_BUTTON, callback, context );
+        hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_BUTTON, enum_objects_callback, &params );
         if (FAILED(hr)) return hr;
         if (hr != DIENUM_CONTINUE) return DI_OK;
     }
     if (flags == DIDFT_ALL || (flags & (DIDFT_NODATA | DIDFT_COLLECTION)))
     {
-        hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_NODATA, callback, context );
+        hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_NODATA, enum_objects_callback, &params );
         if (FAILED(hr)) return hr;
         if (hr != DIENUM_CONTINUE) return DI_OK;
     }
@@ -1045,9 +1060,10 @@ static HRESULT check_property( struct dinput_device *impl, const GUID *guid, con
     return DI_OK;
 }
 
-static BOOL CALLBACK find_object( const DIDEVICEOBJECTINSTANCEW *instance, void *context )
+static BOOL find_object( struct dinput_device *device, UINT index, struct hid_value_caps *caps,
+                         const DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
-    *(DIDEVICEOBJECTINSTANCEW *)context = *instance;
+    *(DIDEVICEOBJECTINSTANCEW *)data = *instance;
     return DIENUM_STOP;
 }
 
@@ -1058,7 +1074,8 @@ struct get_object_property_params
     DWORD property;
 };
 
-static BOOL CALLBACK get_object_property( const DIDEVICEOBJECTINSTANCEW *instance, void *context )
+static BOOL get_object_property( struct dinput_device *device, UINT index, struct hid_value_caps *caps,
+                                 const DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
     static const struct object_properties default_properties =
     {
@@ -1066,7 +1083,7 @@ static BOOL CALLBACK get_object_property( const DIDEVICEOBJECTINSTANCEW *instanc
         .range_max = DIPROPRANGE_NOMAX,
         .granularity = 1,
     };
-    struct get_object_property_params *params = context;
+    struct get_object_property_params *params = data;
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( params->iface );
     const struct object_properties *properties = NULL;
 
@@ -1235,9 +1252,10 @@ struct set_object_property_params
     DWORD property;
 };
 
-static BOOL CALLBACK set_object_property( const DIDEVICEOBJECTINSTANCEW *instance, void *context )
+static BOOL set_object_property( struct dinput_device *device, UINT index, struct hid_value_caps *caps,
+                                 const DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
-    struct set_object_property_params *params = context;
+    struct set_object_property_params *params = data;
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( params->iface );
     struct object_properties *properties = NULL;
 
@@ -1276,9 +1294,9 @@ static BOOL CALLBACK set_object_property( const DIDEVICEOBJECTINSTANCEW *instanc
     return DIENUM_STOP;
 }
 
-static BOOL CALLBACK reset_object_value( const DIDEVICEOBJECTINSTANCEW *instance, void *context )
+static BOOL reset_object_value( struct dinput_device *impl, UINT index, struct hid_value_caps *caps,
+                                const DIDEVICEOBJECTINSTANCEW *instance, void *context )
 {
-    struct dinput_device *impl = context;
     struct object_properties *properties;
     LONG tmp = -1;
 
@@ -1445,7 +1463,8 @@ static void dinput_device_set_username( struct dinput_device *impl, const DIPROP
         lstrcpynW( device_player->username, value->wsz, ARRAY_SIZE(device_player->username) );
 }
 
-static BOOL CALLBACK get_object_info( const DIDEVICEOBJECTINSTANCEW *instance, void *data )
+static BOOL get_object_info( struct dinput_device *device, UINT index, struct hid_value_caps *caps,
+                             const DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
     DIDEVICEOBJECTINSTANCEW *dest = data;
     DWORD size = dest->dwSize;
@@ -2194,7 +2213,7 @@ static BOOL CALLBACK enum_objects_init( const DIDEVICEOBJECTINSTANCEW *instance,
     }
 
     if (impl->object_properties && (instance->dwType & (DIDFT_AXIS | DIDFT_POV)))
-        reset_object_value( instance, impl );
+        reset_object_value( impl, format->dwNumObjs, NULL, instance, NULL );
 
     format->dwNumObjs++;
     return DIENUM_CONTINUE;

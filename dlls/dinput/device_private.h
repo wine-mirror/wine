@@ -34,6 +34,12 @@ typedef struct
     UINT_PTR uAppData;
 } ActionMap;
 
+struct dinput_device;
+struct hid_value_caps;
+
+typedef BOOL (*enum_object_callback)( struct dinput_device *impl, UINT index, struct hid_value_caps *caps,
+                                      const DIDEVICEOBJECTINSTANCEW *instance, void *data );
+
 struct dinput_device_vtbl
 {
     void (*destroy)( IDirectInputDevice8W *iface );
@@ -42,7 +48,7 @@ struct dinput_device_vtbl
     HRESULT (*acquire)( IDirectInputDevice8W *iface );
     HRESULT (*unacquire)( IDirectInputDevice8W *iface );
     HRESULT (*enum_objects)( IDirectInputDevice8W *iface, const DIPROPHEADER *filter, DWORD flags,
-                             LPDIENUMDEVICEOBJECTSCALLBACKW callback, void *context );
+                             enum_object_callback callback, void *context );
     HRESULT (*get_property)( IDirectInputDevice8W *iface, DWORD property, DIPROPHEADER *header,
                              const DIDEVICEOBJECTINSTANCEW *instance );
     HRESULT (*get_effect_info)( IDirectInputDevice8W *iface, DIEFFECTINFOW *info, const GUID *guid );
