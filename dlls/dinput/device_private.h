@@ -130,11 +130,12 @@ extern void dinput_device_internal_addref( struct dinput_device *device );
 extern void dinput_device_internal_release( struct dinput_device *device );
 
 extern HRESULT dinput_device_init_device_format( IDirectInputDevice8W *iface );
+extern int dinput_device_object_index_from_id( IDirectInputDevice8W *iface, DWORD id );
 
 extern BOOL get_app_key(HKEY*, HKEY*) DECLSPEC_HIDDEN;
 extern DWORD get_config_key( HKEY, HKEY, const WCHAR *, WCHAR *, DWORD ) DECLSPEC_HIDDEN;
 extern BOOL device_instance_is_disabled( DIDEVICEINSTANCEW *instance, BOOL *override ) DECLSPEC_HIDDEN;
-extern void queue_event( IDirectInputDevice8W *iface, int inst_id, DWORD data, DWORD time, DWORD seq ) DECLSPEC_HIDDEN;
+extern void queue_event( IDirectInputDevice8W *iface, int index, DWORD data, DWORD time, DWORD seq ) DECLSPEC_HIDDEN;
 
 extern const GUID dinput_pidvid_guid DECLSPEC_HIDDEN;
 

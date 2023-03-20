@@ -314,23 +314,22 @@ static int id_to_offset( struct dinput_device *impl, int id )
     return -1;
 }
 
-static BOOL object_matches_semantics( const DIOBJECTDATAFORMAT *object, DWORD semantic, BOOL exact )
+int dinput_device_object_index_from_id( IDirectInputDevice8W *iface, DWORD id )
 {
-    DWORD value = semantic & 0xff, axis = (semantic >> 15) & 3, type;
+    struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
+    const DIDATAFORMAT *format = &impl->device_format;
+    const DIOBJECTDATAFORMAT *object;
 
-    switch (semantic & 0x700)
+    if (!format->rgodf) return -1;
+
+    object = format->rgodf + impl->device_format.dwNumObjs;
+    while (object-- > format->rgodf)
     {
-    case 0x200: type = DIDFT_ABSAXIS; break;
-    case 0x300: type = DIDFT_RELAXIS; break;
-    case 0x400: type = DIDFT_BUTTON; break;
-    case 0x600: type = DIDFT_POV; break;
-    default: return FALSE;
+        if (!object->dwType) continue;
+        if ((object->dwType & 0x00ffffff) == (id & 0x00ffffff)) return object - format->rgodf;
     }
 
-    if (!(DIDFT_GETTYPE( object->dwType ) & type)) return FALSE;
-    if ((semantic & 0xf0000000) == 0x80000000) return object->dwOfs == value;
-    if (axis && (axis - 1) != DIDFT_GETINSTANCE( object->dwType )) return FALSE;
-    return !exact || !value || value == DIDFT_GETINSTANCE( object->dwType ) + 1;
+    return -1;
 }
 
 /*
@@ -484,12 +483,13 @@ static BOOL set_app_data( struct dinput_device *dev, int offset, UINT_PTR app_da
     return TRUE;
 }
 
-void queue_event( IDirectInputDevice8W *iface, int inst_id, DWORD data, DWORD time, DWORD seq )
+void queue_event( IDirectInputDevice8W *iface, int index, DWORD data, DWORD time, DWORD seq )
 {
     static ULONGLONG notify_ms = 0;
     struct dinput_device *This = impl_from_IDirectInputDevice8W( iface );
-    int next_pos, ofs = id_to_offset( This, inst_id );
+    const DIOBJECTDATAFORMAT *user_obj = This->user_format.rgodf + index;
     ULONGLONG time_ms = GetTickCount64();
+    int next_pos;
 
     if (time_ms - notify_ms > 1000)
     {
@@ -497,7 +497,7 @@ void queue_event( IDirectInputDevice8W *iface, int inst_id, DWORD data, DWORD ti
         notify_ms = time_ms;
     }
 
-    if (!This->queue_len || This->overflow || ofs < 0) return;
+    if (!This->queue_len || This->overflow || !user_obj->dwType) return;
 
     next_pos = (This->queue_head + 1) % This->queue_len;
     if (next_pos == This->queue_tail)
@@ -507,9 +507,9 @@ void queue_event( IDirectInputDevice8W *iface, int inst_id, DWORD data, DWORD ti
         return;
     }
 
-    TRACE( " queueing %lu at offset %u (queue head %u / size %u)\n", data, ofs, This->queue_head, This->queue_len );
+    TRACE( " queueing %lu at offset %lu (queue head %u / size %u)\n", data, user_obj->dwOfs, This->queue_head, This->queue_len );
 
-    This->data_queue[This->queue_head].dwOfs       = ofs;
+    This->data_queue[This->queue_head].dwOfs       = user_obj->dwOfs;
     This->data_queue[This->queue_head].dwData      = data;
     This->data_queue[This->queue_head].dwTimeStamp = time;
     This->data_queue[This->queue_head].dwSequence  = seq;
@@ -521,9 +521,9 @@ void queue_event( IDirectInputDevice8W *iface, int inst_id, DWORD data, DWORD ti
         int i;
         for (i=0; i < This->num_actions; i++)
         {
-            if (This->action_map[i].offset == ofs)
+            if (This->action_map[i].offset == user_obj->dwOfs)
             {
-                TRACE( "Offset %d mapped to uAppData %#Ix\n", ofs, This->action_map[i].uAppData );
+                TRACE( "Offset %lu mapped to uAppData %#Ix\n", user_obj->dwOfs, This->action_map[i].uAppData );
                 This->data_queue[This->queue_head].uAppData = This->action_map[i].uAppData;
                 break;
             }
@@ -1845,6 +1845,25 @@ static HRESULT WINAPI dinput_device_WriteEffectToFile( IDirectInputDevice8W *ifa
     return DI_OK;
 }
 
+static BOOL object_matches_semantic( const DIOBJECTDATAFORMAT *object, DWORD semantic, BOOL exact )
+{
+    DWORD value = semantic & 0xff, axis = (semantic >> 15) & 3, type;
+
+    switch (semantic & 0x700)
+    {
+    case 0x200: type = DIDFT_ABSAXIS; break;
+    case 0x300: type = DIDFT_RELAXIS; break;
+    case 0x400: type = DIDFT_BUTTON; break;
+    case 0x600: type = DIDFT_POV; break;
+    default: return FALSE;
+    }
+
+    if (!(DIDFT_GETTYPE( object->dwType ) & type)) return FALSE;
+    if ((semantic & 0xf0000000) == 0x80000000) return object->dwOfs == value;
+    if (axis && (axis - 1) != DIDFT_GETINSTANCE( object->dwType )) return FALSE;
+    return !exact || !value || value == DIDFT_GETINSTANCE( object->dwType ) + 1;
+}
+
 static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface, DIACTIONFORMATW *format,
                                                     const WCHAR *username, DWORD flags )
 {
@@ -1901,7 +1920,7 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
         for (object = impl->device_format.rgodf; object < object_end; object++)
         {
             if (mapped[object - impl->device_format.rgodf]) continue;
-            if (!object_matches_semantics( object, action->dwSemantic, TRUE )) continue;
+            if (!object_matches_semantic( object, action->dwSemantic, TRUE )) continue;
             if ((action->dwFlags & DIA_FORCEFEEDBACK) && !(object->dwType & DIDFT_FFACTUATOR)) continue;
             action->dwObjID = object->dwType;
             action->guidInstance = impl->guid;
@@ -1920,7 +1939,7 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
         for (object = impl->device_format.rgodf; object < object_end; object++)
         {
             if (mapped[object - impl->device_format.rgodf]) continue;
-            if (!object_matches_semantics( object, action->dwSemantic, FALSE )) continue;
+            if (!object_matches_semantic( object, action->dwSemantic, FALSE )) continue;
             if ((action->dwFlags & DIA_FORCEFEEDBACK) && !(object->dwType & DIDFT_FFACTUATOR)) continue;
             action->dwObjID = object->dwType;
             action->guidInstance = impl->guid;

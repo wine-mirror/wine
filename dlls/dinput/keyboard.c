@@ -87,7 +87,7 @@ static void keyboard_handle_event( struct keyboard *impl, DWORD vkey, DWORD scan
 {
     BYTE new_diks, subtype = GET_DIDEVICE_SUBTYPE( impl->base.instance.dwDevType );
     IDirectInputDevice8W *iface = &impl->base.IDirectInputDevice8W_iface;
-    int dik_code;
+    int dik_code, index;
 
     switch (vkey)
     {
@@ -109,8 +109,10 @@ static void keyboard_handle_event( struct keyboard *impl, DWORD vkey, DWORD scan
     TRACE( "setting key %02x to %02x\n", dik_code, impl->base.device_state[dik_code] );
 
     EnterCriticalSection( &impl->base.crit );
-    queue_event( iface, DIDFT_MAKEINSTANCE( dik_code ) | DIDFT_PSHBUTTON, new_diks,
-                 GetCurrentTime(), impl->base.dinput->evsequence++ );
+
+    if ((index = dinput_device_object_index_from_id( iface, DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( dik_code ) )) >= 0)
+        queue_event( iface, index, new_diks, GetCurrentTime(), impl->base.dinput->evsequence++ );
+
     if (impl->base.hEvent) SetEvent( impl->base.hEvent );
     LeaveCriticalSection( &impl->base.crit );
 }

@@ -37,12 +37,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
-/* Wine mouse driver object instances */
-#define WINE_MOUSE_X_AXIS_INSTANCE   0
-#define WINE_MOUSE_Y_AXIS_INSTANCE   1
-#define WINE_MOUSE_Z_AXIS_INSTANCE   2
-#define WINE_MOUSE_BUTTONS_INSTANCE  3
-
 static const struct dinput_device_vtbl mouse_vtbl;
 
 typedef enum
@@ -160,8 +154,8 @@ void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPA
     DIMOUSESTATE2 *state = (DIMOUSESTATE2 *)impl->base.device_state;
     POINT rel, pt;
     DWORD seq;
-    int i, wdata = 0;
     BOOL notify = FALSE;
+    int i;
 
     static const USHORT mouse_button_flags[] =
     {
@@ -206,15 +200,13 @@ void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPA
 
     if (rel.x)
     {
-        queue_event( iface, DIDFT_MAKEINSTANCE(WINE_MOUSE_X_AXIS_INSTANCE) | DIDFT_RELAXIS,
-                     pt.x, GetCurrentTime(), seq );
+        queue_event( iface, 0, pt.x, GetCurrentTime(), seq );
         notify = TRUE;
     }
 
     if (rel.y)
     {
-        queue_event( iface, DIDFT_MAKEINSTANCE(WINE_MOUSE_Y_AXIS_INSTANCE) | DIDFT_RELAXIS,
-                     pt.y, GetCurrentTime(), seq );
+        queue_event( iface, 1, pt.y, GetCurrentTime(), seq );
         notify = TRUE;
     }
 
@@ -227,9 +219,8 @@ void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPA
 
     if (ri->data.mouse.usButtonFlags & RI_MOUSE_WHEEL)
     {
-        state->lZ += (wdata = (SHORT)ri->data.mouse.usButtonData);
-        queue_event( iface, DIDFT_MAKEINSTANCE(WINE_MOUSE_Z_AXIS_INSTANCE) | DIDFT_RELAXIS,
-                     wdata, GetCurrentTime(), seq );
+        state->lZ += (SHORT)ri->data.mouse.usButtonData;
+        queue_event( iface, 2, (SHORT)ri->data.mouse.usButtonData, GetCurrentTime(), seq );
         notify = TRUE;
     }
 
@@ -238,8 +229,7 @@ void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPA
         if (ri->data.mouse.usButtonFlags & mouse_button_flags[i])
         {
             state->rgbButtons[i / 2] = 0x80 - (i % 2) * 0x80;
-            queue_event( iface, DIDFT_MAKEINSTANCE( WINE_MOUSE_BUTTONS_INSTANCE + (i / 2) ) | DIDFT_PSHBUTTON,
-                         state->rgbButtons[i / 2], GetCurrentTime(), seq );
+            queue_event( iface, 3 + (i / 2), state->rgbButtons[i / 2], GetCurrentTime(), seq );
             notify = TRUE;
         }
     }
@@ -257,12 +247,14 @@ int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam
     MSLLHOOKSTRUCT *hook = (MSLLHOOKSTRUCT *)lparam;
     struct mouse *impl = impl_from_IDirectInputDevice8W( iface );
     DIMOUSESTATE2 *state = (DIMOUSESTATE2 *)impl->base.device_state;
-    int wdata = 0, inst_id = -1, ret = 0;
     BOOL notify = FALSE;
+    int ret = 0;
+    DWORD seq;
 
     TRACE( "iface %p, msg %#Ix, x %+ld, y %+ld\n", iface, wparam, hook->pt.x, hook->pt.y );
 
     EnterCriticalSection( &impl->base.crit );
+    seq = impl->base.dinput->evsequence++;
 
     switch(wparam) {
         case WM_MOUSEMOVE:
@@ -282,19 +274,13 @@ int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam
 
             if (pt.x)
             {
-                inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_X_AXIS_INSTANCE) | DIDFT_RELAXIS;
-                wdata = pt1.x;
+                queue_event( iface, 0, pt1.x, GetCurrentTime(), seq );
+                notify = TRUE;
             }
             if (pt.y)
             {
-                /* Already have X, need to queue it */
-                if (inst_id != -1)
-                {
-                    queue_event( iface, inst_id, wdata, GetCurrentTime(), impl->base.dinput->evsequence );
-                    notify = TRUE;
-                }
-                inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_Y_AXIS_INSTANCE) | DIDFT_RELAXIS;
-                wdata = pt1.y;
+                queue_event( iface, 1, pt1.y, GetCurrentTime(), seq );
+                notify = TRUE;
             }
 
             if (pt.x || pt.y)
@@ -306,51 +292,52 @@ int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam
             break;
         }
         case WM_MOUSEWHEEL:
-            inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_Z_AXIS_INSTANCE) | DIDFT_RELAXIS;
-            state->lZ += wdata = (short)HIWORD( hook->mouseData );
+            state->lZ += (short)HIWORD( hook->mouseData );
+            queue_event( iface, 2, state->lZ, GetCurrentTime(), seq );
             /* FarCry crashes if it gets a mouse wheel message */
             /* FIXME: should probably filter out other messages too */
             ret = impl->clipped;
             break;
         case WM_LBUTTONDOWN:
-            inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 0) | DIDFT_PSHBUTTON;
-            state->rgbButtons[0] = wdata = 0x80;
+            state->rgbButtons[0] = 0x80;
+            queue_event( iface, 3, 0x80, GetCurrentTime(), seq );
+            notify = TRUE;
             break;
         case WM_LBUTTONUP:
-            inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 0) | DIDFT_PSHBUTTON;
-            state->rgbButtons[0] = wdata = 0x00;
+            state->rgbButtons[0] = 0x00;
+            queue_event( iface, 3, 0x00, GetCurrentTime(), seq );
+            notify = TRUE;
             break;
         case WM_RBUTTONDOWN:
-            inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 1) | DIDFT_PSHBUTTON;
-            state->rgbButtons[1] = wdata = 0x80;
+            state->rgbButtons[1] = 0x80;
+            queue_event( iface, 4, 0x80, GetCurrentTime(), seq );
+            notify = TRUE;
             break;
         case WM_RBUTTONUP:
-            inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 1) | DIDFT_PSHBUTTON;
-            state->rgbButtons[1] = wdata = 0x00;
+            state->rgbButtons[1] = 0x00;
+            queue_event( iface, 4, 0x00, GetCurrentTime(), seq );
+            notify = TRUE;
             break;
         case WM_MBUTTONDOWN:
-            inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 2) | DIDFT_PSHBUTTON;
-            state->rgbButtons[2] = wdata = 0x80;
+            state->rgbButtons[2] = 0x80;
+            queue_event( iface, 5, 0x80, GetCurrentTime(), seq );
+            notify = TRUE;
             break;
         case WM_MBUTTONUP:
-            inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 2) | DIDFT_PSHBUTTON;
-            state->rgbButtons[2] = wdata = 0x00;
+            state->rgbButtons[2] = 0x00;
+            queue_event( iface, 5, 0x00, GetCurrentTime(), seq );
+            notify = TRUE;
             break;
         case WM_XBUTTONDOWN:
-            inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 2 + HIWORD(hook->mouseData)) | DIDFT_PSHBUTTON;
-            state->rgbButtons[2 + HIWORD( hook->mouseData )] = wdata = 0x80;
+            state->rgbButtons[2 + HIWORD( hook->mouseData )] = 0x80;
+            queue_event( iface, 5 + HIWORD(hook->mouseData), 0x80, GetCurrentTime(), seq );
+            notify = TRUE;
             break;
         case WM_XBUTTONUP:
-            inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 2 + HIWORD(hook->mouseData)) | DIDFT_PSHBUTTON;
-            state->rgbButtons[2 + HIWORD( hook->mouseData )] = wdata = 0x00;
+            state->rgbButtons[2 + HIWORD( hook->mouseData )] = 0x00;
+            queue_event( iface, 5 + HIWORD(hook->mouseData), 0x00, GetCurrentTime(), seq );
+            notify = TRUE;
             break;
-    }
-
-
-    if (inst_id != -1)
-    {
-        queue_event( iface, inst_id, wdata, GetCurrentTime(), impl->base.dinput->evsequence++ );
-        notify = TRUE;
     }
 
     TRACE( "buttons %02x %02x %02x %02x %02x, x %+ld, y %+ld, w %+ld\n", state->rgbButtons[0],
