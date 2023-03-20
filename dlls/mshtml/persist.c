@@ -378,12 +378,15 @@ HRESULT set_moniker(HTMLOuterWindow *window, IMoniker *mon, IUri *nav_uri, IBind
     hres = create_doc_uri(uri, &nsuri);
     if(!nav_uri)
         IUri_Release(uri);
-    if(SUCCEEDED(hres)) {
-        if(async_bsc)
-            bscallback = async_bsc;
-        else
-            hres = create_channelbsc(mon, NULL, NULL, 0, TRUE, &bscallback);
+    if(FAILED(hres)) {
+        CoTaskMemFree(url);
+        return hres;
     }
+
+    if(async_bsc)
+        bscallback = async_bsc;
+    else
+        hres = create_channelbsc(mon, NULL, NULL, 0, TRUE, &bscallback);
 
     if(SUCCEEDED(hres)) {
         if(window->base.inner_window->doc)
@@ -391,7 +394,6 @@ HRESULT set_moniker(HTMLOuterWindow *window, IMoniker *mon, IUri *nav_uri, IBind
         abort_window_bindings(window->base.inner_window);
 
         hres = load_nsuri(window, nsuri, NULL, bscallback, LOAD_FLAGS_BYPASS_CACHE);
-        nsISupports_Release((nsISupports*)nsuri); /* FIXME */
         if(SUCCEEDED(hres)) {
             hres = create_pending_window(window, bscallback);
             TRACE("pending window for %p %p %p\n", window, bscallback, window->pending_window);
@@ -399,6 +401,7 @@ HRESULT set_moniker(HTMLOuterWindow *window, IMoniker *mon, IUri *nav_uri, IBind
         if(bscallback != async_bsc)
             IBindStatusCallback_Release(&bscallback->bsc.IBindStatusCallback_iface);
     }
+    nsISupports_Release((nsISupports*)nsuri); /* FIXME */
 
     if(FAILED(hres)) {
         CoTaskMemFree(url);
