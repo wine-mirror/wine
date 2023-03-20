@@ -396,6 +396,14 @@ DECL_WINELIB_TYPE_AW(LDAPAPIFeatureInfo)
 extern "C" {
 #endif
 
+void CDECL ldap_memfreeA(char*);
+void CDECL ldap_memfreeW(WCHAR*);
+#define    ldap_memfree WINELIB_NAME_AW(ldap_memfree)
+ULONG CDECL ldap_value_freeA(char**);
+ULONG CDECL ldap_value_freeW(WCHAR**);
+#define    ldap_value_free WINELIB_NAME_AW(ldap_value_free)
+ULONG CDECL ldap_value_free_len(struct berval**);
+
 LDAP * CDECL cldap_openA(PCHAR,ULONG);
 LDAP * CDECL cldap_openW(PWCHAR,ULONG);
 #define    cldap_open WINELIB_NAME_AW(cldap_open)
@@ -470,8 +478,8 @@ ULONG CDECL ldap_delete_ext_sW(LDAP*,PWCHAR,PLDAPControlW*,PLDAPControlW*);
 ULONG CDECL ldap_delete_sA(LDAP*,PCHAR);
 ULONG CDECL ldap_delete_sW(LDAP*,PWCHAR);
 #define    ldap_delete_s WINELIB_NAME_AW(ldap_delete_s)
-PCHAR CDECL ldap_dn2ufnA(PCHAR);
-PWCHAR CDECL ldap_dn2ufnW(PWCHAR);
+char* CDECL ldap_dn2ufnA(char*) __WINE_DEALLOC(ldap_memfreeA) __WINE_MALLOC;
+WCHAR* CDECL ldap_dn2ufnW(WCHAR*) __WINE_DEALLOC(ldap_memfreeW) __WINE_MALLOC;
 #define    ldap_dn2ufn WINELIB_NAME_AW(ldap_dn2ufn)
 ULONG CDECL ldap_encode_sort_controlA(PLDAP,PLDAPSortKeyA*,PLDAPControlA,BOOLEAN);
 ULONG CDECL ldap_encode_sort_controlW(PLDAP,PLDAPSortKeyW*,PLDAPControlW,BOOLEAN);
@@ -482,8 +490,8 @@ PWCHAR CDECL ldap_err2stringW(ULONG);
 ULONG CDECL ldap_escape_filter_elementA(PCHAR,ULONG,PCHAR,ULONG);
 ULONG CDECL ldap_escape_filter_elementW(PCHAR,ULONG,PWCHAR,ULONG);
 #define    ldap_escape_filter_element WINELIB_NAME_AW(ldap_escape_filter_element)
-PCHAR* CDECL ldap_explode_dnA(PCHAR,ULONG);
-PWCHAR* CDECL ldap_explode_dnW(PWCHAR,ULONG);
+char** CDECL ldap_explode_dnA(char*,ULONG) __WINE_DEALLOC(ldap_value_freeA);
+WCHAR** CDECL ldap_explode_dnW(WCHAR*,ULONG) __WINE_DEALLOC(ldap_value_freeW);
 #define    ldap_explode_dn WINELIB_NAME_AW(ldap_explode_dn)
 ULONG CDECL ldap_extended_operationA(LDAP*,PCHAR,struct berval*,PLDAPControlA*,PLDAPControlA*,ULONG*);
 ULONG CDECL ldap_extended_operationW(LDAP*,PWCHAR,struct berval*,PLDAPControlW*,PLDAPControlW*,ULONG*);
@@ -508,18 +516,17 @@ ULONG CDECL ldap_get_optionA(LDAP*,int,void*);
 ULONG CDECL ldap_get_optionW(LDAP*,int,void*);
 #define    ldap_get_option WINELIB_NAME_AW(ldap_get_option)
 ULONG CDECL ldap_get_paged_count(LDAP*,PLDAPSearch,ULONG*,LDAPMessage*);
-PCHAR* CDECL ldap_get_valuesA(LDAP*,LDAPMessage*,PCHAR);
-PWCHAR* CDECL ldap_get_valuesW(LDAP*,LDAPMessage*,PWCHAR);
+char** CDECL ldap_get_valuesA(LDAP*,LDAPMessage*,char*) __WINE_DEALLOC(ldap_value_freeA);
+WCHAR** CDECL ldap_get_valuesW(LDAP*,LDAPMessage*,WCHAR*) __WINE_DEALLOC(ldap_value_freeW);
 #define    ldap_get_values WINELIB_NAME_AW(ldap_get_values)
-struct berval ** CDECL ldap_get_values_lenA(LDAP*,LDAPMessage*,PCHAR);
-struct berval ** CDECL ldap_get_values_lenW(LDAP*,LDAPMessage*,PWCHAR);
+struct berval ** CDECL ldap_get_values_lenA(LDAP*,LDAPMessage*,char*)
+    __WINE_DEALLOC(ldap_value_free_len);
+struct berval ** CDECL ldap_get_values_lenW(LDAP*,LDAPMessage*,WCHAR*)
+    __WINE_DEALLOC(ldap_value_free_len);
 #define    ldap_get_values_len WINELIB_NAME_AW(ldap_get_values_len)
 LDAP* CDECL ldap_initA(const PCHAR,ULONG);
 LDAP* CDECL ldap_initW(const PWCHAR,ULONG);
 #define    ldap_init WINELIB_NAME_AW(ldap_init)
-VOID CDECL ldap_memfreeA(PCHAR);
-VOID CDECL ldap_memfreeW(PWCHAR);
-#define    ldap_memfree WINELIB_NAME_AW(ldap_memfree)
 ULONG CDECL ldap_modifyA(LDAP*,PCHAR,LDAPModA*[]);
 ULONG CDECL ldap_modifyW(LDAP*,PWCHAR,LDAPModW*[]);
 #define    ldap_modify WINELIB_NAME_AW(ldap_modify)
@@ -635,10 +642,6 @@ ULONG CDECL ldap_ufn2dnW(PWCHAR,PWCHAR*);
 #define    ldap_ufn2dn WINELIB_NAME_AW(ldap_ufn2dn)
 ULONG CDECL ldap_unbind(LDAP*);
 ULONG CDECL ldap_unbind_s(LDAP*);
-ULONG CDECL ldap_value_freeA(PCHAR*);
-ULONG CDECL ldap_value_freeW(PWCHAR*);
-#define    ldap_value_free WINELIB_NAME_AW(ldap_value_free)
-ULONG CDECL ldap_value_free_len(struct berval**);
 
 void CDECL ber_bvfree(BERVAL*);
 
