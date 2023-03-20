@@ -1047,16 +1047,11 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
         hr = IDirectInputDevice8_GetDeviceState( device, sizeof(state), state );
         ok( hr == DI_OK, "GetDeviceState returned: %#lx\n", hr );
         ok( state[0] == expect_state[i][0], "got state[0] %+ld\n", state[0] );
-        todo_wine_if( i == 2 || i == 5 )
         ok( state[1] == expect_state[i][1], "got state[1] %+ld\n", state[1] );
-        todo_wine_if( expect_state[i][2] )
         ok( state[2] == expect_state[i][2], "got state[2] %+ld\n", state[2] );
         ok( state[3] == expect_state[i][3], "got state[3] %+ld\n", state[3] );
-        todo_wine_if( expect_state[i][4] )
         ok( state[4] == expect_state[i][4], "got state[4] %+ld\n", state[4] );
-        todo_wine_if( expect_state[i][5] )
         ok( state[5] == expect_state[i][5], "got state[5] %+ld\n", state[5] );
-        todo_wine_if( expect_state[i][6] )
         ok( state[6] == expect_state[i][6], "got state[6] %+ld\n", state[6] );
         ok( state[7] == expect_state[i][7] ||
             broken(state[7] == -45 && expect_state[i][7] == -43) /* 32-bit rounding */,
@@ -1079,13 +1074,11 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     while (res--)
     {
         winetest_push_context( "%lu", res );
-        todo_wine
         check_member( objdata[res], expect_objdata[res], "%#lx", dwOfs );
-        todo_wine
         ok( objdata[res].dwData == expect_objdata[res].dwData ||
             broken(objdata[res].dwData == -45 && expect_objdata[res].dwData == -43) /* 32-bit rounding */,
             "got dwData %+ld\n", objdata[res].dwData );
-        todo_wine
+        todo_wine_if( res != 0 && res != 3 && res != 6 )
         check_member( objdata[res], expect_objdata[res], "%#Ix", uAppData );
         winetest_pop_context();
     }

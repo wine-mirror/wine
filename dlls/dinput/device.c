@@ -2035,6 +2035,7 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
 
     for (i = 0; i < format->dwNumActions; i++, offset += sizeof(ULONG))
     {
+        if (format->rgoAction[i].dwFlags & DIA_APPNOMAP) continue;
         if (!IsEqualGUID( &impl->guid, &format->rgoAction[i].guidInstance )) continue;
         if ((index = dinput_device_object_index_from_id( iface, format->rgoAction[i].dwObjID )) < 0) continue;
 
