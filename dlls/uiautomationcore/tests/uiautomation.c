@@ -11841,6 +11841,15 @@ static void test_CUIAutomation_TreeWalker_ifaces(IUIAutomation *uia_iface)
     provider_add_child(&Provider, &Provider_child);
     provider_add_child(&Provider, &Provider_child2);
 
+    /* NULL input argument tests. */
+    hr = IUIAutomationTreeWalker_GetFirstChildElement(walker, element, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    element2 = (void *)0xdeadbeef;
+    hr = IUIAutomationTreeWalker_GetFirstChildElement(walker, NULL, &element2);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    ok(!element2, "element2 != NULL\n");
+
     /* NavigateDirection_FirstChild. */
     element2 = NULL;
     hr = IUIAutomationTreeWalker_GetFirstChildElement(walker, element, &element2);
