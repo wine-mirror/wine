@@ -2084,9 +2084,12 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
 
     free( obj_df );
 
-    prop_range.lMin = format->lAxisMin;
-    prop_range.lMax = format->lAxisMax;
-    IDirectInputDevice8_SetProperty( iface, DIPROP_RANGE, &prop_range.diph );
+    if (format->lAxisMin != format->lAxisMax)
+    {
+        prop_range.lMin = format->lAxisMin;
+        prop_range.lMax = format->lAxisMax;
+        IDirectInputDevice8_SetProperty( iface, DIPROP_RANGE, &prop_range.diph );
+    }
 
     prop_buffer.dwData = format->dwBufferSize;
     IDirectInputDevice8_SetProperty( iface, DIPROP_BUFFERSIZE, &prop_buffer.diph );

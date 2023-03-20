@@ -925,18 +925,14 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     prop_range.diph.dwObj = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 2 );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
     ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
-    todo_wine
     ok( prop_range.lMin == +1000, "got lMin %+ld\n", prop_range.lMin );
-    todo_wine
     ok( prop_range.lMax == +51000, "got lMax %+ld\n", prop_range.lMax );
 
     prop_range.diph.dwHow = DIPH_BYUSAGE;
     prop_range.diph.dwObj = MAKELONG(HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC);
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
     ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
-    todo_wine
     ok( prop_range.lMin == -14000, "got lMin %+ld\n", prop_range.lMin );
-    todo_wine
     ok( prop_range.lMax == -4000, "got lMax %+ld\n", prop_range.lMax );
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_BUFFERSIZE, &prop_dword.diph );
