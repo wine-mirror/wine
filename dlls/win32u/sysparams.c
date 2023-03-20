@@ -101,6 +101,14 @@ static const WCHAR devpkey_device_matching_device_id[] =
     '\\','0','0','0','8'
 };
 
+static const WCHAR devpkey_device_bus_number[] =
+{
+    'P','r','o','p','e','r','t','i','e','s',
+    '\\','{','A','4','5','C','2','5','4','E','-','D','F','1','C','-','4','E','F','D',
+    '-','8','0','2','0','-','6','7','D','1','4','6','A','8','5','0','E','0','}',
+    '\\','0','0','1','7'
+};
+
 static const WCHAR devpropkey_device_ispresentW[] =
 {
     'P','r','o','p','e','r','t','i','e','s',
@@ -1235,6 +1243,17 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
             set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_STRING, bufferW,
                            asciiz_to_unicode( bufferW, "ROOT\\BasicRender" ));
         NtClose( subkey );
+    }
+
+    if (gpu->vendor_id && gpu->device_id)
+    {
+        if ((subkey = reg_create_key( hkey, devpkey_device_bus_number,
+                                      sizeof(devpkey_device_bus_number), 0, NULL )))
+        {
+            set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_UINT32,
+                           &gpu_index, sizeof(gpu_index) );
+            NtClose( subkey );
+        }
     }
 
     desc = gpu->name;
