@@ -3253,6 +3253,7 @@ HRESULT create_document_event(HTMLDocumentNode *doc, eventid_t event_id, DOMEven
     }
 
     event = alloc_event(nsevent, doc->document_mode, event_info[event_id].type, event_id);
+    nsIDOMEvent_Release(nsevent);
     if(!event)
         return E_OUTOFMEMORY;
 
