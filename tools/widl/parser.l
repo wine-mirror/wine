@@ -543,7 +543,7 @@ void push_import( char *import_name )
     import->name = xstrdup( import_name );
     list_add_tail( &imports, &import->entry );
 
-    input_name = find_input_file( import_name, input_name );
+    input_name = find_input_file( import_name, state->input_name );
     file = open_input_file( input_name );
     line_number = 1;
 
