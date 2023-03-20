@@ -2022,6 +2022,7 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
     free( data_format.rgodf );
 
     if (FAILED(hr)) return hr;
+    if (flags == DIDSAM_FORCESAVE) return DI_SETTINGSNOTSAVED;
     if (!data_format.dwNumObjs) return DI_NOEFFECT;
     return hr;
 }

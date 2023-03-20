@@ -818,7 +818,6 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     /* first SetActionMap call for a user always return DI_SETTINGSNOTSAVED */
 
     hr = IDirectInputDevice8_SetActionMap( device, &voice_action_format, NULL, DIDSAM_FORCESAVE );
-    todo_wine
     ok( hr == DI_SETTINGSNOTSAVED, "SetActionMap returned %#lx\n", hr );
 
     memset( prop_username.wsz, 0, sizeof(prop_username.wsz) );
@@ -829,7 +828,6 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     hr = IDirectInputDevice8_SetActionMap( device, &voice_action_format, NULL, DIDSAM_DEFAULT );
     ok( hr == DI_NOEFFECT, "SetActionMap returned %#lx\n", hr );
     hr = IDirectInputDevice8_SetActionMap( device, &voice_action_format, NULL, DIDSAM_FORCESAVE );
-    todo_wine
     ok( hr == DI_SETTINGSNOTSAVED, "SetActionMap returned %#lx\n", hr );
 
     memset( prop_username.wsz, 0, sizeof(prop_username.wsz) );
@@ -874,10 +872,8 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     /* DIDSAM_FORCESAVE always returns DI_SETTINGSNOTSAVED */
 
     hr = IDirectInputDevice8_SetActionMap( device, &action_format, L"username", DIDSAM_FORCESAVE );
-    todo_wine
     ok( hr == DI_SETTINGSNOTSAVED, "SetActionMap returned %#lx\n", hr );
     hr = IDirectInputDevice8_SetActionMap( device, &action_format, L"username", DIDSAM_FORCESAVE );
-    todo_wine
     ok( hr == DI_SETTINGSNOTSAVED, "SetActionMap returned %#lx\n", hr );
     check_diactionformatw( &action_format, &expect_action_format_1 );
 
@@ -946,7 +942,6 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     ok( hr == DI_OK, "SetActionMap returned %#lx\n", hr );
     check_diactionformatw( &action_format, &expect_action_format_2_filled );
     hr = IDirectInputDevice8_SetActionMap( device, &action_format, L"username", DIDSAM_FORCESAVE );
-    todo_wine
     ok( hr == DI_SETTINGSNOTSAVED, "SetActionMap returned %#lx\n", hr );
     check_diactionformatw( &action_format, &expect_action_format_2_filled );
 
