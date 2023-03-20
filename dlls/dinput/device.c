@@ -1077,18 +1077,12 @@ struct get_object_property_params
 static BOOL get_object_property( struct dinput_device *device, UINT index, struct hid_value_caps *caps,
                                  const DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
-    static const struct object_properties default_properties =
-    {
-        .range_min = DIPROPRANGE_NOMIN,
-        .range_max = DIPROPRANGE_NOMAX,
-        .granularity = 1,
-    };
     struct get_object_property_params *params = data;
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( params->iface );
-    const struct object_properties *properties = NULL;
+    const struct object_properties *properties;
 
-    if (!impl->object_properties) properties = &default_properties;
-    else properties = impl->object_properties + instance->dwOfs / sizeof(LONG);
+    if (index == -1) return DIENUM_STOP;
+    properties = impl->object_properties + index;
 
     switch (params->property)
     {
@@ -1257,10 +1251,10 @@ static BOOL set_object_property( struct dinput_device *device, UINT index, struc
 {
     struct set_object_property_params *params = data;
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( params->iface );
-    struct object_properties *properties = NULL;
+    struct object_properties *properties;
 
-    if (!impl->object_properties) return DIENUM_STOP;
-    properties = impl->object_properties + instance->dwOfs / sizeof(LONG);
+    if (index == -1) return DIENUM_STOP;
+    properties = impl->object_properties + index;
 
     switch (params->property)
     {
@@ -1300,13 +1294,15 @@ static BOOL reset_object_value( struct dinput_device *impl, UINT index, struct h
     struct object_properties *properties;
     LONG tmp = -1;
 
-    if (!impl->object_properties) return DIENUM_STOP;
-    properties = impl->object_properties + instance->dwOfs / sizeof(LONG);
+    if (index == -1) return DIENUM_STOP;
+    properties = impl->object_properties + index;
 
     if (instance->dwType & DIDFT_AXIS)
     {
-        if (!properties->range_min) tmp = properties->range_max / 2;
-        else tmp = round( (properties->range_min + properties->range_max) / 2.0 );
+        LONG range_min = 0, range_max = 0xfffe;
+        if (properties->range_min != DIPROPRANGE_NOMIN) range_min = properties->range_min;
+        if (properties->range_max != DIPROPRANGE_NOMAX) range_max = properties->range_max;
+        tmp = round( (range_min + range_max) / 2.0 );
     }
 
     *(LONG *)(impl->device_state + instance->dwOfs) = tmp;
@@ -2211,6 +2207,12 @@ static BOOL enum_objects_count( struct dinput_device *impl, UINT index, struct h
 static BOOL enum_objects_init( struct dinput_device *impl, UINT index, struct hid_value_caps *caps,
                                const DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
+    static const struct object_properties default_properties =
+    {
+        .range_min = DIPROPRANGE_NOMIN,
+        .range_max = DIPROPRANGE_NOMAX,
+        .granularity = 1,
+    };
     DIDATAFORMAT *format = &impl->device_format;
     DIOBJECTDATAFORMAT *object_format;
 
@@ -2223,8 +2225,8 @@ static BOOL enum_objects_init( struct dinput_device *impl, UINT index, struct hi
     object_format->dwType = instance->dwType;
     object_format->dwFlags = instance->dwFlags;
 
-    if (impl->object_properties && (instance->dwType & (DIDFT_AXIS | DIDFT_POV)))
-        reset_object_value( impl, index, caps, instance, NULL );
+    impl->object_properties[index] = default_properties;
+    if (instance->dwType & (DIDFT_AXIS | DIDFT_POV)) reset_object_value( impl, index, caps, instance, NULL );
 
     return DIENUM_CONTINUE;
 }
@@ -2239,8 +2241,8 @@ HRESULT dinput_device_init_device_format( IDirectInputDevice8W *iface )
     };
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
     DIDATAFORMAT *format = &impl->device_format;
-    ULONG i, size;
     HRESULT hr;
+    ULONG i;
 
     hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_ALL, enum_objects_count, NULL );
     if (FAILED(hr)) return hr;
@@ -2251,8 +2253,8 @@ HRESULT dinput_device_init_device_format( IDirectInputDevice8W *iface )
         return DIERR_OUTOFMEMORY;
     }
 
-    size = format->dwNumObjs * sizeof(*format->rgodf);
-    if (!(format->rgodf = calloc( 1, size ))) return DIERR_OUTOFMEMORY;
+    if (!(impl->object_properties = calloc( format->dwNumObjs, sizeof(*impl->object_properties) ))) return DIERR_OUTOFMEMORY;
+    if (!(format->rgodf = calloc( format->dwNumObjs, sizeof(*format->rgodf) ))) return DIERR_OUTOFMEMORY;
 
     format->dwSize = sizeof(*format);
     format->dwObjSize = sizeof(*format->rgodf);

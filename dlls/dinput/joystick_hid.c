@@ -1176,13 +1176,16 @@ static BOOL read_device_state_value( struct dinput_device *device, UINT index, s
                                      const DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
     struct hid_joystick *impl = CONTAINING_RECORD( device, struct hid_joystick, base );
-    struct object_properties *properties = impl->base.object_properties + instance->dwOfs / sizeof(LONG);
     IDirectInputDevice8W *iface = &impl->base.IDirectInputDevice8W_iface;
     ULONG logical_value, report_len = impl->caps.InputReportByteLength;
     struct parse_device_state_params *params = data;
     char *report_buf = impl->input_report_buf;
+    struct object_properties *properties;
     LONG old_value, value;
     NTSTATUS status;
+
+    if (index == -1) return DIENUM_STOP;
+    properties = device->object_properties + index;
 
     if (instance->wReportId != impl->base.device_state_report_id) return DIENUM_CONTINUE;
 
@@ -1645,14 +1648,19 @@ HRESULT hid_joystick_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *in
 static BOOL init_object_properties( struct dinput_device *device, UINT index, struct hid_value_caps *caps,
                                     const DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
-    struct object_properties *properties = device->object_properties + instance->dwOfs / sizeof(LONG);
+    struct object_properties *properties;
     LONG tmp;
+
+    if (index == -1) return DIENUM_STOP;
+    properties = device->object_properties + index;
 
     properties->bit_size = caps->bit_size;
     properties->physical_min = caps->physical_min;
     properties->physical_max = caps->physical_max;
     properties->logical_min = caps->logical_min;
     properties->logical_max = caps->logical_max;
+    properties->range_min = 0;
+    properties->range_max = 0;
 
     if (instance->dwType & DIDFT_AXIS) properties->range_max = 65535;
     else
@@ -1988,8 +1996,6 @@ HRESULT hid_joystick_create_device( struct dinput *dinput, const GUID *guid, IDi
         },
     };
     HIDD_ATTRIBUTES attrs = {.Size = sizeof(attrs)};
-    struct object_properties *object_properties;
-    struct hid_preparsed_data *preparsed;
     struct hid_joystick *impl = NULL;
     USAGE_AND_PAGE *usages;
     char *buffer;
@@ -2081,13 +2087,8 @@ HRESULT hid_joystick_create_device( struct dinput *dinput, const GUID *guid, IDi
         impl->base.caps.dwFFDriverVersion = 1;
     }
 
-    preparsed = (struct hid_preparsed_data *)impl->preparsed;
-    size = preparsed->input_caps_count * sizeof(struct object_properties);
-    if (!(object_properties = calloc( 1, size ))) goto failed;
-    impl->base.object_properties = object_properties;
-    enum_objects( impl, &filter, DIDFT_AXIS | DIDFT_POV, init_object_properties, NULL );
-
     if (FAILED(hr = dinput_device_init_device_format( &impl->base.IDirectInputDevice8W_iface ))) goto failed;
+    enum_objects( impl, &filter, DIDFT_AXIS | DIDFT_POV, init_object_properties, NULL );
 
     *out = &impl->base.IDirectInputDevice8W_iface;
     return DI_OK;
