@@ -2022,12 +2022,6 @@ HRESULT hid_joystick_create_device( struct dinput *dinput, const GUID *guid, IDi
     list_init( &impl->effect_list );
 
     hr = E_OUTOFMEMORY;
-    preparsed = (struct hid_preparsed_data *)impl->preparsed;
-    size = preparsed->input_caps_count * sizeof(struct object_properties);
-    if (!(object_properties = calloc( 1, size ))) goto failed;
-    impl->base.object_properties = object_properties;
-    enum_objects( impl, &filter, DIDFT_AXIS | DIDFT_POV, init_object_properties, NULL );
-
     size = impl->caps.InputReportByteLength;
     if (!(buffer = malloc( size ))) goto failed;
     impl->input_report_buf = buffer;
@@ -2086,6 +2080,14 @@ HRESULT hid_joystick_create_device( struct dinput *dinput, const GUID *guid, IDi
         impl->base.caps.dwHardwareRevision = 1;
         impl->base.caps.dwFFDriverVersion = 1;
     }
+
+    preparsed = (struct hid_preparsed_data *)impl->preparsed;
+    size = preparsed->input_caps_count * sizeof(struct object_properties);
+    if (!(object_properties = calloc( 1, size ))) goto failed;
+    impl->base.object_properties = object_properties;
+    enum_objects( impl, &filter, DIDFT_AXIS | DIDFT_POV, init_object_properties, NULL );
+
+    if (FAILED(hr = dinput_device_init_device_format( &impl->base.IDirectInputDevice8W_iface ))) goto failed;
 
     *out = &impl->base.IDirectInputDevice8W_iface;
     return DI_OK;

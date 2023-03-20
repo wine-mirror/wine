@@ -299,12 +299,6 @@ static HRESULT WINAPI dinput7_CreateDeviceEx( IDirectInput7W *iface, const GUID 
 
     if (FAILED(hr)) return hr;
 
-    if (FAILED(hr = dinput_device_init_device_format( device )))
-    {
-        IDirectInputDevice8_Release( device );
-        return hr;
-    }
-
     hr = IDirectInputDevice8_QueryInterface( device, iid, out );
     IDirectInputDevice8_Release( device );
     return hr;

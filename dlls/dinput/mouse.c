@@ -107,6 +107,7 @@ HRESULT mouse_create_device( struct dinput *dinput, const GUID *guid, IDirectInp
     struct mouse *impl;
     HKEY hkey, appkey;
     WCHAR buffer[20];
+    HRESULT hr;
 
     TRACE( "dinput %p, guid %s, out %p\n", dinput, debugstr_guid( guid ), out );
 
@@ -122,6 +123,7 @@ HRESULT mouse_create_device( struct dinput *dinput, const GUID *guid, IDirectInp
     impl->base.caps.dwFirmwareRevision = 100;
     impl->base.caps.dwHardwareRevision = 100;
     impl->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
+    if (dinput->dwVersion >= 0x0800) impl->base.use_raw_input = TRUE;
 
     /* One object_properties per axis */
     impl->base.object_properties = calloc( 3, sizeof(struct object_properties) );
@@ -132,6 +134,8 @@ HRESULT mouse_create_device( struct dinput *dinput, const GUID *guid, IDirectInp
     }
     IDirectInputDevice8_EnumObjects( &impl->base.IDirectInputDevice8W_iface, init_object_properties, impl, DIDFT_RELAXIS );
 
+    if (FAILED(hr = dinput_device_init_device_format( &impl->base.IDirectInputDevice8W_iface ))) goto failed;
+
     get_app_key(&hkey, &appkey);
     if (!get_config_key( hkey, appkey, L"MouseWarpOverride", buffer, sizeof(buffer) ))
     {
@@ -141,11 +145,12 @@ HRESULT mouse_create_device( struct dinput *dinput, const GUID *guid, IDirectInp
     if (appkey) RegCloseKey(appkey);
     if (hkey) RegCloseKey(hkey);
 
-    if (dinput->dwVersion >= 0x0800)
-        impl->base.use_raw_input = TRUE;
-
     *out = &impl->base.IDirectInputDevice8W_iface;
     return DI_OK;
+
+failed:
+    IDirectInputDevice_Release( &impl->base.IDirectInputDevice8W_iface );
+    return hr;
 }
 
 void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam, RAWINPUT *ri )

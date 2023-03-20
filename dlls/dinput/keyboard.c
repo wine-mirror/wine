@@ -188,6 +188,7 @@ HRESULT keyboard_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instan
 HRESULT keyboard_create_device( struct dinput *dinput, const GUID *guid, IDirectInputDevice8W **out )
 {
     struct keyboard *impl;
+    HRESULT hr;
 
     TRACE( "dinput %p, guid %s, out %p.\n", dinput, debugstr_guid( guid ), out );
 
@@ -202,12 +203,16 @@ HRESULT keyboard_create_device( struct dinput *dinput, const GUID *guid, IDirect
     impl->base.caps.dwDevType = impl->base.instance.dwDevType;
     impl->base.caps.dwFirmwareRevision = 100;
     impl->base.caps.dwHardwareRevision = 100;
+    if (dinput->dwVersion >= 0x0800) impl->base.use_raw_input = TRUE;
 
-    if (dinput->dwVersion >= 0x0800)
-        impl->base.use_raw_input = TRUE;
+    if (FAILED(hr = dinput_device_init_device_format( &impl->base.IDirectInputDevice8W_iface ))) goto failed;
 
     *out = &impl->base.IDirectInputDevice8W_iface;
     return DI_OK;
+
+failed:
+    IDirectInputDevice_Release( &impl->base.IDirectInputDevice8W_iface );
+    return hr;
 }
 
 static HRESULT keyboard_poll( IDirectInputDevice8W *iface )
