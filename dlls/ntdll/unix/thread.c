@@ -1377,8 +1377,7 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
     thread_data->param = param;
 
     pthread_attr_init( &pthread_attr );
-    pthread_attr_setstack( &pthread_attr, teb->DeallocationStack,
-                           (char *)thread_data->kernel_stack + kernel_stack_size - (char *)teb->DeallocationStack );
+    pthread_attr_setstack( &pthread_attr, thread_data->kernel_stack, kernel_stack_size );
     pthread_attr_setguardsize( &pthread_attr, 0 );
     pthread_attr_setscope( &pthread_attr, PTHREAD_SCOPE_SYSTEM ); /* force creating a kernel thread */
     InterlockedIncrement( &nb_threads );
