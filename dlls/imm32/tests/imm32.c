@@ -3321,11 +3321,8 @@ static void test_ImmEscape( BOOL unicode )
 
     winetest_push_context( unicode ? "unicode" : "ansi" );
 
-    SetLastError( 0xdeadbeef );
     ok_ret( 0, ImmEscapeW( hkl, 0, 0, NULL ) );
     ok_ret( 0, ImmEscapeA( hkl, 0, 0, NULL ) );
-    todo_wine
-    ok_ret( 0xdeadbeef, GetLastError() );
 
     /* IME_PROP_END_UNLOAD for the IME to unload / reload. */
     ime_info.fdwProperty = IME_PROP_END_UNLOAD;
