@@ -549,6 +549,7 @@ static void test_mouse_keyboard(void)
 
     hwnd = CreateWindowExA(WS_EX_TOPMOST, "static", "dinput", WS_POPUP | WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, NULL, NULL);
     ok(hwnd != NULL, "CreateWindowExA failed\n");
+    flush_events();
 
     hr = CoCreateInstance(&CLSID_DirectInput8, 0, CLSCTX_INPROC_SERVER, &IID_IDirectInput8A, (LPVOID*)&di);
     if (hr == DIERR_OLDDIRECTINPUTVERSION ||
