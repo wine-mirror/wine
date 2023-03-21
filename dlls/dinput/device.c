@@ -2028,7 +2028,7 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
     /* Construct the dataformat and actionmap */
     obj_df = malloc( sizeof(DIOBJECTDATAFORMAT) * num_actions );
     data_format.rgodf = (LPDIOBJECTDATAFORMAT)obj_df;
-    data_format.dwNumObjs = num_actions;
+    data_format.dwNumObjs = 0;
 
     action_map = malloc( sizeof(ActionMap) * num_actions );
 
@@ -2051,6 +2051,7 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
             action_map[action].offset = offset;
             obj_df[action].dwOfs = offset;
             offset += (type & DIDFT_BUTTON) ? 1 : 4;
+            data_format.dwNumObjs++;
 
             action++;
         }
