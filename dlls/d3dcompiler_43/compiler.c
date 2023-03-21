@@ -556,17 +556,21 @@ HRESULT WINAPI D3DCompile2(const void *data, SIZE_T data_size, const char *filen
         vkd3d_shader_free_messages(messages);
     }
 
-    if (!ret && shader_blob)
+    if (ret)
+        return hresult_from_vkd3d_result(ret);
+
+    if (!shader_blob)
     {
-        if (FAILED(hr = D3DCreateBlob(byte_code.size, shader_blob)))
-        {
-            vkd3d_shader_free_shader_code(&byte_code);
-            return hr;
-        }
-        memcpy(ID3D10Blob_GetBufferPointer(*shader_blob), byte_code.code, byte_code.size);
+        vkd3d_shader_free_shader_code(&byte_code);
+        return S_OK;
     }
 
-    return hresult_from_vkd3d_result(ret);
+    if (SUCCEEDED(hr = D3DCreateBlob(byte_code.size, shader_blob)))
+        memcpy(ID3D10Blob_GetBufferPointer(*shader_blob), byte_code.code, byte_code.size);
+
+    vkd3d_shader_free_shader_code(&byte_code);
+
+    return hr;
 }
 
 HRESULT WINAPI D3DCompile(const void *data, SIZE_T data_size, const char *filename,
