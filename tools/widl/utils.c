@@ -32,51 +32,11 @@
 #include "utils.h"
 #include "parser.h"
 
-#define CURRENT_LOCATION { input_name ? input_name : "stdin", parser_text, line_number, 0, line_number, 0 }
-
-static const int want_near_indication = 0;
-
-static void make_print(char *str)
-{
-	while(*str)
-	{
-		if(!isprint(*str))
-			*str = ' ';
-		str++;
-	}
-}
-
-static void generic_msg( const struct location *where, const char *s, const char *t, va_list ap )
-{
-    fprintf( stderr, "%s:%d: %s: ", where->input_name, where->first_line, t );
-    vfprintf( stderr, s, ap );
-
-    if (want_near_indication)
-    {
-        char *cpy;
-        if (where->near_text)
-        {
-            cpy = xstrdup( where->near_text );
-            make_print( cpy );
-            fprintf( stderr, " near '%s'", cpy );
-            free( cpy );
-        }
-	}
-}
-
-
-/* yyerror:  yacc assumes this is not newline terminated.  */
-void parser_error(const char *s)
-{
-	error_loc("%s\n", s);
-}
-
 void error_at( const struct location *where, const char *s, ... )
 {
-    struct location cur_loc = CURRENT_LOCATION;
     va_list ap;
     va_start( ap, s );
-    generic_msg( where ? where : &cur_loc, s, "error", ap );
+    generic_msg( where, s, "error", ap );
     va_end( ap );
     exit( 1 );
 }
@@ -102,10 +62,9 @@ void warning(const char *s, ...)
 
 void warning_at( const struct location *where, const char *s, ... )
 {
-    struct location cur_loc = CURRENT_LOCATION;
     va_list ap;
     va_start( ap, s );
-    generic_msg( where ? where : &cur_loc, s, "warning", ap );
+    generic_msg( where, s, "warning", ap );
     va_end( ap );
 }
 

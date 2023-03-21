@@ -21,16 +21,19 @@
 #ifndef __WIDL_PARSER_H
 #define __WIDL_PARSER_H
 
+#include "widltypes.h"
+
 int parser_parse(void);
 
+extern void generic_msg( const struct location *where, const char *s, const char *t, va_list ap );
+extern void parser_error( const char *message );
+extern void init_location( struct location *where );
+
 extern FILE *parser_in;
-extern char *parser_text;
 extern int parser_debug;
 extern int yy_flex_debug;
 
 extern int parse_only;
-void push_import( char *import_name );
-void pop_import(void);
 
 int is_type(const char *name);
 

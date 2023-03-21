@@ -22,8 +22,8 @@
 #define __WIDL_UTILS_H
 
 #include "widltypes.h"
+#include "parser.h"
 
-void parser_error(const char *s) __attribute__((noreturn));
 void error(const char *s, ...) __attribute__((format (printf, 1, 2))) __attribute__((noreturn));
 void error_at( const struct location *, const char *s, ... ) __attribute__((format( printf, 2, 3 ))) __attribute__((noreturn));
 #define error_loc( ... ) error_at( NULL, ## __VA_ARGS__ )

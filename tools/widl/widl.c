@@ -140,8 +140,6 @@ static struct strarray dlldirs;
 static char *output_name;
 static const char *sysroot = "";
 
-int line_number = 1;
-
 static FILE *idfile;
 
 unsigned int pointer_size = 0;

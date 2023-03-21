@@ -125,6 +125,8 @@ static typelib_t *current_typelib;
 {
 
 int parser_lex( PARSER_STYPE *yylval );
+void push_import( char *input_name );
+void pop_import(void);
 
 }
 
@@ -3387,14 +3389,6 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
     }
     list_add_tail( list, &stmt->entry );
     return list;
-}
-
-void init_location( struct location *where )
-{
-    where->input_name = input_name ? input_name : "stdin";
-    where->near_text = parser_text;
-    where->first_line = line_number;
-    where->last_line = line_number;
 }
 
 type_t *find_parameterized_type(type_t *type, typeref_list_t *params)

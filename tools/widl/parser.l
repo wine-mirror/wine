@@ -78,6 +78,7 @@ struct import
     struct list entry;
 };
 static struct list imports = LIST_INIT( imports );
+static int line_number = 1;
 
 /* converts an integer in string form to an unsigned long and prints an error
  * on overflow */
@@ -509,6 +510,56 @@ static void switch_to_acf(void)
     acf_name = NULL;
 
     yy_switch_to_buffer( yy_create_buffer( file, YY_BUF_SIZE ) );
+}
+
+#define CURRENT_LOCATION { input_name ? input_name : "stdin", parser_text, line_number, 0, line_number, 0 }
+
+static const int want_near_indication = 0;
+
+static void make_print(char *str)
+{
+    while(*str)
+    {
+        if(!isprint(*str))
+            *str = ' ';
+        str++;
+    }
+}
+
+void init_location( struct location *where )
+{
+    where->input_name = input_name ? input_name : "stdin";
+    where->near_text = parser_text;
+    where->first_line = line_number;
+    where->last_line = line_number;
+}
+
+void generic_msg( const struct location *where, const char *s, const char *t, va_list ap )
+{
+    struct location cur_loc = CURRENT_LOCATION;
+
+    if (!where) where = &cur_loc;
+
+    fprintf( stderr, "%s:%d: %s: ", where->input_name, where->first_line, t );
+    vfprintf( stderr, s, ap );
+
+    if (want_near_indication)
+    {
+        char *cpy;
+        if (where->near_text)
+        {
+            cpy = xstrdup( where->near_text );
+            make_print( cpy );
+            fprintf( stderr, " near '%s'", cpy );
+            free( cpy );
+        }
+    }
+}
+
+/* yyerror:  yacc assumes this is not newline terminated.  */
+void parser_error( const char *message )
+{
+    error_loc( "%s\n", message );
 }
 
 static void warning_disable(int warning)

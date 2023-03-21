@@ -656,8 +656,6 @@ type_t *reg_type(type_t *type, const char *name, struct namespace *namespace, in
 var_t *make_var(char *name);
 var_list_t *append_var(var_list_t *list, var_t *var);
 
-void init_location( struct location * );
-
 char *format_namespace(struct namespace *namespace, const char *prefix, const char *separator, const char *suffix,
                        const char *abi_prefix);
 char *format_parameterized_type_name(type_t *type, typeref_list_t *params);

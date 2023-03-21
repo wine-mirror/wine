@@ -72,9 +72,6 @@ extern const char *prefix_server;
 extern unsigned int pointer_size;
 extern time_t now;
 
-extern int line_number;
-extern int char_number;
-
 enum stub_mode
 {
     MODE_Os,  /* inline stubs */
