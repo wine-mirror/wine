@@ -180,14 +180,23 @@ struct color_fixup_desc
 };
 #include <poppack.h>
 
+struct fragment_caps
+{
+    unsigned int PrimitiveMiscCaps;
+    unsigned int TextureOpCaps;
+    unsigned int max_blend_stages;
+    unsigned int max_textures;
+    bool proj_control;
+    bool srgb_write;
+    bool color_key;
+};
+
 struct wined3d_d3d_limits
 {
     unsigned int vs_version, hs_version, ds_version, gs_version, ps_version, cs_version;
     DWORD vs_uniform_count;
     DWORD ps_uniform_count;
     unsigned int varying_count;
-    unsigned int ffp_textures;
-    unsigned int ffp_blend_stages;
     unsigned int ffp_vertex_blend_matrices;
     unsigned int active_light_count;
 
@@ -200,6 +209,7 @@ struct wined3d_d3d_limits
 
 struct wined3d_d3d_info
 {
+    struct fragment_caps ffp_fragment_caps;
     struct wined3d_d3d_limits limits;
     uint32_t wined3d_creation_flags;
     uint32_t xyzrhw : 1;
@@ -207,7 +217,6 @@ struct wined3d_d3d_info
     uint32_t ffp_generic_attributes : 1;
     uint32_t ffp_alpha_test : 1;
     uint32_t vs_clipping : 1;
-    uint32_t shader_color_key : 1;
     uint32_t shader_double_precision : 1;
     uint32_t shader_output_interpolation : 1;
     uint32_t frag_coord_correction : 1;
@@ -1986,17 +1995,6 @@ struct wined3d_state_entry_template
     unsigned int state;
     struct wined3d_state_entry content;
     unsigned int extension;
-};
-
-struct fragment_caps
-{
-    DWORD PrimitiveMiscCaps;
-    DWORD TextureOpCaps;
-    unsigned int max_blend_stages;
-    unsigned int max_textures;
-    bool proj_control;
-    bool srgb_write;
-    bool color_key;
 };
 
 #define GL_EXT_EMUL_ARB_MULTITEXTURE 0x00000001

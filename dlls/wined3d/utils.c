@@ -6411,7 +6411,7 @@ void wined3d_ffp_get_fs_settings(const struct wined3d_context *context, const st
 
     settings->padding = 0;
 
-    for (i = 0; i < d3d_info->limits.ffp_blend_stages; ++i)
+    for (i = 0; i < d3d_info->ffp_fragment_caps.max_blend_stages; ++i)
     {
         struct wined3d_texture *texture;
 

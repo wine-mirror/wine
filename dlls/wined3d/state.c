@@ -1010,7 +1010,7 @@ static void state_texfactor(struct wined3d_context *context, const struct wined3
     wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_TEXTUREFACTOR]);
 
     /* And now the default texture color as well */
-    for (i = 0; i < context->d3d_info->limits.ffp_blend_stages; ++i)
+    for (i = 0; i < context->d3d_info->ffp_fragment_caps.max_blend_stages; ++i)
     {
         /* Note the WINED3D_RS value applies to all textures, but GL has one
          * per texture, so apply it now ready to be used! */
@@ -3626,7 +3626,7 @@ void apply_pixelshader(struct wined3d_context *context, const struct wined3d_sta
     {
         /* Disabled the pixel shader - color ops weren't applied while it was
          * enabled, so re-apply them. */
-        for (i = 0; i < context->d3d_info->limits.ffp_blend_stages; ++i)
+        for (i = 0; i < context->d3d_info->ffp_fragment_caps.max_blend_stages; ++i)
         {
             if (!isStateDirty(context, STATE_TEXTURESTAGE(i, WINED3D_TSS_COLOR_OP)))
                 context_apply_state(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_COLOR_OP));
@@ -5303,7 +5303,7 @@ static void prune_invalid_states(struct wined3d_state_entry *state_table, const 
 {
     unsigned int start, last, i;
 
-    start = STATE_TEXTURESTAGE(d3d_info->limits.ffp_blend_stages, 0);
+    start = STATE_TEXTURESTAGE(d3d_info->ffp_fragment_caps.max_blend_stages, 0);
     last = STATE_TEXTURESTAGE(WINED3D_MAX_FFP_TEXTURES - 1, WINED3D_HIGHEST_TEXTURE_STATE);
     for (i = start; i <= last; ++i)
     {
@@ -5311,7 +5311,7 @@ static void prune_invalid_states(struct wined3d_state_entry *state_table, const 
         state_table[i].apply = state_undefined;
     }
 
-    start = STATE_TRANSFORM(WINED3D_TS_TEXTURE0 + d3d_info->limits.ffp_blend_stages);
+    start = STATE_TRANSFORM(WINED3D_TS_TEXTURE0 + d3d_info->ffp_fragment_caps.max_blend_stages);
     last = STATE_TRANSFORM(WINED3D_TS_TEXTURE0 + WINED3D_MAX_FFP_TEXTURES - 1);
     for (i = start; i <= last; ++i)
     {

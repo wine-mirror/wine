@@ -1034,7 +1034,7 @@ static void set_tex_op_atifs(struct wined3d_context *context, const struct wined
             return;
         }
         new_desc->num_textures_used = 0;
-        for (i = 0; i < d3d_info->limits.ffp_blend_stages; ++i)
+        for (i = 0; i < d3d_info->ffp_fragment_caps.max_blend_stages; ++i)
         {
             if (settings.op[i].cop == WINED3D_TOP_DISABLE)
                 break;

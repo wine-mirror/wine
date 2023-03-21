@@ -1669,7 +1669,7 @@ void wined3d_texture_load(struct wined3d_texture *texture,
     else
         flag = WINED3D_TEXTURE_RGB_VALID;
 
-    if (!d3d_info->shader_color_key
+    if (!d3d_info->ffp_fragment_caps.color_key
             && (!(texture->async.flags & WINED3D_TEXTURE_ASYNC_COLOR_KEY)
             != !(texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT)
             || (texture->async.flags & WINED3D_TEXTURE_ASYNC_COLOR_KEY
@@ -2062,7 +2062,7 @@ void wined3d_texture_gl_prepare_texture(struct wined3d_texture_gl *texture_gl,
     TRACE("texture_gl %p, context_gl %p, srgb %d, format %s.\n",
             texture_gl, context_gl, srgb, debug_d3dformat(format->id));
 
-    if (!d3d_info->shader_color_key
+    if (!d3d_info->ffp_fragment_caps.color_key
             && !(texture_gl->t.async.flags & WINED3D_TEXTURE_ASYNC_COLOR_KEY)
             != !(texture_gl->t.async.color_key_flags & WINED3D_CKEY_SRC_BLT))
     {
@@ -5795,7 +5795,7 @@ static bool ffp_blit_supported(enum wined3d_blit_op blit_op, const struct wined3
     switch (blit_op)
     {
         case WINED3D_BLIT_OP_COLOR_BLIT_CKEY:
-            if (context->d3d_info->shader_color_key)
+            if (context->d3d_info->ffp_fragment_caps.color_key)
             {
                 TRACE("Colour keying requires converted textures.\n");
                 return false;

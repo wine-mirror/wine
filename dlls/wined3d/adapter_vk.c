@@ -2294,7 +2294,6 @@ static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_
     struct wined3d_vk_info *vk_info = &adapter_vk->vk_info;
     struct wined3d_physical_device_info device_info;
     struct wined3d_vertex_caps vertex_caps;
-    struct fragment_caps fragment_caps;
     unsigned int sample_counts_mask;
     struct shader_caps shader_caps;
 
@@ -2308,7 +2307,7 @@ static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_
 
     adapter_vk->a.shader_backend->shader_get_caps(&adapter_vk->a, &shader_caps);
     adapter_vk->a.vertex_pipe->vp_get_caps(&adapter_vk->a, &vertex_caps);
-    adapter_vk->a.fragment_pipe->get_caps(&adapter_vk->a, &fragment_caps);
+    adapter_vk->a.fragment_pipe->get_caps(&adapter_vk->a, &d3d_info->ffp_fragment_caps);
 
     d3d_info->limits.vs_version = shader_caps.vs_version;
     d3d_info->limits.hs_version = shader_caps.hs_version;
@@ -2319,8 +2318,6 @@ static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_
     d3d_info->limits.vs_uniform_count = shader_caps.vs_uniform_count;
     d3d_info->limits.ps_uniform_count = shader_caps.ps_uniform_count;
     d3d_info->limits.varying_count = shader_caps.varying_count;
-    d3d_info->limits.ffp_textures = fragment_caps.max_textures;
-    d3d_info->limits.ffp_blend_stages = fragment_caps.max_blend_stages;
     d3d_info->limits.ffp_vertex_blend_matrices = vertex_caps.max_vertex_blend_matrices;
     d3d_info->limits.active_light_count = vertex_caps.max_active_lights;
 
@@ -2341,7 +2338,6 @@ static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_
     d3d_info->ffp_generic_attributes = vertex_caps.ffp_generic_attributes;
     d3d_info->ffp_alpha_test = false;
     d3d_info->vs_clipping = !!(shader_caps.wined3d_caps & WINED3D_SHADER_CAP_VS_CLIPPING);
-    d3d_info->shader_color_key = fragment_caps.color_key;
     d3d_info->shader_double_precision = !!(shader_caps.wined3d_caps & WINED3D_SHADER_CAP_DOUBLE_PRECISION);
     d3d_info->shader_output_interpolation = !!(shader_caps.wined3d_caps & WINED3D_SHADER_CAP_OUTPUT_INTERPOLATION);
     d3d_info->viewport_array_index_any_shader = false; /* VK_EXT_shader_viewport_index_layer */

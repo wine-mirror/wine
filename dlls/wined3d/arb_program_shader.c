@@ -4267,7 +4267,7 @@ static struct arb_ps_compiled_shader *find_arb_pshader(struct wined3d_context_gl
 
         if (!d3d_info->vs_clipping)
             shader_data->clipplane_emulation = shader_find_free_input_register(&shader->reg_maps,
-                    d3d_info->limits.ffp_blend_stages - 1);
+                    d3d_info->ffp_fragment_caps.max_blend_stages - 1);
         else
             shader_data->clipplane_emulation = ~0U;
     }
@@ -4514,7 +4514,12 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
     {
         args->ps_signature = ~0;
         if (!d3d_info->vs_clipping && adapter->fragment_pipe == &arbfp_fragment_pipeline)
-            args->clip.boolclip.clip_texcoord = ffp_clip_emul(&context_gl->c) ? d3d_info->limits.ffp_blend_stages : 0;
+        {
+            if (ffp_clip_emul(&context_gl->c))
+                args->clip.boolclip.clip_texcoord = d3d_info->ffp_fragment_caps.max_blend_stages;
+            else
+                args->clip.boolclip.clip_texcoord = 0;
+        }
         /* Otherwise: Setting boolclip_compare set clip_texcoord to 0 */
     }
 
@@ -7720,7 +7725,7 @@ static BOOL arbfp_blit_supported(enum wined3d_blit_op blit_op, const struct wine
     switch (blit_op)
     {
         case WINED3D_BLIT_OP_COLOR_BLIT_CKEY:
-            if (!context->d3d_info->shader_color_key)
+            if (!context->d3d_info->ffp_fragment_caps.color_key)
             {
                 /* The conversion modifies the alpha channel so the color key might no longer match. */
                 TRACE("Color keying not supported with converted textures.\n");

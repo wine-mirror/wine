@@ -3798,8 +3798,8 @@ static void wined3d_context_gl_map_fixed_function_samplers(struct wined3d_contex
 
     ffu_map = context_gl->c.fixed_function_usage_map;
 
-    if (d3d_info->limits.ffp_textures == d3d_info->limits.ffp_blend_stages
-            || context_gl->c.lowest_disabled_stage <= d3d_info->limits.ffp_textures)
+    if (d3d_info->ffp_fragment_caps.max_textures == d3d_info->ffp_fragment_caps.max_blend_stages
+            || context_gl->c.lowest_disabled_stage <= d3d_info->ffp_fragment_caps.max_textures)
     {
         while (ffu_map)
         {
@@ -3843,7 +3843,7 @@ static void wined3d_context_gl_map_psamplers(struct wined3d_context_gl *context_
         {
             wined3d_context_gl_map_stage(context_gl, i, i);
             context_invalidate_state(&context_gl->c, STATE_SAMPLER(i));
-            if (i < d3d_info->limits.ffp_blend_stages)
+            if (i < d3d_info->ffp_fragment_caps.max_blend_stages)
                 context_invalidate_texture_stage(&context_gl->c, i);
         }
     }
@@ -4897,7 +4897,7 @@ static void draw_primitive_immediate_mode(struct wined3d_context_gl *context_gl,
         GL_EXTCALL(glSecondaryColor3fEXT)(0.0f, 0.0f, 0.0f);
     }
 
-    texture_stages = d3d_info->limits.ffp_blend_stages;
+    texture_stages = d3d_info->ffp_fragment_caps.max_blend_stages;
     for (texture_idx = 0; texture_idx < texture_stages; ++texture_idx)
     {
         if (!gl_info->supported[ARB_MULTITEXTURE] && texture_idx > 0)
@@ -5363,7 +5363,7 @@ void wined3d_context_gl_load_tex_coords(const struct wined3d_context_gl *context
     unsigned int texture_idx;
     GLuint bo;
 
-    for (texture_idx = 0; texture_idx < context_gl->c.d3d_info->limits.ffp_blend_stages; ++texture_idx)
+    for (texture_idx = 0; texture_idx < context_gl->c.d3d_info->ffp_fragment_caps.max_blend_stages; ++texture_idx)
     {
         unsigned int coord_idx = state->texture_states[texture_idx][WINED3D_TSS_TEXCOORD_INDEX];
 
