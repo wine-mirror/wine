@@ -1208,6 +1208,7 @@ BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
                 device_manager->add_mode( mode, param );
             }
 
+            free(modes);
             macdrv_free_monitors(monitors);
         }
 
