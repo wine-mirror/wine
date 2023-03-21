@@ -79,7 +79,7 @@ ULONG CDECL ldap_modify_extA( LDAP *ld, char *dn, LDAPModA **mods, LDAPControlA 
 
     TRACE( "(%p, %s, %p, %p, %p, %p)\n", ld, debugstr_a(dn), mods, serverctrls, clientctrls, message );
 
-    if (!ld) return ~0u;
+    if (!ld || !message) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (mods && !(modsW = modarrayAtoW( mods ))) goto exit;
@@ -109,9 +109,9 @@ ULONG CDECL ldap_modify_extW( LDAP *ld, WCHAR *dn, LDAPModW **mods, LDAPControlW
 
     TRACE( "(%p, %s, %p, %p, %p, %p)\n", ld, debugstr_w(dn), mods, serverctrls, clientctrls, message );
 
-    if (!ld) return ~0u;
+    if (!ld || !message) return WLDAP32_LDAP_PARAM_ERROR;
 
-    if (dn && !(dnU = strWtoU( dn ))) goto exit;
+    if (!(dnU = dn ? strWtoU( dn ) : strdup( "" ))) goto exit;
     if (mods && !(modsU = modarrayWtoU( mods ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
@@ -173,7 +173,7 @@ ULONG CDECL ldap_modify_ext_sW( LDAP *ld, WCHAR *dn, LDAPModW **mods, LDAPContro
 
     if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
-    if (dn && !(dnU = strWtoU( dn ))) goto exit;
+    if (!(dnU = dn ? strWtoU( dn ) : strdup( "" ))) goto exit;
     if (mods && !(modsU = modarrayWtoU( mods ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
