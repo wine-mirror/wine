@@ -1312,7 +1312,7 @@ static void atifs_get_caps(const struct wined3d_adapter *adapter, struct fragmen
      * The proper fix for this is not to use GL_ATI_fragment_shader on cards newer than the
      * r200 series and use an ARB or GLSL shader instead
      */
-    caps->MaxTextureBlendStages   = WINED3D_MAX_FFP_TEXTURES;
+    caps->max_blend_stages = WINED3D_MAX_FFP_TEXTURES;
     caps->max_textures = 6;
 }
 

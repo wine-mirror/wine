@@ -1997,7 +1997,7 @@ struct fragment_caps
     DWORD wined3d_caps;
     DWORD PrimitiveMiscCaps;
     DWORD TextureOpCaps;
-    DWORD MaxTextureBlendStages;
+    unsigned int max_blend_stages;
     unsigned int max_textures;
 };
 

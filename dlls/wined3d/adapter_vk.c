@@ -2320,7 +2320,7 @@ static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_
     d3d_info->limits.ps_uniform_count = shader_caps.ps_uniform_count;
     d3d_info->limits.varying_count = shader_caps.varying_count;
     d3d_info->limits.ffp_textures = fragment_caps.max_textures;
-    d3d_info->limits.ffp_blend_stages = fragment_caps.MaxTextureBlendStages;
+    d3d_info->limits.ffp_blend_stages = fragment_caps.max_blend_stages;
     d3d_info->limits.ffp_vertex_blend_matrices = vertex_caps.max_vertex_blend_matrices;
     d3d_info->limits.active_light_count = vertex_caps.max_active_lights;
 

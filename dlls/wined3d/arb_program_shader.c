@@ -5795,7 +5795,7 @@ static void arbfp_get_caps(const struct wined3d_adapter *adapter, struct fragmen
 
     /* TODO: Implement WINED3DTEXOPCAPS_PREMODULATE */
 
-    caps->MaxTextureBlendStages   = WINED3D_MAX_FFP_TEXTURES;
+    caps->max_blend_stages = WINED3D_MAX_FFP_TEXTURES;
     caps->max_textures = min(gl_info->limits.samplers[WINED3D_SHADER_TYPE_PIXEL], WINED3D_MAX_FFP_TEXTURES);
 }
 

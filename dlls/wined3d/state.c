@@ -5185,7 +5185,7 @@ static void ffp_fragment_get_caps(const struct wined3d_adapter *adapter, struct 
     if (gl_info->supported[ARB_TEXTURE_ENV_DOT3])
         caps->TextureOpCaps |= WINED3DTEXOPCAPS_DOTPRODUCT3;
 
-    caps->MaxTextureBlendStages = gl_info->limits.ffp_textures;
+    caps->max_blend_stages = gl_info->limits.ffp_textures;
     caps->max_textures = gl_info->limits.ffp_textures;
 }
 
