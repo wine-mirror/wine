@@ -32,7 +32,7 @@
 #include "utils.h"
 #include "parser.h"
 
-#define CURRENT_LOCATION { input_name ? input_name : "stdin", line_number, parser_text }
+#define CURRENT_LOCATION { input_name ? input_name : "stdin", parser_text, line_number, 0, line_number, 0 }
 
 static const int want_near_indication = 0;
 
@@ -48,7 +48,7 @@ static void make_print(char *str)
 
 static void generic_msg( const struct location *where, const char *s, const char *t, va_list ap )
 {
-    fprintf( stderr, "%s:%d: %s: ", where->input_name, where->line_number, t );
+    fprintf( stderr, "%s:%d: %s: ", where->input_name, where->first_line, t );
     vfprintf( stderr, s, ap );
 
     if (want_near_indication)

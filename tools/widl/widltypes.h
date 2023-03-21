@@ -313,8 +313,11 @@ enum type_basic_type
 struct location
 {
     const char *input_name;
-    int line_number;
     const char *near_text;
+    int first_line;
+    int last_line;
+    int first_column;
+    int last_column;
 };
 
 struct str_list_entry_t

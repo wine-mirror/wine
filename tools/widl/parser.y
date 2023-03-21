@@ -2195,7 +2195,7 @@ static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, at
        */
       if (cur && input_name == cur->where.input_name)
           error_loc( "%s: redefinition error; original definition was at %s:%d\n",
-                     cur->name, cur->where.input_name, cur->where.line_number );
+                     cur->name, cur->where.input_name, cur->where.first_line );
 
       name = declare_var(attrs, decl_spec, decl, 0);
       cur = type_new_alias(&name->declspec, name->name);
@@ -3392,8 +3392,9 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 void init_location( struct location *where )
 {
     where->input_name = input_name ? input_name : "stdin";
-    where->line_number = line_number;
     where->near_text = parser_text;
+    where->first_line = line_number;
+    where->last_line = line_number;
 }
 
 type_t *find_parameterized_type(type_t *type, typeref_list_t *params)
