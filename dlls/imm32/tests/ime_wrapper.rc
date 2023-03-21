@@ -18,7 +18,7 @@
 
 #pragma makedep testdll
 
-#define WINE_LANGID 047f
+#define WINE_LANGID 047f /* LANG_INVARIANT/SUBLANG_DEFAULT */
 #define WINE_FILETYPE VFT_DRV
 #define WINE_FILESUBTYPE VFT2_DRV_INPUTMETHOD
 #define WINE_FILENAME "ime_wrapper"
