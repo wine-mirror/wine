@@ -552,8 +552,8 @@ HRESULT WINAPI D3DCompile2(const void *data, SIZE_T data_size, const char *filen
             }
             memcpy(ID3D10Blob_GetBufferPointer(*messages_blob), messages, size);
         }
-        else
-            vkd3d_shader_free_messages(messages);
+
+        vkd3d_shader_free_messages(messages);
     }
 
     if (!ret && shader_blob)
