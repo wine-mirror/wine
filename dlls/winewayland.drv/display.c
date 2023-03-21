@@ -32,28 +32,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
-static BOOL force_display_devices_refresh;
-
-static void wayland_refresh_display_devices(void)
-{
-    UINT32 num_path, num_mode;
-    force_display_devices_refresh = TRUE;
-    /* Trigger refresh in win32u */
-    NtUserGetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, &num_path, &num_mode);
-}
-
 void wayland_init_display_devices(void)
 {
-    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
-    DWORD current_pid = GetCurrentProcessId();
-    HWND desktop_hwnd = UlongToHandle(thread_info->top_window);
-    DWORD desktop_pid = 0;
-
-    if (desktop_hwnd) NtUserGetWindowThread(desktop_hwnd, &desktop_pid);
-
-    /* Refresh devices only from the desktop window process. */
-    if (!desktop_pid || current_pid == desktop_pid)
-        wayland_refresh_display_devices();
+    UINT32 num_path, num_mode;
+    /* Trigger refresh in win32u */
+    NtUserGetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, &num_path, &num_mode);
 }
 
 static void wayland_add_device_gpu(const struct gdi_device_manager *device_manager,
@@ -141,11 +124,9 @@ BOOL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manage
     struct wayland_output *output;
     INT output_id = 0;
 
-    if (!force && !force_display_devices_refresh) return TRUE;
+    if (!force) return TRUE;
 
-    TRACE("force=%d force_refresh=%d\n", force, force_display_devices_refresh);
-
-    force_display_devices_refresh = FALSE;
+    TRACE("force=%d\n", force);
 
     wayland_add_device_gpu(device_manager, param);
 

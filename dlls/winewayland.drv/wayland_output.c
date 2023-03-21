@@ -132,8 +132,6 @@ static void output_handle_done(void *data, struct wl_output *wl_output)
               mode->width, mode->height, mode->refresh,
               output->current_mode == mode ? "*" : "");
     }
-
-    wayland_init_display_devices();
 }
 
 static void output_handle_scale(void *data, struct wl_output *wl_output,

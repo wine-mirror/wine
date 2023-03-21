@@ -65,7 +65,6 @@ static void registry_handle_global_remove(void *data, struct wl_registry *regist
         {
             TRACE("removing output->name=%s\n", output->name);
             wayland_output_destroy(output);
-            wayland_init_display_devices();
             return;
         }
     }
@@ -128,6 +127,8 @@ BOOL wayland_process_init(void)
      * initial events produced from registering the globals. */
     wl_display_roundtrip_queue(process_wl_display, process_wayland->wl_event_queue);
     wl_display_roundtrip_queue(process_wl_display, process_wayland->wl_event_queue);
+
+    wayland_init_display_devices();
 
     return TRUE;
 }
