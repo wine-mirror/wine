@@ -3062,7 +3062,7 @@ static void test_ImmGetProperty(void)
     };
     static const IMEINFO expect_ime_info_0411 = /* MS Japanese IME */
     {
-        .fdwProperty = IME_PROP_COMPLETE_ON_UNSELECT | IME_PROP_CANDLIST_START_FROM_1 | IME_PROP_UNICODE | IME_PROP_AT_CARET | 0xa,
+        .fdwProperty = IME_PROP_CANDLIST_START_FROM_1 | IME_PROP_UNICODE | IME_PROP_AT_CARET | 0xa,
         .fdwConversionCaps = IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_KATAKANA,
         .fdwSentenceCaps = IME_SMODE_PLAURALCLAUSE | IME_SMODE_CONVERSATION,
         .fdwSCSCaps = SCS_CAP_COMPSTR | SCS_CAP_SETRECONVERTSTRING | SCS_CAP_MAKEREAD,
@@ -3101,7 +3101,8 @@ static void test_ImmGetProperty(void)
     else if (hkl == (HKL)0x08040804) expect = &expect_ime_info_0804;
     else expect = &expect_ime_info;
 
-    ok_ret( expect->fdwProperty,       ImmGetProperty( hkl, IGP_PROPERTY ) );
+    /* IME_PROP_COMPLETE_ON_UNSELECT seems to be somtimes set on CJK locales IMEs, sometimes not */
+    ok_ret( expect->fdwProperty,       ImmGetProperty( hkl, IGP_PROPERTY ) & ~IME_PROP_COMPLETE_ON_UNSELECT );
     todo_wine
     ok_ret( expect->fdwConversionCaps, ImmGetProperty( hkl, IGP_CONVERSION ) );
     todo_wine
