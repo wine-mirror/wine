@@ -1988,17 +1988,15 @@ struct wined3d_state_entry_template
     unsigned int extension;
 };
 
-#define WINED3D_FRAGMENT_CAP_PROJ_CONTROL   0x00000001
-#define WINED3D_FRAGMENT_CAP_SRGB_WRITE     0x00000002
-#define WINED3D_FRAGMENT_CAP_COLOR_KEY      0x00000004
-
 struct fragment_caps
 {
-    DWORD wined3d_caps;
     DWORD PrimitiveMiscCaps;
     DWORD TextureOpCaps;
     unsigned int max_blend_stages;
     unsigned int max_textures;
+    bool proj_control;
+    bool srgb_write;
+    bool color_key;
 };
 
 #define GL_EXT_EMUL_ARB_MULTITEXTURE 0x00000001

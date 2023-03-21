@@ -993,7 +993,7 @@ static HRESULT shader_spirv_alloc(struct wined3d_device *device,
     priv->vertex_pipe = vertex_pipe;
     priv->fragment_pipe = fragment_pipe;
     fragment_pipe->get_caps(device->adapter, &fragment_caps);
-    priv->ffp_proj_control = fragment_caps.wined3d_caps & WINED3D_FRAGMENT_CAP_PROJ_CONTROL;
+    priv->ffp_proj_control = fragment_caps.proj_control;
     memset(&priv->bindings, 0, sizeof(priv->bindings));
 
     device->vertex_priv = vertex_priv;

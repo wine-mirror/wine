@@ -4824,7 +4824,7 @@ static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct wine
     priv->vertex_pipe = vertex_pipe;
     priv->fragment_pipe = fragment_pipe;
     fragment_pipe->get_caps(device->adapter, &fragment_caps);
-    priv->ffp_proj_control = fragment_caps.wined3d_caps & WINED3D_FRAGMENT_CAP_PROJ_CONTROL;
+    priv->ffp_proj_control = fragment_caps.proj_control;
 
     device->vertex_priv = vertex_priv;
     device->fragment_priv = fragment_priv;
@@ -5763,9 +5763,10 @@ static void arbfp_get_caps(const struct wined3d_adapter *adapter, struct fragmen
 {
     const struct wined3d_gl_info *gl_info = &wined3d_adapter_gl_const(adapter)->gl_info;
 
-    caps->wined3d_caps = WINED3D_FRAGMENT_CAP_PROJ_CONTROL
-            | WINED3D_FRAGMENT_CAP_SRGB_WRITE
-            | WINED3D_FRAGMENT_CAP_COLOR_KEY;
+    memset(caps, 0, sizeof(*caps));
+    caps->proj_control = true;
+    caps->srgb_write = true;
+    caps->color_key = true;
     caps->PrimitiveMiscCaps = WINED3DPMISCCAPS_TSSARGTEMP;
     caps->TextureOpCaps =  WINED3DTEXOPCAPS_DISABLE                     |
                            WINED3DTEXOPCAPS_SELECTARG1                  |

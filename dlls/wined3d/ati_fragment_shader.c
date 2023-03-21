@@ -1269,7 +1269,8 @@ static void atifs_enable(const struct wined3d_context *context, BOOL enable)
 
 static void atifs_get_caps(const struct wined3d_adapter *adapter, struct fragment_caps *caps)
 {
-    caps->wined3d_caps = WINED3D_FRAGMENT_CAP_PROJ_CONTROL;
+    memset(caps, 0, sizeof(*caps));
+    caps->proj_control = true;
     caps->PrimitiveMiscCaps = WINED3DPMISCCAPS_TSSARGTEMP               |
             WINED3DPMISCCAPS_PERSTAGECONSTANT;
     caps->TextureOpCaps =  WINED3DTEXOPCAPS_DISABLE                     |

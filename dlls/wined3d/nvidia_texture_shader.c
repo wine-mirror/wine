@@ -697,7 +697,8 @@ static void nvrc_fragment_get_caps(const struct wined3d_adapter *adapter, struct
 {
     const struct wined3d_gl_info *gl_info = &wined3d_adapter_gl_const(adapter)->gl_info;
 
-    caps->wined3d_caps = 0;
+    memset(caps, 0, sizeof(*caps));
+
     caps->PrimitiveMiscCaps = WINED3DPMISCCAPS_TSSARGTEMP;
 
     /* The caps below can be supported but aren't handled yet in utils.c

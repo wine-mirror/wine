@@ -5150,7 +5150,7 @@ static void ffp_fragment_get_caps(const struct wined3d_adapter *adapter, struct 
 {
     const struct wined3d_gl_info *gl_info = &wined3d_adapter_gl_const(adapter)->gl_info;
 
-    caps->wined3d_caps = 0;
+    memset(caps, 0, sizeof(*caps));
     caps->PrimitiveMiscCaps = 0;
     caps->TextureOpCaps = WINED3DTEXOPCAPS_ADD
             | WINED3DTEXOPCAPS_ADDSIGNED
