@@ -39,7 +39,11 @@ namespace Windows.UI.ViewManagement
     typedef enum UIElementType UIElementType;
 
     interface IUISettings;
+    interface IUISettings2;
     interface IUISettings3;
+    interface IUISettings4;
+    interface IUISettings5;
+    interface IUISettings6;
 
     runtimeclass UISettings;
 
@@ -144,6 +148,19 @@ namespace Windows.UI.ViewManagement
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.UI.ViewManagement.UISettings),
+        uuid(bad82401-2721-44f9-bb91-2bb228be442f)
+    ]
+    interface IUISettings2 : IInspectable
+    {
+        [propget] HRESULT TextScaleFactor([out, retval] DOUBLE *value);
+        [eventadd] HRESULT TextScaleFactorChanged([in] Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.UISettings *, IInspectable *> *handler,
+                                                  [out, retval] EventRegistrationToken *cookie);
+        [eventremove] HRESULT TextScaleFactorChanged([in] EventRegistrationToken cookie);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.UISettings),
         uuid(03021be4-5254-4781-8194-5168f7d06d7b)
     ]
     interface IUISettings3 : IInspectable
@@ -162,6 +179,7 @@ namespace Windows.UI.ViewManagement
     runtimeclass UISettings
     {
         [default] interface Windows.UI.ViewManagement.IUISettings;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.ViewManagement.IUISettings2;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.ViewManagement.IUISettings3;
     }
 }
