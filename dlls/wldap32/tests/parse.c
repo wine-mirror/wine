@@ -175,6 +175,66 @@ static void test_ldap_bind_sA( void )
     ldap_unbind( ld );
 }
 
+static void test_ldap_add(void)
+{
+    char *one_empty_string[] = { (char *)"", NULL };
+    LDAPModA empty_equals_empty = { 0, (char *)"", { one_empty_string } };
+    LDAPModA *attrs[] = { &empty_equals_empty, NULL };
+    LDAP *ld;
+    ULONG ret, num;
+
+    ld = ldap_initA( (char *)"db.debian.org", 389 );
+    ok( ld != NULL, "ldap_init failed\n" );
+
+    ret = ldap_addA( NULL, NULL, NULL );
+    ok( ret == (ULONG)-1, "ldap_addA should fail, got %#lx\n", ret );
+    ret = ldap_addA( NULL, (char *)"", attrs );
+    ok( ret == (ULONG)-1, "ldap_addA should fail, got %#lx\n", ret );
+    ret = ldap_addA( ld, NULL, attrs );
+    ok( ret != (ULONG)-1, "ldap_addA should succeed, got %#lx\n", ret );
+    ret = ldap_addA( ld, (char *)"", NULL );
+    ok( ret != (ULONG)-1, "ldap_addA should succeed, got %#lx\n", ret );
+    ret = ldap_addA( ld, (char *)"", attrs );
+    ok( ret != (ULONG)-1, "ldap_addA should succeed, got %#lx\n", ret );
+
+    ret = ldap_add_sA( NULL, NULL, NULL );
+    ok( ret == LDAP_PARAM_ERROR, "ldap_add_sA should fail, got %#lx\n", ret );
+    ret = ldap_add_sA( NULL, (char *)"", attrs );
+    ok( ret == LDAP_PARAM_ERROR, "ldap_add_sA should fail, got %#lx\n", ret );
+    ret = ldap_add_sA( ld, NULL, attrs );
+    ok( ret == LDAP_ALREADY_EXISTS, "ldap_add_sA should fail, got %#lx\n", ret );
+    ret = ldap_add_sA( ld, (char *)"", NULL );
+    ok( ret == LDAP_PROTOCOL_ERROR, "ldap_add_sA should fail, got %#lx\n", ret );
+    ret = ldap_add_sA( ld, (char *)"", attrs );
+    ok( ret == LDAP_ALREADY_EXISTS, "ldap_add_sA should fail, got %#lx\n", ret );
+
+    ret = ldap_add_extA( NULL, NULL, NULL, NULL, NULL, NULL );
+    ok( ret == LDAP_PARAM_ERROR, "ldap_add_extA should fail, got %#lx\n", ret );
+    ret = ldap_add_extA( NULL, (char *)"", attrs, NULL, NULL, &num );
+    ok( ret == LDAP_PARAM_ERROR, "ldap_add_extA should fail, got %#lx\n", ret );
+    ret = ldap_add_extA( ld, NULL, attrs, NULL, NULL, &num );
+    ok( !ret, "ldap_add_extA should succeed, got %#lx\n", ret );
+    ret = ldap_add_extA( ld, (char *)"", NULL, NULL, NULL, &num );
+    ok( !ret, "ldap_add_extA should succeed, got %#lx\n", ret );
+    ret = ldap_add_extA( ld, (char *)"", attrs, NULL, NULL, NULL );
+    ok( ret == LDAP_PARAM_ERROR, "ldap_add_extA should fail, got %#lx\n", ret );
+    ret = ldap_add_extA( ld, (char *)"", attrs, NULL, NULL, &num );
+    ok( !ret, "ldap_add_extA should succeed, got %#lx\n", ret );
+
+    ret = ldap_add_ext_sA( NULL, NULL, NULL, NULL, NULL );
+    ok( ret == LDAP_PARAM_ERROR, "ldap_add_ext_sA should fail, got %#lx\n", ret );
+    ret = ldap_add_ext_sA( NULL, (char *)"", attrs, NULL, NULL );
+    ok( ret == LDAP_PARAM_ERROR, "ldap_add_ext_sA should fail, got %#lx\n", ret );
+    ret = ldap_add_ext_sA( ld, NULL, attrs, NULL, NULL );
+    ok( ret == LDAP_ALREADY_EXISTS, "ldap_add_ext_sA should fail, got %#lx\n", ret );
+    ret = ldap_add_ext_sA( ld, (char *)"", NULL, NULL, NULL );
+    ok( ret == LDAP_PROTOCOL_ERROR, "ldap_add_ext_sA should fail, got %#lx\n", ret );
+    ret = ldap_add_ext_sA( ld, (char *)"", attrs, NULL, NULL );
+    ok( ret == LDAP_ALREADY_EXISTS, "ldap_add_ext_sA should fail, got %#lx\n", ret );
+
+    ldap_unbind( ld );
+}
+
 static void test_ldap_server_control( void )
 {
     /* SEQUENCE  { INTEGER :: 0x07 } */
@@ -297,6 +357,7 @@ START_TEST (parse)
     test_ldap_paged_search();
     test_ldap_server_control();
     test_ldap_bind_sA();
+    test_ldap_add();
 
     ld = ldap_initA( (char *)"db.debian.org", 389 );
     ok( ld != NULL, "ldap_init failed\n" );
