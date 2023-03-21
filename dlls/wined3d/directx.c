@@ -2530,7 +2530,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d_adapter *adapter,
 
     caps->TextureOpCaps                    = fragment_caps.TextureOpCaps;
     caps->MaxTextureBlendStages            = fragment_caps.MaxTextureBlendStages;
-    caps->MaxSimultaneousTextures          = fragment_caps.MaxSimultaneousTextures;
+    caps->MaxSimultaneousTextures          = fragment_caps.max_textures;
 
     caps->MaxUserClipPlanes                = vertex_caps.max_user_clip_planes;
     caps->MaxActiveLights                  = vertex_caps.max_active_lights;

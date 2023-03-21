@@ -1298,7 +1298,7 @@ static enum wined3d_feature_level feature_level_from_caps(const struct wined3d_g
 
     if (fragment_caps->TextureOpCaps & WINED3DTEXOPCAPS_DOTPRODUCT3)
         return WINED3D_FEATURE_LEVEL_7;
-    if (fragment_caps->MaxSimultaneousTextures > 1)
+    if (fragment_caps->max_textures > 1)
         return WINED3D_FEATURE_LEVEL_6;
 
     return WINED3D_FEATURE_LEVEL_5;
@@ -5189,7 +5189,7 @@ static void wined3d_adapter_gl_init_d3d_info(struct wined3d_adapter_gl *adapter_
     d3d_info->limits.vs_uniform_count = shader_caps.vs_uniform_count;
     d3d_info->limits.ps_uniform_count = shader_caps.ps_uniform_count;
     d3d_info->limits.varying_count = shader_caps.varying_count;
-    d3d_info->limits.ffp_textures = fragment_caps.MaxSimultaneousTextures;
+    d3d_info->limits.ffp_textures = fragment_caps.max_textures;
     d3d_info->limits.ffp_blend_stages = fragment_caps.MaxTextureBlendStages;
     TRACE("Max texture stages: %u.\n", d3d_info->limits.ffp_blend_stages);
     d3d_info->limits.ffp_vertex_blend_matrices = vertex_caps.max_vertex_blend_matrices;

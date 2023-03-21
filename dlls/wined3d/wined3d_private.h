@@ -1998,7 +1998,7 @@ struct fragment_caps
     DWORD PrimitiveMiscCaps;
     DWORD TextureOpCaps;
     DWORD MaxTextureBlendStages;
-    DWORD MaxSimultaneousTextures;
+    unsigned int max_textures;
 };
 
 #define GL_EXT_EMUL_ARB_MULTITEXTURE 0x00000001

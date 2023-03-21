@@ -5186,7 +5186,7 @@ static void ffp_fragment_get_caps(const struct wined3d_adapter *adapter, struct 
         caps->TextureOpCaps |= WINED3DTEXOPCAPS_DOTPRODUCT3;
 
     caps->MaxTextureBlendStages = gl_info->limits.ffp_textures;
-    caps->MaxSimultaneousTextures = gl_info->limits.ffp_textures;
+    caps->max_textures = gl_info->limits.ffp_textures;
 }
 
 static unsigned int ffp_fragment_get_emul_mask(const struct wined3d_adapter *adapter)

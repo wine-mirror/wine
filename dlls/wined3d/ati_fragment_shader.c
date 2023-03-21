@@ -1313,7 +1313,7 @@ static void atifs_get_caps(const struct wined3d_adapter *adapter, struct fragmen
      * r200 series and use an ARB or GLSL shader instead
      */
     caps->MaxTextureBlendStages   = WINED3D_MAX_FFP_TEXTURES;
-    caps->MaxSimultaneousTextures = 6;
+    caps->max_textures = 6;
 }
 
 static unsigned int atifs_get_emul_mask(const struct wined3d_adapter *adapter)

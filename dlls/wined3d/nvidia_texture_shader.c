@@ -748,7 +748,7 @@ static void nvrc_fragment_get_caps(const struct wined3d_adapter *adapter, struct
 #endif
 
     caps->MaxTextureBlendStages = min(WINED3D_MAX_FFP_TEXTURES, gl_info->limits.general_combiners);
-    caps->MaxSimultaneousTextures = gl_info->limits.ffp_textures;
+    caps->max_textures = gl_info->limits.ffp_textures;
 }
 
 static unsigned int nvrc_fragment_get_emul_mask(const struct wined3d_adapter *adapter)

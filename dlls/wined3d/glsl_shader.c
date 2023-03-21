@@ -12081,7 +12081,7 @@ static void glsl_fragment_pipe_get_caps(const struct wined3d_adapter *adapter, s
             | WINED3DTEXOPCAPS_BUMPENVMAP
             | WINED3DTEXOPCAPS_BUMPENVMAPLUMINANCE;
     caps->MaxTextureBlendStages = WINED3D_MAX_FFP_TEXTURES;
-    caps->MaxSimultaneousTextures = min(gl_info->limits.samplers[WINED3D_SHADER_TYPE_PIXEL], WINED3D_MAX_FFP_TEXTURES);
+    caps->max_textures = min(gl_info->limits.samplers[WINED3D_SHADER_TYPE_PIXEL], WINED3D_MAX_FFP_TEXTURES);
 }
 
 static unsigned int glsl_fragment_pipe_get_emul_mask(const struct wined3d_adapter *adapter)
