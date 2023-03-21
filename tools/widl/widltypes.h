@@ -37,7 +37,6 @@ struct uuid
 #define TRUE 1
 #define FALSE 0
 
-typedef struct _loc_info_t loc_info_t;
 typedef struct _attr_t attr_t;
 typedef struct _attr_custdata_t attr_custdata_t;
 typedef struct _expr_t expr_t;
@@ -311,7 +310,7 @@ enum type_basic_type
 #define TYPE_BASIC_INT_MIN TYPE_BASIC_INT8
 #define TYPE_BASIC_INT_MAX TYPE_BASIC_HYPER
 
-struct _loc_info_t
+struct location
 {
     const char *input_name;
     int line_number;
@@ -513,7 +512,7 @@ struct _type_t {
   unsigned int typestring_offset;
   unsigned int ptrdesc;           /* used for complex structs */
   int typelib_idx;
-  loc_info_t loc_info;
+  struct location where;
   unsigned int ignore : 1;
   unsigned int defined : 1;
   unsigned int written : 1;
@@ -533,7 +532,7 @@ struct _var_t {
   /* fields specific to functions */
   unsigned int procstring_offset, func_idx;
 
-  struct _loc_info_t loc_info;
+  struct location where;
 
   unsigned int declonly : 1;
 
@@ -654,7 +653,7 @@ type_t *reg_type(type_t *type, const char *name, struct namespace *namespace, in
 var_t *make_var(char *name);
 var_list_t *append_var(var_list_t *list, var_t *var);
 
-void init_loc_info(loc_info_t *);
+void init_location( struct location * );
 
 char *format_namespace(struct namespace *namespace, const char *prefix, const char *separator, const char *suffix,
                        const char *abi_prefix);

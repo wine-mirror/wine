@@ -1791,9 +1791,7 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, declarator
     {
       if (ptr_attr && ptr_attr != FC_UP &&
           type_get_type(type_pointer_get_ref_type(ptr)) == TYPE_INTERFACE)
-          warning_loc_info(&v->loc_info,
-                           "%s: pointer attribute applied to interface "
-                           "pointer type has no effect\n", v->name);
+          warning_at( &v->where, "%s: pointer attribute applied to interface pointer type has no effect\n", v->name );
       if (!ptr_attr && top)
       {
         /* FIXME: this is a horrible hack to cope with the issue that we
@@ -1972,7 +1970,7 @@ var_t *make_var(char *name)
   init_declspec(&v->declspec, NULL);
   v->attrs = NULL;
   v->eval = NULL;
-  init_loc_info(&v->loc_info);
+  init_location( &v->where );
   v->declonly = FALSE;
   return v;
 }
@@ -1984,7 +1982,7 @@ static var_t *copy_var(var_t *src, char *name, map_attrs_filter_t attr_filter)
   v->declspec = src->declspec;
   v->attrs = map_attrs(src->attrs, attr_filter);
   v->eval = src->eval;
-  v->loc_info = src->loc_info;
+  v->where = src->where;
   return v;
 }
 
@@ -2195,10 +2193,9 @@ static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, at
        * FIXME: We may consider string separated type tables for each input
        *        for cleaner solution.
        */
-      if (cur && input_name == cur->loc_info.input_name)
-          error_loc("%s: redefinition error; original definition was at %s:%d\n",
-                    cur->name, cur->loc_info.input_name,
-                    cur->loc_info.line_number);
+      if (cur && input_name == cur->where.input_name)
+          error_loc( "%s: redefinition error; original definition was at %s:%d\n",
+                     cur->name, cur->where.input_name, cur->where.line_number );
 
       name = declare_var(attrs, decl_spec, decl, 0);
       cur = type_new_alias(&name->declspec, name->name);
@@ -2486,7 +2483,7 @@ attr_list_t *append_attr(attr_list_t *list, attr_t *attr)
         LIST_FOR_EACH_ENTRY(attr_existing, list, attr_t, entry)
             if (attr_existing->type == attr->type)
             {
-                parser_warning("duplicate attribute %s\n", get_attr_display_name(attr->type));
+                warning_loc( "duplicate attribute %s\n", get_attr_display_name(attr->type) );
                 /* use the last attribute, like MIDL does */
                 list_remove(&attr_existing->entry);
                 break;
@@ -2779,8 +2776,7 @@ static void check_conformance_expr_list(const char *attr_name, const var_t *arg,
         {
             const type_t *expr_type = expr_resolve_type(&expr_loc, container_type, dim);
             if (!is_allowed_conf_type(expr_type))
-                error_loc_info(&arg->loc_info, "expression must resolve to integral type <= 32bits for attribute %s\n",
-                               attr_name);
+                error_at( &arg->where, "expression must resolve to integral type <= 32bits for attribute %s\n", attr_name );
         }
     }
 }
@@ -2822,9 +2818,7 @@ static void check_field_common(const type_t *container_type,
 
     if (is_attr(arg->attrs, ATTR_LENGTHIS) &&
         (is_attr(arg->attrs, ATTR_STRING) || is_aliaschain_attr(arg->declspec.type, ATTR_STRING)))
-        error_loc_info(&arg->loc_info,
-                       "string and length_is specified for argument %s are mutually exclusive attributes\n",
-                       arg->name);
+        error_at( &arg->where, "string and length_is specified for argument %s are mutually exclusive attributes\n", arg->name );
 
     if (is_attr(arg->attrs, ATTR_SIZEIS))
     {
@@ -2847,7 +2841,7 @@ static void check_field_common(const type_t *container_type,
             expr_loc.attr = "iid_is";
             expr_type = expr_resolve_type(&expr_loc, container_type, expr);
             if (!expr_type || !is_ptr_guid_type(expr_type))
-                error_loc_info(&arg->loc_info, "expression must resolve to pointer to GUID type for attribute iid_is\n");
+                error_at( &arg->where, "expression must resolve to pointer to GUID type for attribute iid_is\n" );
         }
     }
     if (is_attr(arg->attrs, ATTR_SWITCHIS))
@@ -2861,8 +2855,7 @@ static void check_field_common(const type_t *container_type,
             expr_loc.attr = "switch_is";
             expr_type = expr_resolve_type(&expr_loc, container_type, expr);
             if (!expr_type || !is_allowed_conf_type(expr_type))
-                error_loc_info(&arg->loc_info, "expression must resolve to integral type <= 32bits for attribute %s\n",
-                               expr_loc.attr);
+                error_at( &arg->where, "expression must resolve to integral type <= 32bits for attribute %s\n", expr_loc.attr );
         }
     }
 
@@ -2902,17 +2895,14 @@ static void check_field_common(const type_t *container_type,
             default:
                 break;
             }
-            error_loc_info(&arg->loc_info, "%s \'%s\' of %s \'%s\' %s\n",
-                           var_type, arg->name, container_type_name, container_name, reason);
+            error_at( &arg->where, "%s \'%s\' of %s \'%s\' %s\n", var_type, arg->name, container_type_name, container_name, reason );
             break;
         }
         case TGT_CTXT_HANDLE:
         case TGT_CTXT_HANDLE_POINTER:
             if (type_get_type(container_type) != TYPE_FUNCTION)
-                error_loc_info(&arg->loc_info,
-                               "%s \'%s\' of %s \'%s\' cannot be a context handle\n",
-                               var_type, arg->name, container_type_name,
-                               container_name);
+                error_at( &arg->where, "%s \'%s\' of %s \'%s\' cannot be a context handle\n",
+                          var_type, arg->name, container_type_name, container_name );
             break;
         case TGT_STRING:
         {
@@ -2920,7 +2910,7 @@ static void check_field_common(const type_t *container_type,
             while (is_ptr(t))
                 t = type_pointer_get_ref_type(t);
             if (is_aliaschain_attr(t, ATTR_RANGE))
-                warning_loc_info(&arg->loc_info, "%s: range not verified for a string of ranged types\n", arg->name);
+                warning_at( &arg->where, "%s: range not verified for a string of ranged types\n", arg->name );
             break;
         }
         case TGT_POINTER:
@@ -2934,9 +2924,7 @@ static void check_field_common(const type_t *container_type,
         case TGT_ENUM:
             type = type_get_real_type(type);
             if (!type_is_complete(type))
-            {
-                error_loc_info(&arg->loc_info, "undefined type declaration \"enum %s\"\n", type->name);
-            }
+                error_at( &arg->where, "undefined type declaration \"enum %s\"\n", type->name );
         case TGT_USER_TYPE:
         case TGT_IFACE_POINTER:
         case TGT_BASIC:
@@ -2964,14 +2952,14 @@ static void check_remoting_fields(const var_t *var, type_t *type)
         if (type_is_complete(type))
             fields = type_struct_get_fields(type);
         else
-            error_loc_info(&var->loc_info, "undefined type declaration \"struct %s\"\n", type->name);
+            error_at( &var->where, "undefined type declaration \"struct %s\"\n", type->name );
     }
     else if (type_get_type(type) == TYPE_UNION || type_get_type(type) == TYPE_ENCAPSULATED_UNION)
     {
         if (type_is_complete(type))
             fields = type_union_get_cases(type);
         else
-            error_loc_info(&var->loc_info, "undefined type declaration \"union %s\"\n", type->name);
+            error_at( &var->where, "undefined type declaration \"union %s\"\n", type->name );
     }
 
     if (fields) LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
@@ -3003,10 +2991,10 @@ static void check_remoting_args(const var_t *func)
             case TGT_UNION:
             case TGT_CTXT_HANDLE:
             case TGT_USER_TYPE:
-                error_loc_info(&arg->loc_info, "out parameter \'%s\' of function \'%s\' is not a pointer\n", arg->name, funcname);
+                error_at( &arg->where, "out parameter \'%s\' of function \'%s\' is not a pointer\n", arg->name, funcname );
                 break;
             case TGT_IFACE_POINTER:
-                error_loc_info(&arg->loc_info, "out interface pointer \'%s\' of function \'%s\' is not a double pointer\n", arg->name, funcname);
+                error_at( &arg->where, "out interface pointer \'%s\' of function \'%s\' is not a double pointer\n", arg->name, funcname );
                 break;
             case TGT_STRING:
                 if (is_array(type))
@@ -3017,7 +3005,7 @@ static void check_remoting_args(const var_t *func)
                     if (!type_array_has_conformance(type) && type_array_get_dim(type)) break;
                 }
                 if (is_attr( arg->attrs, ATTR_IN )) break;
-                error_loc_info(&arg->loc_info, "out parameter \'%s\' of function \'%s\' cannot be an unsized string\n", arg->name, funcname);
+                error_at( &arg->where, "out parameter \'%s\' of function \'%s\' cannot be an unsized string\n", arg->name, funcname );
                 break;
             case TGT_INVALID:
                 /* already error'd before we get here */
@@ -3080,7 +3068,7 @@ static void check_functions(const type_t *iface, int is_inside_library)
                 if (is_attr(func->attrs, ATTR_PROPGET) != is_attr(func_iter->attrs, ATTR_PROPGET)) continue;
                 if (is_attr(func->attrs, ATTR_PROPPUT) != is_attr(func_iter->attrs, ATTR_PROPPUT)) continue;
                 if (is_attr(func->attrs, ATTR_PROPPUTREF) != is_attr(func_iter->attrs, ATTR_PROPPUTREF)) continue;
-                error_loc_info(&func->loc_info, "duplicated function \'%s\'\n", func->name);
+                error_at( &func->where, "duplicated function \'%s\'\n", func->name );
             }
         }
     }
@@ -3401,11 +3389,11 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
     return list;
 }
 
-void init_loc_info(loc_info_t *i)
+void init_location( struct location *where )
 {
-    i->input_name = input_name ? input_name : "stdin";
-    i->line_number = line_number;
-    i->near_text = parser_text;
+    where->input_name = input_name ? input_name : "stdin";
+    where->line_number = line_number;
+    where->near_text = parser_text;
 }
 
 type_t *find_parameterized_type(type_t *type, typeref_list_t *params)

@@ -392,7 +392,7 @@ static inline type_t *type_runtimeclass_get_default_iface(const type_t *type, in
             return ref->type;
 
     if (!check) return NULL;
-    error_loc_info(&type->loc_info, "runtimeclass %s needs a default interface\n", type->name);
+    error_at( &type->where, "runtimeclass %s needs a default interface\n", type->name );
 }
 
 static inline type_t *type_delegate_get_iface(const type_t *type)

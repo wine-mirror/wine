@@ -24,12 +24,12 @@
 #include "widltypes.h"
 
 void parser_error(const char *s) __attribute__((noreturn));
-int parser_warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
-void error_loc(const char *s, ...) __attribute__((format (printf, 1, 2))) __attribute__((noreturn));
 void error(const char *s, ...) __attribute__((format (printf, 1, 2))) __attribute__((noreturn));
-void error_loc_info(const loc_info_t *, const char *s, ...) __attribute__((format (printf, 2, 3))) __attribute__((noreturn));
+void error_at( const struct location *, const char *s, ... ) __attribute__((format( printf, 2, 3 ))) __attribute__((noreturn));
+#define error_loc( ... ) error_at( NULL, ## __VA_ARGS__ )
 void warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
-void warning_loc_info(const loc_info_t *, const char *s, ...) __attribute__((format (printf, 2, 3)));
+void warning_at( const struct location *, const char *s, ... ) __attribute__((format( printf, 2, 3 )));
+#define warning_loc( ... ) warning_at( NULL, ## __VA_ARGS__ )
 void chat(const char *s, ...) __attribute__((format (printf, 1, 2)));
 size_t strappend(char **buf, size_t *len, size_t pos, const char* fmt, ...) __attribute__((__format__ (__printf__, 4, 5 )));
 
