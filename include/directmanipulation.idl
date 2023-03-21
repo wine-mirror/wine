@@ -135,6 +135,17 @@ typedef enum DIRECTMANIPULATION_INPUT_MODE
     DIRECTMANIPULATION_INPUT_MODE_MANUAL
 } DIRECTMANIPULATION_INPUT_MODE;
 
+typedef enum DIRECTMANIPULATION_INTERACTION_TYPE
+{
+    DIRECTMANIPULATION_INTERACTION_BEGIN                    = 0,
+    DIRECTMANIPULATION_INTERACTION_TYPE_MANIPULATION        = 1,
+    DIRECTMANIPULATION_INTERACTION_TYPE_GESTURE_TAP         = 2,
+    DIRECTMANIPULATION_INTERACTION_TYPE_GESTURE_HOLD        = 3,
+    DIRECTMANIPULATION_INTERACTION_TYPE_GESTURE_CROSS_SLIDE = 4,
+    DIRECTMANIPULATION_INTERACTION_TYPE_GESTURE_PINCH_ZOOM  = 5,
+    DIRECTMANIPULATION_INTERACTION_END                      = 100
+} DIRECTMANIPULATION_INTERACTION_TYPE;
+
 [
     local,
     object,
@@ -388,6 +399,18 @@ interface IDirectManipulationCompositor2 : IDirectManipulationCompositor
 {
     HRESULT AddContentWithCrossProcessChaining([in] IDirectManipulationPrimaryContent *content, [in] IUnknown *device,
                                                [in] IUnknown *parentVisual, [in] IUnknown *childVisual);
+}
+
+[
+    local,
+    object,
+    uuid(e43f45b8-42b4-403e-b1f2-273b8f510830),
+    pointer_default(unique)
+]
+interface IDirectManipulationInteractionEventHandler : IUnknown
+{
+    HRESULT OnInteraction([in] IDirectManipulationViewport2 *viewport,
+                          [in] DIRECTMANIPULATION_INTERACTION_TYPE interaction);
 }
 
 [
