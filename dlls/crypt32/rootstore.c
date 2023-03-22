@@ -657,7 +657,7 @@ static HCERTSTORE create_root_store(void)
 void CRYPT_ImportSystemRootCertsToReg(void)
 {
     HCERTSTORE store = NULL;
-    HKEY key;
+    HKEY key = NULL;
     LONG rc;
     HANDLE hsem;
 
@@ -674,24 +674,28 @@ void CRYPT_ImportSystemRootCertsToReg(void)
     }
 
     if(GetLastError() == ERROR_ALREADY_EXISTS)
-        WaitForSingleObject(hsem, INFINITE);
-    else
     {
-        if ((store = create_root_store()))
-        {
-            rc = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\SystemCertificates\\Root\\Certificates", 0, NULL, 0,
-                KEY_ALL_ACCESS, NULL, &key, 0);
-            if (!rc)
-            {
-                if (!CRYPT_SerializeContextsToReg(key, REG_OPTION_VOLATILE, pCertInterface, store))
-                    ERR("Failed to import system certs into registry, %08lx\n", GetLastError());
-                RegCloseKey(key);
-            }
-            CertCloseStore(store, 0);
-        } else
-            ERR("Failed to create root store\n");
+        WaitForSingleObject(hsem, INFINITE);
+        goto done;
     }
 
+    rc = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\SystemCertificates\\Root\\Certificates", 0, NULL, 0,
+            KEY_ALL_ACCESS, NULL, &key, 0);
+    if (rc)
+        goto done;
+
+    if (!(store = create_root_store()))
+    {
+        ERR("Failed to create root store\n");
+        goto done;
+    }
+
+    if (!CRYPT_SerializeContextsToReg(key, REG_OPTION_VOLATILE, pCertInterface, store))
+        ERR("Failed to import system certs into registry, %08lx\n", GetLastError());
+
+done:
+    RegCloseKey(key);
+    CertCloseStore(store, 0);
     root_certs_imported = TRUE;
     ReleaseSemaphore(hsem, 1, NULL);
     CloseHandle(hsem);
