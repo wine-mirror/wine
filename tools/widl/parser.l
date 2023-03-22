@@ -173,7 +173,7 @@ static int token_winrt( int token, const char *str, YYSTYPE *yylval )
 
 static void winrt_enable( int ns_prefix )
 {
-    if (!list_empty( &import_stack ) && !winrt_mode) error_loc( "WinRT IDL file imported in non-winrt mode." );
+    if (!list_empty( &import_stack ) && !winrt_mode) error_loc( "WinRT IDL file imported in non-winrt mode.\n" );
 
     use_abi_namespace = ns_prefix;
     winrt_mode = TRUE;
