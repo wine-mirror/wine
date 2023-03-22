@@ -26,6 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ui);
 struct uisettings
 {
     IUISettings IUISettings_iface;
+    IUISettings2 IUISettings2_iface;
     IUISettings3 IUISettings3_iface;
     LONG ref;
 };
@@ -54,6 +55,10 @@ static HRESULT WINAPI uisettings_QueryInterface( IUISettings *iface, REFIID iid,
         IsEqualGUID( iid, &IID_IUISettings ))
     {
         *out = &impl->IUISettings_iface;
+    }
+    else if (IsEqualGUID( iid, &IID_IUISettings2 ))
+    {
+        *out = &impl->IUISettings2_iface;
     }
     else if (IsEqualGUID( iid, &IID_IUISettings3 ))
     {
@@ -212,6 +217,43 @@ static const struct IUISettingsVtbl uisettings_vtbl =
     uisettings_UIElementColor
 };
 
+DEFINE_IINSPECTABLE( uisettings2, IUISettings2, struct uisettings, IUISettings_iface );
+
+static HRESULT WINAPI uisettings2_get_TextScaleFactor( IUISettings2 *iface, DOUBLE *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uisettings2_add_TextScaleFactorChanged( IUISettings2 *iface, ITypedEventHandler_UISettings_IInspectable *handler,
+        EventRegistrationToken *cookie )
+{
+    FIXME( "iface %p, handler %p, cookie %p stub!\n", iface, handler, cookie );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uisettings2_remove_TextScaleFactorChanged( IUISettings2 *iface, EventRegistrationToken cookie )
+{
+    FIXME( "iface %p, cookie %#I64x stub!\n", iface, cookie.value );
+    return E_NOTIMPL;
+}
+
+static const struct IUISettings2Vtbl uisettings2_vtbl =
+{
+    uisettings2_QueryInterface,
+    uisettings2_AddRef,
+    uisettings2_Release,
+
+    /* IInspectable methods */
+    uisettings2_GetIids,
+    uisettings2_GetRuntimeClassName,
+    uisettings2_GetTrustLevel,
+
+    /* IUISettings2 methods */
+    uisettings2_get_TextScaleFactor,
+    uisettings2_add_TextScaleFactorChanged,
+    uisettings2_remove_TextScaleFactorChanged
+};
 
 static HRESULT WINAPI uisettings3_QueryInterface( IUISettings3 *iface, REFIID iid, void **out )
 {
@@ -402,6 +444,7 @@ static HRESULT WINAPI factory_ActivateInstance( IActivationFactory *iface, IInsp
     }
 
     impl->IUISettings_iface.lpVtbl = &uisettings_vtbl;
+    impl->IUISettings2_iface.lpVtbl = &uisettings2_vtbl;
     impl->IUISettings3_iface.lpVtbl = &uisettings3_vtbl;
     impl->ref = 1;
 
