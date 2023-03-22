@@ -36,11 +36,6 @@ static inline struct uisettings *impl_from_IUISettings( IUISettings *iface )
     return CONTAINING_RECORD( iface, struct uisettings, IUISettings_iface );
 }
 
-static inline struct uisettings *impl_from_IUISettings3( IUISettings3 *iface )
-{
-    return CONTAINING_RECORD( iface, struct uisettings, IUISettings3_iface );
-}
-
 static HRESULT WINAPI uisettings_QueryInterface( IUISettings *iface, REFIID iid, void **out )
 {
     struct uisettings *impl = impl_from_IUISettings( iface );
@@ -255,41 +250,7 @@ static const struct IUISettings2Vtbl uisettings2_vtbl =
     uisettings2_remove_TextScaleFactorChanged
 };
 
-static HRESULT WINAPI uisettings3_QueryInterface( IUISettings3 *iface, REFIID iid, void **out )
-{
-    struct uisettings *impl = impl_from_IUISettings3( iface );
-    return uisettings_QueryInterface(&impl->IUISettings_iface, iid, out);
-}
-
-static ULONG WINAPI uisettings3_AddRef( IUISettings3 *iface )
-{
-    struct uisettings *impl = impl_from_IUISettings3( iface );
-    return uisettings_AddRef(&impl->IUISettings_iface);
-}
-
-static ULONG WINAPI uisettings3_Release( IUISettings3 *iface )
-{
-    struct uisettings *impl = impl_from_IUISettings3( iface );
-    return uisettings_Release(&impl->IUISettings_iface);
-}
-
-static HRESULT WINAPI uisettings3_GetIids( IUISettings3 *iface, ULONG *iid_count, IID **iids )
-{
-    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI uisettings3_GetRuntimeClassName( IUISettings3 *iface, HSTRING *class_name )
-{
-    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI uisettings3_GetTrustLevel( IUISettings3 *iface, TrustLevel *trust_level )
-{
-    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
-    return E_NOTIMPL;
-}
+DEFINE_IINSPECTABLE( uisettings3, IUISettings3, struct uisettings, IUISettings_iface );
 
 static DWORD get_app_theme(void)
 {
