@@ -6011,7 +6011,10 @@ static void test_occlusion_query(void)
 
     ID3D11DeviceContext_End(context, query);
     get_query_data(context, query, &data, sizeof(data));
-    ok(data.uint == 640 * 480, "Got unexpected query result 0x%08lx%08lx.\n", data.dword[1], data.dword[0]);
+    /* WARP devices randomly return zero as if the draw did not happen, much
+     * like in test_pipeline_statistics_query(). */
+    ok(data.uint == 640 * 480 || broken(is_warp_device(device) && !data.uint),
+            "Got unexpected query result 0x%08lx%08lx.\n", data.dword[1], data.dword[0]);
 
     memset(&data, 0xff, sizeof(data));
     hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(DWORD), 0);
