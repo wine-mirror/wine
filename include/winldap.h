@@ -499,16 +499,18 @@ ULONG CDECL ldap_extended_operationW(LDAP*,PWCHAR,struct berval*,PLDAPControlW*,
 ULONG CDECL ldap_extended_operation_sA(LDAP*,PCHAR,struct berval*,PLDAPControlA*,PLDAPControlA*,PCHAR*,struct berval**);
 ULONG CDECL ldap_extended_operation_sW(LDAP*,PWCHAR,struct berval*,PLDAPControlW*,PLDAPControlW*,PWCHAR*,struct berval**);
 #define    ldap_extended_operation_s WINELIB_NAME_AW(ldap_extended_operation_s)
-PCHAR CDECL ldap_first_attributeA(LDAP*,LDAPMessage*,BerElement**);
-PWCHAR CDECL ldap_first_attributeW(LDAP*,LDAPMessage*,BerElement**);
+char* CDECL ldap_first_attributeA(LDAP*,LDAPMessage*,BerElement**)
+    __WINE_DEALLOC(ldap_memfreeA) __WINE_MALLOC;
+WCHAR* CDECL ldap_first_attributeW(LDAP*,LDAPMessage*,BerElement**)
+    __WINE_DEALLOC(ldap_memfreeW) __WINE_MALLOC;
 #define    ldap_first_attribute WINELIB_NAME_AW(ldap_first_attribute)
 LDAPMessage* CDECL ldap_first_entry(LDAP*,LDAPMessage*);
 LDAPMessage* CDECL ldap_first_reference(LDAP*,LDAPMessage*);
 ULONG CDECL ldap_free_controlsA(LDAPControlA**);
 ULONG CDECL ldap_free_controlsW(LDAPControlW**);
 #define    ldap_free_controls WINELIB_NAME_AW(ldap_free_controls)
-PCHAR CDECL ldap_get_dnA(LDAP*,LDAPMessage*);
-PWCHAR CDECL ldap_get_dnW(LDAP*,LDAPMessage*);
+char* CDECL ldap_get_dnA(LDAP*,LDAPMessage*) __WINE_DEALLOC(ldap_memfreeA) __WINE_MALLOC;
+WCHAR* CDECL ldap_get_dnW(LDAP*,LDAPMessage*) __WINE_DEALLOC(ldap_memfreeW) __WINE_MALLOC;
 #define    ldap_get_dn WINELIB_NAME_AW(ldap_get_dn)
 ULONG CDECL ldap_get_next_page(PLDAP,PLDAPSearch,ULONG,ULONG*);
 ULONG CDECL ldap_get_next_page_s(PLDAP,PLDAPSearch,struct l_timeval*,ULONG,ULONG*,LDAPMessage**);
@@ -552,8 +554,10 @@ ULONG CDECL ldap_modrdn_sA(LDAP*,PCHAR,PCHAR);
 ULONG CDECL ldap_modrdn_sW(LDAP*,PWCHAR,PWCHAR);
 #define    ldap_modrdn_s WINELIB_NAME_AW(ldap_modrdn_s)
 ULONG CDECL ldap_msgfree(LDAPMessage*);
-PCHAR CDECL ldap_next_attributeA(LDAP*,LDAPMessage*,BerElement*);
-PWCHAR CDECL ldap_next_attributeW(LDAP*,LDAPMessage*,BerElement*);
+char* CDECL ldap_next_attributeA(LDAP*,LDAPMessage*,BerElement*)
+    __WINE_DEALLOC(ldap_memfreeA) __WINE_MALLOC;
+WCHAR* CDECL ldap_next_attributeW(LDAP*,LDAPMessage*,BerElement*)
+    __WINE_DEALLOC(ldap_memfreeW) __WINE_MALLOC;
 #define    ldap_next_attribute WINELIB_NAME_AW(ldap_next_attribute)
 LDAPMessage * CDECL ldap_next_entry(LDAP*,LDAPMessage*);
 LDAP * CDECL ldap_openA(PCHAR,ULONG);
