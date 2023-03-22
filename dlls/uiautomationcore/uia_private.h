@@ -151,6 +151,7 @@ const struct uia_pattern_info *uia_pattern_info_from_id(PATTERNID pattern_id) DE
 const struct uia_control_type_info *uia_control_type_info_from_id(CONTROLTYPEID control_type_id) DECLSPEC_HIDDEN;
 
 /* uia_provider.c */
+HRESULT create_base_hwnd_provider(HWND hwnd, IRawElementProviderSimple **elprov) DECLSPEC_HIDDEN;
 void uia_stop_provider_thread(void) DECLSPEC_HIDDEN;
 void uia_provider_thread_remove_node(HUIANODE node) DECLSPEC_HIDDEN;
 LRESULT uia_lresult_from_node(HUIANODE huianode) DECLSPEC_HIDDEN;

@@ -1203,6 +1203,147 @@ HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, long child_id, DWORD
 }
 
 /*
+ * Default ProviderType_BaseHwnd IRawElementProviderSimple interface.
+ */
+struct base_hwnd_provider {
+    IRawElementProviderSimple IRawElementProviderSimple_iface;
+    LONG refcount;
+
+    HWND hwnd;
+};
+
+static inline struct base_hwnd_provider *impl_from_base_hwnd_provider(IRawElementProviderSimple *iface)
+{
+    return CONTAINING_RECORD(iface, struct base_hwnd_provider, IRawElementProviderSimple_iface);
+}
+
+static HRESULT WINAPI base_hwnd_provider_QueryInterface(IRawElementProviderSimple *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IRawElementProviderSimple) || IsEqualIID(riid, &IID_IUnknown))
+        *ppv = iface;
+    else
+        return E_NOINTERFACE;
+
+    IRawElementProviderSimple_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI base_hwnd_provider_AddRef(IRawElementProviderSimple *iface)
+{
+    struct base_hwnd_provider *base_hwnd_prov = impl_from_base_hwnd_provider(iface);
+    ULONG refcount = InterlockedIncrement(&base_hwnd_prov->refcount);
+
+    TRACE("%p, refcount %ld\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI base_hwnd_provider_Release(IRawElementProviderSimple *iface)
+{
+    struct base_hwnd_provider *base_hwnd_prov = impl_from_base_hwnd_provider(iface);
+    ULONG refcount = InterlockedDecrement(&base_hwnd_prov->refcount);
+
+    TRACE("%p, refcount %ld\n", iface, refcount);
+
+    if (!refcount)
+        heap_free(base_hwnd_prov);
+
+    return refcount;
+}
+
+static HRESULT WINAPI base_hwnd_provider_get_ProviderOptions(IRawElementProviderSimple *iface,
+        enum ProviderOptions *ret_val)
+{
+    TRACE("%p, %p\n", iface, ret_val);
+    *ret_val = ProviderOptions_ClientSideProvider;
+    return S_OK;
+}
+
+static HRESULT WINAPI base_hwnd_provider_GetPatternProvider(IRawElementProviderSimple *iface,
+        PATTERNID pattern_id, IUnknown **ret_val)
+{
+    FIXME("%p, %d, %p: stub\n", iface, pattern_id, ret_val);
+    *ret_val = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI base_hwnd_provider_GetPropertyValue(IRawElementProviderSimple *iface,
+        PROPERTYID prop_id, VARIANT *ret_val)
+{
+    struct base_hwnd_provider *base_hwnd_prov = impl_from_base_hwnd_provider(iface);
+    HRESULT hr = S_OK;
+
+    TRACE("%p, %d, %p\n", iface, prop_id, ret_val);
+
+    VariantInit(ret_val);
+    if (!IsWindow(base_hwnd_prov->hwnd))
+        return UIA_E_ELEMENTNOTAVAILABLE;
+
+    switch (prop_id)
+    {
+    case UIA_ProviderDescriptionPropertyId:
+        V_VT(ret_val) = VT_BSTR;
+        V_BSTR(ret_val) = SysAllocString(L"Wine: HWND Proxy");
+        break;
+
+    case UIA_NativeWindowHandlePropertyId:
+        V_VT(ret_val) = VT_I4;
+        V_I4(ret_val) = HandleToUlong(base_hwnd_prov->hwnd);
+        break;
+
+    default:
+        break;
+    }
+
+    if (FAILED(hr))
+        VariantClear(ret_val);
+
+    return hr;
+}
+
+static HRESULT WINAPI base_hwnd_provider_get_HostRawElementProvider(IRawElementProviderSimple *iface,
+        IRawElementProviderSimple **ret_val)
+{
+    TRACE("%p, %p\n", iface, ret_val);
+    *ret_val = NULL;
+    return S_OK;
+}
+
+static const IRawElementProviderSimpleVtbl base_hwnd_provider_vtbl = {
+    base_hwnd_provider_QueryInterface,
+    base_hwnd_provider_AddRef,
+    base_hwnd_provider_Release,
+    base_hwnd_provider_get_ProviderOptions,
+    base_hwnd_provider_GetPatternProvider,
+    base_hwnd_provider_GetPropertyValue,
+    base_hwnd_provider_get_HostRawElementProvider,
+};
+
+HRESULT create_base_hwnd_provider(HWND hwnd, IRawElementProviderSimple **elprov)
+{
+    struct base_hwnd_provider *base_hwnd_prov;
+
+    *elprov = NULL;
+
+    if (!hwnd)
+        return E_INVALIDARG;
+
+    if (!IsWindow(hwnd))
+        return UIA_E_ELEMENTNOTAVAILABLE;
+
+    if (!(base_hwnd_prov = heap_alloc_zero(sizeof(*base_hwnd_prov))))
+        return E_OUTOFMEMORY;
+
+    base_hwnd_prov->IRawElementProviderSimple_iface.lpVtbl = &base_hwnd_provider_vtbl;
+    base_hwnd_prov->refcount = 1;
+    base_hwnd_prov->hwnd = hwnd;
+    *elprov = &base_hwnd_prov->IRawElementProviderSimple_iface;
+
+    return S_OK;
+}
+
+/*
  * UI Automation provider thread functions.
  */
 struct uia_provider_thread

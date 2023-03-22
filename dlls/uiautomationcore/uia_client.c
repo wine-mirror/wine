@@ -2646,6 +2646,10 @@ HRESULT WINAPI UiaHUiaNodeFromVariant(VARIANT *in_val, HUIANODE *huianode)
 
 static SAFEARRAY WINAPI *default_uia_provider_callback(HWND hwnd, enum ProviderType prov_type)
 {
+    IRawElementProviderSimple *elprov = NULL;
+    SAFEARRAY *sa = NULL;
+    HRESULT hr;
+
     switch (prov_type)
     {
     case ProviderType_Proxy:
@@ -2657,14 +2661,27 @@ static SAFEARRAY WINAPI *default_uia_provider_callback(HWND hwnd, enum ProviderT
         break;
 
     case ProviderType_BaseHwnd:
-        FIXME("Default ProviderType_BaseHwnd provider unimplemented.\n");
+        hr = create_base_hwnd_provider(hwnd, &elprov);
+        if (FAILED(hr))
+            WARN("create_base_hwnd_provider failed with hr %#lx\n", hr);
         break;
 
     default:
         break;
     }
 
-    return NULL;
+    if (elprov)
+    {
+        LONG idx = 0;
+
+        sa = SafeArrayCreateVector(VT_UNKNOWN, 0, 1);
+        if (sa)
+            SafeArrayPutElement(sa, &idx, (void *)elprov);
+
+        IRawElementProviderSimple_Release(elprov);
+    }
+
+    return sa;
 }
 
 static UiaProviderCallback *uia_provider_callback = default_uia_provider_callback;

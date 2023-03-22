@@ -6532,15 +6532,14 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
     ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
 
     memset(buf, 0, sizeof(buf));
-    todo_wine ok(get_nested_provider_desc(V_BSTR(&v), L"Main", TRUE, buf), "Failed to get nested provider description\n");
-    if (lstrlenW(buf))
-    {
-        check_node_provider_desc_prefix(buf, GetCurrentProcessId(), hwnd);
-        check_node_provider_desc(buf, L"Main", L"Provider_child", TRUE);
-        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
-        check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
-        check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, FALSE);
-    }
+    ok(get_nested_provider_desc(V_BSTR(&v), L"Main", TRUE, buf), "Failed to get nested provider description\n");
+
+    check_node_provider_desc_prefix(buf, GetCurrentProcessId(), hwnd);
+    check_node_provider_desc(buf, L"Main", L"Provider_child", TRUE);
+
+    check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
+    check_node_provider_desc_todo(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+    check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, FALSE);
     VariantClear(&v);
 
     Provider_child.ignore_hwnd_prop = FALSE;
@@ -6749,7 +6748,7 @@ static void test_UiaNodeFromHandle(const char *name)
     SET_EXPECT_MULTI(winproc_GETOBJECT_CLIENT, 2);
     hr = UiaNodeFromHandle(hwnd, &node);
     /* Windows 10 and below return E_FAIL, Windows 11 returns S_OK. */
-    todo_wine ok(hr == S_OK || broken(hr == E_FAIL), "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK || broken(hr == E_FAIL), "Unexpected hr %#lx.\n", hr);
     CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
     todo_wine CHECK_CALLED(winproc_GETOBJECT_CLIENT);
     if (SUCCEEDED(hr))
@@ -6765,23 +6764,20 @@ static void test_UiaNodeFromHandle(const char *name)
     SET_EXPECT(winproc_GETOBJECT_UiaRoot);
     SET_EXPECT_MULTI(winproc_GETOBJECT_CLIENT, 2);
     hr = UiaNodeFromHandle(hwnd, &node);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
     todo_wine CHECK_CALLED(winproc_GETOBJECT_CLIENT);
 
     hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
-        check_node_provider_desc(V_BSTR(&v), L"Annotation", NULL, FALSE);
-        check_node_provider_desc(V_BSTR(&v), L"Main", NULL, FALSE);
-        check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
-        check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
-        VariantClear(&v);
-    }
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
+    check_node_provider_desc_todo(V_BSTR(&v), L"Annotation", NULL, FALSE);
+    check_node_provider_desc_todo(V_BSTR(&v), L"Main", NULL, FALSE);
+    check_node_provider_desc_todo(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+    check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
+    VariantClear(&v);
 
-    todo_wine ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
 
     /*
      * COM initialized, but provider passed into UiaReturnRawElementProvider
@@ -6794,24 +6790,22 @@ static void test_UiaNodeFromHandle(const char *name)
     SET_EXPECT(winproc_GETOBJECT_UiaRoot);
     SET_EXPECT_MULTI(winproc_GETOBJECT_CLIENT, 2);
     hr = UiaNodeFromHandle(hwnd, &node);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
     todo_wine CHECK_CALLED(winproc_GETOBJECT_CLIENT);
 
     hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
-        check_node_provider_desc(V_BSTR(&v), L"Annotation", NULL, FALSE);
-        check_node_provider_desc(V_BSTR(&v), L"Main", NULL, FALSE);
-        check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
-        check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
-        VariantClear(&v);
-    }
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
+    check_node_provider_desc_todo(V_BSTR(&v), L"Annotation", NULL, FALSE);
+    check_node_provider_desc_todo(V_BSTR(&v), L"Main", NULL, FALSE);
+    check_node_provider_desc_todo(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+    check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
+    VariantClear(&v);
+
     ok_method_sequence(node_from_hwnd1, "node_from_hwnd1");
 
-    todo_wine ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
 
     /*
      * COM initialized, but provider passed into UiaReturnRawElementProvider
@@ -6830,31 +6824,29 @@ static void test_UiaNodeFromHandle(const char *name)
     Provider.runtime_id[0] = UiaAppendRuntimeId;
     Provider.runtime_id[1] = 1;
     hr = UiaNodeFromHandle(hwnd, &node);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(Provider.ref == 1 || broken(Provider.ref == 2), "Unexpected refcnt %ld\n", Provider.ref);
     CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
     todo_wine CHECK_CALLED(winproc_GETOBJECT_CLIENT);
 
     hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-    if (SUCCEEDED(hr))
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+
+    check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
+    if (Provider.ref == 1 || get_provider_desc(V_BSTR(&v), L"Annotation:", NULL))
     {
-        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
-
-        if (get_provider_desc(V_BSTR(&v), L"Annotation:", NULL))
-        {
-            check_node_provider_desc(V_BSTR(&v), L"Annotation", NULL, FALSE);
-            check_node_provider_desc(V_BSTR(&v), L"Main", NULL, FALSE);
-        }
-        else
-            check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider", FALSE);
-
-        check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
-        check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
-        VariantClear(&v);
+        check_node_provider_desc_todo(V_BSTR(&v), L"Annotation", NULL, FALSE);
+        check_node_provider_desc_todo(V_BSTR(&v), L"Main", NULL, FALSE);
     }
+    else
+        check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider", FALSE);
+
+    check_node_provider_desc_todo(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+    check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
+    VariantClear(&v);
+
     ok_method_sequence(node_from_hwnd9, "node_from_hwnd9");
-    todo_wine ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
     /*
      * Bug on Windows 8 through Win10v1709 - if we have a RuntimeId failure,
      * refcount doesn't get decremented.
@@ -12335,9 +12327,8 @@ static void test_node_hwnd_provider_(HUIANODE node, HWND hwnd, const char *file,
     winetest_push_context("UIA_NativeWindowHandlePropertyId");
     hr = UiaGetPropertyValue(node, UIA_NativeWindowHandlePropertyId, &v);
     ok_(file, line)(hr == S_OK, "Unexpected hr %#lx\n", hr);
-    todo_wine ok_(file, line)(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
-    if (V_VT(&v) == VT_I4)
-        ok_(file, line)(V_I4(&v) == HandleToUlong(hwnd), "V_I4(&v) = %#lx, expected %#lx\n", V_I4(&v), HandleToUlong(hwnd));
+    ok_(file, line)(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
+    ok_(file, line)(V_I4(&v) == HandleToUlong(hwnd), "V_I4(&v) = %#lx, expected %#lx\n", V_I4(&v), HandleToUlong(hwnd));
     VariantClear(&v);
     winetest_pop_context();
 
