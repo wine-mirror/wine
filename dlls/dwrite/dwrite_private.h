@@ -16,6 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef __WINE_DWRITE_PRIVATE_H
+#define __WINE_DWRITE_PRIVATE_H
+
 #include "dwrite_3.h"
 #include "d2d1.h"
 #include "winternl.h"
@@ -27,11 +30,25 @@
 #define MS_GSUB_TAG DWRITE_MAKE_OPENTYPE_TAG('G','S','U','B')
 #define MS_GPOS_TAG DWRITE_MAKE_OPENTYPE_TAG('G','P','O','S')
 
+typedef struct MATRIX_2X2
+{
+    float m11;
+    float m12;
+    float m21;
+    float m22;
+} MATRIX_2X2;
+
 static const DWRITE_MATRIX identity =
 {
     1.0f, 0.0f,
     0.0f, 1.0f,
     0.0f, 0.0f
+};
+
+static const MATRIX_2X2 identity_2x2 =
+{
+    1.0f, 0.0f,
+    0.0f, 1.0f,
 };
 
 static inline LPWSTR heap_strdupnW(const WCHAR *str, UINT32 len)
@@ -820,3 +837,5 @@ struct font_data_context;
 extern HMODULE dwrite_module DECLSPEC_HIDDEN;
 
 extern void dwrite_fontface_get_glyph_bbox(IDWriteFontFace *fontface, struct dwrite_glyphbitmap *bitmap) DECLSPEC_HIDDEN;
+
+#endif /* __WINE_DWRITE_PRIVATE_H */

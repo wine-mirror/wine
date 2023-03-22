@@ -20,6 +20,7 @@
 #include "windef.h"
 #include "winternl.h"
 #include "dwrite.h"
+#include "dwrite_private.h"
 #include "wine/unixlib.h"
 
 struct create_font_object_params
@@ -66,7 +67,7 @@ struct get_glyph_bbox_params
     unsigned int simulations;
     unsigned int glyph;
     float emsize;
-    DWRITE_MATRIX m;
+    MATRIX_2X2 m;
     RECT *bbox;
 };
 
@@ -77,7 +78,7 @@ struct get_glyph_bitmap_params
     unsigned int glyph;
     unsigned int mode;
     float emsize;
-    DWRITE_MATRIX m;
+    MATRIX_2X2 m;
     RECT bbox;
     int pitch;
     BYTE *bitmap;

@@ -69,6 +69,15 @@ struct cache_entry
     unsigned int has_bitmap : 1;
 };
 
+/* Ignore dx and dy because FreeType doesn't actually use it */
+static inline void matrix_2x2_from_dwrite_matrix(MATRIX_2X2 *m1, const DWRITE_MATRIX *m2)
+{
+    m1->m11 = m2->m11;
+    m1->m12 = m2->m12;
+    m1->m21 = m2->m21;
+    m1->m22 = m2->m22;
+}
+
 static void fontface_release_cache_entry(struct cache_entry *entry)
 {
     free(entry->bitmap);
@@ -157,11 +166,11 @@ void dwrite_fontface_get_glyph_bbox(IDWriteFontFace *iface, struct dwrite_glyphb
     params.simulations = bitmap->simulations;
     params.glyph = bitmap->glyph;
     params.emsize = bitmap->emsize;
-    params.m = bitmap->m ? *bitmap->m : identity;
+    matrix_2x2_from_dwrite_matrix(&params.m, bitmap->m ? bitmap->m : &identity);
 
     EnterCriticalSection(&fontface->cs);
     /* For now bypass cache for transformed cases. */
-    if (bitmap->m && memcmp(bitmap->m, &identity, sizeof(*bitmap->m)))
+    if (bitmap->m && memcmp(&params.m, &identity_2x2, sizeof(params.m)))
     {
         params.bbox = &bitmap->bbox;
         UNIX_CALL(get_glyph_bbox, &params);
@@ -202,15 +211,15 @@ static HRESULT dwrite_fontface_get_glyph_bitmap(struct dwrite_fontface *fontface
     params.glyph = bitmap->glyph;
     params.mode = rendering_mode;
     params.emsize = bitmap->emsize;
-    params.m = bitmap->m ? *bitmap->m : identity;
     params.bbox = bitmap->bbox;
     params.pitch = bitmap->pitch;
     params.bitmap = bitmap->buf;
     params.is_1bpp = is_1bpp;
+    matrix_2x2_from_dwrite_matrix(&params.m, bitmap->m ? bitmap->m : &identity);
 
     EnterCriticalSection(&fontface->cs);
     /* For now bypass cache for transformed cases. */
-    if (memcmp(&params.m, &identity, sizeof(params.m)))
+    if (bitmap->m && memcmp(&params.m, &identity_2x2, sizeof(params.m)))
     {
         UNIX_CALL(get_glyph_bitmap, &params);
     }

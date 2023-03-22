@@ -496,7 +496,7 @@ static NTSTATUS get_glyph_count(void *args)
     return STATUS_SUCCESS;
 }
 
-static inline void ft_matrix_from_dwrite_matrix(const DWRITE_MATRIX *m, FT_Matrix *ft_matrix)
+static inline void ft_matrix_from_matrix_2x2(const MATRIX_2X2 *m, FT_Matrix *ft_matrix)
 {
     ft_matrix->xx =  m->m11 * 0x10000;
     ft_matrix->xy = -m->m21 * 0x10000;
@@ -504,7 +504,7 @@ static inline void ft_matrix_from_dwrite_matrix(const DWRITE_MATRIX *m, FT_Matri
     ft_matrix->yy =  m->m22 * 0x10000;
 }
 
-static BOOL get_glyph_transform(unsigned int simulations, const DWRITE_MATRIX *m, FT_Matrix *ret)
+static BOOL get_glyph_transform(unsigned int simulations, const MATRIX_2X2 *m, FT_Matrix *ret)
 {
     FT_Matrix ftm;
 
@@ -515,7 +515,7 @@ static BOOL get_glyph_transform(unsigned int simulations, const DWRITE_MATRIX *m
 
     /* Some fonts provide mostly bitmaps and very few outlines, for example for .notdef.
        Disable transform if that's the case. */
-    if (!memcmp(m, &identity, sizeof(*m)) && !simulations)
+    if (!memcmp(m, &identity_2x2, sizeof(*m)) && !simulations)
         return FALSE;
 
     if (simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE)
@@ -527,7 +527,7 @@ static BOOL get_glyph_transform(unsigned int simulations, const DWRITE_MATRIX *m
         pFT_Matrix_Multiply(&ftm, ret);
     }
 
-    ft_matrix_from_dwrite_matrix(m, &ftm);
+    ft_matrix_from_matrix_2x2(m, &ftm);
     pFT_Matrix_Multiply(&ftm, ret);
 
     return TRUE;
@@ -955,7 +955,7 @@ static NTSTATUS wow64_get_glyph_bbox(void *args)
         ULONG simulations;
         ULONG glyph;
         float emsize;
-        DWRITE_MATRIX m;
+        MATRIX_2X2 m;
         PTR32 bbox;
     } const *params32 = args;
     struct get_glyph_bbox_params params =
@@ -980,7 +980,7 @@ static NTSTATUS wow64_get_glyph_bitmap(void *args)
         ULONG glyph;
         ULONG mode;
         float emsize;
-        DWRITE_MATRIX m;
+        MATRIX_2X2 m;
         RECT bbox;
         int pitch;
         PTR32 bitmap;
