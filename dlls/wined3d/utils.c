@@ -5850,7 +5850,6 @@ static void compute_texture_matrix(const struct wined3d_matrix *matrix, uint32_t
 void get_texture_matrix(const struct wined3d_context *context, const struct wined3d_state *state,
         const unsigned int tex, struct wined3d_matrix *mat)
 {
-    const struct wined3d_device *device = context->device;
     BOOL generated = (state->texture_states[tex][WINED3D_TSS_TEXCOORD_INDEX] & 0xffff0000)
             != WINED3DTSS_TCI_PASSTHRU;
     unsigned int coord_idx = min(state->texture_states[tex][WINED3D_TSS_TEXCOORD_INDEX & 0x0000ffff],
@@ -5863,7 +5862,7 @@ void get_texture_matrix(const struct wined3d_context *context, const struct wine
             context->stream_info.use_map & (1u << (WINED3D_FFP_TEXCOORD0 + coord_idx))
             ? context->stream_info.elements[WINED3D_FFP_TEXCOORD0 + coord_idx].format->id
             : WINED3DFMT_UNKNOWN,
-            device->shader_backend->shader_has_ffp_proj_control(device->shader_priv), mat);
+            context->d3d_info->ffp_fragment_caps.proj_control, mat);
 
     if (texture && !(texture->flags & WINED3D_TEXTURE_POW2_MAT_IDENT))
     {

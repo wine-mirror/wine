@@ -286,7 +286,6 @@ struct shader_arb_priv
 
     const struct wined3d_vertex_pipe_ops *vertex_pipe;
     const struct wined3d_fragment_pipe_ops *fragment_pipe;
-    BOOL ffp_proj_control;
 };
 
 /* Context activation for state handlers is done by the caller. */
@@ -4843,7 +4842,6 @@ static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct wine
         const struct wined3d_fragment_pipe_ops *fragment_pipe)
 {
     const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
-    struct fragment_caps fragment_caps;
     void *vertex_priv, *fragment_priv;
     struct shader_arb_priv *priv;
 
@@ -4874,8 +4872,6 @@ static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct wine
 
     priv->vertex_pipe = vertex_pipe;
     priv->fragment_pipe = fragment_pipe;
-    fragment_pipe->get_caps(device->adapter, &fragment_caps);
-    priv->ffp_proj_control = fragment_caps.proj_control;
 
     device->vertex_priv = vertex_priv;
     device->fragment_priv = fragment_priv;
@@ -5695,13 +5691,6 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
     shader_arb_add_instruction_modifiers(ins);
 }
 
-static BOOL shader_arb_has_ffp_proj_control(void *shader_priv)
-{
-    struct shader_arb_priv *priv = shader_priv;
-
-    return priv->ffp_proj_control;
-}
-
 static void shader_arb_precompile(void *shader_priv, struct wined3d_shader *shader) {}
 
 static uint64_t shader_arb_shader_compile(struct wined3d_context *context, const struct wined3d_shader_desc *shader_desc,
@@ -5729,7 +5718,6 @@ const struct wined3d_shader_backend_ops arb_program_shader_backend =
     shader_arb_init_context_state,
     shader_arb_get_caps,
     shader_arb_color_fixup_supported,
-    shader_arb_has_ffp_proj_control,
     shader_arb_shader_compile,
 };
 

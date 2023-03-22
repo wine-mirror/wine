@@ -49,7 +49,6 @@ struct shader_spirv_priv
 {
     const struct wined3d_vertex_pipe_ops *vertex_pipe;
     const struct wined3d_fragment_pipe_ops *fragment_pipe;
-    bool ffp_proj_control;
 
     struct shader_spirv_resource_bindings bindings;
 };
@@ -968,7 +967,6 @@ static void shader_spirv_destroy(struct wined3d_shader *shader)
 static HRESULT shader_spirv_alloc(struct wined3d_device *device,
         const struct wined3d_vertex_pipe_ops *vertex_pipe, const struct wined3d_fragment_pipe_ops *fragment_pipe)
 {
-    struct fragment_caps fragment_caps;
     void *vertex_priv, *fragment_priv;
     struct shader_spirv_priv *priv;
 
@@ -992,8 +990,6 @@ static HRESULT shader_spirv_alloc(struct wined3d_device *device,
 
     priv->vertex_pipe = vertex_pipe;
     priv->fragment_pipe = fragment_pipe;
-    fragment_pipe->get_caps(device->adapter, &fragment_caps);
-    priv->ffp_proj_control = fragment_caps.proj_control;
     memset(&priv->bindings, 0, sizeof(priv->bindings));
 
     device->vertex_priv = vertex_priv;
@@ -1049,13 +1045,6 @@ static BOOL shader_spirv_color_fixup_supported(struct color_fixup_desc fixup)
     return is_identity_fixup(fixup);
 }
 
-static BOOL shader_spirv_has_ffp_proj_control(void *shader_priv)
-{
-    struct shader_spirv_priv *priv = shader_priv;
-
-    return priv->ffp_proj_control;
-}
-
 static uint64_t shader_spirv_compile(struct wined3d_context *context, const struct wined3d_shader_desc *shader_desc,
         enum wined3d_shader_type shader_type)
 {
@@ -1081,7 +1070,6 @@ static const struct wined3d_shader_backend_ops spirv_shader_backend_vk =
     .shader_init_context_state = shader_spirv_init_context_state,
     .shader_get_caps = shader_spirv_get_caps,
     .shader_color_fixup_supported = shader_spirv_color_fixup_supported,
-    .shader_has_ffp_proj_control = shader_spirv_has_ffp_proj_control,
     .shader_compile = shader_spirv_compile,
 };
 

@@ -1922,7 +1922,6 @@ struct shader_none_priv
 {
     const struct wined3d_vertex_pipe_ops *vertex_pipe;
     const struct wined3d_fragment_pipe_ops *fragment_pipe;
-    BOOL ffp_proj_control;
 };
 
 static void shader_none_handle_instruction(const struct wined3d_shader_instruction *ins) {}
@@ -1966,7 +1965,6 @@ static void shader_none_disable(void *shader_priv, struct wined3d_context *conte
 static HRESULT shader_none_alloc(struct wined3d_device *device, const struct wined3d_vertex_pipe_ops *vertex_pipe,
         const struct wined3d_fragment_pipe_ops *fragment_pipe)
 {
-    struct fragment_caps fragment_caps;
     void *vertex_priv, *fragment_priv;
     struct shader_none_priv *priv;
 
@@ -1990,8 +1988,6 @@ static HRESULT shader_none_alloc(struct wined3d_device *device, const struct win
 
     priv->vertex_pipe = vertex_pipe;
     priv->fragment_pipe = fragment_pipe;
-    fragment_pipe->get_caps(device->adapter, &fragment_caps);
-    priv->ffp_proj_control = fragment_caps.proj_control;
 
     device->vertex_priv = vertex_priv;
     device->fragment_priv = fragment_priv;
@@ -2027,13 +2023,6 @@ static BOOL shader_none_color_fixup_supported(struct color_fixup_desc fixup)
     return TRUE;
 }
 
-static BOOL shader_none_has_ffp_proj_control(void *shader_priv)
-{
-    struct shader_none_priv *priv = shader_priv;
-
-    return priv->ffp_proj_control;
-}
-
 static uint64_t shader_none_shader_compile(struct wined3d_context *context, const struct wined3d_shader_desc *shader_desc,
         enum wined3d_shader_type shader_type)
 {
@@ -2058,7 +2047,6 @@ const struct wined3d_shader_backend_ops none_shader_backend =
     shader_none_init_context_state,
     shader_none_get_caps,
     shader_none_color_fixup_supported,
-    shader_none_has_ffp_proj_control,
     shader_none_shader_compile,
 };
 
