@@ -9173,6 +9173,12 @@ static void test_create_surface_pitch(void)
         {DDSCAPS_SYSTEMMEMORY | DDSCAPS_TEXTURE | DDSCAPS_ALLOCONLOAD,
                 DDSD_LPSURFACE | DDSD_PITCH,                    0x100,  DD_OK,
                 DDSD_PITCH,                                     0x100,  0    },
+        {DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE,
+                0,                                              0,      DD_OK,
+                DDSD_PITCH,                                     0x100,  0x0fc},
+        {DDSCAPS_VIDEOMEMORY | DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE,
+                0,                                              0,      DD_OK,
+                DDSD_PITCH,                                     0x100,  0x100},
     };
     DWORD flags_mask = DDSD_PITCH | DDSD_LPSURFACE | DDSD_LINEARSIZE;
 
