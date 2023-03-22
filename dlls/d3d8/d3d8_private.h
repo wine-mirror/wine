@@ -371,7 +371,7 @@ static inline unsigned int wined3d_usage_from_d3d(D3DPOOL pool, DWORD usage)
         usage |= WINED3DUSAGE_SCRATCH;
     else if (pool == D3DPOOL_MANAGED)
         usage |= WINED3DUSAGE_MANAGED;
-    return usage;
+    return usage | WINED3DUSAGE_VIDMEM_ACCOUNTING;
 }
 
 static inline unsigned int wined3d_bind_flags_from_d3d8_usage(DWORD usage)

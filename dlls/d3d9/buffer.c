@@ -312,6 +312,9 @@ HRESULT vertexbuffer_init(struct d3d9_vertexbuffer *buffer, struct d3d9_device *
     desc.misc_flags = 0;
     desc.structure_byte_stride = 0;
 
+    if (!device->d3d_parent->extended)
+        desc.usage |= WINED3DUSAGE_VIDMEM_ACCOUNTING;
+
     if (desc.access & WINED3D_RESOURCE_ACCESS_GPU)
     {
         desc.bind_flags = WINED3D_BIND_VERTEX_BUFFER;
@@ -619,6 +622,9 @@ HRESULT indexbuffer_init(struct d3d9_indexbuffer *buffer, struct d3d9_device *de
         desc.access |= WINED3D_RESOURCE_ACCESS_MAP_R | WINED3D_RESOURCE_ACCESS_MAP_W;
     desc.misc_flags = 0;
     desc.structure_byte_stride = 0;
+
+    if (!device->d3d_parent->extended)
+        desc.usage |= WINED3DUSAGE_VIDMEM_ACCOUNTING;
 
     if (desc.access & WINED3D_RESOURCE_ACCESS_GPU)
         desc.bind_flags = WINED3D_BIND_INDEX_BUFFER;

@@ -6031,7 +6031,7 @@ static void wined3d_resource_desc_from_ddraw(struct ddraw *ddraw,
     wined3d_desc->format = wined3dformat_from_ddrawformat(&desc->u4.ddpfPixelFormat);
     wined3d_desc->multisample_type = WINED3D_MULTISAMPLE_NONE;
     wined3d_desc->multisample_quality = 0;
-    wined3d_desc->usage = 0;
+    wined3d_desc->usage = WINED3DUSAGE_VIDMEM_ACCOUNTING;
     wined3d_desc->bind_flags = 0;
     wined3d_desc->access = WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_MAP_R | WINED3D_RESOURCE_ACCESS_MAP_W;
     wined3d_desc->width = desc->dwWidth;
@@ -6158,7 +6158,7 @@ static HRESULT ddraw_texture_init(struct ddraw_texture *texture, struct ddraw *d
         draw_texture_desc = wined3d_desc;
         draw_texture_desc.bind_flags = bind_flags;
         draw_texture_desc.access = WINED3D_RESOURCE_ACCESS_GPU;
-        draw_texture_desc.usage = WINED3DUSAGE_PRIVATE;
+        draw_texture_desc.usage = 0;
 
         if (FAILED(hr = wined3d_texture_create(wined3d_device, &draw_texture_desc, layers,
                 levels, 0, NULL, texture, &ddraw_texture_wined3d_parent_ops, &draw_texture)))

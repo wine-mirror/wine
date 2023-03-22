@@ -927,6 +927,7 @@ enum wined3d_memory_segment_group
 #define WINED3DUSAGE_STATICDECL                                 0x04000000
 #define WINED3DUSAGE_OVERLAY                                    0x08000000
 #define WINED3DUSAGE_MANAGED                                    0x20000000
+#define WINED3DUSAGE_VIDMEM_ACCOUNTING                          0x40000000
 
 #define WINED3DUSAGE_QUERY_GENMIPMAP                            0x00000400
 #define WINED3DUSAGE_QUERY_LEGACYBUMPMAP                        0x00008000
@@ -1311,7 +1312,6 @@ enum wined3d_memory_segment_group
 
 #define WINED3D_LEGACY_DEPTH_BIAS                               0x00000001
 #define WINED3D_NO3D                                            0x00000002
-#define WINED3D_VIDMEM_ACCOUNTING                               0x00000004
 #define WINED3D_PRESENT_CONVERSION                              0x00000008
 #define WINED3D_RESTORE_MODE_ON_ACTIVATE                        0x00000010
 #define WINED3D_FOCUS_MESSAGES                                  0x00000020

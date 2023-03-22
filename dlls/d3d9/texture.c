@@ -1409,6 +1409,9 @@ HRESULT d3d9_texture_2d_init(struct d3d9_texture *texture, struct d3d9_device *d
     desc.depth = 1;
     desc.size = 0;
 
+    if (!device->d3d_parent->extended)
+        desc.usage |= WINED3DUSAGE_VIDMEM_ACCOUNTING;
+
     texture->IDirect3DBaseTexture9_iface.lpVtbl = (const IDirect3DBaseTexture9Vtbl *)&d3d9_texture_2d_vtbl;
     return d3d9_texture_init(texture, device, &desc, pool, usage, 1, level_count);
 }
@@ -1429,6 +1432,9 @@ HRESULT d3d9_texture_cube_init(struct d3d9_texture *texture, struct d3d9_device 
     desc.height = edge_length;
     desc.depth = 1;
     desc.size = 0;
+
+    if (!device->d3d_parent->extended)
+        desc.usage |= WINED3DUSAGE_VIDMEM_ACCOUNTING;
 
     texture->IDirect3DBaseTexture9_iface.lpVtbl = (const IDirect3DBaseTexture9Vtbl *)&d3d9_texture_cube_vtbl;
     return d3d9_texture_init(texture, device, &desc, pool, usage, 6, level_count);
@@ -1454,6 +1460,9 @@ HRESULT d3d9_texture_3d_init(struct d3d9_texture *texture, struct d3d9_device *d
     desc.height = height;
     desc.depth = depth;
     desc.size = 0;
+
+    if (!device->d3d_parent->extended)
+        desc.usage |= WINED3DUSAGE_VIDMEM_ACCOUNTING;
 
     texture->IDirect3DBaseTexture9_iface.lpVtbl = (const IDirect3DBaseTexture9Vtbl *)&d3d9_texture_3d_vtbl;
     return d3d9_texture_init(texture, device, &desc, pool, usage, 1, level_count);

@@ -689,9 +689,7 @@ BOOL d3d9_init(struct d3d9 *d3d9, BOOL extended)
     unsigned int adapter_idx, output_idx, adapter_count, output_count = 0;
     struct wined3d_adapter *wined3d_adapter;
 
-    if (!extended)
-        flags |= WINED3D_VIDMEM_ACCOUNTING;
-    else
+    if (extended)
         flags |= WINED3D_RESTORE_MODE_ON_ACTIVATE;
 
     d3d9->IDirect3D9Ex_iface.lpVtbl = &d3d9_vtbl;
