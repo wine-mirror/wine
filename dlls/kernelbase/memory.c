@@ -83,29 +83,81 @@ SIZE_T WINAPI GetLargePageMinimum(void)
 }
 
 
+static void fill_system_info( SYSTEM_INFO *si, const SYSTEM_BASIC_INFORMATION *basic_info,
+                              const SYSTEM_CPU_INFORMATION *cpu_info )
+{
+    si->u.s.wProcessorArchitecture  = cpu_info->ProcessorArchitecture;
+    si->u.s.wReserved               = 0;
+    si->dwPageSize                  = basic_info->PageSize;
+    si->lpMinimumApplicationAddress = basic_info->LowestUserAddress;
+    si->lpMaximumApplicationAddress = basic_info->HighestUserAddress;
+    si->dwActiveProcessorMask       = basic_info->ActiveProcessorsAffinityMask;
+    si->dwNumberOfProcessors        = basic_info->NumberOfProcessors;
+    si->dwAllocationGranularity     = basic_info->AllocationGranularity;
+    si->wProcessorLevel             = cpu_info->ProcessorLevel;
+    si->wProcessorRevision          = cpu_info->ProcessorRevision;
+
+    switch (cpu_info->ProcessorArchitecture)
+    {
+    case PROCESSOR_ARCHITECTURE_INTEL:
+        switch (cpu_info->ProcessorLevel)
+        {
+        case 3:  si->dwProcessorType = PROCESSOR_INTEL_386;     break;
+        case 4:  si->dwProcessorType = PROCESSOR_INTEL_486;     break;
+        case 5:
+        case 6:  si->dwProcessorType = PROCESSOR_INTEL_PENTIUM; break;
+        default: si->dwProcessorType = PROCESSOR_INTEL_PENTIUM; break;
+        }
+        break;
+    case PROCESSOR_ARCHITECTURE_AMD64:
+        si->dwProcessorType = PROCESSOR_AMD_X8664;
+        break;
+    case PROCESSOR_ARCHITECTURE_ARM:
+        switch (cpu_info->ProcessorLevel)
+        {
+        case 4:  si->dwProcessorType = PROCESSOR_ARM_7TDMI;     break;
+        default: si->dwProcessorType = PROCESSOR_ARM920;
+        }
+        break;
+    case PROCESSOR_ARCHITECTURE_ARM64:
+        si->dwProcessorType = 0;
+        break;
+    default:
+        FIXME( "Unknown processor architecture %x\n", cpu_info->ProcessorArchitecture );
+        si->dwProcessorType = 0;
+        break;
+    }
+}
+
+
 /***********************************************************************
  *          GetNativeSystemInfo   (kernelbase.@)
  */
 void WINAPI DECLSPEC_HOTPATCH GetNativeSystemInfo( SYSTEM_INFO *si )
 {
-    USHORT current_machine, native_machine;
+    SYSTEM_BASIC_INFORMATION basic_info;
+    SYSTEM_CPU_INFORMATION cpu_info;
 
-    GetSystemInfo( si );
-    RtlWow64GetProcessMachines( GetCurrentProcess(), &current_machine, &native_machine );
-    if (!current_machine) return;
-    switch (native_machine)
+    if (is_wow64)
     {
-    case IMAGE_FILE_MACHINE_AMD64:
-        si->u.s.wProcessorArchitecture = PROCESSOR_ARCHITECTURE_AMD64;
-        si->dwProcessorType = PROCESSOR_AMD_X8664;
-        break;
-    case IMAGE_FILE_MACHINE_ARM64:
-        si->u.s.wProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM64;
-        si->dwProcessorType = 0;
-        break;
-    default:
-        FIXME( "Add the proper information for %x in wow64 mode\n", native_machine );
+        USHORT current_machine, native_machine;
+
+        RtlWow64GetProcessMachines( 0, &current_machine, &native_machine );
+        if (native_machine != IMAGE_FILE_MACHINE_AMD64)
+        {
+            GetSystemInfo( si );
+            si->u.s.wProcessorArchitecture = PROCESSOR_ARCHITECTURE_AMD64;
+            return;
+        }
     }
+
+    if (!set_ntstatus( RtlGetNativeSystemInformation( SystemBasicInformation,
+                                                      &basic_info, sizeof(basic_info), NULL )) ||
+        !set_ntstatus( RtlGetNativeSystemInformation( SystemCpuInformation,
+                                                      &cpu_info, sizeof(cpu_info), NULL )))
+        return;
+
+    fill_system_info( si, &basic_info, &cpu_info );
 }
 
 
@@ -123,59 +175,7 @@ void WINAPI DECLSPEC_HOTPATCH GetSystemInfo( SYSTEM_INFO *si )
                                                  &cpu_info, sizeof(cpu_info), NULL )))
         return;
 
-    si->u.s.wProcessorArchitecture  = cpu_info.ProcessorArchitecture;
-    si->u.s.wReserved               = 0;
-    si->dwPageSize                  = basic_info.PageSize;
-    si->lpMinimumApplicationAddress = basic_info.LowestUserAddress;
-    si->lpMaximumApplicationAddress = basic_info.HighestUserAddress;
-    si->dwActiveProcessorMask       = basic_info.ActiveProcessorsAffinityMask;
-    si->dwNumberOfProcessors        = basic_info.NumberOfProcessors;
-    si->dwAllocationGranularity     = basic_info.AllocationGranularity;
-    si->wProcessorLevel             = cpu_info.ProcessorLevel;
-    si->wProcessorRevision          = cpu_info.ProcessorRevision;
-
-    switch (cpu_info.ProcessorArchitecture)
-    {
-    case PROCESSOR_ARCHITECTURE_INTEL:
-        switch (cpu_info.ProcessorLevel)
-        {
-        case 3:  si->dwProcessorType = PROCESSOR_INTEL_386;     break;
-        case 4:  si->dwProcessorType = PROCESSOR_INTEL_486;     break;
-        case 5:
-        case 6:  si->dwProcessorType = PROCESSOR_INTEL_PENTIUM; break;
-        default: si->dwProcessorType = PROCESSOR_INTEL_PENTIUM; break;
-        }
-        break;
-    case PROCESSOR_ARCHITECTURE_PPC:
-        switch (cpu_info.ProcessorLevel)
-        {
-        case 1:  si->dwProcessorType = PROCESSOR_PPC_601;       break;
-        case 3:
-        case 6:  si->dwProcessorType = PROCESSOR_PPC_603;       break;
-        case 4:  si->dwProcessorType = PROCESSOR_PPC_604;       break;
-        case 9:  si->dwProcessorType = PROCESSOR_PPC_604;       break;
-        case 20: si->dwProcessorType = PROCESSOR_PPC_620;       break;
-        default: si->dwProcessorType = 0;
-        }
-        break;
-    case PROCESSOR_ARCHITECTURE_AMD64:
-        si->dwProcessorType = PROCESSOR_AMD_X8664;
-        break;
-    case PROCESSOR_ARCHITECTURE_ARM:
-        switch (cpu_info.ProcessorLevel)
-        {
-        case 4:  si->dwProcessorType = PROCESSOR_ARM_7TDMI;     break;
-        default: si->dwProcessorType = PROCESSOR_ARM920;
-        }
-        break;
-    case PROCESSOR_ARCHITECTURE_ARM64:
-        si->dwProcessorType = 0;
-        break;
-    default:
-        FIXME( "Unknown processor architecture %x\n", cpu_info.ProcessorArchitecture );
-        si->dwProcessorType = 0;
-        break;
-    }
+    fill_system_info( si, &basic_info, &cpu_info );
 }
 
 

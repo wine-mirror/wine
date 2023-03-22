@@ -2202,12 +2202,12 @@ static void test_IsWow64Process2(void)
 
 #if defined(__i386__) || defined(__x86_64__)
         ok(machine == IMAGE_FILE_MACHINE_I386, "got %#x\n", machine);
-        expect_native = IMAGE_FILE_MACHINE_AMD64;
+        ok( native_machine == IMAGE_FILE_MACHINE_AMD64 ||
+            native_machine == IMAGE_FILE_MACHINE_ARM64, "got %#x\n", native_machine);
+        expect_native = native_machine;
 #else
         skip("not supported architecture\n");
 #endif
-        ok(native_machine == expect_native, "got %#x\n", native_machine);
-
         ret = TerminateProcess(pi.hProcess, 0);
         ok(ret, "TerminateProcess error\n");
 
@@ -2279,6 +2279,7 @@ static void test_SystemInfo(void)
 {
     SYSTEM_INFO si, nsi;
     BOOL is_wow64;
+    USHORT machine, native_machine;
 
     if (!pGetNativeSystemInfo)
     {
@@ -2297,9 +2298,14 @@ static void test_SystemInfo(void)
             ok(S(U(nsi)).wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64,
                "Expected PROCESSOR_ARCHITECTURE_AMD64, got %d\n",
                S(U(nsi)).wProcessorArchitecture);
-            ok(nsi.dwProcessorType == PROCESSOR_AMD_X8664,
-               "Expected PROCESSOR_AMD_X8664, got %ld\n",
-               nsi.dwProcessorType);
+            if (pIsWow64Process2 && pIsWow64Process2(GetCurrentProcess(), &machine, &native_machine) &&
+                native_machine == IMAGE_FILE_MACHINE_ARM64)
+            {
+                ok(nsi.dwProcessorType == PROCESSOR_INTEL_PENTIUM, "got %ld\n", nsi.dwProcessorType);
+                ok(nsi.wProcessorLevel == 15, "got %d\n", nsi.wProcessorLevel);
+                ok(nsi.wProcessorRevision == 0x40a, "got %d\n", nsi.wProcessorRevision);
+            }
+            else ok(nsi.dwProcessorType == PROCESSOR_AMD_X8664, "got %ld\n", nsi.dwProcessorType);
         }
     }
     else
