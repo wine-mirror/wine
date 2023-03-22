@@ -381,6 +381,23 @@ int get_node_provider_type_at_idx(struct uia_node *node, int idx)
     return 0;
 }
 
+static HRESULT get_prop_val_from_node_provider(IWineUiaNode *node, const struct uia_prop_info *prop_info, int idx,
+        VARIANT *out_val)
+{
+    IWineUiaProvider *prov;
+    HRESULT hr;
+
+    VariantInit(out_val);
+    hr = IWineUiaNode_get_provider(node, idx, &prov);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IWineUiaProvider_get_prop_val(prov, prop_info, out_val);
+    IWineUiaProvider_Release(prov);
+
+    return hr;
+}
+
 static HRESULT get_prov_opts_from_node_provider(IWineUiaNode *node, int idx, int *out_opts)
 {
     IWineUiaProvider *prov;
@@ -2231,22 +2248,16 @@ BOOL WINAPI UiaNodeRelease(HUIANODE huianode)
     return TRUE;
 }
 
-static HRESULT get_prop_val_from_node_provider(struct uia_node *node,
+static HRESULT get_prop_val_from_node(struct uia_node *node,
         const struct uia_prop_info *prop_info, VARIANT *v)
 {
-    IWineUiaProvider *prov;
     HRESULT hr = S_OK;
     int i;
 
+    VariantInit(v);
     for (i = 0; i < node->prov_count; i++)
     {
-        hr = IWineUiaNode_get_provider(&node->IWineUiaNode_iface, i, &prov);
-        if (FAILED(hr))
-            return hr;
-
-        VariantInit(v);
-        hr = IWineUiaProvider_get_prop_val(prov, prop_info, v);
-        IWineUiaProvider_Release(prov);
+        hr = get_prop_val_from_node_provider(&node->IWineUiaNode_iface, prop_info, i, v);
         if (FAILED(hr) || V_VT(v) != VT_EMPTY)
             break;
     }
@@ -2301,7 +2312,7 @@ HRESULT WINAPI UiaGetPropertyValue(HUIANODE huianode, PROPERTYID prop_id, VARIAN
         break;
     }
 
-    hr = get_prop_val_from_node_provider(node, prop_info, &v);
+    hr = get_prop_val_from_node(node, prop_info, &v);
     if (SUCCEEDED(hr) && V_VT(&v) != VT_EMPTY)
     {
         /*
@@ -2440,7 +2451,7 @@ HRESULT WINAPI UiaGetRuntimeId(HUIANODE huianode, SAFEARRAY **runtime_id)
     {
         VARIANT v;
 
-        hr = get_prop_val_from_node_provider(node, prop_info, &v);
+        hr = get_prop_val_from_node(node, prop_info, &v);
         if (FAILED(hr))
         {
             VariantClear(&v);
