@@ -273,6 +273,9 @@ static HRESULT dinput_device_init_user_format( struct dinput_device *impl, const
     user_obj = user_format->rgodf + user_format->dwNumObjs;
     while (user_obj-- > user_format->rgodf) user_obj->dwType |= DIDFT_OPTIONAL;
 
+    for (i = 0; i < device_format->dwNumObjs; i++)
+        impl->object_properties[i].app_data = -1;
+
     for (i = 0; i < format->dwNumObjs; ++i)
     {
         match_obj = format->rgodf + i;
@@ -295,23 +298,6 @@ failed:
     free( user_format->rgodf );
     user_format->rgodf = NULL;
     return DIERR_INVALIDPARAM;
-}
-
-static int id_to_offset( struct dinput_device *impl, int id )
-{
-    DIDATAFORMAT *user_format = &impl->user_format;
-    DIOBJECTDATAFORMAT *user_obj;
-
-    if (!user_format->rgodf) return -1;
-
-    user_obj = user_format->rgodf + impl->device_format.dwNumObjs;
-    while (user_obj-- > user_format->rgodf)
-    {
-        if (!user_obj->dwType) continue;
-        if ((user_obj->dwType & 0x00ffffff) == (id & 0x00ffffff)) return user_obj->dwOfs;
-    }
-
-    return -1;
 }
 
 int dinput_device_object_index_from_id( IDirectInputDevice8W *iface, DWORD id )
@@ -443,50 +429,11 @@ static BOOL load_mapping_settings( struct dinput_device *This, LPDIACTIONFORMATW
     return mapped > 0;
 }
 
-static BOOL set_app_data( struct dinput_device *dev, int offset, UINT_PTR app_data )
-{
-    int num_actions = dev->num_actions;
-    ActionMap *action_map = dev->action_map, *target_map = NULL;
-
-    if (num_actions == 0)
-    {
-        num_actions = 1;
-        action_map = malloc( sizeof(ActionMap) );
-        if (!action_map) return FALSE;
-        target_map = &action_map[0];
-    }
-    else
-    {
-        int i;
-        for (i = 0; i < num_actions; i++)
-        {
-            if (dev->action_map[i].offset != offset) continue;
-            target_map = &dev->action_map[i];
-            break;
-        }
-
-        if (!target_map)
-        {
-            num_actions++;
-            action_map = realloc( action_map, sizeof(ActionMap) * num_actions );
-            if (!action_map) return FALSE;
-            target_map = &action_map[num_actions-1];
-        }
-    }
-
-    target_map->offset = offset;
-    target_map->uAppData = app_data;
-
-    dev->action_map = action_map;
-    dev->num_actions = num_actions;
-
-    return TRUE;
-}
-
 void queue_event( IDirectInputDevice8W *iface, int index, DWORD data, DWORD time, DWORD seq )
 {
     static ULONGLONG notify_ms = 0;
     struct dinput_device *This = impl_from_IDirectInputDevice8W( iface );
+    struct object_properties *properties = This->object_properties + index;
     const DIOBJECTDATAFORMAT *user_obj = This->user_format.rgodf + index;
     ULONGLONG time_ms = GetTickCount64();
     int next_pos;
@@ -513,22 +460,7 @@ void queue_event( IDirectInputDevice8W *iface, int index, DWORD data, DWORD time
     This->data_queue[This->queue_head].dwData      = data;
     This->data_queue[This->queue_head].dwTimeStamp = time;
     This->data_queue[This->queue_head].dwSequence  = seq;
-    This->data_queue[This->queue_head].uAppData    = -1;
-
-    /* Set uAppData by means of action mapping */
-    if (This->num_actions > 0)
-    {
-        int i;
-        for (i=0; i < This->num_actions; i++)
-        {
-            if (This->action_map[i].offset == user_obj->dwOfs)
-            {
-                TRACE( "Offset %lu mapped to uAppData %#Ix\n", user_obj->dwOfs, This->action_map[i].uAppData );
-                This->data_queue[This->queue_head].uAppData = This->action_map[i].uAppData;
-                break;
-            }
-        }
-    }
+    This->data_queue[This->queue_head].uAppData    = properties->app_data;
 
     This->queue_head = next_pos;
     /* Send event if asked */
@@ -603,10 +535,6 @@ static HRESULT WINAPI dinput_device_SetDataFormat( IDirectInputDevice8W *iface, 
     if (This->status == STATUS_ACQUIRED) return DIERR_ACQUIRED;
 
     EnterCriticalSection(&This->crit);
-
-    free( This->action_map );
-    This->action_map = NULL;
-    This->num_actions = 0;
 
     dinput_device_release_user_format( This );
     res = dinput_device_init_user_format( This, format );
@@ -706,8 +634,6 @@ void dinput_device_internal_release( struct dinput_device *impl )
 
         free( impl->device_format.rgodf );
         dinput_device_release_user_format( impl );
-
-        free( impl->action_map );
 
         dinput_internal_release( impl->dinput );
         impl->crit.DebugInfo->Spare[0] = 0;
@@ -1060,13 +986,6 @@ static HRESULT check_property( struct dinput_device *impl, const GUID *guid, con
     return DI_OK;
 }
 
-static BOOL find_object( struct dinput_device *device, UINT index, struct hid_value_caps *caps,
-                         const DIDEVICEOBJECTINSTANCEW *instance, void *data )
-{
-    *(DIDEVICEOBJECTINSTANCEW *)data = *instance;
-    return DIENUM_STOP;
-}
-
 struct get_object_property_params
 {
     IDirectInputDevice8W *iface;
@@ -1137,6 +1056,12 @@ static BOOL get_object_property( struct dinput_device *device, UINT index, struc
         lstrcpynW( value->wsz, instance->tszName, ARRAY_SIZE(value->wsz) );
         return DIENUM_STOP;
     }
+    case (DWORD_PTR)DIPROP_APPDATA:
+    {
+        DIPROPPOINTER *value = (DIPROPPOINTER *)params->header;
+        value->uData = properties->app_data;
+        return DIENUM_STOP;
+    }
     }
 
     return DIENUM_STOP;
@@ -1172,6 +1097,7 @@ static HRESULT dinput_device_get_property( IDirectInputDevice8W *iface, const GU
     case (DWORD_PTR)DIPROP_GRANULARITY:
     case (DWORD_PTR)DIPROP_KEYNAME:
     case (DWORD_PTR)DIPROP_CALIBRATIONMODE:
+    case (DWORD_PTR)DIPROP_APPDATA:
         hr = impl->vtbl->enum_objects( iface, &filter, object_mask, get_object_property, &params );
         if (FAILED(hr)) return hr;
         if (hr == DIENUM_CONTINUE) return DIERR_NOTFOUND;
@@ -1283,6 +1209,12 @@ static BOOL set_object_property( struct dinput_device *device, UINT index, struc
         properties->calibration_mode = value->dwData;
         return DIENUM_CONTINUE;
     }
+    case (DWORD_PTR)DIPROP_APPDATA:
+    {
+        DIPROPPOINTER *value = (DIPROPPOINTER *)params->header;
+        properties->app_data = value->uData;
+        return DIENUM_CONTINUE;
+    }
     }
 
     return DIENUM_STOP;
@@ -1328,8 +1260,6 @@ static HRESULT dinput_device_set_property( IDirectInputDevice8W *iface, const GU
 {
     struct set_object_property_params params = {.iface = iface, .header = header, .property = LOWORD( guid )};
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
-    DWORD object_mask = DIDFT_AXIS | DIDFT_BUTTON | DIDFT_POV;
-    DIDEVICEOBJECTINSTANCEW instance;
     DIPROPHEADER filter;
     HRESULT hr;
 
@@ -1401,13 +1331,8 @@ static HRESULT dinput_device_set_property( IDirectInputDevice8W *iface, const GU
     }
     case (DWORD_PTR)DIPROP_APPDATA:
     {
-        const DIPROPPOINTER *value = (const DIPROPPOINTER *)header;
-        int user_offset;
-        hr = impl->vtbl->enum_objects( iface, &filter, object_mask, find_object, &instance );
+        hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_ALL, set_object_property, &params );
         if (FAILED(hr)) return hr;
-        if (hr == DIENUM_CONTINUE) return DIERR_OBJECTNOTFOUND;
-        if ((user_offset = id_to_offset( impl, instance.dwType )) < 0) return DIERR_OBJECTNOTFOUND;
-        if (!set_app_data( impl, user_offset, value->uData )) return DIERR_OUTOFMEMORY;
         return DI_OK;
     }
     default:
@@ -1971,9 +1896,38 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
     return DI_OK;
 }
 
+static BOOL init_object_app_data( struct dinput_device *device, UINT index, struct hid_value_caps *caps,
+                                  const DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    struct object_properties *properties;
+    const DIACTIONFORMATW *format = data;
+    const DIACTIONW *action = format->rgoAction + format->dwNumActions;
+
+    if (index == -1) return DIENUM_STOP;
+    if (instance->wUsagePage == HID_USAGE_PAGE_PID) return DIENUM_CONTINUE;
+
+    properties = device->object_properties + index;
+    properties->app_data = 0;
+
+    while (action-- > format->rgoAction)
+    {
+        if (action->dwObjID != instance->dwType) continue;
+        properties->app_data = action->uAppData;
+        break;
+    }
+
+    return DIENUM_CONTINUE;
+}
+
 static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, DIACTIONFORMATW *format,
                                                   const WCHAR *username, DWORD flags )
 {
+    static const DIPROPHEADER filter =
+    {
+        .dwSize = sizeof(filter),
+        .dwHeaderSize = sizeof(filter),
+        .dwHow = DIPH_DEVICE,
+    };
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
     DIDATAFORMAT data_format =
     {
@@ -2010,9 +1964,8 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
     };
     WCHAR username_buf[MAX_PATH];
     DWORD username_len = MAX_PATH;
-    int i, index, action = 0, num_actions = 0;
+    int i, index, num_actions = 0;
     unsigned int offset = 0;
-    ActionMap *action_map;
     HRESULT hr;
 
     FIXME( "iface %p, format %p, username %s, flags %#lx stub!\n", iface, format,
@@ -2027,10 +1980,8 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
 
     if (num_actions == 0) return DI_NOEFFECT;
 
-    data_format.rgodf = malloc( sizeof(DIOBJECTDATAFORMAT) * num_actions );
+    if (!(data_format.rgodf = malloc( sizeof(DIOBJECTDATAFORMAT) * num_actions ))) return DIERR_OUTOFMEMORY;
     data_format.dwDataSize = format->dwDataSize;
-
-    action_map = malloc( sizeof(ActionMap) * num_actions );
 
     for (i = 0; i < format->dwNumActions; i++, offset += sizeof(ULONG))
     {
@@ -2038,8 +1989,6 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
         if (!IsEqualGUID( &impl->guid, &format->rgoAction[i].guidInstance )) continue;
         if ((index = dinput_device_object_index_from_id( iface, format->rgoAction[i].dwObjID )) < 0) continue;
 
-        action_map[action].uAppData = format->rgoAction[i].uAppData;
-        action_map[action].offset = offset;
         data_format.rgodf[data_format.dwNumObjs] = impl->device_format.rgodf[index];
         data_format.rgodf[data_format.dwNumObjs].dwOfs = offset;
         data_format.dwNumObjs++;
@@ -2051,8 +2000,8 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
         WARN( "Failed to set data format from action map, hr %#lx\n", hr );
     else
     {
-        impl->action_map = action_map;
-        impl->num_actions = num_actions;
+        if (FAILED(impl->vtbl->enum_objects( iface, &filter, DIDFT_ALL, init_object_app_data, format )))
+            WARN( "Failed to initialize action map app data\n" );
 
         if (format->lAxisMin != format->lAxisMax)
         {
@@ -2076,7 +2025,6 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
 
     LeaveCriticalSection( &impl->crit );
 
-    if (FAILED(hr)) free( action_map );
     free( data_format.rgodf );
     return hr;
 }
@@ -2196,6 +2144,7 @@ static BOOL enum_objects_init( struct dinput_device *impl, UINT index, struct hi
         .range_min = DIPROPRANGE_NOMIN,
         .range_max = DIPROPRANGE_NOMAX,
         .granularity = 1,
+        .app_data = -1,
     };
     DIDATAFORMAT *format = &impl->device_format;
     DIOBJECTDATAFORMAT *object_format;

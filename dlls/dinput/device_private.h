@@ -28,12 +28,6 @@
 #include "wine/list.h"
 #include "dinput_private.h"
 
-typedef struct
-{
-    unsigned int offset;
-    UINT_PTR uAppData;
-} ActionMap;
-
 struct dinput_device;
 struct hid_value_caps;
 
@@ -72,6 +66,7 @@ struct object_properties
     LONG range_max;
     LONG deadzone;
     LONG saturation;
+    UINT_PTR app_data;
     DWORD calibration_mode;
     DWORD granularity;
 };
@@ -112,10 +107,6 @@ struct dinput_device
 
     DIDATAFORMAT device_format;
     DIDATAFORMAT user_format;
-
-    /* Action mapping */
-    int                         num_actions; /* number of actions mapped */
-    ActionMap                  *action_map;  /* array of mappings */
 
     /* internal device callbacks */
     HANDLE read_event;

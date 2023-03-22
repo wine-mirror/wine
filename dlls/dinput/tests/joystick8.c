@@ -917,7 +917,6 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     prop_pointer.diph.dwHow = DIPH_BYUSAGE;
     prop_pointer.diph.dwObj = MAKELONG(HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC);
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
-    todo_wine
     ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
     ok( prop_pointer.uData == 0, "got uData %#Ix\n", prop_pointer.uData );
 
@@ -965,23 +964,18 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     prop_pointer.diph.dwHow = DIPH_BYID;
     prop_pointer.diph.dwObj = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 3 );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
-    todo_wine
     ok( hr == DIERR_NOTFOUND, "GetProperty returned %#lx\n", hr );
 
     prop_pointer.diph.dwHow = DIPH_BYID;
     prop_pointer.diph.dwObj = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 2 );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
-    todo_wine
     ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
-    todo_wine
     ok( prop_pointer.uData == 6, "got uData %#Ix\n", prop_pointer.uData );
 
     prop_pointer.diph.dwHow = DIPH_BYUSAGE;
     prop_pointer.diph.dwObj = MAKELONG(HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC);
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
-    todo_wine
     ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
-    todo_wine
     ok( prop_pointer.uData == 8, "got uData %#Ix\n", prop_pointer.uData );
 
     prop_range.diph.dwHow = DIPH_BYID;
@@ -1078,7 +1072,6 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
         ok( objdata[res].dwData == expect_objdata[res].dwData ||
             broken(objdata[res].dwData == -45 && expect_objdata[res].dwData == -43) /* 32-bit rounding */,
             "got dwData %+ld\n", objdata[res].dwData );
-        todo_wine_if( res != 0 && res != 3 && res != 6 )
         check_member( objdata[res], expect_objdata[res], "%#Ix", uAppData );
         winetest_pop_context();
     }
@@ -1095,9 +1088,7 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     prop_pointer.diph.dwHow = DIPH_BYUSAGE;
     prop_pointer.diph.dwObj = MAKELONG(HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC);
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
-    todo_wine
     ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
-    todo_wine
     ok( prop_pointer.uData == 8, "got uData %#Ix\n", prop_pointer.uData );
 
     hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIJoystick2 );
@@ -1106,9 +1097,7 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     prop_pointer.diph.dwHow = DIPH_BYUSAGE;
     prop_pointer.diph.dwObj = MAKELONG(HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC);
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
-    todo_wine
     ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
-    todo_wine
     ok( prop_pointer.uData == -1, "got uData %#Ix\n", prop_pointer.uData );
 
     prop_range.diph.dwHow = DIPH_BYID;
@@ -2705,7 +2694,6 @@ static void test_simple_joystick( DWORD version )
     prop_pointer.diph.dwHow = DIPH_BYUSAGE;
     prop_pointer.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
-    todo_wine_if( version >= 0x0800 )
     ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DI_OK),
         "GetProperty DIPROP_APPDATA returned %#lx\n", hr );
     if (hr == DI_OK) ok( prop_pointer.uData == 0xfeedcafe, "got %p\n", (void *)prop_pointer.uData );
