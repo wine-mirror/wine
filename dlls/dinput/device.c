@@ -1975,7 +1975,6 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
                                                   const WCHAR *username, DWORD flags )
 {
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
-    DIOBJECTDATAFORMAT *obj_df = NULL;
     DIDATAFORMAT data_format =
     {
         .dwSize = sizeof(DIDATAFORMAT),
@@ -2011,30 +2010,14 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
     };
     WCHAR username_buf[MAX_PATH];
     DWORD username_len = MAX_PATH;
-    int i, action = 0, num_actions = 0;
+    int i, index, action = 0, num_actions = 0;
     unsigned int offset = 0;
-    const DIDATAFORMAT *df;
     ActionMap *action_map;
 
     FIXME( "iface %p, format %p, username %s, flags %#lx stub!\n", iface, format,
            debugstr_w(username), flags );
 
     if (!format) return DIERR_INVALIDPARAM;
-
-    switch (GET_DIDEVICE_TYPE( impl->instance.dwDevType ))
-    {
-    case DIDEVTYPE_KEYBOARD:
-    case DI8DEVTYPE_KEYBOARD:
-        df = &c_dfDIKeyboard;
-        break;
-    case DIDEVTYPE_MOUSE:
-    case DI8DEVTYPE_MOUSE:
-        df = &c_dfDIMouse2;
-        break;
-    default:
-        df = &impl->device_format;
-        break;
-    }
 
     if (impl->status == STATUS_ACQUIRED) return DIERR_ACQUIRED;
 
@@ -2045,34 +2028,21 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
 
     if (num_actions == 0) return DI_NOEFFECT;
 
-    /* Construct the dataformat and actionmap */
-    obj_df = malloc( sizeof(DIOBJECTDATAFORMAT) * num_actions );
-    data_format.rgodf = (LPDIOBJECTDATAFORMAT)obj_df;
+    data_format.rgodf = malloc( sizeof(DIOBJECTDATAFORMAT) * num_actions );
     data_format.dwDataSize = format->dwDataSize;
 
     action_map = malloc( sizeof(ActionMap) * num_actions );
 
     for (i = 0; i < format->dwNumActions; i++, offset += sizeof(ULONG))
     {
-        if (IsEqualGUID( &impl->guid, &format->rgoAction[i].guidInstance ))
-        {
-            DWORD inst = DIDFT_GETINSTANCE( format->rgoAction[i].dwObjID );
-            DWORD type = DIDFT_GETTYPE( format->rgoAction[i].dwObjID );
-            LPDIOBJECTDATAFORMAT obj;
+        if (!IsEqualGUID( &impl->guid, &format->rgoAction[i].guidInstance )) continue;
+        if ((index = dinput_device_object_index_from_id( iface, format->rgoAction[i].dwObjID )) < 0) continue;
 
-            if (type == DIDFT_PSHBUTTON) type = DIDFT_BUTTON;
-            if (type == DIDFT_RELAXIS) type = DIDFT_AXIS;
-
-            if (!(obj = dataformat_to_odf_by_type( df, inst, type ))) continue;
-
-            memcpy( &obj_df[action], obj, df->dwObjSize );
-
-            action_map[action].uAppData = format->rgoAction[i].uAppData;
-            action_map[action].offset = offset;
-            obj_df[action].dwOfs = offset;
-            data_format.dwNumObjs++;
-            action++;
-        }
+        action_map[action].uAppData = format->rgoAction[i].uAppData;
+        action_map[action].offset = offset;
+        data_format.rgodf[data_format.dwNumObjs] = impl->device_format.rgodf[index];
+        data_format.rgodf[data_format.dwNumObjs].dwOfs = offset;
+        data_format.dwNumObjs++;
     }
 
     IDirectInputDevice8_SetDataFormat( iface, &data_format );
@@ -2080,7 +2050,7 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
     impl->action_map = action_map;
     impl->num_actions = num_actions;
 
-    free( obj_df );
+    free( data_format.rgodf );
 
     if (format->lAxisMin != format->lAxisMax)
     {
