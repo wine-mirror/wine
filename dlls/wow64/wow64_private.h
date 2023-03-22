@@ -38,6 +38,7 @@ extern ULONG_PTR args_alignment DECLSPEC_HIDDEN;
 extern ULONG_PTR highest_user_address DECLSPEC_HIDDEN;
 extern ULONG_PTR default_zero_bits DECLSPEC_HIDDEN;
 extern SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock DECLSPEC_HIDDEN;
+extern void (WINAPI *pBTCpuUpdateProcessorInformation)( SYSTEM_CPU_INFORMATION * ) DECLSPEC_HIDDEN;
 
 struct object_attr64
 {

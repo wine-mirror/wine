@@ -337,7 +337,9 @@ NTSTATUS WINAPI wow64_NtQuerySystemInformation( UINT *args )
 
     case SystemCpuInformation:  /* SYSTEM_CPU_INFORMATION */
     case SystemEmulationProcessorInformation:  /* SYSTEM_CPU_INFORMATION */
-        return NtQuerySystemInformation( SystemEmulationProcessorInformation, ptr, len, retlen );
+        status = NtQuerySystemInformation( SystemEmulationProcessorInformation, ptr, len, retlen );
+        if (!status && pBTCpuUpdateProcessorInformation) pBTCpuUpdateProcessorInformation( ptr );
+        return status;
 
     case SystemBasicInformation:  /* SYSTEM_BASIC_INFORMATION */
     case SystemEmulationBasicInformation:  /* SYSTEM_BASIC_INFORMATION */

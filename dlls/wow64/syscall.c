@@ -110,7 +110,7 @@ static void     (WINAPI *pBTCpuSimulate)(void);
 static NTSTATUS (WINAPI *pBTCpuResetToConsistentState)( EXCEPTION_POINTERS * );
 static void *   (WINAPI *p__wine_get_unix_opcode)(void);
 static void *   (WINAPI *pKiRaiseUserExceptionDispatcher)(void);
-
+void (WINAPI *pBTCpuUpdateProcessorInformation)( SYSTEM_CPU_INFORMATION * ) = NULL;
 
 void *dummy = RtlUnwind;
 
@@ -842,6 +842,7 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
     GET_PTR( BTCpuResetToConsistentState );
     GET_PTR( BTCpuSetContext );
     GET_PTR( BTCpuSimulate );
+    GET_PTR( BTCpuUpdateProcessorInformation );
     GET_PTR( __wine_get_unix_opcode );
 
     module = load_64bit_module( L"wow64win.dll" );
