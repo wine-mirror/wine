@@ -2013,13 +2013,12 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
     int i, index, action = 0, num_actions = 0;
     unsigned int offset = 0;
     ActionMap *action_map;
+    HRESULT hr;
 
     FIXME( "iface %p, format %p, username %s, flags %#lx stub!\n", iface, format,
            debugstr_w(username), flags );
 
     if (!format) return DIERR_INVALIDPARAM;
-
-    if (impl->status == STATUS_ACQUIRED) return DIERR_ACQUIRED;
 
     /* Count the actions */
     for (i = 0; i < format->dwNumActions; i++)
@@ -2046,33 +2045,40 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
         data_format.dwNumObjs++;
     }
 
-    IDirectInputDevice8_SetDataFormat( iface, &data_format );
+    EnterCriticalSection( &impl->crit );
 
-    impl->action_map = action_map;
-    impl->num_actions = num_actions;
-
-    free( data_format.rgodf );
-
-    if (format->lAxisMin != format->lAxisMax)
+    if (FAILED(hr = IDirectInputDevice8_SetDataFormat( iface, &data_format )))
+        WARN( "Failed to set data format from action map, hr %#lx\n", hr );
+    else
     {
-        prop_range.lMin = format->lAxisMin;
-        prop_range.lMax = format->lAxisMax;
-        IDirectInputDevice8_SetProperty( iface, DIPROP_RANGE, &prop_range.diph );
+        impl->action_map = action_map;
+        impl->num_actions = num_actions;
+
+        if (format->lAxisMin != format->lAxisMax)
+        {
+            prop_range.lMin = format->lAxisMin;
+            prop_range.lMax = format->lAxisMax;
+            IDirectInputDevice8_SetProperty( iface, DIPROP_RANGE, &prop_range.diph );
+        }
+
+        prop_buffer.dwData = format->dwBufferSize;
+        IDirectInputDevice8_SetProperty( iface, DIPROP_BUFFERSIZE, &prop_buffer.diph );
+
+        if (username == NULL) GetUserNameW( username_buf, &username_len );
+        else lstrcpynW( username_buf, username, MAX_PATH );
+
+        if (flags & DIDSAM_NOUSER) prop_username.wsz[0] = '\0';
+        else lstrcpynW( prop_username.wsz, username_buf, ARRAY_SIZE(prop_username.wsz) );
+        dinput_device_set_username( impl, &prop_username );
+
+        save_mapping_settings( iface, format, username_buf );
     }
 
-    prop_buffer.dwData = format->dwBufferSize;
-    IDirectInputDevice8_SetProperty( iface, DIPROP_BUFFERSIZE, &prop_buffer.diph );
+    LeaveCriticalSection( &impl->crit );
 
-    if (username == NULL) GetUserNameW( username_buf, &username_len );
-    else lstrcpynW( username_buf, username, MAX_PATH );
-
-    if (flags & DIDSAM_NOUSER) prop_username.wsz[0] = '\0';
-    else lstrcpynW( prop_username.wsz, username_buf, ARRAY_SIZE(prop_username.wsz) );
-    dinput_device_set_username( impl, &prop_username );
-
-    save_mapping_settings( iface, format, username_buf );
-
-    return DI_OK;
+    if (FAILED(hr)) free( action_map );
+    free( data_format.rgodf );
+    return hr;
 }
 
 static HRESULT WINAPI dinput_device_GetImageInfo( IDirectInputDevice8W *iface, DIDEVICEIMAGEINFOHEADERW *header )
