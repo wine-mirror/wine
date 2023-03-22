@@ -824,9 +824,7 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
 
     memset( prop_username.wsz, 0, sizeof(prop_username.wsz) );
     hr = IDirectInputDevice_GetProperty( device, DIPROP_USERNAME, &prop_username.diph );
-    todo_wine
     ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
-    todo_wine
     ok( !wcscmp( prop_username.wsz, username ), "got username %s\n", debugstr_w(prop_username.wsz) );
 
     hr = IDirectInputDevice8_SetActionMap( device, &voice_action_format, NULL, DIDSAM_DEFAULT );
@@ -837,9 +835,7 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
 
     memset( prop_username.wsz, 0, sizeof(prop_username.wsz) );
     hr = IDirectInputDevice_GetProperty( device, DIPROP_USERNAME, &prop_username.diph );
-    todo_wine
     ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
-    todo_wine
     ok( !wcscmp( prop_username.wsz, username ), "got username %s\n", debugstr_w(prop_username.wsz) );
 
 

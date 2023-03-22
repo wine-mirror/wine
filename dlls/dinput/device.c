@@ -1964,8 +1964,8 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
     };
     WCHAR username_buf[MAX_PATH];
     DWORD username_len = MAX_PATH;
-    int i, index, num_actions = 0;
     unsigned int offset = 0;
+    int i, index;
     HRESULT hr;
 
     FIXME( "iface %p, format %p, username %s, flags %#lx stub!\n", iface, format,
@@ -1973,14 +1973,7 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
 
     if (!format) return DIERR_INVALIDPARAM;
 
-    /* Count the actions */
-    for (i = 0; i < format->dwNumActions; i++)
-        if (IsEqualGUID( &impl->guid, &format->rgoAction[i].guidInstance ))
-            num_actions++;
-
-    if (num_actions == 0) return DI_NOEFFECT;
-
-    if (!(data_format.rgodf = malloc( sizeof(DIOBJECTDATAFORMAT) * num_actions ))) return DIERR_OUTOFMEMORY;
+    if (!(data_format.rgodf = malloc( sizeof(DIOBJECTDATAFORMAT) * format->dwNumActions ))) return DIERR_OUTOFMEMORY;
     data_format.dwDataSize = format->dwDataSize;
 
     for (i = 0; i < format->dwNumActions; i++, offset += sizeof(ULONG))
@@ -2026,6 +2019,9 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
     LeaveCriticalSection( &impl->crit );
 
     free( data_format.rgodf );
+
+    if (FAILED(hr)) return hr;
+    if (!data_format.dwNumObjs) return DI_NOEFFECT;
     return hr;
 }
 
