@@ -139,6 +139,8 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     {
     case EMR_HEADER:
         return PSDRV_StartPage(&data->pdev->dev);
+    case EMR_EOF:
+        return PSDRV_EndPage(&data->pdev->dev);
     default:
         FIXME("unsupported record: %ld\n", rec->iType);
     }
