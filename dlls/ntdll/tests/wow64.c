@@ -68,6 +68,17 @@ static void init(void)
 
     if (!IsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
 
+    if (is_wow64)
+    {
+        TEB64 *teb64 = ULongToPtr( NtCurrentTeb()->GdiBatchCount );
+
+        if (teb64)
+        {
+            PEB64 *peb64 = ULongToPtr(teb64->Peb);
+            old_wow64 = !peb64->LdrData;
+        }
+    }
+
 #define GET_PROC(func) p##func = (void *)GetProcAddress( ntdll, #func )
     GET_PROC( NtQuerySystemInformation );
     GET_PROC( NtQuerySystemInformationEx );
@@ -100,10 +111,6 @@ static void init(void)
             native_machine = IMAGE_FILE_MACHINE_ARM64;
             break;
         case PROCESSOR_ARCHITECTURE_AMD64:
-            native_machine = IMAGE_FILE_MACHINE_AMD64;
-            break;
-        case PROCESSOR_ARCHITECTURE_INTEL:
-            old_wow64 = TRUE;
             native_machine = IMAGE_FILE_MACHINE_AMD64;
             break;
         }
