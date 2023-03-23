@@ -203,6 +203,13 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
             return 1;
         }
     }
+    case EMR_ELLIPSE:
+    {
+        const EMRELLIPSE *p = (const EMRELLIPSE *)rec;
+        const RECTL *r = &p->rclBox;
+
+        return PSDRV_Ellipse(&data->pdev->dev, r->left, r->top, r->right, r->bottom);
+    }
     case EMR_RECTANGLE:
     {
         const EMRRECTANGLE *rect = (const EMRRECTANGLE *)rec;
