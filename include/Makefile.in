@@ -810,6 +810,7 @@ SOURCES = \
 	windows.devices.enumeration.idl \
 	windows.devices.haptics.idl \
 	windows.devices.power.idl \
+	windows.devices.radios.idl \
 	windows.foundation.collections.idl \
 	windows.foundation.idl \
 	windows.foundation.metadata.idl \
