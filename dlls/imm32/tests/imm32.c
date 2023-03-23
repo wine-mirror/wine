@@ -2849,7 +2849,7 @@ static HKL ime_install(void)
     ok( !wcscmp( buffer, L"WineTest IME" ), "got Layout Text %s\n", debugstr_w(buffer) );
 
     len = sizeof(buffer);
-    memset( buffer, 0xcd, sizeof(buffer) );
+    memset( buffer, 0, sizeof(buffer) );
     ret = RegQueryValueExW( hkey, L"Layout File", NULL, NULL, (BYTE *)buffer, &len );
     todo_wine
     ok( !ret, "RegQueryValueExW returned %#lx, error %lu\n", ret, GetLastError() );
