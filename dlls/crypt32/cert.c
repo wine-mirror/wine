@@ -714,6 +714,19 @@ static BOOL CertContext_SetProperty(cert_t *cert, DWORD dwPropId,
 
     if (!cert->base.properties)
         ret = FALSE;
+    else if (dwPropId >= CERT_FIRST_USER_PROP_ID && dwPropId <= CERT_LAST_USER_PROP_ID)
+    {
+        if (pvData)
+        {
+            const CRYPT_DATA_BLOB *blob = pvData;
+            ret = ContextPropertyList_SetProperty(cert->base.properties, dwPropId, blob->pbData, blob->cbData);
+        }
+        else
+        {
+            ContextPropertyList_RemoveProperty(cert->base.properties, dwPropId);
+            ret = TRUE;
+        }
+    }
     else
     {
         switch (dwPropId)

@@ -405,6 +405,12 @@ static BOOL CRYPT_ReadContextProp(
         SetLastError(ERROR_FILE_NOT_FOUND);
         ret = FALSE;
     }
+    else if (hdr->propID >= CERT_FIRST_USER_PROP_ID && hdr->propID <= CERT_LAST_USER_PROP_ID)
+    {
+        CRYPT_DATA_BLOB blob = { hdr->cb, (LPBYTE)pbElement };
+
+        ret = contextInterface->setProp(context, hdr->propID, 0, &blob);
+    }
     else if (hdr->propID != CERT_CERT_PROP_ID &&
      hdr->propID != CERT_CRL_PROP_ID && hdr->propID != CERT_CTL_PROP_ID)
     {

@@ -369,6 +369,7 @@ static void testCertProperties(void)
     BYTE hash[20] = { 0 }, hashProperty[20];
     CRYPT_DATA_BLOB blob;
     CERT_KEY_CONTEXT keyContext;
+    unsigned int value;
 
     ok(context != NULL, "CertCreateCertificateContext failed: %08lx\n", GetLastError());
 
@@ -566,6 +567,25 @@ static void testCertProperties(void)
             free(buf);
         }
     }
+
+    ret = CertGetCertificateContextProperty(context, CERT_LAST_USER_PROP_ID, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND, "got ret %d, error %#lx.\n", ret, GetLastError());
+
+    blob.cbData = sizeof(value);
+    blob.pbData = (BYTE *)&value;
+    value = 1;
+    ret = CertSetCertificateContextProperty(context, CERT_LAST_USER_PROP_ID, 0, &blob);
+    ok(ret, "got error %#lx.\n", GetLastError());
+    value = 0xdeadbeef;
+    size = 0xdeadbeef;
+    ret = CertGetCertificateContextProperty(context, CERT_LAST_USER_PROP_ID, NULL, &size);
+    ok(ret, "got error %#lx.\n", GetLastError());
+    ok(size == sizeof(value), "got size %lu.\n", size);
+    ret = CertGetCertificateContextProperty(context, CERT_LAST_USER_PROP_ID, &value, &size);
+    ok(ret, "got error %#lx.\n", GetLastError());
+    ok(size == sizeof(value), "got size %lu.\n", size);
+    ok(value == 1, "got value %u.\n", value);
+
     CertFreeCertificateContext(context);
 
     context = CertCreateCertificateContext(X509_ASN_ENCODING,
