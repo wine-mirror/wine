@@ -19,6 +19,7 @@
  */
 
 %option bison-bridge
+%option bison-locations
 %option stack
 %option noinput nounput noyy_top_state
 %option noyywrap
@@ -53,6 +54,7 @@ uuid  {hd}{8}-{hd}{4}-{hd}{4}-{hd}{4}-{hd}{12}
 
 #define YYerror PARSER_error
 #define YYSTYPE PARSER_STYPE
+#define YYLTYPE PARSER_LTYPE
 #define YYUNDEF PARSER_UNDEF
 #define yyerror parser_error
 
@@ -197,13 +199,16 @@ static void winrt_enable( int ns_prefix )
                                                 }
 }
 <PP_LINE>[0-9]+{ws}*                            {
-                                                    line_number = strtoul( yytext, NULL, 10 ) - 1;  /* We didn't read the newline */
+                                                    yylloc->first_line = strtoul( yytext, NULL, 10 ) - 1;
+                                                    yylloc->last_line = yylloc->first_line;
+                                                    line_number = yylloc->first_line;
                                                     yy_pop_state();
                                                     yy_push_state(PP_FILE);
                                                 }
 <PP_FILE>\"(\\[^n]|[^"\\\n])*\"{ws}*            {
                                                     input_name = xstrdup( yytext + 1 );
                                                     *strchr( input_name, '"' ) = 0;
+                                                    yylloc->input_name = input_name;
                                                 }
 <PP_FILE>[^"][^\n]*                             { yy_pop_state(); }
 
@@ -557,9 +562,9 @@ void generic_msg( const struct location *where, const char *s, const char *t, va
 }
 
 /* yyerror:  yacc assumes this is not newline terminated.  */
-void parser_error( const char *message )
+void parser_error( const struct location *where, const char *message )
 {
-    error_loc( "%s\n", message );
+    error_at( where, "%s\n", message );
 }
 
 static void warning_disable(int warning)

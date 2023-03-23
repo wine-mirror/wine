@@ -124,15 +124,17 @@ static typelib_t *current_typelib;
 %code provides
 {
 
-int parser_lex( PARSER_STYPE *yylval );
+int parser_lex( PARSER_STYPE *yylval, PARSER_LTYPE *yylloc );
 void push_import( char *input_name );
 void pop_import(void);
 
 }
 
+%define api.location.type {struct location}
 %define api.prefix {parser_}
 %define api.pure full
 %define parse.error verbose
+%locations
 
 %union {
 	attr_t *attr;
