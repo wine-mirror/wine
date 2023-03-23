@@ -2317,15 +2317,15 @@ void signal_init_threading(void)
 NTSTATUS signal_alloc_thread( TEB *teb )
 {
     struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&teb->GdiTebBatch;
+    WOW_TEB *wow_teb = get_wow_teb( teb );
 
-    if (teb->WowTebOffset)
+    if (wow_teb)
     {
         if (!fs32_sel)
         {
-            void *teb32 = (char *)teb + teb->WowTebOffset;
             sigset_t sigset;
             int idx;
-            LDT_ENTRY entry = ldt_make_entry( teb32, page_size - 1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
+            LDT_ENTRY entry = ldt_make_entry( wow_teb, page_size - 1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
 
             server_enter_uninterrupted_section( &ldt_mutex, &sigset );
             for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
@@ -2423,6 +2423,7 @@ static void *mac_thread_gsbase(void)
 void signal_init_process(void)
 {
     struct sigaction sig_act;
+    WOW_TEB *wow_teb = get_wow_teb( NtCurrentTeb() );
     void *ptr, *kernel_stack = (char *)ntdll_get_thread_data()->kernel_stack + kernel_stack_size;
 
     amd64_thread_data()->syscall_frame = (struct syscall_frame *)kernel_stack - 1;
@@ -2436,13 +2437,12 @@ void signal_init_process(void)
     if (xstate_compaction_enabled) syscall_flags |= SYSCALL_HAVE_XSAVEC;
 
 #ifdef __linux__
-    if (NtCurrentTeb()->WowTebOffset)
+    if (wow_teb)
     {
-        void *teb32 = (char *)NtCurrentTeb() + NtCurrentTeb()->WowTebOffset;
         int sel;
 
         cs32_sel = 0x23;
-        if ((sel = alloc_fs_sel( -1, teb32 )) != -1)
+        if ((sel = alloc_fs_sel( -1, wow_teb )) != -1)
         {
             amd64_thread_data()->fs = fs32_sel = (sel << 3) | 3;
             syscall_flags |= SYSCALL_HAVE_PTHREAD_TEB;
@@ -2453,14 +2453,13 @@ void signal_init_process(void)
         else ERR_(seh)( "failed to allocate %%fs selector\n" );
     }
 #elif defined(__APPLE__)
-    if (NtCurrentTeb()->WowTebOffset)
+    if (wow_teb)
     {
-        void *teb32 = (char *)NtCurrentTeb() + NtCurrentTeb()->WowTebOffset;
         LDT_ENTRY cs32_entry, fs32_entry;
         int idx;
 
         cs32_entry = ldt_make_entry( NULL, -1, LDT_FLAGS_CODE | LDT_FLAGS_32BIT );
-        fs32_entry = ldt_make_entry( teb32, page_size - 1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
+        fs32_entry = ldt_make_entry( wow_teb, page_size - 1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
 
         for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
         {
@@ -2520,7 +2519,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
 #if defined __linux__
     arch_prctl( ARCH_SET_GS, teb );
     arch_prctl( ARCH_GET_FS, &amd64_thread_data()->pthread_teb );
-    if (fs32_sel) alloc_fs_sel( fs32_sel >> 3, (char *)teb + teb->WowTebOffset );
+    if (fs32_sel) alloc_fs_sel( fs32_sel >> 3, get_wow_teb( teb ));
 #elif defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
     amd64_set_gsbase( teb );
 #elif defined(__NetBSD__)
@@ -2556,7 +2555,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     {
         wow_context->ContextFlags = CONTEXT_I386_ALL;
         wow_context->Eax = (ULONG_PTR)entry;
-        wow_context->Ebx = (arg == peb ? get_wow_teb( teb )->Peb : (ULONG_PTR)arg);
+        wow_context->Ebx = (arg == peb ? (ULONG_PTR)wow_peb : (ULONG_PTR)arg);
         wow_context->Esp = get_wow_teb( teb )->Tib.StackBase - 16;
         wow_context->Eip = pLdrSystemDllInitBlock->pRtlUserThreadStart;
         wow_context->SegCs = cs32_sel;

@@ -1617,7 +1617,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     {
         i386_context->ContextFlags = CONTEXT_I386_ALL;
         i386_context->Eax = (ULONG_PTR)entry;
-        i386_context->Ebx = (arg == peb ? get_wow_teb( teb )->Peb : (ULONG_PTR)arg);
+        i386_context->Ebx = (arg == peb ? (ULONG_PTR)wow_peb : (ULONG_PTR)arg);
         i386_context->Esp = get_wow_teb( teb )->Tib.StackBase - 16;
         i386_context->Eip = pLdrSystemDllInitBlock->pRtlUserThreadStart;
         i386_context->SegCs = 0x23;
@@ -1634,7 +1634,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     {
         arm_context->ContextFlags = CONTEXT_ARM_ALL;
         arm_context->R0 = (ULONG_PTR)entry;
-        arm_context->R1 = (arg == peb ? get_wow_teb( teb )->Peb : (ULONG_PTR)arg);
+        arm_context->R1 = (arg == peb ? (ULONG_PTR)wow_peb : (ULONG_PTR)arg);
         arm_context->Sp = get_wow_teb( teb )->Tib.StackBase;
         arm_context->Pc = pLdrSystemDllInitBlock->pRtlUserThreadStart;
         if (arm_context->Pc & 1) arm_context->Cpsr |= 0x20; /* thumb mode */

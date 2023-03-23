@@ -2410,11 +2410,8 @@ void WINAPI RtlSetLastWin32Error( DWORD err )
 {
     TEB *teb = NtCurrentTeb();
 #ifdef _WIN64
-    if (teb->WowTebOffset)
-    {
-        TEB32 *teb32 = (TEB32 *)((char *)teb + teb->WowTebOffset);
-        teb32->LastErrorValue = err;
-    }
+    WOW_TEB *wow_teb = get_wow_teb( teb );
+    if (wow_teb) wow_teb->LastErrorValue = err;
 #endif
     teb->LastErrorValue = err;
 }

@@ -1914,7 +1914,7 @@ static void load_apiset_dll(void)
                 map->Version == 6 &&
                 map->Size <= sec->Misc.VirtualSize)
             {
-                NtCurrentTeb()->Peb->ApiSetMap = map;
+                peb->ApiSetMap = map;
                 if (wow_peb) wow_peb->ApiSetMap = PtrToUlong(map);
                 TRACE( "loaded %s apiset at %p\n", debugstr_w(path), map );
                 return;
