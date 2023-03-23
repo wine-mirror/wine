@@ -461,6 +461,22 @@ SAFEARRAY{ws}*/\(	return tSAFEARRAY;
 			}
 %%
 
+static void print_imports(void)
+{
+    struct import_state *state, *next;
+
+    if (list_empty( &import_stack )) return;
+
+    fprintf( stderr, "In file included from " );
+    LIST_FOR_EACH_ENTRY_SAFE_REV( state, next, &import_stack, struct import_state, entry )
+    {
+        if (&next->entry == &import_stack) break;
+        fprintf( stderr, "%s:%d,\n", state->input_name, state->where.first_line );
+        fprintf( stderr, "                 from ");
+    }
+    fprintf( stderr, "%s:%d:\n", state->input_name, state->where.first_line );
+}
+
 void pop_import( struct location *where )
 {
     struct list *entry = list_head( &import_stack );
@@ -551,18 +567,6 @@ static void end_of_line( struct location *where )
     where->last_column = 1;
 }
 
-static const int want_near_indication = 0;
-
-static void make_print(char *str)
-{
-    while(*str)
-    {
-        if(!isprint(*str))
-            *str = ' ';
-        str++;
-    }
-}
-
 void init_location( struct location *where, const struct location *begin, const struct location *end )
 {
     if (!begin) begin = &previous_location;
@@ -580,30 +584,39 @@ void init_location( struct location *where, const struct location *begin, const 
     }
 }
 
-void generic_msg( const struct location *where, const char *s, const char *t, va_list ap )
+static void diagnostic( const struct location *where, const char *type, const char *message )
 {
+    char buffer[1024], *line = NULL;
+    FILE *file;
+    int i;
+
     if (!where) where = &previous_location;
 
-    fprintf( stderr, "%s:%d: %s: ", where->input_name, where->first_line, t );
-    vfprintf( stderr, s, ap );
+    print_imports();
 
-    if (want_near_indication)
-    {
-        char *cpy;
-        if (where->near_text)
-        {
-            cpy = xstrdup( where->near_text );
-            make_print( cpy );
-            fprintf( stderr, " near '%s'", cpy );
-            free( cpy );
-        }
-    }
+    fprintf( stderr, "%s:%d:%d: %s: %s\n", where->input_name, where->first_line, where->first_column, type, message );
+
+    if (!where->input_name || !(file = fopen( where->input_name, "r" ))) return;
+    for (i = 0; i < where->first_line; i++) if (!(line = fgets( buffer, sizeof(buffer), file ))) break;
+    fclose( file );
+    if (!line) return;
+    fprintf( stderr, "%s", line );
+
+    line = buffer;
+    for (i = 0; i < where->first_column - 1; i++) line += sprintf( line, " " );
+    line += sprintf( line, "^" );
+    for (i = where->first_column + 1; i < where->last_column; i++) line += sprintf( line, "~" );
+    fprintf( stderr, "%s\n", buffer );
 }
 
-/* yyerror:  yacc assumes this is not newline terminated.  */
 void parser_error( const struct location *where, const char *message )
 {
-    error_at( where, "%s\n", message );
+    diagnostic( where, "error", message );
+}
+
+void parser_warning( const struct location *where, const char *message )
+{
+    diagnostic( where, "warning", message );
 }
 
 static void warning_disable(int warning)

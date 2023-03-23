@@ -313,7 +313,6 @@ enum type_basic_type
 struct location
 {
     const char *input_name;
-    const char *near_text;
     int first_line;
     int last_line;
     int first_column;

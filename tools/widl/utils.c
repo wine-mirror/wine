@@ -34,10 +34,14 @@
 
 void error_at( const struct location *where, const char *s, ... )
 {
+    char buffer[1024];
+
     va_list ap;
     va_start( ap, s );
-    generic_msg( where, s, "error", ap );
+    vsnprintf( buffer, sizeof(buffer), s, ap );
     va_end( ap );
+
+    parser_error( where, buffer );
     exit( 1 );
 }
 
@@ -62,10 +66,14 @@ void warning(const char *s, ...)
 
 void warning_at( const struct location *where, const char *s, ... )
 {
+    char buffer[1024];
+
     va_list ap;
     va_start( ap, s );
-    generic_msg( where, s, "warning", ap );
+    vsnprintf( buffer, sizeof(buffer), s, ap );
     va_end( ap );
+
+    parser_warning( where, buffer );
 }
 
 void chat(const char *s, ...)
