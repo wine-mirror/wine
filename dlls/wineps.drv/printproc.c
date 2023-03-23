@@ -24,6 +24,8 @@
 #include <winspool.h>
 #include <ddk/winsplp.h>
 
+#include "psdrv.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
@@ -37,6 +39,7 @@ struct pp_data
     HANDLE hport;
     WCHAR *doc_name;
     WCHAR *out_file;
+    PSDRV_PDEVICE *pdev;
 };
 
 typedef enum
@@ -215,6 +218,7 @@ HANDLE WINAPI OpenPrintProcessor(WCHAR *port, PRINTPROCESSOROPENDATA *open_data)
 {
     struct pp_data *data;
     HANDLE hport;
+    HDC hdc;
 
     TRACE("%s, %p\n", debugstr_w(port), open_data);
 
@@ -239,6 +243,23 @@ HANDLE WINAPI OpenPrintProcessor(WCHAR *port, PRINTPROCESSOROPENDATA *open_data)
     data->hport = hport;
     data->doc_name = wcsdup(open_data->pDocumentName);
     data->out_file = wcsdup(open_data->pOutputFile);
+
+    hdc = CreateCompatibleDC(NULL);
+    if (!hdc)
+    {
+        LocalFree(data);
+        return NULL;
+    }
+    SetGraphicsMode(hdc, GM_ADVANCED);
+    data->pdev = create_psdrv_physdev(hdc, open_data->pPrinterName,
+            (const PSDRV_DEVMODE *)open_data->pDevMode);
+    if (!data->pdev)
+    {
+        DeleteDC(hdc);
+        LocalFree(data);
+        return NULL;
+    }
+    data->pdev->dev.hdc = hdc;
     return (HANDLE)data;
 }
 
@@ -368,6 +389,9 @@ BOOL WINAPI ClosePrintProcessor(HANDLE pp)
     ClosePrinter(data->hport);
     free(data->doc_name);
     free(data->out_file);
+    DeleteDC(data->pdev->dev.hdc);
+    HeapFree(GetProcessHeap(), 0, data->pdev->Devmode);
+    HeapFree(GetProcessHeap(), 0, data->pdev);
 
     memset(data, 0, sizeof(*data));
     LocalFree(data);

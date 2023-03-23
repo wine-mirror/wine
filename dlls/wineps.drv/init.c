@@ -338,8 +338,8 @@ static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
 	  physDev->horzRes, physDev->vertRes);
 }
 
-static PSDRV_PDEVICE *create_psdrv_physdev( HDC hdc, const WCHAR *device,
-                                            const PSDRV_DEVMODE *devmode )
+PSDRV_PDEVICE *create_psdrv_physdev( HDC hdc, const WCHAR *device,
+                                     const PSDRV_DEVMODE *devmode )
 {
     PRINTERINFO *pi = PSDRV_FindPrinterInfo( device );
     PSDRV_PDEVICE *pdev;

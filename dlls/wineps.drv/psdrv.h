@@ -393,6 +393,9 @@ static inline PSDRV_PDEVICE *get_psdrv_dev( PHYSDEV dev )
     return (PSDRV_PDEVICE *)dev;
 }
 
+extern PSDRV_PDEVICE *create_psdrv_physdev( HDC hdc, const WCHAR *device,
+        const PSDRV_DEVMODE *devmode ) DECLSPEC_HIDDEN;
+
 /*
  *  Every glyph name in the Adobe Glyph List and the 35 core PostScript fonts
  */
