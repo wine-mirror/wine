@@ -133,7 +133,16 @@ static struct pp_data* get_handle_data(HANDLE pp)
 static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         const ENHMETARECORD *rec, int n, LPARAM arg)
 {
-    FIXME("unsupported record: %ld\n", rec->iType);
+    struct pp_data *data = (struct pp_data *)arg;
+
+    switch (rec->iType)
+    {
+    case EMR_HEADER:
+        return PSDRV_StartPage(&data->pdev->dev);
+    default:
+        FIXME("unsupported record: %ld\n", rec->iType);
+    }
+
     return 1;
 }
 
@@ -174,7 +183,7 @@ static BOOL print_metafile(struct pp_data *data, HANDLE hdata)
     if (!hmf)
         return FALSE;
 
-    ret = EnumEnhMetaFile(NULL, hmf, hmf_proc, NULL, NULL);
+    ret = EnumEnhMetaFile(NULL, hmf, hmf_proc, (void *)data, NULL);
     DeleteEnhMetaFile(hmf);
     return ret;
 }
