@@ -213,6 +213,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
 
     case EMR_MOVETOEX:
     case EMR_SETWORLDTRANSFORM:
+    case EMR_MODIFYWORLDTRANSFORM:
         return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n);
     default:
         FIXME("unsupported record: %ld\n", rec->iType);
