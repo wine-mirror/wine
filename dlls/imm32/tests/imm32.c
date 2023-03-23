@@ -2574,15 +2574,9 @@ static LRESULT WINAPI ime_ImeEscape( HIMC himc, UINT escape, void *data )
     case IME_ESC_SET_EUDC_DICTIONARY:
         if (!data) return 4;
         if (ime_info.fdwProperty & IME_PROP_UNICODE)
-        {
-            todo_wine_if(*(WCHAR *)data != 'E')
             ok_wcs( L"EscapeIme", data );
-        }
         else
-        {
-            todo_wine_if(*(char *)data != 'E')
             ok_str( "EscapeIme", data );
-        }
         /* fallthrough */
     case IME_ESC_QUERY_SUPPORT:
     case IME_ESC_SEQUENCE_TO_INTERNAL:

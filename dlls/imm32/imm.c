@@ -1006,7 +1006,7 @@ LRESULT WINAPI ImmEscapeA( HKL hkl, HIMC himc, UINT code, void *data )
 
     if (!(ime = ime_acquire( hkl ))) return 0;
 
-    if (!EscapeRequiresWA( code ) || !ime_is_unicode( ime ))
+    if (!EscapeRequiresWA( code ) || !ime_is_unicode( ime ) || !data)
         ret = ime->pImeEscape( himc, code, data );
     else
     {
@@ -1039,7 +1039,7 @@ LRESULT WINAPI ImmEscapeW( HKL hkl, HIMC himc, UINT code, void *data )
 
     if (!(ime = ime_acquire( hkl ))) return 0;
 
-    if (!EscapeRequiresWA( code ) || ime_is_unicode( ime ))
+    if (!EscapeRequiresWA( code ) || ime_is_unicode( ime ) || !data)
         ret = ime->pImeEscape( himc, code, data );
     else
     {
