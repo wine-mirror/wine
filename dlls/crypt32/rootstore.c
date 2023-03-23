@@ -614,29 +614,30 @@ static void add_ms_root_certs(HCERTSTORE to)
  */
 static void read_trusted_roots_from_known_locations(HCERTSTORE store)
 {
-    HCERTSTORE from = CertOpenStore(CERT_STORE_PROV_MEMORY,
-     X509_ASN_ENCODING, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
+    HCERTSTORE new;
     DWORD needed;
     struct enum_root_certs_params params = { NULL, 2048, &needed };
 
-    if (from)
+    new = CertOpenStore( CERT_STORE_PROV_MEMORY, X509_ASN_ENCODING, 0, CERT_STORE_CREATE_NEW_FLAG, NULL );
+    if (!new) return;
+
+    params.buffer = CryptMemAlloc( params.size );
+    while (!CRYPT32_CALL( enum_root_certs, &params ))
     {
-        params.buffer = CryptMemAlloc( params.size );
-        while (!CRYPT32_CALL( enum_root_certs, &params ))
+        if (needed > params.size)
         {
-            if (needed > params.size)
-            {
-                CryptMemFree( params.buffer );
-                params.buffer = CryptMemAlloc( needed );
-                params.size = needed;
-            }
-            else CertAddEncodedCertificateToStore( from, X509_ASN_ENCODING, params.buffer, needed,
-                                                   CERT_STORE_ADD_NEW, NULL );
+            CryptMemFree( params.buffer );
+            params.buffer = CryptMemAlloc( needed );
+            params.size = needed;
+            continue;
         }
-        CryptMemFree( params.buffer );
-        check_and_store_certs(from, store);
+        CertAddEncodedCertificateToStore( new, X509_ASN_ENCODING, params.buffer, needed,
+                                          CERT_STORE_ADD_NEW, NULL );
     }
-    CertCloseStore(from, 0);
+    CryptMemFree( params.buffer );
+    check_and_store_certs( new, store );
+
+    CertCloseStore( new, 0 );
 }
 
 static HCERTSTORE create_root_store(void)
