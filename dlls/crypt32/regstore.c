@@ -56,8 +56,7 @@ static void CRYPT_HashToStr(const BYTE *hash, LPWSTR asciiHash)
         wsprintfW(asciiHash + i * 2, L"%02X", hash[i]);
 }
 
-static void CRYPT_RegReadSerializedFromReg(HKEY key, DWORD contextType,
- HCERTSTORE store)
+static void CRYPT_RegReadSerializedFromReg(HKEY key, DWORD contextType, HCERTSTORE store, DWORD disposition)
 {
     LONG rc;
     DWORD index = 0;
@@ -130,7 +129,7 @@ static void CRYPT_RegReadSerializedFromReg(HKEY key, DWORD contextType,
                                         TRACE("hash matches, adding\n");
                                         contextInterface->addContextToStore(
                                          store, context,
-                                         CERT_STORE_ADD_REPLACE_EXISTING, NULL);
+                                         disposition, NULL);
                                     }
                                     else
                                         TRACE("hash doesn't match, ignoring\n");
@@ -149,7 +148,7 @@ static void CRYPT_RegReadSerializedFromReg(HKEY key, DWORD contextType,
     } while (!rc);
 }
 
-static void CRYPT_RegReadFromReg(HKEY key, HCERTSTORE store)
+static void CRYPT_RegReadFromReg(HKEY key, HCERTSTORE store, DWORD disposition)
 {
     static const WCHAR * const subKeys[] = { L"Certificates", L"CRLs", L"CTLs" };
     static const DWORD contextFlags[] = { CERT_STORE_CERTIFICATE_CONTEXT_FLAG,
@@ -165,7 +164,7 @@ static void CRYPT_RegReadFromReg(HKEY key, HCERTSTORE store)
          &hKey, NULL);
         if (!rc)
         {
-            CRYPT_RegReadSerializedFromReg(hKey, contextFlags[i], store);
+            CRYPT_RegReadSerializedFromReg(hKey, contextFlags[i], store, disposition);
             RegCloseKey(hKey);
         }
     }
@@ -463,7 +462,7 @@ static BOOL WINAPI CRYPT_RegControl(HCERTSTORE hCertStore, DWORD dwFlags,
          CERT_STORE_CREATE_NEW_FLAG, NULL);
 
         CRYPT_RegFlushStore(store, FALSE);
-        CRYPT_RegReadFromReg(store->key, memStore);
+        CRYPT_RegReadFromReg(store->key, memStore, CERT_STORE_ADD_REPLACE_EXISTING);
         I_CertUpdateStore(store->memStore, memStore, 0, 0);
         CertCloseStore(memStore, 0);
         break;
@@ -551,7 +550,7 @@ WINECRYPT_CERTSTORE *CRYPT_RegOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
                     list_init(&regInfo->certsToDelete);
                     list_init(&regInfo->crlsToDelete);
                     list_init(&regInfo->ctlsToDelete);
-                    CRYPT_RegReadFromReg(regInfo->key, regInfo->memStore);
+                    CRYPT_RegReadFromReg(regInfo->key, regInfo->memStore, CERT_STORE_ADD_ALWAYS);
                     regInfo->dirty = FALSE;
                     provInfo.cbSize = sizeof(provInfo);
                     provInfo.cStoreProvFunc = ARRAY_SIZE(regProvFuncs);
