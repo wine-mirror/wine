@@ -151,6 +151,14 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
 
         return PSDRV_PolyBezier(&data->pdev->dev, (const POINT *)p->aptl, p->cptl);
     }
+    case EMR_POLYPOLYLINE:
+    {
+        const EMRPOLYPOLYLINE *p = (const EMRPOLYPOLYLINE *)rec;
+
+        return PSDRV_PolyPolyline(&data->pdev->dev,
+                (const POINT *)(p->aPolyCounts + p->nPolys),
+                p->aPolyCounts, p->nPolys);
+    }
     case EMR_EOF:
         return PSDRV_EndPage(&data->pdev->dev);
     case EMR_SELECTOBJECT:
