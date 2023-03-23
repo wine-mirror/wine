@@ -1130,7 +1130,7 @@ void *get_cpu_area( USHORT machine )
     WOW64_CPURESERVED *cpu;
     ULONG align;
 
-    if (!NtCurrentTeb()->WowTebOffset) return NULL;
+    if (!is_wow64()) return NULL;
 #ifdef _WIN64
     cpu = NtCurrentTeb()->TlsSlots[WOW64_TLS_CPURESERVED];
 #else

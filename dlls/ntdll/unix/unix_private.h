@@ -52,6 +52,34 @@ static inline BOOL is_machine_64bit( WORD machine )
     return (machine == IMAGE_FILE_MACHINE_AMD64 || machine == IMAGE_FILE_MACHINE_ARM64);
 }
 
+#ifdef _WIN64
+typedef TEB32 WOW_TEB;
+typedef PEB32 WOW_PEB;
+static inline TEB64 *NtCurrentTeb64(void) { return NULL; }
+#else
+typedef TEB64 WOW_TEB;
+typedef PEB64 WOW_PEB;
+static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiBatchCount; }
+#endif
+
+extern WOW_PEB *wow_peb DECLSPEC_HIDDEN;
+
+static inline WOW_TEB *get_wow_teb( TEB *teb )
+{
+    return teb->WowTebOffset ? (WOW_TEB *)((char *)teb + teb->WowTebOffset) : NULL;
+}
+
+static inline BOOL is_wow64(void)
+{
+    return !!wow_peb;
+}
+
+/* check for old-style Wow64 (using a 32-bit ntdll.so) */
+static inline BOOL is_old_wow64(void)
+{
+    return !is_win64 && wow_peb;
+}
+
 /* thread private data, stored in NtCurrentTeb()->GdiTebBatch */
 struct ntdll_thread_data
 {
@@ -366,10 +394,7 @@ static inline NTSTATUS wait_async( HANDLE handle, BOOL alertable )
 
 static inline BOOL in_wow64_call(void)
 {
-#ifdef _WIN64
-    return !!NtCurrentTeb()->WowTebOffset;
-#endif
-    return FALSE;
+    return is_win64 && is_wow64();
 }
 
 static inline void set_async_iosb( client_ptr_t iosb, NTSTATUS status, ULONG_PTR info )
@@ -424,29 +449,6 @@ static inline client_ptr_t iosb_client_ptr( IO_STATUS_BLOCK *io )
     if (io && in_wow64_call()) return wine_server_client_ptr( io->Pointer );
 #endif
     return wine_server_client_ptr( io );
-}
-
-#ifdef _WIN64
-typedef TEB32 WOW_TEB;
-typedef PEB32 WOW_PEB;
-static inline TEB64 *NtCurrentTeb64(void) { return NULL; }
-#else
-typedef TEB64 WOW_TEB;
-typedef PEB64 WOW_PEB;
-static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiBatchCount; }
-#endif
-
-extern WOW_PEB *wow_peb DECLSPEC_HIDDEN;
-
-static inline WOW_TEB *get_wow_teb( TEB *teb )
-{
-    return teb->WowTebOffset ? (WOW_TEB *)((char *)teb + teb->WowTebOffset) : NULL;
-}
-
-/* check for old-style Wow64 (using a 32-bit ntdll.so) */
-static inline BOOL is_old_wow64(void)
-{
-    return !is_win64 && wow_peb;
 }
 
 enum loadorder

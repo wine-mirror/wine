@@ -2974,7 +2974,6 @@ NTSTATUS virtual_alloc_teb( TEB **ret_teb )
     void *ptr = NULL;
     NTSTATUS status = STATUS_SUCCESS;
     SIZE_T block_size = signal_stack_mask + 1;
-    BOOL is_wow = !!NtCurrentTeb()->WowTebOffset;
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
     if (next_free_teb)
@@ -2989,7 +2988,7 @@ NTSTATUS virtual_alloc_teb( TEB **ret_teb )
         {
             SIZE_T total = 32 * block_size;
 
-            if ((status = NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, is_win64 && is_wow ? 0x7fffffff : 0,
+            if ((status = NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, is_win64 && is_wow64() ? 0x7fffffff : 0,
                                                    &total, MEM_RESERVE, PAGE_READWRITE )))
             {
                 server_leave_uninterrupted_section( &virtual_mutex, &sigset );
@@ -3002,7 +3001,7 @@ NTSTATUS virtual_alloc_teb( TEB **ret_teb )
         NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&ptr, 0, &block_size,
                                  MEM_COMMIT, PAGE_READWRITE );
     }
-    *ret_teb = teb = init_teb( ptr, is_wow );
+    *ret_teb = teb = init_teb( ptr, is_wow64() );
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
 
     if ((status = signal_alloc_thread( teb )))

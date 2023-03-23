@@ -419,7 +419,7 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOO
         };
         SYSTEM_BASIC_INFORMATION sbi;
 
-        virtual_get_system_info( &sbi, !!NtCurrentTeb()->WowTebOffset );
+        virtual_get_system_info( &sbi, is_wow64() );
         result->type = call->type;
         addr = wine_server_get_ptr( call->virtual_alloc_ex.addr );
         size = call->virtual_alloc_ex.size;

@@ -2998,7 +2998,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
     {
         SYSTEM_BASIC_INFORMATION sbi;
 
-        virtual_get_system_info( &sbi, !!NtCurrentTeb()->WowTebOffset );
+        virtual_get_system_info( &sbi, is_wow64() );
         len = sizeof(sbi);
         if (size == len)
         {
