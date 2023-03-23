@@ -169,6 +169,13 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     }
     case EMR_EOF:
         return PSDRV_EndPage(&data->pdev->dev);
+    case EMR_SETPIXELV:
+    {
+        const EMRSETPIXELV *p = (const EMRSETPIXELV *)rec;
+
+        return PSDRV_SetPixel(&data->pdev->dev, p->ptlPixel.x,
+                p->ptlPixel.y, p->crColor);
+    }
     case EMR_SELECTOBJECT:
     {
         const EMRSELECTOBJECT *so = (const EMRSELECTOBJECT *)rec;
