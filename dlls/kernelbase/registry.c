@@ -227,25 +227,76 @@ static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING *name, DWORD o
     return status;
 }
 
+static NTSTATUS create_subkey( HKEY *subkey, HKEY root, UNICODE_STRING *name, DWORD options, ACCESS_MASK access,
+                               const UNICODE_STRING *class, PULONG dispos )
+{
+    DWORD i = 0, len = name->Length / sizeof(WCHAR);
+    WCHAR *buffer = name->Buffer;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING str;
+    NTSTATUS status;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = root;
+    attr.ObjectName = &str;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    if (i < len && buffer[i] == '\\') return STATUS_OBJECT_PATH_INVALID;
+    while (i < len && buffer[i] != '\\') i++;
+
+    str.Buffer = name->Buffer;
+    str.Length = i * sizeof(WCHAR);
+
+    if (i == len)
+    {
+        if (options & REG_OPTION_OPEN_LINK) attr.Attributes |= OBJ_OPENLINK;
+    }
+    else
+    {
+        options &= ~REG_OPTION_CREATE_LINK;
+    }
+
+    status = NtCreateKey( (HANDLE *)subkey, access, &attr, 0, class, options, dispos );
+    if (status == STATUS_PREDEFINED_HANDLE)
+    {
+        *subkey = get_perflib_key( *subkey );
+        status = STATUS_SUCCESS;
+    }
+
+    if (!status)
+    {
+        while (i < len && buffer[i] == '\\') i++;
+
+        name->Buffer += i;
+        name->Length -= i * sizeof(WCHAR);
+    }
+
+    return status;
+}
+
 /* wrapper for NtCreateKey that creates the key recursively if necessary */
 static NTSTATUS create_key( HKEY *retkey, HKEY root, UNICODE_STRING name, ULONG options, ACCESS_MASK access,
                             const UNICODE_STRING *class, PULONG dispos )
 {
-    BOOL force_wow32 = is_win64 && (access & KEY_WOW64_32KEY);
     NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
-    OBJECT_ATTRIBUTES attr;
-    HKEY subkey;
+    HKEY subkey, subkey_root = root;
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = root;
-    attr.ObjectName = &name;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-    if (options & REG_OPTION_OPEN_LINK) attr.Attributes |= OBJ_OPENLINK;
+    *retkey = NULL;
 
-    if (!force_wow32)
+    if (!(is_win64 && (access & KEY_WOW64_32KEY)))
     {
+        OBJECT_ATTRIBUTES attr;
+
+        attr.Length = sizeof(attr);
+        attr.RootDirectory = root;
+        attr.ObjectName = &name;
+        attr.Attributes = 0;
+        attr.SecurityDescriptor = NULL;
+        attr.SecurityQualityOfService = NULL;
+        if (options & REG_OPTION_OPEN_LINK) attr.Attributes |= OBJ_OPENLINK;
+
         status = NtCreateKey( (HANDLE *)retkey, access, &attr, 0, class, options, dispos );
         if (status == STATUS_PREDEFINED_HANDLE)
         {
@@ -257,60 +308,30 @@ static NTSTATUS create_key( HKEY *retkey, HKEY root, UNICODE_STRING name, ULONG 
             return status;
     }
 
-    status = open_key( &subkey, root, &name, options & REG_OPTION_OPEN_LINK, access, TRUE );
+    status = open_key( &subkey_root, root, &name, options & REG_OPTION_OPEN_LINK, access, TRUE );
     if (!status && (options & REG_OPTION_CREATE_LINK))
     {
-        NtClose( subkey );
+        NtClose( subkey_root );
         status = STATUS_OBJECT_NAME_COLLISION;
     }
 
     if (!status)
         if (dispos) *dispos = REG_OPENED_EXISTING_KEY;
 
-    attr.RootDirectory = subkey;
     if (status == STATUS_OBJECT_NAME_NOT_FOUND)
     {
-        DWORD attrs, i, len = name.Length / sizeof(WCHAR);
-        WCHAR *buffer = name.Buffer;
-
-        attrs = attr.Attributes;
-
-        while (len)
+        status = STATUS_SUCCESS;
+        while (!status && name.Length)
         {
-            i = 0;
-
-            /* don't try to create registry root */
-            if (!attr.RootDirectory && len > 10 && !wcsnicmp( buffer, L"\\Registry\\", 10 )) i += 10;
-            while (i < len && buffer[i] != '\\') i++;
-
-            name.Buffer = buffer;
-            name.Length = i * sizeof(WCHAR);
-
-            if (i == len)
-            {
-                attr.Attributes = attrs;
-                status = NtCreateKey( (HANDLE *)&subkey, access, &attr, 0, class, options, dispos );
-            }
-            else
-            {
-                attr.Attributes = attrs & ~OBJ_OPENLINK;
-                status = NtCreateKey( (HANDLE *)&subkey, access, &attr, 0, class,
-                                      options & ~REG_OPTION_CREATE_LINK, dispos );
-            }
-            if (attr.RootDirectory != root) NtClose( attr.RootDirectory );
-            if (!NT_SUCCESS(status)) return status;
-            attr.RootDirectory = subkey;
-            while (i < len && buffer[i] == '\\') i++;
-            buffer += i;
-            len -= i;
+            status = create_subkey( &subkey, subkey_root, &name, options, access, class, dispos );
+            if (subkey_root && subkey_root != root) NtClose( subkey_root );
+            subkey_root = subkey;
         }
     }
-    if (status == STATUS_PREDEFINED_HANDLE)
-    {
-        attr.RootDirectory = get_perflib_key( attr.RootDirectory );
-        status = STATUS_SUCCESS;
-    }
-    *retkey = attr.RootDirectory;
+
+    if (!status)
+        *retkey = subkey_root;
+
     return status;
 }
 
