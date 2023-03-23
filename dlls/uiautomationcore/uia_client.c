@@ -2653,8 +2653,20 @@ static SAFEARRAY WINAPI *default_uia_provider_callback(HWND hwnd, enum ProviderT
     switch (prov_type)
     {
     case ProviderType_Proxy:
-        FIXME("Default ProviderType_Proxy MSAA provider unimplemented.\n");
+    {
+        IAccessible *acc;
+
+        hr = AccessibleObjectFromWindow(hwnd, OBJID_CLIENT, &IID_IAccessible, (void **)&acc);
+        if (FAILED(hr) || !acc)
+            break;
+
+        hr = create_msaa_provider(acc, CHILDID_SELF, hwnd, TRUE, &elprov);
+        if (FAILED(hr))
+            WARN("Failed to create MSAA proxy provider with hr %#lx\n", hr);
+
+        IAccessible_Release(acc);
         break;
+    }
 
     case ProviderType_NonClientArea:
         FIXME("Default ProviderType_NonClientArea provider unimplemented.\n");

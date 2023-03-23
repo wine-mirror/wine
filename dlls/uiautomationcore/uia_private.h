@@ -155,3 +155,5 @@ HRESULT create_base_hwnd_provider(HWND hwnd, IRawElementProviderSimple **elprov)
 void uia_stop_provider_thread(void) DECLSPEC_HIDDEN;
 void uia_provider_thread_remove_node(HUIANODE node) DECLSPEC_HIDDEN;
 LRESULT uia_lresult_from_node(HUIANODE huianode) DECLSPEC_HIDDEN;
+HRESULT create_msaa_provider(IAccessible *acc, long child_id, HWND hwnd, BOOL known_root_acc,
+        IRawElementProviderSimple **elprov) DECLSPEC_HIDDEN;

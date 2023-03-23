@@ -796,7 +796,7 @@ static HRESULT WINAPI msaa_fragment_Navigate(IRawElementProviderFragment *iface,
         else
             acc = msaa_prov->acc;
 
-        hr = UiaProviderFromIAccessible(acc, CHILDID_SELF, 0, &elprov);
+        hr = create_msaa_provider(acc, CHILDID_SELF, NULL, FALSE, &elprov);
         if (SUCCEEDED(hr))
         {
             struct msaa_provider *prov = impl_from_msaa_provider(elprov);
@@ -827,7 +827,7 @@ static HRESULT WINAPI msaa_fragment_Navigate(IRawElementProviderFragment *iface,
         if (FAILED(hr) || !acc)
             break;
 
-        hr = UiaProviderFromIAccessible(acc, child_id, 0, &elprov);
+        hr = create_msaa_provider(acc, child_id, NULL, FALSE, &elprov);
         if (SUCCEEDED(hr))
         {
             struct msaa_provider *prov = impl_from_msaa_provider(elprov);
@@ -877,7 +877,7 @@ static HRESULT WINAPI msaa_fragment_Navigate(IRawElementProviderFragment *iface,
         if (FAILED(hr) || !acc)
             break;
 
-        hr = UiaProviderFromIAccessible(acc, child_id, 0, &elprov);
+        hr = create_msaa_provider(acc, child_id, NULL, FALSE, &elprov);
         if (SUCCEEDED(hr))
         {
             struct msaa_provider *prov = impl_from_msaa_provider(elprov);
@@ -1134,13 +1134,48 @@ static const ILegacyIAccessibleProviderVtbl msaa_acc_provider_vtbl = {
     msaa_acc_provider_get_DefaultAction,
 };
 
+HRESULT create_msaa_provider(IAccessible *acc, long child_id, HWND hwnd, BOOL known_root_acc,
+        IRawElementProviderSimple **elprov)
+{
+    struct msaa_provider *msaa_prov = heap_alloc_zero(sizeof(*msaa_prov));
+
+    if (!msaa_prov)
+        return E_OUTOFMEMORY;
+
+    msaa_prov->IRawElementProviderSimple_iface.lpVtbl = &msaa_provider_vtbl;
+    msaa_prov->IRawElementProviderFragment_iface.lpVtbl = &msaa_fragment_vtbl;
+    msaa_prov->ILegacyIAccessibleProvider_iface.lpVtbl = &msaa_acc_provider_vtbl;
+    msaa_prov->refcount = 1;
+    variant_init_i4(&msaa_prov->cid, child_id);
+    msaa_prov->acc = acc;
+    IAccessible_AddRef(acc);
+    msaa_prov->ia2 = msaa_acc_get_ia2(acc);
+
+    if (!hwnd)
+    {
+        HRESULT hr;
+
+        hr = WindowFromAccessibleObject(acc, &msaa_prov->hwnd);
+        if (FAILED(hr))
+            WARN("WindowFromAccessibleObject failed with hr %#lx\n", hr);
+    }
+    else
+        msaa_prov->hwnd = hwnd;
+
+    if (known_root_acc)
+        msaa_prov->root_acc_check_ran = msaa_prov->is_root_acc = TRUE;
+
+    *elprov = &msaa_prov->IRawElementProviderSimple_iface;
+
+    return S_OK;
+}
+
 /***********************************************************************
  *          UiaProviderFromIAccessible (uiautomationcore.@)
  */
 HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, long child_id, DWORD flags,
         IRawElementProviderSimple **elprov)
 {
-    struct msaa_provider *msaa_prov;
     IServiceProvider *serv_prov;
     HWND hwnd = NULL;
     HRESULT hr;
@@ -1184,22 +1219,7 @@ HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, long child_id, DWORD
     if (!hwnd)
         return E_FAIL;
 
-    msaa_prov = heap_alloc_zero(sizeof(*msaa_prov));
-    if (!msaa_prov)
-        return E_OUTOFMEMORY;
-
-    msaa_prov->IRawElementProviderSimple_iface.lpVtbl = &msaa_provider_vtbl;
-    msaa_prov->IRawElementProviderFragment_iface.lpVtbl = &msaa_fragment_vtbl;
-    msaa_prov->ILegacyIAccessibleProvider_iface.lpVtbl = &msaa_acc_provider_vtbl;
-    msaa_prov->refcount = 1;
-    msaa_prov->hwnd = hwnd;
-    variant_init_i4(&msaa_prov->cid, child_id);
-    msaa_prov->acc = acc;
-    IAccessible_AddRef(acc);
-    msaa_prov->ia2 = msaa_acc_get_ia2(acc);
-    *elprov = &msaa_prov->IRawElementProviderSimple_iface;
-
-    return S_OK;
+    return create_msaa_provider(acc, child_id, hwnd, FALSE, elprov);
 }
 
 static HRESULT uia_get_hr_for_last_error(void)

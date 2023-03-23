@@ -90,6 +90,7 @@ DEFINE_EXPECT(Accessible2_get_accName);
 DEFINE_EXPECT(Accessible2_get_accRole);
 DEFINE_EXPECT(Accessible2_get_accState);
 DEFINE_EXPECT(Accessible2_accLocation);
+DEFINE_EXPECT(Accessible_QI_IAccIdentity);
 DEFINE_EXPECT(Accessible2_QI_IAccIdentity);
 DEFINE_EXPECT(Accessible2_get_uniqueID);
 DEFINE_EXPECT(Accessible_child_accNavigate);
@@ -177,7 +178,10 @@ static HRESULT WINAPI Accessible_QueryInterface(IAccessible *iface, REFIID riid,
     {
         if (This == &Accessible2)
             CHECK_EXPECT(Accessible2_QI_IAccIdentity);
-        ok(This == &Accessible2, "unexpected call\n");
+        else if (This == &Accessible)
+            CHECK_EXPECT(Accessible_QI_IAccIdentity);
+
+        ok(This == &Accessible2 || This == &Accessible, "unexpected call\n");
         return E_NOINTERFACE;
     }
 
@@ -6738,10 +6742,17 @@ static void test_UiaNodeFromHandle(const char *name)
     /* Only sent twice on Win7. */
     SET_EXPECT_MULTI(winproc_GETOBJECT_CLIENT, 2);
     hr = UiaNodeFromHandle(hwnd, &node);
-    /* Windows 10 and below return E_FAIL, Windows 11 returns S_OK. */
-    ok(hr == S_OK || broken(hr == E_FAIL), "Unexpected hr %#lx.\n", hr);
+    /*
+     * On all versions of Windows prior to Windows 11, this would fail due to
+     * COM being uninitialized, presumably because it tries to get an MSAA
+     * proxy. Windows 11 now has the thread end up in an implicit MTA after
+     * the call to UiaNodeFromHandle, which is probably why this now succeeds.
+     * I don't know of anything that relies on this behavior, so for now we
+     * won't match it.
+     */
+    todo_wine ok(hr == S_OK || broken(hr == E_FAIL), "Unexpected hr %#lx.\n", hr);
     CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
-    todo_wine CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
     if (SUCCEEDED(hr))
         UiaNodeRelease(node);
 
@@ -6757,7 +6768,7 @@ static void test_UiaNodeFromHandle(const char *name)
     hr = UiaNodeFromHandle(hwnd, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
-    todo_wine CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
 
     hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
     ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
@@ -6783,7 +6794,7 @@ static void test_UiaNodeFromHandle(const char *name)
     hr = UiaNodeFromHandle(hwnd, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
-    todo_wine CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
 
     hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
     ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
@@ -6818,7 +6829,7 @@ static void test_UiaNodeFromHandle(const char *name)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(Provider.ref == 1 || broken(Provider.ref == 2), "Unexpected refcnt %ld\n", Provider.ref);
     CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
-    todo_wine CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
 
     hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
     ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
@@ -12683,6 +12694,93 @@ static void test_default_clientside_providers(void)
 
     UiaNodeRelease(node);
     prov_root = NULL;
+
+    /*
+     * Test default ProviderType_Proxy clientside provider. Provider will be
+     * the HWND provider for this node, and Accessible will be the main
+     * provider.
+     */
+    initialize_provider(&Provider, ProviderOptions_ClientSideProvider, hwnd, FALSE);
+    set_accessible_props(&Accessible, ROLE_SYSTEM_TEXT, STATE_SYSTEM_FOCUSABLE, 0, L"Accessible", 0, 0, 20, 20);
+    set_accessible_ia2_props(&Accessible, FALSE, 0);
+    acc_client = &Accessible.IAccessible_iface;
+    prov_root = child_win_prov_root = NULL;
+
+    SET_EXPECT(Accessible_QI_IAccIdentity);
+    SET_EXPECT(Accessible_get_accParent);
+    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    /* Only sent twice on Win7. */
+    SET_EXPECT_MULTI(winproc_GETOBJECT_CLIENT, 2);
+    hr = UiaNodeFromProvider(&Provider.IRawElementProviderSimple_iface, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+    ok(Accessible.ref >= 2, "Unexpected refcnt %ld\n", Accessible.ref);
+    todo_wine CHECK_CALLED(Accessible_QI_IAccIdentity);
+    todo_wine CHECK_CALLED(Accessible_get_accParent);
+    CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+
+    hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
+    check_node_provider_desc(V_BSTR(&v), L"Hwnd", L"Provider", FALSE);
+    check_node_provider_desc_todo(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+    check_node_provider_desc(V_BSTR(&v), L"Main", NULL, TRUE);
+    VariantClear(&v);
+
+    SET_EXPECT(Accessible_get_accRole);
+    hr = UiaGetPropertyValue(node, UIA_ControlTypePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
+    ok(V_I4(&v) == UIA_EditControlTypeId, "Unexpected I4 %#lx\n", V_I4(&v));
+    VariantClear(&v);
+    CHECK_CALLED(Accessible_get_accRole);
+
+    UiaNodeRelease(node);
+    ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    /*
+     * Unlike UiaProviderFromIAccessible which won't create a provider for an
+     * MSAA proxy, the default clientside proxy provider will.
+     */
+    hwnd2 = CreateWindowA("EDIT", "", WS_VISIBLE | WS_CHILD | ES_PASSWORD,
+            0, 0, 100, 100, hwnd, NULL, NULL, NULL);
+    initialize_provider(&Provider, ProviderOptions_ClientSideProvider, hwnd2, FALSE);
+
+    /* Tries to get override provider from parent HWND. */
+    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    hr = UiaNodeFromProvider(&Provider.IRawElementProviderSimple_iface, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+    todo_wine CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+
+    hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd2);
+    check_node_provider_desc(V_BSTR(&v), L"Hwnd", L"Provider", FALSE);
+    check_node_provider_desc_todo(V_BSTR(&v), L"Main", NULL, FALSE);
+    check_node_provider_desc_todo(V_BSTR(&v), L"Annotation", NULL, TRUE);
+    VariantClear(&v);
+
+    hr = UiaGetPropertyValue(node, UIA_ControlTypePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
+    ok(V_I4(&v) == UIA_EditControlTypeId, "Unexpected I4 %#lx\n", V_I4(&v));
+    VariantClear(&v);
+
+    hr = UiaGetPropertyValue(node, UIA_IsPasswordPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(V_VT(&v) == VT_BOOL, "Unexpected VT %d\n", V_VT(&v));
+    ok(check_variant_bool(&v, TRUE), "V_BOOL(&v) = %#x\n", V_BOOL(&v));
+    VariantClear(&v);
+
+    UiaNodeRelease(node);
+    DestroyWindow(hwnd2);
+
+    set_accessible_props(&Accessible, 0, 0, 0, NULL, 0, 0, 0, 0);
+    acc_client = NULL;
+    prov_root = child_win_prov_root = NULL;
 
     method_sequences_enabled = TRUE;
     DestroyWindow(hwnd);
