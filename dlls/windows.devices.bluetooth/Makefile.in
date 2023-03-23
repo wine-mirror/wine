@@ -1,0 +1,9 @@
+MODULE  = windows.devices.bluetooth.dll
+IMPORTS = combase
+
+C_SRCS = \
+	bluetoothadapter.c \
+	main.c
+
+IDL_SRCS = \
+	classes.idl
