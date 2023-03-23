@@ -2369,6 +2369,16 @@ HRESULT WINAPI UiaNodeFromHandle(HWND hwnd, HUIANODE *huianode)
 }
 
 /***********************************************************************
+ *          UiaGetRootNode (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaGetRootNode(HUIANODE *huianode)
+{
+    TRACE("(%p)\n", huianode);
+
+    return UiaNodeFromHandle(GetDesktopWindow(), huianode);
+}
+
+/***********************************************************************
  *          UiaNodeRelease (uiautomationcore.@)
  */
 BOOL WINAPI UiaNodeRelease(HUIANODE huianode)

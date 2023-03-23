@@ -12792,6 +12792,67 @@ static void test_default_clientside_providers(void)
     CoUninitialize();
 }
 
+static void test_UiaGetRootNode(void)
+{
+    HUIANODE node;
+    HRESULT hr;
+    VARIANT v;
+
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    UiaRegisterProviderCallback(test_uia_provider_callback);
+
+    /*
+     * UiaGetRootNode is the same as calling UiaNodeFromHandle with the
+     * desktop window handle.
+     */
+    initialize_provider(&Provider_hwnd, ProviderOptions_ClientSideProvider, GetDesktopWindow(), TRUE);
+    initialize_provider(&Provider_nc, ProviderOptions_ClientSideProvider | ProviderOptions_NonClientAreaProvider,
+            GetDesktopWindow(), TRUE);
+    initialize_provider(&Provider_proxy, ProviderOptions_ClientSideProvider, GetDesktopWindow(), TRUE);
+    Provider_proxy.ignore_hwnd_prop = TRUE;
+
+    base_hwnd_prov = &Provider_hwnd.IRawElementProviderSimple_iface;
+    proxy_prov = &Provider_proxy.IRawElementProviderSimple_iface;
+    nc_prov = &Provider_nc.IRawElementProviderSimple_iface;
+
+    method_sequences_enabled = FALSE;
+    SET_EXPECT(prov_callback_base_hwnd);
+    SET_EXPECT(prov_callback_nonclient);
+    SET_EXPECT(prov_callback_proxy);
+    hr = UiaGetRootNode(&node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!node, "Node == NULL.\n");
+    ok(Provider_proxy.ref == 2, "Unexpected refcnt %ld\n", Provider_proxy.ref);
+    ok(Provider_hwnd.ref == 2, "Unexpected refcnt %ld\n", Provider_hwnd.ref);
+    ok(Provider_nc.ref == 2, "Unexpected refcnt %ld\n", Provider_nc.ref);
+    CHECK_CALLED(prov_callback_base_hwnd);
+    CHECK_CALLED(prov_callback_nonclient);
+    CHECK_CALLED(prov_callback_proxy);
+
+    hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), GetDesktopWindow());
+    check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_proxy", TRUE);
+    check_node_provider_desc(V_BSTR(&v), L"Hwnd", L"Provider_hwnd", FALSE);
+    check_node_provider_desc(V_BSTR(&v), L"Nonclient", L"Provider_nc", FALSE);
+    VariantClear(&v);
+
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
+    ok(Provider_proxy.ref == 1, "Unexpected refcnt %ld\n", Provider_proxy.ref);
+    ok(Provider_hwnd.ref == 1, "Unexpected refcnt %ld\n", Provider_hwnd.ref);
+    ok(Provider_nc.ref == 1, "Unexpected refcnt %ld\n", Provider_nc.ref);
+
+    initialize_provider(&Provider_hwnd, ProviderOptions_ClientSideProvider, NULL, TRUE);
+    initialize_provider(&Provider_nc, ProviderOptions_ClientSideProvider | ProviderOptions_NonClientAreaProvider, NULL,
+            TRUE);
+    initialize_provider(&Provider_proxy, ProviderOptions_ClientSideProvider, NULL, TRUE);
+    base_hwnd_prov = proxy_prov = nc_prov = NULL;
+
+    method_sequences_enabled = TRUE;
+    UiaRegisterProviderCallback(NULL);
+    CoUninitialize();
+}
+
 /*
  * Once a process returns a UI Automation provider with
  * UiaReturnRawElementProvider it ends up in an implicit MTA until exit. This
@@ -12860,6 +12921,7 @@ START_TEST(uiautomation)
     test_UiaFind();
     test_CUIAutomation();
     test_default_clientside_providers();
+    test_UiaGetRootNode();
     if (uia_dll)
     {
         pUiaProviderFromIAccessible = (void *)GetProcAddress(uia_dll, "UiaProviderFromIAccessible");
