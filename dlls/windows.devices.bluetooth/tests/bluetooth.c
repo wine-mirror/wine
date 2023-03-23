@@ -49,6 +49,7 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid )
 static void test_BluetoothAdapterStatics(void)
 {
     static const WCHAR *bluetoothadapter_statics_name = L"Windows.Devices.Bluetooth.BluetoothAdapter";
+    IBluetoothAdapterStatics *bluetoothadapter_statics;
     IActivationFactory *factory;
     HSTRING str;
     HRESULT hr;
@@ -70,6 +71,11 @@ static void test_BluetoothAdapterStatics(void)
     check_interface( factory, &IID_IInspectable );
     check_interface( factory, &IID_IAgileObject );
 
+    hr = IActivationFactory_QueryInterface( factory, &IID_IBluetoothAdapterStatics, (void **)&bluetoothadapter_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IBluetoothAdapterStatics_Release( bluetoothadapter_statics );
+    ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }

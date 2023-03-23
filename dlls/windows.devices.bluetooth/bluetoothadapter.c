@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(bluetooth);
 struct bluetoothadapter
 {
     IActivationFactory IActivationFactory_iface;
+    IBluetoothAdapterStatics IBluetoothAdapterStatics_iface;
     LONG ref;
 };
 
@@ -45,6 +46,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
         *out = &impl->IActivationFactory_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IBluetoothAdapterStatics ))
+    {
+        *out = &impl->IBluetoothAdapterStatics_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -107,9 +115,45 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( bluetoothadapter_statics, IBluetoothAdapterStatics, struct bluetoothadapter, IActivationFactory_iface )
+
+static HRESULT WINAPI bluetoothadapter_statics_GetDeviceSelector( IBluetoothAdapterStatics *iface, HSTRING *result )
+{
+    FIXME( "iface %p, result %p stub!\n", iface, result );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI bluetoothadapter_statics_FromIdAsync( IBluetoothAdapterStatics *iface, HSTRING id, IAsyncOperation_BluetoothAdapter **operation )
+{
+    FIXME( "iface %p, id %s, operation %p stub!\n", iface, debugstr_hstring(id), operation );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI bluetoothadapter_statics_GetDefaultAsync( IBluetoothAdapterStatics *iface, IAsyncOperation_BluetoothAdapter **operation )
+{
+    FIXME( "iface %p, operation %p stub!\n", iface, operation );
+    return E_NOTIMPL;
+}
+
+static const struct IBluetoothAdapterStaticsVtbl bluetoothadapter_statics_vtbl =
+{
+    bluetoothadapter_statics_QueryInterface,
+    bluetoothadapter_statics_AddRef,
+    bluetoothadapter_statics_Release,
+    /* IInspectable methods */
+    bluetoothadapter_statics_GetIids,
+    bluetoothadapter_statics_GetRuntimeClassName,
+    bluetoothadapter_statics_GetTrustLevel,
+    /* IBluetoothAdapterStatics methods */
+    bluetoothadapter_statics_GetDeviceSelector,
+    bluetoothadapter_statics_FromIdAsync,
+    bluetoothadapter_statics_GetDefaultAsync,
+};
+
 static struct bluetoothadapter bluetoothadapter_statics =
 {
     {&factory_vtbl},
+    {&bluetoothadapter_statics_vtbl},
     1,
 };
 

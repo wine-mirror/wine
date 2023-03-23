@@ -24,7 +24,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(bluetooth);
 
-static const char *debugstr_hstring( HSTRING hstr )
+const char *debugstr_hstring( HSTRING hstr )
 {
     const WCHAR *str;
     UINT32 len;
