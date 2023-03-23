@@ -159,6 +159,14 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
                 (const POINT *)(p->aPolyCounts + p->nPolys),
                 p->aPolyCounts, p->nPolys);
     }
+    case EMR_POLYPOLYGON:
+    {
+        const EMRPOLYPOLYGON *p = (const EMRPOLYPOLYGON *)rec;
+
+        return PSDRV_PolyPolygon(&data->pdev->dev,
+                (const POINT *)(p->aPolyCounts + p->nPolys),
+                (const INT *)p->aPolyCounts, p->nPolys);
+    }
     case EMR_EOF:
         return PSDRV_EndPage(&data->pdev->dev);
     case EMR_SELECTOBJECT:
