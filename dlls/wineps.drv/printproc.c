@@ -167,6 +167,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
 
         switch (GetObjectType(obj))
         {
+        case OBJ_PEN: return PSDRV_SelectPen(&data->pdev->dev, obj, NULL) != NULL;
         case OBJ_BRUSH: return PSDRV_SelectBrush(&data->pdev->dev, obj, pattern) != NULL;
         default:
             FIXME("unhandled object type %ld\n", GetObjectType(obj));
