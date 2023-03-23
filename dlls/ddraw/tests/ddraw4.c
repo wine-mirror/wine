@@ -18697,14 +18697,15 @@ static void test_texture_wrong_caps(const GUID *device_guid)
     static struct
     {
         struct vec3 position;
+        unsigned int diffuse;
         struct vec2 texcoord;
     }
     quad[] =
     {
-        {{-1.0f, -1.0f, 0.0f}, {0.0f, 1.0f}},
-        {{-1.0f,  1.0f, 0.0f}, {0.0f, 0.0f}},
-        {{ 1.0f, -1.0f, 0.0f}, {1.0f, 1.0f}},
-        {{ 1.0f,  1.0f, 0.0f}, {1.0f, 0.0f}},
+        {{-1.0f, -1.0f, 0.0f}, 0x00ff0000, {0.0f, 1.0f}},
+        {{-1.0f,  1.0f, 0.0f}, 0x00ff0000, {0.0f, 0.0f}},
+        {{ 1.0f, -1.0f, 0.0f}, 0x00ff0000, {1.0f, 1.0f}},
+        {{ 1.0f,  1.0f, 0.0f}, 0x00ff0000, {1.0f, 0.0f}},
     };
     static DDPIXELFORMAT fmt =
     {
@@ -18712,10 +18713,10 @@ static void test_texture_wrong_caps(const GUID *device_guid)
                 {32}, {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0xff000000}
     };
     D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+    IDirect3DTexture2 *texture, *ret_texture;
     unsigned int color, expected_color;
     IDirectDrawSurface4 *surface, *rt;
     IDirect3DViewport3 *viewport;
-    IDirect3DTexture2 *texture;
     IDirect3DDevice3 *device;
     IDirectDraw4 *ddraw;
     DDSURFACEDESC2 ddsd;
@@ -18758,6 +18759,8 @@ static void test_texture_wrong_caps(const GUID *device_guid)
 
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDevice3_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
@@ -18766,21 +18769,26 @@ static void test_texture_wrong_caps(const GUID *device_guid)
     hr = IDirect3DDevice3_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDirect3DDevice3_SetTextureStageState(device, 0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
-
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
     hr = IDirect3DDevice3_SetTexture(device, 0, texture);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice3_GetTexture(device, 0, &ret_texture);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine_if (!is_software_device_type(device_guid))
+        ok(ret_texture == texture, "Got texture %p.\n", ret_texture);
+
     hr = IDirect3DViewport3_Clear2(viewport, 1, &clear_rect, D3DCLEAR_TARGET, 0x000000ff, 0.0f, 0);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDirect3DDevice3_BeginScene(device);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDirect3DDevice3_DrawPrimitive(device, D3DPT_TRIANGLESTRIP,
-            D3DFVF_XYZ | D3DFVF_TEX1, quad, 4, 0);
+            D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1, quad, 4, 0);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDirect3DDevice3_EndScene(device);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
-    expected_color = is_software_device_type(device_guid) ? 0x0000ff00 : 0x00ffffff;
+    expected_color = is_software_device_type(device_guid) ? 0x0000ff00 : 0x00ff0000;
     color = get_surface_color(rt, 320, 240);
     ok(color == expected_color, "Got color 0x%08x, expected 0x%08x.\n", color, expected_color);
 

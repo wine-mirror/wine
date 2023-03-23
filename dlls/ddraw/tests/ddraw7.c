@@ -19031,21 +19031,22 @@ static void test_texture_wrong_caps(const GUID *device_guid)
     static struct
     {
         struct vec3 position;
+        unsigned int diffuse;
         struct vec2 texcoord;
     }
     quad[] =
     {
-        {{-1.0f, -1.0f, 0.0f}, {0.0f, 1.0f}},
-        {{-1.0f,  1.0f, 0.0f}, {0.0f, 0.0f}},
-        {{ 1.0f, -1.0f, 0.0f}, {1.0f, 1.0f}},
-        {{ 1.0f,  1.0f, 0.0f}, {1.0f, 0.0f}},
+        {{-1.0f, -1.0f, 0.0f}, 0x00ff0000, {0.0f, 1.0f}},
+        {{-1.0f,  1.0f, 0.0f}, 0x00ff0000, {0.0f, 0.0f}},
+        {{ 1.0f, -1.0f, 0.0f}, 0x00ff0000, {1.0f, 1.0f}},
+        {{ 1.0f,  1.0f, 0.0f}, 0x00ff0000, {1.0f, 0.0f}},
     };
     static DDPIXELFORMAT fmt =
     {
         sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
                 {32}, {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0xff000000}
     };
-    IDirectDrawSurface7 *surface, *rt;
+    IDirectDrawSurface7 *surface, *rt, *ret_surface;
     IDirect3DDevice7 *device;
     IDirectDraw7 *ddraw;
     DDSURFACEDESC2 ddsd;
@@ -19083,6 +19084,8 @@ static void test_texture_wrong_caps(const GUID *device_guid)
 
     hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDevice7_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
@@ -19095,6 +19098,9 @@ static void test_texture_wrong_caps(const GUID *device_guid)
 
     hr = IDirect3DDevice7_SetTexture(device, 0, surface);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice7_GetTexture(device, 0, &ret_surface);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!ret_surface, "Got surface %p.\n", ret_surface);
 
     hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x000000ff, 0.0f, 0);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
@@ -19104,13 +19110,13 @@ static void test_texture_wrong_caps(const GUID *device_guid)
     hr = IDirect3DDevice7_BeginScene(device);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP,
-            D3DFVF_XYZ | D3DFVF_TEX1, quad, 4, 0);
+            D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1, quad, 4, 0);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDirect3DDevice7_EndScene(device);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     color = get_surface_color(rt, 320, 240);
-    ok(color == 0, "Got unexpected color 0x%08x.\n", color);
+    ok(color == 0x00ff0000, "Got unexpected color 0x%08x.\n", color);
 
     IDirectDrawSurface7_Release(surface);
     IDirectDrawSurface7_Release(rt);

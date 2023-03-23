@@ -15651,9 +15651,9 @@ static void test_texture_wrong_caps(const GUID *device_guid)
                 {32}, {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0xff000000}
     };
     D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+    D3DTEXTUREHANDLE texture_handle, ret_handle;
     unsigned int color, expected_color;
     IDirectDrawSurface *surface, *rt;
-    D3DTEXTUREHANDLE texture_handle;
     IDirect3DMaterial2 *background;
     IDirect3DViewport2 *viewport;
     IDirect3DTexture2 *texture;
@@ -15698,8 +15698,14 @@ static void test_texture_wrong_caps(const GUID *device_guid)
 
     hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_TEXTUREHANDLE, texture_handle);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_GetRenderState(device, D3DRENDERSTATE_TEXTUREHANDLE, &ret_handle);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine_if (!is_software_device_type(device_guid))
+        ok(ret_handle == texture_handle, "Got handle %#lx.\n", ret_handle);
 
     background = create_diffuse_material(device, 1.0f, 0.0f, 0.0f, 1.0f);
     viewport_set_background(device, viewport, background);
