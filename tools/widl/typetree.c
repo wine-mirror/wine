@@ -65,7 +65,7 @@ type_t *make_type(enum type_type type)
     t->tfswrite = FALSE;
     t->checked = FALSE;
     t->typelib_idx = -1;
-    init_location( &t->where );
+    init_location( &t->where, NULL, NULL );
     return t;
 }
 
@@ -478,7 +478,7 @@ type_t *type_new_alias(const decl_spec_t *t, const char *name)
     a->name = xstrdup(name);
     a->attrs = NULL;
     a->details.alias.aliasee = *t;
-    init_location( &a->where );
+    init_location( &a->where, NULL, NULL );
 
     return a;
 }

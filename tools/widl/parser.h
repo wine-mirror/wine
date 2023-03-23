@@ -27,7 +27,7 @@ int parser_parse(void);
 
 extern void generic_msg( const struct location *where, const char *s, const char *t, va_list ap );
 extern void parser_error( const struct location *where, const char *message );
-extern void init_location( struct location *where );
+extern void init_location( struct location *copy, const struct location *begin, const struct location *end );
 
 extern FILE *parser_in;
 extern int parser_debug;

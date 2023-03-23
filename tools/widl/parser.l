@@ -60,6 +60,13 @@ uuid  {hd}{8}-{hd}{4}-{hd}{4}-{hd}{4}-{hd}{12}
 
 #include "parser.tab.h"
 
+static void reset_location( struct location *where, const char *input_name );
+static void update_location( struct location *where, const char *yytext );
+static void end_of_line( struct location *where );
+
+#define YY_USER_INIT    reset_location( yylloc, input_name )
+#define YY_USER_ACTION  update_location( yylloc, yytext );
+
 static void switch_to_acf(void);
 
 static warning_list_t *disabled_warnings = NULL;
@@ -68,7 +75,7 @@ struct import_state
 {
     YY_BUFFER_STATE buffer;
     char *input_name;
-    int line_number;
+    struct location where;
     struct list entry;
 };
 static struct list import_stack = LIST_INIT( import_stack );
@@ -80,7 +87,7 @@ struct import
     struct list entry;
 };
 static struct list imports = LIST_INIT( imports );
-static int line_number = 1;
+static struct location previous_location;
 
 /* converts an integer in string form to an unsigned long and prints an error
  * on overflow */
@@ -183,25 +190,28 @@ static void winrt_enable( int ns_prefix )
 <PP_PRAGMA>{
     midl_echo/"("                               {
                                                     yy_pop_state();
+                                                    yylloc->first_line -= 1;
                                                     return tCPPQUOTE;
                                                 }
     winrt{ws}+ns_prefix[^\n]*                   {
                                                     yy_pop_state();
+                                                    yylloc->first_line -= 1;
                                                     winrt_enable( TRUE );
                                                 }
     winrt[^\n]*                                 {
                                                     yy_pop_state();
+                                                    yylloc->first_line -= 1;
                                                     winrt_enable( FALSE );
                                                 }
     [^\n]*                                      {
                                                     yy_pop_state();
+                                                    yylloc->first_line -= 1;
                                                     return token_str( aPRAGMA, yytext, yylval );
                                                 }
 }
 <PP_LINE>[0-9]+{ws}*                            {
                                                     yylloc->first_line = strtoul( yytext, NULL, 10 ) - 1;
                                                     yylloc->last_line = yylloc->first_line;
-                                                    line_number = yylloc->first_line;
                                                     yy_pop_state();
                                                     yy_push_state(PP_FILE);
                                                 }
@@ -424,7 +434,7 @@ SAFEARRAY{ws}*/\(	return tSAFEARRAY;
     \"(\\.|[^"\\])*\"                           { return token_str( aSTRING, yytext, yylval ); }
     \'(\\.|[^'\\])*\'                           { return token_str( aSQSTRING, yytext, yylval ); }
 
-    \n                                          { line_number++; }
+    \n                                          { end_of_line( yylloc ); }
     {ws}                                        {}
     \<\<                                        { return SHL; }
     \>\>                                        { return SHR; }
@@ -451,7 +461,7 @@ SAFEARRAY{ws}*/\(	return tSAFEARRAY;
 			}
 %%
 
-void pop_import(void)
+void pop_import( struct location *where )
 {
     struct list *entry = list_head( &import_stack );
     struct import_state *state;
@@ -466,11 +476,11 @@ void pop_import(void)
     yy_switch_to_buffer( state->buffer );
 
     input_name = state->input_name;
-    line_number = state->line_number;
+    *where = state->where;
     free( state );
 }
 
-void push_import( char *import_name )
+void push_import( const char *import_name, struct location *where )
 {
     struct import_state *state;
     struct import *import;
@@ -482,7 +492,7 @@ void push_import( char *import_name )
 
     state->buffer = YY_CURRENT_BUFFER;
     state->input_name = input_name;
-    state->line_number = line_number;
+    state->where = *where;
     input_name = NULL;
 
     /* reset buffer for <<EOF>>, in case import fails or already imported */
@@ -497,7 +507,7 @@ void push_import( char *import_name )
 
     input_name = find_input_file( import_name, state->input_name );
     file = open_input_file( input_name );
-    line_number = 1;
+    reset_location( where, input_name );
 
     yy_switch_to_buffer( yy_create_buffer( file, YY_BUF_SIZE ) );
 }
@@ -511,13 +521,35 @@ static void switch_to_acf(void)
 
     input_name = xstrdup( acf_name );
     file = open_input_file( input_name );
-    line_number = 1;
     acf_name = NULL;
 
     yy_switch_to_buffer( yy_create_buffer( file, YY_BUF_SIZE ) );
 }
 
-#define CURRENT_LOCATION { input_name ? input_name : "stdin", parser_text, line_number, 0, line_number, 0 }
+static void reset_location( struct location *where, const char *input_name )
+{
+    where->first_line = 1;
+    where->last_line = 1;
+    where->first_column = 1;
+    where->last_column = 1;
+    where->input_name = xstrdup( input_name );
+}
+
+static void update_location( struct location *where, const char *yytext )
+{
+    int len = strlen( yytext );
+    previous_location = *where;
+    where->first_column = where->last_column;
+    where->last_column += len;
+}
+
+static void end_of_line( struct location *where )
+{
+    where->first_line++;
+    where->last_line++;
+    where->first_column = 1;
+    where->last_column = 1;
+}
 
 static const int want_near_indication = 0;
 
@@ -531,19 +563,26 @@ static void make_print(char *str)
     }
 }
 
-void init_location( struct location *where )
+void init_location( struct location *where, const struct location *begin, const struct location *end )
 {
-    where->input_name = input_name ? input_name : "stdin";
-    where->near_text = parser_text;
-    where->first_line = line_number;
-    where->last_line = line_number;
+    if (!begin) begin = &previous_location;
+    *where = *begin;
+
+    if (end)
+    {
+        where->last_line   = end->last_line;
+        where->last_column = end->last_column;
+    }
+    else
+    {
+        where->first_line   = begin->last_line;
+        where->first_column = begin->last_column;
+    }
 }
 
 void generic_msg( const struct location *where, const char *s, const char *t, va_list ap )
 {
-    struct location cur_loc = CURRENT_LOCATION;
-
-    if (!where) where = &cur_loc;
+    if (!where) where = &previous_location;
 
     fprintf( stderr, "%s:%d: %s: ", where->input_name, where->first_line, t );
     vfprintf( stderr, s, ap );

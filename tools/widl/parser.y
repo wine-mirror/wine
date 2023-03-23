@@ -125,8 +125,12 @@ static typelib_t *current_typelib;
 {
 
 int parser_lex( PARSER_STYPE *yylval, PARSER_LTYPE *yylloc );
-void push_import( char *input_name );
-void pop_import(void);
+void push_import( const char *fname, PARSER_LTYPE *yylloc );
+void pop_import( PARSER_LTYPE *yylloc );
+
+# define YYLLOC_DEFAULT( cur, rhs, n ) \
+        do { if (n) init_location( &(cur), &YYRHSLOC( rhs, 1 ), &YYRHSLOC( rhs, n ) ); \
+             else init_location( &(cur), &YYRHSLOC( rhs, 0 ), NULL ); } while(0)
 
 }
 
@@ -511,9 +515,9 @@ typedecl:
 cppquote: tCPPQUOTE '(' aSTRING ')'		{ $$ = $3; }
 	;
 
-import_start: tIMPORT aSTRING ';'		{ $$ = $2; push_import($2); }
+import_start: tIMPORT aSTRING ';'		{ $$ = $2; push_import( $2, &yylloc ); }
 	;
-import: import_start imp_statements aEOF	{ pop_import(); }
+import: import_start imp_statements aEOF	{ pop_import( &yylloc ); }
 	;
 
 importlib: tIMPORTLIB '(' aSTRING ')'
@@ -1974,7 +1978,7 @@ var_t *make_var(char *name)
   init_declspec(&v->declspec, NULL);
   v->attrs = NULL;
   v->eval = NULL;
-  init_location( &v->where );
+  init_location( &v->where, NULL, NULL );
   v->declonly = FALSE;
   return v;
 }
