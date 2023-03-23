@@ -869,7 +869,7 @@ NTSTATUS signal_set_full_context( CONTEXT *context )
  */
 void *get_native_context( CONTEXT *context )
 {
-    return is_wow64 ? NULL : context;
+    return is_old_wow64() ? NULL : context;
 }
 
 
@@ -878,7 +878,7 @@ void *get_native_context( CONTEXT *context )
  */
 void *get_wow_context( CONTEXT *context )
 {
-    return is_wow64 ? context : NULL;
+    return is_old_wow64() ? context : NULL;
 }
 
 
@@ -1731,7 +1731,7 @@ static BOOL handle_interrupt( unsigned int interrupt, ucontext_t *sigcontext, vo
         NtRaiseException( rec, context, FALSE );
         return TRUE;
     case 0x2d:
-        if (!is_wow64)
+        if (!is_old_wow64())
         {
             /* On Wow64, the upper DWORD of Rax contains garbage, and the debug
              * service is usually not recognized when called from usermode. */
@@ -1748,7 +1748,7 @@ static BOOL handle_interrupt( unsigned int interrupt, ucontext_t *sigcontext, vo
         context->Eip += 3;
         rec->ExceptionCode = EXCEPTION_BREAKPOINT;
         rec->ExceptionAddress = (void *)context->Eip;
-        rec->NumberParameters = is_wow64 ? 1 : 3;
+        rec->NumberParameters = is_old_wow64() ? 1 : 3;
         rec->ExceptionInformation[0] = context->Eax;
         rec->ExceptionInformation[1] = context->Ecx;
         rec->ExceptionInformation[2] = context->Edx;
@@ -1974,7 +1974,7 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         /* fall through */
     default:
         rec.ExceptionCode = EXCEPTION_BREAKPOINT;
-        rec.NumberParameters = is_wow64 ? 1 : 3;
+        rec.NumberParameters = is_old_wow64() ? 1 : 3;
         rec.ExceptionInformation[0] = 0;
         rec.ExceptionInformation[1] = 0; /* FIXME */
         rec.ExceptionInformation[2] = 0; /* FIXME */
@@ -2018,7 +2018,7 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 
         rec.ExceptionCode = STATUS_FLOAT_MULTIPLE_TRAPS;
         rec.ExceptionInformation[rec.NumberParameters++] = 0;
-        if (is_wow64) rec.ExceptionInformation[rec.NumberParameters++] = ((XSAVE_FORMAT *)xcontext.c.ExtendedRegisters)->MxCsr;
+        if (is_old_wow64()) rec.ExceptionInformation[rec.NumberParameters++] = ((XSAVE_FORMAT *)xcontext.c.ExtendedRegisters)->MxCsr;
         break;
     default:
         WINE_ERR( "Got unexpected trap %d\n", TRAP_sig(ucontext) );

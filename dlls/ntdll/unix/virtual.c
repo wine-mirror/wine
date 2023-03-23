@@ -3848,7 +3848,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_PTR z
     if (zero_bits > 21 && zero_bits < 32) return STATUS_INVALID_PARAMETER_3;
     if (zero_bits > 32 && zero_bits < granularity_mask) return STATUS_INVALID_PARAMETER_3;
 #ifndef _WIN64
-    if (!is_wow64 && zero_bits >= 32) return STATUS_INVALID_PARAMETER_3;
+    if (!is_old_wow64() && zero_bits >= 32) return STATUS_INVALID_PARAMETER_3;
 #endif
 
     if (process != NtCurrentProcess())
@@ -4648,7 +4648,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         return STATUS_INVALID_PARAMETER_4;
 
 #ifndef _WIN64
-    if (!is_wow64)
+    if (!is_old_wow64())
     {
         if (zero_bits >= 32) return STATUS_INVALID_PARAMETER_4;
         if (alloc_type & AT_ROUND_TO_PAGE)
@@ -5330,7 +5330,7 @@ NTSTATUS WINAPI NtWow64GetNativeSystemInformation( SYSTEM_INFORMATION_CLASS clas
     case SystemNativeBasicInformation:
         return NtQuerySystemInformation( SystemBasicInformation, info, len, retlen );
     default:
-        if (is_wow64) return STATUS_INVALID_INFO_CLASS;
+        if (is_old_wow64()) return STATUS_INVALID_INFO_CLASS;
         return NtQuerySystemInformation( class, info, len, retlen );
     }
 }

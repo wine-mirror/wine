@@ -2997,7 +2997,7 @@ void init_files(void)
     HANDLE key;
 
 #ifndef _WIN64
-    if (is_wow64) init_redirects();
+    if (is_old_wow64()) init_redirects();
 #endif
     /* a couple of directories that we don't want to return in directory searches */
     ignore_file( config_dir );

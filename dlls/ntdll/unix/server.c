@@ -96,9 +96,6 @@ unsigned int supported_machines_count = 0;
 USHORT supported_machines[8] = { 0 };
 USHORT native_machine = 0;
 BOOL process_exiting = FALSE;
-#ifndef _WIN64
-BOOL is_wow64 = FALSE;
-#endif
 
 timeout_t server_start_time = 0;  /* time of server startup */
 
@@ -576,10 +573,8 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOO
         if (reserve == call->create_thread.reserve && commit == call->create_thread.commit &&
             (ULONG_PTR)func == call->create_thread.func && (ULONG_PTR)arg == call->create_thread.arg)
         {
-#ifndef _WIN64
             /* FIXME: hack for debugging 32-bit process without a 64-bit ntdll */
-            if (is_wow64 && func == (void *)0x7ffe1000) func = pDbgUiRemoteBreakin;
-#endif
+            if (is_old_wow64() && func == (void *)0x7ffe1000) func = pDbgUiRemoteBreakin;
             attr->TotalLength = sizeof(buffer);
             attr->Attributes[0].Attribute    = PS_ATTRIBUTE_CLIENT_ID;
             attr->Attributes[0].Size         = sizeof(id);
@@ -1579,7 +1574,6 @@ size_t server_init_process(void)
         if (arch && !strcmp( arch, "win32" ))
             fatal_error( "WINEARCH set to win32 but '%s' is a 64-bit installation.\n", config_dir );
 #ifndef _WIN64
-        is_wow64 = TRUE;
         NtCurrentTeb()->GdiBatchCount = PtrToUlong( (char *)NtCurrentTeb() - teb_offset );
         NtCurrentTeb()->WowTebOffset  = -teb_offset;
         wow_peb = (PEB64 *)((char *)peb - page_size);

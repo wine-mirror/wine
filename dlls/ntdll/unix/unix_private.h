@@ -138,9 +138,6 @@ extern timeout_t server_start_time DECLSPEC_HIDDEN;
 extern sigset_t server_block_set DECLSPEC_HIDDEN;
 extern struct _KUSER_SHARED_DATA *user_shared_data DECLSPEC_HIDDEN;
 extern SYSTEM_CPU_INFORMATION cpu_info DECLSPEC_HIDDEN;
-#ifndef _WIN64
-extern BOOL is_wow64 DECLSPEC_HIDDEN;
-#endif
 #ifdef __i386__
 extern struct ldt_copy __wine_ldt_copy DECLSPEC_HIDDEN;
 #endif
@@ -444,6 +441,12 @@ extern WOW_PEB *wow_peb DECLSPEC_HIDDEN;
 static inline WOW_TEB *get_wow_teb( TEB *teb )
 {
     return teb->WowTebOffset ? (WOW_TEB *)((char *)teb + teb->WowTebOffset) : NULL;
+}
+
+/* check for old-style Wow64 (using a 32-bit ntdll.so) */
+static inline BOOL is_old_wow64(void)
+{
+    return !is_win64 && wow_peb;
 }
 
 enum loadorder

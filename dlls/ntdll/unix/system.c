@@ -2572,10 +2572,8 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         {
             SYSTEM_CPU_INFORMATION cpu = cpu_info;
 
-#ifndef _WIN64
-            if (is_wow64 && cpu.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
+            if (is_old_wow64() && cpu.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
                 cpu.ProcessorArchitecture = PROCESSOR_ARCHITECTURE_AMD64;
-#endif
             memcpy(info, &cpu, len);
         }
         else ret = STATUS_INFO_LENGTH_MISMATCH;
