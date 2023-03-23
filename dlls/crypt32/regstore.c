@@ -56,7 +56,7 @@ static void CRYPT_HashToStr(const BYTE *hash, LPWSTR asciiHash)
         wsprintfW(asciiHash + i * 2, L"%02X", hash[i]);
 }
 
-static void CRYPT_RegReadSerializedFromReg(HKEY key, DWORD contextType, HCERTSTORE store, DWORD disposition)
+void CRYPT_RegReadSerializedFromReg(HKEY key, DWORD contextType, HCERTSTORE store, DWORD disposition)
 {
     LONG rc;
     DWORD index = 0;
