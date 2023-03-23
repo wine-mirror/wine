@@ -1162,6 +1162,8 @@ static struct Provider Provider_hwnd, Provider_nc, Provider_proxy, Provider_prox
 static void initialize_provider(struct Provider *prov, int prov_opts, HWND hwnd, BOOL initialize_nav_links);
 static void set_provider_prop_override(struct Provider *prov, struct Provider_prop_override *override, int count);
 static void set_property_override(struct Provider_prop_override *override, int prop_id, VARIANT *val);
+static void initialize_provider_tree(BOOL initialize_nav_links);
+static void provider_add_child(struct Provider *prov, struct Provider *child);
 
 static const WCHAR *uia_bstr_prop_str = L"uia-string";
 static const ULONG uia_i4_prop_val = 0xdeadbeef;
@@ -8659,6 +8661,40 @@ static const struct prov_method_sequence nav_seq14[] = {
     { 0 }
 };
 
+static const struct prov_method_sequence nav_seq15[] = {
+    NODE_CREATE_SEQ(&Provider_child2_child_child),
+    { &Provider_child2_child_child, PROV_GET_PROPERTY_VALUE }, /* UIA_ProviderDescriptionPropertyId */
+};
+
+static const struct prov_method_sequence nav_seq16[] = {
+    { &Provider_child2_child_child, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    NODE_CREATE_SEQ(&Provider_child2_child),
+    { &Provider_child2_child, PROV_GET_PROPERTY_VALUE }, /* UIA_IsControlElementPropertyId */
+    { &Provider_child2_child, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    NODE_CREATE_SEQ(&Provider_child2),
+    { &Provider_child2, PROV_GET_PROPERTY_VALUE }, /* UIA_IsControlElementPropertyId */
+    { &Provider_child2, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    NODE_CREATE_SEQ(&Provider),
+    { &Provider, PROV_GET_PROPERTY_VALUE }, /* UIA_IsControlElementPropertyId */
+    /* Only done on Win10v1507 and below. */
+    { &Provider, FRAG_NAVIGATE, METHOD_OPTIONAL }, /* NavigateDirection_Parent */
+    { 0 }
+};
+
+static const struct prov_method_sequence nav_seq17[] = {
+    { &Provider_child2_child_child, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    NODE_CREATE_SEQ(&Provider_child2_child),
+    { &Provider_child2_child, PROV_GET_PROPERTY_VALUE }, /* UIA_IsControlElementPropertyId */
+    { &Provider_child2_child, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    NODE_CREATE_SEQ(&Provider_child2),
+    { &Provider_child2, PROV_GET_PROPERTY_VALUE }, /* UIA_IsControlElementPropertyId */
+    { &Provider_child2, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    NODE_CREATE_SEQ(&Provider),
+    { &Provider, PROV_GET_PROPERTY_VALUE }, /* UIA_IsControlElementPropertyId */
+    { &Provider, PROV_GET_PROPERTY_VALUE }, /* UIA_ProviderDescriptionPropertyId */
+    { 0 }
+};
+
 static void set_provider_nav_ifaces(struct Provider *prov, struct Provider *parent, struct Provider *frag_root,
     struct Provider *prev_sibling, struct Provider *next_sibling, struct Provider *first_child,
     struct Provider *last_child)
@@ -8686,8 +8722,10 @@ static void set_provider_nav_ifaces(struct Provider *prov, struct Provider *pare
 
 static void test_UiaNavigate(void)
 {
+    struct Provider_prop_override prop_override;
     LONG exp_lbound[2], exp_elems[2], idx[2], i;
     struct node_provider_desc exp_node_desc[4];
+    struct UiaPropertyCondition prop_cond;
     struct UiaCacheRequest cache_req;
     HUIANODE node, node2, node3;
     SAFEARRAY *out_req;
@@ -9194,6 +9232,74 @@ static void test_UiaNavigate(void)
     base_hwnd_prov = nc_prov = NULL;
     prov_root = NULL;
     UiaRegisterProviderCallback(NULL);
+
+    /*
+     * Conditional navigation for conditions other than ConditionType_True.
+     */
+    initialize_provider_tree(TRUE);
+    Provider.frag_root = &Provider.IRawElementProviderFragmentRoot_iface;
+    provider_add_child(&Provider, &Provider_child2);
+    provider_add_child(&Provider_child2, &Provider_child2_child);
+    provider_add_child(&Provider_child2_child, &Provider_child2_child_child);
+
+    hr = UiaNodeFromProvider(&Provider_child2_child_child.IRawElementProviderSimple_iface, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child2_child_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child2_child_child.ref);
+
+    hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
+    check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_child2_child_child", TRUE);
+    VariantClear(&v);
+
+    ok_method_sequence(nav_seq15, "nav_seq15");
+
+    /*
+     * Navigate from Provider_child2_child_child to a parent that has
+     * UIA_IsControlElementPropertyId set to FALSE.
+     */
+    V_VT(&v) = VT_BOOL;
+    V_BOOL(&v) = VARIANT_FALSE;
+    set_property_condition(&prop_cond, UIA_IsControlElementPropertyId, &v, PropertyConditionFlags_None);
+
+    init_node_provider_desc(&exp_node_desc[0], GetCurrentProcessId(), NULL);
+    add_provider_desc(&exp_node_desc[0], L"Main", L"Provider", TRUE);
+    set_cache_request(&cache_req, NULL, TreeScope_Element, NULL, 0, NULL, 0, AutomationElementMode_Full);
+    tree_struct = NULL;
+    out_req = NULL;
+    hr = UiaNavigate(node, NavigateDirection_Parent, (struct UiaCondition *)&prop_cond, &cache_req, &out_req, &tree_struct);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(!out_req, "out_req != NULL\n");
+    ok(!tree_struct, "tree_struct != NULL\n");
+    ok_method_sequence(nav_seq16, "nav_seq16");
+
+    /* Provider will now return FALSE for UIA_IsControlElementPropertyId. */
+    set_property_override(&prop_override, UIA_IsControlElementPropertyId, &v);
+    set_provider_prop_override(&Provider, &prop_override, 1);
+
+    set_property_condition(&prop_cond, UIA_IsControlElementPropertyId, &v, PropertyConditionFlags_None);
+    init_node_provider_desc(&exp_node_desc[0], GetCurrentProcessId(), NULL);
+    add_provider_desc(&exp_node_desc[0], L"Main", L"Provider", TRUE);
+    set_cache_request(&cache_req, NULL, TreeScope_Element, NULL, 0, NULL, 0, AutomationElementMode_Full);
+    tree_struct = NULL;
+    out_req = NULL;
+    hr = UiaNavigate(node, NavigateDirection_Parent, (struct UiaCondition *)&prop_cond, &cache_req, &out_req, &tree_struct);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(!!out_req, "out_req == NULL\n");
+    ok(!!tree_struct, "tree_struct == NULL\n");
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+
+    exp_lbound[0] = exp_lbound[1] = 0;
+    exp_elems[0] = exp_elems[1] = 1;
+    test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+
+    ok(!wcscmp(tree_struct, L"P)"), "tree structure %s\n", debugstr_w(tree_struct));
+    ok_method_sequence(nav_seq17, "nav_seq17");
+    SafeArrayDestroy(out_req);
+    SysFreeString(tree_struct);
+
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
+    ok(Provider_child2_child_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child2_child_child.ref);
 
     CoUninitialize();
     DestroyWindow(hwnd);

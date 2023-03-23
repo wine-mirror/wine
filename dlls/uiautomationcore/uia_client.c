@@ -934,6 +934,63 @@ static HRESULT navigate_uia_node(struct uia_node *node, int nav_dir, HUIANODE *o
 
 static HRESULT uia_condition_check(HUIANODE node, struct UiaCondition *condition);
 static BOOL uia_condition_matched(HRESULT hr);
+static HRESULT conditional_navigate_uia_node(struct uia_node *node, int nav_dir, struct UiaCondition *cond,
+        HUIANODE *out_node)
+{
+    HRESULT hr;
+
+    *out_node = NULL;
+    switch (nav_dir)
+    {
+    case NavigateDirection_Parent:
+    {
+        struct uia_node *node_data = node;
+        HUIANODE parent;
+
+        IWineUiaNode_AddRef(&node_data->IWineUiaNode_iface);
+        while (1)
+        {
+            hr = navigate_uia_node(node_data, NavigateDirection_Parent, &parent);
+            if (FAILED(hr) || !parent)
+                break;
+
+            hr = uia_condition_check(parent, cond);
+            if (FAILED(hr))
+                break;
+
+            if (uia_condition_matched(hr))
+            {
+                *out_node = parent;
+                break;
+            }
+
+            IWineUiaNode_Release(&node_data->IWineUiaNode_iface);
+            node_data = unsafe_impl_from_IWineUiaNode((IWineUiaNode *)parent);
+        }
+        IWineUiaNode_Release(&node_data->IWineUiaNode_iface);
+        break;
+    }
+
+    case NavigateDirection_NextSibling:
+    case NavigateDirection_PreviousSibling:
+    case NavigateDirection_FirstChild:
+    case NavigateDirection_LastChild:
+        if (cond->ConditionType != ConditionType_True)
+        {
+            FIXME("ConditionType %d based navigation for dir %d is not implemented.\n", cond->ConditionType, nav_dir);
+            return E_NOTIMPL;
+        }
+
+        hr = navigate_uia_node(node, nav_dir, out_node);
+        break;
+
+    default:
+        WARN("Invalid NavigateDirection %d\n", nav_dir);
+        return E_INVALIDARG;
+    }
+
+    return hr;
+}
 
 /*
  * Assuming we have a tree that looks like this:
@@ -3068,7 +3125,7 @@ HRESULT WINAPI UiaNavigate(HUIANODE huianode, enum NavigateDirection dir, struct
         struct UiaCacheRequest *cache_req, SAFEARRAY **out_req, BSTR *tree_struct)
 {
     struct uia_node *node = unsafe_impl_from_IWineUiaNode((IWineUiaNode *)huianode);
-    HUIANODE node2;
+    HUIANODE node2 = NULL;
     HRESULT hr;
 
     TRACE("(%p, %u, %p, %p, %p, %p)\n", huianode, dir, nav_condition, cache_req, out_req,
@@ -3080,17 +3137,8 @@ HRESULT WINAPI UiaNavigate(HUIANODE huianode, enum NavigateDirection dir, struct
     *out_req = NULL;
     *tree_struct = NULL;
 
-    if (nav_condition->ConditionType != ConditionType_True)
-    {
-        FIXME("ConditionType %d based navigation is not implemented.\n", nav_condition->ConditionType);
-        return E_NOTIMPL;
-    }
-
-    hr = navigate_uia_node(node, dir, &node2);
-    if (FAILED(hr))
-        return hr;
-
-    if (node2)
+    hr = conditional_navigate_uia_node(node, dir, nav_condition, &node2);
+    if (SUCCEEDED(hr) && node2)
     {
         hr = UiaGetUpdatedCache(node2, cache_req, NormalizeState_None, NULL, out_req, tree_struct);
         if (FAILED(hr))
