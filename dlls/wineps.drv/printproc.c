@@ -40,6 +40,7 @@ struct pp_data
     WCHAR *doc_name;
     WCHAR *out_file;
     PSDRV_PDEVICE *pdev;
+    struct brush_pattern *patterns;
 };
 
 typedef enum
@@ -138,9 +139,40 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     switch (rec->iType)
     {
     case EMR_HEADER:
-        return PSDRV_StartPage(&data->pdev->dev);
+    {
+        const ENHMETAHEADER *header = (const ENHMETAHEADER *)rec;
+
+        data->patterns = calloc(sizeof(*data->patterns), header->nHandles);
+        return data->patterns && PSDRV_StartPage(&data->pdev->dev);
+    }
     case EMR_EOF:
         return PSDRV_EndPage(&data->pdev->dev);
+    case EMR_SELECTOBJECT:
+    {
+        const EMRSELECTOBJECT *so = (const EMRSELECTOBJECT *)rec;
+        struct brush_pattern *pattern;
+        HGDIOBJ obj;
+
+        if (so->ihObject & 0x80000000)
+        {
+            obj = GetStockObject(so->ihObject & 0x7fffffff);
+            pattern = NULL;
+        }
+        else
+        {
+            obj = (htable->objectHandle)[so->ihObject];
+            pattern = data->patterns + so->ihObject;
+        }
+        SelectObject(data->pdev->dev.hdc, obj);
+
+        switch (GetObjectType(obj))
+        {
+        case OBJ_BRUSH: return PSDRV_SelectBrush(&data->pdev->dev, obj, pattern) != NULL;
+        default:
+            FIXME("unhandled object type %ld\n", GetObjectType(obj));
+            return 1;
+        }
+    }
     default:
         FIXME("unsupported record: %ld\n", rec->iType);
     }
@@ -187,6 +219,8 @@ static BOOL print_metafile(struct pp_data *data, HANDLE hdata)
 
     ret = EnumEnhMetaFile(NULL, hmf, hmf_proc, (void *)data, NULL);
     DeleteEnhMetaFile(hmf);
+    free(data->patterns);
+    data->patterns = NULL;
     return ret;
 }
 
