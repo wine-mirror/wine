@@ -2776,8 +2776,21 @@ static HRESULT WINAPI uia_iface_CompareRuntimeIds(IUIAutomation6 *iface, SAFEARR
 
 static HRESULT WINAPI uia_iface_GetRootElement(IUIAutomation6 *iface, IUIAutomationElement **root)
 {
-    FIXME("%p, %p: stub\n", iface, root);
-    return E_NOTIMPL;
+    struct uia_iface *uia_iface = impl_from_IUIAutomation6(iface);
+    HUIANODE node;
+    HRESULT hr;
+
+    TRACE("%p, %p\n", iface, root);
+
+    if (!root)
+        return E_POINTER;
+
+    *root = NULL;
+    hr = UiaGetRootNode(&node);
+    if (FAILED(hr))
+        return hr;
+
+    return create_uia_element(root, uia_iface->is_cui8, node);
 }
 
 static HRESULT WINAPI uia_iface_ElementFromHandle(IUIAutomation6 *iface, UIA_HWND hwnd, IUIAutomationElement **out_elem)

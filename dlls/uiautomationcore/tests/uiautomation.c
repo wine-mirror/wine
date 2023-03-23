@@ -12199,6 +12199,65 @@ static void test_CUIAutomation_TreeWalker_ifaces(IUIAutomation *uia_iface)
     UnregisterClassA("test_CUIAutomation_TreeWalker_ifaces class", NULL);
 }
 
+static void test_GetRootElement(IUIAutomation *uia_iface)
+{
+    IUIAutomationElement *element;
+    HRESULT hr;
+    VARIANT v;
+
+    hr = IUIAutomation_GetRootElement(uia_iface, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    UiaRegisterProviderCallback(test_uia_provider_callback);
+
+    initialize_provider(&Provider_hwnd, ProviderOptions_ClientSideProvider, GetDesktopWindow(), TRUE);
+    initialize_provider(&Provider_nc, ProviderOptions_ClientSideProvider | ProviderOptions_NonClientAreaProvider,
+            GetDesktopWindow(), TRUE);
+    initialize_provider(&Provider_proxy, ProviderOptions_ClientSideProvider, GetDesktopWindow(), TRUE);
+    Provider_proxy.ignore_hwnd_prop = TRUE;
+
+    base_hwnd_prov = &Provider_hwnd.IRawElementProviderSimple_iface;
+    proxy_prov = &Provider_proxy.IRawElementProviderSimple_iface;
+    nc_prov = &Provider_nc.IRawElementProviderSimple_iface;
+
+    /* Retrieve an element representing the desktop HWND. */
+    method_sequences_enabled = FALSE;
+    SET_EXPECT(prov_callback_base_hwnd);
+    SET_EXPECT(prov_callback_nonclient);
+    SET_EXPECT(prov_callback_proxy);
+    hr = IUIAutomation_GetRootElement(uia_iface, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!element, "Node == NULL.\n");
+    ok(Provider_proxy.ref == 2, "Unexpected refcnt %ld\n", Provider_proxy.ref);
+    ok(Provider_hwnd.ref == 2, "Unexpected refcnt %ld\n", Provider_hwnd.ref);
+    ok(Provider_nc.ref == 2, "Unexpected refcnt %ld\n", Provider_nc.ref);
+    CHECK_CALLED(prov_callback_base_hwnd);
+    CHECK_CALLED(prov_callback_nonclient);
+    CHECK_CALLED(prov_callback_proxy);
+
+    hr = IUIAutomationElement_GetCurrentPropertyValueEx(element, UIA_ProviderDescriptionPropertyId, TRUE, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), GetDesktopWindow());
+    check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_proxy", TRUE);
+    check_node_provider_desc(V_BSTR(&v), L"Hwnd", L"Provider_hwnd", FALSE);
+    check_node_provider_desc(V_BSTR(&v), L"Nonclient", L"Provider_nc", FALSE);
+    VariantClear(&v);
+
+    IUIAutomationElement_Release(element);
+    ok(Provider_proxy.ref == 1, "Unexpected refcnt %ld\n", Provider_proxy.ref);
+    ok(Provider_hwnd.ref == 1, "Unexpected refcnt %ld\n", Provider_hwnd.ref);
+    ok(Provider_nc.ref == 1, "Unexpected refcnt %ld\n", Provider_nc.ref);
+
+    initialize_provider(&Provider_hwnd, ProviderOptions_ClientSideProvider, NULL, TRUE);
+    initialize_provider(&Provider_nc, ProviderOptions_ClientSideProvider | ProviderOptions_NonClientAreaProvider, NULL,
+            TRUE);
+    initialize_provider(&Provider_proxy, ProviderOptions_ClientSideProvider, NULL, TRUE);
+    base_hwnd_prov = proxy_prov = nc_prov = NULL;
+
+    method_sequences_enabled = TRUE;
+    UiaRegisterProviderCallback(NULL);
+}
+
 struct uia_com_classes {
     const GUID *clsid;
     const GUID *iid;
@@ -12305,6 +12364,7 @@ static void test_CUIAutomation(void)
     test_Element_GetPropertyValue(uia_iface);
     test_Element_cache_methods(uia_iface);
     test_Element_Find(uia_iface);
+    test_GetRootElement(uia_iface);
 
     IUIAutomation_Release(uia_iface);
     CoUninitialize();
