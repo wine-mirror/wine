@@ -199,6 +199,17 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         data->patterns[p->ihBrush].bits.ptr = (BYTE *)p + p->offBits;
         return 1;
     }
+    case EMR_CREATEDIBPATTERNBRUSHPT:
+    {
+        const EMRCREATEDIBPATTERNBRUSHPT *p = (const EMRCREATEDIBPATTERNBRUSHPT *)rec;
+
+        if (!PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n))
+            return 0;
+        data->patterns[p->ihBrush].usage = p->iUsage;
+        data->patterns[p->ihBrush].info = (BITMAPINFO *)((BYTE *)p + p->offBmi);
+        data->patterns[p->ihBrush].bits.ptr = (BYTE *)p + p->offBits;
+        return 1;
+    }
 
     case EMR_MOVETOEX:
         return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n);
