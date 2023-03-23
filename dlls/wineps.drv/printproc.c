@@ -181,6 +181,9 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         return PSDRV_Rectangle(&data->pdev->dev, rect->rclBox.left,
                 rect->rclBox.top, rect->rclBox.right, rect->rclBox.bottom);
     }
+
+    case EMR_MOVETOEX:
+        return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n);
     default:
         FIXME("unsupported record: %ld\n", rec->iType);
     }
