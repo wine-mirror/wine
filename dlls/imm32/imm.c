@@ -928,6 +928,23 @@ BOOL WINAPI ImmDestroyContext(HIMC hIMC)
     return IMM_DestroyContext(hIMC);
 }
 
+struct enum_register_word_params_WtoA
+{
+    REGISTERWORDENUMPROCA proc;
+    void *user;
+};
+
+static int CALLBACK enum_register_word_WtoA( const WCHAR *readingW, DWORD style,
+                                             const WCHAR *stringW, void *user )
+{
+    char *readingA = strdupWtoA( readingW ), *stringA = strdupWtoA( stringW );
+    struct enum_register_word_params_WtoA *params = user;
+    int ret = params->proc( readingA, style, stringA, params->user );
+    free( readingA );
+    free( stringA );
+    return ret;
+}
+
 /***********************************************************************
  *		ImmEnumRegisterWordA (IMM32.@)
  */
@@ -946,13 +963,31 @@ UINT WINAPI ImmEnumRegisterWordA( HKL hkl, REGISTERWORDENUMPROCA procA, const ch
         ret = ime->pImeEnumRegisterWord( procA, readingA, style, stringA, user );
     else
     {
+        struct enum_register_word_params_WtoA params = {.proc = procA, .user = user};
         WCHAR *readingW = strdupAtoW( readingA ), *stringW = strdupAtoW( stringA );
-        ret = ime->pImeEnumRegisterWord( procA, readingW, style, stringW, user );
+        ret = ime->pImeEnumRegisterWord( enum_register_word_WtoA, readingW, style, stringW, &params );
         free( readingW );
         free( stringW );
     }
 
     ime_release( ime );
+    return ret;
+}
+
+struct enum_register_word_params_AtoW
+{
+    REGISTERWORDENUMPROCW proc;
+    void *user;
+};
+
+static int CALLBACK enum_register_word_AtoW( const char *readingA, DWORD style,
+                                             const char *stringA, void *user )
+{
+    WCHAR *readingW = strdupAtoW( readingA ), *stringW = strdupAtoW( stringA );
+    struct enum_register_word_params_AtoW *params = user;
+    int ret = params->proc( readingW, style, stringW, params->user );
+    free( readingW );
+    free( stringW );
     return ret;
 }
 
@@ -974,8 +1009,9 @@ UINT WINAPI ImmEnumRegisterWordW( HKL hkl, REGISTERWORDENUMPROCW procW, const WC
         ret = ime->pImeEnumRegisterWord( procW, readingW, style, stringW, user );
     else
     {
+        struct enum_register_word_params_AtoW params = {.proc = procW, .user = user};
         char *readingA = strdupWtoA( readingW ), *stringA = strdupWtoA( stringW );
-        ret = ime->pImeEnumRegisterWord( procW, readingA, style, stringA, user );
+        ret = ime->pImeEnumRegisterWord( enum_register_word_AtoW, readingA, style, stringA, &params );
         free( readingA );
         free( stringA );
     }

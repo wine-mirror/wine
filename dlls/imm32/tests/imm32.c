@@ -3408,9 +3408,7 @@ static int CALLBACK enum_register_wordA( const char *reading, DWORD style, const
     ime_trace( "reading %s, style %#lx, string %s, user %p\n", debugstr_a(reading), style, debugstr_a(string), user );
 
     ok_eq( 0xdeadbeef, style, UINT, "%#x" );
-    todo_wine_if( reading[1] == 0 )
     ok_str( "Reading", reading );
-    todo_wine_if( string[1] == 0 )
     ok_str( "String", string );
 
     return 0xdeadbeef;
@@ -3421,9 +3419,7 @@ static int CALLBACK enum_register_wordW( const WCHAR *reading, DWORD style, cons
     ime_trace( "reading %s, style %#lx, string %s, user %p\n", debugstr_w(reading), style, debugstr_w(string), user );
 
     ok_eq( 0xdeadbeef, style, UINT, "%#x" );
-    todo_wine_if( reading[0] != 'R' )
     ok_wcs( L"Reading", reading );
-    todo_wine_if( string[0] != 'S' )
     ok_wcs( L"String", string );
 
     return 0xdeadbeef;
