@@ -12361,12 +12361,49 @@ static void test_node_hwnd_provider_(HUIANODE node, HWND hwnd, const char *file,
     winetest_pop_context();
 }
 
+enum {
+    PARENT_HWND_NULL,
+    PARENT_HWND_HWND,
+    PARENT_HWND_DESKTOP,
+};
+
+struct uia_hwnd_control_type_test {
+    DWORD style;
+    DWORD style_ex;
+    int exp_control_type;
+    int parent_hwnd_type;
+};
+
+static const struct uia_hwnd_control_type_test hwnd_control_type_test[] = {
+    { WS_OVERLAPPEDWINDOW,   0,                UIA_WindowControlTypeId, PARENT_HWND_NULL },
+    /* Top-level window (parent is desktop window) is always a window control. */
+    { WS_CHILD,              0,                UIA_WindowControlTypeId, PARENT_HWND_DESKTOP },
+    /* Not a top-level window, considered a pane. */
+    { WS_CHILD,              0,                UIA_PaneControlTypeId,   PARENT_HWND_HWND },
+    /* Not a top-level window, but WS_EX_APPWINDOW is always considered a window. */
+    { WS_CHILD,              WS_EX_APPWINDOW,  UIA_WindowControlTypeId, PARENT_HWND_HWND },
+    /*
+     * WS_POPUP is always a pane regardless of being a top level window,
+     * unless WS_CAPTION is set.
+     */
+    { WS_CAPTION | WS_POPUP, 0,                UIA_WindowControlTypeId, PARENT_HWND_DESKTOP },
+    { WS_BORDER | WS_POPUP,  0,                UIA_PaneControlTypeId,   PARENT_HWND_DESKTOP },
+    { WS_POPUP,              0,                UIA_PaneControlTypeId,   PARENT_HWND_DESKTOP },
+    /*
+     * Top level window with WS_EX_TOOLWINDOW and without WS_CAPTION is
+     * considered a pane.
+     */
+    { WS_CHILD,              WS_EX_TOOLWINDOW, UIA_PaneControlTypeId,   PARENT_HWND_DESKTOP },
+    { WS_CHILD | WS_CAPTION, WS_EX_TOOLWINDOW, UIA_WindowControlTypeId, PARENT_HWND_DESKTOP },
+};
+
 static void test_default_clientside_providers(void)
 {
     HUIANODE node;
     HRESULT hr;
     HWND hwnd;
     VARIANT v;
+    int i;
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
     hwnd = create_test_hwnd("test_default_clientside_providers class");
@@ -12411,6 +12448,55 @@ static void test_default_clientside_providers(void)
     ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
     ok(Provider_nc.ref == 1, "Unexpected refcnt %ld\n", Provider_nc.ref);
 
+    method_sequences_enabled = FALSE;
+    VariantInit(&v);
+    for (i = 0; i < ARRAY_SIZE(hwnd_control_type_test); i++)
+    {
+        const struct uia_hwnd_control_type_test *test = &hwnd_control_type_test[i];
+        HWND hwnd2, parent;
+
+        if (test->parent_hwnd_type == PARENT_HWND_HWND)
+            parent = hwnd;
+        else if (test->parent_hwnd_type == PARENT_HWND_DESKTOP)
+            parent = GetDesktopWindow();
+        else
+            parent = NULL;
+
+        hwnd2 = CreateWindowExA(test->style_ex, "test_default_clientside_providers class", "Test window", test->style,
+                0, 0, 100, 100, parent, NULL, NULL, NULL);
+        initialize_provider(&Provider_nc, ProviderOptions_ClientSideProvider | ProviderOptions_NonClientAreaProvider, hwnd2, TRUE);
+        initialize_provider(&Provider, ProviderOptions_ClientSideProvider, hwnd2, TRUE);
+        Provider_nc.ignore_hwnd_prop = Provider.ignore_hwnd_prop = TRUE;
+        Provider.ret_invalid_prop_type = Provider_nc.ret_invalid_prop_type = TRUE;
+
+        /* If parent is hwnd, it will be queried for an override provider. */
+        if (test->style == WS_CHILD && (parent == hwnd))
+            SET_EXPECT_MULTI(winproc_GETOBJECT_UiaRoot, 2);
+        else
+            SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+        /* Only sent on Win7. */
+        SET_EXPECT(winproc_GETOBJECT_CLIENT);
+        hr = UiaNodeFromProvider(&Provider_nc.IRawElementProviderSimple_iface, &node);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+        ok(Provider_nc.ref == 2, "Unexpected refcnt %ld\n", Provider_nc.ref);
+        if (hwnd_control_type_test[i].style == WS_CHILD && (parent == hwnd))
+            todo_wine CHECK_CALLED_MULTI(winproc_GETOBJECT_UiaRoot, 2);
+        else
+            CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+        called_winproc_GETOBJECT_CLIENT = expect_winproc_GETOBJECT_CLIENT = 0;
+
+        hr = UiaGetPropertyValue(node, UIA_ControlTypePropertyId, &v);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        ok(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
+        ok(V_I4(&v) == test->exp_control_type, "Unexpected control type %ld\n", V_I4(&v));
+        VariantClear(&v);
+
+        UiaNodeRelease(node);
+        DestroyWindow(hwnd2);
+    }
+
+    method_sequences_enabled = TRUE;
     DestroyWindow(hwnd);
     UnregisterClassA("test_default_clientside_providers class", NULL);
 

@@ -1229,6 +1229,45 @@ static HRESULT uia_send_message_timeout(HWND hwnd, UINT msg, WPARAM wparam, LPAR
     return S_OK;
 }
 
+static BOOL is_top_level_hwnd(HWND hwnd)
+{
+    return (GetAncestor(hwnd, GA_PARENT) == GetDesktopWindow()) ? TRUE : FALSE;
+}
+
+static HRESULT get_uia_control_type_for_hwnd(HWND hwnd, int *control_type)
+{
+    LONG_PTR style, ex_style;
+
+    *control_type = 0;
+    if ((ex_style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE)) & WS_EX_APPWINDOW)
+    {
+        *control_type = UIA_WindowControlTypeId;
+        return S_OK;
+    }
+
+    SetLastError(NO_ERROR);
+    if (!(style = GetWindowLongPtrW(hwnd, GWL_STYLE)) && (GetLastError() != NO_ERROR))
+        return uia_get_hr_for_last_error();
+
+    /*
+     * Non-caption HWNDs that are popups or tool windows aren't considered full
+     * windows, only panes.
+     */
+    if (((style & WS_CAPTION) != WS_CAPTION) && ((ex_style & WS_EX_TOOLWINDOW) || (style & WS_POPUP)))
+    {
+        *control_type = UIA_PaneControlTypeId;
+        return S_OK;
+    }
+
+    /* Non top-level HWNDs are considered panes as well. */
+    if (!is_top_level_hwnd(hwnd))
+        *control_type = UIA_PaneControlTypeId;
+    else
+        *control_type = UIA_WindowControlTypeId;
+
+    return S_OK;
+}
+
 /*
  * Default ProviderType_BaseHwnd IRawElementProviderSimple interface.
  */
@@ -1363,6 +1402,19 @@ static HRESULT WINAPI base_hwnd_provider_GetPropertyValue(IRawElementProviderSim
 
         hr = uia_send_message_timeout(base_hwnd_prov->hwnd, WM_GETTEXT, SysStringLen(V_BSTR(ret_val)) + 1,
                 (LPARAM)V_BSTR(ret_val), UIA_DEFAULT_MSG_TIMEOUT, &lres);
+        break;
+    }
+
+    case UIA_ControlTypePropertyId:
+    {
+        int control_type;
+
+        hr = get_uia_control_type_for_hwnd(base_hwnd_prov->hwnd, &control_type);
+        if (SUCCEEDED(hr))
+        {
+            V_VT(ret_val) = VT_I4;
+            V_I4(ret_val) = control_type;
+        }
         break;
     }
 
