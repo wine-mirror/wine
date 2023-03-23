@@ -217,6 +217,14 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         return PSDRV_Rectangle(&data->pdev->dev, rect->rclBox.left,
                 rect->rclBox.top, rect->rclBox.right, rect->rclBox.bottom);
     }
+    case EMR_ROUNDRECT:
+    {
+        const EMRROUNDRECT *p = (const EMRROUNDRECT *)rec;
+
+        return PSDRV_RoundRect(&data->pdev->dev, p->rclBox.left,
+                p->rclBox.top, p->rclBox.right, p->rclBox.bottom,
+                p->szlCorner.cx, p->szlCorner.cy);
+    }
     case EMR_LINETO:
     {
         const EMRLINETO *line = (const EMRLINETO *)rec;
