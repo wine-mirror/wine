@@ -10211,6 +10211,19 @@ static HWND create_test_hwnd(const char *class_name)
             0, 0, 100, 100, NULL, NULL, NULL, NULL);
 }
 
+static HWND create_child_test_hwnd(const char *class_name, HWND parent)
+{
+    WNDCLASSA cls = { 0 };
+
+    cls.lpfnWndProc = child_test_wnd_proc;
+    cls.hInstance = GetModuleHandleA(NULL);
+    cls.lpszClassName = class_name;
+    RegisterClassA(&cls);
+
+    return CreateWindowA(class_name, "Test child window", WS_CHILD,
+            0, 0, 50, 50, parent, NULL, NULL, NULL);
+}
+
 static IUIAutomationElement *create_test_element_from_hwnd(IUIAutomation *uia_iface, HWND hwnd, BOOL block_hwnd_provs)
 {
     IUIAutomationElement *element;
@@ -12397,17 +12410,66 @@ static const struct uia_hwnd_control_type_test hwnd_control_type_test[] = {
     { WS_CHILD | WS_CAPTION, WS_EX_TOOLWINDOW, UIA_WindowControlTypeId, PARENT_HWND_DESKTOP },
 };
 
+static void create_base_hwnd_test_node(HWND hwnd, BOOL child_hwnd, struct Provider *main, struct Provider *nc,
+        HUIANODE *ret_node)
+{
+    ULONG main_ref, nc_ref;
+    HRESULT hr;
+
+    initialize_provider(nc, ProviderOptions_ClientSideProvider | ProviderOptions_NonClientAreaProvider, hwnd, TRUE);
+    initialize_provider(main, ProviderOptions_ClientSideProvider, hwnd, TRUE);
+    nc->ignore_hwnd_prop = main->ignore_hwnd_prop = TRUE;
+    main_ref = main->ref;
+    nc_ref = nc->ref;
+
+    if (!child_hwnd)
+    {
+        SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+        SET_EXPECT(winproc_GETOBJECT_CLIENT);
+        prov_root = &main->IRawElementProviderSimple_iface;
+    }
+    else
+    {
+        SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+        SET_EXPECT(winproc_GETOBJECT_CLIENT);
+        SET_EXPECT(child_winproc_GETOBJECT_UiaRoot);
+        child_win_prov_root = &main->IRawElementProviderSimple_iface;
+    }
+
+    hr = UiaNodeFromProvider(&nc->IRawElementProviderSimple_iface, ret_node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(main->ref == (main_ref + 1), "Unexpected refcnt %ld\n", main->ref);
+    ok(nc->ref == (nc_ref + 1), "Unexpected refcnt %ld\n", nc->ref);
+    if (child_hwnd)
+    {
+        /* Called while trying to get override provider. */
+        todo_wine CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+        CHECK_CALLED(child_winproc_GETOBJECT_UiaRoot);
+    }
+    else
+        CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+    called_winproc_GETOBJECT_CLIENT = expect_winproc_GETOBJECT_CLIENT = 0;
+    Provider.ret_invalid_prop_type = Provider_nc.ret_invalid_prop_type = TRUE;
+}
+
 static void test_default_clientside_providers(void)
 {
+    struct UiaRect uia_rect = { 0 };
+    HWND hwnd, hwnd_child;
+    RECT rect = { 0 };
+    IUnknown *unk_ns;
     HUIANODE node;
     HRESULT hr;
-    HWND hwnd;
     VARIANT v;
     int i;
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
     hwnd = create_test_hwnd("test_default_clientside_providers class");
+    hwnd_child = create_child_test_hwnd("test_default_clientside_providers child class", hwnd);
     method_sequences_enabled = FALSE;
+
+    hr = UiaGetReservedNotSupportedValue(&unk_ns);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     /*
      * Test default BaseHwnd provider. Unlike the other default providers, the
@@ -12417,19 +12479,7 @@ static void test_default_clientside_providers(void)
      * providers will return nothing so that we can isolate properties coming
      * from the BaseHwnd provider.
      */
-    initialize_provider(&Provider_nc, ProviderOptions_ClientSideProvider | ProviderOptions_NonClientAreaProvider, hwnd, TRUE);
-    initialize_provider(&Provider, ProviderOptions_ClientSideProvider, hwnd, TRUE);
-    Provider_nc.ignore_hwnd_prop = Provider.ignore_hwnd_prop = TRUE;
-    prov_root = &Provider.IRawElementProviderSimple_iface;
-    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
-    /* Only sent on Win7. */
-    SET_EXPECT(winproc_GETOBJECT_CLIENT);
-    hr = UiaNodeFromProvider(&Provider_nc.IRawElementProviderSimple_iface, &node);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
-    ok(Provider_nc.ref == 2, "Unexpected refcnt %ld\n", Provider_nc.ref);
-    CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
-    called_winproc_GETOBJECT_CLIENT = expect_winproc_GETOBJECT_CLIENT = 0;
+    create_base_hwnd_test_node(hwnd, FALSE, &Provider, &Provider_nc, &node);
 
     hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
     ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
@@ -12443,17 +12493,58 @@ static void test_default_clientside_providers(void)
     Provider.ret_invalid_prop_type = Provider_nc.ret_invalid_prop_type = TRUE;
     test_node_hwnd_provider(node, hwnd);
     ok_method_sequence(default_hwnd_prov_props_seq, "default_hwnd_prov_props_seq");
+    method_sequences_enabled = FALSE;
+
+    /* Get the bounding rectangle from the default BaseHwnd provider. */
+    GetWindowRect(hwnd, &rect);
+    set_uia_rect(&uia_rect, rect.left, rect.top, (rect.right - rect.left), (rect.bottom - rect.top));
+    hr = UiaGetPropertyValue(node, UIA_BoundingRectanglePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_uia_rect_val(&v, &uia_rect);
+    VariantClear(&v);
+
+    /* Minimized top-level HWNDs don't return a bounding rectangle. */
+    ShowWindow(hwnd, SW_MINIMIZE);
+    hr = UiaGetPropertyValue(node, UIA_BoundingRectanglePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_UNKNOWN, "Unexpected vt %d\n", V_VT(&v));
+    ok(V_UNKNOWN(&v) == unk_ns, "unexpected IUnknown %p\n", V_UNKNOWN(&v));
+    VariantClear(&v);
 
     UiaNodeRelease(node);
     ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
     ok(Provider_nc.ref == 1, "Unexpected refcnt %ld\n", Provider_nc.ref);
 
-    method_sequences_enabled = FALSE;
+    /* Create a child window node. */
+    create_base_hwnd_test_node(hwnd_child, TRUE, &Provider, &Provider_nc, &node);
+    test_node_hwnd_provider(node, hwnd_child);
+
+    /* Get the bounding rectangle from the default BaseHwnd provider. */
+    GetWindowRect(hwnd_child, &rect);
+    set_uia_rect(&uia_rect, rect.left, rect.top, (rect.right - rect.left), (rect.bottom - rect.top));
+    hr = UiaGetPropertyValue(node, UIA_BoundingRectanglePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_uia_rect_val(&v, &uia_rect);
+    VariantClear(&v);
+
+    /* Minimized non top-level HWNDs return a bounding rectangle. */
+    ShowWindow(hwnd_child, SW_MINIMIZE);
+    GetWindowRect(hwnd_child, &rect);
+    set_uia_rect(&uia_rect, rect.left, rect.top, (rect.right - rect.left), (rect.bottom - rect.top));
+    hr = UiaGetPropertyValue(node, UIA_BoundingRectanglePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_uia_rect_val(&v, &uia_rect);
+    VariantClear(&v);
+
+    UiaNodeRelease(node);
+    ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
+    ok(Provider_nc.ref == 1, "Unexpected refcnt %ld\n", Provider_nc.ref);
+
     VariantInit(&v);
     for (i = 0; i < ARRAY_SIZE(hwnd_control_type_test); i++)
     {
         const struct uia_hwnd_control_type_test *test = &hwnd_control_type_test[i];
-        HWND hwnd2, parent;
+        HWND parent, hwnd2;
 
         if (test->parent_hwnd_type == PARENT_HWND_HWND)
             parent = hwnd;
@@ -12498,8 +12589,11 @@ static void test_default_clientside_providers(void)
 
     method_sequences_enabled = TRUE;
     DestroyWindow(hwnd);
+    DestroyWindow(hwnd_child);
     UnregisterClassA("test_default_clientside_providers class", NULL);
+    UnregisterClassA("test_default_clientside_providers child class", NULL);
 
+    IUnknown_Release(unk_ns);
     CoUninitialize();
 }
 
