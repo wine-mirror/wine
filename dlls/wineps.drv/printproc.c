@@ -174,6 +174,13 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
             return 1;
         }
     }
+    case EMR_RECTANGLE:
+    {
+        const EMRRECTANGLE *rect = (const EMRRECTANGLE *)rec;
+
+        return PSDRV_Rectangle(&data->pdev->dev, rect->rclBox.left,
+                rect->rclBox.top, rect->rclBox.right, rect->rclBox.bottom);
+    }
     default:
         FIXME("unsupported record: %ld\n", rec->iType);
     }
