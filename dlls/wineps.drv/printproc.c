@@ -285,7 +285,8 @@ BOOL WINAPI PrintDocumentOnPrintProcessor(HANDLE pp, WCHAR *doc_name)
     info.pDocName = data->doc_name;
     info.pOutputFile = data->out_file;
     info.pDatatype = (WCHAR *)L"RAW";
-    if (!StartDocPrinterW(data->hport, 1, (BYTE *)&info))
+    data->pdev->job.id = StartDocPrinterW(data->hport, 1, (BYTE *)&info);
+    if (!data->pdev->job.id)
     {
         ClosePrinter(spool_data);
         return FALSE;
@@ -309,6 +310,14 @@ BOOL WINAPI PrintDocumentOnPrintProcessor(HANDLE pp, WCHAR *doc_name)
     pos.QuadPart = header.cjSize;
     if (!(ret = SeekPrinter(spool_data, pos, NULL, FILE_BEGIN, FALSE)))
         goto cleanup;
+
+    data->pdev->job.hprinter = data->hport;
+    data->pdev->job.banding = FALSE;
+    data->pdev->job.OutOfPage = TRUE;
+    data->pdev->job.PageNo = 0;
+    data->pdev->job.quiet = FALSE;
+    data->pdev->job.passthrough_state = passthrough_none;
+    data->pdev->job.doc_name = strdupW(data->doc_name);
 
     while (1)
     {
@@ -366,6 +375,7 @@ BOOL WINAPI PrintDocumentOnPrintProcessor(HANDLE pp, WCHAR *doc_name)
     }
 
 cleanup:
+    HeapFree(GetProcessHeap(), 0, data->pdev->job.doc_name);
     ClosePrinter(spool_data);
     return EndDocPrinter(data->hport) && ret;
 }
