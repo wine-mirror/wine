@@ -361,7 +361,7 @@ static void pres_udiv(float **args, unsigned int n, const struct preshader_instr
 
     for (i = 0; i < instr->comp_count; ++i)
     {
-        unsigned int v = arg1[instr->scalar ? 0 : i] / arg2[i];
+        unsigned int v = arg2[i] ? arg1[instr->scalar ? 0 : i] / arg2[i] : UINT_MAX;
         retval[i] = *(float *)&v;
     }
 }

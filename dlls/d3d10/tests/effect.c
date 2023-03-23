@@ -8587,6 +8587,26 @@ static void test_effect_value_expression(void)
     ok(blend_factor[3] == 0.3f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
+    /* udiv */
+    pass = t->lpVtbl->GetPassByName(t, "p9");
+    ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
+
+    f[0] = 2.0f;
+    f[1] = 0.0f;
+    hr = g_var3->lpVtbl->SetFloatVector(g_var3, f);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
+    ok(!blend_state, "Unexpected blend state %p.\n", blend_state);
+    ok(blend_factor[0] == UINT_MAX, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
+    ok(blend_factor[1] == UINT_MAX, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
+    ok(blend_factor[2] == UINT_MAX, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
+    ok(blend_factor[3] == UINT_MAX, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
+
     /* movc */
     pass = t->lpVtbl->GetPassByName(t, "p10");
     ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
