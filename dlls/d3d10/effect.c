@@ -252,6 +252,33 @@ static void pres_cos(float **args, unsigned int n, const struct preshader_instr 
         retval[i] = cos(args[0][i]);
 }
 
+static void pres_asin(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    float *retval = args[1];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+        retval[i] = asinf(args[0][i]);
+}
+
+static void pres_acos(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    float *retval = args[1];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+        retval[i] = acosf(args[0][i]);
+}
+
+static void pres_atan(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    float *retval = args[1];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+        retval[i] = atanf(args[0][i]);
+}
+
 static void pres_ineg(float **args, unsigned int n, const struct preshader_instr *instr)
 {
     int *arg1 = (int *)args[0];
@@ -343,6 +370,15 @@ static void pres_mul(float **args, unsigned int n, const struct preshader_instr 
         retval[i] = args[0][instr->scalar ? 0 : i] * args[1][i];
 }
 
+static void pres_atan2(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    float *retval = args[2];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+        retval[i] = atan2f(args[0][instr->scalar ? 0 : i], args[1][i]);
+}
+
 static void pres_div(float **args, unsigned int n, const struct preshader_instr *instr)
 {
     float *retval = args[2];
@@ -403,6 +439,9 @@ static const struct preshader_op_info preshader_ops[] =
     { 0x104, "frc",  pres_frc  },
     { 0x108, "sin",  pres_sin  },
     { 0x109, "cos",  pres_cos  },
+    { 0x10a, "asin", pres_asin },
+    { 0x10b, "acos", pres_acos },
+    { 0x10c, "atan", pres_atan },
     { 0x120, "ineg", pres_ineg },
     { 0x130, "itof", pres_itof },
     { 0x131, "utof", pres_utof },
@@ -412,6 +451,7 @@ static const struct preshader_op_info preshader_ops[] =
     { 0x201, "max",  pres_max  },
     { 0x204, "add",  pres_add  },
     { 0x205, "mul",  pres_mul  },
+    { 0x206, "atan2",pres_atan2},
     { 0x208, "div",  pres_div  },
     { 0x21a, "udiv", pres_udiv },
     { 0x21e, "imax", pres_imax },
