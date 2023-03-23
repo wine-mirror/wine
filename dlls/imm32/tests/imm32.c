@@ -2512,6 +2512,7 @@ enum ime_function
     IME_SELECT = 1,
     IME_NOTIFY,
     IME_PROCESS_KEY,
+    IME_SET_ACTIVE_CONTEXT,
     MSG_IME_UI,
 };
 
@@ -2535,6 +2536,10 @@ struct ime_call
             WORD vkey;
             LPARAM key_data;
         } process_key;
+        struct
+        {
+            int flag;
+        } set_active_context;
         struct
         {
             UINT msg;
@@ -2576,6 +2581,9 @@ static int ok_call_( const char *file, int line, const struct ime_call *expected
         if ((ret = expected->process_key.vkey - received->process_key.vkey)) goto done;
         if ((ret = expected->process_key.key_data - received->process_key.key_data)) goto done;
         break;
+    case IME_SET_ACTIVE_CONTEXT:
+        if ((ret = expected->set_active_context.flag - received->set_active_context.flag)) goto done;
+        break;
     case MSG_IME_UI:
         if ((ret = expected->message.msg - received->message.msg)) goto done;
         if ((ret = (expected->message.wparam - received->message.wparam))) goto done;
@@ -2603,6 +2611,11 @@ done:
         ok_(file, line)( !ret, "got hkl %p, himc %p, IME_PROCESS_KEY vkey %#x, key_data %#Ix\n",
                          received->hkl, received->himc, received->process_key.vkey, received->process_key.key_data );
         return ret;
+    case IME_SET_ACTIVE_CONTEXT:
+        todo_wine_if( expected->todo )
+        ok_(file, line)( !ret, "got hkl %p, himc %p, IME_SET_ACTIVE_CONTEXT flag %u\n", received->hkl, received->himc,
+                         received->set_active_context.flag );
+        return ret;
     case MSG_IME_UI:
         todo_wine_if( expected->todo )
         ok_(file, line)( !ret, "got hkl %p, himc %p, MSG_IME_UI msg %#x, wparam %#Ix, lparam %#Ix\n", received->hkl,
@@ -2626,6 +2639,11 @@ done:
         todo_wine_if( expected->todo )
         ok_(file, line)( !ret, "hkl %p, himc %p, IME_PROCESS_KEY vkey %#x, key_data %#Ix\n",
                          expected->hkl, expected->himc, expected->process_key.vkey, expected->process_key.key_data );
+        break;
+    case IME_SET_ACTIVE_CONTEXT:
+        todo_wine_if( expected->todo )
+        ok_(file, line)( !ret, "hkl %p, himc %p, IME_SET_ACTIVE_CONTEXT flag %u\n", expected->hkl, expected->himc,
+                         expected->set_active_context.flag );
         break;
     case MSG_IME_UI:
         todo_wine_if( expected->todo )
@@ -2928,9 +2946,14 @@ static BOOL WINAPI ime_ImeSelect( HIMC himc, BOOL select )
 
 static BOOL WINAPI ime_ImeSetActiveContext( HIMC himc, BOOL flag )
 {
+    struct ime_call call =
+    {
+        .hkl = GetKeyboardLayout( 0 ), .himc = himc,
+        .func = IME_SET_ACTIVE_CONTEXT, .set_active_context = {.flag = flag}
+    };
     ime_trace( "himc %p, flag %#x\n", himc, flag );
-    ok( 0, "unexpected call\n" );
-    return FALSE;
+    ime_calls[ime_call_count++] = call;
+    return TRUE;
 }
 
 static BOOL WINAPI ime_ImeSetCompositionString( HIMC himc, DWORD index, const void *comp, DWORD comp_len,
@@ -4761,6 +4784,106 @@ static void test_DefWindowProc(void)
     ime_call_count = 0;
 }
 
+static void test_ImmSetActiveContext(void)
+{
+    const struct ime_call activate_0_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = IME_SET_ACTIVE_CONTEXT, .set_active_context = {.flag = 1}
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_SETCONTEXT, .wparam = 1, .lparam = ISC_SHOWUIALL}
+        },
+        {0},
+    };
+    const struct ime_call deactivate_0_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = IME_SET_ACTIVE_CONTEXT, .set_active_context = {.flag = 0}
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_SETCONTEXT, .wparam = 0, .lparam = ISC_SHOWUIALL}
+        },
+        {0},
+    };
+    struct ime_call deactivate_1_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/,
+            .func = IME_SELECT, .select = 1,
+        },
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/,
+            .func = IME_SET_ACTIVE_CONTEXT, .set_active_context = {.flag = 0}
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_SETCONTEXT, .wparam = 0, .lparam = ISC_SHOWUIALL}
+        },
+        {0},
+    };
+    struct ime_call activate_1_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/,
+            .func = IME_SET_ACTIVE_CONTEXT, .set_active_context = {.flag = 1}
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_SETCONTEXT, .wparam = 1, .lparam = ISC_SHOWUIALL}
+        },
+        {0},
+    };
+    HKL hkl, old_hkl = GetKeyboardLayout( 0 );
+    HIMC himc;
+
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
+
+    if (!(hkl = ime_install())) return;
+
+    hwnd = CreateWindowW( L"static", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    ok_ret( 1, ImmLoadIME( hkl ) );
+    process_messages();
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+    SetLastError( 0xdeadbeef );
+    ok_ret( 1, ImmSetActiveContext( hwnd, default_himc, TRUE ) );
+    ok_seq( activate_0_seq );
+    ok_ret( 0, GetLastError() );
+    ok_ret( 1, ImmSetActiveContext( hwnd, default_himc, TRUE ) );
+    ok_seq( activate_0_seq );
+    ok_ret( 1, ImmSetActiveContext( hwnd, default_himc, FALSE ) );
+    ok_seq( deactivate_0_seq );
+
+    himc = ImmCreateContext();
+    ok_ne( NULL, himc, HIMC, "%p" );
+    ok_ret( 1, ImmSetActiveContext( hwnd, himc, FALSE ) );
+    deactivate_1_seq[0].himc = himc;
+    deactivate_1_seq[1].himc = himc;
+    ok_seq( deactivate_1_seq );
+    ok_ret( 1, ImmSetActiveContext( hwnd, himc, TRUE ) );
+    activate_1_seq[0].himc = himc;
+    ok_seq( activate_1_seq );
+    ok_ret( 1, ImmDestroyContext( himc ) );
+
+    ok_ret( 1, ImmActivateLayout( old_hkl ) );
+    ok_ret( 1, DestroyWindow( hwnd ) );
+    process_messages();
+
+    ime_cleanup( hkl, TRUE );
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+}
+
 START_TEST(imm32)
 {
     default_hkl = GetKeyboardLayout( 0 );
@@ -4801,6 +4924,7 @@ START_TEST(imm32)
     test_ImmCreateInputContext();
     test_ImmProcessKey();
     test_DefWindowProc();
+    test_ImmSetActiveContext();
 
     if (init())
     {
