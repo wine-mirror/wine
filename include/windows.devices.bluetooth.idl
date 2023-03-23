@@ -1,0 +1,89 @@
+/*
+ * Copyright (C) 2023 Mohamad Al-Jaf
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+/* import "windows.devices.bluetooth.genericattributeprofile.idl"; */
+/* import "windows.devices.bluetooth.rfcomm.idl"; */
+import "windows.devices.enumeration.idl";
+import "windows.devices.radios.idl";
+/* import "windows.networking.idl"; */
+import "windows.storage.streams.idl";
+
+namespace Windows.Devices.Bluetooth {
+    interface IBluetoothAdapter;
+    interface IBluetoothAdapter2;
+    interface IBluetoothAdapter3;
+    interface IBluetoothAdapterStatics;
+
+    runtimeclass BluetoothAdapter;
+
+    declare {
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Devices.Bluetooth.BluetoothAdapter *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Devices.Bluetooth.BluetoothAdapter *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.Devices.Bluetooth.BluetoothAdapter),
+        uuid(7974f04c-5f7a-4a34-9225-a855f84b1a8b)
+    ]
+    interface IBluetoothAdapter : IInspectable
+    {
+        [propget] HRESULT DeviceId([out, retval] HSTRING *value);
+        [propget] HRESULT BluetoothAddress([out, retval] UINT64 *value);
+        [propget] HRESULT IsClassicSupported([out, retval] boolean *value);
+        [propget] HRESULT IsLowEnergySupported([out, retval] boolean *value);
+        [propget] HRESULT IsPeripheralRoleSupported([out, retval] boolean *value);
+        [propget] HRESULT IsCentralRoleSupported([out, retval] boolean *value);
+        [propget] HRESULT IsAdvertisementOffloadSupported([out, retval] boolean *value);
+        HRESULT GetRadioAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Radios.Radio *> **operation);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.Devices.Bluetooth.BluetoothAdapter),
+        uuid(8b02fb6a-ac4c-4741-8661-8eab7d17ea9f)
+    ]
+    interface IBluetoothAdapterStatics : IInspectable
+    {
+        HRESULT GetDeviceSelector([out, retval] HSTRING *result);
+        HRESULT FromIdAsync([in] HSTRING id, [out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Bluetooth.BluetoothAdapter *> **operation);
+        HRESULT GetDefaultAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Bluetooth.BluetoothAdapter *> **operation);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        marshaling_behavior(agile),
+        static(Windows.Devices.Bluetooth.IBluetoothAdapterStatics, Windows.Foundation.UniversalApiContract, 4.0),
+        threading(both)
+    ]
+    runtimeclass BluetoothAdapter
+    {
+        [default] interface Windows.Devices.Bluetooth.IBluetoothAdapter;
+        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Devices.Bluetooth.IBluetoothAdapter2;
+        [contract(Windows.Foundation.UniversalApiContract, 10.0)] interface Windows.Devices.Bluetooth.IBluetoothAdapter3;
+    }
+}
