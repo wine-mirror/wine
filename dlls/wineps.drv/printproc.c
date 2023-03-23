@@ -312,6 +312,11 @@ BOOL WINAPI PrintDocumentOnPrintProcessor(HANDLE pp, WCHAR *doc_name)
         goto cleanup;
 
     data->pdev->job.hprinter = data->hport;
+    if (!PSDRV_WriteHeader(&data->pdev->dev, data->doc_name))
+    {
+        WARN("Failed to write header\n");
+        goto cleanup;
+    }
     data->pdev->job.banding = FALSE;
     data->pdev->job.OutOfPage = TRUE;
     data->pdev->job.PageNo = 0;
@@ -375,6 +380,9 @@ BOOL WINAPI PrintDocumentOnPrintProcessor(HANDLE pp, WCHAR *doc_name)
     }
 
 cleanup:
+    if (data->pdev->job.PageNo)
+        PSDRV_WriteFooter(&data->pdev->dev);
+
     HeapFree(GetProcessHeap(), 0, data->pdev->job.doc_name);
     ClosePrinter(spool_data);
     return EndDocPrinter(data->hport) && ret;
