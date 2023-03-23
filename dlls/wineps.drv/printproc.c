@@ -181,6 +181,13 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         return PSDRV_Rectangle(&data->pdev->dev, rect->rclBox.left,
                 rect->rclBox.top, rect->rclBox.right, rect->rclBox.bottom);
     }
+    case EMR_LINETO:
+    {
+        const EMRLINETO *line = (const EMRLINETO *)rec;
+
+        return PSDRV_LineTo(&data->pdev->dev, line->ptl.x, line->ptl.y) &&
+            MoveToEx(data->pdev->dev.hdc, line->ptl.x, line->ptl.y, NULL);
+    }
 
     case EMR_MOVETOEX:
         return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n);
