@@ -233,6 +233,14 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
                 p->rclBox.right, p->rclBox.bottom, p->ptlStart.x,
                 p->ptlStart.y, p->ptlEnd.x, p->ptlEnd.y);
     }
+    case EMR_CHORD:
+    {
+        const EMRCHORD *p = (const EMRCHORD *)rec;
+
+        return PSDRV_Chord(&data->pdev->dev, p->rclBox.left, p->rclBox.top,
+                p->rclBox.right, p->rclBox.bottom, p->ptlStart.x,
+                p->ptlStart.y, p->ptlEnd.x, p->ptlEnd.y);
+    }
     case EMR_LINETO:
     {
         const EMRLINETO *line = (const EMRLINETO *)rec;
