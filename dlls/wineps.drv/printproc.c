@@ -145,6 +145,12 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         data->patterns = calloc(sizeof(*data->patterns), header->nHandles);
         return data->patterns && PSDRV_StartPage(&data->pdev->dev);
     }
+    case EMR_POLYBEZIER:
+    {
+        const EMRPOLYBEZIER *p = (const EMRPOLYBEZIER *)rec;
+
+        return PSDRV_PolyBezier(&data->pdev->dev, (const POINT *)p->aptl, p->cptl);
+    }
     case EMR_EOF:
         return PSDRV_EndPage(&data->pdev->dev);
     case EMR_SELECTOBJECT:
