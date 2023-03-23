@@ -379,6 +379,16 @@ static void pres_imax(float **args, unsigned int n, const struct preshader_instr
     }
 }
 
+static void pres_movc(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    float *arg1 = args[0], *arg2 = args[1], *arg3 = args[2];
+    float *retval = args[3];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+        retval[i] = arg1[i] ? arg2[i] : arg3[i];
+}
+
 struct preshader_op_info
 {
     int opcode;
@@ -405,6 +415,7 @@ static const struct preshader_op_info preshader_ops[] =
     { 0x208, "div",  pres_div  },
     { 0x21a, "udiv", pres_udiv },
     { 0x21e, "imax", pres_imax },
+    { 0x301, "movc", pres_movc },
 };
 
 static int __cdecl preshader_op_compare(const void *a, const void *b)
