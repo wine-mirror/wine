@@ -1482,9 +1482,53 @@ static ULONG WINAPI base_hwnd_fragment_Release(IRawElementProviderFragment *ifac
 static HRESULT WINAPI base_hwnd_fragment_Navigate(IRawElementProviderFragment *iface,
         enum NavigateDirection direction, IRawElementProviderFragment **ret_val)
 {
-    FIXME("%p, %d, %p: stub\n", iface, direction, ret_val);
+    struct base_hwnd_provider *base_hwnd_prov = impl_from_base_hwnd_fragment(iface);
+    IRawElementProviderSimple *elprov = NULL;
+    HRESULT hr = S_OK;
+
+    TRACE("%p, %d, %p\n", iface, direction, ret_val);
+
     *ret_val = NULL;
-    return E_NOTIMPL;
+
+    switch (direction)
+    {
+    case NavigateDirection_Parent:
+    {
+        HWND parent, owner;
+
+        /*
+         * Top level owned windows have their owner window as a parent instead
+         * of the desktop window.
+         */
+        if (is_top_level_hwnd(base_hwnd_prov->hwnd) && (owner = GetWindow(base_hwnd_prov->hwnd, GW_OWNER)))
+            parent = owner;
+        else
+            parent = GetAncestor(base_hwnd_prov->hwnd, GA_PARENT);
+
+        if (parent)
+            hr = create_base_hwnd_provider(parent, &elprov);
+        break;
+    }
+
+    case NavigateDirection_FirstChild:
+    case NavigateDirection_LastChild:
+    case NavigateDirection_PreviousSibling:
+    case NavigateDirection_NextSibling:
+        FIXME("Unimplemented NavigateDirection %d\n", direction);
+        return E_NOTIMPL;
+
+    default:
+        FIXME("Invalid NavigateDirection %d\n", direction);
+        return E_INVALIDARG;
+    }
+
+    if (elprov)
+    {
+        hr = IRawElementProviderSimple_QueryInterface(elprov, &IID_IRawElementProviderFragment, (void **)ret_val);
+        IRawElementProviderSimple_Release(elprov);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI base_hwnd_fragment_GetRuntimeId(IRawElementProviderFragment *iface,

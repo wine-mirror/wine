@@ -6353,15 +6353,12 @@ static void test_UiaNodeFromHandle_client_proc(void)
 
     memset(buf, 0, sizeof(buf));
     GetWindowThreadProcessId(hwnd, &pid);
-    todo_wine ok(get_nested_provider_desc(V_BSTR(&v), L"Main", FALSE, buf), "Failed to get nested provider description\n");
-    if (lstrlenW(buf))
-    {
-        check_node_provider_desc_prefix(buf, pid, hwnd);
-        check_node_provider_desc(buf, L"Main", L"Provider", TRUE);
-        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
-        check_node_provider_desc_todo(V_BSTR(&v), L"Nonclient", NULL, FALSE);
-        check_node_provider_desc_todo(V_BSTR(&v), L"Hwnd", NULL, TRUE);
-    }
+    ok(get_nested_provider_desc(V_BSTR(&v), L"Main", FALSE, buf), "Failed to get nested provider description\n");
+    check_node_provider_desc_prefix(buf, pid, hwnd);
+    check_node_provider_desc(buf, L"Main", L"Provider", TRUE);
+    check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
+    check_node_provider_desc_todo(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+    check_node_provider_desc_todo(V_BSTR(&v), L"Hwnd", NULL, TRUE);
 
     VariantClear(&v);
 
@@ -6427,15 +6424,12 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
     ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
 
     memset(buf, 0, sizeof(buf));
-    todo_wine ok(get_nested_provider_desc(V_BSTR(&v), L"Main", FALSE, buf), "Failed to get nested provider description\n");
-    if (lstrlenW(buf))
-    {
-        check_node_provider_desc_prefix(buf, GetCurrentProcessId(), hwnd);
-        check_node_provider_desc(buf, L"Main", L"Provider", TRUE);
-        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
-        check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
-        check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
-    }
+    ok(get_nested_provider_desc(V_BSTR(&v), L"Main", FALSE, buf), "Failed to get nested provider description\n");
+    check_node_provider_desc_prefix(buf, GetCurrentProcessId(), hwnd);
+    check_node_provider_desc(buf, L"Main", L"Provider", TRUE);
+    check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
+    check_node_provider_desc_todo(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+    check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
 
     VariantClear(&v);
 
@@ -6583,15 +6577,12 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
     ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
 
     memset(buf, 0, sizeof(buf));
-    todo_wine ok(get_nested_provider_desc(V_BSTR(&v), L"Main", FALSE, buf), "Failed to get nested provider description\n");
-    if (lstrlenW(buf))
-    {
-        check_node_provider_desc_prefix(buf, GetCurrentProcessId(), hwnd);
-        check_node_provider_desc(buf, L"Main", L"Provider", TRUE);
-        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
-        check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
-        check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
-    }
+    ok(get_nested_provider_desc(V_BSTR(&v), L"Main", FALSE, buf), "Failed to get nested provider description\n");
+    check_node_provider_desc_prefix(buf, GetCurrentProcessId(), hwnd);
+    check_node_provider_desc(buf, L"Main", L"Provider", TRUE);
+    check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
+    check_node_provider_desc_todo(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+    check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
     VariantClear(&v);
 
     Provider.ignore_hwnd_prop = FALSE;
@@ -12452,10 +12443,60 @@ static void create_base_hwnd_test_node(HWND hwnd, BOOL child_hwnd, struct Provid
     Provider.ret_invalid_prop_type = Provider_nc.ret_invalid_prop_type = TRUE;
 }
 
+#define test_node_hwnd_provider_navigation( node, dir, exp_dest_hwnd ) \
+        test_node_hwnd_provider_navigation_( (node), (dir), (exp_dest_hwnd), __FILE__, __LINE__)
+static void test_node_hwnd_provider_navigation_(HUIANODE node, int nav_dir, HWND exp_dest_hwnd, const char *file,
+        int line)
+{
+    struct UiaCacheRequest cache_req = { NULL, TreeScope_Element, NULL, 0, NULL, 0, AutomationElementMode_Full };
+    const WCHAR *exp_tree_struct = exp_dest_hwnd ? L"P)" : L"";
+    SAFEARRAY *out_req = NULL;
+    BSTR tree_struct = NULL;
+    LONG idx[2] = { 0 };
+    HUIANODE tmp_node;
+    HRESULT hr;
+    VARIANT v;
+    int i;
+
+    hr = UiaNavigate(node, nav_dir, (struct UiaCondition *)&UiaTrueCondition, &cache_req, &out_req, &tree_struct);
+    ok_(file, line)(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok_(file, line)(!!out_req, "out_req == NULL\n");
+    ok_(file, line)(!!tree_struct, "tree_struct == NULL\n");
+    if (!exp_dest_hwnd)
+        goto exit;
+
+    for (i = 0; i < 2; i++)
+    {
+        hr = SafeArrayGetLBound(out_req, 1 + i, &idx[i]);
+        ok_(file, line)(hr == S_OK, "SafeArrayGetLBound unexpected hr %#lx\n", hr);
+    }
+
+    hr = SafeArrayGetElement(out_req, idx, &v);
+    ok_(file, line)(hr == S_OK, "SafeArrayGetElement unexpected hr %#lx\n", hr);
+
+    hr = UiaHUiaNodeFromVariant(&v, &tmp_node);
+    ok_(file, line)(hr == S_OK, "UiaHUiaNodeFromVariant unexpected hr %#lx\n", hr);
+    ok_(file, line)(!!tmp_node, "tmp_node == NULL\n");
+    VariantClear(&v);
+
+    hr = UiaGetPropertyValue(tmp_node, UIA_NativeWindowHandlePropertyId, &v);
+    ok_(file, line)(hr == S_OK, "UiaGetPropertyValue unexpected hr %#lx\n", hr);
+    ok_(file, line)(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    ok_(file, line)(V_I4(&v) == HandleToUlong(exp_dest_hwnd), "V_I4(&v) = %#lx, expected %#lx\n", V_I4(&v),
+            HandleToUlong(exp_dest_hwnd));
+    VariantClear(&v);
+    UiaNodeRelease(tmp_node);
+
+exit:
+    ok_(file, line)(!wcscmp(tree_struct, exp_tree_struct), "unexpected tree structure %s\n", debugstr_w(tree_struct));
+    SafeArrayDestroy(out_req);
+    SysFreeString(tree_struct);
+}
+
 static void test_default_clientside_providers(void)
 {
     struct UiaRect uia_rect = { 0 };
-    HWND hwnd, hwnd_child;
+    HWND hwnd, hwnd_child, hwnd2;
     RECT rect = { 0 };
     IUnknown *unk_ns;
     HUIANODE node;
@@ -12544,7 +12585,7 @@ static void test_default_clientside_providers(void)
     for (i = 0; i < ARRAY_SIZE(hwnd_control_type_test); i++)
     {
         const struct uia_hwnd_control_type_test *test = &hwnd_control_type_test[i];
-        HWND parent, hwnd2;
+        HWND parent;
 
         if (test->parent_hwnd_type == PARENT_HWND_HWND)
             parent = hwnd;
@@ -12586,6 +12627,62 @@ static void test_default_clientside_providers(void)
         UiaNodeRelease(node);
         DestroyWindow(hwnd2);
     }
+
+    /*
+     * Default ProviderType_BaseHwnd provider navigation tests.
+     */
+    create_base_hwnd_test_node(hwnd, FALSE, &Provider, &Provider_nc, &node);
+    test_node_hwnd_provider(node, hwnd);
+
+    /*
+     * Navigate to the parent of our top-level HWND, will get a node
+     * representing the desktop HWND.
+     */
+    test_node_hwnd_provider_navigation(node, NavigateDirection_Parent, GetDesktopWindow());
+    UiaNodeRelease(node);
+
+    /*
+     * Create a node repesenting an HWND that is a top-level window, but is
+     * owned by another window. For top-level HWNDs, parent navigation will go
+     * to the owner instead of the parent.
+     */
+    hwnd2 = CreateWindowA("test_default_clientside_providers class", "Test window", WS_POPUP, 0, 0, 50, 50, hwnd, NULL,
+            NULL, NULL);
+    ok(GetAncestor(hwnd2, GA_PARENT) == GetDesktopWindow(), "unexpected parent hwnd");
+    ok(GetWindow(hwnd2, GW_OWNER) == hwnd, "unexpected owner hwnd");
+    create_base_hwnd_test_node(hwnd2, FALSE, &Provider, &Provider_nc, &node);
+    test_node_hwnd_provider(node, hwnd2);
+
+    /* Navigate to the parent. */
+    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    /* Only sent on Win7. */
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    test_node_hwnd_provider_navigation(node, NavigateDirection_Parent, hwnd);
+    CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+    called_winproc_GETOBJECT_CLIENT = expect_winproc_GETOBJECT_CLIENT = 0;
+
+    UiaNodeRelease(node);
+    DestroyWindow(hwnd2);
+
+    /*
+     * Create a node for our child window.
+     */
+    initialize_provider(&Provider2, ProviderOptions_ServerSideProvider, hwnd, TRUE);
+    Provider2.ignore_hwnd_prop = TRUE;
+    prov_root = &Provider2.IRawElementProviderSimple_iface;
+    create_base_hwnd_test_node(hwnd_child, TRUE, &Provider, &Provider_nc, &node);
+    test_node_hwnd_provider(node, hwnd_child);
+
+    /* Navigate to parent. */
+    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    /* Only sent on Win7. */
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    test_node_hwnd_provider_navigation(node, NavigateDirection_Parent, hwnd);
+    CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+    called_winproc_GETOBJECT_CLIENT = expect_winproc_GETOBJECT_CLIENT = 0;
+
+    UiaNodeRelease(node);
+    prov_root = NULL;
 
     method_sequences_enabled = TRUE;
     DestroyWindow(hwnd);
