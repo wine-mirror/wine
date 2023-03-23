@@ -471,7 +471,7 @@ static void test_GdipImageGetFrameDimensionsCount(void)
     expect(0xffffffff, color);
 
     stat = GdipImageSelectActiveFrame((GpImage*)bm, &dimension, 1);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     GdipDisposeImage((GpImage*)bm);
 }

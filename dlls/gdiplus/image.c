@@ -4553,11 +4553,8 @@ GpStatus WINGDIPAPI GdipImageSelectActiveFrame(GpImage *image, GDIPCONST GUID *d
         return ObjectBusy;
 
     if (frame >= image->frame_count)
-    {
         WARN("requested frame %u, but image has only %u\n", frame, image->frame_count);
-        image_unlock(image);
-        return InvalidParameter;
-    }
+        /* rely on codec->select_func() to fail */
 
     if (image->type != ImageTypeBitmap && image->type != ImageTypeMetafile)
     {
