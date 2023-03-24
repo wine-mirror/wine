@@ -34,6 +34,18 @@
 extern "C" {
 #endif  /* __cplusplus */
 
+/**
+ * \file vkd3d.h
+ *
+ * This file contains definitions for the vkd3d library.
+ *
+ * The vkd3d library is a 3D graphics library built on top of
+ * Vulkan. It has an API very similar, but not identical, to
+ * Direct3D 12.
+ *
+ * \since 1.0
+ */
+
 enum vkd3d_structure_type
 {
     /* 1.0 */
@@ -63,6 +75,7 @@ enum vkd3d_api_version
     VKD3D_API_VERSION_1_4,
     VKD3D_API_VERSION_1_5,
     VKD3D_API_VERSION_1_6,
+    VKD3D_API_VERSION_1_7,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_API_VERSION),
 };

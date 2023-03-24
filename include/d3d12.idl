@@ -2240,6 +2240,7 @@ interface ID3D12CommandQueue : ID3D12Pageable
     void UpdateTileMappings(ID3D12Resource *resource, UINT region_count,
             const D3D12_TILED_RESOURCE_COORDINATE *region_start_coordinates,
             const D3D12_TILE_REGION_SIZE *region_sizes,
+            ID3D12Heap *heap,
             UINT range_count,
             const D3D12_TILE_RANGE_FLAGS *range_flags,
             UINT *heap_range_offsets,

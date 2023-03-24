@@ -948,16 +948,11 @@ HRESULT vkd3d_get_private_data(struct vkd3d_private_store *store,
     const struct vkd3d_private_data *data;
     HRESULT hr = S_OK;
     unsigned int size;
-    int rc;
 
     if (!out_size)
         return E_INVALIDARG;
 
-    if ((rc = vkd3d_mutex_lock(&store->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return hresult_from_errno(rc);
-    }
+    vkd3d_mutex_lock(&store->mutex);
 
     if (!(data = vkd3d_private_store_get_private_data(store, tag)))
     {
@@ -990,13 +985,8 @@ HRESULT vkd3d_set_private_data(struct vkd3d_private_store *store,
         const GUID *tag, unsigned int data_size, const void *data)
 {
     HRESULT hr;
-    int rc;
 
-    if ((rc = vkd3d_mutex_lock(&store->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return hresult_from_errno(rc);
-    }
+    vkd3d_mutex_lock(&store->mutex);
 
     hr = vkd3d_private_store_set_private_data(store, tag, data, data_size, false);
 
@@ -1009,13 +999,8 @@ HRESULT vkd3d_set_private_data_interface(struct vkd3d_private_store *store,
 {
     const void *data = object ? object : (void *)&object;
     HRESULT hr;
-    int rc;
 
-    if ((rc = vkd3d_mutex_lock(&store->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return hresult_from_errno(rc);
-    }
+    vkd3d_mutex_lock(&store->mutex);
 
     hr = vkd3d_private_store_set_private_data(store, tag, data, sizeof(object), !!object);
 

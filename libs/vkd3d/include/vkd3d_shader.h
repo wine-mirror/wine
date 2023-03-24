@@ -30,12 +30,12 @@ extern "C" {
 /**
  * \file vkd3d_shader.h
  *
- * \since 1.2
- *
  * This file contains definitions for the vkd3d-shader library.
  *
  * The vkd3d-shader library provides multiple utilities related to the
  * compilation, transformation, and reflection of GPU shaders.
+ *
+ * \since 1.2
  */
 
 /** \since 1.3 */
@@ -48,6 +48,7 @@ enum vkd3d_shader_api_version
     VKD3D_SHADER_API_VERSION_1_4,
     VKD3D_SHADER_API_VERSION_1_5,
     VKD3D_SHADER_API_VERSION_1_6,
+    VKD3D_SHADER_API_VERSION_1_7,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_API_VERSION),
 };
@@ -150,6 +151,18 @@ enum vkd3d_shader_compile_option_name
     VKD3D_SHADER_COMPILE_OPTION_API_VERSION = 0x00000004,
     /** \a value is a member of enum vkd3d_shader_compile_option_typed_uav. \since 1.5 */
     VKD3D_SHADER_COMPILE_OPTION_TYPED_UAV   = 0x00000005,
+    /**
+     * If \a value is nonzero, write the point size for Vulkan tessellation and
+     * geometry shaders. This option should be enabled if and only if the
+     * shaderTessellationAndGeometryPointSize feature is enabled. The default
+     * value is nonzero, i.e. write the point size.
+     *
+     * This option is supported by vkd3d_shader_compile() for the SPIR-V target
+     * type and Vulkan targets; it should not be enabled otherwise.
+     *
+     * \since 1.7
+     */
+    VKD3D_SHADER_COMPILE_OPTION_WRITE_TESS_GEOM_POINT_SIZE = 0x00000006,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_COMPILE_OPTION_NAME),
 };
@@ -1461,6 +1474,46 @@ enum vkd3d_shader_swizzle_component
 };
 
 /**
+ * A description of a DXBC section.
+ *
+ * \since 1.7
+ */
+struct vkd3d_shader_dxbc_section_desc
+{
+    /** The section tag. */
+    uint32_t tag;
+    /** The contents of the section. */
+    struct vkd3d_shader_code data;
+};
+
+/**
+ * A description of a DXBC blob, as returned by vkd3d_shader_parse_dxbc().
+ *
+ * \since 1.7
+ */
+struct vkd3d_shader_dxbc_desc
+{
+    /**
+     * The DXBC tag. This will always be "DXBC" in structures returned by
+     * this version of vkd3d-shader.
+     */
+    uint32_t tag;
+    /** A checksum of the DXBC contents. */
+    uint32_t checksum[4];
+    /**
+     * The DXBC version. This will always be 1 in structures returned by this
+     * version of vkd3d-shader.
+     */
+    unsigned int version;
+    /** The total size of the DXBC blob. */
+    size_t size;
+    /** The number of sections contained in the DXBC. */
+    size_t section_count;
+    /** Descriptions of the sections contained in the DXBC. */
+    struct vkd3d_shader_dxbc_section_desc *sections;
+};
+
+/**
  * A mask selecting one component from a vkd3d-shader swizzle. The component has
  * type \ref vkd3d_shader_swizzle_component.
  */
@@ -1596,7 +1649,7 @@ VKD3D_SHADER_API const enum vkd3d_shader_target_type *vkd3d_shader_get_supported
  * vkd3d_shader_compile_info. Regardless of the requested level, if this
  * parameter is NULL, no compilation messages will be returned.
  * \n
- * If no compilation messages are produced by the compiler, this parameter may
+ * If no messages are produced by the compiler, this parameter may
  * receive NULL instead of a valid string pointer.
  *
  * \return A member of \ref vkd3d_result.
@@ -1645,10 +1698,15 @@ VKD3D_SHADER_API void vkd3d_shader_free_shader_code(struct vkd3d_shader_code *co
  * needed.
  *
  * \param messages Optional output location for error or informational messages
- * produced by the compiler.
+ * produced by the parser.
  * \n
- * This parameter behaves identically to the \a messages parameter of
- * vkd3d_shader_compile().
+ * This string is null-terminated and UTF-8 encoded.
+ * \n
+ * The messages are allocated by vkd3d-shader and should be freed with
+ * vkd3d_shader_free_messages() when no longer needed.
+ * \n
+ * If no messages are produced by the parser, this parameter may
+ * receive NULL instead of a valid string pointer.
  *
  * \return A member of \ref vkd3d_result.
  */
@@ -1683,10 +1741,15 @@ VKD3D_SHADER_API void vkd3d_shader_free_root_signature(
  * vkd3d_shader_free_shader_code() when no longer needed.
  *
  * \param messages Optional output location for error or informational messages
- * produced by the compiler.
+ * produced by the serializer.
  * \n
- * This parameter behaves identically to the \a messages parameter of
- * vkd3d_shader_compile().
+ * This string is null-terminated and UTF-8 encoded.
+ * \n
+ * The messages are allocated by vkd3d-shader and should be freed with
+ * vkd3d_shader_free_messages() when no longer needed.
+ * \n
+ * If no messages are produced by the serializer, this parameter may
+ * receive NULL instead of a valid string pointer.
  *
  * \return A member of \ref vkd3d_result.
  */
@@ -1733,10 +1796,19 @@ VKD3D_SHADER_API int vkd3d_shader_convert_root_signature(struct vkd3d_shader_ver
  * depending on their structure type.
  *
  * \param messages Optional output location for error or informational messages
- * produced by the compiler.
+ * produced by the parser.
  * \n
- * This parameter behaves identically to the \a messages parameter of
- * vkd3d_shader_compile().
+ * This string is null-terminated and UTF-8 encoded.
+ * \n
+ * The messages are allocated by vkd3d-shader and should be freed with
+ * vkd3d_shader_free_messages() when no longer needed.
+ * \n
+ * The messages returned can be regulated with the \a log_level member of struct
+ * vkd3d_shader_compile_info. Regardless of the requested level, if this
+ * parameter is NULL, no compilation messages will be returned.
+ * \n
+ * If no messages are produced by the parser, this parameter may
+ * receive NULL instead of a valid string pointer.
  *
  * \return A member of \ref vkd3d_result.
  */
@@ -1768,12 +1840,20 @@ VKD3D_SHADER_API void vkd3d_shader_free_scan_descriptor_info(
  * Members of \a signature may be allocated by vkd3d-shader. The signature
  * should be freed with vkd3d_shader_free_shader_signature() when no longer
  * needed.
+ * \n
+ * The signature may contain pointers into the input shader, and should only be
+ * accessed while the input shader remains valid.
  *
  * \param messages Optional output location for error or informational messages
- * produced by the compiler.
+ * produced by the parser.
  * \n
- * This parameter behaves identically to the \a messages parameter of
- * vkd3d_shader_compile().
+ * This string is null-terminated and UTF-8 encoded.
+ * \n
+ * The messages are allocated by vkd3d-shader and should be freed with
+ * vkd3d_shader_free_messages() when no longer needed.
+ * \n
+ * If no messages are produced by the parser, this parameter may
+ * receive NULL instead of a valid string pointer.
  *
  * \return A member of \ref vkd3d_result.
  */
@@ -1829,10 +1909,19 @@ VKD3D_SHADER_API void vkd3d_shader_free_shader_signature(struct vkd3d_shader_sig
  * vkd3d_shader_free_shader_code() when no longer needed.
  *
  * \param messages Optional output location for error or informational messages
- * produced by the compiler.
+ * produced by the preprocessor.
  * \n
- * This parameter behaves identically to the \a messages parameter of
- * vkd3d_shader_compile().
+ * This string is null-terminated and UTF-8 encoded.
+ * \n
+ * The messages are allocated by vkd3d-shader and should be freed with
+ * vkd3d_shader_free_messages() when no longer needed.
+ * \n
+ * The messages returned can be regulated with the \a log_level member of struct
+ * vkd3d_shader_compile_info. Regardless of the requested level, if this
+ * parameter is NULL, no compilation messages will be returned.
+ * \n
+ * If no messages are produced by the preprocessor, this parameter may
+ * receive NULL instead of a valid string pointer.
  *
  * \return A member of \ref vkd3d_result.
  *
@@ -1852,6 +1941,85 @@ VKD3D_SHADER_API int vkd3d_shader_preprocess(const struct vkd3d_shader_compile_i
  * \since 1.4
  */
 VKD3D_SHADER_API void vkd3d_shader_set_log_callback(PFN_vkd3d_log callback);
+
+/**
+ * Free the contents of a vkd3d_shader_dxbc_desc structure allocated by
+ * another vkd3d-shader function, such as vkd3d_shader_parse_dxbc().
+ *
+ * This function may free the \ref vkd3d_shader_dxbc_desc.sections member, but
+ * does not free the structure itself.
+ *
+ * \param dxbc The vkd3d_shader_dxbc_desc structure to free.
+ *
+ * \since 1.7
+ */
+VKD3D_SHADER_API void vkd3d_shader_free_dxbc(struct vkd3d_shader_dxbc_desc *dxbc);
+
+/**
+ * Parse a DXBC blob contained in a vkd3d_shader_code structure.
+ *
+ * \param dxbc A vkd3d_shader_code structure containing the DXBC blob to parse.
+ *
+ * \param flags A set of flags modifying the behaviour of the function. No
+ * flags are defined for this version of vkd3d-shader, and this parameter
+ * should be set to 0.
+ *
+ * \param desc A vkd3d_shader_dxbc_desc structure describing the contents of
+ * the DXBC blob. Its vkd3d_shader_dxbc_section_desc structures will contain
+ * pointers into the input blob; its contents are only valid while the input
+ * blob is valid. The contents of this structure should be freed with
+ * vkd3d_shader_free_dxbc() when no longer needed.
+ *
+ * \param messages Optional output location for error or informational messages
+ * produced by the parser.
+ * \n
+ * This string is null-terminated and UTF-8 encoded.
+ * \n
+ * The messages are allocated by vkd3d-shader and should be freed with
+ * vkd3d_shader_free_messages() when no longer needed.
+ * \n
+ * If no messages are produced by the parser, this parameter may
+ * receive NULL instead of a valid string pointer.
+ *
+ * \return A member of \ref vkd3d_result.
+ *
+ * \since 1.7
+ */
+VKD3D_SHADER_API int vkd3d_shader_parse_dxbc(const struct vkd3d_shader_code *dxbc,
+        uint32_t flags, struct vkd3d_shader_dxbc_desc *desc, char **messages);
+
+/**
+ * Serialize a DXBC description into a blob stored in a vkd3d_shader_code
+ * structure.
+ *
+ * \param section_count The number of DXBC sections to serialize.
+ *
+ * \param sections An array of vkd3d_shader_dxbc_section_desc structures
+ * to serialize.
+ *
+ * \param dxbc A pointer to a vkd3d_shader_code structure in which the
+ * serialized blob will be stored.
+ * \n
+ * The output blob is allocated by vkd3d-shader and should be freed with
+ * vkd3d_shader_free_shader_code() when no longer needed.
+ *
+ * \param messages Optional output location for error or informational messages
+ * produced by the serializer.
+ * \n
+ * This string is null-terminated and UTF-8 encoded.
+ * \n
+ * The messages are allocated by vkd3d-shader and should be freed with
+ * vkd3d_shader_free_messages() when no longer needed.
+ * \n
+ * If no messages are produced by the serializer, this parameter may
+ * receive NULL instead of a valid string pointer.
+ *
+ * \return A member of \ref vkd3d_result.
+ *
+ * \since 1.7
+ */
+VKD3D_SHADER_API int vkd3d_shader_serialize_dxbc(size_t section_count,
+        const struct vkd3d_shader_dxbc_section_desc *sections, struct vkd3d_shader_code *dxbc, char **messages);
 
 #endif  /* VKD3D_SHADER_NO_PROTOTYPES */
 
@@ -1908,6 +2076,15 @@ typedef void (*PFN_vkd3d_shader_preprocess)(struct vkd3d_shader_compile_info *co
 
 /** Type of vkd3d_shader_set_log_callback(). \since 1.4 */
 typedef void (*PFN_vkd3d_shader_set_log_callback)(PFN_vkd3d_log callback);
+
+/** Type of vkd3d_shader_free_dxbc(). \since 1.7 */
+typedef void (*PFN_vkd3d_shader_free_dxbc)(struct vkd3d_shader_dxbc_desc *dxbc);
+/** Type of vkd3d_shader_parse_dxbc(). \since 1.7 */
+typedef int (*PFN_vkd3d_shader_parse_dxbc)(const struct vkd3d_shader_code *dxbc,
+        uint32_t flags, struct vkd3d_shader_dxbc_desc *desc, char **messages);
+/** Type of vkd3d_shader_serialize_dxbc(). \since 1.7 */
+typedef int (*PFN_vkd3d_shader_serialize_dxbc)(size_t section_count,
+        const struct vkd3d_shader_dxbc_section_desc *sections, struct vkd3d_shader_code *dxbc, char **messages);
 
 #ifdef __cplusplus
 }

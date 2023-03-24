@@ -509,6 +509,8 @@ bool hlsl_fold_constant_exprs(struct hlsl_ctx *ctx, struct hlsl_ir_node *instr, 
     if (instr->type != HLSL_IR_EXPR)
         return false;
     expr = hlsl_ir_expr(instr);
+    if (!expr->operands[0].node)
+        return false;
 
     if (instr->data_type->type > HLSL_CLASS_VECTOR)
         return false;
@@ -601,7 +603,7 @@ bool hlsl_fold_constant_swizzles(struct hlsl_ctx *ctx, struct hlsl_ir_node *inst
 {
     struct hlsl_ir_constant *value, *res;
     struct hlsl_ir_swizzle *swizzle;
-    unsigned int i, swizzle_bits;
+    unsigned int i;
 
     if (instr->type != HLSL_IR_SWIZZLE)
         return false;
@@ -613,12 +615,8 @@ bool hlsl_fold_constant_swizzles(struct hlsl_ctx *ctx, struct hlsl_ir_node *inst
     if (!(res = hlsl_new_constant(ctx, instr->data_type, &instr->loc)))
         return false;
 
-    swizzle_bits = swizzle->swizzle;
     for (i = 0; i < swizzle->node.data_type->dimx; ++i)
-    {
-        res->value[i] = value->value[swizzle_bits & 3];
-        swizzle_bits >>= 2;
-    }
+        res->value[i] = value->value[hlsl_swizzle_get_component(swizzle->swizzle, i)];
 
     list_add_before(&swizzle->node.entry, &res->node.entry);
     hlsl_replace_node(&swizzle->node, &res->node);

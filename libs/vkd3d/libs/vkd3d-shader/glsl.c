@@ -22,7 +22,7 @@ struct vkd3d_glsl_generator
 {
     struct vkd3d_shader_version version;
     struct vkd3d_string_buffer buffer;
-    const struct vkd3d_shader_location *location;
+    struct vkd3d_shader_location location;
     struct vkd3d_shader_message_context *message_context;
     bool failed;
 };
@@ -38,7 +38,7 @@ struct vkd3d_glsl_generator *vkd3d_glsl_generator_create(const struct vkd3d_shad
     memset(generator, 0, sizeof(*generator));
     generator->version = *version;
     vkd3d_string_buffer_init(&generator->buffer);
-    generator->location = location;
+    generator->location = *location;
     generator->message_context = message_context;
     return generator;
 }
@@ -50,7 +50,7 @@ static void VKD3D_PRINTF_FUNC(3, 4) vkd3d_glsl_compiler_error(
     va_list args;
 
     va_start(args, fmt);
-    vkd3d_shader_verror(generator->message_context, generator->location, error, fmt, args);
+    vkd3d_shader_verror(generator->message_context, &generator->location, error, fmt, args);
     va_end(args);
     generator->failed = true;
 }
@@ -93,28 +93,20 @@ static void vkd3d_glsl_handle_instruction(struct vkd3d_glsl_generator *generator
 int vkd3d_glsl_generator_generate(struct vkd3d_glsl_generator *generator,
         struct vkd3d_shader_parser *parser, struct vkd3d_shader_code *out)
 {
+    unsigned int i;
     void *code;
-    struct vkd3d_shader_instruction ins;
 
     vkd3d_string_buffer_printf(&generator->buffer, "#version 440\n\n");
     vkd3d_string_buffer_printf(&generator->buffer, "void main()\n{\n");
 
-    while (!vkd3d_shader_parser_is_end(parser))
+    generator->location.column = 0;
+    for (i = 0; i < parser->instructions.count; ++i)
     {
-        vkd3d_shader_parser_read_instruction(parser, &ins);
-
-        if (ins.handler_idx == VKD3DSIH_INVALID)
-        {
-            vkd3d_glsl_compiler_error(generator,
-                    VKD3D_SHADER_ERROR_GLSL_INTERNAL,
-                    "Encountered unrecognized or invalid instruction.");
-            break;
-        }
-
-        vkd3d_glsl_handle_instruction(generator, &ins);
+        generator->location.line = i + 1;
+        vkd3d_glsl_handle_instruction(generator, &parser->instructions.elements[i]);
     }
 
-    if (parser->failed || generator->failed)
+    if (generator->failed)
         return VKD3D_ERROR_INVALID_SHADER;
 
     vkd3d_string_buffer_printf(&generator->buffer, "}\n");

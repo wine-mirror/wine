@@ -206,7 +206,7 @@ static enum vkd3d_shader_input_sysval_semantic vkd3d_siv_from_sysval(enum vkd3d_
 
 #define VKD3D_SPIRV_VERSION 0x00010000
 #define VKD3D_SPIRV_GENERATOR_ID 18
-#define VKD3D_SPIRV_GENERATOR_VERSION 6
+#define VKD3D_SPIRV_GENERATOR_VERSION 7
 #define VKD3D_SPIRV_GENERATOR_MAGIC vkd3d_make_u32(VKD3D_SPIRV_GENERATOR_VERSION, VKD3D_SPIRV_GENERATOR_ID)
 
 struct vkd3d_spirv_stream
@@ -1767,7 +1767,7 @@ static void vkd3d_spirv_builder_init(struct vkd3d_spirv_builder *builder, const 
     rb_init(&builder->declarations, vkd3d_spirv_declaration_compare);
 
     builder->main_function_id = vkd3d_spirv_alloc_id(builder);
-    vkd3d_spirv_build_op_name(builder, builder->main_function_id, entry_point);
+    vkd3d_spirv_build_op_name(builder, builder->main_function_id, "%s", entry_point);
 }
 
 static void vkd3d_spirv_builder_begin_main_function(struct vkd3d_spirv_builder *builder)
@@ -2223,7 +2223,7 @@ struct spirv_compiler
     struct vkd3d_spirv_builder spirv_builder;
 
     struct vkd3d_shader_message_context *message_context;
-    const struct vkd3d_shader_location *location;
+    struct vkd3d_shader_location location;
     bool failed;
 
     bool strip_debug;
@@ -2285,6 +2285,7 @@ struct spirv_compiler
     struct vkd3d_shader_spec_constant *spec_constants;
     size_t spec_constants_size;
     enum vkd3d_shader_compile_option_formatting_flags formatting;
+    bool write_tess_geom_point_size;
 
     struct vkd3d_string_buffer_cache string_buffers;
 };
@@ -2322,7 +2323,7 @@ struct spirv_compiler *spirv_compiler_create(const struct vkd3d_shader_version *
 
     memset(compiler, 0, sizeof(*compiler));
     compiler->message_context = message_context;
-    compiler->location = location;
+    compiler->location = *location;
 
     if ((target_info = vkd3d_find_struct(compile_info->next, SPIRV_TARGET_INFO)))
     {
@@ -2351,6 +2352,7 @@ struct spirv_compiler *spirv_compiler_create(const struct vkd3d_shader_version *
 
     compiler->formatting = VKD3D_SHADER_COMPILE_OPTION_FORMATTING_INDENT
             | VKD3D_SHADER_COMPILE_OPTION_FORMATTING_HEADER;
+    compiler->write_tess_geom_point_size = true;
 
     for (i = 0; i < compile_info->option_count; ++i)
     {
@@ -2388,6 +2390,10 @@ struct spirv_compiler *spirv_compiler_create(const struct vkd3d_shader_version *
                     compiler->uav_read_without_format = true;
                 else
                     WARN("Ignoring unrecognised value %#x for option %#x.\n", option->value, option->name);
+                break;
+
+            case VKD3D_SHADER_COMPILE_OPTION_WRITE_TESS_GEOM_POINT_SIZE:
+                compiler->write_tess_geom_point_size = option->value;
                 break;
         }
     }
@@ -2560,7 +2566,7 @@ static void VKD3D_PRINTF_FUNC(3, 4) spirv_compiler_error(struct spirv_compiler *
     va_list args;
 
     va_start(args, format);
-    vkd3d_shader_verror(compiler->message_context, compiler->location, error, format, args);
+    vkd3d_shader_verror(compiler->message_context, &compiler->location, error, format, args);
     va_end(args);
     compiler->failed = true;
 }
@@ -6348,10 +6354,18 @@ static void spirv_compiler_emit_point_size(struct spirv_compiler *compiler)
     /* Set the point size. Point sprites are not supported in d3d10+, but
      * point primitives can still be used with e.g. stream output. Vulkan
      * requires the point size to always be explicitly defined when outputting
-     * points. */
-    vkd3d_spirv_build_op_store(&compiler->spirv_builder,
-            spirv_compiler_emit_builtin_variable(compiler, &point_size, SpvStorageClassOutput, 0),
-            spirv_compiler_get_constant_float(compiler, 1.0f), SpvMemoryAccessMaskNone);
+     * points.
+     *
+     * If shaderTessellationAndGeometryPointSize is disabled, we must not write
+     * PointSize for tessellation and geometry shaders. In that case the point
+     * size defaults to 1.0. */
+    if (spirv_compiler_is_opengl_target(compiler) || compiler->shader_type == VKD3D_SHADER_TYPE_VERTEX
+            || compiler->write_tess_geom_point_size)
+    {
+        vkd3d_spirv_build_op_store(&compiler->spirv_builder,
+                spirv_compiler_emit_builtin_variable(compiler, &point_size, SpvStorageClassOutput, 0),
+                spirv_compiler_get_constant_float(compiler, 1.0f), SpvMemoryAccessMaskNone);
+    }
 }
 
 static void spirv_compiler_emit_dcl_output_topology(struct spirv_compiler *compiler,
@@ -9577,7 +9591,7 @@ static bool is_dcl_instruction(enum vkd3d_shader_opcode handler_idx)
             || handler_idx == VKD3DSIH_HS_DECLS;
 }
 
-int spirv_compiler_handle_instruction(struct spirv_compiler *compiler,
+static int spirv_compiler_handle_instruction(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     int ret = VKD3D_OK;
@@ -9934,12 +9948,24 @@ int spirv_compiler_handle_instruction(struct spirv_compiler *compiler,
 }
 
 int spirv_compiler_generate_spirv(struct spirv_compiler *compiler,
-        const struct vkd3d_shader_compile_info *compile_info, struct vkd3d_shader_code *spirv)
+        const struct vkd3d_shader_compile_info *compile_info, struct vkd3d_shader_parser *parser,
+        struct vkd3d_shader_code *spirv)
 {
+    const struct vkd3d_shader_instruction_array *instructions = &parser->instructions;
     const struct vkd3d_shader_spirv_target_info *info = compiler->spirv_target_info;
     const struct vkd3d_shader_spirv_domain_shader_target_info *ds_info;
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     const struct vkd3d_shader_phase *phase;
+    enum vkd3d_result result = VKD3D_OK;
+    unsigned int i;
+
+    compiler->location.column = 0;
+    for (i = 0; i < instructions->count; ++i)
+    {
+        compiler->location.line = i + 1;
+        if ((result = spirv_compiler_handle_instruction(compiler, &instructions->elements[i])) < 0)
+            return result;
+    }
 
     if ((phase = spirv_compiler_get_current_shader_phase(compiler)))
         spirv_compiler_leave_shader_phase(compiler, phase);

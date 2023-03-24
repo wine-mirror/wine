@@ -26,24 +26,19 @@ static HRESULT d3d12_fence_signal(struct d3d12_fence *fence, uint64_t value, VkF
 static void d3d12_fence_signal_timeline_semaphore(struct d3d12_fence *fence, uint64_t timeline_value);
 static HRESULT d3d12_command_queue_signal(struct d3d12_command_queue *command_queue,
         struct d3d12_fence *fence, uint64_t value);
-static bool d3d12_command_queue_flush_ops(struct d3d12_command_queue *queue, bool *flushed_any);
+static HRESULT d3d12_command_queue_flush_ops(struct d3d12_command_queue *queue, bool *flushed_any);
+static HRESULT d3d12_command_queue_flush_ops_locked(struct d3d12_command_queue *queue, bool *flushed_any);
 
 HRESULT vkd3d_queue_create(struct d3d12_device *device,
         uint32_t family_index, const VkQueueFamilyProperties *properties, struct vkd3d_queue **queue)
 {
     const struct vkd3d_vk_device_procs *vk_procs = &device->vk_procs;
     struct vkd3d_queue *object;
-    int rc;
 
     if (!(object = vkd3d_malloc(sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if ((rc = vkd3d_mutex_init(&object->mutex)))
-    {
-        ERR("Failed to initialize mutex, error %d.\n", rc);
-        vkd3d_free(object);
-        return hresult_from_errno(rc);
-    }
+    vkd3d_mutex_init(&object->mutex);
 
     object->completed_sequence_number = 0;
     object->submitted_sequence_number = 0;
@@ -71,10 +66,8 @@ void vkd3d_queue_destroy(struct vkd3d_queue *queue, struct d3d12_device *device)
 {
     const struct vkd3d_vk_device_procs *vk_procs = &device->vk_procs;
     unsigned int i;
-    int rc;
 
-    if ((rc = vkd3d_mutex_lock(&queue->mutex)))
-        ERR("Failed to lock mutex, error %d.\n", rc);
+    vkd3d_mutex_lock(&queue->mutex);
 
     for (i = 0; i < queue->semaphore_count; ++i)
         VK_CALL(vkDestroySemaphore(device->vk_device, queue->semaphores[i].vk_semaphore, NULL));
@@ -87,8 +80,7 @@ void vkd3d_queue_destroy(struct vkd3d_queue *queue, struct d3d12_device *device)
             VK_CALL(vkDestroySemaphore(device->vk_device, queue->old_vk_semaphores[i], NULL));
     }
 
-    if (!rc)
-        vkd3d_mutex_unlock(&queue->mutex);
+    vkd3d_mutex_unlock(&queue->mutex);
 
     vkd3d_mutex_destroy(&queue->mutex);
     vkd3d_free(queue);
@@ -96,15 +88,9 @@ void vkd3d_queue_destroy(struct vkd3d_queue *queue, struct d3d12_device *device)
 
 VkQueue vkd3d_queue_acquire(struct vkd3d_queue *queue)
 {
-    int rc;
-
     TRACE("queue %p.\n", queue);
 
-    if ((rc = vkd3d_mutex_lock(&queue->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return VK_NULL_HANDLE;
-    }
+    vkd3d_mutex_lock(&queue->mutex);
 
     assert(queue->vk_queue);
     return queue->vk_queue;
@@ -148,13 +134,8 @@ static void vkd3d_queue_update_sequence_number(struct vkd3d_queue *queue,
     uint64_t completed_sequence_number;
     VkSemaphore vk_semaphore;
     unsigned int i, j;
-    int rc;
 
-    if ((rc = vkd3d_mutex_lock(&queue->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return;
-    }
+    vkd3d_mutex_lock(&queue->mutex);
 
     completed_sequence_number = queue->completed_sequence_number;
     queue->completed_sequence_number = max(sequence_number, queue->completed_sequence_number);
@@ -255,15 +236,10 @@ static HRESULT vkd3d_enqueue_gpu_fence(struct vkd3d_fence_worker *worker,
         struct vkd3d_queue *queue, uint64_t queue_sequence_number)
 {
     struct vkd3d_waiting_fence *waiting_fence;
-    int rc;
 
     TRACE("worker %p, fence %p, value %#"PRIx64".\n", worker, fence, value);
 
-    if ((rc = vkd3d_mutex_lock(&worker->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return hresult_from_errno(rc);
-    }
+    vkd3d_mutex_lock(&worker->mutex);
 
     if (!vkd3d_array_reserve((void **)&worker->fences, &worker->fences_size,
             worker->fence_count + 1, sizeof(*worker->fences)))
@@ -349,24 +325,15 @@ static void *vkd3d_fence_worker_main(void *arg)
     struct vkd3d_waiting_fence *old_fences, *cur_fences = NULL;
     struct vkd3d_fence_worker *worker = arg;
     unsigned int i;
-    int rc;
 
     vkd3d_set_thread_name("vkd3d_fence");
 
     for (;;)
     {
-        if ((rc = vkd3d_mutex_lock(&worker->mutex)))
-        {
-            ERR("Failed to lock mutex, error %d.\n", rc);
-            break;
-        }
+        vkd3d_mutex_lock(&worker->mutex);
 
-        if (!worker->fence_count && !worker->should_exit && (rc = vkd3d_cond_wait(&worker->cond, &worker->mutex)))
-        {
-            ERR("Failed to wait on condition variable, error %d.\n", rc);
-            vkd3d_mutex_unlock(&worker->mutex);
-            break;
-        }
+        if (!worker->fence_count && !worker->should_exit)
+            vkd3d_cond_wait(&worker->cond, &worker->mutex);
 
         if (worker->should_exit)
         {
@@ -399,7 +366,6 @@ static HRESULT vkd3d_fence_worker_start(struct vkd3d_fence_worker *worker,
         struct vkd3d_queue *queue, struct d3d12_device *device)
 {
     HRESULT hr;
-    int rc;
 
     TRACE("worker %p.\n", worker);
 
@@ -414,18 +380,9 @@ static HRESULT vkd3d_fence_worker_start(struct vkd3d_fence_worker *worker,
     worker->wait_for_gpu_fence = device->vk_info.KHR_timeline_semaphore
             ? vkd3d_wait_for_gpu_timeline_semaphore : vkd3d_wait_for_gpu_fence;
 
-    if ((rc = vkd3d_mutex_init(&worker->mutex)))
-    {
-        ERR("Failed to initialize mutex, error %d.\n", rc);
-        return hresult_from_errno(rc);
-    }
+    vkd3d_mutex_init(&worker->mutex);
 
-    if ((rc = vkd3d_cond_init(&worker->cond)))
-    {
-        ERR("Failed to initialize condition variable, error %d.\n", rc);
-        vkd3d_mutex_destroy(&worker->mutex);
-        return hresult_from_errno(rc);
-    }
+    vkd3d_cond_init(&worker->cond);
 
     if (FAILED(hr = vkd3d_create_thread(device->vkd3d_instance,
             vkd3d_fence_worker_main, worker, &worker->thread)))
@@ -441,15 +398,10 @@ static HRESULT vkd3d_fence_worker_stop(struct vkd3d_fence_worker *worker,
         struct d3d12_device *device)
 {
     HRESULT hr;
-    int rc;
 
     TRACE("worker %p.\n", worker);
 
-    if ((rc = vkd3d_mutex_lock(&worker->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return hresult_from_errno(rc);
-    }
+    vkd3d_mutex_lock(&worker->mutex);
 
     worker->should_exit = true;
     vkd3d_cond_signal(&worker->cond);
@@ -513,15 +465,10 @@ static VkResult d3d12_fence_create_vk_fence(struct d3d12_fence *fence, VkFence *
     VkFenceCreateInfo fence_info;
     unsigned int i;
     VkResult vr;
-    int rc;
 
     *vk_fence = VK_NULL_HANDLE;
 
-    if ((rc = vkd3d_mutex_lock(&fence->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        goto create_fence;
-    }
+    vkd3d_mutex_lock(&fence->mutex);
 
     for (i = 0; i < ARRAY_SIZE(fence->old_vk_fences); ++i)
     {
@@ -537,7 +484,6 @@ static VkResult d3d12_fence_create_vk_fence(struct d3d12_fence *fence, VkFence *
     if (*vk_fence)
         return VK_SUCCESS;
 
-create_fence:
     vk_procs = &device->vk_procs;
 
     fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
@@ -596,13 +542,8 @@ static void d3d12_fence_destroy_vk_objects(struct d3d12_fence *fence)
     const struct vkd3d_vk_device_procs *vk_procs;
     struct d3d12_device *device = fence->device;
     unsigned int i;
-    int rc;
 
-    if ((rc = vkd3d_mutex_lock(&fence->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return;
-    }
+    vkd3d_mutex_lock(&fence->mutex);
 
     vk_procs = &device->vk_procs;
 
@@ -655,13 +596,7 @@ static struct vkd3d_signaled_semaphore *d3d12_fence_acquire_vk_semaphore_locked(
 
 static void d3d12_fence_remove_vk_semaphore(struct d3d12_fence *fence, struct vkd3d_signaled_semaphore *semaphore)
 {
-    int rc;
-
-    if ((rc = vkd3d_mutex_lock(&fence->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return;
-    }
+    vkd3d_mutex_lock(&fence->mutex);
 
     assert(semaphore->u.binary.is_acquired);
 
@@ -672,13 +607,7 @@ static void d3d12_fence_remove_vk_semaphore(struct d3d12_fence *fence, struct vk
 
 static void d3d12_fence_release_vk_semaphore(struct d3d12_fence *fence, struct vkd3d_signaled_semaphore *semaphore)
 {
-    int rc;
-
-    if ((rc = vkd3d_mutex_lock(&fence->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return;
-    }
+    vkd3d_mutex_lock(&fence->mutex);
 
     assert(semaphore->u.binary.is_acquired);
     semaphore->u.binary.is_acquired = false;
@@ -699,13 +628,7 @@ static void d3d12_fence_update_pending_value_locked(struct d3d12_fence *fence)
 
 static HRESULT d3d12_fence_update_pending_value(struct d3d12_fence *fence)
 {
-    int rc;
-
-    if ((rc = vkd3d_mutex_lock(&fence->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return hresult_from_errno(rc);
-    }
+    vkd3d_mutex_lock(&fence->mutex);
 
     d3d12_fence_update_pending_value_locked(fence);
 
@@ -714,30 +637,24 @@ static HRESULT d3d12_fence_update_pending_value(struct d3d12_fence *fence)
     return S_OK;
 }
 
-static HRESULT d3d12_device_add_blocked_command_queues(struct d3d12_device *device,
-        struct d3d12_command_queue * const *command_queues, unsigned int count)
+static HRESULT d3d12_command_queue_record_as_blocked(struct d3d12_command_queue *command_queue)
 {
+    struct d3d12_device *device = command_queue->device;
     HRESULT hr = S_OK;
-    unsigned int i;
-    int rc;
 
-    if ((rc = vkd3d_mutex_lock(&device->mutex)))
+    vkd3d_mutex_lock(&device->blocked_queues_mutex);
+
+    if (device->blocked_queue_count < ARRAY_SIZE(device->blocked_queues))
     {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return hresult_from_errno(rc);
+        device->blocked_queues[device->blocked_queue_count++] = command_queue;
     }
-
-    if ((i = ARRAY_SIZE(device->blocked_queues) - device->blocked_queue_count) < count)
+    else
     {
-        FIXME("Failed to add %u blocked command queue(s) to device %p.\n", count - i, device);
-        count = i;
+        WARN("Failed to add blocked command queue %p to device %p.\n", command_queue, device);
         hr = E_FAIL;
     }
 
-    for (i = 0; i < count; ++i)
-        device->blocked_queues[device->blocked_queue_count++] = command_queues[i];
-
-    vkd3d_mutex_unlock(&device->mutex);
+    vkd3d_mutex_unlock(&device->blocked_queues_mutex);
     return hr;
 }
 
@@ -745,36 +662,32 @@ static HRESULT d3d12_device_flush_blocked_queues_once(struct d3d12_device *devic
 {
     struct d3d12_command_queue *blocked_queues[VKD3D_MAX_DEVICE_BLOCKED_QUEUES];
     unsigned int i, blocked_queue_count;
-    int rc;
+    HRESULT hr = S_OK;
 
     *flushed_any = false;
 
-    if ((rc = vkd3d_mutex_lock(&device->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return hresult_from_errno(rc);
-    }
+    vkd3d_mutex_lock(&device->blocked_queues_mutex);
 
-    /* Flush any ops unblocked by a new pending value. These cannot be flushed
-     * with the device locked, so move the queue pointers to a local array. */
+    /* Flush any ops unblocked by a new pending value. These cannot be
+     * flushed while holding blocked_queue_mutex, so move the queue
+     * pointers to a local array. */
     blocked_queue_count = device->blocked_queue_count;
     memcpy(blocked_queues, device->blocked_queues, blocked_queue_count * sizeof(blocked_queues[0]));
     device->blocked_queue_count = 0;
 
-    vkd3d_mutex_unlock(&device->mutex);
+    vkd3d_mutex_unlock(&device->blocked_queues_mutex);
 
-    i = 0;
-    while (i < blocked_queue_count)
+    for (i = 0; i < blocked_queue_count; ++i)
     {
-        if (d3d12_command_queue_flush_ops(blocked_queues[i], flushed_any))
-            blocked_queues[i] = blocked_queues[--blocked_queue_count];
-        else
-            ++i;
+        HRESULT new_hr;
+
+        new_hr = d3d12_command_queue_flush_ops(blocked_queues[i], flushed_any);
+
+        if (SUCCEEDED(hr))
+            hr = new_hr;
     }
 
-    /* None of these queues could have been re-added during the above loop because
-     * blocked queues always have a nonzero op count. */
-    return d3d12_device_add_blocked_command_queues(device, blocked_queues, blocked_queue_count);
+    return hr;
 }
 
 static HRESULT d3d12_device_flush_blocked_queues(struct d3d12_device *device)
@@ -785,8 +698,6 @@ static HRESULT d3d12_device_flush_blocked_queues(struct d3d12_device *device)
     /* Executing an op on one queue may unblock another, so repeat until nothing is flushed. */
     do
     {
-        if (!device->blocked_queue_count)
-            return S_OK;
         if (FAILED(hr = d3d12_device_flush_blocked_queues_once(device, &flushed_any)))
             return hr;
     }
@@ -799,15 +710,10 @@ static HRESULT d3d12_fence_add_vk_semaphore(struct d3d12_fence *fence, VkSemapho
         VkFence vk_fence, uint64_t value, const struct vkd3d_queue *signalling_queue)
 {
     struct vkd3d_signaled_semaphore *semaphore;
-    int rc;
 
     TRACE("fence %p, value %#"PRIx64".\n", fence, value);
 
-    if ((rc = vkd3d_mutex_lock(&fence->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return hresult_from_errno(rc);
-    }
+    vkd3d_mutex_lock(&fence->mutex);
 
     d3d12_fence_garbage_collect_vk_semaphores_locked(fence, false);
 
@@ -874,13 +780,8 @@ static HRESULT d3d12_fence_signal(struct d3d12_fence *fence, uint64_t value, VkF
     struct d3d12_device *device = fence->device;
     struct vkd3d_signaled_semaphore *current;
     unsigned int i;
-    int rc;
 
-    if ((rc = vkd3d_mutex_lock(&fence->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return hresult_from_errno(rc);
-    }
+    vkd3d_mutex_lock(&fence->mutex);
 
     fence->value = value;
 
@@ -922,13 +823,8 @@ static uint64_t d3d12_fence_add_pending_timeline_signal(struct d3d12_fence *fenc
         const struct vkd3d_queue *signalling_queue)
 {
     struct vkd3d_signaled_semaphore *semaphore;
-    int rc;
 
-    if ((rc = vkd3d_mutex_lock(&fence->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return hresult_from_errno(rc);
-    }
+    vkd3d_mutex_lock(&fence->mutex);
 
     if (!vkd3d_array_reserve((void **)&fence->semaphores, &fence->semaphores_size,
             fence->semaphore_count + 1, sizeof(*fence->semaphores)))
@@ -967,13 +863,8 @@ static void d3d12_fence_signal_timeline_semaphore(struct d3d12_fence *fence, uin
 {
     bool did_signal;
     unsigned int i;
-    int rc;
 
-    if ((rc = vkd3d_mutex_lock(&fence->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return;
-    }
+    vkd3d_mutex_lock(&fence->mutex);
 
     /* With multiple fence workers, it is possible that signal calls are out of
      * order. The physical value itself is monotonic, but we need to make sure
@@ -1061,7 +952,6 @@ static ULONG STDMETHODCALLTYPE d3d12_fence_Release(ID3D12Fence *iface)
 static void d3d12_fence_decref(struct d3d12_fence *fence)
 {
     ULONG internal_refcount = InterlockedDecrement(&fence->internal_refcount);
-    int rc;
 
     if (!internal_refcount)
     {
@@ -1073,8 +963,7 @@ static void d3d12_fence_decref(struct d3d12_fence *fence)
 
         vkd3d_free(fence->events);
         vkd3d_free(fence->semaphores);
-        if ((rc = vkd3d_mutex_destroy(&fence->mutex)))
-            ERR("Failed to destroy mutex, error %d.\n", rc);
+        vkd3d_mutex_destroy(&fence->mutex);
         vkd3d_cond_destroy(&fence->null_event_cond);
         vkd3d_free(fence);
 
@@ -1136,15 +1025,10 @@ static UINT64 STDMETHODCALLTYPE d3d12_fence_GetCompletedValue(ID3D12Fence *iface
 {
     struct d3d12_fence *fence = impl_from_ID3D12Fence(iface);
     uint64_t completed_value;
-    int rc;
 
     TRACE("iface %p.\n", iface);
 
-    if ((rc = vkd3d_mutex_lock(&fence->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return 0;
-    }
+    vkd3d_mutex_lock(&fence->mutex);
     completed_value = fence->value;
     vkd3d_mutex_unlock(&fence->mutex);
     return completed_value;
@@ -1156,15 +1040,10 @@ static HRESULT STDMETHODCALLTYPE d3d12_fence_SetEventOnCompletion(ID3D12Fence *i
     struct d3d12_fence *fence = impl_from_ID3D12Fence(iface);
     unsigned int i;
     bool latch = false;
-    int rc;
 
     TRACE("iface %p, value %#"PRIx64", event %p.\n", iface, value, event);
 
-    if ((rc = vkd3d_mutex_lock(&fence->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return hresult_from_errno(rc);
-    }
+    vkd3d_mutex_lock(&fence->mutex);
 
     if (value <= fence->value)
     {
@@ -1215,13 +1094,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_fence_SetEventOnCompletion(ID3D12Fence *i
 
 static HRESULT d3d12_fence_signal_cpu_timeline_semaphore(struct d3d12_fence *fence, uint64_t value)
 {
-    int rc;
-
-    if ((rc = vkd3d_mutex_lock(&fence->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return hresult_from_errno(rc);
-    }
+    vkd3d_mutex_lock(&fence->mutex);
 
     fence->value = value;
     d3d12_fence_signal_external_events_locked(fence);
@@ -1276,7 +1149,6 @@ static HRESULT d3d12_fence_init(struct d3d12_fence *fence, struct d3d12_device *
     const struct vkd3d_vk_device_procs *vk_procs = &device->vk_procs;
     VkResult vr;
     HRESULT hr;
-    int rc;
 
     fence->ID3D12Fence_iface.lpVtbl = &d3d12_fence_vtbl;
     fence->internal_refcount = 1;
@@ -1285,18 +1157,9 @@ static HRESULT d3d12_fence_init(struct d3d12_fence *fence, struct d3d12_device *
     fence->value = initial_value;
     fence->max_pending_value = initial_value;
 
-    if ((rc = vkd3d_mutex_init(&fence->mutex)))
-    {
-        ERR("Failed to initialize mutex, error %d.\n", rc);
-        return hresult_from_errno(rc);
-    }
+    vkd3d_mutex_init(&fence->mutex);
 
-    if ((rc = vkd3d_cond_init(&fence->null_event_cond)))
-    {
-        ERR("Failed to initialize cond variable, error %d.\n", rc);
-        hr = hresult_from_errno(rc);
-        goto fail_destroy_mutex;
-    }
+    vkd3d_cond_init(&fence->null_event_cond);
 
     if (flags)
         FIXME("Ignoring flags %#x.\n", flags);
@@ -1335,7 +1198,6 @@ fail_destroy_timeline_semaphore:
     VK_CALL(vkDestroySemaphore(device->vk_device, fence->timeline_semaphore, NULL));
 fail_destroy_null_cond:
     vkd3d_cond_destroy(&fence->null_event_cond);
-fail_destroy_mutex:
     vkd3d_mutex_destroy(&fence->mutex);
 
     return hr;
@@ -2802,7 +2664,6 @@ static void d3d12_command_list_prepare_descriptors(struct d3d12_command_list *li
     unsigned int variable_binding_size, unbounded_offset, table_index, heap_size, i;
     const struct d3d12_root_signature *root_signature = bindings->root_signature;
     const struct d3d12_descriptor_set_layout *layout;
-    struct d3d12_device *device = list->device;
     const struct d3d12_desc *base_descriptor;
     VkDescriptorSet vk_descriptor_set;
 
@@ -2833,8 +2694,7 @@ static void d3d12_command_list_prepare_descriptors(struct d3d12_command_list *li
                 /* Descriptors may not be set, eg. WoW. */
                 && (base_descriptor = bindings->descriptor_tables[table_index]))
         {
-            heap_size = vkd3d_gpu_descriptor_allocator_range_size_from_descriptor(
-                    &device->gpu_descriptor_allocator, base_descriptor);
+            heap_size = d3d12_desc_heap_range_size(base_descriptor);
 
             if (heap_size < unbounded_offset)
                 WARN("Descriptor heap size %u is less than the offset %u of an unbounded range in table %u, "
@@ -2860,11 +2720,11 @@ static bool vk_write_descriptor_set_from_d3d12_desc(VkWriteDescriptorSet *vk_des
         unsigned int index, bool use_array)
 {
     uint32_t descriptor_range_magic = range->descriptor_magic;
-    const struct vkd3d_view *view = descriptor->u.view_info.view;
+    const struct vkd3d_view *view = descriptor->s.u.view_info.view;
     uint32_t vk_binding = range->binding;
     uint32_t set = range->set;
 
-    if (descriptor->magic != descriptor_range_magic)
+    if (descriptor->s.magic != descriptor_range_magic)
         return false;
 
     vk_descriptor_write->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -2873,15 +2733,15 @@ static bool vk_write_descriptor_set_from_d3d12_desc(VkWriteDescriptorSet *vk_des
     vk_descriptor_write->dstBinding = use_array ? vk_binding : vk_binding + index;
     vk_descriptor_write->dstArrayElement = use_array ? index : 0;
     vk_descriptor_write->descriptorCount = 1;
-    vk_descriptor_write->descriptorType = descriptor->vk_descriptor_type;
+    vk_descriptor_write->descriptorType = descriptor->s.vk_descriptor_type;
     vk_descriptor_write->pImageInfo = NULL;
     vk_descriptor_write->pBufferInfo = NULL;
     vk_descriptor_write->pTexelBufferView = NULL;
 
-    switch (descriptor->magic)
+    switch (descriptor->s.magic)
     {
         case VKD3D_DESCRIPTOR_MAGIC_CBV:
-            vk_descriptor_write->pBufferInfo = &descriptor->u.vk_cbv_info;
+            vk_descriptor_write->pBufferInfo = &descriptor->s.u.vk_cbv_info;
             break;
 
         case VKD3D_DESCRIPTOR_MAGIC_SRV:
@@ -2892,8 +2752,8 @@ static bool vk_write_descriptor_set_from_d3d12_desc(VkWriteDescriptorSet *vk_des
              * in pairs in one set. */
             if (range->descriptor_count == UINT_MAX)
             {
-                if (descriptor->vk_descriptor_type != VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER
-                        && descriptor->vk_descriptor_type != VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER)
+                if (descriptor->s.vk_descriptor_type != VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER
+                        && descriptor->s.vk_descriptor_type != VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER)
                 {
                     vk_descriptor_write->dstSet = vk_descriptor_sets[set + 1];
                     vk_descriptor_write->dstBinding = 0;
@@ -2903,13 +2763,13 @@ static bool vk_write_descriptor_set_from_d3d12_desc(VkWriteDescriptorSet *vk_des
             {
                 if (!use_array)
                     vk_descriptor_write->dstBinding = vk_binding + 2 * index;
-                if (descriptor->vk_descriptor_type != VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER
-                        && descriptor->vk_descriptor_type != VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER)
+                if (descriptor->s.vk_descriptor_type != VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER
+                        && descriptor->s.vk_descriptor_type != VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER)
                     ++vk_descriptor_write->dstBinding;
             }
 
-            if (descriptor->vk_descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER
-                    || descriptor->vk_descriptor_type == VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER)
+            if (descriptor->s.vk_descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER
+                    || descriptor->s.vk_descriptor_type == VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER)
             {
                 vk_descriptor_write->pTexelBufferView = &view->u.vk_buffer_view;
             }
@@ -2917,7 +2777,7 @@ static bool vk_write_descriptor_set_from_d3d12_desc(VkWriteDescriptorSet *vk_des
             {
                 vk_image_info->sampler = VK_NULL_HANDLE;
                 vk_image_info->imageView = view->u.vk_image_view;
-                vk_image_info->imageLayout = descriptor->magic == VKD3D_DESCRIPTOR_MAGIC_SRV
+                vk_image_info->imageLayout = descriptor->s.magic == VKD3D_DESCRIPTOR_MAGIC_SRV
                         ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_GENERAL;
 
                 vk_descriptor_write->pImageInfo = vk_image_info;
@@ -2933,7 +2793,7 @@ static bool vk_write_descriptor_set_from_d3d12_desc(VkWriteDescriptorSet *vk_des
             break;
 
         default:
-            ERR("Invalid descriptor %#x.\n", descriptor->magic);
+            ERR("Invalid descriptor %#x.\n", descriptor->s.magic);
             return false;
     }
 
@@ -2974,8 +2834,7 @@ static void d3d12_command_list_update_descriptor_table(struct d3d12_command_list
         descriptor_count = range->descriptor_count;
         if ((unbounded = descriptor_count == UINT_MAX))
         {
-            descriptor_count = vkd3d_gpu_descriptor_allocator_range_size_from_descriptor(
-                    &list->device->gpu_descriptor_allocator, descriptor);
+            descriptor_count = d3d12_desc_heap_range_size(descriptor);
 
             if (descriptor_count > range->vk_binding_count)
             {
@@ -2997,8 +2856,8 @@ static void d3d12_command_list_update_descriptor_table(struct d3d12_command_list
                     if (state->uav_counters.bindings[k].register_space == range->register_space
                             && state->uav_counters.bindings[k].register_index == register_idx)
                     {
-                        VkBufferView vk_counter_view = descriptor->magic == VKD3D_DESCRIPTOR_MAGIC_UAV
-                                ? descriptor->u.view_info.view->vk_counter_view : VK_NULL_HANDLE;
+                        VkBufferView vk_counter_view = descriptor->s.magic == VKD3D_DESCRIPTOR_MAGIC_UAV
+                                ? descriptor->s.u.view_info.view->vk_counter_view : VK_NULL_HANDLE;
                         if (bindings->vk_uav_counter_views[k] != vk_counter_view)
                             bindings->uav_counters_dirty = true;
                         bindings->vk_uav_counter_views[k] = vk_counter_view;
@@ -3008,7 +2867,7 @@ static void d3d12_command_list_update_descriptor_table(struct d3d12_command_list
             }
 
             /* Not all descriptors are necessarily populated if the range is unbounded. */
-            if (descriptor->magic == VKD3D_DESCRIPTOR_MAGIC_FREE)
+            if (descriptor->s.magic == VKD3D_DESCRIPTOR_MAGIC_FREE)
                 continue;
 
             if (!vk_write_descriptor_set_from_d3d12_desc(current_descriptor_write, current_image_info,
@@ -3242,8 +3101,8 @@ static unsigned int d3d12_command_list_bind_descriptor_table(struct d3d12_comman
     /* AMD, Nvidia and Intel drivers on Windows work if SetDescriptorHeaps()
      * is not called, so we bind heaps from the tables instead. No NULL check is
      * needed here because it's checked when descriptor tables are set. */
-    heap = vkd3d_gpu_descriptor_allocator_heap_from_descriptor(&list->device->gpu_descriptor_allocator, desc);
-    offset = desc - (const struct d3d12_desc *)heap->descriptors;
+    heap = d3d12_desc_get_descriptor_heap(desc);
+    offset = desc->index;
 
     if (heap->desc.Type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
     {
@@ -4517,16 +4376,6 @@ static void d3d12_command_list_set_descriptor_table(struct d3d12_command_list *l
     if (bindings->descriptor_tables[index] == desc)
         return;
 
-    if (desc && !vkd3d_gpu_descriptor_allocator_heap_from_descriptor(&list->device->gpu_descriptor_allocator,
-            desc))
-    {
-        /* Failure to find a heap means the descriptor handle is from
-         * the wrong heap type or not a handle at all. */
-        ERR("Invalid heap for base descriptor %"PRIx64".\n", base_descriptor.ptr);
-        /* TODO: Mark list as invalid? */
-        return;
-    }
-
     bindings->descriptor_tables[index] = desc;
     bindings->descriptor_table_dirty_mask |= (uint64_t)1 << index;
     bindings->descriptor_table_active_mask |= (uint64_t)1 << index;
@@ -5457,7 +5306,7 @@ static void STDMETHODCALLTYPE d3d12_command_list_ClearUnorderedAccessViewUint(ID
             iface, gpu_handle.ptr, cpu_handle.ptr, resource, values, rect_count, rects);
 
     resource_impl = unsafe_impl_from_ID3D12Resource(resource);
-    view = d3d12_desc_from_cpu_handle(cpu_handle)->u.view_info.view;
+    view = d3d12_desc_from_cpu_handle(cpu_handle)->s.u.view_info.view;
     memcpy(colour.uint32, values, sizeof(colour.uint32));
 
     if (view->format->type != VKD3D_FORMAT_TYPE_UINT)
@@ -5516,7 +5365,7 @@ static void STDMETHODCALLTYPE d3d12_command_list_ClearUnorderedAccessViewFloat(I
             iface, gpu_handle.ptr, cpu_handle.ptr, resource, values, rect_count, rects);
 
     resource_impl = unsafe_impl_from_ID3D12Resource(resource);
-    view = d3d12_desc_from_cpu_handle(cpu_handle)->u.view_info.view;
+    view = d3d12_desc_from_cpu_handle(cpu_handle)->s.u.view_info.view;
     memcpy(colour.float32, values, sizeof(colour.float32));
 
     d3d12_command_list_clear_uav(list, resource_impl, view, &colour, rect_count, rects);
@@ -6150,6 +5999,11 @@ static ULONG STDMETHODCALLTYPE d3d12_command_queue_AddRef(ID3D12CommandQueue *if
     return refcount;
 }
 
+static void d3d12_command_queue_op_array_destroy(struct d3d12_command_queue_op_array *array)
+{
+    vkd3d_free(array->ops);
+}
+
 static ULONG STDMETHODCALLTYPE d3d12_command_queue_Release(ID3D12CommandQueue *iface)
 {
     struct d3d12_command_queue *command_queue = impl_from_ID3D12CommandQueue(iface);
@@ -6164,7 +6018,8 @@ static ULONG STDMETHODCALLTYPE d3d12_command_queue_Release(ID3D12CommandQueue *i
         vkd3d_fence_worker_stop(&command_queue->fence_worker, device);
 
         vkd3d_mutex_destroy(&command_queue->op_mutex);
-        vkd3d_free(command_queue->ops);
+        d3d12_command_queue_op_array_destroy(&command_queue->op_queue);
+        d3d12_command_queue_op_array_destroy(&command_queue->aux_op_queue);
 
         vkd3d_private_store_destroy(&command_queue->private_store);
 
@@ -6235,28 +6090,24 @@ static HRESULT STDMETHODCALLTYPE d3d12_command_queue_GetDevice(ID3D12CommandQueu
     return d3d12_device_query_interface(command_queue->device, iid, device);
 }
 
-static struct vkd3d_cs_op_data *d3d12_command_queue_require_space_locked(struct d3d12_command_queue *queue)
+static struct vkd3d_cs_op_data *d3d12_command_queue_op_array_require_space(struct d3d12_command_queue_op_array *array)
 {
-    if (!vkd3d_array_reserve((void **)&queue->ops, &queue->ops_size, queue->ops_count + 1, sizeof(*queue->ops)))
+    if (!vkd3d_array_reserve((void **)&array->ops, &array->size, array->count + 1, sizeof(*array->ops)))
         return NULL;
 
-    return &queue->ops[queue->ops_count++];
+    return &array->ops[array->count++];
 }
 
 static void STDMETHODCALLTYPE d3d12_command_queue_UpdateTileMappings(ID3D12CommandQueue *iface,
         ID3D12Resource *resource, UINT region_count,
-        const D3D12_TILED_RESOURCE_COORDINATE *region_start_coordinates,
-        const D3D12_TILE_REGION_SIZE *region_sizes,
-        UINT range_count,
-        const D3D12_TILE_RANGE_FLAGS *range_flags,
-        UINT *heap_range_offsets,
-        UINT *range_tile_counts,
-        D3D12_TILE_MAPPING_FLAGS flags)
+        const D3D12_TILED_RESOURCE_COORDINATE *region_start_coordinates, const D3D12_TILE_REGION_SIZE *region_sizes,
+        ID3D12Heap *heap, UINT range_count, const D3D12_TILE_RANGE_FLAGS *range_flags,
+        UINT *heap_range_offsets, UINT *range_tile_counts, D3D12_TILE_MAPPING_FLAGS flags)
 {
     FIXME("iface %p, resource %p, region_count %u, region_start_coordinates %p, "
-            "region_sizes %p, range_count %u, range_flags %p, heap_range_offsets %p, "
+            "region_sizes %p, heap %p, range_count %u, range_flags %p, heap_range_offsets %p, "
             "range_tile_counts %p, flags %#x stub!\n",
-            iface, resource, region_count, region_start_coordinates, region_sizes, range_count,
+            iface, resource, region_count, region_start_coordinates, region_sizes, heap, range_count,
             range_flags, heap_range_offsets, range_tile_counts, flags);
 }
 
@@ -6303,6 +6154,18 @@ static void d3d12_command_queue_execute(struct d3d12_command_queue *command_queu
     vkd3d_free(buffers);
 }
 
+static void d3d12_command_queue_submit_locked(struct d3d12_command_queue *queue)
+{
+    bool flushed_any = false;
+    HRESULT hr;
+
+    if (queue->op_queue.count == 1 && !queue->is_flushing)
+    {
+        if (FAILED(hr = d3d12_command_queue_flush_ops_locked(queue, &flushed_any)))
+            ERR("Cannot flush queue, hr %#x.\n", hr);
+    }
+}
+
 static void STDMETHODCALLTYPE d3d12_command_queue_ExecuteCommandLists(ID3D12CommandQueue *iface,
         UINT command_list_count, ID3D12CommandList * const *command_lists)
 {
@@ -6311,7 +6174,6 @@ static void STDMETHODCALLTYPE d3d12_command_queue_ExecuteCommandLists(ID3D12Comm
     struct vkd3d_cs_op_data *op;
     VkCommandBuffer *buffers;
     unsigned int i;
-    int rc;
 
     TRACE("iface %p, command_list_count %u, command_lists %p.\n",
             iface, command_list_count, command_lists);
@@ -6340,20 +6202,9 @@ static void STDMETHODCALLTYPE d3d12_command_queue_ExecuteCommandLists(ID3D12Comm
         buffers[i] = cmd_list->vk_command_buffer;
     }
 
-    if ((rc = vkd3d_mutex_lock(&command_queue->op_mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return;
-    }
+    vkd3d_mutex_lock(&command_queue->op_mutex);
 
-    if (!command_queue->ops_count)
-    {
-        d3d12_command_queue_execute(command_queue, buffers, command_list_count);
-        vkd3d_mutex_unlock(&command_queue->op_mutex);
-        return;
-    }
-
-    if (!(op = d3d12_command_queue_require_space_locked(command_queue)))
+    if (!(op = d3d12_command_queue_op_array_require_space(&command_queue->op_queue)))
     {
         ERR("Failed to add op.\n");
         return;
@@ -6361,6 +6212,8 @@ static void STDMETHODCALLTYPE d3d12_command_queue_ExecuteCommandLists(ID3D12Comm
     op->opcode = VKD3D_CS_OP_EXECUTE;
     op->u.execute.buffers = buffers;
     op->u.execute.buffer_count = command_list_count;
+
+    d3d12_command_queue_submit_locked(command_queue);
 
     vkd3d_mutex_unlock(&command_queue->op_mutex);
     return;
@@ -6389,15 +6242,10 @@ static HRESULT vkd3d_enqueue_timeline_semaphore(struct vkd3d_fence_worker *worke
         struct d3d12_fence *fence, uint64_t value, struct vkd3d_queue *queue)
 {
     struct vkd3d_waiting_fence *waiting_fence;
-    int rc;
 
     TRACE("worker %p, fence %p, value %#"PRIx64".\n", worker, fence, value);
 
-    if ((rc = vkd3d_mutex_lock(&worker->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return hresult_from_errno(rc);
-    }
+    vkd3d_mutex_lock(&worker->mutex);
 
     if (!vkd3d_array_reserve((void **)&worker->fences, &worker->fences_size,
             worker->fence_count + 1, sizeof(*worker->fences)))
@@ -6427,23 +6275,12 @@ static HRESULT STDMETHODCALLTYPE d3d12_command_queue_Signal(ID3D12CommandQueue *
     struct d3d12_fence *fence = unsafe_impl_from_ID3D12Fence(fence_iface);
     struct vkd3d_cs_op_data *op;
     HRESULT hr = S_OK;
-    int rc;
 
     TRACE("iface %p, fence %p, value %#"PRIx64".\n", iface, fence_iface, value);
 
-    if ((rc = vkd3d_mutex_lock(&command_queue->op_mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return hresult_from_errno(rc);
-    }
+    vkd3d_mutex_lock(&command_queue->op_mutex);
 
-    if (!command_queue->ops_count)
-    {
-        hr = d3d12_command_queue_signal(command_queue, fence, value);
-        goto done;
-    }
-
-    if (!(op = d3d12_command_queue_require_space_locked(command_queue)))
+    if (!(op = d3d12_command_queue_op_array_require_space(&command_queue->op_queue)))
     {
         hr = E_OUTOFMEMORY;
         goto done;
@@ -6453,6 +6290,8 @@ static HRESULT STDMETHODCALLTYPE d3d12_command_queue_Signal(ID3D12CommandQueue *
     op->u.signal.value = value;
 
     d3d12_fence_incref(fence);
+
+    d3d12_command_queue_submit_locked(command_queue);
 
 done:
     vkd3d_mutex_unlock(&command_queue->op_mutex);
@@ -6774,37 +6613,13 @@ static HRESULT STDMETHODCALLTYPE d3d12_command_queue_Wait(ID3D12CommandQueue *if
     struct d3d12_fence *fence = unsafe_impl_from_ID3D12Fence(fence_iface);
     struct vkd3d_cs_op_data *op;
     HRESULT hr = S_OK;
-    int rc;
 
     TRACE("iface %p, fence %p, value %#"PRIx64".\n", iface, fence_iface, value);
 
-    if ((rc = vkd3d_mutex_lock(&command_queue->op_mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return hresult_from_errno(rc);
-    }
-    if ((rc = vkd3d_mutex_lock(&fence->mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        hr = hresult_from_errno(rc);
-        goto done;
-    }
+    vkd3d_mutex_lock(&command_queue->op_mutex);
 
-    if (!command_queue->ops_count && value <= fence->max_pending_value)
+    if (!(op = d3d12_command_queue_op_array_require_space(&command_queue->op_queue)))
     {
-        hr = d3d12_command_queue_wait_locked(command_queue, fence, value);
-        goto done;
-    }
-
-    /* This is the critical part required to support out-of-order signal.
-     * Normally we would be able to submit waits and signals out of order, but
-     * we don't have virtualized queues in Vulkan, so we need to handle the case
-     * where multiple queues alias over the same physical queue, so effectively,
-     * we need to manage out-of-order submits ourselves. */
-
-    if (!(op = d3d12_command_queue_require_space_locked(command_queue)))
-    {
-        vkd3d_mutex_unlock(&fence->mutex);
         hr = E_OUTOFMEMORY;
         goto done;
     }
@@ -6814,15 +6629,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_command_queue_Wait(ID3D12CommandQueue *if
 
     d3d12_fence_incref(fence);
 
-    /* Add the queue to the blocked list after writing the op to ensure the queue isn't
-     * removed again in another thread because it has no ops. */
-    if (command_queue->ops_count == 1)
-        hr = d3d12_device_add_blocked_command_queues(command_queue->device, &command_queue, 1);
-
-    /* The fence must remain locked until the op is created and the queue is added to the blocked list,
-     * because if an unblocking d3d12_fence_Signal() call occurs on another thread before the above
-     * work is done, flushing will be delayed until the next signal, if one occurs at all. */
-    vkd3d_mutex_unlock(&fence->mutex);
+    d3d12_command_queue_submit_locked(command_queue);
 
 done:
     vkd3d_mutex_unlock(&command_queue->op_mutex);
@@ -6950,82 +6757,147 @@ static const struct ID3D12CommandQueueVtbl d3d12_command_queue_vtbl =
     d3d12_command_queue_GetDesc,
 };
 
+static void d3d12_command_queue_swap_queues(struct d3d12_command_queue *queue)
+{
+    struct d3d12_command_queue_op_array array;
+
+    array = queue->op_queue;
+    queue->op_queue = queue->aux_op_queue;
+    queue->aux_op_queue = array;
+}
+
+static bool d3d12_command_queue_op_array_append(struct d3d12_command_queue_op_array *array,
+        size_t count, const struct vkd3d_cs_op_data *new_ops)
+{
+    if (!vkd3d_array_reserve((void **)&array->ops, &array->size, array->count + count, sizeof(*array->ops)))
+    {
+        ERR("Cannot reserve memory for %zu new ops.\n", count);
+        return false;
+    }
+
+    memcpy(&array->ops[array->count], new_ops, count * sizeof(*array->ops));
+    array->count += count;
+
+    return true;
+}
+
+static HRESULT d3d12_command_queue_fixup_after_flush(struct d3d12_command_queue *queue, unsigned int done_count)
+{
+    HRESULT hr;
+
+    queue->aux_op_queue.count -= done_count;
+    memmove(queue->aux_op_queue.ops, &queue->aux_op_queue.ops[done_count],
+            queue->aux_op_queue.count * sizeof(*queue->aux_op_queue.ops));
+
+    vkd3d_mutex_lock(&queue->op_mutex);
+
+    d3d12_command_queue_swap_queues(queue);
+
+    d3d12_command_queue_op_array_append(&queue->op_queue, queue->aux_op_queue.count, queue->aux_op_queue.ops);
+
+    queue->aux_op_queue.count = 0;
+    queue->is_flushing = false;
+
+    hr = d3d12_command_queue_record_as_blocked(queue);
+
+    vkd3d_mutex_unlock(&queue->op_mutex);
+
+    return hr;
+}
+
+static HRESULT d3d12_command_queue_flush_ops(struct d3d12_command_queue *queue, bool *flushed_any)
+{
+    HRESULT hr;
+
+    vkd3d_mutex_lock(&queue->op_mutex);
+
+    /* This function may be re-entered when invoking
+     * d3d12_command_queue_signal().  The first call is responsible
+     * for re-adding the queue to the flush list. */
+    if (queue->is_flushing)
+    {
+        vkd3d_mutex_unlock(&queue->op_mutex);
+        return S_OK;
+    }
+
+    hr = d3d12_command_queue_flush_ops_locked(queue, flushed_any);
+
+    vkd3d_mutex_unlock(&queue->op_mutex);
+
+    return hr;
+}
+
 /* flushed_any is initialised by the caller. */
-static bool d3d12_command_queue_flush_ops(struct d3d12_command_queue *queue, bool *flushed_any)
+static HRESULT d3d12_command_queue_flush_ops_locked(struct d3d12_command_queue *queue, bool *flushed_any)
 {
     struct vkd3d_cs_op_data *op;
     struct d3d12_fence *fence;
-    bool flushed_all = false;
     unsigned int i;
-    int rc;
 
-    if (!queue->ops_count)
-        return true;
-
-    /* This function may be re-entered during a call below to d3d12_command_queue_signal().
-     * We return true because the first caller is responsible for re-adding this queue to
-     * the flush list if it ends up returning false. */
-    if (queue->is_flushing)
-        return true;
-
-    if ((rc = vkd3d_mutex_lock(&queue->op_mutex)))
-    {
-        ERR("Failed to lock mutex, error %d.\n", rc);
-        return true;
-    }
-
-    /* Currently only required for d3d12_command_queue_signal(), but set it here anyway. */
     queue->is_flushing = true;
 
-    for (i = 0; i < queue->ops_count; ++i)
+    assert(queue->aux_op_queue.count == 0);
+
+    while (queue->op_queue.count != 0)
     {
-        op = &queue->ops[i];
-        switch (op->opcode)
+        d3d12_command_queue_swap_queues(queue);
+
+        vkd3d_mutex_unlock(&queue->op_mutex);
+
+        for (i = 0; i < queue->aux_op_queue.count; ++i)
         {
-            case VKD3D_CS_OP_WAIT:
-                fence = op->u.wait.fence;
-                if (op->u.wait.value > fence->max_pending_value)
-                {
-                    queue->ops_count -= i;
-                    memmove(queue->ops, op, queue->ops_count * sizeof(*op));
-                    goto done;
-                }
-                vkd3d_mutex_lock(&fence->mutex);
-                d3d12_command_queue_wait_locked(queue, fence, op->u.wait.value);
-                d3d12_fence_decref(fence);
-                break;
+            op = &queue->aux_op_queue.ops[i];
+            switch (op->opcode)
+            {
+                case VKD3D_CS_OP_WAIT:
+                    fence = op->u.wait.fence;
+                    vkd3d_mutex_lock(&fence->mutex);
+                    if (op->u.wait.value > fence->max_pending_value)
+                    {
+                        vkd3d_mutex_unlock(&fence->mutex);
+                        return d3d12_command_queue_fixup_after_flush(queue, i);
+                    }
+                    d3d12_command_queue_wait_locked(queue, fence, op->u.wait.value);
+                    d3d12_fence_decref(fence);
+                    break;
 
-            case VKD3D_CS_OP_SIGNAL:
-                d3d12_command_queue_signal(queue, op->u.signal.fence, op->u.signal.value);
-                d3d12_fence_decref(op->u.signal.fence);
-                break;
+                case VKD3D_CS_OP_SIGNAL:
+                    d3d12_command_queue_signal(queue, op->u.signal.fence, op->u.signal.value);
+                    d3d12_fence_decref(op->u.signal.fence);
+                    break;
 
-            case VKD3D_CS_OP_EXECUTE:
-                d3d12_command_queue_execute(queue, op->u.execute.buffers, op->u.execute.buffer_count);
-                break;
+                case VKD3D_CS_OP_EXECUTE:
+                    d3d12_command_queue_execute(queue, op->u.execute.buffers, op->u.execute.buffer_count);
+                    break;
 
-            default:
-                FIXME("Unhandled op type %u.\n", op->opcode);
-                break;
+                default:
+                    vkd3d_unreachable();
+            }
+
+            *flushed_any |= true;
         }
-        *flushed_any |= true;
+
+        queue->aux_op_queue.count = 0;
+
+        vkd3d_mutex_lock(&queue->op_mutex);
     }
 
-    queue->ops_count = 0;
-    flushed_all = true;
-
-done:
     queue->is_flushing = false;
 
-    vkd3d_mutex_unlock(&queue->op_mutex);
-    return flushed_all;
+    return S_OK;
+}
+
+static void d3d12_command_queue_op_array_init(struct d3d12_command_queue_op_array *array)
+{
+    array->ops = NULL;
+    array->count = 0;
+    array->size = 0;
 }
 
 static HRESULT d3d12_command_queue_init(struct d3d12_command_queue *queue,
         struct d3d12_device *device, const D3D12_COMMAND_QUEUE_DESC *desc)
 {
     HRESULT hr;
-    int rc;
 
     queue->ID3D12CommandQueue_iface.lpVtbl = &d3d12_command_queue_vtbl;
     queue->refcount = 1;
@@ -7040,10 +6912,10 @@ static HRESULT d3d12_command_queue_init(struct d3d12_command_queue *queue,
     queue->last_waited_fence = NULL;
     queue->last_waited_fence_value = 0;
 
-    queue->ops = NULL;
-    queue->ops_count = 0;
-    queue->ops_size = 0;
+    d3d12_command_queue_op_array_init(&queue->op_queue);
     queue->is_flushing = false;
+
+    d3d12_command_queue_op_array_init(&queue->aux_op_queue);
 
     if (desc->Priority == D3D12_COMMAND_QUEUE_PRIORITY_GLOBAL_REALTIME)
     {
@@ -7059,11 +6931,7 @@ static HRESULT d3d12_command_queue_init(struct d3d12_command_queue *queue,
     if (FAILED(hr = vkd3d_private_store_init(&queue->private_store)))
         return hr;
 
-    if ((rc = vkd3d_mutex_init(&queue->op_mutex)) < 0)
-    {
-        hr = hresult_from_errno(rc);
-        goto fail_destroy_private_store;
-    }
+    vkd3d_mutex_init(&queue->op_mutex);
 
     if (FAILED(hr = vkd3d_fence_worker_start(&queue->fence_worker, queue->vkd3d_queue, device)))
         goto fail_destroy_op_mutex;
@@ -7074,7 +6942,6 @@ static HRESULT d3d12_command_queue_init(struct d3d12_command_queue *queue,
 
 fail_destroy_op_mutex:
     vkd3d_mutex_destroy(&queue->op_mutex);
-fail_destroy_private_store:
     vkd3d_private_store_destroy(&queue->private_store);
     return hr;
 }
@@ -7113,8 +6980,10 @@ VkQueue vkd3d_acquire_vk_queue(ID3D12CommandQueue *queue)
     struct d3d12_command_queue *d3d12_queue = impl_from_ID3D12CommandQueue(queue);
     VkQueue vk_queue = vkd3d_queue_acquire(d3d12_queue->vkd3d_queue);
 
-    if (d3d12_queue->ops_count)
-        WARN("Acquired command queue %p with %zu remaining ops.\n", d3d12_queue, d3d12_queue->ops_count);
+    if (d3d12_queue->op_queue.count)
+        WARN("Acquired command queue %p with %zu remaining ops.\n", d3d12_queue, d3d12_queue->op_queue.count);
+    else if (d3d12_queue->is_flushing)
+        WARN("Acquired command queue %p which is flushing.\n", d3d12_queue);
 
     return vk_queue;
 }

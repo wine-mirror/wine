@@ -33,21 +33,27 @@ void dxbc_writer_init(struct dxbc_writer *dxbc)
 
 void dxbc_writer_add_section(struct dxbc_writer *dxbc, uint32_t tag, const void *data, size_t size)
 {
-    struct dxbc_writer_section *section;
+    struct vkd3d_shader_dxbc_section_desc *section;
 
     assert(dxbc->section_count < ARRAY_SIZE(dxbc->sections));
 
     section = &dxbc->sections[dxbc->section_count++];
     section->tag = tag;
-    section->data = data;
-    section->size = size;
+    section->data.code = data;
+    section->data.size = size;
 }
 
-int dxbc_writer_write(struct dxbc_writer *dxbc, struct vkd3d_shader_code *out)
+int vkd3d_shader_serialize_dxbc(size_t section_count, const struct vkd3d_shader_dxbc_section_desc *sections,
+        struct vkd3d_shader_code *dxbc, char **messages)
 {
     size_t size_position, offsets_position, checksum_position, i;
     struct vkd3d_bytecode_buffer buffer = {0};
     uint32_t checksum[4];
+
+    TRACE("section_count %zu, sections %p, dxbc %p, messages %p.\n", section_count, sections, dxbc, messages);
+
+    if (messages)
+        *messages = NULL;
 
     put_u32(&buffer, TAG_DXBC);
 
@@ -57,18 +63,18 @@ int dxbc_writer_write(struct dxbc_writer *dxbc, struct vkd3d_shader_code *out)
 
     put_u32(&buffer, 1); /* version */
     size_position = put_u32(&buffer, 0);
-    put_u32(&buffer, dxbc->section_count);
+    put_u32(&buffer, section_count);
 
     offsets_position = bytecode_get_size(&buffer);
-    for (i = 0; i < dxbc->section_count; ++i)
+    for (i = 0; i < section_count; ++i)
         put_u32(&buffer, 0);
 
-    for (i = 0; i < dxbc->section_count; ++i)
+    for (i = 0; i < section_count; ++i)
     {
         set_u32(&buffer, offsets_position + i * sizeof(uint32_t), bytecode_get_size(&buffer));
-        put_u32(&buffer, dxbc->sections[i].tag);
-        put_u32(&buffer, dxbc->sections[i].size);
-        bytecode_put_bytes(&buffer, dxbc->sections[i].data, dxbc->sections[i].size);
+        put_u32(&buffer, sections[i].tag);
+        put_u32(&buffer, sections[i].data.size);
+        bytecode_put_bytes(&buffer, sections[i].data.code, sections[i].data.size);
     }
     set_u32(&buffer, size_position, bytecode_get_size(&buffer));
 
@@ -78,10 +84,15 @@ int dxbc_writer_write(struct dxbc_writer *dxbc, struct vkd3d_shader_code *out)
 
     if (!buffer.status)
     {
-        out->code = buffer.data;
-        out->size = buffer.size;
+        dxbc->code = buffer.data;
+        dxbc->size = buffer.size;
     }
     return buffer.status;
+}
+
+int dxbc_writer_write(struct dxbc_writer *dxbc, struct vkd3d_shader_code *out)
+{
+    return vkd3d_shader_serialize_dxbc(dxbc->section_count, dxbc->sections, out, NULL);
 }
 
 struct vkd3d_shader_src_param_entry
@@ -95,12 +106,6 @@ struct vkd3d_shader_sm4_parser
     const uint32_t *start, *end;
 
     unsigned int output_map[MAX_REG_OUTPUT];
-
-    struct vkd3d_shader_src_param src_param[SM4_MAX_SRC_COUNT];
-    struct vkd3d_shader_dst_param dst_param[SM4_MAX_DST_COUNT];
-    struct list src_free;
-    struct list src;
-    struct vkd3d_shader_immediate_constant_buffer icb;
 
     struct vkd3d_shader_parser p;
 };
@@ -206,7 +211,8 @@ static bool shader_sm4_read_register_space(struct vkd3d_shader_sm4_parser *priv,
 static void shader_sm4_read_conditional_op(struct vkd3d_shader_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *priv)
 {
-    shader_sm4_read_src_param(priv, &tokens, &tokens[token_count], VKD3D_DATA_UINT, &priv->src_param[0]);
+    shader_sm4_read_src_param(priv, &tokens, &tokens[token_count], VKD3D_DATA_UINT,
+            (struct vkd3d_shader_src_param *)&ins->src[0]);
     ins->flags = (opcode_token & VKD3D_SM4_CONDITIONAL_NZ) ?
             VKD3D_SHADER_CONDITIONAL_OP_NZ : VKD3D_SHADER_CONDITIONAL_OP_Z;
 }
@@ -214,6 +220,7 @@ static void shader_sm4_read_conditional_op(struct vkd3d_shader_instruction *ins,
 static void shader_sm4_read_shader_data(struct vkd3d_shader_instruction *ins, uint32_t opcode, uint32_t opcode_token,
         const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *priv)
 {
+    struct vkd3d_shader_immediate_constant_buffer *icb;
     enum vkd3d_sm4_shader_data_type type;
     unsigned int icb_size;
 
@@ -227,16 +234,24 @@ static void shader_sm4_read_shader_data(struct vkd3d_shader_instruction *ins, ui
 
     ++tokens;
     icb_size = token_count - 1;
-    if (icb_size % 4 || icb_size > MAX_IMMEDIATE_CONSTANT_BUFFER_SIZE)
+    if (icb_size % 4)
     {
         FIXME("Unexpected immediate constant buffer size %u.\n", icb_size);
         ins->handler_idx = VKD3DSIH_INVALID;
         return;
     }
 
-    priv->icb.vec4_count = icb_size / 4;
-    memcpy(priv->icb.data, tokens, sizeof(*tokens) * icb_size);
-    ins->declaration.icb = &priv->icb;
+    if (!(icb = vkd3d_malloc(offsetof(struct vkd3d_shader_immediate_constant_buffer, data[icb_size]))))
+    {
+        ERR("Failed to allocate immediate constant buffer, size %u.\n", icb_size);
+        vkd3d_shader_parser_error(&priv->p, VKD3D_SHADER_ERROR_TPF_OUT_OF_MEMORY, "Out of memory.");
+        ins->handler_idx = VKD3DSIH_INVALID;
+        return;
+    }
+    icb->vec4_count = icb_size / 4;
+    memcpy(icb->data, tokens, sizeof(*tokens) * icb_size);
+    shader_instruction_array_add_icb(&priv->p.instructions, icb);
+    ins->declaration.icb = icb;
 }
 
 static void shader_sm4_set_descriptor_register_range(struct vkd3d_shader_sm4_parser *sm4,
@@ -273,6 +288,13 @@ static void shader_sm4_read_dcl_resource(struct vkd3d_shader_instruction *ins, u
     {
         semantic->resource_type = resource_type_table[resource_type];
     }
+
+    if (semantic->resource_type == VKD3D_SHADER_RESOURCE_TEXTURE_2DMS
+            || semantic->resource_type == VKD3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY)
+    {
+        semantic->sample_count = (opcode_token & VKD3D_SM4_RESOURCE_SAMPLE_COUNT_MASK) >> VKD3D_SM4_RESOURCE_SAMPLE_COUNT_SHIFT;
+    }
+
     reg_data_type = opcode == VKD3D_SM4_OP_DCL_RESOURCE ? VKD3D_DATA_RESOURCE : VKD3D_DATA_UAV;
     shader_sm4_read_dst_param(priv, &tokens, end, reg_data_type, &semantic->resource.reg);
     shader_sm4_set_descriptor_register_range(priv, &semantic->resource.reg.reg, &semantic->resource.range);
@@ -438,8 +460,9 @@ static void shader_sm4_read_dcl_global_flags(struct vkd3d_shader_instruction *in
 static void shader_sm5_read_fcall(struct vkd3d_shader_instruction *ins, uint32_t opcode, uint32_t opcode_token,
         const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *priv)
 {
-    priv->src_param[0].reg.u.fp_body_idx = *tokens++;
-    shader_sm4_read_src_param(priv, &tokens, &tokens[token_count], VKD3D_DATA_OPAQUE, &priv->src_param[0]);
+    struct vkd3d_shader_src_param *src_params = (struct vkd3d_shader_src_param *)ins->src;
+    src_params[0].reg.u.fp_body_idx = *tokens++;
+    shader_sm4_read_src_param(priv, &tokens, &tokens[token_count], VKD3D_DATA_OPAQUE, &src_params[0]);
 }
 
 static void shader_sm5_read_dcl_function_body(struct vkd3d_shader_instruction *ins, uint32_t opcode,
@@ -687,7 +710,7 @@ static const struct vkd3d_sm4_opcode_info opcode_table[] =
     {VKD3D_SM4_OP_USHR,                             VKD3DSIH_USHR,                             "u",    "uu"},
     {VKD3D_SM4_OP_UTOF,                             VKD3DSIH_UTOF,                             "f",    "u"},
     {VKD3D_SM4_OP_XOR,                              VKD3DSIH_XOR,                              "u",    "uu"},
-    {VKD3D_SM4_OP_DCL_RESOURCE,                     VKD3DSIH_DCL,                              "R",    "",
+    {VKD3D_SM4_OP_DCL_RESOURCE,                     VKD3DSIH_DCL,                              "",     "",
             shader_sm4_read_dcl_resource},
     {VKD3D_SM4_OP_DCL_CONSTANT_BUFFER,              VKD3DSIH_DCL_CONSTANT_BUFFER,              "",     "",
             shader_sm4_read_dcl_constant_buffer},
@@ -987,37 +1010,10 @@ static enum vkd3d_data_type map_data_type(char t)
 static void shader_sm4_destroy(struct vkd3d_shader_parser *parser)
 {
     struct vkd3d_shader_sm4_parser *sm4 = vkd3d_shader_sm4_parser(parser);
-    struct vkd3d_shader_src_param_entry *e1, *e2;
 
-    list_move_head(&sm4->src_free, &sm4->src);
-    LIST_FOR_EACH_ENTRY_SAFE(e1, e2, &sm4->src_free, struct vkd3d_shader_src_param_entry, entry)
-    {
-        vkd3d_free(e1);
-    }
+    shader_instruction_array_destroy(&parser->instructions);
     free_shader_desc(&parser->shader_desc);
     vkd3d_free(sm4);
-}
-
-static struct vkd3d_shader_src_param *get_src_param(struct vkd3d_shader_sm4_parser *priv)
-{
-    struct vkd3d_shader_src_param_entry *e;
-    struct list *elem;
-
-    if (!list_empty(&priv->src_free))
-    {
-        elem = list_head(&priv->src_free);
-        list_remove(elem);
-    }
-    else
-    {
-        if (!(e = vkd3d_malloc(sizeof(*e))))
-            return NULL;
-        elem = &e->entry;
-    }
-
-    list_add_tail(&priv->src, elem);
-    e = LIST_ENTRY(elem, struct vkd3d_shader_src_param_entry, entry);
-    return &e->param;
 }
 
 static bool shader_sm4_read_reg_idx(struct vkd3d_shader_sm4_parser *priv, const uint32_t **ptr,
@@ -1025,7 +1021,7 @@ static bool shader_sm4_read_reg_idx(struct vkd3d_shader_sm4_parser *priv, const 
 {
     if (addressing & VKD3D_SM4_ADDRESSING_RELATIVE)
     {
-        struct vkd3d_shader_src_param *rel_addr = get_src_param(priv);
+        struct vkd3d_shader_src_param *rel_addr = shader_parser_get_src_params(&priv->p, 1);
 
         if (!(reg_idx->rel_addr = rel_addr))
         {
@@ -1468,13 +1464,13 @@ static void shader_sm4_read_instruction(struct vkd3d_shader_parser *parser, stru
     struct vkd3d_shader_sm4_parser *sm4 = vkd3d_shader_sm4_parser(parser);
     const struct vkd3d_sm4_opcode_info *opcode_info;
     uint32_t opcode_token, opcode, previous_token;
+    struct vkd3d_shader_dst_param *dst_params;
+    struct vkd3d_shader_src_param *src_params;
     const uint32_t **ptr = &parser->ptr;
     unsigned int i, len;
     size_t remaining;
     const uint32_t *p;
     DWORD precise;
-
-    list_move_head(&sm4->src_free, &sm4->src);
 
     if (*ptr >= sm4->end)
     {
@@ -1520,11 +1516,15 @@ static void shader_sm4_read_instruction(struct vkd3d_shader_parser *parser, stru
     ins->structured = false;
     ins->predicate = NULL;
     ins->dst_count = strnlen(opcode_info->dst_info, SM4_MAX_DST_COUNT);
-    ins->dst = sm4->dst_param;
     ins->src_count = strnlen(opcode_info->src_info, SM4_MAX_SRC_COUNT);
-    ins->src = sm4->src_param;
-    assert(ins->dst_count <= ARRAY_SIZE(sm4->dst_param));
-    assert(ins->src_count <= ARRAY_SIZE(sm4->src_param));
+    ins->src = src_params = shader_parser_get_src_params(parser, ins->src_count);
+    if (!src_params && ins->src_count)
+    {
+        ERR("Failed to allocate src parameters.\n");
+        vkd3d_shader_parser_error(parser, VKD3D_SHADER_ERROR_TPF_OUT_OF_MEMORY, "Out of memory.");
+        ins->handler_idx = VKD3DSIH_INVALID;
+        return;
+    }
     ins->resource_type = VKD3D_SHADER_RESOURCE_NONE;
     ins->resource_stride = 0;
     ins->resource_data_type[0] = VKD3D_DATA_FLOAT;
@@ -1538,6 +1538,8 @@ static void shader_sm4_read_instruction(struct vkd3d_shader_parser *parser, stru
 
     if (opcode_info->read_opcode_func)
     {
+        ins->dst = NULL;
+        ins->dst_count = 0;
         opcode_info->read_opcode_func(ins, opcode, opcode_token, p, len, sm4);
     }
     else
@@ -1557,21 +1559,29 @@ static void shader_sm4_read_instruction(struct vkd3d_shader_parser *parser, stru
         precise = (opcode_token & VKD3D_SM5_PRECISE_MASK) >> VKD3D_SM5_PRECISE_SHIFT;
         ins->flags |= precise << VKD3DSI_PRECISE_SHIFT;
 
+        ins->dst = dst_params = shader_parser_get_dst_params(parser, ins->dst_count);
+        if (!dst_params && ins->dst_count)
+        {
+            ERR("Failed to allocate dst parameters.\n");
+            vkd3d_shader_parser_error(parser, VKD3D_SHADER_ERROR_TPF_OUT_OF_MEMORY, "Out of memory.");
+            ins->handler_idx = VKD3DSIH_INVALID;
+            return;
+        }
         for (i = 0; i < ins->dst_count; ++i)
         {
             if (!(shader_sm4_read_dst_param(sm4, &p, *ptr, map_data_type(opcode_info->dst_info[i]),
-                    &sm4->dst_param[i])))
+                    &dst_params[i])))
             {
                 ins->handler_idx = VKD3DSIH_INVALID;
                 return;
             }
-            sm4->dst_param[i].modifiers |= instruction_dst_modifier;
+            dst_params[i].modifiers |= instruction_dst_modifier;
         }
 
         for (i = 0; i < ins->src_count; ++i)
         {
             if (!(shader_sm4_read_src_param(sm4, &p, *ptr, map_data_type(opcode_info->src_info[i]),
-                    &sm4->src_param[i])))
+                    &src_params[i])))
             {
                 ins->handler_idx = VKD3DSIH_INVALID;
                 return;
@@ -1594,20 +1604,9 @@ static bool shader_sm4_is_end(struct vkd3d_shader_parser *parser)
     return parser->ptr == sm4->end;
 }
 
-static void shader_sm4_reset(struct vkd3d_shader_parser *parser)
-{
-    struct vkd3d_shader_sm4_parser *sm4 = vkd3d_shader_sm4_parser(parser);
-
-    parser->ptr = sm4->start;
-    parser->failed = false;
-}
-
 static const struct vkd3d_shader_parser_ops shader_sm4_parser_ops =
 {
-    .parser_reset = shader_sm4_reset,
     .parser_destroy = shader_sm4_destroy,
-    .parser_read_instruction = shader_sm4_read_instruction,
-    .parser_is_end = shader_sm4_is_end,
 };
 
 static bool shader_sm4_init(struct vkd3d_shader_sm4_parser *sm4, const uint32_t *byte_code,
@@ -1670,7 +1669,10 @@ static bool shader_sm4_init(struct vkd3d_shader_sm4_parser *sm4, const uint32_t 
     version.major = VKD3D_SM4_VERSION_MAJOR(version_token);
     version.minor = VKD3D_SM4_VERSION_MINOR(version_token);
 
-    vkd3d_shader_parser_init(&sm4->p, message_context, source_name, &version, &shader_sm4_parser_ops);
+    /* Estimate instruction count to avoid reallocation in most shaders. */
+    if (!vkd3d_shader_parser_init(&sm4->p, message_context, source_name, &version, &shader_sm4_parser_ops,
+            token_count / 7u + 20))
+        return false;
     sm4->p.ptr = sm4->start;
 
     memset(sm4->output_map, 0xff, sizeof(sm4->output_map));
@@ -1689,9 +1691,6 @@ static bool shader_sm4_init(struct vkd3d_shader_sm4_parser *sm4, const uint32_t 
 
         sm4->output_map[e->register_index] = e->semantic_index;
     }
-
-    list_init(&sm4->src_free);
-    list_init(&sm4->src);
 
     return true;
 }
@@ -1717,6 +1716,9 @@ static void skip_dword_unknown(const char **ptr, unsigned int count)
 {
     unsigned int i;
     uint32_t d;
+
+    if (!count)
+        return;
 
     WARN("Skipping %u unknown DWORDs:\n", count);
     for (i = 0; i < count; ++i)
@@ -1745,18 +1747,19 @@ static const char *shader_get_string(const char *data, size_t data_size, DWORD o
     return data + offset;
 }
 
-static int parse_dxbc(const char *data, size_t data_size,
-        struct vkd3d_shader_message_context *message_context, const char *source_name,
-        int (*chunk_handler)(const char *data, DWORD data_size, DWORD tag, void *ctx), void *ctx)
+static int parse_dxbc(const struct vkd3d_shader_code *dxbc, struct vkd3d_shader_message_context *message_context,
+        const char *source_name, struct vkd3d_shader_dxbc_desc *desc)
 {
     const struct vkd3d_shader_location location = {.source_name = source_name};
+    struct vkd3d_shader_dxbc_section_desc *sections, *section;
     uint32_t checksum[4], calculated_checksum[4];
+    const char *data = dxbc->code;
+    size_t data_size = dxbc->size;
     const char *ptr = data;
-    int ret = VKD3D_OK;
     uint32_t chunk_count;
     uint32_t total_size;
-    unsigned int i;
     uint32_t version;
+    unsigned int i;
     uint32_t tag;
 
     if (data_size < VKD3D_DXBC_HEADER_SIZE)
@@ -1810,6 +1813,12 @@ static int parse_dxbc(const char *data, size_t data_size,
     read_dword(&ptr, &chunk_count);
     TRACE("chunk count: %#x\n", chunk_count);
 
+    if (!(sections = vkd3d_calloc(chunk_count, sizeof(*sections))))
+    {
+        vkd3d_shader_error(message_context, &location, VKD3D_SHADER_ERROR_DXBC_OUT_OF_MEMORY, "Out of memory.");
+        return VKD3D_ERROR_OUT_OF_MEMORY;
+    }
+
     for (i = 0; i < chunk_count; ++i)
     {
         uint32_t chunk_tag, chunk_size;
@@ -1824,6 +1833,7 @@ static int parse_dxbc(const char *data, size_t data_size,
             WARN("Invalid chunk offset %#x (data size %zu).\n", chunk_offset, data_size);
             vkd3d_shader_error(message_context, &location, VKD3D_SHADER_ERROR_DXBC_INVALID_CHUNK_OFFSET,
                     "DXBC chunk %u has invalid offset %#x (data size %#zx).", i, chunk_offset, data_size);
+            vkd3d_free(sections);
             return VKD3D_ERROR_INVALID_ARGUMENT;
         }
 
@@ -1839,39 +1849,120 @@ static int parse_dxbc(const char *data, size_t data_size,
             vkd3d_shader_error(message_context, &location, VKD3D_SHADER_ERROR_DXBC_INVALID_CHUNK_SIZE,
                     "DXBC chunk %u has invalid size %#x (data size %#zx, chunk offset %#x).",
                     i, chunk_offset, data_size, chunk_offset);
+            vkd3d_free(sections);
             return VKD3D_ERROR_INVALID_ARGUMENT;
         }
 
-        if ((ret = chunk_handler(chunk_ptr, chunk_size, chunk_tag, ctx)) < 0)
+        section = &sections[i];
+        section->tag = chunk_tag;
+        section->data.code = chunk_ptr;
+        section->data.size = chunk_size;
+    }
+
+    desc->tag = tag;
+    memcpy(desc->checksum, checksum, sizeof(checksum));
+    desc->version = version;
+    desc->size = total_size;
+    desc->section_count = chunk_count;
+    desc->sections = sections;
+
+    return VKD3D_OK;
+}
+
+void vkd3d_shader_free_dxbc(struct vkd3d_shader_dxbc_desc *dxbc)
+{
+    TRACE("dxbc %p.\n", dxbc);
+
+    vkd3d_free(dxbc->sections);
+}
+
+static int for_each_dxbc_section(const struct vkd3d_shader_code *dxbc,
+        struct vkd3d_shader_message_context *message_context, const char *source_name,
+        int (*section_handler)(const struct vkd3d_shader_dxbc_section_desc *section,
+        struct vkd3d_shader_message_context *message_context, void *ctx), void *ctx)
+{
+    struct vkd3d_shader_dxbc_desc desc;
+    unsigned int i;
+    int ret;
+
+    if ((ret = parse_dxbc(dxbc, message_context, source_name, &desc)) < 0)
+        return ret;
+
+    for (i = 0; i < desc.section_count; ++i)
+    {
+        if ((ret = section_handler(&desc.sections[i], message_context, ctx)) < 0)
             break;
     }
+
+    vkd3d_shader_free_dxbc(&desc);
 
     return ret;
 }
 
-static int shader_parse_signature(DWORD tag, const char *data, DWORD data_size,
-        struct vkd3d_shader_signature *s)
+int vkd3d_shader_parse_dxbc(const struct vkd3d_shader_code *dxbc,
+        uint32_t flags, struct vkd3d_shader_dxbc_desc *desc, char **messages)
+{
+    struct vkd3d_shader_message_context message_context;
+    int ret;
+
+    TRACE("dxbc {%p, %zu}, flags %#x, desc %p, messages %p.\n", dxbc->code, dxbc->size, flags, desc, messages);
+
+    if (messages)
+        *messages = NULL;
+    vkd3d_shader_message_context_init(&message_context, VKD3D_SHADER_LOG_INFO);
+
+    ret = parse_dxbc(dxbc, &message_context, NULL, desc);
+
+    vkd3d_shader_message_context_trace_messages(&message_context);
+    if (!vkd3d_shader_message_context_copy_messages(&message_context, messages) && ret >= 0)
+    {
+        vkd3d_shader_free_dxbc(desc);
+        ret = VKD3D_ERROR_OUT_OF_MEMORY;
+    }
+    vkd3d_shader_message_context_cleanup(&message_context);
+
+    if (ret < 0)
+        memset(desc, 0, sizeof(*desc));
+
+    return ret;
+}
+
+static int shader_parse_signature(const struct vkd3d_shader_dxbc_section_desc *section,
+        struct vkd3d_shader_message_context *message_context, struct vkd3d_shader_signature *s)
 {
     bool has_stream_index, has_min_precision;
     struct vkd3d_shader_signature_element *e;
+    const char *data = section->data.code;
+    uint32_t count, header_size;
     const char *ptr = data;
     unsigned int i;
-    uint32_t count;
 
-    if (!require_space(0, 2, sizeof(DWORD), data_size))
+    if (!require_space(0, 2, sizeof(uint32_t), section->data.size))
     {
-        WARN("Invalid data size %#x.\n", data_size);
+        WARN("Invalid data size %#zx.\n", section->data.size);
+        vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_DXBC_INVALID_SIGNATURE,
+                "Section size %zu is smaller than the minimum signature header size.\n", section->data.size);
         return VKD3D_ERROR_INVALID_ARGUMENT;
     }
 
     read_dword(&ptr, &count);
     TRACE("%u elements.\n", count);
 
-    skip_dword_unknown(&ptr, 1); /* It seems to always be 0x00000008. */
-
-    if (!require_space(ptr - data, count, 6 * sizeof(DWORD), data_size))
+    read_dword(&ptr, &header_size);
+    i = header_size / sizeof(uint32_t);
+    if (align(header_size, sizeof(uint32_t)) != header_size || i < 2
+            || !require_space(2, i - 2, sizeof(uint32_t), section->data.size))
     {
-        WARN("Invalid count %#x (data size %#x).\n", count, data_size);
+        WARN("Invalid header size %#x.\n", header_size);
+        vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_DXBC_INVALID_SIGNATURE,
+                "Signature header size %#x is invalid.\n", header_size);
+        return VKD3D_ERROR_INVALID_ARGUMENT;
+    }
+    skip_dword_unknown(&ptr, i - 2);
+
+    if (!require_space(ptr - data, count, 6 * sizeof(uint32_t), section->data.size))
+    {
+        WARN("Invalid count %#x (data size %#zx).\n", count, section->data.size);
         return VKD3D_ERROR_INVALID_ARGUMENT;
     }
 
@@ -1881,8 +1972,8 @@ static int shader_parse_signature(DWORD tag, const char *data, DWORD data_size,
         return VKD3D_ERROR_OUT_OF_MEMORY;
     }
 
-    has_min_precision = tag == TAG_OSG1 || tag == TAG_PSG1 || tag == TAG_ISG1;
-    has_stream_index = tag == TAG_OSG5 || has_min_precision;
+    has_min_precision = section->tag == TAG_OSG1 || section->tag == TAG_PSG1 || section->tag == TAG_ISG1;
+    has_stream_index = section->tag == TAG_OSG5 || has_min_precision;
 
     for (i = 0; i < count; ++i)
     {
@@ -1894,9 +1985,9 @@ static int shader_parse_signature(DWORD tag, const char *data, DWORD data_size,
             e[i].stream_index = 0;
 
         read_dword(&ptr, &name_offset);
-        if (!(e[i].semantic_name = shader_get_string(data, data_size, name_offset)))
+        if (!(e[i].semantic_name = shader_get_string(data, section->data.size, name_offset)))
         {
-            WARN("Invalid name offset %#x (data size %#x).\n", name_offset, data_size);
+            WARN("Invalid name offset %#x (data size %#zx).\n", name_offset, section->data.size);
             vkd3d_free(e);
             return VKD3D_ERROR_INVALID_ARGUMENT;
         }
@@ -1907,7 +1998,7 @@ static int shader_parse_signature(DWORD tag, const char *data, DWORD data_size,
         read_dword(&ptr, &mask);
         e[i].mask = mask & 0xff;
         e[i].used_mask = (mask >> 8) & 0xff;
-        switch (tag)
+        switch (section->tag)
         {
             case TAG_OSGN:
             case TAG_OSG1:
@@ -1935,11 +2026,12 @@ static int shader_parse_signature(DWORD tag, const char *data, DWORD data_size,
     return VKD3D_OK;
 }
 
-static int isgn_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
+static int isgn_handler(const struct vkd3d_shader_dxbc_section_desc *section,
+        struct vkd3d_shader_message_context *message_context, void *ctx)
 {
     struct vkd3d_shader_signature *is = ctx;
 
-    if (tag != TAG_ISGN)
+    if (section->tag != TAG_ISGN)
         return VKD3D_OK;
 
     if (is->elements)
@@ -1947,27 +2039,28 @@ static int isgn_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
         FIXME("Multiple input signatures.\n");
         vkd3d_shader_free_shader_signature(is);
     }
-    return shader_parse_signature(tag, data, data_size, is);
+    return shader_parse_signature(section, message_context, is);
 }
 
-int shader_parse_input_signature(const void *dxbc, size_t dxbc_length,
+int shader_parse_input_signature(const struct vkd3d_shader_code *dxbc,
         struct vkd3d_shader_message_context *message_context, struct vkd3d_shader_signature *signature)
 {
     int ret;
 
     memset(signature, 0, sizeof(*signature));
-    if ((ret = parse_dxbc(dxbc, dxbc_length, message_context, NULL, isgn_handler, signature)) < 0)
+    if ((ret = for_each_dxbc_section(dxbc, message_context, NULL, isgn_handler, signature)) < 0)
         ERR("Failed to parse input signature.\n");
 
     return ret;
 }
 
-static int shdr_handler(const char *data, DWORD data_size, DWORD tag, void *context)
+static int shdr_handler(const struct vkd3d_shader_dxbc_section_desc *section,
+        struct vkd3d_shader_message_context *message_context, void *context)
 {
     struct vkd3d_shader_desc *desc = context;
     int ret;
 
-    switch (tag)
+    switch (section->tag)
     {
         case TAG_ISGN:
         case TAG_ISG1:
@@ -1976,7 +2069,7 @@ static int shdr_handler(const char *data, DWORD data_size, DWORD tag, void *cont
                 FIXME("Multiple input signatures.\n");
                 break;
             }
-            if ((ret = shader_parse_signature(tag, data, data_size, &desc->input_signature)) < 0)
+            if ((ret = shader_parse_signature(section, message_context, &desc->input_signature)) < 0)
                 return ret;
             break;
 
@@ -1988,7 +2081,7 @@ static int shdr_handler(const char *data, DWORD data_size, DWORD tag, void *cont
                 FIXME("Multiple output signatures.\n");
                 break;
             }
-            if ((ret = shader_parse_signature(tag, data, data_size, &desc->output_signature)) < 0)
+            if ((ret = shader_parse_signature(section, message_context, &desc->output_signature)) < 0)
                 return ret;
             break;
 
@@ -1999,7 +2092,7 @@ static int shdr_handler(const char *data, DWORD data_size, DWORD tag, void *cont
                 FIXME("Multiple patch constant signatures.\n");
                 break;
             }
-            if ((ret = shader_parse_signature(tag, data, data_size, &desc->patch_constant_signature)) < 0)
+            if ((ret = shader_parse_signature(section, message_context, &desc->patch_constant_signature)) < 0)
                 return ret;
             break;
 
@@ -2007,8 +2100,8 @@ static int shdr_handler(const char *data, DWORD data_size, DWORD tag, void *cont
         case TAG_SHEX:
             if (desc->byte_code)
                 FIXME("Multiple shader code chunks.\n");
-            desc->byte_code = (const uint32_t *)data;
-            desc->byte_code_size = data_size;
+            desc->byte_code = section->data.code;
+            desc->byte_code_size = section->data.size;
             break;
 
         case TAG_AON9:
@@ -2020,7 +2113,7 @@ static int shdr_handler(const char *data, DWORD data_size, DWORD tag, void *cont
             break;
 
         default:
-            TRACE("Skipping chunk %#x.\n", tag);
+            TRACE("Skipping chunk %#x.\n", section->tag);
             break;
     }
 
@@ -2034,7 +2127,7 @@ void free_shader_desc(struct vkd3d_shader_desc *desc)
     vkd3d_shader_free_shader_signature(&desc->patch_constant_signature);
 }
 
-static int shader_extract_from_dxbc(const void *dxbc, size_t dxbc_length,
+static int shader_extract_from_dxbc(const struct vkd3d_shader_code *dxbc,
         struct vkd3d_shader_message_context *message_context, const char *source_name, struct vkd3d_shader_desc *desc)
 {
     int ret;
@@ -2045,7 +2138,7 @@ static int shader_extract_from_dxbc(const void *dxbc, size_t dxbc_length,
     memset(&desc->output_signature, 0, sizeof(desc->output_signature));
     memset(&desc->patch_constant_signature, 0, sizeof(desc->patch_constant_signature));
 
-    ret = parse_dxbc(dxbc, dxbc_length, message_context, source_name, shdr_handler, desc);
+    ret = for_each_dxbc_section(dxbc, message_context, source_name, shdr_handler, desc);
     if (!desc->byte_code)
         ret = VKD3D_ERROR_INVALID_ARGUMENT;
 
@@ -2061,7 +2154,9 @@ static int shader_extract_from_dxbc(const void *dxbc, size_t dxbc_length,
 int vkd3d_shader_sm4_parser_create(const struct vkd3d_shader_compile_info *compile_info,
         struct vkd3d_shader_message_context *message_context, struct vkd3d_shader_parser **parser)
 {
+    struct vkd3d_shader_instruction_array *instructions;
     struct vkd3d_shader_desc *shader_desc;
+    struct vkd3d_shader_instruction *ins;
     struct vkd3d_shader_sm4_parser *sm4;
     int ret;
 
@@ -2072,7 +2167,7 @@ int vkd3d_shader_sm4_parser_create(const struct vkd3d_shader_compile_info *compi
     }
 
     shader_desc = &sm4->p.shader_desc;
-    if ((ret = shader_extract_from_dxbc(compile_info->source.code, compile_info->source.size,
+    if ((ret = shader_extract_from_dxbc(&compile_info->source,
             message_context, compile_info->source_name, shader_desc)) < 0)
     {
         WARN("Failed to extract shader, vkd3d result %d.\n", ret);
@@ -2087,6 +2182,28 @@ int vkd3d_shader_sm4_parser_create(const struct vkd3d_shader_compile_info *compi
         free_shader_desc(shader_desc);
         vkd3d_free(sm4);
         return VKD3D_ERROR_INVALID_ARGUMENT;
+    }
+
+    instructions = &sm4->p.instructions;
+    while (!shader_sm4_is_end(&sm4->p))
+    {
+        if (!shader_instruction_array_reserve(instructions, instructions->count + 1))
+        {
+            ERR("Failed to allocate instructions.\n");
+            vkd3d_shader_parser_error(&sm4->p, VKD3D_SHADER_ERROR_TPF_OUT_OF_MEMORY, "Out of memory.");
+            shader_sm4_destroy(&sm4->p);
+            return VKD3D_ERROR_OUT_OF_MEMORY;
+        }
+        ins = &instructions->elements[instructions->count];
+        shader_sm4_read_instruction(&sm4->p, ins);
+
+        if (ins->handler_idx == VKD3DSIH_INVALID)
+        {
+            WARN("Encountered unrecognized or invalid instruction.\n");
+            shader_sm4_destroy(&sm4->p);
+            return VKD3D_ERROR_OUT_OF_MEMORY;
+        }
+        ++instructions->count;
     }
 
     *parser = &sm4->p;
@@ -2444,21 +2561,21 @@ static int shader_parse_static_samplers(struct root_signature_parser_context *co
     return VKD3D_OK;
 }
 
-static int shader_parse_root_signature(const char *data, unsigned int data_size,
+static int shader_parse_root_signature(const struct vkd3d_shader_code *data,
         struct vkd3d_shader_versioned_root_signature_desc *desc)
 {
     struct vkd3d_shader_root_signature_desc *v_1_0 = &desc->u.v_1_0;
     struct root_signature_parser_context context;
     unsigned int count, offset, version;
-    const char *ptr = data;
+    const char *ptr = data->code;
     int ret;
 
-    context.data = data;
-    context.data_size = data_size;
+    context.data = data->code;
+    context.data_size = data->size;
 
-    if (!require_space(0, 6, sizeof(DWORD), data_size))
+    if (!require_space(0, 6, sizeof(uint32_t), data->size))
     {
-        WARN("Invalid data size %#x.\n", data_size);
+        WARN("Invalid data size %#zx.\n", data->size);
         return VKD3D_ERROR_INVALID_ARGUMENT;
     }
 
@@ -2527,14 +2644,15 @@ static int shader_parse_root_signature(const char *data, unsigned int data_size,
     return VKD3D_OK;
 }
 
-static int rts0_handler(const char *data, DWORD data_size, DWORD tag, void *context)
+static int rts0_handler(const struct vkd3d_shader_dxbc_section_desc *section,
+        struct vkd3d_shader_message_context *message_context, void *context)
 {
     struct vkd3d_shader_versioned_root_signature_desc *desc = context;
 
-    if (tag != TAG_RTS0)
+    if (section->tag != TAG_RTS0)
         return VKD3D_OK;
 
-    return shader_parse_root_signature(data, data_size, desc);
+    return shader_parse_root_signature(&section->data, desc);
 }
 
 int vkd3d_shader_parse_root_signature(const struct vkd3d_shader_code *dxbc,
@@ -2550,7 +2668,7 @@ int vkd3d_shader_parse_root_signature(const struct vkd3d_shader_code *dxbc,
         *messages = NULL;
     vkd3d_shader_message_context_init(&message_context, VKD3D_SHADER_LOG_INFO);
 
-    ret = parse_dxbc(dxbc->code, dxbc->size, &message_context, NULL, rts0_handler, root_signature);
+    ret = for_each_dxbc_section(dxbc, &message_context, NULL, rts0_handler, root_signature);
     vkd3d_shader_message_context_trace_messages(&message_context);
     if (!vkd3d_shader_message_context_copy_messages(&message_context, messages))
         ret = VKD3D_ERROR_OUT_OF_MEMORY;

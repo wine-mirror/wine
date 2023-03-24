@@ -425,9 +425,10 @@ void vkd3d_shader_dump_shader(enum vkd3d_shader_source_type source_type,
             shader_get_source_type_suffix(source_type), shader->code, shader->size);
 }
 
-void vkd3d_shader_parser_init(struct vkd3d_shader_parser *parser,
+bool vkd3d_shader_parser_init(struct vkd3d_shader_parser *parser,
         struct vkd3d_shader_message_context *message_context, const char *source_name,
-        const struct vkd3d_shader_version *version, const struct vkd3d_shader_parser_ops *ops)
+        const struct vkd3d_shader_version *version, const struct vkd3d_shader_parser_ops *ops,
+        unsigned int instruction_reserve)
 {
     parser->message_context = message_context;
     parser->location.source_name = source_name;
@@ -435,6 +436,7 @@ void vkd3d_shader_parser_init(struct vkd3d_shader_parser *parser,
     parser->location.column = 0;
     parser->shader_version = *version;
     parser->ops = ops;
+    return shader_instruction_array_init(&parser->instructions, instruction_reserve);
 }
 
 void VKD3D_PRINTF_FUNC(3, 4) vkd3d_shader_parser_error(struct vkd3d_shader_parser *parser,
@@ -1053,9 +1055,10 @@ static int scan_with_parser(const struct vkd3d_shader_compile_info *compile_info
         struct vkd3d_shader_message_context *message_context, struct vkd3d_shader_parser *parser)
 {
     struct vkd3d_shader_scan_descriptor_info *scan_descriptor_info;
-    struct vkd3d_shader_instruction instruction;
+    struct vkd3d_shader_instruction *instruction;
     struct vkd3d_shader_scan_context context;
-    int ret;
+    int ret = VKD3D_OK;
+    unsigned int i;
 
     if ((scan_descriptor_info = vkd3d_find_struct(compile_info->next, SCAN_DESCRIPTOR_INFO)))
     {
@@ -1068,33 +1071,19 @@ static int scan_with_parser(const struct vkd3d_shader_compile_info *compile_info
     if (TRACE_ON())
     {
         vkd3d_shader_trace(parser);
-        vkd3d_shader_parser_reset(parser);
     }
 
-    while (!vkd3d_shader_parser_is_end(parser))
+    for (i = 0; i < parser->instructions.count; ++i)
     {
-        vkd3d_shader_parser_read_instruction(parser, &instruction);
-
-        if (instruction.handler_idx == VKD3DSIH_INVALID)
-        {
-            WARN("Encountered unrecognized or invalid instruction.\n");
-            if (scan_descriptor_info)
-                vkd3d_shader_free_scan_descriptor_info(scan_descriptor_info);
-            ret = VKD3D_ERROR_INVALID_SHADER;
-            goto done;
-        }
-
-        if ((ret = vkd3d_shader_scan_instruction(&context, &instruction)) < 0)
+        instruction = &parser->instructions.elements[i];
+        if ((ret = vkd3d_shader_scan_instruction(&context, instruction)) < 0)
         {
             if (scan_descriptor_info)
                 vkd3d_shader_free_scan_descriptor_info(scan_descriptor_info);
-            goto done;
+            break;
         }
     }
 
-    ret = parser->failed ? VKD3D_ERROR_INVALID_SHADER : VKD3D_OK;
-
-done:
     vkd3d_shader_scan_context_cleanup(&context);
     return ret;
 }
@@ -1182,7 +1171,6 @@ static int compile_dxbc_tpf(const struct vkd3d_shader_compile_info *compile_info
         struct vkd3d_shader_code *out, struct vkd3d_shader_message_context *message_context)
 {
     struct vkd3d_shader_scan_descriptor_info scan_descriptor_info;
-    struct vkd3d_shader_instruction instruction;
     struct vkd3d_shader_compile_info scan_info;
     struct spirv_compiler *spirv_compiler;
     struct vkd3d_shader_parser *parser;
@@ -1243,26 +1231,7 @@ static int compile_dxbc_tpf(const struct vkd3d_shader_compile_info *compile_info
         return VKD3D_ERROR;
     }
 
-    while (!vkd3d_shader_parser_is_end(parser))
-    {
-        vkd3d_shader_parser_read_instruction(parser, &instruction);
-
-        if (instruction.handler_idx == VKD3DSIH_INVALID)
-        {
-            WARN("Encountered unrecognized or invalid instruction.\n");
-            ret = VKD3D_ERROR_INVALID_SHADER;
-            break;
-        }
-
-        if ((ret = spirv_compiler_handle_instruction(spirv_compiler, &instruction)) < 0)
-            break;
-    }
-
-    if (parser->failed)
-        ret = VKD3D_ERROR_INVALID_SHADER;
-
-    if (ret >= 0)
-        ret = spirv_compiler_generate_spirv(spirv_compiler, compile_info, out);
+    ret = spirv_compiler_generate_spirv(spirv_compiler, compile_info, parser, out);
 
     spirv_compiler_destroy(spirv_compiler);
     vkd3d_shader_parser_destroy(parser);
@@ -1431,7 +1400,7 @@ int vkd3d_shader_parse_input_signature(const struct vkd3d_shader_code *dxbc,
         *messages = NULL;
     vkd3d_shader_message_context_init(&message_context, VKD3D_SHADER_LOG_INFO);
 
-    ret = shader_parse_input_signature(dxbc->code, dxbc->size, &message_context, signature);
+    ret = shader_parse_input_signature(dxbc, &message_context, signature);
     vkd3d_shader_message_context_trace_messages(&message_context);
     if (!vkd3d_shader_message_context_copy_messages(&message_context, messages))
         ret = VKD3D_ERROR_OUT_OF_MEMORY;
@@ -1580,4 +1549,107 @@ int vkd3d_shader_preprocess(const struct vkd3d_shader_compile_info *compile_info
 void vkd3d_shader_set_log_callback(PFN_vkd3d_log callback)
 {
     vkd3d_dbg_set_log_callback(callback);
+}
+
+static struct vkd3d_shader_param_node *shader_param_allocator_node_create(
+        struct vkd3d_shader_param_allocator *allocator)
+{
+    struct vkd3d_shader_param_node *node;
+
+    if (!(node = vkd3d_malloc(offsetof(struct vkd3d_shader_param_node, param[allocator->count * allocator->stride]))))
+        return NULL;
+    node->next = NULL;
+    return node;
+}
+
+static void shader_param_allocator_init(struct vkd3d_shader_param_allocator *allocator,
+        unsigned int count, unsigned int stride)
+{
+    allocator->count = max(count, 4);
+    allocator->stride = stride;
+    allocator->head = NULL;
+    allocator->current = NULL;
+    allocator->index = allocator->count;
+}
+
+static void shader_param_allocator_destroy(struct vkd3d_shader_param_allocator *allocator)
+{
+    struct vkd3d_shader_param_node *current = allocator->head;
+
+    while (current)
+    {
+        struct vkd3d_shader_param_node *next = current->next;
+        vkd3d_free(current);
+        current = next;
+    }
+}
+
+void *shader_param_allocator_get(struct vkd3d_shader_param_allocator *allocator, unsigned int count)
+{
+    void *params;
+
+    if (!count)
+        return NULL;
+
+    if (count > allocator->count - allocator->index)
+    {
+        struct vkd3d_shader_param_node *next = shader_param_allocator_node_create(allocator);
+
+        if (!next)
+            return NULL;
+        if (allocator->current)
+            allocator->current->next = next;
+        else
+            allocator->head = next;
+        allocator->current = next;
+        allocator->index = 0;
+    }
+
+    params = &allocator->current->param[allocator->index * allocator->stride];
+    allocator->index += count;
+    return params;
+}
+
+bool shader_instruction_array_init(struct vkd3d_shader_instruction_array *instructions, unsigned int reserve)
+{
+    memset(instructions, 0, sizeof(*instructions));
+    /* Size the parameter initial allocations so they are large enough for most shaders. The
+     * code path for chained allocations will be tested if a few shaders need to use it. */
+    shader_param_allocator_init(&instructions->dst_params, reserve - reserve / 8u,
+            sizeof(*instructions->elements->dst));
+    shader_param_allocator_init(&instructions->src_params, reserve * 2u, sizeof(*instructions->elements->src));
+    return shader_instruction_array_reserve(instructions, reserve);
+}
+
+bool shader_instruction_array_reserve(struct vkd3d_shader_instruction_array *instructions, unsigned int reserve)
+{
+    if (!vkd3d_array_reserve((void **)&instructions->elements, &instructions->capacity, reserve,
+            sizeof(*instructions->elements)))
+    {
+        ERR("Failed to allocate instructions.\n");
+        return false;
+    }
+    return true;
+}
+
+bool shader_instruction_array_add_icb(struct vkd3d_shader_instruction_array *instructions,
+        struct vkd3d_shader_immediate_constant_buffer *icb)
+{
+    if (!vkd3d_array_reserve((void **)&instructions->icbs, &instructions->icb_capacity, instructions->icb_count + 1,
+            sizeof(*instructions->icbs)))
+        return false;
+    instructions->icbs[instructions->icb_count++] = icb;
+    return true;
+}
+
+void shader_instruction_array_destroy(struct vkd3d_shader_instruction_array *instructions)
+{
+    unsigned int i;
+
+    vkd3d_free(instructions->elements);
+    shader_param_allocator_destroy(&instructions->dst_params);
+    shader_param_allocator_destroy(&instructions->src_params);
+    for (i = 0; i < instructions->icb_count; ++i)
+        vkd3d_free(instructions->icbs[i]);
+    vkd3d_free(instructions->icbs);
 }

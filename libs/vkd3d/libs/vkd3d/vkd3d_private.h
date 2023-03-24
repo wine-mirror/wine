@@ -207,56 +207,49 @@ struct vkd3d_cond
     CONDITION_VARIABLE cond;
 };
 
-static inline int vkd3d_mutex_init(struct vkd3d_mutex *lock)
+static inline void vkd3d_mutex_init(struct vkd3d_mutex *lock)
 {
     InitializeCriticalSection(&lock->lock);
-    return 0;
 }
 
-static inline int vkd3d_mutex_lock(struct vkd3d_mutex *lock)
+static inline void vkd3d_mutex_lock(struct vkd3d_mutex *lock)
 {
     EnterCriticalSection(&lock->lock);
-    return 0;
 }
 
-static inline int vkd3d_mutex_unlock(struct vkd3d_mutex *lock)
+static inline void vkd3d_mutex_unlock(struct vkd3d_mutex *lock)
 {
     LeaveCriticalSection(&lock->lock);
-    return 0;
 }
 
-static inline int vkd3d_mutex_destroy(struct vkd3d_mutex *lock)
+static inline void vkd3d_mutex_destroy(struct vkd3d_mutex *lock)
 {
     DeleteCriticalSection(&lock->lock);
-    return 0;
 }
 
-static inline int vkd3d_cond_init(struct vkd3d_cond *cond)
+static inline void vkd3d_cond_init(struct vkd3d_cond *cond)
 {
     InitializeConditionVariable(&cond->cond);
-    return 0;
 }
 
-static inline int vkd3d_cond_signal(struct vkd3d_cond *cond)
+static inline void vkd3d_cond_signal(struct vkd3d_cond *cond)
 {
     WakeConditionVariable(&cond->cond);
-    return 0;
 }
 
-static inline int vkd3d_cond_broadcast(struct vkd3d_cond *cond)
+static inline void vkd3d_cond_broadcast(struct vkd3d_cond *cond)
 {
     WakeAllConditionVariable(&cond->cond);
-    return 0;
 }
 
-static inline int vkd3d_cond_wait(struct vkd3d_cond *cond, struct vkd3d_mutex *lock)
+static inline void vkd3d_cond_wait(struct vkd3d_cond *cond, struct vkd3d_mutex *lock)
 {
-    return !SleepConditionVariableCS(&cond->cond, &lock->lock, INFINITE);
+    if (!SleepConditionVariableCS(&cond->cond, &lock->lock, INFINITE))
+        ERR("Could not sleep on the condition variable, error %u.\n", GetLastError());
 }
 
-static inline int vkd3d_cond_destroy(struct vkd3d_cond *cond)
+static inline void vkd3d_cond_destroy(struct vkd3d_cond *cond)
 {
-    return 0;
 }
 
 #else  /* _WIN32 */
@@ -280,49 +273,85 @@ struct vkd3d_cond
 };
 
 
-static inline int vkd3d_mutex_init(struct vkd3d_mutex *lock)
+static inline void vkd3d_mutex_init(struct vkd3d_mutex *lock)
 {
-    return pthread_mutex_init(&lock->lock, NULL);
+    int ret;
+
+    ret = pthread_mutex_init(&lock->lock, NULL);
+    if (ret)
+        ERR("Could not initialize the mutex, error %d.\n", ret);
 }
 
-static inline int vkd3d_mutex_lock(struct vkd3d_mutex *lock)
+static inline void vkd3d_mutex_lock(struct vkd3d_mutex *lock)
 {
-    return pthread_mutex_lock(&lock->lock);
+    int ret;
+
+    ret = pthread_mutex_lock(&lock->lock);
+    if (ret)
+        ERR("Could not lock the mutex, error %d.\n", ret);
 }
 
-static inline int vkd3d_mutex_unlock(struct vkd3d_mutex *lock)
+static inline void vkd3d_mutex_unlock(struct vkd3d_mutex *lock)
 {
-    return pthread_mutex_unlock(&lock->lock);
+    int ret;
+
+    ret = pthread_mutex_unlock(&lock->lock);
+    if (ret)
+        ERR("Could not unlock the mutex, error %d.\n", ret);
 }
 
-static inline int vkd3d_mutex_destroy(struct vkd3d_mutex *lock)
+static inline void vkd3d_mutex_destroy(struct vkd3d_mutex *lock)
 {
-    return pthread_mutex_destroy(&lock->lock);
+    int ret;
+
+    ret = pthread_mutex_destroy(&lock->lock);
+    if (ret)
+        ERR("Could not destroy the mutex, error %d.\n", ret);
 }
 
-static inline int vkd3d_cond_init(struct vkd3d_cond *cond)
+static inline void vkd3d_cond_init(struct vkd3d_cond *cond)
 {
-    return pthread_cond_init(&cond->cond, NULL);
+    int ret;
+
+    ret = pthread_cond_init(&cond->cond, NULL);
+    if (ret)
+        ERR("Could not initialize the condition variable, error %d.\n", ret);
 }
 
-static inline int vkd3d_cond_signal(struct vkd3d_cond *cond)
+static inline void vkd3d_cond_signal(struct vkd3d_cond *cond)
 {
-    return pthread_cond_signal(&cond->cond);
+    int ret;
+
+    ret = pthread_cond_signal(&cond->cond);
+    if (ret)
+        ERR("Could not signal the condition variable, error %d.\n", ret);
 }
 
-static inline int vkd3d_cond_broadcast(struct vkd3d_cond *cond)
+static inline void vkd3d_cond_broadcast(struct vkd3d_cond *cond)
 {
-    return pthread_cond_broadcast(&cond->cond);
+    int ret;
+
+    ret = pthread_cond_broadcast(&cond->cond);
+    if (ret)
+        ERR("Could not broadcast the condition variable, error %d.\n", ret);
 }
 
-static inline int vkd3d_cond_wait(struct vkd3d_cond *cond, struct vkd3d_mutex *lock)
+static inline void vkd3d_cond_wait(struct vkd3d_cond *cond, struct vkd3d_mutex *lock)
 {
-    return pthread_cond_wait(&cond->cond, &lock->lock);
+    int ret;
+
+    ret = pthread_cond_wait(&cond->cond, &lock->lock);
+    if (ret)
+        ERR("Could not wait on the condition variable, error %d.\n", ret);
 }
 
-static inline int vkd3d_cond_destroy(struct vkd3d_cond *cond)
+static inline void vkd3d_cond_destroy(struct vkd3d_cond *cond)
 {
-    return pthread_cond_destroy(&cond->cond);
+    int ret;
+
+    ret = pthread_cond_destroy(&cond->cond);
+    if (ret)
+        ERR("Could not destroy the condition variable, error %d.\n", ret);
 }
 
 #endif  /* _WIN32 */
@@ -391,30 +420,6 @@ D3D12_GPU_VIRTUAL_ADDRESS vkd3d_gpu_va_allocator_allocate(struct vkd3d_gpu_va_al
 void *vkd3d_gpu_va_allocator_dereference(struct vkd3d_gpu_va_allocator *allocator, D3D12_GPU_VIRTUAL_ADDRESS address);
 void vkd3d_gpu_va_allocator_free(struct vkd3d_gpu_va_allocator *allocator, D3D12_GPU_VIRTUAL_ADDRESS address);
 
-struct vkd3d_gpu_descriptor_allocation
-{
-    const struct d3d12_desc *base;
-    size_t count;
-};
-
-struct vkd3d_gpu_descriptor_allocator
-{
-    struct vkd3d_mutex mutex;
-
-    struct vkd3d_gpu_descriptor_allocation *allocations;
-    size_t allocations_size;
-    size_t allocation_count;
-};
-
-size_t vkd3d_gpu_descriptor_allocator_range_size_from_descriptor(
-        struct vkd3d_gpu_descriptor_allocator *allocator, const struct d3d12_desc *desc);
-bool vkd3d_gpu_descriptor_allocator_register_range(struct vkd3d_gpu_descriptor_allocator *allocator,
-        const struct d3d12_desc *base, size_t count);
-bool vkd3d_gpu_descriptor_allocator_unregister_range(
-        struct vkd3d_gpu_descriptor_allocator *allocator, const struct d3d12_desc *base);
-struct d3d12_descriptor_heap *vkd3d_gpu_descriptor_allocator_heap_from_descriptor(
-        struct vkd3d_gpu_descriptor_allocator *allocator, const struct d3d12_desc *desc);
-
 struct vkd3d_render_pass_key
 {
     unsigned int attachment_count;
@@ -471,14 +476,11 @@ static inline void vkd3d_private_data_destroy(struct vkd3d_private_data *data)
 
 static inline HRESULT vkd3d_private_store_init(struct vkd3d_private_store *store)
 {
-    int rc;
-
     list_init(&store->content);
 
-    if ((rc = vkd3d_mutex_init(&store->mutex)))
-        ERR("Failed to initialize mutex, error %d.\n", rc);
+    vkd3d_mutex_init(&store->mutex);
 
-    return hresult_from_errno(rc);
+    return S_OK;
 }
 
 static inline void vkd3d_private_store_destroy(struct vkd3d_private_store *store)
@@ -718,13 +720,17 @@ struct vkd3d_view_info
 
 struct d3d12_desc
 {
-    uint32_t magic;
-    VkDescriptorType vk_descriptor_type;
-    union
+    struct
     {
-        VkDescriptorBufferInfo vk_cbv_info;
-        struct vkd3d_view_info view_info;
-    } u;
+        uint32_t magic;
+        VkDescriptorType vk_descriptor_type;
+        union
+        {
+            VkDescriptorBufferInfo vk_cbv_info;
+            struct vkd3d_view_info view_info;
+        } u;
+    } s;
+    unsigned int index;
 };
 
 static inline struct d3d12_desc *d3d12_desc_from_cpu_handle(D3D12_CPU_DESCRIPTOR_HANDLE cpu_handle)
@@ -735,6 +741,11 @@ static inline struct d3d12_desc *d3d12_desc_from_cpu_handle(D3D12_CPU_DESCRIPTOR
 static inline struct d3d12_desc *d3d12_desc_from_gpu_handle(D3D12_GPU_DESCRIPTOR_HANDLE gpu_handle)
 {
     return (struct d3d12_desc *)(intptr_t)gpu_handle.ptr;
+}
+
+static inline void d3d12_desc_copy_raw(struct d3d12_desc *dst, const struct d3d12_desc *src)
+{
+    dst->s = src->s;
 }
 
 void d3d12_desc_copy(struct d3d12_desc *dst, const struct d3d12_desc *src, struct d3d12_device *device);
@@ -856,6 +867,17 @@ struct d3d12_descriptor_heap
 
     BYTE descriptors[];
 };
+
+static inline struct d3d12_descriptor_heap *d3d12_desc_get_descriptor_heap(const struct d3d12_desc *descriptor)
+{
+    return CONTAINING_RECORD(descriptor - descriptor->index, struct d3d12_descriptor_heap, descriptors);
+}
+
+static inline unsigned int d3d12_desc_heap_range_size(const struct d3d12_desc *descriptor)
+{
+    const struct d3d12_descriptor_heap *heap = d3d12_desc_get_descriptor_heap(descriptor);
+    return heap->desc.NumDescriptors - descriptor->index;
+}
 
 HRESULT d3d12_descriptor_heap_create(struct d3d12_device *device,
         const D3D12_DESCRIPTOR_HEAP_DESC *desc, struct d3d12_descriptor_heap **descriptor_heap);
@@ -1348,6 +1370,13 @@ struct vkd3d_cs_op_data
     } u;
 };
 
+struct d3d12_command_queue_op_array
+{
+    struct vkd3d_cs_op_data *ops;
+    size_t count;
+    size_t size;
+};
+
 /* ID3D12CommandQueue */
 struct d3d12_command_queue
 {
@@ -1365,10 +1394,15 @@ struct d3d12_command_queue
     struct d3d12_device *device;
 
     struct vkd3d_mutex op_mutex;
-    struct vkd3d_cs_op_data *ops;
-    size_t ops_count;
-    size_t ops_size;
+
+    /* These fields are protected by op_mutex. */
+    struct d3d12_command_queue_op_array op_queue;
     bool is_flushing;
+
+    /* This field is not protected by op_mutex, but can only be used
+     * by the thread that set is_flushing; when is_flushing is not
+     * set, aux_op_queue.count must be zero. */
+    struct d3d12_command_queue_op_array aux_op_queue;
 
     struct vkd3d_private_store private_store;
 };
@@ -1465,7 +1499,6 @@ struct d3d12_device
     PFN_vkd3d_signal_event signal_event;
     size_t wchar_size;
 
-    struct vkd3d_gpu_descriptor_allocator gpu_descriptor_allocator;
     struct vkd3d_gpu_va_allocator gpu_va_allocator;
 
     struct vkd3d_mutex mutex;
@@ -1491,6 +1524,7 @@ struct d3d12_device
     unsigned int queue_family_count;
     VkTimeDomainEXT vk_host_time_domain;
 
+    struct vkd3d_mutex blocked_queues_mutex;
     struct d3d12_command_queue *blocked_queues[VKD3D_MAX_DEVICE_BLOCKED_QUEUES];
     unsigned int blocked_queue_count;
 
