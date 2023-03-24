@@ -7873,6 +7873,34 @@ static const struct prov_method_sequence cache_req_seq7[] = {
     { 0 }
 };
 
+static const struct prov_method_sequence cache_req_seq8[] = {
+    NODE_CREATE_SEQ(&Provider_child),
+    { 0 }
+};
+
+static const struct prov_method_sequence cache_req_seq9[] = {
+    { &Provider_child, PROV_GET_PROPERTY_VALUE }, /* UIA_IsControlElementPropertyId */
+    /* Done twice on Windows, but we shouldn't need to replicate this. */
+    { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_IsControlElementPropertyId */
+    { &Provider_child, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    NODE_CREATE_SEQ(&Provider),
+    { &Provider, PROV_GET_PROPERTY_VALUE }, /* UIA_IsControlElementPropertyId */
+    /* Only done on Win10v1507 and below. */
+    { &Provider, FRAG_NAVIGATE, METHOD_OPTIONAL }, /* NavigateDirection_Parent */
+    { 0 }
+};
+
+static const struct prov_method_sequence cache_req_seq10[] = {
+    { &Provider_child, PROV_GET_PROPERTY_VALUE }, /* UIA_IsControlElementPropertyId */
+    /* Done twice on Windows, but we shouldn't need to replicate this. */
+    { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_IsControlElementPropertyId */
+    { &Provider_child, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    NODE_CREATE_SEQ(&Provider),
+    { &Provider, PROV_GET_PROPERTY_VALUE }, /* UIA_IsControlElementPropertyId */
+    { &Provider, PROV_GET_PROPERTY_VALUE }, /* UIA_ProviderDescriptionPropertyId. */
+    { 0 }
+};
+
 static const struct UiaCondition UiaTrueCondition  = { ConditionType_True };
 static const struct UiaCondition UiaFalseCondition = { ConditionType_False };
 static void test_UiaGetUpdatedCache(void)
@@ -8419,7 +8447,65 @@ static void test_UiaGetUpdatedCache(void)
 
     ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
     ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
+
+    /* Normalization navigation tests. */
     initialize_provider(&Provider, ProviderOptions_ServerSideProvider, NULL, FALSE);
+    initialize_provider(&Provider_child, ProviderOptions_ServerSideProvider, NULL, FALSE);
+
+    hr = UiaNodeFromProvider(&Provider_child.IRawElementProviderSimple_iface, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+    ok_method_sequence(cache_req_seq8, "cache_req_seq8");
+
+    /*
+     * Neither Provider_child or Provider match this condition, return
+     * nothing.
+     */
+    variant_init_bool(&v, FALSE);
+    set_property_condition(&prop_cond, UIA_IsControlElementPropertyId, &v, PropertyConditionFlags_None);
+    set_cache_request(&cache_req, (struct UiaCondition *)&prop_cond, TreeScope_Element, NULL, 0, NULL, 0, AutomationElementMode_Full);
+    tree_struct = NULL; out_req = NULL;
+    hr = UiaGetUpdatedCache(node, &cache_req, NormalizeState_View, NULL, &out_req, &tree_struct);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!out_req, "out_req != NULL\n");
+    ok(!!tree_struct, "tree_struct == NULL\n");
+    ok(!wcscmp(tree_struct, L""), "tree structure %s\n", debugstr_w(tree_struct));
+    SysFreeString(tree_struct);
+    ok_method_sequence(cache_req_seq9, "cache_req_seq9");
+
+    /*
+     * Provider now matches our condition, we'll get Provider in the cache
+     * request.
+     */
+    variant_init_bool(&v, FALSE);
+    set_property_override(&prop_override, UIA_IsControlElementPropertyId, &v);
+    set_provider_prop_override(&Provider, &prop_override, 1);
+    init_node_provider_desc(&exp_node_desc[0], GetCurrentProcessId(), NULL);
+    add_provider_desc(&exp_node_desc[0], L"Main", L"Provider", TRUE);
+
+    set_cache_request(&cache_req, (struct UiaCondition *)&prop_cond, TreeScope_Element, NULL, 0, NULL, 0, AutomationElementMode_Full);
+    tree_struct = NULL; out_req = NULL;
+    hr = UiaGetUpdatedCache(node, &cache_req, NormalizeState_View, NULL, &out_req, &tree_struct);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!out_req, "out_req == NULL\n");
+    ok(!!tree_struct, "tree_struct == NULL\n");
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+
+    exp_lbound[0] = exp_lbound[1] = 0;
+    exp_elems[0] = exp_elems[1] = 1;
+    test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+    ok(!wcscmp(tree_struct, L"P)"), "tree structure %s\n", debugstr_w(tree_struct));
+    ok_method_sequence(cache_req_seq10, "cache_req_seq10");
+
+    ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
+    SafeArrayDestroy(out_req);
+    SysFreeString(tree_struct);
+    VariantClear(&v);
+
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
+    ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
+    initialize_provider(&Provider, ProviderOptions_ServerSideProvider, NULL, FALSE);
+    initialize_provider(&Provider_child, ProviderOptions_ServerSideProvider, NULL, FALSE);
 
     IUnknown_Release(unk_ns);
     CoUninitialize();

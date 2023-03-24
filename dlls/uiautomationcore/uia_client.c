@@ -2992,6 +2992,31 @@ static HRESULT uia_condition_check(HUIANODE node, struct UiaCondition *condition
     }
 }
 
+static HRESULT uia_node_normalize(HUIANODE huianode, struct UiaCondition *cond, HUIANODE *normalized_node)
+{
+    struct uia_node *node = impl_from_IWineUiaNode((IWineUiaNode *)huianode);
+    HRESULT hr;
+
+    *normalized_node = NULL;
+    if (cond)
+    {
+        hr = uia_condition_check(huianode, cond);
+        if (FAILED(hr))
+            return hr;
+
+        /*
+         * If our initial node doesn't match our normalization condition, need
+         * to get the nearest ancestor that does.
+         */
+        if (!uia_condition_matched(hr))
+            return conditional_navigate_uia_node(node, NavigateDirection_Parent, cond, normalized_node);
+    }
+
+    *normalized_node = huianode;
+    IWineUiaNode_AddRef(&node->IWineUiaNode_iface);
+    return S_OK;
+}
+
 /***********************************************************************
  *          UiaGetUpdatedCache (uiautomationcore.@)
  */
@@ -3001,6 +3026,7 @@ HRESULT WINAPI UiaGetUpdatedCache(HUIANODE huianode, struct UiaCacheRequest *cac
     struct uia_node *node = unsafe_impl_from_IWineUiaNode((IWineUiaNode *)huianode);
     struct UiaCondition *cond;
     SAFEARRAYBOUND sabound[2];
+    HUIANODE ret_node;
     SAFEARRAY *sa;
     LONG idx[2];
     HRESULT hr;
@@ -3052,17 +3078,14 @@ HRESULT WINAPI UiaGetUpdatedCache(HUIANODE huianode, struct UiaCacheRequest *cac
         return E_INVALIDARG;
     }
 
-    if (cond)
-    {
-        hr = uia_condition_check(huianode, cond);
-        if (FAILED(hr))
-            return hr;
+    hr = uia_node_normalize(huianode, cond, &ret_node);
+    if (FAILED(hr))
+        return hr;
 
-        if (!uia_condition_matched(hr))
-        {
-            *tree_struct = SysAllocString(L"");
-            return S_OK;
-        }
+    if (!ret_node)
+    {
+        *tree_struct = SysAllocString(L"");
+        return S_OK;
     }
 
     sabound[0].cElements = 1;
@@ -3071,51 +3094,44 @@ HRESULT WINAPI UiaGetUpdatedCache(HUIANODE huianode, struct UiaCacheRequest *cac
     if (!(sa = SafeArrayCreate(VT_VARIANT, 2, sabound)))
     {
         WARN("Failed to create safearray\n");
-        return E_FAIL;
+        hr = E_FAIL;
+        goto exit;
     }
 
-    get_variant_for_node(huianode, &v);
+    get_variant_for_node(ret_node, &v);
     idx[0] = idx[1] = 0;
 
     hr = SafeArrayPutElement(sa, idx, &v);
     if (FAILED(hr))
-    {
-        SafeArrayDestroy(sa);
-        return hr;
-    }
+        goto exit;
 
     idx[0] = 0;
     VariantClear(&v);
     for (i = 0; i < cache_req->cProperties; i++)
     {
-        hr = UiaGetPropertyValue(huianode, cache_req->pProperties[i], &v);
+        hr = UiaGetPropertyValue(ret_node, cache_req->pProperties[i], &v);
         /* Don't fail on unimplemented properties. */
         if (FAILED(hr) && hr != E_NOTIMPL)
-        {
-            SafeArrayDestroy(sa);
-            return hr;
-        }
+            goto exit;
 
         idx[1] = 1 + i;
         hr = SafeArrayPutElement(sa, idx, &v);
         VariantClear(&v);
         if (FAILED(hr))
-        {
-            SafeArrayDestroy(sa);
-            return hr;
-        }
+            goto exit;
     }
-
-    /*
-     * AddRef huianode since we're returning a reference to the same node we
-     * passed in, rather than creating a new one.
-     */
-    IWineUiaNode_AddRef(&node->IWineUiaNode_iface);
 
     *out_req = sa;
     *tree_struct = SysAllocString(L"P)");
 
-    return S_OK;
+exit:
+    if (FAILED(hr))
+    {
+        SafeArrayDestroy(sa);
+        UiaNodeRelease(ret_node);
+    }
+
+    return hr;
 }
 
 /***********************************************************************
