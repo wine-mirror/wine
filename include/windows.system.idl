@@ -28,13 +28,136 @@ import "windows.foundation.idl";
 
 namespace Windows.System
 {
+    typedef enum DispatcherQueuePriority DispatcherQueuePriority;
+
+    interface IDispatcherQueue;
+    interface IDispatcherQueue2;
+    interface IDispatcherQueueController;
+    interface IDispatcherQueueControllerStatics;
+    interface IDispatcherQueueShutdownStartingEventArgs;
+    interface IDispatcherQueueStatics;
+    interface IDispatcherQueueTimer;
     interface IUser;
     interface IUserStatics;
     interface IUserChangedEventArgs;
     interface IUserChangedEventArgs2;
 
+    runtimeclass DispatcherQueue;
+    runtimeclass DispatcherQueueController;
+    runtimeclass DispatcherQueueShutdownStartingEventArgs;
+    runtimeclass DispatcherQueueTimer;
     runtimeclass User;
     runtimeclass UserChangedEventArgs;
+
+    declare
+    {
+        interface Windows.Foundation.TypedEventHandler<Windows.System.DispatcherQueue *, IInspectable *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.System.DispatcherQueue *, Windows.System.DispatcherQueueShutdownStartingEventArgs *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.System.DispatcherQueueTimer *, IInspectable *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0)
+    ]
+    enum DispatcherQueuePriority
+    {
+        Low    = -10,
+        Normal = 0,
+        High   = 10,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        uuid(dfa2dc9c-1a2d-4917-98f2-939af1d6e0c8)
+    ]
+    delegate HRESULT DispatcherQueueHandler();
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        exclusiveto(Windows.System.DispatcherQueue),
+        uuid(603e88e4-a338-4ffe-a457-a5cfb9ceb899)
+    ]
+    interface IDispatcherQueue : IInspectable
+    {
+        HRESULT CreateTimer([out, retval] Windows.System.DispatcherQueueTimer **result);
+        [overload("TryEnqueue")] HRESULT TryEnqueue([in] Windows.System.DispatcherQueueHandler *callback, [out, retval] boolean *result);
+        [overload("TryEnqueue")] HRESULT TryEnqueueWithPriority([in] Windows.System.DispatcherQueuePriority priority, [in] Windows.System.DispatcherQueueHandler *callback,
+                                                                [out, retval] boolean *result);
+        [eventadd] HRESULT ShutdownStarting([in] Windows.Foundation.TypedEventHandler<Windows.System.DispatcherQueue *, Windows.System.DispatcherQueueShutdownStartingEventArgs *> *handler,
+                                            [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT ShutdownStarting([in] EventRegistrationToken token);
+        [eventadd] HRESULT ShutdownCompleted([in] Windows.Foundation.TypedEventHandler<Windows.System.DispatcherQueue *, IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT ShutdownCompleted([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        exclusiveto(Windows.System.DispatcherQueue),
+        uuid(c822c647-30ef-506e-bd1e-a647ae6675ff)
+    ]
+    interface IDispatcherQueue2 : IInspectable
+    {
+        [propget] HRESULT HasThreadAccess([out, retval] boolean *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        exclusiveto(Windows.System.DispatcherQueueController),
+        uuid(22f34e66-50db-4e36-a98d-61c01b384d20)
+    ]
+    interface IDispatcherQueueController : IInspectable
+    {
+        [propget] HRESULT DispatcherQueue([out, retval] Windows.System.DispatcherQueue **value);
+        HRESULT ShutdownQueueAsync([out, retval] Windows.Foundation.IAsyncAction **operation);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        exclusiveto(Windows.System.DispatcherQueueController),
+        uuid(0a6c98e0-5198-49a2-a313-3f70d1f13c27)
+    ]
+    interface IDispatcherQueueControllerStatics : IInspectable
+    {
+        HRESULT CreateOnDedicatedThread([out, retval] Windows.System.DispatcherQueueController **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        exclusiveto(Windows.System.DispatcherQueueShutdownStartingEventArgs),
+        uuid(c4724c4c-ff97-40c0-a226-cc0aaa545e89)
+    ]
+    interface IDispatcherQueueShutdownStartingEventArgs : IInspectable
+    {
+        HRESULT GetDeferral([out, retval] Windows.Foundation.Deferral **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        exclusiveto(Windows.System.DispatcherQueue),
+        uuid(a96d83d7-9371-4517-9245-d0824ac12c74)
+    ]
+    interface IDispatcherQueueStatics : IInspectable
+    {
+        HRESULT GetForCurrentThread([out, retval] Windows.System.DispatcherQueue **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        exclusiveto(Windows.System.DispatcherQueueTimer),
+        uuid(5feabb1d-a31c-4727-b1ac-37454649d56a)
+    ]
+    interface IDispatcherQueueTimer : IInspectable
+    {
+        [propget] HRESULT Interval([out, retval] Windows.Foundation.TimeSpan *value);
+        [propput] HRESULT Interval([in] Windows.Foundation.TimeSpan value);
+        [propget] HRESULT IsRunning([out, retval] boolean *value);
+        [propget] HRESULT IsRepeating([out, retval] boolean *value);
+        [propput] HRESULT IsRepeating([in] boolean value);
+        HRESULT Start();
+        HRESULT Stop();
+        [eventadd] HRESULT Tick([in] Windows.Foundation.TypedEventHandler<Windows.System.DispatcherQueueTimer *, IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT Tick([in] EventRegistrationToken token);
+    }
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -44,6 +167,47 @@ namespace Windows.System
     interface IUserChangedEventArgs : IInspectable
     {
         [propget] HRESULT User([out, retval] Windows.System.User **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        marshaling_behavior(agile),
+        static(Windows.System.IDispatcherQueueStatics, Windows.Foundation.UniversalApiContract, 5.0),
+        threading(both)
+    ]
+    runtimeclass DispatcherQueue
+    {
+        [default] interface Windows.System.IDispatcherQueue;
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.System.IDispatcherQueue2;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        marshaling_behavior(agile),
+        static(Windows.System.IDispatcherQueueControllerStatics, Windows.Foundation.UniversalApiContract, 5.0),
+        threading(both)
+    ]
+    runtimeclass DispatcherQueueController
+    {
+        [default] interface Windows.System.IDispatcherQueueController;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass DispatcherQueueShutdownStartingEventArgs
+    {
+        [default] interface Windows.System.IDispatcherQueueShutdownStartingEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass DispatcherQueueTimer
+    {
+        [default] interface Windows.System.IDispatcherQueueTimer;
     }
 
     [
