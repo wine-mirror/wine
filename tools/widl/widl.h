@@ -99,7 +99,6 @@ extern void end_cplusplus_guard(FILE *fp);
 
 extern attr_t *attr_int( enum attr_type attr_type, unsigned int val );
 extern attr_t *attr_ptr( enum attr_type attr_type, void *val );
-extern attr_t *make_custom_attr( struct uuid *id, expr_t *pval );
 
 extern int is_attr( const attr_list_t *list, enum attr_type attr_type );
 extern int is_ptrchain_attr( const var_t *var, enum attr_type attr_type );

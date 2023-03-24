@@ -625,7 +625,10 @@ attribute
         | tCONTRACT '(' contract_req ')'        { $$ = attr_ptr( ATTR_CONTRACT, $3 ); }
         | tCONTRACTVERSION '(' contract_ver ')' { $$ = attr_int( ATTR_CONTRACTVERSION, $3 ); }
         | tCONTROL                              { $$ = attr_int( ATTR_CONTROL, 0 ); }
-        | tCUSTOM '(' aUUID ',' expr_const ')'  { $$ = make_custom_attr( $3, $5 ); }
+        | tCUSTOM '(' aUUID ',' expr_const ')'  { attr_custdata_t *data = xmalloc( sizeof(*data) );
+                                                  data->id = *$3; data->pval = $5;
+                                                  $$ = attr_ptr( ATTR_CUSTOM, data );
+                                                }
         | tDECODE                               { $$ = attr_int( ATTR_DECODE, 0 ); }
         | tDEFAULT                              { $$ = attr_int( ATTR_DEFAULT, 0 ); }
         | tDEFAULTBIND                          { $$ = attr_int( ATTR_DEFAULTBIND, 0 ); }

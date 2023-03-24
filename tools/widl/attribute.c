@@ -40,17 +40,6 @@ attr_t *attr_ptr( enum attr_type attr_type, void *val )
     return a;
 }
 
-attr_t *make_custom_attr( struct uuid *id, expr_t *pval )
-{
-    attr_t *a = xmalloc( sizeof(attr_t) );
-    attr_custdata_t *cstdata = xmalloc( sizeof(attr_custdata_t) );
-    a->type = ATTR_CUSTOM;
-    cstdata->id = *id;
-    cstdata->pval = pval;
-    a->u.pval = cstdata;
-    return a;
-}
-
 int is_attr( const attr_list_t *list, enum attr_type attr_type )
 {
     const attr_t *attr;
