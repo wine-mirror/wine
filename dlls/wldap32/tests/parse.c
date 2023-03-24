@@ -349,6 +349,33 @@ static void test_ldap_compare( LDAP *ld )
     ok( ret == LDAP_UNDEFINED_TYPE, "ldap_compare_ext_sA should fail, got %#lx\n", ret );
 }
 
+static void test_ldap_delete( LDAP *ld )
+{
+    ULONG ret, num;
+
+    ret = ldap_deleteA( NULL, NULL );
+    ok( ret == (ULONG)-1, "ldap_deleteA should fail, got %#lx\n", ret );
+    ret = ldap_deleteA( NULL, (char *)"" );
+    ok( ret == (ULONG)-1, "ldap_deleteA should fail, got %#lx\n", ret );
+
+    ret = ldap_delete_sA( NULL, NULL );
+    ok( ret == LDAP_PARAM_ERROR, "ldap_delete_sA should fail, got %#lx\n", ret );
+    ret = ldap_delete_sA( NULL, (char *)"" );
+    ok( ret == LDAP_PARAM_ERROR, "ldap_delete_sA should fail, got %#lx\n", ret );
+
+    ret = ldap_delete_extA( NULL, NULL, NULL, NULL, NULL );
+    ok( ret == LDAP_PARAM_ERROR, "ldap_delete_extA should fail, got %#lx\n", ret );
+    ret = ldap_delete_extA( NULL, (char *)"", NULL, NULL, &num );
+    ok( ret == LDAP_PARAM_ERROR, "ldap_delete_extA should fail, got %#lx\n", ret );
+    ret = ldap_delete_extA( ld, (char *)"", NULL, NULL, NULL );
+    ok( ret == LDAP_PARAM_ERROR, "ldap_delete_extA should fail, got %#lx\n", ret );
+
+    ret = ldap_delete_ext_sA( NULL, NULL, NULL, NULL );
+    ok( ret == LDAP_PARAM_ERROR, "ldap_delete_ext_sA should fail, got %#lx\n", ret );
+    ret = ldap_delete_ext_sA( NULL, (char *)"", NULL, NULL );
+    ok( ret == LDAP_PARAM_ERROR, "ldap_delete_ext_sA should fail, got %#lx\n", ret );
+}
+
 static void test_ldap_server_control( void )
 {
     /* SEQUENCE  { INTEGER :: 0x07 } */
@@ -478,6 +505,7 @@ START_TEST (parse)
     test_ldap_add( ld );
     test_ldap_modify( ld );
     test_ldap_compare( ld );
+    test_ldap_delete( ld );
     test_ldap_parse_sort_control( ld );
     test_ldap_search_extW( ld );
     test_ldap_get_optionW( ld );

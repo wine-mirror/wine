@@ -72,7 +72,7 @@ ULONG CDECL ldap_delete_extA( LDAP *ld, char *dn, LDAPControlA **serverctrls, LD
 
     TRACE( "(%p, %s, %p, %p, %p)\n", ld, debugstr_a(dn), serverctrls, clientctrls, message );
 
-    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if (!ld || !message) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (serverctrls && !(serverctrlsW = controlarrayAtoW( serverctrls ))) goto exit;
@@ -99,9 +99,9 @@ ULONG CDECL ldap_delete_extW( LDAP *ld, WCHAR *dn, LDAPControlW **serverctrls, L
 
     TRACE( "(%p, %s, %p, %p, %p)\n", ld, debugstr_w(dn), serverctrls, clientctrls, message );
 
-    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if (!ld || !message) return WLDAP32_LDAP_PARAM_ERROR;
 
-    if (dn && !(dnU = strWtoU( dn ))) goto exit;
+    if (!(dnU = dn ? strWtoU( dn ) : strdup( "" ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
     else
@@ -155,7 +155,7 @@ ULONG CDECL ldap_delete_ext_sW( LDAP *ld, WCHAR *dn, LDAPControlW **serverctrls,
 
     if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
-    if (dn && !(dnU = strWtoU( dn ))) goto exit;
+    if (!(dnU = dn ? strWtoU( dn ) : strdup( "" ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
     else
