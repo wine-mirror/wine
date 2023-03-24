@@ -29,6 +29,22 @@
 
 #include <wine/test.h>
 
+static BOOL is_process_elevated(void)
+{
+    HANDLE token;
+    if (OpenProcessToken( GetCurrentProcess(), TOKEN_QUERY, &token ))
+    {
+        TOKEN_ELEVATION_TYPE type;
+        DWORD size;
+        BOOL ret;
+
+        ret = GetTokenInformation( token, TokenElevationType, &type, sizeof(type), &size );
+        CloseHandle( token );
+        return (ret && type == TokenElevationTypeFull);
+    }
+    return FALSE;
+}
+
 static void test_Connect(void)
 {
     WCHAR comp_name[MAX_COMPUTERNAME_LENGTH + 1];
@@ -73,7 +89,8 @@ static void test_Connect(void)
     V_BSTR(&v_comp) = SysAllocString(comp_name);
 
     hr = ITaskService_Connect(service, v_comp, v_null, v_null, v_null);
-    ok(hr == S_OK || hr == E_ACCESSDENIED /* not an administrator */, "Connect error %#lx\n", hr);
+    ok(hr == S_OK || (hr == E_ACCESSDENIED && !is_process_elevated()),
+       "Connect error %#lx\n", hr);
     was_connected = hr == S_OK;
     SysFreeString(V_BSTR(&v_comp));
 
