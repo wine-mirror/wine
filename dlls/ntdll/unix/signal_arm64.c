@@ -1615,6 +1615,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
 
     if ((i386_context = get_cpu_area( IMAGE_FILE_MACHINE_I386 )))
     {
+        XMM_SAVE_AREA32 *fpu = (XMM_SAVE_AREA32 *)i386_context->ExtendedRegisters;
         i386_context->ContextFlags = CONTEXT_I386_ALL;
         i386_context->Eax = (ULONG_PTR)entry;
         i386_context->Ebx = (arg == peb ? (ULONG_PTR)wow_peb : (ULONG_PTR)arg);
@@ -1627,8 +1628,9 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
         i386_context->SegGs = 0x2b;
         i386_context->SegSs = 0x2b;
         i386_context->EFlags = 0x202;
-        i386_context->FloatSave.ControlWord = 0x27f;
-        ((XSAVE_FORMAT *)i386_context->ExtendedRegisters)->MxCsr = 0x1f80;
+        fpu->ControlWord = 0x27f;
+        fpu->MxCsr = 0x1f80;
+        fpux_to_fpu( &i386_context->FloatSave, fpu );
     }
     else if ((arm_context = get_cpu_area( IMAGE_FILE_MACHINE_ARMNT )))
     {
