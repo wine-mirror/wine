@@ -722,7 +722,7 @@ static void test_GetTask(void)
     {
         { 0, S_OK },
         { TASK_CREATE, S_OK },
-        { TASK_UPDATE, 0x80070002 /* HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) */ },
+        { TASK_UPDATE, __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) },
         { TASK_CREATE | TASK_UPDATE, S_OK }
     };
     static const struct
@@ -730,8 +730,8 @@ static void test_GetTask(void)
         DWORD flags, hr;
     } open_existing_task[] =
     {
-        { 0, 0x800700b7 /* HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS) */ },
-        { TASK_CREATE, 0x800700b7 /* HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS) */ },
+        { 0, __HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS) },
+        { TASK_CREATE, __HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS) },
         { TASK_UPDATE, S_OK },
         { TASK_CREATE | TASK_UPDATE, S_OK }
     };
