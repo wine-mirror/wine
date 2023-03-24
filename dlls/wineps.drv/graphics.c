@@ -375,30 +375,37 @@ BOOL CDECL PSDRV_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT* counts, 
     return TRUE;
 }
 
+static BOOL poly_bezier( PHYSDEV dev, const POINT *pt0, const POINT *pts, DWORD count)
+{
+    POINT dev_pts[3];
+    DWORD i;
+
+    TRACE( "\n" );
+
+    dev_pts[0] = *pt0;
+    LPtoDP( dev->hdc, dev_pts, 1 );
+
+    PSDRV_WriteSpool( dev, "%PolyBezier\n", 12 );
+    PSDRV_SetPen( dev );
+    PSDRV_SetClip( dev );
+    PSDRV_WriteMoveTo( dev, dev_pts[0].x, dev_pts[0].y );
+    for (i = 0; i < count; i += 3)
+    {
+        memcpy( dev_pts, pts, sizeof(dev_pts) );
+        LPtoDP( dev->hdc, dev_pts, 3 );
+        PSDRV_WriteCurveTo( dev, dev_pts );
+    }
+    PSDRV_DrawLine(dev);
+    PSDRV_ResetClip(dev);
+    return TRUE;
+}
 
 /***********************************************************************
  *           PSDRV_PolyBezier
  */
 BOOL CDECL PSDRV_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD count )
 {
-    DWORD i;
-    POINT *dev_pts;
-
-    TRACE("\n");
-
-    if (!(dev_pts = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*dev_pts) ))) return FALSE;
-    memcpy( dev_pts, pts, count * sizeof(*dev_pts) );
-    LPtoDP( dev->hdc, dev_pts, count );
-
-    PSDRV_WriteSpool(dev, "%PolyBezier\n",12);
-    PSDRV_SetPen(dev);
-    PSDRV_SetClip(dev);
-    PSDRV_WriteMoveTo(dev, dev_pts[0].x, dev_pts[0].y );
-    for (i = 1; i < count; i += 3) PSDRV_WriteCurveTo( dev, dev_pts + i );
-    PSDRV_DrawLine(dev);
-    PSDRV_ResetClip(dev);
-    HeapFree( GetProcessHeap(), 0, dev_pts );
-    return TRUE;
+    return poly_bezier( dev, pts, pts + 1, count - 1 );
 }
 
 
@@ -407,26 +414,10 @@ BOOL CDECL PSDRV_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD count )
  */
 BOOL CDECL PSDRV_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD count )
 {
-    DWORD i;
-    POINT *dev_pts;
+    POINT pt0;
 
-    TRACE("\n");
-
-    count++;  /* add initial position */
-    if (!(dev_pts = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*dev_pts) ))) return FALSE;
-    GetCurrentPositionEx( dev->hdc, dev_pts );
-    memcpy( dev_pts + 1, pts, (count - 1) * sizeof(*dev_pts) );
-    LPtoDP( dev->hdc, dev_pts, count );
-
-    PSDRV_WriteSpool(dev, "%PolyBezier\n",12);
-    PSDRV_SetPen(dev);
-    PSDRV_SetClip(dev);
-    PSDRV_WriteMoveTo(dev, dev_pts[0].x, dev_pts[0].y );
-    for (i = 1; i < count; i += 3) PSDRV_WriteCurveTo( dev, dev_pts + i );
-    PSDRV_DrawLine(dev);
-    PSDRV_ResetClip(dev);
-    HeapFree( GetProcessHeap(), 0, dev_pts );
-    return TRUE;
+    GetCurrentPositionEx( dev->hdc, &pt0 );
+    return poly_bezier( dev, &pt0, pts, count );
 }
 
 
