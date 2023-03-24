@@ -26,48 +26,44 @@ import "eventtoken.idl";
 import "windowscontracts.idl";
 import "windows.foundation.idl";
 
-namespace Windows {
-    namespace System {
-        interface IUser;
-        interface IUserStatics;
-        interface IUserChangedEventArgs;
-        interface IUserChangedEventArgs2;
-        runtimeclass User;
-        runtimeclass UserChangedEventArgs;
+namespace Windows.System
+{
+    interface IUser;
+    interface IUserStatics;
+    interface IUserChangedEventArgs;
+    interface IUserChangedEventArgs2;
+
+    runtimeclass User;
+    runtimeclass UserChangedEventArgs;
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.System.UserChangedEventArgs),
+        uuid(086459dc-18c6-48db-bc99-724fb9203ccc)
+    ]
+    interface IUserChangedEventArgs : IInspectable
+    {
+        [propget] HRESULT User([out, retval] Windows.System.User **value);
     }
-}
 
-namespace Windows {
-    namespace System {
-        [
-            contract(Windows.Foundation.UniversalApiContract, 1.0),
-            exclusiveto(Windows.System.UserChangedEventArgs),
-            uuid(086459dc-18c6-48db-bc99-724fb9203ccc)
-        ]
-        interface IUserChangedEventArgs : IInspectable
-        {
-            [propget] HRESULT User([out, retval] Windows.System.User** value);
-        }
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.System.IUserStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both),
+    ]
+    runtimeclass User
+    {
+        [default] interface Windows.System.IUser;
+    }
 
-        [
-            contract(Windows.Foundation.UniversalApiContract, 1.0),
-            marshaling_behavior(agile),
-            static(Windows.System.IUserStatics, Windows.Foundation.UniversalApiContract, 1.0),
-            threading(both),
-        ]
-        runtimeclass User
-        {
-            [default] interface Windows.System.IUser;
-        }
-
-        [
-            contract(Windows.Foundation.UniversalApiContract, 1.0),
-            marshaling_behavior(agile)
-        ]
-        runtimeclass UserChangedEventArgs
-        {
-            [default] interface Windows.System.IUserChangedEventArgs;
-            [contract(Windows.Foundation.UniversalApiContract, 10.0)] interface Windows.System.IUserChangedEventArgs2;
-        }
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass UserChangedEventArgs
+    {
+        [default] interface Windows.System.IUserChangedEventArgs;
+        [contract(Windows.Foundation.UniversalApiContract, 10.0)] interface Windows.System.IUserChangedEventArgs2;
     }
 }
