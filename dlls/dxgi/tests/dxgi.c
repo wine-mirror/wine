@@ -4936,9 +4936,12 @@ static void test_swapchain_backbuffer_index(IUnknown *device, BOOL is_d3d12)
     DXGI_SWAP_CHAIN_DESC swapchain_desc;
     unsigned int index, expected_index;
     IDXGISwapChain3 *swapchain3;
+    ID3D12Device *d3d12_device;
+    ID3D12CommandQueue *queue;
     IDXGISwapChain *swapchain;
     HRESULT hr, expected_hr;
     IDXGIFactory *factory;
+    ID3D12Fence *fence;
     unsigned int i, j;
     ULONG refcount;
     RECT rect;
@@ -5039,6 +5042,52 @@ static void test_swapchain_backbuffer_index(IUnknown *device, BOOL is_d3d12)
             ok(index == expected_index, "Got back buffer index %u, expected %u.\n", index, expected_index);
             hr = IDXGISwapChain3_Present(swapchain3, 0, 0);
             ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        }
+
+        if (is_d3d12)
+        {
+            hr = IUnknown_QueryInterface(device, &IID_ID3D12CommandQueue, (void **)&queue);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+            hr = ID3D12CommandQueue_GetDevice(queue, &IID_ID3D12Device, (void **)&d3d12_device);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+            hr = ID3D12Device_CreateFence(d3d12_device, 0, 0, &IID_ID3D12Fence, (void **)&fence);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+            hr = ID3D12CommandQueue_Wait(queue, fence, 1);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+            hr = IDXGISwapChain_ResizeBuffers(swapchain, 0,
+                    rect.right, rect.bottom, DXGI_FORMAT_UNKNOWN, swapchain_desc.Flags);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+            /* The back buffer index is updated when Present() is
+             * called, not when frames are presented. */
+            for (j = 0; j < swapchain_desc.BufferCount + 2; ++j)
+            {
+                index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain3);
+                expected_index = j % swapchain_desc.BufferCount;
+                ok(index == expected_index, "Got back buffer index %u, expected %u.\n", index, expected_index);
+                hr = IDXGISwapChain3_Present(swapchain3, 0, 0);
+                ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            }
+
+            index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain3);
+            expected_index = j % swapchain_desc.BufferCount;
+            ok(index == expected_index, "Got back buffer index %u, expected %u.\n", index, expected_index);
+
+            hr = ID3D12Fence_Signal(fence, 1);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+            index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain3);
+            expected_index = j % swapchain_desc.BufferCount;
+            ok(index == expected_index, "Got back buffer index %u, expected %u.\n", index, expected_index);
+
+            refcount = ID3D12Fence_Release(fence);
+            ok(!refcount, "Fence has %lu references left.\n", refcount);
+            ID3D12Device_Release(d3d12_device);
+            ID3D12CommandQueue_Release(queue);
         }
 
         wait_device_idle(device);
