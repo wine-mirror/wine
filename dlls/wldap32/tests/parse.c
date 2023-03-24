@@ -175,16 +175,12 @@ static void test_ldap_bind_sA( void )
     ldap_unbind( ld );
 }
 
-static void test_ldap_add(void)
+static void test_ldap_add( LDAP *ld )
 {
     char *one_empty_string[] = { (char *)"", NULL };
     LDAPModA empty_equals_empty = { 0, (char *)"", { one_empty_string } };
     LDAPModA *attrs[] = { &empty_equals_empty, NULL };
-    LDAP *ld;
     ULONG ret, num;
-
-    ld = ldap_initA( (char *)"db.debian.org", 389 );
-    ok( ld != NULL, "ldap_init failed\n" );
 
     ret = ldap_addA( NULL, NULL, NULL );
     ok( ret == (ULONG)-1, "ldap_addA should fail, got %#lx\n", ret );
@@ -231,20 +227,14 @@ static void test_ldap_add(void)
     ok( ret == LDAP_PROTOCOL_ERROR, "ldap_add_ext_sA should fail, got %#lx\n", ret );
     ret = ldap_add_ext_sA( ld, (char *)"", attrs, NULL, NULL );
     ok( ret == LDAP_ALREADY_EXISTS, "ldap_add_ext_sA should fail, got %#lx\n", ret );
-
-    ldap_unbind( ld );
 }
 
-static void test_ldap_modify(void)
+static void test_ldap_modify( LDAP *ld )
 {
     char *one_empty_string[] = { (char *)"", NULL };
     LDAPModA empty_equals_empty = { 0, (char *)"", { one_empty_string } };
     LDAPModA *attrs[] = { &empty_equals_empty, NULL };
-    LDAP *ld;
     ULONG ret, num;
-
-    ld = ldap_initA( (char *)"db.debian.org", 389 );
-    ok( ld != NULL, "ldap_init failed\n" );
 
     ret = ldap_modifyA( NULL, NULL, NULL );
     ok( ret == (ULONG)-1, "ldap_modifyA should fail, got %#lx\n", ret );
@@ -291,18 +281,12 @@ static void test_ldap_modify(void)
     ok( ret == LDAP_UNWILLING_TO_PERFORM, "ldap_modify_ext_sA should fail, got %#lx\n", ret );
     ret = ldap_modify_ext_sA( ld, (char *)"", attrs, NULL, NULL );
     ok( ret == LDAP_UNDEFINED_TYPE, "ldap_modify_ext_sA should fail, got %#lx\n", ret );
-
-    ldap_unbind( ld );
 }
 
-static void test_ldap_compare(void)
+static void test_ldap_compare( LDAP *ld )
 {
     struct berval empty_value = { 0 };
-    LDAP *ld;
     ULONG ret, num;
-
-    ld = ldap_initA( (char *)"db.debian.org", 389 );
-    ok( ld != NULL, "ldap_init failed\n" );
 
     ret = ldap_compareA( NULL, NULL, NULL, NULL );
     ok( ret == (ULONG)-1, "ldap_compareA should fail, got %#lx\n", ret );
@@ -363,8 +347,6 @@ static void test_ldap_compare(void)
     ok( ret == LDAP_UNDEFINED_TYPE, "ldap_compare_ext_sA should fail, got %#lx\n", ret );
     ret = ldap_compare_ext_sA( ld, (char *)"", (char *)"", (char *)"", &empty_value, NULL, NULL );
     ok( ret == LDAP_UNDEFINED_TYPE, "ldap_compare_ext_sA should fail, got %#lx\n", ret );
-
-    ldap_unbind( ld );
 }
 
 static void test_ldap_server_control( void )
@@ -489,13 +471,13 @@ START_TEST (parse)
     test_ldap_paged_search();
     test_ldap_server_control();
     test_ldap_bind_sA();
-    test_ldap_add();
-    test_ldap_modify();
-    test_ldap_compare();
 
     ld = ldap_initA( (char *)"db.debian.org", 389 );
     ok( ld != NULL, "ldap_init failed\n" );
 
+    test_ldap_add( ld );
+    test_ldap_modify( ld );
+    test_ldap_compare( ld );
     test_ldap_parse_sort_control( ld );
     test_ldap_search_extW( ld );
     test_ldap_get_optionW( ld );
