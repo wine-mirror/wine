@@ -621,124 +621,127 @@ activatable_attr:
 	;
 
 attribute
-	: %empty				{ $$ = NULL; }
-	| tACTIVATABLE '(' activatable_attr ')'	{ $$ = make_attrp(ATTR_ACTIVATABLE, $3); }
-	| tAGGREGATABLE				{ $$ = make_attr(ATTR_AGGREGATABLE); }
-	| tANNOTATION '(' aSTRING ')'		{ $$ = make_attrp(ATTR_ANNOTATION, $3); }
-	| tAPPOBJECT				{ $$ = make_attr(ATTR_APPOBJECT); }
-	| tASYNC				{ $$ = make_attr(ATTR_ASYNC); }
-	| tAUTOHANDLE				{ $$ = make_attr(ATTR_AUTO_HANDLE); }
-	| tBINDABLE				{ $$ = make_attr(ATTR_BINDABLE); }
-	| tBROADCAST				{ $$ = make_attr(ATTR_BROADCAST); }
-	| tCALLAS '(' ident ')'			{ $$ = make_attrp(ATTR_CALLAS, $3); }
-	| tCASE '(' expr_list_int_const ')'	{ $$ = make_attrp(ATTR_CASE, $3); }
-	| tCODE					{ $$ = make_attr(ATTR_CODE); }
-	| tCOMMSTATUS				{ $$ = make_attr(ATTR_COMMSTATUS); }
-	| tCONTEXTHANDLE			{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); }
-	| tCONTEXTHANDLENOSERIALIZE		{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); /* RPC_CONTEXT_HANDLE_DONT_SERIALIZE */ }
-	| tCONTEXTHANDLESERIALIZE		{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); /* RPC_CONTEXT_HANDLE_SERIALIZE */ }
-	| tCONTRACT '(' contract_req ')'	{ $$ = make_attrp(ATTR_CONTRACT, $3); }
-	| tCONTRACTVERSION '(' contract_ver ')'	{ $$ = make_attrv(ATTR_CONTRACTVERSION, $3); }
-	| tCONTROL				{ $$ = make_attr(ATTR_CONTROL); }
-	| tCUSTOM '(' aUUID ',' expr_const ')'  { $$ = make_custom_attr($3, $5); }
-	| tDECODE				{ $$ = make_attr(ATTR_DECODE); }
-	| tDEFAULT				{ $$ = make_attr(ATTR_DEFAULT); }
-	| tDEFAULTBIND				{ $$ = make_attr(ATTR_DEFAULTBIND); }
-	| tDEFAULTCOLLELEM			{ $$ = make_attr(ATTR_DEFAULTCOLLELEM); }
-	| tDEFAULTVALUE '(' expr_const ')'	{ $$ = make_attrp(ATTR_DEFAULTVALUE, $3); }
-	| tDEFAULTVTABLE			{ $$ = make_attr(ATTR_DEFAULTVTABLE); }
-	| tDISABLECONSISTENCYCHECK		{ $$ = make_attr(ATTR_DISABLECONSISTENCYCHECK); }
-	| tDISPLAYBIND				{ $$ = make_attr(ATTR_DISPLAYBIND); }
-	| tDLLNAME '(' aSTRING ')'		{ $$ = make_attrp(ATTR_DLLNAME, $3); }
-	| tDUAL					{ $$ = make_attr(ATTR_DUAL); }
-	| tENABLEALLOCATE			{ $$ = make_attr(ATTR_ENABLEALLOCATE); }
-	| tENCODE				{ $$ = make_attr(ATTR_ENCODE); }
-	| tENDPOINT '(' str_list ')'		{ $$ = make_attrp(ATTR_ENDPOINT, $3); }
-	| tENTRY '(' expr_const ')'		{ $$ = make_attrp(ATTR_ENTRY, $3); }
-	| tEVENTADD				{ $$ = make_attr(ATTR_EVENTADD); }
-	| tEVENTREMOVE				{ $$ = make_attr(ATTR_EVENTREMOVE); }
-	| tEXCLUSIVETO '(' decl_spec ')'	{ if ($3->type->type_type != TYPE_RUNTIMECLASS)
-						      error_loc("type %s is not a runtimeclass\n", $3->type->name);
-						  $$ = make_attrp(ATTR_EXCLUSIVETO, $3->type); }
-	| tEXPLICITHANDLE			{ $$ = make_attr(ATTR_EXPLICIT_HANDLE); }
-	| tFAULTSTATUS				{ $$ = make_attr(ATTR_FAULTSTATUS); }
-	| tFLAGS				{ $$ = make_attr(ATTR_FLAGS); }
-	| tFORCEALLOCATE			{ $$ = make_attr(ATTR_FORCEALLOCATE); }
-	| tHANDLE				{ $$ = make_attr(ATTR_HANDLE); }
-	| tHELPCONTEXT '(' expr_int_const ')'	{ $$ = make_attrp(ATTR_HELPCONTEXT, $3); }
-	| tHELPFILE '(' aSTRING ')'		{ $$ = make_attrp(ATTR_HELPFILE, $3); }
-	| tHELPSTRING '(' aSTRING ')'		{ $$ = make_attrp(ATTR_HELPSTRING, $3); }
-	| tHELPSTRINGCONTEXT '(' expr_int_const ')'	{ $$ = make_attrp(ATTR_HELPSTRINGCONTEXT, $3); }
-	| tHELPSTRINGDLL '(' aSTRING ')'	{ $$ = make_attrp(ATTR_HELPSTRINGDLL, $3); }
-	| tHIDDEN				{ $$ = make_attr(ATTR_HIDDEN); }
-	| tID '(' expr_int_const ')'		{ $$ = make_attrp(ATTR_ID, $3); }
-	| tIDEMPOTENT				{ $$ = make_attr(ATTR_IDEMPOTENT); }
-	| tIGNORE				{ $$ = make_attr(ATTR_IGNORE); }
-	| tIIDIS '(' expr ')'			{ $$ = make_attrp(ATTR_IIDIS, $3); }
-	| tIMMEDIATEBIND			{ $$ = make_attr(ATTR_IMMEDIATEBIND); }
-	| tIMPLICITHANDLE '(' arg ')'		{ $$ = make_attrp(ATTR_IMPLICIT_HANDLE, $3); }
-	| tIN					{ $$ = make_attr(ATTR_IN); }
-	| tINPUTSYNC				{ $$ = make_attr(ATTR_INPUTSYNC); }
-	| tLENGTHIS '(' m_exprs ')'		{ $$ = make_attrp(ATTR_LENGTHIS, $3); }
-	| tLCID	'(' expr_int_const ')'		{ $$ = make_attrp(ATTR_LIBLCID, $3); }
-	| tLCID					{ $$ = make_attr(ATTR_PARAMLCID); }
-	| tLICENSED				{ $$ = make_attr(ATTR_LICENSED); }
-	| tLOCAL				{ $$ = make_attr(ATTR_LOCAL); }
-	| tMARSHALINGBEHAVIOR '(' marshaling_behavior ')'
-						{ $$ = make_attrv(ATTR_MARSHALING_BEHAVIOR, $3); }
-	| tMAYBE				{ $$ = make_attr(ATTR_MAYBE); }
-	| tMESSAGE				{ $$ = make_attr(ATTR_MESSAGE); }
-	| tNOCODE				{ $$ = make_attr(ATTR_NOCODE); }
-	| tNONBROWSABLE				{ $$ = make_attr(ATTR_NONBROWSABLE); }
-	| tNONCREATABLE				{ $$ = make_attr(ATTR_NONCREATABLE); }
-	| tNONEXTENSIBLE			{ $$ = make_attr(ATTR_NONEXTENSIBLE); }
-	| tNOTIFY				{ $$ = make_attr(ATTR_NOTIFY); }
-	| tNOTIFYFLAG				{ $$ = make_attr(ATTR_NOTIFYFLAG); }
-	| tOBJECT				{ $$ = make_attr(ATTR_OBJECT); }
-	| tODL					{ $$ = make_attr(ATTR_ODL); }
-	| tOLEAUTOMATION			{ $$ = make_attr(ATTR_OLEAUTOMATION); }
-	| tOPTIMIZE '(' aSTRING ')'		{ $$ = make_attrp(ATTR_OPTIMIZE, $3); }
-	| tOPTIONAL                             { $$ = make_attr(ATTR_OPTIONAL); }
-	| tOUT					{ $$ = make_attr(ATTR_OUT); }
-	| tOVERLOAD '(' aSTRING ')'		{ $$ = make_attrp(ATTR_OVERLOAD, $3); }
-	| tPARTIALIGNORE			{ $$ = make_attr(ATTR_PARTIALIGNORE); }
-	| tPOINTERDEFAULT '(' pointer_type ')'	{ $$ = make_attrv(ATTR_POINTERDEFAULT, $3); }
-	| tPROGID '(' aSTRING ')'		{ $$ = make_attrp(ATTR_PROGID, $3); }
-	| tPROPGET				{ $$ = make_attr(ATTR_PROPGET); }
-	| tPROPPUT				{ $$ = make_attr(ATTR_PROPPUT); }
-	| tPROPPUTREF				{ $$ = make_attr(ATTR_PROPPUTREF); }
-	| tPROXY				{ $$ = make_attr(ATTR_PROXY); }
-	| tPUBLIC				{ $$ = make_attr(ATTR_PUBLIC); }
-	| tRANGE '(' expr_int_const ',' expr_int_const ')'
-						{ expr_list_t *list = append_expr( NULL, $3 );
-						  list = append_expr( list, $5 );
-						  $$ = make_attrp(ATTR_RANGE, list); }
-	| tREADONLY				{ $$ = make_attr(ATTR_READONLY); }
-	| tREPRESENTAS '(' type ')'		{ $$ = make_attrp(ATTR_REPRESENTAS, $3); }
-	| tREQUESTEDIT				{ $$ = make_attr(ATTR_REQUESTEDIT); }
-	| tRESTRICTED				{ $$ = make_attr(ATTR_RESTRICTED); }
-	| tRETVAL				{ $$ = make_attr(ATTR_RETVAL); }
-	| tSIZEIS '(' m_exprs ')'		{ $$ = make_attrp(ATTR_SIZEIS, $3); }
-	| tSOURCE				{ $$ = make_attr(ATTR_SOURCE); }
-	| tSTATIC '(' static_attr ')'		{ $$ = make_attrp(ATTR_STATIC, $3); }
-	| tSTRICTCONTEXTHANDLE                  { $$ = make_attr(ATTR_STRICTCONTEXTHANDLE); }
-	| tSTRING				{ $$ = make_attr(ATTR_STRING); }
-	| tSWITCHIS '(' expr ')'		{ $$ = make_attrp(ATTR_SWITCHIS, $3); }
-	| tSWITCHTYPE '(' type ')'		{ $$ = make_attrp(ATTR_SWITCHTYPE, $3); }
-	| tTRANSMITAS '(' type ')'		{ $$ = make_attrp(ATTR_TRANSMITAS, $3); }
-	| tTHREADING '(' threading_type ')'	{ $$ = make_attrv(ATTR_THREADING, $3); }
-	| tUIDEFAULT				{ $$ = make_attr(ATTR_UIDEFAULT); }
-	| tUSESGETLASTERROR			{ $$ = make_attr(ATTR_USESGETLASTERROR); }
-	| tUSERMARSHAL '(' type ')'		{ $$ = make_attrp(ATTR_USERMARSHAL, $3); }
-	| tUUID '(' aUUID ')'			{ $$ = make_attrp(ATTR_UUID, $3); }
-	| tASYNCUUID '(' aUUID ')'		{ $$ = make_attrp(ATTR_ASYNCUUID, $3); }
-	| tV1ENUM				{ $$ = make_attr(ATTR_V1ENUM); }
-	| tVARARG				{ $$ = make_attr(ATTR_VARARG); }
-	| tVERSION '(' version ')'		{ $$ = make_attrv(ATTR_VERSION, $3); }
-	| tVIPROGID '(' aSTRING ')'		{ $$ = make_attrp(ATTR_VIPROGID, $3); }
-	| tWIREMARSHAL '(' type ')'		{ $$ = make_attrp(ATTR_WIREMARSHAL, $3); }
-	| pointer_type				{ $$ = make_attrv(ATTR_POINTERTYPE, $1); }
-	;
+        : %empty                                { $$ = NULL; }
+        | tACTIVATABLE '(' activatable_attr ')' { $$ = make_attrp( ATTR_ACTIVATABLE, $3 ); }
+        | tAGGREGATABLE                         { $$ = make_attr( ATTR_AGGREGATABLE ); }
+        | tANNOTATION '(' aSTRING ')'           { $$ = make_attrp( ATTR_ANNOTATION, $3 ); }
+        | tAPPOBJECT                            { $$ = make_attr( ATTR_APPOBJECT ); }
+        | tASYNC                                { $$ = make_attr( ATTR_ASYNC ); }
+        | tAUTOHANDLE                           { $$ = make_attr( ATTR_AUTO_HANDLE ); }
+        | tBINDABLE                             { $$ = make_attr( ATTR_BINDABLE ); }
+        | tBROADCAST                            { $$ = make_attr( ATTR_BROADCAST ); }
+        | tCALLAS '(' ident ')'                 { $$ = make_attrp( ATTR_CALLAS, $3 ); }
+        | tCASE '(' expr_list_int_const ')'     { $$ = make_attrp( ATTR_CASE, $3 ); }
+        | tCODE                                 { $$ = make_attr( ATTR_CODE ); }
+        | tCOMMSTATUS                           { $$ = make_attr( ATTR_COMMSTATUS ); }
+        | tCONTEXTHANDLE                        { $$ = make_attrv( ATTR_CONTEXTHANDLE, 0 ); }
+        | tCONTEXTHANDLENOSERIALIZE             { $$ = make_attrv( ATTR_CONTEXTHANDLE, 0 ); /* RPC_CONTEXT_HANDLE_DONT_SERIALIZE */ }
+        | tCONTEXTHANDLESERIALIZE               { $$ = make_attrv( ATTR_CONTEXTHANDLE, 0 ); /* RPC_CONTEXT_HANDLE_SERIALIZE */ }
+        | tCONTRACT '(' contract_req ')'        { $$ = make_attrp( ATTR_CONTRACT, $3 ); }
+        | tCONTRACTVERSION '(' contract_ver ')' { $$ = make_attrv( ATTR_CONTRACTVERSION, $3 ); }
+        | tCONTROL                              { $$ = make_attr( ATTR_CONTROL ); }
+        | tCUSTOM '(' aUUID ',' expr_const ')'  { $$ = make_custom_attr( $3, $5 ); }
+        | tDECODE                               { $$ = make_attr( ATTR_DECODE ); }
+        | tDEFAULT                              { $$ = make_attr( ATTR_DEFAULT ); }
+        | tDEFAULTBIND                          { $$ = make_attr( ATTR_DEFAULTBIND ); }
+        | tDEFAULTCOLLELEM                      { $$ = make_attr( ATTR_DEFAULTCOLLELEM ); }
+        | tDEFAULTVALUE '(' expr_const ')'      { $$ = make_attrp( ATTR_DEFAULTVALUE, $3 ); }
+        | tDEFAULTVTABLE                        { $$ = make_attr( ATTR_DEFAULTVTABLE ); }
+        | tDISABLECONSISTENCYCHECK              { $$ = make_attr( ATTR_DISABLECONSISTENCYCHECK ); }
+        | tDISPLAYBIND                          { $$ = make_attr( ATTR_DISPLAYBIND ); }
+        | tDLLNAME '(' aSTRING ')'              { $$ = make_attrp( ATTR_DLLNAME, $3 ); }
+        | tDUAL                                 { $$ = make_attr( ATTR_DUAL ); }
+        | tENABLEALLOCATE                       { $$ = make_attr( ATTR_ENABLEALLOCATE ); }
+        | tENCODE                               { $$ = make_attr( ATTR_ENCODE ); }
+        | tENDPOINT '(' str_list ')'            { $$ = make_attrp( ATTR_ENDPOINT, $3 ); }
+        | tENTRY '(' expr_const ')'             { $$ = make_attrp( ATTR_ENTRY, $3 ); }
+        | tEVENTADD                             { $$ = make_attr( ATTR_EVENTADD ); }
+        | tEVENTREMOVE                          { $$ = make_attr( ATTR_EVENTREMOVE ); }
+        | tEXCLUSIVETO '(' decl_spec ')'        { if ($3->type->type_type != TYPE_RUNTIMECLASS)
+                                                      error_loc( "type %s is not a runtimeclass\n", $3->type->name );
+                                                  $$ = make_attrp( ATTR_EXCLUSIVETO, $3->type );
+                                                }
+        | tEXPLICITHANDLE                       { $$ = make_attr( ATTR_EXPLICIT_HANDLE ); }
+        | tFAULTSTATUS                          { $$ = make_attr( ATTR_FAULTSTATUS ); }
+        | tFLAGS                                { $$ = make_attr( ATTR_FLAGS ); }
+        | tFORCEALLOCATE                        { $$ = make_attr( ATTR_FORCEALLOCATE ); }
+        | tHANDLE                               { $$ = make_attr( ATTR_HANDLE ); }
+        | tHELPCONTEXT '(' expr_int_const ')'   { $$ = make_attrp( ATTR_HELPCONTEXT, $3 ); }
+        | tHELPFILE '(' aSTRING ')'             { $$ = make_attrp( ATTR_HELPFILE, $3 ); }
+        | tHELPSTRING '(' aSTRING ')'           { $$ = make_attrp( ATTR_HELPSTRING, $3 ); }
+        | tHELPSTRINGCONTEXT '(' expr_int_const ')'
+                                                { $$ = make_attrp( ATTR_HELPSTRINGCONTEXT, $3 ); }
+        | tHELPSTRINGDLL '(' aSTRING ')'        { $$ = make_attrp( ATTR_HELPSTRINGDLL, $3 ); }
+        | tHIDDEN                               { $$ = make_attr( ATTR_HIDDEN ); }
+        | tID '(' expr_int_const ')'            { $$ = make_attrp( ATTR_ID, $3 ); }
+        | tIDEMPOTENT                           { $$ = make_attr( ATTR_IDEMPOTENT ); }
+        | tIGNORE                               { $$ = make_attr( ATTR_IGNORE ); }
+        | tIIDIS '(' expr ')'                   { $$ = make_attrp( ATTR_IIDIS, $3 ); }
+        | tIMMEDIATEBIND                        { $$ = make_attr( ATTR_IMMEDIATEBIND ); }
+        | tIMPLICITHANDLE '(' arg ')'           { $$ = make_attrp( ATTR_IMPLICIT_HANDLE, $3 ); }
+        | tIN                                   { $$ = make_attr( ATTR_IN ); }
+        | tINPUTSYNC                            { $$ = make_attr( ATTR_INPUTSYNC ); }
+        | tLENGTHIS '(' m_exprs ')'             { $$ = make_attrp( ATTR_LENGTHIS, $3 ); }
+        | tLCID '(' expr_int_const ')'          { $$ = make_attrp( ATTR_LIBLCID, $3 ); }
+        | tLCID                                 { $$ = make_attr( ATTR_PARAMLCID ); }
+        | tLICENSED                             { $$ = make_attr( ATTR_LICENSED ); }
+        | tLOCAL                                { $$ = make_attr( ATTR_LOCAL ); }
+        | tMARSHALINGBEHAVIOR '(' marshaling_behavior ')'
+                                                { $$ = make_attrv( ATTR_MARSHALING_BEHAVIOR, $3 ); }
+        | tMAYBE                                { $$ = make_attr( ATTR_MAYBE ); }
+        | tMESSAGE                              { $$ = make_attr( ATTR_MESSAGE ); }
+        | tNOCODE                               { $$ = make_attr( ATTR_NOCODE ); }
+        | tNONBROWSABLE                         { $$ = make_attr( ATTR_NONBROWSABLE ); }
+        | tNONCREATABLE                         { $$ = make_attr( ATTR_NONCREATABLE ); }
+        | tNONEXTENSIBLE                        { $$ = make_attr( ATTR_NONEXTENSIBLE ); }
+        | tNOTIFY                               { $$ = make_attr( ATTR_NOTIFY ); }
+        | tNOTIFYFLAG                           { $$ = make_attr( ATTR_NOTIFYFLAG ); }
+        | tOBJECT                               { $$ = make_attr( ATTR_OBJECT ); }
+        | tODL                                  { $$ = make_attr( ATTR_ODL ); }
+        | tOLEAUTOMATION                        { $$ = make_attr( ATTR_OLEAUTOMATION ); }
+        | tOPTIMIZE '(' aSTRING ')'             { $$ = make_attrp( ATTR_OPTIMIZE, $3 ); }
+        | tOPTIONAL                             { $$ = make_attr( ATTR_OPTIONAL ); }
+        | tOUT                                  { $$ = make_attr( ATTR_OUT ); }
+        | tOVERLOAD '(' aSTRING ')'             { $$ = make_attrp( ATTR_OVERLOAD, $3 ); }
+        | tPARTIALIGNORE                        { $$ = make_attr( ATTR_PARTIALIGNORE ); }
+        | tPOINTERDEFAULT '(' pointer_type ')'  { $$ = make_attrv( ATTR_POINTERDEFAULT, $3 ); }
+        | tPROGID '(' aSTRING ')'               { $$ = make_attrp( ATTR_PROGID, $3 ); }
+        | tPROPGET                              { $$ = make_attr( ATTR_PROPGET ); }
+        | tPROPPUT                              { $$ = make_attr( ATTR_PROPPUT ); }
+        | tPROPPUTREF                           { $$ = make_attr( ATTR_PROPPUTREF ); }
+        | tPROXY                                { $$ = make_attr( ATTR_PROXY ); }
+        | tPUBLIC                               { $$ = make_attr( ATTR_PUBLIC ); }
+        | tRANGE '(' expr_int_const ',' expr_int_const ')'
+                                                { expr_list_t *list = append_expr( NULL, $3 );
+                                                  list = append_expr( list, $5 );
+                                                  $$ = make_attrp( ATTR_RANGE, list );
+                                                }
+        | tREADONLY                             { $$ = make_attr( ATTR_READONLY ); }
+        | tREPRESENTAS '(' type ')'             { $$ = make_attrp( ATTR_REPRESENTAS, $3 ); }
+        | tREQUESTEDIT                          { $$ = make_attr( ATTR_REQUESTEDIT ); }
+        | tRESTRICTED                           { $$ = make_attr( ATTR_RESTRICTED ); }
+        | tRETVAL                               { $$ = make_attr( ATTR_RETVAL ); }
+        | tSIZEIS '(' m_exprs ')'               { $$ = make_attrp( ATTR_SIZEIS, $3 ); }
+        | tSOURCE                               { $$ = make_attr( ATTR_SOURCE ); }
+        | tSTATIC '(' static_attr ')'           { $$ = make_attrp( ATTR_STATIC, $3 ); }
+        | tSTRICTCONTEXTHANDLE                  { $$ = make_attr( ATTR_STRICTCONTEXTHANDLE ); }
+        | tSTRING                               { $$ = make_attr( ATTR_STRING ); }
+        | tSWITCHIS '(' expr ')'                { $$ = make_attrp( ATTR_SWITCHIS, $3 ); }
+        | tSWITCHTYPE '(' type ')'              { $$ = make_attrp( ATTR_SWITCHTYPE, $3 ); }
+        | tTRANSMITAS '(' type ')'              { $$ = make_attrp( ATTR_TRANSMITAS, $3 ); }
+        | tTHREADING '(' threading_type ')'     { $$ = make_attrv( ATTR_THREADING, $3 ); }
+        | tUIDEFAULT                            { $$ = make_attr( ATTR_UIDEFAULT ); }
+        | tUSESGETLASTERROR                     { $$ = make_attr( ATTR_USESGETLASTERROR ); }
+        | tUSERMARSHAL '(' type ')'             { $$ = make_attrp( ATTR_USERMARSHAL, $3 ); }
+        | tUUID '(' aUUID ')'                   { $$ = make_attrp( ATTR_UUID, $3 ); }
+        | tASYNCUUID '(' aUUID ')'              { $$ = make_attrp( ATTR_ASYNCUUID, $3 ); }
+        | tV1ENUM                               { $$ = make_attr( ATTR_V1ENUM ); }
+        | tVARARG                               { $$ = make_attr( ATTR_VARARG ); }
+        | tVERSION '(' version ')'              { $$ = make_attrv( ATTR_VERSION, $3 ); }
+        | tVIPROGID '(' aSTRING ')'             { $$ = make_attrp( ATTR_VIPROGID, $3 ); }
+        | tWIREMARSHAL '(' type ')'             { $$ = make_attrp( ATTR_WIREMARSHAL, $3 ); }
+        | pointer_type                          { $$ = make_attrv( ATTR_POINTERTYPE, $1 ); }
+        ;
 
 callconv: tCDECL
 	| tFASTCALL
@@ -751,15 +754,15 @@ cases
 	| cases case				{ $$ = append_var( $1, $2 ); }
 	;
 
-case:	  tCASE expr_int_const ':' union_field	{ attr_t *a = make_attrp(ATTR_CASE, append_expr( NULL, $2 ));
-						  $$ = $4; if (!$$) $$ = make_var(NULL);
-						  $$->attrs = append_attr( $$->attrs, a );
-						}
-	| tDEFAULT ':' union_field		{ attr_t *a = make_attr(ATTR_DEFAULT);
-						  $$ = $3; if (!$$) $$ = make_var(NULL);
-						  $$->attrs = append_attr( $$->attrs, a );
-						}
-	;
+case    : tCASE expr_int_const ':' union_field  { attr_t *a = make_attrp( ATTR_CASE, append_expr( NULL, $2 ) );
+                                                  $$ = $4; if (!$$) $$ = make_var( NULL );
+                                                  $$->attrs = append_attr( $$->attrs, a );
+                                                }
+        | tDEFAULT ':' union_field              { attr_t *a = make_attr( ATTR_DEFAULT );
+                                                  $$ = $3; if (!$$) $$ = make_var( NULL );
+                                                  $$->attrs = append_attr( $$->attrs, a );
+                                                }
+        ;
 
 enums
 	: %empty				{ $$ = NULL; }
@@ -1040,8 +1043,8 @@ class_interface:
 dispinterface: tDISPINTERFACE typename		{ $$ = type_dispinterface_declare($2); }
 	;
 
-dispattributes: attributes			{ $$ = append_attr($1, make_attr(ATTR_DISPINTERFACE)); }
-	;
+dispattributes: attributes                      { $$ = append_attr( $1, make_attr( ATTR_DISPINTERFACE ) ); }
+        ;
 
 dispint_props: tPROPERTIES ':'			{ $$ = NULL; }
 	| dispint_props s_field ';'		{ $$ = append_var( $1, $2 ); }
@@ -1386,12 +1389,12 @@ acf_attribute_list
 	;
 
 acf_attribute
-	: tALLOCATE '(' allocate_option_list ')'
-						{ $$ = make_attrv(ATTR_ALLOCATE, $3); }
-        | tENCODE                               { $$ = make_attr(ATTR_ENCODE); }
-        | tDECODE                               { $$ = make_attr(ATTR_DECODE); }
-        | tEXPLICITHANDLE                       { $$ = make_attr(ATTR_EXPLICIT_HANDLE); }
-	;
+        : tALLOCATE '(' allocate_option_list ')'
+                                                { $$ = make_attrv( ATTR_ALLOCATE, $3 ); }
+        | tENCODE                               { $$ = make_attr( ATTR_ENCODE ); }
+        | tDECODE                               { $$ = make_attr( ATTR_DECODE ); }
+        | tEXPLICITHANDLE                       { $$ = make_attr( ATTR_EXPLICIT_HANDLE ); }
+        ;
 
 allocate_option_list
 	: allocate_option			{ $$ = $1; }
