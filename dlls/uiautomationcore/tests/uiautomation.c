@@ -73,6 +73,7 @@ DEFINE_EXPECT(prov_callback_base_hwnd);
 DEFINE_EXPECT(prov_callback_nonclient);
 DEFINE_EXPECT(prov_callback_proxy);
 DEFINE_EXPECT(prov_callback_parent_proxy);
+DEFINE_EXPECT(uia_event_callback);
 DEFINE_EXPECT(winproc_GETOBJECT_UiaRoot);
 DEFINE_EXPECT(child_winproc_GETOBJECT_UiaRoot);
 DEFINE_EXPECT(Accessible_accNavigate);
@@ -1133,6 +1134,7 @@ static struct Provider
     IRawElementProviderFragment IRawElementProviderFragment_iface;
     IRawElementProviderFragmentRoot IRawElementProviderFragmentRoot_iface;
     IRawElementProviderHwndOverride IRawElementProviderHwndOverride_iface;
+    IRawElementProviderAdviseEvents IRawElementProviderAdviseEvents_iface;
     IValueProvider IValueProvider_iface;
     ILegacyIAccessibleProvider ILegacyIAccessibleProvider_iface;
     LONG ref;
@@ -1158,6 +1160,10 @@ static struct Provider
     struct Provider_value_pattern_data value_pattern_data;
     struct Provider_legacy_accessible_pattern_data legacy_acc_pattern_data;
     IRawElementProviderFragment *focus_prov;
+    IRawElementProviderFragmentRoot **embedded_frag_roots;
+    int embedded_frag_roots_count;
+    int advise_events_added_event_id;
+    int advise_events_removed_event_id;
 } Provider, Provider2, Provider_child, Provider_child2;
 static struct Provider Provider_hwnd, Provider_nc, Provider_proxy, Provider_proxy2, Provider_override;
 static void initialize_provider(struct Provider *prov, int prov_opts, HWND hwnd, BOOL initialize_nav_links);
@@ -1224,8 +1230,11 @@ enum {
     FRAG_GET_RUNTIME_ID,
     FRAG_GET_FRAGMENT_ROOT,
     FRAG_GET_BOUNDING_RECT,
+    FRAG_GET_EMBEDDED_FRAGMENT_ROOTS,
     FRAG_ROOT_GET_FOCUS,
     HWND_OVERRIDE_GET_OVERRIDE_PROVIDER,
+    ADVISE_EVENTS_EVENT_ADDED,
+    ADVISE_EVENTS_EVENT_REMOVED,
 };
 
 static const char *prov_method_str[] = {
@@ -1237,8 +1246,11 @@ static const char *prov_method_str[] = {
     "GetRuntimeId",
     "get_FragmentRoot",
     "get_BoundingRectangle",
+    "GetEmbeddedFragmentRoots",
     "GetFocus",
     "GetOverrideProviderForHwnd",
+    "AdviseEventAdded",
+    "AdviseEventRemoved",
 };
 
 static const char *get_prov_method_str(int method)
@@ -1276,6 +1288,15 @@ static struct prov_method_sequence *sequence;
     { prov , FRAG_NAVIGATE }, /* NavigateDirection_Parent */ \
     { prov , PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL } \
 
+#define NODE_CREATE_SEQ_OPTIONAL(prov) \
+    { prov , PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL }, \
+    /* Win10v1507 and below call this. */ \
+    { prov , PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */ \
+    { prov , PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL }, \
+    { prov , PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, \
+    { prov , FRAG_NAVIGATE, METHOD_OPTIONAL }, /* NavigateDirection_Parent */ \
+    { prov , PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL } \
+
 /*
  * This sequence of method calls is always used when creating an HUIANODE from
  * an IRawElementProviderSimple that returns an HWND from get_HostRawElementProvider.
@@ -1292,6 +1313,20 @@ static struct prov_method_sequence *sequence;
     { prov , PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL }, \
     { prov , PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL }, \
     { prov , FRAG_NAVIGATE, METHOD_OPTIONAL }, /* NavigateDirection_Parent */ \
+    { prov , PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL } \
+
+/*
+ * Node creation sequence with the first get_ProviderOptions call being optional.
+ * Used for event tests since each Windows version has different amounts of
+ * calls to get_ProviderOptions before node creation.
+ */
+#define NODE_CREATE_SEQ3(prov) \
+    { prov , PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL }, \
+    /* Win10v1507 and below call this. */ \
+    { prov , PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */ \
+    { prov , PROV_GET_HOST_RAW_ELEMENT_PROVIDER }, \
+    { prov , PROV_GET_PROPERTY_VALUE }, \
+    { prov , FRAG_NAVIGATE }, /* NavigateDirection_Parent */ \
     { prov , PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL } \
 
 static void flush_method_sequence(void)
@@ -1593,6 +1628,8 @@ HRESULT WINAPI ProviderSimple_QueryInterface(IRawElementProviderSimple *iface, R
         *ppv = &This->IRawElementProviderFragmentRoot_iface;
     else if (IsEqualIID(riid, &IID_IRawElementProviderHwndOverride))
         *ppv = &This->IRawElementProviderHwndOverride_iface;
+    else if (IsEqualIID(riid, &IID_IRawElementProviderAdviseEvents))
+        *ppv = &This->IRawElementProviderAdviseEvents_iface;
     else if (IsEqualIID(riid, &IID_IValueProvider))
         *ppv = &This->IValueProvider_iface;
     else if (IsEqualIID(riid, &IID_ILegacyIAccessibleProvider))
@@ -2016,9 +2053,29 @@ static HRESULT WINAPI ProviderFragment_get_BoundingRectangle(IRawElementProvider
 static HRESULT WINAPI ProviderFragment_GetEmbeddedFragmentRoots(IRawElementProviderFragment *iface,
         SAFEARRAY **ret_val)
 {
-    ok(0, "unexpected call\n");
+    struct Provider *This = impl_from_ProviderFragment(iface);
+
+    add_method_call(This, FRAG_GET_EMBEDDED_FRAGMENT_ROOTS);
+    if (This->expected_tid)
+        ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
+    This->last_call_tid = GetCurrentThreadId();
+
     *ret_val = NULL;
-    return E_NOTIMPL;
+    if (This->embedded_frag_roots && This->embedded_frag_roots_count)
+    {
+        SAFEARRAY *sa;
+        LONG idx;
+
+        if (!(sa = SafeArrayCreateVector(VT_UNKNOWN, 0, This->embedded_frag_roots_count)))
+            return E_FAIL;
+
+        for (idx = 0; idx < This->embedded_frag_roots_count; idx++)
+            SafeArrayPutElement(sa, &idx, (IUnknown *)This->embedded_frag_roots[idx]);
+
+        *ret_val = sa;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ProviderFragment_SetFocus(IRawElementProviderFragment *iface)
@@ -2164,6 +2221,66 @@ static const IRawElementProviderHwndOverrideVtbl ProviderHwndOverrideVtbl = {
     ProviderHwndOverride_AddRef,
     ProviderHwndOverride_Release,
     ProviderHwndOverride_GetOverrideProviderForHwnd,
+};
+
+static inline struct Provider *impl_from_ProviderAdviseEvents(IRawElementProviderAdviseEvents *iface)
+{
+    return CONTAINING_RECORD(iface, struct Provider, IRawElementProviderAdviseEvents_iface);
+}
+
+static HRESULT WINAPI ProviderAdviseEvents_QueryInterface(IRawElementProviderAdviseEvents *iface, REFIID riid,
+        void **ppv)
+{
+    struct Provider *Provider = impl_from_ProviderAdviseEvents(iface);
+    return IRawElementProviderSimple_QueryInterface(&Provider->IRawElementProviderSimple_iface, riid, ppv);
+}
+
+static ULONG WINAPI ProviderAdviseEvents_AddRef(IRawElementProviderAdviseEvents *iface)
+{
+    struct Provider *Provider = impl_from_ProviderAdviseEvents(iface);
+    return IRawElementProviderSimple_AddRef(&Provider->IRawElementProviderSimple_iface);
+}
+
+static ULONG WINAPI ProviderAdviseEvents_Release(IRawElementProviderAdviseEvents *iface)
+{
+    struct Provider *Provider = impl_from_ProviderAdviseEvents(iface);
+    return IRawElementProviderSimple_Release(&Provider->IRawElementProviderSimple_iface);
+}
+
+static HRESULT WINAPI ProviderAdviseEvents_AdviseEventAdded(IRawElementProviderAdviseEvents *iface,
+        EVENTID event_id, SAFEARRAY *prop_ids)
+{
+    struct Provider *This = impl_from_ProviderAdviseEvents(iface);
+
+    add_method_call(This, ADVISE_EVENTS_EVENT_ADDED);
+    if (This->expected_tid)
+        ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
+    This->last_call_tid = GetCurrentThreadId();
+    This->advise_events_added_event_id = event_id;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI ProviderAdviseEvents_AdviseEventRemoved(IRawElementProviderAdviseEvents *iface,
+        EVENTID event_id, SAFEARRAY *prop_ids)
+{
+    struct Provider *This = impl_from_ProviderAdviseEvents(iface);
+
+    add_method_call(This, ADVISE_EVENTS_EVENT_REMOVED);
+    if (This->expected_tid)
+        ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
+    This->last_call_tid = GetCurrentThreadId();
+    This->advise_events_removed_event_id = event_id;
+
+    return S_OK;
+}
+
+static const IRawElementProviderAdviseEventsVtbl ProviderAdviseEventsVtbl = {
+    ProviderAdviseEvents_QueryInterface,
+    ProviderAdviseEvents_AddRef,
+    ProviderAdviseEvents_Release,
+    ProviderAdviseEvents_AdviseEventAdded,
+    ProviderAdviseEvents_AdviseEventRemoved,
 };
 
 static inline struct Provider *impl_from_ProviderValuePattern(IValueProvider *iface)
@@ -2363,6 +2480,7 @@ static struct Provider Provider =
     { &ProviderFragmentVtbl },
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
+    { &ProviderAdviseEventsVtbl },
     { &ProviderValuePatternVtbl },
     { &ProviderLegacyIAccessiblePatternVtbl },
     1,
@@ -2379,6 +2497,7 @@ static struct Provider Provider2 =
     { &ProviderFragmentVtbl },
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
+    { &ProviderAdviseEventsVtbl },
     { &ProviderValuePatternVtbl },
     { &ProviderLegacyIAccessiblePatternVtbl },
     1,
@@ -2395,6 +2514,7 @@ static struct Provider Provider_child =
     { &ProviderFragmentVtbl },
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
+    { &ProviderAdviseEventsVtbl },
     { &ProviderValuePatternVtbl },
     { &ProviderLegacyIAccessiblePatternVtbl },
     1,
@@ -2411,6 +2531,7 @@ static struct Provider Provider_child2 =
     { &ProviderFragmentVtbl },
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
+    { &ProviderAdviseEventsVtbl },
     { &ProviderValuePatternVtbl },
     { &ProviderLegacyIAccessiblePatternVtbl },
     1,
@@ -2427,6 +2548,7 @@ static struct Provider Provider_hwnd =
     { &ProviderFragmentVtbl },
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
+    { &ProviderAdviseEventsVtbl },
     { &ProviderValuePatternVtbl },
     { &ProviderLegacyIAccessiblePatternVtbl },
     1,
@@ -2443,6 +2565,7 @@ static struct Provider Provider_nc =
     { &ProviderFragmentVtbl },
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
+    { &ProviderAdviseEventsVtbl },
     { &ProviderValuePatternVtbl },
     { &ProviderLegacyIAccessiblePatternVtbl },
     1,
@@ -2460,6 +2583,7 @@ static struct Provider Provider_proxy =
     { &ProviderFragmentVtbl },
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
+    { &ProviderAdviseEventsVtbl },
     { &ProviderValuePatternVtbl },
     { &ProviderLegacyIAccessiblePatternVtbl },
     1,
@@ -2477,6 +2601,7 @@ static struct Provider Provider_proxy2 =
     { &ProviderFragmentVtbl },
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
+    { &ProviderAdviseEventsVtbl },
     { &ProviderValuePatternVtbl },
     { &ProviderLegacyIAccessiblePatternVtbl },
     1,
@@ -2494,6 +2619,7 @@ static struct Provider Provider_override =
     { &ProviderFragmentVtbl },
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
+    { &ProviderAdviseEventsVtbl },
     { &ProviderValuePatternVtbl },
     { &ProviderLegacyIAccessiblePatternVtbl },
     1,
@@ -2512,6 +2638,7 @@ static struct Provider Provider_override =
         { &ProviderFragmentVtbl }, \
         { &ProviderFragmentRootVtbl }, \
         { &ProviderHwndOverrideVtbl }, \
+        { &ProviderAdviseEventsVtbl }, \
         { &ProviderValuePatternVtbl }, \
         { &ProviderLegacyIAccessiblePatternVtbl }, \
         1, \
@@ -9491,6 +9618,9 @@ static void initialize_provider(struct Provider *prov, int prov_opts, HWND hwnd,
     memset(&prov->value_pattern_data, 0, sizeof(prov->value_pattern_data));
     memset(&prov->legacy_acc_pattern_data, 0, sizeof(prov->legacy_acc_pattern_data));
     prov->focus_prov = NULL;
+    prov->embedded_frag_roots = NULL;
+    prov->embedded_frag_roots_count = 0;
+    prov->advise_events_added_event_id = prov->advise_events_removed_event_id = 0;
     if (initialize_nav_links)
     {
         prov->frag_root = NULL;
@@ -13575,6 +13705,476 @@ static void test_UiaNodeFromFocus(void)
     UnregisterClassA("UiaNodeFromFocus child class", NULL);
 }
 
+static const struct prov_method_sequence event_seq1[] = {
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL }, /* Only done on Win8+. */
+    { &Provider, FRAG_GET_FRAGMENT_ROOT, METHOD_OPTIONAL }, /* Only called on Arabic version of Win10+. */
+    { 0 },
+};
+
+static const struct prov_method_sequence event_seq2[] = {
+    { &Provider, FRAG_GET_RUNTIME_ID },
+    { &Provider, FRAG_GET_RUNTIME_ID, METHOD_OPTIONAL }, /* Only done on Win10v1809+. */
+    { &Provider, FRAG_GET_FRAGMENT_ROOT, METHOD_TODO },
+    { &Provider, FRAG_GET_FRAGMENT_ROOT, METHOD_OPTIONAL }, /* Called twice on Win11. */
+    NODE_CREATE_SEQ_OPTIONAL(&Provider), /* Only done in Win11. */
+    { &Provider, FRAG_GET_RUNTIME_ID, METHOD_OPTIONAL }, /* Only done on Win8+. */
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL }, /* Only done on Win10v1809+. */
+    { &Provider, ADVISE_EVENTS_EVENT_ADDED, METHOD_TODO },
+    { 0 },
+};
+
+static const struct prov_method_sequence event_seq3[] = {
+    { &Provider, PROV_GET_PROVIDER_OPTIONS },
+    /* The following four methods are only called on Arabic versions of Win10+. */
+    { &Provider, FRAG_GET_FRAGMENT_ROOT, METHOD_OPTIONAL },
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL },
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider, FRAG_GET_FRAGMENT_ROOT, METHOD_OPTIONAL },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL }, /* Only done on Win8+. */
+    NODE_CREATE_SEQ3(&Provider),
+    { &Provider, FRAG_GET_RUNTIME_ID },
+    { 0 },
+};
+
+static const struct prov_method_sequence event_seq4[] = {
+    { &Provider, ADVISE_EVENTS_EVENT_REMOVED, METHOD_TODO },
+    { 0 },
+};
+
+static const struct prov_method_sequence event_seq5[] = {
+    { &Provider, FRAG_GET_RUNTIME_ID },
+    { &Provider, FRAG_GET_RUNTIME_ID, METHOD_OPTIONAL }, /* Only done on Win10v1809+. */
+    { &Provider, FRAG_GET_FRAGMENT_ROOT, METHOD_TODO },
+    { &Provider, FRAG_GET_FRAGMENT_ROOT, METHOD_OPTIONAL }, /* Called twice on Win11. */
+    { &Provider, FRAG_GET_EMBEDDED_FRAGMENT_ROOTS, METHOD_TODO },
+    NODE_CREATE_SEQ_OPTIONAL(&Provider), /* Only done in Win11. */
+    { &Provider, FRAG_GET_RUNTIME_ID, METHOD_OPTIONAL }, /* Only done on Win8+. */
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL }, /* Only done on Win10v1809+. */
+    { &Provider, ADVISE_EVENTS_EVENT_ADDED, METHOD_TODO },
+    { 0 },
+};
+
+static const struct prov_method_sequence event_seq6[] = {
+    { &Provider, ADVISE_EVENTS_EVENT_REMOVED, METHOD_TODO },
+    { &Provider_child, ADVISE_EVENTS_EVENT_REMOVED, METHOD_TODO },
+    { &Provider_child2, ADVISE_EVENTS_EVENT_REMOVED, METHOD_TODO },
+    { 0 },
+};
+
+static struct EventData {
+    LONG exp_lbound[2];
+    LONG exp_elems[2];
+    struct node_provider_desc exp_node_desc;
+    const WCHAR *exp_tree_struct;
+} EventData;
+
+static void set_event_data(LONG exp_lbound0, LONG exp_lbound1, LONG exp_elems0, LONG exp_elems1,
+        struct node_provider_desc *exp_node_desc, const WCHAR *exp_tree_struct)
+{
+    EventData.exp_lbound[0] = exp_lbound0;
+    EventData.exp_lbound[1] = exp_lbound1;
+    EventData.exp_elems[0] = exp_elems0;
+    EventData.exp_elems[1] = exp_elems1;
+    if (exp_node_desc)
+        EventData.exp_node_desc = *exp_node_desc;
+    else
+        memset(&EventData.exp_node_desc, 0, sizeof(EventData.exp_node_desc));
+    EventData.exp_tree_struct = exp_tree_struct;
+}
+
+static void WINAPI uia_event_callback(struct UiaEventArgs *args, SAFEARRAY *req_data, BSTR tree_struct)
+{
+    CHECK_EXPECT(uia_event_callback);
+
+    if (!EventData.exp_elems[0] && !EventData.exp_elems[1])
+        ok(!req_data, "req_data != NULL\n");
+    else
+        test_cache_req_sa(req_data, EventData.exp_lbound, EventData.exp_elems, &EventData.exp_node_desc);
+
+    ok(!wcscmp(tree_struct, EventData.exp_tree_struct), "tree structure %s\n", debugstr_w(tree_struct));
+}
+
+struct event_test_thread_data {
+    HUIAEVENT event;
+    DWORD exp_thread_id;
+};
+
+static DWORD WINAPI uia_add_event_test_thread(LPVOID param)
+{
+    struct event_test_thread_data *data = (struct event_test_thread_data *)param;
+    HRESULT hr;
+
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    hr = UiaRemoveEvent(data->event);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+    ok(Provider2.ref == 1, "Unexpected refcnt %ld\n", Provider2.ref);
+    todo_wine ok(Provider2.last_call_tid == data->exp_thread_id ||
+            broken(Provider2.last_call_tid == GetCurrentThreadId()), "Expected method call on separate thread\n");
+    todo_wine ok(Provider2.advise_events_removed_event_id == UIA_AutomationFocusChangedEventId,
+            "Unexpected advise event removed, event ID %d\n", Provider.advise_events_removed_event_id);
+
+    CoUninitialize();
+    return 0;
+}
+
+static void test_UiaAddEvent(void)
+{
+    IRawElementProviderFragmentRoot *embedded_roots[2] = { &Provider_child.IRawElementProviderFragmentRoot_iface,
+                                                           &Provider_child2.IRawElementProviderFragmentRoot_iface };
+    struct event_test_thread_data thread_data = { 0 };
+    struct Provider_prop_override prop_override;
+    struct node_provider_desc exp_node_desc;
+    struct UiaPropertyCondition prop_cond;
+    struct UiaCacheRequest cache_req;
+    HUIAEVENT event;
+    HUIANODE node;
+    HANDLE thread;
+    HRESULT hr;
+    HWND hwnd;
+    VARIANT v;
+
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    initialize_provider(&Provider, ProviderOptions_ServerSideProvider, NULL, TRUE);
+    initialize_provider(&Provider_child, ProviderOptions_ServerSideProvider, NULL, TRUE);
+    provider_add_child(&Provider, &Provider_child);
+    initialize_provider(&Provider_child_child, ProviderOptions_ServerSideProvider, NULL, TRUE);
+    provider_add_child(&Provider_child, &Provider_child_child);
+
+    /* Create a node with Provider as its only provider. */
+    method_sequences_enabled = FALSE;
+    hr = UiaNodeFromProvider(&Provider.IRawElementProviderSimple_iface, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+
+    hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
+    check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider", TRUE);
+    VariantClear(&v);
+
+    /*
+     * Raise event without any registered event handlers.
+     */
+    method_sequences_enabled = TRUE;
+    hr = UiaRaiseAutomationEvent(&Provider.IRawElementProviderSimple_iface, UIA_AutomationFocusChangedEventId);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr) && sequence_cnt)
+        ok_method_sequence(event_seq1, "event_seq1");
+
+    /*
+     * Register an event on a node without an HWND/RuntimeId. The event will
+     * be created successfully, but without any way to match a provider to
+     * this node, we won't be able to trigger the event handler.
+     */
+    event = NULL;
+    Provider.frag_root = &Provider.IRawElementProviderFragmentRoot_iface;
+    set_cache_request(&cache_req, (struct UiaCondition *)&UiaTrueCondition, TreeScope_Element, NULL, 0, NULL, 0,
+            AutomationElementMode_Full);
+    hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Element, NULL, 0, &cache_req,
+            &event);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!event, "event == NULL\n");
+    todo_wine ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
+    if (SUCCEEDED(hr))
+        ok_method_sequence(event_seq2, "event_seq2");
+
+    /*
+     * Even though we raise an event on the same provider as the one our node
+     * currently represents, without an HWND/RuntimeId, we have no way to
+     * match them. The event handler will not be called.
+     */
+    hr = UiaRaiseAutomationEvent(&Provider.IRawElementProviderSimple_iface, UIA_AutomationFocusChangedEventId);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr) && sequence_cnt)
+        ok_method_sequence(event_seq3, "event_seq3");
+
+    hr = UiaRemoveEvent(event);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+    if (SUCCEEDED(hr))
+        ok_method_sequence(event_seq4, "event_seq4");
+
+    /*
+     * Register an event on the same node again, except this time we have a
+     * runtimeID. Nodes returned to the event handler are normalized against
+     * the cache request view condition.
+     */
+    event = NULL;
+    variant_init_bool(&v, TRUE);
+    set_property_condition(&prop_cond, UIA_IsControlElementPropertyId, &v, PropertyConditionFlags_None);
+    set_cache_request(&cache_req, (struct UiaCondition *)&prop_cond, TreeScope_Element, NULL, 0, NULL, 0,
+            AutomationElementMode_Full);
+
+    Provider.runtime_id[0] = Provider.runtime_id[1] = 0xdeadbeef;
+    hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Element, NULL, 0, &cache_req,
+            &event);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!event, "event == NULL\n");
+    todo_wine ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
+    if (SUCCEEDED(hr))
+        ok_method_sequence(event_seq2, "event_seq2");
+
+    /* Event callback is now invoked since we can match by runtime ID. */
+    method_sequences_enabled = FALSE;
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), NULL);
+    add_provider_desc(&exp_node_desc, L"Main", L"Provider", TRUE);
+    set_event_data(0, 0, 1, 1, &exp_node_desc, L"P)");
+    SET_EXPECT(uia_event_callback);
+    hr = UiaRaiseAutomationEvent(&Provider.IRawElementProviderSimple_iface, UIA_AutomationFocusChangedEventId);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine CHECK_CALLED(uia_event_callback);
+
+    /*
+     * Runtime ID matches so event callback is invoked, but nothing matches
+     * the cache request view condition, so the callback will be passed a
+     * NULL cache request.
+     */
+    variant_init_bool(&v, FALSE);
+    set_property_override(&prop_override, UIA_IsControlElementPropertyId, &v);
+    set_provider_prop_override(&Provider, &prop_override, 1);
+
+    set_event_data(0, 0, 0, 0, &exp_node_desc, L"");
+    SET_EXPECT(uia_event_callback);
+    hr = UiaRaiseAutomationEvent(&Provider.IRawElementProviderSimple_iface, UIA_AutomationFocusChangedEventId);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine CHECK_CALLED(uia_event_callback);
+    set_provider_prop_override(&Provider, NULL, 0);
+
+    method_sequences_enabled = TRUE;
+    hr = UiaRemoveEvent(event);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+    if (SUCCEEDED(hr))
+        ok_method_sequence(event_seq4, "event_seq4");
+
+    /* Create an event with TreeScope_Children. */
+    hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Children, NULL, 0, &cache_req,
+            &event);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!event, "event == NULL\n");
+    todo_wine ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
+    if (SUCCEEDED(hr))
+        ok_method_sequence(event_seq5, "event_seq5");
+
+    /*
+     * Only TreeScope_Children and not TreeScope_Element, handler won't be
+     * called.
+     */
+    method_sequences_enabled = FALSE;
+    hr = UiaRaiseAutomationEvent(&Provider.IRawElementProviderSimple_iface, UIA_AutomationFocusChangedEventId);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Provider_child_child is not a direct child, handler won't be called. */
+    hr = UiaRaiseAutomationEvent(&Provider_child_child.IRawElementProviderSimple_iface, UIA_AutomationFocusChangedEventId);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Raised an event on Provider_child, handler will be called. */
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), NULL);
+    add_provider_desc(&exp_node_desc, L"Main", L"Provider_child", TRUE);
+    set_event_data(0, 0, 1, 1, &exp_node_desc, L"P)");
+    SET_EXPECT(uia_event_callback);
+    hr = UiaRaiseAutomationEvent(&Provider_child.IRawElementProviderSimple_iface, UIA_AutomationFocusChangedEventId);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine CHECK_CALLED(uia_event_callback);
+
+    /* Provider_child doesn't match the view condition, but Provider does. */
+    variant_init_bool(&v, FALSE);
+    set_property_override(&prop_override, UIA_IsControlElementPropertyId, &v);
+    set_provider_prop_override(&Provider_child, &prop_override, 1);
+
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), NULL);
+    add_provider_desc(&exp_node_desc, L"Main", L"Provider", TRUE);
+    set_event_data(0, 0, 1, 1, &exp_node_desc, L"P)");
+    SET_EXPECT(uia_event_callback);
+    hr = UiaRaiseAutomationEvent(&Provider_child.IRawElementProviderSimple_iface, UIA_AutomationFocusChangedEventId);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine CHECK_CALLED(uia_event_callback);
+    set_provider_prop_override(&Provider_child, NULL, 0);
+
+    hr = UiaRemoveEvent(event);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+
+    /* Create an event with TreeScope_Descendants. */
+    hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Element | TreeScope_Descendants, NULL, 0,
+            &cache_req, &event);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!event, "event == NULL\n");
+    todo_wine ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
+
+    /* Raised an event on Provider_child_child. */
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), NULL);
+    add_provider_desc(&exp_node_desc, L"Main", L"Provider_child_child", TRUE);
+    set_event_data(0, 0, 1, 1, &exp_node_desc, L"P)");
+    SET_EXPECT(uia_event_callback);
+    hr = UiaRaiseAutomationEvent(&Provider_child_child.IRawElementProviderSimple_iface, UIA_AutomationFocusChangedEventId);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine CHECK_CALLED(uia_event_callback);
+
+    hr = UiaRemoveEvent(event);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+
+    CoUninitialize();
+
+    /*
+     * When adding an event, each node provider's fragment root is queried
+     * for, and if one is retrieved, it's IRawElementProviderAdviseEvents
+     * interface is used. On Win10v1809+, ProviderOptions_UseComThreading is
+     * respected for these interfaces. Set Provider2 as the fragment root here
+     * to test this.
+     */
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    initialize_provider(&Provider, ProviderOptions_ServerSideProvider, NULL, FALSE);
+    initialize_provider(&Provider2, ProviderOptions_UseComThreading | ProviderOptions_ServerSideProvider, NULL, TRUE);
+    Provider.frag_root = &Provider2.IRawElementProviderFragmentRoot_iface;
+    hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Element | TreeScope_Descendants, NULL, 0,
+            &cache_req, &event);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!event, "event == NULL\n");
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+    todo_wine ok(Provider2.ref > 1, "Unexpected refcnt %ld\n", Provider2.ref);
+    ok(!Provider.advise_events_added_event_id, "Unexpected advise event added, event ID %d\n", Provider.advise_events_added_event_id);
+    todo_wine ok(Provider2.advise_events_added_event_id == UIA_AutomationFocusChangedEventId,
+            "Unexpected advise event added, event ID %d\n", Provider.advise_events_added_event_id);
+
+    thread_data.exp_thread_id = GetCurrentThreadId();
+    thread_data.event = event;
+    thread = CreateThread(NULL, 0, uia_add_event_test_thread, (void *)&thread_data, 0, NULL);
+    while (MsgWaitForMultipleObjects(1, &thread, FALSE, INFINITE, QS_ALLINPUT) != WAIT_OBJECT_0)
+    {
+        MSG msg;
+
+        while (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE))
+        {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    }
+    CloseHandle(thread);
+
+    /* Test retrieving AdviseEvents on embedded fragment roots. */
+    initialize_provider(&Provider, ProviderOptions_ServerSideProvider, NULL, FALSE);
+    initialize_provider(&Provider_child, ProviderOptions_ServerSideProvider, NULL, FALSE);
+    initialize_provider(&Provider_child2, ProviderOptions_ServerSideProvider, NULL, FALSE);
+    Provider.frag_root = &Provider.IRawElementProviderFragmentRoot_iface;
+    Provider.embedded_frag_roots = embedded_roots;
+    Provider.embedded_frag_roots_count = ARRAY_SIZE(embedded_roots);
+    Provider_child.frag_root = &Provider_child.IRawElementProviderFragmentRoot_iface;
+    Provider_child2.frag_root = &Provider_child2.IRawElementProviderFragmentRoot_iface;
+
+    hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Element | TreeScope_Descendants, NULL, 0,
+            &cache_req, &event);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!event, "event == NULL\n");
+    todo_wine ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
+    todo_wine ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+    todo_wine ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
+    todo_wine ok(Provider.advise_events_added_event_id == UIA_AutomationFocusChangedEventId,
+            "Unexpected advise event added, event ID %d\n", Provider.advise_events_added_event_id);
+    todo_wine ok(Provider_child.advise_events_added_event_id == UIA_AutomationFocusChangedEventId,
+            "Unexpected advise event added, event ID %d\n", Provider_child.advise_events_added_event_id);
+    todo_wine ok(Provider_child2.advise_events_added_event_id == UIA_AutomationFocusChangedEventId,
+            "Unexpected advise event added, event ID %d\n", Provider_child2.advise_events_added_event_id);
+
+    method_sequences_enabled = TRUE;
+    hr = UiaRemoveEvent(event);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+    ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
+    ok(Provider_child2.ref == 1, "Unexpected refcnt %ld\n", Provider_child2.ref);
+    if (SUCCEEDED(hr))
+        ok_method_sequence(event_seq6, "event_seq6");
+
+    UiaNodeRelease(node);
+    ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
+    initialize_provider(&Provider, ProviderOptions_ServerSideProvider, NULL, TRUE);
+    initialize_provider(&Provider_child, ProviderOptions_ServerSideProvider, NULL, TRUE);
+    initialize_provider(&Provider_child2, ProviderOptions_ServerSideProvider, NULL, TRUE);
+
+    hwnd = create_test_hwnd("UiaAddEvent test class");
+    UiaRegisterProviderCallback(test_uia_provider_callback);
+
+    /* Set clientside providers for our test window and the desktop. */
+    set_clientside_providers_for_hwnd(&Provider_proxy, &Provider_nc, &Provider_hwnd, GetDesktopWindow());
+    Provider_proxy.frag_root = Provider_hwnd.frag_root = Provider_nc.frag_root = NULL;
+    base_hwnd_prov = &Provider_hwnd.IRawElementProviderSimple_iface;
+    nc_prov = &Provider_nc.IRawElementProviderSimple_iface;
+    proxy_prov = &Provider_proxy.IRawElementProviderSimple_iface;
+
+    set_clientside_providers_for_hwnd(NULL, &Provider_nc2, &Provider_hwnd2, hwnd);
+    provider_add_child(&Provider_nc, &Provider_nc2);
+    initialize_provider(&Provider, ProviderOptions_ServerSideProvider, hwnd, TRUE);
+    Provider.frag_root = &Provider.IRawElementProviderFragmentRoot_iface;
+    prov_root = &Provider.IRawElementProviderSimple_iface;
+    Provider.ignore_hwnd_prop = TRUE;
+
+    method_sequences_enabled = FALSE;
+    SET_EXPECT(prov_callback_base_hwnd);
+    SET_EXPECT(prov_callback_nonclient);
+    SET_EXPECT(prov_callback_proxy);
+    hr = UiaGetRootNode(&node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!node, "Node == NULL.\n");
+    ok(Provider_proxy.ref == 2, "Unexpected refcnt %ld\n", Provider_proxy.ref);
+    ok(Provider_hwnd.ref == 2, "Unexpected refcnt %ld\n", Provider_hwnd.ref);
+    ok(Provider_nc.ref == 2, "Unexpected refcnt %ld\n", Provider_nc.ref);
+    CHECK_CALLED(prov_callback_base_hwnd);
+    CHECK_CALLED(prov_callback_nonclient);
+    CHECK_CALLED(prov_callback_proxy);
+
+    /* Register an event on the desktop HWND. */
+    set_cache_request(&cache_req, (struct UiaCondition *)&UiaTrueCondition, TreeScope_Element, NULL, 0, NULL, 0,
+            AutomationElementMode_Full);
+    hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Element | TreeScope_Children, NULL, 0,
+            &cache_req, &event);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!event, "event == NULL\n");
+
+    /*
+     * Raising an event on a serverside provider results in no clientside
+     * providers being added for the HWND, which means we won't match this
+     * event.
+     */
+    Provider_hwnd2.prov_opts = ProviderOptions_ServerSideProvider;
+    hr = UiaRaiseAutomationEvent(&Provider_hwnd2.IRawElementProviderSimple_iface, UIA_AutomationFocusChangedEventId);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Now that Provider has clientside providers, the event will be matched. */
+    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    SET_EXPECT(prov_callback_base_hwnd);
+    SET_EXPECT(prov_callback_nonclient);
+    SET_EXPECT_MULTI(prov_callback_proxy, 2);
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), hwnd);
+    add_provider_desc(&exp_node_desc, L"Main", L"Provider", FALSE);
+    add_provider_desc(&exp_node_desc, L"Nonclient", L"Provider_nc2", TRUE);
+    add_provider_desc(&exp_node_desc, L"Hwnd", L"Provider_hwnd2", FALSE);
+    set_event_data(0, 0, 1, 1, &exp_node_desc, L"P)");
+    SET_EXPECT(uia_event_callback);
+    Provider_hwnd2.prov_opts = ProviderOptions_ClientSideProvider;
+    hr = UiaRaiseAutomationEvent(&Provider_hwnd2.IRawElementProviderSimple_iface, UIA_AutomationFocusChangedEventId);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+    todo_wine CHECK_CALLED(prov_callback_base_hwnd);
+    todo_wine CHECK_CALLED(prov_callback_nonclient);
+    todo_wine CHECK_CALLED_MULTI(prov_callback_proxy, 2);
+    todo_wine CHECK_CALLED(uia_event_callback);
+
+    hr = UiaRemoveEvent(event);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    UiaNodeRelease(node);
+
+    method_sequences_enabled = TRUE;
+    CoUninitialize();
+    UiaRegisterProviderCallback(NULL);
+    DestroyWindow(hwnd);
+    UnregisterClassA("UiaAddEvent test class", NULL);
+}
+
 /*
  * Once a process returns a UI Automation provider with
  * UiaReturnRawElementProvider it ends up in an implicit MTA until exit. This
@@ -13645,6 +14245,7 @@ START_TEST(uiautomation)
     test_default_clientside_providers();
     test_UiaGetRootNode();
     test_UiaNodeFromFocus();
+    test_UiaAddEvent();
     if (uia_dll)
     {
         pUiaProviderFromIAccessible = (void *)GetProcAddress(uia_dll, "UiaProviderFromIAccessible");
