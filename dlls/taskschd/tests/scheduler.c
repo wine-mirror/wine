@@ -788,14 +788,16 @@ static void test_GetTask(void)
 
     for (i = 0; i < ARRAY_SIZE(create_new_task); i++)
     {
+        winetest_push_context("%d", i);
         hr = ITaskFolder_RegisterTask(root, Wine_Task1, xml1, create_new_task[i].flags, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
-        ok(hr == create_new_task[i].hr, "%d: expected %#lx, got %#lx\n", i, create_new_task[i].hr, hr);
+        ok(hr == create_new_task[i].hr, "expected %#lx, got %#lx\n", create_new_task[i].hr, hr);
         if (hr == S_OK)
         {
             hr = ITaskFolder_DeleteTask(root, Wine_Task1, 0);
             ok(hr == S_OK, "DeleteTask error %#lx\n", hr);
             IRegisteredTask_Release(task1);
         }
+        winetest_pop_context();
     }
 
     hr = ITaskFolder_RegisterTask(root, Wine_Task1, NULL, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
@@ -1276,19 +1278,21 @@ static void test_daily_trigger(ITrigger *trigger)
 
     for (i = 0; i < ARRAY_SIZE(start_test); i++)
     {
+        winetest_push_context("%lu", i);
         start_boundary = SysAllocString(start_test[i].str);
         hr = IDailyTrigger_put_StartBoundary(daily_trigger, start_boundary);
-        ok(hr == start_test[i].hr, "%lu: got %08lx expected %08lx\n", i, hr, start_test[i].hr);
+        ok(hr == start_test[i].hr, "got %08lx expected %08lx\n", hr, start_test[i].hr);
         SysFreeString(start_boundary);
         if (hr == S_OK)
         {
             start_boundary = NULL;
             hr = IDailyTrigger_get_StartBoundary(daily_trigger, &start_boundary);
-            ok(hr == S_OK, "%lu: got %08lx\n", i, hr);
+            ok(hr == S_OK, "got %08lx\n", hr);
             ok(start_boundary != NULL, "start_boundary not set\n");
-            ok(!lstrcmpW(start_boundary, start_test[i].str), "%lu: got %s\n", i, wine_dbgstr_w(start_boundary));
+            ok(!lstrcmpW(start_boundary, start_test[i].str), "got %s\n", wine_dbgstr_w(start_boundary));
             SysFreeString(start_boundary);
         }
+        winetest_pop_context();
     }
 
     hr = IDailyTrigger_put_StartBoundary(daily_trigger, NULL);
