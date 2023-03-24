@@ -221,8 +221,8 @@ tlsw_session_connect( LDAP *ld, tls_session *session, const char *name_in )
 
 		while ( expected > 0 ) {
 			size = tlsw_recv( s->sbiod, (char *)in_bufs[0].pvBuffer + recv_offset, expected );
-			if ( size < 0 )
-				break;
+			if ( size <= 0 )
+				goto done;
 			in_bufs[0].cbBuffer += size;
 			recv_offset += size;
 			expected -= size;
@@ -239,6 +239,7 @@ tlsw_session_connect( LDAP *ld, tls_session *session, const char *name_in )
 		}
 	}
 
+done:
 	ber_memfree( in_bufs[0].pvBuffer );
 	FreeContextBuffer( out_bufs[0].pvBuffer );
 	return status == SEC_E_OK ? 0 : -1;
@@ -247,7 +248,7 @@ tlsw_session_connect( LDAP *ld, tls_session *session, const char *name_in )
 static int
 tlsw_session_upflags( Sockbuf *sb, tls_session *session, int rc )
 {
-	return -1;
+	return 0;
 }
 
 static char *
