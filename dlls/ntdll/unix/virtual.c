@@ -5319,10 +5319,21 @@ NTSTATUS WINAPI NtWow64WriteVirtualMemory64( HANDLE process, ULONG64 addr, const
 NTSTATUS WINAPI NtWow64GetNativeSystemInformation( SYSTEM_INFORMATION_CLASS class, void *info,
                                                    ULONG len, ULONG *retlen )
 {
+    NTSTATUS status;
+
     switch (class)
     {
-    case SystemBasicInformation:
     case SystemCpuInformation:
+        status = NtQuerySystemInformation( class, info, len, retlen );
+        if (!status && is_old_wow64())
+        {
+            SYSTEM_CPU_INFORMATION *cpu = info;
+
+            if (cpu->ProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
+                cpu->ProcessorArchitecture = PROCESSOR_ARCHITECTURE_AMD64;
+        }
+        return status;
+    case SystemBasicInformation:
     case SystemEmulationBasicInformation:
     case SystemEmulationProcessorInformation:
         return NtQuerySystemInformation( class, info, len, retlen );

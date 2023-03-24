@@ -322,7 +322,6 @@ static void test_query_cpu(void)
     {
         ok( sci.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL, "ProcessorArchitecture wrong %x\n",
             sci.ProcessorArchitecture );
-        todo_wine
         ok( sci2.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64 ||
             sci2.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64,
             "ProcessorArchitecture wrong %x\n", sci2.ProcessorArchitecture );
