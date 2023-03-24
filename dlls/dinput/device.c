@@ -1785,7 +1785,8 @@ static HRESULT WINAPI dinput_device_WriteEffectToFile( IDirectInputDevice8W *ifa
     return DI_OK;
 }
 
-static BOOL object_matches_semantic( const DIOBJECTDATAFORMAT *object, DWORD semantic, BOOL exact )
+static BOOL object_matches_semantic( const DIDEVICEINSTANCEW *instance, const DIOBJECTDATAFORMAT *object,
+                                     DWORD semantic, BOOL exact )
 {
     DWORD value = semantic & 0xff, axis = (semantic >> 15) & 3, type;
 
@@ -1799,7 +1800,15 @@ static BOOL object_matches_semantic( const DIOBJECTDATAFORMAT *object, DWORD sem
     }
 
     if (!(DIDFT_GETTYPE( object->dwType ) & type)) return FALSE;
-    if ((semantic & 0xf0000000) == 0x80000000) return object->dwOfs == value;
+    if ((semantic & 0xf0000000) == 0x80000000)
+    {
+        switch (semantic & 0x0f000000)
+        {
+        case 0x01000000: return (instance->dwDevType & 0xf) == DIDEVTYPE_KEYBOARD && object->dwOfs == value;
+        case 0x02000000: return (instance->dwDevType & 0xf) == DIDEVTYPE_MOUSE && object->dwOfs == value;
+        default: return FALSE;
+        }
+    }
     if (axis && (axis - 1) != DIDFT_GETINSTANCE( object->dwType )) return FALSE;
     return !exact || !value || value == DIDFT_GETINSTANCE( object->dwType ) + 1;
 }
@@ -1872,7 +1881,7 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
         for (object = impl->device_format.rgodf; object < object_end; object++)
         {
             if (mapped[object - impl->device_format.rgodf]) continue;
-            if (!object_matches_semantic( object, action->dwSemantic, TRUE )) continue;
+            if (!object_matches_semantic( &impl->instance, object, action->dwSemantic, TRUE )) continue;
             if ((action->dwFlags & DIA_FORCEFEEDBACK) && !(object->dwType & DIDFT_FFACTUATOR)) continue;
             action->dwObjID = object->dwType;
             action->guidInstance = impl->guid;
@@ -1891,7 +1900,7 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
         for (object = impl->device_format.rgodf; object < object_end; object++)
         {
             if (mapped[object - impl->device_format.rgodf]) continue;
-            if (!object_matches_semantic( object, action->dwSemantic, FALSE )) continue;
+            if (!object_matches_semantic( &impl->instance, object, action->dwSemantic, FALSE )) continue;
             if ((action->dwFlags & DIA_FORCEFEEDBACK) && !(object->dwType & DIDFT_FFACTUATOR)) continue;
             action->dwObjID = object->dwType;
             action->guidInstance = impl->guid;
