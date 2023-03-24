@@ -2814,10 +2814,61 @@ static HRESULT WINAPI uia_iface_ElementFromPoint(IUIAutomation6 *iface, POINT pt
     return E_NOTIMPL;
 }
 
+static HRESULT uia_get_focused_element(IUIAutomation6 *iface, IUIAutomationCacheRequest *cache_req,
+        BOOL use_default_cache_req, IUIAutomationElement **out_elem)
+{
+    struct uia_iface *uia_iface = impl_from_IUIAutomation6(iface);
+    struct UiaCacheRequest *cache_req_struct;
+    BSTR tree_struct;
+    SAFEARRAY *sa;
+    HRESULT hr;
+
+    if (!out_elem)
+        return E_POINTER;
+
+    *out_elem = NULL;
+    if (use_default_cache_req)
+    {
+        hr = create_uia_cache_request_iface(&cache_req);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    hr = get_uia_cache_request_struct_from_iface(cache_req, &cache_req_struct);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = UiaNodeFromFocus(cache_req_struct, &sa, &tree_struct);
+    if (SUCCEEDED(hr))
+    {
+        if (!sa)
+        {
+            /*
+             * Failure to get a focused element returns E_FAIL from the BuildCache
+             * method, but UIA_E_ELEMENTNOTAVAILABLE from the default cache
+             * request method.
+             */
+            hr = use_default_cache_req ? UIA_E_ELEMENTNOTAVAILABLE : E_FAIL;
+            SysFreeString(tree_struct);
+            goto exit;
+        }
+
+        hr = create_uia_element_from_cache_req(out_elem, uia_iface->is_cui8, cache_req_struct, 0, sa, tree_struct);
+        SafeArrayDestroy(sa);
+    }
+
+exit:
+    if (use_default_cache_req)
+        IUIAutomationCacheRequest_Release(cache_req);
+
+    return hr;
+}
+
 static HRESULT WINAPI uia_iface_GetFocusedElement(IUIAutomation6 *iface, IUIAutomationElement **out_elem)
 {
-    FIXME("%p, %p: stub\n", iface, out_elem);
-    return E_NOTIMPL;
+    TRACE("%p, %p\n", iface, out_elem);
+
+    return uia_get_focused_element(iface, NULL, TRUE, out_elem);
 }
 
 static HRESULT WINAPI uia_iface_GetRootElementBuildCache(IUIAutomation6 *iface, IUIAutomationCacheRequest *cache_req,
@@ -2844,8 +2895,9 @@ static HRESULT WINAPI uia_iface_ElementFromPointBuildCache(IUIAutomation6 *iface
 static HRESULT WINAPI uia_iface_GetFocusedElementBuildCache(IUIAutomation6 *iface,
         IUIAutomationCacheRequest *cache_req, IUIAutomationElement **out_elem)
 {
-    FIXME("%p, %p, %p: stub\n", iface, cache_req, out_elem);
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p\n", iface, cache_req, out_elem);
+
+    return uia_get_focused_element(iface, cache_req, FALSE, out_elem);
 }
 
 static HRESULT WINAPI uia_iface_CreateTreeWalker(IUIAutomation6 *iface, IUIAutomationCondition *cond,

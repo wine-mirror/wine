@@ -12493,6 +12493,213 @@ static void test_GetRootElement(IUIAutomation *uia_iface)
     UiaRegisterProviderCallback(NULL);
 }
 
+#define test_get_focused_elem( uia_iface, cache_req, exp_hr, exp_node_desc, proxy_cback_count, base_hwnd_cback_count, \
+                              nc_cback_count, win_get_obj_count, child_win_get_obj_count, proxy_cback_todo, \
+                              base_hwnd_cback_todo, nc_cback_todo, win_get_obj_todo, child_win_get_obj_todo ) \
+        test_get_focused_elem_( (uia_iface), (cache_req), (exp_hr), (exp_node_desc), (proxy_cback_count), (base_hwnd_cback_count), \
+                               (nc_cback_count), (win_get_obj_count), (child_win_get_obj_count), (proxy_cback_todo), \
+                               (base_hwnd_cback_todo), (nc_cback_todo), (win_get_obj_todo), (child_win_get_obj_todo), __FILE__, __LINE__)
+static void test_get_focused_elem_(IUIAutomation *uia_iface, IUIAutomationCacheRequest *cache_req, HRESULT exp_hr,
+        struct node_provider_desc *exp_node_desc, int proxy_cback_count, int base_hwnd_cback_count, int nc_cback_count,
+        int win_get_obj_count, int child_win_get_obj_count, BOOL proxy_cback_todo, BOOL base_hwnd_cback_todo,
+        BOOL nc_cback_todo, BOOL win_get_obj_todo, BOOL child_win_get_obj_todo, const char *file, int line)
+{
+    IUIAutomationElement *element = NULL;
+    HRESULT hr;
+    VARIANT v;
+
+    SET_EXPECT_MULTI(prov_callback_base_hwnd, base_hwnd_cback_count);
+    SET_EXPECT_MULTI(prov_callback_nonclient, nc_cback_count);
+    SET_EXPECT_MULTI(prov_callback_proxy, proxy_cback_count);
+    SET_EXPECT_MULTI(winproc_GETOBJECT_UiaRoot, win_get_obj_count);
+    SET_EXPECT_MULTI(child_winproc_GETOBJECT_UiaRoot, child_win_get_obj_count);
+    if (cache_req)
+        hr = IUIAutomation_GetFocusedElementBuildCache(uia_iface, cache_req, &element);
+    else
+        hr = IUIAutomation_GetFocusedElement(uia_iface, &element);
+    ok_(file, line)(hr == exp_hr, "Unexpected hr %#lx.\n", hr);
+    todo_wine_if(base_hwnd_cback_todo) CHECK_CALLED_MULTI(prov_callback_base_hwnd, base_hwnd_cback_count);
+    todo_wine_if(proxy_cback_todo) CHECK_CALLED_MULTI(prov_callback_proxy, proxy_cback_count);
+    todo_wine_if(nc_cback_todo) CHECK_CALLED_MULTI(prov_callback_nonclient, nc_cback_count);
+    todo_wine_if(win_get_obj_todo) CHECK_CALLED_MULTI(winproc_GETOBJECT_UiaRoot, win_get_obj_count);
+    todo_wine_if(child_win_get_obj_todo) CHECK_CALLED_MULTI(child_winproc_GETOBJECT_UiaRoot, child_win_get_obj_count);
+
+    if (exp_node_desc->prov_count)
+    {
+        ok_(file, line)(!!element, "element == NULL\n");
+
+        hr = IUIAutomationElement_GetCurrentPropertyValueEx(element, UIA_ProviderDescriptionPropertyId, TRUE, &v);
+        ok_(file, line)(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        test_node_provider_desc_(exp_node_desc, V_BSTR(&v), file, line);
+        VariantClear(&v);
+
+        IUIAutomationElement_Release(element);
+    }
+    else
+        ok_(file, line)(!element, "element != NULL\n");
+}
+
+static void test_GetFocusedElement(IUIAutomation *uia_iface)
+{
+    struct Provider_prop_override prop_override;
+    struct node_provider_desc exp_node_desc;
+    IUIAutomationCacheRequest *cache_req;
+    IUIAutomationElement *element;
+    HWND hwnd, hwnd_child;
+    HRESULT hr;
+    VARIANT v;
+
+    hwnd = create_test_hwnd("test_GetFocusedElement class");
+    hwnd_child = create_child_test_hwnd("test_GetFocusedElement child class", hwnd);
+    UiaRegisterProviderCallback(test_uia_provider_callback);
+
+    cache_req = NULL;
+    hr = IUIAutomation_CreateCacheRequest(uia_iface, &cache_req);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cache_req, "cache_req == NULL\n");
+
+    /*
+     * Set clientside providers for our test windows and the desktop. Same
+     * tests as UiaNodeFromFocus, just with COM methods.
+     */
+    set_clientside_providers_for_hwnd(&Provider_proxy, &Provider_nc, &Provider_hwnd, GetDesktopWindow());
+    base_hwnd_prov = &Provider_hwnd.IRawElementProviderSimple_iface;
+    nc_prov = &Provider_nc.IRawElementProviderSimple_iface;
+    proxy_prov = &Provider_proxy.IRawElementProviderSimple_iface;
+
+    set_clientside_providers_for_hwnd(NULL, &Provider_nc2, &Provider_hwnd2, hwnd);
+    initialize_provider(&Provider, ProviderOptions_ServerSideProvider, hwnd, TRUE);
+    Provider.frag_root = &Provider.IRawElementProviderFragmentRoot_iface;
+    prov_root = &Provider.IRawElementProviderSimple_iface;
+    Provider.ignore_hwnd_prop = TRUE;
+
+    set_clientside_providers_for_hwnd(NULL, &Provider_nc3, &Provider_hwnd3, hwnd_child);
+    initialize_provider(&Provider2, ProviderOptions_ServerSideProvider, hwnd_child, TRUE);
+    Provider2.frag_root = &Provider2.IRawElementProviderFragmentRoot_iface;
+    child_win_prov_root = &Provider2.IRawElementProviderSimple_iface;
+    Provider2.ignore_hwnd_prop = TRUE;
+
+    /* NULL input argument tests. */
+    hr = IUIAutomation_GetFocusedElement(uia_iface, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IUIAutomation_GetFocusedElementBuildCache(uia_iface, cache_req, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    element = (void *)0xdeadbeef;
+    hr = IUIAutomation_GetFocusedElementBuildCache(uia_iface, NULL, &element);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    ok(!element, "element != NULL\n");
+
+    /*
+     * None of the providers for the desktop node return a provider from
+     * IRawElementProviderFragmentRoot::GetFocus, so we just get the
+     * desktop node.
+     */
+    method_sequences_enabled = FALSE;
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), GetDesktopWindow());
+    add_provider_desc(&exp_node_desc, L"Main", L"Provider_proxy", TRUE);
+    add_provider_desc(&exp_node_desc, L"Nonclient", L"Provider_nc", FALSE);
+    add_provider_desc(&exp_node_desc, L"Hwnd", L"Provider_hwnd", FALSE);
+
+    test_get_focused_elem(uia_iface, NULL, S_OK, &exp_node_desc, 1, 1, 1, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE);
+    test_get_focused_elem(uia_iface, cache_req, S_OK, &exp_node_desc, 1, 1, 1, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    /* Provider_hwnd returns Provider_hwnd2 from GetFocus. */
+    Provider_hwnd.focus_prov = &Provider_hwnd2.IRawElementProviderFragment_iface;
+
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), hwnd);
+    add_provider_desc(&exp_node_desc, L"Main", L"Provider", TRUE);
+    add_provider_desc(&exp_node_desc, L"Nonclient", L"Provider_nc2", FALSE);
+    add_provider_desc(&exp_node_desc, L"Hwnd", L"Provider_hwnd2", FALSE);
+
+    test_get_focused_elem(uia_iface, NULL, S_OK, &exp_node_desc, 2, 1, 2, 1, 0, TRUE, FALSE, FALSE, FALSE, FALSE);
+    test_get_focused_elem(uia_iface, cache_req, S_OK, &exp_node_desc, 2, 1, 2, 1, 0, TRUE, FALSE, FALSE, FALSE, FALSE);
+
+    /*
+     * Provider_proxy returns Provider from GetFocus. The provider that
+     * creates the node will not have GetFocus called on it to avoid returning
+     * the same provider twice. Similarly, on nodes other than the desktop
+     * node, the HWND provider will not have GetFocus called on it.
+     */
+    Provider_hwnd.focus_prov = NULL;
+    Provider_proxy.focus_prov = &Provider.IRawElementProviderFragment_iface;
+    Provider.focus_prov = Provider_hwnd2.focus_prov = &Provider2.IRawElementProviderFragment_iface;
+
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), hwnd);
+    add_provider_desc(&exp_node_desc, L"Main", L"Provider", TRUE);
+    add_provider_desc(&exp_node_desc, L"Nonclient", L"Provider_nc2", FALSE);
+    add_provider_desc(&exp_node_desc, L"Hwnd", L"Provider_hwnd2", FALSE);
+
+    test_get_focused_elem(uia_iface, NULL, S_OK, &exp_node_desc, 2, 2, 2, 1, 0, TRUE, FALSE, FALSE, FALSE, FALSE);
+    test_get_focused_elem(uia_iface, cache_req, S_OK, &exp_node_desc, 2, 2, 2, 1, 0, TRUE, FALSE, FALSE, FALSE, FALSE);
+
+    /*
+     * Provider_nc returns Provider_nc2 from GetFocus, Provider returns
+     * Provider2, Provider_nc3 returns Provider_child.
+     */
+    initialize_provider(&Provider_child, ProviderOptions_ServerSideProvider, NULL, TRUE);
+    Provider_proxy.focus_prov = Provider_hwnd.focus_prov = NULL;
+    Provider_nc.focus_prov = &Provider_nc2.IRawElementProviderFragment_iface;
+    Provider.focus_prov = &Provider2.IRawElementProviderFragment_iface;
+    Provider_nc3.focus_prov = &Provider_child.IRawElementProviderFragment_iface;
+
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), NULL);
+    add_provider_desc(&exp_node_desc, L"Main", L"Provider_child", TRUE);
+
+    test_get_focused_elem(uia_iface, NULL, S_OK,  &exp_node_desc, 2, 3, 2, 2, 1, TRUE, FALSE, FALSE, TRUE, FALSE);
+    test_get_focused_elem(uia_iface, cache_req, S_OK,  &exp_node_desc, 2, 3, 2, 2, 1, TRUE, FALSE, FALSE, TRUE, FALSE);
+
+    /*
+     * Provider_proxy returns Provider_child_child from GetFocus. The focus
+     * provider is normalized against the cache request view condition.
+     * Provider_child_child and its ancestors don't match the cache request
+     * view condition, so we'll get no provider.
+     */
+    initialize_provider(&Provider_child, ProviderOptions_ServerSideProvider, NULL, TRUE);
+    initialize_provider(&Provider_child_child, ProviderOptions_ServerSideProvider, NULL, TRUE);
+    provider_add_child(&Provider, &Provider_child);
+    provider_add_child(&Provider_child, &Provider_child_child);
+    Provider_proxy.focus_prov = &Provider_child_child.IRawElementProviderFragment_iface;
+    Provider_nc.focus_prov = Provider_hwnd.focus_prov = NULL;
+
+    variant_init_bool(&v, FALSE);
+    set_property_override(&prop_override, UIA_IsControlElementPropertyId, &v);
+    set_provider_prop_override(&Provider_child_child, &prop_override, 1);
+    set_provider_prop_override(&Provider_child, &prop_override, 1);
+    set_provider_prop_override(&Provider, &prop_override, 1);
+
+    /*
+     * GetFocusedElement returns UIA_E_ELEMENTNOTAVAILABLE when no provider
+     * matches our view condition, GetFocusedElementBuildCache returns E_FAIL.
+     */
+    init_node_provider_desc(&exp_node_desc, 0, NULL);
+    test_get_focused_elem(uia_iface, NULL, UIA_E_ELEMENTNOTAVAILABLE,
+            &exp_node_desc, 2, 2, 2, 1, 0, TRUE, FALSE, FALSE, FALSE, FALSE);
+    test_get_focused_elem(uia_iface, cache_req, E_FAIL,
+            &exp_node_desc, 2, 2, 2, 1, 0, TRUE, FALSE, FALSE, FALSE, FALSE);
+
+    /* This time, Provider_child matches our view condition. */
+    set_provider_prop_override(&Provider_child, NULL, 0);
+
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), NULL);
+    add_provider_desc(&exp_node_desc, L"Main", L"Provider_child", TRUE);
+
+    test_get_focused_elem(uia_iface, NULL, S_OK, &exp_node_desc, 1, 1, 1, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    method_sequences_enabled = TRUE;
+    initialize_provider(&Provider, ProviderOptions_ServerSideProvider, NULL, TRUE);
+    initialize_provider(&Provider_child, ProviderOptions_ServerSideProvider, NULL, TRUE);
+    initialize_provider(&Provider_child_child, ProviderOptions_ServerSideProvider, NULL, TRUE);
+
+    base_hwnd_prov = nc_prov = proxy_prov = prov_root = NULL;
+    IUIAutomationCacheRequest_Release(cache_req);
+    UiaRegisterProviderCallback(NULL);
+    DestroyWindow(hwnd);
+    UnregisterClassA("test_GetFocusedElement class", NULL);
+    UnregisterClassA("test_GetFocusedElement child class", NULL);
+}
+
 struct uia_com_classes {
     const GUID *clsid;
     const GUID *iid;
@@ -12600,6 +12807,7 @@ static void test_CUIAutomation(void)
     test_Element_cache_methods(uia_iface);
     test_Element_Find(uia_iface);
     test_GetRootElement(uia_iface);
+    test_GetFocusedElement(uia_iface);
 
     IUIAutomation_Release(uia_iface);
     CoUninitialize();
