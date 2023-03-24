@@ -1068,7 +1068,10 @@ static void contexts_from_server( CONTEXT *context, context_t server_contexts[2]
     if (native_context)
     {
         context_from_server( native_context, &server_contexts[0], native_machine );
-        if (wow_context) context_from_server( wow_context, &server_contexts[1], main_image_info.Machine );
+        if (wow_context)
+            context_from_server( wow_context, &server_contexts[1], main_image_info.Machine );
+        else
+            context_from_server( native_context, &server_contexts[1], native_machine );
     }
     else context_from_server( wow_context, &server_contexts[0], main_image_info.Machine );
 }
