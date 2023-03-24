@@ -4034,12 +4034,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
                 case WINED3D_RS_ADAPTIVETESS_X:
                 case WINED3D_RS_ADAPTIVETESS_Z:
-                    set_depth_bounds = true;
-                    break;
-
                 case WINED3D_RS_ADAPTIVETESS_W:
                     set_depth_bounds = true;
-                    wined3d_device_set_render_state(device, idx, state->rs[idx]);
                     break;
 
                 case WINED3D_RS_ADAPTIVETESS_Y:
