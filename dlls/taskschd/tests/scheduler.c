@@ -683,8 +683,8 @@ static void test_GetTask(void)
     static WCHAR Wine_Task2[] = { '\\','W','i','n','e','\\','T','a','s','k','2',0 };
     static WCHAR Task1[] = { 'T','a','s','k','1',0 };
     static WCHAR Task2[] = { 'T','a','s','k','2',0 };
-    static const char xml1[] =
-        "<?xml version=\"1.0\"?>\n"
+    static WCHAR xml1[] =
+        L"<?xml version=\"1.0\"?>\n"
         "<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
         "  <RegistrationInfo>\n"
         "    <Description>\"Task1\"</Description>\n"
@@ -699,8 +699,8 @@ static void test_GetTask(void)
         "    </Exec>\n"
         "  </Actions>\n"
         "</Task>\n";
-    static const char xml2[] =
-        "<?xml version=\"1.0\"?>\n"
+    static WCHAR xml2[] =
+        L"<?xml version=\"1.0\"?>\n"
         "<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
         "  <RegistrationInfo>\n"
         "    <Description>\"Task2\"</Description>\n"
@@ -735,7 +735,6 @@ static void test_GetTask(void)
         { TASK_UPDATE, S_OK },
         { TASK_CREATE | TASK_UPDATE, S_OK }
     };
-    WCHAR xmlW[sizeof(xml1)];
     HRESULT hr;
     BSTR bstr;
     TASK_STATE state;
@@ -775,9 +774,7 @@ static void test_GetTask(void)
     hr = ITaskFolder_CreateFolder(root, Wine, v_null, &folder);
     ok(hr == S_OK, "CreateFolder error %#lx\n", hr);
 
-    MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, ARRAY_SIZE(xmlW));
-
-    hr = ITaskFolder_RegisterTask(root, Wine, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
+    hr = ITaskFolder_RegisterTask(root, Wine, xml1, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
     todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED) || broken(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS)) /* Vista */, "expected ERROR_ACCESS_DENIED, got %#lx\n", hr);
 
@@ -797,7 +794,7 @@ static void test_GetTask(void)
 
     for (i = 0; i < ARRAY_SIZE(create_new_task); i++)
     {
-        hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, create_new_task[i].flags, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
+        hr = ITaskFolder_RegisterTask(root, Wine_Task1, xml1, create_new_task[i].flags, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
         ok(hr == create_new_task[i].hr, "%d: expected %#lx, got %#lx\n", i, create_new_task[i].hr, hr);
         if (hr == S_OK)
         {
@@ -810,24 +807,24 @@ static void test_GetTask(void)
     hr = ITaskFolder_RegisterTask(root, Wine_Task1, NULL, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
     ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "expected RPC_X_NULL_REF_POINTER, got %#lx\n", hr);
 
-    hr = ITaskFolder_RegisterTask(root, Wine, xmlW, TASK_VALIDATE_ONLY, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
+    hr = ITaskFolder_RegisterTask(root, Wine, xml1, TASK_VALIDATE_ONLY, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
     ok(hr == S_OK, "RegisterTask error %#lx\n", hr);
 
-    hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
+    hr = ITaskFolder_RegisterTask(root, Wine_Task1, xml1, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
     ok(hr == S_OK, "RegisterTask error %#lx\n", hr);
 
-    hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
+    hr = ITaskFolder_RegisterTask(root, Wine_Task1, xml1, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
     ok(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS), "expected ERROR_ALREADY_EXISTS, got %#lx\n", hr);
 
-    hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, 0, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
+    hr = ITaskFolder_RegisterTask(root, Wine_Task1, xml1, 0, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
     ok(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS), "expected ERROR_ALREADY_EXISTS, got %#lx\n", hr);
 
-    hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, TASK_CREATE_OR_UPDATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
+    hr = ITaskFolder_RegisterTask(root, Wine_Task1, xml1, TASK_CREATE_OR_UPDATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
     ok(hr == S_OK, "RegisterTask error %#lx\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(open_existing_task); i++)
     {
-        hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, open_existing_task[i].flags, v_null, v_null, TASK_LOGON_NONE, v_null, &task2);
+        hr = ITaskFolder_RegisterTask(root, Wine_Task1, xml1, open_existing_task[i].flags, v_null, v_null, TASK_LOGON_NONE, v_null, &task2);
         ok(hr == open_existing_task[i].hr, "%d: expected %#lx, got %#lx\n", i, open_existing_task[i].hr, hr);
         if (hr == S_OK)
             IRegisteredTask_Release(task2);
@@ -856,12 +853,10 @@ static void test_GetTask(void)
 
     IRegisteredTask_Release(task1);
 
-    hr = ITaskFolder_RegisterTask(folder, Task1, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task2);
+    hr = ITaskFolder_RegisterTask(folder, Task1, xml1, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task2);
     ok(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS), "expected ERROR_ALREADY_EXISTS, got %#lx\n", hr);
 
-    MultiByteToWideChar(CP_ACP, 0, xml2, -1, xmlW, ARRAY_SIZE(xmlW));
-
-    hr = ITaskFolder_RegisterTask(folder, Task2, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task2);
+    hr = ITaskFolder_RegisterTask(folder, Task2, xml2, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task2);
     ok(hr == S_OK, "RegisterTask error %#lx\n", hr);
 
     hr = IRegisteredTask_get_Name(task2, &bstr);
@@ -967,7 +962,7 @@ static void test_GetTask(void)
     hr = ITaskFolder_DeleteTask(folder, Task2, 0);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) || hr == S_OK /* win7 */, "expected ERROR_FILE_NOT_FOUND, got %#lx\n", hr);
 
-    hr = ITaskFolder_RegisterTask(root, NULL, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
+    hr = ITaskFolder_RegisterTask(root, NULL, xml2, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
     if(hr == E_ACCESSDENIED)
     {
         skip("Access denied\n");
@@ -986,7 +981,7 @@ static void test_GetTask(void)
     ok(hr == S_OK, "DeleteTask error %#lx\n", hr);
     SysFreeString(bstr);
 
-    hr = ITaskFolder_RegisterTask(folder, NULL, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
+    hr = ITaskFolder_RegisterTask(folder, NULL, xml2, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#lx\n", hr);
 
 no_access:
@@ -1455,8 +1450,9 @@ static void create_action(ITaskDefinition *taskdef)
 
 static void test_TaskDefinition(void)
 {
-    static const char xml1[] =
-        "<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
+    static WCHAR xml0[] = L"";
+    static WCHAR xml1[] =
+        L"<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
         "  <RegistrationInfo>\n"
         "    <Description>\"Task1\"</Description>\n"
         "    <Author>author</Author>\n"
@@ -1476,8 +1472,8 @@ static void test_TaskDefinition(void)
         "    </Exec>\n"
         "  </Actions>\n"
         "</Task>\n";
-    static const char xml2[] =
-        "<Task>\n"
+    static WCHAR xml2[] =
+        L"<Task>\n"
         "  <RegistrationInfo>\n"
         "    <Description>\"Task1\"</Description>\n"
         "  </RegistrationInfo>\n"
@@ -1491,8 +1487,8 @@ static void test_TaskDefinition(void)
         "    </Exec>\n"
         "  </Actions>\n"
         "</Task>\n";
-    static const char xml3[] =
-        "<TASK>\n"
+    static WCHAR xml3[] =
+        L"<TASK>\n"
         "  <RegistrationInfo>\n"
         "    <Description>\"Task1\"</Description>\n"
         "  </RegistrationInfo>\n"
@@ -1506,8 +1502,8 @@ static void test_TaskDefinition(void)
         "    </Exec>\n"
         "  </Actions>\n"
         "</TASK>\n";
-    static const char xml4[] =
-        "<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
+    static WCHAR xml4[] =
+        L"<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
         "  <RegistrationInfo/>\n"
         "  <Settings/>\n"
         "  <Actions>\n"
@@ -1516,14 +1512,14 @@ static void test_TaskDefinition(void)
         "    </Exec>\n"
         "  </Actions>\n"
         "</Task>\n";
-    static const char xml5[] =
-        "<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
+    static WCHAR xml5[] =
+        L"<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
         "  <RegistrationInfo/>\n"
         "  <Settings/>\n"
         "  <Actions/>\n"
         "</Task>\n";
-    static const char xml6[] =
-        "<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
+    static WCHAR xml6[] =
+        L"<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
         "  <RegistrationInfo/>\n"
         "  <Actions>\n"
         "    <Exec>\n"
@@ -1532,8 +1528,8 @@ static void test_TaskDefinition(void)
         "  </Actions>\n"
         "  <Settings>\n"
         "</Task>\n";
-    static const char xml7[] =
-        "<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
+    static WCHAR xml7[] =
+        L"<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
         "  <RegistrationInfo/>\n"
         "  <Settings>\n"
         "    <Enabled>FALSE</Enabled>\n"
@@ -1567,7 +1563,6 @@ static void test_TaskDefinition(void)
     ITrigger *trigger;
     BSTR xml, bstr;
     VARIANT var;
-    WCHAR xmlW[sizeof(xml1)];
 
     hr = CoCreateInstance(&CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, &IID_ITaskService, (void **)&service);
     if (hr != S_OK)
@@ -1604,43 +1599,34 @@ static void test_TaskDefinition(void)
     hr = ITaskDefinition_put_XmlText(taskdef, NULL);
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#lx\n", hr);
 
-    MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, ARRAY_SIZE(xmlW));
-    hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
+    hr = ITaskDefinition_put_XmlText(taskdef, xml1);
     ok(hr == S_OK, "put_XmlText error %#lx\n", hr);
 
-    MultiByteToWideChar(CP_ACP, 0, xml2, -1, xmlW, ARRAY_SIZE(xmlW));
-    hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
+    hr = ITaskDefinition_put_XmlText(taskdef, xml2);
     ok(hr == SCHED_E_NAMESPACE, "expected SCHED_E_NAMESPACE, got %#lx\n", hr);
 
-    MultiByteToWideChar(CP_ACP, 0, xml3, -1, xmlW, ARRAY_SIZE(xmlW));
-    hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
+    hr = ITaskDefinition_put_XmlText(taskdef, xml3);
     todo_wine
     ok(hr == SCHED_E_UNEXPECTEDNODE, "expected SCHED_E_UNEXPECTEDNODE, got %#lx\n", hr);
 
-    MultiByteToWideChar(CP_ACP, 0, xml4, -1, xmlW, ARRAY_SIZE(xmlW));
-    hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
+    hr = ITaskDefinition_put_XmlText(taskdef, xml4);
     ok(hr == S_OK, "put_XmlText error %#lx\n", hr);
 
-    MultiByteToWideChar(CP_ACP, 0, xml5, -1, xmlW, ARRAY_SIZE(xmlW));
-    hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
+    hr = ITaskDefinition_put_XmlText(taskdef, xml5);
     todo_wine
     ok(hr == SCHED_E_MISSINGNODE, "expected SCHED_E_MISSINGNODE, got %#lx\n", hr);
 
-    MultiByteToWideChar(CP_ACP, 0, xml6, -1, xmlW, ARRAY_SIZE(xmlW));
-    hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
+    hr = ITaskDefinition_put_XmlText(taskdef, xml6);
     ok(hr == SCHED_E_MALFORMEDXML, "expected SCHED_E_MALFORMEDXML, got %#lx\n", hr);
 
-    MultiByteToWideChar(CP_ACP, 0, xml7, -1, xmlW, ARRAY_SIZE(xmlW));
-    hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
+    hr = ITaskDefinition_put_XmlText(taskdef, xml7);
     ok(hr == SCHED_E_INVALIDVALUE, "expected SCHED_E_INVALIDVALUE, got %#lx\n", hr);
 
-    xmlW[0] = 0;
-    hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
+    hr = ITaskDefinition_put_XmlText(taskdef, xml0);
     ok(hr == SCHED_E_MALFORMEDXML, "expected SCHED_E_MALFORMEDXML, got %#lx\n", hr);
 
     /* test registration info */
-    MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, ARRAY_SIZE(xmlW));
-    hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
+    hr = ITaskDefinition_put_XmlText(taskdef, xml1);
     ok(hr == S_OK, "put_XmlText error %#lx\n", hr);
     hr = ITaskDefinition_get_RegistrationInfo(taskdef, &reginfo);
     ok(hr == S_OK, "get_RegistrationInfo error %#lx\n", hr);
@@ -1732,8 +1718,7 @@ static void test_TaskDefinition(void)
 
     IRegistrationInfo_Release(reginfo);
 
-    MultiByteToWideChar(CP_ACP, 0, xml4, -1, xmlW, ARRAY_SIZE(xmlW));
-    hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
+    hr = ITaskDefinition_put_XmlText(taskdef, xml4);
     ok(hr == S_OK, "put_XmlText error %#lx\n", hr);
     hr = ITaskDefinition_get_RegistrationInfo(taskdef, &reginfo);
     ok(hr == S_OK, "get_RegistrationInfo error %#lx\n", hr);
