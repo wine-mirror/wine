@@ -24,15 +24,7 @@
 
 #include "parser.tab.h"
 
-attr_t *make_attr( enum attr_type attr_type )
-{
-    attr_t *a = xmalloc( sizeof(attr_t) );
-    a->type = attr_type;
-    a->u.ival = 0;
-    return a;
-}
-
-attr_t *make_attrv( enum attr_type attr_type, unsigned int val )
+attr_t *attr_int( enum attr_type attr_type, unsigned int val )
 {
     attr_t *a = xmalloc( sizeof(attr_t) );
     a->type = attr_type;
@@ -40,7 +32,7 @@ attr_t *make_attrv( enum attr_type attr_type, unsigned int val )
     return a;
 }
 
-attr_t *make_attrp( enum attr_type attr_type, void *val )
+attr_t *attr_ptr( enum attr_type attr_type, void *val )
 {
     attr_t *a = xmalloc( sizeof(attr_t) );
     a->type = attr_type;

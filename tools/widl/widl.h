@@ -97,9 +97,8 @@ extern void end_cplusplus_guard(FILE *fp);
 
 /* attribute.c */
 
-extern attr_t *make_attr( enum attr_type attr_type );
-extern attr_t *make_attrv( enum attr_type attr_type, unsigned int val );
-extern attr_t *make_attrp( enum attr_type attr_type, void *val );
+extern attr_t *attr_int( enum attr_type attr_type, unsigned int val );
+extern attr_t *attr_ptr( enum attr_type attr_type, void *val );
 extern attr_t *make_custom_attr( struct uuid *id, expr_t *pval );
 
 extern int is_attr( const attr_list_t *list, enum attr_type attr_type );

@@ -1268,7 +1268,7 @@ static void compute_interface_signature_uuid(type_t *iface)
     if (!(uuid = get_attrp(iface->attrs, ATTR_UUID)))
     {
         uuid = xmalloc(sizeof(*uuid));
-        iface->attrs = append_attr(iface->attrs, make_attrp(ATTR_UUID, uuid));
+        iface->attrs = append_attr( iface->attrs, attr_ptr( ATTR_UUID, uuid ) );
     }
 
     sha1_init(&ctx);
