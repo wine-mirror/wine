@@ -1,0 +1,51 @@
+/*
+ * Copyright (C) 2023 Mohamad Al-Jaf
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+
+namespace Windows.Graphics.Effects {
+    interface IGraphicsEffect;
+    interface IGraphicsEffectSource;
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(cb51c0ce-8fe6-4636-b202-861faa07d8f3)
+    ]
+    interface IGraphicsEffect : IInspectable
+        requires Windows.Graphics.Effects.IGraphicsEffectSource
+    {
+        [propget] HRESULT Name([out, retval] HSTRING *name);
+        [propput] HRESULT Name([in] HSTRING name);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(2d8f9ddc-4339-4eb9-9216-f9deb75658a2)
+    ]
+    interface IGraphicsEffectSource : IInspectable
+    {
+    }
+}

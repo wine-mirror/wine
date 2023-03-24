@@ -817,6 +817,7 @@ SOURCES = \
 	windows.globalization.idl \
 	windows.graphics.directx.direct3d11.idl \
 	windows.graphics.directx.idl \
+	windows.graphics.effects.idl \
 	windows.graphics.holographic.idl \
 	windows.h \
 	windows.media.closedcaptioning.idl \
