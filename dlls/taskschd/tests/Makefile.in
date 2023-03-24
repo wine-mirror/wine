@@ -1,5 +1,5 @@
 TESTDLL   = taskschd.dll
-IMPORTS   = oleaut32 ole32
+IMPORTS   = advapi32 oleaut32 ole32
 
 C_SRCS = \
 	scheduler.c

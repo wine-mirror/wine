@@ -22,6 +22,7 @@
 #define COBJMACROS
 
 #include "windef.h"
+#include "winternl.h"
 #include "winbase.h"
 #include "initguid.h"
 #include "objbase.h"
@@ -44,6 +45,21 @@ static BOOL is_process_elevated(void)
     }
     return FALSE;
 }
+
+static BOOL check_win_version(int min_major, int min_minor)
+{
+    HMODULE hntdll = GetModuleHandleA("ntdll.dll");
+    NTSTATUS (WINAPI *pRtlGetVersion)(RTL_OSVERSIONINFOEXW *);
+    RTL_OSVERSIONINFOEXW rtlver;
+
+    rtlver.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOEXW);
+    pRtlGetVersion = (void *)GetProcAddress(hntdll, "RtlGetVersion");
+    pRtlGetVersion(&rtlver);
+    return rtlver.dwMajorVersion > min_major ||
+           (rtlver.dwMajorVersion == min_major &&
+            rtlver.dwMinorVersion >= min_minor);
+}
+#define is_win8_plus() check_win_version(6, 2)
 
 static void test_Connect(void)
 {
@@ -222,6 +238,12 @@ static void test_GetFolder(void)
     todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#lx\n", hr);
 
+    if (!is_process_elevated() && !is_win8_plus())
+    {
+        win_skip("Skipping CreateFolder tests because deleting folders requires elevated privileges on Windows 7\n");
+        goto cleanup;
+    }
+
     hr = ITaskFolder_CreateFolder(folder, Wine_Folder1_Folder2, v_null, &subfolder);
     ok(hr == S_OK, "CreateFolder error %#lx\n", hr);
     ITaskFolder_Release(subfolder);
@@ -376,6 +398,7 @@ static void test_GetFolder(void)
     todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), "expected ERROR_INVALID_NAME, got %#lx\n", hr);
 
+ cleanup:
     ITaskFolder_Release(folder);
     ITaskService_Release(service);
 }
@@ -435,6 +458,12 @@ static void test_FolderCollection(void)
     BOOL is_first;
     VARIANT idx;
     static const int vt[] = { VT_I1, VT_I2, VT_I4, VT_I8, VT_UI1, VT_UI2, VT_UI4, VT_UI8, VT_INT, VT_UINT };
+
+    if (!is_process_elevated() && !is_win8_plus())
+    {
+        win_skip("Skipping ITaskFolderCollection tests because deleting folders requires elevated privileges on Windows 7\n");
+        return;
+    }
 
     hr = CoCreateInstance(&CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, &IID_ITaskService, (void **)&service);
     if (hr != S_OK)
@@ -758,6 +787,12 @@ static void test_GetTask(void)
     IID iid;
     int i;
 
+    if (!is_process_elevated() && !is_win8_plus())
+    {
+        win_skip("Skipping task creation tests because deleting anything requires elevated privileges on Windows 7\n");
+        return;
+    }
+
     hr = CoCreateInstance(&CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, &IID_ITaskService, (void **)&service);
     if (hr != S_OK)
     {
@@ -781,6 +816,13 @@ static void test_GetTask(void)
     hr = ITaskFolder_GetTask(root, Wine_Task1, &task1);
     ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) /* win7 */,
        "expected ERROR_PATH_NOT_FOUND, got %#lx\n", hr);
+
+    hr = ITaskFolder_RegisterTask(root, Wine, xml1, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
+    ok(hr == S_OK, "RegisterTask error %#lx\n", hr);
+
+    /* Without elevated privileges this fails on Windows 7 */
+    hr = ITaskFolder_DeleteTask(root, Wine, 0);
+    ok(hr == S_OK, "DeleteTask error %#lx\n", hr);
 
     hr = ITaskFolder_CreateFolder(root, Wine, v_null, &folder);
     ok(hr == S_OK, "CreateFolder error %#lx\n", hr);
