@@ -31,8 +31,6 @@
 
 static void test_Connect(void)
 {
-    static WCHAR empty[] = { 0 };
-    static const WCHAR deadbeefW[] = { '0','.','0','.','0','.','0',0 };
     WCHAR comp_name[MAX_COMPUTERNAME_LENGTH + 1];
     DWORD len;
     HRESULT hr;
@@ -79,7 +77,7 @@ static void test_Connect(void)
     was_connected = hr == S_OK;
     SysFreeString(V_BSTR(&v_comp));
 
-    V_BSTR(&v_comp) = SysAllocString(deadbeefW);
+    V_BSTR(&v_comp) = SysAllocString(L"0.0.0.0");
     hr = ITaskService_Connect(service, v_comp, v_null, v_null, v_null);
     ok(hr == HRESULT_FROM_WIN32(RPC_S_INVALID_NET_ADDR) || hr == HRESULT_FROM_WIN32(ERROR_BAD_NETPATH) /* VM */,
        "expected RPC_S_INVALID_NET_ADDR, got %#lx\n", hr);
@@ -91,7 +89,7 @@ static void test_Connect(void)
     ok(vbool == VARIANT_FALSE || (was_connected && vbool == VARIANT_TRUE),
        "Connect shouldn't trash an existing connection, got %d (was connected %d)\n", vbool, was_connected);
 
-    V_BSTR(&v_comp) = SysAllocString(empty);
+    V_BSTR(&v_comp) = SysAllocString(L"");
     hr = ITaskService_Connect(service, v_comp, v_null, v_null, v_null);
     ok(hr == S_OK, "Connect error %#lx\n", hr);
     SysFreeString(V_BSTR(&v_comp));
@@ -118,17 +116,15 @@ static void test_Connect(void)
 
 static void test_GetFolder(void)
 {
-    static WCHAR dot[] = { '.',0 };
-    static WCHAR empty[] = { 0 };
-    static WCHAR slash[] = { '/',0 };
-    static WCHAR bslash[] = { '\\',0 };
-    static WCHAR Wine[] = { '\\','W','i','n','e',0 };
-    static WCHAR Wine_Folder1[] = { '\\','W','i','n','e','\\','F','o','l','d','e','r','1',0 };
-    static WCHAR Wine_Folder1_[] = { '\\','W','i','n','e','\\','F','o','l','d','e','r','1','\\',0 };
-    static WCHAR Wine_Folder1_Folder2[] = { '\\','W','i','n','e','\\','F','o','l','d','e','r','1','\\','F','o','l','d','e','r','2',0 };
-    static WCHAR Folder1_Folder2[] = { '\\','F','o','l','d','e','r','1','\\','F','o','l','d','e','r','2',0 };
-    static const WCHAR Folder1[] = { 'F','o','l','d','e','r','1',0 };
-    static const WCHAR Folder2[] = { 'F','o','l','d','e','r','2',0 };
+    static WCHAR dot[] = L".";
+    static WCHAR empty[] = L"";
+    static WCHAR slash[] = L"/";
+    static WCHAR bslash[] = L"\\";
+    static WCHAR Wine[] = L"\\Wine";
+    static WCHAR Wine_Folder1[] = L"\\Wine\\Folder1";
+    static WCHAR Wine_Folder1_[] = L"\\Wine\\Folder1\\";
+    static WCHAR Wine_Folder1_Folder2[] = L"\\Wine\\Folder1\\Folder2";
+    static WCHAR Folder1_Folder2[] = L"\\Folder1\\Folder2";
     HRESULT hr;
     BSTR bstr;
     VARIANT v_null;
@@ -240,7 +236,7 @@ static void test_GetFolder(void)
 
     hr = ITaskFolder_get_Name(subfolder, &bstr);
     ok (hr == S_OK, "get_Name error %#lx\n", hr);
-    ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
+    ok(!lstrcmpW(bstr, L"Folder2"), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = ITaskFolder_get_Path(subfolder, &bstr);
     ok(hr == S_OK, "get_Path error %#lx\n", hr);
@@ -252,7 +248,7 @@ static void test_GetFolder(void)
     ok(hr == S_OK, "GetFolder error %#lx\n", hr);
     hr = ITaskFolder_get_Name(subfolder, &bstr);
     ok (hr == S_OK, "get_Name error %#lx\n", hr);
-    ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
+    ok(!lstrcmpW(bstr, L"Folder2"), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = ITaskFolder_get_Path(subfolder, &bstr);
     ok(hr == S_OK, "get_Path error %#lx\n", hr);
@@ -264,7 +260,7 @@ static void test_GetFolder(void)
     ok(hr == S_OK, "GetFolder error %#lx\n", hr);
     hr = ITaskFolder_get_Name(subfolder, &bstr);
     ok (hr == S_OK, "get_Name error %#lx\n", hr);
-    ok(!lstrcmpW(bstr, Folder1), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
+    ok(!lstrcmpW(bstr, L"Folder1"), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = ITaskFolder_get_Path(subfolder, &bstr);
     ok(hr == S_OK, "get_Path error %#lx\n", hr);
@@ -317,7 +313,7 @@ static void test_GetFolder(void)
     ok(hr == S_OK, "GetFolder error %#lx\n", hr);
     hr = ITaskFolder_get_Name(subfolder2, &bstr);
     ok (hr == S_OK, "get_Name error %#lx\n", hr);
-    ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
+    ok(!lstrcmpW(bstr, L"Folder2"), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = ITaskFolder_get_Path(subfolder2, &bstr);
     ok(hr == S_OK, "get_Path error %#lx\n", hr);
@@ -330,7 +326,7 @@ static void test_GetFolder(void)
 
     hr = ITaskFolder_get_Name(subfolder2, &bstr);
     ok (hr == S_OK, "get_Name error %#lx\n", hr);
-    ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
+    ok(!lstrcmpW(bstr, L"Folder2"), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = ITaskFolder_get_Path(subfolder2, &bstr);
     ok(hr == S_OK, "get_Path error %#lx\n", hr);
@@ -406,12 +402,10 @@ static void set_var(int vt, VARIANT *var, LONG val)
 
 static void test_FolderCollection(void)
 {
-    static WCHAR Wine[] = { '\\','W','i','n','e',0 };
-    static WCHAR Wine_Folder1[] = { '\\','W','i','n','e','\\','F','o','l','d','e','r','1',0 };
-    static WCHAR Wine_Folder2[] = { '\\','W','i','n','e','\\','F','o','l','d','e','r','2',0 };
-    static WCHAR Wine_Folder3[] = { '\\','W','i','n','e','\\','F','o','l','d','e','r','3',0 };
-    static const WCHAR Folder1[] = { 'F','o','l','d','e','r','1',0 };
-    static const WCHAR Folder2[] = { 'F','o','l','d','e','r','2',0 };
+    static WCHAR Wine[] = L"\\Wine";
+    static WCHAR Wine_Folder1[] = L"\\Wine\\Folder1";
+    static WCHAR Wine_Folder2[] = L"\\Wine\\Folder2";
+    static WCHAR Wine_Folder3[] = L"\\Wine\\Folder3";
     HRESULT hr;
     BSTR bstr;
     VARIANT v_null, var[3];
@@ -518,9 +512,9 @@ static void test_FolderCollection(void)
         hr = ITaskFolder_get_Name(subfolder, &bstr);
         ok(hr == S_OK, "get_Name error %#lx\n", hr);
         if (is_first)
-            ok(!lstrcmpW(bstr, Folder1), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
+            ok(!lstrcmpW(bstr, L"Folder1"), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
         else
-            ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
+            ok(!lstrcmpW(bstr, L"Folder2"), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
 
         ITaskFolder_Release(subfolder);
 
@@ -541,9 +535,9 @@ static void test_FolderCollection(void)
         hr = ITaskFolder_get_Name(subfolder, &bstr);
         ok(hr == S_OK, "get_Name error %#lx\n", hr);
         if (is_first)
-            ok(!lstrcmpW(bstr, Folder1), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
+            ok(!lstrcmpW(bstr, L"Folder1"), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
         else
-            ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
+            ok(!lstrcmpW(bstr, L"Folder2"), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
         SysFreeString(bstr);
 
         ITaskFolder_Release(subfolder);
@@ -604,9 +598,9 @@ static void test_FolderCollection(void)
     hr = ITaskFolder_get_Name((ITaskFolder *)V_DISPATCH(&var[0]), &bstr);
     ok(hr == S_OK, "get_Name error %#lx\n", hr);
     if (is_first)
-        ok(!lstrcmpW(bstr, Folder1), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
+        ok(!lstrcmpW(bstr, L"Folder1"), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
     else
-        ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
+        ok(!lstrcmpW(bstr, L"Folder2"), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     IDispatch_Release(V_DISPATCH(&var[0]));
 
@@ -650,9 +644,9 @@ static void test_FolderCollection(void)
         hr = ITaskFolder_get_Name(subfolder, &bstr);
         ok(hr == S_OK, "get_Name error %#lx\n", hr);
         if (is_first)
-            ok(!lstrcmpW(bstr, Folder1), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
+            ok(!lstrcmpW(bstr, L"Folder1"), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
         else
-            ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
+            ok(!lstrcmpW(bstr, L"Folder2"), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
         SysFreeString(bstr);
 
         ITaskFolder_Release(subfolder);
@@ -678,11 +672,11 @@ static void test_FolderCollection(void)
 
 static void test_GetTask(void)
 {
-    static WCHAR Wine[] = { '\\','W','i','n','e',0 };
-    static WCHAR Wine_Task1[] = { '\\','W','i','n','e','\\','T','a','s','k','1',0 };
-    static WCHAR Wine_Task2[] = { '\\','W','i','n','e','\\','T','a','s','k','2',0 };
-    static WCHAR Task1[] = { 'T','a','s','k','1',0 };
-    static WCHAR Task2[] = { 'T','a','s','k','2',0 };
+    static WCHAR Wine[] = L"\\Wine";
+    static WCHAR Wine_Task1[] = L"\\Wine\\Task1";
+    static WCHAR Wine_Task2[] = L"\\Wine\\Task2";
+    static WCHAR Task1[] = L"Task1";
+    static WCHAR Task2[] = L"Task2";
     static WCHAR xml1[] =
         L"<?xml version=\"1.0\"?>\n"
         "<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
@@ -1225,18 +1219,6 @@ static void change_settings(ITaskDefinition *taskdef, struct settings *test)
 
 static void test_daily_trigger(ITrigger *trigger)
 {
-    static const WCHAR startW[] =
-        {'2','0','0','4','-','0','1','-','0','1','T','0','0',':','0','0',':','0','0',0};
-    static const WCHAR start2W[] =
-        {'2','0','0','4','-','0','1','-','0','1','T','0','0',':','0','0',':','0','0','Z',0};
-    static const WCHAR start3W[] =
-        {'2','0','0','4','-','0','1','-','0','1','T','0','0',':','0','0',':','0','0','+','0','1',':','0','0',0};
-    static const WCHAR start4W[] =
-        {'2','0','0','4','.','0','1','.','0','1','T','0','0','.','0','0','.','0','0',0};
-    static const WCHAR start5W[] =
-        {'9','9','9','9','-','9','9','-','9','9','T','9','9',':','9','9',':','9','9',0};
-    static const WCHAR start6W[] =
-        {'i','n','v','a','l','i','d',0};
     static const struct
     {
         const WCHAR *str;
@@ -1244,12 +1226,12 @@ static void test_daily_trigger(ITrigger *trigger)
     }
     start_test[] =
     {
-        {startW, S_OK},
-        {start2W, S_OK},
-        {start3W, S_OK},
-        {start4W, S_OK},
-        {start5W, S_OK},
-        {start6W, S_OK},
+        {L"2004-01-01T00:00:00", S_OK},
+        {L"2004-01-01T00:00:00Z", S_OK},
+        {L"2004-01-01T00:00:00+01:00", S_OK},
+        {L"2004.01.01T00.00.00", S_OK},
+        {L"9999-99-99T99:99:99", S_OK},
+        {L"invalid", S_OK},
     };
     IDailyTrigger *daily_trigger;
     BSTR start_boundary;
@@ -1333,10 +1315,10 @@ static void test_daily_trigger(ITrigger *trigger)
 
 static void create_action(ITaskDefinition *taskdef)
 {
-    static WCHAR task1_exe[] = { 't','a','s','k','1','.','e','x','e',0 };
-    static WCHAR workdir[] = { 'w','o','r','k','d','i','r',0 };
-    static WCHAR args[] = { 'a','r','g','u','m','e','n','s',0 };
-    static WCHAR comment[] = { 'c','o','m','m','e','n','t',0 };
+    static WCHAR task1_exe[] = L"task1.exe";
+    static WCHAR workdir[] = L"workdir";
+    static WCHAR args[] = L"argumens";
+    static WCHAR comment[] = L"comment";
     HRESULT hr;
     IActionCollection *actions;
     IAction *action;
@@ -1540,18 +1522,11 @@ static void test_TaskDefinition(void)
         "    </Exec>\n"
         "  </Actions>\n"
         "</Task>\n";
-    static const WCHAR authorW[] = { 'a','u','t','h','o','r',0 };
-    static const WCHAR versionW[] = { '1','.','0',0 };
-    static const WCHAR dateW[] = { '2','0','1','8','-','0','4','-','0','2','T','1','1',':','2','2',':','3','3',0 };
-    static const WCHAR docW[] = { 'd','o','c',0 };
-    static const WCHAR uriW[] = { 'u','r','i',0 };
-    static const WCHAR sourceW[] = { 's','o','u','r','c','e',0 };
-    static WCHAR Task1[] = { '"','T','a','s','k','1','"',0 };
-    static struct settings def_settings = { { 0 }, { 'P','T','7','2','H',0 }, { 0 },
+    static struct settings def_settings = { L"", L"PT72H", L"",
         0, 7, TASK_INSTANCES_IGNORE_NEW, TASK_COMPATIBILITY_V2, VARIANT_TRUE, VARIANT_TRUE,
         VARIANT_TRUE, VARIANT_TRUE, VARIANT_FALSE, VARIANT_FALSE, VARIANT_TRUE, VARIANT_FALSE,
         VARIANT_FALSE, VARIANT_FALSE };
-    static struct settings new_settings = { { 'P','1','Y',0 }, { 'P','T','1','0','M',0 }, { 0 },
+    static struct settings new_settings = { L"P1Y", L"PT10M", L"",
         100, 1, TASK_INSTANCES_STOP_EXISTING, TASK_COMPATIBILITY_V1, VARIANT_FALSE, VARIANT_FALSE,
         VARIANT_FALSE, VARIANT_FALSE, VARIANT_TRUE, VARIANT_TRUE, VARIANT_FALSE, VARIANT_TRUE,
         VARIANT_TRUE, VARIANT_TRUE };
@@ -1633,7 +1608,7 @@ static void test_TaskDefinition(void)
 
     hr = IRegistrationInfo_get_Description(reginfo, &bstr);
     ok(hr == S_OK, "get_Description error %#lx\n", hr);
-    ok(!lstrcmpW(bstr, Task1), "expected Task1, got %s\n", wine_dbgstr_w(bstr));
+    ok(!lstrcmpW(bstr, L"\"Task1\""), "expected \"Task1\", got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = IRegistrationInfo_put_Description(reginfo, NULL);
     ok(hr == S_OK, "put_Description error %#lx\n", hr);
@@ -1644,7 +1619,7 @@ static void test_TaskDefinition(void)
 
     hr = IRegistrationInfo_get_Author(reginfo, &bstr);
     ok(hr == S_OK, "get_Author error %#lx\n", hr);
-    ok(!lstrcmpW(bstr, authorW), "expected %s, got %s\n", wine_dbgstr_w(authorW), wine_dbgstr_w(bstr));
+    ok(!lstrcmpW(bstr, L"author"), "expected author, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = IRegistrationInfo_put_Author(reginfo, NULL);
     ok(hr == S_OK, "put_Author error %#lx\n", hr);
@@ -1655,7 +1630,7 @@ static void test_TaskDefinition(void)
 
     hr = IRegistrationInfo_get_Version(reginfo, &bstr);
     ok(hr == S_OK, "get_Version error %#lx\n", hr);
-    ok(!lstrcmpW(bstr, versionW), "expected %s, got %s\n", wine_dbgstr_w(versionW), wine_dbgstr_w(bstr));
+    ok(!lstrcmpW(bstr, L"1.0"), "expected 1.0, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = IRegistrationInfo_put_Version(reginfo, NULL);
     ok(hr == S_OK, "put_Version error %#lx\n", hr);
@@ -1666,7 +1641,7 @@ static void test_TaskDefinition(void)
 
     hr = IRegistrationInfo_get_Date(reginfo, &bstr);
     ok(hr == S_OK, "get_Date error %#lx\n", hr);
-    ok(!lstrcmpW(bstr, dateW), "expected %s, got %s\n", wine_dbgstr_w(dateW), wine_dbgstr_w(bstr));
+    ok(!lstrcmpW(bstr, L"2018-04-02T11:22:33"), "expected 2018-04-02T11:22:33, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = IRegistrationInfo_put_Date(reginfo, NULL);
     ok(hr == S_OK, "put_Date error %#lx\n", hr);
@@ -1677,7 +1652,7 @@ static void test_TaskDefinition(void)
 
     hr = IRegistrationInfo_get_Documentation(reginfo, &bstr);
     ok(hr == S_OK, "get_Documentation error %#lx\n", hr);
-    ok(!lstrcmpW(bstr, docW), "expected %s, got %s\n", wine_dbgstr_w(docW), wine_dbgstr_w(bstr));
+    ok(!lstrcmpW(bstr, L"doc"), "expected doc, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = IRegistrationInfo_put_Documentation(reginfo, NULL);
     ok(hr == S_OK, "put_Documentation error %#lx\n", hr);
@@ -1688,7 +1663,7 @@ static void test_TaskDefinition(void)
 
     hr = IRegistrationInfo_get_URI(reginfo, &bstr);
     ok(hr == S_OK, "get_URI error %#lx\n", hr);
-    ok(!lstrcmpW(bstr, uriW), "expected %s, got %s\n", wine_dbgstr_w(uriW), wine_dbgstr_w(bstr));
+    ok(!lstrcmpW(bstr, L"uri"), "expected uri, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = IRegistrationInfo_put_URI(reginfo, NULL);
     ok(hr == S_OK, "put_URI error %#lx\n", hr);
@@ -1699,7 +1674,7 @@ static void test_TaskDefinition(void)
 
     hr = IRegistrationInfo_get_Source(reginfo, &bstr);
     ok(hr == S_OK, "get_Source error %#lx\n", hr);
-    ok(!lstrcmpW(bstr, sourceW), "expected %s, got %s\n", wine_dbgstr_w(sourceW), wine_dbgstr_w(bstr));
+    ok(!lstrcmpW(bstr, L"source"), "expected source, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = IRegistrationInfo_put_Source(reginfo, NULL);
     ok(hr == S_OK, "put_Source error %#lx\n", hr);
