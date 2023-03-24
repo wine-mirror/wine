@@ -76,7 +76,7 @@
 #@ stub UiaIAccessibleFromProvider
 @ stdcall UiaLookupId(long ptr)
 @ stdcall UiaNavigate(ptr long ptr ptr ptr ptr)
-@ stub UiaNodeFromFocus
+@ stdcall UiaNodeFromFocus(ptr ptr ptr)
 @ stdcall UiaNodeFromHandle(long ptr)
 @ stub UiaNodeFromPoint
 @ stdcall UiaNodeFromProvider(ptr ptr)

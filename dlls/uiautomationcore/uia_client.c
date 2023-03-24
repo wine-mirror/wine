@@ -2436,6 +2436,15 @@ HRESULT WINAPI UiaGetRootNode(HUIANODE *huianode)
 }
 
 /***********************************************************************
+ *          UiaNodeFromFocus (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaNodeFromFocus(struct UiaCacheRequest *cache_req, SAFEARRAY **out_req, BSTR *tree_struct)
+{
+    FIXME("(%p, %p, %p): stub\n", cache_req, out_req, tree_struct);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
  *          UiaNodeRelease (uiautomationcore.@)
  */
 BOOL WINAPI UiaNodeRelease(HUIANODE huianode)
