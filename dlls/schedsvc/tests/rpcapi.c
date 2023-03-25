@@ -42,8 +42,8 @@ static LONG CALLBACK rpc_exception_filter(EXCEPTION_POINTERS *ptrs)
 START_TEST(rpcapi)
 {
     static unsigned char ncalrpc[] = "ncalrpc";
-    static const char xml1[] =
-        "<?xml version=\"1.0\"?>\n"
+    static const WCHAR* xml1 =
+        L"<?xml version=\"1.0\"?>\n"
         "<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
         "  <RegistrationInfo>\n"
         "    <Description>\"Task1\"</Description>\n"
@@ -78,7 +78,7 @@ START_TEST(rpcapi)
         { TASK_UPDATE, S_OK },
         { TASK_CREATE | TASK_UPDATE, S_OK }
     };
-    WCHAR xmlW[sizeof(xml1)], *xml;
+    WCHAR *xml;
     HRESULT hr;
     DWORD version, start_index, count, i, enumed, enabled, state;
     WCHAR *path;
@@ -146,11 +146,9 @@ START_TEST(rpcapi)
     hr = SchRpcCreateFolder(L"\\Wine", NULL, 0);
     ok(hr == S_OK, "expected S_OK, got %#lx\n", hr);
 
-    MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, ARRAY_SIZE(xmlW));
-
     path = NULL;
     info = NULL;
-    hr = SchRpcRegisterTask(L"Wine", xmlW, TASK_VALIDATE_ONLY, NULL, TASK_LOGON_NONE, 0, NULL, &path, &info);
+    hr = SchRpcRegisterTask(L"Wine", xml1, TASK_VALIDATE_ONLY, NULL, TASK_LOGON_NONE, 0, NULL, &path, &info);
     ok(hr == S_OK, "expected S_OK, got %#lx\n", hr);
     ok(!path, "expected NULL, path %p\n", path);
     ok(!info, "expected NULL, info %p\n", info);
@@ -159,7 +157,7 @@ START_TEST(rpcapi)
     {
         path = NULL;
         info = NULL;
-        hr = SchRpcRegisterTask(L"\\Wine\\Task1", xmlW, create_new_task[i].flags, NULL,
+        hr = SchRpcRegisterTask(L"\\Wine\\Task1", xml1, create_new_task[i].flags, NULL,
                                 TASK_LOGON_NONE, 0, NULL, &path, &info);
         ok(hr == create_new_task[i].hr, "%lu: expected %#lx, got %#lx\n", i, create_new_task[i].hr, hr);
 
@@ -174,21 +172,21 @@ START_TEST(rpcapi)
 
     path = NULL;
     info = NULL;
-    hr = SchRpcRegisterTask(L"\\Wine\\Task1", xmlW, TASK_VALIDATE_ONLY, NULL, TASK_LOGON_NONE, 0, NULL, &path, &info);
+    hr = SchRpcRegisterTask(L"\\Wine\\Task1", xml1, TASK_VALIDATE_ONLY, NULL, TASK_LOGON_NONE, 0, NULL, &path, &info);
     ok(hr == S_OK, "expected S_OK, got %#lx\n", hr);
     ok(!path, "expected NULL, path %p\n", path);
     ok(!info, "expected NULL, info %p\n", info);
 
     path = NULL;
     info = NULL;
-    hr = SchRpcRegisterTask(NULL, xmlW, TASK_VALIDATE_ONLY, NULL, TASK_LOGON_NONE, 0, NULL, &path, &info);
+    hr = SchRpcRegisterTask(NULL, xml1, TASK_VALIDATE_ONLY, NULL, TASK_LOGON_NONE, 0, NULL, &path, &info);
     ok(hr == S_OK, "expected S_OK, got %#lx\n", hr);
     ok(!path, "expected NULL, path %p\n", path);
     ok(!info, "expected NULL, info %p\n", info);
 
     path = NULL;
     info = NULL;
-    hr = SchRpcRegisterTask(L"Wine\\Folder1\\Task1", xmlW, TASK_CREATE, NULL, TASK_LOGON_NONE, 0, NULL, &path, &info);
+    hr = SchRpcRegisterTask(L"Wine\\Folder1\\Task1", xml1, TASK_CREATE, NULL, TASK_LOGON_NONE, 0, NULL, &path, &info);
     ok(hr == S_OK, "expected S_OK, got %#lx\n", hr);
     ok(!lstrcmpW(path, L"\\Wine\\Folder1\\Task1") /* win7 */ || !lstrcmpW(path, L"Wine\\Folder1\\Task1") /* vista */,
        "expected \\Wine\\Folder1\\Task1, task actual path %s\n", wine_dbgstr_w(path));
@@ -199,7 +197,7 @@ START_TEST(rpcapi)
     {
         path = NULL;
         info = NULL;
-        hr = SchRpcRegisterTask(L"Wine\\Folder1\\Task1", xmlW, open_existing_task[i].flags, NULL,
+        hr = SchRpcRegisterTask(L"Wine\\Folder1\\Task1", xml1, open_existing_task[i].flags, NULL,
                                 TASK_LOGON_NONE, 0, NULL, &path, &info);
         ok(hr == open_existing_task[i].hr, "%lu: expected %#lx, got %#lx\n", i, open_existing_task[i].hr, hr);
         if (hr == S_OK)
@@ -216,7 +214,7 @@ START_TEST(rpcapi)
 
     path = NULL;
     info = NULL;
-    hr = SchRpcRegisterTask(L"Wine\\Folder1\\Task1", xmlW, TASK_CREATE, NULL, TASK_LOGON_NONE, 0, NULL, &path, &info);
+    hr = SchRpcRegisterTask(L"Wine\\Folder1\\Task1", xml1, TASK_CREATE, NULL, TASK_LOGON_NONE, 0, NULL, &path, &info);
     ok(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS), "expected ERROR_ALREADY_EXISTS, got %#lx\n", hr);
     ok(!path, "expected NULL, path %p\n", path);
     ok(!info, "expected NULL, info %p\n", info);
@@ -358,7 +356,7 @@ START_TEST(rpcapi)
 
     path = NULL;
     info = NULL;
-    hr = SchRpcRegisterTask(L"Wine\\Task1", xmlW, TASK_CREATE, NULL, TASK_LOGON_NONE, 0, NULL, &path, &info);
+    hr = SchRpcRegisterTask(L"Wine\\Task1", xml1, TASK_CREATE, NULL, TASK_LOGON_NONE, 0, NULL, &path, &info);
     ok(hr == S_OK, "expected S_OK, got %#lx\n", hr);
     ok(!lstrcmpW(path, L"\\Wine\\Task1") /* win7 */ || !lstrcmpW(path, L"Wine\\Task1") /* vista */,
        "expected \\Wine\\Task1, task actual path %s\n", wine_dbgstr_w(path));
@@ -367,7 +365,7 @@ START_TEST(rpcapi)
 
     path = NULL;
     info = NULL;
-    hr = SchRpcRegisterTask(L"\\Wine\\Task2", xmlW, TASK_CREATE, NULL, TASK_LOGON_NONE, 0, NULL, &path, &info);
+    hr = SchRpcRegisterTask(L"\\Wine\\Task2", xml1, TASK_CREATE, NULL, TASK_LOGON_NONE, 0, NULL, &path, &info);
     ok(hr == S_OK, "expected S_OK, got %#lx\n", hr);
     ok(!lstrcmpW(path, L"\\Wine\\Task2"), "expected \\Wine\\Task2, task actual path %s\n", wine_dbgstr_w(path));
     ok(!info, "expected NULL, info %p\n", info);
@@ -449,7 +447,7 @@ START_TEST(rpcapi)
 
     path = NULL;
     info = NULL;
-    hr = SchRpcRegisterTask(L"Wine\\Task3", xmlW, TASK_CREATE, NULL, TASK_LOGON_NONE, 0, NULL, &path, &info);
+    hr = SchRpcRegisterTask(L"Wine\\Task3", xml1, TASK_CREATE, NULL, TASK_LOGON_NONE, 0, NULL, &path, &info);
     ok(hr == S_OK, "expected S_OK, got %#lx\n", hr);
     ok(!lstrcmpW(path, L"\\Wine\\Task3") /* win7 */ || !lstrcmpW(path, L"Wine\\Task3") /* vista */,
        "expected \\Wine\\Task3, task actual path %s\n", wine_dbgstr_w(path));
@@ -515,7 +513,7 @@ START_TEST(rpcapi)
 
     path = NULL;
     info = NULL;
-    hr = SchRpcRegisterTask(NULL, xmlW, TASK_CREATE, NULL, TASK_LOGON_NONE, 0, NULL, &path, &info);
+    hr = SchRpcRegisterTask(NULL, xml1, TASK_CREATE, NULL, TASK_LOGON_NONE, 0, NULL, &path, &info);
     ok(hr == S_OK || hr == E_ACCESSDENIED, "expected S_OK, got %#lx\n", hr);
     if (hr != E_ACCESSDENIED)
     {
