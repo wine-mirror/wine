@@ -155,6 +155,7 @@ START_TEST(rpcapi)
 
     for (i = 0; i < ARRAY_SIZE(create_new_task); i++)
     {
+        winetest_push_context("%lu", i);
         path = NULL;
         info = NULL;
         hr = SchRpcRegisterTask(L"\\Wine\\Task1", xml1, create_new_task[i].flags, NULL,
@@ -168,6 +169,7 @@ START_TEST(rpcapi)
             ok(!info, "expected NULL, info %p\n", info);
             MIDL_user_free(path);
         }
+        winetest_pop_context();
     }
 
     path = NULL;
@@ -195,11 +197,12 @@ START_TEST(rpcapi)
 
     for (i = 0; i < ARRAY_SIZE(open_existing_task); i++)
     {
+        winetest_push_context("%lu", i);
         path = NULL;
         info = NULL;
         hr = SchRpcRegisterTask(L"Wine\\Folder1\\Task1", xml1, open_existing_task[i].flags, NULL,
                                 TASK_LOGON_NONE, 0, NULL, &path, &info);
-        ok(hr == open_existing_task[i].hr, "%lu: expected %#lx, got %#lx\n", i, open_existing_task[i].hr, hr);
+        ok(hr == open_existing_task[i].hr, "expected %#lx, got %#lx\n", open_existing_task[i].hr, hr);
         if (hr == S_OK)
         {
             ok(!lstrcmpW(path, L"\\Wine\\Folder1\\Task1") /* win7 */ ||
@@ -208,8 +211,9 @@ START_TEST(rpcapi)
             MIDL_user_free(path);
         }
         else
-            ok(!path, "%lu: expected NULL, path %p\n", i, path);
-        ok(!info, "%lu: expected NULL, info %p\n", i, info);
+            ok(!path, "expected NULL, path %p\n", path);
+        ok(!info, "expected NULL, info %p\n", info);
+        winetest_pop_context();
     }
 
     path = NULL;
