@@ -16,8 +16,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdarg.h>
+
 #define COBJMACROS
 
+#include "winternl.h"
 #include "initguid.h"
 #include "taskschd.h"
 
@@ -57,6 +60,37 @@ static WCHAR *a2w(const char *str)
 
     return ret;
 }
+
+static BOOL is_process_elevated(void)
+{
+    HANDLE token;
+    if (OpenProcessToken( GetCurrentProcess(), TOKEN_QUERY, &token ))
+    {
+        TOKEN_ELEVATION_TYPE type;
+        DWORD size;
+        BOOL ret;
+
+        ret = GetTokenInformation( token, TokenElevationType, &type, sizeof(type), &size );
+        CloseHandle( token );
+        return (ret && type == TokenElevationTypeFull);
+    }
+    return FALSE;
+}
+
+static BOOL check_win_version(int min_major, int min_minor)
+{
+    HMODULE hntdll = GetModuleHandleA("ntdll.dll");
+    NTSTATUS (WINAPI *pRtlGetVersion)(RTL_OSVERSIONINFOEXW *);
+    RTL_OSVERSIONINFOEXW rtlver;
+
+    rtlver.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOEXW);
+    pRtlGetVersion = (void *)GetProcAddress(hntdll, "RtlGetVersion");
+    pRtlGetVersion(&rtlver);
+    return rtlver.dwMajorVersion > min_major ||
+           (rtlver.dwMajorVersion == min_major &&
+            rtlver.dwMinorVersion >= min_minor);
+}
+#define is_win10_plus() check_win_version(10, 0)
 
 #define run_command(a) _run_command(__LINE__,a)
 static DWORD _run_command(unsigned line, const char *cmd)
@@ -172,6 +206,12 @@ START_TEST(schtasks)
     static WCHAR wineW[] = L"\\wine";
     static WCHAR wine_testW[] = L"\\wine\\test";
     DWORD r;
+
+    if (!is_process_elevated() && !is_win10_plus())
+    {
+        win_skip("Deleting the test folders requires elevated privileges on Windows <= 8\n");
+        return;
+    }
 
     CoInitialize(NULL);
     if(!initialize_task_service()) {
