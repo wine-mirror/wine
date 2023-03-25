@@ -9034,12 +9034,18 @@ static void test_create_surface_pitch(void)
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &primary, NULL);
     ok(SUCCEEDED(hr), "Failed to create a primary surface, hr %#lx.\n", hr);
 
-    hr = IDirectDraw7_GetAvailableVidMem(ddraw, &vidmem_caps, &vidmem_total, &vidmem_free);
-    ok(SUCCEEDED(hr) || hr == DDERR_NODIRECTDRAWHW,
-            "Failed to get available video memory, hr %#lx.\n", hr);
-
     for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
+        /* 64 bit ddraw can leak video memory when trying to create a DDSCAPS_TEXTURE surface.
+         * Surface creation fails, but video memory is consumed anyway. Update the free vidmem
+         * every iteration.
+         *
+         * This E_NOINTERFACE texture creation failure does not happen in earlier versions of
+         * the API, so we get to release the surface and avoid the vidmem leak. */
+        hr = IDirectDraw7_GetAvailableVidMem(ddraw, &vidmem_caps, &vidmem_total, &vidmem_free);
+        ok(SUCCEEDED(hr) || hr == DDERR_NODIRECTDRAWHW,
+                "Failed to get available video memory, hr %#lx.\n", hr);
+
         memset(&surface_desc, 0, sizeof(surface_desc));
         surface_desc.dwSize = sizeof(surface_desc);
         surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | test_data[i].flags_in;
