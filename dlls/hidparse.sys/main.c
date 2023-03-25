@@ -130,11 +130,11 @@ static void debug_print_preparsed( struct hid_preparsed_data *data )
                 data->output_caps_start, data->output_caps_count, data->output_caps_end, data->output_report_byte_length,
                 data->feature_caps_start, data->feature_caps_count, data->feature_caps_end, data->feature_report_byte_length,
                 data->number_link_collection_nodes );
-        end = data->input_caps_count;
+        end = data->input_caps_end - data->input_caps_start;
         for (i = 0; i < end; i++) TRACE( "input %d: %s\n", i, debugstr_hid_value_caps( HID_INPUT_VALUE_CAPS( data ) + i ) );
-        end = data->output_caps_count;
+        end = data->output_caps_end - data->output_caps_start;
         for (i = 0; i < end; i++) TRACE( "output %d: %s\n", i, debugstr_hid_value_caps( HID_OUTPUT_VALUE_CAPS( data ) + i ) );
-        end = data->feature_caps_count;
+        end = data->feature_caps_end - data->feature_caps_start;
         for (i = 0; i < end; i++) TRACE( "feature %d: %s\n", i, debugstr_hid_value_caps( HID_FEATURE_VALUE_CAPS( data ) + i ) );
         end = data->number_link_collection_nodes;
         for (i = 0; i < end; i++) TRACE( "collection %d: %s\n", i, debugstr_hid_collection_node( HID_COLLECTION_NODES( data ) + i ) );
@@ -171,6 +171,7 @@ struct hid_parser_state
     ULONG  bit_size[3][256];
     USHORT byte_length[3];
     USHORT caps_count[3];
+    USHORT empty_caps[3];
     USHORT data_count[3];
 };
 
@@ -373,6 +374,7 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
 
     if (!state->items.report_count)
     {
+        state->empty_caps[type] += usages_size;
         reset_local_items( state );
         return TRUE;
     }
@@ -435,6 +437,8 @@ static struct hid_preparsed_data *build_preparsed_data( struct hid_parser_state 
 
     caps_size = state->caps_count[HidP_Input] + state->caps_count[HidP_Output] +
                 state->caps_count[HidP_Feature];
+    caps_size += state->empty_caps[HidP_Input] + state->empty_caps[HidP_Output] +
+                 state->empty_caps[HidP_Feature];
     caps_size *= sizeof(struct hid_value_caps);
 
     size = caps_size + FIELD_OFFSET(struct hid_preparsed_data, value_caps[0]) +
@@ -446,26 +450,26 @@ static struct hid_preparsed_data *build_preparsed_data( struct hid_parser_state 
     data->usage = state->usage;
     data->usage_page = state->usage_page;
     data->input_caps_start = 0;
-    data->input_caps_count = state->caps_count[HidP_Input];
-    data->input_caps_end = data->input_caps_start + data->input_caps_count;
+    data->input_caps_count = state->caps_count[HidP_Input] + state->empty_caps[HidP_Input];
+    data->input_caps_end = data->input_caps_start + state->caps_count[HidP_Input];
     data->input_report_byte_length = state->byte_length[HidP_Input];
     data->output_caps_start = data->input_caps_end;
-    data->output_caps_count = state->caps_count[HidP_Output];
-    data->output_caps_end = data->output_caps_start + data->output_caps_count;
+    data->output_caps_count = state->caps_count[HidP_Output] + state->empty_caps[HidP_Output];
+    data->output_caps_end = data->output_caps_start + state->caps_count[HidP_Output];
     data->output_report_byte_length = state->byte_length[HidP_Output];
     data->feature_caps_start = data->output_caps_end;
-    data->feature_caps_count = state->caps_count[HidP_Feature];
-    data->feature_caps_end = data->feature_caps_start + data->feature_caps_count;
+    data->feature_caps_count = state->caps_count[HidP_Feature] + state->empty_caps[HidP_Feature];
+    data->feature_caps_end = data->feature_caps_start + state->caps_count[HidP_Feature];
     data->feature_report_byte_length = state->byte_length[HidP_Feature];
     data->caps_size = caps_size;
     data->number_link_collection_nodes = state->number_link_collection_nodes;
 
     caps = HID_INPUT_VALUE_CAPS( data );
-    memcpy( caps, state->values[0], data->input_caps_count * sizeof(*caps) );
+    memcpy( caps, state->values[0], state->caps_count[HidP_Input] * sizeof(*caps) );
     caps = HID_OUTPUT_VALUE_CAPS( data );
-    memcpy( caps, state->values[1], data->output_caps_count * sizeof(*caps) );
+    memcpy( caps, state->values[1], state->caps_count[HidP_Output] * sizeof(*caps) );
     caps = HID_FEATURE_VALUE_CAPS( data );
-    memcpy( caps, state->values[2], data->feature_caps_count * sizeof(*caps) );
+    memcpy( caps, state->values[2], state->caps_count[HidP_Feature] * sizeof(*caps) );
 
     nodes = HID_COLLECTION_NODES( data );
     for (i = 0; i < data->number_link_collection_nodes; ++i)
@@ -675,7 +679,7 @@ NTSTATUS WINAPI HidP_GetCollectionDescription( PHIDP_REPORT_DESCRIPTOR report_de
     device_desc->CollectionDesc[0].PreparsedData = (PHIDP_PREPARSED_DATA)preparsed;
 
     caps = HID_INPUT_VALUE_CAPS( preparsed );
-    caps_end = caps + preparsed->input_caps_count;
+    caps_end = caps + preparsed->input_caps_end - preparsed->input_caps_start;
     for (; caps != caps_end; ++caps)
     {
         len = caps->start_byte * 8 + caps->start_bit + caps->bit_size * caps->report_count;
@@ -684,7 +688,7 @@ NTSTATUS WINAPI HidP_GetCollectionDescription( PHIDP_REPORT_DESCRIPTOR report_de
     }
 
     caps = HID_OUTPUT_VALUE_CAPS( preparsed );
-    caps_end = caps + preparsed->output_caps_count;
+    caps_end = caps + preparsed->output_caps_end - preparsed->output_caps_start;
     for (; caps != caps_end; ++caps)
     {
         len = caps->start_byte * 8 + caps->start_bit + caps->bit_size * caps->report_count;
@@ -693,7 +697,7 @@ NTSTATUS WINAPI HidP_GetCollectionDescription( PHIDP_REPORT_DESCRIPTOR report_de
     }
 
     caps = HID_FEATURE_VALUE_CAPS( preparsed );
-    caps_end = caps + preparsed->feature_caps_count;
+    caps_end = caps + preparsed->feature_caps_end - preparsed->feature_caps_start;
     for (; caps != caps_end; ++caps)
     {
         len = caps->start_byte * 8 + caps->start_bit + caps->bit_size * caps->report_count;

@@ -3173,11 +3173,9 @@ static void check_preparsed_data( HANDLE file, const struct hidp_kdr *expect_kdr
         check_member( *kdr, *expect_kdr, "%d", output_caps_end );
         check_member( *kdr, *expect_kdr, "%d", output_report_byte_length );
         check_member( *kdr, *expect_kdr, "%d", feature_caps_start );
-        todo_wine
         check_member( *kdr, *expect_kdr, "%d", feature_caps_count );
         check_member( *kdr, *expect_kdr, "%d", feature_caps_end );
         check_member( *kdr, *expect_kdr, "%d", feature_report_byte_length );
-        todo_wine
         check_member( *kdr, *expect_kdr, "%d", caps_size );
         check_member( *kdr, *expect_kdr, "%d", number_link_collection_nodes );
 
