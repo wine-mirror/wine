@@ -106,6 +106,13 @@ static typelib_t *current_typelib;
 
 %}
 
+%code requires
+{
+
+#define PARSER_LTYPE struct location
+
+}
+
 %code provides
 {
 
@@ -119,7 +126,6 @@ void pop_import( PARSER_LTYPE *yylloc );
 
 }
 
-%define api.location.type {struct location}
 %define api.prefix {parser_}
 %define api.pure full
 %define parse.error verbose
