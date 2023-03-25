@@ -471,7 +471,7 @@ START_TEST(rpcapi)
     MIDL_user_free(names[0]);
     MIDL_user_free(names);
 
-    if (0) /* crashes under win7 */
+    if (0) /* each of these crashes on Windows 7 to 11 */
     {
     hr = SchRpcGetTaskInfo(NULL, 0, NULL, NULL);
     hr = SchRpcGetTaskInfo(L"Task1", 0, NULL, NULL);
