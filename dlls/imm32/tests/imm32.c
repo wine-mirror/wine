@@ -3869,6 +3869,44 @@ static void test_ImmActivateLayout(void)
     CHECK_CALLED( ImeDestroy );
     ok_seq( empty_sequence );
 
+
+    /* when there's a window, ActivateKeyboardLayout calls ImeInquire */
+
+    if (!(hkl = ime_install())) goto cleanup;
+
+    hwnd = CreateWindowW( L"static", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    ok_seq( empty_sequence );
+
+    SET_EXPECT( ImeInquire );
+    ok_eq( old_hkl, ActivateKeyboardLayout( hkl, 0 ), HKL, "%p" );
+    todo_wine
+    CHECK_CALLED( ImeInquire );
+    ok_seq( activate_seq );
+
+    ok_eq( hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
+
+    ok_eq( hkl, ActivateKeyboardLayout( old_hkl, 0 ), HKL, "%p" );
+    ok_seq( deactivate_seq );
+
+    ok_eq( old_hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
+
+    ime_cleanup( hkl );
+    ok_seq( empty_sequence );
+
+    /* ImmActivateLayout leaks the IME, we need to free it manually */
+
+    SET_EXPECT( ImeDestroy );
+    ret = ImmFreeLayout( hkl );
+    ok( ret, "ImmFreeLayout returned %u\n", ret );
+    todo_wine
+    CHECK_CALLED( ImeDestroy );
+    ok_seq( empty_sequence );
+
+    ok_ret( 1, DestroyWindow( hwnd ) );
+
+
 cleanup:
     SET_ENABLE( ImeInquire, FALSE );
     SET_ENABLE( ImeDestroy, FALSE );
