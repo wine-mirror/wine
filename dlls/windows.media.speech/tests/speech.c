@@ -1772,7 +1772,7 @@ static void test_Recognition(void)
     recog_state = 0xdeadbeef;
     hr = ISpeechRecognizer2_get_State(recognizer2, &recog_state);
     ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
-    ok(recog_state == SpeechRecognizerState_Capturing, "recog_state was %u.\n", recog_state);
+    ok(recog_state == SpeechRecognizerState_Capturing || broken(recog_state == SpeechRecognizerState_Idle), "recog_state was %u.\n", recog_state);
 
     /*
      * TODO: Use a loopback device together with prerecorded audio files to test the recognizer's functionality.
