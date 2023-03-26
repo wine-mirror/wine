@@ -4565,7 +4565,12 @@ struct icmp_handle_data
  */
 BOOL WINAPI IcmpCloseHandle( HANDLE handle )
 {
-    struct icmp_handle_data *data = (struct icmp_handle_data *)handle;
+    struct icmp_handle_data *data;
+
+    if (handle == NULL || handle == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    data = (struct icmp_handle_data *)handle;
 
     CloseHandle( data->nsi_device );
     heap_free( data );
