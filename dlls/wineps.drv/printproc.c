@@ -393,6 +393,27 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         free(pts);
         return i;
     }
+    case EMR_POLYLINETO16:
+    {
+        const EMRPOLYLINETO16 *p = (const EMRPOLYLINETO16 *)rec;
+        POINT *pts;
+        DWORD cnt;
+        int i;
+
+        cnt = p->cpts + 1;
+        pts = malloc(sizeof(*pts) * cnt);
+        if (!pts) return 0;
+        GetCurrentPositionEx(data->pdev->dev.hdc, pts);
+        for (i = 0; i < p->cpts; i++)
+        {
+            pts[i + 1].x = p->apts[i].x;
+            pts[i + 1].y = p->apts[i].y;
+        }
+        i = PSDRV_PolyPolyline(&data->pdev->dev, pts, &cnt, 1) &&
+            MoveToEx(data->pdev->dev.hdc, pts[cnt - 1].x, pts[cnt - 1].y, NULL);
+        free(pts);
+        return i;
+    }
     case EMR_CREATEMONOBRUSH:
     {
         const EMRCREATEMONOBRUSH *p = (const EMRCREATEMONOBRUSH *)rec;
