@@ -172,6 +172,24 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         return PSDRV_PolyBezierTo(&data->pdev->dev, (const POINT *)p->aptl, p->cptl) &&
             MoveToEx(data->pdev->dev.hdc, p->aptl[p->cptl - 1].x, p->aptl[p->cptl - 1].y, NULL);
     }
+    case EMR_POLYLINETO:
+    {
+        const EMRPOLYLINETO *p = (const EMRPOLYLINETO *)rec;
+        POINT *pts;
+        DWORD cnt;
+        int ret;
+
+        cnt = p->cptl + 1;
+        pts = malloc(sizeof(*pts) * cnt);
+        if (!pts) return 0;
+
+        GetCurrentPositionEx(data->pdev->dev.hdc, pts);
+        memcpy(pts + 1, p->aptl, sizeof(*pts) * p->cptl);
+        ret = PSDRV_PolyPolyline(&data->pdev->dev, pts, &cnt, 1) &&
+            MoveToEx(data->pdev->dev.hdc, pts[cnt - 1].x, pts[cnt - 1].y, NULL);
+        free(pts);
+        return ret;
+    }
     case EMR_POLYPOLYLINE:
     {
         const EMRPOLYPOLYLINE *p = (const EMRPOLYPOLYLINE *)rec;
