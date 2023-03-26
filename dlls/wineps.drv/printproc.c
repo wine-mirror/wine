@@ -295,6 +295,35 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         return PSDRV_LineTo(&data->pdev->dev, line->ptl.x, line->ptl.y) &&
             MoveToEx(data->pdev->dev.hdc, line->ptl.x, line->ptl.y, NULL);
     }
+    case EMR_ARCTO:
+    {
+        const EMRARCTO *p = (const EMRARCTO *)rec;
+        POINT pt;
+        BOOL ret;
+
+        ret = GetCurrentPositionEx(data->pdev->dev.hdc, &pt);
+        if (ret)
+        {
+            ret = ArcTo(data->pdev->dev.hdc, p->rclBox.left, p->rclBox.top,
+                    p->rclBox.right, p->rclBox.bottom, p->ptlStart.x,
+                    p->ptlStart.y, p->ptlStart.x, p->ptlStart.y);
+        }
+        if (ret)
+            ret = PSDRV_LineTo(&data->pdev->dev, pt.x, pt.y);
+        if (ret)
+        {
+            ret = PSDRV_Arc(&data->pdev->dev, p->rclBox.left, p->rclBox.top,
+                    p->rclBox.right, p->rclBox.bottom, p->ptlStart.x,
+                    p->ptlStart.y, p->ptlEnd.x, p->ptlEnd.y);
+        }
+        if (ret)
+        {
+            ret = ArcTo(data->pdev->dev.hdc, p->rclBox.left, p->rclBox.top,
+                    p->rclBox.right, p->rclBox.bottom, p->ptlEnd.x,
+                    p->ptlEnd.y, p->ptlEnd.x, p->ptlEnd.y);
+        }
+        return ret;
+    }
     case EMR_CREATEMONOBRUSH:
     {
         const EMRCREATEMONOBRUSH *p = (const EMRCREATEMONOBRUSH *)rec;
