@@ -18,7 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifdef __x86_64__
+#include <corecrt.h>
+
+#if defined(__x86_64__) && _MSVCR_VER>=140
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -26,6 +28,7 @@
 #include "wine/exception.h"
 #include "wine/debug.h"
 #include "cppexcept.h"
+#include "msvcrt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
@@ -880,24 +883,23 @@ EXCEPTION_DISPOSITION __cdecl __CxxFrameHandler4(EXCEPTION_RECORD *rec,
     return cxx_frame_handler4(rec, frame, context, dispatch, &descr, trylevel);
 }
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID reserved)
+BOOL msvcrt_init_handler4(void)
 {
-    switch (fdwReason)
-    {
-    case DLL_PROCESS_ATTACH:
-        fls_index = FlsAlloc(NULL);
-        if (fls_index == FLS_OUT_OF_INDEXES)
-            return FALSE;
-        /* fall through */
-    case DLL_THREAD_ATTACH:
-        FlsSetValue(fls_index, (void*)-2);
-        break;
-    case DLL_PROCESS_DETACH:
-        if (reserved) break;
-        FlsFree(fls_index);
-        break;
-    }
+    fls_index = FlsAlloc(NULL);
+    if (fls_index == FLS_OUT_OF_INDEXES)
+        return FALSE;
+    msvcrt_attach_handler4();
     return TRUE;
+}
+
+void msvcrt_attach_handler4(void)
+{
+    FlsSetValue(fls_index, (void*)-2);
+}
+
+void msvcrt_free_handler4(void)
+{
+    FlsFree(fls_index);
 }
 
 #endif

@@ -26,6 +26,7 @@ C_SRCS = \
 	exception_ptr.c \
 	exit.c \
 	file.c \
+	handler4.c \
 	heap.c \
 	iob.c \
 	locale.c \

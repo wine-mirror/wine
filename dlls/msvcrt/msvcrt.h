@@ -117,6 +117,16 @@ BOOL __cdecl __CxxRegisterExceptionObject(EXCEPTION_POINTERS*, cxx_frame_info*);
 void __cdecl __CxxUnregisterExceptionObject(cxx_frame_info*, BOOL);
 void CDECL __DestructExceptionObject(EXCEPTION_RECORD*);
 
+#if defined(__x86_64__) && _MSVCR_VER>=140
+void** __cdecl __current_exception(void);
+int* __cdecl __processing_throw(void);
+void __cdecl terminate(void);
+
+BOOL msvcrt_init_handler4(void);
+void msvcrt_attach_handler4(void);
+void msvcrt_free_handler4(void);
+#endif
+
 /* TLS data */
 extern DWORD msvcrt_tls_index DECLSPEC_HIDDEN;
 
