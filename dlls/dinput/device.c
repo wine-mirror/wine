@@ -1815,7 +1815,7 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
     BOOL load_success = FALSE;
     BOOL *mapped;
 
-    FIXME( "iface %p, format %p, username %s, flags %#lx stub!\n", iface, format,
+    TRACE( "iface %p, format %p, username %s, flags %#lx\n", iface, format,
            debugstr_w(username), flags );
 
     if (!format) return DIERR_INVALIDPARAM;
@@ -1824,6 +1824,16 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
         return DIERR_INVALIDPARAM;
     if (format->dwNumActions * 4 != format->dwDataSize)
         return DIERR_INVALIDPARAM;
+
+    TRACE( "format guid %s, genre %#lx, name %s\n", debugstr_guid(&format->guidActionMap),
+           format->dwGenre, debugstr_w(format->tszActionMap) );
+    for (i = 0; i < format->dwNumActions; i++)
+    {
+        DIACTIONW *action = format->rgoAction + i;
+        TRACE( "  %lu: app_data %#Ix, semantic %#lx, flags %#lx, instance %s, obj_id %#lx, how %#lx, name %s\n",
+               i, action->uAppData, action->dwSemantic, action->dwFlags, debugstr_guid(&action->guidInstance),
+               action->dwObjID, action->dwHow, debugstr_w(action->lptszActionName) );
+    }
 
     action_end = format->rgoAction + format->dwNumActions;
     for (action = format->rgoAction; action < action_end; action++)
@@ -1968,11 +1978,21 @@ static HRESULT WINAPI dinput_device_SetActionMap( IDirectInputDevice8W *iface, D
     int i, index;
     HRESULT hr;
 
-    FIXME( "iface %p, format %p, username %s, flags %#lx stub!\n", iface, format,
+    TRACE( "iface %p, format %p, username %s, flags %#lx\n", iface, format,
            debugstr_w(username), flags );
 
     if (!format) return DIERR_INVALIDPARAM;
     if (flags != DIDSAM_DEFAULT && flags != DIDSAM_FORCESAVE && flags != DIDSAM_NOUSER) return DIERR_INVALIDPARAM;
+
+    TRACE( "format guid %s, genre %#lx, name %s\n", debugstr_guid(&format->guidActionMap),
+           format->dwGenre, debugstr_w(format->tszActionMap) );
+    for (i = 0; i < format->dwNumActions; i++)
+    {
+        DIACTIONW *action = format->rgoAction + i;
+        TRACE( "  %u: app_data %#Ix, semantic %#lx, flags %#lx, instance %s, obj_id %#lx, how %#lx, name %s\n",
+               i, action->uAppData, action->dwSemantic, action->dwFlags, debugstr_guid(&action->guidInstance),
+               action->dwObjID, action->dwHow, debugstr_w(action->lptszActionName) );
+    }
 
     if (!(data_format.rgodf = malloc( sizeof(DIOBJECTDATAFORMAT) * format->dwNumActions ))) return DIERR_OUTOFMEMORY;
     data_format.dwDataSize = format->dwDataSize;

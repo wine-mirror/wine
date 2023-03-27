@@ -519,6 +519,18 @@ static HRESULT WINAPI dinput8_EnumDevicesBySemantics( IDirectInput8W *iface, con
     FIXME( "iface %p, username %s, action_format %p, callback %p, context %p, flags %#lx stub!\n",
            iface, debugstr_w(username), action_format, callback, context, flags );
 
+    if (!action_format) return DIERR_INVALIDPARAM;
+
+    TRACE( "format guid %s, genre %#lx, name %s\n", debugstr_guid(&action_format->guidActionMap),
+           action_format->dwGenre, debugstr_w(action_format->tszActionMap) );
+    for (i = 0; i < action_format->dwNumActions; i++)
+    {
+        DIACTIONW *action = action_format->rgoAction + i;
+        TRACE( "  %u: app_data %#Ix, semantic %#lx, flags %#lx, instance %s, obj_id %#lx, how %#lx, name %s\n",
+               i, action->uAppData, action->dwSemantic, action->dwFlags, debugstr_guid(&action->guidInstance),
+               action->dwObjID, action->dwHow, debugstr_w(action->lptszActionName) );
+    }
+
     didevi.dwSize = sizeof(didevi);
 
     hr = IDirectInput8_EnumDevices( &impl->IDirectInput8W_iface, DI8DEVCLASS_GAMECTRL,
