@@ -2012,13 +2012,31 @@ HKL WINAPI ImmInstallIMEA( const char *filenameA, const char *descriptionA )
     return hkl;
 }
 
+static LCID get_ime_file_lang( const WCHAR *filename )
+{
+    DWORD *languages;
+    LCID lcid = 0;
+    void *info;
+    UINT len;
+
+    if (!(len = GetFileVersionInfoSizeW( filename, NULL ))) return 0;
+    if (!(info = malloc( len ))) goto done;
+    if (!GetFileVersionInfoW( filename, 0, len, info )) goto done;
+    if (!VerQueryValueW( info, L"\\VarFileInfo\\Translation", (void **)&languages, &len ) || !len) goto done;
+    lcid = languages[0];
+
+done:
+    free( info );
+    return lcid;
+}
+
 /***********************************************************************
  *		ImmInstallIMEW (IMM32.@)
  */
 HKL WINAPI ImmInstallIMEW( const WCHAR *filename, const WCHAR *description )
 {
     WCHAR path[ARRAY_SIZE(layouts_formatW)+8], buffer[MAX_PATH];
-    LCID lcid = GetUserDefaultLCID();
+    LCID lcid;
     WORD count = 0x20;
     const WCHAR *tmp;
     DWORD length;
@@ -2027,7 +2045,7 @@ HKL WINAPI ImmInstallIMEW( const WCHAR *filename, const WCHAR *description )
 
     TRACE( "filename %s, description %s\n", debugstr_w(filename), debugstr_w(description) );
 
-    if (!filename || !description)
+    if (!filename || !description || !(lcid = get_ime_file_lang( filename )))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
@@ -2037,8 +2055,8 @@ HKL WINAPI ImmInstallIMEW( const WCHAR *filename, const WCHAR *description )
     {
         DWORD disposition = 0;
 
-        hkl = (HKL)MAKELPARAM( lcid, 0xe000 | count );
-        swprintf( path, ARRAY_SIZE(path), layouts_formatW, (ULONG_PTR)hkl);
+        hkl = (HKL)(UINT_PTR)MAKELONG( lcid, 0xe000 | count );
+        swprintf( path, ARRAY_SIZE(path), layouts_formatW, (ULONG)(ULONG_PTR)hkl);
         if (!RegCreateKeyExW( HKEY_LOCAL_MACHINE, path, 0, NULL, 0,
                               KEY_WRITE, NULL, &hkey, &disposition ))
         {
