@@ -3152,6 +3152,11 @@ static LRESULT ime_internal_msg( WPARAM wparam, LPARAM lparam)
         ImmSetActiveContext(hwnd, himc, wparam == IME_INTERNAL_ACTIVATE);
         ImmReleaseContext(hwnd, himc);
         break;
+    case IME_INTERNAL_HKL_ACTIVATE:
+        ImmEnumInputContext( 0, enum_activate_layout, 0 );
+        break;
+   case IME_INTERNAL_HKL_DEACTIVATE:
+        break;
     default:
         FIXME("wparam = %Ix\n", wparam);
         break;

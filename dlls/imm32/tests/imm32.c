@@ -4013,12 +4013,12 @@ static void test_ImmActivateLayout(void)
         {
             .hkl = expect_ime, .himc = default_himc,
             .func = IME_SELECT, .select = 1,
-            .todo = TRUE, .flaky_himc = TRUE,
+            .flaky_himc = TRUE,
         },
         {
             .hkl = expect_ime, .himc = 0/*himc*/,
             .func = IME_SELECT, .select = 1,
-            .todo = TRUE, .flaky_himc = TRUE,
+            .flaky_himc = TRUE,
         },
         {
             .hkl = expect_ime, .himc = default_himc,
@@ -4067,12 +4067,12 @@ static void test_ImmActivateLayout(void)
         {
             .hkl = default_hkl, .himc = default_himc,
             .func = IME_SELECT, .select = 0,
-            .todo = TRUE, .flaky_himc = TRUE,
+            .flaky_himc = TRUE,
         },
         {
             .hkl = default_hkl, .himc = 0/*himc*/,
             .func = IME_SELECT, .select = 0,
-            .todo = TRUE, .flaky_himc = TRUE,
+            .flaky_himc = TRUE,
         },
         {0},
     };
@@ -4149,7 +4149,6 @@ static void test_ImmActivateLayout(void)
 
     SET_EXPECT( ImeInquire );
     ok_eq( old_hkl, ActivateKeyboardLayout( hkl, 0 ), HKL, "%p" );
-    todo_wine
     CHECK_CALLED( ImeInquire );
     activate_with_window_seq[1].himc = himc;
     ok_seq( activate_with_window_seq );
@@ -4164,7 +4163,9 @@ static void test_ImmActivateLayout(void)
     memset( ime_calls, 0, sizeof(ime_calls) );
     ime_call_count = 0;
 
+    todo_ImeDestroy = TRUE; /* Wine doesn't leak the IME */
     ok_eq( hkl, ActivateKeyboardLayout( old_hkl, 0 ), HKL, "%p" );
+    todo_ImeDestroy = FALSE;
     deactivate_with_window_seq[1].himc = himc;
     deactivate_with_window_seq[5].himc = himc;
     ok_seq( deactivate_with_window_seq );
@@ -4175,7 +4176,9 @@ static void test_ImmActivateLayout(void)
     ok_seq( empty_sequence );
 
 
+    todo_ImeInquire = TRUE;
     ok_eq( old_hkl, ActivateKeyboardLayout( hkl, 0 ), HKL, "%p" );
+    todo_ImeInquire = FALSE;
     ok_eq( hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
 
     ok_ret( 1, EnumThreadWindows( GetCurrentThreadId(), enum_thread_ime_windows, (LPARAM)&ime_windows ) );
@@ -4183,7 +4186,9 @@ static void test_ImmActivateLayout(void)
     todo_wine ok( !!ime_windows.ime_ui_hwnd, "missing IME UI window\n" );
     todo_wine ok_ret( (UINT_PTR)ime_windows.ime_hwnd, (UINT_PTR)GetParent( ime_windows.ime_ui_hwnd ) );
 
+    todo_ImeDestroy = TRUE; /* Wine doesn't leak the IME */
     ok_eq( hkl, ActivateKeyboardLayout( old_hkl, 0 ), HKL, "%p" );
+    todo_ImeDestroy = FALSE;
     ok_eq( old_hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
 
 

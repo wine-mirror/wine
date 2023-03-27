@@ -1219,11 +1219,13 @@ HKL WINAPI NtUserActivateKeyboardLayout( HKL layout, UINT flags )
         return 0;
 
     old_layout = info->kbd_layout;
-    info->kbd_layout = layout;
     if (old_layout != layout)
     {
+        HWND ime_hwnd = get_default_ime_window( 0 );
         const NLS_LOCALE_DATA *data;
         CHARSETINFO cs = {0};
+
+        if (ime_hwnd) send_message( ime_hwnd, WM_IME_INTERNAL, IME_INTERNAL_HKL_DEACTIVATE, HandleToUlong(old_layout) );
 
         if (HIWORD(layout) & 0x8000)
             FIXME( "Aliased keyboard layout not yet implemented\n" );
@@ -1232,7 +1234,11 @@ HKL WINAPI NtUserActivateKeyboardLayout( HKL layout, UINT flags )
         else
             translate_charset_info( ULongToPtr(data->idefaultansicodepage), &cs, TCI_SRCCODEPAGE );
 
+        info->kbd_layout = layout;
         info->kbd_layout_id = 0;
+
+        if (ime_hwnd) send_message( ime_hwnd, WM_IME_INTERNAL, IME_INTERNAL_HKL_ACTIVATE, HandleToUlong(layout) );
+
         if ((focus = get_focus()) && get_window_thread( focus, NULL ) == GetCurrentThreadId())
             send_message( focus, WM_INPUTLANGCHANGE, cs.ciCharset, (LPARAM)layout );
     }
