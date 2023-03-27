@@ -209,8 +209,8 @@ static BOOL CALLBACK check_no_created_effect_objects( IDirectInputEffect *effect
     return DIENUM_CONTINUE;
 }
 
-#define check_diactionw( a, b ) check_diactionw_( __LINE__, a, b, FALSE )
-static void check_diactionw_( int line, const DIACTIONW *actual, const DIACTIONW *expected, BOOL todo )
+#define check_diactionw( a, b ) check_diactionw_( __LINE__, a, b )
+static void check_diactionw_( int line, const DIACTIONW *actual, const DIACTIONW *expected )
 {
     check_member_( __FILE__, line, *actual, *expected, "%#Ix", uAppData );
     check_member_( __FILE__, line, *actual, *expected, "%#lx", dwSemantic );
@@ -219,15 +219,13 @@ static void check_diactionw_( int line, const DIACTIONW *actual, const DIACTIONW
         check_member_wstr_( __FILE__, line, *actual, *expected, lptszActionName );
     else
         check_member_( __FILE__, line, *actual, *expected, "%p", lptszActionName );
-    todo_wine_if( todo )
     check_member_guid_( __FILE__, line, *actual, *expected, guidInstance );
     check_member_( __FILE__, line, *actual, *expected, "%#lx", dwObjID );
-    todo_wine_if( todo )
     check_member_( __FILE__, line, *actual, *expected, "%#lx", dwHow );
 }
 
-#define check_diactionformatw( a, b ) check_diactionformatw_( __LINE__, a, b, FALSE )
-static void check_diactionformatw_( int line, const DIACTIONFORMATW *actual, const DIACTIONFORMATW *expected, BOOL todo )
+#define check_diactionformatw( a, b ) check_diactionformatw_( __LINE__, a, b )
+static void check_diactionformatw_( int line, const DIACTIONFORMATW *actual, const DIACTIONFORMATW *expected )
 {
     DWORD i;
     check_member_( __FILE__, line, *actual, *expected, "%#lx", dwSize );
@@ -237,7 +235,7 @@ static void check_diactionformatw_( int line, const DIACTIONFORMATW *actual, con
     for (i = 0; i < min( actual->dwNumActions, expected->dwNumActions ); ++i)
     {
         winetest_push_context( "action[%lu]", i );
-        check_diactionw_( line, actual->rgoAction + i, expected->rgoAction + i, todo && i >= 2 );
+        check_diactionw_( line, actual->rgoAction + i, expected->rgoAction + i );
         winetest_pop_context();
         if (expected->dwActionSize != sizeof(DIACTIONW)) break;
         if (actual->dwActionSize != sizeof(DIACTIONW)) break;
@@ -1377,7 +1375,7 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     ok( hr == DI_OK, "BuildActionMap returned %#lx\n", hr );
     hr = IDirectInputDevice8_BuildActionMap( device, &action_format, L"username", DIDBAM_PRESERVE );
     ok( hr == DI_OK, "BuildActionMap returned %#lx\n", hr );
-    check_diactionformatw_( __LINE__, &action_format, &expect_action_format_4, TRUE );
+    check_diactionformatw( &action_format, &expect_action_format_4 );
 
     IDirectInputDevice8_Release( keyboard );
     IDirectInputDevice8_Release( mouse );

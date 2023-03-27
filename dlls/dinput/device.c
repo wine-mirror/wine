@@ -1847,6 +1847,8 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
     for (action = format->rgoAction; action < action_end; action++)
     {
         if (!action->dwSemantic) return DIERR_INVALIDPARAM;
+        if (flags == DIDBAM_PRESERVE && !IsEqualCLSID( &action->guidInstance, &GUID_NULL ) &&
+            !IsEqualCLSID( &action->guidInstance, &impl->guid )) continue;
         if (action->dwFlags & DIA_APPMAPPED) action->dwHow = DIAH_APPREQUESTED;
         else action->dwHow = 0;
     }
@@ -1864,6 +1866,8 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
     for (action = format->rgoAction; action < action_end; action++)
     {
         if (action->dwHow == DIAH_APPREQUESTED || action->dwHow == DIAH_USERCONFIG) continue;
+        if (flags == DIDBAM_PRESERVE && !IsEqualCLSID( &action->guidInstance, &GUID_NULL ) &&
+            !IsEqualCLSID( &action->guidInstance, &impl->guid )) continue;
         if (action->dwFlags & DIA_APPNOMAP) continue;
         action->guidInstance = GUID_NULL;
         action->dwHow = 0;
