@@ -3820,7 +3820,6 @@ static void test_ImmActivateLayout(void)
     SET_ENABLE( ImeInquire, TRUE );
     SET_ENABLE( ImeDestroy, TRUE );
 
-    todo_wine
     ok_ret( 1, ImmActivateLayout( old_hkl ) );
 
     ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
@@ -3840,16 +3839,16 @@ static void test_ImmActivateLayout(void)
     /* ImmActivateLayout changes active HKL */
 
     SET_EXPECT( ImeInquire );
-    todo_wine
     ok_ret( 1, ImmActivateLayout( hkl ) );
     ok_seq( activate_seq );
     todo_wine
     CHECK_CALLED( ImeInquire );
 
-    todo_wine
     ok_eq( hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
 
-    todo_wine
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    ok_seq( empty_sequence );
+
     ok_ret( 1, ImmActivateLayout( old_hkl ) );
     ok_seq( deactivate_seq );
 

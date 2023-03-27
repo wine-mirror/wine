@@ -566,8 +566,12 @@ static void ime_release( struct ime *ime )
 
 BOOL WINAPI ImmActivateLayout( HKL hkl )
 {
-    FIXME( "hkl %p stub!\n", hkl );
-    return FALSE;
+    FIXME( "hkl %p semi-stub!\n", hkl );
+
+    if (hkl == GetKeyboardLayout( 0 )) return TRUE;
+    if (!ActivateKeyboardLayout( hkl, 0 )) return FALSE;
+
+    return TRUE;
 }
 
 static BOOL free_input_context_data( HIMC hIMC )
