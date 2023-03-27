@@ -564,12 +564,20 @@ static void ime_release( struct ime *ime )
     LeaveCriticalSection( &ime_cs );
 }
 
+static BOOL CALLBACK enum_activate_layout( HIMC himc, LPARAM lparam )
+{
+    if (ImmLockIMC( himc )) ImmUnlockIMC( himc );
+    return TRUE;
+}
+
 BOOL WINAPI ImmActivateLayout( HKL hkl )
 {
-    FIXME( "hkl %p semi-stub!\n", hkl );
+    TRACE( "hkl %p\n", hkl );
 
     if (hkl == GetKeyboardLayout( 0 )) return TRUE;
     if (!ActivateKeyboardLayout( hkl, 0 )) return FALSE;
+
+    ImmEnumInputContext( 0, enum_activate_layout, 0 );
 
     return TRUE;
 }
