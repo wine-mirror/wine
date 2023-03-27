@@ -2519,6 +2519,7 @@ struct ime_call
     };
 
     BOOL todo;
+    BOOL flaky_himc;
 };
 
 struct ime_call empty_sequence[] = {{0}};
@@ -2531,7 +2532,9 @@ static void ok_call_( const char *file, int line, const struct ime_call *expecte
     int ret;
 
     if ((ret = expected->func - received->func)) goto done;
-    if ((ret = (UINT_PTR)expected->himc - (UINT_PTR)received->himc)) goto done;
+    /* Wine doesn't allocate HIMC in a deterministic order, ignore them when they are enumerated */
+    if (expected->flaky_himc && (ret = !!(UINT_PTR)expected->himc - !!(UINT_PTR)received->himc)) goto done;
+    if (!expected->flaky_himc && (ret = (UINT_PTR)expected->himc - (UINT_PTR)received->himc)) goto done;
     if ((ret = (UINT)(UINT_PTR)expected->hkl - (UINT)(UINT_PTR)received->hkl)) goto done;
     switch (expected->func)
     {
@@ -2598,7 +2601,6 @@ static void ok_seq_( const char *file, int line, const struct ime_call *expected
 static LRESULT CALLBACK ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     ime_trace( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
-    ok( 0, "unexpected call\n" );
     return DefWindowProcW( hwnd, msg, wparam, lparam );
 }
 
@@ -3872,6 +3874,160 @@ cleanup:
     SET_ENABLE( ImeDestroy, FALSE );
 }
 
+static void test_ImmCreateInputContext(void)
+{
+    struct ime_call activate_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = IME_SELECT, .select = 1,
+            .todo = TRUE, .flaky_himc = TRUE,
+        },
+        {
+            .hkl = expect_ime, .himc = 0/*himc[0]*/,
+            .func = IME_SELECT, .select = 1,
+            .todo = TRUE, .flaky_himc = TRUE,
+        },
+        {0},
+    };
+    struct ime_call select1_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = 0/*himc[1]*/,
+            .func = IME_SELECT, .select = 1,
+            .todo = TRUE,
+        },
+        {0},
+    };
+    struct ime_call select0_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = 0/*himc[1]*/,
+            .func = IME_SELECT, .select = 0,
+        },
+        {0},
+    };
+    struct ime_call deactivate_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = IME_NOTIFY, .notify = {.action = NI_COMPOSITIONSTR, .index = CPS_CANCEL, .value = 0},
+            .todo = TRUE, .flaky_himc = TRUE,
+        },
+        {
+            .hkl = expect_ime, .himc = 0/*himc[0]*/,
+            .func = IME_NOTIFY, .notify = {.action = NI_COMPOSITIONSTR, .index = CPS_CANCEL, .value = 0},
+            .todo = TRUE, .flaky_himc = TRUE,
+        },
+        {
+            .hkl = default_hkl, .himc = default_himc,
+            .func = IME_SELECT, .select = 0,
+            .todo = TRUE, .flaky_himc = TRUE,
+        },
+        {
+            .hkl = default_hkl, .himc = 0/*himc[0]*/,
+            .func = IME_SELECT, .select = 0,
+            .todo = TRUE, .flaky_himc = TRUE,
+        },
+        {0},
+    };
+    HKL hkl, old_hkl = GetKeyboardLayout( 0 );
+    INPUTCONTEXT *ctx;
+    HIMC himc[2];
+    HWND hwnd;
+
+    ctx = ImmLockIMC( default_himc );
+    ok( !!ctx, "ImmLockIMC failed, error %lu\n", GetLastError() );
+    ok_ret( 0, IsWindow( ctx->hWnd ) );
+    ok_ret( 1, ImmUnlockIMC( default_himc ) );
+
+
+    /* new input contexts cannot be locked before IME window has been created */
+
+    himc[0] = ImmCreateContext();
+    ok( !!himc[0], "ImmCreateContext failed, error %lu\n", GetLastError() );
+    ctx = ImmLockIMC( himc[0] );
+    todo_wine
+    ok( !ctx, "ImmLockIMC failed, error %lu\n", GetLastError() );
+    if (ctx) ImmUnlockIMCC( himc[0] );
+
+    hwnd = CreateWindowW( L"static", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+    ctx = ImmLockIMC( default_himc );
+    ok( !!ctx, "ImmLockIMC failed, error %lu\n", GetLastError() );
+    ok_ret( 1, ImmUnlockIMC( default_himc ) );
+
+    ctx = ImmLockIMC( himc[0] );
+    ok( !!ctx, "ImmLockIMC failed, error %lu\n", GetLastError() );
+    ok_ret( 1, ImmUnlockIMC( himc[0] ) );
+
+
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
+    ime_info.dwPrivateDataSize = 123;
+
+    if (!(hkl = ime_install())) goto cleanup;
+
+
+    /* Activating the layout calls ImeSelect 1 on existing HIMC */
+
+    ok_seq( empty_sequence );
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    activate_seq[1].himc = himc[0];
+    ok_seq( activate_seq );
+
+    ok_eq( hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
+
+    ctx = ImmLockIMC( default_himc );
+    ok( !!ctx, "ImmLockIMC failed, error %lu\n", GetLastError() );
+    ok_ret( 1, ImmUnlockIMC( default_himc ) );
+
+    ctx = ImmLockIMC( himc[0] );
+    ok( !!ctx, "ImmLockIMC failed, error %lu\n", GetLastError() );
+    ok_ret( 1, ImmUnlockIMC( himc[0] ) );
+
+
+    /* ImmLockIMC triggers the ImeSelect call, to allocate private data */
+
+    himc[1] = ImmCreateContext();
+    ok( !!himc[1], "ImmCreateContext failed, error %lu\n", GetLastError() );
+
+    todo_wine
+    ok_seq( empty_sequence );
+    ctx = ImmLockIMC( himc[1] );
+    ok( !!ctx, "ImmLockIMC failed, error %lu\n", GetLastError() );
+    select1_seq[0].himc = himc[1];
+    ok_seq( select1_seq );
+
+    ok_ret( 1, ImmUnlockIMC( himc[1] ) );
+
+    ok_seq( empty_sequence );
+    ok_ret( 1, ImmDestroyContext( himc[1] ) );
+    select0_seq[0].himc = himc[1];
+    ok_seq( select0_seq );
+
+
+    /* Deactivating the layout calls ImeSelect 0 on existing HIMC */
+
+    ok_ret( 1, ImmActivateLayout( old_hkl ) );
+    deactivate_seq[1].himc = himc[0];
+    deactivate_seq[3].himc = himc[0];
+    ok_seq( deactivate_seq );
+
+    ok_eq( old_hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
+
+    ok_ret( 1, ImmFreeLayout( hkl ) );
+    ime_cleanup( hkl );
+    ok_seq( empty_sequence );
+
+cleanup:
+    ok_ret( 1, ImmDestroyContext( himc[0] ) );
+    ok_ret( 1, DestroyWindow( hwnd ) );
+
+    ime_info.dwPrivateDataSize = 0;
+}
+
 START_TEST(imm32)
 {
     default_hkl = GetKeyboardLayout( 0 );
@@ -3904,6 +4060,7 @@ START_TEST(imm32)
     test_ImmUnregisterWord( TRUE );
 
     test_ImmActivateLayout();
+    test_ImmCreateInputContext();
 
     if (init())
     {
