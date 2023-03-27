@@ -45,19 +45,6 @@ static inline struct dinput *impl_from_IDirectInput8W( IDirectInput8W *iface )
     return CONTAINING_RECORD( iface, struct dinput, IDirectInput8W_iface );
 }
 
-static DWORD diactionformat_priorityW( DIACTIONFORMATW *action_format, DWORD genre )
-{
-    int i;
-    DWORD priorityFlags = 0;
-
-    /* If there's at least one action for the device it's priority 1 */
-    for (i = 0; i < action_format->dwNumActions; i++)
-        if ((action_format->rgoAction[i].dwSemantic & genre) == genre)
-            priorityFlags |= DIEDBS_MAPPEDPRI1;
-
-    return priorityFlags;
-}
-
 #if defined __i386__ && defined _MSC_VER
 __declspec(naked) BOOL enum_callback_wrapper(void *callback, const void *instance, void *ref)
 {
@@ -438,65 +425,82 @@ static HRESULT WINAPI dinput8_FindDevice( IDirectInput8W *iface, const GUID *gui
     return IDirectInput7_FindDevice( &impl->IDirectInput7W_iface, guid, name, instance_guid );
 }
 
-static BOOL should_enumerate_device( const WCHAR *username, DWORD flags, struct list *device_players, const GUID *guid )
-{
-    BOOL should_enumerate = TRUE;
-    struct DevicePlayer *device_player;
-
-    /* Check if user owns impl device */
-    if (flags & DIEDBSFL_THISUSER && username && *username)
-    {
-        should_enumerate = FALSE;
-        LIST_FOR_EACH_ENTRY( device_player, device_players, struct DevicePlayer, entry )
-        {
-            if (IsEqualGUID( &device_player->instance_guid, guid ))
-            {
-                if (*device_player->username && !wcscmp( username, device_player->username ))
-                    return TRUE; /* Device username matches */
-                break;
-            }
-        }
-    }
-
-    /* Check if impl device is not owned by anyone */
-    if (flags & DIEDBSFL_AVAILABLEDEVICES)
-    {
-        BOOL found = FALSE;
-        should_enumerate = FALSE;
-        LIST_FOR_EACH_ENTRY( device_player, device_players, struct DevicePlayer, entry )
-        {
-            if (IsEqualGUID( &device_player->instance_guid, guid ))
-            {
-                if (*device_player->username) found = TRUE;
-                break;
-            }
-        }
-        if (!found) return TRUE; /* Device does not have a username */
-    }
-
-    return should_enumerate;
-}
-
 struct enum_device_by_semantics_params
 {
     IDirectInput8W *iface;
     const WCHAR *username;
     DWORD flags;
 
-    DIDEVICEINSTANCEW *instances;
-    DWORD instance_count;
+    IDirectInputDevice8W *devices[128];
+    DWORD device_count;
 };
 
 static BOOL CALLBACK enum_device_by_semantics( const DIDEVICEINSTANCEW *instance, void *context )
 {
     struct enum_device_by_semantics_params *params = context;
-    struct dinput *impl = impl_from_IDirectInput8W( params->iface );
-
-    if (should_enumerate_device( params->username, params->flags, &impl->device_players, &instance->guidInstance ))
+    DIDEVCAPS caps = {.dwSize = sizeof(caps)};
+    DIPROPSTRING prop_username =
     {
-        params->instance_count++;
-        params->instances = realloc( params->instances, sizeof(DIDEVICEINSTANCEW) * params->instance_count );
-        params->instances[params->instance_count - 1] = *instance;
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPSTRING),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+    };
+    IDirectInputDevice8W *device;
+    BOOL ret = DIENUM_CONTINUE;
+    HRESULT hr;
+
+    if (params->device_count >= ARRAY_SIZE(params->devices)) return DIENUM_STOP;
+
+    if (FAILED(hr = IDirectInput8_CreateDevice( params->iface, &instance->guidInstance, &device, NULL )))
+    {
+        WARN( "Failed to create device, hr %#lx\n", hr );
+        return DIENUM_CONTINUE;
+    }
+
+    if (FAILED(hr = IDirectInputDevice8_GetCapabilities( device, &caps )))
+        WARN( "Failed to get device capabilities, hr %#lx\n", hr );
+    if ((params->flags & DIEDBSFL_FORCEFEEDBACK) && !caps.dwFFDriverVersion) goto done;
+
+    if (FAILED(hr = IDirectInputDevice8_GetProperty( device, DIPROP_USERNAME, &prop_username.diph )))
+        WARN( "Failed to get device capabilities, hr %#lx\n", hr );
+    else if ((params->flags & DIEDBSFL_THISUSER) && *params->username && wcscmp( params->username, prop_username.wsz ))
+        goto done;
+    else if ((params->flags & DIEDBSFL_AVAILABLEDEVICES) && *prop_username.wsz)
+        goto done;
+
+    IDirectInputDevice_AddRef( device );
+    params->devices[params->device_count++] = device;
+
+done:
+    IDirectInputDevice8_Release( device );
+    return ret;
+}
+
+struct enum_device_object_semantics_params
+{
+    DIDEVICEINSTANCEW instance;
+    DIACTIONFORMATW *format;
+    DWORD flags;
+};
+
+static BOOL CALLBACK enum_device_object_semantics( const DIDEVICEOBJECTINSTANCEW *obj, void *args )
+{
+    struct enum_device_object_semantics_params *params = args;
+    DIACTIONFORMATW *format = params->format;
+    UINT i;
+
+    for (i = 0; format && i < format->dwNumActions; i++)
+    {
+        DIOBJECTDATAFORMAT object_format = {.dwType = obj->dwType, .dwOfs = obj->dwOfs};
+        BYTE dev_type = params->instance.dwDevType & 0xf;
+        DIACTIONW *action = format->rgoAction + i;
+
+        if (!device_object_matches_semantic( &params->instance, &object_format, action->dwSemantic, FALSE )) continue;
+        if (!(action->dwSemantic & 0x4000)) params->flags |= DIEDBS_MAPPEDPRI1;
+        else if (dev_type != DIDEVTYPE_KEYBOARD && dev_type != DIDEVTYPE_MOUSE) params->flags |= DIEDBS_MAPPEDPRI2;
     }
 
     return DIENUM_CONTINUE;
@@ -505,18 +509,13 @@ static BOOL CALLBACK enum_device_by_semantics( const DIDEVICEINSTANCEW *instance
 static HRESULT WINAPI dinput8_EnumDevicesBySemantics( IDirectInput8W *iface, const WCHAR *username, DIACTIONFORMATW *action_format,
                                                       LPDIENUMDEVICESBYSEMANTICSCBW callback, void *context, DWORD flags )
 {
-    struct enum_device_by_semantics_params params = {.iface = iface, .username = username, .flags = flags};
-    DWORD callbackFlags, enum_flags = DIEDFL_ATTACHEDONLY | (flags & DIEDFL_FORCEFEEDBACK);
-    static const GUID *guids[2] = {&GUID_SysKeyboard, &GUID_SysMouse};
-    static const DWORD actionMasks[] = {DIKEYBOARD_MASK, DIMOUSE_MASK};
+    struct enum_device_by_semantics_params params = {.iface = iface, .username = username ? username : L"", .flags = flags};
+    DWORD enum_flags = DIEDFL_ATTACHEDONLY | (flags & DIEDFL_FORCEFEEDBACK);
     struct dinput *impl = impl_from_IDirectInput8W( iface );
-    IDirectInputDevice8W *device;
-    DIDEVICEINSTANCEW didevi;
     unsigned int i = 0;
     HRESULT hr;
-    int remain;
 
-    FIXME( "iface %p, username %s, action_format %p, callback %p, context %p, flags %#lx stub!\n",
+    TRACE( "iface %p, username %s, action_format %p, callback %p, context %p, flags %#lx\n",
            iface, debugstr_w(username), action_format, callback, context, flags );
 
     if (!action_format) return DIERR_INVALIDPARAM;
@@ -531,64 +530,35 @@ static HRESULT WINAPI dinput8_EnumDevicesBySemantics( IDirectInput8W *iface, con
                action->dwObjID, action->dwHow, debugstr_w(action->lptszActionName) );
     }
 
-    didevi.dwSize = sizeof(didevi);
-
-    hr = IDirectInput8_EnumDevices( &impl->IDirectInput8W_iface, DI8DEVCLASS_GAMECTRL,
-                                    enum_device_by_semantics, &params, enum_flags );
-    if (FAILED(hr))
+    if (FAILED(hr = IDirectInput8_EnumDevices( &impl->IDirectInput8W_iface, DI8DEVCLASS_ALL,
+                                               enum_device_by_semantics, &params, enum_flags )))
     {
-        free( params.instances );
-        return hr;
+        WARN( "Failed to enumerate devices, hr %#lx\n", hr );
+        goto cleanup;
     }
 
-    remain = params.instance_count;
-    /* Add keyboard and mouse to remaining device count */
-    if (!(flags & DIEDBSFL_FORCEFEEDBACK))
+    while (params.device_count--)
     {
-        for (i = 0; i < ARRAY_SIZE(guids); i++)
-        {
-            if (should_enumerate_device( username, flags, &impl->device_players, guids[i] )) remain++;
-        }
-    }
+        struct enum_device_object_semantics_params object_params = {.instance = {.dwSize = sizeof(DIDEVICEINSTANCEW)}, .format = action_format};
+        IDirectInputDevice8W *device = params.devices[params.device_count];
+        BOOL ret = DIENUM_STOP;
 
-    for (i = 0; i < params.instance_count; i++)
-    {
-        callbackFlags = diactionformat_priorityW( action_format, action_format->dwGenre );
-        IDirectInput_CreateDevice( iface, &params.instances[i].guidInstance, &device, NULL );
+        if (FAILED(hr = IDirectInputDevice8_GetDeviceInfo( device, &object_params.instance )))
+            WARN( "Failed to get device %p info, hr %#lx\n", device, hr );
+        else if (FAILED(hr = IDirectInputDevice8_EnumObjects( device, enum_device_object_semantics, &object_params, DIDFT_ALL )))
+            WARN( "Failed to enumerate device %p objects, hr %#lx\n", device, hr );
+        else
+            ret = callback( &object_params.instance, device, object_params.flags, params.device_count, context );
 
-        if (callback( &params.instances[i], device, callbackFlags, --remain, context ) == DIENUM_STOP)
-        {
-            free( params.instances );
-            IDirectInputDevice_Release( device );
-            return DI_OK;
-        }
-        IDirectInputDevice_Release( device );
-    }
-
-    free( params.instances );
-
-    if (flags & DIEDBSFL_FORCEFEEDBACK) return DI_OK;
-
-    /* Enumerate keyboard and mouse */
-    for (i = 0; i < ARRAY_SIZE(guids); i++)
-    {
-        if (should_enumerate_device( username, flags, &impl->device_players, guids[i] ))
-        {
-            callbackFlags = diactionformat_priorityW( action_format, actionMasks[i] );
-
-            IDirectInput_CreateDevice( iface, guids[i], &device, NULL );
-            IDirectInputDevice_GetDeviceInfo( device, &didevi );
-
-            if (callback( &didevi, device, callbackFlags, --remain, context ) == DIENUM_STOP)
-            {
-                IDirectInputDevice_Release( device );
-                return DI_OK;
-            }
-            IDirectInputDevice_Release( device );
-        }
+        IDirectInputDevice8_Release( device );
+        if (ret == DIENUM_STOP) goto cleanup;
     }
 
     return DI_OK;
+
+cleanup:
+    while (params.device_count--) IDirectInputDevice8_Release( params.devices[params.device_count] );
+    return hr;
 }
 
 static HRESULT WINAPI dinput8_ConfigureDevices( IDirectInput8W *iface, LPDICONFIGUREDEVICESCALLBACK callback,

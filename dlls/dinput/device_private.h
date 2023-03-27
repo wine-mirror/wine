@@ -128,6 +128,8 @@ extern void dinput_device_internal_release( struct dinput_device *device );
 
 extern HRESULT dinput_device_init_device_format( IDirectInputDevice8W *iface );
 extern int dinput_device_object_index_from_id( IDirectInputDevice8W *iface, DWORD id );
+extern BOOL device_object_matches_semantic( const DIDEVICEINSTANCEW *instance, const DIOBJECTDATAFORMAT *object,
+                                            DWORD semantic, BOOL exact );
 
 extern BOOL get_app_key(HKEY*, HKEY*) DECLSPEC_HIDDEN;
 extern DWORD get_config_key( HKEY, HKEY, const WCHAR *, WCHAR *, DWORD ) DECLSPEC_HIDDEN;

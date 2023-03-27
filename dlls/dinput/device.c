@@ -1785,7 +1785,7 @@ static HRESULT WINAPI dinput_device_WriteEffectToFile( IDirectInputDevice8W *ifa
     return DI_OK;
 }
 
-static BOOL object_matches_semantic( const DIDEVICEINSTANCEW *instance, const DIOBJECTDATAFORMAT *object,
+BOOL device_object_matches_semantic( const DIDEVICEINSTANCEW *instance, const DIOBJECTDATAFORMAT *object,
                                      DWORD semantic, BOOL exact )
 {
     DWORD value = semantic & 0xff, axis = (semantic >> 15) & 3, type;
@@ -1885,7 +1885,7 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
         for (object = impl->device_format.rgodf; object < object_end; object++)
         {
             if (mapped[object - impl->device_format.rgodf]) continue;
-            if (!object_matches_semantic( &impl->instance, object, action->dwSemantic, TRUE )) continue;
+            if (!device_object_matches_semantic( &impl->instance, object, action->dwSemantic, TRUE )) continue;
             if ((action->dwFlags & DIA_FORCEFEEDBACK) && !(object->dwType & DIDFT_FFACTUATOR)) continue;
             action->dwObjID = object->dwType;
             action->guidInstance = impl->guid;
@@ -1904,7 +1904,7 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
         for (object = impl->device_format.rgodf; object < object_end; object++)
         {
             if (mapped[object - impl->device_format.rgodf]) continue;
-            if (!object_matches_semantic( &impl->instance, object, action->dwSemantic, FALSE )) continue;
+            if (!device_object_matches_semantic( &impl->instance, object, action->dwSemantic, FALSE )) continue;
             if ((action->dwFlags & DIA_FORCEFEEDBACK) && !(object->dwType & DIDFT_FFACTUATOR)) continue;
             action->dwObjID = object->dwType;
             action->guidInstance = impl->guid;

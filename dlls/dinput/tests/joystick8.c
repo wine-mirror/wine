@@ -445,7 +445,7 @@ static BOOL CALLBACK enum_devices_by_semantic( const DIDEVICEINSTANCEW *instance
     if (remaining == 2)
     {
         expect_instance = &expect_joystick;
-        todo_wine ok( flags == (context ? 3 : 0), "got flags %#lx\n", flags );
+        ok( flags == (context ? 3 : 0), "got flags %#lx\n", flags );
     }
     else if (remaining == 1)
     {
