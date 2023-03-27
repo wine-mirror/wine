@@ -136,7 +136,7 @@ _ACRTIMP int    __cdecl _fpclass(double);
 
 _ACRTIMP double __cdecl nextafter(double, double);
 
-#ifndef __i386__
+#if !defined(__i386__) || defined(_NO_CRT_MATH_INLINE)
 
 _ACRTIMP float __cdecl sinf(float);
 _ACRTIMP float __cdecl cosf(float);
@@ -206,13 +206,13 @@ static inline int   _fpclassf(float x)
 
 #endif
 
-#if !defined(__i386__) && !defined(__x86_64__) && (_MSVCR_VER == 0 || _MSVCR_VER >= 110)
+#if (!defined(__i386__) && !defined(__x86_64__) && (_MSVCR_VER == 0 || _MSVCR_VER >= 110)) || defined(_NO_CRT_MATH_INLINE)
 _ACRTIMP float __cdecl fabsf(float);
 #else
 static inline float fabsf(float x) { return fabs(x); }
 #endif
 
-#if !defined(__i386__) || _MSVCR_VER>=120
+#if !defined(__i386__) || _MSVCR_VER>=120 || defined(_NO_CRT_MATH_INLINE)
 
 _ACRTIMP float __cdecl _chgsignf(float);
 _ACRTIMP float __cdecl _copysignf(float, float);

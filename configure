@@ -725,6 +725,8 @@ TIFF_PE_LIBS
 TIFF_PE_CFLAGS
 PNG_PE_LIBS
 PNG_PE_CFLAGS
+MUSL_PE_LIBS
+MUSL_PE_CFLAGS
 MPG123_PE_LIBS
 MPG123_PE_CFLAGS
 LDAP_PE_LIBS
@@ -1577,6 +1579,7 @@ enable_lcms2
 enable_ldap
 enable_mfuuid
 enable_mpg123
+enable_musl
 enable_png
 enable_strmbase
 enable_strmiids
@@ -1734,6 +1737,8 @@ LDAP_PE_CFLAGS
 LDAP_PE_LIBS
 MPG123_PE_CFLAGS
 MPG123_PE_LIBS
+MUSL_PE_CFLAGS
+MUSL_PE_LIBS
 PNG_PE_CFLAGS
 PNG_PE_LIBS
 TIFF_PE_CFLAGS
@@ -2526,6 +2531,10 @@ Some influential environment variables:
               version
   MPG123_PE_LIBS
               Linker flags for the PE mpg123, overriding the bundled version
+  MUSL_PE_CFLAGS
+              C compiler flags for the PE musl, overriding the bundled version
+  MUSL_PE_LIBS
+              Linker flags for the PE musl, overriding the bundled version
   PNG_PE_CFLAGS
               C compiler flags for the PE png, overriding the bundled version
   PNG_PE_LIBS Linker flags for the PE png, overriding the bundled version
@@ -13161,6 +13170,21 @@ fi
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: mpg123 cflags: $MPG123_PE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: mpg123 libs: $MPG123_PE_LIBS" >&5
 
+if ${MUSL_PE_LIBS:+false} :
+then :
+  MUSL_PE_LIBS=musl
+   if ${MUSL_PE_CFLAGS:+false} :
+then :
+  MUSL_PE_CFLAGS=
+else $as_nop
+  enable_musl=no
+fi
+else $as_nop
+  enable_musl=no
+fi
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: musl cflags: $MUSL_PE_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: musl libs: $MUSL_PE_LIBS" >&5
+
 if ${PNG_PE_LIBS:+false} :
 then :
   PNG_PE_LIBS="png \$(ZLIB_PE_LIBS)"
@@ -21976,6 +22000,7 @@ wine_fn_config_makefile libs/lcms2 enable_lcms2
 wine_fn_config_makefile libs/ldap enable_ldap
 wine_fn_config_makefile libs/mfuuid enable_mfuuid
 wine_fn_config_makefile libs/mpg123 enable_mpg123
+wine_fn_config_makefile libs/musl enable_musl
 wine_fn_config_makefile libs/png enable_png
 wine_fn_config_makefile libs/strmbase enable_strmbase
 wine_fn_config_makefile libs/strmiids enable_strmiids
@@ -23128,6 +23153,8 @@ LDAP_PE_CFLAGS = $LDAP_PE_CFLAGS
 LDAP_PE_LIBS = $LDAP_PE_LIBS
 MPG123_PE_CFLAGS = $MPG123_PE_CFLAGS
 MPG123_PE_LIBS = $MPG123_PE_LIBS
+MUSL_PE_CFLAGS = $MUSL_PE_CFLAGS
+MUSL_PE_LIBS = $MUSL_PE_LIBS
 PNG_PE_CFLAGS = $PNG_PE_CFLAGS
 PNG_PE_LIBS = $PNG_PE_LIBS
 TIFF_PE_CFLAGS = $TIFF_PE_CFLAGS
