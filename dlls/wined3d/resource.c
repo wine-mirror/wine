@@ -582,7 +582,7 @@ VkPipelineStageFlags vk_pipeline_stage_mask_from_bind_flags(uint32_t bind_flags)
     if (bind_flags & WINED3D_BIND_RENDER_TARGET)
         flags |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     if (bind_flags & WINED3D_BIND_DEPTH_STENCIL)
-        flags |= VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        flags |= VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     if (bind_flags & WINED3D_BIND_STREAM_OUTPUT)
         flags |= VK_PIPELINE_STAGE_TRANSFORM_FEEDBACK_BIT_EXT;
 
