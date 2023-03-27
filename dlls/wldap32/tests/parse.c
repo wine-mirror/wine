@@ -491,6 +491,59 @@ static void test_ldap_paged_search(void)
     ldap_unbind( ld );
 }
 
+static void test_opt_ssl(void)
+{
+    LDAP *ld;
+    ULONG ret, version = LDAP_VERSION3, value;
+
+    /* Turning on LDAP_OPT_SSL without setting the protocol version does not work */
+    ld = ldap_initA( (char *)"db.debian.org", 636 );
+    ok( ld != NULL, "ldap_init failed\n" );
+    ret = ldap_set_optionA( ld, LDAP_OPT_SSL, LDAP_OPT_ON );
+    ok( !ret, "ldap_set_optionA should succeed, got %#lx\n", ret );
+    ret = ldap_simple_bind_sA( ld, NULL, NULL );
+    todo_wine ok( ret == LDAP_PROTOCOL_ERROR, "ldap_simple_bind_sA should fail, got %#lx\n", ret );
+    ldap_unbind( ld );
+
+    /* Setting the protocol version to 3 automatically enables SSL when using port 636 */
+    ld = ldap_initA( (char *)"db.debian.org", 636 );
+    ok( ld != NULL, "ldap_init failed\n" );
+    ret = ldap_set_optionA( ld, LDAP_OPT_PROTOCOL_VERSION, &version );
+    ok( !ret, "ldap_set_optionA should succeed, got %#lx\n", ret );
+    ret = ldap_set_optionA( ld, LDAP_OPT_SSL, LDAP_OPT_OFF );
+    ok( !ret, "ldap_set_optionA should succeed, got %#lx\n", ret );
+    ret = ldap_simple_bind_sA( ld, NULL, NULL );
+    todo_wine ok( !ret, "ldap_simple_bind_sA should succeed, got %#lx\n", ret );
+    ldap_unbind( ld );
+
+    /* Turning on SSL when the server does not expect it does not work */
+    ld = ldap_initA( (char *)"db.debian.org", 389 );
+    ok( ld != NULL, "ldap_init failed\n" );
+    ret = ldap_set_optionA( ld, LDAP_OPT_SSL, LDAP_OPT_ON );
+    ok( !ret, "ldap_set_optionA should succeed, got %#lx\n", ret );
+    ret = ldap_simple_bind_sA( ld, NULL, NULL );
+    ok( ret == LDAP_SERVER_DOWN, "ldap_simple_bind_sA should fail, got %#lx\n", ret );
+    ldap_unbind( ld );
+
+    /* SSL can also be turned on by passing a pointer to a variable with value 1 */
+    ld = ldap_initA( (char *)"db.debian.org", 389 );
+    ok( ld != NULL, "ldap_init failed\n" );
+    value = 1;
+    ret = ldap_set_optionA( ld, LDAP_OPT_SSL, &value );
+    ok( !ret, "ldap_set_optionA should succeed, got %#lx\n", ret );
+    ret = ldap_simple_bind_sA( ld, NULL, NULL );
+    ok( ret == LDAP_SERVER_DOWN, "ldap_simple_bind_sA should fail, got %#lx\n", ret );
+    ldap_unbind( ld );
+
+    /* SSL cannot be turned on by passing a pointer to a variable with a bogus value */
+    ld = ldap_initA( (char *)"db.debian.org", 389 );
+    ok( ld != NULL, "ldap_init failed\n" );
+    value = 2;
+    ret = ldap_set_optionA( ld, LDAP_OPT_SSL, &value );
+    ok( ret == LDAP_PARAM_ERROR, "ldap_set_optionA should fail, got %#lx\n", ret );
+    ldap_unbind( ld );
+}
+
 START_TEST (parse)
 {
     LDAP *ld;
@@ -498,6 +551,7 @@ START_TEST (parse)
     test_ldap_paged_search();
     test_ldap_server_control();
     test_ldap_bind_sA();
+    test_opt_ssl();
 
     ld = ldap_initA( (char *)"db.debian.org", 389 );
     ok( ld != NULL, "ldap_init failed\n" );

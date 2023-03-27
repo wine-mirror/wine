@@ -598,6 +598,24 @@ static inline WCHAR *strnAtoW( const char *str, DWORD in_len, DWORD *out_len )
     return ret;
 }
 
+static inline char *strreplace( const char *s, const char *before, const char *after )
+{
+    char *ret = malloc( strlen( s ) + strlen( after ) / strlen( before ) + 1 );
+    char *cur, *prev = ret;
+    if (ret)
+    {
+        ret[0] = 0;
+        for (cur = strstr( s, before ); cur; cur = strstr( prev, before ))
+        {
+            strncat( ret, prev, cur - prev );
+            strcat( ret, after );
+            prev = cur + strlen( before );
+        }
+        strncat( ret, prev, cur - prev );
+    }
+    return ret;
+}
+
 static inline DWORD bvarraylenW( struct WLDAP32_berval **bv )
 {
     struct WLDAP32_berval **p = bv;
