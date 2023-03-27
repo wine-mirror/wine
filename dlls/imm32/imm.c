@@ -564,6 +564,23 @@ static void ime_release( struct ime *ime )
     LeaveCriticalSection( &ime_cs );
 }
 
+static void imc_select_hkl( struct imc *imc, HKL hkl )
+{
+    if (imc->ime)
+    {
+        if (imc->ime->hkl == hkl) return;
+        imc->ime->pImeSelect( imc->handle, FALSE );
+        ime_release( imc->ime );
+    }
+
+    if (!hkl)
+        imc->ime = NULL;
+    else if (!(imc->ime = ime_acquire( hkl )))
+        WARN( "Failed to acquire IME for HKL %p\n", hkl );
+    else
+        imc->ime->pImeSelect( imc->handle, TRUE );
+}
+
 static BOOL CALLBACK enum_activate_layout( HIMC himc, LPARAM lparam )
 {
     if (ImmLockIMC( himc )) ImmUnlockIMC( himc );
@@ -3026,20 +3043,8 @@ BOOL WINAPI ImmProcessKey(HWND hwnd, HKL hKL, UINT vKey, LPARAM lKeyData, DWORD 
     TRACE("%p %p %x %x %lx\n",hwnd, hKL, vKey, (UINT)lKeyData, unknown);
 
     if (!(data = get_imc_data( imc ))) return FALSE;
-
-    /* Make sure we are inputting to the correct keyboard */
-    if (data->ime->hkl != hKL)
-    {
-        struct ime *new_hkl;
-
-        if (!(new_hkl = ime_acquire( hKL ))) return FALSE;
-
-        data->ime->pImeSelect( imc, FALSE );
-        ime_release( data->ime );
-
-        data->ime = new_hkl;
-        data->ime->pImeSelect( imc, TRUE );
-    }
+    imc_select_hkl( data, hKL );
+    if (!data->ime) return FALSE;
 
     GetKeyboardState(state);
     if (data->ime->pImeProcessKey( imc, vKey, lKeyData, state ))
