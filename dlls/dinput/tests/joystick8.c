@@ -408,6 +408,76 @@ static void check_dinput_devices( DWORD version, DIDEVICEINSTANCEW *devinst )
     }
 }
 
+static BOOL CALLBACK enum_devices_by_semantic( const DIDEVICEINSTANCEW *instance, IDirectInputDevice8W *device,
+                                               DWORD flags, DWORD remaining, void *context )
+{
+    const DIDEVICEINSTANCEW expect_joystick =
+    {
+        .dwSize = sizeof(DIDEVICEINSTANCEW),
+        .guidInstance = expect_guid_product,
+        .guidProduct = expect_guid_product,
+        .dwDevType = DIDEVTYPE_HID | (DI8DEVTYPEJOYSTICK_LIMITED << 8) | DI8DEVTYPE_JOYSTICK,
+        .tszInstanceName = L"Wine Test",
+        .tszProductName = L"Wine Test",
+        .wUsagePage = HID_USAGE_PAGE_GENERIC,
+        .wUsage = HID_USAGE_GENERIC_JOYSTICK,
+    };
+    const DIDEVICEINSTANCEW expect_keyboard =
+    {
+        .dwSize = sizeof(DIDEVICEINSTANCEW),
+        .guidInstance = GUID_SysKeyboard,
+        .guidProduct = GUID_SysKeyboard,
+        .dwDevType = (DI8DEVTYPEKEYBOARD_PCENH << 8) | DI8DEVTYPE_KEYBOARD,
+        .tszInstanceName = L"Keyboard",
+        .tszProductName = L"Keyboard",
+    };
+    const DIDEVICEINSTANCEW expect_mouse =
+    {
+        .dwSize = sizeof(DIDEVICEINSTANCEW),
+        .guidInstance = GUID_SysMouse,
+        .guidProduct = GUID_SysMouse,
+        .dwDevType = (DI8DEVTYPEMOUSE_UNKNOWN << 8) | DI8DEVTYPE_MOUSE,
+        .tszInstanceName = L"Mouse",
+        .tszProductName = L"Mouse",
+    };
+    const DIDEVICEINSTANCEW *expect_instance = NULL;
+
+    ok( remaining <= 2, "got remaining %lu\n", remaining );
+
+    if (remaining == 2)
+    {
+        expect_instance = &expect_joystick;
+        todo_wine ok( flags == (context ? 3 : 0), "got flags %#lx\n", flags );
+    }
+    else if (remaining == 1)
+    {
+        expect_instance = &expect_keyboard;
+        ok( flags == 1, "got flags %#lx\n", flags );
+    }
+    else if (remaining == 0)
+    {
+        expect_instance = &expect_mouse;
+        ok( flags == 1, "got flags %#lx\n", flags );
+    }
+
+    check_member( *instance, *expect_instance, "%#lx", dwSize );
+    if (expect_instance != &expect_joystick) check_member_guid( *instance, *expect_instance, guidInstance );
+    check_member_guid( *instance, *expect_instance, guidProduct );
+    todo_wine_if( expect_instance == &expect_mouse )
+    check_member( *instance, *expect_instance, "%#lx", dwDevType );
+    if (!localized)
+    {
+        check_member_wstr( *instance, *expect_instance, tszInstanceName );
+        todo_wine_if( expect_instance != &expect_joystick )
+        check_member_wstr( *instance, *expect_instance, tszProductName );
+    }
+    check_member_guid( *instance, *expect_instance, guidFFDriver );
+    check_member( *instance, *expect_instance, "%#x", wUsagePage );
+    check_member( *instance, *expect_instance, "%#x", wUsage );
+
+    return DIENUM_CONTINUE;
+}
+
 static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE event )
 {
     const DIACTIONW expect_actions[] =
@@ -1277,7 +1347,7 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     ok( !wcscmp( prop_username.wsz, L"" ), "got username %s\n", debugstr_w(prop_username.wsz) );
 
 
-    /* test BuildActionMap with multiple devices */
+    /* test BuildActionMap with multiple devices and EnumDevicesBySemantics */
 
     hr = DirectInput8Create( instance, 0x800, &IID_IDirectInput8W, (void **)&dinput, NULL );
     ok( hr == DI_OK, "DirectInput8Create returned %#lx\n", hr );
@@ -1311,6 +1381,26 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
 
     IDirectInputDevice8_Release( keyboard );
     IDirectInputDevice8_Release( mouse );
+
+    action_format = action_format_2;
+    action_format.rgoAction = actions;
+    memcpy( actions, default_actions, sizeof(default_actions) );
+    hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format, enum_devices_by_semantic, (void *)0xdeadbeef, 0 );
+    ok( hr == DI_OK, "EnumDevicesBySemantics returned %#lx\n", hr );
+
+    action_format = action_format_3;
+    action_format.rgoAction = actions;
+    memcpy( actions, default_actions + 7, sizeof(expect_actions_4) );
+    hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format, enum_devices_by_semantic, (void *)0xdeadbeef, 0 );
+    ok( hr == DI_OK, "EnumDevicesBySemantics returned %#lx\n", hr );
+
+    action_format = action_format_3;
+    action_format.rgoAction = actions;
+    memcpy( actions, default_actions + 9, 2 * sizeof(DIACTIONW) );
+    action_format.dwNumActions = 2;
+    action_format.dwDataSize = 8;
+    hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format, enum_devices_by_semantic, NULL, 0 );
+    ok( hr == DI_OK, "EnumDevicesBySemantics returned %#lx\n", hr );
 
     IDirectInput8_Release( dinput );
 }
