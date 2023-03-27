@@ -1812,7 +1812,6 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
     DIACTIONW *action, *action_end;
     DWORD i, username_len = MAX_PATH;
     WCHAR username_buf[MAX_PATH];
-    BOOL load_success = FALSE;
     BOOL *mapped;
 
     TRACE( "iface %p, format %p, username %s, flags %#lx\n", iface, format,
@@ -1840,12 +1839,7 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
     {
         if (!action->dwSemantic) return DIERR_INVALIDPARAM;
         if (action->dwFlags & DIA_APPMAPPED) action->dwHow = DIAH_APPREQUESTED;
-        else if (action->dwFlags & DIA_APPNOMAP) continue;
-        else
-        {
-            action->dwHow = 0;
-            action->guidInstance = GUID_NULL;
-        }
+        else action->dwHow = 0;
     }
 
     /* Unless asked the contrary by these flags, try to load a previous mapping */
@@ -1854,10 +1848,18 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
         /* Retrieve logged user name if necessary */
         if (username == NULL) GetUserNameW( username_buf, &username_len );
         else lstrcpynW( username_buf, username, MAX_PATH );
-        load_success = load_mapping_settings( impl, format, username_buf );
+        load_mapping_settings( impl, format, username_buf );
     }
 
-    if (load_success) return DI_OK;
+    action_end = format->rgoAction + format->dwNumActions;
+    for (action = format->rgoAction; action < action_end; action++)
+    {
+        if (action->dwHow == DIAH_APPREQUESTED || action->dwHow == DIAH_USERCONFIG) continue;
+        if (action->dwFlags & DIA_APPNOMAP) continue;
+        action->guidInstance = GUID_NULL;
+        action->dwHow = 0;
+    }
+
     if (!(mapped = calloc( impl->device_format.dwNumObjs, sizeof(*mapped) ))) return DIERR_OUTOFMEMORY;
 
     action_end = format->rgoAction + format->dwNumActions;
