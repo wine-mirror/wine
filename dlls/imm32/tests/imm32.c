@@ -2489,6 +2489,11 @@ static BOOL todo_IME_DLL_PROCESS_DETACH;
 DEFINE_EXPECT( IME_DLL_PROCESS_DETACH );
 
 static IMEINFO ime_info;
+static UINT ime_count;
+static WCHAR ime_path[MAX_PATH];
+static HIMC default_himc;
+static HKL default_hkl;
+static HKL expect_ime = (HKL)(int)0xe020047f;
 
 enum ime_function
 {
@@ -2498,8 +2503,9 @@ enum ime_function
 
 struct ime_call
 {
-    enum ime_function func;
+    HKL hkl;
     HIMC himc;
+    enum ime_function func;
 
     union
     {
@@ -2526,6 +2532,7 @@ static void ok_call_( const char *file, int line, const struct ime_call *expecte
 
     if ((ret = expected->func - received->func)) goto done;
     if ((ret = (UINT_PTR)expected->himc - (UINT_PTR)received->himc)) goto done;
+    if ((ret = (UINT)(UINT_PTR)expected->hkl - (UINT)(UINT_PTR)received->hkl)) goto done;
     switch (expected->func)
     {
     case IME_SELECT:
@@ -2543,12 +2550,12 @@ done:
     {
     case IME_SELECT:
         todo_wine_if( expected->todo )
-        ok_(file, line)( !ret, "got IME_SELECT himc %p, select %u\n", received->himc, received->select );
+        ok_(file, line)( !ret, "got hkl %p, himc %p, IME_SELECT select %u\n", received->hkl, received->himc, received->select );
         return;
     case IME_NOTIFY:
         todo_wine_if( expected->todo )
-        ok_(file, line)( !ret, "got IME_NOTIFY himc %p, action %#x, index %#x, value %#x\n",
-                         received->himc, received->notify.action, received->notify.index,
+        ok_(file, line)( !ret, "got hkl %p, himc %p, IME_NOTIFY action %#x, index %#x, value %#x\n",
+                         received->hkl, received->himc, received->notify.action, received->notify.index,
                          received->notify.value );
         return;
     }
@@ -2557,12 +2564,12 @@ done:
     {
     case IME_SELECT:
         todo_wine_if( expected->todo )
-        ok_(file, line)( !ret, "IME_SELECT himc %p, select %u\n", expected->himc, expected->select );
+        ok_(file, line)( !ret, "hkl %p, himc %p, IME_SELECT select %u\n", expected->hkl, expected->himc, expected->select );
         break;
     case IME_NOTIFY:
         todo_wine_if( expected->todo )
-        ok_(file, line)( !ret, "IME_NOTIFY himc %p, action %#x, index %#x, value %#x\n",
-                         expected->himc, expected->notify.action, expected->notify.index,
+        ok_(file, line)( !ret, "hkl %p, himc %p, IME_NOTIFY action %#x, index %#x, value %#x\n",
+                         expected->hkl, expected->himc, expected->notify.action, expected->notify.index,
                          expected->notify.value );
         break;
     }
@@ -2638,6 +2645,7 @@ static UINT WINAPI ime_ImeEnumRegisterWord( REGISTERWORDENUMPROCW proc, const WC
     ime_trace( "proc %p, reading %s, style %lu, string %s, data %p\n",
                proc, debugstr_w(reading), style, debugstr_w(string), data );
 
+    ok_eq( default_hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
     CHECK_EXPECT( ImeEnumRegisterWord );
 
     if (!style)
@@ -2666,6 +2674,7 @@ static LRESULT WINAPI ime_ImeEscape( HIMC himc, UINT escape, void *data )
 {
     ime_trace( "himc %p, escape %#x, data %p\n", himc, escape, data );
 
+    ok_eq( default_hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
     CHECK_EXPECT( ImeEscape );
 
     switch (escape)
@@ -2709,6 +2718,7 @@ static UINT WINAPI ime_ImeGetRegisterWordStyle( UINT item, STYLEBUFW *style )
 {
     ime_trace( "item %u, style %p\n", item, style );
 
+    ok_eq( default_hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
     CHECK_EXPECT( ImeGetRegisterWordStyle );
 
     if (!style)
@@ -2755,6 +2765,7 @@ static BOOL WINAPI ime_ImeProcessKey( HIMC himc, UINT vkey, LPARAM key_data, BYT
 {
     ime_trace( "himc %p, vkey %u, key_data %#Ix, key_state %p\n",
                himc, vkey, key_data, key_state );
+    ok_eq( default_hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
     ok( 0, "unexpected call\n" );
     return FALSE;
 }
@@ -2763,6 +2774,7 @@ static BOOL WINAPI ime_ImeRegisterWord( const WCHAR *reading, DWORD style, const
 {
     ime_trace( "reading %s, style %lu, string %s\n", debugstr_w(reading), style, debugstr_w(string) );
 
+    ok_eq( default_hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
     CHECK_EXPECT( ImeRegisterWord );
 
     if (style) ok_eq( 0xdeadbeef, style, UINT, "%#x" );
@@ -2782,7 +2794,11 @@ static BOOL WINAPI ime_ImeRegisterWord( const WCHAR *reading, DWORD style, const
 
 static BOOL WINAPI ime_ImeSelect( HIMC himc, BOOL select )
 {
-    struct ime_call call = {.func = IME_SELECT, .himc = himc, .select = select};
+    struct ime_call call =
+    {
+        .hkl = GetKeyboardLayout( 0 ), .himc = himc,
+        .func = IME_SELECT, .select = select
+    };
     ime_trace( "himc %p, select %d\n", himc, select );
     ime_calls[ime_call_count++] = call;
     return TRUE;
@@ -2816,6 +2832,7 @@ static BOOL WINAPI ime_ImeUnregisterWord( const WCHAR *reading, DWORD style, con
 {
     ime_trace( "reading %s, style %lu, string %s\n", debugstr_w(reading), style, debugstr_w(string) );
 
+    ok_eq( default_hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
     CHECK_EXPECT( ImeUnregisterWord );
 
     if (style) ok_eq( 0xdeadbeef, style, UINT, "%#x" );
@@ -2835,7 +2852,11 @@ static BOOL WINAPI ime_ImeUnregisterWord( const WCHAR *reading, DWORD style, con
 
 static BOOL WINAPI ime_NotifyIME( HIMC himc, DWORD action, DWORD index, DWORD value )
 {
-    struct ime_call call = {.func = IME_NOTIFY, .himc = himc, .notify = {.action = action, .index = index, .value = value}};
+    struct ime_call call =
+    {
+        .hkl = GetKeyboardLayout( 0 ), .himc = himc,
+        .func = IME_NOTIFY, .notify = {.action = action, .index = index, .value = value}
+    };
     ime_trace( "himc %p, action %#lx, index %lu, value %lu\n", himc, action, index, value );
     ime_calls[ime_call_count++] = call;
     return FALSE;
@@ -2886,10 +2907,6 @@ static struct ime_functions ime_functions =
     ime_DllMain,
 };
 
-static UINT ime_count;
-static WCHAR ime_path[MAX_PATH];
-static HIMC default_himc;
-
 static HKL ime_install(void)
 {
     WCHAR buffer[MAX_PATH];
@@ -2930,7 +2947,7 @@ static HKL ime_install(void)
         "MoveFileW failed, error %lu\n", GetLastError() );
 
     hkl = ImmInstallIMEW( ime_path, L"WineTest IME" );
-    ok( hkl == (HKL)(int)0xe020047f, "ImmInstallIMEW returned %p, error %lu\n", hkl, GetLastError() );
+    ok( hkl == expect_ime, "ImmInstallIMEW returned %p, error %lu\n", hkl, GetLastError() );
 
     swprintf( buffer, ARRAY_SIZE(buffer), L"System\\CurrentControlSet\\Control\\Keyboard Layouts\\%08x", hkl );
     ret = RegOpenKeyW( HKEY_LOCAL_MACHINE, buffer, &hkey );
@@ -3776,13 +3793,25 @@ static void test_ImmActivateLayout(void)
 {
     const struct ime_call activate_seq[] =
     {
-        {.func = IME_SELECT, .himc = default_himc, .select = 1, .todo = TRUE},
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = IME_SELECT, .select = 1,
+            .todo = TRUE,
+        },
         {0},
     };
     const struct ime_call deactivate_seq[] =
     {
-        {.func = IME_NOTIFY, .himc = default_himc, .notify = {.action = NI_COMPOSITIONSTR, .index = CPS_CANCEL, .value = 0}, .todo = TRUE},
-        {.func = IME_SELECT, .himc = default_himc, .select = 0, .todo = TRUE},
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = IME_NOTIFY, .notify = {.action = NI_COMPOSITIONSTR, .index = CPS_CANCEL, .value = 0},
+            .todo = TRUE,
+        },
+        {
+            .hkl = default_hkl, .himc = default_himc,
+            .func = IME_SELECT, .select = 0,
+            .todo = TRUE,
+        },
         {0},
     };
     HKL hkl, old_hkl = GetKeyboardLayout( 0 );
@@ -3846,6 +3875,8 @@ cleanup:
 
 START_TEST(imm32)
 {
+    default_hkl = GetKeyboardLayout( 0 );
+
     if (!is_ime_enabled())
     {
         win_skip("IME support not implemented\n");
