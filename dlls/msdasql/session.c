@@ -693,8 +693,7 @@ static ULONG WINAPI command_Release(ICommandText *iface)
     if (!refs)
     {
         TRACE( "destroying %p\n", command );
-        if (command->properties)
-            heap_free(command->properties);
+        heap_free(command->properties);
         if (command->session)
             IUnknown_Release(command->session);
 
