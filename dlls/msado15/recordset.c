@@ -970,6 +970,22 @@ static HRESULT map_index( struct fields *fields, VARIANT *index, ULONG *ret )
     return MAKE_ADO_HRESULT(adErrItemNotFound);
 }
 
+static inline WCHAR *heap_strdupAtoW(const char *str)
+{
+    LPWSTR ret = NULL;
+
+    if(str) {
+        DWORD len;
+
+        len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+        ret = malloc(len*sizeof(WCHAR));
+        if(ret)
+            MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    }
+
+    return ret;
+}
+
 static HRESULT WINAPI fields_get_Item( Fields *iface, VARIANT index, Field **obj )
 {
     struct fields *fields = impl_from_Fields( iface );
@@ -1948,6 +1964,15 @@ static HRESULT load_all_recordset_data(struct recordset *recordset, IUnknown *ro
                 case DBTYPE_I4:
                     V_I4(&copy) = *(LONG*)(data + bindings[datacol].obValue);
                     break;
+                case DBTYPE_STR:
+                {
+                    WCHAR *str = heap_strdupAtoW( (char*)(data + bindings[datacol].obValue) );
+
+                    V_VT(&copy) = VT_BSTR;
+                    V_BSTR(&copy) = SysAllocString(str);
+                    free(str);
+                    break;
+                }
                 case DBTYPE_WSTR:
                 {
                     V_VT(&copy) = VT_BSTR;
