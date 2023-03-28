@@ -3150,21 +3150,24 @@ static BOOL is_ime_ui_msg(UINT msg)
 
 static LRESULT ime_internal_msg( WPARAM wparam, LPARAM lparam)
 {
-    HWND hwnd = (HWND)lparam;
+    HWND hwnd;
     HIMC himc;
 
     switch (wparam)
     {
     case IME_INTERNAL_ACTIVATE:
     case IME_INTERNAL_DEACTIVATE:
+        hwnd = (HWND)lparam;
         himc = ImmGetContext(hwnd);
         ImmSetActiveContext(hwnd, himc, wparam == IME_INTERNAL_ACTIVATE);
         ImmReleaseContext(hwnd, himc);
         break;
     case IME_INTERNAL_HKL_ACTIVATE:
         ImmEnumInputContext( 0, enum_activate_layout, 0 );
+        hwnd = get_ime_ui_window();
         break;
    case IME_INTERNAL_HKL_DEACTIVATE:
+        hwnd = get_ime_ui_window();
         break;
     default:
         FIXME("wparam = %Ix\n", wparam);
