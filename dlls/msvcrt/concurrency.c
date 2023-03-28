@@ -2005,7 +2005,7 @@ static void execute_chore(_UnrealizedChore *chore,
 static void CALLBACK chore_wrapper_finally(BOOL normal, void *data)
 {
     _UnrealizedChore *chore = data;
-    LONG prev_finished, new_finished;
+    LONG count, prev_finished, new_finished;
     volatile LONG *ptr;
 
     TRACE("(%u %p)\n", normal, data);
@@ -2013,6 +2013,7 @@ static void CALLBACK chore_wrapper_finally(BOOL normal, void *data)
     if (!chore->task_collection)
         return;
     ptr = &chore->task_collection->finished;
+    count = chore->task_collection->count;
     chore->task_collection = NULL;
 
     do {
@@ -2023,7 +2024,8 @@ static void CALLBACK chore_wrapper_finally(BOOL normal, void *data)
             new_finished = prev_finished + 1;
     } while (InterlockedCompareExchange(ptr, new_finished, prev_finished)
              != prev_finished);
-    RtlWakeAddressSingle((LONG*)ptr);
+    if (new_finished >= count)
+        RtlWakeAddressSingle((LONG*)ptr);
 }
 
 static void __cdecl chore_wrapper(_UnrealizedChore *chore)
