@@ -1932,8 +1932,15 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
     status = load_main_exe( NULL, main_argv[1], curdir, &image, module );
     if (!status)
     {
+        char *loader;
+
         if (main_image_info.ImageCharacteristics & IMAGE_FILE_DLL) status = STATUS_INVALID_IMAGE_FORMAT;
-        if (main_image_info.Machine != current_machine) status = STATUS_INVALID_IMAGE_FORMAT;
+        /* if we have to use a different loader, fall back to start.exe */
+        if ((loader = get_alternate_wineloader( main_image_info.Machine )))
+        {
+            free( loader );
+            status = STATUS_INVALID_IMAGE_FORMAT;
+        }
     }
 
     if (status)  /* try launching it through start.exe */

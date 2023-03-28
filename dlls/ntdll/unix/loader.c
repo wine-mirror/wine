@@ -656,7 +656,7 @@ static void init_paths( char *argv[] )
 /***********************************************************************
  *           get_alternate_wineloader
  */
-static char *get_alternate_wineloader( WORD machine )
+char *get_alternate_wineloader( WORD machine )
 {
     char *ret = NULL;
 
