@@ -513,6 +513,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         return 1;
     }
 
+    case EMR_SETWINDOWEXTEX:
     case EMR_MOVETOEX:
     case EMR_SETWORLDTRANSFORM:
     case EMR_MODIFYWORLDTRANSFORM:
