@@ -29,6 +29,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(taskkill);
 
 static BOOL force_termination = FALSE;
+static BOOL kill_child_processes;
 
 static WCHAR **task_list;
 static unsigned int task_count;
@@ -238,6 +239,46 @@ static void taskkill_message_print_process(int msg, unsigned int index)
     taskkill_message_printfW(msg, pid_str);
 }
 
+static BOOL find_parent(unsigned int process_index, unsigned int *parent_index)
+{
+    DWORD parent_id = process_list[process_index].p.th32ParentProcessID;
+    unsigned int i;
+
+    if (!parent_id)
+        return FALSE;
+
+    for (i = 0; i < process_count; ++i)
+    {
+        if (process_list[i].p.th32ProcessID == parent_id)
+        {
+            *parent_index = i;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static void mark_child_processes(void)
+{
+    unsigned int i, parent;
+
+    for (i = 0; i < process_count; ++i)
+    {
+        if (process_list[i].matched)
+            continue;
+        parent = i;
+        while (find_parent(parent, &parent))
+        {
+            if (process_list[parent].matched)
+            {
+                WINE_TRACE("Adding child %04lx.\n", process_list[i].p.th32ProcessID);
+                process_list[i].matched = TRUE;
+                break;
+            }
+        }
+    }
+}
+
 /* The implemented task enumeration and termination behavior does not
  * exactly match native behavior. On Windows:
  *
@@ -259,17 +300,20 @@ static int send_close_messages(void)
     unsigned int i;
     int status_code = 0;
 
-    for (i = 0; i < task_count; i++)
+    for (i = 0; i < process_count; i++)
     {
         if (!process_list[i].matched)
             continue;
         info.pid = process_list[i].p.th32ProcessID;
         process_name = process_list[i].p.szExeFile;
         info.found = FALSE;
+        WINE_TRACE("Terminating pid %04lx.\n", info.pid);
         EnumWindows(pid_enum_proc, (LPARAM)&info);
         if (info.found)
         {
-            if (process_list[i].is_numeric)
+            if (kill_child_processes)
+                taskkill_message_printfW(STRING_CLOSE_CHILD, info.pid, process_list[i].p.th32ParentProcessID);
+            else if (process_list[i].is_numeric)
                 taskkill_message_printfW(STRING_CLOSE_PID_SEARCH, info.pid);
             else
                 taskkill_message_printfW(STRING_CLOSE_PROC_SRCH, process_name, info.pid);
@@ -311,7 +355,9 @@ static int terminate_processes(void)
             CloseHandle(process);
             continue;
         }
-        if (process_list[i].is_numeric)
+        if (kill_child_processes)
+            taskkill_message_printfW(STRING_TERM_CHILD, pid, process_list[i].p.th32ParentProcessID);
+        else if (process_list[i].is_numeric)
             taskkill_message_printfW(STRING_TERM_PID_SEARCH, pid);
         else
             taskkill_message_printfW(STRING_TERM_PROC_SEARCH, process_name, pid);
@@ -378,8 +424,8 @@ static BOOL process_arguments(int argc, WCHAR *argv[])
             argdata++;
 
             if (!wcsicmp(L"t", argdata))
-                WINE_FIXME("argument T not supported\n");
-            if (!wcsicmp(L"f", argdata))
+                kill_child_processes = TRUE;
+            else if (!wcsicmp(L"f", argdata))
                 force_termination = TRUE;
             /* Options /IM and /PID appear to behave identically, except for
              * the fact that they cannot be specified at the same time. */
@@ -442,7 +488,8 @@ int __cdecl wmain(int argc, WCHAR *argv[])
 
     for (i = 0; i < task_count; ++i)
         mark_task_process(task_list[i], &search_status);
-
+    if (kill_child_processes)
+        mark_child_processes();
     if (force_termination)
         terminate_status = terminate_processes();
     else

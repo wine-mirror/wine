@@ -17611,6 +17611,17 @@ msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr ""
 
+#: programs/taskkill/taskkill.rc:44
+msgid ""
+"The process with PID %1!u! (child process of PID %2!u!) has been "
+"terminated.\n"
+msgstr ""
+
+#: programs/taskkill/taskkill.rc:45
+msgid ""
+"Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
+msgstr ""
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&Nová úloha (Spusti...)"

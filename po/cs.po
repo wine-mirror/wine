@@ -17870,6 +17870,19 @@ msgstr "Chyba: proces „%1“ nelze ukončit.\n"
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr "Chyba: samoukončení procesu není dovoleno.\n"
 
+#: programs/taskkill/taskkill.rc:44
+#, fuzzy
+#| msgid "Process with PID %1!u! was forcibly terminated.\n"
+msgid ""
+"The process with PID %1!u! (child process of PID %2!u!) has been "
+"terminated.\n"
+msgstr "Proces identifikovaný jako %1!u! (PID) byl násilně ukončen.\n"
+
+#: programs/taskkill/taskkill.rc:45
+msgid ""
+"Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
+msgstr ""
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&Nová úloha (Spustit...)"

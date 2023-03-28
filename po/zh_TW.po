@@ -17071,6 +17071,19 @@ msgstr "錯誤: 無法終止處理程序 %1。\n"
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr "錯誤: 處理程序不允許自我終止。\n"
 
+#: programs/taskkill/taskkill.rc:44
+#, fuzzy
+#| msgid "Process with PID %1!u! was forcibly terminated.\n"
+msgid ""
+"The process with PID %1!u! (child process of PID %2!u!) has been "
+"terminated.\n"
+msgstr "處理程序 PID %1!u! 已被強制終止。\n"
+
+#: programs/taskkill/taskkill.rc:45
+msgid ""
+"Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
+msgstr ""
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "執行新工作(&N)..."

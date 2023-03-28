@@ -40,4 +40,6 @@ STRINGTABLE
     STRING_ENUM_FAILED, "Error: Unable to enumerate the process list.\n"
     STRING_TERMINATE_FAILED, "Error: Unable to terminate process \"%1\".\n"
     STRING_SELF_TERMINATION, "Error: Process self-termination is not permitted.\n"
+    STRING_TERM_CHILD, "The process with PID %1!u! (child process of PID %2!u!) has been terminated.\n"
+    STRING_CLOSE_CHILD, "Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
 }

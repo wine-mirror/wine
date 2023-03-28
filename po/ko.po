@@ -17187,6 +17187,19 @@ msgstr "오류: \"%1\" 프로세스를 중단할 수 없습니다.\n"
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr "오류: 프로세스 자체 종료는 허용되지 않습니다.\n"
 
+#: programs/taskkill/taskkill.rc:44
+#, fuzzy
+#| msgid "Process with PID %1!u! was forcibly terminated.\n"
+msgid ""
+"The process with PID %1!u! (child process of PID %2!u!) has been "
+"terminated.\n"
+msgstr "PID %1!u! 프로세스를 강제로 종료하였습니다.\n"
+
+#: programs/taskkill/taskkill.rc:45
+msgid ""
+"Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
+msgstr ""
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "새 작업(&N) (실행...)"
