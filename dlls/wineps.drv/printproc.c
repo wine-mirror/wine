@@ -356,6 +356,16 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         }
         return ret;
     }
+    case EMR_PAINTRGN:
+    {
+        const EMRPAINTRGN *p = (const EMRPAINTRGN *)rec;
+        HRGN rgn = ExtCreateRegion(NULL, p->cbRgnData, (const RGNDATA *)p->RgnData);
+        int ret;
+
+        ret = PSDRV_PaintRgn(&data->pdev->dev, rgn);
+        DeleteObject(rgn);
+        return ret;
+    }
     case EMR_POLYBEZIER16:
     {
         const EMRPOLYBEZIER16 *p = (const EMRPOLYBEZIER16 *)rec;
