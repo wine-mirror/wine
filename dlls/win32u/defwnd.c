@@ -2922,9 +2922,7 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
     case WM_IME_COMPOSITION:
     case WM_IME_STARTCOMPOSITION:
     case WM_IME_ENDCOMPOSITION:
-    case WM_IME_SELECT:
     case WM_IME_NOTIFY:
-    case WM_IME_CONTROL:
         {
             HWND ime_hwnd = get_default_ime_window( hwnd );
             if (ime_hwnd && ime_hwnd != NtUserGetParent( hwnd ))

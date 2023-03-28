@@ -4440,11 +4440,11 @@ static void test_DefWindowProc(void)
     ok_ret( 0, DefWindowProcW( hwnd, WM_IME_NOTIFY, 0, 0 ) );
     ok_seq( notify_seq );
     ok_ret( 0, DefWindowProcW( hwnd, WM_IME_CONTROL, 0, 0 ) );
-    todo_wine ok_seq( empty_sequence );
+    ok_seq( empty_sequence );
     ok_ret( 0, DefWindowProcW( hwnd, WM_IME_COMPOSITIONFULL, 0, 0 ) );
     ok_seq( empty_sequence );
     ok_ret( 0, DefWindowProcW( hwnd, WM_IME_SELECT, 0, 0 ) );
-    todo_wine ok_seq( empty_sequence );
+    ok_seq( empty_sequence );
     ok_ret( 0, DefWindowProcW( hwnd, WM_IME_CHAR, 0, 0 ) );
     ok_seq( empty_sequence );
     ok_ret( 0, DefWindowProcW( hwnd, 0x287, 0, 0 ) );
