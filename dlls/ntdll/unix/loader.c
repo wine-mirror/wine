@@ -653,6 +653,32 @@ static void init_paths( char *argv[] )
 }
 
 
+/***********************************************************************
+ *           get_alternate_wineloader
+ */
+static char *get_alternate_wineloader( WORD machine )
+{
+    char *ret = NULL;
+
+    if (machine == current_machine) return NULL;
+
+    if (machine == IMAGE_FILE_MACHINE_AMD64)  /* try the 64-bit loader */
+    {
+        size_t len = strlen(wineloader);
+
+        if (len <= 2 || strcmp( wineloader + len - 2, "64" ))
+        {
+            ret = malloc( len + 3 );
+            strcpy( ret, wineloader );
+            strcat( ret, "64" );
+        }
+        return ret;
+    }
+
+    return remove_tail( wineloader, "64" );
+}
+
+
 static void preloader_exec( char **argv )
 {
     if (use_preloader)
@@ -686,22 +712,7 @@ static void preloader_exec( char **argv )
 /* exec the appropriate wine loader for the specified machine */
 static NTSTATUS loader_exec( char **argv, WORD machine )
 {
-    if (machine != current_machine)
-    {
-        if (machine == IMAGE_FILE_MACHINE_AMD64)  /* try the 64-bit loader */
-        {
-            size_t len = strlen(wineloader);
-
-            if (len <= 2 || strcmp( wineloader + len - 2, "64" ))
-            {
-                argv[1] = malloc( len + 3 );
-                strcpy( argv[1], wineloader );
-                strcat( argv[1], "64" );
-                preloader_exec( argv );
-            }
-        }
-        else if ((argv[1] = remove_tail( wineloader, "64" ))) preloader_exec( argv );
-    }
+    if (((argv[1] = get_alternate_wineloader( machine )))) preloader_exec( argv );
 
     argv[1] = strdup( wineloader );
     preloader_exec( argv );
