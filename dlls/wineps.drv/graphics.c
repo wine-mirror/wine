@@ -226,7 +226,10 @@ static BOOL PSDRV_DrawArc( PHYSDEV dev, INT left, INT top,
     else
         PSDRV_WriteNewPath( dev );
 
-    PSDRV_WriteArc(dev, x, y, w, h, start_angle, end_angle);
+    if(GetArcDirection(dev->hdc) == AD_COUNTERCLOCKWISE)
+        PSDRV_WriteArc(dev, x, y, w, h, start_angle, end_angle);
+    else
+        PSDRV_WriteArc(dev, x, y, w, h, end_angle, start_angle);
     if(lines == 1 || lines == 2) { /* chord or pie */
         PSDRV_WriteClosePath(dev);
 	PSDRV_Brush(dev,0);
