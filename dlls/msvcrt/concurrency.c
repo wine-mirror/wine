@@ -2288,8 +2288,8 @@ DEFINE_THISCALL_WRAPPER(_StructuredTaskCollection__IsCanceling, 4)
 bool __thiscall _StructuredTaskCollection__IsCanceling(
         _StructuredTaskCollection *this)
 {
-    FIXME("(%p): stub!\n", this);
-    return FALSE;
+    TRACE("(%p)\n", this);
+    return !!((ULONG_PTR)this->exception & STRUCTURED_TASK_COLLECTION_CANCELLED);
 }
 
 /* ?_CheckTaskCollection@_UnrealizedChore@details@Concurrency@@IAEXXZ */

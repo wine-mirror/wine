@@ -1403,7 +1403,7 @@ static void __cdecl chore_proc(_UnrealizedChore *_this)
         MSVCRT_bool canceling = call_func1(
                 p__StructuredTaskCollection__IsCanceling,
                 chore->chore.task_collection);
-        todo_wine ok(canceling, "Task is not canceling\n");
+        ok(canceling, "Task is not canceling\n");
     }
 }
 
