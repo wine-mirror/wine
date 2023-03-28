@@ -3939,7 +3939,6 @@ static void test_ImmProcessKey(void)
 
     ok_eq( hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
     ok_ret( 0, ImmProcessKey( hwnd, old_hkl, 'A', 0, 0 ) );
-    todo_wine
     ok_seq( empty_sequence );
     ok_eq( hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
 
@@ -4235,7 +4234,6 @@ static void test_ImmCreateInputContext(void)
         {
             .hkl = expect_ime, .himc = 0/*himc[1]*/,
             .func = IME_SELECT, .select = 1,
-            .todo = TRUE,
         },
         {0},
     };
@@ -4344,7 +4342,6 @@ static void test_ImmCreateInputContext(void)
     himc[1] = ImmCreateContext();
     ok( !!himc[1], "ImmCreateContext failed, error %lu\n", GetLastError() );
 
-    todo_wine
     ok_seq( empty_sequence );
     ctx = ImmLockIMC( himc[1] );
     ok( !!ctx, "ImmLockIMC failed, error %lu\n", GetLastError() );

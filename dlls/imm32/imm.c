@@ -565,21 +565,27 @@ static void ime_release( struct ime *ime )
     LeaveCriticalSection( &ime_cs );
 }
 
-static void imc_select_hkl( struct imc *imc, HKL hkl )
+static void imc_release_ime( struct imc *imc )
 {
+    if (imc->ui_hwnd) DestroyWindow( imc->ui_hwnd );
+    imc->ui_hwnd = NULL;
+    imc->ime->pImeSelect( imc->handle, FALSE );
+    ime_release( imc->ime );
+    imc->ime = NULL;
+    ImmDestroyIMCC( imc->IMC.hPrivate );
+}
+
+static struct ime *imc_select_ime( struct imc *imc )
+{
+    HKL hkl = GetKeyboardLayout( 0 );
+
     if (imc->ime)
     {
-        if (imc->ime->hkl == hkl) return;
-        if (imc->ui_hwnd) DestroyWindow( imc->ui_hwnd );
-        imc->ui_hwnd = NULL;
-        imc->ime->pImeSelect( imc->handle, FALSE );
-        ime_release( imc->ime );
-        ImmDestroyIMCC( imc->IMC.hPrivate );
+        if (imc->ime->hkl == hkl) return imc->ime;
+        imc_release_ime( imc );
     }
 
-    if (!hkl)
-        imc->ime = NULL;
-    else if (!(imc->ime = ime_acquire( hkl )))
+    if (!(imc->ime = ime_acquire( hkl )))
         WARN( "Failed to acquire IME for HKL %p\n", hkl );
     else
     {
@@ -589,6 +595,8 @@ static void imc_select_hkl( struct imc *imc, HKL hkl )
         imc->IMC.fdwSentence = imc->ime->info.fdwSentenceCaps;
         imc->ime->pImeSelect( imc->handle, TRUE );
     }
+
+    return imc->ime;
 }
 
 static BOOL CALLBACK enum_activate_layout( HIMC himc, LPARAM lparam )
@@ -617,16 +625,13 @@ static BOOL free_input_context_data( HIMC hIMC )
 
     TRACE( "Destroying %p\n", hIMC );
 
-    if (data->ui_hwnd) DestroyWindow( data->ui_hwnd );
-    data->ime->pImeSelect( hIMC, FALSE );
+    if (data->ime) imc_release_ime( data );
 
     ImmDestroyIMCC( data->IMC.hCompStr );
     ImmDestroyIMCC( data->IMC.hCandInfo );
     ImmDestroyIMCC( data->IMC.hGuideLine );
-    ImmDestroyIMCC( data->IMC.hPrivate );
     ImmDestroyIMCC( data->IMC.hMsgBuf );
 
-    ime_release( data->ime );
     free( data );
 
     return TRUE;
@@ -731,6 +736,7 @@ static HIMCC ImmCreateBlankCompStr(void)
 BOOL WINAPI ImmSetActiveContext(HWND hwnd, HIMC himc, BOOL activate)
 {
     struct imc *data = get_imc_data( himc );
+    struct ime *ime;
 
     TRACE("(%p, %p, %x)\n", hwnd, himc, activate);
 
@@ -742,7 +748,7 @@ BOOL WINAPI ImmSetActiveContext(HWND hwnd, HIMC himc, BOOL activate)
     if (data)
     {
         data->IMC.hWnd = activate ? hwnd : NULL;
-        data->ime->pImeSetActiveContext( himc, activate );
+        if ((ime = imc_select_ime( data ))) ime->pImeSetActiveContext( himc, activate );
     }
 
     if (IsWindow(hwnd))
@@ -910,8 +916,6 @@ static struct imc *create_input_context( HIMC default_imc )
         return 0;
     }
 
-    imc_select_hkl( new_context, GetKeyboardLayout( 0 ) );
-
     TRACE("Created context %p\n", new_context);
     return new_context;
 }
@@ -934,14 +938,14 @@ static struct imc *default_input_context(void)
 static HWND get_ime_ui_window(void)
 {
     struct imc *imc = default_input_context();
+    struct ime *ime;
 
-    imc_select_hkl( imc, GetKeyboardLayout( 0 ) );
-    if (!imc->ime) return 0;
+    if (!(ime = imc_select_ime( imc ))) return 0;
 
     if (!imc->ui_hwnd)
     {
-        imc->ui_hwnd = CreateWindowExW( WS_EX_TOOLWINDOW, imc->ime->ui_class, NULL, WS_POPUP, 0, 0, 1, 1,
-                                        ImmGetDefaultIMEWnd( 0 ), 0, imc->ime->module, 0 );
+        imc->ui_hwnd = CreateWindowExW( WS_EX_TOOLWINDOW, ime->ui_class, NULL, WS_POPUP, 0, 0, 1, 1,
+                                        ImmGetDefaultIMEWnd( 0 ), 0, ime->module, 0 );
         SetWindowLongPtrW( imc->ui_hwnd, IMMGWL_IMC, (LONG_PTR)imc->handle );
     }
     return imc->ui_hwnd;
@@ -1153,6 +1157,7 @@ DWORD WINAPI ImmGetCandidateListA(
     struct imc *data = get_imc_data( hIMC );
     LPCANDIDATEINFO candinfo;
     LPCANDIDATELIST candlist;
+    struct ime *ime;
     DWORD ret = 0;
 
     TRACE("%p, %ld, %p, %ld\n", hIMC, dwIndex, lpCandList, dwBufLen);
@@ -1168,7 +1173,9 @@ DWORD WINAPI ImmGetCandidateListA(
     if ( !candlist->dwSize || !candlist->dwCount )
         goto done;
 
-    if (!ime_is_unicode( data->ime ))
+    if (!(ime = imc_select_ime( data )))
+        ret = 0;
+    else if (!ime_is_unicode( ime ))
     {
         ret = candlist->dwSize;
         if ( lpCandList && dwBufLen >= ret )
@@ -1191,6 +1198,7 @@ DWORD WINAPI ImmGetCandidateListCountA(
     struct imc *data = get_imc_data( hIMC );
     LPCANDIDATEINFO candinfo;
     DWORD ret, count;
+    struct ime *ime;
 
     TRACE("%p, %p\n", hIMC, lpdwListCount);
 
@@ -1201,7 +1209,9 @@ DWORD WINAPI ImmGetCandidateListCountA(
 
     *lpdwListCount = count = candinfo->dwCount;
 
-    if (!ime_is_unicode( data->ime ))
+    if (!(ime = imc_select_ime( data )))
+        ret = 0;
+    else if (!ime_is_unicode( ime ))
         ret = candinfo->dwSize;
     else
     {
@@ -1223,6 +1233,7 @@ DWORD WINAPI ImmGetCandidateListCountW(
     struct imc *data = get_imc_data( hIMC );
     LPCANDIDATEINFO candinfo;
     DWORD ret, count;
+    struct ime *ime;
 
     TRACE("%p, %p\n", hIMC, lpdwListCount);
 
@@ -1233,7 +1244,9 @@ DWORD WINAPI ImmGetCandidateListCountW(
 
     *lpdwListCount = count = candinfo->dwCount;
 
-    if (ime_is_unicode( data->ime ))
+    if (!(ime = imc_select_ime( data )))
+        ret = 0;
+    else if (ime_is_unicode( ime ))
         ret = candinfo->dwSize;
     else
     {
@@ -1256,6 +1269,7 @@ DWORD WINAPI ImmGetCandidateListW(
     struct imc *data = get_imc_data( hIMC );
     LPCANDIDATEINFO candinfo;
     LPCANDIDATELIST candlist;
+    struct ime *ime;
     DWORD ret = 0;
 
     TRACE("%p, %ld, %p, %ld\n", hIMC, dwIndex, lpCandList, dwBufLen);
@@ -1271,7 +1285,9 @@ DWORD WINAPI ImmGetCandidateListW(
     if ( !candlist->dwSize || !candlist->dwCount )
         goto done;
 
-    if (ime_is_unicode( data->ime ))
+    if (!(ime = imc_select_ime( data )))
+        ret = 0;
+    else if (ime_is_unicode( ime ))
     {
         ret = candlist->dwSize;
         if ( lpCandList && dwBufLen >= ret )
@@ -1351,15 +1367,15 @@ BOOL WINAPI ImmGetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
 
 /* Source encoding is defined by context, source length is always given in respective characters. Destination buffer
    length is always in bytes. */
-static INT CopyCompStringIMEtoClient( const struct imc *data, const void *src, INT src_len,
-                                      void *dst, INT dst_len, BOOL unicode )
+static INT CopyCompStringIMEtoClient( BOOL src_unicode, const void *src, INT src_len,
+                                      void *dst, INT dst_len, BOOL dst_unicode )
 {
-    int char_size = unicode ? sizeof(WCHAR) : sizeof(char);
+    int char_size = dst_unicode ? sizeof(WCHAR) : sizeof(char);
     INT ret;
 
-    if (ime_is_unicode( data->ime ) ^ unicode)
+    if (src_unicode ^ dst_unicode)
     {
-        if (unicode)
+        if (dst_unicode)
             ret = MultiByteToWideChar(CP_ACP, 0, src, src_len, dst, dst_len / sizeof(WCHAR));
         else
             ret = WideCharToMultiByte(CP_ACP, 0, src, src_len, dst, dst_len, NULL, NULL);
@@ -1381,8 +1397,8 @@ static INT CopyCompStringIMEtoClient( const struct imc *data, const void *src, I
 
 /* Composition string encoding is defined by context, returned attributes correspond to string, converted according to
    passed mode. String length is in characters, attributes are in byte arrays. */
-static INT CopyCompAttrIMEtoClient( const struct imc *data, const BYTE *src, INT src_len, const void *comp_string,
-                                    INT str_len, BYTE *dst, INT dst_len, BOOL unicode )
+static INT CopyCompAttrIMEtoClient( BOOL src_unicode, const BYTE *src, INT src_len, const void *comp_string, INT str_len,
+                                    BYTE *dst, INT dst_len, BOOL unicode )
 {
     union
     {
@@ -1394,7 +1410,7 @@ static INT CopyCompAttrIMEtoClient( const struct imc *data, const BYTE *src, INT
 
     string.str = comp_string;
 
-    if (ime_is_unicode( data->ime ) && !unicode)
+    if (src_unicode && !unicode)
     {
         rc = WideCharToMultiByte(CP_ACP, 0, string.strW, str_len, NULL, 0, NULL, NULL);
         if (dst_len)
@@ -1421,7 +1437,7 @@ static INT CopyCompAttrIMEtoClient( const struct imc *data, const BYTE *src, INT
             rc = j;
         }
     }
-    else if (!ime_is_unicode( data->ime ) && unicode)
+    else if (!src_unicode && unicode)
     {
         rc = MultiByteToWideChar(CP_ACP, 0, string.strA, str_len, NULL, 0);
         if (dst_len)
@@ -1452,12 +1468,12 @@ static INT CopyCompAttrIMEtoClient( const struct imc *data, const BYTE *src, INT
     return rc;
 }
 
-static INT CopyCompClauseIMEtoClient( struct imc *data, LPBYTE source, INT slen, LPBYTE ssource,
+static INT CopyCompClauseIMEtoClient( BOOL src_unicode, LPBYTE source, INT slen, LPBYTE ssource,
                                       LPBYTE target, INT tlen, BOOL unicode )
 {
     INT rc;
 
-    if (ime_is_unicode( data->ime ) && !unicode)
+    if (src_unicode && !unicode)
     {
         if (tlen)
         {
@@ -1478,7 +1494,7 @@ static INT CopyCompClauseIMEtoClient( struct imc *data, LPBYTE source, INT slen,
         else
             rc = slen;
     }
-    else if (!ime_is_unicode( data->ime ) && unicode)
+    else if (!src_unicode && unicode)
     {
         if (tlen)
         {
@@ -1507,15 +1523,15 @@ static INT CopyCompClauseIMEtoClient( struct imc *data, LPBYTE source, INT slen,
     return rc;
 }
 
-static INT CopyCompOffsetIMEtoClient( struct imc *data, DWORD offset, LPBYTE ssource, BOOL unicode )
+static INT CopyCompOffsetIMEtoClient( BOOL src_unicode, DWORD offset, LPBYTE ssource, BOOL unicode )
 {
     int rc;
 
-    if (ime_is_unicode( data->ime ) && !unicode)
+    if (src_unicode && !unicode)
     {
         rc = WideCharToMultiByte(CP_ACP, 0, (LPWSTR)ssource, offset, NULL, 0, NULL, NULL);
     }
-    else if (!ime_is_unicode( data->ime ) && unicode)
+    else if (!src_unicode && unicode)
     {
         rc = MultiByteToWideChar(CP_ACP, 0, (LPSTR)ssource, offset, NULL, 0);
     }
@@ -1531,6 +1547,8 @@ static LONG ImmGetCompositionStringT( HIMC hIMC, DWORD dwIndex, LPVOID lpBuf,
     LONG rc = 0;
     struct imc *data = get_imc_data( hIMC );
     LPCOMPOSITIONSTRING compstr;
+    BOOL src_unicode;
+    struct ime *ime;
     LPBYTE compdata;
 
     TRACE("(%p, 0x%lx, %p, %ld)\n", hIMC, dwIndex, lpBuf, dwBufLen);
@@ -1541,6 +1559,10 @@ static LONG ImmGetCompositionStringT( HIMC hIMC, DWORD dwIndex, LPVOID lpBuf,
     if (!data->IMC.hCompStr)
        return FALSE;
 
+    if (!(ime = imc_select_ime( data )))
+        return FALSE;
+    src_unicode = ime_is_unicode( ime );
+
     compdata = ImmLockIMCC(data->IMC.hCompStr);
     compstr = (LPCOMPOSITIONSTRING)compdata;
 
@@ -1548,63 +1570,63 @@ static LONG ImmGetCompositionStringT( HIMC hIMC, DWORD dwIndex, LPVOID lpBuf,
     {
     case GCS_RESULTSTR:
         TRACE("GCS_RESULTSTR\n");
-        rc = CopyCompStringIMEtoClient(data, compdata + compstr->dwResultStrOffset, compstr->dwResultStrLen, lpBuf, dwBufLen, unicode);
+        rc = CopyCompStringIMEtoClient(src_unicode, compdata + compstr->dwResultStrOffset, compstr->dwResultStrLen, lpBuf, dwBufLen, unicode);
         break;
     case GCS_COMPSTR:
         TRACE("GCS_COMPSTR\n");
-        rc = CopyCompStringIMEtoClient(data, compdata + compstr->dwCompStrOffset, compstr->dwCompStrLen, lpBuf, dwBufLen, unicode);
+        rc = CopyCompStringIMEtoClient(src_unicode, compdata + compstr->dwCompStrOffset, compstr->dwCompStrLen, lpBuf, dwBufLen, unicode);
         break;
     case GCS_COMPATTR:
         TRACE("GCS_COMPATTR\n");
-        rc = CopyCompAttrIMEtoClient(data, compdata + compstr->dwCompAttrOffset, compstr->dwCompAttrLen,
+        rc = CopyCompAttrIMEtoClient(src_unicode, compdata + compstr->dwCompAttrOffset, compstr->dwCompAttrLen,
                                      compdata + compstr->dwCompStrOffset, compstr->dwCompStrLen,
                                      lpBuf, dwBufLen, unicode);
         break;
     case GCS_COMPCLAUSE:
         TRACE("GCS_COMPCLAUSE\n");
-        rc = CopyCompClauseIMEtoClient(data, compdata + compstr->dwCompClauseOffset,compstr->dwCompClauseLen,
+        rc = CopyCompClauseIMEtoClient(src_unicode, compdata + compstr->dwCompClauseOffset,compstr->dwCompClauseLen,
                                        compdata + compstr->dwCompStrOffset,
                                        lpBuf, dwBufLen, unicode);
         break;
     case GCS_RESULTCLAUSE:
         TRACE("GCS_RESULTCLAUSE\n");
-        rc = CopyCompClauseIMEtoClient(data, compdata + compstr->dwResultClauseOffset,compstr->dwResultClauseLen,
+        rc = CopyCompClauseIMEtoClient(src_unicode, compdata + compstr->dwResultClauseOffset,compstr->dwResultClauseLen,
                                        compdata + compstr->dwResultStrOffset,
                                        lpBuf, dwBufLen, unicode);
         break;
     case GCS_RESULTREADSTR:
         TRACE("GCS_RESULTREADSTR\n");
-        rc = CopyCompStringIMEtoClient(data, compdata + compstr->dwResultReadStrOffset, compstr->dwResultReadStrLen, lpBuf, dwBufLen, unicode);
+        rc = CopyCompStringIMEtoClient(src_unicode, compdata + compstr->dwResultReadStrOffset, compstr->dwResultReadStrLen, lpBuf, dwBufLen, unicode);
         break;
     case GCS_RESULTREADCLAUSE:
         TRACE("GCS_RESULTREADCLAUSE\n");
-        rc = CopyCompClauseIMEtoClient(data, compdata + compstr->dwResultReadClauseOffset,compstr->dwResultReadClauseLen,
+        rc = CopyCompClauseIMEtoClient(src_unicode, compdata + compstr->dwResultReadClauseOffset,compstr->dwResultReadClauseLen,
                                        compdata + compstr->dwResultStrOffset,
                                        lpBuf, dwBufLen, unicode);
         break;
     case GCS_COMPREADSTR:
         TRACE("GCS_COMPREADSTR\n");
-        rc = CopyCompStringIMEtoClient(data, compdata + compstr->dwCompReadStrOffset, compstr->dwCompReadStrLen, lpBuf, dwBufLen, unicode);
+        rc = CopyCompStringIMEtoClient(src_unicode, compdata + compstr->dwCompReadStrOffset, compstr->dwCompReadStrLen, lpBuf, dwBufLen, unicode);
         break;
     case GCS_COMPREADATTR:
         TRACE("GCS_COMPREADATTR\n");
-        rc = CopyCompAttrIMEtoClient(data, compdata + compstr->dwCompReadAttrOffset, compstr->dwCompReadAttrLen,
+        rc = CopyCompAttrIMEtoClient(src_unicode, compdata + compstr->dwCompReadAttrOffset, compstr->dwCompReadAttrLen,
                                      compdata + compstr->dwCompReadStrOffset, compstr->dwCompReadStrLen,
                                      lpBuf, dwBufLen, unicode);
         break;
     case GCS_COMPREADCLAUSE:
         TRACE("GCS_COMPREADCLAUSE\n");
-        rc = CopyCompClauseIMEtoClient(data, compdata + compstr->dwCompReadClauseOffset,compstr->dwCompReadClauseLen,
+        rc = CopyCompClauseIMEtoClient(src_unicode, compdata + compstr->dwCompReadClauseOffset,compstr->dwCompReadClauseLen,
                                        compdata + compstr->dwCompStrOffset,
                                        lpBuf, dwBufLen, unicode);
         break;
     case GCS_CURSORPOS:
         TRACE("GCS_CURSORPOS\n");
-        rc = CopyCompOffsetIMEtoClient(data, compstr->dwCursorPos, compdata + compstr->dwCompStrOffset, unicode);
+        rc = CopyCompOffsetIMEtoClient(src_unicode, compstr->dwCursorPos, compdata + compstr->dwCompStrOffset, unicode);
         break;
     case GCS_DELTASTART:
         TRACE("GCS_DELTASTART\n");
-        rc = CopyCompOffsetIMEtoClient(data, compstr->dwDeltaStart, compdata + compstr->dwCompStrOffset, unicode);
+        rc = CopyCompOffsetIMEtoClient(src_unicode, compstr->dwDeltaStart, compdata + compstr->dwCompStrOffset, unicode);
         break;
     default:
         FIXME("Unhandled index 0x%lx\n",dwIndex);
@@ -2198,6 +2220,7 @@ BOOL WINAPI ImmNotifyIME(
   HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
 {
     struct imc *data = get_imc_data( hIMC );
+    struct ime *ime;
 
     TRACE("(%p, %ld, %ld, %ld)\n",
         hIMC, dwAction, dwIndex, dwValue);
@@ -2213,7 +2236,8 @@ BOOL WINAPI ImmNotifyIME(
         return FALSE;
     }
 
-    return data->ime->pNotifyIME( hIMC, dwAction, dwIndex, dwValue );
+    if (!(ime = imc_select_ime( data ))) return FALSE;
+    return ime->pNotifyIME( hIMC, dwAction, dwIndex, dwValue );
 }
 
 /***********************************************************************
@@ -2404,6 +2428,7 @@ BOOL WINAPI ImmSetCompositionStringA(
     WCHAR *ReadBuffer = NULL;
     BOOL rc;
     struct imc *data = get_imc_data( hIMC );
+    struct ime *ime;
 
     TRACE("(%p, %ld, %p, %ld, %p, %ld):\n",
             hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen);
@@ -2420,8 +2445,8 @@ BOOL WINAPI ImmSetCompositionStringA(
           dwIndex == SCS_QUERYRECONVERTSTRING))
         return FALSE;
 
-    if (!ime_is_unicode( data->ime ))
-        return data->ime->pImeSetCompositionString( hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen );
+    if (!(ime = imc_select_ime( data ))) return FALSE;
+    if (!ime_is_unicode( ime )) return ime->pImeSetCompositionString( hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen );
 
     comp_len = MultiByteToWideChar(CP_ACP, 0, lpComp, dwCompLen, NULL, 0);
     if (comp_len)
@@ -2460,6 +2485,7 @@ BOOL WINAPI ImmSetCompositionStringW(
     CHAR *ReadBuffer = NULL;
     BOOL rc;
     struct imc *data = get_imc_data( hIMC );
+    struct ime *ime;
 
     TRACE("(%p, %ld, %p, %ld, %p, %ld):\n",
             hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen);
@@ -2476,8 +2502,8 @@ BOOL WINAPI ImmSetCompositionStringW(
           dwIndex == SCS_QUERYRECONVERTSTRING))
         return FALSE;
 
-    if (ime_is_unicode( data->ime ))
-        return data->ime->pImeSetCompositionString( hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen );
+    if (!(ime = imc_select_ime( data ))) return FALSE;
+    if (ime_is_unicode( ime )) return ime->pImeSetCompositionString( hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen );
 
     comp_len = WideCharToMultiByte(CP_ACP, 0, lpComp, dwCompLen, NULL, 0, NULL,
                                    NULL);
@@ -2738,6 +2764,7 @@ DWORD WINAPI ImmGetImeMenuItemsA( HIMC himc, DWORD flags, DWORD type, IMEMENUITE
                                   IMEMENUITEMINFOA *menuA, DWORD size )
 {
     struct imc *data = get_imc_data( himc );
+    struct ime *ime;
     DWORD ret;
 
     TRACE( "himc %p, flags %#lx, type %lu, parentA %p, menuA %p, size %lu.\n",
@@ -2749,8 +2776,9 @@ DWORD WINAPI ImmGetImeMenuItemsA( HIMC himc, DWORD flags, DWORD type, IMEMENUITE
         return 0;
     }
 
-    if (!ime_is_unicode( data->ime ) || (!parentA && !menuA))
-        ret = data->ime->pImeGetImeMenuItems( himc, flags, type, parentA, menuA, size );
+    if (!(ime = imc_select_ime( data ))) return 0;
+    if (!ime_is_unicode( ime ) || (!parentA && !menuA))
+        ret = ime->pImeGetImeMenuItems( himc, flags, type, parentA, menuA, size );
     else
     {
         IMEMENUITEMINFOW tmpW, *menuW, *parentW = parentA ? &tmpW : NULL;
@@ -2763,7 +2791,7 @@ DWORD WINAPI ImmGetImeMenuItemsA( HIMC himc, DWORD flags, DWORD type, IMEMENUITE
             menuW = malloc( size );
         }
 
-        ret = data->ime->pImeGetImeMenuItems( himc, flags, type, parentW, menuW, size );
+        ret = ime->pImeGetImeMenuItems( himc, flags, type, parentW, menuW, size );
 
         if (parentA)
         {
@@ -2796,6 +2824,7 @@ DWORD WINAPI ImmGetImeMenuItemsW( HIMC himc, DWORD flags, DWORD type, IMEMENUITE
                                   IMEMENUITEMINFOW *menuW, DWORD size )
 {
     struct imc *data = get_imc_data( himc );
+    struct ime *ime;
     DWORD ret;
 
     TRACE( "himc %p, flags %#lx, type %lu, parentW %p, menuW %p, size %lu.\n",
@@ -2807,8 +2836,9 @@ DWORD WINAPI ImmGetImeMenuItemsW( HIMC himc, DWORD flags, DWORD type, IMEMENUITE
         return 0;
     }
 
-    if (ime_is_unicode( data->ime ) || (!parentW && !menuW))
-        ret = data->ime->pImeGetImeMenuItems( himc, flags, type, parentW, menuW, size );
+    if (!(ime = imc_select_ime( data ))) return 0;
+    if (ime_is_unicode( ime ) || (!parentW && !menuW))
+        ret = ime->pImeGetImeMenuItems( himc, flags, type, parentW, menuW, size );
     else
     {
         IMEMENUITEMINFOA tmpA, *menuA, *parentA = parentW ? &tmpA : NULL;
@@ -2821,7 +2851,7 @@ DWORD WINAPI ImmGetImeMenuItemsW( HIMC himc, DWORD flags, DWORD type, IMEMENUITE
             menuA = malloc( size );
         }
 
-        ret = data->ime->pImeGetImeMenuItems( himc, flags, type, parentA, menuA, size );
+        ret = ime->pImeGetImeMenuItems( himc, flags, type, parentA, menuA, size );
 
         if (parentW)
         {
@@ -2857,7 +2887,7 @@ INPUTCONTEXT *WINAPI ImmLockIMC( HIMC himc )
     if (!imc) return NULL;
     imc->dwLock++;
 
-    imc_select_hkl( imc, GetKeyboardLayout( 0 ) );
+    imc_select_ime( imc );
     return &imc->IMC;
 }
 
@@ -2988,6 +3018,7 @@ BOOL WINAPI ImmGenerateMessage(HIMC hIMC)
 BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyData)
 {
     struct imc *data;
+    struct ime *ime;
     HIMC imc = ImmGetContext(hwnd);
     BYTE state[256];
     UINT scancode;
@@ -2999,6 +3030,7 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
     TRACE("%p %x %x %x\n",hwnd, msg, (UINT)wParam, (UINT)lKeyData);
 
     if (!(data = get_imc_data( imc ))) return FALSE;
+    if (!(ime = imc_select_ime( imc ))) return FALSE;
     if (data->lastVK == VK_PROCESSKEY) return FALSE;
 
     GetKeyboardState(state);
@@ -3007,11 +3039,11 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
     list = calloc( list_count, sizeof(TRANSMSG) + sizeof(DWORD) );
     list->uMsgCount = list_count;
 
-    if (data->ime->info.fdwProperty & IME_PROP_KBD_CHAR_FIRST)
+    if (ime->info.fdwProperty & IME_PROP_KBD_CHAR_FIRST)
     {
         WCHAR chr;
 
-        if (!ime_is_unicode( data->ime ))
+        if (!ime_is_unicode( ime ))
             ToAscii( data->lastVK, scancode, state, &chr, 0 );
         else
             ToUnicodeEx(data->lastVK, scancode, state, &chr, 1, 0, GetKeyboardLayout(0));
@@ -3020,7 +3052,7 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
     else
         uVirtKey = data->lastVK;
 
-    msg_count = data->ime->pImeToAsciiEx( uVirtKey, scancode, state, list, 0, imc );
+    msg_count = ime->pImeToAsciiEx( uVirtKey, scancode, state, list, 0, imc );
     TRACE("%i messages generated\n",msg_count);
     if (msg_count && msg_count <= list_count)
     {
@@ -3047,6 +3079,7 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
 BOOL WINAPI ImmProcessKey( HWND hwnd, HKL hkl, UINT vkey, LPARAM lparam, DWORD unknown )
 {
     struct imc *imc;
+    struct ime *ime;
     BYTE state[256];
     BOOL ret;
 
@@ -3054,12 +3087,11 @@ BOOL WINAPI ImmProcessKey( HWND hwnd, HKL hkl, UINT vkey, LPARAM lparam, DWORD u
 
     if (hkl != GetKeyboardLayout( 0 )) return FALSE;
     if (!(imc = get_imc_data( ImmGetContext( hwnd ) ))) return FALSE;
-    imc_select_hkl( imc, hkl );
-    if (!imc->ime) return FALSE;
+    if (!(ime = imc_select_ime( imc ))) return FALSE;
 
     GetKeyboardState( state );
 
-    ret = imc->ime->pImeProcessKey( imc->handle, vkey, lparam, state );
+    ret = ime->pImeProcessKey( imc->handle, vkey, lparam, state );
     imc->lastVK = ret ? vkey : VK_PROCESSKEY;
 
     return ret;
