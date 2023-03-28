@@ -804,7 +804,7 @@ HRESULT gc_run(script_ctx_t *ctx)
                 } while(head);
                 return E_OUTOFMEMORY;
             }
-            chunk = chunk->next, chunk_idx = 0;
+            chunk = chunk->next; chunk_idx = 0;
             chunk->next = NULL;
         }
         chunk->ref[chunk_idx++] = obj->ref;
@@ -901,13 +901,13 @@ HRESULT gc_run(script_ctx_t *ctx)
     free(gc_ctx.next);
 
     /* Restore */
-    chunk = head, chunk_idx = 0;
+    chunk = head; chunk_idx = 0;
     LIST_FOR_EACH_ENTRY(obj, &ctx->objects, jsdisp_t, entry) {
         obj->ref = chunk->ref[chunk_idx++];
         if(chunk_idx == ARRAY_SIZE(chunk->ref)) {
             struct chunk *next = chunk->next;
             free(chunk);
-            chunk = next, chunk_idx = 0;
+            chunk = next; chunk_idx = 0;
         }
     }
     free(chunk);
