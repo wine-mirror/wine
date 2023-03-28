@@ -571,6 +571,7 @@ static void imc_select_hkl( struct imc *imc, HKL hkl )
         if (imc->ime->hkl == hkl) return;
         imc->ime->pImeSelect( imc->handle, FALSE );
         ime_release( imc->ime );
+        ImmDestroyIMCC( imc->IMC.hPrivate );
     }
 
     if (!hkl)
@@ -578,7 +579,13 @@ static void imc_select_hkl( struct imc *imc, HKL hkl )
     else if (!(imc->ime = ime_acquire( hkl )))
         WARN( "Failed to acquire IME for HKL %p\n", hkl );
     else
+    {
+        if (!(imc->IMC.hPrivate = ImmCreateIMCC( imc->ime->info.dwPrivateDataSize )))
+            WARN( "Failed to allocate IME private data for IMC %p\n", imc );
+        imc->IMC.fdwConversion = imc->ime->info.fdwConversionCaps;
+        imc->IMC.fdwSentence = imc->ime->info.fdwSentenceCaps;
         imc->ime->pImeSelect( imc->handle, TRUE );
+    }
 }
 
 static BOOL CALLBACK enum_activate_layout( HIMC himc, LPARAM lparam )
@@ -872,15 +879,7 @@ static struct imc *create_input_context( HIMC default_imc )
     LPCANDIDATEINFO ci;
     int i;
 
-    new_context = calloc( 1, sizeof(*new_context) );
-
-    /* Load the IME */
-    if (!(new_context->ime = ime_acquire( GetKeyboardLayout( 0 ) )))
-    {
-        TRACE("IME dll could not be loaded\n");
-        free( new_context );
-        return 0;
-    }
+    if (!(new_context = calloc( 1, sizeof(*new_context) ))) return NULL;
 
     /* the HIMCCs are never NULL */
     new_context->IMC.hCompStr = ImmCreateBlankCompStr();
@@ -899,12 +898,6 @@ static struct imc *create_input_context( HIMC default_imc )
     for (i = 0; i < ARRAY_SIZE(new_context->IMC.cfCandForm); i++)
         new_context->IMC.cfCandForm[i].dwIndex = ~0u;
 
-    /* Initialize the IME Private */
-    new_context->IMC.hPrivate = ImmCreateIMCC( new_context->ime->info.dwPrivateDataSize );
-
-    new_context->IMC.fdwConversion = new_context->ime->info.fdwConversionCaps;
-    new_context->IMC.fdwSentence = new_context->ime->info.fdwSentenceCaps;
-
     if (!default_imc)
         new_context->handle = NtUserCreateInputContext((UINT_PTR)new_context);
     else if (NtUserUpdateInputContext(default_imc, NtUserInputContextClientPtr, (UINT_PTR)new_context))
@@ -915,12 +908,7 @@ static struct imc *create_input_context( HIMC default_imc )
         return 0;
     }
 
-    if (!new_context->ime->pImeSelect( new_context->handle, TRUE ))
-    {
-        TRACE("Selection of IME failed\n");
-        IMM_DestroyContext(new_context);
-        return 0;
-    }
+    imc_select_hkl( new_context, GetKeyboardLayout( 0 ) );
     SendMessageW( GetFocus(), WM_IME_SELECT, TRUE, (LPARAM)new_context->ime );
 
     TRACE("Created context %p\n", new_context);
