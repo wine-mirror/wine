@@ -180,6 +180,12 @@ typedef struct
     void *event;
 } _StructuredTaskCollection;
 
+typedef enum
+{
+    TASK_COLLECTION_SUCCESS = 1,
+    TASK_COLLECTION_CANCELLED
+} _TaskCollectionStatus;
+
 typedef struct _UnrealizedChore
 {
     const vtable_ptr *vtable;
@@ -2161,7 +2167,7 @@ static void CALLBACK exception_ptr_rethrow_finally(BOOL normal, void *data)
 /* ?_RunAndWait@_StructuredTaskCollection@details@Concurrency@@QAA?AW4_TaskCollectionStatus@23@PAV_UnrealizedChore@23@@Z */
 /* ?_RunAndWait@_StructuredTaskCollection@details@Concurrency@@QAG?AW4_TaskCollectionStatus@23@PAV_UnrealizedChore@23@@Z */
 /* ?_RunAndWait@_StructuredTaskCollection@details@Concurrency@@QEAA?AW4_TaskCollectionStatus@23@PEAV_UnrealizedChore@23@@Z */
-/*_TaskCollectionStatus*/int __stdcall _StructuredTaskCollection__RunAndWait(
+_TaskCollectionStatus __stdcall _StructuredTaskCollection__RunAndWait(
         _StructuredTaskCollection *this, _UnrealizedChore *chore)
 {
     LONG expected, val;
@@ -2202,7 +2208,7 @@ static void CALLBACK exception_ptr_rethrow_finally(BOOL normal, void *data)
         }
         __FINALLY_CTX(exception_ptr_rethrow_finally, ep)
     }
-    return 1;
+    return TASK_COLLECTION_SUCCESS;
 }
 
 /* ?_Cancel@_StructuredTaskCollection@details@Concurrency@@QAAXXZ */
