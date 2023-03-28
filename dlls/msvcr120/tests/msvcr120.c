@@ -1587,7 +1587,17 @@ static void test_StructuredTaskCollection(void)
     ok(b, "SetEvent failed\n");
 
     status = p__StructuredTaskCollection__RunAndWait(&task_coll, NULL);
-    todo_wine ok(status == 2, "_StructuredTaskCollection::_RunAndWait failed: %d\n", status);
+    ok(status == 2, "_StructuredTaskCollection::_RunAndWait failed: %d\n", status);
+    call_func1(p__StructuredTaskCollection_dtor, &task_coll);
+
+    /* cancel task collection without scheduled tasks */
+    call_func2(p__StructuredTaskCollection_ctor, &task_coll, NULL);
+    call_func1(p__StructuredTaskCollection__Cancel, &task_coll);
+    ok(task_coll.context == context, "Unexpected context: %p != %p\n", task_coll.context, context);
+    chore_ctor(&chore1);
+    status = p__StructuredTaskCollection__RunAndWait(&task_coll, NULL);
+    ok(status == 2, "_StructuredTaskCollection::_RunAndWait failed: %d\n", status);
+    ok(!chore1.executed, "Canceled collection executed chore\n");
     call_func1(p__StructuredTaskCollection_dtor, &task_coll);
 
     CloseHandle(chore_start_evt);

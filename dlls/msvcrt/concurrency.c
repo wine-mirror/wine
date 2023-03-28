@@ -1967,6 +1967,64 @@ struct execute_chore_data {
     _StructuredTaskCollection *task_collection;
 };
 
+/* ?_Cancel@_StructuredTaskCollection@details@Concurrency@@QAAXXZ */
+/* ?_Cancel@_StructuredTaskCollection@details@Concurrency@@QAEXXZ */
+/* ?_Cancel@_StructuredTaskCollection@details@Concurrency@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_StructuredTaskCollection__Cancel, 4)
+void __thiscall _StructuredTaskCollection__Cancel(
+        _StructuredTaskCollection *this)
+{
+    ThreadScheduler *scheduler;
+    void *prev_exception, *new_exception;
+    struct scheduled_chore *sc, *next;
+    LONG removed = 0;
+    LONG prev_finished, new_finished;
+
+    TRACE("(%p)\n", this);
+
+    if (!this->context)
+        this->context = get_current_context();
+    scheduler = get_thread_scheduler_from_context(this->context);
+    if (!scheduler)
+        return;
+
+    new_exception = this->exception;
+    do {
+        prev_exception = new_exception;
+        if ((ULONG_PTR)prev_exception & STRUCTURED_TASK_COLLECTION_CANCELLED)
+            return;
+        new_exception = (void*)((ULONG_PTR)prev_exception |
+                STRUCTURED_TASK_COLLECTION_CANCELLED);
+    } while ((new_exception = InterlockedCompareExchangePointer(
+                    &this->exception, new_exception, prev_exception))
+             != prev_exception);
+
+    EnterCriticalSection(&scheduler->cs);
+    LIST_FOR_EACH_ENTRY_SAFE(sc, next, &scheduler->scheduled_chores,
+                             struct scheduled_chore, entry) {
+        if (sc->chore->task_collection != this)
+            continue;
+        sc->chore->task_collection = NULL;
+        list_remove(&sc->entry);
+        removed++;
+        operator_delete(sc);
+    }
+    LeaveCriticalSection(&scheduler->cs);
+    if (!removed)
+        return;
+
+    new_finished = this->finished;
+    do {
+        prev_finished = new_finished;
+        if (prev_finished == FINISHED_INITIAL)
+            new_finished = removed;
+        else
+            new_finished = prev_finished + removed;
+    } while ((new_finished = InterlockedCompareExchange(&this->finished,
+                    new_finished, prev_finished)) != prev_finished);
+    RtlWakeAddressAll((LONG*)&this->finished);
+}
+
 static LONG CALLBACK execute_chore_except(EXCEPTION_POINTERS *pexc, void *_data)
 {
     struct execute_chore_data *data = _data;
@@ -1975,6 +2033,8 @@ static LONG CALLBACK execute_chore_except(EXCEPTION_POINTERS *pexc, void *_data)
 
     if (pexc->ExceptionRecord->ExceptionCode != CXX_EXCEPTION)
         return EXCEPTION_CONTINUE_SEARCH;
+
+    _StructuredTaskCollection__Cancel(data->task_collection);
 
     ptr = operator_new(sizeof(*ptr));
     __ExceptionPtrCreate(ptr);
@@ -2216,17 +2276,9 @@ _TaskCollectionStatus __stdcall _StructuredTaskCollection__RunAndWait(
         }
         __FINALLY_CTX(exception_ptr_rethrow_finally, ep)
     }
+    if (exception & STRUCTURED_TASK_COLLECTION_CANCELLED)
+        return TASK_COLLECTION_CANCELLED;
     return TASK_COLLECTION_SUCCESS;
-}
-
-/* ?_Cancel@_StructuredTaskCollection@details@Concurrency@@QAAXXZ */
-/* ?_Cancel@_StructuredTaskCollection@details@Concurrency@@QAEXXZ */
-/* ?_Cancel@_StructuredTaskCollection@details@Concurrency@@QEAAXXZ */
-DEFINE_THISCALL_WRAPPER(_StructuredTaskCollection__Cancel, 4)
-void __thiscall _StructuredTaskCollection__Cancel(
-        _StructuredTaskCollection *this)
-{
-    FIXME("(%p): stub!\n", this);
 }
 
 /* ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAA_NXZ */
