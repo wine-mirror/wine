@@ -290,6 +290,7 @@ ULONG CDECL ldap_set_optionA( LDAP *ld, int option, void *value )
     case WLDAP32_LDAP_OPT_ERROR_NUMBER:
     case WLDAP32_LDAP_OPT_PROTOCOL_VERSION:
     case WLDAP32_LDAP_OPT_REFERRALS:
+    case WLDAP32_LDAP_OPT_REFERRAL_HOP_LIMIT:
     case WLDAP32_LDAP_OPT_SIZELIMIT:
     case WLDAP32_LDAP_OPT_SSL:
     case WLDAP32_LDAP_OPT_TIMELIMIT:
@@ -325,7 +326,6 @@ ULONG CDECL ldap_set_optionA( LDAP *ld, int option, void *value )
     case WLDAP32_LDAP_OPT_PROMPT_CREDENTIALS:
     case WLDAP32_LDAP_OPT_REF_DEREF_CONN_PER_MSG:
     case WLDAP32_LDAP_OPT_REFERRAL_CALLBACK:
-    case WLDAP32_LDAP_OPT_REFERRAL_HOP_LIMIT:
     case WLDAP32_LDAP_OPT_ROOTDSE_CACHE:
     case WLDAP32_LDAP_OPT_SASL_METHOD:
     case WLDAP32_LDAP_OPT_SECURITY_CONTEXT:
@@ -439,6 +439,10 @@ ULONG CDECL ldap_set_optionW( LDAP *ld, int option, void *value )
         }
         return map_error( ldap_set_option( CTX(ld), option, value ) );
     }
+    case WLDAP32_LDAP_OPT_REFERRAL_HOP_LIMIT:
+        FIXME( "ignoring referral hop limit\n" );
+        return WLDAP32_LDAP_SUCCESS;
+
     case WLDAP32_LDAP_OPT_DEREF:
     case WLDAP32_LDAP_OPT_DESC:
     case WLDAP32_LDAP_OPT_ERROR_NUMBER:
@@ -507,7 +511,6 @@ ULONG CDECL ldap_set_optionW( LDAP *ld, int option, void *value )
     case WLDAP32_LDAP_OPT_PROMPT_CREDENTIALS:
     case WLDAP32_LDAP_OPT_REF_DEREF_CONN_PER_MSG:
     case WLDAP32_LDAP_OPT_REFERRAL_CALLBACK:
-    case WLDAP32_LDAP_OPT_REFERRAL_HOP_LIMIT:
     case WLDAP32_LDAP_OPT_ROOTDSE_CACHE:
     case WLDAP32_LDAP_OPT_SASL_METHOD:
     case WLDAP32_LDAP_OPT_SECURITY_CONTEXT:
