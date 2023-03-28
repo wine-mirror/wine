@@ -2829,14 +2829,17 @@ DWORD WINAPI ImmGetImeMenuItemsW( HIMC himc, DWORD flags, DWORD type, IMEMENUITE
 /***********************************************************************
 *		ImmLockIMC(IMM32.@)
 */
-LPINPUTCONTEXT WINAPI ImmLockIMC(HIMC hIMC)
+INPUTCONTEXT *WINAPI ImmLockIMC( HIMC himc )
 {
-    struct imc *data = get_imc_data( hIMC );
+    struct imc *imc = get_imc_data( himc );
 
-    if (!data)
-        return NULL;
-    data->dwLock++;
-    return &data->IMC;
+    TRACE( "himc %p\n", himc );
+
+    if (!imc) return NULL;
+    imc->dwLock++;
+
+    imc_select_hkl( imc, GetKeyboardLayout( 0 ) );
+    return &imc->IMC;
 }
 
 /***********************************************************************
