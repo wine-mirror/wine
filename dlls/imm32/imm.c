@@ -3025,27 +3025,24 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
 *		ImmProcessKey(IMM32.@)
 *       ( Undocumented, called from user32.dll )
 */
-BOOL WINAPI ImmProcessKey(HWND hwnd, HKL hKL, UINT vKey, LPARAM lKeyData, DWORD unknown)
+BOOL WINAPI ImmProcessKey( HWND hwnd, HKL hkl, UINT vkey, LPARAM lparam, DWORD unknown )
 {
-    struct imc *data;
-    HIMC imc = ImmGetContext(hwnd);
+    struct imc *imc;
     BYTE state[256];
+    BOOL ret;
 
-    TRACE("%p %p %x %x %lx\n",hwnd, hKL, vKey, (UINT)lKeyData, unknown);
+    TRACE( "hwnd %p, hkl %p, vkey %#x, lparam %#Ix, unknown %#lx\n", hwnd, hkl, vkey, lparam, unknown );
 
-    if (!(data = get_imc_data( imc ))) return FALSE;
-    imc_select_hkl( data, hKL );
-    if (!data->ime) return FALSE;
+    if (!(imc = get_imc_data( ImmGetContext( hwnd ) ))) return FALSE;
+    imc_select_hkl( imc, hkl );
+    if (!imc->ime) return FALSE;
 
-    GetKeyboardState(state);
-    if (data->ime->pImeProcessKey( imc, vKey, lKeyData, state ))
-    {
-        data->lastVK = vKey;
-        return TRUE;
-    }
+    GetKeyboardState( state );
 
-    data->lastVK = VK_PROCESSKEY;
-    return FALSE;
+    ret = imc->ime->pImeProcessKey( imc->handle, vkey, lparam, state );
+    imc->lastVK = ret ? vkey : VK_PROCESSKEY;
+
+    return ret;
 }
 
 /***********************************************************************
