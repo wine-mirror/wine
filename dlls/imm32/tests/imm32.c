@@ -2505,6 +2505,7 @@ static WCHAR ime_path[MAX_PATH];
 static HIMC default_himc;
 static HKL default_hkl;
 static HKL expect_ime = (HKL)(int)0xe020047f;
+static BOOL skip_DefWindowProc;
 
 enum ime_function
 {
@@ -2703,6 +2704,7 @@ static LRESULT CALLBACK ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, 
     ok( !ptr, "got IMMGWL_PRIVATE %#Ix\n", ptr );
 
     ime_calls[ime_call_count++] = call;
+    if (skip_DefWindowProc) return 0;
     return DefWindowProcW( hwnd, msg, wparam, lparam );
 }
 
@@ -4385,6 +4387,92 @@ cleanup:
     ime_info.dwPrivateDataSize = 0;
 }
 
+static void test_DefWindowProc(void)
+{
+    const struct ime_call start_composition_seq[] =
+    {
+        {.hkl = expect_ime, .himc = default_himc, .func = MSG_IME_UI, .message = {.msg = WM_IME_STARTCOMPOSITION}},
+        {0},
+    };
+    const struct ime_call end_composition_seq[] =
+    {
+        {.hkl = expect_ime, .himc = default_himc, .func = MSG_IME_UI, .message = {.msg = WM_IME_ENDCOMPOSITION}},
+        {0},
+    };
+    const struct ime_call composition_seq[] =
+    {
+        {.hkl = expect_ime, .himc = default_himc, .func = MSG_IME_UI, .message = {.msg = WM_IME_COMPOSITION}},
+        {0},
+    };
+    const struct ime_call set_context_seq[] =
+    {
+        {.hkl = expect_ime, .himc = default_himc, .func = MSG_IME_UI, .message = {.msg = WM_IME_SETCONTEXT}},
+        {0},
+    };
+    const struct ime_call notify_seq[] =
+    {
+        {.hkl = expect_ime, .himc = default_himc, .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY}},
+        {0},
+    };
+    HKL hkl, old_hkl = GetKeyboardLayout( 0 );
+    UINT_PTR ret;
+
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
+
+    if (!(hkl = ime_install())) return;
+
+    hwnd = CreateWindowW( L"static", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    ok_ret( 1, ImmLoadIME( hkl ) );
+    process_messages();
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+    skip_DefWindowProc = TRUE;
+    ok_ret( 0, DefWindowProcW( hwnd, WM_IME_STARTCOMPOSITION, 0, 0 ) );
+    ok_seq( start_composition_seq );
+    ok_ret( 0, DefWindowProcW( hwnd, WM_IME_ENDCOMPOSITION, 0, 0 ) );
+    ok_seq( end_composition_seq );
+    ok_ret( 0, DefWindowProcW( hwnd, WM_IME_COMPOSITION, 0, 0 ) );
+    ok_seq( composition_seq );
+    ok_ret( 0, DefWindowProcW( hwnd, WM_IME_SETCONTEXT, 0, 0 ) );
+    ok_seq( set_context_seq );
+    ok_ret( 0, DefWindowProcW( hwnd, WM_IME_NOTIFY, 0, 0 ) );
+    ok_seq( notify_seq );
+    ok_ret( 0, DefWindowProcW( hwnd, WM_IME_CONTROL, 0, 0 ) );
+    todo_wine ok_seq( empty_sequence );
+    ok_ret( 0, DefWindowProcW( hwnd, WM_IME_COMPOSITIONFULL, 0, 0 ) );
+    ok_seq( empty_sequence );
+    ok_ret( 0, DefWindowProcW( hwnd, WM_IME_SELECT, 0, 0 ) );
+    todo_wine ok_seq( empty_sequence );
+    ok_ret( 0, DefWindowProcW( hwnd, WM_IME_CHAR, 0, 0 ) );
+    ok_seq( empty_sequence );
+    ok_ret( 0, DefWindowProcW( hwnd, 0x287, 0, 0 ) );
+    ok_seq( empty_sequence );
+    ok_ret( 0, DefWindowProcW( hwnd, WM_IME_REQUEST, 0, 0 ) );
+    ok_seq( empty_sequence );
+    ret = DefWindowProcW( hwnd, WM_IME_KEYDOWN, 0, 0 );
+    todo_wine
+    ok_ret( 0, ret );
+    ok_seq( empty_sequence );
+    ret = DefWindowProcW( hwnd, WM_IME_KEYUP, 0, 0 );
+    todo_wine
+    ok_ret( 0, ret );
+    ok_seq( empty_sequence );
+    skip_DefWindowProc = FALSE;
+
+    ok_ret( 1, ImmActivateLayout( old_hkl ) );
+    ok_ret( 1, DestroyWindow( hwnd ) );
+    process_messages();
+
+    ime_cleanup( hkl, TRUE );
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+}
+
 START_TEST(imm32)
 {
     default_hkl = GetKeyboardLayout( 0 );
@@ -4419,6 +4507,7 @@ START_TEST(imm32)
     test_ImmActivateLayout();
     test_ImmCreateInputContext();
     test_ImmProcessKey();
+    test_DefWindowProc();
 
     if (init())
     {
