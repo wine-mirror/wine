@@ -2499,6 +2499,7 @@ enum ime_function
 {
     IME_SELECT = 1,
     IME_NOTIFY,
+    IME_PROCESS_KEY,
 };
 
 struct ime_call
@@ -2516,6 +2517,11 @@ struct ime_call
             int index;
             int value;
         } notify;
+        struct
+        {
+            WORD vkey;
+            LPARAM key_data;
+        } process_key;
     };
 
     BOOL todo;
@@ -2546,6 +2552,10 @@ static int ok_call_( const char *file, int line, const struct ime_call *expected
         if ((ret = expected->notify.index - received->notify.index)) goto done;
         if ((ret = expected->notify.value - received->notify.value)) goto done;
         break;
+    case IME_PROCESS_KEY:
+        if ((ret = expected->process_key.vkey - received->process_key.vkey)) goto done;
+        if ((ret = expected->process_key.key_data - received->process_key.key_data)) goto done;
+        break;
     }
 
 done:
@@ -2561,6 +2571,11 @@ done:
                          received->hkl, received->himc, received->notify.action, received->notify.index,
                          received->notify.value );
         return ret;
+    case IME_PROCESS_KEY:
+        todo_wine_if( expected->todo )
+        ok_(file, line)( !ret, "got hkl %p, himc %p, IME_PROCESS_KEY vkey %#x, key_data %#Ix\n",
+                         received->hkl, received->himc, received->process_key.vkey, received->process_key.key_data );
+        return ret;
     }
 
     switch (expected->func)
@@ -2574,6 +2589,11 @@ done:
         ok_(file, line)( !ret, "hkl %p, himc %p, IME_NOTIFY action %#x, index %#x, value %#x\n",
                          expected->hkl, expected->himc, expected->notify.action, expected->notify.index,
                          expected->notify.value );
+        break;
+    case IME_PROCESS_KEY:
+        todo_wine_if( expected->todo )
+        ok_(file, line)( !ret, "hkl %p, himc %p, IME_PROCESS_KEY vkey %#x, key_data %#Ix\n",
+                         expected->hkl, expected->himc, expected->process_key.vkey, expected->process_key.key_data );
         break;
     }
 
@@ -2772,11 +2792,15 @@ static BOOL WINAPI ime_ImeInquire( IMEINFO *info, WCHAR *ui_class, DWORD flags )
 
 static BOOL WINAPI ime_ImeProcessKey( HIMC himc, UINT vkey, LPARAM key_data, BYTE *key_state )
 {
+    struct ime_call call =
+    {
+        .hkl = GetKeyboardLayout( 0 ), .himc = himc,
+        .func = IME_PROCESS_KEY, .process_key = {.vkey = vkey, .key_data = key_data}
+    };
     ime_trace( "himc %p, vkey %u, key_data %#Ix, key_state %p\n",
                himc, vkey, key_data, key_state );
-    ok_eq( default_hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
-    ok( 0, "unexpected call\n" );
-    return FALSE;
+    ime_calls[ime_call_count++] = call;
+    return TRUE;
 }
 
 static BOOL WINAPI ime_ImeRegisterWord( const WCHAR *reading, DWORD style, const WCHAR *string )
@@ -3800,6 +3824,59 @@ cleanup:
     winetest_pop_context();
 }
 
+static void test_ImmProcessKey(void)
+{
+    const struct ime_call process_key_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = IME_PROCESS_KEY, .process_key = {.vkey = 'A', .key_data = 0},
+        },
+        {0},
+    };
+    HKL hkl, old_hkl = GetKeyboardLayout( 0 );
+    UINT_PTR ret;
+
+    hwnd = CreateWindowW( L"static", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+    ok_ret( 0, ImmProcessKey( hwnd, old_hkl, 'A', 0, 0 ) );
+    ok_seq( empty_sequence );
+
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
+
+    if (!(hkl = ime_install())) goto cleanup;
+
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    ok_ret( 1, ImmLoadIME( hkl ) );
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+    ok_ret( 0, ImmProcessKey( 0, hkl, 'A', 0, 0 ) );
+    ok_seq( empty_sequence );
+
+    ret = ImmProcessKey( hwnd, hkl, 'A', 0, 0 );
+    todo_wine
+    ok_ret( 2, ret );
+    ok_seq( process_key_seq );
+
+    ok_eq( hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
+    ok_ret( 0, ImmProcessKey( hwnd, old_hkl, 'A', 0, 0 ) );
+    todo_wine
+    ok_seq( empty_sequence );
+    ok_eq( hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
+
+    ok_ret( 1, ImmActivateLayout( old_hkl ) );
+
+    ime_cleanup( hkl, TRUE );
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+cleanup:
+    ok_ret( 1, DestroyWindow( hwnd ) );
+}
+
 static void test_ImmActivateLayout(void)
 {
     const struct ime_call activate_seq[] =
@@ -4126,6 +4203,7 @@ START_TEST(imm32)
 
     test_ImmActivateLayout();
     test_ImmCreateInputContext();
+    test_ImmProcessKey();
 
     if (init())
     {
