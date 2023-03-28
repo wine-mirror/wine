@@ -21,7 +21,7 @@
 
 #include <stdlib.h>
 #include <windows.h>
-#include <psapi.h>
+#include <tlhelp32.h>
 #include <wine/debug.h>
 
 #include "taskkill.h"
@@ -33,7 +33,13 @@ static BOOL force_termination = FALSE;
 static WCHAR **task_list;
 static unsigned int task_count;
 
-static DWORD *pid_list, pid_list_size;
+static struct
+{
+    PROCESSENTRY32W p;
+    BOOL matched;
+}
+*process_list;
+static unsigned int process_count;
 
 struct pid_close_info
 {
@@ -127,61 +133,36 @@ static BOOL CALLBACK pid_enum_proc(HWND hwnd, LPARAM lParam)
 
 static BOOL enumerate_processes(void)
 {
-    DWORD alloc_bytes = 1024 * sizeof(*pid_list), needed_bytes;
+    unsigned int alloc_count = 128;
+    void *realloc_list;
+    HANDLE snapshot;
 
-    pid_list = malloc(alloc_bytes);
-    if (!pid_list)
+    snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (snapshot == INVALID_HANDLE_VALUE)
         return FALSE;
 
-    for (;;)
+    process_list = malloc(alloc_count * sizeof(*process_list));
+    if (!process_list)
+        return FALSE;
+
+    process_list[0].p.dwSize = sizeof(process_list[0].p);
+    if (!Process32FirstW(snapshot, &process_list[0].p))
+        return FALSE;
+
+    do
     {
-        DWORD *realloc_list;
-
-        if (!EnumProcesses(pid_list, alloc_bytes, &needed_bytes))
-            return FALSE;
-
-        /* EnumProcesses can't signal an insufficient buffer condition, so the
-         * only way to possibly determine whether a larger buffer is required
-         * is to see whether the written number of bytes is the same as the
-         * buffer size. If so, the buffer will be reallocated to twice the
-         * size. */
-        if (alloc_bytes != needed_bytes)
-            break;
-
-        alloc_bytes *= 2;
-        realloc_list = realloc(pid_list, alloc_bytes);
-        if (!realloc_list)
-            return FALSE;
-        pid_list = realloc_list;
-    }
-
-    pid_list_size = needed_bytes / sizeof(*pid_list);
-    return TRUE;
-}
-
-static BOOL get_process_name_from_pid(DWORD pid, WCHAR *buf, DWORD chars)
-{
-    HANDLE process;
-    HMODULE module;
-    DWORD required_size;
-
-    process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
-    if (!process)
-        return FALSE;
-
-    if (!EnumProcessModules(process, &module, sizeof(module), &required_size))
-    {
-        CloseHandle(process);
-        return FALSE;
-    }
-
-    if (!GetModuleBaseNameW(process, module, buf, chars))
-    {
-        CloseHandle(process);
-        return FALSE;
-    }
-
-    CloseHandle(process);
+        process_list[process_count++].matched = FALSE;
+        if (process_count == alloc_count)
+        {
+            alloc_count *= 2;
+            realloc_list = realloc(process_list, alloc_count * sizeof(*process_list));
+            if (!realloc_list)
+                return FALSE;
+            process_list = realloc_list;
+        }
+        process_list[process_count].p.dwSize = sizeof(process_list[process_count].p);
+    } while (Process32NextW(snapshot, &process_list[process_count].p));
+    CloseHandle(snapshot);
     return TRUE;
 }
 
@@ -204,6 +185,14 @@ static BOOL get_task_pid(const WCHAR *str, BOOL *is_numeric, WCHAR *process_name
     if (*is_numeric)
     {
         *pid = wcstol(str, NULL, 10);
+        for (i = 0; i < process_count; ++i)
+        {
+            if (process_list[i].p.th32ProcessID == *pid)
+                break;
+        }
+        if (i == process_count || process_list[i].matched)
+            goto not_found;
+        process_list[i].matched = TRUE;
         if (*pid == self_pid)
         {
             taskkill_message(STRING_SELF_TERMINATION);
@@ -213,22 +202,24 @@ static BOOL get_task_pid(const WCHAR *str, BOOL *is_numeric, WCHAR *process_name
         return TRUE;
     }
 
-    for (i = 0; i < pid_list_size; ++i)
+    for (i = 0; i < process_count; ++i)
     {
-        if (get_process_name_from_pid(pid_list[i], process_name, MAX_PATH) &&
-                !wcsicmp(process_name, str))
+        if (!wcsicmp(process_list[i].p.szExeFile, str) && !process_list[i].matched)
         {
-            if (pid_list[i] == self_pid)
+            process_list[i].matched = TRUE;
+            if (process_list[i].p.th32ProcessID == self_pid)
             {
                 taskkill_message(STRING_SELF_TERMINATION);
                 *status_code = 1;
                 return FALSE;
             }
-            *pid = pid_list[i];
+            *pid = process_list[i].p.th32ProcessID;
+            wcscpy(process_name, process_list[i].p.szExeFile);
             return TRUE;
         }
     }
 
+not_found:
     taskkill_message_printfW(STRING_SEARCH_FAILED, str);
     *status_code = 128;
     return FALSE;
