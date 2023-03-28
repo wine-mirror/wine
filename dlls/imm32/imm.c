@@ -619,7 +619,6 @@ static BOOL free_input_context_data( HIMC hIMC )
 
     if (data->ui_hwnd) DestroyWindow( data->ui_hwnd );
     data->ime->pImeSelect( hIMC, FALSE );
-    SendMessageW( data->IMC.hWnd, WM_IME_SELECT, FALSE, (LPARAM)data->ime );
 
     ImmDestroyIMCC( data->IMC.hCompStr );
     ImmDestroyIMCC( data->IMC.hCandInfo );
@@ -912,7 +911,6 @@ static struct imc *create_input_context( HIMC default_imc )
     }
 
     imc_select_hkl( new_context, GetKeyboardLayout( 0 ) );
-    SendMessageW( GetFocus(), WM_IME_SELECT, TRUE, (LPARAM)new_context->ime );
 
     TRACE("Created context %p\n", new_context);
     return new_context;
@@ -3164,10 +3162,12 @@ static LRESULT ime_internal_msg( WPARAM wparam, LPARAM lparam)
         break;
     case IME_INTERNAL_HKL_ACTIVATE:
         ImmEnumInputContext( 0, enum_activate_layout, 0 );
-        hwnd = get_ime_ui_window();
+        if (!(hwnd = get_ime_ui_window())) break;
+        SendMessageW( hwnd, WM_IME_SELECT, TRUE, lparam );
         break;
    case IME_INTERNAL_HKL_DEACTIVATE:
-        hwnd = get_ime_ui_window();
+        if (!(hwnd = get_ime_ui_window())) break;
+        SendMessageW( hwnd, WM_IME_SELECT, FALSE, lparam );
         break;
     default:
         FIXME("wparam = %Ix\n", wparam);
