@@ -6541,8 +6541,10 @@ typedef enum _FIRMWARE_TYPE
 #pragma intrinsic(_InterlockedAnd)
 #pragma intrinsic(_InterlockedCompareExchange)
 #pragma intrinsic(_InterlockedCompareExchange64)
+#pragma intrinsic(_InterlockedCompareExchangePointer)
 #pragma intrinsic(_InterlockedExchange)
 #pragma intrinsic(_InterlockedExchangeAdd)
+#pragma intrinsic(_InterlockedExchangePointer)
 #pragma intrinsic(_InterlockedIncrement)
 #pragma intrinsic(_InterlockedIncrement16)
 #pragma intrinsic(_InterlockedDecrement)
@@ -6556,10 +6558,12 @@ BOOLEAN   _BitScanReverse(unsigned long*,unsigned long);
 long      _InterlockedAnd(long volatile *,long);
 long      _InterlockedCompareExchange(long volatile*,long,long);
 long long _InterlockedCompareExchange64(long long volatile*,long long,long long);
+void *    _InterlockedCompareExchangePointer(void *volatile*,void*,void*);
 long      _InterlockedDecrement(long volatile*);
 short     _InterlockedDecrement16(short volatile*);
 long      _InterlockedExchange(long volatile*,long);
 long      _InterlockedExchangeAdd(long volatile*,long);
+void *    _InterlockedExchangePointer(void *volatile*,void*);
 long      _InterlockedIncrement(long volatile*);
 short     _InterlockedIncrement16(short volatile*);
 long      _InterlockedOr(long volatile *,long);
@@ -6569,19 +6573,15 @@ DECLSPEC_NORETURN void __fastfail(unsigned int);
 #ifndef __i386__
 
 #pragma intrinsic(_InterlockedAnd64)
-#pragma intrinsic(_InterlockedCompareExchangePointer)
 #pragma intrinsic(_InterlockedDecrement64)
 #pragma intrinsic(_InterlockedExchangeAdd64)
-#pragma intrinsic(_InterlockedExchangePointer)
 #pragma intrinsic(_InterlockedIncrement64)
 #pragma intrinsic(_InterlockedOr64)
 #pragma intrinsic(_InterlockedXor64)
 
 __int64   _InterlockedAnd64(__int64 volatile *, __int64);
-void *    _InterlockedCompareExchangePointer(void *volatile*,void*,void*);
 __int64   _InterlockedDecrement64(__int64 volatile *);
 __int64   _InterlockedExchangeAdd64(__int64 volatile *, __int64);
-void *    _InterlockedExchangePointer(void *volatile*,void*);
 __int64   _InterlockedIncrement64(__int64 volatile *);
 __int64   _InterlockedOr64(__int64 volatile *, __int64);
 __int64   _InterlockedXor64(__int64 volatile *, __int64);
@@ -6595,21 +6595,11 @@ static FORCEINLINE __int64 InterlockedAnd64( __int64 volatile *dest, __int64 val
     return prev;
 }
 
-static FORCEINLINE void * WINAPI InterlockedCompareExchangePointer( void *volatile *dest, void *xchg, void *compare )
-{
-    return (void *)_InterlockedCompareExchange( (long volatile*)dest, (long)xchg, (long)compare );
-}
-
 static FORCEINLINE __int64 InterlockedExchangeAdd64( __int64 volatile *dest, __int64 val )
 {
     __int64 prev;
     do prev = *dest; while (InterlockedCompareExchange64( dest, prev + val, prev ) != prev);
     return prev;
-}
-
-static FORCEINLINE void * WINAPI InterlockedExchangePointer( void *volatile *dest, void *val )
-{
-    return (void *)_InterlockedExchange( (long volatile*)dest, (long)val );
 }
 
 static FORCEINLINE __int64 InterlockedIncrement64( __int64 volatile *dest )
