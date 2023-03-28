@@ -37,6 +37,7 @@ static struct
 {
     PROCESSENTRY32W p;
     BOOL matched;
+    BOOL is_numeric;
 }
 *process_list;
 static unsigned int process_count;
@@ -151,6 +152,7 @@ static BOOL enumerate_processes(void)
 
     do
     {
+        process_list[process_count].is_numeric = FALSE;
         process_list[process_count++].matched = FALSE;
         if (process_count == alloc_count)
         {
@@ -166,40 +168,42 @@ static BOOL enumerate_processes(void)
     return TRUE;
 }
 
-static BOOL get_task_pid(const WCHAR *str, BOOL *is_numeric, WCHAR *process_name, int *status_code, DWORD *pid)
+static void mark_task_process(const WCHAR *str, int *status_code)
 {
     DWORD self_pid = GetCurrentProcessId();
     const WCHAR *p = str;
+    BOOL is_numeric;
     unsigned int i;
+    DWORD pid;
 
-    *is_numeric = TRUE;
+    is_numeric = TRUE;
     while (*p)
     {
         if (!iswdigit(*p++))
         {
-            *is_numeric = FALSE;
+            is_numeric = FALSE;
             break;
         }
     }
 
-    if (*is_numeric)
+    if (is_numeric)
     {
-        *pid = wcstol(str, NULL, 10);
+        pid = wcstol(str, NULL, 10);
         for (i = 0; i < process_count; ++i)
         {
-            if (process_list[i].p.th32ProcessID == *pid)
+            if (process_list[i].p.th32ProcessID == pid)
                 break;
         }
         if (i == process_count || process_list[i].matched)
             goto not_found;
         process_list[i].matched = TRUE;
-        if (*pid == self_pid)
+        process_list[i].is_numeric = TRUE;
+        if (pid == self_pid)
         {
             taskkill_message(STRING_SELF_TERMINATION);
             *status_code = 1;
-            return FALSE;
         }
-        return TRUE;
+        return;
     }
 
     for (i = 0; i < process_count; ++i)
@@ -211,18 +215,27 @@ static BOOL get_task_pid(const WCHAR *str, BOOL *is_numeric, WCHAR *process_name
             {
                 taskkill_message(STRING_SELF_TERMINATION);
                 *status_code = 1;
-                return FALSE;
             }
-            *pid = process_list[i].p.th32ProcessID;
-            wcscpy(process_name, process_list[i].p.szExeFile);
-            return TRUE;
+            return;
         }
     }
 
 not_found:
     taskkill_message_printfW(STRING_SEARCH_FAILED, str);
     *status_code = 128;
-    return FALSE;
+}
+
+static void taskkill_message_print_process(int msg, unsigned int index)
+{
+    WCHAR pid_str[16];
+
+    if (!process_list[index].is_numeric)
+    {
+        taskkill_message_printfW(msg, process_list[index].p.szExeFile);
+        return;
+    }
+    wsprintfW(pid_str, L"%lu", process_list[index].p.th32ProcessID);
+    taskkill_message_printfW(msg, pid_str);
 }
 
 /* The implemented task enumeration and termination behavior does not
@@ -241,28 +254,28 @@ not_found:
  * system processes. */
 static int send_close_messages(void)
 {
-    WCHAR process_name[MAX_PATH];
+    const WCHAR *process_name;
     struct pid_close_info info;
     unsigned int i;
     int status_code = 0;
-    BOOL is_numeric;
 
     for (i = 0; i < task_count; i++)
     {
-        if (!get_task_pid(task_list[i], &is_numeric, process_name, &status_code, &info.pid))
+        if (!process_list[i].matched)
             continue;
-
+        info.pid = process_list[i].p.th32ProcessID;
+        process_name = process_list[i].p.szExeFile;
         info.found = FALSE;
         EnumWindows(pid_enum_proc, (LPARAM)&info);
         if (info.found)
         {
-            if (is_numeric)
+            if (process_list[i].is_numeric)
                 taskkill_message_printfW(STRING_CLOSE_PID_SEARCH, info.pid);
             else
                 taskkill_message_printfW(STRING_CLOSE_PROC_SRCH, process_name, info.pid);
             continue;
         }
-        taskkill_message_printfW(STRING_SEARCH_FAILED, task_list[i]);
+        taskkill_message_print_process(STRING_SEARCH_FAILED, i);
         status_code = 128;
     }
 
@@ -271,36 +284,37 @@ static int send_close_messages(void)
 
 static int terminate_processes(void)
 {
-    WCHAR process_name[MAX_PATH];
+    const WCHAR *process_name;
     unsigned int i;
     int status_code = 0;
-    BOOL is_numeric;
     HANDLE process;
     DWORD pid;
 
-    for (i = 0; i < task_count; i++)
+    for (i = 0; i < process_count; i++)
     {
-        if (!get_task_pid(task_list[i], &is_numeric, process_name, &status_code, &pid))
+        if (!process_list[i].matched)
             continue;
 
+        pid = process_list[i].p.th32ProcessID;
+        process_name = process_list[i].p.szExeFile;
         process = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
         if (!process)
         {
-            taskkill_message_printfW(STRING_SEARCH_FAILED, task_list[i]);
+            taskkill_message_print_process(STRING_SEARCH_FAILED, i);
             status_code = 128;
             continue;
         }
         if (!TerminateProcess(process, 1))
         {
-            taskkill_message_printfW(STRING_TERMINATE_FAILED, task_list[i]);
+            taskkill_message_print_process(STRING_TERMINATE_FAILED, i);
             status_code = 1;
             CloseHandle(process);
             continue;
         }
-        if (is_numeric)
+        if (process_list[i].is_numeric)
             taskkill_message_printfW(STRING_TERM_PID_SEARCH, pid);
         else
-            taskkill_message_printfW(STRING_TERM_PROC_SEARCH, task_list[i], pid);
+            taskkill_message_printfW(STRING_TERM_PROC_SEARCH, process_name, pid);
         CloseHandle(process);
     }
     return status_code;
@@ -414,6 +428,9 @@ static BOOL process_arguments(int argc, WCHAR *argv[])
 
 int __cdecl wmain(int argc, WCHAR *argv[])
 {
+    int search_status = 0, terminate_status;
+    unsigned int i;
+
     if (!process_arguments(argc, argv))
         return 1;
 
@@ -423,7 +440,12 @@ int __cdecl wmain(int argc, WCHAR *argv[])
         return 1;
     }
 
+    for (i = 0; i < task_count; ++i)
+        mark_task_process(task_list[i], &search_status);
+
     if (force_termination)
-        return terminate_processes();
-    return send_close_messages();
+        terminate_status = terminate_processes();
+    else
+        terminate_status = send_close_messages();
+    return search_status ? search_status : terminate_status;
 }
