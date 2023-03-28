@@ -186,6 +186,12 @@ typedef enum
     TASK_COLLECTION_CANCELLED
 } _TaskCollectionStatus;
 
+typedef enum
+{
+    STRUCTURED_TASK_COLLECTION_CANCELLED   = 0x2,
+    STRUCTURED_TASK_COLLECTION_STATUS_MASK = 0x7
+} _StructuredTaskCollectionStatusBits;
+
 typedef struct _UnrealizedChore
 {
     const vtable_ptr *vtable;
@@ -1976,7 +1982,7 @@ static LONG CALLBACK execute_chore_except(EXCEPTION_POINTERS *pexc, void *_data)
 
     new_exception = data->task_collection->exception;
     do {
-        if ((ULONG_PTR)new_exception & ~0x7) {
+        if ((ULONG_PTR)new_exception & ~STRUCTURED_TASK_COLLECTION_STATUS_MASK) {
             __ExceptionPtrDestroy(ptr);
             operator_delete(ptr);
             break;
@@ -1999,7 +2005,8 @@ static void execute_chore(_UnrealizedChore *chore,
 
     __TRY
     {
-        if (!((ULONG_PTR)task_collection->exception & ~0x7) && chore->chore_proc)
+        if (!((ULONG_PTR)task_collection->exception & ~STRUCTURED_TASK_COLLECTION_STATUS_MASK) &&
+                chore->chore_proc)
             chore->chore_proc(chore);
     }
     __EXCEPT_CTX(execute_chore_except, &data)
@@ -2172,6 +2179,7 @@ _TaskCollectionStatus __stdcall _StructuredTaskCollection__RunAndWait(
 {
     LONG expected, val;
     ULONG_PTR exception;
+    exception_ptr *ep;
 
     TRACE("(%p %p)\n", this, chore);
 
@@ -2199,8 +2207,8 @@ _TaskCollectionStatus __stdcall _StructuredTaskCollection__RunAndWait(
     this->count = 0;
 
     exception = (ULONG_PTR)this->exception;
-    if (exception & ~0x7) {
-        exception_ptr *ep = (exception_ptr*)(exception & ~0x7);
+    ep = (exception_ptr*)(exception & ~STRUCTURED_TASK_COLLECTION_STATUS_MASK);
+    if (ep) {
         this->exception = 0;
         __TRY
         {
