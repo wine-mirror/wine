@@ -136,10 +136,7 @@ static DWORD *enumerate_processes(DWORD *list_count)
         DWORD *realloc_list;
 
         if (!EnumProcesses(pid_list, alloc_bytes, &needed_bytes))
-        {
-            free(pid_list);
             return NULL;
-        }
 
         /* EnumProcesses can't signal an insufficient buffer condition, so the
          * only way to possibly determine whether a larger buffer is required
@@ -152,10 +149,7 @@ static DWORD *enumerate_processes(DWORD *list_count)
         alloc_bytes *= 2;
         realloc_list = realloc(pid_list, alloc_bytes);
         if (!realloc_list)
-        {
-            free(pid_list);
             return NULL;
-        }
         pid_list = realloc_list;
     }
 
@@ -288,7 +282,6 @@ static int send_close_messages(void)
         }
     }
 
-    free(pid_list);
     return status_code;
 }
 
@@ -403,7 +396,6 @@ static int terminate_processes(void)
         }
     }
 
-    free(pid_list);
     return status_code;
 }
 
@@ -515,19 +507,10 @@ static BOOL process_arguments(int argc, WCHAR *argv[])
 
 int __cdecl wmain(int argc, WCHAR *argv[])
 {
-    int status_code = 0;
-
     if (!process_arguments(argc, argv))
-    {
-        free(task_list);
         return 1;
-    }
 
     if (force_termination)
-        status_code = terminate_processes();
-    else
-        status_code = send_close_messages();
-
-    free(task_list);
-    return status_code;
+        return terminate_processes();
+    return send_close_messages();
 }
