@@ -185,6 +185,55 @@ static BOOL get_process_name_from_pid(DWORD pid, WCHAR *buf, DWORD chars)
     return TRUE;
 }
 
+static BOOL get_task_pid(const WCHAR *str, BOOL *is_numeric, WCHAR *process_name, int *status_code, DWORD *pid)
+{
+    DWORD self_pid = GetCurrentProcessId();
+    const WCHAR *p = str;
+    unsigned int i;
+
+    *is_numeric = TRUE;
+    while (*p)
+    {
+        if (!iswdigit(*p++))
+        {
+            *is_numeric = FALSE;
+            break;
+        }
+    }
+
+    if (*is_numeric)
+    {
+        *pid = wcstol(str, NULL, 10);
+        if (*pid == self_pid)
+        {
+            taskkill_message(STRING_SELF_TERMINATION);
+            *status_code = 1;
+            return FALSE;
+        }
+        return TRUE;
+    }
+
+    for (i = 0; i < pid_list_size; ++i)
+    {
+        if (get_process_name_from_pid(pid_list[i], process_name, MAX_PATH) &&
+                !wcsicmp(process_name, str))
+        {
+            if (pid_list[i] == self_pid)
+            {
+                taskkill_message(STRING_SELF_TERMINATION);
+                *status_code = 1;
+                return FALSE;
+            }
+            *pid = pid_list[i];
+            return TRUE;
+        }
+    }
+
+    taskkill_message_printfW(STRING_SEARCH_FAILED, str);
+    *status_code = 128;
+    return FALSE;
+}
+
 /* The implemented task enumeration and termination behavior does not
  * exactly match native behavior. On Windows:
  *
@@ -201,79 +250,29 @@ static BOOL get_process_name_from_pid(DWORD pid, WCHAR *buf, DWORD chars)
  * system processes. */
 static int send_close_messages(void)
 {
-    DWORD self_pid = GetCurrentProcessId();
+    WCHAR process_name[MAX_PATH];
+    struct pid_close_info info;
     unsigned int i;
     int status_code = 0;
+    BOOL is_numeric;
 
     for (i = 0; i < task_count; i++)
     {
-        WCHAR *p = task_list[i];
-        BOOL is_numeric = TRUE;
+        if (!get_task_pid(task_list[i], &is_numeric, process_name, &status_code, &info.pid))
+            continue;
 
-        /* Determine whether the string is not numeric. */
-        while (*p)
+        info.found = FALSE;
+        EnumWindows(pid_enum_proc, (LPARAM)&info);
+        if (info.found)
         {
-            if (!iswdigit(*p++))
-            {
-                is_numeric = FALSE;
-                break;
-            }
-        }
-
-        if (is_numeric)
-        {
-            DWORD pid = wcstol(task_list[i], NULL, 10);
-            struct pid_close_info info = { pid };
-
-            if (pid == self_pid)
-            {
-                taskkill_message(STRING_SELF_TERMINATION);
-                status_code = 1;
-                continue;
-            }
-
-            EnumWindows(pid_enum_proc, (LPARAM)&info);
-            if (info.found)
-                taskkill_message_printfW(STRING_CLOSE_PID_SEARCH, pid);
+            if (is_numeric)
+                taskkill_message_printfW(STRING_CLOSE_PID_SEARCH, info.pid);
             else
-            {
-                taskkill_message_printfW(STRING_SEARCH_FAILED, task_list[i]);
-                status_code = 128;
-            }
+                taskkill_message_printfW(STRING_CLOSE_PROC_SRCH, process_name, info.pid);
+            continue;
         }
-        else
-        {
-            DWORD index;
-            BOOL found_process = FALSE;
-
-            for (index = 0; index < pid_list_size; index++)
-            {
-                WCHAR process_name[MAX_PATH];
-
-                if (get_process_name_from_pid(pid_list[index], process_name, MAX_PATH) &&
-                    !wcsicmp(process_name, task_list[i]))
-                {
-                    struct pid_close_info info = { pid_list[index] };
-
-                    found_process = TRUE;
-                    if (pid_list[index] == self_pid)
-                    {
-                        taskkill_message(STRING_SELF_TERMINATION);
-                        status_code = 1;
-                        continue;
-                    }
-
-                    EnumWindows(pid_enum_proc, (LPARAM)&info);
-                    taskkill_message_printfW(STRING_CLOSE_PROC_SRCH, process_name, pid_list[index]);
-                }
-            }
-
-            if (!found_process)
-            {
-                taskkill_message_printfW(STRING_SEARCH_FAILED, task_list[i]);
-                status_code = 128;
-            }
-        }
+        taskkill_message_printfW(STRING_SEARCH_FAILED, task_list[i]);
+        status_code = 128;
     }
 
     return status_code;
@@ -281,107 +280,38 @@ static int send_close_messages(void)
 
 static int terminate_processes(void)
 {
-    DWORD self_pid = GetCurrentProcessId();
+    WCHAR process_name[MAX_PATH];
     unsigned int i;
     int status_code = 0;
+    BOOL is_numeric;
+    HANDLE process;
+    DWORD pid;
 
     for (i = 0; i < task_count; i++)
     {
-        WCHAR *p = task_list[i];
-        BOOL is_numeric = TRUE;
+        if (!get_task_pid(task_list[i], &is_numeric, process_name, &status_code, &pid))
+            continue;
 
-        /* Determine whether the string is not numeric. */
-        while (*p)
+        process = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+        if (!process)
         {
-            if (!iswdigit(*p++))
-            {
-                is_numeric = FALSE;
-                break;
-            }
+            taskkill_message_printfW(STRING_SEARCH_FAILED, task_list[i]);
+            status_code = 128;
+            continue;
         }
-
-        if (is_numeric)
+        if (!TerminateProcess(process, 1))
         {
-            DWORD pid = wcstol(task_list[i], NULL, 10);
-            HANDLE process;
-
-            if (pid == self_pid)
-            {
-                taskkill_message(STRING_SELF_TERMINATION);
-                status_code = 1;
-                continue;
-            }
-
-            process = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
-            if (!process)
-            {
-                taskkill_message_printfW(STRING_SEARCH_FAILED, task_list[i]);
-                status_code = 128;
-                continue;
-            }
-
-            if (!TerminateProcess(process, 1))
-            {
-                taskkill_message_printfW(STRING_TERMINATE_FAILED, task_list[i]);
-                status_code = 1;
-                CloseHandle(process);
-                continue;
-            }
-
-            taskkill_message_printfW(STRING_TERM_PID_SEARCH, pid);
+            taskkill_message_printfW(STRING_TERMINATE_FAILED, task_list[i]);
+            status_code = 1;
             CloseHandle(process);
+            continue;
         }
+        if (is_numeric)
+            taskkill_message_printfW(STRING_TERM_PID_SEARCH, pid);
         else
-        {
-            DWORD index;
-            BOOL found_process = FALSE;
-
-            for (index = 0; index < pid_list_size; index++)
-            {
-                WCHAR process_name[MAX_PATH];
-
-                if (get_process_name_from_pid(pid_list[index], process_name, MAX_PATH) &&
-                    !wcsicmp(process_name, task_list[i]))
-                {
-                    HANDLE process;
-
-                    if (pid_list[index] == self_pid)
-                    {
-                        taskkill_message(STRING_SELF_TERMINATION);
-                        status_code = 1;
-                        continue;
-                    }
-
-                    process = OpenProcess(PROCESS_TERMINATE, FALSE, pid_list[index]);
-                    if (!process)
-                    {
-                        taskkill_message_printfW(STRING_SEARCH_FAILED, task_list[i]);
-                        status_code = 128;
-                        continue;
-                    }
-
-                    if (!TerminateProcess(process, 1))
-                    {
-                        taskkill_message_printfW(STRING_TERMINATE_FAILED, task_list[i]);
-                        status_code = 1;
-                        CloseHandle(process);
-                        continue;
-                    }
-
-                    found_process = TRUE;
-                    taskkill_message_printfW(STRING_TERM_PROC_SEARCH, task_list[i], pid_list[index]);
-                    CloseHandle(process);
-                }
-            }
-
-            if (!found_process)
-            {
-                taskkill_message_printfW(STRING_SEARCH_FAILED, task_list[i]);
-                status_code = 128;
-            }
-        }
+            taskkill_message_printfW(STRING_TERM_PROC_SEARCH, task_list[i], pid);
+        CloseHandle(process);
     }
-
     return status_code;
 }
 
