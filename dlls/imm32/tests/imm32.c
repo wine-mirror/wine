@@ -2527,7 +2527,7 @@ static struct ime_call ime_calls[1024];
 static ULONG ime_call_count;
 
 #define ok_call( a, b ) ok_call_( __FILE__, __LINE__, a, b )
-static void ok_call_( const char *file, int line, const struct ime_call *expected, const struct ime_call *received )
+static int ok_call_( const char *file, int line, const struct ime_call *expected, const struct ime_call *received )
 {
     int ret;
 
@@ -2554,13 +2554,13 @@ done:
     case IME_SELECT:
         todo_wine_if( expected->todo )
         ok_(file, line)( !ret, "got hkl %p, himc %p, IME_SELECT select %u\n", received->hkl, received->himc, received->select );
-        return;
+        return ret;
     case IME_NOTIFY:
         todo_wine_if( expected->todo )
         ok_(file, line)( !ret, "got hkl %p, himc %p, IME_NOTIFY action %#x, index %#x, value %#x\n",
                          received->hkl, received->himc, received->notify.action, received->notify.index,
                          received->notify.value );
-        return;
+        return ret;
     }
 
     switch (expected->func)
@@ -2576,21 +2576,28 @@ done:
                          expected->notify.value );
         break;
     }
+
+    return 0;
 }
 
 #define ok_seq( a ) ok_seq_( __FILE__, __LINE__, a, #a )
 static void ok_seq_( const char *file, int line, const struct ime_call *expected, const char *context )
 {
     const struct ime_call *received = ime_calls;
-    UINT i = 0;
+    UINT i = 0, ret;
 
     while (expected->func || received->func)
     {
         winetest_push_context( "%u%s%s", i++, !expected->func ? " (spurious)" : "",
                                !received->func ? " (missing)" : "" );
-        ok_call_( file, line, expected, received );
-        if (expected->func) expected++;
-        if (received->func) received++;
+        ret = ok_call_( file, line, expected, received );
+        if (ret && expected->todo && !strcmp( winetest_platform, "wine" ))
+            expected++;
+        else
+        {
+            if (expected->func) expected++;
+            if (received->func) received++;
+        }
         winetest_pop_context();
     }
 
@@ -3813,7 +3820,6 @@ static void test_ImmActivateLayout(void)
         {
             .hkl = default_hkl, .himc = default_himc,
             .func = IME_SELECT, .select = 0,
-            .todo = TRUE,
         },
         {0},
     };
@@ -3822,6 +3828,20 @@ static void test_ImmActivateLayout(void)
         {
             .hkl = expect_ime, .himc = default_himc,
             .func = IME_SELECT, .select = 1,
+            .todo = TRUE,
+        },
+        {0},
+    };
+    const struct ime_call deactivate_with_window_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = IME_NOTIFY, .notify = {.action = NI_COMPOSITIONSTR, .index = CPS_CANCEL, .value = 0},
+            .todo = TRUE,
+        },
+        {
+            .hkl = default_hkl, .himc = default_himc,
+            .func = IME_SELECT, .select = 0,
             .todo = TRUE,
         },
         {0},
@@ -3902,7 +3922,7 @@ static void test_ImmActivateLayout(void)
     ok_eq( hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
 
     ok_eq( hkl, ActivateKeyboardLayout( old_hkl, 0 ), HKL, "%p" );
-    ok_seq( deactivate_seq );
+    ok_seq( deactivate_with_window_seq );
 
     ok_eq( old_hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
 
@@ -3967,12 +3987,12 @@ static void test_ImmCreateInputContext(void)
         {
             .hkl = default_hkl, .himc = default_himc,
             .func = IME_SELECT, .select = 0,
-            .todo = TRUE, .flaky_himc = TRUE,
+            .flaky_himc = TRUE,
         },
         {
             .hkl = default_hkl, .himc = 0/*himc[0]*/,
             .func = IME_SELECT, .select = 0,
-            .todo = TRUE, .flaky_himc = TRUE,
+            .flaky_himc = TRUE,
         },
         {0},
     };
