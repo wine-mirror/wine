@@ -493,6 +493,34 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         DeleteObject(rgn);
         return ret;
     }
+    case EMR_BITBLT:
+    {
+        const EMRBITBLT *p = (const EMRBITBLT *)rec;
+        const BITMAPINFO *bi = (const BITMAPINFO *)((BYTE *)p + p->offBmiSrc);
+        const BYTE *src_bits = (BYTE *)p + p->offBitsSrc;
+        EMRSTRETCHBLT blt;
+
+
+        blt.rclBounds = p->rclBounds;
+        blt.xDest = p->xDest;
+        blt.yDest = p->yDest;
+        blt.cxDest = p->cxDest;
+        blt.cyDest = p->cyDest;
+        blt.dwRop = p->dwRop;
+        blt.xSrc = p->xSrc;
+        blt.ySrc = p->ySrc;
+        blt.xformSrc = p->xformSrc;
+        blt.crBkColorSrc = p->crBkColorSrc;
+        blt.iUsageSrc = p->iUsageSrc;
+        blt.offBmiSrc = p->offBmiSrc;
+        blt.cbBmiSrc = p->cbBmiSrc;
+        blt.offBitsSrc = p->offBitsSrc;
+        blt.cbBitsSrc = p->cbBitsSrc;
+        blt.cxSrc = p->cxDest;
+        blt.cySrc = p->cyDest;
+
+        return stretch_blt(&data->pdev->dev, &blt, bi, src_bits);
+    }
     case EMR_STRETCHBLT:
     {
         const EMRSTRETCHBLT *p = (const EMRSTRETCHBLT *)rec;
