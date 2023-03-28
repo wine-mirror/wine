@@ -2927,7 +2927,7 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
     case WM_IME_CONTROL:
         {
             HWND ime_hwnd = get_default_ime_window( hwnd );
-            if (ime_hwnd)
+            if (ime_hwnd && ime_hwnd != NtUserGetParent( hwnd ))
                 result = NtUserMessageCall( ime_hwnd, msg, wparam, lparam,
                                             0, NtUserSendMessage, ansi );
         }

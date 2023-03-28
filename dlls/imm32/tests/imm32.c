@@ -2505,7 +2505,6 @@ static WCHAR ime_path[MAX_PATH];
 static HIMC default_himc;
 static HKL default_hkl;
 static HKL expect_ime = (HKL)(int)0xe020047f;
-static BOOL skip_DefWindowProc;
 
 enum ime_function
 {
@@ -2704,7 +2703,6 @@ static LRESULT CALLBACK ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, 
     ok( !ptr, "got IMMGWL_PRIVATE %#Ix\n", ptr );
 
     ime_calls[ime_call_count++] = call;
-    if (skip_DefWindowProc) return 0;
     return DefWindowProcW( hwnd, msg, wparam, lparam );
 }
 
@@ -4431,7 +4429,6 @@ static void test_DefWindowProc(void)
     memset( ime_calls, 0, sizeof(ime_calls) );
     ime_call_count = 0;
 
-    skip_DefWindowProc = TRUE;
     ok_ret( 0, DefWindowProcW( hwnd, WM_IME_STARTCOMPOSITION, 0, 0 ) );
     ok_seq( start_composition_seq );
     ok_ret( 0, DefWindowProcW( hwnd, WM_IME_ENDCOMPOSITION, 0, 0 ) );
@@ -4462,7 +4459,6 @@ static void test_DefWindowProc(void)
     todo_wine
     ok_ret( 0, ret );
     ok_seq( empty_sequence );
-    skip_DefWindowProc = FALSE;
 
     ok_ret( 1, ImmActivateLayout( old_hkl ) );
     ok_ret( 1, DestroyWindow( hwnd ) );
