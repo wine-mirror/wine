@@ -3033,6 +3033,7 @@ BOOL WINAPI ImmProcessKey( HWND hwnd, HKL hkl, UINT vkey, LPARAM lparam, DWORD u
 
     TRACE( "hwnd %p, hkl %p, vkey %#x, lparam %#Ix, unknown %#lx\n", hwnd, hkl, vkey, lparam, unknown );
 
+    if (hkl != GetKeyboardLayout( 0 )) return FALSE;
     if (!(imc = get_imc_data( ImmGetContext( hwnd ) ))) return FALSE;
     imc_select_hkl( imc, hkl );
     if (!imc->ime) return FALSE;
