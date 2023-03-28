@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <math.h>
 #include <stdlib.h>
 
 #include <windows.h>
@@ -131,6 +132,11 @@ static struct pp_data* get_handle_data(HANDLE pp)
     return ret;
 }
 
+static inline INT GDI_ROUND(double val)
+{
+    return (int)floor(val + 0.5);
+}
+
 static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         const ENHMETARECORD *rec, int n, LPARAM arg)
 {
@@ -241,6 +247,32 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
             FIXME("unhandled object type %ld\n", GetObjectType(obj));
             return 1;
         }
+    }
+    case EMR_ANGLEARC:
+    {
+        const EMRANGLEARC *p = (const EMRANGLEARC *)rec;
+        int arc_dir = SetArcDirection(data->pdev->dev.hdc,
+                p->eSweepAngle >= 0 ? AD_COUNTERCLOCKWISE : AD_CLOCKWISE);
+        EMRARCTO arcto;
+        int ret;
+
+        arcto.emr.iType = EMR_ARCTO;
+        arcto.rclBox.left = p->ptlCenter.x - p->nRadius;
+        arcto.rclBox.top = p->ptlCenter.y - p->nRadius;
+        arcto.rclBox.right = p->ptlCenter.x + p->nRadius;
+        arcto.rclBox.bottom = p->ptlCenter.y + p->nRadius;
+        arcto.ptlStart.x = GDI_ROUND(p->ptlCenter.x +
+                cos(p->eStartAngle * M_PI / 180) * p->nRadius);
+        arcto.ptlStart.y = GDI_ROUND(p->ptlCenter.y -
+                sin(p->eStartAngle * M_PI / 180) * p->nRadius);
+        arcto.ptlEnd.x = GDI_ROUND(p->ptlCenter.x +
+                cos((p->eStartAngle + p->eSweepAngle) * M_PI / 180) * p->nRadius);
+        arcto.ptlEnd.y = GDI_ROUND(p->ptlCenter.y -
+                sin((p->eStartAngle + p->eSweepAngle) * M_PI / 180) * p->nRadius);
+
+        ret = hmf_proc(hdc, htable, (ENHMETARECORD *)&arcto, n, arg);
+        SetArcDirection(data->pdev->dev.hdc, arc_dir);
+        return ret;
     }
     case EMR_ELLIPSE:
     {
