@@ -163,7 +163,7 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_Open(IDirectMusicSynth8 *iface, DMU
         modified = TRUE;
     params->fShare = FALSE;
 
-    if (params->dwSize >= sizeof(params)) {
+    if (params->dwSize >= sizeof(*params)) {
         if (params->dwValidParams & DMUS_PORTPARAMS_FEATURES && params->dwFeatures) {
             if (params->dwFeatures & ~(DMUS_PORT_FEATURE_AUDIOPATH|DMUS_PORT_FEATURE_STREAMING)) {
                 modified = TRUE;
