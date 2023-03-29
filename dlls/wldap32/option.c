@@ -96,6 +96,9 @@ ULONG CDECL ldap_get_optionA( LDAP *ld, int option, void *value )
     case WLDAP32_LDAP_OPT_TIMELIMIT:
         return ldap_get_optionW( ld, option, value );
 
+    case WLDAP32_LDAP_OPT_REFERRAL_HOP_LIMIT:
+        return ldap_get_optionW( ld, LDAP_OPT_REFHOPLIMIT, value );
+
     case WLDAP32_LDAP_OPT_CACHE_ENABLE:
     case WLDAP32_LDAP_OPT_CACHE_FN_PTRS:
     case WLDAP32_LDAP_OPT_CACHE_STRATEGY:
@@ -122,7 +125,6 @@ ULONG CDECL ldap_get_optionA( LDAP *ld, int option, void *value )
     case WLDAP32_LDAP_OPT_PROMPT_CREDENTIALS:
     case WLDAP32_LDAP_OPT_REF_DEREF_CONN_PER_MSG:
     case WLDAP32_LDAP_OPT_REFERRAL_CALLBACK:
-    case WLDAP32_LDAP_OPT_REFERRAL_HOP_LIMIT:
     case WLDAP32_LDAP_OPT_ROOTDSE_CACHE:
     case WLDAP32_LDAP_OPT_SASL_METHOD:
     case WLDAP32_LDAP_OPT_SECURITY_CONTEXT:
@@ -215,6 +217,9 @@ ULONG CDECL ldap_get_optionW( LDAP *ld, int option, void *value )
     case WLDAP32_LDAP_OPT_TIMELIMIT:
         return map_error( ldap_get_option( CTX(ld), option, value ) );
 
+    case WLDAP32_LDAP_OPT_REFERRAL_HOP_LIMIT:
+        return map_error( ldap_get_option( CTX(ld), LDAP_OPT_REFHOPLIMIT, value ) );
+
     case WLDAP32_LDAP_OPT_CACHE_ENABLE:
     case WLDAP32_LDAP_OPT_CACHE_FN_PTRS:
     case WLDAP32_LDAP_OPT_CACHE_STRATEGY:
@@ -241,7 +246,6 @@ ULONG CDECL ldap_get_optionW( LDAP *ld, int option, void *value )
     case WLDAP32_LDAP_OPT_PROMPT_CREDENTIALS:
     case WLDAP32_LDAP_OPT_REF_DEREF_CONN_PER_MSG:
     case WLDAP32_LDAP_OPT_REFERRAL_CALLBACK:
-    case WLDAP32_LDAP_OPT_REFERRAL_HOP_LIMIT:
     case WLDAP32_LDAP_OPT_ROOTDSE_CACHE:
     case WLDAP32_LDAP_OPT_SASL_METHOD:
     case WLDAP32_LDAP_OPT_SECURITY_CONTEXT:
@@ -459,8 +463,7 @@ ULONG CDECL ldap_set_optionW( LDAP *ld, int option, void *value )
         return map_error( ldap_set_option( CTX(ld), option, value ) );
     }
     case WLDAP32_LDAP_OPT_REFERRAL_HOP_LIMIT:
-        FIXME( "ignoring referral hop limit\n" );
-        return WLDAP32_LDAP_SUCCESS;
+        return map_error( ldap_set_option( CTX(ld), LDAP_OPT_REFHOPLIMIT, value ) );
 
     case WLDAP32_LDAP_OPT_SERVER_CERTIFICATE:
         CERT_CALLBACK(ld) = value;
