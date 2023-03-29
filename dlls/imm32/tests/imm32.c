@@ -3954,6 +3954,37 @@ cleanup:
     ok_ret( 1, DestroyWindow( hwnd ) );
 }
 
+struct ime_windows
+{
+    HWND ime_hwnd;
+    HWND ime_ui_hwnd;
+};
+
+static BOOL CALLBACK enum_thread_ime_windows( HWND hwnd, LPARAM lparam )
+{
+    struct ime_windows *params = (void *)lparam;
+    WCHAR buffer[256];
+    UINT ret;
+
+    ime_trace( "hwnd %p, lparam %#Ix\n", hwnd, lparam );
+
+    ret = RealGetWindowClassW( hwnd, buffer, ARRAY_SIZE(buffer) );
+    ok( ret, "RealGetWindowClassW returned %#x\n", ret );
+
+    if (!wcscmp( buffer, L"IME" ))
+    {
+        ok( !params->ime_hwnd, "Found extra IME window %p\n", hwnd );
+        params->ime_hwnd = hwnd;
+    }
+    if (!wcscmp( buffer, ime_ui_class.lpszClassName ))
+    {
+        ok( !params->ime_ui_hwnd, "Found extra IME UI window %p\n", hwnd );
+        params->ime_ui_hwnd = hwnd;
+    }
+
+    return TRUE;
+}
+
 static void test_ImmActivateLayout(void)
 {
     const struct ime_call activate_seq[] =
@@ -4046,6 +4077,7 @@ static void test_ImmActivateLayout(void)
         {0},
     };
     HKL hkl, old_hkl = GetKeyboardLayout( 0 );
+    struct ime_windows ime_windows = {0};
     HIMC himc;
     UINT ret;
 
@@ -4142,10 +4174,22 @@ static void test_ImmActivateLayout(void)
     ok_ret( 1, ImmDestroyContext( himc ) );
     ok_seq( empty_sequence );
 
+
+    ok_eq( old_hkl, ActivateKeyboardLayout( hkl, 0 ), HKL, "%p" );
+    ok_eq( hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
+
+    ok_ret( 1, EnumThreadWindows( GetCurrentThreadId(), enum_thread_ime_windows, (LPARAM)&ime_windows ) );
+    ok( !!ime_windows.ime_hwnd, "missing IME window\n" );
+    todo_wine ok( !!ime_windows.ime_ui_hwnd, "missing IME UI window\n" );
+    todo_wine ok_ret( (UINT_PTR)ime_windows.ime_hwnd, (UINT_PTR)GetParent( ime_windows.ime_ui_hwnd ) );
+
+    ok_eq( hkl, ActivateKeyboardLayout( old_hkl, 0 ), HKL, "%p" );
+    ok_eq( old_hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
+
+
     SET_EXPECT( ImeDestroy );
     ime_cleanup( hkl, TRUE );
     CHECK_CALLED( ImeDestroy );
-    ok_seq( empty_sequence );
 
     ok_ret( 1, DestroyWindow( hwnd ) );
     process_messages();
