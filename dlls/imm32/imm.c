@@ -942,8 +942,8 @@ static HWND get_ime_ui_window(void)
 
     if (!imc->ui_hwnd)
     {
-        imc->ui_hwnd = CreateWindowExW( WS_EX_TOOLWINDOW, imc->ime->ui_class, NULL,
-                                        WS_POPUP, 0, 0, 1, 1, 0, 0, imc->ime->module, 0 );
+        imc->ui_hwnd = CreateWindowExW( WS_EX_TOOLWINDOW, imc->ime->ui_class, NULL, WS_POPUP, 0, 0, 1, 1,
+                                        ImmGetDefaultIMEWnd( 0 ), 0, imc->ime->module, 0 );
         SetWindowLongPtrW( imc->ui_hwnd, IMMGWL_IMC, (LONG_PTR)imc->handle );
     }
     return imc->ui_hwnd;

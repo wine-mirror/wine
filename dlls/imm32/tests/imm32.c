@@ -4184,7 +4184,7 @@ static void test_ImmActivateLayout(void)
     ok_ret( 1, EnumThreadWindows( GetCurrentThreadId(), enum_thread_ime_windows, (LPARAM)&ime_windows ) );
     ok( !!ime_windows.ime_hwnd, "missing IME window\n" );
     ok( !!ime_windows.ime_ui_hwnd, "missing IME UI window\n" );
-    todo_wine ok_ret( (UINT_PTR)ime_windows.ime_hwnd, (UINT_PTR)GetParent( ime_windows.ime_ui_hwnd ) );
+    ok_ret( (UINT_PTR)ime_windows.ime_hwnd, (UINT_PTR)GetParent( ime_windows.ime_ui_hwnd ) );
 
     todo_ImeDestroy = TRUE; /* Wine doesn't leak the IME */
     ok_eq( hkl, ActivateKeyboardLayout( old_hkl, 0 ), HKL, "%p" );
