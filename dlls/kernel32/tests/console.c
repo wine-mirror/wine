@@ -4238,17 +4238,17 @@ static void test_GetConsoleOriginalTitleA(void)
     ok(!ret, "Unexpected string length; error %lu\n", GetLastError());
 
     ret = GetConsoleOriginalTitleA(buf, ARRAY_SIZE(buf));
-    todo_wine ok(ret, "GetConsoleOriginalTitleA failed: %lu\n", GetLastError());
-    todo_wine ok(!strcmp(buf, title), "got %s, expected %s\n", wine_dbgstr_a(buf), wine_dbgstr_a(title));
-    todo_wine ok(ret == title_len, "got %lu, expected %lu\n", ret, title_len);
+    ok(ret, "GetConsoleOriginalTitleA failed: %lu\n", GetLastError());
+    ok(!strcmp(buf, title), "got %s, expected %s\n", wine_dbgstr_a(buf), wine_dbgstr_a(title));
+    ok(ret == title_len, "got %lu, expected %lu\n", ret, title_len);
 
     ret = SetConsoleTitleA("test");
     ok(ret, "SetConsoleTitleA failed: %lu\n", GetLastError());
 
     ret = GetConsoleOriginalTitleA(buf, ARRAY_SIZE(buf));
-    todo_wine ok(ret, "GetConsoleOriginalTitleA failed: %lu\n", GetLastError());
-    todo_wine ok(!strcmp(buf, title), "got %s, expected %s\n", wine_dbgstr_a(buf), wine_dbgstr_a(title));
-    todo_wine ok(ret == title_len, "got %lu, expected %lu\n", ret, title_len);
+    ok(ret, "GetConsoleOriginalTitleA failed: %lu\n", GetLastError());
+    ok(!strcmp(buf, title), "got %s, expected %s\n", wine_dbgstr_a(buf), wine_dbgstr_a(title));
+    ok(ret == title_len, "got %lu, expected %lu\n", ret, title_len);
 }
 
 static void test_GetConsoleOriginalTitleW(void)

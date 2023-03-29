@@ -914,9 +914,17 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetConsoleMode( HANDLE handle, DWORD *mode )
  */
 DWORD WINAPI DECLSPEC_HOTPATCH GetConsoleOriginalTitleA( LPSTR title, DWORD size )
 {
-    FIXME( ": (%p, %lu) stub!\n", title, size );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return 0;
+    WCHAR *ptr = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) );
+    DWORD ret;
+
+    if (!ptr) return 0;
+
+    ret = GetConsoleOriginalTitleW( ptr, size );
+    if (ret)
+        WideCharToMultiByte( GetConsoleOutputCP(), 0, ptr, -1, title, size, NULL, NULL);
+
+    HeapFree( GetProcessHeap(), 0, ptr );
+    return ret;
 }
 
 
