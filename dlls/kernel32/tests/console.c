@@ -4264,23 +4264,23 @@ static void test_GetConsoleOriginalTitleW(void)
     ok(!ret, "Unexpected string length; error %lu\n", GetLastError());
 
     ret = GetConsoleOriginalTitleW(buf, ARRAY_SIZE(buf));
-    todo_wine ok(ret, "GetConsoleOriginalTitleW failed: %lu\n", GetLastError());
+    ok(ret, "GetConsoleOriginalTitleW failed: %lu\n", GetLastError());
     buf[ret] = 0;
-    todo_wine ok(!wcscmp(buf, title), "got %s, expected %s\n", wine_dbgstr_w(buf), wine_dbgstr_w(title));
-    todo_wine ok(ret == title_len, "got %lu, expected %lu\n", ret, title_len);
+    ok(!wcscmp(buf, title), "got %s, expected %s\n", wine_dbgstr_w(buf), wine_dbgstr_w(title));
+    ok(ret == title_len, "got %lu, expected %lu\n", ret, title_len);
 
     ret = SetConsoleTitleW(L"test");
     ok(ret, "SetConsoleTitleW failed: %lu\n", GetLastError());
 
     ret = GetConsoleOriginalTitleW(buf, ARRAY_SIZE(buf));
-    todo_wine ok(ret, "GetConsoleOriginalTitleW failed: %lu\n", GetLastError());
-    todo_wine ok(!wcscmp(buf, title), "got %s, expected %s\n", wine_dbgstr_w(buf), wine_dbgstr_w(title));
-    todo_wine ok(ret == title_len, "got %lu, expected %lu\n", ret, title_len);
+    ok(ret, "GetConsoleOriginalTitleW failed: %lu\n", GetLastError());
+    ok(!wcscmp(buf, title), "got %s, expected %s\n", wine_dbgstr_w(buf), wine_dbgstr_w(title));
+    ok(ret == title_len, "got %lu, expected %lu\n", ret, title_len);
 
     ret = GetConsoleOriginalTitleW(buf, 5);
-    todo_wine ok(ret, "GetConsoleOriginalTitleW failed: %lu\n", GetLastError());
-    todo_wine ok(!wcscmp(buf, L"Orig"), "got %s, expected 'Orig'\n", wine_dbgstr_w(buf));
-    todo_wine ok(ret == title_len, "got %lu, expected %lu\n", ret, title_len);
+    ok(ret, "GetConsoleOriginalTitleW failed: %lu\n", GetLastError());
+    ok(!wcscmp(buf, L"Orig"), "got %s, expected 'Orig'\n", wine_dbgstr_w(buf));
+    ok(ret == title_len, "got %lu, expected %lu\n", ret, title_len);
 }
 
 static void test_GetConsoleOriginalTitle(void)
