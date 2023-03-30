@@ -868,11 +868,32 @@ static void fill_notify(struct sc_notify_handle *notify, struct service_entry *s
     SetEvent(notify->event);
 }
 
+static void notify_service_state(struct service_entry *service)
+{
+    struct sc_service_handle *service_handle;
+    DWORD mask;
+
+    mask = 1 << (service->status.dwCurrentState - SERVICE_STOPPED);
+    LIST_FOR_EACH_ENTRY(service_handle, &service->handles, struct sc_service_handle, entry)
+    {
+        struct sc_notify_handle *notify = service_handle->notify;
+        if (notify && (notify->notify_mask & mask))
+        {
+            fill_notify(notify, service);
+            sc_notify_release(notify);
+            service_handle->notify = NULL;
+            service_handle->status_notified = TRUE;
+        }
+        else
+            service_handle->status_notified = FALSE;
+    }
+}
+
 DWORD __cdecl svcctl_SetServiceStatus(SC_RPC_HANDLE handle, SERVICE_STATUS *status)
 {
-    struct sc_service_handle *service, *service_handle;
+    struct sc_service_handle *service;
     struct process_entry *process;
-    DWORD err, mask;
+    DWORD err;
 
     WINE_TRACE("(%p, %p)\n", handle, status);
 
@@ -902,21 +923,7 @@ DWORD __cdecl svcctl_SetServiceStatus(SC_RPC_HANDLE handle, SERVICE_STATUS *stat
         release_process(process);
     }
 
-    mask = 1 << (service->service_entry->status.dwCurrentState - SERVICE_STOPPED);
-    LIST_FOR_EACH_ENTRY(service_handle, &service->service_entry->handles, struct sc_service_handle, entry)
-    {
-        struct sc_notify_handle *notify = service_handle->notify;
-        if (notify && (notify->notify_mask & mask))
-        {
-            fill_notify(notify, service->service_entry);
-            sc_notify_release(notify);
-            service_handle->notify = NULL;
-            service_handle->status_notified = TRUE;
-        }
-        else
-            service_handle->status_notified = FALSE;
-    }
-
+    notify_service_state(service->service_entry);
     service_unlock(service->service_entry);
 
     return ERROR_SUCCESS;
