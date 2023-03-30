@@ -1781,7 +1781,7 @@ static void test_simple_joystick( DWORD version )
         .expect_count = version < 0x700 ? ARRAY_SIZE(expect_objects_5) : ARRAY_SIZE(expect_objects),
         .expect_objs = version < 0x700 ? expect_objects_5 : expect_objects,
         .todo_objs = version < 0x700 ? todo_objects_5 : NULL,
-        .todo_extra = version < 0x700 ? TRUE : FALSE,
+        .todo_extra = version < 0x700,
     };
 
     const DIEFFECTINFOW expect_effects[] = {};
