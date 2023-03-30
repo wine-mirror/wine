@@ -179,5 +179,8 @@ float __cdecl erfcf(float x)
 	if (ix < 0x41e00000) {  /* |x| < 28 */
 		return sign ? 2 - erfc2(ix,x) : erfc2(ix,x);
 	}
-	return sign ? 2 - 0x1p-120f : 0x1p-120f*0x1p-120f;
+	if (sign)
+		return 2 - FLT_MIN;
+	errno = ERANGE;
+	return FLT_MIN * FLT_MIN;
 }

@@ -269,5 +269,8 @@ double __cdecl erfc(double x)
 	if (ix < 0x403c0000) {  /* 0.84375 <= |x| < 28 */
 		return sign ? 2 - erfc2(ix,x) : erfc2(ix,x);
 	}
-	return sign ? 2 - 0x1p-1022 : 0x1p-1022*0x1p-1022;
+	if (sign)
+		return 2 - DBL_MIN;
+	errno = ERANGE;
+	return fp_barrier(DBL_MIN) * DBL_MIN;
 }
