@@ -868,7 +868,7 @@ static void fill_notify(struct sc_notify_handle *notify, struct service_entry *s
     SetEvent(notify->event);
 }
 
-static void notify_service_state(struct service_entry *service)
+void notify_service_state(struct service_entry *service)
 {
     struct sc_service_handle *service_handle;
     DWORD mask;

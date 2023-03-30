@@ -616,6 +616,122 @@ static void test_runner(void (*p_run_test)(void))
     CloseHandle(thread);
 }
 
+static void CALLBACK notify_cb(void *user)
+{
+}
+
+static inline void test_kill_service_process(void)
+{
+    static const char *argv[2] = {"param1", "param2"};
+    SC_HANDLE service_handle = register_service("simple_service");
+    SERVICE_STATUS_PROCESS status2;
+    SERVICE_NOTIFYW notify;
+    SERVICE_STATUS status;
+    DWORD bytes, error;
+    HANDLE process;
+    BOOL res;
+
+    if(!service_handle)
+        return;
+
+    trace("starting...\n");
+    res = StartServiceA(service_handle, 2, argv);
+    ok(res, "StartService failed: %lu\n", GetLastError());
+    if(!res) {
+        DeleteService(service_handle);
+        CloseServiceHandle(service_handle);
+        return;
+    }
+    expect_event("RUNNING");
+
+    memset(&notify, 0, sizeof(notify));
+    notify.dwVersion = SERVICE_NOTIFY_STATUS_CHANGE;
+    notify.dwNotificationStatus = 0xdeadbeef;
+    notify.pfnNotifyCallback = notify_cb;
+    notify.pContext = &notify;
+    error = NotifyServiceStatusChangeW(service_handle, SERVICE_NOTIFY_STOPPED | SERVICE_NOTIFY_RUNNING
+            | SERVICE_NOTIFY_PAUSED | SERVICE_NOTIFY_PAUSE_PENDING | SERVICE_NOTIFY_STOP_PENDING, &notify);
+    ok(error == ERROR_SUCCESS, "got error %lu.\n", error);
+
+    /* This shouldn't wait, we are supposed to get service start notification before. */
+    SleepEx(5000, TRUE);
+    ok(!notify.dwNotificationStatus, "got %#lx.\n", notify.dwNotificationStatus);
+    ok(notify.dwNotificationTriggered == SERVICE_NOTIFY_RUNNING, "got %#lx.\n", notify.dwNotificationTriggered);
+    ok(notify.ServiceStatus.dwCurrentState == SERVICE_RUNNING, "got %#lx.\n", notify.ServiceStatus.dwCurrentState);
+    ok(!notify.ServiceStatus.dwWin32ExitCode, "got %#lx.\n", notify.ServiceStatus.dwWin32ExitCode);
+
+    res = QueryServiceStatus(service_handle, &status);
+    ok(res, "got error %lu.\n", GetLastError());
+    ok(status.dwServiceType == SERVICE_WIN32_OWN_PROCESS, "got %lx.\n", status.dwServiceType);
+    ok(status.dwCurrentState == SERVICE_RUNNING, "got %lx.\n", status.dwCurrentState);
+
+    res = QueryServiceStatusEx(service_handle, SC_STATUS_PROCESS_INFO, (BYTE *)&status2, sizeof(status2), &bytes);
+    ok(res, "got error %lu.\n", GetLastError());
+    ok(status2.dwCurrentState == SERVICE_RUNNING, "got %lx.\n", status2.dwCurrentState);
+    ok(status2.dwProcessId, "got %ld\n", status2.dwProcessId);
+
+    process = OpenProcess(PROCESS_TERMINATE, FALSE, status2.dwProcessId);
+    ok(!!process, "got NULL.\n");
+    res = TerminateProcess(process, 0xdeadbeef);
+    ok(res, "got error %lu.\n", GetLastError());
+    CloseHandle(process);
+
+    memset(&notify, 0, sizeof(notify));
+    notify.dwVersion = SERVICE_NOTIFY_STATUS_CHANGE;
+    notify.dwNotificationStatus = 0xdeadbeef;
+    notify.pfnNotifyCallback = notify_cb;
+    notify.pContext = &notify;
+    error = NotifyServiceStatusChangeW(service_handle, SERVICE_NOTIFY_STOPPED | SERVICE_NOTIFY_RUNNING
+            | SERVICE_NOTIFY_PAUSED | SERVICE_NOTIFY_PAUSE_PENDING | SERVICE_NOTIFY_STOP_PENDING, &notify);
+    ok(error == ERROR_SUCCESS, "got error %lu.\n", error);
+
+    SleepEx(3000, TRUE);
+    ok(!notify.dwNotificationStatus, "got %#lx.\n", notify.dwNotificationStatus);
+    ok(notify.dwNotificationTriggered == SERVICE_NOTIFY_STOPPED, "got %#lx.\n", notify.dwNotificationTriggered);
+    ok(notify.ServiceStatus.dwCurrentState == SERVICE_STOPPED, "got %#lx.\n", notify.ServiceStatus.dwCurrentState);
+    ok(notify.ServiceStatus.dwWin32ExitCode == ERROR_PROCESS_ABORTED, "got %#lx.\n", notify.ServiceStatus.dwWin32ExitCode);
+    ok(!notify.ServiceStatus.dwServiceSpecificExitCode, "got %#lx.\n", notify.ServiceStatus.dwWin32ExitCode);
+
+    res = QueryServiceStatus(service_handle, &status);
+    ok(res, "got error %lu.\n", error);
+    ok(status.dwServiceType == SERVICE_WIN32_OWN_PROCESS, "got %lx.\n", status.dwServiceType);
+    ok(status.dwCurrentState == SERVICE_STOPPED, "got %lx.\n", status.dwCurrentState);
+    ok(!status.dwControlsAccepted, "got %lx\n", status.dwControlsAccepted);
+    ok(status.dwWin32ExitCode == ERROR_PROCESS_ABORTED, "got %ld.\n", status.dwWin32ExitCode);
+    ok(!status.dwServiceSpecificExitCode, "got %ld.\n",
+            status.dwServiceSpecificExitCode);
+    ok(!status.dwCheckPoint, "got %ld.\n", status.dwCheckPoint);
+    ok(!status.dwWaitHint, "got %ld.\n", status.dwWaitHint);
+
+    res = QueryServiceStatusEx(service_handle, SC_STATUS_PROCESS_INFO, (BYTE *)&status2, sizeof(status2), &bytes);
+    ok(res, "got error %lu.\n", error);
+    ok(!status2.dwProcessId, "got %ld.\n", status2.dwProcessId);
+
+    res = DeleteService(service_handle);
+    ok(res, "got error %lu.\n", error);
+
+    res = QueryServiceStatus(service_handle, &status);
+    ok(res, "got error %lu.\n", error);
+    ok(status.dwServiceType == SERVICE_WIN32_OWN_PROCESS, "got %lx.\n", status.dwServiceType);
+    ok(status.dwCurrentState == SERVICE_STOPPED, "got %lx.\n", status.dwCurrentState);
+    ok(status.dwControlsAccepted == 0, "got %lx.\n", status.dwControlsAccepted);
+    ok(status.dwWin32ExitCode == ERROR_PROCESS_ABORTED, "got %ld.\n", status.dwWin32ExitCode);
+    ok(status.dwServiceSpecificExitCode == 0, "got %ld.\n",
+            status.dwServiceSpecificExitCode);
+    ok(!status.dwCheckPoint, "got %ld.\n", status.dwCheckPoint);
+    ok(!status.dwWaitHint, "got %ld.\n", status.dwWaitHint);
+
+    res = QueryServiceStatusEx(service_handle, SC_STATUS_PROCESS_INFO, (BYTE *)&status2, sizeof(status2), &bytes);
+    ok(res, "got error %lu.\n", GetLastError());
+    ok(!status2.dwProcessId, "got %ld.\n", status2.dwProcessId);
+
+    CloseServiceHandle(service_handle);
+
+    res = QueryServiceStatus(service_handle, &status);
+    ok(!res, "QueryServiceStatus should have failed.\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %ld.\n", GetLastError());
+}
+
 START_TEST(service)
 {
     char **argv;
@@ -641,6 +757,7 @@ START_TEST(service)
     if(argc < 3) {
         test_runner(test_service);
         test_runner(test_no_stop);
+        test_runner(test_kill_service_process);
     }else {
         strcpy(service_name, argv[3]);
         sprintf(named_pipe_name, "\\\\.\\pipe\\%s_pipe", service_name);

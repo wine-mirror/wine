@@ -47,7 +47,7 @@ static DWORD default_preshutdown_timeout = 180000;
 static DWORD autostart_delay = 120000;
 static void *environment = NULL;
 static HKEY service_current_key = NULL;
-static HANDLE job_object;
+static HANDLE job_object, job_completion_port;
 
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
@@ -1280,6 +1280,50 @@ static void load_registry_parameters(void)
     RegCloseKey( key );
 }
 
+static DWORD WINAPI process_monitor_thread_proc( void *arg )
+{
+    struct scmdatabase *db = active_database;
+    struct service_entry *service;
+    struct process_entry *process;
+    OVERLAPPED *overlapped;
+    ULONG_PTR value;
+    DWORD key, pid;
+
+    while (GetQueuedCompletionStatus(job_completion_port, &key, &value, &overlapped, INFINITE))
+    {
+        if (!key)
+            break;
+        if (key != JOB_OBJECT_MSG_EXIT_PROCESS)
+            continue;
+        pid = (ULONG_PTR)overlapped;
+        WINE_TRACE("pid %04lx exited.\n", pid);
+        scmdatabase_lock(db);
+        LIST_FOR_EACH_ENTRY(service, &db->services, struct service_entry, entry)
+        {
+            if (service->status.dwCurrentState != SERVICE_RUNNING || !service->process
+                    || service->process->process_id != pid) continue;
+
+            WINE_TRACE("Stopping service %s.\n", debugstr_w(service->config.lpBinaryPathName));
+            service->status.dwCurrentState = SERVICE_STOPPED;
+            service->status.dwControlsAccepted = 0;
+            service->status.dwWin32ExitCode = ERROR_PROCESS_ABORTED;
+            service->status.dwServiceSpecificExitCode = 0;
+            service->status.dwCheckPoint = 0;
+            service->status.dwWaitHint = 0;
+            SetEvent(service->status_changed_event);
+
+            process = service->process;
+            service->process = NULL;
+            process->use_count--;
+            release_process(process);
+            notify_service_state(service);
+        }
+        scmdatabase_unlock(db);
+    }
+    WINE_TRACE("Terminating.\n");
+    return 0;
+}
+
 int __cdecl main(int argc, char *argv[])
 {
     static const WCHAR service_current_key_str[] = { 'S','Y','S','T','E','M','\\',
@@ -1288,7 +1332,8 @@ int __cdecl main(int argc, char *argv[])
         'S','e','r','v','i','c','e','C','u','r','r','e','n','t',0};
     static const WCHAR svcctl_started_event[] = SVCCTL_STARTED_EVENT;
     JOBOBJECT_EXTENDED_LIMIT_INFORMATION job_limit;
-    HANDLE started_event;
+    JOBOBJECT_ASSOCIATE_COMPLETION_PORT port_info;
+    HANDLE started_event, process_monitor_thread;
     DWORD err;
 
     job_object = CreateJobObjectW(NULL, NULL);
@@ -1296,6 +1341,15 @@ int __cdecl main(int argc, char *argv[])
     if (!SetInformationJobObject(job_object, JobObjectExtendedLimitInformation, &job_limit, sizeof(job_limit)))
     {
         WINE_ERR("Failed to initialized job object, err %lu.\n", GetLastError());
+        return GetLastError();
+    }
+    job_completion_port = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 1);
+    port_info.CompletionPort = job_completion_port;
+    port_info.CompletionKey = job_object;
+    if (!SetInformationJobObject(job_object, JobObjectAssociateCompletionPortInformation,
+            &port_info, sizeof(port_info)))
+    {
+        WINE_ERR("Failed to set completion port for job, err %lu.\n", GetLastError());
         return GetLastError();
     }
 
@@ -1316,8 +1370,11 @@ int __cdecl main(int argc, char *argv[])
     if ((err = RPC_Init()) == ERROR_SUCCESS)
     {
         scmdatabase_autostart_services(active_database);
+        process_monitor_thread = CreateThread(NULL, 0, process_monitor_thread_proc, NULL, 0, NULL);
         SetEvent(started_event);
         WaitForSingleObject(exit_event, INFINITE);
+        PostQueuedCompletionStatus(job_completion_port, 0, 0, NULL);
+        WaitForSingleObject(process_monitor_thread, INFINITE);
         scmdatabase_wait_terminate(active_database);
         if (delayed_autostart_cleanup)
         {
