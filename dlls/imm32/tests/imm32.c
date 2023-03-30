@@ -6119,6 +6119,104 @@ static void test_ImmSetCompositionWindow(void)
     ime_call_count = 0;
 }
 
+static void test_ImmSetStatusWindowPos(void)
+{
+    struct ime_call set_status_window_pos_0_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/,
+            .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETSTATUSWINDOWPOS},
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_TEST_WIN, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETSTATUSWINDOWPOS},
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETSTATUSWINDOWPOS},
+        },
+        {0},
+    };
+    struct ime_call set_status_window_pos_1_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/,
+            .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETSTATUSWINDOWPOS},
+        },
+        {.todo = TRUE},
+    };
+    INPUTCONTEXT *ctx;
+    POINT pos;
+    HIMC himc;
+    HKL hkl;
+
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
+
+    if (!(hkl = wineime_hkl)) return;
+
+    hwnd = CreateWindowW( test_class.lpszClassName, NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    ok_ret( 1, ImmLoadIME( hkl ) );
+    himc = ImmCreateContext();
+    ok_ne( NULL, himc, HIMC, "%p" );
+    ctx = ImmLockIMC( himc );
+    ok_ne( NULL, ctx, INPUTCONTEXT *, "%p" );
+    process_messages();
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+    set_status_window_pos_0_seq[0].himc = himc;
+    set_status_window_pos_1_seq[0].himc = himc;
+
+    memset( &pos, 0xcd, sizeof(pos) );
+    ctx->ptStatusWndPos.x = 0xdeadbeef;
+    ctx->ptStatusWndPos.y = 0xfeedcafe;
+    ctx->fdwInit = ~INIT_STATUSWNDPOS;
+    todo_wine ok_ret( 0, ImmGetStatusWindowPos( himc, &pos ) );
+    todo_wine ok_eq( 0xcdcdcdcd, pos.x, UINT, "%u" );
+    todo_wine ok_eq( 0xcdcdcdcd, pos.y, UINT, "%u" );
+    ctx->fdwInit = INIT_STATUSWNDPOS;
+    ok_ret( 1, ImmGetStatusWindowPos( himc, &pos ) );
+    ok_eq( 0xdeadbeef, pos.x, UINT, "%u" );
+    ok_eq( 0xfeedcafe, pos.y, UINT, "%u" );
+    ok_seq( empty_sequence );
+
+    pos.x = 123;
+    pos.y = 456;
+    ctx->hWnd = hwnd;
+    ctx->fdwInit = 0;
+    ok_ret( 1, ImmSetStatusWindowPos( himc, &pos ) );
+    ok_seq( set_status_window_pos_0_seq );
+    todo_wine ok_eq( INIT_STATUSWNDPOS, ctx->fdwInit, UINT, "%u" );
+
+    ok_ret( 1, ImmSetStatusWindowPos( himc, &pos ) );
+    ok_seq( set_status_window_pos_0_seq );
+    ok_ret( 1, ImmGetStatusWindowPos( himc, &pos ) );
+    ok_eq( 123, pos.x, UINT, "%u" );
+    ok_eq( 123, ctx->ptStatusWndPos.x, UINT, "%u" );
+    ok_eq( 456, pos.y, UINT, "%u" );
+    ok_eq( 456, ctx->ptStatusWndPos.y, UINT, "%u" );
+    ok_seq( empty_sequence );
+
+    ctx->hWnd = 0;
+    ok_ret( 1, ImmSetStatusWindowPos( himc, &pos ) );
+    ok_seq( set_status_window_pos_1_seq );
+
+    ok_ret( 1, ImmUnlockIMC( himc ) );
+    ok_ret( 1, ImmDestroyContext( himc ) );
+
+    ok_ret( 1, ImmActivateLayout( default_hkl ) );
+    ok_ret( 1, DestroyWindow( hwnd ) );
+    process_messages();
+
+    ok_ret( 1, ImmFreeLayout( hkl ) );
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+}
+
 START_TEST(imm32)
 {
     default_hkl = GetKeyboardLayout( 0 );
@@ -6176,6 +6274,7 @@ START_TEST(imm32)
     test_ImmGetCompositionString( TRUE );
     test_ImmGetCompositionString( FALSE );
     test_ImmSetCompositionWindow();
+    test_ImmSetStatusWindowPos();
 
     if (wineime_hkl) ime_cleanup( wineime_hkl, TRUE );
 
