@@ -97,6 +97,12 @@ extern BOOL WINAPI ImmActivateLayout(HKL);
 #define check_member_wstr( val, exp, member )                                                      \
     check_member_wstr_( __FILE__, __LINE__, val, exp, member )
 
+#define check_member_str_( file, line, val, exp, member )                                          \
+    ok_(file, line)( !strcmp( (val).member, (exp).member ), "got " #member " %s\n",                \
+                     debugstr_a((val).member) )
+#define check_member_str( val, exp, member )                                                       \
+    check_member_str_( __FILE__, __LINE__, val, exp, member )
+
 #define check_member_point_( file, line, val, exp, member )                                        \
     ok_(file, line)( !memcmp( &(val).member, &(exp).member, sizeof(POINT) ),                       \
                      "got " #member " %s\n", wine_dbgstr_point( &(val).member ) )
@@ -174,6 +180,44 @@ static void check_composition_form_( int line, COMPOSITIONFORM *form, const COMP
     check_member_( __FILE__, line, *form, *expect, "%#lx", dwStyle );
     check_member_point_( __FILE__, line, *form, *expect, ptCurrentPos );
     check_member_rect_( __FILE__, line, *form, *expect, rcArea );
+}
+
+#define check_logfont_w( a, b ) check_logfont_w_( __LINE__, a, b, FALSE )
+static void check_logfont_w_( int line, LOGFONTW *font, const LOGFONTW *expect, BOOL todo )
+{
+    check_member_( __FILE__, line, *font, *expect, "%lu", lfHeight );
+    check_member_( __FILE__, line, *font, *expect, "%lu", lfWidth );
+    check_member_( __FILE__, line, *font, *expect, "%lu", lfEscapement );
+    check_member_( __FILE__, line, *font, *expect, "%lu", lfOrientation );
+    check_member_( __FILE__, line, *font, *expect, "%lu", lfWeight );
+    check_member_( __FILE__, line, *font, *expect, "%u", lfItalic );
+    check_member_( __FILE__, line, *font, *expect, "%u", lfUnderline );
+    check_member_( __FILE__, line, *font, *expect, "%u", lfStrikeOut );
+    check_member_( __FILE__, line, *font, *expect, "%u", lfCharSet );
+    check_member_( __FILE__, line, *font, *expect, "%u", lfOutPrecision );
+    check_member_( __FILE__, line, *font, *expect, "%u", lfClipPrecision );
+    check_member_( __FILE__, line, *font, *expect, "%u", lfQuality );
+    check_member_( __FILE__, line, *font, *expect, "%u", lfPitchAndFamily );
+    todo_wine_if(todo) check_member_wstr_( __FILE__, line, *font, *expect, lfFaceName );
+}
+
+#define check_logfont_a( a, b ) check_logfont_a_( __LINE__, a, b, FALSE )
+static void check_logfont_a_( int line, LOGFONTA *font, const LOGFONTA *expect, BOOL todo )
+{
+    check_member_( __FILE__, line, *font, *expect, "%lu", lfHeight );
+    check_member_( __FILE__, line, *font, *expect, "%lu", lfWidth );
+    check_member_( __FILE__, line, *font, *expect, "%lu", lfEscapement );
+    check_member_( __FILE__, line, *font, *expect, "%lu", lfOrientation );
+    check_member_( __FILE__, line, *font, *expect, "%lu", lfWeight );
+    check_member_( __FILE__, line, *font, *expect, "%u", lfItalic );
+    check_member_( __FILE__, line, *font, *expect, "%u", lfUnderline );
+    check_member_( __FILE__, line, *font, *expect, "%u", lfStrikeOut );
+    check_member_( __FILE__, line, *font, *expect, "%u", lfCharSet );
+    check_member_( __FILE__, line, *font, *expect, "%u", lfOutPrecision );
+    check_member_( __FILE__, line, *font, *expect, "%u", lfClipPrecision );
+    check_member_( __FILE__, line, *font, *expect, "%u", lfQuality );
+    check_member_( __FILE__, line, *font, *expect, "%u", lfPitchAndFamily );
+    todo_wine_if(todo) check_member_str_( __FILE__, line, *font, *expect, lfFaceName );
 }
 
 #define DEFINE_EXPECT(func) \
@@ -1009,6 +1053,7 @@ static DWORD WINAPI test_cross_thread_himc_thread( void *arg )
     COMPOSITIONFORM composition = {0};
     INPUTCONTEXT *contexts[2];
     HIMC himc[2], tmp_himc;
+    LOGFONTW fontW = {0};
     HWND hwnd, tmp_hwnd;
     POINT pos = {0};
     MSG msg;
@@ -1041,6 +1086,8 @@ static DWORD WINAPI test_cross_thread_himc_thread( void *arg )
     ok_ret( 1, ImmSetCandidateWindow( himc[1], &candidate ) );
     ok_ret( 1, ImmSetStatusWindowPos( himc[0], &pos ) );
     ok_ret( 1, ImmSetStatusWindowPos( himc[1], &pos ) );
+    ok_ret( 1, ImmSetCompositionFontW( himc[0], &fontW ) );
+    ok_ret( 1, ImmSetCompositionFontW( himc[1], &fontW ) );
 
     params->hwnd = hwnd;
     params->himc[0] = himc[0];
@@ -6217,6 +6264,162 @@ static void test_ImmSetStatusWindowPos(void)
     ime_call_count = 0;
 }
 
+static void test_ImmSetCompositionFont( BOOL unicode )
+{
+    struct ime_call set_composition_font_0_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/,
+            .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETCOMPOSITIONFONT},
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_TEST_WIN, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETCOMPOSITIONFONT},
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETCOMPOSITIONFONT},
+        },
+        {0},
+    };
+    struct ime_call set_composition_font_1_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/,
+            .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETCOMPOSITIONFONT},
+        },
+        {.todo = TRUE},
+    };
+    LOGFONTW fontW, expect_fontW =
+    {
+        .lfHeight = 1,
+        .lfWidth = 2,
+        .lfEscapement = 3,
+        .lfOrientation = 4,
+        .lfWeight = 5,
+        .lfItalic = 6,
+        .lfUnderline = 7,
+        .lfStrikeOut = 8,
+        .lfCharSet = 8,
+        .lfOutPrecision = 10,
+        .lfClipPrecision = 11,
+        .lfQuality = 12,
+        .lfPitchAndFamily = 13,
+        .lfFaceName = L"FontFace",
+    };
+    LOGFONTA fontA, expect_fontA =
+    {
+        .lfHeight = 1,
+        .lfWidth = 2,
+        .lfEscapement = 3,
+        .lfOrientation = 4,
+        .lfWeight = 5,
+        .lfItalic = 6,
+        .lfUnderline = 7,
+        .lfStrikeOut = 8,
+        .lfCharSet = 8,
+        .lfOutPrecision = 10,
+        .lfClipPrecision = 11,
+        .lfQuality = 12,
+        .lfPitchAndFamily = 13,
+        .lfFaceName = "FontFace",
+    };
+    INPUTCONTEXT *ctx;
+    HIMC himc;
+    HKL hkl;
+
+    winetest_push_context( unicode ? "unicode" : "ansi" );
+
+    /* IME_PROP_END_UNLOAD for the IME to unload / reload. */
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD;
+    if (unicode) ime_info.fdwProperty |= IME_PROP_UNICODE;
+
+    if (!(hkl = wineime_hkl)) goto cleanup;
+
+    hwnd = CreateWindowW( test_class.lpszClassName, NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    ok_ret( 1, ImmLoadIME( hkl ) );
+    himc = ImmCreateContext();
+    ok_ne( NULL, himc, HIMC, "%p" );
+    ctx = ImmLockIMC( himc );
+    ok_ne( NULL, ctx, INPUTCONTEXT *, "%p" );
+    process_messages();
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+    set_composition_font_0_seq[0].himc = himc;
+    set_composition_font_1_seq[0].himc = himc;
+
+    memset( &fontW, 0xcd, sizeof(fontW) );
+    memset( &fontA, 0xcd, sizeof(fontA) );
+
+    if (unicode) ctx->lfFont.W = expect_fontW;
+    else ctx->lfFont.A = expect_fontA;
+    ctx->fdwInit = ~INIT_LOGFONT;
+    todo_wine ok_ret( 0, ImmGetCompositionFontW( himc, &fontW ) );
+    todo_wine ok_ret( 0, ImmGetCompositionFontA( himc, &fontA ) );
+    ctx->fdwInit = INIT_LOGFONT;
+    ok_ret( 1, ImmGetCompositionFontW( himc, &fontW ) );
+    check_logfont_w_( __LINE__, &fontW, &expect_fontW, !unicode );
+    ok_ret( 1, ImmGetCompositionFontA( himc, &fontA ) );
+    check_logfont_a_( __LINE__, &fontA, &expect_fontA, !unicode );
+
+    ctx->hWnd = hwnd;
+    ctx->fdwInit = 0;
+    memset( &ctx->lfFont, 0xcd, sizeof(ctx->lfFont) );
+    ok_ret( 1, ImmSetCompositionFontW( himc, &expect_fontW ) );
+    todo_wine ok_eq( INIT_LOGFONT, ctx->fdwInit, UINT, "%u" );
+    ok_seq( set_composition_font_0_seq );
+    ok_ret( 1, ImmSetCompositionFontW( himc, &expect_fontW ) );
+    ok_seq( set_composition_font_0_seq );
+    if (unicode) check_logfont_w( &ctx->lfFont.W, &expect_fontW );
+    else check_logfont_a_( __LINE__, &ctx->lfFont.A, &expect_fontA, TRUE );
+
+    ok_ret( 1, ImmGetCompositionFontW( himc, &fontW ) );
+    check_logfont_w( &fontW, &expect_fontW );
+    ok_ret( 1, ImmGetCompositionFontA( himc, &fontA ) );
+    check_logfont_a( &fontA, &expect_fontA );
+
+    ctx->hWnd = hwnd;
+    ctx->fdwInit = 0;
+    memset( &ctx->lfFont, 0xcd, sizeof(ctx->lfFont) );
+    ok_ret( 1, ImmSetCompositionFontA( himc, &expect_fontA ) );
+    todo_wine ok_eq( INIT_LOGFONT, ctx->fdwInit, UINT, "%u" );
+    ok_seq( set_composition_font_0_seq );
+    ok_ret( 1, ImmSetCompositionFontA( himc, &expect_fontA ) );
+    ok_seq( set_composition_font_0_seq );
+    if (unicode) check_logfont_w( &ctx->lfFont.W, &expect_fontW );
+    else check_logfont_a_( __LINE__, &ctx->lfFont.A, &expect_fontA, TRUE );
+
+    ok_ret( 1, ImmGetCompositionFontW( himc, &fontW ) );
+    check_logfont_w( &fontW, &expect_fontW );
+    ok_ret( 1, ImmGetCompositionFontA( himc, &fontA ) );
+    check_logfont_a( &fontA, &expect_fontA );
+
+    ctx->hWnd = 0;
+    ok_ret( 1, ImmSetCompositionFontW( himc, &expect_fontW ) );
+    ok_seq( set_composition_font_1_seq );
+    ok_ret( 1, ImmSetCompositionFontA( himc, &expect_fontA ) );
+    ok_seq( set_composition_font_1_seq );
+
+    ok_ret( 1, ImmUnlockIMC( himc ) );
+    ok_ret( 1, ImmDestroyContext( himc ) );
+
+    ok_ret( 1, ImmActivateLayout( default_hkl ) );
+    ok_ret( 1, DestroyWindow( hwnd ) );
+    process_messages();
+
+    ok_ret( 1, ImmFreeLayout( hkl ) );
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+cleanup:
+    winetest_pop_context();
+}
+
 START_TEST(imm32)
 {
     default_hkl = GetKeyboardLayout( 0 );
@@ -6275,6 +6478,8 @@ START_TEST(imm32)
     test_ImmGetCompositionString( FALSE );
     test_ImmSetCompositionWindow();
     test_ImmSetStatusWindowPos();
+    test_ImmSetCompositionFont( TRUE );
+    test_ImmSetCompositionFont( FALSE );
 
     if (wineime_hkl) ime_cleanup( wineime_hkl, TRUE );
 
