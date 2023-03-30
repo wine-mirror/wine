@@ -8341,7 +8341,6 @@ static void test_MFInitMediaTypeFromVideoInfoHeader(void)
     hr = IMFMediaType_GetUINT32(media_type, &MF_MT_INTERLACE_MODE, &value32);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(value32 == MFVideoInterlace_Progressive, "Unexpected value %#x.\n", value32);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, &value32);
     ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
