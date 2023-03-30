@@ -45,9 +45,9 @@ float __cdecl expf(float x)
 		if (abstop >= top12(INFINITY))
 			return x + x;
 		if (x > 0x1.62e42ep6f) /* x > log(0x1p128) ~= 88.72 */
-			return __math_oflowf(0);
+			return math_error(_OVERFLOW, "expf", x, 0, x * FLT_MAX);
 		if (x < -0x1.9fe368p6f) /* x < log(0x1p-150) ~= -103.97 */
-			return __math_uflowf(0);
+			return math_error(_UNDERFLOW, "expf", x, 0, fp_barrierf(FLT_MIN) * FLT_MIN);
 	}
 
 	/* x*N/Ln2 = k + r with r in [-1/2, 1/2] and int k.  */
@@ -56,15 +56,8 @@ float __cdecl expf(float x)
 	/* Round and convert z to int, the result is in [-150*N, 128*N] and
 	   ideally ties-to-even rule is used, otherwise the magnitude of r
 	   can be bigger which gives larger approximation error.  */
-#if TOINT_INTRINSICS
-	kd = roundtoint(z);
-	ki = converttoint(z);
-#else
-# define SHIFT __exp2f_data.shift
-	kd = eval_as_double(z + SHIFT);
-	ki = asuint64(kd);
-	kd -= SHIFT;
-#endif
+	kd = round(z);
+	ki = (int64_t)kd;
 	r = z - kd;
 
 	/* exp(x) = 2^(k/N) * 2^(r/N) ~= s * (C0*r^3 + C1*r^2 + C2*r + 1) */
