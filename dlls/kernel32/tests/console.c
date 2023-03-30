@@ -4283,6 +4283,15 @@ static void test_GetConsoleOriginalTitleW(void)
     ok(ret == title_len, "got %lu, expected %lu\n", ret, title_len);
 }
 
+static void test_GetConsoleOriginalTitleW_empty(void)
+{
+    WCHAR buf[64];
+    DWORD ret;
+
+    ret = GetConsoleOriginalTitleW(buf, ARRAY_SIZE(buf));
+    ok(!ret, "GetConsoleOriginalTitleW failed: %lu\n", GetLastError());
+}
+
 static void test_GetConsoleOriginalTitle(void)
 {
     STARTUPINFOA si = { sizeof(si) };
@@ -4294,6 +4303,14 @@ static void test_GetConsoleOriginalTitle(void)
     winetest_get_mainargs(&argv);
     sprintf(buf, "\"%s\" console title_test", argv[0]);
     si.lpTitle = title;
+    ret = CreateProcessA(NULL, buf, NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &info);
+    ok(ret, "CreateProcess failed: %lu\n", GetLastError());
+    CloseHandle(info.hThread);
+    wait_child_process(info.hProcess);
+    CloseHandle(info.hProcess);
+
+    strcat(buf, " empty");
+    title[0] = 0;
     ret = CreateProcessA(NULL, buf, NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &info);
     ok(ret, "CreateProcess failed: %lu\n", GetLastError());
     CloseHandle(info.hThread);
@@ -4944,10 +4961,15 @@ START_TEST(console)
         ExitProcess(exit_code);
     }
 
-    if (argc == 3 && !strcmp(argv[2], "title_test"))
+    if (argc >= 3 && !strcmp(argv[2], "title_test"))
     {
-        test_GetConsoleOriginalTitleA();
-        test_GetConsoleOriginalTitleW();
+        if (argc == 3)
+        {
+            test_GetConsoleOriginalTitleA();
+            test_GetConsoleOriginalTitleW();
+        }
+        else
+            test_GetConsoleOriginalTitleW_empty();
         return;
     }
 
