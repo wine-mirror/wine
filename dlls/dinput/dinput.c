@@ -944,7 +944,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH DirectInput8Create( HINSTANCE hinst, DWORD vers
 
     if (outer || FAILED(hr = IDirectInput8_Initialize( (IDirectInput8W *)unknown, hinst, version )))
     {
-        IUnknown_Release( (IUnknown *)unknown );
+        IUnknown_Release( unknown );
         *out = NULL;
         return hr;
     }

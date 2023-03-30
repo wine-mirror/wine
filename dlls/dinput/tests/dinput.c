@@ -84,7 +84,7 @@ static HRESULT WINAPI outer_QueryInterface( IUnknown *iface, REFIID iid, void **
 
     if (IsEqualGUID( iid, &IID_IUnknown ))
     {
-        *obj = (IUnknown *)iface;
+        *obj = iface;
         return S_OK;
     }
 
