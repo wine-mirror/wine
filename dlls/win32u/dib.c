@@ -205,9 +205,11 @@ static BOOL bitmapinfo_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *
 {
     void *src_colors;
 
-    if (coloruse > DIB_PAL_COLORS + 1) return FALSE;  /* FIXME: handle DIB_PAL_COLORS+1 format */
+    if (coloruse > DIB_PAL_INDICES) return FALSE;
     if (!bitmapinfoheader_from_user_bitmapinfo( &dst->bmiHeader, &info->bmiHeader )) return FALSE;
     if (!is_valid_dib_format( &dst->bmiHeader, allow_compression )) return FALSE;
+    if (coloruse == DIB_PAL_INDICES && (dst->bmiHeader.biBitCount != 1 ||
+                dst->bmiHeader.biCompression != BI_RGB)) return FALSE;
 
     src_colors = (char *)info + info->bmiHeader.biSize;
 
@@ -229,6 +231,18 @@ static BOOL bitmapinfo_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *
         {
             memcpy( dst->bmiColors, src_colors, colors * sizeof(WORD) );
             max_colors = colors;
+        }
+        else if (coloruse == DIB_PAL_INDICES)
+        {
+            dst->bmiColors[0].rgbRed = 0;
+            dst->bmiColors[0].rgbGreen = 0;
+            dst->bmiColors[0].rgbBlue = 0;
+            dst->bmiColors[0].rgbReserved = 0;
+            dst->bmiColors[1].rgbRed = 0xff;
+            dst->bmiColors[1].rgbGreen = 0xff;
+            dst->bmiColors[1].rgbBlue = 0xff;
+            dst->bmiColors[1].rgbReserved = 0;
+            colors = max_colors;
         }
         else if (info->bmiHeader.biSize != sizeof(BITMAPCOREHEADER))
         {
@@ -675,7 +689,7 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
     INT src_to_dst_offset;
     HRGN clip = 0;
 
-    if (!bitmapinfo_from_user_bitmapinfo( src_info, info, coloruse, TRUE ) || coloruse > DIB_PAL_COLORS)
+    if (!bitmapinfo_from_user_bitmapinfo( src_info, info, coloruse, TRUE ))
     {
         RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return 0;
@@ -698,6 +712,8 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
     if (coloruse == DIB_PAL_COLORS && !fill_color_table_from_pal_colors( src_info, hdc )) return 0;
 
     if (!(bitmap = GDI_GetObjPtr( hbitmap, NTGDI_OBJ_BITMAP ))) return 0;
+
+    if (coloruse == DIB_PAL_INDICES && bitmap->dib.dsBm.bmBitsPixel != 1) return 0;
 
     if (src_info->bmiHeader.biCompression == BI_RLE4 || src_info->bmiHeader.biCompression == BI_RLE8)
     {

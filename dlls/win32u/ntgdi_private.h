@@ -28,6 +28,9 @@
 /* extra stock object: default 1x1 bitmap for memory DCs */
 #define DEFAULT_BITMAP (STOCK_LAST+1)
 
+/* Undocumented value for DIB's color use: indicates a mono DIB w/o pal entries */
+#define DIB_PAL_INDICES 2
+
 struct gdi_obj_funcs
 {
     INT     (*pGetObjectW)( HGDIOBJ handle, INT count, LPVOID buffer );

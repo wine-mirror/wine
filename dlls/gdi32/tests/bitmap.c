@@ -915,7 +915,7 @@ static void test_dib_formats(void)
     char data[2048];  /* 2 x 2 pixels, max 64 bits-per-pixel, max 64 planes */
     void *bits;
     int planes, bpp, compr, format;
-    HBITMAP hdib, hbmp;
+    HBITMAP hdib, hbmp, hbmp_mono;
     HDC hdc, memdc;
     UINT ret;
     BOOL format_ok, expect_ok;
@@ -924,6 +924,7 @@ static void test_dib_formats(void)
     hdc = GetDC( 0 );
     memdc = CreateCompatibleDC( 0 );
     hbmp = CreateCompatibleBitmap( hdc, 10, 10 );
+    hbmp_mono = CreateBitmap( 10, 10, 1, 1, NULL );
 
     memset( data, 0xaa, sizeof(data) );
 
@@ -1203,6 +1204,8 @@ static void test_dib_formats(void)
     DeleteObject( hdib );
     ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_PAL_COLORS+1);
     ok( !ret, "SetDIBits succeeded with DIB_PAL_COLORS+1\n" );
+    ret = SetDIBits(hdc, hbmp_mono, 0, 1, data, bi, DIB_PAL_COLORS+1);
+    ok( ret, "SetDIBits failed with DIB_PAL_COLORS+1\n" );
     ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_PAL_COLORS+1 );
     ok( ret, "SetDIBitsToDevice failed with DIB_PAL_COLORS+1\n" );
     ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_PAL_COLORS+1, SRCCOPY );
@@ -1226,6 +1229,8 @@ static void test_dib_formats(void)
     ok( hdib == NULL, "CreateDIBitmap succeeded with DIB_PAL_COLORS+2\n" );
     DeleteObject( hdib );
     ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_PAL_COLORS+2);
+    ok( !ret, "SetDIBits succeeded with DIB_PAL_COLORS+2\n" );
+    ret = SetDIBits(hdc, hbmp_mono, 0, 1, data, bi, DIB_PAL_COLORS+2);
     ok( !ret, "SetDIBits succeeded with DIB_PAL_COLORS+2\n" );
     ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_PAL_COLORS+2 );
     ok( !ret, "SetDIBitsToDevice succeeded with DIB_PAL_COLORS+2\n" );
@@ -1285,6 +1290,7 @@ static void test_dib_formats(void)
 
     DeleteDC( memdc );
     DeleteObject( hbmp );
+    DeleteObject( hbmp_mono );
     ReleaseDC( 0, hdc );
     HeapFree( GetProcessHeap(), 0, bi );
 }
