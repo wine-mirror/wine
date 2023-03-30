@@ -10,11 +10,7 @@
 
 #define POWF_LOG2_TABLE_BITS 4
 #define POWF_LOG2_POLY_ORDER 5
-#if TOINT_INTRINSICS
 #define POWF_SCALE_BITS EXP2F_TABLE_BITS
-#else
-#define POWF_SCALE_BITS 0
-#endif
 #define POWF_SCALE ((double)(1 << POWF_SCALE_BITS))
 extern hidden const struct powf_log2_data {
 	struct {

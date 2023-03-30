@@ -73,19 +73,10 @@ static inline float exp2_inline(double_t xd, uint32_t sign_bias)
 	uint64_t ki, ski, t;
 	double_t kd, z, r, r2, y, s;
 
-#if TOINT_INTRINSICS
 #define C __exp2f_data.poly_scaled
 	/* N*x = k + r with r in [-1/2, 1/2] */
-	kd = roundtoint(xd); /* k */
-	ki = converttoint(xd);
-#else
-#define C __exp2f_data.poly
-#define SHIFT __exp2f_data.shift_scaled
-	/* x = k/N + r with r in [-1/(2N), 1/(2N)] */
-	kd = eval_as_double(xd + SHIFT);
-	ki = asuint64(kd);
-	kd -= SHIFT; /* k/N */
-#endif
+	kd = round(xd); /* k */
+	ki = (int64_t)kd;
 	r = xd - kd;
 
 	/* exp2(x) = 2^(k/N) * 2^r ~= s * (C0*r^3 + C1*r^2 + C2*r + 1) */
@@ -150,6 +141,8 @@ float __cdecl powf(float x, float y)
 			float_t x2 = x * x;
 			if (ix & 0x80000000 && checkint(iy) == 1)
 				x2 = -x2;
+			if (iy & 0x80000000 && x2 == 0.0)
+				return math_error(_SING, "powf", x, y, 1 / x2);
 			/* Without the barrier some versions of clang hoist the 1/x2 and
 			   thus division by zero exception can be signaled spuriously.  */
 			return iy & 0x80000000 ? fp_barrierf(1 / x2) : x2;
@@ -159,7 +152,7 @@ float __cdecl powf(float x, float y)
 			/* Finite x < 0.  */
 			int yint = checkint(iy);
 			if (yint == 0)
-				return __math_invalidf(x);
+				return math_error(_DOMAIN, "powf", x, y, 0 / (x - x));
 			if (yint == 1)
 				sign_bias = SIGN_BIAS;
 			ix &= 0x7fffffff;
@@ -177,9 +170,9 @@ float __cdecl powf(float x, float y)
 			  asuint64(126.0 * POWF_SCALE) >> 47)) {
 		/* |y*log(x)| >= 126.  */
 		if (ylogx > 0x1.fffffffd1d571p+6 * POWF_SCALE)
-			return __math_oflowf(sign_bias);
+			return math_error(_OVERFLOW, "powf", x, y, (sign_bias ? -1.0 : 1.0) * 0x1p1023);
 		if (ylogx <= -150.0 * POWF_SCALE)
-			return __math_uflowf(sign_bias);
+			return math_error(_UNDERFLOW, "powf", x, y, (sign_bias ? -1.0 : 1.0) / 0x1p1023);
 	}
 	return exp2_inline(ylogx, sign_bias);
 }

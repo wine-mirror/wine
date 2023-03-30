@@ -121,7 +121,7 @@ static inline double_t log_inline(uint64_t ix, double_t *tail)
    a double.  (int32_t)KI is the k used in the argument reduction and exponent
    adjustment of scale, positive k here means the result may overflow and
    negative k means the result may underflow.  */
-static inline double specialcase(double_t tmp, uint64_t sbits, uint64_t ki)
+static inline double specialcase(double argx, double argy, double_t tmp, uint64_t sbits, uint64_t ki)
 {
 	double_t scale, y;
 
@@ -130,6 +130,8 @@ static inline double specialcase(double_t tmp, uint64_t sbits, uint64_t ki)
 		sbits -= 1009ull << 52;
 		scale = asdouble(sbits);
 		y = 0x1p1009 * (scale + scale * tmp);
+		if (isinf(y))
+			return math_error(_OVERFLOW, "pow", argx, argy, y);
 		return eval_as_double(y);
 	}
 	/* k < 0, need special care in the subnormal range.  */
@@ -154,6 +156,8 @@ static inline double specialcase(double_t tmp, uint64_t sbits, uint64_t ki)
 			y = asdouble(sbits & 0x8000000000000000);
 		/* The underflow exception needs to be signaled explicitly.  */
 		fp_force_eval(fp_barrier(0x1p-1022) * 0x1p-1022);
+		y = 0x1p-1022 * y;
+		return math_error(_UNDERFLOW, "pow", argx, argy, y);
 	}
 	y = 0x1p-1022 * y;
 	return eval_as_double(y);
@@ -163,7 +167,7 @@ static inline double specialcase(double_t tmp, uint64_t sbits, uint64_t ki)
 
 /* Computes sign*exp(x+xtail) where |xtail| < 2^-8/N and |xtail| <= |x|.
    The sign_bias argument is SIGN_BIAS or 0 and sets the sign to -1 or 1.  */
-static inline double exp_inline(double_t x, double_t xtail, uint32_t sign_bias)
+static inline double exp_inline(double argx, double argy, double_t x, double_t xtail, uint32_t sign_bias)
 {
 	uint32_t abstop;
 	uint64_t ki, idx, top, sbits;
@@ -182,9 +186,9 @@ static inline double exp_inline(double_t x, double_t xtail, uint32_t sign_bias)
 		if (abstop >= top12(1024.0)) {
 			/* Note: inf and nan are already handled.  */
 			if (asuint64(x) >> 63)
-				return __math_uflow(sign_bias);
+				return math_error(_UNDERFLOW, "pow", argx, argy, (sign_bias ? -DBL_MIN : DBL_MIN) * DBL_MIN);
 			else
-				return __math_oflow(sign_bias);
+				return math_error(_OVERFLOW, "pow", argx, argy, (sign_bias ? -DBL_MAX : DBL_MAX) * DBL_MAX);
 		}
 		/* Large x is special cased below.  */
 		abstop = 0;
@@ -193,20 +197,8 @@ static inline double exp_inline(double_t x, double_t xtail, uint32_t sign_bias)
 	/* exp(x) = 2^(k/N) * exp(r), with exp(r) in [2^(-1/2N),2^(1/2N)].  */
 	/* x = ln2/N*k + r, with int k and r in [-ln2/2N, ln2/2N].  */
 	z = InvLn2N * x;
-#if TOINT_INTRINSICS
-	kd = roundtoint(z);
-	ki = converttoint(z);
-#elif EXP_USE_TOINT_NARROW
-	/* z - kd is in [-0.5-2^-16, 0.5] in all rounding modes.  */
-	kd = eval_as_double(z + Shift);
-	ki = asuint64(kd) >> 16;
-	kd = (double_t)(int32_t)ki;
-#else
-	/* z - kd is in [-1, 1] in non-nearest rounding modes.  */
-	kd = eval_as_double(z + Shift);
-	ki = asuint64(kd);
-	kd -= Shift;
-#endif
+	kd = round(z);
+	ki = (int64_t)kd;
 	r = x + kd * NegLn2hiN + kd * NegLn2loN;
 	/* The code assumes 2^-200 < |xtail| < 2^-8/N.  */
 	r += xtail;
@@ -223,7 +215,7 @@ static inline double exp_inline(double_t x, double_t xtail, uint32_t sign_bias)
 	/* Worst case error is less than 0.5+1.11/N+(abs poly error * 2^53) ulp.  */
 	tmp = tail + r + r2 * (C2 + r * C3) + r2 * r2 * (C4 + r * C5);
 	if (predict_false(abstop == 0))
-		return specialcase(tmp, sbits, ki);
+		return specialcase(argx, argy, tmp, sbits, ki);
 	scale = asdouble(sbits);
 	/* Note: tmp == 0 or |tmp| > 2^-200 and scale > 2^-739, so there
 	   is no spurious underflow here even without fma.  */
@@ -286,6 +278,8 @@ double __cdecl pow(double x, double y)
 			double_t x2 = x * x;
 			if (ix >> 63 && checkint(iy) == 1)
 				x2 = -x2;
+			if (iy & 0x8000000000000000ULL && x2 == 0.0)
+				return math_error(_SING, "pow", x, y, 1 / x2);
 			/* Without the barrier some versions of clang hoist the 1/x2 and
 			   thus division by zero exception can be signaled spuriously.  */
 			return iy >> 63 ? fp_barrier(1 / x2) : x2;
@@ -295,7 +289,7 @@ double __cdecl pow(double x, double y)
 			/* Finite x < 0.  */
 			int yint = checkint(iy);
 			if (yint == 0)
-				return __math_invalid(x);
+				return math_error(_DOMAIN, "pow", x, y, 0 / (x - x));
 			if (yint == 1)
 				sign_bias = SIGN_BIAS;
 			ix &= 0x7fffffffffffffff;
@@ -313,9 +307,9 @@ double __cdecl pow(double x, double y)
 				else
 					return 1.0;
 			}
-			return (ix > asuint64(1.0)) == (topy < 0x800) ?
-				       __math_oflow(0) :
-				       __math_uflow(0);
+			if ((ix > asuint64(1.0)) == (topy < 0x800))
+				return math_error(_OVERFLOW, "pow", x, y, fp_barrier(DBL_MAX) * DBL_MAX);
+			return math_error(_UNDERFLOW, "pow", x, y, fp_barrier(DBL_MIN) * DBL_MIN);
 		}
 		if (topx == 0) {
 			/* Normalize subnormal x so exponent becomes negative.  */
@@ -339,5 +333,5 @@ double __cdecl pow(double x, double y)
 	ehi = yhi * lhi;
 	elo = ylo * lhi + y * llo; /* |elo| < |ehi| * 2^-25.  */
 #endif
-	return exp_inline(ehi, elo, sign_bias);
+	return exp_inline(x, y, ehi, elo, sign_bias);
 }
