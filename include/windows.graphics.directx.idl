@@ -27,6 +27,7 @@ import "windowscontracts.idl";
 import "windows.foundation.idl";
 
 namespace Windows.Graphics.DirectX {
+    typedef enum DirectXAlphaMode DirectXAlphaMode;
     typedef enum DirectXPixelFormat DirectXPixelFormat;
 
     declare {
@@ -34,6 +35,17 @@ namespace Windows.Graphics.DirectX {
         interface Windows.Foundation.Collections.IIterator<Windows.Graphics.DirectX.DirectXPixelFormat>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Graphics.DirectX.DirectXPixelFormat>;
     }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0)
+    ]
+    enum DirectXAlphaMode
+    {
+        Unspecified   = 0,
+        Premultiplied = 1,
+        Straight      = 2,
+        Ignore        = 3,
+    };
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0)
