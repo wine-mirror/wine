@@ -91,6 +91,18 @@ extern BOOL WINAPI ImmActivateLayout(HKL);
 #define check_member( val, exp, fmt, member )                                                      \
     check_member_( __FILE__, __LINE__, val, exp, fmt, member )
 
+#define check_member_point_( file, line, val, exp, member )                                        \
+    ok_(file, line)( !memcmp( &(val).member, &(exp).member, sizeof(POINT) ),                       \
+                     "got " #member " %s\n", wine_dbgstr_point( &(val).member ) )
+#define check_member_point( val, exp, member )                                                     \
+    check_member_point_( __FILE__, __LINE__, val, exp, member )
+
+#define check_member_rect_( file, line, val, exp, member )                                         \
+    ok_(file, line)( !memcmp( &(val).member, &(exp).member, sizeof(RECT) ),                        \
+                     "got " #member " %s\n", wine_dbgstr_rect( &(val).member ) )
+#define check_member_rect( val, exp, member )                                                      \
+    check_member_rect_( __FILE__, __LINE__, val, exp, member )
+
 #define check_candidate_list( a, b ) check_candidate_list_( __LINE__, a, b, TRUE )
 static void check_candidate_list_( int line, CANDIDATELIST *list, const CANDIDATELIST *expect, BOOL unicode )
 {
@@ -109,6 +121,15 @@ static void check_candidate_list_( int line, CANDIDATELIST *list, const CANDIDAT
         if (unicode) ok_( __FILE__, line )( !wcscmp( list_str, expect_str ), "got %s\n", debugstr_w(list_str) );
         else ok_( __FILE__, line )( !strcmp( list_str, expect_str ), "got %s\n", debugstr_a(list_str) );
     }
+}
+
+#define check_candidate_form( a, b ) check_candidate_form_( __LINE__, a, b )
+static void check_candidate_form_( int line, CANDIDATEFORM *form, const CANDIDATEFORM *expect )
+{
+    check_member_( __FILE__, line, *form, *expect, "%#lx", dwIndex );
+    check_member_( __FILE__, line, *form, *expect, "%#lx", dwStyle );
+    check_member_point_( __FILE__, line, *form, *expect, ptCurrentPos );
+    check_member_rect_( __FILE__, line, *form, *expect, rcArea );
 }
 
 #define DEFINE_EXPECT(func) \
@@ -5314,6 +5335,80 @@ cleanup:
     winetest_pop_context();
 }
 
+static void test_ImmGetCandidateWindow(void)
+{
+    HKL hkl, old_hkl = GetKeyboardLayout( 0 );
+    const CANDIDATEFORM expect_form =
+    {
+        .dwIndex = 0xdeadbeef,
+        .dwStyle = 0xfeedcafe,
+        .ptCurrentPos = {.x = 123, .y = 456},
+        .rcArea = {.left = 1, .top = 2, .right = 3, .bottom = 4},
+    };
+    CANDIDATEFORM cand_form;
+    INPUTCONTEXT *ctx;
+    HIMC himc;
+
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
+
+    if (!(hkl = ime_install())) return;
+
+    hwnd = CreateWindowW( test_class.lpszClassName, NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    ok_ret( 1, ImmLoadIME( hkl ) );
+    himc = ImmCreateContext();
+    ok_ne( NULL, himc, HIMC, "%p" );
+    ctx = ImmLockIMC( himc );
+    ok_ne( NULL, ctx, INPUTCONTEXT *, "%p" );
+    process_messages();
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+    memset( &cand_form, 0xcd, sizeof(cand_form) );
+    ok_ret( 0, ImmGetCandidateWindow( default_himc, 0, &cand_form ) );
+    ok_eq( 0xcdcdcdcd, cand_form.dwIndex, UINT, "%u" );
+    ok_ret( 0, ImmGetCandidateWindow( default_himc, 1, &cand_form ) );
+    ok_eq( 0xcdcdcdcd, cand_form.dwIndex, UINT, "%u" );
+    ok_ret( 0, ImmGetCandidateWindow( default_himc, 2, &cand_form ) );
+    ok_eq( 0xcdcdcdcd, cand_form.dwIndex, UINT, "%u" );
+    ok_ret( 0, ImmGetCandidateWindow( default_himc, 3, &cand_form ) );
+    ok_eq( 0xcdcdcdcd, cand_form.dwIndex, UINT, "%u" );
+    todo_wine ok_ret( 1, ImmGetCandidateWindow( default_himc, 4, &cand_form ) );
+    ok_seq( empty_sequence );
+
+    ok_ret( 0, ImmGetCandidateWindow( himc, 0, &cand_form ) );
+    ok_seq( empty_sequence );
+
+    todo_wine ok_seq( empty_sequence );
+    ok( !!ctx, "ImmLockIMC failed, error %lu\n", GetLastError() );
+    ctx->cfCandForm[0] = expect_form;
+
+    todo_wine ok_ret( 1, ImmGetCandidateWindow( himc, 0, &cand_form ) );
+    todo_wine check_candidate_form( &cand_form, &expect_form );
+    ok_seq( empty_sequence );
+
+    todo_wine ok_seq( empty_sequence );
+    ok( !!ctx, "ImmLockIMC failed, error %lu\n", GetLastError() );
+    ctx->cfCandForm[0].dwIndex = -1;
+
+    ok_ret( 0, ImmGetCandidateWindow( himc, 0, &cand_form ) );
+    ok_seq( empty_sequence );
+
+    ok_ret( 1, ImmUnlockIMC( himc ) );
+    ok_ret( 1, ImmDestroyContext( himc ) );
+
+    ok_ret( 1, ImmActivateLayout( old_hkl ) );
+    ok_ret( 1, DestroyWindow( hwnd ) );
+    process_messages();
+
+    ime_cleanup( hkl, TRUE );
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+}
+
 START_TEST(imm32)
 {
     default_hkl = GetKeyboardLayout( 0 );
@@ -5364,6 +5459,7 @@ START_TEST(imm32)
     test_ImmGetCandidateList( FALSE );
     test_ImmGetCandidateListCount( TRUE );
     test_ImmGetCandidateListCount( FALSE );
+    test_ImmGetCandidateWindow();
 
     if (init())
     {
