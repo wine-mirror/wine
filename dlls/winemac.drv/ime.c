@@ -1321,7 +1321,7 @@ NTSTATUS WINAPI macdrv_ime_set_text(void *arg, ULONG size)
 {
     struct ime_set_text_params *params = arg;
     ULONG length = (size - offsetof(struct ime_set_text_params, text)) / sizeof(WCHAR);
-    void *himc = param_ptr(params->data);
+    void *himc = param_ptr(params->himc);
     HWND hwnd = UlongToHandle(params->hwnd);
 
     if (!himc) himc = RealIMC(FROM_MACDRV);
@@ -1365,7 +1365,7 @@ NTSTATUS WINAPI macdrv_ime_query_char_rect(void *arg, ULONG size)
 {
     struct ime_query_char_rect_params *params = arg;
     struct ime_query_char_rect_result *result = param_ptr(params->result);
-    void *himc = param_ptr(params->data);
+    void *himc = param_ptr(params->himc);
     IMECHARPOSITION charpos;
     BOOL ret = FALSE;
 

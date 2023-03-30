@@ -378,7 +378,7 @@ typedef struct macdrv_event {
             unsigned long   time_ms;
         }                                           hotkey_press;
         struct {
-            void           *data;
+            void           *himc;
             CFStringRef     text;       /* new text or NULL if just completing existing text */
             unsigned int    cursor_pos;
             unsigned int    complete;   /* is completing text? */
@@ -487,7 +487,7 @@ typedef struct macdrv_query {
             CFTypeRef           pasteboard;
         }                                           drag_operation;
         struct {
-            void   *data;
+            void   *himc;
             CFRange range;
             CGRect  rect;
         }                                           ime_char_rect;

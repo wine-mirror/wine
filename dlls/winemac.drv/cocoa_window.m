@@ -403,7 +403,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 @property (nonatomic) CGFloat colorKeyRed, colorKeyGreen, colorKeyBlue;
 @property (nonatomic) BOOL usePerPixelAlpha;
 
-@property (assign, nonatomic) void* imeData;
+@property (assign, nonatomic) void* himc;
 @property (nonatomic) BOOL commandDone;
 
 @property (readonly, copy, nonatomic) NSArray* childWineWindows;
@@ -714,7 +714,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         WineWindow* window = (WineWindow*)[self window];
 
         event = macdrv_create_event(IM_SET_TEXT, window);
-        event->im_set_text.data = [window imeData];
+        event->im_set_text.himc = [window himc];
         event->im_set_text.text = (CFStringRef)[text copy];
         event->im_set_text.complete = TRUE;
 
@@ -797,7 +797,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             markedTextSelection.location += replacementRange.location;
 
             event = macdrv_create_event(IM_SET_TEXT, window);
-            event->im_set_text.data = [window imeData];
+            event->im_set_text.himc = [window himc];
             event->im_set_text.text = (CFStringRef)[[markedText string] copy];
             event->im_set_text.complete = FALSE;
             event->im_set_text.cursor_pos = markedTextSelection.location + markedTextSelection.length;
@@ -860,7 +860,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         query = macdrv_create_query();
         query->type = QUERY_IME_CHAR_RECT;
         query->window = (macdrv_window)[window retain];
-        query->ime_char_rect.data = [window imeData];
+        query->ime_char_rect.himc = [window himc];
         query->ime_char_rect.range = CFRangeMake(aRange.location, aRange.length);
 
         if ([window.queue query:query timeout:0.3 flags:WineQueryNoPreemptWait])
@@ -947,7 +947,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     @synthesize shapeChangedSinceLastDraw;
     @synthesize colorKeyed, colorKeyRed, colorKeyGreen, colorKeyBlue;
     @synthesize usePerPixelAlpha;
-    @synthesize imeData, commandDone;
+    @synthesize himc, commandDone;
 
     + (WineWindow*) createWindowWithFeatures:(const struct macdrv_window_features*)wf
                                  windowFrame:(NSRect)window_frame
@@ -3903,7 +3903,7 @@ uint32_t macdrv_window_background_color(void)
 /***********************************************************************
  *              macdrv_send_text_input_event
  */
-void macdrv_send_text_input_event(int pressed, unsigned int flags, int repeat, int keyc, void* data, int* done)
+void macdrv_send_text_input_event(int pressed, unsigned int flags, int repeat, int keyc, void* himc, int* done)
 {
     OnMainThreadAsync(^{
         BOOL ret;
@@ -3922,7 +3922,7 @@ void macdrv_send_text_input_event(int pressed, unsigned int flags, int repeat, i
             CGEventRef c;
             NSEvent* event;
 
-            window.imeData = data;
+            window.himc = himc;
             fix_device_modifiers_by_generic(&localFlags);
 
             // An NSEvent created with +keyEventWithType:... is internally marked

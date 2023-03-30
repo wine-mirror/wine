@@ -65,7 +65,7 @@
     NSRect frameAtResizeStart;
     BOOL resizingFromLeft, resizingFromTop;
 
-    void* imeData;
+    void* himc;
     BOOL commandDone;
 
     NSSize savedContentMinSize;

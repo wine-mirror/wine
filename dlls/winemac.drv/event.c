@@ -154,7 +154,7 @@ static void macdrv_im_set_text(const macdrv_event *event)
     struct ime_set_text_params *params;
     CFIndex length = 0, size;
 
-    TRACE_(imm)("win %p/%p himc %p text %s complete %u\n", hwnd, event->window, event->im_set_text.data,
+    TRACE_(imm)("win %p/%p himc %p text %s complete %u\n", hwnd, event->window, event->im_set_text.himc,
                 debugstr_cf(event->im_set_text.text), event->im_set_text.complete);
 
     if (event->im_set_text.text)
@@ -163,7 +163,7 @@ static void macdrv_im_set_text(const macdrv_event *event)
     size = offsetof(struct ime_set_text_params, text[length]);
     if (!(params = malloc(size))) return;
     params->hwnd = HandleToUlong(hwnd);
-    params->data = (UINT_PTR)event->im_set_text.data;
+    params->himc = (UINT_PTR)event->im_set_text.himc;
     params->cursor_pos = event->im_set_text.cursor_pos;
     params->complete = event->im_set_text.complete;
 
@@ -287,7 +287,7 @@ static BOOL query_drag_operation(macdrv_query *query)
 BOOL query_ime_char_rect(macdrv_query* query)
 {
     HWND hwnd = macdrv_get_window_hwnd(query->window);
-    void *himc = query->ime_char_rect.data;
+    void *himc = query->ime_char_rect.himc;
     CFRange *range = &query->ime_char_rect.range;
     CGRect *rect = &query->ime_char_rect.rect;
     struct ime_query_char_rect_result result = { .location = 0 };
@@ -298,7 +298,7 @@ BOOL query_ime_char_rect(macdrv_query* query)
                 range->length);
 
     params.hwnd = HandleToUlong(hwnd);
-    params.data = (UINT_PTR)himc;
+    params.himc = (UINT_PTR)himc;
     params.result = (UINT_PTR)&result;
     params.location = range->location;
     params.length = range->length;
