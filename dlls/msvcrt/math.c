@@ -1426,35 +1426,6 @@ float CDECL ceilf( float x )
     return u.f;
 }
 
-/*********************************************************************
- *      floorf (MSVCRT.@)
- *
- * Copied from musl: src/math/floorf.c
- */
-float CDECL floorf( float x )
-{
-    union {float f; UINT32 i;} u = {x};
-    int e = (int)(u.i >> 23 & 0xff) - 0x7f;
-    UINT32 m;
-
-    if (e >= 23)
-        return x;
-    if (e >= 0) {
-        m = 0x007fffff >> e;
-        if ((u.i & m) == 0)
-            return x;
-        if (u.i >> 31)
-            u.i += m;
-        u.i &= ~m;
-    } else {
-        if (u.i >> 31 == 0)
-            return 0;
-        else if (u.i << 1)
-            return -1;
-    }
-    return u.f;
-}
-
 #endif
 
 /*********************************************************************
@@ -3256,35 +3227,6 @@ double CDECL ceil( double x )
             return -0.0;
         else if (u.i << 1)
             return 1.0;
-    }
-    return u.f;
-}
-
-/*********************************************************************
- *		floor (MSVCRT.@)
- *
- * Based on musl: src/math/floorf.c
- */
-double CDECL floor( double x )
-{
-    union {double f; UINT64 i;} u = {x};
-    int e = (int)(u.i >> 52 & 0x7ff) - 0x3ff;
-    UINT64 m;
-
-    if (e >= 52)
-        return x;
-    if (e >= 0) {
-        m = 0x000fffffffffffffULL >> e;
-        if ((u.i & m) == 0)
-            return x;
-        if (u.i >> 63)
-            u.i += m;
-        u.i &= ~m;
-    } else {
-        if (u.i >> 63 == 0)
-            return 0;
-        else if (u.i << 1)
-            return -1;
     }
     return u.f;
 }
