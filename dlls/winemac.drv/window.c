@@ -2037,10 +2037,8 @@ LRESULT macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 
 static inline RECT get_surface_rect(const RECT *visible_rect)
 {
-    RECT rect;
-    RECT desktop_rect = rect_from_cgrect(macdrv_get_desktop_rect());
+    RECT rect = *visible_rect;
 
-    intersect_rect(&rect, visible_rect, &desktop_rect);
     OffsetRect(&rect, -visible_rect->left, -visible_rect->top);
     rect.left &= ~127;
     rect.top  &= ~127;
