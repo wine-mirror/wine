@@ -23,7 +23,7 @@ float __cdecl roundf(float x)
 		FORCE_EVAL(x + toint);
 		return 0*u.f;
 	}
-	y = x + toint - toint - x;
+	y = fp_barrierf(x + toint) - toint - x;
 	if (y > 0.5f)
 		y = y + x - 1;
 	else if (y <= -0.5f)

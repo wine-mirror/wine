@@ -467,27 +467,6 @@ recompute:
     return n & 7;
 }
 
-/* Based on musl implementation: src/math/round.c */
-static double __round(double x)
-{
-    ULONGLONG llx = *(ULONGLONG*)&x, tmp;
-    int e = (llx >> 52 & 0x7ff) - 0x3ff;
-
-    if (e >= 52)
-        return x;
-    if (e < -1)
-        return 0 * x;
-    else if (e == -1)
-        return signbit(x) ? -1 : 1;
-
-    tmp = 0x000fffffffffffffULL >> e;
-    if (!(llx & tmp))
-        return x;
-    llx += 0x0008000000000000ULL >> e;
-    llx &= ~tmp;
-    return *(double*)&llx;
-}
-
 #ifndef __i386__
 /* Copied from musl: src/math/__sindf.c */
 static float __sindf(double x)
@@ -945,7 +924,7 @@ float CDECL expf( float x )
     /* Round and convert z to int, the result is in [-150*N, 128*N] and
        ideally ties-to-even rule is used, otherwise the magnitude of r
        can be bigger which gives larger approximation error.  */
-    kd = __round(z);
+    kd = round(z);
     ki = (INT64)kd;
     r = z - kd;
 
@@ -1037,7 +1016,7 @@ static float powf_exp2(double xd, UINT32 sign_bias)
     double kd, z, r, r2, y, s;
 
     /* N*x = k + r with r in [-1/2, 1/2] */
-    kd = __round(xd); /* k */
+    kd = round(xd); /* k */
     ki = (INT64)kd;
     r = xd - kd;
 
@@ -2187,7 +2166,7 @@ double CDECL exp( double x )
     /* exp(x) = 2^(k/N) * exp(r), with exp(r) in [2^(-1/2N),2^(1/2N)]. */
     /* x = ln2/N*k + r, with int k and r in [-ln2/2N, ln2/2N]. */
     z = invln2N * x;
-    kd = __round(z);
+    kd = round(z);
     ki = (INT64)kd;
 
     r = x + kd * negln2hiN + kd * negln2loN;
@@ -2495,7 +2474,7 @@ static double pow_exp(double argx, double argy, double x, double xtail, UINT32 s
     /* exp(x) = 2^(k/N) * exp(r), with exp(r) in [2^(-1/2N),2^(1/2N)]. */
     /* x = ln2/N*k + r, with int k and r in [-ln2/2N, ln2/2N]. */
     z = invln2N * x;
-    kd = __round(z);
+    kd = round(z);
     ki = (INT64)kd;
     r = x + kd * negln2hiN + kd * negln2loN;
     /* The code assumes 2^-200 < |xtail| < 2^-8/N. */
@@ -5334,45 +5313,6 @@ __int64 CDECL llrintf(float x)
         return 0;
     }
     return f;
-}
-
-/*********************************************************************
- *      round (MSVCR120.@)
- */
-double CDECL round(double x)
-{
-    return __round(x);
-}
-
-/*********************************************************************
- *      roundf (MSVCR120.@)
- *
- * Copied from musl: src/math/roundf.c
- */
-float CDECL roundf(float x)
-{
-    static const float toint = 1 / FLT_EPSILON;
-
-    unsigned int ix = *(unsigned int*)&x;
-    int e = ix >> 23 & 0xff;
-    float y;
-
-    if (e >= 0x7f + 23)
-        return x;
-    if (ix >> 31)
-        x = -x;
-    if (e < 0x7f - 1)
-        return 0 * *(float*)&ix;
-    y = fp_barrierf(x + toint) - toint - x;
-    if (y > 0.5f)
-        y = y + x - 1;
-    else if (y <= -0.5f)
-        y = y + x + 1;
-    else
-        y = y + x;
-    if (ix >> 31)
-        y = -y;
-    return y;
 }
 
 /*********************************************************************
