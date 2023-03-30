@@ -251,7 +251,11 @@ ULONG CDECL WLDAP32_ldap_connect( LDAP *ld, struct l_timeval *timeout )
     TRACE( "(%p, %p)\n", ld, timeout );
 
     if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
-    return WLDAP32_LDAP_SUCCESS; /* FIXME: do something, e.g. ping the host */
+
+    if (timeout && (timeout->tv_sec || timeout->tv_usec))
+        FIXME( "ignoring timeout\n" );
+
+    return map_error( ldap_connect( CTX(ld) ) );
 }
 
 /***********************************************************************
