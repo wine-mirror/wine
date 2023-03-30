@@ -987,7 +987,7 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
     INT offX=0, offY=0;
     LPINPUTCONTEXT lpIMC;
 
-    lpIMC = LockRealIMC(hIMC);
+    lpIMC = ImmLockIMC(hIMC);
     if (lpIMC == NULL)
         return;
 
@@ -1101,7 +1101,7 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
     ImmUnlockIMCC(lpIMC->hCompStr);
 
     EndPaint(hwnd,&ps);
-    UnlockRealIMC(hIMC);
+    ImmUnlockIMC(hIMC);
 }
 
 static void UpdateDefaultIMEWindow(HIMC hIMC, HWND hwnd)
@@ -1109,7 +1109,7 @@ static void UpdateDefaultIMEWindow(HIMC hIMC, HWND hwnd)
     LPCOMPOSITIONSTRING compstr;
     LPINPUTCONTEXT lpIMC;
 
-    lpIMC = LockRealIMC(hIMC);
+    lpIMC = ImmLockIMC(hIMC);
     if (lpIMC == NULL)
         return;
 
@@ -1130,7 +1130,7 @@ static void UpdateDefaultIMEWindow(HIMC hIMC, HWND hwnd)
         ImmUnlockIMCC(lpIMC->hCompStr);
 
     lpIMC->hWnd = GetFocus();
-    UnlockRealIMC(hIMC);
+    ImmUnlockIMC(hIMC);
 }
 
 static void DefaultIMEComposition(HIMC hIMC, HWND hwnd, LPARAM lParam)
@@ -1214,8 +1214,6 @@ static LRESULT WINAPI IME_WindowProc(HWND hwnd, UINT msg, WPARAM wParam,
      */
 
     hIMC = (HIMC)GetWindowLongPtrW(hwnd,IMMGWL_IMC);
-    if (!hIMC)
-        hIMC = RealIMC(FROM_X11);
 
     /* if we have no hIMC there are many messages we cannot process */
     if (hIMC == NULL)
@@ -1244,14 +1242,14 @@ static LRESULT WINAPI IME_WindowProc(HWND hwnd, UINT msg, WPARAM wParam,
 
             SetWindowTextA(hwnd,"Wine Ime Active");
 
-            lpIMC = LockRealIMC(hIMC);
+            lpIMC = ImmLockIMC(hIMC);
             if (lpIMC)
             {
                 myPrivate = ImmLockIMCC(lpIMC->hPrivate);
                 myPrivate->hwndDefault = hwnd;
                 ImmUnlockIMCC(lpIMC->hPrivate);
             }
-            UnlockRealIMC(hIMC);
+            ImmUnlockIMC(hIMC);
 
             return TRUE;
         }
