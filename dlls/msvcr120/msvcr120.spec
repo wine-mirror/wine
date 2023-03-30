@@ -2334,9 +2334,9 @@
 @ cdecl remquol(double double ptr) remquo
 @ cdecl rename(str str)
 @ cdecl rewind(ptr)
-@ cdecl rint(double)
+@ cdecl rint(double) MSVCRT_rint
 @ cdecl rintf(float)
-@ cdecl rintl(double) rint
+@ cdecl rintl(double) MSVCRT_rint
 @ cdecl round(double)
 @ cdecl roundf(float)
 @ cdecl roundl(double) round

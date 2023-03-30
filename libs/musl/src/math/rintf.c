@@ -22,9 +22,9 @@ float __cdecl rintf(float x)
 	if (e >= 0x7f+23)
 		return x;
 	if (s)
-		y = x - toint + toint;
+		y = fp_barrierf(x - toint) + toint;
 	else
-		y = x + toint - toint;
+		y = fp_barrierf(x + toint) - toint;
 	if (y == 0)
 		return s ? -0.0f : 0.0f;
 	return y;

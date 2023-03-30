@@ -1758,9 +1758,9 @@
 @ cdecl _o_remquol(double double ptr) remquo
 @ cdecl _o_rename(str str) rename
 @ cdecl _o_rewind(ptr) rewind
-@ cdecl _o_rint(double) rint
+@ cdecl _o_rint(double) MSVCRT_rint
 @ cdecl _o_rintf(float) rintf
-@ cdecl _o_rintl(double) rint
+@ cdecl _o_rintl(double) MSVCRT_rint
 @ cdecl _o_round(double) round
 @ cdecl _o_roundf(float) roundf
 @ cdecl _o_roundl(double) round
@@ -2471,9 +2471,9 @@
 @ cdecl remquol(double double ptr) remquo
 @ cdecl rename(str str)
 @ cdecl rewind(ptr)
-@ cdecl rint(double)
+@ cdecl rint(double) MSVCRT_rint
 @ cdecl rintf(float)
-@ cdecl rintl(double) rint
+@ cdecl rintl(double) MSVCRT_rint
 @ cdecl round(double)
 @ cdecl roundf(float)
 @ cdecl roundl(double) round

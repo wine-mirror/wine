@@ -953,37 +953,6 @@ double CDECL atan( double x )
     return sign ? -z : z;
 }
 
-/*********************************************************************
- *      rint (MSVCR120.@)
- *
- * Copied from musl: src/math/rint.c
- */
-double CDECL rint(double x)
-{
-    static const double toint = 1 / DBL_EPSILON;
-
-    ULONGLONG llx = *(ULONGLONG*)&x;
-    int e = llx >> 52 & 0x7ff;
-    int s = llx >> 63;
-    unsigned cw;
-    double y;
-
-    if (e >= 0x3ff+52)
-        return x;
-    cw = _controlfp(0, 0);
-    if ((cw & _MCW_PC) != _PC_53)
-        _controlfp(_PC_53, _MCW_PC);
-    if (s)
-        y = fp_barrier(x - toint) + toint;
-    else
-        y = fp_barrier(x + toint) - toint;
-    if ((cw & _MCW_PC) != _PC_53)
-        _controlfp(cw, _MCW_PC);
-    if (y == 0)
-        return s ? -0.0 : 0;
-    return y;
-}
-
 /* Copied from musl: src/math/exp_data.c */
 static const UINT64 exp_T[] = {
     0x0ULL, 0x3ff0000000000000ULL,
@@ -2568,6 +2537,23 @@ int CDECL _isnan(double num)
 #if _MSVCR_VER>=120
 
 /*********************************************************************
+ *      rint (MSVCR120.@)
+ */
+double CDECL MSVCRT_rint(double x)
+{
+    unsigned cw;
+    double y;
+
+    cw = _controlfp(0, 0);
+    if ((cw & _MCW_PC) != _PC_53)
+        _controlfp(_PC_53, _MCW_PC);
+    y = rint(x);
+    if ((cw & _MCW_PC) != _PC_53)
+        _controlfp(cw, _MCW_PC);
+    return y;
+}
+
+/*********************************************************************
  *		_nearbyint (MSVCR120.@)
  *
  * Based on musl: src/math/nearbyteint.c
@@ -2585,7 +2571,7 @@ double CDECL nearbyint(double x)
         cw |= _EM_INEXACT;
         _setfp(&cw, _EM_INEXACT, NULL, 0);
     }
-    x = rint(x);
+    x = MSVCRT_rint(x);
     if (update_cw || update_sw)
     {
         sw = 0;
@@ -3512,38 +3498,13 @@ void __cdecl __libm_sse2_sqrt_precise(void)
 #if _MSVCR_VER>=120
 
 /*********************************************************************
- *      rintf (MSVCR120.@)
- *
- * Copied from musl: src/math/rintf.c
- */
-float CDECL rintf(float x)
-{
-    static const float toint = 1 / FLT_EPSILON;
-
-    unsigned int ix = *(unsigned int*)&x;
-    int e = ix >> 23 & 0xff;
-    int s = ix >> 31;
-    float y;
-
-    if (e >= 0x7f + 23)
-        return x;
-    if (s)
-        y = fp_barrierf(x - toint) + toint;
-    else
-        y = fp_barrierf(x + toint) - toint;
-    if (y == 0)
-        return s ? -0.0f : 0.0f;
-    return y;
-}
-
-/*********************************************************************
  *      lrint (MSVCR120.@)
  */
 __msvcrt_long CDECL lrint(double x)
 {
     double d;
 
-    d = rint(x);
+    d = MSVCRT_rint(x);
     if ((d < 0 && d != (double)(__msvcrt_long)d)
             || (d >= 0 && d != (double)(__msvcrt_ulong)d)) {
         *_errno() = EDOM;
@@ -3575,7 +3536,7 @@ __int64 CDECL llrint(double x)
 {
     double d;
 
-    d = rint(x);
+    d = MSVCRT_rint(x);
     if ((d < 0 && d != (double)(__int64)d)
             || (d >= 0 && d != (double)(unsigned __int64)d)) {
         *_errno() = EDOM;

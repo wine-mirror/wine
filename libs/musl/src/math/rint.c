@@ -20,9 +20,9 @@ double __cdecl rint(double x)
 	if (e >= 0x3ff+52)
 		return x;
 	if (s)
-		y = x - toint + toint;
+		y = fp_barrier(x - toint) + toint;
 	else
-		y = x + toint - toint;
+		y = fp_barrier(x + toint) - toint;
 	if (y == 0)
 		return s ? -0.0 : 0;
 	return y;
