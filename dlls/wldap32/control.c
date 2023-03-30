@@ -108,6 +108,7 @@ ULONG CDECL ldap_create_sort_controlW( LDAP *ld, LDAPSortKeyW **sortkey, UCHAR c
     TRACE( "(%p, %p, 0x%02x, %p)\n", ld, sortkey, critical, control );
 
     if (!ld || !sortkey || !control) return WLDAP32_LDAP_PARAM_ERROR;
+    if ((ret = WLDAP32_ldap_connect( ld, NULL ))) return ret;
 
     if (!(sortkeyU = sortkeyarrayWtoU( sortkey ))) return WLDAP32_LDAP_NO_MEMORY;
 
@@ -160,6 +161,7 @@ INT CDECL ldap_create_vlv_controlW( LDAP *ld, WLDAP32_LDAPVLVInfo *info, UCHAR c
     TRACE( "(%p, %p, 0x%02x, %p)\n", ld, info, critical, control );
 
     if (!ld || !control) return ~0u;
+    if ((ret = WLDAP32_ldap_connect( ld, NULL ))) return ret;
 
     if (info && !(infoU = vlvinfoWtoU( info ))) return WLDAP32_LDAP_NO_MEMORY;
 

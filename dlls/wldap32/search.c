@@ -109,24 +109,24 @@ ULONG CDECL ldap_search_extW( LDAP *ld, WCHAR *base, ULONG scope, WCHAR *filter,
                               LDAPControlW **serverctrls, LDAPControlW **clientctrls, ULONG timelimit,
                               ULONG sizelimit, ULONG *message )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret;
     char *baseU = NULL, *filterU = NULL, **attrsU = NULL;
     LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
-    struct timeval timevalU;
+    struct l_timeval timevalW = { timelimit, 0 };
+    struct timeval timevalU = { timelimit, 0 };
 
     TRACE( "(%p, %s, %#lx, %s, %p, %#lx, %p, %p, %#lx, %#lx, %p)\n", ld, debugstr_w(base), scope,
            debugstr_w(filter), attrs, attrsonly, serverctrls, clientctrls, timelimit, sizelimit, message );
 
-    if (!ld) return ~0u;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if ((ret = WLDAP32_ldap_connect( ld, &timevalW ))) return ret;
 
+    ret = WLDAP32_LDAP_NO_MEMORY;
     if (base && !(baseU = strWtoU( base ))) goto exit;
     if (filter && !(filterU = strWtoU( filter ))) goto exit;
     if (attrs && !(attrsU = strarrayWtoU( attrs ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
-
-    timevalU.tv_sec = timelimit;
-    timevalU.tv_usec = 0;
 
     ret = map_error( ldap_search_ext( CTX(ld), baseU, scope, filterU, attrsU, attrsonly, serverctrlsU,
                                       clientctrlsU, timelimit ? &timevalU : NULL, sizelimit, (int *)message ) );
@@ -180,7 +180,7 @@ ULONG CDECL ldap_search_ext_sW( LDAP *ld, WCHAR *base, ULONG scope, WCHAR *filte
                                 LDAPControlW **serverctrls, LDAPControlW **clientctrls, struct l_timeval *timeout,
                                 ULONG sizelimit, LDAPMessage **res )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret;
     char *baseU = NULL, *filterU = NULL, **attrsU = NULL;
     LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
     struct timeval timevalU;
@@ -190,7 +190,9 @@ ULONG CDECL ldap_search_ext_sW( LDAP *ld, WCHAR *base, ULONG scope, WCHAR *filte
            debugstr_w(filter), attrs, attrsonly, serverctrls, clientctrls, timeout, sizelimit, res );
 
     if (!ld || !res) return WLDAP32_LDAP_PARAM_ERROR;
+    if ((ret = WLDAP32_ldap_connect( ld, timeout ))) return ret;
 
+    ret = WLDAP32_LDAP_NO_MEMORY;
     if (base && !(baseU = strWtoU( base ))) goto exit;
     if (filter && !(filterU = strWtoU( filter ))) goto exit;
     if (attrs && !(attrsU = strarrayWtoU( attrs ))) goto exit;

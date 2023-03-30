@@ -95,6 +95,7 @@ ULONG CDECL ldap_modrdn2W( LDAP *ld, WCHAR *dn, WCHAR *newdn, int delete )
     TRACE( "(%p, %s, %p, 0x%02x)\n", ld, debugstr_w(dn), newdn, delete );
 
     if (!ld || !newdn) return ~0u;
+    if (WLDAP32_ldap_connect( ld, NULL ) != WLDAP32_LDAP_SUCCESS) return ~0u;
 
     if (dn && !(dnU = strWtoU( dn ))) return ~0u;
 
@@ -136,15 +137,17 @@ exit:
  */
 ULONG CDECL ldap_modrdn2_sW( LDAP *ld, WCHAR *dn, WCHAR *newdn, int delete )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret;
     char *dnU = NULL, *newdnU = NULL;
 
     TRACE( "(%p, %s, %p, 0x%02x)\n", ld, debugstr_w(dn), newdn, delete );
 
     if (!ld || !newdn) return WLDAP32_LDAP_PARAM_ERROR;
+    if ((ret = WLDAP32_ldap_connect( ld, NULL ))) return ret;
 
     if (dn && !(dnU = strWtoU( dn ))) return WLDAP32_LDAP_NO_MEMORY;
 
+    ret = WLDAP32_LDAP_NO_MEMORY;
     if ((newdnU = strWtoU( newdn )))
     {
         ret = map_error( ldap_rename_s( CTX(ld), dnU, newdnU, NULL, delete, NULL, NULL ) );

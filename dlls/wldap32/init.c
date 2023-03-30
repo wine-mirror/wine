@@ -24,6 +24,8 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "winternl.h"
+#include "schannel.h"
+#include "sspi.h"
 
 #include "wine/debug.h"
 #include "winldap_private.h"
@@ -248,6 +250,9 @@ exit:
  */
 ULONG CDECL WLDAP32_ldap_connect( LDAP *ld, struct l_timeval *timeout )
 {
+    VERIFYSERVERCERT *cert_callback = CERT_CALLBACK(ld);
+    int ret;
+
     TRACE( "(%p, %p)\n", ld, timeout );
 
     if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
@@ -255,7 +260,32 @@ ULONG CDECL WLDAP32_ldap_connect( LDAP *ld, struct l_timeval *timeout )
     if (timeout && (timeout->tv_sec || timeout->tv_usec))
         FIXME( "ignoring timeout\n" );
 
-    return map_error( ldap_connect( CTX(ld) ) );
+    if ((ret = ldap_connect( CTX(ld) )))
+        return map_error( ret );
+
+    if (cert_callback)
+    {
+        CtxtHandle *tls_context;
+        const CERT_CONTEXT *cert;
+
+        if ((ret = ldap_get_option( CTX(ld), LDAP_OPT_X_TLS_SSL_CTX, &tls_context )))
+            return map_error( ret );
+
+        if (QueryContextAttributesA( tls_context, SECPKG_ATTR_REMOTE_CERT_CONTEXT, &cert ) != SEC_E_OK)
+            return WLDAP32_LDAP_SERVER_DOWN;
+
+        if (cert_callback( ld, &cert ))
+        {
+            TRACE( "accepted\n" );
+        }
+        else
+        {
+            WARN( "rejected\n" );
+            return WLDAP32_LDAP_SERVER_DOWN;
+        }
+    }
+
+    return WLDAP32_LDAP_SUCCESS;
 }
 
 /***********************************************************************
@@ -427,6 +457,8 @@ ULONG CDECL ldap_start_tls_sW( LDAP *ld, ULONG *retval, LDAPMessage **result, LD
     else
     {
         ret = map_error( ldap_start_tls_s( CTX(ld), serverctrlsU, clientctrlsU ) );
+        if (!ret && WLDAP32_ldap_connect( ld, NULL ) != WLDAP32_LDAP_SUCCESS)
+            ret = WLDAP32_LDAP_LOCAL_ERROR;
     }
 
 exit:

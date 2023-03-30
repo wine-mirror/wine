@@ -1,6 +1,6 @@
 MODULE    = wldap32.dll
 IMPORTLIB = wldap32
-IMPORTS   = $(LDAP_PE_LIBS) secur32 ws2_32 user32
+IMPORTS   = $(LDAP_PE_LIBS) crypt32 secur32 ws2_32 user32
 EXTRAINCL = $(LDAP_PE_CFLAGS)
 
 C_SRCS = \

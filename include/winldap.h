@@ -391,6 +391,8 @@ typedef struct ldap_apifeature_infoW
 
 DECL_WINELIB_TYPE_AW(LDAPAPIFeatureInfo)
 
+typedef BOOLEAN (CDECL VERIFYSERVERCERT)(LDAP*,const CERT_CONTEXT**);
+
 
 #ifdef __cplusplus
 extern "C" {

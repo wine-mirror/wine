@@ -58,7 +58,7 @@ exit:
  */
 ULONG CDECL ldap_bindW( LDAP *ld, WCHAR *dn, WCHAR *cred, ULONG method )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret;
     char *dnU = NULL, *credU = NULL;
     struct berval pwd = { 0, NULL };
     int msg;
@@ -67,7 +67,9 @@ ULONG CDECL ldap_bindW( LDAP *ld, WCHAR *dn, WCHAR *cred, ULONG method )
 
     if (!ld) return ~0u;
     if (method != WLDAP32_LDAP_AUTH_SIMPLE) return WLDAP32_LDAP_PARAM_ERROR;
+    if ((ret = WLDAP32_ldap_connect( ld, NULL ))) return ret;
 
+    ret = WLDAP32_LDAP_NO_MEMORY;
     if (dn && !(dnU = strWtoU( dn ))) goto exit;
     if (cred)
     {
@@ -171,14 +173,16 @@ static int interact_callback( LDAP *ld, unsigned flags, void *defaults, void *sa
  */
 ULONG CDECL ldap_bind_sW( LDAP *ld, WCHAR *dn, WCHAR *cred, ULONG method )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret;
     char *dnU = NULL, *credU = NULL;
     struct berval pwd = { 0, NULL };
 
     TRACE( "(%p, %s, %p, %#lx)\n", ld, debugstr_w(dn), cred, method );
 
     if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if ((ret = WLDAP32_ldap_connect( ld, NULL ))) return ret;
 
+    ret = WLDAP32_LDAP_NO_MEMORY;
     if (method == WLDAP32_LDAP_AUTH_SIMPLE)
     {
         if (dn && !(dnU = strWtoU( dn ))) goto exit;
@@ -260,7 +264,7 @@ exit:
 ULONG CDECL ldap_sasl_bindW( LDAP *ld, const PWCHAR dn, const PWCHAR mechanism, const BERVAL *cred,
                              LDAPControlW **serverctrls, LDAPControlW **clientctrls, int *message )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret;
     char *dnU, *mechanismU = NULL;
     LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
     struct berval credU;
@@ -269,7 +273,9 @@ ULONG CDECL ldap_sasl_bindW( LDAP *ld, const PWCHAR dn, const PWCHAR mechanism, 
            debugstr_w(mechanism), cred, serverctrls, clientctrls, message );
 
     if (!ld || !dn || !mechanism || !cred || !message) return WLDAP32_LDAP_PARAM_ERROR;
+    if ((ret = WLDAP32_ldap_connect( ld, NULL ))) return ret;
 
+    ret = WLDAP32_LDAP_NO_MEMORY;
     if (!(dnU = strWtoU( dn ))) goto exit;
     if (!(mechanismU = strWtoU( mechanism ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
@@ -325,7 +331,7 @@ exit:
 ULONG CDECL ldap_sasl_bind_sW( LDAP *ld, const PWCHAR dn, const PWCHAR mechanism, const BERVAL *cred,
                                LDAPControlW **serverctrls, LDAPControlW **clientctrls, BERVAL **serverdata )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret;
     char *dnU, *mechanismU = NULL;
     LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
     struct berval *dataU, credU;
@@ -334,7 +340,9 @@ ULONG CDECL ldap_sasl_bind_sW( LDAP *ld, const PWCHAR dn, const PWCHAR mechanism
            debugstr_w(mechanism), cred, serverctrls, clientctrls, serverdata );
 
     if (!ld || !dn || !mechanism || !cred || !serverdata) return WLDAP32_LDAP_PARAM_ERROR;
+    if ((ret = WLDAP32_ldap_connect( ld, NULL ))) return ret;
 
+    ret = WLDAP32_LDAP_NO_MEMORY;
     if (!(dnU = strWtoU( dn ))) goto exit;
     if (!(mechanismU = strWtoU( mechanism ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
@@ -395,7 +403,7 @@ ULONG CDECL ldap_simple_bindW( LDAP *ld, WCHAR *dn, WCHAR *passwd )
 
     TRACE( "(%p, %s, %p)\n", ld, debugstr_w(dn), passwd );
 
-    if (!ld) return ~0u;
+    if (!ld || WLDAP32_ldap_connect( ld, NULL ) != WLDAP32_LDAP_SUCCESS) return ~0u;
 
     if (dn && !(dnU = strWtoU( dn ))) goto exit;
     if (passwd)
@@ -445,14 +453,16 @@ exit:
  */
 ULONG CDECL ldap_simple_bind_sW( LDAP *ld, WCHAR *dn, WCHAR *passwd )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret;
     char *dnU = NULL, *passwdU = NULL;
     struct berval pwd = { 0, NULL };
 
     TRACE( "(%p, %s, %p)\n", ld, debugstr_w(dn), passwd );
 
     if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if ((ret = WLDAP32_ldap_connect( ld, NULL ))) return ret;
 
+    ret = WLDAP32_LDAP_NO_MEMORY;
     if (dn && !(dnU = strWtoU( dn ))) goto exit;
     if (passwd)
     {

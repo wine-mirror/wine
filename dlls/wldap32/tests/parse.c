@@ -544,6 +544,44 @@ static void test_opt_ssl(void)
     ldap_unbind( ld );
 }
 
+static BOOLEAN CDECL verify_certificate( LDAP *ld, const CERT_CONTEXT **cert )
+{
+    CertFreeCertificateContext(*cert);
+    return FALSE;
+}
+
+static void test_opt_server_certificate(void)
+{
+    LDAP *ld;
+    ULONG ret, version = LDAP_VERSION3;
+
+    ld = ldap_initA( (char *)"db.debian.org", 636 );
+    ok( ld != NULL, "ldap_init failed\n" );
+    ret = ldap_set_optionA( ld, LDAP_OPT_PROTOCOL_VERSION, &version );
+    ok( !ret, "ldap_set_optionA should succeed, got %#lx\n", ret );
+    ret = ldap_set_optionA( ld, LDAP_OPT_SSL, LDAP_OPT_ON );
+    ok( !ret, "ldap_set_optionA should succeed, got %#lx\n", ret );
+    ret = ldap_set_optionA( ld, LDAP_OPT_SERVER_CERTIFICATE, &verify_certificate );
+    ok( !ret, "ldap_set_optionA should succeed, got %#lx\n", ret );
+    ret = ldap_connect( ld, NULL );
+    ok( ret == LDAP_SERVER_DOWN, "ldap_connect should fail, got %#lx\n", ret );
+    ret = ldap_simple_bindA( ld, NULL, NULL );
+    ok( ret == (ULONG)-1, "ldap_simple_bindA should fail, got %#lx\n", ret );
+    ret = ldap_simple_bind_sA( ld, NULL, NULL );
+    ok( ret == LDAP_SERVER_DOWN, "ldap_simple_bind_sA should fail, got %#lx\n", ret );
+    ldap_unbind( ld );
+
+    ld = ldap_initA( (char *)"db.debian.org", 389 );
+    ok( ld != NULL, "ldap_init failed\n" );
+    ret = ldap_set_optionA( ld, LDAP_OPT_PROTOCOL_VERSION, &version );
+    ok( !ret, "ldap_set_optionA should succeed, got %#lx\n", ret );
+    ret = ldap_set_optionA( ld, LDAP_OPT_SERVER_CERTIFICATE, &verify_certificate );
+    ok( !ret, "ldap_set_optionA should succeed, got %#lx\n", ret );
+    ret = ldap_start_tls_sA( ld, NULL, NULL, NULL, NULL );
+    ok( ret == LDAP_LOCAL_ERROR, "ldap_start_tls_sA should fail, got %#lx\n", ret );
+    ldap_unbind( ld );
+}
+
 START_TEST (parse)
 {
     LDAP *ld;
@@ -552,6 +590,7 @@ START_TEST (parse)
     test_ldap_server_control();
     test_ldap_bind_sA();
     test_opt_ssl();
+    test_opt_server_certificate();
 
     ld = ldap_initA( (char *)"db.debian.org", 389 );
     ok( ld != NULL, "ldap_init failed\n" );

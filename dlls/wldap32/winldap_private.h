@@ -21,6 +21,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include "winternl.h"
+#include "wincrypt.h"
 #include "winnls.h"
 
 #define LDAP_NEEDS_PROTOTYPES
@@ -362,8 +363,18 @@ typedef struct ldapsearch
     struct WLDAP32_berval *cookie;
 } LDAPSearch;
 
-#define CTX(ld) (*(LDAP **)ld->Reserved3)
-#define SERVER_CTRLS(ld) (*(struct berval ***)(ld->Reserved3 + sizeof(LDAP *)))
+typedef BOOLEAN (CDECL VERIFYSERVERCERT)(LDAP*,const CERT_CONTEXT**);
+
+struct private_data
+{
+    LDAP *ctx;
+    struct berval **server_ctrls;
+    VERIFYSERVERCERT *cert_callback;
+};
+
+#define CTX(ld) (((struct private_data *)ld->Reserved3)->ctx)
+#define SERVER_CTRLS(ld) (((struct private_data *)ld->Reserved3)->server_ctrls)
+#define CERT_CALLBACK(ld) (((struct private_data *)ld->Reserved3)->cert_callback)
 #define MSG(entry) (entry->Request)
 #define BER(ber) ((BerElement *)((ber)->opaque))
 
@@ -423,6 +434,7 @@ ULONG CDECL ldap_compare_ext_sW( LDAP *, WCHAR *, WCHAR *, WCHAR *, struct WLDAP
                                  LDAPControlW ** );
 ULONG CDECL ldap_compare_sA( LDAP *, char *, char *, char * );
 ULONG CDECL ldap_compare_sW( LDAP *, WCHAR *, WCHAR *, WCHAR * );
+ULONG CDECL WLDAP32_ldap_connect( LDAP *, struct l_timeval * );
 ULONG CDECL ldap_create_sort_controlA( LDAP *, LDAPSortKeyA **, UCHAR, LDAPControlA ** );
 ULONG CDECL ldap_create_sort_controlW( LDAP *, LDAPSortKeyW **, UCHAR, LDAPControlW ** );
 int CDECL ldap_create_vlv_controlA( LDAP *, WLDAP32_LDAPVLVInfo *, UCHAR, LDAPControlA ** );

@@ -1,5 +1,5 @@
 TESTDLL   = wldap32.dll
-IMPORTS   = wldap32
+IMPORTS   = crypt32 wldap32
 
 C_SRCS = \
 	ber.c \

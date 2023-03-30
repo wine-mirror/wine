@@ -46,8 +46,8 @@ typedef struct tlsw_ctx {
 } tlsw_ctx;
 
 typedef struct tlsw_session {
+	CtxtHandle ctxt_handle; /* ctxt_handle must be the first field */
 	CredHandle cred_handle;
-	CtxtHandle ctxt_handle;
 	Sockbuf_IO_Desc *sbiod;
 	struct berval peer_der_dn;
 } tlsw_session;
