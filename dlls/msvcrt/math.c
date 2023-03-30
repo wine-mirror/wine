@@ -220,22 +220,7 @@ float CDECL _chgsignf( float num )
 
 #ifndef __i386__
 extern float __sindf(double x);
-
-/* Copied from musl: src/math/__cosdf.c */
-static float __cosdf(double x)
-{
-    static const double C0 = -0x1.0000000000000p-1,
-        C1 = 0x1.5555555555555p-5,
-        C2 = -0x1.6c16c16c16c17p-10,
-        C3 = 0x1.a01a01a01a01ap-16,
-        C4 = -0x1.27e4fb7789f5cp-22;
-    double z;
-
-    z = x * x;
-    if (x > -7.8163146972656250e-03 && x < 7.8163146972656250e-03)
-        return 1 + C0 * z;
-    return 1.0 + z * (C0 + z * (C1 + z * (C2 + z * (C3 + z * C4))));
-}
+extern float __cosdf(double x);
 
 static const UINT64 exp2f_T[] = {
     0x3ff0000000000000ULL, 0x3fefd9b0d3158574ULL, 0x3fefb5586cf9890fULL, 0x3fef9301d0125b51ULL,
