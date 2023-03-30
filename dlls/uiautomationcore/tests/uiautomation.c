@@ -135,7 +135,7 @@ static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
 
     IUnknown_QueryInterface(iface1, &IID_IUnknown, (void**)&unk1);
     IUnknown_QueryInterface(iface2, &IID_IUnknown, (void**)&unk2);
-    cmp = (unk1 == unk2) ? TRUE : FALSE;
+    cmp = unk1 == unk2;
 
     IUnknown_Release(unk1);
     IUnknown_Release(unk2);
