@@ -3185,7 +3185,7 @@ static void test_async_reader_settings(void)
             WMT_TYPE_DWORD, 0, E_INVALIDARG);
 
     SetEvent(callback.expect_started);
-    hr = IWMReader_Start(reader, 0, 0, 1, (void **)NULL);
+    hr = IWMReader_Start(reader, 0, 0, 1, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMReader_Close(reader);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -3259,7 +3259,7 @@ static void test_async_reader_streaming(void)
         ok(!ref, "Got outstanding refcount %ld.\n", ref);
     }
 
-    hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)NULL);
+    hr = IWMReader_Start(reader, 0, 0, 1.0f, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     wait_started_callback(&callback);
 
@@ -3296,7 +3296,7 @@ static void test_async_reader_streaming(void)
     callback.last_pts[1] = 0;
     callback.next_pts[1] = 0;
 
-    hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)NULL);
+    hr = IWMReader_Start(reader, 0, 0, 1.0f, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     wait_started_callback(&callback);
 
