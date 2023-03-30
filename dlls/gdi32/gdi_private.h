@@ -53,7 +53,7 @@ static inline DWORD gdi_handle_type( HGDIOBJ obj )
 #define MFVERSION 0x300
 
 /* Undocumented value for DIB's iUsage: Indicates a mono DIB w/o pal entries */
-#define DIB_PAL_MONO 2
+#define DIB_PAL_INDICES 2
 
 /* Format of comment record added by GetWinMetaFileBits */
 #include <pshpack2.h>

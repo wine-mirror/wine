@@ -451,7 +451,7 @@ static DWORD emfdc_create_brush( struct emf *emf, HBRUSH brush )
                  * FIXME: It may be that the DIB functions themselves accept this value.
                  */
                 emr->emr.iType = EMR_CREATEMONOBRUSH;
-                usage = DIB_PAL_MONO;
+                usage = DIB_PAL_INDICES;
                 emr->cbBmi = sizeof( BITMAPINFOHEADER );
             }
             else
@@ -1617,7 +1617,7 @@ BOOL EMFDC_MaskBlt( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst, INT h
     emr->cbBitsSrc = src_info.bmiHeader.biSizeImage;
     emr->xMask = x_mask;
     emr->yMask = y_mask;
-    emr->iUsageMask = DIB_PAL_MONO;
+    emr->iUsageMask = DIB_PAL_INDICES;
     emr->offBmiMask = mask_info_size ? emr->offBitsSrc + emr->cbBitsSrc : 0;
     emr->cbBmiMask = mask_info_size;
     emr->offBitsMask = emr->offBmiMask + emr->cbBmiMask;
@@ -1720,7 +1720,7 @@ BOOL EMFDC_PlgBlt( DC_ATTR *dc_attr, const POINT *points, HDC hdc_src, INT x_src
     emr->cbBitsSrc = src_info.bmiHeader.biSizeImage;
     emr->xMask = x_mask;
     emr->yMask = y_mask;
-    emr->iUsageMask = DIB_PAL_MONO;
+    emr->iUsageMask = DIB_PAL_INDICES;
     emr->offBmiMask = mask_info_size ? emr->offBitsSrc + emr->cbBitsSrc : 0;
     emr->cbBmiMask = mask_info_size;
     emr->offBitsMask = emr->offBmiMask + emr->cbBmiMask;

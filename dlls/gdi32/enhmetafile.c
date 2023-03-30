@@ -1858,7 +1858,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
         /* Need to check if the bitmap is monochrome, and if the
            two colors are really black and white */
-        if (pCreateMonoBrush->iUsage == DIB_PAL_MONO)
+        if (pCreateMonoBrush->iUsage == DIB_PAL_INDICES)
         {
             BITMAP bm;
 
