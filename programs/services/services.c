@@ -47,6 +47,7 @@ static DWORD default_preshutdown_timeout = 180000;
 static DWORD autostart_delay = 120000;
 static void *environment = NULL;
 static HKEY service_current_key = NULL;
+static HANDLE job_object;
 
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
@@ -1102,6 +1103,8 @@ found:
         release_process(process);
         return err;
     }
+    if (!AssignProcessToJobObject(job_object, pi.hProcess))
+        WINE_ERR("Could not add object to job.\n");
 
     process->process_id = pi.dwProcessId;
     process->process = pi.hProcess;
@@ -1284,8 +1287,17 @@ int __cdecl main(int argc, char *argv[])
         'C','o','n','t','r','o','l','\\',
         'S','e','r','v','i','c','e','C','u','r','r','e','n','t',0};
     static const WCHAR svcctl_started_event[] = SVCCTL_STARTED_EVENT;
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION job_limit;
     HANDLE started_event;
     DWORD err;
+
+    job_object = CreateJobObjectW(NULL, NULL);
+    job_limit.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_BREAKAWAY_OK | JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK;
+    if (!SetInformationJobObject(job_object, JobObjectExtendedLimitInformation, &job_limit, sizeof(job_limit)))
+    {
+        WINE_ERR("Failed to initialized job object, err %lu.\n", GetLastError());
+        return GetLastError();
+    }
 
     started_event = CreateEventW(NULL, TRUE, FALSE, svcctl_started_event);
 
