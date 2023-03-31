@@ -3349,50 +3349,30 @@ int CDECL _fdpcomp(float x, float y)
 
 /*********************************************************************
  *      acosh (MSVCR120.@)
- *
- * Copied from musl: src/math/acosh.c
  */
-double CDECL acosh(double x)
+double CDECL MSVCRT_acosh(double x)
 {
-    int e = *(UINT64*)&x >> 52 & 0x7ff;
-
     if (x < 1)
     {
         *_errno() = EDOM;
         feraiseexcept(FE_INVALID);
         return NAN;
     }
-
-    if (e < 0x3ff + 1) /* |x| < 2, up to 2ulp error in [1,1.125] */
-        return log1p(x - 1 + sqrt((x - 1) * (x - 1) + 2 * (x - 1)));
-    if (e < 0x3ff + 26) /* |x| < 0x1p26 */
-        return log(2 * x - 1 / (x + sqrt(x * x - 1)));
-    /* |x| >= 0x1p26 or nan */
-    return log(x) + 0.693147180559945309417232121458176568;
+    return acosh( x );
 }
 
 /*********************************************************************
  *      acoshf (MSVCR120.@)
- *
- * Copied from musl: src/math/acoshf.c
  */
-float CDECL acoshf(float x)
+float CDECL MSVCRT_acoshf(float x)
 {
-    UINT32 a = *(UINT32*)&x & 0x7fffffff;
-
     if (x < 1)
     {
         *_errno() = EDOM;
         feraiseexcept(FE_INVALID);
         return NAN;
     }
-
-    if (a < 0x3f800000 + (1 << 23)) /* |x| < 2, up to 2ulp error in [1,1.125] */
-        return log1pf(x - 1 + sqrtf((x - 1) * (x - 1) + 2 * (x - 1)));
-    if (*(UINT32*)&x < 0x3f800000 + (12 << 23)) /* 2 <= x < 0x1p12 */
-        return logf(2 * x - 1 / (x + sqrtf(x * x - 1)));
-    /* x >= 0x1p12 or x <= -2 or nan */
-    return logf(x) + 0.693147180559945309417232121458176568f;
+    return acoshf( x );
 }
 
 /*********************************************************************

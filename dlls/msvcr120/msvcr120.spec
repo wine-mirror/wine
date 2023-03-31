@@ -2012,9 +2012,9 @@
 @ cdecl abs(long)
 @ cdecl acos(double)
 @ cdecl -arch=!i386 acosf(float)
-@ cdecl acosh(double)
-@ cdecl acoshf(float)
-@ cdecl acoshl(double) acosh
+@ cdecl acosh(double) MSVCRT_acosh
+@ cdecl acoshf(float) MSVCRT_acoshf
+@ cdecl acoshl(double) MSVCRT_acosh
 @ cdecl asctime(ptr)
 @ cdecl asctime_s(ptr long ptr)
 @ cdecl asin(double) MSVCRT_asin
