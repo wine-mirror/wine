@@ -2485,6 +2485,7 @@ static void test_ImmDisableIME(void)
 
 #define ime_trace( msg, ... ) if (winetest_debug > 1) trace( "%04lx:%s " msg, GetCurrentThreadId(), __func__, ## __VA_ARGS__ )
 
+static BOOL ImeSelect_init_status;
 static BOOL todo_ImeInquire;
 DEFINE_EXPECT( ImeInquire );
 static BOOL todo_ImeDestroy;
@@ -2907,8 +2908,21 @@ static BOOL WINAPI ime_ImeSelect( HIMC himc, BOOL select )
         .hkl = GetKeyboardLayout( 0 ), .himc = himc,
         .func = IME_SELECT, .select = select
     };
+    INPUTCONTEXT *ctx;
+
     ime_trace( "himc %p, select %d\n", himc, select );
     ime_calls[ime_call_count++] = call;
+
+    if (ImeSelect_init_status && select)
+    {
+        ctx = ImmLockIMC( himc );
+        ok_ne( NULL, ctx, INPUTCONTEXT *, "%p" );
+        ctx->fOpen = ~0;
+        ctx->fdwConversion = ~0;
+        ctx->fdwSentence = ~0;
+        ImmUnlockIMC( himc );
+    }
+
     return TRUE;
 }
 
@@ -4310,8 +4324,13 @@ static void test_ImmActivateLayout(void)
         },
         {
             .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETOPENSTATUS},
+            .todo = TRUE,
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
             .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETCONVERSIONMODE},
-            .todo = TRUE, .broken = (default_hkl == (HKL)0x04120412),
+            .todo = TRUE,
         },
         {
             .hkl = expect_ime, .himc = default_himc,
@@ -4776,6 +4795,7 @@ START_TEST(imm32)
     /* test these first to sanitize conversion / open statuses */
     test_ImmSetConversionStatus();
     test_ImmSetOpenStatus();
+    ImeSelect_init_status = TRUE;
 
     test_ImmActivateLayout();
     test_ImmCreateInputContext();
