@@ -5241,6 +5241,79 @@ cleanup:
     winetest_pop_context();
 }
 
+static void test_ImmGetCandidateListCount( BOOL unicode )
+{
+    HKL hkl, old_hkl = GetKeyboardLayout( 0 );
+    CANDIDATEINFO *cand_info;
+    INPUTCONTEXT *ctx;
+    DWORD count;
+    HIMC himc;
+
+    winetest_push_context( unicode ? "unicode" : "ansi" );
+
+    /* IME_PROP_END_UNLOAD for the IME to unload / reload. */
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD;
+    if (unicode) ime_info.fdwProperty |= IME_PROP_UNICODE;
+
+    if (!(hkl = ime_install())) goto cleanup;
+
+    hwnd = CreateWindowW( test_class.lpszClassName, NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    ok_ret( 1, ImmLoadIME( hkl ) );
+    himc = ImmCreateContext();
+    ok_ne( NULL, himc, HIMC, "%p" );
+    ctx = ImmLockIMC( himc );
+    ok_ne( NULL, ctx, INPUTCONTEXT *, "%p" );
+    process_messages();
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+    ok_ret( 144, ImmGetCandidateListCountW( default_himc, &count ) );
+    ok_eq( 0, count, UINT, "%u" );
+    ok_seq( empty_sequence );
+    ok_ret( 144, ImmGetCandidateListCountA( default_himc, &count ) );
+    ok_eq( 0, count, UINT, "%u" );
+    ok_seq( empty_sequence );
+
+    ok_ret( 144, ImmGetCandidateListCountW( himc, &count ) );
+    ok_eq( 0, count, UINT, "%u" );
+    ok_seq( empty_sequence );
+    ok_ret( 144, ImmGetCandidateListCountA( himc, &count ) );
+    ok_eq( 0, count, UINT, "%u" );
+    ok_seq( empty_sequence );
+
+    cand_info = ImmLockIMCC( ctx->hCandInfo );
+    ok( !!cand_info, "ImmLockIMCC failed, error %lu\n", GetLastError() );
+    cand_info->dwCount = 1;
+    ok_ret( 0, ImmUnlockIMCC( ctx->hCandInfo ) );
+
+    todo_wine_if(!unicode)
+    ok_ret( (unicode ? 144 : 172), ImmGetCandidateListCountW( himc, &count ) );
+    ok_eq( 1, count, UINT, "%u" );
+    ok_seq( empty_sequence );
+    todo_wine_if(unicode)
+    ok_ret( (unicode ? 172 : 144), ImmGetCandidateListCountA( himc, &count ) );
+    ok_eq( 1, count, UINT, "%u" );
+    ok_seq( empty_sequence );
+
+    ok_ret( 1, ImmUnlockIMC( himc ) );
+    ok_ret( 1, ImmDestroyContext( himc ) );
+
+    ok_ret( 1, ImmActivateLayout( old_hkl ) );
+    ok_ret( 1, DestroyWindow( hwnd ) );
+    process_messages();
+
+    ime_cleanup( hkl, TRUE );
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+cleanup:
+    winetest_pop_context();
+}
+
 START_TEST(imm32)
 {
     default_hkl = GetKeyboardLayout( 0 );
@@ -5289,6 +5362,8 @@ START_TEST(imm32)
 
     test_ImmGetCandidateList( TRUE );
     test_ImmGetCandidateList( FALSE );
+    test_ImmGetCandidateListCount( TRUE );
+    test_ImmGetCandidateListCount( FALSE );
 
     if (init())
     {
