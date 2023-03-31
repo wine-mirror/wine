@@ -3348,57 +3348,6 @@ int CDECL _fdpcomp(float x, float y)
 }
 
 /*********************************************************************
- *      asinh (MSVCR120.@)
- *
- * Copied from musl: src/math/asinh.c
- */
-double CDECL asinh(double x)
-{
-    UINT64 ux = *(UINT64*)&x;
-    int e = ux >> 52 & 0x7ff;
-    int s = ux >> 63;
-
-    /* |x| */
-    ux &= (UINT64)-1 / 2;
-    x = *(double*)&ux;
-
-    if (e >= 0x3ff + 26) /* |x| >= 0x1p26 or inf or nan */
-        x = log(x) + 0.693147180559945309417232121458176568;
-    else if (e >= 0x3ff + 1) /* |x| >= 2 */
-        x = log(2 * x + 1 / (sqrt(x * x + 1) + x));
-    else if (e >= 0x3ff - 26) /* |x| >= 0x1p-26 */
-        x = log1p(x + x * x / (sqrt(x * x + 1) + 1));
-    else /* |x| < 0x1p-26, raise inexact if x != 0 */
-        fp_barrier(x + 0x1p120f);
-    return s ? -x : x;
-}
-
-/*********************************************************************
- *      asinhf (MSVCR120.@)
- *
- * Copied from musl: src/math/asinhf.c
- */
-float CDECL asinhf(float x)
-{
-    UINT32 ux = *(UINT32*)&x;
-    UINT32 i = ux & 0x7fffffff;
-    int s = ux >> 31;
-
-    /* |x| */
-    x = *(float*)&i;
-
-    if (i >= 0x3f800000 + (12 << 23))/* |x| >= 0x1p12 or inf or nan */
-        x = logf(x) + 0.693147180559945309417232121458176568f;
-    else if (i >= 0x3f800000 + (1 << 23)) /* |x| >= 2 */
-        x = logf(2 * x + 1 / (sqrtf(x * x + 1) + x));
-    else if (i >= 0x3f800000 - (12 << 23)) /* |x| >= 0x1p-12 */
-        x = log1pf(x + x * x / (sqrtf(x * x + 1) + 1));
-    else /* |x| < 0x1p-12, raise inexact if x!=0 */
-        fp_barrierf(x + 0x1p120f);
-    return s ? -x : x;
-}
-
-/*********************************************************************
  *      acosh (MSVCR120.@)
  *
  * Copied from musl: src/math/acosh.c
