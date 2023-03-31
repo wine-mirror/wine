@@ -24,6 +24,84 @@
 
 #define D3DERR_INVALIDCALL 0x8876086c
 
+#ifndef MAKEFOURCC
+#define MAKEFOURCC(ch0, ch1, ch2, ch3)  \
+    ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) |  \
+    ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24 ))
+#endif
+
+/* dds_header.flags */
+#define DDS_CAPS 0x00000001
+#define DDS_HEIGHT 0x00000002
+#define DDS_WIDTH 0x00000004
+#define DDS_PITCH 0x00000008
+#define DDS_PIXELFORMAT 0x00001000
+#define DDS_MIPMAPCOUNT 0x00020000
+#define DDS_LINEARSIZE 0x00080000
+
+/* dds_header.caps */
+#define DDSCAPS_ALPHA    0x00000002
+#define DDS_CAPS_TEXTURE 0x00001000
+
+/* dds_pixel_format.flags */
+#define DDS_PF_ALPHA 0x00000001
+#define DDS_PF_ALPHA_ONLY 0x00000002
+#define DDS_PF_FOURCC 0x00000004
+#define DDS_PF_RGB 0x00000040
+#define DDS_PF_LUMINANCE 0x00020000
+#define DDS_PF_BUMPLUMINANCE 0x00040000
+#define DDS_PF_BUMPDUDV 0x00080000
+
+struct dds_pixel_format
+{
+    DWORD size;
+    DWORD flags;
+    DWORD fourcc;
+    DWORD bpp;
+    DWORD rmask;
+    DWORD gmask;
+    DWORD bmask;
+    DWORD amask;
+};
+
+struct dds_header
+{
+    DWORD size;
+    DWORD flags;
+    DWORD height;
+    DWORD width;
+    DWORD pitch_or_linear_size;
+    DWORD depth;
+    DWORD miplevels;
+    DWORD reserved[11];
+    struct dds_pixel_format pixel_format;
+    DWORD caps;
+    DWORD caps2;
+    DWORD caps3;
+    DWORD caps4;
+    DWORD reserved2;
+};
+
+static void fill_dds_header(struct dds_header *header)
+{
+    memset(header, 0, sizeof(*header));
+
+    header->size = sizeof(*header);
+    header->flags = DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT;
+    header->height = 4;
+    header->width = 4;
+    header->pixel_format.size = sizeof(header->pixel_format);
+    /* X8R8G8B8 */
+    header->pixel_format.flags = DDS_PF_RGB;
+    header->pixel_format.fourcc = 0;
+    header->pixel_format.bpp = 32;
+    header->pixel_format.rmask = 0xff0000;
+    header->pixel_format.gmask = 0x00ff00;
+    header->pixel_format.bmask = 0x0000ff;
+    header->pixel_format.amask = 0;
+    header->caps = DDS_CAPS_TEXTURE;
+}
+
 /* 1x1 1bpp bmp image */
 static const BYTE test_bmp_1bpp[] =
 {
@@ -36,6 +114,16 @@ static const BYTE test_bmp_1bpp[] =
 static const BYTE test_bmp_1bpp_data[] =
 {
     0xf3, 0xf2, 0xf1, 0xff
+};
+
+/* 1x1 2bpp bmp image */
+static const BYTE test_bmp_2bpp[] =
+{
+    0x42, 0x4d, 0x42, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3e, 0x00, 0x00, 0x00, 0x28, 0x00,
+    0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x12, 0x0b, 0x00, 0x00, 0x12, 0x0b, 0x00, 0x00, 0x02, 0x00,
+    0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0xf1, 0xf2, 0xf3, 0x80, 0xf4, 0xf5, 0xf6, 0x81, 0x00, 0x00,
+    0x00, 0x00
 };
 
 /* 1x1 4bpp bmp image */
@@ -566,6 +654,28 @@ static const BYTE test_dds_cube_data[] =
     0xf5, 0xa7, 0x08, 0x69, 0x74, 0xc0, 0xbf, 0xd7
 };
 
+/* 4x4x2 DXT3 volume dds, 2 mipmaps */
+static const BYTE test_dds_volume[] =
+{
+    0x44, 0x44, 0x53, 0x20, 0x7c, 0x00, 0x00, 0x00, 0x07, 0x10, 0x8a, 0x00, 0x04, 0x00, 0x00, 0x00,
+    0x04, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
+    0x04, 0x00, 0x00, 0x00, 0x44, 0x58, 0x54, 0x33, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x10, 0x40, 0x00,
+    0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xef, 0x87, 0x0f, 0x78, 0x05, 0x05, 0x50, 0x50,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xef, 0x87, 0x0f, 0x78, 0x05, 0x05, 0x50, 0x50,
+    0xff, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2f, 0x7e, 0xcf, 0x79, 0x01, 0x54, 0x5c, 0x5c,
+    0x0f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x84, 0xef, 0x7b, 0xaa, 0xab, 0xab, 0xab
+};
+static const BYTE test_dds_volume_data[] =
+{
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xef, 0x87, 0x0f, 0x78, 0x05, 0x05, 0x50, 0x50,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xef, 0x87, 0x0f, 0x78, 0x05, 0x05, 0x50, 0x50,
+};
+
 /* 1x1 wmp image */
 static const BYTE test_wmp[] =
 {
@@ -745,6 +855,10 @@ test_image[] =
     {
         test_dds_cube,       sizeof(test_dds_cube),          test_dds_cube_data,
         {4, 4, 1, 6, 3, 0x4, DXGI_FORMAT_BC1_UNORM,          D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS}
+    },
+    {
+        test_dds_volume,     sizeof(test_dds_volume),        test_dds_volume_data,
+        {4, 4, 2, 1, 3, 0,   DXGI_FORMAT_BC2_UNORM,          D3D10_RESOURCE_DIMENSION_TEXTURE3D, D3DX10_IFF_DDS}
     },
     {
         test_wmp,            sizeof(test_wmp),               test_wmp_data,
@@ -1158,7 +1272,7 @@ static void check_image_info(D3DX10_IMAGE_INFO *image_info, const struct test_im
             image_info->ImageFileFormat, image->expected_info.ImageFileFormat);
 }
 
-static ID3D10Texture2D *get_texture_readback(ID3D10Texture2D *texture)
+static ID3D10Texture2D *get_texture2d_readback(ID3D10Texture2D *texture)
 {
     D3D10_TEXTURE2D_DESC desc;
     ID3D10Texture2D *readback;
@@ -1173,6 +1287,32 @@ static ID3D10Texture2D *get_texture_readback(ID3D10Texture2D *texture)
     desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
 
     hr = ID3D10Device_CreateTexture2D(device, &desc, NULL, &readback);
+    if (hr != S_OK)
+    {
+        ID3D10Device_Release(device);
+        return NULL;
+    }
+    ID3D10Device_CopyResource(device, (ID3D10Resource *)readback, (ID3D10Resource *)texture);
+
+    ID3D10Device_Release(device);
+    return readback;
+}
+
+static ID3D10Texture3D *get_texture3d_readback(ID3D10Texture3D *texture)
+{
+    D3D10_TEXTURE3D_DESC desc;
+    ID3D10Texture3D *readback;
+    ID3D10Device *device;
+    HRESULT hr;
+
+    ID3D10Texture3D_GetDevice(texture, &device);
+
+    ID3D10Texture3D_GetDesc(texture, &desc);
+    desc.Usage = D3D10_USAGE_STAGING;
+    desc.BindFlags = 0;
+    desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
+
+    hr = ID3D10Device_CreateTexture3D(device, &desc, NULL, &readback);
     if (hr != S_OK)
     {
         ID3D10Device_Release(device);
@@ -1210,9 +1350,10 @@ static void check_resource_info(ID3D10Resource *resource, const struct test_imag
     }
 
     ID3D10Resource_GetType(resource, &resource_dimension);
-    ok(resource_dimension == image->expected_info.ResourceDimension,
-            "Got unexpected ResourceDimension %u, expected %u.\n",
-             resource_dimension, image->expected_info.ResourceDimension);
+    todo_wine_if (image->expected_info.ResourceDimension == D3D10_RESOURCE_DIMENSION_TEXTURE3D)
+        ok(resource_dimension == image->expected_info.ResourceDimension,
+                "Got unexpected ResourceDimension %u, expected %u.\n",
+                 resource_dimension, image->expected_info.ResourceDimension);
 
     switch (resource_dimension)
     {
@@ -1297,7 +1438,7 @@ static void check_resource_info(ID3D10Resource *resource, const struct test_imag
     }
 }
 
-static void check_resource_data(ID3D10Resource *resource, const struct test_image *image, unsigned int line)
+static void check_texture2d_data(ID3D10Texture2D *texture, const struct test_image *image, unsigned int line)
 {
     unsigned int width, height, stride, i, array_slice;
     D3D10_MAPPED_TEXTURE2D map;
@@ -1307,7 +1448,7 @@ static void check_resource_data(ID3D10Resource *resource, const struct test_imag
     BOOL line_match;
     HRESULT hr;
 
-    readback = get_texture_readback((ID3D10Texture2D *)resource);
+    readback = get_texture2d_readback(texture);
     ok_(__FILE__, line)(readback != NULL, "Failed to get texture readback.\n");
     if (!readback)
         return;
@@ -1349,6 +1490,74 @@ static void check_resource_data(ID3D10Resource *resource, const struct test_imag
     }
 
     ID3D10Texture2D_Release(readback);
+}
+
+static void check_texture3d_data(ID3D10Texture3D *texture, const struct test_image *image, unsigned int line)
+{
+    unsigned int width, height, depth, stride, i;
+    D3D10_MAPPED_TEXTURE3D map;
+    D3D10_TEXTURE3D_DESC desc;
+    ID3D10Texture3D *readback;
+    const BYTE *expected_data;
+    BOOL line_match;
+    HRESULT hr;
+
+    readback = get_texture3d_readback(texture);
+    ok_(__FILE__, line)(readback != NULL, "Failed to get texture readback.\n");
+    if (!readback)
+        return;
+
+    ID3D10Texture3D_GetDesc(readback, &desc);
+    width = desc.Width;
+    height = desc.Height;
+    depth = desc.Depth;
+    stride = (width * get_bpp_from_format(desc.Format) + 7) / 8;
+    if (is_block_compressed(desc.Format))
+    {
+        stride *= 4;
+        height /= 4;
+    }
+
+    expected_data = image->expected_data;
+    hr = ID3D10Texture3D_Map(readback, 0, D3D10_MAP_READ, 0, &map);
+    ok_(__FILE__, line)(hr == S_OK, "Map failed, hr %#lx.\n", hr);
+
+    for (i = 0; i < height * depth; ++i)
+    {
+        line_match = !memcmp(expected_data + stride * i,
+                (BYTE *)map.pData + map.RowPitch * i, stride);
+        ok_(__FILE__, line)(line_match, "Data mismatch for line %u.\n", i);
+        if (!line_match)
+        {
+            for (unsigned int j = 0; j < stride; ++j)
+                trace("%02x\n", *((BYTE *)map.pData + map.RowPitch * i + j));
+            break;
+        }
+    }
+
+    ID3D10Texture3D_Unmap(readback, 0);
+    ID3D10Texture3D_Release(readback);
+}
+
+static void check_resource_data(ID3D10Resource *resource, const struct test_image *image, unsigned int line)
+{
+    ID3D10Texture3D *texture3d;
+    ID3D10Texture2D *texture2d;
+
+    if (SUCCEEDED(ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture3D, (void **)&texture3d)))
+    {
+        check_texture3d_data(texture3d, image, line);
+        ID3D10Texture3D_Release(texture3d);
+    }
+    else if (SUCCEEDED(ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&texture2d)))
+    {
+        check_texture2d_data(texture2d, image, line);
+        ID3D10Texture2D_Release(texture2d);
+    }
+    else
+    {
+        ok(0, "Failed to get 2D or 3D texture interface.\n");
+    }
 }
 
 static void test_D3DX10UnsetAllDeviceObjects(void)
@@ -2547,10 +2756,45 @@ static void test_D3DX10CreateThreadPump(void)
     ok(!ret, "Got unexpected refcount %lu.\n", ret);
 }
 
+#define check_dds_pixel_format(flags, fourcc, bpp, rmask, gmask, bmask, amask, format) \
+        check_dds_pixel_format_(__LINE__, flags, fourcc, bpp, rmask, gmask, bmask, amask, format)
+static void check_dds_pixel_format_(unsigned int line, DWORD flags, DWORD fourcc, DWORD bpp,
+        DWORD rmask, DWORD gmask, DWORD bmask, DWORD amask, DXGI_FORMAT expected_format)
+{
+    D3DX10_IMAGE_INFO info;
+    HRESULT hr;
+    struct
+    {
+        DWORD magic;
+        struct dds_header header;
+        BYTE data[256];
+    } dds;
+
+    dds.magic = MAKEFOURCC('D','D','S',' ');
+    fill_dds_header(&dds.header);
+    dds.header.pixel_format.flags = flags;
+    dds.header.pixel_format.fourcc = fourcc;
+    dds.header.pixel_format.bpp = bpp;
+    dds.header.pixel_format.rmask = rmask;
+    dds.header.pixel_format.gmask = gmask;
+    dds.header.pixel_format.bmask = bmask;
+    dds.header.pixel_format.amask = amask;
+    memset(dds.data, 0, sizeof(dds.data));
+
+    hr = D3DX10GetImageInfoFromMemory(&dds, sizeof(dds), NULL, &info, NULL);
+    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx for pixel format %#x.\n", hr, expected_format);
+    if (SUCCEEDED(hr))
+    {
+        ok_(__FILE__, line)(info.Format == expected_format, "Unexpected format %#x, expected %#x\n",
+                info.Format, expected_format);
+    }
+}
+
 static void test_get_image_info(void)
 {
     static const WCHAR test_resource_name[] = L"resource.data";
     static const WCHAR test_filename[] = L"image.data";
+    char buffer[sizeof(test_bmp_1bpp) * 2];
     D3DX10_IMAGE_INFO image_info;
     HMODULE resource_module;
     WCHAR path[MAX_PATH];
@@ -2572,6 +2816,29 @@ static void test_get_image_info(void)
     dword = 0xdeadbeef;
     hr = D3DX10GetImageInfoFromMemory(&dword, sizeof(dword), NULL, &image_info, &hr2);
     ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
+
+    /* NULL hr2 is valid. */
+    hr = D3DX10GetImageInfoFromMemory(test_image[0].data, test_image[0].size, NULL, &image_info, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Test a too-large size. */
+    memset(buffer, 0xcc, sizeof(buffer));
+    memcpy(buffer, test_bmp_1bpp, sizeof(test_bmp_1bpp));
+    hr = D3DX10GetImageInfoFromMemory(buffer, sizeof(buffer), NULL, &image_info, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    check_image_info(&image_info, &test_image[0], __LINE__);
+
+    /* Test a too-small size. */
+    hr2 = 0xdeadbeef;
+    hr = D3DX10GetImageInfoFromMemory(test_bmp_1bpp, sizeof(test_bmp_1bpp) - 1, NULL, &image_info, &hr2);
+    todo_wine ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
+
+    /* 2 bpp is not a valid bit count. */
+    hr2 = 0xdeadbeef;
+    hr = D3DX10GetImageInfoFromMemory(test_bmp_2bpp, sizeof(test_bmp_2bpp), NULL, &image_info, &hr2);
+    todo_wine ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
     ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
 
     for (i = 0; i < ARRAY_SIZE(test_image); ++i)
@@ -2639,6 +2906,30 @@ static void test_get_image_info(void)
         winetest_pop_context();
     }
 
+    check_dds_pixel_format(DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0, DXGI_FORMAT_BC1_UNORM);
+    check_dds_pixel_format(DDS_PF_FOURCC, MAKEFOURCC('D','X','T','2'), 0, 0, 0, 0, 0, DXGI_FORMAT_BC2_UNORM);
+    check_dds_pixel_format(DDS_PF_FOURCC, MAKEFOURCC('D','X','T','3'), 0, 0, 0, 0, 0, DXGI_FORMAT_BC2_UNORM);
+    check_dds_pixel_format(DDS_PF_FOURCC, MAKEFOURCC('D','X','T','4'), 0, 0, 0, 0, 0, DXGI_FORMAT_BC3_UNORM);
+    check_dds_pixel_format(DDS_PF_FOURCC, MAKEFOURCC('D','X','T','5'), 0, 0, 0, 0, 0, DXGI_FORMAT_BC3_UNORM);
+    check_dds_pixel_format(DDS_PF_FOURCC, MAKEFOURCC('R','G','B','G'), 0, 0, 0, 0, 0, DXGI_FORMAT_R8G8_B8G8_UNORM);
+    check_dds_pixel_format(DDS_PF_FOURCC, MAKEFOURCC('G','R','G','B'), 0, 0, 0, 0, 0, DXGI_FORMAT_G8R8_G8B8_UNORM);
+    check_dds_pixel_format(DDS_PF_RGB, 0, 16, 0xf800, 0x07e0, 0x001f, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+    check_dds_pixel_format(DDS_PF_RGB | DDS_PF_ALPHA, 0, 16, 0x7c00, 0x03e0, 0x001f, 0x8000, DXGI_FORMAT_R8G8B8A8_UNORM);
+    check_dds_pixel_format(DDS_PF_RGB | DDS_PF_ALPHA, 0, 16, 0x0f00, 0x00f0, 0x000f, 0xf000, DXGI_FORMAT_R8G8B8A8_UNORM);
+    check_dds_pixel_format(DDS_PF_RGB, 0, 8, 0xe0, 0x1c, 0x03, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+    check_dds_pixel_format(DDS_PF_ALPHA_ONLY, 0, 8, 0, 0, 0, 0xff, DXGI_FORMAT_A8_UNORM);
+    check_dds_pixel_format(DDS_PF_RGB | DDS_PF_ALPHA, 0, 16, 0x00e0, 0x001c, 0x0003, 0xff00, DXGI_FORMAT_R8G8B8A8_UNORM);
+    check_dds_pixel_format(DDS_PF_RGB, 0, 16, 0xf00, 0x0f0, 0x00f, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+    check_dds_pixel_format(DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000, DXGI_FORMAT_R10G10B10A2_UNORM);
+    check_dds_pixel_format(DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000, DXGI_FORMAT_R8G8B8A8_UNORM);
+    check_dds_pixel_format(DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000, DXGI_FORMAT_R8G8B8A8_UNORM);
+    check_dds_pixel_format(DDS_PF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+    check_dds_pixel_format(DDS_PF_RGB, 0, 32, 0x0000ff, 0x00ff00, 0xff0000, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+    check_dds_pixel_format(DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+    check_dds_pixel_format(DDS_PF_RGB, 0, 32, 0x0000ffff, 0xffff0000, 0, 0, DXGI_FORMAT_R16G16_UNORM);
+    check_dds_pixel_format(DDS_PF_LUMINANCE, 0, 8, 0xff, 0, 0, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+    check_dds_pixel_format(DDS_PF_LUMINANCE | DDS_PF_ALPHA, 0, 16, 0x00ff, 0, 0, 0xff00, DXGI_FORMAT_R8G8B8A8_UNORM);
+    check_dds_pixel_format(DDS_PF_LUMINANCE | DDS_PF_ALPHA, 0, 8, 0x0f, 0, 0, 0xf0, DXGI_FORMAT_R8G8B8A8_UNORM);
 
     /* D3DX10GetImageInfoFromResource tests */
 
