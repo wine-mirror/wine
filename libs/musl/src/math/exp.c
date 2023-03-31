@@ -28,7 +28,7 @@
    a double.  (int32_t)KI is the k used in the argument reduction and exponent
    adjustment of scale, positive k here means the result may overflow and
    negative k means the result may underflow.  */
-static inline double specialcase(double_t tmp, uint64_t sbits, uint64_t ki)
+static inline double specialcase(double x, double_t tmp, uint64_t sbits, uint64_t ki)
 {
 	double_t scale, y;
 
@@ -37,6 +37,8 @@ static inline double specialcase(double_t tmp, uint64_t sbits, uint64_t ki)
 		sbits -= 1009ull << 52;
 		scale = asdouble(sbits);
 		y = 0x1p1009 * (scale + scale * tmp);
+		if (isinf(y))
+			return math_error(_OVERFLOW, "exp", x, 0, y);
 		return eval_as_double(y);
 	}
 	/* k < 0, need special care in the subnormal range.  */
@@ -58,6 +60,8 @@ static inline double specialcase(double_t tmp, uint64_t sbits, uint64_t ki)
 			y = 0.0;
 		/* The underflow exception needs to be signaled explicitly.  */
 		fp_force_eval(fp_barrier(0x1p-1022) * 0x1p-1022);
+		y = 0x1p-1022 * y;
+		return math_error(_UNDERFLOW, "exp", x, 0, y);
 	}
 	y = 0x1p-1022 * y;
 	return eval_as_double(y);
@@ -87,9 +91,9 @@ double __cdecl exp(double x)
 			if (abstop >= top12(INFINITY))
 				return 1.0 + x;
 			if (asuint64(x) >> 63)
-				return __math_uflow(0);
+				return math_error(_UNDERFLOW, "exp", x, 0, fp_barrier(DBL_MIN) * DBL_MIN);
 			else
-				return __math_oflow(0);
+				return math_error(_OVERFLOW, "exp", x, 0, fp_barrier(DBL_MAX) * DBL_MAX);
 		}
 		/* Large x is special cased below.  */
 		abstop = 0;
@@ -98,20 +102,8 @@ double __cdecl exp(double x)
 	/* exp(x) = 2^(k/N) * exp(r), with exp(r) in [2^(-1/2N),2^(1/2N)].  */
 	/* x = ln2/N*k + r, with int k and r in [-ln2/2N, ln2/2N].  */
 	z = InvLn2N * x;
-#if TOINT_INTRINSICS
-	kd = roundtoint(z);
-	ki = converttoint(z);
-#elif EXP_USE_TOINT_NARROW
-	/* z - kd is in [-0.5-2^-16, 0.5] in all rounding modes.  */
-	kd = eval_as_double(z + Shift);
-	ki = asuint64(kd) >> 16;
-	kd = (double_t)(int32_t)ki;
-#else
-	/* z - kd is in [-1, 1] in non-nearest rounding modes.  */
-	kd = eval_as_double(z + Shift);
-	ki = asuint64(kd);
-	kd -= Shift;
-#endif
+	kd = round(z);
+	ki = (int64_t)kd;
 	r = x + kd * NegLn2hiN + kd * NegLn2loN;
 	/* 2^(k/N) ~= scale * (1 + tail).  */
 	idx = 2 * (ki % N);
@@ -126,7 +118,7 @@ double __cdecl exp(double x)
 	/* Worst case error is less than 0.5+1.11/N+(abs poly error * 2^53) ulp.  */
 	tmp = tail + r + r2 * (C2 + r * C3) + r2 * r2 * (C4 + r * C5);
 	if (predict_false(abstop == 0))
-		return specialcase(tmp, sbits, ki);
+		return specialcase(x, tmp, sbits, ki);
 	scale = asdouble(sbits);
 	/* Note: tmp == 0 or |tmp| > 2^-200 and scale > 2^-739, so there
 	   is no spurious underflow here even without fma.  */

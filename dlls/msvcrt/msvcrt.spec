@@ -1282,7 +1282,7 @@
 @ cdecl -arch=win64 difftime(long long) _difftime64
 @ cdecl -ret64 div(long long)
 @ cdecl exit(long)
-@ cdecl exp(double)
+@ cdecl exp(double) MSVCRT_exp
 @ cdecl -arch=!i386 expf(float)
 @ cdecl fabs(double)
 @ cdecl -arch=arm,arm64 fabsf(float)
