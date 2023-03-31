@@ -256,12 +256,10 @@ ULONG CDECL WLDAP32_ldap_connect( LDAP *ld, struct l_timeval *timeout )
     TRACE( "(%p, %p)\n", ld, timeout );
 
     if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if (CONNECTED(ld)) return WLDAP32_LDAP_SUCCESS;
 
-    if (timeout && (timeout->tv_sec || timeout->tv_usec))
-        FIXME( "ignoring timeout\n" );
-
-    if ((ret = ldap_connect( CTX(ld) )))
-        return map_error( ret );
+    if (timeout && (timeout->tv_sec || timeout->tv_usec)) FIXME( "ignoring timeout\n" );
+    if ((ret = ldap_connect( CTX(ld) ))) return map_error( ret );
 
     if (cert_callback)
     {
@@ -285,6 +283,7 @@ ULONG CDECL WLDAP32_ldap_connect( LDAP *ld, struct l_timeval *timeout )
         }
     }
 
+    CONNECTED(ld) = TRUE;
     return WLDAP32_LDAP_SUCCESS;
 }
 
@@ -456,9 +455,8 @@ ULONG CDECL ldap_start_tls_sW( LDAP *ld, ULONG *retval, LDAPMessage **result, LD
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
     else
     {
+        if (CONNECTED(ld)) return WLDAP32_LDAP_LOCAL_ERROR;
         ret = map_error( ldap_start_tls_s( CTX(ld), serverctrlsU, clientctrlsU ) );
-        if (!ret && WLDAP32_ldap_connect( ld, NULL ) != WLDAP32_LDAP_SUCCESS)
-            ret = WLDAP32_LDAP_LOCAL_ERROR;
     }
 
 exit:

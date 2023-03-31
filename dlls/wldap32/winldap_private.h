@@ -194,16 +194,17 @@ typedef struct WLDAP32_berelement
     char *opaque;
 } WLDAP32_BerElement;
 
+struct ld_sb
+{
+    UINT_PTR sb_sd;
+    UCHAR Reserved1[41];
+    ULONG_PTR sb_naddr;
+    UCHAR Reserved2[24];
+};
+
 typedef struct ldap
 {
-    struct
-    {
-        UINT_PTR sb_sd;
-        UCHAR Reserved1[41];
-        ULONG_PTR sb_naddr;
-        UCHAR Reserved2[24];
-    } ld_sb;
-
+    struct ld_sb ld_sb;
     char *ld_host;
     ULONG ld_version;
     UCHAR ld_lberoptions;
@@ -220,6 +221,25 @@ typedef struct ldap
     ULONG ld_refhoplimit;
     ULONG ld_options;
 } LDAP, *PLDAP;
+
+typedef BOOLEAN (CDECL VERIFYSERVERCERT)(LDAP *, const CERT_CONTEXT **);
+
+struct private_data
+{
+    LDAP *ctx;
+    struct berval **server_ctrls;
+    VERIFYSERVERCERT *cert_callback;
+    BOOL connected;
+};
+C_ASSERT(sizeof(struct private_data) < FIELD_OFFSET(struct ld_sb, sb_naddr) - FIELD_OFFSET(struct ld_sb, Reserved1));
+
+#define CTX(ld) (((struct private_data *)ld->ld_sb.Reserved1)->ctx)
+#define SERVER_CTRLS(ld) (((struct private_data *)ld->ld_sb.Reserved1)->server_ctrls)
+#define CERT_CALLBACK(ld) (((struct private_data *)ld->ld_sb.Reserved1)->cert_callback)
+#define CONNECTED(ld) (((struct private_data *)ld->ld_sb.Reserved1)->connected)
+
+#define MSG(entry) (entry->Request)
+#define BER(ber) ((BerElement *)((ber)->opaque))
 
 typedef struct l_timeval
 {
@@ -365,21 +385,6 @@ typedef struct ldapsearch
     ULONG sizelimit;
     struct WLDAP32_berval *cookie;
 } LDAPSearch;
-
-typedef BOOLEAN (CDECL VERIFYSERVERCERT)(LDAP*,const CERT_CONTEXT**);
-
-struct private_data
-{
-    LDAP *ctx;
-    struct berval **server_ctrls;
-    VERIFYSERVERCERT *cert_callback;
-};
-
-#define CTX(ld) (((struct private_data *)ld->Reserved3)->ctx)
-#define SERVER_CTRLS(ld) (((struct private_data *)ld->Reserved3)->server_ctrls)
-#define CERT_CALLBACK(ld) (((struct private_data *)ld->Reserved3)->cert_callback)
-#define MSG(entry) (entry->Request)
-#define BER(ber) ((BerElement *)((ber)->opaque))
 
 void CDECL WLDAP32_ber_bvecfree( BERVAL ** );
 void CDECL WLDAP32_ber_bvfree( BERVAL * );
