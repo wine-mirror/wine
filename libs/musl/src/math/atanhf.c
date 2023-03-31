@@ -13,6 +13,7 @@ float __cdecl atanhf(float x)
 
 	if (u.i < 0x3f800000 - (1<<23)) {
 		if (u.i < 0x3f800000 - (32<<23)) {
+			fp_barrierf(y + 0x1p120f);
 			/* handle underflow */
 			if (u.i < (1<<23))
 				FORCE_EVAL((float)(y*y));
@@ -23,6 +24,7 @@ float __cdecl atanhf(float x)
 	} else {
 		/* avoid overflow */
 		y = 0.5f*log1pf(2*(y/(1-y)));
+		if (isinf(y)) errno = ERANGE;
 	}
 	return s ? -y : y;
 }

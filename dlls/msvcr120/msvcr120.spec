@@ -2026,9 +2026,9 @@
 @ cdecl -arch=!i386 atanf(float)
 @ cdecl atan2(double double)
 @ cdecl -arch=!i386 atan2f(float float)
-@ cdecl atanh(double)
-@ cdecl atanhf(float)
-@ cdecl atanhl(double) atanh
+@ cdecl atanh(double) MSVCRT_atanh
+@ cdecl atanhf(float) MSVCRT_atanhf
+@ cdecl atanhl(double) MSVCRT_atanh
 @ cdecl -private atexit(ptr) MSVCRT_atexit  # not imported to avoid conflicts with Mingw
 @ cdecl atof(str)
 @ cdecl atoi(str)

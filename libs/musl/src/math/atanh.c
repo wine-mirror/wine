@@ -14,6 +14,7 @@ double __cdecl atanh(double x)
 
 	if (e < 0x3ff - 1) {
 		if (e < 0x3ff - 32) {
+			fp_barrier(y + 0x1p120f);
 			/* handle underflow */
 			if (e == 0)
 				FORCE_EVAL((float)y);
@@ -24,6 +25,7 @@ double __cdecl atanh(double x)
 	} else {
 		/* avoid overflow */
 		y = 0.5*log1p(2*(y/(1-y)));
+		if (isinf(y)) errno = ERANGE;
 	}
 	return s ? -y : y;
 }

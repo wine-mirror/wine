@@ -78,7 +78,7 @@ void msvcrt_init_math( void *module )
 }
 
 /* Copied from musl: src/internal/libm.h */
-#if !defined(__i386__) || _MSVCR_VER>=120
+#ifndef __i386__
 static inline float fp_barrierf(float x)
 {
     volatile float y = x;
@@ -3377,73 +3377,30 @@ float CDECL MSVCRT_acoshf(float x)
 
 /*********************************************************************
  *      atanh (MSVCR120.@)
- *
- * Copied from musl: src/math/atanh.c
  */
-double CDECL atanh(double x)
+double CDECL MSVCRT_atanh(double x)
 {
-    UINT64 ux = *(UINT64*)&x;
-    int e = ux >> 52 & 0x7ff;
-    int s = ux >> 63;
-
-    /* |x| */
-    ux &= (UINT64)-1 / 2;
-    x = *(double*)&ux;
-
-    if (x > 1) {
+    if (fabs(x) > 1)
+    {
         *_errno() = EDOM;
         feraiseexcept(FE_INVALID);
         return NAN;
     }
-
-    if (e < 0x3ff - 1) {
-        if (e < 0x3ff - 32) {
-            fp_barrier(x + 0x1p120f);
-            if (e == 0) /* handle underflow */
-                fp_barrier(x * x);
-        } else { /* |x| < 0.5, up to 1.7ulp error */
-            x = 0.5 * log1p(2 * x + 2 * x * x / (1 - x));
-        }
-    } else { /* avoid overflow */
-        x = 0.5 * log1p(2 * (x / (1 - x)));
-        if (isinf(x)) *_errno() = ERANGE;
-    }
-    return s ? -x : x;
+    return atanh( x );
 }
 
 /*********************************************************************
  *      atanhf (MSVCR120.@)
- *
- * Copied from musl: src/math/atanhf.c
  */
-float CDECL atanhf(float x)
+float CDECL MSVCRT_atanhf(float x)
 {
-    UINT32 ux = *(UINT32*)&x;
-    int s = ux >> 31;
-
-    /* |x| */
-    ux &= 0x7fffffff;
-    x = *(float*)&ux;
-
-    if (x > 1) {
+    if (fabs(x) > 1)
+    {
         *_errno() = EDOM;
         feraiseexcept(FE_INVALID);
         return NAN;
     }
-
-    if (ux < 0x3f800000 - (1 << 23)) {
-        if (ux < 0x3f800000 - (32 << 23)) {
-            fp_barrierf(x + 0x1p120f);
-            if (ux < (1 << 23)) /* handle underflow */
-                fp_barrierf(x * x);
-        } else { /* |x| < 0.5, up to 1.7ulp error */
-            x = 0.5f * log1pf(2 * x + 2 * x * x / (1 - x));
-        }
-    } else { /* avoid overflow */
-        x = 0.5f * log1pf(2 * (x / (1 - x)));
-        if (isinf(x)) *_errno() = ERANGE;
-    }
-    return s ? -x : x;
+    return atanhf( x );
 }
 
 #endif /* _MSVCR_VER>=120 */

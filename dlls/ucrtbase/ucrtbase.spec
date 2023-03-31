@@ -1576,9 +1576,9 @@
 @ cdecl _o_atan2(double double) atan2
 @ cdecl -arch=!i386 _o_atan2f(float float) atan2f
 @ cdecl -arch=!i386 _o_atanf(float) atanf
-@ cdecl _o_atanh(double) atanh
-@ cdecl _o_atanhf(float) atanhf
-@ cdecl _o_atanhl(double) atanh
+@ cdecl _o_atanh(double) MSVCRT_atanh
+@ cdecl _o_atanhf(float) MSVCRT_atanhf
+@ cdecl _o_atanhl(double) MSVCRT_atanh
 @ cdecl _o_atof(str) atof
 @ cdecl _o_atoi(str) atoi
 @ cdecl _o_atol(str) atol
@@ -2170,9 +2170,9 @@
 @ cdecl atan2(double double)
 @ cdecl -arch=!i386 atan2f(float float)
 @ cdecl -arch=!i386 atanf(float)
-@ cdecl atanh(double)
-@ cdecl atanhf(float)
-@ cdecl atanhl(double) atanh
+@ cdecl atanh(double) MSVCRT_atanh
+@ cdecl atanhf(float) MSVCRT_atanhf
+@ cdecl atanhl(double) MSVCRT_atanh
 @ cdecl atof(str)
 @ cdecl atoi(str)
 @ cdecl atol(str)
