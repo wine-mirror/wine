@@ -1286,6 +1286,7 @@ typedef struct VkPipelineShaderStageRequiredSubgroupSizeCreateInfo32
     uint32_t requiredSubgroupSize;
 } VkPipelineShaderStageRequiredSubgroupSizeCreateInfo32;
 typedef VkPipelineShaderStageRequiredSubgroupSizeCreateInfo32 VkPipelineShaderStageRequiredSubgroupSizeCreateInfoEXT32;
+typedef VkPipelineShaderStageRequiredSubgroupSizeCreateInfo32 VkShaderRequiredSubgroupSizeCreateInfoEXT32;
 
 typedef struct VkPipelineShaderStageModuleIdentifierCreateInfoEXT32
 {
@@ -2802,6 +2803,22 @@ typedef struct VkPhysicalDeviceMultiviewPerViewRenderAreasFeaturesQCOM32
     VkBool32 multiviewPerViewRenderAreas;
 } VkPhysicalDeviceMultiviewPerViewRenderAreasFeaturesQCOM32;
 
+typedef struct VkPhysicalDeviceShaderObjectFeaturesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 shaderObject;
+} VkPhysicalDeviceShaderObjectFeaturesEXT32;
+
+typedef struct VkPhysicalDeviceShaderTileImageFeaturesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 shaderTileImageColorReadAccess;
+    VkBool32 shaderTileImageDepthReadAccess;
+    VkBool32 shaderTileImageStencilReadAccess;
+} VkPhysicalDeviceShaderTileImageFeaturesEXT32;
+
 typedef struct VkDeviceCreateInfo32
 {
     VkStructureType sType;
@@ -3891,6 +3908,24 @@ typedef struct VkSemaphoreCreateInfo32
     PTR32 pNext;
     VkSemaphoreCreateFlags flags;
 } VkSemaphoreCreateInfo32;
+
+typedef struct VkShaderCreateInfoEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkShaderCreateFlagsEXT flags;
+    VkShaderStageFlagBits stage;
+    VkShaderStageFlags nextStage;
+    VkShaderCodeTypeEXT codeType;
+    PTR32 codeSize;
+    PTR32 pCode;
+    PTR32 pName;
+    uint32_t setLayoutCount;
+    PTR32 pSetLayouts;
+    uint32_t pushConstantRangeCount;
+    PTR32 pPushConstantRanges;
+    PTR32 pSpecializationInfo;
+} VkShaderCreateInfoEXT32;
 
 typedef struct VkDeviceGroupSwapchainCreateInfoKHR32
 {
@@ -5271,6 +5306,7 @@ typedef struct VkPhysicalDeviceClusterCullingShaderPropertiesHUAWEI32
     uint32_t maxWorkGroupCount[3];
     uint32_t maxWorkGroupSize[3];
     uint32_t maxOutputClusterCount;
+    VkDeviceSize DECLSPEC_ALIGN(8) indirectBufferOffsetAlignment;
 } VkPhysicalDeviceClusterCullingShaderPropertiesHUAWEI32;
 
 typedef struct VkPhysicalDeviceLineRasterizationPropertiesEXT32
@@ -5644,6 +5680,23 @@ typedef struct VkPhysicalDeviceShaderCorePropertiesARM32
     uint32_t texelRate;
     uint32_t fmaRate;
 } VkPhysicalDeviceShaderCorePropertiesARM32;
+
+typedef struct VkPhysicalDeviceShaderObjectPropertiesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint8_t shaderBinaryUUID[VK_UUID_SIZE];
+    uint32_t shaderBinaryVersion;
+} VkPhysicalDeviceShaderObjectPropertiesEXT32;
+
+typedef struct VkPhysicalDeviceShaderTileImagePropertiesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 shaderTileImageCoherentReadAccelerated;
+    VkBool32 shaderTileImageReadSampleFromPixelRateInvocation;
+    VkBool32 shaderTileImageReadFromHelperInvocation;
+} VkPhysicalDeviceShaderTileImagePropertiesEXT32;
 
 typedef struct VkPhysicalDeviceProperties232
 {
@@ -11589,6 +11642,30 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_FEATURES_EXT:
+        {
+            VkPhysicalDeviceShaderObjectFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceShaderObjectFeaturesEXT *in_ext = (const VkPhysicalDeviceShaderObjectFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->shaderObject = in_ext->shaderObject;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TILE_IMAGE_FEATURES_EXT:
+        {
+            VkPhysicalDeviceShaderTileImageFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceShaderTileImageFeaturesEXT *in_ext = (const VkPhysicalDeviceShaderTileImageFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TILE_IMAGE_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->shaderTileImageColorReadAccess = in_ext->shaderTileImageColorReadAccess;
+            out_ext->shaderTileImageDepthReadAccess = in_ext->shaderTileImageDepthReadAccess;
+            out_ext->shaderTileImageStencilReadAccess = in_ext->shaderTileImageStencilReadAccess;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -13480,6 +13557,30 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_RENDER_AREAS_FEATURES_QCOM;
             out_ext->pNext = NULL;
             out_ext->multiviewPerViewRenderAreas = in_ext->multiviewPerViewRenderAreas;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_FEATURES_EXT:
+        {
+            VkPhysicalDeviceShaderObjectFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceShaderObjectFeaturesEXT32 *in_ext = (const VkPhysicalDeviceShaderObjectFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->shaderObject = in_ext->shaderObject;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TILE_IMAGE_FEATURES_EXT:
+        {
+            VkPhysicalDeviceShaderTileImageFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceShaderTileImageFeaturesEXT32 *in_ext = (const VkPhysicalDeviceShaderTileImageFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TILE_IMAGE_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->shaderTileImageColorReadAccess = in_ext->shaderTileImageColorReadAccess;
+            out_ext->shaderTileImageDepthReadAccess = in_ext->shaderTileImageDepthReadAccess;
+            out_ext->shaderTileImageStencilReadAccess = in_ext->shaderTileImageStencilReadAccess;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -16468,6 +16569,66 @@ static inline void convert_VkShaderModuleCreateInfo_win32_to_host(struct convers
             break;
         }
     }
+}
+
+static inline void convert_VkShaderCreateInfoEXT_win32_to_host(struct conversion_context *ctx, const VkShaderCreateInfoEXT32 *in, VkShaderCreateInfoEXT *out)
+{
+    const VkBaseInStructure32 *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->flags = in->flags;
+    out->stage = in->stage;
+    out->nextStage = in->nextStage;
+    out->codeType = in->codeType;
+    out->codeSize = in->codeSize;
+    out->pCode = (const void *)UlongToPtr(in->pCode);
+    out->pName = (const char *)UlongToPtr(in->pName);
+    out->setLayoutCount = in->setLayoutCount;
+    out->pSetLayouts = (const VkDescriptorSetLayout *)UlongToPtr(in->pSetLayouts);
+    out->pushConstantRangeCount = in->pushConstantRangeCount;
+    out->pPushConstantRanges = (const VkPushConstantRange *)UlongToPtr(in->pPushConstantRanges);
+    out->pSpecializationInfo = convert_VkSpecializationInfo_array_win32_to_host(ctx, (const VkSpecializationInfo32 *)UlongToPtr(in->pSpecializationInfo), 1);
+
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO:
+        {
+            VkPipelineShaderStageRequiredSubgroupSizeCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPipelineShaderStageRequiredSubgroupSizeCreateInfo32 *in_ext = (const VkPipelineShaderStageRequiredSubgroupSizeCreateInfo32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO;
+            out_ext->pNext = NULL;
+            out_ext->requiredSubgroupSize = in_ext->requiredSubgroupSize;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.\n", in_header->sType);
+            break;
+        }
+    }
+}
+
+static inline const VkShaderCreateInfoEXT *convert_VkShaderCreateInfoEXT_array_win32_to_host(struct conversion_context *ctx, const VkShaderCreateInfoEXT32 *in, uint32_t count)
+{
+    VkShaderCreateInfoEXT *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkShaderCreateInfoEXT_win32_to_host(ctx, &in[i], &out[i]);
+    }
+
+    return out;
 }
 
 #ifdef _WIN64
@@ -19914,6 +20075,30 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_FEATURES_EXT:
+        {
+            VkPhysicalDeviceShaderObjectFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceShaderObjectFeaturesEXT32 *in_ext = (const VkPhysicalDeviceShaderObjectFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->shaderObject = in_ext->shaderObject;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TILE_IMAGE_FEATURES_EXT:
+        {
+            VkPhysicalDeviceShaderTileImageFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceShaderTileImageFeaturesEXT32 *in_ext = (const VkPhysicalDeviceShaderTileImageFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TILE_IMAGE_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->shaderTileImageColorReadAccess = in_ext->shaderTileImageColorReadAccess;
+            out_ext->shaderTileImageDepthReadAccess = in_ext->shaderTileImageDepthReadAccess;
+            out_ext->shaderTileImageStencilReadAccess = in_ext->shaderTileImageStencilReadAccess;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -21453,6 +21638,26 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_FEATURES_EXT:
+        {
+            VkPhysicalDeviceShaderObjectFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_FEATURES_EXT);
+            const VkPhysicalDeviceShaderObjectFeaturesEXT *in_ext = (const VkPhysicalDeviceShaderObjectFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_FEATURES_EXT;
+            out_ext->shaderObject = in_ext->shaderObject;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TILE_IMAGE_FEATURES_EXT:
+        {
+            VkPhysicalDeviceShaderTileImageFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TILE_IMAGE_FEATURES_EXT);
+            const VkPhysicalDeviceShaderTileImageFeaturesEXT *in_ext = (const VkPhysicalDeviceShaderTileImageFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TILE_IMAGE_FEATURES_EXT;
+            out_ext->shaderTileImageColorReadAccess = in_ext->shaderTileImageColorReadAccess;
+            out_ext->shaderTileImageDepthReadAccess = in_ext->shaderTileImageDepthReadAccess;
+            out_ext->shaderTileImageStencilReadAccess = in_ext->shaderTileImageStencilReadAccess;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             break;
         }
@@ -22743,6 +22948,24 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceShaderObjectPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TILE_IMAGE_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceShaderTileImagePropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TILE_IMAGE_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -23351,6 +23574,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
             memcpy(out_ext->maxWorkGroupCount, in_ext->maxWorkGroupCount, 3 * sizeof(uint32_t));
             memcpy(out_ext->maxWorkGroupSize, in_ext->maxWorkGroupSize, 3 * sizeof(uint32_t));
             out_ext->maxOutputClusterCount = in_ext->maxOutputClusterCount;
+            out_ext->indirectBufferOffsetAlignment = in_ext->indirectBufferOffsetAlignment;
             out_header = (void *)out_ext;
             break;
         }
@@ -23768,6 +23992,27 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
             out_ext->pixelRate = in_ext->pixelRate;
             out_ext->texelRate = in_ext->texelRate;
             out_ext->fmaRate = in_ext->fmaRate;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceShaderObjectPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_PROPERTIES_EXT);
+            const VkPhysicalDeviceShaderObjectPropertiesEXT *in_ext = (const VkPhysicalDeviceShaderObjectPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_PROPERTIES_EXT;
+            memcpy(out_ext->shaderBinaryUUID, in_ext->shaderBinaryUUID, VK_UUID_SIZE * sizeof(uint8_t));
+            out_ext->shaderBinaryVersion = in_ext->shaderBinaryVersion;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TILE_IMAGE_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceShaderTileImagePropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TILE_IMAGE_PROPERTIES_EXT);
+            const VkPhysicalDeviceShaderTileImagePropertiesEXT *in_ext = (const VkPhysicalDeviceShaderTileImagePropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TILE_IMAGE_PROPERTIES_EXT;
+            out_ext->shaderTileImageCoherentReadAccelerated = in_ext->shaderTileImageCoherentReadAccelerated;
+            out_ext->shaderTileImageReadSampleFromPixelRateInvocation = in_ext->shaderTileImageReadSampleFromPixelRateInvocation;
+            out_ext->shaderTileImageReadFromHelperInvocation = in_ext->shaderTileImageReadFromHelperInvocation;
             out_header = (void *)out_ext;
             break;
         }
@@ -26762,6 +27007,28 @@ static void thunk32_vkCmdBindPipelineShaderGroupNV(void *args)
     } *params = args;
 
     wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->funcs.p_vkCmdBindPipelineShaderGroupNV(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->command_buffer, params->pipelineBindPoint, params->pipeline, params->groupIndex);
+}
+
+#ifdef _WIN64
+static void thunk64_vkCmdBindShadersEXT(void *args)
+{
+    struct vkCmdBindShadersEXT_params *params = args;
+
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBindShadersEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->stageCount, params->pStages, params->pShaders);
+}
+#endif /* _WIN64 */
+
+static void thunk32_vkCmdBindShadersEXT(void *args)
+{
+    struct
+    {
+        PTR32 commandBuffer;
+        uint32_t stageCount;
+        PTR32 pStages;
+        PTR32 pShaders;
+    } *params = args;
+
+    wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->funcs.p_vkCmdBindShadersEXT(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->command_buffer, params->stageCount, (const VkShaderStageFlagBits *)UlongToPtr(params->pStages), (const VkShaderEXT *)UlongToPtr(params->pShaders));
 }
 
 #ifdef _WIN64
@@ -33226,6 +33493,41 @@ static NTSTATUS thunk32_vkCreateShaderModule(void *args)
 }
 
 #ifdef _WIN64
+static NTSTATUS thunk64_vkCreateShadersEXT(void *args)
+{
+    struct vkCreateShadersEXT_params *params = args;
+
+    TRACE("%p, %u, %p, %p, %p\n", params->device, params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pShaders);
+
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkCreateShadersEXT(wine_device_from_handle(params->device)->device, params->createInfoCount, params->pCreateInfos, NULL, params->pShaders);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkCreateShadersEXT(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        uint32_t createInfoCount;
+        PTR32 pCreateInfos;
+        PTR32 pAllocator;
+        PTR32 pShaders;
+        VkResult result;
+    } *params = args;
+    const VkShaderCreateInfoEXT *pCreateInfos_host;
+    struct conversion_context ctx;
+
+    TRACE("%#x, %u, %#x, %#x, %#x\n", params->device, params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pShaders);
+
+    init_conversion_context(&ctx);
+    pCreateInfos_host = convert_VkShaderCreateInfoEXT_array_win32_to_host(&ctx, (const VkShaderCreateInfoEXT32 *)UlongToPtr(params->pCreateInfos), params->createInfoCount);
+    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkCreateShadersEXT(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, params->createInfoCount, pCreateInfos_host, NULL, (VkShaderEXT *)UlongToPtr(params->pShaders));
+    free_conversion_context(&ctx);
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
 static NTSTATUS thunk64_vkCreateSwapchainKHR(void *args)
 {
     struct vkCreateSwapchainKHR_params *params = args;
@@ -34396,6 +34698,33 @@ static NTSTATUS thunk32_vkDestroySemaphore(void *args)
     TRACE("%#x, 0x%s, %#x\n", params->device, wine_dbgstr_longlong(params->semaphore), params->pAllocator);
 
     wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkDestroySemaphore(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, params->semaphore, NULL);
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
+static NTSTATUS thunk64_vkDestroyShaderEXT(void *args)
+{
+    struct vkDestroyShaderEXT_params *params = args;
+
+    TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->shader), params->pAllocator);
+
+    wine_device_from_handle(params->device)->funcs.p_vkDestroyShaderEXT(wine_device_from_handle(params->device)->device, params->shader, NULL);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkDestroyShaderEXT(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        VkShaderEXT DECLSPEC_ALIGN(8) shader;
+        PTR32 pAllocator;
+    } *params = args;
+
+    TRACE("%#x, 0x%s, %#x\n", params->device, wine_dbgstr_longlong(params->shader), params->pAllocator);
+
+    wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkDestroyShaderEXT(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, params->shader, NULL);
     return STATUS_SUCCESS;
 }
 
@@ -38900,6 +39229,38 @@ static NTSTATUS thunk32_vkGetSemaphoreCounterValueKHR(void *args)
 }
 
 #ifdef _WIN64
+static NTSTATUS thunk64_vkGetShaderBinaryDataEXT(void *args)
+{
+    struct vkGetShaderBinaryDataEXT_params *params = args;
+
+    TRACE("%p, 0x%s, %p, %p\n", params->device, wine_dbgstr_longlong(params->shader), params->pDataSize, params->pData);
+
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkGetShaderBinaryDataEXT(wine_device_from_handle(params->device)->device, params->shader, params->pDataSize, params->pData);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkGetShaderBinaryDataEXT(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        VkShaderEXT DECLSPEC_ALIGN(8) shader;
+        PTR32 pDataSize;
+        PTR32 pData;
+        VkResult result;
+    } *params = args;
+    size_t pDataSize_host;
+
+    TRACE("%#x, 0x%s, %#x, %#x\n", params->device, wine_dbgstr_longlong(params->shader), params->pDataSize, params->pData);
+
+    pDataSize_host = *(PTR32 *)UlongToPtr(params->pDataSize);
+    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetShaderBinaryDataEXT(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, params->shader, &pDataSize_host, (void *)UlongToPtr(params->pData));
+    *(PTR32 *)UlongToPtr(params->pDataSize) = pDataSize_host;
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
 static NTSTATUS thunk64_vkGetShaderInfoAMD(void *args)
 {
     struct vkGetShaderInfoAMD_params *params = args;
@@ -40590,9 +40951,11 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_shader_demote_to_helper_invocation",
     "VK_EXT_shader_image_atomic_int64",
     "VK_EXT_shader_module_identifier",
+    "VK_EXT_shader_object",
     "VK_EXT_shader_stencil_export",
     "VK_EXT_shader_subgroup_ballot",
     "VK_EXT_shader_subgroup_vote",
+    "VK_EXT_shader_tile_image",
     "VK_EXT_shader_viewport_index_layer",
     "VK_EXT_subgroup_size_control",
     "VK_EXT_subpass_merge_feedback",
@@ -40831,6 +41194,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     (void *)thunk64_vkCmdBindInvocationMaskHUAWEI,
     (void *)thunk64_vkCmdBindPipeline,
     (void *)thunk64_vkCmdBindPipelineShaderGroupNV,
+    (void *)thunk64_vkCmdBindShadersEXT,
     (void *)thunk64_vkCmdBindShadingRateImageNV,
     (void *)thunk64_vkCmdBindTransformFeedbackBuffersEXT,
     (void *)thunk64_vkCmdBindVertexBuffers,
@@ -41091,6 +41455,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkCreateSamplerYcbcrConversionKHR,
     thunk64_vkCreateSemaphore,
     thunk64_vkCreateShaderModule,
+    thunk64_vkCreateShadersEXT,
     thunk64_vkCreateSwapchainKHR,
     thunk64_vkCreateValidationCacheEXT,
     thunk64_vkCreateWin32SurfaceKHR,
@@ -41133,6 +41498,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkDestroySamplerYcbcrConversion,
     thunk64_vkDestroySamplerYcbcrConversionKHR,
     thunk64_vkDestroySemaphore,
+    thunk64_vkDestroyShaderEXT,
     thunk64_vkDestroyShaderModule,
     thunk64_vkDestroySurfaceKHR,
     thunk64_vkDestroySwapchainKHR,
@@ -41276,6 +41642,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkGetSamplerOpaqueCaptureDescriptorDataEXT,
     thunk64_vkGetSemaphoreCounterValue,
     thunk64_vkGetSemaphoreCounterValueKHR,
+    thunk64_vkGetShaderBinaryDataEXT,
     thunk64_vkGetShaderInfoAMD,
     thunk64_vkGetShaderModuleCreateInfoIdentifierEXT,
     thunk64_vkGetShaderModuleIdentifierEXT,
@@ -41378,6 +41745,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     (void *)thunk32_vkCmdBindInvocationMaskHUAWEI,
     (void *)thunk32_vkCmdBindPipeline,
     (void *)thunk32_vkCmdBindPipelineShaderGroupNV,
+    (void *)thunk32_vkCmdBindShadersEXT,
     (void *)thunk32_vkCmdBindShadingRateImageNV,
     (void *)thunk32_vkCmdBindTransformFeedbackBuffersEXT,
     (void *)thunk32_vkCmdBindVertexBuffers,
@@ -41638,6 +42006,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkCreateSamplerYcbcrConversionKHR,
     thunk32_vkCreateSemaphore,
     thunk32_vkCreateShaderModule,
+    thunk32_vkCreateShadersEXT,
     thunk32_vkCreateSwapchainKHR,
     thunk32_vkCreateValidationCacheEXT,
     thunk32_vkCreateWin32SurfaceKHR,
@@ -41680,6 +42049,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkDestroySamplerYcbcrConversion,
     thunk32_vkDestroySamplerYcbcrConversionKHR,
     thunk32_vkDestroySemaphore,
+    thunk32_vkDestroyShaderEXT,
     thunk32_vkDestroyShaderModule,
     thunk32_vkDestroySurfaceKHR,
     thunk32_vkDestroySwapchainKHR,
@@ -41823,6 +42193,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkGetSamplerOpaqueCaptureDescriptorDataEXT,
     thunk32_vkGetSemaphoreCounterValue,
     thunk32_vkGetSemaphoreCounterValueKHR,
+    thunk32_vkGetShaderBinaryDataEXT,
     thunk32_vkGetShaderInfoAMD,
     thunk32_vkGetShaderModuleCreateInfoIdentifierEXT,
     thunk32_vkGetShaderModuleIdentifierEXT,

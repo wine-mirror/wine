@@ -52,6 +52,7 @@ enum unix_call
     unix_vkCmdBindInvocationMaskHUAWEI,
     unix_vkCmdBindPipeline,
     unix_vkCmdBindPipelineShaderGroupNV,
+    unix_vkCmdBindShadersEXT,
     unix_vkCmdBindShadingRateImageNV,
     unix_vkCmdBindTransformFeedbackBuffersEXT,
     unix_vkCmdBindVertexBuffers,
@@ -312,6 +313,7 @@ enum unix_call
     unix_vkCreateSamplerYcbcrConversionKHR,
     unix_vkCreateSemaphore,
     unix_vkCreateShaderModule,
+    unix_vkCreateShadersEXT,
     unix_vkCreateSwapchainKHR,
     unix_vkCreateValidationCacheEXT,
     unix_vkCreateWin32SurfaceKHR,
@@ -354,6 +356,7 @@ enum unix_call
     unix_vkDestroySamplerYcbcrConversion,
     unix_vkDestroySamplerYcbcrConversionKHR,
     unix_vkDestroySemaphore,
+    unix_vkDestroyShaderEXT,
     unix_vkDestroyShaderModule,
     unix_vkDestroySurfaceKHR,
     unix_vkDestroySwapchainKHR,
@@ -497,6 +500,7 @@ enum unix_call
     unix_vkGetSamplerOpaqueCaptureDescriptorDataEXT,
     unix_vkGetSemaphoreCounterValue,
     unix_vkGetSemaphoreCounterValueKHR,
+    unix_vkGetShaderBinaryDataEXT,
     unix_vkGetShaderInfoAMD,
     unix_vkGetShaderModuleCreateInfoIdentifierEXT,
     unix_vkGetShaderModuleIdentifierEXT,
@@ -832,6 +836,14 @@ struct vkCmdBindPipelineShaderGroupNV_params
     VkPipelineBindPoint pipelineBindPoint;
     VkPipeline DECLSPEC_ALIGN(8) pipeline;
     uint32_t groupIndex;
+};
+
+struct vkCmdBindShadersEXT_params
+{
+    VkCommandBuffer commandBuffer;
+    uint32_t stageCount;
+    const VkShaderStageFlagBits *pStages;
+    const VkShaderEXT *pShaders;
 };
 
 struct vkCmdBindShadingRateImageNV_params
@@ -2879,6 +2891,16 @@ struct vkCreateShaderModule_params
     VkResult result;
 };
 
+struct vkCreateShadersEXT_params
+{
+    VkDevice device;
+    uint32_t createInfoCount;
+    const VkShaderCreateInfoEXT *pCreateInfos;
+    const VkAllocationCallbacks *pAllocator;
+    VkShaderEXT *pShaders;
+    VkResult result;
+};
+
 struct vkCreateSwapchainKHR_params
 {
     VkDevice device;
@@ -3179,6 +3201,13 @@ struct vkDestroySemaphore_params
 {
     VkDevice device;
     VkSemaphore DECLSPEC_ALIGN(8) semaphore;
+    const VkAllocationCallbacks *pAllocator;
+};
+
+struct vkDestroyShaderEXT_params
+{
+    VkDevice device;
+    VkShaderEXT DECLSPEC_ALIGN(8) shader;
     const VkAllocationCallbacks *pAllocator;
 };
 
@@ -4288,6 +4317,15 @@ struct vkGetSemaphoreCounterValueKHR_params
     VkDevice device;
     VkSemaphore DECLSPEC_ALIGN(8) semaphore;
     uint64_t *pValue;
+    VkResult result;
+};
+
+struct vkGetShaderBinaryDataEXT_params
+{
+    VkDevice device;
+    VkShaderEXT DECLSPEC_ALIGN(8) shader;
+    size_t *pDataSize;
+    void *pData;
     VkResult result;
 };
 

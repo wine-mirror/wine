@@ -388,6 +388,16 @@ void WINAPI vkCmdBindPipelineShaderGroupNV(VkCommandBuffer commandBuffer, VkPipe
     UNIX_CALL(vkCmdBindPipelineShaderGroupNV, &params);
 }
 
+void WINAPI vkCmdBindShadersEXT(VkCommandBuffer commandBuffer, uint32_t stageCount, const VkShaderStageFlagBits *pStages, const VkShaderEXT *pShaders)
+{
+    struct vkCmdBindShadersEXT_params params;
+    params.commandBuffer = commandBuffer;
+    params.stageCount = stageCount;
+    params.pStages = pStages;
+    params.pShaders = pShaders;
+    UNIX_CALL(vkCmdBindShadersEXT, &params);
+}
+
 void WINAPI vkCmdBindShadingRateImageNV(VkCommandBuffer commandBuffer, VkImageView imageView, VkImageLayout imageLayout)
 {
     struct vkCmdBindShadingRateImageNV_params params;
@@ -3014,6 +3024,20 @@ VkResult WINAPI vkCreateShaderModule(VkDevice device, const VkShaderModuleCreate
     return params.result;
 }
 
+VkResult WINAPI vkCreateShadersEXT(VkDevice device, uint32_t createInfoCount, const VkShaderCreateInfoEXT *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkShaderEXT *pShaders)
+{
+    struct vkCreateShadersEXT_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.createInfoCount = createInfoCount;
+    params.pCreateInfos = pCreateInfos;
+    params.pAllocator = pAllocator;
+    params.pShaders = pShaders;
+    status = UNIX_CALL(vkCreateShadersEXT, &params);
+    assert(!status);
+    return params.result;
+}
+
 VkResult WINAPI vkCreateSwapchainKHR(VkDevice device, const VkSwapchainCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSwapchainKHR *pSwapchain)
 {
     struct vkCreateSwapchainKHR_params params;
@@ -3451,6 +3475,17 @@ void WINAPI vkDestroySemaphore(VkDevice device, VkSemaphore semaphore, const VkA
     params.semaphore = semaphore;
     params.pAllocator = pAllocator;
     status = UNIX_CALL(vkDestroySemaphore, &params);
+    assert(!status);
+}
+
+void WINAPI vkDestroyShaderEXT(VkDevice device, VkShaderEXT shader, const VkAllocationCallbacks *pAllocator)
+{
+    struct vkDestroyShaderEXT_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.shader = shader;
+    params.pAllocator = pAllocator;
+    status = UNIX_CALL(vkDestroyShaderEXT, &params);
     assert(!status);
 }
 
@@ -5079,6 +5114,19 @@ VkResult WINAPI vkGetSemaphoreCounterValueKHR(VkDevice device, VkSemaphore semap
     return params.result;
 }
 
+VkResult WINAPI vkGetShaderBinaryDataEXT(VkDevice device, VkShaderEXT shader, size_t *pDataSize, void *pData)
+{
+    struct vkGetShaderBinaryDataEXT_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.shader = shader;
+    params.pDataSize = pDataSize;
+    params.pData = pData;
+    status = UNIX_CALL(vkGetShaderBinaryDataEXT, &params);
+    assert(!status);
+    return params.result;
+}
+
 VkResult WINAPI vkGetShaderInfoAMD(VkDevice device, VkPipeline pipeline, VkShaderStageFlagBits shaderStage, VkShaderInfoTypeAMD infoType, size_t *pInfoSize, void *pInfo)
 {
     struct vkGetShaderInfoAMD_params params;
@@ -5744,6 +5792,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdBindInvocationMaskHUAWEI", vkCmdBindInvocationMaskHUAWEI},
     {"vkCmdBindPipeline", vkCmdBindPipeline},
     {"vkCmdBindPipelineShaderGroupNV", vkCmdBindPipelineShaderGroupNV},
+    {"vkCmdBindShadersEXT", vkCmdBindShadersEXT},
     {"vkCmdBindShadingRateImageNV", vkCmdBindShadingRateImageNV},
     {"vkCmdBindTransformFeedbackBuffersEXT", vkCmdBindTransformFeedbackBuffersEXT},
     {"vkCmdBindVertexBuffers", vkCmdBindVertexBuffers},
@@ -6000,6 +6049,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCreateSamplerYcbcrConversionKHR", vkCreateSamplerYcbcrConversionKHR},
     {"vkCreateSemaphore", vkCreateSemaphore},
     {"vkCreateShaderModule", vkCreateShaderModule},
+    {"vkCreateShadersEXT", vkCreateShadersEXT},
     {"vkCreateSwapchainKHR", vkCreateSwapchainKHR},
     {"vkCreateValidationCacheEXT", vkCreateValidationCacheEXT},
     {"vkDebugMarkerSetObjectNameEXT", vkDebugMarkerSetObjectNameEXT},
@@ -6037,6 +6087,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkDestroySamplerYcbcrConversion", vkDestroySamplerYcbcrConversion},
     {"vkDestroySamplerYcbcrConversionKHR", vkDestroySamplerYcbcrConversionKHR},
     {"vkDestroySemaphore", vkDestroySemaphore},
+    {"vkDestroyShaderEXT", vkDestroyShaderEXT},
     {"vkDestroyShaderModule", vkDestroyShaderModule},
     {"vkDestroySwapchainKHR", vkDestroySwapchainKHR},
     {"vkDestroyValidationCacheEXT", vkDestroyValidationCacheEXT},
@@ -6128,6 +6179,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetSamplerOpaqueCaptureDescriptorDataEXT", vkGetSamplerOpaqueCaptureDescriptorDataEXT},
     {"vkGetSemaphoreCounterValue", vkGetSemaphoreCounterValue},
     {"vkGetSemaphoreCounterValueKHR", vkGetSemaphoreCounterValueKHR},
+    {"vkGetShaderBinaryDataEXT", vkGetShaderBinaryDataEXT},
     {"vkGetShaderInfoAMD", vkGetShaderInfoAMD},
     {"vkGetShaderModuleCreateInfoIdentifierEXT", vkGetShaderModuleCreateInfoIdentifierEXT},
     {"vkGetShaderModuleIdentifierEXT", vkGetShaderModuleIdentifierEXT},
