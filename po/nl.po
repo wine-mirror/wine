@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-12-28 23:15+0100\n"
+"PO-Revision-Date: 2023-03-31 12:05+0200\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -3721,16 +3721,12 @@ msgid "High"
 msgstr "Hoog"
 
 #: dlls/ir50_32/ir50_32.rc:28
-#, fuzzy
-#| msgid "Index"
 msgid "Indeo5"
-msgstr "Index"
+msgstr "Indeo5"
 
 #: dlls/ir50_32/ir50_32.rc:29
-#, fuzzy
-#| msgid "Wine Video 1 video codec"
 msgid "Indeo Video Interactive version 5 video codec"
-msgstr "Wine Video 1 video codec"
+msgstr "Indeo Video Interactive versie 5 video codec"
 
 #: dlls/joy.cpl/joy.rc:37
 msgid "Joysticks"
@@ -17333,17 +17329,16 @@ msgid "Error: Process self-termination is not permitted.\n"
 msgstr "Fout: Zelf-beëindiging van een proces is niet toegestaan.\n"
 
 #: programs/taskkill/taskkill.rc:44
-#, fuzzy
-#| msgid "Process with PID %1!u! was forcibly terminated.\n"
 msgid ""
 "The process with PID %1!u! (child process of PID %2!u!) has been "
 "terminated.\n"
-msgstr "Proces met PID %1!u! is geforceerd beëindigd.\n"
+msgstr "Het proces met PID %1!u! (onderdeel van PID %2!u!) is beëindigd.\n"
 
 #: programs/taskkill/taskkill.rc:45
 msgid ""
 "Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
 msgstr ""
+"Signaal verzonden om PID %1!u!, onderdeel van PID %2!u!, af te sluiten.\n"
 
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -18144,7 +18139,7 @@ msgstr "Reageert niet"
 
 #: programs/taskmgr/taskmgr.rc:324
 msgid "Running"
-msgstr "Geactiveerd"
+msgstr "Actief"
 
 #: programs/taskmgr/taskmgr.rc:325
 msgid "Task"
@@ -18261,8 +18256,8 @@ msgstr ""
 #: programs/wineboot/wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr ""
-"De Wine configuratie in %s wordt bijgewerkt.\n"
-"Even geduld alstublieft..."
+"Even geduld...\n"
+"De Wine configuratie in %s wordt bijgewerkt."
 
 #: programs/winecfg/winecfg.rc:146
 msgid ""
@@ -18495,7 +18490,7 @@ msgstr "Thema:"
 
 #: programs/winecfg/winecfg.rc:295
 msgid "&WinRT app theme:"
-msgstr ""
+msgstr "Thema voor &WinRT programma's:"
 
 #: programs/winecfg/winecfg.rc:297
 msgid "&Install theme..."
@@ -18618,14 +18613,12 @@ msgid "Mono"
 msgstr "Mono"
 
 #: programs/winecfg/winecfg.rc:98
-#, fuzzy
-#| msgid "Right"
 msgid "Light"
-msgstr "Rechts"
+msgstr "Licht"
 
 #: programs/winecfg/winecfg.rc:99
 msgid "Dark"
-msgstr ""
+msgstr "Donker"
 
 #: programs/winecfg/winecfg.rc:53
 msgid ""
