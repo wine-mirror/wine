@@ -3898,6 +3898,168 @@ cleanup:
     winetest_pop_context();
 }
 
+static void test_ImmSetConversionStatus(void)
+{
+    const struct ime_call set_conversion_status_0_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETCONVERSIONMODE},
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETCONVERSIONMODE},
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETSENTENCEMODE},
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETSENTENCEMODE},
+        },
+        {0},
+    };
+    const struct ime_call set_conversion_status_1_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0xdeadbeef, .value = IMC_SETCONVERSIONMODE},
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETCONVERSIONMODE},
+        },
+        {0},
+    };
+    const struct ime_call set_conversion_status_2_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETCONVERSIONMODE},
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETCONVERSIONMODE},
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0xfeedcafe, .value = IMC_SETSENTENCEMODE},
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETSENTENCEMODE},
+        },
+        {0},
+    };
+    DWORD old_conversion, old_sentence, conversion, sentence;
+    HKL hkl, old_hkl = GetKeyboardLayout( 0 );
+    INPUTCONTEXT *ctx;
+
+    ok_ret( 0, ImmGetConversionStatus( 0, &old_conversion, &old_sentence ) );
+    ok_ret( 1, ImmGetConversionStatus( default_himc, &old_conversion, &old_sentence ) );
+
+    ctx = ImmLockIMC( default_himc );
+    ok_ne( NULL, ctx, INPUTCONTEXT *, "%p" );
+    ok_eq( old_conversion, ctx->fdwConversion, UINT, "%#x" );
+    ok_eq( old_sentence, ctx->fdwSentence, UINT, "%#x" );
+
+    hwnd = CreateWindowW( L"static", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    process_messages();
+
+    ok_ret( 1, ImmGetConversionStatus( default_himc, &conversion, &sentence ) );
+    ok_eq( old_conversion, conversion, UINT, "%#x" );
+    ok_eq( old_sentence, sentence, UINT, "%#x" );
+    ok_eq( old_conversion, ctx->fdwConversion, UINT, "%#x" );
+    ok_eq( old_sentence, ctx->fdwSentence, UINT, "%#x" );
+
+    ok_ret( 1, ImmSetConversionStatus( default_himc, 0, 0 ) );
+    ok_ret( 1, ImmGetConversionStatus( default_himc, &conversion, &sentence ) );
+    ok_eq( 0, conversion, UINT, "%#x" );
+    ok_eq( 0, sentence, UINT, "%#x" );
+    ok_eq( 0, ctx->fdwConversion, UINT, "%#x" );
+    ok_eq( 0, ctx->fdwSentence, UINT, "%#x" );
+
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
+
+    if (!(hkl = ime_install())) goto cleanup;
+
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    ok_ret( 1, ImmLoadIME( hkl ) );
+    process_messages();
+    /* initial values are dependent on both old and new IME */
+    ok_ret( 1, ImmSetConversionStatus( default_himc, 0, 0 ) );
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+    ok_ret( 1, ImmGetConversionStatus( default_himc, &conversion, &sentence ) );
+    ok_eq( 0, conversion, UINT, "%#x" );
+    ok_eq( 0, sentence, UINT, "%#x" );
+    ok_eq( 0, ctx->fdwConversion, UINT, "%#x" );
+    ok_eq( 0, ctx->fdwSentence, UINT, "%#x" );
+
+    ok_seq( empty_sequence );
+    ok_ret( 1, ImmSetConversionStatus( default_himc, 0xdeadbeef, 0xfeedcafe ) );
+    ok_seq( set_conversion_status_0_seq );
+
+    ok_ret( 1, ImmGetConversionStatus( default_himc, &conversion, &sentence ) );
+    ok_eq( 0xdeadbeef, conversion, UINT, "%#x" );
+    ok_eq( 0xfeedcafe, sentence, UINT, "%#x" );
+    ok_eq( 0xdeadbeef, ctx->fdwConversion, UINT, "%#x" );
+    ok_eq( 0xfeedcafe, ctx->fdwSentence, UINT, "%#x" );
+
+    ok_seq( empty_sequence );
+    ok_ret( 1, ImmSetConversionStatus( default_himc, 0, 0xfeedcafe ) );
+    ok_seq( set_conversion_status_1_seq );
+
+    ok_ret( 1, ImmGetConversionStatus( default_himc, &conversion, &sentence ) );
+    ok_eq( 0, conversion, UINT, "%#x" );
+    ok_eq( 0xfeedcafe, sentence, UINT, "%#x" );
+    ok_eq( 0, ctx->fdwConversion, UINT, "%#x" );
+    ok_eq( 0xfeedcafe, ctx->fdwSentence, UINT, "%#x" );
+
+    ok_seq( empty_sequence );
+    ok_ret( 1, ImmSetConversionStatus( default_himc, ~0, ~0 ) );
+    ok_seq( set_conversion_status_2_seq );
+
+    ok_ret( 1, ImmGetConversionStatus( default_himc, &conversion, &sentence ) );
+    ok_eq( ~0, conversion, UINT, "%#x" );
+    ok_eq( ~0, sentence, UINT, "%#x" );
+    ok_eq( ~0, ctx->fdwConversion, UINT, "%#x" );
+    ok_eq( ~0, ctx->fdwSentence, UINT, "%#x" );
+
+    /* status is cached and some bits are kept from the previous active IME */
+    ok_ret( 1, ImmActivateLayout( old_hkl ) );
+    todo_wine ok_eq( 0x200, ctx->fdwConversion, UINT, "%#x" );
+    ok_eq( old_sentence, ctx->fdwSentence, UINT, "%#x" );
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    todo_wine ok_eq( ~0, ctx->fdwConversion, UINT, "%#x" );
+    todo_wine ok_eq( ~0, ctx->fdwSentence, UINT, "%#x" );
+    ok_ret( 1, ImmActivateLayout( old_hkl ) );
+    todo_wine ok_eq( 0x200, ctx->fdwConversion, UINT, "%#x" );
+    ok_eq( old_sentence, ctx->fdwSentence, UINT, "%#x" );
+
+    ime_cleanup( hkl, TRUE );
+
+cleanup:
+    /* sanitize conversion status to some sane default */
+    ok_ret( 1, ImmSetConversionStatus( default_himc, 0, 0 ) );
+    ok_ret( 1, ImmGetConversionStatus( default_himc, &conversion, &sentence ) );
+    ok_eq( 0, conversion, UINT, "%#x" );
+    ok_eq( 0, sentence, UINT, "%#x" );
+    ok_eq( 0, ctx->fdwConversion, UINT, "%#x" );
+    ok_eq( 0, ctx->fdwSentence, UINT, "%#x" );
+
+    ok_ret( 1, DestroyWindow( hwnd ) );
+    process_messages();
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+    ok_ret( 1, ImmUnlockIMC( default_himc ) );
+}
+
 static void test_ImmProcessKey(void)
 {
     const struct ime_call process_key_seq[] =
@@ -4492,6 +4654,9 @@ START_TEST(imm32)
     test_ImmGetRegisterWordStyle( TRUE );
     test_ImmUnregisterWord( FALSE );
     test_ImmUnregisterWord( TRUE );
+
+    /* test these first to sanitize conversion / open statuses */
+    test_ImmSetConversionStatus();
 
     test_ImmActivateLayout();
     test_ImmCreateInputContext();
