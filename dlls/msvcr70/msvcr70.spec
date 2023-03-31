@@ -688,7 +688,7 @@
 @ cdecl abs(long)
 @ cdecl acos(double)
 @ cdecl asctime(ptr)
-@ cdecl asin(double)
+@ cdecl asin(double) MSVCRT_asin
 @ cdecl atan(double)
 @ cdecl atan2(double double)
 @ cdecl -private atexit(ptr) MSVCRT_atexit  # not imported to avoid conflicts with Mingw

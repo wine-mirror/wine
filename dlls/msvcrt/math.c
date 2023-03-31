@@ -445,29 +445,7 @@ float CDECL tanhf( float x )
 
 /*********************************************************************
  *		asin (MSVCRT.@)
- *
- * Copied from musl: src/math/asin.c
  */
-static double asin_R(double z)
-{
-    /* coefficients for R(x^2) */
-    static const double pS0 =  1.66666666666666657415e-01,
-                 pS1 = -3.25565818622400915405e-01,
-                 pS2 =  2.01212532134862925881e-01,
-                 pS3 = -4.00555345006794114027e-02,
-                 pS4 =  7.91534994289814532176e-04,
-                 pS5 =  3.47933107596021167570e-05,
-                 qS1 = -2.40339491173441421878e+00,
-                 qS2 =  2.02094576023350569471e+00,
-                 qS3 = -6.88283971605453293030e-01,
-                 qS4 =  7.70381505559019352791e-02;
-
-    double p, q;
-    p = z * (pS0 + z * (pS1 + z * (pS2 + z * (pS3 + z * (pS4 + z * pS5)))));
-    q = 1.0 + z * (qS1 + z * (qS2 + z * (qS3 + z * qS4)));
-    return p / q;
-}
-
 #ifdef __i386__
 double CDECL x87_asin(double);
 __ASM_GLOBAL_FUNC( x87_asin,
@@ -485,70 +463,28 @@ __ASM_GLOBAL_FUNC( x87_asin,
         "ret" )
 #endif
 
-double CDECL asin( double x )
+double CDECL MSVCRT_asin( double x )
 {
-    static const double pio2_hi = 1.57079632679489655800e+00,
-                 pio2_lo = 6.12323399573676603587e-17;
-
-    double z, r, s;
-    unsigned int hx, ix;
-    ULONGLONG llx;
 #ifdef __i386__
     unsigned int x87_cw, sse2_cw;
-#endif
+    unsigned int hx = *(ULONGLONG*)&x >> 32;
+    unsigned int ix = hx & 0x7fffffff;
 
-    hx = *(ULONGLONG*)&x >> 32;
-    ix = hx & 0x7fffffff;
-    /* |x| >= 1 or nan */
-    if (ix >= 0x3ff00000) {
-        unsigned int lx;
-        lx = *(ULONGLONG*)&x;
-        if (((ix - 0x3ff00000) | lx) == 0)
-            /* asin(1) = +-pi/2 with inexact */
-            return x * pio2_hi + 7.5231638452626401e-37;
-        if (isnan(x))
-        {
-#ifdef __i386__
-            return math_error(_DOMAIN, "asin", x, 0, x);
-#else
-            return x;
-#endif
-        }
-        return math_error(_DOMAIN, "asin", x, 0, 0 / (x - x));
-    }
+    if (isnan(x)) return math_error(_DOMAIN, "asin", x, 0, x);
 
-#ifdef __i386__
-    __control87_2(0, 0, &x87_cw, &sse2_cw);
-    if (!sse2_enabled || (x87_cw & _MCW_EM) != _MCW_EM
+    /* |x| < 1 */
+    if (ix < 0x3ff00000)
+    {
+        __control87_2(0, 0, &x87_cw, &sse2_cw);
+        if (!sse2_enabled || (x87_cw & _MCW_EM) != _MCW_EM
             || (sse2_cw & (_MCW_EM | _MCW_RC)) != _MCW_EM)
-        return x87_asin(x);
+            return x87_asin(x);
+    }
+#else
+    if (isnan(x)) return x;
 #endif
 
-    /* |x| < 0.5 */
-    if (ix < 0x3fe00000) {
-        /* if 0x1p-1022 <= |x| < 0x1p-26, avoid raising underflow */
-        if (ix < 0x3e500000 && ix >= 0x00100000)
-            return x;
-        return x + x * asin_R(x * x);
-    }
-    /* 1 > |x| >= 0.5 */
-    z = (1 - fabs(x)) * 0.5;
-    s = sqrt(z);
-    r = asin_R(z);
-    if (ix >= 0x3fef3333) {  /* if |x| > 0.975 */
-        x = pio2_hi - (2 * (s + s * r) - pio2_lo);
-    } else {
-        double f, c;
-        /* f+c = sqrt(z) */
-        f = s;
-        llx = (*(ULONGLONG*)&f >> 32) << 32;
-        f = *(double*)&llx;
-        c = (z - f * f) / (s + f);
-        x = 0.5 * pio2_hi - (2 * s * r - (pio2_lo - 2 * c) - (0.5 * pio2_hi - 2 * f));
-    }
-    if (hx >> 31)
-        return -x;
-    return x;
+    return asin( x );
 }
 
 /*********************************************************************

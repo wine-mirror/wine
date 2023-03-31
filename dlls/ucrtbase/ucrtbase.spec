@@ -1567,7 +1567,7 @@
 @ cdecl _o_acoshl(double) acosh
 @ cdecl _o_asctime(ptr) asctime
 @ cdecl _o_asctime_s(ptr long ptr) asctime_s
-@ cdecl _o_asin(double) asin
+@ cdecl _o_asin(double) MSVCRT_asin
 @ cdecl -arch=!i386 _o_asinf(float) asinf
 @ cdecl _o_asinh(double) asinh
 @ cdecl _o_asinhf(float) asinhf
@@ -2161,7 +2161,7 @@
 @ cdecl acoshl(double) acosh
 @ cdecl asctime(ptr)
 @ cdecl asctime_s(ptr long ptr)
-@ cdecl asin(double)
+@ cdecl asin(double) MSVCRT_asin
 @ cdecl -arch=!i386 asinf(float)
 @ cdecl asinh(double)
 @ cdecl asinhf(float)

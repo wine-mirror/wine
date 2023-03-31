@@ -78,7 +78,7 @@ double __cdecl asin(double x)
 		if ((ix-0x3ff00000 | lx) == 0)
 			/* asin(1) = +-pi/2 with inexact */
 			return x*pio2_hi + 0x1p-120f;
-		return 0/(x-x);
+		return math_error(_DOMAIN, "asin", x, 0, 0 / (x - x));
 	}
 	/* |x| < 0.5 */
 	if (ix < 0x3fe00000) {
