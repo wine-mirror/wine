@@ -75,7 +75,8 @@ double __cdecl acos(double x)
 				return 2*pio2_hi + 0x1p-120f;
 			return 0;
 		}
-		return 0/(x-x);
+		if (isnan(x)) return x;
+		return math_error(_DOMAIN, "acos", x, 0, 0 / (x - x));
 	}
 	/* |x| < 0.5 */
 	if (ix < 0x3fe00000) {
