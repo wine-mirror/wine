@@ -86,6 +86,31 @@ extern BOOL WINAPI ImmFreeLayout(HKL);
 extern BOOL WINAPI ImmLoadIME(HKL);
 extern BOOL WINAPI ImmActivateLayout(HKL);
 
+#define check_member_( file, line, val, exp, fmt, member )                                         \
+    ok_(file, line)( (val).member == (exp).member, "got " #member " " fmt "\n", (val).member )
+#define check_member( val, exp, fmt, member )                                                      \
+    check_member_( __FILE__, __LINE__, val, exp, fmt, member )
+
+#define check_candidate_list( a, b ) check_candidate_list_( __LINE__, a, b, TRUE )
+static void check_candidate_list_( int line, CANDIDATELIST *list, const CANDIDATELIST *expect, BOOL unicode )
+{
+    UINT i;
+
+    check_member_( __FILE__, line, *list, *expect, "%lu", dwSize );
+    check_member_( __FILE__, line, *list, *expect, "%lu", dwStyle );
+    check_member_( __FILE__, line, *list, *expect, "%lu", dwCount );
+    check_member_( __FILE__, line, *list, *expect, "%lu", dwSelection );
+    check_member_( __FILE__, line, *list, *expect, "%lu", dwPageStart );
+    check_member_( __FILE__, line, *list, *expect, "%lu", dwPageSize );
+    for (i = 0; i < list->dwCount && i < expect->dwCount; ++i)
+    {
+        void *list_str = (BYTE *)list + list->dwOffset[i], *expect_str = (BYTE *)expect + expect->dwOffset[i];
+        check_member_( __FILE__, line, *list, *expect, "%lu", dwOffset[i] );
+        if (unicode) ok_( __FILE__, line )( !wcscmp( list_str, expect_str ), "got %s\n", debugstr_w(list_str) );
+        else ok_( __FILE__, line )( !strcmp( list_str, expect_str ), "got %s\n", debugstr_a(list_str) );
+    }
+}
+
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE, enabled_ ## func = FALSE
 
@@ -5088,6 +5113,134 @@ static void test_ImmRequestMessage(void)
     ime_call_count = 0;
 }
 
+static void test_ImmGetCandidateList( BOOL unicode )
+{
+    char buffer[512], expect_bufW[512] = {0}, expect_bufA[512] = {0};
+    CANDIDATELIST *cand_list = (CANDIDATELIST *)buffer, *expect_listW, *expect_listA;
+    HKL hkl, old_hkl = GetKeyboardLayout( 0 );
+    CANDIDATEINFO *cand_info;
+    INPUTCONTEXT *ctx;
+    HIMC himc;
+
+    expect_listW = (CANDIDATELIST *)expect_bufW;
+    expect_listW->dwSize = offsetof(CANDIDATELIST, dwOffset[2]) + 32 * sizeof(WCHAR);
+    expect_listW->dwStyle = 0xdeadbeef;
+    expect_listW->dwCount = 2;
+    expect_listW->dwSelection = 3;
+    expect_listW->dwPageStart = 4;
+    expect_listW->dwPageSize = 5;
+    expect_listW->dwOffset[0] = offsetof(CANDIDATELIST, dwOffset[2]) + 2 * sizeof(WCHAR);
+    expect_listW->dwOffset[1] = offsetof(CANDIDATELIST, dwOffset[2]) + 16 * sizeof(WCHAR);
+    wcscpy( (WCHAR *)(expect_bufW + expect_listW->dwOffset[0]), L"Candidate 1" );
+    wcscpy( (WCHAR *)(expect_bufW + expect_listW->dwOffset[1]), L"Candidate 2" );
+
+    expect_listA = (CANDIDATELIST *)expect_bufA;
+    expect_listA->dwSize = offsetof(CANDIDATELIST, dwOffset[2]) + 32;
+    expect_listA->dwStyle = 0xdeadbeef;
+    expect_listA->dwCount = 2;
+    expect_listA->dwSelection = 3;
+    expect_listA->dwPageStart = 4;
+    expect_listA->dwPageSize = 5;
+    expect_listA->dwOffset[0] = offsetof(CANDIDATELIST, dwOffset[2]) + 2;
+    expect_listA->dwOffset[1] = offsetof(CANDIDATELIST, dwOffset[2]) + 16;
+    strcpy( (char *)(expect_bufA + expect_listA->dwOffset[0]), "Candidate 1" );
+    strcpy( (char *)(expect_bufA + expect_listA->dwOffset[1]), "Candidate 2" );
+
+    winetest_push_context( unicode ? "unicode" : "ansi" );
+
+    /* IME_PROP_END_UNLOAD for the IME to unload / reload. */
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD;
+    if (unicode) ime_info.fdwProperty |= IME_PROP_UNICODE;
+
+    if (!(hkl = ime_install())) goto cleanup;
+
+    hwnd = CreateWindowW( test_class.lpszClassName, NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    ok_ret( 1, ImmLoadIME( hkl ) );
+    himc = ImmCreateContext();
+    ok_ne( NULL, himc, HIMC, "%p" );
+    ctx = ImmLockIMC( himc );
+    ok_ne( NULL, ctx, INPUTCONTEXT *, "%p" );
+    process_messages();
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+    ok_ret( 0, ImmGetCandidateListW( default_himc, 0, NULL, 0 ) );
+    ok_seq( empty_sequence );
+    ok_ret( 0, ImmGetCandidateListW( default_himc, 1, NULL, 0 ) );
+    ok_seq( empty_sequence );
+    ok_ret( 0, ImmGetCandidateListW( default_himc, 0, cand_list, sizeof(buffer) ) );
+    ok_seq( empty_sequence );
+
+    ok_ret( 0, ImmGetCandidateListW( himc, 0, cand_list, sizeof(buffer) ) );
+    ok_seq( empty_sequence );
+
+    todo_wine ok_seq( empty_sequence );
+    ctx->hCandInfo = ImmReSizeIMCC( ctx->hCandInfo, sizeof(*cand_info) + sizeof(buffer) );
+    ok( !!ctx->hCandInfo, "ImmReSizeIMCC failed, error %lu\n", GetLastError() );
+
+    cand_info = ImmLockIMCC( ctx->hCandInfo );
+    ok( !!cand_info, "ImmLockIMCC failed, error %lu\n", GetLastError() );
+    cand_info->dwCount = 1;
+    cand_info->dwOffset[0] = sizeof(*cand_info);
+    if (unicode) memcpy( cand_info + 1, expect_bufW, sizeof(expect_bufW) );
+    else memcpy( cand_info + 1, expect_bufA, sizeof(expect_bufA) );
+    ok_ret( 0, ImmUnlockIMCC( ctx->hCandInfo ) );
+
+    ok_ret( (unicode ? 96 : 80), ImmGetCandidateListW( himc, 0, NULL, 0 ) );
+    ok_seq( empty_sequence );
+    ok_ret( 0, ImmGetCandidateListW( himc, 1, NULL, 0 ) );
+    ok_seq( empty_sequence );
+    memset( buffer, 0xcd, sizeof(buffer) );
+    ok_ret( (unicode ? 96 : 80), ImmGetCandidateListW( himc, 0, cand_list, sizeof(buffer) ) );
+    ok_seq( empty_sequence );
+
+    if (!unicode)
+    {
+        expect_listW->dwSize = offsetof(CANDIDATELIST, dwOffset[2]) + 24 * sizeof(WCHAR);
+        expect_listW->dwOffset[0] = offsetof(CANDIDATELIST, dwOffset[2]);
+        expect_listW->dwOffset[1] = offsetof(CANDIDATELIST, dwOffset[2]) + 12 * sizeof(WCHAR);
+        wcscpy( (WCHAR *)(expect_bufW + expect_listW->dwOffset[0]), L"Candidate 1" );
+        wcscpy( (WCHAR *)(expect_bufW + expect_listW->dwOffset[1]), L"Candidate 2" );
+    }
+    check_candidate_list_( __LINE__, cand_list, expect_listW, TRUE );
+
+    ok_ret( (unicode ? 56 : 64), ImmGetCandidateListA( himc, 0, NULL, 0 ) );
+    ok_seq( empty_sequence );
+    ok_ret( 0, ImmGetCandidateListA( himc, 1, NULL, 0 ) );
+    ok_seq( empty_sequence );
+    memset( buffer, 0xcd, sizeof(buffer) );
+    ok_ret( (unicode ? 56 : 64), ImmGetCandidateListA( himc, 0, cand_list, sizeof(buffer) ) );
+    ok_seq( empty_sequence );
+
+    if (unicode)
+    {
+        expect_listA->dwSize = offsetof(CANDIDATELIST, dwOffset[2]) + 24;
+        expect_listA->dwOffset[0] = offsetof(CANDIDATELIST, dwOffset[2]);
+        expect_listA->dwOffset[1] = offsetof(CANDIDATELIST, dwOffset[2]) + 12;
+        strcpy( (char *)(expect_bufA + expect_listA->dwOffset[0]), "Candidate 1" );
+        strcpy( (char *)(expect_bufA + expect_listA->dwOffset[1]), "Candidate 2" );
+    }
+    check_candidate_list_( __LINE__, cand_list, expect_listA, FALSE );
+
+    ok_ret( 1, ImmUnlockIMC( himc ) );
+    ok_ret( 1, ImmDestroyContext( himc ) );
+
+    ok_ret( 1, ImmActivateLayout( old_hkl ) );
+    ok_ret( 1, DestroyWindow( hwnd ) );
+    process_messages();
+
+    ime_cleanup( hkl, TRUE );
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+cleanup:
+    winetest_pop_context();
+}
+
 START_TEST(imm32)
 {
     default_hkl = GetKeyboardLayout( 0 );
@@ -5133,6 +5286,9 @@ START_TEST(imm32)
     test_DefWindowProc();
     test_ImmSetActiveContext();
     test_ImmRequestMessage();
+
+    test_ImmGetCandidateList( TRUE );
+    test_ImmGetCandidateList( FALSE );
 
     if (init())
     {
