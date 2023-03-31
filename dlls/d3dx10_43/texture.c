@@ -71,18 +71,6 @@ wic_pixel_formats[] =
     { &GUID_WICPixelFormat128bppRGBAFloat,    DXGI_FORMAT_R32G32B32A32_FLOAT }
 };
 
-static const DXGI_FORMAT to_be_converted_format[] =
-{
-    DXGI_FORMAT_UNKNOWN,
-    DXGI_FORMAT_R8_UNORM,
-    DXGI_FORMAT_R8G8_UNORM,
-    DXGI_FORMAT_B5G6R5_UNORM,
-    DXGI_FORMAT_B4G4R4A4_UNORM,
-    DXGI_FORMAT_B5G5R5A1_UNORM,
-    DXGI_FORMAT_B8G8R8X8_UNORM,
-    DXGI_FORMAT_B8G8R8A8_UNORM
-};
-
 static D3DX10_IMAGE_FILE_FORMAT wic_container_guid_to_file_format(GUID *container_format)
 {
     unsigned int i;
@@ -260,12 +248,30 @@ static unsigned int get_bpp_from_format(DXGI_FORMAT format)
 
 static DXGI_FORMAT get_d3dx10_dds_format(DXGI_FORMAT format)
 {
+    static const struct
+    {
+        DXGI_FORMAT src;
+        DXGI_FORMAT dst;
+    }
+    format_map[] =
+    {
+        {DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_R8G8B8A8_UNORM},
+        {DXGI_FORMAT_R8_UNORM,          DXGI_FORMAT_R8G8B8A8_UNORM},
+        {DXGI_FORMAT_R8G8_UNORM,        DXGI_FORMAT_R8G8B8A8_UNORM},
+        {DXGI_FORMAT_B5G6R5_UNORM,      DXGI_FORMAT_R8G8B8A8_UNORM},
+        {DXGI_FORMAT_B4G4R4A4_UNORM,    DXGI_FORMAT_R8G8B8A8_UNORM},
+        {DXGI_FORMAT_B5G5R5A1_UNORM,    DXGI_FORMAT_R8G8B8A8_UNORM},
+        {DXGI_FORMAT_B8G8R8X8_UNORM,    DXGI_FORMAT_R8G8B8A8_UNORM},
+        {DXGI_FORMAT_B8G8R8A8_UNORM,    DXGI_FORMAT_R8G8B8A8_UNORM},
+        {DXGI_FORMAT_R16_UNORM,         DXGI_FORMAT_R16G16B16A16_UNORM},
+    };
+
     unsigned int i;
 
-    for (i = 0; i < ARRAY_SIZE(to_be_converted_format); ++i)
+    for (i = 0; i < ARRAY_SIZE(format_map); ++i)
     {
-        if (format == to_be_converted_format[i])
-            return DXGI_FORMAT_R8G8B8A8_UNORM;
+        if (format == format_map[i].src)
+            return format_map[i].dst;
     }
     return format;
 }
