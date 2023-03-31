@@ -39,7 +39,6 @@
  */
 float __cdecl fmaf(float x, float y, float z)
 {
-	#pragma STDC FENV_ACCESS ON
 	double xy, result;
 	union {double f; uint64_t i;} u;
 	int e;
@@ -54,6 +53,7 @@ float __cdecl fmaf(float x, float y, float z)
 		(result - xy == z && result - z == xy) || /* exact */
 		fegetround() != FE_TONEAREST)       /* not round-to-nearest */
 	{
+		if (!isnan(x) && !isnan(y) && !isnan(z) && isnan(u.f)) errno = EDOM;
 		/*
 		underflow may not be raised correctly, example:
 		fmaf(0x1p-120f, 0x1p-120f, 0x1p-149f)

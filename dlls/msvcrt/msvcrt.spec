@@ -1297,8 +1297,6 @@
 @ cdecl fgetws(ptr long ptr)
 @ cdecl floor(double)
 @ cdecl -arch=!i386 floorf(float)
-@ cdecl fma(double double double)
-@ cdecl -arch=!i386 fmaf(float float float)
 @ cdecl fmod(double double)
 @ cdecl -arch=!i386 fmodf(float float)
 @ cdecl fopen(str str)

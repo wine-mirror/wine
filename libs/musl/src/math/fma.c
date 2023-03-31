@@ -58,19 +58,23 @@ static void mul(uint64_t *hi, uint64_t *lo, uint64_t x, uint64_t y)
 
 double __cdecl fma(double x, double y, double z)
 {
-	#pragma STDC FENV_ACCESS ON
-
 	/* normalize so top 10bits and last bit are 0 */
 	struct num nx, ny, nz;
 	nx = normalize(x);
 	ny = normalize(y);
 	nz = normalize(z);
 
-	if (nx.e >= ZEROINFNAN || ny.e >= ZEROINFNAN)
-		return x*y + z;
+	if (nx.e >= ZEROINFNAN || ny.e >= ZEROINFNAN) {
+		double r = x * y + z;
+		if (!isnan(x) && !isnan(y) && !isnan(z) && isnan(r)) errno = EDOM;
+		return r;
+	}
 	if (nz.e >= ZEROINFNAN) {
-		if (nz.e > ZEROINFNAN) /* z==0 */
-			return x*y + z;
+		if (nz.e > ZEROINFNAN) { /* z==0 */
+			double r = x * y + z;
+			if (!isnan(x) && !isnan(y) && isnan(r)) errno = EDOM;
+			return r;
+		}
 		return z;
 	}
 
@@ -86,7 +90,7 @@ double __cdecl fma(double x, double y, double z)
 	if (d > 0) {
 		if (d < 64) {
 			zlo = nz.m<<d;
-			zhi = nz.m>>64-d;
+			zhi = nz.m>>(64-d);
 		} else {
 			zlo = 0;
 			zhi = nz.m;
@@ -94,7 +98,7 @@ double __cdecl fma(double x, double y, double z)
 			d -= 64;
 			if (d == 0) {
 			} else if (d < 64) {
-				rlo = rhi<<64-d | rlo>>d | !!(rlo<<64-d);
+				rlo = rhi<<(64-d) | rlo>>d | !!(rlo<<(64-d));
 				rhi = rhi>>d;
 			} else {
 				rlo = 1;
@@ -107,7 +111,7 @@ double __cdecl fma(double x, double y, double z)
 		if (d == 0) {
 			zlo = nz.m;
 		} else if (d < 64) {
-			zlo = nz.m>>d | !!(nz.m<<64-d);
+			zlo = nz.m>>d | !!(nz.m<<(64-d));
 		} else {
 			zlo = 1;
 		}
@@ -139,7 +143,7 @@ double __cdecl fma(double x, double y, double z)
 		e += 64;
 		d = a_clz_64(rhi)-1;
 		/* note: d > 0 */
-		rhi = rhi<<d | rlo>>64-d | !!(rlo<<d);
+		rhi = rhi<<d | rlo>>(64-d) | !!(rlo<<d);
 	} else if (rlo) {
 		d = a_clz_64(rlo)-1;
 		if (d < 0)
@@ -190,7 +194,7 @@ double __cdecl fma(double x, double y, double z)
 		} else {
 			/* only round once when scaled */
 			d = 10;
-			i = ( rhi>>d | !!(rhi<<64-d) ) << d;
+			i = ( rhi>>d | !!(rhi<<(64-d)) ) << d;
 			if (sign)
 				i = -i;
 			r = i;
