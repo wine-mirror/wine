@@ -27,6 +27,7 @@
 #include "objbase.h"
 
 #include "activation.h"
+#include "rometadataresolution.h"
 
 #define WIDL_using_Windows_Foundation_Metadata
 #include "windows.foundation.metadata.h"

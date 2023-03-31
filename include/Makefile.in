@@ -645,6 +645,7 @@ SOURCES = \
 	rmxftmpl.x \
 	roapi.h \
 	roerrorapi.h \
+	rometadataresolution.h \
 	roparameterizediid.idl \
 	row.idl \
 	rowchg.idl \
