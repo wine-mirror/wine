@@ -2325,9 +2325,9 @@
 @ cdecl rand()
 @ cdecl rand_s(ptr)
 @ cdecl realloc(ptr long)
-@ cdecl remainder(double double)
-@ cdecl remainderf(float float)
-@ cdecl remainderl(double double) remainder
+@ cdecl remainder(double double) MSVCRT_remainder
+@ cdecl remainderf(float float) MSVCRT_remainderf
+@ cdecl remainderl(double double) MSVCRT_remainder
 @ cdecl remove(str)
 @ cdecl remquo(double double ptr)
 @ cdecl remquof(float float ptr)

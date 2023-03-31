@@ -3350,35 +3350,33 @@ float CDECL _scalbf(float num, __msvcrt_long power)
   return ldexp(num, power);
 }
 
-#if _MSVCR_VER>=120
+#if _MSVCR_VER == 120 /* other versions call remainder() directly */
 
 /*********************************************************************
  *      remainder (MSVCR120.@)
- *
- * Copied from musl: src/math/remainder.c
  */
-double CDECL remainder(double x, double y)
+double CDECL MSVCRT_remainder(double x, double y)
 {
-    int q;
-#if _MSVCR_VER == 120 && defined(__x86_64__)
+#ifdef __x86_64__
     if (isnan(x) || isnan(y)) *_errno() = EDOM;
 #endif
-    return remquo(x, y, &q);
+    return remainder(x, y);
 }
 
 /*********************************************************************
  *      remainderf (MSVCR120.@)
- *
- * Copied from musl: src/math/remainderf.c
  */
-float CDECL remainderf(float x, float y)
+float CDECL MSVCRT_remainderf(float x, float y)
 {
-    int q;
-#if _MSVCR_VER == 120 && defined(__x86_64__)
+#ifdef __x86_64__
     if (isnan(x) || isnan(y)) *_errno() = EDOM;
 #endif
-    return remquof(x, y, &q);
+    return remainderf(x, y);
 }
+
+#endif /* _MSVCR_VER == 120 */
+
+#if _MSVCR_VER>=120
 
 /*********************************************************************
  *      _except1 (MSVCR120.@)
