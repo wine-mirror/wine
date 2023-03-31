@@ -4554,6 +4554,26 @@ static void test_ImmCreateInputContext(void)
     struct ime_call select1_seq[] =
     {
         {
+            .hkl = expect_ime, .himc = 0/*himc[0]*/,
+            .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETOPENSTATUS},
+            .todo = TRUE, .flaky_himc = TRUE, .broken = TRUE /* sometimes */,
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETOPENSTATUS},
+            .todo = TRUE, .flaky_himc = TRUE, .broken = TRUE /* sometimes */,
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETOPENSTATUS},
+            .todo = TRUE, .broken = TRUE /* sometimes */,
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETCONVERSIONMODE},
+            .todo = TRUE, .broken = TRUE /* sometimes */,
+        },
+        {
             .hkl = expect_ime, .himc = 0/*himc[1]*/,
             .func = IME_SELECT, .select = 1,
         },
@@ -4667,7 +4687,8 @@ static void test_ImmCreateInputContext(void)
     ok_seq( empty_sequence );
     ctx = ImmLockIMC( himc[1] );
     ok( !!ctx, "ImmLockIMC failed, error %lu\n", GetLastError() );
-    select1_seq[0].himc = himc[1];
+    select1_seq[0].himc = himc[0];
+    select1_seq[4].himc = himc[1];
     ok_seq( select1_seq );
 
     ok_ret( 1, ImmUnlockIMC( himc[1] ) );
@@ -4813,6 +4834,21 @@ static void test_ImmSetActiveContext(void)
     struct ime_call deactivate_1_seq[] =
     {
         {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETOPENSTATUS},
+            .todo = TRUE, .flaky_himc = TRUE, .broken = TRUE /* sometimes */,
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETOPENSTATUS},
+            .todo = TRUE, .broken = TRUE /* sometimes */,
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETCONVERSIONMODE},
+            .todo = TRUE, .broken = TRUE /* sometimes */,
+        },
+        {
             .hkl = expect_ime, .himc = 0/*himc*/,
             .func = IME_SELECT, .select = 1,
         },
@@ -4867,8 +4903,8 @@ static void test_ImmSetActiveContext(void)
     himc = ImmCreateContext();
     ok_ne( NULL, himc, HIMC, "%p" );
     ok_ret( 1, ImmSetActiveContext( hwnd, himc, FALSE ) );
-    deactivate_1_seq[0].himc = himc;
-    deactivate_1_seq[1].himc = himc;
+    deactivate_1_seq[3].himc = himc;
+    deactivate_1_seq[4].himc = himc;
     ok_seq( deactivate_1_seq );
     ok_ret( 1, ImmSetActiveContext( hwnd, himc, TRUE ) );
     activate_1_seq[0].himc = himc;
