@@ -4060,6 +4060,124 @@ cleanup:
     ok_ret( 1, ImmUnlockIMC( default_himc ) );
 }
 
+static void test_ImmSetOpenStatus(void)
+{
+    const struct ime_call set_open_status_0_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETOPENSTATUS},
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETOPENSTATUS},
+        },
+        {0},
+    };
+    const struct ime_call set_open_status_1_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETOPENSTATUS},
+            .todo = TRUE,
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETOPENSTATUS},
+            .todo = TRUE,
+        },
+        {0},
+    };
+    HKL hkl, old_hkl = GetKeyboardLayout( 0 );
+    DWORD old_status, status;
+    INPUTCONTEXT *ctx;
+
+    ok_ret( 0, ImmGetOpenStatus( 0 ) );
+    old_status = ImmGetOpenStatus( default_himc );
+
+    ctx = ImmLockIMC( default_himc );
+    ok_ne( NULL, ctx, INPUTCONTEXT *, "%p" );
+    ok_eq( old_status, ctx->fOpen, UINT, "%#x" );
+
+    hwnd = CreateWindowW( L"static", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    process_messages();
+
+    status = ImmGetOpenStatus( default_himc );
+    ok_eq( old_status, status, UINT, "%#x" );
+    ok_eq( old_status, ctx->fOpen, UINT, "%#x" );
+
+    ok_ret( 1, ImmSetOpenStatus( default_himc, 0 ) );
+    status = ImmGetOpenStatus( default_himc );
+    ok_eq( 0, status, UINT, "%#x" );
+    ok_eq( 0, ctx->fOpen, UINT, "%#x" );
+
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
+
+    if (!(hkl = ime_install())) goto cleanup;
+
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    ok_ret( 1, ImmLoadIME( hkl ) );
+    process_messages();
+    /* initial values are dependent on both old and new IME */
+    ok_ret( 1, ImmSetOpenStatus( default_himc, 0 ) );
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+    status = ImmGetOpenStatus( default_himc );
+    ok_eq( 0, status, UINT, "%#x" );
+    ok_eq( 0, ctx->fOpen, UINT, "%#x" );
+
+    ok_seq( empty_sequence );
+    ok_ret( 1, ImmSetOpenStatus( default_himc, 0xdeadbeef ) );
+    ok_seq( set_open_status_0_seq );
+
+    status = ImmGetOpenStatus( default_himc );
+    ok_eq( 0xdeadbeef, status, UINT, "%#x" );
+    ok_eq( 0xdeadbeef, ctx->fOpen, UINT, "%#x" );
+
+    ok_seq( empty_sequence );
+    ok_ret( 1, ImmSetOpenStatus( default_himc, ~0 ) );
+    ok_seq( set_open_status_1_seq );
+
+    status = ImmGetOpenStatus( default_himc );
+    todo_wine ok_eq( ~0, status, UINT, "%#x" );
+    todo_wine ok_eq( ~0, ctx->fOpen, UINT, "%#x" );
+
+    /* status is cached between IME activations */
+
+    ok_ret( 1, ImmActivateLayout( old_hkl ) );
+    status = ImmGetOpenStatus( default_himc );
+    todo_wine ok_eq( old_status, status, UINT, "%#x" );
+    todo_wine ok_eq( old_status, ctx->fOpen, UINT, "%#x" );
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    status = ImmGetOpenStatus( default_himc );
+    todo_wine ok_eq( 1, status, UINT, "%#x" );
+    todo_wine ok_eq( 1, ctx->fOpen, UINT, "%#x" );
+    ok_ret( 1, ImmSetOpenStatus( default_himc, 0 ) );
+    ok_ret( 1, ImmActivateLayout( old_hkl ) );
+    status = ImmGetOpenStatus( default_himc );
+    ok_eq( old_status, status, UINT, "%#x" );
+    ok_eq( old_status, ctx->fOpen, UINT, "%#x" );
+
+    ime_cleanup( hkl, TRUE );
+
+cleanup:
+    /* sanitize open status to some sane default */
+    ok_ret( 1, ImmSetOpenStatus( default_himc, 0 ) );
+    status = ImmGetOpenStatus( default_himc );
+    ok_eq( 0, status, UINT, "%#x" );
+    ok_eq( 0, ctx->fOpen, UINT, "%#x" );
+
+    ok_ret( 1, DestroyWindow( hwnd ) );
+    process_messages();
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+    ok_ret( 1, ImmUnlockIMC( default_himc ) );
+}
+
 static void test_ImmProcessKey(void)
 {
     const struct ime_call process_key_seq[] =
@@ -4657,6 +4775,7 @@ START_TEST(imm32)
 
     /* test these first to sanitize conversion / open statuses */
     test_ImmSetConversionStatus();
+    test_ImmSetOpenStatus();
 
     test_ImmActivateLayout();
     test_ImmCreateInputContext();
