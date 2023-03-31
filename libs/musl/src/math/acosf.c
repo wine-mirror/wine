@@ -18,15 +18,16 @@
 static const float
 pio2_hi = 1.5707962513e+00, /* 0x3fc90fda */
 pio2_lo = 7.5497894159e-08, /* 0x33a22168 */
-pS0 =  1.6666586697e-01,
-pS1 = -4.2743422091e-02,
-pS2 = -8.6563630030e-03,
-qS1 = -7.0662963390e-01;
+pS0 =  1.66666672e-01,
+pS1 = -5.11644611e-02,
+pS2 = -1.21124933e-02,
+pS3 = -3.58742251e-03,
+qS1 = -7.56982703e-01;
 
 static float R(float z)
 {
 	float_t p, q;
-	p = z*(pS0+z*(pS1+z*pS2));
+	p = z*(pS0+z*(pS1+z*(pS2+z*pS3)));
 	q = 1.0f+z*qS1;
 	return p/q;
 }
@@ -42,23 +43,23 @@ float __cdecl acosf(float x)
 	if (ix >= 0x3f800000) {
 		if (ix == 0x3f800000) {
 			if (hx >> 31)
-				return 2*pio2_hi + 0x1p-120f;
+				return M_PI;
 			return 0;
 		}
-		return 0/(x-x);
+		if (isnan(x)) return x;
+		return math_error(_DOMAIN, "acosf", x, 0, 0 / (x - x));
 	}
 	/* |x| < 0.5 */
 	if (ix < 0x3f000000) {
 		if (ix <= 0x32800000) /* |x| < 2**-26 */
-			return pio2_hi + 0x1p-120f;
+			return M_PI_2;
 		return pio2_hi - (x - (pio2_lo-x*R(x*x)));
 	}
 	/* x < -0.5 */
 	if (hx >> 31) {
 		z = (1+x)*0.5f;
 		s = sqrtf(z);
-		w = R(z)*s-pio2_lo;
-		return 2*(pio2_hi - (s+w));
+		return 2*(pio2_hi - (s + (R(z)*s-pio2_lo)));
 	}
 	/* x > 0.5 */
 	z = (1-x)*0.5f;
