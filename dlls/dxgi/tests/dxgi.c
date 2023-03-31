@@ -7727,7 +7727,10 @@ static void test_swapchain_present_count(IUnknown *device, BOOL is_d3d12)
     };
 
     UINT present_count, expected;
+    ID3D12Device *d3d12_device;
+    ID3D12CommandQueue *queue;
     IDXGISwapChain *swapchain;
+    ID3D12Fence *fence;
     unsigned int i;
     HWND window;
     HRESULT hr;
@@ -7784,6 +7787,42 @@ static void test_swapchain_present_count(IUnknown *device, BOOL is_d3d12)
         hr = IDXGISwapChain_GetLastPresentCount(swapchain, &present_count);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         ok(present_count == expected, "Got unexpected present count %u, expected %u.\n", present_count, expected);
+
+        if (is_d3d12)
+        {
+            hr = IUnknown_QueryInterface(device, &IID_ID3D12CommandQueue, (void **)&queue);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+            hr = ID3D12CommandQueue_GetDevice(queue, &IID_ID3D12Device, (void **)&d3d12_device);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+            hr = ID3D12Device_CreateFence(d3d12_device, 0, 0, &IID_ID3D12Fence, (void **)&fence);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+            hr = ID3D12CommandQueue_Wait(queue, fence, 1);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+            /* The present count is updated when Present() is called,
+             * not when frames are presented. */
+            hr = IDXGISwapChain_Present(swapchain, 0, 0);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            expected = present_count + 1;
+            hr = IDXGISwapChain_GetLastPresentCount(swapchain, &present_count);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            ok(present_count == expected, "Got unexpected present count %u, expected %u.\n", present_count, expected);
+
+            hr = ID3D12Fence_Signal(fence, 1);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+            expected = present_count;
+            hr = IDXGISwapChain_GetLastPresentCount(swapchain, &present_count);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            ok(present_count == expected, "Got unexpected present count %u, expected %u.\n", present_count, expected);
+
+            ID3D12Fence_Release(fence);
+            ID3D12Device_Release(d3d12_device);
+            ID3D12CommandQueue_Release(queue);
+        }
 
         IDXGISwapChain_Release(swapchain);
     }
