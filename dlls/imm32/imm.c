@@ -568,24 +568,25 @@ static void ime_release( struct ime *ime )
     LeaveCriticalSection( &ime_cs );
 }
 
-static void imc_release_ime( struct imc *imc )
+static void imc_release_ime( struct imc *imc, struct ime *ime )
 {
     if (imc->ui_hwnd) DestroyWindow( imc->ui_hwnd );
     imc->ui_hwnd = NULL;
-    imc->ime->pImeSelect( imc->handle, FALSE );
-    ime_release( imc->ime );
-    imc->ime = NULL;
+    ime->pImeSelect( imc->handle, FALSE );
+    ime_release( ime );
     ImmDestroyIMCC( imc->IMC.hPrivate );
 }
 
 static struct ime *imc_select_ime( struct imc *imc )
 {
     HKL hkl = GetKeyboardLayout( 0 );
+    struct ime *ime;
 
-    if (imc->ime)
+    if ((ime = imc->ime))
     {
-        if (imc->ime->hkl == hkl) return imc->ime;
-        imc_release_ime( imc );
+        if (ime->hkl == hkl) return ime;
+        imc->ime = NULL;
+        imc_release_ime( imc, ime );
     }
 
     if (!(imc->ime = ime_acquire( hkl )))
@@ -623,12 +624,13 @@ BOOL WINAPI ImmActivateLayout( HKL hkl )
 static BOOL free_input_context_data( HIMC hIMC )
 {
     struct imc *data = query_imc_data( hIMC );
+    struct ime *ime;
 
     if (!data) return FALSE;
 
     TRACE( "Destroying %p\n", hIMC );
 
-    if (data->ime) imc_release_ime( data );
+    if ((ime = imc_select_ime( data ))) imc_release_ime( data, ime );
 
     ImmDestroyIMCC( data->IMC.hCompStr );
     ImmDestroyIMCC( data->IMC.hCandInfo );
