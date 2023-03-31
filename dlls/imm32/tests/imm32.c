@@ -4238,6 +4238,37 @@ cleanup:
     winetest_pop_context();
 }
 
+struct ime_windows
+{
+    HWND ime_hwnd;
+    HWND ime_ui_hwnd;
+};
+
+static BOOL CALLBACK enum_thread_ime_windows( HWND hwnd, LPARAM lparam )
+{
+    struct ime_windows *params = (void *)lparam;
+    WCHAR buffer[256];
+    UINT ret;
+
+    ime_trace( "hwnd %p, lparam %#Ix\n", hwnd, lparam );
+
+    ret = RealGetWindowClassW( hwnd, buffer, ARRAY_SIZE(buffer) );
+    ok( ret, "RealGetWindowClassW returned %#x\n", ret );
+
+    if (!wcscmp( buffer, L"IME" ))
+    {
+        ok( !params->ime_hwnd, "Found extra IME window %p\n", hwnd );
+        params->ime_hwnd = hwnd;
+    }
+    if (!wcscmp( buffer, ime_ui_class.lpszClassName ))
+    {
+        ok( !params->ime_ui_hwnd, "Found extra IME UI window %p\n", hwnd );
+        params->ime_ui_hwnd = hwnd;
+    }
+
+    return TRUE;
+}
+
 static void test_ImmSetConversionStatus(void)
 {
     const struct ime_call set_conversion_status_0_seq[] =
@@ -4473,8 +4504,10 @@ static void test_ImmSetOpenStatus(void)
         {0},
     };
     HKL hkl;
+    struct ime_windows ime_windows = {0};
     DWORD old_status, status;
     INPUTCONTEXT *ctx;
+    HIMC himc;
 
     ok_ret( 0, ImmGetOpenStatus( 0 ) );
     old_status = ImmGetOpenStatus( default_himc );
@@ -4520,6 +4553,22 @@ static void test_ImmSetOpenStatus(void)
     status = ImmGetOpenStatus( default_himc );
     ok_eq( 0xdeadbeef, status, UINT, "%#x" );
     ok_eq( 0xdeadbeef, ctx->fOpen, UINT, "%#x" );
+
+
+    himc = ImmCreateContext();
+    ok_ne( NULL, himc, HIMC, "%p" );
+    ok_ret( 1, EnumThreadWindows( GetCurrentThreadId(), enum_thread_ime_windows, (LPARAM)&ime_windows ) );
+    ok_ne( NULL, ime_windows.ime_hwnd, HWND, "%p" );
+    ok_ne( NULL, ime_windows.ime_ui_hwnd, HWND, "%p" );
+    ok_eq( default_himc, (HIMC)GetWindowLongPtrW( ime_windows.ime_ui_hwnd, IMMGWL_IMC ), HIMC, "%p" );
+    ok_ret( 1, ImmSetOpenStatus( himc, TRUE ) );
+    todo_wine ok_eq( default_himc, (HIMC)GetWindowLongPtrW( ime_windows.ime_ui_hwnd, IMMGWL_IMC ), HIMC, "%p" );
+    ok_ret( 1, ImmSetOpenStatus( himc, FALSE ) );
+    todo_wine ok_eq( default_himc, (HIMC)GetWindowLongPtrW( ime_windows.ime_ui_hwnd, IMMGWL_IMC ), HIMC, "%p" );
+    ok_ret( 1, ImmDestroyContext( himc ) );
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
 
     ok_ret( 1, ImmSetOpenStatus( default_himc, 0xdeadbeef ) );
     ok_seq( empty_sequence );
@@ -4638,37 +4687,6 @@ static void test_ImmProcessKey(void)
 
 cleanup:
     ok_ret( 1, DestroyWindow( hwnd ) );
-}
-
-struct ime_windows
-{
-    HWND ime_hwnd;
-    HWND ime_ui_hwnd;
-};
-
-static BOOL CALLBACK enum_thread_ime_windows( HWND hwnd, LPARAM lparam )
-{
-    struct ime_windows *params = (void *)lparam;
-    WCHAR buffer[256];
-    UINT ret;
-
-    ime_trace( "hwnd %p, lparam %#Ix\n", hwnd, lparam );
-
-    ret = RealGetWindowClassW( hwnd, buffer, ARRAY_SIZE(buffer) );
-    ok( ret, "RealGetWindowClassW returned %#x\n", ret );
-
-    if (!wcscmp( buffer, L"IME" ))
-    {
-        ok( !params->ime_hwnd, "Found extra IME window %p\n", hwnd );
-        params->ime_hwnd = hwnd;
-    }
-    if (!wcscmp( buffer, ime_ui_class.lpszClassName ))
-    {
-        ok( !params->ime_ui_hwnd, "Found extra IME UI window %p\n", hwnd );
-        params->ime_ui_hwnd = hwnd;
-    }
-
-    return TRUE;
 }
 
 static void test_ImmActivateLayout(void)
@@ -5231,6 +5249,7 @@ static void test_ImmSetActiveContext(void)
         {0},
     };
     HKL hkl;
+    struct ime_windows ime_windows = {0};
     HIMC himc;
 
     ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
@@ -5246,6 +5265,10 @@ static void test_ImmSetActiveContext(void)
     process_messages();
     memset( ime_calls, 0, sizeof(ime_calls) );
     ime_call_count = 0;
+
+    ok_ret( 1, EnumThreadWindows( GetCurrentThreadId(), enum_thread_ime_windows, (LPARAM)&ime_windows ) );
+    ok_ne( NULL, ime_windows.ime_hwnd, HWND, "%p" );
+    ok_ne( NULL, ime_windows.ime_ui_hwnd, HWND, "%p" );
 
     SetLastError( 0xdeadbeef );
     ok_ret( 1, ImmSetActiveContext( hwnd, default_himc, TRUE ) );
@@ -5265,6 +5288,13 @@ static void test_ImmSetActiveContext(void)
     ok_ret( 1, ImmSetActiveContext( hwnd, himc, TRUE ) );
     activate_1_seq[0].himc = himc;
     ok_seq( activate_1_seq );
+
+    ok_eq( default_himc, (HIMC)GetWindowLongPtrW( ime_windows.ime_ui_hwnd, IMMGWL_IMC ), HIMC, "%p" );
+    ok_ret( 1, ImmSetActiveContext( hwnd, himc, TRUE ) );
+    ok_eq( default_himc, (HIMC)GetWindowLongPtrW( ime_windows.ime_ui_hwnd, IMMGWL_IMC ), HIMC, "%p" );
+    ok_eq( default_himc, ImmAssociateContext( hwnd, himc ), HIMC, "%p" );
+    todo_wine ok_eq( himc, (HIMC)GetWindowLongPtrW( ime_windows.ime_ui_hwnd, IMMGWL_IMC ), HIMC, "%p" );
+
     ok_ret( 1, ImmDestroyContext( himc ) );
 
     ok_ret( 1, ImmActivateLayout( default_hkl ) );
