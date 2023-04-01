@@ -42,6 +42,8 @@
 
 #include "initguid.h"
 
+#include "d3d11_4.h"
+
 DEFINE_GUID(DMOVideoFormat_RGB24,D3DFMT_R8G8B8,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
 DEFINE_GUID(DMOVideoFormat_RGB32,D3DFMT_X8R8G8B8,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
 DEFINE_GUID(DMOVideoFormat_RGB555,D3DFMT_X1R5G5B5,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
@@ -6713,6 +6715,291 @@ failed:
     CoUninitialize();
 }
 
+static HRESULT get_next_h264_output_sample(IMFTransform *transform, IMFSample **input_sample,
+        IMFSample *output_sample, MFT_OUTPUT_DATA_BUFFER *output, const BYTE **data, ULONG *data_len)
+{
+    DWORD status;
+    HRESULT hr;
+
+    while (1)
+    {
+        status = 0;
+        memset(output, 0, sizeof(*output));
+        output[0].pSample = output_sample;
+        hr = IMFTransform_ProcessOutput(transform, 0, 1, output, &status);
+        if (hr != S_OK)
+            ok(output[0].pSample == output_sample, "got %p.\n", output[0].pSample);
+        if (hr != MF_E_TRANSFORM_NEED_MORE_INPUT)
+            return hr;
+
+        ok(status == 0, "got output[0].dwStatus %#lx\n", status);
+        hr = IMFTransform_ProcessInput(transform, 0, *input_sample, 0);
+        ok(hr == S_OK, "got %#lx\n", hr);
+        IMFSample_Release(*input_sample);
+        *input_sample = next_h264_sample(data, data_len);
+    }
+}
+
+static void test_h264_with_dxgi_manager(void)
+{
+    static const unsigned int set_width = 82, set_height = 84, aligned_width = 96, aligned_height = 96;
+    const struct attribute_desc output_sample_attributes[] =
+    {
+        ATTR_UINT32(MFSampleExtension_CleanPoint, 1),
+        {0},
+    };
+    const struct buffer_desc output_buffer_desc_nv12 =
+    {
+        .length = aligned_width * aligned_height * 3 / 2,
+        .compare = compare_nv12, .dump = dump_nv12, .rect = {.top=0, .left=0, .right = set_width, .bottom = set_height},
+    };
+    const struct sample_desc output_sample_desc_nv12 =
+    {
+        .attributes = output_sample_attributes,
+        .sample_time = 333667, .sample_duration = 333667,
+        .buffer_count = 1, .buffers = &output_buffer_desc_nv12,
+    };
+
+    IMFDXGIDeviceManager *manager = NULL;
+    IMFTrackedSample *tracked_sample;
+    IMFSample *input_sample, *sample;
+    MFT_OUTPUT_DATA_BUFFER output[1];
+    IMFTransform *transform = NULL;
+    ID3D11Multithread *multithread;
+    IMFCollection *output_samples;
+    MFT_OUTPUT_STREAM_INFO info;
+    IMFDXGIBuffer *dxgi_buffer;
+    unsigned int width, height;
+    D3D11_TEXTURE2D_DESC desc;
+    IMFMediaBuffer *buffer;
+    IMFAttributes *attribs;
+    ID3D11Texture2D *tex2d;
+    IMF2DBuffer2 *buffer2d;
+    ID3D11Device *d3d11;
+    IMFMediaType *type;
+    DWORD status, val;
+    UINT64 frame_size;
+    MFVideoArea area;
+    const BYTE *data;
+    ULONG data_len;
+    UINT32 value;
+    HRESULT hr;
+    UINT token;
+    GUID guid;
+    DWORD ret;
+
+    if (!pMFCreateDXGIDeviceManager)
+    {
+        win_skip("MFCreateDXGIDeviceManager() is not avaliable, skipping tests.\n");
+        return;
+    }
+
+    hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_VIDEO_SUPPORT, NULL, 0,
+            D3D11_SDK_VERSION, &d3d11, NULL, NULL);
+    if (FAILED(hr))
+    {
+        skip("D3D11 device creation failed, skipping tests.\n");
+        return;
+    }
+
+    hr = MFStartup(MF_VERSION, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = ID3D11Device_QueryInterface(d3d11, &IID_ID3D11Multithread, (void **)&multithread);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ID3D11Multithread_SetMultithreadProtected(multithread, TRUE);
+    ID3D11Multithread_Release(multithread);
+
+    hr = pMFCreateDXGIDeviceManager(&token, &manager);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFDXGIDeviceManager_ResetDevice(manager, (IUnknown *)d3d11, token);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ID3D11Device_Release(d3d11);
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_MSH264DecoderMFT, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform)))
+        goto failed;
+
+    hr = IMFTransform_GetAttributes(transform, &attribs);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IMFAttributes_GetUINT32(attribs, &MF_SA_D3D11_AWARE, &value);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(value == 1, "got %u.\n", value);
+    IMFAttributes_Release(attribs);
+
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_SET_D3D_MANAGER, (ULONG_PTR)transform);
+    todo_wine ok(hr == E_NOINTERFACE, "got %#lx\n", hr);
+
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_SET_D3D_MANAGER, (ULONG_PTR)manager);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE), "got %#lx\n", hr);
+    if (hr == E_NOINTERFACE)
+    {
+        win_skip("No hardware video decoding support.\n");
+        goto failed;
+    }
+
+    hr = MFCreateMediaType(&type);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaType_SetGUID(type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaType_SetGUID(type, &MF_MT_SUBTYPE, &MFVideoFormat_H264);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaType_SetUINT64(type, &MF_MT_FRAME_SIZE, 1088 | (1920ull << 32));
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFTransform_SetInputType(transform, 0, type, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IMFMediaType_Release(type);
+
+    hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &type);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaType_SetGUID(type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaType_SetGUID(type, &MF_MT_SUBTYPE, &MFVideoFormat_NV12);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFTransform_SetOutputType(transform, 0, type, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IMFMediaType_Release(type);
+
+    status = 0;
+    memset(output, 0, sizeof(output));
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, output, &status);
+    todo_wine ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "got %#lx\n", hr);
+    if (hr != MF_E_TRANSFORM_NEED_MORE_INPUT) goto failed;
+
+    hr = IMFTransform_GetAttributes(transform, &attribs);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFAttributes_GetUINT32(attribs, &MF_SA_D3D11_AWARE, &value);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(value == 1, "got %u.\n", value);
+    IMFAttributes_Release(attribs);
+
+    load_resource(L"h264data.bin", &data, &data_len);
+
+    input_sample = next_h264_sample(&data, &data_len);
+    hr = get_next_h264_output_sample(transform, &input_sample, NULL, output, &data, &data_len);
+    ok(hr == MF_E_TRANSFORM_STREAM_CHANGE, "got %#lx\n", hr);
+    ok(!output[0].pSample, "got %p.\n", output[0].pSample);
+
+    hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &type);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &frame_size);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    width = frame_size >> 32;
+    height = frame_size & 0xffffffff;
+    ok(width == aligned_width, "got %u.\n", width);
+    ok(height == aligned_height, "got %u.\n", height);
+    memset(&area, 0xcc, sizeof(area));
+    hr = IMFMediaType_GetBlob(type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&area, sizeof(area), NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(!area.OffsetX.value && !area.OffsetX.fract, "got %d.%d.\n", area.OffsetX.value, area.OffsetX.fract);
+    ok(!area.OffsetY.value && !area.OffsetY.fract, "got %d.%d.\n", area.OffsetY.value, area.OffsetY.fract);
+    ok(area.Area.cx == set_width, "got %ld.\n", area.Area.cx);
+    ok(area.Area.cy == set_height, "got %ld.\n", area.Area.cy);
+
+    hr = IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &guid);
+    ok(hr == S_OK, "Failed to get subtype, hr %#lx.\n", hr);
+    ok(IsEqualIID(&guid, &MEDIASUBTYPE_NV12), "got guid %s.\n", debugstr_guid(&guid));
+
+    hr = IMFTransform_SetOutputType(transform, 0, type, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IMFMediaType_Release(type);
+
+    hr = IMFTransform_GetOutputStreamInfo(transform, 0, &info);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(info.dwFlags == (MFT_OUTPUT_STREAM_WHOLE_SAMPLES | MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER
+            | MFT_OUTPUT_STREAM_FIXED_SAMPLE_SIZE | MFT_OUTPUT_STREAM_PROVIDES_SAMPLES), "got %#lx.\n", info.dwFlags);
+
+    hr = get_next_h264_output_sample(transform, &input_sample, NULL, output, &data, &data_len);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(output[0].dwStatus == 0, "got %#lx.\n", status);
+    sample = output[0].pSample;
+
+    hr = IMFSample_QueryInterface(sample, &IID_IMFTrackedSample, (void **)&tracked_sample);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IMFTrackedSample_Release(tracked_sample);
+
+    hr = IMFSample_GetBufferCount(sample, &val);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(val == 1, "got %lu.\n", val);
+    hr = IMFSample_GetBufferByIndex(sample, 0, &buffer);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFDXGIBuffer, (void **)&dxgi_buffer);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer2, (void **)&buffer2d);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IMFDXGIBuffer_GetResource(dxgi_buffer, &IID_ID3D11Texture2D, (void **)&tex2d);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    memset(&desc, 0xcc, sizeof(desc));
+    ID3D11Texture2D_GetDesc(tex2d, &desc);
+    ok(desc.Format == DXGI_FORMAT_NV12, "got %u.\n", desc.Format);
+    ok(!desc.Usage, "got %u.\n", desc.Usage);
+    todo_wine ok(desc.BindFlags == D3D11_BIND_DECODER, "got %#x.\n", desc.BindFlags);
+    ok(!desc.CPUAccessFlags, "got %#x.\n", desc.CPUAccessFlags);
+    ok(!desc.MiscFlags, "got %#x.\n", desc.MiscFlags);
+    ok(desc.MipLevels == 1, "git %u.\n", desc.MipLevels);
+    ok(desc.Width == aligned_width, "got %u.\n", desc.Width);
+    ok(desc.Height == aligned_height, "got %u.\n", desc.Height);
+
+    ID3D11Texture2D_Release(tex2d);
+    IMFDXGIBuffer_Release(dxgi_buffer);
+    IMF2DBuffer2_Release(buffer2d);
+    IMFMediaBuffer_Release(buffer);
+    IMFSample_Release(sample);
+
+    status = 0;
+    hr = get_next_h264_output_sample(transform, &input_sample, NULL, output, &data, &data_len);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(sample != output[0].pSample, "got %p.\n", output[0].pSample);
+    sample = output[0].pSample;
+
+    hr = MFCreateCollection(&output_samples);
+    ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
+
+    hr = IMFCollection_AddElement(output_samples, (IUnknown *)sample);
+    ok(hr == S_OK, "AddElement returned %#lx\n", hr);
+    IMFSample_Release(sample);
+
+    ret = check_mf_sample_collection(output_samples, &output_sample_desc_nv12, L"nv12frame.bmp");
+    ok(ret == 0, "got %lu%% diff\n", ret);
+    IMFCollection_Release(output_samples);
+
+    memset(&info, 0xcc, sizeof(info));
+    hr = IMFTransform_GetOutputStreamInfo(transform, 0, &info);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(info.dwFlags == (MFT_OUTPUT_STREAM_WHOLE_SAMPLES | MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER
+            | MFT_OUTPUT_STREAM_FIXED_SAMPLE_SIZE | MFT_OUTPUT_STREAM_PROVIDES_SAMPLES), "got %#lx.\n", info.dwFlags);
+    ok(info.cbSize == aligned_width * aligned_height * 2, "got %lu.\n", info.cbSize);
+    ok(!info.cbAlignment, "got %lu.\n", info.cbAlignment);
+
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_SET_D3D_MANAGER, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    memset(&info, 0xcc, sizeof(info));
+    hr = IMFTransform_GetOutputStreamInfo(transform, 0, &info);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(info.dwFlags == (MFT_OUTPUT_STREAM_WHOLE_SAMPLES | MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER
+            | MFT_OUTPUT_STREAM_FIXED_SAMPLE_SIZE), "got %#lx.\n", info.dwFlags);
+    if (0)
+    {
+        /* hangs on Windows. */
+        get_next_h264_output_sample(transform, &input_sample, NULL, output, &data, &data_len);
+    }
+
+    IMFSample_Release(input_sample);
+
+failed:
+    if (manager)
+        IMFDXGIDeviceManager_Release(manager);
+    if (transform)
+        IMFTransform_Release(transform);
+    CoUninitialize();
+}
+
 START_TEST(transform)
 {
     init_functions();
@@ -6731,4 +7018,5 @@ START_TEST(transform)
     test_color_convert();
     test_video_processor();
     test_mp3_decoder();
+    test_h264_with_dxgi_manager();
 }

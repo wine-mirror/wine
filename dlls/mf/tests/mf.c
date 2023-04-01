@@ -45,6 +45,7 @@ extern GUID DMOVideoFormat_RGB32;
 
 HRESULT (WINAPI *pMFCreateSampleCopierMFT)(IMFTransform **copier);
 HRESULT (WINAPI *pMFGetTopoNodeCurrentType)(IMFTopologyNode *node, DWORD stream, BOOL output, IMFMediaType **type);
+HRESULT (WINAPI *pMFCreateDXGIDeviceManager)(UINT *token, IMFDXGIDeviceManager **manager);
 BOOL has_video_processor;
 
 static BOOL is_vista(void)
@@ -6467,6 +6468,9 @@ void init_functions(void)
 #define X(f) p##f = (void*)GetProcAddress(mod, #f)
     X(MFCreateSampleCopierMFT);
     X(MFGetTopoNodeCurrentType);
+
+    mod = GetModuleHandleA("mfplat.dll");
+    X(MFCreateDXGIDeviceManager);
 #undef X
 
     hr = CoInitialize(NULL);

@@ -32,6 +32,8 @@
 
 extern HRESULT (WINAPI *pMFCreateSampleCopierMFT)(IMFTransform **copier);
 extern HRESULT (WINAPI *pMFGetTopoNodeCurrentType)(IMFTopologyNode *node, DWORD stream, BOOL output, IMFMediaType **type);
+extern HRESULT (WINAPI *pMFCreateDXGIDeviceManager)(UINT *token, IMFDXGIDeviceManager **manager);
+
 extern BOOL has_video_processor;
 void init_functions(void);
 
