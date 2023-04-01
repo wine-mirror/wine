@@ -991,6 +991,13 @@ static BOOL CALLBACK check_object_count( const DIDEVICEOBJECTINSTANCEW *obj, voi
     return DIENUM_CONTINUE;
 }
 
+static BOOL CALLBACK check_object_count_bad_retval( const DIDEVICEOBJECTINSTANCEW *obj, void *args )
+{
+    DWORD *count = args;
+    *count = *count + 1;
+    return -1; /* Invalid, but should CONTINUE. Only explicit DIENUM_STOP will stop enumeration. */
+}
+
 static void test_sys_mouse( DWORD version )
 {
     const DIDEVCAPS expect_caps =
@@ -1335,6 +1342,11 @@ static void test_sys_mouse( DWORD version )
     ok( hr == DI_OK, "EnumObjects returned %#lx\n", hr );
     ok( check_objects_params.index >= check_objects_params.expect_count, "missing %u objects\n",
         check_objects_params.expect_count - check_objects_params.index );
+
+    res = 0;
+    hr = IDirectInputDevice8_EnumObjects( device, check_object_count_bad_retval, &res, DIDFT_AXIS );
+    ok( hr == DI_OK, "EnumObjects returned %#lx\n", hr );
+    todo_wine ok( res == 3, "got %lu expected 3\n", res );
 
     objinst.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW);
     res = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
