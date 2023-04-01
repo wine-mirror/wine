@@ -1595,7 +1595,7 @@
 @ cdecl -arch=arm ?_Reset@_ContextCallback@details@Concurrency@@AAAXXZ(ptr) _ContextCallback__Reset
 @ thiscall -arch=i386 ?_Reset@_ContextCallback@details@Concurrency@@AAEXXZ(ptr) _ContextCallback__Reset
 @ cdecl -arch=win64 ?_Reset@_ContextCallback@details@Concurrency@@AEAAXXZ(ptr) _ContextCallback__Reset
-@ stub ?_Rethrow_future_exception@std@@YAXVexception_ptr@1@@Z
+@ cdecl -norelay ?_Rethrow_future_exception@std@@YAXVexception_ptr@1@@Z() _Rethrow_future_exception
 @ stub -arch=win32 ?_Rng_abort@std@@YAXPBD@Z
 @ stub -arch=win64 ?_Rng_abort@std@@YAXPEBD@Z
 @ cdecl -arch=win32 ?_Schedule_chore@details@Concurrency@@YAHPAU_Threadpool_chore@12@@Z(ptr) _Schedule_chore

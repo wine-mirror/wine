@@ -1595,7 +1595,7 @@
 @ cdecl -arch=arm ?_Reset@_ContextCallback@details@Concurrency@@AAAXXZ(ptr) msvcp140.?_Reset@_ContextCallback@details@Concurrency@@AAAXXZ
 @ thiscall -arch=i386 ?_Reset@_ContextCallback@details@Concurrency@@AAEXXZ(ptr) msvcp140.?_Reset@_ContextCallback@details@Concurrency@@AAEXXZ
 @ cdecl -arch=win64 ?_Reset@_ContextCallback@details@Concurrency@@AEAAXXZ(ptr) msvcp140.?_Reset@_ContextCallback@details@Concurrency@@AEAAXXZ
-@ stub ?_Rethrow_future_exception@std@@YAXVexception_ptr@1@@Z
+@ cdecl -norelay ?_Rethrow_future_exception@std@@YAXVexception_ptr@1@@Z() msvcp140.?_Rethrow_future_exception@std@@YAXVexception_ptr@1@@Z
 @ stub -arch=win32 ?_Rng_abort@std@@YAXPBD@Z
 @ stub -arch=win64 ?_Rng_abort@std@@YAXPEBD@Z
 @ cdecl -arch=win32 ?_Schedule_chore@details@Concurrency@@YAHPAU_Threadpool_chore@12@@Z(ptr) msvcp140.?_Schedule_chore@details@Concurrency@@YAHPAU_Threadpool_chore@12@@Z

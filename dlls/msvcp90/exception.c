@@ -947,6 +947,38 @@ bool __cdecl MSVCP__uncaught_exception(void)
     return __uncaught_exception();
 }
 
+#if _MSVCP_VER >= 110
+typedef struct
+{
+    EXCEPTION_RECORD *rec;
+    LONG *ref; /* not binary compatible with native */
+} exception_ptr;
+
+static void exception_ptr_rethrow(const exception_ptr *ep)
+{
+    TRACE("(%p)\n", ep);
+
+    if (!ep->rec)
+    {
+        static const char *exception_msg = "bad exception";
+        exception e;
+
+        MSVCP_exception_ctor(&e, &exception_msg);
+        _CxxThrowException(&e, &exception_cxx_type);
+        return;
+    }
+
+    RaiseException(ep->rec->ExceptionCode, ep->rec->ExceptionFlags & (~EH_UNWINDING),
+            ep->rec->NumberParameters, ep->rec->ExceptionInformation);
+}
+
+/* ?_Rethrow_future_exception@std@@YAXVexception_ptr@1@@Z */
+void __cdecl _Rethrow_future_exception(const exception_ptr ep)
+{
+    exception_ptr_rethrow(&ep);
+}
+#endif
+
 #if _MSVCP_VER >= 140
 void** CDECL __current_exception(void);
 
@@ -1001,12 +1033,6 @@ int __cdecl __uncaught_exceptions(void)
 {
     return *__processing_throw();
 }
-
-typedef struct
-{
-    EXCEPTION_RECORD *rec;
-    LONG *ref; /* not binary compatible with native */
-} exception_ptr;
 
 /*********************************************************************
  * ?__ExceptionPtrCreate@@YAXPAX@Z
@@ -1102,20 +1128,7 @@ void __cdecl __ExceptionPtrAssign(exception_ptr *ep, const exception_ptr *assign
  */
 void __cdecl __ExceptionPtrRethrow(const exception_ptr *ep)
 {
-    TRACE("(%p)\n", ep);
-
-    if (!ep->rec)
-    {
-        static const char *exception_msg = "bad exception";
-        exception e;
-
-        MSVCP_exception_ctor(&e, &exception_msg);
-        _CxxThrowException(&e, &exception_cxx_type);
-        return;
-    }
-
-    RaiseException(ep->rec->ExceptionCode, ep->rec->ExceptionFlags & (~EH_UNWINDING),
-            ep->rec->NumberParameters, ep->rec->ExceptionInformation);
+    exception_ptr_rethrow(ep);
 }
 
 /*********************************************************************

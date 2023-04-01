@@ -1693,7 +1693,7 @@
 @ cdecl -arch=win64 ?_Rep@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@G_K@Z(ptr ptr ptr long long) num_put_wchar__Rep
 @ cdecl -arch=win32 ?_Rep@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@_WI@Z(ptr ptr long ptr long long) num_put_wchar__Rep
 @ cdecl -arch=win64 ?_Rep@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@_W_K@Z(ptr ptr ptr long long) num_put_wchar__Rep
-@ stub ?_Rethrow_future_exception@std@@YAXVexception_ptr@1@@Z
+@ cdecl -norelay ?_Rethrow_future_exception@std@@YAXVexception_ptr@1@@Z() _Rethrow_future_exception
 @ stub -arch=win32 ?_Rng_abort@std@@YAXPBD@Z
 @ stub -arch=win64 ?_Rng_abort@std@@YAXPEBD@Z
 @ cdecl -arch=win32 ?_Segment_index_of@_Concurrent_vector_base_v4@details@Concurrency@@KAII@Z(long) _vector_base_v4__Segment_index_of
