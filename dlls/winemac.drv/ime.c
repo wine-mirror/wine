@@ -492,14 +492,9 @@ static void IME_AddToSelected(HIMC hIMC)
     hSelectedFrom[hSelectedCount - 1] = hIMC;
 }
 
-static void UpdateDataInDefaultIMEWindow(HIMC hIMC, HWND hwnd, BOOL showable)
+static void UpdateDataInDefaultIMEWindow(INPUTCONTEXT *lpIMC, HWND hwnd, BOOL showable)
 {
     LPCOMPOSITIONSTRING compstr;
-    LPINPUTCONTEXT lpIMC;
-
-    lpIMC = ImmLockIMC(hIMC);
-    if (lpIMC == NULL)
-        return;
 
     if (lpIMC->hCompStr)
         compstr = ImmLockIMCC(lpIMC->hCompStr);
@@ -515,8 +510,6 @@ static void UpdateDataInDefaultIMEWindow(HIMC hIMC, HWND hwnd, BOOL showable)
 
     if (compstr != NULL)
         ImmUnlockIMCC(lpIMC->hCompStr);
-
-    ImmUnlockIMC(hIMC);
 }
 
 BOOL WINAPI ImeDestroy(UINT uForce)
@@ -673,8 +666,11 @@ UINT WINAPI ImeToAsciiEx(UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
 
         return msgs;
     }
-    else
-        UpdateDataInDefaultIMEWindow(hIMC, hwndDefault, FALSE);
+    else if ((lpIMC = LockRealIMC(hIMC)))
+    {
+        UpdateDataInDefaultIMEWindow(lpIMC, hwndDefault, FALSE);
+        UnlockRealIMC(hIMC);
+    }
     return 0;
 }
 
@@ -1064,9 +1060,12 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
 
 static void DefaultIMEComposition(HIMC hIMC, HWND hwnd, LPARAM lParam)
 {
+    INPUTCONTEXT *ctx;
     TRACE("IME message WM_IME_COMPOSITION 0x%Ix\n", lParam);
-    if (!(lParam & GCS_RESULTSTR))
-         UpdateDataInDefaultIMEWindow(hIMC, hwnd, TRUE);
+    if (lParam & GCS_RESULTSTR) return;
+    if (!(ctx = ImmLockIMC( hIMC ))) return;
+    UpdateDataInDefaultIMEWindow( ctx, hwnd, TRUE );
+    ImmUnlockIMC(hIMC);
 }
 
 static void DefaultIMEStartComposition(HIMC hIMC, HWND hwnd)
