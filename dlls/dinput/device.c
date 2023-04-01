@@ -730,7 +730,9 @@ static BOOL enum_objects_callback( struct dinput_device *impl, UINT index, struc
     struct enum_objects_params *params = data;
     if (instance->wUsagePage == HID_USAGE_PAGE_PID && !(instance->dwType & DIDFT_NODATA))
         return DIENUM_CONTINUE;
-    return params->callback( instance, params->context );
+
+    /* Applications may return non-zero values instead of DIENUM_CONTINUE. */
+    return params->callback( instance, params->context ) ? DIENUM_CONTINUE : DIENUM_STOP;
 }
 
 static HRESULT WINAPI dinput_device_EnumObjects( IDirectInputDevice8W *iface, LPDIENUMDEVICEOBJECTSCALLBACKW callback,

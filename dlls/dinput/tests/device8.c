@@ -1346,7 +1346,7 @@ static void test_sys_mouse( DWORD version )
     res = 0;
     hr = IDirectInputDevice8_EnumObjects( device, check_object_count_bad_retval, &res, DIDFT_AXIS );
     ok( hr == DI_OK, "EnumObjects returned %#lx\n", hr );
-    todo_wine ok( res == 3, "got %lu expected 3\n", res );
+    ok( res == 3, "got %lu expected 3\n", res );
 
     objinst.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW);
     res = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
