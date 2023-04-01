@@ -1104,14 +1104,9 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
     ImmUnlockIMC(hIMC);
 }
 
-static void UpdateDefaultIMEWindow(HIMC hIMC, HWND hwnd)
+static void UpdateDefaultIMEWindow(INPUTCONTEXT *lpIMC, HWND hwnd)
 {
     LPCOMPOSITIONSTRING compstr;
-    LPINPUTCONTEXT lpIMC;
-
-    lpIMC = ImmLockIMC(hIMC);
-    if (lpIMC == NULL)
-        return;
 
     if (lpIMC->hCompStr)
         compstr = ImmLockIMCC(lpIMC->hCompStr);
@@ -1130,20 +1125,25 @@ static void UpdateDefaultIMEWindow(HIMC hIMC, HWND hwnd)
         ImmUnlockIMCC(lpIMC->hCompStr);
 
     lpIMC->hWnd = GetFocus();
-    ImmUnlockIMC(hIMC);
 }
 
 static void DefaultIMEComposition(HIMC hIMC, HWND hwnd, LPARAM lParam)
 {
+    INPUTCONTEXT *ctx;
     TRACE("IME message WM_IME_COMPOSITION 0x%Ix\n", lParam);
-    if (!(lParam & GCS_RESULTSTR))
-        UpdateDefaultIMEWindow(hIMC, hwnd);
+    if (lParam & GCS_RESULTSTR) return;
+    if (!(ctx = ImmLockIMC( hIMC ))) return;
+    UpdateDefaultIMEWindow( ctx, hwnd );
+    ImmUnlockIMC(hIMC);
 }
 
 static void DefaultIMEStartComposition(HIMC hIMC, HWND hwnd )
 {
+    INPUTCONTEXT *ctx;
     TRACE("IME message WM_IME_STARTCOMPOSITION\n");
-    UpdateDefaultIMEWindow(hIMC, hwnd);
+    if (!(ctx = ImmLockIMC( hIMC ))) return;
+    UpdateDefaultIMEWindow( ctx, hwnd );
+    ImmUnlockIMC(hIMC);
 }
 
 static LRESULT ImeHandleNotify(HIMC hIMC, HWND hwnd, UINT msg, WPARAM wParam,
