@@ -1009,8 +1009,9 @@ coclassdef: attributes coclass '{' class_interfaces '}' semicolon_opt
 runtimeclass: tRUNTIMECLASS typename		{ $$ = type_runtimeclass_declare($2, current_namespace); }
 	;
 
-runtimeclass_def: attributes runtimeclass '{' class_interfaces '}' semicolon_opt
-						{ $$ = type_runtimeclass_define($2, $1, $4); }
+runtimeclass_def: attributes runtimeclass inherit '{' class_interfaces '}' semicolon_opt
+						{ if ($3 && type_get_type($3) != TYPE_RUNTIMECLASS) error_loc("%s is not a runtimeclass\n", $3->name);
+						  $$ = type_runtimeclass_define($2, $1, $5); }
 	;
 
 apicontract: tAPICONTRACT typename		{ $$ = type_apicontract_declare($2, current_namespace); }
