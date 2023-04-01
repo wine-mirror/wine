@@ -9,6 +9,3 @@
 
 # System tray
 @ cdecl wine_notify_icon(long ptr)
-
-#IME Interface
-@ stdcall ImeSelect(long long)
