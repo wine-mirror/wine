@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2023-02-13 23:59+0200\n"
+"PO-Revision-Date: 2023-04-01 17:37+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -17261,17 +17261,19 @@ msgid "Error: Process self-termination is not permitted.\n"
 msgstr "Klaida: savo proceso priverstinis nutraukimas negalimas.\n"
 
 #: programs/taskkill/taskkill.rc:44
-#, fuzzy
-#| msgid "Process with PID %1!u! was forcibly terminated.\n"
 msgid ""
 "The process with PID %1!u! (child process of PID %2!u!) has been "
 "terminated.\n"
-msgstr "Procesas su PID %1!u! priverstinai nutrauktas.\n"
+msgstr ""
+"Procesas su PID %1!u! (pavaldus procesui su PID %2!u!) priverstinai "
+"nutrauktas.\n"
 
 #: programs/taskkill/taskkill.rc:45
 msgid ""
 "Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
 msgstr ""
+"Nusiųstas priverstinio nutraukimo signalas procesui su PID %1!u!, pavaldžiam "
+"PID %2!u!.\n"
 
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -18420,7 +18422,7 @@ msgstr "&Apipavidalinimas:"
 
 #: programs/winecfg/winecfg.rc:295
 msgid "&WinRT app theme:"
-msgstr ""
+msgstr "&WinRT programos tema:"
 
 #: programs/winecfg/winecfg.rc:297
 msgid "&Install theme..."
@@ -18543,14 +18545,12 @@ msgid "Mono"
 msgstr "Monofoninis"
 
 #: programs/winecfg/winecfg.rc:98
-#, fuzzy
-#| msgid "Right"
 msgid "Light"
-msgstr "Dešininė"
+msgstr "Šviesi"
 
 #: programs/winecfg/winecfg.rc:99
 msgid "Dark"
-msgstr ""
+msgstr "Tamsi"
 
 #: programs/winecfg/winecfg.rc:53
 msgid ""
