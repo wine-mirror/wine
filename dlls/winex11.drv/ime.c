@@ -998,26 +998,25 @@ NTSTATUS WINAPI x11drv_ime_set_result( void *params, ULONG len )
 /*****
  * Internal functions to help with IME window management
  */
-static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
+static void PaintDefaultIMEWnd( HIMC hIMC, HWND hwnd )
 {
     PAINTSTRUCT ps;
     RECT rect;
     HDC hdc;
     HMONITOR monitor;
     MONITORINFO mon_info;
-    INT offX=0, offY=0;
+    INT offX = 0, offY = 0;
     LPINPUTCONTEXT lpIMC;
     WCHAR *str;
     UINT len;
 
-    lpIMC = ImmLockIMC(hIMC);
-    if (lpIMC == NULL)
-        return;
+    lpIMC = ImmLockIMC( hIMC );
+    if (lpIMC == NULL) return;
 
-    hdc = BeginPaint(hwnd,&ps);
+    hdc = BeginPaint( hwnd, &ps );
 
-    GetClientRect(hwnd,&rect);
-    FillRect(hdc, &rect, (HBRUSH)(COLOR_WINDOW + 1));
+    GetClientRect( hwnd, &rect );
+    FillRect( hdc, &rect, (HBRUSH)(COLOR_WINDOW + 1) );
 
     if ((str = input_context_get_comp_str( lpIMC, FALSE, &len )))
     {
@@ -1028,7 +1027,7 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
         GetTextExtentPoint32W( hdc, str, len, &size );
         pt.x = size.cx;
         pt.y = size.cy;
-        LPtoDP(hdc,&pt,1);
+        LPtoDP( hdc, &pt, 1 );
 
         /*
          * How this works based on tests on windows:
@@ -1045,12 +1044,12 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
         if (lpIMC->cfCompForm.dwStyle != CFS_DEFAULT)
         {
             POINT cpt = lpIMC->cfCompForm.ptCurrentPos;
-            ClientToScreen(lpIMC->hWnd,&cpt);
+            ClientToScreen( lpIMC->hWnd, &cpt );
             rect.left = cpt.x;
             rect.top = cpt.y;
             rect.right = rect.left + pt.x;
             rect.bottom = rect.top + pt.y;
-            monitor = MonitorFromPoint(cpt, MONITOR_DEFAULTTOPRIMARY);
+            monitor = MonitorFromPoint( cpt, MONITOR_DEFAULTTOPRIMARY );
         }
         else /* CFS_DEFAULT */
         {
@@ -1058,20 +1057,20 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
             HWND target = lpIMC->hWnd;
             if (!target) target = GetFocus();
 
-            GetWindowRect(target,&rect);
+            GetWindowRect( target, &rect );
             rect.top = rect.bottom;
             rect.right = rect.left + pt.x + 20;
             rect.bottom = rect.top + pt.y + 20;
-            offX=offY=10;
-            monitor = MonitorFromWindow(target, MONITOR_DEFAULTTOPRIMARY);
+            offX = offY = 10;
+            monitor = MonitorFromWindow( target, MONITOR_DEFAULTTOPRIMARY );
         }
 
         if (lpIMC->cfCompForm.dwStyle == CFS_RECT)
         {
             RECT client;
-            client =lpIMC->cfCompForm.rcArea;
+            client = lpIMC->cfCompForm.rcArea;
             MapWindowPoints( lpIMC->hWnd, 0, (POINT *)&client, 2 );
-            IntersectRect(&rect,&rect,&client);
+            IntersectRect( &rect, &rect, &client );
             /* TODO:  Wrap the input if needed */
         }
 
@@ -1079,7 +1078,7 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
         {
             /* make sure we are on the desktop */
             mon_info.cbSize = sizeof(mon_info);
-            GetMonitorInfoW(monitor, &mon_info);
+            GetMonitorInfoW( monitor, &mon_info );
 
             if (rect.bottom > mon_info.rcWork.bottom)
             {
@@ -1100,118 +1099,85 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
             }
         }
 
-        SetWindowPos(hwnd, HWND_TOPMOST, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, SWP_NOACTIVATE);
-
+        SetWindowPos( hwnd, HWND_TOPMOST, rect.left, rect.top, rect.right - rect.left,
+                      rect.bottom - rect.top, SWP_NOACTIVATE );
         TextOutW( hdc, offX, offY, str, len );
 
         if (font) SelectObject( hdc, font );
         free( str );
     }
 
-    EndPaint(hwnd,&ps);
-    ImmUnlockIMC(hIMC);
+    EndPaint( hwnd, &ps );
+    ImmUnlockIMC( hIMC );
 }
 
-static void UpdateDefaultIMEWindow(INPUTCONTEXT *lpIMC, HWND hwnd)
+static void UpdateDefaultIMEWindow( INPUTCONTEXT *lpIMC, HWND hwnd )
 {
     LPCOMPOSITIONSTRING compstr;
 
-    if (lpIMC->hCompStr)
-        compstr = ImmLockIMCC(lpIMC->hCompStr);
-    else
-        compstr = NULL;
+    if (lpIMC->hCompStr) compstr = ImmLockIMCC( lpIMC->hCompStr );
+    else compstr = NULL;
 
     if (compstr == NULL || compstr->dwCompStrLen == 0)
-        ShowWindow(hwnd,SW_HIDE);
+        ShowWindow( hwnd, SW_HIDE );
     else
     {
-        ShowWindow(hwnd,SW_SHOWNOACTIVATE);
-        RedrawWindow(hwnd, NULL, NULL, RDW_ERASENOW | RDW_INVALIDATE);
+        ShowWindow( hwnd, SW_SHOWNOACTIVATE );
+        RedrawWindow( hwnd, NULL, NULL, RDW_ERASENOW | RDW_INVALIDATE );
     }
 
-    if (compstr != NULL)
-        ImmUnlockIMCC(lpIMC->hCompStr);
+    if (compstr != NULL) ImmUnlockIMCC( lpIMC->hCompStr );
 
     lpIMC->hWnd = GetFocus();
 }
 
-static void DefaultIMEComposition(HIMC hIMC, HWND hwnd, LPARAM lParam)
+static void DefaultIMEComposition( HIMC hIMC, HWND hwnd, LPARAM lParam )
 {
     INPUTCONTEXT *ctx;
-    TRACE("IME message WM_IME_COMPOSITION 0x%Ix\n", lParam);
+    TRACE( "IME message WM_IME_COMPOSITION 0x%Ix\n", lParam );
     if (lParam & GCS_RESULTSTR) return;
     if (!(ctx = ImmLockIMC( hIMC ))) return;
     UpdateDefaultIMEWindow( ctx, hwnd );
-    ImmUnlockIMC(hIMC);
+    ImmUnlockIMC( hIMC );
 }
 
-static void DefaultIMEStartComposition(HIMC hIMC, HWND hwnd )
+static void DefaultIMEStartComposition( HIMC hIMC, HWND hwnd )
 {
     INPUTCONTEXT *ctx;
-    TRACE("IME message WM_IME_STARTCOMPOSITION\n");
+    TRACE( "IME message WM_IME_STARTCOMPOSITION\n" );
     if (!(ctx = ImmLockIMC( hIMC ))) return;
     UpdateDefaultIMEWindow( ctx, hwnd );
-    ImmUnlockIMC(hIMC);
+    ImmUnlockIMC( hIMC );
 }
 
-static LRESULT ImeHandleNotify(HIMC hIMC, HWND hwnd, UINT msg, WPARAM wParam,
-                               LPARAM lParam)
+static LRESULT ImeHandleNotify( HIMC hIMC, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     switch (wParam)
     {
-        case IMN_OPENSTATUSWINDOW:
-            FIXME("WM_IME_NOTIFY:IMN_OPENSTATUSWINDOW\n");
-            break;
-        case IMN_CLOSESTATUSWINDOW:
-            FIXME("WM_IME_NOTIFY:IMN_CLOSESTATUSWINDOW\n");
-            break;
-        case IMN_OPENCANDIDATE:
-            FIXME("WM_IME_NOTIFY:IMN_OPENCANDIDATE\n");
-            break;
-        case IMN_CHANGECANDIDATE:
-            FIXME("WM_IME_NOTIFY:IMN_CHANGECANDIDATE\n");
-            break;
-        case IMN_CLOSECANDIDATE:
-            FIXME("WM_IME_NOTIFY:IMN_CLOSECANDIDATE\n");
-            break;
-        case IMN_SETCONVERSIONMODE:
-            FIXME("WM_IME_NOTIFY:IMN_SETCONVERSIONMODE\n");
-            break;
-        case IMN_SETSENTENCEMODE:
-            FIXME("WM_IME_NOTIFY:IMN_SETSENTENCEMODE\n");
-            break;
-        case IMN_SETOPENSTATUS:
-            TRACE("WM_IME_NOTIFY:IMN_SETOPENSTATUS\n");
-            break;
-        case IMN_SETCANDIDATEPOS:
-            FIXME("WM_IME_NOTIFY:IMN_SETCANDIDATEPOS\n");
-            break;
-        case IMN_SETCOMPOSITIONFONT:
-            FIXME("WM_IME_NOTIFY:IMN_SETCOMPOSITIONFONT\n");
-            break;
-        case IMN_SETCOMPOSITIONWINDOW:
-            FIXME("WM_IME_NOTIFY:IMN_SETCOMPOSITIONWINDOW\n");
-            break;
-        case IMN_GUIDELINE:
-            FIXME("WM_IME_NOTIFY:IMN_GUIDELINE\n");
-            break;
-        case IMN_SETSTATUSWINDOWPOS:
-            FIXME("WM_IME_NOTIFY:IMN_SETSTATUSWINDOWPOS\n");
-            break;
-        default:
-            FIXME("WM_IME_NOTIFY:<Unknown 0x%Ix>\n",wParam);
-            break;
+    case IMN_OPENSTATUSWINDOW: FIXME( "WM_IME_NOTIFY:IMN_OPENSTATUSWINDOW\n" ); break;
+    case IMN_CLOSESTATUSWINDOW: FIXME( "WM_IME_NOTIFY:IMN_CLOSESTATUSWINDOW\n" ); break;
+    case IMN_OPENCANDIDATE: FIXME( "WM_IME_NOTIFY:IMN_OPENCANDIDATE\n" ); break;
+    case IMN_CHANGECANDIDATE: FIXME( "WM_IME_NOTIFY:IMN_CHANGECANDIDATE\n" ); break;
+    case IMN_CLOSECANDIDATE: FIXME( "WM_IME_NOTIFY:IMN_CLOSECANDIDATE\n" ); break;
+    case IMN_SETCONVERSIONMODE: FIXME( "WM_IME_NOTIFY:IMN_SETCONVERSIONMODE\n" ); break;
+    case IMN_SETSENTENCEMODE: FIXME( "WM_IME_NOTIFY:IMN_SETSENTENCEMODE\n" ); break;
+    case IMN_SETOPENSTATUS: TRACE( "WM_IME_NOTIFY:IMN_SETOPENSTATUS\n" ); break;
+    case IMN_SETCANDIDATEPOS: FIXME( "WM_IME_NOTIFY:IMN_SETCANDIDATEPOS\n" ); break;
+    case IMN_SETCOMPOSITIONFONT: FIXME( "WM_IME_NOTIFY:IMN_SETCOMPOSITIONFONT\n" ); break;
+    case IMN_SETCOMPOSITIONWINDOW: FIXME( "WM_IME_NOTIFY:IMN_SETCOMPOSITIONWINDOW\n" ); break;
+    case IMN_GUIDELINE: FIXME( "WM_IME_NOTIFY:IMN_GUIDELINE\n" ); break;
+    case IMN_SETSTATUSWINDOWPOS: FIXME( "WM_IME_NOTIFY:IMN_SETSTATUSWINDOWPOS\n" ); break;
+    default: FIXME( "WM_IME_NOTIFY:<Unknown 0x%Ix>\n", wParam ); break;
     }
     return 0;
 }
 
-static LRESULT WINAPI IME_WindowProc(HWND hwnd, UINT msg, WPARAM wParam,
-                                          LPARAM lParam)
+static LRESULT WINAPI IME_WindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     LRESULT rc = 0;
-    HIMC    hIMC;
+    HIMC hIMC;
 
-    TRACE("Incoming Message 0x%x  (0x%08Ix, 0x%08Ix)\n", msg, wParam, lParam);
+    TRACE( "Incoming Message 0x%x  (0x%08Ix, 0x%08Ix)\n", msg, wParam, lParam );
 
     /*
      * Each UI window contains the current Input Context.
@@ -1221,12 +1187,13 @@ static LRESULT WINAPI IME_WindowProc(HWND hwnd, UINT msg, WPARAM wParam,
      * messages.
      */
 
-    hIMC = (HIMC)GetWindowLongPtrW(hwnd,IMMGWL_IMC);
+    hIMC = (HIMC)GetWindowLongPtrW( hwnd, IMMGWL_IMC );
 
     /* if we have no hIMC there are many messages we cannot process */
     if (hIMC == NULL)
     {
-        switch (msg) {
+        switch (msg)
+        {
         case WM_IME_STARTCOMPOSITION:
         case WM_IME_ENDCOMPOSITION:
         case WM_IME_COMPOSITION:
@@ -1234,104 +1201,100 @@ static LRESULT WINAPI IME_WindowProc(HWND hwnd, UINT msg, WPARAM wParam,
         case WM_IME_CONTROL:
         case WM_IME_COMPOSITIONFULL:
         case WM_IME_SELECT:
-        case WM_IME_CHAR:
-            return 0L;
-        default:
-            break;
+        case WM_IME_CHAR: return 0L;
+        default: break;
         }
     }
 
-    switch(msg)
+    switch (msg)
     {
-        case WM_CREATE:
+    case WM_CREATE:
+    {
+        LPIMEPRIVATE myPrivate;
+        LPINPUTCONTEXT lpIMC;
+
+        SetWindowTextA( hwnd, "Wine Ime Active" );
+
+        lpIMC = ImmLockIMC( hIMC );
+        if (lpIMC)
         {
-            LPIMEPRIVATE myPrivate;
-            LPINPUTCONTEXT lpIMC;
-
-            SetWindowTextA(hwnd,"Wine Ime Active");
-
-            lpIMC = ImmLockIMC(hIMC);
-            if (lpIMC)
-            {
-                myPrivate = ImmLockIMCC(lpIMC->hPrivate);
-                myPrivate->hwndDefault = hwnd;
-                ImmUnlockIMCC(lpIMC->hPrivate);
-            }
-            ImmUnlockIMC(hIMC);
-
-            return TRUE;
+            myPrivate = ImmLockIMCC( lpIMC->hPrivate );
+            myPrivate->hwndDefault = hwnd;
+            ImmUnlockIMCC( lpIMC->hPrivate );
         }
-        case WM_PAINT:
-            PaintDefaultIMEWnd(hIMC, hwnd);
-            return FALSE;
+        ImmUnlockIMC( hIMC );
 
-        case WM_NCCREATE:
-            return TRUE;
-
-        case WM_SETFOCUS:
-            if (wParam)
-                SetFocus((HWND)wParam);
-            else
-                FIXME("Received focus, should never have focus\n");
-            break;
-        case WM_IME_COMPOSITION:
-            DefaultIMEComposition(hIMC, hwnd, lParam);
-            break;
-        case WM_IME_STARTCOMPOSITION:
-            DefaultIMEStartComposition(hIMC, hwnd);
-            break;
-        case WM_IME_ENDCOMPOSITION:
-            TRACE("IME message %s, 0x%Ix, 0x%Ix\n",
-                    "WM_IME_ENDCOMPOSITION", wParam, lParam);
-            ShowWindow(hwnd,SW_HIDE);
-            break;
-        case WM_IME_SELECT:
-            TRACE("IME message %s, 0x%Ix, 0x%Ix\n","WM_IME_SELECT", wParam, lParam);
-            break;
-        case WM_IME_CONTROL:
-            TRACE("IME message %s, 0x%Ix, 0x%Ix\n","WM_IME_CONTROL", wParam, lParam);
-            rc = 1;
-            break;
-        case WM_IME_NOTIFY:
-            rc = ImeHandleNotify(hIMC,hwnd,msg,wParam,lParam);
-            break;
-       default:
-            TRACE("Non-standard message 0x%x\n",msg);
+        return TRUE;
     }
+    case WM_PAINT:
+        PaintDefaultIMEWnd( hIMC, hwnd );
+        return FALSE;
+    case WM_NCCREATE:
+        return TRUE;
+    case WM_SETFOCUS:
+        if (wParam) SetFocus( (HWND)wParam );
+        else FIXME( "Received focus, should never have focus\n" );
+        break;
+
+    case WM_IME_COMPOSITION:
+        DefaultIMEComposition( hIMC, hwnd, lParam );
+        break;
+    case WM_IME_STARTCOMPOSITION:
+        DefaultIMEStartComposition( hIMC, hwnd );
+        break;
+    case WM_IME_ENDCOMPOSITION:
+        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_IME_ENDCOMPOSITION", wParam, lParam );
+        ShowWindow( hwnd, SW_HIDE );
+        break;
+    case WM_IME_SELECT:
+        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_IME_SELECT", wParam, lParam );
+        break;
+    case WM_IME_CONTROL:
+        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_IME_CONTROL", wParam, lParam );
+        rc = 1;
+        break;
+    case WM_IME_NOTIFY:
+        rc = ImeHandleNotify( hIMC, hwnd, msg, wParam, lParam );
+        break;
+    default:
+        TRACE( "Non-standard message 0x%x\n", msg );
+    }
+
     /* check the MSIME messages */
     if (msg == WM_MSIME_SERVICE)
     {
-            TRACE("IME message %s, 0x%Ix, 0x%Ix\n","WM_MSIME_SERVICE", wParam, lParam);
-            rc = FALSE;
+        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_SERVICE", wParam, lParam );
+        rc = FALSE;
     }
     else if (msg == WM_MSIME_RECONVERTOPTIONS)
     {
-            TRACE("IME message %s, 0x%Ix, 0x%Ix\n","WM_MSIME_RECONVERTOPTIONS", wParam, lParam);
+        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_RECONVERTOPTIONS", wParam, lParam );
     }
     else if (msg == WM_MSIME_MOUSE)
     {
-            TRACE("IME message %s, 0x%Ix, 0x%Ix\n","WM_MSIME_MOUSE", wParam, lParam);
+        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_MOUSE", wParam, lParam );
     }
     else if (msg == WM_MSIME_RECONVERTREQUEST)
     {
-            TRACE("IME message %s, 0x%Ix, 0x%Ix\n","WM_MSIME_RECONVERTREQUEST", wParam, lParam);
+        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_RECONVERTREQUEST", wParam, lParam );
     }
     else if (msg == WM_MSIME_RECONVERT)
     {
-            TRACE("IME message %s, 0x%Ix, 0x%Ix\n","WM_MSIME_RECONVERT", wParam, lParam);
+        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_RECONVERT", wParam, lParam );
     }
     else if (msg == WM_MSIME_QUERYPOSITION)
     {
-            TRACE("IME message %s, 0x%Ix, 0x%Ix\n","WM_MSIME_QUERYPOSITION", wParam, lParam);
+        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_QUERYPOSITION", wParam, lParam );
     }
     else if (msg == WM_MSIME_DOCUMENTFEED)
     {
-            TRACE("IME message %s, 0x%Ix, 0x%Ix\n","WM_MSIME_DOCUMENTFEED", wParam, lParam);
+        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_DOCUMENTFEED", wParam, lParam );
     }
+
     /* DefWndProc if not an IME message */
     if (!rc && !((msg >= WM_IME_STARTCOMPOSITION && msg <= WM_IME_KEYLAST) ||
-                      (msg >= WM_IME_SETCONTEXT && msg <= WM_IME_KEYUP)))
-        rc = DefWindowProcW(hwnd,msg,wParam,lParam);
+                 (msg >= WM_IME_SETCONTEXT && msg <= WM_IME_KEYUP)))
+        rc = DefWindowProcW( hwnd, msg, wParam, lParam );
 
     return rc;
 }
