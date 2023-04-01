@@ -516,15 +516,6 @@ BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
 
 /* Interfaces to XIM and other parts of winex11drv */
 
-NTSTATUS x11drv_ime_set_open_status( UINT open )
-{
-    HIMC imc;
-
-    imc = RealIMC(FROM_X11);
-    ImmSetOpenStatus(imc, open);
-    return 0;
-}
-
 NTSTATUS x11drv_ime_set_composition_status( UINT open )
 {
     HIMC imc;

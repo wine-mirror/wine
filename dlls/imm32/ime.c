@@ -40,6 +40,7 @@ static const char *debugstr_imn( WPARAM wparam )
     case IMN_SETCOMPOSITIONWINDOW: return "IMN_SETCOMPOSITIONWINDOW";
     case IMN_GUIDELINE: return "IMN_GUIDELINE";
     case IMN_SETSTATUSWINDOWPOS: return "IMN_SETSTATUSWINDOWPOS";
+    case IMN_WINE_SET_OPEN_STATUS: return "IMN_WINE_SET_OPEN_STATUS";
     default: return wine_dbg_sprintf( "%#Ix", wparam );
     }
 }
@@ -337,6 +338,20 @@ static void ime_ui_start_composition( HIMC himc, HWND hwnd )
     ImmUnlockIMC( himc );
 }
 
+static LRESULT ime_ui_notify( HIMC himc, HWND hwnd, WPARAM wparam, LPARAM lparam )
+{
+    TRACE( "himc %p, hwnd %p, wparam %s, lparam %#Ix\n", hwnd, himc, debugstr_imn(wparam), lparam );
+
+    switch (wparam)
+    {
+    case IMN_WINE_SET_OPEN_STATUS:
+        return ImmSetOpenStatus( himc, lparam );
+    default:
+        FIXME( "himc %p, hwnd %p, wparam %s, lparam %#Ix stub!\n", hwnd, himc, debugstr_imn(wparam), lparam );
+        return 0;
+    }
+}
+
 static LRESULT WINAPI ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     HIMC himc = (HIMC)GetWindowLongPtrW( hwnd, IMMGWL_IMC );
@@ -379,9 +394,7 @@ static LRESULT WINAPI ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
         ShowWindow( hwnd, SW_HIDE );
         break;
     case WM_IME_NOTIFY:
-        FIXME( "hwnd %p, himc %p, msg %s, wparam %s, lparam %#Ix stub!\n", hwnd, himc,
-               debugstr_wm_ime(msg), debugstr_imn(wparam), lparam );
-        return 0;
+        return ime_ui_notify( himc, hwnd, wparam, lparam );
     case WM_IME_CONTROL:
         FIXME( "hwnd %p, himc %p, msg %s, wparam %s, lparam %#Ix stub!\n", hwnd, himc,
                debugstr_wm_ime(msg), debugstr_imc(wparam), lparam );

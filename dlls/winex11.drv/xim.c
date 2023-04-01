@@ -122,12 +122,10 @@ static BOOL xic_preedit_state_notify( XIC xic, XPointer user, XPointer arg )
     switch (state)
     {
     case XIMPreeditEnable:
-        x11drv_client_call( client_ime_set_open_status, TRUE );
+        send_message( hwnd, WM_IME_NOTIFY, IMN_WINE_SET_OPEN_STATUS, TRUE );
         break;
     case XIMPreeditDisable:
-        x11drv_client_call( client_ime_set_open_status, FALSE );
-        break;
-    default:
+        send_message( hwnd, WM_IME_NOTIFY, IMN_WINE_SET_OPEN_STATUS, FALSE );
         break;
     }
 

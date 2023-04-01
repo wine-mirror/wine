@@ -38,7 +38,6 @@ extern NTSTATUS x11drv_dnd_drop_event( UINT arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_dnd_leave_event( UINT arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_ime_set_composition_status( UINT arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_ime_set_cursor_pos( UINT pos ) DECLSPEC_HIDDEN;
-extern NTSTATUS x11drv_ime_set_open_status( UINT open ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_ime_update_association( UINT arg ) DECLSPEC_HIDDEN;
 
 extern LRESULT WINAPI foreign_window_proc( HWND hwnd, UINT msg, WPARAM wparam,
