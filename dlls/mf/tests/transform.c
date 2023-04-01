@@ -6867,8 +6867,7 @@ static void test_h264_with_dxgi_manager(void)
     status = 0;
     memset(output, 0, sizeof(output));
     hr = IMFTransform_ProcessOutput(transform, 0, 1, output, &status);
-    todo_wine ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "got %#lx\n", hr);
-    if (hr != MF_E_TRANSFORM_NEED_MORE_INPUT) goto failed;
+    ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "got %#lx\n", hr);
 
     hr = IMFTransform_GetAttributes(transform, &attribs);
     ok(hr == S_OK, "got %#lx\n", hr);

@@ -63,6 +63,7 @@ struct h264_decoder
     struct wg_sample_queue *wg_sample_queue;
 
     IMFVideoSampleAllocatorEx *allocator;
+    BOOL allocator_initialized;
 };
 
 static struct h264_decoder *impl_from_IMFTransform(IMFTransform *iface)
@@ -202,6 +203,26 @@ static HRESULT fill_output_media_type(struct h264_decoder *decoder, IMFMediaType
     }
 
     return S_OK;
+}
+
+static HRESULT init_allocator(struct h264_decoder *decoder)
+{
+    HRESULT hr;
+
+    if (decoder->allocator_initialized)
+        return S_OK;
+
+    if (FAILED(hr = IMFVideoSampleAllocatorEx_InitializeSampleAllocatorEx(decoder->allocator, 10, 10,
+            decoder->attributes, decoder->output_type)))
+        return hr;
+    decoder->allocator_initialized = TRUE;
+    return S_OK;
+}
+
+static void uninit_allocator(struct h264_decoder *decoder)
+{
+    IMFVideoSampleAllocatorEx_UninitializeSampleAllocator(decoder->allocator);
+    decoder->allocator_initialized = FALSE;
 }
 
 static HRESULT WINAPI transform_QueryInterface(IMFTransform *iface, REFIID iid, void **out)
@@ -583,11 +604,22 @@ static HRESULT WINAPI transform_ProcessEvent(IMFTransform *iface, DWORD id, IMFM
 static HRESULT WINAPI transform_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_TYPE message, ULONG_PTR param)
 {
     struct h264_decoder *decoder = impl_from_IMFTransform(iface);
+    HRESULT hr;
 
     TRACE("iface %p, message %#x, param %Ix.\n", iface, message, param);
 
     if (message == MFT_MESSAGE_SET_D3D_MANAGER)
-        return IMFVideoSampleAllocatorEx_SetDirectXManager(decoder->allocator, (IUnknown *)param);
+    {
+        if (FAILED(hr = IMFVideoSampleAllocatorEx_SetDirectXManager(decoder->allocator, (IUnknown *)param)))
+            return hr;
+
+        uninit_allocator(decoder);
+        if (param)
+            decoder->output_info.dwFlags |= MFT_OUTPUT_STREAM_PROVIDES_SAMPLES;
+        else
+            decoder->output_info.dwFlags &= ~MFT_OUTPUT_STREAM_PROVIDES_SAMPLES;
+        return S_OK;
+    }
 
     FIXME("Ignoring message %#x.\n", message);
     return S_OK;
@@ -611,6 +643,7 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
     struct h264_decoder *decoder = impl_from_IMFTransform(iface);
     struct wg_format wg_format;
     UINT32 sample_size;
+    IMFSample *sample;
     UINT64 frame_rate;
     GUID subtype;
     HRESULT hr;
@@ -624,7 +657,7 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
         return MF_E_TRANSFORM_TYPE_NOT_SET;
 
     *status = samples->dwStatus = 0;
-    if (!samples->pSample)
+    if (!(sample = samples->pSample) && !(decoder->output_info.dwFlags & MFT_OUTPUT_STREAM_PROVIDES_SAMPLES))
         return E_INVALIDARG;
 
     if (FAILED(hr = IMFMediaType_GetGUID(decoder->output_type, &MF_MT_SUBTYPE, &subtype)))
@@ -633,7 +666,21 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
             decoder->wg_format.u.video.height, &sample_size)))
         return hr;
 
-    if (SUCCEEDED(hr = wg_transform_read_mf(decoder->wg_transform, samples->pSample,
+    if (decoder->output_info.dwFlags & MFT_OUTPUT_STREAM_PROVIDES_SAMPLES)
+    {
+        if (FAILED(hr = init_allocator(decoder)))
+        {
+            ERR("Failed to initialize allocator, hr %#lx.\n", hr);
+            return hr;
+        }
+        if (FAILED(hr = IMFVideoSampleAllocatorEx_AllocateSample(decoder->allocator, &sample)))
+        {
+            ERR("Failed to allocate sample, hr %#lx.\n", hr);
+            return hr;
+        }
+    }
+
+    if (SUCCEEDED(hr = wg_transform_read_mf(decoder->wg_transform, sample,
             sample_size, &wg_format, &samples->dwStatus)))
         wg_sample_queue_flush(decoder->wg_sample_queue, false);
 
@@ -652,6 +699,16 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
 
         samples[0].dwStatus |= MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE;
         *status |= MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE;
+
+        uninit_allocator(decoder);
+    }
+
+    if (decoder->output_info.dwFlags & MFT_OUTPUT_STREAM_PROVIDES_SAMPLES)
+    {
+        if (hr == S_OK)
+            samples->pSample = sample;
+        else
+            IMFSample_Release(sample);
     }
 
     return hr;
