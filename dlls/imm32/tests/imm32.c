@@ -91,6 +91,12 @@ extern BOOL WINAPI ImmActivateLayout(HKL);
 #define check_member( val, exp, fmt, member )                                                      \
     check_member_( __FILE__, __LINE__, val, exp, fmt, member )
 
+#define check_member_wstr_( file, line, val, exp, member )                                         \
+    ok_(file, line)( !wcscmp( (val).member, (exp).member ), "got " #member " %s\n",                \
+                     debugstr_w((val).member) )
+#define check_member_wstr( val, exp, member )                                                      \
+    check_member_wstr_( __FILE__, __LINE__, val, exp, member )
+
 #define check_member_point_( file, line, val, exp, member )                                        \
     ok_(file, line)( !memcmp( &(val).member, &(exp).member, sizeof(POINT) ),                       \
                      "got " #member " %s\n", wine_dbgstr_point( &(val).member ) )
@@ -102,6 +108,36 @@ extern BOOL WINAPI ImmActivateLayout(HKL);
                      "got " #member " %s\n", wine_dbgstr_rect( &(val).member ) )
 #define check_member_rect( val, exp, member )                                                      \
     check_member_rect_( __FILE__, __LINE__, val, exp, member )
+
+#define check_composition_string( a, b ) check_composition_string_( __LINE__, a, b )
+static void check_composition_string_( int line, COMPOSITIONSTRING *string, const COMPOSITIONSTRING *expect )
+{
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwSize );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwCompReadAttrLen );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwCompReadAttrOffset );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwCompReadClauseLen );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwCompReadClauseOffset );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwCompReadStrLen );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwCompReadStrOffset );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwCompAttrLen );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwCompAttrOffset );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwCompClauseLen );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwCompClauseOffset );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwCompStrLen );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwCompStrOffset );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwCursorPos );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwDeltaStart );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwResultReadClauseLen );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwResultReadClauseOffset );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwResultReadStrLen );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwResultReadStrOffset );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwResultClauseLen );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwResultClauseOffset );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwResultStrLen );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwResultStrOffset );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwPrivateSize );
+    check_member_( __FILE__, line, *string, *expect, "%lu", dwPrivateOffset );
+}
 
 #define check_candidate_list( a, b ) check_candidate_list_( __LINE__, a, b, TRUE )
 static void check_candidate_list_( int line, CANDIDATELIST *list, const CANDIDATELIST *expect, BOOL unicode )
@@ -600,7 +636,7 @@ static LRESULT WINAPI test_ime_wnd_proc(HWND hWnd, UINT msg, WPARAM wParam, LPAR
                            hWnd, msg, wParam, lParam);
 }
 
-static void test_ImmGetCompositionString(void)
+static void test_SCS_SETSTR(void)
 {
     HIMC imc;
     static const WCHAR string[] = {'w','i','n','e',0x65e5,0x672c,0x8a9e};
@@ -5484,6 +5520,296 @@ static void test_ImmGetCandidateWindow(void)
     ime_call_count = 0;
 }
 
+static void test_ImmGetCompositionString( BOOL unicode )
+{
+    static COMPOSITIONSTRING expect_string_empty = {.dwSize = sizeof(COMPOSITIONSTRING)};
+    static COMPOSITIONSTRING expect_stringA =
+    {
+        .dwSize = 176,
+        .dwCompReadAttrLen = 8,
+        .dwCompReadAttrOffset = 116,
+        .dwCompReadClauseLen = 8,
+        .dwCompReadClauseOffset = 108,
+        .dwCompReadStrLen = 8,
+        .dwCompReadStrOffset = 100,
+        .dwCompAttrLen = 4,
+        .dwCompAttrOffset = 136,
+        .dwCompClauseLen = 8,
+        .dwCompClauseOffset = 128,
+        .dwCompStrLen = 4,
+        .dwCompStrOffset = 124,
+        .dwCursorPos = 3,
+        .dwDeltaStart = 1,
+        .dwResultReadClauseLen = 8,
+        .dwResultReadClauseOffset = 150,
+        .dwResultReadStrLen = 10,
+        .dwResultReadStrOffset = 140,
+        .dwResultClauseLen = 8,
+        .dwResultClauseOffset = 164,
+        .dwResultStrLen = 6,
+        .dwResultStrOffset = 158,
+        .dwPrivateSize = 4,
+        .dwPrivateOffset = 172,
+    };
+    static const COMPOSITIONSTRING expect_stringW =
+    {
+        .dwSize = 204,
+        .dwCompReadAttrLen = 8,
+        .dwCompReadAttrOffset = 124,
+        .dwCompReadClauseLen = 8,
+        .dwCompReadClauseOffset = 116,
+        .dwCompReadStrLen = 8,
+        .dwCompReadStrOffset = 100,
+        .dwCompAttrLen = 4,
+        .dwCompAttrOffset = 148,
+        .dwCompClauseLen = 8,
+        .dwCompClauseOffset = 140,
+        .dwCompStrLen = 4,
+        .dwCompStrOffset = 132,
+        .dwCursorPos = 3,
+        .dwDeltaStart = 1,
+        .dwResultReadClauseLen = 8,
+        .dwResultReadClauseOffset = 172,
+        .dwResultReadStrLen = 10,
+        .dwResultReadStrOffset = 152,
+        .dwResultClauseLen = 8,
+        .dwResultClauseOffset = 192,
+        .dwResultStrLen = 6,
+        .dwResultStrOffset = 180,
+        .dwPrivateSize = 4,
+        .dwPrivateOffset = 200,
+    };
+    static const UINT gcs_indexes[] =
+    {
+        GCS_COMPREADSTR,
+        GCS_COMPREADATTR,
+        GCS_COMPREADCLAUSE,
+        GCS_COMPSTR,
+        GCS_COMPATTR,
+        GCS_COMPCLAUSE,
+        GCS_CURSORPOS,
+        GCS_DELTASTART,
+        GCS_RESULTREADSTR,
+        GCS_RESULTREADCLAUSE,
+        GCS_RESULTSTR,
+        GCS_RESULTCLAUSE,
+    };
+    static const UINT expect_retW[ARRAY_SIZE(gcs_indexes)] = {16, 8, 8, 8, 4, 8, 3, 1, 20, 8, 12, 8};
+    static const UINT expect_retA[ARRAY_SIZE(gcs_indexes)] = {8, 8, 8, 4, 4, 8, 3, 1, 10, 8, 6, 8};
+    HKL hkl, old_hkl = GetKeyboardLayout( 0 );
+    COMPOSITIONSTRING *string;
+    char buffer[1024];
+    INPUTCONTEXT *old_ctx, *ctx;
+    const void *str;
+    HIMCC old_himcc;
+    UINT i, len;
+    BYTE *dst;
+    HIMC himc;
+
+    winetest_push_context( unicode ? "unicode" : "ansi" );
+
+    /* IME_PROP_END_UNLOAD for the IME to unload / reload. */
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD;
+    if (unicode) ime_info.fdwProperty |= IME_PROP_UNICODE;
+
+    if (!(hkl = ime_install())) goto cleanup;
+
+    hwnd = CreateWindowW( test_class.lpszClassName, NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    ok_ret( 1, ImmLoadIME( hkl ) );
+    himc = ImmCreateContext();
+    ok_ne( NULL, himc, HIMC, "%p" );
+    ctx = ImmLockIMC( himc );
+    ok_ne( NULL, ctx, INPUTCONTEXT *, "%p" );
+    process_messages();
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+    memset( buffer, 0xcd, sizeof(buffer) );
+    todo_wine ok_ret( -2, ImmGetCompositionStringW( default_himc, GCS_COMPSTR | GCS_COMPATTR, buffer, sizeof(buffer) ) );
+    memset( buffer, 0xcd, sizeof(buffer) );
+    todo_wine ok_ret( -2, ImmGetCompositionStringA( default_himc, GCS_COMPSTR | GCS_COMPATTR, buffer, sizeof(buffer) ) );
+
+    for (i = 0; i < ARRAY_SIZE(gcs_indexes); ++i)
+    {
+        memset( buffer, 0xcd, sizeof(buffer) );
+        ok_ret( 0, ImmGetCompositionStringW( default_himc, gcs_indexes[i], buffer, sizeof(buffer) ) );
+        memset( buffer, 0xcd, sizeof(buffer) );
+        ok_ret( 0, ImmGetCompositionStringA( default_himc, gcs_indexes[i], buffer, sizeof(buffer) ) );
+
+        memset( buffer, 0xcd, sizeof(buffer) );
+        ok_ret( 0, ImmGetCompositionStringW( himc, gcs_indexes[i], buffer, sizeof(buffer) ) );
+        memset( buffer, 0xcd, sizeof(buffer) );
+        ok_ret( 0, ImmGetCompositionStringA( himc, gcs_indexes[i], buffer, sizeof(buffer) ) );
+    }
+
+    ctx->hCompStr = ImmReSizeIMCC( ctx->hCompStr, unicode ? expect_stringW.dwSize : expect_stringA.dwSize );
+    string = ImmLockIMCC( ctx->hCompStr );
+    ok( !!string, "ImmLockIMCC failed, error %lu\n", GetLastError() );
+    check_composition_string( string, &expect_string_empty );
+
+    string->dwCursorPos = 3;
+    string->dwDeltaStart = 1;
+
+    if (unicode) str = L"ReadComp";
+    else str = "ReadComp";
+    len = unicode ? wcslen( str ) : strlen( str );
+
+    string->dwCompReadStrLen = len;
+    string->dwCompReadStrOffset = string->dwSize;
+    dst = (BYTE *)string + string->dwCompReadStrOffset;
+    memcpy( dst, str, len * (unicode ? sizeof(WCHAR) : 1) );
+    string->dwSize += len * (unicode ? sizeof(WCHAR) : 1);
+
+    string->dwCompReadClauseLen = 2 * sizeof(DWORD);
+    string->dwCompReadClauseOffset = string->dwSize;
+    dst = (BYTE *)string + string->dwCompReadClauseOffset;
+    *(DWORD *)(dst + 0 * sizeof(DWORD)) = 0;
+    *(DWORD *)(dst + 1 * sizeof(DWORD)) = len;
+    string->dwSize += 2 * sizeof(DWORD);
+
+    string->dwCompReadAttrLen = len;
+    string->dwCompReadAttrOffset = string->dwSize;
+    dst = (BYTE *)string + string->dwCompReadAttrOffset;
+    memset( dst, ATTR_INPUT, len );
+    string->dwSize += len;
+
+    if (unicode) str = L"Comp";
+    else str = "Comp";
+    len = unicode ? wcslen( str ) : strlen( str );
+
+    string->dwCompStrLen = len;
+    string->dwCompStrOffset = string->dwSize;
+    dst = (BYTE *)string + string->dwCompStrOffset;
+    memcpy( dst, str, len * (unicode ? sizeof(WCHAR) : 1) );
+    string->dwSize += len * (unicode ? sizeof(WCHAR) : 1);
+
+    string->dwCompClauseLen = 2 * sizeof(DWORD);
+    string->dwCompClauseOffset = string->dwSize;
+    dst = (BYTE *)string + string->dwCompClauseOffset;
+    *(DWORD *)(dst + 0 * sizeof(DWORD)) = 0;
+    *(DWORD *)(dst + 1 * sizeof(DWORD)) = len;
+    string->dwSize += 2 * sizeof(DWORD);
+
+    string->dwCompAttrLen = len;
+    string->dwCompAttrOffset = string->dwSize;
+    dst = (BYTE *)string + string->dwCompAttrOffset;
+    memset( dst, ATTR_INPUT, len );
+    string->dwSize += len;
+
+    if (unicode) str = L"ReadResult";
+    else str = "ReadResult";
+    len = unicode ? wcslen( str ) : strlen( str );
+
+    string->dwResultReadStrLen = len;
+    string->dwResultReadStrOffset = string->dwSize;
+    dst = (BYTE *)string + string->dwResultReadStrOffset;
+    memcpy( dst, str, len * (unicode ? sizeof(WCHAR) : 1) );
+    string->dwSize += len * (unicode ? sizeof(WCHAR) : 1);
+
+    string->dwResultReadClauseLen = 2 * sizeof(DWORD);
+    string->dwResultReadClauseOffset = string->dwSize;
+    dst = (BYTE *)string + string->dwResultReadClauseOffset;
+    *(DWORD *)(dst + 0 * sizeof(DWORD)) = 0;
+    *(DWORD *)(dst + 1 * sizeof(DWORD)) = len;
+    string->dwSize += 2 * sizeof(DWORD);
+
+    if (unicode) str = L"Result";
+    else str = "Result";
+    len = unicode ? wcslen( str ) : strlen( str );
+
+    string->dwResultStrLen = len;
+    string->dwResultStrOffset = string->dwSize;
+    dst = (BYTE *)string + string->dwResultStrOffset;
+    memcpy( dst, str, len * (unicode ? sizeof(WCHAR) : 1) );
+    string->dwSize += len * (unicode ? sizeof(WCHAR) : 1);
+
+    string->dwResultClauseLen = 2 * sizeof(DWORD);
+    string->dwResultClauseOffset = string->dwSize;
+    dst = (BYTE *)string + string->dwResultClauseOffset;
+    *(DWORD *)(dst + 0 * sizeof(DWORD)) = 0;
+    *(DWORD *)(dst + 1 * sizeof(DWORD)) = len;
+    string->dwSize += 2 * sizeof(DWORD);
+
+    string->dwPrivateSize = 4;
+    string->dwPrivateOffset = string->dwSize;
+    dst = (BYTE *)string + string->dwPrivateOffset;
+    memset( dst, 0xa5, string->dwPrivateSize );
+    string->dwSize += 4;
+
+    check_composition_string( string, unicode ? &expect_stringW : &expect_stringA );
+    ok_ret( 0, ImmUnlockIMCC( ctx->hCompStr ) );
+    old_himcc = ctx->hCompStr;
+
+    for (i = 0; i < ARRAY_SIZE(gcs_indexes); ++i)
+    {
+        UINT_PTR expect;
+
+        winetest_push_context( "%u", i );
+
+        memset( buffer, 0xcd, sizeof(buffer) );
+        expect = expect_retW[i];
+        ok_ret( expect, ImmGetCompositionStringW( himc, gcs_indexes[i], buffer, sizeof(buffer) ) );
+        memset( buffer + expect, 0, 4 );
+
+        if (i == 0) ok_wcs( L"ReadComp", (WCHAR *)buffer );
+        else if (i == 3) ok_wcs( L"Comp", (WCHAR *)buffer );
+        else if (i == 8) ok_wcs( L"ReadResult", (WCHAR *)buffer );
+        else if (i == 10) ok_wcs( L"Result", (WCHAR *)buffer );
+        else if (i != 6 && i != 7) ok_wcs( L"", (WCHAR *)buffer );
+
+        memset( buffer, 0xcd, sizeof(buffer) );
+        expect = expect_retA[i];
+        ok_ret( expect, ImmGetCompositionStringA( himc, gcs_indexes[i], buffer, sizeof(buffer) ) );
+        memset( buffer + expect, 0, 4 );
+
+        if (i == 0) ok_str( "ReadComp", (char *)buffer );
+        else if (i == 3) ok_str( "Comp", (char *)buffer );
+        else if (i == 8) ok_str( "ReadResult", (char *)buffer );
+        else if (i == 10) ok_str( "Result", (char *)buffer );
+        else if (i != 6 && i != 7) ok_str( "", (char *)buffer );
+
+        winetest_pop_context();
+    }
+    ok_seq( empty_sequence );
+
+    old_ctx = ctx;
+    ok_ret( 1, ImmUnlockIMC( himc ) );
+
+    /* composition strings are kept between IME selections */
+    ok_ret( 1, ImmActivateLayout( old_hkl ) );
+    ctx = ImmLockIMC( himc );
+    ok_eq( old_ctx, ctx, INPUTCONTEXT *, "%p" );
+    ok_eq( old_himcc, ctx->hCompStr, HIMCC, "%p" );
+    string = ImmLockIMCC( ctx->hCompStr );
+    ok_ne( NULL, string, COMPOSITIONSTRING *, "%p" );
+    *string = expect_string_empty;
+    ok_ret( 0, ImmUnlockIMCC( ctx->hCompStr ) );
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    ok_eq( old_himcc, ctx->hCompStr, HIMCC, "%p" );
+    check_composition_string( string, &expect_string_empty );
+    ok_ret( 1, ImmActivateLayout( old_hkl ) );
+    ok_eq( old_himcc, ctx->hCompStr, HIMCC, "%p" );
+    check_composition_string( string, &expect_string_empty );
+
+    ok_ret( 1, ImmUnlockIMC( himc ) );
+    ok_ret( 1, ImmDestroyContext( himc ) );
+
+    ok_ret( 1, ImmActivateLayout( old_hkl ) );
+    ok_ret( 1, DestroyWindow( hwnd ) );
+    process_messages();
+
+    ime_cleanup( hkl, TRUE );
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+cleanup:
+    winetest_pop_context();
+}
+
 START_TEST(imm32)
 {
     default_hkl = GetKeyboardLayout( 0 );
@@ -5536,10 +5862,13 @@ START_TEST(imm32)
     test_ImmGetCandidateListCount( FALSE );
     test_ImmGetCandidateWindow();
 
+    test_ImmGetCompositionString( TRUE );
+    test_ImmGetCompositionString( FALSE );
+
     if (init())
     {
         test_ImmNotifyIME();
-        test_ImmGetCompositionString();
+        test_SCS_SETSTR();
         test_ImmSetCompositionString();
         test_ImmIME();
         test_ImmAssociateContextEx();
