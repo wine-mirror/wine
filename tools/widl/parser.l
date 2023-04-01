@@ -245,6 +245,7 @@ static void winrt_enable( int ns_prefix )
     callback                                    { return tCALLBACK; }
     code                                        { return tCODE; }
     comm_status                                 { return tCOMMSTATUS; }
+    composable                                  { return token_winrt( tCOMPOSABLE, yytext, yylval ); }
     context_handle                              { return tCONTEXTHANDLE; }
     context_handle_noserialize                  { return tCONTEXTHANDLENOSERIALIZE; }
     context_handle_serialize                    { return tCONTEXTHANDLENOSERIALIZE; }
