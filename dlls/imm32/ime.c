@@ -246,7 +246,6 @@ static LRESULT WINAPI ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
 {
     HIMC himc = (HIMC)GetWindowLongPtrW( hwnd, IMMGWL_IMC );
     INPUTCONTEXT *ctx;
-    LRESULT ret = 0;
 
     TRACE( "hwnd %p, himc %p, msg %s, wparam %#Ix, lparam %#Ix\n",
            hwnd, himc, debugstr_wm_ime(msg), wparam, lparam );
@@ -288,8 +287,6 @@ static LRESULT WINAPI ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
     case WM_PAINT:
         ime_ui_paint( himc, hwnd );
         return FALSE;
-    case WM_NCCREATE:
-        return TRUE;
     case WM_SETFOCUS:
         if (wparam) SetFocus( (HWND)wparam );
         else FIXME( "Received focus, should never have focus\n" );
@@ -313,12 +310,7 @@ static LRESULT WINAPI ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
         return 1;
     }
 
-    /* DefWndProc if not an IME message */
-    if (!ret && !((msg >= WM_IME_STARTCOMPOSITION && msg <= WM_IME_KEYLAST) ||
-                  (msg >= WM_IME_SETCONTEXT && msg <= WM_IME_KEYUP)))
-        ret = DefWindowProcW( hwnd, msg, wparam, lparam );
-
-    return ret;
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
 }
 
 static WNDCLASSEXW ime_ui_class =
