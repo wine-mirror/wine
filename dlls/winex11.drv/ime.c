@@ -70,6 +70,27 @@ static UINT WM_MSIME_RECONVERT;
 static UINT WM_MSIME_QUERYPOSITION;
 static UINT WM_MSIME_DOCUMENTFEED;
 
+static WCHAR *input_context_get_comp_str( INPUTCONTEXT *ctx, BOOL result, UINT *length )
+{
+    COMPOSITIONSTRING *string;
+    WCHAR *text = NULL;
+    UINT len, off;
+
+    if (!(string = ImmLockIMCC( ctx->hCompStr ))) return NULL;
+    len = result ? string->dwResultStrLen : string->dwCompStrLen;
+    off = result ? string->dwResultStrOffset : string->dwCompStrOffset;
+
+    if (len && off && (text = malloc( (len + 1) * sizeof(WCHAR) )))
+    {
+        memcpy( text, (BYTE *)string + off, len * sizeof(WCHAR) );
+        text[len] = 0;
+        *length = len;
+    }
+
+    ImmUnlockIMCC( ctx->hCompStr );
+    return text;
+}
+
 static LRESULT WINAPI IME_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                                           LPARAM lParam);
 
@@ -659,11 +680,9 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                 case CPS_COMPLETE:
                 {
                     HIMCC newCompStr;
-                    DWORD cplen = 0;
-                    LPWSTR cpstr;
-                    LPCOMPOSITIONSTRING cs = NULL;
-                    LPBYTE cdata = NULL;
                     LPIMEPRIVATE myPrivate;
+                    WCHAR *str;
+                    UINT len;
 
                     TRACE("CPS_COMPLETE\n");
 
@@ -673,20 +692,12 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                     ImmDestroyIMCC(lpIMC->hCompStr);
                     lpIMC->hCompStr = newCompStr;
 
-                    if (lpIMC->hCompStr)
-                    {
-                        cdata = ImmLockIMCC(lpIMC->hCompStr);
-                        cs = (LPCOMPOSITIONSTRING)cdata;
-                        cplen = cs->dwCompStrLen;
-                        cpstr = (LPWSTR)&(cdata[cs->dwCompStrOffset]);
-                        ImmUnlockIMCC(lpIMC->hCompStr);
-                    }
                     myPrivate = ImmLockIMCC(lpIMC->hPrivate);
-                    if (cplen > 0)
+                    if ((str = input_context_get_comp_str( lpIMC, FALSE, &len )))
                     {
-                        WCHAR param = cpstr[0];
+                        WCHAR param = str[0];
 
-                        newCompStr = updateResultStr(lpIMC->hCompStr, cpstr, cplen);
+                        newCompStr = updateResultStr( lpIMC->hCompStr, str, len );
                         ImmDestroyIMCC(lpIMC->hCompStr);
                         lpIMC->hCompStr = newCompStr;
                         newCompStr = updateCompStr(lpIMC->hCompStr, NULL, 0);
@@ -700,6 +711,7 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                                             GCS_RESULTSTR|GCS_RESULTCLAUSE);
 
                         GenerateIMEMessage(hIMC,WM_IME_ENDCOMPOSITION, 0, 0);
+                        free( str );
                     }
                     else if (myPrivate->bInComposition)
                         GenerateIMEMessage(hIMC,WM_IME_ENDCOMPOSITION, 0, 0);
@@ -980,12 +992,12 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
     PAINTSTRUCT ps;
     RECT rect;
     HDC hdc;
-    LPCOMPOSITIONSTRING compstr;
-    LPBYTE compdata = NULL;
     HMONITOR monitor;
     MONITORINFO mon_info;
     INT offX=0, offY=0;
     LPINPUTCONTEXT lpIMC;
+    WCHAR *str;
+    UINT len;
 
     lpIMC = ImmLockIMC(hIMC);
     if (lpIMC == NULL)
@@ -996,18 +1008,13 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
     GetClientRect(hwnd,&rect);
     FillRect(hdc, &rect, (HBRUSH)(COLOR_WINDOW + 1));
 
-    compdata = ImmLockIMCC(lpIMC->hCompStr);
-    compstr = (LPCOMPOSITIONSTRING)compdata;
-
-    if (compstr->dwCompStrLen && compstr->dwCompStrOffset)
+    if ((str = input_context_get_comp_str( lpIMC, FALSE, &len )))
     {
         SIZE size;
         POINT pt;
         HFONT oldfont = NULL;
-        LPWSTR CompString;
         LPIMEPRIVATE myPrivate;
 
-        CompString = (LPWSTR)(compdata + compstr->dwCompStrOffset);
         myPrivate = ImmLockIMCC(lpIMC->hPrivate);
 
         if (myPrivate->textfont)
@@ -1015,7 +1022,7 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
 
         ImmUnlockIMCC(lpIMC->hPrivate);
 
-        GetTextExtentPoint32W(hdc, CompString, compstr->dwCompStrLen, &size);
+        GetTextExtentPoint32W( hdc, str, len, &size );
         pt.x = size.cx;
         pt.y = size.cy;
         LPtoDP(hdc,&pt,1);
@@ -1092,13 +1099,12 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
 
         SetWindowPos(hwnd, HWND_TOPMOST, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, SWP_NOACTIVATE);
 
-        TextOutW(hdc, offX,offY, CompString, compstr->dwCompStrLen);
+        TextOutW( hdc, offX, offY, str, len );
 
         if (oldfont)
             SelectObject(hdc,oldfont);
+        free( str );
     }
-
-    ImmUnlockIMCC(lpIMC->hCompStr);
 
     EndPaint(hwnd,&ps);
     ImmUnlockIMC(hIMC);
