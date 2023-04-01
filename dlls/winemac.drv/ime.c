@@ -67,6 +67,27 @@ static UINT WM_MSIME_RECONVERT;
 static UINT WM_MSIME_QUERYPOSITION;
 static UINT WM_MSIME_DOCUMENTFEED;
 
+static WCHAR *input_context_get_comp_str( INPUTCONTEXT *ctx, BOOL result, UINT *length )
+{
+    COMPOSITIONSTRING *string;
+    WCHAR *text = NULL;
+    UINT len, off;
+
+    if (!(string = ImmLockIMCC( ctx->hCompStr ))) return NULL;
+    len = result ? string->dwResultStrLen : string->dwCompStrLen;
+    off = result ? string->dwResultStrOffset : string->dwCompStrOffset;
+
+    if (len && off && (text = malloc( (len + 1) * sizeof(WCHAR) )))
+    {
+        memcpy( text, (BYTE *)string + off, len * sizeof(WCHAR) );
+        text[len] = 0;
+        *length = len;
+    }
+
+    ImmUnlockIMCC( ctx->hCompStr );
+    return text;
+}
+
 static HWND input_context_get_ui_hwnd( INPUTCONTEXT *ctx )
 {
     struct ime_private *priv;
@@ -759,11 +780,9 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                 case CPS_COMPLETE:
                 {
                     HIMCC newCompStr;
-                    DWORD cplen = 0;
-                    LPWSTR cpstr;
-                    LPCOMPOSITIONSTRING cs = NULL;
-                    LPBYTE cdata = NULL;
                     LPIMEPRIVATE myPrivate;
+                    WCHAR *str;
+                    UINT len;
 
                     TRACE("NI_COMPOSITIONSTR: CPS_COMPLETE\n");
 
@@ -773,21 +792,13 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                     ImmDestroyIMCC(lpIMC->hCompStr);
                     lpIMC->hCompStr = newCompStr;
 
-                    if (lpIMC->hCompStr)
-                    {
-                        cdata = ImmLockIMCC(lpIMC->hCompStr);
-                        cs = (LPCOMPOSITIONSTRING)cdata;
-                        cplen = cs->dwCompStrLen;
-                        cpstr = (LPWSTR)&cdata[cs->dwCompStrOffset];
-                        ImmUnlockIMCC(lpIMC->hCompStr);
-                    }
                     myPrivate = ImmLockIMCC(lpIMC->hPrivate);
-                    if (cplen > 0)
+                    if ((str = input_context_get_comp_str( lpIMC, FALSE, &len )))
                     {
-                        WCHAR param = cpstr[0];
+                        WCHAR param = str[0];
                         DWORD flags = GCS_COMPSTR;
 
-                        newCompStr = updateResultStr(lpIMC->hCompStr, cpstr, cplen);
+                        newCompStr = updateResultStr( lpIMC->hCompStr, str, len );
                         ImmDestroyIMCC(lpIMC->hCompStr);
                         lpIMC->hCompStr = newCompStr;
                         newCompStr = updateCompStr(lpIMC->hCompStr, NULL, 0, &flags);
@@ -800,6 +811,7 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                                            GCS_RESULTSTR | GCS_RESULTCLAUSE);
 
                         GenerateIMEMessage(hIMC, WM_IME_ENDCOMPOSITION, 0, 0);
+                        free( str );
                     }
                     else if (myPrivate->bInComposition)
                         GenerateIMEMessage(hIMC, WM_IME_ENDCOMPOSITION, 0, 0);
@@ -945,12 +957,12 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
     PAINTSTRUCT ps;
     RECT rect;
     HDC hdc;
-    LPCOMPOSITIONSTRING compstr;
-    LPBYTE compdata = NULL;
     HMONITOR monitor;
     MONITORINFO mon_info;
     INT offX = 0, offY = 0;
     LPINPUTCONTEXT lpIMC;
+    WCHAR *str;
+    UINT len;
 
     lpIMC = ImmLockIMC(hIMC);
     if (lpIMC == NULL)
@@ -961,18 +973,13 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
     GetClientRect(hwnd, &rect);
     FillRect(hdc, &rect, (HBRUSH)(COLOR_WINDOW + 1));
 
-    compdata = ImmLockIMCC(lpIMC->hCompStr);
-    compstr = (LPCOMPOSITIONSTRING)compdata;
-
-    if (compstr->dwCompStrLen && compstr->dwCompStrOffset)
+    if ((str = input_context_get_comp_str( lpIMC, FALSE, &len )))
     {
         SIZE size;
         POINT pt;
         HFONT oldfont = NULL;
-        LPWSTR CompString;
         LPIMEPRIVATE myPrivate;
 
-        CompString = (LPWSTR)(compdata + compstr->dwCompStrOffset);
         myPrivate = ImmLockIMCC(lpIMC->hPrivate);
 
         if (myPrivate->textfont)
@@ -980,7 +987,7 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
 
         ImmUnlockIMCC(lpIMC->hPrivate);
 
-        GetTextExtentPoint32W(hdc, CompString, compstr->dwCompStrLen, &size);
+        GetTextExtentPoint32W( hdc, str, len, &size );
         pt.x = size.cx;
         pt.y = size.cy;
         LPtoDP(hdc, &pt, 1);
@@ -1058,10 +1065,11 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
         SetWindowPos(hwnd, HWND_TOPMOST, rect.left, rect.top, rect.right - rect.left,
                      rect.bottom - rect.top, SWP_NOACTIVATE);
 
-        TextOutW(hdc, offX, offY, CompString, compstr->dwCompStrLen);
+        TextOutW( hdc, offX, offY, str, len );
 
         if (oldfont)
             SelectObject(hdc, oldfont);
+        free( str );
     }
 
     ImmUnlockIMCC(lpIMC->hCompStr);
@@ -1416,13 +1424,12 @@ NTSTATUS WINAPI macdrv_ime_query_char_rect(void *arg, ULONG size)
         if (ic)
         {
             LPIMEPRIVATE private = ImmLockIMCC(ic->hPrivate);
-            LPBYTE compdata = ImmLockIMCC(ic->hCompStr);
-            LPCOMPOSITIONSTRING compstr = (LPCOMPOSITIONSTRING)compdata;
-            LPWSTR str = (LPWSTR)(compdata + compstr->dwCompStrOffset);
+            WCHAR *str;
             HWND hwnd;
+            UINT len;
 
             if ((hwnd = input_context_get_ui_hwnd( ic )) && IsWindowVisible( hwnd ) &&
-                compstr->dwCompStrOffset)
+                (str = input_context_get_comp_str( ic, FALSE, &len )))
             {
                 HDC dc = GetDC( hwnd );
                 HFONT oldfont = NULL;
@@ -1431,15 +1438,13 @@ NTSTATUS WINAPI macdrv_ime_query_char_rect(void *arg, ULONG size)
                 if (private->textfont)
                     oldfont = SelectObject(dc, private->textfont);
 
-                if (result->location > compstr->dwCompStrLen)
-                    result->location = compstr->dwCompStrLen;
-                if (result->location + result->length > compstr->dwCompStrLen)
-                    result->length = compstr->dwCompStrLen - result->location;
+                if (result->location > len) result->location = len;
+                if (result->location + result->length > len) result->length = len - result->location;
 
-                GetTextExtentPoint32W(dc, str, result->location, &size);
+                GetTextExtentPoint32W( dc, str, result->location, &size );
                 charpos.rcDocument.left = size.cx;
                 charpos.rcDocument.top = 0;
-                GetTextExtentPoint32W(dc, str, result->location + result->length, &size);
+                GetTextExtentPoint32W( dc, str, result->location + result->length, &size );
                 charpos.rcDocument.right = size.cx;
                 charpos.rcDocument.bottom = size.cy;
 
@@ -1454,9 +1459,9 @@ NTSTATUS WINAPI macdrv_ime_query_char_rect(void *arg, ULONG size)
                 if (oldfont)
                     SelectObject(dc, oldfont);
                 ReleaseDC( hwnd, dc );
+                free( str );
             }
 
-            ImmUnlockIMCC(ic->hCompStr);
             ImmUnlockIMCC(ic->hPrivate);
         }
 
