@@ -49,7 +49,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(imm);
 
 #define FROM_X11 ((HIMC)0xcafe1337)
 
-typedef struct _IMEPRIVATE {
+typedef struct ime_private
+{
     BOOL bInComposition;
     BOOL bInternalState;
     HFONT textfont;
@@ -89,6 +90,16 @@ static WCHAR *input_context_get_comp_str( INPUTCONTEXT *ctx, BOOL result, UINT *
 
     ImmUnlockIMCC( ctx->hCompStr );
     return text;
+}
+
+static HFONT input_context_select_ui_font( INPUTCONTEXT *ctx, HDC hdc )
+{
+    struct ime_private *priv;
+    HFONT font = NULL;
+    if (!(priv = ImmLockIMCC( ctx->hPrivate ))) return NULL;
+    if (priv->textfont) font = SelectObject( hdc, priv->textfont );
+    ImmUnlockIMCC( ctx->hPrivate );
+    return font;
 }
 
 static LRESULT WINAPI IME_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
@@ -1010,17 +1021,9 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
 
     if ((str = input_context_get_comp_str( lpIMC, FALSE, &len )))
     {
+        HFONT font = input_context_select_ui_font( lpIMC, hdc );
         SIZE size;
         POINT pt;
-        HFONT oldfont = NULL;
-        LPIMEPRIVATE myPrivate;
-
-        myPrivate = ImmLockIMCC(lpIMC->hPrivate);
-
-        if (myPrivate->textfont)
-            oldfont = SelectObject(hdc,myPrivate->textfont);
-
-        ImmUnlockIMCC(lpIMC->hPrivate);
 
         GetTextExtentPoint32W( hdc, str, len, &size );
         pt.x = size.cx;
@@ -1101,8 +1104,7 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
 
         TextOutW( hdc, offX, offY, str, len );
 
-        if (oldfont)
-            SelectObject(hdc,oldfont);
+        if (font) SelectObject( hdc, font );
         free( str );
     }
 
