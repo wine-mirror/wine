@@ -98,6 +98,16 @@ static HWND input_context_get_ui_hwnd( INPUTCONTEXT *ctx )
     return hwnd;
 }
 
+static HFONT input_context_select_ui_font( INPUTCONTEXT *ctx, HDC hdc )
+{
+    struct ime_private *priv;
+    HFONT font = NULL;
+    if (!(priv = ImmLockIMCC( ctx->hPrivate ))) return NULL;
+    if (priv->textfont) font = SelectObject( hdc, priv->textfont );
+    ImmUnlockIMCC( ctx->hPrivate );
+    return font;
+}
+
 static HIMC RealIMC(HIMC hIMC)
 {
     if (hIMC == FROM_MACDRV)
@@ -975,17 +985,9 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
 
     if ((str = input_context_get_comp_str( lpIMC, FALSE, &len )))
     {
+        HFONT font = input_context_select_ui_font( lpIMC, hdc );
         SIZE size;
         POINT pt;
-        HFONT oldfont = NULL;
-        LPIMEPRIVATE myPrivate;
-
-        myPrivate = ImmLockIMCC(lpIMC->hPrivate);
-
-        if (myPrivate->textfont)
-            oldfont = SelectObject(hdc, myPrivate->textfont);
-
-        ImmUnlockIMCC(lpIMC->hPrivate);
 
         GetTextExtentPoint32W( hdc, str, len, &size );
         pt.x = size.cx;
@@ -1067,8 +1069,7 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
 
         TextOutW( hdc, offX, offY, str, len );
 
-        if (oldfont)
-            SelectObject(hdc, oldfont);
+        if (font) SelectObject( hdc, font );
         free( str );
     }
 
@@ -1423,7 +1424,6 @@ NTSTATUS WINAPI macdrv_ime_query_char_rect(void *arg, ULONG size)
 
         if (ic)
         {
-            LPIMEPRIVATE private = ImmLockIMCC(ic->hPrivate);
             WCHAR *str;
             HWND hwnd;
             UINT len;
@@ -1432,11 +1432,8 @@ NTSTATUS WINAPI macdrv_ime_query_char_rect(void *arg, ULONG size)
                 (str = input_context_get_comp_str( ic, FALSE, &len )))
             {
                 HDC dc = GetDC( hwnd );
-                HFONT oldfont = NULL;
+                HFONT font = input_context_select_ui_font( ic, dc );
                 SIZE size;
-
-                if (private->textfont)
-                    oldfont = SelectObject(dc, private->textfont);
 
                 if (result->location > len) result->location = len;
                 if (result->location + result->length > len) result->length = len - result->location;
@@ -1456,13 +1453,10 @@ NTSTATUS WINAPI macdrv_ime_query_char_rect(void *arg, ULONG size)
                 result->rect = charpos.rcDocument;
                 ret = TRUE;
 
-                if (oldfont)
-                    SelectObject(dc, oldfont);
+                if (font) SelectObject( dc, font );
                 ReleaseDC( hwnd, dc );
                 free( str );
             }
-
-            ImmUnlockIMCC(ic->hPrivate);
         }
 
         ImmUnlockIMC(himc);
