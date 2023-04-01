@@ -43,7 +43,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(imm);
 
 #define FROM_MACDRV ((HIMC)0xcafe1337)
 
-typedef struct _IMEPRIVATE {
+typedef struct ime_private
+{
     BOOL bInComposition;
     BOOL bInternalState;
     HFONT textfont;
@@ -65,6 +66,16 @@ static UINT WM_MSIME_RECONVERTREQUEST;
 static UINT WM_MSIME_RECONVERT;
 static UINT WM_MSIME_QUERYPOSITION;
 static UINT WM_MSIME_DOCUMENTFEED;
+
+static HWND input_context_get_ui_hwnd( INPUTCONTEXT *ctx )
+{
+    struct ime_private *priv;
+    HWND hwnd;
+    if (!(priv = ImmLockIMCC( ctx->hPrivate ))) return NULL;
+    hwnd = priv->hwndDefault;
+    ImmUnlockIMCC( ctx->hPrivate );
+    return hwnd;
+}
 
 static HIMC RealIMC(HIMC hIMC)
 {
@@ -542,13 +553,14 @@ BOOL WINAPI ImeProcessKey(HIMC hIMC, UINT vKey, LPARAM lKeyData, const LPBYTE lp
     if (lpIMC)
     {
         LPIMEPRIVATE myPrivate;
+        HWND hwnd = input_context_get_ui_hwnd( lpIMC );
         myPrivate = ImmLockIMCC(lpIMC->hPrivate);
 
         if (inIME && !myPrivate->bInternalState)
             ImmSetOpenStatus(RealIMC(FROM_MACDRV), TRUE);
         else if (!inIME && myPrivate->bInternalState)
         {
-            ShowWindow(myPrivate->hwndDefault, SW_HIDE);
+            ShowWindow( hwnd, SW_HIDE );
             ImmDestroyIMCC(lpIMC->hCompStr);
             lpIMC->hCompStr = ImeCreateBlankCompStr();
             ImmSetOpenStatus(RealIMC(FROM_MACDRV), FALSE);
@@ -613,7 +625,7 @@ UINT WINAPI ImeToAsciiEx(UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
     UINT vkey;
     LPINPUTCONTEXT lpIMC;
     LPIMEPRIVATE myPrivate;
-    HWND hwndDefault;
+    HWND hwnd;
     UINT repeat;
     int done = 0;
 
@@ -628,6 +640,7 @@ UINT WINAPI ImeToAsciiEx(UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
     }
 
     lpIMC = LockRealIMC(hIMC);
+    hwnd = input_context_get_ui_hwnd( lpIMC );
     myPrivate = ImmLockIMCC(lpIMC->hPrivate);
     if (!myPrivate->bInternalState)
     {
@@ -637,7 +650,6 @@ UINT WINAPI ImeToAsciiEx(UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
     }
 
     repeat = myPrivate->repeat;
-    hwndDefault = myPrivate->hwndDefault;
     ImmUnlockIMCC(lpIMC->hPrivate);
     UnlockRealIMC(hIMC);
 
@@ -668,7 +680,7 @@ UINT WINAPI ImeToAsciiEx(UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
     }
     else if ((lpIMC = LockRealIMC(hIMC)))
     {
-        UpdateDataInDefaultIMEWindow(lpIMC, hwndDefault, FALSE);
+        UpdateDataInDefaultIMEWindow( lpIMC, hwnd, FALSE );
         UnlockRealIMC(hIMC);
     }
     return 0;
@@ -1407,11 +1419,12 @@ NTSTATUS WINAPI macdrv_ime_query_char_rect(void *arg, ULONG size)
             LPBYTE compdata = ImmLockIMCC(ic->hCompStr);
             LPCOMPOSITIONSTRING compstr = (LPCOMPOSITIONSTRING)compdata;
             LPWSTR str = (LPWSTR)(compdata + compstr->dwCompStrOffset);
+            HWND hwnd;
 
-            if (private->hwndDefault && compstr->dwCompStrOffset &&
-                IsWindowVisible(private->hwndDefault))
+            if ((hwnd = input_context_get_ui_hwnd( ic )) && IsWindowVisible( hwnd ) &&
+                compstr->dwCompStrOffset)
             {
-                HDC dc = GetDC(private->hwndDefault);
+                HDC dc = GetDC( hwnd );
                 HFONT oldfont = NULL;
                 SIZE size;
 
@@ -1434,13 +1447,13 @@ NTSTATUS WINAPI macdrv_ime_query_char_rect(void *arg, ULONG size)
                     OffsetRect(&charpos.rcDocument, 10, 10);
 
                 LPtoDP(dc, (POINT*)&charpos.rcDocument, 2);
-                MapWindowPoints(private->hwndDefault, 0, (POINT*)&charpos.rcDocument, 2);
+                MapWindowPoints( hwnd, 0, (POINT *)&charpos.rcDocument, 2 );
                 result->rect = charpos.rcDocument;
                 ret = TRUE;
 
                 if (oldfont)
                     SelectObject(dc, oldfont);
-                ReleaseDC(private->hwndDefault, dc);
+                ReleaseDC( hwnd, dc );
             }
 
             ImmUnlockIMCC(ic->hCompStr);
