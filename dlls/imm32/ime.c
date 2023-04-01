@@ -250,23 +250,6 @@ static LRESULT WINAPI ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
     TRACE( "hwnd %p, himc %p, msg %s, wparam %#Ix, lparam %#Ix\n",
            hwnd, himc, debugstr_wm_ime(msg), wparam, lparam );
 
-    /* if we have no himc there are many messages we cannot process */
-    if (!himc)
-    {
-        switch (msg)
-        {
-        case WM_IME_STARTCOMPOSITION:
-        case WM_IME_ENDCOMPOSITION:
-        case WM_IME_COMPOSITION:
-        case WM_IME_NOTIFY:
-        case WM_IME_CONTROL:
-        case WM_IME_COMPOSITIONFULL:
-        case WM_IME_SELECT:
-        case WM_IME_CHAR: return 0L;
-        default: break;
-        }
-    }
-
     switch (msg)
     {
     case WM_CREATE:
