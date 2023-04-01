@@ -1994,6 +1994,7 @@ static HRESULT load_all_recordset_data(struct recordset *recordset, IUnknown *ro
                     st.wMinute = ts->minute;
                     st.wSecond = ts->second;
                     st.wMilliseconds = ts->fraction/1000000;
+                    st.wDayOfWeek = 0;
                     hr = (SystemTimeToVariantTime(&st, &d) ? S_OK : E_FAIL);
 
                     V_DATE(&copy) = d;
