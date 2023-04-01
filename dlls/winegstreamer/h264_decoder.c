@@ -61,6 +61,8 @@ struct h264_decoder
     struct wg_format wg_format;
     struct wg_transform *wg_transform;
     struct wg_sample_queue *wg_sample_queue;
+
+    IMFVideoSampleAllocatorEx *allocator;
 };
 
 static struct h264_decoder *impl_from_IMFTransform(IMFTransform *iface)
@@ -241,6 +243,7 @@ static ULONG WINAPI transform_Release(IMFTransform *iface)
 
     if (!refcount)
     {
+        IMFVideoSampleAllocatorEx_Release(decoder->allocator);
         if (decoder->wg_transform)
             wg_transform_destroy(decoder->wg_transform);
         if (decoder->input_type)
@@ -251,7 +254,6 @@ static ULONG WINAPI transform_Release(IMFTransform *iface)
             IMFAttributes_Release(decoder->output_attributes);
         if (decoder->attributes)
             IMFAttributes_Release(decoder->attributes);
-
         wg_sample_queue_destroy(decoder->wg_sample_queue);
         free(decoder);
     }
@@ -580,7 +582,14 @@ static HRESULT WINAPI transform_ProcessEvent(IMFTransform *iface, DWORD id, IMFM
 
 static HRESULT WINAPI transform_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_TYPE message, ULONG_PTR param)
 {
-    FIXME("iface %p, message %#x, param %Ix stub!\n", iface, message, param);
+    struct h264_decoder *decoder = impl_from_IMFTransform(iface);
+
+    TRACE("iface %p, message %#x, param %Ix.\n", iface, message, param);
+
+    if (message == MFT_MESSAGE_SET_D3D_MANAGER)
+        return IMFVideoSampleAllocatorEx_SetDirectXManager(decoder->allocator, (IUnknown *)param);
+
+    FIXME("Ignoring message %#x.\n", message);
     return S_OK;
 }
 
@@ -732,12 +741,16 @@ HRESULT h264_decoder_create(REFIID riid, void **ret)
         goto failed;
     if (FAILED(hr = wg_sample_queue_create(&decoder->wg_sample_queue)))
         goto failed;
+    if (FAILED(hr = MFCreateVideoSampleAllocatorEx(&IID_IMFVideoSampleAllocatorEx, (void **)&decoder->allocator)))
+        goto failed;
 
     *ret = &decoder->IMFTransform_iface;
     TRACE("Created decoder %p\n", *ret);
     return S_OK;
 
 failed:
+    if (decoder->wg_sample_queue)
+        wg_sample_queue_destroy(decoder->wg_sample_queue);
     if (decoder->output_attributes)
         IMFAttributes_Release(decoder->output_attributes);
     if (decoder->attributes)

@@ -6832,7 +6832,7 @@ static void test_h264_with_dxgi_manager(void)
     IMFAttributes_Release(attribs);
 
     hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_SET_D3D_MANAGER, (ULONG_PTR)transform);
-    todo_wine ok(hr == E_NOINTERFACE, "got %#lx\n", hr);
+    ok(hr == E_NOINTERFACE, "got %#lx\n", hr);
 
     hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_SET_D3D_MANAGER, (ULONG_PTR)manager);
     ok(hr == S_OK || broken(hr == E_NOINTERFACE), "got %#lx\n", hr);
