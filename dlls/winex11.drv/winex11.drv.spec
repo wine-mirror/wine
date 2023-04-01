@@ -11,8 +11,6 @@
 @ cdecl wine_notify_icon(long ptr)
 
 #IME Interface
-@ stdcall ImeInquire(ptr ptr wstr)
-@ stdcall ImeDestroy(long)
 @ stdcall ImeSelect(long long)
 @ stdcall ImeToAsciiEx(long long ptr ptr long long)
 @ stdcall NotifyIME(long long long long)

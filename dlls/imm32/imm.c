@@ -20,37 +20,24 @@
  */
 
 #define COBJMACROS
-
-#include <stdarg.h>
-#include <stdio.h>
-
 #include "initguid.h"
-#include "objbase.h"
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "ntuser.h"
-#include "winerror.h"
-#include "wine/debug.h"
-#include "imm.h"
-#include "immdev.h"
-#include "winnls.h"
-#include "winreg.h"
-#include "wine/list.h"
+#include "imm_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(imm);
 
 #define IMM_INIT_MAGIC 0x19650412
 BOOL WINAPI User32InitializeImmEntryTable(DWORD);
 
+HMODULE imm32_module;
+
 /* MSIME messages */
-static UINT WM_MSIME_SERVICE;
-static UINT WM_MSIME_RECONVERTOPTIONS;
-static UINT WM_MSIME_MOUSE;
-static UINT WM_MSIME_RECONVERTREQUEST;
-static UINT WM_MSIME_RECONVERT;
-static UINT WM_MSIME_QUERYPOSITION;
-static UINT WM_MSIME_DOCUMENTFEED;
+UINT WM_MSIME_SERVICE;
+UINT WM_MSIME_RECONVERTOPTIONS;
+UINT WM_MSIME_MOUSE;
+UINT WM_MSIME_RECONVERTREQUEST;
+UINT WM_MSIME_RECONVERT;
+UINT WM_MSIME_QUERYPOSITION;
+UINT WM_MSIME_DOCUMENTFEED;
 
 struct ime
 {
@@ -709,28 +696,28 @@ static void IMM_FreeAllImmHkl(void)
     }
 }
 
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
+BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
 {
-    TRACE("%p, %lx, %p\n",hInstDLL,fdwReason,lpReserved);
-    switch (fdwReason)
+    TRACE( "instance %p, reason %lx, reserved %p\n", instance, reason, reserved );
+
+    switch (reason)
     {
-        case DLL_PROCESS_ATTACH:
-            if (!User32InitializeImmEntryTable(IMM_INIT_MAGIC))
-            {
-                return FALSE;
-            }
-            break;
-        case DLL_THREAD_ATTACH:
-            break;
-        case DLL_THREAD_DETACH:
-            IMM_FreeThreadData();
-            break;
-        case DLL_PROCESS_DETACH:
-            if (lpReserved) break;
-            IMM_FreeThreadData();
-            IMM_FreeAllImmHkl();
-            break;
+    case DLL_PROCESS_ATTACH:
+        if (!User32InitializeImmEntryTable( IMM_INIT_MAGIC )) return FALSE;
+        imm32_module = instance;
+        break;
+    case DLL_THREAD_ATTACH:
+        break;
+    case DLL_THREAD_DETACH:
+        IMM_FreeThreadData();
+        break;
+    case DLL_PROCESS_DETACH:
+        if (reserved) break;
+        IMM_FreeThreadData();
+        IMM_FreeAllImmHkl();
+        break;
     }
+
     return TRUE;
 }
 

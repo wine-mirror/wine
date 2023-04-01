@@ -19,29 +19,352 @@
 #include <stdarg.h>
 #include <stddef.h>
 
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "imm.h"
-#include "immdev.h"
-
-#include "wine/debug.h"
+#include "imm_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(imm);
 
+static WCHAR *input_context_get_comp_str( INPUTCONTEXT *ctx, BOOL result, UINT *length )
+{
+    COMPOSITIONSTRING *string;
+    WCHAR *text = NULL;
+    UINT len, off;
+
+    if (!(string = ImmLockIMCC( ctx->hCompStr ))) return NULL;
+    len = result ? string->dwResultStrLen : string->dwCompStrLen;
+    off = result ? string->dwResultStrOffset : string->dwCompStrOffset;
+
+    if (len && off && (text = malloc( (len + 1) * sizeof(WCHAR) )))
+    {
+        memcpy( text, (BYTE *)string + off, len * sizeof(WCHAR) );
+        text[len] = 0;
+        *length = len;
+    }
+
+    ImmUnlockIMCC( ctx->hCompStr );
+    return text;
+}
+
+static HFONT input_context_select_ui_font( INPUTCONTEXT *ctx, HDC hdc )
+{
+    struct ime_private *priv;
+    HFONT font = NULL;
+    if (!(priv = ImmLockIMCC( ctx->hPrivate ))) return NULL;
+    if (priv->textfont) font = SelectObject( hdc, priv->textfont );
+    ImmUnlockIMCC( ctx->hPrivate );
+    return font;
+}
+
+static void ime_ui_paint( HIMC himc, HWND hwnd )
+{
+    PAINTSTRUCT ps;
+    RECT rect;
+    HDC hdc;
+    HMONITOR monitor;
+    MONITORINFO mon_info;
+    INPUTCONTEXT *ctx;
+    POINT offset;
+    WCHAR *str;
+    UINT len;
+
+    if (!(ctx = ImmLockIMC( himc ))) return;
+
+    hdc = BeginPaint( hwnd, &ps );
+
+    GetClientRect( hwnd, &rect );
+    FillRect( hdc, &rect, (HBRUSH)(COLOR_WINDOW + 1) );
+
+    if ((str = input_context_get_comp_str( ctx, FALSE, &len )))
+    {
+        HFONT font = input_context_select_ui_font( ctx, hdc );
+        SIZE size;
+        POINT pt;
+
+        GetTextExtentPoint32W( hdc, str, len, &size );
+        pt.x = size.cx;
+        pt.y = size.cy;
+        LPtoDP( hdc, &pt, 1 );
+
+        /*
+         * How this works based on tests on windows:
+         * CFS_POINT: then we start our window at the point and grow it as large
+         *    as it needs to be for the string.
+         * CFS_RECT:  we still use the ptCurrentPos as a starting point and our
+         *    window is only as large as we need for the string, but we do not
+         *    grow such that our window exceeds the given rect.  Wrapping if
+         *    needed and possible.   If our ptCurrentPos is outside of our rect
+         *    then no window is displayed.
+         * CFS_FORCE_POSITION: appears to behave just like CFS_POINT
+         *    maybe because the default MSIME does not do any IME adjusting.
+         */
+        if (ctx->cfCompForm.dwStyle != CFS_DEFAULT)
+        {
+            POINT cpt = ctx->cfCompForm.ptCurrentPos;
+            ClientToScreen( ctx->hWnd, &cpt );
+            rect.left = cpt.x;
+            rect.top = cpt.y;
+            rect.right = rect.left + pt.x;
+            rect.bottom = rect.top + pt.y;
+            monitor = MonitorFromPoint( cpt, MONITOR_DEFAULTTOPRIMARY );
+        }
+        else /* CFS_DEFAULT */
+        {
+            /* Windows places the default IME window in the bottom left */
+            HWND target = ctx->hWnd;
+            if (!target) target = GetFocus();
+
+            GetWindowRect( target, &rect );
+            rect.top = rect.bottom;
+            rect.right = rect.left + pt.x + 20;
+            rect.bottom = rect.top + pt.y + 20;
+            offset.x = offset.y = 10;
+            monitor = MonitorFromWindow( target, MONITOR_DEFAULTTOPRIMARY );
+        }
+
+        if (ctx->cfCompForm.dwStyle == CFS_RECT)
+        {
+            RECT client;
+            client = ctx->cfCompForm.rcArea;
+            MapWindowPoints( ctx->hWnd, 0, (POINT *)&client, 2 );
+            IntersectRect( &rect, &rect, &client );
+            /* TODO:  Wrap the input if needed */
+        }
+
+        if (ctx->cfCompForm.dwStyle == CFS_DEFAULT)
+        {
+            /* make sure we are on the desktop */
+            mon_info.cbSize = sizeof(mon_info);
+            GetMonitorInfoW( monitor, &mon_info );
+
+            if (rect.bottom > mon_info.rcWork.bottom)
+            {
+                int shift = rect.bottom - mon_info.rcWork.bottom;
+                rect.top -= shift;
+                rect.bottom -= shift;
+            }
+            if (rect.left < 0)
+            {
+                rect.right -= rect.left;
+                rect.left = 0;
+            }
+            if (rect.right > mon_info.rcWork.right)
+            {
+                int shift = rect.right - mon_info.rcWork.right;
+                rect.left -= shift;
+                rect.right -= shift;
+            }
+        }
+
+        SetWindowPos( hwnd, HWND_TOPMOST, rect.left, rect.top, rect.right - rect.left,
+                      rect.bottom - rect.top, SWP_NOACTIVATE );
+        TextOutW( hdc, offset.x, offset.y, str, len );
+
+        if (font) SelectObject( hdc, font );
+        free( str );
+    }
+
+    EndPaint( hwnd, &ps );
+    ImmUnlockIMC( himc );
+}
+
+static void ime_ui_update_window( INPUTCONTEXT *ctx, HWND hwnd )
+{
+    COMPOSITIONSTRING *string;
+
+    if (ctx->hCompStr) string = ImmLockIMCC( ctx->hCompStr );
+    else string = NULL;
+
+    if (!string || string->dwCompStrLen == 0)
+        ShowWindow( hwnd, SW_HIDE );
+    else
+    {
+        ShowWindow( hwnd, SW_SHOWNOACTIVATE );
+        RedrawWindow( hwnd, NULL, NULL, RDW_ERASENOW | RDW_INVALIDATE );
+    }
+
+    if (string) ImmUnlockIMCC( ctx->hCompStr );
+
+    ctx->hWnd = GetFocus();
+}
+
+static void ime_ui_composition( HIMC himc, HWND hwnd, LPARAM lparam )
+{
+    INPUTCONTEXT *ctx;
+    TRACE( "IME message WM_IME_COMPOSITION 0x%Ix\n", lparam );
+    if (lparam & GCS_RESULTSTR) return;
+    if (!(ctx = ImmLockIMC( himc ))) return;
+    ime_ui_update_window( ctx, hwnd );
+    ImmUnlockIMC( himc );
+}
+
+static void ime_ui_start_composition( HIMC himc, HWND hwnd )
+{
+    INPUTCONTEXT *ctx;
+    TRACE( "IME message WM_IME_STARTCOMPOSITION\n" );
+    if (!(ctx = ImmLockIMC( himc ))) return;
+    ime_ui_update_window( ctx, hwnd );
+    ImmUnlockIMC( himc );
+}
+
+static LRESULT ime_ui_notify( HIMC himc, HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    switch (wparam)
+    {
+    case IMN_OPENSTATUSWINDOW: FIXME( "WM_IME_NOTIFY:IMN_OPENSTATUSWINDOW\n" ); break;
+    case IMN_CLOSESTATUSWINDOW: FIXME( "WM_IME_NOTIFY:IMN_CLOSESTATUSWINDOW\n" ); break;
+    case IMN_OPENCANDIDATE: FIXME( "WM_IME_NOTIFY:IMN_OPENCANDIDATE\n" ); break;
+    case IMN_CHANGECANDIDATE: FIXME( "WM_IME_NOTIFY:IMN_CHANGECANDIDATE\n" ); break;
+    case IMN_CLOSECANDIDATE: FIXME( "WM_IME_NOTIFY:IMN_CLOSECANDIDATE\n" ); break;
+    case IMN_SETCONVERSIONMODE: FIXME( "WM_IME_NOTIFY:IMN_SETCONVERSIONMODE\n" ); break;
+    case IMN_SETSENTENCEMODE: FIXME( "WM_IME_NOTIFY:IMN_SETSENTENCEMODE\n" ); break;
+    case IMN_SETOPENSTATUS: TRACE( "WM_IME_NOTIFY:IMN_SETOPENSTATUS\n" ); break;
+    case IMN_SETCANDIDATEPOS: FIXME( "WM_IME_NOTIFY:IMN_SETCANDIDATEPOS\n" ); break;
+    case IMN_SETCOMPOSITIONFONT: FIXME( "WM_IME_NOTIFY:IMN_SETCOMPOSITIONFONT\n" ); break;
+    case IMN_SETCOMPOSITIONWINDOW: FIXME( "WM_IME_NOTIFY:IMN_SETCOMPOSITIONWINDOW\n" ); break;
+    case IMN_GUIDELINE: FIXME( "WM_IME_NOTIFY:IMN_GUIDELINE\n" ); break;
+    case IMN_SETSTATUSWINDOWPOS: FIXME( "WM_IME_NOTIFY:IMN_SETSTATUSWINDOWPOS\n" ); break;
+    default: FIXME( "WM_IME_NOTIFY:<Unknown 0x%Ix>\n", wparam ); break;
+    }
+    return 0;
+}
+
+static LRESULT WINAPI ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    HIMC himc = (HIMC)GetWindowLongPtrW( hwnd, IMMGWL_IMC );
+    INPUTCONTEXT *ctx;
+    LRESULT ret = 0;
+
+    TRACE( "hwnd %p, himc %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, himc, msg, wparam, lparam );
+
+    /* if we have no himc there are many messages we cannot process */
+    if (!himc)
+    {
+        switch (msg)
+        {
+        case WM_IME_STARTCOMPOSITION:
+        case WM_IME_ENDCOMPOSITION:
+        case WM_IME_COMPOSITION:
+        case WM_IME_NOTIFY:
+        case WM_IME_CONTROL:
+        case WM_IME_COMPOSITIONFULL:
+        case WM_IME_SELECT:
+        case WM_IME_CHAR: return 0L;
+        default: break;
+        }
+    }
+
+    switch (msg)
+    {
+    case WM_CREATE:
+    {
+        struct ime_private *priv;
+
+        SetWindowTextA( hwnd, "Wine Ime Active" );
+
+        if (!(ctx = ImmLockIMC( himc ))) return TRUE;
+        if ((priv = ImmLockIMCC( ctx->hPrivate )))
+        {
+            priv->hwndDefault = hwnd;
+            ImmUnlockIMCC( ctx->hPrivate );
+        }
+        ImmUnlockIMC( himc );
+        return TRUE;
+    }
+    case WM_PAINT:
+        ime_ui_paint( himc, hwnd );
+        return FALSE;
+    case WM_NCCREATE:
+        return TRUE;
+    case WM_SETFOCUS:
+        if (wparam) SetFocus( (HWND)wparam );
+        else FIXME( "Received focus, should never have focus\n" );
+        break;
+    case WM_IME_COMPOSITION:
+        ime_ui_composition( himc, hwnd, lparam );
+        break;
+    case WM_IME_STARTCOMPOSITION:
+        ime_ui_start_composition( himc, hwnd );
+        break;
+    case WM_IME_ENDCOMPOSITION:
+        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_IME_ENDCOMPOSITION", wparam, lparam );
+        ShowWindow( hwnd, SW_HIDE );
+        break;
+    case WM_IME_SELECT:
+        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_IME_SELECT", wparam, lparam );
+        break;
+    case WM_IME_CONTROL:
+        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_IME_CONTROL", wparam, lparam );
+        ret = 1;
+        break;
+    case WM_IME_NOTIFY:
+        ret = ime_ui_notify( himc, hwnd, msg, wparam, lparam );
+        break;
+    default:
+        TRACE( "Non-standard message 0x%x\n", msg );
+        break;
+    }
+
+    /* check the MSIME messages */
+    if (msg == WM_MSIME_SERVICE)
+        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_SERVICE", wparam, lparam );
+    else if (msg == WM_MSIME_RECONVERTOPTIONS)
+        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_RECONVERTOPTIONS", wparam, lparam );
+    else if (msg == WM_MSIME_MOUSE)
+        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_MOUSE", wparam, lparam );
+    else if (msg == WM_MSIME_RECONVERTREQUEST)
+        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_RECONVERTREQUEST", wparam, lparam );
+    else if (msg == WM_MSIME_RECONVERT)
+        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_RECONVERT", wparam, lparam );
+    else if (msg == WM_MSIME_QUERYPOSITION)
+        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_QUERYPOSITION", wparam, lparam );
+    else if (msg == WM_MSIME_DOCUMENTFEED)
+        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_DOCUMENTFEED", wparam, lparam );
+
+    /* DefWndProc if not an IME message */
+    if (!ret && !((msg >= WM_IME_STARTCOMPOSITION && msg <= WM_IME_KEYLAST) ||
+                  (msg >= WM_IME_SETCONTEXT && msg <= WM_IME_KEYUP)))
+        ret = DefWindowProcW( hwnd, msg, wparam, lparam );
+
+    return ret;
+}
+
+static WNDCLASSEXW ime_ui_class =
+{
+    .cbSize = sizeof(WNDCLASSEXW),
+    .style = CS_GLOBALCLASS | CS_IME | CS_HREDRAW | CS_VREDRAW,
+    .lpfnWndProc = ime_ui_window_proc,
+    .cbWndExtra = 2 * sizeof(LONG_PTR),
+    .lpszClassName = L"Wine IME",
+    .hbrBackground = (HBRUSH)(COLOR_WINDOW + 1),
+};
+
 BOOL WINAPI ImeInquire( IMEINFO *info, WCHAR *ui_class, DWORD flags )
 {
-    FIXME( "info %p, ui_class %p, flags %#lx stub!\n", info, ui_class, flags );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    TRACE( "info %p, ui_class %p, flags %#lx\n", info, ui_class, flags );
+
+    ime_ui_class.hInstance = imm32_module;
+    ime_ui_class.hCursor = LoadCursorW( NULL, (LPWSTR)IDC_ARROW );
+    ime_ui_class.hIcon = LoadIconW( NULL, (LPWSTR)IDI_APPLICATION );
+    RegisterClassExW( &ime_ui_class );
+
+    wcscpy( ui_class, ime_ui_class.lpszClassName );
+    memset( info, 0, sizeof(*info) );
+    info->dwPrivateDataSize = sizeof(IMEPRIVATE);
+    info->fdwProperty = IME_PROP_UNICODE | IME_PROP_AT_CARET;
+    info->fdwConversionCaps = IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE;
+    info->fdwSentenceCaps = IME_SMODE_AUTOMATIC;
+    info->fdwUICaps = UI_CAP_2700;
+    /* Tell App we cannot accept ImeSetCompositionString calls */
+    info->fdwSCSCaps = 0;
+    info->fdwSelectCaps = SELECT_CAP_CONVERSION;
+
+    return TRUE;
 }
 
 BOOL WINAPI ImeDestroy( UINT force )
 {
-    FIXME( "force %u stub!\n", force );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    TRACE( "force %u\n", force );
+    UnregisterClassW( ime_ui_class.lpszClassName, imm32_module );
+    return TRUE;
 }
 
 BOOL WINAPI ImeSelect( HIMC himc, BOOL select )

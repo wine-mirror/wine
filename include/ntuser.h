@@ -490,6 +490,16 @@ enum wine_internal_message
 #define IME_INTERNAL_HKL_ACTIVATE    0x19
 #define IME_INTERNAL_HKL_DEACTIVATE  0x20
 
+/* internal IME private */
+typedef struct ime_private
+{
+    BOOL bInComposition;
+    BOOL bInternalState;
+    HFONT textfont;
+    HWND hwndDefault;
+    UINT repeat;
+} IMEPRIVATE, *LPIMEPRIVATE;
+
 #define WM_SYSTIMER  0x0118
 
 /* the various structures that can be sent in messages, in platform-independent layout */

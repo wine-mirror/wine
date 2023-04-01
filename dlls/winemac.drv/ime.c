@@ -43,16 +43,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(imm);
 
 #define FROM_MACDRV ((HIMC)0xcafe1337)
 
-typedef struct ime_private
-{
-    BOOL bInComposition;
-    BOOL bInternalState;
-    HFONT textfont;
-    HWND hwndDefault;
-
-    UINT repeat;
-} IMEPRIVATE, *LPIMEPRIVATE;
-
 static const WCHAR UI_CLASS_NAME[] = {'W','i','n','e',' ','M','a','c',' ','I','M','E',0};
 
 static HIMC *hSelectedFrom = NULL;
