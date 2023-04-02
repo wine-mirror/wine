@@ -288,13 +288,10 @@ NTSTATUS x11drv_xim_preedit_state( void *arg )
     return 0;
 }
 
-
 /***********************************************************************
- *           X11DRV_InitXIM
- *
- * Process-wide XIM initialization.
+ *           xim_init
  */
-BOOL X11DRV_InitXIM( const WCHAR *input_style )
+BOOL xim_init( const WCHAR *input_style )
 {
     static const WCHAR offthespotW[] = {'o','f','f','t','h','e','s','p','o','t',0};
     static const WCHAR overthespotW[] = {'o','v','e','r','t','h','e','s','p','o','t',0};
@@ -416,26 +413,6 @@ static BOOL open_xim( Display *display )
 
     thread_data->xim = xim;
 
-    if ((ximStyle & (XIMPreeditNothing | XIMPreeditNone)) == 0 ||
-        (ximStyle & (XIMStatusNothing | XIMStatusNone)) == 0)
-    {
-        char **list;
-        int count;
-        thread_data->font_set = XCreateFontSet(display, "fixed",
-                          &list, &count, NULL);
-        TRACE("ximFontSet = %p\n", thread_data->font_set);
-        TRACE("list = %p, count = %d\n", list, count);
-        if (list != NULL)
-        {
-            int i;
-            for (i = 0; i < count; ++i)
-                TRACE("list[%d] = %s\n", i, list[i]);
-            XFreeStringList(list);
-        }
-    }
-    else
-        thread_data->font_set = NULL;
-
     x11drv_client_call( client_ime_update_association, 0 );
     return TRUE;
 }
@@ -446,9 +423,16 @@ static void open_xim_callback( Display *display, XPointer ptr, XPointer data )
         XUnregisterIMInstantiateCallback( display, NULL, NULL, NULL, open_xim_callback, NULL);
 }
 
-void X11DRV_SetupXIM(void)
+void xim_thread_attach( struct x11drv_thread_data *data )
 {
-    Display *display = thread_display();
+    Display *display = data->display;
+    int i, count;
+    char **list;
+
+    data->font_set = XCreateFontSet( display, "fixed", &list, &count, NULL );
+    TRACE( "created XFontSet %p, list %p, count %d\n", data->font_set, list, count );
+    for (i = 0; list && i < count; ++i) TRACE( "  %d: %s\n", i, list[i] );
+    if (list) XFreeStringList( list );
 
     if (!open_xim( display ))
         XRegisterIMInstantiateCallback( display, NULL, NULL, NULL, open_xim_callback, NULL );
