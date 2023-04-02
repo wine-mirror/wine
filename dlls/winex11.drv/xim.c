@@ -368,53 +368,51 @@ static BOOL open_xim( Display *display )
     XGetIMValues(xim, XNQueryInputStyle, &ximStyles, NULL);
     if (ximStyles == 0)
     {
-        WARN("Could not find supported input style.\n");
-        XCloseIM(xim);
+        WARN( "Could not find supported input style.\n" );
+        XCloseIM( xim );
         return FALSE;
     }
-    else
+
+    TRACE("ximStyles->count_styles = %d\n", ximStyles->count_styles);
+
+    ximStyleRoot = 0;
+    ximStyleNone = 0;
+
+    for (i = 0; i < ximStyles->count_styles; ++i)
     {
-        TRACE("ximStyles->count_styles = %d\n", ximStyles->count_styles);
-
-        ximStyleRoot = 0;
-        ximStyleNone = 0;
-
-        for (i = 0; i < ximStyles->count_styles; ++i)
+        int style = ximStyles->supported_styles[i];
+        TRACE("ximStyles[%d] = %s%s%s%s%s\n", i,
+                    (style&XIMPreeditArea)?"XIMPreeditArea ":"",
+                    (style&XIMPreeditCallbacks)?"XIMPreeditCallbacks ":"",
+                    (style&XIMPreeditPosition)?"XIMPreeditPosition ":"",
+                    (style&XIMPreeditNothing)?"XIMPreeditNothing ":"",
+                    (style&XIMPreeditNone)?"XIMPreeditNone ":"");
+        if (!ximStyle && (ximStyles->supported_styles[i] ==
+                            ximStyleRequest))
         {
-            int style = ximStyles->supported_styles[i];
-            TRACE("ximStyles[%d] = %s%s%s%s%s\n", i,
-                        (style&XIMPreeditArea)?"XIMPreeditArea ":"",
-                        (style&XIMPreeditCallbacks)?"XIMPreeditCallbacks ":"",
-                        (style&XIMPreeditPosition)?"XIMPreeditPosition ":"",
-                        (style&XIMPreeditNothing)?"XIMPreeditNothing ":"",
-                        (style&XIMPreeditNone)?"XIMPreeditNone ":"");
-            if (!ximStyle && (ximStyles->supported_styles[i] ==
-                                ximStyleRequest))
-            {
-                ximStyle = ximStyleRequest;
-                TRACE("Setting Style: ximStyle = ximStyleRequest\n");
-            }
-            else if (!ximStyleRoot &&(ximStyles->supported_styles[i] ==
-                     STYLE_ROOT))
-            {
-                ximStyleRoot = STYLE_ROOT;
-                TRACE("Setting Style: ximStyleRoot = STYLE_ROOT\n");
-            }
-            else if (!ximStyleNone && (ximStyles->supported_styles[i] ==
-                     STYLE_NONE))
-            {
-                TRACE("Setting Style: ximStyleNone = STYLE_NONE\n");
-                ximStyleNone = STYLE_NONE;
-            }
+            ximStyle = ximStyleRequest;
+            TRACE("Setting Style: ximStyle = ximStyleRequest\n");
         }
-        XFree(ximStyles);
-
-        if (ximStyle == 0)
-            ximStyle = ximStyleRoot;
-
-        if (ximStyle == 0)
-            ximStyle = ximStyleNone;
+        else if (!ximStyleRoot &&(ximStyles->supported_styles[i] ==
+                 STYLE_ROOT))
+        {
+            ximStyleRoot = STYLE_ROOT;
+            TRACE("Setting Style: ximStyleRoot = STYLE_ROOT\n");
+        }
+        else if (!ximStyleNone && (ximStyles->supported_styles[i] ==
+                 STYLE_NONE))
+        {
+            TRACE("Setting Style: ximStyleNone = STYLE_NONE\n");
+            ximStyleNone = STYLE_NONE;
+        }
     }
+    XFree(ximStyles);
+
+    if (ximStyle == 0)
+        ximStyle = ximStyleRoot;
+
+    if (ximStyle == 0)
+        ximStyle = ximStyleNone;
 
     thread_data->xim = xim;
 
