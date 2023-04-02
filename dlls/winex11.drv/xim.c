@@ -109,12 +109,14 @@ void X11DRV_XIMLookupChars( const char *str, UINT count )
     free( output );
 }
 
-static BOOL XIMPreEditStateNotifyCallback(XIC xic, XPointer p, XPointer data)
+static BOOL xic_preedit_state_notify( XIC xic, XPointer user, XPointer arg )
 {
-    const struct x11drv_win_data * const win_data = (struct x11drv_win_data *)p;
-    const XIMPreeditState state = ((XIMPreeditStateNotifyCallbackStruct *)data)->state;
+    XIMPreeditStateNotifyCallbackStruct *params = (void *)arg;
+    const XIMPreeditState state = params->state;
+    HWND hwnd = (HWND)user;
 
-    TRACE("xic = %p, win = %lx, state = %lu\n", xic, win_data->whole_window, state);
+    TRACE( "xic %p, hwnd %p, state %lu\n", xic, hwnd, state );
+
     switch (state)
     {
     case XIMPreeditEnable:
@@ -130,17 +132,23 @@ static BOOL XIMPreEditStateNotifyCallback(XIC xic, XPointer p, XPointer data)
     return TRUE;
 }
 
-static int XIMPreEditStartCallback(XIC ic, XPointer client_data, XPointer call_data)
+static int xic_preedit_start( XIC xic, XPointer user, XPointer arg )
 {
-    TRACE("PreEditStartCallback %p\n",ic);
+    HWND hwnd = (HWND)user;
+
+    TRACE( "xic %p, hwnd %p, arg %p\n", xic, hwnd, arg );
+
     x11drv_client_call( client_ime_set_composition_status, TRUE );
     ximInComposeMode = TRUE;
     return -1;
 }
 
-static void XIMPreEditDoneCallback(XIC ic, XPointer client_data, XPointer call_data)
+static int xic_preedit_done( XIC xic, XPointer user, XPointer arg )
 {
-    TRACE("PreeditDoneCallback %p\n",ic);
+    HWND hwnd = (HWND)user;
+
+    TRACE( "xic %p, hwnd %p, arg %p\n", xic, hwnd, arg );
+
     ximInComposeMode = FALSE;
     if (dwCompStringSize)
         free( CompositionString );
@@ -148,12 +156,15 @@ static void XIMPreEditDoneCallback(XIC ic, XPointer client_data, XPointer call_d
     dwCompStringLength = 0;
     CompositionString = NULL;
     x11drv_client_call( client_ime_set_composition_status, FALSE );
+    return 0;
 }
 
-static void XIMPreEditDrawCallback(XIM ic, XPointer client_data,
-                                   XIMPreeditDrawCallbackStruct *P_DR)
+static int xic_preedit_draw( XIC xic, XPointer user, XPointer arg )
 {
-    TRACE("PreEditDrawCallback %p\n",ic);
+    XIMPreeditDrawCallbackStruct *P_DR = (void *)arg;
+    HWND hwnd = (HWND)user;
+
+    TRACE( "xic %p, hwnd %p, arg %p\n", xic, hwnd, arg );
 
     if (P_DR)
     {
@@ -189,13 +200,17 @@ static void XIMPreEditDrawCallback(XIM ic, XPointer client_data,
             X11DRV_ImmSetInternalString (sel, len, NULL, 0);
         x11drv_client_call( client_ime_set_cursor_pos, P_DR->caret );
     }
+
     TRACE("Finished\n");
+    return 0;
 }
 
-static void XIMPreEditCaretCallback(XIC ic, XPointer client_data,
-                                    XIMPreeditCaretCallbackStruct *P_C)
+static int xic_preedit_caret( XIC xic, XPointer user, XPointer arg )
 {
-    TRACE("PreeditCaretCallback %p\n",ic);
+    XIMPreeditCaretCallbackStruct *P_C = (void *)arg;
+    HWND hwnd = (HWND)user;
+
+    TRACE( "xic %p, hwnd %p, arg %p\n", xic, hwnd, arg );
 
     if (P_C)
     {
@@ -219,7 +234,7 @@ static void XIMPreEditCaretCallback(XIC ic, XPointer client_data,
                 break;
             case XIMDontChange:
                 P_C->position = pos;
-                return;
+                return 0;
             case XIMCaretUp:
             case XIMCaretDown:
             case XIMPreviousLine:
@@ -232,6 +247,7 @@ static void XIMPreEditCaretCallback(XIC ic, XPointer client_data,
         P_C->position = pos;
     }
     TRACE("Finished\n");
+    return 0;
 }
 
 NTSTATUS x11drv_xim_reset( void *hwnd )
@@ -440,45 +456,44 @@ void X11DRV_SetupXIM(void)
         XRegisterIMInstantiateCallback( display, NULL, NULL, NULL, open_xim_callback, NULL );
 }
 
-static BOOL X11DRV_DestroyIC(XIC xic, XPointer p, XPointer data)
+static BOOL xic_destroy( XIC xic, XPointer user, XPointer arg )
 {
-    struct x11drv_win_data *win_data = (struct x11drv_win_data *)p;
-    TRACE("xic = %p, win = %lx\n", xic, win_data->whole_window);
-    win_data->xic = NULL;
+    struct x11drv_win_data *data;
+    HWND hwnd = (HWND)user;
+
+    TRACE( "xic %p, hwnd %p, arg %p\n", xic, hwnd, arg );
+
+    if ((data = get_win_data( hwnd )))
+    {
+        if (data->xic == xic) data->xic = NULL;
+        release_win_data( data );
+    }
+
     return TRUE;
 }
 
-
-XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data)
+XIC X11DRV_CreateIC( XIM xim, HWND hwnd, struct x11drv_win_data *data )
 {
+    XICCallback destroy = {.callback = xic_destroy, .client_data = (XPointer)hwnd};
+    XICCallback preedit_caret = {.callback = xic_preedit_caret, .client_data = (XPointer)hwnd};
+    XICCallback preedit_done = {.callback = xic_preedit_done, .client_data = (XPointer)hwnd};
+    XICCallback preedit_draw = {.callback = xic_preedit_draw, .client_data = (XPointer)hwnd};
+    XICCallback preedit_start = {.callback = xic_preedit_start, .client_data = (XPointer)hwnd};
+    XICCallback preedit_state_notify = {.callback = xic_preedit_state_notify, .client_data = (XPointer)hwnd};
     XPoint spot = {0};
     XVaNestedList preedit, status;
     XIC xic;
-    XICCallback destroy = {(XPointer)data, X11DRV_DestroyIC};
-    XICCallback P_StateNotifyCB, P_StartCB, P_DoneCB, P_DrawCB, P_CaretCB;
     Window win = data->whole_window;
     XFontSet fontSet = x11drv_thread_data()->font_set;
 
-    TRACE( "xim %p, data %p\n", xim, data );
-
-    /* create callbacks */
-    P_StateNotifyCB.client_data = (XPointer)data;
-    P_StartCB.client_data = NULL;
-    P_DoneCB.client_data = NULL;
-    P_DrawCB.client_data = NULL;
-    P_CaretCB.client_data = NULL;
-    P_StateNotifyCB.callback = XIMPreEditStateNotifyCallback;
-    P_StartCB.callback = XIMPreEditStartCallback;
-    P_DoneCB.callback = (XICProc)XIMPreEditDoneCallback;
-    P_DrawCB.callback = (XICProc)XIMPreEditDrawCallback;
-    P_CaretCB.callback = (XICProc)XIMPreEditCaretCallback;
+    TRACE( "xim %p, hwnd %p, data %p\n", xim, hwnd, data );
 
     preedit = XVaCreateNestedList( 0, XNFontSet, fontSet,
-                                   XNPreeditCaretCallback, &P_CaretCB,
-                                   XNPreeditDoneCallback, &P_DoneCB,
-                                   XNPreeditDrawCallback, &P_DrawCB,
-                                   XNPreeditStartCallback, &P_StartCB,
-                                   XNPreeditStateNotifyCallback, &P_StateNotifyCB,
+                                   XNPreeditCaretCallback, &preedit_caret,
+                                   XNPreeditDoneCallback, &preedit_done,
+                                   XNPreeditDrawCallback, &preedit_draw,
+                                   XNPreeditStartCallback, &preedit_start,
+                                   XNPreeditStateNotifyCallback, &preedit_state_notify,
                                    XNSpotLocation, &spot, NULL );
     status = XVaCreateNestedList( 0, XNFontSet, fontSet, NULL );
     xic = XCreateIC( xim, XNInputStyle, ximStyle, XNPreeditAttributes, preedit, XNStatusAttributes, status,

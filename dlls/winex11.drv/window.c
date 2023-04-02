@@ -2326,7 +2326,7 @@ XIC X11DRV_get_ic( HWND hwnd )
     {
         x11drv_thread_data()->last_xic_hwnd = hwnd;
         ret = data->xic;
-        if (!ret && (xim = x11drv_thread_data()->xim)) ret = X11DRV_CreateIC( xim, data );
+        if (!ret && (xim = x11drv_thread_data()->xim)) ret = X11DRV_CreateIC( xim, hwnd, data );
         release_win_data( data );
     }
     return ret;
