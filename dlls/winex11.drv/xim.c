@@ -270,6 +270,27 @@ static int xic_preedit_caret( XIC xic, XPointer user, XPointer arg )
     return 0;
 }
 
+static int xic_status_start( XIC xic, XPointer user, XPointer arg )
+{
+    HWND hwnd = (HWND)user;
+    TRACE( "xic %p, hwnd %p, arg %p\n", xic, hwnd, arg );
+    return 0;
+}
+
+static int xic_status_done( XIC xic, XPointer user, XPointer arg )
+{
+    HWND hwnd = (HWND)user;
+    TRACE( "xic %p, hwnd %p, arg %p\n", xic, hwnd, arg );
+    return 0;
+}
+
+static int xic_status_draw( XIC xic, XPointer user, XPointer arg )
+{
+    HWND hwnd = (HWND)user;
+    TRACE( "xic %p, hwnd %p, arg %p\n", xic, hwnd, arg );
+    return 0;
+}
+
 NTSTATUS x11drv_xim_reset( void *hwnd )
 {
     XIC ic = X11DRV_get_ic(hwnd);
@@ -467,6 +488,9 @@ XIC X11DRV_CreateIC( XIM xim, HWND hwnd, struct x11drv_win_data *data )
     XICCallback preedit_draw = {.callback = xic_preedit_draw, .client_data = (XPointer)hwnd};
     XICCallback preedit_start = {.callback = xic_preedit_start, .client_data = (XPointer)hwnd};
     XICCallback preedit_state_notify = {.callback = xic_preedit_state_notify, .client_data = (XPointer)hwnd};
+    XICCallback status_done = {.callback = xic_status_done, .client_data = (XPointer)hwnd};
+    XICCallback status_draw = {.callback = xic_status_draw, .client_data = (XPointer)hwnd};
+    XICCallback status_start = {.callback = xic_status_start, .client_data = (XPointer)hwnd};
     XPoint spot = {0};
     XVaNestedList preedit, status;
     XIC xic;
@@ -482,7 +506,11 @@ XIC X11DRV_CreateIC( XIM xim, HWND hwnd, struct x11drv_win_data *data )
                                    XNPreeditStartCallback, &preedit_start,
                                    XNPreeditStateNotifyCallback, &preedit_state_notify,
                                    XNSpotLocation, &spot, NULL );
-    status = XVaCreateNestedList( 0, XNFontSet, fontSet, NULL );
+    status = XVaCreateNestedList( 0, XNFontSet, fontSet,
+                                  XNStatusStartCallback, &status_start,
+                                  XNStatusDoneCallback, &status_done,
+                                  XNStatusDrawCallback, &status_draw,
+                                  NULL );
     xic = XCreateIC( xim, XNInputStyle, ximStyle, XNPreeditAttributes, preedit, XNStatusAttributes, status,
                      XNClientWindow, win, XNFocusWindow, win, XNDestroyCallback, &destroy, NULL );
     TRACE( "created XIC %p\n", xic );
