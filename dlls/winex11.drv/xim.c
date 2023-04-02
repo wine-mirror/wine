@@ -61,6 +61,26 @@ static XIMStyle ximStyle = 0;
 static XIMStyle ximStyleRoot = 0;
 static XIMStyle ximStyleRequest = STYLE_CALLBACK;
 
+static const char *debugstr_xim_style( XIMStyle style )
+{
+    char buffer[1024], *buf = buffer;
+
+    buf += sprintf( buf, "preedit" );
+    if (style & XIMPreeditArea) buf += sprintf( buf, " area" );
+    if (style & XIMPreeditCallbacks) buf += sprintf( buf, " callbacks" );
+    if (style & XIMPreeditPosition) buf += sprintf( buf, " position" );
+    if (style & XIMPreeditNothing) buf += sprintf( buf, " nothing" );
+    if (style & XIMPreeditNone) buf += sprintf( buf, " none" );
+
+    buf += sprintf( buf, ", status" );
+    if (style & XIMStatusArea) buf += sprintf( buf, " area" );
+    if (style & XIMStatusCallbacks) buf += sprintf( buf, " callbacks" );
+    if (style & XIMStatusNothing) buf += sprintf( buf, " nothing" );
+    if (style & XIMStatusNone) buf += sprintf( buf, " none" );
+
+    return wine_dbg_sprintf( "%s", buffer );
+}
+
 static void X11DRV_ImmSetInternalString(UINT offset, UINT selLength, LPWSTR lpComp, UINT len)
 {
     /* Composition strings are edited in chunks */
@@ -338,9 +358,8 @@ static XIM xim_create( struct x11drv_thread_data *data )
     if (XSetIMValues( xim, XNDestroyCallback, &destroy, NULL ))
         WARN( "Could not set destroy callback.\n" );
 
-    TRACE("xim = %p\n", xim);
-    TRACE("X display of IM = %p\n", XDisplayOfIM(xim));
-    TRACE("Using %s locale of Input Method\n", XLocaleOfIM(xim));
+    TRACE( "xim %p, XDisplayOfIM %p, XLocaleOfIM %s\n", xim, XDisplayOfIM( xim ),
+           debugstr_a(XLocaleOfIM( xim )) );
 
     XGetIMValues(xim, XNQueryInputStyle, &ximStyles, NULL);
     if (ximStyles == 0)
@@ -350,21 +369,16 @@ static XIM xim_create( struct x11drv_thread_data *data )
         return NULL;
     }
 
-    TRACE("ximStyles->count_styles = %d\n", ximStyles->count_styles);
-
     ximStyleRoot = 0;
     ximStyleNone = 0;
     ximStyle = 0;
 
+    TRACE( "input styles count %u\n", ximStyles->count_styles );
     for (i = 0; i < ximStyles->count_styles; ++i)
     {
-        int style = ximStyles->supported_styles[i];
-        TRACE("ximStyles[%d] = %s%s%s%s%s\n", i,
-                    (style&XIMPreeditArea)?"XIMPreeditArea ":"",
-                    (style&XIMPreeditCallbacks)?"XIMPreeditCallbacks ":"",
-                    (style&XIMPreeditPosition)?"XIMPreeditPosition ":"",
-                    (style&XIMPreeditNothing)?"XIMPreeditNothing ":"",
-                    (style&XIMPreeditNone)?"XIMPreeditNone ":"");
+        XIMStyle style = ximStyles->supported_styles[i];
+        TRACE( "  %u: %#lx %s\n", i, style, debugstr_xim_style( style ) );
+
         if (!ximStyle && (ximStyles->supported_styles[i] ==
                             ximStyleRequest))
         {
