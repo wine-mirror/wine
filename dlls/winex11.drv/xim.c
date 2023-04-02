@@ -172,47 +172,38 @@ static int xic_preedit_done( XIC xic, XPointer user, XPointer arg )
 
 static int xic_preedit_draw( XIC xic, XPointer user, XPointer arg )
 {
-    XIMPreeditDrawCallbackStruct *P_DR = (void *)arg;
+    XIMPreeditDrawCallbackStruct *params = (void *)arg;
     HWND hwnd = (HWND)user;
+    XIMText *text;
 
     TRACE( "xic %p, hwnd %p, arg %p\n", xic, hwnd, arg );
 
-    if (P_DR)
+    if (!params) return 0;
+
+    if (!(text = params->text))
+        X11DRV_ImmSetInternalString( params->chg_first, params->chg_length, NULL, 0 );
+    else if (!text->encoding_is_wchar)
     {
-        int sel = P_DR->chg_first;
-        int len = P_DR->chg_length;
-        if (P_DR->text)
+        size_t text_len;
+        WCHAR *output;
+
+        text_len = strlen( text->string.multi_byte );
+        if ((output = malloc( text_len * sizeof(WCHAR) )))
         {
-            if (! P_DR->text->encoding_is_wchar)
-            {
-                size_t text_len;
-                WCHAR *output;
-
-                TRACE("multibyte\n");
-                text_len = strlen( P_DR->text->string.multi_byte );
-                if ((output = malloc( text_len * sizeof(WCHAR) )))
-                {
-                    text_len = ntdll_umbstowcs( P_DR->text->string.multi_byte, text_len,
-                                                output, text_len );
-
-                    X11DRV_ImmSetInternalString( sel, len, output, text_len );
-                    free( output );
-                }
-            }
-            else
-            {
-                FIXME("wchar PROBIBILY WRONG\n");
-                X11DRV_ImmSetInternalString (sel, len,
-                                             (LPWSTR)P_DR->text->string.wide_char,
-                                             P_DR->text->length);
-            }
+            text_len = ntdll_umbstowcs( text->string.multi_byte, text_len, output, text_len );
+            X11DRV_ImmSetInternalString( params->chg_first, params->chg_length, output, text_len );
+            free( output );
         }
-        else
-            X11DRV_ImmSetInternalString (sel, len, NULL, 0);
-        x11drv_client_call( client_ime_set_cursor_pos, P_DR->caret );
+    }
+    else
+    {
+        FIXME( "wchar PROBIBILY WRONG\n" );
+        X11DRV_ImmSetInternalString( params->chg_first, params->chg_length,
+                                     (WCHAR *)text->string.wide_char, text->length );
     }
 
-    TRACE("Finished\n");
+    x11drv_client_call( client_ime_set_cursor_pos, params->caret );
+
     return 0;
 }
 
