@@ -317,46 +317,26 @@ BOOL xim_init( const WCHAR *input_style )
     return TRUE;
 }
 
+static void xim_open( Display *display, XPointer user, XPointer arg );
+static void xim_destroy( XIM xim, XPointer user, XPointer arg );
 
-static void open_xim_callback( Display *display, XPointer ptr, XPointer data );
-
-static void X11DRV_DestroyIM(XIM xim, XPointer p, XPointer data)
+static XIM xim_create( struct x11drv_thread_data *data )
 {
-    struct x11drv_thread_data *thread_data = x11drv_thread_data();
-
-    TRACE("xim = %p, p = %p\n", xim, p);
-    thread_data->xim = NULL;
-    ximStyle = 0;
-    XRegisterIMInstantiateCallback( thread_data->display, NULL, NULL, NULL, open_xim_callback, NULL );
-}
-
-/***********************************************************************
- *           X11DRV Ime creation
- *
- * Should always be called with the x11 lock held
- */
-static BOOL open_xim( Display *display )
-{
-    struct x11drv_thread_data *thread_data = x11drv_thread_data();
+    XIMCallback destroy = {.callback = xim_destroy, .client_data = (XPointer)data};
+    Display *display = data->display;
     XIMStyle ximStyleNone;
     XIMStyles *ximStyles = NULL;
     INT i;
     XIM xim;
-    XIMCallback destroy;
 
-    xim = XOpenIM(display, NULL, NULL, NULL);
-    if (xim == NULL)
+    if (!(xim = XOpenIM( display, NULL, NULL, NULL )))
     {
         WARN("Could not open input method.\n");
-        return FALSE;
+        return NULL;
     }
 
-    destroy.client_data = NULL;
-    destroy.callback = X11DRV_DestroyIM;
-    if (XSetIMValues(xim, XNDestroyCallback, &destroy, NULL))
-    {
-        WARN("Could not set destroy callback.\n");
-    }
+    if (XSetIMValues( xim, XNDestroyCallback, &destroy, NULL ))
+        WARN( "Could not set destroy callback.\n" );
 
     TRACE("xim = %p\n", xim);
     TRACE("X display of IM = %p\n", XDisplayOfIM(xim));
@@ -367,13 +347,14 @@ static BOOL open_xim( Display *display )
     {
         WARN( "Could not find supported input style.\n" );
         XCloseIM( xim );
-        return FALSE;
+        return NULL;
     }
 
     TRACE("ximStyles->count_styles = %d\n", ximStyles->count_styles);
 
     ximStyleRoot = 0;
     ximStyleNone = 0;
+    ximStyle = 0;
 
     for (i = 0; i < ximStyles->count_styles; ++i)
     {
@@ -411,16 +392,26 @@ static BOOL open_xim( Display *display )
     if (ximStyle == 0)
         ximStyle = ximStyleNone;
 
-    thread_data->xim = xim;
-
-    x11drv_client_call( client_ime_update_association, 0 );
-    return TRUE;
+    return xim;
 }
 
-static void open_xim_callback( Display *display, XPointer ptr, XPointer data )
+static void xim_open( Display *display, XPointer user, XPointer arg )
 {
-    if (open_xim( display ))
-        XUnregisterIMInstantiateCallback( display, NULL, NULL, NULL, open_xim_callback, NULL);
+    struct x11drv_thread_data *data = (void *)user;
+    TRACE( "display %p, data %p, arg %p\n", display, user, arg );
+    if (!(data->xim = xim_create( data ))) return;
+    XUnregisterIMInstantiateCallback( display, NULL, NULL, NULL, xim_open, user );
+
+    x11drv_client_call( client_ime_update_association, 0 );
+}
+
+static void xim_destroy( XIM xim, XPointer user, XPointer arg )
+{
+    struct x11drv_thread_data *data = x11drv_thread_data();
+    TRACE( "xim %p, user %p, arg %p\n", xim, user, arg );
+    if (data->xim != xim) return;
+    data->xim = NULL;
+    XRegisterIMInstantiateCallback( data->display, NULL, NULL, NULL, xim_open, user );
 }
 
 void xim_thread_attach( struct x11drv_thread_data *data )
@@ -434,8 +425,8 @@ void xim_thread_attach( struct x11drv_thread_data *data )
     for (i = 0; list && i < count; ++i) TRACE( "  %d: %s\n", i, list[i] );
     if (list) XFreeStringList( list );
 
-    if (!open_xim( display ))
-        XRegisterIMInstantiateCallback( display, NULL, NULL, NULL, open_xim_callback, NULL );
+    if ((data->xim = xim_create( data ))) x11drv_client_call( client_ime_update_association, 0 );
+    else XRegisterIMInstantiateCallback( display, NULL, NULL, NULL, xim_open, (XPointer)data );
 }
 
 static BOOL xic_destroy( XIC xic, XPointer user, XPointer arg )
