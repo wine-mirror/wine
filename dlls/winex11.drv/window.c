@@ -2312,28 +2312,6 @@ Window X11DRV_get_whole_window( HWND hwnd )
 
 
 /***********************************************************************
- *		X11DRV_get_ic
- *
- * Return the X input context associated with a window
- */
-XIC X11DRV_get_ic( HWND hwnd )
-{
-    struct x11drv_win_data *data = get_win_data( hwnd );
-    XIM xim;
-    XIC ret = 0;
-
-    if (data)
-    {
-        x11drv_thread_data()->last_xic_hwnd = hwnd;
-        ret = data->xic;
-        if (!ret && (xim = x11drv_thread_data()->xim)) ret = X11DRV_CreateIC( xim, hwnd, data );
-        release_win_data( data );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *		X11DRV_GetDC   (X11DRV.@)
  */
 void X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,

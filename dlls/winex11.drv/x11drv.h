@@ -641,7 +641,6 @@ struct x11drv_win_data
 extern struct x11drv_win_data *get_win_data( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void release_win_data( struct x11drv_win_data *data ) DECLSPEC_HIDDEN;
 extern Window X11DRV_get_whole_window( HWND hwnd ) DECLSPEC_HIDDEN;
-extern XIC X11DRV_get_ic( HWND hwnd ) DECLSPEC_HIDDEN;
 extern Window get_dummy_parent(void) DECLSPEC_HIDDEN;
 
 extern void sync_gl_drawable( HWND hwnd, BOOL known_child ) DECLSPEC_HIDDEN;
@@ -820,9 +819,9 @@ extern struct x11drv_display_device_handler desktop_handler DECLSPEC_HIDDEN;
 
 /* XIM support */
 extern BOOL xim_init( const WCHAR *input_style ) DECLSPEC_HIDDEN;
-extern XIC X11DRV_CreateIC( XIM xim, HWND hwnd, struct x11drv_win_data *data ) DECLSPEC_HIDDEN;
 extern void xim_thread_attach( struct x11drv_thread_data *data ) DECLSPEC_HIDDEN;
 extern void X11DRV_XIMLookupChars( const char *str, UINT count ) DECLSPEC_HIDDEN;
+extern XIC X11DRV_get_ic( HWND hwnd ) DECLSPEC_HIDDEN;
 
 #define XEMBED_MAPPED  (1 << 0)
 

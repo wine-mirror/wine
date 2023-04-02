@@ -448,7 +448,7 @@ static BOOL xic_destroy( XIC xic, XPointer user, XPointer arg )
     return TRUE;
 }
 
-XIC X11DRV_CreateIC( XIM xim, HWND hwnd, struct x11drv_win_data *data )
+static XIC xic_create( XIM xim, HWND hwnd, Window win )
 {
     XICCallback destroy = {.callback = xic_destroy, .client_data = (XPointer)hwnd};
     XICCallback preedit_caret = {.callback = xic_preedit_caret, .client_data = (XPointer)hwnd};
@@ -462,10 +462,9 @@ XIC X11DRV_CreateIC( XIM xim, HWND hwnd, struct x11drv_win_data *data )
     XPoint spot = {0};
     XVaNestedList preedit, status;
     XIC xic;
-    Window win = data->whole_window;
     XFontSet fontSet = x11drv_thread_data()->font_set;
 
-    TRACE( "xim %p, hwnd %p, data %p\n", xim, hwnd, data );
+    TRACE( "xim %p, hwnd %p/%lx\n", xim, hwnd, win );
 
     preedit = XVaCreateNestedList( 0, XNFontSet, fontSet,
                                    XNPreeditCaretCallback, &preedit_caret,
@@ -483,10 +482,23 @@ XIC X11DRV_CreateIC( XIM xim, HWND hwnd, struct x11drv_win_data *data )
                      XNClientWindow, win, XNFocusWindow, win, XNDestroyCallback, &destroy, NULL );
     TRACE( "created XIC %p\n", xic );
 
-    data->xic = xic;
-
     XFree( preedit );
     XFree( status );
 
     return xic;
+}
+
+XIC X11DRV_get_ic( HWND hwnd )
+{
+    struct x11drv_win_data *data;
+    XIM xim;
+    XIC ret;
+
+    if (!(data = get_win_data( hwnd ))) return 0;
+    x11drv_thread_data()->last_xic_hwnd = hwnd;
+    if (!(ret = data->xic) && (xim = x11drv_thread_data()->xim))
+        ret = data->xic = xic_create( xim, hwnd, data->whole_window );
+    release_win_data( data );
+
+    return ret;
 }
