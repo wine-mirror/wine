@@ -457,33 +457,10 @@ XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data)
     XIC xic;
     XICCallback destroy = {(XPointer)data, X11DRV_DestroyIC};
     XICCallback P_StateNotifyCB, P_StartCB, P_DoneCB, P_DrawCB, P_CaretCB;
-    LCID lcid;
     Window win = data->whole_window;
     XFontSet fontSet = x11drv_thread_data()->font_set;
 
-    TRACE("xim = %p\n", xim);
-
-    lcid = NtCurrentTeb()->CurrentLocale;
-    if (!lcid) NtQueryDefaultLocale( TRUE, &lcid );
-
-    /* use complex and slow XIC initialization method only for CJK */
-    switch (PRIMARYLANGID(LANGIDFROMLCID(lcid)))
-    {
-    case LANG_CHINESE:
-    case LANG_JAPANESE:
-    case LANG_KOREAN:
-        break;
-
-    default:
-        xic = XCreateIC(xim,
-                        XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
-                        XNClientWindow, win,
-                        XNFocusWindow, win,
-                        XNDestroyCallback, &destroy,
-                        NULL);
-        data->xic = xic;
-        return xic;
-    }
+    TRACE( "xim %p, data %p\n", xim, data );
 
     /* create callbacks */
     P_StateNotifyCB.client_data = (XPointer)data;
