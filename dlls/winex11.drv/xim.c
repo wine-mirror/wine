@@ -182,24 +182,30 @@ static int xic_preedit_draw( XIC xic, XPointer user, XPointer arg )
 
     if (!(text = params->text))
         X11DRV_ImmSetInternalString( params->chg_first, params->chg_length, NULL, 0 );
-    else if (!text->encoding_is_wchar)
+    else
     {
         size_t text_len;
         WCHAR *output;
+        char *str;
+        int len;
 
-        text_len = strlen( text->string.multi_byte );
+        if (!text->encoding_is_wchar) str = text->string.multi_byte;
+        else if ((len = wcstombs( NULL, text->string.wide_char, text->length )) < 0) str = NULL;
+        else if ((str = malloc( len + 1 )))
+        {
+            wcstombs( str, text->string.wide_char, len );
+            str[len] = 0;
+        }
+
+        text_len = str ? strlen( str ) : 0;
         if ((output = malloc( text_len * sizeof(WCHAR) )))
         {
-            text_len = ntdll_umbstowcs( text->string.multi_byte, text_len, output, text_len );
+            text_len = ntdll_umbstowcs( str, text_len, output, text_len );
             X11DRV_ImmSetInternalString( params->chg_first, params->chg_length, output, text_len );
             free( output );
         }
-    }
-    else
-    {
-        FIXME( "wchar PROBIBILY WRONG\n" );
-        X11DRV_ImmSetInternalString( params->chg_first, params->chg_length,
-                                     (WCHAR *)text->string.wide_char, text->length );
+
+        if (str != text->string.multi_byte) free( str );
     }
 
     x11drv_client_call( client_ime_set_cursor_pos, params->caret );
