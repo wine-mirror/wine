@@ -49,17 +49,8 @@ static DWORD dwCompStringLength = 0;
 static LPBYTE CompositionString = NULL;
 static DWORD dwCompStringSize = 0;
 
-#define STYLE_OFFTHESPOT (XIMPreeditArea | XIMStatusArea)
-#define STYLE_OVERTHESPOT (XIMPreeditPosition | XIMStatusNothing)
-#define STYLE_ROOT (XIMPreeditNothing | XIMStatusNothing)
-/* this uses all the callbacks to utilize full IME support */
-#define STYLE_CALLBACK (XIMPreeditCallbacks | XIMStatusNothing)
-/* in order to enable deadkey support */
-#define STYLE_NONE (XIMPreeditNothing | XIMStatusNothing)
-
-static XIMStyle ximStyle = 0;
-static XIMStyle ximStyleRoot = 0;
-static XIMStyle ximStyleRequest = STYLE_CALLBACK;
+static XIMStyle input_style = 0;
+static XIMStyle input_style_req = XIMPreeditCallbacks | XIMStatusCallbacks;
 
 static const char *debugstr_xim_style( XIMStyle style )
 {
@@ -338,13 +329,6 @@ BOOL xim_init( const WCHAR *input_style )
     static const WCHAR overthespotW[] = {'o','v','e','r','t','h','e','s','p','o','t',0};
     static const WCHAR rootW[] = {'r','o','o','t',0};
 
-    if (!wcsicmp( input_style, offthespotW ))
-        ximStyleRequest = STYLE_OFFTHESPOT;
-    else if (!wcsicmp( input_style, overthespotW ))
-        ximStyleRequest = STYLE_OVERTHESPOT;
-    else if (!wcsicmp( input_style, rootW ))
-        ximStyleRequest = STYLE_ROOT;
-
     if (!XSupportsLocale())
     {
         WARN("X does not support locale.\n");
@@ -355,6 +339,17 @@ BOOL xim_init( const WCHAR *input_style )
         WARN("Could not set locale modifiers.\n");
         return FALSE;
     }
+
+    if (!wcsicmp( input_style, offthespotW ))
+        input_style_req = XIMPreeditArea | XIMStatusArea;
+    else if (!wcsicmp( input_style, overthespotW ))
+        input_style_req = XIMPreeditPosition | XIMStatusNothing;
+    else if (!wcsicmp( input_style, rootW ))
+        input_style_req = XIMPreeditNothing | XIMStatusNothing;
+
+    TRACE( "requesting %s style %#lx %s\n", debugstr_w(input_style), input_style_req,
+           debugstr_xim_style( input_style_req ) );
+
     return TRUE;
 }
 
@@ -364,13 +359,12 @@ static void xim_destroy( XIM xim, XPointer user, XPointer arg );
 static XIM xim_create( struct x11drv_thread_data *data )
 {
     XIMCallback destroy = {.callback = xim_destroy, .client_data = (XPointer)data};
-    Display *display = data->display;
-    XIMStyle ximStyleNone;
-    XIMStyles *ximStyles = NULL;
+    XIMStyle input_style_fallback = XIMPreeditNone | XIMStatusNone;
+    XIMStyles *styles = NULL;
     INT i;
     XIM xim;
 
-    if (!(xim = XOpenIM( display, NULL, NULL, NULL )))
+    if (!(xim = XOpenIM( data->display, NULL, NULL, NULL )))
     {
         WARN("Could not open input method.\n");
         return NULL;
@@ -382,50 +376,28 @@ static XIM xim_create( struct x11drv_thread_data *data )
     TRACE( "xim %p, XDisplayOfIM %p, XLocaleOfIM %s\n", xim, XDisplayOfIM( xim ),
            debugstr_a(XLocaleOfIM( xim )) );
 
-    XGetIMValues(xim, XNQueryInputStyle, &ximStyles, NULL);
-    if (ximStyles == 0)
+    XGetIMValues( xim, XNQueryInputStyle, &styles, NULL );
+    if (!styles)
     {
         WARN( "Could not find supported input style.\n" );
         XCloseIM( xim );
         return NULL;
     }
 
-    ximStyleRoot = 0;
-    ximStyleNone = 0;
-    ximStyle = 0;
-
-    TRACE( "input styles count %u\n", ximStyles->count_styles );
-    for (i = 0; i < ximStyles->count_styles; ++i)
+    TRACE( "input styles count %u\n", styles->count_styles );
+    for (i = 0, input_style = 0; i < styles->count_styles; ++i)
     {
-        XIMStyle style = ximStyles->supported_styles[i];
+        XIMStyle style = styles->supported_styles[i];
         TRACE( "  %u: %#lx %s\n", i, style, debugstr_xim_style( style ) );
 
-        if (!ximStyle && (ximStyles->supported_styles[i] ==
-                            ximStyleRequest))
-        {
-            ximStyle = ximStyleRequest;
-            TRACE("Setting Style: ximStyle = ximStyleRequest\n");
-        }
-        else if (!ximStyleRoot &&(ximStyles->supported_styles[i] ==
-                 STYLE_ROOT))
-        {
-            ximStyleRoot = STYLE_ROOT;
-            TRACE("Setting Style: ximStyleRoot = STYLE_ROOT\n");
-        }
-        else if (!ximStyleNone && (ximStyles->supported_styles[i] ==
-                 STYLE_NONE))
-        {
-            TRACE("Setting Style: ximStyleNone = STYLE_NONE\n");
-            ximStyleNone = STYLE_NONE;
-        }
+        if (style == input_style_req) input_style = style;
+        if (!input_style && (style & input_style_req)) input_style = style;
+        if (input_style_fallback > style) input_style_fallback = style;
     }
-    XFree(ximStyles);
+    XFree(styles);
 
-    if (ximStyle == 0)
-        ximStyle = ximStyleRoot;
-
-    if (ximStyle == 0)
-        ximStyle = ximStyleNone;
+    if (!input_style) input_style = input_style_fallback;
+    TRACE( "selected style %#lx %s\n", input_style, debugstr_xim_style( input_style ) );
 
     return xim;
 }
@@ -511,7 +483,7 @@ XIC X11DRV_CreateIC( XIM xim, HWND hwnd, struct x11drv_win_data *data )
                                   XNStatusDoneCallback, &status_done,
                                   XNStatusDrawCallback, &status_draw,
                                   NULL );
-    xic = XCreateIC( xim, XNInputStyle, ximStyle, XNPreeditAttributes, preedit, XNStatusAttributes, status,
+    xic = XCreateIC( xim, XNInputStyle, input_style, XNPreeditAttributes, preedit, XNStatusAttributes, status,
                      XNClientWindow, win, XNFocusWindow, win, XNDestroyCallback, &destroy, NULL );
     TRACE( "created XIC %p\n", xic );
 
