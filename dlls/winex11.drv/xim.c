@@ -215,46 +215,45 @@ static int xic_preedit_draw( XIC xic, XPointer user, XPointer arg )
 
 static int xic_preedit_caret( XIC xic, XPointer user, XPointer arg )
 {
-    XIMPreeditCaretCallbackStruct *P_C = (void *)arg;
+    XIMPreeditCaretCallbackStruct *params = (void *)arg;
     HWND hwnd = (HWND)user;
+    int pos;
 
     TRACE( "xic %p, hwnd %p, arg %p\n", xic, hwnd, arg );
 
-    if (P_C)
+    if (!params) return 0;
+
+    pos = x11drv_client_call( client_ime_get_cursor_pos, 0 );
+    switch (params->direction)
     {
-        int pos = x11drv_client_call( client_ime_get_cursor_pos, 0 );
-        TRACE("pos: %d\n", pos);
-        switch(P_C->direction)
-        {
-            case XIMForwardChar:
-            case XIMForwardWord:
-                pos++;
-                break;
-            case XIMBackwardChar:
-            case XIMBackwardWord:
-                pos--;
-                break;
-            case XIMLineStart:
-                pos = 0;
-                break;
-            case XIMAbsolutePosition:
-                pos = P_C->position;
-                break;
-            case XIMDontChange:
-                P_C->position = pos;
-                return 0;
-            case XIMCaretUp:
-            case XIMCaretDown:
-            case XIMPreviousLine:
-            case XIMNextLine:
-            case XIMLineEnd:
-                FIXME("Not implemented\n");
-                break;
-        }
-        x11drv_client_call( client_ime_set_cursor_pos, pos );
-        P_C->position = pos;
+    case XIMForwardChar:
+    case XIMForwardWord:
+        pos++;
+        break;
+    case XIMBackwardChar:
+    case XIMBackwardWord:
+        pos--;
+        break;
+    case XIMLineStart:
+        pos = 0;
+        break;
+    case XIMAbsolutePosition:
+        pos = params->position;
+        break;
+    case XIMDontChange:
+        params->position = pos;
+        return 0;
+    case XIMCaretUp:
+    case XIMCaretDown:
+    case XIMPreviousLine:
+    case XIMNextLine:
+    case XIMLineEnd:
+        FIXME( "Not implemented\n" );
+        break;
     }
-    TRACE("Finished\n");
+    x11drv_client_call( client_ime_set_cursor_pos, pos );
+    params->position = pos;
+
     return 0;
 }
 
