@@ -69,7 +69,6 @@ struct process_text_input_params
     UINT scan;
     UINT repeat;
     const BYTE *key_state;
-    int *done;
 };
 
 /* macdrv_init params */

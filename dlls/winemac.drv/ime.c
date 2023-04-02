@@ -628,7 +628,7 @@ UINT WINAPI ImeToAsciiEx(UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
     LPIMEPRIVATE myPrivate;
     HWND hwnd;
     UINT repeat;
-    int done = 0;
+    UINT ret;
 
     TRACE("uVKey 0x%04x uScanCode 0x%04x fuState %u hIMC %p\n", uVKey, uScanCode, fuState, hIMC);
 
@@ -660,13 +660,9 @@ UINT WINAPI ImeToAsciiEx(UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
     params.scan = uScanCode;
     params.repeat = repeat;
     params.key_state = lpbKeyState;
-    params.done = &done;
-    MACDRV_CALL(ime_process_text_input, &params);
+    ret = MACDRV_CALL(ime_process_text_input, &params);
 
-    while (!done)
-        MsgWaitForMultipleObjectsEx(0, NULL, INFINITE, QS_POSTMESSAGE | QS_SENDMESSAGE, 0);
-
-    if (done < 0)
+    if (!ret)
     {
         UINT msgs = 0;
         UINT msg = (uScanCode & 0x8000) ? WM_KEYUP : WM_KEYDOWN;

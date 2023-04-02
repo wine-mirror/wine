@@ -1197,7 +1197,7 @@ NTSTATUS macdrv_ime_process_text_input(void *arg)
     void *himc = UlongToHandle(params->himc);
     const BYTE *key_state = params->key_state;
     unsigned int flags;
-    int keyc;
+    int keyc, done = 0;
 
     TRACE("vkey 0x%04x scan 0x%04x repeat %u himc %p\n", params->vkey, params->scan,
           params->repeat, himc);
@@ -1224,17 +1224,15 @@ NTSTATUS macdrv_ime_process_text_input(void *arg)
     for (keyc = 0; keyc < ARRAY_SIZE(thread_data->keyc2vkey); keyc++)
         if (thread_data->keyc2vkey[keyc] == params->vkey) break;
 
-    if (keyc >= ARRAY_SIZE(thread_data->keyc2vkey))
-    {
-        *params->done = -1;
-        return 0;
-    }
+    if (keyc >= ARRAY_SIZE(thread_data->keyc2vkey)) return 0;
 
     TRACE("flags 0x%08x keyc 0x%04x\n", flags, keyc);
 
     macdrv_send_text_input_event(((params->scan & 0x8000) == 0), flags, params->repeat, keyc,
-                                 himc, params->done);
-    return 0;
+                                 himc, &done);
+    while (!done) NtUserMsgWaitForMultipleObjectsEx(0, NULL, INFINITE, QS_POSTMESSAGE | QS_SENDMESSAGE, 0);
+
+    return done > 0;
 }
 
 
