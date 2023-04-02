@@ -1194,12 +1194,13 @@ NTSTATUS macdrv_ime_process_text_input(void *arg)
 {
     struct process_text_input_params *params = arg;
     struct macdrv_thread_data *thread_data = macdrv_thread_data();
+    void *himc = UlongToHandle(params->himc);
     const BYTE *key_state = params->key_state;
     unsigned int flags;
     int keyc;
 
     TRACE("vkey 0x%04x scan 0x%04x repeat %u himc %p\n", params->vkey, params->scan,
-          params->repeat, params->himc);
+          params->repeat, himc);
 
     flags = thread_data->last_modifiers;
     if (key_state[VK_SHIFT] & 0x80)
@@ -1232,7 +1233,7 @@ NTSTATUS macdrv_ime_process_text_input(void *arg)
     TRACE("flags 0x%08x keyc 0x%04x\n", flags, keyc);
 
     macdrv_send_text_input_event(((params->scan & 0x8000) == 0), flags, params->repeat, keyc,
-                                 params->himc, params->done);
+                                 himc, params->done);
     return 0;
 }
 

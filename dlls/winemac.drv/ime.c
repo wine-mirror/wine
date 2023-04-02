@@ -649,11 +649,11 @@ UINT WINAPI ImeToAsciiEx(UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
     UnlockRealIMC(hIMC);
 
     TRACE("Processing Mac 0x%04x\n", vkey);
+    params.himc = HandleToULong(hIMC);
     params.vkey = uVKey;
     params.scan = uScanCode;
     params.repeat = repeat;
     params.key_state = lpbKeyState;
-    params.himc = hIMC;
     params.done = &done;
     MACDRV_CALL(ime_process_text_input, &params);
 

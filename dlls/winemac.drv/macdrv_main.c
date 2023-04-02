@@ -667,20 +667,20 @@ static NTSTATUS wow64_ime_process_text_input(void *arg)
 {
     struct
     {
+        UINT himc;
         UINT vkey;
         UINT scan;
         UINT repeat;
         ULONG key_state;
-        ULONG himc;
         ULONG done;
     } *params32 = arg;
     struct process_text_input_params params;
 
+    params.himc = params32->himc;
     params.vkey = params32->vkey;
     params.scan = params32->scan;
     params.repeat = params32->repeat;
     params.key_state = UlongToPtr(params32->key_state);
-    params.himc = UlongToPtr(params32->himc);
     params.done = UlongToPtr(params32->done);
     return macdrv_ime_process_text_input(&params);
 }

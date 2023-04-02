@@ -63,11 +63,11 @@ struct dnd_have_format_params
 /* macdrv_ime_process_text_input params */
 struct process_text_input_params
 {
+    UINT himc;
     UINT vkey;
     UINT scan;
     UINT repeat;
     const BYTE *key_state;
-    void *himc;
     int *done;
 };
 
@@ -177,7 +177,7 @@ struct ime_query_char_rect_params
 {
     UINT32 hwnd;
     UINT32 location;
-    UINT64 himc;
+    UINT32 himc;
     UINT64 result; /* FIXME: Use NtCallbackReturn instead */
     UINT32 length;
 };
@@ -187,7 +187,7 @@ struct ime_set_text_params
 {
     UINT32 hwnd;
     UINT32 cursor_pos;
-    UINT64 himc;
+    UINT32 himc;
     UINT32 complete;
     WCHAR text[1];
 };
