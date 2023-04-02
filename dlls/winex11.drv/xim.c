@@ -452,8 +452,7 @@ static BOOL X11DRV_DestroyIC(XIC xic, XPointer p, XPointer data)
 XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data)
 {
     XPoint spot = {0};
-    XVaNestedList preedit = NULL;
-    XVaNestedList status = NULL;
+    XVaNestedList preedit, status;
     XIC xic;
     XICCallback destroy = {(XPointer)data, X11DRV_DestroyIC};
     XICCallback P_StateNotifyCB, P_StartCB, P_DoneCB, P_DrawCB, P_CaretCB;
@@ -474,88 +473,22 @@ XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data)
     P_DrawCB.callback = (XICProc)XIMPreEditDrawCallback;
     P_CaretCB.callback = (XICProc)XIMPreEditCaretCallback;
 
-    if ((ximStyle & (XIMPreeditNothing | XIMPreeditNone)) == 0)
-    {
-        preedit = XVaCreateNestedList(0,
-                        XNFontSet, fontSet,
-                        XNSpotLocation, &spot,
-                        XNPreeditStateNotifyCallback, &P_StateNotifyCB,
-                        XNPreeditStartCallback, &P_StartCB,
-                        XNPreeditDoneCallback, &P_DoneCB,
-                        XNPreeditDrawCallback, &P_DrawCB,
-                        XNPreeditCaretCallback, &P_CaretCB,
-                        NULL);
-        TRACE("preedit = %p\n", preedit);
-    }
-    else
-    {
-        preedit = XVaCreateNestedList(0,
-                        XNPreeditStateNotifyCallback, &P_StateNotifyCB,
-                        XNPreeditStartCallback, &P_StartCB,
-                        XNPreeditDoneCallback, &P_DoneCB,
-                        XNPreeditDrawCallback, &P_DrawCB,
-                        XNPreeditCaretCallback, &P_CaretCB,
-                        NULL);
+    preedit = XVaCreateNestedList( 0, XNFontSet, fontSet,
+                                   XNPreeditCaretCallback, &P_CaretCB,
+                                   XNPreeditDoneCallback, &P_DoneCB,
+                                   XNPreeditDrawCallback, &P_DrawCB,
+                                   XNPreeditStartCallback, &P_StartCB,
+                                   XNPreeditStateNotifyCallback, &P_StateNotifyCB,
+                                   XNSpotLocation, &spot, NULL );
+    status = XVaCreateNestedList( 0, XNFontSet, fontSet, NULL );
+    xic = XCreateIC( xim, XNInputStyle, ximStyle, XNPreeditAttributes, preedit, XNStatusAttributes, status,
+                     XNClientWindow, win, XNFocusWindow, win, XNDestroyCallback, &destroy, NULL );
+    TRACE( "created XIC %p\n", xic );
 
-        TRACE("preedit = %p\n", preedit);
-    }
-
-    if ((ximStyle & (XIMStatusNothing | XIMStatusNone)) == 0)
-    {
-        status = XVaCreateNestedList(0,
-            XNFontSet, fontSet,
-            NULL);
-        TRACE("status = %p\n", status);
-     }
-
-    if (preedit != NULL && status != NULL)
-    {
-        xic = XCreateIC(xim,
-              XNInputStyle, ximStyle,
-              XNPreeditAttributes, preedit,
-              XNStatusAttributes, status,
-              XNClientWindow, win,
-              XNFocusWindow, win,
-              XNDestroyCallback, &destroy,
-              NULL);
-     }
-    else if (preedit != NULL)
-    {
-        xic = XCreateIC(xim,
-              XNInputStyle, ximStyle,
-              XNPreeditAttributes, preedit,
-              XNClientWindow, win,
-              XNFocusWindow, win,
-              XNDestroyCallback, &destroy,
-              NULL);
-    }
-    else if (status != NULL)
-    {
-        xic = XCreateIC(xim,
-              XNInputStyle, ximStyle,
-              XNStatusAttributes, status,
-              XNClientWindow, win,
-              XNFocusWindow, win,
-              XNDestroyCallback, &destroy,
-              NULL);
-    }
-    else
-    {
-        xic = XCreateIC(xim,
-              XNInputStyle, ximStyle,
-              XNClientWindow, win,
-              XNFocusWindow, win,
-              XNDestroyCallback, &destroy,
-              NULL);
-    }
-
-    TRACE("xic = %p\n", xic);
     data->xic = xic;
 
-    if (preedit != NULL)
-        XFree(preedit);
-    if (status != NULL)
-        XFree(status);
+    XFree( preedit );
+    XFree( status );
 
     return xic;
 }
