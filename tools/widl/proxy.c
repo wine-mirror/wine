@@ -298,6 +298,7 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
   if (has_ret) {
     indent++;
     proxy_free_variables( type_function_get_args(func->declspec.type), "" );
+    print_proxy( "/* coverity[uninit_use_in_call:SUPPRESS] */\n" );
     print_proxy( "_RetVal = NdrProxyErrorHandler(RpcExceptionCode());\n" );
     indent--;
   }
