@@ -3033,6 +3033,7 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
 
     GetKeyboardState(state);
     scancode = lKeyData >> 0x10 & 0xff;
+    uVirtKey = data->lastVK;
 
     list = calloc( list_count, sizeof(TRANSMSG) + sizeof(DWORD) );
     list->uMsgCount = list_count;
@@ -3047,15 +3048,12 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
             ToUnicodeEx(data->lastVK, scancode, state, &chr, 1, 0, GetKeyboardLayout(0));
         uVirtKey = MAKELONG(data->lastVK,chr);
     }
-    else
-        uVirtKey = data->lastVK;
 
     msg_count = ime->pImeToAsciiEx( uVirtKey, scancode, state, list, 0, data->handle );
     TRACE("%i messages generated\n",msg_count);
-    if (msg_count && msg_count <= list_count)
-        for (i = 0; i < msg_count; i++) imc_post_message( data, list->TransMsg + i );
-    else if (msg_count > list_count)
-        ImmGenerateMessage( data->handle );
+
+    if (msg_count > list_count) ImmGenerateMessage( data->handle );
+    else for (i = 0; i < msg_count; i++) imc_post_message( data, list->TransMsg + i );
 
     free( list );
 
