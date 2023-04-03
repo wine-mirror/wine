@@ -259,24 +259,6 @@ float CDECL _nextafterf( float x, float y )
     return y;
 }
 
-/* Copied from musl: src/math/ilogbf.c */
-static int __ilogbf(float x)
-{
-    union { float f; UINT32 i; } u = { x };
-    int e = u.i >> 23 & 0xff;
-
-    if (!e)
-    {
-        u.i <<= 9;
-        if (u.i == 0) return FP_ILOGB0;
-        /* subnormal x */
-        for (e = -0x7f; u.i >> 31 == 0; e--, u.i <<= 1);
-        return e;
-    }
-    if (e == 0xff) return u.i << 9 ? FP_ILOGBNAN : INT_MAX;
-    return e - 0x7f;
-}
-
 /*********************************************************************
  *      _logbf (MSVCRT.@)
  *
@@ -290,7 +272,7 @@ float CDECL _logbf(float x)
         *_errno() = ERANGE;
         return -1 / (x * x);
     }
-    return __ilogbf(x);
+    return ilogbf(x);
 }
 
 #endif
@@ -4522,24 +4504,6 @@ __int64 CDECL _abs64( __int64 n )
     return n >= 0 ? n : -n;
 }
 
-/* Copied from musl: src/math/ilogb.c */
-static int __ilogb(double x)
-{
-    union { double f; UINT64 i; } u = { x };
-    int e = u.i >> 52 & 0x7ff;
-
-    if (!e)
-    {
-        u.i <<= 12;
-        if (u.i == 0) return FP_ILOGB0;
-        /* subnormal x */
-        for (e = -0x3ff; u.i >> 63 == 0; e--, u.i <<= 1);
-        return e;
-    }
-    if (e == 0x7ff) return u.i << 12 ? FP_ILOGBNAN : INT_MAX;
-    return e - 0x3ff;
-}
-
 /*********************************************************************
  *		_logb (MSVCRT.@)
  *
@@ -4551,7 +4515,7 @@ double CDECL _logb(double x)
         return x * x;
     if (x == 0)
         return math_error(_SING, "_logb", x, 0, -1 / (x * x));
-    return __ilogb(x);
+    return ilogb(x);
 }
 
 /*********************************************************************
@@ -9866,19 +9830,4 @@ double CDECL MSVCR120_creal(_Dcomplex z)
     return z._Val[0];
 }
 
-/*********************************************************************
- *      ilogb (MSVCR120.@)
- */
-int CDECL ilogb(double x)
-{
-    return __ilogb(x);
-}
-
-/*********************************************************************
- *      ilogbf (MSVCR120.@)
- */
-int CDECL ilogbf(float x)
-{
-    return __ilogbf(x);
-}
 #endif /* _MSVCR_VER>=120 */
