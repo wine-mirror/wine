@@ -46,11 +46,15 @@ namespace Windows.UI.Composition {
     interface ICompositionSurfaceBrush;
     interface ICompositionSurfaceBrush2;
     interface ICompositionSurfaceBrush3;
+    interface ISpriteVisual;
+    interface ISpriteVisual2;
 
     runtimeclass CompositionBrush;
     runtimeclass CompositionEasingFunction;
     runtimeclass CompositionObject;
     runtimeclass CompositionSurfaceBrush;
+    runtimeclass ContainerVisual;
+    runtimeclass SpriteVisual;
 
     declare {
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.UI.Composition.ICompositionSurface *>;
@@ -157,6 +161,17 @@ namespace Windows.UI.Composition {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.SpriteVisual),
+        uuid(08e05581-1ad1-4f97-9757-402d76e4233b)
+    ]
+    interface ISpriteVisual : IInspectable
+    {
+        [propget] HRESULT Brush([out, retval] Windows.UI.Composition.CompositionBrush **value);
+        [propput] HRESULT Brush([in] Windows.UI.Composition.CompositionBrush *value);
+    }
+
+    [
         composable(Windows.UI.Composition.ICompositionBrushFactory, public, Windows.Foundation.UniversalApiContract, 2.0),
         contract(Windows.Foundation.UniversalApiContract, 2.0),
         marshaling_behavior(agile),
@@ -189,5 +204,16 @@ namespace Windows.UI.Composition {
         [default] interface Windows.UI.Composition.ICompositionSurfaceBrush;
         [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionSurfaceBrush2;
         [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Composition.ICompositionSurfaceBrush3;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass SpriteVisual : Windows.UI.Composition.ContainerVisual
+    {
+        [default] interface Windows.UI.Composition.ISpriteVisual;
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ISpriteVisual2;
     }
 }
