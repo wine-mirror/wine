@@ -983,16 +983,7 @@ float CDECL cosf( float x )
     }
 }
 
-/* Copied from musl: src/math/__expo2f.c */
-static float __expo2f(float x, float sign)
-{
-    static const int k = 235;
-    static const float kln2 = 0x1.45c778p+7f;
-    float scale;
-
-    *(UINT32*)&scale = (UINT32)(0x7f + k/2) << 23;
-    return expf(x - kln2) * (sign * scale) * scale;
-}
+extern float __expo2f(float x, float sign);
 
 /*********************************************************************
  *      coshf (MSVCRT.@)
@@ -2237,15 +2228,7 @@ double CDECL cos( double x )
     }
 }
 
-static double __expo2(double x, double sign)
-{
-    static const int k = 2043;
-    static const double kln2 = 0x1.62066151add8bp+10;
-    double scale;
-
-    *(UINT64*)&scale = (UINT64)(0x3ff + k / 2) << 52;
-    return exp(x - kln2) * (sign * scale) * scale;
-}
+extern double __expo2(double x, double sign);
 
 /*********************************************************************
  *		cosh (MSVCRT.@)
