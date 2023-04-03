@@ -8858,30 +8858,6 @@ float CDECL erfcf(float x)
 }
 
 /*********************************************************************
- *      fdimf (MSVCR120.@)
- */
-float CDECL fdimf(float x, float y)
-{
-    if(isnan(x))
-        return x;
-    if(isnan(y))
-        return y;
-    return x>y ? x-y : 0;
-}
-
-/*********************************************************************
- *      fdim (MSVCR120.@)
- */
-double CDECL fdim(double x, double y)
-{
-    if(isnan(x))
-        return x;
-    if(isnan(y))
-        return y;
-    return x>y ? x-y : 0;
-}
-
-/*********************************************************************
  *      _fdsign (MSVCR120.@)
  */
 int CDECL _fdsign(float x)
