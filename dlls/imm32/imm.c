@@ -441,11 +441,14 @@ BOOL WINAPI ImmFreeLayout( HKL hkl )
 
     EnterCriticalSection( &ime_cs );
     if ((ime = find_ime_from_hkl( hkl )) && ime->refcount) ime = NULL;
-    if (ime) list_remove( &ime->entry );
+    if (ime)
+    {
+        list_remove( &ime->entry );
+        if (!ime->pImeDestroy( 0 )) WARN( "ImeDestroy failed\n" );
+    }
     LeaveCriticalSection( &ime_cs );
     if (!ime) return TRUE;
 
-    if (!ime->pImeDestroy( 0 )) WARN( "ImeDestroy failed\n" );
     FreeLibrary( ime->module );
     free( ime );
     return TRUE;
@@ -460,12 +463,11 @@ BOOL WINAPI ImmLoadIME( HKL hkl )
     TRACE( "hkl %p\n", hkl );
 
     EnterCriticalSection( &ime_cs );
-    ime = find_ime_from_hkl( hkl );
-    LeaveCriticalSection( &ime_cs );
-    if (ime) return TRUE;
-
-    if (!(ime = calloc( 1, sizeof(*ime) ))) return FALSE;
-    ime->hkl = hkl;
+    if ((ime = find_ime_from_hkl( hkl )) || !(ime = calloc( 1, sizeof(*ime) )))
+    {
+        LeaveCriticalSection( &ime_cs );
+        return !!ime;
+    }
 
     if (!ImmGetIMEFileNameW( hkl, buffer, MAX_PATH )) use_default_ime = TRUE;
     else if (!(ime->module = LoadLibraryW( buffer ))) use_default_ime = TRUE;
@@ -481,6 +483,7 @@ BOOL WINAPI ImmLoadIME( HKL hkl )
     if (!(ime->p##f = (void *)GetProcAddress( ime->module, #f )) &&      \
         !(ime->p##f = use_default_ime ? (void *)f : NULL))               \
     {                                                                    \
+        LeaveCriticalSection( &ime_cs );                                 \
         WARN( "Can't find function %s in HKL %p IME\n", #f, hkl );       \
         goto failed;                                                     \
     }
@@ -502,12 +505,16 @@ BOOL WINAPI ImmLoadIME( HKL hkl )
     LOAD_FUNCPTR( ImeGetImeMenuItems );
 #undef LOAD_FUNCPTR
 
-    if (!ime->pImeInquire( &ime->info, buffer, 0 )) goto failed;
+    ime->hkl = hkl;
+    if (!ime->pImeInquire( &ime->info, buffer, 0 ))
+    {
+        LeaveCriticalSection( &ime_cs );
+        goto failed;
+    }
 
     if (ime_is_unicode( ime )) lstrcpynW( ime->ui_class, buffer, ARRAY_SIZE(ime->ui_class) );
     else MultiByteToWideChar( CP_ACP, 0, (char *)buffer, -1, ime->ui_class, ARRAY_SIZE(ime->ui_class) );
 
-    EnterCriticalSection( &ime_cs );
     list_add_tail( &ime_list, &ime->entry );
     LeaveCriticalSection( &ime_cs );
 
