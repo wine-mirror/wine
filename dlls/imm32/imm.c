@@ -748,17 +748,11 @@ static void imc_send_message( struct imc *imc, TRANSMSG *message )
     SendMessageW( target, message->message, message->wParam, message->lParam );
 }
 
-static LRESULT ImmInternalSendIMENotify( struct imc *data, WPARAM notify, LPARAM lParam )
+static LRESULT imc_notify_ime( struct imc *imc, WPARAM notify, LPARAM lparam )
 {
     HWND target;
-
-    target = data->IMC.hWnd;
-    if (!target) target = GetFocus();
-
-    if (target)
-       return SendMessageW(target, WM_IME_NOTIFY, notify, lParam);
-
-    return 0;
+    if (!(target = imc->IMC.hWnd) && !(target = GetFocus())) return 0;
+    return SendMessageW( target, WM_IME_NOTIFY, notify, lparam );
 }
 
 /***********************************************************************
@@ -2368,7 +2362,7 @@ BOOL WINAPI ImmSetCandidateWindow(
 
     data->IMC.cfCandForm[lpCandidate->dwIndex] = *lpCandidate;
     ImmNotifyIME(hIMC, NI_CONTEXTUPDATED, 0, IMC_SETCANDIDATEPOS);
-    ImmInternalSendIMENotify(data, IMN_SETCANDIDATEPOS, 1 << lpCandidate->dwIndex);
+    imc_notify_ime( data, IMN_SETCANDIDATEPOS, 1 << lpCandidate->dwIndex );
 
     return TRUE;
 }
@@ -2393,7 +2387,7 @@ BOOL WINAPI ImmSetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
     MultiByteToWideChar(CP_ACP, 0, lplf->lfFaceName, -1, data->IMC.lfFont.W.lfFaceName,
                         LF_FACESIZE);
     ImmNotifyIME(hIMC, NI_CONTEXTUPDATED, 0, IMC_SETCOMPOSITIONFONT);
-    ImmInternalSendIMENotify(data, IMN_SETCOMPOSITIONFONT, 0);
+    imc_notify_ime( data, IMN_SETCOMPOSITIONFONT, 0 );
 
     return TRUE;
 }
@@ -2416,7 +2410,7 @@ BOOL WINAPI ImmSetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
 
     data->IMC.lfFont.W = *lplf;
     ImmNotifyIME(hIMC, NI_CONTEXTUPDATED, 0, IMC_SETCOMPOSITIONFONT);
-    ImmInternalSendIMENotify(data, IMN_SETCOMPOSITIONFONT, 0);
+    imc_notify_ime( data, IMN_SETCOMPOSITIONFONT, 0 );
 
     return TRUE;
 }
@@ -2575,7 +2569,7 @@ BOOL WINAPI ImmSetCompositionWindow(
 
     if (ui_hwnd && reshow) ShowWindow( ui_hwnd, SW_SHOWNOACTIVATE );
 
-    ImmInternalSendIMENotify(data, IMN_SETCOMPOSITIONWINDOW, 0);
+    imc_notify_ime( data, IMN_SETCOMPOSITIONWINDOW, 0 );
     return TRUE;
 }
 
@@ -2603,14 +2597,14 @@ BOOL WINAPI ImmSetConversionStatus(
         oldConversion = data->IMC.fdwConversion;
         data->IMC.fdwConversion = fdwConversion;
         ImmNotifyIME(hIMC, NI_CONTEXTUPDATED, oldConversion, IMC_SETCONVERSIONMODE);
-        ImmInternalSendIMENotify(data, IMN_SETCONVERSIONMODE, 0);
+        imc_notify_ime( data, IMN_SETCONVERSIONMODE, 0 );
     }
     if ( fdwSentence != data->IMC.fdwSentence )
     {
         oldSentence = data->IMC.fdwSentence;
         data->IMC.fdwSentence = fdwSentence;
         ImmNotifyIME(hIMC, NI_CONTEXTUPDATED, oldSentence, IMC_SETSENTENCEMODE);
-        ImmInternalSendIMENotify(data, IMN_SETSENTENCEMODE, 0);
+        imc_notify_ime( data, IMN_SETSENTENCEMODE, 0 );
     }
 
     return TRUE;
@@ -2640,7 +2634,7 @@ BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
     {
         data->IMC.fOpen = fOpen;
         ImmNotifyIME( hIMC, NI_CONTEXTUPDATED, 0, IMC_SETOPENSTATUS);
-        ImmInternalSendIMENotify(data, IMN_SETOPENSTATUS, 0);
+        imc_notify_ime( data, IMN_SETOPENSTATUS, 0 );
     }
 
     return TRUE;
@@ -2667,7 +2661,7 @@ BOOL WINAPI ImmSetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
 
     data->IMC.ptStatusWndPos = *lpptPos;
     ImmNotifyIME( hIMC, NI_CONTEXTUPDATED, 0, IMC_SETSTATUSWINDOWPOS);
-    ImmInternalSendIMENotify(data, IMN_SETSTATUSWINDOWPOS, 0);
+    imc_notify_ime( data, IMN_SETSTATUSWINDOWPOS, 0 );
 
     return TRUE;
 }
