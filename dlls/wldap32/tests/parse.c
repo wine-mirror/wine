@@ -114,7 +114,7 @@ static void test_ldap_search_extW( LDAP *ld )
     ok( !ret, "ldap_search_extW failed %#lx\n", ret );
 }
 
-static void test_ldap_set_optionW( LDAP *ld )
+static void test_opt_referrals( LDAP *ld )
 {
     ULONG ret, oldvalue;
 
@@ -132,7 +132,7 @@ static void test_ldap_set_optionW( LDAP *ld )
     ok( !ret, "ldap_set_optionW failed %#lx\n", ret );
 }
 
-static void test_ldap_get_optionW( LDAP *ld )
+static void test_opt_protocol_version( LDAP *ld )
 {
     ULONG ret, version;
 
@@ -601,7 +601,7 @@ START_TEST (parse)
     test_ldap_delete( ld );
     test_ldap_parse_sort_control( ld );
     test_ldap_search_extW( ld );
-    test_ldap_get_optionW( ld );
-    test_ldap_set_optionW( ld );
+    test_opt_referrals( ld );
+    test_opt_protocol_version( ld );
     ldap_unbind( ld );
 }
