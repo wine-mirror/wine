@@ -124,9 +124,11 @@ static void wayland_add_device_modes(const struct gdi_device_manager *device_man
 
     RB_FOR_EACH_ENTRY(output_mode, &output->modes, struct wayland_output_mode, entry)
     {
-        DEVMODEW mode;
+        DEVMODEW mode = {.dmSize = sizeof(mode)};
+        BOOL mode_is_current = output_mode == output->current_mode;
         populate_devmode(output_mode, &mode);
-        device_manager->add_mode(&mode, FALSE, param);
+        if (mode_is_current) mode.dmFields |= DM_POSITION;
+        device_manager->add_mode(&mode, mode_is_current, param);
     }
 }
 
