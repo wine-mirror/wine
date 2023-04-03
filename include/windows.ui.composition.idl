@@ -34,21 +34,64 @@ import "windows.ui.idl";
 import "windows.ui.core.idl";
 
 namespace Windows.UI.Composition {
+    typedef enum CompositionBitmapInterpolationMode CompositionBitmapInterpolationMode;
+    typedef enum CompositionStretch CompositionStretch;
+
     interface ICompositionBrush;
     interface ICompositionBrushFactory;
     interface ICompositionEasingFunction;
     interface ICompositionEasingFunctionFactory;
     interface ICompositionEasingFunctionStatics;
     interface ICompositionSurface;
+    interface ICompositionSurfaceBrush;
+    interface ICompositionSurfaceBrush2;
+    interface ICompositionSurfaceBrush3;
 
     runtimeclass CompositionBrush;
     runtimeclass CompositionEasingFunction;
     runtimeclass CompositionObject;
+    runtimeclass CompositionSurfaceBrush;
 
     declare {
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.UI.Composition.ICompositionSurface *>;
         interface Windows.Foundation.IAsyncOperation<Windows.UI.Composition.ICompositionSurface *>;
     }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0)
+    ]
+    enum CompositionBitmapInterpolationMode
+    {
+        NearestNeighbor                = 0,
+        Linear                         = 1,
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)]
+        MagLinearMinLinearMipLinear    = 2,
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)]
+        MagLinearMinLinearMipNearest   = 3,
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)]
+        MagLinearMinNearestMipLinear   = 4,
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)]
+        MagLinearMinNearestMipNearest  = 5,
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)]
+        MagNearestMinLinearMipLinear   = 6,
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)]
+        MagNearestMinLinearMipNearest  = 7,
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)]
+        MagNearestMinNearestMipLinear  = 8,
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)]
+        MagNearestMinNearestMipNearest = 9,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0)
+    ]
+    enum CompositionStretch
+    {
+        None          = 0,
+        Fill          = 1,
+        Uniform       = 2,
+        UniformToFill = 3,
+    };
 
     [
         contract(Windows.Foundation.UniversalApiContract, 2.0),
@@ -95,6 +138,25 @@ namespace Windows.UI.Composition {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.CompositionSurfaceBrush),
+        uuid(ad016d79-1e4c-4c0d-9c29-83338c87c162)
+    ]
+    interface ICompositionSurfaceBrush : IInspectable
+    {
+        [propget] HRESULT BitmapInterpolationMode([out, retval] Windows.UI.Composition.CompositionBitmapInterpolationMode *value);
+        [propput] HRESULT BitmapInterpolationMode([in] Windows.UI.Composition.CompositionBitmapInterpolationMode value);
+        [propget] HRESULT HorizontalAlignmentRatio([out, retval] FLOAT *value);
+        [propput] HRESULT HorizontalAlignmentRatio([in] FLOAT value);
+        [propget] HRESULT Stretch([out, retval] Windows.UI.Composition.CompositionStretch *value);
+        [propput] HRESULT Stretch([in] Windows.UI.Composition.CompositionStretch value);
+        [propget] HRESULT Surface([out, retval] Windows.UI.Composition.ICompositionSurface **value);
+        [propput] HRESULT Surface([in] Windows.UI.Composition.ICompositionSurface *value);
+        [propget] HRESULT VerticalAlignmentRatio([out, retval] FLOAT *value);
+        [propput] HRESULT VerticalAlignmentRatio([in] FLOAT value);
+    }
+
+    [
         composable(Windows.UI.Composition.ICompositionBrushFactory, public, Windows.Foundation.UniversalApiContract, 2.0),
         contract(Windows.Foundation.UniversalApiContract, 2.0),
         marshaling_behavior(agile),
@@ -115,5 +177,17 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionEasingFunction : Windows.UI.Composition.CompositionObject
     {
         [default] interface Windows.UI.Composition.ICompositionEasingFunction;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass CompositionSurfaceBrush : Windows.UI.Composition.CompositionBrush
+    {
+        [default] interface Windows.UI.Composition.ICompositionSurfaceBrush;
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionSurfaceBrush2;
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Composition.ICompositionSurfaceBrush3;
     }
 }
