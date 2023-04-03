@@ -43,6 +43,7 @@ STRINGTABLE
 
    IDS_REMOVE, "&Remove"
    IDS_MODIFY_REMOVE, "&Modify/Remove"
+   IDS_WAIT_COMPLETE, "Please wait until the current uninstall/modify process is complete."
 }
 
 STRINGTABLE
