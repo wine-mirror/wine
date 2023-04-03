@@ -4126,6 +4126,14 @@ static void test_ImmSetConversionStatus(void)
     ok_eq( 0xdeadbeef, ctx->fdwConversion, UINT, "%#x" );
     ok_eq( 0xfeedcafe, ctx->fdwSentence, UINT, "%#x" );
 
+    ok_ret( 1, ImmSetConversionStatus( default_himc, 0xdeadbeef, 0xfeedcafe ) );
+    ok_seq( empty_sequence );
+
+    ok_ret( 1, ImmGetConversionStatus( default_himc, &conversion, NULL ) );
+    ok_eq( 0xdeadbeef, conversion, UINT, "%#x" );
+    ok_eq( 0xdeadbeef, ctx->fdwConversion, UINT, "%#x" );
+    ok_eq( 0xfeedcafe, ctx->fdwSentence, UINT, "%#x" );
+
     ok_seq( empty_sequence );
     ok_ret( 1, ImmSetConversionStatus( default_himc, 0, 0xfeedcafe ) );
     ok_seq( set_conversion_status_1_seq );
@@ -4139,6 +4147,14 @@ static void test_ImmSetConversionStatus(void)
     ok_seq( empty_sequence );
     ok_ret( 1, ImmSetConversionStatus( default_himc, ~0, ~0 ) );
     ok_seq( set_conversion_status_2_seq );
+
+    ok_ret( 1, ImmGetConversionStatus( default_himc, NULL, &sentence ) );
+    ok_eq( ~0, sentence, UINT, "%#x" );
+    ok_eq( ~0, ctx->fdwConversion, UINT, "%#x" );
+    ok_eq( ~0, ctx->fdwSentence, UINT, "%#x" );
+
+    ok_ret( 1, ImmSetConversionStatus( default_himc, ~0, ~0 ) );
+    ok_seq( empty_sequence );
 
     ok_ret( 1, ImmGetConversionStatus( default_himc, &conversion, &sentence ) );
     ok_eq( ~0, conversion, UINT, "%#x" );
@@ -4253,9 +4269,23 @@ static void test_ImmSetOpenStatus(void)
     ok_eq( 0xdeadbeef, status, UINT, "%#x" );
     ok_eq( 0xdeadbeef, ctx->fOpen, UINT, "%#x" );
 
+    ok_ret( 1, ImmSetOpenStatus( default_himc, 0xdeadbeef ) );
+    ok_seq( empty_sequence );
+
+    status = ImmGetOpenStatus( default_himc );
+    ok_eq( 0xdeadbeef, status, UINT, "%#x" );
+    ok_eq( 0xdeadbeef, ctx->fOpen, UINT, "%#x" );
+
     ok_seq( empty_sequence );
     ok_ret( 1, ImmSetOpenStatus( default_himc, ~0 ) );
     ok_seq( set_open_status_1_seq );
+
+    status = ImmGetOpenStatus( default_himc );
+    todo_wine ok_eq( ~0, status, UINT, "%#x" );
+    todo_wine ok_eq( ~0, ctx->fOpen, UINT, "%#x" );
+
+    ok_ret( 1, ImmSetOpenStatus( default_himc, ~0 ) );
+    ok_seq( empty_sequence );
 
     status = ImmGetOpenStatus( default_himc );
     todo_wine ok_eq( ~0, status, UINT, "%#x" );
