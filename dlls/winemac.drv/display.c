@@ -864,6 +864,33 @@ static DEVMODEW *display_get_modes(CGDirectDisplayID display_id, int *modes_coun
     return devmodes;
 }
 
+static void display_get_current_mode(struct macdrv_display *display, DEVMODEW *devmode)
+{
+    CGDisplayModeRef display_mode;
+    CGDirectDisplayID display_id;
+
+    display_id = display->displayID;
+    display_mode = CGDisplayCopyDisplayMode(display_id);
+
+    devmode->dmPosition.x = CGRectGetMinX(display->frame);
+    devmode->dmPosition.y = CGRectGetMinY(display->frame);
+    devmode->dmFields |= DM_POSITION;
+
+    display_mode_to_devmode(display_id, display_mode, devmode);
+    if (retina_enabled)
+    {
+        struct display_mode_descriptor *desc = create_original_display_mode_descriptor(display_id);
+        if (display_mode_matches_descriptor(display_mode, desc))
+        {
+            devmode->dmPelsWidth *= 2;
+            devmode->dmPelsHeight *= 2;
+        }
+        free_display_mode_descriptor(desc);
+    }
+
+    CFRelease(display_mode);
+}
+
 /***********************************************************************
  *              GetCurrentDisplaySettings  (MACDRV.@)
  *
@@ -872,8 +899,6 @@ BOOL macdrv_GetCurrentDisplaySettings(LPCWSTR devname, BOOL is_primary, LPDEVMOD
 {
     struct macdrv_display *displays = NULL;
     int num_displays, display_idx;
-    CGDisplayModeRef display_mode;
-    CGDirectDisplayID display_id;
     WCHAR *end;
 
     TRACE("%s, %u, %p + %hu\n", debugstr_w(devname), is_primary, devmode, devmode->dmSize);
@@ -890,26 +915,7 @@ BOOL macdrv_GetCurrentDisplaySettings(LPCWSTR devname, BOOL is_primary, LPDEVMOD
         return FALSE;
     }
 
-    display_id = displays[display_idx].displayID;
-    display_mode = CGDisplayCopyDisplayMode(display_id);
-
-    devmode->dmPosition.x = CGRectGetMinX(displays[display_idx].frame);
-    devmode->dmPosition.y = CGRectGetMinY(displays[display_idx].frame);
-    devmode->dmFields |= DM_POSITION;
-
-    display_mode_to_devmode(display_id, display_mode, devmode);
-    if (retina_enabled)
-    {
-        struct display_mode_descriptor *desc = create_original_display_mode_descriptor(display_id);
-        if (display_mode_matches_descriptor(display_mode, desc))
-        {
-            devmode->dmPelsWidth *= 2;
-            devmode->dmPelsHeight *= 2;
-        }
-        free_display_mode_descriptor(desc);
-    }
-
-    CFRelease(display_mode);
+    display_get_current_mode(&displays[display_idx], devmode);
     macdrv_free_displays(displays);
 
     TRACE("current mode -- %dx%d-%dx%dx%dbpp @%d Hz",
