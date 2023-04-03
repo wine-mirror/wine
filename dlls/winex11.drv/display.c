@@ -156,41 +156,6 @@ void X11DRV_Settings_Init(void)
     X11DRV_Settings_SetHandler(&nores_handler);
 }
 
-/* Initialize registry display settings when new display devices are added */
-void init_registry_display_settings(void)
-{
-    DEVMODEW dm = {.dmSize = sizeof(dm)};
-    DISPLAY_DEVICEW dd = {sizeof(dd)};
-    UNICODE_STRING device_name;
-    DWORD i = 0;
-    int ret;
-
-    while (!NtUserEnumDisplayDevices( NULL, i++, &dd, 0 ))
-    {
-        RtlInitUnicodeString( &device_name, dd.DeviceName );
-
-        /* Skip if the device already has registry display settings */
-        if (NtUserEnumDisplaySettings( &device_name, ENUM_REGISTRY_SETTINGS, &dm, 0 ))
-            continue;
-
-        if (!NtUserEnumDisplaySettings( &device_name, ENUM_CURRENT_SETTINGS, &dm, 0 ))
-        {
-            ERR("Failed to query current display settings for %s.\n", wine_dbgstr_w(dd.DeviceName));
-            continue;
-        }
-
-        TRACE("Device %s current display mode %ux%u %ubits %uHz at %d,%d.\n",
-              wine_dbgstr_w(dd.DeviceName), (int)dm.dmPelsWidth, (int)dm.dmPelsHeight,
-              (int)dm.dmBitsPerPel, (int)dm.dmDisplayFrequency, (int)dm.dmPosition.x, (int)dm.dmPosition.y);
-
-        ret = NtUserChangeDisplaySettings( &device_name, &dm, NULL,
-                                           CDS_GLOBAL | CDS_NORESET | CDS_UPDATEREGISTRY, NULL );
-        if (ret != DISP_CHANGE_SUCCESSFUL)
-            ERR("Failed to save registry display settings for %s, returned %d.\n",
-                wine_dbgstr_w(dd.DeviceName), ret);
-    }
-}
-
 static void set_display_depth(ULONG_PTR display_id, DWORD depth)
 {
     struct x11drv_display_depth *display_depth;
@@ -548,6 +513,25 @@ BOOL X11DRV_DisplayDevices_SupportEventHandlers(void)
 
 static BOOL force_display_devices_refresh;
 
+static const char *debugstr_devmodew( const DEVMODEW *devmode )
+{
+    char position[32] = {0};
+
+    if (devmode->dmFields & DM_POSITION)
+    {
+        snprintf( position, sizeof(position), " at (%d,%d)",
+                 (int)devmode->dmPosition.x, (int)devmode->dmPosition.y );
+    }
+
+    return wine_dbg_sprintf( "%ux%u %ubits %uHz rotated %u degrees%s",
+                             (unsigned int)devmode->dmPelsWidth,
+                             (unsigned int)devmode->dmPelsHeight,
+                             (unsigned int)devmode->dmBitsPerPel,
+                             (unsigned int)devmode->dmDisplayFrequency,
+                             (unsigned int)devmode->dmDisplayOrientation * 90,
+                             position );
+}
+
 BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )
 {
     struct x11drv_display_device_handler *handler;
@@ -579,6 +563,8 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
 
         for (adapter = 0; adapter < adapter_count; adapter++)
         {
+            DEVMODEW current_mode = {.dmSize = sizeof(current_mode)};
+
             device_manager->add_adapter( &adapters[adapter], param );
 
             if (!handler->get_monitors(adapters[adapter].id, &monitors, &monitor_count)) break;
@@ -590,13 +576,22 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
 
             handler->free_monitors(monitors, monitor_count);
 
+            settings_handler.get_current_mode( adapters[adapter].id, &current_mode );
             if (!settings_handler.get_modes( adapters[adapter].id, EDS_ROTATEDMODE, &modes, &mode_count ))
                 continue;
 
             for (mode = modes; mode_count; mode_count--)
             {
-                TRACE( "mode: %p\n", mode );
-                device_manager->add_mode( mode, FALSE, param );
+                if (is_same_devmode( mode, &current_mode ))
+                {
+                    TRACE( "current mode: %s\n", debugstr_devmodew( &current_mode ) );
+                    device_manager->add_mode( &current_mode, TRUE, param );
+                }
+                else
+                {
+                    TRACE( "mode: %s\n", debugstr_devmodew( mode ) );
+                    device_manager->add_mode( mode, FALSE, param );
+                }
                 mode = (DEVMODEW *)((char *)mode + sizeof(*modes) + modes[0].dmDriverExtra);
             }
 
