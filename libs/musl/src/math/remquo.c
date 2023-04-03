@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdint.h>
+#include "libm.h"
 
 double __cdecl remquo(double x, double y, int *quo)
 {
@@ -13,6 +14,7 @@ double __cdecl remquo(double x, double y, int *quo)
 	uint64_t uxi = ux.i;
 
 	*quo = 0;
+	if (y == 0 || isinf(x)) errno = EDOM;
 	if (uy.i<<1 == 0 || isnan(y) || ex == 0x7ff)
 		return (x*y)/(x*y);
 	if (ux.i<<1 == 0)

@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdint.h>
+#include "libm.h"
 
 float __cdecl remquof(float x, float y, int *quo)
 {
@@ -13,6 +14,7 @@ float __cdecl remquof(float x, float y, int *quo)
 	uint32_t uxi = ux.i;
 
 	*quo = 0;
+	if (y == 0 || isinf(x)) errno = EDOM;
 	if (uy.i<<1 == 0 || isnan(y) || ex == 0xff)
 		return (x*y)/(x*y);
 	if (ux.i<<1 == 0)
