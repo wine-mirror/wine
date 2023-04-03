@@ -39,10 +39,16 @@ namespace Windows.UI.Composition {
     interface ICompositionEasingFunction;
     interface ICompositionEasingFunctionFactory;
     interface ICompositionEasingFunctionStatics;
+    interface ICompositionSurface;
 
     runtimeclass CompositionBrush;
     runtimeclass CompositionEasingFunction;
     runtimeclass CompositionObject;
+
+    declare {
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.UI.Composition.ICompositionSurface *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.UI.Composition.ICompositionSurface *>;
+    }
 
     [
         contract(Windows.Foundation.UniversalApiContract, 2.0),
@@ -77,6 +83,14 @@ namespace Windows.UI.Composition {
         uuid(60840774-3da0-4949-8200-7206c00190a0)
     ]
     interface ICompositionEasingFunctionFactory : IInspectable
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        uuid(1527540d-42c7-47a6-a408-668f79a90dfb)
+    ]
+    interface ICompositionSurface : IInspectable
     {
     }
 
