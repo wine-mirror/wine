@@ -3,6 +3,7 @@
 float __cdecl coshf(float x)
 {
 	union {float f; uint32_t i;} u = {.f = x};
+	uint32_t sign = u.i & 0x80000000;
 	uint32_t w;
 	float t;
 
@@ -28,6 +29,10 @@ float __cdecl coshf(float x)
 	}
 
 	/* |x| > log(FLT_MAX) or nan */
+	if (w > 0x7f800000) {
+		u.i |= sign | 0x400000;
+		return u.f;
+	}
 	t = __expo2f(x, 1.0f);
 	return t;
 }

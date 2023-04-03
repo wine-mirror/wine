@@ -986,45 +986,6 @@ float CDECL cosf( float x )
 extern float __expo2f(float x, float sign);
 
 /*********************************************************************
- *      coshf (MSVCRT.@)
- *
- * Copied from musl: src/math/coshf.c
- */
-float CDECL coshf( float x )
-{
-    UINT32 ui = *(UINT32*)&x;
-    UINT32 sign = ui & 0x80000000;
-    float t;
-
-    /* |x| */
-    ui &= 0x7fffffff;
-    x = *(float*)&ui;
-
-    /* |x| < log(2) */
-    if (ui < 0x3f317217) {
-        if (ui < 0x3f800000 - (12 << 23)) {
-            fp_barrierf(x + 0x1p120f);
-            return 1;
-        }
-        t = expm1f(x);
-        return 1 + t * t / (2 * (1 + t));
-    }
-
-    /* |x| < log(FLT_MAX) */
-    if (ui < 0x42b17217) {
-        t = expf(x);
-        return 0.5f * (t + 1 / t);
-    }
-
-    /* |x| > log(FLT_MAX) or nan */
-    if (ui > 0x7f800000)
-        *(UINT32*)&t = ui | sign | 0x400000;
-    else
-        t = __expo2f(x, 1.0f);
-    return t;
-}
-
-/*********************************************************************
  *      expf (MSVCRT.@)
  */
 float CDECL expf( float x )
