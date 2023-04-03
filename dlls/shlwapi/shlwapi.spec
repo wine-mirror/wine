@@ -781,6 +781,7 @@
 @ stdcall -import StrDupW (wstr)
 @ stdcall StrFormatByteSize64A(int64 ptr long)
 @ stdcall StrFormatByteSizeA(long ptr long)
+@ stdcall StrFormatByteSizeEx(int64 long ptr long)
 @ stdcall StrFormatByteSizeW(int64 ptr long)
 @ stdcall StrFormatKBSizeA(int64 str long)
 @ stdcall StrFormatKBSizeW(int64 wstr long)
