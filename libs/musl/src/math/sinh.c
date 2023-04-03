@@ -7,6 +7,7 @@
 double __cdecl sinh(double x)
 {
 	union {double f; uint64_t i;} u = {.f = x};
+	uint64_t sign = u.i & 0x8000000000000000ULL;
 	uint32_t w;
 	double t, h, absx;
 
@@ -34,6 +35,10 @@ double __cdecl sinh(double x)
 
 	/* |x| > log(DBL_MAX) or nan */
 	/* note: the result is stored to handle overflow */
+	if (w > 0x7ff00000) {
+		u.i |= sign | 0x0008000000000000ULL;
+		return u.f;
+	}
 	t = __expo2(absx, 2*h);
 	return t;
 }

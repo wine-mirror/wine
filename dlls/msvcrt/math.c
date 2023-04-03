@@ -2153,8 +2153,6 @@ double CDECL cos( double x )
     }
 }
 
-extern double __expo2(double x, double sign);
-
 /* Copied from musl: src/math/exp_data.c */
 static const UINT64 exp_T[] = {
     0x0ULL, 0x3ff0000000000000ULL,
@@ -2858,44 +2856,6 @@ double CDECL sin( double x )
     case 2: return -__sin(y[0], y[1], 1);
     default: return -__cos(y[0], y[1]);
     }
-}
-
-/*********************************************************************
- *		sinh (MSVCRT.@)
- */
-double CDECL sinh( double x )
-{
-    UINT64 ux = *(UINT64*)&x;
-    UINT64 sign = ux & 0x8000000000000000ULL;
-    UINT32 w;
-    double t, h, absx;
-
-    h = 0.5;
-    if (ux >> 63)
-        h = -h;
-    /* |x| */
-    ux &= (UINT64)-1 / 2;
-    absx = *(double*)&ux;
-    w = ux >> 32;
-
-    /* |x| < log(DBL_MAX) */
-    if (w < 0x40862e42) {
-        t = expm1(absx);
-        if (w < 0x3ff00000) {
-            if (w < 0x3ff00000 - (26 << 20))
-                return x;
-            return h * (2 * t - t * t / (t + 1));
-        }
-        return h * (t + t / (t + 1));
-    }
-
-    /* |x| > log(DBL_MAX) or nan */
-    /* note: the result is stored to handle overflow */
-    if (ux > 0x7ff0000000000000ULL)
-        *(UINT64*)&t = ux | sign | 0x0008000000000000ULL;
-    else
-        t = __expo2(absx, 2 * h);
-    return t;
 }
 
 static BOOL sqrt_validate( double *x, BOOL update_sw )
