@@ -295,38 +295,6 @@ float CDECL _logbf(float x)
 
 #endif
 
-/* Copied from musl: src/math/scalbn.c */
-static double __scalbn(double x, int n)
-{
-    union {double f; UINT64 i;} u;
-    double y = x;
-
-    if (n > 1023) {
-        y *= 0x1p1023;
-        n -= 1023;
-        if (n > 1023) {
-            y *= 0x1p1023;
-            n -= 1023;
-            if (n > 1023)
-                n = 1023;
-        }
-    } else if (n < -1022) {
-        /* make sure final n < -53 to avoid double
-           rounding in the subnormal range */
-        y *= 0x1p-1022 * 0x1p53;
-        n += 1022 - 53;
-        if (n < -1022) {
-            y *= 0x1p-1022 * 0x1p53;
-            n += 1022 - 53;
-            if (n < -1022)
-                n = -1022;
-        }
-    }
-    u.i = (UINT64)(0x3ff + n) << 52;
-    x = y * u.f;
-    return x;
-}
-
 /* Copied from musl: src/math/__rem_pio2_large.c */
 static int __rem_pio2_large(double *x, double *y, int e0, int nx, int prec)
 {
@@ -391,7 +359,7 @@ recompute:
     }
 
     /* compute n */
-    z = __scalbn(z, q0); /* actual value of z */
+    z = scalbn(z, q0); /* actual value of z */
     z -= 8.0 * floor(z * 0.125); /* trim off integer >= 8 */
     n = (INT32)z;
     z -= (double)n;
@@ -431,7 +399,7 @@ recompute:
         if (ih == 2) {
             z = 1.0 - z;
             if (carry != 0)
-                z -= __scalbn(1.0, q0);
+                z -= scalbn(1.0, q0);
         }
     }
 
@@ -462,7 +430,7 @@ recompute:
             q0 -= 24;
         }
     } else { /* break z into 24-bit if necessary */
-        z = __scalbn(z, -q0);
+        z = scalbn(z, -q0);
         if (z >= 0x1p24) {
             fw = (double)(INT32)(0x1p-24 * z);
             iq[jz] = (INT32)(z - 0x1p24 * fw);
@@ -474,7 +442,7 @@ recompute:
     }
 
     /* convert integer "bit" chunk to floating-point value */
-    fw = __scalbn(1.0, q0);
+    fw = scalbn(1.0, q0);
     for (i = jz; i >= 0; i--) {
         q[i] = fw * (double)iq[i];
         fw *= 0x1p-24;
@@ -4853,7 +4821,7 @@ double CDECL fma( double x, double y, double z )
             r = i;
         }
     }
-    return __scalbn(r, e);
+    return scalbn(r, e);
 }
 
 /*********************************************************************
@@ -5338,7 +5306,7 @@ int * CDECL __fpecode(void)
  */
 double CDECL ldexp(double num, int exp)
 {
-  double z = __scalbn(num, exp);
+  double z = scalbn(num, exp);
 
   if (isfinite(num) && !isfinite(z))
     return math_error(_OVERFLOW, "ldexp", num, exp, z);
