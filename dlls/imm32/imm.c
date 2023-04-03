@@ -3016,12 +3016,19 @@ BOOL WINAPI ImmGenerateMessage(HIMC hIMC)
 */
 BOOL WINAPI ImmTranslateMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    static const DWORD list_count = 10;
+    union
+    {
+        struct
+        {
+            UINT uMsgCount;
+            TRANSMSG TransMsg[10];
+        };
+        TRANSMSGLIST list;
+    } buffer = {.uMsgCount = ARRAY_SIZE(buffer.TransMsg)};
     UINT scan, vkey, count, i;
     struct imc *data;
     struct ime *ime;
     BYTE state[256];
-    TRANSMSGLIST *list = NULL;
     WCHAR chr;
 
     TRACE( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
@@ -3034,9 +3041,6 @@ BOOL WINAPI ImmTranslateMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     scan = lparam >> 0x10 & 0xff;
     vkey = data->lastVK;
 
-    list = calloc( list_count, sizeof(TRANSMSG) + sizeof(DWORD) );
-    list->uMsgCount = list_count;
-
     if (ime->info.fdwProperty & IME_PROP_KBD_CHAR_FIRST)
     {
         if (!ime_is_unicode( ime )) ToAscii( data->lastVK, scan, state, &chr, 0 );
@@ -3044,13 +3048,11 @@ BOOL WINAPI ImmTranslateMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
         vkey = MAKELONG( data->lastVK, chr );
     }
 
-    count = ime->pImeToAsciiEx( vkey, scan, state, list, 0, data->handle );
+    count = ime->pImeToAsciiEx( vkey, scan, state, &buffer.list, 0, data->handle );
     TRACE( "%u messages generated\n", count );
 
-    if (count > list_count) ImmGenerateMessage( data->handle );
-    else for (i = 0; i < count; i++) imc_post_message( data, list->TransMsg + i );
-
-    free( list );
+    if (count > ARRAY_SIZE(buffer.TransMsg)) ImmGenerateMessage( data->handle );
+    else for (i = 0; i < count; i++) imc_post_message( data, buffer.TransMsg + i );
 
     data->lastVK = VK_PROCESSKEY;
 
