@@ -125,8 +125,10 @@ float __lgammaf_r(float x, int *signgamp)
 	if (sign) {
 		x = -x;
 		t = sin_pi(x);
-		if (t == 0.0f) /* -integer */
+		if (t == 0.0f) { /* -integer */
+			errno = ERANGE;
 			return 1.0f/(x-x);
+		}
 		if (t > 0.0f)
 			*signgamp = -1;
 		else

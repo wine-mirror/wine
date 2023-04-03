@@ -190,8 +190,10 @@ double __lgamma_r(double x, int *signgamp)
 	if (sign) {
 		x = -x;
 		t = sin_pi(x);
-		if (t == 0.0) /* -integer */
+		if (t == 0.0) { /* -integer */
+			errno = ERANGE;
 			return 1.0/(x-x);
+		}
 		if (t > 0.0)
 			*signgamp = -1;
 		else
