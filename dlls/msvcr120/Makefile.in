@@ -1,7 +1,7 @@
 EXTRADEFS = -D_CRTIMP=
 MODULE    = msvcr120.dll
 IMPORTLIB = msvcr120
-IMPORTS   = ntdll
+IMPORTS   = $(MUSL_PE_LIBS) ntdll
 DELAYIMPORTS = advapi32 user32
 PARENTSRC = ../msvcrt
 

@@ -2075,22 +2075,6 @@ float CDECL modff( float x, float *iptr )
 
 #endif
 
-#if !defined(__i386__) && !defined(__x86_64__) && (_MSVCR_VER == 0 || _MSVCR_VER >= 110)
-
-/*********************************************************************
- *      fabsf (MSVCRT.@)
- *
- * Copied from musl: src/math/fabsf.c
- */
-float CDECL fabsf( float x )
-{
-    union { float f; UINT32 i; } u = { x };
-    u.i &= 0x7fffffff;
-    return u.f;
-}
-
-#endif
-
 /*********************************************************************
  *		acos (MSVCRT.@)
  *
@@ -5092,18 +5076,6 @@ float CDECL fmaf( float x, float y, float z )
         u.i++;
     else
         u.i--;
-    return u.f;
-}
-
-/*********************************************************************
- *		fabs (MSVCRT.@)
- *
- * Copied from musl: src/math/fabsf.c
- */
-double CDECL fabs( double x )
-{
-    union { double f; UINT64 i; } u = { x };
-    u.i &= ~0ull >> 1;
     return u.f;
 }
 
