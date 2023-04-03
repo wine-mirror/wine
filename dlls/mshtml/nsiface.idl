@@ -25,7 +25,7 @@
 
 #pragma makedep header
 
-cpp_quote("#define GECKO_VERSION \"2.47.3\"")
+cpp_quote("#define GECKO_VERSION \"2.47.4\"")
 cpp_quote("#define GECKO_VERSION_STRING \"Wine Gecko \" GECKO_VERSION")
 
 import "wtypes.idl";
@@ -114,6 +114,7 @@ interface nsIDOMHTMLSelectElement;
 interface nsIFile;
 interface nsIDocShell;
 interface mozIDOMWindowProxy;
+interface nsIDOMMediaQueryListListener;
 
 interface IMoniker;
 
@@ -919,6 +920,7 @@ interface nsIDOMMediaQueryList : nsISupports
 {
     nsresult GetMedia(nsAString *aMedia);
     nsresult GetMatches(bool *_retval);
+    nsresult SetListener(nsIDOMMediaQueryListListener *listener);
 }
 
 [
@@ -1445,6 +1447,8 @@ interface nsIDOMHTMLDocument : nsIDOMDocument
     nsresult GetSelection(nsISelection **_retval);
     nsresult CaptureEvents();
     nsresult ReleaseEvents();
+    nsresult GetIECompatMode(uint32_t *aIECompatMode);
+    nsresult SetIECompatMode(uint32_t aIECompatMode);
 }
 
 [
@@ -1777,6 +1781,7 @@ interface nsIDOMHTMLInputElement : nsISupports
     nsresult MozGetFileNameArray(uint32_t *aLength, PRUnichar ***aFileNames);
     nsresult MozSetFileNameArray(const PRUnichar **aFileNames, uint32_t aLength);
     nsresult MozIsTextField(bool aExcludePassword, bool *_retval);
+    nsresult GetComplete(bool *aComplete);
 }
 
 [

@@ -6,7 +6,7 @@
   interruptible: true
   variables:
     GIT_STRATEGY: none
-    GECKO_VER: 2.47.3
+    GECKO_VER: 2.47.4
     MONO_VER: 7.4.0
   cache:
     - key: wine-gecko-$GECKO_VER
