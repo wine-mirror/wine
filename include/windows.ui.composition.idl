@@ -34,12 +34,33 @@ import "windows.ui.idl";
 import "windows.ui.core.idl";
 
 namespace Windows.UI.Composition {
+    interface ICompositionBrush;
+    interface ICompositionBrushFactory;
     interface ICompositionEasingFunction;
     interface ICompositionEasingFunctionFactory;
     interface ICompositionEasingFunctionStatics;
 
+    runtimeclass CompositionBrush;
     runtimeclass CompositionEasingFunction;
     runtimeclass CompositionObject;
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.CompositionBrush),
+        uuid(ab0d7608-30c0-40e9-b568-b60a6bd1fb46)
+    ]
+    interface ICompositionBrush : IInspectable
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.CompositionBrush),
+        uuid(da53fb4c-4650-47c4-ad76-765379607ed6)
+    ]
+    interface ICompositionBrushFactory : IInspectable
+    {
+    }
 
     [
         contract(Windows.Foundation.UniversalApiContract, 2.0),
@@ -57,6 +78,17 @@ namespace Windows.UI.Composition {
     ]
     interface ICompositionEasingFunctionFactory : IInspectable
     {
+    }
+
+    [
+        composable(Windows.UI.Composition.ICompositionBrushFactory, public, Windows.Foundation.UniversalApiContract, 2.0),
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass CompositionBrush : Windows.UI.Composition.CompositionObject
+    {
+        [default] interface Windows.UI.Composition.ICompositionBrush;
     }
 
     [
