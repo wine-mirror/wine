@@ -258,7 +258,7 @@
 @ extern _commode MSVCRT__commode
 @ cdecl _control87(long long)
 @ cdecl _controlfp(long long)
-@ cdecl _copysign(double double)
+@ cdecl _copysign(double double) copysign
 @ varargs _cprintf(str)
 @ cdecl _cputs(str)
 @ cdecl _cputws(wstr)

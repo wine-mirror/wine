@@ -217,19 +217,6 @@ float CDECL _chgsignf( float num )
 }
 
 /*********************************************************************
- *      _copysignf (MSVCRT.@)
- *
- * Copied from musl: src/math/copysignf.c
- */
-float CDECL _copysignf( float x, float y )
-{
-    union { float f; UINT32 i; } ux = { x }, uy = { y };
-    ux.i &= 0x7fffffff;
-    ux.i |= uy.i & 0x80000000;
-    return ux.f;
-}
-
-/*********************************************************************
  *      _nextafterf (MSVCRT.@)
  *
  * Copied from musl: src/math/nextafterf.c
@@ -5722,19 +5709,6 @@ int CDECL fesetround(int round_mode)
 }
 
 #endif /* _MSVCR_VER>=120 */
-
-/*********************************************************************
- *		_copysign (MSVCRT.@)
- *
- * Copied from musl: src/math/copysign.c
- */
-double CDECL _copysign( double x, double y )
-{
-    union { double f; UINT64 i; } ux = { x }, uy = { y };
-    ux.i &= ~0ull >> 1;
-    ux.i |= uy.i & 1ull << 63;
-    return ux.f;
-}
 
 /*********************************************************************
  *		_finite (MSVCRT.@)

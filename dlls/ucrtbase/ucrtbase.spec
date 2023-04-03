@@ -237,8 +237,8 @@
 @ cdecl _control87(long long)
 @ cdecl _controlfp(long long)
 @ cdecl _controlfp_s(ptr long long)
-@ cdecl _copysign(double double)
-@ cdecl _copysignf(float float)
+@ cdecl _copysign(double double) copysign
+@ cdecl _copysignf(float float) copysignf
 @ cdecl _cputs(str)
 @ cdecl _cputws(wstr)
 @ cdecl _creat(str long)
@@ -2236,9 +2236,9 @@
 @ stub conj
 @ stub conjf
 @ stub conjl
-@ cdecl copysign(double double) _copysign
-@ cdecl copysignf(float float) _copysignf
-@ cdecl copysignl(double double) _copysign
+@ cdecl copysign(double double)
+@ cdecl copysignf(float float)
+@ cdecl copysignl(double double) copysign
 @ cdecl cos(double)
 @ cdecl -arch=!i386 cosf(float)
 @ cdecl cosh(double)
