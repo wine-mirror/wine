@@ -3018,7 +3018,6 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
 {
     struct imc *data;
     struct ime *ime;
-    HIMC imc = ImmGetContext(hwnd);
     BYTE state[256];
     UINT scancode;
     TRANSMSGLIST *list = NULL;
@@ -3028,8 +3027,8 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
 
     TRACE("%p %x %x %x\n",hwnd, msg, (UINT)wParam, (UINT)lKeyData);
 
-    if (!(data = get_imc_data( imc ))) return FALSE;
-    if (!(ime = imc_select_ime( imc ))) return FALSE;
+    if (!(data = get_imc_data( ImmGetContext( hwnd ) ))) return FALSE;
+    if (!(ime = imc_select_ime( data ))) return FALSE;
     if (data->lastVK == VK_PROCESSKEY) return FALSE;
 
     GetKeyboardState(state);
@@ -3051,12 +3050,12 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
     else
         uVirtKey = data->lastVK;
 
-    msg_count = ime->pImeToAsciiEx( uVirtKey, scancode, state, list, 0, imc );
+    msg_count = ime->pImeToAsciiEx( uVirtKey, scancode, state, list, 0, data->handle );
     TRACE("%i messages generated\n",msg_count);
     if (msg_count && msg_count <= list_count)
         for (i = 0; i < msg_count; i++) imc_post_message( data, list->TransMsg + i );
     else if (msg_count > list_count)
-        ImmGenerateMessage(imc);
+        ImmGenerateMessage( data->handle );
 
     free( list );
 
