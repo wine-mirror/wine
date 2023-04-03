@@ -744,14 +744,11 @@ static void ImmInternalPostIMEMessage( struct imc *data, UINT msg, WPARAM wParam
        PostMessageW(target, msg, wParam, lParam);
 }
 
-/* for sending messages as the IME */
-static void ImmInternalSendIMEMessage( struct imc *data, UINT msg, WPARAM wParam, LPARAM lParam )
+static void imc_send_message( struct imc *imc, TRANSMSG *message )
 {
-    HWND target = GetFocus();
-    if (!target)
-       SendMessageW(data->IMC.hWnd,msg,wParam,lParam);
-    else
-       SendMessageW(target, msg, wParam, lParam);
+    HWND target;
+    if (!(target = GetFocus()) && !(target = imc->IMC.hWnd)) return;
+    SendMessageW( target, message->message, message->wParam, message->lParam );
 }
 
 static LRESULT ImmInternalSendIMENotify( struct imc *data, WPARAM notify, LPARAM lParam )
@@ -3014,9 +3011,7 @@ BOOL WINAPI ImmGenerateMessage(HIMC hIMC)
         data->IMC.dwNumMsgBuf = 0;
 
         lpTransMsg = ImmLockIMCC(hMsgBuf);
-        for (i = 0; i < dwNumMsgBuf; i++)
-            ImmInternalSendIMEMessage(data, lpTransMsg[i].message, lpTransMsg[i].wParam, lpTransMsg[i].lParam);
-
+        for (i = 0; i < dwNumMsgBuf; i++) imc_send_message( data, lpTransMsg + i );
         ImmUnlockIMCC(hMsgBuf);
         ImmDestroyIMCC(hMsgBuf);
     }
