@@ -431,12 +431,31 @@ ULONG CDECL ldap_set_optionW( LDAP *ld, int option, void *value )
     }
     case WLDAP32_LDAP_OPT_REFERRALS:
     {
-        if (value == WLDAP32_LDAP_OPT_OFF) value = LDAP_OPT_OFF;
-        else if (value != WLDAP32_LDAP_OPT_ON)
+        if (value == WLDAP32_LDAP_OPT_ON)
+            value = LDAP_OPT_ON;
+        else if (value == WLDAP32_LDAP_OPT_OFF)
+            value = LDAP_OPT_OFF;
+        else if (value == (void *)LDAP_CHASE_SUBORDINATE_REFERRALS ||
+                 value == (void *)LDAP_CHASE_EXTERNAL_REFERRALS ||
+                 value == (void *)(LDAP_CHASE_SUBORDINATE_REFERRALS|LDAP_CHASE_EXTERNAL_REFERRALS))
         {
             FIXME( "upgrading referral value %p to LDAP_OPT_ON (OpenLDAP lacks sufficient granularity)\n", value );
             value = LDAP_OPT_ON;
         }
+        else if (*(ULONG *)value == 1)
+            value = LDAP_OPT_ON;
+        else if (*(ULONG *)value == 0)
+            value = LDAP_OPT_OFF;
+        else if (*(ULONG *)value == LDAP_CHASE_SUBORDINATE_REFERRALS ||
+                 *(ULONG *)value == LDAP_CHASE_EXTERNAL_REFERRALS ||
+                 *(ULONG *)value == (LDAP_CHASE_SUBORDINATE_REFERRALS|LDAP_CHASE_EXTERNAL_REFERRALS))
+        {
+            FIXME( "upgrading referral value 0x%lx to LDAP_OPT_ON (OpenLDAP lacks sufficient granularity)\n", *(ULONG *)value );
+            value = LDAP_OPT_ON;
+        }
+        else
+            return WLDAP32_LDAP_PARAM_ERROR;
+
         return map_error( ldap_set_option( CTX(ld), option, value ) );
     }
     case WLDAP32_LDAP_OPT_REFERRAL_HOP_LIMIT:

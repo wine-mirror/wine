@@ -116,20 +116,29 @@ static void test_ldap_search_extW( LDAP *ld )
 
 static void test_opt_referrals( LDAP *ld )
 {
-    ULONG ret, oldvalue;
+    ULONG ret, value;
 
-    ret = ldap_get_optionW( ld, LDAP_OPT_REFERRALS, &oldvalue );
-    if (ret == LDAP_SERVER_DOWN || ret == LDAP_UNAVAILABLE)
-    {
-        skip("test server can't be reached\n");
-        return;
-    }
+    value = 0xdeadbeef;
+    ret = ldap_get_optionW( ld, LDAP_OPT_REFERRALS, &value );
+    ok( !ret, "ldap_get_optionW failed %#lx\n", ret );
+    todo_wine ok( value == 1, "got %lu\n", value );
 
-    ret = ldap_set_optionW( ld, LDAP_OPT_REFERRALS, LDAP_OPT_OFF );
+    value = 0;
+    ret = ldap_set_optionW( ld, LDAP_OPT_REFERRALS, (void *)&value );
     ok( !ret, "ldap_set_optionW failed %#lx\n", ret );
 
-    ret = ldap_set_optionW( ld, LDAP_OPT_REFERRALS, (void *)&oldvalue );
+    value = 0xdeadbeef;
+    ret = ldap_get_optionW( ld, LDAP_OPT_REFERRALS, &value );
+    ok( !ret, "ldap_get_optionW failed %#lx\n", ret );
+    ok( !value, "got %lu\n", value );
+
+    ret = ldap_set_optionW( ld, LDAP_OPT_REFERRALS, LDAP_OPT_ON );
     ok( !ret, "ldap_set_optionW failed %#lx\n", ret );
+
+    value = 0xdeadbeef;
+    ret = ldap_get_optionW( ld, LDAP_OPT_REFERRALS, &value );
+    ok( !ret, "ldap_get_optionW failed %#lx\n", ret );
+    todo_wine ok( value == 1, "got %lu\n", value );
 }
 
 static void test_opt_protocol_version( LDAP *ld )
