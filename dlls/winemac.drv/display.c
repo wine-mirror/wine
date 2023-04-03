@@ -1077,45 +1077,6 @@ done:
 }
 
 /***********************************************************************
- *              init_registry_display_settings
- *
- * Initialize registry display settings when new display devices are added.
- */
-static void init_registry_display_settings(void)
-{
-    DEVMODEW dm = {.dmSize = sizeof(dm)};
-    DISPLAY_DEVICEW dd = {sizeof(dd)};
-    UNICODE_STRING str;
-    DWORD i = 0;
-    int ret;
-
-    while (!NtUserEnumDisplayDevices(NULL, i++, &dd, 0))
-    {
-        RtlInitUnicodeString(&str, dd.DeviceName);
-
-        /* Skip if the device already has registry display settings */
-        if (NtUserEnumDisplaySettings(&str, ENUM_REGISTRY_SETTINGS, &dm, 0))
-            continue;
-
-        if (!NtUserEnumDisplaySettings(&str, ENUM_CURRENT_SETTINGS, &dm, 0))
-        {
-            ERR("Failed to query current display settings for %s.\n", wine_dbgstr_w(dd.DeviceName));
-            continue;
-        }
-
-        TRACE("Device %s current display mode %ux%u %ubits %uHz at %d,%d.\n",
-              wine_dbgstr_w(dd.DeviceName), (unsigned int)dm.dmPelsWidth, (unsigned int)dm.dmPelsHeight,
-              (unsigned int)dm.dmBitsPerPel, (unsigned int)dm.dmDisplayFrequency, (int)dm.dmPosition.x, (int)dm.dmPosition.y);
-
-        ret = NtUserChangeDisplaySettings(&str, &dm, NULL,
-                                          CDS_GLOBAL | CDS_NORESET | CDS_UPDATEREGISTRY, NULL);
-        if (ret != DISP_CHANGE_SUCCESSFUL)
-            ERR("Failed to save registry display settings for %s, returned %d.\n",
-                wine_dbgstr_w(dd.DeviceName), ret);
-    }
-}
-
-/***********************************************************************
  *              macdrv_displays_changed
  *
  * Handler for DISPLAYS_CHANGED events.
@@ -1133,24 +1094,62 @@ void macdrv_displays_changed(const macdrv_event *event)
         NtUserGetWindowThread(hwnd, NULL) == GetCurrentThreadId())
     {
         macdrv_init_display_devices(TRUE);
-        init_registry_display_settings();
         macdrv_resize_desktop();
     }
 }
 
 static BOOL force_display_devices_refresh;
 
+static BOOL is_same_devmode(const DEVMODEW *a, const DEVMODEW *b)
+{
+    return a->dmDisplayOrientation == b->dmDisplayOrientation &&
+           a->dmDisplayFixedOutput == b->dmDisplayFixedOutput &&
+           a->dmBitsPerPel == b->dmBitsPerPel &&
+           a->dmPelsWidth == b->dmPelsWidth &&
+           a->dmPelsHeight == b->dmPelsHeight &&
+           a->dmDisplayFlags == b->dmDisplayFlags &&
+           a->dmDisplayFrequency == b->dmDisplayFrequency;
+}
+
+static const char *debugstr_devmodew(const DEVMODEW *devmode)
+{
+    char position[32] = {0};
+
+    if (devmode->dmFields & DM_POSITION)
+    {
+        snprintf(position, sizeof(position), " at (%d,%d)",
+                 (int)devmode->dmPosition.x, (int)devmode->dmPosition.y);
+    }
+
+    return wine_dbg_sprintf("%ux%u %ubits %uHz rotated %u degrees %sstretched %sinterlaced%s",
+                            (unsigned int)devmode->dmPelsWidth,
+                            (unsigned int)devmode->dmPelsHeight,
+                            (unsigned int)devmode->dmBitsPerPel,
+                            (unsigned int)devmode->dmDisplayFrequency,
+                            (unsigned int)devmode->dmDisplayOrientation * 90,
+                            devmode->dmDisplayFixedOutput == DMDFO_STRETCH ? "" : "un",
+                            devmode->dmDisplayFlags & DM_INTERLACED ? "" : "non-",
+                            position);
+}
+
 BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )
 {
     struct macdrv_adapter *adapters, *adapter;
     struct macdrv_monitor *monitors, *monitor;
     struct macdrv_gpu *gpus, *gpu;
-    INT gpu_count, adapter_count, monitor_count, mode_count;
+    struct macdrv_display *displays, *display;
+    INT gpu_count, adapter_count, monitor_count, mode_count, display_count;
     DEVMODEW *mode, *modes;
     DWORD len;
 
     if (!force && !force_display_devices_refresh) return TRUE;
     force_display_devices_refresh = FALSE;
+
+    if (macdrv_get_displays(&displays, &display_count))
+    {
+        displays = NULL;
+        display_count = 0;
+    }
 
     /* Initialize GPUs */
     if (macdrv_get_gpus(&gpus, &gpu_count))
@@ -1179,6 +1178,7 @@ BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
 
         for (adapter = adapters; adapter < adapters + adapter_count; adapter++)
         {
+            DEVMODEW current_mode = { .dmSize = sizeof(current_mode) };
             struct gdi_adapter gdi_adapter =
             {
                 .id = adapter->id,
@@ -1201,17 +1201,35 @@ BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
                 device_manager->add_monitor( &gdi_monitor, param );
             }
 
+            /* Get the current mode */
+            if (displays)
+            {
+                for (display = displays; display < displays + display_count; display++)
+                {
+                    if (display->displayID == adapter->id)
+                    {
+                        display_get_current_mode(display, &current_mode);
+                        break;
+                    }
+                }
+            }
+
             if (!(modes = display_get_modes(adapter->id, &mode_count))) break;
             TRACE("adapter: %#x, mode count: %d\n", adapter->id, mode_count);
 
             /* Initialize modes */
             for (mode = modes; mode < modes + mode_count; mode++)
             {
-                TRACE("mode: %dx%dx%dbpp @%d Hz, %sstretched %sinterlaced\n", (int)mode->dmPelsWidth, (int)mode->dmPelsHeight,
-                      (int)mode->dmBitsPerPel, (int)mode->dmDisplayFrequency,
-                      mode->dmDisplayFixedOutput == DMDFO_STRETCH ? "" : "un",
-                      mode->dmDisplayFlags & DM_INTERLACED ? "" : "non-");
-                device_manager->add_mode( mode, FALSE, param );
+                if (is_same_devmode(mode, &current_mode))
+                {
+                    TRACE("current mode: %s\n", debugstr_devmodew(&current_mode));
+                    device_manager->add_mode( &current_mode, TRUE, param );
+                }
+                else
+                {
+                    TRACE("mode: %s\n", debugstr_devmodew(mode));
+                    device_manager->add_mode( mode, FALSE, param );
+                }
             }
 
             free(modes);
@@ -1222,6 +1240,7 @@ BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     }
 
     macdrv_free_gpus(gpus);
+    macdrv_free_displays(displays);
     return TRUE;
 }
 
