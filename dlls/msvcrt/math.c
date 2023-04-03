@@ -8921,34 +8921,6 @@ int CDECL _fdpcomp(float x, float y)
 }
 
 /*********************************************************************
- *      fminf (MSVCR120.@)
- */
-float CDECL fminf(float x, float y)
-{
-    if(isnan(x))
-        return y;
-    if(isnan(y))
-        return x;
-    if(x==0 && y==0)
-        return signbit(x) ? x : y;
-    return x<y ? x : y;
-}
-
-/*********************************************************************
- *      fmin (MSVCR120.@)
- */
-double CDECL fmin(double x, double y)
-{
-    if(isnan(x))
-        return y;
-    if(isnan(y))
-        return x;
-    if(x==0 && y==0)
-        return signbit(x) ? x : y;
-    return x<y ? x : y;
-}
-
-/*********************************************************************
  *      asinh (MSVCR120.@)
  *
  * Copied from musl: src/math/asinh.c
