@@ -3014,52 +3014,47 @@ BOOL WINAPI ImmGenerateMessage(HIMC hIMC)
 *       ImmTranslateMessage(IMM32.@)
 *       ( Undocumented, call internally and from user32.dll )
 */
-BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyData)
+BOOL WINAPI ImmTranslateMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
+    static const DWORD list_count = 10;
+    UINT scan, vkey, count, i;
     struct imc *data;
     struct ime *ime;
     BYTE state[256];
-    UINT scancode;
     TRANSMSGLIST *list = NULL;
-    UINT msg_count, i;
-    UINT uVirtKey;
-    static const DWORD list_count = 10;
+    WCHAR chr;
 
-    TRACE("%p %x %x %x\n",hwnd, msg, (UINT)wParam, (UINT)lKeyData);
+    TRACE( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
 
     if (!(data = get_imc_data( ImmGetContext( hwnd ) ))) return FALSE;
     if (!(ime = imc_select_ime( data ))) return FALSE;
     if (data->lastVK == VK_PROCESSKEY) return FALSE;
 
-    GetKeyboardState(state);
-    scancode = lKeyData >> 0x10 & 0xff;
-    uVirtKey = data->lastVK;
+    GetKeyboardState( state );
+    scan = lparam >> 0x10 & 0xff;
+    vkey = data->lastVK;
 
     list = calloc( list_count, sizeof(TRANSMSG) + sizeof(DWORD) );
     list->uMsgCount = list_count;
 
     if (ime->info.fdwProperty & IME_PROP_KBD_CHAR_FIRST)
     {
-        WCHAR chr;
-
-        if (!ime_is_unicode( ime ))
-            ToAscii( data->lastVK, scancode, state, &chr, 0 );
-        else
-            ToUnicodeEx(data->lastVK, scancode, state, &chr, 1, 0, GetKeyboardLayout(0));
-        uVirtKey = MAKELONG(data->lastVK,chr);
+        if (!ime_is_unicode( ime )) ToAscii( data->lastVK, scan, state, &chr, 0 );
+        else ToUnicodeEx( data->lastVK, scan, state, &chr, 1, 0, GetKeyboardLayout( 0 ) );
+        vkey = MAKELONG( data->lastVK, chr );
     }
 
-    msg_count = ime->pImeToAsciiEx( uVirtKey, scancode, state, list, 0, data->handle );
-    TRACE("%i messages generated\n",msg_count);
+    count = ime->pImeToAsciiEx( vkey, scan, state, list, 0, data->handle );
+    TRACE( "%u messages generated\n", count );
 
-    if (msg_count > list_count) ImmGenerateMessage( data->handle );
-    else for (i = 0; i < msg_count; i++) imc_post_message( data, list->TransMsg + i );
+    if (count > list_count) ImmGenerateMessage( data->handle );
+    else for (i = 0; i < count; i++) imc_post_message( data, list->TransMsg + i );
 
     free( list );
 
     data->lastVK = VK_PROCESSKEY;
 
-    return (msg_count > 0);
+    return count > 0;
 }
 
 /***********************************************************************
