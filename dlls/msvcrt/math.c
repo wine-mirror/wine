@@ -2155,49 +2155,6 @@ double CDECL cos( double x )
 
 extern double __expo2(double x, double sign);
 
-/*********************************************************************
- *		cosh (MSVCRT.@)
- *
- * Copied from musl: src/math/cosh.c
- */
-double CDECL cosh( double x )
-{
-    UINT64 ux = *(UINT64*)&x;
-    UINT64 sign = ux & 0x8000000000000000ULL;
-    UINT32 w;
-    double t;
-
-    /* |x| */
-    ux &= (uint64_t)-1 / 2;
-    x = *(double*)&ux;
-    w = ux >> 32;
-
-    /* |x| < log(2) */
-    if (w < 0x3fe62e42) {
-        if (w < 0x3ff00000 - (26 << 20)) {
-            fp_barrier(x + 0x1p120f);
-            return 1;
-        }
-        t = expm1(x);
-        return 1 + t * t / (2 * (1 + t));
-    }
-
-    /* |x| < log(DBL_MAX) */
-    if (w < 0x40862e42) {
-        t = exp(x);
-        /* note: if x>log(0x1p26) then the 1/t is not needed */
-        return 0.5 * (t + 1 / t);
-    }
-
-    /* |x| > log(DBL_MAX) or nan */
-    /* note: the result is stored to handle overflow */
-    if (ux > 0x7ff0000000000000ULL)
-        *(UINT64*)&t = ux | sign | 0x0008000000000000ULL;
-    else
-        t = __expo2(x, 1.0);
-    return t;
-}
-
 /* Copied from musl: src/math/exp_data.c */
 static const UINT64 exp_T[] = {
     0x0ULL, 0x3ff0000000000000ULL,
