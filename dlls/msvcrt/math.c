@@ -8858,34 +8858,6 @@ float CDECL erfcf(float x)
 }
 
 /*********************************************************************
- *      fmaxf (MSVCR120.@)
- */
-float CDECL fmaxf(float x, float y)
-{
-    if(isnan(x))
-        return y;
-    if(isnan(y))
-        return x;
-    if(x==0 && y==0)
-        return signbit(x) ? y : x;
-    return x<y ? y : x;
-}
-
-/*********************************************************************
- *      fmax (MSVCR120.@)
- */
-double CDECL fmax(double x, double y)
-{
-    if(isnan(x))
-        return y;
-    if(isnan(y))
-        return x;
-    if(x==0 && y==0)
-        return signbit(x) ? y : x;
-    return x<y ? y : x;
-}
-
-/*********************************************************************
  *      fdimf (MSVCR120.@)
  */
 float CDECL fdimf(float x, float y)
