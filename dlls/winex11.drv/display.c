@@ -599,7 +599,7 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
             for (mode = modes; mode_count; mode_count--)
             {
                 TRACE( "mode: %p\n", mode );
-                device_manager->add_mode( mode, param );
+                device_manager->add_mode( mode, FALSE, param );
                 mode = (DEVMODEW *)((char *)mode + sizeof(*modes) + modes[0].dmDriverExtra);
             }
 

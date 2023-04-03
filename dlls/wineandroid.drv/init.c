@@ -295,7 +295,7 @@ BOOL ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device_manag
         device_manager->add_gpu( &gpu, param );
         device_manager->add_adapter( &adapter, param );
         device_manager->add_monitor( &gdi_monitor, param );
-        device_manager->add_mode( &mode, param );
+        device_manager->add_mode( &mode, FALSE, param );
         force_display_devices_refresh = FALSE;
     }
 

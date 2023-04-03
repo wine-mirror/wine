@@ -1482,9 +1482,10 @@ static void add_monitor( const struct gdi_monitor *monitor, void *param )
     if (hkey) NtClose( hkey );
 }
 
-static void add_mode( const DEVMODEW *mode, void *param )
+static void add_mode( const DEVMODEW *mode, BOOL current, void *param )
 {
     struct device_manager_ctx *ctx = param;
+    DEVMODEW nopos_mode;
 
     if (!ctx->adapter_count)
     {
@@ -1496,10 +1497,21 @@ static void add_mode( const DEVMODEW *mode, void *param )
         add_adapter( &default_adapter, ctx );
     }
 
-    if (write_adapter_mode( ctx->adapter_key, ctx->mode_count, mode ))
+    nopos_mode = *mode;
+    nopos_mode.dmPosition.x = 0;
+    nopos_mode.dmPosition.y = 0;
+    nopos_mode.dmFields &= ~DM_POSITION;
+
+    if (write_adapter_mode( ctx->adapter_key, ctx->mode_count, &nopos_mode ))
     {
         ctx->mode_count++;
         set_reg_value( ctx->adapter_key, mode_countW, REG_DWORD, &ctx->mode_count, sizeof(ctx->mode_count) );
+        if (current)
+        {
+            if (!read_adapter_mode( ctx->adapter_key, ENUM_REGISTRY_SETTINGS, &nopos_mode ))
+                write_adapter_mode( ctx->adapter_key, ENUM_REGISTRY_SETTINGS, mode );
+            write_adapter_mode( ctx->adapter_key, ENUM_CURRENT_SETTINGS, mode );
+        }
     }
 }
 
@@ -1626,6 +1638,15 @@ static BOOL update_display_cache_from_registry(void)
     return ret;
 }
 
+static BOOL is_same_devmode( const DEVMODEW *a, const DEVMODEW *b )
+{
+    return a->dmDisplayOrientation == b->dmDisplayOrientation &&
+           a->dmBitsPerPel == b->dmBitsPerPel &&
+           a->dmPelsWidth == b->dmPelsWidth &&
+           a->dmPelsHeight == b->dmPelsHeight &&
+           a->dmDisplayFrequency == b->dmDisplayFrequency;
+}
+
 static BOOL update_display_cache( BOOL force )
 {
     HWINSTA winstation = NtUserGetProcessWindowStation();
@@ -1682,7 +1703,6 @@ static BOOL update_display_cache( BOOL force )
         {
             mode = modes[2];
             mode.dmFields |= DM_POSITION;
-            write_adapter_mode( ctx.adapter_key, ENUM_CURRENT_SETTINGS, &mode );
         }
         monitor.rc_monitor.right = mode.dmPelsWidth;
         monitor.rc_monitor.bottom = mode.dmPelsHeight;
@@ -1690,7 +1710,11 @@ static BOOL update_display_cache( BOOL force )
         monitor.rc_work.bottom = mode.dmPelsHeight;
 
         add_monitor( &monitor, &ctx );
-        for (i = 0; i < ARRAY_SIZE(modes); ++i) add_mode( modes + i, &ctx );
+        for (i = 0; i < ARRAY_SIZE(modes); ++i)
+        {
+            if (is_same_devmode( modes + i, &mode )) add_mode( &mode, TRUE, &ctx );
+            else add_mode( modes + i, FALSE, &ctx );
+        }
     }
     release_display_manager_ctx( &ctx );
 

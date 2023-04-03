@@ -126,7 +126,7 @@ static void wayland_add_device_modes(const struct gdi_device_manager *device_man
     {
         DEVMODEW mode;
         populate_devmode(output_mode, &mode);
-        device_manager->add_mode(&mode, param);
+        device_manager->add_mode(&mode, FALSE, param);
     }
 }
 

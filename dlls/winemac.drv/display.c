@@ -1205,7 +1205,7 @@ BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
                       (int)mode->dmBitsPerPel, (int)mode->dmDisplayFrequency,
                       mode->dmDisplayFixedOutput == DMDFO_STRETCH ? "" : "un",
                       mode->dmDisplayFlags & DM_INTERLACED ? "" : "non-");
-                device_manager->add_mode( mode, param );
+                device_manager->add_mode( mode, FALSE, param );
             }
 
             free(modes);

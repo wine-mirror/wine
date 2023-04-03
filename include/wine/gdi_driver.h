@@ -266,7 +266,7 @@ struct gdi_device_manager
     void (*add_gpu)( const struct gdi_gpu *gpu, void *param );
     void (*add_adapter)( const struct gdi_adapter *adapter, void *param );
     void (*add_monitor)( const struct gdi_monitor *monitor, void *param );
-    void (*add_mode)( const DEVMODEW *mode, void *param );
+    void (*add_mode)( const DEVMODEW *mode, BOOL current, void *param );
 };
 
 #define WINE_DM_UNSUPPORTED 0x80000000
