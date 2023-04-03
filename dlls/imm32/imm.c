@@ -2605,29 +2605,26 @@ BOOL WINAPI ImmSetConversionStatus(
 /***********************************************************************
  *		ImmSetOpenStatus (IMM32.@)
  */
-BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
+BOOL WINAPI ImmSetOpenStatus( HIMC himc, BOOL status )
 {
-    struct imc *data = get_imc_data( hIMC );
+    INPUTCONTEXT *ctx;
     HWND ui_hwnd;
 
-    TRACE("%p %d\n", hIMC, fOpen);
+    TRACE( "himc %p, status %u\n", himc, status );
 
-    if (!data)
+    if (NtUserQueryInputContext( himc, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
+
+    if ((ui_hwnd = get_ime_ui_window())) SetWindowLongPtrW( ui_hwnd, IMMGWL_IMC, (LONG_PTR)himc );
+
+    if (!status != !ctx->fOpen)
     {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return FALSE;
+        ctx->fOpen = status;
+        ImmNotifyIME( himc, NI_CONTEXTUPDATED, 0, IMC_SETOPENSTATUS );
+        SendMessageW( ctx->hWnd, WM_IME_NOTIFY, IMN_SETOPENSTATUS, 0 );
     }
 
-    if (NtUserQueryInputContext( hIMC, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
-
-    if ((ui_hwnd = get_ime_ui_window())) SetWindowLongPtrW( ui_hwnd, IMMGWL_IMC, (LONG_PTR)hIMC );
-
-    if (!fOpen != !data->IMC.fOpen)
-    {
-        data->IMC.fOpen = fOpen;
-        ImmNotifyIME( hIMC, NI_CONTEXTUPDATED, 0, IMC_SETOPENSTATUS);
-        imc_notify_ime( data, IMN_SETOPENSTATUS, 0 );
-    }
+    ImmUnlockIMC( himc );
 
     return TRUE;
 }
