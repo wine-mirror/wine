@@ -39,6 +39,9 @@ namespace Windows.UI.Composition {
 
     interface ICompositionBrush;
     interface ICompositionBrushFactory;
+    interface ICompositionClip;
+    interface ICompositionClip2;
+    interface ICompositionClipFactory;
     interface ICompositionEasingFunction;
     interface ICompositionEasingFunctionFactory;
     interface ICompositionEasingFunctionStatics;
@@ -50,6 +53,7 @@ namespace Windows.UI.Composition {
     interface ISpriteVisual2;
 
     runtimeclass CompositionBrush;
+    runtimeclass CompositionClip;
     runtimeclass CompositionEasingFunction;
     runtimeclass CompositionObject;
     runtimeclass CompositionSurfaceBrush;
@@ -112,6 +116,24 @@ namespace Windows.UI.Composition {
         uuid(da53fb4c-4650-47c4-ad76-765379607ed6)
     ]
     interface ICompositionBrushFactory : IInspectable
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.CompositionClip),
+        uuid(1ccd2a52-cfc7-4ace-9983-146bb8eb6a3c)
+    ]
+    interface ICompositionClip : IInspectable
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.CompositionClip),
+        uuid(b9484caf-20c7-4aed-ac4a-9c78ba1302cf)
+    ]
+    interface ICompositionClipFactory : IInspectable
     {
     }
 
@@ -180,6 +202,18 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionBrush : Windows.UI.Composition.CompositionObject
     {
         [default] interface Windows.UI.Composition.ICompositionBrush;
+    }
+
+    [
+        composable(Windows.UI.Composition.ICompositionClipFactory, public, Windows.Foundation.UniversalApiContract, 2.0),
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass CompositionClip : Windows.UI.Composition.CompositionObject
+    {
+        [default] interface Windows.UI.Composition.ICompositionClip;
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionClip2;
     }
 
     [
