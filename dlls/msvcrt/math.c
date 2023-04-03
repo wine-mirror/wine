@@ -2010,32 +2010,6 @@ float CDECL floorf( float x )
 }
 
 /*********************************************************************
- *      frexpf (MSVCRT.@)
- *
- * Copied from musl: src/math/frexpf.c
- */
-float CDECL frexpf( float x, int *e )
-{
-    UINT32 ux = *(UINT32*)&x;
-    int ee = ux >> 23 & 0xff;
-
-    if (!ee) {
-        if (x) {
-            x = frexpf(x * 0x1p64, e);
-            *e -= 64;
-        } else *e = 0;
-        return x;
-    } else if (ee == 0xff) {
-        return x;
-    }
-
-    *e = ee - 0x7e;
-    ux &= 0x807ffffful;
-    ux |= 0x3f000000ul;
-    return *(float*)&ux;
-}
-
-/*********************************************************************
  *      modff (MSVCRT.@)
  *
  * Copied from musl: src/math/modff.c
@@ -5077,32 +5051,6 @@ float CDECL fmaf( float x, float y, float z )
     else
         u.i--;
     return u.f;
-}
-
-/*********************************************************************
- *		frexp (MSVCRT.@)
- *
- * Copied from musl: src/math/frexp.c
- */
-double CDECL frexp( double x, int *e )
-{
-    UINT64 ux = *(UINT64*)&x;
-    int ee = ux >> 52 & 0x7ff;
-
-    if (!ee) {
-        if (x) {
-            x = frexp(x * 0x1p64, e);
-            *e -= 64;
-        } else *e = 0;
-        return x;
-    } else if (ee == 0x7ff) {
-        return x;
-    }
-
-    *e = ee - 0x3fe;
-    ux &= 0x800fffffffffffffull;
-    ux |= 0x3fe0000000000000ull;
-    return *(double*)&ux;
 }
 
 /*********************************************************************
