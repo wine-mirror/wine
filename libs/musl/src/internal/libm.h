@@ -10,6 +10,8 @@
 typedef float float_t;
 typedef double double_t;
 
+hidden double math_error(int type, const char *name, double arg1, double arg2, double retval);
+
 #if LDBL_MANT_DIG == 53 && LDBL_MAX_EXP == 1024
 #elif LDBL_MANT_DIG == 64 && LDBL_MAX_EXP == 16384 && __BYTE_ORDER == __LITTLE_ENDIAN
 union ldshape {

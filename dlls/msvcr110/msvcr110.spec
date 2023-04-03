@@ -1409,8 +1409,8 @@
 @ cdecl _lock(long)
 @ cdecl _lock_file(ptr)
 @ cdecl _locking(long long long)
-@ cdecl _logb(double)
-@ cdecl -arch=!i386 _logbf(float)
+@ cdecl _logb(double) logb
+@ cdecl -arch=!i386 _logbf(float) logbf
 @ cdecl -arch=i386 _longjmpex(ptr long) MSVCRT_longjmp
 @ cdecl _lrotl(long long) MSVCRT__lrotl
 @ cdecl _lrotr(long long) MSVCRT__lrotr

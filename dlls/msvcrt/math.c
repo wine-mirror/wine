@@ -131,7 +131,7 @@ int CDECL _matherr(struct _exception *e)
 }
 
 
-static double math_error(int type, const char *name, double arg1, double arg2, double retval)
+double math_error(int type, const char *name, double arg1, double arg2, double retval)
 {
     struct _exception exception = {type, (char *)name, arg1, arg2, retval};
 
@@ -257,22 +257,6 @@ float CDECL _nextafterf( float x, float y )
         *_errno() = ERANGE;
     }
     return y;
-}
-
-/*********************************************************************
- *      _logbf (MSVCRT.@)
- *
- * Copied from musl: src/math/logbf.c
- */
-float CDECL _logbf(float x)
-{
-    if (!isfinite(x))
-        return x * x;
-    if (x == 0) {
-        *_errno() = ERANGE;
-        return -1 / (x * x);
-    }
-    return ilogbf(x);
 }
 
 #endif
@@ -4502,20 +4486,6 @@ intmax_t CDECL imaxabs( intmax_t n )
 __int64 CDECL _abs64( __int64 n )
 {
     return n >= 0 ? n : -n;
-}
-
-/*********************************************************************
- *		_logb (MSVCRT.@)
- *
- * Copied from musl: src/math/logb.c
- */
-double CDECL _logb(double x)
-{
-    if (!isfinite(x))
-        return x * x;
-    if (x == 0)
-        return math_error(_SING, "_logb", x, 0, -1 / (x * x));
-    return ilogb(x);
 }
 
 /*********************************************************************

@@ -13,6 +13,6 @@ double __cdecl logb(double x)
 	if (!isfinite(x))
 		return x * x;
 	if (x == 0)
-		return -1/(x*x);
+		return math_error(_SING, "_logb", x, 0, -1 / (x * x));
 	return ilogb(x);
 }

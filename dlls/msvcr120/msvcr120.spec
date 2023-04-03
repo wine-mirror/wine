@@ -1420,8 +1420,8 @@
 @ cdecl _lock(long)
 @ cdecl _lock_file(ptr)
 @ cdecl _locking(long long long)
-@ cdecl _logb(double)
-@ cdecl -arch=!i386 _logbf(float)
+@ cdecl _logb(double) logb
+@ cdecl -arch=!i386 _logbf(float) logbf
 @ cdecl -arch=i386 _longjmpex(ptr long) MSVCRT_longjmp
 @ cdecl _lrotl(long long) MSVCRT__lrotl
 @ cdecl _lrotr(long long) MSVCRT__lrotr
@@ -2266,9 +2266,9 @@
 @ cdecl log2(double)
 @ cdecl log2f(float)
 @ cdecl log2l(double) log2
-@ cdecl logb(double) _logb
-@ cdecl logbf(float) _logbf
-@ cdecl logbl(double) _logb
+@ cdecl logb(double)
+@ cdecl logbf(float)
+@ cdecl logbl(double) logb
 @ cdecl -arch=i386,x86_64,arm,arm64 longjmp(ptr long) MSVCRT_longjmp
 @ cdecl lrint(double)
 @ cdecl lrintf(float)

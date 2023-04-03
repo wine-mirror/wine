@@ -568,8 +568,8 @@
 @ cdecl _lock_file(ptr)
 @ cdecl _lock_locales()
 @ cdecl _locking(long long long)
-@ cdecl _logb(double)
-@ cdecl -arch=!i386 _logbf(float)
+@ cdecl _logb(double) logb
+@ cdecl -arch=!i386 _logbf(float) logbf
 @ cdecl -arch=i386 _longjmpex(ptr long) MSVCRT_longjmp
 @ cdecl _lrotl(long long) MSVCRT__lrotl
 @ cdecl _lrotr(long long) MSVCRT__lrotr
@@ -1142,8 +1142,8 @@
 @ cdecl _o__localtime64_s(ptr ptr) _localtime64_s
 @ cdecl _o__lock_file(ptr) _lock_file
 @ cdecl _o__locking(long long long) _locking
-@ cdecl _o__logb(double) _logb
-@ cdecl -arch=!i386 _o__logbf(float) _logbf
+@ cdecl _o__logb(double) logb
+@ cdecl -arch=!i386 _o__logbf(float) logbf
 @ cdecl _o__lsearch(ptr ptr ptr long ptr) _lsearch
 @ stub _o__lsearch_s
 @ cdecl _o__lseek(long long long) _lseek
@@ -1699,9 +1699,9 @@
 @ cdecl _o_log2(double) log2
 @ cdecl _o_log2f(float) log2f
 @ cdecl _o_log2l(double) log2
-@ cdecl _o_logb(double) _logb
-@ cdecl _o_logbf(float) _logbf
-@ cdecl _o_logbl(double) _logb
+@ cdecl _o_logb(double) logb
+@ cdecl _o_logbf(float) logbf
+@ cdecl _o_logbl(double) logb
 @ cdecl -arch=!i386 _o_logf(float) logf
 @ cdecl _o_lrint(double) lrint
 @ cdecl _o_lrintf(float) lrintf
@@ -2401,9 +2401,9 @@
 @ cdecl log2(double)
 @ cdecl log2f(float)
 @ cdecl log2l(double) log2
-@ cdecl logb(double) _logb
-@ cdecl logbf(float) _logbf
-@ cdecl logbl(double) _logb
+@ cdecl logb(double)
+@ cdecl logbf(float)
+@ cdecl logbl(double) logb
 @ cdecl -arch=!i386 logf(float)
 @ cdecl -arch=i386,x86_64,arm,arm64 longjmp(ptr long) MSVCRT_longjmp
 @ cdecl lrint(double)
