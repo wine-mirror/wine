@@ -129,11 +129,12 @@ double __cdecl expm1(double x)
 	if (hx >= 0x4043687A) {  /* if |x|>=56*ln2 */
 		if (isnan(x))
 			return x;
+		if (isinf(x))
+			return sign ? -1 : x;
 		if (sign)
-			return -1;
+			return math_error(_UNDERFLOW, "exp", x, 0, -1);
 		if (x > o_threshold) {
-			x *= 0x1p1023;
-			return x;
+			return math_error(_OVERFLOW, "exp", x, 0, x * 0x1p1023);
 		}
 	}
 

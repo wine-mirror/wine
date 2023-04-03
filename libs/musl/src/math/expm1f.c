@@ -37,12 +37,11 @@ float __cdecl expm1f(float x)
 	/* filter out huge and non-finite argument */
 	if (hx >= 0x4195b844) {  /* if |x|>=27*ln2 */
 		if (hx > 0x7f800000)  /* NaN */
-			return x;
+			return u.i == 0xff800000 ? -1 : x;
 		if (sign)
-			return -1;
+			return math_error(_UNDERFLOW, "exp", x, 0, -1);
 		if (hx > 0x42b17217) { /* x > log(FLT_MAX) */
-			x *= 0x1p127f;
-			return x;
+			return math_error(_OVERFLOW, "exp", x, 0, fp_barrierf(x * FLT_MAX));
 		}
 	}
 

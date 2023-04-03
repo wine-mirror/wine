@@ -489,93 +489,6 @@ static double __round(double x)
 }
 
 #if !defined(__i386__) || _MSVCR_VER >= 120
-/* Copied from musl: src/math/expm1f.c */
-static float __expm1f(float x)
-{
-    static const float ln2_hi = 6.9313812256e-01,
-        ln2_lo = 9.0580006145e-06,
-        invln2 = 1.4426950216e+00,
-        Q1 = -3.3333212137e-2,
-        Q2 = 1.5807170421e-3;
-
-    float y, hi, lo, c, t, e, hxs, hfx, r1, twopk;
-    union {float f; UINT32 i;} u = {x};
-    UINT32 hx = u.i & 0x7fffffff;
-    int k, sign = u.i >> 31;
-
-    /* filter out huge and non-finite argument */
-    if (hx >= 0x4195b844) { /* if |x|>=27*ln2 */
-        if (hx >= 0x7f800000) /* NaN */
-            return u.i == 0xff800000 ? -1 : x;
-        if (sign)
-            return math_error(_UNDERFLOW, "exp", x, 0, -1);
-        if (hx > 0x42b17217) /* x > log(FLT_MAX) */
-            return math_error(_OVERFLOW, "exp", x, 0, fp_barrierf(x * FLT_MAX));
-    }
-
-    /* argument reduction */
-    if (hx > 0x3eb17218) { /* if |x| > 0.5 ln2 */
-        if (hx < 0x3F851592) { /* and |x| < 1.5 ln2 */
-            if (!sign) {
-                hi = x - ln2_hi;
-                lo = ln2_lo;
-                k = 1;
-            } else {
-                hi = x + ln2_hi;
-                lo = -ln2_lo;
-                k = -1;
-            }
-        } else {
-            k = invln2 * x + (sign ? -0.5f : 0.5f);
-            t = k;
-            hi = x - t * ln2_hi; /* t*ln2_hi is exact here */
-            lo = t * ln2_lo;
-        }
-        x = hi - lo;
-        c = (hi - x) - lo;
-    } else if (hx < 0x33000000) { /* when |x|<2**-25, return x */
-        if (hx < 0x00800000)
-            fp_barrierf(x * x);
-        return x;
-    } else
-        k = 0;
-
-    /* x is now in primary range */
-    hfx = 0.5f * x;
-    hxs = x * hfx;
-    r1 = 1.0f + hxs * (Q1 + hxs * Q2);
-    t = 3.0f - r1 * hfx;
-    e = hxs * ((r1 - t) / (6.0f - x * t));
-    if (k == 0) /* c is 0 */
-        return x - (x * e - hxs);
-    e = x * (e - c) - c;
-    e -= hxs;
-    /* exp(x) ~ 2^k (x_reduced - e + 1) */
-    if (k == -1)
-        return 0.5f * (x - e) - 0.5f;
-    if (k == 1) {
-        if (x < -0.25f)
-            return -2.0f * (e - (x + 0.5f));
-        return 1.0f + 2.0f * (x - e);
-    }
-    u.i = (0x7f + k) << 23; /* 2^k */
-    twopk = u.f;
-    if (k < 0 || k > 56) { /* suffice to return exp(x)-1 */
-        y = x - e + 1.0f;
-        if (k == 128)
-            y = y * 2.0f * 0x1p127f;
-        else
-            y = y * twopk;
-        return y - 1.0f;
-    }
-    u.i = (0x7f-k) << 23; /* 2^-k */
-    if (k < 23)
-        y = (x - e + (1 - u.f)) * twopk;
-    else
-        y = (x - (e + u.f) + 1) * twopk;
-    return y;
-}
-
 #ifndef __i386__
 /* Copied from musl: src/math/__sindf.c */
 static float __sindf(double x)
@@ -1102,7 +1015,7 @@ float CDECL coshf( float x )
             fp_barrierf(x + 0x1p120f);
             return 1;
         }
-        t = __expm1f(x);
+        t = expm1f(x);
         return 1 + t * t / (2 * (1 + t));
     }
 
@@ -1641,7 +1554,7 @@ float CDECL sinhf( float x )
 
     /* |x| < log(FLT_MAX) */
     if (ui < 0x42b17217) {
-        t = __expm1f(absx);
+        t = expm1f(absx);
         if (ui < 0x3f800000) {
             if (ui < 0x3f800000 - (12 << 23))
                 return x;
@@ -1855,16 +1768,16 @@ float CDECL tanhf( float x )
             fp_barrierf(x + 0x1p120f);
             t = 1 + 0 / x;
         } else {
-            t = __expm1f(2 * x);
+            t = expm1f(2 * x);
             t = 1 - 2 / (t + 2);
         }
     } else if (ui > 0x3e82c578) {
         /* |x| > log(5/3)/2 ~= 0.2554 */
-        t = __expm1f(2 * x);
+        t = expm1f(2 * x);
         t = t / (t + 2);
     } else if (ui >= 0x00800000) {
         /* |x| >= 0x1p-126 */
-        t = __expm1f(-2 * x);
+        t = expm1f(-2 * x);
         t = -t / (t + 2);
     } else {
         /* |x| is subnormal */
@@ -2536,100 +2449,6 @@ double CDECL cos( double x )
     }
 }
 
-/* Copied from musl: src/math/expm1.c */
-static double __expm1(double x)
-{
-    static const double o_threshold = 7.09782712893383973096e+02,
-        ln2_hi = 6.93147180369123816490e-01,
-        ln2_lo = 1.90821492927058770002e-10,
-        invln2 = 1.44269504088896338700e+00,
-        Q1 = -3.33333333333331316428e-02,
-        Q2 = 1.58730158725481460165e-03,
-        Q3 = -7.93650757867487942473e-05,
-        Q4 = 4.00821782732936239552e-06,
-        Q5 = -2.01099218183624371326e-07;
-
-    double y, hi, lo, c, t, e, hxs, hfx, r1, twopk;
-    union {double f; UINT64 i;} u = {x};
-    UINT32 hx = u.i >> 32 & 0x7fffffff;
-    int k, sign = u.i >> 63;
-
-    /* filter out huge and non-finite argument */
-    if (hx >= 0x4043687A) { /* if |x|>=56*ln2 */
-        if (isnan(x))
-            return x;
-        if (isinf(x))
-            return sign ? -1 : x;
-        if (sign)
-            return math_error(_UNDERFLOW, "exp", x, 0, -1);
-        if (x > o_threshold)
-            return math_error(_OVERFLOW, "exp", x, 0, x * 0x1p1023);
-    }
-
-    /* argument reduction */
-    if (hx > 0x3fd62e42) { /* if |x| > 0.5 ln2 */
-        if (hx < 0x3FF0A2B2) { /* and |x| < 1.5 ln2 */
-            if (!sign) {
-                hi = x - ln2_hi;
-                lo = ln2_lo;
-                k = 1;
-            } else {
-                hi = x + ln2_hi;
-                lo = -ln2_lo;
-                k = -1;
-            }
-        } else {
-            k = invln2 * x + (sign ? -0.5 : 0.5);
-            t = k;
-            hi = x - t * ln2_hi; /* t*ln2_hi is exact here */
-            lo = t * ln2_lo;
-        }
-        x = hi - lo;
-        c = (hi - x) - lo;
-    } else if (hx < 0x3c900000) { /* |x| < 2**-54, return x */
-        fp_barrier(x + 0x1p120f);
-        if (hx < 0x00100000)
-            fp_barrier((float)x);
-        return x;
-    } else
-        k = 0;
-
-    /* x is now in primary range */
-    hfx = 0.5 * x;
-    hxs = x * hfx;
-    r1 = 1.0 + hxs * (Q1 + hxs * (Q2 + hxs * (Q3 + hxs * (Q4 + hxs * Q5))));
-    t = 3.0 - r1 * hfx;
-    e = hxs * ((r1 - t) / (6.0 - x * t));
-    if (k == 0) /* c is 0 */
-        return x - (x * e - hxs);
-    e = x * (e - c) - c;
-    e -= hxs;
-    /* exp(x) ~ 2^k (x_reduced - e + 1) */
-    if (k == -1)
-        return 0.5 * (x - e) - 0.5;
-    if (k == 1) {
-        if (x < -0.25)
-            return -2.0 * (e - (x + 0.5));
-        return 1.0 + 2.0 * (x - e);
-    }
-    u.i = (UINT64)(0x3ff + k) << 52; /* 2^k */
-    twopk = u.f;
-    if (k < 0 || k > 56) { /* suffice to return exp(x)-1 */
-        y = x - e + 1.0;
-        if (k == 1024)
-            y = y * 2.0 * 0x1p1023;
-        else
-            y = y * twopk;
-        return y - 1.0;
-    }
-    u.i = (UINT64)(0x3ff - k) << 52; /* 2^-k */
-    if (k < 20)
-        y = (x - e + (1 - u.f)) * twopk;
-    else
-        y = (x - (e + u.f) + 1) * twopk;
-    return y;
-}
-
 static double __expo2(double x, double sign)
 {
     static const int k = 2043;
@@ -2663,7 +2482,7 @@ double CDECL cosh( double x )
             fp_barrier(x + 0x1p120f);
             return 1;
         }
-        t = __expm1(x);
+        t = expm1(x);
         return 1 + t * t / (2 * (1 + t));
     }
 
@@ -3932,7 +3751,7 @@ double CDECL sinh( double x )
 
     /* |x| < log(DBL_MAX) */
     if (w < 0x40862e42) {
-        t = __expm1(absx);
+        t = expm1(absx);
         if (w < 0x3ff00000) {
             if (w < 0x3ff00000 - (26 << 20))
                 return x;
@@ -4233,16 +4052,16 @@ double CDECL tanh( double x )
             fp_barrier(x + 0x1p120f);
             t = 1 - 0 / x;
         } else {
-            t = __expm1(2 * x);
+            t = expm1(2 * x);
             t = 1 - 2 / (t + 2);
         }
     } else if (w > 0x3fd058ae) {
         /* |x| > log(5/3)/2 ~= 0.2554 */
-        t = __expm1(2 * x);
+        t = expm1(2 * x);
         t = t / (t + 2);
     } else if (w >= 0x00100000) {
         /* |x| >= 0x1p-1022, up to 2ulp error in [0.1,0.2554] */
-        t = __expm1(-2 * x);
+        t = expm1(-2 * x);
         t = -t / (t + 2);
     } else {
         /* |x| is subnormal */
@@ -7664,22 +7483,6 @@ float CDECL exp2f(float x)
     y = z * r2 + y;
     y = y * s;
     return y;
-}
-
-/*********************************************************************
- *      expm1 (MSVCR120.@)
- */
-double CDECL expm1(double x)
-{
-    return __expm1(x);
-}
-
-/*********************************************************************
- *      expm1f (MSVCR120.@)
- */
-float CDECL expm1f(float x)
-{
-    return __expm1f(x);
 }
 
 /*********************************************************************
