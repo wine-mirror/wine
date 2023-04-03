@@ -983,8 +983,6 @@ float CDECL cosf( float x )
     }
 }
 
-extern float __expo2f(float x, float sign);
-
 /*********************************************************************
  *      expf (MSVCRT.@)
  */
@@ -1275,40 +1273,6 @@ float CDECL sinf( float x )
     case 2: return __sindf(-y);
     default: return -__cosdf(y);
     }
-}
-
-/*********************************************************************
- *      sinhf (MSVCRT.@)
- */
-float CDECL sinhf( float x )
-{
-    UINT32 ui = *(UINT32*)&x;
-    float t, h, absx;
-
-    h = 0.5;
-    if (ui >> 31)
-        h = -h;
-    /* |x| */
-    ui &= 0x7fffffff;
-    absx = *(float*)&ui;
-
-    /* |x| < log(FLT_MAX) */
-    if (ui < 0x42b17217) {
-        t = expm1f(absx);
-        if (ui < 0x3f800000) {
-            if (ui < 0x3f800000 - (12 << 23))
-                return x;
-            return h * (2 * t - t * t / (t + 1));
-        }
-        return h * (t + t / (t + 1));
-    }
-
-    /* |x| > logf(FLT_MAX) or nan */
-    if (ui > 0x7f800000)
-        *(DWORD*)&t = *(DWORD*)&x | 0x400000;
-    else
-        t = __expo2f(absx, 2 * h);
-    return t;
 }
 
 static BOOL sqrtf_validate( float *x )

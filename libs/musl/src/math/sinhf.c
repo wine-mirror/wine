@@ -3,6 +3,7 @@
 float __cdecl sinhf(float x)
 {
 	union {float f; uint32_t i;} u = {.f = x};
+	uint32_t sign = u.i & 0x80000000;
 	uint32_t w;
 	float t, h, absx;
 
@@ -26,6 +27,10 @@ float __cdecl sinhf(float x)
 	}
 
 	/* |x| > logf(FLT_MAX) or nan */
+	if (w > 0x7f800000) {
+            u.i = w | sign | 0x400000;
+            return u.f;
+	}
 	t = __expo2f(absx, 2*h);
 	return t;
 }
