@@ -105,15 +105,15 @@ struct wg_parser_stream
     uint32_t number;
 
     GstPad *their_src, *my_sink;
-    GstElement *flip;
+    GstElement *flip, *decodebin;
     GstSegment segment;
-    struct wg_format preferred_format, current_format;
+    struct wg_format preferred_format, current_format, stream_format;
 
     pthread_cond_t event_cond, event_empty_cond;
     GstBuffer *buffer;
     GstMapInfo map_info;
 
-    bool flushing, eos, enabled, has_caps, has_tags, has_buffer;
+    bool flushing, eos, enabled, has_caps, has_tags, has_buffer, no_more_pads;
 
     uint64_t duration;
     gchar *tags[WG_PARSER_TAG_COUNT];
@@ -456,6 +456,33 @@ static NTSTATUS wg_parser_stream_notify_qos(void *args)
     return S_OK;
 }
 
+static bool parser_no_more_pads(struct wg_parser *parser)
+{
+    unsigned int i;
+
+    for (i = 0; i < parser->stream_count; ++i)
+    {
+        if (!parser->streams[i]->no_more_pads)
+            return false;
+    }
+
+    return parser->no_more_pads;
+}
+
+static gboolean autoplug_continue_cb(GstElement * decodebin, GstPad *pad, GstCaps * caps, gpointer user)
+{
+    struct wg_format format;
+
+    wg_format_from_caps(&format, caps);
+
+    if (format.major_type != WG_MAJOR_TYPE_UNKNOWN
+            && format.major_type != WG_MAJOR_TYPE_VIDEO
+            && format.major_type != WG_MAJOR_TYPE_AUDIO)
+        return false;
+
+    return true;
+}
+
 static GstAutoplugSelectResult autoplug_select_cb(GstElement *bin, GstPad *pad,
         GstCaps *caps, GstElementFactory *fact, gpointer user)
 {
@@ -752,6 +779,7 @@ static struct wg_parser_stream *create_stream(struct wg_parser *parser)
 
     stream->parser = parser;
     stream->number = parser->stream_count;
+    stream->no_more_pads = true;
     stream->current_format.major_type = WG_MAJOR_TYPE_UNKNOWN;
     pthread_cond_init(&stream->event_cond, NULL);
     pthread_cond_init(&stream->event_empty_cond, NULL);
@@ -786,25 +814,18 @@ static void free_stream(struct wg_parser_stream *stream)
     free(stream);
 }
 
-static void pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
+static bool stream_create_post_processing_elements(struct wg_parser_stream *stream)
 {
-    GstElement *first = NULL, *last = NULL;
-    struct wg_parser *parser = user;
-    struct wg_parser_stream *stream;
+    GstElement *element = NULL, *first = NULL, *last = NULL;
+    struct wg_parser *parser = stream->parser;
+    GstPad *pad = stream->their_src;
     const char *name;
     GstCaps *caps;
     int ret;
 
-    GST_LOG("parser %p, element %p, pad %p.", parser, element, pad);
-
-    if (gst_pad_is_linked(pad))
-        return;
-
     caps = gst_pad_query_caps(pad, NULL);
     name = gst_structure_get_name(gst_caps_get_structure(caps, 0));
-
-    if (!(stream = create_stream(parser)))
-        goto out;
+    gst_caps_unref(caps);
 
     if (!strcmp(name, "video/x-raw"))
     {
@@ -812,29 +833,29 @@ static void pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
          * necessarily consume it. In particular, the video renderer can't. */
         if (!(element = create_element("deinterlace", "good"))
                 || !append_element(parser->container, element, &first, &last))
-            goto out;
+            return false;
 
         /* decodebin considers many YUV formats to be "raw", but some quartz
          * filters can't handle those. Also, videoflip can't handle all "raw"
          * formats either. Add a videoconvert to swap color spaces. */
         if (!(element = create_element("videoconvert", "base"))
                 || !append_element(parser->container, element, &first, &last))
-            goto out;
+            return false;
 
         /* GStreamer outputs RGB video top-down, but DirectShow expects bottom-up. */
         if (!(element = create_element("videoflip", "good"))
                 || !append_element(parser->container, element, &first, &last))
-            goto out;
+            return false;
         stream->flip = element;
 
         /* videoflip does not support 15 and 16-bit RGB so add a second videoconvert
          * to do the final conversion. */
         if (!(element = create_element("videoconvert", "base"))
                 || !append_element(parser->container, element, &first, &last))
-            goto out;
+            return false;
 
         if (!link_src_to_element(pad, first) || !link_element_to_sink(last, stream->my_sink))
-            goto out;
+            return false;
     }
     else if (!strcmp(name, "audio/x-raw"))
     {
@@ -844,27 +865,120 @@ static void pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
          * depth and channel count. */
         if (!(element = create_element("audioconvert", "base"))
                 || !append_element(parser->container, element, &first, &last))
-            goto out;
+            return false;
 
         if (!link_src_to_element(pad, first) || !link_element_to_sink(last, stream->my_sink))
-            goto out;
+            return false;
     }
     else if ((ret = gst_pad_link(pad, stream->my_sink)) < 0)
     {
         GST_ERROR("Failed to link decodebin source pad to our sink pad, error %s.",
                 gst_pad_link_get_name(ret));
-        goto out;
+        return false;
     }
 
-    gst_pad_set_active(stream->my_sink, 1);
+    return true;
+}
+
+static void stream_decodebin_no_more_pads_cb(GstElement *element, gpointer user)
+{
+    struct wg_parser_stream *stream = user;
+    struct wg_parser *parser = stream->parser;
+
+    GST_DEBUG("stream %p, parser %p, element %p.", stream, parser, element);
+
+    pthread_mutex_lock(&parser->mutex);
+    stream->no_more_pads = true;
+    pthread_mutex_unlock(&parser->mutex);
+    pthread_cond_signal(&parser->init_cond);
+}
+
+static void stream_decodebin_pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
+{
+    struct wg_parser_stream *stream = user;
+    struct wg_parser *parser = stream->parser;
+
+    GST_LOG("stream %p, parser %p, element %p, pad %p.", stream, parser, element, pad);
+
+    if (gst_pad_is_linked(pad))
+        return;
+
     gst_object_ref(stream->their_src = pad);
-out:
+    if (!stream_create_post_processing_elements(stream))
+        return;
+    gst_pad_set_active(stream->my_sink, 1);
+}
+
+static bool stream_decodebin_create(struct wg_parser_stream *stream)
+{
+    struct wg_parser *parser = stream->parser;
+
+    GST_LOG("stream %p, parser %p.", stream, parser);
+
+    if (!(stream->decodebin = create_element("decodebin", "base")))
+        return false;
+    gst_bin_add(GST_BIN(parser->container), stream->decodebin);
+
+    g_signal_connect(stream->decodebin, "pad-added", G_CALLBACK(stream_decodebin_pad_added_cb), stream);
+    g_signal_connect(stream->decodebin, "autoplug-select", G_CALLBACK(autoplug_select_cb), stream);
+    g_signal_connect(stream->decodebin, "no-more-pads", G_CALLBACK(stream_decodebin_no_more_pads_cb), stream);
+
+    pthread_mutex_lock(&parser->mutex);
+    stream->no_more_pads = false;
+    pthread_mutex_unlock(&parser->mutex);
+    gst_element_sync_state_with_parent(stream->decodebin);
+
+    GST_LOG("Created stream decodebin %p for %u.", stream->decodebin, stream->number);
+
+    return true;
+}
+
+static void pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
+{
+    struct wg_parser_stream *stream;
+    struct wg_parser *parser = user;
+    GstCaps *caps;
+
+    GST_LOG("parser %p, element %p, pad %p.", parser, element, pad);
+
+    if (gst_pad_is_linked(pad))
+        return;
+
+    if (!(stream = create_stream(parser)))
+        return;
+
+    caps = gst_pad_query_caps(pad, NULL);
+    wg_format_from_caps(&stream->stream_format, caps);
     gst_caps_unref(caps);
+
+    /* For compressed stream, create an extra decodebin to decode it. */
+    if (stream->stream_format.major_type != WG_MAJOR_TYPE_UNKNOWN
+            && stream->stream_format.major_type != WG_MAJOR_TYPE_VIDEO
+            && stream->stream_format.major_type != WG_MAJOR_TYPE_AUDIO)
+    {
+        if (!stream_decodebin_create(stream))
+        {
+            GST_ERROR("Failed to create decodebin for stream %u.", stream->number);
+            return;
+        }
+
+        if (!link_src_to_element(pad, stream->decodebin))
+            GST_ERROR("Failed to link pad %p to stream decodebin %p for stream %u.",
+                    pad, stream->decodebin, stream->number);
+
+        return;
+    }
+
+    gst_object_ref(stream->their_src = pad);
+    if (!stream_create_post_processing_elements(stream))
+        return;
+    gst_pad_set_active(stream->my_sink, 1);
 }
 
 static void pad_removed_cb(GstElement *element, GstPad *pad, gpointer user)
 {
     struct wg_parser *parser = user;
+    bool done = false;
     unsigned int i;
     char *name;
 
@@ -873,13 +987,33 @@ static void pad_removed_cb(GstElement *element, GstPad *pad, gpointer user)
     for (i = 0; i < parser->stream_count; ++i)
     {
         struct wg_parser_stream *stream = parser->streams[i];
+        GstPad *stream_decodebin_sink_peer = NULL;
+        GstPad *stream_decodebin_sink = NULL;
 
-        if (stream->their_src == pad)
+        if (stream->decodebin)
+        {
+            stream_decodebin_sink = gst_element_get_static_pad(stream->decodebin, "sink");
+            stream_decodebin_sink_peer = gst_pad_get_peer(stream_decodebin_sink);
+        }
+
+        if (stream->their_src == pad || stream_decodebin_sink_peer == pad)
         {
             gst_object_unref(stream->their_src);
             stream->their_src = NULL;
-            return;
+
+            if (stream_decodebin_sink_peer == pad)
+                gst_pad_unlink(pad, stream_decodebin_sink);
+
+            done = true;
         }
+
+        if (stream_decodebin_sink_peer)
+            gst_object_unref(stream_decodebin_sink_peer);
+        if (stream_decodebin_sink)
+            gst_object_unref(stream_decodebin_sink);
+
+        if (done)
+            return;
     }
 
     name = gst_pad_get_name(pad);
@@ -1432,7 +1566,7 @@ static NTSTATUS wg_parser_connect(void *args)
 
     pthread_mutex_lock(&parser->mutex);
 
-    while (!parser->no_more_pads && !parser->error)
+    while (!parser_no_more_pads(parser) && !parser->error)
         pthread_cond_wait(&parser->init_cond, &parser->mutex);
     if (parser->error)
     {
@@ -1628,6 +1762,7 @@ static BOOL decodebin_parser_init_gst(struct wg_parser *parser)
 
     g_signal_connect(element, "pad-added", G_CALLBACK(pad_added_cb), parser);
     g_signal_connect(element, "pad-removed", G_CALLBACK(pad_removed_cb), parser);
+    g_signal_connect(element, "autoplug-continue", G_CALLBACK(autoplug_continue_cb), parser);
     g_signal_connect(element, "autoplug-select", G_CALLBACK(autoplug_select_cb), parser);
     g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads_cb), parser);
 
