@@ -734,14 +734,11 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
     return TRUE;
 }
 
-/* for posting messages as the IME */
-static void ImmInternalPostIMEMessage( struct imc *data, UINT msg, WPARAM wParam, LPARAM lParam )
+static void imc_post_message( struct imc *imc, TRANSMSG *message )
 {
-    HWND target = GetFocus();
-    if (!target)
-       PostMessageW(data->IMC.hWnd,msg,wParam,lParam);
-    else
-       PostMessageW(target, msg, wParam, lParam);
+    HWND target;
+    if (!(target = GetFocus()) && !(target = imc->IMC.hWnd)) return;
+    PostMessageW( target, message->message, message->wParam, message->lParam );
 }
 
 static void imc_send_message( struct imc *imc, TRANSMSG *message )
@@ -3031,7 +3028,7 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
     BYTE state[256];
     UINT scancode;
     TRANSMSGLIST *list = NULL;
-    UINT msg_count;
+    UINT msg_count, i;
     UINT uVirtKey;
     static const DWORD list_count = 10;
 
@@ -3063,13 +3060,7 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
     msg_count = ime->pImeToAsciiEx( uVirtKey, scancode, state, list, 0, imc );
     TRACE("%i messages generated\n",msg_count);
     if (msg_count && msg_count <= list_count)
-    {
-        UINT i;
-        LPTRANSMSG msgs = list->TransMsg;
-
-        for (i = 0; i < msg_count; i++)
-            ImmInternalPostIMEMessage(data, msgs[i].message, msgs[i].wParam, msgs[i].lParam);
-    }
+        for (i = 0; i < msg_count; i++) imc_post_message( data, list->TransMsg + i );
     else if (msg_count > list_count)
         ImmGenerateMessage(imc);
 
