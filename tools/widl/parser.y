@@ -249,6 +249,7 @@ void pop_import( PARSER_LTYPE *yylloc );
 %token tPRAGMA_WARNING
 %token tPROGID tPROPERTIES
 %token tPROPGET tPROPPUT tPROPPUTREF
+%token tPROTECTED
 %token tPROXY tPTR
 %token tPUBLIC
 %token tRANGE
@@ -703,6 +704,7 @@ attribute
         | tPROPGET                              { $$ = attr_int( @$, ATTR_PROPGET, 0 ); }
         | tPROPPUT                              { $$ = attr_int( @$, ATTR_PROPPUT, 0 ); }
         | tPROPPUTREF                           { $$ = attr_int( @$, ATTR_PROPPUTREF, 0 ); }
+        | tPROTECTED                            { $$ = attr_int( @$, ATTR_PROTECTED, 0 ); }
         | tPROXY                                { $$ = attr_int( @$, ATTR_PROXY, 0 ); }
         | tPUBLIC                               { $$ = attr_int( @$, ATTR_PUBLIC, 0 ); }
         | tRANGE '(' expr_int_const ',' expr_int_const ')'

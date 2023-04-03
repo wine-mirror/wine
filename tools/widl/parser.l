@@ -319,6 +319,7 @@ static void winrt_enable( int ns_prefix )
     propget                                     { return tPROPGET; }
     propput                                     { return tPROPPUT; }
     propputref                                  { return tPROPPUTREF; }
+    protected                                   { return tPROTECTED; }
     proxy                                       { return tPROXY; }
     ptr                                         { return tPTR; }
     public                                      { return tPUBLIC; }
