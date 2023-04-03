@@ -9797,23 +9797,6 @@ float CDECL tgammaf(float x)
 }
 
 /*********************************************************************
- *      nan (MSVCR120.@)
- */
-double CDECL nan(const char *tagp)
-{
-    /* Windows ignores input (MSDN) */
-    return NAN;
-}
-
-/*********************************************************************
- *      nanf (MSVCR120.@)
- */
-float CDECL nanf(const char *tagp)
-{
-    return NAN;
-}
-
-/*********************************************************************
  *      _except1 (MSVCR120.@)
  *  TODO:
  *   - find meaning of ignored cw and operation bits
