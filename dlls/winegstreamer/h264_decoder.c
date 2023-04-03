@@ -183,7 +183,8 @@ static HRESULT fill_output_media_type(struct h264_decoder *decoder, IMFMediaType
     }
 
     if (FAILED(hr = IMFMediaType_GetItem(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, NULL))
-            && !IsRectEmpty(&wg_format->u.video.padding))
+            && (wg_format->u.video.padding.left || wg_format->u.video.padding.right || wg_format->u.video.padding.top
+            || wg_format->u.video.padding.bottom))
     {
         MFVideoArea aperture =
         {
