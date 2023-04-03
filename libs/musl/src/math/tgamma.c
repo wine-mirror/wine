@@ -114,18 +114,24 @@ double __cdecl tgamma(double x)
 	int sign = u.i>>63;
 
 	/* special cases */
-	if (ix >= 0x7ff00000)
+	if (ix >= 0x7ff00000) {
 		/* tgamma(nan)=nan, tgamma(inf)=inf, tgamma(-inf)=nan with invalid */
+		if (u.i == 0xfff0000000000000ULL) errno = EDOM;
 		return x + INFINITY;
-	if (ix < (0x3ff-54)<<20)
+	}
+	if (ix < (0x3ff-54)<<20) {
 		/* |x| < 2^-54: tgamma(x) ~ 1/x, +-0 raises div-by-zero */
+		if (x == 0.0) errno = ERANGE;
 		return 1/x;
+	}
 
 	/* integer arguments */
 	/* raise inexact when non-integer */
 	if (x == floor(x)) {
-		if (sign)
+		if (sign) {
+			errno = EDOM;
 			return 0/0.0;
+		}
 		if (x <= sizeof fact/sizeof *fact)
 			return fact[(int)x - 1];
 	}
@@ -133,6 +139,7 @@ double __cdecl tgamma(double x)
 	/* x >= 172: tgamma(x)=inf with overflow */
 	/* x =< -184: tgamma(x)=+-0 with underflow */
 	if (ix >= 0x40670000) { /* |x| >= 184 */
+		errno = ERANGE;
 		if (sign) {
 			FORCE_EVAL((float)(0x1p-126/x));
 			if (floor(x) * 0.5 == floor(x * 0.5))
