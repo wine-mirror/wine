@@ -52,7 +52,7 @@ int __rem_pio2f(float x, double *y)
 	/* 25+53 bit pi is good enough for medium size */
 	if (ix < 0x4dc90fdb) {  /* |x| ~< 2^28*(pi/2), medium size */
 		/* Use a specialized rint() to get fn. */
-		fn = (double_t)x*invpio2 + toint - toint;
+		fn = fp_barrier(x * invpio2 + toint) - toint;
 		n  = (int32_t)fn;
 		*y = x - fn*pio2_1 - fn*pio2_1t;
 		/* Matters with directed rounding. */
