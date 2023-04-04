@@ -68,6 +68,7 @@ namespace Windows.UI.Composition {
     interface IInsetClip;
     interface ILinearEasingFunction;
     interface IQuaternionKeyFrameAnimation;
+    interface IScalarKeyFrameAnimation;
     interface ISpriteVisual;
     interface ISpriteVisual2;
     interface IVisual;
@@ -95,6 +96,7 @@ namespace Windows.UI.Composition {
     runtimeclass LinearEasingFunction;
     runtimeclass KeyFrameAnimation;
     runtimeclass QuaternionKeyFrameAnimation;
+    runtimeclass ScalarKeyFrameAnimation;
     runtimeclass SpriteVisual;
     runtimeclass Visual;
     runtimeclass VisualCollection;
@@ -466,6 +468,20 @@ namespace Windows.UI.Composition {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.ScalarKeyFrameAnimation),
+        uuid(ae288fa9-252c-4b95-a725-bf85e38000a1)
+    ]
+    interface IScalarKeyFrameAnimation : IInspectable
+    {
+        [overload("InsertKeyFrame")] HRESULT InsertKeyFrame([in] FLOAT key, [in] FLOAT value);
+        [overload("InsertKeyFrame")] HRESULT InsertKeyFrameWithEasingFunction(
+            [in] FLOAT key, [in] FLOAT value,
+            [in] Windows.UI.Composition.CompositionEasingFunction *function
+        );
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
         exclusiveto(Windows.UI.Composition.SpriteVisual),
         uuid(08e05581-1ad1-4f97-9757-402d76e4233b)
     ]
@@ -699,6 +715,16 @@ namespace Windows.UI.Composition {
     runtimeclass QuaternionKeyFrameAnimation : Windows.UI.Composition.KeyFrameAnimation
     {
         [default] interface Windows.UI.Composition.IQuaternionKeyFrameAnimation;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass ScalarKeyFrameAnimation : Windows.UI.Composition.KeyFrameAnimation
+    {
+        [default] interface Windows.UI.Composition.IScalarKeyFrameAnimation;
     }
 
     [
