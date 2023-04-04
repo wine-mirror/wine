@@ -1344,14 +1344,6 @@ static HRESULT WINAPI VMR9FilterConfig_SetRenderingMode(IVMRFilterConfig9 *iface
         return VFW_E_WRONG_STATE;
     }
 
-    if (This->allocator)
-        IVMRSurfaceAllocator9_Release(This->allocator);
-    if (This->presenter)
-        IVMRImagePresenter9_Release(This->presenter);
-
-    This->allocator = NULL;
-    This->presenter = NULL;
-
     switch (mode)
     {
     case VMR9Mode_Windowed:
