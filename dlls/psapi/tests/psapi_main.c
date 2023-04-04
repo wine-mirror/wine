@@ -222,8 +222,10 @@ struct moduleex_snapshot
 static BOOL test_EnumProcessModulesEx_snapshot(HANDLE proc, struct moduleex_snapshot* mxsnap,
                                                unsigned numsnap)
 {
+    void* cookie;
     DWORD needed;
     char buffer[80];
+    char buffer2[80];
     MODULEINFO info;
     int i, j;
     BOOL ret;
@@ -243,6 +245,14 @@ static BOOL test_EnumProcessModulesEx_snapshot(HANDLE proc, struct moduleex_snap
             ok(ret, "GetModuleBaseName failed: %lu (%u/%lu=%p)\n", GetLastError(), j, mxsnap[i].num_modules, mxsnap[i].modules[j]);
             ret = GetModuleFileNameExA(proc, mxsnap[i].modules[j], buffer, sizeof(buffer));
             ok(ret, "GetModuleFileNameEx failed: %lu (%u/%lu=%p)\n", GetLastError(), j, mxsnap[i].num_modules, mxsnap[i].modules[j]);
+            if (wow64)
+            {
+                pWow64DisableWow64FsRedirection(&cookie);
+                ret = GetModuleFileNameExA(proc, mxsnap[i].modules[j], buffer2, sizeof(buffer2));
+                ok(ret, "GetModuleFileNameEx failed: %lu (%u/%lu=%p)\n", GetLastError(), j, mxsnap[i].num_modules, mxsnap[i].modules[j]);
+                pWow64RevertWow64FsRedirection(cookie);
+                ok(!strcmp(buffer, buffer2), "Didn't FS redirection to come into play %s <> %s\n", buffer, buffer2);
+            }
             memset(&info, 0, sizeof(info));
             ret = GetModuleInformation(proc, mxsnap[i].modules[j], &info, sizeof(info));
             ok(ret, "GetModuleInformation failed: %lu\n", GetLastError());
@@ -251,6 +261,30 @@ static BOOL test_EnumProcessModulesEx_snapshot(HANDLE proc, struct moduleex_snap
             /* info.EntryPoint to be checked */
         }
         winetest_pop_context();
+    }
+
+    if (wow64)
+    {
+        HMODULE modules[128];
+        DWORD num;
+
+        pWow64DisableWow64FsRedirection(&cookie);
+        for (i = 0; i < numsnap; i++)
+        {
+            modules[0] = (void *)0xdeadbeef;
+            ret = EnumProcessModulesEx(proc, modules, sizeof(modules), &needed, mxsnap[i].list);
+            ok(ret, "didn't succeed %lu\n", GetLastError());
+            ok(needed % sizeof(HMODULE) == 0, "not a multiple of sizeof(HMODULE) cbNeeded=%ld\n", needed);
+            num = min(needed, sizeof(modules)) / sizeof(HMODULE);
+            /* It happens that modules are still loading... so check that msxsnap[i].modules is a subset of modules[].
+             * Crossing fingers that no module is unloaded
+             */
+            ok(num >= mxsnap[i].num_modules, "Mismatch in module count %lu %lu\n", num, mxsnap[i].num_modules);
+            num = min(num, mxsnap[i].num_modules);
+            for (j = 0; j < num; j++)
+                ok(modules[j] == mxsnap[i].modules[j], "Mismatch in modules handle\n");
+        }
+        pWow64RevertWow64FsRedirection(cookie);
     }
     return ret;
 }
