@@ -573,10 +573,10 @@ static char *demangle_datatype (char **str, compound_type *ct,
     case '0': case '1': case '2': case '3': case '4':
     case '5': case '6': case '7': case '8': case '9':
       /* Referring back to previously parsed type */
-      if (sym->argc >= (size_t)('0' - *iter))
+      if (sym->argc >= (size_t)(*iter - '0'))
         return NULL;
-      ct->dest_type = sym->arg_type ['0' - *iter];
-      ct->expression = xstrdup (sym->arg_text ['0' - *iter]);
+      ct->dest_type = sym->arg_type [*iter - '0'];
+      ct->expression = xstrdup (sym->arg_text [*iter - '0']);
       iter++;
       break;
     default :
