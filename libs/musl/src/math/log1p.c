@@ -77,11 +77,15 @@ double __cdecl log1p(double x)
 	k = 1;
 	if (hx < 0x3fda827a || hx>>31) {  /* 1+x < sqrt(2)+ */
 		if (hx >= 0xbff00000) {  /* x <= -1.0 */
-			if (x == -1)
+			if (x == -1) {
+				errno = ERANGE;
 				return x/0.0; /* log1p(-1) = -inf */
+			}
+			errno = EDOM;
 			return (x-x)/0.0;     /* log1p(x<-1) = NaN */
 		}
 		if (hx<<1 < 0x3ca00000<<1) {  /* |x| < 2**-53 */
+			fp_barrier(x + 0x1p120f);
 			/* underflow if subnormal */
 			if ((hx&0x7ff00000) == 0)
 				FORCE_EVAL((float)x);

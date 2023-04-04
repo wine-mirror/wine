@@ -32,8 +32,11 @@ float __cdecl log1pf(float x)
 	k = 1;
 	if (ix < 0x3ed413d0 || ix>>31) {  /* 1+x < sqrt(2)+  */
 		if (ix >= 0xbf800000) {  /* x <= -1.0 */
-			if (x == -1)
+			if (x == -1) {
+				errno = ERANGE;
 				return x/0.0f; /* log1p(-1)=+inf */
+			}
+			errno = EDOM;
 			return (x-x)/0.0f;     /* log1p(x<-1)=NaN */
 		}
 		if (ix<<1 < 0x33800000<<1) {   /* |x| < 2**-24 */
