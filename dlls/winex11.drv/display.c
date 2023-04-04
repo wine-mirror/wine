@@ -278,6 +278,15 @@ BOOL is_detached_mode(const DEVMODEW *mode)
            mode->dmPelsHeight == 0;
 }
 
+static BOOL is_same_devmode( const DEVMODEW *a, const DEVMODEW *b )
+{
+    return a->dmDisplayOrientation == b->dmDisplayOrientation &&
+           a->dmBitsPerPel == b->dmBitsPerPel &&
+           a->dmPelsWidth == b->dmPelsWidth &&
+           a->dmPelsHeight == b->dmPelsHeight &&
+           a->dmDisplayFrequency == b->dmDisplayFrequency;
+}
+
 /* Get the full display mode with all the necessary fields set.
  * Return NULL on failure. Caller should call free_full_mode() to free the returned mode. */
 static DEVMODEW *get_full_mode(ULONG_PTR id, DEVMODEW *dev_mode)
@@ -294,19 +303,7 @@ static DEVMODEW *get_full_mode(ULONG_PTR id, DEVMODEW *dev_mode)
     for (mode_idx = 0; mode_idx < mode_count; ++mode_idx)
     {
         found_mode = (DEVMODEW *)((BYTE *)modes + (sizeof(*modes) + modes[0].dmDriverExtra) * mode_idx);
-
-        if (found_mode->dmBitsPerPel != dev_mode->dmBitsPerPel)
-            continue;
-        if (found_mode->dmPelsWidth != dev_mode->dmPelsWidth)
-            continue;
-        if (found_mode->dmPelsHeight != dev_mode->dmPelsHeight)
-            continue;
-        if (found_mode->dmDisplayFrequency != dev_mode->dmDisplayFrequency)
-            continue;
-        if (found_mode->dmDisplayOrientation != dev_mode->dmDisplayOrientation)
-            continue;
-
-        break;
+        if (is_same_devmode( found_mode, dev_mode )) break;
     }
 
     if (!found_mode || mode_idx == mode_count)
