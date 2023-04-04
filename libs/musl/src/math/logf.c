@@ -37,11 +37,13 @@ float __cdecl logf(float x)
 	if (predict_false(ix - 0x00800000 >= 0x7f800000 - 0x00800000)) {
 		/* x < 0x1p-126 or inf or nan.  */
 		if (ix * 2 == 0)
-			return __math_divzerof(1);
+			return math_error(_SING, "logf", x, 0, (ix & 0x80000000 ? 1.0 : -1.0) / x);
 		if (ix == 0x7f800000) /* log(inf) == inf.  */
 			return x;
-		if ((ix & 0x80000000) || ix * 2 >= 0xff000000)
-			return __math_invalidf(x);
+		if (ix * 2 > 0xff000000)
+			return x;
+		if (ix & 0x80000000)
+			return math_error(_DOMAIN, "logf", x, 0, (x - x) / (x - x));
 		/* x is subnormal, normalize it.  */
 		ix = asuint(x * 0x1p23f);
 		ix -= 23 << 23;
