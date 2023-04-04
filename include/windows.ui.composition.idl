@@ -34,7 +34,10 @@ import "windows.ui.idl";
 import "windows.ui.core.idl";
 
 namespace Windows.UI.Composition {
+    typedef enum CompositionBackfaceVisibility CompositionBackfaceVisibility;
     typedef enum CompositionBitmapInterpolationMode CompositionBitmapInterpolationMode;
+    typedef enum CompositionBorderMode CompositionBorderMode;
+    typedef enum CompositionCompositeMode CompositionCompositeMode;
     typedef enum CompositionStretch CompositionStretch;
 
     interface ICompositionBrush;
@@ -49,8 +52,16 @@ namespace Windows.UI.Composition {
     interface ICompositionSurfaceBrush;
     interface ICompositionSurfaceBrush2;
     interface ICompositionSurfaceBrush3;
+    interface IContainerVisual;
+    interface IContainerVisualFactory;
     interface ISpriteVisual;
     interface ISpriteVisual2;
+    interface IVisual;
+    interface IVisual2;
+    interface IVisual3;
+    interface IVisual4;
+    interface IVisualCollection;
+    interface IVisualFactory;
 
     runtimeclass CompositionBrush;
     runtimeclass CompositionClip;
@@ -59,11 +70,25 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionSurfaceBrush;
     runtimeclass ContainerVisual;
     runtimeclass SpriteVisual;
+    runtimeclass Visual;
+    runtimeclass VisualCollection;
 
     declare {
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.UI.Composition.ICompositionSurface *>;
         interface Windows.Foundation.IAsyncOperation<Windows.UI.Composition.ICompositionSurface *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.UI.Composition.Visual *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.UI.Composition.Visual *>;
     }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0)
+    ]
+    enum CompositionBackfaceVisibility
+    {
+        Inherit = 0,
+        Visible = 1,
+        Hidden  = 2,
+    };
 
     [
         contract(Windows.Foundation.UniversalApiContract, 2.0)
@@ -88,6 +113,28 @@ namespace Windows.UI.Composition {
         MagNearestMinNearestMipLinear  = 8,
         [contract(Windows.Foundation.UniversalApiContract, 8.0)]
         MagNearestMinNearestMipNearest = 9,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0)
+    ]
+    enum CompositionBorderMode
+    {
+        Inherit = 0,
+        Soft    = 1,
+        Hard    = 2,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0)
+    ]
+    enum CompositionCompositeMode
+    {
+        Inherit           = 0,
+        SourceOver        = 1,
+        DestinationInvert = 2,
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)]
+        MinBlend          = 3,
     };
 
     [
@@ -184,6 +231,25 @@ namespace Windows.UI.Composition {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.ContainerVisual),
+        uuid(02f6bc74-ed20-4773-afe6-d49b4a93db32)
+    ]
+    interface IContainerVisual : IInspectable
+    {
+        [propget] HRESULT Children([out, retval] Windows.UI.Composition.VisualCollection **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.ContainerVisual),
+        uuid(0363a65b-c7da-4d9a-95f4-69b5c8df670b)
+    ]
+    interface IContainerVisualFactory : IInspectable
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
         exclusiveto(Windows.UI.Composition.SpriteVisual),
         uuid(08e05581-1ad1-4f97-9757-402d76e4233b)
     ]
@@ -191,6 +257,73 @@ namespace Windows.UI.Composition {
     {
         [propget] HRESULT Brush([out, retval] Windows.UI.Composition.CompositionBrush **value);
         [propput] HRESULT Brush([in] Windows.UI.Composition.CompositionBrush *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.Visual),
+        uuid(117e202d-a859-4c89-873b-c2aa566788e3)
+    ]
+    interface IVisual : IInspectable
+    {
+        [propget] HRESULT AnchorPoint([out, retval] Windows.Foundation.Numerics.Vector2 *value);
+        [propput] HRESULT AnchorPoint([in] Windows.Foundation.Numerics.Vector2 value);
+        [propget] HRESULT BackfaceVisibility([out, retval] Windows.UI.Composition.CompositionBackfaceVisibility *value);
+        [propput] HRESULT BackfaceVisibility([in] Windows.UI.Composition.CompositionBackfaceVisibility value);
+        [propget] HRESULT BorderMode([out, retval] Windows.UI.Composition.CompositionBorderMode *value);
+        [propput] HRESULT BorderMode([in] Windows.UI.Composition.CompositionBorderMode value);
+        [propget] HRESULT CenterPoint([out, retval] Windows.Foundation.Numerics.Vector3 *value);
+        [propput] HRESULT CenterPoint([in] Windows.Foundation.Numerics.Vector3 value);
+        [propget] HRESULT Clip([out, retval] Windows.UI.Composition.CompositionClip **value);
+        [propput] HRESULT Clip([in] Windows.UI.Composition.CompositionClip *value);
+        [propget] HRESULT CompositeMode([out, retval] Windows.UI.Composition.CompositionCompositeMode *value);
+        [propput] HRESULT CompositeMode([in] Windows.UI.Composition.CompositionCompositeMode value);
+        [propget] HRESULT IsVisible([out, retval] boolean *value);
+        [propput] HRESULT IsVisible([in] boolean value);
+        [propget] HRESULT Offset([out, retval] Windows.Foundation.Numerics.Vector3 *value);
+        [propput] HRESULT Offset([in] Windows.Foundation.Numerics.Vector3 value);
+        [propget] HRESULT Opacity([out, retval] FLOAT *value);
+        [propput] HRESULT Opacity([in] FLOAT value);
+        [propget] HRESULT Orientation([out, retval] Windows.Foundation.Numerics.Quaternion *value);
+        [propput] HRESULT Orientation([in] Windows.Foundation.Numerics.Quaternion value);
+        [propget] HRESULT Parent([out, retval] Windows.UI.Composition.ContainerVisual **value);
+        [propget] HRESULT RotationAngle([out, retval] FLOAT *value);
+        [propput] HRESULT RotationAngle([in] FLOAT value);
+        [propget] HRESULT RotationAngleInDegrees([out, retval] FLOAT *value);
+        [propput] HRESULT RotationAngleInDegrees([in] FLOAT value);
+        [propget] HRESULT RotationAxis([out, retval] Windows.Foundation.Numerics.Vector3 *value);
+        [propput] HRESULT RotationAxis([in] Windows.Foundation.Numerics.Vector3 value);
+        [propget] HRESULT Scale([out, retval] Windows.Foundation.Numerics.Vector3 *value);
+        [propput] HRESULT Scale([in] Windows.Foundation.Numerics.Vector3 value);
+        [propget] HRESULT Size([out, retval] Windows.Foundation.Numerics.Vector2 *value);
+        [propput] HRESULT Size([in] Windows.Foundation.Numerics.Vector2 value);
+        [propget] HRESULT TransformMatrix([out, retval] Windows.Foundation.Numerics.Matrix4x4 *value);
+        [propput] HRESULT TransformMatrix([in] Windows.Foundation.Numerics.Matrix4x4 value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.Visual),
+        uuid(ad0ff93e-b502-4eb5-87b4-9a38a71d0137)
+    ]
+    interface IVisualFactory : IInspectable
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.VisualCollection),
+        uuid(8b745505-fd3e-4a98-84a8-e949468c6bcb)
+    ]
+    interface IVisualCollection : IInspectable
+    {
+        [propget] HRESULT Count([out, retval] INT32 *value);
+        HRESULT InsertAbove([in] Windows.UI.Composition.Visual *child, [in] Windows.UI.Composition.Visual *sibling);
+        HRESULT InsertAtBottom([in] Windows.UI.Composition.Visual *child);
+        HRESULT InsertAtTop([in] Windows.UI.Composition.Visual *child);
+        HRESULT InsertBelow([in] Windows.UI.Composition.Visual *child, [in] Windows.UI.Composition.Visual *sibling);
+        HRESULT Remove([in] Windows.UI.Composition.Visual *child);
+        HRESULT RemoveAll();
     }
 
     [
@@ -241,6 +374,17 @@ namespace Windows.UI.Composition {
     }
 
     [
+        composable(Windows.UI.Composition.IContainerVisualFactory, public, Windows.Foundation.UniversalApiContract, 2.0),
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass ContainerVisual : Windows.UI.Composition.Visual
+    {
+        [default] interface Windows.UI.Composition.IContainerVisual;
+    }
+
+    [
         contract(Windows.Foundation.UniversalApiContract, 2.0),
         marshaling_behavior(agile),
         threading(both)
@@ -249,5 +393,30 @@ namespace Windows.UI.Composition {
     {
         [default] interface Windows.UI.Composition.ISpriteVisual;
         [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ISpriteVisual2;
+    }
+
+    [
+        composable(Windows.UI.Composition.IVisualFactory, public, Windows.Foundation.UniversalApiContract, 2.0),
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass Visual : Windows.UI.Composition.CompositionObject
+    {
+        [default] interface Windows.UI.Composition.IVisual;
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.UI.Composition.IVisual2;
+        [contract(Windows.Foundation.UniversalApiContract, 11.0)] interface Windows.UI.Composition.IVisual3;
+        [contract(Windows.Foundation.UniversalApiContract, 12.0)] interface Windows.UI.Composition.IVisual4;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass VisualCollection : Windows.UI.Composition.CompositionObject
+    {
+        [default] interface Windows.UI.Composition.IVisualCollection;
+        interface Windows.Foundation.Collections.IIterable<Windows.UI.Composition.Visual *>;
     }
 }
