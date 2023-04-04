@@ -1352,13 +1352,14 @@ static HRESULT WINAPI VMR9FilterConfig_SetRenderingMode(IVMRFilterConfig9 *iface
         if (FAILED(hr = default_presenter_create(This, &default_presenter)))
         {
             ERR("Failed to create default presenter, hr %#lx.\n", hr);
-            break;
+            LeaveCriticalSection(&This->renderer.filter.filter_cs);
+            return hr;
         }
         This->allocator = &default_presenter->IVMRSurfaceAllocator9_iface;
         This->presenter = &default_presenter->IVMRImagePresenter9_iface;
         IVMRImagePresenter9_AddRef(This->presenter);
 
-        hr = IVMRSurfaceAllocator9_AdviseNotify(This->allocator, &This->IVMRSurfaceAllocatorNotify9_iface);
+        IVMRSurfaceAllocator9_AdviseNotify(This->allocator, &This->IVMRSurfaceAllocatorNotify9_iface);
         break;
     case VMR9Mode_Renderless:
         break;
