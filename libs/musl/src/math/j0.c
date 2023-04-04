@@ -118,7 +118,7 @@ double __cdecl _j0(double x)
 
 	/* j0(+-inf)=0, j0(nan)=nan */
 	if (ix >= 0x7ff00000)
-		return 1/(x*x);
+		return math_error(_DOMAIN, "_j0", x, 0, 1 / (x * x));
 	x = fabs(x);
 
 	if (ix >= 0x40000000) {  /* |x| >= 2 */
@@ -165,9 +165,11 @@ double __cdecl _y0(double x)
 
 	/* y0(nan)=nan, y0(<0)=nan, y0(0)=-inf, y0(inf)=0 */
 	if ((ix<<1 | lx) == 0)
-		return -1/0.0;
+		return math_error(_OVERFLOW, "_y0", x, 0, -INFINITY);
+	if (isnan(x))
+		return x;
 	if (ix>>31)
-		return 0/0.0;
+		return math_error(_DOMAIN, "_y0", x, 0, 0 / (x - x));
 	if (ix >= 0x7ff00000)
 		return 1/x;
 
