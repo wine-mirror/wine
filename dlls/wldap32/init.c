@@ -271,17 +271,17 @@ ULONG CDECL WLDAP32_ldap_connect( LDAP *ld, struct l_timeval *timeout )
         if ((ret = ldap_get_option( CTX(ld), LDAP_OPT_X_TLS_SSL_CTX, &tls_context )))
             return map_error( ret );
 
-        if (QueryContextAttributesA( tls_context, SECPKG_ATTR_REMOTE_CERT_CONTEXT, &cert ) != SEC_E_OK)
-            return WLDAP32_LDAP_SERVER_DOWN;
-
-        if (cert_callback( ld, &cert ))
+        if (QueryContextAttributesA( tls_context, SECPKG_ATTR_REMOTE_CERT_CONTEXT, &cert ) == SEC_E_OK)
         {
-            TRACE( "accepted\n" );
-        }
-        else
-        {
-            WARN( "rejected\n" );
-            return WLDAP32_LDAP_SERVER_DOWN;
+            if (cert_callback( ld, &cert ))
+            {
+                TRACE( "accepted\n" );
+            }
+            else
+            {
+                WARN( "rejected\n" );
+                return WLDAP32_LDAP_SERVER_DOWN;
+            }
         }
     }
 

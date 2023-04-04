@@ -586,6 +586,8 @@ static void test_opt_server_certificate(void)
     ok( !ret, "ldap_set_optionA should succeed, got %#lx\n", ret );
     ret = ldap_set_optionA( ld, LDAP_OPT_SERVER_CERTIFICATE, &verify_certificate );
     ok( !ret, "ldap_set_optionA should succeed, got %#lx\n", ret );
+    ret = ldap_connect( ld, NULL );
+    ok( !ret, "ldap_connect should succeed, got %#lx\n", ret );
     ret = ldap_start_tls_sA( ld, NULL, NULL, NULL, NULL );
     ok( ret == LDAP_LOCAL_ERROR, "ldap_start_tls_sA should fail, got %#lx\n", ret );
     ldap_unbind( ld );
