@@ -67,6 +67,7 @@ namespace Windows.UI.Composition {
     interface IExpressionAnimation;
     interface IInsetClip;
     interface ILinearEasingFunction;
+    interface IQuaternionKeyFrameAnimation;
     interface ISpriteVisual;
     interface ISpriteVisual2;
     interface IVisual;
@@ -93,6 +94,7 @@ namespace Windows.UI.Composition {
     runtimeclass InsetClip;
     runtimeclass LinearEasingFunction;
     runtimeclass KeyFrameAnimation;
+    runtimeclass QuaternionKeyFrameAnimation;
     runtimeclass SpriteVisual;
     runtimeclass Visual;
     runtimeclass VisualCollection;
@@ -450,6 +452,20 @@ namespace Windows.UI.Composition {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.QuaternionKeyFrameAnimation),
+        uuid(404e5835-ecf6-4240-8520-671279cf36bc)
+    ]
+    interface IQuaternionKeyFrameAnimation : IInspectable
+    {
+        [overload("InsertKeyFrame")] HRESULT InsertKeyFrame([in] FLOAT key, [in] Windows.Foundation.Numerics.Quaternion value);
+        [overload("InsertKeyFrame")] HRESULT InsertKeyFrameWithEasingFunction(
+            [in] FLOAT key, [in] Windows.Foundation.Numerics.Quaternion value,
+            [in] Windows.UI.Composition.CompositionEasingFunction *function
+        );
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
         exclusiveto(Windows.UI.Composition.SpriteVisual),
         uuid(08e05581-1ad1-4f97-9757-402d76e4233b)
     ]
@@ -673,6 +689,16 @@ namespace Windows.UI.Composition {
     runtimeclass LinearEasingFunction : Windows.UI.Composition.CompositionEasingFunction
     {
         [default] interface Windows.UI.Composition.ILinearEasingFunction;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass QuaternionKeyFrameAnimation : Windows.UI.Composition.KeyFrameAnimation
+    {
+        [default] interface Windows.UI.Composition.IQuaternionKeyFrameAnimation;
     }
 
     [
