@@ -3300,10 +3300,12 @@ static void test_ReadConsole(HANDLE input)
 
     SetLastError(0xdeadbeef);
     ret = GetFileSize(input, NULL);
-    ok(ret == INVALID_FILE_SIZE, "expected INVALID_FILE_SIZE, got %#lx\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE ||
-       GetLastError() == ERROR_INVALID_FUNCTION, /* Win 8, 10 */
-       "expected ERROR_INVALID_HANDLE, got %ld\n", GetLastError());
+    ok(ret == INVALID_FILE_SIZE || broken(TRUE), /* only Win7 pro64 on 64bit returns a valid file size here */
+       "expected INVALID_FILE_SIZE, got %#lx\n", ret);
+    if (ret == INVALID_FILE_SIZE)
+        ok(GetLastError() == ERROR_INVALID_HANDLE ||
+           GetLastError() == ERROR_INVALID_FUNCTION, /* Win 8, 10 */
+           "expected ERROR_INVALID_HANDLE, got %ld\n", GetLastError());
 
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
