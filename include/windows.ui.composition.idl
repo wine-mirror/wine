@@ -44,6 +44,7 @@ namespace Windows.UI.Composition {
     typedef enum CompositionStretch CompositionStretch;
 
     interface IColorKeyFrameAnimation;
+    interface ICompositionBatchCompletedEventArgs;
     interface ICompositionBrush;
     interface ICompositionBrushFactory;
     interface ICompositionClip;
@@ -57,6 +58,7 @@ namespace Windows.UI.Composition {
     interface ICompositionEffectFactory;
     interface ICompositionPropertySet;
     interface ICompositionPropertySet2;
+    interface ICompositionScopedBatch;
     interface ICompositionSurface;
     interface ICompositionSurfaceBrush;
     interface ICompositionSurfaceBrush2;
@@ -80,6 +82,7 @@ namespace Windows.UI.Composition {
 
     runtimeclass ColorKeyFrameAnimation;
     runtimeclass CompositionAnimation;
+    runtimeclass CompositionBatchCompletedEventArgs;
     runtimeclass CompositionBrush;
     runtimeclass CompositionClip;
     runtimeclass CompositionColorBrush;
@@ -88,6 +91,7 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionEffectFactory;
     runtimeclass CompositionObject;
     runtimeclass CompositionPropertySet;
+    runtimeclass CompositionScopedBatch;
     runtimeclass CompositionSurfaceBrush;
     runtimeclass ContainerVisual;
     runtimeclass CubicBezierEasingFunction;
@@ -106,6 +110,7 @@ namespace Windows.UI.Composition {
         interface Windows.Foundation.IAsyncOperation<Windows.UI.Composition.ICompositionSurface *>;
         interface Windows.Foundation.Collections.IIterable<Windows.UI.Composition.Visual *>;
         interface Windows.Foundation.Collections.IIterator<Windows.UI.Composition.Visual *>;
+        interface Windows.Foundation.TypedEventHandler<IInspectable *, Windows.UI.Composition.CompositionBatchCompletedEventArgs *>;
     }
 
     [
@@ -225,6 +230,15 @@ namespace Windows.UI.Composition {
             [in] FLOAT key, [in] Windows.UI.Color value,
             [in] Windows.UI.Composition.CompositionEasingFunction *function
         );
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.CompositionBatchCompletedEventArgs),
+        uuid(0d00dad0-9464-450a-a562-2e2698b0a812)
+    ]
+    interface ICompositionBatchCompletedEventArgs : IInspectable
+    {
     }
 
     [
@@ -356,6 +370,25 @@ namespace Windows.UI.Composition {
             [in] HSTRING name, [out] Windows.Foundation.Numerics.Vector4 *value,
             [out, retval] Windows.UI.Composition.CompositionGetValueStatus *result
         );
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.CompositionScopedBatch),
+        uuid(0d00dad0-fb07-46fd-8c72-6280d1a3d1dd)
+    ]
+    interface ICompositionScopedBatch : IInspectable
+    {
+        [propget] HRESULT IsActive([out, retval] boolean *value);
+        [propget] HRESULT IsEnded([out, retval] boolean *value);
+        HRESULT End();
+        HRESULT Resume();
+        HRESULT Suspend();
+        [eventadd] HRESULT Completed(
+            [in] Windows.Foundation.TypedEventHandler<IInspectable *, Windows.UI.Composition.CompositionBatchCompletedEventArgs *> *handler,
+            [out, retval] EventRegistrationToken *token
+        );
+        [eventremove] HRESULT Completed([in] EventRegistrationToken token);
     }
 
     [
@@ -569,6 +602,16 @@ namespace Windows.UI.Composition {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass CompositionBatchCompletedEventArgs : Windows.UI.Composition.CompositionObject
+    {
+        [default] interface Windows.UI.Composition.ICompositionBatchCompletedEventArgs;
+    }
+
+    [
         composable(Windows.UI.Composition.ICompositionBrushFactory, public, Windows.Foundation.UniversalApiContract, 2.0),
         contract(Windows.Foundation.UniversalApiContract, 2.0),
         marshaling_behavior(agile),
@@ -642,6 +685,16 @@ namespace Windows.UI.Composition {
     {
         [default] interface Windows.UI.Composition.ICompositionPropertySet;
         [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionPropertySet2;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass CompositionScopedBatch : Windows.UI.Composition.CompositionObject
+    {
+        [default] interface Windows.UI.Composition.ICompositionScopedBatch;
     }
 
     [
