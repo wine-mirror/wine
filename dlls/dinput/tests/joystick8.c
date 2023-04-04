@@ -1450,6 +1450,11 @@ static void test_simple_joystick( DWORD version )
                 REPORT_COUNT(1, 4),
                 INPUT(1, Data|Var|Abs),
             END_COLLECTION,
+
+            USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+            USAGE(1, HID_USAGE_GENERIC_RZ),
+            COLLECTION(1, Physical),
+            END_COLLECTION,
         END_COLLECTION,
     };
     C_ASSERT(sizeof(report_desc) < MAX_HID_DESCRIPTOR_LEN);
@@ -1679,6 +1684,14 @@ static void test_simple_joystick( DWORD version )
             .wUsagePage = HID_USAGE_PAGE_GENERIC,
             .wUsage = HID_USAGE_GENERIC_JOYSTICK,
         },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwType = DIDFT_COLLECTION|DIDFT_NODATA|DIDFT_MAKEINSTANCE(2),
+            .tszName = L"Collection 2 - Z Rotation",
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_RZ,
+        },
     };
     const DIDEVICEOBJECTINSTANCEW expect_objects_5[] =
     {
@@ -1764,6 +1777,21 @@ static void test_simple_joystick( DWORD version )
             .wReportId = 1,
         },
     };
+    struct check_object_todo todo_objects[ARRAY_SIZE(expect_objects)] =
+    {
+        {0},
+        {0},
+        {0},
+        {0},
+        {0},
+        {0},
+        {0},
+        {0},
+        {0},
+        {0},
+        {0},
+        { .guid = TRUE },
+    };
     struct check_object_todo todo_objects_5[ARRAY_SIZE(expect_objects_5)] =
     {
         {.guid = TRUE, .type = TRUE, .flags = TRUE, .usage = TRUE, .usage_page = TRUE, .name = TRUE},
@@ -1780,7 +1808,7 @@ static void test_simple_joystick( DWORD version )
         .version = version,
         .expect_count = version < 0x700 ? ARRAY_SIZE(expect_objects_5) : ARRAY_SIZE(expect_objects),
         .expect_objs = version < 0x700 ? expect_objects_5 : expect_objects,
-        .todo_objs = version < 0x700 ? todo_objects_5 : NULL,
+        .todo_objs = version < 0x700 ? todo_objects_5 : todo_objects,
         .todo_extra = version < 0x700,
     };
 
