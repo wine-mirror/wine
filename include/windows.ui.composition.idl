@@ -37,9 +37,11 @@ namespace Windows.UI.Composition {
     typedef enum CompositionBackfaceVisibility CompositionBackfaceVisibility;
     typedef enum CompositionBitmapInterpolationMode CompositionBitmapInterpolationMode;
     typedef enum CompositionBorderMode CompositionBorderMode;
+    typedef enum CompositionColorSpace CompositionColorSpace;
     typedef enum CompositionCompositeMode CompositionCompositeMode;
     typedef enum CompositionStretch CompositionStretch;
 
+    interface IColorKeyFrameAnimation;
     interface ICompositionBrush;
     interface ICompositionBrushFactory;
     interface ICompositionClip;
@@ -63,12 +65,14 @@ namespace Windows.UI.Composition {
     interface IVisualCollection;
     interface IVisualFactory;
 
+    runtimeclass ColorKeyFrameAnimation;
     runtimeclass CompositionBrush;
     runtimeclass CompositionClip;
     runtimeclass CompositionEasingFunction;
     runtimeclass CompositionObject;
     runtimeclass CompositionSurfaceBrush;
     runtimeclass ContainerVisual;
+    runtimeclass KeyFrameAnimation;
     runtimeclass SpriteVisual;
     runtimeclass Visual;
     runtimeclass VisualCollection;
@@ -128,6 +132,20 @@ namespace Windows.UI.Composition {
     [
         contract(Windows.Foundation.UniversalApiContract, 2.0)
     ]
+    enum CompositionColorSpace
+    {
+        Auto      = 0,
+        Hsl       = 1,
+        Rgb       = 2,
+        [contract(Windows.Foundation.UniversalApiContract, 5.0)]
+        HslLinear = 3,
+        [contract(Windows.Foundation.UniversalApiContract, 5.0)]
+        RgbLinear = 4,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0)
+    ]
     enum CompositionCompositeMode
     {
         Inherit           = 0,
@@ -147,6 +165,22 @@ namespace Windows.UI.Composition {
         Uniform       = 2,
         UniformToFill = 3,
     };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.ColorKeyFrameAnimation),
+        uuid(93adb5e9-8e05-4593-84a3-dca152781e56)
+    ]
+    interface IColorKeyFrameAnimation : IInspectable
+    {
+        [propget] HRESULT InterpolationColorSpace([out, retval] Windows.UI.Composition.CompositionColorSpace *value);
+        [propput] HRESULT InterpolationColorSpace([in] Windows.UI.Composition.CompositionColorSpace value);
+        [overload("InsertKeyFrame")] HRESULT InsertKeyFrame([in] FLOAT key, [in] Windows.UI.Color value);
+        [overload("InsertKeyFrame")] HRESULT InsertKeyFrameWithEasingFunction(
+            [in] FLOAT key, [in] Windows.UI.Color value,
+            [in] Windows.UI.Composition.CompositionEasingFunction *function
+        );
+    }
 
     [
         contract(Windows.Foundation.UniversalApiContract, 2.0),
@@ -324,6 +358,16 @@ namespace Windows.UI.Composition {
         HRESULT InsertBelow([in] Windows.UI.Composition.Visual *child, [in] Windows.UI.Composition.Visual *sibling);
         HRESULT Remove([in] Windows.UI.Composition.Visual *child);
         HRESULT RemoveAll();
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass ColorKeyFrameAnimation : Windows.UI.Composition.KeyFrameAnimation
+    {
+        [default] interface Windows.UI.Composition.IColorKeyFrameAnimation;
     }
 
     [
