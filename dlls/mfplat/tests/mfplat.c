@@ -7255,6 +7255,7 @@ static ID3D12Device *create_d3d12_device(void)
 static void test_d3d11_surface_buffer(void)
 {
     DWORD max_length, cur_length, length, color;
+    BYTE *data, *data2, *buffer_start;
     IMFDXGIBuffer *dxgi_buffer;
     D3D11_TEXTURE2D_DESC desc;
     IMF2DBuffer2 *_2dbuffer2;
@@ -7263,7 +7264,6 @@ static void test_d3d11_surface_buffer(void)
     IMFMediaBuffer *buffer;
     ID3D11Device *device;
     BYTE buff[64 * 64 * 4];
-    BYTE *data, *data2;
     LONG pitch, pitch2;
     UINT index, size;
     IUnknown *obj;
@@ -7575,7 +7575,54 @@ static void test_d3d11_surface_buffer(void)
 
     ID3D11Texture2D_Release(texture);
 
-    /* Subresource index 1. */
+    memset(&desc, 0, sizeof(desc));
+    desc.Width = 64;
+    desc.Height = 64;
+    desc.ArraySize = 1;
+    desc.MipLevels = 1;
+    desc.Format = DXGI_FORMAT_NV12;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+
+    hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
+    if (SUCCEEDED(hr))
+    {
+        hr = pMFCreateDXGISurfaceBuffer(&IID_ID3D11Texture2D, (IUnknown *)texture, 0, FALSE, &buffer);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer2, (void **)&_2dbuffer2);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+
+        hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Read, &data, &pitch, &buffer_start, &length);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+
+        ok(pitch >= desc.Width, "got %ld.\n", pitch);
+        ok(length == pitch * desc.Height * 3 / 2, "got %lu.\n", length);
+
+        hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+
+        IMF2DBuffer2_Release(_2dbuffer2);
+        IMFMediaBuffer_Release(buffer);
+        ID3D11Texture2D_Release(texture);
+    }
+    else
+    {
+        win_skip("Failed to create NV12 texture, hr %#lx, skipping test.\n", hr);
+        ID3D11Device_Release(device);
+        return;
+    }
+
+    /* Subresource index 1.
+     * When WARP d3d11 device is used, this test leaves the device in a broken state, so it should
+     * be kept last. */
+    memset(&desc, 0, sizeof(desc));
+    desc.Width = 64;
+    desc.Height = 64;
+    desc.ArraySize = 1;
+    desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+
     hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
     ok(hr == S_OK, "Failed to create a texture, hr %#lx.\n", hr);
 
@@ -7600,7 +7647,6 @@ static void test_d3d11_surface_buffer(void)
 
     IMF2DBuffer_Release(_2d_buffer);
     IMFMediaBuffer_Release(buffer);
-
     ID3D11Texture2D_Release(texture);
 
     ID3D11Device_Release(device);

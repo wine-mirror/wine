@@ -1063,7 +1063,7 @@ static HRESULT dxgi_surface_buffer_lock(struct buffer *buffer, MF2DBuffer_LockFl
         if (buffer_start)
             *buffer_start = *scanline0;
         if (buffer_length)
-            *buffer_length = buffer->dxgi_surface.map_desc.RowPitch * buffer->_2d.height;
+            *buffer_length = buffer->dxgi_surface.map_desc.DepthPitch;
     }
 
     return hr;
