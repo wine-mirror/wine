@@ -61,6 +61,7 @@ namespace Windows.UI.Composition {
     interface IContainerVisual;
     interface IContainerVisualFactory;
     interface ICubicBezierEasingFunction;
+    interface IExpressionAnimation;
     interface ISpriteVisual;
     interface ISpriteVisual2;
     interface IVisual;
@@ -71,6 +72,7 @@ namespace Windows.UI.Composition {
     interface IVisualFactory;
 
     runtimeclass ColorKeyFrameAnimation;
+    runtimeclass CompositionAnimation;
     runtimeclass CompositionBrush;
     runtimeclass CompositionClip;
     runtimeclass CompositionColorBrush;
@@ -81,6 +83,7 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionSurfaceBrush;
     runtimeclass ContainerVisual;
     runtimeclass CubicBezierEasingFunction;
+    runtimeclass ExpressionAnimation;
     runtimeclass KeyFrameAnimation;
     runtimeclass SpriteVisual;
     runtimeclass Visual;
@@ -349,6 +352,17 @@ namespace Windows.UI.Composition {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.ExpressionAnimation),
+        uuid(6acc5431-7d3d-4bf3-abb6-f44bdc4888c1)
+    ]
+    interface IExpressionAnimation : IInspectable
+    {
+        [propget] HRESULT Expression([out, retval] HSTRING *value);
+        [propput] HRESULT Expression([in] HSTRING value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
         exclusiveto(Windows.UI.Composition.SpriteVisual),
         uuid(08e05581-1ad1-4f97-9757-402d76e4233b)
     ]
@@ -531,6 +545,16 @@ namespace Windows.UI.Composition {
     runtimeclass CubicBezierEasingFunction : Windows.UI.Composition.CompositionEasingFunction
     {
         [default] interface Windows.UI.Composition.ICubicBezierEasingFunction;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass ExpressionAnimation : Windows.UI.Composition.CompositionAnimation
+    {
+        [default] interface Windows.UI.Composition.IExpressionAnimation;
     }
 
     [
