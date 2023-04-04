@@ -39,6 +39,7 @@ namespace Windows.UI.Composition {
     typedef enum CompositionBorderMode CompositionBorderMode;
     typedef enum CompositionColorSpace CompositionColorSpace;
     typedef enum CompositionCompositeMode CompositionCompositeMode;
+    typedef enum CompositionEffectFactoryLoadStatus CompositionEffectFactoryLoadStatus;
     typedef enum CompositionStretch CompositionStretch;
 
     interface IColorKeyFrameAnimation;
@@ -52,6 +53,7 @@ namespace Windows.UI.Composition {
     interface ICompositionEasingFunctionFactory;
     interface ICompositionEasingFunctionStatics;
     interface ICompositionEffectBrush;
+    interface ICompositionEffectFactory;
     interface ICompositionSurface;
     interface ICompositionSurfaceBrush;
     interface ICompositionSurfaceBrush2;
@@ -74,6 +76,7 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionColorBrush;
     runtimeclass CompositionEasingFunction;
     runtimeclass CompositionEffectBrush;
+    runtimeclass CompositionEffectFactory;
     runtimeclass CompositionObject;
     runtimeclass CompositionSurfaceBrush;
     runtimeclass ContainerVisual;
@@ -159,6 +162,17 @@ namespace Windows.UI.Composition {
         DestinationInvert = 2,
         [contract(Windows.Foundation.UniversalApiContract, 3.0)]
         MinBlend          = 3,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0)
+    ]
+    enum CompositionEffectFactoryLoadStatus
+    {
+        Success          = 0,
+        EffectTooComplex = 1,
+        Pending          = 2,
+        Other            = -1,
     };
 
     [
@@ -262,6 +276,18 @@ namespace Windows.UI.Composition {
     {
         HRESULT GetSourceParameter([in] HSTRING name, [out, retval] Windows.UI.Composition.CompositionBrush **result);
         HRESULT SetSourceParameter([in] HSTRING name, [in] Windows.UI.Composition.CompositionBrush *source);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.CompositionEffectFactory),
+        uuid(be5624af-ba7e-4510-9850-41c0b4ff74df)
+    ]
+    interface ICompositionEffectFactory : IInspectable
+    {
+        HRESULT CreateBrush([out, retval] Windows.UI.Composition.CompositionEffectBrush **result);
+        [propget] HRESULT ExtendedError([out, retval] HRESULT *value);
+        [propget] HRESULT LoadStatus([out, retval] Windows.UI.Composition.CompositionEffectFactoryLoadStatus *value);
     }
 
     [
@@ -462,6 +488,16 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionEffectBrush : Windows.UI.Composition.CompositionBrush
     {
         [default] interface Windows.UI.Composition.ICompositionEffectBrush;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass CompositionEffectFactory : Windows.UI.Composition.CompositionObject
+    {
+        [default] interface Windows.UI.Composition.ICompositionEffectFactory;
     }
 
     [
