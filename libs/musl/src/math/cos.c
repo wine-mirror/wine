@@ -62,6 +62,8 @@ double __cdecl cos(double x)
 	}
 
 	/* cos(Inf or NaN) is NaN */
+	if (isinf(x))
+		return math_error(_DOMAIN, "cos", x, 0, x - x);
 	if (ix >= 0x7ff00000)
 		return x-x;
 

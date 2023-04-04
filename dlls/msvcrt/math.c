@@ -219,9 +219,6 @@ float CDECL _chgsignf( float num )
 #endif
 
 #ifndef __i386__
-extern float __sindf(double x);
-extern float __cosdf(double x);
-
 static const UINT64 exp2f_T[] = {
     0x3ff0000000000000ULL, 0x3fefd9b0d3158574ULL, 0x3fefb5586cf9890fULL, 0x3fef9301d0125b51ULL,
     0x3fef72b83c7d517bULL, 0x3fef54873168b9aaULL, 0x3fef387a6e756238ULL, 0x3fef1e9df51fdee1ULL,
@@ -493,70 +490,6 @@ float CDECL atanf( float x )
 }
 
 extern int __rem_pio2f(float x, double *y);
-
-/*********************************************************************
- *      cosf (MSVCRT.@)
- *
- * Copied from musl: src/math/cosf.c
- */
-float CDECL cosf( float x )
-{
-    static const double c1pio2 = 1*M_PI_2,
-        c2pio2 = 2*M_PI_2,
-        c3pio2 = 3*M_PI_2,
-        c4pio2 = 4*M_PI_2;
-
-    double y;
-    UINT32 ix;
-    unsigned n, sign;
-
-    ix = *(UINT32*)&x;
-    sign = ix >> 31;
-    ix &= 0x7fffffff;
-
-    if (ix <= 0x3f490fda) { /* |x| ~<= pi/4 */
-        if (ix < 0x39800000) { /* |x| < 2**-12 */
-            /* raise inexact if x != 0 */
-            fp_barrierf(x + 0x1p120f);
-            return 1.0f;
-        }
-        return __cosdf(x);
-    }
-    if (ix <= 0x407b53d1) { /* |x| ~<= 5*pi/4 */
-        if (ix > 0x4016cbe3) /* |x| ~> 3*pi/4 */
-            return -__cosdf(sign ? x + c2pio2 : x - c2pio2);
-        else {
-            if (sign)
-                return __sindf(x + c1pio2);
-            else
-                return __sindf(c1pio2 - x);
-        }
-    }
-    if (ix <= 0x40e231d5) { /* |x| ~<= 9*pi/4 */
-        if (ix > 0x40afeddf) /* |x| ~> 7*pi/4 */
-            return __cosdf(sign ? x + c4pio2 : x - c4pio2);
-        else {
-            if (sign)
-                return __sindf(-x - c3pio2);
-            else
-                return __sindf(x - c3pio2);
-        }
-    }
-
-    /* cos(Inf or NaN) is NaN */
-    if (isinf(x)) return math_error(_DOMAIN, "cosf", x, 0, x - x);
-    if (ix >= 0x7f800000)
-        return x - x;
-
-    /* general argument reduction needed */
-    n = __rem_pio2f(x, &y);
-    switch (n & 3) {
-    case 0: return __cosdf(y);
-    case 1: return __sindf(-y);
-    case 2: return -__cosdf(y);
-    default: return __sindf(y);
-    }
-}
 
 /*********************************************************************
  *      expf (MSVCRT.@)
@@ -1308,86 +1241,6 @@ double CDECL rint(double x)
 }
 
 extern int __rem_pio2(double x, double *y);
-
-/* Copied from musl: src/math/__sin.c */
-static double __sin(double x, double y, int iy)
-{
-    static const double S1  = -1.66666666666666324348e-01,
-                 S2  =  8.33333333332248946124e-03,
-                 S3  = -1.98412698298579493134e-04,
-                 S4  =  2.75573137070700676789e-06,
-                 S5  = -2.50507602534068634195e-08,
-                 S6  =  1.58969099521155010221e-10;
-
-    double z, r, v, w;
-
-    z = x * x;
-    w = z * z;
-    r = S2 + z * (S3 + z * S4) + z * w * (S5 + z * S6);
-    v = z * x;
-    if (iy == 0)
-        return x + v * (S1 + z * r);
-    else
-        return x - ((z * (0.5 * y - v * r) - y) - v * S1);
-}
-
-/* Copied from musl: src/math/__cos.c */
-static double __cos(double x, double y)
-{
-    static const double C1  =  4.16666666666666019037e-02,
-                 C2  = -1.38888888888741095749e-03,
-                 C3  =  2.48015872894767294178e-05,
-                 C4  = -2.75573143513906633035e-07,
-                 C5  =  2.08757232129817482790e-09,
-                 C6  = -1.13596475577881948265e-11;
-    double hz, z, r, w;
-
-    z = x * x;
-    w = z * z;
-    r = z * (C1 + z * (C2 + z * C3)) + w * w * (C4 + z * (C5 + z * C6));
-    hz = 0.5 * z;
-    w = 1.0 - hz;
-    return w + (((1.0 - w) - hz) + (z * r - x * y));
-}
-
-/*********************************************************************
- *		cos (MSVCRT.@)
- *
- * Copied from musl: src/math/cos.c
- */
-double CDECL cos( double x )
-{
-    double y[2];
-    UINT32 ix;
-    unsigned n;
-
-    ix = *(ULONGLONG*)&x >> 32;
-    ix &= 0x7fffffff;
-
-    /* |x| ~< pi/4 */
-    if (ix <= 0x3fe921fb) {
-        if (ix < 0x3e46a09e) { /* |x| < 2**-27 * sqrt(2) */
-            /* raise inexact if x!=0 */
-            fp_barrier(x + 0x1p120f);
-            return 1.0;
-        }
-        return __cos(x, 0);
-    }
-
-    /* cos(Inf or NaN) is NaN */
-    if (isinf(x)) return math_error(_DOMAIN, "cos", x, 0, x - x);
-    if (ix >= 0x7ff00000)
-        return x - x;
-
-    /* argument reduction */
-    n = __rem_pio2(x, y);
-    switch (n & 3) {
-    case 0: return __cos(y[0], y[1]);
-    case 1: return -__sin(y[0], y[1], 1);
-    case 2: return -__cos(y[0], y[1]);
-    default: return __sin(y[0], y[1], 1);
-    }
-}
 
 /* Copied from musl: src/math/exp_data.c */
 static const UINT64 exp_T[] = {

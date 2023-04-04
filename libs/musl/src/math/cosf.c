@@ -63,6 +63,8 @@ float __cdecl cosf(float x)
 	}
 
 	/* cos(Inf or NaN) is NaN */
+	if (isinf(x))
+		return math_error(_DOMAIN, "cosf", x, 0, x - x);
 	if (ix >= 0x7f800000)
 		return x-x;
 
