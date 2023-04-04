@@ -201,7 +201,7 @@ static inline struct default_presenter *impl_from_IVMRSurfaceAllocator9(IVMRSurf
     return CONTAINING_RECORD(iface, struct default_presenter, IVMRSurfaceAllocator9_iface);
 }
 
-static HRESULT VMR9DefaultAllocatorPresenterImpl_create(struct quartz_vmr *parent, LPVOID * ppv);
+static HRESULT default_presenter_create(struct quartz_vmr *parent, struct default_presenter **presenter);
 
 static inline struct quartz_vmr *impl_from_IBaseFilter(IBaseFilter *iface)
 {
@@ -1332,6 +1332,7 @@ static HRESULT WINAPI VMR9FilterConfig_GetRenderingPrefs(IVMRFilterConfig9 *ifac
 
 static HRESULT WINAPI VMR9FilterConfig_SetRenderingMode(IVMRFilterConfig9 *iface, DWORD mode)
 {
+    struct default_presenter *default_presenter;
     HRESULT hr = S_OK;
     struct quartz_vmr *This = impl_from_IVMRFilterConfig9(iface);
 
@@ -1350,21 +1351,14 @@ static HRESULT WINAPI VMR9FilterConfig_SetRenderingMode(IVMRFilterConfig9 *iface
     case VMR9Mode_Windowless:
         This->cookie = ~0;
 
-        if (FAILED(hr = VMR9DefaultAllocatorPresenterImpl_create(This, (void **)&This->presenter)))
+        if (FAILED(hr = default_presenter_create(This, &default_presenter)))
         {
             ERR("Failed to create default presenter, hr %#lx.\n", hr);
             break;
         }
-
-        if (FAILED(hr = IVMRImagePresenter9_QueryInterface(This->presenter,
-                    &IID_IVMRSurfaceAllocator9, (void **)&This->allocator)))
-        {
-            ERR("Failed to query for IVMRSurfaceAllocator9, hr %#lx.\n", hr);
-            IVMRImagePresenter9_Release(This->presenter);
-            This->allocator = NULL;
-            This->presenter = NULL;
-            break;
-        }
+        This->allocator = &default_presenter->IVMRSurfaceAllocator9_iface;
+        This->presenter = &default_presenter->IVMRImagePresenter9_iface;
+        IVMRImagePresenter9_AddRef(This->presenter);
 
         hr = IVMRSurfaceAllocator9_AdviseNotify(This->allocator, &This->IVMRSurfaceAllocatorNotify9_iface);
         break;
@@ -3102,7 +3096,7 @@ static IDirect3D9 *init_d3d9(HMODULE d3d9_handle)
     return d3d9_create(D3D_SDK_VERSION);
 }
 
-static HRESULT VMR9DefaultAllocatorPresenterImpl_create(struct quartz_vmr *parent, LPVOID * ppv)
+static HRESULT default_presenter_create(struct quartz_vmr *parent, struct default_presenter **presenter)
 {
     struct default_presenter *object;
 
@@ -3124,6 +3118,6 @@ static HRESULT VMR9DefaultAllocatorPresenterImpl_create(struct quartz_vmr *paren
     object->pVMR9 = parent;
 
     TRACE("Created default presenter %p.\n", object);
-    *ppv = &object->IVMRImagePresenter9_iface;
+    *presenter = object;
     return S_OK;
 }
