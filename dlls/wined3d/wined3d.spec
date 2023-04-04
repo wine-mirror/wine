@@ -359,4 +359,5 @@
 @ cdecl vkd3d_shader_parse_root_signature(ptr ptr ptr)
 @ cdecl vkd3d_shader_preprocess(ptr ptr ptr)
 @ cdecl vkd3d_shader_scan(ptr ptr)
+@ cdecl vkd3d_shader_serialize_dxbc(long ptr ptr ptr)
 @ cdecl vkd3d_shader_serialize_root_signature(ptr ptr ptr)
