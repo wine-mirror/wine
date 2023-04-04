@@ -84,10 +84,19 @@ double __cdecl exp2(double x)
 				return 0.0;
 			if (abstop >= top12(INFINITY))
 				return 1.0 + x;
-			if (!(asuint64(x) >> 63))
-				return __math_oflow(0);
-			else if (asuint64(x) >= asuint64(-1075.0))
-				return __math_uflow(0);
+			if (!(asuint64(x) >> 63)) {
+				errno = ERANGE;
+				return fp_barrier(DBL_MAX) * DBL_MAX;
+			}
+			else if (x <= -2147483648.0) {
+				fp_barrier(x + 0x1p120f);
+				return 0;
+			}
+			else if (asuint64(x) >= asuint64(-1075.0)) {
+				errno = ERANGE;
+				fp_barrier(x + 0x1p120f);
+				return 0;
+			}
 		}
 		if (2 * asuint64(x) > 2 * asuint64(928.0))
 			/* Large x is special cased below.  */

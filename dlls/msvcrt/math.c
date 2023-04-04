@@ -488,7 +488,6 @@ static double __round(double x)
     return *(double*)&llx;
 }
 
-#if !defined(__i386__) || _MSVCR_VER >= 120
 #ifndef __i386__
 /* Copied from musl: src/math/__sindf.c */
 static float __sindf(double x)
@@ -525,7 +524,6 @@ static float __cosdf(double x)
         return 1 + C0 * z;
     return 1.0 + z * (C0 + z * (C1 + z * (C2 + z * (C3 + z * C4))));
 }
-#endif
 
 static const UINT64 exp2f_T[] = {
     0x3ff0000000000000ULL, 0x3fefd9b0d3158574ULL, 0x3fefb5586cf9890fULL, 0x3fef9301d0125b51ULL,
@@ -5497,173 +5495,6 @@ void __cdecl __libm_sse2_sqrt_precise(void)
 #endif  /* __i386__ */
 
 #if _MSVCR_VER>=120
-
-/*********************************************************************
- *      exp2 (MSVCR120.@)
- *
- * Copied from musl: src/math/exp2.c
- */
-double CDECL exp2(double x)
-{
-    static const double C[] = {
-        0x1.62e42fefa39efp-1,
-        0x1.ebfbdff82c424p-3,
-        0x1.c6b08d70cf4b5p-5,
-        0x1.3b2abd24650ccp-7,
-        0x1.5d7e09b4e3a84p-10
-    };
-
-    UINT32 abstop;
-    UINT64 ki, idx, top, sbits;
-    double kd, r, r2, scale, tail, tmp;
-
-    abstop = (*(UINT64*)&x >> 52) & 0x7ff;
-    if (abstop - 0x3c9 >= 0x408 - 0x3c9) {
-        if (abstop - 0x3c9 >= 0x80000000) {
-            /* Avoid spurious underflow for tiny x. */
-            /* Note: 0 is common input. */
-            return 1.0 + x;
-        }
-        if (abstop >= 409) {
-            if (*(UINT64*)&x == 0xfff0000000000000ull)
-                return 0.0;
-            if (abstop >= 0x7ff)
-                return 1.0 + x;
-            if (!(*(UINT64*)&x >> 63)) {
-                *_errno() = ERANGE;
-                return fp_barrier(DBL_MAX) * DBL_MAX;
-            }
-            else if (x <= -2147483648.0) {
-                fp_barrier(x + 0x1p120f);
-                return 0;
-            }
-            else if (*(UINT64*)&x >= 0xc090cc0000000000ull) {
-                *_errno() = ERANGE;
-                fp_barrier(x + 0x1p120f);
-                return 0;
-            }
-        }
-        if (2 * *(UINT64*)&x > 2 * 0x408d000000000000ull)
-            /* Large x is special cased below. */
-            abstop = 0;
-    }
-
-    /* exp2(x) = 2^(k/N) * 2^r, with 2^r in [2^(-1/2N),2^(1/2N)]. */
-    /* x = k/N + r, with int k and r in [-1/2N, 1/2N]. */
-    kd = fp_barrier(x + 0x1.8p52 / (1 << 7));
-    ki = *(UINT64*)&kd; /* k. */
-    kd -= 0x1.8p52 / (1 << 7); /* k/N for int k. */
-    r = x - kd;
-    /* 2^(k/N) ~= scale * (1 + tail). */
-    idx = 2 * (ki % (1 << 7));
-    top = ki << (52 - 7);
-    tail = *(double*)&exp_T[idx];
-    /* This is only a valid scale when -1023*N < k < 1024*N. */
-    sbits = exp_T[idx + 1] + top;
-    /* exp2(x) = 2^(k/N) * 2^r ~= scale + scale * (tail + 2^r - 1). */
-    /* Evaluation is optimized assuming superscalar pipelined execution. */
-    r2 = r * r;
-    /* Without fma the worst case error is 0.5/N ulp larger. */
-    /* Worst case error is less than 0.5+0.86/N+(abs poly error * 2^53) ulp. */
-    tmp = tail + r * C[0] + r2 * (C[1] + r * C[2]) + r2 * r2 * (C[3] + r * C[4]);
-    if (abstop == 0)
-    {
-        /* Handle cases that may overflow or underflow when computing the result that
-           is scale*(1+TMP) without intermediate rounding. The bit representation of
-           scale is in SBITS, however it has a computed exponent that may have
-           overflown into the sign bit so that needs to be adjusted before using it as
-           a double. (int32_t)KI is the k used in the argument reduction and exponent
-           adjustment of scale, positive k here means the result may overflow and
-           negative k means the result may underflow. */
-        double scale, y;
-
-        if ((ki & 0x80000000) == 0) {
-            /* k > 0, the exponent of scale might have overflowed by 1. */
-            sbits -= 1ull << 52;
-            scale = *(double*)&sbits;
-            y = 2 * (scale + scale * tmp);
-            return y;
-        }
-        /* k < 0, need special care in the subnormal range. */
-        sbits += 1022ull << 52;
-        scale = *(double*)&sbits;
-        y = scale + scale * tmp;
-        if (y < 1.0) {
-            /* Round y to the right precision before scaling it into the subnormal
-               range to avoid double rounding that can cause 0.5+E/2 ulp error where
-               E is the worst-case ulp error outside the subnormal range. So this
-               is only useful if the goal is better than 1 ulp worst-case error. */
-            double hi, lo;
-            lo = scale - y + scale * tmp;
-            hi = 1.0 + y;
-            lo = 1.0 - hi + y + lo;
-            y = hi + lo - 1.0;
-            /* Avoid -0.0 with downward rounding. */
-            if (y == 0.0)
-                y = 0.0;
-            /* The underflow exception needs to be signaled explicitly. */
-            fp_barrier(fp_barrier(0x1p-1022) * 0x1p-1022);
-        }
-        y = 0x1p-1022 * y;
-        return y;
-    }
-    scale = *(double*)&sbits;
-    /* Note: tmp == 0 or |tmp| > 2^-65 and scale > 2^-928, so there
-       is no spurious underflow here even without fma. */
-    return scale + scale * tmp;
-}
-
-/*********************************************************************
- *      exp2f (MSVCR120.@)
- *
- * Copied from musl: src/math/exp2f.c
- */
-float CDECL exp2f(float x)
-{
-    static const double C[] = {
-        0x1.c6af84b912394p-5, 0x1.ebfce50fac4f3p-3, 0x1.62e42ff0c52d6p-1
-    };
-    static const double shift = 0x1.8p+52 / (1 << 5);
-
-    double kd, xd, z, r, r2, y, s;
-    UINT32 abstop;
-    UINT64 ki, t;
-
-    xd = x;
-    abstop = (*(UINT32*)&x >> 20) & 0x7ff;
-    if (abstop >= 0x430) {
-        /* |x| >= 128 or x is nan.  */
-        if (*(UINT32*)&x == 0xff800000)
-            return 0.0f;
-        if (abstop >= 0x7f8)
-            return x + x;
-        if (x > 0.0f) {
-            *_errno() = ERANGE;
-            return fp_barrierf(x * FLT_MAX);
-        }
-        if (x <= -150.0f) {
-            fp_barrierf(x - 0x1p120);
-            return 0;
-        }
-    }
-
-    /* x = k/N + r with r in [-1/(2N), 1/(2N)] and int k, N = 1 << 5. */
-    kd = xd + shift;
-    ki = *(UINT64*)&kd;
-    kd -= shift; /* k/(1<<5) for int k.  */
-    r = xd - kd;
-
-    /* exp2(x) = 2^(k/N) * 2^r ~= s * (C0*r^3 + C1*r^2 + C2*r + 1) */
-    t = exp2f_T[ki % (1 << 5)];
-    t += ki << (52 - 5);
-    s = *(double*)&t;
-    z = C[0] * r + C[1];
-    r2 = r * r;
-    y = C[2] * r + 1;
-    y = z * r2 + y;
-    y = y * s;
-    return y;
-}
 
 /*********************************************************************
  *      log1p (MSVCR120.@)

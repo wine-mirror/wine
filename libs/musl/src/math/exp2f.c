@@ -44,10 +44,14 @@ float __cdecl exp2f(float x)
 			return 0.0f;
 		if (abstop >= top12(INFINITY))
 			return x + x;
-		if (x > 0.0f)
-			return __math_oflowf(0);
-		if (x <= -150.0f)
-			return __math_uflowf(0);
+		if (x > 0.0f) {
+			errno = ERANGE;
+			return fp_barrierf(x * FLT_MAX);
+		}
+		if (x <= -150.0f) {
+			fp_barrierf(x - 0x1p120);
+			return 0;
+		}
 	}
 
 	/* x = k/N + r with r in [-1/(2N), 1/(2N)] and int k.  */
