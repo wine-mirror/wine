@@ -1349,8 +1349,6 @@ static HRESULT WINAPI VMR9FilterConfig_SetRenderingMode(IVMRFilterConfig9 *iface
     {
     case VMR9Mode_Windowed:
     case VMR9Mode_Windowless:
-        This->cookie = ~0;
-
         if (FAILED(hr = default_presenter_create(This, &default_presenter)))
         {
             ERR("Failed to create default presenter, hr %#lx.\n", hr);
