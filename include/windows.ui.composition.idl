@@ -47,6 +47,7 @@ namespace Windows.UI.Composition {
     interface ICompositionClip;
     interface ICompositionClip2;
     interface ICompositionClipFactory;
+    interface ICompositionColorBrush;
     interface ICompositionEasingFunction;
     interface ICompositionEasingFunctionFactory;
     interface ICompositionEasingFunctionStatics;
@@ -68,6 +69,7 @@ namespace Windows.UI.Composition {
     runtimeclass ColorKeyFrameAnimation;
     runtimeclass CompositionBrush;
     runtimeclass CompositionClip;
+    runtimeclass CompositionColorBrush;
     runtimeclass CompositionEasingFunction;
     runtimeclass CompositionObject;
     runtimeclass CompositionSurfaceBrush;
@@ -216,6 +218,17 @@ namespace Windows.UI.Composition {
     ]
     interface ICompositionClipFactory : IInspectable
     {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.CompositionColorBrush),
+        uuid(2b264c5e-bf35-4831-8642-cf70c20fff2f)
+    ]
+    interface ICompositionColorBrush : IInspectable
+    {
+        [propget] HRESULT Color([out, retval] Windows.UI.Color *value);
+        [propput] HRESULT Color([in] Windows.UI.Color value);
     }
 
     [
@@ -391,6 +404,16 @@ namespace Windows.UI.Composition {
     {
         [default] interface Windows.UI.Composition.ICompositionClip;
         [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionClip2;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass CompositionColorBrush : Windows.UI.Composition.CompositionBrush
+    {
+        [default] interface Windows.UI.Composition.ICompositionColorBrush;
     }
 
     [
