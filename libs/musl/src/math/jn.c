@@ -225,7 +225,7 @@ double __cdecl _yn(int n, double x)
 	if ((ix | (lx|-lx)>>31) > 0x7ff00000) /* nan */
 		return x;
 	if (sign && (ix|lx)!=0) /* x < 0 */
-		return 0/0.0;
+		return math_error(_DOMAIN, "_y1", x, 0, 0 / (x - x));
 	if (ix == 0x7ff00000)
 		return 0.0;
 
