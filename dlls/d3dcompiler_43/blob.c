@@ -250,11 +250,11 @@ static HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, D3D
 
     for (i = 0; i < src_dxbc.count; ++i)
     {
-        struct dxbc_section *section = &src_dxbc.sections[i];
+        const struct vkd3d_shader_dxbc_section_desc *section = &src_dxbc.sections[i];
 
         if (check_blob_part(section->tag, part))
         {
-            hr = dxbc_add_section(&dst_dxbc, section->tag, section->data, section->data_size);
+            hr = dxbc_add_section(&dst_dxbc, section->tag, section->data.code, section->data.size);
             if (FAILED(hr))
             {
                 dxbc_destroy(&src_dxbc);
@@ -304,10 +304,10 @@ static HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, D3D
     if (count == 1 && (part == D3D_BLOB_DEBUG_INFO || part == D3D_BLOB_LEGACY_SHADER || part == D3D_BLOB_XNA_PREPASS_SHADER
             || part == D3D_BLOB_XNA_SHADER))
     {
-        hr = D3DCreateBlob(dst_dxbc.sections[0].data_size, blob);
+        hr = D3DCreateBlob(dst_dxbc.sections[0].data.size, blob);
         if (SUCCEEDED(hr))
         {
-            memcpy(ID3D10Blob_GetBufferPointer(*blob), dst_dxbc.sections[0].data, dst_dxbc.sections[0].data_size);
+            memcpy(ID3D10Blob_GetBufferPointer(*blob), dst_dxbc.sections[0].data.code, dst_dxbc.sections[0].data.size);
         }
         else
         {
@@ -391,11 +391,11 @@ static HRESULT d3dcompiler_strip_shader(const void *data, SIZE_T data_size, UINT
 
     for (i = 0; i < src_dxbc.count; ++i)
     {
-        struct dxbc_section *section = &src_dxbc.sections[i];
+        const struct vkd3d_shader_dxbc_section_desc *section = &src_dxbc.sections[i];
 
         if (check_blob_strip(section->tag, flags))
         {
-            hr = dxbc_add_section(&dst_dxbc, section->tag, section->data, section->data_size);
+            hr = dxbc_add_section(&dst_dxbc, section->tag, section->data.code, section->data.size);
             if (FAILED(hr))
             {
                 dxbc_destroy(&src_dxbc);

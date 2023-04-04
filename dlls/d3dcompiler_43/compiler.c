@@ -25,8 +25,6 @@
 
 #include "d3dcompiler_private.h"
 
-#include <vkd3d_shader.h>
-
 WINE_DEFAULT_DEBUG_CHANNEL(d3dcompiler);
 
 static HRESULT hresult_from_vkd3d_result(int vkd3d_result)

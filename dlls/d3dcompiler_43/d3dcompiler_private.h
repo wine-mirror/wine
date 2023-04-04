@@ -38,6 +38,8 @@
 #include <assert.h>
 #include <stdint.h>
 
+#include <vkd3d_shader.h>
+
 /*
  * This doesn't belong here, but for some functions it is possible to return that value,
  * see http://msdn.microsoft.com/en-us/library/bb205278%28v=VS.85%29.aspx
@@ -551,18 +553,11 @@ void SlDeleteShader(struct bwriter_shader *shader) DECLSPEC_HIDDEN;
 #define TAG_XNAP MAKE_TAG('X', 'N', 'A', 'P')
 #define TAG_XNAS MAKE_TAG('X', 'N', 'A', 'S')
 
-struct dxbc_section
-{
-    DWORD tag;
-    const char *data;
-    DWORD data_size;
-};
-
 struct dxbc
 {
     UINT size;
     UINT count;
-    struct dxbc_section *sections;
+    struct vkd3d_shader_dxbc_section_desc *sections;
 };
 
 HRESULT dxbc_write_blob(struct dxbc *dxbc, ID3DBlob **blob) DECLSPEC_HIDDEN;

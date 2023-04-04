@@ -538,7 +538,7 @@ HRESULT dxbc_add_section(struct dxbc *dxbc, DWORD tag, const char *data, size_t 
 
     if (dxbc->count >= dxbc->size)
     {
-        struct dxbc_section *new_sections;
+        struct vkd3d_shader_dxbc_section_desc *new_sections;
         DWORD new_size = dxbc->size << 1;
 
         new_sections = HeapReAlloc(GetProcessHeap(), 0, dxbc->sections, new_size * sizeof(*dxbc->sections));
@@ -553,8 +553,8 @@ HRESULT dxbc_add_section(struct dxbc *dxbc, DWORD tag, const char *data, size_t 
     }
 
     dxbc->sections[dxbc->count].tag = tag;
-    dxbc->sections[dxbc->count].data_size = data_size;
-    dxbc->sections[dxbc->count].data = data;
+    dxbc->sections[dxbc->count].data.size = data_size;
+    dxbc->sections[dxbc->count].data.code = data;
     ++dxbc->count;
 
     return S_OK;
@@ -670,7 +670,7 @@ HRESULT dxbc_write_blob(struct dxbc *dxbc, ID3DBlob **blob)
 
     for (i = 0; i < dxbc->count; ++i)
     {
-        size += 12 + dxbc->sections[i].data_size;
+        size += 12 + dxbc->sections[i].data.size;
     }
 
     hr = D3DCreateBlob(size, &object);
@@ -703,16 +703,16 @@ HRESULT dxbc_write_blob(struct dxbc *dxbc, ID3DBlob **blob)
     for (i = 0; i < dxbc->count; ++i)
     {
         write_u32(&ptr, offset);
-        offset += 8 + dxbc->sections[i].data_size;
+        offset += 8 + dxbc->sections[i].data.size;
     }
 
     /* write the chunks */
     for (i = 0; i < dxbc->count; ++i)
     {
         write_u32(&ptr, dxbc->sections[i].tag);
-        write_u32(&ptr, dxbc->sections[i].data_size);
-        memcpy(ptr, dxbc->sections[i].data, dxbc->sections[i].data_size);
-        ptr += dxbc->sections[i].data_size;
+        write_u32(&ptr, dxbc->sections[i].data.size);
+        memcpy(ptr, dxbc->sections[i].data.code, dxbc->sections[i].data.size);
+        ptr += dxbc->sections[i].data.size;
     }
 
     TRACE("Created ID3DBlob %p\n", object);
