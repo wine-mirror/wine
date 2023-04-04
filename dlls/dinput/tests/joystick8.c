@@ -4196,7 +4196,6 @@ static void test_many_axes_joystick(void)
 done:
     hid_device_stop( &desc, 1 );
     cleanup_registry_keys();
-    winetest_pop_context();
 }
 
 static void test_driving_wheel_axes(void)
@@ -4416,7 +4415,6 @@ static void test_driving_wheel_axes(void)
 done:
     hid_device_stop( &desc, 1 );
     cleanup_registry_keys();
-    winetest_pop_context();
 }
 
 static BOOL test_winmm_joystick(void)
