@@ -608,9 +608,14 @@ static INT_PTR CALLBACK SupportInfoDlgProc(HWND hWnd, UINT msg, WPARAM wParam, L
         case WM_DESTROY:
             return 0;
 
+        case WM_CLOSE:
+            EndDialog(hWnd, TRUE);
+            return TRUE;
+
         case WM_COMMAND:
             switch (LOWORD(wParam))
             {
+                case IDCANCEL:
                 case IDOK:
                     EndDialog(hWnd, TRUE);
                     break;
