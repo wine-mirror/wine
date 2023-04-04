@@ -526,12 +526,6 @@ void skip_u32_unknown(const char **ptr, unsigned int count)
     }
 }
 
-static void write_u32_unknown(char **ptr, uint32_t u32)
-{
-    FIXME("Writing unknown u32 0x%08x.\n", u32);
-    write_u32(ptr, u32);
-}
-
 HRESULT dxbc_add_section(struct dxbc *dxbc, DWORD tag, const char *data, size_t data_size)
 {
     TRACE("dxbc %p, tag %s, size %#Ix.\n", dxbc, debugstr_an((const char *)&tag, 4), data_size);
@@ -656,70 +650,6 @@ void dxbc_destroy(struct dxbc *dxbc)
     TRACE("dxbc %p.\n", dxbc);
 
     HeapFree(GetProcessHeap(), 0, dxbc->sections);
-}
-
-HRESULT dxbc_write_blob(struct dxbc *dxbc, ID3DBlob **blob)
-{
-    DWORD size = 32, offset = size + 4 * dxbc->count;
-    ID3DBlob *object;
-    HRESULT hr;
-    char *ptr;
-    unsigned int i;
-
-    TRACE("dxbc %p, blob %p.\n", dxbc, blob);
-
-    for (i = 0; i < dxbc->count; ++i)
-    {
-        size += 12 + dxbc->sections[i].data.size;
-    }
-
-    hr = D3DCreateBlob(size, &object);
-    if (FAILED(hr))
-    {
-        WARN("Failed to create blob\n");
-        return hr;
-    }
-
-    ptr = ID3D10Blob_GetBufferPointer(object);
-
-    write_u32(&ptr, TAG_DXBC);
-
-    /* signature(?) */
-    write_u32_unknown(&ptr, 0);
-    write_u32_unknown(&ptr, 0);
-    write_u32_unknown(&ptr, 0);
-    write_u32_unknown(&ptr, 0);
-
-    /* seems to be always 1 */
-    write_u32_unknown(&ptr, 1);
-
-    /* DXBC size */
-    write_u32(&ptr, size);
-
-    /* chunk count */
-    write_u32(&ptr, dxbc->count);
-
-    /* write the chunk offsets */
-    for (i = 0; i < dxbc->count; ++i)
-    {
-        write_u32(&ptr, offset);
-        offset += 8 + dxbc->sections[i].data.size;
-    }
-
-    /* write the chunks */
-    for (i = 0; i < dxbc->count; ++i)
-    {
-        write_u32(&ptr, dxbc->sections[i].tag);
-        write_u32(&ptr, dxbc->sections[i].data.size);
-        memcpy(ptr, dxbc->sections[i].data.code, dxbc->sections[i].data.size);
-        ptr += dxbc->sections[i].data.size;
-    }
-
-    TRACE("Created ID3DBlob %p\n", object);
-
-    *blob = object;
-
-    return S_OK;
 }
 
 void compilation_message(struct compilation_messages *msg, const char *fmt, va_list args)

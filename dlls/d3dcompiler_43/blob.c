@@ -348,9 +348,12 @@ static BOOL check_blob_strip(DWORD tag, UINT flags)
 
 static HRESULT d3dcompiler_strip_shader(const void *data, SIZE_T data_size, UINT flags, ID3DBlob **blob)
 {
-    struct dxbc src_dxbc, dst_dxbc;
+    struct vkd3d_shader_dxbc_section_desc *sections;
+    struct vkd3d_shader_code dst_dxbc;
+    unsigned int section_count, i;
+    struct dxbc src_dxbc;
     HRESULT hr;
-    unsigned int i;
+    int ret;
 
     if (!blob)
     {
@@ -372,39 +375,37 @@ static HRESULT d3dcompiler_strip_shader(const void *data, SIZE_T data_size, UINT
     }
 
     /* src_dxbc.count >= dst_dxbc.count */
-    hr = dxbc_init(&dst_dxbc, src_dxbc.count);
-    if (FAILED(hr))
+    if (!(sections = calloc(src_dxbc.count, sizeof(*sections))))
     {
+        ERR("Failed to allocate sections memory.\n");
         dxbc_destroy(&src_dxbc);
-        WARN("Failed to init dxbc\n");
-        return hr;
+        return E_OUTOFMEMORY;
     }
 
-    for (i = 0; i < src_dxbc.count; ++i)
+    for (i = 0, section_count = 0; i < src_dxbc.count; ++i)
     {
-        const struct vkd3d_shader_dxbc_section_desc *section = &src_dxbc.sections[i];
+        const struct vkd3d_shader_dxbc_section_desc *src_section = &src_dxbc.sections[i];
 
-        if (check_blob_strip(section->tag, flags))
-        {
-            hr = dxbc_add_section(&dst_dxbc, section->tag, section->data.code, section->data.size);
-            if (FAILED(hr))
-            {
-                dxbc_destroy(&src_dxbc);
-                dxbc_destroy(&dst_dxbc);
-                WARN("Failed to add section to dxbc\n");
-                return hr;
-            }
-        }
+        if (check_blob_strip(src_section->tag, flags))
+            sections[section_count++] = *src_section;
     }
 
-    hr = dxbc_write_blob(&dst_dxbc, blob);
-    if (FAILED(hr))
+    if ((ret = vkd3d_shader_serialize_dxbc(section_count, sections, &dst_dxbc, NULL) < 0))
     {
-        WARN("Failed to write blob part\n");
+        WARN("Failed to serialise DXBC, ret %d.\n", ret);
+        hr = E_FAIL;
+        goto done;
     }
 
+    if (FAILED(hr = D3DCreateBlob(dst_dxbc.size, blob)))
+        WARN("Failed to create blob, hr %#lx.\n", hr);
+    else
+        memcpy(ID3D10Blob_GetBufferPointer(*blob), dst_dxbc.code, dst_dxbc.size);
+    vkd3d_shader_free_shader_code(&dst_dxbc);
+
+done:
+    free(sections);
     dxbc_destroy(&src_dxbc);
-    dxbc_destroy(&dst_dxbc);
 
     return hr;
 }

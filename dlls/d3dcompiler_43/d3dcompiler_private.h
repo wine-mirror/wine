@@ -560,16 +560,9 @@ struct dxbc
     struct vkd3d_shader_dxbc_section_desc *sections;
 };
 
-HRESULT dxbc_write_blob(struct dxbc *dxbc, ID3DBlob **blob) DECLSPEC_HIDDEN;
 void dxbc_destroy(struct dxbc *dxbc) DECLSPEC_HIDDEN;
 HRESULT dxbc_parse(const char *data, SIZE_T data_size, struct dxbc *dxbc) DECLSPEC_HIDDEN;
 HRESULT dxbc_add_section(struct dxbc *dxbc, DWORD tag, const char *data, size_t data_size) DECLSPEC_HIDDEN;
 HRESULT dxbc_init(struct dxbc *dxbc, unsigned int size) DECLSPEC_HIDDEN;
-
-static inline void write_u32(char **ptr, uint32_t u32)
-{
-    memcpy(*ptr, &u32, sizeof(u32));
-    *ptr += sizeof(u32);
-}
 
 #endif /* __WINE_D3DCOMPILER_PRIVATE_H */
