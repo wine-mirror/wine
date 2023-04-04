@@ -35,12 +35,18 @@ float __cdecl log2f(float x)
 		return 0;
 	if (predict_false(ix - 0x00800000 >= 0x7f800000 - 0x00800000)) {
 		/* x < 0x1p-126 or inf or nan.  */
-		if (ix * 2 == 0)
+		if (ix * 2 == 0) {
+			errno = ERANGE;
 			return __math_divzerof(1);
+		}
 		if (ix == 0x7f800000) /* log2(inf) == inf.  */
 			return x;
-		if ((ix & 0x80000000) || ix * 2 >= 0xff000000)
+		if (ix * 2 > 0xff000000)
+			return x;
+		if (ix & 0x80000000) {
+			errno = EDOM;
 			return __math_invalidf(x);
+		}
 		/* x is subnormal, normalize it.  */
 		ix = asuint(x * 0x1p23f);
 		ix -= 23 << 23;

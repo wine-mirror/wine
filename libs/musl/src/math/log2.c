@@ -65,12 +65,18 @@ double __cdecl log2(double x)
 	}
 	if (predict_false(top - 0x0010 >= 0x7ff0 - 0x0010)) {
 		/* x < 0x1p-1022 or inf or nan.  */
-		if (ix * 2 == 0)
+		if (ix * 2 == 0) {
+			errno = ERANGE;
 			return __math_divzero(1);
+		}
 		if (ix == asuint64(INFINITY)) /* log(inf) == inf.  */
 			return x;
-		if ((top & 0x8000) || (top & 0x7ff0) == 0x7ff0)
+		if ((top & 0x7ff0) == 0x7ff0 && (ix & 0xfffffffffffffULL))
+			return x;
+		if (top & 0x8000) {
+			errno = EDOM;
 			return __math_invalid(x);
+		}
 		/* x is subnormal, normalize it.  */
 		ix = asuint64(x * 0x1p52);
 		ix -= 52ULL << 52;
