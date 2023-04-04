@@ -62,6 +62,7 @@ namespace Windows.UI.Composition {
     interface IContainerVisualFactory;
     interface ICubicBezierEasingFunction;
     interface IExpressionAnimation;
+    interface IInsetClip;
     interface ISpriteVisual;
     interface ISpriteVisual2;
     interface IVisual;
@@ -84,6 +85,7 @@ namespace Windows.UI.Composition {
     runtimeclass ContainerVisual;
     runtimeclass CubicBezierEasingFunction;
     runtimeclass ExpressionAnimation;
+    runtimeclass InsetClip;
     runtimeclass KeyFrameAnimation;
     runtimeclass SpriteVisual;
     runtimeclass Visual;
@@ -363,6 +365,23 @@ namespace Windows.UI.Composition {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.InsetClip),
+        uuid(1e73e647-84c7-477a-b474-5880e0442e15)
+    ]
+    interface IInsetClip : IInspectable
+    {
+        [propget] HRESULT BottomInset([out, retval] FLOAT *value);
+        [propput] HRESULT BottomInset([in] FLOAT value);
+        [propget] HRESULT LeftInset([out, retval] FLOAT *value);
+        [propput] HRESULT LeftInset([in] FLOAT value);
+        [propget] HRESULT RightInset([out, retval] FLOAT *value);
+        [propput] HRESULT RightInset([in] FLOAT value);
+        [propget] HRESULT TopInset([out, retval] FLOAT *value);
+        [propput] HRESULT TopInset([in] FLOAT value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
         exclusiveto(Windows.UI.Composition.SpriteVisual),
         uuid(08e05581-1ad1-4f97-9757-402d76e4233b)
     ]
@@ -555,6 +574,16 @@ namespace Windows.UI.Composition {
     runtimeclass ExpressionAnimation : Windows.UI.Composition.CompositionAnimation
     {
         [default] interface Windows.UI.Composition.IExpressionAnimation;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass InsetClip : Windows.UI.Composition.CompositionClip
+    {
+        [default] interface Windows.UI.Composition.IInsetClip;
     }
 
     [
