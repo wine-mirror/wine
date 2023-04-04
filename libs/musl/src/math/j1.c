@@ -120,7 +120,7 @@ double __cdecl _j1(double x)
 	sign = ix>>31;
 	ix &= 0x7fffffff;
 	if (ix >= 0x7ff00000)
-		return 1/(x*x);
+		return math_error(isnan(x) ? 0 : _DOMAIN, "_j1", x, 0, 1 / (x * x));
 	if (ix >= 0x40000000)  /* |x| >= 2 */
 		return common(ix, fabs(x), 0, sign);
 	if (ix >= 0x38000000) {  /* |x| >= 2**-127 */
@@ -157,9 +157,11 @@ double __cdecl _y1(double x)
 	EXTRACT_WORDS(ix, lx, x);
 	/* y1(nan)=nan, y1(<0)=nan, y1(0)=-inf, y1(inf)=0 */
 	if ((ix<<1 | lx) == 0)
-		return -1/0.0;
+		return math_error(_OVERFLOW, "_y1", x, 0, -INFINITY);
+	if (isnan(x))
+		return x;
 	if (ix>>31)
-		return 0/0.0;
+		return math_error(_DOMAIN, "_y1", x, 0, 0 / (x - x));
 	if (ix >= 0x7ff00000)
 		return 1/x;
 
