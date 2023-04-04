@@ -45,9 +45,11 @@ double __cdecl log10(double x)
 	k = 0;
 	if (hx < 0x00100000 || hx>>31) {
 		if (u.i<<1 == 0)
-			return -1/(x*x);  /* log(+-0)=-inf */
-		if (hx>>31)
-			return (x-x)/0.0; /* log(-#) = NaN */
+			return math_error(_SING, "log10", x, 0, -1 / (x * x));
+		if ((u.i & ~(1ULL << 63)) > 0x7ff0000000000000ULL)
+			return x;
+		if (hx >> 31)
+			return math_error(_DOMAIN, "log10", x, 0, (x - x) / (x - x));
 		/* subnormal number, scale x up */
 		k -= 54;
 		x *= 0x1p54;

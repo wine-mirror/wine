@@ -39,9 +39,11 @@ float __cdecl log10f(float x)
 	k = 0;
 	if (ix < 0x00800000 || ix>>31) {  /* x < 2**-126  */
 		if (ix<<1 == 0)
-			return -1/(x*x);  /* log(+-0)=-inf */
+			return math_error(_SING, "log10f", x, 0, -1 / (x * x));
+		if ((ix & ~(1u << 31)) > 0x7f800000)
+			return x;
 		if (ix>>31)
-			return (x-x)/0.0f; /* log(-#) = NaN */
+			return math_error(_DOMAIN, "log10f", x, 0, (x - x) / (x - x));
 		/* subnormal number, scale up x */
 		k -= 25;
 		x *= 0x1p25f;
