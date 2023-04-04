@@ -728,7 +728,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
             instance.dwFlags = 0;
             instance.wUsagePage = node->usage_page;
             instance.wUsage = node->usage;
-            instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
+            instance.guidType = GUID_Unknown;
             instance.wReportId = 0;
             instance.wCollectionNumber = node->parent;
             instance.dwDimension = 0;
