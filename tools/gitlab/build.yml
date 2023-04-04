@@ -34,7 +34,7 @@ build-linux:
     paths:
       - usr/local/
   script:
-    - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-linux
+    - ./tools/gitlab/build-linux
 
 build-mac:
   extends: .wine-build
@@ -49,7 +49,7 @@ build-mac:
       - build32/config.log
   script:
     - export PATH="/usr/local/opt/ccache/libexec:$PATH"
-    - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-mac
+    - ./tools/gitlab/build-mac
 
 build-daily-linux:
   extends: .wine-build
