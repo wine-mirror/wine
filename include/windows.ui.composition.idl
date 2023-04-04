@@ -57,6 +57,7 @@ namespace Windows.UI.Composition {
     interface ICompositionSurfaceBrush3;
     interface IContainerVisual;
     interface IContainerVisualFactory;
+    interface ICubicBezierEasingFunction;
     interface ISpriteVisual;
     interface ISpriteVisual2;
     interface IVisual;
@@ -74,6 +75,7 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionObject;
     runtimeclass CompositionSurfaceBrush;
     runtimeclass ContainerVisual;
+    runtimeclass CubicBezierEasingFunction;
     runtimeclass KeyFrameAnimation;
     runtimeclass SpriteVisual;
     runtimeclass Visual;
@@ -297,6 +299,17 @@ namespace Windows.UI.Composition {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.CubicBezierEasingFunction),
+        uuid(32350666-c1e8-44f9-96b8-c98acf0ae698)
+    ]
+    interface ICubicBezierEasingFunction : IInspectable
+    {
+        [propget] HRESULT ControlPoint1([out, retval] Windows.Foundation.Numerics.Vector2 *value);
+        [propget] HRESULT ControlPoint2([out, retval] Windows.Foundation.Numerics.Vector2 *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
         exclusiveto(Windows.UI.Composition.SpriteVisual),
         uuid(08e05581-1ad1-4f97-9757-402d76e4233b)
     ]
@@ -449,6 +462,16 @@ namespace Windows.UI.Composition {
     runtimeclass ContainerVisual : Windows.UI.Composition.Visual
     {
         [default] interface Windows.UI.Composition.IContainerVisual;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass CubicBezierEasingFunction : Windows.UI.Composition.CompositionEasingFunction
+    {
+        [default] interface Windows.UI.Composition.ICubicBezierEasingFunction;
     }
 
     [
