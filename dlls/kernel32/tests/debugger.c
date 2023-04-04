@@ -1189,7 +1189,6 @@ static void test_debug_loop_wow64(void)
         default:
             ok(0, "Unexpected event: %lu\n", ev.dwDebugEventCode);
             /* fall through */
-        case EXIT_PROCESS_DEBUG_EVENT:
         case EXIT_THREAD_DEBUG_EVENT:
             ret = ContinueDebugEvent( ev.dwProcessId, ev.dwThreadId, DBG_CONTINUE );
             ok(ret, "ContinueDebugEvent failed, last error %#lx.\n", GetLastError());
@@ -1205,7 +1204,23 @@ static void test_debug_loop_wow64(void)
         ok(ret, "GetExitCodeProcess failed: %lu\n", GetLastError());
         ok(ec != STILL_ACTIVE, "GetExitCodeProcess still active\n");
     }
+    for (;;)
+    {
+        DEBUG_EVENT ev;
 
+        ret = WaitForDebugEvent( &ev, 2000 );
+        if (!ret || ev.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT) break;
+        switch (ev.dwDebugEventCode)
+        {
+        default:
+            ok(0, "Unexpected event: %lu\n", ev.dwDebugEventCode);
+            /* fall through */
+        case EXIT_THREAD_DEBUG_EVENT:
+            ret = ContinueDebugEvent( ev.dwProcessId, ev.dwThreadId, DBG_CONTINUE );
+            ok(ret, "ContinueDebugEvent failed, last error %#lx.\n", GetLastError());
+            break;
+        }
+    }
     ret = CloseHandle( pi.hThread );
     ok(ret, "CloseHandle failed, last error %#lx.\n", GetLastError());
     ret = CloseHandle( pi.hProcess );
