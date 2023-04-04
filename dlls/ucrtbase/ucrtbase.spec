@@ -1733,9 +1733,9 @@
 @ cdecl _o_nextafter(double double) nextafter
 @ cdecl _o_nextafterf(float float) nextafterf
 @ cdecl _o_nextafterl(double double) nextafter
-@ cdecl _o_nexttoward(double double) MSVCRT_nexttoward
-@ cdecl _o_nexttowardf(float double) MSVCRT_nexttowardf
-@ cdecl _o_nexttowardl(double double) MSVCRT_nexttoward
+@ cdecl _o_nexttoward(double double) __nexttoward
+@ cdecl _o_nexttowardf(float double) __nexttowardf
+@ cdecl _o_nexttowardl(double double) __nexttoward
 @ cdecl _o_pow(double double) pow
 @ cdecl -arch=!i386 _o_powf(float float) powf
 @ cdecl _o_putc(long ptr) putc
@@ -2441,9 +2441,9 @@
 @ cdecl nextafter(double double)
 @ cdecl nextafterf(float float)
 @ cdecl nextafterl(double double) nextafter
-@ cdecl nexttoward(double double) MSVCRT_nexttoward
-@ cdecl nexttowardf(float double) MSVCRT_nexttowardf
-@ cdecl nexttowardl(double double) MSVCRT_nexttoward
+@ cdecl nexttoward(double double) __nexttoward
+@ cdecl nexttowardf(float double) __nexttowardf
+@ cdecl nexttowardl(double double) __nexttoward
 @ stub norm
 @ stub normf
 @ stub norml

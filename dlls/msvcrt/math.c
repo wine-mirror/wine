@@ -4076,59 +4076,6 @@ float CDECL nearbyintf(float x)
     return x;
 }
 
-/*********************************************************************
- *              nexttoward (MSVCR120.@)
- */
-double CDECL MSVCRT_nexttoward(double num, double next)
-{
-    return nextafter(num, next);
-}
-
-/*********************************************************************
- *              nexttowardf (MSVCR120.@)
- *
- * Copied from musl: src/math/nexttowardf.c
- */
-float CDECL MSVCRT_nexttowardf(float x, double y)
-{
-    unsigned int ix = *(unsigned int*)&x;
-    unsigned int e;
-    float ret;
-
-    if (isnan(x) || isnan(y))
-        return x + y;
-    if (x == y)
-        return y;
-    if (x == 0) {
-        ix = 1;
-        if (signbit(y))
-            ix |= 0x80000000;
-    } else if (x < y) {
-        if (signbit(x))
-            ix--;
-        else
-            ix++;
-    } else {
-        if (signbit(x))
-            ix++;
-        else
-            ix--;
-    }
-    e = ix & 0x7f800000;
-    /* raise overflow if ix is infinite and x is finite */
-    if (e == 0x7f800000) {
-        fp_barrierf(x + x);
-        *_errno() = ERANGE;
-    }
-    ret = *(float*)&ix;
-    /* raise underflow if ret is subnormal or zero */
-    if (e == 0) {
-        fp_barrierf(x * x + ret * ret);
-        *_errno() = ERANGE;
-    }
-    return ret;
-}
-
 #endif /* _MSVCR_VER>=120 */
 
 /*********************************************************************

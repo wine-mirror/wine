@@ -2303,9 +2303,9 @@
 @ cdecl nextafter(double double)
 @ cdecl nextafterf(float float)
 @ cdecl nextafterl(double double) nextafter
-@ cdecl nexttoward(double double) MSVCRT_nexttoward
-@ cdecl nexttowardf(float double) MSVCRT_nexttowardf
-@ cdecl nexttowardl(double double) MSVCRT_nexttoward
+@ cdecl nexttoward(double double) __nexttoward
+@ cdecl nexttowardf(float double) __nexttowardf
+@ cdecl nexttowardl(double double) __nexttoward
 @ stub norm
 @ stub normf
 @ stub norml

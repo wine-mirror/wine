@@ -1,7 +1,7 @@
 #include "libm.h"
 
 #if LDBL_MANT_DIG == 53 && LDBL_MAX_EXP == 1024
-double __cdecl nexttoward(double x, long double y)
+double __cdecl __nexttoward(double x, double y)
 {
 	return nextafter(x, y);
 }

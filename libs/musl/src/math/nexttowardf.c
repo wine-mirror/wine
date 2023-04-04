@@ -1,6 +1,6 @@
 #include "libm.h"
 
-float __cdecl nexttowardf(float x, long double y)
+float __cdecl __nexttowardf(float x, double y)
 {
 	union {float f; uint32_t i;} ux = {x};
 	uint32_t e;
@@ -26,10 +26,14 @@ float __cdecl nexttowardf(float x, long double y)
 	}
 	e = ux.i & 0x7f800000;
 	/* raise overflow if ux.f is infinite and x is finite */
-	if (e == 0x7f800000)
+	if (e == 0x7f800000) {
 		FORCE_EVAL(x+x);
+		errno = ERANGE;
+	}
 	/* raise underflow if ux.f is subnormal or zero */
-	if (e == 0)
+	if (e == 0) {
 		FORCE_EVAL(x*x + ux.f*ux.f);
+		errno = ERANGE;
+	}
 	return ux.f;
 }
