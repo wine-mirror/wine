@@ -51,6 +51,7 @@ namespace Windows.UI.Composition {
     interface ICompositionEasingFunction;
     interface ICompositionEasingFunctionFactory;
     interface ICompositionEasingFunctionStatics;
+    interface ICompositionEffectBrush;
     interface ICompositionSurface;
     interface ICompositionSurfaceBrush;
     interface ICompositionSurfaceBrush2;
@@ -72,6 +73,7 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionClip;
     runtimeclass CompositionColorBrush;
     runtimeclass CompositionEasingFunction;
+    runtimeclass CompositionEffectBrush;
     runtimeclass CompositionObject;
     runtimeclass CompositionSurfaceBrush;
     runtimeclass ContainerVisual;
@@ -249,6 +251,17 @@ namespace Windows.UI.Composition {
     ]
     interface ICompositionEasingFunctionFactory : IInspectable
     {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.CompositionEffectBrush),
+        uuid(bf7f795e-83cc-44bf-a447-3e3c071789ec)
+    ]
+    interface ICompositionEffectBrush : IInspectable
+    {
+        HRESULT GetSourceParameter([in] HSTRING name, [out, retval] Windows.UI.Composition.CompositionBrush **result);
+        HRESULT SetSourceParameter([in] HSTRING name, [in] Windows.UI.Composition.CompositionBrush *source);
     }
 
     [
@@ -439,6 +452,16 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionEasingFunction : Windows.UI.Composition.CompositionObject
     {
         [default] interface Windows.UI.Composition.ICompositionEasingFunction;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass CompositionEffectBrush : Windows.UI.Composition.CompositionBrush
+    {
+        [default] interface Windows.UI.Composition.ICompositionEffectBrush;
     }
 
     [
