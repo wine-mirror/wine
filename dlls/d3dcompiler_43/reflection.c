@@ -1862,22 +1862,23 @@ static HRESULT d3dcompiler_parse_shdr(struct d3dcompiler_shader_reflection *r, c
 static HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection *reflection,
         const void *data, SIZE_T data_size)
 {
-    struct dxbc src_dxbc;
-    HRESULT hr;
+    const struct vkd3d_shader_code src_dxbc = {.code = data, .size = data_size};
+    struct vkd3d_shader_dxbc_desc src_dxbc_desc;
+    HRESULT hr = S_OK;
     unsigned int i;
+    int ret;
 
     wine_rb_init(&reflection->types, d3dcompiler_shader_reflection_type_compare);
 
-    hr = dxbc_parse(data, data_size, &src_dxbc);
-    if (FAILED(hr))
+    if ((ret = vkd3d_shader_parse_dxbc(&src_dxbc, 0, &src_dxbc_desc, NULL)) < 0)
     {
-        WARN("Failed to parse reflection\n");
-        return hr;
+        WARN("Failed to parse reflection, ret %d.\n", ret);
+        return E_FAIL;
     }
 
-    for (i = 0; i < src_dxbc.count; ++i)
+    for (i = 0; i < src_dxbc_desc.section_count; ++i)
     {
-        const struct vkd3d_shader_dxbc_section_desc *section = &src_dxbc.sections[i];
+        const struct vkd3d_shader_dxbc_section_desc *section = &src_dxbc_desc.sections[i];
 
         switch (section->tag)
         {
@@ -1967,13 +1968,13 @@ static HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_refl
         }
     }
 
-    dxbc_destroy(&src_dxbc);
+    vkd3d_shader_free_dxbc(&src_dxbc_desc);
 
     return hr;
 
 err_out:
     reflection_cleanup(reflection);
-    dxbc_destroy(&src_dxbc);
+    vkd3d_shader_free_dxbc(&src_dxbc_desc);
 
     return hr;
 }

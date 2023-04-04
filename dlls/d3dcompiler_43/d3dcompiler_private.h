@@ -553,16 +553,4 @@ void SlDeleteShader(struct bwriter_shader *shader) DECLSPEC_HIDDEN;
 #define TAG_XNAP MAKE_TAG('X', 'N', 'A', 'P')
 #define TAG_XNAS MAKE_TAG('X', 'N', 'A', 'S')
 
-struct dxbc
-{
-    UINT size;
-    UINT count;
-    struct vkd3d_shader_dxbc_section_desc *sections;
-};
-
-void dxbc_destroy(struct dxbc *dxbc) DECLSPEC_HIDDEN;
-HRESULT dxbc_parse(const char *data, SIZE_T data_size, struct dxbc *dxbc) DECLSPEC_HIDDEN;
-HRESULT dxbc_add_section(struct dxbc *dxbc, DWORD tag, const char *data, size_t data_size) DECLSPEC_HIDDEN;
-HRESULT dxbc_init(struct dxbc *dxbc, unsigned int size) DECLSPEC_HIDDEN;
-
 #endif /* __WINE_D3DCOMPILER_PRIVATE_H */
