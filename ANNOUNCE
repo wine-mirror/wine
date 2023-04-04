@@ -1,14 +1,13 @@
-The Wine team is proud to announce that the stable release Wine 8.0
-is now available.
+The Wine stable release 8.0.1 is now available.
 
-This release represents a year of development effort and over 8,600
-individual changes. It contains a large number of improvements that
-are listed in the release notes below. The main achievement is the
-completion of the conversion to PE format.
+What's new in this release:
+  - Fixes for macOS Ventura 13.3 on Apple Silicon
+  - Tamil and Turkish translation updates
+  - Various bug fixes
 
 The source is available at:
 
-  https://dl.winehq.org/wine/source/8.0/wine-8.0.tar.xz
+  https://dl.winehq.org/wine/source/8.0/wine-8.0.1.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -24,336 +23,182 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-What's new in Wine 8.0
-======================
-
-*** PE modules
-
-- After 4 years of work, the PE conversion is finally complete: all modules can
-  be built in PE format. This is an important milestone on the road to supporting
-  various features such as copy protection, 32-bit applications on 64-bit hosts,
-  Windows debuggers, x86 applications on ARM, etc.
-  However, some modules still perform direct calls between the PE and the Unix
-  part, instead of going through the NT system call interface. The remaining
-  direct calls will be removed during the Wine 8.x development phase.
-
-- A special syscall dispatcher is used for PE -> Unix transitions, to avoid the
-  overhead of a full NT system call. This minimizes the performance impact of the
-  new architecture, in particular for the OpenGL and Vulkan libraries.
-
-- Building mixed Windows/Unix libraries in ELF format (.dll.so libraries) is
-  still supported for use in Winelib applications. However, such applications
-  won't support features enabled by the NT syscall interface, such as WoW64
-  without 32-bit libraries.
-
-
-*** WoW64
-
-- WoW64 thunks are implemented for essentially all Unix libraries, enabling a
-  32-bit PE module to call a 64-bit Unix library. Once the remaining direct
-  PE/Unix calls have been removed, this will make it fully possible to run
-  32-bit Windows applications without any 32-bit Unix library.
-
-- When the 32-bit Wine loader isn't found, 32-bit applications are started in
-  the new experimental "Windows-like" WoW64 mode (where 32-bit code runs inside
-  a 64-bit host process). This mode can be enabled by building with the
-  '--enable-archs' configure option. This is still under development and not yet
-  recommended for general use. Since in case of configuration errors it is
-  possible for it to be triggered inadvertently, applications started in this
-  mode print the warning "starting in experimental wow64 mode".
-
-
-*** Graphics
-
-- The "Light" theme is enabled in the default configuration, for a more modern
-  look. Other themes can still be configured through WineCfg.
-
-- The graphics drivers (winex11.drv, winemac.drv, wineandroid.drv) are converted
-  to run on the Unix side of the syscall boundary, and interface with the Unix
-  side of the Win32u library.
-
-- The Print Processor architecture is implemented. This will be used to avoid
-  direct PE<->Unix calls in the printer driver.
-
-- Effects are supported in Direct2D, including description parsing and a number
-  of core objects.
-
-- Command lists recording and playback are implemented in Direct2D.
-
-- The Vulkan driver supports up to version 1.3.237 of the Vulkan spec.
-
-
-*** Direct3D
-
-- Many optimizations related to streaming map acceleration are implemented, in
-  common code as well as in the GL renderer. Depending on the application, this
-  may result in major performance improvements.
-
-- Adapter video memory budget change notifications are implemented.
-
-- The Vulkan renderer supports setting multiple viewports and scissor rectangles.
-
-- Several Direct3D 10 and 11 features, which were already implemented, are
-  accurately reported through capability flags:
-  - Per-format support for vertex and index buffers.
-  - Per-format support for all capabilities via D3D11_FEATURE_FORMAT_SUPPORT.
-  - No-overwrite maps on shader resources and constant buffers.
-  - Partial range binding of constant buffers.
-
-- For convenience, a new WINE_D3D_CONFIG environment variable may be used instead
-  of modifying the HKEY_CURRENT_USER\Software\Wine\Direct3D registry key. The
-  value is a comma- or semicolon-separated list of key-value pairs, e.g.:
-
-      WINE_D3D_CONFIG="renderer=vulkan;VideoPciVendorID=0xc0de"
-
-  If an individual setting is specified in both the environment variable and the
-  registry, the former takes precedence.
-
-- The Direct3D graphics card database recognizes more graphics cards.
-
-- The Vulkan renderer limits the maximum Direct3D feature level based on
-  available Vulkan features.
-
-
-*** Direct3D helper libraries
-
-- A new HLSL compiler is implemented using the vkd3d-shader library.
-
-- A new HLSL disassembler is implemented using the vkd3d-shader library.
-
-- The HLSL preprocessor is reimplemented using the vkd3d-shader HLSL
-  preprocessor.
-
-- The D3DX 10 Thread Pump is implemented.
-
-- Many more expressions are supported in Direct3D 10 effects.
-
-- Cubemap projection is implemented in the D3DX 9 helper library.
-
-
-*** Audio / Video
-
-- The MPEG-1 audio decoder filter for layers 1 and 2, and the separate filter for
-  layer 3, are both implemented on top of GStreamer.
-
-- The ASF reader filter is implemented.
-
-- The OpenAL32.dll wrapper library is removed, in favor of the native
-  OpenAL32.dll library shipped by Windows applications.
-
-
-*** Media Foundation
-
-- Content type resolution is improved in the Media Foundation Player.
-
-- Rate control is implemented.
-
-- The Enhanced Video Renderer default mixer and presenter are better supported.
-
-- The DirectShow filter is implemented in the Enhanced Video Renderer.
-
-- An initial framework is implemented for the Writer encoding API.
-
-- The topology loader is better supported.
-
-
-*** Input devices
-
-- Controller hotplug support is greatly improved, and controller removal and
-  insertion are correctly dispatched to applications.
-
-- Driving wheel device detection and reporting is better implemented, using the
-  SDL library and HID usages as hints for the device types.
-
-- Force feedback effect support is improved, specifically with driving wheel
-  controllers.
-
-- The HID Haptics specification is used for left / right motor rumble and trigger
-  rumble. It makes it possible for device drivers to expose haptics support over
-  HidRaw, and overcome EvDev limitations.
-
-- The Joystick Control Panel is redesigned, with new graphics and a dedicated
-  view for XInput gamepads.
-
-- Sony DualShock and DualSense controllers are supported when the hidraw backend
-  is used, and exposed to applications in the same way as they are on Windows.
-
-- The Windows.Gaming.Input module is introduced, one of the first WinRT modules
-  in Wine, implementing a new programming interface to access gamepads, joysticks
-  and driving wheel devices.  For this new input API, hotplug notifications are
-  also implemented, as well as force feedback effects and haptics. This API is
-  the first one to support trigger rumble.
-
-
-*** Internationalization
-
-- A proper locale database, in Windows locale.nls format, is generated from the
-  Unicode CLDR database. The list of supported locales is essentially identical
-  to that of the latest Windows version.
-
-- Unicode string comparison is based on the Windows Sortkey database and
-  algorithms instead of the Unicode Collation Algorithm, yielding more compatible
-  results.
-
-- Characters from high Unicode planes (in UTF-16 encoding) are supported in most
-  functions, in particular for case mappings, BiDi formatting, and character
-  shaping.
-
-- The UTF-8 encoding is supported as Ansi codepage. It is enabled when requested
-  by the application's manifest.
-
-- Unicode character tables are based on version 15.0.0 of the Unicode Standard.
-
-- The timezone data is generated from the IANA timezone database version 2022g.
-
-
-*** Text and fonts
-
-- Font linking is enabled for most system fonts, which should fix missing glyphs
-  in CJK locales.
-
-- Font fallback in DirectWrite is reworked, with additional support for an large
-  number of scripts.
-
-
-*** Kernel
-
-- The ApiSetSchema database is implemented, replacing all the api-ms-* forwarding
-  modules. This reduces both disk space and address space usage.
-
-- DOS file attributes are persistent, and stored on disk using the filesystem's
-  extended attributes, in a format compatible with Samba.
-
-
-*** Internet and networking
-
-- The Online Certificate Status Protocol (OCSP) is implemented.
-
-- More EcmaScript features are supported in JScript standard-compliant mode.
-
-- The JScript garbage collector is implemented.
-
-- Accessibility support is enabled in Wine Gecko package.
-
-- Web Storage, Performance object and more event objects are implemented in
-  MSHTML.
-
-
-*** Mono / .NET
-
-- The Mono engine is updated to version 7.4.0. The list of changes can be viewed
-  at https://github.com/madewokherd/wine-mono/releases/tag/wine-mono-7.4.0
-
-
-*** Builtin applications
-
-- All the builtin applications use Common Controls version 6, which enables
-  theming and high-DPI rendering by default.
-
-- The Wine Debugger (winedbg) prints thread names in the 'info thread' listing,
-  for applications that set the names of their threads. All internal Wine threads
-  also set their own name.
-
-- The QWORD type is supported in the REGEDIT and REG registry tools.
-
-- Notepad has a status bar displaying the current cursor position. The Goto Line
-  functionality is also implemented.
-
-- The builtin console programs print data in the OEM codepage, for better
-  compatibility with applications reading their output.
-
-- The Service Control tool (sc.exe) supports the 'query' command.
-
-
-*** Development tools
-
-- The PE conversion has made it necessary to implement a new mechanism to run
-  static C++ constructors in Winelib ELF applications. Unfortunately, this
-  requires the corresponding modules to be rebuilt with Wine 8.0.  The rebuilt
-  modules will still run correctly on older Wine versions, but older modules will
-  no longer execute static constructors when run on Wine 8.0.
-
-- In regression tests, individual checks can be marked as "flaky". This is useful
-  for checks that depend on external factors such as network timings. The errors
-  are still reported but not counted as failures.
-
-- Test failure messages can be printed in color by setting the WINETEST_COLOR
-  environment variable, to make them easier to spot in the test log.
-
-- The Resource Compiler (WRC) and Message Compiler (WMC) use the locale.nls
-  database to detect languages and codepages, and thus support all the Windows
-  locales.
-
-- The WineDump tool supports printing the contents of Enhanced Metafile spool
-  files, as well as more contents from PDB files.
-
-
-*** Build infrastructure
-
-- PE binaries can be built for multiple architectures from the same build tree,
-  using the '--enable-archs' option to configure, for example
-  '--enable-archs=i386,x86_64'. This can be used to enable the experimental
-  WoW64 mode, where 32-bit applications can run without any 32-bit host
-  libraries. Note that this mode is still under development and not yet
-  recommended for general use.
-
-- Data types that are defined as 'long' on Windows are defined as 'long' instead
-  of 'int' on all platforms with a 32-bit long type. This is more compatible, but
-  it can cause printf format warnings with Unix compilers. In Winelib code, it
-  can be disabled by defining WINE_NO_LONG_TYPES.
-
-- Import libraries can be generated without using dlltool, by passing the
-  '--without-dlltool' option to winebuild. This is used to avoid dlltool bugs
-  with delay import libraries.
-
-- Libraries that contain only resources and no code can be built with the
-  '--data-only' option to winegcc, which makes them smaller and more efficient to
-  load.
-
-
-*** Bundled libraries
-
-- Faudio is updated to the upstream release 22.11.
-
-- LCMS2 is updated to the upstream release 2.14.
-
-- LibJPEG is updated to the upstream release 9e.
-
-- LibMPG123 is updated to the upstream release 1.31.1.
-
-- LibPng is updated to the upstream release 1.6.39.
-
-- LibTiff is updated to the upstream release 4.4.0.
-
-- LibXml2 is updated to the upstream release 2.10.3.
-
-- LibXslt is updated to the upstream release 1.1.37.
-
-- Zlib is updated to the upstream release 1.2.13.
-
-
-*** Platform-specific features
-
-- The experimental WoW64 architecture is supported on macOS versions from 10.15.
-
-- 64-bit time_t is supported on 32-bit Linux with recent Glibc versions.
-
-- Exception unwinding on ARM platforms is extended with EHABI support on ARM32
-  and Dwarf support on ARM64.
-
-
-*** Miscellaneous
-
-- RSA encryption and the RSA-PSS signing algorithm are implemented.
-
-- An initial version of the UI Automation API is implemented.
-
-- Function name demangling supports various C++11 features.
-
-
-*** External dependencies
-
-- The vkd3d and LDAP libraries are bundled in the source tree and built as
-  PE. The corresponding Unix libraries are no longer needed.
-
-- The OpenAL library is no longer used.
+Bugs fixed in 8.0.1 (total 36):
+
+ - #49615  Device read errors logged in dmesg when running wine commands with empty CD/DVD drive, since 5.5
+ - #51345  Regression: Visual Studio 2005 "package load failure"
+ - #52506  Setup of game "What's the Secret?" fails to create icon
+ - #52878  Free PC Audit 5.1.211.96 fails to show info in 'Brief' tab (needs GetBinaryValue method of the StdRegProv class)
+ - #53274  adsldp:ldap - test_ParseDisplayName() sometimes fails to connect to the server
+ - #53926  New typelib marshaller depends on IID_IDispatch support from target interface
+ - #53981  Chromium broken sandbox due to GetSecurityInfo giving access denied
+ - #54030  Snagit needs Win32_Volume class ( 'select deviceid from win32_volume where driveletter =C:')
+ - #54215  ListView doesn't refresh when changing between List and Details styles.
+ - #54234  vbscript fails to compile when colon follows Else in If...Else
+ - #54289  RtlCopyContext buffer overflow
+ - #54318  Rich Edit inserts newly composed text at wrong position when system IME composition ends while a selection is active
+ - #54337  AviUtl shows Japanese text as garbage after conversion in ExEdit edit box
+ - #54353  crypt32:cert - testVerifyRevocation() gets unexpected success in Wine on second run
+ - #54357  Spurious fixme message when calling ScrollWindow()
+ - #54364  RtlGenRandom fails on systems with more than 128 cores
+ - #54371  loader won't launch from PATH unless named "wine"
+ - #54376  ws2_32:sock - test_reuseaddr() overflows a sockaddr variable by reading an AF_INET6 peer name into it
+ - #54379  since wine 8.0 print doesn't work any more
+ - #54432  Missing ntdll.RtlAddressInSectionTable() implementation causes all GraalVM Native Image exes to crash on load
+ - #54449  nethack crashes
+ - #54456  vbscript memory leak in For Each with SafeArray as group
+ - #54457  vbscript memory leaks in interp_redim_preserve
+ - #54458  vbscript memory leaks in Global_Split
+ - #54489  VarAbs() does not handle BSTR arguments correctly
+ - #54490  vbscript fails to compile when statement follows ElseIf
+ - #54493  vbscript fails to compile concat when used without space and expression begins with H
+ - #54495  Motorola Ready For Assistant does not start, needs ext-ms-win-networking-wlanapi-l1-1-0.dll
+ - #54563  The gif is displaying wrongly, with weird backgrounds of various colors
+ - #54564  Rich Edit crashes when Ctrl+Right is pressed at past the final paragraph
+ - #54570  Saints Row: The Third heavy rain causes heavy fps reductions
+ - #54581  SpeedCommander 20 installer crashes on unimplemented function SHELL32.dll.Shell_GetCachedImageIndexW
+ - #54617  KakaoTalk IM text edit window leaves artifacts when the text overflows and scroll bar appears
+ - #54663  ldp.exe crashes on unimplemented function wldap32.dll.ldap_set_dbg_flags
+ - #54690  ldp.exe crashes when attempting to connect to an invalid host
+ - #54707  adsldp:ldap - test_DirectorySearch() fails on Windows and Linux
+
+----------------------------------------------------------------
+
+Changes since 8.0:
+
+Akihiro Sagawa (2):
+      user32/tests: Add DBCS WM_CHAR tests for edit control.
+      user32/edit: Fix WM_CHAR handler for double-byte characters.
+
+Alex Henrie (5):
+      shell32: Add support for Program Manager icons with arguments.
+      wldap32: Add ldap_set_dbg_flags stub.
+      wldap32: Handle null LDAPMessage in ldap_count_entries.
+      wldap32: Handle null LDAPMessage in ldap_parse_result.
+      server: Fix buffer overrun in map_view handler.
+
+Alexandre Julliard (2):
+      gitlab: Add workaround for more strict git ownership check.
+      ntdll: Prefer the ntdll path over argv[0] on platforms without reliable exe information.
+
+Alistair Leslie-Hughes (1):
+      mountmgr.sys: Don't attempt to read from invalid media.
+
+Brendan Shanks (7):
+      loader: In macOS preloader, move the top-down allocations area down.
+      loader: In macOS preloader, stop using mincore() to test if a region is empty.
+      server: On macOS, fake debug registers when running under Rosetta.
+      ntdll: Add a WARN when setting debug registers fails under Rosetta.
+      loader: In macOS preloader, fix an environment variable sometimes being lost.
+      taskmgr: Use exit code 1 when terminating processes.
+      taskkill: Use exit code 1 when terminating processes.
+
+Carlos Rodriguez (1):
+      wined3d: Add GPU information for another Intel UHD 630 GPU.
+
+Dmitry Timoshkov (3):
+      win32u: Give full access rights to the process window station.
+      win32u: Give full access rights to the thread desktop.
+      rpcrt4: Mark the buffer as invalid in NdrProxyFreeBuffer().
+
+Eric Pouech (3):
+      ntdll: Implement RtlAddressInSectionTable.
+      conhost: Only update font when running with a window.
+      winedbg: Use debuggee's bitness for 'examine /a' command.
+
+Florian Will (2):
+      gdiplus/tests: Test for GdipPrivateAddFontFile() sharing violation.
+      gdiplus: Use FILE_SHARE_READ in GdipPrivateAddFontFile().
+
+Gabriel Ivăncescu (1):
+      jscript: Fix jsstr leak after changing variant type to BSTR.
+
+Gijs Vermeulen (1):
+      shell32: Add Shell_GetCachedImageIndexA/W exports.
+
+Giovanni Mascellani (1):
+      wbemprox: Do not call Release() inside wbemprox_cf_CreateInstance().
+
+Hans Leidekker (8):
+      wbemprox: Implement GetBinaryValue() method.
+      adsldp/tests: Avoid test failures when the server is down.
+      wbemprox: Implement Win32_Volume.
+      advapi32: Bump random buffer size.
+      msi: Install and patch global assemblies in InstallFinalize.
+      msi: Perform late initialization of the assembly caches.
+      adsldp/tests: Skip all remaining tests when the server is down.
+      adsldp/tests: Fix test failures.
+
+Hugh McMaster (2):
+      regedit: Allow export_key() to return TRUE.
+      regedit: Append '.reg' file extension if necessary.
+
+Illia Polishchuk (2):
+      d3d9/tests: Add test for non-indexed instancing drawing.
+      d3d9: Always draw only a single instance for non-indexed draws.
+
+Jacek Caban (2):
+      win32u: Silence spurious FIXME in NtUserScrollWindowEx.
+      oleaut32: Remove overflow check for VT_R4 and VT_R8 in VarAbs.
+
+Jason Millard (7):
+      vbscript: Fix compile when colon follows Else on new line.
+      vbscript: Fix memory leak in owned safearray iterator.
+      vbscript: Fix memory leak in Split().
+      vbscript: Fix memory leak in Split().
+      oleaut32: Fix VarAbs function for BSTR with positive values.
+      vbscript: Fix compile when statement after ElseIf or after separator.
+      vbscript: Fix compile issue with non hex after concat without space.
+
+Jinoh Kang (7):
+      ws2_32/test: Fix sockaddr buffer overflow in test_reuseaddr.
+      riched20: Obtain the composition start index after deleting selection.
+      riched20/tests: Test for word movement across paragraph boundary.
+      riched20: Don't set para unless committing cursor move in ME_MoveCursorWords.
+      riched20/tests: Test for ITextDocument::Freeze and ITextDocument::Unfreeze.
+      riched20: Don't assume that TxDraw preserves the device context's brush selection.
+      riched20: Implement ITextDocument::Freeze and ITextDocument::Unfreeze.
+
+K.B.Dharun Krishna (1):
+      po: Update Tamil translation.
+
+Michael Stefaniuc (2):
+      tools: Get the ANNOUNCE bug list from the stable-notes git notes.
+      gitlab: Do not run the build script on each commit.
+
+Nikolay Sivov (1):
+      apisetschema: Add ext-ms-win-networking-wlanapi-l1-1-0.
+
+Paul Gofman (5):
+      ntdll: Factor out context_copy_ranges() function.
+      ntdll: Do not use extended context in RtlCopyContext() if extended state is not copied.
+      cryptnet: Cache revocation status in verify_cert_revocation().
+      cryptnet: Use cert data hash as cache id instead of serial number.
+      cryptnet: Also hash issuer cert for cache id.
+
+Piotr Caban (7):
+      msvcrt: Don't crash on NULL argument in getenv.
+      msvcrt: Don't crash on NULL argument in _wgetenv.
+      msvcrt: Improve error handling in getenv_s.
+      msvcrt: Improve error handling in _wgetenv_s.
+      winspool: Fix FILE: output handling in StartDocDlgW.
+      localspl: Ignore an empty output string.
+      gdiplus: Use transparency instead of background color if transparent color flag is set in GIF GCE.
+
+Rémi Bernon (2):
+      dwrite: Statically init the system_fallback locale list.
+      services: Use a separate allocation for NotifyParamsArray[0].params.
+
+Serkan Önder (1):
+      po: Update Turkish translation.
+
+Tingzhong Luo (1):
+      evr: Fix crash when clearing input type for the mixer.
+
+Zebediah Figura (1):
+      oleaut32: Manually construct a stub buffer for dispinterfaces.
+
+Zhiyi Zhang (3):
+      comctl32/tests: Add WM_STYLECHANGED tests for changing listview view styles.
+      comctl32/listview: Repaint when changing view styles.
+      user32/tests: Test winstation and desktop access rights.
