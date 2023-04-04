@@ -61,6 +61,8 @@ double __cdecl tan(double x)
 	}
 
 	/* tan(Inf or NaN) is NaN */
+	if (isinf(x))
+		return math_error(_DOMAIN, "tan", x, 0, x - x);
 	if (ix >= 0x7ff00000)
 		return x - x;
 

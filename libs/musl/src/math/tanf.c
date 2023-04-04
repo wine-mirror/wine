@@ -55,6 +55,8 @@ float __cdecl tanf(float x)
 	}
 
 	/* tan(Inf or NaN) is NaN */
+	if (isinf(x))
+		return math_error(_DOMAIN, "tanf", x, 0, x - x);
 	if (ix >= 0x7f800000)
 		return x - x;
 

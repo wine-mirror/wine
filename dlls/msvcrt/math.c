@@ -489,8 +489,6 @@ float CDECL atanf( float x )
     return sign ? -z : z;
 }
 
-extern int __rem_pio2f(float x, double *y);
-
 /*********************************************************************
  *      expf (MSVCRT.@)
  */
@@ -811,82 +809,6 @@ float CDECL sqrtf( float x )
     z = *(float*)&r;
     return z;
 #endif
-}
-
-/* Copied from musl: src/math/__tandf.c */
-static float __tandf(double x, int odd)
-{
-    static const double T[] = {
-        0x15554d3418c99f.0p-54,
-        0x1112fd38999f72.0p-55,
-        0x1b54c91d865afe.0p-57,
-        0x191df3908c33ce.0p-58,
-        0x185dadfcecf44e.0p-61,
-        0x1362b9bf971bcd.0p-59,
-    };
-
-    double z, r, w, s, t, u;
-
-    z = x * x;
-    r = T[4] + z * T[5];
-    t = T[2] + z * T[3];
-    w = z * z;
-    s = z * x;
-    u = T[0] + z * T[1];
-    r = (x + s * u) + (s * w) * (t + w * r);
-    return odd ? -1.0 / r : r;
-}
-
-/*********************************************************************
- *      tanf (MSVCRT.@)
- *
- * Copied from musl: src/math/tanf.c
- */
-float CDECL tanf( float x )
-{
-    static const double t1pio2 = 1*M_PI_2,
-        t2pio2 = 2*M_PI_2,
-        t3pio2 = 3*M_PI_2,
-        t4pio2 = 4*M_PI_2;
-
-    double y;
-    UINT32 ix;
-    unsigned n, sign;
-
-    ix = *(UINT32*)&x;
-    sign = ix >> 31;
-    ix &= 0x7fffffff;
-
-    if (ix <= 0x3f490fda) { /* |x| ~<= pi/4 */
-        if (ix < 0x39800000) { /* |x| < 2**-12 */
-            /* raise inexact if x!=0 and underflow if subnormal */
-            fp_barrierf(ix < 0x00800000 ? x / 0x1p120f : x + 0x1p120f);
-            return x;
-        }
-        return __tandf(x, 0);
-    }
-    if (ix <= 0x407b53d1) { /* |x| ~<= 5*pi/4 */
-        if (ix <= 0x4016cbe3) /* |x| ~<= 3pi/4 */
-            return __tandf((sign ? x + t1pio2 : x - t1pio2), 1);
-        else
-            return __tandf((sign ? x + t2pio2 : x - t2pio2), 0);
-    }
-    if (ix <= 0x40e231d5) { /* |x| ~<= 9*pi/4 */
-        if (ix <= 0x40afeddf) /* |x| ~<= 7*pi/4 */
-            return __tandf((sign ? x + t3pio2 : x - t3pio2), 1);
-        else
-            return __tandf((sign ? x + t4pio2 : x - t4pio2), 0);
-    }
-
-    /* tan(Inf or NaN) is NaN */
-    if (isinf(x))
-        return math_error(_DOMAIN, "tanf", x, 0, x - x);
-    if (ix >= 0x7f800000)
-        return x - x;
-
-    /* argument reduction */
-    n = __rem_pio2f(x, &y);
-    return __tandf(y, n & 1);
 }
 
 /*********************************************************************
@@ -1239,8 +1161,6 @@ double CDECL rint(double x)
         return s ? -0.0 : 0;
     return y;
 }
-
-extern int __rem_pio2(double x, double *y);
 
 /* Copied from musl: src/math/exp_data.c */
 static const UINT64 exp_T[] = {
@@ -2066,97 +1986,6 @@ double CDECL sqrt( double x )
     ix |= ix1;
     return *(double*)&ix;
 #endif
-}
-
-/* Copied from musl: src/math/__tan.c */
-static double __tan(double x, double y, int odd)
-{
-    static const double T[] = {
-        3.33333333333334091986e-01,
-        1.33333333333201242699e-01,
-        5.39682539762260521377e-02,
-        2.18694882948595424599e-02,
-        8.86323982359930005737e-03,
-        3.59207910759131235356e-03,
-        1.45620945432529025516e-03,
-        5.88041240820264096874e-04,
-        2.46463134818469906812e-04,
-        7.81794442939557092300e-05,
-        7.14072491382608190305e-05,
-        -1.85586374855275456654e-05,
-        2.59073051863633712884e-05,
-    };
-    static const double pio4 = 7.85398163397448278999e-01;
-    static const double pio4lo = 3.06161699786838301793e-17;
-
-    double z, r, v, w, s, a, w0, a0;
-    UINT32 hx;
-    int big, sign;
-
-    hx = *(ULONGLONG*)&x >> 32;
-    big = (hx & 0x7fffffff) >= 0x3FE59428; /* |x| >= 0.6744 */
-    if (big) {
-        sign = hx >> 31;
-        if (sign) {
-            x = -x;
-            y = -y;
-        }
-        x = (pio4 - x) + (pio4lo - y);
-        y = 0.0;
-    }
-    z = x * x;
-    w = z * z;
-    r = T[1] + w * (T[3] + w * (T[5] + w * (T[7] + w * (T[9] + w * T[11]))));
-    v = z * (T[2] + w * (T[4] + w * (T[6] + w * (T[8] + w * (T[10] + w * T[12])))));
-    s = z * x;
-    r = y + z * (s * (r + v) + y) + s * T[0];
-    w = x + r;
-    if (big) {
-        s = 1 - 2 * odd;
-        v = s - 2.0 * (x + (r - w * w / (w + s)));
-        return sign ? -v : v;
-    }
-    if (!odd)
-        return w;
-    /* -1.0/(x+r) has up to 2ulp error, so compute it accurately */
-    w0 = w;
-    *(LONGLONG*)&w0 = *(LONGLONG*)&w0 & 0xffffffff00000000ULL;
-    v = r - (w0 - x);       /* w0+v = r+x */
-    a0 = a = -1.0 / w;
-    *(LONGLONG*)&a0 = *(LONGLONG*)&a0 & 0xffffffff00000000ULL;
-    return a0 + a * (1.0 + a0 * w0 + a0 * v);
-}
-
-/*********************************************************************
- *		tan (MSVCRT.@)
- *
- * Copied from musl: src/math/tan.c
- */
-double CDECL tan( double x )
-{
-    double y[2];
-    UINT32 ix;
-    unsigned n;
-
-    ix = *(ULONGLONG*)&x >> 32;
-    ix &= 0x7fffffff;
-
-    if (ix <= 0x3fe921fb) { /* |x| ~< pi/4 */
-        if (ix < 0x3e400000) { /* |x| < 2**-27 */
-            /* raise inexact if x!=0 and underflow if subnormal */
-            fp_barrier(ix < 0x00100000 ? x / 0x1p120f : x + 0x1p120f);
-            return x;
-        }
-        return __tan(x, 0.0, 0);
-    }
-
-    if (isinf(x))
-        return math_error(_DOMAIN, "tan", x, 0, x - x);
-    if (ix >= 0x7ff00000)
-        return x - x;
-
-    n = __rem_pio2(x, y);
-    return __tan(y[0], y[1], n & 1);
 }
 
 /*********************************************************************
