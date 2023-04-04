@@ -40,6 +40,7 @@ namespace Windows.UI.Composition {
     typedef enum CompositionColorSpace CompositionColorSpace;
     typedef enum CompositionCompositeMode CompositionCompositeMode;
     typedef enum CompositionEffectFactoryLoadStatus CompositionEffectFactoryLoadStatus;
+    typedef enum CompositionGetValueStatus CompositionGetValueStatus;
     typedef enum CompositionStretch CompositionStretch;
 
     interface IColorKeyFrameAnimation;
@@ -54,6 +55,8 @@ namespace Windows.UI.Composition {
     interface ICompositionEasingFunctionStatics;
     interface ICompositionEffectBrush;
     interface ICompositionEffectFactory;
+    interface ICompositionPropertySet;
+    interface ICompositionPropertySet2;
     interface ICompositionSurface;
     interface ICompositionSurfaceBrush;
     interface ICompositionSurfaceBrush2;
@@ -82,6 +85,7 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionEffectBrush;
     runtimeclass CompositionEffectFactory;
     runtimeclass CompositionObject;
+    runtimeclass CompositionPropertySet;
     runtimeclass CompositionSurfaceBrush;
     runtimeclass ContainerVisual;
     runtimeclass CubicBezierEasingFunction;
@@ -180,6 +184,16 @@ namespace Windows.UI.Composition {
         EffectTooComplex = 1,
         Pending          = 2,
         Other            = -1,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0)
+    ]
+    enum CompositionGetValueStatus
+    {
+        Succeeded    = 0,
+        TypeMismatch = 1,
+        NotFound     = 2,
     };
 
     [
@@ -295,6 +309,49 @@ namespace Windows.UI.Composition {
         HRESULT CreateBrush([out, retval] Windows.UI.Composition.CompositionEffectBrush **result);
         [propget] HRESULT ExtendedError([out, retval] HRESULT *value);
         [propget] HRESULT LoadStatus([out, retval] Windows.UI.Composition.CompositionEffectFactoryLoadStatus *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.CompositionPropertySet),
+        uuid(c9d6d202-5f67-4453-9117-9eadd430d3c2)
+    ]
+    interface ICompositionPropertySet : IInspectable
+    {
+        HRESULT InsertColor([in] HSTRING name, [in] Windows.UI.Color value);
+        HRESULT InsertMatrix3x2([in] HSTRING name, [in] Windows.Foundation.Numerics.Matrix3x2 value);
+        HRESULT InsertMatrix4x4([in] HSTRING name, [in] Windows.Foundation.Numerics.Matrix4x4 value);
+        HRESULT InsertQuaternion([in] HSTRING name, [in] Windows.Foundation.Numerics.Quaternion value);
+        HRESULT InsertScalar([in] HSTRING name, [in] FLOAT value);
+        HRESULT InsertVector2([in] HSTRING name, [in] Windows.Foundation.Numerics.Vector2 value);
+        HRESULT InsertVector3([in] HSTRING name, [in] Windows.Foundation.Numerics.Vector3 value);
+        HRESULT InsertVector4([in] HSTRING name, [in] Windows.Foundation.Numerics.Vector4 value);
+        HRESULT TryGetColor([in] HSTRING name, [out] Windows.UI.Color *value, [out, retval] Windows.UI.Composition.CompositionGetValueStatus *result);
+        HRESULT TryGetMatrix3x2(
+            [in] HSTRING name, [out] Windows.Foundation.Numerics.Matrix3x2 *value,
+            [out, retval] Windows.UI.Composition.CompositionGetValueStatus *result
+        );
+        HRESULT TryGetMatrix4x4(
+            [in] HSTRING name, [out] Windows.Foundation.Numerics.Matrix4x4 *value,
+            [out, retval] Windows.UI.Composition.CompositionGetValueStatus *result
+        );
+        HRESULT TryGetQuaternion(
+            [in] HSTRING name, [out] Windows.Foundation.Numerics.Quaternion *value,
+            [out, retval] Windows.UI.Composition.CompositionGetValueStatus *result
+        );
+        HRESULT TryGetScalar([in] HSTRING name, [out] FLOAT *value, [out, retval] Windows.UI.Composition.CompositionGetValueStatus *result);
+        HRESULT TryGetVector2(
+            [in] HSTRING name, [out] Windows.Foundation.Numerics.Vector2 *value,
+            [out, retval] Windows.UI.Composition.CompositionGetValueStatus *result
+        );
+        HRESULT TryGetVector3(
+            [in] HSTRING name, [out] Windows.Foundation.Numerics.Vector3 *value,
+            [out, retval] Windows.UI.Composition.CompositionGetValueStatus *result
+        );
+        HRESULT TryGetVector4(
+            [in] HSTRING name, [out] Windows.Foundation.Numerics.Vector4 *value,
+            [out, retval] Windows.UI.Composition.CompositionGetValueStatus *result
+        );
     }
 
     [
@@ -542,6 +599,17 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionEffectFactory : Windows.UI.Composition.CompositionObject
     {
         [default] interface Windows.UI.Composition.ICompositionEffectFactory;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass CompositionPropertySet : Windows.UI.Composition.CompositionObject
+    {
+        [default] interface Windows.UI.Composition.ICompositionPropertySet;
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionPropertySet2;
     }
 
     [
