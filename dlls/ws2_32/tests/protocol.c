@@ -2176,6 +2176,7 @@ static void test_getaddrinfo(void)
     SOCKADDR_IN *sockaddr;
     CHAR name[256], *ip;
     DWORD size = sizeof(name);
+    BOOL has_ipv6_getaddrinfo = TRUE;
     BOOL has_ipv6_addr;
 
     memset(&hint, 0, sizeof(ADDRINFOA));
@@ -2376,8 +2377,10 @@ static void test_getaddrinfo(void)
     }
     else
     {
+        todo_wine
         ok(ret == WSAHOST_NOT_FOUND, "getaddrinfo failed with %d\n", ret);
-        win_skip("getaddrinfo does not support IPV6\n");
+        skip("getaddrinfo does not support IPV6\n");
+        has_ipv6_getaddrinfo = FALSE;
     }
 
     hint.ai_flags = 0;
@@ -2468,7 +2471,10 @@ static void test_getaddrinfo(void)
     ret = getaddrinfo("www.kernel.org", NULL, NULL, &result);
     ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
     if (!has_ipv6_addr)
-        todo_wine ok(!ipv6_found(result), "IPv6 address is returned.\n");
+    {
+        todo_wine_if(has_ipv6_getaddrinfo)
+        ok(!ipv6_found(result), "IPv6 address is returned.\n");
+    }
     freeaddrinfo(result);
 
     for (i = 0; i < ARRAY_SIZE(hinttests); i++)

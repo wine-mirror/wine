@@ -2187,7 +2187,14 @@ static void test_reuseaddr(void)
         ok(s1 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
 
         rc = bind(s1, tests[i].addr_loopback, tests[i].addrlen);
-        ok(!rc, "got error %d.\n", WSAGetLastError());
+        ok(!rc || (tests[i].domain == AF_INET6 && WSAGetLastError() == WSAEADDRNOTAVAIL), "got error %d.\n", WSAGetLastError());
+        if (tests[i].domain == AF_INET6 && WSAGetLastError() == WSAEADDRNOTAVAIL)
+        {
+            skip("IPv6 not supported, skipping test\n");
+            closesocket(s1);
+            winetest_pop_context();
+            continue;
+        }
 
         s2 = socket(tests[i].domain, SOCK_STREAM, 0);
         ok(s2 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
@@ -2392,7 +2399,7 @@ static void test_reuseaddr(void)
             }
         }
         rc = bind(s[0], tests_exclusive[i].s[0].addr, tests_exclusive[i].s[0].addrlen);
-        ok(!rc, "got error %d.\n", WSAGetLastError());
+        ok(!rc || (tests_exclusive[i].s[0].domain == AF_INET6 && WSAGetLastError() == WSAEADDRNOTAVAIL), "got error %d.\n", WSAGetLastError());
 
         rc = bind(s[1], tests_exclusive[i].s[1].addr, tests_exclusive[i].s[1].addrlen);
 
@@ -2746,7 +2753,12 @@ static void test_ipv6_cmsg(void)
     ok(server != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
 
     rc = bind(server, (SOCKADDR *)&localhost, sizeof(localhost));
-    ok(rc != SOCKET_ERROR, "bind failed, error %u\n", WSAGetLastError());
+    ok(rc != SOCKET_ERROR || WSAGetLastError() == WSAEADDRNOTAVAIL, "bind failed, error %u\n", WSAGetLastError());
+    if (WSAGetLastError() == WSAEADDRNOTAVAIL)
+    {
+        skip("IPv6 not supported, skipping test\n");
+        goto cleanup;
+    }
     rc = connect(client, (SOCKADDR *)&localhost, sizeof(localhost));
     ok(rc != SOCKET_ERROR, "connect failed, error %u\n", WSAGetLastError());
 
@@ -2820,6 +2832,7 @@ static void test_ipv6_cmsg(void)
     rc = setsockopt(server, IPPROTO_IPV6, IPV6_RECVTCLASS, (const char *)&off, sizeof(off));
     ok(!rc, "failed to clear IPV6_RECVTCLASS, error %u\n", WSAGetLastError());
 
+cleanup:
     closesocket(server);
     closesocket(client);
 }

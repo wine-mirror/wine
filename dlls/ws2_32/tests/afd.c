@@ -2281,6 +2281,12 @@ static void test_bind(void)
     todo_wine ok(ret == STATUS_PENDING, "got %#x\n", ret);
     ret = WaitForSingleObject(event, 0);
     ok(!ret, "got %#x\n", ret);
+    if (io.Status == STATUS_INVALID_ADDRESS_COMPONENT)
+    {
+        skip("IPv6 not supported\n");
+        closesocket(s);
+        goto cleanup;
+    }
     ok(!io.Status, "got %#lx\n", io.Status);
     ok(io.Information == sizeof(addr6), "got %#Ix\n", io.Information);
     ok(addr6.sin6_family == AF_INET6, "got family %u\n", addr6.sin6_family);
@@ -2315,6 +2321,7 @@ static void test_bind(void)
     closesocket(s2);
     closesocket(s);
 
+cleanup:
     CloseHandle(event);
     free(params);
 }
