@@ -216,49 +216,6 @@ float CDECL _chgsignf( float num )
     return u.f;
 }
 
-/*********************************************************************
- *      _nextafterf (MSVCRT.@)
- *
- * Copied from musl: src/math/nextafterf.c
- */
-float CDECL _nextafterf( float x, float y )
-{
-    unsigned int ix = *(unsigned int*)&x;
-    unsigned int iy = *(unsigned int*)&y;
-    unsigned int ax, ay, e;
-
-    if (isnan(x) || isnan(y))
-        return x + y;
-    if (x == y) {
-        if (_fpclassf(y) & (_FPCLASS_ND | _FPCLASS_PD | _FPCLASS_NZ | _FPCLASS_PZ ))
-            *_errno() = ERANGE;
-        return y;
-    }
-    ax = ix & 0x7fffffff;
-    ay = iy & 0x7fffffff;
-    if (ax == 0) {
-        if (ay == 0)
-            return y;
-        ix = (iy & 0x80000000) | 1;
-    } else if (ax > ay || ((ix ^ iy) & 0x80000000))
-        ix--;
-    else
-        ix++;
-    e = ix & 0x7f800000;
-    /* raise overflow if ix is infinite and x is finite */
-    if (e == 0x7f800000) {
-        fp_barrierf(x + x);
-        *_errno() = ERANGE;
-    }
-    /* raise underflow if ix is subnormal or zero */
-    y = *(float*)&ix;
-    if (e == 0) {
-        fp_barrierf(x * x + y * y);
-        *_errno() = ERANGE;
-    }
-    return y;
-}
-
 #endif
 
 /* Copied from musl: src/math/__rem_pio2_large.c */
@@ -4124,7 +4081,7 @@ float CDECL nearbyintf(float x)
  */
 double CDECL MSVCRT_nexttoward(double num, double next)
 {
-    return _nextafter(num, next);
+    return nextafter(num, next);
 }
 
 /*********************************************************************
@@ -4173,50 +4130,6 @@ float CDECL MSVCRT_nexttowardf(float x, double y)
 }
 
 #endif /* _MSVCR_VER>=120 */
-
-/*********************************************************************
- *		_nextafter (MSVCRT.@)
- *
- * Copied from musl: src/math/nextafter.c
- */
-double CDECL _nextafter(double x, double y)
-{
-    ULONGLONG llx = *(ULONGLONG*)&x;
-    ULONGLONG lly = *(ULONGLONG*)&y;
-    ULONGLONG ax, ay;
-    int e;
-
-    if (isnan(x) || isnan(y))
-        return x + y;
-    if (llx == lly) {
-        if (_fpclass(y) & (_FPCLASS_ND | _FPCLASS_PD | _FPCLASS_NZ | _FPCLASS_PZ ))
-            *_errno() = ERANGE;
-        return y;
-    }
-    ax = llx & -1ULL / 2;
-    ay = lly & -1ULL / 2;
-    if (ax == 0) {
-        if (ay == 0)
-            return y;
-        llx = (lly & 1ULL << 63) | 1;
-    } else if (ax > ay || ((llx ^ lly) & 1ULL << 63))
-        llx--;
-    else
-        llx++;
-    e = llx >> 52 & 0x7ff;
-    /* raise overflow if llx is infinite and x is finite */
-    if (e == 0x7ff) {
-        fp_barrier(x + x);
-        *_errno() = ERANGE;
-    }
-    /* raise underflow if llx is subnormal or zero */
-    y = *(double*)&llx;
-    if (e == 0) {
-        fp_barrier(x * x + y * y);
-        *_errno() = ERANGE;
-    }
-    return y;
-}
 
 /*********************************************************************
  *		_ecvt (MSVCRT.@)

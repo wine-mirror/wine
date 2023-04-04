@@ -8,8 +8,12 @@ double __cdecl nextafter(double x, double y)
 
 	if (isnan(x) || isnan(y))
 		return x + y;
-	if (ux.i == uy.i)
+	if (ux.i == uy.i) {
+		e = ux.i >> 52 & 0x7ff;
+		if (!e)
+			errno = ERANGE;
 		return y;
+	}
 	ax = ux.i & -1ULL/2;
 	ay = uy.i & -1ULL/2;
 	if (ax == 0) {
@@ -22,10 +26,14 @@ double __cdecl nextafter(double x, double y)
 		ux.i++;
 	e = ux.i >> 52 & 0x7ff;
 	/* raise overflow if ux.f is infinite and x is finite */
-	if (e == 0x7ff)
+	if (e == 0x7ff) {
 		FORCE_EVAL(x+x);
+		errno = ERANGE;
+	}
 	/* raise underflow if ux.f is subnormal or zero */
-	if (e == 0)
+	if (e == 0) {
 		FORCE_EVAL(x*x + ux.f*ux.f);
+		errno = ERANGE;
+	}
 	return ux.f;
 }

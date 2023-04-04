@@ -731,8 +731,8 @@
 @ cdecl _mktime32(ptr)
 @ cdecl _mktime64(ptr)
 @ cdecl _msize(ptr)
-@ cdecl _nextafter(double double)
-@ cdecl -arch=x86_64 _nextafterf(float float)
+@ cdecl _nextafter(double double) nextafter
+@ cdecl -arch=x86_64 _nextafterf(float float) nextafterf
 @ cdecl -arch=i386 _o__CIacos() _CIacos
 @ cdecl -arch=i386 _o__CIasin() _CIasin
 @ cdecl -arch=i386 _o__CIatan() _CIatan
@@ -1299,8 +1299,8 @@
 @ cdecl _o__mktime32(ptr) _mktime32
 @ cdecl _o__mktime64(ptr) _mktime64
 @ cdecl _o__msize(ptr) _msize
-@ cdecl _o__nextafter(double double) _nextafter
-@ cdecl -arch=x86_64 _o__nextafterf(float float) _nextafterf
+@ cdecl _o__nextafter(double double) nextafter
+@ cdecl -arch=x86_64 _o__nextafterf(float float) nextafterf
 @ cdecl _o__open_osfhandle(long long) _open_osfhandle
 @ cdecl _o__pclose(ptr) _pclose
 @ cdecl _o__pipe(ptr long long) _pipe
@@ -1730,9 +1730,9 @@
 @ cdecl _o_nearbyint(double) nearbyint
 @ cdecl _o_nearbyintf(float) nearbyintf
 @ cdecl _o_nearbyintl(double) nearbyint
-@ cdecl _o_nextafter(double double) _nextafter
-@ cdecl _o_nextafterf(float float) _nextafterf
-@ cdecl _o_nextafterl(double double) _nextafter
+@ cdecl _o_nextafter(double double) nextafter
+@ cdecl _o_nextafterf(float float) nextafterf
+@ cdecl _o_nextafterl(double double) nextafter
 @ cdecl _o_nexttoward(double double) MSVCRT_nexttoward
 @ cdecl _o_nexttowardf(float double) MSVCRT_nexttowardf
 @ cdecl _o_nexttowardl(double double) MSVCRT_nexttoward
@@ -2438,9 +2438,9 @@
 @ cdecl nearbyint(double)
 @ cdecl nearbyintf(float)
 @ cdecl nearbyintl(double) nearbyint
-@ cdecl nextafter(double double) _nextafter
-@ cdecl nextafterf(float float) _nextafterf
-@ cdecl nextafterl(double double) _nextafter
+@ cdecl nextafter(double double)
+@ cdecl nextafterf(float float)
+@ cdecl nextafterl(double double) nextafter
 @ cdecl nexttoward(double double) MSVCRT_nexttoward
 @ cdecl nexttowardf(float double) MSVCRT_nexttowardf
 @ cdecl nexttowardl(double double) MSVCRT_nexttoward

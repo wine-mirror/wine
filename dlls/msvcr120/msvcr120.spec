@@ -1583,8 +1583,8 @@
 @ cdecl _mktime32(ptr)
 @ cdecl _mktime64(ptr)
 @ cdecl _msize(ptr)
-@ cdecl _nextafter(double double)
-@ cdecl -arch=x86_64 _nextafterf(float float)
+@ cdecl _nextafter(double double) nextafter
+@ cdecl -arch=x86_64 _nextafterf(float float) nextafterf
 @ cdecl _onexit(ptr)
 @ varargs _open(str long)
 @ cdecl _open_osfhandle(long long)
@@ -2300,9 +2300,9 @@
 @ cdecl nearbyint(double)
 @ cdecl nearbyintf(float)
 @ cdecl nearbyintl(double) nearbyint
-@ cdecl nextafter(double double) _nextafter
-@ cdecl nextafterf(float float) _nextafterf
-@ cdecl nextafterl(double double) _nextafter
+@ cdecl nextafter(double double)
+@ cdecl nextafterf(float float)
+@ cdecl nextafterl(double double) nextafter
 @ cdecl nexttoward(double double) MSVCRT_nexttoward
 @ cdecl nexttowardf(float double) MSVCRT_nexttowardf
 @ cdecl nexttowardl(double double) MSVCRT_nexttoward

@@ -457,7 +457,7 @@
 @ cdecl _mktemp(str)
 @ cdecl _msize(ptr)
 @ cdecl _msize_dbg(ptr) _msize
-@ cdecl _nextafter(double double)
+@ cdecl _nextafter(double double) nextafter
 @ cdecl _onexit(ptr)
 @ varargs _open(str long)
 @ cdecl _open_osfhandle(long long)

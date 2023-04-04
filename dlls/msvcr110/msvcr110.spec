@@ -1572,8 +1572,8 @@
 @ cdecl _mktime32(ptr)
 @ cdecl _mktime64(ptr)
 @ cdecl _msize(ptr)
-@ cdecl _nextafter(double double)
-@ cdecl -arch=x86_64 _nextafterf(float float)
+@ cdecl _nextafter(double double) nextafter
+@ cdecl -arch=x86_64 _nextafterf(float float) nextafterf
 @ cdecl _onexit(ptr)
 @ varargs _open(str long)
 @ cdecl _open_osfhandle(long long)
