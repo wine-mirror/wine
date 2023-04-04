@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdint.h>
+#include "libm.h"
 
 double __cdecl fmod(double x, double y)
 {
@@ -13,6 +14,8 @@ double __cdecl fmod(double x, double y)
 	/* float load/store to inner loops ruining performance and code size */
 	uint64_t uxi = ux.i;
 
+	if (isinf(x))
+		return math_error(_DOMAIN, "fmod", x, y, (x * y) / (x * y));
 	if (uy.i<<1 == 0 || isnan(y) || ex == 0x7ff)
 		return (x*y)/(x*y);
 	if (uxi<<1 <= uy.i<<1) {

@@ -11,6 +11,8 @@ float __cdecl fmodf(float x, float y)
 	uint32_t i;
 	uint32_t uxi = ux.i;
 
+	if (isinf(x))
+		return math_error(_DOMAIN, "fmodf", x, y, (x * y) / (x * y));
 	if (uy.i<<1 == 0 || isnan(y) || ex == 0xff)
 		return (x*y)/(x*y);
 	if (uxi<<1 <= uy.i<<1) {
