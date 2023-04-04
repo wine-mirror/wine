@@ -348,10 +348,11 @@ static BOOL check_blob_strip(DWORD tag, UINT flags)
 
 static HRESULT d3dcompiler_strip_shader(const void *data, SIZE_T data_size, UINT flags, ID3DBlob **blob)
 {
+    const struct vkd3d_shader_code src_dxbc = {.code = data, .size = data_size};
     struct vkd3d_shader_dxbc_section_desc *sections;
+    struct vkd3d_shader_dxbc_desc src_dxbc_desc;
     struct vkd3d_shader_code dst_dxbc;
     unsigned int section_count, i;
-    struct dxbc src_dxbc;
     HRESULT hr;
     int ret;
 
@@ -367,24 +368,23 @@ static HRESULT d3dcompiler_strip_shader(const void *data, SIZE_T data_size, UINT
         return D3DERR_INVALIDCALL;
     }
 
-    hr = dxbc_parse(data, data_size, &src_dxbc);
-    if (FAILED(hr))
+    if ((ret = vkd3d_shader_parse_dxbc(&src_dxbc, 0, &src_dxbc_desc, NULL)) < 0)
     {
-        WARN("Failed to parse blob part\n");
-        return hr;
+        WARN("Failed to parse source data, ret %d.\n", ret);
+        return E_FAIL;
     }
 
     /* src_dxbc.count >= dst_dxbc.count */
-    if (!(sections = calloc(src_dxbc.count, sizeof(*sections))))
+    if (!(sections = calloc(src_dxbc_desc.section_count, sizeof(*sections))))
     {
         ERR("Failed to allocate sections memory.\n");
-        dxbc_destroy(&src_dxbc);
+        vkd3d_shader_free_dxbc(&src_dxbc_desc);
         return E_OUTOFMEMORY;
     }
 
-    for (i = 0, section_count = 0; i < src_dxbc.count; ++i)
+    for (i = 0, section_count = 0; i < src_dxbc_desc.section_count; ++i)
     {
-        const struct vkd3d_shader_dxbc_section_desc *src_section = &src_dxbc.sections[i];
+        const struct vkd3d_shader_dxbc_section_desc *src_section = &src_dxbc_desc.sections[i];
 
         if (check_blob_strip(src_section->tag, flags))
             sections[section_count++] = *src_section;
@@ -405,7 +405,7 @@ static HRESULT d3dcompiler_strip_shader(const void *data, SIZE_T data_size, UINT
 
 done:
     free(sections);
-    dxbc_destroy(&src_dxbc);
+    vkd3d_shader_free_dxbc(&src_dxbc_desc);
 
     return hr;
 }
