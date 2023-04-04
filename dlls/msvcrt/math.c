@@ -787,69 +787,6 @@ float CDECL powf( float x, float y )
     return powf_exp2(ylogx, sign_bias);
 }
 
-/*********************************************************************
- *      sinf (MSVCRT.@)
- *
- * Copied from musl: src/math/sinf.c
- */
-float CDECL sinf( float x )
-{
-    static const double s1pio2 = 1*M_PI_2,
-        s2pio2 = 2*M_PI_2,
-        s3pio2 = 3*M_PI_2,
-        s4pio2 = 4*M_PI_2;
-
-    double y;
-    UINT32 ix;
-    int n, sign;
-
-    ix = *(UINT32*)&x;
-    sign = ix >> 31;
-    ix &= 0x7fffffff;
-
-    if (ix <= 0x3f490fda) { /* |x| ~<= pi/4 */
-        if (ix < 0x39800000) { /* |x| < 2**-12 */
-            /* raise inexact if x!=0 and underflow if subnormal */
-            fp_barrierf(ix < 0x00800000 ? x / 0x1p120f : x + 0x1p120f);
-            return x;
-        }
-        return __sindf(x);
-    }
-    if (ix <= 0x407b53d1) { /* |x| ~<= 5*pi/4 */
-        if (ix <= 0x4016cbe3) { /* |x| ~<= 3pi/4 */
-            if (sign)
-                return -__cosdf(x + s1pio2);
-            else
-                return __cosdf(x - s1pio2);
-        }
-        return __sindf(sign ? -(x + s2pio2) : -(x - s2pio2));
-    }
-    if (ix <= 0x40e231d5) { /* |x| ~<= 9*pi/4 */
-        if (ix <= 0x40afeddf) { /* |x| ~<= 7*pi/4 */
-            if (sign)
-                return __cosdf(x + s3pio2);
-            else
-                return -__cosdf(x - s3pio2);
-        }
-        return __sindf(sign ? x + s4pio2 : x - s4pio2);
-    }
-
-    /* sin(Inf or NaN) is NaN */
-    if (isinf(x))
-        return math_error(_DOMAIN, "sinf", x, 0, x - x);
-    if (ix >= 0x7f800000)
-        return x - x;
-
-    /* general argument reduction needed */
-    n = __rem_pio2f(x, &y);
-    switch (n&3) {
-    case 0: return __sindf(y);
-    case 1: return __cosdf(y);
-    case 2: return __sindf(-y);
-    default: return -__cosdf(y);
-    }
-}
-
 static BOOL sqrtf_validate( float *x )
 {
     short c = _fdclass(*x);
@@ -2115,46 +2052,6 @@ double CDECL pow( double x, double y )
     ehi = yhi * lhi;
     elo = ylo * lhi + y * llo; /* |elo| < |ehi| * 2^-25. */
     return pow_exp(x, y, ehi, elo, sign_bias);
-}
-
-/*********************************************************************
- *		sin (MSVCRT.@)
- *
- * Copied from musl: src/math/sin.c
- */
-double CDECL sin( double x )
-{
-    double y[2];
-    UINT32 ix;
-    unsigned n;
-
-    ix = *(ULONGLONG*)&x >> 32;
-    ix &= 0x7fffffff;
-
-    /* |x| ~< pi/4 */
-    if (ix <= 0x3fe921fb) {
-        if (ix < 0x3e500000) { /* |x| < 2**-26 */
-            /* raise inexact if x != 0 and underflow if subnormal*/
-            fp_barrier(ix < 0x00100000 ? x/0x1p120f : x+0x1p120f);
-            return x;
-        }
-        return __sin(x, 0.0, 0);
-    }
-
-    /* sin(Inf or NaN) is NaN */
-    if (isinf(x))
-        return math_error(_DOMAIN, "sin", x, 0, x - x);
-    if (ix >= 0x7ff00000)
-        return x - x;
-
-    /* argument reduction needed */
-    n = __rem_pio2(x, y);
-    switch (n&3) {
-    case 0: return  __sin(y[0], y[1], 1);
-    case 1: return  __cos(y[0], y[1]);
-    case 2: return -__sin(y[0], y[1], 1);
-    default: return -__cos(y[0], y[1]);
-    }
 }
 
 static BOOL sqrt_validate( double *x, BOOL update_sw )

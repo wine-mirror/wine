@@ -63,6 +63,8 @@ double __cdecl sin(double x)
 	}
 
 	/* sin(Inf or NaN) is NaN */
+	if (isinf(x))
+		return math_error(_DOMAIN, "sin", x, 0, x - x);
 	if (ix >= 0x7ff00000)
 		return x - x;
 

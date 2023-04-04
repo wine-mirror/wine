@@ -61,6 +61,8 @@ float __cdecl sinf(float x)
 	}
 
 	/* sin(Inf or NaN) is NaN */
+	if (isinf(x))
+		return math_error(_DOMAIN, "sinf", x, 0, x - x);
 	if (ix >= 0x7f800000)
 		return x - x;
 
