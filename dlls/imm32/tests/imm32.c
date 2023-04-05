@@ -4219,7 +4219,6 @@ static void test_ImmSetConversionStatus(void)
             .hkl = expect_ime, .himc = default_himc,
             .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0xdeadbeef, .value = IMC_SETCONVERSIONMODE},
         },
-        {.todo = TRUE}, /* spurious calls */
         {0},
     };
     const struct ime_call set_conversion_status_2_seq[] =

@@ -2635,36 +2635,33 @@ BOOL WINAPI ImmSetCompositionWindow(
 /***********************************************************************
  *		ImmSetConversionStatus (IMM32.@)
  */
-BOOL WINAPI ImmSetConversionStatus(
-  HIMC hIMC, DWORD fdwConversion, DWORD fdwSentence)
+BOOL WINAPI ImmSetConversionStatus( HIMC himc, DWORD conversion, DWORD sentence )
 {
-    DWORD oldConversion, oldSentence;
-    struct imc *data = get_imc_data( hIMC );
+    DWORD old_conversion, old_sentence;
+    INPUTCONTEXT *ctx;
 
-    TRACE("%p %ld %ld\n", hIMC, fdwConversion, fdwSentence);
+    TRACE( "himc %p, conversion %#lx, sentence %#lx\n", himc, conversion, sentence );
 
-    if (!data)
+    if (NtUserQueryInputContext( himc, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
+
+    if (conversion != ctx->fdwConversion)
     {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return FALSE;
+        old_conversion = ctx->fdwConversion;
+        ctx->fdwConversion = conversion;
+        ImmNotifyIME( himc, NI_CONTEXTUPDATED, old_conversion, IMC_SETCONVERSIONMODE );
+        SendMessageW( ctx->hWnd, WM_IME_NOTIFY, IMN_SETCONVERSIONMODE, 0 );
     }
 
-    if (NtUserQueryInputContext( hIMC, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
+    if (sentence != ctx->fdwSentence)
+    {
+        old_sentence = ctx->fdwSentence;
+        ctx->fdwSentence = sentence;
+        ImmNotifyIME( himc, NI_CONTEXTUPDATED, old_sentence, IMC_SETSENTENCEMODE );
+        SendMessageW( ctx->hWnd, WM_IME_NOTIFY, IMN_SETSENTENCEMODE, 0 );
+    }
 
-    if ( fdwConversion != data->IMC.fdwConversion )
-    {
-        oldConversion = data->IMC.fdwConversion;
-        data->IMC.fdwConversion = fdwConversion;
-        ImmNotifyIME(hIMC, NI_CONTEXTUPDATED, oldConversion, IMC_SETCONVERSIONMODE);
-        imc_notify_ime( data, IMN_SETCONVERSIONMODE, 0 );
-    }
-    if ( fdwSentence != data->IMC.fdwSentence )
-    {
-        oldSentence = data->IMC.fdwSentence;
-        data->IMC.fdwSentence = fdwSentence;
-        ImmNotifyIME(hIMC, NI_CONTEXTUPDATED, oldSentence, IMC_SETSENTENCEMODE);
-        imc_notify_ime( data, IMN_SETSENTENCEMODE, 0 );
-    }
+    ImmUnlockIMC( himc );
 
     return TRUE;
 }
