@@ -6069,7 +6069,6 @@ static void test_ImmSetCompositionWindow(void)
         {
             .hkl = expect_ime, .himc = 0/*himc*/,
             .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETCOMPOSITIONWINDOW},
-            .todo = TRUE
         },
         {
             .hkl = expect_ime, .himc = default_himc,
@@ -6086,9 +6085,8 @@ static void test_ImmSetCompositionWindow(void)
         {
             .hkl = expect_ime, .himc = 0/*himc*/,
             .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETCOMPOSITIONWINDOW},
-            .todo = TRUE
         },
-        {.todo = TRUE},
+        {0},
     };
     COMPOSITIONFORM comp_form, expect_form =
     {
@@ -6136,7 +6134,7 @@ static void test_ImmSetCompositionWindow(void)
     memset( &comp_form, 0xcd, sizeof(comp_form) );
     ok_ret( 1, ImmSetCompositionWindow( himc, &comp_form ) );
     ok_seq( set_composition_window_0_seq );
-    todo_wine ok_eq( INIT_COMPFORM, ctx->fdwInit, UINT, "%u" );
+    ok_eq( INIT_COMPFORM, ctx->fdwInit, UINT, "%u" );
     check_composition_form( &ctx->cfCompForm, &comp_form );
 
     ok_ret( 1, ImmSetCompositionWindow( himc, &expect_form ) );

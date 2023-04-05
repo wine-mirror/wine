@@ -119,6 +119,14 @@ static struct list ime_list = LIST_INIT( ime_list );
 
 static const WCHAR layouts_formatW[] = L"System\\CurrentControlSet\\Control\\Keyboard Layouts\\%08lx";
 
+static const char *debugstr_composition( const COMPOSITIONFORM *composition )
+{
+    if (!composition) return "(null)";
+    return wine_dbg_sprintf( "style %#lx, pos %s, area %s", composition->dwStyle,
+                             wine_dbgstr_point( &composition->ptCurrentPos ),
+                             wine_dbgstr_rect( &composition->rcArea ) );
+}
+
 static BOOL ime_is_unicode( const struct ime *ime )
 {
     return !!(ime->info.fdwProperty & IME_PROP_UNICODE);
@@ -2595,28 +2603,19 @@ BOOL WINAPI ImmSetCompositionStringW(
 /***********************************************************************
  *		ImmSetCompositionWindow (IMM32.@)
  */
-BOOL WINAPI ImmSetCompositionWindow(
-  HIMC hIMC, LPCOMPOSITIONFORM lpCompForm)
+BOOL WINAPI ImmSetCompositionWindow( HIMC himc, COMPOSITIONFORM *composition )
 {
     BOOL reshow = FALSE;
-    struct imc *data = get_imc_data( hIMC );
+    INPUTCONTEXT *ctx;
     HWND ui_hwnd;
 
-    TRACE("(%p, %p)\n", hIMC, lpCompForm);
-    if (lpCompForm)
-        TRACE("\t%lx, %s, %s\n", lpCompForm->dwStyle,
-              wine_dbgstr_point(&lpCompForm->ptCurrentPos),
-              wine_dbgstr_rect(&lpCompForm->rcArea));
+    TRACE( "himc %p, composition %s\n", himc, debugstr_composition( composition ) );
 
-    if (!data)
-    {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return FALSE;
-    }
+    if (NtUserQueryInputContext( himc, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
 
-    if (NtUserQueryInputContext( hIMC, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
-
-    data->IMC.cfCompForm = *lpCompForm;
+    ctx->cfCompForm = *composition;
+    ctx->fdwInit |= INIT_COMPFORM;
 
     if ((ui_hwnd = get_ime_ui_window()) && IsWindowVisible( ui_hwnd ))
     {
@@ -2624,11 +2623,13 @@ BOOL WINAPI ImmSetCompositionWindow(
         ShowWindow( ui_hwnd, SW_HIDE );
     }
 
-    /* FIXME: this is a partial stub */
-
     if (ui_hwnd && reshow) ShowWindow( ui_hwnd, SW_SHOWNOACTIVATE );
 
-    imc_notify_ime( data, IMN_SETCOMPOSITIONWINDOW, 0 );
+    ImmNotifyIME( himc, NI_CONTEXTUPDATED, 0, IMC_SETCOMPOSITIONWINDOW );
+    SendMessageW( ctx->hWnd, WM_IME_NOTIFY, IMN_SETCOMPOSITIONWINDOW, 0 );
+
+    ImmUnlockIMC( himc );
+
     return TRUE;
 }
 
