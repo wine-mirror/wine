@@ -78,19 +78,13 @@ void msvcrt_init_math( void *module )
 }
 
 /* Copied from musl: src/internal/libm.h */
-#ifndef __i386__
-static inline float fp_barrierf(float x)
-{
-    volatile float y = x;
-    return y;
-}
-#endif
-
+#if _MSVCR_VER >= 120
 static inline double fp_barrier(double x)
 {
     volatile double y = x;
     return y;
 }
+#endif
 
 static inline double ret_nan( BOOL update_sw )
 {
@@ -399,49 +393,17 @@ float CDECL sqrtf( float x )
 /*********************************************************************
  *      tanhf (MSVCRT.@)
  */
-float CDECL tanhf( float x )
+#if _MSVCR_VER < 140  /* other versions call tanhf() directly */
+float CDECL MSVCRT_tanhf( float x )
 {
-    UINT32 ui = *(UINT32*)&x;
-    UINT32 sign = ui & 0x80000000;
-    float t;
-
-    /* x = |x| */
-    ui &= 0x7fffffff;
-    x = *(float*)&ui;
-
-    if (ui > 0x3f0c9f54) {
-        /* |x| > log(3)/2 ~= 0.5493 or nan */
-        if (ui > 0x41200000) {
-            if (ui > 0x7f800000) {
-                *(UINT32*)&x = ui | sign | 0x400000;
-#if _MSVCR_VER < 140
-                return math_error(_DOMAIN, "tanhf", x, 0, x);
-#else
-                return x;
-#endif
-            }
-            /* |x| > 10 */
-            fp_barrierf(x + 0x1p120f);
-            t = 1 + 0 / x;
-        } else {
-            t = expm1f(2 * x);
-            t = 1 - 2 / (t + 2);
-        }
-    } else if (ui > 0x3e82c578) {
-        /* |x| > log(5/3)/2 ~= 0.2554 */
-        t = expm1f(2 * x);
-        t = t / (t + 2);
-    } else if (ui >= 0x00800000) {
-        /* |x| >= 0x1p-126 */
-        t = expm1f(-2 * x);
-        t = -t / (t + 2);
-    } else {
-        /* |x| is subnormal */
-        fp_barrierf(x * x);
-        t = x;
+    if (isnan( x ))
+    {
+        *(UINT32*)&x |= 0x400000;
+        return math_error(_DOMAIN, "tanhf", x, 0, x);
     }
-    return sign ? -t : t;
+    return tanhf( x );
 }
+#endif
 
 #endif
 
@@ -675,54 +637,17 @@ double CDECL sqrt( double x )
 /*********************************************************************
  *		tanh (MSVCRT.@)
  */
-double CDECL tanh( double x )
+#if _MSVCR_VER < 140  /* other versions call tanh() directly */
+double CDECL MSVCRT_tanh( double x )
 {
-    UINT64 ui = *(UINT64*)&x;
-    UINT64 sign = ui & 0x8000000000000000ULL;
-    UINT32 w;
-    double t;
-
-    /* x = |x| */
-    ui &= (UINT64)-1 / 2;
-    x = *(double*)&ui;
-    w = ui >> 32;
-
-    if (w > 0x3fe193ea) {
-        /* |x| > log(3)/2 ~= 0.5493 or nan */
-        if (w > 0x40340000) {
-            if (ui > 0x7ff0000000000000ULL) {
-                *(UINT64*)&x = ui | sign | 0x0008000000000000ULL;
-#if _MSVCR_VER < 140
-                return math_error(_DOMAIN, "tanh", x, 0, x);
-#else
-                return x;
-#endif
-            }
-            /* |x| > 20 */
-            /* note: this branch avoids raising overflow */
-            fp_barrier(x + 0x1p120f);
-            t = 1 - 0 / x;
-        } else {
-            t = expm1(2 * x);
-            t = 1 - 2 / (t + 2);
-        }
-    } else if (w > 0x3fd058ae) {
-        /* |x| > log(5/3)/2 ~= 0.2554 */
-        t = expm1(2 * x);
-        t = t / (t + 2);
-    } else if (w >= 0x00100000) {
-        /* |x| >= 0x1p-1022, up to 2ulp error in [0.1,0.2554] */
-        t = expm1(-2 * x);
-        t = -t / (t + 2);
-    } else {
-        /* |x| is subnormal */
-        /* note: the branch above would not raise underflow in [0x1p-1023,0x1p-1022) */
-        fp_barrier((float)x);
-        t = x;
+    if (isnan( x ))
+    {
+        *(UINT64*)&x |= 0x0008000000000000ULL;
+        return math_error(_DOMAIN, "tanh", x, 0, x);
     }
-    return sign ? -t : t;
+    return tanh( x );
 }
-
+#endif
 
 #if (defined(__GNUC__) || defined(__clang__)) && defined(__i386__)
 

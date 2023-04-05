@@ -1510,8 +1510,8 @@
 @ cdecl system(str)
 @ cdecl tan(double)
 @ cdecl -arch=!i386 tanf(float)
-@ cdecl tanh(double)
-@ cdecl -arch=!i386 tanhf(float)
+@ cdecl tanh(double) MSVCRT_tanh
+@ cdecl -arch=!i386 tanhf(float) MSVCRT_tanhf
 @ cdecl tmpfile()
 @ cdecl tmpfile_s(ptr)
 @ cdecl tmpnam(ptr)

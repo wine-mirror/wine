@@ -1461,9 +1461,9 @@
 @ varargs swscanf_s(wstr wstr)
 @ cdecl system(str)
 @ cdecl tan(double)
-@ cdecl tanh(double)
+@ cdecl tanh(double) MSVCRT_tanh
 @ cdecl -arch=!i386 tanf(float)
-@ cdecl -arch=!i386 tanhf(float)
+@ cdecl -arch=!i386 tanhf(float) MSVCRT_tanhf
 @ cdecl -arch=win32 time(ptr) _time32
 @ cdecl -arch=win64 time(ptr) _time64
 @ cdecl tmpfile()

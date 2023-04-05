@@ -4,11 +4,11 @@ float __cdecl tanhf(float x)
 {
 	union {float f; uint32_t i;} u = {.f = x};
 	uint32_t w;
-	int sign;
+	uint32_t sign;
 	float t;
 
 	/* x = |x| */
-	sign = u.i >> 31;
+	sign = u.i & 0x80000000;
 	u.i &= 0x7fffffff;
 	x = u.f;
 	w = u.i;
@@ -16,7 +16,12 @@ float __cdecl tanhf(float x)
 	if (w > 0x3f0c9f54) {
 		/* |x| > log(3)/2 ~= 0.5493 or nan */
 		if (w > 0x41200000) {
+			if (w > 0x7f800000) {
+				u.i |= sign | 0x400000;
+				return u.f;
+			}
 			/* |x| > 10 */
+			fp_barrierf(x + 0x1p120f);
 			t = 1 + 0/x;
 		} else {
 			t = expm1f(2*x);

@@ -8,11 +8,11 @@ double __cdecl tanh(double x)
 {
 	union {double f; uint64_t i;} u = {.f = x};
 	uint32_t w;
-	int sign;
+	uint64_t sign;
 	double_t t;
 
 	/* x = |x| */
-	sign = u.i >> 63;
+	sign = u.i & 0x8000000000000000ULL;
 	u.i &= (uint64_t)-1/2;
 	x = u.f;
 	w = u.i >> 32;
@@ -20,8 +20,13 @@ double __cdecl tanh(double x)
 	if (w > 0x3fe193ea) {
 		/* |x| > log(3)/2 ~= 0.5493 or nan */
 		if (w > 0x40340000) {
+			if (w > 0x7ff00000) {
+                            u.i |= sign | 0x0008000000000000ULL;
+                            return u.f;
+			}
 			/* |x| > 20 or nan */
 			/* note: this branch avoids raising overflow */
+			fp_barrier(x + 0x1p120f);
 			t = 1 - 0/x;
 		} else {
 			t = expm1(2*x);

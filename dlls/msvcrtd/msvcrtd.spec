@@ -797,7 +797,7 @@
 @ varargs swscanf(wstr wstr)
 @ cdecl system(str)
 @ cdecl tan(double)
-@ cdecl tanh(double)
+@ cdecl tanh(double) MSVCRT_tanh
 @ cdecl -arch=win32 time(ptr) _time32
 @ cdecl -arch=win64 time(ptr) _time64
 @ cdecl tmpfile()
