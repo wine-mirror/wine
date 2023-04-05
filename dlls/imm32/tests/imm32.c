@@ -4399,7 +4399,6 @@ static void test_ImmSetOpenStatus(void)
         {
             .hkl = expect_ime, .himc = default_himc,
             .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETOPENSTATUS},
-            .todo = TRUE,
         },
         {0},
     };
@@ -4408,17 +4407,14 @@ static void test_ImmSetOpenStatus(void)
         {
             .hkl = expect_ime, .himc = default_himc,
             .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETOPENSTATUS},
-            .todo = TRUE,
         },
         {
             .hkl = expect_ime, .himc = default_himc,
             .func = MSG_TEST_WIN, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETOPENSTATUS},
-            .todo = TRUE,
         },
         {
             .hkl = expect_ime, .himc = default_himc,
             .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETOPENSTATUS},
-            .todo = TRUE,
         },
         {0},
     };
@@ -4483,8 +4479,8 @@ static void test_ImmSetOpenStatus(void)
     ok_seq( set_open_status_1_seq );
 
     status = ImmGetOpenStatus( default_himc );
-    todo_wine ok_eq( 0xfeedcafe, status, UINT, "%#x" );
-    todo_wine ok_eq( 0xfeedcafe, ctx->fOpen, UINT, "%#x" );
+    ok_eq( 0xfeedcafe, status, UINT, "%#x" );
+    ok_eq( 0xfeedcafe, ctx->fOpen, UINT, "%#x" );
 
     ctx->hWnd = hwnd;
     ok_seq( empty_sequence );
@@ -4492,15 +4488,15 @@ static void test_ImmSetOpenStatus(void)
     ok_seq( set_open_status_2_seq );
 
     status = ImmGetOpenStatus( default_himc );
-    todo_wine ok_eq( ~0, status, UINT, "%#x" );
-    todo_wine ok_eq( ~0, ctx->fOpen, UINT, "%#x" );
+    ok_eq( ~0, status, UINT, "%#x" );
+    ok_eq( ~0, ctx->fOpen, UINT, "%#x" );
 
     ok_ret( 1, ImmSetOpenStatus( default_himc, ~0 ) );
     ok_seq( empty_sequence );
 
     status = ImmGetOpenStatus( default_himc );
-    todo_wine ok_eq( ~0, status, UINT, "%#x" );
-    todo_wine ok_eq( ~0, ctx->fOpen, UINT, "%#x" );
+    ok_eq( ~0, status, UINT, "%#x" );
+    ok_eq( ~0, ctx->fOpen, UINT, "%#x" );
 
     /* status is cached between IME activations */
 

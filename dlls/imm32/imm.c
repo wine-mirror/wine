@@ -2688,7 +2688,7 @@ BOOL WINAPI ImmSetOpenStatus( HIMC himc, BOOL status )
 
     if ((ui_hwnd = get_ime_ui_window())) SetWindowLongPtrW( ui_hwnd, IMMGWL_IMC, (LONG_PTR)himc );
 
-    if (!status != !ctx->fOpen)
+    if (status != ctx->fOpen)
     {
         ctx->fOpen = status;
         ImmNotifyIME( himc, NI_CONTEXTUPDATED, 0, IMC_SETOPENSTATUS );
