@@ -47,29 +47,13 @@
 
 extern HINSTANCE SETUPAPI_hInstance DECLSPEC_HIDDEN;
 
-static inline void * __WINE_ALLOC_SIZE(2) heap_realloc_zero(void *mem, size_t len)
-{
-    return HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mem, len);
-}
-
-static inline WCHAR *strdupW( const WCHAR *str )
-{
-    WCHAR *ret = NULL;
-    if (str)
-    {
-        int len = (lstrlenW(str) + 1) * sizeof(WCHAR);
-        if ((ret = HeapAlloc( GetProcessHeap(), 0, len ))) memcpy( ret, str, len );
-    }
-    return ret;
-}
-
 static inline char *strdupWtoA( const WCHAR *str )
 {
     char *ret = NULL;
     if (str)
     {
         DWORD len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
-        if ((ret = HeapAlloc( GetProcessHeap(), 0, len )))
+        if ((ret = malloc( len )))
             WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
     }
     return ret;
@@ -81,7 +65,7 @@ static inline WCHAR *strdupAtoW( const char *str )
     if (str)
     {
         DWORD len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
-        if ((ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+        if ((ret = malloc( len * sizeof(WCHAR) )))
             MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len );
     }
     return ret;
