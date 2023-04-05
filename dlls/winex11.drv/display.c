@@ -564,6 +564,10 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
         for (adapter = 0; adapter < adapter_count; adapter++)
         {
             DEVMODEW current_mode = {.dmSize = sizeof(current_mode)};
+            WCHAR devname[32];
+            char buffer[32];
+            ULONG_PTR settings_id;
+            BOOL is_primary = adapters[adapter].state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE;
 
             device_manager->add_adapter( &adapters[adapter], param );
 
@@ -576,8 +580,13 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
 
             handler->free_monitors(monitors, monitor_count);
 
-            settings_handler.get_current_mode( adapters[adapter].id, &current_mode );
-            if (!settings_handler.get_modes( adapters[adapter].id, EDS_ROTATEDMODE, &modes, &mode_count ))
+            /* Get the settings handler id for the adapter */
+            snprintf( buffer, sizeof(buffer), "\\\\.\\DISPLAY%d", adapter + 1 );
+            asciiz_to_unicode( devname, buffer );
+            if (!settings_handler.get_id( devname, is_primary, &settings_id )) break;
+
+            settings_handler.get_current_mode( settings_id, &current_mode );
+            if (!settings_handler.get_modes( settings_id, EDS_ROTATEDMODE, &modes, &mode_count ))
                 continue;
 
             for (mode = modes; mode_count; mode_count--)
