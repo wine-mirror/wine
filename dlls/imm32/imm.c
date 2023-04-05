@@ -2698,25 +2698,28 @@ BOOL WINAPI ImmSetOpenStatus( HIMC himc, BOOL status )
 /***********************************************************************
  *		ImmSetStatusWindowPos (IMM32.@)
  */
-BOOL WINAPI ImmSetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
+BOOL WINAPI ImmSetStatusWindowPos( HIMC himc, POINT *pos )
 {
-    struct imc *data = get_imc_data( hIMC );
+    INPUTCONTEXT *ctx;
 
-    TRACE("(%p, %p)\n", hIMC, lpptPos);
+    TRACE( "himc %p, pos %s\n", himc, wine_dbgstr_point( pos ) );
 
-    if (!data || !lpptPos)
+    if (!pos)
     {
-        SetLastError(ERROR_INVALID_HANDLE);
+        SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
     }
 
-    if (NtUserQueryInputContext( hIMC, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
+    if (NtUserQueryInputContext( himc, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
 
-    TRACE("\t%s\n", wine_dbgstr_point(lpptPos));
+    ctx->ptStatusWndPos = *pos;
+    ctx->fdwInit |= INIT_STATUSWNDPOS;
 
-    data->IMC.ptStatusWndPos = *lpptPos;
-    ImmNotifyIME( hIMC, NI_CONTEXTUPDATED, 0, IMC_SETSTATUSWINDOWPOS);
-    imc_notify_ime( data, IMN_SETSTATUSWINDOWPOS, 0 );
+    ImmNotifyIME( himc, NI_CONTEXTUPDATED, 0, IMC_SETSTATUSWINDOWPOS );
+    SendMessageW( ctx->hWnd, WM_IME_NOTIFY, IMN_SETSTATUSWINDOWPOS, 0 );
+
+    ImmUnlockIMC( himc );
 
     return TRUE;
 }

@@ -6188,7 +6188,7 @@ static void test_ImmSetStatusWindowPos(void)
             .hkl = expect_ime, .himc = 0/*himc*/,
             .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETSTATUSWINDOWPOS},
         },
-        {.todo = TRUE},
+        {0},
     };
     INPUTCONTEXT *ctx;
     POINT pos;
@@ -6235,7 +6235,7 @@ static void test_ImmSetStatusWindowPos(void)
     ctx->fdwInit = 0;
     ok_ret( 1, ImmSetStatusWindowPos( himc, &pos ) );
     ok_seq( set_status_window_pos_0_seq );
-    todo_wine ok_eq( INIT_STATUSWNDPOS, ctx->fdwInit, UINT, "%u" );
+    ok_eq( INIT_STATUSWNDPOS, ctx->fdwInit, UINT, "%u" );
 
     ok_ret( 1, ImmSetStatusWindowPos( himc, &pos ) );
     ok_seq( set_status_window_pos_0_seq );
