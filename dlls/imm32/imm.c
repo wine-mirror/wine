@@ -3203,6 +3203,9 @@ LRESULT WINAPI __wine_ime_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
 {
     HWND ui_hwnd;
 
+    TRACE( "hwnd %p, msg %s, wparam %#Ix, lparam %#Ix, ansi %u\n",
+           hwnd, debugstr_wm_ime(msg), wparam, lparam, ansi );
+
     switch (msg)
     {
     case WM_CREATE:

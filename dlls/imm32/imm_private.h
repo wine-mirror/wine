@@ -44,3 +44,31 @@ extern UINT WM_MSIME_RECONVERTREQUEST;
 extern UINT WM_MSIME_RECONVERT;
 extern UINT WM_MSIME_QUERYPOSITION;
 extern UINT WM_MSIME_DOCUMENTFEED;
+
+static const char *debugstr_wm_ime( UINT msg )
+{
+    switch (msg)
+    {
+    case WM_IME_STARTCOMPOSITION: return "WM_IME_STARTCOMPOSITION";
+    case WM_IME_ENDCOMPOSITION: return "WM_IME_ENDCOMPOSITION";
+    case WM_IME_COMPOSITION: return "WM_IME_COMPOSITION";
+    case WM_IME_SETCONTEXT: return "WM_IME_SETCONTEXT";
+    case WM_IME_NOTIFY: return "WM_IME_NOTIFY";
+    case WM_IME_CONTROL: return "WM_IME_CONTROL";
+    case WM_IME_COMPOSITIONFULL: return "WM_IME_COMPOSITIONFULL";
+    case WM_IME_SELECT: return "WM_IME_SELECT";
+    case WM_IME_CHAR: return "WM_IME_CHAR";
+    case WM_IME_REQUEST: return "WM_IME_REQUEST";
+    case WM_IME_KEYDOWN: return "WM_IME_KEYDOWN";
+    case WM_IME_KEYUP: return "WM_IME_KEYUP";
+    default:
+        if (msg == WM_MSIME_SERVICE) return "WM_MSIME_SERVICE";
+        else if (msg == WM_MSIME_RECONVERTOPTIONS) return "WM_MSIME_RECONVERTOPTIONS";
+        else if (msg == WM_MSIME_MOUSE) return "WM_MSIME_MOUSE";
+        else if (msg == WM_MSIME_RECONVERTREQUEST) return "WM_MSIME_RECONVERTREQUEST";
+        else if (msg == WM_MSIME_RECONVERT) return "WM_MSIME_RECONVERT";
+        else if (msg == WM_MSIME_QUERYPOSITION) return "WM_MSIME_QUERYPOSITION";
+        else if (msg == WM_MSIME_DOCUMENTFEED) return "WM_MSIME_DOCUMENTFEED";
+        return wine_dbg_sprintf( "%#x", msg );
+    }
+}

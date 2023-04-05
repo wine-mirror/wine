@@ -23,6 +23,45 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(imm);
 
+static const char *debugstr_imn( WPARAM wparam )
+{
+    switch (wparam)
+    {
+    case IMN_OPENSTATUSWINDOW: return "IMN_OPENSTATUSWINDOW";
+    case IMN_CLOSESTATUSWINDOW: return "IMN_CLOSESTATUSWINDOW";
+    case IMN_OPENCANDIDATE: return "IMN_OPENCANDIDATE";
+    case IMN_CHANGECANDIDATE: return "IMN_CHANGECANDIDATE";
+    case IMN_CLOSECANDIDATE: return "IMN_CLOSECANDIDATE";
+    case IMN_SETCONVERSIONMODE: return "IMN_SETCONVERSIONMODE";
+    case IMN_SETSENTENCEMODE: return "IMN_SETSENTENCEMODE";
+    case IMN_SETOPENSTATUS: return "IMN_SETOPENSTATUS";
+    case IMN_SETCANDIDATEPOS: return "IMN_SETCANDIDATEPOS";
+    case IMN_SETCOMPOSITIONFONT: return "IMN_SETCOMPOSITIONFONT";
+    case IMN_SETCOMPOSITIONWINDOW: return "IMN_SETCOMPOSITIONWINDOW";
+    case IMN_GUIDELINE: return "IMN_GUIDELINE";
+    case IMN_SETSTATUSWINDOWPOS: return "IMN_SETSTATUSWINDOWPOS";
+    default: return wine_dbg_sprintf( "%#Ix", wparam );
+    }
+}
+
+static const char *debugstr_imc( WPARAM wparam )
+{
+    switch (wparam)
+    {
+    case IMC_GETCANDIDATEPOS: return "IMC_GETCANDIDATEPOS";
+    case IMC_SETCANDIDATEPOS: return "IMC_SETCANDIDATEPOS";
+    case IMC_GETCOMPOSITIONFONT: return "IMC_GETCOMPOSITIONFONT";
+    case IMC_SETCOMPOSITIONFONT: return "IMC_SETCOMPOSITIONFONT";
+    case IMC_GETCOMPOSITIONWINDOW: return "IMC_GETCOMPOSITIONWINDOW";
+    case IMC_SETCOMPOSITIONWINDOW: return "IMC_SETCOMPOSITIONWINDOW";
+    case IMC_GETSTATUSWINDOWPOS: return "IMC_GETSTATUSWINDOWPOS";
+    case IMC_SETSTATUSWINDOWPOS: return "IMC_SETSTATUSWINDOWPOS";
+    case IMC_CLOSESTATUSWINDOW: return "IMC_CLOSESTATUSWINDOW";
+    case IMC_OPENSTATUSWINDOW: return "IMC_OPENSTATUSWINDOW";
+    default: return wine_dbg_sprintf( "%#Ix", wparam );
+    }
+}
+
 static WCHAR *input_context_get_comp_str( INPUTCONTEXT *ctx, BOOL result, UINT *length )
 {
     COMPOSITIONSTRING *string;
@@ -189,7 +228,6 @@ static void ime_ui_update_window( INPUTCONTEXT *ctx, HWND hwnd )
 static void ime_ui_composition( HIMC himc, HWND hwnd, LPARAM lparam )
 {
     INPUTCONTEXT *ctx;
-    TRACE( "IME message WM_IME_COMPOSITION 0x%Ix\n", lparam );
     if (lparam & GCS_RESULTSTR) return;
     if (!(ctx = ImmLockIMC( himc ))) return;
     ime_ui_update_window( ctx, hwnd );
@@ -199,32 +237,9 @@ static void ime_ui_composition( HIMC himc, HWND hwnd, LPARAM lparam )
 static void ime_ui_start_composition( HIMC himc, HWND hwnd )
 {
     INPUTCONTEXT *ctx;
-    TRACE( "IME message WM_IME_STARTCOMPOSITION\n" );
     if (!(ctx = ImmLockIMC( himc ))) return;
     ime_ui_update_window( ctx, hwnd );
     ImmUnlockIMC( himc );
-}
-
-static LRESULT ime_ui_notify( HIMC himc, HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
-{
-    switch (wparam)
-    {
-    case IMN_OPENSTATUSWINDOW: FIXME( "WM_IME_NOTIFY:IMN_OPENSTATUSWINDOW\n" ); break;
-    case IMN_CLOSESTATUSWINDOW: FIXME( "WM_IME_NOTIFY:IMN_CLOSESTATUSWINDOW\n" ); break;
-    case IMN_OPENCANDIDATE: FIXME( "WM_IME_NOTIFY:IMN_OPENCANDIDATE\n" ); break;
-    case IMN_CHANGECANDIDATE: FIXME( "WM_IME_NOTIFY:IMN_CHANGECANDIDATE\n" ); break;
-    case IMN_CLOSECANDIDATE: FIXME( "WM_IME_NOTIFY:IMN_CLOSECANDIDATE\n" ); break;
-    case IMN_SETCONVERSIONMODE: FIXME( "WM_IME_NOTIFY:IMN_SETCONVERSIONMODE\n" ); break;
-    case IMN_SETSENTENCEMODE: FIXME( "WM_IME_NOTIFY:IMN_SETSENTENCEMODE\n" ); break;
-    case IMN_SETOPENSTATUS: TRACE( "WM_IME_NOTIFY:IMN_SETOPENSTATUS\n" ); break;
-    case IMN_SETCANDIDATEPOS: FIXME( "WM_IME_NOTIFY:IMN_SETCANDIDATEPOS\n" ); break;
-    case IMN_SETCOMPOSITIONFONT: FIXME( "WM_IME_NOTIFY:IMN_SETCOMPOSITIONFONT\n" ); break;
-    case IMN_SETCOMPOSITIONWINDOW: FIXME( "WM_IME_NOTIFY:IMN_SETCOMPOSITIONWINDOW\n" ); break;
-    case IMN_GUIDELINE: FIXME( "WM_IME_NOTIFY:IMN_GUIDELINE\n" ); break;
-    case IMN_SETSTATUSWINDOWPOS: FIXME( "WM_IME_NOTIFY:IMN_SETSTATUSWINDOWPOS\n" ); break;
-    default: FIXME( "WM_IME_NOTIFY:<Unknown 0x%Ix>\n", wparam ); break;
-    }
-    return 0;
 }
 
 static LRESULT WINAPI ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
@@ -233,7 +248,8 @@ static LRESULT WINAPI ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
     INPUTCONTEXT *ctx;
     LRESULT ret = 0;
 
-    TRACE( "hwnd %p, himc %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, himc, msg, wparam, lparam );
+    TRACE( "hwnd %p, himc %p, msg %s, wparam %#Ix, lparam %#Ix\n",
+           hwnd, himc, debugstr_wm_ime(msg), wparam, lparam );
 
     /* if we have no himc there are many messages we cannot process */
     if (!himc)
@@ -285,39 +301,17 @@ static LRESULT WINAPI ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
         ime_ui_start_composition( himc, hwnd );
         break;
     case WM_IME_ENDCOMPOSITION:
-        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_IME_ENDCOMPOSITION", wparam, lparam );
         ShowWindow( hwnd, SW_HIDE );
         break;
-    case WM_IME_SELECT:
-        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_IME_SELECT", wparam, lparam );
-        break;
-    case WM_IME_CONTROL:
-        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_IME_CONTROL", wparam, lparam );
-        ret = 1;
-        break;
     case WM_IME_NOTIFY:
-        ret = ime_ui_notify( himc, hwnd, msg, wparam, lparam );
-        break;
-    default:
-        TRACE( "Non-standard message 0x%x\n", msg );
-        break;
+        FIXME( "hwnd %p, himc %p, msg %s, wparam %s, lparam %#Ix stub!\n", hwnd, himc,
+               debugstr_wm_ime(msg), debugstr_imn(wparam), lparam );
+        return 0;
+    case WM_IME_CONTROL:
+        FIXME( "hwnd %p, himc %p, msg %s, wparam %s, lparam %#Ix stub!\n", hwnd, himc,
+               debugstr_wm_ime(msg), debugstr_imc(wparam), lparam );
+        return 1;
     }
-
-    /* check the MSIME messages */
-    if (msg == WM_MSIME_SERVICE)
-        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_SERVICE", wparam, lparam );
-    else if (msg == WM_MSIME_RECONVERTOPTIONS)
-        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_RECONVERTOPTIONS", wparam, lparam );
-    else if (msg == WM_MSIME_MOUSE)
-        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_MOUSE", wparam, lparam );
-    else if (msg == WM_MSIME_RECONVERTREQUEST)
-        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_RECONVERTREQUEST", wparam, lparam );
-    else if (msg == WM_MSIME_RECONVERT)
-        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_RECONVERT", wparam, lparam );
-    else if (msg == WM_MSIME_QUERYPOSITION)
-        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_QUERYPOSITION", wparam, lparam );
-    else if (msg == WM_MSIME_DOCUMENTFEED)
-        TRACE( "IME message %s, 0x%Ix, 0x%Ix\n", "WM_MSIME_DOCUMENTFEED", wparam, lparam );
 
     /* DefWndProc if not an IME message */
     if (!ret && !((msg >= WM_IME_STARTCOMPOSITION && msg <= WM_IME_KEYLAST) ||
