@@ -107,6 +107,7 @@ extern NTSTATUS android_java_init( void *arg );
 extern NTSTATUS android_java_uninit( void *arg );
 extern NTSTATUS android_register_window( void *arg );
 extern PNTAPCFUNC register_window_callback;
+extern UINT64 start_device_callback;
 
 extern unsigned int screen_width;
 extern unsigned int screen_height;
