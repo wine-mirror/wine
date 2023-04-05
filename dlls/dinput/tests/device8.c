@@ -2153,7 +2153,7 @@ static void test_sys_keyboard( DWORD version )
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(full_state), full_state );
     ok( hr == DI_OK, "GetDeviceState returned %#lx\n", hr );
     hr = IDirectInputDevice8_Unacquire( device );
-    ok( hr == DI_OK, "Uncquire returned %#lx\n", hr );
+    ok( hr == DI_OK, "Unacquire returned %#lx\n", hr );
     hr = IDirectInputDevice8_SetDataFormat( device, &data_format );
     ok( hr == DI_OK, "SetDataFormat returned %#lx\n", hr );
     hr = IDirectInputDevice8_Acquire( device );
