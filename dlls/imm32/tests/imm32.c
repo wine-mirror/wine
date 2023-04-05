@@ -6286,7 +6286,7 @@ static void test_ImmSetCompositionFont( BOOL unicode )
             .hkl = expect_ime, .himc = 0/*himc*/,
             .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETCOMPOSITIONFONT},
         },
-        {.todo = TRUE},
+        {0},
     };
     LOGFONTW fontW, expect_fontW =
     {
@@ -6369,33 +6369,33 @@ static void test_ImmSetCompositionFont( BOOL unicode )
     ctx->fdwInit = 0;
     memset( &ctx->lfFont, 0xcd, sizeof(ctx->lfFont) );
     ok_ret( 1, ImmSetCompositionFontW( himc, &expect_fontW ) );
-    todo_wine ok_eq( INIT_LOGFONT, ctx->fdwInit, UINT, "%u" );
+    ok_eq( INIT_LOGFONT, ctx->fdwInit, UINT, "%u" );
     ok_seq( set_composition_font_0_seq );
     ok_ret( 1, ImmSetCompositionFontW( himc, &expect_fontW ) );
     ok_seq( set_composition_font_0_seq );
     if (unicode) check_logfont_w( &ctx->lfFont.W, &expect_fontW );
-    else check_logfont_a_( __LINE__, &ctx->lfFont.A, &expect_fontA, TRUE );
+    else check_logfont_a( &ctx->lfFont.A, &expect_fontA );
 
     ok_ret( 1, ImmGetCompositionFontW( himc, &fontW ) );
-    check_logfont_w( &fontW, &expect_fontW );
+    check_logfont_w_( __LINE__, &fontW, &expect_fontW, !unicode );
     ok_ret( 1, ImmGetCompositionFontA( himc, &fontA ) );
-    check_logfont_a( &fontA, &expect_fontA );
+    check_logfont_a_( __LINE__, &fontA, &expect_fontA, !unicode );
 
     ctx->hWnd = hwnd;
     ctx->fdwInit = 0;
     memset( &ctx->lfFont, 0xcd, sizeof(ctx->lfFont) );
     ok_ret( 1, ImmSetCompositionFontA( himc, &expect_fontA ) );
-    todo_wine ok_eq( INIT_LOGFONT, ctx->fdwInit, UINT, "%u" );
+    ok_eq( INIT_LOGFONT, ctx->fdwInit, UINT, "%u" );
     ok_seq( set_composition_font_0_seq );
     ok_ret( 1, ImmSetCompositionFontA( himc, &expect_fontA ) );
     ok_seq( set_composition_font_0_seq );
     if (unicode) check_logfont_w( &ctx->lfFont.W, &expect_fontW );
-    else check_logfont_a_( __LINE__, &ctx->lfFont.A, &expect_fontA, TRUE );
+    else check_logfont_a( &ctx->lfFont.A, &expect_fontA );
 
     ok_ret( 1, ImmGetCompositionFontW( himc, &fontW ) );
-    check_logfont_w( &fontW, &expect_fontW );
+    check_logfont_w_( __LINE__, &fontW, &expect_fontW, !unicode );
     ok_ret( 1, ImmGetCompositionFontA( himc, &fontA ) );
-    check_logfont_a( &fontA, &expect_fontA );
+    check_logfont_a_( __LINE__, &fontA, &expect_fontA, !unicode );
 
     ctx->hWnd = 0;
     ok_ret( 1, ImmSetCompositionFontW( himc, &expect_fontW ) );

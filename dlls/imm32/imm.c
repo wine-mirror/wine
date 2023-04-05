@@ -132,6 +132,12 @@ static BOOL ime_is_unicode( const struct ime *ime )
     return !!(ime->info.fdwProperty & IME_PROP_UNICODE);
 }
 
+static BOOL input_context_is_unicode( INPUTCONTEXT *ctx )
+{
+    struct imc *imc = CONTAINING_RECORD( ctx, struct imc, IMC );
+    return !imc->ime || ime_is_unicode( imc->ime );
+}
+
 static BOOL IMM_DestroyContext(HIMC hIMC);
 static struct imc *get_imc_data( HIMC hIMC );
 
@@ -2438,49 +2444,73 @@ BOOL WINAPI ImmSetCandidateWindow(
 /***********************************************************************
  *		ImmSetCompositionFontA (IMM32.@)
  */
-BOOL WINAPI ImmSetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
+BOOL WINAPI ImmSetCompositionFontA( HIMC himc, LOGFONTA *fontA )
 {
-    struct imc *data = get_imc_data( hIMC );
-    TRACE("(%p, %p)\n", hIMC, lplf);
+    INPUTCONTEXT *ctx;
+    BOOL ret = TRUE;
 
-    if (!data || !lplf)
+    TRACE( "hwnd %p, fontA %p\n", himc, fontA );
+
+    if (!fontA) return FALSE;
+
+    if (NtUserQueryInputContext( himc, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
+
+    if (input_context_is_unicode( ctx ))
     {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return FALSE;
+        LOGFONTW fontW;
+        memcpy( &fontW, fontA, offsetof(LOGFONTW, lfFaceName) );
+        MultiByteToWideChar( CP_ACP, 0, fontA->lfFaceName, -1, fontW.lfFaceName, LF_FACESIZE );
+        ret = ImmSetCompositionFontW( himc, &fontW );
+    }
+    else
+    {
+        ctx->lfFont.A = *fontA;
+        ctx->fdwInit |= INIT_LOGFONT;
+
+        ImmNotifyIME( himc, NI_CONTEXTUPDATED, 0, IMC_SETCOMPOSITIONFONT );
+        SendMessageW( ctx->hWnd, WM_IME_NOTIFY, IMN_SETCOMPOSITIONFONT, 0 );
     }
 
-    if (NtUserQueryInputContext( hIMC, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
+    ImmUnlockIMC( himc );
 
-    memcpy(&data->IMC.lfFont.W,lplf,sizeof(LOGFONTA));
-    MultiByteToWideChar(CP_ACP, 0, lplf->lfFaceName, -1, data->IMC.lfFont.W.lfFaceName,
-                        LF_FACESIZE);
-    ImmNotifyIME(hIMC, NI_CONTEXTUPDATED, 0, IMC_SETCOMPOSITIONFONT);
-    imc_notify_ime( data, IMN_SETCOMPOSITIONFONT, 0 );
-
-    return TRUE;
+    return ret;
 }
 
 /***********************************************************************
  *		ImmSetCompositionFontW (IMM32.@)
  */
-BOOL WINAPI ImmSetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
+BOOL WINAPI ImmSetCompositionFontW( HIMC himc, LOGFONTW *fontW )
 {
-    struct imc *data = get_imc_data( hIMC );
-    TRACE("(%p, %p)\n", hIMC, lplf);
+    INPUTCONTEXT *ctx;
+    BOOL ret = TRUE;
 
-    if (!data || !lplf)
+    TRACE( "hwnd %p, fontW %p\n", himc, fontW );
+
+    if (!fontW) return FALSE;
+
+    if (NtUserQueryInputContext( himc, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
+
+    if (!input_context_is_unicode( ctx ))
     {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return FALSE;
+        LOGFONTA fontA;
+        memcpy( &fontA, fontW, offsetof(LOGFONTA, lfFaceName) );
+        WideCharToMultiByte( CP_ACP, 0, fontW->lfFaceName, -1, fontA.lfFaceName, LF_FACESIZE, NULL, NULL );
+        ret = ImmSetCompositionFontA( himc, &fontA );
+    }
+    else
+    {
+        ctx->lfFont.W = *fontW;
+        ctx->fdwInit |= INIT_LOGFONT;
+
+        ImmNotifyIME( himc, NI_CONTEXTUPDATED, 0, IMC_SETCOMPOSITIONFONT );
+        SendMessageW( ctx->hWnd, WM_IME_NOTIFY, IMN_SETCOMPOSITIONFONT, 0 );
     }
 
-    if (NtUserQueryInputContext( hIMC, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
+    ImmUnlockIMC( himc );
 
-    data->IMC.lfFont.W = *lplf;
-    ImmNotifyIME(hIMC, NI_CONTEXTUPDATED, 0, IMC_SETCOMPOSITIONFONT);
-    imc_notify_ime( data, IMN_SETCOMPOSITIONFONT, 0 );
-
-    return TRUE;
+    return ret;
 }
 
 /***********************************************************************
