@@ -6442,7 +6442,7 @@ static void test_ImmSetCandidateWindow(void)
             .hkl = expect_ime, .himc = 0/*himc*/,
             .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETCANDIDATEPOS},
         },
-        {.todo = TRUE},
+        {0},
     };
     CANDIDATEFORM cand_form, expect_form =
     {

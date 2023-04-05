@@ -127,6 +127,14 @@ static const char *debugstr_composition( const COMPOSITIONFORM *composition )
                              wine_dbgstr_rect( &composition->rcArea ) );
 }
 
+static const char *debugstr_candidate( const CANDIDATEFORM *candidate )
+{
+    if (!candidate) return "(null)";
+    return wine_dbg_sprintf( "idx %#lx, style %#lx, pos %s, area %s", candidate->dwIndex,
+                             candidate->dwStyle, wine_dbgstr_point( &candidate->ptCurrentPos ),
+                             wine_dbgstr_rect( &candidate->rcArea ) );
+}
+
 static BOOL ime_is_unicode( const struct ime *ime )
 {
     return !!(ime->info.fdwProperty & IME_PROP_UNICODE);
@@ -825,13 +833,6 @@ static void imc_send_message( struct imc *imc, TRANSMSG *message )
     HWND target;
     if (!(target = GetFocus()) && !(target = imc->IMC.hWnd)) return;
     SendMessageW( target, message->message, message->wParam, message->lParam );
-}
-
-static LRESULT imc_notify_ime( struct imc *imc, WPARAM notify, LPARAM lparam )
-{
-    HWND target;
-    if (!(target = imc->IMC.hWnd) && !(target = GetFocus())) return 0;
-    return SendMessageW( target, WM_IME_NOTIFY, notify, lparam );
 }
 
 /***********************************************************************
@@ -2429,29 +2430,24 @@ LRESULT WINAPI ImmRequestMessageW(HIMC hIMC, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *		ImmSetCandidateWindow (IMM32.@)
  */
-BOOL WINAPI ImmSetCandidateWindow(
-  HIMC hIMC, LPCANDIDATEFORM lpCandidate)
+BOOL WINAPI ImmSetCandidateWindow( HIMC himc, CANDIDATEFORM *candidate )
 {
-    struct imc *data = get_imc_data( hIMC );
+    INPUTCONTEXT *ctx;
 
-    TRACE("(%p, %p)\n", hIMC, lpCandidate);
+    TRACE( "hwnd %p, candidate %s\n", himc, debugstr_candidate( candidate ) );
 
-    if (!data || !lpCandidate)
-        return FALSE;
+    if (!candidate) return FALSE;
+    if (candidate->dwIndex >= ARRAY_SIZE(ctx->cfCandForm)) return FALSE;
 
-    if (NtUserQueryInputContext( hIMC, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
+    if (NtUserQueryInputContext( himc, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
 
-    TRACE("\t%lx, %lx, %s, %s\n",
-          lpCandidate->dwIndex, lpCandidate->dwStyle,
-          wine_dbgstr_point(&lpCandidate->ptCurrentPos),
-          wine_dbgstr_rect(&lpCandidate->rcArea));
+    ctx->cfCandForm[candidate->dwIndex] = *candidate;
 
-    if (lpCandidate->dwIndex >= ARRAY_SIZE(data->IMC.cfCandForm))
-        return FALSE;
+    ImmNotifyIME( himc, NI_CONTEXTUPDATED, 0, IMC_SETCANDIDATEPOS );
+    SendMessageW( ctx->hWnd, WM_IME_NOTIFY, IMN_SETCANDIDATEPOS, 1 << candidate->dwIndex );
 
-    data->IMC.cfCandForm[lpCandidate->dwIndex] = *lpCandidate;
-    ImmNotifyIME(hIMC, NI_CONTEXTUPDATED, 0, IMC_SETCANDIDATEPOS);
-    imc_notify_ime( data, IMN_SETCANDIDATEPOS, 1 << lpCandidate->dwIndex );
+    ImmUnlockIMC( himc );
 
     return TRUE;
 }
