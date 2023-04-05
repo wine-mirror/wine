@@ -226,7 +226,7 @@ static BOOL query_drag_drop(macdrv_query *query)
 {
     HWND hwnd = macdrv_get_window_hwnd(query->window);
     struct macdrv_win_data *data = get_win_data(hwnd);
-    struct dnd_query_drop_params params;
+    struct dnd_query_drop_params params = {.dispatch = {.callback = dnd_query_drop_callback}};
     void *ret_ptr;
     ULONG ret_len;
 
@@ -242,7 +242,7 @@ static BOOL query_drag_drop(macdrv_query *query)
     params.y = query->drag_drop.y + data->rects.visible.top;
     params.handle = (UINT_PTR)query->drag_drop.pasteboard;
     release_win_data(data);
-    if (KeUserModeCallback(client_func_dnd_query_drop, &params, sizeof(params), &ret_ptr, &ret_len))
+    if (KeUserDispatchCallback(&params.dispatch, sizeof(params), &ret_ptr, &ret_len))
         return FALSE;
     return *(BOOL *)ret_ptr;
 }
@@ -252,12 +252,12 @@ static BOOL query_drag_drop(macdrv_query *query)
  */
 static BOOL query_drag_exited(macdrv_query *query)
 {
-    struct dnd_query_exited_params params;
+    struct dnd_query_exited_params params = {.dispatch = {.callback = dnd_query_exited_callback}};
     void *ret_ptr;
     ULONG ret_len;
 
     params.hwnd = HandleToUlong(macdrv_get_window_hwnd(query->window));
-    if (KeUserModeCallback(client_func_dnd_query_exited, &params, sizeof(params), &ret_ptr, &ret_len))
+    if (KeUserDispatchCallback(&params.dispatch, sizeof(params), &ret_ptr, &ret_len))
         return FALSE;
     return *(BOOL *)ret_ptr;
 }
@@ -268,7 +268,7 @@ static BOOL query_drag_exited(macdrv_query *query)
  */
 static BOOL query_drag_operation(macdrv_query *query)
 {
-    struct dnd_query_drag_params params;
+    struct dnd_query_drag_params params = {.dispatch = {.callback = dnd_query_drag_callback}};
     HWND hwnd = macdrv_get_window_hwnd(query->window);
     struct macdrv_win_data *data = get_win_data(hwnd);
     void *ret_ptr;
@@ -288,7 +288,7 @@ static BOOL query_drag_operation(macdrv_query *query)
     params.handle = (UINT_PTR)query->drag_operation.pasteboard;
     release_win_data(data);
 
-    if (KeUserModeCallback(client_func_dnd_query_drag, &params, sizeof(params), &ret_ptr, &ret_len))
+    if (KeUserDispatchCallback(&params.dispatch, sizeof(params), &ret_ptr, &ret_len))
         return FALSE;
     effect = *(DWORD *)ret_ptr;
     if (!effect) return FALSE;

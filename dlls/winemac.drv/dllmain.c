@@ -368,22 +368,10 @@ cleanup:
     return NtCallbackReturn(entries, count * sizeof(entries[0]), 0);
 }
 
-static const KERNEL_CALLBACK_PROC kernel_callbacks[] =
-{
-    macdrv_app_icon,
-    macdrv_app_quit_request,
-    macdrv_dnd_query_drag,
-    macdrv_dnd_query_drop,
-    macdrv_dnd_query_exited,
-};
-
-C_ASSERT(NtUserDriverCallbackFirst + ARRAYSIZE(kernel_callbacks) == client_func_last);
-
 
 static BOOL process_attach(void)
 {
     struct init_params params;
-    KERNEL_CALLBACK_PROC *callback_table;
 
     struct localized_string *str;
     struct localized_string strings[] = {
@@ -409,11 +397,14 @@ static BOOL process_attach(void)
     for (str = strings; str->id; str++)
         str->len = LoadStringW(macdrv_module, str->id, (WCHAR *)&str->str, 0);
     params.strings = strings;
+    params.app_icon_callback = (UINT_PTR)macdrv_app_icon;
+    params.app_quit_request_callback = (UINT_PTR)macdrv_app_quit_request;
+    params.dnd_query_drag_callback = (UINT_PTR)macdrv_dnd_query_drag;
+    params.dnd_query_drop_callback = (UINT_PTR)macdrv_dnd_query_drop;
+    params.dnd_query_exited_callback = (UINT_PTR)macdrv_dnd_query_exited;
 
     if (MACDRV_CALL(init, &params)) return FALSE;
 
-    callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;
-    memcpy( callback_table + NtUserDriverCallbackFirst, kernel_callbacks, sizeof(kernel_callbacks) );
     return TRUE;
 }
 

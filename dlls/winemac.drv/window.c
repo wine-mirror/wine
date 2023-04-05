@@ -2318,14 +2318,16 @@ void macdrv_reassert_window_position(HWND hwnd)
  */
 void macdrv_app_quit_requested(const macdrv_event *event)
 {
-    struct app_quit_request_params params = { .flags = 0 };
+    struct app_quit_request_params params = {.dispatch = {.callback = app_quit_request_callback}};
+    void *ret_ptr;
+    ULONG ret_len;
 
     TRACE("reason %d\n", event->app_quit_requested.reason);
 
     if (event->app_quit_requested.reason == QUIT_REASON_LOGOUT)
         params.flags = ENDSESSION_LOGOFF;
 
-    macdrv_client_func(client_func_app_quit_request, &params, sizeof(params));
+    KeUserDispatchCallback(&params.dispatch, sizeof(params), &ret_ptr, &ret_len);
 }
 
 

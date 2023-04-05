@@ -44,6 +44,12 @@ extern BOOL allow_vsync;
 extern BOOL allow_set_gamma;
 extern BOOL allow_software_rendering;
 
+extern UINT64 app_icon_callback;
+extern UINT64 app_quit_request_callback;
+extern UINT64 dnd_query_drag_callback;
+extern UINT64 dnd_query_drop_callback;
+extern UINT64 dnd_query_exited_callback;
+
 extern const char* debugstr_cf(CFTypeRef t);
 
 static inline CGRect cgrect_from_rect(RECT rect)
@@ -264,9 +270,6 @@ extern NTSTATUS macdrv_dnd_get_formats(void *arg);
 extern NTSTATUS macdrv_dnd_have_format(void *arg);
 extern NTSTATUS macdrv_dnd_release(void *arg);
 extern NTSTATUS macdrv_dnd_retain(void *arg);
-
-extern NTSTATUS macdrv_client_func(enum macdrv_client_funcs func, const void *params,
-                                   ULONG size);
 
 /* user helpers */
 
