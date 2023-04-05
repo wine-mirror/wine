@@ -542,10 +542,12 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     INT gpu, adapter, monitor;
     DEVMODEW *modes, *mode;
     UINT mode_count;
+    BOOL virtual_desktop;
 
     if (!force && !force_display_devices_refresh) return TRUE;
     force_display_devices_refresh = FALSE;
-    handler = is_virtual_desktop() ? &desktop_handler : &host_handler;
+    virtual_desktop = is_virtual_desktop();
+    handler = virtual_desktop ? &desktop_handler : &host_handler;
 
     TRACE("via %s\n", wine_dbgstr_a(handler->name));
 
@@ -585,7 +587,11 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
             asciiz_to_unicode( devname, buffer );
             if (!settings_handler.get_id( devname, is_primary, &settings_id )) break;
 
-            settings_handler.get_current_mode( settings_id, &current_mode );
+            /* We don't need to set the win32u current mode when we are in
+             * virtual desktop mode, and, additionally, skipping this avoids a
+             * deadlock, since the desktop get_current_mode() implementation
+             * recurses into win32u. */
+            if (!virtual_desktop) settings_handler.get_current_mode( settings_id, &current_mode );
             if (!settings_handler.get_modes( settings_id, EDS_ROTATEDMODE, &modes, &mode_count ))
                 continue;
 
