@@ -1215,29 +1215,19 @@ BLUE_INI TEXTFILE
 "BorderColor = 174 174 174\r\n"
 
 "[Progress.Bar]\r\n"
-"BgType = ImageFile\r\n"
-"ImageFile = blue_progress_track_horizontal.bmp\r\n"
 "MinSize = 10, 10\r\n"
-"SizingMargins = 1, 1, 1, 1\r\n"
-"SizingType = Stretch\r\n"
+"FillColor = 255 255 255\r\n"
 
 "[Progress.BarVert]\r\n"
-"BgType = ImageFile\r\n"
-"ImageFile = blue_progress_track_vertical.bmp\r\n"
-"SizingMargins = 1, 1, 1, 1\r\n"
-"SizingType = Stretch\r\n"
+"FillColor = 255 255 255\r\n"
 
 "[Progress.Chunk]\r\n"
-"BgType = ImageFile\r\n"
-"ImageFile = blue_progress_chunk_horizontal.bmp\r\n"
-"SizingMargins = 1, 1, 1, 1\r\n"
-"SizingType = Stretch\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 48 150 250\r\n"
 
 "[Progress.ChunkVert]\r\n"
-"BgType = ImageFile\r\n"
-"ImageFile = blue_progress_chunk_vertical.bmp\r\n"
-"SizingMargins = 1, 1, 1, 1\r\n"
-"SizingType = Stretch\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 48 150 250\r\n"
 
 "[Progress.Fill]\r\n"
 "FillColor = 48 150 250\r\n"
@@ -1276,17 +1266,10 @@ BLUE_INI TEXTFILE
 "BgType = None\r\n"
 
 "[Progress.TransparentBar]\r\n"
-"BgType = ImageFile\r\n"
-"ImageFile = blue_progress_track_horizontal.bmp\r\n"
-"MinSize = 10, 10\r\n"
-"SizingMargins = 1, 1, 1, 1\r\n"
-"SizingType = Stretch\r\n"
+"FillColor = 255 255 255\r\n"
 
 "[Progress.TransparentBarVert]\r\n"
-"BgType = ImageFile\r\n"
-"ImageFile = blue_progress_track_vertical.bmp\r\n"
-"SizingMargins = 1, 1, 1, 1\r\n"
-"SizingType = Stretch\r\n"
+"FillColor = 255 255 255\r\n"
 
 "\r\n; Rebar\r\n"
 "[Rebar]\r\n"
@@ -3529,19 +3512,6 @@ BLUE_NAVIGATION_MENU_BUTTON_39PX_BMP BITMAP "blue_navigation_menu_button_39px.bm
 
 /* @makedep: blue_navigation_menu_button_52px.bmp */
 BLUE_NAVIGATION_MENU_BUTTON_52PX_BMP BITMAP "blue_navigation_menu_button_52px.bmp"
-
-/* Progress */
-/* @makedep: blue_progress_chunk_horizontal.bmp */
-BLUE_PROGRESS_CHUNK_HORIZONTAL_BMP BITMAP "blue_progress_chunk_horizontal.bmp"
-
-/* @makedep: blue_progress_chunk_vertical.bmp */
-BLUE_PROGRESS_CHUNK_VERTICAL_BMP BITMAP "blue_progress_chunk_vertical.bmp"
-
-/* @makedep: blue_progress_track_horizontal.bmp */
-BLUE_PROGRESS_TRACK_HORIZONTAL_BMP BITMAP "blue_progress_track_horizontal.bmp"
-
-/* @makedep: blue_progress_track_vertical.bmp */
-BLUE_PROGRESS_TRACK_VERTICAL_BMP BITMAP "blue_progress_track_vertical.bmp"
 
 /* Rebar */
 /* @makedep: blue_rebar_background.bmp */
