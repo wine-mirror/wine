@@ -150,6 +150,17 @@ static void test_get_blob_part(void)
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
     ok(blob2 == blob, "D3DGetBlobPart failed got %p, expected %p\n", blob, blob2);
 
+    hr = D3DGetBlobPart(test_blob_part, 7 * sizeof(DWORD), D3D_BLOB_INPUT_SIGNATURE_BLOB, 0, &blob);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+    ok(blob2 == blob, "D3DGetBlobPart failed got %p, expected %p\n", blob, blob2);
+
+    hr = D3DGetBlobPart(test_blob_part, 8 * sizeof(DWORD), D3D_BLOB_INPUT_SIGNATURE_BLOB, 0, &blob);
+#if D3D_COMPILER_VERSION < 46
+    todo_wine
+#endif
+    ok(hr == expected, "Got unexpected hr %#lx.\n", hr);
+    ok(blob2 == blob, "D3DGetBlobPart failed got %p, expected %p\n", blob, blob2);
+
     hr = D3DGetBlobPart(test_blob_part, test_blob_part[6], D3D_BLOB_INPUT_SIGNATURE_BLOB, 0, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
