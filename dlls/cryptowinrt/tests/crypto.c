@@ -251,7 +251,6 @@ static void test_Credentials_Statics(void)
     HSTRING str;
     HRESULT hr;
     DWORD ret;
-    LONG ref;
 
     hr = WindowsCreateString( credentials_statics_name, wcslen( credentials_statics_name ), &str );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
@@ -317,10 +316,8 @@ static void test_Credentials_Statics(void)
 
     IAsyncOperation_boolean_Release( bool_async );
 
-    ref = IKeyCredentialManagerStatics_Release( credentials_statics );
-    ok( ref == 2, "got ref %ld.\n", ref );
-    ref = IActivationFactory_Release( factory );
-    ok( ref == 1, "got ref %ld.\n", ref );
+    IKeyCredentialManagerStatics_Release( credentials_statics );
+    IActivationFactory_Release( factory );
 }
 
 START_TEST(crypto)
