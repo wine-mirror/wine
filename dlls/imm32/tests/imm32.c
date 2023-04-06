@@ -778,12 +778,6 @@ static void test_SCS_SETSTR(void)
             skip("WM_IME_COMPOSITION(GCS_RESULTSTR) isn't tested\n");
         msg_spy_flush_msgs();
     }
-}
-
-static void test_ImmSetCompositionString(void)
-{
-    HIMC imc;
-    BOOL ret;
 
     SetLastError(0xdeadbeef);
     imc = ImmGetContext(hwnd);
@@ -2577,6 +2571,8 @@ DEFINE_EXPECT( ImeEnumRegisterWord );
 DEFINE_EXPECT( ImeRegisterWord );
 DEFINE_EXPECT( ImeGetRegisterWordStyle );
 DEFINE_EXPECT( ImeUnregisterWord );
+static BOOL todo_ImeSetCompositionString;
+DEFINE_EXPECT( ImeSetCompositionString );
 static BOOL todo_IME_DLL_PROCESS_ATTACH;
 DEFINE_EXPECT( IME_DLL_PROCESS_ATTACH );
 static BOOL todo_IME_DLL_PROCESS_DETACH;
@@ -3079,8 +3075,85 @@ static BOOL WINAPI ime_ImeSetCompositionString( HIMC himc, DWORD index, const vo
 {
     ime_trace( "himc %p, index %lu, comp %p, comp_len %lu, read %p, read_len %lu\n",
                himc, index, comp, comp_len, read, read_len );
-    ok( 0, "unexpected call\n" );
-    return FALSE;
+    CHECK_EXPECT( ImeSetCompositionString );
+
+    ok_eq( expect_ime, GetKeyboardLayout( 0 ), HKL, "%p" );
+    ok_ne( default_himc, himc, HIMC, "%p" );
+
+    if (ime_info.fdwProperty & IME_PROP_UNICODE)
+    {
+        switch (index)
+        {
+        case SCS_SETSTR:
+            todo_wine_if( todo_ImeSetCompositionString )
+            ok_eq( 22, comp_len, UINT, "%#x" );
+            ok_wcs( L"CompString", comp );
+            break;
+        case SCS_CHANGECLAUSE:
+        {
+            const UINT *clause = comp;
+            ok_eq( 8, comp_len, UINT, "%#x" );
+            ok_eq( 0, clause[0], UINT, "%#x" );
+            todo_wine_if( todo_ImeSetCompositionString )
+            ok_eq( 1, clause[1], UINT, "%#x");
+            break;
+        }
+        case SCS_CHANGEATTR:
+        {
+            const BYTE *attr = comp;
+            todo_wine_if( todo_ImeSetCompositionString && comp_len != 4 )
+            ok_eq( 4, comp_len, UINT, "%#x" );
+            todo_wine_if( todo_ImeSetCompositionString && attr[0] != 0xcd )
+            ok_eq( 0xcd, attr[0], UINT, "%#x" );
+            todo_wine_if( todo_ImeSetCompositionString )
+            ok_eq( 0xcd, attr[1], UINT, "%#x" );
+            break;
+        }
+        default:
+            ok( 0, "unexpected index %#lx\n", index );
+            break;
+        }
+    }
+    else
+    {
+        switch (index)
+        {
+        case SCS_SETSTR:
+            todo_wine_if( todo_ImeSetCompositionString )
+            ok_eq( 11, comp_len, UINT, "%#x" );
+            ok_str( "CompString", comp );
+            break;
+        case SCS_CHANGECLAUSE:
+        {
+            const UINT *clause = comp;
+            ok_eq( 8, comp_len, UINT, "%#x" );
+            todo_wine_if( todo_ImeSetCompositionString )
+            ok_eq( 0, clause[0], UINT, "%#x" );
+            todo_wine_if( todo_ImeSetCompositionString )
+            ok_eq( 1, clause[1], UINT, "%#x");
+            break;
+        }
+        case SCS_CHANGEATTR:
+        {
+            const BYTE *attr = comp;
+            todo_wine_if( todo_ImeSetCompositionString && comp_len != 4 )
+            ok_eq( 4, comp_len, UINT, "%#x" );
+            todo_wine_if( todo_ImeSetCompositionString )
+            ok_eq( 0xcd, attr[0], UINT, "%#x" );
+            todo_wine_if( todo_ImeSetCompositionString )
+            ok_eq( 0xcd, attr[1], UINT, "%#x" );
+            break;
+        }
+        default:
+            ok( 0, "unexpected index %#lx\n", index );
+            break;
+        }
+    }
+
+    ok_eq( NULL, read, const void *, "%p" );
+    ok_eq( 0, read_len, UINT, "%#x" );
+
+    return TRUE;
 }
 
 static UINT WINAPI ime_ImeToAsciiEx( UINT vkey, UINT scan_code, BYTE *key_state, TRANSMSGLIST *msgs, UINT state, HIMC himc )
@@ -5594,6 +5667,12 @@ static void test_ImmGetCompositionString( BOOL unicode )
         GCS_RESULTSTR,
         GCS_RESULTCLAUSE,
     };
+    static const UINT scs_indexes[] =
+    {
+        SCS_SETSTR,
+        SCS_CHANGEATTR,
+        SCS_CHANGECLAUSE,
+    };
     static const UINT expect_retW[ARRAY_SIZE(gcs_indexes)] = {16, 8, 8, 8, 4, 8, 3, 1, 20, 8, 12, 8};
     static const UINT expect_retA[ARRAY_SIZE(gcs_indexes)] = {8, 8, 8, 4, 4, 8, 3, 1, 10, 8, 6, 8};
     HKL hkl, old_hkl = GetKeyboardLayout( 0 );
@@ -5605,6 +5684,8 @@ static void test_ImmGetCompositionString( BOOL unicode )
     UINT i, len;
     BYTE *dst;
     HIMC himc;
+
+    SET_ENABLE( ImeSetCompositionString, TRUE );
 
     winetest_push_context( unicode ? "unicode" : "ansi" );
 
@@ -5774,6 +5855,83 @@ static void test_ImmGetCompositionString( BOOL unicode )
 
         winetest_pop_context();
     }
+
+    for (i = 0; i < ARRAY_SIZE(gcs_indexes); ++i)
+    {
+        winetest_push_context( "%u", i );
+        ok_ret( 0, ImmSetCompositionStringW( himc, gcs_indexes[i], buffer, sizeof(buffer), NULL, 0 ) );
+        ok_ret( 0, ImmSetCompositionStringA( himc, gcs_indexes[i], buffer, sizeof(buffer), NULL, 0 ) );
+        winetest_pop_context();
+    }
+    ok_ret( 0, ImmSetCompositionStringW( himc, SCS_SETSTR | SCS_CHANGEATTR, buffer, sizeof(buffer), NULL, 0 ) );
+    ok_ret( 0, ImmSetCompositionStringA( himc, SCS_SETSTR | SCS_CHANGEATTR, buffer, sizeof(buffer), NULL, 0 ) );
+    ok_ret( 0, ImmSetCompositionStringW( himc, SCS_CHANGECLAUSE | SCS_CHANGEATTR, buffer, sizeof(buffer), NULL, 0 ) );
+    ok_ret( 0, ImmSetCompositionStringA( himc, SCS_CHANGECLAUSE | SCS_CHANGEATTR, buffer, sizeof(buffer), NULL, 0 ) );
+
+    for (i = 0; i < ARRAY_SIZE(scs_indexes); ++i)
+    {
+        winetest_push_context( "%u", i );
+
+        if (scs_indexes[i] == SCS_CHANGECLAUSE)
+        {
+            memset( buffer, 0, sizeof(buffer) );
+            *((DWORD *)buffer + 1) = 1;
+            len = 2 * sizeof(DWORD);
+        }
+        else if (scs_indexes[i] == SCS_CHANGEATTR)
+        {
+            memset( buffer, 0xcd, sizeof(buffer) );
+            len = expect_stringW.dwCompAttrLen;
+        }
+        else if (scs_indexes[i] == SCS_SETSTR)
+        {
+            wcscpy( (WCHAR *)buffer, L"CompString" );
+            len = 11 * sizeof(WCHAR);
+        }
+
+        todo_ImeSetCompositionString = !unicode;
+        SET_EXPECT( ImeSetCompositionString );
+        ok_ret( 1, ImmSetCompositionStringW( himc, scs_indexes[i], buffer, len, NULL, 0 ) );
+        CHECK_CALLED( ImeSetCompositionString );
+        todo_ImeSetCompositionString = FALSE;
+        ok_seq( empty_sequence );
+
+        string = ImmLockIMCC( ctx->hCompStr );
+        ok_ne( NULL, string, COMPOSITIONSTRING *, "%p" );
+        check_composition_string( string, unicode ? &expect_stringW : &expect_stringA );
+        ok_ret( 0, ImmUnlockIMCC( ctx->hCompStr ) );
+
+        if (scs_indexes[i] == SCS_CHANGECLAUSE)
+        {
+            memset( buffer, 0, sizeof(buffer) );
+            *((DWORD *)buffer + 1) = 1;
+            len = 2 * sizeof(DWORD);
+        }
+        else if (scs_indexes[i] == SCS_CHANGEATTR)
+        {
+            memset( buffer, 0xcd, sizeof(buffer) );
+            len = expect_stringA.dwCompAttrLen;
+        }
+        else if (scs_indexes[i] == SCS_SETSTR)
+        {
+            strcpy( buffer, "CompString" );
+            len = 11;
+        }
+
+        todo_ImeSetCompositionString = unicode;
+        SET_EXPECT( ImeSetCompositionString );
+        ok_ret( 1, ImmSetCompositionStringA( himc, scs_indexes[i], buffer, len, NULL, 0 ) );
+        CHECK_CALLED( ImeSetCompositionString );
+        todo_ImeSetCompositionString = FALSE;
+        ok_seq( empty_sequence );
+
+        string = ImmLockIMCC( ctx->hCompStr );
+        ok_ne( NULL, string, COMPOSITIONSTRING *, "%p" );
+        check_composition_string( string, unicode ? &expect_stringW : &expect_stringA );
+        ok_ret( 0, ImmUnlockIMCC( ctx->hCompStr ) );
+
+        winetest_pop_context();
+    }
     ok_seq( empty_sequence );
 
     old_ctx = ctx;
@@ -5808,6 +5966,7 @@ static void test_ImmGetCompositionString( BOOL unicode )
 
 cleanup:
     winetest_pop_context();
+    SET_ENABLE( ImeSetCompositionString, FALSE );
 }
 
 START_TEST(imm32)
@@ -5869,7 +6028,6 @@ START_TEST(imm32)
     {
         test_ImmNotifyIME();
         test_SCS_SETSTR();
-        test_ImmSetCompositionString();
         test_ImmIME();
         test_ImmAssociateContextEx();
         test_NtUserAssociateInputContext();
