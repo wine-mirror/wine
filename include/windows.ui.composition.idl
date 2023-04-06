@@ -63,6 +63,8 @@ namespace Windows.UI.Composition {
     interface ICompositionSurfaceBrush;
     interface ICompositionSurfaceBrush2;
     interface ICompositionSurfaceBrush3;
+    interface ICompositionTarget;
+    interface ICompositionTargetFactory;
     interface IContainerVisual;
     interface IContainerVisualFactory;
     interface ICubicBezierEasingFunction;
@@ -93,6 +95,7 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionPropertySet;
     runtimeclass CompositionScopedBatch;
     runtimeclass CompositionSurfaceBrush;
+    runtimeclass CompositionTarget;
     runtimeclass ContainerVisual;
     runtimeclass CubicBezierEasingFunction;
     runtimeclass ExpressionAnimation;
@@ -420,6 +423,26 @@ namespace Windows.UI.Composition {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.CompositionTarget),
+        uuid(a1bea8ba-d726-4663-8129-6b5e7927ffa6)
+    ]
+    interface ICompositionTarget : IInspectable
+    {
+        [propget] HRESULT Root([out, retval] Windows.UI.Composition.Visual **value);
+        [propput] HRESULT Root([in] Windows.UI.Composition.Visual *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        exclusiveto(Windows.UI.Composition.CompositionTarget),
+        uuid(93cd9d2b-8516-4b14-a8ce-f49e2119ec42)
+    ]
+    interface ICompositionTargetFactory : IInspectable
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
         exclusiveto(Windows.UI.Composition.ContainerVisual),
         uuid(02f6bc74-ed20-4773-afe6-d49b4a93db32)
     ]
@@ -707,6 +730,17 @@ namespace Windows.UI.Composition {
         [default] interface Windows.UI.Composition.ICompositionSurfaceBrush;
         [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionSurfaceBrush2;
         [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Composition.ICompositionSurfaceBrush3;
+    }
+
+    [
+        composable(Windows.UI.Composition.ICompositionTargetFactory, public, Windows.Foundation.UniversalApiContract, 5.0),
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass CompositionTarget : Windows.UI.Composition.CompositionObject
+    {
+        [default] interface Windows.UI.Composition.ICompositionTarget;
     }
 
     [
