@@ -527,6 +527,103 @@ static int mask_blt(PHYSDEV dev, const EMRMASKBLT *p, const BITMAPINFO *src_bi,
     return TRUE;
 }
 
+static void combine_transform(XFORM *result, const XFORM *xform1, const XFORM *xform2)
+{
+    XFORM r;
+
+    /* Create the result in a temporary XFORM, since result may be
+     * equal to xform1 or xform2 */
+    r.eM11 = xform1->eM11 * xform2->eM11 + xform1->eM12 * xform2->eM21;
+    r.eM12 = xform1->eM11 * xform2->eM12 + xform1->eM12 * xform2->eM22;
+    r.eM21 = xform1->eM21 * xform2->eM11 + xform1->eM22 * xform2->eM21;
+    r.eM22 = xform1->eM21 * xform2->eM12 + xform1->eM22 * xform2->eM22;
+    r.eDx  = xform1->eDx  * xform2->eM11 + xform1->eDy  * xform2->eM21 + xform2->eDx;
+    r.eDy  = xform1->eDx  * xform2->eM12 + xform1->eDy  * xform2->eM22 + xform2->eDy;
+
+    *result = r;
+}
+
+static int plg_blt(PHYSDEV dev, const EMRPLGBLT *p)
+{
+    const BITMAPINFO *src_bi, *mask_bi;
+    const BYTE *src_bits, *mask_bits;
+    XFORM xf, xform_dest;
+    EMRMASKBLT maskblt;
+    /* rect coords */
+    POINT rect[3];
+    /* parallelogram coords */
+    POINT plg[3];
+    double det;
+
+    memcpy(plg, p->aptlDest, sizeof(plg));
+    rect[0].x = p->xSrc;
+    rect[0].y = p->ySrc;
+    rect[1].x = p->xSrc + p->cxSrc;
+    rect[1].y = p->ySrc;
+    rect[2].x = p->xSrc;
+    rect[2].y = p->ySrc + p->cySrc;
+    /* calc XFORM matrix to transform hdcDest -> hdcSrc (parallelogram to rectangle) */
+    /* determinant */
+    det = rect[1].x*(rect[2].y - rect[0].y) - rect[2].x*(rect[1].y - rect[0].y) - rect[0].x*(rect[2].y - rect[1].y);
+
+    if (fabs(det) < 1e-5)
+        return TRUE;
+
+    TRACE("%ld,%ld,%ldx%ld -> %ld,%ld,%ld,%ld,%ld,%ld\n", p->xSrc, p->ySrc, p->cxSrc, p->cySrc,
+            plg[0].x, plg[0].y, plg[1].x, plg[1].y, plg[2].x, plg[2].y);
+
+    /* X components */
+    xf.eM11 = (plg[1].x*(rect[2].y - rect[0].y) - plg[2].x*(rect[1].y - rect[0].y) - plg[0].x*(rect[2].y - rect[1].y)) / det;
+    xf.eM21 = (rect[1].x*(plg[2].x - plg[0].x) - rect[2].x*(plg[1].x - plg[0].x) - rect[0].x*(plg[2].x - plg[1].x)) / det;
+    xf.eDx  = (rect[0].x*(rect[1].y*plg[2].x - rect[2].y*plg[1].x) -
+            rect[1].x*(rect[0].y*plg[2].x - rect[2].y*plg[0].x) +
+            rect[2].x*(rect[0].y*plg[1].x - rect[1].y*plg[0].x)
+            ) / det;
+
+    /* Y components */
+    xf.eM12 = (plg[1].y*(rect[2].y - rect[0].y) - plg[2].y*(rect[1].y - rect[0].y) - plg[0].y*(rect[2].y - rect[1].y)) / det;
+    xf.eM22 = (rect[1].x*(plg[2].y - plg[0].y) - rect[2].x*(plg[1].y - plg[0].y) - rect[0].x*(plg[2].y - plg[1].y)) / det;
+    xf.eDy  = (rect[0].x*(rect[1].y*plg[2].y - rect[2].y*plg[1].y) -
+            rect[1].x*(rect[0].y*plg[2].y - rect[2].y*plg[0].y) +
+            rect[2].x*(rect[0].y*plg[1].y - rect[1].y*plg[0].y)
+            ) / det;
+
+    combine_transform(&xf, &xf, &p->xformSrc);
+
+    GetTransform(dev->hdc, 0x203, &xform_dest);
+    SetWorldTransform(dev->hdc, &xf);
+    /* now destination and source DCs use same coords */
+    maskblt.rclBounds = p->rclBounds;
+    maskblt.xDest = p->xSrc;
+    maskblt.yDest = p->ySrc;
+    maskblt.cxDest = p->cxSrc;
+    maskblt.cyDest = p->cySrc;
+    maskblt.dwRop = SRCCOPY;
+    maskblt.xSrc = p->xSrc;
+    maskblt.ySrc = p->ySrc;
+    maskblt.xformSrc = p->xformSrc;
+    maskblt.crBkColorSrc = p->crBkColorSrc;
+    maskblt.iUsageSrc = p->iUsageSrc;
+    maskblt.offBmiSrc = 0;
+    maskblt.cbBmiSrc = p->cbBmiSrc;
+    maskblt.offBitsSrc = 0;
+    maskblt.cbBitsSrc = p->cbBitsSrc;
+    maskblt.xMask = p->xMask;
+    maskblt.yMask = p->yMask;
+    maskblt.iUsageMask = p->iUsageMask;
+    maskblt.offBmiMask = 0;
+    maskblt.cbBmiMask = p->cbBmiMask;
+    maskblt.offBitsMask = 0;
+    maskblt.cbBitsMask = p->cbBitsMask;
+    src_bi = (const BITMAPINFO *)((BYTE *)p + p->offBmiSrc);
+    src_bits = (BYTE *)p + p->offBitsSrc;
+    mask_bi = (const BITMAPINFO *)((BYTE *)p + p->offBmiMask);
+    mask_bits = (BYTE *)p + p->offBitsMask;
+    mask_blt(dev, &maskblt, src_bi, src_bits, mask_bi, mask_bits);
+    SetWorldTransform(dev->hdc, &xform_dest);
+    return TRUE;
+}
+
 static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         const ENHMETARECORD *rec, int n, LPARAM arg)
 {
@@ -801,6 +898,12 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         const BYTE *src_bits = (BYTE *)p + p->offBitsSrc;
 
         return mask_blt(&data->pdev->dev, p, src_bi, src_bits, mask_bi, mask_bits);
+    }
+    case EMR_PLGBLT:
+    {
+        const EMRPLGBLT *p = (const EMRPLGBLT *)rec;
+
+        return plg_blt(&data->pdev->dev, p);
     }
     case EMR_POLYBEZIER16:
     {
