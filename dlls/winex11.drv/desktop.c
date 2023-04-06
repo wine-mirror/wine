@@ -123,10 +123,10 @@ BOOL is_virtual_desktop(void)
 }
 
 /* Virtual desktop display settings handler */
-static BOOL X11DRV_desktop_get_id( const WCHAR *device_name, BOOL is_primary, ULONG_PTR *id )
+static BOOL X11DRV_desktop_get_id( const WCHAR *device_name, BOOL is_primary, x11drv_settings_id *id )
 {
     if (!is_primary) return FALSE;
-    *id = 0;
+    id->id = 0;
     return TRUE;
 }
 
@@ -143,7 +143,7 @@ static void add_desktop_mode( DEVMODEW *mode, DWORD depth, DWORD width, DWORD he
     mode->dmDisplayFrequency = 60;
 }
 
-static BOOL X11DRV_desktop_get_modes( ULONG_PTR id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count )
+static BOOL X11DRV_desktop_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count )
 {
     UINT depth_idx, size_idx, mode_idx = 0;
     UINT screen_width, screen_height;
@@ -197,7 +197,7 @@ static void X11DRV_desktop_free_modes( DEVMODEW *modes )
     free( modes );
 }
 
-static BOOL X11DRV_desktop_get_current_mode( ULONG_PTR id, DEVMODEW *mode )
+static BOOL X11DRV_desktop_get_current_mode( x11drv_settings_id id, DEVMODEW *mode )
 {
     RECT primary_rect = NtUserGetPrimaryMonitorRect();
 
@@ -214,7 +214,7 @@ static BOOL X11DRV_desktop_get_current_mode( ULONG_PTR id, DEVMODEW *mode )
     return TRUE;
 }
 
-static LONG X11DRV_desktop_set_current_mode( ULONG_PTR id, const DEVMODEW *mode )
+static LONG X11DRV_desktop_set_current_mode( x11drv_settings_id id, const DEVMODEW *mode )
 {
     if (mode->dmFields & DM_BITSPERPEL && mode->dmBitsPerPel != screen_bpp)
         WARN("Cannot change screen color depth from %dbits to %dbits!\n",

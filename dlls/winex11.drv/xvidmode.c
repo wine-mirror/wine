@@ -85,12 +85,12 @@ static int XVidModeErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
 }
 
 /* XF86VidMode display settings handler */
-static BOOL xf86vm_get_id(const WCHAR *device_name, BOOL is_primary, ULONG_PTR *id)
+static BOOL xf86vm_get_id(const WCHAR *device_name, BOOL is_primary, x11drv_settings_id *id)
 {
     /* XVidMode only supports changing the primary adapter settings.
      * For non-primary adapters, an id is still provided but getting
      * and changing non-primary adapters' settings will be ignored. */
-    *id = is_primary ? 1 : 0;
+    id->id = is_primary ? 1 : 0;
     return TRUE;
 }
 
@@ -112,7 +112,7 @@ static void add_xf86vm_mode(DEVMODEW *mode, DWORD depth, const XF86VidModeModeIn
     memcpy((BYTE *)mode + sizeof(*mode), &mode_info, sizeof(mode_info));
 }
 
-static BOOL xf86vm_get_modes(ULONG_PTR id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count)
+static BOOL xf86vm_get_modes(x11drv_settings_id id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count)
 {
     INT xf86vm_mode_idx, xf86vm_mode_count;
     XF86VidModeModeInfo **xf86vm_modes;
@@ -169,7 +169,7 @@ static void xf86vm_free_modes(DEVMODEW *modes)
     free(modes);
 }
 
-static BOOL xf86vm_get_current_mode(ULONG_PTR id, DEVMODEW *mode)
+static BOOL xf86vm_get_current_mode(x11drv_settings_id id, DEVMODEW *mode)
 {
     XF86VidModeModeLine xf86vm_mode;
     INT dotclock;
@@ -182,7 +182,7 @@ static BOOL xf86vm_get_current_mode(ULONG_PTR id, DEVMODEW *mode)
     mode->u1.s2.dmPosition.x = 0;
     mode->u1.s2.dmPosition.y = 0;
 
-    if (id != 1)
+    if (id.id != 1)
     {
         FIXME("Non-primary adapters are unsupported.\n");
         mode->dmBitsPerPel = 0;
@@ -210,12 +210,12 @@ static BOOL xf86vm_get_current_mode(ULONG_PTR id, DEVMODEW *mode)
     return TRUE;
 }
 
-static LONG xf86vm_set_current_mode(ULONG_PTR id, const DEVMODEW *mode)
+static LONG xf86vm_set_current_mode(x11drv_settings_id id, const DEVMODEW *mode)
 {
     XF86VidModeModeInfo *xf86vm_mode;
     Bool ret;
 
-    if (id != 1)
+    if (id.id != 1)
     {
         FIXME("Non-primary adapters are unsupported.\n");
         return DISP_CHANGE_SUCCESSFUL;

@@ -142,12 +142,12 @@ static int XRandRErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
 }
 
 /* XRandR 1.0 display settings handler */
-static BOOL xrandr10_get_id( const WCHAR *device_name, BOOL is_primary, ULONG_PTR *id )
+static BOOL xrandr10_get_id( const WCHAR *device_name, BOOL is_primary, x11drv_settings_id *id )
 {
     /* RandR 1.0 only supports changing the primary adapter settings.
      * For non-primary adapters, an id is still provided but getting
      * and changing non-primary adapters' settings will be ignored. */
-    *id = is_primary ? 1 : 0;
+    id->id = is_primary ? 1 : 0;
     return TRUE;
 }
 
@@ -171,7 +171,7 @@ static void add_xrandr10_mode( DEVMODEW *mode, DWORD depth, DWORD width, DWORD h
     memcpy( (BYTE *)mode + sizeof(*mode), &size_id, sizeof(size_id) );
 }
 
-static BOOL xrandr10_get_modes( ULONG_PTR id, DWORD flags, DEVMODEW **new_modes, UINT *new_mode_count )
+static BOOL xrandr10_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new_modes, UINT *new_mode_count )
 {
     INT size_idx, depth_idx, rate_idx, mode_idx = 0;
     INT size_count, rate_count, mode_count = 0;
@@ -233,7 +233,7 @@ static void xrandr10_free_modes( DEVMODEW *modes )
     free( modes );
 }
 
-static BOOL xrandr10_get_current_mode( ULONG_PTR id, DEVMODEW *mode )
+static BOOL xrandr10_get_current_mode( x11drv_settings_id id, DEVMODEW *mode )
 {
     XRRScreenConfiguration *screen_config;
     XRRScreenSize *sizes;
@@ -249,7 +249,7 @@ static BOOL xrandr10_get_current_mode( ULONG_PTR id, DEVMODEW *mode )
     mode->u1.s2.dmPosition.x = 0;
     mode->u1.s2.dmPosition.y = 0;
 
-    if (id != 1)
+    if (id.id != 1)
     {
         FIXME("Non-primary adapters are unsupported.\n");
         mode->dmBitsPerPel = 0;
@@ -275,7 +275,7 @@ static BOOL xrandr10_get_current_mode( ULONG_PTR id, DEVMODEW *mode )
     return TRUE;
 }
 
-static LONG xrandr10_set_current_mode( ULONG_PTR id, const DEVMODEW *mode )
+static LONG xrandr10_set_current_mode( x11drv_settings_id id, const DEVMODEW *mode )
 {
     XRRScreenConfiguration *screen_config;
     Rotation rotation;
@@ -283,7 +283,7 @@ static LONG xrandr10_set_current_mode( ULONG_PTR id, const DEVMODEW *mode )
     Window root;
     Status stat;
 
-    if (id != 1)
+    if (id.id != 1)
     {
         FIXME("Non-primary adapters are unsupported.\n");
         return DISP_CHANGE_SUCCESSFUL;
@@ -1215,7 +1215,7 @@ static void xrandr14_register_event_handlers(void)
 }
 
 /* XRandR 1.4 display settings handler */
-static BOOL xrandr14_get_id( const WCHAR *device_name, BOOL is_primary, ULONG_PTR *id )
+static BOOL xrandr14_get_id( const WCHAR *device_name, BOOL is_primary, x11drv_settings_id *id )
 {
     struct current_mode *tmp_modes, *new_current_modes = NULL;
     INT gpu_count, adapter_count, new_current_mode_count = 0;
@@ -1276,7 +1276,7 @@ static BOOL xrandr14_get_id( const WCHAR *device_name, BOOL is_primary, ULONG_PT
         return FALSE;
     }
 
-    *id = current_modes[display_idx].id;
+    id->id = current_modes[display_idx].id;
     pthread_mutex_unlock( &xrandr_mutex );
     return TRUE;
 }
@@ -1309,12 +1309,12 @@ static void add_xrandr14_mode( DEVMODEW *mode, XRRModeInfo *info, DWORD depth, D
     memcpy( (BYTE *)mode + sizeof(*mode), &info->id, sizeof(info->id) );
 }
 
-static BOOL xrandr14_get_modes( ULONG_PTR id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count )
+static BOOL xrandr14_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count )
 {
     DWORD frequency, orientation, orientation_count;
     XRRScreenResources *screen_resources;
     XRROutputInfo *output_info = NULL;
-    RROutput output = (RROutput)id;
+    RROutput output = (RROutput)id.id;
     XRRCrtcInfo *crtc_info = NULL;
     UINT depth_idx, mode_idx = 0;
     XRRModeInfo *mode_info;
@@ -1426,12 +1426,12 @@ static void xrandr14_free_modes( DEVMODEW *modes )
     free( modes );
 }
 
-static BOOL xrandr14_get_current_mode( ULONG_PTR id, DEVMODEW *mode )
+static BOOL xrandr14_get_current_mode( x11drv_settings_id id, DEVMODEW *mode )
 {
     struct current_mode *mode_ptr = NULL;
     XRRScreenResources *screen_resources;
     XRROutputInfo *output_info = NULL;
-    RROutput output = (RROutput)id;
+    RROutput output = (RROutput)id.id;
     XRRModeInfo *mode_info = NULL;
     XRRCrtcInfo *crtc_info = NULL;
     BOOL ret = FALSE;
@@ -1441,7 +1441,7 @@ static BOOL xrandr14_get_current_mode( ULONG_PTR id, DEVMODEW *mode )
     pthread_mutex_lock( &xrandr_mutex );
     for (mode_idx = 0; mode_idx < current_mode_count; ++mode_idx)
     {
-        if (current_modes[mode_idx].id != id)
+        if (current_modes[mode_idx].id != id.id)
             continue;
 
         if (!current_modes[mode_idx].loaded)
@@ -1532,10 +1532,10 @@ done:
     return ret;
 }
 
-static LONG xrandr14_set_current_mode( ULONG_PTR id, const DEVMODEW *mode )
+static LONG xrandr14_set_current_mode( x11drv_settings_id id, const DEVMODEW *mode )
 {
     unsigned int screen_width, screen_height;
-    RROutput output = (RROutput)id, *outputs;
+    RROutput output = (RROutput)id.id, *outputs;
     XRRScreenResources *screen_resources;
     XRROutputInfo *output_info = NULL;
     XRRCrtcInfo *crtc_info = NULL;

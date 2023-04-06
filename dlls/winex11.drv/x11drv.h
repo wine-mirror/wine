@@ -708,6 +708,9 @@ extern void init_recursive_mutex( pthread_mutex_t *mutex ) DECLSPEC_HIDDEN;
 #define DEPTH_COUNT 3
 extern const unsigned int *depths DECLSPEC_HIDDEN;
 
+/* Use a distinct type for the settings id, to avoid mixups other types of ids */
+typedef struct { ULONG_PTR id; } x11drv_settings_id;
+
 /* Required functions for changing and enumerating display settings */
 struct x11drv_settings_handler
 {
@@ -721,7 +724,7 @@ struct x11drv_settings_handler
      * Following functions use this id to identify the device.
      *
      * Return FALSE if the device cannot be found and TRUE on success */
-    BOOL (*get_id)(const WCHAR *device_name, BOOL is_primary, ULONG_PTR *id);
+    BOOL (*get_id)(const WCHAR *device_name, BOOL is_primary, x11drv_settings_id *id);
 
     /* get_modes() will be called to get a list of supported modes of the device of id in modes
      * with respect to flags, which could be 0, EDS_RAWMODE or EDS_ROTATEDMODE. If the implementation
@@ -732,7 +735,7 @@ struct x11drv_settings_handler
      * dmDisplayFlags and dmDisplayFrequency
      *
      * Return FALSE on failure with parameters unchanged and error code set. Return TRUE on success */
-    BOOL (*get_modes)(ULONG_PTR id, DWORD flags, DEVMODEW **modes, UINT *mode_count);
+    BOOL (*get_modes)(x11drv_settings_id id, DWORD flags, DEVMODEW **modes, UINT *mode_count);
 
     /* free_modes() will be called to free the mode list returned from get_modes() */
     void (*free_modes)(DEVMODEW *modes);
@@ -744,13 +747,13 @@ struct x11drv_settings_handler
      * dmDisplayFrequency and dmPosition
      *
      * Return FALSE on failure with parameters unchanged and error code set. Return TRUE on success */
-    BOOL (*get_current_mode)(ULONG_PTR id, DEVMODEW *mode);
+    BOOL (*get_current_mode)(x11drv_settings_id id, DEVMODEW *mode);
 
     /* set_current_mode() will be called to change the display mode of the display device of id.
      * mode must be a valid mode from get_modes() with optional fields, such as dmPosition set.
      *
      * Return DISP_CHANGE_*, same as ChangeDisplaySettingsExW() return values */
-    LONG (*set_current_mode)(ULONG_PTR id, const DEVMODEW *mode);
+    LONG (*set_current_mode)(x11drv_settings_id id, const DEVMODEW *mode);
 };
 
 extern void X11DRV_Settings_SetHandler(const struct x11drv_settings_handler *handler) DECLSPEC_HIDDEN;
