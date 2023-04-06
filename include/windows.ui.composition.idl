@@ -44,7 +44,14 @@ namespace Windows.UI.Composition {
     typedef enum CompositionGetValueStatus CompositionGetValueStatus;
     typedef enum CompositionStretch CompositionStretch;
 
+    interface IAnimationObject;
     interface IColorKeyFrameAnimation;
+    interface ICompositionAnimation;
+    interface ICompositionAnimation2;
+    interface ICompositionAnimation3;
+    interface ICompositionAnimation4;
+    interface ICompositionAnimationBase;
+    interface ICompositionAnimationFactory;
     interface ICompositionBatchCompletedEventArgs;
     interface ICompositionBrush;
     interface ICompositionBrushFactory;
@@ -58,6 +65,12 @@ namespace Windows.UI.Composition {
     interface ICompositionEasingFunctionStatics;
     interface ICompositionEffectBrush;
     interface ICompositionEffectFactory;
+    interface ICompositionObject;
+    interface ICompositionObject2;
+    interface ICompositionObject3;
+    interface ICompositionObject4;
+    interface ICompositionObjectFactory;
+    interface ICompositionObjectStatics;
     interface ICompositionPropertySet;
     interface ICompositionPropertySet2;
     interface ICompositionScopedBatch;
@@ -133,7 +146,9 @@ namespace Windows.UI.Composition {
     declare {
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.UI.Composition.ICompositionSurface *>;
         interface Windows.Foundation.IAsyncOperation<Windows.UI.Composition.ICompositionSurface *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.UI.Composition.CompositionAnimation *>;
         interface Windows.Foundation.Collections.IIterable<Windows.UI.Composition.Visual *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.UI.Composition.CompositionAnimation *>;
         interface Windows.Foundation.Collections.IIterator<Windows.UI.Composition.Visual *>;
         interface Windows.Foundation.TypedEventHandler<IInspectable *, Windows.UI.Composition.CompositionBatchCompletedEventArgs *>;
     }
@@ -270,6 +285,66 @@ namespace Windows.UI.Composition {
             [in] FLOAT key, [in] Windows.UI.Color value,
             [in] Windows.UI.Composition.CompositionEasingFunction *function
         );
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.CompositionAnimation),
+        uuid(464c4c2c-1caa-4061-9b40-e13fde1503ca)
+    ]
+    interface ICompositionAnimation : IInspectable
+    {
+        HRESULT ClearAllParameters();
+        HRESULT ClearParameter([in] HSTRING key);
+        HRESULT SetColorParameter([in] HSTRING key, [in] Windows.UI.Color value);
+        HRESULT SetMatrix3x2Parameter([in] HSTRING key, [in] Windows.Foundation.Numerics.Matrix3x2 value);
+        HRESULT SetMatrix4x4Parameter([in] HSTRING key, [in] Windows.Foundation.Numerics.Matrix4x4 value);
+        HRESULT SetQuaternionParameter([in] HSTRING key, [in] Windows.Foundation.Numerics.Quaternion value);
+        HRESULT SetReferenceParameter([in] HSTRING key, [in] Windows.UI.Composition.CompositionObject *object);
+        HRESULT SetScalarParameter([in] HSTRING key, [in] FLOAT value);
+        HRESULT SetVector2Parameter([in] HSTRING key, [in] Windows.Foundation.Numerics.Vector2 value);
+        HRESULT SetVector3Parameter([in] HSTRING key, [in] Windows.Foundation.Numerics.Vector3 value);
+        HRESULT SetVector4Parameter([in] HSTRING key, [in] Windows.Foundation.Numerics.Vector4 value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        uuid(1c2c2999-e818-48d3-a6dd-d78c82f8ace9)
+    ]
+    interface ICompositionAnimationBase : IInspectable
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.CompositionAnimation),
+        uuid(10f6c4fb-6e51-4c25-bbd3-586a9bec3ef4)
+    ]
+    interface ICompositionAnimationFactory : IInspectable
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.CompositionObject),
+        uuid(bcb4ad45-7609-4550-934f-16002a68fded)
+    ]
+    interface ICompositionObject : IInspectable
+    {
+        [propget] HRESULT Compositor([out, retval] Windows.UI.Composition.Compositor **value);
+        [propget] HRESULT Dispatcher([out, retval] Windows.UI.Core.CoreDispatcher **value);
+        [propget] HRESULT Properties([out, retval] Windows.UI.Composition.CompositionPropertySet **value);
+        HRESULT StartAnimation([in] HSTRING name, [in] Windows.UI.Composition.CompositionAnimation *animation);
+        HRESULT StopAnimation([in] HSTRING name);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.CompositionObject),
+        uuid(51205c5e-558a-4f2a-8d39-37bfe1e20ddd)
+    ]
+    interface ICompositionObjectFactory : IInspectable
+    {
     }
 
     [
@@ -774,6 +849,21 @@ namespace Windows.UI.Composition {
     }
 
     [
+        composable(Windows.UI.Composition.ICompositionAnimationFactory, public, Windows.Foundation.UniversalApiContract, 2.0),
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass CompositionAnimation : Windows.UI.Composition.CompositionObject
+    {
+        [default] interface Windows.UI.Composition.ICompositionAnimation;
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionAnimation2;
+        [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.UI.Composition.ICompositionAnimation3;
+        [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.UI.Composition.ICompositionAnimation4;
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionAnimationBase;
+    }
+
+    [
         contract(Windows.Foundation.UniversalApiContract, 2.0),
         marshaling_behavior(agile),
         threading(both)
@@ -856,6 +946,23 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionEffectFactory : Windows.UI.Composition.CompositionObject
     {
         [default] interface Windows.UI.Composition.ICompositionEffectFactory;
+    }
+
+    [
+        composable(Windows.UI.Composition.ICompositionObjectFactory, public, Windows.Foundation.UniversalApiContract, 2.0),
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        static(Windows.UI.Composition.ICompositionObjectStatics, Windows.Foundation.UniversalApiContract, 7.0),
+        threading(both)
+    ]
+    runtimeclass CompositionObject
+    {
+        [default] interface Windows.UI.Composition.ICompositionObject;
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionObject2;
+        [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.UI.Composition.ICompositionObject3;
+        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.UI.Composition.ICompositionObject4;
+        interface Windows.Foundation.IClosable;
+        [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.UI.Composition.IAnimationObject;
     }
 
     [
