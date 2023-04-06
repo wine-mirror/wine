@@ -51,6 +51,7 @@ namespace Windows.UI.Composition {
     interface ICompositionClip2;
     interface ICompositionClipFactory;
     interface ICompositionColorBrush;
+    interface ICompositionCommitBatch;
     interface ICompositionEasingFunction;
     interface ICompositionEasingFunctionFactory;
     interface ICompositionEasingFunctionStatics;
@@ -91,6 +92,7 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionBrush;
     runtimeclass CompositionClip;
     runtimeclass CompositionColorBrush;
+    runtimeclass CompositionCommitBatch;
     runtimeclass CompositionEasingFunction;
     runtimeclass CompositionEffectBrush;
     runtimeclass CompositionEffectFactory;
@@ -295,6 +297,22 @@ namespace Windows.UI.Composition {
     {
         [propget] HRESULT Color([out, retval] Windows.UI.Color *value);
         [propput] HRESULT Color([in] Windows.UI.Color value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.CompositionCommitBatch),
+        uuid(0d00dad0-ca07-4400-8c8e-cb5db08559cc)
+    ]
+    interface ICompositionCommitBatch : IInspectable
+    {
+        [propget] HRESULT IsActive([out, retval] boolean *value);
+        [propget] HRESULT IsEnded([out, retval] boolean *value);
+        [eventadd] HRESULT Completed(
+            [in] Windows.Foundation.TypedEventHandler<IInspectable *, Windows.UI.Composition.CompositionBatchCompletedEventArgs *> *handler,
+            [out, retval] EventRegistrationToken *token
+        );
+        [eventremove] HRESULT Completed([in] EventRegistrationToken token);
     }
 
     [
@@ -713,6 +731,16 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionColorBrush : Windows.UI.Composition.CompositionBrush
     {
         [default] interface Windows.UI.Composition.ICompositionColorBrush;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass CompositionCommitBatch : Windows.UI.Composition.CompositionObject
+    {
+        [default] interface Windows.UI.Composition.ICompositionCommitBatch;
     }
 
     [
