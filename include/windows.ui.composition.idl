@@ -35,6 +35,7 @@ import "windows.ui.core.idl";
 
 namespace Windows.UI.Composition {
     typedef enum CompositionBackfaceVisibility CompositionBackfaceVisibility;
+    typedef enum CompositionBatchTypes CompositionBatchTypes;
     typedef enum CompositionBitmapInterpolationMode CompositionBitmapInterpolationMode;
     typedef enum CompositionBorderMode CompositionBorderMode;
     typedef enum CompositionColorSpace CompositionColorSpace;
@@ -66,6 +67,18 @@ namespace Windows.UI.Composition {
     interface ICompositionSurfaceBrush3;
     interface ICompositionTarget;
     interface ICompositionTargetFactory;
+    interface ICompositor;
+    interface ICompositor2;
+    interface ICompositor3;
+    interface ICompositor4;
+    interface ICompositor5;
+    interface ICompositor6;
+    interface ICompositor7;
+    interface ICompositorStatics;
+    interface ICompositorWithBlurredWallpaperBackdropBrush;
+    interface ICompositorWithProjectedShadow;
+    interface ICompositorWithRadialGradient;
+    interface ICompositorWithVisualSurface;
     interface IContainerVisual;
     interface IContainerVisualFactory;
     interface ICubicBezierEasingFunction;
@@ -101,6 +114,7 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionScopedBatch;
     runtimeclass CompositionSurfaceBrush;
     runtimeclass CompositionTarget;
+    runtimeclass Compositor;
     runtimeclass ContainerVisual;
     runtimeclass CubicBezierEasingFunction;
     runtimeclass ExpressionAnimation;
@@ -132,6 +146,21 @@ namespace Windows.UI.Composition {
         Inherit = 0,
         Visible = 1,
         Hidden  = 2,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        flags
+    ]
+    enum CompositionBatchTypes
+    {
+        None              = 0x0,
+        Animation         = 0x1,
+        Effect            = 0x2,
+        [contract(Windows.Foundation.UniversalApiContract, 7.0)]
+        InfiniteAnimation = 0x4,
+        [contract(Windows.Foundation.UniversalApiContract, 7.0)]
+        AllAnimations     = 0x5,
     };
 
     [
@@ -463,6 +492,60 @@ namespace Windows.UI.Composition {
     ]
     interface ICompositionTargetFactory : IInspectable
     {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.Compositor),
+        uuid(b403ca50-7f8c-4e83-985f-cc45060036d8)
+    ]
+    interface ICompositor : IInspectable
+    {
+        HRESULT CreateColorKeyFrameAnimation([out, retval] Windows.UI.Composition.ColorKeyFrameAnimation **result);
+        [overload("CreateColorBrush")] HRESULT CreateColorBrush([out, retval] Windows.UI.Composition.CompositionColorBrush **result);
+        [overload("CreateColorBrush")] HRESULT CreateColorBrushWithColor(
+            [in] Windows.UI.Color color, [out, retval] Windows.UI.Composition.CompositionColorBrush **result
+        );
+        HRESULT CreateContainerVisual([out, retval] Windows.UI.Composition.ContainerVisual **result);
+        HRESULT CreateCubicBezierEasingFunction(
+            [in] Windows.Foundation.Numerics.Vector2 point1, [in] Windows.Foundation.Numerics.Vector2 point2,
+            [out, retval] Windows.UI.Composition.CubicBezierEasingFunction **result
+        );
+        [overload("CreateEffectFactory")] HRESULT CreateEffectFactory(
+            [in] Windows.Graphics.Effects.IGraphicsEffect *effect, [out, retval] Windows.UI.Composition.CompositionEffectFactory **result
+        );
+        [overload("CreateEffectFactory")] HRESULT CreateEffectFactoryWithProperties(
+            [in] Windows.Graphics.Effects.IGraphicsEffect *effect, [in] Windows.Foundation.Collections.IIterable<HSTRING> *animatable,
+            [out, retval] Windows.UI.Composition.CompositionEffectFactory **result
+        );
+        [overload("CreateExpressionAnimation")] HRESULT CreateExpressionAnimation([out, retval] Windows.UI.Composition.ExpressionAnimation **result);
+        [overload("CreateExpressionAnimation")] HRESULT CreateExpressionAnimationWithExpression(
+            [in] HSTRING expression, [out, retval] Windows.UI.Composition.ExpressionAnimation **result
+        );
+        [overload("CreateInsetClip")] HRESULT CreateInsetClip([out, retval] Windows.UI.Composition.InsetClip **result);
+        [overload("CreateInsetClip")] HRESULT CreateInsetClipWithInsets(
+            [in] FLOAT left, [in] FLOAT top, [in] FLOAT right, [in] FLOAT bottom,
+            [out, retval] Windows.UI.Composition.InsetClip **result
+        );
+        HRESULT CreateLinearEasingFunction([out, retval] Windows.UI.Composition.LinearEasingFunction **result);
+        HRESULT CreatePropertySet([out, retval] Windows.UI.Composition.CompositionPropertySet **result);
+        HRESULT CreateQuaternionKeyFrameAnimation([out, retval] Windows.UI.Composition.QuaternionKeyFrameAnimation **result);
+        HRESULT CreateScalarKeyFrameAnimation([out, retval] Windows.UI.Composition.ScalarKeyFrameAnimation **result);
+        HRESULT CreateScopedBatch(
+            [in] Windows.UI.Composition.CompositionBatchTypes type, [out, retval] Windows.UI.Composition.CompositionScopedBatch **result
+        );
+        HRESULT CreateSpriteVisual([out, retval] Windows.UI.Composition.SpriteVisual **result);
+        [overload("CreateSurfaceBrush")] HRESULT CreateSurfaceBrush([out, retval] Windows.UI.Composition.CompositionSurfaceBrush **result);
+        [overload("CreateSurfaceBrush")] HRESULT CreateSurfaceBrushWithSurface(
+            [in] Windows.UI.Composition.ICompositionSurface *surface, [out, retval] Windows.UI.Composition.CompositionSurfaceBrush **result
+        );
+        HRESULT CreateTargetForCurrentView([out, retval] Windows.UI.Composition.CompositionTarget **result);
+        HRESULT CreateVector2KeyFrameAnimation([out, retval] Windows.UI.Composition.Vector2KeyFrameAnimation **result);
+        HRESULT CreateVector3KeyFrameAnimation([out, retval] Windows.UI.Composition.Vector3KeyFrameAnimation **result);
+        HRESULT CreateVector4KeyFrameAnimation([out, retval] Windows.UI.Composition.Vector4KeyFrameAnimation **result);
+        HRESULT GetCommitBatch(
+            [in] Windows.UI.Composition.CompositionBatchTypes type, [out, retval] Windows.UI.Composition.CompositionCommitBatch **result
+        );
     }
 
     [
@@ -817,6 +900,29 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionTarget : Windows.UI.Composition.CompositionObject
     {
         [default] interface Windows.UI.Composition.ICompositionTarget;
+    }
+
+    [
+        activatable(Windows.Foundation.UniversalApiContract, 2.0),
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        static(Windows.UI.Composition.ICompositorStatics, Windows.Foundation.UniversalApiContract, 6.0),
+        threading(both)
+    ]
+    runtimeclass Compositor
+    {
+        [default] interface Windows.UI.Composition.ICompositor;
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositor2;
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.UI.Composition.ICompositor3;
+        [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.UI.Composition.ICompositor4;
+        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.UI.Composition.ICompositor5;
+        [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.UI.Composition.ICompositor6;
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Composition.ICompositorWithProjectedShadow;
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Composition.ICompositorWithRadialGradient;
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Composition.ICompositorWithVisualSurface;
+        [contract(Windows.Foundation.UniversalApiContract, 12.0)] interface Windows.UI.Composition.ICompositor7;
+        [contract(Windows.Foundation.UniversalApiContract, 13.0)] interface Windows.UI.Composition.ICompositorWithBlurredWallpaperBackdropBrush;
+        interface Windows.Foundation.IClosable;
     }
 
     [
