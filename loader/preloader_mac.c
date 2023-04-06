@@ -106,6 +106,39 @@ void *__stack_chk_guard = 0;
 void __stack_chk_fail_local(void) { return; }
 void __stack_chk_fail(void) { return; }
 
+/* Binaries targeting 10.6 and 10.7 contain the __program_vars section, and
+ * dyld4 (starting in Monterey) does not like it to be missing:
+ * - running vmmap on a Wine process prints this warning:
+ *   "Process exists but has not fully started -- dyld has initialized but libSystem has not"
+ * - because libSystem is not initialized, dlerror() always returns NULL (causing GStreamer
+ *   to crash on init).
+ * - starting with macOS Sonoma, Wine crashes on launch if libSystem is not initialized.
+ *
+ * Adding __program_vars fixes those issues, and also allows more of the vars to
+ * be set correctly by the preloader for the loaded binary.
+ *
+ * See also:
+ * <https://github.com/apple-oss-distributions/Csu/blob/Csu-88/crt.c#L42>
+ * <https://github.com/apple-oss-distributions/dyld/blob/dyld-1042.1/common/MachOAnalyzer.cpp#L2185>
+ */
+int           NXArgc = 0;
+const char**  NXArgv = NULL;
+const char**  environ = NULL;
+const char*   __progname = NULL;
+
+extern void* __dso_handle;
+struct ProgramVars
+{
+    void*           mh;
+    int*            NXArgcPtr;
+    const char***   NXArgvPtr;
+    const char***   environPtr;
+    const char**    __prognamePtr;
+};
+__attribute__((used))  static struct ProgramVars pvars
+__attribute__ ((section ("__DATA,__program_vars")))  = { &__dso_handle, &NXArgc, &NXArgv, &environ, &__progname };
+
+
 /*
  * When 'start' is called, stack frame looks like:
  *
@@ -620,15 +653,16 @@ static void fixup_stack( void *stack )
 static void set_program_vars( void *stack, void *mod )
 {
     int *pargc;
-    char **argv, **env;
+    const char **argv, **env;
     int *wine_NXArgc = pdlsym( mod, "NXArgc" );
-    char ***wine_NXArgv = pdlsym( mod, "NXArgv" );
-    char ***wine_environ = pdlsym( mod, "environ" );
+    const char ***wine_NXArgv = pdlsym( mod, "NXArgv" );
+    const char ***wine_environ = pdlsym( mod, "environ" );
 
     pargc = stack;
-    argv = (char **)pargc + 1;
+    argv = (const char **)pargc + 1;
     env = &argv[*pargc-1] + 2;
 
+    /* set vars in the loaded binary */
     if (wine_NXArgc)
         *wine_NXArgc = *pargc;
     else
@@ -643,6 +677,11 @@ static void set_program_vars( void *stack, void *mod )
         *wine_environ = env;
     else
         wld_printf( "preloader: Warning: failed to set environ\n" );
+
+    /* set vars in the __program_vars section */
+    NXArgc = *pargc;
+    NXArgv = argv;
+    environ = env;
 }
 
 void *wld_start( void *stack, int *is_unix_thread )
