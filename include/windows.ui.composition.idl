@@ -60,6 +60,9 @@ namespace Windows.UI.Composition {
     interface ICompositionClipFactory;
     interface ICompositionColorBrush;
     interface ICompositionCommitBatch;
+    interface ICompositionDrawingSurface;
+    interface ICompositionDrawingSurface2;
+    interface ICompositionDrawingSurfaceFactory;
     interface ICompositionEasingFunction;
     interface ICompositionEasingFunctionFactory;
     interface ICompositionEasingFunctionStatics;
@@ -119,6 +122,7 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionClip;
     runtimeclass CompositionColorBrush;
     runtimeclass CompositionCommitBatch;
+    runtimeclass CompositionDrawingSurface;
     runtimeclass CompositionEasingFunction;
     runtimeclass CompositionEffectBrush;
     runtimeclass CompositionEffectFactory;
@@ -417,6 +421,27 @@ namespace Windows.UI.Composition {
             [out, retval] EventRegistrationToken *token
         );
         [eventremove] HRESULT Completed([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.CompositionDrawingSurface),
+        uuid(a166c300-fad0-4d11-9e67-e433162ff49e)
+    ]
+    interface ICompositionDrawingSurface : IInspectable
+    {
+        [propget] HRESULT AlphaMode([out, retval] Windows.Graphics.DirectX.DirectXAlphaMode *value);
+        [propget] HRESULT PixelFormat([out, retval] Windows.Graphics.DirectX.DirectXPixelFormat *value);
+        [propget] HRESULT Size([out, retval] Windows.Foundation.Size *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.UI.Composition.CompositionDrawingSurface),
+        uuid(9497b00a-312d-46b9-9db3-412fd79464c8)
+    ]
+    interface ICompositionDrawingSurfaceFactory : IInspectable
+    {
     }
 
     [
@@ -914,6 +939,19 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionCommitBatch : Windows.UI.Composition.CompositionObject
     {
         [default] interface Windows.UI.Composition.ICompositionCommitBatch;
+    }
+
+    [
+        composable(Windows.UI.Composition.ICompositionDrawingSurfaceFactory, public, Windows.Foundation.UniversalApiContract, 4.0),
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass CompositionDrawingSurface : Windows.UI.Composition.CompositionObject
+    {
+        [default] interface Windows.UI.Composition.ICompositionDrawingSurface;
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.UI.Composition.ICompositionDrawingSurface2;
+        interface Windows.UI.Composition.ICompositionSurface;
     }
 
     [
