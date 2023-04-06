@@ -1230,27 +1230,35 @@ BLUE_INI TEXTFILE
 "FillColor = 48 150 250\r\n"
 
 "[Progress.Fill]\r\n"
+"BorderSize = 0\r\n"
 "FillColor = 48 150 250\r\n"
 
 "[Progress.FillVert]\r\n"
+"BorderSize = 0\r\n"
 "FillColor = 48 150 250\r\n"
 
 "[Progress.Fill(Error)]\r\n"
+"BorderSize = 0\r\n"
 "FillColor = 213 0 0\r\n"
 
 "[Progress.FillVert(Error)]\r\n"
+"BorderSize = 0\r\n"
 "FillColor = 213 0 0\r\n"
 
 "[Progress.Fill(Paused)]\r\n"
+"BorderSize = 0\r\n"
 "FillColor = 255 238 88\r\n"
 
 "[Progress.FillVert(Paused)]\r\n"
+"BorderSize = 0\r\n"
 "FillColor = 255 238 88\r\n"
 
 "[Progress.Fill(Partial)]\r\n"
+"BorderSize = 0\r\n"
 "FillColor = 189 189 189\r\n"
 
 "[Progress.FillVert(Partial)]\r\n"
+"BorderSize = 0\r\n"
 "FillColor = 189 189 189\r\n"
 
 "[Progress.PulseOverlay]\r\n"
