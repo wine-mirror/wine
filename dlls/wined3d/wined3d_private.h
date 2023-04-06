@@ -3085,6 +3085,7 @@ enum wined3d_pci_device
     CARD_AMD_RADEON_PRO_V620        = 0x73a1,
     CARD_AMD_RADEON_PRO_V620_VF     = 0x73ae,
     CARD_AMD_VANGOGH                = 0x163f,
+    CARD_AMD_RAPHAEL                = 0x164e,
 
     CARD_NVIDIA_RIVA_128            = 0x0018,
     CARD_NVIDIA_RIVA_TNT            = 0x0020,
