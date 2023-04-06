@@ -75,6 +75,7 @@ namespace Windows.UI.Composition {
     interface IScalarKeyFrameAnimation;
     interface ISpriteVisual;
     interface ISpriteVisual2;
+    interface IVector2KeyFrameAnimation;
     interface IVisual;
     interface IVisual2;
     interface IVisual3;
@@ -105,6 +106,7 @@ namespace Windows.UI.Composition {
     runtimeclass QuaternionKeyFrameAnimation;
     runtimeclass ScalarKeyFrameAnimation;
     runtimeclass SpriteVisual;
+    runtimeclass Vector2KeyFrameAnimation;
     runtimeclass Visual;
     runtimeclass VisualCollection;
 
@@ -549,6 +551,20 @@ namespace Windows.UI.Composition {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.Vector2KeyFrameAnimation),
+        uuid(df414515-4e29-4f11-b55e-bf2a6eb36294)
+    ]
+    interface IVector2KeyFrameAnimation : IInspectable
+    {
+        [overload("InsertKeyFrame")] HRESULT InsertKeyFrame([in] FLOAT key, [in] Windows.Foundation.Numerics.Vector2 value);
+        [overload("InsertKeyFrame")] HRESULT InsertKeyFrameWithEasingFunction(
+            [in] FLOAT key, [in] Windows.Foundation.Numerics.Vector2 value,
+            [in] Windows.UI.Composition.CompositionEasingFunction *function
+        );
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
         exclusiveto(Windows.UI.Composition.Visual),
         uuid(117e202d-a859-4c89-873b-c2aa566788e3)
     ]
@@ -823,6 +839,16 @@ namespace Windows.UI.Composition {
     {
         [default] interface Windows.UI.Composition.ISpriteVisual;
         [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ISpriteVisual2;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass Vector2KeyFrameAnimation : Windows.UI.Composition.KeyFrameAnimation
+    {
+        [default] interface Windows.UI.Composition.IVector2KeyFrameAnimation;
     }
 
     [
