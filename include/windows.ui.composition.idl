@@ -68,6 +68,10 @@ namespace Windows.UI.Composition {
     interface ICompositionEasingFunctionStatics;
     interface ICompositionEffectBrush;
     interface ICompositionEffectFactory;
+    interface ICompositionGraphicsDevice;
+    interface ICompositionGraphicsDevice2;
+    interface ICompositionGraphicsDevice3;
+    interface ICompositionGraphicsDevice4;
     interface ICompositionObject;
     interface ICompositionObject2;
     interface ICompositionObject3;
@@ -102,6 +106,7 @@ namespace Windows.UI.Composition {
     interface IInsetClip;
     interface ILinearEasingFunction;
     interface IQuaternionKeyFrameAnimation;
+    interface IRenderingDeviceReplacedEventArgs;
     interface IScalarKeyFrameAnimation;
     interface ISpriteVisual;
     interface ISpriteVisual2;
@@ -126,6 +131,7 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionEasingFunction;
     runtimeclass CompositionEffectBrush;
     runtimeclass CompositionEffectFactory;
+    runtimeclass CompositionGraphicsDevice;
     runtimeclass CompositionObject;
     runtimeclass CompositionPropertySet;
     runtimeclass CompositionScopedBatch;
@@ -139,6 +145,7 @@ namespace Windows.UI.Composition {
     runtimeclass LinearEasingFunction;
     runtimeclass KeyFrameAnimation;
     runtimeclass QuaternionKeyFrameAnimation;
+    runtimeclass RenderingDeviceReplacedEventArgs;
     runtimeclass ScalarKeyFrameAnimation;
     runtimeclass SpriteVisual;
     runtimeclass Vector2KeyFrameAnimation;
@@ -155,6 +162,7 @@ namespace Windows.UI.Composition {
         interface Windows.Foundation.Collections.IIterator<Windows.UI.Composition.CompositionAnimation *>;
         interface Windows.Foundation.Collections.IIterator<Windows.UI.Composition.Visual *>;
         interface Windows.Foundation.TypedEventHandler<IInspectable *, Windows.UI.Composition.CompositionBatchCompletedEventArgs *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.UI.Composition.CompositionGraphicsDevice *, Windows.UI.Composition.RenderingDeviceReplacedEventArgs *>;
     }
 
     [
@@ -487,6 +495,24 @@ namespace Windows.UI.Composition {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.CompositionGraphicsDevice),
+        uuid(fb22c6e1-80a2-4667-9936-dbeaf6eefe95)
+    ]
+    interface ICompositionGraphicsDevice : IInspectable
+    {
+        HRESULT CreateDrawingSurface(
+            [in] Windows.Foundation.Size pixels, [in] Windows.Graphics.DirectX.DirectXPixelFormat format,
+            [in] Windows.Graphics.DirectX.DirectXAlphaMode mode, [out, retval] Windows.UI.Composition.CompositionDrawingSurface **result
+        );
+        [eventadd] HRESULT RenderingDeviceReplaced(
+            [in] Windows.Foundation.TypedEventHandler<Windows.UI.Composition.CompositionGraphicsDevice *, Windows.UI.Composition.RenderingDeviceReplacedEventArgs *> *handler,
+            [out, retval] EventRegistrationToken *token
+        );
+        [eventremove] HRESULT RenderingDeviceReplaced([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
         exclusiveto(Windows.UI.Composition.CompositionPropertySet),
         uuid(c9d6d202-5f67-4453-9117-9eadd430d3c2)
     ]
@@ -727,6 +753,16 @@ namespace Windows.UI.Composition {
             [in] FLOAT key, [in] Windows.Foundation.Numerics.Quaternion value,
             [in] Windows.UI.Composition.CompositionEasingFunction *function
         );
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.Composition.RenderingDeviceReplacedEventArgs),
+        uuid(3a31ac7d-28bf-4e7a-8524-71679d480f38)
+    ]
+    interface IRenderingDeviceReplacedEventArgs : IInspectable
+    {
+        [propget] HRESULT GraphicsDevice([out, retval] Windows.UI.Composition.CompositionGraphicsDevice **value);
     }
 
     [
@@ -987,6 +1023,19 @@ namespace Windows.UI.Composition {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass CompositionGraphicsDevice : Windows.UI.Composition.CompositionObject
+    {
+        [default] interface Windows.UI.Composition.ICompositionGraphicsDevice;
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.UI.Composition.ICompositionGraphicsDevice2;
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Composition.ICompositionGraphicsDevice3;
+        [contract(Windows.Foundation.UniversalApiContract, 12.0)] interface Windows.UI.Composition.ICompositionGraphicsDevice4;
+    }
+
+    [
         composable(Windows.UI.Composition.ICompositionObjectFactory, public, Windows.Foundation.UniversalApiContract, 2.0),
         contract(Windows.Foundation.UniversalApiContract, 2.0),
         marshaling_behavior(agile),
@@ -1129,6 +1178,16 @@ namespace Windows.UI.Composition {
     runtimeclass QuaternionKeyFrameAnimation : Windows.UI.Composition.KeyFrameAnimation
     {
         [default] interface Windows.UI.Composition.IQuaternionKeyFrameAnimation;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass RenderingDeviceReplacedEventArgs : Windows.UI.Composition.CompositionObject
+    {
+        [default] interface Windows.UI.Composition.IRenderingDeviceReplacedEventArgs;
     }
 
     [
