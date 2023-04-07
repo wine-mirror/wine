@@ -920,7 +920,11 @@ static void session_start(struct media_session *session, const GUID *time_format
             LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
             {
                 if (FAILED(hr = IMFMediaSource_Start(source->source, source->pd, &GUID_NULL, start_position)))
+                {
                     WARN("Failed to start media source %p, hr %#lx.\n", source->source, hr);
+                    session_command_complete_with_event(session, MESessionStarted, hr, NULL);
+                    return;
+                }
             }
 
             session->state = SESSION_STATE_STARTING_SOURCES;

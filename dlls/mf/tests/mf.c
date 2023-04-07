@@ -2514,7 +2514,7 @@ static void test_media_session_events(void)
     hr = IMFMediaSession_Start(session, &GUID_NULL, &propvar);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = wait_media_event_until_blocking(session, callback, MESessionStarted, 1000, &propvar);
-    todo_wine ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
     ok(propvar.vt == VT_EMPTY, "got vt %u\n", propvar.vt);
     ok(propvar.punkVal != (IUnknown *)topology, "got punkVal %p\n", propvar.punkVal);
     PropVariantClear(&propvar);
