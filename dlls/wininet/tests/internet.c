@@ -1736,7 +1736,7 @@ static void test_InternetGetConnectedStateExW(void)
     wcscpy(buffer, L"wine");
     SetLastError(0xdeadbeef);
     res = pInternetGetConnectedStateExW(&flags, buffer, ARRAY_SIZE(buffer), 0);
-    trace("Internet Connection: Flags 0x%02lx - Name '%s'\n", flags, wine_dbgstr_w(buffer));
+    trace("Internet Connection: Flags 0x%02lx - Name %s\n", flags, wine_dbgstr_w(buffer));
     ok (flags & INTERNET_RAS_INSTALLED, "Missing RAS flag\n");
     if(!res) {
         DWORD error = GetLastError();
