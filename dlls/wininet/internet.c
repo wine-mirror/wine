@@ -1221,7 +1221,7 @@ BOOL WINAPI InternetGetConnectedStateExW(LPDWORD lpdwStatus, LPWSTR lpszConnecti
     for (;;)
     {
         ULONG flags = GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_DNS_SERVER |
-                      GAA_FLAG_SKIP_FRIENDLY_NAME | GAA_FLAG_INCLUDE_ALL_GATEWAYS;
+                      GAA_FLAG_SKIP_FRIENDLY_NAME | GAA_FLAG_INCLUDE_GATEWAYS;
         ULONG errcode = GetAdaptersAddresses(AF_UNSPEC, flags, NULL, buf, &size);
 
         if (errcode == ERROR_SUCCESS)

@@ -145,14 +145,14 @@ static void print_basic_information(void)
     IP_ADAPTER_ADDRESSES *adapters;
     ULONG out = 0;
 
-    if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_GATEWAYS,
+    if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS,
                              NULL, NULL, &out) == ERROR_BUFFER_OVERFLOW)
     {
         adapters = HeapAlloc(GetProcessHeap(), 0, out);
         if (!adapters)
             exit(1);
 
-        if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_GATEWAYS,
+        if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS,
                                  NULL, adapters, &out) == ERROR_SUCCESS)
         {
             IP_ADAPTER_ADDRESSES *p;
@@ -293,14 +293,14 @@ static void print_full_information(void)
         HeapFree(GetProcessHeap(), 0, info);
     }
 
-    if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_GATEWAYS,
+    if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS,
                              NULL, NULL, &out) == ERROR_BUFFER_OVERFLOW)
     {
         adapters = HeapAlloc(GetProcessHeap(), 0, out);
         if (!adapters)
             exit(1);
 
-        if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_GATEWAYS,
+        if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS,
                                  NULL, adapters, &out) == ERROR_SUCCESS)
         {
             IP_ADAPTER_ADDRESSES *p;

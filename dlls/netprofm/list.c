@@ -1747,7 +1747,7 @@ static void init_networks( struct list_manager *mgr )
     IP_ADAPTER_ADDRESSES *buf, *aa;
     GUID id;
     ULONG ret, flags = GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST |
-                       GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_INCLUDE_ALL_GATEWAYS;
+                       GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_INCLUDE_GATEWAYS;
 
     list_init( &mgr->networks );
     list_init( &mgr->connections );

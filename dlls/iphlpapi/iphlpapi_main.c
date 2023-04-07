@@ -1018,7 +1018,7 @@ static DWORD gateway_and_prefix_addresses_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG
             luid = (family == AF_INET) ? &key4->luid : &key6->luid;
             if (luid->Value != aa->Luid.Value) continue;
 
-            if (flags & GAA_FLAG_INCLUDE_ALL_GATEWAYS)
+            if (flags & GAA_FLAG_INCLUDE_GATEWAYS)
             {
                 memset( &sockaddr, 0, sizeof(sockaddr) );
                 if (family == AF_INET)
@@ -1268,7 +1268,7 @@ static DWORD adapters_addresses_alloc( ULONG family, ULONG flags, IP_ADAPTER_ADD
         if (err) goto err;
     }
 
-    if (flags & (GAA_FLAG_INCLUDE_ALL_GATEWAYS | GAA_FLAG_INCLUDE_PREFIX))
+    if (flags & (GAA_FLAG_INCLUDE_GATEWAYS | GAA_FLAG_INCLUDE_PREFIX))
     {
         err = call_families( gateway_and_prefix_addresses_alloc, aa, family, flags );
         if (err) goto err;
