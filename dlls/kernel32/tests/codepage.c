@@ -54,6 +54,7 @@ static void test_destination_buffer(void)
     len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, buffer, needed+1, NULL, NULL);
     ok( (len > 0), "returned %d with %lu and '%s' (expected '> 0')\n",
         len, GetLastError(), buffer);
+    ok(!lstrcmpA(buffer, "foobar"), "expected \"foobar\" got \"%s\"\n", buffer);
 
     memset(buffer, 'x', maxsize);
     buffer[maxsize] = '\0';
@@ -61,6 +62,7 @@ static void test_destination_buffer(void)
     len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, buffer, needed, NULL, NULL);
     ok( (len > 0), "returned %d with %lu and '%s' (expected '> 0')\n",
         len, GetLastError(), buffer);
+    ok(!lstrcmpA(buffer, "foobar"), "expected \"foobar\" got \"%s\"\n", buffer);
 
     memset(buffer, 'x', maxsize);
     buffer[maxsize] = '\0';
@@ -69,6 +71,8 @@ static void test_destination_buffer(void)
     ok( !len && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
         "returned %d with %lu and '%s' (expected '0' with "
         "ERROR_INSUFFICIENT_BUFFER)\n", len, GetLastError(), buffer);
+    ok(!strncmp(buffer, "foobar", 6), "expected \"foobar\" got \"%s\"\n", buffer);
+    ok(buffer[6] == 'x', "expected buf[5]=='x', got \"%s\"\n", buffer);
 
     memset(buffer, 'x', maxsize);
     buffer[maxsize] = '\0';
@@ -77,6 +81,8 @@ static void test_destination_buffer(void)
     ok( !len && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
         "returned %d with %lu and '%s' (expected '0' with "
         "ERROR_INSUFFICIENT_BUFFER)\n", len, GetLastError(), buffer);
+    ok(buffer[0] == 'f', "expected buf[1]=='f', got \"%s\"\n", buffer);
+    ok(buffer[1] == 'x', "expected buf[1]=='x', got \"%s\"\n", buffer);
 
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, buffer, 0, NULL, NULL);
@@ -427,6 +433,23 @@ static void test_string_conversion(LPBOOL bUsedDefaultChar)
     ok(ret == 10, "ret is %d\n", ret);
     ok(!strcmp(mbs, "\xf3\xe7\x3d\xa3\xbf\xa3\xbf\xa3\xbf"), "mbs is %s\n", mbs);
     if(bUsedDefaultChar) ok(*bUsedDefaultChar == TRUE, "bUsedDefaultChar is %d\n", *bUsedDefaultChar);
+
+    /* Show that characters are not truncated */
+    ZeroMemory(mbs, 5);
+    ret = WideCharToMultiByte(936, 0, dbwcs2, -1, mbs, 1, (const char *)default_char, bUsedDefaultChar);
+    ok(!ret, "ret is %d\n", ret);
+    ok(mbs[0] == '\0', "mbs is %s\n", mbs);
+    if(bUsedDefaultChar) ok(*bUsedDefaultChar == FALSE, "bUsedDefaultChar is %d\n", *bUsedDefaultChar);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetLastError() is %lu\n", GetLastError());
+
+    /* And destination is not null-terminated even when too short */
+    FillMemory(mbs, 5, 'x');
+    mbs[5] = '\0';
+    ret = WideCharToMultiByte(936, 0, dbwcs2, -1, mbs, 2, (const char *)default_char, bUsedDefaultChar);
+    ok(!ret, "ret is %d\n", ret);
+    ok(!strcmp(mbs, "\xf3\xe7""xxx"), "mbs is %s\n", mbs);
+    if(bUsedDefaultChar) ok(*bUsedDefaultChar == FALSE, "bUsedDefaultChar is %d\n", *bUsedDefaultChar);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetLastError() is %lu\n", GetLastError());
 
     /* Length-only tests */
     SetLastError(0xdeadbeef);
