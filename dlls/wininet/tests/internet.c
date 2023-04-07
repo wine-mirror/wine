@@ -29,6 +29,7 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "winnls.h"
+#include "wchar.h"
 
 #include "wine/test.h"
 
@@ -1696,33 +1697,37 @@ static void test_InternetGetConnectedStateExA(void)
     ok(flags, "Expected at least one flag set\n");
 
     /* no space for complete string this time */
-    buffer[0] = 0;
+    memset(buffer, 'z', sizeof(buffer) - 1);
+    buffer[sizeof(buffer) - 1] = 0;
     flags = 0;
     res = pInternetGetConnectedStateExA(&flags, buffer, sz, 0);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(flags, "Expected at least one flag set\n");
-    ok(sz - 1 == strlen(buffer), "Expected %lu bytes, got %u\n", sz - 1, lstrlenA(buffer));
+    ok(sz - 1 == strlen(buffer), "Expected len %lu, got %u: %s\n", sz - 1, lstrlenA(buffer), wine_dbgstr_a(buffer));
 
-    buffer[0] = 0;
+    memset(buffer, 'z', sizeof(buffer) - 1);
+    buffer[sizeof(buffer) - 1] = 0;
     flags = 0;
     res = pInternetGetConnectedStateExA(&flags, buffer, sz / 2, 0);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(flags, "Expected at least one flag set\n");
-    ok(sz / 2 - 1 == strlen(buffer), "Expected %lu bytes, got %u\n", sz / 2 - 1, lstrlenA(buffer));
+    ok(sz / 2 - 1 == strlen(buffer), "Expected len %lu, got %u: %s\n", sz / 2 - 1, lstrlenA(buffer), wine_dbgstr_a(buffer));
 
-    buffer[0] = 0;
+    memset(buffer, 'z', sizeof(buffer) - 1);
+    buffer[sizeof(buffer) - 1] = 0;
     flags = 0;
     res = pInternetGetConnectedStateExA(&flags, buffer, 2, 0);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(flags, "Expected at least one flag set\n");
-    ok(strlen(buffer) == 1, "Expected 1 byte, got %u\n", lstrlenA(buffer));
+    ok(strlen(buffer) == 1, "Expected len 1, got %u: %s\n", lstrlenA(buffer), wine_dbgstr_a(buffer));
 
+    memset(buffer, 'z', sizeof(buffer) - 1);
+    buffer[sizeof(buffer) - 1] = 0;
     flags = 0;
-    buffer[0] = 0xDE;
     res = pInternetGetConnectedStateExA(&flags, buffer, 1, 0);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(flags, "Expected at least one flag set\n");
-    ok(!buffer[0], "Expected 0 bytes, got %u\n", lstrlenA(buffer));
+    ok(!buffer[0], "Expected len 0, got %u: %s\n", lstrlenA(buffer), wine_dbgstr_a(buffer));
 }
 
 static void test_InternetGetConnectedStateExW(void)
@@ -1794,42 +1799,46 @@ static void test_InternetGetConnectedStateExW(void)
     ok(flags, "Expected at least one flag set\n");
 
     /* no space for complete string this time */
-    buffer[0] = 0;
+    wmemset(buffer, 'z', ARRAY_SIZE(buffer) - 1);
+    buffer[ARRAY_SIZE(buffer) - 1] = 0;
     flags = 0;
     res = pInternetGetConnectedStateExW(&flags, buffer, sz, 0);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(flags, "Expected at least one flag set\n");
     if (flags & INTERNET_CONNECTION_MODEM)
-        ok(!buffer[0], "Expected 0 bytes, got %u\n", lstrlenW(buffer));
+        ok(!buffer[0], "Expected len 0, got %u: %s\n", lstrlenW(buffer), wine_dbgstr_w(buffer));
     else
-        ok(sz - 1 == lstrlenW(buffer), "Expected %lu bytes, got %u\n", sz - 1, lstrlenW(buffer));
+        ok(sz - 1 == lstrlenW(buffer), "Expected len %lu, got %u: %s\n", sz - 1, lstrlenW(buffer), wine_dbgstr_w(buffer));
 
-    buffer[0] = 0;
+    wmemset(buffer, 'z', ARRAY_SIZE(buffer) - 1);
+    buffer[ARRAY_SIZE(buffer) - 1] = 0;
     flags = 0;
     res = pInternetGetConnectedStateExW(&flags, buffer, sz / 2, 0);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(flags, "Expected at least one flag set\n");
     if (flags & INTERNET_CONNECTION_MODEM)
-        ok(!buffer[0], "Expected 0 bytes, got %u\n", lstrlenW(buffer));
+        ok(!buffer[0], "Expected len 0, got %u: %s\n", lstrlenW(buffer), wine_dbgstr_w(buffer));
     else
-        ok(sz / 2 - 1 == lstrlenW(buffer), "Expected %lu bytes, got %u\n", sz / 2 - 1, lstrlenW(buffer));
+        ok(sz / 2 - 1 == lstrlenW(buffer), "Expected len %lu, got %u: %s\n", sz / 2 - 1, lstrlenW(buffer), wine_dbgstr_w(buffer));
 
-    buffer[0] = 0;
+    wmemset(buffer, 'z', ARRAY_SIZE(buffer) - 1);
+    buffer[ARRAY_SIZE(buffer) - 1] = 0;
     flags = 0;
     res = pInternetGetConnectedStateExW(&flags, buffer, 2, 0);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(flags, "Expected at least one flag set\n");
     if (flags & INTERNET_CONNECTION_MODEM)
-        ok(!buffer[0], "Expected 0 bytes, got %u\n", lstrlenW(buffer));
+        ok(!buffer[0], "Expected len 0, got %u: %s\n", lstrlenW(buffer), wine_dbgstr_w(buffer));
     else
-        ok(lstrlenW(buffer) == 1, "Expected 1 byte, got %u\n", lstrlenW(buffer));
+        ok(lstrlenW(buffer) == 1, "Expected len 1, got %u: %s\n", lstrlenW(buffer), wine_dbgstr_w(buffer));
 
-    buffer[0] = 0xDEAD;
+    wmemset(buffer, 'z', ARRAY_SIZE(buffer) - 1);
+    buffer[ARRAY_SIZE(buffer) - 1] = 0;
     flags = 0;
     res = pInternetGetConnectedStateExW(&flags, buffer, 1, 0);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(flags, "Expected at least one flag set\n");
-    ok(!buffer[0], "Expected 0 bytes, got %u\n", lstrlenW(buffer));
+    ok(!buffer[0], "Expected len 0, got %u: %s\n", lstrlenW(buffer), wine_dbgstr_w(buffer));
 }
 
 static void test_format_message(HMODULE hdll)
