@@ -3813,9 +3813,11 @@ static void test_swapchain_parameters(void)
 static void test_backbuffer_resize(void)
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
+    IDirect3DSwapChain9 *swapchain, *old_swapchain;
     IDirect3DSurface9 *backbuffer, *old_backbuffer;
+    IDirect3DDevice9Ex *device, *device2;
+    IDirect3DBaseTexture9 *texture;
     D3DSURFACE_DESC surface_desc;
-    IDirect3DDevice9Ex *device;
     unsigned int color;
     ULONG refcount;
     HWND window;
@@ -3861,6 +3863,16 @@ static void test_backbuffer_resize(void)
     color = get_pixel_color(device, 1, 1);
     ok(color == 0x00ff0000, "Got unexpected color 0x%08x.\n", color);
 
+    hr = IDirect3DDevice9_GetSwapChain(device, 0, &old_swapchain);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DSurface9_GetContainer(backbuffer, &IID_IDirect3DSwapChain9, (void **)&swapchain);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(swapchain == old_swapchain, "Swapchains didn't match.\n");
+    IDirect3DSwapChain9_Release(swapchain);
+    hr = IDirect3DSurface9_GetContainer(backbuffer, &IID_IDirect3DDevice9, (void **)&device2);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+
     present_parameters.BackBufferWidth = 800;
     present_parameters.BackBufferHeight = 600;
     present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
@@ -3877,6 +3889,27 @@ static void test_backbuffer_resize(void)
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#lx.\n", hr);
     todo_wine ok(surface_desc.Width == 640, "Got unexpected width %u.\n", surface_desc.Width);
     todo_wine ok(surface_desc.Height == 480, "Got unexpected height %u.\n", surface_desc.Height);
+
+    hr = IDirect3DDevice9_GetSwapChain(device, 0, &swapchain);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(swapchain == old_swapchain, "Swapchains didn't match.\n");
+    IDirect3DSwapChain9_Release(swapchain);
+    IDirect3DSwapChain9_Release(old_swapchain);
+
+    hr = IDirect3DSurface9_GetContainer(old_backbuffer, &IID_IDirect3DSwapChain9, (void **)&swapchain);
+    todo_wine ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+    if (hr == S_OK)
+        IDirect3DSwapChain9_Release(swapchain);
+    hr = IDirect3DSurface9_GetContainer(old_backbuffer, &IID_IDirect3DBaseTexture9, (void **)&texture);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+    hr = IDirect3DSurface9_GetContainer(old_backbuffer, &IID_IDirect3DDevice9, (void **)&device2);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(device2 == device, "Devices didn't match.\n");
+        IDirect3DDevice9_Release(device2);
+    }
+
     refcount = IDirect3DSurface9_Release(old_backbuffer);
     ok(!refcount, "Surface has %lu references left.\n", refcount);
 
