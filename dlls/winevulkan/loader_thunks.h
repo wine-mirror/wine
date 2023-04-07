@@ -509,6 +509,7 @@ enum unix_call
     unix_vkInitializePerformanceApiINTEL,
     unix_vkInvalidateMappedMemoryRanges,
     unix_vkMapMemory,
+    unix_vkMapMemory2KHR,
     unix_vkMergePipelineCaches,
     unix_vkMergeValidationCachesEXT,
     unix_vkQueueBeginDebugUtilsLabelEXT,
@@ -545,6 +546,7 @@ enum unix_call
     unix_vkTrimCommandPoolKHR,
     unix_vkUninitializePerformanceApiINTEL,
     unix_vkUnmapMemory,
+    unix_vkUnmapMemory2KHR,
     unix_vkUpdateDescriptorSetWithTemplate,
     unix_vkUpdateDescriptorSetWithTemplateKHR,
     unix_vkUpdateDescriptorSets,
@@ -4398,6 +4400,14 @@ struct vkMapMemory_params
     VkResult result;
 };
 
+struct vkMapMemory2KHR_params
+{
+    VkDevice device;
+    const VkMemoryMapInfoKHR *pMemoryMapInfo;
+    void **ppData;
+    VkResult result;
+};
+
 struct vkMergePipelineCaches_params
 {
     VkDevice device;
@@ -4663,6 +4673,13 @@ struct vkUnmapMemory_params
 {
     VkDevice device;
     VkDeviceMemory DECLSPEC_ALIGN(8) memory;
+};
+
+struct vkUnmapMemory2KHR_params
+{
+    VkDevice device;
+    const VkMemoryUnmapInfoKHR *pMemoryUnmapInfo;
+    VkResult result;
 };
 
 struct vkUpdateDescriptorSetWithTemplate_params

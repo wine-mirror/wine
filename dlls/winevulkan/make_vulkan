@@ -100,7 +100,6 @@ UNSUPPORTED_EXTENSIONS = [
     "VK_GOOGLE_display_timing",
     "VK_KHR_external_fence_win32",
     "VK_KHR_external_semaphore_win32",
-    "VK_KHR_map_memory2", # Needs wow64 handling and is useless for now.
     # Relates to external_semaphore and needs type conversions in bitflags.
     "VK_KHR_shared_presentable_image", # Needs WSI work.
     "VK_KHR_video_queue", # TODO Video extensions use separate headers + xml
@@ -215,7 +214,9 @@ FUNCTION_OVERRIDES = {
     "vkAllocateMemory" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
     "vkFreeMemory" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
     "vkMapMemory" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
+    "vkMapMemory2KHR" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
     "vkUnmapMemory" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
+    "vkUnmapMemory2KHR" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
     "vkCreateBuffer" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
     "vkCreateImage" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
 

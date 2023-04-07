@@ -55,7 +55,9 @@ VkResult wine_vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevice phys
 VkResult wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *pSurfaceInfo, VkSurfaceCapabilities2KHR *pSurfaceCapabilities) DECLSPEC_HIDDEN;
 VkResult wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR *pSurfaceCapabilities) DECLSPEC_HIDDEN;
 VkResult wine_vkMapMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags, void **ppData) DECLSPEC_HIDDEN;
+VkResult wine_vkMapMemory2KHR(VkDevice device, const VkMemoryMapInfoKHR *pMemoryMapInfo, void **ppData) DECLSPEC_HIDDEN;
 void wine_vkUnmapMemory(VkDevice device, VkDeviceMemory memory) DECLSPEC_HIDDEN;
+VkResult wine_vkUnmapMemory2KHR(VkDevice device, const VkMemoryUnmapInfoKHR *pMemoryUnmapInfo) DECLSPEC_HIDDEN;
 
 /* For use by vkDevice and children */
 struct vulkan_device_funcs
@@ -490,6 +492,7 @@ struct vulkan_device_funcs
     VkResult (*p_vkInitializePerformanceApiINTEL)(VkDevice, const VkInitializePerformanceApiInfoINTEL *);
     VkResult (*p_vkInvalidateMappedMemoryRanges)(VkDevice, uint32_t, const VkMappedMemoryRange *);
     VkResult (*p_vkMapMemory)(VkDevice, VkDeviceMemory, VkDeviceSize, VkDeviceSize, VkMemoryMapFlags, void **);
+    VkResult (*p_vkMapMemory2KHR)(VkDevice, const VkMemoryMapInfoKHR *, void **);
     VkResult (*p_vkMergePipelineCaches)(VkDevice, VkPipelineCache, uint32_t, const VkPipelineCache *);
     VkResult (*p_vkMergeValidationCachesEXT)(VkDevice, VkValidationCacheEXT, uint32_t, const VkValidationCacheEXT *);
     void (*p_vkQueueBeginDebugUtilsLabelEXT)(VkQueue, const VkDebugUtilsLabelEXT *);
@@ -525,6 +528,7 @@ struct vulkan_device_funcs
     void (*p_vkTrimCommandPoolKHR)(VkDevice, VkCommandPool, VkCommandPoolTrimFlags);
     void (*p_vkUninitializePerformanceApiINTEL)(VkDevice);
     void (*p_vkUnmapMemory)(VkDevice, VkDeviceMemory);
+    VkResult (*p_vkUnmapMemory2KHR)(VkDevice, const VkMemoryUnmapInfoKHR *);
     void (*p_vkUpdateDescriptorSetWithTemplate)(VkDevice, VkDescriptorSet, VkDescriptorUpdateTemplate, const void *);
     void (*p_vkUpdateDescriptorSetWithTemplateKHR)(VkDevice, VkDescriptorSet, VkDescriptorUpdateTemplate, const void *);
     void (*p_vkUpdateDescriptorSets)(VkDevice, uint32_t, const VkWriteDescriptorSet *, uint32_t, const VkCopyDescriptorSet *);
@@ -1025,6 +1029,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkInitializePerformanceApiINTEL) \
     USE_VK_FUNC(vkInvalidateMappedMemoryRanges) \
     USE_VK_FUNC(vkMapMemory) \
+    USE_VK_FUNC(vkMapMemory2KHR) \
     USE_VK_FUNC(vkMergePipelineCaches) \
     USE_VK_FUNC(vkMergeValidationCachesEXT) \
     USE_VK_FUNC(vkQueueBeginDebugUtilsLabelEXT) \
@@ -1060,6 +1065,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkTrimCommandPoolKHR) \
     USE_VK_FUNC(vkUninitializePerformanceApiINTEL) \
     USE_VK_FUNC(vkUnmapMemory) \
+    USE_VK_FUNC(vkUnmapMemory2KHR) \
     USE_VK_FUNC(vkUpdateDescriptorSetWithTemplate) \
     USE_VK_FUNC(vkUpdateDescriptorSetWithTemplateKHR) \
     USE_VK_FUNC(vkUpdateDescriptorSets) \

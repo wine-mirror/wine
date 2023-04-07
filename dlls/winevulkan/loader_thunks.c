@@ -5228,6 +5228,18 @@ VkResult WINAPI vkMapMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize
     return params.result;
 }
 
+VkResult WINAPI vkMapMemory2KHR(VkDevice device, const VkMemoryMapInfoKHR *pMemoryMapInfo, void **ppData)
+{
+    struct vkMapMemory2KHR_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pMemoryMapInfo = pMemoryMapInfo;
+    params.ppData = ppData;
+    status = UNIX_CALL(vkMapMemory2KHR, &params);
+    assert(!status);
+    return params.result;
+}
+
 VkResult WINAPI vkMergePipelineCaches(VkDevice device, VkPipelineCache dstCache, uint32_t srcCacheCount, const VkPipelineCache *pSrcCaches)
 {
     struct vkMergePipelineCaches_params params;
@@ -5637,6 +5649,17 @@ void WINAPI vkUnmapMemory(VkDevice device, VkDeviceMemory memory)
     params.memory = memory;
     status = UNIX_CALL(vkUnmapMemory, &params);
     assert(!status);
+}
+
+VkResult WINAPI vkUnmapMemory2KHR(VkDevice device, const VkMemoryUnmapInfoKHR *pMemoryUnmapInfo)
+{
+    struct vkUnmapMemory2KHR_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pMemoryUnmapInfo = pMemoryUnmapInfo;
+    status = UNIX_CALL(vkUnmapMemory2KHR, &params);
+    assert(!status);
+    return params.result;
 }
 
 void WINAPI vkUpdateDescriptorSetWithTemplate(VkDevice device, VkDescriptorSet descriptorSet, VkDescriptorUpdateTemplate descriptorUpdateTemplate, const void *pData)
@@ -6188,6 +6211,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkInitializePerformanceApiINTEL", vkInitializePerformanceApiINTEL},
     {"vkInvalidateMappedMemoryRanges", vkInvalidateMappedMemoryRanges},
     {"vkMapMemory", vkMapMemory},
+    {"vkMapMemory2KHR", vkMapMemory2KHR},
     {"vkMergePipelineCaches", vkMergePipelineCaches},
     {"vkMergeValidationCachesEXT", vkMergeValidationCachesEXT},
     {"vkQueueBeginDebugUtilsLabelEXT", vkQueueBeginDebugUtilsLabelEXT},
@@ -6223,6 +6247,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkTrimCommandPoolKHR", vkTrimCommandPoolKHR},
     {"vkUninitializePerformanceApiINTEL", vkUninitializePerformanceApiINTEL},
     {"vkUnmapMemory", vkUnmapMemory},
+    {"vkUnmapMemory2KHR", vkUnmapMemory2KHR},
     {"vkUpdateDescriptorSetWithTemplate", vkUpdateDescriptorSetWithTemplate},
     {"vkUpdateDescriptorSetWithTemplateKHR", vkUpdateDescriptorSetWithTemplateKHR},
     {"vkUpdateDescriptorSets", vkUpdateDescriptorSets},

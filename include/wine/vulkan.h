@@ -403,6 +403,8 @@
 #define VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME "VK_KHR_deferred_host_operations"
 #define VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_SPEC_VERSION 1
 #define VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME "VK_KHR_pipeline_executable_properties"
+#define VK_KHR_MAP_MEMORY_2_SPEC_VERSION 1
+#define VK_KHR_MAP_MEMORY_2_EXTENSION_NAME "VK_KHR_map_memory2"
 #define VK_EXT_SHADER_ATOMIC_FLOAT_2_SPEC_VERSION 1
 #define VK_EXT_SHADER_ATOMIC_FLOAT_2_EXTENSION_NAME "VK_EXT_shader_atomic_float2"
 #define VK_EXT_SURFACE_MAINTENANCE_1_SPEC_VERSION 1
@@ -4154,6 +4156,8 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PIPELINE_EXECUTABLE_INFO_KHR = 1000269003,
     VK_STRUCTURE_TYPE_PIPELINE_EXECUTABLE_STATISTIC_KHR = 1000269004,
     VK_STRUCTURE_TYPE_PIPELINE_EXECUTABLE_INTERNAL_REPRESENTATION_KHR = 1000269005,
+    VK_STRUCTURE_TYPE_MEMORY_MAP_INFO_KHR = 1000271000,
+    VK_STRUCTURE_TYPE_MEMORY_UNMAP_INFO_KHR = 1000271001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT_2_FEATURES_EXT = 1000273000,
     VK_STRUCTURE_TYPE_SURFACE_PRESENT_MODE_EXT = 1000274000,
     VK_STRUCTURE_TYPE_SURFACE_PRESENT_SCALING_CAPABILITIES_EXT = 1000274001,
@@ -6519,6 +6523,16 @@ typedef struct VkMemoryHostPointerPropertiesEXT
     uint32_t memoryTypeBits;
 } VkMemoryHostPointerPropertiesEXT;
 
+typedef struct VkMemoryMapInfoKHR
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkMemoryMapFlags flags;
+    VkDeviceMemory WINE_VK_ALIGN(8) memory;
+    VkDeviceSize WINE_VK_ALIGN(8) offset;
+    VkDeviceSize WINE_VK_ALIGN(8) size;
+} VkMemoryMapInfoKHR;
+
 typedef struct VkMemoryOpaqueCaptureAddressAllocateInfo
 {
     VkStructureType sType;
@@ -6555,6 +6569,14 @@ typedef struct VkMemoryType
     VkMemoryPropertyFlags propertyFlags;
     uint32_t heapIndex;
 } VkMemoryType;
+
+typedef struct VkMemoryUnmapInfoKHR
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkMemoryUnmapFlagsKHR flags;
+    VkDeviceMemory WINE_VK_ALIGN(8) memory;
+} VkMemoryUnmapInfoKHR;
 
 typedef struct VkMemoryWin32HandlePropertiesKHR
 {
@@ -12282,6 +12304,7 @@ typedef VkResult (VKAPI_PTR *PFN_vkGetValidationCacheDataEXT)(VkDevice, VkValida
 typedef VkResult (VKAPI_PTR *PFN_vkInitializePerformanceApiINTEL)(VkDevice, const VkInitializePerformanceApiInfoINTEL *);
 typedef VkResult (VKAPI_PTR *PFN_vkInvalidateMappedMemoryRanges)(VkDevice, uint32_t, const VkMappedMemoryRange *);
 typedef VkResult (VKAPI_PTR *PFN_vkMapMemory)(VkDevice, VkDeviceMemory, VkDeviceSize, VkDeviceSize, VkMemoryMapFlags, void **);
+typedef VkResult (VKAPI_PTR *PFN_vkMapMemory2KHR)(VkDevice, const VkMemoryMapInfoKHR *, void **);
 typedef VkResult (VKAPI_PTR *PFN_vkMergePipelineCaches)(VkDevice, VkPipelineCache, uint32_t, const VkPipelineCache *);
 typedef VkResult (VKAPI_PTR *PFN_vkMergeValidationCachesEXT)(VkDevice, VkValidationCacheEXT, uint32_t, const VkValidationCacheEXT *);
 typedef void (VKAPI_PTR *PFN_vkQueueBeginDebugUtilsLabelEXT)(VkQueue, const VkDebugUtilsLabelEXT *);
@@ -12318,6 +12341,7 @@ typedef void (VKAPI_PTR *PFN_vkTrimCommandPool)(VkDevice, VkCommandPool, VkComma
 typedef void (VKAPI_PTR *PFN_vkTrimCommandPoolKHR)(VkDevice, VkCommandPool, VkCommandPoolTrimFlags);
 typedef void (VKAPI_PTR *PFN_vkUninitializePerformanceApiINTEL)(VkDevice);
 typedef void (VKAPI_PTR *PFN_vkUnmapMemory)(VkDevice, VkDeviceMemory);
+typedef VkResult (VKAPI_PTR *PFN_vkUnmapMemory2KHR)(VkDevice, const VkMemoryUnmapInfoKHR *);
 typedef void (VKAPI_PTR *PFN_vkUpdateDescriptorSetWithTemplate)(VkDevice, VkDescriptorSet, VkDescriptorUpdateTemplate, const void *);
 typedef void (VKAPI_PTR *PFN_vkUpdateDescriptorSetWithTemplateKHR)(VkDevice, VkDescriptorSet, VkDescriptorUpdateTemplate, const void *);
 typedef void (VKAPI_PTR *PFN_vkUpdateDescriptorSets)(VkDevice, uint32_t, const VkWriteDescriptorSet *, uint32_t, const VkCopyDescriptorSet *);
@@ -12826,6 +12850,7 @@ VkResult VKAPI_CALL vkGetValidationCacheDataEXT(VkDevice device, VkValidationCac
 VkResult VKAPI_CALL vkInitializePerformanceApiINTEL(VkDevice device, const VkInitializePerformanceApiInfoINTEL *pInitializeInfo);
 VkResult VKAPI_CALL vkInvalidateMappedMemoryRanges(VkDevice device, uint32_t memoryRangeCount, const VkMappedMemoryRange *pMemoryRanges);
 VkResult VKAPI_CALL vkMapMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags, void **ppData);
+VkResult VKAPI_CALL vkMapMemory2KHR(VkDevice device, const VkMemoryMapInfoKHR *pMemoryMapInfo, void **ppData);
 VkResult VKAPI_CALL vkMergePipelineCaches(VkDevice device, VkPipelineCache dstCache, uint32_t srcCacheCount, const VkPipelineCache *pSrcCaches);
 VkResult VKAPI_CALL vkMergeValidationCachesEXT(VkDevice device, VkValidationCacheEXT dstCache, uint32_t srcCacheCount, const VkValidationCacheEXT *pSrcCaches);
 void VKAPI_CALL vkQueueBeginDebugUtilsLabelEXT(VkQueue queue, const VkDebugUtilsLabelEXT *pLabelInfo);
@@ -12862,6 +12887,7 @@ void VKAPI_CALL vkTrimCommandPool(VkDevice device, VkCommandPool commandPool, Vk
 void VKAPI_CALL vkTrimCommandPoolKHR(VkDevice device, VkCommandPool commandPool, VkCommandPoolTrimFlags flags);
 void VKAPI_CALL vkUninitializePerformanceApiINTEL(VkDevice device);
 void VKAPI_CALL vkUnmapMemory(VkDevice device, VkDeviceMemory memory);
+VkResult VKAPI_CALL vkUnmapMemory2KHR(VkDevice device, const VkMemoryUnmapInfoKHR *pMemoryUnmapInfo);
 void VKAPI_CALL vkUpdateDescriptorSetWithTemplate(VkDevice device, VkDescriptorSet descriptorSet, VkDescriptorUpdateTemplate descriptorUpdateTemplate, const void *pData);
 void VKAPI_CALL vkUpdateDescriptorSetWithTemplateKHR(VkDevice device, VkDescriptorSet descriptorSet, VkDescriptorUpdateTemplate descriptorUpdateTemplate, const void *pData);
 void VKAPI_CALL vkUpdateDescriptorSets(VkDevice device, uint32_t descriptorWriteCount, const VkWriteDescriptorSet *pDescriptorWrites, uint32_t descriptorCopyCount, const VkCopyDescriptorSet *pDescriptorCopies);

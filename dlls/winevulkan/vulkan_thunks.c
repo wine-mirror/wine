@@ -5927,6 +5927,16 @@ typedef struct VkInitializePerformanceApiInfoINTEL32
     PTR32 pUserData;
 } VkInitializePerformanceApiInfoINTEL32;
 
+typedef struct VkMemoryMapInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkMemoryMapFlags flags;
+    VkDeviceMemory DECLSPEC_ALIGN(8) memory;
+    VkDeviceSize DECLSPEC_ALIGN(8) offset;
+    VkDeviceSize DECLSPEC_ALIGN(8) size;
+} VkMemoryMapInfoKHR32;
+
 typedef struct VkSparseMemoryBind32
 {
     VkDeviceSize DECLSPEC_ALIGN(8) resourceOffset;
@@ -6204,6 +6214,14 @@ typedef struct VkDebugUtilsMessengerCallbackDataEXT32
     uint32_t objectCount;
     PTR32 pObjects;
 } VkDebugUtilsMessengerCallbackDataEXT32;
+
+typedef struct VkMemoryUnmapInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkMemoryUnmapFlagsKHR flags;
+    VkDeviceMemory DECLSPEC_ALIGN(8) memory;
+} VkMemoryUnmapInfoKHR32;
 
 typedef struct VkCopyDescriptorSet32
 {
@@ -24915,6 +24933,20 @@ static inline void convert_VkInitializePerformanceApiInfoINTEL_win32_to_host(con
         FIXME("Unexpected pNext\n");
 }
 
+static inline void convert_VkMemoryMapInfoKHR_win32_to_unwrapped_host(const VkMemoryMapInfoKHR32 *in, VkMemoryMapInfoKHR *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->flags = in->flags;
+    out->memory = in->memory;
+    out->offset = in->offset;
+    out->size = in->size;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
 #ifdef _WIN64
 static inline void convert_VkSparseMemoryBind_win64_to_host(const VkSparseMemoryBind *in, VkSparseMemoryBind *out)
 {
@@ -25955,6 +25987,18 @@ static inline void convert_VkDebugUtilsMessengerCallbackDataEXT_win32_to_host(st
             break;
         }
     }
+}
+
+static inline void convert_VkMemoryUnmapInfoKHR_win32_to_unwrapped_host(const VkMemoryUnmapInfoKHR32 *in, VkMemoryUnmapInfoKHR *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->flags = in->flags;
+    out->memory = in->memory;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkCopyDescriptorSet_win32_to_host(const VkCopyDescriptorSet32 *in, VkCopyDescriptorSet *out)
@@ -39519,6 +39563,36 @@ static NTSTATUS thunk32_vkMapMemory(void *args)
 }
 
 #ifdef _WIN64
+static NTSTATUS thunk64_vkMapMemory2KHR(void *args)
+{
+    struct vkMapMemory2KHR_params *params = args;
+
+    TRACE("%p, %p, %p\n", params->device, params->pMemoryMapInfo, params->ppData);
+
+    params->result = wine_vkMapMemory2KHR(params->device, params->pMemoryMapInfo, params->ppData);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkMapMemory2KHR(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        PTR32 pMemoryMapInfo;
+        PTR32 ppData;
+        VkResult result;
+    } *params = args;
+    VkMemoryMapInfoKHR pMemoryMapInfo_host;
+
+    TRACE("%#x, %#x, %#x\n", params->device, params->pMemoryMapInfo, params->ppData);
+
+    convert_VkMemoryMapInfoKHR_win32_to_unwrapped_host((const VkMemoryMapInfoKHR32 *)UlongToPtr(params->pMemoryMapInfo), &pMemoryMapInfo_host);
+    params->result = wine_vkMapMemory2KHR((VkDevice)UlongToPtr(params->device), &pMemoryMapInfo_host, (void **)UlongToPtr(params->ppData));
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
 static NTSTATUS thunk64_vkMergePipelineCaches(void *args)
 {
     struct vkMergePipelineCaches_params *params = args;
@@ -40584,6 +40658,35 @@ static NTSTATUS thunk32_vkUnmapMemory(void *args)
 }
 
 #ifdef _WIN64
+static NTSTATUS thunk64_vkUnmapMemory2KHR(void *args)
+{
+    struct vkUnmapMemory2KHR_params *params = args;
+
+    TRACE("%p, %p\n", params->device, params->pMemoryUnmapInfo);
+
+    params->result = wine_vkUnmapMemory2KHR(params->device, params->pMemoryUnmapInfo);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkUnmapMemory2KHR(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        PTR32 pMemoryUnmapInfo;
+        VkResult result;
+    } *params = args;
+    VkMemoryUnmapInfoKHR pMemoryUnmapInfo_host;
+
+    TRACE("%#x, %#x\n", params->device, params->pMemoryUnmapInfo);
+
+    convert_VkMemoryUnmapInfoKHR_win32_to_unwrapped_host((const VkMemoryUnmapInfoKHR32 *)UlongToPtr(params->pMemoryUnmapInfo), &pMemoryUnmapInfo_host);
+    params->result = wine_vkUnmapMemory2KHR((VkDevice)UlongToPtr(params->device), &pMemoryUnmapInfo_host);
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
 static void thunk64_vkUpdateDescriptorSetWithTemplate(void *args)
 {
     struct vkUpdateDescriptorSetWithTemplate_params *params = args;
@@ -41009,6 +41112,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_maintenance2",
     "VK_KHR_maintenance3",
     "VK_KHR_maintenance4",
+    "VK_KHR_map_memory2",
     "VK_KHR_multiview",
     "VK_KHR_performance_query",
     "VK_KHR_pipeline_executable_properties",
@@ -41651,6 +41755,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkInitializePerformanceApiINTEL,
     thunk64_vkInvalidateMappedMemoryRanges,
     thunk64_vkMapMemory,
+    thunk64_vkMapMemory2KHR,
     thunk64_vkMergePipelineCaches,
     thunk64_vkMergeValidationCachesEXT,
     thunk64_vkQueueBeginDebugUtilsLabelEXT,
@@ -41687,6 +41792,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkTrimCommandPoolKHR,
     thunk64_vkUninitializePerformanceApiINTEL,
     thunk64_vkUnmapMemory,
+    thunk64_vkUnmapMemory2KHR,
     (void *)thunk64_vkUpdateDescriptorSetWithTemplate,
     thunk64_vkUpdateDescriptorSetWithTemplateKHR,
     (void *)thunk64_vkUpdateDescriptorSets,
@@ -42202,6 +42308,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkInitializePerformanceApiINTEL,
     thunk32_vkInvalidateMappedMemoryRanges,
     thunk32_vkMapMemory,
+    thunk32_vkMapMemory2KHR,
     thunk32_vkMergePipelineCaches,
     thunk32_vkMergeValidationCachesEXT,
     thunk32_vkQueueBeginDebugUtilsLabelEXT,
@@ -42238,6 +42345,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkTrimCommandPoolKHR,
     thunk32_vkUninitializePerformanceApiINTEL,
     thunk32_vkUnmapMemory,
+    thunk32_vkUnmapMemory2KHR,
     (void *)thunk32_vkUpdateDescriptorSetWithTemplate,
     thunk32_vkUpdateDescriptorSetWithTemplateKHR,
     (void *)thunk32_vkUpdateDescriptorSets,
