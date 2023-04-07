@@ -1696,7 +1696,7 @@ static void test_InternetGetConnectedStateExA(void)
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(flags, "Expected at least one flag set\n");
 
-    /* no space for complete string this time */
+    /* no space for complete string this time, double-byte characters get truncated */
     memset(buffer, 'z', sizeof(buffer) - 1);
     buffer[sizeof(buffer) - 1] = 0;
     flags = 0;

@@ -1296,8 +1296,12 @@ BOOL WINAPI InternetGetConnectedStateExA(LPDWORD lpdwStatus, LPSTR lpszConnectio
     rc = InternetGetConnectedStateExW(lpdwStatus,lpwszConnectionName, dwNameLen,
                                       dwReserved);
     if (rc && lpwszConnectionName)
+    {
         WideCharToMultiByte(CP_ACP,0,lpwszConnectionName,-1,lpszConnectionName,
                             dwNameLen, NULL, NULL);
+        /* Yes, blindly truncate double-byte characters */
+        lpszConnectionName[dwNameLen - 1] = '\0';
+    }
 
     free(lpwszConnectionName);
     return rc;
