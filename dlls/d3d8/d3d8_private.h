@@ -199,6 +199,7 @@ struct d3d8_surface
     IDirect3DDevice8 *parent_device;
     IUnknown *container;
     struct d3d8_texture *texture;
+    struct wined3d_swapchain *swapchain;
 };
 
 struct wined3d_rendertarget_view *d3d8_surface_acquire_rendertarget_view(struct d3d8_surface *surface) DECLSPEC_HIDDEN;
