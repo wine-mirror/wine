@@ -1759,6 +1759,11 @@ static void test_InternetGetConnectedStateExW(void)
     res = pInternetGetConnectedStateExW(NULL, NULL, 0, 0);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
 
+    SetLastError(0xdeadbeef);
+    res = pInternetGetConnectedStateExW(NULL, NULL, 0, 1);
+    ok(res == FALSE, "Expected TRUE, got %d\n", res);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Unexpected gle %lu\n", GetLastError());
+
     flags = 0;
     res = pInternetGetConnectedStateExW(&flags, NULL, 0, 0);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
