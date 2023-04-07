@@ -1844,20 +1844,16 @@ DWORD WINAPI ImmGetConversionListW( HKL hkl, HIMC himc, const WCHAR *srcW, CANDI
 /***********************************************************************
  *		ImmGetConversionStatus (IMM32.@)
  */
-BOOL WINAPI ImmGetConversionStatus(
-  HIMC hIMC, LPDWORD lpfdwConversion, LPDWORD lpfdwSentence)
+BOOL WINAPI ImmGetConversionStatus( HIMC himc, DWORD *conversion, DWORD *sentence )
 {
-    struct imc *data = get_imc_data( hIMC );
+    INPUTCONTEXT *ctx;
 
-    TRACE("%p %p %p\n", hIMC, lpfdwConversion, lpfdwSentence);
+    TRACE( "himc %p, conversion %p, sentence %p\n", himc, conversion, sentence );
 
-    if (!data)
-        return FALSE;
-
-    if (lpfdwConversion)
-        *lpfdwConversion = data->IMC.fdwConversion;
-    if (lpfdwSentence)
-        *lpfdwSentence = data->IMC.fdwSentence;
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
+    if (conversion) *conversion = ctx->fdwConversion;
+    if (sentence) *sentence = ctx->fdwSentence;
+    ImmUnlockIMC( himc );
 
     return TRUE;
 }
