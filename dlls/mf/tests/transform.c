@@ -3845,7 +3845,7 @@ static void test_h264_decoder(void)
     todo_wine
     ok(i == 2, "got %lu iterations\n", i);
     todo_wine
-    ok(h264_encoded_data_len == 1180, "got h264_encoded_data_len %lu\n", h264_encoded_data_len);
+    ok(h264_encoded_data_len == 2425, "got h264_encoded_data_len %lu\n", h264_encoded_data_len);
     ok(hr == MF_E_TRANSFORM_STREAM_CHANGE, "ProcessOutput returned %#lx\n", hr);
     ok(output_status == MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE, "got output[0].dwStatus %#lx\n", output_status);
     hr = IMFSample_GetTotalLength(output_sample, &length);

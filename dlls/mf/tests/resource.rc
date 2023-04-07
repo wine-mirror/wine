@@ -55,7 +55,7 @@ mp3encdata.bin RCDATA mp3encdata.bin
 mp3decdata.bin RCDATA mp3decdata.bin
 
 /* Generated with:
- *  gst-launch-1.0 videotestsrc num-buffers=60 pattern=smpte100 ! \
+ *  gst-launch-1.0 videotestsrc num-buffers=120 pattern=smpte100 ! \
  *      video/x-raw,format=I420,width=84,height=82,framerate=30000/1001 ! \
  *      videoflip method=clockwise ! videoconvert ! \
  *      x264enc ! filesink location=dlls/mf/tests/h264data.bin
