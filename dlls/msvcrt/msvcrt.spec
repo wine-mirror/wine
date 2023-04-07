@@ -1254,7 +1254,7 @@
 @ cdecl asctime(ptr)
 @ cdecl asctime_s(ptr long ptr)
 @ cdecl asin(double) MSVCRT_asin
-@ cdecl atan(double)
+@ cdecl atan(double) MSVCRT_atan
 @ cdecl atan2(double double)
 @ cdecl -arch=!i386 asinf(float)
 @ cdecl -arch=!i386 atanf(float) MSVCRT_atanf
