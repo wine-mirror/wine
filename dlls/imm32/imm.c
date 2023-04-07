@@ -1919,20 +1919,18 @@ UINT WINAPI ImmGetIMEFileNameW( HKL hkl, WCHAR *buffer, UINT length )
 /***********************************************************************
  *		ImmGetOpenStatus (IMM32.@)
  */
-BOOL WINAPI ImmGetOpenStatus(HIMC hIMC)
+BOOL WINAPI ImmGetOpenStatus( HIMC himc )
 {
-    struct imc *data = get_imc_data( hIMC );
-    static int i;
+    INPUTCONTEXT *ctx;
+    BOOL status;
 
-    if (!data)
-        return FALSE;
+    TRACE( "himc %p\n", himc );
 
-    TRACE("(%p): semi-stub\n", hIMC);
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
+    status = ctx->fOpen;
+    ImmUnlockIMC( himc );
 
-    if (!i++)
-      FIXME("(%p): semi-stub\n", hIMC);
-
-  return data->IMC.fOpen;
+    return status;
 }
 
 /***********************************************************************
