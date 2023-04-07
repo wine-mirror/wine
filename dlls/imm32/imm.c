@@ -39,6 +39,13 @@ UINT WM_MSIME_RECONVERT;
 UINT WM_MSIME_QUERYPOSITION;
 UINT WM_MSIME_DOCUMENTFEED;
 
+struct imc_entry
+{
+    HIMC himc;
+    INPUTCONTEXT context;
+    struct list entry;
+};
+
 struct ime
 {
     LONG refcount; /* guarded by ime_cs */
@@ -49,6 +56,7 @@ struct ime
 
     IMEINFO info;
     WCHAR ui_class[17];
+    struct list input_contexts;
 
     BOOL (WINAPI *pImeInquire)(IMEINFO *, void *, DWORD);
     BOOL (WINAPI *pImeConfigure)(HKL, HWND, DWORD, void *);
@@ -435,16 +443,21 @@ static struct ime *find_ime_from_hkl( HKL hkl )
 
 BOOL WINAPI ImmFreeLayout( HKL hkl )
 {
+    struct imc_entry *imc_entry, *imc_next;
     struct ime *ime;
 
     TRACE( "hkl %p\n", hkl );
 
     EnterCriticalSection( &ime_cs );
-    if ((ime = find_ime_from_hkl( hkl )) && ime->refcount) ime = NULL;
-    if (ime)
+    if ((ime = find_ime_from_hkl( hkl )))
     {
         list_remove( &ime->entry );
         if (!ime->pImeDestroy( 0 )) WARN( "ImeDestroy failed\n" );
+        LIST_FOR_EACH_ENTRY_SAFE( imc_entry, imc_next, &ime->input_contexts, struct imc_entry, entry )
+        {
+            ImmDestroyIMCC( imc_entry->context.hPrivate );
+            free( imc_entry );
+        }
     }
     LeaveCriticalSection( &ime_cs );
     if (!ime) return TRUE;
@@ -514,6 +527,7 @@ BOOL WINAPI ImmLoadIME( HKL hkl )
 
     if (ime_is_unicode( ime )) lstrcpynW( ime->ui_class, buffer, ARRAY_SIZE(ime->ui_class) );
     else MultiByteToWideChar( CP_ACP, 0, (char *)buffer, -1, ime->ui_class, ARRAY_SIZE(ime->ui_class) );
+    list_init( &ime->input_contexts );
 
     list_add_tail( &ime_list, &ime->entry );
     LeaveCriticalSection( &ime_cs );
@@ -562,13 +576,63 @@ static void ime_release( struct ime *ime )
     LeaveCriticalSection( &ime_cs );
 }
 
+static void ime_save_input_context( struct ime *ime, HIMC himc, INPUTCONTEXT *ctx )
+{
+    static INPUTCONTEXT default_input_context =
+    {
+        .cfCandForm = {{.dwIndex = -1}, {.dwIndex = -1}, {.dwIndex = -1}, {.dwIndex = -1}}
+    };
+    const INPUTCONTEXT old = *ctx;
+    struct imc_entry *entry;
+
+    *ctx = default_input_context;
+    ctx->hWnd = old.hWnd;
+    ctx->hMsgBuf = old.hMsgBuf;
+    ctx->hCompStr = old.hCompStr;
+    ctx->hCandInfo = old.hCandInfo;
+    ctx->hGuideLine = old.hGuideLine;
+    if (!(ctx->hPrivate = ImmCreateIMCC( ime->info.dwPrivateDataSize )))
+        WARN( "Failed to allocate IME private data\n" );
+
+    if (!(entry = malloc( sizeof(*entry) ))) return;
+    entry->himc = himc;
+    entry->context = *ctx;
+
+    EnterCriticalSection( &ime_cs );
+
+    /* reference the IME the first time the input context cache is used
+     * in the same way Windows does it, so it doesn't get destroyed and
+     * INPUTCONTEXT cache lost when keyboard layout is changed
+     */
+    if (list_empty( &ime->input_contexts )) ime->refcount++;
+
+    list_add_tail( &ime->input_contexts, &entry->entry );
+    LeaveCriticalSection( &ime_cs );
+}
+
+static INPUTCONTEXT *ime_find_input_context( struct ime *ime, HIMC himc )
+{
+    struct imc_entry *entry;
+
+    EnterCriticalSection( &ime_cs );
+    LIST_FOR_EACH_ENTRY( entry, &ime->input_contexts, struct imc_entry, entry )
+        if (entry->himc == himc) break;
+    LeaveCriticalSection( &ime_cs );
+
+    if (&entry->entry == &ime->input_contexts) return NULL;
+    return &entry->context;
+}
+
 static void imc_release_ime( struct imc *imc, struct ime *ime )
 {
+    INPUTCONTEXT *ctx;
+
     if (imc->ui_hwnd) DestroyWindow( imc->ui_hwnd );
     imc->ui_hwnd = NULL;
     ime->pImeSelect( imc->handle, FALSE );
+
+    if ((ctx = ime_find_input_context( ime, imc->handle ))) *ctx = imc->IMC;
     ime_release( ime );
-    ImmDestroyIMCC( imc->IMC.hPrivate );
 }
 
 static struct ime *imc_select_ime( struct imc *imc )
@@ -587,10 +651,11 @@ static struct ime *imc_select_ime( struct imc *imc )
         WARN( "Failed to acquire IME for HKL %p\n", hkl );
     else
     {
-        if (!(imc->IMC.hPrivate = ImmCreateIMCC( imc->ime->info.dwPrivateDataSize )))
-            WARN( "Failed to allocate IME private data for IMC %p\n", imc );
-        imc->IMC.fdwConversion = imc->ime->info.fdwConversionCaps;
-        imc->IMC.fdwSentence = imc->ime->info.fdwSentenceCaps;
+        INPUTCONTEXT *ctx;
+
+        if ((ctx = ime_find_input_context( imc->ime, imc->handle ))) imc->IMC = *ctx;
+        else ime_save_input_context( imc->ime, imc->handle, &imc->IMC );
+
         imc->ime->pImeSelect( imc->handle, TRUE );
     }
 
@@ -690,14 +755,20 @@ static void IMM_FreeThreadData(void)
 
 static void IMM_FreeAllImmHkl(void)
 {
-    struct ime *ime, *next;
+    struct ime *ime, *ime_next;
 
-    LIST_FOR_EACH_ENTRY_SAFE( ime, next, &ime_list, struct ime, entry )
+    LIST_FOR_EACH_ENTRY_SAFE( ime, ime_next, &ime_list, struct ime, entry )
     {
+        struct imc_entry *imc_entry, *imc_next;
         list_remove( &ime->entry );
 
         ime->pImeDestroy( 1 );
         FreeLibrary( ime->module );
+        LIST_FOR_EACH_ENTRY_SAFE( imc_entry, imc_next, &ime->input_contexts, struct imc_entry, entry )
+        {
+            ImmDestroyIMCC( imc_entry->context.hPrivate );
+            free( imc_entry );
+        }
 
         free( ime );
     }

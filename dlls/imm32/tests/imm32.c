@@ -4351,8 +4351,8 @@ static void test_ImmSetConversionStatus(void)
     todo_wine ok_eq( 0x200, ctx->fdwConversion, UINT, "%#x" );
     ok_eq( old_sentence, ctx->fdwSentence, UINT, "%#x" );
     ok_ret( 1, ImmActivateLayout( hkl ) );
-    todo_wine ok_eq( ~0, ctx->fdwConversion, UINT, "%#x" );
-    todo_wine ok_eq( ~0, ctx->fdwSentence, UINT, "%#x" );
+    ok_eq( ~0, ctx->fdwConversion, UINT, "%#x" );
+    ok_eq( ~0, ctx->fdwSentence, UINT, "%#x" );
     ok_ret( 1, ImmActivateLayout( default_hkl ) );
     todo_wine ok_eq( 0x200, ctx->fdwConversion, UINT, "%#x" );
     ok_eq( old_sentence, ctx->fdwSentence, UINT, "%#x" );
@@ -4506,8 +4506,8 @@ static void test_ImmSetOpenStatus(void)
 
     ok_ret( 1, ImmActivateLayout( default_hkl ) );
     status = ImmGetOpenStatus( default_himc );
-    todo_wine ok_eq( old_status, status, UINT, "%#x" );
-    todo_wine ok_eq( old_status, ctx->fOpen, UINT, "%#x" );
+    ok_eq( old_status, status, UINT, "%#x" );
+    ok_eq( old_status, ctx->fOpen, UINT, "%#x" );
     ok_ret( 1, ImmActivateLayout( hkl ) );
     status = ImmGetOpenStatus( default_himc );
     todo_wine ok_eq( 1, status, UINT, "%#x" );
@@ -4752,10 +4752,8 @@ static void test_ImmActivateLayout(void)
     ok_ret( 1, ImmActivateLayout( hkl ) );
     ok_seq( empty_sequence );
 
-    todo_ImeDestroy = TRUE; /* Wine doesn't leak the IME */
     ok_ret( 1, ImmActivateLayout( default_hkl ) );
     ok_seq( deactivate_seq );
-    todo_ImeDestroy = FALSE;
 
     ok_eq( default_hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
 
@@ -4786,9 +4784,7 @@ static void test_ImmActivateLayout(void)
     CHECK_CALLED( ImeInquire );
     activate_with_window_seq[1].himc = himc;
     ok_seq( activate_with_window_seq );
-    todo_ImeInquire = TRUE;
     ok_ret( 1, ImmLoadIME( hkl ) );
-    todo_ImeInquire = FALSE;
 
     ok_eq( hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
 
@@ -4797,9 +4793,7 @@ static void test_ImmActivateLayout(void)
     memset( ime_calls, 0, sizeof(ime_calls) );
     ime_call_count = 0;
 
-    todo_ImeDestroy = TRUE; /* Wine doesn't leak the IME */
     ok_eq( hkl, ActivateKeyboardLayout( default_hkl, 0 ), HKL, "%p" );
-    todo_ImeDestroy = FALSE;
     deactivate_with_window_seq[1].himc = himc;
     deactivate_with_window_seq[5].himc = himc;
     ok_seq( deactivate_with_window_seq );
@@ -4810,9 +4804,7 @@ static void test_ImmActivateLayout(void)
     ok_seq( empty_sequence );
 
 
-    todo_ImeInquire = TRUE;
     ok_eq( default_hkl, ActivateKeyboardLayout( hkl, 0 ), HKL, "%p" );
-    todo_ImeInquire = FALSE;
     ok_eq( hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
 
     ok_ret( 1, EnumThreadWindows( GetCurrentThreadId(), enum_thread_ime_windows, (LPARAM)&ime_windows ) );
@@ -4820,9 +4812,7 @@ static void test_ImmActivateLayout(void)
     ok( !!ime_windows.ime_ui_hwnd, "missing IME UI window\n" );
     ok_ret( (UINT_PTR)ime_windows.ime_hwnd, (UINT_PTR)GetParent( ime_windows.ime_ui_hwnd ) );
 
-    todo_ImeDestroy = TRUE; /* Wine doesn't leak the IME */
     ok_eq( hkl, ActivateKeyboardLayout( default_hkl, 0 ), HKL, "%p" );
-    todo_ImeDestroy = FALSE;
     ok_eq( default_hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
     process_messages();
 
