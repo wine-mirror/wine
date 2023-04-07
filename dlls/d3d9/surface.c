@@ -70,6 +70,8 @@ static ULONG WINAPI d3d9_surface_AddRef(IDirect3DSurface9 *iface)
         if (surface->wined3d_rtv)
             wined3d_rendertarget_view_incref(surface->wined3d_rtv);
         wined3d_texture_incref(surface->wined3d_texture);
+        if (surface->swapchain)
+            wined3d_swapchain_incref(surface->swapchain);
     }
 
     return refcount;
@@ -103,6 +105,10 @@ static ULONG WINAPI d3d9_surface_Release(IDirect3DSurface9 *iface)
 
         if (surface->wined3d_rtv)
             wined3d_rendertarget_view_decref(surface->wined3d_rtv);
+        if (surface->swapchain)
+            wined3d_swapchain_decref(surface->swapchain);
+        /* Releasing the texture may free the d3d9 object, so do not access it
+         * after releasing the texture. */
         wined3d_texture_decref(surface->wined3d_texture);
 
         /* Release the device last, as it may cause the device to be destroyed. */
@@ -363,6 +369,7 @@ struct d3d9_surface *d3d9_surface_create(struct wined3d_texture *wined3d_texture
     surface->container = container;
     surface->wined3d_texture = wined3d_texture;
     surface->sub_resource_idx = sub_resource_idx;
+    surface->swapchain = wined3d_texture_get_swapchain(wined3d_texture);
 
     if (surface->container && SUCCEEDED(IUnknown_QueryInterface(surface->container,
             &IID_IDirect3DBaseTexture9, (void **)&texture)))
