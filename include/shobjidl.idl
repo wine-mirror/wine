@@ -699,6 +699,7 @@ typedef char *LPVIEWSETTINGS;
 
 typedef [v1_enum] enum FOLDERFLAGS
 {
+    FWF_NONE                = 0x00000000,
     FWF_AUTOARRANGE         = 0x00000001,
     FWF_ABBREVIATEDNAMES    = 0x00000002,
     FWF_SNAPTOGRID          = 0x00000004,
