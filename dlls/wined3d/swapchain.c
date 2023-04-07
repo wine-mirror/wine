@@ -1429,15 +1429,63 @@ static HRESULT wined3d_swapchain_state_init(struct wined3d_swapchain_state *stat
     return hr;
 }
 
+static HRESULT swapchain_create_texture(struct wined3d_swapchain *swapchain,
+        bool front, bool depth, struct wined3d_texture **texture)
+{
+    const struct wined3d_swapchain_desc *swapchain_desc = &swapchain->state.desc;
+    struct wined3d_device *device = swapchain->device;
+    struct wined3d_resource_desc texture_desc;
+    uint32_t texture_flags = 0;
+    HRESULT hr;
+
+    texture_desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
+    texture_desc.format = depth ? swapchain_desc->auto_depth_stencil_format : swapchain_desc->backbuffer_format;
+    texture_desc.multisample_type = swapchain_desc->multisample_type;
+    texture_desc.multisample_quality = swapchain_desc->multisample_quality;
+    texture_desc.usage = 0;
+    if (!depth && (device->wined3d->flags & WINED3D_NO3D))
+        texture_desc.usage |= WINED3DUSAGE_OWNDC;
+    if (device->wined3d->flags & WINED3D_NO3D)
+        texture_desc.access = WINED3D_RESOURCE_ACCESS_CPU;
+    else
+        texture_desc.access = WINED3D_RESOURCE_ACCESS_GPU;
+    if (!depth && (swapchain_desc->flags & WINED3D_SWAPCHAIN_LOCKABLE_BACKBUFFER))
+        texture_desc.access |= WINED3D_RESOURCE_ACCESS_MAP_R | WINED3D_RESOURCE_ACCESS_MAP_W;
+    texture_desc.width = swapchain_desc->backbuffer_width;
+    texture_desc.height = swapchain_desc->backbuffer_height;
+    texture_desc.depth = 1;
+    texture_desc.size = 0;
+
+    if (front)
+        texture_desc.bind_flags = 0;
+    else if (depth)
+        texture_desc.bind_flags = WINED3D_BIND_DEPTH_STENCIL;
+    else
+        texture_desc.bind_flags = swapchain_desc->backbuffer_bind_flags;
+
+    if (swapchain_desc->flags & WINED3D_SWAPCHAIN_GDI_COMPATIBLE)
+        texture_flags |= WINED3D_TEXTURE_CREATE_GET_DC;
+
+    if (FAILED(hr = wined3d_texture_create(device, &texture_desc, 1, 1,
+            texture_flags, NULL, NULL, &wined3d_null_parent_ops, texture)))
+    {
+        WARN("Failed to create texture, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    if (!depth)
+        wined3d_texture_set_swapchain(*texture, swapchain);
+
+    return S_OK;
+}
+
 static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struct wined3d_device *device,
         struct wined3d_swapchain_desc *desc, struct wined3d_swapchain_state_parent *state_parent,
         void *parent, const struct wined3d_parent_ops *parent_ops,
         const struct wined3d_swapchain_ops *swapchain_ops)
 {
-    struct wined3d_resource_desc texture_desc;
     struct wined3d_output_desc output_desc;
     BOOL displaymode_set = FALSE;
-    DWORD texture_flags = 0;
     HRESULT hr = E_FAIL;
     RECT client_rect;
     unsigned int i;
@@ -1519,36 +1567,12 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
 
     TRACE("Creating front buffer.\n");
 
-    texture_desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
-    texture_desc.format = swapchain->state.desc.backbuffer_format;
-    texture_desc.multisample_type = swapchain->state.desc.multisample_type;
-    texture_desc.multisample_quality = swapchain->state.desc.multisample_quality;
-    texture_desc.usage = 0;
-    if (device->wined3d->flags & WINED3D_NO3D)
-        texture_desc.usage |= WINED3DUSAGE_OWNDC;
-    texture_desc.bind_flags = 0;
-    if (device->wined3d->flags & WINED3D_NO3D)
-        texture_desc.access = WINED3D_RESOURCE_ACCESS_CPU;
-    else
-        texture_desc.access = WINED3D_RESOURCE_ACCESS_GPU;
-    if (swapchain->state.desc.flags & WINED3D_SWAPCHAIN_LOCKABLE_BACKBUFFER)
-        texture_desc.access |= WINED3D_RESOURCE_ACCESS_MAP_R | WINED3D_RESOURCE_ACCESS_MAP_W;
-    texture_desc.width = swapchain->state.desc.backbuffer_width;
-    texture_desc.height = swapchain->state.desc.backbuffer_height;
-    texture_desc.depth = 1;
-    texture_desc.size = 0;
-
-    if (swapchain->state.desc.flags & WINED3D_SWAPCHAIN_GDI_COMPATIBLE)
-        texture_flags |= WINED3D_TEXTURE_CREATE_GET_DC;
-
-    if (FAILED(hr = wined3d_texture_create(device, &texture_desc, 1, 1, texture_flags,
-            NULL, NULL, &wined3d_null_parent_ops, &swapchain->front_buffer)))
+    if (FAILED(hr = swapchain_create_texture(swapchain, true, false, &swapchain->front_buffer)))
     {
         WARN("Failed to create front buffer, hr %#lx.\n", hr);
         goto err;
     }
 
-    wined3d_texture_set_swapchain(swapchain->front_buffer, swapchain);
     if (!(device->wined3d->flags & WINED3D_NO3D))
     {
         wined3d_texture_validate_location(swapchain->front_buffer, 0, WINED3D_LOCATION_DRAWABLE);
@@ -1580,21 +1604,15 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
             goto err;
         }
 
-        texture_desc.bind_flags = swapchain->state.desc.backbuffer_bind_flags;
-        texture_desc.usage = 0;
-        if (device->wined3d->flags & WINED3D_NO3D)
-            texture_desc.usage |= WINED3DUSAGE_OWNDC;
         for (i = 0; i < swapchain->state.desc.backbuffer_count; ++i)
         {
             TRACE("Creating back buffer %u.\n", i);
-            if (FAILED(hr = wined3d_texture_create(device, &texture_desc, 1, 1, texture_flags,
-                    NULL, NULL, &wined3d_null_parent_ops, &swapchain->back_buffers[i])))
+            if (FAILED(hr = swapchain_create_texture(swapchain, false, false, &swapchain->back_buffers[i])))
             {
                 WARN("Failed to create back buffer %u, hr %#lx.\n", i, hr);
                 swapchain->state.desc.backbuffer_count = i;
                 goto err;
             }
-            wined3d_texture_set_swapchain(swapchain->back_buffers[i], swapchain);
         }
     }
 
@@ -1607,16 +1625,7 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
             struct wined3d_view_desc desc;
             struct wined3d_texture *ds;
 
-            texture_desc.format = swapchain->state.desc.auto_depth_stencil_format;
-            texture_desc.usage = 0;
-            texture_desc.bind_flags = WINED3D_BIND_DEPTH_STENCIL;
-            if (device->wined3d->flags & WINED3D_NO3D)
-                texture_desc.access = WINED3D_RESOURCE_ACCESS_CPU;
-            else
-                texture_desc.access = WINED3D_RESOURCE_ACCESS_GPU;
-
-            if (FAILED(hr = wined3d_texture_create(device, &texture_desc, 1, 1, 0,
-                    NULL, NULL, &wined3d_null_parent_ops, &ds)))
+            if (FAILED(hr = swapchain_create_texture(swapchain, false, true, &ds)))
             {
                 WARN("Failed to create the auto depth/stencil surface, hr %#lx.\n", hr);
                 goto err;
