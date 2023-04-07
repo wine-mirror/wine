@@ -1730,7 +1730,7 @@ static void test_InternetGetConnectedStateExA(void)
     res = pInternetGetConnectedStateExA(&flags, buffer, sz, 0);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(flags, "Expected at least one flag set\n");
-    ok(sz - 1 == strlen(buffer), "Expected len %lu, got %u: %s\n", sz - 1, lstrlenA(buffer), wine_dbgstr_a(buffer));
+    ok(sz - 1 == strlen(buffer), "Expected len %lu, got %Iu: %s\n", sz - 1, strlen(buffer), wine_dbgstr_a(buffer));
 
     memset(buffer, 'z', sizeof(buffer) - 1);
     buffer[sizeof(buffer) - 1] = 0;
@@ -1738,7 +1738,7 @@ static void test_InternetGetConnectedStateExA(void)
     res = pInternetGetConnectedStateExA(&flags, buffer, sz / 2, 0);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(flags, "Expected at least one flag set\n");
-    ok(sz / 2 - 1 == strlen(buffer), "Expected len %lu, got %u: %s\n", sz / 2 - 1, lstrlenA(buffer), wine_dbgstr_a(buffer));
+    ok(sz / 2 - 1 == strlen(buffer), "Expected len %lu, got %Iu: %s\n", sz / 2 - 1, strlen(buffer), wine_dbgstr_a(buffer));
 
     memset(buffer, 'z', sizeof(buffer) - 1);
     buffer[sizeof(buffer) - 1] = 0;
@@ -1746,7 +1746,7 @@ static void test_InternetGetConnectedStateExA(void)
     res = pInternetGetConnectedStateExA(&flags, buffer, 2, 0);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(flags, "Expected at least one flag set\n");
-    ok(strlen(buffer) == 1, "Expected len 1, got %u: %s\n", lstrlenA(buffer), wine_dbgstr_a(buffer));
+    ok(strlen(buffer) == 1, "Expected len 1, got %Iu: %s\n", strlen(buffer), wine_dbgstr_a(buffer));
 
     memset(buffer, 'z', sizeof(buffer) - 1);
     buffer[sizeof(buffer) - 1] = 0;
