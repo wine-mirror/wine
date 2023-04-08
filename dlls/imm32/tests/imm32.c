@@ -6122,8 +6122,8 @@ static void test_ImmSetCompositionWindow(void)
     ctx->cfCompForm = expect_form;
     ctx->fdwInit = ~INIT_COMPFORM;
     memset( &comp_form, 0xcd, sizeof(comp_form) );
-    todo_wine ok_ret( 0, ImmGetCompositionWindow( himc, &comp_form ) );
-    todo_wine ok_eq( 0xcdcdcdcd, comp_form.dwStyle, UINT, "%#x" );
+    ok_ret( 0, ImmGetCompositionWindow( himc, &comp_form ) );
+    ok_eq( 0xcdcdcdcd, comp_form.dwStyle, UINT, "%#x" );
     ctx->fdwInit = INIT_COMPFORM;
     ok_ret( 1, ImmGetCompositionWindow( himc, &comp_form ) );
     check_composition_form( &comp_form, &expect_form );

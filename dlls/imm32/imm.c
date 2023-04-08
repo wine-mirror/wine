@@ -1740,17 +1740,18 @@ LONG WINAPI ImmGetCompositionStringW(
 /***********************************************************************
  *		ImmGetCompositionWindow (IMM32.@)
  */
-BOOL WINAPI ImmGetCompositionWindow(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm)
+BOOL WINAPI ImmGetCompositionWindow( HIMC himc, COMPOSITIONFORM *composition )
 {
-    struct imc *data = get_imc_data( hIMC );
+    INPUTCONTEXT *ctx;
+    BOOL ret;
 
-    TRACE("(%p, %p)\n", hIMC, lpCompForm);
+    TRACE( "himc %p, composition %p\n", himc, composition );
 
-    if (!data)
-        return FALSE;
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
+    if ((ret = !!(ctx->fdwInit & INIT_COMPFORM))) *composition = ctx->cfCompForm;
+    ImmUnlockIMC( himc );
 
-    *lpCompForm = data->IMC.cfCompForm;
-    return TRUE;
+    return ret;
 }
 
 /***********************************************************************
