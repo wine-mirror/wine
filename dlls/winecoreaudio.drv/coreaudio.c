@@ -85,6 +85,7 @@ struct coreaudio_stream
     EDataFlow flow;
     DWORD flags;
     AUDCLNT_SHAREMODE share;
+    HANDLE event;
 
     BOOL playing;
     REFERENCE_TIME period;
@@ -1308,7 +1309,9 @@ static NTSTATUS unix_start(void *args)
 
     OSSpinLockLock(&stream->lock);
 
-    if(stream->playing)
+    if((stream->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK) && !stream->event)
+        params->result = AUDCLNT_E_EVENTHANDLE_NOT_SET;
+    else if(stream->playing)
         params->result = AUDCLNT_E_NOT_STOPPED;
     else{
         stream->playing = TRUE;
@@ -1653,6 +1656,27 @@ static NTSTATUS unix_set_volumes(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS unix_set_event_handle(void *args)
+{
+    struct set_event_handle_params *params = args;
+    struct coreaudio_stream *stream = handle_get_stream(params->stream);
+    HRESULT hr = S_OK;
+
+    OSSpinLockLock(&stream->lock);
+    if(!stream->unit)
+        hr = AUDCLNT_E_DEVICE_INVALIDATED;
+    else if(!(stream->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK))
+        hr = AUDCLNT_E_EVENTHANDLE_NOT_EXPECTED;
+    else if(stream->event)
+        hr = HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
+    else
+        stream->event = params->event;
+    OSSpinLockUnlock(&stream->lock);
+
+    params->result = hr;
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     unix_not_implemented,
@@ -1679,7 +1703,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     unix_get_frequency,
     unix_get_position,
     unix_set_volumes,
-    unix_not_implemented,
+    unix_set_event_handle,
     unix_not_implemented,
     unix_is_started,
     unix_not_implemented,
@@ -1997,6 +2021,24 @@ static NTSTATUS unix_wow64_set_volumes(void *args)
     return unix_set_volumes(&params);
 }
 
+static NTSTATUS unix_wow64_set_event_handle(void *args)
+{
+    struct
+    {
+        stream_handle stream;
+        PTR32 event;
+        HRESULT result;
+    } *params32 = args;
+    struct set_event_handle_params params =
+    {
+        .stream = params32->stream,
+        .event = ULongToHandle(params32->event)
+    };
+    unix_set_event_handle(&params);
+    params32->result = params.result;
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     unix_not_implemented,
@@ -2023,7 +2065,7 @@ unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     unix_wow64_get_frequency,
     unix_wow64_get_position,
     unix_wow64_set_volumes,
-    unix_not_implemented,
+    unix_wow64_set_event_handle,
     unix_not_implemented,
     unix_is_started,
     unix_not_implemented,

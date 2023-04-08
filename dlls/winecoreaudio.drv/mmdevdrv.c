@@ -92,7 +92,6 @@ struct ACImpl {
 
     EDataFlow dataflow;
     UINT32 channel_count, period_ms;
-    DWORD flags;
     HANDLE event;
     float *vols;
 
@@ -752,7 +751,6 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         return params.result;
     }
 
-    This->flags = flags;
     This->channel_count = fmt->nChannels;
     This->period_ms = period / 10000;
 
@@ -942,9 +940,6 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
     if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    if((This->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK) && !This->event)
-        return AUDCLNT_E_EVENTHANDLE_NOT_SET;
-
     params.stream = This->stream;
     UNIX_CALL(start, &params);
 
@@ -996,7 +991,7 @@ static HRESULT WINAPI AudioClient_SetEventHandle(IAudioClient3 *iface,
         HANDLE event)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    HRESULT hr = S_OK;
+    struct set_event_handle_params params;
 
     TRACE("(%p)->(%p)\n", This, event);
 
@@ -1006,19 +1001,17 @@ static HRESULT WINAPI AudioClient_SetEventHandle(IAudioClient3 *iface,
     if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    EnterCriticalSection(&g_sessions_lock);
+    params.stream = This->stream;
+    params.event = event;
+    UNIX_CALL(set_event_handle, &params);
 
-    if(!(This->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK))
-        hr = AUDCLNT_E_EVENTHANDLE_NOT_EXPECTED;
-    else if(This->event){
-        FIXME("called twice\n");
-        hr = HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
-    }else
+    if(SUCCEEDED(params.result)){
+        EnterCriticalSection(&g_sessions_lock);
         This->event = event;
+        LeaveCriticalSection(&g_sessions_lock);
+    }
 
-    LeaveCriticalSection(&g_sessions_lock);
-
-    return hr;
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
