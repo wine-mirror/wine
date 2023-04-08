@@ -5653,21 +5653,21 @@ static void test_ImmGetCandidateWindow(void)
     ok_eq( 0xcdcdcdcd, cand_form.dwIndex, UINT, "%u" );
     ok_ret( 0, ImmGetCandidateWindow( default_himc, 3, &cand_form ) );
     ok_eq( 0xcdcdcdcd, cand_form.dwIndex, UINT, "%u" );
-    todo_wine ok_ret( 1, ImmGetCandidateWindow( default_himc, 4, &cand_form ) );
+    ok_ret( 1, ImmGetCandidateWindow( default_himc, 4, &cand_form ) );
     ok_seq( empty_sequence );
 
     ok_ret( 0, ImmGetCandidateWindow( himc, 0, &cand_form ) );
     ok_seq( empty_sequence );
 
-    todo_wine ok_seq( empty_sequence );
+    ok_seq( empty_sequence );
     ok( !!ctx, "ImmLockIMC failed, error %lu\n", GetLastError() );
     ctx->cfCandForm[0] = expect_form;
 
-    todo_wine ok_ret( 1, ImmGetCandidateWindow( himc, 0, &cand_form ) );
-    todo_wine check_candidate_form( &cand_form, &expect_form );
+    ok_ret( 1, ImmGetCandidateWindow( himc, 0, &cand_form ) );
+    check_candidate_form( &cand_form, &expect_form );
     ok_seq( empty_sequence );
 
-    todo_wine ok_seq( empty_sequence );
+    ok_seq( empty_sequence );
     ok( !!ctx, "ImmLockIMC failed, error %lu\n", GetLastError() );
     ctx->cfCandForm[0].dwIndex = -1;
 
@@ -6481,8 +6481,8 @@ static void test_ImmSetCandidateWindow(void)
     memset( &cand_form, 0xcd, sizeof(cand_form) );
     ok_ret( 0, ImmGetCandidateWindow( himc, 0, &cand_form ) );
     ok_eq( 0xcdcdcdcd, cand_form.dwStyle, UINT, "%#x" );
-    todo_wine ok_ret( 1, ImmGetCandidateWindow( himc, 1, &cand_form ) );
-    todo_wine check_candidate_form( &cand_form, &expect_form );
+    ok_ret( 1, ImmGetCandidateWindow( himc, 1, &cand_form ) );
+    check_candidate_form( &cand_form, &expect_form );
     ok_ret( 1, ImmGetCandidateWindow( himc, 2, &cand_form ) );
     check_candidate_form( &cand_form, &expect_form );
     ok_seq( empty_sequence );

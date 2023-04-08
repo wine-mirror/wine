@@ -1390,25 +1390,21 @@ done:
 /***********************************************************************
  *		ImmGetCandidateWindow (IMM32.@)
  */
-BOOL WINAPI ImmGetCandidateWindow(
-  HIMC hIMC, DWORD dwIndex, LPCANDIDATEFORM lpCandidate)
+BOOL WINAPI ImmGetCandidateWindow( HIMC himc, DWORD index, CANDIDATEFORM *candidate )
 {
-    struct imc *data = get_imc_data( hIMC );
+    INPUTCONTEXT *ctx;
+    BOOL ret = TRUE;
 
-    TRACE("%p, %ld, %p\n", hIMC, dwIndex, lpCandidate);
+    TRACE( "himc %p, index %lu, candidate %p\n", himc, index, candidate );
 
-    if (!data || !lpCandidate)
-        return FALSE;
+    if (!candidate) return FALSE;
 
-    if (dwIndex >= ARRAY_SIZE(data->IMC.cfCandForm))
-        return FALSE;
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
+    if (ctx->cfCandForm[index].dwIndex == -1) ret = FALSE;
+    else *candidate = ctx->cfCandForm[index];
+    ImmUnlockIMC( himc );
 
-    if (data->IMC.cfCandForm[dwIndex].dwIndex != dwIndex)
-        return FALSE;
-
-    *lpCandidate = data->IMC.cfCandForm[dwIndex];
-
-    return TRUE;
+    return ret;
 }
 
 /***********************************************************************
