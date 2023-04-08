@@ -986,256 +986,335 @@ static void test_NtUserAssociateInputContext(void)
     ImmReleaseContext(hwnd,imc);
 }
 
-typedef struct _igc_threadinfo {
+struct test_cross_thread_himc_params
+{
     HWND hwnd;
     HANDLE event;
-    HIMC himc;
-    HIMC u_himc;
-} igc_threadinfo;
+    HIMC himc[2];
+    INPUTCONTEXT *contexts[2];
+};
 
-
-static DWORD WINAPI ImmGetContextThreadFunc( LPVOID lpParam)
+static DWORD WINAPI test_cross_thread_himc_thread( void *arg )
 {
-    HIMC h1,h2;
-    HWND hwnd2;
-    COMPOSITIONFORM cf;
-    CANDIDATEFORM cdf;
-    POINT pt;
+    CANDIDATEFORM candidate = {.dwIndex = 1, .dwStyle = CFS_CANDIDATEPOS};
+    struct test_cross_thread_himc_params *params = arg;
+    COMPOSITIONFORM composition = {0};
+    INPUTCONTEXT *contexts[2];
+    HIMC himc[2], tmp_himc;
+    HWND hwnd, tmp_hwnd;
+    POINT pos = {0};
     MSG msg;
 
-    igc_threadinfo *info= (igc_threadinfo*)lpParam;
-    info->hwnd = CreateWindowExA(WS_EX_CLIENTEDGE, wndcls, "Wine imm32.dll test",
-                                 WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
-                                 240, 120, NULL, NULL, GetModuleHandleW(NULL), NULL);
+    hwnd = CreateWindowW( L"static", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok_ne( NULL, hwnd, HWND, "%p" );
+    himc[0] = ImmGetContext( hwnd );
+    ok_ne( NULL, himc[0], HIMC, "%p" );
+    contexts[0] = ImmLockIMC( himc[0] );
+    ok_ne( NULL, contexts[0], INPUTCONTEXT *, "%p" );
 
-    h1 = ImmGetContext(hwnd);
-    ok(info->himc == h1, "hwnd context changed in new thread\n");
-    h2 = ImmGetContext(info->hwnd);
-    ok(h2 != h1, "new hwnd in new thread should have different context\n");
-    info->himc = h2;
-    ImmReleaseContext(hwnd,h1);
+    tmp_hwnd = CreateWindowW( L"static", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                              100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    tmp_himc = ImmGetContext( tmp_hwnd );
+    ok_eq( himc[0], tmp_himc, HIMC, "%p" );
+    ok_ret( 1, ImmReleaseContext( tmp_hwnd, tmp_himc ) );
+    ok_ret( 1, DestroyWindow( tmp_hwnd ) );
 
-    hwnd2 = CreateWindowExA(WS_EX_CLIENTEDGE, wndcls, "Wine imm32.dll test",
-                            WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
-                            240, 120, NULL, NULL, GetModuleHandleW(NULL), NULL);
-    h1 = ImmGetContext(hwnd2);
+    himc[1] = ImmCreateContext();
+    ok_ne( NULL, himc[1], HIMC, "%p" );
+    contexts[1] = ImmLockIMC( himc[1] );
+    ok_ne( NULL, contexts[1], INPUTCONTEXT *, "%p" );
 
-    ok(h1 == h2, "Windows in same thread should have same default context\n");
-    ImmReleaseContext(hwnd2,h1);
-    ImmReleaseContext(info->hwnd,h2);
-    DestroyWindow(hwnd2);
+    ok_ret( 1, ImmSetOpenStatus( himc[0], 0xdeadbeef ) );
+    ok_ret( 1, ImmSetOpenStatus( himc[1], 0xfeedcafe ) );
+    ok_ret( 1, ImmSetCompositionWindow( himc[0], &composition ) );
+    ok_ret( 1, ImmSetCompositionWindow( himc[1], &composition ) );
+    ok_ret( 1, ImmSetCandidateWindow( himc[0], &candidate ) );
+    ok_ret( 1, ImmSetCandidateWindow( himc[1], &candidate ) );
+    ok_ret( 1, ImmSetStatusWindowPos( himc[0], &pos ) );
+    ok_ret( 1, ImmSetStatusWindowPos( himc[1], &pos ) );
 
-    /* priming for later tests */
-    ImmSetCompositionWindow(h1, &cf);
-    ImmSetStatusWindowPos(h1, &pt);
-    info->u_himc = ImmCreateContext();
-    ImmSetOpenStatus(info->u_himc, TRUE);
-    cdf.dwIndex = 0;
-    cdf.dwStyle = CFS_CANDIDATEPOS;
-    cdf.ptCurrentPos.x = 0;
-    cdf.ptCurrentPos.y = 0;
-    ImmSetCandidateWindow(info->u_himc, &cdf);
+    params->hwnd = hwnd;
+    params->himc[0] = himc[0];
+    params->himc[1] = himc[1];
+    params->contexts[0] = contexts[0];
+    params->contexts[1] = contexts[1];
+    SetEvent( params->event );
 
-    SetEvent(info->event);
-
-    while(GetMessageW(&msg, 0, 0, 0))
+    while (GetMessageW( &msg, 0, 0, 0 ))
     {
-        TranslateMessage(&msg);
-        DispatchMessageW(&msg);
+        TranslateMessage( &msg );
+        DispatchMessageW( &msg );
     }
+
+    ok_ret( 1, ImmUnlockIMC( himc[0] ) );
+    ok_ret( 1, ImmUnlockIMC( himc[1] ) );
+
+    ok_ret( 1, ImmDestroyContext( himc[1] ) );
+    ok_ret( 1, ImmReleaseContext( hwnd, himc[0] ) );
+    ok_ret( 0, DestroyWindow( hwnd ) );
+
     return 1;
 }
 
-static void test_ImmThreads(void)
+static void test_cross_thread_himc(void)
 {
-    HIMC himc, otherHimc, h1;
-    igc_threadinfo threadinfo;
-    HANDLE hThread;
-    DWORD dwThreadId;
-    BOOL rc;
-    LOGFONTA lf;
-    COMPOSITIONFORM cf;
-    CANDIDATEFORM cdf;
-    DWORD status, sentence;
-    POINT pt;
+    static const WCHAR comp_string[] = L"CompString";
+    struct test_cross_thread_himc_params params;
+    COMPOSITIONFORM composition = {0};
+    DWORD tid, conversion, sentence;
+    CANDIDATEFORM candidate = {0};
+    COMPOSITIONSTRING *string;
+    HIMC himc[2], tmp_himc;
+    INPUTCONTEXT *tmp_ctx;
+    LOGFONTW fontW = {0};
+    LOGFONTA fontA = {0};
+    char buffer[512];
+    POINT pos = {0};
+    HANDLE thread;
+    BYTE *dst;
+    UINT ret;
 
-    himc = ImmGetContext(hwnd);
-    threadinfo.event = CreateEventA(NULL, TRUE, FALSE, NULL);
-    threadinfo.himc = himc;
-    hThread = CreateThread(NULL, 0, ImmGetContextThreadFunc, &threadinfo, 0, &dwThreadId );
-    WaitForSingleObject(threadinfo.event, INFINITE);
+    himc[0] = ImmGetContext( hwnd );
+    ok_ne( NULL, himc[0], HIMC, "%p" );
+    ok_ne( NULL, ImmLockIMC( himc[0] ), INPUTCONTEXT *, "%p" );
+    ok_ret( 1, ImmUnlockIMC( himc[0] ) );
 
-    otherHimc = ImmGetContext(threadinfo.hwnd);
+    params.event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    ok_ne( NULL, params.event, HANDLE, "%p" );
+    thread = CreateThread( NULL, 0, test_cross_thread_himc_thread, &params, 0, &tid );
+    ok_ne( NULL, thread, HANDLE, "%p" );
+    WaitForSingleObject( params.event, INFINITE );
 
-    ok(himc != otherHimc, "Windows from other threads should have different himc\n");
-    ok(otherHimc == threadinfo.himc, "Context from other thread should not change in main thread\n");
+    tmp_himc = ImmGetContext( params.hwnd );
+    ok_ne( himc[0], tmp_himc, HIMC, "%p" );
+    ok_eq( params.himc[0], tmp_himc, HIMC, "%p" );
+    ok_ret( 1, ImmReleaseContext( params.hwnd, tmp_himc ) );
 
-    SET_ENABLE(WM_IME_SETCONTEXT_DEACTIVATE, TRUE);
-    SET_ENABLE(WM_IME_SETCONTEXT_ACTIVATE, TRUE);
-    SET_EXPECT(WM_IME_SETCONTEXT_ACTIVATE);
-    rc = ImmSetActiveContext(hwnd, otherHimc, TRUE);
-    ok(rc, "ImmSetActiveContext failed\n");
-    CHECK_CALLED(WM_IME_SETCONTEXT_ACTIVATE);
-    SET_EXPECT(WM_IME_SETCONTEXT_DEACTIVATE);
-    rc = ImmSetActiveContext(hwnd, otherHimc, FALSE);
-    ok(rc, "ImmSetActiveContext failed\n");
-    CHECK_CALLED(WM_IME_SETCONTEXT_DEACTIVATE);
-    SET_ENABLE(WM_IME_SETCONTEXT_DEACTIVATE, FALSE);
-    SET_ENABLE(WM_IME_SETCONTEXT_ACTIVATE, FALSE);
+    himc[1] = ImmCreateContext();
+    ok_ne( NULL, himc[1], HIMC, "%p" );
+    tmp_ctx = ImmLockIMC( himc[1] );
+    ok_ne( NULL, tmp_ctx, INPUTCONTEXT *, "%p" );
 
-    h1 = ImmAssociateContext(hwnd,otherHimc);
-    ok(h1 == NULL, "Should fail to be able to Associate a default context from a different thread\n");
-    h1 = ImmGetContext(hwnd);
-    ok(h1 == himc, "Context for window should remain unchanged\n");
-    ImmReleaseContext(hwnd,h1);
+    tmp_ctx->hCompStr = ImmReSizeIMCC( tmp_ctx->hCompStr, 512 );
+    ok_ne( NULL, tmp_ctx->hCompStr, HIMCC, "%p" );
+    string = ImmLockIMCC( tmp_ctx->hCompStr );
+    ok_ne( NULL, string, COMPOSITIONSTRING *, "%p" );
+    string->dwSize = sizeof(COMPOSITIONSTRING);
+    string->dwCompStrLen = wcslen( comp_string );
+    string->dwCompStrOffset = string->dwSize;
+    dst = (BYTE *)string + string->dwCompStrOffset;
+    memcpy( dst, comp_string, string->dwCompStrLen * sizeof(WCHAR) );
+    string->dwSize += string->dwCompStrLen * sizeof(WCHAR);
 
-    h1 = ImmAssociateContext(hwnd, threadinfo.u_himc);
-    ok (h1 == NULL, "Should fail to associate a context from a different thread\n");
-    h1 = ImmGetContext(hwnd);
-    ok(h1 == himc, "Context for window should remain unchanged\n");
-    ImmReleaseContext(hwnd,h1);
+    string->dwCompClauseLen = 2 * sizeof(DWORD);
+    string->dwCompClauseOffset = string->dwSize;
+    dst = (BYTE *)string + string->dwCompClauseOffset;
+    *(DWORD *)(dst + 0 * sizeof(DWORD)) = 0;
+    *(DWORD *)(dst + 1 * sizeof(DWORD)) = string->dwCompStrLen;
+    string->dwSize += 2 * sizeof(DWORD);
 
-    h1 = ImmAssociateContext(threadinfo.hwnd, threadinfo.u_himc);
-    ok (h1 == NULL, "Should fail to associate a context from a different thread into a window from that thread.\n");
-    h1 = ImmGetContext(threadinfo.hwnd);
-    ok(h1 == threadinfo.himc, "Context for window should remain unchanged\n");
-    ImmReleaseContext(threadinfo.hwnd,h1);
+    string->dwCompAttrLen = string->dwCompStrLen;
+    string->dwCompAttrOffset = string->dwSize;
+    dst = (BYTE *)string + string->dwCompAttrOffset;
+    memset( dst, ATTR_INPUT, string->dwCompStrLen );
+    string->dwSize += string->dwCompStrLen;
+    ok_ret( 0, ImmUnlockIMCC( tmp_ctx->hCompStr ) );
 
-    /* OpenStatus */
-    rc = ImmSetOpenStatus(himc, TRUE);
-    ok(rc != 0, "ImmSetOpenStatus failed\n");
-    rc = ImmGetOpenStatus(himc);
-    ok(rc != 0, "ImmGetOpenStatus failed\n");
-    rc = ImmSetOpenStatus(himc, FALSE);
-    ok(rc != 0, "ImmSetOpenStatus failed\n");
-    rc = ImmGetOpenStatus(himc);
-    ok(rc == 0, "ImmGetOpenStatus failed\n");
+    ok_ret( 1, ImmUnlockIMC( himc[1] ) );
 
-    rc = ImmSetOpenStatus(otherHimc, TRUE);
-    ok(rc == 0, "ImmSetOpenStatus should fail\n");
-    rc = ImmSetOpenStatus(threadinfo.u_himc, TRUE);
-    ok(rc == 0, "ImmSetOpenStatus should fail\n");
-    rc = ImmGetOpenStatus(otherHimc);
-    ok(rc == 0, "ImmGetOpenStatus failed\n");
-    rc = ImmGetOpenStatus(threadinfo.u_himc);
-    ok (rc == 1 || broken(rc == 0), "ImmGetOpenStatus should return 1\n");
-    rc = ImmSetOpenStatus(otherHimc, FALSE);
-    ok(rc == 0, "ImmSetOpenStatus should fail\n");
-    rc = ImmGetOpenStatus(otherHimc);
-    ok(rc == 0, "ImmGetOpenStatus failed\n");
+    /* ImmLockIMC should succeed with cross thread HIMC */
 
-    /* CompositionFont */
-    rc = ImmGetCompositionFontA(himc, &lf);
-    ok(rc != 0, "ImmGetCompositionFont failed\n");
-    rc = ImmSetCompositionFontA(himc, &lf);
-    ok(rc != 0, "ImmSetCompositionFont failed\n");
+    tmp_ctx = ImmLockIMC( params.himc[0] );
+    ok_eq( params.contexts[0], tmp_ctx, INPUTCONTEXT *, "%p" );
+    ret = ImmGetIMCLockCount( params.himc[0] );
+    ok( ret >= 2, "got ret %u\n", ret );
 
-    rc = ImmGetCompositionFontA(otherHimc, &lf);
-    ok(rc != 0 || broken(rc == 0), "ImmGetCompositionFont failed\n");
-    rc = ImmGetCompositionFontA(threadinfo.u_himc, &lf);
-    ok(rc != 0 || broken(rc == 0), "ImmGetCompositionFont user himc failed\n");
-    rc = ImmSetCompositionFontA(otherHimc, &lf);
-    ok(rc == 0, "ImmSetCompositionFont should fail\n");
-    rc = ImmSetCompositionFontA(threadinfo.u_himc, &lf);
-    ok(rc == 0, "ImmSetCompositionFont should fail\n");
+    tmp_ctx->hCompStr = ImmReSizeIMCC( tmp_ctx->hCompStr, 512 );
+    ok_ne( NULL, tmp_ctx->hCompStr, HIMCC, "%p" );
+    string = ImmLockIMCC( tmp_ctx->hCompStr );
+    ok_ne( NULL, string, COMPOSITIONSTRING *, "%p" );
+    string->dwSize = sizeof(COMPOSITIONSTRING);
+    string->dwCompStrLen = wcslen( comp_string );
+    string->dwCompStrOffset = string->dwSize;
+    dst = (BYTE *)string + string->dwCompStrOffset;
+    memcpy( dst, comp_string, string->dwCompStrLen * sizeof(WCHAR) );
+    string->dwSize += string->dwCompStrLen * sizeof(WCHAR);
 
-    /* CompositionString */
-    rc = ImmSetCompositionStringA(himc, SCS_SETSTR, "a", 2, NULL, 0);
-    ok(rc, "failed.\n");
-    rc = ImmSetCompositionStringA(otherHimc, SCS_SETSTR, "a", 2, NULL, 0);
-    ok(!rc, "should fail.\n");
-    rc = ImmSetCompositionStringA(threadinfo.u_himc, SCS_SETSTR, "a", 2, NULL, 0);
-    ok(!rc, "should fail.\n");
+    string->dwCompClauseLen = 2 * sizeof(DWORD);
+    string->dwCompClauseOffset = string->dwSize;
+    dst = (BYTE *)string + string->dwCompClauseOffset;
+    *(DWORD *)(dst + 0 * sizeof(DWORD)) = 0;
+    *(DWORD *)(dst + 1 * sizeof(DWORD)) = string->dwCompStrLen;
+    string->dwSize += 2 * sizeof(DWORD);
 
-    /* CompositionWindow */
-    rc = ImmSetCompositionWindow(himc, &cf);
-    ok(rc != 0, "ImmSetCompositionWindow failed\n");
-    rc = ImmGetCompositionWindow(himc, &cf);
-    ok(rc != 0, "ImmGetCompositionWindow failed\n");
+    string->dwCompAttrLen = string->dwCompStrLen;
+    string->dwCompAttrOffset = string->dwSize;
+    dst = (BYTE *)string + string->dwCompAttrOffset;
+    memset( dst, ATTR_INPUT, string->dwCompStrLen );
+    string->dwSize += string->dwCompStrLen;
+    ok_ret( 0, ImmUnlockIMCC( tmp_ctx->hCompStr ) );
 
-    rc = ImmSetCompositionWindow(otherHimc, &cf);
-    ok(rc == 0, "ImmSetCompositionWindow should fail\n");
-    rc = ImmSetCompositionWindow(threadinfo.u_himc, &cf);
-    ok(rc == 0, "ImmSetCompositionWindow should fail\n");
-    rc = ImmGetCompositionWindow(otherHimc, &cf);
-    ok(rc != 0 || broken(rc == 0), "ImmGetCompositionWindow failed\n");
-    rc = ImmGetCompositionWindow(threadinfo.u_himc, &cf);
-    ok(rc != 0 || broken(rc == 0), "ImmGetCompositionWindow failed\n");
+    ok_ret( 1, ImmUnlockIMC( params.himc[0] ) );
 
-    /* ConversionStatus */
-    rc = ImmGetConversionStatus(himc, &status, &sentence);
-    ok(rc != 0, "ImmGetConversionStatus failed\n");
-    rc = ImmSetConversionStatus(himc, status, sentence);
-    ok(rc != 0, "ImmSetConversionStatus failed\n");
+    tmp_ctx = ImmLockIMC( params.himc[1] );
+    ok_eq( params.contexts[1], tmp_ctx, INPUTCONTEXT *, "%p" );
+    ret = ImmGetIMCLockCount( params.himc[1] );
+    ok( ret >= 2, "got ret %u\n", ret );
+    ok_ret( 1, ImmUnlockIMC( params.himc[1] ) );
 
-    rc = ImmGetConversionStatus(otherHimc, &status, &sentence);
-    ok(rc != 0 || broken(rc == 0), "ImmGetConversionStatus failed\n");
-    rc = ImmGetConversionStatus(threadinfo.u_himc, &status, &sentence);
-    ok(rc != 0 || broken(rc == 0), "ImmGetConversionStatus failed\n");
-    rc = ImmSetConversionStatus(otherHimc, status, sentence);
-    ok(rc == 0, "ImmSetConversionStatus should fail\n");
-    rc = ImmSetConversionStatus(threadinfo.u_himc, status, sentence);
-    ok(rc == 0, "ImmSetConversionStatus should fail\n");
+    /* ImmSetActiveContext should succeed with cross thread HIMC */
 
-    /* StatusWindowPos */
-    rc = ImmSetStatusWindowPos(himc, &pt);
-    ok(rc != 0, "ImmSetStatusWindowPos failed\n");
-    rc = ImmGetStatusWindowPos(himc, &pt);
-    ok(rc != 0, "ImmGetStatusWindowPos failed\n");
+    SET_ENABLE( WM_IME_SETCONTEXT_DEACTIVATE, TRUE );
+    SET_ENABLE( WM_IME_SETCONTEXT_ACTIVATE, TRUE );
 
-    rc = ImmSetStatusWindowPos(otherHimc, &pt);
-    ok(rc == 0, "ImmSetStatusWindowPos should fail\n");
-    rc = ImmSetStatusWindowPos(threadinfo.u_himc, &pt);
-    ok(rc == 0, "ImmSetStatusWindowPos should fail\n");
-    rc = ImmGetStatusWindowPos(otherHimc, &pt);
-    ok(rc != 0 || broken(rc == 0), "ImmGetStatusWindowPos failed\n");
-    rc = ImmGetStatusWindowPos(threadinfo.u_himc, &pt);
-    ok(rc != 0 || broken(rc == 0), "ImmGetStatusWindowPos failed\n");
+    SET_EXPECT( WM_IME_SETCONTEXT_ACTIVATE );
+    ok_ret( 1, ImmSetActiveContext( hwnd, params.himc[0], TRUE ) );
+    CHECK_CALLED( WM_IME_SETCONTEXT_ACTIVATE );
 
-    h1 = ImmAssociateContext(threadinfo.hwnd, NULL);
-    ok (h1 == otherHimc, "ImmAssociateContext cross thread with NULL should work\n");
-    h1 = ImmGetContext(threadinfo.hwnd);
-    ok (h1 == NULL, "CrossThread window context should be NULL\n");
-    h1 = ImmAssociateContext(threadinfo.hwnd, h1);
-    ok (h1 == NULL, "Resetting cross thread context should fail\n");
-    h1 = ImmGetContext(threadinfo.hwnd);
-    ok (h1 == NULL, "CrossThread window context should still be NULL\n");
+    SET_EXPECT( WM_IME_SETCONTEXT_DEACTIVATE );
+    ok_ret( 1, ImmSetActiveContext( hwnd, params.himc[0], FALSE ) );
+    CHECK_CALLED( WM_IME_SETCONTEXT_DEACTIVATE );
 
-    rc = ImmDestroyContext(threadinfo.u_himc);
-    ok (rc == 0, "ImmDestroyContext Cross Thread should fail\n");
+    SET_ENABLE( WM_IME_SETCONTEXT_DEACTIVATE, FALSE );
+    SET_ENABLE( WM_IME_SETCONTEXT_ACTIVATE, FALSE );
 
-    /* Candidate Window */
-    rc = ImmGetCandidateWindow(himc, 0, &cdf);
-    ok (rc == 0, "ImmGetCandidateWindow should fail\n");
-    cdf.dwIndex = 0;
-    cdf.dwStyle = CFS_CANDIDATEPOS;
-    cdf.ptCurrentPos.x = 0;
-    cdf.ptCurrentPos.y = 0;
-    rc = ImmSetCandidateWindow(himc, &cdf);
-    ok (rc == 1, "ImmSetCandidateWindow should succeed\n");
-    rc = ImmGetCandidateWindow(himc, 0, &cdf);
-    ok (rc == 1, "ImmGetCandidateWindow should succeed\n");
+    /* ImmSetOpenStatus should fail with cross thread HIMC */
 
-    rc = ImmGetCandidateWindow(otherHimc, 0, &cdf);
-    ok (rc == 0, "ImmGetCandidateWindow should fail\n");
-    rc = ImmSetCandidateWindow(otherHimc, &cdf);
-    ok (rc == 0, "ImmSetCandidateWindow should fail\n");
-    rc = ImmGetCandidateWindow(threadinfo.u_himc, 0, &cdf);
-    ok (rc == 1 || broken( rc == 0), "ImmGetCandidateWindow should succeed\n");
-    rc = ImmSetCandidateWindow(threadinfo.u_himc, &cdf);
-    ok (rc == 0, "ImmSetCandidateWindow should fail\n");
+    ok_ret( 1, ImmSetOpenStatus( himc[1], 0xdeadbeef ) );
+    ok_ret( (int)0xdeadbeef, ImmGetOpenStatus( himc[1] ) );
 
-    ImmReleaseContext(threadinfo.hwnd,otherHimc);
-    ImmReleaseContext(hwnd,himc);
+    ok_ret( 0, ImmSetOpenStatus( params.himc[0], TRUE ) );
+    ok_ret( 0, ImmSetOpenStatus( params.himc[1], TRUE ) );
+    ok_ret( (int)0xdeadbeef, ImmGetOpenStatus( params.himc[0] ) );
+    ok_ret( (int)0xfeedcafe, ImmGetOpenStatus( params.himc[1] ) );
+    ok_ret( 0, ImmSetOpenStatus( params.himc[0], FALSE ) );
+    ok_ret( (int)0xdeadbeef, ImmGetOpenStatus( params.himc[0] ) );
 
-    SendMessageA(threadinfo.hwnd, WM_CLOSE, 0, 0);
-    rc = PostThreadMessageA(dwThreadId, WM_QUIT, 1, 0);
-    ok(rc == 1, "PostThreadMessage should succeed\n");
-    WaitForSingleObject(hThread, INFINITE);
-    CloseHandle(hThread);
+    /* ImmSetConversionStatus should fail with cross thread HIMC */
 
-    himc = ImmGetContext(GetDesktopWindow());
-    ok(himc == NULL, "Should not be able to get himc from other process window\n");
+    ok_ret( 1, ImmGetConversionStatus( himc[1], &conversion, &sentence ) );
+    ok_ret( 1, ImmSetConversionStatus( himc[1], conversion, sentence ) );
+
+    ok_ret( 1, ImmGetConversionStatus( params.himc[0], &conversion, &sentence ) );
+    ok_ret( 1, ImmGetConversionStatus( params.himc[1], &conversion, &sentence ) );
+    ok_ret( 0, ImmSetConversionStatus( params.himc[0], conversion, sentence ) );
+    ok_ret( 0, ImmSetConversionStatus( params.himc[1], conversion, sentence ) );
+
+    /* ImmSetCompositionFont(W|A) should fail with cross thread HIMC */
+
+    ok_ret( 1, ImmSetCompositionFontA( himc[1], &fontA ) );
+    ok_ret( 1, ImmGetCompositionFontA( himc[1], &fontA ) );
+    ok_ret( 1, ImmSetCompositionFontW( himc[1], &fontW ) );
+    ok_ret( 1, ImmGetCompositionFontW( himc[1], &fontW ) );
+
+    ok_ret( 0, ImmSetCompositionFontA( params.himc[0], &fontA ) );
+    ok_ret( 0, ImmSetCompositionFontA( params.himc[1], &fontA ) );
+    ok_ret( 1, ImmGetCompositionFontA( params.himc[0], &fontA ) );
+    ok_ret( 1, ImmGetCompositionFontA( params.himc[1], &fontA ) );
+    ok_ret( 0, ImmSetCompositionFontW( params.himc[0], &fontW ) );
+    ok_ret( 0, ImmSetCompositionFontW( params.himc[1], &fontW ) );
+    ok_ret( 1, ImmGetCompositionFontW( params.himc[0], &fontW ) );
+    ok_ret( 1, ImmGetCompositionFontW( params.himc[1], &fontW ) );
+
+    /* ImmSetCompositionString(W|A) should fail with cross thread HIMC */
+
+    ok_ret( 10, ImmGetCompositionStringA( himc[1], GCS_COMPSTR, buffer, sizeof(buffer) ) );
+    ok_ret( 20, ImmGetCompositionStringW( himc[1], GCS_COMPSTR, buffer, sizeof(buffer) ) );
+    ok_ret( 1, ImmSetCompositionStringA( himc[1], SCS_SETSTR, "a", 2, NULL, 0 ) );
+    ok_ret( 1, ImmSetCompositionStringW( himc[1], SCS_SETSTR, L"a", 4, NULL, 0 ) );
+
+    ok_ret( 0, ImmSetCompositionStringA( params.himc[0], SCS_SETSTR, "a", 2, NULL, 0 ) );
+    ok_ret( 0, ImmSetCompositionStringA( params.himc[1], SCS_SETSTR, "a", 2, NULL, 0 ) );
+    ok_ret( 0, ImmSetCompositionStringW( params.himc[0], SCS_SETSTR, L"a", 4, NULL, 0 ) );
+    ok_ret( 0, ImmSetCompositionStringW( params.himc[1], SCS_SETSTR, L"a", 4, NULL, 0 ) );
+    ok_ret( 10, ImmGetCompositionStringA( params.himc[0], GCS_COMPSTR, buffer, sizeof(buffer) ) );
+    ok_ret( 0, ImmGetCompositionStringA( params.himc[1], GCS_COMPSTR, buffer, sizeof(buffer) ) );
+    ok_ret( 20, ImmGetCompositionStringW( params.himc[0], GCS_COMPSTR, buffer, sizeof(buffer) ) );
+    ok_ret( 0, ImmGetCompositionStringW( params.himc[1], GCS_COMPSTR, buffer, sizeof(buffer) ) );
+
+    /* ImmSetCompositionWindow should fail with cross thread HIMC */
+
+    ok_ret( 1, ImmSetCompositionWindow( himc[1], &composition ) );
+    ok_ret( 1, ImmGetCompositionWindow( himc[1], &composition ) );
+
+    ok_ret( 0, ImmSetCompositionWindow( params.himc[0], &composition ) );
+    ok_ret( 0, ImmSetCompositionWindow( params.himc[1], &composition ) );
+    ok_ret( 1, ImmGetCompositionWindow( params.himc[0], &composition ) );
+    ok_ret( 1, ImmGetCompositionWindow( params.himc[1], &composition ) );
+
+    /* ImmSetCandidateWindow should fail with cross thread HIMC */
+
+    ok_ret( 1, ImmSetCandidateWindow( himc[1], &candidate ) );
+    ok_ret( 1, ImmGetCandidateWindow( himc[1], 0, &candidate ) );
+
+    ok_ret( 1, ImmGetCandidateWindow( params.himc[0], 1, &candidate ) );
+    ok_ret( 1, ImmGetCandidateWindow( params.himc[1], 1, &candidate ) );
+    ok_ret( 0, ImmSetCandidateWindow( params.himc[0], &candidate ) );
+    ok_ret( 0, ImmSetCandidateWindow( params.himc[1], &candidate ) );
+
+    /* ImmSetStatusWindowPos should fail with cross thread HIMC */
+
+    ok_ret( 1, ImmSetStatusWindowPos( himc[1], &pos ) );
+    ok_ret( 1, ImmGetStatusWindowPos( himc[1], &pos ) );
+
+    ok_ret( 0, ImmSetStatusWindowPos( params.himc[0], &pos ) );
+    ok_ret( 0, ImmSetStatusWindowPos( params.himc[1], &pos ) );
+    ok_ret( 1, ImmGetStatusWindowPos( params.himc[0], &pos ) );
+    ok_ret( 1, ImmGetStatusWindowPos( params.himc[1], &pos ) );
+
+    /* ImmGenerateMessage should fail with cross thread HIMC */
+
+    ok_ret( 1, ImmGenerateMessage( himc[1] ) );
+
+    todo_wine ok_ret( 0, ImmGenerateMessage( params.himc[0] ) );
+    todo_wine ok_ret( 0, ImmGenerateMessage( params.himc[1] ) );
+
+    /* ImmAssociateContext should fail with cross thread HWND or HIMC */
+
+    tmp_himc = ImmAssociateContext( hwnd, params.himc[0] );
+    ok_eq( NULL, tmp_himc, HIMC, "%p" );
+    tmp_himc = ImmGetContext( hwnd );
+    ok_eq( himc[0], tmp_himc, HIMC, "%p" );
+    ok_ret( 1, ImmReleaseContext( hwnd, tmp_himc ) );
+
+    tmp_himc = ImmAssociateContext( hwnd, params.himc[1] );
+    ok_eq( NULL, tmp_himc, HIMC, "%p" );
+    tmp_himc = ImmGetContext( hwnd );
+    ok_eq( himc[0], tmp_himc, HIMC, "%p" );
+    ok_ret( 1, ImmReleaseContext( hwnd, tmp_himc ) );
+
+    tmp_himc = ImmAssociateContext( params.hwnd, params.himc[1] );
+    ok_eq( NULL, tmp_himc, HIMC, "%p" );
+    tmp_himc = ImmGetContext( params.hwnd );
+    ok_eq( params.himc[0], tmp_himc, HIMC, "%p" );
+    ok_ret( 1, ImmReleaseContext( params.hwnd, tmp_himc ) );
+
+    /* ImmAssociateContext should succeed with cross thread HWND and NULL HIMC */
+
+    tmp_himc = ImmAssociateContext( params.hwnd, NULL );
+    ok_eq( params.himc[0], tmp_himc, HIMC, "%p" );
+    tmp_himc = ImmGetContext( params.hwnd );
+    ok_eq( NULL, tmp_himc, HIMC, "%p" );
+
+    /* ImmReleaseContext / ImmDestroyContext should fail with cross thread HIMC */
+
+    ok_ret( 1, ImmReleaseContext( params.hwnd, params.himc[0] ) );
+    ok_ret( 0, ImmDestroyContext( params.himc[1] ) );
+
+    /* ImmGetContext should fail with another process HWND */
+
+    tmp_himc = ImmGetContext( GetDesktopWindow() );
+    ok_eq( NULL, tmp_himc, HIMC, "%p" );
+
+    ok_ret( 0, SendMessageW( params.hwnd, WM_CLOSE, 0, 0 ) );
+    ok_ret( 1, PostThreadMessageW( tid, WM_QUIT, 1, 0 ) );
+    ok_ret( 0, WaitForSingleObject( thread, 5000 ) );
+    ok_ret( 1, CloseHandle( thread ) );
+    ok_ret( 1, CloseHandle( params.event ) );
+
+    ok_ret( 1, ImmReleaseContext( hwnd, himc[0] ) );
+    ok_ret( 1, ImmDestroyContext( himc[1] ) );
 }
 
 static void test_ImmIsUIMessage(void)
@@ -6009,7 +6088,7 @@ START_TEST(imm32)
         test_ImmIME();
         test_ImmAssociateContextEx();
         test_NtUserAssociateInputContext();
-        test_ImmThreads();
+        test_cross_thread_himc();
         test_ImmIsUIMessage();
         test_ImmGetContext();
         test_ImmDefaultHwnd();
