@@ -85,7 +85,8 @@ struct coreaudio_stream
     AUDCLNT_SHAREMODE share;
 
     BOOL playing;
-    UINT32 period_ms, period_frames;
+    REFERENCE_TIME period;
+    UINT32 period_frames;
     UINT32 bufsize_frames, resamp_bufsize_frames;
     UINT32 lcl_offs_frames, held_frames, wri_offs_frames, tmp_buffer_frames;
     UINT32 cap_bufsize_frames, cap_offs_frames, cap_held_frames;
@@ -658,7 +659,7 @@ static NTSTATUS unix_create_stream(void *args)
         goto end;
     }
 
-    stream->period_ms = params->period / 10000;
+    stream->period = params->period;
     stream->period_frames = muldiv(params->period, stream->fmt->nSamplesPerSec, 10000000);
     stream->dev_id = dev_id_from_device(params->device);
     stream->flow = params->flow;
@@ -1272,8 +1273,7 @@ static NTSTATUS unix_get_latency(void *args)
     latency += stream_latency;
     /* pretend we process audio in Period chunks, so max latency includes
      * the period time */
-    *params->latency = muldiv(latency, 10000000, stream->fmt->nSamplesPerSec)
-        + stream->period_ms * 10000;
+    *params->latency = muldiv(latency, 10000000, stream->fmt->nSamplesPerSec) + stream->period;
 
     OSSpinLockUnlock(&stream->lock);
     params->result = S_OK;
