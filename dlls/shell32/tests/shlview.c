@@ -1504,7 +1504,7 @@ static void test_folder_flags(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(settings.ViewMode == FVM_TILE || broken(!settings.ViewMode) /* pre win7 */,
             "Got view mode %u.\n", settings.ViewMode);
-    todo_wine ok(settings.fFlags == FWF_USESEARCHFOLDER || broken(!settings.fFlags) /* pre vista */,
+    ok(settings.fFlags == FWF_USESEARCHFOLDER || broken(!settings.fFlags) /* pre vista */,
             "Got flags %#x.\n", settings.fFlags);
 
     destroy_interfaces(desktop, shellview);

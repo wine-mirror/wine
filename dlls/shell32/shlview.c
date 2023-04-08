@@ -3780,6 +3780,7 @@ IShellView *IShellView_Constructor(IShellFolder *folder)
     sv->ptLastMousePos.x = 0;
     sv->ptLastMousePos.y = 0;
     sv->FolderSettings.ViewMode = FVM_TILE;
+    sv->FolderSettings.fFlags = FWF_USESEARCHFOLDER;
 
     TRACE("(%p)->(%p)\n", sv, folder);
     return (IShellView*)&sv->IShellView3_iface;
