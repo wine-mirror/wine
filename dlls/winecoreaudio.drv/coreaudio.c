@@ -81,7 +81,9 @@ struct coreaudio_stream
     AudioConverterRef converter;
     AudioStreamBasicDescription dev_desc; /* audio unit format, not necessarily the same as fmt */
     AudioDeviceID dev_id;
+
     EDataFlow flow;
+    DWORD flags;
     AUDCLNT_SHAREMODE share;
 
     BOOL playing;
@@ -663,6 +665,7 @@ static NTSTATUS unix_create_stream(void *args)
     stream->period_frames = muldiv(params->period, stream->fmt->nSamplesPerSec, 10000000);
     stream->dev_id = dev_id_from_device(params->device);
     stream->flow = params->flow;
+    stream->flags = params->flags;
     stream->share = params->share;
 
     stream->bufsize_frames = muldiv(params->duration, stream->fmt->nSamplesPerSec, 10000000);
