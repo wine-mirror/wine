@@ -2092,18 +2092,18 @@ UINT WINAPI ImmGetRegisterWordStyleW( HKL hkl, UINT count, STYLEBUFW *styleW )
 /***********************************************************************
  *		ImmGetStatusWindowPos (IMM32.@)
  */
-BOOL WINAPI ImmGetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
+BOOL WINAPI ImmGetStatusWindowPos( HIMC himc, POINT *pos )
 {
-    struct imc *data = get_imc_data( hIMC );
+    INPUTCONTEXT *ctx;
+    BOOL ret;
 
-    TRACE("(%p, %p)\n", hIMC, lpptPos);
+    TRACE( "himc %p, pos %p\n", himc, pos );
 
-    if (!data || !lpptPos)
-        return FALSE;
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
+    if ((ret = !!(ctx->fdwInit & INIT_STATUSWNDPOS))) *pos = ctx->ptStatusWndPos;
+    ImmUnlockIMC( himc );
 
-    *lpptPos = data->IMC.ptStatusWndPos;
-
-    return TRUE;
+    return ret;
 }
 
 /***********************************************************************

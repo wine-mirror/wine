@@ -6220,9 +6220,9 @@ static void test_ImmSetStatusWindowPos(void)
     ctx->ptStatusWndPos.x = 0xdeadbeef;
     ctx->ptStatusWndPos.y = 0xfeedcafe;
     ctx->fdwInit = ~INIT_STATUSWNDPOS;
-    todo_wine ok_ret( 0, ImmGetStatusWindowPos( himc, &pos ) );
-    todo_wine ok_eq( 0xcdcdcdcd, pos.x, UINT, "%u" );
-    todo_wine ok_eq( 0xcdcdcdcd, pos.y, UINT, "%u" );
+    ok_ret( 0, ImmGetStatusWindowPos( himc, &pos ) );
+    ok_eq( 0xcdcdcdcd, pos.x, UINT, "%u" );
+    ok_eq( 0xcdcdcdcd, pos.y, UINT, "%u" );
     ctx->fdwInit = INIT_STATUSWNDPOS;
     ok_ret( 1, ImmGetStatusWindowPos( himc, &pos ) );
     ok_eq( 0xdeadbeef, pos.x, UINT, "%u" );
