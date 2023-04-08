@@ -1094,14 +1094,20 @@ static void test_GetSetCurrentViewMode(void)
     hr = IShellFolder_CreateViewObject(desktop, NULL, &IID_IShellView, (void**)&sview);
     ok(hr == S_OK, "got (0x%08lx)\n", hr);
 
+    hr = IShellView_QueryInterface(sview, &IID_IFolderView, (void **)&fview);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    viewmode = 0xdeadbeef;
+    hr = IFolderView_GetCurrentViewMode(fview, &viewmode);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(viewmode == FVM_TILE || broken(viewmode == 0) /* pre win7 */, "Got view mode %u.\n", viewmode);
+
     fs.ViewMode = 1;
     fs.fFlags = 0;
     browser = IShellBrowserImpl_Construct();
     hr = IShellView_CreateViewWindow(sview, NULL, &fs, browser, &rc, &hwnd);
     ok(hr == S_OK || broken(hr == S_FALSE /*Win2k*/ ), "got (0x%08lx)\n", hr);
 
-    hr = IShellView_QueryInterface(sview, &IID_IFolderView, (void**)&fview);
-    ok(hr == S_OK || broken(hr == E_NOINTERFACE), "got (0x%08lx)\n", hr);
     if(SUCCEEDED(hr))
     {
         HWND hwnd_lv;

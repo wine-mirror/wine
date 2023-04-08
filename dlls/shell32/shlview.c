@@ -3779,6 +3779,7 @@ IShellView *IShellView_Constructor(IShellFolder *folder)
     sv->cScrollDelay = 0;
     sv->ptLastMousePos.x = 0;
     sv->ptLastMousePos.y = 0;
+    sv->FolderSettings.ViewMode = FVM_TILE;
 
     TRACE("(%p)->(%p)\n", sv, folder);
     return (IShellView*)&sv->IShellView3_iface;
