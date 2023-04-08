@@ -87,7 +87,7 @@ struct coreaudio_stream
     AUDCLNT_SHAREMODE share;
     HANDLE event;
 
-    BOOL playing;
+    BOOL playing, please_quit;
     REFERENCE_TIME period;
     UINT32 period_frames;
     UINT32 bufsize_frames, resamp_bufsize_frames;
@@ -745,6 +745,12 @@ static NTSTATUS unix_release_stream( void *args )
     struct coreaudio_stream *stream = handle_get_stream(params->stream);
     SIZE_T size;
 
+    if(params->timer_thread){
+        stream->please_quit = TRUE;
+        NtWaitForSingleObject(params->timer_thread, FALSE, NULL);
+        NtClose(params->timer_thread);
+    }
+
     if(stream->unit){
         AudioOutputUnitStop(stream->unit);
         AudioComponentInstanceDispose(stream->unit);
@@ -1370,6 +1376,35 @@ static NTSTATUS unix_reset(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS unix_timer_loop(void *args)
+{
+    struct timer_loop_params *params = args;
+    struct coreaudio_stream *stream = handle_get_stream(params->stream);
+    LARGE_INTEGER delay, next, last;
+    int adjust;
+
+    delay.QuadPart = -stream->period;
+    NtQueryPerformanceCounter(&last, NULL);
+    next.QuadPart = last.QuadPart + stream->period;
+
+    while(!stream->please_quit){
+        NtSetEvent(stream->event, NULL);
+        NtDelayExecution(FALSE, &delay);
+        NtQueryPerformanceCounter(&last, NULL);
+
+        adjust = next.QuadPart - last.QuadPart;
+        if(adjust > stream->period / 2)
+            adjust = stream->period / 2;
+        else if(adjust < -stream->period / 2)
+            adjust = -stream->period / 2;
+
+        delay.QuadPart = -(stream->period + adjust);
+        next.QuadPart += stream->period;
+    }
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS unix_get_render_buffer(void *args)
 {
     struct get_render_buffer_params *params = args;
@@ -1688,7 +1723,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     unix_start,
     unix_stop,
     unix_reset,
-    unix_not_implemented,
+    unix_timer_loop,
     unix_get_render_buffer,
     unix_release_render_buffer,
     unix_get_capture_buffer,
@@ -2050,7 +2085,7 @@ unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     unix_start,
     unix_stop,
     unix_reset,
-    unix_not_implemented,
+    unix_timer_loop,
     unix_wow64_get_render_buffer,
     unix_release_render_buffer,
     unix_wow64_get_capture_buffer,
