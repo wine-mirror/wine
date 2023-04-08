@@ -1491,6 +1491,25 @@ static void test_newmenu(void)
     IUnknown_Release(unk);
 }
 
+static void test_folder_flags(void)
+{
+    FOLDERSETTINGS settings;
+    IShellFolder *desktop;
+    IShellView *shellview;
+    HRESULT hr;
+
+    create_interfaces(&desktop, &shellview);
+
+    hr = IShellView_GetCurrentInfo(shellview, &settings);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(settings.ViewMode == FVM_TILE || broken(!settings.ViewMode) /* pre win7 */,
+            "Got view mode %u.\n", settings.ViewMode);
+    todo_wine ok(settings.fFlags == FWF_USESEARCHFOLDER || broken(!settings.fFlags) /* pre vista */,
+            "Got flags %#x.\n", settings.fFlags);
+
+    destroy_interfaces(desktop, shellview);
+}
+
 START_TEST(shlview)
 {
     OleInitialize(NULL);
@@ -1507,6 +1526,7 @@ START_TEST(shlview)
     test_SHCreateShellFolderView();
     test_SHCreateShellFolderViewEx();
     test_newmenu();
+    test_folder_flags();
 
     OleUninitialize();
 }
