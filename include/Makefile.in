@@ -838,6 +838,7 @@ SOURCES = \
 	windows.system.threading.idl \
 	windows.system.userprofile.idl \
 	windows.ui.composition.idl \
+	windows.ui.composition.interop.idl \
 	windows.ui.core.idl \
 	windows.ui.idl \
 	windows.ui.viewmanagement.idl \
