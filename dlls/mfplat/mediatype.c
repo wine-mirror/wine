@@ -26,6 +26,7 @@
 #include "ks.h"
 #include "ksmedia.h"
 #include "amvideo.h"
+#include "wmcodecdsp.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -3593,6 +3594,22 @@ static const GUID * get_mf_subtype_for_am_subtype(const GUID *subtype)
 
     if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB32))
         return &MFVideoFormat_RGB32;
+    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_ARGB32))
+        return &MFVideoFormat_ARGB32;
+    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_I420))
+        return &MFVideoFormat_I420;
+    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_AYUV))
+        return &MFVideoFormat_AYUV;
+    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_YV12))
+        return &MFVideoFormat_YV12;
+    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_YUY2))
+        return &MFVideoFormat_YUY2;
+    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_UYVY))
+        return &MFVideoFormat_UYVY;
+    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_YVYU))
+        return &MFVideoFormat_YVYU;
+    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_NV12))
+        return &MFVideoFormat_NV12;
     else
     {
         FIXME("Unknown subtype %s.\n", debugstr_guid(subtype));

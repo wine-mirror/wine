@@ -56,6 +56,7 @@
 #undef EXTERN_GUID
 #define EXTERN_GUID DEFINE_GUID
 #include "mfd3d12.h"
+#include "wmcodecdsp.h"
 
 DEFINE_GUID(DUMMY_CLSID, 0x12345678,0x1234,0x1234,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19);
 DEFINE_GUID(DUMMY_GUID1, 0x12345678,0x1234,0x1234,0x21,0x21,0x21,0x21,0x21,0x21,0x21,0x21);
@@ -8421,6 +8422,22 @@ static void test_MFInitMediaTypeFromAMMediaType(void)
         {0}, {0}, 0, 0, 0,
         {sizeof(BITMAPINFOHEADER), 32, 24, 1, 0, 0xdeadbeef}
     };
+    static const struct guid_type_pair
+    {
+        const GUID *am_type;
+        const GUID *mf_type;
+    } guid_types[] =
+    {
+        { &MEDIASUBTYPE_I420, &MFVideoFormat_I420 },
+        { &MEDIASUBTYPE_AYUV, &MFVideoFormat_AYUV },
+        { &MEDIASUBTYPE_YV12, &MFVideoFormat_YV12 },
+        { &MEDIASUBTYPE_YUY2, &MFVideoFormat_YUY2 },
+        { &MEDIASUBTYPE_UYVY, &MFVideoFormat_UYVY },
+        { &MEDIASUBTYPE_YVYU, &MFVideoFormat_YVYU },
+        { &MEDIASUBTYPE_NV12, &MFVideoFormat_NV12 },
+        { &MEDIASUBTYPE_ARGB32, &MFVideoFormat_ARGB32 },
+    };
+    unsigned int i;
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -8538,6 +8555,22 @@ static void test_MFInitMediaTypeFromAMMediaType(void)
     hr = IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, &value32);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(value32 == 128, "Unexpected value %d.\n", value32);
+
+    vih.bmiHeader.biHeight = 24;
+    for (i = 0; i < ARRAY_SIZE(guid_types); ++i)
+    {
+        memcpy(&mt.subtype, guid_types[i].am_type, sizeof(GUID));
+
+        hr = MFInitMediaTypeFromAMMediaType(media_type, &mt);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFMediaType_GetGUID(media_type, &MF_MT_MAJOR_TYPE, &guid);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(IsEqualGUID(&guid, &MFMediaType_Video), "Unexpected guid %s.\n", debugstr_guid(&guid));
+        hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &guid);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(IsEqualGUID(&guid, guid_types[i].mf_type), "Unexpected guid %s.\n", debugstr_guid(&guid));
+    }
 
     IMFMediaType_Release(media_type);
 }

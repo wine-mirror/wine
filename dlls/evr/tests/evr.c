@@ -673,7 +673,6 @@ static void test_query_accept(void)
     {
         memcpy(&req_mt.subtype, subtype_tests[i], sizeof(GUID));
         hr = IPin_QueryAccept(pin, &req_mt);
-        todo_wine_if(i)
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
     }
 
