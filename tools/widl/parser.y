@@ -2481,8 +2481,12 @@ static void check_field_common(const type_t *container_type,
             break;
         }
         case TGT_POINTER:
-            type = type_pointer_get_ref_type(type);
-            more_to_do = TRUE;
+            if (type_get_type(type_pointer_get_ref_type(type)) != TYPE_VOID ||
+                !type->name || strcmp(type->name, "HANDLE"))
+            {
+                type = type_pointer_get_ref_type(type);
+                more_to_do = TRUE;
+            }
             break;
         case TGT_ARRAY:
             type = type_array_get_element_type(type);
