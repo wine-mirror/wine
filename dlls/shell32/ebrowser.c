@@ -362,6 +362,7 @@ static HRESULT create_new_shellview(ExplorerBrowserImpl *This, IShellItem *psi)
                 This->hwnd_sv = NULL;
             }
 
+            This->fs.fFlags |= FWF_USESEARCHFOLDER | FWF_FULLROWSELECT | FWF_NOCLIENTEDGE;
             hr = IShellView_CreateViewWindow(psv, This->psv, &This->fs, psb, &This->sv_rc, &hwnd_new);
             if(SUCCEEDED(hr))
             {

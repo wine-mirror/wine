@@ -1726,6 +1726,8 @@ static void test_folder_settings(void)
     ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     ebrowser_browse_to_desktop(browser);
+    settings.fFlags |= FWF_USESEARCHFOLDER | FWF_FULLROWSELECT | FWF_NOCLIENTEDGE;
+    CHECK_SETTINGS(browser, settings);
 
     settings.ViewMode = FVM_AUTO; settings.fFlags = FWF_AUTOARRANGE;
     hr = IExplorerBrowser_SetFolderSettings(browser, &settings);
