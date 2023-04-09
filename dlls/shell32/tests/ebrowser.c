@@ -1688,6 +1688,23 @@ static void setup_window(void)
     ok(hwnd != NULL, "Failed to create window for tests.\n");
 }
 
+#define CHECK_SETTINGS(browser,expected) _check_settings(browser, expected, __LINE__)
+static void _check_settings(IExplorerBrowser *browser, FOLDERSETTINGS expected, int line)
+{
+    FOLDERSETTINGS settings;
+    IShellView *view;
+    HRESULT hr;
+
+    hr = IExplorerBrowser_GetCurrentView(browser, &IID_IShellView, (void **)&view);
+    ok_(__FILE__,line)(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IShellView_GetCurrentInfo(view, &settings);
+    ok_(__FILE__,line)(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok_(__FILE__,line)(!memcmp(&settings, &expected, sizeof(settings)),
+            "Got settings {view mode: %d, flags: %#x}, expected {view mode: %d, flags: %#x}.\n",
+            settings.ViewMode, settings.fFlags, expected.ViewMode, expected.fFlags);
+    IShellView_Release(view);
+}
+
 static void test_folder_settings(void)
 {
     IExplorerBrowser *browser;
@@ -1702,7 +1719,45 @@ static void test_folder_settings(void)
 
     settings.ViewMode = 0; settings.fFlags = FWF_NONE;
     hr = IExplorerBrowser_SetFolderSettings(browser, &settings);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    settings.ViewMode = FVM_ICON; settings.fFlags = FWF_SNAPTOGRID;
+    hr = IExplorerBrowser_SetFolderSettings(browser, &settings);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    ebrowser_browse_to_desktop(browser);
+
+    settings.ViewMode = FVM_AUTO; settings.fFlags = FWF_AUTOARRANGE;
+    hr = IExplorerBrowser_SetFolderSettings(browser, &settings);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(settings.ViewMode == FVM_AUTO && settings.fFlags == FWF_AUTOARRANGE,
+            "Got view mode %d, flags %#x.\n", settings.ViewMode, settings.fFlags);
+    settings.ViewMode = FVM_ICON; settings.fFlags = FWF_AUTOARRANGE;
+    CHECK_SETTINGS(browser, settings);
+
+    settings.ViewMode = FVM_LIST; settings.fFlags = FWF_AUTOARRANGE;
+    hr = IExplorerBrowser_SetFolderSettings(browser, &settings);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    settings.ViewMode = 0; settings.fFlags = FWF_SNAPTOGRID;
+    hr = IExplorerBrowser_SetFolderSettings(browser, &settings);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(settings.ViewMode == 0 && settings.fFlags == FWF_SNAPTOGRID,
+            "Got view mode %d, flags %#x.\n", settings.ViewMode, settings.fFlags);
+    settings.ViewMode = FVM_LIST;
+    CHECK_SETTINGS(browser, settings);
+
+    settings.ViewMode = FVM_LAST + 1; settings.fFlags = FWF_AUTOARRANGE;
+    hr = IExplorerBrowser_SetFolderSettings(browser, &settings);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    settings.ViewMode = FVM_LIST;
+    CHECK_SETTINGS(browser, settings);
+
+    settings.ViewMode = FVM_ICON; settings.fFlags = FWF_NONE;
+    hr = IExplorerBrowser_SetFolderSettings(browser, &settings);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(settings.ViewMode == FVM_ICON && settings.fFlags == FWF_NONE,
+            "Got view mode %d, flags %#x.\n", settings.ViewMode, settings.fFlags);
+    CHECK_SETTINGS(browser, settings);
 
     IExplorerBrowser_Release(browser);
 }

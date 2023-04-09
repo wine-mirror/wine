@@ -340,24 +340,6 @@ static void size_panes(ExplorerBrowserImpl *This)
                TRUE);
 }
 
-static HRESULT change_viewmode(ExplorerBrowserImpl *This, UINT viewmode)
-{
-    IFolderView *pfv;
-    HRESULT hr;
-
-    if(!This->psv)
-        return E_FAIL;
-
-    hr = IShellView_QueryInterface(This->psv, &IID_IFolderView, (void*)&pfv);
-    if(SUCCEEDED(hr))
-    {
-        hr = IFolderView_SetCurrentViewMode(pfv, This->fs.ViewMode);
-        IFolderView_Release(pfv);
-    }
-
-    return hr;
-}
-
 static HRESULT create_new_shellview(ExplorerBrowserImpl *This, IShellItem *psi)
 {
     IShellBrowser *psb = &This->IShellBrowser_iface;
@@ -988,17 +970,32 @@ static HRESULT WINAPI IExplorerBrowser_fnSetEmptyText(IExplorerBrowser *iface,
 static HRESULT WINAPI IExplorerBrowser_fnSetFolderSettings(IExplorerBrowser *iface,
                                                            const FOLDERSETTINGS *pfs)
 {
-    ExplorerBrowserImpl *This = impl_from_IExplorerBrowser(iface);
-    TRACE("%p (%p)\n", This, pfs);
+    ExplorerBrowserImpl *browser = impl_from_IExplorerBrowser(iface);
+    IFolderView2 *view;
+    HRESULT hr;
 
-    if(!pfs)
+    TRACE("explorer browser %p, settings %p.\n", iface, pfs);
+
+    if (!pfs)
         return E_INVALIDARG;
 
-    This->fs.ViewMode = pfs->ViewMode;
-    This->fs.fFlags = pfs->fFlags | FWF_NOCLIENTEDGE;
+    if (pfs->ViewMode)
+        browser->fs.ViewMode = pfs->ViewMode;
+    browser->fs.fFlags = pfs->fFlags;
 
-    /* Change the settings of the current view, if any. */
-    return change_viewmode(This, This->fs.ViewMode);
+    if (!browser->psv)
+        return E_INVALIDARG;
+
+    hr = IShellView_QueryInterface(browser->psv, &IID_IFolderView2, (void **)&view);
+    if (SUCCEEDED(hr))
+    {
+        hr = IFolderView2_SetCurrentViewMode(view, browser->fs.ViewMode);
+        if (SUCCEEDED(hr))
+            if (SUCCEEDED(hr))
+                hr = IFolderView2_SetCurrentFolderFlags(view, ~FWF_NONE, browser->fs.fFlags);
+        IFolderView2_Release(view);
+    }
+    return hr;
 }
 
 static HRESULT WINAPI IExplorerBrowser_fnAdvise(IExplorerBrowser *iface,
