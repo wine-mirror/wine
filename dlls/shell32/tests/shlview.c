@@ -1533,24 +1533,24 @@ static void test_folder_flags(void)
     }
 
     hr = IFolderView2_GetCurrentFolderFlags(folderview, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     flags = 0xdeadbeef;
     hr = IFolderView2_GetCurrentFolderFlags(folderview, &flags);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(flags == FWF_USESEARCHFOLDER, "Got flags %#lx.\n", flags);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(flags == FWF_USESEARCHFOLDER, "Got flags %#lx.\n", flags);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         hr = IFolderView2_SetCurrentFolderFlags(folderview, tests[i].mask, tests[i].flags);
-        todo_wine ok(hr == S_OK, "Test %u: Got hr %#lx.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got hr %#lx.\n", i, hr);
         flags = 0xdeadbeef;
         hr = IFolderView2_GetCurrentFolderFlags(folderview, &flags);
-        todo_wine ok(hr == S_OK, "Test %u: Got hr %#lx.\n", i, hr);
-        todo_wine ok(flags == tests[i].expected, "Test %u: Got flags %#lx.\n", i, flags);
+        ok(hr == S_OK, "Test %u: Got hr %#lx.\n", i, hr);
+        ok(flags == tests[i].expected, "Test %u: Got flags %#lx.\n", i, flags);
 
         hr = IFolderView2_SetCurrentFolderFlags(folderview, ~FWF_NONE, FWF_NONE);
-        todo_wine ok(hr == S_OK, "Test %u: Got hr %#lx.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got hr %#lx.\n", i, hr);
     }
 
     IFolderView2_Release(folderview);
