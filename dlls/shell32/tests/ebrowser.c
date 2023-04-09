@@ -983,7 +983,6 @@ static void test_basics(void)
 {
     IExplorerBrowser *peb;
     IShellBrowser *psb;
-    FOLDERSETTINGS fs;
     ULONG lres;
     EXPLORER_BROWSER_OPTIONS flags;
     HDWP hdwp;
@@ -1087,13 +1086,6 @@ static void test_basics(void)
 
     ebrowser_instantiate(&peb);
     ebrowser_initialize(peb);
-
-    /* SetFolderSettings */
-    hr = IExplorerBrowser_SetFolderSettings(peb, NULL);
-    ok(hr == E_INVALIDARG, "got (0x%08lx)\n", hr);
-    fs.ViewMode = 0; fs.fFlags = 0;
-    hr = IExplorerBrowser_SetFolderSettings(peb, &fs);
-    todo_wine ok(hr == E_INVALIDARG, "got (0x%08lx)\n", hr);
 
     /* SetPropertyBag */
     hr = IExplorerBrowser_SetPropertyBag(peb, NULL);
@@ -1696,6 +1688,25 @@ static void setup_window(void)
     ok(hwnd != NULL, "Failed to create window for tests.\n");
 }
 
+static void test_folder_settings(void)
+{
+    IExplorerBrowser *browser;
+    FOLDERSETTINGS settings;
+    HRESULT hr;
+
+    ebrowser_instantiate(&browser);
+    ebrowser_initialize(browser);
+
+    hr = IExplorerBrowser_SetFolderSettings(browser, NULL);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    settings.ViewMode = 0; settings.fFlags = FWF_NONE;
+    hr = IExplorerBrowser_SetFolderSettings(browser, &settings);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    IExplorerBrowser_Release(browser);
+}
+
 START_TEST(ebrowser)
 {
     OleInitialize(NULL);
@@ -1719,6 +1730,7 @@ START_TEST(ebrowser)
     test_GetCurrentView();
     test_SetSite();
     test_InputObject();
+    test_folder_settings();
 
     DestroyWindow(hwnd);
     OleUninitialize();
