@@ -2709,25 +2709,20 @@ static HRESULT WINAPI FolderView_GetCurrentViewMode(IFolderView2 *iface, UINT *m
 
 static HRESULT WINAPI FolderView_SetCurrentViewMode(IFolderView2 *iface, UINT mode)
 {
-    IShellViewImpl *This = impl_from_IFolderView2(iface);
-    DWORD dwStyle;
+    IShellViewImpl *shellview = impl_from_IFolderView2(iface);
+    DWORD style;
 
-    TRACE("%p, %u.\n", This, mode);
+    TRACE("folder view %p, mode %u.\n", iface, mode);
 
-    if((mode < FVM_FIRST || mode > FVM_LAST) &&
-       (mode != FVM_AUTO))
-        return E_INVALIDARG;
+    if (mode == FVM_AUTO)
+        mode = FVM_ICON;
 
-    /* Windows before Vista uses LVM_SETVIEW and possibly
-       LVM_SETEXTENDEDLISTVIEWSTYLE to set the style of the listview,
-       while later versions seem to accomplish this through other
-       means. */
-    dwStyle = ViewModeToListStyle(mode);
-    SetStyle(This, dwStyle, LVS_TYPEMASK);
-
-    /* This will not necessarily be the actual mode set above.
-       This mimics the behavior of Windows XP. */
-    This->FolderSettings.ViewMode = mode;
+    if (mode >= FVM_FIRST && mode <= FVM_LAST)
+    {
+        style = ViewModeToListStyle(mode);
+        SetStyle(shellview, style, LVS_TYPEMASK);
+        shellview->FolderSettings.ViewMode = mode;
+    }
 
     return S_OK;
 }

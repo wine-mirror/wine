@@ -1110,13 +1110,23 @@ static void test_GetSetCurrentViewMode(void)
 
         hr = IFolderView_SetCurrentViewMode(fview, FVM_AUTO);
         ok(hr == S_OK, "got (0x%08lx)\n", hr);
+        viewmode = 0xdeadbeef;
+        hr = IFolderView_GetCurrentViewMode(fview, &viewmode);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(viewmode == FVM_ICON || broken(viewmode == FVM_AUTO) /* pre vista */, "Got view mode %d.\n", viewmode);
 
+        hr = IFolderView_SetCurrentViewMode(fview, FVM_LIST);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        viewmode = 0xdeadbeef;
+        hr = IFolderView_GetCurrentViewMode(fview, &viewmode);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(viewmode == FVM_LIST, "Got view mode %d.\n", viewmode);
         hr = IFolderView_SetCurrentViewMode(fview, 0);
-        ok(hr == E_INVALIDARG || broken(hr == S_OK),
-           "got (0x%08lx)\n", hr);
-
+        ok(hr == S_OK || broken(hr == E_INVALIDARG) /* pre win7 */, "Got hr %#lx.\n", hr);
+        viewmode = 0xdeadbeef;
         hr = IFolderView_GetCurrentViewMode(fview, &viewmode);
         ok(hr == S_OK, "got (0x%08lx)\n", hr);
+        ok(viewmode == FVM_LIST || broken(viewmode == 0) /* pre vista */, "Got view mode %d.\n", viewmode);
 
         for(i = 1; i < 9; i++)
         {
@@ -1134,8 +1144,12 @@ static void test_GetSetCurrentViewMode(void)
         }
 
         hr = IFolderView_SetCurrentViewMode(fview, 9);
-        ok(hr == E_INVALIDARG || broken(hr == S_OK),
-           "got (0x%08lx)\n", hr);
+        ok(hr == S_OK || broken(hr == E_INVALIDARG) /* pre win7 */, "Got hr %#lx.\n", hr);
+        viewmode = 0xdeadbeef;
+        hr = IFolderView_GetCurrentViewMode(fview, &viewmode);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(viewmode == FVM_CONTENT || broken(viewmode == 9) /* pre vista */ ||
+                broken(viewmode == FVM_THUMBSTRIP) /* vista */, "Got view mode %d.\n", viewmode);
 
         /* Test messages */
         hwnd_lv = subclass_listview(hwnd);
