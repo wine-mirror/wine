@@ -29,7 +29,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 #define MAKE_TAG(ch0, ch1, ch2, ch3) \
     ((DWORD)(ch0) | ((DWORD)(ch1) << 8) | \
     ((DWORD)(ch2) << 16) | ((DWORD)(ch3) << 24 ))
-#define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
 #define TAG_FX10 MAKE_TAG('F', 'X', '1', '0')
 #define TAG_FXLC MAKE_TAG('F', 'X', 'L', 'C')
 #define TAG_CLI4 MAKE_TAG('C', 'L', 'I', '4')
@@ -1144,89 +1143,6 @@ static BOOL d3d_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, S
 static BOOL require_space(size_t offset, size_t count, size_t size, size_t data_size)
 {
     return !count || (data_size - offset) / count >= size;
-}
-
-static HRESULT parse_dxbc(const char *data, SIZE_T data_size,
-        HRESULT (*chunk_handler)(const char *data, size_t data_size, uint32_t tag, void *ctx), void *ctx)
-{
-    const char *ptr = data;
-    uint32_t chunk_count;
-    uint32_t total_size;
-    HRESULT hr = S_OK;
-    uint32_t version;
-    unsigned int i;
-    uint32_t tag;
-
-    if (!data)
-    {
-        WARN("No data supplied.\n");
-        return E_FAIL;
-    }
-
-    tag = read_u32(&ptr);
-    TRACE("tag: %s.\n", debugstr_an((const char *)&tag, 4));
-
-    if (tag != TAG_DXBC)
-    {
-        WARN("Wrong tag.\n");
-        return E_FAIL;
-    }
-
-    FIXME("Skipping DXBC checksum.\n");
-    skip_u32_unknown(&ptr, 4);
-
-    version = read_u32(&ptr);
-    TRACE("version: %#x.\n", version);
-    if (version != 0x00000001)
-    {
-        WARN("Got unexpected DXBC version %#x.\n", version);
-        return E_FAIL;
-    }
-
-    total_size = read_u32(&ptr);
-    TRACE("Total size: %#x.\n", total_size);
-
-    if (data_size != total_size)
-    {
-        WARN("Wrong size supplied.\n");
-        return E_FAIL;
-    }
-
-    chunk_count = read_u32(&ptr);
-    TRACE("Chunk count: %#x.\n", chunk_count);
-
-    for (i = 0; i < chunk_count; ++i)
-    {
-        uint32_t chunk_tag, chunk_size;
-        const char *chunk_ptr;
-        uint32_t chunk_offset;
-
-        chunk_offset = read_u32(&ptr);
-        TRACE("Chunk %u at offset %#x.\n", i, chunk_offset);
-
-        if (chunk_offset >= data_size || !require_space(chunk_offset, 2, sizeof(uint32_t), data_size))
-        {
-            WARN("Invalid chunk offset %#x (data size %#Ix).\n", chunk_offset, data_size);
-            return E_FAIL;
-        }
-
-        chunk_ptr = data + chunk_offset;
-
-        chunk_tag = read_u32(&chunk_ptr);
-        chunk_size = read_u32(&chunk_ptr);
-
-        if (!require_space(chunk_ptr - data, 1, chunk_size, data_size))
-        {
-            WARN("Invalid chunk size %#x (data size %#Ix, chunk offset %#x).\n",
-                    chunk_size, data_size, chunk_offset);
-            return E_FAIL;
-        }
-
-        if (FAILED(hr = chunk_handler(chunk_ptr, chunk_size, chunk_tag, ctx)))
-            break;
-    }
-
-    return hr;
 }
 
 static BOOL fx10_get_string(const char *data, size_t data_size, uint32_t offset, const char **s, size_t *l)
@@ -2620,8 +2536,13 @@ static HRESULT parse_fx10_ctab(void *ctx, const char *data, unsigned int data_si
     return S_OK;
 }
 
-static HRESULT fxlvm_chunk_handler(const char *data, size_t data_size, uint32_t tag, void *ctx)
+static HRESULT fxlvm_chunk_handler(const struct vkd3d_shader_dxbc_section_desc *section,
+        struct d3d10_preshader_parse_context *ctx)
 {
+    const char *data = section->data.code;
+    size_t data_size = section->data.size;
+    uint32_t tag = section->tag;
+
     TRACE("Chunk tag: %s, size: %Iu.\n", debugstr_an((const char *)&tag, 4), data_size);
 
     switch (tag)
@@ -2644,16 +2565,33 @@ static HRESULT fxlvm_chunk_handler(const char *data, size_t data_size, uint32_t 
 static HRESULT parse_fx10_preshader(const char *data, size_t data_size,
         struct d3d10_effect *effect, struct d3d10_effect_preshader *preshader)
 {
+    const struct vkd3d_shader_code dxbc = {.code = data, .size = data_size};
+    const struct vkd3d_shader_dxbc_section_desc *section;
     struct d3d10_preshader_parse_context context;
-    HRESULT hr;
+    struct vkd3d_shader_dxbc_desc dxbc_desc;
+    HRESULT hr = S_OK;
+    unsigned int i;
+    int ret;
 
     memset(preshader, 0, sizeof(*preshader));
     memset(&context, 0, sizeof(context));
     context.preshader = preshader;
     context.effect = effect;
 
-    if (FAILED(hr = parse_dxbc(data, data_size, fxlvm_chunk_handler, &context)))
-        return hr;
+    if ((ret = vkd3d_shader_parse_dxbc(&dxbc, 0, &dxbc_desc, NULL)) < 0)
+    {
+        WARN("Failed to parse DXBC, ret %d.\n", ret);
+        return E_FAIL;
+    }
+
+    for (i = 0; i < dxbc_desc.section_count; ++i)
+    {
+        section = &dxbc_desc.sections[i];
+        if (FAILED(hr = fxlvm_chunk_handler(section, &context)))
+            break;
+    }
+
+    vkd3d_shader_free_dxbc(&dxbc_desc);
 
     /* Constant buffer and literal constants are preallocated, validate here that expression
        has no invalid accesses for those. */
@@ -2671,7 +2609,7 @@ static HRESULT parse_fx10_preshader(const char *data, size_t data_size,
         return E_FAIL;
     }
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT d3d10_effect_add_prop_dependency(struct d3d10_effect_prop_dependencies *d,
