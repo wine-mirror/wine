@@ -1422,7 +1422,7 @@
 @ cdecl -arch=!i386 sinhf(float)
 @ varargs sprintf(ptr str)
 @ varargs sprintf_s(ptr long str)
-@ cdecl sqrt(double)
+@ cdecl sqrt(double) MSVCRT_sqrt
 @ cdecl -arch=!i386 sqrtf(float) MSVCRT_sqrtf
 @ cdecl srand(long)
 @ varargs sscanf(str str)

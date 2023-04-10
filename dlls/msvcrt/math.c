@@ -77,12 +77,14 @@ void msvcrt_init_math( void *module )
 #endif
 }
 
+#if defined(__i386__) || defined(__x86_64__)
 static inline double ret_nan( BOOL update_sw )
 {
     double x = 1.0;
     if (!update_sw) return -NAN;
     return (x - x) / (x - x);
 }
+#endif
 
 #define SET_X87_CW(MASK) \
     "subl $4, %esp\n\t" \
@@ -408,6 +410,7 @@ double CDECL MSVCRT_exp( double x )
 }
 #endif
 
+#if defined(__x86_64__) || defined(__i386__)
 static BOOL sqrt_validate( double *x, BOOL update_sw )
 {
     short c = _dclass(*x);
@@ -433,7 +436,6 @@ static BOOL sqrt_validate( double *x, BOOL update_sw )
     return TRUE;
 }
 
-#if defined(__x86_64__) || defined(__i386__)
 double CDECL sse2_sqrt(double);
 __ASM_GLOBAL_FUNC( sse2_sqrt,
         "sqrtsd %xmm0, %xmm0\n\t"
@@ -452,10 +454,8 @@ __ASM_GLOBAL_FUNC( x87_sqrt,
 
 /*********************************************************************
  *		sqrt (MSVCRT.@)
- *
- * Copied from musl: src/math/sqrt.c
  */
-double CDECL sqrt( double x )
+double CDECL MSVCRT_sqrt( double x )
 {
 #ifdef __x86_64__
     if (!sqrt_validate(&x, TRUE))
@@ -468,104 +468,7 @@ double CDECL sqrt( double x )
 
     return x87_sqrt(x);
 #else
-    static const double tiny = 1.0e-300;
-
-    double z;
-    int sign = 0x80000000;
-    int ix0,s0,q,m,t,i;
-    unsigned int r,t1,s1,ix1,q1;
-    ULONGLONG ix;
-
-    if (!sqrt_validate(&x, TRUE))
-        return x;
-
-    ix = *(ULONGLONG*)&x;
-    ix0 = ix >> 32;
-    ix1 = ix;
-
-    /* normalize x */
-    m = ix0 >> 20;
-    if (m == 0) {  /* subnormal x */
-        while (ix0 == 0) {
-            m -= 21;
-            ix0 |= (ix1 >> 11);
-            ix1 <<= 21;
-        }
-        for (i=0; (ix0 & 0x00100000) == 0; i++)
-            ix0 <<= 1;
-        m -= i - 1;
-        ix0 |= ix1 >> (32 - i);
-        ix1 <<= i;
-    }
-    m -= 1023;    /* unbias exponent */
-    ix0 = (ix0 & 0x000fffff) | 0x00100000;
-    if (m & 1) {  /* odd m, double x to make it even */
-        ix0 += ix0 + ((ix1 & sign) >> 31);
-        ix1 += ix1;
-    }
-    m >>= 1;      /* m = [m/2] */
-
-    /* generate sqrt(x) bit by bit */
-    ix0 += ix0 + ((ix1 & sign) >> 31);
-    ix1 += ix1;
-    q = q1 = s0 = s1 = 0;  /* [q,q1] = sqrt(x) */
-    r = 0x00200000;        /* r = moving bit from right to left */
-
-    while (r != 0) {
-        t = s0 + r;
-        if (t <= ix0) {
-            s0   = t + r;
-            ix0 -= t;
-            q   += r;
-        }
-        ix0 += ix0 + ((ix1 & sign) >> 31);
-        ix1 += ix1;
-        r >>= 1;
-    }
-
-    r = sign;
-    while (r != 0) {
-        t1 = s1 + r;
-        t  = s0;
-        if (t < ix0 || (t == ix0 && t1 <= ix1)) {
-            s1 = t1 + r;
-            if ((t1&sign) == sign && (s1 & sign) == 0)
-                s0++;
-            ix0 -= t;
-            if (ix1 < t1)
-                ix0--;
-            ix1 -= t1;
-            q1 += r;
-        }
-        ix0 += ix0 + ((ix1 & sign) >> 31);
-        ix1 += ix1;
-        r >>= 1;
-    }
-
-    /* use floating add to find out rounding direction */
-    if ((ix0 | ix1) != 0) {
-        z = 1.0 - tiny; /* raise inexact flag */
-        if (z >= 1.0) {
-            z = 1.0 + tiny;
-            if (q1 == (unsigned int)0xffffffff) {
-                q1 = 0;
-                q++;
-            } else if (z > 1.0) {
-                if (q1 == (unsigned int)0xfffffffe)
-                    q++;
-                q1 += 2;
-            } else
-                q1 += q1 & 1;
-        }
-    }
-    ix0 = (q >> 1) + 0x3fe00000;
-    ix1 = q1 >> 1;
-    if (q & 1)
-        ix1 |= sign;
-    ix = ix0 + ((unsigned int)m << 20);
-    ix <<= 32;
-    ix |= ix1;
-    return *(double*)&ix;
+    return sqrt( x );
 #endif
 }
 

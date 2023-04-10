@@ -35,7 +35,7 @@ double __cdecl sqrt(double x)
 		if (ix == 0x7ff0000000000000)
 			return x;
 		if (ix > 0x7ff0000000000000)
-			return __math_invalid(x);
+			return math_error(_DOMAIN, "sqrt", x, 0, (x - x) / (x - x));
 		/* x is subnormal, normalize it.  */
 		ix = asuint64(x * 0x1p52);
 		top = ix >> 52;

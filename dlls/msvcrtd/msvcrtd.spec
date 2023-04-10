@@ -769,7 +769,7 @@
 @ cdecl sin(double)
 @ cdecl sinh(double)
 @ varargs sprintf(ptr str)
-@ cdecl sqrt(double)
+@ cdecl sqrt(double) MSVCRT_sqrt
 @ cdecl srand(long)
 @ varargs sscanf(str str)
 @ cdecl strcat(str str)
