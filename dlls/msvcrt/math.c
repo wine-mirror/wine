@@ -288,6 +288,7 @@ float CDECL MSVCRT_atanf( float x )
 }
 #endif
 
+#ifdef __x86_64__
 static BOOL sqrtf_validate( float *x )
 {
     short c = _fdclass(*x);
@@ -303,7 +304,6 @@ static BOOL sqrtf_validate( float *x )
     return TRUE;
 }
 
-#if defined(__x86_64__) || defined(__i386__)
 float CDECL sse2_sqrtf(float);
 __ASM_GLOBAL_FUNC( sse2_sqrtf,
         "sqrtss %xmm0, %xmm0\n\t"
@@ -312,10 +312,8 @@ __ASM_GLOBAL_FUNC( sse2_sqrtf,
 
 /*********************************************************************
  *      sqrtf (MSVCRT.@)
- *
- * Copied from musl: src/math/sqrtf.c
  */
-float CDECL sqrtf( float x )
+float CDECL MSVCRT_sqrtf( float x )
 {
 #ifdef __x86_64__
     if (!sqrtf_validate(&x))
@@ -323,61 +321,7 @@ float CDECL sqrtf( float x )
 
     return sse2_sqrtf(x);
 #else
-    static const float tiny = 1.0e-30;
-
-    float z;
-    int ix,s,q,m,t,i;
-    unsigned int r;
-
-    ix = *(int*)&x;
-
-    if (!sqrtf_validate(&x))
-        return x;
-
-    /* normalize x */
-    m = ix >> 23;
-    if (m == 0) {  /* subnormal x */
-        for (i = 0; (ix & 0x00800000) == 0; i++)
-            ix <<= 1;
-        m -= i - 1;
-    }
-    m -= 127;  /* unbias exponent */
-    ix = (ix & 0x007fffff) | 0x00800000;
-    if (m & 1)  /* odd m, double x to make it even */
-        ix += ix;
-    m >>= 1;  /* m = [m/2] */
-
-    /* generate sqrt(x) bit by bit */
-    ix += ix;
-    q = s = 0;       /* q = sqrt(x) */
-    r = 0x01000000;  /* r = moving bit from right to left */
-
-    while (r != 0) {
-        t = s + r;
-        if (t <= ix) {
-            s = t + r;
-            ix -= t;
-            q += r;
-        }
-        ix += ix;
-        r >>= 1;
-    }
-
-    /* use floating add to find out rounding direction */
-    if (ix != 0) {
-        z = 1.0f - tiny; /* raise inexact flag */
-        if (z >= 1.0f) {
-            z = 1.0f + tiny;
-            if (z > 1.0f)
-                q += 2;
-            else
-                q += q & 1;
-        }
-    }
-    ix = (q >> 1) + 0x3f000000;
-    r = ix + ((unsigned int)m << 23);
-    z = *(float*)&r;
-    return z;
+    return sqrtf( x );
 #endif
 }
 

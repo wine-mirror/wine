@@ -1779,7 +1779,7 @@
 @ cdecl _o_sinh(double) sinh
 @ cdecl -arch=!i386 _o_sinhf(float) sinhf
 @ cdecl _o_sqrt(double) sqrt
-@ cdecl -arch=!i386 _o_sqrtf(float) sqrtf
+@ cdecl -arch=!i386 _o_sqrtf(float) MSVCRT_sqrtf
 @ cdecl _o_srand(long) srand
 @ cdecl _o_strcat_s(str long str) strcat_s
 @ cdecl _o_strcoll(str str) strcoll
@@ -2495,7 +2495,7 @@
 @ cdecl sinh(double)
 @ cdecl -arch=!i386 sinhf(float)
 @ cdecl sqrt(double)
-@ cdecl -arch=!i386 sqrtf(float)
+@ cdecl -arch=!i386 sqrtf(float) MSVCRT_sqrtf
 @ cdecl srand(long)
 @ cdecl strcat(str str)
 @ cdecl strcat_s(str long str)

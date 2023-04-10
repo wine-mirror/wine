@@ -24,7 +24,7 @@ float __cdecl sqrtf(float x)
 		if (ix == 0x7f800000)
 			return x;
 		if (ix > 0x7f800000)
-			return __math_invalidf(x);
+			return math_error(_DOMAIN, "sqrtf", x, 0, (x - x) / (x - x));
 		/* x is subnormal, normalize it.  */
 		ix = asuint(x * 0x1p23f);
 		ix -= 23 << 23;
