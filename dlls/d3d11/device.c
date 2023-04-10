@@ -6898,49 +6898,12 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
         struct wined3d_texture **wined3d_texture)
 {
     struct d3d_device *device = device_from_wined3d_device_parent(device_parent);
-    struct d3d_texture2d *texture;
-    ID3D11Texture2D *texture_iface;
-    D3D11_TEXTURE2D_DESC desc;
-    HRESULT hr;
 
     TRACE("device_parent %p, container_parent %p, wined3d_desc %p, texture_flags %#lx, wined3d_texture %p.\n",
             device_parent, container_parent, wined3d_desc, texture_flags, wined3d_texture);
 
-    desc.Width = wined3d_desc->width;
-    desc.Height = wined3d_desc->height;
-    desc.MipLevels = 1;
-    desc.ArraySize = 1;
-    desc.Format = dxgi_format_from_wined3dformat(wined3d_desc->format);
-    desc.SampleDesc.Count = wined3d_desc->multisample_type ? wined3d_desc->multisample_type : 1;
-    desc.SampleDesc.Quality = wined3d_desc->multisample_quality;
-    desc.Usage = D3D11_USAGE_DEFAULT;
-    desc.BindFlags = d3d11_bind_flags_from_wined3d(wined3d_desc->bind_flags);
-    desc.CPUAccessFlags = 0;
-    desc.MiscFlags = 0;
-
-    if (texture_flags & WINED3D_TEXTURE_CREATE_GET_DC)
-    {
-        desc.MiscFlags |= D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
-        texture_flags &= ~WINED3D_TEXTURE_CREATE_GET_DC;
-    }
-
-    if (texture_flags)
-        FIXME("Unhandled flags %#lx.\n", texture_flags);
-
-    if (FAILED(hr = d3d11_device_CreateTexture2D(&device->ID3D11Device2_iface,
-            &desc, NULL, &texture_iface)))
-    {
-        WARN("Failed to create 2D texture, hr %#lx.\n", hr);
-        return hr;
-    }
-
-    texture = impl_from_ID3D11Texture2D(texture_iface);
-
-    *wined3d_texture = texture->wined3d_texture;
-    wined3d_texture_incref(*wined3d_texture);
-    ID3D11Texture2D_Release(&texture->ID3D11Texture2D_iface);
-
-    return S_OK;
+    return wined3d_texture_create(device->wined3d_device, wined3d_desc, 1, 1,
+            texture_flags, NULL, NULL, &d3d_null_wined3d_parent_ops, wined3d_texture);
 }
 
 static const struct wined3d_device_parent_ops d3d_wined3d_device_parent_ops =

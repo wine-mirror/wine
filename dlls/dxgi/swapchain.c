@@ -848,6 +848,41 @@ static const struct wined3d_swapchain_state_parent_ops d3d11_swapchain_state_par
     d3d11_swapchain_windowed_state_changed,
 };
 
+static HRESULT d3d11_swapchain_create_d3d11_textures(struct d3d11_swapchain *swapchain,
+        struct dxgi_device *device, struct wined3d_swapchain_desc *desc)
+{
+    IWineDXGIDeviceParent *dxgi_device_parent;
+    unsigned int texture_flags = 0;
+    unsigned int i;
+    HRESULT hr;
+
+    if (FAILED(hr = IWineDXGIDevice_QueryInterface(&device->IWineDXGIDevice_iface,
+            &IID_IWineDXGIDeviceParent, (void **)&dxgi_device_parent)))
+    {
+        ERR("Device should implement IWineDXGIDeviceParent.\n");
+        return E_FAIL;
+    }
+
+    if (desc->flags & WINED3D_SWAPCHAIN_GDI_COMPATIBLE)
+        texture_flags |= WINED3D_TEXTURE_CREATE_GET_DC;
+
+    for (i = 0; i < desc->backbuffer_count; ++i)
+    {
+        IDXGISurface *surface;
+
+        if (FAILED(hr = IWineDXGIDeviceParent_register_swapchain_texture(dxgi_device_parent,
+                wined3d_swapchain_get_back_buffer(swapchain->wined3d_swapchain, i), texture_flags, &surface)))
+        {
+            ERR("Failed to create parent swapchain texture, hr %#lx.\n", hr);
+            break;
+        }
+        IDXGISurface_Release(surface);
+    }
+
+    IWineDXGIDeviceParent_Release(dxgi_device_parent);
+    return hr;
+}
+
 HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_device *device,
         struct wined3d_swapchain_desc *desc)
 {
@@ -891,6 +926,14 @@ HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_devi
             swapchain, &d3d11_swapchain_wined3d_parent_ops, &swapchain->wined3d_swapchain)))
     {
         WARN("Failed to create wined3d swapchain, hr %#lx.\n", hr);
+        if (hr == WINED3DERR_INVALIDCALL)
+            hr = E_INVALIDARG;
+        goto cleanup;
+    }
+
+    if (FAILED(hr = d3d11_swapchain_create_d3d11_textures(swapchain, device, desc)))
+    {
+        ERR("Failed to create d3d11 textures, hr %#lx.\n", hr);
         goto cleanup;
     }
 
