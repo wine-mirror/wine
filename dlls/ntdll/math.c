@@ -42,6 +42,11 @@
 #define WIN32_NO_STATUS
 #include "ntdll_misc.h"
 
+double math_error( int type, const char *name, double arg1, double arg2, double retval )
+{
+    return retval;
+}
+
 /* Copied from musl: src/internal/libm.h */
 static inline float fp_barrierf(float x)
 {
@@ -1816,46 +1821,6 @@ double CDECL pow( double x, double y )
     ehi = yhi * lhi;
     elo = ylo * lhi + y * llo; /* |elo| < |ehi| * 2^-25. */
     return pow_exp(x, y, ehi, elo, sign_bias);
-}
-
-/*********************************************************************
- *                  sin   (NTDLL.@)
- *
- * Copied from musl: src/math/sin.c
- */
-double CDECL sin( double x )
-{
-    double y[2];
-    UINT32 ix;
-    unsigned n;
-
-    ix = *(ULONGLONG*)&x >> 32;
-    ix &= 0x7fffffff;
-
-    /* |x| ~< pi/4 */
-    if (ix <= 0x3fe921fb) {
-        if (ix < 0x3e500000) { /* |x| < 2**-26 */
-            /* raise inexact if x != 0 and underflow if subnormal*/
-            fp_barrier(ix < 0x00100000 ? x/0x1p120f : x+0x1p120f);
-            return x;
-        }
-        return __sin(x, 0.0, 0);
-    }
-
-    /* sin(Inf or NaN) is NaN */
-    if (isinf(x))
-        return x - x;
-    if (ix >= 0x7ff00000)
-        return x - x;
-
-    /* argument reduction needed */
-    n = __rem_pio2(x, y);
-    switch (n&3) {
-    case 0: return  __sin(y[0], y[1], 1);
-    case 1: return  __cos(y[0], y[1]);
-    case 2: return -__sin(y[0], y[1], 1);
-    default: return -__cos(y[0], y[1]);
-    }
 }
 
 /*********************************************************************
