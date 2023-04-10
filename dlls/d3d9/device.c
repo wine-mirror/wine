@@ -1148,7 +1148,8 @@ static HRESULT d3d9_device_reset(struct d3d9_device *device,
             struct wined3d_resource *resource = wined3d_rendertarget_view_get_resource(rtv);
             struct d3d9_surface *surface;
 
-            if ((surface = d3d9_surface_create(wined3d_texture_from_resource(resource), 0)))
+            if ((surface = d3d9_surface_create(wined3d_texture_from_resource(resource), 0,
+                    (IUnknown *)&device->IDirect3DDevice9Ex_iface)))
                 surface->parent_device = &device->IDirect3DDevice9Ex_iface;
         }
     }
@@ -1353,7 +1354,7 @@ static HRESULT WINAPI d3d9_device_CreateTexture(IDirect3DDevice9Ex *iface,
     levels = wined3d_texture_get_level_count(object->wined3d_texture);
     for (i = 0; i < levels; ++i)
     {
-        if (!d3d9_surface_create(object->wined3d_texture, i))
+        if (!d3d9_surface_create(object->wined3d_texture, i, (IUnknown *)&object->IDirect3DBaseTexture9_iface))
         {
             IDirect3DTexture9_Release(&object->IDirect3DBaseTexture9_iface);
             return E_OUTOFMEMORY;
@@ -1456,7 +1457,7 @@ static HRESULT WINAPI d3d9_device_CreateCubeTexture(IDirect3DDevice9Ex *iface,
     levels = wined3d_texture_get_level_count(object->wined3d_texture);
     for (i = 0; i < levels * 6; ++i)
     {
-        if (!d3d9_surface_create(object->wined3d_texture, i))
+        if (!d3d9_surface_create(object->wined3d_texture, i, (IUnknown *)&object->IDirect3DBaseTexture9_iface))
         {
             IDirect3DTexture9_Release(&object->IDirect3DBaseTexture9_iface);
             return E_OUTOFMEMORY;
@@ -1599,7 +1600,7 @@ static HRESULT d3d9_device_create_surface(struct d3d9_device *device, unsigned i
         return hr;
     }
 
-    if (!(surface_impl = d3d9_surface_create(texture, 0)))
+    if (!(surface_impl = d3d9_surface_create(texture, 0, NULL)))
     {
         wined3d_texture_decref(texture);
         wined3d_mutex_unlock();
@@ -4564,11 +4565,8 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
     TRACE("device_parent %p, container_parent %p, desc %p, texture flags %#lx, texture %p.\n",
             device_parent, container_parent, desc, texture_flags, texture);
 
-    if (container_parent == device_parent)
-        container_parent = &device->IDirect3DDevice9Ex_iface;
-
     if (FAILED(hr = wined3d_texture_create(device->wined3d_device, desc, 1, 1,
-            texture_flags, NULL, container_parent, &d3d9_null_wined3d_parent_ops, texture)))
+            texture_flags, NULL, NULL, &d3d9_null_wined3d_parent_ops, texture)))
     {
         WARN("Failed to create texture, hr %#lx.\n", hr);
         return hr;

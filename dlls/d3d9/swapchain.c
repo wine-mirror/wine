@@ -411,7 +411,8 @@ HRESULT d3d9_swapchain_create(struct d3d9_device *device, struct wined3d_swapcha
 
     for (i = 0; i < desc->backbuffer_count; ++i)
     {
-        if (!(surface = d3d9_surface_create(wined3d_swapchain_get_back_buffer(object->wined3d_swapchain, i), 0)))
+        if (!(surface = d3d9_surface_create(wined3d_swapchain_get_back_buffer(object->wined3d_swapchain, i), 0,
+                (IUnknown *)&object->IDirect3DSwapChain9Ex_iface)))
         {
             IDirect3DSwapChain9Ex_Release(&object->IDirect3DSwapChain9Ex_iface);
             return E_OUTOFMEMORY;
@@ -424,7 +425,8 @@ HRESULT d3d9_swapchain_create(struct d3d9_device *device, struct wined3d_swapcha
     {
         struct wined3d_resource *resource = wined3d_rendertarget_view_get_resource(wined3d_dsv);
 
-        if (!(surface = d3d9_surface_create(wined3d_texture_from_resource(resource), 0)))
+        if (!(surface = d3d9_surface_create(wined3d_texture_from_resource(resource), 0,
+                (IUnknown *)&device->IDirect3DDevice9Ex_iface)))
         {
             IDirect3DSwapChain9Ex_Release(&object->IDirect3DSwapChain9Ex_iface);
             return E_OUTOFMEMORY;

@@ -180,7 +180,7 @@ struct d3d9_surface
 
 struct wined3d_rendertarget_view *d3d9_surface_acquire_rendertarget_view(struct d3d9_surface *surface) DECLSPEC_HIDDEN;
 struct d3d9_surface *d3d9_surface_create(struct wined3d_texture *wined3d_texture,
-        unsigned int sub_resource_idx) DECLSPEC_HIDDEN;
+        unsigned int sub_resource_idx, IUnknown *container) DECLSPEC_HIDDEN;
 struct d3d9_device *d3d9_surface_get_device(const struct d3d9_surface *surface) DECLSPEC_HIDDEN;
 void d3d9_surface_release_rendertarget_view(struct d3d9_surface *surface,
         struct wined3d_rendertarget_view *rtv) DECLSPEC_HIDDEN;
