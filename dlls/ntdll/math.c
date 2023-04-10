@@ -56,35 +56,6 @@ int CDECL abs( int i )
 }
 
 /*********************************************************************
- *                  ceil   (NTDLL.@)
- *
- * Based on musl: src/math/ceilf.c
- */
-double CDECL ceil( double x )
-{
-    union {double f; UINT64 i;} u = {x};
-    int e = (u.i >> 52 & 0x7ff) - 0x3ff;
-    UINT64 m;
-
-    if (e >= 52)
-        return x;
-    if (e >= 0) {
-        m = 0x000fffffffffffffULL >> e;
-        if ((u.i & m) == 0)
-            return x;
-        if (u.i >> 63 == 0)
-            u.i += m;
-        u.i &= ~m;
-    } else {
-        if (u.i >> 63)
-            return -0.0;
-        else if (u.i << 1)
-            return 1.0;
-    }
-    return u.f;
-}
-
-/*********************************************************************
  *                  fabs   (NTDLL.@)
  *
  * Copied from musl: src/math/fabsf.c
