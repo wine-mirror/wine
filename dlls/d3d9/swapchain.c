@@ -393,7 +393,10 @@ static HRESULT swapchain_init(struct d3d9_swapchain *swapchain, struct d3d9_devi
 HRESULT d3d9_swapchain_create(struct d3d9_device *device, struct wined3d_swapchain_desc *desc,
         unsigned int swap_interval, struct d3d9_swapchain **swapchain)
 {
+    struct wined3d_rendertarget_view *wined3d_dsv;
     struct d3d9_swapchain *object;
+    struct d3d9_surface *surface;
+    unsigned int i;
     HRESULT hr;
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
@@ -404,6 +407,29 @@ HRESULT d3d9_swapchain_create(struct d3d9_device *device, struct wined3d_swapcha
         WARN("Failed to initialize swapchain, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
+    }
+
+    for (i = 0; i < desc->backbuffer_count; ++i)
+    {
+        if (!(surface = d3d9_surface_create(wined3d_swapchain_get_back_buffer(object->wined3d_swapchain, i), 0)))
+        {
+            IDirect3DSwapChain9Ex_Release(&object->IDirect3DSwapChain9Ex_iface);
+            return E_OUTOFMEMORY;
+        }
+        surface->parent_device = &device->IDirect3DDevice9Ex_iface;
+    }
+
+    if ((desc->flags & WINED3D_SWAPCHAIN_IMPLICIT)
+            && (wined3d_dsv = wined3d_device_context_get_depth_stencil_view(device->immediate_context)))
+    {
+        struct wined3d_resource *resource = wined3d_rendertarget_view_get_resource(wined3d_dsv);
+
+        if (!(surface = d3d9_surface_create(wined3d_texture_from_resource(resource), 0)))
+        {
+            IDirect3DSwapChain9Ex_Release(&object->IDirect3DSwapChain9Ex_iface);
+            return E_OUTOFMEMORY;
+        }
+        surface->parent_device = &device->IDirect3DDevice9Ex_iface;
     }
 
     TRACE("Created swapchain %p.\n", object);
