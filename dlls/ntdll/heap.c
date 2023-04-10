@@ -146,7 +146,8 @@ C_ASSERT( sizeof(ARENA_LARGE) == 4 * BLOCK_ALIGN );
 
 #define ROUND_ADDR(addr, mask) ((void *)((UINT_PTR)(addr) & ~(UINT_PTR)(mask)))
 #define ROUND_SIZE(size, mask) ((((SIZE_T)(size) + (mask)) & ~(SIZE_T)(mask)))
-#define FIELD_MAX(type, field) (((SIZE_T)1 << (sizeof(((type *)0)->field) * 8)) - 1)
+#define FIELD_BITS(type, field) (sizeof(((type *)0)->field) * 8)
+#define FIELD_MAX(type, field) (((SIZE_T)1 << FIELD_BITS(type, field)) - 1)
 
 #define HEAP_MIN_BLOCK_SIZE   ROUND_SIZE(sizeof(struct entry) + BLOCK_ALIGN, BLOCK_ALIGN - 1)
 
@@ -168,17 +169,11 @@ C_ASSERT( HEAP_MAX_FREE_BLOCK_SIZE >= HEAP_MAX_BLOCK_REGION_SIZE );
 /* minimum size to start allocating large blocks */
 #define HEAP_MIN_LARGE_BLOCK_SIZE  (HEAP_MAX_USED_BLOCK_SIZE - 0x1000)
 
-/* There will be a free list bucket for every arena size up to and including this value */
-#define HEAP_MAX_SMALL_FREE_LIST 0x100
-C_ASSERT( HEAP_MAX_SMALL_FREE_LIST % BLOCK_ALIGN == 0 );
-#define HEAP_NB_SMALL_FREE_LISTS (((HEAP_MAX_SMALL_FREE_LIST - HEAP_MIN_BLOCK_SIZE) / BLOCK_ALIGN) + 1)
-
-/* Max size of the blocks on the free lists above HEAP_MAX_SMALL_FREE_LIST */
-static const SIZE_T free_list_sizes[] =
-{
-    0x200, 0x400, 0x1000, ~(SIZE_T)0
-};
-#define HEAP_NB_FREE_LISTS (ARRAY_SIZE(free_list_sizes) + HEAP_NB_SMALL_FREE_LISTS)
+#define FREE_LIST_LINEAR_BITS 2
+#define FREE_LIST_LINEAR_MASK ((1 << FREE_LIST_LINEAR_BITS) - 1)
+#define FREE_LIST_COUNT ((FIELD_BITS( struct block, block_size ) - FREE_LIST_LINEAR_BITS + 1) * (1 << FREE_LIST_LINEAR_BITS) + 1)
+/* for reference, update this when changing parameters */
+C_ASSERT( FREE_LIST_COUNT == 0x3d );
 
 typedef struct DECLSPEC_ALIGN(BLOCK_ALIGN) tagSUBHEAP
 {
@@ -304,7 +299,7 @@ struct heap
     DWORD            pending_pos;   /* Position in pending free requests ring */
     struct block   **pending_free;  /* Ring buffer for pending free requests */
     RTL_CRITICAL_SECTION cs;
-    struct entry     free_lists[HEAP_NB_FREE_LISTS];
+    struct entry     free_lists[FREE_LIST_COUNT];
     struct bin      *bins;
     SUBHEAP          subheap;
 };
@@ -567,23 +562,6 @@ static void valgrind_notify_free_all( SUBHEAP *subheap, const struct heap *heap 
 #endif
 }
 
-/* locate a free list entry of the appropriate size */
-/* size is the size of the whole block including the arena header */
-static inline struct entry *find_free_list( struct heap *heap, SIZE_T block_size, BOOL last )
-{
-    struct entry *list, *end = heap->free_lists + ARRAY_SIZE(heap->free_lists);
-    unsigned int i;
-
-    if (block_size <= HEAP_MAX_SMALL_FREE_LIST)
-        i = (block_size - HEAP_MIN_BLOCK_SIZE) / BLOCK_ALIGN;
-    else for (i = HEAP_NB_SMALL_FREE_LISTS; i < HEAP_NB_FREE_LISTS - 1; i++)
-        if (block_size <= free_list_sizes[i - HEAP_NB_SMALL_FREE_LISTS]) break;
-
-    list = heap->free_lists + i;
-    if (last && ++list == end) list = heap->free_lists;
-    return list;
-}
-
 /* get the memory protection type to use for a given heap */
 static inline ULONG get_protection_type( DWORD flags )
 {
@@ -622,10 +600,60 @@ static void heap_set_status( const struct heap *heap, ULONG flags, NTSTATUS stat
     if (status) RtlSetLastWin32ErrorAndNtStatusFromNtStatus( status );
 }
 
-static size_t get_free_list_block_size( unsigned int index )
+static SIZE_T get_free_list_block_size( unsigned int index )
 {
-    if (index < HEAP_NB_SMALL_FREE_LISTS) return HEAP_MIN_BLOCK_SIZE + index * BLOCK_ALIGN;
-    return free_list_sizes[index - HEAP_NB_SMALL_FREE_LISTS];
+    DWORD log = index >> FREE_LIST_LINEAR_BITS;
+    DWORD linear = index & FREE_LIST_LINEAR_MASK;
+
+    if (log == 0) return index * BLOCK_ALIGN;
+
+    return (((1 << FREE_LIST_LINEAR_BITS) + linear) << (log - 1)) * BLOCK_ALIGN;
+}
+
+/*
+ * Given a size, return its index in the block size list for freelists.
+ *
+ * With FREE_LIST_LINEAR_BITS=2, the list looks like this
+ * (with respect to size / BLOCK_ALIGN):
+ *   0,
+ *   1,   2,   3,   4,   5,   6,   7,   8,
+ *  10,  12,  14,  16,  20,  24,  28,  32,
+ *  40,  48,  56,  64,  80,  96, 112, 128,
+ * 160, 192, 224, 256, 320, 384, 448, 512,
+ * ...
+ */
+static unsigned int get_free_list_index( SIZE_T block_size )
+{
+    DWORD bit, log, linear;
+
+    if (block_size > get_free_list_block_size( FREE_LIST_COUNT - 1 ))
+        return FREE_LIST_COUNT - 1;
+
+    block_size /= BLOCK_ALIGN;
+    /* find the highest bit */
+    if (!BitScanReverse( &bit, block_size ) || bit < FREE_LIST_LINEAR_BITS)
+    {
+        /* for small values, the index is same as block_size. */
+        log = 0;
+        linear = block_size;
+    }
+    else
+    {
+        /* the highest bit is always set, ignore it and encode the next FREE_LIST_LINEAR_BITS bits
+         * as a linear scale, combined with the shift as a log scale, in the free list index. */
+        log = bit - FREE_LIST_LINEAR_BITS + 1;
+        linear = (block_size >> (bit - FREE_LIST_LINEAR_BITS)) & FREE_LIST_LINEAR_MASK;
+    }
+
+    return (log << FREE_LIST_LINEAR_BITS) + linear;
+}
+
+/* locate a free list entry of the appropriate size */
+static inline struct entry *find_free_list( struct heap *heap, SIZE_T block_size, BOOL last )
+{
+    unsigned int index = get_free_list_index( block_size );
+    if (last && ++index == FREE_LIST_COUNT) index = 0;
+    return &heap->free_lists[index];
 }
 
 static void heap_dump( const struct heap *heap )
@@ -649,7 +677,7 @@ static void heap_dump( const struct heap *heap )
     }
 
     TRACE( "  free_lists: %p\n", heap->free_lists );
-    for (i = 0; i < HEAP_NB_FREE_LISTS; i++)
+    for (i = 0; i < FREE_LIST_COUNT; i++)
         TRACE( "    %p: size %#8Ix, prev %p, next %p\n", heap->free_lists + i, get_free_list_block_size( i ),
                LIST_ENTRY( heap->free_lists[i].entry.prev, struct entry, entry ),
                LIST_ENTRY( heap->free_lists[i].entry.next, struct entry, entry ) );
@@ -1124,7 +1152,7 @@ static BOOL is_valid_free_block( const struct heap *heap, const struct block *bl
     unsigned int i;
 
     if ((subheap = find_subheap( heap, block, FALSE ))) return TRUE;
-    for (i = 0; i < HEAP_NB_FREE_LISTS; i++) if (block == &heap->free_lists[i].block) return TRUE;
+    for (i = 0; i < FREE_LIST_COUNT; i++) if (block == &heap->free_lists[i].block) return TRUE;
     return FALSE;
 }
 
@@ -1508,7 +1536,7 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, void *addr, SIZE_T total_size, SIZE_T 
     list_init( &heap->large_list );
 
     list_init( &heap->free_lists[0].entry );
-    for (i = 0, entry = heap->free_lists; i < HEAP_NB_FREE_LISTS; i++, entry++)
+    for (i = 0, entry = heap->free_lists; i < FREE_LIST_COUNT; i++, entry++)
     {
         block_set_flags( &entry->block, ~0, BLOCK_FLAG_FREE_LINK );
         block_set_size( &entry->block, 0 );

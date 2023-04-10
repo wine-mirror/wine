@@ -452,9 +452,7 @@ static void test_HeapCreate(void)
 
     SetLastError( 0xdeadbeef );
     ptr1 = HeapAlloc( heap, 0, alloc_size - (0x200 + 0x80 * sizeof(void *)) );
-    todo_wine
     ok( !ptr1, "HeapAlloc succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "got error %lu\n", GetLastError() );
     ret = HeapFree( heap, 0, ptr1 );
     ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
