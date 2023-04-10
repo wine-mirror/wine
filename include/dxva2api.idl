@@ -631,14 +631,14 @@ interface IDirectXVideoDecoderService : IDirectXVideoAccelerationService
     HRESULT GetDecoderConfigurations(
         [in] REFGUID guid,
         [in] const DXVA2_VideoDesc *pVideoDesc,
-        [in] IUnknown *pReserved,
+        [in] void *pReserved,
         [out] UINT *pCount,
         [out] DXVA2_ConfigPictureDecode **ppConfigs);
 
     HRESULT CreateVideoDecoder(
         [in] REFGUID guid,
         [in] const DXVA2_VideoDesc *pVideoDesc,
-        [in] DXVA2_ConfigPictureDecode *pConfig,
+        [in] const DXVA2_ConfigPictureDecode *pConfig,
         [in] IDirect3DSurface9 **ppDecoderRenderTargets,
         [in] UINT NumSurfaces,
         [out] IDirectXVideoDecoder **ppDecode);

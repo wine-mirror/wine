@@ -701,7 +701,7 @@ static HRESULT WINAPI device_manager_decoder_service_GetDecoderRenderTargets(IDi
 }
 
 static HRESULT WINAPI device_manager_decoder_service_GetDecoderConfigurations(IDirectXVideoDecoderService *iface,
-        REFGUID guid, const DXVA2_VideoDesc *video_desc, IUnknown *reserved, UINT *count, DXVA2_ConfigPictureDecode **configs)
+        REFGUID guid, const DXVA2_VideoDesc *video_desc, void *reserved, UINT *count, DXVA2_ConfigPictureDecode **configs)
 {
     FIXME("%p, %s, %p, %p, %p, %p.\n", iface, debugstr_guid(guid), video_desc, reserved, count, configs);
 
@@ -709,7 +709,7 @@ static HRESULT WINAPI device_manager_decoder_service_GetDecoderConfigurations(ID
 }
 
 static HRESULT WINAPI device_manager_decoder_service_CreateVideoDecoder(IDirectXVideoDecoderService *iface,
-        REFGUID guid, const DXVA2_VideoDesc *video_desc, DXVA2_ConfigPictureDecode *config, IDirect3DSurface9 **rts,
+        REFGUID guid, const DXVA2_VideoDesc *video_desc, const DXVA2_ConfigPictureDecode *config, IDirect3DSurface9 **rts,
         UINT num_surfaces, IDirectXVideoDecoder **decoder)
 {
     FIXME("%p, %s, %p, %p, %p, %u, %p.\n", iface, debugstr_guid(guid), video_desc, config, rts, num_surfaces,
