@@ -207,36 +207,6 @@ float CDECL _chgsignf( float num )
 
 #endif
 
-/*********************************************************************
- *      _fdclass (MSVCR120.@)
- *
- * Copied from musl: src/math/__fpclassifyf.c
- */
-short CDECL _fdclass(float x)
-{
-    union { float f; UINT32 i; } u = { x };
-    int e = u.i >> 23 & 0xff;
-
-    if (!e) return u.i << 1 ? FP_SUBNORMAL : FP_ZERO;
-    if (e == 0xff) return u.i << 9 ? FP_NAN : FP_INFINITE;
-    return FP_NORMAL;
-}
-
-/*********************************************************************
- *      _dclass (MSVCR120.@)
- *
- * Copied from musl: src/math/__fpclassify.c
- */
-short CDECL _dclass(double x)
-{
-    union { double f; UINT64 i; } u = { x };
-    int e = u.i >> 52 & 0x7ff;
-
-    if (!e) return u.i << 1 ? FP_SUBNORMAL : FP_ZERO;
-    if (e == 0x7ff) return (u.i << 12) ? FP_NAN : FP_INFINITE;
-    return FP_NORMAL;
-}
-
 #ifndef __i386__
 
 /*********************************************************************
@@ -291,6 +261,8 @@ float CDECL MSVCRT_atanf( float x )
 #endif
 
 #ifdef __x86_64__
+extern short CDECL _fdclass(float x);
+
 static BOOL sqrtf_validate( float *x )
 {
     short c = _fdclass(*x);
@@ -411,6 +383,8 @@ double CDECL MSVCRT_exp( double x )
 #endif
 
 #if defined(__x86_64__) || defined(__i386__)
+extern short CDECL _dclass(double x);
+
 static BOOL sqrt_validate( double *x, BOOL update_sw )
 {
     short c = _dclass(*x);
