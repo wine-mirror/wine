@@ -21,6 +21,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 
+static void STDMETHODCALLTYPE dxgi_null_wined3d_object_destroyed(void *parent) {}
+
+static const struct wined3d_parent_ops dxgi_null_wined3d_parent_ops =
+{
+    dxgi_null_wined3d_object_destroyed,
+};
+
 static inline struct dxgi_device *impl_from_IWineDXGIDevice(IWineDXGIDevice *iface)
 {
     return CONTAINING_RECORD(iface, struct dxgi_device, IWineDXGIDevice_iface);
@@ -168,7 +175,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
         const DXGI_SURFACE_DESC *desc, UINT surface_count, DXGI_USAGE usage,
         const DXGI_SHARED_RESOURCE *shared_resource, IDXGISurface **surface)
 {
-    struct wined3d_device_parent *device_parent;
+    struct dxgi_device *device = impl_from_IWineDXGIDevice(iface);
     struct wined3d_resource_desc surface_desc;
     IWineDXGIDeviceParent *dxgi_device_parent;
     HRESULT hr;
@@ -184,8 +191,6 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
         ERR("Device should implement IWineDXGIDeviceParent.\n");
         return E_FAIL;
     }
-
-    device_parent = IWineDXGIDeviceParent_get_wined3d_device_parent(dxgi_device_parent);
 
     surface_desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
     surface_desc.format = wined3dformat_from_dxgi_format(desc->Format);
@@ -204,23 +209,22 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
     for (i = 0; i < surface_count; ++i)
     {
         struct wined3d_texture *wined3d_texture;
-        IUnknown *parent;
 
-        if (FAILED(hr = device_parent->ops->create_swapchain_texture(device_parent,
-                NULL, &surface_desc, 0, &wined3d_texture)))
+        if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &surface_desc,
+                1, 1, 0, NULL, NULL, &dxgi_null_wined3d_parent_ops, &wined3d_texture)))
         {
-            ERR("Failed to create surface, hr %#lx.\n", hr);
+            ERR("Failed to create wined3d texture, hr %#lx.\n", hr);
             goto fail;
         }
 
-        parent = wined3d_texture_get_parent(wined3d_texture);
-        hr = IUnknown_QueryInterface(parent, &IID_IDXGISurface, (void **)&surface[i]);
+        if (FAILED(hr = IWineDXGIDeviceParent_register_swapchain_texture(
+                dxgi_device_parent, wined3d_texture, 0, &surface[i])))
+        {
+            wined3d_texture_decref(wined3d_texture);
+            ERR("Failed to create parent swapchain texture, hr %#lx.\n", hr);
+            goto fail;
+        }
         wined3d_texture_decref(wined3d_texture);
-        if (FAILED(hr))
-        {
-            ERR("Surface should implement IDXGISurface.\n");
-            goto fail;
-        }
 
         TRACE("Created IDXGISurface %p (%u/%u).\n", surface[i], i + 1, surface_count);
     }

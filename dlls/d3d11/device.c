@@ -3335,7 +3335,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateTexture2D(ID3D11Device2 *ifa
 
     TRACE("iface %p, desc %p, data %p, texture %p.\n", iface, desc, data, texture);
 
-    if (FAILED(hr = d3d_texture2d_create(device, desc, data, &object)))
+    if (FAILED(hr = d3d_texture2d_create(device, desc, NULL, data, &object)))
         return hr;
 
     *texture = &object->ID3D11Texture2D_iface;
@@ -6021,7 +6021,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture2D(ID3D10Device1 *ifa
     d3d11_desc.CPUAccessFlags = d3d11_cpu_access_flags_from_d3d10_cpu_access_flags(desc->CPUAccessFlags);
     d3d11_desc.MiscFlags = d3d11_resource_misc_flags_from_d3d10_resource_misc_flags(desc->MiscFlags);
 
-    if (FAILED(hr = d3d_texture2d_create(device, &d3d11_desc, (const D3D11_SUBRESOURCE_DATA *)data, &object)))
+    if (FAILED(hr = d3d_texture2d_create(device, &d3d11_desc, NULL, (const D3D11_SUBRESOURCE_DATA *)data, &object)))
         return hr;
 
     *texture = &object->ID3D10Texture2D_iface;
@@ -6780,6 +6780,46 @@ static struct wined3d_device_parent * STDMETHODCALLTYPE dxgi_device_parent_get_w
     return &device->device_parent;
 }
 
+static HRESULT STDMETHODCALLTYPE dxgi_device_parent_register_swapchain_texture(IWineDXGIDeviceParent *iface,
+        struct wined3d_texture *wined3d_texture, unsigned int texture_flags, IDXGISurface **ret_surface)
+{
+    struct d3d_device *device = device_from_dxgi_device_parent(iface);
+    struct wined3d_resource_desc wined3d_desc;
+    struct d3d_texture2d *object;
+    D3D11_TEXTURE2D_DESC desc;
+    HRESULT hr;
+
+    wined3d_resource_get_desc(wined3d_texture_get_resource(wined3d_texture), &wined3d_desc);
+
+    desc.Width = wined3d_desc.width;
+    desc.Height = wined3d_desc.height;
+    desc.MipLevels = 1;
+    desc.ArraySize = 1;
+    desc.Format = dxgi_format_from_wined3dformat(wined3d_desc.format);
+    desc.SampleDesc.Count = wined3d_desc.multisample_type ? wined3d_desc.multisample_type : 1;
+    desc.SampleDesc.Quality = wined3d_desc.multisample_quality;
+    desc.Usage = D3D11_USAGE_DEFAULT;
+    desc.BindFlags = d3d11_bind_flags_from_wined3d(wined3d_desc.bind_flags);
+    desc.CPUAccessFlags = 0;
+    desc.MiscFlags = 0;
+
+    if (texture_flags & WINED3D_TEXTURE_CREATE_GET_DC)
+    {
+        desc.MiscFlags |= D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
+        texture_flags &= ~WINED3D_TEXTURE_CREATE_GET_DC;
+    }
+
+    if (texture_flags)
+        FIXME("Unhandled flags %#x.\n", texture_flags);
+
+    if (FAILED(hr = d3d_texture2d_create(device, &desc, wined3d_texture, NULL, &object)))
+        return hr;
+
+    hr = IUnknown_QueryInterface(object->dxgi_resource, &IID_IDXGISurface, (void **)ret_surface);
+    ID3D11Texture2D_Release(&object->ID3D11Texture2D_iface);
+    return hr;
+}
+
 static const struct IWineDXGIDeviceParentVtbl d3d_dxgi_device_parent_vtbl =
 {
     /* IUnknown methods */
@@ -6788,6 +6828,7 @@ static const struct IWineDXGIDeviceParentVtbl d3d_dxgi_device_parent_vtbl =
     dxgi_device_parent_Release,
     /* IWineDXGIDeviceParent methods */
     dxgi_device_parent_get_wined3d_device_parent,
+    dxgi_device_parent_register_swapchain_texture,
 };
 
 static inline struct d3d_device *device_from_wined3d_device_parent(struct wined3d_device_parent *device_parent)

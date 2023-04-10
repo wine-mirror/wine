@@ -956,11 +956,9 @@ static BOOL validate_texture2d_desc(const D3D11_TEXTURE2D_DESC *desc, D3D_FEATUR
 }
 
 HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DESC *desc,
-        const D3D11_SUBRESOURCE_DATA *data, struct d3d_texture2d **out)
+        struct wined3d_texture *wined3d_texture, const D3D11_SUBRESOURCE_DATA *data, struct d3d_texture2d **out)
 {
-    struct wined3d_resource_desc wined3d_desc;
     struct d3d_texture2d *texture;
-    unsigned int levels;
     BOOL needs_surface;
     DWORD flags = 0;
     HRESULT hr;
@@ -980,38 +978,51 @@ HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DE
     wined3d_mutex_lock();
     texture->desc = *desc;
 
-    wined3d_desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
-    wined3d_desc.format = wined3dformat_from_dxgi_format(desc->Format);
-    wined3d_desc.multisample_type = desc->SampleDesc.Count > 1 ? desc->SampleDesc.Count : WINED3D_MULTISAMPLE_NONE;
-    wined3d_desc.multisample_quality = desc->SampleDesc.Quality;
-    wined3d_desc.usage = wined3d_usage_from_d3d11(desc->Usage);
-    wined3d_desc.bind_flags = wined3d_bind_flags_from_d3d11(desc->BindFlags, desc->MiscFlags);
-    wined3d_desc.access = wined3d_access_from_d3d11(desc->Usage,
-            desc->Usage == D3D11_USAGE_DEFAULT ? 0 : desc->CPUAccessFlags);
-    wined3d_desc.width = desc->Width;
-    wined3d_desc.height = desc->Height;
-    wined3d_desc.depth = 1;
-    wined3d_desc.size = 0;
-
-    levels = desc->MipLevels ? desc->MipLevels : wined3d_log2i(max(desc->Width, desc->Height)) + 1;
-
-    if (desc->MiscFlags & D3D11_RESOURCE_MISC_GDI_COMPATIBLE)
-        flags |= WINED3D_TEXTURE_CREATE_GET_DC;
-    if (desc->MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS)
-        flags |= WINED3D_TEXTURE_CREATE_GENERATE_MIPMAPS;
-
-    if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &wined3d_desc,
-            desc->ArraySize, levels, flags, (struct wined3d_sub_resource_data *)data,
-            texture, &d3d_texture2d_wined3d_parent_ops, &texture->wined3d_texture)))
+    if (wined3d_texture)
     {
-        WARN("Failed to create wined3d texture, hr %#lx.\n", hr);
-        free(texture);
-        wined3d_mutex_unlock();
-        if (hr == WINED3DERR_NOTAVAILABLE || hr == WINED3DERR_INVALIDCALL)
-            hr = E_INVALIDARG;
-        return hr;
+        wined3d_resource_set_parent(wined3d_texture_get_resource(wined3d_texture),
+                texture, &d3d_texture2d_wined3d_parent_ops);
+        wined3d_texture_incref(wined3d_texture);
+        texture->wined3d_texture = wined3d_texture;
     }
-    texture->desc.MipLevels = levels;
+    else
+    {
+        struct wined3d_resource_desc wined3d_desc;
+        unsigned int levels;
+
+        wined3d_desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
+        wined3d_desc.format = wined3dformat_from_dxgi_format(desc->Format);
+        wined3d_desc.multisample_type = desc->SampleDesc.Count > 1 ? desc->SampleDesc.Count : WINED3D_MULTISAMPLE_NONE;
+        wined3d_desc.multisample_quality = desc->SampleDesc.Quality;
+        wined3d_desc.usage = wined3d_usage_from_d3d11(desc->Usage);
+        wined3d_desc.bind_flags = wined3d_bind_flags_from_d3d11(desc->BindFlags, desc->MiscFlags);
+        wined3d_desc.access = wined3d_access_from_d3d11(desc->Usage,
+                desc->Usage == D3D11_USAGE_DEFAULT ? 0 : desc->CPUAccessFlags);
+        wined3d_desc.width = desc->Width;
+        wined3d_desc.height = desc->Height;
+        wined3d_desc.depth = 1;
+        wined3d_desc.size = 0;
+
+        levels = desc->MipLevels ? desc->MipLevels : wined3d_log2i(max(desc->Width, desc->Height)) + 1;
+
+        if (desc->MiscFlags & D3D11_RESOURCE_MISC_GDI_COMPATIBLE)
+            flags |= WINED3D_TEXTURE_CREATE_GET_DC;
+        if (desc->MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS)
+            flags |= WINED3D_TEXTURE_CREATE_GENERATE_MIPMAPS;
+
+        if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &wined3d_desc,
+                desc->ArraySize, levels, flags, (struct wined3d_sub_resource_data *)data,
+                texture, &d3d_texture2d_wined3d_parent_ops, &texture->wined3d_texture)))
+        {
+            WARN("Failed to create wined3d texture, hr %#lx.\n", hr);
+            free(texture);
+            wined3d_mutex_unlock();
+            if (hr == WINED3DERR_NOTAVAILABLE || hr == WINED3DERR_INVALIDCALL)
+                hr = E_INVALIDARG;
+            return hr;
+        }
+        texture->desc.MipLevels = levels;
+    }
 
     needs_surface = desc->MipLevels == 1 && desc->ArraySize == 1;
     hr = d3d_device_create_dxgi_resource((IUnknown *)&device->ID3D10Device1_iface,

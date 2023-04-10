@@ -62,6 +62,8 @@ interface IWineDXGIDevice : IDXGIDevice3
 interface IWineDXGIDeviceParent : IUnknown
 {
     struct wined3d_device_parent *get_wined3d_device_parent();
+    HRESULT register_swapchain_texture(struct wined3d_texture *texture,
+            unsigned int texture_flags, IDXGISurface **ret_surface);
 }
 
 struct wine_dxgi_adapter_info
