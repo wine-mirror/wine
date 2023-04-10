@@ -577,7 +577,6 @@ static void test_sharelists(HDC winhdc)
                     if (source_sharing)
                     {
                         res = wglShareLists(other, source);
-                        todo_wine_if(source_current)
                         ok(res, "Sharing of display lists from other to source failed\n");
                     }
                     if (dest_current)
@@ -588,12 +587,12 @@ static void test_sharelists(HDC winhdc)
                     if (dest_sharing)
                     {
                         res = wglShareLists(other, dest);
-                        todo_wine_if(dest_current)
+                        todo_wine_if(source_sharing && dest_current)
                         ok(res, "Sharing of display lists from other to dest failed\n");
                     }
 
                     res = wglShareLists(source, dest);
-                    todo_wine_if(dest_current || dest_sharing)
+                    todo_wine_if((source_current || source_sharing) && (dest_current || dest_sharing))
                     ok(res || broken(nvidia && !source_sharing && dest_sharing),
                        "Sharing of display lists from source to dest failed\n");
 

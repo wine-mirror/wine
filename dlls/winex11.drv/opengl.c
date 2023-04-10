@@ -1916,6 +1916,8 @@ done:
  */
 static BOOL glxdrv_wglShareLists(struct wgl_context *org, struct wgl_context *dest)
 {
+    struct wgl_context *keep, *clobber;
+
     TRACE("(%p, %p)\n", org, dest);
 
     /* Sharing of display lists works differently in GLX and WGL. In case of GLX it is done
@@ -1926,34 +1928,35 @@ static BOOL glxdrv_wglShareLists(struct wgl_context *org, struct wgl_context *de
      * so there delaying context creation doesn't work.
      *
      * The new approach is to create a GLX context in wglCreateContext / wglCreateContextAttribsARB
-     * and when a program requests sharing we recreate the destination context if it hasn't been made
-     * current or when it hasn't shared display lists before.
+     * and when a program requests sharing we recreate the destination or source context if it
+     * hasn't been made current and it hasn't shared display lists before.
      */
 
-    if(dest->has_been_current)
+    if (!dest->has_been_current && !dest->sharing)
     {
-        ERR("Could not share display lists because the destination context has already been current\n");
-        return FALSE;
+        keep = org;
+        clobber = dest;
     }
-    else if(dest->sharing)
+    else if (!org->has_been_current && !org->sharing)
     {
-        ERR("Could not share display lists because the destination context has already shared lists\n");
-        return FALSE;
+        keep = dest;
+        clobber = org;
     }
     else
     {
-        /* Re-create the GLX context and share display lists */
-        pglXDestroyContext(gdi_display, dest->ctx);
-        dest->ctx = create_glxcontext(gdi_display, dest, org->ctx);
-        TRACE(" re-created context (%p) for Wine context %p (%s) sharing lists with ctx %p (%s)\n",
-              dest->ctx, dest, debugstr_fbconfig(dest->fmt->fbconfig),
-              org->ctx, debugstr_fbconfig( org->fmt->fbconfig));
-
-        org->sharing = TRUE;
-        dest->sharing = TRUE;
-        return TRUE;
+        ERR("Could not share display lists because both of the contexts have already been current or shared\n");
+        return FALSE;
     }
-    return FALSE;
+
+    pglXDestroyContext(gdi_display, clobber->ctx);
+    clobber->ctx = create_glxcontext(gdi_display, clobber, keep->ctx);
+    TRACE("re-created context (%p) for Wine context %p (%s) sharing lists with ctx %p (%s)\n",
+          clobber->ctx, clobber, debugstr_fbconfig(clobber->fmt->fbconfig),
+          keep->ctx, debugstr_fbconfig(keep->fmt->fbconfig));
+
+    org->sharing = TRUE;
+    dest->sharing = TRUE;
+    return TRUE;
 }
 
 static void wglFinish(void)
