@@ -16,23 +16,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
- *
- *
- * For functions copied from musl libc (http://musl.libc.org/):
- * ====================================================
- * Copyright 2005-2020 Rich Felker, et al.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- * ====================================================
  */
 
 #include <math.h>
@@ -53,18 +36,6 @@ double math_error( int type, const char *name, double arg1, double arg2, double 
 int CDECL abs( int i )
 {
     return i >= 0 ? i : -i;
-}
-
-/*********************************************************************
- *                  fabs   (NTDLL.@)
- *
- * Copied from musl: src/math/fabsf.c
- */
-double CDECL fabs( double x )
-{
-    union { double f; UINT64 i; } u = { x };
-    u.i &= ~0ull >> 1;
-    return u.f;
 }
 
 #if (defined(__GNUC__) || defined(__clang__)) && defined(__i386__)
