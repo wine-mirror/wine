@@ -19,6 +19,7 @@
  */
 
 #include "d3d10_private.h"
+#include <vkd3d_shader.h>
 
 #include <float.h>
 #include <stdint.h>
@@ -4056,28 +4057,42 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, size_t data_
     return parse_fx10_body(e, ptr, data_size - (ptr - data));
 }
 
-static HRESULT fx10_chunk_handler(const char *data, size_t data_size, uint32_t tag, void *ctx)
-{
-    struct d3d10_effect *e = ctx;
-
-    TRACE("tag: %s.\n", debugstr_an((const char *)&tag, 4));
-
-    TRACE("Chunk size: %#Ix.\n", data_size);
-
-    switch(tag)
-    {
-        case TAG_FX10:
-            return parse_fx10(e, data, data_size);
-
-        default:
-            FIXME("Unhandled chunk %s.\n", debugstr_an((const char *)&tag, 4));
-            return S_OK;
-    }
-}
-
 HRESULT d3d10_effect_parse(struct d3d10_effect *effect, const void *data, SIZE_T data_size)
 {
-    return parse_dxbc(data, data_size, fx10_chunk_handler, effect);
+    const struct vkd3d_shader_code dxbc = {.code = data, .size = data_size};
+    const struct vkd3d_shader_dxbc_section_desc *section;
+    struct vkd3d_shader_dxbc_desc dxbc_desc;
+    HRESULT hr = S_OK;
+    unsigned int i;
+    int ret;
+
+    if ((ret = vkd3d_shader_parse_dxbc(&dxbc, 0, &dxbc_desc, NULL)) < 0)
+    {
+        WARN("Failed to parse DXBC, ret %d.\n", ret);
+        return E_FAIL;
+    }
+
+    for (i = 0; i < dxbc_desc.section_count; ++i)
+    {
+        section = &dxbc_desc.sections[i];
+
+        TRACE("Section %u: tag %s, data {%p, %#Ix}.\n",
+                i, debugstr_an((const char *)&section->tag, 4),
+                section->data.code, section->data.size);
+
+        if (section->tag != TAG_FX10)
+        {
+            FIXME("Unhandled chunk %s.\n", debugstr_an((const char *)&section->tag, 4));
+            continue;
+        }
+
+        if (FAILED(hr = parse_fx10(effect, section->data.code, section->data.size)))
+            break;
+    }
+
+    vkd3d_shader_free_dxbc(&dxbc_desc);
+
+    return hr;
 }
 
 static void d3d10_effect_shader_variable_destroy(struct d3d10_effect_shader_variable *s,
