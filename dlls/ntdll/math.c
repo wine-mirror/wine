@@ -492,47 +492,6 @@ medium:
     return n;
 }
 
-/* Copied from musl: src/math/__sin.c */
-static double __sin(double x, double y, int iy)
-{
-    static const double S1  = -1.66666666666666324348e-01,
-                 S2  =  8.33333333332248946124e-03,
-                 S3  = -1.98412698298579493134e-04,
-                 S4  =  2.75573137070700676789e-06,
-                 S5  = -2.50507602534068634195e-08,
-                 S6  =  1.58969099521155010221e-10;
-
-    double z, r, v, w;
-
-    z = x * x;
-    w = z * z;
-    r = S2 + z * (S3 + z * S4) + z * w * (S5 + z * S6);
-    v = z * x;
-    if (iy == 0)
-        return x + v * (S1 + z * r);
-    else
-        return x - ((z * (0.5 * y - v * r) - y) - v * S1);
-}
-
-/* Copied from musl: src/math/__cos.c */
-static double __cos(double x, double y)
-{
-    static const double C1  =  4.16666666666666019037e-02,
-                 C2  = -1.38888888888741095749e-03,
-                 C3  =  2.48015872894767294178e-05,
-                 C4  = -2.75573143513906633035e-07,
-                 C5  =  2.08757232129817482790e-09,
-                 C6  = -1.13596475577881948265e-11;
-    double hz, z, r, w;
-
-    z = x * x;
-    w = z * z;
-    r = z * (C1 + z * (C2 + z * C3)) + w * w * (C4 + z * (C5 + z * C6));
-    hz = 0.5 * z;
-    w = 1.0 - hz;
-    return w + (((1.0 - w) - hz) + (z * r - x * y));
-}
-
 /* Copied from musl: src/math/__tan.c */
 static double __tan(double x, double y, int odd)
 {
@@ -1278,46 +1237,6 @@ double CDECL ceil( double x )
             return 1.0;
     }
     return u.f;
-}
-
-/*********************************************************************
- *                  cos   (NTDLL.@)
- *
- * Copied from musl: src/math/cos.c
- */
-double CDECL cos( double x )
-{
-    double y[2];
-    UINT32 ix;
-    unsigned n;
-
-    ix = *(ULONGLONG*)&x >> 32;
-    ix &= 0x7fffffff;
-
-    /* |x| ~< pi/4 */
-    if (ix <= 0x3fe921fb) {
-        if (ix < 0x3e46a09e) { /* |x| < 2**-27 * sqrt(2) */
-            /* raise inexact if x!=0 */
-            fp_barrier(x + 0x1p120f);
-            return 1.0;
-        }
-        return __cos(x, 0);
-    }
-
-    /* cos(Inf or NaN) is NaN */
-    if (isinf(x))
-        return x - x;
-    if (ix >= 0x7ff00000)
-        return x - x;
-
-    /* argument reduction */
-    n = __rem_pio2(x, y);
-    switch (n & 3) {
-    case 0: return __cos(y[0], y[1]);
-    case 1: return -__sin(y[0], y[1], 1);
-    case 2: return -__cos(y[0], y[1]);
-    default: return __sin(y[0], y[1], 1);
-    }
 }
 
 /*********************************************************************
