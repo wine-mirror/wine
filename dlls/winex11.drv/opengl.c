@@ -1601,14 +1601,17 @@ static int describe_pixel_format( int iPixelFormat, PIXELFORMATDESCRIPTOR *ppfd,
     pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_BLUE_SIZE, &bb);
     pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_ALPHA_SIZE, &ab);
 
-    ppfd->cRedBits = rb;
-    ppfd->cRedShift = gb + bb + ab;
     ppfd->cBlueBits = bb;
-    ppfd->cBlueShift = ab;
+    ppfd->cBlueShift = 0;
     ppfd->cGreenBits = gb;
-    ppfd->cGreenShift = bb + ab;
+    ppfd->cGreenShift = bb;
+    ppfd->cRedBits = rb;
+    ppfd->cRedShift = gb + bb;
     ppfd->cAlphaBits = ab;
-    ppfd->cAlphaShift = 0;
+    if (ab)
+        ppfd->cAlphaShift = rb + gb + bb;
+    else
+        ppfd->cAlphaShift = 0;
   } else {
     ppfd->cRedBits = 0;
     ppfd->cRedShift = 0;

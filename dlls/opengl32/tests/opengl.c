@@ -288,7 +288,20 @@ static void test_choosepixelformat(void)
     pfd.iPixelType = PFD_TYPE_RGBA;
 
     pfd.cColorBits = 32;
-    ok( test_pfd(&pfd, NULL), "Simple pfd failed\n" );
+    ok( test_pfd(&pfd, &ret_fmt), "Simple pfd failed\n" );
+    ok( ret_fmt.cColorBits == 32, "Got %u.\n", ret_fmt.cColorBits );
+    ok( !ret_fmt.cBlueShift, "Got %u.\n", ret_fmt.cBlueShift );
+    ok( ret_fmt.cBlueBits == 8, "Got %u.\n", ret_fmt.cBlueBits );
+    ok( ret_fmt.cRedBits == 8, "Got %u.\n", ret_fmt.cRedBits );
+    ok( ret_fmt.cGreenBits == 8, "Got %u.\n", ret_fmt.cGreenBits );
+    ok( ret_fmt.cGreenShift == 8, "Got %u.\n", ret_fmt.cGreenShift );
+    ok( ret_fmt.cRedShift == 16, "Got %u.\n", ret_fmt.cRedShift );
+    ok( !ret_fmt.cAlphaBits || ret_fmt.cAlphaBits == 8, "Got %u.\n", ret_fmt.cAlphaBits );
+    if (ret_fmt.cAlphaBits)
+        ok( ret_fmt.cAlphaShift == 24, "Got %u.\n", ret_fmt.cAlphaShift );
+    else
+        ok( !ret_fmt.cAlphaShift, "Got %u.\n", ret_fmt.cAlphaShift );
+
     pfd.dwFlags |= PFD_DOUBLEBUFFER_DONTCARE;
     ok( test_pfd(&pfd, NULL), "PFD_DOUBLEBUFFER_DONTCARE failed\n" );
     pfd.dwFlags |= PFD_STEREO_DONTCARE;
