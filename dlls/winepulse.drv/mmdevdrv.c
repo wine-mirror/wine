@@ -48,6 +48,7 @@
 #include "audiopolicy.h"
 
 #include "../mmdevapi/unixlib.h"
+#include "../mmdevapi/mmdevdrv.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(pulse);
 
@@ -112,58 +113,6 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
     }
     return TRUE;
 }
-
-typedef struct ACImpl ACImpl;
-
-typedef struct _AudioSession {
-    GUID guid;
-    struct list clients;
-
-    IMMDevice *device;
-
-    float master_vol;
-    UINT32 channel_count;
-    float *channel_vols;
-    BOOL mute;
-
-    struct list entry;
-} AudioSession;
-
-typedef struct _AudioSessionWrapper {
-    IAudioSessionControl2 IAudioSessionControl2_iface;
-    IChannelAudioVolume IChannelAudioVolume_iface;
-    ISimpleAudioVolume ISimpleAudioVolume_iface;
-
-    LONG ref;
-
-    ACImpl *client;
-    AudioSession *session;
-} AudioSessionWrapper;
-
-struct ACImpl {
-    IAudioClient3 IAudioClient3_iface;
-    IAudioRenderClient IAudioRenderClient_iface;
-    IAudioCaptureClient IAudioCaptureClient_iface;
-    IAudioClock IAudioClock_iface;
-    IAudioClock2 IAudioClock2_iface;
-    IAudioStreamVolume IAudioStreamVolume_iface;
-    IUnknown *marshal;
-    IMMDevice *parent;
-    struct list entry;
-    float *vol;
-
-    LONG ref;
-    EDataFlow dataflow;
-    UINT32 channel_count;
-    HANDLE timer;
-
-    stream_handle pulse_stream;
-
-    AudioSession *session;
-    AudioSessionWrapper *session_wrapper;
-
-    char pulse_name[0];
-};
 
 static const IAudioClient3Vtbl AudioClient3_Vtbl;
 static const IAudioRenderClientVtbl AudioRenderClient_Vtbl;
@@ -354,7 +303,7 @@ static DWORD WINAPI pulse_timer_cb(void *user)
 {
     struct timer_loop_params params;
     ACImpl *This = user;
-    params.stream = This->pulse_stream;
+    params.stream = This->stream;
     SetThreadDescription(GetCurrentThread(), L"winepulse_timer_loop");
     pulse_call(timer_loop, &params);
     return 0;
@@ -363,9 +312,9 @@ static DWORD WINAPI pulse_timer_cb(void *user)
 static void set_stream_volumes(ACImpl *This)
 {
     struct set_volumes_params params;
-    params.stream          = This->pulse_stream;
+    params.stream          = This->stream;
     params.master_volume   = This->session->mute ? 0.0f : This->session->master_vol;
-    params.volumes         = This->vol;
+    params.volumes         = This->vols;
     params.session_volumes = This->session->channel_vols;
     params.channel         = 0;
     pulse_call(set_volumes, &params);
@@ -578,7 +527,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     *out = NULL;
 
     len = strlen(pulse_name) + 1;
-    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, FIELD_OFFSET(ACImpl, pulse_name[len]));
+    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, FIELD_OFFSET(ACImpl, device_name[len]));
     if (!This)
         return E_OUTOFMEMORY;
 
@@ -590,7 +539,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     This->IAudioStreamVolume_iface.lpVtbl = &AudioStreamVolume_Vtbl;
     This->dataflow = dataflow;
     This->parent = dev;
-    memcpy(This->pulse_name, pulse_name, len);
+    memcpy(This->device_name, pulse_name, len);
 
     hr = CoCreateFreeThreadedMarshaler((IUnknown*)&This->IAudioClient3_iface, &This->marshal);
     if (FAILED(hr)) {
@@ -649,9 +598,9 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
     ref = InterlockedDecrement(&This->ref);
     TRACE("(%p) Refcount now %lu\n", This, ref);
     if (!ref) {
-        if (This->pulse_stream) {
-            pulse_release_stream(This->pulse_stream, This->timer);
-            This->pulse_stream = 0;
+        if (This->stream) {
+            pulse_release_stream(This->stream, This->timer_thread);
+            This->stream = 0;
             EnterCriticalSection(&session_cs);
             list_remove(&This->entry);
             LeaveCriticalSection(&session_cs);
@@ -837,7 +786,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
     EnterCriticalSection(&session_cs);
 
-    if (This->pulse_stream) {
+    if (This->stream) {
         LeaveCriticalSection(&session_cs);
         return AUDCLNT_E_ALREADY_INITIALIZED;
     }
@@ -858,7 +807,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     }
 
     params.name = name = get_application_name(TRUE);
-    params.device   = This->pulse_name;
+    params.device   = This->device_name;
     params.flow     = This->dataflow;
     params.share    = mode;
     params.flags    = flags;
@@ -875,26 +824,26 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         return hr;
     }
 
-    if (!(This->vol = malloc(channel_count * sizeof(*This->vol))))
+    if (!(This->vols = malloc(channel_count * sizeof(*This->vols))))
     {
         pulse_release_stream(stream, NULL);
         LeaveCriticalSection(&session_cs);
         return E_OUTOFMEMORY;
     }
     for (i = 0; i < channel_count; i++)
-        This->vol[i] = 1.f;
+        This->vols[i] = 1.f;
 
     hr = get_audio_session(sessionguid, This->parent, channel_count, &This->session);
     if (FAILED(hr))
     {
-        free(This->vol);
-        This->vol = NULL;
+        free(This->vols);
+        This->vols = NULL;
         LeaveCriticalSection(&session_cs);
         pulse_release_stream(stream, NULL);
         return E_OUTOFMEMORY;
     }
 
-    This->pulse_stream = stream;
+    This->stream = stream;
     This->channel_count = channel_count;
     list_add_tail(&This->session->clients, &This->entry);
     set_stream_volumes(This);
@@ -913,10 +862,10 @@ static HRESULT WINAPI AudioClient_GetBufferSize(IAudioClient3 *iface,
 
     if (!out)
         return E_POINTER;
-    if (!This->pulse_stream)
+    if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    params.stream = This->pulse_stream;
+    params.stream = This->stream;
     params.frames = out;
     pulse_call(get_buffer_size, &params);
     return params.result;
@@ -932,10 +881,10 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
 
     if (!latency)
         return E_POINTER;
-    if (!This->pulse_stream)
+    if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    params.stream  = This->pulse_stream;
+    params.stream  = This->stream;
     params.latency = latency;
     pulse_call(get_latency, &params);
     return params.result;
@@ -951,10 +900,10 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,
 
     if (!out)
         return E_POINTER;
-    if (!This->pulse_stream)
+    if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    params.stream  = This->pulse_stream;
+    params.stream  = This->stream;
     params.padding = out;
     pulse_call(get_current_padding, &params);
     return params.result;
@@ -1125,7 +1074,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
         return E_POINTER;
     *pwfx = NULL;
 
-    params.device = This->pulse_name;
+    params.device = This->device_name;
     params.flow = This->dataflow;
     params.fmt = CoTaskMemAlloc(sizeof(WAVEFORMATEXTENSIBLE));
     if (!params.fmt)
@@ -1155,7 +1104,7 @@ static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient3 *iface,
         return E_POINTER;
 
     params.flow = This->dataflow;
-    params.device = This->pulse_name;
+    params.device = This->device_name;
     params.def_period = defperiod;
     params.min_period = minperiod;
 
@@ -1172,17 +1121,17 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
 
     TRACE("(%p)\n", This);
 
-    if (!This->pulse_stream)
+    if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    params.stream = This->pulse_stream;
+    params.stream = This->stream;
     pulse_call(start, &params);
     if (FAILED(hr = params.result))
         return hr;
 
-    if (!This->timer) {
-        This->timer = CreateThread(NULL, 0, pulse_timer_cb, This, 0, NULL);
-        SetThreadPriority(This->timer, THREAD_PRIORITY_TIME_CRITICAL);
+    if (!This->timer_thread) {
+        This->timer_thread = CreateThread(NULL, 0, pulse_timer_cb, This, 0, NULL);
+        SetThreadPriority(This->timer_thread, THREAD_PRIORITY_TIME_CRITICAL);
     }
 
     return S_OK;
@@ -1195,10 +1144,10 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
 
     TRACE("(%p)\n", This);
 
-    if (!This->pulse_stream)
+    if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    params.stream = This->pulse_stream;
+    params.stream = This->stream;
     pulse_call(stop, &params);
     return params.result;
 }
@@ -1210,10 +1159,10 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient3 *iface)
 
     TRACE("(%p)\n", This);
 
-    if (!This->pulse_stream)
+    if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    params.stream = This->pulse_stream;
+    params.stream = This->stream;
     pulse_call(reset, &params);
     return params.result;
 }
@@ -1228,10 +1177,10 @@ static HRESULT WINAPI AudioClient_SetEventHandle(IAudioClient3 *iface,
 
     if (!event)
         return E_INVALIDARG;
-    if (!This->pulse_stream)
+    if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    params.stream = This->pulse_stream;
+    params.stream = This->stream;
     params.event  = event;
     pulse_call(set_event_handle, &params);
     return params.result;
@@ -1248,7 +1197,7 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
         return E_POINTER;
     *ppv = NULL;
 
-    if (!This->pulse_stream)
+    if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
     if (IsEqualIID(riid, &IID_IAudioRenderClient)) {
@@ -1451,11 +1400,11 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
 
     if (!data)
         return E_POINTER;
-    if (!This->pulse_stream)
+    if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
     *data = NULL;
 
-    params.stream = This->pulse_stream;
+    params.stream = This->stream;
     params.frames = frames;
     params.data   = data;
     pulse_call(get_render_buffer, &params);
@@ -1470,10 +1419,10 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
 
     TRACE("(%p)->(%u, %lx)\n", This, written_frames, flags);
 
-    if (!This->pulse_stream)
+    if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    params.stream         = This->pulse_stream;
+    params.stream         = This->stream;
     params.written_frames = written_frames;
     params.flags          = flags;
     pulse_call(release_render_buffer, &params);
@@ -1540,10 +1489,10 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
     *data = NULL;
     if (!frames || !flags)
         return E_POINTER;
-    if (!This->pulse_stream)
+    if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    params.stream = This->pulse_stream;
+    params.stream = This->stream;
     params.data   = data;
     params.frames = frames;
     params.flags  = (UINT*)flags;
@@ -1561,10 +1510,10 @@ static HRESULT WINAPI AudioCaptureClient_ReleaseBuffer(
 
     TRACE("(%p)->(%u)\n", This, done);
 
-    if (!This->pulse_stream)
+    if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    params.stream = This->pulse_stream;
+    params.stream = This->stream;
     params.done   = done;
     pulse_call(release_capture_buffer, &params);
     return params.result;
@@ -1580,10 +1529,10 @@ static HRESULT WINAPI AudioCaptureClient_GetNextPacketSize(
 
     if (!frames)
         return E_POINTER;
-    if (!This->pulse_stream)
+    if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    params.stream = This->pulse_stream;
+    params.stream = This->stream;
     params.frames = frames;
     pulse_call(get_next_packet_size, &params);
     return params.result;
@@ -1645,10 +1594,10 @@ static HRESULT WINAPI AudioClock_GetFrequency(IAudioClock *iface, UINT64 *freq)
 
     TRACE("(%p)->(%p)\n", This, freq);
 
-    if (!This->pulse_stream)
+    if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    params.stream = This->pulse_stream;
+    params.stream = This->stream;
     params.freq   = freq;
     pulse_call(get_frequency, &params);
     return params.result;
@@ -1664,10 +1613,10 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
 
     if (!pos)
         return E_POINTER;
-    if (!This->pulse_stream)
+    if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    params.stream  = This->pulse_stream;
+    params.stream  = This->stream;
     params.device  = FALSE;
     params.pos     = pos;
     params.qpctime = qpctime;
@@ -1729,10 +1678,10 @@ static HRESULT WINAPI AudioClock2_GetDevicePosition(IAudioClock2 *iface,
 
     if (!pos)
         return E_POINTER;
-    if (!This->pulse_stream)
+    if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    params.stream  = This->pulse_stream;
+    params.stream  = This->stream;
     params.device  = TRUE;
     params.pos     = pos;
     params.qpctime = qpctime;
@@ -1817,14 +1766,14 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
     if (!levels)
         return E_POINTER;
 
-    if (!This->pulse_stream)
+    if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
     if (count != This->channel_count)
         return E_INVALIDARG;
 
     EnterCriticalSection(&session_cs);
     for (i = 0; i < count; ++i)
-        This->vol[i] = levels[i];
+        This->vols[i] = levels[i];
 
     set_stream_volumes(This);
     LeaveCriticalSection(&session_cs);
@@ -1842,14 +1791,14 @@ static HRESULT WINAPI AudioStreamVolume_GetAllVolumes(
     if (!levels)
         return E_POINTER;
 
-    if (!This->pulse_stream)
+    if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
     if (count != This->channel_count)
         return E_INVALIDARG;
 
     EnterCriticalSection(&session_cs);
     for (i = 0; i < count; ++i)
-        levels[i] = This->vol[i];
+        levels[i] = This->vols[i];
     LeaveCriticalSection(&session_cs);
     return S_OK;
 }
@@ -1864,13 +1813,13 @@ static HRESULT WINAPI AudioStreamVolume_SetChannelVolume(
     if (level < 0.f || level > 1.f)
         return E_INVALIDARG;
 
-    if (!This->pulse_stream)
+    if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
     if (index >= This->channel_count)
         return E_INVALIDARG;
 
     EnterCriticalSection(&session_cs);
-    This->vol[index] = level;
+    This->vols[index] = level;
     set_stream_volumes(This);
     LeaveCriticalSection(&session_cs);
     return S_OK;
@@ -1886,13 +1835,13 @@ static HRESULT WINAPI AudioStreamVolume_GetChannelVolume(
     if (!level)
         return E_POINTER;
 
-    if (!This->pulse_stream)
+    if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
     if (index >= This->channel_count)
         return E_INVALIDARG;
 
     EnterCriticalSection(&session_cs);
-    *level = This->vol[index];
+    *level = This->vols[index];
     LeaveCriticalSection(&session_cs);
     return S_OK;
 }
@@ -1999,10 +1948,10 @@ static HRESULT WINAPI AudioSessionControl_GetState(IAudioSessionControl2 *iface,
     LIST_FOR_EACH_ENTRY(client, &This->session->clients, ACImpl, entry) {
         struct is_started_params params;
 
-        if (!client->pulse_stream)
+        if (!client->stream)
             continue;
 
-        params.stream = client->pulse_stream;
+        params.stream = client->stream;
         pulse_call(is_started, &params);
         if (params.result == S_OK) {
             *state = AudioSessionStateActive;
@@ -2172,14 +2121,6 @@ static const IAudioSessionControl2Vtbl AudioSessionControl2_Vtbl =
     AudioSessionControl_IsSystemSoundsSession,
     AudioSessionControl_SetDuckingPreference
 };
-
-typedef struct _SessionMgr {
-    IAudioSessionManager2 IAudioSessionManager2_iface;
-
-    LONG ref;
-
-    IMMDevice *device;
-} SessionMgr;
 
 static HRESULT WINAPI AudioSessionManager_QueryInterface(IAudioSessionManager2 *iface,
         REFIID riid, void **ppv)
