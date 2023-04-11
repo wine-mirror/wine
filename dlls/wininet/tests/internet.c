@@ -1531,7 +1531,7 @@ static void test_InternetErrorDlg(void)
 
     for(i = INTERNET_ERROR_BASE; i < INTERNET_ERROR_LAST; i++)
     {
-        DWORD expected = ERROR_CANCELLED, expected2 = ERROR_SUCCESS, test_flags = 0, j;
+        DWORD expected = ERROR_CANCELLED, expected2 = ERROR_SUCCESS, broken2, test_flags = 0, j;
 
         for (j = 0; j < ARRAY_SIZE(no_ui_res); ++j)
         {
@@ -1565,20 +1565,30 @@ static void test_InternetErrorDlg(void)
         res = InternetErrorDlg(hwnd, req, i, FLAGS_ERROR_UI_FLAGS_NO_UI, NULL);
 
         /* Handle some special cases */
+        broken2 = expected2;
         switch(i)
         {
         case ERROR_INTERNET_CHG_POST_IS_NON_SECURE:
             if (broken(res == ERROR_CANCELLED)) /* before win10 returns ERROR_CANCELLED */
             {
                 expected = ERROR_CANCELLED;
-                expected2 = ERROR_CANCELLED;
+                expected2 = broken2 = ERROR_CANCELLED;
             }
             break;
+        case ERROR_INTERNET_SEC_CERT_WEAK_SIGNATURE:
+            if (res == ERROR_CANCELLED)
+            {
+                expected = ERROR_CANCELLED;
+                expected2 = ERROR_CANCELLED;
+                broken2 = ERROR_SUCCESS; /* win10 1607 */
+                break;
+            }
+            /* fall through */
         default:
             if(broken(expected == ERROR_CANCELLED && res == ERROR_NOT_SUPPORTED)) /* XP, Win7, Win8 */
             {
                 expected = ERROR_NOT_SUPPORTED;
-                expected2 = ERROR_SUCCESS;
+                expected2 = broken2 = ERROR_SUCCESS;
             }
             break;
         }
@@ -1590,7 +1600,8 @@ static void test_InternetErrorDlg(void)
         ok(res == expected, "Got %ld, expected %ld (%ld)\n", res, expected, i);
 
         res = InternetErrorDlg(NULL, req, i, FLAGS_ERROR_UI_FILTER_FOR_ERRORS | FLAGS_ERROR_UI_FLAGS_NO_UI, NULL);
-        ok(res == expected2, "Got %ld, expected %ld (%ld)\n", res, expected2, i);
+        ok(res == expected2 || broken(res == broken2),
+           "Got %ld, expected %ld (%ld)\n", res, expected2, i);
 
         /* With a null req */
         if(test_flags & FLAG_NEEDREQ)
@@ -1603,7 +1614,8 @@ static void test_InternetErrorDlg(void)
         ok(res == expected, "Got %ld, expected %ld (%ld)\n", res, expected, i);
 
         res = InternetErrorDlg(NULL, NULL, i, FLAGS_ERROR_UI_FILTER_FOR_ERRORS | FLAGS_ERROR_UI_FLAGS_NO_UI, NULL);
-        ok(res == expected2, "Got %ld, expected %ld (%ld)\n", res, expected2, i);
+        ok(res == expected2 || broken(res == broken2),
+           "Got %ld, expected %ld (%ld)\n", res, expected2, i);
     }
 
     res = InternetErrorDlg(NULL, req, 0xdeadbeef, FLAGS_ERROR_UI_FILTER_FOR_ERRORS | FLAGS_ERROR_UI_FLAGS_NO_UI, NULL);
