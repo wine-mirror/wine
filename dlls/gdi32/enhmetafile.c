@@ -2200,11 +2200,8 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     {
 	const EMRFRAMERGN *pFrameRgn = (const EMRFRAMERGN *)mr;
 	HRGN hRgn = ExtCreateRegion(NULL, pFrameRgn->cbRgnData, (const RGNDATA *)pFrameRgn->RgnData);
-	FrameRgn(hdc,
-		 hRgn,
-		 (handletable->objectHandle)[pFrameRgn->ihBrush],
-		 pFrameRgn->szlStroke.cx,
-		 pFrameRgn->szlStroke.cy);
+	FrameRgn(hdc, hRgn, get_object_handle(handletable, pFrameRgn->ihBrush),
+		 pFrameRgn->szlStroke.cx, pFrameRgn->szlStroke.cy);
 	DeleteObject(hRgn);
 	break;
     }
