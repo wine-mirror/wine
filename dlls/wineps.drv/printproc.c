@@ -624,6 +624,74 @@ static int plg_blt(PHYSDEV dev, const EMRPLGBLT *p)
     return TRUE;
 }
 
+static int poly_draw(PHYSDEV dev, const POINT *points, const BYTE *types, DWORD count)
+{
+    POINT first, cur, pts[4];
+    DWORD i, num_pts;
+
+    /* check for valid point types */
+    for (i = 0; i < count; i++)
+    {
+        switch (types[i])
+        {
+        case PT_MOVETO:
+        case PT_LINETO | PT_CLOSEFIGURE:
+        case PT_LINETO:
+            break;
+        case PT_BEZIERTO:
+            if (i + 2 >= count) return FALSE;
+            if (types[i + 1] != PT_BEZIERTO) return FALSE;
+            if ((types[i + 2] & ~PT_CLOSEFIGURE) != PT_BEZIERTO) return FALSE;
+            i += 2;
+            break;
+        default:
+            return FALSE;
+        }
+    }
+
+    GetCurrentPositionEx(dev->hdc, &cur);
+    first = cur;
+
+    for (i = 0; i < count; i++)
+    {
+        switch (types[i])
+        {
+        case PT_MOVETO:
+            first = points[i];
+            break;
+        case PT_LINETO:
+        case (PT_LINETO | PT_CLOSEFIGURE):
+            pts[0] = cur;
+            pts[1] = points[i];
+            num_pts = 2;
+            if (!PSDRV_PolyPolyline(dev, pts, &num_pts, 1))
+                return FALSE;
+            break;
+        case PT_BEZIERTO:
+            pts[0] = cur;
+            pts[1] = points[i];
+            pts[2] = points[i + 1];
+            pts[3] = points[i + 2];
+            if (!PSDRV_PolyBezier(dev, pts, 4))
+                return FALSE;
+            i += 2;
+            break;
+        }
+
+        cur = points[i];
+        if (types[i] & PT_CLOSEFIGURE)
+        {
+            pts[0] = cur;
+            pts[1] = first;
+            num_pts = 2;
+            if (!PSDRV_PolyPolyline(dev, pts, &num_pts, 1))
+                return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
 static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         const ENHMETARECORD *rec, int n, LPARAM arg)
 {
@@ -849,6 +917,14 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
                     p->ptlEnd.y, p->ptlEnd.x, p->ptlEnd.y);
         }
         return ret;
+    }
+    case EMR_POLYDRAW:
+    {
+        const EMRPOLYDRAW *p = (const EMRPOLYDRAW *)rec;
+        const POINT *pts = (const POINT *)p->aptl;
+
+        return poly_draw(&data->pdev->dev, pts, (BYTE *)(p->aptl + p->cptl), p->cptl) &&
+            MoveToEx(data->pdev->dev.hdc, pts[p->cptl - 1].x, pts[p->cptl - 1].y, NULL);
     }
     case EMR_PAINTRGN:
     {
