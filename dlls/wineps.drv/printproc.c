@@ -1162,6 +1162,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     case EMR_SETWORLDTRANSFORM:
     case EMR_MODIFYWORLDTRANSFORM:
     case EMR_CREATEPEN:
+    case EMR_CREATEBRUSHINDIRECT:
     case EMR_SETARCDIRECTION:
         return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n);
     default:
