@@ -768,6 +768,12 @@ static BOOL emr_produces_output(int type)
     }
 }
 
+static HGDIOBJ get_object_handle(HANDLETABLE *handletable, DWORD i)
+{
+    if (i & 0x80000000)
+        return GetStockObject( i & 0x7fffffff );
+    return handletable->objectHandle[i];
+}
 
 /*****************************************************************************
  *           PlayEnhMetaFileRecord  (GDI32.@)
@@ -899,19 +905,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_SELECTOBJECT:
       {
 	const EMRSELECTOBJECT *pSelectObject = (const EMRSELECTOBJECT *)mr;
-	if( pSelectObject->ihObject & 0x80000000 ) {
-	  /* High order bit is set - it's a stock object
-	   * Strip the high bit to get the index.
-	   * See MSDN article Q142319
-	   */
-	  SelectObject( hdc, GetStockObject( pSelectObject->ihObject &
-					     0x7fffffff ) );
-	} else {
-	  /* High order bit wasn't set - not a stock object
-	   */
-	      SelectObject( hdc,
-			(handletable->objectHandle)[pSelectObject->ihObject] );
-	}
+	SelectObject( hdc, get_object_handle(handletable, pSelectObject->ihObject) );
 	break;
       }
     case EMR_DELETEOBJECT:
@@ -1297,11 +1291,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       {
 	const EMRSELECTPALETTE *lpSelectPal = (const EMRSELECTPALETTE *)mr;
 
-	if( lpSelectPal->ihPal & 0x80000000 ) {
-		SelectPalette( hdc, GetStockObject(lpSelectPal->ihPal & 0x7fffffff), TRUE);
-	} else {
-		SelectPalette( hdc, (handletable->objectHandle)[lpSelectPal->ihPal], TRUE);
-	}
+	SelectPalette( hdc, get_object_handle(handletable, lpSelectPal->ihPal), TRUE );
 	break;
       }
 
