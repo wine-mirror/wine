@@ -2191,9 +2191,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     {
 	const EMRFILLRGN *pFillRgn = (const EMRFILLRGN *)mr;
 	HRGN hRgn = ExtCreateRegion(NULL, pFillRgn->cbRgnData, (const RGNDATA *)pFillRgn->RgnData);
-	FillRgn(hdc,
-		hRgn,
-		(handletable->objectHandle)[pFillRgn->ihBrush]);
+	FillRgn(hdc, hRgn, get_object_handle(handletable, pFillRgn->ihBrush));
 	DeleteObject(hRgn);
 	break;
     }
