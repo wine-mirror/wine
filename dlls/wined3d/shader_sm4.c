@@ -17,6 +17,8 @@
  */
 
 #include "wined3d_private.h"
+#define LIBVKD3D_SHADER_SOURCE
+#include <vkd3d_shader.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
@@ -1823,7 +1825,6 @@ const struct wined3d_shader_frontend sm4_shader_frontend =
 };
 
 #define TAG_AON9 WINEMAKEFOURCC('A', 'o', 'n', '9')
-#define TAG_DXBC WINEMAKEFOURCC('D', 'X', 'B', 'C')
 #define TAG_ISG1 WINEMAKEFOURCC('I', 'S', 'G', '1')
 #define TAG_ISGN WINEMAKEFOURCC('I', 'S', 'G', 'N')
 #define TAG_OSG1 WINEMAKEFOURCC('O', 'S', 'G', '1')
@@ -1840,13 +1841,6 @@ struct aon9_header
     unsigned int shader_version;
     DWORD unknown;
     unsigned int byte_code_offset;
-};
-
-struct shader_handler_context
-{
-    struct wined3d_shader *shader;
-    enum vkd3d_shader_source_type *source_type;
-    unsigned int max_version;
 };
 
 static void read_dword(const char **ptr, unsigned int *d)
@@ -1871,77 +1865,6 @@ static void skip_dword_unknown(const char **ptr, unsigned int count)
         read_dword(ptr, &d);
         WARN("\t0x%08x\n", d);
     }
-}
-
-static HRESULT parse_dxbc(const char *data, SIZE_T data_size,
-        HRESULT (*chunk_handler)(const char *data, unsigned int data_size, unsigned int tag, void *ctx), void *ctx)
-{
-    const char *ptr = data;
-    HRESULT hr = S_OK;
-    unsigned int chunk_count;
-    unsigned int total_size;
-    unsigned int i;
-    unsigned int version;
-    unsigned int tag;
-
-    read_dword(&ptr, &tag);
-    TRACE("tag: %s.\n", debugstr_an((const char *)&tag, 4));
-
-    if (tag != TAG_DXBC)
-    {
-        WARN("Wrong tag.\n");
-        return E_INVALIDARG;
-    }
-
-    WARN("Ignoring DXBC checksum.\n");
-    skip_dword_unknown(&ptr, 4);
-
-    read_dword(&ptr, &version);
-    TRACE("version: %#x.\n", version);
-    if (version != 0x00000001)
-    {
-        WARN("Got unexpected DXBC version %#x.\n", version);
-        return E_INVALIDARG;
-    }
-
-    read_dword(&ptr, &total_size);
-    TRACE("total size: %#x\n", total_size);
-
-    read_dword(&ptr, &chunk_count);
-    TRACE("chunk count: %#x\n", chunk_count);
-
-    for (i = 0; i < chunk_count; ++i)
-    {
-        unsigned int chunk_tag, chunk_size;
-        const char *chunk_ptr;
-        unsigned int chunk_offset;
-
-        read_dword(&ptr, &chunk_offset);
-        TRACE("chunk %u at offset %#x\n", i, chunk_offset);
-
-        if (chunk_offset >= data_size || !require_space(chunk_offset, 2, sizeof(DWORD), data_size))
-        {
-            WARN("Invalid chunk offset %#x (data size %#Ix).\n", chunk_offset, data_size);
-            return E_FAIL;
-        }
-
-        chunk_ptr = data + chunk_offset;
-
-        read_dword(&chunk_ptr, &chunk_tag);
-        read_dword(&chunk_ptr, &chunk_size);
-
-        if (!require_space(chunk_ptr - data, 1, chunk_size, data_size))
-        {
-            WARN("Invalid chunk size %#x (data size %#Ix, chunk offset %#x).\n",
-                    chunk_size, data_size, chunk_offset);
-            return E_FAIL;
-        }
-
-        if (FAILED(hr = chunk_handler(chunk_ptr, chunk_size, chunk_tag, ctx)))
-            break;
-    }
-
-    return hr;
 }
 
 static const char *shader_get_string(const char *data, size_t data_size, unsigned int offset)
@@ -2031,17 +1954,19 @@ static HRESULT shader_parse_signature(DWORD tag, const char *data, unsigned int 
     return S_OK;
 }
 
-static HRESULT shader_dxbc_chunk_handler(const char *data, unsigned int data_size, unsigned int tag, void *context)
+static HRESULT shader_dxbc_process_section(struct wined3d_shader *shader, unsigned int max_version,
+        enum vkd3d_shader_source_type *source_type, const struct vkd3d_shader_dxbc_section_desc *section)
 {
-    struct shader_handler_context *ctx = context;
-    struct wined3d_shader *shader = ctx->shader;
+    unsigned int data_size = section->data.size;
+    const void *data = section->data.code;
+    uint32_t tag = section->tag;
     HRESULT hr;
 
     switch (tag)
     {
         case TAG_ISGN:
         case TAG_ISG1:
-            if (ctx->max_version < 4)
+            if (max_version < 4)
             {
                 TRACE("Skipping shader input signature.\n");
                 break;
@@ -2058,7 +1983,7 @@ static HRESULT shader_dxbc_chunk_handler(const char *data, unsigned int data_siz
         case TAG_OSGN:
         case TAG_OSG1:
         case TAG_OSG5:
-            if (ctx->max_version < 4)
+            if (max_version < 4)
             {
                 TRACE("Skipping shader output signature.\n");
                 break;
@@ -2085,22 +2010,22 @@ static HRESULT shader_dxbc_chunk_handler(const char *data, unsigned int data_siz
 
         case TAG_SHDR:
         case TAG_SHEX:
-            if (ctx->max_version < 4)
+            if (max_version < 4)
             {
                 TRACE("Skipping SM4+ shader.\n");
                 break;
             }
             if (shader->function)
                 FIXME("Multiple shader code chunks.\n");
-            shader->function = (const DWORD *)data;
+            shader->function = data;
             shader->functionLength = data_size;
-            *ctx->source_type = VKD3D_SHADER_SOURCE_DXBC_TPF;
+            *source_type = VKD3D_SHADER_SOURCE_DXBC_TPF;
             break;
 
         case TAG_AON9:
-            if (ctx->max_version < 4)
+            if (max_version < 4)
             {
-                const struct aon9_header *header = (const struct aon9_header *)data;
+                const struct aon9_header *header = data;
                 unsigned int unknown_dword_count;
                 const char *byte_code;
 
@@ -2109,7 +2034,8 @@ static HRESULT shader_dxbc_chunk_handler(const char *data, unsigned int data_siz
                     WARN("Invalid Aon9 data size %#x.\n", data_size);
                     return E_FAIL;
                 }
-                byte_code = data + header->byte_code_offset;
+                byte_code = data;
+                byte_code += header->byte_code_offset;
                 unknown_dword_count = (header->byte_code_offset - sizeof(*header)) / sizeof(DWORD);
 
                 if (data_size - 2 * sizeof(DWORD) < header->byte_code_offset)
@@ -2123,7 +2049,7 @@ static HRESULT shader_dxbc_chunk_handler(const char *data, unsigned int data_siz
                     FIXME("Multiple shader code chunks.\n");
                 shader->function = (const DWORD *)byte_code;
                 shader->functionLength = data_size - header->byte_code_offset;
-                *ctx->source_type = VKD3D_SHADER_SOURCE_D3D_BYTECODE;
+                *source_type = VKD3D_SHADER_SOURCE_D3D_BYTECODE;
                 TRACE("Feature level 9 shader version 0%08x, 0%08lx.\n",
                         header->shader_version, *shader->function);
             }
@@ -2144,14 +2070,25 @@ static HRESULT shader_dxbc_chunk_handler(const char *data, unsigned int data_siz
 HRESULT shader_extract_from_dxbc(struct wined3d_shader *shader,
         unsigned int max_shader_version, enum vkd3d_shader_source_type *source_type)
 {
-    struct shader_handler_context ctx;
-    HRESULT hr;
+    const struct vkd3d_shader_code dxbc = {.code = shader->byte_code, .size = shader->byte_code_size};
+    struct vkd3d_shader_dxbc_desc dxbc_desc;
+    HRESULT hr = WINED3D_OK;
+    unsigned int i;
+    int ret;
 
-    ctx.shader = shader;
-    ctx.source_type = source_type;
-    ctx.max_version = max_shader_version;
+    if ((ret = vkd3d_shader_parse_dxbc(&dxbc, 0, &dxbc_desc, NULL)) < 0)
+    {
+        WARN("Failed to parse DXBC, ret %d.\n", ret);
+        return E_INVALIDARG;
+    }
 
-    hr = parse_dxbc(shader->byte_code, shader->byte_code_size, shader_dxbc_chunk_handler, &ctx);
+    for (i = 0; i < dxbc_desc.section_count; ++i)
+    {
+        if (FAILED(hr = shader_dxbc_process_section(shader, max_shader_version, source_type, &dxbc_desc.sections[i])))
+            break;
+    }
+    vkd3d_shader_free_dxbc(&dxbc_desc);
+
     if (!shader->function)
         hr = E_INVALIDARG;
 
