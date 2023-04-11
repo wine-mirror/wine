@@ -1785,16 +1785,15 @@ static void test_InternetGetConnectedStateExW(void)
     buffer[0] = 0;
     res = pInternetGetConnectedStateExW(NULL, buffer, ARRAY_SIZE(buffer), 0);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
-    sz = lstrlenW(buffer);
-    ok(sz > 0, "Expected a connection name\n");
+    ok(buffer[0], "Expected a connection name\n");
 
     buffer[0] = 0;
     flags = 0;
     res = pInternetGetConnectedStateExW(&flags, buffer, ARRAY_SIZE(buffer), 0);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(flags, "Expected at least one flag set\n");
+    ok(buffer[0], "Expected a connection name\n");
     sz = lstrlenW(buffer);
-    ok(sz > 0, "Expected a connection name\n");
 
     flags = 0;
     res = pInternetGetConnectedStateExW(&flags, NULL, ARRAY_SIZE(buffer), 0);
