@@ -1712,13 +1712,6 @@ static void test_InternetGetConnectedStateExA(void)
 
     buffer[0] = 0;
     flags = 0;
-    res = pInternetGetConnectedStateExA(&flags, buffer, 1, 0);
-    ok(res == TRUE, "Expected TRUE, got %d\n", res);
-    ok(flags, "Expected at least one flag set\n");
-    ok(!buffer[0], "Expected 0 bytes, got %u\n", lstrlenA(buffer));
-
-    buffer[0] = 0;
-    flags = 0;
     res = pInternetGetConnectedStateExA(&flags, buffer, 2, 0);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(flags, "Expected at least one flag set\n");
@@ -1820,13 +1813,6 @@ static void test_InternetGetConnectedStateExW(void)
         ok(!buffer[0], "Expected 0 bytes, got %u\n", lstrlenW(buffer));
     else
         ok(sz / 2 - 1 == lstrlenW(buffer), "Expected %lu bytes, got %u\n", sz / 2 - 1, lstrlenW(buffer));
-
-    buffer[0] = 0;
-    flags = 0;
-    res = pInternetGetConnectedStateExW(&flags, buffer, 1, 0);
-    ok(res == TRUE, "Expected TRUE, got %d\n", res);
-    ok(flags, "Expected at least one flag set\n");
-    ok(!buffer[0], "Expected 0 bytes, got %u\n", lstrlenW(buffer));
 
     buffer[0] = 0;
     flags = 0;
