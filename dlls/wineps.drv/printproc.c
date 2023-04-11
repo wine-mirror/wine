@@ -735,6 +735,13 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
             return 1;
         }
     }
+    case EMR_DELETEOBJECT:
+    {
+        const EMRDELETEOBJECT *p = (const EMRDELETEOBJECT *)rec;
+
+        memset(&data->patterns[p->ihObject], 0, sizeof(*data->patterns));
+        return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n);
+    }
     case EMR_ANGLEARC:
     {
         const EMRANGLEARC *p = (const EMRANGLEARC *)rec;
