@@ -367,7 +367,7 @@ static HRESULT d3dcompiler_strip_shader(const void *data, SIZE_T data_size, UINT
         return E_FAIL;
     }
 
-    if (!data || !data_size)
+    if (!data || data_size < DXBC_HEADER_SIZE)
     {
         WARN("Invalid arguments: data %p, data_size %Iu.\n", data, data_size);
         return D3DERR_INVALIDCALL;
