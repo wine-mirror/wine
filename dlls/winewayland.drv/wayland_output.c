@@ -101,7 +101,8 @@ static void wayland_output_done(struct wayland_output *output)
 {
     struct wayland_output_mode *mode;
 
-    TRACE("name=%s\n", output->name);
+    TRACE("name=%s logical=%d,%d\n",
+          output->name, output->logical_x, output->logical_y);
 
     RB_FOR_EACH_ENTRY(mode, &output->modes, struct wayland_output_mode, entry)
     {
@@ -161,6 +162,10 @@ static void zxdg_output_v1_handle_logical_position(void *data,
                                                    int32_t x,
                                                    int32_t y)
 {
+    struct wayland_output *output = data;
+    TRACE("logical_x=%d logical_y=%d\n", x, y);
+    output->logical_x = x;
+    output->logical_y = y;
 }
 
 static void zxdg_output_v1_handle_logical_size(void *data,

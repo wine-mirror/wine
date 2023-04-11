@@ -70,6 +70,7 @@ struct wayland_output
     struct rb_tree modes;
     struct wayland_output_mode *current_mode;
     char *name;
+    int logical_x, logical_y;
     uint32_t global_id;
 };
 
