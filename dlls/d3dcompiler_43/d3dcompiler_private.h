@@ -532,6 +532,8 @@ struct bwriter_shader *SlAssembleShader(const char *text, char **messages) DECLS
 HRESULT shader_write_bytecode(const struct bwriter_shader *shader, uint32_t **result, uint32_t *size) DECLSPEC_HIDDEN;
 void SlDeleteShader(struct bwriter_shader *shader) DECLSPEC_HIDDEN;
 
+#define DXBC_HEADER_SIZE (8 * sizeof(uint32_t))
+
 #define MAKE_TAG(ch0, ch1, ch2, ch3) \
     ((DWORD)(ch0) | ((DWORD)(ch1) << 8) | \
     ((DWORD)(ch2) << 16) | ((DWORD)(ch3) << 24 ))

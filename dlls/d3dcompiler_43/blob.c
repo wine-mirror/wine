@@ -220,7 +220,7 @@ static HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, D3D
     HRESULT hr;
     unsigned int i, count;
 
-    if (!data || !data_size || flags || !blob)
+    if (!data || data_size < DXBC_HEADER_SIZE || flags || !blob)
     {
         WARN("Invalid arguments: data %p, data_size %Iu, flags %#x, blob %p.\n", data, data_size, flags, blob);
         return D3DERR_INVALIDCALL;
