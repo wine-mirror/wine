@@ -323,6 +323,17 @@ static void test_set_csstext(IHTMLStyle *style)
     ok(!lstrcmpW(V_BSTR(&v), L"black"), "str=%s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    test_style_set_csstext(style, L"background: url(http://test.winehq.org/i m\ta\\g\\\\e\n((\\(.png);");
+
+    hres = IHTMLStyle_get_background(style, &str);
+    ok(hres == S_OK, "get_background failed: %08lx\n", hres);
+    if(compat_mode < COMPAT_IE9)
+        todo_wine
+        ok(wcsstr(str, L"url(http://test.winehq.org/i m\ta\\g\\\\e\n%28%28\\%28.png)") != NULL, "background = %s\n", wine_dbgstr_w(str));
+    else
+        ok(!str, "background = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLCSSStyleDeclaration, (void**)&css_style);
     ok(hres == S_OK || broken(!is_ie9plus && hres == E_NOINTERFACE),
        "Could not get IHTMLCSSStyleDeclaration interface: %08lx\n", hres);
@@ -2861,6 +2872,42 @@ static void test_body_style(IHTMLStyle *style)
         ok(!lstrcmpW(str, L"left 21%"), "backgroundPosition = %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
     }
+
+    /* background */
+    hres = IHTMLStyle_get_background(style, &sDefault);
+    ok(hres == S_OK, "get_background failed: %08lx\n", hres);
+
+    str = SysAllocString(L"url(\"http://test.winehq.org/tests/winehq_snapshot/\")");
+    hres = IHTMLStyle_put_background(style, str);
+    ok(hres == S_OK, "put_background failed: %08lx\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle_get_background(style, &str);
+    ok(hres == S_OK, "get_background failed: %08lx\n", hres);
+    if(compat_mode < COMPAT_IE9)
+        todo_wine
+        ok(wcsstr(str, L"url(http://test.winehq.org/tests/winehq_snapshot/)") != NULL, "background = %s\n", wine_dbgstr_w(str));
+    else
+        ok(wcsstr(str, L"url(\"http://test.winehq.org/tests/winehq_snapshot/\")") != NULL, "background = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    str = SysAllocString(L"url(http://test.winehq.org/i m\ta\\g\\\\e\n((\\(.png)");
+    hres = IHTMLStyle_put_background(style, str);
+    ok(hres == S_OK, "put_background failed: %08lx\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle_get_background(style, &str);
+    ok(hres == S_OK, "get_background failed: %08lx\n", hres);
+    if(compat_mode < COMPAT_IE9)
+        todo_wine
+        ok(wcsstr(str, L"url(http://test.winehq.org/i m\ta\\g\\\\e\n%28%28\\%28.png)") != NULL, "background = %s\n", wine_dbgstr_w(str));
+    else
+        ok(wcsstr(str, L"url(\"http://test.winehq.org/tests/winehq_snapshot/\")") != NULL, "background = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    hres = IHTMLStyle_put_background(style, sDefault);
+    ok(hres == S_OK, "put_background failed: %08lx\n", hres);
+    SysFreeString(sDefault);
 
     /* borderTopWidth */
     hres = IHTMLStyle_get_borderTopWidth(style, &vDefault);
