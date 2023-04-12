@@ -41,6 +41,7 @@ struct pp_data
     WCHAR *doc_name;
     WCHAR *out_file;
     PSDRV_PDEVICE *pdev;
+    DWORD brush;
     struct brush_pattern *patterns;
 };
 
@@ -692,6 +693,32 @@ static int poly_draw(PHYSDEV dev, const POINT *points, const BYTE *types, DWORD 
     return TRUE;
 }
 
+static HGDIOBJ get_object_handle(struct pp_data *data, HANDLETABLE *handletable,
+        DWORD i, struct brush_pattern **pattern)
+{
+    if (i & 0x80000000)
+    {
+        *pattern = NULL;
+        return GetStockObject(i & 0x7fffffff);
+    }
+    *pattern = data->patterns + i;
+    return handletable->objectHandle[i];
+}
+
+static BOOL fill_rgn(struct pp_data *data, HANDLETABLE *htable, DWORD brush, HRGN rgn)
+{
+    struct brush_pattern *pattern;
+    HBRUSH hbrush;
+    int ret;
+
+    hbrush = get_object_handle(data, htable, brush, &pattern);
+    PSDRV_SelectBrush(&data->pdev->dev, hbrush, pattern);
+    ret = PSDRV_PaintRgn(&data->pdev->dev, rgn);
+    hbrush = get_object_handle(data, htable, data->brush, &pattern);
+    PSDRV_SelectBrush(&data->pdev->dev, hbrush, pattern);
+    return ret;
+}
+
 static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         const ENHMETARECORD *rec, int n, LPARAM arg)
 {
@@ -782,22 +809,19 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         struct brush_pattern *pattern;
         HGDIOBJ obj;
 
-        if (so->ihObject & 0x80000000)
-        {
-            obj = GetStockObject(so->ihObject & 0x7fffffff);
-            pattern = NULL;
-        }
-        else
-        {
-            obj = (htable->objectHandle)[so->ihObject];
-            pattern = data->patterns + so->ihObject;
-        }
+        obj = get_object_handle(data, htable, so->ihObject, &pattern);
         SelectObject(data->pdev->dev.hdc, obj);
 
         switch (GetObjectType(obj))
         {
         case OBJ_PEN: return PSDRV_SelectPen(&data->pdev->dev, obj, NULL) != NULL;
-        case OBJ_BRUSH: return PSDRV_SelectBrush(&data->pdev->dev, obj, pattern) != NULL;
+        case OBJ_BRUSH:
+            if (PSDRV_SelectBrush(&data->pdev->dev, obj, pattern))
+            {
+                data->brush = so->ihObject;
+                return 1;
+            }
+            return 0;
         default:
             FIXME("unhandled object type %ld\n", GetObjectType(obj));
             return 1;
@@ -925,6 +949,17 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
 
         return poly_draw(&data->pdev->dev, pts, (BYTE *)(p->aptl + p->cptl), p->cptl) &&
             MoveToEx(data->pdev->dev.hdc, pts[p->cptl - 1].x, pts[p->cptl - 1].y, NULL);
+    }
+    case EMR_FILLRGN:
+    {
+        const EMRFILLRGN *p = (const EMRFILLRGN *)rec;
+        HRGN rgn;
+        int ret;
+
+        rgn = ExtCreateRegion(NULL, p->cbRgnData, (const RGNDATA *)p->RgnData);
+        ret = fill_rgn(data, htable, p->ihBrush, rgn);
+        DeleteObject(rgn);
+        return ret;
     }
     case EMR_PAINTRGN:
     {
