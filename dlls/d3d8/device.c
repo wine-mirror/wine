@@ -989,7 +989,8 @@ static HRESULT WINAPI d3d8_device_Reset(IDirect3DDevice8 *iface,
             struct wined3d_resource *resource = wined3d_rendertarget_view_get_resource(rtv);
             struct d3d8_surface *surface;
 
-            if ((surface = d3d8_surface_create(wined3d_texture_from_resource(resource), 0)))
+            if ((surface = d3d8_surface_create(wined3d_texture_from_resource(resource), 0,
+                    (IUnknown *)&device->IDirect3DDevice8_iface)))
                 surface->parent_device = &device->IDirect3DDevice8_iface;
         }
 
@@ -1121,7 +1122,7 @@ static HRESULT WINAPI d3d8_device_CreateTexture(IDirect3DDevice8 *iface,
     levels = wined3d_texture_get_level_count(object->wined3d_texture);
     for (i = 0; i < levels; ++i)
     {
-        if (!d3d8_surface_create(object->wined3d_texture, i))
+        if (!d3d8_surface_create(object->wined3d_texture, i, (IUnknown *)&object->IDirect3DBaseTexture8_iface))
         {
             IDirect3DTexture8_Release(&object->IDirect3DBaseTexture8_iface);
             return E_OUTOFMEMORY;
@@ -1195,7 +1196,7 @@ static HRESULT WINAPI d3d8_device_CreateCubeTexture(IDirect3DDevice8 *iface, UIN
     levels = wined3d_texture_get_level_count(object->wined3d_texture);
     for (i = 0; i < levels * 6; ++i)
     {
-        if (!d3d8_surface_create(object->wined3d_texture, i))
+        if (!d3d8_surface_create(object->wined3d_texture, i, (IUnknown *)&object->IDirect3DBaseTexture8_iface))
         {
             IDirect3DTexture8_Release(&object->IDirect3DBaseTexture8_iface);
             return E_OUTOFMEMORY;
@@ -1297,7 +1298,7 @@ static HRESULT d3d8_device_create_surface(struct d3d8_device *device, enum wined
         return hr;
     }
 
-    if (!(surface_impl = d3d8_surface_create(texture, 0)))
+    if (!(surface_impl = d3d8_surface_create(texture, 0, NULL)))
     {
         wined3d_texture_decref(texture);
         wined3d_mutex_unlock();
@@ -3634,7 +3635,7 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
             device_parent, container_parent, desc, texture_flags, texture);
 
     if (FAILED(hr = wined3d_texture_create(device->wined3d_device, desc, 1, 1, texture_flags,
-            NULL, &device->IDirect3DDevice8_iface, &d3d8_null_wined3d_parent_ops, texture)))
+            NULL, NULL, &d3d8_null_wined3d_parent_ops, texture)))
     {
         WARN("Failed to create texture, hr %#lx.\n", hr);
         return hr;
