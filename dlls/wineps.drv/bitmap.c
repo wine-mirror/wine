@@ -197,7 +197,8 @@ DWORD CDECL PSDRV_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
 
     if (info->bmiHeader.biPlanes != 1) goto update_format;
     if (info->bmiHeader.biCompression != BI_RGB) goto update_format;
-    if (info->bmiHeader.biBitCount == 16 || info->bmiHeader.biBitCount == 32) goto update_format;
+    if (info->bmiHeader.biBitCount != 1 && info->bmiHeader.biBitCount != 4 &&
+            info->bmiHeader.biBitCount != 8 && info->bmiHeader.biBitCount != 24) goto update_format;
     if (!bits) return ERROR_SUCCESS;  /* just querying the format */
 
     TRACE( "bpp %u %s -> %s\n", info->bmiHeader.biBitCount, wine_dbgstr_rect(&src->visrect),
@@ -297,7 +298,9 @@ DWORD CDECL PSDRV_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
 
 update_format:
     info->bmiHeader.biPlanes = 1;
-    if (info->bmiHeader.biBitCount > 8) info->bmiHeader.biBitCount = 24;
+    if (info->bmiHeader.biBitCount != 1 && info->bmiHeader.biBitCount != 4 &&
+            info->bmiHeader.biBitCount != 8 && info->bmiHeader.biBitCount != 24)
+        info->bmiHeader.biBitCount = 24;
     info->bmiHeader.biCompression = BI_RGB;
     return ERROR_BAD_FORMAT;
 }
