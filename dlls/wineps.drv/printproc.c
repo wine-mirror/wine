@@ -961,6 +961,31 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         DeleteObject(rgn);
         return ret;
     }
+    case EMR_FRAMERGN:
+    {
+        const EMRFRAMERGN *p = (const EMRFRAMERGN *)rec;
+        HRGN rgn, frame;
+        int ret;
+
+        rgn = ExtCreateRegion(NULL, p->cbRgnData, (const RGNDATA *)p->RgnData);
+        frame = CreateRectRgn(0, 0, 0, 0);
+
+        CombineRgn(frame, rgn, 0, RGN_COPY);
+        OffsetRgn(frame, -p->szlStroke.cx, 0);
+        OffsetRgn(rgn, p->szlStroke.cx, 0);
+        CombineRgn(frame, frame, rgn, RGN_AND);
+        OffsetRgn(rgn, -p->szlStroke.cx, -p->szlStroke.cy);
+        CombineRgn(frame, frame, rgn, RGN_AND);
+        OffsetRgn(rgn, 0, 2*p->szlStroke.cy);
+        CombineRgn(frame, frame, rgn, RGN_AND);
+        OffsetRgn(rgn, 0, -p->szlStroke.cy);
+        CombineRgn(frame, rgn, frame, RGN_DIFF);
+
+        ret = fill_rgn(data, htable, p->ihBrush, frame);
+        DeleteObject(rgn);
+        DeleteObject(frame);
+        return ret;
+    }
     case EMR_PAINTRGN:
     {
         const EMRPAINTRGN *p = (const EMRPAINTRGN *)rec;
