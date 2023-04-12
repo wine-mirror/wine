@@ -1541,8 +1541,8 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
     if (swapchain->state.desc.flags & WINED3D_SWAPCHAIN_GDI_COMPATIBLE)
         texture_flags |= WINED3D_TEXTURE_CREATE_GET_DC;
 
-    if (FAILED(hr = device->device_parent->ops->create_swapchain_texture(device->device_parent,
-            parent, &texture_desc, texture_flags, &swapchain->front_buffer)))
+    if (FAILED(hr = wined3d_texture_create(device, &texture_desc, 1, 1, texture_flags,
+            NULL, NULL, &wined3d_null_parent_ops, &swapchain->front_buffer)))
     {
         WARN("Failed to create front buffer, hr %#lx.\n", hr);
         goto err;
@@ -1587,8 +1587,8 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
         for (i = 0; i < swapchain->state.desc.backbuffer_count; ++i)
         {
             TRACE("Creating back buffer %u.\n", i);
-            if (FAILED(hr = device->device_parent->ops->create_swapchain_texture(device->device_parent,
-                    parent, &texture_desc, texture_flags, &swapchain->back_buffers[i])))
+            if (FAILED(hr = wined3d_texture_create(device, &texture_desc, 1, 1, texture_flags,
+                    NULL, NULL, &wined3d_null_parent_ops, &swapchain->back_buffers[i])))
             {
                 WARN("Failed to create back buffer %u, hr %#lx.\n", i, hr);
                 swapchain->state.desc.backbuffer_count = i;
@@ -1615,8 +1615,8 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
             else
                 texture_desc.access = WINED3D_RESOURCE_ACCESS_GPU;
 
-            if (FAILED(hr = device->device_parent->ops->create_swapchain_texture(device->device_parent,
-                    device->device_parent, &texture_desc, 0, &ds)))
+            if (FAILED(hr = wined3d_texture_create(device, &texture_desc, 1, 1, 0,
+                    NULL, NULL, &wined3d_null_parent_ops, &ds)))
             {
                 WARN("Failed to create the auto depth/stencil surface, hr %#lx.\n", hr);
                 goto err;

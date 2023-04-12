@@ -5993,8 +5993,8 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         texture_desc.depth = 1;
         texture_desc.size = 0;
 
-        if (FAILED(hr = device->device_parent->ops->create_swapchain_texture(device->device_parent,
-                device->device_parent, &texture_desc, 0, &texture)))
+        if (FAILED(hr = wined3d_texture_create(device, &texture_desc, 1, 1, 0,
+                NULL, NULL, &wined3d_null_parent_ops, &texture)))
         {
             ERR("Failed to create the auto depth/stencil surface, hr %#lx.\n", hr);
             return WINED3DERR_INVALIDCALL;

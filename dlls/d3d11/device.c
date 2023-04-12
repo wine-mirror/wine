@@ -6893,26 +6893,12 @@ static HRESULT CDECL device_parent_texture_sub_resource_created(struct wined3d_d
     return S_OK;
 }
 
-static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_device_parent *device_parent,
-        void *container_parent, const struct wined3d_resource_desc *wined3d_desc, DWORD texture_flags,
-        struct wined3d_texture **wined3d_texture)
-{
-    struct d3d_device *device = device_from_wined3d_device_parent(device_parent);
-
-    TRACE("device_parent %p, container_parent %p, wined3d_desc %p, texture_flags %#lx, wined3d_texture %p.\n",
-            device_parent, container_parent, wined3d_desc, texture_flags, wined3d_texture);
-
-    return wined3d_texture_create(device->wined3d_device, wined3d_desc, 1, 1,
-            texture_flags, NULL, NULL, &d3d_null_wined3d_parent_ops, wined3d_texture);
-}
-
 static const struct wined3d_device_parent_ops d3d_wined3d_device_parent_ops =
 {
     device_parent_wined3d_device_created,
     device_parent_mode_changed,
     device_parent_activate,
     device_parent_texture_sub_resource_created,
-    device_parent_create_swapchain_texture,
 };
 
 static int d3d_sampler_state_compare(const void *key, const struct wine_rb_entry *entry)

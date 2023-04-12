@@ -4555,33 +4555,12 @@ static HRESULT CDECL device_parent_texture_sub_resource_created(struct wined3d_d
     return D3D_OK;
 }
 
-static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_device_parent *device_parent,
-        void *container_parent, const struct wined3d_resource_desc *desc, DWORD texture_flags,
-        struct wined3d_texture **texture)
-{
-    struct d3d9_device *device = device_from_device_parent(device_parent);
-    HRESULT hr;
-
-    TRACE("device_parent %p, container_parent %p, desc %p, texture flags %#lx, texture %p.\n",
-            device_parent, container_parent, desc, texture_flags, texture);
-
-    if (FAILED(hr = wined3d_texture_create(device->wined3d_device, desc, 1, 1,
-            texture_flags, NULL, NULL, &d3d9_null_wined3d_parent_ops, texture)))
-    {
-        WARN("Failed to create texture, hr %#lx.\n", hr);
-        return hr;
-    }
-
-    return hr;
-}
-
 static const struct wined3d_device_parent_ops d3d9_wined3d_device_parent_ops =
 {
     device_parent_wined3d_device_created,
     device_parent_mode_changed,
     device_parent_activate,
     device_parent_texture_sub_resource_created,
-    device_parent_create_swapchain_texture,
 };
 
 static void setup_fpu(void)
