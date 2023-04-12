@@ -96,8 +96,8 @@ static int dns_only_query( const char *node, const struct addrinfo *hints, struc
         }
     }
 
-    for (ptr = rec; ptr; ptr = ptr->pNext) count++;
-    for (ptr = rec6; ptr; ptr = ptr->pNext) count++;
+    for (ptr = rec; ptr; ptr = ptr->pNext) { if (ptr->wType == DNS_TYPE_A) count++; };
+    for (ptr = rec6; ptr; ptr = ptr->pNext) { if (ptr->wType == DNS_TYPE_AAAA) count++; };
     if (!count)
     {
         DnsRecordListFree( (DNS_RECORD *)rec, DnsFreeRecordList );
@@ -114,6 +114,7 @@ static int dns_only_query( const char *node, const struct addrinfo *hints, struc
 
     for (ptr = rec; ptr; ptr = ptr->pNext)
     {
+        if (ptr->wType != DNS_TYPE_A) continue;
         info->ai_family   = AF_INET;
         info->ai_socktype = hints->ai_socktype;
         info->ai_protocol = hints->ai_protocol;
@@ -128,6 +129,7 @@ static int dns_only_query( const char *node, const struct addrinfo *hints, struc
     }
     for (ptr = rec6; ptr; ptr = ptr->pNext)
     {
+        if (ptr->wType != DNS_TYPE_AAAA) continue;
         info->ai_family   = AF_INET6;
         info->ai_socktype = hints->ai_socktype;
         info->ai_protocol = hints->ai_protocol;
