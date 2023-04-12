@@ -986,6 +986,19 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         DeleteObject(frame);
         return ret;
     }
+    case EMR_INVERTRGN:
+    {
+        const EMRINVERTRGN *p = (const EMRINVERTRGN *)rec;
+        int old_rop, ret;
+        HRGN rgn;
+
+        rgn = ExtCreateRegion(NULL, p->cbRgnData, (const RGNDATA *)p->RgnData);
+        old_rop = SetROP2(data->pdev->dev.hdc, R2_NOT);
+        ret = fill_rgn(data, htable, 0x80000000 | BLACK_BRUSH, rgn);
+        SetROP2(data->pdev->dev.hdc, old_rop);
+        DeleteObject(rgn);
+        return ret;
+    }
     case EMR_PAINTRGN:
     {
         const EMRPAINTRGN *p = (const EMRPAINTRGN *)rec;
