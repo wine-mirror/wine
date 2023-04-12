@@ -49,8 +49,6 @@ typedef struct _DriverFuncs {
             GUID **guids, UINT *num, UINT *default_index);
     HRESULT (WINAPI *pGetAudioEndpoint)(void *key, IMMDevice *dev,
             IAudioClient **out);
-    HRESULT (WINAPI *pGetAudioSessionManager)(IMMDevice *device,
-            IAudioSessionManager2 **out);
     HRESULT (WINAPI *pGetAudioSessionWrapper)(const GUID *guid, IMMDevice *device,
                                               struct audio_session_wrapper **out);
     HRESULT (WINAPI *pGetPropValue)(GUID *guid,
@@ -76,6 +74,7 @@ typedef struct MMDevice {
 
 extern HRESULT AudioClient_Create(MMDevice *parent, IAudioClient **ppv) DECLSPEC_HIDDEN;
 extern HRESULT AudioEndpointVolume_Create(MMDevice *parent, IAudioEndpointVolumeEx **ppv) DECLSPEC_HIDDEN;
+extern HRESULT AudioSessionManager_Create(IMMDevice *device, IAudioSessionManager2 **ppv) DECLSPEC_HIDDEN;
 extern HRESULT SpatialAudioClient_Create(IMMDevice *device, ISpatialAudioClient **out) DECLSPEC_HIDDEN;
 
 extern HRESULT load_devices_from_reg(void) DECLSPEC_HIDDEN;
