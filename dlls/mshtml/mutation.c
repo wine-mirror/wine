@@ -388,6 +388,26 @@ static nsresult run_insert_script(HTMLDocumentNode *doc, nsISupports *script_ifa
     return NS_OK;
 }
 
+DWORD get_compat_mode_version(compat_mode_t compat_mode)
+{
+    switch(compat_mode) {
+    case COMPAT_MODE_QUIRKS:
+    case COMPAT_MODE_IE5:
+    case COMPAT_MODE_IE7:
+        return 7;
+    case COMPAT_MODE_IE8:
+        return 8;
+    case COMPAT_MODE_IE9:
+        return 9;
+    case COMPAT_MODE_IE10:
+        return 10;
+    case COMPAT_MODE_IE11:
+        return 11;
+    DEFAULT_UNREACHABLE;
+    }
+    return 0;
+}
+
 /*
  * We may change document mode only in early stage of document lifetime.
  * Later attempts will not have an effect.
@@ -396,7 +416,13 @@ compat_mode_t lock_document_mode(HTMLDocumentNode *doc)
 {
     TRACE("%p: %d\n", doc, doc->document_mode);
 
-    doc->document_mode_locked = TRUE;
+    if(!doc->document_mode_locked) {
+        doc->document_mode_locked = TRUE;
+
+        if(doc->html_document)
+            nsIDOMHTMLDocument_SetIECompatMode(doc->html_document, get_compat_mode_version(doc->document_mode));
+    }
+
     return doc->document_mode;
 }
 

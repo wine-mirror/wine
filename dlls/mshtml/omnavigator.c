@@ -1170,30 +1170,8 @@ extern HRESULT WINAPI MapBrowserEmulationModeToUserAgent(const void*,WCHAR**);
 /* Retrieves allocated user agent via CoTaskMemAlloc */
 static HRESULT get_user_agent(OmNavigator *navigator, WCHAR **user_agent)
 {
-    DWORD version;
+    DWORD version = get_compat_mode_version(dispex_compat_mode(&navigator->dispex));
 
-    switch(dispex_compat_mode(&navigator->dispex)) {
-    case COMPAT_MODE_QUIRKS:
-    case COMPAT_MODE_IE5:
-    case COMPAT_MODE_IE7:
-        version = 7;
-        break;
-    case COMPAT_MODE_IE8:
-        version = 8;
-        break;
-    case COMPAT_MODE_IE9:
-        version = 9;
-        break;
-    case COMPAT_MODE_IE10:
-        version = 10;
-        break;
-    case COMPAT_MODE_IE11:
-        version = 11;
-        break;
-    default:
-        assert(0);
-        return E_FAIL;
-    }
     return MapBrowserEmulationModeToUserAgent(&version, user_agent);
 }
 

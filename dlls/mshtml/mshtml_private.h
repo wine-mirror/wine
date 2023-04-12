@@ -1023,6 +1023,7 @@ void ConnectionPointContainer_Destroy(ConnectionPointContainer*) DECLSPEC_HIDDEN
 HRESULT create_gecko_browser(HTMLDocumentObj*,GeckoBrowser**) DECLSPEC_HIDDEN;
 void detach_gecko_browser(GeckoBrowser*) DECLSPEC_HIDDEN;
 
+DWORD get_compat_mode_version(compat_mode_t compat_mode) DECLSPEC_HIDDEN;
 compat_mode_t lock_document_mode(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 
 void init_mutation(nsIComponentManager*) DECLSPEC_HIDDEN;
