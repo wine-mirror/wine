@@ -371,8 +371,14 @@ static void test_get_blob_part(void)
     hr = D3DStripShader(NULL, test_blob_part[6], 0, &blob);
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
-    hr = D3DStripShader(test_blob_part, 2, 0, &blob);
+    hr = D3DStripShader(test_blob_part, 7 * sizeof(DWORD), 0, &blob);
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+
+    hr = D3DStripShader(test_blob_part, 8 * sizeof(DWORD), 0, &blob);
+#if D3D_COMPILER_VERSION < 46
+    todo_wine
+#endif
+    ok(hr == expected, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DStripShader(test_blob_part, test_blob_part[6], 0, NULL);
     ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
