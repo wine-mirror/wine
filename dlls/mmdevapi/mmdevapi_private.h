@@ -23,6 +23,7 @@
 #include <wine/list.h>
 #include <wine/unixlib.h>
 
+#include "mmdevdrv.h"
 #include "unixlib.h"
 
 extern HRESULT MMDevEnum_Create(REFIID riid, void **ppv) DECLSPEC_HIDDEN;
@@ -50,6 +51,8 @@ typedef struct _DriverFuncs {
             IAudioClient **out);
     HRESULT (WINAPI *pGetAudioSessionManager)(IMMDevice *device,
             IAudioSessionManager2 **out);
+    HRESULT (WINAPI *pGetAudioSessionWrapper)(const GUID *guid, IMMDevice *device,
+                                              struct audio_session_wrapper **out);
     HRESULT (WINAPI *pGetPropValue)(GUID *guid,
             const PROPERTYKEY *prop, PROPVARIANT *out);
 } DriverFuncs;
