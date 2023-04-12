@@ -2286,7 +2286,7 @@ static BOOL get_cor_header( HANDLE file, const SECTION_IMAGE_INFORMATION *info, 
     {
         if (va < sec[i].VirtualAddress) continue;
         if (sec[i].Misc.VirtualSize && va - sec[i].VirtualAddress >= sec[i].Misc.VirtualSize) continue;
-        offset.QuadPart = sec->PointerToRawData + va - sec[i].VirtualAddress;
+        offset.QuadPart = sec[i].PointerToRawData + va - sec[i].VirtualAddress;
         if (NtReadFile( file, 0, NULL, NULL, &io, cor, sizeof(*cor), &offset, NULL )) return FALSE;
         return (io.Information == sizeof(*cor));
     }
