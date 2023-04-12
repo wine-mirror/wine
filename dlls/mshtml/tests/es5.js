@@ -2095,3 +2095,16 @@ sync_test("matchMedia", function() {
     mql = window.matchMedia("(max-width: 1000px)");
     ok(mql.matches === true, "(max-width: 1000px) does not match");
 });
+
+sync_test("initProgressEvent", function() {
+    var e = document.createEvent("ProgressEvent");
+    e.initProgressEvent("loadend", false, false, true, 13, 42);
+    ok(e.lengthComputable === true, "lengthComputable = " + e.lengthComputable);
+    ok(e.loaded === 13, "loaded = " + e.loaded);
+    ok(e.total === 42, "total = " + e.total);
+
+    e.initProgressEvent("loadstart", false, false, false, 99, 50);
+    ok(e.lengthComputable === false, "lengthComputable after re-init = " + e.lengthComputable);
+    ok(e.loaded === 99, "loaded after re-init = " + e.loaded);
+    ok(e.total === 50, "total after re-init = " + e.total);
+});

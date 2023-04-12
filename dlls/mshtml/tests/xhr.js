@@ -319,6 +319,11 @@ function test_timeout() {
             ok(e.lengthComputable === false, "lengthComputable = " + e.lengthComputable);
             ok(e.loaded === 0, "loaded = " + e.loaded);
             ok(e.total === 18446744073709552000, "total = " + e.total);
+
+            e.initProgressEvent("timeout", false, false, true, 13, 42);
+            ok(e.lengthComputable === false, "lengthComputable after initProgressEvent = " + e.lengthComputable);
+            ok(e.loaded === 0, "loaded after initProgressEvent = " + e.loaded);
+            ok(e.total === 18446744073709552000, "total after initProgressEvent = " + e.total);
         }
         next_test();
     }

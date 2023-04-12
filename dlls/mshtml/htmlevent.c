@@ -2583,6 +2583,7 @@ typedef struct {
     DOMEvent event;
     IDOMProgressEvent IDOMProgressEvent_iface;
     nsIDOMProgressEvent *nsevent;
+    BOOL manual_init;
 } DOMProgressEvent;
 
 static inline DOMProgressEvent *impl_from_IDOMProgressEvent(IDOMProgressEvent *iface)
@@ -2670,7 +2671,7 @@ static HRESULT WINAPI DOMProgressEvent_get_total(IDOMProgressEvent *iface, ULONG
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(NS_FAILED(nsIDOMProgressEvent_GetLengthComputable(This->nsevent, &b)) || !b) {
+    if(!This->manual_init && (NS_FAILED(nsIDOMProgressEvent_GetLengthComputable(This->nsevent, &b)) || !b)) {
         *p = ~0;
         return S_OK;
     }
@@ -2683,9 +2684,30 @@ static HRESULT WINAPI DOMProgressEvent_initProgressEvent(IDOMProgressEvent *ifac
                                                          ULONGLONG loaded, ULONGLONG total)
 {
     DOMProgressEvent *This = impl_from_IDOMProgressEvent(iface);
-    FIXME("(%p)->(%s %x %x %x %s %s)\n", This, debugstr_w(type), can_bubble, cancelable, lengthComputable,
+    nsAString type_str;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %x %x %x %s %s)\n", This, debugstr_w(type), can_bubble, cancelable, lengthComputable,
           wine_dbgstr_longlong(loaded), wine_dbgstr_longlong(total));
-    return E_NOTIMPL;
+
+    if(This->event.target) {
+        TRACE("called on already dispatched event\n");
+        return S_OK;
+    }
+
+    hres = IDOMEvent_initEvent(&This->event.IDOMEvent_iface, type, can_bubble, cancelable);
+    if(SUCCEEDED(hres)) {
+        nsAString_InitDepend(&type_str, type);
+        nsres = nsIDOMProgressEvent_InitProgressEvent(This->nsevent, &type_str, !!can_bubble, !!cancelable,
+                                                      !!lengthComputable, loaded, total);
+        nsAString_Finish(&type_str);
+        if(NS_FAILED(nsres))
+            return map_nsresult(nsres);
+        This->manual_init = TRUE;
+    }
+
+    return hres;
 }
 
 static const IDOMProgressEventVtbl DOMProgressEventVtbl = {
