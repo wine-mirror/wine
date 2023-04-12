@@ -1292,18 +1292,22 @@ static BOOLEAN get_dir_case_sensitivity( const char *dir )
 /***********************************************************************
  *           is_hidden_file
  *
- * Check if the specified file should be hidden based on its name and the show dot files option.
+ * Check if the specified file should be hidden based on its unix path and the show dot files option.
  */
-static BOOL is_hidden_file( const UNICODE_STRING *name )
+static BOOL is_hidden_file( const char *name )
 {
-    WCHAR *p, *end;
+    const char *p;
 
     if (show_dot_files) return FALSE;
 
-    end = p = name->Buffer + name->Length/sizeof(WCHAR);
-    while (p > name->Buffer && p[-1] == '\\') p--;
-    while (p > name->Buffer && p[-1] != '\\') p--;
-    return (p < end && *p == '.');
+    p = name + strlen( name );
+    while (p > name && p[-1] == '/') p--;
+    while (p > name && p[-1] != '/') p--;
+    if (*p++ != '.') return FALSE;
+    if (!*p || *p == '/') return FALSE;  /* "." directory */
+    if (*p++ != '.') return FALSE;
+    if (!*p || *p == '/') return FALSE;  /* ".." directory */
+    return TRUE;
 }
 
 
@@ -1676,6 +1680,9 @@ static int get_file_info( const char *path, struct stat *st, ULONG *attr )
         free( parent_path );
     }
     *attr |= get_file_attributes( st );
+
+    if (is_hidden_file( path ))
+        *attr |= FILE_ATTRIBUTE_HIDDEN;
 
     attr_len = xattr_get( path, SAMBA_XATTR_DOS_ATTRIB, attr_data, sizeof(attr_data)-1 );
     if (attr_len != -1)
@@ -2252,11 +2259,6 @@ static NTSTATUS get_dir_data_entry( struct dir_data *dir_data, void *info_ptr, I
     if (class != FileNamesInformation)
     {
         if (st.st_dev != dir_data->id.dev) st.st_ino = 0;  /* ignore inode if on a different device */
-
-        if (!show_dot_files && names->long_name[0] == '.' && names->long_name[1] &&
-            (names->long_name[1] != '.' || names->long_name[2]))
-            attributes |= FILE_ATTRIBUTE_HIDDEN;
-
         fill_file_info( &st, attributes, info, class );
     }
 
@@ -4218,7 +4220,6 @@ NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
             info->AllocationSize = std.AllocationSize;
             info->EndOfFile      = std.EndOfFile;
             info->FileAttributes = basic.FileAttributes;
-            if (is_hidden_file( attr->ObjectName )) info->FileAttributes |= FILE_ATTRIBUTE_HIDDEN;
         }
         free( unix_name );
     }
@@ -4249,10 +4250,7 @@ NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC
         else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
             status = STATUS_INVALID_INFO_CLASS;
         else
-        {
             status = fill_file_info( &st, attributes, info, FileBasicInformation );
-            if (is_hidden_file( attr->ObjectName )) info->FileAttributes |= FILE_ATTRIBUTE_HIDDEN;
-        }
         free( unix_name );
     }
     else WARN( "%s not found (%x)\n", debugstr_us(attr->ObjectName), status );
