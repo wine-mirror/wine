@@ -309,8 +309,7 @@ static const struct wined3d_parent_ops d3d8_surface_wined3d_parent_ops =
     surface_wined3d_object_destroyed,
 };
 
-struct d3d8_surface *d3d8_surface_create(struct wined3d_texture *wined3d_texture, unsigned int sub_resource_idx,
-        const struct wined3d_parent_ops **parent_ops)
+struct d3d8_surface *d3d8_surface_create(struct wined3d_texture *wined3d_texture, unsigned int sub_resource_idx)
 {
     IDirect3DBaseTexture8 *texture;
     struct d3d8_surface *surface;
@@ -333,7 +332,8 @@ struct d3d8_surface *d3d8_surface_create(struct wined3d_texture *wined3d_texture
         IDirect3DBaseTexture8_Release(texture);
     }
 
-    *parent_ops = &d3d8_surface_wined3d_parent_ops;
+    wined3d_texture_set_sub_resource_parent(wined3d_texture, sub_resource_idx,
+            surface, &d3d8_surface_wined3d_parent_ops);
 
     TRACE("Created surface %p.\n", surface);
     return surface;
