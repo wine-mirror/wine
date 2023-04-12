@@ -684,8 +684,17 @@ static HRESULT WINAPI HTMLInputElement_get_readyState(IHTMLInputElement *iface, 
 static HRESULT WINAPI HTMLInputElement_get_complete(IHTMLInputElement *iface, VARIANT_BOOL *p)
 {
     HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    cpp_bool complete;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMHTMLInputElement_GetComplete(This->nsinput, &complete);
+    if(NS_FAILED(nsres))
+        return map_nsresult(nsres);
+
+    *p = variant_bool(complete);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_loop(IHTMLInputElement *iface, VARIANT v)

@@ -2412,6 +2412,7 @@ static void test_inputload(IHTMLDocument2 *doc)
 {
     IHTMLInputElement *input;
     IHTMLElement *elem;
+    VARIANT_BOOL b;
     VARIANT v;
     BSTR str;
     HRESULT hres;
@@ -2438,14 +2439,26 @@ static void test_inputload(IHTMLDocument2 *doc)
     ok(V_DISPATCH(&v) == (IDispatch*)&input_onload_obj, "V_DISPATCH(onload) != input_onload_obj\n");
     VariantClear(&v);
 
+    hres = IHTMLInputElement_get_complete(input, &b);
+    ok(hres == S_OK, "get_complete failed: %08lx\n", hres);
+    ok(b == VARIANT_FALSE, "complete = %x\n", b);
+
     str = SysAllocString(L"http://test.winehq.org/tests/winehq_snapshot/index_files/winehq_logo_text.png?v=2");
     hres = IHTMLInputElement_put_src(input, str);
     ok(hres == S_OK, "put_src failed: %08lx\n", hres);
     SysFreeString(str);
 
+    hres = IHTMLInputElement_get_complete(input, &b);
+    ok(hres == S_OK, "get_complete failed: %08lx\n", hres);
+    ok(b == VARIANT_FALSE, "complete = %x\n", b);
+
     SET_EXPECT(input_onload);
     pump_msgs(&called_input_onload);
     CHECK_CALLED(input_onload);
+
+    hres = IHTMLInputElement_get_complete(input, &b);
+    ok(hres == S_OK, "get_complete failed: %08lx\n", hres);
+    ok(b == VARIANT_TRUE, "complete = %x\n", b);
 
     IHTMLInputElement_Release(input);
 }
@@ -2494,15 +2507,37 @@ static void test_link_load(IHTMLDocument2 *doc)
 
 static void test_focus(IHTMLDocument2 *doc)
 {
+    IHTMLInputElement *input;
     IHTMLElement2 *elem2;
     IHTMLElement4 *div;
     IHTMLElement *elem;
+    VARIANT_BOOL b;
     VARIANT v;
+    BSTR str;
     HRESULT hres;
 
     elem = get_elem_id(doc, L"inputid");
     elem2 = get_elem2_iface((IUnknown*)elem);
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLInputElement, (void**)&input);
     IHTMLElement_Release(elem);
+    ok(hres == S_OK, "Could not get IHTMLInputElement iface: %08lx\n", hres);
+
+    hres = IHTMLInputElement_get_complete(input, &b);
+    ok(hres == S_OK, "get_complete failed: %08lx\n", hres);
+    ok(b == VARIANT_FALSE, "complete = %x\n", b);
+
+    str = SysAllocString(L"http://test.winehq.org/tests/winehq_snapshot/index_files/winehq_logo_text.png?v=3");
+    hres = IHTMLInputElement_put_src(input, str);
+    ok(hres == S_OK, "put_src failed: %08lx\n", hres);
+    SysFreeString(str);
+
+    pump_msgs(NULL);
+
+    hres = IHTMLInputElement_get_complete(input, &b);
+    ok(hres == S_OK, "get_complete failed: %08lx\n", hres);
+    ok(b == VARIANT_FALSE, "complete = %x\n", b);
+    IHTMLInputElement_Release(input);
 
     elem = get_elem_id(doc, L"divid");
     div = get_elem4_iface((IUnknown*)elem);
@@ -2779,7 +2814,9 @@ static void test_unload_event(IHTMLDocument2 *doc)
 static void test_submit(IHTMLDocument2 *doc)
 {
     IHTMLElement *elem, *submit;
+    IHTMLInputElement *input;
     IHTMLFormElement *form;
+    VARIANT_BOOL b;
     VARIANT v;
     DWORD cp_cookie;
     HRESULT hres;
@@ -2809,6 +2846,14 @@ static void test_submit(IHTMLDocument2 *doc)
     IHTMLFormElement_Release(form);
 
     submit = get_elem_id(doc, L"submitid");
+
+    hres = IHTMLElement_QueryInterface(submit, &IID_IHTMLInputElement, (void**)&input);
+    ok(hres == S_OK, "Could not get IHTMLInputElement iface: %08lx\n", hres);
+
+    hres = IHTMLInputElement_get_complete(input, &b);
+    ok(hres == S_OK, "get_complete failed: %08lx\n", hres);
+    ok(b == VARIANT_FALSE, "complete = %x\n", b);
+    IHTMLInputElement_Release(input);
 
     SET_EXPECT(form_onclick);
     SET_EXPECT(form_onsubmit);

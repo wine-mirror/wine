@@ -3987,6 +3987,7 @@ static void test_contenteditable(IUnknown *unk)
 #define test_input_type(i,t) _test_input_type(__LINE__,i,t)
 static void _test_input_type(unsigned line, IHTMLInputElement *input, const WCHAR *extype)
 {
+    VARIANT_BOOL b;
     BSTR type;
     HRESULT hres;
 
@@ -3994,6 +3995,10 @@ static void _test_input_type(unsigned line, IHTMLInputElement *input, const WCHA
     ok_(__FILE__,line) (hres == S_OK, "get_type failed: %08lx\n", hres);
     ok_(__FILE__,line) (!lstrcmpW(type, extype), "type=%s, expected %s\n", wine_dbgstr_w(type), wine_dbgstr_w(extype));
     SysFreeString(type);
+
+    hres = IHTMLInputElement_get_complete(input, &b);
+    ok_(__FILE__,line) (hres == S_OK, "get_complete failed: %08lx\n", hres);
+    ok(b == VARIANT_FALSE, "complete = %x\n", b);
 }
 
 #define test_input_name(u, c) _test_input_name(__LINE__,u, c)
