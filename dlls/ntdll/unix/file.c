@@ -1681,14 +1681,13 @@ static int get_file_info( const char *path, struct stat *st, ULONG *attr )
     }
     *attr |= get_file_attributes( st );
 
-    if (is_hidden_file( path ))
-        *attr |= FILE_ATTRIBUTE_HIDDEN;
-
     attr_len = xattr_get( path, SAMBA_XATTR_DOS_ATTRIB, attr_data, sizeof(attr_data)-1 );
     if (attr_len != -1)
         *attr |= parse_samba_dos_attrib_data( attr_data, attr_len );
     else
     {
+        if (is_hidden_file( path ))
+            *attr |= FILE_ATTRIBUTE_HIDDEN;
         if (errno == ENOTSUP) return ret;
 #ifdef ENODATA
         if (errno == ENODATA) return ret;
