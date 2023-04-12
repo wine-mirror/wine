@@ -60,7 +60,6 @@ static const IAudioClockVtbl AudioClock_Vtbl;
 static const IAudioClock2Vtbl AudioClock2_Vtbl;
 static const IAudioStreamVolumeVtbl AudioStreamVolume_Vtbl;
 static const IChannelAudioVolumeVtbl ChannelAudioVolume_Vtbl;
-static const IAudioSessionManager2Vtbl AudioSessionManager2_Vtbl;
 
 static WCHAR drv_key_devicesW[256];
 
@@ -119,11 +118,6 @@ static inline ACImpl *impl_from_IAudioClock2(IAudioClock2 *iface)
 static inline ACImpl *impl_from_IAudioStreamVolume(IAudioStreamVolume *iface)
 {
     return CONTAINING_RECORD(iface, ACImpl, IAudioStreamVolume_iface);
-}
-
-static inline SessionMgr *impl_from_IAudioSessionManager2(IAudioSessionManager2 *iface)
-{
-    return CONTAINING_RECORD(iface, SessionMgr, IAudioSessionManager2_iface);
 }
 
 BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
@@ -2155,176 +2149,6 @@ static const IChannelAudioVolumeVtbl ChannelAudioVolume_Vtbl =
     ChannelAudioVolume_SetAllVolumes,
     ChannelAudioVolume_GetAllVolumes
 };
-
-static HRESULT WINAPI AudioSessionManager_QueryInterface(IAudioSessionManager2 *iface,
-        REFIID riid, void **ppv)
-{
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
-
-    if(!ppv)
-        return E_POINTER;
-    *ppv = NULL;
-
-    if(IsEqualIID(riid, &IID_IUnknown) ||
-            IsEqualIID(riid, &IID_IAudioSessionManager) ||
-            IsEqualIID(riid, &IID_IAudioSessionManager2))
-        *ppv = iface;
-    if(*ppv){
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    WARN("Unknown interface %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI AudioSessionManager_AddRef(IAudioSessionManager2 *iface)
-{
-    SessionMgr *This = impl_from_IAudioSessionManager2(iface);
-    ULONG ref;
-    ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) Refcount now %lu\n", This, ref);
-    return ref;
-}
-
-static ULONG WINAPI AudioSessionManager_Release(IAudioSessionManager2 *iface)
-{
-    SessionMgr *This = impl_from_IAudioSessionManager2(iface);
-    ULONG ref;
-    ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p) Refcount now %lu\n", This, ref);
-    if(!ref)
-        HeapFree(GetProcessHeap(), 0, This);
-    return ref;
-}
-
-static HRESULT WINAPI AudioSessionManager_GetAudioSessionControl(
-        IAudioSessionManager2 *iface, const GUID *session_guid, DWORD flags,
-        IAudioSessionControl **out)
-{
-    SessionMgr *This = impl_from_IAudioSessionManager2(iface);
-    AudioSession *session;
-    AudioSessionWrapper *wrapper;
-    HRESULT hr;
-
-    TRACE("(%p)->(%s, %lx, %p)\n", This, debugstr_guid(session_guid),
-            flags, out);
-
-    hr = get_audio_session(session_guid, This->device, 0, &session);
-    if(FAILED(hr))
-        return hr;
-
-    wrapper = AudioSessionWrapper_Create(NULL);
-    if(!wrapper)
-        return E_OUTOFMEMORY;
-
-    wrapper->session = session;
-
-    *out = (IAudioSessionControl*)&wrapper->IAudioSessionControl2_iface;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI AudioSessionManager_GetSimpleAudioVolume(
-        IAudioSessionManager2 *iface, const GUID *session_guid, DWORD flags,
-        ISimpleAudioVolume **out)
-{
-    SessionMgr *This = impl_from_IAudioSessionManager2(iface);
-    AudioSession *session;
-    AudioSessionWrapper *wrapper;
-    HRESULT hr;
-
-    TRACE("(%p)->(%s, %lx, %p)\n", This, debugstr_guid(session_guid),
-            flags, out);
-
-    hr = get_audio_session(session_guid, This->device, 0, &session);
-    if(FAILED(hr))
-        return hr;
-
-    wrapper = AudioSessionWrapper_Create(NULL);
-    if(!wrapper)
-        return E_OUTOFMEMORY;
-
-    wrapper->session = session;
-
-    *out = &wrapper->ISimpleAudioVolume_iface;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI AudioSessionManager_GetSessionEnumerator(
-        IAudioSessionManager2 *iface, IAudioSessionEnumerator **out)
-{
-    SessionMgr *This = impl_from_IAudioSessionManager2(iface);
-    FIXME("(%p)->(%p) - stub\n", This, out);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI AudioSessionManager_RegisterSessionNotification(
-        IAudioSessionManager2 *iface, IAudioSessionNotification *notification)
-{
-    SessionMgr *This = impl_from_IAudioSessionManager2(iface);
-    FIXME("(%p)->(%p) - stub\n", This, notification);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI AudioSessionManager_UnregisterSessionNotification(
-        IAudioSessionManager2 *iface, IAudioSessionNotification *notification)
-{
-    SessionMgr *This = impl_from_IAudioSessionManager2(iface);
-    FIXME("(%p)->(%p) - stub\n", This, notification);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI AudioSessionManager_RegisterDuckNotification(
-        IAudioSessionManager2 *iface, const WCHAR *session_id,
-        IAudioVolumeDuckNotification *notification)
-{
-    SessionMgr *This = impl_from_IAudioSessionManager2(iface);
-    FIXME("(%p)->(%p) - stub\n", This, notification);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI AudioSessionManager_UnregisterDuckNotification(
-        IAudioSessionManager2 *iface,
-        IAudioVolumeDuckNotification *notification)
-{
-    SessionMgr *This = impl_from_IAudioSessionManager2(iface);
-    FIXME("(%p)->(%p) - stub\n", This, notification);
-    return E_NOTIMPL;
-}
-
-static const IAudioSessionManager2Vtbl AudioSessionManager2_Vtbl =
-{
-    AudioSessionManager_QueryInterface,
-    AudioSessionManager_AddRef,
-    AudioSessionManager_Release,
-    AudioSessionManager_GetAudioSessionControl,
-    AudioSessionManager_GetSimpleAudioVolume,
-    AudioSessionManager_GetSessionEnumerator,
-    AudioSessionManager_RegisterSessionNotification,
-    AudioSessionManager_UnregisterSessionNotification,
-    AudioSessionManager_RegisterDuckNotification,
-    AudioSessionManager_UnregisterDuckNotification
-};
-
-HRESULT WINAPI AUDDRV_GetAudioSessionManager(IMMDevice *device,
-        IAudioSessionManager2 **out)
-{
-    SessionMgr *This;
-
-    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SessionMgr));
-    if(!This)
-        return E_OUTOFMEMORY;
-
-    This->IAudioSessionManager2_iface.lpVtbl = &AudioSessionManager2_Vtbl;
-    This->device = device;
-    This->ref = 1;
-
-    *out = &This->IAudioSessionManager2_iface;
-
-    return S_OK;
-}
 
 HRESULT WINAPI AUDDRV_GetAudioSessionWrapper(const GUID *guid, IMMDevice *device,
                                              AudioSessionWrapper **out)
