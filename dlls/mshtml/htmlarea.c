@@ -467,7 +467,6 @@ static const NodeImplVtbl HTMLAreaElementImplVtbl = {
     HTMLElement_destructor,
     HTMLElement_cpc,
     HTMLElement_clone,
-    HTMLElement_dispatch_nsevent_hook,
     HTMLAreaElement_handle_event,
     HTMLElement_get_attr_col
 };

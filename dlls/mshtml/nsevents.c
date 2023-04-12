@@ -438,7 +438,6 @@ static nsresult handle_unload(HTMLDocumentNode *doc, nsIDOMEvent *nsevent)
 
 static nsresult handle_htmlevent(HTMLDocumentNode *doc, nsIDOMEvent *nsevent)
 {
-    const event_target_vtbl_t *target_vtbl;
     nsIDOMEventTarget *event_target;
     EventTarget *target;
     nsIDOMNode *nsnode;
@@ -487,15 +486,7 @@ static nsresult handle_htmlevent(HTMLDocumentNode *doc, nsIDOMEvent *nsevent)
         }
     }
 
-    target_vtbl = dispex_get_vtbl(&target->dispex);
-
-    if(target_vtbl && target_vtbl->dispatch_nsevent_hook &&
-       target_vtbl->dispatch_nsevent_hook(&target->dispex, event) == S_OK) {
-        /* overridden by hook, so cancel it */
-        nsIDOMEvent_StopPropagation(nsevent);
-    }else {
-        dispatch_event(target, event);
-    }
+    dispatch_event(target, event);
 
     IDOMEvent_Release(&event->IDOMEvent_iface);
     IEventTarget_Release(&target->IEventTarget_iface);

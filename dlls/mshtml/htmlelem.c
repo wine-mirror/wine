@@ -6873,11 +6873,6 @@ HRESULT HTMLElement_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **
     return S_OK;
 }
 
-HRESULT HTMLElement_dispatch_nsevent_hook(HTMLDOMNode *iface, DOMEvent *event)
-{
-    return S_FALSE;
-}
-
 HRESULT HTMLElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDOMEvent *event, BOOL *prevent_default)
 {
     HTMLElement *This = impl_from_HTMLDOMNode(iface);
@@ -6928,7 +6923,6 @@ static const NodeImplVtbl HTMLElementImplVtbl = {
     HTMLElement_destructor,
     HTMLElement_cpc,
     HTMLElement_clone,
-    HTMLElement_dispatch_nsevent_hook,
     HTMLElement_handle_event,
     HTMLElement_get_attr_col
 };
@@ -7069,12 +7063,6 @@ static void HTMLElement_bind_event(DispatchEx *dispex, eventid_t eid)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
     ensure_doc_nsevent_handler(This->node.doc, This->node.nsnode, eid);
-}
-
-static HRESULT HTMLElement_event_target_dispatch_nsevent_hook(DispatchEx *dispex, DOMEvent *event)
-{
-    HTMLElement *This = impl_from_DispatchEx(dispex);
-    return This->node.vtbl->dispatch_nsevent_hook(&This->node, event);
 }
 
 static HRESULT HTMLElement_handle_event_default(DispatchEx *dispex, eventid_t eid, nsIDOMEvent *nsevent, BOOL *prevent_default)
@@ -7350,7 +7338,6 @@ static event_target_vtbl_t HTMLElement_event_target_vtbl = {
     },
     HTMLElement_get_gecko_target,
     HTMLElement_bind_event,
-    HTMLElement_event_target_dispatch_nsevent_hook,
     HTMLElement_get_parent_event_target,
     HTMLElement_handle_event_default,
     HTMLElement_get_cp_container,

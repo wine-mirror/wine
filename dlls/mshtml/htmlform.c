@@ -984,7 +984,6 @@ static const NodeImplVtbl HTMLFormElementImplVtbl = {
     HTMLElement_destructor,
     HTMLElement_cpc,
     HTMLElement_clone,
-    HTMLElement_dispatch_nsevent_hook,
     HTMLFormElement_handle_event,
     HTMLElement_get_attr_col,
     NULL,

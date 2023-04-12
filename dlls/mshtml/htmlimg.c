@@ -39,7 +39,6 @@ struct HTMLImg {
     IHTMLImgElement IHTMLImgElement_iface;
 
     nsIDOMHTMLImageElement *nsimg;
-    eventid_t skip_event;
 };
 
 static inline HTMLImg *impl_from_IHTMLImgElement(IHTMLImgElement *iface)
@@ -282,7 +281,6 @@ static HRESULT WINAPI HTMLImgElement_get_alt(IHTMLImgElement *iface, BSTR *p)
 static HRESULT WINAPI HTMLImgElement_put_src(IHTMLImgElement *iface, BSTR v)
 {
     HTMLImg *This = impl_from_IHTMLImgElement(iface);
-    HRESULT hres = S_OK;
     nsAString src_str;
     nsresult nsres;
 
@@ -291,32 +289,7 @@ static HRESULT WINAPI HTMLImgElement_put_src(IHTMLImgElement *iface, BSTR v)
     nsAString_InitDepend(&src_str, v);
     nsres = nsIDOMHTMLImageElement_SetSrc(This->nsimg, &src_str);
     nsAString_Finish(&src_str);
-    if(NS_FAILED(nsres))
-        ERR("SetSrc failed: %08lx\n", nsres);
-
-    if(dispex_compat_mode(&This->element.node.event_target.dispex) < COMPAT_MODE_IE9) {
-        eventid_t eventid;
-        cpp_bool complete;
-        UINT32 height = 0;
-        DOMEvent *event;
-
-        /* Synchronously send load event if the image was completed immediately (such as from cache) */
-        This->skip_event = EVENTID_INVALID_ID;
-
-        nsres = nsIDOMHTMLImageElement_GetComplete(This->nsimg, &complete);
-        if(NS_SUCCEEDED(nsres) && complete) {
-            nsIDOMHTMLImageElement_GetNaturalHeight(This->nsimg, &height);
-            eventid = height ? EVENTID_LOAD : EVENTID_ERROR;
-
-            hres = create_document_event(This->element.node.doc, eventid, &event);
-            if(SUCCEEDED(hres)) {
-                This->skip_event = eventid;
-                dispatch_event(&This->element.node.event_target, event);
-                IDOMEvent_Release(&event->IDOMEvent_iface);
-            }
-        }
-    }
-    return hres;
+    return map_nsresult(nsres);
 }
 
 static HRESULT WINAPI HTMLImgElement_get_src(IHTMLImgElement *iface, BSTR *p)
@@ -702,18 +675,6 @@ static HRESULT HTMLImgElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     return S_OK;
 }
 
-static HRESULT HTMLImgElement_dispatch_nsevent_hook(HTMLDOMNode *iface, DOMEvent *event)
-{
-    HTMLImg *This = impl_from_HTMLDOMNode(iface);
-
-    if(event->event_id == This->skip_event) {
-        This->skip_event = EVENTID_INVALID_ID;
-        return S_OK;
-    }
-
-    return S_FALSE;
-}
-
 static HRESULT HTMLImgElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
 {
     HTMLImg *This = impl_from_HTMLDOMNode(iface);
@@ -747,7 +708,6 @@ static const NodeImplVtbl HTMLImgElementImplVtbl = {
     HTMLElement_destructor,
     HTMLElement_cpc,
     HTMLElement_clone,
-    HTMLImgElement_dispatch_nsevent_hook,
     HTMLElement_handle_event,
     HTMLElement_get_attr_col,
     NULL,
@@ -799,7 +759,6 @@ HRESULT HTMLImgElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTML
 
     ret->IHTMLImgElement_iface.lpVtbl = &HTMLImgElementVtbl;
     ret->element.node.vtbl = &HTMLImgElementImplVtbl;
-    ret->skip_event = EVENTID_INVALID_ID;
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLImgElement_dispex);
 

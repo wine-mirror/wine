@@ -1432,7 +1432,6 @@ static const NodeImplVtbl HTMLInputElementImplVtbl = {
     HTMLElement_destructor,
     HTMLElement_cpc,
     HTMLElement_clone,
-    HTMLElement_dispatch_nsevent_hook,
     HTMLElement_handle_event,
     HTMLElement_get_attr_col,
     NULL,
@@ -1642,7 +1641,6 @@ static const NodeImplVtbl HTMLLabelElementImplVtbl = {
     HTMLElement_destructor,
     HTMLElement_cpc,
     HTMLElement_clone,
-    HTMLElement_dispatch_nsevent_hook,
     HTMLElement_handle_event,
     HTMLElement_get_attr_col,
 };
@@ -1979,7 +1977,6 @@ static const NodeImplVtbl HTMLButtonElementImplVtbl = {
     HTMLElement_destructor,
     HTMLElement_cpc,
     HTMLElement_clone,
-    HTMLElement_dispatch_nsevent_hook,
     HTMLElement_handle_event,
     HTMLElement_get_attr_col,
     NULL,
