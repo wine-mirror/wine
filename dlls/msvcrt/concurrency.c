@@ -68,6 +68,8 @@ typedef struct {
         unsigned int, (const Context*), (this))
 #define call_Context_GetScheduleGroupId(this) CALL_VTBL_FUNC(this, 8, \
         unsigned int, (const Context*), (this))
+#define call_Context_IsSynchronouslyBlocked(this) CALL_VTBL_FUNC(this, 16, \
+        bool, (const Context*), (this))
 #define call_Context_dtor(this, flags) CALL_VTBL_FUNC(this, 20, \
         Context*, (Context*, unsigned int), (this, flags))
 
@@ -874,6 +876,13 @@ _Context *__cdecl _Context__CurrentContext(_Context *ret)
     TRACE("(%p)\n", ret);
     ret->context = Context_CurrentContext();
     return ret;
+}
+
+DEFINE_THISCALL_WRAPPER(_Context_IsSynchronouslyBlocked, 4)
+BOOL __thiscall _Context_IsSynchronouslyBlocked(const _Context *this)
+{
+    TRACE("(%p)\n", this);
+    return call_Context_IsSynchronouslyBlocked(this->context);
 }
 #endif
 

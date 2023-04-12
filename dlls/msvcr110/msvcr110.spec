@@ -550,9 +550,9 @@
 @ stub -arch=arm ?_IsCanceling@_TaskCollection@details@Concurrency@@QAA_NXZ
 @ stub -arch=i386 ?_IsCanceling@_TaskCollection@details@Concurrency@@QAE_NXZ
 @ stub -arch=win64 ?_IsCanceling@_TaskCollection@details@Concurrency@@QEAA_NXZ
-@ stub -arch=arm ?_IsSynchronouslyBlocked@_Context@details@Concurrency@@QBA_NXZ
-@ stub -arch=i386 ?_IsSynchronouslyBlocked@_Context@details@Concurrency@@QBE_NXZ
-@ stub -arch=win64 ?_IsSynchronouslyBlocked@_Context@details@Concurrency@@QEBA_NXZ
+@ cdecl -arch=arm ?_IsSynchronouslyBlocked@_Context@details@Concurrency@@QBA_NXZ(ptr) _Context_IsSynchronouslyBlocked
+@ thiscall -arch=i386 ?_IsSynchronouslyBlocked@_Context@details@Concurrency@@QBE_NXZ(ptr) _Context_IsSynchronouslyBlocked
+@ cdecl -arch=win64 ?_IsSynchronouslyBlocked@_Context@details@Concurrency@@QEBA_NXZ(ptr) _Context_IsSynchronouslyBlocked
 @ stub -arch=win32 ?_Name_base@type_info@@CAPBDPBV1@PAU__type_info_node@@@Z
 @ stub -arch=win64 ?_Name_base@type_info@@CAPEBDPEBV1@PEAU__type_info_node@@@Z
 @ stub -arch=win32 ?_Name_base_internal@type_info@@CAPBDPBV1@PAU__type_info_node@@@Z
