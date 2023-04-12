@@ -2580,6 +2580,24 @@ HRESULT WINAPI AUDDRV_GetAudioSessionManager(IMMDevice *device,
     return S_OK;
 }
 
+HRESULT WINAPI AUDDRV_GetAudioSessionWrapper(const GUID *guid, IMMDevice *device,
+                                             AudioSessionWrapper **out)
+{
+    AudioSession *session;
+
+    HRESULT hr = get_audio_session(guid, device, 0, &session);
+    if(FAILED(hr))
+        return hr;
+
+    *out = AudioSessionWrapper_Create(NULL);
+    if(!*out)
+        return E_OUTOFMEMORY;
+
+    (*out)->session = session;
+
+    return S_OK;
+}
+
 HRESULT WINAPI AUDDRV_GetPropValue(GUID *guid, const PROPERTYKEY *prop, PROPVARIANT *out)
 {
     struct get_prop_value_params params;
