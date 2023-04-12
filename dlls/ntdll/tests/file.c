@@ -4107,7 +4107,7 @@ static void test_dotfile_file_attributes(void)
     status = nt_get_file_attrs(filename, &attrs);
     ok( status == STATUS_SUCCESS, "got %#lx\n", status );
     ok( attrs & FILE_ATTRIBUTE_SYSTEM, "got attributes %#lx\n", attrs );
-    todo_wine ok( !(attrs & FILE_ATTRIBUTE_HIDDEN), "got attributes %#lx\n", attrs );
+    ok( !(attrs & FILE_ATTRIBUTE_HIDDEN), "got attributes %#lx\n", attrs );
 
     status = pNtQueryInformationFile( h, &io, &info, sizeof(info), FileBasicInformation );
     ok( status == STATUS_SUCCESS, "got %#lx\n", status );
