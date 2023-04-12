@@ -3568,12 +3568,10 @@ static HRESULT CDECL device_parent_texture_sub_resource_created(struct wined3d_d
     {
         struct d3d8_surface *d3d_surface;
 
-        if (!(d3d_surface = heap_alloc_zero(sizeof(*d3d_surface))))
+        if (!(d3d_surface = d3d8_surface_create(wined3d_texture, sub_resource_idx, parent_ops)))
             return E_OUTOFMEMORY;
 
-        surface_init(d3d_surface, wined3d_texture, sub_resource_idx, parent_ops);
         *parent = d3d_surface;
-        TRACE("Created surface %p.\n", d3d_surface);
     }
     else if (type == WINED3D_RTYPE_TEXTURE_3D)
     {
