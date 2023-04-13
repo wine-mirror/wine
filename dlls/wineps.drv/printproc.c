@@ -800,6 +800,132 @@ static int poly_draw(PHYSDEV dev, const POINT *points, const BYTE *types, DWORD 
     return TRUE;
 }
 
+static inline void reset_bounds(RECT *bounds)
+{
+    bounds->left = bounds->top = INT_MAX;
+    bounds->right = bounds->bottom = INT_MIN;
+}
+
+static BOOL gradient_fill(PHYSDEV dev, const TRIVERTEX *vert_array, DWORD nvert,
+        const void *grad_array, DWORD ngrad, ULONG mode)
+{
+    char buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
+    struct bitblt_coords src, dst;
+    struct gdi_image_bits bits;
+    HBITMAP bmp, old_bmp;
+    BOOL ret = FALSE;
+    TRIVERTEX *pts;
+    unsigned int i;
+    HDC hdc_src;
+    HRGN rgn;
+
+    if (!(pts = malloc(nvert * sizeof(*pts)))) return FALSE;
+    memcpy(pts, vert_array, sizeof(*pts) * nvert);
+    for (i = 0; i < nvert; i++)
+        LPtoDP(dev->hdc, (POINT *)&pts[i], 1);
+
+    /* compute bounding rect of all the rectangles/triangles */
+    reset_bounds(&dst.visrect);
+    for (i = 0; i < ngrad * (mode == GRADIENT_FILL_TRIANGLE ? 3 : 2); i++)
+    {
+        ULONG v = ((ULONG *)grad_array)[i];
+        dst.visrect.left   = min(dst.visrect.left,   pts[v].x);
+        dst.visrect.top    = min(dst.visrect.top,    pts[v].y);
+        dst.visrect.right  = max(dst.visrect.right,  pts[v].x);
+        dst.visrect.bottom = max(dst.visrect.bottom, pts[v].y);
+    }
+
+    dst.x = dst.visrect.left;
+    dst.y = dst.visrect.top;
+    dst.width = dst.visrect.right - dst.visrect.left;
+    dst.height = dst.visrect.bottom - dst.visrect.top;
+    clip_visrect(dev->hdc, &dst.visrect, &dst.visrect);
+
+    info->bmiHeader.biSize          = sizeof(info->bmiHeader);
+    info->bmiHeader.biPlanes        = 1;
+    info->bmiHeader.biBitCount      = 24;
+    info->bmiHeader.biCompression   = BI_RGB;
+    info->bmiHeader.biXPelsPerMeter = 0;
+    info->bmiHeader.biYPelsPerMeter = 0;
+    info->bmiHeader.biClrUsed       = 0;
+    info->bmiHeader.biClrImportant  = 0;
+    info->bmiHeader.biWidth         = dst.visrect.right - dst.visrect.left;
+    info->bmiHeader.biHeight        = dst.visrect.bottom - dst.visrect.top;
+    info->bmiHeader.biSizeImage     = 0;
+    memset(&bits, 0, sizeof(bits));
+    hdc_src = CreateCompatibleDC(NULL);
+    if (!hdc_src)
+    {
+        free(pts);
+        return FALSE;
+    }
+    bmp = CreateDIBSection(hdc_src, info, DIB_RGB_COLORS, &bits.ptr, NULL, 0);
+    if (!bmp)
+    {
+        DeleteObject(hdc_src);
+        free(pts);
+        return FALSE;
+    }
+    old_bmp = SelectObject(hdc_src, bmp);
+
+    /* make src and points relative to the bitmap */
+    src = dst;
+    src.x -= dst.visrect.left;
+    src.y -= dst.visrect.top;
+    OffsetRect(&src.visrect, -dst.visrect.left, -dst.visrect.top);
+    for (i = 0; i < nvert; i++)
+    {
+        pts[i].x -= dst.visrect.left;
+        pts[i].y -= dst.visrect.top;
+    }
+    ret = GdiGradientFill(hdc_src, pts, nvert, (void *)grad_array, ngrad, mode);
+    SelectObject(hdc_src, old_bmp);
+    DeleteObject(hdc_src);
+
+    rgn = CreateRectRgn(0, 0, 0, 0);
+    if (mode == GRADIENT_FILL_TRIANGLE)
+    {
+        const GRADIENT_TRIANGLE *gt = grad_array;
+        POINT triangle[3];
+        HRGN tmp;
+
+        for (i = 0; i < ngrad; i++)
+        {
+            triangle[0].x = pts[gt[i].Vertex1].x;
+            triangle[0].y = pts[gt[i].Vertex1].y;
+            triangle[1].x = pts[gt[i].Vertex2].x;
+            triangle[1].y = pts[gt[i].Vertex2].y;
+            triangle[2].x = pts[gt[i].Vertex3].x;
+            triangle[2].y = pts[gt[i].Vertex3].y;
+            tmp = CreatePolygonRgn(triangle, 3, ALTERNATE);
+            CombineRgn(rgn, rgn, tmp, RGN_OR);
+            DeleteObject(tmp);
+        }
+    }
+    else
+    {
+        const GRADIENT_RECT *gr = grad_array;
+        HRGN tmp = CreateRectRgn(0, 0, 0, 0);
+
+        for (i = 0; i < ngrad; i++)
+        {
+            SetRectRgn(tmp, pts[gr[i].UpperLeft].x, pts[gr[i].UpperLeft].y,
+                    pts[gr[i].LowerRight].x, pts[gr[i].LowerRight].y);
+            CombineRgn(rgn, rgn, tmp, RGN_OR);
+        }
+        DeleteObject(tmp);
+    }
+    free(pts);
+
+    OffsetRgn(rgn, dst.visrect.left, dst.visrect.top);
+    if (ret)
+        ret = (PSDRV_PutImage(dev, rgn, info, &bits, &src, &dst, SRCCOPY) == ERROR_SUCCESS);
+    DeleteObject(rgn);
+    DeleteObject(bmp);
+    return ret;
+}
+
 static HGDIOBJ get_object_handle(struct pp_data *data, HANDLETABLE *handletable,
         DWORD i, struct brush_pattern **pattern)
 {
@@ -1331,6 +1457,13 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         data->patterns[p->ihBrush].info = (BITMAPINFO *)((BYTE *)p + p->offBmi);
         data->patterns[p->ihBrush].bits.ptr = (BYTE *)p + p->offBits;
         return 1;
+    }
+    case EMR_GRADIENTFILL:
+    {
+        const EMRGRADIENTFILL *p = (const EMRGRADIENTFILL *)rec;
+
+        return gradient_fill(&data->pdev->dev, p->Ver, p->nVer,
+                p->Ver + p->nVer, p->nTri, p->ulMode);
     }
 
     case EMR_SETWINDOWEXTEX:
