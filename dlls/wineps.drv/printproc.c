@@ -1237,6 +1237,8 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     }
     case EMR_FILLPATH:
         return PSDRV_FillPath(&data->pdev->dev);
+    case EMR_STROKEANDFILLPATH:
+        return PSDRV_StrokeAndFillPath(&data->pdev->dev);
     case EMR_ABORTPATH:
     {
         data->path = FALSE;
