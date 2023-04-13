@@ -1110,6 +1110,18 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         PSDRV_SetBkColor(&data->pdev->dev, p->crColor);
         return 1;
     }
+    case EMR_RESTOREDC:
+    {
+        HDC hdc = data->pdev->dev.hdc;
+        int ret = PlayEnhMetaFileRecord(hdc, htable, rec, n);
+
+        select_hbrush(data, htable, n, GetCurrentObject(hdc, OBJ_BRUSH));
+        /* TODO: reselect font */
+        PSDRV_SelectPen(&data->pdev->dev, GetCurrentObject(hdc, OBJ_PEN), NULL);
+        PSDRV_SetBkColor(&data->pdev->dev, GetBkColor(hdc));
+        PSDRV_SetTextColor(&data->pdev->dev, GetTextColor(hdc));
+        return ret;
+    }
     case EMR_SELECTOBJECT:
     {
         const EMRSELECTOBJECT *so = (const EMRSELECTOBJECT *)rec;
