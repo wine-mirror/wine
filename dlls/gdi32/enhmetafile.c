@@ -2238,6 +2238,53 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	break;
     }
 
+    case EMR_TRANSPARENTBLT:
+    {
+        const EMRTRANSPARENTBLT *pTransparentBlt = (const EMRTRANSPARENTBLT *)mr;
+
+        TRACE("EMR_TRANSPARENTBLT: %ld, %ld %ldx%ld -> %ld, %ld %ldx%ld color %08lx offBitsSrc %ld\n",
+               pTransparentBlt->xSrc, pTransparentBlt->ySrc, pTransparentBlt->cxSrc,
+               pTransparentBlt->cySrc, pTransparentBlt->xDest, pTransparentBlt->yDest,
+               pTransparentBlt->cxDest, pTransparentBlt->cyDest,
+               pTransparentBlt->dwRop, pTransparentBlt->offBitsSrc);
+
+        if(pTransparentBlt->offBmiSrc == 0) {
+            FIXME("EMR_TRANSPARENTBLT: offBmiSrc == 0\n");
+        } else {
+            HDC hdcSrc = NtGdiCreateCompatibleDC( hdc );
+            HBRUSH hBrush, hBrushOld;
+            HBITMAP hBmp = 0, hBmpOld = 0;
+            const BITMAPINFO *pbi = (const BITMAPINFO *)((const BYTE *)mr + pTransparentBlt->offBmiSrc);
+
+            SetGraphicsMode(hdcSrc, GM_ADVANCED);
+            SetWorldTransform(hdcSrc, &pTransparentBlt->xformSrc);
+
+            hBrush = CreateSolidBrush(pTransparentBlt->crBkColorSrc);
+            hBrushOld = SelectObject(hdcSrc, hBrush);
+            PatBlt(hdcSrc, pTransparentBlt->rclBounds.left, pTransparentBlt->rclBounds.top,
+                   pTransparentBlt->rclBounds.right - pTransparentBlt->rclBounds.left,
+                   pTransparentBlt->rclBounds.bottom - pTransparentBlt->rclBounds.top, PATCOPY);
+            SelectObject(hdcSrc, hBrushOld);
+            DeleteObject(hBrush);
+
+            hBmp = CreateDIBitmap(hdc, (const BITMAPINFOHEADER *)pbi, CBM_INIT,
+                                  (const BYTE *)mr + pTransparentBlt->offBitsSrc,
+                                  pbi, pTransparentBlt->iUsageSrc);
+            hBmpOld = SelectObject(hdcSrc, hBmp);
+
+            GdiTransparentBlt(hdc, pTransparentBlt->xDest, pTransparentBlt->yDest,
+                              pTransparentBlt->cxDest, pTransparentBlt->cyDest,
+                              hdcSrc, pTransparentBlt->xSrc, pTransparentBlt->ySrc,
+                              pTransparentBlt->cxSrc, pTransparentBlt->cySrc,
+                              pTransparentBlt->dwRop);
+
+            SelectObject(hdcSrc, hBmpOld);
+            DeleteObject(hBmp);
+            DeleteDC(hdcSrc);
+        }
+        break;
+    }
+
     case EMR_GRADIENTFILL:
     {
         EMRGRADIENTFILL *grad = (EMRGRADIENTFILL *)mr;
@@ -2257,7 +2304,6 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_COLORCORRECTPALETTE:
     case EMR_SETICMPROFILEA:
     case EMR_SETICMPROFILEW:
-    case EMR_TRANSPARENTBLT:
     case EMR_SETLINKEDUFI:
     case EMR_COLORMATCHTOTARGETW:
     case EMR_CREATECOLORSPACEW:
