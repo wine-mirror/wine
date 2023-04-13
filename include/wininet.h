@@ -1776,6 +1776,9 @@ typedef BOOL (CALLBACK *pfnInternetGetProxyInfo)(LPCSTR, DWORD, LPSTR, DWORD, LP
 typedef BOOL (CALLBACK *pfnInternetInitializeAutoProxyDll)(DWORD, LPSTR, LPSTR, AutoProxyHelperFunctions *,
     LPAUTO_PROXY_SCRIPT_BUFFER);
 
+#define PROXY_AUTO_DETECT_TYPE_DHCP  1
+#define PROXY_AUTO_DETECT_TYPE_DNS_A 2
+
 BOOL WINAPI InternetInitializeAutoProxyDll(DWORD);
 BOOL WINAPI DetectAutoProxyUrl(LPSTR, DWORD, DWORD);
 
