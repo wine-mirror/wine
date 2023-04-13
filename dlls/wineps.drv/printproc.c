@@ -1353,6 +1353,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     case EMR_CREATEBRUSHINDIRECT:
     case EMR_SETARCDIRECTION:
     case EMR_SELECTCLIPPATH:
+    case EMR_EXTSELECTCLIPRGN:
         return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n);
     default:
         FIXME("unsupported record: %ld\n", rec->iType);
