@@ -230,7 +230,7 @@ static void put_d3d9_surface_color(IDirect3DSurface9 *surface,
 
 struct d3d11_resource_readback
 {
-    ID3D11Resource *resource;
+    ID3D11Resource *orig_resource, *resource;
     D3D11_MAPPED_SUBRESOURCE map_desc;
     ID3D11DeviceContext *immediate_context;
     unsigned int width, height, depth, sub_resource_idx;
@@ -242,6 +242,7 @@ static void init_d3d11_resource_readback(ID3D11Resource *resource, ID3D11Resourc
 {
     HRESULT hr;
 
+    rb->orig_resource = resource;
     rb->resource = readback_resource;
     rb->width = width;
     rb->height = height;
@@ -252,7 +253,7 @@ static void init_d3d11_resource_readback(ID3D11Resource *resource, ID3D11Resourc
 
     ID3D11DeviceContext_CopyResource(rb->immediate_context, rb->resource, resource);
     if (FAILED(hr = ID3D11DeviceContext_Map(rb->immediate_context,
-            rb->resource, sub_resource_idx, D3D11_MAP_READ, 0, &rb->map_desc)))
+            rb->resource, sub_resource_idx, D3D11_MAP_READ_WRITE, 0, &rb->map_desc)))
     {
         trace("Failed to map resource, hr %#lx.\n", hr);
         ID3D11Resource_Release(rb->resource);
@@ -278,7 +279,7 @@ static void get_d3d11_texture2d_readback(ID3D11Texture2D *texture, unsigned int 
     ID3D11Texture2D_GetDesc(texture, &texture_desc);
     texture_desc.Usage = D3D11_USAGE_STAGING;
     texture_desc.BindFlags = 0;
-    texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+    texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
     texture_desc.MiscFlags = 0;
     if (FAILED(hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, (ID3D11Texture2D **)&rb_texture)))
     {
@@ -296,9 +297,15 @@ static void get_d3d11_texture2d_readback(ID3D11Texture2D *texture, unsigned int 
     ID3D11Device_Release(device);
 }
 
-static void release_d3d11_resource_readback(struct d3d11_resource_readback *rb)
+static void release_d3d11_resource_readback(struct d3d11_resource_readback *rb, BOOL upload)
 {
     ID3D11DeviceContext_Unmap(rb->immediate_context, rb->resource, rb->sub_resource_idx);
+
+    if (upload)
+    {
+        ID3D11DeviceContext_CopyResource(rb->immediate_context, rb->orig_resource, rb->resource);
+    }
+
     ID3D11Resource_Release(rb->resource);
     ID3D11DeviceContext_Release(rb->immediate_context);
 }
@@ -326,9 +333,30 @@ static DWORD get_d3d11_texture_color(ID3D11Texture2D *texture, unsigned int x, u
 
     get_d3d11_texture2d_readback(texture, 0, &rb);
     color = get_d3d11_readback_color(&rb, x, y, 0);
-    release_d3d11_resource_readback(&rb);
+    release_d3d11_resource_readback(&rb, FALSE);
 
     return color;
+}
+
+static void put_d3d11_readback_u32(struct d3d11_resource_readback *rb,
+        unsigned int x, unsigned int y, unsigned int z, DWORD color)
+{
+    *(DWORD *)get_d3d11_readback_data(rb, x, y, z, sizeof(DWORD)) = color;
+}
+
+static void put_d3d11_readback_color(struct d3d11_resource_readback *rb,
+        unsigned int x, unsigned int y, unsigned int z, DWORD color)
+{
+    put_d3d11_readback_u32(rb, x, y, z, color);
+}
+
+static void put_d3d11_texture_color(ID3D11Texture2D *texture, unsigned int x, unsigned int y, DWORD color)
+{
+    struct d3d11_resource_readback rb;
+
+    get_d3d11_texture2d_readback(texture, 0, &rb);
+    put_d3d11_readback_color(&rb, x, y, 0, color);
+    release_d3d11_resource_readback(&rb, TRUE);
 }
 
 static HRESULT (WINAPI *pD3D11CreateDevice)(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type, HMODULE swrast, UINT flags,
@@ -7229,6 +7257,7 @@ static void test_d3d11_surface_buffer(void)
     DWORD max_length, cur_length, length, color;
     IMFDXGIBuffer *dxgi_buffer;
     D3D11_TEXTURE2D_DESC desc;
+    IMF2DBuffer2 *_2dbuffer2;
     ID3D11Texture2D *texture;
     IMF2DBuffer *_2d_buffer;
     IMFMediaBuffer *buffer;
@@ -7408,6 +7437,116 @@ static void test_d3d11_surface_buffer(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IMF2DBuffer_Release(_2d_buffer);
+
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer2, (void **)&_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Lock flags are honored, so reads and writes are discarded if
+     * the flags are not correct. */
+    put_d3d11_texture_color(texture, 0, 0, 0xcdcdcdcd);
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Read, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(data == data2, "Unexpected scanline pointer.\n");
+    ok(*(DWORD *)data == 0xcdcdcdcd, "Unexpected leading dword %#lx.\n", *(DWORD *)data);
+    memset(data, 0xab, 4);
+    IMF2DBuffer2_Unlock2D(_2dbuffer2);
+
+    color = get_d3d11_texture_color(texture, 0, 0);
+    todo_wine
+    ok(color == 0xcdcdcdcd, "Unexpected leading dword %#lx.\n", color);
+    put_d3d11_texture_color(texture, 0, 0, 0xefefefef);
+
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Write, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(*(DWORD *)data != 0xefefefef, "Unexpected leading dword.\n");
+    memset(data, 0x89, 4);
+    IMF2DBuffer2_Unlock2D(_2dbuffer2);
+
+    color = get_d3d11_texture_color(texture, 0, 0);
+    ok(color == 0x89898989, "Unexpected leading dword %#lx.\n", color);
+
+    /* When relocking for writing, stores are committed even if they
+     * were issued before relocking. */
+    put_d3d11_texture_color(texture, 0, 0, 0xcdcdcdcd);
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Read, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    memset(data, 0xab, 4);
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Write, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMF2DBuffer2_Unlock2D(_2dbuffer2);
+    IMF2DBuffer2_Unlock2D(_2dbuffer2);
+
+    color = get_d3d11_texture_color(texture, 0, 0);
+    ok(color == 0xabababab, "Unexpected leading dword %#lx.\n", color);
+
+    /* Flags incompatibilities. */
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_ReadWrite, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_ReadWrite, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Read, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Write, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer_Lock2D(_2d_buffer, &data, &pitch);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Read, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Read, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_ReadWrite, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Write, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer_Lock2D(_2d_buffer, &data, &pitch);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Except when originally locking for writing. */
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Write, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Write, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_ReadWrite, &data, &pitch, &data2, &length);
+    todo_wine
+    ok(hr == HRESULT_FROM_WIN32(ERROR_WAS_LOCKED), "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Read, &data, &pitch, &data2, &length);
+    todo_wine
+    ok(hr == HRESULT_FROM_WIN32(ERROR_WAS_LOCKED), "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer_Lock2D(_2d_buffer, &data, &pitch);
+    todo_wine
+    ok(hr == HRESULT_FROM_WIN32(ERROR_WAS_LOCKED), "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
+    todo_wine
+    ok(hr == HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED), "Unexpected hr %#lx.\n", hr);
+
+    IMF2DBuffer2_Release(_2dbuffer2);
     IMFMediaBuffer_Release(buffer);
 
     /* Bottom up. */
