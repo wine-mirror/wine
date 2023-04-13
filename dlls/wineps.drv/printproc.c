@@ -1580,6 +1580,9 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
                 p->Ver + p->nVer, p->nTri, p->ulMode);
     }
 
+    case EMR_ALPHABLEND:
+        break;
+
     case EMR_SETWINDOWEXTEX:
     case EMR_SETWINDOWORGEX:
     case EMR_SETVIEWPORTEXTEX:
