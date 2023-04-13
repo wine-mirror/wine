@@ -173,6 +173,111 @@ static inline void get_bounding_rect(RECT *rect, int x, int y, int width, int he
     }
 }
 
+static inline void order_rect(RECT *rect)
+{
+    if (rect->left > rect->right)
+    {
+        int tmp = rect->left;
+        rect->left = rect->right;
+        rect->right = tmp;
+    }
+    if (rect->top > rect->bottom)
+    {
+        int tmp = rect->top;
+        rect->top = rect->bottom;
+        rect->bottom = tmp;
+    }
+}
+
+static BOOL intersect_vis_rectangles(struct bitblt_coords *dst, struct bitblt_coords *src)
+{
+    RECT rect;
+
+    /* intersect the rectangles */
+
+    if ((src->width == dst->width) && (src->height == dst->height)) /* no stretching */
+    {
+        OffsetRect(&src->visrect, dst->x - src->x, dst->y - src->y);
+        if (!IntersectRect(&rect, &src->visrect, &dst->visrect)) return FALSE;
+        src->visrect = dst->visrect = rect;
+        OffsetRect(&src->visrect, src->x - dst->x, src->y - dst->y);
+    }
+    else  /* stretching */
+    {
+        /* map source rectangle into destination coordinates */
+        rect = src->visrect;
+        OffsetRect(&rect,
+                    -src->x - (src->width < 0 ? 1 : 0),
+                    -src->y - (src->height < 0 ? 1 : 0));
+        rect.left   = rect.left * dst->width / src->width;
+        rect.top    = rect.top * dst->height / src->height;
+        rect.right  = rect.right * dst->width / src->width;
+        rect.bottom = rect.bottom * dst->height / src->height;
+        order_rect(&rect);
+
+        /* when the source rectangle needs to flip and it doesn't fit in the source device
+           area, the destination area isn't flipped. So, adjust destination coordinates */
+        if (src->width < 0 && dst->width > 0 &&
+            (src->x + src->width + 1 < src->visrect.left || src->x > src->visrect.right))
+            dst->x += (dst->width - rect.right) - rect.left;
+        else if (src->width > 0 && dst->width < 0 &&
+                 (src->x < src->visrect.left || src->x + src->width > src->visrect.right))
+            dst->x -= rect.right - (dst->width - rect.left);
+
+        if (src->height < 0 && dst->height > 0 &&
+            (src->y + src->height + 1 < src->visrect.top || src->y > src->visrect.bottom))
+            dst->y += (dst->height - rect.bottom) - rect.top;
+        else if (src->height > 0 && dst->height < 0 &&
+                 (src->y < src->visrect.top || src->y + src->height > src->visrect.bottom))
+            dst->y -= rect.bottom - (dst->height - rect.top);
+
+        OffsetRect(&rect, dst->x, dst->y);
+
+        /* avoid rounding errors */
+        rect.left--;
+        rect.top--;
+        rect.right++;
+        rect.bottom++;
+        if (!IntersectRect(&dst->visrect, &rect, &dst->visrect)) return FALSE;
+
+        /* map destination rectangle back to source coordinates */
+        rect = dst->visrect;
+        OffsetRect(&rect,
+                    -dst->x - (dst->width < 0 ? 1 : 0),
+                    -dst->y - (dst->height < 0 ? 1 : 0));
+        rect.left   = src->x + rect.left * src->width / dst->width;
+        rect.top    = src->y + rect.top * src->height / dst->height;
+        rect.right  = src->x + rect.right * src->width / dst->width;
+        rect.bottom = src->y + rect.bottom * src->height / dst->height;
+        order_rect(&rect);
+
+        /* avoid rounding errors */
+        rect.left--;
+        rect.top--;
+        rect.right++;
+        rect.bottom++;
+        if (!IntersectRect(&src->visrect, &rect, &src->visrect)) return FALSE;
+    }
+    return TRUE;
+}
+
+static void clip_visrect(HDC hdc, RECT *dst, const RECT *src)
+{
+    HRGN hrgn;
+
+    hrgn = CreateRectRgn(0, 0, 0, 0);
+    if (GetRandomRgn(hdc, hrgn, 3) == 1)
+    {
+        GetRgnBox(hrgn, dst);
+        IntersectRect(dst, dst, src);
+    }
+    else
+    {
+        *dst = *src;
+    }
+    DeleteObject(hrgn);
+}
+
 static void get_vis_rectangles(HDC hdc, struct bitblt_coords *dst,
         const XFORM *xform, DWORD width, DWORD height, struct bitblt_coords *src)
 {
@@ -193,7 +298,7 @@ static void get_vis_rectangles(HDC hdc, struct bitblt_coords *dst,
         dst->width = -dst->width;
     }
     get_bounding_rect(&rect, dst->x, dst->y, dst->width, dst->height);
-    dst->visrect = rect;
+    clip_visrect(hdc, &dst->visrect, &rect);
 
     if (!src) return;
 
@@ -206,8 +311,10 @@ static void get_vis_rectangles(HDC hdc, struct bitblt_coords *dst,
     src->y      = rect.top;
     src->width  = rect.right - rect.left;
     src->height = rect.bottom - rect.top;
-    get_bounding_rect( &rect, src->x, src->y, src->width, src->height );
+    get_bounding_rect(&rect, src->x, src->y, src->width, src->height);
     src->visrect = rect;
+
+    intersect_vis_rectangles(dst, src);
 }
 
 static int stretch_blt(PHYSDEV dev, const EMRSTRETCHBLT *blt,
