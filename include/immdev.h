@@ -134,6 +134,13 @@ DWORD  WINAPI ImmGetIMCCSize(HIMCC);
 #define IMMGWL_IMC                      0
 #define IMMGWL_PRIVATE                  (sizeof(LONG_PTR))
 
+#define INIT_STATUSWNDPOS               0x00000001
+#define INIT_CONVERSION                 0x00000002
+#define INIT_SENTENCE                   0x00000004
+#define INIT_LOGFONT                    0x00000008
+#define INIT_COMPFORM                   0x00000010
+#define INIT_SOFTKBDPOS                 0x00000020
+
 /* IME Property bits */
 #define IME_PROP_END_UNLOAD             0x0001
 #define IME_PROP_KBD_CHAR_FIRST         0x0002
