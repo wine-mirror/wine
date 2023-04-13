@@ -1350,9 +1350,9 @@ static BOOL test_enum_svc(int attempt)
         goto retry; /* service stop race condition */
     }
     ok(!ret, "Expected failure\n");
-    ok(needed != 0xdeadbeef && needed > 0, "Expected the needed buffer size for the missing services\n");
-    todo_wine ok(needed < tempneeded, "Expected a smaller needed buffer size for the missing services\n");
-    ok(returned < tempreturned, "Expected fewer services to be returned\n");
+    ok(needed != 0xdeadbeef && needed > 0, "Expected the needed buffer size for the missing services, got %lx\n", needed);
+    todo_wine ok(needed < tempneeded, "Expected < %lu bytes needed for the remaining services, got %lu\n", tempneeded, needed);
+    ok(returned < tempreturned, "Expected < %lu remaining services, got %lu\n", tempreturned, returned);
     todo_wine ok(resume, "Expected a resume handle\n");
     ok(GetLastError() == ERROR_MORE_DATA,
        "Expected ERROR_MORE_DATA, got %ld\n", GetLastError());
@@ -1369,8 +1369,8 @@ static BOOL test_enum_svc(int attempt)
     if (!ret && GetLastError() == ERROR_MORE_DATA && attempt)
         goto retry; /* service start race condition */
     ok(ret, "Expected success, got error %lu\n", GetLastError());
-    ok(needed == 0, "Expected needed buffer to be 0 as we are done\n");
-    todo_wine ok(returned == missing, "Expected %lu services to be returned\n", missing);
+    ok(needed == 0, "Expected 0 needed bytes as we are done, got %lu\n", needed);
+    todo_wine ok(returned == missing, "Expected %lu remaining services, got %lu\n", missing, returned);
     ok(resume == 0, "Expected the resume handle to be 0\n");
 
     /* See if things add up */
