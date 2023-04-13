@@ -1550,6 +1550,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     case EMR_SETARCDIRECTION:
     case EMR_CLOSEFIGURE:
     case EMR_FLATTENPATH:
+    case EMR_WIDENPATH:
     case EMR_SELECTCLIPPATH:
     case EMR_EXTSELECTCLIPRGN:
         return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n);
