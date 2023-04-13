@@ -1590,6 +1590,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     case EMR_SETVIEWPORTORGEX:
     case EMR_SETBRUSHORGEX:
     case EMR_SETMAPPERFLAGS:
+    case EMR_SETMAPMODE:
     case EMR_SETROP2:
     case EMR_SETSTRETCHBLTMODE:
     case EMR_SETTEXTALIGN:
