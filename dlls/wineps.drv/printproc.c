@@ -1235,6 +1235,8 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         data->path = FALSE;
         return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n);
     }
+    case EMR_FILLPATH:
+        return PSDRV_FillPath(&data->pdev->dev);
     case EMR_ABORTPATH:
     {
         data->path = FALSE;
