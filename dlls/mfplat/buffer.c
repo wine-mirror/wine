@@ -56,6 +56,7 @@ struct buffer
         unsigned int height;
         int pitch;
         unsigned int locks;
+        MF2DBuffer_LockFlags lock_flags;
         p_copy_image_func copy_image;
     } _2d;
     struct
@@ -663,12 +664,14 @@ static HRESULT d3d9_surface_buffer_lock(struct buffer *buffer, MF2DBuffer_LockFl
     if (buffer->_2d.linear_buffer)
         hr = MF_E_UNEXPECTED;
     else if (!buffer->_2d.locks)
-    {
         hr = IDirect3DSurface9_LockRect(buffer->d3d9_surface.surface, &buffer->d3d9_surface.rect, NULL, 0);
-    }
+    else if (buffer->_2d.lock_flags == MF2DBuffer_LockFlags_Write && flags != MF2DBuffer_LockFlags_Write)
+        hr = HRESULT_FROM_WIN32(ERROR_WAS_LOCKED);
 
     if (SUCCEEDED(hr))
     {
+        if (!buffer->_2d.locks)
+            buffer->_2d.lock_flags = flags;
         buffer->_2d.locks++;
         *scanline0 = buffer->d3d9_surface.rect.pBits;
         *pitch = buffer->d3d9_surface.rect.Pitch;
@@ -715,6 +718,7 @@ static HRESULT WINAPI d3d9_surface_buffer_Unlock2D(IMF2DBuffer2 *iface)
         {
             IDirect3DSurface9_UnlockRect(buffer->d3d9_surface.surface);
             memset(&buffer->d3d9_surface.rect, 0, sizeof(buffer->d3d9_surface.rect));
+            buffer->_2d.lock_flags = 0;
         }
     }
     else
