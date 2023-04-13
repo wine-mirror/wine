@@ -1094,6 +1094,14 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         return PSDRV_SetPixel(&data->pdev->dev, p->ptlPixel.x,
                 p->ptlPixel.y, p->crColor);
     }
+    case EMR_SETTEXTCOLOR:
+    {
+        const EMRSETTEXTCOLOR *p = (const EMRSETTEXTCOLOR *)rec;
+
+        SetTextColor(data->pdev->dev.hdc, p->crColor);
+        PSDRV_SetTextColor(&data->pdev->dev, p->crColor);
+        return 1;
+    }
     case EMR_SELECTOBJECT:
     {
         const EMRSELECTOBJECT *so = (const EMRSELECTOBJECT *)rec;
