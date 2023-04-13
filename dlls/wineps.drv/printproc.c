@@ -1592,6 +1592,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     case EMR_SETMAPPERFLAGS:
     case EMR_SETMAPMODE:
     case EMR_SETBKMODE:
+    case EMR_SETPOLYFILLMODE:
     case EMR_SETROP2:
     case EMR_SETSTRETCHBLTMODE:
     case EMR_SETTEXTALIGN:
