@@ -49,6 +49,11 @@ static BOOL (WINAPI *pInternetGetCookieExW)(LPCWSTR,LPCWSTR,LPWSTR,LPDWORD,DWORD
 static BOOL (WINAPI *pInternetGetConnectedStateExA)(LPDWORD,LPSTR,DWORD,DWORD);
 static BOOL (WINAPI *pInternetGetConnectedStateExW)(LPDWORD,LPWSTR,DWORD,DWORD);
 
+#ifndef ERROR_WINHTTP_AUTODETECTION_FAILED
+#define ERROR_WINHTTP_AUTODETECTION_FAILED 12180
+#endif
+
+
 /* ############################### */
 
 static void test_InternetCanonicalizeUrlA(void)
@@ -163,17 +168,39 @@ static void test_InternetQueryOptionA(void)
 {
   HINTERNET hinet,hurl;
   DWORD len, val;
+  INTERNET_PROXY_INFOA *pi;
   DWORD err;
   static const char useragent[] = {"Wininet Test"};
+  char proxy[256];
   char *buffer;
-  int retval;
-  BOOL res;
+  BOOL retval, res;
+
+  SetLastError(0xdeadfeed);
+  memset(proxy, 0, sizeof(proxy));
+  res = DetectAutoProxyUrl(proxy, sizeof(proxy), PROXY_AUTO_DETECT_TYPE_DHCP);
+  todo_wine ok((res && proxy[0]) ||
+     (!res && GetLastError() == ERROR_WINHTTP_AUTODETECTION_FAILED && !proxy[0]),
+     "unexpected DHCP proxy result: %d gle %lu proxy %s\n", res, GetLastError(), proxy);
+
+  SetLastError(0xdeadfeed);
+  memset(proxy, 0, sizeof(proxy));
+  res = DetectAutoProxyUrl(proxy, sizeof(proxy), PROXY_AUTO_DETECT_TYPE_DNS_A);
+  todo_wine ok((res && proxy[0]) ||
+     (!res && GetLastError() == ERROR_WINHTTP_AUTODETECTION_FAILED && !proxy[0]) ||
+     broken(!res && GetLastError() == ERROR_NOT_FOUND && !proxy[0]),
+     "unexpected DNS proxy result: %d gle %lu proxy %s\n", res, GetLastError(), proxy);
 
   SetLastError(0xdeadbeef);
   len = 0xdeadbeef;
   retval = InternetQueryOptionA(NULL, INTERNET_OPTION_PROXY, NULL, &len);
   ok(!retval && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got wrong error %x(%lu)\n", retval, GetLastError());
   ok(len >= sizeof(INTERNET_PROXY_INFOA) && len != 0xdeadbeef,"len = %lu\n", len);
+
+  pi = HeapAlloc(GetProcessHeap(), 0, len);
+  retval = InternetQueryOptionA(NULL, INTERNET_OPTION_PROXY, pi, &len);
+  ok(retval, "Failed (%lu)\n", GetLastError());
+  ok(len >= sizeof(INTERNET_PROXY_INFOA) && len != 0xdeadbeef, "len = %lu\n", len);
+  HeapFree(GetProcessHeap(), 0, pi);
 
   hinet = InternetOpenA(useragent,INTERNET_OPEN_TYPE_DIRECT,NULL,NULL, 0);
   ok((hinet != 0x0),"InternetOpen Failed\n");
