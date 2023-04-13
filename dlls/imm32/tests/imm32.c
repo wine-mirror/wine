@@ -182,8 +182,8 @@ static void check_composition_form_( int line, COMPOSITIONFORM *form, const COMP
     check_member_rect_( __FILE__, line, *form, *expect, rcArea );
 }
 
-#define check_logfont_w( a, b ) check_logfont_w_( __LINE__, a, b, FALSE )
-static void check_logfont_w_( int line, LOGFONTW *font, const LOGFONTW *expect, BOOL todo )
+#define check_logfont_w( a, b ) check_logfont_w_( __LINE__, a, b )
+static void check_logfont_w_( int line, LOGFONTW *font, const LOGFONTW *expect )
 {
     check_member_( __FILE__, line, *font, *expect, "%lu", lfHeight );
     check_member_( __FILE__, line, *font, *expect, "%lu", lfWidth );
@@ -198,11 +198,11 @@ static void check_logfont_w_( int line, LOGFONTW *font, const LOGFONTW *expect, 
     check_member_( __FILE__, line, *font, *expect, "%u", lfClipPrecision );
     check_member_( __FILE__, line, *font, *expect, "%u", lfQuality );
     check_member_( __FILE__, line, *font, *expect, "%u", lfPitchAndFamily );
-    todo_wine_if(todo) check_member_wstr_( __FILE__, line, *font, *expect, lfFaceName );
+    check_member_wstr_( __FILE__, line, *font, *expect, lfFaceName );
 }
 
-#define check_logfont_a( a, b ) check_logfont_a_( __LINE__, a, b, FALSE )
-static void check_logfont_a_( int line, LOGFONTA *font, const LOGFONTA *expect, BOOL todo )
+#define check_logfont_a( a, b ) check_logfont_a_( __LINE__, a, b )
+static void check_logfont_a_( int line, LOGFONTA *font, const LOGFONTA *expect )
 {
     check_member_( __FILE__, line, *font, *expect, "%lu", lfHeight );
     check_member_( __FILE__, line, *font, *expect, "%lu", lfWidth );
@@ -217,7 +217,7 @@ static void check_logfont_a_( int line, LOGFONTA *font, const LOGFONTA *expect, 
     check_member_( __FILE__, line, *font, *expect, "%u", lfClipPrecision );
     check_member_( __FILE__, line, *font, *expect, "%u", lfQuality );
     check_member_( __FILE__, line, *font, *expect, "%u", lfPitchAndFamily );
-    todo_wine_if(todo) check_member_str_( __FILE__, line, *font, *expect, lfFaceName );
+    check_member_str_( __FILE__, line, *font, *expect, lfFaceName );
 }
 
 #define DEFINE_EXPECT(func) \
@@ -6357,13 +6357,13 @@ static void test_ImmSetCompositionFont( BOOL unicode )
     if (unicode) ctx->lfFont.W = expect_fontW;
     else ctx->lfFont.A = expect_fontA;
     ctx->fdwInit = ~INIT_LOGFONT;
-    todo_wine ok_ret( 0, ImmGetCompositionFontW( himc, &fontW ) );
-    todo_wine ok_ret( 0, ImmGetCompositionFontA( himc, &fontA ) );
+    ok_ret( 0, ImmGetCompositionFontW( himc, &fontW ) );
+    ok_ret( 0, ImmGetCompositionFontA( himc, &fontA ) );
     ctx->fdwInit = INIT_LOGFONT;
     ok_ret( 1, ImmGetCompositionFontW( himc, &fontW ) );
-    check_logfont_w_( __LINE__, &fontW, &expect_fontW, !unicode );
+    check_logfont_w( &fontW, &expect_fontW );
     ok_ret( 1, ImmGetCompositionFontA( himc, &fontA ) );
-    check_logfont_a_( __LINE__, &fontA, &expect_fontA, !unicode );
+    check_logfont_a( &fontA, &expect_fontA );
 
     ctx->hWnd = hwnd;
     ctx->fdwInit = 0;
@@ -6377,9 +6377,9 @@ static void test_ImmSetCompositionFont( BOOL unicode )
     else check_logfont_a( &ctx->lfFont.A, &expect_fontA );
 
     ok_ret( 1, ImmGetCompositionFontW( himc, &fontW ) );
-    check_logfont_w_( __LINE__, &fontW, &expect_fontW, !unicode );
+    check_logfont_w( &fontW, &expect_fontW );
     ok_ret( 1, ImmGetCompositionFontA( himc, &fontA ) );
-    check_logfont_a_( __LINE__, &fontA, &expect_fontA, !unicode );
+    check_logfont_a( &fontA, &expect_fontA );
 
     ctx->hWnd = hwnd;
     ctx->fdwInit = 0;
@@ -6393,9 +6393,9 @@ static void test_ImmSetCompositionFont( BOOL unicode )
     else check_logfont_a( &ctx->lfFont.A, &expect_fontA );
 
     ok_ret( 1, ImmGetCompositionFontW( himc, &fontW ) );
-    check_logfont_w_( __LINE__, &fontW, &expect_fontW, !unicode );
+    check_logfont_w( &fontW, &expect_fontW );
     ok_ret( 1, ImmGetCompositionFontA( himc, &fontA ) );
-    check_logfont_a_( __LINE__, &fontA, &expect_fontA, !unicode );
+    check_logfont_a( &fontA, &expect_fontA );
 
     ctx->hWnd = 0;
     ok_ret( 1, ImmSetCompositionFontW( himc, &expect_fontW ) );

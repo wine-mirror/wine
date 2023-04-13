@@ -1413,38 +1413,53 @@ BOOL WINAPI ImmGetCandidateWindow(
 /***********************************************************************
  *		ImmGetCompositionFontA (IMM32.@)
  */
-BOOL WINAPI ImmGetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
+BOOL WINAPI ImmGetCompositionFontA( HIMC himc, LOGFONTA *fontA )
 {
-    LOGFONTW lfW;
-    BOOL rc;
+    INPUTCONTEXT *ctx;
+    LOGFONTW fontW;
+    BOOL ret = TRUE;
 
-    TRACE("(%p, %p):\n", hIMC, lplf);
+    TRACE( "himc %p, fontA %p\n", himc, fontA );
 
-    rc = ImmGetCompositionFontW(hIMC,&lfW);
-    if (!rc || !lplf)
-        return FALSE;
+    if (!fontA) return FALSE;
 
-    memcpy(lplf,&lfW,sizeof(LOGFONTA));
-    WideCharToMultiByte(CP_ACP, 0, lfW.lfFaceName, -1, lplf->lfFaceName,
-                        LF_FACESIZE, NULL, NULL);
-    return TRUE;
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
+    if (!(ctx->fdwInit & INIT_LOGFONT)) ret = FALSE;
+    else if (!input_context_is_unicode( ctx )) *fontA = ctx->lfFont.A;
+    else if ((ret = ImmGetCompositionFontW( himc, &fontW )))
+    {
+        memcpy( fontA, &fontW, offsetof(LOGFONTA, lfFaceName) );
+        WideCharToMultiByte( CP_ACP, 0, fontW.lfFaceName, -1, fontA->lfFaceName, LF_FACESIZE, NULL, NULL );
+    }
+    ImmUnlockIMC( himc );
+
+    return ret;
 }
 
 /***********************************************************************
  *		ImmGetCompositionFontW (IMM32.@)
  */
-BOOL WINAPI ImmGetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
+BOOL WINAPI ImmGetCompositionFontW( HIMC himc, LOGFONTW *fontW )
 {
-    struct imc *data = get_imc_data( hIMC );
+    INPUTCONTEXT *ctx;
+    LOGFONTA fontA;
+    BOOL ret = TRUE;
 
-    TRACE("(%p, %p):\n", hIMC, lplf);
+    TRACE( "himc %p, fontW %p\n", himc, fontW );
 
-    if (!data || !lplf)
-        return FALSE;
+    if (!fontW) return FALSE;
 
-    *lplf = data->IMC.lfFont.W;
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
+    if (!(ctx->fdwInit & INIT_LOGFONT)) ret = FALSE;
+    else if (input_context_is_unicode( ctx )) *fontW = ctx->lfFont.W;
+    else if ((ret = ImmGetCompositionFontA( himc, &fontA )))
+    {
+        memcpy( fontW, &fontA, offsetof(LOGFONTW, lfFaceName) );
+        MultiByteToWideChar( CP_ACP, 0, fontA.lfFaceName, -1, fontW->lfFaceName, LF_FACESIZE );
+    }
+    ImmUnlockIMC( himc );
 
-    return TRUE;
+    return ret;
 }
 
 
