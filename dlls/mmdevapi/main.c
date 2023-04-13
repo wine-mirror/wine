@@ -42,7 +42,7 @@
 #include "winreg.h"
 #include "spatialaudioclient.h"
 
-#include "mmdevapi.h"
+#include "mmdevapi_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);

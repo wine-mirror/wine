@@ -35,7 +35,7 @@
 #include "audiopolicy.h"
 #include "spatialaudioclient.h"
 
-#include "mmdevapi.h"
+#include "mmdevapi_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 
