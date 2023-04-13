@@ -440,7 +440,7 @@ COLORREF CDECL PSDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
     /* we bracket the setcolor in gsave/grestore so that we don't trash
        the current pen colour */
     PSDRV_WriteGSave(dev);
-    PSDRV_WriteRectangle( dev, pt.x, pt.y, 0, 0 );
+    PSDRV_WriteRectangle( dev, pt.x, pt.y, 1, 1 );
     PSDRV_CreateColor( dev, &pscolor, color );
     PSDRV_WriteSetColor( dev, &pscolor );
     PSDRV_WriteFill( dev );
