@@ -1454,8 +1454,8 @@ static void test_find_activatable_class(HANDLE handle, const WCHAR *classid, enu
     ok_(__FILE__, line)(data.lpData != NULL, "got lpData %p\n", data.lpData);
 
     header = (struct strsection_header *)data.lpSectionBase;
-    ok_(__FILE__, line)(header->magic == 0x64487353, "got wrong magic 0x%08lx\n", header->magic);
     ok_(__FILE__, line)(data.lpSectionBase != NULL, "got lpSectionBase %p\n", data.lpSectionBase);
+    ok_(__FILE__, line)(header->magic == 0x64487353, "got wrong magic 0x%08lx\n", header->magic);
     ok_(__FILE__, line)(data.ulSectionTotalLength > 0, "got ulSectionTotalLength %lu\n", data.ulSectionTotalLength);
     ok_(__FILE__, line)(data.lpSectionGlobalData == (BYTE *)header + header->global_offset,
                         "got lpSectionGlobalData %p\n", data.lpSectionGlobalData);
@@ -1706,10 +1706,10 @@ static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GU
     }
 
     header = (struct guidsection_header*)data.lpSectionBase;
+    ok_(__FILE__, line)(data.lpSectionBase != NULL, "data.lpSectionBase == NULL\n");
     ok_(__FILE__, line)(data.lpSectionGlobalData == ((BYTE*)header + header->names_offset), "data.lpSectionGlobalData == NULL\n");
     ok_(__FILE__, line)(data.ulSectionGlobalDataLength == header->names_len, "data.ulSectionGlobalDataLength=%lu\n",
        data.ulSectionGlobalDataLength);
-    ok_(__FILE__, line)(data.lpSectionBase != NULL, "data.lpSectionBase == NULL\n");
     ok_(__FILE__, line)(data.ulSectionTotalLength > 0, "data.ulSectionTotalLength=%lu\n",
        data.ulSectionTotalLength);
     ok_(__FILE__, line)(data.hActCtx == NULL, "data.hActCtx=%p\n", data.hActCtx);
@@ -1914,9 +1914,9 @@ static void test_find_progid_redirection(HANDLE handle, const GUID *clsid, const
     }
 
     header = (struct strsection_header*)data.lpSectionBase;
+    ok_(__FILE__, line)(data.lpSectionBase != NULL, "data.lpSectionBase == NULL\n");
     ok_(__FILE__, line)(data.lpSectionGlobalData == (BYTE*)header + header->global_offset, "data.lpSectionGlobalData == NULL\n");
     ok_(__FILE__, line)(data.ulSectionGlobalDataLength == header->global_len, "data.ulSectionGlobalDataLength=%lu\n", data.ulSectionGlobalDataLength);
-    ok_(__FILE__, line)(data.lpSectionBase != NULL, "data.lpSectionBase == NULL\n");
     ok_(__FILE__, line)(data.ulSectionTotalLength > 0, "data.ulSectionTotalLength=%lu\n", data.ulSectionTotalLength);
     ok_(__FILE__, line)(data.hActCtx == NULL, "data.hActCtx=%p\n", data.hActCtx);
     ok_(__FILE__, line)(data.ulAssemblyRosterIndex == exid, "data.ulAssemblyRosterIndex=%lu, expected %lu\n",
