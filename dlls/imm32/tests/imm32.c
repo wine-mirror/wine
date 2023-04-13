@@ -168,6 +168,14 @@ static void check_candidate_form_( int line, CANDIDATEFORM *form, const CANDIDAT
     check_member_rect_( __FILE__, line, *form, *expect, rcArea );
 }
 
+#define check_composition_form( a, b ) check_composition_form_( __LINE__, a, b )
+static void check_composition_form_( int line, COMPOSITIONFORM *form, const COMPOSITIONFORM *expect )
+{
+    check_member_( __FILE__, line, *form, *expect, "%#lx", dwStyle );
+    check_member_point_( __FILE__, line, *form, *expect, ptCurrentPos );
+    check_member_rect_( __FILE__, line, *form, *expect, rcArea );
+}
+
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE, enabled_ ## func = FALSE
 
@@ -6007,6 +6015,110 @@ cleanup:
     SET_ENABLE( ImeSetCompositionString, FALSE );
 }
 
+static void test_ImmSetCompositionWindow(void)
+{
+    struct ime_call set_composition_window_0_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/,
+            .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETCOMPOSITIONWINDOW},
+            .todo = TRUE
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_TEST_WIN, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETCOMPOSITIONWINDOW},
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETCOMPOSITIONWINDOW},
+        },
+        {0},
+    };
+    struct ime_call set_composition_window_1_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/,
+            .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETCOMPOSITIONWINDOW},
+            .todo = TRUE
+        },
+        {.todo = TRUE},
+    };
+    COMPOSITIONFORM comp_form, expect_form =
+    {
+        .dwStyle = 0xfeedcafe,
+        .ptCurrentPos = {.x = 123, .y = 456},
+        .rcArea = {.left = 1, .top = 2, .right = 3, .bottom = 4},
+    };
+    INPUTCONTEXT *ctx;
+    HIMC himc;
+    HKL hkl;
+
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
+
+    if (!(hkl = wineime_hkl)) return;
+
+    hwnd = CreateWindowW( test_class.lpszClassName, NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    ok_ret( 1, ImmLoadIME( hkl ) );
+    himc = ImmCreateContext();
+    ok_ne( NULL, himc, HIMC, "%p" );
+    ctx = ImmLockIMC( himc );
+    ok_ne( NULL, ctx, INPUTCONTEXT *, "%p" );
+    process_messages();
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+    set_composition_window_0_seq[0].himc = himc;
+    set_composition_window_1_seq[0].himc = himc;
+
+    ctx->cfCompForm = expect_form;
+    ctx->fdwInit = ~INIT_COMPFORM;
+    memset( &comp_form, 0xcd, sizeof(comp_form) );
+    todo_wine ok_ret( 0, ImmGetCompositionWindow( himc, &comp_form ) );
+    todo_wine ok_eq( 0xcdcdcdcd, comp_form.dwStyle, UINT, "%#x" );
+    ctx->fdwInit = INIT_COMPFORM;
+    ok_ret( 1, ImmGetCompositionWindow( himc, &comp_form ) );
+    check_composition_form( &comp_form, &expect_form );
+    ok_seq( empty_sequence );
+
+    ctx->hWnd = hwnd;
+    ctx->fdwInit = 0;
+    memset( &comp_form, 0xcd, sizeof(comp_form) );
+    ok_ret( 1, ImmSetCompositionWindow( himc, &comp_form ) );
+    ok_seq( set_composition_window_0_seq );
+    todo_wine ok_eq( INIT_COMPFORM, ctx->fdwInit, UINT, "%u" );
+    check_composition_form( &ctx->cfCompForm, &comp_form );
+
+    ok_ret( 1, ImmSetCompositionWindow( himc, &expect_form ) );
+    ok_seq( set_composition_window_0_seq );
+    check_composition_form( &ctx->cfCompForm, &expect_form );
+
+    ctx->cfCompForm = expect_form;
+    ok_ret( 1, ImmGetCompositionWindow( himc, &comp_form ) );
+    check_composition_form( &comp_form, &expect_form );
+    ok_seq( empty_sequence );
+
+    ctx->hWnd = 0;
+    memset( &comp_form, 0xcd, sizeof(comp_form) );
+    ok_ret( 1, ImmSetCompositionWindow( himc, &comp_form ) );
+    ok_seq( set_composition_window_1_seq );
+    check_composition_form( &ctx->cfCompForm, &comp_form );
+
+    ok_ret( 1, ImmUnlockIMC( himc ) );
+    ok_ret( 1, ImmDestroyContext( himc ) );
+
+    ok_ret( 1, ImmActivateLayout( default_hkl ) );
+    ok_ret( 1, DestroyWindow( hwnd ) );
+    process_messages();
+
+    ok_ret( 1, ImmFreeLayout( hkl ) );
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+}
+
 START_TEST(imm32)
 {
     default_hkl = GetKeyboardLayout( 0 );
@@ -6063,6 +6175,7 @@ START_TEST(imm32)
 
     test_ImmGetCompositionString( TRUE );
     test_ImmGetCompositionString( FALSE );
+    test_ImmSetCompositionWindow();
 
     if (wineime_hkl) ime_cleanup( wineime_hkl, TRUE );
 
