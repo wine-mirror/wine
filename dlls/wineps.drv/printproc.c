@@ -43,6 +43,7 @@ struct pp_data
     PSDRV_PDEVICE *pdev;
     DWORD brush;
     struct brush_pattern *patterns;
+    BOOL path;
 };
 
 typedef enum
@@ -1182,6 +1183,11 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
 
         return poly_draw(&data->pdev->dev, pts, (BYTE *)(p->aptl + p->cptl), p->cptl) &&
             MoveToEx(data->pdev->dev.hdc, pts[p->cptl - 1].x, pts[p->cptl - 1].y, NULL);
+    }
+    case EMR_ENDPATH:
+    {
+        data->path = FALSE;
+        return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n);
     }
     case EMR_FILLRGN:
     {
