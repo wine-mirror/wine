@@ -1559,6 +1559,19 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         data->patterns[p->ihBrush].bits.ptr = (BYTE *)p + p->offBits;
         return 1;
     }
+    case EMR_EXTESCAPE:
+    {
+        const struct EMREXTESCAPE
+        {
+            EMR emr;
+            DWORD escape;
+            DWORD size;
+            BYTE data[1];
+        } *p = (const struct EMREXTESCAPE *)rec;
+
+        PSDRV_ExtEscape(&data->pdev->dev, p->escape, p->size, p->data, 0, NULL);
+        return 1;
+    }
     case EMR_GRADIENTFILL:
     {
         const EMRGRADIENTFILL *p = (const EMRGRADIENTFILL *)rec;
