@@ -41,7 +41,6 @@ struct pp_data
     WCHAR *doc_name;
     WCHAR *out_file;
     PSDRV_PDEVICE *pdev;
-    DWORD brush;
     struct brush_pattern *patterns;
     BOOL path;
 };
@@ -939,7 +938,24 @@ static HGDIOBJ get_object_handle(struct pp_data *data, HANDLETABLE *handletable,
     return handletable->objectHandle[i];
 }
 
-static BOOL fill_rgn(struct pp_data *data, HANDLETABLE *htable, DWORD brush, HRGN rgn)
+static BOOL select_hbrush(struct pp_data *data, HANDLETABLE *htable, int handle_count, HBRUSH brush)
+{
+    struct brush_pattern *pattern = NULL;
+    int i;
+
+    for (i = 0; i < handle_count; i++)
+    {
+        if (htable->objectHandle[i] == brush)
+        {
+            pattern = data->patterns + i;
+            break;
+        }
+    }
+
+    return PSDRV_SelectBrush(&data->pdev->dev, brush, pattern) != NULL;
+}
+
+static BOOL fill_rgn(struct pp_data *data, HANDLETABLE *htable, int handle_count, DWORD brush, HRGN rgn)
 {
     struct brush_pattern *pattern;
     HBRUSH hbrush;
@@ -948,7 +964,7 @@ static BOOL fill_rgn(struct pp_data *data, HANDLETABLE *htable, DWORD brush, HRG
     hbrush = get_object_handle(data, htable, brush, &pattern);
     PSDRV_SelectBrush(&data->pdev->dev, hbrush, pattern);
     ret = PSDRV_PaintRgn(&data->pdev->dev, rgn);
-    hbrush = get_object_handle(data, htable, data->brush, &pattern);
+    select_hbrush(data, htable, handle_count, GetCurrentObject(data->pdev->dev.hdc, OBJ_BRUSH));
     PSDRV_SelectBrush(&data->pdev->dev, hbrush, pattern);
     return ret;
 }
@@ -1090,13 +1106,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         switch (GetObjectType(obj))
         {
         case OBJ_PEN: return PSDRV_SelectPen(&data->pdev->dev, obj, NULL) != NULL;
-        case OBJ_BRUSH:
-            if (PSDRV_SelectBrush(&data->pdev->dev, obj, pattern))
-            {
-                data->brush = so->ihObject;
-                return 1;
-            }
-            return 0;
+        case OBJ_BRUSH: return PSDRV_SelectBrush(&data->pdev->dev, obj, pattern) != NULL;
         default:
             FIXME("unhandled object type %ld\n", GetObjectType(obj));
             return 1;
@@ -1253,7 +1263,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         int ret;
 
         rgn = ExtCreateRegion(NULL, p->cbRgnData, (const RGNDATA *)p->RgnData);
-        ret = fill_rgn(data, htable, p->ihBrush, rgn);
+        ret = fill_rgn(data, htable, n, p->ihBrush, rgn);
         DeleteObject(rgn);
         return ret;
     }
@@ -1277,7 +1287,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         OffsetRgn(rgn, 0, -p->szlStroke.cy);
         CombineRgn(frame, rgn, frame, RGN_DIFF);
 
-        ret = fill_rgn(data, htable, p->ihBrush, frame);
+        ret = fill_rgn(data, htable, n, p->ihBrush, frame);
         DeleteObject(rgn);
         DeleteObject(frame);
         return ret;
@@ -1290,7 +1300,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
 
         rgn = ExtCreateRegion(NULL, p->cbRgnData, (const RGNDATA *)p->RgnData);
         old_rop = SetROP2(data->pdev->dev.hdc, R2_NOT);
-        ret = fill_rgn(data, htable, 0x80000000 | BLACK_BRUSH, rgn);
+        ret = fill_rgn(data, htable, n, 0x80000000 | BLACK_BRUSH, rgn);
         SetROP2(data->pdev->dev.hdc, old_rop);
         DeleteObject(rgn);
         return ret;
