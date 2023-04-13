@@ -348,7 +348,8 @@ static void test_PrivateExtractIcons(void) {
     ok(cIcons == ~0u, "got %u\n", cIcons);
 
     cIcons = pPrivateExtractIconsA("notepad.exe", 0, 16, 16, NULL, NULL, 1, 0);
-    ok(cIcons == 1 || broken(cIcons == 2) /* win2k */, "got %u\n", cIcons);
+    ok(cIcons == 1 || broken(cIcons == 4) /* win11 */ ||
+       broken(cIcons == 2) /* win2k */, "got %u\n", cIcons);
 
     ahIcon[0] = (HICON)0xdeadbeef;
     cIcons = pPrivateExtractIconsA("notepad.exe", 0, 16, 16, ahIcon, NULL, 1, 0);
