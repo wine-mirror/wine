@@ -36,8 +36,9 @@ static void test_DnsQuery(void)
     WCHAR domain[MAX_PATH];
     WCHAR name[NS_MAXDNAME];
     DWORD ret, size;
-    DNS_RECORDW *rec;
+    DNS_RECORDW *rec, *ptr;
     DNS_STATUS status;
+    WORD type;
 
     rec = NULL;
     status = DnsQuery_W(L"winehq.org", DNS_TYPE_A, DNS_QUERY_STANDARD, NULL, &rec, NULL);
@@ -47,6 +48,52 @@ static void test_DnsQuery(void)
         return;
     }
     ok(status == ERROR_SUCCESS, "got %ld\n", status);
+    DnsRecordListFree(rec, DnsFreeRecordList);
+
+    /* Show that DNS_TYPE_A returns CNAMEs too */
+    rec = NULL;
+    wcscpy(domain, L"test.winehq.org"); /* should be a CNAME */
+    status = DnsQuery_W(domain, DNS_TYPE_A, DNS_QUERY_STANDARD, NULL, &rec, NULL);
+    if (status == ERROR_TIMEOUT)
+    {
+        skip("query timed out\n");
+        return;
+    }
+    ok(status == ERROR_SUCCESS, "got %ld\n", status);
+    type = DNS_TYPE_CNAME; /* CNAMEs come first */
+    for (ptr = rec; ptr; ptr = ptr->pNext)
+    {
+        ok(!wcscmp(domain, ptr->pName), "expected record name %s, got %s\n", wine_dbgstr_w(domain), wine_dbgstr_w(ptr->pName));
+        ok(type == ptr->wType, "expected record type %d, got %d\n", type, ptr->wType);
+        if (ptr->wType == DNS_TYPE_CNAME)
+        {
+            /* CNAME chains are bad practice so assume A for the remainder */
+            type = DNS_TYPE_A;
+            wcscpy(domain, L"winehq.org");
+            ok(!wcscmp(domain, ptr->Data.CNAME.pNameHost), "expected CNAME target %s, got %s\n", wine_dbgstr_w(domain), wine_dbgstr_w(ptr->Data.CNAME.pNameHost));
+        }
+    }
+    DnsRecordListFree(rec, DnsFreeRecordList);
+
+    /* But DNS_TYPE_CNAME does not return A records! */
+    rec = NULL;
+    wcscpy(domain, L"test.winehq.org");
+    status = DnsQuery_W(L"test.winehq.org", DNS_TYPE_CNAME, DNS_QUERY_STANDARD, NULL, &rec, NULL);
+    if (status == ERROR_TIMEOUT)
+    {
+        skip("query timed out\n");
+        return;
+    }
+    ok(status == ERROR_SUCCESS, "got %ld\n", status);
+    ptr = rec;
+    ok(!wcscmp(domain, ptr->pName), "expected record name %s, got %s\n", wine_dbgstr_w(domain), wine_dbgstr_w(ptr->pName));
+    ok(DNS_TYPE_CNAME == ptr->wType, "expected record type %d, got %d\n", DNS_TYPE_CNAME, ptr->wType);
+    if (ptr->wType == DNS_TYPE_CNAME)
+    {
+        wcscpy(domain, L"winehq.org");
+        ok(!wcscmp(domain, ptr->Data.CNAME.pNameHost), "expected CNAME target %s, got %s\n", wine_dbgstr_w(domain), wine_dbgstr_w(ptr->Data.CNAME.pNameHost));
+    }
+    ok(ptr->pNext == NULL, "unexpected CNAME chain\n");
     DnsRecordListFree(rec, DnsFreeRecordList);
 
     status = DnsQuery_W(L"", DNS_TYPE_SRV, DNS_QUERY_STANDARD, NULL, &rec, NULL);
