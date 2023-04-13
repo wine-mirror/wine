@@ -6420,6 +6420,106 @@ cleanup:
     winetest_pop_context();
 }
 
+static void test_ImmSetCandidateWindow(void)
+{
+    struct ime_call set_candidate_window_0_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/,
+            .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETCANDIDATEPOS},
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_TEST_WIN, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETCANDIDATEPOS, .lparam = 4},
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_SETCANDIDATEPOS, .lparam = 4},
+        },
+        {0},
+    };
+    struct ime_call set_candidate_window_1_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/,
+            .func = IME_NOTIFY, .notify = {.action = NI_CONTEXTUPDATED, .index = 0, .value = IMC_SETCANDIDATEPOS},
+        },
+        {.todo = TRUE},
+    };
+    CANDIDATEFORM cand_form, expect_form =
+    {
+        .dwIndex = 2, .dwStyle = 0xfeedcafe,
+        .ptCurrentPos = {.x = 123, .y = 456},
+        .rcArea = {.left = 1, .top = 2, .right = 3, .bottom = 4},
+    };
+    INPUTCONTEXT *ctx;
+    HIMC himc;
+    HKL hkl;
+
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
+
+    if (!(hkl = wineime_hkl)) return;
+
+    hwnd = CreateWindowW( test_class.lpszClassName, NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    ok_ret( 1, ImmLoadIME( hkl ) );
+    himc = ImmCreateContext();
+    ok_ne( NULL, himc, HIMC, "%p" );
+    ctx = ImmLockIMC( himc );
+    ok_ne( NULL, ctx, INPUTCONTEXT *, "%p" );
+    process_messages();
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+    set_candidate_window_0_seq[0].himc = himc;
+    set_candidate_window_1_seq[0].himc = himc;
+
+    ctx->cfCandForm[1] = expect_form;
+    ctx->cfCandForm[2] = expect_form;
+    ctx->fdwInit = 0;
+    memset( &cand_form, 0xcd, sizeof(cand_form) );
+    ok_ret( 0, ImmGetCandidateWindow( himc, 0, &cand_form ) );
+    ok_eq( 0xcdcdcdcd, cand_form.dwStyle, UINT, "%#x" );
+    todo_wine ok_ret( 1, ImmGetCandidateWindow( himc, 1, &cand_form ) );
+    todo_wine check_candidate_form( &cand_form, &expect_form );
+    ok_ret( 1, ImmGetCandidateWindow( himc, 2, &cand_form ) );
+    check_candidate_form( &cand_form, &expect_form );
+    ok_seq( empty_sequence );
+
+    ctx->hWnd = hwnd;
+    memset( &cand_form, 0xcd, sizeof(cand_form) );
+    cand_form.dwIndex = 2;
+    ok_ret( 1, ImmSetCandidateWindow( himc, &cand_form ) );
+    ok_seq( set_candidate_window_0_seq );
+    check_candidate_form( &ctx->cfCandForm[2], &cand_form );
+    ok_eq( 0, ctx->fdwInit, UINT, "%u" );
+
+    ok_ret( 1, ImmSetCandidateWindow( himc, &expect_form ) );
+    ok_seq( set_candidate_window_0_seq );
+    check_candidate_form( &ctx->cfCandForm[2], &expect_form );
+
+    ctx->hWnd = 0;
+    memset( &cand_form, 0xcd, sizeof(cand_form) );
+    cand_form.dwIndex = 2;
+    ok_ret( 1, ImmSetCandidateWindow( himc, &cand_form ) );
+    ok_seq( set_candidate_window_1_seq );
+    check_candidate_form( &ctx->cfCandForm[2], &cand_form );
+
+    ok_ret( 1, ImmUnlockIMC( himc ) );
+    ok_ret( 1, ImmDestroyContext( himc ) );
+
+    ok_ret( 1, ImmActivateLayout( default_hkl ) );
+    ok_ret( 1, DestroyWindow( hwnd ) );
+    process_messages();
+
+    ok_ret( 1, ImmFreeLayout( hkl ) );
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+}
+
 START_TEST(imm32)
 {
     default_hkl = GetKeyboardLayout( 0 );
@@ -6480,6 +6580,7 @@ START_TEST(imm32)
     test_ImmSetStatusWindowPos();
     test_ImmSetCompositionFont( TRUE );
     test_ImmSetCompositionFont( FALSE );
+    test_ImmSetCandidateWindow();
 
     if (wineime_hkl) ime_cleanup( wineime_hkl, TRUE );
 
