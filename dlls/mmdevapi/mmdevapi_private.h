@@ -16,12 +16,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "unixlib.h"
-
+#include <endpointvolume.h>
+#include <spatialaudioclient.h>
 #include <winternl.h>
 
 #include <wine/list.h>
 #include <wine/unixlib.h>
+
+#include "unixlib.h"
 
 extern HRESULT MMDevEnum_Create(REFIID riid, void **ppv) DECLSPEC_HIDDEN;
 extern void MMDevEnum_Free(void) DECLSPEC_HIDDEN;
