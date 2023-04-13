@@ -953,10 +953,51 @@ static BOOL fill_rgn(struct pp_data *data, HANDLETABLE *htable, DWORD brush, HRG
     return ret;
 }
 
+static BOOL is_path_record(int type)
+{
+    switch(type)
+    {
+    case EMR_POLYBEZIER:
+    case EMR_POLYGON:
+    case EMR_POLYLINE:
+    case EMR_POLYBEZIERTO:
+    case EMR_POLYLINETO:
+    case EMR_POLYPOLYLINE:
+    case EMR_POLYPOLYGON:
+    case EMR_MOVETOEX:
+    case EMR_ANGLEARC:
+    case EMR_ELLIPSE:
+    case EMR_RECTANGLE:
+    case EMR_ROUNDRECT:
+    case EMR_ARC:
+    case EMR_CHORD:
+    case EMR_PIE:
+    case EMR_LINETO:
+    case EMR_ARCTO:
+    case EMR_POLYDRAW:
+    case EMR_EXTTEXTOUTA:
+    case EMR_EXTTEXTOUTW:
+    case EMR_POLYBEZIER16:
+    case EMR_POLYGON16:
+    case EMR_POLYLINE16:
+    case EMR_POLYBEZIERTO16:
+    case EMR_POLYLINETO16:
+    case EMR_POLYPOLYLINE16:
+    case EMR_POLYPOLYGON16:
+    case EMR_POLYDRAW16:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
 static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         const ENHMETARECORD *rec, int n, LPARAM arg)
 {
     struct pp_data *data = (struct pp_data *)arg;
+
+    if (data->path && is_path_record(rec->iType))
+        return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n);
 
     switch (rec->iType)
     {
@@ -1183,6 +1224,11 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
 
         return poly_draw(&data->pdev->dev, pts, (BYTE *)(p->aptl + p->cptl), p->cptl) &&
             MoveToEx(data->pdev->dev.hdc, pts[p->cptl - 1].x, pts[p->cptl - 1].y, NULL);
+    }
+    case EMR_BEGINPATH:
+    {
+        data->path = TRUE;
+        return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n);
     }
     case EMR_ENDPATH:
     {
