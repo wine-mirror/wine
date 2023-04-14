@@ -2101,6 +2101,8 @@ async_test("matchMedia", function() {
     ok(!("removeEventListener" in mql), "removeEventListener in MediaQueryList");
     r = mql.addListener(null);
     ok(r === undefined, "addListener with null returned " + r);
+    r = mql.removeListener(null);
+    ok(r === undefined, "removeListener with null returned " + r);
     r = mql.addListener("function() { ok(false, 'string handler called'); }");
     ok(r === undefined, "addListener with string returned " + r);
 
@@ -2117,7 +2119,9 @@ async_test("matchMedia", function() {
     }
     var tests = [
         [ 20, 20, function() {
-            var r = mql.addListener(handler);
+            var r = mql.removeListener("function() { ok(false, 'string handler called'); }");
+            ok(r === undefined, "removeListener with string returned " + r);
+            r = mql.addListener(handler);
             ok(r === undefined, "addListener with function returned " + r);
         }],
         [ 120, 120, function() {
@@ -2129,8 +2133,12 @@ async_test("matchMedia", function() {
         [ 30, 30, function() {
             ok(event_fired === true, "event not fired after changing from 120x120 to 30x30 view");
             ok(event2_fired === true, "event not fired from second handler after changing from 120x120 to 30x30 view");
+            var r = mql.removeListener(handler);
+            ok(r === undefined, "removeListener with function returned " + r);
         }],
         [ 300, 300, function() {
+            ok(event_fired === false, "removed event handler fired after changing from 30x30 to 300x300 view");
+            ok(event2_fired === true, "event not fired from second handler after changing from 30x30 to 300x300 view");
         }]
     ];
 

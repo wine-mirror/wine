@@ -2817,10 +2817,23 @@ static HRESULT WINAPI media_query_list_addListener(IWineMSHTMLMediaQueryList *if
 static HRESULT WINAPI media_query_list_removeListener(IWineMSHTMLMediaQueryList *iface, VARIANT *listener)
 {
     struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
+    struct media_query_list_listener *entry;
 
-    FIXME("(%p)->(%s)\n", media_query_list, debugstr_variant(listener));
+    TRACE("(%p)->(%s)\n", media_query_list, debugstr_variant(listener));
 
-    return E_NOTIMPL;
+    if(V_VT(listener) != VT_DISPATCH || !V_DISPATCH(listener))
+        return S_OK;
+
+    LIST_FOR_EACH_ENTRY(entry, &media_query_list->listeners, struct media_query_list_listener, entry) {
+        if(entry->function == V_DISPATCH(listener)) {
+            list_remove(&entry->entry);
+            IDispatch_Release(entry->function);
+            free(entry);
+            break;
+        }
+    }
+
+    return S_OK;
 }
 
 static const IWineMSHTMLMediaQueryListVtbl media_query_list_vtbl = {
