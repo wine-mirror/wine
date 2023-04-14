@@ -920,6 +920,86 @@ bool __thiscall ExternalContextBase_IsSynchronouslyBlocked(const ExternalContext
     return FALSE;
 }
 
+DEFINE_THISCALL_WRAPPER(ExternalContextBase_Block, 4)
+void __thiscall ExternalContextBase_Block(ExternalContextBase *this)
+{
+    FIXME("(%p)->() stub\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(ExternalContextBase_Yield, 4)
+void __thiscall ExternalContextBase_Yield(ExternalContextBase *this)
+{
+    FIXME("(%p)->() stub\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(ExternalContextBase_SpinYield, 4)
+void __thiscall ExternalContextBase_SpinYield(ExternalContextBase *this)
+{
+    FIXME("(%p)->() stub\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(ExternalContextBase_Oversubscribe, 8)
+void __thiscall ExternalContextBase_Oversubscribe(
+        ExternalContextBase *this, bool oversubscribe)
+{
+    FIXME("(%p)->(%x) stub\n", this, oversubscribe);
+}
+
+DEFINE_THISCALL_WRAPPER(ExternalContextBase_Alloc, 8)
+void* __thiscall ExternalContextBase_Alloc(ExternalContextBase *this, size_t size)
+{
+    FIXME("(%p)->(%Iu) stub\n", this, size);
+    return NULL;
+}
+
+DEFINE_THISCALL_WRAPPER(ExternalContextBase_Free, 8)
+void __thiscall ExternalContextBase_Free(ExternalContextBase *this, void *addr)
+{
+    FIXME("(%p)->(%p) stub\n", this, addr);
+}
+
+DEFINE_THISCALL_WRAPPER(ExternalContextBase_EnterCriticalRegionHelper, 4)
+int __thiscall ExternalContextBase_EnterCriticalRegionHelper(ExternalContextBase *this)
+{
+    FIXME("(%p)->() stub\n", this);
+    return 0;
+}
+
+DEFINE_THISCALL_WRAPPER(ExternalContextBase_EnterHyperCriticalRegionHelper, 4)
+int __thiscall ExternalContextBase_EnterHyperCriticalRegionHelper(ExternalContextBase *this)
+{
+    FIXME("(%p)->() stub\n", this);
+    return 0;
+}
+
+DEFINE_THISCALL_WRAPPER(ExternalContextBase_ExitCriticalRegionHelper, 4)
+int __thiscall ExternalContextBase_ExitCriticalRegionHelper(ExternalContextBase *this)
+{
+    FIXME("(%p)->() stub\n", this);
+    return 0;
+}
+
+DEFINE_THISCALL_WRAPPER(ExternalContextBase_ExitHyperCriticalRegionHelper, 4)
+int __thiscall ExternalContextBase_ExitHyperCriticalRegionHelper(ExternalContextBase *this)
+{
+    FIXME("(%p)->() stub\n", this);
+    return 0;
+}
+
+DEFINE_THISCALL_WRAPPER(ExternalContextBase_GetCriticalRegionType, 4)
+int __thiscall ExternalContextBase_GetCriticalRegionType(const ExternalContextBase *this)
+{
+    FIXME("(%p)->() stub\n", this);
+    return 0;
+}
+
+DEFINE_THISCALL_WRAPPER(ExternalContextBase_GetContextKind, 4)
+int __thiscall ExternalContextBase_GetContextKind(const ExternalContextBase *this)
+{
+    FIXME("(%p)->() stub\n", this);
+    return 0;
+}
+
 static void remove_scheduled_chores(Scheduler *scheduler, const ExternalContextBase *context)
 {
     ThreadScheduler *tscheduler = (ThreadScheduler*)scheduler;
@@ -3483,7 +3563,19 @@ __ASM_BLOCK_BEGIN(concurrency_vtables)
             VTABLE_ADD_FUNC(ExternalContextBase_GetScheduleGroupId)
             VTABLE_ADD_FUNC(ExternalContextBase_Unblock)
             VTABLE_ADD_FUNC(ExternalContextBase_IsSynchronouslyBlocked)
-            VTABLE_ADD_FUNC(ExternalContextBase_vector_dtor));
+            VTABLE_ADD_FUNC(ExternalContextBase_vector_dtor)
+            VTABLE_ADD_FUNC(ExternalContextBase_Block)
+            VTABLE_ADD_FUNC(ExternalContextBase_Yield)
+            VTABLE_ADD_FUNC(ExternalContextBase_SpinYield)
+            VTABLE_ADD_FUNC(ExternalContextBase_Oversubscribe)
+            VTABLE_ADD_FUNC(ExternalContextBase_Alloc)
+            VTABLE_ADD_FUNC(ExternalContextBase_Free)
+            VTABLE_ADD_FUNC(ExternalContextBase_EnterCriticalRegionHelper)
+            VTABLE_ADD_FUNC(ExternalContextBase_EnterHyperCriticalRegionHelper)
+            VTABLE_ADD_FUNC(ExternalContextBase_ExitCriticalRegionHelper)
+            VTABLE_ADD_FUNC(ExternalContextBase_ExitHyperCriticalRegionHelper)
+            VTABLE_ADD_FUNC(ExternalContextBase_GetCriticalRegionType)
+            VTABLE_ADD_FUNC(ExternalContextBase_GetContextKind));
     __ASM_VTABLE(ThreadScheduler,
             VTABLE_ADD_FUNC(ThreadScheduler_vector_dtor)
             VTABLE_ADD_FUNC(ThreadScheduler_Id)
