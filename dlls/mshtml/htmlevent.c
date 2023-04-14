@@ -83,7 +83,7 @@ static const WCHAR *event_types[] = {
     L"MouseEvent",
     L"Event", /* FIXME */
     L"UIEvent",
-    L"Event", /* FIXME */
+    L"PageTransitionEvent",
     L"MessageEvent",
     L"ProgressEvent",
     L"StorageEvent",
