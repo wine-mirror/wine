@@ -2629,9 +2629,7 @@ BOOL WINAPI ImmSetCompositionStringW(
  */
 BOOL WINAPI ImmSetCompositionWindow( HIMC himc, COMPOSITIONFORM *composition )
 {
-    BOOL reshow = FALSE;
     INPUTCONTEXT *ctx;
-    HWND ui_hwnd;
 
     TRACE( "himc %p, composition %s\n", himc, debugstr_composition( composition ) );
 
@@ -2640,14 +2638,6 @@ BOOL WINAPI ImmSetCompositionWindow( HIMC himc, COMPOSITIONFORM *composition )
 
     ctx->cfCompForm = *composition;
     ctx->fdwInit |= INIT_COMPFORM;
-
-    if ((ui_hwnd = get_ime_ui_window()) && IsWindowVisible( ui_hwnd ))
-    {
-        reshow = TRUE;
-        ShowWindow( ui_hwnd, SW_HIDE );
-    }
-
-    if (ui_hwnd && reshow) ShowWindow( ui_hwnd, SW_SHOWNOACTIVATE );
 
     ImmNotifyIME( himc, NI_CONTEXTUPDATED, 0, IMC_SETCOMPOSITIONWINDOW );
     SendMessageW( ctx->hWnd, WM_IME_NOTIFY, IMN_SETCOMPOSITIONWINDOW, 0 );

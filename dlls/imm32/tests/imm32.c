@@ -6221,7 +6221,7 @@ static void test_ImmSetCompositionWindow(void)
     memset( &comp_form, 0xcd, sizeof(comp_form) );
     ok_ret( 1, ImmSetCompositionWindow( himc, &comp_form ) );
     process_messages();
-    todo_wine ok_seq( set_composition_window_0_seq );
+    ok_seq( set_composition_window_0_seq );
     ok_eq( INIT_COMPFORM, ctx->fdwInit, UINT, "%u" );
     check_composition_form( &ctx->cfCompForm, &comp_form );
     ok_ret( 1, IsWindowVisible( ime_windows.ime_ui_hwnd ) );
