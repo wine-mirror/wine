@@ -72,6 +72,8 @@ typedef struct {
         bool, (const Context*), (this))
 #define call_Context_dtor(this, flags) CALL_VTBL_FUNC(this, 20, \
         Context*, (Context*, unsigned int), (this, flags))
+#define call_Context_Block(this) CALL_VTBL_FUNC(this, 24, \
+        void, (Context*), (this))
 
 typedef struct {
     Context *context;
@@ -824,7 +826,9 @@ unsigned int __cdecl Context_Id(void)
 /* ?Block@Context@Concurrency@@SAXXZ */
 void __cdecl Context_Block(void)
 {
-    FIXME("()\n");
+    Context *ctx = get_current_context();
+    TRACE("()\n");
+    call_Context_Block(ctx);
 }
 
 /* ?Yield@Context@Concurrency@@SAXXZ */
