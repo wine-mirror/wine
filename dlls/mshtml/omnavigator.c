@@ -2651,11 +2651,25 @@ void create_console(compat_mode_t compat_mode, IWineMSHTMLConsole **ret)
     *ret = &obj->IWineMSHTMLConsole_iface;
 }
 
+struct media_query_list_listener {
+    struct list entry;
+    IDispatch *function;
+};
+
+struct media_query_list_callback;
 struct media_query_list {
     DispatchEx dispex;
     IWineMSHTMLMediaQueryList IWineMSHTMLMediaQueryList_iface;
     LONG ref;
     nsIDOMMediaQueryList *nsquerylist;
+    struct media_query_list_callback *callback;
+    struct list listeners;
+};
+
+struct media_query_list_callback {
+    nsIDOMMediaQueryListListener nsIDOMMediaQueryListListener_iface;
+    struct media_query_list *media_query_list;
+    LONG ref;
 };
 
 static inline struct media_query_list *impl_from_IWineMSHTMLMediaQueryList(IWineMSHTMLMediaQueryList *iface)
@@ -2696,10 +2710,17 @@ static ULONG WINAPI media_query_list_Release(IWineMSHTMLMediaQueryList *iface)
 {
     struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
     LONG ref = InterlockedDecrement(&media_query_list->ref);
+    struct media_query_list_listener *listener, *listener2;
 
     TRACE("(%p) ref=%ld\n", media_query_list, ref);
 
     if(!ref) {
+        media_query_list->callback->media_query_list = NULL;
+        LIST_FOR_EACH_ENTRY_SAFE(listener, listener2, &media_query_list->listeners, struct media_query_list_listener, entry) {
+            IDispatch_Release(listener->function);
+            free(listener);
+        }
+        nsIDOMMediaQueryListListener_Release(&media_query_list->callback->nsIDOMMediaQueryListListener_iface);
         nsIDOMMediaQueryList_Release(media_query_list->nsquerylist);
         release_dispex(&media_query_list->dispex);
         free(media_query_list);
@@ -2773,10 +2794,24 @@ static HRESULT WINAPI media_query_list_get_matches(IWineMSHTMLMediaQueryList *if
 static HRESULT WINAPI media_query_list_addListener(IWineMSHTMLMediaQueryList *iface, VARIANT *listener)
 {
     struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
+    struct media_query_list_listener *entry;
 
-    FIXME("(%p)->(%s)\n", media_query_list, debugstr_variant(listener));
+    TRACE("(%p)->(%s)\n", media_query_list, debugstr_variant(listener));
 
-    return E_NOTIMPL;
+    if(V_VT(listener) != VT_DISPATCH || !V_DISPATCH(listener))
+        return S_OK;
+
+    LIST_FOR_EACH_ENTRY(entry, &media_query_list->listeners, struct media_query_list_listener, entry)
+        if(entry->function == V_DISPATCH(listener))
+            return S_OK;
+
+    if(!(entry = malloc(sizeof(*entry))))
+        return E_OUTOFMEMORY;
+    entry->function = V_DISPATCH(listener);
+    IDispatch_AddRef(V_DISPATCH(listener));
+
+    list_add_tail(&media_query_list->listeners, &entry->entry);
+    return S_OK;
 }
 
 static HRESULT WINAPI media_query_list_removeListener(IWineMSHTMLMediaQueryList *iface, VARIANT *listener)
@@ -2800,6 +2835,101 @@ static const IWineMSHTMLMediaQueryListVtbl media_query_list_vtbl = {
     media_query_list_get_matches,
     media_query_list_addListener,
     media_query_list_removeListener
+};
+
+static inline struct media_query_list_callback *impl_from_nsIDOMMediaQueryListListener(nsIDOMMediaQueryListListener *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_query_list_callback, nsIDOMMediaQueryListListener_iface);
+}
+
+static nsresult NSAPI media_query_list_callback_QueryInterface(nsIDOMMediaQueryListListener *iface,
+        nsIIDRef riid, void **result)
+{
+    struct media_query_list_callback *callback = impl_from_nsIDOMMediaQueryListListener(iface);
+
+    if(IsEqualGUID(&IID_nsISupports, riid) || IsEqualGUID(&IID_nsIDOMMediaQueryListListener, riid)) {
+        *result = &callback->nsIDOMMediaQueryListListener_iface;
+    }else {
+        *result = NULL;
+        return NS_NOINTERFACE;
+    }
+
+    nsIDOMMediaQueryListListener_AddRef(&callback->nsIDOMMediaQueryListListener_iface);
+    return NS_OK;
+}
+
+static nsrefcnt NSAPI media_query_list_callback_AddRef(nsIDOMMediaQueryListListener *iface)
+{
+    struct media_query_list_callback *callback = impl_from_nsIDOMMediaQueryListListener(iface);
+    LONG ref = InterlockedIncrement(&callback->ref);
+
+    TRACE("(%p) ref=%ld\n", callback, ref);
+
+    return ref;
+}
+
+static nsrefcnt NSAPI media_query_list_callback_Release(nsIDOMMediaQueryListListener *iface)
+{
+    struct media_query_list_callback *callback = impl_from_nsIDOMMediaQueryListListener(iface);
+    LONG ref = InterlockedDecrement(&callback->ref);
+
+    TRACE("(%p) ref=%ld\n", callback, ref);
+
+    if(!ref)
+        free(callback);
+    return ref;
+}
+
+static nsresult NSAPI media_query_list_callback_HandleChange(nsIDOMMediaQueryListListener *iface, nsIDOMMediaQueryList *mql)
+{
+    struct media_query_list_callback *callback = impl_from_nsIDOMMediaQueryListListener(iface);
+    IDispatch *listener_funcs_buf[4], **listener_funcs = listener_funcs_buf;
+    struct media_query_list *media_query_list = callback->media_query_list;
+    struct media_query_list_listener *listener;
+    unsigned cnt, i = 0;
+    VARIANT args[1], v;
+    HRESULT hres;
+
+    if(!media_query_list)
+        return NS_OK;
+
+    cnt = list_count(&media_query_list->listeners);
+    if(cnt > ARRAY_SIZE(listener_funcs_buf) && !(listener_funcs = malloc(cnt * sizeof(*listener_funcs))))
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    LIST_FOR_EACH_ENTRY(listener, &media_query_list->listeners, struct media_query_list_listener, entry) {
+        listener_funcs[i] = listener->function;
+        IDispatch_AddRef(listener_funcs[i++]);
+    }
+
+    for(i = 0; i < cnt; i++) {
+        DISPPARAMS dp = { args, NULL, 1, 0 };
+
+        V_VT(args) = VT_DISPATCH;
+        V_DISPATCH(args) = (IDispatch*)&media_query_list->dispex.IDispatchEx_iface;
+        V_VT(&v) = VT_EMPTY;
+
+        TRACE("%p >>>\n", media_query_list);
+        hres = call_disp_func(listener_funcs[i], &dp, &v);
+        if(hres == S_OK) {
+            TRACE("%p <<< %s\n", media_query_list, debugstr_variant(&v));
+            VariantClear(&v);
+        }else {
+            WARN("%p <<< %08lx\n", media_query_list, hres);
+        }
+        IDispatch_Release(listener_funcs[i]);
+    }
+
+    if(listener_funcs != listener_funcs_buf)
+        free(listener_funcs);
+    return NS_OK;
+}
+
+static const nsIDOMMediaQueryListListenerVtbl media_query_list_callback_vtbl = {
+    media_query_list_callback_QueryInterface,
+    media_query_list_callback_AddRef,
+    media_query_list_callback_Release,
+    media_query_list_callback_HandleChange
 };
 
 static const tid_t media_query_list_iface_tids[] = {
@@ -2826,10 +2956,19 @@ HRESULT create_media_query_list(HTMLWindow *window, BSTR media_query, IDispatch 
     if(!(media_query_list = malloc(sizeof(*media_query_list))))
         return E_OUTOFMEMORY;
 
+    if(!(media_query_list->callback = malloc(sizeof(*media_query_list->callback)))) {
+        free(media_query_list);
+        return E_OUTOFMEMORY;
+    }
+    media_query_list->callback->nsIDOMMediaQueryListListener_iface.lpVtbl = &media_query_list_callback_vtbl;
+    media_query_list->callback->media_query_list = media_query_list;
+    media_query_list->callback->ref = 1;
+
     nsAString_InitDepend(&nsstr, media_query);
     nsres = nsIDOMWindow_MatchMedia(window->outer_window->nswindow, &nsstr, &nsunk);
     nsAString_Finish(&nsstr);
     if(NS_FAILED(nsres)) {
+        free(media_query_list->callback);
         free(media_query_list);
         return map_nsresult(nsres);
     }
@@ -2837,8 +2976,12 @@ HRESULT create_media_query_list(HTMLWindow *window, BSTR media_query, IDispatch 
     assert(NS_SUCCEEDED(nsres));
     nsISupports_Release(nsunk);
 
+    nsres = nsIDOMMediaQueryList_SetListener(media_query_list->nsquerylist, &media_query_list->callback->nsIDOMMediaQueryListListener_iface);
+    assert(NS_SUCCEEDED(nsres));
+
     media_query_list->IWineMSHTMLMediaQueryList_iface.lpVtbl = &media_query_list_vtbl;
     media_query_list->ref = 1;
+    list_init(&media_query_list->listeners);
     init_dispatch(&media_query_list->dispex, (IUnknown*)&media_query_list->IWineMSHTMLMediaQueryList_iface,
                   &media_query_list_dispex, dispex_compat_mode(&window->inner_window->event_target.dispex));
 

@@ -2071,8 +2071,8 @@ sync_test("console", function() {
     ok(except, "console.timeLog: expected exception");
 });
 
-sync_test("matchMedia", function() {
-    var i, r, mql;
+async_test("matchMedia", function() {
+    var i, r, mql, expect, event_fired, event2_fired;
 
     try {
         mql = window.matchMedia("");
@@ -2094,6 +2094,65 @@ sync_test("matchMedia", function() {
     }
     mql = window.matchMedia("(max-width: 1000px)");
     ok(mql.matches === true, "(max-width: 1000px) does not match");
+    mql = window.matchMedia("(max-width: 50px)");
+    ok(mql.matches === false, "(max-width: 50px) matches");
+
+    ok(!("addEventListener" in mql), "addEventListener in MediaQueryList");
+    ok(!("removeEventListener" in mql), "removeEventListener in MediaQueryList");
+    r = mql.addListener(null);
+    ok(r === undefined, "addListener with null returned " + r);
+    r = mql.addListener("function() { ok(false, 'string handler called'); }");
+    ok(r === undefined, "addListener with string returned " + r);
+
+    var handler = function(e) {
+        ok(this === window, "handler this = " + this);
+        ok(e === mql, "handler argument = " + e);
+        event_fired = true;
+        ok(event2_fired !== true, "second handler fired before first");
+    }
+    var handler2 = function(e) {
+        ok(this === window, "handler2 this = " + this);
+        ok(e === mql, "handler2 argument = " + e);
+        event2_fired = true;
+    }
+    var tests = [
+        [ 20, 20, function() {
+            var r = mql.addListener(handler);
+            ok(r === undefined, "addListener with function returned " + r);
+        }],
+        [ 120, 120, function() {
+            ok(event_fired === true, "event not fired after changing from 20x20 to 120x120 view");
+            mql.addListener(null);
+            mql.addListener("function() { ok(false, 'second string handler called'); }");
+            mql.addListener(handler2);
+        }],
+        [ 30, 30, function() {
+            ok(event_fired === true, "event not fired after changing from 120x120 to 30x30 view");
+            ok(event2_fired === true, "event not fired from second handler after changing from 120x120 to 30x30 view");
+        }],
+        [ 300, 300, function() {
+        }]
+    ];
+
+    function test() {
+        tests[i][2]();
+        if(++i >= tests.length) {
+            next_test();
+            return;
+        }
+        expect = !expect;
+        event_fired = event2_fired = false;
+        external.setViewSize(tests[i][0], tests[i][1]);
+        window.setTimeout(check);
+    }
+
+    // async dispatch once even after change confirmed, to ensure that any possible listeners are dispatched first (or not)
+    function check() { window.setTimeout(mql.matches === expect ? test : check); }
+
+    i = 0;
+    expect = !mql.matches;
+    external.setViewSize(tests[i][0], tests[i][1]);
+    window.setTimeout(check);
 });
 
 sync_test("initProgressEvent", function() {

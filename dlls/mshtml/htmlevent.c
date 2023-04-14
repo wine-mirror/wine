@@ -3337,7 +3337,7 @@ HRESULT create_storage_event(HTMLDocumentNode *doc, BSTR key, BSTR old_value, BS
     return S_OK;
 }
 
-static HRESULT call_disp_func(IDispatch *disp, DISPPARAMS *dp, VARIANT *retv)
+HRESULT call_disp_func(IDispatch *disp, DISPPARAMS *dp, VARIANT *retv)
 {
     IDispatchEx *dispex;
     EXCEPINFO ei;

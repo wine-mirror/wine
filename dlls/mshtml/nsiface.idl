@@ -925,6 +925,16 @@ interface nsIDOMMediaQueryList : nsISupports
 
 [
     object,
+    uuid(279a5cbd-5c15-475d-847b-e0de1624eb77),
+    local
+]
+interface nsIDOMMediaQueryListListener : nsISupports
+{
+    nsresult HandleChange(nsIDOMMediaQueryList *mql);
+}
+
+[
+    object,
     uuid(450cf0ba-de90-4f86-85bf-e10cc8b8713f),
     local
 ]
