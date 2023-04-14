@@ -68,6 +68,8 @@ typedef struct {
         unsigned int, (const Context*), (this))
 #define call_Context_GetScheduleGroupId(this) CALL_VTBL_FUNC(this, 8, \
         unsigned int, (const Context*), (this))
+#define call_Context_Unblock(this) CALL_VTBL_FUNC(this, 12, \
+        void, (Context*), (this))
 #define call_Context_IsSynchronouslyBlocked(this) CALL_VTBL_FUNC(this, 16, \
         bool, (const Context*), (this))
 #define call_Context_dtor(this, flags) CALL_VTBL_FUNC(this, 20, \
@@ -324,6 +326,7 @@ typedef struct {
 typedef struct rwl_queue
 {
     struct rwl_queue *next;
+    Context *ctx;
 } rwl_queue;
 
 #define WRITER_WAITING 0x80000000
@@ -3129,14 +3132,6 @@ reader_writer_lock* __thiscall reader_writer_lock_ctor(reader_writer_lock *this)
 {
     TRACE("(%p)\n", this);
 
-    if (!keyed_event) {
-        HANDLE event;
-
-        NtCreateKeyedEvent(&event, GENERIC_READ|GENERIC_WRITE, NULL, 0);
-        if (InterlockedCompareExchangePointer(&keyed_event, event, NULL) != NULL)
-            NtClose(event);
-    }
-
     memset(this, 0, sizeof(*this));
     return this;
 }
@@ -3170,7 +3165,7 @@ static inline void spin_wait_for_next_rwl(rwl_queue *q)
 DEFINE_THISCALL_WRAPPER(reader_writer_lock_lock, 4)
 void __thiscall reader_writer_lock_lock(reader_writer_lock *this)
 {
-    rwl_queue q = { NULL }, *last;
+    rwl_queue q = { NULL, get_current_context() }, *last;
 
     TRACE("(%p)\n", this);
 
@@ -3183,11 +3178,11 @@ void __thiscall reader_writer_lock_lock(reader_writer_lock *this)
     last = InterlockedExchangePointer((void**)&this->writer_tail, &q);
     if (last) {
         last->next = &q;
-        NtWaitForKeyedEvent(keyed_event, &q, 0, NULL);
+        call_Context_Block(q.ctx);
     } else {
         this->writer_head = &q;
         if (InterlockedOr(&this->count, WRITER_WAITING))
-            NtWaitForKeyedEvent(keyed_event, &q, 0, NULL);
+            call_Context_Block(q.ctx);
     }
 
     this->thread_id = GetCurrentThreadId();
@@ -3204,7 +3199,7 @@ void __thiscall reader_writer_lock_lock(reader_writer_lock *this)
 DEFINE_THISCALL_WRAPPER(reader_writer_lock_lock_read, 4)
 void __thiscall reader_writer_lock_lock_read(reader_writer_lock *this)
 {
-    rwl_queue q;
+    rwl_queue q = { NULL, get_current_context() };
 
     TRACE("(%p)\n", this);
 
@@ -3226,17 +3221,17 @@ void __thiscall reader_writer_lock_lock_read(reader_writer_lock *this)
             if (InterlockedCompareExchange(&this->count, count+1, count) == count) break;
 
         if (count & WRITER_WAITING)
-            NtWaitForKeyedEvent(keyed_event, &q, 0, NULL);
+            call_Context_Block(q.ctx);
 
         head = InterlockedExchangePointer((void**)&this->reader_head, NULL);
         while(head && head != &q) {
             rwl_queue *next = head->next;
             InterlockedIncrement(&this->count);
-            NtReleaseKeyedEvent(keyed_event, head, 0, NULL);
+            call_Context_Unblock(head->ctx);
             head = next;
         }
     } else {
-        NtWaitForKeyedEvent(keyed_event, &q, 0, NULL);
+        call_Context_Block(q.ctx);
     }
 }
 
@@ -3314,7 +3309,7 @@ void __thiscall reader_writer_lock_unlock(reader_writer_lock *this)
     this->thread_id = 0;
     next = this->writer_head->next;
     if (next) {
-        NtReleaseKeyedEvent(keyed_event, next, 0, NULL);
+        call_Context_Unblock(next->ctx);
         return;
     }
     InterlockedAnd(&this->count, ~WRITER_WAITING);
@@ -3322,7 +3317,7 @@ void __thiscall reader_writer_lock_unlock(reader_writer_lock *this)
     while (head) {
         next = head->next;
         InterlockedIncrement(&this->count);
-        NtReleaseKeyedEvent(keyed_event, head, 0, NULL);
+        call_Context_Unblock(head->ctx);
         head = next;
     }
 
