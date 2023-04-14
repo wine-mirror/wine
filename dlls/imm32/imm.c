@@ -866,66 +866,6 @@ BOOL WINAPI ImmSetActiveContext(HWND hwnd, HIMC himc, BOOL activate)
 }
 
 /***********************************************************************
- *		ImmAssociateContext (IMM32.@)
- */
-HIMC WINAPI ImmAssociateContext(HWND hwnd, HIMC imc)
-{
-    HIMC old;
-    UINT ret;
-
-    TRACE("(%p, %p):\n", hwnd, imc);
-
-    old = NtUserGetWindowInputContext(hwnd);
-    ret = NtUserAssociateInputContext(hwnd, imc, 0);
-    if (ret == AICR_FOCUS_CHANGED)
-    {
-        ImmSetActiveContext(hwnd, old, FALSE);
-        ImmSetActiveContext(hwnd, imc, TRUE);
-    }
-    return ret == AICR_FAILED ? 0 : old;
-}
-
-
-/*
- * Helper function for ImmAssociateContextEx
- */
-static BOOL CALLBACK _ImmAssociateContextExEnumProc(HWND hwnd, LPARAM lParam)
-{
-    HIMC hImc = (HIMC)lParam;
-    ImmAssociateContext(hwnd,hImc);
-    return TRUE;
-}
-
-/***********************************************************************
- *              ImmAssociateContextEx (IMM32.@)
- */
-BOOL WINAPI ImmAssociateContextEx(HWND hwnd, HIMC imc, DWORD flags)
-{
-    HIMC old;
-    UINT ret;
-
-    TRACE("(%p, %p, 0x%lx):\n", hwnd, imc, flags);
-
-    if (!hwnd)
-        return FALSE;
-
-    if (flags == IACE_CHILDREN)
-    {
-        EnumChildWindows(hwnd, _ImmAssociateContextExEnumProc, (LPARAM)imc);
-        return TRUE;
-    }
-
-    old = NtUserGetWindowInputContext(hwnd);
-    ret = NtUserAssociateInputContext(hwnd, imc, flags);
-    if (ret == AICR_FOCUS_CHANGED)
-    {
-        ImmSetActiveContext(hwnd, old, FALSE);
-        ImmSetActiveContext(hwnd, imc, TRUE);
-    }
-    return ret != AICR_FAILED;
-}
-
-/***********************************************************************
  *		ImmConfigureIMEA (IMM32.@)
  */
 BOOL WINAPI ImmConfigureIMEA( HKL hkl, HWND hwnd, DWORD mode, void *data )
@@ -1063,6 +1003,62 @@ BOOL WINAPI ImmDestroyContext(HIMC hIMC)
     if ((UINT_PTR)hIMC == NtUserGetThreadInfo()->default_imc) return FALSE;
     if (NtUserQueryInputContext( hIMC, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
     return IMM_DestroyContext(hIMC);
+}
+
+/***********************************************************************
+ *      ImmAssociateContext (IMM32.@)
+ */
+HIMC WINAPI ImmAssociateContext( HWND hwnd, HIMC new_himc )
+{
+    HIMC old_himc;
+    UINT ret;
+
+    TRACE( "hwnd %p, new_himc %p\n", hwnd, new_himc );
+
+    old_himc = NtUserGetWindowInputContext( hwnd );
+    ret = NtUserAssociateInputContext( hwnd, new_himc, 0 );
+    if (ret == AICR_FOCUS_CHANGED)
+    {
+        ImmSetActiveContext( hwnd, old_himc, FALSE );
+        ImmSetActiveContext( hwnd, new_himc, TRUE );
+    }
+
+    return ret == AICR_FAILED ? 0 : old_himc;
+}
+
+static BOOL CALLBACK enum_associate_context( HWND hwnd, LPARAM lparam )
+{
+    ImmAssociateContext( hwnd, (HIMC)lparam );
+    return TRUE;
+}
+
+/***********************************************************************
+ *              ImmAssociateContextEx (IMM32.@)
+ */
+BOOL WINAPI ImmAssociateContextEx( HWND hwnd, HIMC new_himc, DWORD flags )
+{
+    HIMC old_himc;
+    UINT ret;
+
+    TRACE( "hwnd %p, new_himc %p, flags %#lx\n", hwnd, new_himc, flags );
+
+    if (!hwnd) return FALSE;
+
+    if (flags == IACE_CHILDREN)
+    {
+        EnumChildWindows( hwnd, enum_associate_context, (LPARAM)new_himc );
+        return TRUE;
+    }
+
+    old_himc = NtUserGetWindowInputContext( hwnd );
+    ret = NtUserAssociateInputContext( hwnd, new_himc, flags );
+    if (ret == AICR_FOCUS_CHANGED)
+    {
+        ImmSetActiveContext( hwnd, old_himc, FALSE );
+        ImmSetActiveContext( hwnd, new_himc, TRUE );
+    }
+
+    return ret != AICR_FAILED;
 }
 
 struct enum_register_word_params_WtoA
