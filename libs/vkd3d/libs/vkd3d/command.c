@@ -6781,16 +6781,16 @@ static bool d3d12_command_queue_op_array_append(struct d3d12_command_queue_op_ar
     return true;
 }
 
-static HRESULT d3d12_command_queue_fixup_after_flush(struct d3d12_command_queue *queue, unsigned int done_count)
+static void d3d12_command_queue_delete_aux_ops(struct d3d12_command_queue *queue,
+        unsigned int done_count)
 {
-    HRESULT hr;
-
     queue->aux_op_queue.count -= done_count;
     memmove(queue->aux_op_queue.ops, &queue->aux_op_queue.ops[done_count],
             queue->aux_op_queue.count * sizeof(*queue->aux_op_queue.ops));
+}
 
-    vkd3d_mutex_lock(&queue->op_mutex);
-
+static HRESULT d3d12_command_queue_fixup_after_flush_locked(struct d3d12_command_queue *queue)
+{
     d3d12_command_queue_swap_queues(queue);
 
     d3d12_command_queue_op_array_append(&queue->op_queue, queue->aux_op_queue.count, queue->aux_op_queue.ops);
@@ -6798,11 +6798,7 @@ static HRESULT d3d12_command_queue_fixup_after_flush(struct d3d12_command_queue 
     queue->aux_op_queue.count = 0;
     queue->is_flushing = false;
 
-    hr = d3d12_command_queue_record_as_blocked(queue);
-
-    vkd3d_mutex_unlock(&queue->op_mutex);
-
-    return hr;
+    return d3d12_command_queue_record_as_blocked(queue);
 }
 
 static HRESULT d3d12_command_queue_flush_ops(struct d3d12_command_queue *queue, bool *flushed_any)
@@ -6855,7 +6851,9 @@ static HRESULT d3d12_command_queue_flush_ops_locked(struct d3d12_command_queue *
                     if (op->u.wait.value > fence->max_pending_value)
                     {
                         vkd3d_mutex_unlock(&fence->mutex);
-                        return d3d12_command_queue_fixup_after_flush(queue, i);
+                        d3d12_command_queue_delete_aux_ops(queue, i);
+                        vkd3d_mutex_lock(&queue->op_mutex);
+                        return d3d12_command_queue_fixup_after_flush_locked(queue);
                     }
                     d3d12_command_queue_wait_locked(queue, fence, op->u.wait.value);
                     d3d12_fence_decref(fence);
