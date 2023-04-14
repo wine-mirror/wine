@@ -17,6 +17,7 @@
  */
 
 #include <windows.h>
+#include <psapi.h>
 #include "wine/test.h"
 
 #define MAX_BUFFER 65536
@@ -164,6 +165,108 @@ static void test_format(void)
     ok(!!pos, "Failed to list tasklist.exe.\n");
 }
 
+static void test_filter(void)
+{
+    char options[256], *pos, basename[64];
+    HANDLE current_process;
+    DWORD current_pid;
+
+    current_pid = GetCurrentProcessId();
+    current_process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, current_pid);
+    GetModuleBaseNameA(current_process, NULL, basename, ARRAY_SIZE(basename));
+    CloseHandle(current_process);
+
+    /* /fi */
+    /* no value for fi */
+    run_tasklist("/fi", 1);
+    ok(stdout_size == 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size > 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+
+    /* IMAGENAME eq */
+    sprintf(options, "/fi \"IMAGENAME eq %s\"", basename);
+    run_tasklist(options, 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    pos = strstr(stdout_buffer, basename);
+    ok(!!pos, "Failed to list %s.\n", basename);
+
+    /* IMAGENAME ne */
+    sprintf(options, "/fi \"IMAGENAME ne %s\"", basename);
+    run_tasklist(options, 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    pos = strstr(stdout_buffer, basename);
+    ok(!pos, "Got %s.\n", basename);
+    pos = strstr(stdout_buffer, "tasklist.exe");
+    ok(!!pos, "Failed to list tasklist.exe.\n");
+
+    /* PID eq */
+    sprintf(options, "/fi \"PID eq %ld\"", current_pid);
+    run_tasklist(options, 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    pos = strstr(stdout_buffer, basename);
+    ok(!!pos, "Failed to list %s.\n", basename);
+
+    /* PID ne */
+    sprintf(options, "/fi \"PID ne %ld\"", current_pid);
+    run_tasklist(options, 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    pos = strstr(stdout_buffer, basename);
+    ok(!pos, "Got %s.\n", basename);
+    pos = strstr(stdout_buffer, "tasklist.exe");
+    ok(!!pos, "Failed to list tasklist.exe.\n");
+
+    /* PID gt */
+    sprintf(options, "/fi \"PID gt %ld\"", current_pid - 1);
+    run_tasklist(options, 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    pos = strstr(stdout_buffer, basename);
+    ok(!!pos, "Failed to list %s.\n", basename);
+
+    /* PID lt */
+    sprintf(options, "/fi \"PID lt %ld\"", current_pid + 1);
+    run_tasklist(options, 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    pos = strstr(stdout_buffer, basename);
+    ok(!!pos, "Failed to list %s.\n", basename);
+
+    /* PID ge */
+    sprintf(options, "/fi \"PID ge %ld\"", current_pid);
+    run_tasklist(options, 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    pos = strstr(stdout_buffer, basename);
+    ok(!!pos, "Failed to list %s.\n", basename);
+
+    /* PID le */
+    sprintf(options, "/fi \"PID le %ld\"", current_pid);
+    run_tasklist(options, 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    pos = strstr(stdout_buffer, basename);
+    ok(!!pos, "Failed to list %s.\n", basename);
+
+    /* IMAGENAME eq + PID eq */
+    sprintf(options, "/fi \"IMAGENAME eq %s\" /fi \"PID eq %ld\"", basename, current_pid);
+    run_tasklist(options, 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    pos = strstr(stdout_buffer, basename);
+    ok(!!pos, "Failed to list %s.\n", basename);
+
+    /* IMAGENAME eq + PID eq with wrong PID */
+    sprintf(options, "/fi \"IMAGENAME eq %s\" /fi \"PID eq %ld\"", basename, current_pid + 1);
+    run_tasklist(options, 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    pos = strstr(stdout_buffer, basename);
+    ok(!pos, "Got %s.\n", basename);
+}
+
 START_TEST(tasklist)
 {
     if (PRIMARYLANGID(GetUserDefaultUILanguage()) != LANG_ENGLISH)
@@ -175,4 +278,5 @@ START_TEST(tasklist)
     test_basic();
     test_no_header();
     test_format();
+    test_filter();
 }

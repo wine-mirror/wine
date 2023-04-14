@@ -17939,6 +17939,11 @@ msgstr "U redu"
 msgid "ERROR: Invalid syntax\n"
 msgstr "Neispravna sintaksa.\n"
 
+#: programs/tasklist/tasklist.rc:37
+#, fuzzy
+msgid "ERROR: The search filter cannot be recognized.\n"
+msgstr "Datoteka „%s“ nije pronađena."
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr ""

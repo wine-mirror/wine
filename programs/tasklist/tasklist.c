@@ -173,10 +173,74 @@ static BOOL tasklist_get_process_info(const PROCESSENTRY32W *process_entry, stru
     if (info->memory_usage[0] == '\0')
         wcscpy(info->memory_usage, L"N/A");
 
+    info->pid_value = process_entry->th32ProcessID;
+    info->memory_usage_value = memory_counters.WorkingSetSize / 1024;
+    info->session_id_value = session_id;
     wcscpy(info->image_name, process_entry->szExeFile);
     swprintf(info->pid, ARRAY_SIZE(info->pid), L"%u", process_entry->th32ProcessID);
     wcscpy(info->session_name, session_id == 0 ? L"Services" : L"Console");
     swprintf(info->session_number, ARRAY_SIZE(info->session_number), L"%u", session_id);
+    return TRUE;
+}
+
+static BOOL tasklist_check_filters(const struct tasklist_filter *filter,
+                                   const struct tasklist_process_info *info)
+{
+    DWORD left_dword_operand, right_dword_operand;
+    const WCHAR *left_string_operand = NULL;
+    BOOL eval;
+
+    while (filter)
+    {
+        left_string_operand = NULL;
+        left_dword_operand = 0;
+        eval = FALSE;
+
+        if (filter->name == IMAGENAME)
+            left_string_operand = info->image_name;
+        else if (filter->name == SESSIONNAME)
+            left_string_operand = info->session_name;
+        else if (filter->name == PID)
+            left_dword_operand = info->pid_value;
+        else if (filter->name == SESSION)
+            left_dword_operand = info->session_id_value;
+        else if (filter->name == MEMUSAGE)
+            left_dword_operand = info->memory_usage_value;
+
+        if (left_string_operand)
+        {
+            eval = wcsicmp(left_string_operand, filter->value);
+            if (filter->op == EQ)
+                eval = !eval;
+        }
+        else
+        {
+            if (swscanf(filter->value, L"%lu", &right_dword_operand) != 1)
+            {
+                WINE_ERR("Invalid filter operand %s.\n", wine_dbgstr_w(filter->value));
+                return FALSE;
+            }
+
+            if (filter->op == EQ)
+                eval = left_dword_operand == right_dword_operand;
+            else if (filter->op == NE)
+                eval = left_dword_operand != right_dword_operand;
+            else if (filter->op == GT)
+                eval = left_dword_operand > right_dword_operand;
+            else if (filter->op == LT)
+                eval = left_dword_operand < right_dword_operand;
+            else if (filter->op == GE)
+                eval = left_dword_operand >= right_dword_operand;
+            else if (filter->op == LE)
+                eval = left_dword_operand <= right_dword_operand;
+        }
+
+        if (!eval)
+            return FALSE;
+
+        filter = filter->next;
+    }
+
     return TRUE;
 }
 
@@ -207,6 +271,9 @@ static void tasklist_print(const struct tasklist_options *options)
         if (!tasklist_get_process_info(&process_list[i], &info))
             continue;
 
+        if (!tasklist_check_filters(options->filters, &info))
+            continue;
+
         if (options->format == TABLE)
             wprintf(L"%-25.25s %8.8s %-16.16s %11.11s %12s\n",
                     info.image_name, info.pid, info.session_name, info.session_number, info.memory_usage);
@@ -232,7 +299,9 @@ static void tasklist_print(const struct tasklist_options *options)
 int __cdecl wmain(int argc, WCHAR *argv[])
 {
     struct tasklist_options options = {0};
-    int i;
+    struct tasklist_filter *filter, *next, **filter_ptr = &options.filters;
+    WCHAR *filter_name, *filter_op, *buffer;
+    int i, ret = 0;
 
     for (i = 0; i < argc; i++)
         WINE_TRACE("%s ", wine_dbgstr_w(argv[i]));
@@ -243,7 +312,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
         if (!wcscmp(argv[i], L"/?"))
         {
             tasklist_message(STRING_USAGE);
-            return 0;
+            goto done;
         }
         else if (!wcsicmp(argv[i], L"/nh"))
         {
@@ -254,7 +323,8 @@ int __cdecl wmain(int argc, WCHAR *argv[])
             if (i + 1 >= argc)
             {
                 tasklist_error(STRING_INVALID_SYNTAX);
-                return 1;
+                ret = 1;
+                goto done;
             }
             else if (!wcsicmp(argv[i + 1], L"TABLE"))
             {
@@ -271,8 +341,92 @@ int __cdecl wmain(int argc, WCHAR *argv[])
             else
             {
                 tasklist_error(STRING_INVALID_SYNTAX);
-                return 1;
+                ret = 1;
+                goto done;
             }
+        }
+        else if (!wcsicmp(argv[i], L"/fi"))
+        {
+            if (i + 1 >= argc || !(filter_name = wcstok(argv[i + 1], L" ", &buffer)))
+            {
+                tasklist_error(STRING_INVALID_SYNTAX);
+                ret = 1;
+                goto done;
+            }
+
+            filter = calloc(1, sizeof(*filter));
+            if (!filter)
+            {
+                WINE_ERR("Out of memory.\n");
+                ret = 1;
+                goto done;
+            }
+
+            if (!wcsicmp(filter_name, L"IMAGENAME"))
+                filter->name = IMAGENAME;
+            else if (!wcsicmp(filter_name, L"PID"))
+                filter->name = PID;
+            else if (!wcsicmp(filter_name, L"SESSION"))
+                filter->name = SESSION;
+            else if (!wcsicmp(filter_name, L"SESSIONNAME"))
+                filter->name = SESSIONNAME;
+            else if (!wcsicmp(filter_name, L"MEMUSAGE"))
+                filter->name = MEMUSAGE;
+            else
+            {
+                WINE_WARN("Ignoring filter %s.\n", wine_dbgstr_w(filter_name));
+                free(filter);
+                continue;
+            }
+
+            filter_op = wcstok(NULL, L" ", &buffer);
+            if (!filter_op)
+            {
+                tasklist_error(STRING_FILTER_NOT_RECOGNIZED);
+                free(filter);
+                ret = 1;
+                goto done;
+            }
+
+            if (!wcsicmp(filter_op, L"EQ"))
+                filter->op = EQ;
+            else if (!wcsicmp(filter_op, L"NE"))
+                filter->op = NE;
+            else if (!wcsicmp(filter_op, L"GT"))
+                filter->op = GT;
+            else if (!wcsicmp(filter_op, L"LT"))
+                filter->op = LT;
+            else if (!wcsicmp(filter_op, L"GE"))
+                filter->op = GE;
+            else if (!wcsicmp(filter_op, L"LE"))
+                filter->op = LE;
+            else
+            {
+                tasklist_error(STRING_FILTER_NOT_RECOGNIZED);
+                free(filter);
+                ret = 1;
+                goto done;
+            }
+
+            if (filter->op >= GT && filter->name != PID && filter->name != SESSION && filter->name != MEMUSAGE)
+            {
+                tasklist_error(STRING_FILTER_NOT_RECOGNIZED);
+                free(filter);
+                ret = 1;
+                goto done;
+            }
+
+            filter->value = wcstok(NULL, L" ", &buffer);
+            if (!filter->value)
+            {
+                tasklist_error(STRING_FILTER_NOT_RECOGNIZED);
+                free(filter);
+                ret = 1;
+                goto done;
+            }
+
+            *filter_ptr = filter;
+            filter_ptr = &filter->next;
         }
         else
         {
@@ -281,5 +435,14 @@ int __cdecl wmain(int argc, WCHAR *argv[])
     }
 
     tasklist_print(&options);
-    return 0;
+
+done:
+    next = options.filters;
+    while (next)
+    {
+        filter = next->next;
+        free(next);
+        next = filter;
+    }
+    return ret;
 }

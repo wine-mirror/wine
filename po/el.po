@@ -16803,6 +16803,10 @@ msgstr ""
 msgid "ERROR: Invalid syntax\n"
 msgstr "Μη έγγυρος(οι) χαρακτήρας(ες) στο μονοπάτι.\n"
 
+#: programs/tasklist/tasklist.rc:37
+msgid "ERROR: The search filter cannot be recognized.\n"
+msgstr ""
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr ""

@@ -17933,6 +17933,12 @@ msgstr "OK"
 msgid "ERROR: Invalid syntax\n"
 msgstr "reg: Neplatná syntaxe. "
 
+#: programs/tasklist/tasklist.rc:37
+#, fuzzy
+#| msgid "The file cannot be accessed.\n"
+msgid "ERROR: The search filter cannot be recognized.\n"
+msgstr "K souboru není možné přistupovat.\n"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&Nová úloha (Spustit...)"

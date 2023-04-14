@@ -33,6 +33,7 @@ STRINGTABLE
     STRING_MEM_USAGE,               "Mem Usage"
     STRING_K,                       "K"
     STRING_INVALID_SYNTAX,          "ERROR: Invalid syntax\n"
+    STRING_FILTER_NOT_RECOGNIZED,   "ERROR: The search filter cannot be recognized.\n"
 }
 
 #define WINE_FILEDESCRIPTION_STR "Wine tasklist"

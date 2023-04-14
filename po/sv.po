@@ -18127,6 +18127,12 @@ msgstr "OK"
 msgid "ERROR: Invalid syntax\n"
 msgstr "reg: Ogiltig syntax. "
 
+#: programs/tasklist/tasklist.rc:37
+#, fuzzy
+#| msgid "The filename cannot be resolved.\n"
+msgid "ERROR: The search filter cannot be recognized.\n"
+msgstr "Filnamnet kan inte hittas.\n"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&Ny aktivitet (Kör...)"

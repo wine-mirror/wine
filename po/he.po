@@ -17946,6 +17946,11 @@ msgstr "אישור"
 msgid "ERROR: Invalid syntax\n"
 msgstr "Error: Invalid key name\n"
 
+#: programs/tasklist/tasklist.rc:37
+#, fuzzy
+msgid "ERROR: The search filter cannot be recognized.\n"
+msgstr "'%s' לא נמצא."
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "משימה &חדשה (הפעלה...)"

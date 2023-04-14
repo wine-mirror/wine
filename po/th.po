@@ -17107,6 +17107,11 @@ msgstr "ตกลง"
 msgid "ERROR: Invalid syntax\n"
 msgstr "แฟ้มตํารา (*.txt).\n"
 
+#: programs/tasklist/tasklist.rc:37
+#, fuzzy
+msgid "ERROR: The search filter cannot be recognized.\n"
+msgstr "ไม่พบข้อความ '%s' ที่ต้องการค้นหา.\n"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr ""

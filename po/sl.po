@@ -18455,6 +18455,12 @@ msgstr "V redu"
 msgid "ERROR: Invalid syntax\n"
 msgstr "Napaka: neveljavno ime ključa\n"
 
+#: programs/tasklist/tasklist.rc:37
+#, fuzzy
+#| msgid "The filename cannot be resolved.\n"
+msgid "ERROR: The search filter cannot be recognized.\n"
+msgstr "Imena datoteke ni mogoče razrešiti.\n"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&Novo opravilo (Zaženi ...)"

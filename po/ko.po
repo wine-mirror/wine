@@ -17250,6 +17250,12 @@ msgstr "확인"
 msgid "ERROR: Invalid syntax\n"
 msgstr "reg: 잘못된 구문. "
 
+#: programs/tasklist/tasklist.rc:37
+#, fuzzy
+#| msgid "The filename cannot be resolved.\n"
+msgid "ERROR: The search filter cannot be recognized.\n"
+msgstr "파일 이름을 확인할 수 없습니다.\n"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "새 작업(&N) (실행...)"

@@ -17298,6 +17298,10 @@ msgstr "K"
 msgid "ERROR: Invalid syntax\n"
 msgstr "ERROR: Invalid syntax\n"
 
+#: programs/tasklist/tasklist.rc:37
+msgid "ERROR: The search filter cannot be recognized.\n"
+msgstr "ERROR: The search filter cannot be recognized.\n"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&New Task (Run...)"

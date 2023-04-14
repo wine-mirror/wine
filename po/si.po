@@ -17223,6 +17223,10 @@ msgstr "හරි"
 msgid "ERROR: Invalid syntax\n"
 msgstr "reg: අවලංගු රීති."
 
+#: programs/tasklist/tasklist.rc:37
+msgid "ERROR: The search filter cannot be recognized.\n"
+msgstr ""
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "අලුත් කාර්යයක් (ධාවන කරන්න...) (&N)"

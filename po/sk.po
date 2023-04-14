@@ -17669,6 +17669,10 @@ msgstr "OK"
 msgid "ERROR: Invalid syntax\n"
 msgstr "Nesprávny názov.\n"
 
+#: programs/tasklist/tasklist.rc:37
+msgid "ERROR: The search filter cannot be recognized.\n"
+msgstr ""
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&Nová úloha (Spusti...)"

@@ -17449,6 +17449,12 @@ msgstr "D'acord"
 msgid "ERROR: Invalid syntax\n"
 msgstr "reg: La sintaxi no és vàlida. "
 
+#: programs/tasklist/tasklist.rc:37
+#, fuzzy
+#| msgid "The filename cannot be resolved.\n"
+msgid "ERROR: The search filter cannot be recognized.\n"
+msgstr "No es pot resoldre el nom de fitxer.\n"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&Tasca nova (executa...)"

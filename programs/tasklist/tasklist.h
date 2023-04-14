@@ -28,6 +28,7 @@
 #define STRING_MEM_USAGE                106
 #define STRING_K                        107
 #define STRING_INVALID_SYNTAX           108
+#define STRING_FILTER_NOT_RECOGNIZED    109
 
 enum tasklist_format
 {
@@ -36,8 +37,38 @@ enum tasklist_format
     LIST  = 2,
 };
 
+enum tasklist_filter_name
+{
+    IMAGENAME   = 1,
+    PID         = 2,
+    SESSION     = 3,
+    SESSIONNAME = 4,
+    MEMUSAGE    = 5,
+};
+
+enum tasklist_filter_operator
+{
+    EQ = 0,
+    NE = 1,
+    GT = 2,
+    LT = 3,
+    GE = 4,
+    LE = 5,
+};
+
+struct tasklist_filter
+{
+    enum tasklist_filter_name name;
+    enum tasklist_filter_operator op;
+    WCHAR *value;
+    struct tasklist_filter *next;
+};
+
 struct tasklist_process_info
 {
+    DWORD pid_value;
+    DWORD memory_usage_value;
+    DWORD session_id_value;
     WCHAR image_name[32];
     WCHAR pid[32];
     WCHAR session_name[32];
@@ -49,4 +80,5 @@ struct tasklist_options
 {
     BOOL no_header;
     enum tasklist_format format;
+    struct tasklist_filter *filters;
 };

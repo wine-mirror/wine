@@ -17559,6 +17559,12 @@ msgstr "ОК"
 msgid "ERROR: Invalid syntax\n"
 msgstr "reg: неверный синтаксис. "
 
+#: programs/tasklist/tasklist.rc:37
+#, fuzzy
+#| msgid "The filename cannot be resolved.\n"
+msgid "ERROR: The search filter cannot be recognized.\n"
+msgstr "Не удалось разобрать имя файла.\n"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&Новая задача (Выполнить...)"

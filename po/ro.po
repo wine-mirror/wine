@@ -18195,6 +18195,11 @@ msgstr "OK"
 msgid "ERROR: Invalid syntax\n"
 msgstr "reg: Sintaxă nevalidă. "
 
+#: programs/tasklist/tasklist.rc:37
+#, fuzzy
+msgid "ERROR: The search filter cannot be recognized.\n"
+msgstr "'%s' nu a fost găsit."
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "Sarcină &nouă (executare...)"

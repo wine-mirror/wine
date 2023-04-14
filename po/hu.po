@@ -18431,6 +18431,12 @@ msgstr "OK"
 msgid "ERROR: Invalid syntax\n"
 msgstr "Hiba: Érvénytelen kulcsnév\n"
 
+#: programs/tasklist/tasklist.rc:37
+#, fuzzy
+#| msgid "The filename cannot be resolved.\n"
+msgid "ERROR: The search filter cannot be recognized.\n"
+msgstr "A fájlnév nem található!.\n"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "Új feladat (f&uttatás...)"
