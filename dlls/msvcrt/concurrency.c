@@ -921,8 +921,8 @@ void __thiscall ExternalContextBase_Unblock(ExternalContextBase *this)
 DEFINE_THISCALL_WRAPPER(ExternalContextBase_IsSynchronouslyBlocked, 4)
 bool __thiscall ExternalContextBase_IsSynchronouslyBlocked(const ExternalContextBase *this)
 {
-    FIXME("(%p)->() stub\n", this);
-    return FALSE;
+    TRACE("(%p)->()\n", this);
+    return this->blocked >= 1;
 }
 
 DEFINE_THISCALL_WRAPPER(ExternalContextBase_Block, 4)
