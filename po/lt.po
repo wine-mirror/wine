@@ -17319,6 +17319,12 @@ msgstr "Atm naudojimas"
 msgid "K"
 msgstr "Gerai"
 
+#: programs/tasklist/tasklist.rc:36
+#, fuzzy
+#| msgid "reg: Invalid syntax. "
+msgid "ERROR: Invalid syntax\n"
+msgstr "reg: Netinkama sintaksė. "
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&Nauja užduotis (vykdyti...)"

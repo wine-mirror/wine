@@ -122,6 +122,48 @@ static void test_no_header(void)
     ok(!pos, "Got header.\n");
 }
 
+static void test_format(void)
+{
+    char *pos;
+
+    /* /fo */
+    run_tasklist("/fo", 1);
+    ok(stdout_size == 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size > 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+
+    /* /fo invalid */
+    run_tasklist("/fo invalid", 1);
+    ok(stdout_size == 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size > 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+
+    /* /fo TABLE */
+    run_tasklist("/fo TABLE", 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    pos = strstr(stdout_buffer, "\r\n"
+                                "Image Name                     PID Session Name        Session#    Mem Usage\r\n"
+                                "========================= ======== ================ =========== ============\r\n");
+    ok(pos == stdout_buffer, "Got the wrong first line.\n");
+    pos = strstr(stdout_buffer, "tasklist.exe");
+    ok(!!pos, "Failed to list tasklist.exe.\n");
+
+    /* /fo CSV */
+    run_tasklist("/fo CSV", 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    pos = strstr(stdout_buffer, "\"Image Name\",\"PID\",\"Session Name\",\"Session#\",\"Mem Usage\"");
+    ok(pos == stdout_buffer, "Got the wrong first line.\n");
+    pos = strstr(stdout_buffer, "\"tasklist.exe\",");
+    ok(!!pos, "Failed to list tasklist.exe.\n");
+
+    /* /fo LIST */
+    run_tasklist("/fo LIST", 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    pos = strstr(stdout_buffer, "Image Name:   tasklist.exe");
+    ok(!!pos, "Failed to list tasklist.exe.\n");
+}
+
 START_TEST(tasklist)
 {
     if (PRIMARYLANGID(GetUserDefaultUILanguage()) != LANG_ENGLISH)
@@ -132,4 +174,5 @@ START_TEST(tasklist)
 
     test_basic();
     test_no_header();
+    test_format();
 }

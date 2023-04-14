@@ -17768,6 +17768,12 @@ msgstr "Uso de Mem"
 msgid "K"
 msgstr "Aceptar"
 
+#: programs/tasklist/tasklist.rc:36
+#, fuzzy
+#| msgid "reg: Invalid syntax. "
+msgid "ERROR: Invalid syntax\n"
+msgstr "reg: Sintaxis inválida. "
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&Nueva Tarea (Ejecutar...)"

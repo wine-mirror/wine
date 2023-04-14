@@ -16467,6 +16467,10 @@ msgstr ""
 msgid "K"
 msgstr ""
 
+#: programs/tasklist/tasklist.rc:36
+msgid "ERROR: Invalid syntax\n"
+msgstr ""
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr ""

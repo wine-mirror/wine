@@ -18425,6 +18425,12 @@ msgstr "Memória - (Személyes munkakészlet)"
 msgid "K"
 msgstr "OK"
 
+#: programs/tasklist/tasklist.rc:36
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "ERROR: Invalid syntax\n"
+msgstr "Hiba: Érvénytelen kulcsnév\n"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "Új feladat (f&uttatás...)"

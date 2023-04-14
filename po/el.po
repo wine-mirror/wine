@@ -16798,6 +16798,11 @@ msgstr ""
 msgid "K"
 msgstr ""
 
+#: programs/tasklist/tasklist.rc:36
+#, fuzzy
+msgid "ERROR: Invalid syntax\n"
+msgstr "Μη έγγυρος(οι) χαρακτήρας(ες) στο μονοπάτι.\n"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr ""

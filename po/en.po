@@ -17294,6 +17294,10 @@ msgstr "Mem Usage"
 msgid "K"
 msgstr "K"
 
+#: programs/tasklist/tasklist.rc:36
+msgid "ERROR: Invalid syntax\n"
+msgstr "ERROR: Invalid syntax\n"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&New Task (Run...)"

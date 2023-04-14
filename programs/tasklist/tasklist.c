@@ -33,6 +33,14 @@ static int tasklist_message(int msg)
     return wprintf(msg_buffer);
 }
 
+static int tasklist_error(int msg)
+{
+    WCHAR msg_buffer[MAXSTRING];
+
+    LoadStringW(GetModuleHandleW(NULL), msg, msg_buffer, ARRAY_SIZE(msg_buffer));
+    return fwprintf(stderr, msg_buffer);
+}
+
 static PROCESSENTRY32W *enumerate_processes(DWORD *process_count)
 {
     unsigned int alloc_count = 128;
@@ -112,7 +120,8 @@ static NUMBERFMTW *tasklist_get_memory_format(void)
     return &format;
 }
 
-static void tasklist_get_header(struct tasklist_process_info *header)
+static void tasklist_get_header(const struct tasklist_options *options,
+                                struct tasklist_process_info *header)
 {
     HMODULE module;
 
@@ -122,6 +131,14 @@ static void tasklist_get_header(struct tasklist_process_info *header)
     LoadStringW(module, STRING_SESSION_NAME, header->session_name, ARRAY_SIZE(header->session_name));
     LoadStringW(module, STRING_SESSION_NUMBER, header->session_number, ARRAY_SIZE(header->session_number));
     LoadStringW(module, STRING_MEM_USAGE, header->memory_usage, ARRAY_SIZE(header->memory_usage));
+    if (options->format == LIST)
+    {
+        wcscat(header->image_name, L":");
+        wcscat(header->pid, L":");
+        wcscat(header->session_name, L":");
+        wcscat(header->session_number, L":");
+        wcscat(header->memory_usage, L":");
+    }
 }
 
 static BOOL tasklist_get_process_info(const PROCESSENTRY32W *process_entry, struct tasklist_process_info *info)
@@ -169,14 +186,19 @@ static void tasklist_print(const struct tasklist_options *options)
     PROCESSENTRY32W *process_list;
     DWORD process_count, i;
 
-    wprintf(L"\n");
+    if (options->format == TABLE)
+        wprintf(L"\n");
 
+    tasklist_get_header(options, &header);
     if (!options->no_header)
     {
-        tasklist_get_header(&header);
-        wprintf(L"%-25.25s %8.8s %-16.16s %11.11s %12.12s\n"
-                L"========================= ======== ================ =========== ============\n",
-                header.image_name, header.pid, header.session_name, header.session_number, header.memory_usage);
+        if (options->format == TABLE)
+            wprintf(L"%-25.25s %8.8s %-16.16s %11.11s %12.12s\n"
+                    L"========================= ======== ================ =========== ============\n",
+                    header.image_name, header.pid, header.session_name, header.session_number, header.memory_usage);
+        else if (options->format == CSV)
+            wprintf(L"\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                    header.image_name, header.pid, header.session_name, header.session_number, header.memory_usage);
     }
 
     process_list = enumerate_processes(&process_count);
@@ -185,8 +207,24 @@ static void tasklist_print(const struct tasklist_options *options)
         if (!tasklist_get_process_info(&process_list[i], &info))
             continue;
 
-        wprintf(L"%-25.25s %8.8s %-16.16s %11.11s %12s\n",
-                info.image_name, info.pid, info.session_name, info.session_number, info.memory_usage);
+        if (options->format == TABLE)
+            wprintf(L"%-25.25s %8.8s %-16.16s %11.11s %12s\n",
+                    info.image_name, info.pid, info.session_name, info.session_number, info.memory_usage);
+        else if (options->format == CSV)
+            wprintf(L"\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                    info.image_name, info.pid, info.session_name, info.session_number, info.memory_usage);
+        else if (options->format == LIST)
+            wprintf(L"\n"
+                    L"%-13.13s %s\n"
+                    L"%-13.13s %s\n"
+                    L"%-13.13s %s\n"
+                    L"%-13.13s %s\n"
+                    L"%-13.13s %s\n",
+                    header.image_name, info.image_name,
+                    header.pid, info.pid,
+                    header.session_name, info.session_name,
+                    header.session_number, info.session_number,
+                    header.memory_usage, info.memory_usage);
     }
     free(process_list);
 }
@@ -210,6 +248,31 @@ int __cdecl wmain(int argc, WCHAR *argv[])
         else if (!wcsicmp(argv[i], L"/nh"))
         {
             options.no_header = TRUE;
+        }
+        else if (!wcsicmp(argv[i], L"/fo"))
+        {
+            if (i + 1 >= argc)
+            {
+                tasklist_error(STRING_INVALID_SYNTAX);
+                return 1;
+            }
+            else if (!wcsicmp(argv[i + 1], L"TABLE"))
+            {
+                options.format = TABLE;
+            }
+            else if (!wcsicmp(argv[i + 1], L"CSV"))
+            {
+                options.format = CSV;
+            }
+            else if (!wcsicmp(argv[i + 1], L"LIST"))
+            {
+                options.format = LIST;
+            }
+            else
+            {
+                tasklist_error(STRING_INVALID_SYNTAX);
+                return 1;
+            }
         }
         else
         {

@@ -17553,6 +17553,12 @@ msgstr "Память"
 msgid "K"
 msgstr "ОК"
 
+#: programs/tasklist/tasklist.rc:36
+#, fuzzy
+#| msgid "reg: Invalid syntax. "
+msgid "ERROR: Invalid syntax\n"
+msgstr "reg: неверный синтаксис. "
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&Новая задача (Выполнить...)"

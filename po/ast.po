@@ -17164,6 +17164,12 @@ msgstr ""
 msgid "K"
 msgstr "Aceutar"
 
+#: programs/tasklist/tasklist.rc:36
+#, fuzzy
+#| msgid "reg: Invalid syntax. "
+msgid "ERROR: Invalid syntax\n"
+msgstr "reg: La sintaxis nun ye válida. "
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr ""

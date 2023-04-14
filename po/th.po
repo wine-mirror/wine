@@ -17102,6 +17102,11 @@ msgstr ""
 msgid "K"
 msgstr "ตกลง"
 
+#: programs/tasklist/tasklist.rc:36
+#, fuzzy
+msgid "ERROR: Invalid syntax\n"
+msgstr "แฟ้มตํารา (*.txt).\n"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr ""

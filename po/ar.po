@@ -18523,6 +18523,12 @@ msgstr "استخدام الذاكرة"
 msgid "K"
 msgstr "حسنًا"
 
+#: programs/tasklist/tasklist.rc:36
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "ERROR: Invalid syntax\n"
+msgstr "خطأ : اسم المفتاح غير سليم\n"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "م&همة جديدة (تشغيل)..."

@@ -27,6 +27,14 @@
 #define STRING_SESSION_NUMBER           105
 #define STRING_MEM_USAGE                106
 #define STRING_K                        107
+#define STRING_INVALID_SYNTAX           108
+
+enum tasklist_format
+{
+    TABLE = 0,
+    CSV   = 1,
+    LIST  = 2,
+};
 
 struct tasklist_process_info
 {
@@ -40,4 +48,5 @@ struct tasklist_process_info
 struct tasklist_options
 {
     BOOL no_header;
+    enum tasklist_format format;
 };

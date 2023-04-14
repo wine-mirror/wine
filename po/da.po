@@ -18434,6 +18434,12 @@ msgstr "Hukommelse forbrug"
 msgid "K"
 msgstr "OK"
 
+#: programs/tasklist/tasklist.rc:36
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "ERROR: Invalid syntax\n"
+msgstr "Fejl: Ugyldigt nøgle navn\n"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&Ny opgave (Kør...)"

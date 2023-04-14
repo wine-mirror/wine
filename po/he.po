@@ -17940,6 +17940,12 @@ msgstr "שימוש בזיכרון"
 msgid "K"
 msgstr "אישור"
 
+#: programs/tasklist/tasklist.rc:36
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "ERROR: Invalid syntax\n"
+msgstr "Error: Invalid key name\n"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "משימה &חדשה (הפעלה...)"

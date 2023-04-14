@@ -16992,6 +16992,11 @@ msgstr ""
 msgid "K"
 msgstr "قبول"
 
+#: programs/tasklist/tasklist.rc:36
+#, fuzzy
+msgid "ERROR: Invalid syntax\n"
+msgstr "پرونده‌های متنی (*.txt).\n"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr ""

@@ -18121,6 +18121,12 @@ msgstr "Minnesanvändning"
 msgid "K"
 msgstr "OK"
 
+#: programs/tasklist/tasklist.rc:36
+#, fuzzy
+#| msgid "reg: Invalid syntax. "
+msgid "ERROR: Invalid syntax\n"
+msgstr "reg: Ogiltig syntax. "
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&Ny aktivitet (Kör...)"

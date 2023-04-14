@@ -17244,6 +17244,12 @@ msgstr "메모리 사용량"
 msgid "K"
 msgstr "확인"
 
+#: programs/tasklist/tasklist.rc:36
+#, fuzzy
+#| msgid "reg: Invalid syntax. "
+msgid "ERROR: Invalid syntax\n"
+msgstr "reg: 잘못된 구문. "
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "새 작업(&N) (실행...)"

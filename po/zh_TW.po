@@ -17128,6 +17128,12 @@ msgstr "記憶體使用量"
 msgid "K"
 msgstr "確定"
 
+#: programs/tasklist/tasklist.rc:36
+#, fuzzy
+#| msgid "reg: Invalid syntax. "
+msgid "ERROR: Invalid syntax\n"
+msgstr "reg: 無效的語法。 "
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "執行新工作(&N)..."
