@@ -123,6 +123,111 @@ static void check_service_interface_(unsigned int line, void *iface_ptr, REFGUID
         IUnknown_Release(unk);
 }
 
+struct d3d9_surface_readback
+{
+    IDirect3DSurface9 *surface, *readback_surface;
+    D3DLOCKED_RECT map_desc;
+    D3DSURFACE_DESC surf_desc;
+};
+
+static void get_d3d9_surface_readback(IDirect3DSurface9 *surface, struct d3d9_surface_readback *rb)
+{
+    IDirect3DDevice9 *device;
+    HRESULT hr;
+
+    rb->surface = surface;
+
+    hr = IDirect3DSurface9_GetDevice(surface, &device);
+    ok(hr == D3D_OK, "Failed to get device, hr %#lx.\n", hr);
+
+    hr = IDirect3DSurface9_GetDesc(surface, &rb->surf_desc);
+    ok(hr == D3D_OK, "Failed to get surface desc, hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, rb->surf_desc.Width, rb->surf_desc.Height,
+            rb->surf_desc.Format, D3DPOOL_SYSTEMMEM, &rb->readback_surface, NULL);
+    ok(hr == D3D_OK, "Failed to create surface, hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9Ex_GetRenderTargetData(device, surface, rb->readback_surface);
+    ok(hr == D3D_OK, "Failed to get render target data, hr %#lx.\n", hr);
+
+    hr = IDirect3DSurface9_LockRect(rb->readback_surface, &rb->map_desc, NULL, 0);
+    ok(hr == D3D_OK, "Failed to lock surface, hr %#lx.\n", hr);
+
+    IDirect3DDevice9_Release(device);
+}
+
+static void release_d3d9_surface_readback(struct d3d9_surface_readback *rb, BOOL upload)
+{
+    ULONG refcount;
+    HRESULT hr;
+
+    hr = IDirect3DSurface9_UnlockRect(rb->readback_surface);
+    ok(hr == D3D_OK, "Failed to unlock surface, hr %#lx.\n", hr);
+
+    if (upload)
+    {
+        IDirect3DDevice9 *device;
+
+        IDirect3DSurface9_GetDevice(rb->surface, &device);
+        ok(hr == D3D_OK, "Failed to get device, hr %#lx.\n", hr);
+
+        hr = IDirect3DDevice9_UpdateSurface(device, rb->readback_surface, NULL, rb->surface, NULL);
+        ok(hr == D3D_OK, "Failed to update surface, hr %#lx.\n", hr);
+
+        IDirect3DDevice9_Release(device);
+    }
+
+    refcount = IDirect3DSurface9_Release(rb->readback_surface);
+    ok(refcount == 0, "Readback surface still has references.\n");
+}
+
+static void *get_d3d9_readback_data(struct d3d9_surface_readback *rb,
+        unsigned int x, unsigned int y, unsigned byte_width)
+{
+    return (BYTE *)rb->map_desc.pBits + y * rb->map_desc.Pitch + x * byte_width;
+}
+
+static DWORD get_d3d9_readback_u32(struct d3d9_surface_readback *rb, unsigned int x, unsigned int y)
+{
+    return *(DWORD *)get_d3d9_readback_data(rb, x, y, sizeof(DWORD));
+}
+
+static DWORD get_d3d9_readback_color(struct d3d9_surface_readback *rb, unsigned int x, unsigned int y)
+{
+    return get_d3d9_readback_u32(rb, x, y);
+}
+
+static DWORD get_d3d9_surface_color(IDirect3DSurface9 *surface, unsigned int x, unsigned int y)
+{
+    struct d3d9_surface_readback rb;
+    DWORD color;
+
+    get_d3d9_surface_readback(surface, &rb);
+    color = get_d3d9_readback_color(&rb, x, y);
+    release_d3d9_surface_readback(&rb, FALSE);
+
+    return color;
+}
+
+static void put_d3d9_readback_u32(struct d3d9_surface_readback *rb, unsigned int x, unsigned int y, DWORD color)
+{
+    *(DWORD *)get_d3d9_readback_data(rb, x, y, sizeof(DWORD)) = color;
+}
+
+static void put_d3d9_readback_color(struct d3d9_surface_readback *rb, unsigned int x, unsigned int y, DWORD color)
+{
+    put_d3d9_readback_u32(rb, x, y, color);
+}
+
+static void put_d3d9_surface_color(IDirect3DSurface9 *surface,
+        unsigned int x, unsigned int y, DWORD color)
+{
+    struct d3d9_surface_readback rb;
+
+    get_d3d9_surface_readback(surface, &rb);
+    put_d3d9_readback_color(&rb, x, y, color);
+    release_d3d9_surface_readback(&rb, TRUE);
+}
+
 struct d3d11_resource_readback
 {
     ID3D11Resource *resource;
@@ -6468,6 +6573,7 @@ static void test_MFCreateDXSurfaceBuffer(void)
     BYTE *data, *data2;
     IMFGetService *gs;
     IDirect3D9 *d3d;
+    DWORD color;
     HWND window;
     HRESULT hr;
     LONG pitch;
@@ -6649,22 +6755,26 @@ static void test_MFCreateDXSurfaceBuffer(void)
 
     /* Lock flags are ignored, so writing is allowed when locking for
      * reading and viceversa. */
+    put_d3d9_surface_color(backbuffer, 0, 0, 0xcdcdcdcd);
     hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Read, &data, &pitch, &data2, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(data == data2, "Unexpected scanline pointer.\n");
+    ok(data[0] == 0xcd, "Unexpected leading byte.\n");
     memset(data, 0xab, 4);
     IMF2DBuffer2_Unlock2D(_2dbuffer2);
 
+    color = get_d3d9_surface_color(backbuffer, 0, 0);
+    ok(color == 0xabababab, "Unexpected leading dword.\n");
+    put_d3d9_surface_color(backbuffer, 0, 0, 0xefefefef);
+
     hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Write, &data, &pitch, &data2, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(data[0] == 0xab, "Unexpected leading byte.\n");
+    ok(data[0] == 0xef, "Unexpected leading byte.\n");
+    memset(data, 0x89, 4);
     IMF2DBuffer2_Unlock2D(_2dbuffer2);
 
-    hr = IMFMediaBuffer_Lock(buffer, &data, NULL, NULL);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(data[0] == 0xab || broken(broken_test), "Unexpected leading byte.\n");
-    hr = IMFMediaBuffer_Unlock(buffer);
-    ok(hr == S_OK || broken(broken_test), "Unexpected hr %#lx.\n", hr);
+    color = get_d3d9_surface_color(backbuffer, 0, 0);
+    ok(color == 0x89898989, "Unexpected leading dword.\n");
 
     /* Also, flags incompatibilities are not taken into account even
      * if a buffer is already locked. */
