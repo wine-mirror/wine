@@ -100,6 +100,7 @@ typedef struct {
     struct scheduler_list scheduler;
     unsigned int id;
     union allocator_cache_entry *allocator_cache[8];
+    LONG blocked;
 } ExternalContextBase;
 extern const vtable_ptr ExternalContextBase_vtable;
 static void ExternalContextBase_ctor(ExternalContextBase*);
@@ -927,7 +928,16 @@ bool __thiscall ExternalContextBase_IsSynchronouslyBlocked(const ExternalContext
 DEFINE_THISCALL_WRAPPER(ExternalContextBase_Block, 4)
 void __thiscall ExternalContextBase_Block(ExternalContextBase *this)
 {
-    FIXME("(%p)->() stub\n", this);
+    LONG blocked;
+
+    TRACE("(%p)->()\n", this);
+
+    blocked = InterlockedIncrement(&this->blocked);
+    while (blocked >= 1)
+    {
+        RtlWaitOnAddress(&this->blocked, &blocked, sizeof(LONG), NULL);
+        blocked = this->blocked;
+    }
 }
 
 DEFINE_THISCALL_WRAPPER(ExternalContextBase_Yield, 4)
