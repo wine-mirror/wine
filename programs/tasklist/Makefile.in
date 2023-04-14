@@ -1,7 +1,8 @@
 MODULE    = tasklist.exe
+IMPORTS   = user32
 
 EXTRADLLFLAGS = -mconsole -municode
 
 C_SRCS = tasklist.c
 
-RC_SRCS = version.rc
+RC_SRCS = tasklist.rc

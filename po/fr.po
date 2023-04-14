@@ -17969,6 +17969,46 @@ msgid ""
 "Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
 msgstr ""
 
+#: include/wine/wine_common_ver.rc:138
+#, fuzzy
+#| msgid "page tab list"
+msgid "Wine tasklist"
+msgstr "liste d'onglets de pages"
+
+#: programs/tasklist/tasklist.rc:29
+msgid "Usage: tasklist [/?]\n"
+msgstr ""
+
+#: programs/tasklist/tasklist.rc:30 programs/taskmgr/taskmgr.rc:272
+msgid "Image Name"
+msgstr "Nom d'image"
+
+#: programs/tasklist/tasklist.rc:31 programs/taskmgr/taskmgr.rc:273
+msgid "PID"
+msgstr "PID"
+
+#: programs/tasklist/tasklist.rc:32
+#, fuzzy
+#| msgid "Session ID"
+msgid "Session Name"
+msgstr "ID session"
+
+#: programs/tasklist/tasklist.rc:33
+#, fuzzy
+#| msgid "Session ID"
+msgid "Session#"
+msgstr "ID session"
+
+#: programs/tasklist/tasklist.rc:34 programs/taskmgr/taskmgr.rc:276
+msgid "Mem Usage"
+msgstr "Mémoire"
+
+#: programs/tasklist/tasklist.rc:35
+#, fuzzy
+#| msgid "OK"
+msgid "K"
+msgstr "OK"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&Nouvelle tâche (Exécuter...)"
@@ -18638,14 +18678,6 @@ msgstr "Processus : %d"
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
 msgstr "Utilisation mémoire : %1!u! ko / %2!u! ko"
 
-#: programs/taskmgr/taskmgr.rc:272
-msgid "Image Name"
-msgstr "Nom d'image"
-
-#: programs/taskmgr/taskmgr.rc:273
-msgid "PID"
-msgstr "PID"
-
 #: programs/taskmgr/taskmgr.rc:274
 msgid "CPU"
 msgstr "CPU"
@@ -18653,10 +18685,6 @@ msgstr "CPU"
 #: programs/taskmgr/taskmgr.rc:275
 msgid "CPU Time"
 msgstr "Temps CPU"
-
-#: programs/taskmgr/taskmgr.rc:276
-msgid "Mem Usage"
-msgstr "Mémoire"
 
 #: programs/taskmgr/taskmgr.rc:277
 msgid "Mem Delta"

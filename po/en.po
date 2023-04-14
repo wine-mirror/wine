@@ -17262,6 +17262,38 @@ msgid ""
 msgstr ""
 "Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
 
+#: include/wine/wine_common_ver.rc:138
+msgid "Wine tasklist"
+msgstr "Wine tasklist"
+
+#: programs/tasklist/tasklist.rc:29
+msgid "Usage: tasklist [/?]\n"
+msgstr "Usage: tasklist [/?]\n"
+
+#: programs/tasklist/tasklist.rc:30 programs/taskmgr/taskmgr.rc:272
+msgid "Image Name"
+msgstr "Image Name"
+
+#: programs/tasklist/tasklist.rc:31 programs/taskmgr/taskmgr.rc:273
+msgid "PID"
+msgstr "PID"
+
+#: programs/tasklist/tasklist.rc:32
+msgid "Session Name"
+msgstr "Session Name"
+
+#: programs/tasklist/tasklist.rc:33
+msgid "Session#"
+msgstr "Session#"
+
+#: programs/tasklist/tasklist.rc:34 programs/taskmgr/taskmgr.rc:276
+msgid "Mem Usage"
+msgstr "Mem Usage"
+
+#: programs/tasklist/tasklist.rc:35
+msgid "K"
+msgstr "K"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&New Task (Run...)"
@@ -17923,14 +17955,6 @@ msgstr "Processes: %d"
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
 msgstr "Mem Usage: %1!u!kB / %2!u!kB"
 
-#: programs/taskmgr/taskmgr.rc:272
-msgid "Image Name"
-msgstr "Image Name"
-
-#: programs/taskmgr/taskmgr.rc:273
-msgid "PID"
-msgstr "PID"
-
 #: programs/taskmgr/taskmgr.rc:274
 msgid "CPU"
 msgstr "CPU"
@@ -17938,10 +17962,6 @@ msgstr "CPU"
 #: programs/taskmgr/taskmgr.rc:275
 msgid "CPU Time"
 msgstr "CPU Time"
-
-#: programs/taskmgr/taskmgr.rc:276
-msgid "Mem Usage"
-msgstr "Mem Usage"
 
 #: programs/taskmgr/taskmgr.rc:277
 msgid "Mem Delta"

@@ -22150,6 +22150,7 @@ wine_fn_config_makefile programs/svchost enable_svchost
 wine_fn_config_makefile programs/systeminfo enable_systeminfo
 wine_fn_config_makefile programs/taskkill enable_taskkill
 wine_fn_config_makefile programs/tasklist enable_tasklist
+wine_fn_config_makefile programs/tasklist/tests enable_tests
 wine_fn_config_makefile programs/taskmgr enable_taskmgr
 wine_fn_config_makefile programs/termsv enable_termsv
 wine_fn_config_makefile programs/uninstaller enable_uninstaller

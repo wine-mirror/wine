@@ -17310,6 +17310,46 @@ msgid ""
 "Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
 msgstr ""
 
+#: include/wine/wine_common_ver.rc:138
+#, fuzzy
+#| msgid "page tab list"
+msgid "Wine tasklist"
+msgstr "sayfa sekme listesi"
+
+#: programs/tasklist/tasklist.rc:29
+msgid "Usage: tasklist [/?]\n"
+msgstr ""
+
+#: programs/tasklist/tasklist.rc:30 programs/taskmgr/taskmgr.rc:272
+msgid "Image Name"
+msgstr "Görüntü Adı"
+
+#: programs/tasklist/tasklist.rc:31 programs/taskmgr/taskmgr.rc:273
+msgid "PID"
+msgstr "PID"
+
+#: programs/tasklist/tasklist.rc:32
+#, fuzzy
+#| msgid "Session ID"
+msgid "Session Name"
+msgstr "Oturum Kimliği"
+
+#: programs/tasklist/tasklist.rc:33
+#, fuzzy
+#| msgid "Session ID"
+msgid "Session#"
+msgstr "Oturum Kimliği"
+
+#: programs/tasklist/tasklist.rc:34 programs/taskmgr/taskmgr.rc:276
+msgid "Mem Usage"
+msgstr "Bellek Kullanımı"
+
+#: programs/tasklist/tasklist.rc:35
+#, fuzzy
+#| msgid "OK"
+msgid "K"
+msgstr "Tamam"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&Yeni Görev (Çalıştır...)"
@@ -17971,14 +18011,6 @@ msgstr "İşlemler: %d"
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
 msgstr "Bellek Kullanımı: %1!u!kB / %2!u!kB"
 
-#: programs/taskmgr/taskmgr.rc:272
-msgid "Image Name"
-msgstr "Görüntü Adı"
-
-#: programs/taskmgr/taskmgr.rc:273
-msgid "PID"
-msgstr "PID"
-
 #: programs/taskmgr/taskmgr.rc:274
 msgid "CPU"
 msgstr "CPU"
@@ -17986,10 +18018,6 @@ msgstr "CPU"
 #: programs/taskmgr/taskmgr.rc:275
 msgid "CPU Time"
 msgstr "CPU Zamanı"
-
-#: programs/taskmgr/taskmgr.rc:276
-msgid "Mem Usage"
-msgstr "Bellek Kullanımı"
 
 #: programs/taskmgr/taskmgr.rc:277
 msgid "Mem Delta"

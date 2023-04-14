@@ -18483,6 +18483,46 @@ msgid ""
 "Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
 msgstr ""
 
+#: include/wine/wine_common_ver.rc:138
+#, fuzzy
+#| msgid "page tab list"
+msgid "Wine tasklist"
+msgstr "قائمة لسان الصفحة"
+
+#: programs/tasklist/tasklist.rc:29
+msgid "Usage: tasklist [/?]\n"
+msgstr ""
+
+#: programs/tasklist/tasklist.rc:30 programs/taskmgr/taskmgr.rc:272
+msgid "Image Name"
+msgstr "اسم الصورة"
+
+#: programs/tasklist/tasklist.rc:31 programs/taskmgr/taskmgr.rc:273
+msgid "PID"
+msgstr "معرف العملية"
+
+#: programs/tasklist/tasklist.rc:32
+#, fuzzy
+#| msgid "Session ID"
+msgid "Session Name"
+msgstr "معرف الجلسة"
+
+#: programs/tasklist/tasklist.rc:33
+#, fuzzy
+#| msgid "Session ID"
+msgid "Session#"
+msgstr "معرف الجلسة"
+
+#: programs/tasklist/tasklist.rc:34 programs/taskmgr/taskmgr.rc:276
+msgid "Mem Usage"
+msgstr "استخدام الذاكرة"
+
+#: programs/tasklist/tasklist.rc:35
+#, fuzzy
+#| msgid "OK"
+msgid "K"
+msgstr "حسنًا"
+
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "م&همة جديدة (تشغيل)..."
@@ -19142,14 +19182,6 @@ msgstr "العمليات : %d"
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
 msgstr "استخدام الذاكرة :  %1!u!كب / %2!u!كب"
 
-#: programs/taskmgr/taskmgr.rc:272
-msgid "Image Name"
-msgstr "اسم الصورة"
-
-#: programs/taskmgr/taskmgr.rc:273
-msgid "PID"
-msgstr "معرف العملية"
-
 #: programs/taskmgr/taskmgr.rc:274
 msgid "CPU"
 msgstr "المعالج"
@@ -19157,10 +19189,6 @@ msgstr "المعالج"
 #: programs/taskmgr/taskmgr.rc:275
 msgid "CPU Time"
 msgstr "زمن المعالج"
-
-#: programs/taskmgr/taskmgr.rc:276
-msgid "Mem Usage"
-msgstr "استخدام الذاكرة"
 
 #: programs/taskmgr/taskmgr.rc:277
 msgid "Mem Delta"

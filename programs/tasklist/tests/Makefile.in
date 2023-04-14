@@ -1,0 +1,4 @@
+TESTDLL   = tasklist.exe
+
+C_SRCS = \
+	tasklist.c
