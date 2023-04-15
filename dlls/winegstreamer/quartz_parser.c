@@ -286,7 +286,7 @@ unsigned int wg_format_get_max_size(const struct wg_format *format)
     {
         case WG_MAJOR_TYPE_VIDEO:
         {
-            unsigned int width = format->u.video.width, height = format->u.video.height;
+            unsigned int width = format->u.video.width, height = abs(format->u.video.height);
 
             switch (format->u.video.format)
             {
