@@ -363,6 +363,7 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
     struct color_convert *impl = impl_from_IMFTransform(iface);
     GUID major, subtype;
     UINT64 frame_size;
+    UINT32 stride;
     HRESULT hr;
     ULONG i;
 
@@ -392,6 +393,19 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
         IMFMediaType_Release(impl->input_type);
         impl->input_type = NULL;
     }
+    if (FAILED(IMFMediaType_GetUINT32(impl->input_type, &MF_MT_DEFAULT_STRIDE, &stride)))
+    {
+        if (FAILED(hr = MFGetStrideForBitmapInfoHeader(subtype.Data1, frame_size >> 32, (LONG *)&stride)))
+        {
+            IMFMediaType_Release(impl->input_type);
+            impl->input_type = NULL;
+        }
+        if (FAILED(hr = IMFMediaType_SetUINT32(impl->input_type, &MF_MT_DEFAULT_STRIDE, abs((INT32)stride))))
+        {
+            IMFMediaType_Release(impl->input_type);
+            impl->input_type = NULL;
+        }
+    }
 
     if (impl->output_type && FAILED(hr = try_create_wg_transform(impl)))
     {
@@ -411,6 +425,7 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
     struct color_convert *impl = impl_from_IMFTransform(iface);
     GUID major, subtype;
     UINT64 frame_size;
+    UINT32 stride;
     HRESULT hr;
     ULONG i;
 
@@ -439,6 +454,19 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
     {
         IMFMediaType_Release(impl->output_type);
         impl->output_type = NULL;
+    }
+    if (FAILED(IMFMediaType_GetUINT32(impl->output_type, &MF_MT_DEFAULT_STRIDE, &stride)))
+    {
+        if (FAILED(hr = MFGetStrideForBitmapInfoHeader(subtype.Data1, frame_size >> 32, (LONG *)&stride)))
+        {
+            IMFMediaType_Release(impl->output_type);
+            impl->output_type = NULL;
+        }
+        if (FAILED(hr = IMFMediaType_SetUINT32(impl->output_type, &MF_MT_DEFAULT_STRIDE, abs((INT32)stride))))
+        {
+            IMFMediaType_Release(impl->output_type);
+            impl->output_type = NULL;
+        }
     }
 
     if (impl->input_type && FAILED(hr = try_create_wg_transform(impl)))

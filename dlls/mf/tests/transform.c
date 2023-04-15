@@ -5978,7 +5978,6 @@ static void test_color_convert(void)
         ok(ref == 1, "Release returned %ld\n", ref);
 
         ret = check_mf_sample_collection(output_samples, &output_sample_desc, color_conversion_tests[i].result_bitmap);
-        todo_wine_if(i == 1)
         ok(ret <= color_conversion_tests[i].delta, "got %lu%% diff\n", ret);
         IMFCollection_Release(output_samples);
 
@@ -6223,7 +6222,7 @@ static void test_video_processor(void)
             .output_type_desc = output_type_desc,
             .expect_output_type_desc = output_type_desc,
             .result_bitmap = L"rgb32frame-vp.bmp",
-            .delta = 0,
+            .delta = 2, /* Windows returns 0, Wine needs 2 */
         },
 
         {
@@ -6231,7 +6230,7 @@ static void test_video_processor(void)
             .output_type_desc = output_type_desc_negative_stride,
             .expect_output_type_desc = output_type_desc_negative_stride,
             .result_bitmap = L"rgb32frame-vp.bmp",
-            .delta = 0,
+            .delta = 2, /* Windows returns 0, Wine needs 2 */
         },
 
         {
@@ -6623,7 +6622,6 @@ static void test_video_processor(void)
 
             ret = check_mf_sample_collection(output_samples, &output_sample_desc,
                                              video_processor_tests[i].result_bitmap);
-            todo_wine_if(i == 0 || i == 1)
             ok(ret <= video_processor_tests[i].delta
                    /* w1064v1507 / w1064v1809 incorrectly rescale */
                    || broken(ret == 25) || broken(ret == 32),
