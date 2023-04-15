@@ -558,6 +558,8 @@ static ULONG STDMETHODCALLTYPE d3d11_texture2d_AddRef(ID3D11Texture2D *iface)
     {
         ID3D11Device2_AddRef(texture->device);
         wined3d_texture_incref(texture->wined3d_texture);
+        if (texture->swapchain)
+            wined3d_swapchain_incref(texture->swapchain);
     }
 
     return refcount;
@@ -573,6 +575,10 @@ static ULONG STDMETHODCALLTYPE d3d11_texture2d_Release(ID3D11Texture2D *iface)
     if (!refcount)
     {
         ID3D11Device2 *device = texture->device;
+        if (texture->swapchain)
+            wined3d_swapchain_decref(texture->swapchain);
+        /* Releasing the texture may free the d3d11 object, so do not access it
+         * after releasing the texture. */
         wined3d_texture_decref(texture->wined3d_texture);
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
@@ -984,6 +990,9 @@ HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DE
                 texture, &d3d_texture2d_wined3d_parent_ops);
         wined3d_texture_incref(wined3d_texture);
         texture->wined3d_texture = wined3d_texture;
+
+        if ((texture->swapchain = wined3d_texture_get_swapchain(wined3d_texture)))
+            wined3d_swapchain_incref(texture->swapchain);
     }
     else
     {

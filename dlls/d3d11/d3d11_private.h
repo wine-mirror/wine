@@ -138,6 +138,7 @@ struct d3d_texture2d
 
     IUnknown *dxgi_resource;
     struct wined3d_texture *wined3d_texture;
+    struct wined3d_swapchain *swapchain;
     D3D11_TEXTURE2D_DESC desc;
     ID3D11Device2 *device;
 };
