@@ -4971,6 +4971,37 @@ static void test_wmv_decoder(void)
         ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
         {0},
     };
+    const struct attribute_desc output_type_desc_negative_stride[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, -actual_width),
+        {0},
+    };
+    const struct attribute_desc output_type_desc_rgb[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
+        {0},
+    };
+    const struct attribute_desc output_type_desc_rgb_negative_stride[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, -actual_width * 4),
+        {0},
+    };
+    const struct attribute_desc output_type_desc_rgb_positive_stride[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width * 4),
+        {0},
+    };
     const struct attribute_desc expect_input_type_desc[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
@@ -4992,10 +5023,42 @@ static void test_wmv_decoder(void)
         ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
         {0},
     };
+    const struct attribute_desc expect_output_type_desc_rgb[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width * 4),
+        ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 4),
+        ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+        ATTR_UINT32(MF_MT_VIDEO_NOMINAL_RANGE, 2),
+        ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        {0},
+    };
+    const struct attribute_desc expect_output_type_desc_rgb_negative_stride[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, -actual_width * 4),
+        ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 4),
+        ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+        ATTR_UINT32(MF_MT_VIDEO_NOMINAL_RANGE, 2),
+        ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        {0},
+    };
     const MFT_OUTPUT_STREAM_INFO expect_output_info =
     {
         .dwFlags = MFT_OUTPUT_STREAM_WHOLE_SAMPLES | MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER | MFT_OUTPUT_STREAM_DISCARDABLE,
         .cbSize = 0x3600,
+        .cbAlignment = 1,
+    };
+    const MFT_OUTPUT_STREAM_INFO expect_output_info_rgb =
+    {
+        .dwFlags = MFT_OUTPUT_STREAM_WHOLE_SAMPLES | MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER | MFT_OUTPUT_STREAM_DISCARDABLE,
+        .cbSize = 0x9000,
         .cbAlignment = 1,
     };
     const MFT_OUTPUT_STREAM_INFO empty_output_info =
@@ -5005,6 +5068,11 @@ static void test_wmv_decoder(void)
     const MFT_INPUT_STREAM_INFO expect_input_info =
     {
         .cbSize = 0x3600,
+        .cbAlignment = 1,
+    };
+    const MFT_INPUT_STREAM_INFO expect_input_info_rgb =
+    {
+        .cbSize = 0x9000,
         .cbAlignment = 1,
     };
 
@@ -5018,11 +5086,91 @@ static void test_wmv_decoder(void)
         .length = actual_width * actual_height * 3 / 2,
         .compare = compare_nv12, .dump = dump_nv12, .rect = {.right = 82, .bottom = 84},
     };
+    const struct buffer_desc output_buffer_desc_rgb =
+    {
+        .length = actual_width * actual_height * 4,
+        .compare = compare_rgb32, .dump = dump_rgb32, .rect = {.right = 82, .bottom = 84},
+    };
     const struct sample_desc output_sample_desc_nv12 =
     {
         .attributes = output_sample_attributes,
         .sample_time = 0, .sample_duration = 333333,
         .buffer_count = 1, .buffers = &output_buffer_desc_nv12,
+    };
+    const struct sample_desc output_sample_desc_rgb =
+    {
+        .attributes = output_sample_attributes,
+        .sample_time = 0, .sample_duration = 333333,
+        .buffer_count = 1, .buffers = &output_buffer_desc_rgb,
+    };
+
+    const struct transform_desc
+    {
+        const struct attribute_desc *output_type_desc;
+        const struct attribute_desc *expect_output_type_desc;
+        const MFT_INPUT_STREAM_INFO *expect_input_info;
+        const MFT_OUTPUT_STREAM_INFO *expect_output_info;
+        const struct sample_desc *output_sample_desc;
+        const WCHAR *result_bitmap;
+        ULONG delta;
+    }
+    transform_tests[] =
+    {
+        {
+            /* WMV1 -> YUV */
+            .output_type_desc = output_type_desc,
+            .expect_output_type_desc = expect_output_type_desc,
+            .expect_input_info = &expect_input_info,
+            .expect_output_info = &expect_output_info,
+            .output_sample_desc = &output_sample_desc_nv12,
+            .result_bitmap = L"nv12frame.bmp",
+            .delta = 0,
+        },
+
+        {
+            /* WMV1 -> YUV (negative stride) */
+            .output_type_desc = output_type_desc_negative_stride,
+            .expect_output_type_desc = expect_output_type_desc,
+            .expect_input_info = &expect_input_info,
+            .expect_output_info = &expect_output_info,
+            .output_sample_desc = &output_sample_desc_nv12,
+            .result_bitmap = L"nv12frame.bmp",
+            .delta = 0,
+        },
+
+        {
+            /* WMV1 -> RGB */
+            .output_type_desc = output_type_desc_rgb,
+            .expect_output_type_desc = expect_output_type_desc_rgb,
+            .expect_input_info = &expect_input_info_rgb,
+            .expect_output_info = &expect_output_info_rgb,
+            .output_sample_desc = &output_sample_desc_rgb,
+            .result_bitmap = L"rgb32frame-vp.bmp",
+            .delta = 5,
+        },
+
+        {
+            /* WMV1 -> RGB (negative stride) */
+            .output_type_desc = output_type_desc_rgb_negative_stride,
+            .expect_output_type_desc = expect_output_type_desc_rgb_negative_stride,
+            .expect_input_info = &expect_input_info_rgb,
+            .expect_output_info = &expect_output_info_rgb,
+            .output_sample_desc = &output_sample_desc_rgb,
+            .result_bitmap = L"rgb32frame-vp.bmp",
+            .delta = 5,
+        },
+
+        {
+            /* WMV1 -> RGB (positive stride */
+            .output_type_desc = output_type_desc_rgb_positive_stride,
+            .expect_output_type_desc = expect_output_type_desc_rgb,
+            .expect_input_info = &expect_input_info_rgb,
+            .expect_output_info = &expect_output_info_rgb,
+            .output_sample_desc = &output_sample_desc_rgb,
+            .result_bitmap = L"rgb32frame-vp.bmp",
+            .delta = 5,
+        },
+
     };
 
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
@@ -5034,7 +5182,7 @@ static void test_wmv_decoder(void)
     const BYTE *wmvenc_data;
     ULONG wmvenc_data_len;
     DWORD output_status;
-    ULONG i, ret, ref;
+    ULONG i, j, ret, ref;
     HRESULT hr;
 
     hr = CoInitialize(NULL);
@@ -5114,50 +5262,57 @@ static void test_wmv_decoder(void)
     ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#lx\n", hr);
     ok(i == ARRAY_SIZE(expect_available_outputs), "%lu input media types\n", i);
 
-    check_mft_set_output_type_required(transform, output_type_desc);
-    check_mft_set_output_type(transform, output_type_desc, S_OK);
-    check_mft_get_output_current_type_(transform, expect_output_type_desc, FALSE, TRUE);
-
-    check_mft_get_input_stream_info(transform, S_OK, &expect_input_info);
-    check_mft_get_output_stream_info(transform, S_OK, &expect_output_info);
-
-    load_resource(L"wmvencdata.bin", &wmvenc_data, &wmvenc_data_len);
-
-    input_sample = create_sample(wmvenc_data + sizeof(DWORD), *(DWORD *)wmvenc_data);
-    wmvenc_data_len -= *(DWORD *)wmvenc_data + sizeof(DWORD);
-    wmvenc_data += *(DWORD *)wmvenc_data + sizeof(DWORD);
-    hr = IMFSample_SetSampleTime(input_sample, 0);
-    ok(hr == S_OK, "SetSampleTime returned %#lx\n", hr);
-    hr = IMFSample_SetSampleDuration(input_sample, 333333);
-    ok(hr == S_OK, "SetSampleDuration returned %#lx\n", hr);
-    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
-    ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
-    ret = IMFSample_Release(input_sample);
-    ok(ret <= 1, "Release returned %ld\n", ret);
-
-    hr = MFCreateCollection(&output_samples);
-    ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
-
-    output_sample = create_sample(NULL, expect_output_info.cbSize);
-    for (i = 0; SUCCEEDED(hr = check_mft_process_output(transform, output_sample, &output_status)); i++)
+    for (j = 0; j < ARRAY_SIZE(transform_tests); j++)
     {
-        winetest_push_context("%lu", i);
-        ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
-        hr = IMFCollection_AddElement(output_samples, (IUnknown *)output_sample);
-        ok(hr == S_OK, "AddElement returned %#lx\n", hr);
-        ref = IMFSample_Release(output_sample);
-        ok(ref == 1, "Release returned %ld\n", ref);
-        output_sample = create_sample(NULL, expect_output_info.cbSize);
+        winetest_push_context("transform #%lu", j);
+
+        check_mft_set_output_type_required(transform, transform_tests[j].output_type_desc);
+        check_mft_set_output_type(transform, transform_tests[j].output_type_desc, S_OK);
+        check_mft_get_output_current_type_(transform, transform_tests[j].expect_output_type_desc, FALSE, TRUE);
+
+        check_mft_get_input_stream_info(transform, S_OK, transform_tests[j].expect_input_info);
+        check_mft_get_output_stream_info(transform, S_OK, transform_tests[j].expect_output_info);
+
+        load_resource(L"wmvencdata.bin", &wmvenc_data, &wmvenc_data_len);
+
+        input_sample = create_sample(wmvenc_data + sizeof(DWORD), *(DWORD *)wmvenc_data);
+        wmvenc_data_len -= *(DWORD *)wmvenc_data + sizeof(DWORD);
+        wmvenc_data += *(DWORD *)wmvenc_data + sizeof(DWORD);
+        hr = IMFSample_SetSampleTime(input_sample, 0);
+        ok(hr == S_OK, "SetSampleTime returned %#lx\n", hr);
+        hr = IMFSample_SetSampleDuration(input_sample, 333333);
+        ok(hr == S_OK, "SetSampleDuration returned %#lx\n", hr);
+        hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+        ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
+        ret = IMFSample_Release(input_sample);
+        ok(ret <= 1, "Release returned %ld\n", ret);
+
+        hr = MFCreateCollection(&output_samples);
+        ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
+
+        output_sample = create_sample(NULL, transform_tests[j].expect_output_info->cbSize);
+        for (i = 0; SUCCEEDED(hr = check_mft_process_output(transform, output_sample, &output_status)); i++)
+        {
+            winetest_push_context("%lu", i);
+            ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
+            hr = IMFCollection_AddElement(output_samples, (IUnknown *)output_sample);
+            ok(hr == S_OK, "AddElement returned %#lx\n", hr);
+            ref = IMFSample_Release(output_sample);
+            ok(ref == 1, "Release returned %ld\n", ref);
+            output_sample = create_sample(NULL, transform_tests[j].expect_output_info->cbSize);
+            winetest_pop_context();
+        }
+        ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
+        ret = IMFSample_Release(output_sample);
+        ok(ret == 0, "Release returned %lu\n", ret);
+        ok(i == 1, "got %lu output samples\n", i);
+
+        ret = check_mf_sample_collection(output_samples, transform_tests[j].output_sample_desc,
+                                         transform_tests[j].result_bitmap);
+        ok(ret <= transform_tests[j].delta, "got %lu%% diff\n", ret);
+        IMFCollection_Release(output_samples);
         winetest_pop_context();
     }
-    ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
-    ret = IMFSample_Release(output_sample);
-    ok(ret == 0, "Release returned %lu\n", ret);
-    ok(i == 1, "got %lu output samples\n", i);
-
-    ret = check_mf_sample_collection(output_samples, &output_sample_desc_nv12, L"nv12frame.bmp");
-    ok(ret == 0, "got %lu%% diff\n", ret);
-    IMFCollection_Release(output_samples);
 
 skip_tests:
     ret = IMFTransform_Release(transform);
@@ -5591,6 +5746,22 @@ static void test_color_convert(void)
         ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
         {0},
     };
+    const struct attribute_desc output_type_desc_negative_stride[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, -actual_width * 4),
+        {0},
+    };
+    const struct attribute_desc output_type_desc_positive_stride[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width * 4),
+        {0},
+    };
     const struct attribute_desc expect_input_type_desc[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
@@ -5610,6 +5781,18 @@ static void test_color_convert(void)
         ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
         ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
         ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width * 4),
+        ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 4),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+        ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+        {0},
+    };
+    const struct attribute_desc expect_output_type_desc_negative_stride[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, -actual_width * 4),
         ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 4),
         ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
         ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
@@ -5642,6 +5825,41 @@ static void test_color_convert(void)
         .attributes = output_sample_attributes,
         .sample_time = 0, .sample_duration = 10000000,
         .buffer_count = 1, .buffers = &output_buffer_desc,
+    };
+    const struct transform_desc
+    {
+        const struct attribute_desc *output_type_desc;
+        const struct attribute_desc *expect_output_type_desc;
+        const WCHAR *result_bitmap;
+        ULONG delta;
+    }
+    color_conversion_tests[] =
+    {
+
+        {
+            /* YUV -> RGB */
+            .output_type_desc = output_type_desc,
+            .expect_output_type_desc = expect_output_type_desc,
+            .result_bitmap = L"rgb32frame.bmp",
+            .delta = 4, /* Windows return 0, Wine needs 4 */
+        },
+
+        {
+            /* YUV -> RGB (negative stride) */
+            .output_type_desc = output_type_desc_negative_stride,
+            .expect_output_type_desc = expect_output_type_desc_negative_stride,
+            .result_bitmap = L"rgb32frame-vp.bmp",
+            .delta = 6,
+        },
+
+        {
+            /* YUV -> RGB (positive stride) */
+            .output_type_desc = output_type_desc_positive_stride,
+            .expect_output_type_desc = expect_output_type_desc,
+            .result_bitmap = L"rgb32frame.bmp",
+            .delta = 4, /* Windows return 0, Wine needs 4 */
+        },
+
     };
 
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
@@ -5712,63 +5930,69 @@ static void test_color_convert(void)
     ok(hr == MF_E_NO_MORE_TYPES, "GetInputAvailableType returned %#lx\n", hr);
     ok(i == 20, "%lu input media types\n", i);
 
-    check_mft_set_output_type_required(transform, output_type_desc);
-    check_mft_set_output_type(transform, output_type_desc, S_OK);
-    check_mft_get_output_current_type_(transform, expect_output_type_desc, FALSE, TRUE);
-
     check_mft_set_input_type_required(transform, input_type_desc);
     check_mft_set_input_type(transform, input_type_desc);
     check_mft_get_input_current_type_(transform, expect_input_type_desc, FALSE, TRUE);
 
-    check_mft_get_input_stream_info(transform, S_OK, &input_info);
-    check_mft_get_output_stream_info(transform, S_OK, &output_info);
+    for (i = 0; i < ARRAY_SIZE(color_conversion_tests); i++)
+    {
+        winetest_push_context("color conversion #%lu", i);
+        check_mft_set_output_type_required(transform, color_conversion_tests[i].output_type_desc);
+        check_mft_set_output_type(transform, color_conversion_tests[i].output_type_desc, S_OK);
+        check_mft_get_output_current_type_(transform, color_conversion_tests[i].expect_output_type_desc, FALSE, TRUE);
 
-    load_resource(L"nv12frame.bmp", &nv12frame_data, &nv12frame_data_len);
-    /* skip BMP header and RGB data from the dump */
-    length = *(DWORD *)(nv12frame_data + 2);
-    nv12frame_data_len = nv12frame_data_len - length;
-    nv12frame_data = nv12frame_data + length;
-    ok(nv12frame_data_len == 13824, "got length %lu\n", nv12frame_data_len);
+        check_mft_get_input_stream_info(transform, S_OK, &input_info);
+        check_mft_get_output_stream_info(transform, S_OK, &output_info);
 
-    input_sample = create_sample(nv12frame_data, nv12frame_data_len);
-    hr = IMFSample_SetSampleTime(input_sample, 0);
-    ok(hr == S_OK, "SetSampleTime returned %#lx\n", hr);
-    hr = IMFSample_SetSampleDuration(input_sample, 10000000);
-    ok(hr == S_OK, "SetSampleDuration returned %#lx\n", hr);
-    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
-    ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
-    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
-    ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
-    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
-    ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
-    ret = IMFSample_Release(input_sample);
-    ok(ret <= 1, "Release returned %ld\n", ret);
+        load_resource(L"nv12frame.bmp", &nv12frame_data, &nv12frame_data_len);
+        /* skip BMP header and RGB data from the dump */
+        length = *(DWORD *)(nv12frame_data + 2);
+        nv12frame_data_len = nv12frame_data_len - length;
+        nv12frame_data = nv12frame_data + length;
+        ok(nv12frame_data_len == 13824, "got length %lu\n", nv12frame_data_len);
 
-    hr = MFCreateCollection(&output_samples);
-    ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
+        input_sample = create_sample(nv12frame_data, nv12frame_data_len);
+        hr = IMFSample_SetSampleTime(input_sample, 0);
+        ok(hr == S_OK, "SetSampleTime returned %#lx\n", hr);
+        hr = IMFSample_SetSampleDuration(input_sample, 10000000);
+        ok(hr == S_OK, "SetSampleDuration returned %#lx\n", hr);
+        hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+        ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
+        hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+        ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
+        hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
+        ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
+        ret = IMFSample_Release(input_sample);
+        ok(ret <= 1, "Release returned %ld\n", ret);
 
-    output_sample = create_sample(NULL, output_info.cbSize);
-    hr = check_mft_process_output(transform, output_sample, &output_status);
-    ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
-    ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
-    hr = IMFCollection_AddElement(output_samples, (IUnknown *)output_sample);
-    ok(hr == S_OK, "AddElement returned %#lx\n", hr);
-    ref = IMFSample_Release(output_sample);
-    ok(ref == 1, "Release returned %ld\n", ref);
+        hr = MFCreateCollection(&output_samples);
+        ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
 
-    ret = check_mf_sample_collection(output_samples, &output_sample_desc, L"rgb32frame.bmp");
-    ok(ret <= 4 /* small and harmless diff in Wine vs Windows */, "got %lu%% diff\n", ret);
-    IMFCollection_Release(output_samples);
+        output_sample = create_sample(NULL, output_info.cbSize);
+        hr = check_mft_process_output(transform, output_sample, &output_status);
+        ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
+        ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
+        hr = IMFCollection_AddElement(output_samples, (IUnknown *)output_sample);
+        ok(hr == S_OK, "AddElement returned %#lx\n", hr);
+        ref = IMFSample_Release(output_sample);
+        ok(ref == 1, "Release returned %ld\n", ref);
 
-    output_sample = create_sample(NULL, output_info.cbSize);
-    hr = check_mft_process_output(transform, output_sample, &output_status);
-    ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
-    ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
-    hr = IMFSample_GetTotalLength(output_sample, &length);
-    ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
-    ok(length == 0, "got length %lu\n", length);
-    ret = IMFSample_Release(output_sample);
-    ok(ret == 0, "Release returned %lu\n", ret);
+        ret = check_mf_sample_collection(output_samples, &output_sample_desc, color_conversion_tests[i].result_bitmap);
+        todo_wine_if(i == 1)
+        ok(ret <= color_conversion_tests[i].delta, "got %lu%% diff\n", ret);
+        IMFCollection_Release(output_samples);
+
+        output_sample = create_sample(NULL, output_info.cbSize);
+        hr = check_mft_process_output(transform, output_sample, &output_status);
+        ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
+        ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
+        hr = IMFSample_GetTotalLength(output_sample, &length);
+        ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
+        ok(length == 0, "got length %lu\n", length);
+        ret = IMFSample_Release(output_sample);
+        ok(ret == 0, "Release returned %lu\n", ret);
+        winetest_pop_context();
+    }
 
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %ld\n", ret);
@@ -5944,6 +6168,24 @@ static void test_video_processor(void)
         ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
         {0},
     };
+    const struct attribute_desc output_type_desc_negative_stride[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
+        ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, -actual_width * 4),
+        {0},
+    };
+    const struct attribute_desc output_type_desc_positive_stride[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
+        ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width * 4),
+        {0},
+    };
     const MFT_OUTPUT_STREAM_INFO initial_output_info = {0};
     const MFT_INPUT_STREAM_INFO initial_input_info = {0};
     MFT_OUTPUT_STREAM_INFO output_info = {0};
@@ -5964,6 +6206,42 @@ static void test_video_processor(void)
         .attributes = output_sample_attributes,
         .sample_time = 0, .sample_duration = 10000000,
         .buffer_count = 1, .buffers = &output_buffer_desc,
+    };
+
+    const struct transform_desc
+    {
+        const struct attribute_desc *output_type_desc;
+        const struct attribute_desc *expect_output_type_desc;
+        const WCHAR *result_bitmap;
+        ULONG delta;
+    }
+    video_processor_tests[] =
+    {
+
+        {
+            /* YUV -> RGB */
+            .output_type_desc = output_type_desc,
+            .expect_output_type_desc = output_type_desc,
+            .result_bitmap = L"rgb32frame-vp.bmp",
+            .delta = 0,
+        },
+
+        {
+            /* YUV -> RGB (negative stride) */
+            .output_type_desc = output_type_desc_negative_stride,
+            .expect_output_type_desc = output_type_desc_negative_stride,
+            .result_bitmap = L"rgb32frame-vp.bmp",
+            .delta = 0,
+        },
+
+        {
+            /* YUV -> RGB (positive stride) */
+            .output_type_desc = output_type_desc_positive_stride,
+            .expect_output_type_desc = output_type_desc_positive_stride,
+            .result_bitmap = L"rgb32frame.bmp",
+            .delta = 6,
+        },
+
     };
 
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
@@ -6285,74 +6563,85 @@ static void test_video_processor(void)
     ok(hr == MF_E_NO_MORE_TYPES, "GetInputAvailableType returned %#lx\n", hr);
     ok(i == 22 || i == 30 || broken(i == 26) /* w1064v1507 */, "%lu input media types\n", i);
 
-    check_mft_set_input_type_required(transform, input_type_desc);
-    check_mft_set_input_type(transform, input_type_desc);
-    check_mft_get_input_current_type(transform, input_type_desc);
-
-    check_mft_set_output_type_required(transform, output_type_desc);
-    check_mft_set_output_type(transform, output_type_desc, S_OK);
-    check_mft_get_output_current_type(transform, output_type_desc);
-
-    input_info.cbSize = actual_width * actual_height * 3 / 2;
-    output_info.cbSize = actual_width * actual_height * 4;
-    check_mft_get_input_stream_info(transform, S_OK, &input_info);
-    check_mft_get_output_stream_info(transform, S_OK, &output_info);
-
-    load_resource(L"nv12frame.bmp", &nv12frame_data, &nv12frame_data_len);
-    /* skip BMP header and RGB data from the dump */
-    length = *(DWORD *)(nv12frame_data + 2);
-    nv12frame_data_len = nv12frame_data_len - length;
-    nv12frame_data = nv12frame_data + length;
-    ok(nv12frame_data_len == 13824, "got length %lu\n", nv12frame_data_len);
-
-    input_sample = create_sample(nv12frame_data, nv12frame_data_len);
-    hr = IMFSample_SetSampleTime(input_sample, 0);
-    ok(hr == S_OK, "SetSampleTime returned %#lx\n", hr);
-    hr = IMFSample_SetSampleDuration(input_sample, 10000000);
-    ok(hr == S_OK, "SetSampleDuration returned %#lx\n", hr);
-    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
-    ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
-    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
-    ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
-    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
-    ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
-    ret = IMFSample_Release(input_sample);
-    ok(ret <= 1, "Release returned %ld\n", ret);
-
-    hr = MFCreateCollection(&output_samples);
-    ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
-
-    output_sample = create_sample(NULL, output_info.cbSize);
-    hr = check_mft_process_output(transform, output_sample, &output_status);
-    ok(hr == S_OK || broken(hr == MF_E_SHUTDOWN) /* w8 */, "ProcessOutput returned %#lx\n", hr);
-    if (hr != S_OK)
+    for (i = 0; i < ARRAY_SIZE(video_processor_tests); i++)
     {
-        win_skip("ProcessOutput returned MF_E_SHUTDOWN, skipping tests.\n");
-        goto skip_output;
+        winetest_push_context("transform #%lu", i);
+
+        check_mft_set_input_type_required(transform, input_type_desc);
+        check_mft_set_input_type(transform, input_type_desc);
+        check_mft_get_input_current_type(transform, input_type_desc);
+
+        check_mft_set_output_type_required(transform, video_processor_tests[i].output_type_desc);
+        check_mft_set_output_type(transform, video_processor_tests[i].output_type_desc, S_OK);
+        check_mft_get_output_current_type(transform, video_processor_tests[i].output_type_desc);
+
+        input_info.cbSize = actual_width * actual_height * 3 / 2;
+        output_info.cbSize = actual_width * actual_height * 4;
+        check_mft_get_input_stream_info(transform, S_OK, &input_info);
+        check_mft_get_output_stream_info(transform, S_OK, &output_info);
+
+        load_resource(L"nv12frame.bmp", &nv12frame_data, &nv12frame_data_len);
+        /* skip BMP header and RGB data from the dump */
+        length = *(DWORD *)(nv12frame_data + 2);
+        nv12frame_data_len = nv12frame_data_len - length;
+        nv12frame_data = nv12frame_data + length;
+        ok(nv12frame_data_len == 13824, "got length %lu\n", nv12frame_data_len);
+
+        input_sample = create_sample(nv12frame_data, nv12frame_data_len);
+        hr = IMFSample_SetSampleTime(input_sample, 0);
+        ok(hr == S_OK, "SetSampleTime returned %#lx\n", hr);
+        hr = IMFSample_SetSampleDuration(input_sample, 10000000);
+        ok(hr == S_OK, "SetSampleDuration returned %#lx\n", hr);
+        hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+        ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
+        hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+        ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
+        hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
+        ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
+        ret = IMFSample_Release(input_sample);
+        ok(ret <= 1, "Release returned %ld\n", ret);
+
+        hr = MFCreateCollection(&output_samples);
+        ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
+
+        output_sample = create_sample(NULL, output_info.cbSize);
+        hr = check_mft_process_output(transform, output_sample, &output_status);
+
+        ok(hr == S_OK || broken(hr == MF_E_SHUTDOWN) /* w8 */, "ProcessOutput returned %#lx\n", hr);
+        if (hr != S_OK)
+        {
+            win_skip("ProcessOutput returned MF_E_SHUTDOWN, skipping tests.\n");
+        }
+        else
+        {
+            ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
+
+            hr = IMFCollection_AddElement(output_samples, (IUnknown *)output_sample);
+            ok(hr == S_OK, "AddElement returned %#lx\n", hr);
+            ref = IMFSample_Release(output_sample);
+            ok(ref == 1, "Release returned %ld\n", ref);
+
+            ret = check_mf_sample_collection(output_samples, &output_sample_desc,
+                                             video_processor_tests[i].result_bitmap);
+            todo_wine_if(i == 0 || i == 1)
+            ok(ret <= video_processor_tests[i].delta
+                   /* w1064v1507 / w1064v1809 incorrectly rescale */
+                   || broken(ret == 25) || broken(ret == 32),
+               "got %lu%% diff\n", ret);
+            IMFCollection_Release(output_samples);
+
+            output_sample = create_sample(NULL, output_info.cbSize);
+            hr = check_mft_process_output(transform, output_sample, &output_status);
+            ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
+            ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
+            hr = IMFSample_GetTotalLength(output_sample, &length);
+            ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
+            ok(length == 0, "got length %lu\n", length);
+        }
+        ret = IMFSample_Release(output_sample);
+        ok(ret == 0, "Release returned %lu\n", ret);
+        winetest_pop_context();
     }
-    ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
-
-    hr = IMFCollection_AddElement(output_samples, (IUnknown *)output_sample);
-    ok(hr == S_OK, "AddElement returned %#lx\n", hr);
-    ref = IMFSample_Release(output_sample);
-    ok(ref == 1, "Release returned %ld\n", ref);
-
-    ret = check_mf_sample_collection(output_samples, &output_sample_desc, L"rgb32frame-vp.bmp");
-    todo_wine
-    ok(ret == 0 || broken(ret == 25) /* w1064v1507 / w1064v1809 incorrectly rescale */, "got %lu%% diff\n", ret);
-    IMFCollection_Release(output_samples);
-
-    output_sample = create_sample(NULL, output_info.cbSize);
-    hr = check_mft_process_output(transform, output_sample, &output_status);
-    ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
-    ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
-    hr = IMFSample_GetTotalLength(output_sample, &length);
-    ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
-    ok(length == 0, "got length %lu\n", length);
-
-skip_output:
-    ret = IMFSample_Release(output_sample);
-    ok(ret == 0, "Release returned %lu\n", ret);
 
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %ld\n", ret);
