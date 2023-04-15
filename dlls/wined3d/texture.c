@@ -1513,9 +1513,6 @@ ULONG CDECL wined3d_texture_incref(struct wined3d_texture *texture)
 
     TRACE("texture %p, swapchain %p.\n", texture, texture->swapchain);
 
-    if (texture->swapchain)
-        return wined3d_swapchain_incref(texture->swapchain);
-
     refcount = InterlockedIncrement(&texture->resource.ref);
     TRACE("%p increasing refcount to %u.\n", texture, refcount);
 
@@ -1605,9 +1602,6 @@ ULONG CDECL wined3d_texture_decref(struct wined3d_texture *texture)
     unsigned int i, sub_resource_count, refcount;
 
     TRACE("texture %p, swapchain %p.\n", texture, texture->swapchain);
-
-    if (texture->swapchain)
-        return wined3d_swapchain_decref(texture->swapchain);
 
     refcount = InterlockedDecrement(&texture->resource.ref);
     TRACE("%p decreasing refcount to %u.\n", texture, refcount);
