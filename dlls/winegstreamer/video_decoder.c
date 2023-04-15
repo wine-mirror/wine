@@ -484,6 +484,9 @@ HRESULT WINAPI winegstreamer_create_video_decoder(IMFTransform **out)
 
     TRACE("out %p.\n", out);
 
+    if (!init_gstreamer())
+        return E_FAIL;
+
     if (!(decoder = calloc(1, sizeof(*decoder))))
         return E_OUTOFMEMORY;
 
