@@ -1787,8 +1787,7 @@ HIMC WINAPI ImmGetContext(HWND hWnd)
     if (rc)
     {
         struct imc *data = get_imc_data( rc );
-        if (data) data->IMC.hWnd = hWnd;
-        else rc = 0;
+        if (!data) rc = 0;
     }
 
     TRACE("returning %p\n", rc);

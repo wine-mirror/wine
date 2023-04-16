@@ -5337,7 +5337,7 @@ static void test_ImmSetActiveContext(void)
 
     ctx->hWnd = (HWND)0xdeadbeef;
     ok_eq( himc, ImmGetContext( hwnd ), HIMC, "%p" );
-    todo_wine ok_eq( (HWND)0xdeadbeef, ctx->hWnd, HWND, "%p" );
+    ok_eq( (HWND)0xdeadbeef, ctx->hWnd, HWND, "%p" );
     ok_ret( 1, ImmReleaseContext( hwnd, himc ) );
 
     ok_ret( 1, ImmUnlockIMC( himc ) );
