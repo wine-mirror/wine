@@ -7398,6 +7398,15 @@ static void test_d3d11_surface_buffer(void)
     hr = IMF2DBuffer_Unlock2D(_2d_buffer);
     ok(hr == HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED), "Unexpected hr %#lx.\n", hr);
 
+    hr = IMFMediaBuffer_Lock(buffer, &data, NULL, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMF2DBuffer_Lock2D(_2d_buffer, &data, &pitch);
+    ok(hr == MF_E_UNEXPECTED, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaBuffer_Unlock(buffer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
     IMF2DBuffer_Release(_2d_buffer);
     IMFMediaBuffer_Release(buffer);
 
