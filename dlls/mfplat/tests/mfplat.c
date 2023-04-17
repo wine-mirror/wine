@@ -7442,7 +7442,8 @@ static void test_d3d11_surface_buffer(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     /* Lock flags are honored, so reads and writes are discarded if
-     * the flags are not correct. */
+     * the flags are not correct. Also, previous content is discarded
+     * when locking for writing and not for reading. */
     put_d3d11_texture_color(texture, 0, 0, 0xcdcdcdcd);
     hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Read, &data, &pitch, &data2, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -7454,6 +7455,14 @@ static void test_d3d11_surface_buffer(void)
     color = get_d3d11_texture_color(texture, 0, 0);
     ok(color == 0xcdcdcdcd, "Unexpected leading dword %#lx.\n", color);
     put_d3d11_texture_color(texture, 0, 0, 0xefefefef);
+
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Write, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(*(DWORD *)data != 0xefefefef, "Unexpected leading dword.\n");
+    IMF2DBuffer2_Unlock2D(_2dbuffer2);
+
+    color = get_d3d11_texture_color(texture, 0, 0);
+    ok(color != 0xefefefef, "Unexpected leading dword.\n");
 
     hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Write, &data, &pitch, &data2, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
