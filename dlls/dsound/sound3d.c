@@ -363,11 +363,13 @@ static void DSOUND_ChangeListener(IDirectSoundBufferImpl *ds3dl)
 	TRACE("(%p)\n",ds3dl);
 	for (i = 0; i < ds3dl->device->nrofbuffers; i++)
 	{
+		AcquireSRWLockExclusive(&ds3dl->device->buffers[i]->lock);
 		/* check if this buffer is waiting for recalculation */
 		if (ds3dl->device->buffers[i]->ds3db_need_recalc)
 		{
 			DSOUND_Mix3DBuffer(ds3dl->device->buffers[i]);
 		}
+		ReleaseSRWLockExclusive(&ds3dl->device->buffers[i]->lock);
 	}
 }
 
@@ -545,6 +547,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetAllParameters(IDirectSound3DBu
 	}
 
 	TRACE("setting: all parameters; dwApply = %ld\n", dwApply);
+
+	AcquireSRWLockExclusive(&This->lock);
+
 	This->ds3db_ds3db = *lpcDs3dBuffer;
 
 	if (dwApply == DS3D_IMMEDIATE)
@@ -553,6 +558,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetAllParameters(IDirectSound3DBu
 	}
 	This->ds3db_need_recalc = TRUE;
 	status = DS_OK;
+
+	ReleaseSRWLockExclusive(&This->lock);
 
 	return status;
 }
@@ -564,11 +571,17 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeAngles(IDirectSound3DBuffe
 
     TRACE("setting: Inside Cone Angle = %ld; Outside Cone Angle = %ld; dwApply = %ld\n",
             dwInsideConeAngle, dwOutsideConeAngle, dwApply);
+
+    AcquireSRWLockExclusive(&This->lock);
+
     This->ds3db_ds3db.dwInsideConeAngle = dwInsideConeAngle;
     This->ds3db_ds3db.dwOutsideConeAngle = dwOutsideConeAngle;
     if (dwApply == DS3D_IMMEDIATE)
         DSOUND_Mix3DBuffer(This);
     This->ds3db_need_recalc = TRUE;
+
+    ReleaseSRWLockExclusive(&This->lock);
+
     return DS_OK;
 }
 
@@ -578,6 +591,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeOrientation(IDirectSound3D
     IDirectSoundBufferImpl *This = impl_from_IDirectSound3DBuffer(iface);
 
     TRACE("setting: Cone Orientation vector = (%f,%f,%f); dwApply = %ld\n", x, y, z, dwApply);
+
+    AcquireSRWLockExclusive(&This->lock);
+
     This->ds3db_ds3db.vConeOrientation.x = x;
     This->ds3db_ds3db.vConeOrientation.y = y;
     This->ds3db_ds3db.vConeOrientation.z = z;
@@ -587,6 +603,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeOrientation(IDirectSound3D
         DSOUND_Mix3DBuffer(This);
     }
     This->ds3db_need_recalc = TRUE;
+
+    ReleaseSRWLockExclusive(&This->lock);
+
     return DS_OK;
 }
 
@@ -596,6 +615,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeOutsideVolume(IDirectSound
     IDirectSoundBufferImpl *This = impl_from_IDirectSound3DBuffer(iface);
 
     TRACE("setting: ConeOutsideVolume = %ld; dwApply = %ld\n", lConeOutsideVolume, dwApply);
+
+    AcquireSRWLockExclusive(&This->lock);
+
     This->ds3db_ds3db.lConeOutsideVolume = lConeOutsideVolume;
     if (dwApply == DS3D_IMMEDIATE)
     {
@@ -603,6 +625,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeOutsideVolume(IDirectSound
         DSOUND_Mix3DBuffer(This);
     }
     This->ds3db_need_recalc = TRUE;
+
+    ReleaseSRWLockExclusive(&This->lock);
+
     return DS_OK;
 }
 
@@ -612,6 +637,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetMaxDistance(IDirectSound3DBuff
     IDirectSoundBufferImpl *This = impl_from_IDirectSound3DBuffer(iface);
 
     TRACE("setting: MaxDistance = %f; dwApply = %ld\n", fMaxDistance, dwApply);
+
+    AcquireSRWLockExclusive(&This->lock);
+
     This->ds3db_ds3db.flMaxDistance = fMaxDistance;
     if (dwApply == DS3D_IMMEDIATE)
     {
@@ -619,6 +647,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetMaxDistance(IDirectSound3DBuff
         DSOUND_Mix3DBuffer(This);
     }
     This->ds3db_need_recalc = TRUE;
+
+    ReleaseSRWLockExclusive(&This->lock);
+
     return DS_OK;
 }
 
@@ -628,6 +659,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetMinDistance(IDirectSound3DBuff
     IDirectSoundBufferImpl *This = impl_from_IDirectSound3DBuffer(iface);
 
     TRACE("setting: MinDistance = %f; dwApply = %ld\n", fMinDistance, dwApply);
+
+    AcquireSRWLockExclusive(&This->lock);
+
     This->ds3db_ds3db.flMinDistance = fMinDistance;
     if (dwApply == DS3D_IMMEDIATE)
     {
@@ -635,6 +669,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetMinDistance(IDirectSound3DBuff
         DSOUND_Mix3DBuffer(This);
     }
     This->ds3db_need_recalc = TRUE;
+
+    ReleaseSRWLockExclusive(&This->lock);
+
     return DS_OK;
 }
 
@@ -644,6 +681,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetMode(IDirectSound3DBuffer *ifa
     IDirectSoundBufferImpl *This = impl_from_IDirectSound3DBuffer(iface);
 
     TRACE("setting: Mode = %ld; dwApply = %ld\n", dwMode, dwApply);
+
+    AcquireSRWLockExclusive(&This->lock);
+
     This->ds3db_ds3db.dwMode = dwMode;
     if (dwApply == DS3D_IMMEDIATE)
     {
@@ -651,6 +691,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetMode(IDirectSound3DBuffer *ifa
         DSOUND_Mix3DBuffer(This);
     }
     This->ds3db_need_recalc = TRUE;
+
+    ReleaseSRWLockExclusive(&This->lock);
+
     return DS_OK;
 }
 
@@ -660,6 +703,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetPosition(IDirectSound3DBuffer 
     IDirectSoundBufferImpl *This = impl_from_IDirectSound3DBuffer(iface);
 
     TRACE("setting: Position vector = (%f,%f,%f); dwApply = %ld\n", x, y, z, dwApply);
+
+    AcquireSRWLockExclusive(&This->lock);
+
     This->ds3db_ds3db.vPosition.x = x;
     This->ds3db_ds3db.vPosition.y = y;
     This->ds3db_ds3db.vPosition.z = z;
@@ -669,6 +715,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetPosition(IDirectSound3DBuffer 
         DSOUND_Mix3DBuffer(This);
     }
     This->ds3db_need_recalc = TRUE;
+
+    ReleaseSRWLockExclusive(&This->lock);
+
     return DS_OK;
 }
 
@@ -678,6 +727,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetVelocity(IDirectSound3DBuffer 
     IDirectSoundBufferImpl *This = impl_from_IDirectSound3DBuffer(iface);
 
     TRACE("setting: Velocity vector = (%f,%f,%f); dwApply = %ld\n", x, y, z, dwApply);
+
+    AcquireSRWLockExclusive(&This->lock);
+
     This->ds3db_ds3db.vVelocity.x = x;
     This->ds3db_ds3db.vVelocity.y = y;
     This->ds3db_ds3db.vVelocity.z = z;
@@ -687,6 +739,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetVelocity(IDirectSound3DBuffer 
         DSOUND_Mix3DBuffer(This);
     }
     This->ds3db_need_recalc = TRUE;
+
+    ReleaseSRWLockExclusive(&This->lock);
+
     return DS_OK;
 }
 
