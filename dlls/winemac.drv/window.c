@@ -641,6 +641,8 @@ static void sync_window_min_max_info(HWND hwnd)
             max_size = CGSizeMake(max_rect.right - max_rect.left, max_rect.bottom - max_rect.top);
         }
 
+        constrain_window_frame(NULL, &max_size);
+
         TRACE("min_size (%g,%g) max_size (%g,%g)\n", min_size.width, min_size.height, max_size.width, max_size.height);
         macdrv_set_window_min_max_sizes(data->cocoa_window, min_size, max_size);
     }
