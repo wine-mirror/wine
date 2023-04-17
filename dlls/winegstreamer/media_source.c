@@ -191,7 +191,7 @@ static const IUnknownVtbl source_async_command_vtbl =
     source_async_command_Release,
 };
 
-static HRESULT source_create_async_op(enum source_async_op op, struct source_async_command **ret)
+static HRESULT source_create_async_op(enum source_async_op op, IUnknown **out)
 {
     struct source_async_command *command;
 
@@ -201,8 +201,7 @@ static HRESULT source_create_async_op(enum source_async_op op, struct source_asy
     command->IUnknown_iface.lpVtbl = &source_async_command_vtbl;
     command->op = op;
 
-    *ret = command;
-
+    *out = &command->IUnknown_iface;
     return S_OK;
 }
 
@@ -293,15 +292,16 @@ static void flush_token_queue(struct media_stream *stream, BOOL send)
     {
         if (send)
         {
+            IUnknown *op;
             HRESULT hr;
-            struct source_async_command *command;
-            if (SUCCEEDED(hr = source_create_async_op(SOURCE_ASYNC_REQUEST_SAMPLE, &command)))
+
+            if (SUCCEEDED(hr = source_create_async_op(SOURCE_ASYNC_REQUEST_SAMPLE, &op)))
             {
+                struct source_async_command *command = impl_from_async_command_IUnknown(op);
                 command->u.request_sample.stream = stream;
                 command->u.request_sample.token = stream->token_queue[i];
 
-                hr = MFPutWorkItem(source->async_commands_queue, &source->async_commands_callback,
-                        &command->IUnknown_iface);
+                hr = MFPutWorkItem(source->async_commands_queue, &source->async_commands_callback, op);
             }
             if (FAILED(hr))
                 WARN("Could not enqueue sample request, hr %#lx\n", hr);
@@ -795,7 +795,7 @@ static HRESULT WINAPI media_stream_RequestSample(IMFMediaStream *iface, IUnknown
 {
     struct media_stream *stream = impl_from_IMFMediaStream(iface);
     struct media_source *source = impl_from_IMFMediaSource(stream->media_source);
-    struct source_async_command *command;
+    IUnknown *op;
     HRESULT hr;
 
     TRACE("%p, %p.\n", iface, token);
@@ -808,14 +808,15 @@ static HRESULT WINAPI media_stream_RequestSample(IMFMediaStream *iface, IUnknown
         hr = MF_E_MEDIA_SOURCE_WRONGSTATE;
     else if (stream->eos)
         hr = MF_E_END_OF_STREAM;
-    else if (SUCCEEDED(hr = source_create_async_op(SOURCE_ASYNC_REQUEST_SAMPLE, &command)))
+    else if (SUCCEEDED(hr = source_create_async_op(SOURCE_ASYNC_REQUEST_SAMPLE, &op)))
     {
+        struct source_async_command *command = impl_from_async_command_IUnknown(op);
         command->u.request_sample.stream = stream;
         if (token)
             IUnknown_AddRef(token);
         command->u.request_sample.token = token;
 
-        hr = MFPutWorkItem(source->async_commands_queue, &source->async_commands_callback, &command->IUnknown_iface);
+        hr = MFPutWorkItem(source->async_commands_queue, &source->async_commands_callback, op);
     }
 
     LeaveCriticalSection(&source->cs);
@@ -1314,7 +1315,7 @@ static HRESULT WINAPI media_source_Start(IMFMediaSource *iface, IMFPresentationD
                                      const GUID *time_format, const PROPVARIANT *position)
 {
     struct media_source *source = impl_from_IMFMediaSource(iface);
-    struct source_async_command *command;
+    IUnknown *op;
     HRESULT hr;
 
     TRACE("%p, %p, %p, %p.\n", iface, descriptor, time_format, position);
@@ -1325,13 +1326,14 @@ static HRESULT WINAPI media_source_Start(IMFMediaSource *iface, IMFPresentationD
         hr = MF_E_SHUTDOWN;
     else if (!(IsEqualIID(time_format, &GUID_NULL)))
         hr = MF_E_UNSUPPORTED_TIME_FORMAT;
-    else if (SUCCEEDED(hr = source_create_async_op(SOURCE_ASYNC_START, &command)))
+    else if (SUCCEEDED(hr = source_create_async_op(SOURCE_ASYNC_START, &op)))
     {
+        struct source_async_command *command = impl_from_async_command_IUnknown(op);
         command->u.start.descriptor = descriptor;
         command->u.start.format = *time_format;
         PropVariantCopy(&command->u.start.position, position);
 
-        hr = MFPutWorkItem(source->async_commands_queue, &source->async_commands_callback, &command->IUnknown_iface);
+        hr = MFPutWorkItem(source->async_commands_queue, &source->async_commands_callback, op);
     }
 
     LeaveCriticalSection(&source->cs);
@@ -1342,7 +1344,7 @@ static HRESULT WINAPI media_source_Start(IMFMediaSource *iface, IMFPresentationD
 static HRESULT WINAPI media_source_Stop(IMFMediaSource *iface)
 {
     struct media_source *source = impl_from_IMFMediaSource(iface);
-    struct source_async_command *command;
+    IUnknown *op;
     HRESULT hr;
 
     TRACE("%p.\n", iface);
@@ -1351,8 +1353,8 @@ static HRESULT WINAPI media_source_Stop(IMFMediaSource *iface)
 
     if (source->state == SOURCE_SHUTDOWN)
         hr = MF_E_SHUTDOWN;
-    else if (SUCCEEDED(hr = source_create_async_op(SOURCE_ASYNC_STOP, &command)))
-        hr = MFPutWorkItem(source->async_commands_queue, &source->async_commands_callback, &command->IUnknown_iface);
+    else if (SUCCEEDED(hr = source_create_async_op(SOURCE_ASYNC_STOP, &op)))
+        hr = MFPutWorkItem(source->async_commands_queue, &source->async_commands_callback, op);
 
     LeaveCriticalSection(&source->cs);
 
@@ -1362,7 +1364,7 @@ static HRESULT WINAPI media_source_Stop(IMFMediaSource *iface)
 static HRESULT WINAPI media_source_Pause(IMFMediaSource *iface)
 {
     struct media_source *source = impl_from_IMFMediaSource(iface);
-    struct source_async_command *command;
+    IUnknown *op;
     HRESULT hr;
 
     TRACE("%p.\n", iface);
@@ -1373,9 +1375,8 @@ static HRESULT WINAPI media_source_Pause(IMFMediaSource *iface)
         hr = MF_E_SHUTDOWN;
     else if (source->state != SOURCE_RUNNING)
         hr = MF_E_INVALID_STATE_TRANSITION;
-    else if (SUCCEEDED(hr = source_create_async_op(SOURCE_ASYNC_PAUSE, &command)))
-        hr = MFPutWorkItem(source->async_commands_queue,
-                &source->async_commands_callback, &command->IUnknown_iface);
+    else if (SUCCEEDED(hr = source_create_async_op(SOURCE_ASYNC_PAUSE, &op)))
+        hr = MFPutWorkItem(source->async_commands_queue, &source->async_commands_callback, op);
 
     LeaveCriticalSection(&source->cs);
 
