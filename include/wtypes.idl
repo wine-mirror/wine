@@ -563,6 +563,7 @@ typedef [unique] RemotableHandle *wireHFONT;
 typedef [unique] RemotableHandle *wireHICON;
 typedef [unique] RemotableHandle *wireHMENU;
 typedef [unique] RemotableHandle *wireHWND;
+typedef [unique] RemotableHandle *wireHMONITOR;
 
 cpp_quote("#if 0") /* for IDL only (C/C++ defs are in windef.h) */
 DECLARE_WIREM_HANDLE(HACCEL);
@@ -572,6 +573,7 @@ DECLARE_WIREM_HANDLE(HFONT);
 DECLARE_WIREM_HANDLE(HICON);
 DECLARE_WIREM_HANDLE(HMENU);
 DECLARE_WIREM_HANDLE(HWND);
+DECLARE_WIREM_HANDLE(HMONITOR);
 
 typedef HICON HCURSOR;
 

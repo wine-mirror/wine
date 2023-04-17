@@ -817,6 +817,7 @@ SOURCES = \
 	windows.gaming.ui.idl \
 	windows.globalization.idl \
 	windows.graphics.capture.idl \
+	windows.graphics.capture.interop.idl \
 	windows.graphics.directx.direct3d11.idl \
 	windows.graphics.directx.idl \
 	windows.graphics.effects.idl \
