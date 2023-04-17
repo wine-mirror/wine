@@ -1039,11 +1039,12 @@ static HRESULT dxgi_surface_buffer_lock(struct buffer *buffer, MF2DBuffer_LockFl
 
     if (buffer->_2d.linear_buffer)
         hr = MF_E_UNEXPECTED;
-    else if (!buffer->_2d.locks++)
+    else if (!buffer->_2d.locks)
         hr = dxgi_surface_buffer_map(buffer);
 
     if (SUCCEEDED(hr))
     {
+        buffer->_2d.locks++;
         *scanline0 = buffer->dxgi_surface.map_desc.pData;
         *pitch = buffer->dxgi_surface.map_desc.RowPitch;
         if (buffer_start)
