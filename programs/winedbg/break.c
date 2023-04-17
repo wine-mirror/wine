@@ -398,7 +398,7 @@ void break_check_delayed_bp(void)
 void break_add_watch(const struct dbg_lvalue* lvalue, BOOL is_write)
 {
     int         num;
-    DWORD64     l = 4;
+    DWORD       l = ADDRSIZE;
 
     if (!lvalue->in_debuggee)
     {
@@ -409,21 +409,30 @@ void break_add_watch(const struct dbg_lvalue* lvalue, BOOL is_write)
                       &lvalue->addr);
     if (num == -1) return;
 
+    /* FIXME: this validation part should be moved to CPU backends (likely in a new method) */
     if (lvalue->type.id != dbg_itype_none)
     {
-        if (types_get_info(&lvalue->type, TI_GET_LENGTH, &l))
+        DWORD64 l64;
+        if (types_get_info(&lvalue->type, TI_GET_LENGTH, &l64))
         {
-            switch (l)
+            /* Only allow size of a power of 2, smaller than CPU's pointer size.
+             * (Validation is done by CPU backend with insert_Xpoint method)
+             */
+            if (!(l64 & (l64 - 1)) && l64 <= l)
+                l = l64;
+            else
+                dbg_printf("Unsupported length (%I64x) for watch-points, defaulting to %lu\n", l64, l);
+            /* most CPUs request watch address to be aligned on length */
+            if (lvalue->addr.Offset & (l - 1))
             {
-            case 4: case 2: case 1: break;
-            default:
-                dbg_printf("Unsupported length (%I64x) for watch-points, defaulting to 4\n", l);
-                break;
+                dbg_printf("Watchpoint on unaligned address is not supported\n");
+                dbg_curr_process->bp[num].refcount = 0;
+                return;
             }
         }
-        else dbg_printf("Cannot get watch size, defaulting to 4\n");
+        else dbg_printf("Cannot get watch size, defaulting to %lu\n", l);
     }
-    dbg_curr_process->bp[num].w.len = (DWORD)l - 1;
+    dbg_curr_process->bp[num].w.len = l - 1;
 
     if (!get_watched_value(num, &dbg_curr_process->bp[num].w.oldval))
     {
