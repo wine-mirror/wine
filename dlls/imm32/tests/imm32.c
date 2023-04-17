@@ -2907,6 +2907,8 @@ static void ok_seq_( const char *file, int line, const struct ime_call *expected
     ime_call_count = 0;
 }
 
+static BOOL check_WM_SHOWWINDOW;
+
 static BOOL ignore_message( UINT msg )
 {
     switch (msg)
@@ -2925,6 +2927,8 @@ static BOOL ignore_message( UINT msg )
     case WM_IME_KEYDOWN:
     case WM_IME_KEYUP:
         return FALSE;
+    case WM_SHOWWINDOW:
+        return !check_WM_SHOWWINDOW;
     default:
         return TRUE;
     }
@@ -5269,11 +5273,13 @@ static void test_ImmSetActiveContext(void)
     ok_ret( 1, EnumThreadWindows( GetCurrentThreadId(), enum_thread_ime_windows, (LPARAM)&ime_windows ) );
     ok_ne( NULL, ime_windows.ime_hwnd, HWND, "%p" );
     ok_ne( NULL, ime_windows.ime_ui_hwnd, HWND, "%p" );
+    ok_ret( 0, IsWindowVisible( ime_windows.ime_ui_hwnd ) );
 
     SetLastError( 0xdeadbeef );
     ok_ret( 1, ImmSetActiveContext( hwnd, default_himc, TRUE ) );
     ok_seq( activate_0_seq );
     ok_ret( 0, GetLastError() );
+    ok_ret( 0, IsWindowVisible( ime_windows.ime_ui_hwnd ) );
     ok_ret( 1, ImmSetActiveContext( hwnd, default_himc, TRUE ) );
     ok_seq( activate_0_seq );
     ok_ret( 1, ImmSetActiveContext( hwnd, default_himc, FALSE ) );
@@ -5291,9 +5297,11 @@ static void test_ImmSetActiveContext(void)
 
     ok_eq( default_himc, (HIMC)GetWindowLongPtrW( ime_windows.ime_ui_hwnd, IMMGWL_IMC ), HIMC, "%p" );
     ok_ret( 1, ImmSetActiveContext( hwnd, himc, TRUE ) );
+    ok_ret( 0, IsWindowVisible( ime_windows.ime_ui_hwnd ) );
     ok_eq( default_himc, (HIMC)GetWindowLongPtrW( ime_windows.ime_ui_hwnd, IMMGWL_IMC ), HIMC, "%p" );
     ok_eq( default_himc, ImmAssociateContext( hwnd, himc ), HIMC, "%p" );
     todo_wine ok_eq( himc, (HIMC)GetWindowLongPtrW( ime_windows.ime_ui_hwnd, IMMGWL_IMC ), HIMC, "%p" );
+    ok_ret( 0, IsWindowVisible( ime_windows.ime_ui_hwnd ) );
 
     ok_ret( 1, ImmDestroyContext( himc ) );
 
@@ -6124,6 +6132,7 @@ static void test_ImmSetCompositionWindow(void)
         .ptCurrentPos = {.x = 123, .y = 456},
         .rcArea = {.left = 1, .top = 2, .right = 3, .bottom = 4},
     };
+    struct ime_windows ime_windows = {0};
     INPUTCONTEXT *ctx;
     HIMC himc;
     HKL hkl;
@@ -6149,6 +6158,10 @@ static void test_ImmSetCompositionWindow(void)
     set_composition_window_0_seq[0].himc = himc;
     set_composition_window_1_seq[0].himc = himc;
 
+    ok_ret( 1, EnumThreadWindows( GetCurrentThreadId(), enum_thread_ime_windows, (LPARAM)&ime_windows ) );
+    ok_ne( NULL, ime_windows.ime_hwnd, HWND, "%p" );
+    ok_ne( NULL, ime_windows.ime_ui_hwnd, HWND, "%p" );
+
     ctx->cfCompForm = expect_form;
     ctx->fdwInit = ~INIT_COMPFORM;
     memset( &comp_form, 0xcd, sizeof(comp_form) );
@@ -6158,14 +6171,27 @@ static void test_ImmSetCompositionWindow(void)
     ok_ret( 1, ImmGetCompositionWindow( himc, &comp_form ) );
     check_composition_form( &comp_form, &expect_form );
     ok_seq( empty_sequence );
+    ok_ret( 0, IsWindowVisible( ime_windows.ime_ui_hwnd ) );
+
+    ok_ret( 0, ShowWindow( ime_windows.ime_ui_hwnd, SW_SHOWNOACTIVATE ) );
+    process_messages();
+    ok_seq( empty_sequence );
+    check_WM_SHOWWINDOW = TRUE;
 
     ctx->hWnd = hwnd;
     ctx->fdwInit = 0;
     memset( &comp_form, 0xcd, sizeof(comp_form) );
     ok_ret( 1, ImmSetCompositionWindow( himc, &comp_form ) );
-    ok_seq( set_composition_window_0_seq );
+    process_messages();
+    todo_wine ok_seq( set_composition_window_0_seq );
     ok_eq( INIT_COMPFORM, ctx->fdwInit, UINT, "%u" );
     check_composition_form( &ctx->cfCompForm, &comp_form );
+    ok_ret( 1, IsWindowVisible( ime_windows.ime_ui_hwnd ) );
+    check_WM_SHOWWINDOW = FALSE;
+
+    ShowWindow( ime_windows.ime_ui_hwnd, SW_HIDE );
+    process_messages();
+    ok_seq( empty_sequence );
 
     ok_ret( 1, ImmSetCompositionWindow( himc, &expect_form ) );
     ok_seq( set_composition_window_0_seq );
