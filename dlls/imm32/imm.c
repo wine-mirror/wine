@@ -1776,23 +1776,10 @@ BOOL WINAPI ImmGetCompositionWindow( HIMC himc, COMPOSITIONFORM *composition )
  *		ImmGetContext (IMM32.@)
  *
  */
-HIMC WINAPI ImmGetContext(HWND hWnd)
+HIMC WINAPI ImmGetContext( HWND hwnd )
 {
-    HIMC rc;
-
-    TRACE("%p\n", hWnd);
-
-    rc = NtUserGetWindowInputContext(hWnd);
-
-    if (rc)
-    {
-        struct imc *data = get_imc_data( rc );
-        if (!data) rc = 0;
-    }
-
-    TRACE("returning %p\n", rc);
-
-    return rc;
+    TRACE( "hwnd %p\n", hwnd );
+    return NtUserGetWindowInputContext( hwnd );
 }
 
 /***********************************************************************
