@@ -248,10 +248,8 @@ break_command:
     ;
 
 watch_command:
-      tWATCH '*' expr_lvalue    { break_add_watch_from_lvalue(&$3, TRUE); }
-    | tWATCH identifier         { break_add_watch_from_id($2, TRUE); }
-    | tRWATCH '*' expr_lvalue   { break_add_watch_from_lvalue(&$3, FALSE); }
-    | tRWATCH identifier        { break_add_watch_from_id($2, FALSE); }
+      tWATCH expr_lvalue        { break_add_watch(&$2, TRUE); }
+    | tRWATCH expr_lvalue       { break_add_watch(&$2, FALSE); }
     ;
 
 
