@@ -22095,6 +22095,7 @@ wine_fn_config_makefile programs/fc enable_fc
 wine_fn_config_makefile programs/find enable_find
 wine_fn_config_makefile programs/find/tests enable_tests
 wine_fn_config_makefile programs/findstr enable_findstr
+wine_fn_config_makefile programs/findstr/tests enable_tests
 wine_fn_config_makefile programs/fsutil enable_fsutil
 wine_fn_config_makefile programs/fsutil/tests enable_tests
 wine_fn_config_makefile programs/hh enable_hh
