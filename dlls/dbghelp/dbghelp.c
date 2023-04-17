@@ -68,6 +68,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 unsigned   dbghelp_options = SYMOPT_UNDNAME;
 BOOL       dbghelp_opt_native = FALSE;
 BOOL       dbghelp_opt_real_path = FALSE;
+BOOL       dbghelp_opt_source_actual_path = FALSE;
 SYSTEM_INFO sysinfo;
 
 static struct process* process_first /* = NULL */;
@@ -619,6 +620,10 @@ BOOL WINAPI SymSetExtendedOption(IMAGEHLP_EXTENDED_OPTIONS option, BOOL value)
             old = dbghelp_opt_real_path;
             dbghelp_opt_real_path = value;
             break;
+        case SYMOPT_EX_WINE_SOURCE_ACTUAL_PATH:
+            old = dbghelp_opt_source_actual_path;
+            dbghelp_opt_source_actual_path = value;
+            break;
         default:
             FIXME("Unsupported option %d with value %d\n", option, value);
     }
@@ -638,6 +643,8 @@ BOOL WINAPI SymGetExtendedOption(IMAGEHLP_EXTENDED_OPTIONS option)
             return dbghelp_opt_native;
         case SYMOPT_EX_WINE_MODULE_REAL_PATH:
             return dbghelp_opt_real_path;
+        case SYMOPT_EX_WINE_SOURCE_ACTUAL_PATH:
+            return dbghelp_opt_source_actual_path;
         default:
             FIXME("Unsupported option %d\n", option);
     }

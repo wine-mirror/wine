@@ -1098,8 +1098,12 @@ typedef enum
     SYMOPT_EX_MAX,
 
 #ifdef __WINESRC__
+    /* Include ELF/Mach-O modules in module operations */
     SYMOPT_EX_WINE_NATIVE_MODULES = 1000,
+    /* Return the Unix actual path of loaded module */
     SYMOPT_EX_WINE_MODULE_REAL_PATH,
+    /* Return the raw source file path from debug info (not always mapped to DOS) */
+    SYMOPT_EX_WINE_SOURCE_ACTUAL_PATH,
 #endif
 } IMAGEHLP_EXTENDED_OPTIONS;
 

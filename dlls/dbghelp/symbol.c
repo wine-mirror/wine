@@ -1882,7 +1882,7 @@ static BOOL get_line_from_function(struct module_pair* pair, struct symt_functio
         if (found_dli)
         {
             BOOL ret;
-            if (dbghelp_opt_native)
+            if (dbghelp_opt_source_actual_path)
             {
                 /* Return native file paths when using winedbg */
                 ret = internal_line_set_nameA(pair->pcs, intl, (char*)source_get(pair->effective, dli->u.source_file), FALSE);
