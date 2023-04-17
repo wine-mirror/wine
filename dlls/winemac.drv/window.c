@@ -216,7 +216,7 @@ static void macdrv_mac_to_window_rect(struct macdrv_win_data *data, RECT *rect)
  * Alter a window frame rectangle to fit within a) Cocoa's documented
  * limits, and b) sane sizes, like twice the desktop rect.
  */
-static void constrain_window_frame(CGRect* frame)
+static void constrain_window_frame(CGPoint* origin, CGSize* size)
 {
     CGRect desktop_rect = macdrv_get_desktop_rect();
     int max_width, max_height;
@@ -224,12 +224,18 @@ static void constrain_window_frame(CGRect* frame)
     max_width = min(32000, 2 * CGRectGetWidth(desktop_rect));
     max_height = min(32000, 2 * CGRectGetHeight(desktop_rect));
 
-    if (frame->origin.x < -16000) frame->origin.x = -16000;
-    if (frame->origin.y < -16000) frame->origin.y = -16000;
-    if (frame->origin.x > 16000) frame->origin.x = 16000;
-    if (frame->origin.y > 16000) frame->origin.y = 16000;
-    if (frame->size.width > max_width) frame->size.width = max_width;
-    if (frame->size.height > max_height) frame->size.height = max_height;
+    if (origin)
+    {
+        if (origin->x < -16000) origin->x = -16000;
+        if (origin->y < -16000) origin->y = -16000;
+        if (origin->x > 16000) origin->x = 16000;
+        if (origin->y > 16000) origin->y = 16000;
+    }
+    if (size)
+    {
+        if (size->width > max_width) size->width = max_width;
+        if (size->height > max_height) size->height = max_height;
+    }
 }
 
 
@@ -698,7 +704,7 @@ static void create_cocoa_window(struct macdrv_win_data *data)
     get_cocoa_window_features(data, style, ex_style, &wf, &data->window_rect, &data->client_rect);
 
     frame = cgrect_from_rect(data->whole_rect);
-    constrain_window_frame(&frame);
+    constrain_window_frame(&frame.origin, &frame.size);
     if (frame.size.width < 1 || frame.size.height < 1)
         frame.size.width = frame.size.height = 1;
 
@@ -1139,7 +1145,7 @@ static void sync_window_position(struct macdrv_win_data *data, UINT swp_flags, c
     {
         if (data->minimized) return;
 
-        constrain_window_frame(&frame);
+        constrain_window_frame(&frame.origin, &frame.size);
         if (frame.size.width < 1 || frame.size.height < 1)
             frame.size.width = frame.size.height = 1;
 
