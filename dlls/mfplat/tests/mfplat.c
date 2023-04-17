@@ -7458,7 +7458,6 @@ static void test_d3d11_surface_buffer(void)
 
     hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Write, &data, &pitch, &data2, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(*(DWORD *)data != 0xefefefef, "Unexpected leading dword.\n");
     memset(data, 0x89, 4);
     IMF2DBuffer2_Unlock2D(_2dbuffer2);

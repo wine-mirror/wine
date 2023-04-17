@@ -905,7 +905,7 @@ static HRESULT dxgi_surface_buffer_create_readback_texture(struct buffer *buffer
     return hr;
 }
 
-static HRESULT dxgi_surface_buffer_map(struct buffer *buffer)
+static HRESULT dxgi_surface_buffer_map(struct buffer *buffer, MF2DBuffer_LockFlags flags)
 {
     ID3D11DeviceContext *immediate_context;
     ID3D11Device *device;
@@ -916,8 +916,12 @@ static HRESULT dxgi_surface_buffer_map(struct buffer *buffer)
 
     ID3D11Texture2D_GetDevice(buffer->dxgi_surface.texture, &device);
     ID3D11Device_GetImmediateContext(device, &immediate_context);
-    ID3D11DeviceContext_CopySubresourceRegion(immediate_context, (ID3D11Resource *)buffer->dxgi_surface.rb_texture,
-            0, 0, 0, 0, (ID3D11Resource *)buffer->dxgi_surface.texture, buffer->dxgi_surface.sub_resource_idx, NULL);
+
+    if (flags == MF2DBuffer_LockFlags_Read || flags == MF2DBuffer_LockFlags_ReadWrite)
+    {
+        ID3D11DeviceContext_CopySubresourceRegion(immediate_context, (ID3D11Resource *)buffer->dxgi_surface.rb_texture,
+                0, 0, 0, 0, (ID3D11Resource *)buffer->dxgi_surface.texture, buffer->dxgi_surface.sub_resource_idx, NULL);
+    }
 
     memset(&buffer->dxgi_surface.map_desc, 0, sizeof(buffer->dxgi_surface.map_desc));
     if (FAILED(hr = ID3D11DeviceContext_Map(immediate_context, (ID3D11Resource *)buffer->dxgi_surface.rb_texture,
@@ -971,7 +975,7 @@ static HRESULT WINAPI dxgi_surface_buffer_Lock(IMFMediaBuffer *iface, BYTE **dat
 
         if (SUCCEEDED(hr))
         {
-            hr = dxgi_surface_buffer_map(buffer);
+            hr = dxgi_surface_buffer_map(buffer, MF2DBuffer_LockFlags_ReadWrite);
             if (SUCCEEDED(hr))
             {
                 copy_image(buffer, buffer->_2d.linear_buffer, buffer->_2d.width, buffer->dxgi_surface.map_desc.pData,
@@ -1040,7 +1044,7 @@ static HRESULT dxgi_surface_buffer_lock(struct buffer *buffer, MF2DBuffer_LockFl
     if (buffer->_2d.linear_buffer)
         hr = MF_E_UNEXPECTED;
     else if (!buffer->_2d.locks)
-        hr = dxgi_surface_buffer_map(buffer);
+        hr = dxgi_surface_buffer_map(buffer, flags);
     else if (buffer->_2d.lock_flags == MF2DBuffer_LockFlags_Write && flags != MF2DBuffer_LockFlags_Write)
         hr = HRESULT_FROM_WIN32(ERROR_WAS_LOCKED);
 
