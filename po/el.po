@@ -14457,6 +14457,24 @@ msgstr ""
 msgid "&Run..."
 msgstr ""
 
+#: programs/findstr/findstr.rc:28
+#, fuzzy
+msgid "Usage: findstr /options string\n"
+msgstr "Επιλογές"
+
+#: programs/findstr/findstr.rc:29
+#, fuzzy
+msgid "FINDSTR: Bad command line\n"
+msgstr "Μη έγγυρος(οι) χαρακτήρας(ες) στο μονοπάτι.\n"
+
+#: programs/findstr/findstr.rc:30
+msgid "FINDSTR: Cannot open %s\n"
+msgstr ""
+
+#: programs/findstr/findstr.rc:31
+msgid "FINDSTR: /%c ignored\n"
+msgstr ""
+
 #: programs/fsutil/fsutil.mc:28
 msgid ""
 "- Supported Commands -\n"

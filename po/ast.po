@@ -14807,6 +14807,24 @@ msgstr ""
 msgid "&Run..."
 msgstr "&Executar..."
 
+#: programs/findstr/findstr.rc:28
+#, fuzzy
+#| msgid "Connections"
+msgid "Usage: findstr /options string\n"
+msgstr "Conexones"
+
+#: programs/findstr/findstr.rc:29
+msgid "FINDSTR: Bad command line\n"
+msgstr ""
+
+#: programs/findstr/findstr.rc:30
+msgid "FINDSTR: Cannot open %s\n"
+msgstr ""
+
+#: programs/findstr/findstr.rc:31
+msgid "FINDSTR: /%c ignored\n"
+msgstr ""
+
 #: programs/fsutil/fsutil.mc:28
 msgid ""
 "- Supported Commands -\n"

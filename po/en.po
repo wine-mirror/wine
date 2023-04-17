@@ -14694,6 +14694,22 @@ msgstr "Start"
 msgid "&Run..."
 msgstr "&Run..."
 
+#: programs/findstr/findstr.rc:28
+msgid "Usage: findstr /options string\n"
+msgstr "Usage: findstr /options string\n"
+
+#: programs/findstr/findstr.rc:29
+msgid "FINDSTR: Bad command line\n"
+msgstr "FINDSTR: Bad command line\n"
+
+#: programs/findstr/findstr.rc:30
+msgid "FINDSTR: Cannot open %s\n"
+msgstr "FINDSTR: Cannot open %s\n"
+
+#: programs/findstr/findstr.rc:31
+msgid "FINDSTR: /%c ignored\n"
+msgstr "FINDSTR: /%c ignored\n"
+
 #: programs/fsutil/fsutil.mc:28
 msgid ""
 "- Supported Commands -\n"

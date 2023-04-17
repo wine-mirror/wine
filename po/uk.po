@@ -14978,6 +14978,26 @@ msgstr "Пуск"
 msgid "&Run..."
 msgstr "&Запустити..."
 
+#: programs/findstr/findstr.rc:28
+#, fuzzy
+#| msgid "Use c&onnection string"
+msgid "Usage: findstr /options string\n"
+msgstr "Використовувати р&ядок підключення"
+
+#: programs/findstr/findstr.rc:29
+#, fuzzy
+#| msgid "Invalid command line.\n"
+msgid "FINDSTR: Bad command line\n"
+msgstr "Невірний командний рядок.\n"
+
+#: programs/findstr/findstr.rc:30
+msgid "FINDSTR: Cannot open %s\n"
+msgstr ""
+
+#: programs/findstr/findstr.rc:31
+msgid "FINDSTR: /%c ignored\n"
+msgstr ""
+
 #: programs/fsutil/fsutil.mc:28
 msgid ""
 "- Supported Commands -\n"
