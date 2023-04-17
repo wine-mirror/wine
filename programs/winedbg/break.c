@@ -340,8 +340,17 @@ void break_add_break_from_lineno(const char *filename, int lineno, BOOL swbp)
     if (bkln.addr.Offset)
         break_add_break(&bkln.addr, TRUE, swbp);
     else
-        dbg_printf("Unknown line number\n"
-                   "(either out of file, or no code at given line number)\n");
+    {
+        /* winedbg's lexer can't tell in 'break foo : 3' whether foo shall be interpreted
+         * as a debuggee symbol or as a debuggee source file.
+         * Try now symbol since source file failed.
+         */
+        if (filename)
+            break_add_break_from_id(filename, lineno, swbp);
+        else
+            dbg_printf("Unknown line number\n"
+                       "(either out of file, or no code at given line number)\n");
+    }
 }
 
 /***********************************************************************
