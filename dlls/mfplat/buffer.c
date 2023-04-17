@@ -1041,9 +1041,13 @@ static HRESULT dxgi_surface_buffer_lock(struct buffer *buffer, MF2DBuffer_LockFl
         hr = MF_E_UNEXPECTED;
     else if (!buffer->_2d.locks)
         hr = dxgi_surface_buffer_map(buffer);
+    else if (buffer->_2d.lock_flags == MF2DBuffer_LockFlags_Write && flags != MF2DBuffer_LockFlags_Write)
+        hr = HRESULT_FROM_WIN32(ERROR_WAS_LOCKED);
 
     if (SUCCEEDED(hr))
     {
+        if (!buffer->_2d.locks)
+            buffer->_2d.lock_flags = flags;
         buffer->_2d.locks++;
         *scanline0 = buffer->dxgi_surface.map_desc.pData;
         *pitch = buffer->dxgi_surface.map_desc.RowPitch;
@@ -1087,7 +1091,10 @@ static HRESULT WINAPI dxgi_surface_buffer_Unlock2D(IMF2DBuffer2 *iface)
     if (buffer->_2d.locks)
     {
         if (!--buffer->_2d.locks)
+        {
             dxgi_surface_buffer_unmap(buffer);
+            buffer->_2d.lock_flags = 0;
+        }
     }
     else
         hr = HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED);

@@ -7529,13 +7529,10 @@ static void test_d3d11_surface_buffer(void)
     hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Write, &data, &pitch, &data2, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_ReadWrite, &data, &pitch, &data2, &length);
-    todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_WAS_LOCKED), "Unexpected hr %#lx.\n", hr);
     hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Read, &data, &pitch, &data2, &length);
-    todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_WAS_LOCKED), "Unexpected hr %#lx.\n", hr);
     hr = IMF2DBuffer_Lock2D(_2d_buffer, &data, &pitch);
-    todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_WAS_LOCKED), "Unexpected hr %#lx.\n", hr);
     hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -7543,7 +7540,6 @@ static void test_d3d11_surface_buffer(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
-    todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED), "Unexpected hr %#lx.\n", hr);
 
     IMF2DBuffer2_Release(_2dbuffer2);
