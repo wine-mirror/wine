@@ -3368,15 +3368,22 @@ static void test_wordbreak_proc(void)
 
 static void test_dbcs_WM_CHAR(void)
 {
+    HKL hkl;
+    UINT cp;
     WCHAR textW[] = { 0x4e00, 0x4e8c, 0x4e09, 0 }; /* one, two, three */
     unsigned char bytes[7];
+    BOOL hasdefault;
     HWND hwnd[2];
     int i;
 
-    WideCharToMultiByte(CP_ACP, 0, textW, -1, (char *)bytes, ARRAY_SIZE(bytes), NULL, NULL);
-    if (!IsDBCSLeadByte(bytes[0]))
+    hkl = GetKeyboardLayout( 0 );
+    if (!GetLocaleInfoW(LOWORD(hkl), LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER, (WCHAR *)&cp, sizeof(cp) / sizeof(WCHAR)))
+        cp = CP_ACP;
+
+    WideCharToMultiByte(cp, WC_NO_BEST_FIT_CHARS, textW, -1, (char *)bytes, ARRAY_SIZE(bytes), NULL, &hasdefault);
+    if (hasdefault || !IsDBCSLeadByteEx(cp, bytes[0]))
     {
-        skip("Skipping DBCS WM_CHAR test in this codepage\n");
+        skip("Skipping DBCS WM_CHAR test in the %d codepage\n", cp);
         return;
     }
     hwnd[0] = create_editcontrol(ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
@@ -3396,6 +3403,7 @@ static void test_dbcs_WM_CHAR(void)
         r = SetWindowTextA(hwnd[i], "");
         ok(r, "SetWindowText failed\n");
 
+        /* sending the lead byte separately works for DBCS locales */
         for (p = bytes; *p; p++)
             PostMessageA(hwnd[i], WM_CHAR, *p, 1);
 
