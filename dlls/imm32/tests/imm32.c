@@ -5314,7 +5314,7 @@ static void test_ImmSetActiveContext(void)
 
     ctx->hWnd = (HWND)0xdeadbeef;
     ok_ret( 1, ImmSetActiveContext( hwnd, himc, FALSE ) );
-    todo_wine ok_eq( (HWND)0xdeadbeef, ctx->hWnd, HWND, "%p" );
+    ok_eq( (HWND)0xdeadbeef, ctx->hWnd, HWND, "%p" );
     deactivate_2_seq[0].himc = himc;
     ok_seq( deactivate_2_seq );
 

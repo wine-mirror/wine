@@ -852,7 +852,7 @@ BOOL WINAPI ImmSetActiveContext(HWND hwnd, HIMC himc, BOOL activate)
 
     if (data)
     {
-        data->IMC.hWnd = activate ? hwnd : NULL;
+        if (activate) data->IMC.hWnd = hwnd;
         if ((ime = imc_select_ime( data ))) ime->pImeSetActiveContext( himc, activate );
     }
 
