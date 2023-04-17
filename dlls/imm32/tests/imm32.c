@@ -5240,6 +5240,18 @@ static void test_ImmSetActiveContext(void)
         },
         {0},
     };
+    struct ime_call deactivate_2_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/,
+            .func = IME_SET_ACTIVE_CONTEXT, .set_active_context = {.flag = 0}
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_SETCONTEXT, .wparam = 0, .lparam = ISC_SHOWUIALL}
+        },
+        {0},
+    };
     struct ime_call activate_1_seq[] =
     {
         {
@@ -5254,6 +5266,7 @@ static void test_ImmSetActiveContext(void)
     };
     HKL hkl;
     struct ime_windows ime_windows = {0};
+    INPUTCONTEXT *ctx;
     HIMC himc;
 
     ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
@@ -5287,6 +5300,10 @@ static void test_ImmSetActiveContext(void)
 
     himc = ImmCreateContext();
     ok_ne( NULL, himc, HIMC, "%p" );
+    ctx = ImmLockIMC( himc );
+    ok_ne( NULL, ctx, INPUTCONTEXT *, "%p" );
+    ok_eq( 0, ctx->hWnd, HWND, "%p" );
+
     ok_ret( 1, ImmSetActiveContext( hwnd, himc, FALSE ) );
     deactivate_1_seq[3].himc = himc;
     deactivate_1_seq[4].himc = himc;
@@ -5295,14 +5312,35 @@ static void test_ImmSetActiveContext(void)
     activate_1_seq[0].himc = himc;
     ok_seq( activate_1_seq );
 
+    ctx->hWnd = (HWND)0xdeadbeef;
+    ok_ret( 1, ImmSetActiveContext( hwnd, himc, FALSE ) );
+    todo_wine ok_eq( (HWND)0xdeadbeef, ctx->hWnd, HWND, "%p" );
+    deactivate_2_seq[0].himc = himc;
+    ok_seq( deactivate_2_seq );
+
+    ctx->hWnd = 0;
+    ok_ret( 1, ImmSetActiveContext( hwnd, himc, TRUE ) );
+    ok_eq( hwnd, ctx->hWnd, HWND, "%p" );
+    activate_1_seq[0].himc = himc;
+    ok_seq( activate_1_seq );
+
     ok_eq( default_himc, (HIMC)GetWindowLongPtrW( ime_windows.ime_ui_hwnd, IMMGWL_IMC ), HIMC, "%p" );
     ok_ret( 1, ImmSetActiveContext( hwnd, himc, TRUE ) );
     ok_ret( 0, IsWindowVisible( ime_windows.ime_ui_hwnd ) );
     ok_eq( default_himc, (HIMC)GetWindowLongPtrW( ime_windows.ime_ui_hwnd, IMMGWL_IMC ), HIMC, "%p" );
+
+    ctx->hWnd = 0;
     ok_eq( default_himc, ImmAssociateContext( hwnd, himc ), HIMC, "%p" );
     todo_wine ok_eq( himc, (HIMC)GetWindowLongPtrW( ime_windows.ime_ui_hwnd, IMMGWL_IMC ), HIMC, "%p" );
     ok_ret( 0, IsWindowVisible( ime_windows.ime_ui_hwnd ) );
+    ok_eq( hwnd, ctx->hWnd, HWND, "%p" );
 
+    ctx->hWnd = (HWND)0xdeadbeef;
+    ok_eq( himc, ImmGetContext( hwnd ), HIMC, "%p" );
+    todo_wine ok_eq( (HWND)0xdeadbeef, ctx->hWnd, HWND, "%p" );
+    ok_ret( 1, ImmReleaseContext( hwnd, himc ) );
+
+    ok_ret( 1, ImmUnlockIMC( himc ) );
     ok_ret( 1, ImmDestroyContext( himc ) );
 
     ok_ret( 1, ImmActivateLayout( default_hkl ) );
