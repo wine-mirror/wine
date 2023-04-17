@@ -6623,6 +6623,15 @@ static void test_MFCreateDXSurfaceBuffer(void)
     hr = IMF2DBuffer_Unlock2D(_2dbuffer);
     ok(hr == HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED), "Unexpected hr %#lx.\n", hr);
 
+    hr = IMFMediaBuffer_Lock(buffer, &data, NULL, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMF2DBuffer_Lock2D(_2dbuffer, &data, &pitch);
+    ok(hr == MF_E_UNEXPECTED, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaBuffer_Unlock(buffer);
+    ok(hr == S_OK || broken(broken_test), "Unexpected hr %#lx.\n", hr);
+
     hr = IMF2DBuffer_IsContiguousFormat(_2dbuffer, &value);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!value, "Unexpected return value %d.\n", value);
