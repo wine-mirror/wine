@@ -7452,7 +7452,6 @@ static void test_d3d11_surface_buffer(void)
     IMF2DBuffer2_Unlock2D(_2dbuffer2);
 
     color = get_d3d11_texture_color(texture, 0, 0);
-    todo_wine
     ok(color == 0xcdcdcdcd, "Unexpected leading dword %#lx.\n", color);
     put_d3d11_texture_color(texture, 0, 0, 0xefefefef);
 
