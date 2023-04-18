@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 #include <windows.h>
+#include <ntgdi.h>
 #include <winspool.h>
 #include <ddk/winsplp.h>
 
@@ -40,7 +41,10 @@ struct pp_data
     HANDLE hport;
     WCHAR *doc_name;
     WCHAR *out_file;
+
     PSDRV_PDEVICE *pdev;
+    struct gdi_physdev font_dev;
+
     struct brush_pattern *patterns;
     BOOL path;
 };
@@ -132,6 +136,50 @@ static struct pp_data* get_handle_data(HANDLE pp)
     }
     return ret;
 }
+
+static BOOL CDECL font_EnumFonts(PHYSDEV dev, LOGFONTW *lf, FONTENUMPROCW proc, LPARAM lp)
+{
+    return EnumFontFamiliesExW(dev->hdc, lf, proc, lp, 0);
+}
+
+static BOOL CDECL font_GetCharWidth(PHYSDEV dev, UINT first, UINT count, const WCHAR *chars, INT *buffer)
+{
+    XFORM old, xform = { .eM11 = 1.0f };
+    BOOL ret;
+
+    GetWorldTransform(dev->hdc, &old);
+    SetWorldTransform(dev->hdc, &xform);
+    ret = NtGdiGetCharWidthW(dev->hdc, first, count, (WCHAR *)chars, NTGDI_GETCHARWIDTH_INT, buffer);
+    SetWorldTransform(dev->hdc, &old);
+    return ret;
+}
+
+static BOOL CDECL font_GetTextExtentExPoint(PHYSDEV dev, const WCHAR *str, INT count, INT *dxs)
+{
+    SIZE size;
+    return GetTextExtentExPointW(dev->hdc, str, count, -1, NULL, dxs, &size);
+}
+
+static BOOL CDECL font_GetTextMetrics(PHYSDEV dev, TEXTMETRICW *metrics)
+{
+    return GetTextMetricsW(dev->hdc, metrics);
+}
+
+static HFONT CDECL font_SelectFont(PHYSDEV dev, HFONT hfont, UINT *aa_flags)
+{
+    *aa_flags = GGO_BITMAP;
+    return SelectObject(dev->hdc, hfont) ? hfont : 0;
+}
+
+static const struct gdi_dc_funcs font_funcs =
+{
+    .pEnumFonts = font_EnumFonts,
+    .pGetCharWidth = font_GetCharWidth,
+    .pGetTextExtentExPoint = font_GetTextExtentExPoint,
+    .pGetTextMetrics = font_GetTextMetrics,
+    .pSelectFont = font_SelectFont,
+    .priority = GDI_PRIORITY_FONT_DRV
+};
 
 static inline INT GDI_ROUND(double val)
 {
@@ -1114,18 +1162,23 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     {
         HDC hdc = data->pdev->dev.hdc;
         int ret = PlayEnhMetaFileRecord(hdc, htable, rec, handle_count);
+        UINT aa_flags;
 
-        select_hbrush(data, htable, handle_count, GetCurrentObject(hdc, OBJ_BRUSH));
-        /* TODO: reselect font */
-        PSDRV_SelectPen(&data->pdev->dev, GetCurrentObject(hdc, OBJ_PEN), NULL);
-        PSDRV_SetBkColor(&data->pdev->dev, GetBkColor(hdc));
-        PSDRV_SetTextColor(&data->pdev->dev, GetTextColor(hdc));
+        if (ret)
+        {
+            select_hbrush(data, htable, handle_count, GetCurrentObject(hdc, OBJ_BRUSH));
+            PSDRV_SelectFont(&data->pdev->dev, GetCurrentObject(hdc, OBJ_FONT), &aa_flags);
+            PSDRV_SelectPen(&data->pdev->dev, GetCurrentObject(hdc, OBJ_PEN), NULL);
+            PSDRV_SetBkColor(&data->pdev->dev, GetBkColor(hdc));
+            PSDRV_SetTextColor(&data->pdev->dev, GetTextColor(hdc));
+        }
         return ret;
     }
     case EMR_SELECTOBJECT:
     {
         const EMRSELECTOBJECT *so = (const EMRSELECTOBJECT *)rec;
         struct brush_pattern *pattern;
+        UINT aa_flags;
         HGDIOBJ obj;
 
         obj = get_object_handle(data, htable, so->ihObject, &pattern);
@@ -1135,6 +1188,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         {
         case OBJ_PEN: return PSDRV_SelectPen(&data->pdev->dev, obj, NULL) != NULL;
         case OBJ_BRUSH: return PSDRV_SelectBrush(&data->pdev->dev, obj, pattern) != NULL;
+        case OBJ_FONT: return PSDRV_SelectFont(&data->pdev->dev, obj, &aa_flags) != NULL;
         default:
             FIXME("unhandled object type %ld\n", GetObjectType(obj));
             return 1;
@@ -1749,6 +1803,9 @@ HANDLE WINAPI OpenPrintProcessor(WCHAR *port, PRINTPROCESSOROPENDATA *open_data)
         return NULL;
     }
     data->pdev->dev.hdc = hdc;
+    data->pdev->dev.next = &data->font_dev;
+    data->font_dev.funcs = &font_funcs;
+    data->font_dev.hdc = hdc;
 
     PSDRV_SetTextColor(&data->pdev->dev, GetTextColor(hdc));
     PSDRV_SetBkColor(&data->pdev->dev, GetBkColor(hdc));
