@@ -47,6 +47,16 @@ struct pp_data
 
     struct brush_pattern *patterns;
     BOOL path;
+    INT break_extra;
+    INT break_rem;
+
+    INT saved_dc_size;
+    INT saved_dc_top;
+    struct
+    {
+        INT break_extra;
+        INT break_rem;
+    } *saved_dc;
 };
 
 typedef enum
@@ -87,6 +97,13 @@ typedef struct
     unsigned int ulID;
     unsigned int cjSize;
 } record_hdr;
+
+typedef struct
+{
+    EMR emr;
+    INT break_extra;
+    INT break_count;
+} EMRSETTEXTJUSTIFICATION;
 
 BOOL WINAPI SeekPrinter(HANDLE, LARGE_INTEGER, LARGE_INTEGER*, DWORD, BOOL);
 
@@ -1158,8 +1175,37 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         PSDRV_SetBkColor(&data->pdev->dev, p->crColor);
         return 1;
     }
+    case EMR_SAVEDC:
+    {
+        int ret = PlayEnhMetaFileRecord(hdc, htable, rec, handle_count);
+
+        if (!data->saved_dc_size)
+        {
+            data->saved_dc = malloc(8 * sizeof(*data->saved_dc));
+            if (data->saved_dc)
+                data->saved_dc_size = 8;
+        }
+        else if (data->saved_dc_size == data->saved_dc_top)
+        {
+            void *alloc = realloc(data->saved_dc, data->saved_dc_size * 2);
+
+            if (alloc)
+            {
+                data->saved_dc = alloc;
+                data->saved_dc_size *= 2;
+            }
+        }
+        if (data->saved_dc_size == data->saved_dc_top)
+            return 0;
+
+        data->saved_dc[data->saved_dc_top].break_extra = data->break_extra;
+        data->saved_dc[data->saved_dc_top].break_rem = data->break_rem;
+        data->saved_dc_top++;
+        return ret;
+    }
     case EMR_RESTOREDC:
     {
+        const EMRRESTOREDC *p = (const EMRRESTOREDC *)rec;
         HDC hdc = data->pdev->dev.hdc;
         int ret = PlayEnhMetaFileRecord(hdc, htable, rec, handle_count);
         UINT aa_flags;
@@ -1171,6 +1217,12 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
             PSDRV_SelectPen(&data->pdev->dev, GetCurrentObject(hdc, OBJ_PEN), NULL);
             PSDRV_SetBkColor(&data->pdev->dev, GetBkColor(hdc));
             PSDRV_SetTextColor(&data->pdev->dev, GetTextColor(hdc));
+
+            if (p->iRelative >= 0 || data->saved_dc_top + p->iRelative < 0)
+                return 0;
+            data->saved_dc_top += p->iRelative;
+            data->break_extra = data->saved_dc[data->saved_dc_top].break_extra;
+            data->break_rem = data->saved_dc[data->saved_dc_top].break_rem;
         }
         return ret;
     }
@@ -1633,6 +1685,14 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         return gradient_fill(&data->pdev->dev, p->Ver, p->nVer,
                 p->Ver + p->nVer, p->nTri, p->ulMode);
     }
+    case EMR_SETTEXTJUSTIFICATION:
+    {
+        const EMRSETTEXTJUSTIFICATION *p = (const EMRSETTEXTJUSTIFICATION *)rec;
+
+        data->break_extra = p->break_extra / p->break_count;
+        data->break_rem = p->break_extra - data->break_extra * p->break_count;
+        return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, handle_count);
+    }
 
     case EMR_EXTFLOODFILL:
     case EMR_ALPHABLEND:
@@ -1656,7 +1716,6 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     case EMR_INTERSECTCLIPRECT:
     case EMR_SCALEVIEWPORTEXTEX:
     case EMR_SCALEWINDOWEXTEX:
-    case EMR_SAVEDC:
     case EMR_SETWORLDTRANSFORM:
     case EMR_MODIFYWORLDTRANSFORM:
     case EMR_CREATEPEN:
@@ -1669,7 +1728,6 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     case EMR_EXTSELECTCLIPRGN:
     case EMR_EXTCREATEFONTINDIRECTW:
     case EMR_SETLAYOUT:
-    case EMR_SETTEXTJUSTIFICATION:
         return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, handle_count);
     default:
         FIXME("unsupported record: %ld\n", rec->iType);
@@ -1719,6 +1777,10 @@ static BOOL print_metafile(struct pp_data *data, HANDLE hdata)
     DeleteEnhMetaFile(hmf);
     free(data->patterns);
     data->patterns = NULL;
+    data->path = FALSE;
+    data->break_extra = 0;
+    data->break_rem = 0;
+    data->saved_dc_top = 0;
     return ret;
 }
 
@@ -1959,6 +2021,7 @@ BOOL WINAPI ClosePrintProcessor(HANDLE pp)
     DeleteDC(data->pdev->dev.hdc);
     HeapFree(GetProcessHeap(), 0, data->pdev->Devmode);
     HeapFree(GetProcessHeap(), 0, data->pdev);
+    free(data->saved_dc);
 
     memset(data, 0, sizeof(*data));
     LocalFree(data);
