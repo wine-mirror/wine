@@ -36,3 +36,8 @@ struct tasklist_process_info
     WCHAR session_number[32];
     WCHAR memory_usage[32];
 };
+
+struct tasklist_options
+{
+    BOOL no_header;
+};

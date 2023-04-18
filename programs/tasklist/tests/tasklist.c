@@ -108,6 +108,20 @@ static void test_basic(void)
     ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
 }
 
+static void test_no_header(void)
+{
+    char *pos;
+
+    /* /nh */
+    run_tasklist("/nh", 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    pos = strstr(stdout_buffer, "Image Name");
+    ok(!pos, "Got header.\n");
+    pos = strstr(stdout_buffer, "=");
+    ok(!pos, "Got header.\n");
+}
+
 START_TEST(tasklist)
 {
     if (PRIMARYLANGID(GetUserDefaultUILanguage()) != LANG_ENGLISH)
@@ -117,4 +131,5 @@ START_TEST(tasklist)
     }
 
     test_basic();
+    test_no_header();
 }

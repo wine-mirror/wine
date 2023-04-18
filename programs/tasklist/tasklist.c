@@ -163,17 +163,21 @@ static BOOL tasklist_get_process_info(const PROCESSENTRY32W *process_entry, stru
     return TRUE;
 }
 
-static void tasklist_print(void)
+static void tasklist_print(const struct tasklist_options *options)
 {
     struct tasklist_process_info header, info;
     PROCESSENTRY32W *process_list;
     DWORD process_count, i;
 
     wprintf(L"\n");
-    tasklist_get_header(&header);
-    wprintf(L"%-25.25s %8.8s %-16.16s %11.11s %12.12s\n"
-            L"========================= ======== ================ =========== ============\n",
-            header.image_name, header.pid, header.session_name, header.session_number, header.memory_usage);
+
+    if (!options->no_header)
+    {
+        tasklist_get_header(&header);
+        wprintf(L"%-25.25s %8.8s %-16.16s %11.11s %12.12s\n"
+                L"========================= ======== ================ =========== ============\n",
+                header.image_name, header.pid, header.session_name, header.session_number, header.memory_usage);
+    }
 
     process_list = enumerate_processes(&process_count);
     for (i = 0; i < process_count; ++i)
@@ -189,6 +193,7 @@ static void tasklist_print(void)
 
 int __cdecl wmain(int argc, WCHAR *argv[])
 {
+    struct tasklist_options options = {0};
     int i;
 
     for (i = 0; i < argc; i++)
@@ -202,12 +207,16 @@ int __cdecl wmain(int argc, WCHAR *argv[])
             tasklist_message(STRING_USAGE);
             return 0;
         }
+        else if (!wcsicmp(argv[i], L"/nh"))
+        {
+            options.no_header = TRUE;
+        }
         else
         {
             WINE_WARN("Ignoring option %s\n", wine_dbgstr_w(argv[i]));
         }
     }
 
-    tasklist_print();
+    tasklist_print(&options);
     return 0;
 }
