@@ -119,6 +119,13 @@ struct wg_parser_stream
     gchar *tags[WG_PARSER_TAG_COUNT];
 };
 
+static bool format_is_compressed(struct wg_format *format)
+{
+    return format->major_type != WG_MAJOR_TYPE_UNKNOWN
+            && format->major_type != WG_MAJOR_TYPE_VIDEO
+            && format->major_type != WG_MAJOR_TYPE_AUDIO;
+}
+
 static NTSTATUS wg_parser_get_stream_count(void *args)
 {
     struct wg_parser_get_stream_count_params *params = args;
@@ -475,12 +482,7 @@ static gboolean autoplug_continue_cb(GstElement * decodebin, GstPad *pad, GstCap
 
     wg_format_from_caps(&format, caps);
 
-    if (format.major_type != WG_MAJOR_TYPE_UNKNOWN
-            && format.major_type != WG_MAJOR_TYPE_VIDEO
-            && format.major_type != WG_MAJOR_TYPE_AUDIO)
-        return false;
-
-    return true;
+    return !format_is_compressed(&format);
 }
 
 static GstAutoplugSelectResult autoplug_select_cb(GstElement *bin, GstPad *pad,
@@ -952,9 +954,7 @@ static void pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
     gst_caps_unref(caps);
 
     /* For compressed stream, create an extra decodebin to decode it. */
-    if (stream->stream_format.major_type != WG_MAJOR_TYPE_UNKNOWN
-            && stream->stream_format.major_type != WG_MAJOR_TYPE_VIDEO
-            && stream->stream_format.major_type != WG_MAJOR_TYPE_AUDIO)
+    if (format_is_compressed(&stream->stream_format))
     {
         if (!stream_decodebin_create(stream))
         {
