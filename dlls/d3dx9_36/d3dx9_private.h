@@ -401,9 +401,9 @@ void d3dx_parameters_store_cleanup(struct d3dx_parameters_store *store) DECLSPEC
 struct d3dx_parameter *get_parameter_by_name(struct d3dx_parameters_store *store,
         struct d3dx_parameter *parameter, const char *name) DECLSPEC_HIDDEN;
 
-#define SET_D3D_STATE_(manager, device, method, args...) (manager ? manager->lpVtbl->method(manager, args) \
-        : device->lpVtbl->method(device, args))
-#define SET_D3D_STATE(base_effect, args...) SET_D3D_STATE_(base_effect->manager, base_effect->device, args)
+#define SET_D3D_STATE_(manager, device, method, ...) (manager ? manager->lpVtbl->method(manager, __VA_ARGS__) \
+        : device->lpVtbl->method(device, __VA_ARGS__))
+#define SET_D3D_STATE(base_effect, ...) SET_D3D_STATE_(base_effect->manager, base_effect->device, __VA_ARGS__)
 
 HRESULT d3dx_create_param_eval(struct d3dx_parameters_store *parameters, void *byte_code,
         unsigned int byte_code_size, D3DXPARAMETER_TYPE type,
