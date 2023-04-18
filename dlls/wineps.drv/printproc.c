@@ -1020,6 +1020,493 @@ static BOOL select_hbrush(struct pp_data *data, HANDLETABLE *htable, int handle_
     return PSDRV_SelectBrush(&data->pdev->dev, brush, pattern) != NULL;
 }
 
+/* Performs a device to world transformation on the specified width (which
+ * is in integer format).
+ */
+static inline INT INTERNAL_XDSTOWS(HDC hdc, INT width)
+{
+    double floatWidth;
+    XFORM xform;
+
+    GetWorldTransform(hdc, &xform);
+
+    /* Perform operation with floating point */
+    floatWidth = (double)width * xform.eM11;
+    /* Round to integers */
+    return GDI_ROUND(floatWidth);
+}
+
+/* Performs a device to world transformation on the specified size (which
+ * is in integer format).
+ */
+static inline INT INTERNAL_YDSTOWS(HDC hdc, INT height)
+{
+    double floatHeight;
+    XFORM xform;
+
+    GetWorldTransform(hdc, &xform);
+
+    /* Perform operation with floating point */
+    floatHeight = (double)height * xform.eM22;
+    /* Round to integers */
+    return GDI_ROUND(floatHeight);
+}
+
+static inline INT INTERNAL_YWSTODS(HDC hdc, INT height)
+{
+    POINT pt[2];
+    pt[0].x = pt[0].y = 0;
+    pt[1].x = 0;
+    pt[1].y = height;
+    LPtoDP(hdc, pt, 2);
+    return pt[1].y - pt[0].y;
+}
+
+/* compute positions for text rendering, in device coords */
+static BOOL get_char_positions(struct pp_data *data, const WCHAR *str,
+        INT count, INT *dx, SIZE *size)
+{
+    TEXTMETRICW tm;
+
+    size->cx = size->cy = 0;
+    if (!count) return TRUE;
+
+    PSDRV_GetTextMetrics(&data->pdev->dev, &tm);
+    if (!PSDRV_GetTextExtentExPoint(&data->pdev->dev, str, count, dx)) return FALSE;
+
+    if (data->break_extra || data->break_rem)
+    {
+        int i, space = 0, rem = data->break_rem;
+
+        for (i = 0; i < count; i++)
+        {
+            if (str[i] == tm.tmBreakChar)
+            {
+                space += data->break_extra;
+                if (rem > 0)
+                {
+                    space++;
+                    rem--;
+                }
+            }
+            dx[i] += space;
+        }
+    }
+    size->cx = dx[count - 1];
+    size->cy = tm.tmHeight;
+    return TRUE;
+}
+
+static BOOL get_text_extent(struct pp_data *data, const WCHAR *str, INT count,
+        INT max_ext, INT *nfit, INT *dxs, SIZE *size, UINT flags)
+{
+    INT buffer[256], *pos = dxs;
+    int i, char_extra;
+    BOOL ret;
+
+    if (flags)
+        return GetTextExtentExPointI(data->pdev->dev.hdc, str, count, max_ext, nfit, dxs, size);
+    else if (data->pdev->font.fontloc == Download)
+        return GetTextExtentExPointW(data->pdev->dev.hdc, str, count, max_ext, nfit, dxs, size);
+
+    if (!dxs)
+    {
+        pos = buffer;
+        if (count > 256 && !(pos = malloc(count * sizeof(*pos))))
+            return FALSE;
+    }
+
+    if ((ret = get_char_positions(data, str, count, pos, size)))
+    {
+        char_extra = GetTextCharacterExtra(data->pdev->dev.hdc);
+        if (dxs || nfit)
+        {
+            for (i = 0; i < count; i++)
+            {
+                unsigned int dx = abs(INTERNAL_XDSTOWS(data->pdev->dev.hdc, pos[i]))
+                    + (i + 1) * char_extra;
+                if (nfit && dx > (unsigned int)max_ext) break;
+                if (dxs) dxs[i] = dx;
+            }
+            if (nfit) *nfit = i;
+        }
+
+        size->cx = abs(INTERNAL_XDSTOWS(data->pdev->dev.hdc, size->cx))
+            + count * char_extra;
+        size->cy = abs(INTERNAL_YDSTOWS(data->pdev->dev.hdc, size->cy));
+    }
+
+    if (pos != buffer && pos != dxs) free(pos);
+
+    TRACE("(%s, %d) returning %dx%d\n", debugstr_wn(str,count),
+          max_ext, (int)size->cx, (int)size->cy);
+    return ret;
+}
+
+static inline BOOL intersect_rect(RECT *dst, const RECT *src1, const RECT *src2)
+{
+    dst->left   = max(src1->left, src2->left);
+    dst->top    = max(src1->top, src2->top);
+    dst->right  = min(src1->right, src2->right);
+    dst->bottom = min(src1->bottom, src2->bottom);
+    return !IsRectEmpty(dst);
+}
+
+/***********************************************************************
+ *           get_line_width
+ *
+ * Scale the underline / strikeout line width.
+ */
+static inline int get_line_width(HDC hdc, int metric_size)
+{
+    int width = abs(INTERNAL_YWSTODS(hdc, metric_size));
+    if (width == 0) width = 1;
+    if (metric_size < 0) width = -width;
+    return width;
+}
+
+static BOOL ext_text_out(struct pp_data *data, HANDLETABLE *htable,
+        int handle_count, INT x, INT y, UINT flags, const RECT *rect,
+        const WCHAR *str, UINT count, const INT *dx)
+{
+    HDC hdc = data->pdev->dev.hdc;
+    BOOL ret = FALSE;
+    UINT align;
+    DWORD layout;
+    POINT pt;
+    TEXTMETRICW tm;
+    LOGFONTW lf;
+    double cosEsc, sinEsc;
+    INT char_extra;
+    SIZE sz;
+    RECT rc;
+    POINT *deltas = NULL, width = {0, 0};
+    INT breakRem;
+    XFORM xform;
+
+    /* TODO: Add BiDi support */
+
+    align = GetTextAlign(hdc);
+    breakRem = data->break_rem;
+    layout = GetLayout(hdc);
+
+    if (flags & ETO_RTLREADING) align |= TA_RTLREADING;
+    if (layout & LAYOUT_RTL)
+    {
+        if ((align & TA_CENTER) != TA_CENTER) align ^= TA_RIGHT;
+        align ^= TA_RTLREADING;
+    }
+
+    TRACE("%d, %d, %08x, %s, %s, %d, %p)\n", x, y, flags,
+            wine_dbgstr_rect(rect), debugstr_wn(str, count), count, dx);
+    TRACE("align = %x bkmode = %x mapmode = %x\n", align, GetBkMode(hdc),
+            GetMapMode(hdc));
+
+    if(align & TA_UPDATECP)
+    {
+        GetCurrentPositionEx(hdc, &pt);
+        x = pt.x;
+        y = pt.y;
+    }
+
+    PSDRV_GetTextMetrics(&data->pdev->dev, &tm);
+    GetObjectW(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), &lf);
+
+    if(!(tm.tmPitchAndFamily & TMPF_VECTOR)) /* Non-scalable fonts shouldn't be rotated */
+        lf.lfEscapement = 0;
+
+    GetWorldTransform(hdc, &xform);
+    if (GetGraphicsMode(hdc) == GM_COMPATIBLE &&
+            xform.eM11 * xform.eM22 < 0)
+    {
+        lf.lfEscapement = -lf.lfEscapement;
+    }
+
+    if(lf.lfEscapement != 0)
+    {
+        cosEsc = cos(lf.lfEscapement * M_PI / 1800);
+        sinEsc = sin(lf.lfEscapement * M_PI / 1800);
+    }
+    else
+    {
+        cosEsc = 1;
+        sinEsc = 0;
+    }
+
+    if (rect && (flags & (ETO_OPAQUE | ETO_CLIPPED)))
+    {
+        rc = *rect;
+        LPtoDP(hdc, (POINT*)&rc, 2);
+        order_rect(&rc);
+        if (flags & ETO_OPAQUE)
+            PSDRV_ExtTextOut(&data->pdev->dev, 0, 0, ETO_OPAQUE, &rc, NULL, 0, NULL);
+    }
+    else flags &= ~ETO_CLIPPED;
+
+    if(count == 0)
+    {
+        ret = TRUE;
+        goto done;
+    }
+
+    pt.x = x;
+    pt.y = y;
+    LPtoDP(hdc, &pt, 1);
+    x = pt.x;
+    y = pt.y;
+
+    char_extra = GetTextCharacterExtra(hdc);
+    if (char_extra && dx)
+        char_extra = 0; /* Printer drivers don't add char_extra if dx is supplied */
+
+    if(char_extra || data->break_extra || breakRem || dx || lf.lfEscapement != 0)
+    {
+        UINT i;
+        POINT total = {0, 0}, desired[2];
+
+        deltas = malloc(count * sizeof(*deltas));
+        if (dx)
+        {
+            if (flags & ETO_PDY)
+            {
+                for (i = 0; i < count; i++)
+                {
+                    deltas[i].x = dx[i * 2] + char_extra;
+                    deltas[i].y = -dx[i * 2 + 1];
+                }
+            }
+            else
+            {
+                for (i = 0; i < count; i++)
+                {
+                    deltas[i].x = dx[i] + char_extra;
+                    deltas[i].y = 0;
+                }
+            }
+        }
+        else
+        {
+            INT *dx = malloc(count * sizeof(*dx));
+
+            get_text_extent(data, str, count, -1, NULL, dx, &sz, !!(flags & ETO_GLYPH_INDEX));
+
+            deltas[0].x = dx[0];
+            deltas[0].y = 0;
+            for (i = 1; i < count; i++)
+            {
+                deltas[i].x = dx[i] - dx[i - 1];
+                deltas[i].y = 0;
+            }
+            free(dx);
+        }
+
+        for(i = 0; i < count; i++)
+        {
+            total.x += deltas[i].x;
+            total.y += deltas[i].y;
+
+            desired[0].x = desired[0].y = 0;
+
+            desired[1].x =  cosEsc * total.x + sinEsc * total.y;
+            desired[1].y = -sinEsc * total.x + cosEsc * total.y;
+
+            LPtoDP(hdc, desired, 2);
+            desired[1].x -= desired[0].x;
+            desired[1].y -= desired[0].y;
+
+            if (GetGraphicsMode(hdc) == GM_COMPATIBLE)
+            {
+                if (xform.eM11 < 0)
+                    desired[1].x = -desired[1].x;
+                if (xform.eM22 < 0)
+                    desired[1].y = -desired[1].y;
+            }
+
+            deltas[i].x = desired[1].x - width.x;
+            deltas[i].y = desired[1].y - width.y;
+
+            width = desired[1];
+        }
+        flags |= ETO_PDY;
+    }
+    else
+    {
+        POINT desired[2];
+
+        get_text_extent(data, str, count, 0, NULL, NULL, &sz, !!(flags & ETO_GLYPH_INDEX));
+        desired[0].x = desired[0].y = 0;
+        desired[1].x = sz.cx;
+        desired[1].y = 0;
+        LPtoDP(hdc, desired, 2);
+        desired[1].x -= desired[0].x;
+        desired[1].y -= desired[0].y;
+
+        if (GetGraphicsMode(hdc) == GM_COMPATIBLE)
+        {
+            if (xform.eM11 < 0)
+                desired[1].x = -desired[1].x;
+            if (xform.eM22 < 0)
+                desired[1].y = -desired[1].y;
+        }
+        width = desired[1];
+    }
+
+    tm.tmAscent = abs(INTERNAL_YWSTODS(hdc, tm.tmAscent));
+    tm.tmDescent = abs(INTERNAL_YWSTODS(hdc, tm.tmDescent));
+    switch(align & (TA_LEFT | TA_RIGHT | TA_CENTER))
+    {
+    case TA_LEFT:
+        if (align & TA_UPDATECP)
+        {
+            pt.x = x + width.x;
+            pt.y = y + width.y;
+            DPtoLP(hdc, &pt, 1);
+            MoveToEx(hdc, pt.x, pt.y, NULL);
+        }
+        break;
+
+    case TA_CENTER:
+        x -= width.x / 2;
+        y -= width.y / 2;
+        break;
+
+    case TA_RIGHT:
+        x -= width.x;
+        y -= width.y;
+        if (align & TA_UPDATECP)
+        {
+            pt.x = x;
+            pt.y = y;
+            DPtoLP(hdc, &pt, 1);
+            MoveToEx(hdc, pt.x, pt.y, NULL);
+        }
+        break;
+    }
+
+    switch(align & (TA_TOP | TA_BOTTOM | TA_BASELINE))
+    {
+    case TA_TOP:
+        y += tm.tmAscent * cosEsc;
+        x += tm.tmAscent * sinEsc;
+        break;
+
+    case TA_BOTTOM:
+        y -= tm.tmDescent * cosEsc;
+        x -= tm.tmDescent * sinEsc;
+        break;
+
+    case TA_BASELINE:
+        break;
+    }
+
+    if (GetBkMode(hdc) != TRANSPARENT)
+    {
+        if(!((flags & ETO_CLIPPED) && (flags & ETO_OPAQUE)))
+        {
+            if(!(flags & ETO_OPAQUE) || !rect ||
+               x < rc.left || x + width.x >= rc.right ||
+               y - tm.tmAscent < rc.top || y + tm.tmDescent >= rc.bottom)
+            {
+                RECT text_box;
+                text_box.left = x;
+                text_box.right = x + width.x;
+                text_box.top = y - tm.tmAscent;
+                text_box.bottom = y + tm.tmDescent;
+
+                if (flags & ETO_CLIPPED) intersect_rect(&text_box, &text_box, &rc);
+                if (!IsRectEmpty(&text_box))
+                    PSDRV_ExtTextOut(&data->pdev->dev, 0, 0, ETO_OPAQUE, &text_box, NULL, 0, NULL);
+            }
+        }
+    }
+
+    ret = PSDRV_ExtTextOut(&data->pdev->dev, x, y, (flags & ~ETO_OPAQUE), &rc,
+            str, count, (INT*)deltas);
+
+done:
+    free(deltas);
+
+    if (ret && (lf.lfUnderline || lf.lfStrikeOut))
+    {
+        int underlinePos, strikeoutPos;
+        int underlineWidth, strikeoutWidth;
+        UINT size = NtGdiGetOutlineTextMetricsInternalW(hdc, 0, NULL, 0);
+        OUTLINETEXTMETRICW* otm = NULL;
+        POINT pts[5];
+        HBRUSH hbrush = CreateSolidBrush(GetTextColor(hdc));
+        HPEN hpen = GetStockObject(NULL_PEN);
+
+        PSDRV_SelectPen(&data->pdev->dev, hpen, NULL);
+        hpen = SelectObject(hdc, hpen);
+
+        PSDRV_SelectBrush(&data->pdev->dev, hbrush, NULL);
+        hbrush = SelectObject(hdc, hbrush);
+
+        if(!size)
+        {
+            underlinePos = 0;
+            underlineWidth = tm.tmAscent / 20 + 1;
+            strikeoutPos = tm.tmAscent / 2;
+            strikeoutWidth = underlineWidth;
+        }
+        else
+        {
+            otm = malloc(size);
+            NtGdiGetOutlineTextMetricsInternalW(hdc, size, otm, 0);
+            underlinePos = abs(INTERNAL_YWSTODS(hdc, otm->otmsUnderscorePosition));
+            if (otm->otmsUnderscorePosition < 0) underlinePos = -underlinePos;
+            underlineWidth = get_line_width(hdc, otm->otmsUnderscoreSize);
+            strikeoutPos = abs(INTERNAL_YWSTODS(hdc, otm->otmsStrikeoutPosition));
+            if (otm->otmsStrikeoutPosition < 0) strikeoutPos = -strikeoutPos;
+            strikeoutWidth = get_line_width(hdc, otm->otmsStrikeoutSize);
+            free(otm);
+        }
+
+
+        if (lf.lfUnderline)
+        {
+            const INT cnt = 5;
+            pts[0].x = x - (underlinePos + underlineWidth / 2) * sinEsc;
+            pts[0].y = y - (underlinePos + underlineWidth / 2) * cosEsc;
+            pts[1].x = x + width.x - (underlinePos + underlineWidth / 2) * sinEsc;
+            pts[1].y = y + width.y - (underlinePos + underlineWidth / 2) * cosEsc;
+            pts[2].x = pts[1].x + underlineWidth * sinEsc;
+            pts[2].y = pts[1].y + underlineWidth * cosEsc;
+            pts[3].x = pts[0].x + underlineWidth * sinEsc;
+            pts[3].y = pts[0].y + underlineWidth * cosEsc;
+            pts[4].x = pts[0].x;
+            pts[4].y = pts[0].y;
+            DPtoLP(hdc, pts, 5);
+            PSDRV_PolyPolygon(&data->pdev->dev, pts, &cnt, 1);
+        }
+
+        if (lf.lfStrikeOut)
+        {
+            const INT cnt = 5;
+            pts[0].x = x - (strikeoutPos + strikeoutWidth / 2) * sinEsc;
+            pts[0].y = y - (strikeoutPos + strikeoutWidth / 2) * cosEsc;
+            pts[1].x = x + width.x - (strikeoutPos + strikeoutWidth / 2) * sinEsc;
+            pts[1].y = y + width.y - (strikeoutPos + strikeoutWidth / 2) * cosEsc;
+            pts[2].x = pts[1].x + strikeoutWidth * sinEsc;
+            pts[2].y = pts[1].y + strikeoutWidth * cosEsc;
+            pts[3].x = pts[0].x + strikeoutWidth * sinEsc;
+            pts[3].y = pts[0].y + strikeoutWidth * cosEsc;
+            pts[4].x = pts[0].x;
+            pts[4].y = pts[0].y;
+            DPtoLP(hdc, pts, 5);
+            PSDRV_PolyPolygon(&data->pdev->dev, pts, &cnt, 1);
+        }
+
+        PSDRV_SelectPen(&data->pdev->dev, hpen, NULL);
+        SelectObject(hdc, hpen);
+        select_hbrush(data, htable, handle_count, hbrush);
+        SelectObject(hdc, hbrush);
+        DeleteObject(hbrush);
+    }
+
+    return ret;
+}
+
 static BOOL fill_rgn(struct pp_data *data, HANDLETABLE *htable, int handle_count, DWORD brush, HRGN rgn)
 {
     struct brush_pattern *pattern;
@@ -1500,6 +1987,34 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         const EMRPLGBLT *p = (const EMRPLGBLT *)rec;
 
         return plg_blt(&data->pdev->dev, p);
+    }
+    case EMR_EXTTEXTOUTW:
+    {
+        const EMREXTTEXTOUTW *p = (const EMREXTTEXTOUTW *)rec;
+        HDC hdc = data->pdev->dev.hdc;
+        const INT *dx = NULL;
+        int old_mode, ret;
+        RECT rect;
+
+        rect.left = p->emrtext.rcl.left;
+        rect.top = p->emrtext.rcl.top;
+        rect.right = p->emrtext.rcl.right;
+        rect.bottom = p->emrtext.rcl.bottom;
+
+        old_mode = SetGraphicsMode(hdc, p->iGraphicsMode);
+        /* Reselect the font back into the dc so that the transformation
+           gets updated. */
+        SelectObject(hdc, GetCurrentObject(hdc, OBJ_FONT));
+
+        if (p->emrtext.offDx)
+            dx = (const INT *)((const BYTE *)rec + p->emrtext.offDx);
+
+        ret = ext_text_out(data, htable, handle_count, p->emrtext.ptlReference.x,
+                p->emrtext.ptlReference.y, p->emrtext.fOptions, &rect,
+                (LPCWSTR)((const BYTE *)rec + p->emrtext.offString), p->emrtext.nChars, dx);
+
+        SetGraphicsMode(hdc, old_mode);
+        return ret;
     }
     case EMR_POLYBEZIER16:
     {
