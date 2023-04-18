@@ -45,6 +45,7 @@ C_SRCS = \
 	data/ZapfChancery_MediumItalic.c \
 	data/ZapfDingbats.c \
 	data/agl.c \
+	direction.c \
 	download.c \
 	driver.c \
 	encode.c \

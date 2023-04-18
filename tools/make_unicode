@@ -5807,6 +5807,7 @@ chdir ".." if -f "./make_unicode";
 load_data();
 dump_bidi_dir_table( "dlls/gdi32/uniscribe/direction.c" );
 dump_bidi_dir_table( "dlls/dwrite/direction.c" );
+dump_bidi_dir_table( "dlls/wineps.drv/direction.c" );
 dump_mirroring( "dlls/gdi32/uniscribe/mirror.c" );
 dump_mirroring( "dlls/dwrite/mirror.c" );
 dump_bracket( "dlls/gdi32/uniscribe/bracket.c" );
