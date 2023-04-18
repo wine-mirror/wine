@@ -1008,12 +1008,12 @@ static BOOL is_path_record(int type)
 }
 
 static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
-        const ENHMETARECORD *rec, int n, LPARAM arg)
+        const ENHMETARECORD *rec, int handle_count, LPARAM arg)
 {
     struct pp_data *data = (struct pp_data *)arg;
 
     if (data->path && is_path_record(rec->iType))
-        return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n);
+        return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, handle_count);
 
     switch (rec->iType)
     {
@@ -1113,9 +1113,9 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     case EMR_RESTOREDC:
     {
         HDC hdc = data->pdev->dev.hdc;
-        int ret = PlayEnhMetaFileRecord(hdc, htable, rec, n);
+        int ret = PlayEnhMetaFileRecord(hdc, htable, rec, handle_count);
 
-        select_hbrush(data, htable, n, GetCurrentObject(hdc, OBJ_BRUSH));
+        select_hbrush(data, htable, handle_count, GetCurrentObject(hdc, OBJ_BRUSH));
         /* TODO: reselect font */
         PSDRV_SelectPen(&data->pdev->dev, GetCurrentObject(hdc, OBJ_PEN), NULL);
         PSDRV_SetBkColor(&data->pdev->dev, GetBkColor(hdc));
@@ -1145,7 +1145,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         const EMRDELETEOBJECT *p = (const EMRDELETEOBJECT *)rec;
 
         memset(&data->patterns[p->ihObject], 0, sizeof(*data->patterns));
-        return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n);
+        return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, handle_count);
     }
     case EMR_ANGLEARC:
     {
@@ -1169,7 +1169,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         arcto.ptlEnd.y = GDI_ROUND(p->ptlCenter.y -
                 sin((p->eStartAngle + p->eSweepAngle) * M_PI / 180) * p->nRadius);
 
-        ret = hmf_proc(hdc, htable, (ENHMETARECORD *)&arcto, n, arg);
+        ret = hmf_proc(hdc, htable, (ENHMETARECORD *)&arcto, handle_count, arg);
         SetArcDirection(data->pdev->dev.hdc, arc_dir);
         return ret;
     }
@@ -1266,12 +1266,12 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     case EMR_BEGINPATH:
     {
         data->path = TRUE;
-        return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n);
+        return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, handle_count);
     }
     case EMR_ENDPATH:
     {
         data->path = FALSE;
-        return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n);
+        return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, handle_count);
     }
     case EMR_FILLPATH:
         return PSDRV_FillPath(&data->pdev->dev);
@@ -1282,7 +1282,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     case EMR_ABORTPATH:
     {
         data->path = FALSE;
-        return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n);
+        return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, handle_count);
     }
     case EMR_FILLRGN:
     {
@@ -1291,7 +1291,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         int ret;
 
         rgn = ExtCreateRegion(NULL, p->cbRgnData, (const RGNDATA *)p->RgnData);
-        ret = fill_rgn(data, htable, n, p->ihBrush, rgn);
+        ret = fill_rgn(data, htable, handle_count, p->ihBrush, rgn);
         DeleteObject(rgn);
         return ret;
     }
@@ -1315,7 +1315,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         OffsetRgn(rgn, 0, -p->szlStroke.cy);
         CombineRgn(frame, rgn, frame, RGN_DIFF);
 
-        ret = fill_rgn(data, htable, n, p->ihBrush, frame);
+        ret = fill_rgn(data, htable, handle_count, p->ihBrush, frame);
         DeleteObject(rgn);
         DeleteObject(frame);
         return ret;
@@ -1328,7 +1328,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
 
         rgn = ExtCreateRegion(NULL, p->cbRgnData, (const RGNDATA *)p->RgnData);
         old_rop = SetROP2(data->pdev->dev.hdc, R2_NOT);
-        ret = fill_rgn(data, htable, n, 0x80000000 | BLACK_BRUSH, rgn);
+        ret = fill_rgn(data, htable, handle_count, 0x80000000 | BLACK_BRUSH, rgn);
         SetROP2(data->pdev->dev.hdc, old_rop);
         DeleteObject(rgn);
         return ret;
@@ -1541,7 +1541,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     {
         const EMRCREATEMONOBRUSH *p = (const EMRCREATEMONOBRUSH *)rec;
 
-        if (!PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n))
+        if (!PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, handle_count))
             return 0;
         data->patterns[p->ihBrush].usage = p->iUsage;
         data->patterns[p->ihBrush].info = (BITMAPINFO *)((BYTE *)p + p->offBmi);
@@ -1552,7 +1552,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     {
         const EMRCREATEDIBPATTERNBRUSHPT *p = (const EMRCREATEDIBPATTERNBRUSHPT *)rec;
 
-        if (!PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n))
+        if (!PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, handle_count))
             return 0;
         data->patterns[p->ihBrush].usage = p->iUsage;
         data->patterns[p->ihBrush].info = (BITMAPINFO *)((BYTE *)p + p->offBmi);
@@ -1615,7 +1615,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     case EMR_EXTSELECTCLIPRGN:
     case EMR_SETLAYOUT:
     case EMR_SETTEXTJUSTIFICATION:
-        return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, n);
+        return PlayEnhMetaFileRecord(data->pdev->dev.hdc, htable, rec, handle_count);
     default:
         FIXME("unsupported record: %ld\n", rec->iType);
     }
