@@ -43,7 +43,6 @@ const char *get_machine_str(int mach)
     switch (mach)
     {
     case IMAGE_FILE_MACHINE_UNKNOWN:	return "Unknown";
-    case IMAGE_FILE_MACHINE_I860:	return "i860";
     case IMAGE_FILE_MACHINE_I386:	return "i386";
     case IMAGE_FILE_MACHINE_R3000:	return "R3000";
     case IMAGE_FILE_MACHINE_R4000:	return "R4000";
@@ -56,6 +55,10 @@ const char *get_machine_str(int mach)
     case IMAGE_FILE_MACHINE_ARM:        return "ARM";
     case IMAGE_FILE_MACHINE_ARMNT:      return "ARMNT";
     case IMAGE_FILE_MACHINE_THUMB:      return "ARM Thumb";
+    case IMAGE_FILE_MACHINE_ALPHA64:	return "Alpha64";
+    case IMAGE_FILE_MACHINE_CHPE_X86:	return "CHPE-x86";
+    case IMAGE_FILE_MACHINE_ARM64EC:	return "ARM64EC";
+    case IMAGE_FILE_MACHINE_ARM64X:	return "ARM64X";
     }
     return "???";
 }
@@ -2196,16 +2199,16 @@ static void dump_dynamic_relocs_arm64x( const IMAGE_BASE_RELOCATION *base_reloc,
             rel++;
             switch (type)
             {
-            case 0:  /* zero-fill */
+            case IMAGE_DVRT_ARM64X_FIXUP_TYPE_ZEROFILL:
                 printf( "    off %04x zero-fill %u bytes\n", offset, 1 << arg );
                 break;
-            case 1:  /* set value */
+            case IMAGE_DVRT_ARM64X_FIXUP_TYPE_VALUE:
                 printf( "    off %04x set %u bytes value ", offset, 1 << arg );
                 for (i = (1 << arg ) / sizeof(USHORT); i > 0; i--) printf( "%04x", rel[i - 1] );
                 rel += (1 << arg) / sizeof(USHORT);
                 printf( "\n" );
                 break;
-            case 2:  /* add value */
+            case IMAGE_DVRT_ARM64X_FIXUP_TYPE_DELTA:
                 printf( "    off %04x add offset ", offset );
                 if (arg & 1) printf( "-" );
                 printf( "%08x\n", (UINT)*rel++ * ((arg & 2) ? 8 : 4) );
@@ -2408,14 +2411,14 @@ static BOOL get_alt_header( void )
             rel++;
             switch (type)
             {
-            case 0:  /* zero-fill */
+            case IMAGE_DVRT_ARM64X_FIXUP_TYPE_ZEROFILL:
                 memset( page + offset, 0, 1 << arg );
                 break;
-            case 1:  /* set value */
+            case IMAGE_DVRT_ARM64X_FIXUP_TYPE_VALUE:
                 memcpy( page + offset, rel, 1 << arg );
                 rel += (1 << arg) / sizeof(USHORT);
                 break;
-            case 2:  /* add value */
+            case IMAGE_DVRT_ARM64X_FIXUP_TYPE_DELTA:
                 val = (unsigned int)*rel++ * ((arg & 2) ? 8 : 4);
                 if (arg & 1) val = -val;
                 *(int *)(page + offset) += val;

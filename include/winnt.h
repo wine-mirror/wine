@@ -2497,39 +2497,41 @@ typedef struct _IMAGE_VXD_HEADER {
 #define IMAGE_FILE_BYTES_REVERSED_HI	0x8000
 
 /* These are the settings of the Machine field. */
-#define	IMAGE_FILE_MACHINE_UNKNOWN	0
-#define	IMAGE_FILE_MACHINE_TARGET_HOST  0x0001
-#define	IMAGE_FILE_MACHINE_I860		0x014d
-#define	IMAGE_FILE_MACHINE_I386		0x014c
-#define	IMAGE_FILE_MACHINE_R3000	0x0162
-#define	IMAGE_FILE_MACHINE_R4000	0x0166
-#define	IMAGE_FILE_MACHINE_R10000	0x0168
-#define	IMAGE_FILE_MACHINE_WCEMIPSV2	0x0169
-#define	IMAGE_FILE_MACHINE_ALPHA	0x0184
-#define	IMAGE_FILE_MACHINE_SH3		0x01a2
-#define	IMAGE_FILE_MACHINE_SH3DSP	0x01a3
-#define	IMAGE_FILE_MACHINE_SH3E		0x01a4
-#define	IMAGE_FILE_MACHINE_SH4		0x01a6
-#define	IMAGE_FILE_MACHINE_SH5		0x01a8
-#define	IMAGE_FILE_MACHINE_ARM		0x01c0
-#define	IMAGE_FILE_MACHINE_THUMB	0x01c2
-#define	IMAGE_FILE_MACHINE_ARMNT	0x01c4
-#define	IMAGE_FILE_MACHINE_ARM64	0xaa64
-#define	IMAGE_FILE_MACHINE_AM33		0x01d3
-#define	IMAGE_FILE_MACHINE_POWERPC	0x01f0
-#define	IMAGE_FILE_MACHINE_POWERPCFP	0x01f1
-#define	IMAGE_FILE_MACHINE_IA64		0x0200
-#define	IMAGE_FILE_MACHINE_MIPS16	0x0266
-#define	IMAGE_FILE_MACHINE_ALPHA64	0x0284
-#define	IMAGE_FILE_MACHINE_MIPSFPU	0x0366
-#define	IMAGE_FILE_MACHINE_MIPSFPU16	0x0466
-#define	IMAGE_FILE_MACHINE_AXP64	IMAGE_FILE_MACHINE_ALPHA64
-#define	IMAGE_FILE_MACHINE_TRICORE	0x0520
-#define	IMAGE_FILE_MACHINE_CEF		0x0cef
-#define	IMAGE_FILE_MACHINE_EBC		0x0ebc
-#define	IMAGE_FILE_MACHINE_AMD64	0x8664
-#define	IMAGE_FILE_MACHINE_M32R		0x9041
-#define	IMAGE_FILE_MACHINE_CEE		0xc0ee
+#define IMAGE_FILE_MACHINE_UNKNOWN      0
+#define IMAGE_FILE_MACHINE_TARGET_HOST  0x0001
+#define IMAGE_FILE_MACHINE_I386         0x014c
+#define IMAGE_FILE_MACHINE_R3000        0x0162
+#define IMAGE_FILE_MACHINE_R4000        0x0166
+#define IMAGE_FILE_MACHINE_R10000       0x0168
+#define IMAGE_FILE_MACHINE_WCEMIPSV2    0x0169
+#define IMAGE_FILE_MACHINE_ALPHA        0x0184
+#define IMAGE_FILE_MACHINE_SH3          0x01a2
+#define IMAGE_FILE_MACHINE_SH3DSP       0x01a3
+#define IMAGE_FILE_MACHINE_SH3E         0x01a4
+#define IMAGE_FILE_MACHINE_SH4          0x01a6
+#define IMAGE_FILE_MACHINE_SH5          0x01a8
+#define IMAGE_FILE_MACHINE_ARM          0x01c0
+#define IMAGE_FILE_MACHINE_THUMB        0x01c2
+#define IMAGE_FILE_MACHINE_ARMNT        0x01c4
+#define IMAGE_FILE_MACHINE_AM33         0x01d3
+#define IMAGE_FILE_MACHINE_POWERPC      0x01f0
+#define IMAGE_FILE_MACHINE_POWERPCFP    0x01f1
+#define IMAGE_FILE_MACHINE_IA64         0x0200
+#define IMAGE_FILE_MACHINE_MIPS16       0x0266
+#define IMAGE_FILE_MACHINE_ALPHA64      0x0284
+#define IMAGE_FILE_MACHINE_AXP64 IMAGE_FILE_MACHINE_ALPHA64
+#define IMAGE_FILE_MACHINE_MIPSFPU      0x0366
+#define IMAGE_FILE_MACHINE_MIPSFPU16    0x0466
+#define IMAGE_FILE_MACHINE_TRICORE      0x0520
+#define IMAGE_FILE_MACHINE_CEF          0x0cef
+#define IMAGE_FILE_MACHINE_EBC          0x0ebc
+#define IMAGE_FILE_MACHINE_CHPE_X86     0x3a64
+#define IMAGE_FILE_MACHINE_AMD64        0x8664
+#define IMAGE_FILE_MACHINE_M32R         0x9041
+#define IMAGE_FILE_MACHINE_ARM64EC      0xa641
+#define IMAGE_FILE_MACHINE_ARM64X       0xa64e
+#define IMAGE_FILE_MACHINE_ARM64        0xaa64
+#define IMAGE_FILE_MACHINE_CEE          0xc0ee
 
 #define	IMAGE_SIZEOF_FILE_HEADER		20
 #define IMAGE_SIZEOF_ROM_OPTIONAL_HEADER	56
@@ -3787,6 +3789,97 @@ typedef PIMAGE_DYNAMIC_RELOCATION32_V2 PIMAGE_DYNAMIC_RELOCATION_V2;
 #define IMAGE_DYNAMIC_RELOCATION_GUARD_INDIR_CONTROL_TRANSFER  4
 #define IMAGE_DYNAMIC_RELOCATION_GUARD_SWITCHTABLE_BRANCH      5
 #define IMAGE_DYNAMIC_RELOCATION_ARM64X                        6
+
+typedef struct _IMAGE_CHPE_METADATA_X86
+{
+    ULONG  Version;
+    ULONG  CHPECodeAddressRangeOffset;
+    ULONG  CHPECodeAddressRangeCount;
+    ULONG  WowA64ExceptionHandlerFunctionPointer;
+    ULONG  WowA64DispatchCallFunctionPointer;
+    ULONG  WowA64DispatchIndirectCallFunctionPointer;
+    ULONG  WowA64DispatchIndirectCallCfgFunctionPointer;
+    ULONG  WowA64DispatchRetFunctionPointer;
+    ULONG  WowA64DispatchRetLeafFunctionPointer;
+    ULONG  WowA64DispatchJumpFunctionPointer;
+    ULONG  CompilerIATPointer;
+    ULONG  WowA64RdtscFunctionPointer;
+    ULONG  unknown[4];
+} IMAGE_CHPE_METADATA_X86, *PIMAGE_CHPE_METADATA_X86;
+
+typedef struct _IMAGE_CHPE_RANGE_ENTRY
+{
+    union
+    {
+        ULONG StartOffset;
+        struct
+        {
+            ULONG NativeCode : 1;
+            ULONG AddressBits : 31;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+    ULONG Length;
+} IMAGE_CHPE_RANGE_ENTRY, *PIMAGE_CHPE_RANGE_ENTRY;
+
+typedef struct _IMAGE_ARM64EC_METADATA
+{
+    ULONG  Version;
+    ULONG  CodeMap;
+    ULONG  CodeMapCount;
+    ULONG  CodeRangesToEntryPoints;
+    ULONG  RedirectionMetadata;
+    ULONG  __os_arm64x_dispatch_call_no_redirect;
+    ULONG  __os_arm64x_dispatch_ret;
+    ULONG  __os_arm64x_dispatch_call;
+    ULONG  __os_arm64x_dispatch_icall;
+    ULONG  __os_arm64x_dispatch_icall_cfg;
+    ULONG  AlternateEntryPoint;
+    ULONG  AuxiliaryIAT;
+    ULONG  CodeRangesToEntryPointsCount;
+    ULONG  RedirectionMetadataCount;
+    ULONG  GetX64InformationFunctionPointer;
+    ULONG  SetX64InformationFunctionPointer;
+    ULONG  ExtraRFETable;
+    ULONG  ExtraRFETableSize;
+    ULONG  __os_arm64x_dispatch_fptr;
+    ULONG  AuxiliaryIATCopy;
+} IMAGE_ARM64EC_METADATA;
+
+typedef struct _IMAGE_ARM64EC_REDIRECTION_ENTRY
+{
+    ULONG Source;
+    ULONG Destination;
+} IMAGE_ARM64EC_REDIRECTION_ENTRY;
+
+typedef struct _IMAGE_ARM64EC_CODE_RANGE_ENTRY_POINT
+{
+    ULONG StartRva;
+    ULONG EndRva;
+    ULONG EntryPoint;
+} IMAGE_ARM64EC_CODE_RANGE_ENTRY_POINT;
+
+#define IMAGE_DVRT_ARM64X_FIXUP_TYPE_ZEROFILL   0
+#define IMAGE_DVRT_ARM64X_FIXUP_TYPE_VALUE      1
+#define IMAGE_DVRT_ARM64X_FIXUP_TYPE_DELTA      2
+
+#define IMAGE_DVRT_ARM64X_FIXUP_SIZE_2BYTES     1
+#define IMAGE_DVRT_ARM64X_FIXUP_SIZE_4BYTES     2
+#define IMAGE_DVRT_ARM64X_FIXUP_SIZE_8BYTES     3
+
+typedef struct _IMAGE_DVRT_ARM64X_FIXUP_RECORD
+{
+    USHORT Offset : 12;
+    USHORT Type   :  2;
+    USHORT Size   :  2;
+} IMAGE_DVRT_ARM64X_FIXUP_RECORD, *PIMAGE_DVRT_ARM64X_FIXUP_RECORD;
+
+typedef struct _IMAGE_DVRT_ARM64X_DELTA_FIXUP_RECORD
+{
+    USHORT Offset : 12;
+    USHORT Type   :  2;
+    USHORT Sign   :  1;
+    USHORT Scale  :  1;
+} IMAGE_DVRT_ARM64X_DELTA_FIXUP_RECORD, *PIMAGE_DVRT_ARM64X_DELTA_FIXUP_RECORD;
 
 typedef struct _IMAGE_FUNCTION_ENTRY {
   DWORD StartingAddress;
