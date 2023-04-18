@@ -333,8 +333,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_create_resource(IWineDXGIDevice *if
     struct dxgi_resource *object;
     HRESULT hr;
 
-    TRACE("iface %p, wined3d_resource %p, usage %#x, shared_resource %p, outer %p, surface %p.\n",
-            iface, wined3d_resource, usage, shared_resource, outer, resource);
+    TRACE("iface %p, wined3d_resource %p, usage %#x, shared_resource %p, outer %p, needs_surface %d, "
+            "resource %p.\n", iface, wined3d_resource, usage, shared_resource, outer, needs_surface,
+            resource);
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
     {
