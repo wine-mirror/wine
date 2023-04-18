@@ -1748,6 +1748,9 @@ HANDLE WINAPI OpenPrintProcessor(WCHAR *port, PRINTPROCESSOROPENDATA *open_data)
         return NULL;
     }
     data->pdev->dev.hdc = hdc;
+
+    PSDRV_SetTextColor(&data->pdev->dev, GetTextColor(hdc));
+    PSDRV_SetBkColor(&data->pdev->dev, GetBkColor(hdc));
     return (HANDLE)data;
 }
 
