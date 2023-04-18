@@ -26,11 +26,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
-/* This function is not declared in the SDK headers yet. */
-HRESULT WINAPI D3DAssemble(const void *data, SIZE_T datasize, const char *filename,
-        const D3D_SHADER_MACRO *defines, ID3DInclude *include, UINT flags,
-        ID3DBlob **shader, ID3DBlob **error_messages);
-
 static inline BOOL is_valid_bytecode(DWORD token)
 {
     return (token & 0xfffe0000) == 0xfffe0000;
@@ -193,19 +188,41 @@ HRESULT WINAPI D3DXFindShaderComment(const DWORD *byte_code, DWORD fourcc, const
     return S_FALSE;
 }
 
+static BOOL WINAPI load_d3dassemble_once(INIT_ONCE *once, void *param, void **context)
+{
+    /* FIXME: This assumes that d3dcompiler.h and dlls/d3dcompiler_XX/Makefile.in stay
+     * in sync regarding which library creates the unnumbered d3dcompiler.lib implib.
+     * GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, D3DCompile) would
+     * be nice, but "D3DCompile" will point to the IAT stub, not d3dcompiler_xy.dll */
+    HMODULE mod = GetModuleHandleW(D3DCOMPILER_DLL_W);
+    void **assemble = param;
+
+    if (!mod)
+        ERR("%s not found - which d3dcompiler are we linked against?\n", D3DCOMPILER_DLL_A);
+
+    *assemble = (void *)GetProcAddress(mod, "D3DAssemble");
+    return TRUE;
+}
+
 HRESULT WINAPI D3DXAssembleShader(const char *data, UINT data_len, const D3DXMACRO *defines,
         ID3DXInclude *include, DWORD flags, ID3DXBuffer **shader, ID3DXBuffer **error_messages)
 {
+    static HRESULT (WINAPI *pD3DAssemble)(const void *data, SIZE_T datasize, const char *filename,
+            const D3D_SHADER_MACRO * defines, ID3DInclude * include, UINT flags,
+            ID3DBlob * *shader, ID3DBlob * *error_messages);
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
     HRESULT hr;
 
     TRACE("data %p, data_len %u, defines %p, include %p, flags %#lx, shader %p, error_messages %p.\n",
           data, data_len, defines, include, flags, shader, error_messages);
 
+    InitOnceExecuteOnce(&init_once, load_d3dassemble_once, &pD3DAssemble, NULL);
+
     /* Forward to d3dcompiler: the parameter types aren't really different,
        the actual data types are equivalent */
-    hr = D3DAssemble(data, data_len, NULL, (D3D_SHADER_MACRO *)defines,
-                     (ID3DInclude *)include, flags, (ID3DBlob **)shader,
-                     (ID3DBlob **)error_messages);
+    hr = pD3DAssemble(data, data_len, NULL, (D3D_SHADER_MACRO *)defines,
+            (ID3DInclude *)include, flags, (ID3DBlob **)shader,
+            (ID3DBlob **)error_messages);
 
     if(hr == E_FAIL) hr = D3DXERR_INVALIDDATA;
     return hr;
