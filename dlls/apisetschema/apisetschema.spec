@@ -99,6 +99,7 @@ apiset api-ms-win-core-psapi-ansi-l1-1-0 = kernelbase.dll
 apiset api-ms-win-core-psapi-l1-1-0 = kernelbase.dll
 apiset api-ms-win-core-psapi-obsolete-l1-1-0 = kernelbase.dll
 apiset api-ms-win-core-psapiansi-l1-1-0 = kernelbase.dll
+apiset api-ms-win-core-psm-appnotify-l1-1-0 = twinapi.appcore.dll
 apiset api-ms-win-core-psm-key-l1-1-1 = kernelbase.dll
 apiset api-ms-win-core-quirks-l1-1-0 = kernelbase.dll
 apiset api-ms-win-core-realtime-l1-1-0 = kernelbase.dll
