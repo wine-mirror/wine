@@ -1411,6 +1411,7 @@ enable_tdi_sys
 enable_threadpoolwinrt
 enable_traffic
 enable_twain_32
+enable_twinapi_appcore
 enable_tzres
 enable_ucrtbase
 enable_uianimation
@@ -21801,6 +21802,7 @@ wine_fn_config_makefile dlls/traffic enable_traffic
 wine_fn_config_makefile dlls/twain.dll16 enable_win16
 wine_fn_config_makefile dlls/twain_32 enable_twain_32
 wine_fn_config_makefile dlls/twain_32/tests enable_tests
+wine_fn_config_makefile dlls/twinapi.appcore enable_twinapi_appcore
 wine_fn_config_makefile dlls/typelib.dll16 enable_win16
 wine_fn_config_makefile dlls/tzres enable_tzres
 wine_fn_config_makefile dlls/ucrtbase enable_ucrtbase
