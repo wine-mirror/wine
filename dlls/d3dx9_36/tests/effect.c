@@ -5167,8 +5167,8 @@ static void test_isparameterused_children(unsigned int line, ID3DXEffect *effect
     }
 }
 
-#define test_isparameterused_param_with_children(args...) \
-        test_isparameterused_param_with_children_(__LINE__, args)
+#define test_isparameterused_param_with_children(...) \
+        test_isparameterused_param_with_children_(__LINE__, __VA_ARGS__)
 static void test_isparameterused_param_with_children_(unsigned int line, ID3DXEffect *effect,
         ID3DXEffect *effect2, D3DXHANDLE tech, const char *name, BOOL expected_result)
 {
@@ -6597,8 +6597,8 @@ static const DWORD test_effect_shared_parameters_blob[] =
     0x00000004, 0x00000000, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff,
 };
 
-#define test_effect_shared_vs_arr_compare_helper(args...) \
-        test_effect_shared_vs_arr_compare_helper_(__LINE__, args)
+#define test_effect_shared_vs_arr_compare_helper(...) \
+        test_effect_shared_vs_arr_compare_helper_(__LINE__, __VA_ARGS__)
 static void test_effect_shared_vs_arr_compare_helper_(unsigned int line, ID3DXEffect *effect,
         D3DXHANDLE param_child, struct IDirect3DVertexShader9 *vshader1, unsigned int element,
         BOOL todo)
@@ -6618,8 +6618,8 @@ static void test_effect_shared_vs_arr_compare_helper_(unsigned int line, ID3DXEf
         IDirect3DVertexShader9_Release(vshader2);
 }
 
-#define test_effect_shared_parameters_compare_vconst(args...) \
-        test_effect_shared_parameters_compare_vconst_(__LINE__, args)
+#define test_effect_shared_parameters_compare_vconst(...) \
+        test_effect_shared_parameters_compare_vconst_(__LINE__, __VA_ARGS__)
 static void test_effect_shared_parameters_compare_vconst_(unsigned int line, IDirect3DDevice9 *device,
         unsigned int index, const D3DXVECTOR4 *expected_fvect, BOOL todo)
 {
