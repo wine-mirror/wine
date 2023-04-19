@@ -1073,6 +1073,8 @@ struct d3d12_swapchain
     unsigned int vk_swapchain_width;
     unsigned int vk_swapchain_height;
     VkPresentModeKHR present_mode;
+    VkFormat vk_format;
+
     uint32_t vk_image_index;
 
     struct dxgi_vk_funcs vk_funcs;
@@ -1255,7 +1257,7 @@ static BOOL d3d12_swapchain_is_present_mode_supported(struct d3d12_swapchain *sw
     return supported;
 }
 
-static HRESULT d3d12_swapchain_create_user_buffers(struct d3d12_swapchain *swapchain, VkFormat vk_format)
+static HRESULT d3d12_swapchain_create_user_buffers(struct d3d12_swapchain *swapchain)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
     VkDeviceSize image_offset[DXGI_MAX_SWAP_CHAIN_BUFFERS];
@@ -1276,7 +1278,7 @@ static HRESULT d3d12_swapchain_create_user_buffers(struct d3d12_swapchain *swapc
     image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     image_info.flags = VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT;
     image_info.imageType = VK_IMAGE_TYPE_2D;
-    image_info.format = vk_format;
+    image_info.format = swapchain->vk_format;
     image_info.extent.width = swapchain->desc.Width;
     image_info.extent.height = swapchain->desc.Height;
     image_info.extent.depth = 1;
@@ -1511,8 +1513,7 @@ static HRESULT d3d12_swapchain_create_command_buffers(struct d3d12_swapchain *sw
     return S_OK;
 }
 
-static HRESULT d3d12_swapchain_create_buffers(struct d3d12_swapchain *swapchain,
-        VkFormat vk_swapchain_format, VkFormat vk_format)
+static HRESULT d3d12_swapchain_create_buffers(struct d3d12_swapchain *swapchain)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
     struct vkd3d_image_resource_create_info resource_info;
@@ -1545,7 +1546,7 @@ static HRESULT d3d12_swapchain_create_buffers(struct d3d12_swapchain *swapchain,
 
     queue_family_index = vkd3d_get_vk_queue_family_index(queue);
 
-    if (FAILED(hr = d3d12_swapchain_create_user_buffers(swapchain, vk_format)))
+    if (FAILED(hr = d3d12_swapchain_create_user_buffers(swapchain)))
         return hr;
 
     if (FAILED(hr = d3d12_swapchain_create_command_buffers(swapchain, queue_family_index)))
@@ -1562,7 +1563,7 @@ static HRESULT d3d12_swapchain_create_buffers(struct d3d12_swapchain *swapchain,
     resource_info.desc.Height = swapchain->desc.Height;
     resource_info.desc.DepthOrArraySize = 1;
     resource_info.desc.MipLevels = 1;
-    resource_info.desc.Format = dxgi_format_from_vk_format(vk_format);
+    resource_info.desc.Format = dxgi_format_from_vk_format(swapchain->vk_format);
     resource_info.desc.SampleDesc.Count = 1;
     resource_info.desc.SampleDesc.Quality = 0;
     resource_info.desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
@@ -1671,15 +1672,15 @@ static HRESULT d3d12_swapchain_create_vulkan_swapchain(struct d3d12_swapchain *s
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
     VkSwapchainCreateInfoKHR vk_swapchain_desc;
     VkDevice vk_device = swapchain->vk_device;
-    VkFormat vk_format, vk_swapchain_format;
     unsigned int width, height, image_count;
     VkSurfaceCapabilitiesKHR surface_caps;
+    VkFormat vk_swapchain_format;
     VkSwapchainKHR vk_swapchain;
     VkImageUsageFlags usage;
     VkResult vr;
     HRESULT hr;
 
-    if (!(vk_format = vkd3d_get_vk_format(swapchain->desc.Format)))
+    if (!(swapchain->vk_format = vkd3d_get_vk_format(swapchain->desc.Format)))
     {
         WARN("Invalid format %#x.\n", swapchain->desc.Format);
         return DXGI_ERROR_INVALID_CALL;
@@ -1776,7 +1777,7 @@ static HRESULT d3d12_swapchain_create_vulkan_swapchain(struct d3d12_swapchain *s
 
     swapchain->vk_image_index = INVALID_VK_IMAGE_INDEX;
 
-    return d3d12_swapchain_create_buffers(swapchain, vk_swapchain_format, vk_format);
+    return d3d12_swapchain_create_buffers(swapchain);
 }
 
 static inline struct d3d12_swapchain *d3d12_swapchain_from_IDXGISwapChain4(IDXGISwapChain4 *iface)
