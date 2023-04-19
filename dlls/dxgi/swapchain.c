@@ -1271,9 +1271,6 @@ static HRESULT d3d12_swapchain_create_user_buffers(struct d3d12_swapchain *swapc
     VkResult vr;
     HRESULT hr;
 
-    if (swapchain->vk_images[0])
-        return S_OK;
-
     memset(&image_info, 0, sizeof(image_info));
     image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     image_info.flags = VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT;
@@ -1519,9 +1516,6 @@ static HRESULT d3d12_swapchain_create_image_resources(struct d3d12_swapchain *sw
     unsigned int i;
     HRESULT hr;
 
-    if (swapchain->buffers[0])
-        return S_OK;
-
     resource_info.type = VKD3D_STRUCTURE_TYPE_IMAGE_RESOURCE_CREATE_INFO;
     resource_info.next = NULL;
     resource_info.desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -1540,6 +1534,9 @@ static HRESULT d3d12_swapchain_create_image_resources(struct d3d12_swapchain *sw
 
     for (i = 0; i < swapchain->desc.BufferCount; ++i)
     {
+        assert(swapchain->vk_images[i]);
+        assert(!swapchain->buffers[i]);
+
         resource_info.vk_image = swapchain->vk_images[i];
 
         if (FAILED(hr = vkd3d_create_image_resource(device, &resource_info, &swapchain->buffers[i])))
@@ -1759,6 +1756,16 @@ static HRESULT d3d12_swapchain_create_vulkan_swapchain(struct d3d12_swapchain *s
     return S_OK;
 }
 
+static HRESULT d3d12_swapchain_create_vulkan_resources(struct d3d12_swapchain *swapchain)
+{
+    HRESULT hr;
+
+    if (FAILED(hr = d3d12_swapchain_create_vulkan_swapchain(swapchain)))
+        return hr;
+
+    return d3d12_swapchain_create_command_buffers(swapchain);
+}
+
 static HRESULT d3d12_swapchain_create_resources(struct d3d12_swapchain *swapchain)
 {
     HRESULT hr;
@@ -1775,10 +1782,7 @@ static HRESULT d3d12_swapchain_create_resources(struct d3d12_swapchain *swapchai
     if (FAILED(hr = d3d12_swapchain_create_image_resources(swapchain)))
         return hr;
 
-    if (FAILED(hr = d3d12_swapchain_create_vulkan_swapchain(swapchain)))
-        return hr;
-
-    return d3d12_swapchain_create_command_buffers(swapchain);
+    return d3d12_swapchain_create_vulkan_resources(swapchain);
 }
 
 static inline struct d3d12_swapchain *d3d12_swapchain_from_IDXGISwapChain4(IDXGISwapChain4 *iface)
@@ -1964,7 +1968,7 @@ static HRESULT d3d12_swapchain_set_sync_interval(struct d3d12_swapchain *swapcha
 
     d3d12_swapchain_destroy_buffers(swapchain, FALSE);
     swapchain->present_mode = present_mode;
-    return d3d12_swapchain_create_resources(swapchain);
+    return d3d12_swapchain_create_vulkan_resources(swapchain);
 }
 
 static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain, VkQueue vk_queue)
@@ -2071,7 +2075,7 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
         TRACE("Recreating Vulkan swapchain.\n");
 
         d3d12_swapchain_destroy_buffers(swapchain, FALSE);
-        if (FAILED(hr = d3d12_swapchain_create_resources(swapchain)))
+        if (FAILED(hr = d3d12_swapchain_create_vulkan_resources(swapchain)))
             return hr;
 
         if (!(vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue)))
