@@ -1454,7 +1454,7 @@ static VkResult d3d12_swapchain_record_swapchain_blit(struct d3d12_swapchain *sw
     return vr;
 }
 
-static HRESULT d3d12_swapchain_prepare_command_buffers(struct d3d12_swapchain *swapchain,
+static HRESULT d3d12_swapchain_create_command_buffers(struct d3d12_swapchain *swapchain,
         uint32_t queue_family_index)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
@@ -1548,7 +1548,7 @@ static HRESULT d3d12_swapchain_create_buffers(struct d3d12_swapchain *swapchain,
     if (FAILED(hr = d3d12_swapchain_create_user_buffers(swapchain, vk_format)))
         return hr;
 
-    if (FAILED(hr = d3d12_swapchain_prepare_command_buffers(swapchain, queue_family_index)))
+    if (FAILED(hr = d3d12_swapchain_create_command_buffers(swapchain, queue_family_index)))
         return hr;
 
     if (swapchain->buffers[0])
