@@ -26,7 +26,7 @@
 
 #define D3DXERR_INVALIDDATA 0x88760b59
 
-HRESULT WINAPI D3DAssemble(const void *data, SIZE_T datasize, const char *filename,
+static HRESULT (WINAPI *pD3DAssemble)(const void *data, SIZE_T datasize, const char *filename,
         const D3D_SHADER_MACRO *defines, ID3DInclude *include, UINT flags,
         ID3DBlob **shader, ID3DBlob **error_messages);
 
@@ -1499,7 +1499,7 @@ static HRESULT call_D3DAssemble(const char *source_name, ID3DInclude *include, I
         "#include \"include\\include3.h\"\n"
         "mov oC0, c0";
 
-    return D3DAssemble(ps_code, sizeof(ps_code), source_name, NULL, include, 0, blob, errors);
+    return pD3DAssemble(ps_code, sizeof(ps_code), source_name, NULL, include, 0, blob, errors);
 }
 
 static HRESULT call_D3DCompile(const char *source_name, ID3DInclude *include, ID3D10Blob **blob, ID3D10Blob **errors)
@@ -1761,6 +1761,7 @@ static void test_no_output_blob(void)
 
 START_TEST(hlsl_d3d9)
 {
+    char buffer[20];
     HMODULE mod;
 
     if (!(mod = LoadLibraryA("d3dx9_36.dll")))
@@ -1769,6 +1770,10 @@ START_TEST(hlsl_d3d9)
         return;
     }
     pD3DXGetShaderConstantTable = (void *)GetProcAddress(mod, "D3DXGetShaderConstantTable");
+
+    sprintf(buffer, "d3dcompiler_%d", D3D_COMPILER_VERSION);
+    mod = GetModuleHandleA(buffer);
+    pD3DAssemble = (void *)GetProcAddress(mod, "D3DAssemble");
 
     test_swizzle();
     test_math();

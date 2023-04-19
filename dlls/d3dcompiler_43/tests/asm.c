@@ -27,7 +27,7 @@
    perhaps with a different name? */
 #define D3DXERR_INVALIDDATA                      0x88760b59
 
-HRESULT WINAPI D3DAssemble(const void *data, SIZE_T datasize, const char *filename,
+static HRESULT (WINAPI *pD3DAssemble)(const void *data, SIZE_T datasize, const char *filename,
         const D3D_SHADER_MACRO *defines, ID3DInclude *include, UINT flags,
         ID3DBlob **shader, ID3DBlob **error_messages);
 
@@ -57,7 +57,7 @@ static void exec_tests(const char *name, struct shader_test tests[], unsigned in
     for(i = 0; i < count; i++) {
         /* D3DAssemble sets messages to 0 if there aren't error messages */
         messages = NULL;
-        hr = D3DAssemble(tests[i].text, strlen(tests[i].text), NULL, NULL,
+        hr = pD3DAssemble(tests[i].text, strlen(tests[i].text), NULL, NULL,
                 NULL, D3DCOMPILE_SKIP_VALIDATION, &shader, &messages);
         ok(hr == S_OK, "Test %s, shader %u: D3DAssemble failed with error %#lx - %ld.\n", name, i, hr, hr & 0xffff);
         if(messages) {
@@ -1431,7 +1431,7 @@ static void failure_test(void) {
     {
         shader = NULL;
         messages = NULL;
-        hr = D3DAssemble(tests[i], strlen(tests[i]), NULL, NULL, NULL, D3DCOMPILE_SKIP_VALIDATION, &shader, &messages);
+        hr = pD3DAssemble(tests[i], strlen(tests[i]), NULL, NULL, NULL, D3DCOMPILE_SKIP_VALIDATION, &shader, &messages);
         ok(hr == D3DXERR_INVALIDDATA, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         if (messages)
         {
@@ -1556,7 +1556,7 @@ static void assembleshader_test(void) {
     /* defines test */
     shader = NULL;
     messages = NULL;
-    hr = D3DAssemble(test1, strlen(test1), NULL, defines, NULL, D3DCOMPILE_SKIP_VALIDATION, &shader, &messages);
+    hr = pD3DAssemble(test1, strlen(test1), NULL, defines, NULL, D3DCOMPILE_SKIP_VALIDATION, &shader, &messages);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     if (messages)
     {
@@ -1567,14 +1567,14 @@ static void assembleshader_test(void) {
 
     /* NULL messages test */
     shader = NULL;
-    hr = D3DAssemble(test1, strlen(test1), NULL, defines, NULL, D3DCOMPILE_SKIP_VALIDATION, &shader, NULL);
+    hr = pD3DAssemble(test1, strlen(test1), NULL, defines, NULL, D3DCOMPILE_SKIP_VALIDATION, &shader, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     if (shader)
         ID3D10Blob_Release(shader);
 
     /* NULL shader test */
     messages = NULL;
-    hr = D3DAssemble(test1, strlen(test1), NULL, defines, NULL, D3DCOMPILE_SKIP_VALIDATION, NULL, &messages);
+    hr = pD3DAssemble(test1, strlen(test1), NULL, defines, NULL, D3DCOMPILE_SKIP_VALIDATION, NULL, &messages);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     if (messages)
     {
@@ -1586,7 +1586,7 @@ static void assembleshader_test(void) {
     shader = NULL;
     messages = NULL;
     include.ID3DInclude_iface.lpVtbl = &D3DInclude_Vtbl;
-    hr = D3DAssemble(testshader, strlen(testshader), NULL, NULL,
+    hr = pD3DAssemble(testshader, strlen(testshader), NULL, NULL,
             &include.ID3DInclude_iface, D3DCOMPILE_SKIP_VALIDATION, &shader, &messages);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     if (messages)
@@ -1599,7 +1599,7 @@ static void assembleshader_test(void) {
     /* NULL shader tests */
     shader = NULL;
     messages = NULL;
-    hr = D3DAssemble(NULL, 0, NULL, NULL, NULL, D3DCOMPILE_SKIP_VALIDATION, &shader, &messages);
+    hr = pD3DAssemble(NULL, 0, NULL, NULL, NULL, D3DCOMPILE_SKIP_VALIDATION, &shader, &messages);
     ok(hr == D3DXERR_INVALIDDATA, "Got unexpected hr %#lx.\n", hr);
     if (messages)
     {
@@ -1762,6 +1762,13 @@ static void test_disassemble_shader(void)
 
 START_TEST(asm)
 {
+    HMODULE d3dcompiler;
+    char buffer[20];
+
+    sprintf(buffer, "d3dcompiler_%d", D3D_COMPILER_VERSION);
+    d3dcompiler = GetModuleHandleA(buffer);
+    pD3DAssemble = (void *)GetProcAddress(d3dcompiler, "D3DAssemble");
+
     preproc_test();
     ps_1_1_test();
     vs_1_1_test();
