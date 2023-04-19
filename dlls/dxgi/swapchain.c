@@ -1456,8 +1456,7 @@ static VkResult d3d12_swapchain_record_swapchain_blit(struct d3d12_swapchain *sw
     return vr;
 }
 
-static HRESULT d3d12_swapchain_create_command_buffers(struct d3d12_swapchain *swapchain,
-        uint32_t queue_family_index)
+static HRESULT d3d12_swapchain_create_command_buffers(struct d3d12_swapchain *swapchain)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
     VkDevice vk_device = swapchain->vk_device;
@@ -1470,7 +1469,7 @@ static HRESULT d3d12_swapchain_create_command_buffers(struct d3d12_swapchain *sw
     pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     pool_info.pNext = NULL;
     pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    pool_info.queueFamilyIndex = queue_family_index;
+    pool_info.queueFamilyIndex = vkd3d_get_vk_queue_family_index(swapchain->command_queue);
 
     assert(swapchain->vk_cmd_pool == VK_NULL_HANDLE);
     if ((vr = vk_funcs->p_vkCreateCommandPool(vk_device, &pool_info,
@@ -1558,16 +1557,12 @@ static HRESULT d3d12_swapchain_create_image_resources(struct d3d12_swapchain *sw
 
 static HRESULT d3d12_swapchain_create_buffers(struct d3d12_swapchain *swapchain)
 {
-    ID3D12CommandQueue *queue = swapchain->command_queue;
-    uint32_t queue_family_index;
     HRESULT hr;
-
-    queue_family_index = vkd3d_get_vk_queue_family_index(queue);
 
     if (FAILED(hr = d3d12_swapchain_create_user_buffers(swapchain)))
         return hr;
 
-    if (FAILED(hr = d3d12_swapchain_create_command_buffers(swapchain, queue_family_index)))
+    if (FAILED(hr = d3d12_swapchain_create_command_buffers(swapchain)))
         return hr;
 
     return d3d12_swapchain_create_image_resources(swapchain);
