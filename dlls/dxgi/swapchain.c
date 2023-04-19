@@ -1555,19 +1555,6 @@ static HRESULT d3d12_swapchain_create_image_resources(struct d3d12_swapchain *sw
     return S_OK;
 }
 
-static HRESULT d3d12_swapchain_create_buffers(struct d3d12_swapchain *swapchain)
-{
-    HRESULT hr;
-
-    if (FAILED(hr = d3d12_swapchain_create_user_buffers(swapchain)))
-        return hr;
-
-    if (FAILED(hr = d3d12_swapchain_create_command_buffers(swapchain)))
-        return hr;
-
-    return d3d12_swapchain_create_image_resources(swapchain);
-}
-
 static VkResult d3d12_swapchain_acquire_next_vulkan_image(struct d3d12_swapchain *swapchain)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
@@ -1782,10 +1769,16 @@ static HRESULT d3d12_swapchain_create_resources(struct d3d12_swapchain *swapchai
         return DXGI_ERROR_INVALID_CALL;
     }
 
+    if (FAILED(hr = d3d12_swapchain_create_user_buffers(swapchain)))
+        return hr;
+
+    if (FAILED(hr = d3d12_swapchain_create_image_resources(swapchain)))
+        return hr;
+
     if (FAILED(hr = d3d12_swapchain_create_vulkan_swapchain(swapchain)))
         return hr;
 
-    return d3d12_swapchain_create_buffers(swapchain);
+    return d3d12_swapchain_create_command_buffers(swapchain);
 }
 
 static inline struct d3d12_swapchain *d3d12_swapchain_from_IDXGISwapChain4(IDXGISwapChain4 *iface)
