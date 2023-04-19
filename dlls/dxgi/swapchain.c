@@ -1604,7 +1604,7 @@ static void d3d12_swapchain_destroy_buffers(struct d3d12_swapchain *swapchain, B
 
     for (i = 0; i < swapchain->desc.BufferCount; ++i)
     {
-        if (swapchain->buffers[i] && (destroy_user_buffers || !swapchain->vk_images[0]))
+        if (swapchain->buffers[i] && destroy_user_buffers)
         {
             vkd3d_resource_decref(swapchain->buffers[i]);
             swapchain->buffers[i] = NULL;
