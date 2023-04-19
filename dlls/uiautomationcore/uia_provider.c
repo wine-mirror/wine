@@ -1251,7 +1251,7 @@ static HRESULT uia_send_message_timeout(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 
 static BOOL is_top_level_hwnd(HWND hwnd)
 {
-    return (GetAncestor(hwnd, GA_PARENT) == GetDesktopWindow()) ? TRUE : FALSE;
+    return GetAncestor(hwnd, GA_PARENT) == GetDesktopWindow();
 }
 
 static HRESULT get_uia_control_type_for_hwnd(HWND hwnd, int *control_type)
