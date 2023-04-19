@@ -2072,9 +2072,9 @@ NTSTATUS WINAPI RtlSetThreadErrorMode( DWORD mode, LPDWORD oldmode )
         return STATUS_INVALID_PARAMETER_1;
 
     if (oldmode)
-        *oldmode = NtCurrentTeb()->HardErrorDisabled;
+        *oldmode = NtCurrentTeb()->HardErrorMode;
 
-    NtCurrentTeb()->HardErrorDisabled = mode;
+    NtCurrentTeb()->HardErrorMode = mode;
     return STATUS_SUCCESS;
 }
 
@@ -2091,7 +2091,7 @@ NTSTATUS WINAPI RtlSetThreadErrorMode( DWORD mode, LPDWORD oldmode )
  */
 DWORD WINAPI RtlGetThreadErrorMode( void )
 {
-    return NtCurrentTeb()->HardErrorDisabled;
+    return NtCurrentTeb()->HardErrorMode;
 }
 
 /******************************************************************************

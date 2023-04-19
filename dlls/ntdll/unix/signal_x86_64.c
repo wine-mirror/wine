@@ -2531,7 +2531,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     /* alloc_tls_slot() needs to poke a value to an address relative to each
        thread's gsbase.  Have each thread record its gsbase pointer into its
        TEB so alloc_tls_slot() can find it. */
-    teb->Reserved5[0] = amd64_thread_data()->pthread_teb;
+    teb->Instrumentation[0] = amd64_thread_data()->pthread_teb;
 #else
 # error Please define setting %gs for your architecture
 #endif
