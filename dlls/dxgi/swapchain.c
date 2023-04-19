@@ -1558,31 +1558,9 @@ static HRESULT d3d12_swapchain_create_image_resources(struct d3d12_swapchain *sw
 
 static HRESULT d3d12_swapchain_create_buffers(struct d3d12_swapchain *swapchain)
 {
-    const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
-    VkSwapchainKHR vk_swapchain = swapchain->vk_swapchain;
     ID3D12CommandQueue *queue = swapchain->command_queue;
-    VkDevice vk_device = swapchain->vk_device;
-    uint32_t image_count, queue_family_index;
-    VkResult vr;
+    uint32_t queue_family_index;
     HRESULT hr;
-
-    if ((vr = vk_funcs->p_vkGetSwapchainImagesKHR(vk_device, vk_swapchain, &image_count, NULL)) < 0)
-    {
-        WARN("Failed to get Vulkan swapchain images, vr %d.\n", vr);
-        return hresult_from_vk_result(vr);
-    }
-    if (image_count > ARRAY_SIZE(swapchain->vk_swapchain_images))
-    {
-        FIXME("Unsupported Vulkan swapchain image count %u.\n", image_count);
-        return E_FAIL;
-    }
-    swapchain->buffer_count = image_count;
-    if ((vr = vk_funcs->p_vkGetSwapchainImagesKHR(vk_device, vk_swapchain,
-            &image_count, swapchain->vk_swapchain_images)) < 0)
-    {
-        WARN("Failed to get Vulkan swapchain images, vr %d.\n", vr);
-        return hresult_from_vk_result(vr);
-    }
 
     queue_family_index = vkd3d_get_vk_queue_family_index(queue);
 
@@ -1771,6 +1749,24 @@ static HRESULT d3d12_swapchain_create_vulkan_swapchain(struct d3d12_swapchain *s
 
     if (swapchain->vk_swapchain)
         vk_funcs->p_vkDestroySwapchainKHR(swapchain->vk_device, swapchain->vk_swapchain, NULL);
+
+    if ((vr = vk_funcs->p_vkGetSwapchainImagesKHR(vk_device, vk_swapchain, &image_count, NULL)) < 0)
+    {
+        WARN("Failed to get Vulkan swapchain images, vr %d.\n", vr);
+        return hresult_from_vk_result(vr);
+    }
+    if (image_count > ARRAY_SIZE(swapchain->vk_swapchain_images))
+    {
+        FIXME("Unsupported Vulkan swapchain image count %u.\n", image_count);
+        return E_FAIL;
+    }
+    swapchain->buffer_count = image_count;
+    if ((vr = vk_funcs->p_vkGetSwapchainImagesKHR(vk_device, vk_swapchain,
+            &image_count, swapchain->vk_swapchain_images)) < 0)
+    {
+        WARN("Failed to get Vulkan swapchain images, vr %d.\n", vr);
+        return hresult_from_vk_result(vr);
+    }
 
     swapchain->vk_swapchain = vk_swapchain;
     swapchain->vk_swapchain_width = width;
