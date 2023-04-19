@@ -1070,7 +1070,7 @@ static HRESULT sink_writer_get_sink_factory_class(const WCHAR *url, IMFAttribute
 
     for (i = 0; i < ARRAY_SIZE(class_map); ++i)
     {
-        if (IsEqualGUID(&container, &class_map[i].container))
+        if (IsEqualGUID(&container, class_map[i].container))
         {
             *clsid = *class_map[i].clsid;
             return S_OK;
