@@ -36,7 +36,7 @@
 #include "wine/debug.h"
 #include "wine/rbtree.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(xact3);
+WINE_DEFAULT_DEBUG_CHANNEL(xaudio2);
 
 #if XACT3_VER < 0x0300
 #define IID_IXACT3Engine IID_IXACTEngine
