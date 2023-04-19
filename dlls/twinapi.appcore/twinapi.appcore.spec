@@ -124,4 +124,4 @@
 @ stub RegisterAppConstrainedChangeNotification
 @ stdcall RegisterAppStateChangeNotification(ptr ptr ptr)
 @ stub UnregisterAppConstrainedChangeNotification
-@ stub UnregisterAppStateChangeNotification
+@ stdcall UnregisterAppStateChangeNotification(ptr)

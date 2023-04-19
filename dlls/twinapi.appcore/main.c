@@ -29,3 +29,11 @@ ULONG WINAPI RegisterAppStateChangeNotification( PAPPSTATE_CHANGE_ROUTINE routin
     FIXME( "routine %p, context %p, reg %p - stub.\n", routine, context, reg );
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ *           UnregisterAppStateChangeNotification (twinapi.appcore.@)
+ */
+void WINAPI UnregisterAppStateChangeNotification( PAPPSTATE_REGISTRATION reg )
+{
+    FIXME( "reg %p - stub.\n", reg );
+}
