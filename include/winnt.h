@@ -1710,6 +1710,112 @@ typedef struct DECLSPEC_ALIGN(16) _ARM64_NT_CONTEXT
     DWORD64 Wvr[ARM64_MAX_WATCHPOINTS]; /* 380 */
 } ARM64_NT_CONTEXT, *PARM64_NT_CONTEXT;
 
+typedef struct DECLSPEC_ALIGN(16) _ARM64EC_NT_CONTEXT
+{
+    union
+    {
+        struct
+        {
+            DWORD64 AMD64_P1Home;                         /* 000 */
+            DWORD64 AMD64_P2Home;                         /* 008 */
+            DWORD64 AMD64_P3Home;                         /* 010 */
+            DWORD64 AMD64_P4Home;                         /* 018 */
+            DWORD64 AMD64_P5Home;                         /* 020 */
+            DWORD64 AMD64_P6Home;                         /* 028 */
+            DWORD   ContextFlags;                         /* 030 */
+            DWORD   AMD64_MxCsr_copy;                     /* 034 */
+            WORD    AMD64_SegCs;                          /* 038 */
+            WORD    AMD64_SegDs;                          /* 03a */
+            WORD    AMD64_SegEs;                          /* 03c */
+            WORD    AMD64_SegFs;                          /* 03e */
+            WORD    AMD64_SegGs;                          /* 040 */
+            WORD    AMD64_SegSs;                          /* 042 */
+            DWORD   AMD64_EFlags;                         /* 044 */
+            DWORD64 AMD64_Dr0;                            /* 048 */
+            DWORD64 AMD64_Dr1;                            /* 050 */
+            DWORD64 AMD64_Dr2;                            /* 058 */
+            DWORD64 AMD64_Dr3;                            /* 060 */
+            DWORD64 AMD64_Dr6;                            /* 068 */
+            DWORD64 AMD64_Dr7;                            /* 070 */
+            DWORD64 X8;                                   /* 078 (Rax) */
+            DWORD64 X0;                                   /* 080 (Rcx) */
+            DWORD64 X1;                                   /* 088 (Rdx) */
+            DWORD64 X27;                                  /* 090 (Rbx) */
+            DWORD64 Sp;                                   /* 098 (Rsp) */
+            DWORD64 Fp;                                   /* 0a0 (Rbp) */
+            DWORD64 X25;                                  /* 0a8 (Rsi) */
+            DWORD64 X26;                                  /* 0b0 (Rdi) */
+            DWORD64 X2;                                   /* 0b8 (R8)  */
+            DWORD64 X3;                                   /* 0c0 (R9)  */
+            DWORD64 X4;                                   /* 0c8 (R10) */
+            DWORD64 X5;                                   /* 0d0 (R11) */
+            DWORD64 X19;                                  /* 0d8 (R12) */
+            DWORD64 X20;                                  /* 0e0 (R13) */
+            DWORD64 X21;                                  /* 0e8 (R14) */
+            DWORD64 X22;                                  /* 0f0 (R15) */
+            DWORD64 Pc;                                   /* 0f8 (Rip) */
+            struct
+            {
+                WORD    AMD64_ControlWord;                /* 100 */
+                WORD    AMD64_StatusWord;                 /* 102 */
+                BYTE    AMD64_TagWord;                    /* 104 */
+                BYTE    AMD64_Reserved1;                  /* 105 */
+                WORD    AMD64_ErrorOpcode;                /* 106 */
+                DWORD   AMD64_ErrorOffset;                /* 108 */
+                WORD    AMD64_ErrorSelector;              /* 10c */
+                WORD    AMD64_Reserved2;                  /* 10e */
+                DWORD   AMD64_DataOffset;                 /* 110 */
+                WORD    AMD64_DataSelector;               /* 114 */
+                WORD    AMD64_Reserved3;                  /* 116 */
+                DWORD   AMD64_MxCsr;                      /* 118 */
+                DWORD   AMD64_MxCsr_Mask;                 /* 11c */
+                DWORD64 Lr;                               /* 120 (FloatRegisters[0]) */
+                WORD    X16_0;                            /* 128 */
+                WORD    AMD64_St0_Reserved1;              /* 12a */
+                DWORD   AMD64_St0_Reserved2;              /* 12c */
+                DWORD64 X6;                               /* 130 (FloatRegisters[1]) */
+                WORD    X16_1;                            /* 138 */
+                WORD    AMD64_St1_Reserved1;              /* 13a */
+                DWORD   AMD64_St1_Reserved2;              /* 13c */
+                DWORD64 X7;                               /* 140 (FloatRegisters[2]) */
+                WORD    X16_2;                            /* 148 */
+                WORD    AMD64_St2_Reserved1;              /* 14a */
+                DWORD   AMD64_St2_Reserved2;              /* 14c */
+                DWORD64 X9;                               /* 150 (FloatRegisters[3]) */
+                WORD    X16_3;                            /* 158 */
+                WORD    AMD64_St3_Reserved1;              /* 15a */
+                DWORD   AMD64_St3_Reserved2;              /* 15c */
+                DWORD64 X10;                              /* 160 (FloatRegisters[4]) */
+                WORD    X17_0;                            /* 168 */
+                WORD    AMD64_St4_Reserved1;              /* 16a */
+                DWORD   AMD64_St4_Reserved2;              /* 16c */
+                DWORD64 X11;                              /* 170 (FloatRegisters[5]) */
+                WORD    X17_1;                            /* 178 */
+                WORD    AMD64_St5_Reserved1;              /* 17a */
+                DWORD   AMD64_St5_Reserved2;              /* 17c */
+                DWORD64 X12;                              /* 180 (FloatRegisters[6]) */
+                WORD    X17_2;                            /* 188 */
+                WORD    AMD64_St6_Reserved1;              /* 18a */
+                DWORD   AMD64_St6_Reserved2;              /* 18c */
+                DWORD64 X15;                              /* 190 (FloatRegisters[7]) */
+                WORD    X17_3;                            /* 198 */
+                WORD    AMD64_St7_Reserved1;              /* 19a */
+                DWORD   AMD64_St7_Reserved2;              /* 19c */
+                ARM64_NT_NEON128 V[16];                   /* 1a0 (XmmRegisters) */
+                BYTE    AMD64_XSAVE_FORMAT_Reserved4[96]; /* 2a0 */
+            } DUMMYSTRUCTNAME;
+            M128A   AMD64_VectorRegister[26];             /* 300 */
+            DWORD64 AMD64_VectorControl;                  /* 4a0 */
+            DWORD64 AMD64_DebugControl;                   /* 4a8 */
+            DWORD64 AMD64_LastBranchToRip;                /* 4b0 */
+            DWORD64 AMD64_LastBranchFromRip;              /* 4b8 */
+            DWORD64 AMD64_LastExceptionToRip;             /* 4c0 */
+            DWORD64 AMD64_LastExceptionFromRip;           /* 4c8 */
+        } DUMMYSTRUCTNAME;
+        AMD64_CONTEXT AMD64_Context;
+    } DUMMYUNIONNAME;
+} ARM64EC_NT_CONTEXT, *PARM64EC_NT_CONTEXT;
+
 #ifdef __aarch64__
 
 #define CONTEXT_CONTROL CONTEXT_ARM64_CONTROL
