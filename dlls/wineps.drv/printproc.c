@@ -378,6 +378,10 @@ static void get_vis_rectangles(HDC hdc, struct bitblt_coords *dst,
     src->width  = rect.right - rect.left;
     src->height = rect.bottom - rect.top;
     get_bounding_rect(&rect, src->x, src->y, src->width, src->height);
+    if (rect.left < 0) rect.left = 0;
+    if (rect.top < 0) rect.top = 0;
+    if (rect.right > width) rect.right = width;
+    if (rect.bottom > height) rect.bottom = height;
     src->visrect = rect;
 
     intersect_vis_rectangles(dst, src);
@@ -413,7 +417,7 @@ static int stretch_blt(PHYSDEV dev, const EMRSTRETCHBLT *blt,
     src.layout = 0;
 
     get_vis_rectangles(dev->hdc, &dst, &blt->xformSrc,
-            bi->bmiHeader.biWidth, bi->bmiHeader.biHeight, &src);
+            bi->bmiHeader.biWidth, abs(bi->bmiHeader.biHeight), &src);
 
     memcpy(dst_info, bi, blt->cbBmiSrc);
     memset(&bits, 0, sizeof(bits));
