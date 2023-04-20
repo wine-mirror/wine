@@ -802,6 +802,92 @@ static int plg_blt(PHYSDEV dev, const EMRPLGBLT *p)
     return TRUE;
 }
 
+static inline int get_dib_stride( int width, int bpp )
+{
+    return ((width * bpp + 31) >> 3) & ~3;
+}
+
+static inline int get_dib_image_size( const BITMAPINFO *info )
+{
+    return get_dib_stride( info->bmiHeader.biWidth, info->bmiHeader.biBitCount )
+        * abs( info->bmiHeader.biHeight );
+}
+
+static int set_di_bits_to_device(PHYSDEV dev, const EMRSETDIBITSTODEVICE *p)
+{
+    const BITMAPINFO *info = (const BITMAPINFO *)((BYTE *)p + p->offBmiSrc);
+    char bi_buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
+    BITMAPINFO *bi = (BITMAPINFO *)bi_buffer;
+    HBITMAP bitmap, old_bitmap;
+    int width, height, ret;
+    BYTE *bits;
+
+    width = min(p->cxSrc, info->bmiHeader.biWidth);
+    height = min(p->cySrc, abs(info->bmiHeader.biHeight));
+
+    memset(bi_buffer, 0, sizeof(bi_buffer));
+    bi->bmiHeader.biSize = sizeof(bi->bmiHeader);
+    bi->bmiHeader.biWidth = width;
+    bi->bmiHeader.biHeight = height;
+    bi->bmiHeader.biPlanes = 1;
+    if (p->iUsageSrc == DIB_PAL_COLORS && (info->bmiHeader.biBitCount == 1 ||
+                info->bmiHeader.biBitCount == 4 || info->bmiHeader.biBitCount == 8))
+    {
+        PALETTEENTRY pal[256];
+        HPALETTE hpal;
+        UINT i, size;
+
+        bi->bmiHeader.biBitCount = info->bmiHeader.biBitCount;
+        bi->bmiHeader.biClrUsed = 1 << info->bmiHeader.biBitCount;
+        bi->bmiHeader.biClrImportant = bi->bmiHeader.biClrUsed;
+
+        hpal = GetCurrentObject(dev->hdc, OBJ_PAL);
+        size = GetPaletteEntries(hpal, 0, bi->bmiHeader.biClrUsed, pal);
+        for (i = 0; i < size; i++)
+        {
+            bi->bmiColors[i].rgbBlue = pal[i].peBlue;
+            bi->bmiColors[i].rgbGreen = pal[i].peGreen;
+            bi->bmiColors[i].rgbRed = pal[i].peRed;
+        }
+    }
+    else
+    {
+        bi->bmiHeader.biBitCount = 24;
+    }
+    bi->bmiHeader.biCompression = BI_RGB;
+    bitmap = CreateDIBSection(dev->hdc, bi, DIB_RGB_COLORS, (void **)&bits, NULL, 0);
+    if (!bitmap)
+        return 1;
+    old_bitmap = SelectObject(dev->hdc, bitmap);
+
+    ret = SetDIBitsToDevice(dev->hdc, 0, 0, width, height, p->xSrc, p->ySrc,
+            p->iStartScan, p->cScans, (const BYTE*)p + p->offBitsSrc, info, p->iUsageSrc);
+    SelectObject(dev->hdc, old_bitmap);
+    if (ret)
+    {
+        EMRSTRETCHBLT blt;
+
+        memset(&blt, 0, sizeof(blt));
+        blt.rclBounds = p->rclBounds;
+        blt.xDest = p->xDest;
+        blt.yDest = p->yDest + p->cySrc - height;
+        blt.cxDest = width;
+        blt.cyDest = ret;
+        blt.dwRop = SRCCOPY;
+        blt.xformSrc.eM11 = 1;
+        blt.xformSrc.eM22 = 1;
+        blt.iUsageSrc = DIB_RGB_COLORS;
+        blt.cbBmiSrc = sizeof(bi_buffer);
+        blt.cbBitsSrc = get_dib_image_size(bi);
+        blt.cxSrc = blt.cxDest;
+        blt.cySrc = blt.cyDest;
+        stretch_blt(dev, &blt, bi, bits);
+    }
+
+    DeleteObject(bitmap);
+    return 1;
+}
+
 static int poly_draw(PHYSDEV dev, const POINT *points, const BYTE *types, DWORD count)
 {
     POINT first, cur, pts[4];
@@ -2592,6 +2678,8 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
 
         return plg_blt(&data->pdev->dev, p);
     }
+    case EMR_SETDIBITSTODEVICE:
+        return set_di_bits_to_device(&data->pdev->dev, (const EMRSETDIBITSTODEVICE *)rec);
     case EMR_EXTTEXTOUTW:
     {
         const EMREXTTEXTOUTW *p = (const EMREXTTEXTOUTW *)rec;
