@@ -888,6 +888,52 @@ static int set_di_bits_to_device(PHYSDEV dev, const EMRSETDIBITSTODEVICE *p)
     return 1;
 }
 
+static int stretch_di_bits(PHYSDEV dev, const EMRSTRETCHDIBITS *p)
+{
+    char bi_buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
+    const BYTE *bits = (BYTE *)p + p->offBitsSrc;
+    BITMAPINFO *bi = (BITMAPINFO *)bi_buffer;
+    EMRSTRETCHBLT blt;
+
+    memcpy(bi, (BYTE *)p + p->offBmiSrc, p->cbBmiSrc);
+    memset(bi_buffer + p->cbBmiSrc, 0, sizeof(bi_buffer) - p->cbBmiSrc);
+
+    if (p->iUsageSrc == DIB_PAL_COLORS && (bi->bmiHeader.biBitCount == 1 ||
+                bi->bmiHeader.biBitCount == 4 || bi->bmiHeader.biBitCount == 8))
+    {
+        PALETTEENTRY pal[256];
+        HPALETTE hpal;
+        UINT i, size;
+
+        hpal = GetCurrentObject(dev->hdc, OBJ_PAL);
+        size = GetPaletteEntries(hpal, 0, 1 << bi->bmiHeader.biBitCount, pal);
+        for (i = 0; i < size; i++)
+        {
+            bi->bmiColors[i].rgbBlue = pal[i].peBlue;
+            bi->bmiColors[i].rgbGreen = pal[i].peGreen;
+            bi->bmiColors[i].rgbRed = pal[i].peRed;
+        }
+    }
+
+    memset(&blt, 0, sizeof(blt));
+    blt.rclBounds = p->rclBounds;
+    blt.xDest = p->xDest;
+    blt.yDest = p->yDest;
+    blt.cxDest = p->cxDest;
+    blt.cyDest = p->cyDest;
+    blt.dwRop = p->dwRop;
+    blt.xSrc = p->xSrc;
+    blt.ySrc = abs(bi->bmiHeader.biHeight) - p->ySrc - p->cySrc;
+    blt.xformSrc.eM11 = 1;
+    blt.xformSrc.eM22 = 1;
+    blt.iUsageSrc = p->iUsageSrc;
+    blt.cbBmiSrc = sizeof(bi_buffer);
+    blt.cbBitsSrc = p->cbBitsSrc;
+    blt.cxSrc = p->cxSrc;
+    blt.cySrc = p->cySrc;
+    return stretch_blt(dev, &blt, bi, bits);
+}
+
 static int poly_draw(PHYSDEV dev, const POINT *points, const BYTE *types, DWORD count)
 {
     POINT first, cur, pts[4];
@@ -2680,6 +2726,8 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     }
     case EMR_SETDIBITSTODEVICE:
         return set_di_bits_to_device(&data->pdev->dev, (const EMRSETDIBITSTODEVICE *)rec);
+    case EMR_STRETCHDIBITS:
+        return stretch_di_bits(&data->pdev->dev, (const EMRSTRETCHDIBITS *)rec);
     case EMR_EXTTEXTOUTW:
     {
         const EMREXTTEXTOUTW *p = (const EMREXTTEXTOUTW *)rec;
