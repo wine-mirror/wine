@@ -1263,34 +1263,13 @@ static void check_url_combine(const char *szUrl1, const char *szUrl2, DWORD dwFl
     wszUrl2 = GetWideString(szUrl2);
     wszExpectUrl = GetWideString(szExpectUrl);
 
-    hr = UrlCombineA(szUrl1, szUrl2, NULL, NULL, dwFlags);
-    ok(hr == E_INVALIDARG, "UrlCombineA returned 0x%08lx, expected 0x%08lx\n", hr, E_INVALIDARG);
-
-    dwSize = 0;
-    hr = UrlCombineA(szUrl1, szUrl2, NULL, &dwSize, dwFlags);
-    ok(hr == E_POINTER, "Checking length of string, return was 0x%08lx, expected 0x%08lx\n", hr, E_POINTER);
-    ok(dwSize == dwExpectLen+1, "Got length %ld, expected %ld\n", dwSize, dwExpectLen+1);
-
-    dwSize--;
-    hr = UrlCombineA(szUrl1, szUrl2, szReturnUrl, &dwSize, dwFlags);
-    ok(hr == E_POINTER, "UrlCombineA returned 0x%08lx, expected 0x%08lx\n", hr, E_POINTER);
-    ok(dwSize == dwExpectLen+1, "Got length %ld, expected %ld\n", dwSize, dwExpectLen+1);
-
+    dwSize = ARRAY_SIZE(szReturnUrl);
     hr = UrlCombineA(szUrl1, szUrl2, szReturnUrl, &dwSize, dwFlags);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(dwSize == dwExpectLen, "Got length %ld, expected %ld\n", dwSize, dwExpectLen);
     ok(!strcmp(szReturnUrl, szExpectUrl), "Expected %s, got %s.\n", szExpectUrl, szReturnUrl);
 
-    dwSize = 0;
-    hr = UrlCombineW(wszUrl1, wszUrl2, NULL, &dwSize, dwFlags);
-    ok(hr == E_POINTER, "Checking length of string, return was 0x%08lx, expected 0x%08lx\n", hr, E_POINTER);
-    ok(dwSize == dwExpectLen+1, "Got length %ld, expected %ld\n", dwSize, dwExpectLen+1);
-
-    dwSize--;
-    hr = UrlCombineW(wszUrl1, wszUrl2, wszReturnUrl, &dwSize, dwFlags);
-    ok(hr == E_POINTER, "UrlCombineW returned 0x%08lx, expected 0x%08lx\n", hr, E_POINTER);
-    ok(dwSize == dwExpectLen+1, "Got length %ld, expected %ld\n", dwSize, dwExpectLen+1);
-
+    dwSize = ARRAY_SIZE(wszReturnUrl);
     hr = UrlCombineW(wszUrl1, wszUrl2, wszReturnUrl, &dwSize, dwFlags);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(dwSize == dwExpectLen, "Got length %ld, expected %ld\n", dwSize, dwExpectLen);
@@ -1308,7 +1287,54 @@ static void check_url_combine(const char *szUrl1, const char *szUrl2, DWORD dwFl
 
 static void test_UrlCombine(void)
 {
+    WCHAR bufferW[30];
+    char buffer[30];
     unsigned int i;
+    HRESULT hr;
+    DWORD size;
+
+    hr = UrlCombineA("http://base/", "relative", NULL, NULL, 0);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    size = 0;
+    hr = UrlCombineA("http://base/", "relative", NULL, &size, 0);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(size == strlen("http://base/relative") + 1, "Got size %lu.\n", size);
+
+    --size;
+    strcpy(buffer, "x");
+    hr = UrlCombineA("http://base/", "relative", buffer, &size, 0);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(size == strlen("http://base/relative") + 1, "Got size %lu.\n", size);
+    ok(!strcmp(buffer, "x"), "Got buffer contents %s.\n", debugstr_a(buffer));
+
+    strcpy(buffer, "x");
+    hr = UrlCombineA("http://base/", "relative", buffer, &size, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(size == strlen("http://base/relative"), "Got size %lu.\n", size);
+    ok(!strcmp(buffer, "http://base/relative"), "Got buffer contents %s.\n", debugstr_a(buffer));
+
+    hr = UrlCombineW(L"http://base/", L"relative", NULL, NULL, 0);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    size = 0;
+    hr = UrlCombineW(L"http://base/", L"relative", NULL, &size, 0);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(size == strlen("http://base/relative") + 1, "Got size %lu.\n", size);
+
+    --size;
+    wcscpy(bufferW, L"x");
+    hr = UrlCombineW(L"http://base/", L"relative", bufferW, &size, 0);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(size == strlen("http://base/relative") + 1, "Got size %lu.\n", size);
+    ok(!wcscmp(bufferW, L"x"), "Got buffer contents %s.\n", debugstr_a(buffer));
+
+    wcscpy(bufferW, L"x");
+    hr = UrlCombineW(L"http://base/", L"relative", bufferW, &size, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(size == strlen("http://base/relative"), "Got size %lu.\n", size);
+    ok(!wcscmp(bufferW, L"http://base/relative"), "Got buffer contents %s.\n", debugstr_w(bufferW));
+
     for (i = 0; i < ARRAY_SIZE(TEST_COMBINE); i++) {
         check_url_combine(TEST_COMBINE[i].url1, TEST_COMBINE[i].url2, TEST_COMBINE[i].flags, TEST_COMBINE[i].expecturl);
     }
