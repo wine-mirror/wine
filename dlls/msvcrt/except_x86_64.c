@@ -579,14 +579,14 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
         return ExceptionContinueSearch;
     }
 
+    if (rec->ExceptionCode == CXX_EXCEPTION &&
+        (!rec->ExceptionInformation[1] && !rec->ExceptionInformation[2]))
+    {
+        TRACE("rethrow detected.\n");
+        *rec = *msvcrt_get_thread_data()->exc_record;
+    }
     if (rec->ExceptionCode == CXX_EXCEPTION)
     {
-        if (!rec->ExceptionInformation[1] && !rec->ExceptionInformation[2])
-        {
-            TRACE("rethrow detected.\n");
-            *rec = *msvcrt_get_thread_data()->exc_record;
-        }
-
         exc_type = (cxx_exception_type *)rec->ExceptionInformation[2];
 
         if (TRACE_ON(seh))
