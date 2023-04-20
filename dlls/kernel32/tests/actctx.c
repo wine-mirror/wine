@@ -147,6 +147,11 @@ static const char manifest3[] =
 "        name=\"testsurrogate\""
 "        runtimeVersion=\"v2.0.50727\""
 "    />"
+"    <clrSurrogate "
+"        clsid=\"{96666666-8888-7777-6666-555555555556}\""
+"        name=\"testsurrogate\""
+"        runtimeVersion=\"v2.0.50728\""
+"    />"
 "    <clrClass "
 "        clsid=\"{22345678-1234-5678-1234-111122223333}\""
 "        name=\"clrclass\""
@@ -1592,6 +1597,29 @@ struct clrclass_data {
     DWORD res2[2];
 };
 
+static void validate_guid_index(const ACTCTX_SECTION_KEYED_DATA *data, int line)
+{
+#define GUIDSECTION_MAGIC  0x64487347 /* dHsG */
+    struct guidsection_header *header;
+    struct guid_index *index;
+    unsigned int i;
+
+    header = (struct guidsection_header *)data->lpSectionBase;
+
+    ok_(__FILE__, line)(header->magic == GUIDSECTION_MAGIC, "Unexpected magic %#lx.\n", header->magic);
+    ok_(__FILE__, line)(header->size == sizeof(*header), "Unexpected size %ld.\n", header->size);
+    ok_(__FILE__, line)(header->index_offset >= sizeof(*header), "Unexpected index offset %lu.\n", header->index_offset);
+
+    index = (struct guid_index *)((BYTE *)data->lpSectionBase + header->index_offset);
+    for (i = 0; i < header->count; ++i)
+    {
+        ok_(__FILE__, line)(index[i].data_len <= data->ulSectionTotalLength, "Unexpected data length.\n");
+        ok_(__FILE__, line)(index[i].data_offset <= data->ulSectionTotalLength - index[i].data_len,
+                "Unexpected data offset %ld, section total length %lu, data length %lu.\n",
+                index[i].data_offset, data->ulSectionTotalLength, index[i].data_len);
+    }
+}
+
 static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GUID *tlid, const WCHAR *progid, ULONG exid, int line)
 {
     struct comclassredirect_data *comclass, *comclass2;
@@ -1715,6 +1743,7 @@ static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GU
     ok_(__FILE__, line)(data.hActCtx == NULL, "data.hActCtx=%p\n", data.hActCtx);
     ok_(__FILE__, line)(data.ulAssemblyRosterIndex == exid, "data.ulAssemblyRosterIndex=%lu, expected %lu\n",
        data.ulAssemblyRosterIndex, exid);
+    validate_guid_index(&data, line);
 
     /* generated guid for this class works as key guid in search */
     memset(&data2, 0xfe, sizeof(data2));
@@ -1801,6 +1830,8 @@ static void test_find_ifaceps_redirection(HANDLE handle, const GUID *iid, const 
     ok_(__FILE__, line)(data.hActCtx == NULL, "data.hActCtx=%p\n", data.hActCtx);
     ok_(__FILE__, line)(data.ulAssemblyRosterIndex == exid, "data.ulAssemblyRosterIndex=%lu, expected %lu\n",
        data.ulAssemblyRosterIndex, exid);
+
+    validate_guid_index(&data, line);
 }
 
 struct clrsurrogate_data
@@ -1815,7 +1846,7 @@ struct clrsurrogate_data
 };
 
 static void test_find_surrogate(HANDLE handle, const GUID *clsid, const WCHAR *name, const WCHAR *version,
-    ULONG exid, int line)
+        ULONG exid, int line)
 {
     struct clrsurrogate_data *surrogate;
     ACTCTX_SECTION_KEYED_DATA data;
@@ -1871,6 +1902,8 @@ static void test_find_surrogate(HANDLE handle, const GUID *clsid, const WCHAR *n
     ok_(__FILE__, line)(data.hActCtx == NULL, "data.hActCtx=%p\n", data.hActCtx);
     ok_(__FILE__, line)(data.ulAssemblyRosterIndex == exid, "data.ulAssemblyRosterIndex=%lu, expected %lu\n",
        data.ulAssemblyRosterIndex, exid);
+
+    validate_guid_index(&data, line);
 }
 
 static void test_find_progid_redirection(HANDLE handle, const GUID *clsid, const char *progid, ULONG exid, int line)
@@ -1911,6 +1944,8 @@ static void test_find_progid_redirection(HANDLE handle, const GUID *clsid, const
         comclass = (struct comclassredirect_data*)data2.lpData;
         ok_(__FILE__, line)(IsEqualGUID(guid, &comclass->alias), "got wrong alias referenced from progid %s, %s\n", progid, wine_dbgstr_guid(guid));
         ok_(__FILE__, line)(IsEqualGUID(clsid, &comclass->clsid), "got wrong class referenced from progid %s, %s\n", progid, wine_dbgstr_guid(clsid));
+
+        validate_guid_index(&data2, line);
     }
 
     header = (struct strsection_header*)data.lpSectionBase;
@@ -2076,6 +2111,7 @@ static void test_typelib_section(void)
     section = (struct guidsection_header*)data.lpSectionBase;
     ok(section->count == 4, "got %ld\n", section->count);
     ok(section->size == sizeof(*section), "got %ld\n", section->size);
+    validate_guid_index(&data, __LINE__);
 
     /* For both GUIDs same section is returned */
     ok(data.lpSectionBase == data2.lpSectionBase, "got %p, %p\n", data.lpSectionBase, data2.lpSectionBase);
