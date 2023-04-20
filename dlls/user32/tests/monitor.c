@@ -1683,6 +1683,52 @@ static void check_device_path(const WCHAR *device_path, const LUID *adapter_id, 
     SetupDiDestroyDeviceInfoList(set);
 }
 
+static void check_preferred_mode(const DISPLAYCONFIG_TARGET_PREFERRED_MODE *mode, const WCHAR *gdi_device_name)
+{
+    DISPLAYCONFIG_TARGET_PREFERRED_MODE mode2;
+    DEVMODEW dm, dm2;
+    LONG lret;
+    BOOL bret;
+
+    dm.dmSize = sizeof(dm);
+    bret = EnumDisplaySettingsW(gdi_device_name, ENUM_CURRENT_SETTINGS, &dm);
+    ok(bret, "got error %lu.\n", GetLastError());
+
+    if (dm.dmPelsWidth == 1024 && dm.dmPelsHeight == 768)
+    {
+        skip("Current display mode is already 1024x768, skipping test.\n");
+        return;
+    }
+    if (mode->width == 1024 && mode->height == 768)
+    {
+        skip("Preferred display mode is 1024x768, skipping test.\n");
+        return;
+    }
+
+    memset(&dm2, 0, sizeof(dm2));
+    dm2.dmSize = sizeof(dm2);
+    dm2.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
+    dm2.dmPelsWidth = 1024;
+    dm2.dmPelsHeight = 768;
+    lret = ChangeDisplaySettingsW(&dm2, 0);
+    if (lret != DISP_CHANGE_SUCCESSFUL)
+    {
+        skip("Can't change display settings, skipping test.\n");
+        return;
+    }
+
+    memset(&mode2, 0, sizeof(mode2));
+    mode2.header = mode->header;
+
+    lret = pDisplayConfigGetDeviceInfo(&mode2.header);
+    ok(!lret, "got %ld\n", lret);
+    ok(mode2.width == mode->width, "got %u, expected %u.\n", mode2.width, mode->width);
+    ok(mode2.height == mode->height, "got %u, expected %u.\n", mode2.height, mode->height);
+
+    lret = ChangeDisplaySettingsW(&dm, 0);
+    ok(lret == DISP_CHANGE_SUCCESSFUL, "got %ld.\n", lret);
+}
+
 static void test_QueryDisplayConfig_result(UINT32 flags,
         UINT32 paths, const DISPLAYCONFIG_PATH_INFO *pi, UINT32 modes, const DISPLAYCONFIG_MODE_INFO *mi)
 {
@@ -1722,7 +1768,6 @@ static void test_QueryDisplayConfig_result(UINT32 flags,
         ok(!ret, "Expected 0, got %ld\n", ret);
         check_device_path(target_name.monitorDevicePath, &target_name.header.adapterId, target_name.header.id);
 
-        todo_wine {
         preferred_mode.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE;
         preferred_mode.header.size = sizeof(preferred_mode);
         preferred_mode.header.adapterId = pi[i].targetInfo.adapterId;
@@ -1732,7 +1777,7 @@ static void test_QueryDisplayConfig_result(UINT32 flags,
         ok(!ret, "Expected 0, got %ld\n", ret);
         ok(preferred_mode.width > 0 && preferred_mode.height > 0, "Expected non-zero height/width, got %ux%u\n",
                 preferred_mode.width, preferred_mode.height);
-        }
+        check_preferred_mode(&preferred_mode, source_name.viewGdiDeviceName);
 
         todo_wine {
         adapter_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME;

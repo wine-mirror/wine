@@ -33,6 +33,7 @@
 #include "ntuser_private.h"
 #include "devpropdef.h"
 #include "cfgmgr32.h"
+#include "d3dkmdt.h"
 #include "wine/wingdi16.h"
 #include "wine/server.h"
 
@@ -246,6 +247,7 @@ struct adapter
 
 #define MONITOR_INFO_HAS_MONITOR_ID 0x00000001
 #define MONITOR_INFO_HAS_MONITOR_NAME 0x00000002
+#define MONITOR_INFO_HAS_PREFERRED_MODE 0x00000004
 struct edid_monitor_info
 {
     unsigned int flags;
@@ -254,6 +256,8 @@ struct edid_monitor_info
     char monitor_id_string[8];
     /* MONITOR_INFO_HAS_MONITOR_NAME */
     WCHAR monitor_name[14];
+    /* MONITOR_INFO_HAS_PREFERRED_MODE */
+    unsigned int preferred_width, preferred_height;
 };
 
 struct monitor
@@ -505,6 +509,16 @@ static void get_monitor_info_from_edid( struct edid_monitor_info *info, const un
 
     for (i = 0; i < 4; ++i)
     {
+        if (edid[54 + i * 18] || edid[54 + i * 18 + 1])
+        {
+            /* Detailed timing descriptor. */
+            if (info->flags & MONITOR_INFO_HAS_PREFERRED_MODE) continue;
+            info->preferred_width = edid[54 + i * 18 + 2] | ((UINT32)(edid[54 + i * 18 + 4] & 0xf0) << 4);
+            info->preferred_height = edid[54 + i * 18 + 5] | ((UINT32)(edid[54 + i * 18 + 7] & 0xf0) << 4);
+            if (info->preferred_width && info->preferred_height)
+                info->flags |= MONITOR_INFO_HAS_PREFERRED_MODE;
+            continue;
+        }
         if (edid[54 + i * 18 + 3] != 0xfc) continue;
         /* "Display name" ASCII descriptor. */
         s = (const char *)&edid[54 + i * 18 + 5];
@@ -5862,13 +5876,82 @@ NTSTATUS WINAPI NtUserDisplayConfigGetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEAD
     case DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE:
     {
         DISPLAYCONFIG_TARGET_PREFERRED_MODE *preferred_mode = (DISPLAYCONFIG_TARGET_PREFERRED_MODE *)packet;
+        DISPLAYCONFIG_VIDEO_SIGNAL_INFO *signal_info = &preferred_mode->targetMode.targetVideoSignalInfo;
+        unsigned int i, display_freq;
+        DEVMODEW *found_mode = NULL;
+        BOOL have_edid_mode = FALSE;
+        struct monitor *monitor;
 
-        FIXME( "DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE stub.\n" );
+        FIXME( "DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE semi-stub.\n" );
 
         if (packet->size < sizeof(*preferred_mode))
             return STATUS_INVALID_PARAMETER;
 
-        return STATUS_NOT_SUPPORTED;
+        if (!lock_display_devices()) return STATUS_UNSUCCESSFUL;
+
+        memset( &preferred_mode->width, 0, sizeof(*preferred_mode) - offsetof(DISPLAYCONFIG_TARGET_PREFERRED_MODE, width) );
+
+        LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
+        {
+            if (preferred_mode->header.id != monitor->output_id) continue;
+            if (memcmp( &preferred_mode->header.adapterId, &monitor->adapter->gpu_luid,
+                        sizeof(monitor->adapter->gpu_luid) ))
+                continue;
+
+            for (i = 0; i < monitor->adapter->mode_count; ++i)
+            {
+                DEVMODEW *mode = &monitor->adapter->modes[i];
+
+                if (!have_edid_mode && monitor->edid_info.flags & MONITOR_INFO_HAS_PREFERRED_MODE
+                    && mode->dmPelsWidth == monitor->edid_info.preferred_width
+                    && mode->dmPelsHeight == monitor->edid_info.preferred_height)
+                {
+                    found_mode = mode;
+                    have_edid_mode = TRUE;
+                }
+
+                if (!have_edid_mode && (!found_mode
+                    || (mode->dmPelsWidth > found_mode->dmPelsWidth && mode->dmPelsHeight >= found_mode->dmPelsHeight)
+                    || (mode->dmPelsHeight > found_mode->dmPelsHeight && mode->dmPelsWidth >= found_mode->dmPelsWidth)))
+                    found_mode = mode;
+
+                if (mode->dmPelsWidth == found_mode->dmPelsWidth
+                    && mode->dmPelsHeight == found_mode->dmPelsHeight
+                    && mode->dmDisplayFrequency > found_mode->dmDisplayFrequency)
+                    found_mode = mode;
+            }
+
+            if (!found_mode)
+            {
+                ERR( "No mode found.\n" );
+                break;
+            }
+            preferred_mode->width = found_mode->dmPelsWidth;
+            preferred_mode->height = found_mode->dmPelsHeight;
+            display_freq = found_mode->dmDisplayFrequency;
+
+            signal_info->pixelRate = display_freq * preferred_mode->width * preferred_mode->height;
+            signal_info->hSyncFreq.Numerator = display_freq * preferred_mode->width;
+            signal_info->hSyncFreq.Denominator = 1;
+            signal_info->vSyncFreq.Numerator = display_freq;
+            signal_info->vSyncFreq.Denominator = 1;
+            signal_info->activeSize.cx = preferred_mode->width;
+            signal_info->activeSize.cy = preferred_mode->height;
+            signal_info->totalSize.cx = preferred_mode->width;
+            signal_info->totalSize.cy = preferred_mode->height;
+            signal_info->videoStandard = D3DKMDT_VSS_OTHER;
+            if (!(found_mode->dmFields & DM_DISPLAYFLAGS))
+                signal_info->scanLineOrdering = DISPLAYCONFIG_SCANLINE_ORDERING_UNSPECIFIED;
+            else if (found_mode->dmDisplayFlags & DM_INTERLACED)
+                signal_info->scanLineOrdering = DISPLAYCONFIG_SCANLINE_ORDERING_INTERLACED;
+            else
+                signal_info->scanLineOrdering = DISPLAYCONFIG_SCANLINE_ORDERING_PROGRESSIVE;
+            ret = STATUS_SUCCESS;
+            break;
+        }
+
+        unlock_display_devices();
+        return ret;
     }
     case DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME:
     {
