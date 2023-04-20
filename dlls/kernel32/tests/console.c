@@ -683,6 +683,20 @@ static void testScroll(HANDLE hCon, COORD sbSize)
             "Expected ERROR_NOT_ENOUGH_MEMORY, got %lu\n", GetLastError());
     }
 
+    /* no clipping, src & dst rect do overlap */
+    scroll.Left = 0;
+    scroll.Right = W - 1;
+    scroll.Top = 0;
+    scroll.Bottom = H - 1;
+    dst.X = W / 2 - 3;
+    dst.Y = H / 2 - 3;
+    ci.Char.UnicodeChar = '#';
+    ci.Attributes = TEST_ATTRIB;
+
+    ret = ScrollConsoleScreenBufferA(hCon, &scroll, NULL, dst, &ci);
+    ok(ret, "ScrollConsoleScreenBufferA failed: %lu\n", GetLastError());
+    /* no win10 1909 error here, only check the result of the clipped case */
+
     /* clipping, src & dst rect do overlap */
     resetContent(hCon, sbSize, TRUE);
 
@@ -700,8 +714,14 @@ static void testScroll(HANDLE hCon, COORD sbSize)
     clip.Top = H / 2;
     clip.Bottom = min(H + H / 2, sbSize.Y - 1);
 
+    /* Windows 10 1909 fails if the destination is not in the clip rect
+     * but the result is still ok!
+     */
+    SetLastError(0xdeadbeef);
     ret = ScrollConsoleScreenBufferA(hCon, &scroll, &clip, dst, &ci);
-    ok(ret, "ScrollConsoleScreenBufferA failed: %lu\n", GetLastError());
+    ok((ret && GetLastError() == 0xdeadbeef) ||
+       broken(!ret && GetLastError() == ERROR_INVALID_PARAMETER),
+       "ScrollConsoleScreenBufferA failed: %lu\n", GetLastError());
 
     for (c.Y = 0; c.Y < sbSize.Y; c.Y++)
     {
