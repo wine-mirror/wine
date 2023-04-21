@@ -41,6 +41,9 @@ struct emf
     HBRUSH   dc_brush;
     HPEN     dc_pen;
     BOOL     path;
+    DWORD    palette_size;
+    DWORD    palette_used;
+    PALETTEENTRY *palette;
 };
 
 #define HANDLE_LIST_INC 20
@@ -394,6 +397,40 @@ static void emfdc_delete_object( HDC hdc, HGDIOBJ obj )
     emf->cur_handles--;
 }
 
+static BOOL emfdc_add_palette_entry( struct emf *emf, PALETTEENTRY *entry )
+{
+    int i;
+
+    for (i = 0; i < emf->palette_used; i++)
+    {
+        if (emf->palette[i].peRed == entry->peRed &&
+                emf->palette[i].peGreen == entry->peGreen &&
+                emf->palette[i].peBlue == entry->peBlue) return TRUE;
+    }
+
+    if (emf->palette_size == emf->palette_used)
+    {
+        if (!emf->palette_size)
+        {
+            emf->palette = HeapAlloc( GetProcessHeap(), 0,
+                    8 * sizeof(*emf->palette) );
+            if (!emf->palette) return FALSE;
+            emf->palette_size = 8;
+        }
+        else
+        {
+            void *new_palette = HeapReAlloc( GetProcessHeap(), 0, emf->palette,
+                    2 * emf->palette_size * sizeof(*emf->palette) );
+            if (!new_palette) return FALSE;
+            emf->palette = new_palette;
+            emf->palette_size *= 2;
+        }
+    }
+
+    emf->palette[emf->palette_used++] = *entry;
+    return TRUE;
+}
+
 static DWORD emfdc_create_brush( struct emf *emf, HBRUSH brush )
 {
     DWORD index = 0;
@@ -663,7 +700,10 @@ static DWORD emfdc_create_palette( struct emf *emf, HPALETTE hPal )
         return 0;
 
     for (i = 0; i < hdr->lgpl.palNumEntries; i++)
+    {
         hdr->lgpl.palPalEntry[i].peFlags = 0;
+        emfdc_add_palette_entry( emf, hdr->lgpl.palPalEntry + i );
+    }
 
     hdr->emr.iType = EMR_CREATEPALETTE;
     hdr->emr.nSize = offsetof( EMRCREATEPALETTE, lgpl.palPalEntry[hdr->lgpl.palNumEntries] );
@@ -2344,6 +2384,7 @@ void EMFDC_DeleteDC( DC_ATTR *dc_attr )
     struct emf *emf = get_dc_emf( dc_attr );
     UINT index;
 
+    HeapFree( GetProcessHeap(), 0, emf->palette );
     HeapFree( GetProcessHeap(), 0, emf->emh );
     for (index = 0; index < emf->handles_size; index++)
         if (emf->handles[index])
@@ -2465,6 +2506,9 @@ HDC WINAPI CreateEnhMetaFileW( HDC hdc, const WCHAR *filename, const RECT *rect,
     emf->dc_brush = 0;
     emf->dc_pen = 0;
     emf->path = FALSE;
+    emf->palette_size = 0;
+    emf->palette_used = 0;
+    emf->palette = NULL;
 
     emf->emh->iType = EMR_HEADER;
     emf->emh->nSize = size;
@@ -2533,10 +2577,11 @@ HDC WINAPI CreateEnhMetaFileW( HDC hdc, const WCHAR *filename, const RECT *rect,
  */
 HENHMETAFILE WINAPI CloseEnhMetaFile( HDC hdc )
 {
+    UINT size, palette_size;
     HENHMETAFILE hmf;
     struct emf *emf;
     DC_ATTR *dc_attr;
-    EMREOF emr;
+    EMREOF *emr;
     HANDLE mapping = 0;
 
     TRACE("(%p)\n", hdc );
@@ -2544,18 +2589,26 @@ HENHMETAFILE WINAPI CloseEnhMetaFile( HDC hdc )
     if (!(dc_attr = get_dc_attr( hdc )) || !get_dc_emf( dc_attr )) return 0;
     emf = get_dc_emf( dc_attr );
 
+    palette_size = emf->palette_used * sizeof(*emf->palette);
+    size = sizeof(*emr) + palette_size;
+    if (!(emr = HeapAlloc( GetProcessHeap(), 0, size ))) return 0;
+
     if (dc_attr->save_level)
         RestoreDC( hdc, 1 );
 
     if (emf->dc_brush) DeleteObject( emf->dc_brush );
     if (emf->dc_pen) DeleteObject( emf->dc_pen );
 
-    emr.emr.iType = EMR_EOF;
-    emr.emr.nSize = sizeof(emr);
-    emr.nPalEntries = 0;
-    emr.offPalEntries = FIELD_OFFSET(EMREOF, nSizeLast);
-    emr.nSizeLast = emr.emr.nSize;
-    emfdc_record( emf, &emr.emr );
+
+    emr->emr.iType = EMR_EOF;
+    emr->emr.nSize = size;
+    emr->nPalEntries = emf->palette_used;
+    emr->offPalEntries = FIELD_OFFSET(EMREOF, nSizeLast);
+    memcpy( (BYTE *)emr + emr->offPalEntries, emf->palette, palette_size );
+    /* Set nSizeLast */
+    ((DWORD *)((BYTE *)emr + size))[-1] = size;
+    emfdc_record( emf, &emr->emr );
+    HeapFree( GetProcessHeap(), 0, emr );
 
     emf->emh->rclBounds = dc_attr->emf_bounds;
 
