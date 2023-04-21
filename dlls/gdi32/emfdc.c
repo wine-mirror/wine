@@ -696,6 +696,20 @@ BOOL EMFDC_SelectPalette( DC_ATTR *dc_attr, HPALETTE palette )
     return emfdc_record( emf, &emr.emr );
 }
 
+BOOL EMFDC_RealizePalette( DC_ATTR *dc_attr )
+{
+    HPALETTE palette = GetCurrentObject( dc_attr_handle( dc_attr ), OBJ_PAL );
+    struct emf *emf = get_dc_emf( dc_attr );
+    EMRREALIZEPALETTE emr;
+
+    if (palette == GetStockObject( DEFAULT_PALETTE ))
+        return TRUE;
+
+    emr.emr.iType = EMR_REALIZEPALETTE;
+    emr.emr.nSize = sizeof(emr);
+    return emfdc_record( emf, &emr.emr );
+}
+
 BOOL EMFDC_SelectObject( DC_ATTR *dc_attr, HGDIOBJ obj )
 {
     switch (gdi_handle_type( obj ))
