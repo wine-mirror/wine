@@ -47,12 +47,9 @@ static void test_propertystore(IPropertyStore *store)
     hr = IPropertyStore_GetValue(store, &PKEY_AudioEndpoint_GUID, &pv);
     ok(hr == S_OK, "Failed with %08lx\n", hr);
     ok(pv.vt == VT_LPWSTR, "Value should be %i, is %i\n", VT_LPWSTR, pv.vt);
-    if (hr == S_OK && pv.vt == VT_LPWSTR)
-    {
-        WideCharToMultiByte(CP_ACP, 0, pv.pwszVal, -1, temp, sizeof(temp)-1, NULL, NULL);
-        trace("guid: %s\n", temp);
-        PropVariantClear(&pv);
-    }
+    WideCharToMultiByte(CP_ACP, 0, pv.pwszVal, -1, temp, sizeof(temp)-1, NULL, NULL);
+    trace("guid: %s\n", temp);
+    PropVariantClear(&pv);
 
     pv.vt = VT_EMPTY;
     hr = IPropertyStore_GetValue(store, (const PROPERTYKEY*)&DEVPKEY_DeviceInterface_FriendlyName, &pv);
@@ -204,33 +201,25 @@ START_TEST(propstore)
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&mme);
-    if (FAILED(hr))
-    {
-        skip("mmdevapi not available: 0x%08lx\n", hr);
-        goto cleanup;
-    }
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(mme, eRender, eMultimedia, &dev);
     ok(hr == S_OK || hr == E_NOTFOUND, "GetDefaultAudioEndpoint failed: 0x%08lx\n", hr);
     if (hr != S_OK)
     {
-        if (hr == E_NOTFOUND)
-            skip("No sound card available\n");
-        else
-            skip("GetDefaultAudioEndpoint returns 0x%08lx\n", hr);
+        skip("No sound card available\n");
         goto cleanup;
     }
+
     store = NULL;
     hr = IMMDevice_OpenPropertyStore(dev, 3, &store);
     ok(hr == E_INVALIDARG, "Wrong hr returned: %08lx\n", hr);
-    if (hr != S_OK)
-        /* It seems on windows returning with E_INVALIDARG doesn't
-         * set store to NULL, so just don't set store to non-null
-         * before calling this function
-         */
-        ok(!store, "Store set to non-NULL on failure: %p/%08lx\n", store, hr);
-    else if (store)
-        IPropertyStore_Release(store);
+    /* It seems on windows returning with E_INVALIDARG doesn't
+     * set store to NULL, so just don't set store to non-null
+     * before calling this function
+     */
+    ok(!store, "Got unexpected store %p\n", store);
+
     hr = IMMDevice_OpenPropertyStore(dev, STGM_READ, NULL);
     ok(hr == E_POINTER, "Wrong hr returned: %08lx\n", hr);
 
@@ -239,18 +228,17 @@ START_TEST(propstore)
     if(hr == E_ACCESSDENIED)
         hr = IMMDevice_OpenPropertyStore(dev, STGM_READ, &store);
     ok(hr == S_OK, "Opening valid store returned %08lx\n", hr);
-    if (store)
-    {
-        test_propertystore(store);
-        test_deviceinterface(store);
-        test_getat(store);
-        if (is_wow64)
-            test_setvalue_on_wow64(store);
-        IPropertyStore_Release(store);
-    }
+
+    test_propertystore(store);
+    test_deviceinterface(store);
+    test_getat(store);
+    if (is_wow64)
+        test_setvalue_on_wow64(store);
+    IPropertyStore_Release(store);
+
     IMMDevice_Release(dev);
+
 cleanup:
-    if (mme)
-        IMMDeviceEnumerator_Release(mme);
+    IMMDeviceEnumerator_Release(mme);
     CoUninitialize();
 }
