@@ -1156,13 +1156,13 @@ static HRESULT WINAPI AudioRenderClient_QueryInterface(
 static ULONG WINAPI AudioRenderClient_AddRef(IAudioRenderClient *iface)
 {
     ACImpl *This = impl_from_IAudioRenderClient(iface);
-    return AudioClient_AddRef(&This->IAudioClient3_iface);
+    return IAudioClient3_AddRef(&This->IAudioClient3_iface);
 }
 
 static ULONG WINAPI AudioRenderClient_Release(IAudioRenderClient *iface)
 {
     ACImpl *This = impl_from_IAudioRenderClient(iface);
-    return AudioClient_Release(&This->IAudioClient3_iface);
+    return IAudioClient3_Release(&This->IAudioClient3_iface);
 }
 
 static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
@@ -1509,7 +1509,7 @@ static ULONG WINAPI AudioSessionControl_Release(IAudioSessionControl2 *iface)
     if(!ref){
         if(This->client){
             This->client->session_wrapper = NULL;
-            AudioClient_Release(&This->client->IAudioClient3_iface);
+            IAudioClient3_Release(&This->client->IAudioClient3_iface);
         }
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -1736,13 +1736,13 @@ static HRESULT WINAPI SimpleAudioVolume_QueryInterface(
 static ULONG WINAPI SimpleAudioVolume_AddRef(ISimpleAudioVolume *iface)
 {
     AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
-    return AudioSessionControl_AddRef(&This->IAudioSessionControl2_iface);
+    return IAudioSessionControl2_AddRef(&This->IAudioSessionControl2_iface);
 }
 
 static ULONG WINAPI SimpleAudioVolume_Release(ISimpleAudioVolume *iface)
 {
     AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
-    return AudioSessionControl_Release(&This->IAudioSessionControl2_iface);
+    return IAudioSessionControl2_Release(&This->IAudioSessionControl2_iface);
 }
 
 static HRESULT WINAPI SimpleAudioVolume_SetMasterVolume(
@@ -2016,13 +2016,13 @@ static HRESULT WINAPI ChannelAudioVolume_QueryInterface(
 static ULONG WINAPI ChannelAudioVolume_AddRef(IChannelAudioVolume *iface)
 {
     AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
-    return AudioSessionControl_AddRef(&This->IAudioSessionControl2_iface);
+    return IAudioSessionControl2_AddRef(&This->IAudioSessionControl2_iface);
 }
 
 static ULONG WINAPI ChannelAudioVolume_Release(IChannelAudioVolume *iface)
 {
     AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
-    return AudioSessionControl_Release(&This->IAudioSessionControl2_iface);
+    return IAudioSessionControl2_Release(&This->IAudioSessionControl2_iface);
 }
 
 static HRESULT WINAPI ChannelAudioVolume_GetChannelCount(
