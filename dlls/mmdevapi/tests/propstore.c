@@ -188,11 +188,12 @@ static void test_setvalue_on_wow64(IPropertyStore *store)
 START_TEST(propstore)
 {
     HRESULT hr;
+    IMMDeviceCollection *collection;
     IMMDeviceEnumerator *mme = NULL;
-    IMMDevice *dev = NULL;
     IPropertyStore *store;
     BOOL is_wow64 = FALSE;
     HMODULE hk32 = GetModuleHandleA("kernel32.dll");
+    unsigned int i, count;
 
     pIsWow64Process = (void *)GetProcAddress(hk32, "IsWow64Process");
 
@@ -203,42 +204,47 @@ START_TEST(propstore)
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&mme);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(mme, eRender, eMultimedia, &dev);
-    ok(hr == S_OK || hr == E_NOTFOUND, "GetDefaultAudioEndpoint failed: 0x%08lx\n", hr);
-    if (hr != S_OK)
+    hr = IMMDeviceEnumerator_EnumAudioEndpoints(mme, eRender, DEVICE_STATE_ACTIVE, &collection);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IMMDeviceCollection_GetCount(collection, &count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    for (i = 0; i < count; ++i)
     {
-        skip("No sound card available\n");
-        goto cleanup;
+        IMMDevice *dev;
+
+        hr = IMMDeviceCollection_Item(collection, i, &dev);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        store = NULL;
+        hr = IMMDevice_OpenPropertyStore(dev, 3, &store);
+        ok(hr == E_INVALIDARG, "Wrong hr returned: %08lx\n", hr);
+        /* It seems on windows returning with E_INVALIDARG doesn't
+         * set store to NULL, so just don't set store to non-null
+         * before calling this function
+         */
+        ok(!store, "Got unexpected store %p\n", store);
+
+        hr = IMMDevice_OpenPropertyStore(dev, STGM_READ, NULL);
+        ok(hr == E_POINTER, "Wrong hr returned: %08lx\n", hr);
+
+        store = NULL;
+        hr = IMMDevice_OpenPropertyStore(dev, STGM_READWRITE, &store);
+        if (hr == E_ACCESSDENIED)
+            hr = IMMDevice_OpenPropertyStore(dev, STGM_READ, &store);
+        ok(hr == S_OK, "Opening valid store returned %08lx\n", hr);
+
+        test_propertystore(store);
+        test_deviceinterface(store);
+        test_getat(store);
+        if (is_wow64)
+            test_setvalue_on_wow64(store);
+
+        IPropertyStore_Release(store);
+        IMMDevice_Release(dev);
     }
 
-    store = NULL;
-    hr = IMMDevice_OpenPropertyStore(dev, 3, &store);
-    ok(hr == E_INVALIDARG, "Wrong hr returned: %08lx\n", hr);
-    /* It seems on windows returning with E_INVALIDARG doesn't
-     * set store to NULL, so just don't set store to non-null
-     * before calling this function
-     */
-    ok(!store, "Got unexpected store %p\n", store);
-
-    hr = IMMDevice_OpenPropertyStore(dev, STGM_READ, NULL);
-    ok(hr == E_POINTER, "Wrong hr returned: %08lx\n", hr);
-
-    store = NULL;
-    hr = IMMDevice_OpenPropertyStore(dev, STGM_READWRITE, &store);
-    if(hr == E_ACCESSDENIED)
-        hr = IMMDevice_OpenPropertyStore(dev, STGM_READ, &store);
-    ok(hr == S_OK, "Opening valid store returned %08lx\n", hr);
-
-    test_propertystore(store);
-    test_deviceinterface(store);
-    test_getat(store);
-    if (is_wow64)
-        test_setvalue_on_wow64(store);
-    IPropertyStore_Release(store);
-
-    IMMDevice_Release(dev);
-
-cleanup:
+    IMMDeviceCollection_Release(collection);
     IMMDeviceEnumerator_Release(mme);
     CoUninitialize();
 }
