@@ -200,6 +200,38 @@ static void uia_event_map_entry_release(struct uia_event_map_entry *entry)
 }
 
 /*
+ * Functions for struct uia_event_args, a reference counted structure
+ * used to store event arguments. This is necessary for serverside events
+ * as they're raised on a background thread after the event raising
+ * function has returned.
+ */
+struct uia_event_args
+{
+    struct UiaEventArgs simple_args;
+    LONG ref;
+};
+
+static struct uia_event_args *create_uia_event_args(const struct uia_event_info *event_info)
+{
+    struct uia_event_args *args = heap_alloc_zero(sizeof(*args));
+
+    if (!args)
+        return NULL;
+
+    args->simple_args.Type = event_info->event_arg_type;
+    args->simple_args.EventId = event_info->event_id;
+    args->ref = 1;
+
+    return args;
+}
+
+static void uia_event_args_release(struct uia_event_args *args)
+{
+    if (!InterlockedDecrement(&args->ref))
+        heap_free(args);
+}
+
+/*
  * UI Automation event thread.
  */
 struct uia_event_thread
@@ -975,7 +1007,7 @@ HRESULT WINAPI UiaRemoveEvent(HUIAEVENT huiaevent)
     return S_OK;
 }
 
-static HRESULT uia_event_invoke(HUIANODE node, struct UiaEventArgs *args, struct uia_event *event)
+static HRESULT uia_event_invoke(HUIANODE node, struct uia_event_args *args, struct uia_event *event)
 {
     SAFEARRAY *out_req;
     BSTR tree_struct;
@@ -985,7 +1017,7 @@ static HRESULT uia_event_invoke(HUIANODE node, struct UiaEventArgs *args, struct
             &tree_struct);
     if (SUCCEEDED(hr))
     {
-        event->u.clientside.cback(args, out_req, tree_struct);
+        event->u.clientside.cback(&args->simple_args, out_req, tree_struct);
         SafeArrayDestroy(out_req);
         SysFreeString(tree_struct);
     }
@@ -996,7 +1028,8 @@ static HRESULT uia_event_invoke(HUIANODE node, struct UiaEventArgs *args, struct
 /*
  * Check if the provider that raised the event matches this particular event.
  */
-static HRESULT uia_event_check_match(HUIANODE node, SAFEARRAY *rt_id, struct UiaEventArgs *args, struct uia_event *event)
+static HRESULT uia_event_check_match(HUIANODE node, SAFEARRAY *rt_id, struct uia_event_args *args,
+        struct uia_event *event)
 {
     struct UiaPropertyCondition prop_cond = { ConditionType_Property, UIA_RuntimeIdPropertyId };
     struct uia_node *node_data = impl_from_IWineUiaNode((IWineUiaNode *)node);
@@ -1055,7 +1088,7 @@ static HRESULT uia_event_check_match(HUIANODE node, SAFEARRAY *rt_id, struct Uia
     return hr;
 }
 
-static HRESULT uia_raise_event(IRawElementProviderSimple *elprov, struct UiaEventArgs *args)
+static HRESULT uia_raise_event(IRawElementProviderSimple *elprov, struct uia_event_args *args)
 {
     struct uia_event_map_entry *event_entry;
     enum ProviderOptions prov_opts = 0;
@@ -1069,7 +1102,7 @@ static HRESULT uia_raise_event(IRawElementProviderSimple *elprov, struct UiaEven
         return hr;
 
     EnterCriticalSection(&event_map_cs);
-    if ((event_entry = uia_get_event_map_entry_for_event(args->EventId)))
+    if ((event_entry = uia_get_event_map_entry_for_event(args->simple_args.EventId)))
         InterlockedIncrement(&event_entry->refs);
     LeaveCriticalSection(&event_map_cs);
 
@@ -1120,7 +1153,7 @@ static HRESULT uia_raise_event(IRawElementProviderSimple *elprov, struct UiaEven
 HRESULT WINAPI UiaRaiseAutomationEvent(IRawElementProviderSimple *elprov, EVENTID id)
 {
     const struct uia_event_info *event_info = uia_event_info_from_id(id);
-    struct UiaEventArgs args = { EventArgsType_Simple, id };
+    struct uia_event_args *args;
     HRESULT hr;
 
     TRACE("(%p, %d)\n", elprov, id);
@@ -1138,7 +1171,12 @@ HRESULT WINAPI UiaRaiseAutomationEvent(IRawElementProviderSimple *elprov, EVENTI
         return S_OK;
     }
 
-    hr = uia_raise_event(elprov, &args);
+    args = create_uia_event_args(event_info);
+    if (!args)
+        return E_OUTOFMEMORY;
+
+    hr = uia_raise_event(elprov, args);
+    uia_event_args_release(args);
     if (FAILED(hr))
         return hr;
 
