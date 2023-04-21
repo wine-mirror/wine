@@ -83,6 +83,16 @@ static CRITICAL_SECTION_DEBUG session_cs_debug = {
 };
 static CRITICAL_SECTION session_cs = { &session_cs_debug, -1, 0, 0, 0, 0 };
 
+static void sessions_lock(void)
+{
+    EnterCriticalSection(&session_cs);
+}
+
+static void sessions_unlock(void)
+{
+    LeaveCriticalSection(&session_cs);
+}
+
 BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
 {
     if (reason == DLL_PROCESS_ATTACH) {
@@ -601,9 +611,9 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
         if (This->stream) {
             pulse_release_stream(This->stream, This->timer_thread);
             This->stream = 0;
-            EnterCriticalSection(&session_cs);
+            sessions_lock();
             list_remove(&This->entry);
-            LeaveCriticalSection(&session_cs);
+            sessions_unlock();
         }
         IUnknown_Release(This->marshal);
         IMMDevice_Release(This->parent);
@@ -784,10 +794,10 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         return E_INVALIDARG;
     }
 
-    EnterCriticalSection(&session_cs);
+    sessions_lock();
 
     if (This->stream) {
-        LeaveCriticalSection(&session_cs);
+        sessions_unlock();
         return AUDCLNT_E_ALREADY_INITIALIZED;
     }
 
@@ -797,7 +807,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         if (!(pulse_thread = CreateThread(NULL, 0, pulse_mainloop_thread, event, 0, NULL)))
         {
             ERR("Failed to create mainloop thread.\n");
-            LeaveCriticalSection(&session_cs);
+            sessions_unlock();
             CloseHandle(event);
             return E_FAIL;
         }
@@ -820,14 +830,14 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     free(name);
     if (FAILED(hr = params.result))
     {
-        LeaveCriticalSection(&session_cs);
+        sessions_unlock();
         return hr;
     }
 
     if (!(This->vols = malloc(channel_count * sizeof(*This->vols))))
     {
         pulse_release_stream(stream, NULL);
-        LeaveCriticalSection(&session_cs);
+        sessions_unlock();
         return E_OUTOFMEMORY;
     }
     for (i = 0; i < channel_count; i++)
@@ -838,7 +848,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     {
         free(This->vols);
         This->vols = NULL;
-        LeaveCriticalSection(&session_cs);
+        sessions_unlock();
         pulse_release_stream(stream, NULL);
         return E_OUTOFMEMORY;
     }
@@ -848,7 +858,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     list_add_tail(&This->session->clients, &This->entry);
     set_stream_volumes(This);
 
-    LeaveCriticalSection(&session_cs);
+    sessions_unlock();
     return S_OK;
 }
 
@@ -1771,12 +1781,12 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
     if (count != This->channel_count)
         return E_INVALIDARG;
 
-    EnterCriticalSection(&session_cs);
+    sessions_lock();
     for (i = 0; i < count; ++i)
         This->vols[i] = levels[i];
 
     set_stream_volumes(This);
-    LeaveCriticalSection(&session_cs);
+    sessions_unlock();
     return S_OK;
 }
 
@@ -1796,10 +1806,10 @@ static HRESULT WINAPI AudioStreamVolume_GetAllVolumes(
     if (count != This->channel_count)
         return E_INVALIDARG;
 
-    EnterCriticalSection(&session_cs);
+    sessions_lock();
     for (i = 0; i < count; ++i)
         levels[i] = This->vols[i];
-    LeaveCriticalSection(&session_cs);
+    sessions_unlock();
     return S_OK;
 }
 
@@ -1818,10 +1828,10 @@ static HRESULT WINAPI AudioStreamVolume_SetChannelVolume(
     if (index >= This->channel_count)
         return E_INVALIDARG;
 
-    EnterCriticalSection(&session_cs);
+    sessions_lock();
     This->vols[index] = level;
     set_stream_volumes(This);
-    LeaveCriticalSection(&session_cs);
+    sessions_unlock();
     return S_OK;
 }
 
@@ -1840,9 +1850,9 @@ static HRESULT WINAPI AudioStreamVolume_GetChannelVolume(
     if (index >= This->channel_count)
         return E_INVALIDARG;
 
-    EnterCriticalSection(&session_cs);
+    sessions_lock();
     *level = This->vols[index];
-    LeaveCriticalSection(&session_cs);
+    sessions_unlock();
     return S_OK;
 }
 
@@ -1940,7 +1950,7 @@ static HRESULT WINAPI AudioSessionControl_GetState(IAudioSessionControl2 *iface,
     if (!state)
         return NULL_PTR_ERR;
 
-    EnterCriticalSection(&session_cs);
+    sessions_lock();
     if (list_empty(&This->session->clients)) {
         *state = AudioSessionStateExpired;
         goto out;
@@ -1961,7 +1971,7 @@ static HRESULT WINAPI AudioSessionControl_GetState(IAudioSessionControl2 *iface,
     *state = AudioSessionStateInactive;
 
 out:
-    LeaveCriticalSection(&session_cs);
+    sessions_unlock();
     return S_OK;
 }
 
@@ -2172,11 +2182,11 @@ static HRESULT WINAPI SimpleAudioVolume_SetMasterVolume(
 
     TRACE("PulseAudio does not support session volume control\n");
 
-    EnterCriticalSection(&session_cs);
+    sessions_lock();
     session->master_vol = level;
     LIST_FOR_EACH_ENTRY(client, &This->session->clients, ACImpl, entry)
         set_stream_volumes(client);
-    LeaveCriticalSection(&session_cs);
+    sessions_unlock();
 
     return S_OK;
 }
@@ -2209,11 +2219,11 @@ static HRESULT WINAPI SimpleAudioVolume_SetMute(ISimpleAudioVolume *iface,
     if (context)
         FIXME("Notifications not supported yet\n");
 
-    EnterCriticalSection(&session_cs);
+    sessions_lock();
     session->mute = mute;
     LIST_FOR_EACH_ENTRY(client, &This->session->clients, ACImpl, entry)
         set_stream_volumes(client);
-    LeaveCriticalSection(&session_cs);
+    sessions_unlock();
 
     return S_OK;
 }
@@ -2316,11 +2326,11 @@ static HRESULT WINAPI ChannelAudioVolume_SetChannelVolume(
 
     TRACE("PulseAudio does not support session volume control\n");
 
-    EnterCriticalSection(&session_cs);
+    sessions_lock();
     session->channel_vols[index] = level;
     LIST_FOR_EACH_ENTRY(client, &This->session->clients, ACImpl, entry)
         set_stream_volumes(client);
-    LeaveCriticalSection(&session_cs);
+    sessions_unlock();
 
     return S_OK;
 }
@@ -2367,12 +2377,12 @@ static HRESULT WINAPI ChannelAudioVolume_SetAllVolumes(
 
     TRACE("PulseAudio does not support session volume control\n");
 
-    EnterCriticalSection(&session_cs);
+    sessions_lock();
     for(i = 0; i < count; ++i)
         session->channel_vols[i] = levels[i];
     LIST_FOR_EACH_ENTRY(client, &This->session->clients, ACImpl, entry)
         set_stream_volumes(client);
-    LeaveCriticalSection(&session_cs);
+    sessions_unlock();
     return S_OK;
 }
 
