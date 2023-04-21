@@ -647,6 +647,30 @@ static void dump_section_apiset(void)
     }
 }
 
+static const char *find_export_from_rva( UINT rva )
+{
+    UINT i, *func_names;
+    const UINT *funcs;
+    const UINT *names;
+    const WORD *ordinals;
+    const IMAGE_EXPORT_DIRECTORY *dir;
+    const char *ret = NULL;
+
+    if (!(dir = get_dir( IMAGE_FILE_EXPORT_DIRECTORY ))) return NULL;
+    if (!(funcs = RVA( dir->AddressOfFunctions, dir->NumberOfFunctions * sizeof(DWORD) ))) return NULL;
+    names = RVA( dir->AddressOfNames, dir->NumberOfNames * sizeof(DWORD) );
+    ordinals = RVA( dir->AddressOfNameOrdinals, dir->NumberOfNames * sizeof(WORD) );
+    func_names = calloc( dir->NumberOfFunctions, sizeof(*func_names) );
+
+    for (i = 0; i < dir->NumberOfNames; i++) func_names[ordinals[i]] = names[i];
+    for (i = 0; i < dir->NumberOfFunctions && !ret; i++)
+        if (funcs[i] == rva) ret = get_symbol_str( RVA( func_names[i], sizeof(DWORD) ));
+
+    free( func_names );
+    if (!ret && rva == PE_nt_headers->OptionalHeader.AddressOfEntryPoint) return "<EntryPoint>";
+    return ret;
+}
+
 static	void	dump_dir_exported_functions(void)
 {
     unsigned int size;
@@ -1833,26 +1857,26 @@ static void dump_hybrid_metadata(void)
     {
         const IMAGE_ARM64EC_METADATA *data = metadata;
 
-        printf( "Version                                %#x\n", (int)data->Version );
-        printf( "CodeMap                                %#x\n", (int)data->CodeMap );
-        printf( "CodeMapCount                           %#x\n", (int)data->CodeMapCount );
-        printf( "CodeRangesToEntryPoints                %#x\n", (int)data->CodeRangesToEntryPoints );
-        printf( "RedirectionMetadata                    %#x\n", (int)data->RedirectionMetadata );
-        printf( "__os_arm64x_dispatch_call_no_redirect  %#x\n", (int)data->__os_arm64x_dispatch_call_no_redirect );
-        printf( "__os_arm64x_dispatch_ret               %#x\n", (int)data->__os_arm64x_dispatch_ret );
-        printf( "__os_arm64x_dispatch_call              %#x\n", (int)data->__os_arm64x_dispatch_call );
-        printf( "__os_arm64x_dispatch_icall             %#x\n", (int)data->__os_arm64x_dispatch_icall );
-        printf( "__os_arm64x_dispatch_icall_cfg         %#x\n", (int)data->__os_arm64x_dispatch_icall_cfg );
-        printf( "AlternateEntryPoint                    %#x\n", (int)data->AlternateEntryPoint );
-        printf( "AuxiliaryIAT                           %#x\n", (int)data->AuxiliaryIAT );
-        printf( "CodeRangesToEntryPointsCount           %#x\n", (int)data->CodeRangesToEntryPointsCount );
-        printf( "RedirectionMetadataCount               %#x\n", (int)data->RedirectionMetadataCount );
-        printf( "GetX64InformationFunctionPointer       %#x\n", (int)data->GetX64InformationFunctionPointer );
-        printf( "SetX64InformationFunctionPointer       %#x\n", (int)data->SetX64InformationFunctionPointer );
-        printf( "ExtraRFETable                          %#x\n", (int)data->ExtraRFETable );
-        printf( "ExtraRFETableSize                      %#x\n", (int)data->ExtraRFETableSize );
-        printf( "__os_arm64x_dispatch_fptr              %#x\n", (int)data->__os_arm64x_dispatch_fptr );
-        printf( "AuxiliaryIATCopy                       %#x\n", (int)data->AuxiliaryIATCopy );
+        printf( "  Version                                %#x\n", (int)data->Version );
+        printf( "  CodeMap                                %#x\n", (int)data->CodeMap );
+        printf( "  CodeMapCount                           %#x\n", (int)data->CodeMapCount );
+        printf( "  CodeRangesToEntryPoints                %#x\n", (int)data->CodeRangesToEntryPoints );
+        printf( "  RedirectionMetadata                    %#x\n", (int)data->RedirectionMetadata );
+        printf( "  __os_arm64x_dispatch_call_no_redirect  %#x\n", (int)data->__os_arm64x_dispatch_call_no_redirect );
+        printf( "  __os_arm64x_dispatch_ret               %#x\n", (int)data->__os_arm64x_dispatch_ret );
+        printf( "  __os_arm64x_dispatch_call              %#x\n", (int)data->__os_arm64x_dispatch_call );
+        printf( "  __os_arm64x_dispatch_icall             %#x\n", (int)data->__os_arm64x_dispatch_icall );
+        printf( "  __os_arm64x_dispatch_icall_cfg         %#x\n", (int)data->__os_arm64x_dispatch_icall_cfg );
+        printf( "  AlternateEntryPoint                    %#x\n", (int)data->AlternateEntryPoint );
+        printf( "  AuxiliaryIAT                           %#x\n", (int)data->AuxiliaryIAT );
+        printf( "  CodeRangesToEntryPointsCount           %#x\n", (int)data->CodeRangesToEntryPointsCount );
+        printf( "  RedirectionMetadataCount               %#x\n", (int)data->RedirectionMetadataCount );
+        printf( "  GetX64InformationFunctionPointer       %#x\n", (int)data->GetX64InformationFunctionPointer );
+        printf( "  SetX64InformationFunctionPointer       %#x\n", (int)data->SetX64InformationFunctionPointer );
+        printf( "  ExtraRFETable                          %#x\n", (int)data->ExtraRFETable );
+        printf( "  ExtraRFETableSize                      %#x\n", (int)data->ExtraRFETableSize );
+        printf( "  __os_arm64x_dispatch_fptr              %#x\n", (int)data->__os_arm64x_dispatch_fptr );
+        printf( "  AuxiliaryIATCopy                       %#x\n", (int)data->AuxiliaryIATCopy );
 
         if (data->CodeMap)
         {
@@ -1868,6 +1892,8 @@ static void dump_hybrid_metadata(void)
             }
         }
 
+        if (PE_nt_headers->FileHeader.Machine == IMAGE_FILE_MACHINE_ARM64) break;
+
         if (data->CodeRangesToEntryPoints)
         {
             const IMAGE_ARM64EC_CODE_RANGE_ENTRY_POINT *map = RVA( data->CodeRangesToEntryPoints,
@@ -1876,8 +1902,13 @@ static void dump_hybrid_metadata(void)
             printf( "\nCode ranges to entry points\n" );
             printf( "    Start  -   End      Entry point\n" );
             for (i = 0; i < data->CodeRangesToEntryPointsCount; i++)
-                printf(  "  %08x - %08x   %08x\n",
+            {
+                const char *name = find_export_from_rva( map[i].EntryPoint );
+                printf(  "  %08x - %08x   %08x",
                          (int)map[i].StartRva, (int)map[i].EndRva, (int)map[i].EntryPoint );
+                if (name) printf( "  %s", name );
+                printf( "\n" );
+            }
         }
 
         if (data->RedirectionMetadata)
@@ -1887,7 +1918,12 @@ static void dump_hybrid_metadata(void)
 
             printf( "\nEntry point redirection\n" );
             for (i = 0; i < data->RedirectionMetadataCount; i++)
-                printf(  "  %08x -> %08x\n", (int)map[i].Source, (int)map[i].Destination );
+            {
+                const char *name = find_export_from_rva( map[i].Source );
+                printf(  "  %08x -> %08x", (int)map[i].Source, (int)map[i].Destination );
+                if (name) printf( "  (%s)", name );
+                printf( "\n" );
+            }
         }
         break;
     }
