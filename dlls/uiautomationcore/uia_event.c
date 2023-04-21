@@ -257,6 +257,8 @@ static ULONG WINAPI uia_event_Release(IWineUiaEvent *iface)
             rb_remove(&uia_event_map.serverside_event_map, &event->u.serverside.serverside_event_entry);
             uia_event_map.serverside_event_count--;
             LeaveCriticalSection(&event_map_cs);
+            if (event->u.serverside.event_iface)
+                IWineUiaEvent_Release(event->u.serverside.event_iface);
             if (event->u.serverside.node)
                 IWineUiaNode_Release(event->u.serverside.node);
         }
@@ -292,7 +294,9 @@ static HRESULT WINAPI uia_event_advise_events(IWineUiaEvent *iface, BOOL advise_
     if (!advise_added)
     {
         InterlockedIncrement(&event->event_defunct);
-        uia_event_map_entry_release(event->event_map_entry);
+        /* FIXME: Remove this check once we can raise serverside events. */
+        if (event->event_type == EVENT_TYPE_CLIENTSIDE)
+            uia_event_map_entry_release(event->event_map_entry);
         event->event_map_entry = NULL;
 
         for (i = 0; i < event->event_advisers_count; i++)
@@ -304,11 +308,40 @@ static HRESULT WINAPI uia_event_advise_events(IWineUiaEvent *iface, BOOL advise_
     return S_OK;
 }
 
+static HRESULT WINAPI uia_event_set_event_data(IWineUiaEvent *iface, const GUID *event_guid, long scope,
+        VARIANT runtime_id, IWineUiaEvent *event_iface)
+{
+    struct uia_event *event = impl_from_IWineUiaEvent(iface);
+
+    TRACE("%p, %s, %ld, %s, %p\n", event, debugstr_guid(event_guid), scope, debugstr_variant(&runtime_id), event_iface);
+
+    assert(event->event_type == EVENT_TYPE_SERVERSIDE);
+
+    event->event_id = UiaLookupId(AutomationIdentifierType_Event, event_guid);
+    event->scope = scope;
+    if (V_VT(&runtime_id) == (VT_I4 | VT_ARRAY))
+    {
+        HRESULT hr;
+
+        hr = SafeArrayCopy(V_ARRAY(&runtime_id), &event->runtime_id);
+        if (FAILED(hr))
+        {
+            WARN("Failed to copy runtime id, hr %#lx\n", hr);
+            return hr;
+        }
+    }
+    event->u.serverside.event_iface = event_iface;
+    IWineUiaEvent_AddRef(event_iface);
+
+    return S_OK;
+}
+
 static const IWineUiaEventVtbl uia_event_vtbl = {
     uia_event_QueryInterface,
     uia_event_AddRef,
     uia_event_Release,
     uia_event_advise_events,
+    uia_event_set_event_data,
 };
 
 static struct uia_event *unsafe_impl_from_IWineUiaEvent(IWineUiaEvent *iface)
@@ -598,8 +631,34 @@ static ULONG WINAPI uia_serverside_event_adviser_Release(IWineUiaEventAdviser *i
 
 static HRESULT WINAPI uia_serverside_event_adviser_advise(IWineUiaEventAdviser *iface, BOOL advise_added, LONG_PTR huiaevent)
 {
-    FIXME("%p, %d, %#Ix: stub\n", iface, advise_added, huiaevent);
-    return S_OK;
+    struct uia_serverside_event_adviser *adv_events = impl_from_serverside_IWineUiaEventAdviser(iface);
+    struct uia_event *event_data = (struct uia_event *)huiaevent;
+    HRESULT hr;
+
+    TRACE("%p, %d, %#Ix\n", adv_events, advise_added, huiaevent);
+
+    if (advise_added)
+    {
+        const struct uia_event_info *event_info = uia_event_info_from_id(event_data->event_id);
+        VARIANT v;
+
+        VariantInit(&v);
+        if (event_data->runtime_id)
+        {
+            V_VT(&v) = VT_I4 | VT_ARRAY;
+            V_ARRAY(&v) = event_data->runtime_id;
+        }
+
+        hr = IWineUiaEvent_set_event_data(adv_events->event_iface, event_info->guid, event_data->scope, v,
+                &event_data->IWineUiaEvent_iface);
+        if (FAILED(hr))
+        {
+            WARN("Failed to set event data on serverside event, hr %#lx\n", hr);
+            return hr;
+        }
+    }
+
+    return IWineUiaEvent_advise_events(adv_events->event_iface, advise_added);
 }
 
 static const IWineUiaEventAdviserVtbl uia_serverside_event_adviser_vtbl = {

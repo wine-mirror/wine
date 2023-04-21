@@ -14047,7 +14047,7 @@ static void test_UiaAddEvent_client_proc(void)
         CHECK_CALLED_MULTI(prov_callback_proxy, 3);
     }
 
-    post_event_message(hwnd, WM_UIA_TEST_CHECK_EVENT_ADVISE_ADDED, UIA_AutomationFocusChangedEventId, PROVIDER_ID, TRUE);
+    post_event_message(hwnd, WM_UIA_TEST_CHECK_EVENT_ADVISE_ADDED, UIA_AutomationFocusChangedEventId, PROVIDER_ID, FALSE);
 
     /*
      * Starts navigation in server process, then completes navigation in the
@@ -14071,7 +14071,7 @@ static void test_UiaAddEvent_client_proc(void)
 
     hr = UiaRemoveEvent(event);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    post_event_message(hwnd, WM_UIA_TEST_CHECK_EVENT_ADVISE_REMOVED, UIA_AutomationFocusChangedEventId, PROVIDER_ID, TRUE);
+    post_event_message(hwnd, WM_UIA_TEST_CHECK_EVENT_ADVISE_REMOVED, UIA_AutomationFocusChangedEventId, PROVIDER_ID, FALSE);
 
     /*
      * Register an event on a node that won't require any navigation to reach.

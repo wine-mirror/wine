@@ -140,6 +140,7 @@ struct uia_event
              */
             IWineUiaNode *node;
 
+            IWineUiaEvent *event_iface;
             struct rb_entry serverside_event_entry;
             LONG proc_id;
         } serverside;
