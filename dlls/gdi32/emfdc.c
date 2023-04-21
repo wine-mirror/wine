@@ -651,27 +651,27 @@ static BOOL emfdc_select_pen( DC_ATTR *dc_attr, HPEN pen )
 
 static DWORD emfdc_create_palette( struct emf *emf, HPALETTE hPal )
 {
+    BYTE data[offsetof( EMRCREATEPALETTE, lgpl.palPalEntry[256] )];
+    EMRCREATEPALETTE *hdr = (EMRCREATEPALETTE *)data;
     WORD i;
-    struct {
-        EMRCREATEPALETTE hdr;
-        PALETTEENTRY entry[255];
-    } pal;
 
-    memset( &pal, 0, sizeof(pal) );
+    memset( data, 0, sizeof(data) );
 
-    if (!GetObjectW( hPal, sizeof(pal.hdr.lgpl) + sizeof(pal.entry), &pal.hdr.lgpl ))
+    hdr->lgpl.palVersion = 0x300;
+    hdr->lgpl.palNumEntries = GetPaletteEntries( hPal, 0, 256, hdr->lgpl.palPalEntry );
+    if (!hdr->lgpl.palNumEntries)
         return 0;
 
-    for (i = 0; i < pal.hdr.lgpl.palNumEntries; i++)
-        pal.hdr.lgpl.palPalEntry[i].peFlags = 0;
+    for (i = 0; i < hdr->lgpl.palNumEntries; i++)
+        hdr->lgpl.palPalEntry[i].peFlags = 0;
 
-    pal.hdr.emr.iType = EMR_CREATEPALETTE;
-    pal.hdr.emr.nSize = sizeof(pal.hdr) + pal.hdr.lgpl.palNumEntries * sizeof(PALETTEENTRY);
-    pal.hdr.ihPal = emfdc_add_handle( emf, hPal );
+    hdr->emr.iType = EMR_CREATEPALETTE;
+    hdr->emr.nSize = offsetof( EMRCREATEPALETTE, lgpl.palPalEntry[hdr->lgpl.palNumEntries] );
+    hdr->ihPal = emfdc_add_handle( emf, hPal );
 
-    if (!emfdc_record( emf, &pal.hdr.emr ))
-        pal.hdr.ihPal = 0;
-    return pal.hdr.ihPal;
+    if (!emfdc_record( emf, &hdr->emr ))
+        hdr->ihPal = 0;
+    return hdr->ihPal;
 }
 
 BOOL EMFDC_SelectPalette( DC_ATTR *dc_attr, HPALETTE palette )
