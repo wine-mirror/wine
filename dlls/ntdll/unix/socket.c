@@ -984,6 +984,7 @@ static NTSTATUS try_send( int fd, struct async_send_ioctl *async )
 {
     union unix_sockaddr unix_addr;
     struct msghdr hdr;
+    int attempt = 0;
     ssize_t ret;
 
     memset( &hdr, 0, sizeof(hdr) );
@@ -1028,6 +1029,17 @@ static NTSTATUS try_send( int fd, struct async_send_ioctl *async )
         else if (errno != EINTR)
         {
             if (errno != EWOULDBLOCK) WARN( "sendmsg: %s\n", strerror( errno ) );
+
+            /* ECONNREFUSED may be returned if this is connected datagram socket and the system received
+             * ICMP "destination port unreachable" message from the peer. That is ignored
+             * on Windows. The first sendmsg() will clear the error in this case and the next
+             * call should succeed. */
+            if (!attempt && errno == ECONNREFUSED)
+            {
+                ++attempt;
+                continue;
+            }
+
             return sock_errno_to_status( errno );
         }
     }

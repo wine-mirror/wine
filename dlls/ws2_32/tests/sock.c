@@ -2962,7 +2962,9 @@ static void test_UDP(void)
     /* peer 0 receives data from all other peers */
     struct sock_info peer[NUM_UDP_PEERS];
     char buf[16];
-    int ss, i, n_recv, n_sent;
+    int ss, i, n_recv, n_sent, ret;
+    struct sockaddr_in addr;
+    int sock;
 
     memset (buf,0,sizeof(buf));
     for ( i = NUM_UDP_PEERS - 1; i >= 0; i-- ) {
@@ -3000,6 +3002,27 @@ static void test_UDP(void)
         ok ( n_recv == sizeof(buf), "UDP: recvfrom() received wrong amount of data or socket error: %d\n", n_recv );
         ok ( memcmp ( &peer[0].peer.sin_port, buf, sizeof(peer[0].addr.sin_port) ) == 0, "UDP: port numbers do not match\n" );
     }
+
+    sock = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    ok( sock != INVALID_SOCKET, "got error %u.\n", WSAGetLastError() );
+
+    memset( &addr, 0, sizeof(addr) );
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    addr.sin_port = htons(255);
+
+    ret = connect( sock, (struct sockaddr *)&addr, sizeof(addr) );
+    ok( !ret, "got error %u.\n", WSAGetLastError() );
+
+    /* Send to UDP socket succeeds even if the packets are not received and the network is replying with
+     * "destination port unreachable" ICMP messages. */
+    for (i = 0; i < 10; ++i)
+    {
+        ret = send( sock, buf, sizeof(buf), 0 );
+        ok( ret == sizeof(buf), "got %d, error %u.\n", ret, WSAGetLastError() );
+    }
+
+    closesocket(sock);
 }
 
 static void test_WSASocket(void)
