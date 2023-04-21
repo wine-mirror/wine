@@ -29,6 +29,9 @@
 #include "uuids.h"
 #include "mmdeviceapi.h"
 #include "devpkey.h"
+#include "ks.h"
+#include "ksmedia.h"
+#include "mmreg.h"
 
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, BOOL *);
 
@@ -38,6 +41,7 @@ static const WCHAR software_renderW[] =
 
 static void test_propertystore(IPropertyStore *store)
 {
+    const WAVEFORMATEXTENSIBLE *format;
     HRESULT hr;
     PROPVARIANT pv;
     char temp[128];
@@ -67,6 +71,20 @@ static void test_propertystore(IPropertyStore *store)
     hr = IPropertyStore_GetValue(store, (const PROPERTYKEY*)&DEVPKEY_DeviceInterface_ClassGuid, &pv);
     ok(hr == S_OK, "Failed with %08lx\n", hr);
     ok(pv.vt == VT_EMPTY, "Key should not be found\n");
+    PropVariantClear(&pv);
+
+    pv.vt = VT_EMPTY;
+    hr = IPropertyStore_GetValue(store, (const PROPERTYKEY *)&PKEY_AudioEngine_DeviceFormat, &pv);
+    ok(hr == S_OK, "Failed with %08lx\n", hr);
+    ok(pv.vt == VT_BLOB, "Got type %u\n", pv.vt);
+    ok(pv.blob.cbSize == sizeof(WAVEFORMATEXTENSIBLE), "Got size %lu\n", pv.blob.cbSize);
+    format = (const void *)pv.blob.pBlobData;
+    ok(format->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE, "Got format tag %#x\n", format->Format.wFormatTag);
+    ok(format->Format.cbSize == sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX),
+            "Got extra size %u\n", format->Format.cbSize);
+    todo_wine ok(format->Format.wBitsPerSample == 16, "Got bit depth %u\n", format->Format.wBitsPerSample);
+    todo_wine ok(IsEqualGUID(&format->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM),
+            "Got subformat %s\n", debugstr_guid(&format->SubFormat));
     PropVariantClear(&pv);
 }
 
