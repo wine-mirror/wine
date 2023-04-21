@@ -75,8 +75,8 @@ struct incl_file
     int                included_line; /* line where this file was included */
     enum incl_type     type;          /* type of include */
     unsigned int       arch;          /* architecture for multi-arch files, otherwise 0 */
-    int                use_msvcrt:1;  /* put msvcrt headers in the search path? */
-    int                is_external:1; /* file from external library? */
+    unsigned int       use_msvcrt:1;  /* put msvcrt headers in the search path? */
+    unsigned int       is_external:1; /* file from external library? */
     struct incl_file  *owner;
     unsigned int       files_count;   /* files in use */
     unsigned int       files_size;    /* total allocated size */
@@ -3241,10 +3241,13 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
             strarray_add( &make->test_files, obj );
     }
 
-    output_filenames_obj_dir( make, targets );
-    output( ":" );
-    output_filenames( source->dependencies );
-    output( "\n" );
+    if (targets.count && source->dependencies.count)
+    {
+        output_filenames_obj_dir( make, targets );
+        output( ":" );
+        output_filenames( source->dependencies );
+        output( "\n" );
+    }
 }
 
 
