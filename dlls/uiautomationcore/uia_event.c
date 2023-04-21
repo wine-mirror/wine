@@ -57,6 +57,10 @@ static struct uia_event_map
 {
     struct rb_tree event_map;
     LONG event_count;
+
+    /* rb_tree for serverside events, sorted by PID/event cookie. */
+    struct rb_tree serverside_event_map;
+    LONG serverside_event_count;
 } uia_event_map;
 
 struct uia_event_map_entry
@@ -76,6 +80,22 @@ struct uia_event_map_entry
      */
     struct list events_list;
 };
+
+struct uia_event_identifier {
+    LONG event_cookie;
+    LONG proc_id;
+};
+
+static int uia_serverside_event_id_compare(const void *key, const struct rb_entry *entry)
+{
+    struct uia_event *event = RB_ENTRY_VALUE(entry, struct uia_event, u.serverside.serverside_event_entry);
+    struct uia_event_identifier *event_id = (struct uia_event_identifier *)key;
+
+    if (event_id->proc_id != event->u.serverside.proc_id)
+        return (event_id->proc_id > event->u.serverside.proc_id) - (event_id->proc_id < event->u.serverside.proc_id);
+    else
+        return (event_id->event_cookie > event->event_cookie) - (event_id->event_cookie < event->event_cookie);
+}
 
 static CRITICAL_SECTION event_map_cs;
 static CRITICAL_SECTION_DEBUG event_map_cs_debug =
@@ -231,8 +251,15 @@ static ULONG WINAPI uia_event_Release(IWineUiaEvent *iface)
             if (event->u.clientside.mta_cookie)
                 CoDecrementMTAUsage(event->u.clientside.mta_cookie);
         }
-        else if (event->u.serverside.node)
-            IWineUiaNode_Release(event->u.serverside.node);
+        else
+        {
+            EnterCriticalSection(&event_map_cs);
+            rb_remove(&uia_event_map.serverside_event_map, &event->u.serverside.serverside_event_entry);
+            uia_event_map.serverside_event_count--;
+            LeaveCriticalSection(&event_map_cs);
+            if (event->u.serverside.node)
+                IWineUiaNode_Release(event->u.serverside.node);
+        }
 
         for (i = 0; i < event->event_advisers_count; i++)
             IWineUiaEventAdviser_Release(event->event_advisers[i]);
@@ -292,8 +319,7 @@ static struct uia_event *unsafe_impl_from_IWineUiaEvent(IWineUiaEvent *iface)
     return CONTAINING_RECORD(iface, struct uia_event, IWineUiaEvent_iface);
 }
 
-static HRESULT create_uia_event(struct uia_event **out_event, int event_id, int scope, UiaEventCallback *cback,
-        SAFEARRAY *runtime_id)
+static HRESULT create_uia_event(struct uia_event **out_event, LONG event_cookie, int event_type)
 {
     struct uia_event *event = heap_alloc_zero(sizeof(*event));
 
@@ -303,30 +329,68 @@ static HRESULT create_uia_event(struct uia_event **out_event, int event_id, int 
 
     event->IWineUiaEvent_iface.lpVtbl = &uia_event_vtbl;
     event->ref = 1;
+    event->event_cookie = event_cookie;
+    event->event_type = event_type;
+    *out_event = event;
+
+    return S_OK;
+}
+
+static HRESULT create_clientside_uia_event(struct uia_event **out_event, int event_id, int scope, UiaEventCallback *cback,
+        SAFEARRAY *runtime_id)
+{
+    struct uia_event *event = NULL;
+    static LONG next_event_cookie;
+    HRESULT hr;
+
+    *out_event = NULL;
+    hr = create_uia_event(&event, InterlockedIncrement(&next_event_cookie), EVENT_TYPE_CLIENTSIDE);
+    if (FAILED(hr))
+        return hr;
+
     event->runtime_id = runtime_id;
     event->event_id = event_id;
     event->scope = scope;
     event->u.clientside.cback = cback;
-    event->event_type = EVENT_TYPE_CLIENTSIDE;
 
     *out_event = event;
     return S_OK;
 }
 
-HRESULT create_serverside_uia_event(struct uia_event **out_event)
+HRESULT create_serverside_uia_event(struct uia_event **out_event, LONG process_id, LONG event_cookie)
 {
-    struct uia_event *event = heap_alloc_zero(sizeof(*event));
+    struct uia_event_identifier event_identifier = { event_cookie, process_id };
+    struct rb_entry *rb_entry;
+    struct uia_event *event;
+    HRESULT hr = S_OK;
 
+    /*
+     * Attempt to lookup an existing event for this PID/event_cookie. If there
+     * is one, return S_FALSE.
+     */
     *out_event = NULL;
-    if (!event)
-        return E_OUTOFMEMORY;
+    EnterCriticalSection(&event_map_cs);
+    if (uia_event_map.serverside_event_count && (rb_entry = rb_get(&uia_event_map.serverside_event_map, &event_identifier)))
+    {
+        *out_event = RB_ENTRY_VALUE(rb_entry, struct uia_event, u.serverside.serverside_event_entry);
+        hr = S_FALSE;
+        goto exit;
+    }
 
-    event->IWineUiaEvent_iface.lpVtbl = &uia_event_vtbl;
-    event->ref = 1;
-    event->event_type = EVENT_TYPE_SERVERSIDE;
+    hr = create_uia_event(&event, event_cookie, EVENT_TYPE_SERVERSIDE);
+    if (FAILED(hr))
+        goto exit;
 
+    event->u.serverside.proc_id = process_id;
+    uia_event_map.serverside_event_count++;
+    if (uia_event_map.serverside_event_count == 1)
+        rb_init(&uia_event_map.serverside_event_map, uia_serverside_event_id_compare);
+    rb_put(&uia_event_map.serverside_event_map, &event_identifier, &event->u.serverside.serverside_event_entry);
     *out_event = event;
-    return S_OK;
+
+exit:
+    LeaveCriticalSection(&event_map_cs);
+    return hr;
 }
 
 static HRESULT uia_event_add_event_adviser(IWineUiaEventAdviser *adviser, struct uia_event *event)
@@ -614,7 +678,7 @@ HRESULT WINAPI UiaAddEvent(HUIANODE huianode, EVENTID event_id, UiaEventCallback
     if (FAILED(hr))
         return hr;
 
-    hr = create_uia_event(&event, event_id, scope, callback, sa);
+    hr = create_clientside_uia_event(&event, event_id, scope, callback, sa);
     if (FAILED(hr))
     {
         SafeArrayDestroy(sa);

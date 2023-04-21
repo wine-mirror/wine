@@ -103,6 +103,6 @@ library UIA_wine_private
         HRESULT get_prop_val([in]const GUID *prop_guid, [out, retval]VARIANT *ret_val);
         HRESULT disconnect();
         HRESULT get_hwnd([out, retval]ULONG *out_hwnd);
-        HRESULT attach_event([out, retval]IWineUiaEvent **ret_event);
+        HRESULT attach_event([in]long proc_id, [in]long event_cookie, [out, retval]IWineUiaEvent **ret_event);
     }
 }

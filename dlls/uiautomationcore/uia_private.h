@@ -21,6 +21,7 @@
 #include "uiautomation.h"
 #include "uia_classes.h"
 #include "wine/list.h"
+#include "wine/rbtree.h"
 #include "wine/heap.h"
 
 extern HMODULE huia_module DECLSPEC_HIDDEN;
@@ -116,6 +117,7 @@ struct uia_event
     struct uia_event_map_entry *event_map_entry;
     LONG event_defunct;
 
+    LONG event_cookie;
     int event_type;
     union
     {
@@ -137,6 +139,9 @@ struct uia_event
              * event thread.
              */
             IWineUiaNode *node;
+
+            struct rb_entry serverside_event_entry;
+            LONG proc_id;
         } serverside;
      } u;
 };
@@ -196,7 +201,7 @@ BOOL uia_condition_matched(HRESULT hr) DECLSPEC_HIDDEN;
 HRESULT create_uia_iface(IUnknown **iface, BOOL is_cui8) DECLSPEC_HIDDEN;
 
 /* uia_event.c */
-HRESULT create_serverside_uia_event(struct uia_event **out_event) DECLSPEC_HIDDEN;
+HRESULT create_serverside_uia_event(struct uia_event **out_event, LONG process_id, LONG event_cookie) DECLSPEC_HIDDEN;
 HRESULT uia_event_add_provider_event_adviser(IRawElementProviderAdviseEvents *advise_events,
         struct uia_event *event) DECLSPEC_HIDDEN;
 HRESULT uia_event_add_serverside_event_adviser(IWineUiaEvent *serverside_event, struct uia_event *event) DECLSPEC_HIDDEN;

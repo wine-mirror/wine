@@ -539,23 +539,29 @@ static HRESULT WINAPI uia_node_get_hwnd(IWineUiaNode *iface, ULONG *out_hwnd)
     return S_OK;
 }
 
-static HRESULT WINAPI uia_node_attach_event(IWineUiaNode *iface, IWineUiaEvent **ret_event)
+static HRESULT WINAPI uia_node_attach_event(IWineUiaNode *iface, long proc_id, long event_cookie,
+        IWineUiaEvent **ret_event)
 {
     struct uia_node *node = impl_from_IWineUiaNode(iface);
     struct uia_event *event = NULL;
     HRESULT hr;
 
-    TRACE("%p, %p\n", node, ret_event);
+    TRACE("%p, %ld, %ld, %p\n", node, proc_id, event_cookie, ret_event);
 
     *ret_event = NULL;
-    hr = create_serverside_uia_event(&event);
+    hr = create_serverside_uia_event(&event, proc_id, event_cookie);
     if (FAILED(hr))
         return hr;
+
+    /* Newly created serverside event. */
+    if (hr == S_OK)
+        *ret_event = &event->IWineUiaEvent_iface;
 
     hr = attach_event_to_node_provider(iface, 0, (HUIAEVENT)event);
     if (FAILED(hr))
     {
         IWineUiaEvent_Release(&event->IWineUiaEvent_iface);
+        *ret_event = NULL;
         return hr;
     }
 
@@ -563,9 +569,11 @@ static HRESULT WINAPI uia_node_attach_event(IWineUiaNode *iface, IWineUiaEvent *
      * Attach this nested node to the serverside event to keep the provider
      * thread alive.
      */
-    IWineUiaNode_AddRef(iface);
-    event->u.serverside.node = iface;
-    *ret_event = &event->IWineUiaEvent_iface;
+    if (*ret_event)
+    {
+        IWineUiaNode_AddRef(iface);
+        event->u.serverside.node = iface;
+    }
 
     return hr;
 }
@@ -2282,7 +2290,7 @@ static HRESULT WINAPI uia_nested_node_provider_attach_event(IWineUiaProvider *if
 
     TRACE("%p, %#Ix\n", iface, huiaevent);
 
-    hr = IWineUiaNode_attach_event(prov->nested_node, &remote_event);
+    hr = IWineUiaNode_attach_event(prov->nested_node, GetCurrentProcessId(), event->event_cookie, &remote_event);
     if (FAILED(hr) || !remote_event)
         return hr;
 

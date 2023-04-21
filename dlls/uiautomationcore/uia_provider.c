@@ -20,7 +20,6 @@
 #include "ocidl.h"
 
 #include "wine/debug.h"
-#include "wine/rbtree.h"
 #include "initguid.h"
 #include "wine/iaccessible2.h"
 
