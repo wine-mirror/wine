@@ -13952,11 +13952,11 @@ static void test_UiaAddEvent_client_proc(void)
     SET_EXPECT_MULTI(prov_callback_nonclient, 2);
     SET_EXPECT_MULTI(prov_callback_proxy, 3);
     hr = UiaEventAddWindow(event, hwnd);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine CHECK_CALLED(prov_callback_base_hwnd);
-    todo_wine CHECK_CALLED(prov_callback_nonclient);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    CHECK_CALLED(prov_callback_base_hwnd);
+    CHECK_CALLED(prov_callback_nonclient);
     todo_wine CHECK_CALLED(prov_callback_proxy);
-    post_event_message(hwnd, WM_UIA_TEST_CHECK_EVENT_ADVISE_ADDED, UIA_AutomationFocusChangedEventId, PROVIDER_ID, TRUE);
+    post_event_message(hwnd, WM_UIA_TEST_CHECK_EVENT_ADVISE_ADDED, UIA_AutomationFocusChangedEventId, PROVIDER_ID, FALSE);
 
     /* Successfully raise event. */
     GetWindowThreadProcessId(hwnd, &pid);
@@ -14000,7 +14000,7 @@ static void test_UiaAddEvent_client_proc(void)
 
     hr = UiaRemoveEvent(event);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    post_event_message(hwnd, WM_UIA_TEST_CHECK_EVENT_ADVISE_REMOVED, UIA_AutomationFocusChangedEventId, PROVIDER_ID, TRUE);
+    post_event_message(hwnd, WM_UIA_TEST_CHECK_EVENT_ADVISE_REMOVED, UIA_AutomationFocusChangedEventId, PROVIDER_ID, FALSE);
 
     PostMessageW(hwnd, WM_UIA_TEST_RESET_EVENT_PROVIDERS, 0, 0);
     post_event_message(hwnd, WM_UIA_TEST_SET_EVENT_PROVIDER_DATA, HandleToUlong(hwnd), PROVIDER_ID,
@@ -14093,9 +14093,9 @@ static void test_UiaAddEvent_client_proc(void)
     SET_EXPECT_MULTI(prov_callback_nonclient, 2);
     SET_EXPECT_MULTI(prov_callback_proxy, 3);
     hr = UiaEventAddWindow(event, hwnd);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine CHECK_CALLED(prov_callback_base_hwnd);
-    todo_wine CHECK_CALLED(prov_callback_nonclient);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    CHECK_CALLED(prov_callback_base_hwnd);
+    CHECK_CALLED(prov_callback_nonclient);
     todo_wine CHECK_CALLED(prov_callback_proxy);
 
     /* Wrong runtime ID, no match. */

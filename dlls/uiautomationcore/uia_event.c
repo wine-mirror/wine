@@ -272,15 +272,15 @@ static ULONG WINAPI uia_event_Release(IWineUiaEvent *iface)
     return ref;
 }
 
-static HRESULT WINAPI uia_event_advise_events(IWineUiaEvent *iface, BOOL advise_added)
+static HRESULT WINAPI uia_event_advise_events(IWineUiaEvent *iface, BOOL advise_added, long adviser_start_idx)
 {
     struct uia_event *event = impl_from_IWineUiaEvent(iface);
     HRESULT hr;
     int i;
 
-    TRACE("%p, %d\n", event, advise_added);
+    TRACE("%p, %d, %ld\n", event, advise_added, adviser_start_idx);
 
-    for (i = 0; i < event->event_advisers_count; i++)
+    for (i = adviser_start_idx; i < event->event_advisers_count; i++)
     {
         hr = IWineUiaEventAdviser_advise(event->event_advisers[i], advise_added, (UINT_PTR)event);
         if (FAILED(hr))
@@ -658,7 +658,7 @@ static HRESULT WINAPI uia_serverside_event_adviser_advise(IWineUiaEventAdviser *
         }
     }
 
-    return IWineUiaEvent_advise_events(adv_events->event_iface, advise_added);
+    return IWineUiaEvent_advise_events(adv_events->event_iface, advise_added, 0);
 }
 
 static const IWineUiaEventAdviserVtbl uia_serverside_event_adviser_vtbl = {
@@ -702,6 +702,65 @@ HRESULT uia_event_add_serverside_event_adviser(IWineUiaEvent *serverside_event, 
 
     hr = uia_event_add_event_adviser(&adv_events->IWineUiaEventAdviser_iface, event);
     IWineUiaEventAdviser_Release(&adv_events->IWineUiaEventAdviser_iface);
+
+    return hr;
+}
+
+static HRESULT uia_event_advise(struct uia_event *event, BOOL advise_added, long start_idx)
+{
+    IWineUiaEvent *event_iface;
+    HRESULT hr;
+
+    if (event->u.clientside.git_cookie)
+    {
+        hr = get_interface_in_git(&IID_IWineUiaEvent, event->u.clientside.git_cookie,
+                (IUnknown **)&event_iface);
+        if (FAILED(hr))
+            return hr;
+    }
+    else
+    {
+        event_iface = &event->IWineUiaEvent_iface;
+        IWineUiaEvent_AddRef(event_iface);
+    }
+
+    hr = IWineUiaEvent_advise_events(event_iface, advise_added, start_idx);
+    IWineUiaEvent_Release(event_iface);
+
+    return hr;
+}
+
+/***********************************************************************
+ *          UiaEventAddWindow (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaEventAddWindow(HUIAEVENT huiaevent, HWND hwnd)
+{
+    struct uia_event *event = unsafe_impl_from_IWineUiaEvent((IWineUiaEvent *)huiaevent);
+    int old_event_advisers_count;
+    HUIANODE node;
+    HRESULT hr;
+
+    TRACE("(%p, %p)\n", huiaevent, hwnd);
+
+    if (!event)
+        return E_INVALIDARG;
+
+    assert(event->event_type == EVENT_TYPE_CLIENTSIDE);
+
+    hr = UiaNodeFromHandle(hwnd, &node);
+    if (FAILED(hr))
+        return hr;
+
+    old_event_advisers_count = event->event_advisers_count;
+    hr = attach_event_to_uia_node(node, event);
+    if (FAILED(hr))
+        goto exit;
+
+    if (event->event_advisers_count != old_event_advisers_count)
+        hr = uia_event_advise(event, TRUE, old_event_advisers_count);
+
+exit:
+    UiaNodeRelease(node);
 
     return hr;
 }
@@ -752,7 +811,7 @@ HRESULT WINAPI UiaAddEvent(HUIANODE huianode, EVENTID event_id, UiaEventCallback
     if (FAILED(hr))
         goto exit;
 
-    hr = IWineUiaEvent_advise_events(&event->IWineUiaEvent_iface, TRUE);
+    hr = uia_event_advise(event, TRUE, 0);
     if (FAILED(hr))
         goto exit;
 
@@ -775,7 +834,6 @@ exit:
 HRESULT WINAPI UiaRemoveEvent(HUIAEVENT huiaevent)
 {
     struct uia_event *event = unsafe_impl_from_IWineUiaEvent((IWineUiaEvent *)huiaevent);
-    IWineUiaEvent *event_iface;
     HRESULT hr;
 
     TRACE("(%p)\n", event);
@@ -784,33 +842,18 @@ HRESULT WINAPI UiaRemoveEvent(HUIAEVENT huiaevent)
         return E_INVALIDARG;
 
     assert(event->event_type == EVENT_TYPE_CLIENTSIDE);
+    hr = uia_event_advise(event, FALSE, 0);
+    if (FAILED(hr))
+        return hr;
+
     if (event->u.clientside.git_cookie)
     {
-        hr = get_interface_in_git(&IID_IWineUiaEvent, event->u.clientside.git_cookie, (IUnknown **)&event_iface);
-        if (FAILED(hr))
-            return hr;
-
         hr = unregister_interface_in_git(event->u.clientside.git_cookie);
         if (FAILED(hr))
-        {
-            IWineUiaEvent_Release(event_iface);
             return hr;
-        }
-
-        /*
-         * We want the release of the event_iface proxy to set the reference
-         * count to 0, so we release our reference here.
-         */
-        IWineUiaEvent_Release(&event->IWineUiaEvent_iface);
     }
-    else
-        event_iface = &event->IWineUiaEvent_iface;
 
-    hr = IWineUiaEvent_advise_events(event_iface, FALSE);
-    IWineUiaEvent_Release(event_iface);
-    if (FAILED(hr))
-        WARN("advise_events failed with hr %#lx\n", hr);
-
+    IWineUiaEvent_Release(&event->IWineUiaEvent_iface);
     return S_OK;
 }
 

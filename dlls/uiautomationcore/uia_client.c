@@ -544,6 +544,7 @@ static HRESULT WINAPI uia_node_attach_event(IWineUiaNode *iface, long proc_id, l
 {
     struct uia_node *node = impl_from_IWineUiaNode(iface);
     struct uia_event *event = NULL;
+    int old_event_advisers_count;
     HRESULT hr;
 
     TRACE("%p, %ld, %ld, %p\n", node, proc_id, event_cookie, ret_event);
@@ -557,6 +558,7 @@ static HRESULT WINAPI uia_node_attach_event(IWineUiaNode *iface, long proc_id, l
     if (hr == S_OK)
         *ret_event = &event->IWineUiaEvent_iface;
 
+    old_event_advisers_count = event->event_advisers_count;
     hr = attach_event_to_node_provider(iface, 0, (HUIAEVENT)event);
     if (FAILED(hr))
     {
@@ -574,6 +576,14 @@ static HRESULT WINAPI uia_node_attach_event(IWineUiaNode *iface, long proc_id, l
         IWineUiaNode_AddRef(iface);
         event->u.serverside.node = iface;
     }
+
+    /*
+     * Pre-existing serverside event that has already had its initial
+     * advise call and gotten event data - if we've got new advisers, we need
+     * to advise them here.
+     */
+    if (!(*ret_event) && event->event_id && (event->event_advisers_count != old_event_advisers_count))
+        hr = IWineUiaEvent_advise_events(&event->IWineUiaEvent_iface, TRUE, old_event_advisers_count);
 
     return hr;
 }
@@ -3540,15 +3550,6 @@ exit:
     }
 
     return hr;
-}
-
-/***********************************************************************
- *          UiaEventAddWindow (uiautomationcore.@)
- */
-HRESULT WINAPI UiaEventAddWindow(HUIAEVENT huiaevent, HWND hwnd)
-{
-    FIXME("(%p, %p): stub\n", huiaevent, hwnd);
-    return E_NOTIMPL;
 }
 
 /***********************************************************************
