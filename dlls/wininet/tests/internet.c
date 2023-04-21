@@ -66,7 +66,7 @@ static void test_InternetCanonicalizeUrlA(void)
 
     /* Acrobat Updater 5 calls this for Adobe Reader 8.1 */
     url = "http://swupmf.adobe.com/manifest/50/win/AdobeUpdater.upd";
-    urllen = lstrlenA(url);
+    urllen = strlen(url);
 
     memset(buffer, '#', sizeof(buffer)-1);
     buffer[sizeof(buffer)-1] = '\0';
@@ -74,8 +74,8 @@ static void test_InternetCanonicalizeUrlA(void)
     SetLastError(0xdeadbeef);
     res = InternetCanonicalizeUrlA(url, buffer, &dwSize, 0);
     ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER) && (dwSize == (urllen+1)),
-        "got %lu and %lu with size %lu for '%s' (%d)\n",
-        res, GetLastError(), dwSize, buffer, lstrlenA(buffer));
+        "got %lu and %lu with size %lu for '%s' (%Iu)\n",
+        res, GetLastError(), dwSize, buffer, strlen(buffer));
 
 
     /* buffer has no space for the terminating '\0' */
@@ -86,8 +86,8 @@ static void test_InternetCanonicalizeUrlA(void)
     res = InternetCanonicalizeUrlA(url, buffer, &dwSize, 0);
     /* dwSize is nr. of needed bytes with the terminating '\0' */
     ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER) && (dwSize == (urllen+1)),
-        "got %lu and %lu with size %lu for '%s' (%d)\n",
-        res, GetLastError(), dwSize, buffer, lstrlenA(buffer));
+        "got %lu and %lu with size %lu for '%s' (%Iu)\n",
+        res, GetLastError(), dwSize, buffer, strlen(buffer));
 
     /* buffer has the required size */
     memset(buffer, '#', sizeof(buffer)-1);
@@ -97,8 +97,8 @@ static void test_InternetCanonicalizeUrlA(void)
     res = InternetCanonicalizeUrlA(url, buffer, &dwSize, 0);
     /* dwSize is nr. of copied bytes without the terminating '\0' */
     ok( res && (dwSize == urllen) && (lstrcmpA(url, buffer) == 0),
-        "got %lu and %lu with size %lu for '%s' (%d)\n",
-        res, GetLastError(), dwSize, buffer, lstrlenA(buffer));
+        "got %lu and %lu with size %lu for '%s' (%Iu)\n",
+        res, GetLastError(), dwSize, buffer, strlen(buffer));
 
     memset(buffer, '#', sizeof(buffer)-1);
     buffer[sizeof(buffer)-1] = '\0';
@@ -106,7 +106,7 @@ static void test_InternetCanonicalizeUrlA(void)
     SetLastError(0xdeadbeef);
     res = InternetCanonicalizeUrlA("file:///C:/Program%20Files/Atmel/AVR%20Tools/STK500/STK500.xml", buffer, &dwSize, ICU_DECODE | ICU_NO_ENCODE);
     ok(res, "InternetCanonicalizeUrlA failed %lu\n", GetLastError());
-    ok(dwSize == lstrlenA(buffer), "got %ld expected %d\n", dwSize, lstrlenA(buffer));
+    ok(dwSize == strlen(buffer), "got %ld expected %Iu\n", dwSize, strlen(buffer));
     ok(!lstrcmpA("file://C:\\Program Files\\Atmel\\AVR Tools\\STK500\\STK500.xml", buffer),
        "got %s expected 'file://C:\\Program Files\\Atmel\\AVR Tools\\STK500\\STK500.xml'\n", buffer);
 
@@ -118,8 +118,8 @@ static void test_InternetCanonicalizeUrlA(void)
     res = InternetCanonicalizeUrlA(url, buffer, &dwSize, 0);
     /* dwSize is nr. of copied bytes without the terminating '\0' */
     ok( res && (dwSize == urllen) && (lstrcmpA(url, buffer) == 0),
-        "got %lu and %lu with size %lu for '%s' (%d)\n",
-        res, GetLastError(), dwSize, buffer, lstrlenA(buffer));
+        "got %lu and %lu with size %lu for '%s' (%Iu)\n",
+        res, GetLastError(), dwSize, buffer, strlen(buffer));
 
 
     /* check NULL pointers */
@@ -129,8 +129,8 @@ static void test_InternetCanonicalizeUrlA(void)
     SetLastError(0xdeadbeef);
     res = InternetCanonicalizeUrlA(NULL, buffer, &dwSize, 0);
     ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
-        "got %lu and %lu with size %lu for '%s' (%d)\n",
-        res, GetLastError(), dwSize, buffer, lstrlenA(buffer));
+        "got %lu and %lu with size %lu for '%s' (%Iu)\n",
+        res, GetLastError(), dwSize, buffer, strlen(buffer));
 
     memset(buffer, '#', urllen + 4);
     buffer[urllen + 4] = '\0';
@@ -138,8 +138,8 @@ static void test_InternetCanonicalizeUrlA(void)
     SetLastError(0xdeadbeef);
     res = InternetCanonicalizeUrlA(url, NULL, &dwSize, 0);
     ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
-        "got %lu and %lu with size %lu for '%s' (%d)\n",
-        res, GetLastError(), dwSize, buffer, lstrlenA(buffer));
+        "got %lu and %lu with size %lu for '%s' (%Iu)\n",
+        res, GetLastError(), dwSize, buffer, strlen(buffer));
 
     memset(buffer, '#', urllen + 4);
     buffer[urllen + 4] = '\0';
@@ -147,8 +147,8 @@ static void test_InternetCanonicalizeUrlA(void)
     SetLastError(0xdeadbeef);
     res = InternetCanonicalizeUrlA(url, buffer, NULL, 0);
     ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
-        "got %lu and %lu with size %lu for '%s' (%d)\n",
-        res, GetLastError(), dwSize, buffer, lstrlenA(buffer));
+        "got %lu and %lu with size %lu for '%s' (%Iu)\n",
+        res, GetLastError(), dwSize, buffer, strlen(buffer));
 
     /* test with trailing space */
     dwSize = 256;
@@ -215,7 +215,7 @@ static void test_InternetQueryOptionA(void)
   len=strlen(useragent)+1;
   retval=InternetQueryOptionA(hinet,INTERNET_OPTION_USER_AGENT,NULL,&len);
   err=GetLastError();
-  ok(len == strlen(useragent)+1,"Got wrong user agent length %ld instead of %d\n",len,lstrlenA(useragent));
+  ok(len == strlen(useragent)+1,"Got wrong user agent length %ld instead of %Iu\n",len,strlen(useragent));
   ok(retval == 0,"Got wrong return value %d\n",retval);
   ok(err == ERROR_INSUFFICIENT_BUFFER, "Got wrong error code %ld\n",err);
 
@@ -226,7 +226,7 @@ static void test_InternetQueryOptionA(void)
   if (retval)
   {
       ok(!strcmp(useragent,buffer),"Got wrong user agent string %s instead of %s\n",buffer,useragent);
-      ok(len == strlen(useragent),"Got wrong user agent length %ld instead of %d\n",len,lstrlenA(useragent));
+      ok(len == strlen(useragent),"Got wrong user agent length %ld instead of %Iu\n",len,strlen(useragent));
   }
   HeapFree(GetProcessHeap(),0,buffer);
 
@@ -235,7 +235,7 @@ static void test_InternetQueryOptionA(void)
   buffer=HeapAlloc(GetProcessHeap(),0,100);
   retval=InternetQueryOptionA(hinet,INTERNET_OPTION_USER_AGENT,buffer,&len);
   err=GetLastError();
-  ok(len == strlen(useragent) + 1,"Got wrong user agent length %ld instead of %d\n", len, lstrlenA(useragent) + 1);
+  ok(len == strlen(useragent) + 1,"Got wrong user agent length %ld instead of %Iu\n", len, strlen(useragent) + 1);
   ok(!retval, "Got wrong return value %d\n", retval);
   ok(err == ERROR_INSUFFICIENT_BUFFER, "Got wrong error code %ld\n", err);
   HeapFree(GetProcessHeap(),0,buffer);
@@ -440,7 +440,7 @@ static void test_complicated_cookie(void)
   ret = InternetGetCookieA("http://testing.example.com", NULL, buffer, &len);
   ok(ret == TRUE,"InternetGetCookie failed\n");
   ok(len == 19, "len = %lu\n", len);
-  ok(strlen(buffer) == 18, "strlen(buffer) = %u\n", lstrlenA(buffer));
+  ok(strlen(buffer) == 18, "strlen(buffer) = %Iu\n", strlen(buffer));
   ok(strstr(buffer,"A=B")!=NULL,"A=B missing\n");
   ok(strstr(buffer,"C=D")!=NULL,"C=D missing\n");
   ok(strstr(buffer,"E=F")!=NULL,"E=F missing\n");
@@ -1754,7 +1754,7 @@ static void test_InternetGetConnectedStateExA(void)
     res = pInternetGetConnectedStateExA(&flags, buffer, 1, 0);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(flags, "Expected at least one flag set\n");
-    ok(!buffer[0], "Expected len 0, got %u: %s\n", lstrlenA(buffer), wine_dbgstr_a(buffer));
+    ok(!buffer[0], "Expected len 0, got %Iu: %s\n", strlen(buffer), wine_dbgstr_a(buffer));
 }
 
 static void test_InternetGetConnectedStateExW(void)
