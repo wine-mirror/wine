@@ -37,14 +37,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
-/* Bits set from LSB to MSB; used as mask for runs < 8 bits */
-static const BYTE NTDLL_maskBits[8] = { 0, 1, 3, 7, 15, 31, 63, 127 };
-
-/* Number of set bits for each value of a nibble; used for counting */
-static const BYTE NTDLL_nibbleBitCount[16] = {
-  0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4
-};
-
 /* First set bit in a nibble; used for determining least significant bit */
 static const BYTE NTDLL_leastSignificant[16] = {
   0, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0
@@ -58,6 +50,17 @@ static const signed char NTDLL_mostSignificant[16] = {
 static inline ULONG maskbits( ULONG idx )
 {
     return ~0u << (idx & 31);
+}
+
+static ULONG popcount( ULONG val )
+{
+#if defined(__MINGW32__)
+    return __builtin_popcount( val );
+#else
+    val -= val >> 1 & 0x55555555;
+    val = (val & 0x33333333) + (val >> 2 & 0x33333333);
+    return ((val + (val >> 4)) & 0x0f0f0f0f) * 0x01010101 >> 24;
+#endif
 }
 
 /*************************************************************************
@@ -352,45 +355,16 @@ ULONG WINAPI RtlFindClearBitsAndSet(PRTL_BITMAP lpBits, ULONG ulCount, ULONG ulH
 
 /*************************************************************************
  * RtlNumberOfSetBits	[NTDLL.@]
- *
- * Find the number of set bits in a bitmap.
- *
- * PARAMS
- *  lpBits [I] Bitmap pointer
- *
- * RETURNS
- *  The number of set bits.
  */
-ULONG WINAPI RtlNumberOfSetBits(PCRTL_BITMAP lpBits)
+ULONG WINAPI RtlNumberOfSetBits( const RTL_BITMAP *bitmap )
 {
-  ULONG ulSet = 0;
+    ULONG i, ret = 0;
 
-  TRACE("(%p)\n", lpBits);
+    for (i = 0; i < bitmap->SizeOfBitMap / 32; i++) ret += popcount( bitmap->Buffer[i] );
+    if (bitmap->SizeOfBitMap & 31) ret += popcount( bitmap->Buffer[i] & ~maskbits( bitmap->SizeOfBitMap ));
 
-  if (lpBits)
-  {
-    LPBYTE lpOut = (BYTE *)lpBits->Buffer;
-    ULONG ulCount, ulRemainder;
-    BYTE bMasked;
-
-    ulCount = lpBits->SizeOfBitMap >> 3;
-    ulRemainder = lpBits->SizeOfBitMap & 0x7;
-
-    while (ulCount--)
-    {
-      ulSet += NTDLL_nibbleBitCount[*lpOut >> 4];
-      ulSet += NTDLL_nibbleBitCount[*lpOut & 0xf];
-      lpOut++;
-    }
-
-    if (ulRemainder)
-    {
-      bMasked = *lpOut & NTDLL_maskBits[ulRemainder];
-      ulSet += NTDLL_nibbleBitCount[bMasked >> 4];
-      ulSet += NTDLL_nibbleBitCount[bMasked & 0xf];
-    }
-  }
-  return ulSet;
+    TRACE( "%p -> %lu\n", bitmap, ret );
+    return ret;
 }
 
 /*************************************************************************
