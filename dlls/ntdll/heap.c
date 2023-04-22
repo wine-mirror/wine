@@ -260,7 +260,7 @@ static inline void block_set_type( struct block *block, UINT type )
 static inline SUBHEAP *block_get_subheap( const struct heap *heap, const struct block *block )
 {
     char *offset = ROUND_ADDR( block, REGION_ALIGN - 1 );
-    void *base = offset - block->base_offset * REGION_ALIGN;
+    void *base = offset - (SIZE_T)block->base_offset * REGION_ALIGN;
     if (base != (void *)heap) return base;
     else return (SUBHEAP *)&heap->subheap;
 }
