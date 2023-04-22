@@ -142,63 +142,24 @@ void WINAPI RtlSetBits( RTL_BITMAP *bitmap, ULONG start, ULONG count )
 
 /*************************************************************************
  * RtlClearBits	[NTDLL.@]
- *
- * Clear bits in a bitmap.
- *
- * PARAMS
- *  lpBits  [I] Bitmap pointer
- *  ulStart [I] First bit to set
- *  ulCount [I] Number of consecutive bits to clear
- *
- * RETURNS
- *  Nothing.
  */
-VOID WINAPI RtlClearBits(PRTL_BITMAP lpBits, ULONG ulStart, ULONG ulCount)
+void WINAPI RtlClearBits( RTL_BITMAP *bitmap, ULONG start, ULONG count)
 {
-  LPBYTE lpOut;
+    ULONG end = start + count;
+    ULONG pos = start / 32;
+    ULONG end_pos = end / 32;
 
-  TRACE("(%p,%lu,%lu)\n", lpBits, ulStart, ulCount);
+    TRACE( "(%p,%lu,%lu)\n", bitmap, start, count );
 
-  if (!lpBits || !ulCount ||
-      ulStart >= lpBits->SizeOfBitMap ||
-      ulCount > lpBits->SizeOfBitMap - ulStart)
-    return;
+    if (!count || start >= bitmap->SizeOfBitMap || count > bitmap->SizeOfBitMap - start) return;
 
-  /* FIXME: It might be more efficient/cleaner to manipulate four bytes
-   * at a time. But beware of the pointer arithmetics...
-   */
-  lpOut = ((BYTE*)lpBits->Buffer) + (ulStart >> 3u);
-
-  /* Clear bits in first byte, if ulStart isn't a byte boundary */
-  if (ulStart & 7)
-  {
-    if (ulCount > 7)
+    if (end_pos > pos)
     {
-      /* Clear from start bit to the end of the byte */
-      *lpOut++ &= ~(0xff << (ulStart & 7));
-      ulCount -= (8 - (ulStart & 7));
+        bitmap->Buffer[pos++] &= ~maskbits( start );
+        while (pos < end_pos) bitmap->Buffer[pos++] = 0;
+        if (end & 31) bitmap->Buffer[pos] &= maskbits( end );
     }
-    else
-    {
-      /* Clear from the start bit, possibly into the next byte also */
-      USHORT initialWord = ~(NTDLL_maskBits[ulCount] << (ulStart & 7));
-
-      *lpOut &= (initialWord & 0xff);
-      if ((initialWord >> 8) != 0xff) lpOut[1] &= (initialWord >> 8);
-      return;
-    }
-  }
-
-  /* Clear bits (in blocks of 8) on whole byte boundaries */
-  if (ulCount >> 3)
-  {
-    memset(lpOut, 0, ulCount >> 3);
-    lpOut = lpOut + (ulCount >> 3);
-  }
-
-  /* Clear remaining bits, if any */
-  if (ulCount & 0x7)
-    *lpOut &= ~NTDLL_maskBits[ulCount & 0x7];
+    else bitmap->Buffer[pos] &= ~maskbits( start ) | maskbits( end );
 }
 
 /*************************************************************************
