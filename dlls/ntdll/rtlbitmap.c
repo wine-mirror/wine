@@ -55,6 +55,11 @@ static const signed char NTDLL_mostSignificant[16] = {
   -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3
 };
 
+static inline ULONG maskbits( ULONG idx )
+{
+    return ~0u << (idx & 31);
+}
+
 /*************************************************************************
  * RtlInitializeBitMap	[NTDLL.@]
  *
@@ -115,63 +120,24 @@ VOID WINAPI RtlClearAllBits(PRTL_BITMAP lpBits)
 
 /*************************************************************************
  * RtlSetBits	[NTDLL.@]
- *
- * Set a range of bits in a bitmap.
- *
- * PARAMS
- *  lpBits  [I] Bitmap pointer
- *  ulStart [I] First bit to set
- *  ulCount [I] Number of consecutive bits to set
- *
- * RETURNS
- *  Nothing.
  */
-VOID WINAPI RtlSetBits(PRTL_BITMAP lpBits, ULONG ulStart, ULONG ulCount)
+void WINAPI RtlSetBits( RTL_BITMAP *bitmap, ULONG start, ULONG count )
 {
-  LPBYTE lpOut;
+    ULONG end = start + count;
+    ULONG pos = start / 32;
+    ULONG end_pos = end / 32;
 
-  TRACE("(%p,%lu,%lu)\n", lpBits, ulStart, ulCount);
+    TRACE( "(%p,%lu,%lu)\n", bitmap, start, count );
 
-  if (!lpBits || !ulCount ||
-      ulStart >= lpBits->SizeOfBitMap ||
-      ulCount > lpBits->SizeOfBitMap - ulStart)
-    return;
+    if (!count || start >= bitmap->SizeOfBitMap || count > bitmap->SizeOfBitMap - start) return;
 
-  /* FIXME: It might be more efficient/cleaner to manipulate four bytes
-   * at a time. But beware of the pointer arithmetics...
-   */
-  lpOut = ((BYTE*)lpBits->Buffer) + (ulStart >> 3u);
-
-  /* Set bits in first byte, if ulStart isn't a byte boundary */
-  if (ulStart & 7)
-  {
-    if (ulCount > 7)
+    if (end_pos > pos)
     {
-      /* Set from start bit to the end of the byte */
-      *lpOut++ |= 0xff << (ulStart & 7);
-      ulCount -= (8 - (ulStart & 7));
+        bitmap->Buffer[pos++] |= maskbits( start );
+        while (pos < end_pos) bitmap->Buffer[pos++] = ~0u;
+        if (end & 31) bitmap->Buffer[pos] |= ~maskbits( end );
     }
-    else
-    {
-      /* Set from the start bit, possibly into the next byte also */
-      USHORT initialWord = NTDLL_maskBits[ulCount] << (ulStart & 7);
-
-      *lpOut |= (initialWord & 0xff);
-      if (initialWord >> 8) lpOut[1] |= (initialWord >> 8);
-      return;
-    }
-  }
-
-  /* Set bits up to complete byte count */
-  if (ulCount >> 3)
-  {
-    memset(lpOut, 0xff, ulCount >> 3);
-    lpOut = lpOut + (ulCount >> 3);
-  }
-
-  /* Set remaining bits, if any */
-  if (ulCount & 0x7)
-    *lpOut |= NTDLL_maskBits[ulCount & 0x7];
+    else bitmap->Buffer[pos] |= maskbits( start ) & ~maskbits( end );
 }
 
 /*************************************************************************
