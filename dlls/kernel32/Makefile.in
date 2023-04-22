@@ -3,7 +3,9 @@ MODULE    = kernel32.dll
 IMPORTLIB = kernel32
 IMPORTS   = kernelbase ntdll winecrt0
 
-EXTRADLLFLAGS = -nodefaultlibs -Wb,-F,KERNEL32.dll -Wl,--image-base,0x7b600000
+EXTRADLLFLAGS = -nodefaultlibs -Wb,-F,KERNEL32.dll
+i386_EXTRADLLFLAGS = -Wl,--image-base,0x7b800000
+x86_64_EXTRADLLFLAGS = -Wl,--image-base,0x178000000
 
 C_SRCS = \
 	atom.c \
