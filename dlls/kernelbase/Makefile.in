@@ -3,7 +3,9 @@ MODULE    = kernelbase.dll
 IMPORTLIB = kernelbase
 IMPORTS   = uuid ntdll winecrt0
 
-EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--image-base,0x7b000000
+EXTRADLLFLAGS = -nodefaultlibs -nostartfiles
+i386_EXTRADLLFLAGS = -Wl,--image-base,0x7b000000
+x86_64_EXTRADLLFLAGS = -Wl,--image-base,0x174000000
 
 C_SRCS = \
 	console.c \
