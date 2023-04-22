@@ -186,72 +186,24 @@ BOOLEAN WINAPI RtlAreBitsSet( const RTL_BITMAP *bitmap, ULONG start, ULONG count
 
 /*************************************************************************
  * RtlAreBitsClear	[NTDLL.@]
- *
- * Determine if part of a bitmap is clear.
- *
- * PARAMS
- *  lpBits  [I] Bitmap pointer
- *  ulStart [I] First bit to check from
- *  ulCount [I] Number of consecutive bits to check
- *
- * RETURNS
- *  TRUE,  If ulCount bits from ulStart are clear.
- *  FALSE, Otherwise.
  */
-BOOLEAN WINAPI RtlAreBitsClear(PCRTL_BITMAP lpBits, ULONG ulStart, ULONG ulCount)
+BOOLEAN WINAPI RtlAreBitsClear( const RTL_BITMAP *bitmap, ULONG start, ULONG count )
 {
-  LPBYTE lpOut;
-  ULONG ulRemainder;
+    ULONG end = start + count;
+    ULONG pos = start / 32;
+    ULONG end_pos = end / 32;
 
-  TRACE("(%p,%lu,%lu)\n", lpBits, ulStart, ulCount);
+    TRACE( "(%p,%lu,%lu)\n", bitmap, start, count );
 
-  if (!lpBits || !ulCount ||
-      ulStart >= lpBits->SizeOfBitMap ||
-      ulCount > lpBits->SizeOfBitMap - ulStart)
-    return FALSE;
-
-  /* FIXME: It might be more efficient/cleaner to manipulate four bytes
-   * at a time. But beware of the pointer arithmetics...
-   */
-  lpOut = ((BYTE*)lpBits->Buffer) + (ulStart >> 3u);
-
-  /* Check bits in first byte, if ulStart isn't a byte boundary */
-  if (ulStart & 7)
-  {
-    if (ulCount > 7)
-    {
-      /* Check from start bit to the end of the byte */
-      if (*lpOut & ((0xff << (ulStart & 7)) & 0xff))
+    if (!count || start >= bitmap->SizeOfBitMap || count > bitmap->SizeOfBitMap - start)
         return FALSE;
-      lpOut++;
-      ulCount -= (8 - (ulStart & 7));
-    }
-    else
-    {
-      /* Check from the start bit, possibly into the next byte also */
-      USHORT initialWord = NTDLL_maskBits[ulCount] << (ulStart & 7);
 
-      if (*lpOut & (initialWord & 0xff))
-        return FALSE;
-      if ((initialWord & 0xff00) && (lpOut[1] & (initialWord >> 8)))
-        return FALSE;
-      return TRUE;
-    }
-  }
+    if (end_pos == pos) return !(bitmap->Buffer[pos] & maskbits( start ) & ~maskbits( end ));
 
-  /* Check bits in blocks of 8 bytes */
-  ulRemainder = ulCount & 7;
-  ulCount >>= 3;
-  while (ulCount--)
-  {
-    if (*lpOut++)
-      return FALSE;
-  }
-
-  /* Check remaining bits, if any */
-  if (ulRemainder && *lpOut & NTDLL_maskBits[ulRemainder])
-    return FALSE;
-  return TRUE;
+    if (bitmap->Buffer[pos++] & maskbits( start )) return FALSE;
+    while (pos < end_pos) if (bitmap->Buffer[pos++]) return FALSE;
+    if (!(end & 31)) return TRUE;
+    return !(bitmap->Buffer[pos] & ~maskbits( end ));
 }
 
 /*************************************************************************
