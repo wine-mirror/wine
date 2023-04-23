@@ -288,6 +288,8 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	}
 	TRACE("panning: Angle = %f rad, lPan = %ld\n", flAngle, dsb->volpan.lPan);
 
+	dsb->freq = dsb->ds3db_freq;
+
 	/* FIXME: Doppler Effect disabled since i have no idea which frequency to change and how to do it */
 if(0)
 {
@@ -310,15 +312,14 @@ if(0)
 		         if listener moves AWAY from buffer, its velocity component is NEGATIVE */
 		flListenerVel = ProjectVector(&dsb->device->ds3dl.vVelocity, &vDistance);
 		/* formula taken from Gianicoli D.: Physics, 4th edition: */
-		/* FIXME: replace dsb->freq with appropriate frequency ! */
-		flFreq = dsb->freq * ((DEFAULT_VELOCITY + flListenerVel)/(DEFAULT_VELOCITY + flBufferVel));
+		flFreq = dsb->ds3db_freq * ((DEFAULT_VELOCITY + flListenerVel)/(DEFAULT_VELOCITY + flBufferVel));
 		TRACE("doppler: Buffer velocity (component) = %f, Listener velocity (component) = %f => Doppler shift: %ld Hz -> %f Hz\n",
-		      flBufferVel, flListenerVel, dsb->freq, flFreq);
-		/* FIXME: replace following line with correct frequency setting ! */
+		      flBufferVel, flListenerVel, dsb->ds3db_freq, flFreq);
 		dsb->freq = flFreq;
-		DSOUND_RecalcFormat(dsb);
 	}
 }
+
+	DSOUND_RecalcFormat(dsb);
 
 	for (i = 0; i < dsb->device->pwfx->nChannels; i++)
 		dsb->volpan.dwTotalAmpFactor[i] = 0;
