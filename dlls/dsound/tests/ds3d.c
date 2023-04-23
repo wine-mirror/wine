@@ -1439,6 +1439,8 @@ static void test_doppler(GUID *guid, BOOL play)
     check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, 0, 1, -90, 22050, 29400);
     check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, 0, 1, 90, 22050, 17640);
 
+    check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, 0, 0, -90, 22050, 22050);
+
     IDirectSound3DListener_Release(listener);
     ref = IDirectSoundBuffer_Release(primary);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);

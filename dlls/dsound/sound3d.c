@@ -298,7 +298,8 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	}
 	else if (!(dsb->ds3db_ds3db.vVelocity.x == dsb->device->ds3dl.vVelocity.x &&
 	           dsb->ds3db_ds3db.vVelocity.y == dsb->device->ds3dl.vVelocity.y &&
-	           dsb->ds3db_ds3db.vVelocity.z == dsb->device->ds3dl.vVelocity.z))
+	           dsb->ds3db_ds3db.vVelocity.z == dsb->device->ds3dl.vVelocity.z) &&
+	         !(vDistance.x == 0.0f && vDistance.y == 0.0f && vDistance.z == 0.0f))
 	{
 		/* calculate length of ds3db_ds3db.vVelocity component which causes Doppler Effect
 		   NOTE: if buffer moves TOWARDS the listener, its velocity component is NEGATIVE
