@@ -167,6 +167,7 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	int i, num_main_speakers;
 	float a, ingain;
 	/* doppler shift related stuff */
+	D3DVALUE flFreq, flBufferVel, flListenerVel;
 
 	TRACE("(%p)\n",dsb);
 
@@ -290,10 +291,6 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 
 	dsb->freq = dsb->ds3db_freq;
 
-	/* FIXME: Doppler Effect disabled since i have no idea which frequency to change and how to do it */
-if(0)
-{
-	D3DVALUE flFreq, flBufferVel, flListenerVel;
 	/* doppler shift*/
 	if (!VectorMagnitude(&dsb->ds3db_ds3db.vVelocity) && !VectorMagnitude(&dsb->device->ds3dl.vVelocity))
 	{
@@ -317,7 +314,6 @@ if(0)
 		      flBufferVel, flListenerVel, dsb->ds3db_freq, flFreq);
 		dsb->freq = flFreq;
 	}
-}
 
 	DSOUND_RecalcFormat(dsb);
 
