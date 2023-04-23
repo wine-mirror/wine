@@ -167,7 +167,8 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	int i, num_main_speakers;
 	float a, ingain;
 	/* doppler shift related stuff */
-	D3DVALUE flFreq, flBufferVel, flListenerVel;
+	D3DVECTOR vRelativeVel;
+	D3DVALUE flFreq, flRelativeVel;
 
 	TRACE("(%p)\n",dsb);
 
@@ -292,6 +293,7 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	dsb->freq = dsb->ds3db_freq;
 
 	/* doppler shift*/
+	vRelativeVel = VectorBetweenTwoPoints(&dsb->device->ds3dl.vVelocity, &dsb->ds3db_ds3db.vVelocity);
 	if (!VectorMagnitude(&dsb->ds3db_ds3db.vVelocity) && !VectorMagnitude(&dsb->device->ds3dl.vVelocity))
 	{
 		TRACE("doppler: Buffer and Listener don't have velocities\n");
@@ -301,18 +303,14 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	           dsb->ds3db_ds3db.vVelocity.z == dsb->device->ds3dl.vVelocity.z) &&
 	         !(vDistance.x == 0.0f && vDistance.y == 0.0f && vDistance.z == 0.0f))
 	{
-		/* calculate length of ds3db_ds3db.vVelocity component which causes Doppler Effect
+		/* calculate length of vRelativeVel component which causes Doppler Effect
 		   NOTE: if buffer moves TOWARDS the listener, its velocity component is NEGATIVE
 		         if buffer moves AWAY from listener, its velocity component is POSITIVE */
-		flBufferVel = ProjectVector(&dsb->ds3db_ds3db.vVelocity, &vDistance);
-		/* calculate length of ds3dl.vVelocity component which causes Doppler Effect
-		   NOTE: if listener moves TOWARDS the buffer, its velocity component is POSITIVE
-		         if listener moves AWAY from buffer, its velocity component is NEGATIVE */
-		flListenerVel = ProjectVector(&dsb->device->ds3dl.vVelocity, &vDistance);
+		flRelativeVel = ProjectVector(&vRelativeVel, &vDistance);
 		/* formula taken from Gianicoli D.: Physics, 4th edition: */
-		flFreq = dsb->ds3db_freq * ((DEFAULT_VELOCITY + flListenerVel)/(DEFAULT_VELOCITY + flBufferVel));
-		TRACE("doppler: Buffer velocity (component) = %f, Listener velocity (component) = %f => Doppler shift: %ld Hz -> %f Hz\n",
-		      flBufferVel, flListenerVel, dsb->ds3db_freq, flFreq);
+		flFreq = dsb->ds3db_freq * (DEFAULT_VELOCITY/(DEFAULT_VELOCITY + flRelativeVel));
+		TRACE("doppler: Relative velocity (component) = %f => Doppler shift: %ld Hz -> %f Hz\n",
+		      flRelativeVel, dsb->ds3db_freq, flFreq);
 		dsb->freq = flFreq;
 	}
 
