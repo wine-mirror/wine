@@ -140,7 +140,7 @@ struct IDirectSoundBufferImpl
     PWAVEFORMATEX               pwfx;
     BufferMemory*               buffer;
     DWORD                       playflags,state,leadin;
-    DWORD                       writelead,buflen;
+    DWORD                       writelead,maxwritelead,buflen;
     DWORD                       freq;
     DSVOLUMEPAN                 volpan;
     DSBUFFERDESC                dsbd;

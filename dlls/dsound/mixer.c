@@ -130,6 +130,7 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 
 	/* calculate the 10ms write lead */
 	dsb->writelead = (dsb->freq / 100) * dsb->pwfx->nBlockAlign;
+	dsb->maxwritelead = (DSBFREQUENCY_MAX / 100) * dsb->pwfx->nBlockAlign;
 
 	if (oldFreqAdjustDen)
 		dsb->freqAccNum = (dsb->freqAccNum * dsb->freqAdjustDen + oldFreqAdjustDen / 2) / oldFreqAdjustDen;
