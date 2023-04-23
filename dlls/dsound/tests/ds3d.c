@@ -1441,6 +1441,12 @@ static void test_doppler(GUID *guid, BOOL play)
 
     check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, 0, 0, -90, 22050, 22050);
 
+    /* The Doppler shift does not depend on the frame of reference. */
+    /* Wine TODO: The frequency is too low. */
+    check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, 90, 1, 0, 22050, 29400);
+    /* Wine TODO: The frequency is too low. */
+    check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, -90, 1, 0, 22050, 17640);
+
     IDirectSound3DListener_Release(listener);
     ref = IDirectSoundBuffer_Release(primary);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
