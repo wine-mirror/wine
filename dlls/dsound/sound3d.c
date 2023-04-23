@@ -49,8 +49,8 @@
 #include "dsound.h"
 #include "dsound_private.h"
 
-/* default velocity of sound in the air */
-#define DEFAULT_VELOCITY 340
+/* according to the tests, native uses 360 as the speed of sound */
+#define DEFAULT_VELOCITY 360
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound3d);
 
