@@ -383,7 +383,7 @@ static BOOL connect_query_option( struct object_header *hdr, DWORD option, void 
     {
         if (!validate_buffer( buffer, buflen, sizeof(HINTERNET) )) return FALSE;
 
-        *(HINTERNET *)buffer = ((struct object_header *)connect->session)->handle;
+        *(HINTERNET *)buffer = connect->session->hdr.handle;
         *buflen = sizeof(HINTERNET);
         return TRUE;
     }
