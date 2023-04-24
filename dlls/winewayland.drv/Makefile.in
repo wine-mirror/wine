@@ -10,4 +10,5 @@ SOURCES = \
 	wayland.c \
 	wayland_output.c \
 	waylanddrv_main.c \
+	window.c \
 	xdg-output-unstable-v1.xml

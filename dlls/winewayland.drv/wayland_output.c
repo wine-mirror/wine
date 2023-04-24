@@ -119,7 +119,7 @@ static void maybe_init_display_devices(void)
     /* We only update the display devices from the desktop process. */
     if (GetCurrentProcessId() != desktop_pid) return;
 
-    wayland_init_display_devices(TRUE);
+    NtUserPostMessage(desktop_hwnd, WM_WAYLAND_INIT_DISPLAY_DEVICES, 0, 0);
 }
 
 static void wayland_output_mode_free_rb(struct rb_entry *entry, void *ctx)

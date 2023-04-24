@@ -46,6 +46,11 @@ extern struct wayland process_wayland DECLSPEC_HIDDEN;
  *          Definitions for wayland types
  */
 
+enum wayland_window_message
+{
+    WM_WAYLAND_INIT_DISPLAY_DEVICES = 0x80001000
+};
+
 struct wayland
 {
     BOOL initialized;
@@ -107,5 +112,6 @@ void wayland_output_use_xdg_extension(struct wayland_output *output) DECLSPEC_HI
 
 BOOL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manager,
                                   BOOL force, void *param) DECLSPEC_HIDDEN;
+LRESULT WAYLAND_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_WAYLANDDRV_H */

@@ -32,6 +32,7 @@
 static const struct user_driver_funcs waylanddrv_funcs =
 {
     .pUpdateDisplayDevices = WAYLAND_UpdateDisplayDevices,
+    .pWindowMessage = WAYLAND_WindowMessage
 };
 
 static NTSTATUS waylanddrv_unix_init(void *arg)
