@@ -1456,6 +1456,44 @@ static void test_doppler(GUID *guid, BOOL play)
 
     check_doppler(dsound, listener, play, DS3DMODE_DISABLE, 0, 0, 1, -90, 22050, 22050);
 
+    hr = IDirectSound3DListener_SetDistanceFactor(listener, 10, DS3D_DEFERRED);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* Wine TODO: The distance factor has no effect. */
+    check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, 0, 0.1f, -9, 22050, 29400);
+    /* Wine TODO: The distance factor has no effect. */
+    check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, 0, 0.1f, 9, 22050, 17640);
+    /* Wine TODO: The distance factor has no effect. */
+    check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, 9, 0.1f, 0, 22050, 29400);
+    /* Wine TODO: The distance factor has no effect. */
+    check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, -9, 0.1f, 0, 22050, 17640);
+    /* Wine TODO: The distance factor has no effect. */
+    check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, 0, 0.1f, -24, 22050, 44100);
+    /* Wine TODO: The distance factor has no effect. */
+    check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, 0, 0.1f, 24, 22050, 14700);
+
+    hr = IDirectSound3DListener_SetDistanceFactor(listener, DS3D_DEFAULTDISTANCEFACTOR, DS3D_DEFERRED);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirectSound3DListener_SetDopplerFactor(listener, 2, DS3D_DEFERRED);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* Wine TODO: The Doppler factor has no effect. */
+    check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, 0, 1, -45, 22050, 29400);
+    /* Wine TODO: The Doppler factor has no effect. */
+    check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, 0, 1, 45, 22050, 17640);
+    /* Wine TODO: The Doppler factor has no effect. */
+    check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, 45, 1, 0, 22050, 29400);
+    /* Wine TODO: The Doppler factor has no effect. */
+    check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, -45, 1, 0, 22050, 17640);
+    /* Wine TODO: The Doppler factor has no effect. */
+    check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, 0, 1, -120, 22050, 44100);
+    /* Wine TODO: The Doppler factor has no effect. */
+    check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, 0, 1, 120, 22050, 14700);
+
+    hr = IDirectSound3DListener_SetDopplerFactor(listener, DS3D_DEFAULTDOPPLERFACTOR, DS3D_DEFERRED);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
     IDirectSound3DListener_Release(listener);
     ref = IDirectSoundBuffer_Release(primary);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
