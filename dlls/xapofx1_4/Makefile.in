@@ -8,3 +8,5 @@ C_SRCS = \
 	xapo.c \
 	xapofx.c \
 	xaudio_allocator.c
+
+IDL_SRCS = xaudio_classes.idl

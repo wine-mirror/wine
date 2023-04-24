@@ -4,7 +4,6 @@ IMPORTS   = $(FAUDIO_PE_LIBS) advapi32 ole32 user32 uuid
 EXTRAINCL = $(FAUDIO_PE_CFLAGS)
 
 C_SRCS = \
-	compat.c \
 	x3daudio.c \
 	xapo.c \
 	xapofx.c \

@@ -1,11 +1,11 @@
 EXTRADEFS = -DXAUDIO2_VER=8
 MODULE    = xaudio2_8.dll
+IMPORTLIB = xaudio2_8
 IMPORTS   = $(FAUDIO_PE_LIBS) advapi32 ole32 user32 uuid
 EXTRAINCL = $(FAUDIO_PE_CFLAGS)
 PARENTSRC = ../xaudio2_7
 
 C_SRCS = \
-	compat.c \
 	x3daudio.c \
 	xapo.c \
 	xapofx.c \

@@ -24,7 +24,6 @@
 #define COBJMACROS
 
 #include "xaudio_private.h"
-#include "xaudio2fx.h"
 #include "xapofx.h"
 
 #include "wine/debug.h"
@@ -366,11 +365,11 @@ static HRESULT WINAPI xapocf_CreateInstance(IClassFactory *iface, IUnknown *pOut
         return CLASS_E_NOAGGREGATION;
 
 #if XAUDIO2_VER < 8 && !defined(XAPOFX1_VER)
-    if (IsEqualGUID(This->class, &CLSID_AudioVolumeMeter27))
+    if (IsEqualGUID(This->class, &CLSID_AudioVolumeMeter))
     {
         hr = volume_meter_create(&object);
     }
-    else if (IsEqualGUID(This->class, &CLSID_AudioReverb27))
+    else if (IsEqualGUID(This->class, &CLSID_AudioReverb))
     {
         hr = reverb_create(&object);
     }

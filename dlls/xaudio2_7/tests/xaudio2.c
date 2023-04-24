@@ -18,42 +18,87 @@
 
 #include <windows.h>
 #include <math.h>
+#include <stdbool.h>
 
 #define COBJMACROS
 #include "wine/test.h"
 #include "initguid.h"
-#include "xaudio2.h"
-#include "xaudio2fx.h"
+/* Don't include xaudio2.h directly; it's generated from an IDL with ifdefs and
+ * hence is frozen at version 2.7. Instead include that IDL in a local IDL and
+ * include the generated header.
+ *
+ * Because shared sources are compiled from the C file in the xaudio2_7
+ * directory, we need to use angle brackets here to prevent the compiler from
+ * picking up xaudio_classes.h from that directory for other versions. */
+#include <xaudio_classes.h>
 #include "xapo.h"
 #include "xapofx.h"
 #include "mmsystem.h"
 #include "ks.h"
 #include "ksmedia.h"
 
-static BOOL xaudio27;
+static const GUID IID_IXAudio27 =            {0x8bcf1f58, 0x9fe7, 0x4583, {0x8a, 0xc6, 0xe2, 0xad, 0xc4, 0x65, 0xc8, 0xbb}};
+static const GUID IID_IXAudio28 =            {0x2b02e3cf, 0x2e0b, 0x4ec3, {0xbe, 0x45, 0x1b, 0x2a, 0x3f, 0xe7, 0x21, 0x0d}};
 
-static HRESULT (WINAPI *pXAudio2Create)(IXAudio2 **, UINT32, XAUDIO2_PROCESSOR) = NULL;
-static HRESULT (WINAPI *pCreateAudioVolumeMeter)(IUnknown**) = NULL;
+static const GUID CLSID_AudioVolumeMeter20 = {0xc0c56f46, 0x29b1, 0x44e9, {0x99, 0x39, 0xa3, 0x2c, 0xe8, 0x68, 0x67, 0xe2}};
+static const GUID CLSID_AudioVolumeMeter21 = {0xc1e3f122, 0xa2ea, 0x442c, {0x85, 0x4f, 0x20, 0xd9, 0x8f, 0x83, 0x57, 0xa1}};
+static const GUID CLSID_AudioVolumeMeter22 = {0xf5ca7b34, 0x8055, 0x42c0, {0xb8, 0x36, 0x21, 0x61, 0x29, 0xeb, 0x7e, 0x30}};
+static const GUID CLSID_AudioVolumeMeter23 = {0xe180344b, 0xac83, 0x4483, {0x95, 0x9e, 0x18, 0xa5, 0xc5, 0x6a, 0x5e, 0x19}};
+static const GUID CLSID_AudioVolumeMeter24 = {0xc7338b95, 0x52b8, 0x4542, {0xaa, 0x79, 0x42, 0xeb, 0x01, 0x6c, 0x8c, 0x1c}};
+static const GUID CLSID_AudioVolumeMeter25 = {0x2139e6da, 0xc341, 0x4774, {0x9a, 0xc3, 0xb4, 0xe0, 0x26, 0x34, 0x7f, 0x64}};
+static const GUID CLSID_AudioVolumeMeter26 = {0xe48c5a3f, 0x93ef, 0x43bb, {0xa0, 0x92, 0x2c, 0x7c, 0xeb, 0x94, 0x6f, 0x27}};
+static const GUID CLSID_AudioVolumeMeter27 = {0xcac1105f, 0x619b, 0x4d04, {0x83, 0x1a, 0x44, 0xe1, 0xcb, 0xf1, 0x2d, 0x57}};
+static const GUID CLSID_AudioReverb20 =      {0x6f6ea3a9, 0x2cf5, 0x41cf, {0x91, 0xc1, 0x21, 0x70, 0xb1, 0x54, 0x00, 0x63}};
+static const GUID CLSID_AudioReverb21 =      {0xf4769300, 0xb949, 0x4df9, {0xb3, 0x33, 0x00, 0xd3, 0x39, 0x32, 0xe9, 0xa6}};
+static const GUID CLSID_AudioReverb22 =      {0x629cf0de, 0x3ecc, 0x41e7, {0x99, 0x26, 0xf7, 0xe4, 0x3e, 0xeb, 0xec, 0x51}};
+static const GUID CLSID_AudioReverb23 =      {0x9cab402c, 0x1d37, 0x44b4, {0x88, 0x6d, 0xfa, 0x4f, 0x36, 0x17, 0x0a, 0x4c}};
+static const GUID CLSID_AudioReverb24 =      {0x8bb7778b, 0x645b, 0x4475, {0x9a, 0x73, 0x1d, 0xe3, 0x17, 0x0b, 0xd3, 0xaf}};
+static const GUID CLSID_AudioReverb25 =      {0xd06df0d0, 0x8518, 0x441e, {0x82, 0x2f, 0x54, 0x51, 0xd5, 0xc5, 0x95, 0xb8}};
+static const GUID CLSID_AudioReverb26 =      {0xcecec95a, 0xd894, 0x491a, {0xbe, 0xe3, 0x5e, 0x10, 0x6f, 0xb5, 0x9f, 0x2d}};
+static const GUID CLSID_AudioReverb27 =      {0x6a93130e, 0x1d53, 0x41d1, {0xa9, 0xcf, 0xe7, 0x58, 0x80, 0x0b, 0xb1, 0x79}};
 
-#define XA2CALL_0(method) if(xaudio27) hr = IXAudio27_##method((IXAudio27*)xa); else hr = IXAudio2_##method(xa);
-#define XA2CALL_0V(method) if(xaudio27) IXAudio27_##method((IXAudio27*)xa); else IXAudio2_##method(xa);
-#define XA2CALL_V(method, ...) if(xaudio27) IXAudio27_##method((IXAudio27*)xa, __VA_ARGS__); else IXAudio2_##method(xa, __VA_ARGS__);
-#define XA2CALL(method, ...) if(xaudio27) hr = IXAudio27_##method((IXAudio27*)xa, __VA_ARGS__); else hr = IXAudio2_##method(xa, __VA_ARGS__);
+static const bool xaudio27 = (XAUDIO2_VER <= 7);
+
+static IXAudio2 *create_xaudio2(void)
+{
+    IXAudio2 *audio;
+    HRESULT hr;
+
+#if XAUDIO2_VER <= 7
+    hr = CoCreateInstance(&CLSID_XAudio2, NULL, CLSCTX_INPROC_SERVER, &IID_IXAudio2, (void **)&audio);
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("XAudio 2.7 is not available\n");
+        return NULL;
+    }
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IXAudio2_Initialize(audio, 0, XAUDIO2_ANY_PROCESSOR);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+#else
+    hr = XAudio2Create(&audio, 0, XAUDIO2_DEFAULT_PROCESSOR);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+#endif
+
+    return audio;
+}
 
 static HRESULT create_mastering_voice(IXAudio2 *audio, unsigned int channel_count, IXAudio2MasteringVoice **voice)
 {
-    if (xaudio27)
-        return IXAudio27_CreateMasteringVoice((IXAudio27*)audio, voice, channel_count, 44100, 0, 0, NULL);
-    else
-        return IXAudio2_CreateMasteringVoice(audio, voice, channel_count, 44100, 0, NULL, NULL, AudioCategory_GameEffects);
+#if XAUDIO2_VER <= 7
+    return IXAudio2_CreateMasteringVoice(audio, voice, channel_count, 44100, 0, 0, NULL);
+#else
+    return IXAudio2_CreateMasteringVoice(audio, voice, channel_count, 44100, 0, NULL, NULL, AudioCategory_GameEffects);
+#endif
 }
 
 static void get_voice_state(IXAudio2SourceVoice *voice, XAUDIO2_VOICE_STATE *state)
 {
-    if (xaudio27)
-        IXAudio27SourceVoice_GetState((IXAudio27SourceVoice*)voice, state);
-    else
-        IXAudio2SourceVoice_GetState(voice, state, 0);
+#if XAUDIO2_VER <= 7
+    IXAudio2SourceVoice_GetState(voice, state);
+#else
+    IXAudio2SourceVoice_GetState(voice, state, 0);
+#endif
 }
 
 static void fill_buf(float *buf, WAVEFORMATEX *fmt, DWORD hz, DWORD len_frames)
@@ -191,16 +236,17 @@ static void test_simple_streaming(IXAudio2 *xa)
     IUnknown *vumeter;
     WAVEFORMATEX fmt;
     XAUDIO2_BUFFER buf, buf2;
+    XAUDIO2_VOICE_DETAILS details;
     XAUDIO2_VOICE_STATE state;
     XAUDIO2_EFFECT_DESCRIPTOR effect;
     XAUDIO2_EFFECT_CHAIN chain;
-    DWORD chmask;
+    IXAPO *xapo;
 
     memset(&ecb_state, 0, sizeof(ecb_state));
     memset(&src1_state, 0, sizeof(src1_state));
     memset(&src2_state, 0, sizeof(src2_state));
 
-    XA2CALL_0V(StopEngine);
+    IXAudio2_StopEngine(xa);
 
     /* Tests show in native XA2.8, ECB is called from a mixer thread, but VCBs
      * may be called from other threads in any order. So we can't rely on any
@@ -208,17 +254,20 @@ static void test_simple_streaming(IXAudio2 *xa)
      *
      * XA2.7 does all mixing from a single thread, so call sequence can be
      * tested. */
-    XA2CALL(RegisterForCallbacks, &ecb);
+    hr = IXAudio2_RegisterForCallbacks(xa, &ecb);
     ok(hr == S_OK, "RegisterForCallbacks failed: %08lx\n", hr);
 
     hr = create_mastering_voice(xa, 2, &master);
     ok(hr == S_OK, "CreateMasteringVoice failed: %08lx\n", hr);
 
-    if(!xaudio27){
-        chmask = 0xdeadbeef;
+#if XAUDIO2_VER >= 8
+    {
+        DWORD chmask = 0xdeadbeef;
+
         IXAudio2MasteringVoice_GetChannelMask(master, &chmask);
         ok(chmask == (SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT), "Got unexpected channel mask: 0x%lx\n", chmask);
     }
+#endif
 
     /* create first source voice */
     fmt.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
@@ -229,23 +278,16 @@ static void test_simple_streaming(IXAudio2 *xa)
     fmt.nAvgBytesPerSec = fmt.nSamplesPerSec * fmt.nBlockAlign;
     fmt.cbSize = 0;
 
-    XA2CALL(CreateSourceVoice, &src, &fmt, 0, 1.f, &vcb1, NULL, NULL);
+    hr = IXAudio2_CreateSourceVoice(xa, &src, &fmt, 0, 1.f, &vcb1, NULL, NULL);
     ok(hr == S_OK, "CreateSourceVoice failed: %08lx\n", hr);
 
-    if(xaudio27){
-        XAUDIO27_VOICE_DETAILS details;
-        IXAudio27SourceVoice_GetVoiceDetails((IXAudio27SourceVoice*)src, &details);
-        ok(details.CreationFlags == 0, "Got wrong flags: 0x%x\n", details.CreationFlags);
-        ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
-        ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
-    }else{
-        XAUDIO2_VOICE_DETAILS details;
-        IXAudio2SourceVoice_GetVoiceDetails(src, &details);
-        ok(details.CreationFlags == 0, "Got wrong creation flags: 0x%x\n", details.CreationFlags);
-        ok(details.ActiveFlags == 0, "Got wrong active flags: 0x%x\n", details.CreationFlags);
-        ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
-        ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
-    }
+    IXAudio2SourceVoice_GetVoiceDetails(src, &details);
+    ok(details.CreationFlags == 0, "Got wrong creation flags: 0x%x\n", details.CreationFlags);
+#if XAUDIO2_VER >= 8
+    ok(details.ActiveFlags == 0, "Got wrong active flags: 0x%x\n", details.ActiveFlags);
+#endif
+    ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
+    ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
 
     memset(&buf, 0, sizeof(buf));
     buf.AudioBytes = 22050 * fmt.nBlockAlign;
@@ -259,23 +301,16 @@ static void test_simple_streaming(IXAudio2 *xa)
     ok(hr == S_OK, "Start failed: %08lx\n", hr);
 
     /* create second source voice */
-    XA2CALL(CreateSourceVoice, &src2, &fmt, 0, 1.f, &vcb2, NULL, NULL);
+    hr = IXAudio2_CreateSourceVoice(xa, &src2, &fmt, 0, 1.f, &vcb2, NULL, NULL);
     ok(hr == S_OK, "CreateSourceVoice failed: %08lx\n", hr);
 
-    if(xaudio27){
-        XAUDIO27_VOICE_DETAILS details;
-        IXAudio27SourceVoice_GetVoiceDetails((IXAudio27SourceVoice*)src2, &details);
-        ok(details.CreationFlags == 0, "Got wrong flags: 0x%x\n", details.CreationFlags);
-        ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
-        ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
-    }else{
-        XAUDIO2_VOICE_DETAILS details;
-        IXAudio2SourceVoice_GetVoiceDetails(src2, &details);
-        ok(details.CreationFlags == 0, "Got wrong creation flags: 0x%x\n", details.CreationFlags);
-        ok(details.ActiveFlags == 0, "Got wrong active flags: 0x%x\n", details.CreationFlags);
-        ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
-        ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
-    }
+    IXAudio2SourceVoice_GetVoiceDetails(src2, &details);
+    ok(details.CreationFlags == 0, "Got wrong creation flags: 0x%x\n", details.CreationFlags);
+#if XAUDIO2_VER >= 8
+    ok(details.ActiveFlags == 0, "Got wrong active flags: 0x%x\n", details.ActiveFlags);
+#endif
+    ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
+    ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
 
     memset(&buf2, 0, sizeof(buf2));
     buf2.AudioBytes = 22050 * fmt.nBlockAlign;
@@ -288,32 +323,21 @@ static void test_simple_streaming(IXAudio2 *xa)
     hr = IXAudio2SourceVoice_Start(src2, 0, XAUDIO2_COMMIT_NOW);
     ok(hr == S_OK, "Start failed: %08lx\n", hr);
 
-    XA2CALL_0(StartEngine);
+    hr = IXAudio2_StartEngine(xa);
     ok(hr == S_OK, "StartEngine failed: %08lx\n", hr);
 
     /* hook up volume meter */
-    if(xaudio27){
-        IXAPO *xapo;
+#if XAUDIO2_VER <= 7
+    hr = CoCreateInstance(&CLSID_AudioVolumeMeter, NULL,
+            CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&vumeter);
+#else
+    hr = CreateAudioVolumeMeter(&vumeter);
+#endif
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-        hr = CoCreateInstance(&CLSID_AudioVolumeMeter27, NULL,
-                CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&vumeter);
-        ok(hr == S_OK, "CoCreateInstance(AudioVolumeMeter) failed: %08lx\n", hr);
-
-        hr = IUnknown_QueryInterface(vumeter, &IID_IXAPO27, (void**)&xapo);
-        ok(hr == S_OK, "Couldn't get IXAPO27 interface: %08lx\n", hr);
-        if(SUCCEEDED(hr))
-            IXAPO_Release(xapo);
-    }else{
-        IXAPO *xapo;
-
-        hr = pCreateAudioVolumeMeter(&vumeter);
-        ok(hr == S_OK, "CreateAudioVolumeMeter failed: %08lx\n", hr);
-
-        hr = IUnknown_QueryInterface(vumeter, &IID_IXAPO, (void**)&xapo);
-        ok(hr == S_OK, "Couldn't get IXAPO interface: %08lx\n", hr);
-        if(SUCCEEDED(hr))
-            IXAPO_Release(xapo);
-    }
+    hr = IUnknown_QueryInterface(vumeter, &IID_IXAPO27, (void **)&xapo);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    IXAPO_Release(xapo);
 
     effect.InitialState = TRUE;
     effect.OutputChannels = 2;
@@ -339,16 +363,11 @@ static void test_simple_streaming(IXAudio2 *xa)
     HeapFree(GetProcessHeap(), 0, (void*)buf.pAudioData);
     HeapFree(GetProcessHeap(), 0, (void*)buf2.pAudioData);
 
-    if(xaudio27){
-        IXAudio27SourceVoice_DestroyVoice((IXAudio27SourceVoice*)src);
-        IXAudio27SourceVoice_DestroyVoice((IXAudio27SourceVoice*)src2);
-    }else{
-        IXAudio2SourceVoice_DestroyVoice(src);
-        IXAudio2SourceVoice_DestroyVoice(src2);
-    }
+    IXAudio2SourceVoice_DestroyVoice(src);
+    IXAudio2SourceVoice_DestroyVoice(src2);
     IXAudio2MasteringVoice_DestroyVoice(master);
 
-    XA2CALL_V(UnregisterForCallbacks, &ecb);
+    IXAudio2_UnregisterForCallbacks(xa, &ecb);
 }
 
 static void WINAPI vcb_buf_OnVoiceProcessingPassStart(IXAudio2VoiceCallback *This,
@@ -487,7 +506,7 @@ static void test_buffer_callbacks(IXAudio2 *xa)
     obs_calls = 0;
     obe_calls = 0;
 
-    XA2CALL_0V(StopEngine);
+    IXAudio2_StopEngine(xa);
 
     hr = create_mastering_voice(xa, 2, &master);
     ok(hr == S_OK, "CreateMasteringVoice failed: %08lx\n", hr);
@@ -501,7 +520,7 @@ static void test_buffer_callbacks(IXAudio2 *xa)
     fmt.nAvgBytesPerSec = fmt.nSamplesPerSec * fmt.nBlockAlign;
     fmt.cbSize = 0;
 
-    XA2CALL(CreateSourceVoice, &src, &fmt, 0, 1.f, &vcb_buf, NULL, NULL);
+    hr = IXAudio2_CreateSourceVoice(xa, &src, &fmt, 0, 1.f, &vcb_buf, NULL, NULL);
     ok(hr == S_OK, "CreateSourceVoice failed: %08lx\n", hr);
 
     memset(&buf, 0, sizeof(buf));
@@ -523,16 +542,14 @@ static void test_buffer_callbacks(IXAudio2 *xa)
     ok(hr == S_OK, "Start failed: %08lx\n", hr);
 
 
-    XA2CALL_0(StartEngine);
+    hr = IXAudio2_StartEngine(xa);
     ok(hr == S_OK, "StartEngine failed: %08lx\n", hr);
 
-    if(xaudio27){
-        hr = IXAudio27SourceVoice_SetSourceSampleRate((IXAudio27SourceVoice*)src, 48000);
+    hr = IXAudio2SourceVoice_SetSourceSampleRate(src, 48000);
+    if (xaudio27)
         ok(hr == S_OK, "SetSourceSampleRate failed: %08lx\n", hr);
-    }else{
-        hr = IXAudio2SourceVoice_SetSourceSampleRate(src, 48000);
+    else
         ok(hr == XAUDIO2_E_INVALID_CALL, "SetSourceSampleRate should have failed: %08lx\n", hr);
-    }
 
     while(1){
         get_voice_state(src, &state);
@@ -543,14 +560,10 @@ static void test_buffer_callbacks(IXAudio2 *xa)
 
     ok(state.SamplesPlayed == 4410 * 5, "Got wrong samples played\n");
 
-    if(xaudio27)
-        IXAudio27SourceVoice_DestroyVoice((IXAudio27SourceVoice*)src);
-    else
-        IXAudio2SourceVoice_DestroyVoice(src);
-
+    IXAudio2SourceVoice_DestroyVoice(src);
 
     /* test OnStreamEnd callback */
-    XA2CALL(CreateSourceVoice, &src, &fmt, 0, 1.f, &loop_buf, NULL, NULL);
+    hr = IXAudio2_CreateSourceVoice(xa, &src, &fmt, 0, 1.f, &loop_buf, NULL, NULL);
     ok(hr == S_OK, "CreateSourceVoice failed: %08lx\n", hr);
 
     buf.Flags = XAUDIO2_END_OF_STREAM;
@@ -573,12 +586,7 @@ static void test_buffer_callbacks(IXAudio2 *xa)
     get_voice_state(src, &state);
     ok(state.SamplesPlayed == 0, "Got wrong samples played\n");
 
-    if(xaudio27)
-        IXAudio27SourceVoice_DestroyVoice((IXAudio27SourceVoice*)src);
-    else
-        IXAudio2SourceVoice_DestroyVoice(src);
-
-
+    IXAudio2SourceVoice_DestroyVoice(src);
     IXAudio2MasteringVoice_DestroyVoice(master);
 
     HeapFree(GetProcessHeap(), 0, (void*)buf.pAudioData);
@@ -598,12 +606,8 @@ static UINT32 play_to_completion(IXAudio2SourceVoice *src, UINT32 max_samples)
         get_voice_state(src, &state);
         if(state.BuffersQueued == 0)
             break;
-        if(state.SamplesPlayed >= max_samples){
-            if(xaudio27)
-                IXAudio27SourceVoice_ExitLoop((IXAudio27SourceVoice*)src, XAUDIO2_COMMIT_NOW);
-            else
-                IXAudio2SourceVoice_ExitLoop(src, XAUDIO2_COMMIT_NOW);
-        }
+        if (state.SamplesPlayed >= max_samples)
+            IXAudio2SourceVoice_ExitLoop(src, XAUDIO2_COMMIT_NOW);
         Sleep(100);
     }
 
@@ -622,7 +626,7 @@ static void test_looping(IXAudio2 *xa)
     XAUDIO2_BUFFER buf;
     UINT32 played, running_total = 0;
 
-    XA2CALL_0V(StopEngine);
+    IXAudio2_StopEngine(xa);
 
     hr = create_mastering_voice(xa, 2, &master);
     ok(hr == S_OK, "CreateMasteringVoice failed: %08lx\n", hr);
@@ -636,7 +640,7 @@ static void test_looping(IXAudio2 *xa)
     fmt.nAvgBytesPerSec = fmt.nSamplesPerSec * fmt.nBlockAlign;
     fmt.cbSize = 0;
 
-    XA2CALL(CreateSourceVoice, &src, &fmt, 0, 1.f, &loop_buf, NULL, NULL);
+    hr = IXAudio2_CreateSourceVoice(xa, &src, &fmt, 0, 1.f, &loop_buf, NULL, NULL);
     ok(hr == S_OK, "CreateSourceVoice failed: %08lx\n", hr);
 
     memset(&buf, 0, sizeof(buf));
@@ -645,7 +649,7 @@ static void test_looping(IXAudio2 *xa)
     buf.pAudioData = HeapAlloc(GetProcessHeap(), 0, buf.AudioBytes);
     fill_buf((float*)buf.pAudioData, &fmt, 440, 44100);
 
-    XA2CALL_0(StartEngine);
+    hr = IXAudio2_StartEngine(xa);
     ok(hr == S_OK, "StartEngine failed: %08lx\n", hr);
 
     /* play from middle to end */
@@ -789,10 +793,7 @@ static void test_looping(IXAudio2 *xa)
     ok(nloopends == (played - running_total) / 88200 + 1, "Got wrong OnLoopEnd calls: %u\n", nloopends);
     running_total = played;
 
-    if(xaudio27)
-        IXAudio27SourceVoice_DestroyVoice((IXAudio27SourceVoice*)src);
-    else
-        IXAudio2SourceVoice_DestroyVoice(src);
+    IXAudio2SourceVoice_DestroyVoice(src);
     IXAudio2MasteringVoice_DestroyVoice(master);
     HeapFree(GetProcessHeap(), 0, (void*)buf.pAudioData);
 }
@@ -801,30 +802,24 @@ static void test_submix(IXAudio2 *xa)
 {
     HRESULT hr;
     IXAudio2MasteringVoice *master;
+    XAUDIO2_VOICE_DETAILS details;
     IXAudio2SubmixVoice *sub;
 
-    XA2CALL_0V(StopEngine);
+    IXAudio2_StopEngine(xa);
 
     hr = create_mastering_voice(xa, 2, &master);
     ok(hr == S_OK, "CreateMasteringVoice failed: %08lx\n", hr);
 
-    XA2CALL(CreateSubmixVoice, &sub, 2, 44100, 0, 0, NULL, NULL);
+    hr = IXAudio2_CreateSubmixVoice(xa, &sub, 2, 44100, 0, 0, NULL, NULL);
     ok(hr == S_OK, "CreateSubmixVoice failed: %08lx\n", hr);
 
-    if(xaudio27){
-        XAUDIO27_VOICE_DETAILS details;
-        IXAudio27SubmixVoice_GetVoiceDetails((IXAudio27SubmixVoice*)sub, &details);
-        ok(details.CreationFlags == 0, "Got wrong flags: 0x%x\n", details.CreationFlags);
-        ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
-        ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
-    }else{
-        XAUDIO2_VOICE_DETAILS details;
-        IXAudio2SubmixVoice_GetVoiceDetails(sub, &details);
-        ok(details.CreationFlags == 0, "Got wrong creation flags: 0x%x\n", details.CreationFlags);
-        ok(details.ActiveFlags == 0, "Got wrong active flags: 0x%x\n", details.CreationFlags);
-        ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
-        ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
-    }
+    IXAudio2SubmixVoice_GetVoiceDetails(sub, &details);
+    ok(details.CreationFlags == 0, "Got wrong creation flags: 0x%x\n", details.CreationFlags);
+#if XAUDIO2_VER >= 8
+    ok(details.ActiveFlags == 0, "Got wrong active flags: 0x%x\n", details.ActiveFlags);
+#endif
+    ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
+    ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
 
     IXAudio2SubmixVoice_DestroyVoice(sub);
     IXAudio2MasteringVoice_DestroyVoice(master);
@@ -839,7 +834,7 @@ static void test_flush(IXAudio2 *xa)
     XAUDIO2_BUFFER buf;
     XAUDIO2_VOICE_STATE state;
 
-    XA2CALL_0V(StopEngine);
+    IXAudio2_StopEngine(xa);
 
     hr = create_mastering_voice(xa, 2, &master);
     ok(hr == S_OK, "CreateMasteringVoice failed: %08lx\n", hr);
@@ -852,7 +847,7 @@ static void test_flush(IXAudio2 *xa)
     fmt.nAvgBytesPerSec = fmt.nSamplesPerSec * fmt.nBlockAlign;
     fmt.cbSize = 0;
 
-    XA2CALL(CreateSourceVoice, &src, &fmt, 0, 1.f, NULL, NULL, NULL);
+    hr = IXAudio2_CreateSourceVoice(xa, &src, &fmt, 0, 1.f, NULL, NULL, NULL);
     ok(hr == S_OK, "CreateSourceVoice failed: %08lx\n", hr);
 
     memset(&buf, 0, sizeof(buf));
@@ -866,7 +861,7 @@ static void test_flush(IXAudio2 *xa)
     hr = IXAudio2SourceVoice_Start(src, 0, XAUDIO2_COMMIT_NOW);
     ok(hr == S_OK, "Start failed: %08lx\n", hr);
 
-    XA2CALL_0(StartEngine);
+    hr = IXAudio2_StartEngine(xa);
     ok(hr == S_OK, "StartEngine failed: %08lx\n", hr);
 
     while(1){
@@ -890,30 +885,25 @@ static void test_flush(IXAudio2 *xa)
     hr = IXAudio2SourceVoice_SubmitSourceBuffer(src, &buf, NULL);
     ok(hr == S_OK, "SubmitSourceBuffer failed: %08lx\n", hr);
 
-    if(xaudio27){
-        IXAudio27SourceVoice_DestroyVoice((IXAudio27SourceVoice*)src);
-    }else{
-        IXAudio2SourceVoice_DestroyVoice(src);
-    }
+    IXAudio2SourceVoice_DestroyVoice(src);
     IXAudio2MasteringVoice_DestroyVoice(master);
 
     HeapFree(GetProcessHeap(), 0, (void*)buf.pAudioData);
 }
 
-static UINT32 test_DeviceDetails(IXAudio27 *xa)
+static void test_DeviceDetails(IXAudio2 *xa)
 {
+#if XAUDIO2_VER <= 7
     HRESULT hr;
     XAUDIO2_DEVICE_DETAILS dd;
     UINT32 count, i;
 
-    hr = IXAudio27_GetDeviceCount(xa, &count);
+    hr = IXAudio2_GetDeviceCount(xa, &count);
     ok(hr == S_OK, "GetDeviceCount failed: %08lx\n", hr);
-
-    if(count == 0)
-        return 0;
+    ok(count > 0, "Got %u devices.\n", count);
 
     for(i = 0; i < count; ++i){
-        hr = IXAudio27_GetDeviceDetails(xa, i, &dd);
+        hr = IXAudio2_GetDeviceDetails(xa, i, &dd);
         ok(hr == S_OK, "GetDeviceDetails failed: %08lx\n", hr);
 
         if(i == 0)
@@ -924,8 +914,7 @@ static UINT32 test_DeviceDetails(IXAudio27 *xa)
         ok(IsEqualGUID(&dd.OutputFormat.SubFormat, &KSDATAFORMAT_SUBTYPE_PCM),
            "got format %s\n", debugstr_guid(&dd.OutputFormat.SubFormat));
     }
-
-    return count;
+#endif
 }
 
 static void test_xapo_creation_legacy(const char *module, unsigned int version)
@@ -1159,10 +1148,10 @@ static void test_setchannelvolumes(IXAudio2 *xa)
     fmt_8ch.nAvgBytesPerSec = fmt_8ch.nSamplesPerSec * fmt_8ch.nBlockAlign;
     fmt_8ch.cbSize = 0;
 
-    XA2CALL(CreateSourceVoice, &src_2ch, &fmt_2ch, 0, 1.f, NULL, NULL, NULL);
+    hr = IXAudio2_CreateSourceVoice(xa, &src_2ch, &fmt_2ch, 0, 1.f, NULL, NULL, NULL);
     ok(hr == S_OK, "CreateSourceVoice failed: %08lx\n", hr);
 
-    XA2CALL(CreateSourceVoice, &src_8ch, &fmt_8ch, 0, 1.f, NULL, NULL, NULL);
+    hr = IXAudio2_CreateSourceVoice(xa, &src_8ch, &fmt_8ch, 0, 1.f, NULL, NULL, NULL);
     ok(hr == S_OK, "CreateSourceVoice failed: %08lx\n", hr);
 
     hr = IXAudio2SourceVoice_SetChannelVolumes(src_2ch, 2, volumes, XAUDIO2_COMMIT_NOW);
@@ -1188,14 +1177,8 @@ static void test_setchannelvolumes(IXAudio2 *xa)
         ok(hr == XAUDIO2_E_INVALID_CALL, "SetChannelVolumes should have failed: %08lx\n", hr);
     }
 
-    if(xaudio27){
-        IXAudio27SourceVoice_DestroyVoice((IXAudio27SourceVoice*)src_2ch);
-        IXAudio27SourceVoice_DestroyVoice((IXAudio27SourceVoice*)src_8ch);
-    }else{
-        IXAudio2SourceVoice_DestroyVoice(src_2ch);
-        IXAudio2SourceVoice_DestroyVoice(src_8ch);
-    }
-
+    IXAudio2SourceVoice_DestroyVoice(src_2ch);
+    IXAudio2SourceVoice_DestroyVoice(src_8ch);
     IXAudio2MasteringVoice_DestroyVoice(master);
 }
 
@@ -1215,76 +1198,40 @@ static UINT32 check_has_devices(IXAudio2 *xa)
 
 START_TEST(xaudio2)
 {
+    IXAudio2 *audio, *audio2;
     HRESULT hr;
-    IXAudio27 *xa27 = NULL;
-    IXAudio2 *xa = NULL;
-    HANDLE xa28dll;
-    UINT32 has_devices;
-    ULONG rc;
+    ULONG ref;
 
     CoInitialize(NULL);
 
-    xa28dll = LoadLibraryA("xaudio2_8.dll");
-    if(xa28dll){
-        pXAudio2Create = (void*)GetProcAddress(xa28dll, "XAudio2Create");
-        pCreateAudioVolumeMeter = (void*)GetProcAddress(xa28dll, "CreateAudioVolumeMeter");
-    }
-
     test_xapo_creation();
 
-    /* XAudio 2.7 (Jun 2010 DirectX) */
-    hr = CoCreateInstance(&CLSID_XAudio27, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IXAudio27, (void**)&xa27);
-    if(hr == S_OK){
-        xaudio27 = TRUE;
+    if (!(audio = create_xaudio2()))
+        return;
 
-        hr = IXAudio27_QueryInterface(xa27, &IID_IXAudio28, (void**) &xa);
-        ok(hr != S_OK, "QueryInterface with IID_IXAudio28 on IXAudio27 object returned success. Expected to fail\n");
+    hr = IXAudio2_QueryInterface(audio, &IID_IXAudio27, (void **)&audio2);
+    ok(hr == (xaudio27 ? S_OK : E_NOINTERFACE), "Got hr %#lx.\n", hr);
+    if (hr == S_OK)
+        IXAudio2_Release(audio2);
+    hr = IXAudio2_QueryInterface(audio, &IID_IXAudio28, (void **)&audio2);
+    todo_wine_if (!xaudio27)
+        ok(hr == (xaudio27 ? E_NOINTERFACE : S_OK), "Got hr %#lx.\n", hr);
+    if (hr == S_OK)
+        IXAudio2_Release(audio2);
 
-        hr = IXAudio27_Initialize(xa27, 0, XAUDIO2_ANY_PROCESSOR);
-        ok(hr == S_OK, "Initialize failed: %08lx\n", hr);
+    if (check_has_devices(audio))
+    {
+        test_DeviceDetails(audio);
+        test_simple_streaming(audio);
+        test_buffer_callbacks(audio);
+        test_looping(audio);
+        test_submix(audio);
+        test_flush(audio);
+        test_setchannelvolumes(audio);
+    }
 
-        has_devices = test_DeviceDetails(xa27);
-        if(has_devices){
-            test_simple_streaming((IXAudio2*)xa27);
-            test_buffer_callbacks((IXAudio2*)xa27);
-            test_looping((IXAudio2*)xa27);
-            test_submix((IXAudio2*)xa27);
-            test_flush((IXAudio2*)xa27);
-            test_setchannelvolumes((IXAudio2*)xa27);
-        }else
-            skip("No audio devices available\n");
-
-        rc = IXAudio27_Release(xa27);
-        ok(rc == 0, "IXAudio2.7 object should have been released, got refcount %lu\n", rc);
-    }else
-        win_skip("XAudio 2.7 not available\n");
-
-    /* XAudio 2.8 (Win8+) */
-    if(pXAudio2Create){
-        xaudio27 = FALSE;
-
-        hr = pXAudio2Create(&xa, 0, XAUDIO2_DEFAULT_PROCESSOR);
-        ok(hr == S_OK, "XAudio2Create failed: %08lx\n", hr);
-
-        hr = IXAudio2_QueryInterface(xa, &IID_IXAudio27, (void**)&xa27);
-        ok(hr == E_NOINTERFACE, "XA28 object should support IXAudio27, gave: %08lx\n", hr);
-
-        has_devices = check_has_devices(xa);
-        if(has_devices){
-            test_simple_streaming(xa);
-            test_buffer_callbacks(xa);
-            test_looping(xa);
-            test_submix(xa);
-            test_flush(xa);
-            test_setchannelvolumes(xa);
-        }else
-            skip("No audio devices available\n");
-
-        rc = IXAudio2_Release(xa);
-        ok(rc == 0, "IXAudio2 object should have been released, got refcount %lu\n", rc);
-    }else
-        win_skip("XAudio 2.8 not available\n");
+    ref = IXAudio2_Release(audio);
+    ok(!ref, "Got unexpected refcount %lu.\n", ref);
 
     CoUninitialize();
 }

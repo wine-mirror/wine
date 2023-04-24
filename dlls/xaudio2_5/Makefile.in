@@ -5,7 +5,6 @@ EXTRAINCL = $(FAUDIO_PE_CFLAGS)
 PARENTSRC = ../xaudio2_7
 
 C_SRCS = \
-	compat.c \
 	xapo.c \
 	xaudio_allocator.c \
 	xaudio_dll.c

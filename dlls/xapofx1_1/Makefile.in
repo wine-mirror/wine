@@ -10,3 +10,5 @@ C_SRCS = \
 	xaudio_allocator.c
 
 RC_SRCS = version.rc
+
+IDL_SRCS = xaudio_classes.idl

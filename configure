@@ -22028,6 +22028,7 @@ wine_fn_config_makefile dlls/xaudio2_6 enable_xaudio2_6
 wine_fn_config_makefile dlls/xaudio2_7 enable_xaudio2_7
 wine_fn_config_makefile dlls/xaudio2_7/tests enable_tests
 wine_fn_config_makefile dlls/xaudio2_8 enable_xaudio2_8
+wine_fn_config_makefile dlls/xaudio2_8/tests enable_tests
 wine_fn_config_makefile dlls/xaudio2_9 enable_xaudio2_9
 wine_fn_config_makefile dlls/xinput1_1 enable_xinput1_1
 wine_fn_config_makefile dlls/xinput1_2 enable_xinput1_2
