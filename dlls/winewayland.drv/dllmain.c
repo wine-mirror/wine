@@ -20,8 +20,25 @@
 
 #include "waylanddrv_dll.h"
 
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
+
+static DWORD WINAPI wayland_read_events_thread(void *arg)
+{
+    WAYLANDDRV_UNIX_CALL(read_events, NULL);
+    /* This thread terminates only if an unrecoverable error occurred
+     * during event reading (e.g., the connection to the Wayland
+     * compositor is broken). */
+    ERR("Failed to read events from the compositor, terminating process\n");
+    TerminateProcess(GetCurrentProcess(), 1);
+    return 0;
+}
+
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
+    DWORD tid;
+
     if (reason != DLL_PROCESS_ATTACH) return TRUE;
 
     DisableThreadLibraryCalls(instance);
@@ -29,6 +46,9 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 
     if (WAYLANDDRV_UNIX_CALL(init, NULL))
         return FALSE;
+
+    /* Read wayland events from a dedicated thread. */
+    CloseHandle(CreateThread(NULL, 0, wayland_read_events_thread, NULL, 0, &tid));
 
     return TRUE;
 }
