@@ -40,6 +40,22 @@ static HRESULT (WINAPI *pCreateAudioVolumeMeter)(IUnknown**) = NULL;
 #define XA2CALL_V(method, ...) if(xaudio27) IXAudio27_##method((IXAudio27*)xa, __VA_ARGS__); else IXAudio2_##method(xa, __VA_ARGS__);
 #define XA2CALL(method, ...) if(xaudio27) hr = IXAudio27_##method((IXAudio27*)xa, __VA_ARGS__); else hr = IXAudio2_##method(xa, __VA_ARGS__);
 
+static HRESULT create_mastering_voice(IXAudio2 *audio, unsigned int channel_count, IXAudio2MasteringVoice **voice)
+{
+    if (xaudio27)
+        return IXAudio27_CreateMasteringVoice((IXAudio27*)audio, voice, channel_count, 44100, 0, 0, NULL);
+    else
+        return IXAudio2_CreateMasteringVoice(audio, voice, channel_count, 44100, 0, NULL, NULL, AudioCategory_GameEffects);
+}
+
+static void get_voice_state(IXAudio2SourceVoice *voice, XAUDIO2_VOICE_STATE *state)
+{
+    if (xaudio27)
+        IXAudio27SourceVoice_GetState((IXAudio27SourceVoice*)voice, state);
+    else
+        IXAudio2SourceVoice_GetState(voice, state, 0);
+}
+
 static void fill_buf(float *buf, WAVEFORMATEX *fmt, DWORD hz, DWORD len_frames)
 {
     if(winetest_interactive){
@@ -195,10 +211,7 @@ static void test_simple_streaming(IXAudio2 *xa)
     XA2CALL(RegisterForCallbacks, &ecb);
     ok(hr == S_OK, "RegisterForCallbacks failed: %08lx\n", hr);
 
-    if(xaudio27)
-        hr = IXAudio27_CreateMasteringVoice((IXAudio27*)xa, &master, 2, 44100, 0, 0, NULL);
-    else
-        hr = IXAudio2_CreateMasteringVoice(xa, &master, 2, 44100, 0, NULL, NULL, AudioCategory_GameEffects);
+    hr = create_mastering_voice(xa, 2, &master);
     ok(hr == S_OK, "CreateMasteringVoice failed: %08lx\n", hr);
 
     if(!xaudio27){
@@ -315,10 +328,7 @@ static void test_simple_streaming(IXAudio2 *xa)
     IUnknown_Release(vumeter);
 
     while(1){
-        if(xaudio27)
-            IXAudio27SourceVoice_GetState((IXAudio27SourceVoice*)src, &state);
-        else
-            IXAudio2SourceVoice_GetState(src, &state, 0);
+        get_voice_state(src, &state);
         if(state.SamplesPlayed >= 22050)
             break;
         Sleep(100);
@@ -371,10 +381,7 @@ static void WINAPI vcb_buf_OnBufferStart(IXAudio2VoiceCallback *This,
 
     ok(data->idx == obs_calls, "Buffer callback out of order: %u\n", data->idx);
 
-    if(xaudio27)
-        IXAudio27SourceVoice_GetState((IXAudio27SourceVoice*)data->src, &state);
-    else
-        IXAudio2SourceVoice_GetState(data->src, &state, 0);
+    get_voice_state(data->src, &state);
 
     ok(state.BuffersQueued == 5 - obs_calls, "Got wrong number of buffers remaining: %u\n", state.BuffersQueued);
     ok(state.pCurrentBufferContext == pBufferContext, "Got wrong buffer from GetState\n");
@@ -390,10 +397,7 @@ static void WINAPI vcb_buf_OnBufferEnd(IXAudio2VoiceCallback *This,
 
     ok(data->idx == obe_calls, "Buffer callback out of order: %u\n", data->idx);
 
-    if(xaudio27)
-        IXAudio27SourceVoice_GetState((IXAudio27SourceVoice*)data->src, &state);
-    else
-        IXAudio2SourceVoice_GetState(data->src, &state, 0);
+    get_voice_state(data->src, &state);
 
     ok(state.BuffersQueued == 5 - obe_calls - 1, "Got wrong number of buffers remaining: %u\n", state.BuffersQueued);
     if(state.BuffersQueued == 0)
@@ -485,10 +489,7 @@ static void test_buffer_callbacks(IXAudio2 *xa)
 
     XA2CALL_0V(StopEngine);
 
-    if(xaudio27)
-        hr = IXAudio27_CreateMasteringVoice((IXAudio27*)xa, &master, 2, 44100, 0, 0, NULL);
-    else
-        hr = IXAudio2_CreateMasteringVoice(xa, &master, 2, 44100, 0, NULL, NULL, AudioCategory_GameEffects);
+    hr = create_mastering_voice(xa, 2, &master);
     ok(hr == S_OK, "CreateMasteringVoice failed: %08lx\n", hr);
 
     /* test OnBufferStart/End callbacks */
@@ -534,10 +535,7 @@ static void test_buffer_callbacks(IXAudio2 *xa)
     }
 
     while(1){
-        if(xaudio27)
-            IXAudio27SourceVoice_GetState((IXAudio27SourceVoice*)src, &state);
-        else
-            IXAudio2SourceVoice_GetState(src, &state, 0);
+        get_voice_state(src, &state);
         if(state.SamplesPlayed >= 4410 * 5)
             break;
         Sleep(100);
@@ -572,10 +570,7 @@ static void test_buffer_callbacks(IXAudio2 *xa)
     ok(nstreamends == 1, "Got wrong number of OnStreamEnd calls: %u\n", nstreamends);
 
     /* xaudio resets SamplesPlayed after processing an end-of-stream buffer */
-    if(xaudio27)
-        IXAudio27SourceVoice_GetState((IXAudio27SourceVoice*)src, &state);
-    else
-        IXAudio2SourceVoice_GetState(src, &state, 0);
+    get_voice_state(src, &state);
     ok(state.SamplesPlayed == 0, "Got wrong samples played\n");
 
     if(xaudio27)
@@ -600,10 +595,7 @@ static UINT32 play_to_completion(IXAudio2SourceVoice *src, UINT32 max_samples)
     ok(hr == S_OK, "Start failed: %08lx\n", hr);
 
     while(1){
-        if(xaudio27)
-            IXAudio27SourceVoice_GetState((IXAudio27SourceVoice*)src, &state);
-        else
-            IXAudio2SourceVoice_GetState(src, &state, 0);
+        get_voice_state(src, &state);
         if(state.BuffersQueued == 0)
             break;
         if(state.SamplesPlayed >= max_samples){
@@ -632,10 +624,7 @@ static void test_looping(IXAudio2 *xa)
 
     XA2CALL_0V(StopEngine);
 
-    if(xaudio27)
-        hr = IXAudio27_CreateMasteringVoice((IXAudio27*)xa, &master, 2, 44100, 0, 0, NULL);
-    else
-        hr = IXAudio2_CreateMasteringVoice(xa, &master, 2, 44100, 0, NULL, NULL, AudioCategory_GameEffects);
+    hr = create_mastering_voice(xa, 2, &master);
     ok(hr == S_OK, "CreateMasteringVoice failed: %08lx\n", hr);
 
 
@@ -816,10 +805,7 @@ static void test_submix(IXAudio2 *xa)
 
     XA2CALL_0V(StopEngine);
 
-    if(xaudio27)
-        hr = IXAudio27_CreateMasteringVoice((IXAudio27*)xa, &master, 2, 44100, 0, 0, NULL);
-    else
-        hr = IXAudio2_CreateMasteringVoice(xa, &master, 2, 44100, 0, NULL, NULL, AudioCategory_GameEffects);
+    hr = create_mastering_voice(xa, 2, &master);
     ok(hr == S_OK, "CreateMasteringVoice failed: %08lx\n", hr);
 
     XA2CALL(CreateSubmixVoice, &sub, 2, 44100, 0, 0, NULL, NULL);
@@ -855,10 +841,7 @@ static void test_flush(IXAudio2 *xa)
 
     XA2CALL_0V(StopEngine);
 
-    if(xaudio27)
-        hr = IXAudio27_CreateMasteringVoice((IXAudio27*)xa, &master, 2, 44100, 0, 0, NULL);
-    else
-        hr = IXAudio2_CreateMasteringVoice(xa, &master, 2, 44100, 0, NULL, NULL, AudioCategory_GameEffects);
+    hr = create_mastering_voice(xa, 2, &master);
     ok(hr == S_OK, "CreateMasteringVoice failed: %08lx\n", hr);
 
     fmt.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
@@ -887,10 +870,7 @@ static void test_flush(IXAudio2 *xa)
     ok(hr == S_OK, "StartEngine failed: %08lx\n", hr);
 
     while(1){
-        if(xaudio27)
-            IXAudio27SourceVoice_GetState((IXAudio27SourceVoice*)src, &state);
-        else
-            IXAudio2SourceVoice_GetState(src, &state, 0);
+        get_voice_state(src, &state);
         if(state.SamplesPlayed >= 2205)
             break;
         Sleep(10);
@@ -1160,10 +1140,7 @@ static void test_setchannelvolumes(IXAudio2 *xa)
     WAVEFORMATEX fmt_2ch, fmt_8ch;
     float volumes[] = {0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f};
 
-    if(xaudio27)
-        hr = IXAudio27_CreateMasteringVoice((IXAudio27*)xa, &master, 8, 44100, 0, 0, NULL);
-    else
-        hr = IXAudio2_CreateMasteringVoice(xa, &master, 8, 44100, 0, NULL, NULL, AudioCategory_GameEffects);
+    hr = create_mastering_voice(xa, 8, &master);
     ok(hr == S_OK, "CreateMasteringVoice failed: %08lx\n", hr);
 
     fmt_2ch.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
@@ -1227,7 +1204,7 @@ static UINT32 check_has_devices(IXAudio2 *xa)
     HRESULT hr;
     IXAudio2MasteringVoice *master;
 
-    hr = IXAudio2_CreateMasteringVoice(xa, &master, 2, 44100, 0, NULL, NULL, AudioCategory_GameEffects);
+    hr = create_mastering_voice(xa, 2, &master);
     if(hr != S_OK)
         return 0;
 
