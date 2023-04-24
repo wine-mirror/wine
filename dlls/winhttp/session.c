@@ -737,6 +737,14 @@ static BOOL request_query_option( struct object_header *hdr, DWORD option, void 
 
     switch (option)
     {
+    case WINHTTP_OPTION_PARENT_HANDLE:
+    {
+        if (!validate_buffer( buffer, buflen, sizeof(HINTERNET) )) return FALSE;
+
+        *(HINTERNET *)buffer = request->connect->hdr.handle;
+        *buflen = sizeof(HINTERNET);
+        return TRUE;
+    }
     case WINHTTP_OPTION_SECURITY_FLAGS:
     {
         DWORD flags;
