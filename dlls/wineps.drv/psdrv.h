@@ -417,6 +417,7 @@ extern const UNICODEGLYPH   PSDRV_AGLbyUV[] DECLSPEC_HIDDEN;	 /*  duplicates inc
 extern HINSTANCE PSDRV_hInstance DECLSPEC_HIDDEN;
 extern HANDLE PSDRV_Heap DECLSPEC_HIDDEN;
 extern char *PSDRV_ANSIVector[256] DECLSPEC_HIDDEN;
+extern HFONT PSDRV_DefaultFont DECLSPEC_HIDDEN;
 
 extern INPUTSLOT *find_slot( PPD *ppd, const PSDRV_DEVMODE *dm ) DECLSPEC_HIDDEN;
 extern PAGESIZE *find_pagesize( PPD *ppd, const PSDRV_DEVMODE *dm ) DECLSPEC_HIDDEN;

@@ -1134,6 +1134,8 @@ static HGDIOBJ get_object_handle(struct pp_data *data, HANDLETABLE *handletable,
     if (i & 0x80000000)
     {
         *pattern = NULL;
+        if ((i & 0x7fffffff) == DEVICE_DEFAULT_FONT)
+            return PSDRV_DefaultFont;
         return GetStockObject(i & 0x7fffffff);
     }
     *pattern = data->patterns + i;
