@@ -1429,6 +1429,8 @@ static DECLSPEC_NORETURN void exit_thread( int status )
 
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
 
+    if (InterlockedDecrement( &nb_threads ) <= 0) exit_process( status );
+
     if ((teb = InterlockedExchangePointer( &prev_teb, NtCurrentTeb() )))
     {
         struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
