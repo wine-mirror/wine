@@ -248,10 +248,12 @@ static void check_rect(struct surface_readback *rb, RECT r, const char *message)
     }
 }
 
-#define check_rt_color(a, b) check_rt_color_(__LINE__, a, b, false)
-#define check_rt_color_todo(a, b) check_rt_color_(__LINE__, a, b, true)
-#define check_rt_color_todo_if(a, b, c) check_rt_color_(__LINE__, a, b, c)
-static void check_rt_color_(unsigned int line, IDirect3DSurface8 *rt, D3DCOLOR expected_color, bool todo)
+#define check_rt_color(a, b) check_rt_color_(__LINE__, a, b, false, 0, false)
+#define check_rt_color_broken(a, b, c, d) check_rt_color_(__LINE__, a, b, false, c, d)
+#define check_rt_color_todo(a, b) check_rt_color_(__LINE__, a, b, true, 0, false)
+#define check_rt_color_todo_if(a, b, c) check_rt_color_(__LINE__, a, b, c, 0, false)
+static void check_rt_color_(unsigned int line, IDirect3DSurface8 *rt, D3DCOLOR expected_color, bool todo,
+    D3DCOLOR broken_color, bool is_broken)
 {
     unsigned int color = 0xdeadbeef;
     struct surface_readback rb;
@@ -276,7 +278,8 @@ static void check_rt_color_(unsigned int line, IDirect3DSurface8 *rt, D3DCOLOR e
     }
     release_surface_readback(&rb);
     todo_wine_if (todo)
-        ok_(__FILE__, line)(color == expected_color, "Got unexpected color 0x%08x.\n", color);
+        ok_(__FILE__, line)(color == expected_color || broken(is_broken && color == broken_color),
+                "Got unexpected color 0x%08x.\n", color);
 }
 
 static IDirect3DDevice8 *create_device(IDirect3D8 *d3d, HWND device_window, HWND focus_window, BOOL windowed)
@@ -12189,7 +12192,8 @@ static void test_mipmap_upload(void)
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
             draw_textured_quad(&context, texture);
-            check_rt_color(context.backbuffer, 0x00111111 * (j + 1));
+            /* AMD Windows drivers don't sample from sysmem textures. */
+            check_rt_color_broken(context.backbuffer, 0x00111111 * (j + 1), 0x00000000, pools[i] == D3DPOOL_SYSTEMMEM);
 
             winetest_pop_context();
         }
