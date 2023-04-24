@@ -1446,9 +1446,7 @@ static void test_doppler(GUID *guid, BOOL play)
     check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, -90, 1, 0, 22050, 17640);
 
     /* The Doppler shift is limited to +-0.5 speed of sound. */
-    /* Wine TODO: The frequency is not limited. */
     check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, 0, 1, -240, 22050, 44100);
-    /* Wine TODO: The frequency is not limited. */
     check_doppler(dsound, listener, play, DS3DMODE_NORMAL, 0, 0, 1, 240, 22050, 14700);
 
     IDirectSound3DListener_Release(listener);

@@ -168,7 +168,7 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	float a, ingain;
 	/* doppler shift related stuff */
 	D3DVECTOR vRelativeVel;
-	D3DVALUE flFreq, flRelativeVel;
+	D3DVALUE flFreq, flRelativeVel, flLimitedVel;
 
 	TRACE("(%p)\n",dsb);
 
@@ -307,8 +307,9 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 		   NOTE: if buffer moves TOWARDS the listener, its velocity component is NEGATIVE
 		         if buffer moves AWAY from listener, its velocity component is POSITIVE */
 		flRelativeVel = ProjectVector(&vRelativeVel, &vDistance);
+		flLimitedVel = max(-DEFAULT_VELOCITY/2, min(DEFAULT_VELOCITY/2, flRelativeVel));
 		/* formula taken from Gianicoli D.: Physics, 4th edition: */
-		flFreq = dsb->ds3db_freq * (DEFAULT_VELOCITY/(DEFAULT_VELOCITY + flRelativeVel));
+		flFreq = dsb->ds3db_freq * (DEFAULT_VELOCITY/(DEFAULT_VELOCITY + flLimitedVel));
 		TRACE("doppler: Relative velocity (component) = %f => Doppler shift: %ld Hz -> %f Hz\n",
 		      flRelativeVel, dsb->ds3db_freq, flFreq);
 		dsb->freq = flFreq;
