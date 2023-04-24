@@ -312,7 +312,7 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 		flFreq = dsb->ds3db_freq * (DEFAULT_VELOCITY/(DEFAULT_VELOCITY + flLimitedVel));
 		TRACE("doppler: Relative velocity (component) = %f => Doppler shift: %ld Hz -> %f Hz\n",
 		      flRelativeVel, dsb->ds3db_freq, flFreq);
-		dsb->freq = flFreq;
+		dsb->freq = max(DSBFREQUENCY_MIN, min(DSBFREQUENCY_MAX, (DWORD)flFreq));
 	}
 
 	DSOUND_RecalcFormat(dsb);
