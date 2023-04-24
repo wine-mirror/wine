@@ -47,6 +47,7 @@ extern struct wayland process_wayland DECLSPEC_HIDDEN;
 
 struct wayland
 {
+    BOOL initialized;
     struct wl_display *wl_display;
     struct wl_event_queue *wl_event_queue;
     struct wl_registry *wl_registry;
@@ -80,7 +81,7 @@ struct wayland_output
  */
 
 BOOL wayland_process_init(void) DECLSPEC_HIDDEN;
-void wayland_init_display_devices(void) DECLSPEC_HIDDEN;
+void wayland_init_display_devices(BOOL force) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  *          Wayland output

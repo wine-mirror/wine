@@ -34,9 +34,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
-void wayland_init_display_devices(void)
+static BOOL force_display_devices_refresh;
+
+void wayland_init_display_devices(BOOL force)
 {
     UINT32 num_path, num_mode;
+
+    TRACE("force=%d\n", force);
+
+    if (force) force_display_devices_refresh = TRUE;
     /* Trigger refresh in win32u */
     NtUserGetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, &num_path, &num_mode);
 }
@@ -284,9 +290,11 @@ BOOL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manage
     struct wl_array output_info_array;
     struct output_info *output_info;
 
-    if (!force) return TRUE;
+    if (!force && !force_display_devices_refresh) return TRUE;
 
-    TRACE("force=%d\n", force);
+    TRACE("force=%d force_refresh=%d\n", force, force_display_devices_refresh);
+
+    force_display_devices_refresh = FALSE;
 
     wl_array_init(&output_info_array);
 

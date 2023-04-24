@@ -97,6 +97,26 @@ static void wayland_output_add_mode(struct wayland_output *output,
     if (current) output->current_mode = mode;
 }
 
+static void maybe_init_display_devices(void)
+{
+    DWORD desktop_pid = 0;
+    HWND desktop_hwnd;
+
+    /* Right after process init we initialize all the display devices, so there
+     * is no need to react to each individual event at that time. This check
+     * also helps us avoid calling NtUserGetDesktopWindow() (see below) at
+     * process init time, since it may not be safe. */
+    if (!process_wayland.initialized) return;
+
+    desktop_hwnd = NtUserGetDesktopWindow();
+    NtUserGetWindowThread(desktop_hwnd, &desktop_pid);
+
+    /* We only update the display devices from the desktop process. */
+    if (GetCurrentProcessId() != desktop_pid) return;
+
+    wayland_init_display_devices(TRUE);
+}
+
 static void wayland_output_done(struct wayland_output *output)
 {
     struct wayland_output_mode *mode;
@@ -111,6 +131,8 @@ static void wayland_output_done(struct wayland_output *output)
               mode->width, mode->height, mode->refresh,
               output->current_mode == mode ? "*" : "");
     }
+
+    maybe_init_display_devices();
 }
 
 static void output_handle_geometry(void *data, struct wl_output *wl_output,
@@ -283,6 +305,8 @@ void wayland_output_destroy(struct wayland_output *output)
     wl_output_destroy(output->wl_output);
     free(output->name);
     free(output);
+
+    maybe_init_display_devices();
 }
 
 /**********************************************************************

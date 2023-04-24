@@ -135,7 +135,9 @@ BOOL wayland_process_init(void)
     wl_display_roundtrip_queue(process_wayland.wl_display, process_wayland.wl_event_queue);
     wl_display_roundtrip_queue(process_wayland.wl_display, process_wayland.wl_event_queue);
 
-    wayland_init_display_devices();
+    wayland_init_display_devices(FALSE);
+
+    process_wayland.initialized = TRUE;
 
     return TRUE;
 }
