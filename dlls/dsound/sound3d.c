@@ -182,12 +182,14 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 			/* we need to calculate distance between buffer and listener*/
 			vDistance = VectorBetweenTwoPoints(&dsb->device->ds3dl.vPosition, &dsb->ds3db_ds3db.vPosition);
 			flDistance = VectorMagnitude (&vDistance);
+			vRelativeVel = VectorBetweenTwoPoints(&dsb->device->ds3dl.vVelocity, &dsb->ds3db_ds3db.vVelocity);
 			break;
 		case DS3DMODE_HEADRELATIVE:
 			TRACE("Head-relative 3D processing mode\n");
 			/* distance between buffer and listener is same as buffer's position */
 			vDistance = dsb->ds3db_ds3db.vPosition;
 			flDistance = VectorMagnitude (&vDistance);
+			vRelativeVel = dsb->ds3db_ds3db.vVelocity;
 			break;
 		default:
 			TRACE("3D processing disabled\n");
@@ -293,14 +295,11 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	dsb->freq = dsb->ds3db_freq;
 
 	/* doppler shift*/
-	vRelativeVel = VectorBetweenTwoPoints(&dsb->device->ds3dl.vVelocity, &dsb->ds3db_ds3db.vVelocity);
 	if (!VectorMagnitude(&dsb->ds3db_ds3db.vVelocity) && !VectorMagnitude(&dsb->device->ds3dl.vVelocity))
 	{
 		TRACE("doppler: Buffer and Listener don't have velocities\n");
 	}
-	else if (!(dsb->ds3db_ds3db.vVelocity.x == dsb->device->ds3dl.vVelocity.x &&
-	           dsb->ds3db_ds3db.vVelocity.y == dsb->device->ds3dl.vVelocity.y &&
-	           dsb->ds3db_ds3db.vVelocity.z == dsb->device->ds3dl.vVelocity.z) &&
+	else if (!(vRelativeVel.x == 0.0f && vRelativeVel.y == 0.0f && vRelativeVel.z == 0.0f) &&
 	         !(vDistance.x == 0.0f && vDistance.y == 0.0f && vDistance.z == 0.0f))
 	{
 		/* calculate length of vRelativeVel component which causes Doppler Effect
