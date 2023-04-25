@@ -49,6 +49,69 @@ interface ISpObjectTokenEnumBuilder : IEnumSpObjectTokens
     HRESULT Sort([in] LPCWSTR pszTokenIdToListFirst);
 }
 
+typedef enum SPVSKIPTYPE
+{
+    SPVST_SENTENCE  = (1L << 0)
+} SPVSKIPTYPE;
+
+typedef enum SPVESACTIONS
+{
+    SPVES_CONTINUE = 0,
+    SPVES_ABORT    = (1L << 0),
+    SPVES_SKIP     = (1L << 1),
+    SPVES_RATE     = (1L << 2),
+    SPVES_VOLUME   = (1L << 3)
+} SPVESACTIONS;
+
+[
+    object,
+    uuid(9880499b-cce9-11d2-b503-00c04f797396),
+    helpstring("ISpTTSEngineSite"),
+    pointer_default(unique),
+    local
+]
+interface ISpTTSEngineSite : ISpEventSink
+{
+    HRESULT GetActions();
+    HRESULT Write([in] const void *pBuff,
+                  [in] ULONG cb,
+                  [out] ULONG *pcbWritten);
+    HRESULT GetRate([out] long *pRateAdjust);
+    HRESULT GetVolume([out] USHORT *pusVolume);
+    HRESULT GetSkipInfo([out] SPVSKIPTYPE *peType,
+                        [out] long *plNumItems);
+    HRESULT CompleteSkip([in] long lNumSkipped);
+};
+
+typedef struct SPVTEXTFRAG
+{
+    struct SPVTEXTFRAG* pNext;
+    SPVSTATE  State;
+    LPCWSTR   pTextStart;
+    ULONG     ulTextLen;
+    ULONG     ulTextSrcOffset;
+} SPVTEXTFRAG;
+
+[
+    object,
+    uuid(a74d7c8e-4cc5-4f2f-a6eb-804dee18500e),
+    helpstring("ISpTTSEngine"),
+    pointer_default(unique),
+    local
+]
+interface ISpTTSEngine : IUnknown
+{
+    HRESULT Speak([in] DWORD dwSpeakFlags,
+                  [in] REFGUID rguidFormatId,
+                  [in] const WAVEFORMATEX *pWaveFormatEx,
+                  [in] const SPVTEXTFRAG *pTextFragList,
+                  [in] ISpTTSEngineSite *pOutputSite);
+    HRESULT GetOutputFormat([in] const GUID *pTargetFmtId,
+                            [in] const WAVEFORMATEX *pTargetWaveFormatEx,
+                            [out] GUID *pOutputFormatId,
+                            [out] WAVEFORMATEX **ppCoMemOutputWaveFormatEx);
+};
+
 [
     helpstring("Speech Object DDK Library"),
     uuid(9903f14c-12ce-4c99-9986-2ee3d7d588a8),
