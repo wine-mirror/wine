@@ -6612,6 +6612,109 @@ static void test_ImmSetCandidateWindow(void)
     ime_call_count = 0;
 }
 
+static void test_ImmGenerateMessage(void)
+{
+    const struct ime_call generate_sequence[] =
+    {
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_TEST_WIN, .message = {.msg = WM_IME_COMPOSITION, .wparam = 0, .lparam = GCS_COMPSTR},
+            .todo = TRUE,
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = MSG_IME_UI, .message = {.msg = WM_IME_COMPOSITION, .wparam = 0, .lparam = GCS_COMPSTR},
+            .todo = TRUE,
+        },
+        {0},
+    };
+    TRANSMSG *msgs, *tmp_msgs;
+    INPUTCONTEXT *ctx;
+    HIMC himc;
+    HKL hkl;
+
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
+
+    if (!(hkl = wineime_hkl)) return;
+
+    hwnd = CreateWindowW( test_class.lpszClassName, NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    ok_ret( 1, ImmLoadIME( hkl ) );
+    himc = ImmCreateContext();
+    ok_ne( NULL, himc, HIMC, "%p" );
+    ctx = ImmLockIMC( himc );
+    ok_ne( NULL, ctx, INPUTCONTEXT *, "%p" );
+    process_messages();
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+    todo_wine ok_ret( 4, ImmGetIMCCSize( ctx->hMsgBuf ) );
+    ctx->hMsgBuf = ImmReSizeIMCC( ctx->hMsgBuf, sizeof(*msgs) );
+    ok_ne( NULL, ctx->hMsgBuf, HIMCC, "%p" );
+
+    msgs = ImmLockIMCC( ctx->hMsgBuf );
+    ok_ne( NULL, msgs, TRANSMSG *, "%p" );
+    msgs[0].message = WM_IME_COMPOSITION;
+    msgs[0].wParam = 0;
+    msgs[0].lParam = GCS_COMPSTR;
+    ok_ret( 0, ImmUnlockIMCC( ctx->hMsgBuf ) );
+
+    ctx->hWnd = 0;
+    ctx->dwNumMsgBuf = 0;
+    ok_ret( 1, ImmGenerateMessage( himc ) );
+    ok_seq( empty_sequence );
+    ok_ret( sizeof(*msgs), ImmGetIMCCSize( ctx->hMsgBuf ) );
+    tmp_msgs = ImmLockIMCC( ctx->hMsgBuf );
+    ok_eq( msgs, tmp_msgs, TRANSMSG *, "%p" );
+    ok_ret( 0, ImmUnlockIMCC( ctx->hMsgBuf ) );
+
+    ctx->dwNumMsgBuf = 1;
+    ok_ret( 1, ImmGenerateMessage( himc ) );
+    todo_wine ok_seq( empty_sequence );
+    ok_eq( 0, ctx->dwNumMsgBuf, UINT, "%u" );
+    todo_wine ok_ret( sizeof(*msgs), ImmGetIMCCSize( ctx->hMsgBuf ) );
+    tmp_msgs = ImmLockIMCC( ctx->hMsgBuf );
+    todo_wine ok_eq( msgs, tmp_msgs, TRANSMSG *, "%p" );
+    ok_ret( 0, ImmUnlockIMCC( ctx->hMsgBuf ) );
+
+    ctx->hWnd = hwnd;
+    ctx->dwNumMsgBuf = 0;
+    ok_ret( 1, ImmGenerateMessage( himc ) );
+    ok_seq( empty_sequence );
+    todo_wine ok_ret( sizeof(*msgs), ImmGetIMCCSize( ctx->hMsgBuf ) );
+    tmp_msgs = ImmLockIMCC( ctx->hMsgBuf );
+    todo_wine ok_eq( msgs, tmp_msgs, TRANSMSG *, "%p" );
+    ok_ret( 0, ImmUnlockIMCC( ctx->hMsgBuf ) );
+    if (!tmp_msgs) ctx->hMsgBuf = ImmReSizeIMCC( ctx->hMsgBuf, sizeof(*msgs) );
+
+    ctx->dwNumMsgBuf = 1;
+    ok_ret( 1, ImmGenerateMessage( himc ) );
+    ok_seq( generate_sequence );
+    ok_eq( 0, ctx->dwNumMsgBuf, UINT, "%u" );
+    todo_wine ok_ret( sizeof(*msgs), ImmGetIMCCSize( ctx->hMsgBuf ) );
+    tmp_msgs = ImmLockIMCC( ctx->hMsgBuf );
+    todo_wine ok_eq( msgs, tmp_msgs, TRANSMSG *, "%p" );
+    ok_ret( 0, ImmUnlockIMCC( ctx->hMsgBuf ) );
+
+    tmp_msgs = ImmLockIMCC( ctx->hMsgBuf );
+    todo_wine ok_eq( msgs, tmp_msgs, TRANSMSG *, "%p" );
+    ok_ret( 0, ImmUnlockIMCC( ctx->hMsgBuf ) );
+
+    ok_ret( 1, ImmUnlockIMC( himc ) );
+    ok_ret( 1, ImmDestroyContext( himc ) );
+
+    ok_ret( 1, ImmActivateLayout( default_hkl ) );
+    ok_ret( 1, DestroyWindow( hwnd ) );
+    process_messages();
+
+    ok_ret( 1, ImmFreeLayout( hkl ) );
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+}
+
 START_TEST(imm32)
 {
     default_hkl = GetKeyboardLayout( 0 );
@@ -6673,6 +6776,8 @@ START_TEST(imm32)
     test_ImmSetCompositionFont( TRUE );
     test_ImmSetCompositionFont( FALSE );
     test_ImmSetCandidateWindow();
+
+    test_ImmGenerateMessage();
 
     if (wineime_hkl) ime_cleanup( wineime_hkl, TRUE );
 
