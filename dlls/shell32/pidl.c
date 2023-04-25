@@ -1304,12 +1304,13 @@ HRESULT WINAPI SHBindToFolderIDListParent(IShellFolder *psf, LPCITEMIDLIST pidl,
     TRACE_(shell)("%p,%p,%s\n", psf, pidl, debugstr_guid(riid));
     pdump(pidl);
 
-    if (!pidl || !ppv)
-        return E_INVALIDARG;
-    
-    *ppv = NULL;
     if (ppidlLast)
         *ppidlLast = NULL;
+
+    if (!pidl || !ppv)
+        return E_INVALIDARG;
+
+    *ppv = NULL;
 
     if (!psf)
     {

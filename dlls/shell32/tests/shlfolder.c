@@ -779,7 +779,7 @@ static void test_GetDisplayName(void)
     hr = SHBindToParent(NULL, &IID_IShellFolder, (void **)&psfPersonal, &pidlLast);
     ok (hr == E_INVALIDARG || broken(hr == E_OUTOFMEMORY) /* XP */,
         "SHBindToParent(NULL) should fail! hr = %08lx\n", hr);
-    todo_wine ok(pidlLast == NULL, "got %p\n", pidlLast);
+    ok(pidlLast == NULL, "got %p\n", pidlLast);
 
     /* But it succeeds with an empty PIDL. */
     hr = SHBindToParent(pidlEmpty, &IID_IShellFolder, (void **)&psfPersonal, &pidlLast);
@@ -5601,7 +5601,7 @@ static void test_SHBindToFolderIDListParent(void)
     pidl_last = (LPITEMIDLIST)0xdeadbeef;
     hr = pSHBindToFolderIDListParent(NULL, NULL, &IID_IShellFolder, (void **)&psf, &pidl_last);
     ok(hr == E_INVALIDARG, "got %#lx\n", hr);
-    todo_wine ok(pidl_last == NULL, "got %p\n", pidl_last);
+    ok(pidl_last == NULL, "got %p\n", pidl_last);
 }
 
 START_TEST(shlfolder)
