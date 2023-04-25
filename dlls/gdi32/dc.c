@@ -51,6 +51,11 @@ struct graphics_driver
     driver_entry_point  entry_point;
 };
 
+struct print
+{
+    HANDLE printer;
+    WCHAR *output;
+};
 
 DC_ATTR *get_dc_attr( HDC hdc )
 {
@@ -200,6 +205,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
     driver_entry_point entry_point = NULL;
     const WCHAR *display = NULL, *p;
     WCHAR buf[300], *port = NULL;
+    struct print *print = NULL;
     BOOL is_display = FALSE;
     HANDLE hspool = NULL;
     DC_ATTR *dc_attr;
@@ -249,6 +255,11 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         ClosePrinter( hspool );
         return 0;
     }
+    else if (!(print = HeapAlloc( GetProcessHeap(), 0, sizeof(*print) )))
+    {
+        ClosePrinter( hspool );
+        HeapFree( GetProcessHeap(), 0, port );
+    }
 
     if (display)
     {
@@ -275,13 +286,15 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
             memcpy( port, output, output_str.Length );
             port[output_str.Length / sizeof(WCHAR)] = 0;
         }
-        dc_attr->hspool = HandleToULong( hspool );
-        dc_attr->output = (ULONG_PTR)port;
+        print->printer = hspool;
+        print->output = port;
+        dc_attr->print = (UINT_PTR)print;
     }
     else if (hspool)
     {
         ClosePrinter( hspool );
         HeapFree( GetProcessHeap(), 0, port );
+        HeapFree( GetProcessHeap(), 0, print );
     }
 
     return ret;
@@ -392,6 +405,21 @@ DEVMODEW *WINAPI GdiConvertToDevmodeW( const DEVMODEA *dmA )
     return dmW;
 }
 
+static inline struct print *get_dc_print( DC_ATTR *dc_attr )
+{
+    return (struct print *)(UINT_PTR)dc_attr->print;
+}
+
+static void delete_print_dc( DC_ATTR *dc_attr )
+{
+    struct print *print = get_dc_print( dc_attr );
+
+    ClosePrinter( print->printer );
+    HeapFree( GetProcessHeap(), 0, print->output );
+    HeapFree( GetProcessHeap(), 0, print );
+    dc_attr->print = 0;
+}
+
 /***********************************************************************
  *           DeleteDC    (GDI32.@)
  */
@@ -401,10 +429,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
 
     if (is_meta_dc( hdc )) return METADC_DeleteDC( hdc );
     if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
-    HeapFree( GetProcessHeap(), 0, (WCHAR *)(ULONG_PTR)dc_attr->output );
-    dc_attr->output = 0;
-    if (dc_attr->hspool) ClosePrinter( ULongToHandle(dc_attr->hspool) );
-    dc_attr->hspool = 0;
+    if (dc_attr->print) delete_print_dc( dc_attr );
     if (dc_attr->emf) EMFDC_DeleteDC( dc_attr );
     return NtGdiDeleteObjectApp( hdc );
 }
@@ -2192,6 +2217,7 @@ BOOL WINAPI CancelDC(HDC hdc)
 INT WINAPI StartDocW( HDC hdc, const DOCINFOW *doc )
 {
     WCHAR *output = NULL;
+    struct print *print;
     DC_ATTR *dc_attr;
     ABORTPROC proc;
     DOCINFOW info;
@@ -2218,10 +2244,11 @@ INT WINAPI StartDocW( HDC hdc, const DOCINFOW *doc )
     proc = (ABORTPROC)(UINT_PTR)dc_attr->abort_proc;
     if (proc && !proc( hdc, 0 )) return 0;
 
-    if (dc_attr->hspool)
+    print = get_dc_print( dc_attr );
+    if (print)
     {
-        if (!info.lpszOutput) info.lpszOutput = (const WCHAR *)(ULONG_PTR)dc_attr->output;
-        output = StartDocDlgW( ULongToHandle( dc_attr->hspool ), &info );
+        if (!info.lpszOutput) info.lpszOutput = print->output;
+        output = StartDocDlgW( print->printer, &info );
         if (output) info.lpszOutput = output;
     }
 
