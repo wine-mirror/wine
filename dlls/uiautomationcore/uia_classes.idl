@@ -66,6 +66,7 @@ library UIA_wine_private
         HRESULT get_prov_opts([out, retval]int *out_opts);
         HRESULT has_parent([out, retval]BOOL *out_val);
         HRESULT navigate([in]int nav_dir, [out, retval]VARIANT *ret_val);
+        HRESULT get_focus([out, retval]VARIANT *ret_val);
     }
 
     [

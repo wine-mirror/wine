@@ -13166,21 +13166,20 @@ static void test_node_from_focus_(struct UiaCacheRequest *cache_req, struct node
     SET_EXPECT_MULTI(winproc_GETOBJECT_UiaRoot, win_get_obj_count);
     SET_EXPECT_MULTI(child_winproc_GETOBJECT_UiaRoot, child_win_get_obj_count);
     hr = UiaNodeFromFocus(cache_req, &out_req, &tree_struct);
-    todo_wine ok_(file, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok_(file, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (exp_node_desc->prov_count)
-        todo_wine ok_(file, line)(!!out_req, "out_req == NULL\n");
+        ok_(file, line)(!!out_req, "out_req == NULL\n");
     else
         ok_(file, line)(!out_req, "out_req != NULL\n");
-    todo_wine ok_(file, line)(!!tree_struct, "tree_struct == NULL\n");
+    ok_(file, line)(!!tree_struct, "tree_struct == NULL\n");
     todo_wine_if(base_hwnd_cback_todo) CHECK_CALLED_MULTI(prov_callback_base_hwnd, base_hwnd_cback_count);
     todo_wine_if(proxy_cback_todo) CHECK_CALLED_MULTI(prov_callback_proxy, proxy_cback_count);
     todo_wine_if(nc_cback_todo) CHECK_CALLED_MULTI(prov_callback_nonclient, nc_cback_count);
     todo_wine_if(win_get_obj_todo) CHECK_CALLED_MULTI(winproc_GETOBJECT_UiaRoot, win_get_obj_count);
     todo_wine_if(child_win_get_obj_todo) CHECK_CALLED_MULTI(child_winproc_GETOBJECT_UiaRoot, child_win_get_obj_count);
 
-    if (tree_struct)
-        ok_(file, line)(!wcscmp(tree_struct, exp_tree_struct), "unexpected tree structure %s\n", debugstr_w(tree_struct));
-    if (exp_node_desc->prov_count && SUCCEEDED(hr))
+    ok_(file, line)(!wcscmp(tree_struct, exp_tree_struct), "unexpected tree structure %s\n", debugstr_w(tree_struct));
+    if (exp_node_desc->prov_count)
     {
         exp_lbound[0] = exp_lbound[1] = 0;
         exp_elems[0] = 1;
@@ -13250,7 +13249,7 @@ static void test_UiaNodeFromFocus(void)
     add_provider_desc(&exp_node_desc, L"Nonclient", L"Provider_nc", FALSE);
     add_provider_desc(&exp_node_desc, L"Hwnd", L"Provider_hwnd", FALSE);
 
-    test_node_from_focus(&cache_req, &exp_node_desc, 1, 1, 1, 0, 0, TRUE, TRUE, TRUE, FALSE, FALSE);
+    test_node_from_focus(&cache_req, &exp_node_desc, 1, 1, 1, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE);
 
     /* Provider_hwnd returns Provider_hwnd2 from GetFocus. */
     Provider_hwnd.focus_prov = &Provider_hwnd2.IRawElementProviderFragment_iface;
@@ -13260,7 +13259,7 @@ static void test_UiaNodeFromFocus(void)
     add_provider_desc(&exp_node_desc, L"Nonclient", L"Provider_nc2", FALSE);
     add_provider_desc(&exp_node_desc, L"Hwnd", L"Provider_hwnd2", FALSE);
 
-    test_node_from_focus(&cache_req, &exp_node_desc, 2, 1, 2, 1, 0, TRUE, TRUE, TRUE, TRUE, FALSE);
+    test_node_from_focus(&cache_req, &exp_node_desc, 2, 1, 2, 1, 0, TRUE, FALSE, FALSE, FALSE, FALSE);
 
     /*
      * Provider_proxy returns Provider from GetFocus. The provider that
@@ -13277,7 +13276,7 @@ static void test_UiaNodeFromFocus(void)
     add_provider_desc(&exp_node_desc, L"Nonclient", L"Provider_nc2", FALSE);
     add_provider_desc(&exp_node_desc, L"Hwnd", L"Provider_hwnd2", FALSE);
 
-    test_node_from_focus(&cache_req, &exp_node_desc, 2, 2, 2, 1, 0, TRUE, TRUE, TRUE, TRUE, FALSE);
+    test_node_from_focus(&cache_req, &exp_node_desc, 2, 2, 2, 1, 0, TRUE, FALSE, FALSE, FALSE, FALSE);
 
     /*
      * Provider_nc returns Provider_nc2 from GetFocus, Provider returns
@@ -13292,7 +13291,7 @@ static void test_UiaNodeFromFocus(void)
     init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), NULL);
     add_provider_desc(&exp_node_desc, L"Main", L"Provider_child", TRUE);
 
-    test_node_from_focus(&cache_req, &exp_node_desc, 2, 3, 2, 2, 1, TRUE, TRUE, TRUE, TRUE, TRUE);
+    test_node_from_focus(&cache_req, &exp_node_desc, 2, 3, 2, 2, 1, TRUE, FALSE, FALSE, TRUE, FALSE);
 
     /*
      * Provider_proxy returns Provider_child_child from GetFocus. The focus
@@ -13314,7 +13313,7 @@ static void test_UiaNodeFromFocus(void)
     set_provider_prop_override(&Provider, &prop_override, 1);
 
     init_node_provider_desc(&exp_node_desc, 0, NULL);
-    test_node_from_focus(&cache_req, &exp_node_desc, 2, 2, 2, 1, 0, TRUE, TRUE, TRUE, TRUE, FALSE);
+    test_node_from_focus(&cache_req, &exp_node_desc, 2, 2, 2, 1, 0, TRUE, FALSE, FALSE, FALSE, FALSE);
 
     /* This time, Provider_child matches our view condition. */
     set_provider_prop_override(&Provider_child, NULL, 0);
@@ -13322,7 +13321,7 @@ static void test_UiaNodeFromFocus(void)
     init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), NULL);
     add_provider_desc(&exp_node_desc, L"Main", L"Provider_child", TRUE);
 
-    test_node_from_focus(&cache_req, &exp_node_desc, 1, 1, 1, 0, 0, TRUE, TRUE, TRUE, FALSE, FALSE);
+    test_node_from_focus(&cache_req, &exp_node_desc, 1, 1, 1, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE);
 
     method_sequences_enabled = TRUE;
     initialize_provider(&Provider, ProviderOptions_ServerSideProvider, NULL, TRUE);

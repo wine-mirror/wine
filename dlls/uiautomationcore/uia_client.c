@@ -446,6 +446,22 @@ static HRESULT get_navigate_from_node_provider(IWineUiaNode *node, int idx, int 
     return hr;
 }
 
+static HRESULT get_focus_from_node_provider(IWineUiaNode *node, int idx, VARIANT *ret_val)
+{
+    IWineUiaProvider *prov;
+    HRESULT hr;
+
+    VariantInit(ret_val);
+    hr = IWineUiaNode_get_provider(node, idx, &prov);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IWineUiaProvider_get_focus(prov, ret_val);
+    IWineUiaProvider_Release(prov);
+
+    return hr;
+}
+
 /*
  * IWineUiaNode interface.
  */
@@ -1762,6 +1778,38 @@ static HRESULT WINAPI uia_provider_navigate(IWineUiaProvider *iface, int nav_dir
     return S_OK;
 }
 
+static HRESULT WINAPI uia_provider_get_focus(IWineUiaProvider *iface, VARIANT *out_val)
+{
+    struct uia_provider *prov = impl_from_IWineUiaProvider(iface);
+    IRawElementProviderFragmentRoot *elroot;
+    IRawElementProviderFragment *elfrag;
+    IRawElementProviderSimple *elprov;
+    HRESULT hr;
+
+    TRACE("%p, %p\n", iface, out_val);
+
+    VariantInit(out_val);
+    hr = IRawElementProviderSimple_QueryInterface(prov->elprov, &IID_IRawElementProviderFragmentRoot, (void **)&elroot);
+    if (FAILED(hr))
+        return S_OK;
+
+    hr = IRawElementProviderFragmentRoot_GetFocus(elroot, &elfrag);
+    IRawElementProviderFragmentRoot_Release(elroot);
+    if (FAILED(hr) || !elfrag)
+        return hr;
+
+    hr = IRawElementProviderFragment_QueryInterface(elfrag, &IID_IRawElementProviderSimple, (void **)&elprov);
+    IRawElementProviderFragment_Release(elfrag);
+    if (SUCCEEDED(hr))
+    {
+        hr = get_variant_for_elprov_node(elprov, prov->return_nested_node, out_val);
+        if (FAILED(hr))
+            VariantClear(out_val);
+    }
+
+    return hr;
+}
+
 static const IWineUiaProviderVtbl uia_provider_vtbl = {
     uia_provider_QueryInterface,
     uia_provider_AddRef,
@@ -1770,6 +1818,7 @@ static const IWineUiaProviderVtbl uia_provider_vtbl = {
     uia_provider_get_prov_opts,
     uia_provider_has_parent,
     uia_provider_navigate,
+    uia_provider_get_focus,
 };
 
 static HRESULT create_wine_uia_provider(struct uia_node *node, IRawElementProviderSimple *elprov,
@@ -2170,6 +2219,30 @@ static HRESULT WINAPI uia_nested_node_provider_navigate(IWineUiaProvider *iface,
     return S_OK;
 }
 
+static HRESULT WINAPI uia_nested_node_provider_get_focus(IWineUiaProvider *iface, VARIANT *out_val)
+{
+    struct uia_nested_node_provider *prov = impl_from_nested_node_IWineUiaProvider(iface);
+    HUIANODE node;
+    HRESULT hr;
+    VARIANT v;
+
+    TRACE("%p, %p\n", iface, out_val);
+
+    VariantInit(out_val);
+    hr = get_focus_from_node_provider(prov->nested_node, 0, &v);
+    if (FAILED(hr) || V_VT(&v) == VT_EMPTY)
+        return hr;
+
+    hr = uia_node_from_lresult((LRESULT)V_I4(&v), &node);
+    if (FAILED(hr))
+        return hr;
+
+    get_variant_for_node(node, out_val);
+    VariantClear(&v);
+
+    return S_OK;
+}
+
 static const IWineUiaProviderVtbl uia_nested_node_provider_vtbl = {
     uia_nested_node_provider_QueryInterface,
     uia_nested_node_provider_AddRef,
@@ -2178,6 +2251,7 @@ static const IWineUiaProviderVtbl uia_nested_node_provider_vtbl = {
     uia_nested_node_provider_get_prov_opts,
     uia_nested_node_provider_has_parent,
     uia_nested_node_provider_navigate,
+    uia_nested_node_provider_get_focus,
 };
 
 static BOOL is_nested_node_provider(IWineUiaProvider *iface)
@@ -2435,13 +2509,83 @@ HRESULT WINAPI UiaGetRootNode(HUIANODE *huianode)
     return UiaNodeFromHandle(GetDesktopWindow(), huianode);
 }
 
+static HRESULT get_focused_uia_node(HUIANODE in_node, HUIANODE *out_node)
+{
+    struct uia_node *node = unsafe_impl_from_IWineUiaNode((IWineUiaNode *)in_node);
+    const BOOL desktop_node = (node->hwnd == GetDesktopWindow());
+    HRESULT hr = S_OK;
+    VARIANT v;
+    int i;
+
+    *out_node = NULL;
+    VariantInit(&v);
+    for (i = 0; i < node->prov_count; i++)
+    {
+        /*
+         * When getting focus from nodes other than the desktop, we ignore
+         * both the node's creator provider and its HWND provider. This avoids
+         * the problem of returning the same provider twice from GetFocus.
+         */
+        if (!desktop_node && ((i == node->creator_prov_idx) ||
+                    (get_node_provider_type_at_idx(node, i) == PROV_TYPE_HWND)))
+            continue;
+
+        hr = get_focus_from_node_provider(&node->IWineUiaNode_iface, i, &v);
+        if (FAILED(hr))
+            break;
+
+        if (V_VT(&v) != VT_EMPTY)
+        {
+            hr = UiaHUiaNodeFromVariant(&v, out_node);
+            if (FAILED(hr))
+                *out_node = NULL;
+            break;
+        }
+    }
+
+    return hr;
+}
+
 /***********************************************************************
  *          UiaNodeFromFocus (uiautomationcore.@)
  */
 HRESULT WINAPI UiaNodeFromFocus(struct UiaCacheRequest *cache_req, SAFEARRAY **out_req, BSTR *tree_struct)
 {
-    FIXME("(%p, %p, %p): stub\n", cache_req, out_req, tree_struct);
-    return E_NOTIMPL;
+    HUIANODE node, node2;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %p)\n", cache_req, out_req, tree_struct);
+
+    if (!cache_req || !out_req || !tree_struct)
+        return E_INVALIDARG;
+
+    *out_req = NULL;
+    *tree_struct = NULL;
+
+    hr = UiaGetRootNode(&node);
+    if (FAILED(hr))
+        return hr;
+
+    while (1)
+    {
+        hr = get_focused_uia_node(node, &node2);
+        if (FAILED(hr))
+            goto exit;
+
+        if (!node2)
+            break;
+
+        UiaNodeRelease(node);
+        node = node2;
+    }
+
+    hr = UiaGetUpdatedCache(node, cache_req, NormalizeState_View, NULL, out_req, tree_struct);
+    if (FAILED(hr))
+        WARN("UiaGetUpdatedCache failed with hr %#lx\n", hr);
+exit:
+    UiaNodeRelease(node);
+
+    return hr;
 }
 
 /***********************************************************************
