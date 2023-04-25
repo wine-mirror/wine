@@ -1322,8 +1322,8 @@ static void test_cross_thread_himc(void)
 
     ok_ret( 1, ImmGenerateMessage( himc[1] ) );
 
-    todo_wine ok_ret( 0, ImmGenerateMessage( params.himc[0] ) );
-    todo_wine ok_ret( 0, ImmGenerateMessage( params.himc[1] ) );
+    ok_ret( 0, ImmGenerateMessage( params.himc[0] ) );
+    ok_ret( 0, ImmGenerateMessage( params.himc[1] ) );
 
     /* ImmAssociateContext should fail with cross thread HWND or HIMC */
 
@@ -6619,12 +6619,10 @@ static void test_ImmGenerateMessage(void)
         {
             .hkl = expect_ime, .himc = default_himc,
             .func = MSG_TEST_WIN, .message = {.msg = WM_IME_COMPOSITION, .wparam = 0, .lparam = GCS_COMPSTR},
-            .todo = TRUE,
         },
         {
             .hkl = expect_ime, .himc = default_himc,
             .func = MSG_IME_UI, .message = {.msg = WM_IME_COMPOSITION, .wparam = 0, .lparam = GCS_COMPSTR},
-            .todo = TRUE,
         },
         {0},
     };
@@ -6673,34 +6671,33 @@ static void test_ImmGenerateMessage(void)
 
     ctx->dwNumMsgBuf = 1;
     ok_ret( 1, ImmGenerateMessage( himc ) );
-    todo_wine ok_seq( empty_sequence );
+    ok_seq( empty_sequence );
     ok_eq( 0, ctx->dwNumMsgBuf, UINT, "%u" );
-    todo_wine ok_ret( sizeof(*msgs), ImmGetIMCCSize( ctx->hMsgBuf ) );
+    ok_ret( sizeof(*msgs), ImmGetIMCCSize( ctx->hMsgBuf ) );
     tmp_msgs = ImmLockIMCC( ctx->hMsgBuf );
-    todo_wine ok_eq( msgs, tmp_msgs, TRANSMSG *, "%p" );
+    ok_eq( msgs, tmp_msgs, TRANSMSG *, "%p" );
     ok_ret( 0, ImmUnlockIMCC( ctx->hMsgBuf ) );
 
     ctx->hWnd = hwnd;
     ctx->dwNumMsgBuf = 0;
     ok_ret( 1, ImmGenerateMessage( himc ) );
     ok_seq( empty_sequence );
-    todo_wine ok_ret( sizeof(*msgs), ImmGetIMCCSize( ctx->hMsgBuf ) );
+    ok_ret( sizeof(*msgs), ImmGetIMCCSize( ctx->hMsgBuf ) );
     tmp_msgs = ImmLockIMCC( ctx->hMsgBuf );
-    todo_wine ok_eq( msgs, tmp_msgs, TRANSMSG *, "%p" );
+    ok_eq( msgs, tmp_msgs, TRANSMSG *, "%p" );
     ok_ret( 0, ImmUnlockIMCC( ctx->hMsgBuf ) );
-    if (!tmp_msgs) ctx->hMsgBuf = ImmReSizeIMCC( ctx->hMsgBuf, sizeof(*msgs) );
 
     ctx->dwNumMsgBuf = 1;
     ok_ret( 1, ImmGenerateMessage( himc ) );
     ok_seq( generate_sequence );
     ok_eq( 0, ctx->dwNumMsgBuf, UINT, "%u" );
-    todo_wine ok_ret( sizeof(*msgs), ImmGetIMCCSize( ctx->hMsgBuf ) );
+    ok_ret( sizeof(*msgs), ImmGetIMCCSize( ctx->hMsgBuf ) );
     tmp_msgs = ImmLockIMCC( ctx->hMsgBuf );
-    todo_wine ok_eq( msgs, tmp_msgs, TRANSMSG *, "%p" );
+    ok_eq( msgs, tmp_msgs, TRANSMSG *, "%p" );
     ok_ret( 0, ImmUnlockIMCC( ctx->hMsgBuf ) );
 
     tmp_msgs = ImmLockIMCC( ctx->hMsgBuf );
-    todo_wine ok_eq( msgs, tmp_msgs, TRANSMSG *, "%p" );
+    ok_eq( msgs, tmp_msgs, TRANSMSG *, "%p" );
     ok_ret( 0, ImmUnlockIMCC( ctx->hMsgBuf ) );
 
     ok_ret( 1, ImmUnlockIMC( himc ) );

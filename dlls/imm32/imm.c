@@ -828,13 +828,6 @@ static void imc_post_message( struct imc *imc, TRANSMSG *message )
     PostMessageW( target, message->message, message->wParam, message->lParam );
 }
 
-static void imc_send_message( struct imc *imc, TRANSMSG *message )
-{
-    HWND target;
-    if (!(target = GetFocus()) && !(target = imc->IMC.hWnd)) return;
-    SendMessageW( target, message->message, message->wParam, message->lParam );
-}
-
 /***********************************************************************
  *		ImmSetActiveContext (IMM32.@)
  */
@@ -3049,36 +3042,25 @@ DWORD WINAPI ImmGetIMCCSize(HIMCC imcc)
 /***********************************************************************
 *		ImmGenerateMessage(IMM32.@)
 */
-BOOL WINAPI ImmGenerateMessage(HIMC hIMC)
+BOOL WINAPI ImmGenerateMessage( HIMC himc )
 {
-    struct imc *data = get_imc_data( hIMC );
+    INPUTCONTEXT *ctx;
 
-    if (!data)
+    TRACE( "himc %p\n", himc );
+
+    if (NtUserQueryInputContext( himc, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
+
+    while (ctx->dwNumMsgBuf--)
     {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return FALSE;
+        TRANSMSG *msgs, msg;
+        if (!(msgs = ImmLockIMCC( ctx->hMsgBuf ))) return FALSE;
+        msg = msgs[0];
+        memmove( msgs, msgs + 1, ctx->dwNumMsgBuf * sizeof(*msgs) );
+        ImmUnlockIMCC( ctx->hMsgBuf );
+        SendMessageW( ctx->hWnd, msg.message, msg.wParam, msg.lParam );
     }
-
-    TRACE("%li messages queued\n",data->IMC.dwNumMsgBuf);
-    if (data->IMC.dwNumMsgBuf > 0)
-    {
-        LPTRANSMSG lpTransMsg;
-        HIMCC hMsgBuf;
-        DWORD i, dwNumMsgBuf;
-
-        /* We are going to detach our hMsgBuff so that if processing messages
-           generates new messages they go into a new buffer */
-        hMsgBuf = data->IMC.hMsgBuf;
-        dwNumMsgBuf = data->IMC.dwNumMsgBuf;
-
-        data->IMC.hMsgBuf = ImmCreateIMCC(0);
-        data->IMC.dwNumMsgBuf = 0;
-
-        lpTransMsg = ImmLockIMCC(hMsgBuf);
-        for (i = 0; i < dwNumMsgBuf; i++) imc_send_message( data, lpTransMsg + i );
-        ImmUnlockIMCC(hMsgBuf);
-        ImmDestroyIMCC(hMsgBuf);
-    }
+    ctx->dwNumMsgBuf++;
 
     return TRUE;
 }
