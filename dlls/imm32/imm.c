@@ -972,9 +972,16 @@ static HWND get_ime_ui_window(void)
     {
         imc->ui_hwnd = CreateWindowExW( WS_EX_TOOLWINDOW, ime->ui_class, NULL, WS_POPUP, 0, 0, 1, 1,
                                         ImmGetDefaultIMEWnd( 0 ), 0, ime->module, 0 );
-        SetWindowLongPtrW( imc->ui_hwnd, IMMGWL_IMC, (LONG_PTR)imc->handle );
+        SetWindowLongPtrW( imc->ui_hwnd, IMMGWL_IMC, (LONG_PTR)NtUserGetWindowInputContext( GetFocus() ) );
     }
     return imc->ui_hwnd;
+}
+
+static void set_ime_ui_window_himc( HIMC himc )
+{
+    HWND hwnd;
+    if (!(hwnd = get_ime_ui_window())) return;
+    SetWindowLongPtrW( hwnd, IMMGWL_IMC, (LONG_PTR)himc );
 }
 
 /***********************************************************************
@@ -1021,6 +1028,7 @@ HIMC WINAPI ImmAssociateContext( HWND hwnd, HIMC new_himc )
     {
         ImmSetActiveContext( hwnd, old_himc, FALSE );
         ImmSetActiveContext( hwnd, new_himc, TRUE );
+        if (hwnd == GetFocus()) set_ime_ui_window_himc( new_himc );
     }
 
     return ret == AICR_FAILED ? 0 : old_himc;
@@ -1056,6 +1064,7 @@ BOOL WINAPI ImmAssociateContextEx( HWND hwnd, HIMC new_himc, DWORD flags )
     {
         ImmSetActiveContext( hwnd, old_himc, FALSE );
         ImmSetActiveContext( hwnd, new_himc, TRUE );
+        if (hwnd == GetFocus()) set_ime_ui_window_himc( new_himc );
     }
 
     return ret != AICR_FAILED;
@@ -2683,14 +2692,11 @@ BOOL WINAPI ImmSetConversionStatus( HIMC himc, DWORD conversion, DWORD sentence 
 BOOL WINAPI ImmSetOpenStatus( HIMC himc, BOOL status )
 {
     INPUTCONTEXT *ctx;
-    HWND ui_hwnd;
 
     TRACE( "himc %p, status %u\n", himc, status );
 
     if (NtUserQueryInputContext( himc, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
     if (!(ctx = ImmLockIMC( himc ))) return FALSE;
-
-    if ((ui_hwnd = get_ime_ui_window())) SetWindowLongPtrW( ui_hwnd, IMMGWL_IMC, (LONG_PTR)himc );
 
     if (status != ctx->fOpen)
     {
@@ -3240,11 +3246,15 @@ static LRESULT ime_internal_msg( WPARAM wparam, LPARAM lparam)
     switch (wparam)
     {
     case IME_INTERNAL_ACTIVATE:
+        hwnd = (HWND)lparam;
+        himc = NtUserGetWindowInputContext( hwnd );
+        ImmSetActiveContext( hwnd, himc, TRUE );
+        set_ime_ui_window_himc( himc );
+        break;
     case IME_INTERNAL_DEACTIVATE:
         hwnd = (HWND)lparam;
-        himc = ImmGetContext(hwnd);
-        ImmSetActiveContext(hwnd, himc, wparam == IME_INTERNAL_ACTIVATE);
-        ImmReleaseContext(hwnd, himc);
+        himc = NtUserGetWindowInputContext( hwnd );
+        ImmSetActiveContext( hwnd, himc, FALSE );
         break;
     case IME_INTERNAL_HKL_ACTIVATE:
         ImmEnumInputContext( 0, enum_activate_layout, 0 );

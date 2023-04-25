@@ -4566,9 +4566,9 @@ static void test_ImmSetOpenStatus(void)
     ok_ne( NULL, ime_windows.ime_ui_hwnd, HWND, "%p" );
     ok_eq( default_himc, (HIMC)GetWindowLongPtrW( ime_windows.ime_ui_hwnd, IMMGWL_IMC ), HIMC, "%p" );
     ok_ret( 1, ImmSetOpenStatus( himc, TRUE ) );
-    todo_wine ok_eq( default_himc, (HIMC)GetWindowLongPtrW( ime_windows.ime_ui_hwnd, IMMGWL_IMC ), HIMC, "%p" );
+    ok_eq( default_himc, (HIMC)GetWindowLongPtrW( ime_windows.ime_ui_hwnd, IMMGWL_IMC ), HIMC, "%p" );
     ok_ret( 1, ImmSetOpenStatus( himc, FALSE ) );
-    todo_wine ok_eq( default_himc, (HIMC)GetWindowLongPtrW( ime_windows.ime_ui_hwnd, IMMGWL_IMC ), HIMC, "%p" );
+    ok_eq( default_himc, (HIMC)GetWindowLongPtrW( ime_windows.ime_ui_hwnd, IMMGWL_IMC ), HIMC, "%p" );
     ok_ret( 1, ImmDestroyContext( himc ) );
     memset( ime_calls, 0, sizeof(ime_calls) );
     ime_call_count = 0;
@@ -5331,7 +5331,7 @@ static void test_ImmSetActiveContext(void)
 
     ctx->hWnd = 0;
     ok_eq( default_himc, ImmAssociateContext( hwnd, himc ), HIMC, "%p" );
-    todo_wine ok_eq( himc, (HIMC)GetWindowLongPtrW( ime_windows.ime_ui_hwnd, IMMGWL_IMC ), HIMC, "%p" );
+    ok_eq( himc, (HIMC)GetWindowLongPtrW( ime_windows.ime_ui_hwnd, IMMGWL_IMC ), HIMC, "%p" );
     ok_ret( 0, IsWindowVisible( ime_windows.ime_ui_hwnd ) );
     ok_eq( hwnd, ctx->hWnd, HWND, "%p" );
 
