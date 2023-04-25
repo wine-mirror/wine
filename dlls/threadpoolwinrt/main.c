@@ -202,7 +202,7 @@ static ULONG STDMETHODCALLTYPE async_info_AddRef(IAsyncInfo *iface)
 static ULONG STDMETHODCALLTYPE async_info_Release(IAsyncInfo *iface)
 {
     struct async_action *action = impl_from_IAsyncInfo(iface);
-    return IAsyncAction_AddRef(&action->IAsyncAction_iface);
+    return IAsyncAction_Release(&action->IAsyncAction_iface);
 }
 
 static HRESULT STDMETHODCALLTYPE async_info_GetIids(IAsyncInfo *iface, ULONG *iid_count, IID **iids)
