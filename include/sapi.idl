@@ -574,6 +574,59 @@ typedef [restricted, hidden] struct SPAUDIOBUFFERINFO
     ULONG ulMsEventBias;
 } SPAUDIOBUFFERINFO;
 
+typedef [hidden] enum SPPARTOFSPEECH
+{
+    SPPS_NotOverriden  = -1,
+    SPPS_Unknown       = 0,
+    SPPS_Noun          = 0x1000,
+    SPPS_Verb          = 0x2000,
+    SPPS_Modifier      = 0x3000,
+    SPPS_Function      = 0x4000,
+    SPPS_Interjection  = 0x5000,
+    SPPS_Noncontent    = 0x6000,
+    SPPS_LMA           = 0x7000,
+    SPPS_SuppressWord  = 0xF000
+} SPPARTOFSPEECH;
+
+typedef [restricted, hidden] struct SPVPITCH
+{
+    long MiddleAdj;
+    long RangeAdj;
+} SPVPITCH;
+
+typedef [hidden] enum SPVACTIONS
+{
+    SPVA_Speak = 0,
+    SPVA_Silence,
+    SPVA_Pronounce,
+    SPVA_Bookmark,
+    SPVA_SpellOut,
+    SPVA_Section,
+    SPVA_ParseUnknownTag
+} SPVACTIONS;
+
+typedef [restricted, hidden] struct SPVCONTEXT
+{
+    LPCWSTR pCategory;
+    LPCWSTR pBefore;
+    LPCWSTR pAfter;
+} SPVCONTEXT;
+
+typedef [restricted, hidden] struct SPVSTATE
+{
+    SPVACTIONS      eAction;
+    LANGID          LangID;
+    WORD            wReserved;
+    long            EmphAdj;
+    long            RateAdj;
+    ULONG           Volume;
+    SPVPITCH        PitchAdj;
+    ULONG           SilenceMSecs;
+    SPPHONEID      *pPhoneIds;
+    SPPARTOFSPEECH  ePartOfSpeech;
+    SPVCONTEXT      Context;
+} SPVSTATE;
+
 cpp_quote("#if defined(__GNUC__)")
 
 cpp_quote("#define SPCAT_AUDIOOUT (const WCHAR []){ 'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E','\\\\','S','O','F','T','W','A','R','E','\\\\','M','i','c','r','o','s','o','f','t','\\\\','S','p','e','e','c','h','\\\\','A','u','d','i','o','O','u','t','p','u','t',0 }")
