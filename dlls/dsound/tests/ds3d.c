@@ -1454,7 +1454,6 @@ static void test_doppler(GUID *guid, BOOL play)
 
     check_doppler(dsound, listener, play, DS3DMODE_HEADRELATIVE, 0, -90, 1, -90, 22050, 29400);
 
-    /* Wine TODO: The frequency is not updated. */
     check_doppler(dsound, listener, play, DS3DMODE_DISABLE, 0, 0, 1, -90, 22050, 22050);
 
     IDirectSound3DListener_Release(listener);

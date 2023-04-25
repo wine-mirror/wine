@@ -196,6 +196,8 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 			/* this one is here only to eliminate annoying warning message */
 			dsb->volpan.lVolume = dsb->ds3db_lVolume;
 			DSOUND_RecalcVolPan (&dsb->volpan);
+			dsb->freq = dsb->ds3db_freq;
+			DSOUND_RecalcFormat(dsb);
 			return;
 	}
 	
