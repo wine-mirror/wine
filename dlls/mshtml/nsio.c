@@ -4000,9 +4000,9 @@ void init_nsio(nsIComponentManager *component_manager)
     }
 
     nsres = nsIFactory_CreateInstance(old_factory, NULL, &IID_nsIIOService, (void**)&nsio);
+    nsIFactory_Release(old_factory);
     if(NS_FAILED(nsres)) {
         ERR("Couldn not create nsIOService instance %08lx\n", nsres);
-        nsIFactory_Release(old_factory);
         return;
     }
 
