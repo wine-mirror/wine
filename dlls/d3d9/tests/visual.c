@@ -2808,7 +2808,10 @@ static void test_cube_wrap(void)
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         color = getPixelColor(device, 320, 240);
-        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0x00, 0xff), 1),
+        /* Modern AMD GPUs do slip into reading the border color. */
+        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0x00, 0xff), 1)
+                || broken(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0xbf, 0x40), 1)
+                && address_modes[x].mode == D3DTADDRESS_BORDER),
                 "Got color 0x%08x for addressing mode %s, expected 0x000000ff.\n",
                 color, address_modes[x].name);
 
