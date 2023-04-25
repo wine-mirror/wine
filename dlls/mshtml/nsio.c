@@ -2263,6 +2263,8 @@ static nsresult NSAPI nsChannel_traverse(void *ccp, void *p, nsCycleCollectionTr
         note_cc_edge(This->owner, "owner", cb);
     if(This->post_data_stream)
         note_cc_edge((nsISupports*)This->post_data_stream, "post_data_stream", cb);
+    if(This->load_info)
+        note_cc_edge(This->load_info, "load_info", cb);
     if(This->load_group)
         note_cc_edge((nsISupports*)This->load_group, "load_group", cb);
     if(This->notif_callback)
@@ -2290,6 +2292,11 @@ static nsresult NSAPI nsChannel_unlink(void *p)
         nsIInputStream *post_data_stream = This->post_data_stream;
         This->post_data_stream = NULL;
         nsIInputStream_Release(post_data_stream);
+    }
+    if(This->load_info) {
+        nsISupports *load_info = This->load_info;
+        This->load_info = NULL;
+        nsISupports_Release(load_info);
     }
     if(This->load_group) {
         nsILoadGroup *load_group = This->load_group;
