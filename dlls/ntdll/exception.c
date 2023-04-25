@@ -94,6 +94,7 @@ const char *debugstr_exception_code( DWORD code )
     case EXCEPTION_WINE_CXX_EXCEPTION: return "EXCEPTION_WINE_CXX_EXCEPTION";
     case EXCEPTION_WINE_NAME_THREAD: return "EXCEPTION_WINE_NAME_THREAD";
     case EXCEPTION_WINE_STUB: return "EXCEPTION_WINE_STUB";
+    case RPC_S_SERVER_UNAVAILABLE: return "RPC_S_SERVER_UNAVAILABLE";
     }
     return "unknown";
 }
