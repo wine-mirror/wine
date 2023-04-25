@@ -3122,9 +3122,6 @@ static DOMEvent *progress_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_
 {
     DOMProgressEvent *progress_event;
 
-    if(compat_mode < COMPAT_MODE_IE10)
-        return event_ctor(sizeof(DOMEvent), &DOMEvent_dispex, NULL, NULL, nsevent, event_id, compat_mode);
-
     if(!(progress_event = event_ctor(sizeof(DOMProgressEvent), &DOMProgressEvent_dispex,
             DOMProgressEvent_query_interface, DOMProgressEvent_destroy, nsevent, event_id, compat_mode)))
         return NULL;
@@ -3154,6 +3151,7 @@ static DOMEvent *storage_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t
 static const struct {
     REFIID iid;
     DOMEvent *(*ctor)(void *iface, nsIDOMEvent *nsevent, eventid_t, compat_mode_t);
+    compat_mode_t min_compat_mode;
 } event_types_ctor_table[] = {
     [EVENT_TYPE_EVENT]          = { NULL,                         generic_event_ctor },
     [EVENT_TYPE_UIEVENT]        = { &IID_nsIDOMUIEvent,           ui_event_ctor },
@@ -3164,7 +3162,7 @@ static const struct {
     [EVENT_TYPE_DRAG]           = { NULL,                         generic_event_ctor },
     [EVENT_TYPE_PAGETRANSITION] = { NULL,                         page_transition_event_ctor },
     [EVENT_TYPE_CUSTOM]         = { &IID_nsIDOMCustomEvent,       custom_event_ctor },
-    [EVENT_TYPE_PROGRESS]       = { &IID_nsIDOMProgressEvent,     progress_event_ctor },
+    [EVENT_TYPE_PROGRESS]       = { &IID_nsIDOMProgressEvent,     progress_event_ctor, COMPAT_MODE_IE10 },
     [EVENT_TYPE_MESSAGE]        = { NULL,                         message_event_ctor },
     [EVENT_TYPE_STORAGE]        = { NULL,                         storage_event_ctor },
 };
@@ -3174,6 +3172,9 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent, compat_mode_t compat_mode, ev
 {
     void *iface = NULL;
     DOMEvent *event;
+
+    if(compat_mode < event_types_ctor_table[event_type].min_compat_mode)
+        event_type = EVENT_TYPE_EVENT;
 
     if(event_types_ctor_table[event_type].iid)
         nsIDOMEvent_QueryInterface(nsevent, event_types_ctor_table[event_type].iid, &iface);
