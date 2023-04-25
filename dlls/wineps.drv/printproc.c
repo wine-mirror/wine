@@ -3003,6 +3003,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
 
 static BOOL print_metafile(struct pp_data *data, HANDLE hdata)
 {
+    XFORM xform = { .eM11 = 1, .eM22 = 1 };
     record_hdr header;
     HENHMETAFILE hmf;
     BYTE *buf;
@@ -3037,6 +3038,20 @@ static BOOL print_metafile(struct pp_data *data, HANDLE hdata)
     free(buf);
     if (!hmf)
         return FALSE;
+
+    AbortPath(data->pdev->dev.hdc);
+    SetBkColor(data->pdev->dev.hdc, RGB(255, 255, 255));
+    SetBkMode(data->pdev->dev.hdc, OPAQUE);
+    SetMapMode(data->pdev->dev.hdc, MM_TEXT);
+    SetPolyFillMode(data->pdev->dev.hdc, ALTERNATE);
+    SetROP2(data->pdev->dev.hdc, R2_COPYPEN);
+    SetStretchBltMode(data->pdev->dev.hdc, BLACKONWHITE);
+    SetTextAlign(data->pdev->dev.hdc, TA_LEFT | TA_TOP);
+    SetTextColor(data->pdev->dev.hdc, 0);
+    SetTextJustification(data->pdev->dev.hdc, 0, 0);
+    SetWorldTransform(data->pdev->dev.hdc, &xform);
+    PSDRV_SetTextColor(&data->pdev->dev, 0);
+    PSDRV_SetBkColor(&data->pdev->dev, RGB(255, 255, 255));
 
     ret = EnumEnhMetaFile(NULL, hmf, hmf_proc, (void *)data, NULL);
     DeleteEnhMetaFile(hmf);
@@ -3133,9 +3148,6 @@ HANDLE WINAPI OpenPrintProcessor(WCHAR *port, PRINTPROCESSOROPENDATA *open_data)
     data->pdev->dev.next = &data->font_dev;
     data->font_dev.funcs = &font_funcs;
     data->font_dev.hdc = hdc;
-
-    PSDRV_SetTextColor(&data->pdev->dev, GetTextColor(hdc));
-    PSDRV_SetBkColor(&data->pdev->dev, GetBkColor(hdc));
     return (HANDLE)data;
 }
 
