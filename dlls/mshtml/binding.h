@@ -37,7 +37,7 @@ typedef struct {
     nsIHttpChannelInternal nsIHttpChannelInternal_iface;
     nsICacheInfoChannel    nsICacheInfoChannel_iface;
 
-    LONG ref;
+    nsCycleCollectingAutoRefCnt ccref;
 
     nsWineURI *uri;
     nsIInputStream *post_data_stream;
