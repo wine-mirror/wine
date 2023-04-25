@@ -383,6 +383,7 @@ static void _elem_fire_event(unsigned line, IUnknown *unk, const WCHAR *event, V
     str = SysAllocString(event);
     in_fire_event++;
     hres = IHTMLElement3_fireEvent(elem3, str, evobj, &b);
+    IHTMLElement3_Release(elem3);
     in_fire_event--;
     SysFreeString(str);
     ok_(__FILE__,line)(hres == S_OK, "fireEvent failed: %08lx\n", hres);
