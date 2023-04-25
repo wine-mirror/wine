@@ -560,6 +560,7 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
     }
 
     nsres = NS_InitXPCOM2(&pServMgr, gre_dir, (nsIDirectoryServiceProvider*)&nsDirectoryServiceProvider2);
+    nsIFile_Release(gre_dir);
     if(NS_FAILED(nsres)) {
         ERR("NS_InitXPCOM2 failed: %08lx\n", nsres);
         FreeLibrary(xul_handle);
