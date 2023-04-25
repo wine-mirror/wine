@@ -3876,16 +3876,6 @@ static nsresult NSAPI nsIOServiceHook_NewURI(nsIIOServiceHook *iface, const nsAC
     if(!strncmp(spec, "wine:", 5))
         spec += 5;
 
-    if(aBaseURI) {
-        nsres = nsIURI_QueryInterface(aBaseURI, &IID_nsWineURI, (void**)&base_wine_uri);
-        if(NS_SUCCEEDED(nsres)) {
-            if(!ensure_uri(base_wine_uri))
-                return NS_ERROR_UNEXPECTED;
-        }else {
-            WARN("Could not get base nsWineURI: %08lx\n", nsres);
-        }
-    }
-
     if(aOriginCharset && *aOriginCharset && _strnicmp(aOriginCharset, "utf", 3)) {
         BSTR charset;
         int len;
@@ -3903,8 +3893,21 @@ static nsresult NSAPI nsIOServiceHook_NewURI(nsIIOServiceHook *iface, const nsAC
 
     MultiByteToWideChar(cp, 0, spec, -1, new_spec, ARRAY_SIZE(new_spec));
 
+    if(aBaseURI) {
+        nsres = nsIURI_QueryInterface(aBaseURI, &IID_nsWineURI, (void**)&base_wine_uri);
+        if(NS_SUCCEEDED(nsres)) {
+            if(!ensure_uri(base_wine_uri)) {
+                nsIFileURL_Release(&base_wine_uri->nsIFileURL_iface);
+                return NS_ERROR_UNEXPECTED;
+            }
+        }else {
+            WARN("Could not get base nsWineURI: %08lx\n", nsres);
+        }
+    }
+
     if(base_wine_uri) {
         hres = combine_url(base_wine_uri->uri, new_spec, &urlmon_uri);
+        nsIFileURL_Release(&base_wine_uri->nsIFileURL_iface);
     }else {
         hres = create_uri(new_spec, 0, &urlmon_uri);
         if(FAILED(hres))
@@ -3916,8 +3919,6 @@ static nsresult NSAPI nsIOServiceHook_NewURI(nsIIOServiceHook *iface, const nsAC
 
     nsres = create_nsuri(urlmon_uri, &wine_uri);
     IUri_Release(urlmon_uri);
-    if(base_wine_uri)
-        nsIFileURL_Release(&base_wine_uri->nsIFileURL_iface);
     if(NS_FAILED(nsres))
         return nsres;
 
