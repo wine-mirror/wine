@@ -490,7 +490,6 @@ static BOOL paint_path( PHYSDEV dev, BOOL stroke, BOOL fill )
 {
     POINT *points;
     BYTE *types;
-    BOOL ret = FALSE;
     int i, size = GetPath( dev->hdc, NULL, NULL, 0 );
 
     if (size == -1) return FALSE;
@@ -536,7 +535,7 @@ static BOOL paint_path( PHYSDEV dev, BOOL stroke, BOOL fill )
 done:
     HeapFree( GetProcessHeap(), 0, points );
     HeapFree( GetProcessHeap(), 0, types );
-    return ret;
+    return TRUE;
 }
 
 /***********************************************************************
