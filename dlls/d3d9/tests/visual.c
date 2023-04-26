@@ -26468,10 +26468,10 @@ static void test_mismatched_sample_types(void)
     static IDirect3DVolumeTexture9 *volume;
     IDirect3DVertexShader9 *vertex_shader;
     static IDirect3DTexture9 *tex_2d;
+    unsigned int colour, i, r, g, b;
     D3DLOCKED_RECT locked_rect;
     D3DLOCKED_BOX locked_box;
     IDirect3DDevice9 *device;
-    unsigned int colour, i;
     IDirect3D9 *d3d;
     ULONG refcount;
     D3DCAPS9 caps;
@@ -26540,21 +26540,22 @@ static void test_mismatched_sample_types(void)
 
     static DWORD ps_code[ARRAY_SIZE(ps_header) + TEST_MISMATCHED_SAMPLE_BODY_WORDS + ARRAY_SIZE(ps_footer)];
 
+#define SAMPLE_ZERO 0x1
+#define RANDOM_W    0x2
     static const struct
     {
         const char *name;
         IDirect3DBaseTexture9 **texture;
         IDirect3DPixelShader9 **pixel_shader;
         unsigned int expected_colour;
-        unsigned int expected_broken;
-        unsigned int expected_broken2;
+        unsigned int broken;
     }
     tests[] =
     {
         {"2d_2d", (IDirect3DBaseTexture9 **)&tex_2d, &ps_2d, 0x00707070},
         {"3d_3d", (IDirect3DBaseTexture9 **)&volume, &ps_3d, 0x00303030},
-        {"2d_3d", (IDirect3DBaseTexture9 **)&tex_2d, &ps_3d, 0x00707070, 0x00b2cce5},
-        {"3d_2d", (IDirect3DBaseTexture9 **)&volume, &ps_2d, 0x00303030, 0x00b2cce5, 0x00202020},
+        {"2d_3d", (IDirect3DBaseTexture9 **)&tex_2d, &ps_3d, 0x00707070, SAMPLE_ZERO},
+        {"3d_2d", (IDirect3DBaseTexture9 **)&volume, &ps_2d, 0x00303030, SAMPLE_ZERO | RANDOM_W},
     };
 
     window = create_window();
@@ -26651,10 +26652,17 @@ static void test_mismatched_sample_types(void)
 
         colour = getPixelColor(device, 320, 240);
 
+        /* If texld returns zero, the test writes vec4(0.7, 0.8, 0.9, 0.0) - 0x00b2cce5.
+         *
+         * When sampling the 3D texture with a 2D sampler, most drivers sample at the depth
+         * coordinate we provide (0.5), but some use 0.0, while my radeon GPU uses 0.89. */
+        r = (colour & 0x00ff0000) >> 16;
+        g = (colour & 0x0000ff00) >> 8;
+        b = (colour & 0x000000ff);
         todo_wine_if(!color_match(colour, tests[i].expected_colour, 1))
         ok(color_match(colour, tests[i].expected_colour, 1)
-                || broken(tests[i].expected_broken && color_match(colour, tests[i].expected_broken, 1))
-                || broken(tests[i].expected_broken2 && color_match(colour, tests[i].expected_broken2, 1)),
+                || broken((tests[i].broken & SAMPLE_ZERO) && color_match(colour, 0x00b2cce5, 1))
+                || broken((tests[i].broken & RANDOM_W) && r >= 0x1f && r <= 0x41 && r == g && r == b),
                 "test %s, expected 0x%08x, got 0x%08x.\n",
                 tests[i].name, tests[i].expected_colour, colour);
     }
@@ -26674,6 +26682,9 @@ done:
     ok(!refcount, "Device has %lu references left.\n", refcount);
     IDirect3D9_Release(d3d);
     DestroyWindow(window);
+
+#undef SAMPLE_ZERO
+#undef RANDOM_W
 }
 
 static void test_draw_mapped_buffer(void)
