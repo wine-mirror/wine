@@ -3040,6 +3040,7 @@ static BOOL print_metafile(struct pp_data *data, HANDLE hdata)
         return FALSE;
 
     AbortPath(data->pdev->dev.hdc);
+    MoveToEx(data->pdev->dev.hdc, 0, 0, NULL);
     SetBkColor(data->pdev->dev.hdc, RGB(255, 255, 255));
     SetBkMode(data->pdev->dev.hdc, OPAQUE);
     SetMapMode(data->pdev->dev.hdc, MM_TEXT);
