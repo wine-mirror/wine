@@ -293,7 +293,6 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFrequency(IDirectSoundBuffer8 *i
 	if (freq != oldFreq) {
 		This->freqAdjustNum = This->freq;
 		This->freqAdjustDen = This->device->pwfx->nSamplesPerSec;
-		This->nAvgBytesPerSec = freq * This->pwfx->nBlockAlign;
 		DSOUND_RecalcFormat(This);
 
 		newcommitted = realloc(This->committedbuff, This->writelead);
@@ -1114,8 +1113,6 @@ HRESULT secondarybuffer_create(DirectSoundDevice *device, const DSBUFFERDESC *ds
 
 	dsb->freqAdjustNum = dsb->freq;
 	dsb->freqAdjustDen = device->pwfx->nSamplesPerSec;
-	dsb->nAvgBytesPerSec = dsb->freq *
-		dsbd->lpwfxFormat->nBlockAlign;
 
 	/* calculate fragment size and write lead */
 	DSOUND_RecalcFormat(dsb);

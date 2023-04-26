@@ -141,7 +141,6 @@ struct IDirectSoundBufferImpl
     BufferMemory*               buffer;
     DWORD                       playflags,state,leadin;
     DWORD                       writelead,buflen;
-    DWORD                       nAvgBytesPerSec;
     DWORD                       freq;
     DSVOLUMEPAN                 volpan;
     DSBUFFERDESC                dsbd;
