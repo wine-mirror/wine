@@ -2460,61 +2460,20 @@ HDC WINAPI CreateEnhMetaFileA( HDC hdc, const char *filename, const RECT *rect,
     return ret;
 }
 
-/**********************************************************************
- *           CreateEnhMetaFileW   (GDI32.@)
- */
-HDC WINAPI CreateEnhMetaFileW( HDC hdc, const WCHAR *filename, const RECT *rect,
-                               const WCHAR *description )
+static void emf_reset( DC_ATTR *dc_attr, const RECT *rect )
 {
-    HDC ret;
-    struct emf *emf;
-    DC_ATTR *dc_attr;
-    HANDLE file;
-    DWORD size = 0, length = 0;
+    struct emf *emf = get_dc_emf( dc_attr );
+    HDC hdc = dc_attr_handle( dc_attr );
 
-    TRACE( "(%p %s %s %s)\n", hdc, debugstr_w(filename), wine_dbgstr_rect(rect),
-           debugstr_w(description) );
-
-    if (!(ret = NtGdiCreateMetafileDC( hdc ))) return 0;
-
-    if (!(dc_attr = get_dc_attr( ret )) || !(emf = HeapAlloc( GetProcessHeap(), 0, sizeof(*emf) )))
-    {
-        DeleteDC( ret );
-        return 0;
-    }
-
-    emf->dc_attr = dc_attr;
-    dc_attr->emf = (UINT_PTR)emf;
-
-    if (description) /* App name\0Title\0\0 */
-    {
-        length = lstrlenW( description );
-        length += lstrlenW( description + length + 1 );
-        length += 3;
-        length *= 2;
-    }
-    size = sizeof(ENHMETAHEADER) + (length + 3) / 4 * 4;
-
-    if (!(emf->emh = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size)))
-    {
-        DeleteDC( ret );
-        return 0;
-    }
-
-    emf->handles = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                              HANDLE_LIST_INC * sizeof(emf->handles[0]) );
-    emf->handles_size = HANDLE_LIST_INC;
+    memset( emf->handles, 0, emf->handles_size * sizeof(emf->handles[0]) );
     emf->cur_handles = 1;
     emf->file = 0;
+    if (emf->dc_brush) DeleteObject( emf->dc_brush );
     emf->dc_brush = 0;
+    if (emf->dc_pen) DeleteObject( emf->dc_pen );
     emf->dc_pen = 0;
     emf->path = FALSE;
-    emf->palette_size = 0;
     emf->palette_used = 0;
-    emf->palette = NULL;
-
-    emf->emh->iType = EMR_HEADER;
-    emf->emh->nSize = size;
 
     dc_attr->emf_bounds.left = dc_attr->emf_bounds.top = 0;
     dc_attr->emf_bounds.right = dc_attr->emf_bounds.bottom = -1;
@@ -2538,27 +2497,94 @@ HDC WINAPI CreateEnhMetaFileW( HDC hdc, const WCHAR *filename, const RECT *rect,
     emf->emh->nBytes = emf->emh->nSize;
     emf->emh->nRecords = 1;
     emf->emh->nHandles = 1;
-
     emf->emh->sReserved = 0; /* According to docs, this is reserved and must be 0 */
-    emf->emh->nDescription = length / 2;
-
-    emf->emh->offDescription = length ? sizeof(ENHMETAHEADER) : 0;
-
-    emf->emh->nPalEntries = 0; /* I guess this should start at 0 */
+    emf->emh->nPalEntries = 0;
 
     /* Size in pixels */
-    emf->emh->szlDevice.cx = GetDeviceCaps( ret, HORZRES );
-    emf->emh->szlDevice.cy = GetDeviceCaps( ret, VERTRES );
+    emf->emh->szlDevice.cx = GetDeviceCaps( hdc, HORZRES );
+    emf->emh->szlDevice.cy = GetDeviceCaps( hdc, VERTRES );
 
     /* Size in millimeters */
-    emf->emh->szlMillimeters.cx = GetDeviceCaps( ret, HORZSIZE );
-    emf->emh->szlMillimeters.cy = GetDeviceCaps( ret, VERTSIZE );
+    emf->emh->szlMillimeters.cx = GetDeviceCaps( hdc, HORZSIZE );
+    emf->emh->szlMillimeters.cy = GetDeviceCaps( hdc, VERTSIZE );
+
+    emf->emh->cbPixelFormat = 0;
+    emf->emh->offPixelFormat = 0;
+    emf->emh->bOpenGL = 0;
 
     /* Size in micrometers */
     emf->emh->szlMicrometers.cx = emf->emh->szlMillimeters.cx * 1000;
     emf->emh->szlMicrometers.cy = emf->emh->szlMillimeters.cy * 1000;
+}
+
+static struct emf *emf_create( HDC hdc, const RECT *rect, const WCHAR *description )
+{
+    DWORD size = 0, length = 0;
+    DC_ATTR *dc_attr;
+    struct emf *emf;
+
+    if (!(dc_attr = get_dc_attr( hdc )) || !(emf = HeapAlloc( GetProcessHeap(), 0, sizeof(*emf) )))
+        return NULL;
+
+    if (description) /* App name\0Title\0\0 */
+    {
+        length = lstrlenW( description );
+        length += lstrlenW( description + length + 1 );
+        length += 3;
+        length *= 2;
+    }
+    size = sizeof(ENHMETAHEADER) + (length + 3) / 4 * 4;
+
+    if (!(emf->emh = HeapAlloc( GetProcessHeap(), 0, size )) ||
+        !(emf->handles = HeapAlloc( GetProcessHeap(), 0,
+                HANDLE_LIST_INC * sizeof(emf->handles[0]) )))
+    {
+        HeapFree( GetProcessHeap(), 0, emf->emh );
+        HeapFree( GetProcessHeap(), 0, emf );
+        return NULL;
+    }
+
+    emf->dc_attr = dc_attr;
+    dc_attr->emf = (UINT_PTR)emf;
+
+    emf->handles_size = HANDLE_LIST_INC;
+    emf->dc_brush = 0;
+    emf->dc_pen = 0;
+    emf->palette_size = 0;
+    emf->palette = NULL;
+
+    emf->emh->iType = EMR_HEADER;
+    emf->emh->nSize = size;
+    emf->emh->nDescription = length / 2;
+    emf->emh->offDescription = length ? sizeof(ENHMETAHEADER) : 0;
 
     memcpy( (char *)emf->emh + sizeof(ENHMETAHEADER), description, length );
+
+    emf_reset( dc_attr, rect );
+    return emf;
+}
+
+/**********************************************************************
+ *           CreateEnhMetaFileW   (GDI32.@)
+ */
+HDC WINAPI CreateEnhMetaFileW( HDC hdc, const WCHAR *filename, const RECT *rect,
+                               const WCHAR *description )
+{
+    struct emf *emf;
+    HANDLE file;
+    HDC ret;
+
+    TRACE( "(%p %s %s %s)\n", hdc, debugstr_w(filename), wine_dbgstr_rect(rect),
+           debugstr_w(description) );
+
+    if (!(ret = NtGdiCreateMetafileDC( hdc ))) return 0;
+
+    emf = emf_create( ret, rect, description );
+    if (!emf)
+    {
+        DeleteDC( ret );
+        return 0;
+    }
 
     if (filename)  /* disk based metafile */
     {
