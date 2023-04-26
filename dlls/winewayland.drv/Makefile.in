@@ -1,7 +1,7 @@
 MODULE = winewayland.drv
 UNIXLIB = winewayland.so
 UNIX_CFLAGS = $(WAYLAND_CLIENT_CFLAGS)
-UNIX_LIBS = -lwin32u $(WAYLAND_CLIENT_LIBS)
+UNIX_LIBS = -lwin32u $(WAYLAND_CLIENT_LIBS) $(PTHREAD_LIBS)
 
 SOURCES = \
 	display.c \

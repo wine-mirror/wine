@@ -34,7 +34,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
 struct wayland process_wayland =
 {
-    .output_list = {&process_wayland.output_list, &process_wayland.output_list}
+    .output_list = {&process_wayland.output_list, &process_wayland.output_list},
+    .output_mutex = PTHREAD_MUTEX_INITIALIZER
 };
 
 /**********************************************************************
@@ -77,7 +78,7 @@ static void registry_handle_global_remove(void *data, struct wl_registry *regist
     {
         if (output->global_id == id)
         {
-            TRACE("removing output->name=%s\n", output->name);
+            TRACE("removing output->name=%s\n", output->current.name);
             wayland_output_destroy(output);
             return;
         }

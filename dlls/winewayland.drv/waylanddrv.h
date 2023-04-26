@@ -25,6 +25,7 @@
 # error You must include config.h to use this header
 #endif
 
+#include <pthread.h>
 #include <wayland-client.h>
 #include "xdg-output-unstable-v1-client-protocol.h"
 
@@ -53,6 +54,8 @@ struct wayland
     struct wl_registry *wl_registry;
     struct zxdg_output_manager_v1 *zxdg_output_manager_v1;
     struct wl_list output_list;
+    /* Protects the output_list and the wayland_output.current states. */
+    pthread_mutex_t output_mutex;
 };
 
 struct wayland_output_mode
@@ -63,17 +66,24 @@ struct wayland_output_mode
     int32_t refresh;
 };
 
-struct wayland_output
+struct wayland_output_state
 {
-    struct wl_list link;
-    struct wl_output *wl_output;
-    struct zxdg_output_v1 *zxdg_output_v1;
     struct rb_tree modes;
     struct wayland_output_mode *current_mode;
     char *name;
     int logical_x, logical_y;
     int logical_w, logical_h;
+};
+
+struct wayland_output
+{
+    struct wl_list link;
+    struct wl_output *wl_output;
+    struct zxdg_output_v1 *zxdg_output_v1;
     uint32_t global_id;
+    unsigned int pending_flags;
+    struct wayland_output_state pending;
+    struct wayland_output_state current;
 };
 
 /**********************************************************************

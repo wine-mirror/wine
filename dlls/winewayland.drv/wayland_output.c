@@ -35,6 +35,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 static const int32_t default_refresh = 60000;
 static uint32_t next_output_id = 0;
 
+#define WAYLAND_OUTPUT_CHANGED_MODES      0x01
+#define WAYLAND_OUTPUT_CHANGED_NAME       0x02
+#define WAYLAND_OUTPUT_CHANGED_LOGICAL_XY 0x04
+#define WAYLAND_OUTPUT_CHANGED_LOGICAL_WH 0x08
+
 /**********************************************************************
  *          Output handling
  */
@@ -62,9 +67,9 @@ static int wayland_output_mode_cmp_rb(const void *key,
     return 0;
 }
 
-static void wayland_output_add_mode(struct wayland_output *output,
-                                    int32_t width, int32_t height,
-                                    int32_t refresh, BOOL current)
+static void wayland_output_state_add_mode(struct wayland_output_state *state,
+                                          int32_t width, int32_t height,
+                                          int32_t refresh, BOOL current)
 {
     struct rb_entry *mode_entry;
     struct wayland_output_mode *mode;
@@ -75,7 +80,7 @@ static void wayland_output_add_mode(struct wayland_output *output,
         .refresh = refresh,
     };
 
-    mode_entry = rb_get(&output->modes, &key);
+    mode_entry = rb_get(&state->modes, &key);
     if (mode_entry)
     {
         mode = RB_ENTRY_VALUE(mode_entry, struct wayland_output_mode, entry);
@@ -91,10 +96,10 @@ static void wayland_output_add_mode(struct wayland_output *output,
         mode->width = width;
         mode->height = height;
         mode->refresh = refresh;
-        rb_put(&output->modes, mode, &mode->entry);
+        rb_put(&state->modes, mode, &mode->entry);
     }
 
-    if (current) output->current_mode = mode;
+    if (current) state->current_mode = mode;
 }
 
 static void maybe_init_display_devices(void)
@@ -117,19 +122,65 @@ static void maybe_init_display_devices(void)
     wayland_init_display_devices(TRUE);
 }
 
+static void wayland_output_mode_free_rb(struct rb_entry *entry, void *ctx)
+{
+    free(RB_ENTRY_VALUE(entry, struct wayland_output_mode, entry));
+}
+
 static void wayland_output_done(struct wayland_output *output)
 {
     struct wayland_output_mode *mode;
 
-    TRACE("name=%s logical=%d,%d+%dx%d\n",
-          output->name, output->logical_x, output->logical_y,
-          output->logical_w, output->logical_h);
+    /* Update current state from pending state. */
+    pthread_mutex_lock(&process_wayland.output_mutex);
 
-    RB_FOR_EACH_ENTRY(mode, &output->modes, struct wayland_output_mode, entry)
+    if (output->pending_flags & WAYLAND_OUTPUT_CHANGED_MODES)
+    {
+        RB_FOR_EACH_ENTRY(mode, &output->pending.modes, struct wayland_output_mode, entry)
+        {
+            wayland_output_state_add_mode(&output->current,
+                                          mode->width, mode->height, mode->refresh,
+                                          mode == output->pending.current_mode);
+        }
+        rb_destroy(&output->pending.modes, wayland_output_mode_free_rb, NULL);
+        rb_init(&output->pending.modes, wayland_output_mode_cmp_rb);
+    }
+
+    if (output->pending_flags & WAYLAND_OUTPUT_CHANGED_NAME)
+    {
+        free(output->current.name);
+        output->current.name = output->pending.name;
+        output->pending.name = NULL;
+    }
+
+    if (output->pending_flags & WAYLAND_OUTPUT_CHANGED_LOGICAL_XY)
+    {
+        output->current.logical_x = output->pending.logical_x;
+        output->current.logical_y = output->pending.logical_y;
+    }
+
+    if (output->pending_flags & WAYLAND_OUTPUT_CHANGED_LOGICAL_WH)
+    {
+        output->current.logical_w = output->pending.logical_w;
+        output->current.logical_h = output->pending.logical_h;
+    }
+
+    if (wl_list_empty(&output->link))
+        wl_list_insert(process_wayland.output_list.prev, &output->link);
+
+    output->pending_flags = 0;
+
+    pthread_mutex_unlock(&process_wayland.output_mutex);
+
+    TRACE("name=%s logical=%d,%d+%dx%d\n",
+          output->current.name, output->current.logical_x, output->current.logical_y,
+          output->current.logical_w, output->current.logical_h);
+
+    RB_FOR_EACH_ENTRY(mode, &output->current.modes, struct wayland_output_mode, entry)
     {
         TRACE("mode %dx%d @ %d %s\n",
               mode->width, mode->height, mode->refresh,
-              output->current_mode == mode ? "*" : "");
+              output->current.current_mode == mode ? "*" : "");
     }
 
     maybe_init_display_devices();
@@ -153,8 +204,10 @@ static void output_handle_mode(void *data, struct wl_output *wl_output,
     /* Windows apps don't expect a zero refresh rate, so use a default value. */
     if (refresh == 0) refresh = default_refresh;
 
-    wayland_output_add_mode(output, width, height, refresh,
-                            (flags & WL_OUTPUT_MODE_CURRENT));
+    wayland_output_state_add_mode(&output->pending, width, height, refresh,
+                                  (flags & WL_OUTPUT_MODE_CURRENT));
+
+    output->pending_flags |= WAYLAND_OUTPUT_CHANGED_MODES;
 }
 
 static void output_handle_done(void *data, struct wl_output *wl_output)
@@ -187,8 +240,9 @@ static void zxdg_output_v1_handle_logical_position(void *data,
 {
     struct wayland_output *output = data;
     TRACE("logical_x=%d logical_y=%d\n", x, y);
-    output->logical_x = x;
-    output->logical_y = y;
+    output->pending.logical_x = x;
+    output->pending.logical_y = y;
+    output->pending_flags |= WAYLAND_OUTPUT_CHANGED_LOGICAL_XY;
 }
 
 static void zxdg_output_v1_handle_logical_size(void *data,
@@ -198,8 +252,9 @@ static void zxdg_output_v1_handle_logical_size(void *data,
 {
     struct wayland_output *output = data;
     TRACE("logical_w=%d logical_h=%d\n", width, height);
-    output->logical_w = width;
-    output->logical_h = height;
+    output->pending.logical_w = width;
+    output->pending.logical_h = height;
+    output->pending_flags |= WAYLAND_OUTPUT_CHANGED_LOGICAL_WH;
 }
 
 static void zxdg_output_v1_handle_done(void *data,
@@ -218,8 +273,9 @@ static void zxdg_output_v1_handle_name(void *data,
 {
     struct wayland_output *output = data;
 
-    free(output->name);
-    output->name = strdup(name);
+    free(output->pending.name);
+    output->pending.name = strdup(name);
+    output->pending_flags |= WAYLAND_OUTPUT_CHANGED_NAME;
 }
 
 static void zxdg_output_v1_handle_description(void *data,
@@ -259,14 +315,15 @@ BOOL wayland_output_create(uint32_t id, uint32_t version)
     wl_output_add_listener(output->wl_output, &output_listener, output);
 
     wl_list_init(&output->link);
-    rb_init(&output->modes, wayland_output_mode_cmp_rb);
+    rb_init(&output->pending.modes, wayland_output_mode_cmp_rb);
+    rb_init(&output->current.modes, wayland_output_mode_cmp_rb);
 
     /* Have a fallback while we don't have compositor given name. */
     name_len = snprintf(NULL, 0, "WaylandOutput%d", next_output_id);
-    output->name = malloc(name_len + 1);
-    if (output->name)
+    output->current.name = malloc(name_len + 1);
+    if (output->current.name)
     {
-        snprintf(output->name, name_len + 1, "WaylandOutput%d", next_output_id++);
+        snprintf(output->current.name, name_len + 1, "WaylandOutput%d", next_output_id++);
     }
     else
     {
@@ -277,8 +334,6 @@ BOOL wayland_output_create(uint32_t id, uint32_t version)
     if (process_wayland.zxdg_output_manager_v1)
         wayland_output_use_xdg_extension(output);
 
-    wl_list_insert(process_wayland.output_list.prev, &output->link);
-
     return TRUE;
 
 err:
@@ -286,9 +341,10 @@ err:
     return FALSE;
 }
 
-static void wayland_output_mode_free_rb(struct rb_entry *entry, void *ctx)
+static void wayland_output_state_deinit(struct wayland_output_state *state)
 {
-    free(RB_ENTRY_VALUE(entry, struct wayland_output_mode, entry));
+    rb_destroy(&state->modes, wayland_output_mode_free_rb, NULL);
+    free(state->name);
 }
 
 /**********************************************************************
@@ -298,12 +354,15 @@ static void wayland_output_mode_free_rb(struct rb_entry *entry, void *ctx)
  */
 void wayland_output_destroy(struct wayland_output *output)
 {
-    rb_destroy(&output->modes, wayland_output_mode_free_rb, NULL);
+    pthread_mutex_lock(&process_wayland.output_mutex);
     wl_list_remove(&output->link);
+    pthread_mutex_unlock(&process_wayland.output_mutex);
+
+    wayland_output_state_deinit(&output->pending);
+    wayland_output_state_deinit(&output->current);
     if (output->zxdg_output_v1)
         zxdg_output_v1_destroy(output->zxdg_output_v1);
     wl_output_destroy(output->wl_output);
-    free(output->name);
     free(output);
 
     maybe_init_display_devices();

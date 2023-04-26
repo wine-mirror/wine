@@ -50,7 +50,7 @@ void wayland_init_display_devices(BOOL force)
 struct output_info
 {
     int x, y;
-    struct wayland_output *output;
+    struct wayland_output_state *output;
 };
 
 static int output_info_cmp_primary_x_y(const void *va, const void *vb)
@@ -298,11 +298,13 @@ BOOL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manage
 
     wl_array_init(&output_info_array);
 
+    pthread_mutex_lock(&process_wayland.output_mutex);
+
     wl_list_for_each(output, &process_wayland.output_list, link)
     {
-        if (!output->current_mode) continue;
+        if (!output->current.current_mode) continue;
         output_info = wl_array_add(&output_info_array, sizeof(*output_info));
-        if (output_info) output_info->output = output;
+        if (output_info) output_info->output = &output->current;
         else ERR("Failed to allocate space for output_info\n");
     }
 
@@ -320,6 +322,8 @@ BOOL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manage
     }
 
     wl_array_release(&output_info_array);
+
+    pthread_mutex_unlock(&process_wayland.output_mutex);
 
     return TRUE;
 }
