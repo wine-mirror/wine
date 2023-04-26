@@ -30,6 +30,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
+static void wayland_resize_desktop(void)
+{
+    RECT virtual_rect = NtUserGetVirtualScreenRect();
+    NtUserSetWindowPos(NtUserGetDesktopWindow(), 0,
+                       virtual_rect.left, virtual_rect.top,
+                       virtual_rect.right - virtual_rect.left,
+                       virtual_rect.bottom - virtual_rect.top,
+                       SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE);
+}
+
 /**********************************************************************
  *           WAYLAND_WindowMessage
  */
@@ -39,9 +49,25 @@ LRESULT WAYLAND_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     {
     case WM_WAYLAND_INIT_DISPLAY_DEVICES:
         wayland_init_display_devices(TRUE);
+        wayland_resize_desktop();
         return 0;
     default:
         FIXME("got window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, (long)wp, lp);
         return 0;
     }
+}
+
+/**********************************************************************
+ *           WAYLAND_DesktopWindowProc
+ */
+LRESULT WAYLAND_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    switch (msg)
+    {
+    case WM_DISPLAYCHANGE:
+        wayland_resize_desktop();
+        break;
+    }
+
+    return NtUserMessageCall(hwnd, msg, wp, lp, 0, NtUserDefWindowProc, FALSE);
 }
