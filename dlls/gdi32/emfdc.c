@@ -2384,6 +2384,9 @@ void EMFDC_DeleteDC( DC_ATTR *dc_attr )
     struct emf *emf = get_dc_emf( dc_attr );
     UINT index;
 
+    if (emf->dc_brush) DeleteObject( emf->dc_brush );
+    if (emf->dc_pen) DeleteObject( emf->dc_pen );
+    CloseHandle( emf->file );
     HeapFree( GetProcessHeap(), 0, emf->palette );
     HeapFree( GetProcessHeap(), 0, emf->emh );
     for (index = 0; index < emf->handles_size; index++)
@@ -2597,7 +2600,9 @@ HENHMETAFILE WINAPI CloseEnhMetaFile( HDC hdc )
         RestoreDC( hdc, 1 );
 
     if (emf->dc_brush) DeleteObject( emf->dc_brush );
+    emf->dc_brush = 0;
     if (emf->dc_pen) DeleteObject( emf->dc_pen );
+    emf->dc_pen = 0;
 
 
     emr->emr.iType = EMR_EOF;
@@ -2630,6 +2635,7 @@ HENHMETAFILE WINAPI CloseEnhMetaFile( HDC hdc )
         if (!WriteFile( emf->file, emf->emh, emf->emh->nBytes, NULL, NULL ))
         {
             CloseHandle( emf->file );
+            emf->file = 0;
             return 0;
         }
         HeapFree( GetProcessHeap(), 0, emf->emh );
@@ -2642,6 +2648,7 @@ HENHMETAFILE WINAPI CloseEnhMetaFile( HDC hdc )
     }
 
     hmf = EMF_Create_HENHMETAFILE( emf->emh, emf->emh->nBytes, emf->file != 0 );
+    emf->file = 0;
     emf->emh = NULL;  /* So it won't be deleted */
     DeleteDC( hdc );
     return hmf;
