@@ -96,6 +96,7 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 {
 	DWORD ichannels = dsb->pwfx->nChannels;
 	DWORD ochannels = dsb->device->pwfx->nChannels;
+	LONG64 oldFreqAdjustDen = dsb->freqAdjustDen;
 	WAVEFORMATEXTENSIBLE *pwfxe;
 	BOOL ieee = FALSE;
 
@@ -130,7 +131,8 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 	/* calculate the 10ms write lead */
 	dsb->writelead = (dsb->freq / 100) * dsb->pwfx->nBlockAlign;
 
-	dsb->freqAccNum = 0;
+	if (oldFreqAdjustDen)
+		dsb->freqAccNum = (dsb->freqAccNum * dsb->freqAdjustDen + oldFreqAdjustDen / 2) / oldFreqAdjustDen;
 
 	dsb->get_aux = ieee ? getbpp[4] : getbpp[dsb->pwfx->wBitsPerSample/8 - 1];
 	dsb->put_aux = putieee32;
