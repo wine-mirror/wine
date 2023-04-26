@@ -65,8 +65,6 @@
 # include <mach/mach.h>
 #endif
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -894,8 +892,8 @@ static void save_context( struct xcontext *xcontext, const ucontext_t *sigcontex
         XSTATE *xs;
 
         context->ContextFlags |= CONTEXT_FLOATING_POINT;
-        context->u.FltSave = *FPU_sig(sigcontext);
-        context->MxCsr = context->u.FltSave.MxCsr;
+        context->FltSave = *FPU_sig(sigcontext);
+        context->MxCsr = context->FltSave.MxCsr;
         if ((cpu_info.ProcessorFeatureBits & CPU_FEATURE_AVX) && (xs = XState_sig(FPU_sig(sigcontext))))
         {
             /* xcontext and sigcontext are both on the signal stack, so we can
@@ -925,7 +923,7 @@ static void restore_context( const struct xcontext *xcontext, ucontext_t *sigcon
     amd64_thread_data()->dr6 = context->Dr6;
     amd64_thread_data()->dr7 = context->Dr7;
     set_sigcontext( context, sigcontext );
-    if (FPU_sig(sigcontext)) *FPU_sig(sigcontext) = context->u.FltSave;
+    if (FPU_sig(sigcontext)) *FPU_sig(sigcontext) = context->FltSave;
     if ((cpu_info.ProcessorFeatureBits & CPU_FEATURE_AVX) && (xs = XState_sig(FPU_sig(sigcontext))))
         xs->CompactionMask = xcontext->host_compaction_mask;
     leave_handler( sigcontext );
@@ -1051,7 +1049,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     }
     if (flags & CONTEXT_FLOATING_POINT)
     {
-        frame->xsave = context->u.FltSave;
+        frame->xsave = context->FltSave;
         frame->xstate.Mask |= XSTATE_MASK_LEGACY;
     }
     if (flags & CONTEXT_XSTATE)
@@ -1132,34 +1130,34 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         if (!xstate_compaction_enabled ||
             (frame->xstate.Mask & XSTATE_MASK_LEGACY_FLOATING_POINT))
         {
-            memcpy( &context->u.FltSave, &frame->xsave, FIELD_OFFSET( XSAVE_FORMAT, MxCsr ));
-            memcpy( context->u.FltSave.FloatRegisters, frame->xsave.FloatRegisters,
-                    sizeof( context->u.FltSave.FloatRegisters ));
+            memcpy( &context->FltSave, &frame->xsave, FIELD_OFFSET( XSAVE_FORMAT, MxCsr ));
+            memcpy( context->FltSave.FloatRegisters, frame->xsave.FloatRegisters,
+                    sizeof( context->FltSave.FloatRegisters ));
         }
         else
         {
-            memset( &context->u.FltSave, 0, FIELD_OFFSET( XSAVE_FORMAT, MxCsr ));
-            memset( context->u.FltSave.FloatRegisters, 0,
-                    sizeof( context->u.FltSave.FloatRegisters ));
-            context->u.FltSave.ControlWord = 0x37f;
+            memset( &context->FltSave, 0, FIELD_OFFSET( XSAVE_FORMAT, MxCsr ));
+            memset( context->FltSave.FloatRegisters, 0,
+                    sizeof( context->FltSave.FloatRegisters ));
+            context->FltSave.ControlWord = 0x37f;
         }
 
         if (!xstate_compaction_enabled || (frame->xstate.Mask & XSTATE_MASK_LEGACY_SSE))
         {
-            memcpy( context->u.FltSave.XmmRegisters, frame->xsave.XmmRegisters,
-                    sizeof( context->u.FltSave.XmmRegisters ));
-            context->u.FltSave.MxCsr      = frame->xsave.MxCsr;
-            context->u.FltSave.MxCsr_Mask = frame->xsave.MxCsr_Mask;
+            memcpy( context->FltSave.XmmRegisters, frame->xsave.XmmRegisters,
+                    sizeof( context->FltSave.XmmRegisters ));
+            context->FltSave.MxCsr      = frame->xsave.MxCsr;
+            context->FltSave.MxCsr_Mask = frame->xsave.MxCsr_Mask;
         }
         else
         {
-            memset( context->u.FltSave.XmmRegisters, 0,
-                    sizeof( context->u.FltSave.XmmRegisters ));
-            context->u.FltSave.MxCsr      = 0x1f80;
-            context->u.FltSave.MxCsr_Mask = 0x2ffff;
+            memset( context->FltSave.XmmRegisters, 0,
+                    sizeof( context->FltSave.XmmRegisters ));
+            context->FltSave.MxCsr      = 0x1f80;
+            context->FltSave.MxCsr_Mask = 0x2ffff;
         }
 
-        context->MxCsr = context->u.FltSave.MxCsr;
+        context->MxCsr = context->FltSave.MxCsr;
         context->ContextFlags |= CONTEXT_FLOATING_POINT;
     }
     if ((needed_flags & CONTEXT_XSTATE) && (cpu_info.ProcessorFeatureBits & CPU_FEATURE_AVX))
@@ -2548,8 +2546,8 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     context.SegGs  = ds64_sel;
     context.SegSs  = ds64_sel;
     context.EFlags = 0x200;
-    context.u.FltSave.ControlWord = 0x27f;
-    context.u.FltSave.MxCsr = context.MxCsr = 0x1f80;
+    context.FltSave.ControlWord = 0x27f;
+    context.FltSave.MxCsr = context.MxCsr = 0x1f80;
 
     if ((wow_context = get_cpu_area( IMAGE_FILE_MACHINE_I386 )))
     {
@@ -2565,8 +2563,8 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
         wow_context->SegGs = context.SegGs;
         wow_context->SegSs = context.SegSs;
         wow_context->EFlags = 0x202;
-        wow_context->FloatSave.ControlWord = context.u.FltSave.ControlWord;
-        *(XSAVE_FORMAT *)wow_context->ExtendedRegisters = context.u.FltSave;
+        wow_context->FloatSave.ControlWord = context.FltSave.ControlWord;
+        *(XSAVE_FORMAT *)wow_context->ExtendedRegisters = context.FltSave;
     }
 
     if (suspend) wait_suspend( &context );

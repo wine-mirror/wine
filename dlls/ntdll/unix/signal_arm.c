@@ -59,8 +59,6 @@
 # include <link.h>
 #endif
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -135,7 +133,7 @@ static void save_fpu( CONTEXT *context, const ucontext_t *sigcontext )
     struct vfp_sigframe *frame = get_extended_sigcontext( sigcontext, 0x56465001 );
 
     if (!frame) return;
-    memcpy( context->u.D, frame->fpregs, sizeof(context->u.D) );
+    memcpy( context->D, frame->fpregs, sizeof(context->D) );
     context->Fpscr = frame->fpscr;
 }
 
@@ -144,7 +142,7 @@ static void restore_fpu( const CONTEXT *context, ucontext_t *sigcontext )
     struct vfp_sigframe *frame = get_extended_sigcontext( sigcontext, 0x56465001 );
 
     if (!frame) return;
-    memcpy( frame->fpregs, context->u.D, sizeof(context->u.D) );
+    memcpy( frame->fpregs, context->D, sizeof(context->D) );
     frame->fpscr = context->Fpscr;
 }
 
@@ -288,7 +286,7 @@ static void pop_vfp(CONTEXT *context, int first, int last)
     int i;
     for (i = first; i <= last; i++)
     {
-        context->u.D[i] = *(ULONGLONG *)context->Sp;
+        context->D[i] = *(ULONGLONG *)context->Sp;
         context->Sp += 8;
     }
 }
@@ -943,7 +941,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     if (flags & CONTEXT_FLOATING_POINT)
     {
         frame->fpscr = context->Fpscr;
-        memcpy( frame->d, context->u.D, sizeof(context->u.D) );
+        memcpy( frame->d, context->D, sizeof(context->D) );
     }
     frame->restore_flags |= flags & ~CONTEXT_INTEGER;
     return STATUS_SUCCESS;
@@ -994,7 +992,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
     if (needed_flags & CONTEXT_FLOATING_POINT)
     {
         context->Fpscr = frame->fpscr;
-        memcpy( context->u.D, frame->d, sizeof(frame->d) );
+        memcpy( context->D, frame->d, sizeof(frame->d) );
         context->ContextFlags |= CONTEXT_FLOATING_POINT;
     }
     return STATUS_SUCCESS;

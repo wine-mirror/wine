@@ -23,8 +23,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -690,14 +688,14 @@ static ULONG64 get_int_reg( CONTEXT *context, int reg )
 static void set_int_reg( CONTEXT *context, KNONVOLATILE_CONTEXT_POINTERS *ctx_ptr, int reg, ULONG64 *val )
 {
     *(&context->Rax + reg) = *val;
-    if (ctx_ptr) ctx_ptr->u2.IntegerContext[reg] = val;
+    if (ctx_ptr) ctx_ptr->IntegerContext[reg] = val;
 }
 
 static void set_float_reg( CONTEXT *context, KNONVOLATILE_CONTEXT_POINTERS *ctx_ptr, int reg, M128A *val )
 {
     /* Use a memcpy() to avoid issues if val is misaligned. */
-    memcpy(&context->u.s.Xmm0 + reg, val, sizeof(*val));
-    if (ctx_ptr) ctx_ptr->u.FloatingContext[reg] = val;
+    memcpy(&context->Xmm0 + reg, val, sizeof(*val));
+    if (ctx_ptr) ctx_ptr->FloatingContext[reg] = val;
 }
 
 static int get_opcode_size( struct opcode op )
@@ -1219,29 +1217,29 @@ void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
     if (rec && rec->ExceptionCode == STATUS_LONGJUMP && rec->NumberParameters >= 1)
     {
         struct MSVCRT_JUMP_BUFFER *jmp = (struct MSVCRT_JUMP_BUFFER *)rec->ExceptionInformation[0];
-        context->Rbx       = jmp->Rbx;
-        context->Rsp       = jmp->Rsp;
-        context->Rbp       = jmp->Rbp;
-        context->Rsi       = jmp->Rsi;
-        context->Rdi       = jmp->Rdi;
-        context->R12       = jmp->R12;
-        context->R13       = jmp->R13;
-        context->R14       = jmp->R14;
-        context->R15       = jmp->R15;
-        context->Rip       = jmp->Rip;
-        context->u.s.Xmm6  = jmp->Xmm6;
-        context->u.s.Xmm7  = jmp->Xmm7;
-        context->u.s.Xmm8  = jmp->Xmm8;
-        context->u.s.Xmm9  = jmp->Xmm9;
-        context->u.s.Xmm10 = jmp->Xmm10;
-        context->u.s.Xmm11 = jmp->Xmm11;
-        context->u.s.Xmm12 = jmp->Xmm12;
-        context->u.s.Xmm13 = jmp->Xmm13;
-        context->u.s.Xmm14 = jmp->Xmm14;
-        context->u.s.Xmm15 = jmp->Xmm15;
-        context->MxCsr     = jmp->MxCsr;
-        context->u.FltSave.MxCsr = jmp->MxCsr;
-        context->u.FltSave.ControlWord = jmp->FpCsr;
+        context->Rbx   = jmp->Rbx;
+        context->Rsp   = jmp->Rsp;
+        context->Rbp   = jmp->Rbp;
+        context->Rsi   = jmp->Rsi;
+        context->Rdi   = jmp->Rdi;
+        context->R12   = jmp->R12;
+        context->R13   = jmp->R13;
+        context->R14   = jmp->R14;
+        context->R15   = jmp->R15;
+        context->Rip   = jmp->Rip;
+        context->Xmm6  = jmp->Xmm6;
+        context->Xmm7  = jmp->Xmm7;
+        context->Xmm8  = jmp->Xmm8;
+        context->Xmm9  = jmp->Xmm9;
+        context->Xmm10 = jmp->Xmm10;
+        context->Xmm11 = jmp->Xmm11;
+        context->Xmm12 = jmp->Xmm12;
+        context->Xmm13 = jmp->Xmm13;
+        context->Xmm14 = jmp->Xmm14;
+        context->Xmm15 = jmp->Xmm15;
+        context->MxCsr = jmp->MxCsr;
+        context->FltSave.MxCsr = jmp->MxCsr;
+        context->FltSave.ControlWord = jmp->FpCsr;
     }
     else if (rec && rec->ExceptionCode == STATUS_UNWIND_CONSOLIDATE && rec->NumberParameters >= 1)
     {

@@ -55,8 +55,6 @@
 # include <libunwind.h>
 #endif
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -273,7 +271,7 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame, CONTEXT *conte
     apply_frame_state( context, &info.state, bases );
     context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
     /* Set Pc based on Lr; libunwind also does this as part of unw_step. */
-    context->Pc = context->u.s.Lr;
+    context->Pc = context->Lr;
 
     if (bases->func == (void *)raise_func_trampoline) {
         /* raise_func_trampoline has a full CONTEXT stored on the stack;
@@ -283,26 +281,26 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame, CONTEXT *conte
          * We could also just restore the full context here without doing
          * unw_step at all. */
         const CONTEXT *next_ctx = (const CONTEXT *) *frame;
-        context->u.s.Lr = next_ctx->u.s.Lr;
+        context->Lr = next_ctx->Lr;
     }
 
     TRACE( "next function pc=%016lx\n", context->Pc );
     TRACE("  x0=%016lx  x1=%016lx  x2=%016lx  x3=%016lx\n",
-          context->u.s.X0, context->u.s.X1, context->u.s.X2, context->u.s.X3 );
+          context->X0, context->X1, context->X2, context->X3 );
     TRACE("  x4=%016lx  x5=%016lx  x6=%016lx  x7=%016lx\n",
-          context->u.s.X4, context->u.s.X5, context->u.s.X6, context->u.s.X7 );
+          context->X4, context->X5, context->X6, context->X7 );
     TRACE("  x8=%016lx  x9=%016lx x10=%016lx x11=%016lx\n",
-          context->u.s.X8, context->u.s.X9, context->u.s.X10, context->u.s.X11 );
+          context->X8, context->X9, context->X10, context->X11 );
     TRACE(" x12=%016lx x13=%016lx x14=%016lx x15=%016lx\n",
-          context->u.s.X12, context->u.s.X13, context->u.s.X14, context->u.s.X15 );
+          context->X12, context->X13, context->X14, context->X15 );
     TRACE(" x16=%016lx x17=%016lx x18=%016lx x19=%016lx\n",
-          context->u.s.X16, context->u.s.X17, context->u.s.X18, context->u.s.X19 );
+          context->X16, context->X17, context->X18, context->X19 );
     TRACE(" x20=%016lx x21=%016lx x22=%016lx x23=%016lx\n",
-          context->u.s.X20, context->u.s.X21, context->u.s.X22, context->u.s.X23 );
+          context->X20, context->X21, context->X22, context->X23 );
     TRACE(" x24=%016lx x25=%016lx x26=%016lx x27=%016lx\n",
-          context->u.s.X24, context->u.s.X25, context->u.s.X26, context->u.s.X27 );
+          context->X24, context->X25, context->X26, context->X27 );
     TRACE(" x28=%016lx  fp=%016lx  lr=%016lx  sp=%016lx\n",
-          context->u.s.X28, context->u.s.Fp, context->u.s.Lr, context->Sp );
+          context->X28, context->Fp, context->Lr, context->Sp );
 
     return STATUS_SUCCESS;
 }
@@ -325,14 +323,14 @@ static NTSTATUS libunwind_virtual_unwind( ULONG_PTR ip, ULONG_PTR *frame, CONTEX
     {
         int i;
         for (i = 0; i <= 28; i++)
-            unw_set_reg( &cursor, UNW_ARM64_X0 + i, context->u.X[i] );
-        unw_set_reg( &cursor, UNW_ARM64_FP, context->u.s.Fp );
-        unw_set_reg( &cursor, UNW_ARM64_LR, context->u.s.Lr );
+            unw_set_reg( &cursor, UNW_ARM64_X0 + i, context->X[i] );
+        unw_set_reg( &cursor, UNW_ARM64_FP, context->Fp );
+        unw_set_reg( &cursor, UNW_ARM64_LR, context->Lr );
         unw_set_reg( &cursor, UNW_ARM64_SP, context->Sp );
         unw_set_reg( &cursor, UNW_REG_IP,   context->Pc );
     }
 #else
-    memcpy( unw_context.uc_mcontext.regs, context->u.X, sizeof(context->u.X) );
+    memcpy( unw_context.uc_mcontext.regs, context->X, sizeof(context->X) );
     unw_context.uc_mcontext.sp = context->Sp;
     unw_context.uc_mcontext.pc = context->Pc;
 
@@ -356,7 +354,7 @@ static NTSTATUS libunwind_virtual_unwind( ULONG_PTR ip, ULONG_PTR *frame, CONTEX
                ip, info.start_ip, info.end_ip );
         *handler = NULL;
         *frame = context->Sp;
-        context->Pc = context->u.s.Lr;
+        context->Pc = context->Lr;
         context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
         return STATUS_SUCCESS;
     }
@@ -379,43 +377,43 @@ static NTSTATUS libunwind_virtual_unwind( ULONG_PTR ip, ULONG_PTR *frame, CONTEX
     {
         int i;
         for (i = 0; i <= 28; i++)
-            unw_get_reg( &cursor, UNW_ARM64_X0 + i, (unw_word_t *)&context->u.X[i] );
+            unw_get_reg( &cursor, UNW_ARM64_X0 + i, (unw_word_t *)&context->X[i] );
     }
-    unw_get_reg( &cursor, UNW_ARM64_FP,    (unw_word_t *)&context->u.s.Fp );
-    unw_get_reg( &cursor, UNW_ARM64_X30,   (unw_word_t *)&context->u.s.Lr );
+    unw_get_reg( &cursor, UNW_ARM64_FP,    (unw_word_t *)&context->Fp );
+    unw_get_reg( &cursor, UNW_ARM64_X30,   (unw_word_t *)&context->Lr );
     unw_get_reg( &cursor, UNW_ARM64_SP,    (unw_word_t *)&context->Sp );
 #else
-    unw_get_reg( &cursor, UNW_AARCH64_X0,  (unw_word_t *)&context->u.s.X0 );
-    unw_get_reg( &cursor, UNW_AARCH64_X1,  (unw_word_t *)&context->u.s.X1 );
-    unw_get_reg( &cursor, UNW_AARCH64_X2,  (unw_word_t *)&context->u.s.X2 );
-    unw_get_reg( &cursor, UNW_AARCH64_X3,  (unw_word_t *)&context->u.s.X3 );
-    unw_get_reg( &cursor, UNW_AARCH64_X4,  (unw_word_t *)&context->u.s.X4 );
-    unw_get_reg( &cursor, UNW_AARCH64_X5,  (unw_word_t *)&context->u.s.X5 );
-    unw_get_reg( &cursor, UNW_AARCH64_X6,  (unw_word_t *)&context->u.s.X6 );
-    unw_get_reg( &cursor, UNW_AARCH64_X7,  (unw_word_t *)&context->u.s.X7 );
-    unw_get_reg( &cursor, UNW_AARCH64_X8,  (unw_word_t *)&context->u.s.X8 );
-    unw_get_reg( &cursor, UNW_AARCH64_X9,  (unw_word_t *)&context->u.s.X9 );
-    unw_get_reg( &cursor, UNW_AARCH64_X10, (unw_word_t *)&context->u.s.X10 );
-    unw_get_reg( &cursor, UNW_AARCH64_X11, (unw_word_t *)&context->u.s.X11 );
-    unw_get_reg( &cursor, UNW_AARCH64_X12, (unw_word_t *)&context->u.s.X12 );
-    unw_get_reg( &cursor, UNW_AARCH64_X13, (unw_word_t *)&context->u.s.X13 );
-    unw_get_reg( &cursor, UNW_AARCH64_X14, (unw_word_t *)&context->u.s.X14 );
-    unw_get_reg( &cursor, UNW_AARCH64_X15, (unw_word_t *)&context->u.s.X15 );
-    unw_get_reg( &cursor, UNW_AARCH64_X16, (unw_word_t *)&context->u.s.X16 );
-    unw_get_reg( &cursor, UNW_AARCH64_X17, (unw_word_t *)&context->u.s.X17 );
-    unw_get_reg( &cursor, UNW_AARCH64_X18, (unw_word_t *)&context->u.s.X18 );
-    unw_get_reg( &cursor, UNW_AARCH64_X19, (unw_word_t *)&context->u.s.X19 );
-    unw_get_reg( &cursor, UNW_AARCH64_X20, (unw_word_t *)&context->u.s.X20 );
-    unw_get_reg( &cursor, UNW_AARCH64_X21, (unw_word_t *)&context->u.s.X21 );
-    unw_get_reg( &cursor, UNW_AARCH64_X22, (unw_word_t *)&context->u.s.X22 );
-    unw_get_reg( &cursor, UNW_AARCH64_X23, (unw_word_t *)&context->u.s.X23 );
-    unw_get_reg( &cursor, UNW_AARCH64_X24, (unw_word_t *)&context->u.s.X24 );
-    unw_get_reg( &cursor, UNW_AARCH64_X25, (unw_word_t *)&context->u.s.X25 );
-    unw_get_reg( &cursor, UNW_AARCH64_X26, (unw_word_t *)&context->u.s.X26 );
-    unw_get_reg( &cursor, UNW_AARCH64_X27, (unw_word_t *)&context->u.s.X27 );
-    unw_get_reg( &cursor, UNW_AARCH64_X28, (unw_word_t *)&context->u.s.X28 );
-    unw_get_reg( &cursor, UNW_AARCH64_X29, (unw_word_t *)&context->u.s.Fp );
-    unw_get_reg( &cursor, UNW_AARCH64_X30, (unw_word_t *)&context->u.s.Lr );
+    unw_get_reg( &cursor, UNW_AARCH64_X0,  (unw_word_t *)&context->X0 );
+    unw_get_reg( &cursor, UNW_AARCH64_X1,  (unw_word_t *)&context->X1 );
+    unw_get_reg( &cursor, UNW_AARCH64_X2,  (unw_word_t *)&context->X2 );
+    unw_get_reg( &cursor, UNW_AARCH64_X3,  (unw_word_t *)&context->X3 );
+    unw_get_reg( &cursor, UNW_AARCH64_X4,  (unw_word_t *)&context->X4 );
+    unw_get_reg( &cursor, UNW_AARCH64_X5,  (unw_word_t *)&context->X5 );
+    unw_get_reg( &cursor, UNW_AARCH64_X6,  (unw_word_t *)&context->X6 );
+    unw_get_reg( &cursor, UNW_AARCH64_X7,  (unw_word_t *)&context->X7 );
+    unw_get_reg( &cursor, UNW_AARCH64_X8,  (unw_word_t *)&context->X8 );
+    unw_get_reg( &cursor, UNW_AARCH64_X9,  (unw_word_t *)&context->X9 );
+    unw_get_reg( &cursor, UNW_AARCH64_X10, (unw_word_t *)&context->X10 );
+    unw_get_reg( &cursor, UNW_AARCH64_X11, (unw_word_t *)&context->X11 );
+    unw_get_reg( &cursor, UNW_AARCH64_X12, (unw_word_t *)&context->X12 );
+    unw_get_reg( &cursor, UNW_AARCH64_X13, (unw_word_t *)&context->X13 );
+    unw_get_reg( &cursor, UNW_AARCH64_X14, (unw_word_t *)&context->X14 );
+    unw_get_reg( &cursor, UNW_AARCH64_X15, (unw_word_t *)&context->X15 );
+    unw_get_reg( &cursor, UNW_AARCH64_X16, (unw_word_t *)&context->X16 );
+    unw_get_reg( &cursor, UNW_AARCH64_X17, (unw_word_t *)&context->X17 );
+    unw_get_reg( &cursor, UNW_AARCH64_X18, (unw_word_t *)&context->X18 );
+    unw_get_reg( &cursor, UNW_AARCH64_X19, (unw_word_t *)&context->X19 );
+    unw_get_reg( &cursor, UNW_AARCH64_X20, (unw_word_t *)&context->X20 );
+    unw_get_reg( &cursor, UNW_AARCH64_X21, (unw_word_t *)&context->X21 );
+    unw_get_reg( &cursor, UNW_AARCH64_X22, (unw_word_t *)&context->X22 );
+    unw_get_reg( &cursor, UNW_AARCH64_X23, (unw_word_t *)&context->X23 );
+    unw_get_reg( &cursor, UNW_AARCH64_X24, (unw_word_t *)&context->X24 );
+    unw_get_reg( &cursor, UNW_AARCH64_X25, (unw_word_t *)&context->X25 );
+    unw_get_reg( &cursor, UNW_AARCH64_X26, (unw_word_t *)&context->X26 );
+    unw_get_reg( &cursor, UNW_AARCH64_X27, (unw_word_t *)&context->X27 );
+    unw_get_reg( &cursor, UNW_AARCH64_X28, (unw_word_t *)&context->X28 );
+    unw_get_reg( &cursor, UNW_AARCH64_X29, (unw_word_t *)&context->Fp );
+    unw_get_reg( &cursor, UNW_AARCH64_X30, (unw_word_t *)&context->Lr );
     unw_get_reg( &cursor, UNW_AARCH64_SP,  (unw_word_t *)&context->Sp );
 #endif
     unw_get_reg( &cursor, UNW_REG_IP,      (unw_word_t *)&context->Pc );
@@ -429,26 +427,26 @@ static NTSTATUS libunwind_virtual_unwind( ULONG_PTR ip, ULONG_PTR *frame, CONTEX
          * We could also just restore the full context here without doing
          * unw_step at all. */
         const CONTEXT *next_ctx = (const CONTEXT *) *frame;
-        context->u.s.Lr = next_ctx->u.s.Lr;
+        context->Lr = next_ctx->Lr;
     }
 
     TRACE( "next function pc=%016lx%s\n", context->Pc, rc ? "" : " (last frame)" );
     TRACE("  x0=%016lx  x1=%016lx  x2=%016lx  x3=%016lx\n",
-          context->u.s.X0, context->u.s.X1, context->u.s.X2, context->u.s.X3 );
+          context->X0, context->X1, context->X2, context->X3 );
     TRACE("  x4=%016lx  x5=%016lx  x6=%016lx  x7=%016lx\n",
-          context->u.s.X4, context->u.s.X5, context->u.s.X6, context->u.s.X7 );
+          context->X4, context->X5, context->X6, context->X7 );
     TRACE("  x8=%016lx  x9=%016lx x10=%016lx x11=%016lx\n",
-          context->u.s.X8, context->u.s.X9, context->u.s.X10, context->u.s.X11 );
+          context->X8, context->X9, context->X10, context->X11 );
     TRACE(" x12=%016lx x13=%016lx x14=%016lx x15=%016lx\n",
-          context->u.s.X12, context->u.s.X13, context->u.s.X14, context->u.s.X15 );
+          context->X12, context->X13, context->X14, context->X15 );
     TRACE(" x16=%016lx x17=%016lx x18=%016lx x19=%016lx\n",
-          context->u.s.X16, context->u.s.X17, context->u.s.X18, context->u.s.X19 );
+          context->X16, context->X17, context->X18, context->X19 );
     TRACE(" x20=%016lx x21=%016lx x22=%016lx x23=%016lx\n",
-          context->u.s.X20, context->u.s.X21, context->u.s.X22, context->u.s.X23 );
+          context->X20, context->X21, context->X22, context->X23 );
     TRACE(" x24=%016lx x25=%016lx x26=%016lx x27=%016lx\n",
-          context->u.s.X24, context->u.s.X25, context->u.s.X26, context->u.s.X27 );
+          context->X24, context->X25, context->X26, context->X27 );
     TRACE(" x28=%016lx  fp=%016lx  lr=%016lx  sp=%016lx\n",
-          context->u.s.X28, context->u.s.Fp, context->u.s.Lr, context->Sp );
+          context->X28, context->Fp, context->Lr, context->Sp );
     return STATUS_SUCCESS;
 }
 #endif
@@ -535,12 +533,12 @@ static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
     DWORD i;
 
     context->ContextFlags = CONTEXT_FULL;
-    context->u.s.Fp = FP_sig(sigcontext);     /* Frame pointer */
-    context->u.s.Lr = LR_sig(sigcontext);     /* Link register */
-    context->Sp     = SP_sig(sigcontext);     /* Stack pointer */
-    context->Pc     = PC_sig(sigcontext);     /* Program Counter */
-    context->Cpsr   = PSTATE_sig(sigcontext); /* Current State Register */
-    for (i = 0; i <= 28; i++) context->u.X[i] = REGn_sig( i, sigcontext );
+    context->Fp   = FP_sig(sigcontext);     /* Frame pointer */
+    context->Lr   = LR_sig(sigcontext);     /* Link register */
+    context->Sp   = SP_sig(sigcontext);     /* Stack pointer */
+    context->Pc   = PC_sig(sigcontext);     /* Program Counter */
+    context->Cpsr = PSTATE_sig(sigcontext); /* Current State Register */
+    for (i = 0; i <= 28; i++) context->X[i] = REGn_sig( i, sigcontext );
     save_fpu( context, sigcontext );
 }
 
@@ -554,12 +552,12 @@ static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
 {
     DWORD i;
 
-    FP_sig(sigcontext)     = context->u.s.Fp; /* Frame pointer */
-    LR_sig(sigcontext)     = context->u.s.Lr; /* Link register */
-    SP_sig(sigcontext)     = context->Sp;     /* Stack pointer */
-    PC_sig(sigcontext)     = context->Pc;     /* Program Counter */
-    PSTATE_sig(sigcontext) = context->Cpsr;   /* Current State Register */
-    for (i = 0; i <= 28; i++) REGn_sig( i, sigcontext ) = context->u.X[i];
+    FP_sig(sigcontext)     = context->Fp;   /* Frame pointer */
+    LR_sig(sigcontext)     = context->Lr;   /* Link register */
+    SP_sig(sigcontext)     = context->Sp;   /* Stack pointer */
+    PC_sig(sigcontext)     = context->Pc;   /* Program Counter */
+    PSTATE_sig(sigcontext) = context->Cpsr; /* Current State Register */
+    for (i = 0; i <= 28; i++) REGn_sig( i, sigcontext ) = context->X[i];
     restore_fpu( context, sigcontext );
 }
 
@@ -615,14 +613,14 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 
     if (flags & CONTEXT_INTEGER)
     {
-        memcpy( frame->x, context->u.X, sizeof(context->u.X[0]) * 18 );
+        memcpy( frame->x, context->X, sizeof(context->X[0]) * 18 );
         /* skip x18 */
-        memcpy( frame->x + 19, context->u.X + 19, sizeof(context->u.X[0]) * 10 );
+        memcpy( frame->x + 19, context->X + 19, sizeof(context->X[0]) * 10 );
     }
     if (flags & CONTEXT_CONTROL)
     {
-        frame->fp    = context->u.s.Fp;
-        frame->lr    = context->u.s.Lr;
+        frame->fp    = context->Fp;
+        frame->lr    = context->Lr;
         frame->sp    = context->Sp;
         frame->pc    = context->Pc;
         frame->cpsr  = context->Cpsr;
@@ -635,7 +633,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     }
     if (flags & CONTEXT_ARM64_X18)
     {
-        frame->x[18] = context->u.X[18];
+        frame->x[18] = context->X[18];
     }
     if (flags & CONTEXT_DEBUG_REGISTERS) FIXME( "debug registers not supported\n" );
     frame->restore_flags |= flags & ~CONTEXT_INTEGER;
@@ -661,16 +659,16 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 
     if (needed_flags & CONTEXT_INTEGER)
     {
-        memcpy( context->u.X, frame->x, sizeof(context->u.X[0]) * 29 );
+        memcpy( context->X, frame->x, sizeof(context->X[0]) * 29 );
         context->ContextFlags |= CONTEXT_INTEGER;
     }
     if (needed_flags & CONTEXT_CONTROL)
     {
-        context->u.s.Fp  = frame->fp;
-        context->u.s.Lr  = frame->lr;
-        context->Sp      = frame->sp;
-        context->Pc      = frame->pc;
-        context->Cpsr    = frame->cpsr;
+        context->Fp   = frame->fp;
+        context->Lr   = frame->lr;
+        context->Sp   = frame->sp;
+        context->Pc   = frame->pc;
+        context->Cpsr = frame->cpsr;
         context->ContextFlags |= CONTEXT_CONTROL;
     }
     if (needed_flags & CONTEXT_FLOATING_POINT)
@@ -799,7 +797,7 @@ NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
         if (flags & CONTEXT_FLOATING_POINT)
         {
             wow_frame->Fpscr = context->Fpscr;
-            memcpy( wow_frame->u.D, context->u.D, sizeof(context->u.D) );
+            memcpy( wow_frame->D, context->D, sizeof(context->D) );
         }
         break;
     }
@@ -924,7 +922,7 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
         if (needed_flags & CONTEXT_FLOATING_POINT)
         {
             context->Fpscr = wow_frame->Fpscr;
-            memcpy( context->u.D, wow_frame->u.D, sizeof(wow_frame->u.D) );
+            memcpy( context->D, wow_frame->D, sizeof(wow_frame->D) );
             context->ContextFlags |= CONTEXT_FLOATING_POINT;
         }
         break;
@@ -1045,7 +1043,7 @@ NTSTATUS call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR a
     {
         stack->context.ContextFlags = CONTEXT_FULL;
         NtGetContextThread( GetCurrentThread(), &stack->context );
-        stack->context.u.s.X0 = status;
+        stack->context.X0 = status;
     }
     frame->sp   = (ULONG64)stack;
     frame->pc   = (ULONG64)pKiUserApcDispatcher;
@@ -1339,7 +1337,7 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
             rec.ExceptionAddress = (void *)ctx.Pc;
             rec.ExceptionFlags = EH_NONCONTINUABLE;
             rec.NumberParameters = 1;
-            rec.ExceptionInformation[0] = ctx.u.X[0];
+            rec.ExceptionInformation[0] = ctx.X[0];
             NtRaiseException( &rec, &ctx, FALSE );
             return;
         }
@@ -1607,11 +1605,11 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     I386_CONTEXT *i386_context;
     ARM_CONTEXT *arm_context;
 
-    context.u.s.X0  = (DWORD64)entry;
-    context.u.s.X1  = (DWORD64)arg;
-    context.u.s.X18 = (DWORD64)teb;
-    context.Sp      = (DWORD64)teb->Tib.StackBase;
-    context.Pc      = (DWORD64)pRtlUserThreadStart;
+    context.X0  = (DWORD64)entry;
+    context.X1  = (DWORD64)arg;
+    context.X18 = (DWORD64)teb;
+    context.Sp  = (DWORD64)teb->Tib.StackBase;
+    context.Pc  = (DWORD64)pRtlUserThreadStart;
 
     if ((i386_context = get_cpu_area( IMAGE_FILE_MACHINE_I386 )))
     {
