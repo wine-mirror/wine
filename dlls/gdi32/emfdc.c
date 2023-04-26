@@ -44,7 +44,38 @@ struct emf
     DWORD    palette_size;
     DWORD    palette_used;
     PALETTEENTRY *palette;
+    enum
+    {
+        DOCUMENT_NOT_STARTED,
+        NEEDS_START_PAGE,
+        NEEDS_END_PAGE
+    } document_state;
 };
+
+typedef enum
+{
+    EMRI_METAFILE = 1,
+    EMRI_ENGINE_FONT,
+    EMRI_DEVMODE,
+    EMRI_TYPE1_FONT,
+    EMRI_PRESTARTPAGE,
+    EMRI_DESIGNVECTOR,
+    EMRI_SUBSET_FONT,
+    EMRI_DELTA_FONT,
+    EMRI_FORM_METAFILE,
+    EMRI_BW_METAFILE,
+    EMRI_BW_FORM_METAFILE,
+    EMRI_METAFILE_DATA,
+    EMRI_METAFILE_EXT,
+    EMRI_BW_METAFILE_EXT,
+    EMRI_ENGINE_FONT_EXT,
+    EMRI_TYPE1_FONT_EXT,
+    EMRI_DESIGNVECTOR_EXT,
+    EMRI_SUBSET_FONT_EXT,
+    EMRI_DELTA_FONT_EXT,
+    EMRI_PS_JOB_DATA,
+    EMRI_EMBED_FONT_EXT,
+} emfspool_record_type;
 
 #define HANDLE_LIST_INC 20
 static const RECTL empty_bounds = { 0, 0, -1, -1 };
@@ -2474,6 +2505,7 @@ static void emf_reset( DC_ATTR *dc_attr, const RECT *rect )
     emf->dc_pen = 0;
     emf->path = FALSE;
     emf->palette_used = 0;
+    emf->document_state = DOCUMENT_NOT_STARTED;
 
     dc_attr->emf_bounds.left = dc_attr->emf_bounds.top = 0;
     dc_attr->emf_bounds.right = dc_attr->emf_bounds.bottom = -1;
@@ -2687,4 +2719,153 @@ HENHMETAFILE WINAPI CloseEnhMetaFile( HDC hdc )
     emf->emh = NULL;  /* So it won't be deleted */
     DeleteDC( hdc );
     return hmf;
+}
+
+BOOL spool_start_doc( DC_ATTR *dc_attr, HANDLE hspool, const DOCINFOW *doc_info )
+{
+    struct
+    {
+        unsigned int dwVersion;
+        unsigned int cjSize;
+        unsigned int dpszDocName;
+        unsigned int dpszOutput;
+    } *header;
+    size_t size = sizeof(*header);
+    struct emf *emf;
+    DWORD written;
+    WCHAR *p;
+
+    TRACE( "(%p %p)\n", dc_attr, hspool );
+
+    if (doc_info->lpszDocName)
+        size += (wcslen( doc_info->lpszDocName ) + 1) * sizeof(WCHAR);
+    if (doc_info->lpszOutput)
+        size += (wcslen( doc_info->lpszOutput ) + 1) * sizeof(WCHAR);
+    header = HeapAlloc( GetProcessHeap(), 0, size );
+    if (!header) return FALSE;
+
+    header->dwVersion = 0x10000;
+    header->cjSize = size;
+    p = (WCHAR *)(header + 1);
+    if (doc_info->lpszDocName)
+    {
+        header->dpszDocName = (BYTE *)p - (BYTE *)header;
+        wcscpy( p, doc_info->lpszDocName );
+        p += wcslen( doc_info->lpszDocName ) + 1;
+    }
+    else
+    {
+        header->dpszDocName = 0;
+    }
+    if (doc_info->lpszOutput)
+    {
+        header->dpszOutput = (BYTE *)p - (BYTE *)header;
+        wcscpy( p, doc_info->lpszOutput );
+    }
+    else
+    {
+        header->dpszOutput = 0;
+    }
+    if (!WritePrinter( hspool, header, size, &written )) written = 0;
+    HeapFree( GetProcessHeap(), 0, header );
+    if (written != size) return FALSE;
+
+    emf = emf_create( dc_attr_handle(dc_attr), NULL, NULL );
+    if (!emf) return FALSE;
+    emf->document_state = NEEDS_START_PAGE;
+    return TRUE;
+}
+
+int spool_start_page( DC_ATTR *dc_attr, HANDLE hspool )
+{
+    struct emf *emf = get_dc_emf( dc_attr );
+    HDC hdc = dc_attr_handle( dc_attr );
+    POINT pos = { 0 };
+    XFORM xform;
+
+    TRACE( "(%p)\n", dc_attr );
+
+    /* Save current DC state to EMF */
+    /* FIXME: SetTextJustification if needed */
+    EMFDC_SelectObject( dc_attr, GetCurrentObject(hdc, OBJ_PEN) );
+    EMFDC_SelectObject( dc_attr, GetCurrentObject(hdc, OBJ_BRUSH) );
+    EMFDC_SelectObject( dc_attr, GetCurrentObject(hdc, OBJ_FONT) );
+    if (GetBkColor( hdc ) != 0xffffff)
+        EMFDC_SetBkColor( dc_attr, GetBkColor(hdc) );
+    if (GetBkMode( hdc ) != OPAQUE)
+        EMFDC_SetBkMode( dc_attr, GetBkMode(hdc) );
+    GetCurrentPositionEx( hdc, &pos );
+    if (pos.x || pos.y)
+        EMFDC_MoveTo( dc_attr, pos.x, pos.y );
+    if (GetMapMode( hdc ) != MM_TEXT)
+        EMFDC_SetMapMode( dc_attr, GetMapMode(hdc) );
+    if (GetPolyFillMode( hdc ) != ALTERNATE)
+        EMFDC_SetPolyFillMode( dc_attr, GetPolyFillMode(hdc) );
+    if (GetROP2( hdc ) != R2_COPYPEN)
+        EMFDC_SetROP2( dc_attr, GetROP2(hdc) );
+    if (GetStretchBltMode( hdc ) != BLACKONWHITE)
+        EMFDC_SetStretchBltMode( dc_attr, GetStretchBltMode(hdc) );
+    if (GetTextAlign( hdc ) != (TA_LEFT | TA_TOP))
+        EMFDC_SetTextAlign( dc_attr, GetTextAlign(hdc) );
+    if (GetTextColor( hdc ))
+        EMFDC_SetTextColor( dc_attr, GetTextColor(hdc) );
+    GetWorldTransform(hdc, &xform);
+    if (xform.eM11 != 1 || xform.eM22 != 1 || xform.eM12 || xform.eM21 || xform.eDx || xform.eDy)
+        EMFDC_SetWorldTransform( dc_attr, &xform );
+
+    emf->document_state = NEEDS_END_PAGE;
+    return StartPagePrinter( hspool );
+}
+
+int spool_end_page( DC_ATTR *dc_attr, HANDLE hspool )
+{
+    struct record_hdr
+    {
+        unsigned int ulID;
+        unsigned int cjSize;
+    } record_hdr;
+    struct
+    {
+        struct record_hdr hdr;
+        LARGE_INTEGER pos;
+    } metafile_ext;
+    struct emf *emf = get_dc_emf( dc_attr );
+    DWORD written;
+
+    TRACE( "(%p %p)\n", dc_attr, hspool );
+
+    if (!emf_eof( dc_attr )) return 0;
+
+    record_hdr.ulID = EMRI_METAFILE_DATA;
+    record_hdr.cjSize = emf->emh->nBytes;
+    if (!WritePrinter( hspool, &record_hdr, sizeof(record_hdr), &written )) return 0;
+    if (!WritePrinter( hspool, emf->emh, emf->emh->nBytes, &written )) return 0;
+
+    metafile_ext.hdr.ulID = EMRI_METAFILE_EXT;
+    metafile_ext.hdr.cjSize = sizeof(metafile_ext) - sizeof(struct record_hdr);
+    metafile_ext.pos.QuadPart = emf->emh->nBytes + sizeof(record_hdr);
+    if (!WritePrinter( hspool, &metafile_ext, sizeof(metafile_ext), &written )) return 0;
+
+    emf_reset( dc_attr, NULL );
+    emf->document_state = NEEDS_START_PAGE;
+    return EndPagePrinter( hspool );
+}
+
+int spool_abort_doc( DC_ATTR *dc_attr, HANDLE hspool )
+{
+    TRACE( "(%p %p)\n", dc_attr, hspool );
+
+    EMFDC_DeleteDC( dc_attr );
+    return AbortPrinter( hspool );
+}
+
+int spool_end_doc( DC_ATTR *dc_attr, HANDLE hspool )
+{
+    struct emf *emf = get_dc_emf( dc_attr );
+
+    TRACE( "(%p %p)\n", dc_attr, hspool );
+
+    if (emf->document_state == NEEDS_END_PAGE) spool_end_page( dc_attr, hspool );
+    EMFDC_DeleteDC( dc_attr );
+    return EndDocPrinter( hspool );
 }

@@ -2216,6 +2216,7 @@ BOOL WINAPI CancelDC(HDC hdc)
  */
 INT WINAPI StartDocW( HDC hdc, const DOCINFOW *doc )
 {
+    DOC_INFO_1W spool_info;
     WCHAR *output = NULL;
     struct print *print;
     DC_ATTR *dc_attr;
@@ -2240,6 +2241,7 @@ INT WINAPI StartDocW( HDC hdc, const DOCINFOW *doc )
           debugstr_w(info.lpszDatatype), info.fwType);
 
     if (!(dc_attr = get_dc_attr( hdc ))) return SP_ERROR;
+    if (dc_attr->print && dc_attr->emf) return SP_ERROR;
 
     proc = (ABORTPROC)(UINT_PTR)dc_attr->abort_proc;
     if (proc && !proc( hdc, 0 )) return 0;
@@ -2250,6 +2252,23 @@ INT WINAPI StartDocW( HDC hdc, const DOCINFOW *doc )
         if (!info.lpszOutput) info.lpszOutput = print->output;
         output = StartDocDlgW( print->printer, &info );
         if (output) info.lpszOutput = output;
+
+        if (!info.lpszDatatype || !wcsicmp(info.lpszDatatype, L"EMF"))
+        {
+            spool_info.pDocName = (WCHAR *)info.lpszDocName;
+            spool_info.pOutputFile = (WCHAR *)info.lpszOutput;
+            spool_info.pDatatype = (WCHAR *)L"NT EMF 1.003";
+            if ((ret = StartDocPrinterW( print->printer, 1, (BYTE *)&spool_info )))
+            {
+                if (!spool_start_doc( dc_attr, print->printer, &info ))
+                {
+                    AbortDoc( hdc );
+                    ret = 0;
+                }
+                HeapFree( GetProcessHeap(), 0, output );
+                return ret;
+            }
+        }
     }
 
     ret = NtGdiStartDoc( hdc, &info, NULL, 0 );
@@ -2306,6 +2325,12 @@ INT WINAPI StartDocA( HDC hdc, const DOCINFOA *doc )
  */
 INT WINAPI StartPage( HDC hdc )
 {
+    struct print *print;
+    DC_ATTR *dc_attr;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return SP_ERROR;
+    if ((print = get_dc_print( dc_attr )) && dc_attr->emf)
+        return spool_start_page( dc_attr, print->printer );
     return NtGdiStartPage( hdc );
 }
 
@@ -2314,6 +2339,12 @@ INT WINAPI StartPage( HDC hdc )
  */
 INT WINAPI EndPage( HDC hdc )
 {
+    struct print *print;
+    DC_ATTR *dc_attr;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return SP_ERROR;
+    if ((print = get_dc_print( dc_attr )) && dc_attr->emf)
+        return spool_end_page( dc_attr, print->printer );
     return NtGdiEndPage( hdc );
 }
 
@@ -2322,6 +2353,12 @@ INT WINAPI EndPage( HDC hdc )
  */
 INT WINAPI EndDoc( HDC hdc )
 {
+    struct print *print;
+    DC_ATTR *dc_attr;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return SP_ERROR;
+    if ((print = get_dc_print( dc_attr )) && dc_attr->emf)
+        return spool_end_doc( dc_attr, print->printer );
     return NtGdiEndDoc( hdc );
 }
 
@@ -2330,6 +2367,12 @@ INT WINAPI EndDoc( HDC hdc )
  */
 INT WINAPI AbortDoc( HDC hdc )
 {
+    struct print *print;
+    DC_ATTR *dc_attr;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return SP_ERROR;
+    if ((print = get_dc_print( dc_attr )) && dc_attr->emf)
+        return spool_abort_doc( dc_attr, print->printer );
     return NtGdiAbortDoc( hdc );
 }
 

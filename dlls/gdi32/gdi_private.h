@@ -280,6 +280,13 @@ extern BOOL EMFDC_WidenPath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
 extern HENHMETAFILE EMF_Create_HENHMETAFILE( ENHMETAHEADER *emh, DWORD filesize,
                                              BOOL on_disk ) DECLSPEC_HIDDEN;
 
+extern BOOL spool_start_doc( DC_ATTR *dc_attr, HANDLE hspool,
+                             const DOCINFOW *doc_info ) DECLSPEC_HIDDEN;
+extern int spool_start_page( DC_ATTR *dc_attr, HANDLE hspool ) DECLSPEC_HIDDEN;
+extern int spool_end_page( DC_ATTR *dc_attr, HANDLE hspool ) DECLSPEC_HIDDEN;
+extern int spool_end_doc( DC_ATTR *dc_attr, HANDLE hspool ) DECLSPEC_HIDDEN;
+extern int spool_abort_doc( DC_ATTR *dc_attr, HANDLE hspool ) DECLSPEC_HIDDEN;
+
 static inline int get_dib_stride( int width, int bpp )
 {
     return ((width * bpp + 31) >> 3) & ~3;
