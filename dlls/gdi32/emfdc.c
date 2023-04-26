@@ -2575,35 +2575,16 @@ HDC WINAPI CreateEnhMetaFileW( HDC hdc, const WCHAR *filename, const RECT *rect,
     return ret;
 }
 
-/******************************************************************
- *           CloseEnhMetaFile (GDI32.@)
- */
-HENHMETAFILE WINAPI CloseEnhMetaFile( HDC hdc )
+static BOOL emf_eof( DC_ATTR *dc_attr )
 {
+    struct emf *emf = get_dc_emf( dc_attr );
     UINT size, palette_size;
-    HENHMETAFILE hmf;
-    struct emf *emf;
-    DC_ATTR *dc_attr;
     EMREOF *emr;
-    HANDLE mapping = 0;
-
-    TRACE("(%p)\n", hdc );
-
-    if (!(dc_attr = get_dc_attr( hdc )) || !get_dc_emf( dc_attr )) return 0;
-    emf = get_dc_emf( dc_attr );
+    BOOL ret;
 
     palette_size = emf->palette_used * sizeof(*emf->palette);
     size = sizeof(*emr) + palette_size;
-    if (!(emr = HeapAlloc( GetProcessHeap(), 0, size ))) return 0;
-
-    if (dc_attr->save_level)
-        RestoreDC( hdc, 1 );
-
-    if (emf->dc_brush) DeleteObject( emf->dc_brush );
-    emf->dc_brush = 0;
-    if (emf->dc_pen) DeleteObject( emf->dc_pen );
-    emf->dc_pen = 0;
-
+    if (!(emr = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
 
     emr->emr.iType = EMR_EOF;
     emr->emr.nSize = size;
@@ -2612,8 +2593,9 @@ HENHMETAFILE WINAPI CloseEnhMetaFile( HDC hdc )
     memcpy( (BYTE *)emr + emr->offPalEntries, emf->palette, palette_size );
     /* Set nSizeLast */
     ((DWORD *)((BYTE *)emr + size))[-1] = size;
-    emfdc_record( emf, &emr->emr );
+    ret = emfdc_record( emf, &emr->emr );
     HeapFree( GetProcessHeap(), 0, emr );
+    if (!ret) return FALSE;
 
     emf->emh->rclBounds = dc_attr->emf_bounds;
 
@@ -2629,6 +2611,33 @@ HENHMETAFILE WINAPI CloseEnhMetaFile( HDC hdc )
         emf->emh->rclFrame.bottom = emf->emh->rclBounds.bottom *
             emf->emh->szlMillimeters.cy * 100 / emf->emh->szlDevice.cy;
     }
+    return TRUE;
+}
+
+/******************************************************************
+ *           CloseEnhMetaFile (GDI32.@)
+ */
+HENHMETAFILE WINAPI CloseEnhMetaFile( HDC hdc )
+{
+    HENHMETAFILE hmf;
+    struct emf *emf;
+    DC_ATTR *dc_attr;
+    HANDLE mapping = 0;
+
+    TRACE("(%p)\n", hdc );
+
+    if (!(dc_attr = get_dc_attr( hdc )) || !get_dc_emf( dc_attr )) return 0;
+    emf = get_dc_emf( dc_attr );
+
+    if (dc_attr->save_level)
+        RestoreDC( hdc, 1 );
+
+    if (emf->dc_brush) DeleteObject( emf->dc_brush );
+    emf->dc_brush = 0;
+    if (emf->dc_pen) DeleteObject( emf->dc_pen );
+    emf->dc_pen = 0;
+
+    if (!emf_eof( dc_attr )) return 0;
 
     if (emf->file)  /* disk based metafile */
     {
