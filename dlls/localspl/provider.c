@@ -3816,7 +3816,8 @@ static BOOL WINAPI fpScheduleJob(HANDLE hprinter, DWORD job_id)
     pp->close(hpp);
     print_proc_unload(pp);
 
-    DeleteFileW(job->filename);
+    if (!(printer->info->attributes & PRINTER_ATTRIBUTE_KEEPPRINTEDJOBS))
+        DeleteFileW(job->filename);
     free_job(job);
     LeaveCriticalSection(&printer->info->jobs_cs);
     return ret;
