@@ -467,6 +467,7 @@ extern INT CDECL PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc ) DECLSPEC_HID
 extern BOOL CDECL PSDRV_StrokeAndFillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL CDECL PSDRV_StrokePath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 
+extern BOOL CDECL PSDRV_ResetDC( PHYSDEV dev, const DEVMODEW *lpInitData ) DECLSPEC_HIDDEN;
 extern void PSDRV_MergeDevmodes(PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2,
 			 PRINTERINFO *pi) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_GetFontMetrics(void) DECLSPEC_HIDDEN;

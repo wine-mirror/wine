@@ -3228,6 +3228,30 @@ BOOL WINAPI PrintDocumentOnPrintProcessor(HANDLE pp, WCHAR *doc_name)
 
         switch (record.ulID)
         {
+        case EMRI_DEVMODE:
+        {
+            DEVMODEW *devmode = NULL;
+
+            if (record.cjSize)
+            {
+                devmode = malloc(record.cjSize);
+                if (!devmode)
+                    goto cleanup;
+                ret = ReadPrinter(spool_data, devmode, record.cjSize, &r);
+                if (ret && r != record.cjSize)
+                {
+                    SetLastError(ERROR_INVALID_DATA);
+                    ret = FALSE;
+                }
+            }
+
+            if (ret)
+                ret = PSDRV_ResetDC(&data->pdev->dev, devmode);
+            free(devmode);
+            if (!ret)
+                goto cleanup;
+            break;
+        }
         case EMRI_METAFILE_DATA:
             pos.QuadPart = record.cjSize;
             ret = SeekPrinter(spool_data, pos, NULL, FILE_CURRENT, FALSE);
@@ -3242,7 +3266,7 @@ BOOL WINAPI PrintDocumentOnPrintProcessor(HANDLE pp, WCHAR *doc_name)
             {
                 cur.QuadPart += record.cjSize;
                 ret = ReadPrinter(spool_data, &pos, sizeof(pos), &r);
-                if (r != sizeof(pos))
+                if (ret && r != sizeof(pos))
                 {
                     SetLastError(ERROR_INVALID_DATA);
                     ret = FALSE;
