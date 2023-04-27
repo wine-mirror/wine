@@ -821,13 +821,16 @@ static const IMFMediaStreamVtbl media_stream_vtbl =
     media_stream_RequestSample
 };
 
-static HRESULT new_media_stream(struct media_source *source,
-        struct wg_parser_stream *wg_stream, DWORD stream_id, struct media_stream **out_stream)
+static HRESULT media_stream_create(struct media_source *source, DWORD id,
+        struct media_stream **out)
 {
-    struct media_stream *object = calloc(1, sizeof(*object));
+    struct media_stream *object;
     HRESULT hr;
 
-    TRACE("source %p, wg_stream %p, stream_id %lu.\n", source, wg_stream, stream_id);
+    TRACE("source %p, id %lu.\n", source, id);
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
 
     object->IMFMediaStream_iface.lpVtbl = &media_stream_vtbl;
     object->ref = 1;
@@ -840,16 +843,15 @@ static HRESULT new_media_stream(struct media_source *source,
 
     IMFMediaSource_AddRef(&source->IMFMediaSource_iface);
     object->parent_source = source;
-    object->stream_id = stream_id;
+    object->stream_id = id;
 
     object->state = STREAM_INACTIVE;
     object->eos = FALSE;
-    object->wg_stream = wg_stream;
+    object->wg_stream = wg_parser_get_stream(source->wg_parser, id);
 
     TRACE("Created stream object %p.\n", object);
 
-    *out_stream = object;
-
+    *out = object;
     return S_OK;
 }
 
@@ -1473,7 +1475,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
 
     for (i = 0; i < stream_count; ++i)
     {
-        if (FAILED(hr = new_media_stream(object, wg_parser_get_stream(parser, i), i, &object->streams[i])))
+        if (FAILED(hr = media_stream_create(object, i, &object->streams[i])))
             goto fail;
 
         if (FAILED(hr = media_stream_init_desc(object->streams[i])))
