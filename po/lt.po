@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2023-04-01 17:37+0300\n"
+"PO-Revision-Date: 2023-04-27 09:31+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -325,7 +325,7 @@ msgstr ""
 
 #: dlls/appwiz.cpl/appwiz.rc:47
 msgid "Please wait until the current uninstall/modify process is complete."
-msgstr ""
+msgstr "Palaukite, kol dabartinis šalinimo/modifikavimo procesas bus baigtas."
 
 #: dlls/avifil32/avifil32.rc:42
 msgid "Compress options"
