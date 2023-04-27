@@ -697,8 +697,9 @@ static ULONG WINAPI media_stream_Release(IMFMediaStream *iface)
 
     if (!ref)
     {
-        if (stream->event_queue)
-            IMFMediaEventQueue_Release(stream->event_queue);
+        IMFMediaSource_Release(stream->media_source);
+        IMFStreamDescriptor_Release(stream->descriptor);
+        IMFMediaEventQueue_Release(stream->event_queue);
         flush_token_queue(stream, FALSE);
         free(stream);
     }
@@ -1205,8 +1206,11 @@ static ULONG WINAPI media_source_Release(IMFMediaSource *iface)
 
     if (!ref)
     {
-        IMFMediaSource_Shutdown(&source->IMFMediaSource_iface);
+        IMFMediaSource_Shutdown(iface);
+        IMFPresentationDescriptor_Release(source->pres_desc);
         IMFMediaEventQueue_Release(source->event_queue);
+        IMFByteStream_Release(source->byte_stream);
+        wg_parser_destroy(source->wg_parser);
         free(source);
     }
 
@@ -1344,7 +1348,6 @@ static HRESULT WINAPI media_source_Pause(IMFMediaSource *iface)
 static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
 {
     struct media_source *source = impl_from_IMFMediaSource(iface);
-    unsigned int i;
 
     TRACE("%p.\n", iface);
 
@@ -1359,26 +1362,16 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
     WaitForSingleObject(source->read_thread, INFINITE);
     CloseHandle(source->read_thread);
 
-    IMFPresentationDescriptor_Release(source->pres_desc);
     IMFMediaEventQueue_Shutdown(source->event_queue);
     IMFByteStream_Close(source->byte_stream);
-    IMFByteStream_Release(source->byte_stream);
 
-    for (i = 0; i < source->stream_count; i++)
+    while (source->stream_count--)
     {
-        struct media_stream *stream = source->streams[i];
-
+        struct media_stream *stream = source->streams[source->stream_count];
         stream->state = STREAM_SHUTDOWN;
-
         IMFMediaEventQueue_Shutdown(stream->event_queue);
-        IMFStreamDescriptor_Release(stream->descriptor);
-        IMFMediaSource_Release(stream->media_source);
-
         IMFMediaStream_Release(&stream->IMFMediaStream_iface);
     }
-
-    wg_parser_destroy(source->wg_parser);
-
     free(source->streams);
 
     MFUnlockWorkQueue(source->async_commands_queue);
@@ -1565,17 +1558,14 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
             IMFStreamDescriptor_Release(descriptors[i]);
         free(descriptors);
     }
-    for (i = 0; i < object->stream_count; i++)
+
+    while (object->streams && object->stream_count--)
     {
-        struct media_stream *stream = object->streams[i];
-
-        IMFMediaEventQueue_Release(stream->event_queue);
-        IMFStreamDescriptor_Release(stream->descriptor);
-        IMFMediaSource_Release(stream->media_source);
-
-        free(stream);
+        struct media_stream *stream = object->streams[object->stream_count];
+        IMFMediaStream_Release(&stream->IMFMediaStream_iface);
     }
     free(object->streams);
+
     if (stream_count != UINT_MAX)
         wg_parser_disconnect(object->wg_parser);
     if (object->read_thread)
