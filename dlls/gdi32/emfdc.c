@@ -2807,7 +2807,7 @@ int spool_start_page( DC_ATTR *dc_attr, HANDLE hspool )
     return StartPagePrinter( hspool );
 }
 
-int spool_end_page( DC_ATTR *dc_attr, HANDLE hspool )
+int spool_end_page( DC_ATTR *dc_attr, HANDLE hspool, const DEVMODEW *devmode, BOOL write_devmode )
 {
     struct record_hdr
     {
@@ -2831,9 +2831,20 @@ int spool_end_page( DC_ATTR *dc_attr, HANDLE hspool )
     if (!WritePrinter( hspool, &record_hdr, sizeof(record_hdr), &written )) return 0;
     if (!WritePrinter( hspool, emf->emh, emf->emh->nBytes, &written )) return 0;
 
+    if (write_devmode)
+    {
+        record_hdr.ulID = EMRI_DEVMODE;
+        record_hdr.cjSize = devmode ? devmode->dmSize + devmode->dmDriverExtra : 0;
+        if (!WritePrinter( hspool, &record_hdr, sizeof(record_hdr), &written )) return 0;
+        if (devmode && !WritePrinter( hspool, (BYTE *)devmode,
+                    record_hdr.cjSize, &written )) return 0;
+    }
+
     metafile_ext.hdr.ulID = EMRI_METAFILE_EXT;
     metafile_ext.hdr.cjSize = sizeof(metafile_ext) - sizeof(struct record_hdr);
     metafile_ext.pos.QuadPart = emf->emh->nBytes + sizeof(record_hdr);
+    if (write_devmode)
+        metafile_ext.pos.QuadPart += record_hdr.cjSize + sizeof(record_hdr);
     if (!WritePrinter( hspool, &metafile_ext, sizeof(metafile_ext), &written )) return 0;
 
     emf_reset( dc_attr, NULL );

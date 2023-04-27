@@ -283,7 +283,8 @@ extern HENHMETAFILE EMF_Create_HENHMETAFILE( ENHMETAHEADER *emh, DWORD filesize,
 extern BOOL spool_start_doc( DC_ATTR *dc_attr, HANDLE hspool,
                              const DOCINFOW *doc_info ) DECLSPEC_HIDDEN;
 extern int spool_start_page( DC_ATTR *dc_attr, HANDLE hspool ) DECLSPEC_HIDDEN;
-extern int spool_end_page( DC_ATTR *dc_attr, HANDLE hspool ) DECLSPEC_HIDDEN;
+extern int spool_end_page( DC_ATTR *dc_attr, HANDLE hspool, const DEVMODEW *devmode,
+                           BOOL write_devmode ) DECLSPEC_HIDDEN;
 extern int spool_end_doc( DC_ATTR *dc_attr, HANDLE hspool ) DECLSPEC_HIDDEN;
 extern int spool_abort_doc( DC_ATTR *dc_attr, HANDLE hspool ) DECLSPEC_HIDDEN;
 

@@ -54,7 +54,8 @@ struct graphics_driver
 enum print_flags
 {
     CALL_START_PAGE = 0x1,
-    CALL_END_PAGE   = 0x2
+    CALL_END_PAGE   = 0x2,
+    WRITE_DEVMODE   = 0x4,
 };
 
 struct print
@@ -62,6 +63,7 @@ struct print
     HANDLE printer;
     WCHAR *output;
     enum print_flags flags;
+    DEVMODEW *devmode;
 };
 
 DC_ATTR *get_dc_attr( HDC hdc )
@@ -202,6 +204,29 @@ done:
     return driver->entry_point;
 }
 
+static BOOL print_copy_devmode( struct print *print, const DEVMODEW *devmode )
+{
+    size_t size;
+
+    if (!print) return TRUE;
+    if (!print->devmode && !devmode) return TRUE;
+    HeapFree( GetProcessHeap(), 0, print->devmode );
+
+    if (!devmode)
+    {
+        print->devmode = NULL;
+        print->flags |= WRITE_DEVMODE;
+        return TRUE;
+    }
+
+    size = devmode->dmSize + devmode->dmDriverExtra;
+    print->devmode = HeapAlloc( GetProcessHeap(), 0, size );
+    if (!print->devmode) return FALSE;
+    memcpy(print->devmode, devmode, size);
+    print->flags |= WRITE_DEVMODE;
+    return TRUE;
+}
+
 /***********************************************************************
  *           CreateDCW    (GDI32.@)
  */
@@ -262,10 +287,13 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         ClosePrinter( hspool );
         return 0;
     }
-    else if (!(print = HeapAlloc( GetProcessHeap(), 0, sizeof(*print) )))
+    else if (!(print = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*print) )) ||
+            !print_copy_devmode( print, devmode ))
     {
+        HeapFree( GetProcessHeap(), 0, print );
         ClosePrinter( hspool );
         HeapFree( GetProcessHeap(), 0, port );
+        return 0;
     }
 
     if (display)
@@ -295,13 +323,13 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         }
         print->printer = hspool;
         print->output = port;
-        print->flags = 0;
         dc_attr->print = (UINT_PTR)print;
     }
     else if (hspool)
     {
         ClosePrinter( hspool );
         HeapFree( GetProcessHeap(), 0, port );
+        HeapFree( GetProcessHeap(), 0, print->devmode );
         HeapFree( GetProcessHeap(), 0, print );
     }
 
@@ -431,6 +459,7 @@ static void delete_print_dc( DC_ATTR *dc_attr )
 
     ClosePrinter( print->printer );
     HeapFree( GetProcessHeap(), 0, print->output );
+    HeapFree( GetProcessHeap(), 0, print->devmode );
     HeapFree( GetProcessHeap(), 0, print );
     dc_attr->print = 0;
 }
@@ -471,7 +500,15 @@ HDC WINAPI ResetDCA( HDC hdc, const DEVMODEA *devmode )
  */
 HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
 {
-    return NtGdiResetDC( hdc, devmode, NULL, NULL, NULL ) ? hdc : 0;
+    struct print *print;
+    DC_ATTR *dc_attr;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return 0;
+    print = get_dc_print( dc_attr );
+    if (print && print->flags & CALL_END_PAGE) return 0;
+    if (!NtGdiResetDC( hdc, devmode, NULL, NULL, NULL )) return 0;
+    if (print && !print_copy_devmode( print, devmode )) return 0;
+    return hdc;
 }
 
 /***********************************************************************
@@ -2404,9 +2441,11 @@ INT WINAPI EndPage( HDC hdc )
     print = get_dc_print( dc_attr );
     if (print)
     {
-        print->flags = (print->flags & ~CALL_END_PAGE) | CALL_START_PAGE;
+        BOOL write = print->flags & WRITE_DEVMODE;
+
+        print->flags = (print->flags & ~(CALL_END_PAGE | WRITE_DEVMODE)) | CALL_START_PAGE;
         if (dc_attr->emf)
-            return spool_end_page( dc_attr, print->printer );
+            return spool_end_page( dc_attr, print->printer, print->devmode, write );
     }
     return NtGdiEndPage( hdc );
 }
