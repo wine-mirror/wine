@@ -28,6 +28,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 
 static struct list g_sessions = LIST_INIT(g_sessions);
 
+static CRITICAL_SECTION g_sessions_lock;
+static CRITICAL_SECTION_DEBUG g_sessions_lock_debug =
+{
+    0, 0, &g_sessions_lock,
+    { &g_sessions_lock_debug.ProcessLocksList, &g_sessions_lock_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": g_sessions_lock") }
+};
+static CRITICAL_SECTION g_sessions_lock = { &g_sessions_lock_debug, -1, 0, 0, 0, 0 };
+
+void sessions_lock(void)
+{
+    EnterCriticalSection(&g_sessions_lock);
+}
+
+void sessions_unlock(void)
+{
+    LeaveCriticalSection(&g_sessions_lock);
+}
+
 static inline struct session_mgr *impl_from_IAudioSessionManager2(IAudioSessionManager2 *iface)
 {
     return CONTAINING_RECORD(iface, struct session_mgr, IAudioSessionManager2_iface);

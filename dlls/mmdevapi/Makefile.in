@@ -6,6 +6,7 @@ C_SRCS = \
 	audiovolume.c \
 	devenum.c \
 	main.c \
+	session.c \
 	spatialaudio.c
 
 IDL_SRCS = mmdevapi_classes.idl

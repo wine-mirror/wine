@@ -1,6 +1,7 @@
 MODULE    = winealsa.drv
 UNIXLIB   = winealsa.so
 IMPORTS   = uuid ole32 advapi32
+PARENTSRC = ../mmdevapi
 DELAYIMPORTS = winmm
 UNIX_LIBS    = $(ALSA_LIBS) $(PTHREAD_LIBS)
 
@@ -8,4 +9,5 @@ C_SRCS = \
 	alsa.c \
 	alsamidi.c \
 	midi.c \
-	mmdevdrv.c
+	mmdevdrv.c \
+	session.c
