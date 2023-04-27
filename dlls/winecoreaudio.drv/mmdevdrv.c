@@ -54,7 +54,7 @@ static const REFERENCE_TIME MinimumPeriod = 50000;
 static const IAudioClient3Vtbl AudioClient3_Vtbl;
 static const IAudioRenderClientVtbl AudioRenderClient_Vtbl;
 static const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl;
-static const IAudioSessionControl2Vtbl AudioSessionControl2_Vtbl;
+extern const IAudioSessionControl2Vtbl AudioSessionControl2_Vtbl;
 static const ISimpleAudioVolumeVtbl SimpleAudioVolume_Vtbl;
 static const IAudioClockVtbl AudioClock_Vtbl;
 static const IAudioClock2Vtbl AudioClock2_Vtbl;
@@ -75,12 +75,12 @@ static struct list g_sessions = LIST_INIT(g_sessions);
 
 static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client);
 
-static void sessions_lock(void)
+void DECLSPEC_HIDDEN sessions_lock(void)
 {
     EnterCriticalSection(&g_sessions_lock);
 }
 
-static void sessions_unlock(void)
+void DECLSPEC_HIDDEN sessions_unlock(void)
 {
     LeaveCriticalSection(&g_sessions_lock);
 }
@@ -98,11 +98,6 @@ static inline ACImpl *impl_from_IAudioRenderClient(IAudioRenderClient *iface)
 static inline ACImpl *impl_from_IAudioCaptureClient(IAudioCaptureClient *iface)
 {
     return CONTAINING_RECORD(iface, ACImpl, IAudioCaptureClient_iface);
-}
-
-static inline AudioSessionWrapper *impl_from_IAudioSessionControl2(IAudioSessionControl2 *iface)
-{
-    return CONTAINING_RECORD(iface, AudioSessionWrapper, IAudioSessionControl2_iface);
 }
 
 static inline AudioSessionWrapper *impl_from_ISimpleAudioVolume(ISimpleAudioVolume *iface)
@@ -1465,252 +1460,6 @@ static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client)
 
     return ret;
 }
-
-static HRESULT WINAPI AudioSessionControl_QueryInterface(
-        IAudioSessionControl2 *iface, REFIID riid, void **ppv)
-{
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
-
-    if(!ppv)
-        return E_POINTER;
-    *ppv = NULL;
-
-    if(IsEqualIID(riid, &IID_IUnknown) ||
-            IsEqualIID(riid, &IID_IAudioSessionControl) ||
-            IsEqualIID(riid, &IID_IAudioSessionControl2))
-        *ppv = iface;
-    if(*ppv){
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    WARN("Unknown interface %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI AudioSessionControl_AddRef(IAudioSessionControl2 *iface)
-{
-    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
-    ULONG ref;
-    ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) Refcount now %lu\n", This, ref);
-    return ref;
-}
-
-static ULONG WINAPI AudioSessionControl_Release(IAudioSessionControl2 *iface)
-{
-    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
-    ULONG ref;
-
-    sessions_lock();
-
-    ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p) Refcount now %lu\n", This, ref);
-    if(!ref){
-        if(This->client){
-            This->client->session_wrapper = NULL;
-            IAudioClient3_Release(&This->client->IAudioClient3_iface);
-        }
-        HeapFree(GetProcessHeap(), 0, This);
-    }
-
-    sessions_unlock();
-    return ref;
-}
-
-static HRESULT WINAPI AudioSessionControl_GetState(IAudioSessionControl2 *iface,
-        AudioSessionState *state)
-{
-    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
-    struct is_started_params params;
-    ACImpl *client;
-
-    TRACE("(%p)->(%p)\n", This, state);
-
-    if(!state)
-        return NULL_PTR_ERR;
-
-    sessions_lock();
-
-    if(list_empty(&This->session->clients)){
-        *state = AudioSessionStateExpired;
-        sessions_unlock();
-        return S_OK;
-    }
-
-    LIST_FOR_EACH_ENTRY(client, &This->session->clients, ACImpl, entry){
-        params.stream = client->stream;
-        UNIX_CALL(is_started, &params);
-        if(params.result == S_OK){
-            *state = AudioSessionStateActive;
-            sessions_unlock();
-            return S_OK;
-        }
-    }
-
-    sessions_unlock();
-
-    *state = AudioSessionStateInactive;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI AudioSessionControl_GetDisplayName(
-        IAudioSessionControl2 *iface, WCHAR **name)
-{
-    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
-
-    FIXME("(%p)->(%p) - stub\n", This, name);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI AudioSessionControl_SetDisplayName(
-        IAudioSessionControl2 *iface, const WCHAR *name, const GUID *session)
-{
-    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
-
-    FIXME("(%p)->(%p, %s) - stub\n", This, name, debugstr_guid(session));
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI AudioSessionControl_GetIconPath(
-        IAudioSessionControl2 *iface, WCHAR **path)
-{
-    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
-
-    FIXME("(%p)->(%p) - stub\n", This, path);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI AudioSessionControl_SetIconPath(
-        IAudioSessionControl2 *iface, const WCHAR *path, const GUID *session)
-{
-    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
-
-    FIXME("(%p)->(%p, %s) - stub\n", This, path, debugstr_guid(session));
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI AudioSessionControl_GetGroupingParam(
-        IAudioSessionControl2 *iface, GUID *group)
-{
-    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
-
-    FIXME("(%p)->(%p) - stub\n", This, group);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI AudioSessionControl_SetGroupingParam(
-        IAudioSessionControl2 *iface, const GUID *group, const GUID *session)
-{
-    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
-
-    FIXME("(%p)->(%s, %s) - stub\n", This, debugstr_guid(group),
-            debugstr_guid(session));
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI AudioSessionControl_RegisterAudioSessionNotification(
-        IAudioSessionControl2 *iface, IAudioSessionEvents *events)
-{
-    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
-
-    FIXME("(%p)->(%p) - stub\n", This, events);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI AudioSessionControl_UnregisterAudioSessionNotification(
-        IAudioSessionControl2 *iface, IAudioSessionEvents *events)
-{
-    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
-
-    FIXME("(%p)->(%p) - stub\n", This, events);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI AudioSessionControl_GetSessionIdentifier(
-        IAudioSessionControl2 *iface, WCHAR **id)
-{
-    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
-
-    FIXME("(%p)->(%p) - stub\n", This, id);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI AudioSessionControl_GetSessionInstanceIdentifier(
-        IAudioSessionControl2 *iface, WCHAR **id)
-{
-    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
-
-    FIXME("(%p)->(%p) - stub\n", This, id);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI AudioSessionControl_GetProcessId(
-        IAudioSessionControl2 *iface, DWORD *pid)
-{
-    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
-
-    TRACE("(%p)->(%p)\n", This, pid);
-
-    if(!pid)
-        return E_POINTER;
-
-    *pid = GetCurrentProcessId();
-
-    return S_OK;
-}
-
-static HRESULT WINAPI AudioSessionControl_IsSystemSoundsSession(
-        IAudioSessionControl2 *iface)
-{
-    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
-
-    TRACE("(%p)\n", This);
-
-    return S_FALSE;
-}
-
-static HRESULT WINAPI AudioSessionControl_SetDuckingPreference(
-        IAudioSessionControl2 *iface, BOOL optout)
-{
-    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
-
-    TRACE("(%p)->(%d)\n", This, optout);
-
-    return S_OK;
-}
-
-static const IAudioSessionControl2Vtbl AudioSessionControl2_Vtbl =
-{
-    AudioSessionControl_QueryInterface,
-    AudioSessionControl_AddRef,
-    AudioSessionControl_Release,
-    AudioSessionControl_GetState,
-    AudioSessionControl_GetDisplayName,
-    AudioSessionControl_SetDisplayName,
-    AudioSessionControl_GetIconPath,
-    AudioSessionControl_SetIconPath,
-    AudioSessionControl_GetGroupingParam,
-    AudioSessionControl_SetGroupingParam,
-    AudioSessionControl_RegisterAudioSessionNotification,
-    AudioSessionControl_UnregisterAudioSessionNotification,
-    AudioSessionControl_GetSessionIdentifier,
-    AudioSessionControl_GetSessionInstanceIdentifier,
-    AudioSessionControl_GetProcessId,
-    AudioSessionControl_IsSystemSoundsSession,
-    AudioSessionControl_SetDuckingPreference
-};
 
 static HRESULT WINAPI SimpleAudioVolume_QueryInterface(
         ISimpleAudioVolume *iface, REFIID riid, void **ppv)
