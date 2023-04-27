@@ -2501,8 +2501,8 @@ static void test_MFCreateMFByteStreamOnStream(void)
     hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &test_callback->IMFAsyncCallback_iface, NULL);
     ok(hr == S_OK, "got %#lx\n", hr);
     res = wait_async_callback_result(&test_callback->IMFAsyncCallback_iface, 100, &result);
-    todo_wine ok(res == 0, "got %#lx\n", res);
-    if (res == 0) IMFAsyncResult_Release(result);
+    ok(res == 0, "got %#lx\n", res);
+    IMFAsyncResult_Release(result);
 
     test_stream_complete_read(stream);
     res = wait_async_callback_result(&read_callback->IMFAsyncCallback_iface, 1000, &result);
