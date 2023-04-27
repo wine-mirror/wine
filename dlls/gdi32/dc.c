@@ -2408,8 +2408,12 @@ INT WINAPI SetICMMode( HDC hdc, INT mode )
  */
 BOOL WINAPI GdiIsMetaPrintDC( HDC hdc )
 {
-    FIXME( "%p\n", hdc );
-    return FALSE;
+    DC_ATTR *dc_attr;
+
+    TRACE( "%p\n", hdc );
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    return dc_attr->print && dc_attr->emf;
 }
 
 /***********************************************************************
