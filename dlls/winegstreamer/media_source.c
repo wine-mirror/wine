@@ -31,7 +31,8 @@ struct media_stream
 {
     IMFMediaStream IMFMediaStream_iface;
     LONG ref;
-    struct media_source *parent_source;
+
+    IMFMediaSource *media_source;
     IMFMediaEventQueue *event_queue;
     IMFStreamDescriptor *descriptor;
 
@@ -288,6 +289,7 @@ static BOOL enqueue_token(struct media_stream *stream, IUnknown *token)
 
 static void flush_token_queue(struct media_stream *stream, BOOL send)
 {
+    struct media_source *source = impl_from_IMFMediaSource(stream->media_source);
     LONG i;
 
     for (i = 0; i < stream->token_queue_count; i++)
@@ -301,8 +303,8 @@ static void flush_token_queue(struct media_stream *stream, BOOL send)
                 command->u.request_sample.stream = stream;
                 command->u.request_sample.token = stream->token_queue[i];
 
-                hr = MFPutWorkItem(stream->parent_source->async_commands_queue,
-                        &stream->parent_source->async_commands_callback, &command->IUnknown_iface);
+                hr = MFPutWorkItem(source->async_commands_queue, &source->async_commands_callback,
+                        &command->IUnknown_iface);
             }
             if (FAILED(hr))
                 WARN("Could not enqueue sample request, hr %#lx\n", hr);
@@ -528,7 +530,7 @@ out:
 
 static void wait_on_sample(struct media_stream *stream, IUnknown *token)
 {
-    struct media_source *source = stream->parent_source;
+    struct media_source *source = impl_from_IMFMediaSource(stream->media_source);
     PROPVARIANT empty_var = {.vt = VT_EMPTY};
     struct wg_parser_buffer buffer;
 
@@ -542,7 +544,7 @@ static void wait_on_sample(struct media_stream *stream, IUnknown *token)
     {
         stream->eos = TRUE;
         IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEEndOfStream, &GUID_NULL, S_OK, &empty_var);
-        dispatch_end_of_presentation(stream->parent_source);
+        dispatch_end_of_presentation(source);
     }
 }
 
@@ -741,17 +743,18 @@ static HRESULT WINAPI media_stream_QueueEvent(IMFMediaStream *iface, MediaEventT
     return IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, event_type, ext_type, hr, value);
 }
 
-static HRESULT WINAPI media_stream_GetMediaSource(IMFMediaStream *iface, IMFMediaSource **source)
+static HRESULT WINAPI media_stream_GetMediaSource(IMFMediaStream *iface, IMFMediaSource **out)
 {
     struct media_stream *stream = impl_from_IMFMediaStream(iface);
+    struct media_source *source = impl_from_IMFMediaSource(stream->media_source);
 
-    TRACE("%p, %p.\n", iface, source);
+    TRACE("%p, %p.\n", iface, out);
 
     if (stream->state == STREAM_SHUTDOWN)
         return MF_E_SHUTDOWN;
 
-    IMFMediaSource_AddRef(&stream->parent_source->IMFMediaSource_iface);
-    *source = &stream->parent_source->IMFMediaSource_iface;
+    IMFMediaSource_AddRef(&source->IMFMediaSource_iface);
+    *out = &source->IMFMediaSource_iface;
 
     return S_OK;
 }
@@ -774,6 +777,7 @@ static HRESULT WINAPI media_stream_GetStreamDescriptor(IMFMediaStream* iface, IM
 static HRESULT WINAPI media_stream_RequestSample(IMFMediaStream *iface, IUnknown *token)
 {
     struct media_stream *stream = impl_from_IMFMediaStream(iface);
+    struct media_source *source = impl_from_IMFMediaSource(stream->media_source);
     struct source_async_command *command;
     HRESULT hr;
 
@@ -800,8 +804,7 @@ static HRESULT WINAPI media_stream_RequestSample(IMFMediaStream *iface, IUnknown
             IUnknown_AddRef(token);
         command->u.request_sample.token = token;
 
-        hr = MFPutWorkItem(stream->parent_source->async_commands_queue,
-                &stream->parent_source->async_commands_callback, &command->IUnknown_iface);
+        hr = MFPutWorkItem(source->async_commands_queue, &source->async_commands_callback, &command->IUnknown_iface);
     }
 
     return hr;
@@ -821,9 +824,10 @@ static const IMFMediaStreamVtbl media_stream_vtbl =
     media_stream_RequestSample
 };
 
-static HRESULT media_stream_create(struct media_source *source, DWORD id,
+static HRESULT media_stream_create(IMFMediaSource *source, DWORD id,
         struct media_stream **out)
 {
+    struct wg_parser *wg_parser = impl_from_IMFMediaSource(source)->wg_parser;
     struct media_stream *object;
     HRESULT hr;
 
@@ -841,13 +845,13 @@ static HRESULT media_stream_create(struct media_source *source, DWORD id,
         return hr;
     }
 
-    IMFMediaSource_AddRef(&source->IMFMediaSource_iface);
-    object->parent_source = source;
+    IMFMediaSource_AddRef(source);
+    object->media_source = source;
     object->stream_id = id;
 
     object->state = STREAM_INACTIVE;
     object->eos = FALSE;
-    object->wg_stream = wg_parser_get_stream(source->wg_parser, id);
+    object->wg_stream = wg_parser_get_stream(wg_parser, id);
 
     TRACE("Created stream object %p.\n", object);
 
@@ -1368,7 +1372,7 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
 
         IMFMediaEventQueue_Shutdown(stream->event_queue);
         IMFStreamDescriptor_Release(stream->descriptor);
-        IMFMediaSource_Release(&stream->parent_source->IMFMediaSource_iface);
+        IMFMediaSource_Release(stream->media_source);
 
         IMFMediaStream_Release(&stream->IMFMediaStream_iface);
     }
@@ -1475,13 +1479,13 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
 
     for (i = 0; i < stream_count; ++i)
     {
-        if (FAILED(hr = media_stream_create(object, i, &object->streams[i])))
+        if (FAILED(hr = media_stream_create(&object->IMFMediaSource_iface, i, &object->streams[i])))
             goto fail;
 
         if (FAILED(hr = media_stream_init_desc(object->streams[i])))
         {
             ERR("Failed to finish initialization of media stream %p, hr %#lx.\n", object->streams[i], hr);
-            IMFMediaSource_Release(&object->streams[i]->parent_source->IMFMediaSource_iface);
+            IMFMediaSource_Release(object->streams[i]->media_source);
             IMFMediaEventQueue_Release(object->streams[i]->event_queue);
             free(object->streams[i]);
             goto fail;
@@ -1567,7 +1571,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
 
         IMFMediaEventQueue_Release(stream->event_queue);
         IMFStreamDescriptor_Release(stream->descriptor);
-        IMFMediaSource_Release(&stream->parent_source->IMFMediaSource_iface);
+        IMFMediaSource_Release(stream->media_source);
 
         free(stream);
     }
