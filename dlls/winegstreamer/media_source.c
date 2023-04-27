@@ -199,6 +199,7 @@ static HRESULT source_create_async_op(enum source_async_op op, IUnknown **out)
         return E_OUTOFMEMORY;
 
     command->IUnknown_iface.lpVtbl = &source_async_command_vtbl;
+    command->refcount = 1;
     command->op = op;
 
     *out = &command->IUnknown_iface;
@@ -302,6 +303,7 @@ static void flush_token_queue(struct media_stream *stream, BOOL send)
                 command->u.request_sample.token = stream->token_queue[i];
 
                 hr = MFPutWorkItem(source->async_commands_queue, &source->async_commands_callback, op);
+                IUnknown_Release(op);
             }
             if (FAILED(hr))
                 WARN("Could not enqueue sample request, hr %#lx\n", hr);
@@ -817,6 +819,7 @@ static HRESULT WINAPI media_stream_RequestSample(IMFMediaStream *iface, IUnknown
         command->u.request_sample.token = token;
 
         hr = MFPutWorkItem(source->async_commands_queue, &source->async_commands_callback, op);
+        IUnknown_Release(op);
     }
 
     LeaveCriticalSection(&source->cs);
@@ -1334,6 +1337,7 @@ static HRESULT WINAPI media_source_Start(IMFMediaSource *iface, IMFPresentationD
         PropVariantCopy(&command->u.start.position, position);
 
         hr = MFPutWorkItem(source->async_commands_queue, &source->async_commands_callback, op);
+        IUnknown_Release(op);
     }
 
     LeaveCriticalSection(&source->cs);
@@ -1354,7 +1358,10 @@ static HRESULT WINAPI media_source_Stop(IMFMediaSource *iface)
     if (source->state == SOURCE_SHUTDOWN)
         hr = MF_E_SHUTDOWN;
     else if (SUCCEEDED(hr = source_create_async_op(SOURCE_ASYNC_STOP, &op)))
+    {
         hr = MFPutWorkItem(source->async_commands_queue, &source->async_commands_callback, op);
+        IUnknown_Release(op);
+    }
 
     LeaveCriticalSection(&source->cs);
 
@@ -1376,7 +1383,10 @@ static HRESULT WINAPI media_source_Pause(IMFMediaSource *iface)
     else if (source->state != SOURCE_RUNNING)
         hr = MF_E_INVALID_STATE_TRANSITION;
     else if (SUCCEEDED(hr = source_create_async_op(SOURCE_ASYNC_PAUSE, &op)))
+    {
         hr = MFPutWorkItem(source->async_commands_queue, &source->async_commands_callback, op);
+        IUnknown_Release(op);
+    }
 
     LeaveCriticalSection(&source->cs);
 
