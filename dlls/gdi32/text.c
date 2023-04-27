@@ -939,6 +939,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
     if (count > INT_MAX) return FALSE;
     if (is_meta_dc( hdc )) return METADC_ExtTextOut( hdc, x, y, flags, rect, str, count, dx );
     if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->print) print_call_start_page( dc_attr );
     if (dc_attr->emf && !EMFDC_ExtTextOut( dc_attr, x, y, flags, rect, str, count, dx ))
         return FALSE;
 

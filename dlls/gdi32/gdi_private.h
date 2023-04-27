@@ -287,6 +287,8 @@ extern int spool_end_page( DC_ATTR *dc_attr, HANDLE hspool ) DECLSPEC_HIDDEN;
 extern int spool_end_doc( DC_ATTR *dc_attr, HANDLE hspool ) DECLSPEC_HIDDEN;
 extern int spool_abort_doc( DC_ATTR *dc_attr, HANDLE hspool ) DECLSPEC_HIDDEN;
 
+extern void print_call_start_page( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
+
 static inline int get_dib_stride( int width, int bpp )
 {
     return ((width * bpp + 31) >> 3) & ~3;

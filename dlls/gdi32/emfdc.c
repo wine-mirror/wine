@@ -44,12 +44,6 @@ struct emf
     DWORD    palette_size;
     DWORD    palette_used;
     PALETTEENTRY *palette;
-    enum
-    {
-        DOCUMENT_NOT_STARTED,
-        NEEDS_START_PAGE,
-        NEEDS_END_PAGE
-    } document_state;
 };
 
 typedef enum
@@ -2505,7 +2499,6 @@ static void emf_reset( DC_ATTR *dc_attr, const RECT *rect )
     emf->dc_pen = 0;
     emf->path = FALSE;
     emf->palette_used = 0;
-    emf->document_state = DOCUMENT_NOT_STARTED;
 
     dc_attr->emf_bounds.left = dc_attr->emf_bounds.top = 0;
     dc_attr->emf_bounds.right = dc_attr->emf_bounds.bottom = -1;
@@ -2772,13 +2765,11 @@ BOOL spool_start_doc( DC_ATTR *dc_attr, HANDLE hspool, const DOCINFOW *doc_info 
 
     emf = emf_create( dc_attr_handle(dc_attr), NULL, NULL );
     if (!emf) return FALSE;
-    emf->document_state = NEEDS_START_PAGE;
     return TRUE;
 }
 
 int spool_start_page( DC_ATTR *dc_attr, HANDLE hspool )
 {
-    struct emf *emf = get_dc_emf( dc_attr );
     HDC hdc = dc_attr_handle( dc_attr );
     POINT pos = { 0 };
     XFORM xform;
@@ -2813,7 +2804,6 @@ int spool_start_page( DC_ATTR *dc_attr, HANDLE hspool )
     if (xform.eM11 != 1 || xform.eM22 != 1 || xform.eM12 || xform.eM21 || xform.eDx || xform.eDy)
         EMFDC_SetWorldTransform( dc_attr, &xform );
 
-    emf->document_state = NEEDS_END_PAGE;
     return StartPagePrinter( hspool );
 }
 
@@ -2847,7 +2837,6 @@ int spool_end_page( DC_ATTR *dc_attr, HANDLE hspool )
     if (!WritePrinter( hspool, &metafile_ext, sizeof(metafile_ext), &written )) return 0;
 
     emf_reset( dc_attr, NULL );
-    emf->document_state = NEEDS_START_PAGE;
     return EndPagePrinter( hspool );
 }
 
@@ -2861,11 +2850,8 @@ int spool_abort_doc( DC_ATTR *dc_attr, HANDLE hspool )
 
 int spool_end_doc( DC_ATTR *dc_attr, HANDLE hspool )
 {
-    struct emf *emf = get_dc_emf( dc_attr );
-
     TRACE( "(%p %p)\n", dc_attr, hspool );
 
-    if (emf->document_state == NEEDS_END_PAGE) spool_end_page( dc_attr, hspool );
     EMFDC_DeleteDC( dc_attr );
     return EndDocPrinter( hspool );
 }
