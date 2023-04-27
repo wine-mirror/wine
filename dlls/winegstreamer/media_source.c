@@ -42,13 +42,8 @@ struct media_stream
     LONG token_queue_count;
     LONG token_queue_cap;
 
-    enum
-    {
-        STREAM_INACTIVE,
-        STREAM_SHUTDOWN,
-        STREAM_RUNNING,
-    } state;
     DWORD stream_id;
+    BOOL active;
     BOOL eos;
 };
 
@@ -350,9 +345,8 @@ static void start_pipeline(struct media_source *source, struct source_async_comm
         sd = stream_descriptor_from_id(command->u.start.descriptor, stream_id, &selected);
         IMFStreamDescriptor_Release(sd);
 
-        was_active = stream->state != STREAM_INACTIVE;
-
-        stream->state = selected ? STREAM_RUNNING : STREAM_INACTIVE;
+        was_active = stream->active;
+        stream->active = selected;
 
         if (selected)
         {
@@ -404,14 +398,14 @@ static void start_pipeline(struct media_source *source, struct source_async_comm
 static void pause_pipeline(struct media_source *source)
 {
     unsigned int i;
+    HRESULT hr;
 
     for (i = 0; i < source->stream_count; i++)
     {
         struct media_stream *stream = source->streams[i];
-        if (stream->state != STREAM_INACTIVE)
-        {
-            IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamPaused, &GUID_NULL, S_OK, NULL);
-        }
+        if (stream->active && FAILED(hr = IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamPaused,
+                    &GUID_NULL, S_OK, NULL)))
+            WARN("Failed to queue MEStreamPaused event, hr %#lx\n", hr);
     }
 
     IMFMediaEventQueue_QueueEventParamVar(source->event_queue, MESourcePaused, &GUID_NULL, S_OK, NULL);
@@ -422,12 +416,14 @@ static void pause_pipeline(struct media_source *source)
 static void stop_pipeline(struct media_source *source)
 {
     unsigned int i;
+    HRESULT hr;
 
     for (i = 0; i < source->stream_count; i++)
     {
         struct media_stream *stream = source->streams[i];
-        if (stream->state != STREAM_INACTIVE)
-            IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamStopped, &GUID_NULL, S_OK, NULL);
+        if (stream->active && FAILED(hr = IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamStopped,
+                    &GUID_NULL, S_OK, NULL)))
+            WARN("Failed to queue MEStreamStopped event, hr %#lx\n", hr);
     }
 
     IMFMediaEventQueue_QueueEventParamVar(source->event_queue, MESourceStopped, &GUID_NULL, S_OK, NULL);
@@ -447,8 +443,7 @@ static void dispatch_end_of_presentation(struct media_source *source)
     for (i = 0; i < source->stream_count; i++)
     {
         struct media_stream *stream = source->streams[i];
-
-        if (stream->state != STREAM_INACTIVE && !stream->eos)
+        if (stream->active && !stream->eos)
             return;
     }
 
@@ -760,7 +755,7 @@ static HRESULT WINAPI media_stream_GetMediaSource(IMFMediaStream *iface, IMFMedi
 
     EnterCriticalSection(&source->cs);
 
-    if (stream->state == STREAM_SHUTDOWN)
+    if (source->state == SOURCE_SHUTDOWN)
         hr = MF_E_SHUTDOWN;
     else
     {
@@ -783,7 +778,7 @@ static HRESULT WINAPI media_stream_GetStreamDescriptor(IMFMediaStream* iface, IM
 
     EnterCriticalSection(&source->cs);
 
-    if (stream->state == STREAM_SHUTDOWN)
+    if (source->state == SOURCE_SHUTDOWN)
         hr = MF_E_SHUTDOWN;
     else
     {
@@ -807,9 +802,9 @@ static HRESULT WINAPI media_stream_RequestSample(IMFMediaStream *iface, IUnknown
 
     EnterCriticalSection(&source->cs);
 
-    if (stream->state == STREAM_SHUTDOWN)
+    if (source->state == SOURCE_SHUTDOWN)
         hr = MF_E_SHUTDOWN;
-    else if (stream->state == STREAM_INACTIVE)
+    else if (!stream->active)
         hr = MF_E_MEDIA_SOURCE_WRONGSTATE;
     else if (stream->eos)
         hr = MF_E_END_OF_STREAM;
@@ -867,7 +862,7 @@ static HRESULT media_stream_create(IMFMediaSource *source, DWORD id,
     object->media_source = source;
     object->stream_id = id;
 
-    object->state = STREAM_INACTIVE;
+    object->active = FALSE;
     object->eos = FALSE;
     object->wg_stream = wg_parser_get_stream(wg_parser, id);
 
@@ -1415,7 +1410,6 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
     while (source->stream_count--)
     {
         struct media_stream *stream = source->streams[source->stream_count];
-        stream->state = STREAM_SHUTDOWN;
         IMFMediaEventQueue_Shutdown(stream->event_queue);
         IMFMediaStream_Release(&stream->IMFMediaStream_iface);
     }
