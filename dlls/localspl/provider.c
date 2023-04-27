@@ -237,6 +237,7 @@ typedef struct {
     WCHAR *port;
     WCHAR *print_proc;
     WCHAR *datatype;
+    DWORD attributes;
 
     CRITICAL_SECTION jobs_cs;
     struct list jobs;
@@ -546,6 +547,17 @@ static WCHAR * reg_query_value(HKEY key, const WCHAR *name)
     return ret;
 }
 
+static DWORD reg_query_dword(HKEY hkey, const WCHAR *name)
+{
+    DWORD type, val, size = sizeof(size);
+
+    if (RegQueryValueExW(hkey, name, 0, &type, (BYTE*)&val, &size))
+        return 0;
+    if (type != REG_DWORD)
+        return 0;
+    return val;
+}
+
 static printer_info_t* get_printer_info(const WCHAR *name)
 {
     HKEY hkey, hprinter = NULL;
@@ -582,6 +594,7 @@ static printer_info_t* get_printer_info(const WCHAR *name)
     info->port = reg_query_value(hprinter, L"Port");
     info->print_proc = reg_query_value(hprinter, L"Print Processor");
     info->datatype = reg_query_value(hprinter, L"Datatype");
+    info->attributes = reg_query_dword(hprinter, L"Attributes");
     RegCloseKey(hprinter);
 
     if (!info->name || !info->port || !info->print_proc || !info->datatype)
@@ -3281,6 +3294,7 @@ static DWORD WINAPI fpStartDocPrinter(HANDLE hprinter, DWORD level, BYTE *doc_in
 {
     printer_t *printer = (printer_t *)hprinter;
     DOC_INFO_1W *info = (DOC_INFO_1W *)doc_info;
+    WCHAR *datatype;
 
     TRACE("(%p %ld %p {pDocName = %s, pOutputFile = %s, pDatatype = %s})\n",
             hprinter, level, doc_info, debugstr_w(info->pDocName),
@@ -3315,6 +3329,21 @@ static DWORD WINAPI fpStartDocPrinter(HANDLE hprinter, DWORD level, BYTE *doc_in
     if (printer->doc)
     {
         SetLastError(ERROR_INVALID_PRINTER_STATE);
+        return 0;
+    }
+
+    if (info->pDatatype)
+        datatype = info->pDatatype;
+    else if (printer->datatype)
+        datatype = printer->datatype;
+    else
+        datatype = printer->info->datatype;
+
+    if (!datatype || ((printer->info->attributes & PRINTER_ATTRIBUTE_RAW_ONLY) &&
+                wcsicmp(datatype, L"RAW")))
+    {
+        TRACE("non RAW datatype specified on RAW-only printer (%s)\n", debugstr_w(datatype));
+        SetLastError(ERROR_INVALID_DATATYPE);
         return 0;
     }
 
