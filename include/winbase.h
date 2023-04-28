@@ -1707,6 +1707,11 @@ typedef enum _PROC_THREAD_ATTRIBUTE_NUM
     ProcThreadAttributeSafeOpenPromptOriginClaim = 17,
     ProcThreadAttributeDesktopAppPolicy = 18,
     ProcThreadAttributePseudoConsole = 22,
+    ProcThreadAttributeMitigationAuditPolicy = 24,
+    ProcThreadAttributeMachineType = 25,
+    ProcThreadAttributeComponentFilter = 26,
+    ProcThreadAttributeEnableOptionalXStateFeatures = 27,
+    ProcThreadAttributeTrustedApp = 29,
 } PROC_THREAD_ATTRIBUTE_NUM;
 
 #define PROC_THREAD_ATTRIBUTE_PARENT_PROCESS (ProcThreadAttributeParentProcess | PROC_THREAD_ATTRIBUTE_INPUT)
@@ -1724,6 +1729,10 @@ typedef enum _PROC_THREAD_ATTRIBUTE_NUM
 #define PROC_THREAD_ATTRIBUTE_WIN32K_FILTER (ProcThreadAttributeWin32kFilter | PROC_THREAD_ATTRIBUTE_INPUT)
 #define PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY (ProcThreadAttributeDesktopAppPolicy | PROC_THREAD_ATTRIBUTE_INPUT)
 #define PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE (ProcThreadAttributePseudoConsole | PROC_THREAD_ATTRIBUTE_INPUT)
+#define PROC_THREAD_ATTRIBUTE_MITIGATION_AUDIT_POLICY (ProcThreadAttributeMitigationAuditPolicy | PROC_THREAD_ATTRIBUTE_INPUT)
+#define PROC_THREAD_ATTRIBUTE_MACHINE_TYPE (ProcThreadAttributeMachineType | PROC_THREAD_ATTRIBUTE_INPUT)
+#define PROC_THREAD_ATTRIBUTE_COMPONENT_FILTER (ProcThreadAttributeComponentFilter | PROC_THREAD_ATTRIBUTE_INPUT)
+#define PROC_THREAD_ATTRIBUTE_ENABLE_OPTIONAL_XSTATE_FEATURES (ProcThreadAttributeEnableOptionalXStateFeatures | PROC_THREAD_ATTRIBUTE_THREAD | PROC_THREAD_ATTRIBUTE_INPUT)
 
 #define SYMBOLIC_LINK_FLAG_DIRECTORY (0x1)
 #define VALID_SYMBOLIC_LINK_FLAGS SYMBOLIC_LINK_FLAG_DIRECTORY

@@ -3708,6 +3708,10 @@ typedef enum _PS_ATTRIBUTE_NUM
     PsAttributeBnoIsolation,
     PsAttributeDesktopAppPolicy,
     PsAttributeChpe,
+    PsAttributeMitigationAuditOptions,
+    PsAttributeMachineType,
+    PsAttributeComponentFilter,
+    PsAttributeEnableOptionalXStateFeatures,
     PsAttributeMax
 } PS_ATTRIBUTE_NUM;
 
@@ -3726,8 +3730,8 @@ typedef enum _PS_ATTRIBUTE_NUM
 #define PS_ATTRIBUTE_GROUP_AFFINITY     (PsAttributeGroupAffinity | PS_ATTRIBUTE_THREAD | PS_ATTRIBUTE_INPUT)
 #define PS_ATTRIBUTE_PREFERRED_NODE     (PsAttributePreferredNode | PS_ATTRIBUTE_INPUT)
 #define PS_ATTRIBUTE_IDEAL_PROCESSOR    (PsAttributeIdealProcessor | PS_ATTRIBUTE_THREAD | PS_ATTRIBUTE_INPUT)
-#define PS_ATTRIBUTE_MITIGATION_OPTIONS (PsAttributeMitigationOptions | PS_ATTRIBUTE_INPUT | PS_ATTRIBUTE_UNKNOWN)
-#define PS_ATTRIBUTE_PROTECTION_LEVEL   (PsAttributeProtectionLevel | PS_ATTRIBUTE_INPUT | PS_ATTRIBUTE_UNKNOWN)
+#define PS_ATTRIBUTE_MITIGATION_OPTIONS (PsAttributeMitigationOptions | PS_ATTRIBUTE_INPUT)
+#define PS_ATTRIBUTE_PROTECTION_LEVEL   (PsAttributeProtectionLevel | PS_ATTRIBUTE_INPUT | PS_ATTRIBUTE_ADDITIVE)
 #define PS_ATTRIBUTE_SECURE_PROCESS     (PsAttributeSecureProcess | PS_ATTRIBUTE_INPUT)
 #define PS_ATTRIBUTE_JOB_LIST           (PsAttributeJobList | PS_ATTRIBUTE_INPUT)
 #define PS_ATTRIBUTE_CHILD_PROCESS_POLICY (PsAttributeChildProcessPolicy | PS_ATTRIBUTE_INPUT)
@@ -3736,6 +3740,11 @@ typedef enum _PS_ATTRIBUTE_NUM
 #define PS_ATTRIBUTE_SAFE_OPEN_PROMPT_ORIGIN_CLAIM (PsAttributeSafeOpenPromptOriginClaim | PS_ATTRIBUTE_INPUT)
 #define PS_ATTRIBUTE_BNO_ISOLATION      (PsAttributeBnoIsolation | PS_ATTRIBUTE_INPUT)
 #define PS_ATTRIBUTE_DESKTOP_APP_POLICY (PsAttributeDesktopAppPolicy | PS_ATTRIBUTE_INPUT)
+#define PS_ATTRIBUTE_CHPE               (PsAttributeChpe | PS_ATTRIBUTE_INPUT | PS_ATTRIBUTE_ADDITIVE)
+#define PS_ATTRIBUTE_MITIGATION_AUDIT_OPTIONS (PsAttributeMitigationAuditOptions | PS_ATTRIBUTE_INPUT)
+#define PS_ATTRIBUTE_MACHINE_TYPE       (PsAttributeMachineType | PS_ATTRIBUTE_INPUT | PS_ATTRIBUTE_ADDITIVE)
+#define PS_ATTRIBUTE_COMPONENT_FILTER   (PsAttributeComponentFilter | PS_ATTRIBUTE_INPUT)
+#define PS_ATTRIBUTE_ENABLE_OPTIONAL_XSTATE_FEATURES (PsAttributeEnableOptionalXStateFeatures | PS_ATTRIBUTE_THREAD | PS_ATTRIBUTE_INPUT)
 
 typedef struct _PS_ATTRIBUTE
 {
