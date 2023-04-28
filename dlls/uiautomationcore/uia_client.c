@@ -972,7 +972,10 @@ static HRESULT conditional_navigate_uia_node(struct uia_node *node, int nav_dir,
 
             hr = uia_condition_check(parent, cond);
             if (FAILED(hr))
+            {
+                UiaNodeRelease(parent);
                 break;
+            }
 
             if (uia_condition_matched(hr))
             {
