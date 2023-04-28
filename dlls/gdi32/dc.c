@@ -2458,6 +2458,7 @@ INT WINAPI EndPage( HDC hdc )
     {
         BOOL write = print->flags & WRITE_DEVMODE;
 
+        if (!(print->flags & CALL_END_PAGE)) return SP_ERROR;
         print->flags = (print->flags & ~(CALL_END_PAGE | WRITE_DEVMODE)) | CALL_START_PAGE;
         if (dc_attr->emf)
             return spool_end_page( dc_attr, print->printer, print->devmode, write );
