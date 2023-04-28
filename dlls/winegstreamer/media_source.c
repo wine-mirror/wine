@@ -92,8 +92,10 @@ struct media_source
 
     struct wg_parser *wg_parser;
 
+    IMFStreamDescriptor **descriptors;
     struct media_stream **streams;
     ULONG stream_count;
+
     IMFPresentationDescriptor *pres_desc;
     enum
     {
@@ -1432,9 +1434,11 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
     while (source->stream_count--)
     {
         struct media_stream *stream = source->streams[source->stream_count];
+        IMFStreamDescriptor_Release(source->descriptors[source->stream_count]);
         IMFMediaEventQueue_Shutdown(stream->event_queue);
         IMFMediaStream_Release(&stream->IMFMediaStream_iface);
     }
+    free(source->descriptors);
     free(source->streams);
 
     MFUnlockWorkQueue(source->async_commands_queue);
@@ -1463,7 +1467,6 @@ static const IMFMediaSourceVtbl IMFMediaSource_vtbl =
 
 static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_source **out_media_source)
 {
-    IMFStreamDescriptor **descriptors = NULL;
     unsigned int stream_count = UINT_MAX;
     struct media_source *object;
     UINT64 total_pres_time = 0;
@@ -1531,32 +1534,37 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
 
     stream_count = wg_parser_get_stream_count(parser);
 
-    if (!(object->streams = calloc(stream_count, sizeof(*object->streams))))
+    if (!(object->descriptors = calloc(stream_count, sizeof(*object->descriptors)))
+            || !(object->streams = calloc(stream_count, sizeof(*object->streams))))
     {
+        free(object->descriptors);
         hr = E_OUTOFMEMORY;
         goto fail;
     }
 
     for (i = 0; i < stream_count; ++i)
     {
-        if (FAILED(hr = media_stream_create(&object->IMFMediaSource_iface, i, &object->streams[i])))
-            goto fail;
+        struct media_stream *stream;
 
-        if (FAILED(hr = media_stream_init_desc(object->streams[i])))
+        if (FAILED(hr = media_stream_create(&object->IMFMediaSource_iface, i, &stream)))
+            goto fail;
+        if (FAILED(hr = media_stream_init_desc(stream)))
         {
-            ERR("Failed to finish initialization of media stream %p, hr %#lx.\n", object->streams[i], hr);
-            IMFMediaSource_Release(object->streams[i]->media_source);
-            IMFMediaEventQueue_Release(object->streams[i]->event_queue);
-            free(object->streams[i]);
+            ERR("Failed to finish initialization of media stream %p, hr %#lx.\n", stream, hr);
+            IMFMediaSource_Release(stream->media_source);
+            IMFMediaEventQueue_Release(stream->event_queue);
+            free(stream);
             goto fail;
         }
 
+        IMFStreamDescriptor_AddRef(stream->descriptor);
+        object->descriptors[i] = stream->descriptor;
+        object->streams[i] = stream;
         object->stream_count++;
     }
 
     /* init presentation descriptor */
 
-    descriptors = malloc(object->stream_count * sizeof(IMFStreamDescriptor *));
     for (i = 0; i < object->stream_count; i++)
     {
         static const struct
@@ -1574,8 +1582,6 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
         DWORD len;
         char *str;
 
-        IMFMediaStream_GetStreamDescriptor(&object->streams[i]->IMFMediaStream_iface, &descriptors[i]);
-
         for (j = 0; j < ARRAY_SIZE(tags); ++j)
         {
             if (!(str = wg_parser_stream_get_tag(object->streams[i]->wg_stream, tags[j].tag)))
@@ -1587,22 +1593,17 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
             }
             strW = malloc(len * sizeof(*strW));
             if (MultiByteToWideChar(CP_UTF8, 0, str, -1, strW, len))
-                IMFStreamDescriptor_SetString(descriptors[i], tags[j].mf_attr, strW);
+                IMFStreamDescriptor_SetString(object->descriptors[i], tags[j].mf_attr, strW);
             free(strW);
             free(str);
         }
     }
 
-    if (FAILED(hr = MFCreatePresentationDescriptor(object->stream_count, descriptors, &object->pres_desc)))
+    if (FAILED(hr = MFCreatePresentationDescriptor(object->stream_count, object->descriptors, &object->pres_desc)))
         goto fail;
 
     for (i = 0; i < object->stream_count; i++)
-    {
         IMFPresentationDescriptor_SelectStream(object->pres_desc, i);
-        IMFStreamDescriptor_Release(descriptors[i]);
-    }
-    free(descriptors);
-    descriptors = NULL;
 
     for (i = 0; i < object->stream_count; i++)
         total_pres_time = max(total_pres_time,
@@ -1619,18 +1620,13 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
     fail:
     WARN("Failed to construct MFMediaSource, hr %#lx.\n", hr);
 
-    if (descriptors)
-    {
-        for (i = 0; i < object->stream_count; i++)
-            IMFStreamDescriptor_Release(descriptors[i]);
-        free(descriptors);
-    }
-
     while (object->streams && object->stream_count--)
     {
         struct media_stream *stream = object->streams[object->stream_count];
+        IMFStreamDescriptor_Release(object->descriptors[object->stream_count]);
         IMFMediaStream_Release(&stream->IMFMediaStream_iface);
     }
+    free(object->descriptors);
     free(object->streams);
 
     if (stream_count != UINT_MAX)
