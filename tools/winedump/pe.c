@@ -674,13 +674,13 @@ static const char *find_export_from_rva( UINT rva )
 static	void	dump_dir_exported_functions(void)
 {
     unsigned int size;
-    const IMAGE_EXPORT_DIRECTORY *dir;
+    const IMAGE_EXPORT_DIRECTORY *dir = get_dir_and_size(IMAGE_FILE_EXPORT_DIRECTORY, &size);
     UINT i, *funcs;
     const UINT *pFunc;
     const UINT *pName;
     const WORD *pOrdl;
 
-    dir = get_dir_and_size(IMAGE_FILE_EXPORT_DIRECTORY, &size);
+    if (!dir) return;
 
     printf("\n");
     printf("  Name:            %s\n", (const char*)RVA(dir->Name, sizeof(DWORD)));
@@ -1844,7 +1844,7 @@ static void dump_hybrid_metadata(void)
             {
                 static const char *types[] = { "x86", "ARM64" };
                 unsigned int start = map[i].StartOffset & ~1;
-                unsigned int type = map[i].Length & 1;
+                unsigned int type = map[i].StartOffset & 1;
                 printf(  "  %08x - %08x  %s\n", start, start + (int)map[i].Length, types[type] );
             }
         }
@@ -1887,7 +1887,7 @@ static void dump_hybrid_metadata(void)
             {
                 static const char *types[] = { "ARM64", "ARM64EC", "x64", "??" };
                 unsigned int start = map[i].StartOffset & ~0x3;
-                unsigned int type = map[i].Length & 0x3;
+                unsigned int type = map[i].StartOffset & 0x3;
                 printf(  "  %08x - %08x  %s\n", start, start + (int)map[i].Length, types[type] );
             }
         }
@@ -2962,8 +2962,13 @@ void pe_dump(void)
 
     for (;;)
     {
-        if (alt) printf( "\n**** Alternate (%s) data ****\n\n",
-                         get_machine_str(PE_nt_headers->FileHeader.Machine));
+        if (alt)
+            printf( "\n**** Alternate (%s) data ****\n\n",
+                    get_machine_str(PE_nt_headers->FileHeader.Machine));
+        else if (get_dyn_reloc_table())
+            printf( "**** Native (%s) data ****\n\n",
+                    get_machine_str(PE_nt_headers->FileHeader.Machine));
+
         if (globals.do_dumpheader)
         {
             dump_pe_header();
