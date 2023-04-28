@@ -4745,6 +4745,7 @@ static GpStatus METAFILE_AddPathObject(GpMetafile *metafile, GpPath *path, DWORD
 static GpStatus METAFILE_AddPenObject(GpMetafile *metafile, GpPen *pen, DWORD *id)
 {
     DWORD custom_start_cap_size = 0, custom_start_cap_data_size = 0, custom_start_cap_path_size = 0;
+    DWORD custom_end_cap_size = 0, custom_end_cap_data_size = 0, custom_end_cap_path_size = 0;
     DWORD i, data_flags, pen_data_size, brush_size;
     EmfPlusObject *object_record;
     EmfPlusPenData *pen_data;
@@ -4816,7 +4817,10 @@ static GpStatus METAFILE_AddPenObject(GpMetafile *metafile, GpPen *pen, DWORD *i
     }
     if (pen->customend)
     {
-        FIXME("ignoring custom end cup\n");
+        data_flags |= PenDataCustomEndCap;
+        METAFILE_PrepareCustomLineCapData(pen->customend, &custom_end_cap_size,
+                                          &custom_end_cap_data_size, &custom_end_cap_path_size);
+        pen_data_size += custom_end_cap_size;
     }
 
     stat = METAFILE_PrepareBrushData(pen->brush, &brush_size);
@@ -4911,6 +4915,13 @@ static GpStatus METAFILE_AddPenObject(GpMetafile *metafile, GpPen *pen, DWORD *i
                                        pen->miterlimit, custom_start_cap_data_size,
                                        custom_start_cap_path_size);
         i += custom_start_cap_size;
+    }
+    if (data_flags & PenDataCustomEndCap)
+    {
+        METAFILE_FillCustomLineCapData(pen->customend, pen_data->OptionalData + i,
+                                       pen->miterlimit, custom_end_cap_data_size,
+                                       custom_end_cap_path_size);
+        i += custom_end_cap_size;
     }
 
     METAFILE_FillBrushData(pen->brush,
