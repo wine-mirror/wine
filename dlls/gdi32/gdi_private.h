@@ -187,6 +187,8 @@ extern BOOL EMFDC_Ellipse( DC_ATTR *dc_attr, INT left, INT top, INT right,
 extern BOOL EMFDC_EndPath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_ExcludeClipRect( DC_ATTR *dc_attr, INT left, INT top, INT right,
                                    INT bottom ) DECLSPEC_HIDDEN;
+extern INT  EMFDC_ExtEscape( DC_ATTR *dc_attr, INT escape, INT input_size, const char *input,
+                             INT output_size, char *output) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_ExtFloodFill( DC_ATTR *dc_attr, INT x, INT y, COLORREF color,
                                 UINT fill_type ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_ExtSelectClipRgn( DC_ATTR *dc_attr, HRGN hrgn, INT mode ) DECLSPEC_HIDDEN;

@@ -655,8 +655,17 @@ INT WINAPI Escape( HDC hdc, INT escape, INT in_count, const char *in_data, void 
 INT WINAPI ExtEscape( HDC hdc, INT escape, INT input_size, const char *input,
                       INT output_size, char *output )
 {
+    struct print *print;
+    DC_ATTR *dc_attr;
+
     if (is_meta_dc( hdc ))
         return METADC_ExtEscape( hdc, escape, input_size, input, output_size, output );
+    if (!(dc_attr = get_dc_attr( hdc ))) return 0;
+    if ((print = get_dc_print( dc_attr )) && dc_attr->emf)
+    {
+        int ret = EMFDC_ExtEscape( dc_attr, escape, input_size, input, output_size, output );
+        if (ret) return ret;
+    }
     return NtGdiExtEscape( hdc, NULL, 0, escape, input_size, input, output_size, output );
 }
 

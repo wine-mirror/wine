@@ -1167,6 +1167,38 @@ BOOL EMFDC_PolyDraw( DC_ATTR *dc_attr, const POINT *pts, const BYTE *types, DWOR
     return ret;
 }
 
+INT EMFDC_ExtEscape( DC_ATTR *dc_attr, INT escape, INT input_size, const char *input,
+                      INT output_size, char *output)
+{
+    struct EMREXTESCAPE
+    {
+        EMR emr;
+        DWORD escape;
+        DWORD size;
+        BYTE data[1];
+    } *emr;
+    size_t size;
+
+    if (escape == QUERYESCSUPPORT) return 0;
+
+    size = FIELD_OFFSET( struct EMREXTESCAPE, data[input_size] );
+    size = (size + 3) & ~3;
+    if (!(emr = HeapAlloc( GetProcessHeap(), 0, size ))) return 0;
+
+    emr->emr.iType = EMR_EXTESCAPE;
+    emr->emr.nSize = size;
+    emr->escape = escape;
+    emr->size = input_size;
+    memcpy(emr->data, input, input_size);
+    emfdc_record( get_dc_emf( dc_attr ), &emr->emr );
+    HeapFree( GetProcessHeap(), 0, emr );
+    if (output_size && output) return 0;
+
+    if (escape == PASSTHROUGH || escape == POSTSCRIPT_PASSTHROUGH)
+        input_size -= sizeof(WORD);
+    return input_size ? input_size : 1;
+}
+
 BOOL EMFDC_ExtFloodFill( DC_ATTR *dc_attr, INT x, INT y, COLORREF color, UINT fill_type )
 {
     EMREXTFLOODFILL emr;
