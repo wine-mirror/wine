@@ -26554,6 +26554,7 @@ static void test_mismatched_sample_types(void)
     {
         {"2d_2d", (IDirect3DBaseTexture9 **)&tex_2d, &ps_2d, 0x00707070},
         {"3d_3d", (IDirect3DBaseTexture9 **)&volume, &ps_3d, 0x00303030},
+        /* Star Wars: The Old Republic uses mismatched samplers for rendering water. */
         {"2d_3d", (IDirect3DBaseTexture9 **)&tex_2d, &ps_3d, 0x00707070, SAMPLE_ZERO},
         {"3d_2d", (IDirect3DBaseTexture9 **)&volume, &ps_2d, 0x00303030, SAMPLE_ZERO | RANDOM_W},
     };

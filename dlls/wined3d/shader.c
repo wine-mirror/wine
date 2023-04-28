@@ -2897,6 +2897,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
 
             if ((texture = state->textures[i]))
             {
+                /* Star Wars: The Old Republic uses mismatched samplers for rendering water. */
                 if (texture->resource.type == WINED3D_RTYPE_TEXTURE_2D
                         && resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_3D
                         && !(texture->resource.usage & WINED3DUSAGE_LEGACY_CUBEMAP))
