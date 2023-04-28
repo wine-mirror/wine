@@ -1,14 +1,13 @@
-The Wine development release 8.6 is now available.
+The Wine development release 8.7 is now available.
 
 What's new in this release:
-  - Bundled math library from Musl libc.
-  - Gecko engine updated to version 2.47.4.
-  - Improved spool file support in the PostScript driver.
+  - DXBC shader parsing delegated to vkd3d.
+  - More spool file improvements in the PostScript driver.
   - Various bug fixes.
 
 The source is available at:
 
-  https://dl.winehq.org/wine/source/8.x/wine-8.6.tar.xz
+  https://dl.winehq.org/wine/source/8.x/wine-8.7.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -24,462 +23,327 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 8.6 (total 25):
+Bugs fixed in 8.7 (total 17):
 
- - #11436  Pepakura viewer: err:wgl:X11DRV_wglShareLists Could not share display lists, context already created !
- - #18773  Multiple apps need DirectShow MPEG Layer-3 decoder filter / l3codecx.ax (The Westerner, 3D Mark 2001SE)
- - #28586  Team Fortress Arcade & Pixel Force: Left 4 Dead music doesn't play
- - #32490  Graphical issues in Inquisitor (red squares painted on the screen)
- - #42372  Watchtower Library 2016 crashes when trying to play a video
- - #49002  Multiple games trigger GL_INVALID_FRAMEBUFFER_OPERATION in wined3d (Free Horror Game "My Place", DiRT Rally 2.0)
- - #49332  CounterPath Bria Solo crashes after login dialog
- - #51178  The Bat! v9.3.4.12: Missing content in TTreeViews on Windows versions higher than 8
- - #52193  schtasks.exe:schtasks fails on Windows 7 when missing privileges
- - #53128  Without elevated privileges schedsvc:rpcapi fails on Windows 7
- - #53269  uiautomationcore:uiautomation fails on Windows 10 1909
- - #53781  Multiple apps crash on unimplemented function CFGMGR32.dll.CM_MapCrToWin32Err (Matrix Awakens MegaCity Unreal Engine 5.1 demo, Hogwarts Legacy)
- - #53983  Chromium broken sandbox, needs NtQueryInformationProcess with ProcessHandleTable
- - #54106  taskschd:scheduler - test_GetTask() fails on Windows 7 when it has insufficient privileges
- - #54109  schedsvc:rpcapi causes taskschd:scheduler to crash on w7u_adm
- - #54110  CubicSDR crashes on unimplemented function msvcp140.dll.?_Rethrow_future_exception@std@@YAXVexception_ptr@1@@Z
- - #54594  dinput:device8 - test_dik_codes() sometimes gets timeouts on the GitLab CI
- - #54634  schtasks.exe:schtasks causes taskschd:scheduler to crash on w7u_adm and w8adm
- - #54666  Compilation fails with gcc 4.8.4 - error: missing binary operator before token "("
- - #54713  dinput:device8 - test_mouse_keyboard() fails on some Window 7 locales
- - #54728  Pro Evolution Soccer 2008 demo takes +- 9 minutes to complete extracting 'Pro Evolution Soccer 2008 DEMO.msi' (disabling 'Light' theme works around)
- - #54772  LDAP Explorer (LEX) fails to connect without SSL
- - #54774  dinput:device8 - test_overlapped_format() sometimes gets a timeout in Wine (GitLab CI)
- - #54781  Wine fails to update existed prefix
- - #54819  DnsQuery_A() mishandles CNAME DNS records
+ - #9932   Listview highlight issues when drag&drop enabled
+ - #23647  Street Fighter 4 Benchmark: Flickering screen with parallel rendering enabled
+ - #32089  Window resize enters endless cycle
+ - #32958  ReVolt 1207: Crashes when trying to play Stunt Arena
+ - #33487  Davar bible software not working
+ - #43672  Airscout program 1.2.0.5 does not load under wine 2.0.2
+ - #50249  Shapes On A Plane crashes on start
+ - #51625  Unravel fails to load
+ - #52322  wineserver memory leak during HTTPs download (Genshin Impact Launcher, Qt5)
+ - #54424  user32:edit - test_dbcs_WM_CHAR() fails on Windows in mixed locales
+ - #54464  Multiple games crash on launch (Sekiro: Shadows Die Twice GOTY, Dark Souls III)
+ - #54799  wininet:internet - test_InternetGetConnectedStateExA() fails in the Japanese and Chinese locales in Wine
+ - #54808  Access violation in ntdll when running Adolix Split and Merge PDF with .NET Framework installed
+ - #54815  wininet:internet - test_InternetErrorDlg() fails on Windows 10 1607
+ - #54844  Existing prefixes keep resetting to Win10 when wine is updated
+ - #54856  Final Fantasy XI Online: Opening movie doesn't play (redux part II).
+ - #54882  Conemu fails to start (cannot attach to process)
 
 ----------------------------------------------------------------
 
-Changes since 8.5:
+Changes since 8.6:
 
-Alex Henrie (6):
-      wldap32/tests: Name option test functions after the option being tested.
-      wldap32: Allow LDAP_OPT_REFERRALS to be set from a pointer.
-      wintrust: Annotate WINTRUST_Alloc with __WINE_(DEALLOC|MALLOC).
-      wldap32: Skip over the TLS certificate check if not using TLS.
-      opengl32/tests: Make the wglShareLists tests comprehensive.
-      winex11: Allow replacing either context in wglShareLists.
+Alex Henrie (2):
+      kernel32/tests: Check that lpSectionBase != NULL before dereferencing.
+      ntdll: Increment offset by len in build_clr_surrogate_section.
 
-Alexandre Julliard (78):
-      libs: Import the math library from upstream musl 1.2.3.
-      msvcrt: Use the fabs()/fabsf() implementation from the bundled musl library.
-      msvcrt: Use the frexp()/frexpf() implementation from the bundled musl library.
-      msvcrt: Use the modf()/modff() implementation from the bundled musl library.
-      msvcrt: Use the cbrt()/cbrtf() implementation from the bundled musl library.
-      msvcrt: Use the hypot()/hypotf() implementation from the bundled musl library.
-      msvcrt: Use the trunc()/truncf() implementation from the bundled musl library.
-      msvcrt: Use the fmax()/fmaxf() implementation from the bundled musl library.
-      msvcrt: Use the fmin()/fminf() implementation from the bundled musl library.
-      msvcrt: Use the fdim()/fdimf() implementation from the bundled musl library.
-      msvcrt: Use the copysign()/copysignf() implementation from the bundled musl library.
-      msvcrt: Use the nan()/nanf() implementation from the bundled musl library.
-      msvcrt: Use the scalbn() implementation from the bundled musl library.
-      msvcrt: Use the ilogb()/ilogbf() implementation from the bundled musl library.
-      msvcrt: Use the logb()/logbf() implementation from the bundled musl library.
-      msvcrt: Use the remquo()/remquof() implementation from the bundled musl library.
-      msvcrt: Use the lgamma()/lgammaf() implementation from the bundled musl library.
-      msvcrt: Use the tgamma()/tgammaf() implementation from the bundled musl library.
-      msvcrt: Use the expm1()/expm1f() implementation from the bundled musl library.
-      msvcrt: Use the j0()/y0() implementation from the bundled musl library.
-      msvcrt: Use the j1()/y1() implementation from the bundled musl library.
-      msvcrt: Use the jn()/yn() implementation from the bundled musl library.
-      msvcrt: Use the fmod()/fmodf() implementation from the bundled musl library.
-      msvcrt: Use the log()/logf() implementation from the bundled musl library.
-      msvcrt: Use the log10()/log10f() implementation from the bundled musl library.
-      msvcrt: Use the __expo2()/__expo2f() implementation from the bundled musl library.
-      msvcrt: Use the coshf() implementation from the bundled musl library.
-      msvcrt: Use the sinhf() implementation from the bundled musl library.
-      msvcrt: Use the cosh() implementation from the bundled musl library.
-      msvcrt: Use the sinh() implementation from the bundled musl library.
-      msvcrt: Use the atan2()/atan2f() implementation from the bundled musl library.
-      msvcrt: Use the exp2()/exp2f() implementation from the bundled musl library.
-      msvcrt: Use the log1p()/log1pf() implementation from the bundled musl library.
-      msvcrt: Use the log2()/log2f() implementation from the bundled musl library.
-      msvcrt: Use the fma()/fmaf() implementation from the bundled musl library.
-      msvcrt: Use the round()/roundf() implementation from the bundled musl library.
-      msvcrt: Use the floor()/floorf() implementation from the bundled musl library.
-      msvcrt: Use the ceil()/ceilf() implementation from the bundled musl library.
-      msvcrt: Use the nextafter()/nextafterf() implementation from the bundled musl library.
-      msvcrt: Use the nexttoward()/nexttowardf() implementation from the bundled musl library.
-      msvcrt: Use the __rem_pio2()/__rem_pio2f() implementation from the bundled musl library.
-      msvcrt: Use the __sindf() implementation from the bundled musl library.
-      msvcrt: Use the __cosdf() implementation from the bundled musl library.
-      msvcrt: Use the sin()/sinf() implementation from the bundled musl library.
-      msvcrt: Use the cos()/cosf() implementation from the bundled musl library.
-      msvcrt: Use the tan()/tanf() implementation from the bundled musl library.
-      msvcrt: Use the pow()/powf() implementation from the bundled musl library.
-      msvcrt: Use the rint()/rintf() implementation from the bundled musl library.
-      msvcrt: Use the expf() implementation from the bundled musl library.
-      msvcrt: Use the acosf() implementation from the bundled musl library.
-      msvcrt: Use the asinf() implementation from the bundled musl library.
-      msvcrt: Use the atanf() implementation from the bundled musl library.
-      msvcrt: Use the exp() implementation from the bundled musl library.
-      msvcrt: Use the acos() implementation from the bundled musl library.
-      msvcrt: Use the asin() implementation from the bundled musl library.
-      msvcrt: Use the atan() implementation from the bundled musl library.
-      msvcrt: Use the asinh()/asinhf() implementation from the bundled musl library.
-      msvcrt: Use the acosh()/acoshf() implementation from the bundled musl library.
-      msvcrt: Use the atanh()/atanhf() implementation from the bundled musl library.
-      msvcrt: Use the tanh()/tanhf() implementation from the bundled musl library.
-      msvcrt: Use the remainder()/remainderf() implementation from the bundled musl library.
-      msvcrt: Use the erf()/erfc()/erff()/erfcf() implementation from the bundled musl library.
-      msvcrt: Use the sqrtf() implementation from the bundled musl library.
-      msvcrt: Use the sqrt() implementation from the bundled musl library.
-      msvcrt: Use the _dclass()/_fdclass() implementation from the bundled musl library.
-      ntdll: Use the sin() implementation from the bundled musl library.
-      ntdll: Use the cos() implementation from the bundled musl library.
-      ntdll: Use the tan() implementation from the bundled musl library.
-      ntdll: Use the atan() implementation from the bundled musl library.
-      ntdll: Use the atan2() implementation from the bundled musl library.
-      ntdll: Use the log() implementation from the bundled musl library.
-      ntdll: Use the pow() implementation from the bundled musl library.
-      ntdll: Use the sqrt() implementation from the bundled musl library.
-      ntdll: Use the ceil() implementation from the bundled musl library.
-      ntdll: Use the floor() implementation from the bundled musl library.
-      ntdll: Use the fabs() implementation from the bundled musl library.
-      ntdll: Use the correct section start when reading the COR header.
-      winedump: Apply all dynamic relocations before dumping alternate PE headers.
+Alexandre Julliard (18):
+      include: Add some CHPE definitions.
+      winedump: Dump hybrid metadata also for i386 CHPE modules.
+      include: Add the ARM64EC context structure.
+      include: Update the PEB and TEB structures.
+      zlib: Run source files through zlib2ansi to avoid K&R function definitions.
+      makedep: Avoid generating empty dependencies.
+      winedump: Print entry point names in code range lists.
+      kernelbase: Move to a higher address on 64-bit.
+      kernel32: Move to a higher address on 64-bit.
+      ntdll: Reimplement RtlSetBits() to set 32 bits at a time.
+      ntdll: Reimplement RtlClearBits() to clear 32 bits at a time.
+      ntdll: Reimplement RtlAreBitsSet() to check 32 bits at a time.
+      ntdll: Reimplement RtlAreBitsClear() to check 32 bits at a time.
+      ntdll: Reimplement RtlNumberOfSetBits() to check 32 bits at a time.
+      ntdll: Use a separate memory allocation for the kernel stack.
+      ntdll: Use nameless unions/structs for register contexts.
+      include: Add some new ProcThreadAttribute definitions.
+      winedump: Fix printing of code ranges in hybrid modules.
 
-Alexandros Frantzis (10):
-      win32u: Support setting the current mode using gdi_device_manager.
-      winex11.drv: Extract function to check devmode equality.
-      winex11.drv: Set the current mode using gdi_device_manager.
-      winewayland.drv: Set the current mode using gdi_device_manager.
-      winemac.drv: Extract function to get the current mode.
-      winemac.drv: Set the current mode using gdi_device_manager.
-      wineandroid.drv: Set the current mode using gdi_device_manager.
-      winex11.drv: Use the proper id with the settings handler.
-      winex11.drv: Do not call desktop get_current_mode() from UpdateDisplayDevices.
-      winex11.drv: Use a distinct type for the settings id.
+Alexandros Frantzis (5):
+      winewayland.drv: Initialize display devices once after process init.
+      tools: Support building Wayland protocol source files.
+      winewayland.drv: Use the output name reported by the compositor.
+      winewayland.drv: Basic support for Windows monitor positioning.
+      winewayland.drv: Infer and report Windows monitor positions.
 
 Alistair Leslie-Hughes (1):
-      msado15: Initialize all SYSTEMTIME members.
+      widl: Suppress a coverity warning.
+
+Andrey Gusev (1):
+      dxgi: Update TRACE in dxgi_device_create_resource().
+
+André Zwing (1):
+      ntdll: Print RPC_S_SERVER_UNAVAILABLE exceptions.
+
+Anton Baskanov (7):
+      winegstreamer: Fix negative height image size calculation.
+      winegstreamer: Call init_gstreamer() in winegstreamer_create_video_decoder().
+      dsound: Remove the unused nAvgBytesPerSec field.
+      dsound: Remove redundant assignments to freqAdjustNum and freqAdjustDen.
+      dsound: Preserve freqAccNum value in DSOUND_RecalcFormat().
+      dsound: Acquire the lock when setting 3D buffer parameters.
+      dsound: Allocate big enough committedbuff up front.
 
 Aurimas Fišeras (1):
       po: Update Lithuanian translation.
 
-Biswapriyo Nath (1):
-      include: Fix IDirectXVideoDecoderService declaration in dxva2api.idl.
+Bernhard Übelacker (1):
+      ntoskrnl: Do not leak memory by setting input buffer to NULL.
 
-Connor McAdams (5):
-      uiautomationcore/tests: Add tests for default ProviderType_BaseHwnd clientside provider.
-      uiautomationcore: Add a default ProviderType_BaseHwnd clientside provider.
-      uiautomationcore: Implement UIA_ProcessIdPropertyId for default HWND provider.
-      uiautomationcore: Implement UIA_ClassNamePropertyId for default HWND provider.
-      uiautomationcore: Implement UIA_NamePropertyId for default HWND provider.
+Brendan Shanks (4):
+      winemac: Refactor constrain_window_frame() to use separate origin and size arguments.
+      winemac: Set the Cocoa window contentMaxSize to the size limits from constrain_window_frame().
+      winemac: Don't constrain surface dimensions to the onscreen part of a window.
+      msvcrt: Fix crash when rethrowing after a non-C++ exception on x86_64.
 
-Daniel Tang (1):
-      wintypes: Declare exported functions in rometadataresolution.h.
+Byeong-Sik Jeon (2):
+      imm32: Stop updating INPUTCONTEXT hWnd member in ImmGetContext.
+      imm32: Avoid updating INPUTCONTEXT hWnd on ImmSetActiveContext deactivation.
 
-Davide Beatrici (11):
-      winecoreaudio: Retain precision when storing period in unixlib.
-      winecoreaudio: Store flags in unixlib.
-      winecoreaudio: Implement and call set_event_handle in unixlib.
-      winecoreaudio: Implement and call timer_loop in unixlib.
-      winealsa: Move common mmdevdrv structs into mmdevapi.
-      winecoreaudio: Use mmdevdrv structs from mmdevapi.
-      wineoss: Use mmdevdrv structs from mmdevapi.
-      winepulse: Use mmdevdrv structs from mmdevapi.
-      mmdevapi: Rename mmdevapi.h to mmdevapi_private.h.
-      mmdevapi: Add missing includes to mmdevapi_private.h.
-      mmdevapi: Add missing includes and typedef to mmdevdrv.h.
+Connor McAdams (12):
+      uiautomationcore: Implement UIA_ControlTypePropertyId for default HWND provider.
+      uiautomationcore: Implement UIA_BoundingRectanglePropertyId for default HWND provider.
+      uiautomationcore: Implement NavigateDirection_Parent navigation for default HWND provider.
+      uiautomationcore: Add a default ProviderType_Proxy MSAA bridge clientside provider.
+      uiautomationcore: Implement UiaGetRootNode.
+      uiautomationcore: Implement IUIAutomation::GetRootElement.
+      uiautomationcore: Implement conditional NavigateDirection_Parent navigation.
+      uiautomationcore: Add normalization navigation to UiaGetUpdatedCache.
+      uiautomationcore: Add UiaNodeFromFocus stub.
+      uiautomationcore: Implement UiaNodeFromFocus.
+      uiautomationcore: Implement IUIAutomation::GetFocusedElement{BuildCacheRequest}.
+      uiautomationcore: Retrieve runtime ID on UiaReturnRawElementProvider thread to prevent a deadlock.
 
-Eric Pouech (5):
-      kernel32/debugger: Fix a failing test (on Wine).
-      winedump: Fix out of bounds access (spotted by GCC13).
-      winedbg: Don't crash when no search path has been set.
-      kernel32/tests: Workaround broken behavior in Win7 Pro64.
-      psapi: Test filesystem redirection with EnumProcessModulesEx.
+Davide Beatrici (22):
+      winealsa: Export function to get AudioSessionWrapper object.
+      winecoreaudio: Export function to get AudioSessionWrapper object.
+      wineoss: Export function to get AudioSessionWrapper object.
+      winepulse: Export function to get AudioSessionWrapper object.
+      mmdevapi: Import GetAudioSessionWrapper() from driver.
+      mmdevapi: Implement AudioSessionManager.
+      winealsa: Remove AudioSessionManager.
+      winecoreaudio: Remove AudioSessionManager.
+      wineoss: Remove AudioSessionManager.
+      winepulse: Remove AudioSessionManager.
+      winealsa: Implement functions to lock and unlock sessions.
+      winecoreaudio: Implement functions to lock and unlock sessions.
+      wineoss: Implement functions to lock and unlock sessions.
+      winepulse: Implement functions to lock and unlock sessions.
+      winealsa: Use dedicated macros to call interface functions.
+      winecoreaudio: Use dedicated macros to call interface functions.
+      wineoss: Use dedicated macros to call interface functions.
+      winepulse: Use dedicated macros to call interface functions.
+      winealsa: Move AudioSessionControl into mmdevapi.
+      winecoreaudio: Use mmdevapi's AudioSessionControl.
+      wineoss: Use mmdevapi's AudioSessionControl.
+      winepulse: Use mmdevapi's AudioSessionControl.
 
-Florian Will (5):
-      dinput/tests: Add EnumObjects callback return value test.
-      dinput: Fix EnumObjects callback return value handling.
-      dinput/tests: Add guidType test for collection objects.
-      dinput: Set guidType = GUID_Unknown for HID collections.
-      dinput/tests: Remove unmatched winetest_pop_context().
+Derek Lesho (1):
+      winegstreamer: Cache wg_parser input data.
 
-François Gouget (14):
-      dinput/tests: Fix the spelling of an ok() message.
-      wininet/tests: Remove redundant quotes in an ok() message.
-      wininet/tests: Avoid an unnecessary strlen() call in internet.c.
-      kernel32/tests: Improve the WideCharToMultiByte() null-termination and truncation tests.
-      iphlpapi: Fix the GAA_FLAG_INCLUDE_GATEWAYS constant name.
-      wininet/tests: Fix the InternetErrorDlg() tests on Windows 10 1607.
-      wininet/tests: Avoid an unnecessary lstrlenW() call in internet.c.
-      winintest/tests: Remove a couple of redundant InternetGetConnectedStateEx*() tests.
-      wininet/tests: Dump the state string if it is not as expected.
-      wininet: InternetGetConnectedStateExA() must always null-terminate the state string.
-      wininet/tests: Fix InternetGetConnectedStateEx() parameter checking.
-      user32/tests: Windows 11's notepad has four icons.
-      dnsapi/tests: Test how DnsQuery() handles CNAMEs.
-      advapi32/tests: Make the services resume handle traces more informative.
+Dmitry Timoshkov (1):
+      shell32/tests: Add SHBindToFolderIDListParent() tests.
 
-Gabriel Ivăncescu (6):
-      mshtml: Tell wine-gecko about the IE compat document mode.
-      mshtml: Set dom.ipc.plugins.enabled to FALSE.
-      mshtml: Implement `complete` prop for input elements.
-      mshtml: Get rid of dispatch_nsevent_hook.
-      mshtml: Implement ProgressEvent's initProgressEvent method.
-      mshtml/tests: Add tests for non-stringed url() with non-URL characters in CSS.
+Eric Pouech (6):
+      mf/tests: Add tests about (negative) stride handling.
+      winegstreamer: In video_processor, activate a videoflip converter.
+      winedbg: Let 'break symbol : line' command work again.
+      dbghelp: Use source file path as stored in debug info format.
+      winedbg: Simplify watch command implementation.
+      winedbg: Improve size management in watch command.
 
-Giovanni Mascellani (5):
-      dxgi/tests: Test GetLastPresentCount() with DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT.
-      dxgi: Return correct present count with DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT.
-      dxgi: Return a duplicate frame latency event.
-      dxgi/tests: Rename the waitable object from "event" to "semaphore".
-      dxgi/tests: Test the frame latency waitable more thoroughly.
+François Gouget (7):
+      user32/tests: Fix the DBCS WM_CHAR tests in mixed locales.
+      dnsapi/tests: Make DnsQuery()'s CNAME tests more compatible with CDNs.
+      wininet: Add constants for DetectAutoProxyUrl().
+      wininet/tests: Add more proxy tests.
+      kernel32/tests: Fix the ScrollConsoleScreenBuffer() tests on Windows 10 1909.
+      msi/tests: Fix the ok() formats so they match the size of their arguments.
+      msi/tests: Ok_() takes printf-style arguments.
 
-Hans Leidekker (3):
-      wldap32: Implement LDAP_OPT_REFERRAL_HOP_LIMIT.
-      wldap32: Don't call ldap_connect() when a connection has already been established.
-      ws2_32: Skip non-address records in dns_only_query().
+Gabriel Ivăncescu (12):
+      mshtml: Implement MediaQueryList's addListener method.
+      mshtml: Implement MediaQueryList's removeListener method.
+      mshtml: Use proper event type for PageTransition events.
+      mshtml: Do not release the principal returned by GetPrincipal.
+      mshtml: Fix factory leak in init_nsio.
+      mshtml: Fix nsIFile dir leak in init_xpcom.
+      mshtml: Fix URI leak in NewURI on failure.
+      mshtml: Store minimum compat mode required for events in the ctor table.
+      mshtml: Support cycle collection for nsChannel.
+      mshtml: Fix nsChannel's load_info leak.
+      mshtml: Pass actual node_ccp to ccref_decr for nodes.
+      mshtml/tests: Fix element leak in elem_fire_event.
 
-Hugh McMaster (5):
-      kernel32/tests: Check return length of GetConsoleOriginalTitleA/W().
-      conhost: Save original console title on initialization.
-      kernelbase: Implement GetConsoleOriginalTitleW().
-      kernelbase: Implement GetConsoleOriginalTitleA().
-      kernel32/tests: Test GetConsoleOriginalTitleW() with an empty title.
+Giovanni Mascellani (11):
+      mfplat/tests: Test Lock2D() on a locked D3D9 surface buffer.
+      mfplat/tests: Test locking flags for D3D9 buffers.
+      mfplat/tests: Independently test that locking flags are ignored for D3D9 buffers.
+      mfplat: Fix locking flags usage for D3D9 buffers.
+      mfplat/tests: Test Lock2D() on a locked DXGI surface buffer.
+      mfplat/tests: Test locking flags for DXGI buffers.
+      mfplat: Do not mark a DXGI buffer as locked if surface mapping fails.
+      mfplat: Fix locking flags usage for DXGI buffers.
+      mfplat: Only download surface data from GPU for DXGI buffers when reading.
+      mfplat: Only upload surface data to GPU for DXGI buffers when writing.
+      mfplat/tests: Test that the content of DXGI buffers is discarded when locking for writing.
 
-Jacek Caban (2):
-      winevulkan: Add support for VK_KHR_map_memory2.
-      mshtml: Wine Gecko 2.47.4 release.
+Hans Leidekker (1):
+      wine.inf: Use FLG_ADDREG_NOCLOBBER for CurrentMajor/MinorVersionNumber.
 
-Jactry Zeng (5):
-      include: Add FWF_NONE.
-      shell32: Assign a default view mode value for IShellView.
-      shell32/tests: Move interfaces creation to a function.
-      shell32/tests: Add tests for IShellView_GetCurrentInfo().
-      shell32: Assign a default flags for view information of IShellView.
+Henri Verbeet (12):
+      d3dcompiler: Check for minimum bytecode size in d3dcompiler_get_blob_part().
+      d3dcompiler: Check for minimum bytecode size in d3dcompiler_strip_shader().
+      d3dcompiler: Store DXBC sections as vkd3d_shader_dxbc_section_desc structures.
+      d3dcompiler: Use vkd3d_shader_serialize_dxbc() in d3dcompiler_get_blob_part().
+      d3dcompiler: Use vkd3d_shader_serialize_dxbc() in d3dcompiler_strip_shader().
+      d3dcompiler: Use vkd3d_shader_parse_dxbc() in d3dcompiler_get_blob_part().
+      d3dcompiler: Use vkd3d_shader_parse_dxbc() in d3dcompiler_strip_shader().
+      d3dcompiler: Use vkd3d_shader_parse_dxbc() in d3dcompiler_shader_reflection_init().
+      wined3d: Implement shader_extract_from_dxbc() on top of vkd3d_shader_parse_dxbc().
+      vkd3d: Update the version information for release 1.7.
+      d3d10: Implement d3d10_effect_parse() on top of vkd3d_shader_parse_dxbc().
+      d3d10: Implement parse_fx10_preshader() on top of vkd3d_shader_parse_dxbc().
 
-Mohamad Al-Jaf (34):
-      widl: Add support for inherited runtime classes.
-      widl: Add support for protected attribute.
-      widl: Add support for composable attribute.
-      cryptowinrt/tests: Remove racey refcount test.
-      include: Add windows.ui.composition.idl file.
-      include: Add Windows.UI.Composition.CompositionBrush definition.
-      include: Add ICompositionSurface interface definition.
-      include: Add Windows.UI.Composition.CompositionSurfaceBrush definition.
-      include: Add Windows.UI.Composition.SpriteVisual definition.
-      include: Add Windows.UI.Composition.CompositionClip definition.
-      include: Add Windows.UI.Composition.Visual definition.
-      include: Add Windows.UI.Composition.ColorKeyFrameAnimation definition.
-      include: Add Windows.UI.Composition.CompositionColorBrush definition.
-      include: Add Windows.UI.Composition.CubicBezierEasingFunction definition.
-      include: Add Windows.UI.Composition.CompositionEffectBrush definition.
-      include: Add Windows.UI.Composition.CompositionEffectFactory definition.
-      include: Add Windows.UI.Composition.ExpressionAnimation definition.
-      include: Add Windows.UI.Composition.InsetClip definition.
-      include: Add Windows.UI.Composition.LinearEasingFunction definition.
-      include: Add Windows.UI.Composition.CompositionPropertySet definition.
-      include: Add Windows.UI.Composition.QuaternionKeyFrameAnimation definition.
-      include: Add Windows.UI.Composition.ScalarKeyFrameAnimation definition.
-      include: Add Windows.UI.Composition.CompositionScopedBatch definition.
-      include: Add Windows.UI.Composition.CompositionTarget definition.
-      include: Add Windows.UI.Composition.Vector2KeyFrameAnimation definition.
-      include: Add Windows.UI.Composition.Vector3KeyFrameAnimation definition.
-      include: Add Windows.UI.Composition.Vector4KeyFrameAnimation definition.
-      include: Add Windows.UI.Composition.CompositionCommitBatch definition.
-      include: Add Windows.UI.Composition.Compositor definition.
-      include: Add Windows.UI.Composition.CompositionObject definition.
-      include: Add Windows.UI.Composition.CompositionDrawingSurface definition.
-      include: Add Windows.UI.Composition.CompositionGraphicsDevice definition.
-      widl: Add support for WinRT HANDLE parameter type.
-      include: Add windows.ui.composition.interop.idl file.
+Jactry Zeng (2):
+      appwiz.cpl: Process messages while waiting for the uninstaller to terminate.
+      appwiz.cpl: Handle WM_CLOSE and WM_COMMAND(IDCANCEL) in the support info dialog.
 
-Nikolay Sivov (1):
-      mfplat: Handle more video subtypes in MFInitMediaTypeFromAMMediaType().
+Jinoh Kang (6):
+      kernel32/tests: Test for activation context switching between fibers.
+      ntdll: Factor out reading current activation context into a helper function.
+      ntdll: Store current activation context stack pointer into a local variable.
+      ntdll: Use ActivationContextStackPointer instead of referencing ActivationContextStack directly.
+      ntdll: Implement RtlFreeActivationContextStack().
+      kernelbase: Implement activation context switching for fibers.
 
-Paul Gofman (10):
-      winegstreamer: Fix check for non-zero padding in h264 transform.
-      win32u: Set DEVPKEY_Device_MatchingDeviceId for GPUs.
-      win32u: Set DEVPKEY_Device_BusNumber for GPUs.
-      win32u: Set DEVPKEY_Device_RemovalPolicy for GPUs.
-      mf/tests: Increase h264data.bin video length.
-      mf/tests: Test h264 decoder with dxgi device manager.
-      winegstreamer: Process MFT_MESSAGE_SET_D3D_MANAGER in h264 decoder.
-      winegstreamer: Provide samples if DXGI device manager is set in h264 decoder.
-      winegstreamer: Pass temporary sample to wg_transform_read_mf() in h264 decoder.
-      winex11.drv: Fix bit shifts in pixel format description for RGBA formats.
+Martin Garton (1):
+      msvcrt: Fix typo in #define.
 
-Piotr Caban (61):
-      win32u: Add support for undocummented DIB_PAL_INDICES color usage in SetDIBits.
-      gdi32: Rename DIB_PAL_MONO to DIB_PAL_INDICES.
-      gdi32: Let SetDIBits handle DIB_PAL_INDICES color usage in PlayEnhMetaFileRecord.
-      wineps: Handle EMR_MASKBLT record in spool files.
-      wineps: Handle EMR_PLGBLT record in spool files.
-      wineps: Handle EMR_DELETEOBJECT record in spool files.
-      wineps: Handle EMR_POLYDRAW record in spool files.
-      wineps: Handle EMR_POLYDRAW16 record in spool files.
-      wineps: Handle EMR_CREATEPEN record in spool files.
-      wineps: Handle EMR_CREATEBRUSHINDIRECT record in spool files.
-      gdi32: Factor out function for obtaining gdi object handle.
-      gdi32: Support stock brush in EMR_FILLRGN.
-      gdi32: Support stock brush in EMR_FRAMERGN.
-      wineps: Handle EMR_FILLRGN record in spool files.
-      wineps: Handle EMR_FRAMERGN record in spool files.
-      wineps: Handle EMR_INVERTRGN record in spool files.
-      wineps: Handle EMR_SETROP2 record in spool files.
-      wineps: Handle EMR_SETSTRETCHBLTMODE record in spool files.
-      wineps: Handle EMR_SETTEXTALIGN record in spool files.
-      wineps: Handle EMR_OFFSETCLIPRGN record in spool files.
-      wineps: Handle EMR_EXCLUDECLIPRECT record in spool files.
-      wineps: Handle EMR_INTERSECTCLIPRECT record in spool files.
-      wineps: Handle EMR_SCALEVIEWPORTEXTEX record in spool files.
-      wineps: Handle EMR_SCALEWINDOWEXTEX record in spool files.
-      wineps: Don't write invisible parts of image to decrease output file size.
-      wineps: Handle EMR_SELECTCLIPPATH in spool files.
-      wineps: Handle EMR_EXTSELECTCLIPRGN record in spool files.
-      wineps: Fix reporting supported color depths in PSDRV_PutImage.
-      wineps: Handle EMR_GRADIENTFILL record in spool files.
-      wineps: Handle EMR_ENDPATH record in spool files.
-      wineps: Handle EMR_ABORTPATH record in spool files.
-      wineps: Handle EMR_BEGINPATH record in spool files.
-      wineps: Handle EMR_FILLPATH record in spool files.
-      wineps: Handle EMR_STROKEANDFILLPATH record in spool files.
-      wineps: Handle EMR_STROKEPATH record in spool files.
-      wineps: Handle EMR_CLOSEFIGURE record in spool files.
-      wineps: Handle EMR_FLATTENPATH record in spool files.
-      wineps: Handle EMR_WIDENPATH record in spool files.
-      include: Add EMRTRANSPARENTBLT definition.
-      gdi32: Handle EMR_TRANSPARENTBLT record in PlayEnhMetaFileRecord.
-      wineps: Fix SetPixel implementation.
-      wineps: Don't store currently selected brush in print processor data.
-      wineps: Handle EMR_SETTEXTCOLOR record in spool files.
-      wineps: Handle EMR_SETBKCOLOR record in spool files.
-      wineps: Handle EMR_SAVEDC in spool files.
-      wineps: Handle EMR_RESTOREDC record in spool files.
-      wineps: Handle EMR_EXTESCAPE record in spool files.
-      wineps: Silence FIXME message on EMR_ALPHABLEND record.
-      wineps: Silence FIXME message on EMR_EXTFLOODFILL record.
-      wineps: Handle EMR_SETMAPPERFLAGS record in spool files.
-      wineps: Handle EMR_SETMAPMODE record in spool files.
-      wineps: Handle EMR_SETBKMODE record in spool files.
-      wineps: Handle EMR_SETPOLYFILLMODE record in spool files.
-      wineps: Handle EMR_SETLAYOUT record in spool files.
-      wineps: Handle EMR_SETTEXTJUSTIFICATION record in spool files.
-      msvcr100: Add missing ExternalContextBase virtual functions stubs.
-      msvcr100: Add Context::Block() implementation.
-      msvcr100: Add ExternalContextBase::Block() implementation.
-      msvcr100: Add ExternalContextBase::IsSynchronouslyBlocked() implementation.
-      msvcr100: Add ExternalContextBase::Unblock implementation.
-      msvcr100: Use Context blocking functions in reader_writer_lock class.
+Matteo Bruni (2):
+      d3dcompiler/tests: Add a couple tests for minimum size in D3DGetBlobPart().
+      d3dcompiler/tests: Add a couple tests for minimum size in D3DStripShader().
 
-Rémi Bernon (72):
-      winex11: Remove non-CJK specific XIC creation logic.
-      winex11: Always create XIC preedit and status attributes.
-      winex11: Pass hwnd parameter to all XIC callbacks.
-      winex11: Remove unnecessary else control flow.
-      winex11: Create the thread XFontSet on thread attach.
-      winex11: Set thread data XIM pointer outside of open_xim.
-      winex11: Cleanup XIM initialization traces.
-      imm32: Rewrite ImmInternalSendIMEMessage helper as imc_send_message.
-      imm32: Rewrite ImmInternalPostIMEMessage helper as imc_post_message.
-      imm32: Rewrite ImmInternalSendIMENotify helper as imc_notify_ime.
-      imm32: Fix mixed-up HIMC / imc pointers in ImmTranslateMessage.
-      imm32: Simplify control flow in ImmTranslateMessage.
-      imm32: Cleanup parameters and traces in ImmTranslateMessage.
-      imm32: Use a stack allocated buffer in ImmTranslateMessage.
-      ws2_32/tests: Adjust test results without host IPv6 support.
-      winemac: Rename imeData / data members and variables to himc.
-      winemac: Use UINT(32) for HIMC in the unixlib interface.
-      winemac: Assume IME UI window always has a valid HIMC.
-      winemac: Pass INPUTCONTEXT pointer to UpdateDataInDefaultIMEWindow.
-      winemac: Add a helper to get IME private window.
-      winemac: Add a helper to get COMPOSITIONSTRING text.
-      winemac: Add a helper to select IME private font.
-      winex11: Assume IME UI window always has a valid HIMC.
-      winex11: Pass INPUTCONTEXT pointer to UpdateDefaultIMEWindow.
-      winex11: Add a helper to get COMPOSITIONSTRING text.
-      winex11: Add a helper to select IME private font.
-      winex11: Register XIC status callbacks.
-      winex11: Refactor XIM input style selection.
-      winex11: Reorder control flow in xic_preedit_draw.
-      winex11: Fix XIM wchar encoding in xic_preedit_draw.
-      winex11: Early return control flow in xic_preedit_caret.
-      winex11: Set x11drv_win_data XIC out of X11DRV_CreateIC.
-      dinput/tests: Mark some tests as flaky to work around fvwm bug.
-      imm32/tests: Test setting the same HIMC statuses twice.
-      imm32/tests: Test WM_IME_NOTIFY messages target window.
-      imm32/tests: Add more ImmGetCompositionString(W|A) tests.
-      imm32/tests: Add more ImmSetCompositionString tests.
-      winex11: Cleanup spaces in IME UI window proc.
-      winex11: Move IME UI proc to default IME implementation.
-      winemac: Use the default IME UI window proc implementation.
-      imm32: Cleanup default IME UI window proc traces.
-      imm32: Call DefWindowProcW from IME UI for unhandled messages.
-      imm32: Remove unnecessary HIMC check in IME UI window proc.
-      imm32/tests: Reduce the number of IME installations.
-      imm32/tests: Cleanup the cross thread IMC tests.
-      imm32: Serialize ImeInquire / ImeDestroy calls.
-      imm32: Use INPUTCONTEXT directly in ImmGetOpenStatus.
-      imm32: Use INPUTCONTEXT directly in ImmSetOpenStatus.
-      imm32: Cache INPUTCONTEXT values for every IME.
-      imm32: Compare open status values in ImmSetOpenStatus.
-      imm32: Use INPUTCONTEXT directly in ImmGetConversionStatus.
-      imm32: Use INPUTCONTEXT directly in ImmSetConversionStatus.
-      include: Add INPUTCONTEXT fdwInit flags definitions.
-      imm32/tests: Add some Imm(Get|Set)CompositionWindow tests.
-      imm32/tests: Add some Imm(Get|Set)StatusWindowPos tests.
-      imm32/tests: Add some Imm(Get|Set)CompositionFont tests.
-      imm32/tests: Add some Imm(Get|Set)CandidateWindow tests.
-      imm32: Use INPUTCONTEXT directly in ImmSetCompositionWindow.
-      imm32: Use INPUTCONTEXT directly in ImmGetCompositionWindow.
-      imm32: Use INPUTCONTEXT directly in ImmSetStatusWindowPos.
-      imm32: Use INPUTCONTEXT directly in ImmGetStatusWindowPos.
-      imm32: Use INPUTCONTEXT directly in ImmSetCompositionFont(A|W).
-      imm32: Use INPUTCONTEXT directly in ImmGetCompositionFont(A|W).
-      imm32: Use INPUTCONTEXT directly in ImmSetCandidateWindow.
-      imm32: Use INPUTCONTEXT directly in ImmGetCandidateWindow.
-      winegstreamer: Introduce a new wg_init_gstreamer unixlib entry.
-      winegstreamer: Move some wg_parser / wg_transform helpers to unixlib.c.
-      winegstreamer: Sync element state with parent in append_element.
-      winegstreamer: Use append_element to build wg_parser pipeline.
-      winegstreamer: Remove unnecessary unlink in pad-removed callback.
-      winegstreamer: Introduce new link_src_to_element / link_element_to_sink helpers.
-      winegstreamer: Introduce new stream_type_from_caps helper.
+Michael Stefaniuc (3):
+      threadpoolwinrt: Forward a Release() to a Release() method.
+      uiautomationcore: Drop superfluous TRUE : FALSE conditional expression.
+      win32u: Use ARRAY_SIZE() instead of open coding it.
 
-Santino Mazza (3):
-      mf/tests: Test media session error handling.
-      mf/session: Handle errors when subscribing to source's events.
-      mf/session: Handle error when a source fails to start.
+Mohamad Al-Jaf (9):
+      include: Add windows.graphics.capture.interop.idl file.
+      include: Add appnotify.h file.
+      twinapi.appcore: Add stub DLL.
+      twinapi.appcore: Add RegisterAppStateChangeNotification stub.
+      twinapi.appcore: Add UnregisterAppStateChangeNotification stub.
+      apisetschema: Add api-ms-win-core-psm-appnotify-l1-1-0.
+      shell32: Implement SHBindToFolderIDListParent().
+      shell32/tests: Test SHBindToParent() last parameter behavior.
+      shell32: Fix last parameter behavior in SHBindToFolderIDListParent().
 
-Stefan Dösinger (2):
-      wined3d: Rotate vk bind masks in wined3d_swapchain_vk_rotate.
-      include: X86 msvc has _InterlockedExchangePointer and _InterlockedCompareExchangePointer.
+Paul Gofman (4):
+      ntdll: Mind LFH pending blocks in RtlDestroyHeap().
+      ntdll: Avoid integer overflow in block_get_subheap().
+      mfplat: Fix returned buffer length in dxgi_surface_buffer_lock().
+      wined3d: Add a comment about mismatched samplers.
 
-Tatsuyuki Ishi (1):
-      ntdll: Use log-linear bucketing for free lists.
+Piotr Caban (36):
+      wineps: Rename handle count parameter in hmf_proc.
+      wineps: Set text and background color during device creation.
+      wineps: Handle EMR_EXTCREATEFONTINDIRECTW record in spool files.
+      wineps: Handle font selection in spool files.
+      wineps: Store text justification info in print processor data.
+      wineps: Handle EMR_EXTTEXTOUTW record in spool files.
+      wineps: Add BiDi support in EMR_EXTTEXTOUTW record.
+      wineps: Clip visible rectangle to bitmap size in get_vis_rectangles.
+      wineps: Handle EMR_CREATEPALETTE record in spool files.
+      wineps: Handle EMR_SELECTPALETTE record in spool files.
+      wineps: Handle EMR_SETDIBITSTODEVICE record in spool files.
+      wineps: Handle EMR_STRETCHDIBITS record in spool files.
+      wineps: Handle EMR_REALIZEPALETTE record in spool files.
+      wineps: Handle EMR_RESIZEPALETTE record in spool files.
+      wineps: Handle EMR_SETPALETTEENTRIES record in spool files.
+      gdi32: Use EMR_REALIZEPALETTE to record RealizePalette.
+      gdi32: Fix EMR_CREATEPALETTE recording.
+      gdi32: Store palette in EMR_EOF record.
+      gdi32/tests: Add EMF palette tests.
+      wineps: Fix default device font selection.
+      wineps: Fix return value in path drawing routines.
+      wineps: Continue printing if path drawing function returns error.
+      wineps: Reset memory DC state on every page.
+      localspl: Add support for PRINTER_ATTRIBUTE_RAW_ONLY printer attribute.
+      localspl: Validate datatype in StartDocPrinter.
+      wineps: Reset current position on every page.
+      gdi32: Store the printer info in a structure.
+      gdi32: Improve EMF DC cleanup when CloseEnhMetafile is not called.
+      gdi32: Factor out emf_eof helper.
+      gdi32: Factor out emf_create helper.
+      gdi32: Add support for creating EMF spool files.
+      gdi32: Add GdiIsMetaPrintDC implementation.
+      localspl: Add partial support for PRINTER_ATTRIBUTE_KEEPPRINTEDJOBS attribute.
+      gdi32: Implicitly call StartPage while drawing on printer DC.
+      gdi32: Support creating EMRI_DEVMODE records in spool files.
+      wineps: Handle EMRI_DEVMODE record in spool files.
 
-Torge Matthies (1):
-      msvcr110: Implement _Context::_IsSynchronouslyBlocked.
+Rémi Bernon (11):
+      imm32/tests: Test that ImmSetOpenStatus doesn't set IMMGWL_IMC.
+      imm32/tests: Check IME UI visibility vs ImmSetCompositionWindow.
+      imm32/tests: Check ImmSetActiveContext effect on INPUTCONTEXT hWnd member.
+      imm32: Forward ImmGetContext to NtUserGetWindowInputContext directly.
+      user32: Move WM_IME_COMPOSITION DefWindowProc handlers in separate helpers.
+      user32: Ignore WM_IME_COMPOSITION from the IME UI window in DefWindowProc.
+      imm32: Don't hide/show IME UI window in ImmSetCompositionWindow.
+      imm32: Move ImmAssociateContext(Ex) around.
+      imm32: Update IME UI window IMMGWL_IMC when focus or HIMC changes.
+      imm32/tests: Add some ImmGenerateMessage tests.
+      imm32: Send messages one by one in ImmGenerateMessage.
 
-Vijay Kiran Kamuju (1):
-      msvcp110: Add std::_Rethrow_future_exception implementation.
+Shaun Ren (2):
+      include: Add more sapi structs and enums.
+      include: Add ISpTTSEngineSite and ISpTTSEngine interfaces.
 
-Zebediah Figura (14):
-      quartz/vmr9: Do not clear the previous allocator and presenter in IVMRFilterConfig9::SetRenderingMode().
-      quartz/vmr9: Return a default_presenter structure from the default presenter constructor.
-      quartz/vmr9: Do not bother setting the cookie when using the default presenter.
-      quartz/vmr9: Do not set the mode if we failed to create the default presenter.
-      advapi32: Print ReportEvent() messages one line at a time.
-      d3dx10/tests: Port some additional D3DX10GetImageInfoFromMemory() tests from d3dx11.
-      windowscodecs: Map GUID_WICPixelFormat32bppRGBA1010102 to DXGI_FORMAT_R10G10B10A2_UNORM as well.
-      d3dx10: Map DXGI_FORMAT_R16_UNORM to DXGI_FORMAT_R16G16B16A16_UNORM in get_d3dx10_dds_format().
-      winegstreamer: Initialize media source video types from a wg_video_format array.
-      winegstreamer: Set the MF_MT_DEFAULT_STRIDE attribute in mf_media_type_from_wg_format().
-      winegstreamer: Translate the MF_MT_DEFAULT_STRIDE attribute to flipped video in mf_media_type_to_wg_format().
-      winegstreamer: Move flipping based on RGB to the frontends.
-      wined3d: Do not use glFramebufferTexture() to bind array RTVs with an array size of one.
-      d3d10core/tests: Add a regression test for mismatch of layered framebuffer attachments.
+Stefan Dösinger (14):
+      d3dx9: Use __VA_ARGS__ instead of GCCs named variadics.
+      d3dx9/tests: Use __VA_ARGS__ instead of GCCs named variadics.
+      wined3d: Sync depth stencils to both early and late depth test.
+      wined3d: Avoid VK_IMAGE_LAYOUT_GENERAL.
+      wined3d: Fall back to general layout if necessary.
+      d3d9/tests: Radeon GPUs don't draw from sysmem textures.
+      d3d9/tests: Accept AMD GPU sysmem sample failure in test_mipmap_upload.
+      d3d8/tests: Radeon GPUs don't draw from sysmem textures.
+      d3d8/test: Accept AMD GPU sysmem sample failure in test_mipmap_upload.
+      d3dx9: Load D3DAssemble via GetProcAddress.
+      d3dcompiler/tests: Load D3DAssemble via GetProcAddress.
+      d3dcompiler: Make D3DAssemble a private export.
+      d3d9/tests: AMD GPUs sample the border color of cube textures.
+      d3d9/tests: Accept random depth when using a 3D texture with a 2D sampler.
 
-Zhiyi Zhang (4):
-      winex11.drv: Fix a typo.
-      light.msstyles: Use border fill background for progress parts.
-      light.msstyles: Don't draw a border for progress fill parts.
-      wined3d: Add GPU information for AMD Raphael.
+Vova Mshanetskiy (2):
+      winhttp: Support WINHTTP_OPTION_PARENT_HANDLE in request_query_option().
+      winhttp: Avoid unnecessary cast in connect_query_option().
+
+Zebediah Figura (8):
+      wined3d: Allow retrieving the frontbuffer from a wined3d swapchain.
+      ddraw: Retrieve the frontbuffer directly from wined3d.
+      wined3d: Disable shaderTessellationAndGeometryPointSize.
+      dxgi: Introduce IWineDXGIDeviceParent::register_swapchain_texture() and use it in IDXGIDevice::CreateSurface().
+      dxgi: Create d3d11 swapchain textures directly from d3d11_swapchain_init().
+      d3d9: Move surface allocation to d3d9_surface_create().
+      d3d9: Create sub-resource surfaces manually.
+      d3d9: Pass the container to d3d9_surface_create().
+
+Ziqing Hui (3):
+      winegstreamer: Implement wg_format_from_caps_video_wmv.
+      wingstreamer: Create extra decodebin to decode compressed stream.
+      mfreadwrite: Fix an address of operator typo.
