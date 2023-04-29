@@ -293,6 +293,32 @@ static IMFStreamDescriptor *stream_descriptor_from_id(IMFPresentationDescriptor 
     return NULL;
 }
 
+static HRESULT stream_descriptor_set_tag(IMFStreamDescriptor *descriptor, struct wg_parser_stream *stream,
+    const GUID *attr, enum wg_parser_tag tag)
+{
+    WCHAR *strW;
+    HRESULT hr;
+    DWORD len;
+    char *str;
+
+    if (!(str = wg_parser_stream_get_tag(stream, tag))
+            || !(len = MultiByteToWideChar(CP_UTF8, 0, str, -1, NULL, 0)))
+        hr = S_OK;
+    else if (!(strW = malloc(len * sizeof(*strW))))
+        hr = E_OUTOFMEMORY;
+    else
+    {
+        if (MultiByteToWideChar(CP_UTF8, 0, str, -1, strW, len))
+            hr = IMFStreamDescriptor_SetString(descriptor, attr, strW);
+        else
+            hr = E_FAIL;
+        free(strW);
+    }
+
+    free(str);
+    return hr;
+}
+
 static BOOL enqueue_token(struct media_stream *stream, IUnknown *token)
 {
     if (stream->token_queue_count == stream->token_queue_cap)
@@ -1476,6 +1502,25 @@ static const IMFMediaSourceVtbl IMFMediaSource_vtbl =
     media_source_Shutdown,
 };
 
+static void media_source_init_descriptors(struct media_source *source)
+{
+    HRESULT hr = S_OK;
+    UINT i;
+
+    for (i = 0; i < source->stream_count; i++)
+    {
+        struct media_stream *stream = source->streams[i];
+        IMFStreamDescriptor *descriptor = stream->descriptor;
+
+        if (FAILED(hr = stream_descriptor_set_tag(descriptor, stream->wg_stream,
+                &MF_SD_LANGUAGE, WG_PARSER_TAG_LANGUAGE)))
+            WARN("Failed to set stream descriptor language, hr %#lx\n", hr);
+        if (FAILED(hr = stream_descriptor_set_tag(descriptor, stream->wg_stream,
+                &MF_SD_STREAM_NAME, WG_PARSER_TAG_NAME)))
+            WARN("Failed to set stream descriptor name, hr %#lx\n", hr);
+    }
+}
+
 static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_source **out_media_source)
 {
     unsigned int stream_count = UINT_MAX;
@@ -1574,42 +1619,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
         object->stream_count++;
     }
 
-    /* init presentation descriptor */
-
-    for (i = 0; i < object->stream_count; i++)
-    {
-        static const struct
-        {
-            enum wg_parser_tag tag;
-            const GUID *mf_attr;
-        }
-        tags[] =
-        {
-            {WG_PARSER_TAG_LANGUAGE, &MF_SD_LANGUAGE},
-            {WG_PARSER_TAG_NAME, &MF_SD_STREAM_NAME},
-        };
-        unsigned int j;
-        WCHAR *strW;
-        DWORD len;
-        char *str;
-
-        for (j = 0; j < ARRAY_SIZE(tags); ++j)
-        {
-            if (!(str = wg_parser_stream_get_tag(object->streams[i]->wg_stream, tags[j].tag)))
-                continue;
-            if (!(len = MultiByteToWideChar(CP_UTF8, 0, str, -1, NULL, 0)))
-            {
-                free(str);
-                continue;
-            }
-            strW = malloc(len * sizeof(*strW));
-            if (MultiByteToWideChar(CP_UTF8, 0, str, -1, strW, len))
-                IMFStreamDescriptor_SetString(object->descriptors[i], tags[j].mf_attr, strW);
-            free(strW);
-            free(str);
-        }
-    }
-
+    media_source_init_descriptors(object);
     object->state = SOURCE_STOPPED;
 
     *out_media_source = object;
