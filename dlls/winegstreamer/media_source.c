@@ -272,30 +272,6 @@ static HRESULT wg_format_from_stream_descriptor(IMFStreamDescriptor *descriptor,
     return hr;
 }
 
-static IMFStreamDescriptor *stream_descriptor_from_id(IMFPresentationDescriptor *pres_desc, DWORD id, BOOL *selected)
-{
-    ULONG sd_count;
-    IMFStreamDescriptor *ret;
-    unsigned int i;
-
-    if (FAILED(IMFPresentationDescriptor_GetStreamDescriptorCount(pres_desc, &sd_count)))
-        return NULL;
-
-    for (i = 0; i < sd_count; i++)
-    {
-        DWORD stream_id;
-
-        if (FAILED(IMFPresentationDescriptor_GetStreamDescriptorByIndex(pres_desc, i, selected, &ret)))
-            return NULL;
-
-        if (SUCCEEDED(IMFStreamDescriptor_GetStreamIdentifier(ret, &stream_id)) && stream_id == id)
-            return ret;
-
-        IMFStreamDescriptor_Release(ret);
-    }
-    return NULL;
-}
-
 static HRESULT stream_descriptor_set_tag(IMFStreamDescriptor *descriptor, struct wg_parser_stream *stream,
     const GUID *attr, enum wg_parser_tag tag)
 {
@@ -517,7 +493,8 @@ static HRESULT media_source_start(struct media_source *source, IMFPresentationDe
         GUID *format, PROPVARIANT *position)
 {
     BOOL starting = source->state == SOURCE_STOPPED, seek_message = !starting && position->vt != VT_EMPTY;
-    unsigned int i;
+    IMFStreamDescriptor **descriptors;
+    DWORD i, count;
     HRESULT hr;
 
     TRACE("source %p, descriptor %p, format %s, position %s\n", source, descriptor,
@@ -533,28 +510,53 @@ static HRESULT media_source_start(struct media_source *source, IMFPresentationDe
         position->hVal.QuadPart = 0;
     }
 
+    if (!(descriptors = calloc(source->stream_count, sizeof(*descriptors))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = IMFPresentationDescriptor_GetStreamDescriptorCount(descriptor, &count)))
+        WARN("Failed to get presentation descriptor stream count, hr %#lx\n", hr);
+
+    for (i = 0; i < count; i++)
+    {
+        IMFStreamDescriptor *stream_descriptor;
+        BOOL selected;
+        DWORD id;
+
+        if (FAILED(hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(descriptor, i,
+                &selected, &stream_descriptor)))
+            WARN("Failed to get presentation stream descriptor, hr %#lx\n", hr);
+        else
+        {
+            if (FAILED(hr = IMFStreamDescriptor_GetStreamIdentifier(stream_descriptor, &id)))
+                WARN("Failed to get stream descriptor id, hr %#lx\n", hr);
+            else if (id >= source->stream_count)
+                WARN("Invalid stream descriptor id %lu, hr %#lx\n", id, hr);
+            else if (selected)
+                IMFStreamDescriptor_AddRef((descriptors[id] = stream_descriptor));
+
+            IMFStreamDescriptor_Release(stream_descriptor);
+        }
+    }
+
     for (i = 0; i < source->stream_count; i++)
     {
-        struct media_stream *stream;
-        BOOL was_active, selected;
-        IMFStreamDescriptor *sd;
-        DWORD stream_id;
-
-        stream = source->streams[i];
-        was_active = !starting && stream->active;
-
-        IMFStreamDescriptor_GetStreamIdentifier(stream->descriptor, &stream_id);
-        sd = stream_descriptor_from_id(descriptor, stream_id, &selected);
-        IMFStreamDescriptor_Release(sd);
+        struct media_stream *stream = source->streams[i];
+        BOOL was_active = !starting && stream->active;
 
         if (position->vt != VT_EMPTY)
             stream->eos = FALSE;
 
-        if (!(stream->active = selected))
+        if (!(stream->active = !!descriptors[i]))
             wg_parser_stream_disable(stream->wg_stream);
-        else if (FAILED(hr = media_stream_start(stream, was_active, seek_message, position)))
-            WARN("Failed to start media stream, hr %#lx\n", hr);
+        else
+        {
+            if (FAILED(hr = media_stream_start(stream, was_active, seek_message, position)))
+                WARN("Failed to start media stream, hr %#lx\n", hr);
+            IMFStreamDescriptor_Release(descriptors[i]);
+        }
     }
+
+    free(descriptors);
 
     source->state = SOURCE_RUNNING;
 
