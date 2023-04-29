@@ -452,59 +452,19 @@ static void stop_pipeline(struct media_source *source)
         flush_token_queue(source->streams[i], FALSE);
 }
 
-static void dispatch_end_of_presentation(struct media_source *source)
+static HRESULT media_stream_send_sample(struct media_stream *stream, const struct wg_parser_buffer *wg_buffer, IUnknown *token)
 {
-    PROPVARIANT empty = {.vt = VT_EMPTY};
-    unsigned int i;
-
-    /* A stream has ended, check whether all have */
-    for (i = 0; i < source->stream_count; i++)
-    {
-        struct media_stream *stream = source->streams[i];
-        if (stream->active && !stream->eos)
-            return;
-    }
-
-    IMFMediaEventQueue_QueueEventParamVar(source->event_queue, MEEndOfPresentation, &GUID_NULL, S_OK, &empty);
-}
-
-static void send_buffer(struct media_stream *stream, const struct wg_parser_buffer *wg_buffer, IUnknown *token)
-{
+    IMFSample *sample = NULL;
     IMFMediaBuffer *buffer;
-    IMFSample *sample;
     HRESULT hr;
     BYTE *data;
 
-    if (FAILED(hr = MFCreateSample(&sample)))
-    {
-        ERR("Failed to create sample, hr %#lx.\n", hr);
-        return;
-    }
-
     if (FAILED(hr = MFCreateMemoryBuffer(wg_buffer->size, &buffer)))
-    {
-        ERR("Failed to create buffer, hr %#lx.\n", hr);
-        IMFSample_Release(sample);
-        return;
-    }
-
-    if (FAILED(hr = IMFSample_AddBuffer(sample, buffer)))
-    {
-        ERR("Failed to add buffer, hr %#lx.\n", hr);
-        goto out;
-    }
-
+        return hr;
     if (FAILED(hr = IMFMediaBuffer_SetCurrentLength(buffer, wg_buffer->size)))
-    {
-        ERR("Failed to set size, hr %#lx.\n", hr);
         goto out;
-    }
-
     if (FAILED(hr = IMFMediaBuffer_Lock(buffer, &data, NULL, NULL)))
-    {
-        ERR("Failed to lock buffer, hr %#lx.\n", hr);
         goto out;
-    }
 
     if (!wg_parser_stream_copy_buffer(stream->wg_stream, data, 0, wg_buffer->size))
     {
@@ -515,52 +475,62 @@ static void send_buffer(struct media_stream *stream, const struct wg_parser_buff
     wg_parser_stream_release_buffer(stream->wg_stream);
 
     if (FAILED(hr = IMFMediaBuffer_Unlock(buffer)))
-    {
-        ERR("Failed to unlock buffer, hr %#lx.\n", hr);
         goto out;
-    }
 
+    if (FAILED(hr = MFCreateSample(&sample)))
+        goto out;
+    if (FAILED(hr = IMFSample_AddBuffer(sample, buffer)))
+        goto out;
     if (FAILED(hr = IMFSample_SetSampleTime(sample, wg_buffer->pts)))
-    {
-        ERR("Failed to set sample time, hr %#lx.\n", hr);
         goto out;
-    }
-
     if (FAILED(hr = IMFSample_SetSampleDuration(sample, wg_buffer->duration)))
-    {
-        ERR("Failed to set sample duration, hr %#lx.\n", hr);
         goto out;
-    }
+    if (token && FAILED(hr = IMFSample_SetUnknown(sample, &MFSampleExtension_Token, token)))
+        goto out;
 
-    if (token)
-        IMFSample_SetUnknown(sample, &MFSampleExtension_Token, token);
-
-    IMFMediaEventQueue_QueueEventParamUnk(stream->event_queue, MEMediaSample,
+    hr = IMFMediaEventQueue_QueueEventParamUnk(stream->event_queue, MEMediaSample,
             &GUID_NULL, S_OK, (IUnknown *)sample);
 
 out:
+    if (sample)
+        IMFSample_Release(sample);
     IMFMediaBuffer_Release(buffer);
-    IMFSample_Release(sample);
+    return hr;
 }
 
-static void wait_on_sample(struct media_stream *stream, IUnknown *token)
+static HRESULT media_stream_send_eos(struct media_source *source, struct media_stream *stream)
+{
+    PROPVARIANT empty = {.vt = VT_EMPTY};
+    HRESULT hr;
+    UINT i;
+
+    stream->eos = TRUE;
+    if (FAILED(hr = IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEEndOfStream, &GUID_NULL, S_OK, &empty)))
+        WARN("Failed to queue MEEndOfStream event, hr %#lx\n", hr);
+
+    for (i = 0; i < source->stream_count; i++)
+    {
+        struct media_stream *stream = source->streams[i];
+        if (stream->active && !stream->eos)
+            return S_OK;
+    }
+
+    if (FAILED(hr = IMFMediaEventQueue_QueueEventParamVar(source->event_queue, MEEndOfPresentation, &GUID_NULL, S_OK, &empty)))
+        WARN("Failed to queue MEEndOfPresentation event, hr %#lx\n", hr);
+    return S_OK;
+}
+
+static HRESULT wait_on_sample(struct media_stream *stream, IUnknown *token)
 {
     struct media_source *source = impl_from_IMFMediaSource(stream->media_source);
-    PROPVARIANT empty_var = {.vt = VT_EMPTY};
     struct wg_parser_buffer buffer;
 
     TRACE("%p, %p\n", stream, token);
 
     if (wg_parser_stream_get_buffer(source->wg_parser, stream->wg_stream, &buffer))
-    {
-        send_buffer(stream, &buffer, token);
-    }
-    else
-    {
-        stream->eos = TRUE;
-        IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEEndOfStream, &GUID_NULL, S_OK, &empty_var);
-        dispatch_end_of_presentation(source);
-    }
+        return media_stream_send_sample(stream, &buffer, token);
+
+    return media_stream_send_eos(source, stream);
 }
 
 static HRESULT WINAPI source_async_commands_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
@@ -594,7 +564,10 @@ static HRESULT WINAPI source_async_commands_Invoke(IMFAsyncCallback *iface, IMFA
             if (source->state == SOURCE_PAUSED)
                 enqueue_token(command->u.request_sample.stream, command->u.request_sample.token);
             else if (source->state == SOURCE_RUNNING)
-                wait_on_sample(command->u.request_sample.stream, command->u.request_sample.token);
+            {
+                if (FAILED(hr = wait_on_sample(command->u.request_sample.stream, command->u.request_sample.token)))
+                    WARN("Failed to request sample, hr %#lx\n", hr);
+            }
             break;
     }
 
