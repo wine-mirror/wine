@@ -55,7 +55,7 @@ static const IAudioClient3Vtbl AudioClient3_Vtbl;
 static const IAudioRenderClientVtbl AudioRenderClient_Vtbl;
 static const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl;
 extern const IAudioSessionControl2Vtbl AudioSessionControl2_Vtbl;
-static const ISimpleAudioVolumeVtbl SimpleAudioVolume_Vtbl;
+extern const ISimpleAudioVolumeVtbl SimpleAudioVolume_Vtbl;
 static const IAudioClockVtbl AudioClock_Vtbl;
 static const IAudioClock2Vtbl AudioClock2_Vtbl;
 static const IAudioStreamVolumeVtbl AudioStreamVolume_Vtbl;
@@ -98,11 +98,6 @@ static inline ACImpl *impl_from_IAudioRenderClient(IAudioRenderClient *iface)
 static inline ACImpl *impl_from_IAudioCaptureClient(IAudioCaptureClient *iface)
 {
     return CONTAINING_RECORD(iface, ACImpl, IAudioCaptureClient_iface);
-}
-
-static inline AudioSessionWrapper *impl_from_ISimpleAudioVolume(ISimpleAudioVolume *iface)
-{
-    return CONTAINING_RECORD(iface, AudioSessionWrapper, ISimpleAudioVolume_iface);
 }
 
 static inline AudioSessionWrapper *impl_from_IChannelAudioVolume(IChannelAudioVolume *iface)
@@ -1460,133 +1455,6 @@ static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client)
 
     return ret;
 }
-
-static HRESULT WINAPI SimpleAudioVolume_QueryInterface(
-        ISimpleAudioVolume *iface, REFIID riid, void **ppv)
-{
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
-
-    if(!ppv)
-        return E_POINTER;
-    *ppv = NULL;
-
-    if(IsEqualIID(riid, &IID_IUnknown) ||
-            IsEqualIID(riid, &IID_ISimpleAudioVolume))
-        *ppv = iface;
-    if(*ppv){
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    WARN("Unknown interface %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI SimpleAudioVolume_AddRef(ISimpleAudioVolume *iface)
-{
-    AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
-    return IAudioSessionControl2_AddRef(&This->IAudioSessionControl2_iface);
-}
-
-static ULONG WINAPI SimpleAudioVolume_Release(ISimpleAudioVolume *iface)
-{
-    AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
-    return IAudioSessionControl2_Release(&This->IAudioSessionControl2_iface);
-}
-
-static HRESULT WINAPI SimpleAudioVolume_SetMasterVolume(
-        ISimpleAudioVolume *iface, float level, const GUID *context)
-{
-    AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
-    AudioSession *session = This->session;
-    ACImpl *client;
-
-    TRACE("(%p)->(%f, %s)\n", session, level, wine_dbgstr_guid(context));
-
-    if(level < 0.f || level > 1.f)
-        return E_INVALIDARG;
-
-    if(context)
-        FIXME("Notifications not supported yet\n");
-
-    sessions_lock();
-
-    session->master_vol = level;
-
-    LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry)
-        set_stream_volumes(client, -1);
-
-    sessions_unlock();
-
-    return S_OK;
-}
-
-static HRESULT WINAPI SimpleAudioVolume_GetMasterVolume(
-        ISimpleAudioVolume *iface, float *level)
-{
-    AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
-    AudioSession *session = This->session;
-
-    TRACE("(%p)->(%p)\n", session, level);
-
-    if(!level)
-        return NULL_PTR_ERR;
-
-    *level = session->master_vol;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI SimpleAudioVolume_SetMute(ISimpleAudioVolume *iface,
-        BOOL mute, const GUID *context)
-{
-    AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
-    AudioSession *session = This->session;
-    ACImpl *client;
-
-    TRACE("(%p)->(%u, %s)\n", session, mute, debugstr_guid(context));
-
-    if(context)
-        FIXME("Notifications not supported yet\n");
-
-    sessions_lock();
-
-    session->mute = mute;
-
-    LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry)
-        set_stream_volumes(client, -1);
-
-    sessions_unlock();
-
-    return S_OK;
-}
-
-static HRESULT WINAPI SimpleAudioVolume_GetMute(ISimpleAudioVolume *iface,
-        BOOL *mute)
-{
-    AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
-    AudioSession *session = This->session;
-
-    TRACE("(%p)->(%p)\n", session, mute);
-
-    if(!mute)
-        return NULL_PTR_ERR;
-
-    *mute = session->mute;
-
-    return S_OK;
-}
-
-static const ISimpleAudioVolumeVtbl SimpleAudioVolume_Vtbl  =
-{
-    SimpleAudioVolume_QueryInterface,
-    SimpleAudioVolume_AddRef,
-    SimpleAudioVolume_Release,
-    SimpleAudioVolume_SetMasterVolume,
-    SimpleAudioVolume_GetMasterVolume,
-    SimpleAudioVolume_SetMute,
-    SimpleAudioVolume_GetMute
-};
 
 static HRESULT WINAPI AudioStreamVolume_QueryInterface(
         IAudioStreamVolume *iface, REFIID riid, void **ppv)
