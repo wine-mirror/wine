@@ -343,6 +343,25 @@ static void flush_token_queue(struct media_stream *stream, BOOL send)
     stream->token_queue_cap = 0;
 }
 
+static HRESULT media_stream_start(struct media_stream *stream, BOOL active, BOOL seeking, const PROPVARIANT *position)
+{
+    struct media_source *source = impl_from_IMFMediaSource(stream->media_source);
+    struct wg_format format;
+    HRESULT hr;
+
+    TRACE("source %p, stream %p\n", source, stream);
+
+    if (FAILED(hr = wg_format_from_stream_descriptor(stream->descriptor, &format)))
+        WARN("Failed to get wg_format from stream descriptor, hr %#lx\n", hr);
+    wg_parser_stream_enable(stream->wg_stream, &format);
+
+    if (FAILED(hr = IMFMediaEventQueue_QueueEventParamUnk(source->event_queue, active ? MEUpdatedStream : MENewStream,
+            &GUID_NULL, S_OK, (IUnknown *)&stream->IMFMediaStream_iface)))
+        WARN("Failed to send source stream event, hr %#lx\n", hr);
+    return IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, seeking ? MEStreamSeeked : MEStreamStarted,
+            &GUID_NULL, S_OK, position);
+}
+
 static void start_pipeline(struct media_source *source, struct source_async_command *command)
 {
     PROPVARIANT *position = &command->u.start.position;
@@ -360,46 +379,24 @@ static void start_pipeline(struct media_source *source, struct source_async_comm
     for (i = 0; i < source->stream_count; i++)
     {
         struct media_stream *stream;
+        BOOL was_active, selected;
         IMFStreamDescriptor *sd;
-        struct wg_format format;
         DWORD stream_id;
-        BOOL was_active;
-        BOOL selected;
 
         stream = source->streams[i];
+        was_active = stream->active;
 
         IMFStreamDescriptor_GetStreamIdentifier(stream->descriptor, &stream_id);
-
         sd = stream_descriptor_from_id(command->u.start.descriptor, stream_id, &selected);
         IMFStreamDescriptor_Release(sd);
-
-        was_active = stream->active;
-        stream->active = selected;
-
-        if (selected)
-        {
-            if (FAILED(hr = wg_format_from_stream_descriptor(stream->descriptor, &format)))
-                WARN("Failed to get wg_format from stream descriptor, hr %#lx\n", hr);
-            wg_parser_stream_enable(stream->wg_stream, &format);
-        }
-        else
-        {
-            wg_parser_stream_disable(stream->wg_stream);
-        }
 
         if (position->vt != VT_EMPTY)
             stream->eos = FALSE;
 
-        if (selected)
-        {
-            TRACE("Stream %u (%p) selected\n", i, stream);
-            IMFMediaEventQueue_QueueEventParamUnk(source->event_queue,
-                was_active ? MEUpdatedStream : MENewStream, &GUID_NULL,
-                S_OK, (IUnknown*) &stream->IMFMediaStream_iface);
-
-            IMFMediaEventQueue_QueueEventParamVar(stream->event_queue,
-                seek_message ? MEStreamSeeked : MEStreamStarted, &GUID_NULL, S_OK, position);
-        }
+        if (!(stream->active = selected))
+            wg_parser_stream_disable(stream->wg_stream);
+        else if (FAILED(hr = media_stream_start(stream, was_active, seek_message, position)))
+            WARN("Failed to start media stream, hr %#lx\n", hr);
     }
 
     IMFMediaEventQueue_QueueEventParamVar(source->event_queue,
