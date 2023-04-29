@@ -241,6 +241,32 @@ static ULONG WINAPI source_async_commands_callback_Release(IMFAsyncCallback *ifa
     return IMFMediaSource_Release(&source->IMFMediaSource_iface);
 }
 
+static HRESULT stream_descriptor_get_media_type(IMFStreamDescriptor *descriptor, IMFMediaType **media_type)
+{
+    IMFMediaTypeHandler *handler;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFStreamDescriptor_GetMediaTypeHandler(descriptor, &handler)))
+        return hr;
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, media_type);
+    IMFMediaTypeHandler_Release(handler);
+
+    return hr;
+}
+
+static HRESULT wg_format_from_stream_descriptor(IMFStreamDescriptor *descriptor, struct wg_format *format)
+{
+    IMFMediaType *media_type;
+    HRESULT hr;
+
+    if (FAILED(hr = stream_descriptor_get_media_type(descriptor, &media_type)))
+        return hr;
+    mf_media_type_to_wg_format(media_type, format);
+    IMFMediaType_Release(media_type);
+
+    return hr;
+}
+
 static IMFStreamDescriptor *stream_descriptor_from_id(IMFPresentationDescriptor *pres_desc, DWORD id, BOOL *selected)
 {
     ULONG sd_count;
@@ -322,6 +348,7 @@ static void start_pipeline(struct media_source *source, struct source_async_comm
     PROPVARIANT *position = &command->u.start.position;
     BOOL seek_message = source->state != SOURCE_STOPPED && position->vt != VT_EMPTY;
     unsigned int i;
+    HRESULT hr;
 
     /* seek to beginning on stop->play */
     if (source->state == SOURCE_STOPPED && position->vt == VT_EMPTY)
@@ -334,8 +361,7 @@ static void start_pipeline(struct media_source *source, struct source_async_comm
     {
         struct media_stream *stream;
         IMFStreamDescriptor *sd;
-        IMFMediaTypeHandler *mth;
-        IMFMediaType *current_mt;
+        struct wg_format format;
         DWORD stream_id;
         BOOL was_active;
         BOOL selected;
@@ -352,16 +378,9 @@ static void start_pipeline(struct media_source *source, struct source_async_comm
 
         if (selected)
         {
-            struct wg_format format;
-
-            IMFStreamDescriptor_GetMediaTypeHandler(stream->descriptor, &mth);
-            IMFMediaTypeHandler_GetCurrentMediaType(mth, &current_mt);
-
-            mf_media_type_to_wg_format(current_mt, &format);
+            if (FAILED(hr = wg_format_from_stream_descriptor(stream->descriptor, &format)))
+                WARN("Failed to get wg_format from stream descriptor, hr %#lx\n", hr);
             wg_parser_stream_enable(stream->wg_stream, &format);
-
-            IMFMediaType_Release(current_mt);
-            IMFMediaTypeHandler_Release(mth);
         }
         else
         {
