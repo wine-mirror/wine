@@ -91,12 +91,12 @@ struct media_source
     CRITICAL_SECTION cs;
 
     struct wg_parser *wg_parser;
+    UINT64 duration;
 
     IMFStreamDescriptor **descriptors;
     struct media_stream **streams;
     ULONG stream_count;
 
-    IMFPresentationDescriptor *pres_desc;
     enum
     {
         SOURCE_OPENING,
@@ -367,7 +367,7 @@ static HRESULT media_stream_start(struct media_stream *stream, BOOL active, BOOL
 static HRESULT media_source_start(struct media_source *source, IMFPresentationDescriptor *descriptor,
         GUID *format, PROPVARIANT *position)
 {
-    BOOL seek_message = source->state != SOURCE_STOPPED && position->vt != VT_EMPTY;
+    BOOL starting = source->state == SOURCE_STOPPED, seek_message = !starting && position->vt != VT_EMPTY;
     unsigned int i;
     HRESULT hr;
 
@@ -392,7 +392,7 @@ static HRESULT media_source_start(struct media_source *source, IMFPresentationDe
         DWORD stream_id;
 
         stream = source->streams[i];
-        was_active = stream->active;
+        was_active = !starting && stream->active;
 
         IMFStreamDescriptor_GetStreamIdentifier(stream->descriptor, &stream_id);
         sd = stream_descriptor_from_id(descriptor, stream_id, &selected);
@@ -879,7 +879,7 @@ static HRESULT media_stream_create(IMFMediaSource *source, DWORD id,
     object->media_source = source;
     object->stream_id = id;
 
-    object->active = FALSE;
+    object->active = TRUE;
     object->eos = FALSE;
     object->wg_stream = wg_parser_get_stream(wg_parser, id);
 
@@ -1240,7 +1240,6 @@ static ULONG WINAPI media_source_Release(IMFMediaSource *iface)
     if (!ref)
     {
         IMFMediaSource_Shutdown(iface);
-        IMFPresentationDescriptor_Release(source->pres_desc);
         IMFMediaEventQueue_Release(source->event_queue);
         IMFByteStream_Release(source->byte_stream);
         wg_parser_destroy(source->wg_parser);
@@ -1312,6 +1311,7 @@ static HRESULT WINAPI media_source_CreatePresentationDescriptor(IMFMediaSource *
 {
     struct media_source *source = impl_from_IMFMediaSource(iface);
     HRESULT hr;
+    UINT i;
 
     TRACE("%p, %p.\n", iface, descriptor);
 
@@ -1319,8 +1319,19 @@ static HRESULT WINAPI media_source_CreatePresentationDescriptor(IMFMediaSource *
 
     if (source->state == SOURCE_SHUTDOWN)
         hr = MF_E_SHUTDOWN;
-    else
-        hr = IMFPresentationDescriptor_Clone(source->pres_desc, descriptor);
+    else if (SUCCEEDED(hr = MFCreatePresentationDescriptor(source->stream_count, source->descriptors, descriptor)))
+    {
+        if (FAILED(hr = IMFPresentationDescriptor_SetUINT64(*descriptor, &MF_PD_DURATION, source->duration)))
+            WARN("Failed to set presentation descriptor MF_PD_DURATION, hr %#lx\n", hr);
+
+        for (i = 0; i < source->stream_count; ++i)
+        {
+            if (FAILED(hr = IMFPresentationDescriptor_SelectStream(*descriptor, i)))
+                WARN("Failed to select stream %u, hr %#lx\n", i, hr);
+        }
+
+        hr = S_OK;
+    }
 
     LeaveCriticalSection(&source->cs);
 
@@ -1469,7 +1480,6 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
 {
     unsigned int stream_count = UINT_MAX;
     struct media_source *object;
-    UINT64 total_pres_time = 0;
     struct wg_parser *parser;
     DWORD bytestream_caps;
     uint64_t file_size;
@@ -1557,6 +1567,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
             goto fail;
         }
 
+        object->duration = max(object->duration, wg_parser_stream_get_duration(stream->wg_stream));
         IMFStreamDescriptor_AddRef(stream->descriptor);
         object->descriptors[i] = stream->descriptor;
         object->streams[i] = stream;
@@ -1598,19 +1609,6 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
             free(str);
         }
     }
-
-    if (FAILED(hr = MFCreatePresentationDescriptor(object->stream_count, object->descriptors, &object->pres_desc)))
-        goto fail;
-
-    for (i = 0; i < object->stream_count; i++)
-        IMFPresentationDescriptor_SelectStream(object->pres_desc, i);
-
-    for (i = 0; i < object->stream_count; i++)
-        total_pres_time = max(total_pres_time,
-                wg_parser_stream_get_duration(object->streams[i]->wg_stream));
-
-    if (object->stream_count)
-        IMFPresentationDescriptor_SetUINT64(object->pres_desc, &MF_PD_DURATION, total_pres_time);
 
     object->state = SOURCE_STOPPED;
 
