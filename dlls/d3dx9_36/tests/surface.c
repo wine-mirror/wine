@@ -847,6 +847,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     static const DWORD pixdata_g16r16[] = { 0x07d23fbe, 0xdc7f44a4, 0xe4d8976b, 0x9a84fe89 };
     static const DWORD pixdata_a8b8g8r8[] = { 0xc3394cf0, 0x235ae892, 0x09b197fd, 0x8dc32bf6 };
     static const DWORD pixdata_a2r10g10b10[] = { 0x57395aff, 0x5b7668fd, 0xb0d856b5, 0xff2c61d6 };
+    BYTE buffer[4 * 8 * 4];
 
     hr = create_file("testdummy.bmp", noimage, sizeof(noimage));  /* invalid image */
     testdummy_ok = SUCCEEDED(hr);
@@ -1460,6 +1461,29 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
             hr = D3DXLoadSurfaceFromMemory(newsurf, NULL, &rect, &dds_dxt5[128],
                     D3DFMT_DXT5, 16, NULL, &rect, D3DX_FILTER_NONE, 0);
             ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+            check_release((IUnknown *)newsurf, 1);
+            check_release((IUnknown *)tex, 0);
+
+            /* Test updating subarea of compressed texture. */
+            hr = IDirect3DDevice9_CreateTexture(device, 32, 16, 1, 0, D3DFMT_DXT5, D3DPOOL_SYSTEMMEM, &tex, NULL);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+            hr = IDirect3DTexture9_GetSurfaceLevel(tex, 0, &newsurf);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+            SetRect(&destrect, 0, 0, 4, 8);
+            SetRect(&rect, 0, 0, 4, 8);
+            memset(buffer, 0x40, sizeof(buffer));
+            hr = D3DXLoadSurfaceFromMemory(newsurf, NULL, &destrect, buffer,
+                    D3DFMT_A8B8G8R8, 4 * 4, NULL, &rect, D3DX_FILTER_NONE, 0);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+            hr = IDirect3DSurface9_LockRect(newsurf, &lockrect, &destrect, D3DLOCK_READONLY);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+            /* 2 identical 16 bytes DXT5 blocks. The exact values in blocks may differ from Windows due to
+             * different compression algorithms. */
+            ok(!memcmp(lockrect.pBits, (char *)lockrect.pBits + lockrect.Pitch, 16), "data mismatch.\n");
+            hr = IDirect3DSurface9_UnlockRect(newsurf);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
             check_release((IUnknown *)newsurf, 1);
             check_release((IUnknown *)tex, 0);
 

@@ -2148,7 +2148,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
             }
             tx_compress_dxtn(4, dst_size_aligned.width, dst_size_aligned.height,
                     dst_uncompressed, gl_format, lockrect.pBits,
-                    lockrect.Pitch * destformatdesc->block_width / destformatdesc->block_byte_count);
+                    lockrect.Pitch);
             heap_free(dst_uncompressed);
         }
     }
