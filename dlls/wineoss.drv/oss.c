@@ -1360,6 +1360,16 @@ static NTSTATUS oss_set_volumes(void *args)
 {
     struct set_volumes_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
+    UINT16 i;
+
+    if (params->master_volume) {
+        for (i = 0; i < stream->fmt->nChannels; ++i) {
+            if (params->master_volume * params->volumes[i] * params->session_volumes[i] != 1.0f) {
+                FIXME("Volume control is not implemented\n");
+                break;
+            }
+        }
+    }
 
     oss_lock(stream);
     stream->mute = !params->master_volume;
