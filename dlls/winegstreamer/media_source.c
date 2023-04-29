@@ -362,12 +362,18 @@ static HRESULT media_stream_start(struct media_stream *stream, BOOL active, BOOL
             &GUID_NULL, S_OK, position);
 }
 
-static void start_pipeline(struct media_source *source, struct source_async_command *command)
+static HRESULT media_source_start(struct media_source *source, IMFPresentationDescriptor *descriptor,
+        GUID *format, PROPVARIANT *position)
 {
-    PROPVARIANT *position = &command->u.start.position;
     BOOL seek_message = source->state != SOURCE_STOPPED && position->vt != VT_EMPTY;
     unsigned int i;
     HRESULT hr;
+
+    TRACE("source %p, descriptor %p, format %s, position %s\n", source, descriptor,
+            debugstr_guid(format), wine_dbgstr_variant((VARIANT *)position));
+
+    if (source->state == SOURCE_SHUTDOWN)
+        return MF_E_SHUTDOWN;
 
     /* seek to beginning on stop->play */
     if (source->state == SOURCE_STOPPED && position->vt == VT_EMPTY)
@@ -387,7 +393,7 @@ static void start_pipeline(struct media_source *source, struct source_async_comm
         was_active = stream->active;
 
         IMFStreamDescriptor_GetStreamIdentifier(stream->descriptor, &stream_id);
-        sd = stream_descriptor_from_id(command->u.start.descriptor, stream_id, &selected);
+        sd = stream_descriptor_from_id(descriptor, stream_id, &selected);
         IMFStreamDescriptor_Release(sd);
 
         if (position->vt != VT_EMPTY)
@@ -399,10 +405,6 @@ static void start_pipeline(struct media_source *source, struct source_async_comm
             WARN("Failed to start media stream, hr %#lx\n", hr);
     }
 
-    IMFMediaEventQueue_QueueEventParamVar(source->event_queue,
-        seek_message ? MESourceSeeked : MESourceStarted,
-        &GUID_NULL, S_OK, position);
-
     source->state = SOURCE_RUNNING;
 
     if (position->vt == VT_I8)
@@ -411,12 +413,20 @@ static void start_pipeline(struct media_source *source, struct source_async_comm
 
     for (i = 0; i < source->stream_count; i++)
         flush_token_queue(source->streams[i], position->vt == VT_EMPTY);
+
+    return IMFMediaEventQueue_QueueEventParamVar(source->event_queue,
+            seek_message ? MESourceSeeked : MESourceStarted, &GUID_NULL, S_OK, position);
 }
 
-static void pause_pipeline(struct media_source *source)
+static HRESULT media_source_pause(struct media_source *source)
 {
     unsigned int i;
     HRESULT hr;
+
+    TRACE("source %p\n", source);
+
+    if (source->state == SOURCE_SHUTDOWN)
+        return MF_E_SHUTDOWN;
 
     for (i = 0; i < source->stream_count; i++)
     {
@@ -426,15 +436,19 @@ static void pause_pipeline(struct media_source *source)
             WARN("Failed to queue MEStreamPaused event, hr %#lx\n", hr);
     }
 
-    IMFMediaEventQueue_QueueEventParamVar(source->event_queue, MESourcePaused, &GUID_NULL, S_OK, NULL);
-
     source->state = SOURCE_PAUSED;
+    return IMFMediaEventQueue_QueueEventParamVar(source->event_queue, MESourcePaused, &GUID_NULL, S_OK, NULL);
 }
 
-static void stop_pipeline(struct media_source *source)
+static HRESULT media_source_stop(struct media_source *source)
 {
     unsigned int i;
     HRESULT hr;
+
+    TRACE("source %p\n", source);
+
+    if (source->state == SOURCE_SHUTDOWN)
+        return MF_E_SHUTDOWN;
 
     for (i = 0; i < source->stream_count; i++)
     {
@@ -444,12 +458,12 @@ static void stop_pipeline(struct media_source *source)
             WARN("Failed to queue MEStreamStopped event, hr %#lx\n", hr);
     }
 
-    IMFMediaEventQueue_QueueEventParamVar(source->event_queue, MESourceStopped, &GUID_NULL, S_OK, NULL);
-
     source->state = SOURCE_STOPPED;
 
     for (i = 0; i < source->stream_count; i++)
         flush_token_queue(source->streams[i], FALSE);
+
+    return IMFMediaEventQueue_QueueEventParamVar(source->event_queue, MESourceStopped, &GUID_NULL, S_OK, NULL);
 }
 
 static HRESULT media_stream_send_sample(struct media_stream *stream, const struct wg_parser_buffer *wg_buffer, IUnknown *token)
@@ -504,6 +518,8 @@ static HRESULT media_stream_send_eos(struct media_source *source, struct media_s
     HRESULT hr;
     UINT i;
 
+    TRACE("source %p, stream %p\n", source, stream);
+
     stream->eos = TRUE;
     if (FAILED(hr = IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEEndOfStream, &GUID_NULL, S_OK, &empty)))
         WARN("Failed to queue MEEndOfStream event, hr %#lx\n", hr);
@@ -549,16 +565,22 @@ static HRESULT WINAPI source_async_commands_Invoke(IMFAsyncCallback *iface, IMFA
     switch (command->op)
     {
         case SOURCE_ASYNC_START:
-            if (source->state != SOURCE_SHUTDOWN)
-                start_pipeline(source, command);
+        {
+            IMFPresentationDescriptor *descriptor = command->u.start.descriptor;
+            GUID format = command->u.start.format;
+            PROPVARIANT position = command->u.start.position;
+
+            if (FAILED(hr = media_source_start(source, descriptor, &format, &position)))
+                WARN("Failed to start source %p, hr %#lx\n", source, hr);
             break;
+        }
         case SOURCE_ASYNC_PAUSE:
-            if (source->state != SOURCE_SHUTDOWN)
-                pause_pipeline(source);
+            if (FAILED(hr = media_source_pause(source)))
+                WARN("Failed to pause source %p, hr %#lx\n", source, hr);
             break;
         case SOURCE_ASYNC_STOP:
-            if (source->state != SOURCE_SHUTDOWN)
-                stop_pipeline(source);
+            if (FAILED(hr = media_source_stop(source)))
+                WARN("Failed to stop source %p, hr %#lx\n", source, hr);
             break;
         case SOURCE_ASYNC_REQUEST_SAMPLE:
             if (source->state == SOURCE_PAUSED)
