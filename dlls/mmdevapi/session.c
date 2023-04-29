@@ -39,6 +39,24 @@ static inline struct audio_session_wrapper *impl_from_IAudioSessionControl2(IAud
     return CONTAINING_RECORD(iface, struct audio_session_wrapper, IAudioSessionControl2_iface);
 }
 
+static inline struct audio_session_wrapper *impl_from_ISimpleAudioVolume(ISimpleAudioVolume *iface)
+{
+    return CONTAINING_RECORD(iface, struct audio_session_wrapper, ISimpleAudioVolume_iface);
+}
+
+static void set_stream_volumes(struct audio_client *This)
+{
+    struct set_volumes_params params;
+
+    params.stream          = This->stream;
+    params.master_volume   = (This->session->mute ? 0.0f : This->session->master_vol);
+    params.volumes         = This->vols;
+    params.session_volumes = This->session->channel_vols;
+    params.channel         = 0;
+
+    WINE_UNIX_CALL(set_volumes, &params);
+}
+
 static HRESULT WINAPI control_QueryInterface(IAudioSessionControl2 *iface, REFIID riid, void **ppv)
 {
     TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
@@ -246,4 +264,129 @@ const IAudioSessionControl2Vtbl AudioSessionControl2_Vtbl =
     control_GetProcessId,
     control_IsSystemSoundsSession,
     control_SetDuckingPreference
+};
+
+static HRESULT WINAPI simplevolume_QueryInterface(ISimpleAudioVolume *iface, REFIID riid,
+                                                  void **ppv)
+{
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_ISimpleAudioVolume))
+        *ppv = iface;
+    else {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*ppv);
+
+    return S_OK;
+}
+
+static ULONG WINAPI simplevolume_AddRef(ISimpleAudioVolume *iface)
+{
+    struct audio_session_wrapper *This = impl_from_ISimpleAudioVolume(iface);
+    return IAudioSessionControl2_AddRef(&This->IAudioSessionControl2_iface);
+}
+
+static ULONG WINAPI simplevolume_Release(ISimpleAudioVolume *iface)
+{
+    struct audio_session_wrapper *This = impl_from_ISimpleAudioVolume(iface);
+    return IAudioSessionControl2_Release(&This->IAudioSessionControl2_iface);
+}
+
+static HRESULT WINAPI simplevolume_SetMasterVolume(ISimpleAudioVolume *iface, float level,
+                                                  const GUID *context)
+{
+    struct audio_session_wrapper *This = impl_from_ISimpleAudioVolume(iface);
+    struct audio_session *session = This->session;
+    struct audio_client *client;
+
+    TRACE("(%p)->(%f, %s)\n", session, level, wine_dbgstr_guid(context));
+
+    if (level < 0.f || level > 1.f)
+        return E_INVALIDARG;
+
+    if (context)
+        FIXME("Notifications not supported yet\n");
+
+    sessions_lock();
+
+    session->master_vol = level;
+
+    LIST_FOR_EACH_ENTRY(client, &session->clients, struct audio_client, entry)
+        set_stream_volumes(client);
+
+    sessions_unlock();
+
+    return S_OK;
+}
+
+static HRESULT WINAPI simplevolume_GetMasterVolume(ISimpleAudioVolume *iface, float *level)
+{
+    struct audio_session_wrapper *This = impl_from_ISimpleAudioVolume(iface);
+    struct audio_session *session = This->session;
+
+    TRACE("(%p)->(%p)\n", session, level);
+
+    if (!level)
+        return NULL_PTR_ERR;
+
+    *level = session->master_vol;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI simplevolume_SetMute(ISimpleAudioVolume *iface, BOOL mute,
+                                           const GUID *context)
+{
+    struct audio_session_wrapper *This = impl_from_ISimpleAudioVolume(iface);
+    struct audio_session *session = This->session;
+    struct audio_client *client;
+
+    TRACE("(%p)->(%u, %s)\n", session, mute, debugstr_guid(context));
+
+    if (context)
+        FIXME("Notifications not supported yet\n");
+
+    sessions_lock();
+
+    session->mute = mute;
+
+    LIST_FOR_EACH_ENTRY(client, &session->clients, struct audio_client, entry)
+        set_stream_volumes(client);
+
+    sessions_unlock();
+
+    return S_OK;
+}
+
+static HRESULT WINAPI simplevolume_GetMute(ISimpleAudioVolume *iface, BOOL *mute)
+{
+    struct audio_session_wrapper *This = impl_from_ISimpleAudioVolume(iface);
+    struct audio_session *session = This->session;
+
+    TRACE("(%p)->(%p)\n", session, mute);
+
+    if (!mute)
+        return NULL_PTR_ERR;
+
+    *mute = session->mute;
+
+    return S_OK;
+}
+
+const ISimpleAudioVolumeVtbl SimpleAudioVolume_Vtbl =
+{
+    simplevolume_QueryInterface,
+    simplevolume_AddRef,
+    simplevolume_Release,
+    simplevolume_SetMasterVolume,
+    simplevolume_GetMasterVolume,
+    simplevolume_SetMute,
+    simplevolume_GetMute
 };
