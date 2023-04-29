@@ -294,19 +294,8 @@ DWORD WINAPI RtlLengthSid(PSID pSid)
 
 /**************************************************************************
  *                 RtlInitializeSid			[NTDLL.@]
- *
- * Initialise a SID.
- *
- * PARAMS
- *  pSid                 [I] SID to initialise
- *  pIdentifierAuthority [I] Identifier Authority
- *  nSubAuthorityCount   [I] Number of Sub Authorities
- *
- * RETURNS
- *  Success: TRUE. pSid is initialised with the details given.
- *  Failure: FALSE, if nSubAuthorityCount is >= SID_MAX_SUB_AUTHORITIES.
  */
-BOOL WINAPI RtlInitializeSid(
+NTSTATUS WINAPI RtlInitializeSid(
 	PSID pSid,
 	PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
 	BYTE nSubAuthorityCount)
@@ -315,7 +304,7 @@ BOOL WINAPI RtlInitializeSid(
 	SID* pisid=pSid;
 
 	if (nSubAuthorityCount >= SID_MAX_SUB_AUTHORITIES)
-	  return FALSE;
+	  return STATUS_INVALID_PARAMETER;
 
 	pisid->Revision = SID_REVISION;
 	pisid->SubAuthorityCount = nSubAuthorityCount;
@@ -325,7 +314,7 @@ BOOL WINAPI RtlInitializeSid(
 	for (i = 0; i < nSubAuthorityCount; i++)
 	  *RtlSubAuthoritySid(pSid, i) = 0;
 
-	return TRUE;
+	return STATUS_SUCCESS;
 }
 
 /**************************************************************************

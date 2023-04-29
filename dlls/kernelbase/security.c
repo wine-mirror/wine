@@ -411,7 +411,7 @@ BOOL WINAPI GetWindowsAccountDomainSid( PSID sid, PSID domain_sid, DWORD *size )
  */
 BOOL WINAPI InitializeSid ( PSID sid, PSID_IDENTIFIER_AUTHORITY auth, BYTE count )
 {
-    return RtlInitializeSid( sid, auth, count );
+    return set_ntstatus(RtlInitializeSid( sid, auth, count ));
 }
 
 /******************************************************************************
