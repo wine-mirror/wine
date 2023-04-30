@@ -346,6 +346,9 @@ struct ime_call
     HIMC himc;
     enum ime_function func;
 
+    WCHAR comp[16];
+    WCHAR result[16];
+
     union
     {
         int select;
@@ -425,6 +428,8 @@ static int ok_call_( const char *file, int line, const struct ime_call *expected
         if ((ret = expected->message.msg - received->message.msg)) goto done;
         if ((ret = (expected->message.wparam - received->message.wparam))) goto done;
         if ((ret = (expected->message.lparam - received->message.lparam))) goto done;
+        if ((ret = wcscmp( expected->comp, received->comp ))) goto done;
+        if ((ret = wcscmp( expected->result, received->result ))) goto done;
         break;
     }
 
@@ -466,8 +471,9 @@ done:
         return ret;
     case MSG_TEST_WIN:
         todo_wine_if( expected->todo || expected->todo_value )
-        ok_(file, line)( !ret, "got hkl %p, himc %p, MSG_TEST_WIN msg %s, wparam %#Ix, lparam %#Ix\n", received->hkl,
-                         received->himc, debugstr_wm_ime(received->message.msg), received->message.wparam, received->message.lparam );
+        ok_(file, line)( !ret, "got hkl %p, himc %p, MSG_TEST_WIN msg %s, wparam %#Ix, lparam %#Ix, comp %s, result %s\n", received->hkl,
+                         received->himc, debugstr_wm_ime(received->message.msg), received->message.wparam, received->message.lparam,
+                         debugstr_w(received->comp), debugstr_w(received->result) );
         return ret;
     }
 
@@ -506,8 +512,9 @@ done:
         break;
     case MSG_TEST_WIN:
         todo_wine_if( expected->todo || expected->todo_value )
-        ok_(file, line)( !ret, "hkl %p, himc %p, MSG_TEST_WIN msg %s, wparam %#Ix, lparam %#Ix\n", expected->hkl,
-                         expected->himc, debugstr_wm_ime(expected->message.msg), expected->message.wparam, expected->message.lparam );
+        ok_(file, line)( !ret, "hkl %p, himc %p, MSG_TEST_WIN msg %s, wparam %#Ix, lparam %#Ix, comp %s, result %s\n", expected->hkl,
+                         expected->himc, debugstr_wm_ime(expected->message.msg), expected->message.wparam, expected->message.lparam,
+                         debugstr_w(expected->comp), debugstr_w(expected->result) );
         break;
     }
 
@@ -601,6 +608,12 @@ static LRESULT CALLBACK test_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
     ime_trace( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
 
     if (ignore_message( msg, wparam )) return DefWindowProcW( hwnd, msg, wparam, lparam );
+
+    if (msg == WM_IME_COMPOSITION)
+    {
+        ImmGetCompositionStringW( call.himc, GCS_COMPSTR, call.comp, sizeof(call.comp) );
+        ImmGetCompositionStringW( call.himc, GCS_RESULTSTR, call.result, sizeof(call.result) );
+    }
 
     ime_calls[ime_call_count++] = call;
     return DefWindowProcW( hwnd, msg, wparam, lparam );
@@ -7190,6 +7203,262 @@ cleanup:
     winetest_pop_context();
 }
 
+static void test_ga_na_da(void)
+{
+    /* These sequences have some additional WM_IME_NOTIFY messages with unknown wparam > IMN_PRIVATE */
+    struct ime_call complete_seq[] =
+    {
+        /* G */
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_STARTCOMPOSITION, .wparam = 0, .lparam = 0}},
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\u3131", .result = L"",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0x3131, .lparam = GCS_COMPSTR|GCS_COMPATTR|CS_INSERTCHAR|CS_NOMOVECARET},
+        },
+        /* A */
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\uac00", .result = L"",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0xac00, .lparam = GCS_COMPSTR|GCS_COMPATTR|CS_INSERTCHAR|CS_NOMOVECARET},
+        },
+        /* N */
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\uac04", .result = L"",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0xac04, .lparam = GCS_COMPSTR|GCS_COMPATTR|CS_INSERTCHAR|CS_NOMOVECARET},
+        },
+        /* A */
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\ub098", .result = L"\uac00",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0xac00, .lparam = GCS_RESULTSTR},
+        },
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_CHAR, .wparam = 0xac00, .lparam = 0x1}},
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\ub098", .result = L"\uac00",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0xb098, .lparam = GCS_COMPSTR|GCS_COMPATTR|CS_INSERTCHAR|CS_NOMOVECARET},
+        },
+        /* D */
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\ub09f", .result = L"",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0xb09f, .lparam = GCS_COMPSTR|GCS_COMPATTR|CS_INSERTCHAR|CS_NOMOVECARET},
+        },
+        /* A */
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\ub2e4", .result = L"\ub098",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0xb098, .lparam = GCS_RESULTSTR},
+        },
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_CHAR, .wparam = 0xb098, .lparam = 0x1}},
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\ub2e4", .result = L"\ub098",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0xb2e4, .lparam = GCS_COMPSTR|GCS_COMPATTR|CS_INSERTCHAR|CS_NOMOVECARET},
+        },
+        /* RETURN */
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_ENDCOMPOSITION, .wparam = 0, .lparam = 0}},
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"", .result = L"\ub2e4",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0xb2e4, .lparam = GCS_RESULTSTR},
+        },
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_CHAR, .wparam = 0xb2e4, .lparam = 0x1}},
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_KEYDOWN, .wparam = 0xd, .lparam = 0x1c0001}},
+        {0},
+    };
+    struct ime_call partial_g_seq[] =
+    {
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_STARTCOMPOSITION, .wparam = 0, .lparam = 0}},
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\u3131", .result = L"",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0x3131, .lparam = GCS_COMPSTR|GCS_COMPATTR|CS_INSERTCHAR|CS_NOMOVECARET},
+        },
+        {0},
+    };
+    struct ime_call partial_ga_seq[] =
+    {
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\uac00", .result = L"",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0xac00, .lparam = GCS_COMPSTR|GCS_COMPATTR|CS_INSERTCHAR|CS_NOMOVECARET},
+        },
+        {0},
+    };
+    struct ime_call partial_n_seq[] =
+    {
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\uac04", .result = L"",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0xac04, .lparam = GCS_COMPSTR|GCS_COMPATTR|CS_INSERTCHAR|CS_NOMOVECARET},
+        },
+        {0},
+    };
+    struct ime_call partial_na_seq[] =
+    {
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\ub098", .result = L"\uac00",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0xac00, .lparam = GCS_RESULTSTR},
+        },
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_CHAR, .wparam = 0xac00, .lparam = 0x1}},
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\ub098", .result = L"\uac00",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0xb098, .lparam = GCS_COMPSTR|GCS_COMPATTR|CS_INSERTCHAR|CS_NOMOVECARET},
+        },
+        {0},
+    };
+    struct ime_call partial_d_seq[] =
+    {
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\ub09f", .result = L"",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0xb09f, .lparam = GCS_COMPSTR|GCS_COMPATTR|CS_INSERTCHAR|CS_NOMOVECARET},
+        },
+        {0},
+    };
+    struct ime_call partial_da_seq[] =
+    {
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\ub2e4", .result = L"\ub098",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0xb098, .lparam = GCS_RESULTSTR},
+        },
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_CHAR, .wparam = 0xb098, .lparam = 0x1}},
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\ub2e4", .result = L"\ub098",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0xb2e4, .lparam = GCS_COMPSTR|GCS_COMPATTR|CS_INSERTCHAR|CS_NOMOVECARET},
+        },
+        {0},
+    };
+    struct ime_call partial_return_seq[] =
+    {
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_ENDCOMPOSITION, .wparam = 0, .lparam = 0}},
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"", .result = L"\ub2e4",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0xb2e4, .lparam = GCS_RESULTSTR},
+        },
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_CHAR, .wparam = 0xb2e4, .lparam = 0x1}},
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_KEYDOWN, .wparam = 0xd, .lparam = 0x1c0001}},
+        {0},
+    };
+
+    INPUTCONTEXT *ctx;
+    HWND hwnd;
+    HIMC himc;
+    UINT i;
+
+    /* this test doesn't work on Win32 / WoW64 */
+    if (sizeof(void *) == 4 || default_hkl != (HKL)0x04120412 /* MS Korean IME */)
+    {
+        skip( "Got hkl %p, skipping Korean IME-specific test\n", default_hkl );
+        process_messages();
+        return;
+    }
+
+    hwnd = CreateWindowW( test_class.lpszClassName, NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    flush_events();
+
+    himc = ImmCreateContext();
+    ok_ne( NULL, himc, HIMC, "%p" );
+    ctx = ImmLockIMC( himc );
+    ok_ne( NULL, ctx, INPUTCONTEXT *, "%p" );
+    ok_eq( default_himc, ImmAssociateContext( hwnd, himc ), HIMC, "%p" );
+    ok_ret( 1, ImmSetOpenStatus( himc, TRUE ) );
+    ok_ret( 1, ImmSetConversionStatus( himc, IME_CMODE_FULLSHAPE | IME_CMODE_NATIVE, IME_SMODE_PHRASEPREDICT ) );
+    flush_events();
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+    for (i = 0; i < ARRAY_SIZE(complete_seq); i++) complete_seq[i].himc = himc;
+    for (i = 0; i < ARRAY_SIZE(partial_g_seq); i++) partial_g_seq[i].himc = himc;
+    for (i = 0; i < ARRAY_SIZE(partial_ga_seq); i++) partial_ga_seq[i].himc = himc;
+    for (i = 0; i < ARRAY_SIZE(partial_n_seq); i++) partial_n_seq[i].himc = himc;
+    for (i = 0; i < ARRAY_SIZE(partial_na_seq); i++) partial_na_seq[i].himc = himc;
+    for (i = 0; i < ARRAY_SIZE(partial_d_seq); i++) partial_d_seq[i].himc = himc;
+    for (i = 0; i < ARRAY_SIZE(partial_da_seq); i++) partial_da_seq[i].himc = himc;
+    for (i = 0; i < ARRAY_SIZE(partial_return_seq); i++) partial_return_seq[i].himc = himc;
+
+    keybd_event( 'R', 0x13, 0, 0 );
+    flush_events();
+    keybd_event( 'R', 0x13, KEYEVENTF_KEYUP, 0 );
+
+    keybd_event( 'K', 0x25, 0, 0 );
+    flush_events();
+    keybd_event( 'K', 0x25, KEYEVENTF_KEYUP, 0 );
+
+    keybd_event( 'S', 0x1f, 0, 0 );
+    flush_events();
+    keybd_event( 'S', 0x1f, KEYEVENTF_KEYUP, 0 );
+
+    keybd_event( 'K', 0x25, 0, 0 );
+    flush_events();
+    keybd_event( 'K', 0x25, KEYEVENTF_KEYUP, 0 );
+
+    keybd_event( 'E', 0x12, 0, 0 );
+    flush_events();
+    keybd_event( 'E', 0x12, KEYEVENTF_KEYUP, 0 );
+
+    keybd_event( 'K', 0x25, 0, 0 );
+    flush_events();
+    keybd_event( 'K', 0x25, KEYEVENTF_KEYUP, 0 );
+
+    keybd_event( VK_RETURN, 0x1c, 0, 0 );
+    flush_events();
+    keybd_event( VK_RETURN, 0x1c, KEYEVENTF_KEYUP, 0 );
+
+    flush_events();
+    todo_wine ok_seq( complete_seq );
+
+
+    /* Korean IME uses ImeProcessKey and posts messages */
+
+    todo_wine ok_ret( 2, ImmProcessKey( hwnd, default_hkl, 'R', MAKELONG(1, 0x13), 0 ) );
+    ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYDOWN, 'R', MAKELONG(1, 0x13) ) );
+    ok_seq( empty_sequence );
+    process_messages();
+    todo_wine ok_seq( partial_g_seq );
+
+    /* Korean IME doesn't eat WM_KEYUP */
+
+    ok_ret( 0, ImmProcessKey( hwnd, default_hkl, 'R', MAKELONG(1, 0xc013), 0 ) );
+    ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYUP, 'R', MAKELONG(1, 0xc013) ) );
+    process_messages();
+    ok_seq( empty_sequence );
+
+    todo_wine ok_ret( 2, ImmProcessKey( hwnd, default_hkl, 'K', MAKELONG(1, 0x25), 0 ) );
+    ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYDOWN, 'K', MAKELONG(1, 0x25) ) );
+    process_messages();
+    todo_wine ok_seq( partial_ga_seq );
+
+    todo_wine ok_ret( 2, ImmProcessKey( hwnd, default_hkl, 'S', MAKELONG(1, 0x1f), 0 ) );
+    ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYDOWN, 'S', MAKELONG(1, 0x1f) ) );
+    process_messages();
+    todo_wine ok_seq( partial_n_seq );
+
+    todo_wine ok_ret( 2, ImmProcessKey( hwnd, default_hkl, 'K', MAKELONG(1, 0x25), 0 ) );
+    ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYDOWN, 'K', MAKELONG(1, 0x25) ) );
+    process_messages();
+    todo_wine ok_seq( partial_na_seq );
+
+    todo_wine ok_ret( 2, ImmProcessKey( hwnd, default_hkl, 'E', MAKELONG(1, 0x12), 0 ) );
+    ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYDOWN, 'E', MAKELONG(1, 0x12) ) );
+    process_messages();
+    todo_wine ok_seq( partial_d_seq );
+
+    todo_wine ok_ret( 2, ImmProcessKey( hwnd, default_hkl, 'K', MAKELONG(1, 0x25), 0 ) );
+    ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYDOWN, 'K', MAKELONG(1, 0x25) ) );
+    process_messages();
+    todo_wine ok_seq( partial_da_seq );
+
+    todo_wine ok_ret( 2, ImmProcessKey( hwnd, default_hkl, VK_RETURN, MAKELONG(1, 0x1c), 0 ) );
+    ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYDOWN, VK_RETURN, MAKELONG(1, 0x1c) ) );
+    process_messages();
+    todo_wine ok_seq( partial_return_seq );
+
+
+    ok_ret( 1, ImmSetConversionStatus( himc, 0, IME_SMODE_PHRASEPREDICT ) );
+    ok_ret( 1, ImmSetOpenStatus( himc, FALSE ) );
+
+    ok_ret( 1, ImmUnlockIMC( himc ) );
+    ok_ret( 1, ImmDestroyContext( himc ) );
+
+    ok_ret( 1, DestroyWindow( hwnd ) );
+    process_messages();
+
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+}
+
 START_TEST(imm32)
 {
     default_hkl = GetKeyboardLayout( 0 );
@@ -7257,6 +7526,8 @@ START_TEST(imm32)
     test_ImmTranslateMessage( TRUE );
 
     if (wineime_hkl) ime_cleanup( wineime_hkl, TRUE );
+
+    test_ga_na_da();
 
     if (init())
     {
