@@ -550,13 +550,19 @@ static void ok_seq_( const char *file, int line, const struct ime_call *expected
 }
 
 static BOOL check_WM_SHOWWINDOW;
+static BOOL ignore_WM_IME_NOTIFY;
+static BOOL ignore_WM_IME_REQUEST;
 
 static BOOL ignore_message( UINT msg, WPARAM wparam )
 {
     switch (msg)
     {
     case WM_IME_NOTIFY:
+        if (ignore_WM_IME_NOTIFY) return TRUE;
         return wparam > IMN_PRIVATE;
+    case WM_IME_REQUEST:
+        if (ignore_WM_IME_REQUEST) return TRUE;
+        return FALSE;
     case WM_IME_STARTCOMPOSITION:
     case WM_IME_ENDCOMPOSITION:
     case WM_IME_COMPOSITION:
@@ -566,7 +572,6 @@ static BOOL ignore_message( UINT msg, WPARAM wparam )
     case WM_IME_SELECT:
     case WM_IME_CHAR:
     case 0x287:
-    case WM_IME_REQUEST:
     case WM_IME_KEYDOWN:
     case WM_IME_KEYUP:
         return FALSE;
@@ -7459,6 +7464,178 @@ static void test_ga_na_da(void)
     ime_call_count = 0;
 }
 
+static void test_nihongo_no(void)
+{
+    /* These sequences have some additional WM_IME_NOTIFY messages with wparam > IMN_PRIVATE */
+    /* Some out-of-order WM_IME_REQUEST and WM_IME_NOTIFY messages are also ignored */
+    struct ime_call complete_seq[] =
+    {
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_STARTCOMPOSITION, .wparam = 0, .lparam = 0}},
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\uff4e", .result = L"",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0xff4e, .lparam = GCS_COMPSTR|GCS_COMPCLAUSE|GCS_COMPATTR|GCS_COMPREADSTR|GCS_DELTASTART|GCS_CURSORPOS},
+        },
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\u306b", .result = L"",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0x306b, .lparam = GCS_COMPSTR|GCS_COMPCLAUSE|GCS_COMPATTR|GCS_COMPREADSTR|GCS_DELTASTART|GCS_CURSORPOS},
+        },
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\u306b\uff48", .result = L"",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0x306b, .lparam = GCS_COMPSTR|GCS_COMPCLAUSE|GCS_COMPATTR|GCS_COMPREADSTR|GCS_DELTASTART|GCS_CURSORPOS},
+        },
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\u306b\u307b", .result = L"",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0x306b, .lparam = GCS_COMPSTR|GCS_COMPCLAUSE|GCS_COMPATTR|GCS_COMPREADSTR|GCS_DELTASTART|GCS_CURSORPOS},
+        },
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\u306b\u307b\uff4e", .result = L"",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0x306b, .lparam = GCS_COMPSTR|GCS_COMPCLAUSE|GCS_COMPATTR|GCS_COMPREADSTR|GCS_DELTASTART|GCS_CURSORPOS},
+        },
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\u306b\u307b\u3093\uff47", .result = L"",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0x306b, .lparam = GCS_COMPSTR|GCS_COMPCLAUSE|GCS_COMPATTR|GCS_COMPREADSTR|GCS_DELTASTART|GCS_CURSORPOS},
+        },
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\u306b\u307b\u3093\u3054", .result = L"",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0x306b, .lparam = GCS_COMPSTR|GCS_COMPCLAUSE|GCS_COMPATTR|GCS_COMPREADSTR|GCS_DELTASTART|GCS_CURSORPOS},
+        },
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\u65e5\u672c\u8a9e", .result = L"",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0x65e5, .lparam = GCS_COMPSTR|GCS_COMPCLAUSE|GCS_COMPATTR|GCS_COMPREADSTR|GCS_DELTASTART|GCS_CURSORPOS},
+        },
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"", .result = L"\u65e5\u672c\u8a9e",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0x65e5, .lparam = GCS_RESULTSTR|GCS_RESULTCLAUSE|GCS_RESULTREADSTR|GCS_RESULTREADCLAUSE},
+        },
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_CHAR, .wparam = 0x65e5, .lparam = 0x1}},
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_CHAR, .wparam = 0x672c, .lparam = 0x1}},
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_CHAR, .wparam = 0x8a9e, .lparam = 0x1}},
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_ENDCOMPOSITION, .wparam = 0, .lparam = 0}},
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_STARTCOMPOSITION, .wparam = 0, .lparam = 0}},
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\uff4e", .result = L"",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0xff4e, .lparam = GCS_COMPSTR|GCS_COMPCLAUSE|GCS_COMPATTR|GCS_COMPREADSTR|GCS_DELTASTART|GCS_CURSORPOS},
+        },
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\u306e", .result = L"",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0x306e, .lparam = GCS_COMPSTR|GCS_COMPCLAUSE|GCS_COMPATTR|GCS_COMPREADSTR|GCS_DELTASTART|GCS_CURSORPOS},
+        },
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"", .result = L"\u306e",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0x306e, .lparam = GCS_RESULTSTR|GCS_RESULTCLAUSE|GCS_RESULTREADSTR|GCS_RESULTREADCLAUSE},
+        },
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_CHAR, .wparam = 0x306e, .lparam = 0x1}},
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_ENDCOMPOSITION, .wparam = 0, .lparam = 0}},
+        {0},
+    };
+
+    INPUTCONTEXT *ctx;
+    HWND hwnd;
+    HIMC himc;
+    UINT i;
+
+    /* this test doesn't work on Win32 / WoW64 */
+    if (sizeof(void *) == 4 || default_hkl != (HKL)0x04110411 /* MS Japanese IME */)
+    {
+        skip( "Got hkl %p, skipping Japanese IME-specific test\n", default_hkl );
+        return;
+    }
+
+    hwnd = CreateWindowW( test_class.lpszClassName, NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    flush_events();
+
+    himc = ImmCreateContext();
+    ok_ne( NULL, himc, HIMC, "%p" );
+    ctx = ImmLockIMC( himc );
+    ok_ne( NULL, ctx, INPUTCONTEXT *, "%p" );
+    ok_eq( default_himc, ImmAssociateContext( hwnd, himc ), HIMC, "%p" );
+    ok_ret( 1, ImmSetOpenStatus( himc, TRUE ) );
+    ok_ret( 1, ImmSetConversionStatus( himc, IME_CMODE_FULLSHAPE | IME_CMODE_NATIVE, IME_SMODE_PHRASEPREDICT ) );
+    flush_events();
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+    for (i = 0; i < ARRAY_SIZE(complete_seq); i++) complete_seq[i].himc = himc;
+    ignore_WM_IME_REQUEST = TRUE;
+    ignore_WM_IME_NOTIFY = TRUE;
+
+
+    keybd_event( 'N', 0x31, 0, 0 );
+    flush_events();
+    keybd_event( 'N', 0x31, KEYEVENTF_KEYUP, 0 );
+
+    keybd_event( 'I', 0x17, 0, 0 );
+    flush_events();
+    keybd_event( 'I', 0x17, KEYEVENTF_KEYUP, 0 );
+
+    keybd_event( 'H', 0x23, 0, 0 );
+    flush_events();
+    keybd_event( 'H', 0x23, KEYEVENTF_KEYUP, 0 );
+
+    keybd_event( 'O', 0x18, 0, 0 );
+    flush_events();
+    keybd_event( 'O', 0x18, KEYEVENTF_KEYUP, 0 );
+
+    keybd_event( 'N', 0x31, 0, 0 );
+    flush_events();
+    keybd_event( 'N', 0x31, KEYEVENTF_KEYUP, 0 );
+
+    keybd_event( 'G', 0x22, 0, 0 );
+    flush_events();
+    keybd_event( 'G', 0x22, KEYEVENTF_KEYUP, 0 );
+
+    keybd_event( 'O', 0x18, 0, 0 );
+    flush_events();
+    keybd_event( 'O', 0x18, KEYEVENTF_KEYUP, 0 );
+
+    keybd_event( VK_SPACE, 0x39, 0, 0 );
+    flush_events();
+    keybd_event( VK_SPACE, 0x39, KEYEVENTF_KEYUP, 0 );
+
+    keybd_event( 'N', 0x31, 0, 0 );
+    flush_events();
+    keybd_event( 'N', 0x31, KEYEVENTF_KEYUP, 0 );
+
+    keybd_event( 'O', 0x18, 0, 0 );
+    flush_events();
+    keybd_event( 'O', 0x18, KEYEVENTF_KEYUP, 0 );
+
+    keybd_event( VK_RETURN, 0x1c, 0, 0 );
+    flush_events();
+    keybd_event( VK_RETURN, 0x1c, KEYEVENTF_KEYUP, 0 );
+
+    flush_events();
+    todo_wine ok_seq( complete_seq );
+
+    ignore_WM_IME_REQUEST = FALSE;
+    ignore_WM_IME_NOTIFY = FALSE;
+
+    /* Japanese IME doesn't take input from ImmProcessKey */
+
+    ok_ret( 0, ImmProcessKey( hwnd, default_hkl, 'N', MAKELONG(1, 0x31), 0 ) );
+    ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYDOWN, 'N', MAKELONG(1, 0x31) ) );
+    flush_events();
+    ok_ret( 0, ImmProcessKey( hwnd, default_hkl, 'N', MAKELONG(1, 0xc031), 0 ) );
+    ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYUP, 'N', MAKELONG(1, 0xc031) ) );
+    flush_events();
+    ok_seq( empty_sequence );
+
+
+    ok_ret( 1, ImmSetConversionStatus( himc, 0, IME_SMODE_PHRASEPREDICT ) );
+    ok_ret( 1, ImmSetOpenStatus( himc, FALSE ) );
+
+    ok_ret( 1, ImmUnlockIMC( himc ) );
+    ok_ret( 1, ImmDestroyContext( himc ) );
+
+    ok_ret( 1, DestroyWindow( hwnd ) );
+    process_messages();
+
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+}
+
 START_TEST(imm32)
 {
     default_hkl = GetKeyboardLayout( 0 );
@@ -7528,6 +7705,7 @@ START_TEST(imm32)
     if (wineime_hkl) ime_cleanup( wineime_hkl, TRUE );
 
     test_ga_na_da();
+    test_nihongo_no();
 
     if (init())
     {
