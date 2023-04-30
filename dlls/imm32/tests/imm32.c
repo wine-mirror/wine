@@ -7082,12 +7082,12 @@ static void test_ImmTranslateMessage( BOOL kbd_char_first )
     ok_ret( 2, ImmProcessKey( hwnd, expect_ime, 'Q', MAKELONG(2, 0xc010), 0 ) );
 
     ok_ret( 0, ImmTranslateMessage( hwnd, 0, 0, 0 ) );
-    todo_wine ok_ret( 'Q', ImmGetVirtualKey( hwnd ) );
+    ok_ret( 'Q', ImmGetVirtualKey( hwnd ) );
     ok_seq( process_key_seq );
 
     ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYDOWN, 'Q', MAKELONG(2, 0x10) ) );
     ok_ret( VK_PROCESSKEY, ImmGetVirtualKey( hwnd ) );
-    todo_wine ok_seq( to_ascii_ex_0 );
+    ok_seq( to_ascii_ex_0 );
 
     ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYUP, 'Q', MAKELONG(2, 0xc010) ) );
     ok_seq( empty_sequence );

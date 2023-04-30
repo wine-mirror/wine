@@ -3124,6 +3124,7 @@ BOOL WINAPI ImmTranslateMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 
     TRACE( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
 
+    if (msg < WM_KEYDOWN || msg > WM_KEYUP) return FALSE;
     if (!(data = get_imc_data( ImmGetContext( hwnd ) ))) return FALSE;
     if (!(ime = imc_select_ime( data ))) return FALSE;
     if (data->lastVK == VK_PROCESSKEY) return FALSE;
