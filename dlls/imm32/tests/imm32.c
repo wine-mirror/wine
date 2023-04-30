@@ -252,14 +252,34 @@ static void check_logfont_a_( int line, LOGFONTA *font, const LOGFONTA *expect )
 DEFINE_EXPECT(WM_IME_SETCONTEXT_DEACTIVATE);
 DEFINE_EXPECT(WM_IME_SETCONTEXT_ACTIVATE);
 
-static void process_messages(void)
+#define process_messages() process_messages_(0)
+static void process_messages_(HWND hwnd)
 {
     MSG msg;
 
-    while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE ))
+    while (PeekMessageA( &msg, hwnd, 0, 0, PM_REMOVE ))
     {
         TranslateMessage( &msg );
         DispatchMessageA( &msg );
+    }
+}
+
+/* try to make sure pending X events have been processed before continuing */
+#define flush_events() flush_events_( 100, 200 )
+static void flush_events_( int min_timeout, int max_timeout )
+{
+    DWORD time = GetTickCount() + max_timeout;
+    MSG msg;
+
+    while (max_timeout > 0)
+    {
+        if (MsgWaitForMultipleObjects( 0, NULL, FALSE, min_timeout, QS_ALLINPUT ) == WAIT_TIMEOUT) break;
+        while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE ))
+        {
+            TranslateMessage( &msg );
+            DispatchMessageA( &msg );
+        }
+        max_timeout = time - GetTickCount();
     }
 }
 
@@ -294,6 +314,7 @@ enum ime_function
     IME_SELECT = 1,
     IME_NOTIFY,
     IME_PROCESS_KEY,
+    IME_TO_ASCII_EX,
     IME_SET_ACTIVE_CONTEXT,
     MSG_IME_UI,
     MSG_TEST_WIN,
@@ -321,6 +342,12 @@ struct ime_call
         } process_key;
         struct
         {
+            UINT vkey;
+            UINT vsc;
+            UINT flags;
+        } to_ascii_ex;
+        struct
+        {
             int flag;
         } set_active_context;
         struct
@@ -334,6 +361,7 @@ struct ime_call
     BOOL todo;
     BOOL broken;
     BOOL flaky_himc;
+    BOOL todo_value;
 };
 
 struct ime_call empty_sequence[] = {{0}};
@@ -364,6 +392,11 @@ static int ok_call_( const char *file, int line, const struct ime_call *expected
         if ((ret = expected->process_key.vkey - received->process_key.vkey)) goto done;
         if ((ret = expected->process_key.lparam - received->process_key.lparam)) goto done;
         break;
+    case IME_TO_ASCII_EX:
+        if ((ret = expected->to_ascii_ex.vkey - received->to_ascii_ex.vkey)) goto done;
+        if ((ret = expected->to_ascii_ex.vsc - received->to_ascii_ex.vsc)) goto done;
+        if ((ret = expected->to_ascii_ex.flags - received->to_ascii_ex.flags)) goto done;
+        break;
     case IME_SET_ACTIVE_CONTEXT:
         if ((ret = expected->set_active_context.flag - received->set_active_context.flag)) goto done;
         break;
@@ -381,32 +414,38 @@ done:
     switch (received->func)
     {
     case IME_SELECT:
-        todo_wine_if( expected->todo )
+        todo_wine_if( expected->todo || expected->todo_value )
         ok_(file, line)( !ret, "got hkl %p, himc %p, IME_SELECT select %u\n", received->hkl, received->himc, received->select );
         return ret;
     case IME_NOTIFY:
-        todo_wine_if( expected->todo )
+        todo_wine_if( expected->todo || expected->todo_value )
         ok_(file, line)( !ret, "got hkl %p, himc %p, IME_NOTIFY action %#x, index %#x, value %#x\n",
                          received->hkl, received->himc, received->notify.action, received->notify.index,
                          received->notify.value );
         return ret;
     case IME_PROCESS_KEY:
-        todo_wine_if( expected->todo )
+        todo_wine_if( expected->todo || expected->todo_value )
         ok_(file, line)( !ret, "got hkl %p, himc %p, IME_PROCESS_KEY vkey %#x, lparam %#Ix\n",
                          received->hkl, received->himc, received->process_key.vkey, received->process_key.lparam );
         return ret;
+    case IME_TO_ASCII_EX:
+        todo_wine_if( expected->todo || expected->todo_value )
+        ok_(file, line)( !ret, "got hkl %p, himc %p, IME_TO_ASCII_EX vkey %#x, vsc %#x, flags %#x\n",
+                         received->hkl, received->himc, received->to_ascii_ex.vkey, received->to_ascii_ex.vsc,
+                         received->to_ascii_ex.flags );
+        return ret;
     case IME_SET_ACTIVE_CONTEXT:
-        todo_wine_if( expected->todo )
+        todo_wine_if( expected->todo || expected->todo_value )
         ok_(file, line)( !ret, "got hkl %p, himc %p, IME_SET_ACTIVE_CONTEXT flag %u\n", received->hkl, received->himc,
                          received->set_active_context.flag );
         return ret;
     case MSG_IME_UI:
-        todo_wine_if( expected->todo )
+        todo_wine_if( expected->todo || expected->todo_value )
         ok_(file, line)( !ret, "got hkl %p, himc %p, MSG_IME_UI msg %#x, wparam %#Ix, lparam %#Ix\n", received->hkl,
                          received->himc, received->message.msg, received->message.wparam, received->message.lparam );
         return ret;
     case MSG_TEST_WIN:
-        todo_wine_if( expected->todo )
+        todo_wine_if( expected->todo || expected->todo_value )
         ok_(file, line)( !ret, "got hkl %p, himc %p, MSG_TEST_WIN msg %#x, wparam %#Ix, lparam %#Ix\n", received->hkl,
                          received->himc, received->message.msg, received->message.wparam, received->message.lparam );
         return ret;
@@ -415,32 +454,38 @@ done:
     switch (expected->func)
     {
     case IME_SELECT:
-        todo_wine_if( expected->todo )
+        todo_wine_if( expected->todo || expected->todo_value )
         ok_(file, line)( !ret, "hkl %p, himc %p, IME_SELECT select %u\n", expected->hkl, expected->himc, expected->select );
         break;
     case IME_NOTIFY:
-        todo_wine_if( expected->todo )
+        todo_wine_if( expected->todo || expected->todo_value )
         ok_(file, line)( !ret, "hkl %p, himc %p, IME_NOTIFY action %#x, index %#x, value %#x\n",
                          expected->hkl, expected->himc, expected->notify.action, expected->notify.index,
                          expected->notify.value );
         break;
     case IME_PROCESS_KEY:
-        todo_wine_if( expected->todo )
+        todo_wine_if( expected->todo || expected->todo_value )
         ok_(file, line)( !ret, "hkl %p, himc %p, IME_PROCESS_KEY vkey %#x, lparam %#Ix\n",
                          expected->hkl, expected->himc, expected->process_key.vkey, expected->process_key.lparam );
         break;
+    case IME_TO_ASCII_EX:
+        todo_wine_if( expected->todo || expected->todo_value )
+        ok_(file, line)( !ret, "hkl %p, himc %p, IME_TO_ASCII_EX vkey %#x, vsc %#x, flags %#x\n",
+                         expected->hkl, expected->himc, expected->to_ascii_ex.vkey, expected->to_ascii_ex.vsc,
+                         expected->to_ascii_ex.flags );
+        break;
     case IME_SET_ACTIVE_CONTEXT:
-        todo_wine_if( expected->todo )
+        todo_wine_if( expected->todo || expected->todo_value )
         ok_(file, line)( !ret, "hkl %p, himc %p, IME_SET_ACTIVE_CONTEXT flag %u\n", expected->hkl, expected->himc,
                          expected->set_active_context.flag );
         break;
     case MSG_IME_UI:
-        todo_wine_if( expected->todo )
+        todo_wine_if( expected->todo || expected->todo_value )
         ok_(file, line)( !ret, "hkl %p, himc %p, MSG_IME_UI msg %#x, wparam %#Ix, lparam %#Ix\n", expected->hkl,
                          expected->himc, expected->message.msg, expected->message.wparam, expected->message.lparam );
         break;
     case MSG_TEST_WIN:
-        todo_wine_if( expected->todo )
+        todo_wine_if( expected->todo || expected->todo_value )
         ok_(file, line)( !ret, "hkl %p, himc %p, MSG_TEST_WIN msg %#x, wparam %#Ix, lparam %#Ix\n", expected->hkl,
                          expected->himc, expected->message.msg, expected->message.wparam, expected->message.lparam );
         break;
@@ -3394,11 +3439,70 @@ static BOOL WINAPI ime_ImeSetCompositionString( HIMC himc, DWORD index, const vo
     return TRUE;
 }
 
-static UINT WINAPI ime_ImeToAsciiEx( UINT vkey, UINT scan_code, BYTE *key_state, TRANSMSGLIST *msgs, UINT state, HIMC himc )
+static UINT WINAPI ime_ImeToAsciiEx( UINT vkey, UINT vsc, BYTE *state, TRANSMSGLIST *msgs, UINT flags, HIMC himc )
 {
-    ime_trace( "vkey %u, scan_code %u, key_state %p, msgs %p, state %u, himc %p\n",
-           vkey, scan_code, key_state, msgs, state, himc );
-    return 0;
+    struct ime_call call =
+    {
+        .hkl = GetKeyboardLayout( 0 ), .himc = himc,
+        .func = IME_TO_ASCII_EX, .to_ascii_ex = {.vkey = vkey, .vsc = vsc, .flags = flags}
+    };
+    INPUTCONTEXT *ctx;
+    UINT count = 0;
+
+    ime_trace( "vkey %#x, vsc %#x, state %p, msgs %p, flags %#x, himc %p\n",
+           vkey, vsc, state, msgs, flags, himc );
+    ime_calls[ime_call_count++] = call;
+
+    ok_ne( NULL, msgs, TRANSMSGLIST *, "%p" );
+    todo_wine ok_eq( 256, msgs->uMsgCount, UINT, "%u" );
+
+    ctx = ImmLockIMC( himc );
+    todo_wine ok_ret( VK_PROCESSKEY, ImmGetVirtualKey( ctx->hWnd ) );
+
+    if (vsc & 0x200)
+    {
+        msgs->TransMsg[0].message = WM_IME_STARTCOMPOSITION;
+        msgs->TransMsg[0].wParam = 1;
+        msgs->TransMsg[0].lParam = 0;
+        count++;
+        msgs->TransMsg[1].message = WM_IME_ENDCOMPOSITION;
+        msgs->TransMsg[1].wParam = 1;
+        msgs->TransMsg[1].lParam = 0;
+        count++;
+    }
+
+    if (vsc & 0x400)
+    {
+        TRANSMSG *msgs;
+
+        ctx = ImmLockIMC( himc );
+        ok_ne( NULL, ctx, INPUTCONTEXT *, "%p" );
+
+        ok_ne( NULL, ctx->hMsgBuf, HIMCC, "%p" );
+        ok_eq( 0, ctx->dwNumMsgBuf, UINT, "%u" );
+
+        ctx->hMsgBuf = ImmReSizeIMCC( ctx->hMsgBuf, 64 * sizeof(*msgs) );
+        ok_ne( NULL, ctx->hMsgBuf, HIMCC, "%p" );
+
+        msgs = ImmLockIMCC( ctx->hMsgBuf );
+        ok_ne( NULL, msgs, TRANSMSG *, "%p" );
+
+        msgs[ctx->dwNumMsgBuf].message = WM_IME_STARTCOMPOSITION;
+        msgs[ctx->dwNumMsgBuf].wParam = 2;
+        msgs[ctx->dwNumMsgBuf].lParam = 0;
+        ctx->dwNumMsgBuf++;
+        msgs[ctx->dwNumMsgBuf].message = WM_IME_ENDCOMPOSITION;
+        msgs[ctx->dwNumMsgBuf].wParam = 2;
+        msgs[ctx->dwNumMsgBuf].lParam = 0;
+        ctx->dwNumMsgBuf++;
+
+        ok_ret( 0, ImmUnlockIMCC( ctx->hMsgBuf ) );
+    }
+
+    ok_ret( 1, ImmUnlockIMC( himc ) );
+
+    if (vsc & 0x800) count = ~0;
+    return count;
 }
 
 static BOOL WINAPI ime_ImeUnregisterWord( const WCHAR *reading, DWORD style, const WCHAR *string )
@@ -6845,6 +6949,218 @@ static void test_ImmGenerateMessage(void)
     ime_call_count = 0;
 }
 
+static void test_ImmTranslateMessage( BOOL kbd_char_first )
+{
+    const struct ime_call process_key_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = default_himc, .func = IME_PROCESS_KEY,
+            .process_key = {.vkey = 'Q', .lparam = MAKELONG(2, 0x10)},
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc, .func = IME_PROCESS_KEY,
+            .process_key = {.vkey = 'Q', .lparam = MAKELONG(2, 0xc010)},
+        },
+        {.todo = TRUE},
+    };
+    const struct ime_call to_ascii_ex_0[] =
+    {
+        {
+            .hkl = expect_ime, .himc = default_himc, .func = IME_TO_ASCII_EX,
+            .to_ascii_ex = {.vkey = kbd_char_first ? MAKELONG('Q', 'q') : 'Q', .vsc = 0x10},
+        },
+        {0},
+    };
+    const struct ime_call to_ascii_ex_1[] =
+    {
+        {
+            .hkl = expect_ime, .himc = default_himc, .func = IME_PROCESS_KEY,
+            .process_key = {.vkey = 'Q', .lparam = MAKELONG(2, 0xc010)},
+        },
+        {
+            .hkl = expect_ime, .himc = default_himc, .func = IME_TO_ASCII_EX,
+            /* FIXME what happened to kbd_char_first here!? */
+            .to_ascii_ex = {.vkey = 'Q', .vsc = 0xc010},
+            .todo_value = TRUE,
+        },
+        {0},
+    };
+    struct ime_call to_ascii_ex_2[] =
+    {
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/, .func = IME_PROCESS_KEY,
+            .process_key = {.vkey = 'Q', .lparam = MAKELONG(2, 0x210)},
+        },
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/, .func = IME_TO_ASCII_EX,
+            .to_ascii_ex = {.vkey = kbd_char_first ? MAKELONG('Q', 'q') : 'Q', .vsc = 0x210},
+            .todo_value = TRUE,
+        },
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/, .func = IME_PROCESS_KEY,
+            .process_key = {.vkey = 'Q', .lparam = MAKELONG(2, 0x410)},
+        },
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/, .func = IME_TO_ASCII_EX,
+            .to_ascii_ex = {.vkey = kbd_char_first ? MAKELONG('Q', 'q') : 'Q', .vsc = 0x410},
+            .todo_value = TRUE,
+        },
+        {0},
+    };
+    struct ime_call to_ascii_ex_3[] =
+    {
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/, .func = IME_PROCESS_KEY,
+            .process_key = {.vkey = 'Q', .lparam = MAKELONG(2, 0xa10)},
+        },
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/, .func = IME_TO_ASCII_EX,
+            .to_ascii_ex = {.vkey = kbd_char_first ? MAKELONG('Q', 'q') : 'Q', .vsc = 0xa10},
+            .todo_value = TRUE,
+        },
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/, .func = IME_PROCESS_KEY,
+            .process_key = {.vkey = 'Q', .lparam = MAKELONG(2, 0xc10)},
+        },
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/, .func = IME_TO_ASCII_EX,
+            .to_ascii_ex = {.vkey = kbd_char_first ? MAKELONG('Q', 'q') : 'Q', .vsc = 0xc10},
+            .todo_value = TRUE,
+        },
+        {0},
+    };
+    struct ime_call post_messages[] =
+    {
+        {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_STARTCOMPOSITION, .wparam = 1}},
+        {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_IME_UI, .message = {.msg = WM_IME_STARTCOMPOSITION, .wparam = 1}},
+        {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_ENDCOMPOSITION, .wparam = 1}},
+        {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_IME_UI, .message = {.msg = WM_IME_ENDCOMPOSITION, .wparam = 1}},
+        {0},
+    };
+    struct ime_call sent_messages[] =
+    {
+        {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_STARTCOMPOSITION, .wparam = 2}},
+        {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_IME_UI, .message = {.msg = WM_IME_STARTCOMPOSITION, .wparam = 2}},
+        {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_ENDCOMPOSITION, .wparam = 2}},
+        {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_IME_UI, .message = {.msg = WM_IME_ENDCOMPOSITION, .wparam = 2}},
+        {0},
+    };
+    HWND hwnd, other_hwnd;
+    INPUTCONTEXT *ctx;
+    HIMC himc;
+    HKL hkl;
+    UINT i, ret;
+
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
+    if (kbd_char_first) ime_info.fdwProperty |= IME_PROP_KBD_CHAR_FIRST;
+
+    winetest_push_context( kbd_char_first ? "kbd_char_first" : "default" );
+
+    if (!(hkl = wineime_hkl)) goto cleanup;
+
+    other_hwnd = CreateWindowW( test_class.lpszClassName, NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                                100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( !!other_hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    flush_events();
+
+    hwnd = CreateWindowW( test_class.lpszClassName, NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          100, 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    flush_events();
+
+    ok_ret( 1, ImmActivateLayout( hkl ) );
+    ok_ret( 1, ImmLoadIME( hkl ) );
+    himc = ImmCreateContext();
+    ok_ne( NULL, himc, HIMC, "%p" );
+    ctx = ImmLockIMC( himc );
+    ok_ne( NULL, ctx, INPUTCONTEXT *, "%p" );
+    process_messages();
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+    ok_ret( 2, ImmProcessKey( hwnd, expect_ime, 'Q', MAKELONG(2, 0x10), 0 ) );
+    ok_ret( 2, ImmProcessKey( hwnd, expect_ime, 'Q', MAKELONG(2, 0xc010), 0 ) );
+
+    ok_ret( 0, ImmTranslateMessage( hwnd, 0, 0, 0 ) );
+    todo_wine ok_ret( 'Q', ImmGetVirtualKey( hwnd ) );
+    ok_seq( process_key_seq );
+
+    ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYDOWN, 'Q', MAKELONG(2, 0x10) ) );
+    ok_ret( VK_PROCESSKEY, ImmGetVirtualKey( hwnd ) );
+    todo_wine ok_seq( to_ascii_ex_0 );
+
+    ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYUP, 'Q', MAKELONG(2, 0xc010) ) );
+    ok_seq( empty_sequence );
+
+    ok_ret( 2, ImmProcessKey( hwnd, expect_ime, 'Q', MAKELONG(2, 0xc010), 0 ) );
+    ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYUP, 'Q', MAKELONG(2, 0xc010) ) );
+    ok_ret( VK_PROCESSKEY, ImmGetVirtualKey( hwnd ) );
+    ok_seq( to_ascii_ex_1 );
+
+    ok_eq( default_himc, ImmAssociateContext( hwnd, himc ), HIMC, "%p" );
+    ok_eq( default_himc, ImmAssociateContext( other_hwnd, himc ), HIMC, "%p" );
+    for (i = 0; i < ARRAY_SIZE(to_ascii_ex_2); i++) to_ascii_ex_2[i].himc = himc;
+    for (i = 0; i < ARRAY_SIZE(to_ascii_ex_3); i++) to_ascii_ex_3[i].himc = himc;
+    for (i = 0; i < ARRAY_SIZE(post_messages); i++) post_messages[i].himc = himc;
+    for (i = 0; i < ARRAY_SIZE(sent_messages); i++) sent_messages[i].himc = himc;
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+    ctx->hWnd = hwnd;
+    ok_ret( 2, ImmProcessKey( hwnd, expect_ime, 'Q', MAKELONG(2, 0x210), 0 ) );
+    ret = ImmTranslateMessage( hwnd, WM_KEYUP, 'Q', MAKELONG(2, 0x210) );
+    todo_wine ok_eq( 1, ret, UINT, "%u" );
+    ok_ret( 2, ImmProcessKey( hwnd, expect_ime, 'Q', MAKELONG(2, 0x410), 0 ) );
+    ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYUP, 'Q', MAKELONG(2, 0x410) ) );
+    ok_ret( VK_PROCESSKEY, ImmGetVirtualKey( hwnd ) );
+    ok_seq( to_ascii_ex_2 );
+    process_messages();
+    todo_wine ok_seq( post_messages );
+    ok_ret( 1, ImmGenerateMessage( himc ) );
+    todo_wine ok_seq( sent_messages );
+
+    ok_ret( 2, ImmProcessKey( hwnd, expect_ime, 'Q', MAKELONG(2, 0xa10), 0 ) );
+    ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYUP, 'Q', MAKELONG(2, 0xa10) ) );
+    ok_ret( 2, ImmProcessKey( hwnd, expect_ime, 'Q', MAKELONG(2, 0xc10), 0 ) );
+    ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYUP, 'Q', MAKELONG(2, 0xc10) ) );
+    ok_ret( VK_PROCESSKEY, ImmGetVirtualKey( hwnd ) );
+    ok_seq( to_ascii_ex_3 );
+    process_messages();
+    ok_seq( empty_sequence );
+    ok_ret( 1, ImmGenerateMessage( himc ) );
+    todo_wine ok_seq( sent_messages );
+
+    ctx->hWnd = 0;
+    ok_ret( 2, ImmProcessKey( other_hwnd, expect_ime, 'Q', MAKELONG(2, 0x210), 0 ) );
+    ret = ImmTranslateMessage( other_hwnd, WM_KEYUP, 'Q', MAKELONG(2, 0x210) );
+    todo_wine ok_eq( 1, ret, UINT, "%u" );
+    ok_ret( 2, ImmProcessKey( other_hwnd, expect_ime, 'Q', MAKELONG(2, 0x410), 0 ) );
+    ok_ret( 0, ImmTranslateMessage( other_hwnd, WM_KEYUP, 'Q', MAKELONG(2, 0x410) ) );
+    ok_ret( VK_PROCESSKEY, ImmGetVirtualKey( other_hwnd ) );
+    ok_seq( to_ascii_ex_2 );
+    process_messages_( hwnd );
+    ok_seq( empty_sequence );
+    process_messages_( other_hwnd );
+    todo_wine ok_seq( post_messages );
+    ok_ret( 1, ImmGenerateMessage( himc ) );
+    ok_seq( empty_sequence );
+
+    ok_ret( 1, ImmUnlockIMC( himc ) );
+    ok_ret( 1, ImmDestroyContext( himc ) );
+
+    ok_ret( 1, ImmActivateLayout( default_hkl ) );
+    ok_ret( 1, DestroyWindow( other_hwnd ) );
+    ok_ret( 1, DestroyWindow( hwnd ) );
+    process_messages();
+
+    ok_ret( 1, ImmFreeLayout( hkl ) );
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+
+cleanup:
+    winetest_pop_context();
+}
+
 START_TEST(imm32)
 {
     default_hkl = GetKeyboardLayout( 0 );
@@ -6908,6 +7224,8 @@ START_TEST(imm32)
     test_ImmSetCandidateWindow();
 
     test_ImmGenerateMessage();
+    test_ImmTranslateMessage( FALSE );
+    test_ImmTranslateMessage( TRUE );
 
     if (wineime_hkl) ime_cleanup( wineime_hkl, TRUE );
 
