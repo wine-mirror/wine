@@ -2380,31 +2380,67 @@ BOOL WINAPI ImmReleaseContext(HWND hWnd, HIMC hIMC)
 /***********************************************************************
 *              ImmRequestMessageA(IMM32.@)
 */
-LRESULT WINAPI ImmRequestMessageA(HIMC hIMC, WPARAM wParam, LPARAM lParam)
+LRESULT WINAPI ImmRequestMessageA( HIMC himc, WPARAM wparam, LPARAM lparam )
 {
-    struct imc *data = get_imc_data( hIMC );
+    INPUTCONTEXT *ctx;
+    LRESULT res;
 
-    TRACE("%p %Id %Id\n", hIMC, wParam, wParam);
+    TRACE( "himc %p, wparam %#Ix, lparam %#Ix\n", himc, wparam, lparam );
 
-    if (data) return SendMessageA(data->IMC.hWnd, WM_IME_REQUEST, wParam, lParam);
+    if (NtUserQueryInputContext( himc, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
 
-    SetLastError(ERROR_INVALID_HANDLE);
-    return 0;
+    switch (wparam)
+    {
+    case IMR_CANDIDATEWINDOW:
+    case IMR_COMPOSITIONFONT:
+    case IMR_COMPOSITIONWINDOW:
+    case IMR_CONFIRMRECONVERTSTRING:
+    case IMR_DOCUMENTFEED:
+    case IMR_QUERYCHARPOSITION:
+    case IMR_RECONVERTSTRING:
+        break;
+    default:
+        return FALSE;
+    }
+
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
+    res = SendMessageA( ctx->hWnd, WM_IME_REQUEST, wparam, lparam );
+    ImmUnlockIMC( himc );
+
+    return res;
 }
 
 /***********************************************************************
 *              ImmRequestMessageW(IMM32.@)
 */
-LRESULT WINAPI ImmRequestMessageW(HIMC hIMC, WPARAM wParam, LPARAM lParam)
+LRESULT WINAPI ImmRequestMessageW( HIMC himc, WPARAM wparam, LPARAM lparam )
 {
-    struct imc *data = get_imc_data( hIMC );
+    INPUTCONTEXT *ctx;
+    LRESULT res;
 
-    TRACE("%p %Id %Id\n", hIMC, wParam, wParam);
+    TRACE( "himc %p, wparam %#Ix, lparam %#Ix\n", himc, wparam, lparam );
 
-    if (data) return SendMessageW(data->IMC.hWnd, WM_IME_REQUEST, wParam, lParam);
+    if (NtUserQueryInputContext( himc, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
 
-    SetLastError(ERROR_INVALID_HANDLE);
-    return 0;
+    switch (wparam)
+    {
+    case IMR_CANDIDATEWINDOW:
+    case IMR_COMPOSITIONFONT:
+    case IMR_COMPOSITIONWINDOW:
+    case IMR_CONFIRMRECONVERTSTRING:
+    case IMR_DOCUMENTFEED:
+    case IMR_QUERYCHARPOSITION:
+    case IMR_RECONVERTSTRING:
+        break;
+    default:
+        return FALSE;
+    }
+
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
+    res = SendMessageW( ctx->hWnd, WM_IME_REQUEST, wparam, lparam );
+    ImmUnlockIMC( himc );
+
+    return res;
 }
 
 /***********************************************************************

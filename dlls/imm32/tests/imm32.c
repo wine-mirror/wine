@@ -1582,7 +1582,7 @@ static void test_cross_thread_himc(void)
     ok_ret( 0, ImmRequestMessageW( params.himc[1], IMR_COMPOSITIONFONT, (LPARAM)&fontW ) );
     ok_ret( 0, ImmRequestMessageA( params.himc[1], IMR_COMPOSITIONFONT, (LPARAM)&fontA ) );
 
-    todo_wine ok_seq( empty_sequence );
+    ok_seq( empty_sequence );
 
     /* ImmSetCompositionString(W|A) should fail with cross thread HIMC */
 
@@ -1638,7 +1638,7 @@ static void test_cross_thread_himc(void)
     ok_ret( 0, ImmRequestMessageW( params.himc[1], IMR_CONFIRMRECONVERTSTRING, (LPARAM)&reconv ) );
     ok_ret( 0, ImmRequestMessageA( params.himc[1], IMR_CONFIRMRECONVERTSTRING, (LPARAM)&reconv ) );
 
-    todo_wine ok_seq( empty_sequence );
+    ok_seq( empty_sequence );
 
     /* ImmSetCompositionWindow should fail with cross thread HIMC */
 
@@ -1660,7 +1660,7 @@ static void test_cross_thread_himc(void)
     ok_ret( 0, ImmRequestMessageW( params.himc[1], IMR_COMPOSITIONWINDOW, (LPARAM)&composition ) );
     ok_ret( 0, ImmRequestMessageA( params.himc[1], IMR_COMPOSITIONWINDOW, (LPARAM)&composition ) );
 
-    todo_wine ok_seq( empty_sequence );
+    ok_seq( empty_sequence );
 
     /* ImmSetCandidateWindow should fail with cross thread HIMC */
 
@@ -1687,7 +1687,7 @@ static void test_cross_thread_himc(void)
     ok_ret( 0, ImmRequestMessageW( params.himc[1], IMR_CANDIDATEWINDOW, (LPARAM)&candidate ) );
     ok_ret( 0, ImmRequestMessageA( params.himc[1], IMR_CANDIDATEWINDOW, (LPARAM)&candidate ) );
 
-    todo_wine ok_seq( empty_sequence );
+    ok_seq( empty_sequence );
 
     /* ImmSetStatusWindowPos should fail with cross thread HIMC */
 
@@ -1709,7 +1709,7 @@ static void test_cross_thread_himc(void)
     ok_ret( 0, ImmRequestMessageW( params.himc[1], IMR_QUERYCHARPOSITION, (LPARAM)&char_pos ) );
     ok_ret( 0, ImmRequestMessageA( params.himc[1], IMR_QUERYCHARPOSITION, (LPARAM)&char_pos ) );
 
-    todo_wine ok_seq( empty_sequence );
+    ok_seq( empty_sequence );
 
     /* ImmGenerateMessage should fail with cross thread HIMC */
 
