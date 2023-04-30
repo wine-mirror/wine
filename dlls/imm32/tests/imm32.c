@@ -1351,13 +1351,14 @@ static DWORD WINAPI test_cross_thread_himc_thread( void *arg )
     POINT pos = {0};
     MSG msg;
 
-    hwnd = CreateWindowW( L"static", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+    hwnd = CreateWindowW( test_class.lpszClassName, NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                           100, 100, 100, 100, NULL, NULL, NULL, NULL );
     ok_ne( NULL, hwnd, HWND, "%p" );
     himc[0] = ImmGetContext( hwnd );
     ok_ne( NULL, himc[0], HIMC, "%p" );
     contexts[0] = ImmLockIMC( himc[0] );
     ok_ne( NULL, contexts[0], INPUTCONTEXT *, "%p" );
+    contexts[0]->hWnd = hwnd;
 
     tmp_hwnd = CreateWindowW( L"static", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                               100, 100, 100, 100, NULL, NULL, NULL, NULL );
@@ -1370,6 +1371,7 @@ static DWORD WINAPI test_cross_thread_himc_thread( void *arg )
     ok_ne( NULL, himc[1], HIMC, "%p" );
     contexts[1] = ImmLockIMC( himc[1] );
     ok_ne( NULL, contexts[1], INPUTCONTEXT *, "%p" );
+    contexts[1]->hWnd = hwnd;
 
     ok_ret( 1, ImmSetOpenStatus( himc[0], 0xdeadbeef ) );
     ok_ret( 1, ImmSetOpenStatus( himc[1], 0xfeedcafe ) );
@@ -1408,9 +1410,11 @@ static DWORD WINAPI test_cross_thread_himc_thread( void *arg )
 static void test_cross_thread_himc(void)
 {
     static const WCHAR comp_string[] = L"CompString";
+    RECONVERTSTRING reconv = {.dwSize = sizeof(RECONVERTSTRING)};
     struct test_cross_thread_himc_params params;
     COMPOSITIONFORM composition = {0};
     DWORD tid, conversion, sentence;
+    IMECHARPOSITION char_pos = {0};
     CANDIDATEFORM candidate = {0};
     COMPOSITIONSTRING *string;
     HIMC himc[2], tmp_himc;
@@ -1433,6 +1437,9 @@ static void test_cross_thread_himc(void)
     thread = CreateThread( NULL, 0, test_cross_thread_himc_thread, &params, 0, &tid );
     ok_ne( NULL, thread, HANDLE, "%p" );
     WaitForSingleObject( params.event, INFINITE );
+
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
 
     tmp_himc = ImmGetContext( params.hwnd );
     ok_ne( himc[0], tmp_himc, HIMC, "%p" );
@@ -1565,6 +1572,18 @@ static void test_cross_thread_himc(void)
     ok_ret( 1, ImmGetCompositionFontW( params.himc[0], &fontW ) );
     ok_ret( 1, ImmGetCompositionFontW( params.himc[1], &fontW ) );
 
+    /* ImmRequestMessage(W|A) should fail with cross thread HIMC */
+
+    ok_ret( 0, ImmRequestMessageW( himc[1], IMR_COMPOSITIONFONT, (LPARAM)&fontW ) );
+    ok_ret( 0, ImmRequestMessageA( himc[1], IMR_COMPOSITIONFONT, (LPARAM)&fontA ) );
+
+    ok_ret( 0, ImmRequestMessageW( params.himc[0], IMR_COMPOSITIONFONT, (LPARAM)&fontW ) );
+    ok_ret( 0, ImmRequestMessageA( params.himc[0], IMR_COMPOSITIONFONT, (LPARAM)&fontA ) );
+    ok_ret( 0, ImmRequestMessageW( params.himc[1], IMR_COMPOSITIONFONT, (LPARAM)&fontW ) );
+    ok_ret( 0, ImmRequestMessageA( params.himc[1], IMR_COMPOSITIONFONT, (LPARAM)&fontA ) );
+
+    todo_wine ok_seq( empty_sequence );
+
     /* ImmSetCompositionString(W|A) should fail with cross thread HIMC */
 
     ok_ret( 10, ImmGetCompositionStringA( himc[1], GCS_COMPSTR, buffer, sizeof(buffer) ) );
@@ -1581,6 +1600,46 @@ static void test_cross_thread_himc(void)
     ok_ret( 20, ImmGetCompositionStringW( params.himc[0], GCS_COMPSTR, buffer, sizeof(buffer) ) );
     ok_ret( 0, ImmGetCompositionStringW( params.himc[1], GCS_COMPSTR, buffer, sizeof(buffer) ) );
 
+    /* ImmRequestMessage(W|A) should fail with cross thread HIMC */
+
+    ok_ret( 0, ImmRequestMessageW( himc[1], IMR_RECONVERTSTRING, 0 ) );
+    ok_ret( 0, ImmRequestMessageW( himc[1], IMR_RECONVERTSTRING, (LPARAM)&reconv ) );
+    ok_ret( 0, ImmRequestMessageA( himc[1], IMR_RECONVERTSTRING, 0 ) );
+    ok_ret( 0, ImmRequestMessageA( himc[1], IMR_RECONVERTSTRING, (LPARAM)&reconv ) );
+
+    ok_ret( 0, ImmRequestMessageW( params.himc[0], IMR_RECONVERTSTRING, 0 ) );
+    ok_ret( 0, ImmRequestMessageW( params.himc[0], IMR_RECONVERTSTRING, (LPARAM)&reconv ) );
+    ok_ret( 0, ImmRequestMessageA( params.himc[0], IMR_RECONVERTSTRING, 0 ) );
+    ok_ret( 0, ImmRequestMessageA( params.himc[0], IMR_RECONVERTSTRING, (LPARAM)&reconv ) );
+    ok_ret( 0, ImmRequestMessageW( params.himc[1], IMR_RECONVERTSTRING, 0 ) );
+    ok_ret( 0, ImmRequestMessageW( params.himc[1], IMR_RECONVERTSTRING, (LPARAM)&reconv ) );
+    ok_ret( 0, ImmRequestMessageA( params.himc[1], IMR_RECONVERTSTRING, 0 ) );
+    ok_ret( 0, ImmRequestMessageA( params.himc[1], IMR_RECONVERTSTRING, (LPARAM)&reconv ) );
+
+    ok_ret( 0, ImmRequestMessageW( himc[1], IMR_DOCUMENTFEED, 0 ) );
+    ok_ret( 0, ImmRequestMessageW( himc[1], IMR_DOCUMENTFEED, (LPARAM)&reconv ) );
+    ok_ret( 0, ImmRequestMessageA( himc[1], IMR_DOCUMENTFEED, 0 ) );
+    ok_ret( 0, ImmRequestMessageA( himc[1], IMR_DOCUMENTFEED, (LPARAM)&reconv ) );
+
+    ok_ret( 0, ImmRequestMessageW( params.himc[0], IMR_DOCUMENTFEED, 0 ) );
+    ok_ret( 0, ImmRequestMessageW( params.himc[0], IMR_DOCUMENTFEED, (LPARAM)&reconv ) );
+    ok_ret( 0, ImmRequestMessageA( params.himc[0], IMR_DOCUMENTFEED, 0 ) );
+    ok_ret( 0, ImmRequestMessageA( params.himc[0], IMR_DOCUMENTFEED, (LPARAM)&reconv ) );
+    ok_ret( 0, ImmRequestMessageW( params.himc[1], IMR_DOCUMENTFEED, 0 ) );
+    ok_ret( 0, ImmRequestMessageW( params.himc[1], IMR_DOCUMENTFEED, (LPARAM)&reconv ) );
+    ok_ret( 0, ImmRequestMessageA( params.himc[1], IMR_DOCUMENTFEED, 0 ) );
+    ok_ret( 0, ImmRequestMessageA( params.himc[1], IMR_DOCUMENTFEED, (LPARAM)&reconv ) );
+
+    ok_ret( 0, ImmRequestMessageW( himc[1], IMR_CONFIRMRECONVERTSTRING, (LPARAM)&reconv ) );
+    ok_ret( 0, ImmRequestMessageA( himc[1], IMR_CONFIRMRECONVERTSTRING, (LPARAM)&reconv ) );
+
+    ok_ret( 0, ImmRequestMessageW( params.himc[0], IMR_CONFIRMRECONVERTSTRING, (LPARAM)&reconv ) );
+    ok_ret( 0, ImmRequestMessageA( params.himc[0], IMR_CONFIRMRECONVERTSTRING, (LPARAM)&reconv ) );
+    ok_ret( 0, ImmRequestMessageW( params.himc[1], IMR_CONFIRMRECONVERTSTRING, (LPARAM)&reconv ) );
+    ok_ret( 0, ImmRequestMessageA( params.himc[1], IMR_CONFIRMRECONVERTSTRING, (LPARAM)&reconv ) );
+
+    todo_wine ok_seq( empty_sequence );
+
     /* ImmSetCompositionWindow should fail with cross thread HIMC */
 
     ok_ret( 1, ImmSetCompositionWindow( himc[1], &composition ) );
@@ -1590,6 +1649,18 @@ static void test_cross_thread_himc(void)
     ok_ret( 0, ImmSetCompositionWindow( params.himc[1], &composition ) );
     ok_ret( 1, ImmGetCompositionWindow( params.himc[0], &composition ) );
     ok_ret( 1, ImmGetCompositionWindow( params.himc[1], &composition ) );
+
+    /* ImmRequestMessage(W|A) should fail with cross thread HIMC */
+
+    ok_ret( 0, ImmRequestMessageW( himc[1], IMR_COMPOSITIONWINDOW, (LPARAM)&composition ) );
+    ok_ret( 0, ImmRequestMessageA( himc[1], IMR_COMPOSITIONWINDOW, (LPARAM)&composition ) );
+
+    ok_ret( 0, ImmRequestMessageW( params.himc[0], IMR_COMPOSITIONWINDOW, (LPARAM)&composition ) );
+    ok_ret( 0, ImmRequestMessageA( params.himc[0], IMR_COMPOSITIONWINDOW, (LPARAM)&composition ) );
+    ok_ret( 0, ImmRequestMessageW( params.himc[1], IMR_COMPOSITIONWINDOW, (LPARAM)&composition ) );
+    ok_ret( 0, ImmRequestMessageA( params.himc[1], IMR_COMPOSITIONWINDOW, (LPARAM)&composition ) );
+
+    todo_wine ok_seq( empty_sequence );
 
     /* ImmSetCandidateWindow should fail with cross thread HIMC */
 
@@ -1601,6 +1672,23 @@ static void test_cross_thread_himc(void)
     ok_ret( 0, ImmSetCandidateWindow( params.himc[0], &candidate ) );
     ok_ret( 0, ImmSetCandidateWindow( params.himc[1], &candidate ) );
 
+    /* ImmRequestMessage(W|A) should fail with cross thread HIMC */
+
+    candidate.dwIndex = -1;
+    ok_ret( 0, ImmRequestMessageW( himc[1], IMR_CANDIDATEWINDOW, (LPARAM)&candidate ) );
+    ok_ret( 0, ImmRequestMessageA( himc[1], IMR_CANDIDATEWINDOW, (LPARAM)&candidate ) );
+
+    candidate.dwIndex = 0;
+    ok_ret( 0, ImmRequestMessageW( himc[1], IMR_CANDIDATEWINDOW, (LPARAM)&candidate ) );
+    ok_ret( 0, ImmRequestMessageA( himc[1], IMR_CANDIDATEWINDOW, (LPARAM)&candidate ) );
+
+    ok_ret( 0, ImmRequestMessageW( params.himc[0], IMR_CANDIDATEWINDOW, (LPARAM)&candidate ) );
+    ok_ret( 0, ImmRequestMessageA( params.himc[0], IMR_CANDIDATEWINDOW, (LPARAM)&candidate ) );
+    ok_ret( 0, ImmRequestMessageW( params.himc[1], IMR_CANDIDATEWINDOW, (LPARAM)&candidate ) );
+    ok_ret( 0, ImmRequestMessageA( params.himc[1], IMR_CANDIDATEWINDOW, (LPARAM)&candidate ) );
+
+    todo_wine ok_seq( empty_sequence );
+
     /* ImmSetStatusWindowPos should fail with cross thread HIMC */
 
     ok_ret( 1, ImmSetStatusWindowPos( himc[1], &pos ) );
@@ -1610,6 +1698,18 @@ static void test_cross_thread_himc(void)
     ok_ret( 0, ImmSetStatusWindowPos( params.himc[1], &pos ) );
     ok_ret( 1, ImmGetStatusWindowPos( params.himc[0], &pos ) );
     ok_ret( 1, ImmGetStatusWindowPos( params.himc[1], &pos ) );
+
+    /* ImmRequestMessage(W|A) should fail with cross thread HIMC */
+
+    ok_ret( 0, ImmRequestMessageW( himc[1], IMR_QUERYCHARPOSITION, (LPARAM)&char_pos ) );
+    ok_ret( 0, ImmRequestMessageA( himc[1], IMR_QUERYCHARPOSITION, (LPARAM)&char_pos ) );
+
+    ok_ret( 0, ImmRequestMessageW( params.himc[0], IMR_QUERYCHARPOSITION, (LPARAM)&char_pos ) );
+    ok_ret( 0, ImmRequestMessageA( params.himc[0], IMR_QUERYCHARPOSITION, (LPARAM)&char_pos ) );
+    ok_ret( 0, ImmRequestMessageW( params.himc[1], IMR_QUERYCHARPOSITION, (LPARAM)&char_pos ) );
+    ok_ret( 0, ImmRequestMessageA( params.himc[1], IMR_QUERYCHARPOSITION, (LPARAM)&char_pos ) );
+
+    todo_wine ok_seq( empty_sequence );
 
     /* ImmGenerateMessage should fail with cross thread HIMC */
 
