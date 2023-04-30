@@ -35,6 +35,26 @@
 
 #include "ime_test.h"
 
+static const char *debugstr_wm_ime( UINT msg )
+{
+    switch (msg)
+    {
+    case WM_IME_STARTCOMPOSITION: return "WM_IME_STARTCOMPOSITION";
+    case WM_IME_ENDCOMPOSITION: return "WM_IME_ENDCOMPOSITION";
+    case WM_IME_COMPOSITION: return "WM_IME_COMPOSITION";
+    case WM_IME_SETCONTEXT: return "WM_IME_SETCONTEXT";
+    case WM_IME_NOTIFY: return "WM_IME_NOTIFY";
+    case WM_IME_CONTROL: return "WM_IME_CONTROL";
+    case WM_IME_COMPOSITIONFULL: return "WM_IME_COMPOSITIONFULL";
+    case WM_IME_SELECT: return "WM_IME_SELECT";
+    case WM_IME_CHAR: return "WM_IME_CHAR";
+    case WM_IME_REQUEST: return "WM_IME_REQUEST";
+    case WM_IME_KEYDOWN: return "WM_IME_KEYDOWN";
+    case WM_IME_KEYUP: return "WM_IME_KEYUP";
+    default: return wine_dbg_sprintf( "%#x", msg );
+    }
+}
+
 static const char *debugstr_ok( const char *cond )
 {
     int c, n = 0;
@@ -441,13 +461,13 @@ done:
         return ret;
     case MSG_IME_UI:
         todo_wine_if( expected->todo || expected->todo_value )
-        ok_(file, line)( !ret, "got hkl %p, himc %p, MSG_IME_UI msg %#x, wparam %#Ix, lparam %#Ix\n", received->hkl,
-                         received->himc, received->message.msg, received->message.wparam, received->message.lparam );
+        ok_(file, line)( !ret, "got hkl %p, himc %p, MSG_IME_UI msg %s, wparam %#Ix, lparam %#Ix\n", received->hkl,
+                         received->himc, debugstr_wm_ime(received->message.msg), received->message.wparam, received->message.lparam );
         return ret;
     case MSG_TEST_WIN:
         todo_wine_if( expected->todo || expected->todo_value )
-        ok_(file, line)( !ret, "got hkl %p, himc %p, MSG_TEST_WIN msg %#x, wparam %#Ix, lparam %#Ix\n", received->hkl,
-                         received->himc, received->message.msg, received->message.wparam, received->message.lparam );
+        ok_(file, line)( !ret, "got hkl %p, himc %p, MSG_TEST_WIN msg %s, wparam %#Ix, lparam %#Ix\n", received->hkl,
+                         received->himc, debugstr_wm_ime(received->message.msg), received->message.wparam, received->message.lparam );
         return ret;
     }
 
@@ -481,13 +501,13 @@ done:
         break;
     case MSG_IME_UI:
         todo_wine_if( expected->todo || expected->todo_value )
-        ok_(file, line)( !ret, "hkl %p, himc %p, MSG_IME_UI msg %#x, wparam %#Ix, lparam %#Ix\n", expected->hkl,
-                         expected->himc, expected->message.msg, expected->message.wparam, expected->message.lparam );
+        ok_(file, line)( !ret, "hkl %p, himc %p, MSG_IME_UI msg %s, wparam %#Ix, lparam %#Ix\n", expected->hkl,
+                         expected->himc, debugstr_wm_ime(expected->message.msg), expected->message.wparam, expected->message.lparam );
         break;
     case MSG_TEST_WIN:
         todo_wine_if( expected->todo || expected->todo_value )
-        ok_(file, line)( !ret, "hkl %p, himc %p, MSG_TEST_WIN msg %#x, wparam %#Ix, lparam %#Ix\n", expected->hkl,
-                         expected->himc, expected->message.msg, expected->message.wparam, expected->message.lparam );
+        ok_(file, line)( !ret, "hkl %p, himc %p, MSG_TEST_WIN msg %s, wparam %#Ix, lparam %#Ix\n", expected->hkl,
+                         expected->himc, debugstr_wm_ime(expected->message.msg), expected->message.wparam, expected->message.lparam );
         break;
     }
 
