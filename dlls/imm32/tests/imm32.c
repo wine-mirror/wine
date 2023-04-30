@@ -3246,7 +3246,7 @@ static BOOL WINAPI ime_ImeProcessKey( HIMC himc, UINT vkey, LPARAM lparam, BYTE 
     ime_trace( "himc %p, vkey %u, lparam %#Ix, state %p\n",
                himc, vkey, lparam, state );
     ime_calls[ime_call_count++] = call;
-    return TRUE;
+    return LOWORD(lparam);
 }
 
 static BOOL WINAPI ime_ImeRegisterWord( const WCHAR *reading, DWORD style, const WCHAR *string )
@@ -4740,23 +4740,40 @@ cleanup:
 
 static void test_ImmProcessKey(void)
 {
-    const struct ime_call process_key_seq[] =
+    const struct ime_call process_key_0[] =
     {
         {
             .hkl = expect_ime, .himc = default_himc,
-            .func = IME_PROCESS_KEY, .process_key = {.vkey = 'A', .lparam = 0},
+            .func = IME_PROCESS_KEY, .process_key = {.vkey = 'A', .lparam = MAKELONG(0, 0x1e)},
+        },
+        {0},
+    };
+    const struct ime_call process_key_1[] =
+    {
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = IME_PROCESS_KEY, .process_key = {.vkey = 'A', .lparam = MAKELONG(1, 0x1e)},
+        },
+        {0},
+    };
+    const struct ime_call process_key_2[] =
+    {
+        {
+            .hkl = expect_ime, .himc = default_himc,
+            .func = IME_PROCESS_KEY, .process_key = {.vkey = 'A', .lparam = MAKELONG(2, 0x1e)},
         },
         {0},
     };
     HKL hkl;
     UINT_PTR ret;
+    HIMC himc;
 
     hwnd = CreateWindowW( L"static", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                           100, 100, 100, 100, NULL, NULL, NULL, NULL );
     ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
     process_messages();
 
-    ok_ret( 0, ImmProcessKey( hwnd, default_hkl, 'A', 0, 0 ) );
+    ok_ret( 0, ImmProcessKey( hwnd, default_hkl, 'A', MAKELONG(1, 0x1e), 0 ) );
     ok_seq( empty_sequence );
 
     ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
@@ -4769,18 +4786,34 @@ static void test_ImmProcessKey(void)
     memset( ime_calls, 0, sizeof(ime_calls) );
     ime_call_count = 0;
 
-    ok_ret( 0, ImmProcessKey( 0, hkl, 'A', 0, 0 ) );
+    ok_ret( 0, ImmProcessKey( 0, hkl, 'A', MAKELONG(1, 0x1e), 0 ) );
     ok_seq( empty_sequence );
 
-    ret = ImmProcessKey( hwnd, hkl, 'A', 0, 0 );
+    ok_ret( 0, ImmProcessKey( hwnd, hkl, 'A', MAKELONG(0, 0x1e), 0 ) );
+    ok_seq( process_key_0 );
+    ret = ImmProcessKey( hwnd, hkl, 'A', MAKELONG(1, 0x1e), 0 );
     todo_wine
     ok_ret( 2, ret );
-    ok_seq( process_key_seq );
+    ok_seq( process_key_1 );
+    ok_ret( 2, ImmProcessKey( hwnd, hkl, 'A', MAKELONG(2, 0x1e), 0 ) );
+    ok_seq( process_key_2 );
 
     ok_eq( hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
-    ok_ret( 0, ImmProcessKey( hwnd, default_hkl, 'A', 0, 0 ) );
+    ok_ret( 0, ImmProcessKey( hwnd, default_hkl, 'A', MAKELONG(1, 0x1e), 0 ) );
     ok_seq( empty_sequence );
     ok_eq( hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
+
+    himc = ImmCreateContext();
+    ok_ne( NULL, himc, HIMC, "%p" );
+    ok_ret( 'A', ImmGetVirtualKey( hwnd ) );
+    ok_eq( default_himc, ImmAssociateContext( hwnd, himc ), HIMC, "%p" );
+    todo_wine ok_ret( VK_PROCESSKEY, ImmGetVirtualKey( hwnd ) );
+    ok_eq( himc, ImmAssociateContext( hwnd, default_himc ), HIMC, "%p" );
+    ok_ret( 'A', ImmGetVirtualKey( hwnd ) );
+    ImmDestroyContext( himc );
+
+    ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYUP, 'A', 0 ) );
+    ok_ret( VK_PROCESSKEY, ImmGetVirtualKey( hwnd ) );
 
     ok_ret( 1, ImmActivateLayout( default_hkl ) );
 
