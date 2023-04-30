@@ -544,15 +544,16 @@ static void ok_seq_( const char *file, int line, const struct ime_call *expected
 
 static BOOL check_WM_SHOWWINDOW;
 
-static BOOL ignore_message( UINT msg )
+static BOOL ignore_message( UINT msg, WPARAM wparam )
 {
     switch (msg)
     {
+    case WM_IME_NOTIFY:
+        return wparam > IMN_PRIVATE;
     case WM_IME_STARTCOMPOSITION:
     case WM_IME_ENDCOMPOSITION:
     case WM_IME_COMPOSITION:
     case WM_IME_SETCONTEXT:
-    case WM_IME_NOTIFY:
     case WM_IME_CONTROL:
     case WM_IME_COMPOSITIONFULL:
     case WM_IME_SELECT:
@@ -580,7 +581,7 @@ static LRESULT CALLBACK ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, 
 
     ime_trace( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
 
-    if (ignore_message( msg )) return DefWindowProcW( hwnd, msg, wparam, lparam );
+    if (ignore_message( msg, wparam )) return DefWindowProcW( hwnd, msg, wparam, lparam );
 
     ptr = GetWindowLongPtrW( hwnd, IMMGWL_PRIVATE );
     ok( !ptr, "got IMMGWL_PRIVATE %#Ix\n", ptr );
@@ -599,7 +600,7 @@ static LRESULT CALLBACK test_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
 
     ime_trace( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
 
-    if (ignore_message( msg )) return DefWindowProcW( hwnd, msg, wparam, lparam );
+    if (ignore_message( msg, wparam )) return DefWindowProcW( hwnd, msg, wparam, lparam );
 
     ime_calls[ime_call_count++] = call;
     return DefWindowProcW( hwnd, msg, wparam, lparam );
