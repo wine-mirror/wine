@@ -263,6 +263,299 @@ static void process_messages(void)
     }
 }
 
+#define ime_trace( msg, ... ) if (winetest_debug > 1) trace( "%04lx:%s " msg, GetCurrentThreadId(), __func__, ## __VA_ARGS__ )
+
+static BOOL ImeSelect_init_status;
+static BOOL todo_ImeInquire;
+DEFINE_EXPECT( ImeInquire );
+static BOOL todo_ImeDestroy;
+DEFINE_EXPECT( ImeDestroy );
+DEFINE_EXPECT( ImeEscape );
+DEFINE_EXPECT( ImeEnumRegisterWord );
+DEFINE_EXPECT( ImeRegisterWord );
+DEFINE_EXPECT( ImeGetRegisterWordStyle );
+DEFINE_EXPECT( ImeUnregisterWord );
+static BOOL todo_ImeSetCompositionString;
+DEFINE_EXPECT( ImeSetCompositionString );
+static BOOL todo_IME_DLL_PROCESS_ATTACH;
+DEFINE_EXPECT( IME_DLL_PROCESS_ATTACH );
+static BOOL todo_IME_DLL_PROCESS_DETACH;
+DEFINE_EXPECT( IME_DLL_PROCESS_DETACH );
+
+static IMEINFO ime_info;
+static UINT ime_count;
+static WCHAR ime_path[MAX_PATH];
+static HIMC default_himc;
+static HKL default_hkl, wineime_hkl;
+static HKL expect_ime = (HKL)(int)0xe020047f;
+
+enum ime_function
+{
+    IME_SELECT = 1,
+    IME_NOTIFY,
+    IME_PROCESS_KEY,
+    IME_SET_ACTIVE_CONTEXT,
+    MSG_IME_UI,
+    MSG_TEST_WIN,
+};
+
+struct ime_call
+{
+    HKL hkl;
+    HIMC himc;
+    enum ime_function func;
+
+    union
+    {
+        int select;
+        struct
+        {
+            int action;
+            int index;
+            int value;
+        } notify;
+        struct
+        {
+            WORD vkey;
+            LPARAM lparam;
+        } process_key;
+        struct
+        {
+            int flag;
+        } set_active_context;
+        struct
+        {
+            UINT msg;
+            WPARAM wparam;
+            LPARAM lparam;
+        } message;
+    };
+
+    BOOL todo;
+    BOOL broken;
+    BOOL flaky_himc;
+};
+
+struct ime_call empty_sequence[] = {{0}};
+static struct ime_call ime_calls[1024];
+static ULONG ime_call_count;
+
+#define ok_call( a, b ) ok_call_( __FILE__, __LINE__, a, b )
+static int ok_call_( const char *file, int line, const struct ime_call *expected, const struct ime_call *received )
+{
+    int ret;
+
+    if ((ret = expected->func - received->func)) goto done;
+    /* Wine doesn't allocate HIMC in a deterministic order, ignore them when they are enumerated */
+    if (expected->flaky_himc && (ret = !!(UINT_PTR)expected->himc - !!(UINT_PTR)received->himc)) goto done;
+    if (!expected->flaky_himc && (ret = (UINT_PTR)expected->himc - (UINT_PTR)received->himc)) goto done;
+    if ((ret = (UINT)(UINT_PTR)expected->hkl - (UINT)(UINT_PTR)received->hkl)) goto done;
+    switch (expected->func)
+    {
+    case IME_SELECT:
+        if ((ret = expected->select - received->select)) goto done;
+        break;
+    case IME_NOTIFY:
+        if ((ret = expected->notify.action - received->notify.action)) goto done;
+        if ((ret = expected->notify.index - received->notify.index)) goto done;
+        if ((ret = expected->notify.value - received->notify.value)) goto done;
+        break;
+    case IME_PROCESS_KEY:
+        if ((ret = expected->process_key.vkey - received->process_key.vkey)) goto done;
+        if ((ret = expected->process_key.lparam - received->process_key.lparam)) goto done;
+        break;
+    case IME_SET_ACTIVE_CONTEXT:
+        if ((ret = expected->set_active_context.flag - received->set_active_context.flag)) goto done;
+        break;
+    case MSG_IME_UI:
+    case MSG_TEST_WIN:
+        if ((ret = expected->message.msg - received->message.msg)) goto done;
+        if ((ret = (expected->message.wparam - received->message.wparam))) goto done;
+        if ((ret = (expected->message.lparam - received->message.lparam))) goto done;
+        break;
+    }
+
+done:
+    if (ret && broken( expected->broken )) return ret;
+
+    switch (received->func)
+    {
+    case IME_SELECT:
+        todo_wine_if( expected->todo )
+        ok_(file, line)( !ret, "got hkl %p, himc %p, IME_SELECT select %u\n", received->hkl, received->himc, received->select );
+        return ret;
+    case IME_NOTIFY:
+        todo_wine_if( expected->todo )
+        ok_(file, line)( !ret, "got hkl %p, himc %p, IME_NOTIFY action %#x, index %#x, value %#x\n",
+                         received->hkl, received->himc, received->notify.action, received->notify.index,
+                         received->notify.value );
+        return ret;
+    case IME_PROCESS_KEY:
+        todo_wine_if( expected->todo )
+        ok_(file, line)( !ret, "got hkl %p, himc %p, IME_PROCESS_KEY vkey %#x, lparam %#Ix\n",
+                         received->hkl, received->himc, received->process_key.vkey, received->process_key.lparam );
+        return ret;
+    case IME_SET_ACTIVE_CONTEXT:
+        todo_wine_if( expected->todo )
+        ok_(file, line)( !ret, "got hkl %p, himc %p, IME_SET_ACTIVE_CONTEXT flag %u\n", received->hkl, received->himc,
+                         received->set_active_context.flag );
+        return ret;
+    case MSG_IME_UI:
+        todo_wine_if( expected->todo )
+        ok_(file, line)( !ret, "got hkl %p, himc %p, MSG_IME_UI msg %#x, wparam %#Ix, lparam %#Ix\n", received->hkl,
+                         received->himc, received->message.msg, received->message.wparam, received->message.lparam );
+        return ret;
+    case MSG_TEST_WIN:
+        todo_wine_if( expected->todo )
+        ok_(file, line)( !ret, "got hkl %p, himc %p, MSG_TEST_WIN msg %#x, wparam %#Ix, lparam %#Ix\n", received->hkl,
+                         received->himc, received->message.msg, received->message.wparam, received->message.lparam );
+        return ret;
+    }
+
+    switch (expected->func)
+    {
+    case IME_SELECT:
+        todo_wine_if( expected->todo )
+        ok_(file, line)( !ret, "hkl %p, himc %p, IME_SELECT select %u\n", expected->hkl, expected->himc, expected->select );
+        break;
+    case IME_NOTIFY:
+        todo_wine_if( expected->todo )
+        ok_(file, line)( !ret, "hkl %p, himc %p, IME_NOTIFY action %#x, index %#x, value %#x\n",
+                         expected->hkl, expected->himc, expected->notify.action, expected->notify.index,
+                         expected->notify.value );
+        break;
+    case IME_PROCESS_KEY:
+        todo_wine_if( expected->todo )
+        ok_(file, line)( !ret, "hkl %p, himc %p, IME_PROCESS_KEY vkey %#x, lparam %#Ix\n",
+                         expected->hkl, expected->himc, expected->process_key.vkey, expected->process_key.lparam );
+        break;
+    case IME_SET_ACTIVE_CONTEXT:
+        todo_wine_if( expected->todo )
+        ok_(file, line)( !ret, "hkl %p, himc %p, IME_SET_ACTIVE_CONTEXT flag %u\n", expected->hkl, expected->himc,
+                         expected->set_active_context.flag );
+        break;
+    case MSG_IME_UI:
+        todo_wine_if( expected->todo )
+        ok_(file, line)( !ret, "hkl %p, himc %p, MSG_IME_UI msg %#x, wparam %#Ix, lparam %#Ix\n", expected->hkl,
+                         expected->himc, expected->message.msg, expected->message.wparam, expected->message.lparam );
+        break;
+    case MSG_TEST_WIN:
+        todo_wine_if( expected->todo )
+        ok_(file, line)( !ret, "hkl %p, himc %p, MSG_TEST_WIN msg %#x, wparam %#Ix, lparam %#Ix\n", expected->hkl,
+                         expected->himc, expected->message.msg, expected->message.wparam, expected->message.lparam );
+        break;
+    }
+
+    return 0;
+}
+
+#define ok_seq( a ) ok_seq_( __FILE__, __LINE__, a, #a )
+static void ok_seq_( const char *file, int line, const struct ime_call *expected, const char *context )
+{
+    const struct ime_call *received = ime_calls;
+    UINT i = 0, ret;
+
+    while (expected->func || received->func)
+    {
+        winetest_push_context( "%u%s%s", i++, !expected->func ? " (spurious)" : "",
+                               !received->func ? " (missing)" : "" );
+        ret = ok_call_( file, line, expected, received );
+        if (ret && expected->todo && expected->func &&
+            !strcmp( winetest_platform, "wine" ))
+            expected++;
+        else if (ret && broken(expected->broken))
+            expected++;
+        else
+        {
+            if (expected->func) expected++;
+            if (received->func) received++;
+        }
+        winetest_pop_context();
+    }
+
+    memset( ime_calls, 0, sizeof(ime_calls) );
+    ime_call_count = 0;
+}
+
+static BOOL check_WM_SHOWWINDOW;
+
+static BOOL ignore_message( UINT msg )
+{
+    switch (msg)
+    {
+    case WM_IME_STARTCOMPOSITION:
+    case WM_IME_ENDCOMPOSITION:
+    case WM_IME_COMPOSITION:
+    case WM_IME_SETCONTEXT:
+    case WM_IME_NOTIFY:
+    case WM_IME_CONTROL:
+    case WM_IME_COMPOSITIONFULL:
+    case WM_IME_SELECT:
+    case WM_IME_CHAR:
+    case 0x287:
+    case WM_IME_REQUEST:
+    case WM_IME_KEYDOWN:
+    case WM_IME_KEYUP:
+        return FALSE;
+    case WM_SHOWWINDOW:
+        return !check_WM_SHOWWINDOW;
+    default:
+        return TRUE;
+    }
+}
+
+static LRESULT CALLBACK ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    struct ime_call call =
+    {
+        .hkl = GetKeyboardLayout( 0 ), .himc = (HIMC)GetWindowLongPtrW( hwnd, IMMGWL_IMC ),
+        .func = MSG_IME_UI, .message = {.msg = msg, .wparam = wparam, .lparam = lparam}
+    };
+    LONG_PTR ptr;
+
+    ime_trace( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
+
+    if (ignore_message( msg )) return DefWindowProcW( hwnd, msg, wparam, lparam );
+
+    ptr = GetWindowLongPtrW( hwnd, IMMGWL_PRIVATE );
+    ok( !ptr, "got IMMGWL_PRIVATE %#Ix\n", ptr );
+
+    ime_calls[ime_call_count++] = call;
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+static LRESULT CALLBACK test_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    struct ime_call call =
+    {
+        .hkl = GetKeyboardLayout( 0 ), .himc = ImmGetContext( hwnd ),
+        .func = MSG_TEST_WIN, .message = {.msg = msg, .wparam = wparam, .lparam = lparam}
+    };
+
+    ime_trace( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
+
+    if (ignore_message( msg )) return DefWindowProcW( hwnd, msg, wparam, lparam );
+
+    ime_calls[ime_call_count++] = call;
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+static WNDCLASSEXW ime_ui_class =
+{
+    .cbSize = sizeof(WNDCLASSEXW),
+    .style = CS_IME,
+    .lpfnWndProc = ime_ui_window_proc,
+    .cbWndExtra = 2 * sizeof(LONG_PTR),
+    .lpszClassName = L"WineTestIME",
+};
+
+static WNDCLASSEXW test_class =
+{
+    .cbSize = sizeof(WNDCLASSEXW),
+    .lpfnWndProc = test_window_proc,
+    .lpszClassName = L"WineTest",
+};
+
 /*
  * msgspy - record and analyse message traces sent to a certain window
  */
@@ -2693,299 +2986,6 @@ static void test_ImmDisableIME(void)
     ok(!def, "ImmGetDefaultIMEWnd(hwnd) returned %p\n", def);
 }
 
-#define ime_trace( msg, ... ) if (winetest_debug > 1) trace( "%04lx:%s " msg, GetCurrentThreadId(), __func__, ## __VA_ARGS__ )
-
-static BOOL ImeSelect_init_status;
-static BOOL todo_ImeInquire;
-DEFINE_EXPECT( ImeInquire );
-static BOOL todo_ImeDestroy;
-DEFINE_EXPECT( ImeDestroy );
-DEFINE_EXPECT( ImeEscape );
-DEFINE_EXPECT( ImeEnumRegisterWord );
-DEFINE_EXPECT( ImeRegisterWord );
-DEFINE_EXPECT( ImeGetRegisterWordStyle );
-DEFINE_EXPECT( ImeUnregisterWord );
-static BOOL todo_ImeSetCompositionString;
-DEFINE_EXPECT( ImeSetCompositionString );
-static BOOL todo_IME_DLL_PROCESS_ATTACH;
-DEFINE_EXPECT( IME_DLL_PROCESS_ATTACH );
-static BOOL todo_IME_DLL_PROCESS_DETACH;
-DEFINE_EXPECT( IME_DLL_PROCESS_DETACH );
-
-static IMEINFO ime_info;
-static UINT ime_count;
-static WCHAR ime_path[MAX_PATH];
-static HIMC default_himc;
-static HKL default_hkl, wineime_hkl;
-static HKL expect_ime = (HKL)(int)0xe020047f;
-
-enum ime_function
-{
-    IME_SELECT = 1,
-    IME_NOTIFY,
-    IME_PROCESS_KEY,
-    IME_SET_ACTIVE_CONTEXT,
-    MSG_IME_UI,
-    MSG_TEST_WIN,
-};
-
-struct ime_call
-{
-    HKL hkl;
-    HIMC himc;
-    enum ime_function func;
-
-    union
-    {
-        int select;
-        struct
-        {
-            int action;
-            int index;
-            int value;
-        } notify;
-        struct
-        {
-            WORD vkey;
-            LPARAM key_data;
-        } process_key;
-        struct
-        {
-            int flag;
-        } set_active_context;
-        struct
-        {
-            UINT msg;
-            WPARAM wparam;
-            LPARAM lparam;
-        } message;
-    };
-
-    BOOL todo;
-    BOOL broken;
-    BOOL flaky_himc;
-};
-
-struct ime_call empty_sequence[] = {{0}};
-static struct ime_call ime_calls[1024];
-static ULONG ime_call_count;
-
-#define ok_call( a, b ) ok_call_( __FILE__, __LINE__, a, b )
-static int ok_call_( const char *file, int line, const struct ime_call *expected, const struct ime_call *received )
-{
-    int ret;
-
-    if ((ret = expected->func - received->func)) goto done;
-    /* Wine doesn't allocate HIMC in a deterministic order, ignore them when they are enumerated */
-    if (expected->flaky_himc && (ret = !!(UINT_PTR)expected->himc - !!(UINT_PTR)received->himc)) goto done;
-    if (!expected->flaky_himc && (ret = (UINT_PTR)expected->himc - (UINT_PTR)received->himc)) goto done;
-    if ((ret = (UINT)(UINT_PTR)expected->hkl - (UINT)(UINT_PTR)received->hkl)) goto done;
-    switch (expected->func)
-    {
-    case IME_SELECT:
-        if ((ret = expected->select - received->select)) goto done;
-        break;
-    case IME_NOTIFY:
-        if ((ret = expected->notify.action - received->notify.action)) goto done;
-        if ((ret = expected->notify.index - received->notify.index)) goto done;
-        if ((ret = expected->notify.value - received->notify.value)) goto done;
-        break;
-    case IME_PROCESS_KEY:
-        if ((ret = expected->process_key.vkey - received->process_key.vkey)) goto done;
-        if ((ret = expected->process_key.key_data - received->process_key.key_data)) goto done;
-        break;
-    case IME_SET_ACTIVE_CONTEXT:
-        if ((ret = expected->set_active_context.flag - received->set_active_context.flag)) goto done;
-        break;
-    case MSG_IME_UI:
-    case MSG_TEST_WIN:
-        if ((ret = expected->message.msg - received->message.msg)) goto done;
-        if ((ret = (expected->message.wparam - received->message.wparam))) goto done;
-        if ((ret = (expected->message.lparam - received->message.lparam))) goto done;
-        break;
-    }
-
-done:
-    if (ret && broken( expected->broken )) return ret;
-
-    switch (received->func)
-    {
-    case IME_SELECT:
-        todo_wine_if( expected->todo )
-        ok_(file, line)( !ret, "got hkl %p, himc %p, IME_SELECT select %u\n", received->hkl, received->himc, received->select );
-        return ret;
-    case IME_NOTIFY:
-        todo_wine_if( expected->todo )
-        ok_(file, line)( !ret, "got hkl %p, himc %p, IME_NOTIFY action %#x, index %#x, value %#x\n",
-                         received->hkl, received->himc, received->notify.action, received->notify.index,
-                         received->notify.value );
-        return ret;
-    case IME_PROCESS_KEY:
-        todo_wine_if( expected->todo )
-        ok_(file, line)( !ret, "got hkl %p, himc %p, IME_PROCESS_KEY vkey %#x, key_data %#Ix\n",
-                         received->hkl, received->himc, received->process_key.vkey, received->process_key.key_data );
-        return ret;
-    case IME_SET_ACTIVE_CONTEXT:
-        todo_wine_if( expected->todo )
-        ok_(file, line)( !ret, "got hkl %p, himc %p, IME_SET_ACTIVE_CONTEXT flag %u\n", received->hkl, received->himc,
-                         received->set_active_context.flag );
-        return ret;
-    case MSG_IME_UI:
-        todo_wine_if( expected->todo )
-        ok_(file, line)( !ret, "got hkl %p, himc %p, MSG_IME_UI msg %#x, wparam %#Ix, lparam %#Ix\n", received->hkl,
-                         received->himc, received->message.msg, received->message.wparam, received->message.lparam );
-        return ret;
-    case MSG_TEST_WIN:
-        todo_wine_if( expected->todo )
-        ok_(file, line)( !ret, "got hkl %p, himc %p, MSG_TEST_WIN msg %#x, wparam %#Ix, lparam %#Ix\n", received->hkl,
-                         received->himc, received->message.msg, received->message.wparam, received->message.lparam );
-        return ret;
-    }
-
-    switch (expected->func)
-    {
-    case IME_SELECT:
-        todo_wine_if( expected->todo )
-        ok_(file, line)( !ret, "hkl %p, himc %p, IME_SELECT select %u\n", expected->hkl, expected->himc, expected->select );
-        break;
-    case IME_NOTIFY:
-        todo_wine_if( expected->todo )
-        ok_(file, line)( !ret, "hkl %p, himc %p, IME_NOTIFY action %#x, index %#x, value %#x\n",
-                         expected->hkl, expected->himc, expected->notify.action, expected->notify.index,
-                         expected->notify.value );
-        break;
-    case IME_PROCESS_KEY:
-        todo_wine_if( expected->todo )
-        ok_(file, line)( !ret, "hkl %p, himc %p, IME_PROCESS_KEY vkey %#x, key_data %#Ix\n",
-                         expected->hkl, expected->himc, expected->process_key.vkey, expected->process_key.key_data );
-        break;
-    case IME_SET_ACTIVE_CONTEXT:
-        todo_wine_if( expected->todo )
-        ok_(file, line)( !ret, "hkl %p, himc %p, IME_SET_ACTIVE_CONTEXT flag %u\n", expected->hkl, expected->himc,
-                         expected->set_active_context.flag );
-        break;
-    case MSG_IME_UI:
-        todo_wine_if( expected->todo )
-        ok_(file, line)( !ret, "hkl %p, himc %p, MSG_IME_UI msg %#x, wparam %#Ix, lparam %#Ix\n", expected->hkl,
-                         expected->himc, expected->message.msg, expected->message.wparam, expected->message.lparam );
-        break;
-    case MSG_TEST_WIN:
-        todo_wine_if( expected->todo )
-        ok_(file, line)( !ret, "hkl %p, himc %p, MSG_TEST_WIN msg %#x, wparam %#Ix, lparam %#Ix\n", expected->hkl,
-                         expected->himc, expected->message.msg, expected->message.wparam, expected->message.lparam );
-        break;
-    }
-
-    return 0;
-}
-
-#define ok_seq( a ) ok_seq_( __FILE__, __LINE__, a, #a )
-static void ok_seq_( const char *file, int line, const struct ime_call *expected, const char *context )
-{
-    const struct ime_call *received = ime_calls;
-    UINT i = 0, ret;
-
-    while (expected->func || received->func)
-    {
-        winetest_push_context( "%u%s%s", i++, !expected->func ? " (spurious)" : "",
-                               !received->func ? " (missing)" : "" );
-        ret = ok_call_( file, line, expected, received );
-        if (ret && expected->todo && expected->func &&
-            !strcmp( winetest_platform, "wine" ))
-            expected++;
-        else if (ret && broken(expected->broken))
-            expected++;
-        else
-        {
-            if (expected->func) expected++;
-            if (received->func) received++;
-        }
-        winetest_pop_context();
-    }
-
-    memset( ime_calls, 0, sizeof(ime_calls) );
-    ime_call_count = 0;
-}
-
-static BOOL check_WM_SHOWWINDOW;
-
-static BOOL ignore_message( UINT msg )
-{
-    switch (msg)
-    {
-    case WM_IME_STARTCOMPOSITION:
-    case WM_IME_ENDCOMPOSITION:
-    case WM_IME_COMPOSITION:
-    case WM_IME_SETCONTEXT:
-    case WM_IME_NOTIFY:
-    case WM_IME_CONTROL:
-    case WM_IME_COMPOSITIONFULL:
-    case WM_IME_SELECT:
-    case WM_IME_CHAR:
-    case 0x287:
-    case WM_IME_REQUEST:
-    case WM_IME_KEYDOWN:
-    case WM_IME_KEYUP:
-        return FALSE;
-    case WM_SHOWWINDOW:
-        return !check_WM_SHOWWINDOW;
-    default:
-        return TRUE;
-    }
-}
-
-static LRESULT CALLBACK ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
-{
-    struct ime_call call =
-    {
-        .hkl = GetKeyboardLayout( 0 ), .himc = (HIMC)GetWindowLongPtrW( hwnd, IMMGWL_IMC ),
-        .func = MSG_IME_UI, .message = {.msg = msg, .wparam = wparam, .lparam = lparam}
-    };
-    LONG_PTR ptr;
-
-    ime_trace( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
-
-    if (ignore_message( msg )) return DefWindowProcW( hwnd, msg, wparam, lparam );
-
-    ptr = GetWindowLongPtrW( hwnd, IMMGWL_PRIVATE );
-    ok( !ptr, "got IMMGWL_PRIVATE %#Ix\n", ptr );
-
-    ime_calls[ime_call_count++] = call;
-    return DefWindowProcW( hwnd, msg, wparam, lparam );
-}
-
-static LRESULT CALLBACK test_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
-{
-    struct ime_call call =
-    {
-        .hkl = GetKeyboardLayout( 0 ), .himc = ImmGetContext( hwnd ),
-        .func = MSG_TEST_WIN, .message = {.msg = msg, .wparam = wparam, .lparam = lparam}
-    };
-
-    ime_trace( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
-
-    if (ignore_message( msg )) return DefWindowProcW( hwnd, msg, wparam, lparam );
-
-    ime_calls[ime_call_count++] = call;
-    return DefWindowProcW( hwnd, msg, wparam, lparam );
-}
-
-static WNDCLASSEXW ime_ui_class =
-{
-    .cbSize = sizeof(WNDCLASSEXW),
-    .style = CS_IME,
-    .lpfnWndProc = ime_ui_window_proc,
-    .cbWndExtra = 2 * sizeof(LONG_PTR),
-    .lpszClassName = L"WineTestIME",
-};
-
-static WNDCLASSEXW test_class =
-{
-    .cbSize = sizeof(WNDCLASSEXW),
-    .lpfnWndProc = test_window_proc,
-    .lpszClassName = L"WineTest",
-};
-
 static BOOL WINAPI ime_ImeConfigure( HKL hkl, HWND hwnd, DWORD mode, void *data )
 {
     ime_trace( "hkl %p, hwnd %p, mode %lu, data %p\n", hkl, hwnd, mode, data );
@@ -3136,15 +3136,15 @@ static BOOL WINAPI ime_ImeInquire( IMEINFO *info, WCHAR *ui_class, DWORD flags )
     return TRUE;
 }
 
-static BOOL WINAPI ime_ImeProcessKey( HIMC himc, UINT vkey, LPARAM key_data, BYTE *key_state )
+static BOOL WINAPI ime_ImeProcessKey( HIMC himc, UINT vkey, LPARAM lparam, BYTE *state )
 {
     struct ime_call call =
     {
         .hkl = GetKeyboardLayout( 0 ), .himc = himc,
-        .func = IME_PROCESS_KEY, .process_key = {.vkey = vkey, .key_data = key_data}
+        .func = IME_PROCESS_KEY, .process_key = {.vkey = vkey, .lparam = lparam}
     };
-    ime_trace( "himc %p, vkey %u, key_data %#Ix, key_state %p\n",
-               himc, vkey, key_data, key_state );
+    ime_trace( "himc %p, vkey %u, lparam %#Ix, state %p\n",
+               himc, vkey, lparam, state );
     ime_calls[ime_call_count++] = call;
     return TRUE;
 }
@@ -4644,7 +4644,7 @@ static void test_ImmProcessKey(void)
     {
         {
             .hkl = expect_ime, .himc = default_himc,
-            .func = IME_PROCESS_KEY, .process_key = {.vkey = 'A', .key_data = 0},
+            .func = IME_PROCESS_KEY, .process_key = {.vkey = 'A', .lparam = 0},
         },
         {0},
     };
