@@ -4336,6 +4336,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         0,                                             /* FileReplaceCompletionInformation */
         0,                                             /* FileHardLinkFullIdInformation */
         0,                                             /* FileIdExtdBothDirectoryInformation */
+        0,                                             /* FileDispositionInformationEx */
     };
 
     struct stat st;

@@ -1255,6 +1255,19 @@ typedef enum _FILE_INFORMATION_CLASS {
     FileReplaceCompletionInformation,
     FileHardLinkFullIdInformation,
     FileIdExtdBothDirectoryInformation,
+    FileDispositionInformationEx,
+    FileRenameInformationEx,
+    FileRenameInformationExBypassAccessCheck,
+    FileDesiredStorageClassInformation,
+    FileStatInformation,
+    FileMemoryPartitionInformation,
+    FileStatLxInformation,
+    FileCaseSensitiveInformation,
+    FileLinkInformationEx,
+    FileLinkInformationExBypassAccessCheck,
+    FileStorageReserveIdInformation,
+    FileCaseSensitiveInformationForceAccessCheck,
+    FileKnownFolderInformation,
     FileMaximumInformation
 } FILE_INFORMATION_CLASS, *PFILE_INFORMATION_CLASS;
 
@@ -1423,6 +1436,17 @@ typedef struct _FILE_NAMES_INFORMATION {
 typedef struct _FILE_DISPOSITION_INFORMATION {
     BOOLEAN DoDeleteFile;
 } FILE_DISPOSITION_INFORMATION, *PFILE_DISPOSITION_INFORMATION;
+
+typedef struct _FILE_DISPOSITION_INFORMATION_EX {
+    ULONG Flags;
+} FILE_DISPOSITION_INFORMATION_EX, *PFILE_DISPOSITION_INFORMATION_EX;
+
+#define FILE_DISPOSITION_DO_NOT_DELETE              0x00000000
+#define FILE_DISPOSITION_DELETE                     0x00000001
+#define FILE_DISPOSITION_POSIX_SEMANTICS            0x00000002
+#define FILE_DISPOSITION_FORCE_IMAGE_SECTION_CHECK  0x00000004
+#define FILE_DISPOSITION_ON_CLOSE                   0x00000008
+#define FILE_DISPOSITION_IGNORE_READONLY_ATTRIBUTE  0x00000010
 
 typedef struct _FILE_POSITION_INFORMATION {
     LARGE_INTEGER CurrentByteOffset;
