@@ -4622,6 +4622,9 @@ static HFONT CDECL font_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
             break;
         }
 
+        if (lf.lfOutPrecision == OUT_TT_ONLY_PRECIS)
+            can_use_bitmap = FALSE;
+
         lf.lfWidth = abs(lf.lfWidth);
 
         TRACE( "%s, h=%d, it=%d, weight=%d, PandF=%02x, charset=%d orient %d escapement %d\n",
