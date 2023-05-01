@@ -637,6 +637,12 @@ INT WINAPI Escape( HDC hdc, INT escape, INT in_count, const char *in_data, void 
             }
             break;
         }
+
+    case PASSTHROUGH:
+    case POSTSCRIPT_PASSTHROUGH:
+        in_count = *(const WORD *)in_data + sizeof(WORD);
+        out_data = NULL;
+        break;
     }
 
     /* if not handled internally, pass it to the driver */
