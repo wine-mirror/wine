@@ -185,8 +185,21 @@ static BOOL CDECL font_GetTextMetrics(PHYSDEV dev, TEXTMETRICW *metrics)
 
 static HFONT CDECL font_SelectFont(PHYSDEV dev, HFONT hfont, UINT *aa_flags)
 {
+    HFONT tt_font, old_font;
+    LOGFONTW lf;
+
     *aa_flags = GGO_BITMAP;
-    return SelectObject(dev->hdc, hfont) ? hfont : 0;
+    if (!GetObjectW(hfont, sizeof(lf), &lf))
+        return 0;
+
+    lf.lfOutPrecision = OUT_TT_ONLY_PRECIS;
+    tt_font = CreateFontIndirectW(&lf);
+    if (!tt_font)
+        return 0;
+
+    old_font = SelectObject(dev->hdc, tt_font);
+    DeleteObject(tt_font);
+    return old_font ? hfont : 0;
 }
 
 static const struct gdi_dc_funcs font_funcs =
