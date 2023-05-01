@@ -125,22 +125,11 @@ struct uia_event
             struct UiaCacheRequest cache_req;
             UiaEventCallback *cback;
 
-            /*
-             * This is temporarily used to keep the MTA alive prior to our
-             * introduction of a dedicated event thread.
-             */
-            CO_MTA_USAGE_COOKIE mta_cookie;
             DWORD git_cookie;
         } clientside;
         struct {
-            /*
-             * Similar to the client MTA cookie, used to keep the provider
-             * thread alive as a temporary measure before introducing the
-             * event thread.
-             */
-            IWineUiaNode *node;
-
             IWineUiaEvent *event_iface;
+
             struct rb_entry serverside_event_entry;
             LONG proc_id;
         } serverside;

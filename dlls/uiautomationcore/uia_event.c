@@ -200,6 +200,119 @@ static void uia_event_map_entry_release(struct uia_event_map_entry *entry)
 }
 
 /*
+ * UI Automation event thread.
+ */
+struct uia_event_thread
+{
+    HANDLE hthread;
+    HWND hwnd;
+    LONG ref;
+};
+
+#define WM_UIA_EVENT_THREAD_STOP (WM_USER + 1)
+static struct uia_event_thread event_thread;
+static CRITICAL_SECTION event_thread_cs;
+static CRITICAL_SECTION_DEBUG event_thread_cs_debug =
+{
+    0, 0, &event_thread_cs,
+    { &event_thread_cs_debug.ProcessLocksList, &event_thread_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": event_thread_cs") }
+};
+static CRITICAL_SECTION event_thread_cs = { &event_thread_cs_debug, -1, 0, 0, 0, 0 };
+
+static DWORD WINAPI uia_event_thread_proc(void *arg)
+{
+    HANDLE initialized_event = arg;
+    HWND hwnd;
+    MSG msg;
+
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    hwnd = CreateWindowW(L"Message", NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
+    if (!hwnd)
+    {
+        WARN("CreateWindow failed: %ld\n", GetLastError());
+        CoUninitialize();
+        FreeLibraryAndExitThread(huia_module, 1);
+    }
+
+    event_thread.hwnd = hwnd;
+
+    /* Initialization complete, thread can now process window messages. */
+    SetEvent(initialized_event);
+    TRACE("Event thread started.\n");
+    while (GetMessageW(&msg, NULL, 0, 0))
+    {
+        if ((msg.hwnd == hwnd) && (msg.message == WM_UIA_EVENT_THREAD_STOP))
+            break;
+
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
+
+    TRACE("Shutting down UI Automation event thread.\n");
+
+    DestroyWindow(hwnd);
+    CoUninitialize();
+    FreeLibraryAndExitThread(huia_module, 0);
+}
+
+static BOOL uia_start_event_thread(void)
+{
+    BOOL started = TRUE;
+
+    EnterCriticalSection(&event_thread_cs);
+    if (++event_thread.ref == 1)
+    {
+        HANDLE ready_event = NULL;
+        HANDLE events[2];
+        HMODULE hmodule;
+        DWORD wait_obj;
+
+        /* Increment DLL reference count. */
+        GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+                (const WCHAR *)uia_start_event_thread, &hmodule);
+
+        events[0] = ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+        if (!(event_thread.hthread = CreateThread(NULL, 0, uia_event_thread_proc,
+                ready_event, 0, NULL)))
+        {
+            FreeLibrary(hmodule);
+            started = FALSE;
+            goto exit;
+        }
+
+        events[1] = event_thread.hthread;
+        wait_obj = WaitForMultipleObjects(2, events, FALSE, INFINITE);
+        if (wait_obj != WAIT_OBJECT_0)
+        {
+            CloseHandle(event_thread.hthread);
+            started = FALSE;
+        }
+
+exit:
+        if (ready_event)
+            CloseHandle(ready_event);
+        if (!started)
+            memset(&event_thread, 0, sizeof(event_thread));
+    }
+
+    LeaveCriticalSection(&event_thread_cs);
+    return started;
+}
+
+static void uia_stop_event_thread(void)
+{
+    EnterCriticalSection(&event_thread_cs);
+    if (!--event_thread.ref)
+    {
+        PostMessageW(event_thread.hwnd, WM_UIA_EVENT_THREAD_STOP, 0, 0);
+        CloseHandle(event_thread.hthread);
+        memset(&event_thread, 0, sizeof(event_thread));
+    }
+    LeaveCriticalSection(&event_thread_cs);
+}
+
+/*
  * IWineUiaEvent interface.
  */
 static inline struct uia_event *impl_from_IWineUiaEvent(IWineUiaEvent *iface)
@@ -248,8 +361,8 @@ static ULONG WINAPI uia_event_Release(IWineUiaEvent *iface)
         if (event->event_type == EVENT_TYPE_CLIENTSIDE)
         {
             uia_cache_request_destroy(&event->u.clientside.cache_req);
-            if (event->u.clientside.mta_cookie)
-                CoDecrementMTAUsage(event->u.clientside.mta_cookie);
+            if (event->u.clientside.git_cookie)
+                uia_stop_event_thread();
         }
         else
         {
@@ -259,8 +372,7 @@ static ULONG WINAPI uia_event_Release(IWineUiaEvent *iface)
             LeaveCriticalSection(&event_map_cs);
             if (event->u.serverside.event_iface)
                 IWineUiaEvent_Release(event->u.serverside.event_iface);
-            if (event->u.serverside.node)
-                IWineUiaNode_Release(event->u.serverside.node);
+            uia_stop_event_thread();
         }
 
         for (i = 0; i < event->event_advisers_count; i++)
@@ -413,6 +525,13 @@ HRESULT create_serverside_uia_event(struct uia_event **out_event, LONG process_i
     hr = create_uia_event(&event, event_cookie, EVENT_TYPE_SERVERSIDE);
     if (FAILED(hr))
         goto exit;
+
+    if (!uia_start_event_thread())
+    {
+        heap_free(event);
+        hr = E_FAIL;
+        goto exit;
+    }
 
     event->u.serverside.proc_id = process_id;
     uia_event_map.serverside_event_count++;
@@ -679,15 +798,14 @@ HRESULT uia_event_add_serverside_event_adviser(IWineUiaEvent *serverside_event, 
      */
     if (!event->u.clientside.git_cookie)
     {
-        hr = CoIncrementMTAUsage(&event->u.clientside.mta_cookie);
-        if (FAILED(hr))
-            return hr;
+        if (!uia_start_event_thread())
+            return E_FAIL;
 
         hr = register_interface_in_git((IUnknown *)&event->IWineUiaEvent_iface, &IID_IWineUiaEvent,
                 &event->u.clientside.git_cookie);
         if (FAILED(hr))
         {
-            CoDecrementMTAUsage(event->u.clientside.mta_cookie);
+            uia_stop_event_thread();
             return hr;
         }
     }

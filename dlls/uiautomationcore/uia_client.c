@@ -568,16 +568,6 @@ static HRESULT WINAPI uia_node_attach_event(IWineUiaNode *iface, long proc_id, l
     }
 
     /*
-     * Attach this nested node to the serverside event to keep the provider
-     * thread alive.
-     */
-    if (*ret_event)
-    {
-        IWineUiaNode_AddRef(iface);
-        event->u.serverside.node = iface;
-    }
-
-    /*
      * Pre-existing serverside event that has already had its initial
      * advise call and gotten event data - if we've got new advisers, we need
      * to advise them here.
