@@ -6961,7 +6961,7 @@ static void test_ImmTranslateMessage( BOOL kbd_char_first )
             .hkl = expect_ime, .himc = default_himc, .func = IME_PROCESS_KEY,
             .process_key = {.vkey = 'Q', .lparam = MAKELONG(2, 0xc010)},
         },
-        {.todo = TRUE},
+        {0},
     };
     const struct ime_call to_ascii_ex_0[] =
     {
@@ -6994,7 +6994,6 @@ static void test_ImmTranslateMessage( BOOL kbd_char_first )
         {
             .hkl = expect_ime, .himc = 0/*himc*/, .func = IME_TO_ASCII_EX,
             .to_ascii_ex = {.vkey = kbd_char_first ? MAKELONG('Q', 'q') : 'Q', .vsc = 0x210},
-            .todo_value = TRUE,
         },
         {
             .hkl = expect_ime, .himc = 0/*himc*/, .func = IME_PROCESS_KEY,
@@ -7003,7 +7002,6 @@ static void test_ImmTranslateMessage( BOOL kbd_char_first )
         {
             .hkl = expect_ime, .himc = 0/*himc*/, .func = IME_TO_ASCII_EX,
             .to_ascii_ex = {.vkey = kbd_char_first ? MAKELONG('Q', 'q') : 'Q', .vsc = 0x410},
-            .todo_value = TRUE,
         },
         {0},
     };
@@ -7016,7 +7014,6 @@ static void test_ImmTranslateMessage( BOOL kbd_char_first )
         {
             .hkl = expect_ime, .himc = 0/*himc*/, .func = IME_TO_ASCII_EX,
             .to_ascii_ex = {.vkey = kbd_char_first ? MAKELONG('Q', 'q') : 'Q', .vsc = 0xa10},
-            .todo_value = TRUE,
         },
         {
             .hkl = expect_ime, .himc = 0/*himc*/, .func = IME_PROCESS_KEY,
@@ -7025,7 +7022,6 @@ static void test_ImmTranslateMessage( BOOL kbd_char_first )
         {
             .hkl = expect_ime, .himc = 0/*himc*/, .func = IME_TO_ASCII_EX,
             .to_ascii_ex = {.vkey = kbd_char_first ? MAKELONG('Q', 'q') : 'Q', .vsc = 0xc10},
-            .todo_value = TRUE,
         },
         {0},
     };
@@ -7049,7 +7045,7 @@ static void test_ImmTranslateMessage( BOOL kbd_char_first )
     INPUTCONTEXT *ctx;
     HIMC himc;
     HKL hkl;
-    UINT i, ret;
+    UINT i;
 
     ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
     if (kbd_char_first) ime_info.fdwProperty |= IME_PROP_KBD_CHAR_FIRST;
@@ -7108,16 +7104,15 @@ static void test_ImmTranslateMessage( BOOL kbd_char_first )
 
     ctx->hWnd = hwnd;
     ok_ret( 2, ImmProcessKey( hwnd, expect_ime, 'Q', MAKELONG(2, 0x210), 0 ) );
-    ret = ImmTranslateMessage( hwnd, WM_KEYUP, 'Q', MAKELONG(2, 0x210) );
-    todo_wine ok_eq( 1, ret, UINT, "%u" );
+    ok_ret( 1, ImmTranslateMessage( hwnd, WM_KEYUP, 'Q', MAKELONG(2, 0x210) ) );
     ok_ret( 2, ImmProcessKey( hwnd, expect_ime, 'Q', MAKELONG(2, 0x410), 0 ) );
     ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYUP, 'Q', MAKELONG(2, 0x410) ) );
     ok_ret( VK_PROCESSKEY, ImmGetVirtualKey( hwnd ) );
     ok_seq( to_ascii_ex_2 );
     process_messages();
-    todo_wine ok_seq( post_messages );
+    ok_seq( post_messages );
     ok_ret( 1, ImmGenerateMessage( himc ) );
-    todo_wine ok_seq( sent_messages );
+    ok_seq( sent_messages );
 
     ok_ret( 2, ImmProcessKey( hwnd, expect_ime, 'Q', MAKELONG(2, 0xa10), 0 ) );
     ok_ret( 0, ImmTranslateMessage( hwnd, WM_KEYUP, 'Q', MAKELONG(2, 0xa10) ) );
@@ -7128,12 +7123,11 @@ static void test_ImmTranslateMessage( BOOL kbd_char_first )
     process_messages();
     ok_seq( empty_sequence );
     ok_ret( 1, ImmGenerateMessage( himc ) );
-    todo_wine ok_seq( sent_messages );
+    ok_seq( sent_messages );
 
     ctx->hWnd = 0;
     ok_ret( 2, ImmProcessKey( other_hwnd, expect_ime, 'Q', MAKELONG(2, 0x210), 0 ) );
-    ret = ImmTranslateMessage( other_hwnd, WM_KEYUP, 'Q', MAKELONG(2, 0x210) );
-    todo_wine ok_eq( 1, ret, UINT, "%u" );
+    ok_ret( 1, ImmTranslateMessage( other_hwnd, WM_KEYUP, 'Q', MAKELONG(2, 0x210) ) );
     ok_ret( 2, ImmProcessKey( other_hwnd, expect_ime, 'Q', MAKELONG(2, 0x410), 0 ) );
     ok_ret( 0, ImmTranslateMessage( other_hwnd, WM_KEYUP, 'Q', MAKELONG(2, 0x410) ) );
     ok_ret( VK_PROCESSKEY, ImmGetVirtualKey( other_hwnd ) );
@@ -7141,7 +7135,7 @@ static void test_ImmTranslateMessage( BOOL kbd_char_first )
     process_messages_( hwnd );
     ok_seq( empty_sequence );
     process_messages_( other_hwnd );
-    todo_wine ok_seq( post_messages );
+    ok_seq( post_messages );
     ok_ret( 1, ImmGenerateMessage( himc ) );
     ok_seq( empty_sequence );
 

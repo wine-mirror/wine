@@ -821,13 +821,6 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
     return TRUE;
 }
 
-static void imc_post_message( struct imc *imc, TRANSMSG *message )
-{
-    HWND target;
-    if (!(target = GetFocus()) && !(target = imc->IMC.hWnd)) return;
-    PostMessageW( target, message->message, message->wParam, message->lParam );
-}
-
 /***********************************************************************
  *		ImmSetActiveContext (IMM32.@)
  */
@@ -3104,6 +3097,7 @@ BOOL WINAPI ImmTranslateMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
         };
         TRANSMSGLIST list;
     } buffer = {.uMsgCount = ARRAY_SIZE(buffer.TransMsg)};
+    TRANSMSG *msgs = buffer.TransMsg;
     UINT scan, vkey, count, i;
     struct imc *data;
     struct ime *ime;
@@ -3119,7 +3113,7 @@ BOOL WINAPI ImmTranslateMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     if ((vkey = data->vkey) == VK_PROCESSKEY) return FALSE;
     data->vkey = VK_PROCESSKEY;
     GetKeyboardState( state );
-    scan = lparam >> 0x10 & 0xff;
+    scan = lparam >> 0x10;
 
     if (ime->info.fdwProperty & IME_PROP_KBD_CHAR_FIRST)
     {
@@ -3129,10 +3123,10 @@ BOOL WINAPI ImmTranslateMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     }
 
     count = ime->pImeToAsciiEx( vkey, scan, state, &buffer.list, 0, data->handle );
-    TRACE( "%u messages generated\n", count );
+    if (count >= ARRAY_SIZE(buffer.TransMsg)) return 0;
 
-    if (count > ARRAY_SIZE(buffer.TransMsg)) ImmGenerateMessage( data->handle );
-    else for (i = 0; i < count; i++) imc_post_message( data, buffer.TransMsg + i );
+    for (i = 0; i < count; i++) PostMessageW( hwnd, msgs[i].message, msgs[i].wParam, msgs[i].lParam );
+    TRACE( "%u messages generated\n", count );
 
     return count > 0;
 }
