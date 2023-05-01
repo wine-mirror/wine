@@ -765,25 +765,25 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pAbortPath */
     NULL,                               /* pAlphaBlend */
     NULL,                               /* pAngleArc */
-    PSDRV_Arc,                          /* pArc */
+    NULL,                               /* pArc */
     NULL,                               /* pArcTo */
     NULL,                               /* pBeginPath */
     NULL,                               /* pBlendImage */
-    PSDRV_Chord,                        /* pChord */
+    NULL,                               /* pChord */
     NULL,                               /* pCloseFigure */
     PSDRV_CreateCompatibleDC,           /* pCreateCompatibleDC */
     PSDRV_CreateDC,                     /* pCreateDC */
     PSDRV_DeleteDC,                     /* pDeleteDC */
     NULL,                               /* pDeleteObject */
-    PSDRV_Ellipse,                      /* pEllipse */
-    PSDRV_EndDoc,                       /* pEndDoc */
-    PSDRV_EndPage,                      /* pEndPage */
+    NULL,                               /* pEllipse */
+    NULL,                               /* pEndDoc */
+    NULL,                               /* pEndPage */
     NULL,                               /* pEndPath */
     PSDRV_EnumFonts,                    /* pEnumFonts */
     PSDRV_ExtEscape,                    /* pExtEscape */
     NULL,                               /* pExtFloodFill */
-    PSDRV_ExtTextOut,                   /* pExtTextOut */
-    PSDRV_FillPath,                     /* pFillPath */
+    NULL,                               /* pExtTextOut */
+    NULL,                               /* pFillPath */
     NULL,                               /* pFillRgn */
     NULL,                               /* pFontIsLinked */
     NULL,                               /* pFrameRgn */
@@ -813,42 +813,42 @@ static const struct gdi_dc_funcs psdrv_funcs =
     PSDRV_GetTextMetrics,               /* pGetTextMetrics */
     NULL,                               /* pGradientFill */
     NULL,                               /* pInvertRgn */
-    PSDRV_LineTo,                       /* pLineTo */
+    NULL,                               /* pLineTo */
     NULL,                               /* pMoveTo */
-    PSDRV_PaintRgn,                     /* pPaintRgn */
-    PSDRV_PatBlt,                       /* pPatBlt */
-    PSDRV_Pie,                          /* pPie */
-    PSDRV_PolyBezier,                   /* pPolyBezier */
-    PSDRV_PolyBezierTo,                 /* pPolyBezierTo */
+    NULL,                               /* pPaintRgn */
+    NULL,                               /* pPatBlt */
+    NULL,                               /* pPie */
+    NULL,                               /* pPolyBezier */
+    NULL,                               /* pPolyBezierTo */
     NULL,                               /* pPolyDraw */
-    PSDRV_PolyPolygon,                  /* pPolyPolygon */
-    PSDRV_PolyPolyline,                 /* pPolyPolyline */
+    NULL,                               /* pPolyPolygon */
+    NULL,                               /* pPolyPolyline */
     NULL,                               /* pPolylineTo */
-    PSDRV_PutImage,                     /* pPutImage */
+    NULL,                               /* pPutImage */
     NULL,                               /* pRealizeDefaultPalette */
     NULL,                               /* pRealizePalette */
-    PSDRV_Rectangle,                    /* pRectangle */
+    NULL,                               /* pRectangle */
     PSDRV_ResetDC,                      /* pResetDC */
-    PSDRV_RoundRect,                    /* pRoundRect */
+    NULL,                               /* pRoundRect */
     NULL,                               /* pSelectBitmap */
-    PSDRV_SelectBrush,                  /* pSelectBrush */
+    NULL,                               /* pSelectBrush */
     PSDRV_SelectFont,                   /* pSelectFont */
-    PSDRV_SelectPen,                    /* pSelectPen */
-    PSDRV_SetBkColor,                   /* pSetBkColor */
+    NULL,                               /* pSelectPen */
+    NULL,                               /* pSetBkColor */
     NULL,                               /* pSetBoundsRect */
-    PSDRV_SetDCBrushColor,              /* pSetDCBrushColor */
-    PSDRV_SetDCPenColor,                /* pSetDCPenColor */
+    NULL,                               /* pSetDCBrushColor */
+    NULL,                               /* pSetDCPenColor */
     NULL,                               /* pSetDIBitsToDevice */
     NULL,                               /* pSetDeviceClipping */
     NULL,                               /* pSetDeviceGammaRamp */
-    PSDRV_SetPixel,                     /* pSetPixel */
-    PSDRV_SetTextColor,                 /* pSetTextColor */
-    PSDRV_StartDoc,                     /* pStartDoc */
-    PSDRV_StartPage,                    /* pStartPage */
+    NULL,                               /* pSetPixel */
+    NULL,                               /* pSetTextColor */
+    NULL,                               /* pStartDoc */
+    NULL,                               /* pStartPage */
     NULL,                               /* pStretchBlt */
     NULL,                               /* pStretchDIBits */
-    PSDRV_StrokeAndFillPath,            /* pStrokeAndFillPath */
-    PSDRV_StrokePath,                   /* pStrokePath */
+    NULL,                               /* pStrokeAndFillPath */
+    NULL,                               /* pStrokePath */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pD3DKMTCheckVidPnExclusiveOwnership */
     NULL,                               /* pD3DKMTCloseAdapter */
