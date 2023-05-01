@@ -3457,7 +3457,7 @@ static UINT WINAPI ime_ImeToAsciiEx( UINT vkey, UINT vsc, BYTE *state, TRANSMSGL
     todo_wine ok_eq( 256, msgs->uMsgCount, UINT, "%u" );
 
     ctx = ImmLockIMC( himc );
-    todo_wine ok_ret( VK_PROCESSKEY, ImmGetVirtualKey( ctx->hWnd ) );
+    ok_ret( VK_PROCESSKEY, ImmGetVirtualKey( ctx->hWnd ) );
 
     if (vsc & 0x200)
     {

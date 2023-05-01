@@ -85,8 +85,8 @@ struct imc
         DWORD           dwLock;
         INPUTCONTEXT    IMC;
 
-        struct ime     *ime;
-        UINT            lastVK;
+    struct ime *ime;
+    UINT vkey;
 
     HWND ui_hwnd; /* IME UI window, on the default input context */
 };
@@ -2111,27 +2111,15 @@ BOOL WINAPI ImmGetStatusWindowPos( HIMC himc, POINT *pos )
 /***********************************************************************
  *		ImmGetVirtualKey (IMM32.@)
  */
-UINT WINAPI ImmGetVirtualKey(HWND hWnd)
+UINT WINAPI ImmGetVirtualKey( HWND hwnd )
 {
-  OSVERSIONINFOA version;
-  struct imc *data = get_imc_data( ImmGetContext( hWnd ) );
-  TRACE("%p\n", hWnd);
+    HIMC himc = ImmGetContext( hwnd );
+    struct imc *imc;
 
-  if ( data )
-      return data->lastVK;
+    TRACE( "%p\n", hwnd );
 
-  version.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
-  GetVersionExA( &version );
-  switch(version.dwPlatformId)
-  {
-  case VER_PLATFORM_WIN32_WINDOWS:
-      return VK_PROCESSKEY;
-  case VER_PLATFORM_WIN32_NT:
-      return 0;
-  default:
-      FIXME("%ld not supported\n",version.dwPlatformId);
-      return VK_PROCESSKEY;
-  }
+    if ((imc = get_imc_data( himc ))) return imc->vkey;
+    return VK_PROCESSKEY;
 }
 
 /***********************************************************************
@@ -3127,17 +3115,17 @@ BOOL WINAPI ImmTranslateMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     if (msg < WM_KEYDOWN || msg > WM_KEYUP) return FALSE;
     if (!(data = get_imc_data( ImmGetContext( hwnd ) ))) return FALSE;
     if (!(ime = imc_select_ime( data ))) return FALSE;
-    if (data->lastVK == VK_PROCESSKEY) return FALSE;
 
+    if ((vkey = data->vkey) == VK_PROCESSKEY) return FALSE;
+    data->vkey = VK_PROCESSKEY;
     GetKeyboardState( state );
     scan = lparam >> 0x10 & 0xff;
-    vkey = data->lastVK;
 
     if (ime->info.fdwProperty & IME_PROP_KBD_CHAR_FIRST)
     {
-        if (!ime_is_unicode( ime )) ToAscii( data->lastVK, scan, state, &chr, 0 );
-        else ToUnicodeEx( data->lastVK, scan, state, &chr, 1, 0, GetKeyboardLayout( 0 ) );
-        vkey = MAKELONG( data->lastVK, chr );
+        if (!ime_is_unicode( ime )) ToAscii( vkey, scan, state, &chr, 0 );
+        else ToUnicodeEx( vkey, scan, state, &chr, 1, 0, GetKeyboardLayout( 0 ) );
+        vkey = MAKELONG( vkey, chr );
     }
 
     count = ime->pImeToAsciiEx( vkey, scan, state, &buffer.list, 0, data->handle );
@@ -3145,8 +3133,6 @@ BOOL WINAPI ImmTranslateMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 
     if (count > ARRAY_SIZE(buffer.TransMsg)) ImmGenerateMessage( data->handle );
     else for (i = 0; i < count; i++) imc_post_message( data, buffer.TransMsg + i );
-
-    data->lastVK = VK_PROCESSKEY;
 
     return count > 0;
 }
@@ -3171,7 +3157,7 @@ BOOL WINAPI ImmProcessKey( HWND hwnd, HKL hkl, UINT vkey, LPARAM lparam, DWORD u
     GetKeyboardState( state );
 
     ret = ime->pImeProcessKey( imc->handle, vkey, lparam, state );
-    imc->lastVK = ret ? vkey : VK_PROCESSKEY;
+    imc->vkey = ret ? vkey : VK_PROCESSKEY;
 
     return ret;
 }
