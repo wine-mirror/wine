@@ -761,101 +761,18 @@ fail:
 
 static const struct gdi_dc_funcs psdrv_funcs =
 {
-    NULL,                               /* pAbortDoc */
-    NULL,                               /* pAbortPath */
-    NULL,                               /* pAlphaBlend */
-    NULL,                               /* pAngleArc */
-    NULL,                               /* pArc */
-    NULL,                               /* pArcTo */
-    NULL,                               /* pBeginPath */
-    NULL,                               /* pBlendImage */
-    NULL,                               /* pChord */
-    NULL,                               /* pCloseFigure */
-    PSDRV_CreateCompatibleDC,           /* pCreateCompatibleDC */
-    PSDRV_CreateDC,                     /* pCreateDC */
-    PSDRV_DeleteDC,                     /* pDeleteDC */
-    NULL,                               /* pDeleteObject */
-    NULL,                               /* pEllipse */
-    NULL,                               /* pEndDoc */
-    NULL,                               /* pEndPage */
-    NULL,                               /* pEndPath */
-    PSDRV_EnumFonts,                    /* pEnumFonts */
-    PSDRV_ExtEscape,                    /* pExtEscape */
-    NULL,                               /* pExtFloodFill */
-    NULL,                               /* pExtTextOut */
-    NULL,                               /* pFillPath */
-    NULL,                               /* pFillRgn */
-    NULL,                               /* pFontIsLinked */
-    NULL,                               /* pFrameRgn */
-    NULL,                               /* pGetBoundsRect */
-    NULL,                               /* pGetCharABCWidths */
-    NULL,                               /* pGetCharABCWidthsI */
-    PSDRV_GetCharWidth,                 /* pGetCharWidth */
-    NULL,                               /* pGetCharWidthInfo */
-    PSDRV_GetDeviceCaps,                /* pGetDeviceCaps */
-    NULL,                               /* pGetDeviceGammaRamp */
-    NULL,                               /* pGetFontData */
-    NULL,                               /* pGetFontRealizationInfo */
-    NULL,                               /* pGetFontUnicodeRanges */
-    NULL,                               /* pGetGlyphIndices */
-    NULL,                               /* pGetGlyphOutline */
-    NULL,                               /* pGetICMProfile */
-    NULL,                               /* pGetImage */
-    NULL,                               /* pGetKerningPairs */
-    NULL,                               /* pGetNearestColor */
-    NULL,                               /* pGetOutlineTextMetrics */
-    NULL,                               /* pGetPixel */
-    NULL,                               /* pGetSystemPaletteEntries */
-    NULL,                               /* pGetTextCharsetInfo */
-    PSDRV_GetTextExtentExPoint,         /* pGetTextExtentExPoint */
-    NULL,                               /* pGetTextExtentExPointI */
-    NULL,                               /* pGetTextFace */
-    PSDRV_GetTextMetrics,               /* pGetTextMetrics */
-    NULL,                               /* pGradientFill */
-    NULL,                               /* pInvertRgn */
-    NULL,                               /* pLineTo */
-    NULL,                               /* pMoveTo */
-    NULL,                               /* pPaintRgn */
-    NULL,                               /* pPatBlt */
-    NULL,                               /* pPie */
-    NULL,                               /* pPolyBezier */
-    NULL,                               /* pPolyBezierTo */
-    NULL,                               /* pPolyDraw */
-    NULL,                               /* pPolyPolygon */
-    NULL,                               /* pPolyPolyline */
-    NULL,                               /* pPolylineTo */
-    NULL,                               /* pPutImage */
-    NULL,                               /* pRealizeDefaultPalette */
-    NULL,                               /* pRealizePalette */
-    NULL,                               /* pRectangle */
-    PSDRV_ResetDC,                      /* pResetDC */
-    NULL,                               /* pRoundRect */
-    NULL,                               /* pSelectBitmap */
-    NULL,                               /* pSelectBrush */
-    PSDRV_SelectFont,                   /* pSelectFont */
-    NULL,                               /* pSelectPen */
-    NULL,                               /* pSetBkColor */
-    NULL,                               /* pSetBoundsRect */
-    NULL,                               /* pSetDCBrushColor */
-    NULL,                               /* pSetDCPenColor */
-    NULL,                               /* pSetDIBitsToDevice */
-    NULL,                               /* pSetDeviceClipping */
-    NULL,                               /* pSetDeviceGammaRamp */
-    NULL,                               /* pSetPixel */
-    NULL,                               /* pSetTextColor */
-    NULL,                               /* pStartDoc */
-    NULL,                               /* pStartPage */
-    NULL,                               /* pStretchBlt */
-    NULL,                               /* pStretchDIBits */
-    NULL,                               /* pStrokeAndFillPath */
-    NULL,                               /* pStrokePath */
-    NULL,                               /* pUnrealizePalette */
-    NULL,                               /* pD3DKMTCheckVidPnExclusiveOwnership */
-    NULL,                               /* pD3DKMTCloseAdapter */
-    NULL,                               /* pD3DKMTOpenAdapterFromLuid */
-    NULL,                               /* pD3DKMTQueryVideoMemoryInfo */
-    NULL,                               /* pD3DKMTSetVidPnSourceOwner */
-    GDI_PRIORITY_GRAPHICS_DRV           /* priority */
+    .pCreateCompatibleDC = PSDRV_CreateCompatibleDC,
+    .pCreateDC = PSDRV_CreateDC,
+    .pDeleteDC = PSDRV_DeleteDC,
+    .pEnumFonts = PSDRV_EnumFonts,
+    .pExtEscape = PSDRV_ExtEscape,
+    .pGetCharWidth = PSDRV_GetCharWidth,
+    .pGetDeviceCaps = PSDRV_GetDeviceCaps,
+    .pGetTextExtentExPoint = PSDRV_GetTextExtentExPoint,
+    .pGetTextMetrics = PSDRV_GetTextMetrics,
+    .pResetDC = PSDRV_ResetDC,
+    .pSelectFont = PSDRV_SelectFont,
+    .priority = GDI_PRIORITY_GRAPHICS_DRV
 };
 
 
