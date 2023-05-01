@@ -4360,7 +4360,7 @@ static void dump_set_fd_completion_mode_request( const struct set_fd_completion_
 static void dump_set_fd_disp_info_request( const struct set_fd_disp_info_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
-    fprintf( stderr, ", unlink=%d", req->unlink );
+    fprintf( stderr, ", flags=%08x", req->flags );
 }
 
 static void dump_set_fd_name_info_request( const struct set_fd_name_info_request *req )

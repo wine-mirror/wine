@@ -787,6 +787,7 @@ NTSTATUS WINAPI wow64_NtSetInformationFile( UINT *args )
     case FileIoPriorityHintInformation:   /* FILE_IO_PRIORITY_HINT_INFO */
     case FileValidDataLengthInformation:   /* FILE_VALID_DATA_LENGTH_INFORMATION */
     case FileDispositionInformation:   /* FILE_DISPOSITION_INFORMATION */
+    case FileDispositionInformationEx:   /* FILE_DISPOSITION_INFORMATION_EX */
         status = NtSetInformationFile( handle, iosb_32to64( &io, io32 ), ptr, len, class );
         break;
 

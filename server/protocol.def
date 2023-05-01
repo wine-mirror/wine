@@ -3641,7 +3641,7 @@ struct handle_info
 /* set fd disposition information */
 @REQ(set_fd_disp_info)
     obj_handle_t handle;          /* handle to a file or directory */
-    int          unlink;          /* whether to unlink file on close */
+    unsigned int flags;           /* what actions should be taken when deleting a file */
 @END
 
 

@@ -5230,7 +5230,7 @@ struct set_fd_disp_info_request
 {
     struct request_header __header;
     obj_handle_t handle;
-    int          unlink;
+    unsigned int flags;
     char __pad_20[4];
 };
 struct set_fd_disp_info_reply
@@ -6418,7 +6418,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 777
+#define SERVER_PROTOCOL_VERSION 778
 
 /* ### protocol_version end ### */
 

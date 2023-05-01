@@ -2463,7 +2463,7 @@ static int is_dir_empty( int fd )
 }
 
 /* set disposition for the fd */
-static void set_fd_disposition( struct fd *fd, int unlink )
+static void set_fd_disposition( struct fd *fd, unsigned int flags )
 {
     struct stat st;
 
@@ -2479,7 +2479,7 @@ static void set_fd_disposition( struct fd *fd, int unlink )
         return;
     }
 
-    if (unlink)
+    if (flags & FILE_DISPOSITION_DELETE)
     {
         struct fd *fd_ptr;
 
@@ -2524,7 +2524,7 @@ static void set_fd_disposition( struct fd *fd, int unlink )
         }
     }
 
-    fd->closed->unlink = unlink ? 1 : 0;
+    fd->closed->unlink = (flags & FILE_DISPOSITION_DELETE) ? 1 : 0;
     if (fd->options & FILE_DELETE_ON_CLOSE)
         fd->closed->unlink = -1;
 }
@@ -2955,7 +2955,7 @@ DECL_HANDLER(set_fd_disp_info)
     struct fd *fd = get_handle_fd_obj( current->process, req->handle, DELETE );
     if (fd)
     {
-        set_fd_disposition( fd, req->unlink );
+        set_fd_disposition( fd, req->flags );
         release_object( fd );
     }
 }

@@ -2207,7 +2207,7 @@ C_ASSERT( FIELD_OFFSET(struct set_fd_completion_mode_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_fd_completion_mode_request, flags) == 16 );
 C_ASSERT( sizeof(struct set_fd_completion_mode_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct set_fd_disp_info_request, handle) == 12 );
-C_ASSERT( FIELD_OFFSET(struct set_fd_disp_info_request, unlink) == 16 );
+C_ASSERT( FIELD_OFFSET(struct set_fd_disp_info_request, flags) == 16 );
 C_ASSERT( sizeof(struct set_fd_disp_info_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct set_fd_name_info_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_fd_name_info_request, rootdir) == 16 );
