@@ -39,6 +39,11 @@ static inline struct audio_session_wrapper *impl_from_IAudioSessionControl2(IAud
     return CONTAINING_RECORD(iface, struct audio_session_wrapper, IAudioSessionControl2_iface);
 }
 
+static inline struct audio_session_wrapper *impl_from_IChannelAudioVolume(IChannelAudioVolume *iface)
+{
+    return CONTAINING_RECORD(iface, struct audio_session_wrapper, IChannelAudioVolume_iface);
+}
+
 static inline struct audio_session_wrapper *impl_from_ISimpleAudioVolume(ISimpleAudioVolume *iface)
 {
     return CONTAINING_RECORD(iface, struct audio_session_wrapper, ISimpleAudioVolume_iface);
@@ -263,6 +268,168 @@ const IAudioSessionControl2Vtbl AudioSessionControl2_Vtbl =
     control_GetProcessId,
     control_IsSystemSoundsSession,
     control_SetDuckingPreference
+};
+
+static HRESULT WINAPI channelvolume_QueryInterface(IChannelAudioVolume *iface, REFIID riid,
+                                                   void **ppv)
+{
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IChannelAudioVolume))
+        *ppv = iface;
+    else {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*ppv);
+
+    return S_OK;
+}
+
+static ULONG WINAPI channelvolume_AddRef(IChannelAudioVolume *iface)
+{
+    struct audio_session_wrapper *This = impl_from_IChannelAudioVolume(iface);
+    return IAudioSessionControl2_AddRef(&This->IAudioSessionControl2_iface);
+}
+
+static ULONG WINAPI channelvolume_Release(IChannelAudioVolume *iface)
+{
+    struct audio_session_wrapper *This = impl_from_IChannelAudioVolume(iface);
+    return IAudioSessionControl2_Release(&This->IAudioSessionControl2_iface);
+}
+
+static HRESULT WINAPI channelvolume_GetChannelCount(IChannelAudioVolume *iface, UINT32 *out)
+{
+    struct audio_session_wrapper *This = impl_from_IChannelAudioVolume(iface);
+    struct audio_session *session = This->session;
+
+    TRACE("(%p)->(%p)\n", session, out);
+
+    if (!out)
+        return NULL_PTR_ERR;
+
+    *out = session->channel_count;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI channelvolume_SetChannelVolume(IChannelAudioVolume *iface, UINT32 index,
+                                                     float level, const GUID *context)
+{
+    struct audio_session_wrapper *This = impl_from_IChannelAudioVolume(iface);
+    struct audio_session *session = This->session;
+    struct audio_client *client;
+
+    TRACE("(%p)->(%d, %f, %s)\n", session, index, level, wine_dbgstr_guid(context));
+
+    if (level < 0.f || level > 1.f)
+        return E_INVALIDARG;
+
+    if (index >= session->channel_count)
+        return E_INVALIDARG;
+
+    if (context)
+        FIXME("Notifications not supported yet\n");
+
+    sessions_lock();
+
+    session->channel_vols[index] = level;
+
+    LIST_FOR_EACH_ENTRY(client, &session->clients, struct audio_client, entry)
+        set_stream_volumes(client);
+
+    sessions_unlock();
+
+    return S_OK;
+}
+
+static HRESULT WINAPI channelvolume_GetChannelVolume(IChannelAudioVolume *iface, UINT32 index,
+                                                     float *level)
+{
+    struct audio_session_wrapper *This = impl_from_IChannelAudioVolume(iface);
+    struct audio_session *session = This->session;
+
+    TRACE("(%p)->(%d, %p)\n", session, index, level);
+
+    if (!level)
+        return NULL_PTR_ERR;
+
+    if (index >= session->channel_count)
+        return E_INVALIDARG;
+
+    *level = session->channel_vols[index];
+
+    return S_OK;
+}
+
+static HRESULT WINAPI channelvolume_SetAllVolumes(IChannelAudioVolume *iface, UINT32 count,
+                                                  const float *levels, const GUID *context)
+{
+    struct audio_session_wrapper *This = impl_from_IChannelAudioVolume(iface);
+    struct audio_session *session = This->session;
+    struct audio_client *client;
+    unsigned int i;
+
+    TRACE("(%p)->(%d, %p, %s)\n", session, count, levels, wine_dbgstr_guid(context));
+
+    if (!levels)
+        return NULL_PTR_ERR;
+
+    if (count != session->channel_count)
+        return E_INVALIDARG;
+
+    if (context)
+        FIXME("Notifications not supported yet\n");
+
+    sessions_lock();
+
+    for (i = 0; i < count; ++i)
+        session->channel_vols[i] = levels[i];
+
+    LIST_FOR_EACH_ENTRY(client, &session->clients, struct audio_client, entry)
+        set_stream_volumes(client);
+
+    sessions_unlock();
+
+    return S_OK;
+}
+
+static HRESULT WINAPI channelvolume_GetAllVolumes(IChannelAudioVolume *iface, UINT32 count,
+                                                  float *levels)
+{
+    struct audio_session_wrapper *This = impl_from_IChannelAudioVolume(iface);
+    struct audio_session *session = This->session;
+    unsigned int i;
+
+    TRACE("(%p)->(%d, %p)\n", session, count, levels);
+
+    if (!levels)
+        return NULL_PTR_ERR;
+
+    if (count != session->channel_count)
+        return E_INVALIDARG;
+
+    for (i = 0; i < count; ++i)
+        levels[i] = session->channel_vols[i];
+
+    return S_OK;
+}
+
+const IChannelAudioVolumeVtbl ChannelAudioVolume_Vtbl =
+{
+    channelvolume_QueryInterface,
+    channelvolume_AddRef,
+    channelvolume_Release,
+    channelvolume_GetChannelCount,
+    channelvolume_SetChannelVolume,
+    channelvolume_GetChannelVolume,
+    channelvolume_SetAllVolumes,
+    channelvolume_GetAllVolumes
 };
 
 static HRESULT WINAPI simplevolume_QueryInterface(ISimpleAudioVolume *iface, REFIID riid,
