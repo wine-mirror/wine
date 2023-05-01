@@ -720,7 +720,7 @@ static BOOL init_unix_printers( void )
     HANDLE added_printer;
     PRINTER_INFO_2W pi2;
     NTSTATUS status;
-    WCHAR raw[] = L"RAW", winprint[] = L"WinPrint", empty[] = L"";
+    WCHAR raw[] = L"RAW", wineps[] = L"wineps", empty[] = L"";
     int i;
 
     if (create_printers_reg_key( system_printers_key, &printers_key ))
@@ -753,6 +753,8 @@ static BOOL init_unix_printers( void )
             RegDeleteValueW( printer_key, May_Delete_Value );
             /* flag that the PPD file should be checked for an update */
             set_reg_DWORD( printer_key, L"Status", status | PRINTER_STATUS_DRIVER_UPDATE_NEEDED );
+            RegSetValueExW( printer_key, L"Print Processor", 0, REG_SZ, (const BYTE*)wineps,
+                    (wcslen( wineps ) + 1) * sizeof(WCHAR));
             RegCloseKey( printer_key );
         }
         else
@@ -767,7 +769,7 @@ static BOOL init_unix_printers( void )
             memset( &pi2, 0, sizeof(PRINTER_INFO_2W) );
             pi2.pPrinterName    = printer->name;
             pi2.pDatatype       = raw;
-            pi2.pPrintProcessor = winprint;
+            pi2.pPrintProcessor = wineps;
             pi2.pDriverName     = printer->name;
             pi2.pComment        = printer->comment;
             pi2.pLocation       = printer->location;
