@@ -44,10 +44,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(xim);
 
 BOOL ximInComposeMode=FALSE;
 
-/* moved here from imm32 for dll separation */
-static DWORD dwCompStringLength = 0;
-static LPBYTE CompositionString = NULL;
-static DWORD dwCompStringSize = 0;
+static BYTE *ime_comp_buf;
+static DWORD ime_comp_len;
+static DWORD ime_comp_max;
 
 static XIMStyle input_style = 0;
 static XIMStyle input_style_req = XIMPreeditCallbacks | XIMStatusCallbacks;
@@ -72,38 +71,36 @@ static const char *debugstr_xim_style( XIMStyle style )
     return wine_dbg_sprintf( "%s", buffer );
 }
 
-static void X11DRV_ImmSetInternalString(UINT offset, UINT selLength, LPWSTR lpComp, UINT len)
+static void xim_update_comp_string( UINT offset, UINT old_len, const WCHAR *text, UINT new_len )
 {
     /* Composition strings are edited in chunks */
-    unsigned int byte_length = len * sizeof(WCHAR);
+    unsigned int byte_length = new_len * sizeof(WCHAR);
     unsigned int byte_offset = offset * sizeof(WCHAR);
-    unsigned int byte_selection = selLength * sizeof(WCHAR);
+    unsigned int byte_selection = old_len * sizeof(WCHAR);
     int byte_expansion = byte_length - byte_selection;
-    LPBYTE ptr_new;
+    BYTE *ptr_new;
 
-    TRACE("( %i, %i, %p, %d):\n", offset, selLength, lpComp, len );
+    TRACE( "(%i, %i, %p, %d):\n", offset, old_len, text, new_len );
 
-    if (byte_expansion + dwCompStringLength >= dwCompStringSize)
+    if (byte_expansion + ime_comp_len >= ime_comp_max)
     {
-        ptr_new = realloc( CompositionString, dwCompStringSize + byte_expansion );
-        if (ptr_new == NULL)
+        if (!(ptr_new = realloc( ime_comp_buf, ime_comp_max + byte_expansion )))
         {
             ERR("Couldn't expand composition string buffer\n");
             return;
         }
 
-        CompositionString = ptr_new;
-        dwCompStringSize += byte_expansion;
+        ime_comp_buf = ptr_new;
+        ime_comp_max += byte_expansion;
     }
 
-    ptr_new = CompositionString + byte_offset;
-    memmove(ptr_new + byte_length, ptr_new + byte_selection,
-            dwCompStringLength - byte_offset - byte_selection);
-    if (lpComp) memcpy(ptr_new, lpComp, byte_length);
-    dwCompStringLength += byte_expansion;
+    ptr_new = ime_comp_buf + byte_offset;
+    memmove( ptr_new + byte_length, ptr_new + byte_selection,
+             ime_comp_len - byte_offset - byte_selection );
+    if (text) memcpy( ptr_new, text, byte_length );
+    ime_comp_len += byte_expansion;
 
-    x11drv_client_func( client_func_ime_set_composition_string,
-                        CompositionString, dwCompStringLength );
+    x11drv_client_func( client_func_ime_set_composition_string, ime_comp_buf, ime_comp_len );
 }
 
 void X11DRV_XIMLookupChars( const char *str, UINT count )
@@ -161,11 +158,10 @@ static int xic_preedit_done( XIC xic, XPointer user, XPointer arg )
     TRACE( "xic %p, hwnd %p, arg %p\n", xic, hwnd, arg );
 
     ximInComposeMode = FALSE;
-    if (dwCompStringSize)
-        free( CompositionString );
-    dwCompStringSize = 0;
-    dwCompStringLength = 0;
-    CompositionString = NULL;
+    free( ime_comp_buf );
+    ime_comp_buf = NULL;
+    ime_comp_max = 0;
+    ime_comp_len = 0;
     x11drv_client_call( client_ime_set_composition_status, FALSE );
     return 0;
 }
@@ -181,7 +177,7 @@ static int xic_preedit_draw( XIC xic, XPointer user, XPointer arg )
     if (!params) return 0;
 
     if (!(text = params->text))
-        X11DRV_ImmSetInternalString( params->chg_first, params->chg_length, NULL, 0 );
+        xim_update_comp_string( params->chg_first, params->chg_length, NULL, 0 );
     else
     {
         size_t text_len;
@@ -201,7 +197,7 @@ static int xic_preedit_draw( XIC xic, XPointer user, XPointer arg )
         if ((output = malloc( text_len * sizeof(WCHAR) )))
         {
             text_len = ntdll_umbstowcs( str, text_len, output, text_len );
-            X11DRV_ImmSetInternalString( params->chg_first, params->chg_length, output, text_len );
+            xim_update_comp_string( params->chg_first, params->chg_length, output, text_len );
             free( output );
         }
 
