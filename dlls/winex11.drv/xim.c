@@ -44,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(xim);
 
 BOOL ximInComposeMode=FALSE;
 
-static BYTE *ime_comp_buf;
+static WCHAR *ime_comp_buf;
 static DWORD ime_comp_len;
 static DWORD ime_comp_max;
 
@@ -73,34 +73,29 @@ static const char *debugstr_xim_style( XIMStyle style )
 
 static void xim_update_comp_string( UINT offset, UINT old_len, const WCHAR *text, UINT new_len )
 {
-    /* Composition strings are edited in chunks */
-    unsigned int byte_length = new_len * sizeof(WCHAR);
-    unsigned int byte_offset = offset * sizeof(WCHAR);
-    unsigned int byte_selection = old_len * sizeof(WCHAR);
-    int byte_expansion = byte_length - byte_selection;
-    BYTE *ptr_new;
+    int diff = new_len - old_len;
+    WCHAR *ptr;
 
-    TRACE( "(%i, %i, %p, %d):\n", offset, old_len, text, new_len );
+    TRACE( "offset %u, old_len %u, text %s\n", offset, old_len, debugstr_wn(text, new_len) );
 
-    if (byte_expansion + ime_comp_len >= ime_comp_max)
+    if (diff + ime_comp_len >= ime_comp_max)
     {
-        if (!(ptr_new = realloc( ime_comp_buf, ime_comp_max + byte_expansion )))
+        if (!(ptr = realloc( ime_comp_buf, (ime_comp_max + diff) * sizeof(WCHAR) )))
         {
             ERR("Couldn't expand composition string buffer\n");
             return;
         }
 
-        ime_comp_buf = ptr_new;
-        ime_comp_max += byte_expansion;
+        ime_comp_buf = ptr;
+        ime_comp_max += diff;
     }
 
-    ptr_new = ime_comp_buf + byte_offset;
-    memmove( ptr_new + byte_length, ptr_new + byte_selection,
-             ime_comp_len - byte_offset - byte_selection );
-    if (text) memcpy( ptr_new, text, byte_length );
-    ime_comp_len += byte_expansion;
+    ptr = ime_comp_buf + offset;
+    memmove( ptr + new_len, ptr + old_len, (ime_comp_len - offset - old_len) * sizeof(WCHAR) );
+    if (text) memcpy( ptr, text, new_len * sizeof(WCHAR) );
+    ime_comp_len += diff;
 
-    x11drv_client_func( client_func_ime_set_composition_string, ime_comp_buf, ime_comp_len );
+    x11drv_client_func( client_func_ime_set_composition_string, ime_comp_buf, ime_comp_len * sizeof(WCHAR) );
 }
 
 void X11DRV_XIMLookupChars( const char *str, UINT count )
