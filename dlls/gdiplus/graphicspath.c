@@ -908,7 +908,7 @@ static GpStatus format_string_callback(HDC dc,
     if (y + bounds->Height * args->scale > args->maxY)
         args->maxY = y + bounds->Height * args->scale;
 
-    for (i = index; i < length; ++i)
+    for (i = index; i < length + index; ++i)
     {
         GLYPHMETRICS gm;
         TTPOLYGONHEADER *ph = NULL, *origph;
