@@ -2957,6 +2957,7 @@ static void test_file_disposition_information(void)
     NTSTATUS res;
     IO_STATUS_BLOCK io;
     FILE_DISPOSITION_INFORMATION fdi;
+    FILE_DISPOSITION_INFORMATION_EX fdie;
     FILE_STANDARD_INFORMATION fsi;
     BOOL fileDeleted;
     DWORD fdi2, size;
@@ -3086,6 +3087,27 @@ static void test_file_disposition_information(void)
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
     todo_wine
     ok( !fileDeleted, "File shouldn't have been deleted\n" );
+    SetFileAttributesA( buffer, FILE_ATTRIBUTE_NORMAL );
+    DeleteFileA( buffer );
+
+    /* set disposition on readonly file ignoring readonly attribute */
+    /* FileDispositionInformationEx is only supported on Windows 10 build 1809 and later */
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
+    DeleteFileA( buffer );
+    handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_READONLY, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
+    fdie.Flags = FILE_DISPOSITION_DELETE | FILE_DISPOSITION_IGNORE_READONLY_ATTRIBUTE;
+    res = pNtSetInformationFile( handle, &io, &fdie, sizeof fdie, FileDispositionInformationEx );
+    todo_wine
+    ok( res == STATUS_SUCCESS || broken(res == STATUS_INVALID_INFO_CLASS),
+        "unexpected FileDispositionInformationEx result (expected STATUS_SUCCESS or SSTATUS_INVALID_INFO_CLASS, got %lx)\n", res );
+    CloseHandle( handle );
+    if ( res == STATUS_SUCCESS )
+    {
+        fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+        todo_wine
+        ok( fileDeleted, "File should have been deleted\n" );
+    }
     SetFileAttributesA( buffer, FILE_ATTRIBUTE_NORMAL );
     DeleteFileA( buffer );
 
