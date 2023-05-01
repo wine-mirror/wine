@@ -85,7 +85,7 @@ extern const ISimpleAudioVolumeVtbl SimpleAudioVolume_Vtbl;
 static const IAudioClockVtbl AudioClock_Vtbl;
 static const IAudioClock2Vtbl AudioClock2_Vtbl;
 static const IAudioStreamVolumeVtbl AudioStreamVolume_Vtbl;
-static const IChannelAudioVolumeVtbl ChannelAudioVolume_Vtbl;
+extern const IChannelAudioVolumeVtbl ChannelAudioVolume_Vtbl;
 
 void DECLSPEC_HIDDEN sessions_lock(void)
 {
@@ -110,11 +110,6 @@ static inline ACImpl *impl_from_IAudioRenderClient(IAudioRenderClient *iface)
 static inline ACImpl *impl_from_IAudioCaptureClient(IAudioCaptureClient *iface)
 {
     return CONTAINING_RECORD(iface, ACImpl, IAudioCaptureClient_iface);
-}
-
-static inline AudioSessionWrapper *impl_from_IChannelAudioVolume(IChannelAudioVolume *iface)
-{
-    return CONTAINING_RECORD(iface, AudioSessionWrapper, IChannelAudioVolume_iface);
 }
 
 static inline ACImpl *impl_from_IAudioClock(IAudioClock *iface)
@@ -1606,175 +1601,6 @@ static const IAudioStreamVolumeVtbl AudioStreamVolume_Vtbl =
     AudioStreamVolume_GetChannelVolume,
     AudioStreamVolume_SetAllVolumes,
     AudioStreamVolume_GetAllVolumes
-};
-
-static HRESULT WINAPI ChannelAudioVolume_QueryInterface(
-        IChannelAudioVolume *iface, REFIID riid, void **ppv)
-{
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
-
-    if(!ppv)
-        return E_POINTER;
-    *ppv = NULL;
-
-    if(IsEqualIID(riid, &IID_IUnknown) ||
-            IsEqualIID(riid, &IID_IChannelAudioVolume))
-        *ppv = iface;
-    if(*ppv){
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    WARN("Unknown interface %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI ChannelAudioVolume_AddRef(IChannelAudioVolume *iface)
-{
-    AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
-    return IAudioSessionControl2_AddRef(&This->IAudioSessionControl2_iface);
-}
-
-static ULONG WINAPI ChannelAudioVolume_Release(IChannelAudioVolume *iface)
-{
-    AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
-    return IAudioSessionControl2_Release(&This->IAudioSessionControl2_iface);
-}
-
-static HRESULT WINAPI ChannelAudioVolume_GetChannelCount(
-        IChannelAudioVolume *iface, UINT32 *out)
-{
-    AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
-    AudioSession *session = This->session;
-
-    TRACE("(%p)->(%p)\n", session, out);
-
-    if(!out)
-        return NULL_PTR_ERR;
-
-    *out = session->channel_count;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI ChannelAudioVolume_SetChannelVolume(
-        IChannelAudioVolume *iface, UINT32 index, float level,
-        const GUID *context)
-{
-    AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
-    AudioSession *session = This->session;
-    ACImpl *client;
-
-    TRACE("(%p)->(%d, %f, %s)\n", session, index, level,
-            wine_dbgstr_guid(context));
-
-    if(level < 0.f || level > 1.f)
-        return E_INVALIDARG;
-
-    if(index >= session->channel_count)
-        return E_INVALIDARG;
-
-    if(context)
-        FIXME("Notifications not supported yet\n");
-
-    sessions_lock();
-
-    session->channel_vols[index] = level;
-
-    TRACE("OSS doesn't support setting volume\n");
-    LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry)
-        set_stream_volumes(client);
-
-    sessions_unlock();
-
-    return S_OK;
-}
-
-static HRESULT WINAPI ChannelAudioVolume_GetChannelVolume(
-        IChannelAudioVolume *iface, UINT32 index, float *level)
-{
-    AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
-    AudioSession *session = This->session;
-
-    TRACE("(%p)->(%d, %p)\n", session, index, level);
-
-    if(!level)
-        return NULL_PTR_ERR;
-
-    if(index >= session->channel_count)
-        return E_INVALIDARG;
-
-    *level = session->channel_vols[index];
-
-    return S_OK;
-}
-
-static HRESULT WINAPI ChannelAudioVolume_SetAllVolumes(
-        IChannelAudioVolume *iface, UINT32 count, const float *levels,
-        const GUID *context)
-{
-    AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
-    AudioSession *session = This->session;
-    ACImpl *client;
-    int i;
-
-    TRACE("(%p)->(%d, %p, %s)\n", session, count, levels,
-            wine_dbgstr_guid(context));
-
-    if(!levels)
-        return NULL_PTR_ERR;
-
-    if(count != session->channel_count)
-        return E_INVALIDARG;
-
-    if(context)
-        FIXME("Notifications not supported yet\n");
-
-    sessions_lock();
-
-    for(i = 0; i < count; ++i)
-        session->channel_vols[i] = levels[i];
-
-    TRACE("OSS doesn't support setting volume\n");
-    LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry)
-        set_stream_volumes(client);
-
-    sessions_unlock();
-
-    return S_OK;
-}
-
-static HRESULT WINAPI ChannelAudioVolume_GetAllVolumes(
-        IChannelAudioVolume *iface, UINT32 count, float *levels)
-{
-    AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
-    AudioSession *session = This->session;
-    int i;
-
-    TRACE("(%p)->(%d, %p)\n", session, count, levels);
-
-    if(!levels)
-        return NULL_PTR_ERR;
-
-    if(count != session->channel_count)
-        return E_INVALIDARG;
-
-    for(i = 0; i < count; ++i)
-        levels[i] = session->channel_vols[i];
-
-    return S_OK;
-}
-
-static const IChannelAudioVolumeVtbl ChannelAudioVolume_Vtbl =
-{
-    ChannelAudioVolume_QueryInterface,
-    ChannelAudioVolume_AddRef,
-    ChannelAudioVolume_Release,
-    ChannelAudioVolume_GetChannelCount,
-    ChannelAudioVolume_SetChannelVolume,
-    ChannelAudioVolume_GetChannelVolume,
-    ChannelAudioVolume_SetAllVolumes,
-    ChannelAudioVolume_GetAllVolumes
 };
 
 HRESULT WINAPI AUDDRV_GetAudioSessionWrapper(const GUID *guid, IMMDevice *device,
