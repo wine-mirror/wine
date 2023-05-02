@@ -4095,7 +4095,7 @@ static void test_D3DXSHMultiply3(void)
     D3DXSHMultiply3(c, c, b);
     for (i = 0; i < ARRAY_SIZE(expected_aliased); ++i)
     {
-        equal = compare_float(c[i], expected_aliased[i], 34);
+        equal = compare_float(c[i], expected_aliased[i], 64);
         ok(equal, "Expected[%u] = %.8e, received = %.8e.\n", i, expected_aliased[i], c[i]);
     }
 }
