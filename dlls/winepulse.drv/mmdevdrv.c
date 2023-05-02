@@ -316,7 +316,6 @@ static void set_stream_volumes(ACImpl *This)
     params.master_volume   = This->session->mute ? 0.0f : This->session->master_vol;
     params.volumes         = This->vols;
     params.session_volumes = This->session->channel_vols;
-    params.channel         = 0;
     pulse_call(set_volumes, &params);
 }
 

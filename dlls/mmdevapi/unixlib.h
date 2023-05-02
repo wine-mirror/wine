@@ -207,7 +207,6 @@ struct set_volumes_params
     float master_volume;
     const float *volumes;
     const float *session_volumes;
-    int channel;
 };
 
 struct set_event_handle_params

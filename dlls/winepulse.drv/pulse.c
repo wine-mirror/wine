@@ -2723,7 +2723,6 @@ static NTSTATUS pulse_wow64_set_volumes(void *args)
         float master_volume;
         PTR32 volumes;
         PTR32 session_volumes;
-        int channel;
     } *params32 = args;
     struct set_volumes_params params =
     {
@@ -2731,7 +2730,6 @@ static NTSTATUS pulse_wow64_set_volumes(void *args)
         .master_volume = params32->master_volume,
         .volumes = ULongToPtr(params32->volumes),
         .session_volumes = ULongToPtr(params32->session_volumes),
-        .channel = params32->channel
     };
     return pulse_set_volumes(&params);
 }
