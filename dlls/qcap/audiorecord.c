@@ -21,19 +21,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-typedef struct {
+struct audio_record
+{
     struct strmbase_filter filter;
     IPersistPropertyBag IPersistPropertyBag_iface;
-} AudioRecord;
+};
 
-static inline AudioRecord *impl_from_strmbase_filter(struct strmbase_filter *filter)
+static struct audio_record *impl_from_strmbase_filter(struct strmbase_filter *filter)
 {
-    return CONTAINING_RECORD(filter, AudioRecord, filter);
+    return CONTAINING_RECORD(filter, struct audio_record, filter);
 }
 
-static inline AudioRecord *impl_from_IPersistPropertyBag(IPersistPropertyBag *iface)
+static struct audio_record *impl_from_IPersistPropertyBag(IPersistPropertyBag *iface)
 {
-    return CONTAINING_RECORD(iface, AudioRecord, IPersistPropertyBag_iface);
+    return CONTAINING_RECORD(iface, struct audio_record, IPersistPropertyBag_iface);
 }
 
 static struct strmbase_pin *audio_record_get_pin(struct strmbase_filter *iface, unsigned int index)
@@ -44,7 +45,7 @@ static struct strmbase_pin *audio_record_get_pin(struct strmbase_filter *iface, 
 
 static void audio_record_destroy(struct strmbase_filter *iface)
 {
-    AudioRecord *filter = impl_from_strmbase_filter(iface);
+    struct audio_record *filter = impl_from_strmbase_filter(iface);
 
     strmbase_filter_cleanup(&filter->filter);
     free(filter);
@@ -52,7 +53,7 @@ static void audio_record_destroy(struct strmbase_filter *iface)
 
 static HRESULT audio_record_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
 {
-    AudioRecord *filter = impl_from_strmbase_filter(iface);
+    struct audio_record *filter = impl_from_strmbase_filter(iface);
 
     if (IsEqualGUID(iid, &IID_IPersistPropertyBag))
         *out = &filter->IPersistPropertyBag_iface;
@@ -72,32 +73,35 @@ static const struct strmbase_filter_ops filter_ops =
 
 static HRESULT WINAPI PPB_QueryInterface(IPersistPropertyBag *iface, REFIID riid, LPVOID *ppv)
 {
-    AudioRecord *This = impl_from_IPersistPropertyBag(iface);
-    return IUnknown_QueryInterface(This->filter.outer_unk, riid, ppv);
+    struct audio_record *filter = impl_from_IPersistPropertyBag(iface);
+
+    return IUnknown_QueryInterface(filter->filter.outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI PPB_AddRef(IPersistPropertyBag *iface)
 {
-    AudioRecord *This = impl_from_IPersistPropertyBag(iface);
-    return IUnknown_AddRef(This->filter.outer_unk);
+    struct audio_record *filter = impl_from_IPersistPropertyBag(iface);
+
+    return IUnknown_AddRef(filter->filter.outer_unk);
 }
 
 static ULONG WINAPI PPB_Release(IPersistPropertyBag *iface)
 {
-    AudioRecord *This = impl_from_IPersistPropertyBag(iface);
-    return IUnknown_Release(This->filter.outer_unk);
+    struct audio_record *filter = impl_from_IPersistPropertyBag(iface);
+
+    return IUnknown_Release(filter->filter.outer_unk);
 }
 
 static HRESULT WINAPI PPB_GetClassID(IPersistPropertyBag *iface, CLSID *pClassID)
 {
-    AudioRecord *This = impl_from_IPersistPropertyBag(iface);
+    struct audio_record *This = impl_from_IPersistPropertyBag(iface);
     TRACE("(%p/%p)->(%p)\n", iface, This, pClassID);
     return IBaseFilter_GetClassID(&This->filter.IBaseFilter_iface, pClassID);
 }
 
 static HRESULT WINAPI PPB_InitNew(IPersistPropertyBag *iface)
 {
-    AudioRecord *This = impl_from_IPersistPropertyBag(iface);
+    struct audio_record *This = impl_from_IPersistPropertyBag(iface);
     FIXME("(%p/%p)->(): stub\n", iface, This);
     return E_NOTIMPL;
 }
@@ -105,7 +109,7 @@ static HRESULT WINAPI PPB_InitNew(IPersistPropertyBag *iface)
 static HRESULT WINAPI PPB_Load(IPersistPropertyBag *iface, IPropertyBag *pPropBag,
         IErrorLog *pErrorLog)
 {
-    AudioRecord *This = impl_from_IPersistPropertyBag(iface);
+    struct audio_record *This = impl_from_IPersistPropertyBag(iface);
     HRESULT hr;
     VARIANT var;
 
@@ -124,7 +128,7 @@ static HRESULT WINAPI PPB_Load(IPersistPropertyBag *iface, IPropertyBag *pPropBa
 static HRESULT WINAPI PPB_Save(IPersistPropertyBag *iface, IPropertyBag *pPropBag,
         BOOL fClearDirty, BOOL fSaveAllProperties)
 {
-    AudioRecord *This = impl_from_IPersistPropertyBag(iface);
+    struct audio_record *This = impl_from_IPersistPropertyBag(iface);
     FIXME("(%p/%p)->(%p, %u, %u): stub\n", iface, This, pPropBag, fClearDirty, fSaveAllProperties);
     return E_NOTIMPL;
 }
@@ -142,7 +146,7 @@ static const IPersistPropertyBagVtbl PersistPropertyBagVtbl =
 
 HRESULT audio_record_create(IUnknown *outer, IUnknown **out)
 {
-    AudioRecord *object;
+    struct audio_record *object;
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
