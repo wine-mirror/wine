@@ -230,7 +230,7 @@ BOOL wayland_output_create(uint32_t id, uint32_t version)
         goto err;
     }
 
-    output->wl_output = wl_registry_bind(process_wayland->wl_registry, id,
+    output->wl_output = wl_registry_bind(process_wayland.wl_registry, id,
                                          &wl_output_interface,
                                          version < 2 ? version : 2);
     output->global_id = id;
@@ -252,10 +252,10 @@ BOOL wayland_output_create(uint32_t id, uint32_t version)
         goto err;
     }
 
-    if (process_wayland->zxdg_output_manager_v1)
+    if (process_wayland.zxdg_output_manager_v1)
         wayland_output_use_xdg_extension(output);
 
-    wl_list_insert(process_wayland->output_list.prev, &output->link);
+    wl_list_insert(process_wayland.output_list.prev, &output->link);
 
     return TRUE;
 
@@ -293,7 +293,7 @@ void wayland_output_destroy(struct wayland_output *output)
 void wayland_output_use_xdg_extension(struct wayland_output *output)
 {
     output->zxdg_output_v1 =
-        zxdg_output_manager_v1_get_xdg_output(process_wayland->zxdg_output_manager_v1,
+        zxdg_output_manager_v1_get_xdg_output(process_wayland.zxdg_output_manager_v1,
                                               output->wl_output);
     zxdg_output_v1_add_listener(output->zxdg_output_v1, &zxdg_output_v1_listener,
                                 output);

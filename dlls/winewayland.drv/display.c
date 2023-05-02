@@ -290,7 +290,7 @@ BOOL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manage
 
     wl_array_init(&output_info_array);
 
-    wl_list_for_each(output, &process_wayland->output_list, link)
+    wl_list_for_each(output, &process_wayland.output_list, link)
     {
         if (!output->current_mode) continue;
         output_info = wl_array_add(&output_info_array, sizeof(*output_info));

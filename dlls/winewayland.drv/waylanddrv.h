@@ -39,8 +39,7 @@
  *          Globals
  */
 
-extern struct wl_display *process_wl_display DECLSPEC_HIDDEN;
-extern struct wayland *process_wayland DECLSPEC_HIDDEN;
+extern struct wayland process_wayland DECLSPEC_HIDDEN;
 
 /**********************************************************************
  *          Definitions for wayland types
@@ -48,6 +47,7 @@ extern struct wayland *process_wayland DECLSPEC_HIDDEN;
 
 struct wayland
 {
+    struct wl_display *wl_display;
     struct wl_event_queue *wl_event_queue;
     struct wl_registry *wl_registry;
     struct zxdg_output_manager_v1 *zxdg_output_manager_v1;

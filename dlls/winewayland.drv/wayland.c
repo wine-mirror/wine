@@ -32,8 +32,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
-struct wl_display *process_wl_display = NULL;
-struct wayland *process_wayland = NULL;
+struct wayland process_wayland =
+{
+    .output_list = {&process_wayland.output_list, &process_wayland.output_list}
+};
 
 /**********************************************************************
  *          Registry handling
@@ -54,12 +56,12 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
     {
         struct wayland_output *output;
 
-        process_wayland->zxdg_output_manager_v1 =
+        process_wayland.zxdg_output_manager_v1 =
             wl_registry_bind(registry, id, &zxdg_output_manager_v1_interface,
                              version < 3 ? version : 3);
 
         /* Add zxdg_output_v1 to existing outputs. */
-        wl_list_for_each(output, &process_wayland->output_list, link)
+        wl_list_for_each(output, &process_wayland.output_list, link)
             wayland_output_use_xdg_extension(output);
     }
 }
@@ -71,7 +73,7 @@ static void registry_handle_global_remove(void *data, struct wl_registry *regist
 
     TRACE("id=%u\n", id);
 
-    wl_list_for_each_safe(output, tmp, &process_wayland->output_list, link)
+    wl_list_for_each_safe(output, tmp, &process_wayland.output_list, link)
     {
         if (output->global_id == id)
         {
@@ -97,48 +99,41 @@ BOOL wayland_process_init(void)
 {
     struct wl_display *wl_display_wrapper;
 
-    process_wl_display = wl_display_connect(NULL);
-    if (!process_wl_display)
+    process_wayland.wl_display = wl_display_connect(NULL);
+    if (!process_wayland.wl_display)
         return FALSE;
 
-    process_wayland = calloc(1, sizeof(*process_wayland));
-    if (!process_wayland)
-        return FALSE;
+    TRACE("wl_display=%p\n", process_wayland.wl_display);
 
-    TRACE("process_wayland=%p wl_display=%p\n", process_wayland, process_wl_display);
-
-    if (!(process_wayland->wl_event_queue = wl_display_create_queue(process_wl_display)))
+    if (!(process_wayland.wl_event_queue = wl_display_create_queue(process_wayland.wl_display)))
     {
         ERR("Failed to create event queue\n");
         return FALSE;
     }
 
-    if (!(wl_display_wrapper = wl_proxy_create_wrapper(process_wl_display)))
+    if (!(wl_display_wrapper = wl_proxy_create_wrapper(process_wayland.wl_display)))
     {
         ERR("Failed to create proxy wrapper for wl_display\n");
         return FALSE;
     }
     wl_proxy_set_queue((struct wl_proxy *) wl_display_wrapper,
-                       process_wayland->wl_event_queue);
+                       process_wayland.wl_event_queue);
 
-    process_wayland->wl_registry = wl_display_get_registry(wl_display_wrapper);
+    process_wayland.wl_registry = wl_display_get_registry(wl_display_wrapper);
     wl_proxy_wrapper_destroy(wl_display_wrapper);
-    if (!process_wayland->wl_registry)
+    if (!process_wayland.wl_registry)
     {
         ERR("Failed to get to wayland registry\n");
         return FALSE;
     }
 
-    wl_list_init(&process_wayland->output_list);
-
     /* Populate registry */
-    wl_registry_add_listener(process_wayland->wl_registry, &registry_listener,
-                             process_wayland);
+    wl_registry_add_listener(process_wayland.wl_registry, &registry_listener, NULL);
 
     /* We need two roundtrips. One to get and bind globals, one to handle all
      * initial events produced from registering the globals. */
-    wl_display_roundtrip_queue(process_wl_display, process_wayland->wl_event_queue);
-    wl_display_roundtrip_queue(process_wl_display, process_wayland->wl_event_queue);
+    wl_display_roundtrip_queue(process_wayland.wl_display, process_wayland.wl_event_queue);
+    wl_display_roundtrip_queue(process_wayland.wl_display, process_wayland.wl_event_queue);
 
     wayland_init_display_devices();
 
