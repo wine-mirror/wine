@@ -45,8 +45,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(xim);
 BOOL ximInComposeMode=FALSE;
 
 static WCHAR *ime_comp_buf;
-static DWORD ime_comp_len;
-static DWORD ime_comp_max;
 
 static XIMStyle input_style = 0;
 static XIMStyle input_style_req = XIMPreeditCallbacks | XIMStatusCallbacks;
@@ -73,29 +71,26 @@ static const char *debugstr_xim_style( XIMStyle style )
 
 static void xim_update_comp_string( UINT offset, UINT old_len, const WCHAR *text, UINT new_len )
 {
+    UINT len = ime_comp_buf ? wcslen( ime_comp_buf ) : 0;
     int diff = new_len - old_len;
     WCHAR *ptr;
 
     TRACE( "offset %u, old_len %u, text %s\n", offset, old_len, debugstr_wn(text, new_len) );
 
-    if (diff + ime_comp_len >= ime_comp_max)
+    if (!(ptr = realloc( ime_comp_buf, (len + max(0, diff) + 1) * sizeof(WCHAR) )))
     {
-        if (!(ptr = realloc( ime_comp_buf, (ime_comp_max + diff) * sizeof(WCHAR) )))
-        {
-            ERR("Couldn't expand composition string buffer\n");
-            return;
-        }
-
-        ime_comp_buf = ptr;
-        ime_comp_max += diff;
+        ERR( "Failed to reallocate composition string buffer\n" );
+        return;
     }
 
+    ime_comp_buf = ptr;
     ptr = ime_comp_buf + offset;
-    memmove( ptr + new_len, ptr + old_len, (ime_comp_len - offset - old_len) * sizeof(WCHAR) );
+    memmove( ptr + new_len, ptr + old_len, (len - offset - old_len) * sizeof(WCHAR) );
     if (text) memcpy( ptr, text, new_len * sizeof(WCHAR) );
-    ime_comp_len += diff;
+    len += diff;
+    ime_comp_buf[len] = 0;
 
-    x11drv_client_func( client_func_ime_set_composition_string, ime_comp_buf, ime_comp_len * sizeof(WCHAR) );
+    x11drv_client_func( client_func_ime_set_composition_string, ime_comp_buf, len * sizeof(WCHAR) );
 }
 
 void X11DRV_XIMLookupChars( const char *str, UINT count )
@@ -105,8 +100,9 @@ void X11DRV_XIMLookupChars( const char *str, UINT count )
 
     TRACE("%p %u\n", str, count);
 
-    if (!(output = malloc( count * sizeof(WCHAR) ))) return;
+    if (!(output = malloc( (count + 1) * sizeof(WCHAR) ))) return;
     len = ntdll_umbstowcs( str, count, output, count );
+    output[len] = 0;
 
     x11drv_client_func( client_func_ime_set_result, output, len * sizeof(WCHAR) );
     free( output );
@@ -155,8 +151,7 @@ static int xic_preedit_done( XIC xic, XPointer user, XPointer arg )
     ximInComposeMode = FALSE;
     free( ime_comp_buf );
     ime_comp_buf = NULL;
-    ime_comp_max = 0;
-    ime_comp_len = 0;
+
     x11drv_client_call( client_ime_set_composition_status, FALSE );
     return 0;
 }
