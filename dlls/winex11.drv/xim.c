@@ -170,39 +170,35 @@ static int xic_preedit_draw( XIC xic, XPointer user, XPointer arg )
 {
     XIMPreeditDrawCallbackStruct *params = (void *)arg;
     HWND hwnd = (HWND)user;
+    size_t text_len;
     XIMText *text;
+    WCHAR *output;
+    char *str;
+    int len;
 
     TRACE( "xic %p, hwnd %p, arg %p\n", xic, hwnd, arg );
 
     if (!params) return 0;
 
-    if (!(text = params->text))
+    if (!(text = params->text)) str = NULL;
+    else if (!text->encoding_is_wchar) str = text->string.multi_byte;
+    else if ((len = wcstombs( NULL, text->string.wide_char, text->length )) < 0) str = NULL;
+    else if ((str = malloc( len + 1 )))
+    {
+        wcstombs( str, text->string.wide_char, len );
+        str[len] = 0;
+    }
+
+    if (!str || !(text_len = strlen( str )) || !(output = malloc( text_len * sizeof(WCHAR) )))
         xim_update_comp_string( params->chg_first, params->chg_length, NULL, 0 );
     else
     {
-        size_t text_len;
-        WCHAR *output;
-        char *str;
-        int len;
-
-        if (!text->encoding_is_wchar) str = text->string.multi_byte;
-        else if ((len = wcstombs( NULL, text->string.wide_char, text->length )) < 0) str = NULL;
-        else if ((str = malloc( len + 1 )))
-        {
-            wcstombs( str, text->string.wide_char, len );
-            str[len] = 0;
-        }
-
-        text_len = str ? strlen( str ) : 0;
-        if ((output = malloc( text_len * sizeof(WCHAR) )))
-        {
-            text_len = ntdll_umbstowcs( str, text_len, output, text_len );
-            xim_update_comp_string( params->chg_first, params->chg_length, output, text_len );
-            free( output );
-        }
-
-        if (str != text->string.multi_byte) free( str );
+        text_len = ntdll_umbstowcs( str, text_len, output, text_len );
+        xim_update_comp_string( params->chg_first, params->chg_length, output, text_len );
+        free( output );
     }
+
+    if (text && str != text->string.multi_byte) free( str );
 
     x11drv_client_call( client_ime_set_cursor_pos, params->caret );
 
