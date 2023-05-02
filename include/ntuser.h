@@ -497,7 +497,6 @@ typedef struct ime_private
     BOOL bInternalState;
     HFONT textfont;
     HWND hwndDefault;
-    UINT repeat;
 } IMEPRIVATE, *LPIMEPRIVATE;
 
 #define WM_SYSTIMER  0x0118

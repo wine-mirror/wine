@@ -469,24 +469,6 @@ static void GenerateIMEMessage(HIMC hIMC, UINT msg, WPARAM wParam, LPARAM lParam
     UnlockRealIMC(hIMC);
 }
 
-static BOOL GenerateMessageToTransKey(TRANSMSGLIST *lpTransBuf, UINT *uNumTranMsgs,
-                                      UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    LPTRANSMSG ptr;
-
-    if (*uNumTranMsgs + 1 >= lpTransBuf->uMsgCount)
-        return FALSE;
-
-    ptr = lpTransBuf->TransMsg + *uNumTranMsgs;
-    ptr->message = msg;
-    ptr->wParam = wParam;
-    ptr->lParam = lParam;
-    (*uNumTranMsgs)++;
-
-    return TRUE;
-}
-
-
 static BOOL IME_RemoveFromSelected(HIMC hIMC)
 {
     int i;
@@ -535,8 +517,14 @@ static void UpdateDataInDefaultIMEWindow(INPUTCONTEXT *lpIMC, HWND hwnd, BOOL sh
 
 BOOL WINAPI ImeProcessKey(HIMC hIMC, UINT vKey, LPARAM lKeyData, const LPBYTE lpbKeyState)
 {
+    struct process_text_input_params params =
+    {
+        .himc = (UINT_PTR)hIMC, .vkey = LOWORD(vKey), .scan = HIWORD(lKeyData),
+        .repeat = !!(lKeyData >> 30), .key_state = lpbKeyState,
+    };
     LPINPUTCONTEXT lpIMC;
     BOOL inIME;
+    UINT ret;
 
     TRACE("hIMC %p vKey 0x%04x lKeyData 0x%08Ix lpbKeyState %p\n", hIMC, vKey, lKeyData, lpbKeyState);
 
@@ -567,14 +555,17 @@ BOOL WINAPI ImeProcessKey(HIMC hIMC, UINT vKey, LPARAM lKeyData, const LPBYTE lp
             ImmSetOpenStatus(RealIMC(FROM_MACDRV), FALSE);
         }
 
-        myPrivate->repeat = (lKeyData >> 30) & 0x1;
-
         myPrivate->bInternalState = inIME;
         ImmUnlockIMCC(lpIMC->hPrivate);
     }
     UnlockRealIMC(hIMC);
 
-    return inIME;
+    if (!inIME) return FALSE;
+
+    TRACE( "Processing Mac 0x%04x\n", vKey );
+    ret = MACDRV_CALL( ime_process_text_input, &params );
+
+    return ret != 0;
 }
 
 BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
@@ -611,7 +602,6 @@ BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
         myPrivate->bInternalState = FALSE;
         myPrivate->textfont = NULL;
         myPrivate->hwndDefault = NULL;
-        myPrivate->repeat = 0;
         ImmUnlockIMCC(lpIMC->hPrivate);
         UnlockRealIMC(hIMC);
     }
@@ -622,13 +612,10 @@ BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
 UINT WINAPI ImeToAsciiEx(UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
                          TRANSMSGLIST *lpdwTransKey, UINT fuState, HIMC hIMC)
 {
-    struct process_text_input_params params;
     UINT vkey;
     LPINPUTCONTEXT lpIMC;
     LPIMEPRIVATE myPrivate;
     HWND hwnd;
-    UINT repeat;
-    UINT ret;
 
     TRACE("uVKey 0x%04x uScanCode 0x%04x fuState %u hIMC %p\n", uVKey, uScanCode, fuState, hIMC);
 
@@ -650,41 +637,16 @@ UINT WINAPI ImeToAsciiEx(UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
         return 0;
     }
 
-    repeat = myPrivate->repeat;
     ImmUnlockIMCC(lpIMC->hPrivate);
     UnlockRealIMC(hIMC);
 
-    TRACE("Processing Mac 0x%04x\n", vkey);
-    params.himc = HandleToULong(hIMC);
-    params.vkey = uVKey;
-    params.scan = uScanCode;
-    params.repeat = repeat;
-    params.key_state = lpbKeyState;
-    ret = MACDRV_CALL(ime_process_text_input, &params);
+    /* trigger the pending client_func_ime_set_text call */
+    MACDRV_CALL(ime_get_text_input, NULL);
 
-    if (!ret)
+    if ((lpIMC = LockRealIMC(hIMC)))
     {
-        UINT msgs = 0;
-        UINT msg = (uScanCode & 0x8000) ? WM_KEYUP : WM_KEYDOWN;
-
-        /* KeyStroke not processed by the IME
-         * so we need to rebuild the KeyDown message and pass it on to WINE
-         */
-        if (!GenerateMessageToTransKey(lpdwTransKey, &msgs, msg, vkey, MAKELONG(0x0001, uScanCode)))
-            GenerateIMEMessage(hIMC, msg, vkey, MAKELONG(0x0001, uScanCode));
-
-        return msgs;
-    }
-    else
-    {
-        /* trigger the pending client_func_ime_set_text call */
-        MACDRV_CALL(ime_get_text_input, NULL);
-
-        if ((lpIMC = LockRealIMC(hIMC)))
-        {
-            UpdateDataInDefaultIMEWindow( lpIMC, hwnd, FALSE );
-            UnlockRealIMC(hIMC);
-        }
+        UpdateDataInDefaultIMEWindow( lpIMC, hwnd, FALSE );
+        UnlockRealIMC(hIMC);
     }
     return 0;
 }
