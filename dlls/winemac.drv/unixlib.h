@@ -26,9 +26,7 @@ enum macdrv_funcs
     unix_dnd_have_format,
     unix_dnd_release,
     unix_dnd_retain,
-    unix_ime_process_text_input,
     unix_ime_get_text_input,
-    unix_ime_using_input_method,
     unix_init,
     unix_notify_icon,
     unix_quit_result,
@@ -58,16 +56,6 @@ struct dnd_have_format_params
 {
     UINT64 handle;
     UINT format;
-};
-
-/* macdrv_ime_process_text_input params */
-struct process_text_input_params
-{
-    UINT himc;
-    UINT vkey;
-    UINT scan;
-    UINT repeat;
-    const BYTE *key_state;
 };
 
 /* macdrv_init params */

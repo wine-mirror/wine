@@ -2,6 +2,5 @@
 @ cdecl wine_notify_icon(long ptr)
 
 # IME
-@ stdcall ImeProcessKey(long long long ptr)
 @ stdcall ImeSelect(long long)
 @ stdcall ImeToAsciiEx(long long ptr ptr long long)

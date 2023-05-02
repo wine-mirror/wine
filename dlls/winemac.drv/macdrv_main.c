@@ -607,12 +607,6 @@ NTSTATUS macdrv_client_func(enum macdrv_client_funcs id, const void *params, ULO
 }
 
 
-static NTSTATUS macdrv_ime_using_input_method(void *arg)
-{
-    return macdrv_using_input_method();
-}
-
-
 static NTSTATUS macdrv_quit_result(void *arg)
 {
     struct quit_result_params *params = arg;
@@ -628,9 +622,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     macdrv_dnd_have_format,
     macdrv_dnd_release,
     macdrv_dnd_retain,
-    macdrv_ime_process_text_input,
     macdrv_ime_get_text_input,
-    macdrv_ime_using_input_method,
     macdrv_init,
     macdrv_notify_icon,
     macdrv_quit_result,
@@ -656,26 +648,6 @@ static NTSTATUS wow64_dnd_get_data(void *arg)
     params.size = params32->size;
     params.data = UlongToPtr(params32->data);
     return macdrv_dnd_get_data(&params);
-}
-
-static NTSTATUS wow64_ime_process_text_input(void *arg)
-{
-    struct
-    {
-        UINT himc;
-        UINT vkey;
-        UINT scan;
-        UINT repeat;
-        ULONG key_state;
-    } *params32 = arg;
-    struct process_text_input_params params;
-
-    params.himc = params32->himc;
-    params.vkey = params32->vkey;
-    params.scan = params32->scan;
-    params.repeat = params32->repeat;
-    params.key_state = UlongToPtr(params32->key_state);
-    return macdrv_ime_process_text_input(&params);
 }
 
 static NTSTATUS wow64_init(void *arg)
@@ -752,9 +724,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     macdrv_dnd_have_format,
     macdrv_dnd_release,
     macdrv_dnd_retain,
-    wow64_ime_process_text_input,
     macdrv_ime_get_text_input,
-    macdrv_ime_using_input_method,
     wow64_init,
     wow64_notify_icon,
     macdrv_quit_result,

@@ -121,18 +121,6 @@ static BOOL UnlockRealIMC(HIMC hIMC)
         return FALSE;
 }
 
-static HIMCC ImeCreateBlankCompStr(void)
-{
-    HIMCC rc;
-    LPCOMPOSITIONSTRING ptr;
-    rc = ImmCreateIMCC(sizeof(COMPOSITIONSTRING));
-    ptr = ImmLockIMCC(rc);
-    memset(ptr, 0, sizeof(COMPOSITIONSTRING));
-    ptr->dwSize = sizeof(COMPOSITIONSTRING);
-    ImmUnlockIMCC(rc);
-    return rc;
-}
-
 static int updateField(DWORD origLen, DWORD origOffset, DWORD currentOffset,
                        LPBYTE target, LPBYTE source, DWORD* lenParam,
                        DWORD* offsetParam, BOOL wchars)
@@ -515,59 +503,6 @@ static void UpdateDataInDefaultIMEWindow(INPUTCONTEXT *lpIMC, HWND hwnd, BOOL sh
         ImmUnlockIMCC(lpIMC->hCompStr);
 }
 
-BOOL WINAPI ImeProcessKey(HIMC hIMC, UINT vKey, LPARAM lKeyData, const LPBYTE lpbKeyState)
-{
-    struct process_text_input_params params =
-    {
-        .himc = (UINT_PTR)hIMC, .vkey = LOWORD(vKey), .scan = HIWORD(lKeyData),
-        .repeat = !!(lKeyData >> 30), .key_state = lpbKeyState,
-    };
-    LPINPUTCONTEXT lpIMC;
-    BOOL inIME;
-    UINT ret;
-
-    TRACE("hIMC %p vKey 0x%04x lKeyData 0x%08Ix lpbKeyState %p\n", hIMC, vKey, lKeyData, lpbKeyState);
-
-    switch (vKey)
-    {
-        case VK_SHIFT:
-        case VK_CONTROL:
-        case VK_CAPITAL:
-        case VK_MENU:
-        return FALSE;
-    }
-
-    inIME = MACDRV_CALL(ime_using_input_method, NULL);
-    lpIMC = LockRealIMC(hIMC);
-    if (lpIMC)
-    {
-        LPIMEPRIVATE myPrivate;
-        HWND hwnd = input_context_get_ui_hwnd( lpIMC );
-        myPrivate = ImmLockIMCC(lpIMC->hPrivate);
-
-        if (inIME && !myPrivate->bInternalState)
-            ImmSetOpenStatus(RealIMC(FROM_MACDRV), TRUE);
-        else if (!inIME && myPrivate->bInternalState)
-        {
-            ShowWindow( hwnd, SW_HIDE );
-            ImmDestroyIMCC(lpIMC->hCompStr);
-            lpIMC->hCompStr = ImeCreateBlankCompStr();
-            ImmSetOpenStatus(RealIMC(FROM_MACDRV), FALSE);
-        }
-
-        myPrivate->bInternalState = inIME;
-        ImmUnlockIMCC(lpIMC->hPrivate);
-    }
-    UnlockRealIMC(hIMC);
-
-    if (!inIME) return FALSE;
-
-    TRACE( "Processing Mac 0x%04x\n", vKey );
-    ret = MACDRV_CALL( ime_process_text_input, &params );
-
-    return ret != 0;
-}
-
 BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
 {
     LPINPUTCONTEXT lpIMC;
@@ -612,39 +547,16 @@ BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
 UINT WINAPI ImeToAsciiEx(UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
                          TRANSMSGLIST *lpdwTransKey, UINT fuState, HIMC hIMC)
 {
-    UINT vkey;
     LPINPUTCONTEXT lpIMC;
-    LPIMEPRIVATE myPrivate;
-    HWND hwnd;
 
     TRACE("uVKey 0x%04x uScanCode 0x%04x fuState %u hIMC %p\n", uVKey, uScanCode, fuState, hIMC);
-
-    vkey = LOWORD(uVKey);
-
-    if (vkey == VK_KANA || vkey == VK_KANJI || vkey == VK_MENU)
-    {
-        TRACE("Skipping metakey\n");
-        return 0;
-    }
-
-    lpIMC = LockRealIMC(hIMC);
-    hwnd = input_context_get_ui_hwnd( lpIMC );
-    myPrivate = ImmLockIMCC(lpIMC->hPrivate);
-    if (!myPrivate->bInternalState)
-    {
-        ImmUnlockIMCC(lpIMC->hPrivate);
-        UnlockRealIMC(hIMC);
-        return 0;
-    }
-
-    ImmUnlockIMCC(lpIMC->hPrivate);
-    UnlockRealIMC(hIMC);
 
     /* trigger the pending client_func_ime_set_text call */
     MACDRV_CALL(ime_get_text_input, NULL);
 
     if ((lpIMC = LockRealIMC(hIMC)))
     {
+        HWND hwnd = input_context_get_ui_hwnd( lpIMC );
         UpdateDataInDefaultIMEWindow( lpIMC, hwnd, FALSE );
         UnlockRealIMC(hIMC);
     }
