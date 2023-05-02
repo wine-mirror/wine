@@ -800,6 +800,7 @@ static void session_clear_presentation(struct media_session *session)
 
     IMFTopology_Clear(session->presentation.current_topology);
     session->presentation.topo_status = MF_TOPOSTATUS_INVALID;
+    session->presentation.flags = 0;
 
     LIST_FOR_EACH_ENTRY_SAFE(source, source2, &session->presentation.sources, struct media_source, entry)
     {
