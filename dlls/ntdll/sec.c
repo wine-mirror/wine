@@ -303,7 +303,7 @@ NTSTATUS WINAPI RtlInitializeSid(
 	int i;
 	SID* pisid=pSid;
 
-	if (nSubAuthorityCount >= SID_MAX_SUB_AUTHORITIES)
+	if (nSubAuthorityCount > SID_MAX_SUB_AUTHORITIES)
 	  return STATUS_INVALID_PARAMETER;
 
 	pisid->Revision = SID_REVISION;

@@ -3619,7 +3619,6 @@ static void test_RtlInitializeSid(void)
     ok(!status, "Unexpected status %#lx.\n", status);
 
     status = RtlInitializeSid(sid, &sid_ident, SID_MAX_SUB_AUTHORITIES);
-    todo_wine
     ok(!status, "Unexpected status %#lx.\n", status);
 
     status = RtlInitializeSid(sid, &sid_ident, SID_MAX_SUB_AUTHORITIES + 1);
