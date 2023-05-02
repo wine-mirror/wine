@@ -32,6 +32,14 @@
 WINE_DEFAULT_DEBUG_CHANNEL(event);
 WINE_DECLARE_DEBUG_CHANNEL(imm);
 
+struct ime_update
+{
+    struct ime_set_text_params *comp_params;
+    DWORD comp_size;
+    struct ime_set_text_params *result_params;
+    DWORD result_size;
+};
+static struct ime_update ime_update;
 
 /* return the name of an Mac event */
 static const char *dbgstr_event(int type)
@@ -170,7 +178,20 @@ static void macdrv_im_set_text(const macdrv_event *event)
     if (length)
         CFStringGetCharacters(event->im_set_text.text, CFRangeMake(0, length), params->text);
 
-    macdrv_client_func(client_func_ime_set_text, params, size);
+    free(ime_update.comp_params);
+    ime_update.comp_params = NULL;
+
+    if (params->complete)
+    {
+        free(ime_update.result_params);
+        ime_update.result_params = params;
+        ime_update.result_size = size;
+    }
+    else
+    {
+        ime_update.comp_params = params;
+        ime_update.comp_size = size;
+    }
 }
 
 /***********************************************************************
@@ -179,7 +200,29 @@ static void macdrv_im_set_text(const macdrv_event *event)
 static void macdrv_sent_text_input(const macdrv_event *event)
 {
     TRACE_(imm)("handled: %s\n", event->sent_text_input.handled ? "TRUE" : "FALSE");
-    *event->sent_text_input.done = event->sent_text_input.handled ? 1 : -1;
+    *event->sent_text_input.done = event->sent_text_input.handled || ime_update.result_params ? 1 : -1;
+}
+
+
+/***********************************************************************
+ *              macdrv_ime_get_text_input
+ */
+NTSTATUS macdrv_ime_get_text_input(void *arg)
+{
+    if (ime_update.result_params)
+    {
+        macdrv_client_func(client_func_ime_set_text, ime_update.result_params, ime_update.result_size);
+        free(ime_update.result_params);
+        ime_update.result_params = NULL;
+    }
+    if (ime_update.comp_params)
+    {
+        macdrv_client_func(client_func_ime_set_text, ime_update.comp_params, ime_update.comp_size);
+        free(ime_update.comp_params);
+        ime_update.comp_params = NULL;
+    }
+
+    return 0;
 }
 
 

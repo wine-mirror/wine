@@ -679,10 +679,16 @@ UINT WINAPI ImeToAsciiEx(UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
 
         return msgs;
     }
-    else if ((lpIMC = LockRealIMC(hIMC)))
+    else
     {
-        UpdateDataInDefaultIMEWindow( lpIMC, hwnd, FALSE );
-        UnlockRealIMC(hIMC);
+        /* trigger the pending client_func_ime_set_text call */
+        MACDRV_CALL(ime_get_text_input, NULL);
+
+        if ((lpIMC = LockRealIMC(hIMC)))
+        {
+            UpdateDataInDefaultIMEWindow( lpIMC, hwnd, FALSE );
+            UnlockRealIMC(hIMC);
+        }
     }
     return 0;
 }
