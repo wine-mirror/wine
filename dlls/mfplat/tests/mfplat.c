@@ -6124,26 +6124,25 @@ static void test_MFCreate2DMediaBuffer(void)
         if (is_MEDIASUBTYPE_RGB(ptr->subtype))
             continue;
 
+        winetest_push_context("%u, %u x %u, format %s", i, ptr->width, ptr->height, wine_dbgstr_guid(ptr->subtype));
+
         hr = pMFCreate2DMediaBuffer(ptr->width, ptr->height, ptr->subtype->Data1, FALSE, &buffer);
         ok(hr == S_OK, "Failed to create a buffer, hr %#lx.\n", hr);
 
         hr = IMFMediaBuffer_GetMaxLength(buffer, &length);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(length == ptr->max_length, "%u: unexpected maximum length %lu for %u x %u, format %s.\n",
-                i, length, ptr->width, ptr->height, wine_dbgstr_guid(ptr->subtype));
+        ok(length == ptr->max_length, "Unexpected maximum length %lu.\n", length);
 
         hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&_2dbuffer);
         ok(hr == S_OK, "Failed to get interface, hr %#lx.\n", hr);
 
         hr = IMF2DBuffer_GetContiguousLength(_2dbuffer, &length);
         ok(hr == S_OK, "Failed to get length, hr %#lx.\n", hr);
-        ok(length == ptr->contiguous_length, "%d: unexpected contiguous length %lu for %u x %u, format %s.\n",
-                i, length, ptr->width, ptr->height, wine_dbgstr_guid(ptr->subtype));
+        ok(length == ptr->contiguous_length, "Unexpected contiguous length %lu.\n", length);
 
         hr = IMFMediaBuffer_Lock(buffer, &data, &length2, NULL);
         ok(hr == S_OK, "Failed to lock buffer, hr %#lx.\n", hr);
-        ok(length2 == ptr->contiguous_length, "%d: unexpected linear buffer length %lu for %u x %u, format %s.\n",
-                i, length2, ptr->width, ptr->height, wine_dbgstr_guid(ptr->subtype));
+        ok(length2 == ptr->contiguous_length, "Unexpected linear buffer length %lu.\n", length2);
 
         hr = pMFGetStrideForBitmapInfoHeader(ptr->subtype->Data1, ptr->width, &stride);
         ok(hr == S_OK, "Failed to get stride, hr %#lx.\n", hr);
@@ -6203,8 +6202,8 @@ static void test_MFCreate2DMediaBuffer(void)
         for (j = 0; j < ptr->height; j++)
             for (k = 0; k < stride; k++)
                 ok(data[j * pitch + k] == ((j % 16) << 4) + (k % 16),
-                        "Unexpected byte %02x instead of %02x at test %d row %d column %d.\n",
-                        data[j * pitch + k], ((j % 16) << 4) + (k % 16), i, j, k);
+                        "Unexpected byte %02x instead of %02x at row %d column %d.\n",
+                        data[j * pitch + k], ((j % 16) << 4) + (k % 16), j, k);
 
         data += ptr->height * pitch;
 
@@ -6216,8 +6215,8 @@ static void test_MFCreate2DMediaBuffer(void)
                 for (j = 0; j < ptr->height; j++)
                     for (k = 0; k < stride / 2; k++)
                         ok(data[j * pitch + k] == (((j + ptr->height) % 16) << 4) + (k % 16),
-                                "Unexpected byte %02x instead of %02x at test %d row %d column %d.\n",
-                                data[j * pitch + k], (((j + ptr->height) % 16) << 4) + (k % 16), i, j + ptr->height, k);
+                                "Unexpected byte %02x instead of %02x at row %d column %d.\n",
+                                data[j * pitch + k], (((j + ptr->height) % 16) << 4) + (k % 16), j + ptr->height, k);
                 break;
 
             case MAKEFOURCC('I','M','C','2'):
@@ -6225,16 +6224,16 @@ static void test_MFCreate2DMediaBuffer(void)
                 for (j = 0; j < ptr->height; j++)
                     for (k = 0; k < stride / 2; k++)
                         ok(data[j * (pitch / 2) + k] == (((j + ptr->height) % 16) << 4) + (k % 16),
-                                "Unexpected byte %02x instead of %02x at test %d row %d column %d.\n",
-                                data[j * (pitch / 2) + k], (((j + ptr->height) % 16) << 4) + (k % 16), i, j + ptr->height, k);
+                                "Unexpected byte %02x instead of %02x at row %d column %d.\n",
+                                data[j * (pitch / 2) + k], (((j + ptr->height) % 16) << 4) + (k % 16), j + ptr->height, k);
                 break;
 
             case MAKEFOURCC('N','V','1','2'):
                 for (j = 0; j < ptr->height / 2; j++)
                     for (k = 0; k < stride; k++)
                         ok(data[j * pitch + k] == (((j + ptr->height) % 16) << 4) + (k % 16),
-                                "Unexpected byte %02x instead of %02x at test %d row %d column %d.\n",
-                                data[j * pitch + k], (((j + ptr->height) % 16) << 4) + (k % 16), i, j + ptr->height, k);
+                                "Unexpected byte %02x instead of %02x at row %d column %d.\n",
+                                data[j * pitch + k], (((j + ptr->height) % 16) << 4) + (k % 16), j + ptr->height, k);
                 break;
 
             default:
@@ -6244,8 +6243,7 @@ static void test_MFCreate2DMediaBuffer(void)
         hr = IMF2DBuffer_Unlock2D(_2dbuffer);
         ok(hr == S_OK, "Failed to unlock buffer, hr %#lx.\n", hr);
 
-        ok(pitch == ptr->pitch, "%d: unexpected pitch %ld, expected %d, %u x %u, format %s.\n", i, pitch, ptr->pitch,
-                ptr->width, ptr->height, wine_dbgstr_guid(ptr->subtype));
+        ok(pitch == ptr->pitch, "Unexpected pitch %ld, expected %d.\n", pitch, ptr->pitch);
 
         ret = TRUE;
         hr = IMF2DBuffer_IsContiguousFormat(_2dbuffer, &ret);
@@ -6255,6 +6253,8 @@ static void test_MFCreate2DMediaBuffer(void)
         IMF2DBuffer_Release(_2dbuffer);
 
         IMFMediaBuffer_Release(buffer);
+
+        winetest_pop_context();
     }
 
     /* Alignment tests */
