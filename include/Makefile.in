@@ -120,7 +120,7 @@ SOURCES = \
 	d3d10effect.h \
 	d3d10misc.h \
 	d3d10sdklayers.idl \
-	d3d10shader.h \
+	d3d10shader.idl \
 	d3d11.idl \
 	d3d11_1.idl \
 	d3d11_2.idl \
