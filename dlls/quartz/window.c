@@ -350,6 +350,9 @@ HRESULT WINAPI BaseControlWindowImpl_put_Visible(IVideoWindow *iface, LONG visib
 
     TRACE("window %p, visible %ld.\n", window, visible);
 
+    if (!window->pPin->peer)
+        return VFW_E_NOT_CONNECTED;
+
     ShowWindow(window->hwnd, visible ? SW_SHOW : SW_HIDE);
     return S_OK;
 }

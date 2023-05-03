@@ -2401,6 +2401,9 @@ static void test_video_window(void)
     hr = IVideoWindow_put_MessageDrain(window, (OAHWND)our_hwnd);
     ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
 
+    hr = IVideoWindow_put_Visible(window, OATRUE);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
+
     testfilter_init(&source);
     IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
     IFilterGraph2_AddFilter(graph, filter, NULL);
