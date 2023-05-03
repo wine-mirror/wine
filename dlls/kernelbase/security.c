@@ -1105,7 +1105,10 @@ BOOL WINAPI InitializeSecurityDescriptor( PSECURITY_DESCRIPTOR descr, DWORD revi
  */
 BOOL WINAPI IsValidSecurityDescriptor( PSECURITY_DESCRIPTOR descr )
 {
-    return set_ntstatus( RtlValidSecurityDescriptor( descr ));
+    if (!RtlValidSecurityDescriptor( descr ))
+        return set_ntstatus(STATUS_INVALID_SECURITY_DESCR);
+
+    return TRUE;
 }
 
 /******************************************************************************

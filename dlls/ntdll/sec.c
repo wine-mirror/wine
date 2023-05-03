@@ -534,25 +534,11 @@ NTSTATUS WINAPI RtlCopySecurityDescriptor(PSECURITY_DESCRIPTOR pSourceSD, PSECUR
 
 /**************************************************************************
  * RtlValidSecurityDescriptor			[NTDLL.@]
- *
- * Determine if a SECURITY_DESCRIPTOR is valid.
- *
- * PARAMS
- *  SecurityDescriptor [I] Descriptor to check.
- *
- * RETURNS
- *   Success: STATUS_SUCCESS.
- *   Failure: STATUS_INVALID_SECURITY_DESCR or STATUS_UNKNOWN_REVISION.
  */
-NTSTATUS WINAPI RtlValidSecurityDescriptor(
-	PSECURITY_DESCRIPTOR SecurityDescriptor)
+BOOLEAN WINAPI RtlValidSecurityDescriptor(PSECURITY_DESCRIPTOR descriptor)
 {
-	if ( ! SecurityDescriptor )
-		return STATUS_INVALID_SECURITY_DESCR;
-	if ( ((SECURITY_DESCRIPTOR*)SecurityDescriptor)->Revision != SECURITY_DESCRIPTOR_REVISION )
-		return STATUS_UNKNOWN_REVISION;
-
-	return STATUS_SUCCESS;
+    SECURITY_DESCRIPTOR *sd = descriptor;
+    return sd && sd->Revision == SECURITY_DESCRIPTOR_REVISION;
 }
 
 /**************************************************************************
