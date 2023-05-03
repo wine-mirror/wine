@@ -1,4 +1,5 @@
 MODULE    = wineps.drv
+UNIXLIB   = wineps.so
 IMPORTS   = user32 gdi32 winspool advapi32 win32u
 
 C_SRCS = \
@@ -62,6 +63,7 @@ C_SRCS = \
 	type1.c \
 	type1afm.c \
 	type42.c \
+	unixlib.c \
 	vertical.c
 
 RC_SRCS = wineps.rc

@@ -28,6 +28,7 @@
 #include "winreg.h"
 #include "winnls.h"
 #include "winuser.h"
+#include "unixlib.h"
 #include "psdrv.h"
 #include "winspool.h"
 #include "wine/debug.h"
@@ -98,7 +99,7 @@ static const LOGFONTA DefaultLogFont = {
     DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, ""
 };
 
-static const struct gdi_dc_funcs psdrv_funcs;
+static struct gdi_dc_funcs psdrv_funcs;
 
 /*********************************************************************
  *	     DllMain
@@ -113,8 +114,17 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     switch(reason) {
 
 	case DLL_PROCESS_ATTACH:
+        {
+            struct init_dc_params params = { &psdrv_funcs };
+
             PSDRV_hInstance = hinst;
             DisableThreadLibraryCalls(hinst);
+
+            if (__wine_init_unix_call())
+                return FALSE;
+            if (!WINE_UNIX_CALL( unix_init_dc, &params ))
+                return FALSE;
+
 
 	    PSDRV_Heap = HeapCreate(0, 0x10000, 0);
 	    if (PSDRV_Heap == NULL)
@@ -131,6 +141,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 		return FALSE;
 	    }
             break;
+        }
 
 	case DLL_PROCESS_DETACH:
             if (reserved) break;
@@ -448,88 +459,6 @@ BOOL CDECL PSDRV_ResetDC( PHYSDEV dev, const DEVMODEW *lpInitData )
     return TRUE;
 }
 
-/***********************************************************************
- *           GetDeviceCaps    (WINEPS.@)
- */
-static INT CDECL PSDRV_GetDeviceCaps( PHYSDEV dev, INT cap )
-{
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
-
-    TRACE("%p,%d\n", dev->hdc, cap);
-
-    switch(cap)
-    {
-    case DRIVERVERSION:
-        return 0;
-    case TECHNOLOGY:
-        return DT_RASPRINTER;
-    case HORZSIZE:
-        return MulDiv(physDev->horzSize, 100, physDev->Devmode->dmPublic.dmScale);
-    case VERTSIZE:
-        return MulDiv(physDev->vertSize, 100, physDev->Devmode->dmPublic.dmScale);
-    case HORZRES:
-        return physDev->horzRes;
-    case VERTRES:
-        return physDev->vertRes;
-    case BITSPIXEL:
-        /* Although Windows returns 1 for monochrome printers, we want
-           CreateCompatibleBitmap to provide something other than 1 bpp */
-        return 32;
-    case NUMPENS:
-        return 10;
-    case NUMFONTS:
-        return 39;
-    case NUMCOLORS:
-        return -1;
-    case PDEVICESIZE:
-        return sizeof(PSDRV_PDEVICE);
-    case TEXTCAPS:
-        return TC_CR_ANY | TC_VA_ABLE; /* psdrv 0x59f7 */
-    case RASTERCAPS:
-        return (RC_BITBLT | RC_BITMAP64 | RC_GDI20_OUTPUT | RC_DIBTODEV |
-                RC_STRETCHBLT | RC_STRETCHDIB); /* psdrv 0x6e99 */
-    case ASPECTX:
-        return physDev->logPixelsX;
-    case ASPECTY:
-        return physDev->logPixelsY;
-    case LOGPIXELSX:
-        return MulDiv(physDev->logPixelsX, physDev->Devmode->dmPublic.dmScale, 100);
-    case LOGPIXELSY:
-        return MulDiv(physDev->logPixelsY, physDev->Devmode->dmPublic.dmScale, 100);
-    case NUMRESERVED:
-        return 0;
-    case COLORRES:
-        return 0;
-    case PHYSICALWIDTH:
-        return (physDev->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) ?
-	  physDev->PageSize.cy : physDev->PageSize.cx;
-    case PHYSICALHEIGHT:
-        return (physDev->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) ?
-	  physDev->PageSize.cx : physDev->PageSize.cy;
-    case PHYSICALOFFSETX:
-      if(physDev->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) {
-          if(physDev->pi->ppd->LandscapeOrientation == -90)
-	      return physDev->PageSize.cy - physDev->ImageableArea.top;
-	  else
-	      return physDev->ImageableArea.bottom;
-      }
-      return physDev->ImageableArea.left;
-
-    case PHYSICALOFFSETY:
-      if(physDev->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) {
-          if(physDev->pi->ppd->LandscapeOrientation == -90)
-	      return physDev->PageSize.cx - physDev->ImageableArea.right;
-	  else
-	      return physDev->ImageableArea.left;
-      }
-      return physDev->PageSize.cy - physDev->ImageableArea.top;
-
-    default:
-        dev = GET_NEXT_PHYSDEV( dev, pGetDeviceCaps );
-        return dev->funcs->pGetDeviceCaps( dev, cap );
-    }
-}
-
 static PRINTER_ENUM_VALUESA *load_font_sub_table( HANDLE printer, DWORD *num_entries )
 {
     DWORD res, needed, num;
@@ -759,7 +688,7 @@ fail:
 }
 
 
-static const struct gdi_dc_funcs psdrv_funcs =
+static struct gdi_dc_funcs psdrv_funcs =
 {
     .pCreateCompatibleDC = PSDRV_CreateCompatibleDC,
     .pCreateDC = PSDRV_CreateDC,
@@ -767,7 +696,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     .pEnumFonts = PSDRV_EnumFonts,
     .pExtEscape = PSDRV_ExtEscape,
     .pGetCharWidth = PSDRV_GetCharWidth,
-    .pGetDeviceCaps = PSDRV_GetDeviceCaps,
     .pGetTextExtentExPoint = PSDRV_GetTextExtentExPoint,
     .pGetTextMetrics = PSDRV_GetTextMetrics,
     .pResetDC = PSDRV_ResetDC,

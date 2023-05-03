@@ -585,6 +585,7 @@ extern void passthrough_leave(PHYSDEV dev) DECLSPEC_HIDDEN;
 	setlocale(LC_NUMERIC,tmplocale);			\
 } while (0)
 
+#ifndef WINE_UNIX_LIB
 static inline WCHAR *strdupW( const WCHAR *str )
 {
     int size;
@@ -596,5 +597,6 @@ static inline WCHAR *strdupW( const WCHAR *str )
     if (ret) memcpy( ret, str, size );
     return ret;
 }
+#endif
 
 #endif
