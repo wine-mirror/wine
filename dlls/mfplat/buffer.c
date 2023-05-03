@@ -1336,13 +1336,23 @@ static HRESULT create_1d_buffer(DWORD max_length, DWORD alignment, IMFMediaBuffe
 
 static p_copy_image_func get_2d_buffer_copy_func(DWORD fourcc)
 {
-    if (fourcc == MAKEFOURCC('N','V','1','2'))
-        return copy_image_nv12;
-    if (fourcc == MAKEFOURCC('I','M','C','1') || fourcc == MAKEFOURCC('I','M','C','3'))
-        return copy_image_imc1;
-    if (fourcc == MAKEFOURCC('I','M','C','2') || fourcc == MAKEFOURCC('I','M','C','4'))
-        return copy_image_imc2;
-    return NULL;
+    switch (fourcc)
+    {
+        case MAKEFOURCC('I','M','C','1'):
+        case MAKEFOURCC('I','M','C','3'):
+            return copy_image_imc1;
+
+        case MAKEFOURCC('I','M','C','2'):
+        case MAKEFOURCC('I','M','C','4'):
+        case MAKEFOURCC('N','V','1','1'):
+            return copy_image_imc2;
+
+        case MAKEFOURCC('N','V','1','2'):
+            return copy_image_nv12;
+
+        default:
+            return NULL;
+    }
 }
 
 static HRESULT create_2d_buffer(DWORD width, DWORD height, DWORD fourcc, BOOL bottom_up, IMFMediaBuffer **buffer)
