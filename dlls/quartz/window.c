@@ -231,6 +231,8 @@ HRESULT WINAPI BaseControlWindowImpl_put_WindowStyle(IVideoWindow *iface, LONG s
 
     if (style & (WS_DISABLED|WS_HSCROLL|WS_MAXIMIZE|WS_MINIMIZE|WS_VSCROLL))
         return E_INVALIDARG;
+    if (!window->pPin->peer)
+        return VFW_E_NOT_CONNECTED;
 
     SetWindowLongW(window->hwnd, GWL_STYLE, style);
     SetWindowPos(window->hwnd, 0, 0, 0, 0, 0,
