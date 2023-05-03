@@ -3983,7 +3983,6 @@ static void test_pen(void)
 
     stat = GdipBitmapGetPixel(bitmap, 10, 10, &color);
     expect(Ok, stat);
-    todo_wine
     expect(0xffff0000, color);
 
     stat = GdipBitmapGetPixel(bitmap, 40, 90, &color);
