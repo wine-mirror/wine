@@ -2618,6 +2618,9 @@ static void test_video_window(void)
     hr = IVideoWindow_get_AutoShow(window, &l);
     todo_wine ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
 
+    hr = IVideoWindow_put_AutoShow(window, OAFALSE);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
+
     testfilter_init(&source);
     IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
     IFilterGraph2_AddFilter(graph, filter, NULL);

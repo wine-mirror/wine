@@ -273,11 +273,14 @@ HRESULT WINAPI BaseControlWindowImpl_get_WindowStyleEx(IVideoWindow *iface, LONG
 
 HRESULT WINAPI BaseControlWindowImpl_put_AutoShow(IVideoWindow *iface, LONG AutoShow)
 {
-    struct video_window *This = impl_from_IVideoWindow(iface);
+    struct video_window *window = impl_from_IVideoWindow(iface);
 
-    TRACE("window %p, AutoShow %ld.\n", This, AutoShow);
+    TRACE("window %p, AutoShow %ld.\n", window, AutoShow);
 
-    This->AutoShow = AutoShow;
+    if (!window->pPin->peer)
+        return VFW_E_NOT_CONNECTED;
+
+    window->AutoShow = AutoShow;
 
     return S_OK;
 }
