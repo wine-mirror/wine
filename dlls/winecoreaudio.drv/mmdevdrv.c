@@ -224,7 +224,7 @@ static void get_device_guid(EDataFlow flow, const char *dev, GUID *guid)
         RegCloseKey(key);
 }
 
-static void set_stream_volumes(ACImpl *This, int channel)
+static void set_stream_volumes(ACImpl *This)
 {
     struct set_volumes_params params;
 
@@ -232,7 +232,7 @@ static void set_stream_volumes(ACImpl *This, int channel)
     params.master_volume = This->session->mute ? 0.0f : This->session->master_vol;
     params.volumes = This->vols;
     params.session_volumes = This->session->channel_vols;
-    params.channel = channel;
+    params.channel = 0;
 
     UNIX_CALL(set_volumes, &params);
 }
@@ -689,7 +689,7 @@ end:
         This->vols = NULL;
     }else{
         This->stream = stream;
-        set_stream_volumes(This, -1);
+        set_stream_volumes(This);
     }
 
     sessions_unlock();
@@ -1521,8 +1521,7 @@ static HRESULT WINAPI AudioStreamVolume_SetChannelVolume(
 
     This->vols[index] = level;
 
-    WARN("CoreAudio doesn't support per-channel volume control\n");
-    set_stream_volumes(This, index);
+    set_stream_volumes(This);
 
     sessions_unlock();
 
@@ -1566,7 +1565,7 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
     for(i = 0; i < count; ++i)
         This->vols[i] = levels[i];
 
-    set_stream_volumes(This, -1);
+    set_stream_volumes(This);
 
     sessions_unlock();
 
@@ -1682,9 +1681,8 @@ static HRESULT WINAPI ChannelAudioVolume_SetChannelVolume(
 
     session->channel_vols[index] = level;
 
-    WARN("CoreAudio doesn't support per-channel volume control\n");
     LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry)
-        set_stream_volumes(client, index);
+        set_stream_volumes(client);
 
     sessions_unlock();
 
@@ -1737,7 +1735,7 @@ static HRESULT WINAPI ChannelAudioVolume_SetAllVolumes(
         session->channel_vols[i] = levels[i];
 
     LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry)
-        set_stream_volumes(client, -1);
+        set_stream_volumes(client);
 
     sessions_unlock();
 
