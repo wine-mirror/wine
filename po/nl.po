@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2023-03-31 12:05+0200\n"
+"PO-Revision-Date: 2023-05-03 16:25+0200\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -325,7 +325,7 @@ msgstr ""
 
 #: dlls/appwiz.cpl/appwiz.rc:47
 msgid "Please wait until the current uninstall/modify process is complete."
-msgstr ""
+msgstr "Wacht totdat het verwijderen/ veranderen voltooid is."
 
 #: dlls/avifil32/avifil32.rc:42
 msgid "Compress options"
@@ -2399,7 +2399,7 @@ msgstr ""
 
 #: dlls/cryptui/cryptui.rc:304
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
-msgstr "Cryptographisch berichtsyntaxis standaard/PKCS #7 berichten (*.p7b)"
+msgstr "Cryptografische berichtenopbouw standaard/PKCS #7 berichten (*.p7b)"
 
 #: dlls/cryptui/cryptui.rc:306
 msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
@@ -2565,7 +2565,7 @@ msgstr "Ba&se64-geëncodeerde X.509 (.cer):"
 
 #: dlls/cryptui/cryptui.rc:417
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
-msgstr "&Cryptographisch berichtsyntaxis standaard/PKCS #7 berichten (*.p7b)"
+msgstr "&Cryptografische berichtenopbouw standaard/PKCS #7 berichten (*.p7b)"
 
 #: dlls/cryptui/cryptui.rc:419
 msgid "&Include all certificates in the certification path if possible"
@@ -3903,7 +3903,7 @@ msgstr "Argument is niet optioneel"
 
 #: dlls/jscript/jscript.rc:37
 msgid "Syntax error"
-msgstr "Syntax fout"
+msgstr "Formuleringsfout"
 
 #: dlls/jscript/jscript.rc:38
 msgid "Expected ';'"
@@ -4027,7 +4027,7 @@ msgstr "Reguliere Expressie-object verwacht"
 
 #: dlls/jscript/jscript.rc:65
 msgid "Syntax error in regular expression"
-msgstr "Syntax fout in reguliere expressie"
+msgstr "Formuleringsfout in reguliere expressie"
 
 #: dlls/jscript/jscript.rc:66
 msgid "Exception thrown and not caught"
@@ -6341,7 +6341,7 @@ msgstr "Product verwijderd.\n"
 
 #: dlls/kernelbase/winerror.mc:2798
 msgid "Invalid query syntax.\n"
-msgstr "Ongeldige vraagsyntax.\n"
+msgstr "Ongeldige vraag formulering.\n"
 
 #: dlls/kernelbase/winerror.mc:2803
 msgid "Invalid field.\n"
@@ -6565,7 +6565,7 @@ msgstr "RPC-protocol fout.\n"
 
 #: dlls/kernelbase/winerror.mc:3078
 msgid "Unsupported transfer syntax.\n"
-msgstr "Transfer-syntax wordt niet ondersteund.\n"
+msgstr "Overdrachtsformulering wordt niet ondersteund.\n"
 
 #: dlls/kernelbase/winerror.mc:3088
 msgid "Invalid tag.\n"
@@ -6581,11 +6581,11 @@ msgstr "Geen entry-naam.\n"
 
 #: dlls/kernelbase/winerror.mc:3103
 msgid "Invalid name syntax.\n"
-msgstr "Ongeldige naam-syntax.\n"
+msgstr "Ongeldige formulering van de naam.\n"
 
 #: dlls/kernelbase/winerror.mc:3108
 msgid "Unsupported name syntax.\n"
-msgstr "Naam-syntax wordt niet ondersteund.\n"
+msgstr "Niet ondersteunde formulering van de naam.\n"
 
 #: dlls/kernelbase/winerror.mc:3113
 msgid "No network address.\n"
@@ -7053,7 +7053,7 @@ msgstr "Geen toegang mogelijk tot het bestand.\n"
 
 #: dlls/kernelbase/winerror.mc:3693
 msgid "The filename cannot be resolved.\n"
-msgstr "De bestandsnaam kan niet worden geresolveerd.\n"
+msgstr "De bestandsnaam kan niet worden vastgesteld.\n"
 
 #: dlls/kernelbase/winerror.mc:3698
 msgid "RPC entry type mismatch.\n"
@@ -12721,7 +12721,7 @@ msgstr "Het URL-schema wordt niet herkent of ondersteund.\n"
 
 #: dlls/wininet/winineterror.mc:46
 msgid "The server name could not be resolved.\n"
-msgstr "De servernaam kan niet worden omgezet.\n"
+msgstr "De servernaam kan niet worden vastgesteld.\n"
 
 #: dlls/wininet/winineterror.mc:51
 msgid "The requested operation is invalid.\n"
@@ -13467,7 +13467,7 @@ msgstr "Attribuut of waarde bestaat"
 
 #: dlls/wldap32/wldap32.rc:53
 msgid "Invalid Syntax"
-msgstr "Ongeldige syntax"
+msgstr "Ongeldige formulering"
 
 #: dlls/wldap32/wldap32.rc:64
 msgid "No Such Object"
@@ -13479,7 +13479,7 @@ msgstr "Aliasprobleem"
 
 #: dlls/wldap32/wldap32.rc:66
 msgid "Invalid DN Syntax"
-msgstr "Ongeldige DN-syntax"
+msgstr "Ongeldige DN-formulering"
 
 #: dlls/wldap32/wldap32.rc:67
 msgid "Is Leaf"
@@ -14061,7 +14061,7 @@ msgstr ""
 "\n"
 "SET zonder parameters toont alle omgevingsvariabelen.\n"
 "\n"
-"De syntax voor het maken of wijzigen van een omgevingsvariabele is:\n"
+"De opdracht voor het maken of wijzigen van een omgevingsvariabele is:\n"
 "\n"
 "SET <variable>=<waarde>\n"
 "\n"
@@ -14440,7 +14440,7 @@ msgstr "Argument ontbreekt\n"
 
 #: programs/cmd/cmd.rc:375
 msgid "Syntax error\n"
-msgstr "Syntaxisfout\n"
+msgstr "Formuleringsfout\n"
 
 #: programs/cmd/cmd.rc:377
 msgid "No help available for %1\n"
@@ -14762,24 +14762,20 @@ msgid "&Run..."
 msgstr "&Uitvoeren..."
 
 #: programs/findstr/findstr.rc:28
-#, fuzzy
-#| msgid "Use c&onnection string"
 msgid "Usage: findstr /options string\n"
-msgstr "Ver&bindingsreeks gebruiken"
+msgstr "Gebruik: findstr /opties string\n"
 
 #: programs/findstr/findstr.rc:29
-#, fuzzy
-#| msgid "Invalid command line.\n"
 msgid "FINDSTR: Bad command line\n"
-msgstr "Ongeldige opdrachtregel.\n"
+msgstr "FINDSTR: Foutieve opdrachtregel\n"
 
 #: programs/findstr/findstr.rc:30
 msgid "FINDSTR: Cannot open %s\n"
-msgstr ""
+msgstr "FINDSTR: Kan %s niet openen\n"
 
 #: programs/findstr/findstr.rc:31
 msgid "FINDSTR: /%c ignored\n"
-msgstr ""
+msgstr "FINDSTR: /%c genegeerd\n"
 
 #: programs/fsutil/fsutil.mc:28
 msgid ""
@@ -15968,7 +15964,7 @@ msgstr "Pictogrammen (*.ico)"
 
 #: programs/reg/reg.rc:139
 msgid "reg: Invalid syntax. "
-msgstr "reg: Foutieve syntax. "
+msgstr "reg: Foutieve formulering. "
 
 #: programs/reg/reg.rc:142
 msgid "Type \"REG %1 /?\" for help.\n"
@@ -17365,14 +17361,12 @@ msgstr ""
 "Signaal verzonden om PID %1!u!, onderdeel van PID %2!u!, af te sluiten.\n"
 
 #: include/wine/wine_common_ver.rc:138
-#, fuzzy
-#| msgid "page tab list"
 msgid "Wine tasklist"
-msgstr "paginatablijst"
+msgstr "Wine takenlijst"
 
 #: programs/tasklist/tasklist.rc:29
 msgid "Usage: tasklist [/?]\n"
-msgstr ""
+msgstr "Gebruik: tasklist [/?]\n"
 
 #: programs/tasklist/tasklist.rc:30 programs/taskmgr/taskmgr.rc:272
 msgid "Image Name"
@@ -17380,41 +17374,31 @@ msgstr "Procesnaam"
 
 #: programs/tasklist/tasklist.rc:31 programs/taskmgr/taskmgr.rc:273
 msgid "PID"
-msgstr "Proces-ID"
+msgstr "PID"
 
 #: programs/tasklist/tasklist.rc:32
-#, fuzzy
-#| msgid "Session ID"
 msgid "Session Name"
-msgstr "Sessie-ID"
+msgstr "Sessie Naam"
 
 #: programs/tasklist/tasklist.rc:33
-#, fuzzy
-#| msgid "Session ID"
 msgid "Session#"
-msgstr "Sessie-ID"
+msgstr "Sessie Nr."
 
 #: programs/tasklist/tasklist.rc:34 programs/taskmgr/taskmgr.rc:276
 msgid "Mem Usage"
-msgstr "Geheugengebruik"
+msgstr "Geheugengebr."
 
 #: programs/tasklist/tasklist.rc:35
-#, fuzzy
-#| msgid "OK"
 msgid "K"
-msgstr "OK"
+msgstr "K"
 
 #: programs/tasklist/tasklist.rc:36
-#, fuzzy
-#| msgid "reg: Invalid syntax. "
 msgid "ERROR: Invalid syntax\n"
-msgstr "reg: Foutieve syntax. "
+msgstr "FOUT: Ongeldige formulering\n"
 
 #: programs/tasklist/tasklist.rc:37
-#, fuzzy
-#| msgid "The filename cannot be resolved.\n"
 msgid "ERROR: The search filter cannot be recognized.\n"
-msgstr "De bestandsnaam kan niet worden geresolveerd.\n"
+msgstr "FOUT: Het zoekfilter wordt niet herkend.\n"
 
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -19382,7 +19366,7 @@ msgstr "Fout: Foutieve zoekopdracht\n"
 
 #: programs/wmic/wmic.rc:31
 msgid "Error: Invalid syntax for PATH\n"
-msgstr "Fout: Foutieve syntax voor PATH\n"
+msgstr "Fout: Foutieve formulering voor PATH\n"
 
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
