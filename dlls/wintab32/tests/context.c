@@ -211,7 +211,7 @@ START_TEST(context)
 
     if (!hWintab)
     {
-        skip("Wintab32.dll not available\n");
+        win_skip("Wintab32.dll not available\n");
         return;
     }
 
