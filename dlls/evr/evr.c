@@ -382,7 +382,7 @@ static HRESULT evr_copy_sample_buffer(struct evr *filter, IMediaSample *input_sa
         {
             if (SUCCEEDED(hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, D3DLOCK_DISCARD)))
             {
-                if (src_stride < 0) src -= src_stride * (lines - 1);
+                if (src_stride < 0) src += (-src_stride) * (lines - 1);
                 MFCopyImage(locked_rect.pBits, locked_rect.Pitch, src, src_stride, width * 4, lines);
                 IDirect3DSurface9_UnlockRect(surface);
             }
