@@ -482,6 +482,9 @@ HRESULT WINAPI BaseControlWindowImpl_put_Owner(IVideoWindow *iface, OAHWND owner
 
     TRACE("window %p, owner %#Ix.\n", window, owner);
 
+    if (!window->pPin->peer)
+        return VFW_E_NOT_CONNECTED;
+
     /* Make sure we are marked as WS_CHILD before reparenting ourselves, so that
      * we do not steal focus. LEGO Island depends on this. */
 
