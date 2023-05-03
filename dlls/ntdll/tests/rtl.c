@@ -3625,6 +3625,29 @@ static void test_RtlInitializeSid(void)
     ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %#lx.\n", status);
 }
 
+static void test_RtlValidSecurityDescriptor(void)
+{
+    SECURITY_DESCRIPTOR *sd;
+    NTSTATUS status;
+    BOOLEAN ret;
+
+    ret = RtlValidSecurityDescriptor(NULL);
+    ok(!ret, "Unexpected return value %d.\n", ret);
+
+    sd = calloc(1, SECURITY_DESCRIPTOR_MIN_LENGTH);
+
+    ret = RtlValidSecurityDescriptor(sd);
+    ok(!ret, "Unexpected return value %d.\n", ret);
+
+    status = RtlCreateSecurityDescriptor(sd, SECURITY_DESCRIPTOR_REVISION);
+    ok(!status, "Unexpected return value %#lx.\n", status);
+
+    ret = RtlValidSecurityDescriptor(sd);
+    ok(ret, "Unexpected return value %d.\n", ret);
+
+    free(sd);
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -3670,4 +3693,5 @@ START_TEST(rtl)
     test_RtlDestroyHeap();
     test_RtlFirstFreeAce();
     test_RtlInitializeSid();
+    test_RtlValidSecurityDescriptor();
 }

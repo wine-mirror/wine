@@ -8560,6 +8560,34 @@ static void test_group_as_file_owner(void)
     ok(ret, "got error %lu\n", GetLastError());
 }
 
+static void test_IsValidSecurityDescriptor(void)
+{
+    SECURITY_DESCRIPTOR *sd;
+    BOOL ret;
+
+    SetLastError(0xdeadbeef);
+    ret = IsValidSecurityDescriptor(NULL);
+    ok(!ret, "Unexpected return value %d.\n", ret);
+    ok(GetLastError() == ERROR_INVALID_SECURITY_DESCR, "Unexpected error %ld.\n", GetLastError());
+
+    sd = calloc(1, SECURITY_DESCRIPTOR_MIN_LENGTH);
+
+    SetLastError(0xdeadbeef);
+    ret = IsValidSecurityDescriptor(sd);
+    ok(!ret, "Unexpected return value %d.\n", ret);
+    ok(GetLastError() == ERROR_INVALID_SECURITY_DESCR, "Unexpected error %ld.\n", GetLastError());
+
+    ret = InitializeSecurityDescriptor(sd, SECURITY_DESCRIPTOR_REVISION);
+    ok(ret, "Unexpected return value %d, error %ld.\n", ret, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = IsValidSecurityDescriptor(sd);
+    ok(ret, "Unexpected return value %d.\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "Unexpected error %ld.\n", GetLastError());
+
+    free(sd);
+}
+
 START_TEST(security)
 {
     init();
@@ -8629,6 +8657,7 @@ START_TEST(security)
     test_GetKernelObjectSecurity();
     test_elevation();
     test_group_as_file_owner();
+    test_IsValidSecurityDescriptor();
 
     /* Must be the last test, modifies process token */
     test_token_security_descriptor();
