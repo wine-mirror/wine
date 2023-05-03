@@ -111,8 +111,12 @@ void wayland_output_use_xdg_extension(struct wayland_output *output) DECLSPEC_HI
  */
 
 LRESULT WAYLAND_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) DECLSPEC_HIDDEN;
+void WAYLAND_DestroyWindow(HWND hwnd) DECLSPEC_HIDDEN;
 BOOL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manager,
                                   BOOL force, void *param) DECLSPEC_HIDDEN;
 LRESULT WAYLAND_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) DECLSPEC_HIDDEN;
+BOOL WAYLAND_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags,
+                               const RECT *window_rect, const RECT *client_rect,
+                               RECT *visible_rect, struct window_surface **surface) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_WAYLANDDRV_H */

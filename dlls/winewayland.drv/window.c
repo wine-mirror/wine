@@ -24,11 +24,150 @@
 
 #include "config.h"
 
+#include <assert.h>
+#include <stdlib.h>
+
 #include "waylanddrv.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
+
+/* private window data */
+struct wayland_win_data
+{
+    struct rb_entry entry;
+    /* hwnd that this private data belongs to */
+    HWND hwnd;
+};
+
+static int wayland_win_data_cmp_rb(const void *key,
+                                   const struct rb_entry *entry)
+{
+    HWND key_hwnd = (HWND)key; /* cast to work around const */
+    const struct wayland_win_data *entry_win_data =
+        RB_ENTRY_VALUE(entry, const struct wayland_win_data, entry);
+
+    if (key_hwnd < entry_win_data->hwnd) return -1;
+    if (key_hwnd > entry_win_data->hwnd) return 1;
+    return 0;
+}
+
+static pthread_mutex_t win_data_mutex = PTHREAD_MUTEX_INITIALIZER;
+static struct rb_tree win_data_rb = { wayland_win_data_cmp_rb };
+
+/***********************************************************************
+ *           wayland_win_data_create
+ *
+ * Create a data window structure for an existing window.
+ */
+static struct wayland_win_data *wayland_win_data_create(HWND hwnd)
+{
+    struct wayland_win_data *data;
+    struct rb_entry *rb_entry;
+    HWND parent;
+
+    /* Don't create win data for desktop or HWND_MESSAGE windows. */
+    if (!(parent = NtUserGetAncestor(hwnd, GA_PARENT))) return NULL;
+    if (parent != NtUserGetDesktopWindow() && !NtUserGetAncestor(parent, GA_PARENT))
+        return NULL;
+
+    if (!(data = calloc(1, sizeof(*data)))) return NULL;
+
+    data->hwnd = hwnd;
+
+    pthread_mutex_lock(&win_data_mutex);
+
+    /* Check that another thread hasn't already created the wayland_win_data. */
+    if ((rb_entry = rb_get(&win_data_rb, hwnd)))
+    {
+        free(data);
+        return RB_ENTRY_VALUE(rb_entry, struct wayland_win_data, entry);
+    }
+
+    rb_put(&win_data_rb, hwnd, &data->entry);
+
+    TRACE("hwnd=%p\n", data->hwnd);
+
+    return data;
+}
+
+/***********************************************************************
+ *           wayland_win_data_destroy
+ */
+static void wayland_win_data_destroy(struct wayland_win_data *data)
+{
+    TRACE("hwnd=%p\n", data->hwnd);
+
+    rb_remove(&win_data_rb, &data->entry);
+
+    pthread_mutex_unlock(&win_data_mutex);
+
+    free(data);
+}
+
+/***********************************************************************
+ *           wayland_win_data_get
+ *
+ * Lock and return the data structure associated with a window.
+ */
+static struct wayland_win_data *wayland_win_data_get(HWND hwnd)
+{
+    struct rb_entry *rb_entry;
+
+    pthread_mutex_lock(&win_data_mutex);
+
+    if ((rb_entry = rb_get(&win_data_rb, hwnd)))
+        return RB_ENTRY_VALUE(rb_entry, struct wayland_win_data, entry);
+
+    pthread_mutex_unlock(&win_data_mutex);
+
+    return NULL;
+}
+
+/***********************************************************************
+ *           wayland_win_data_release
+ *
+ * Release the data returned by wayland_win_data_get.
+ */
+static void wayland_win_data_release(struct wayland_win_data *data)
+{
+    assert(data);
+    pthread_mutex_unlock(&win_data_mutex);
+}
+
+/***********************************************************************
+ *           WAYLAND_DestroyWindow
+ */
+void WAYLAND_DestroyWindow(HWND hwnd)
+{
+    struct wayland_win_data *data;
+
+    TRACE("%p\n", hwnd);
+
+    if (!(data = wayland_win_data_get(hwnd))) return;
+    wayland_win_data_destroy(data);
+}
+
+/***********************************************************************
+ *           WAYLAND_WindowPosChanging
+ */
+BOOL WAYLAND_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags,
+                               const RECT *window_rect, const RECT *client_rect,
+                               RECT *visible_rect, struct window_surface **surface)
+{
+    struct wayland_win_data *data = wayland_win_data_get(hwnd);
+
+    TRACE("hwnd %p window %s client %s visible %s after %p flags %08x\n",
+          hwnd, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
+          wine_dbgstr_rect(visible_rect), insert_after, swp_flags);
+
+    if (!data && !(data = wayland_win_data_create(hwnd))) return TRUE;
+
+    wayland_win_data_release(data);
+
+    return TRUE;
+}
 
 static void wayland_resize_desktop(void)
 {
