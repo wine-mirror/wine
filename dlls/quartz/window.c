@@ -1138,13 +1138,16 @@ static HRESULT WINAPI basic_video_SetDefaultDestinationPosition(IBasicVideo *ifa
 static HRESULT WINAPI basic_video_GetVideoSize(IBasicVideo *iface, LONG *width, LONG *height)
 {
     struct video_window *window = impl_from_IBasicVideo(iface);
-    const BITMAPINFOHEADER *bitmap_header = get_bitmap_header(window);
+    const BITMAPINFOHEADER *bitmap_header;
 
     TRACE("window %p, width %p, height %p.\n", window, width, height);
 
     if (!width || !height)
         return E_POINTER;
+    if (!window->pPin->peer)
+        return VFW_E_NOT_CONNECTED;
 
+    bitmap_header = get_bitmap_header(window);
     *width = bitmap_header->biWidth;
     *height = bitmap_header->biHeight;
     return S_OK;

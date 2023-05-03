@@ -2807,6 +2807,8 @@ static void test_basic_video(void)
     ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
     hr = IBasicVideo_GetVideoSize(video, NULL, &height);
     ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    hr = IBasicVideo_GetVideoSize(video, &width, &height);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
 
     hr = IBasicVideo_GetVideoPaletteEntries(video, 0, 1, NULL, &l);
     ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
