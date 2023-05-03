@@ -511,11 +511,14 @@ HRESULT WINAPI BaseControlWindowImpl_get_Owner(IVideoWindow *iface, OAHWND *Owne
 
 HRESULT WINAPI BaseControlWindowImpl_put_MessageDrain(IVideoWindow *iface, OAHWND Drain)
 {
-    struct video_window *This = impl_from_IVideoWindow(iface);
+    struct video_window *window = impl_from_IVideoWindow(iface);
 
-    TRACE("window %p, drain %#Ix.\n", This, Drain);
+    TRACE("window %p, drain %#Ix.\n", window, Drain);
 
-    This->hwndDrain = (HWND)Drain;
+    if (!window->pPin->peer)
+        return VFW_E_NOT_CONNECTED;
+
+    window->hwndDrain = (HWND)Drain;
 
     return S_OK;
 }
