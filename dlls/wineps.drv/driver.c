@@ -126,13 +126,13 @@ void PSDRV_MergeDevmodes( PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2, PRINTERI
 	    dm1->dmPublic.dmPaperWidth  = paper_size_from_points( page->PaperDimension->x );
 	    dm1->dmPublic.dmPaperLength = paper_size_from_points( page->PaperDimension->y );
 	    dm1->dmPublic.dmFields |= DM_PAPERSIZE | DM_PAPERWIDTH | DM_PAPERLENGTH;
-	    TRACE("Changing page to %s %d x %d\n", page->FullName,
+	    TRACE("Changing page to %s %d x %d\n", debugstr_w(page->FullName),
 		  dm1->dmPublic.dmPaperWidth,
 		  dm1->dmPublic.dmPaperLength );
 
             if (dm1->dmPublic.dmSize >= FIELD_OFFSET(DEVMODEW, dmFormName) + CCHFORMNAME * sizeof(WCHAR))
             {
-                MultiByteToWideChar(CP_ACP, 0, page->FullName, -1, dm1->dmPublic.dmFormName, CCHFORMNAME);
+                lstrcpynW(dm1->dmPublic.dmFormName, page->FullName, CCHFORMNAME);
                 dm1->dmPublic.dmFields |= DM_FORMNAME;
             }
 	}
@@ -351,7 +351,7 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
             i++;
         }
         TRACE("Setting pagesize to item %d, WinPage %d (%s), PaperSize %.2fx%.2f\n", Cursel,
-              ps->WinPage, ps->FullName, ps->PaperDimension->x, ps->PaperDimension->y);
+              ps->WinPage, debugstr_w(ps->FullName), ps->PaperDimension->x, ps->PaperDimension->y);
         di->dlgdm->dmPublic.dmPaperSize = ps->WinPage;
         di->dlgdm->dmPublic.dmFields |= DM_PAPERSIZE;
 
@@ -361,7 +361,7 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
 
         if (di->dlgdm->dmPublic.dmSize >= FIELD_OFFSET(DEVMODEW, dmFormName) + CCHFORMNAME * sizeof(WCHAR))
         {
-            MultiByteToWideChar(CP_ACP, 0, ps->FullName, -1, di->dlgdm->dmPublic.dmFormName, CCHFORMNAME);
+            lstrcpynW(di->dlgdm->dmPublic.dmFormName, ps->FullName, CCHFORMNAME);
             di->dlgdm->dmPublic.dmFields |= DM_FORMNAME;
         }
         SendMessageW(GetParent(hwnd), PSM_CHANGED, 0, 0);
@@ -599,10 +599,10 @@ DWORD WINAPI DrvDeviceCapabilities(HANDLE printer, WCHAR *device_name, WORD capa
 
       LIST_FOR_EACH_ENTRY(ps, &pi->ppd->PageSizes, PAGESIZE, entry)
       {
-        TRACE("DC_PAPERNAMES: %s\n", debugstr_a(ps->FullName));
+        TRACE("DC_PAPERNAMES: %s\n", debugstr_w(ps->FullName));
         i++;
         if (output != NULL) {
-          MultiByteToWideChar(CP_ACP, 0, ps->FullName, -1, cp, 64);
+          lstrcpynW(cp, ps->FullName, 64);
 	  cp += 64;
 	}
       }

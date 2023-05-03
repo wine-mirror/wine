@@ -28,6 +28,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
+#include "winnls.h"
 #include "wine/debug.h"
 #include "psdrv.h"
 
@@ -822,13 +823,17 @@ PPD *PSDRV_ParsePPD( const WCHAR *fname, HANDLE printer )
 		tuple.option = NULL;
 	    }
 	    if(!page->FullName) {
+                int len;
+
 	        if(tuple.opttrans) {
-		    page->FullName = tuple.opttrans;
-		    tuple.opttrans = NULL;
+                    len = MultiByteToWideChar( CP_ACP, 0, tuple.opttrans, -1, NULL, 0 );
+                    page->FullName = HeapAlloc( PSDRV_Heap, 0, len * sizeof(WCHAR) );
+                    MultiByteToWideChar( CP_ACP, 0, tuple.opttrans, -1, page->FullName, len );
 		} else
                 {
-                    page->FullName = HeapAlloc( PSDRV_Heap, 0, strlen(page->Name)+1 );
-                    strcpy( page->FullName, page->Name );
+                    len = MultiByteToWideChar( CP_ACP, 0, page->Name, -1, NULL, 0 );
+                    page->FullName = HeapAlloc( PSDRV_Heap, 0, len * sizeof(WCHAR) );
+                    MultiByteToWideChar( CP_ACP, 0, page->Name, -1, page->FullName, len );
 		}
 	    }
 	    if(!page->InvocationString) {
@@ -871,8 +876,9 @@ PPD *PSDRV_ParsePPD( const WCHAR *fname, HANDLE printer )
 		tuple.option = NULL;
 	    }
 	    if(!page->FullName) {
-		page->FullName = tuple.opttrans;
-		tuple.opttrans = NULL;
+                int len = MultiByteToWideChar( CP_ACP, 0, tuple.opttrans, -1, NULL, 0 );
+                page->FullName = HeapAlloc( PSDRV_Heap, 0, len * sizeof(WCHAR) );
+                MultiByteToWideChar( CP_ACP, 0, tuple.opttrans, -1, page->FullName, len );
 	    }
 
 #define PIA page->ImageableArea
@@ -894,8 +900,9 @@ PPD *PSDRV_ParsePPD( const WCHAR *fname, HANDLE printer )
 		tuple.option = NULL;
 	    }
 	    if(!page->FullName) {
-		page->FullName = tuple.opttrans;
-		tuple.opttrans = NULL;
+                int len = MultiByteToWideChar( CP_ACP, 0, tuple.opttrans, -1, NULL, 0 );
+                page->FullName = HeapAlloc( PSDRV_Heap, 0, len * sizeof(WCHAR) );
+                MultiByteToWideChar( CP_ACP, 0, tuple.opttrans, -1, page->FullName, len );
 	    }
 
 #define PD page->PaperDimension
@@ -1026,7 +1033,7 @@ PPD *PSDRV_ParsePPD( const WCHAR *fname, HANDLE printer )
     {
         if(!page->InvocationString || !page->PaperDimension)
         {
-            WARN("Removing page %s since it has a missing %s entry\n", debugstr_a(page->FullName),
+            WARN("Removing page %s since it has a missing %s entry\n", debugstr_w(page->FullName),
                  page->InvocationString ? "PaperDimension" : "InvocationString");
             HeapFree(PSDRV_Heap, 0, page->Name);
             HeapFree(PSDRV_Heap, 0, page->FullName);
@@ -1085,7 +1092,7 @@ PPD *PSDRV_ParsePPD( const WCHAR *fname, HANDLE printer )
 
 	LIST_FOR_EACH_ENTRY(page, &ppd->PageSizes, PAGESIZE, entry) {
 	    TRACE("'%s' aka '%s' (%d) invoked by '%s'\n", page->Name,
-	      page->FullName, page->WinPage, page->InvocationString);
+	      debugstr_w(page->FullName), page->WinPage, page->InvocationString);
 	    if(page->ImageableArea)
 	        TRACE("Area = %.2f,%.2f - %.2f, %.2f\n",
 		      page->ImageableArea->llx, page->ImageableArea->lly,

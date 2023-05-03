@@ -136,7 +136,7 @@ typedef struct {
 typedef struct _tagPAGESIZE {
     struct list         entry;
     char		*Name;
-    char		*FullName;
+    WCHAR		*FullName;
     char		*InvocationString;
     IMAGEABLEAREA	*ImageableArea;
     PAPERDIMENSION	*PaperDimension;
