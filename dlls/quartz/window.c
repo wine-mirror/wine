@@ -598,6 +598,9 @@ HRESULT WINAPI BaseControlWindowImpl_SetWindowPosition(IVideoWindow *iface,
 
     TRACE("window %p, left %ld, top %ld, width %ld, height %ld.\n", window, left, top, width, height);
 
+    if (!window->pPin->peer)
+        return VFW_E_NOT_CONNECTED;
+
     if (!SetWindowPos(window->hwnd, NULL, left, top, width, height, SWP_NOACTIVATE | SWP_NOZORDER))
         return E_FAIL;
     return S_OK;
