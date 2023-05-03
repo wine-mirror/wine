@@ -2881,7 +2881,7 @@ static void test_WSCGetProviderInfo(void)
 
     if (!pWSCGetProviderInfo)
     {
-        skip("WSCGetProviderInfo is not available.\n");
+        win_skip("WSCGetProviderInfo is not available.\n");
         return;
     }
 
