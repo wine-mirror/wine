@@ -2378,6 +2378,11 @@ static void test_video_window(void)
     hr = IVideoWindow_get_Caption(window, &caption);
     todo_wine ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
 
+    caption = SysAllocString(L"foo");
+    hr = IVideoWindow_put_Caption(window, caption);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
+    SysFreeString(caption);
+
     hr = IVideoWindow_get_WindowStyle(window, &l);
     todo_wine ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
 

@@ -194,6 +194,9 @@ HRESULT WINAPI BaseControlWindowImpl_put_Caption(IVideoWindow *iface, BSTR capti
 
     TRACE("window %p, caption %s.\n", window, debugstr_w(caption));
 
+    if (!window->pPin->peer)
+        return VFW_E_NOT_CONNECTED;
+
     if (!SetWindowTextW(window->hwnd, caption))
         return E_FAIL;
 
