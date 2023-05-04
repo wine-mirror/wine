@@ -56,6 +56,7 @@ enum print_flags
     CALL_START_PAGE = 0x1,
     CALL_END_PAGE   = 0x2,
     WRITE_DEVMODE   = 0x4,
+    BANDING         = 0x8,
 };
 
 struct print
@@ -559,6 +560,24 @@ INT WINAPI Escape( HDC hdc, INT escape, INT in_count, const char *in_data, void 
     {
     case ABORTDOC:
         return AbortDoc( hdc );
+
+    case NEXTBAND:
+    {
+        RECT *rect = out_data;
+        struct print *print;
+        DC_ATTR *dc_attr;
+
+        if (!(dc_attr = get_dc_attr( hdc )) || !(print = get_dc_print( dc_attr ))) break;
+        if (print->flags & BANDING)
+        {
+            print->flags &= ~BANDING;
+            SetRectEmpty( rect );
+            return EndPage( hdc );
+        }
+        print->flags |= BANDING;
+        SetRect( rect, 0, 0, GetDeviceCaps(hdc, HORZRES), GetDeviceCaps(hdc, VERTRES) );
+        return 1;
+    }
 
     case ENDDOC:
         return EndDoc( hdc );
