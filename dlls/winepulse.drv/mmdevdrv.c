@@ -287,8 +287,13 @@ static WCHAR *get_application_name(BOOL query_app_name)
         }
 
     skip:
+        if (found)
+        {
+            name = wcsdup(productname);
+            free(data);
+            return name;
+        }
         free(data);
-        if (found) return wcsdup(productname);
     }
 
     name = wcsrchr(path, '\\');
