@@ -303,7 +303,7 @@ static void test_unconnected_filter_state(IBaseFilter *filter)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    todo_wine ok(hr == VFW_S_CANT_CUE, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_S_CANT_CUE, "Got hr %#lx.\n", hr);
     ok(state == State_Paused, "Got state %u.\n", state);
 
     hr = IBaseFilter_Run(filter, 0);
@@ -317,7 +317,7 @@ static void test_unconnected_filter_state(IBaseFilter *filter)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    todo_wine ok(hr == VFW_S_CANT_CUE, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_S_CANT_CUE, "Got hr %#lx.\n", hr);
     ok(state == State_Paused, "Got state %u.\n", state);
 
     hr = IBaseFilter_Stop(filter);
@@ -472,6 +472,8 @@ struct testfilter
     struct strmbase_filter filter;
     struct strmbase_sink sink;
     const AM_MEDIA_TYPE *mt;
+    HANDLE sample_event, eos_event;
+    unsigned int sample_count, eos_count;
 };
 
 static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -492,12 +494,24 @@ static void testfilter_destroy(struct strmbase_filter *iface)
     struct testfilter *filter = impl_from_strmbase_filter(iface);
     strmbase_sink_cleanup(&filter->sink);
     strmbase_filter_cleanup(&filter->filter);
+    CloseHandle(filter->eos_event);
+    CloseHandle(filter->sample_event);
+}
+
+static HRESULT testfilter_init_stream(struct strmbase_filter *iface)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface);
+
+    filter->eos_count = 0;
+    filter->sample_count = 0;
+    return S_OK;
 }
 
 static const struct strmbase_filter_ops testfilter_ops =
 {
     .filter_get_pin = testfilter_get_pin,
     .filter_destroy = testfilter_destroy,
+    .filter_init_stream = testfilter_init_stream,
 };
 
 static HRESULT testsink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
@@ -532,11 +546,61 @@ static HRESULT testsink_connect(struct strmbase_sink *iface, IPin *peer, const A
     return S_OK;
 }
 
+static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample *sample)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
+    REFERENCE_TIME start, end;
+    AM_MEDIA_TYPE *mt;
+    HRESULT hr;
+
+    hr = IMediaSample_GetTime(sample, &start, &end);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    if (winetest_debug > 1)
+        trace("%04lx: Got sample with timestamps %I64d-%I64d.\n", GetCurrentThreadId(), start, end);
+
+    mt = (void *)0xdeadbeef;
+    hr = IMediaSample_GetMediaType(sample, &mt);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(!mt, "Got unexpected media type %p.\n", mt);
+
+    /* Usually the actual size of the sample is the same as its capacity.
+     * For unclear reasons, though, this isn't always the case. */
+
+    ok(!filter->eos_count, "Got a sample after EOS.\n");
+    ++filter->sample_count;
+    SetEvent(filter->sample_event);
+    return S_OK;
+}
+
+static HRESULT testsink_eos(struct strmbase_sink *iface)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
+
+    if (winetest_debug > 1)
+        trace("%04lx: Got EOS.\n", GetCurrentThreadId());
+
+    ok(!filter->eos_count, "Got %u EOS events.\n", filter->eos_count + 1);
+    ++filter->eos_count;
+    SetEvent(filter->eos_event);
+    return S_OK;
+}
+
+static HRESULT testsink_new_segment(struct strmbase_sink *iface,
+        REFERENCE_TIME start, REFERENCE_TIME end, double rate)
+{
+    ok(0, "Unexpected new segment.\n");
+    return S_OK;
+}
+
 static const struct strmbase_sink_ops testsink_ops =
 {
     .base.pin_query_interface = testsink_query_interface,
     .base.pin_get_media_type = testsink_get_media_type,
     .sink_connect = testsink_connect,
+    .pfnReceive = testsink_Receive,
+    .sink_eos = testsink_eos,
+    .sink_new_segment = testsink_new_segment,
 };
 
 static void testfilter_init(struct testfilter *filter)
@@ -545,6 +609,8 @@ static void testfilter_init(struct testfilter *filter)
     memset(filter, 0, sizeof(*filter));
     strmbase_filter_init(&filter->filter, NULL, &clsid, &testfilter_ops);
     strmbase_sink_init(&filter->sink, &filter->filter, L"sink", &testsink_ops, NULL);
+    filter->sample_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    filter->eos_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 }
 
 static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
@@ -627,6 +693,97 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
     IFilterGraph2_Disconnect(graph, &testsink->sink.pin.IPin_iface);
 }
 
+static void test_filter_state(IFilterGraph2 *graph, IMediaControl *control,
+        IPin *source, struct testfilter *testsink)
+{
+    IMemAllocator *allocator;
+    IMediaSample *sample;
+    OAFilterState state;
+    WAVEFORMATEX format;
+    AM_MEDIA_TYPE mt;
+    HRESULT hr;
+    DWORD ret;
+
+    init_pcm_mt(&mt, &format, 1, 32000, 16);
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Stopped, "Got state %lu.\n", state);
+
+    allocator = testsink->sink.pAllocator;
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == VFW_S_CANT_CUE, "Got hr %#lx.\n", hr);
+    ok(state == State_Paused, "Got state %lu.\n", state);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* starting up the device can be a little slow */
+    ret = WaitForSingleObject(testsink->sample_event, 5000);
+    ok(!ret, "Got %lu.\n", ret);
+
+    ret = WaitForSingleObject(testsink->sample_event, 1000);
+    ok(!ret, "Got %lu.\n", ret);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Running, "Got state %lu.\n", state);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == VFW_S_CANT_CUE, "Got hr %#lx.\n", hr);
+    ok(state == State_Paused, "Got state %lu.\n", state);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Stopped, "Got state %lu.\n", state);
+
+    hr = IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
+    ok(hr == VFW_E_NOT_COMMITTED, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Running, "Got state %lu.\n", state);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Stopped, "Got state %lu.\n", state);
+
+    /* Test committing the allocator before the capture filter does. */
+
+    hr = IMemAllocator_Commit(allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemAllocator_Decommit(allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    IFilterGraph2_Disconnect(graph, source);
+    IFilterGraph2_Disconnect(graph, &testsink->sink.pin.IPin_iface);
+}
+
 static void test_connect_pin(IBaseFilter *filter)
 {
     AM_MEDIA_TYPE mt, req_mt, *source_mt;
@@ -648,6 +805,7 @@ static void test_connect_pin(IBaseFilter *filter)
     IBaseFilter_FindPin(filter, L"Capture", &source);
 
     test_source_allocator(graph, control, source, &testsink);
+    test_filter_state(graph, control, source, &testsink);
 
     peer = (IPin *)0xdeadbeef;
     hr = IPin_ConnectedTo(source, &peer);
