@@ -547,6 +547,86 @@ static void testfilter_init(struct testfilter *filter)
     strmbase_sink_init(&filter->sink, &filter->filter, L"sink", &testsink_ops, NULL);
 }
 
+static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
+        IPin *source, struct testfilter *testsink)
+{
+    ALLOCATOR_PROPERTIES props, req_props = {2, 3200, 32, 0};
+    IMemAllocator *allocator;
+    IMediaSample *sample;
+    WAVEFORMATEX format;
+    AM_MEDIA_TYPE mt;
+    HRESULT hr;
+
+    init_pcm_mt(&mt, &format, 1, 32000, 16);
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ok(!!testsink->sink.pAllocator, "Expected an allocator.\n");
+    hr = IMemAllocator_GetProperties(testsink->sink.pAllocator, &props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(props.cBuffers == 4, "Got %ld buffers.\n", props.cBuffers);
+    ok(props.cbBuffer == 32000, "Got size %ld.\n", props.cbBuffer);
+    ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
+    ok(!props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
+
+    hr = IMemAllocator_GetBuffer(testsink->sink.pAllocator, &sample, NULL, NULL, 0);
+    ok(hr == VFW_E_NOT_COMMITTED, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemAllocator_GetBuffer(testsink->sink.pAllocator, &sample, NULL, NULL, AM_GBF_NOWAIT);
+    todo_wine ok(hr == VFW_E_TIMEOUT, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemAllocator_GetBuffer(testsink->sink.pAllocator, &sample, NULL, NULL, 0);
+    ok(hr == VFW_E_NOT_COMMITTED, "Got hr %#lx.\n", hr);
+
+    IFilterGraph2_Disconnect(graph, source);
+    IFilterGraph2_Disconnect(graph, &testsink->sink.pin.IPin_iface);
+
+    init_pcm_mt(&mt, &format, 1, 32000, 8);
+    format.nAvgBytesPerSec = 127;
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ok(!!testsink->sink.pAllocator, "Expected an allocator.\n");
+    hr = IMemAllocator_GetProperties(testsink->sink.pAllocator, &props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(props.cBuffers == 4, "Got %ld buffers.\n", props.cBuffers);
+    ok(props.cbBuffer == 62, "Got size %ld.\n", props.cbBuffer);
+    ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
+    ok(!props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
+
+    IFilterGraph2_Disconnect(graph, source);
+    IFilterGraph2_Disconnect(graph, &testsink->sink.pin.IPin_iface);
+
+    CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMemAllocator, (void **)&allocator);
+    testsink->sink.pAllocator = allocator;
+
+    hr = IMemAllocator_SetProperties(allocator, &req_props, &props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    init_pcm_mt(&mt, &format, 1, 32000, 16);
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    todo_wine ok(testsink->sink.pAllocator && testsink->sink.pAllocator != allocator,
+            "Got unexpected allocator %p.\n", testsink->sink.pAllocator);
+    hr = IMemAllocator_GetProperties(testsink->sink.pAllocator, &props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(props.cBuffers == 4, "Got %ld buffers.\n", props.cBuffers);
+    ok(props.cbBuffer == 32000, "Got size %ld.\n", props.cbBuffer);
+    ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
+    ok(!props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
+
+    IFilterGraph2_Disconnect(graph, source);
+    IFilterGraph2_Disconnect(graph, &testsink->sink.pin.IPin_iface);
+}
+
 static void test_connect_pin(IBaseFilter *filter)
 {
     AM_MEDIA_TYPE mt, req_mt, *source_mt;
@@ -566,6 +646,8 @@ static void test_connect_pin(IBaseFilter *filter)
     IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
 
     IBaseFilter_FindPin(filter, L"Capture", &source);
+
+    test_source_allocator(graph, control, source, &testsink);
 
     peer = (IPin *)0xdeadbeef;
     hr = IPin_ConnectedTo(source, &peer);
