@@ -2468,6 +2468,13 @@ typedef struct VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT32
     VkBool32 imageSlicedViewOf3D;
 } VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT32;
 
+typedef struct VkPhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 attachmentFeedbackLoopDynamicState;
+} VkPhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesEXT32;
+
 typedef struct VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT32
 {
     VkStructureType sType;
@@ -2795,6 +2802,13 @@ typedef struct VkPhysicalDeviceMultiviewPerViewViewportsFeaturesQCOM32
     PTR32 pNext;
     VkBool32 multiviewPerViewViewports;
 } VkPhysicalDeviceMultiviewPerViewViewportsFeaturesQCOM32;
+
+typedef struct VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 rayTracingPositionFetch;
+} VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR32;
 
 typedef struct VkPhysicalDeviceMultiviewPerViewRenderAreasFeaturesQCOM32
 {
@@ -11151,6 +11165,17 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ATTACHMENT_FEEDBACK_LOOP_DYNAMIC_STATE_FEATURES_EXT:
+        {
+            VkPhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesEXT *in_ext = (const VkPhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ATTACHMENT_FEEDBACK_LOOP_DYNAMIC_STATE_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->attachmentFeedbackLoopDynamicState = in_ext->attachmentFeedbackLoopDynamicState;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT:
         {
             VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -11645,6 +11670,17 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_VIEWPORTS_FEATURES_QCOM;
             out_ext->pNext = NULL;
             out_ext->multiviewPerViewViewports = in_ext->multiviewPerViewViewports;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_POSITION_FETCH_FEATURES_KHR:
+        {
+            VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR *in_ext = (const VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_POSITION_FETCH_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->rayTracingPositionFetch = in_ext->rayTracingPositionFetch;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -13070,6 +13106,17 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ATTACHMENT_FEEDBACK_LOOP_DYNAMIC_STATE_FEATURES_EXT:
+        {
+            VkPhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesEXT32 *in_ext = (const VkPhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ATTACHMENT_FEEDBACK_LOOP_DYNAMIC_STATE_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->attachmentFeedbackLoopDynamicState = in_ext->attachmentFeedbackLoopDynamicState;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT:
         {
             VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -13564,6 +13611,17 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_VIEWPORTS_FEATURES_QCOM;
             out_ext->pNext = NULL;
             out_ext->multiviewPerViewViewports = in_ext->multiviewPerViewViewports;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_POSITION_FETCH_FEATURES_KHR:
+        {
+            VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR32 *in_ext = (const VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_POSITION_FETCH_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->rayTracingPositionFetch = in_ext->rayTracingPositionFetch;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -19584,6 +19642,17 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ATTACHMENT_FEEDBACK_LOOP_DYNAMIC_STATE_FEATURES_EXT:
+        {
+            VkPhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesEXT32 *in_ext = (const VkPhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ATTACHMENT_FEEDBACK_LOOP_DYNAMIC_STATE_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->attachmentFeedbackLoopDynamicState = in_ext->attachmentFeedbackLoopDynamicState;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT:
         {
             VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -20078,6 +20147,17 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_VIEWPORTS_FEATURES_QCOM;
             out_ext->pNext = NULL;
             out_ext->multiviewPerViewViewports = in_ext->multiviewPerViewViewports;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_POSITION_FETCH_FEATURES_KHR:
+        {
+            VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR32 *in_ext = (const VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_POSITION_FETCH_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->rayTracingPositionFetch = in_ext->rayTracingPositionFetch;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -21237,6 +21317,15 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ATTACHMENT_FEEDBACK_LOOP_DYNAMIC_STATE_FEATURES_EXT:
+        {
+            VkPhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ATTACHMENT_FEEDBACK_LOOP_DYNAMIC_STATE_FEATURES_EXT);
+            const VkPhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesEXT *in_ext = (const VkPhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ATTACHMENT_FEEDBACK_LOOP_DYNAMIC_STATE_FEATURES_EXT;
+            out_ext->attachmentFeedbackLoopDynamicState = in_ext->attachmentFeedbackLoopDynamicState;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT:
         {
             VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT);
@@ -21644,6 +21733,15 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             const VkPhysicalDeviceMultiviewPerViewViewportsFeaturesQCOM *in_ext = (const VkPhysicalDeviceMultiviewPerViewViewportsFeaturesQCOM *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_VIEWPORTS_FEATURES_QCOM;
             out_ext->multiviewPerViewViewports = in_ext->multiviewPerViewViewports;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_POSITION_FETCH_FEATURES_KHR:
+        {
+            VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_POSITION_FETCH_FEATURES_KHR);
+            const VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR *in_ext = (const VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_POSITION_FETCH_FEATURES_KHR;
+            out_ext->rayTracingPositionFetch = in_ext->rayTracingPositionFetch;
             out_header = (void *)out_ext;
             break;
         }
@@ -29515,6 +29613,26 @@ static void thunk32_vkCmdSetAlphaToOneEnableEXT(void *args)
     } *params = args;
 
     wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->funcs.p_vkCmdSetAlphaToOneEnableEXT(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->command_buffer, params->alphaToOneEnable);
+}
+
+#ifdef _WIN64
+static void thunk64_vkCmdSetAttachmentFeedbackLoopEnableEXT(void *args)
+{
+    struct vkCmdSetAttachmentFeedbackLoopEnableEXT_params *params = args;
+
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetAttachmentFeedbackLoopEnableEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->aspectMask);
+}
+#endif /* _WIN64 */
+
+static void thunk32_vkCmdSetAttachmentFeedbackLoopEnableEXT(void *args)
+{
+    struct
+    {
+        PTR32 commandBuffer;
+        VkImageAspectFlags aspectMask;
+    } *params = args;
+
+    wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->funcs.p_vkCmdSetAttachmentFeedbackLoopEnableEXT(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->command_buffer, params->aspectMask);
 }
 
 #ifdef _WIN64
@@ -40977,6 +41095,7 @@ static const char * const vk_device_extensions[] =
     "VK_ARM_shader_core_properties",
     "VK_EXT_4444_formats",
     "VK_EXT_astc_decode_mode",
+    "VK_EXT_attachment_feedback_loop_dynamic_state",
     "VK_EXT_attachment_feedback_loop_layout",
     "VK_EXT_blend_operation_advanced",
     "VK_EXT_border_color_swizzle",
@@ -41123,6 +41242,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_ray_query",
     "VK_KHR_ray_tracing_maintenance1",
     "VK_KHR_ray_tracing_pipeline",
+    "VK_KHR_ray_tracing_position_fetch",
     "VK_KHR_relaxed_block_layout",
     "VK_KHR_sampler_mirror_clamp_to_edge",
     "VK_KHR_sampler_ycbcr_conversion",
@@ -41401,6 +41521,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     (void *)thunk64_vkCmdResolveImage2KHR,
     (void *)thunk64_vkCmdSetAlphaToCoverageEnableEXT,
     (void *)thunk64_vkCmdSetAlphaToOneEnableEXT,
+    (void *)thunk64_vkCmdSetAttachmentFeedbackLoopEnableEXT,
     (void *)thunk64_vkCmdSetBlendConstants,
     (void *)thunk64_vkCmdSetCheckpointNV,
     (void *)thunk64_vkCmdSetCoarseSampleOrderNV,
@@ -41954,6 +42075,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     (void *)thunk32_vkCmdResolveImage2KHR,
     (void *)thunk32_vkCmdSetAlphaToCoverageEnableEXT,
     (void *)thunk32_vkCmdSetAlphaToOneEnableEXT,
+    (void *)thunk32_vkCmdSetAttachmentFeedbackLoopEnableEXT,
     (void *)thunk32_vkCmdSetBlendConstants,
     (void *)thunk32_vkCmdSetCheckpointNV,
     (void *)thunk32_vkCmdSetCoarseSampleOrderNV,

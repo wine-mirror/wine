@@ -1426,6 +1426,14 @@ void WINAPI vkCmdSetAlphaToOneEnableEXT(VkCommandBuffer commandBuffer, VkBool32 
     UNIX_CALL(vkCmdSetAlphaToOneEnableEXT, &params);
 }
 
+void WINAPI vkCmdSetAttachmentFeedbackLoopEnableEXT(VkCommandBuffer commandBuffer, VkImageAspectFlags aspectMask)
+{
+    struct vkCmdSetAttachmentFeedbackLoopEnableEXT_params params;
+    params.commandBuffer = commandBuffer;
+    params.aspectMask = aspectMask;
+    UNIX_CALL(vkCmdSetAttachmentFeedbackLoopEnableEXT, &params);
+}
+
 void WINAPI vkCmdSetBlendConstants(VkCommandBuffer commandBuffer, const float blendConstants[4])
 {
     struct vkCmdSetBlendConstants_params params;
@@ -5918,6 +5926,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdResolveImage2KHR", vkCmdResolveImage2KHR},
     {"vkCmdSetAlphaToCoverageEnableEXT", vkCmdSetAlphaToCoverageEnableEXT},
     {"vkCmdSetAlphaToOneEnableEXT", vkCmdSetAlphaToOneEnableEXT},
+    {"vkCmdSetAttachmentFeedbackLoopEnableEXT", vkCmdSetAttachmentFeedbackLoopEnableEXT},
     {"vkCmdSetBlendConstants", vkCmdSetBlendConstants},
     {"vkCmdSetCheckpointNV", vkCmdSetCheckpointNV},
     {"vkCmdSetCoarseSampleOrderNV", vkCmdSetCoarseSampleOrderNV},

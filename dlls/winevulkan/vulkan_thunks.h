@@ -200,6 +200,7 @@ struct vulkan_device_funcs
     void (*p_vkCmdResolveImage2KHR)(VkCommandBuffer, const VkResolveImageInfo2 *);
     void (*p_vkCmdSetAlphaToCoverageEnableEXT)(VkCommandBuffer, VkBool32);
     void (*p_vkCmdSetAlphaToOneEnableEXT)(VkCommandBuffer, VkBool32);
+    void (*p_vkCmdSetAttachmentFeedbackLoopEnableEXT)(VkCommandBuffer, VkImageAspectFlags);
     void (*p_vkCmdSetBlendConstants)(VkCommandBuffer, const float[4]);
     void (*p_vkCmdSetCheckpointNV)(VkCommandBuffer, const void *);
     void (*p_vkCmdSetCoarseSampleOrderNV)(VkCommandBuffer, VkCoarseSampleOrderTypeNV, uint32_t, const VkCoarseSampleOrderCustomNV *);
@@ -737,6 +738,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCmdResolveImage2KHR) \
     USE_VK_FUNC(vkCmdSetAlphaToCoverageEnableEXT) \
     USE_VK_FUNC(vkCmdSetAlphaToOneEnableEXT) \
+    USE_VK_FUNC(vkCmdSetAttachmentFeedbackLoopEnableEXT) \
     USE_VK_FUNC(vkCmdSetBlendConstants) \
     USE_VK_FUNC(vkCmdSetCheckpointNV) \
     USE_VK_FUNC(vkCmdSetCoarseSampleOrderNV) \

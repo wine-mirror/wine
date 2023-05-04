@@ -155,6 +155,7 @@ enum unix_call
     unix_vkCmdResolveImage2KHR,
     unix_vkCmdSetAlphaToCoverageEnableEXT,
     unix_vkCmdSetAlphaToOneEnableEXT,
+    unix_vkCmdSetAttachmentFeedbackLoopEnableEXT,
     unix_vkCmdSetBlendConstants,
     unix_vkCmdSetCheckpointNV,
     unix_vkCmdSetCoarseSampleOrderNV,
@@ -1670,6 +1671,12 @@ struct vkCmdSetAlphaToOneEnableEXT_params
 {
     VkCommandBuffer commandBuffer;
     VkBool32 alphaToOneEnable;
+};
+
+struct vkCmdSetAttachmentFeedbackLoopEnableEXT_params
+{
+    VkCommandBuffer commandBuffer;
+    VkImageAspectFlags aspectMask;
 };
 
 struct vkCmdSetBlendConstants_params

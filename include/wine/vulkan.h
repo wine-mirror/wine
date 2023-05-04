@@ -483,7 +483,7 @@
 #define VK_EXT_ATTACHMENT_FEEDBACK_LOOP_LAYOUT_EXTENSION_NAME "VK_EXT_attachment_feedback_loop_layout"
 #define VK_EXT_4444_FORMATS_SPEC_VERSION 1
 #define VK_EXT_4444_FORMATS_EXTENSION_NAME "VK_EXT_4444_formats"
-#define VK_EXT_DEVICE_FAULT_SPEC_VERSION 1
+#define VK_EXT_DEVICE_FAULT_SPEC_VERSION 2
 #define VK_EXT_DEVICE_FAULT_EXTENSION_NAME "VK_EXT_device_fault"
 #define VK_ARM_RASTERIZATION_ORDER_ATTACHMENT_ACCESS_SPEC_VERSION 1
 #define VK_ARM_RASTERIZATION_ORDER_ATTACHMENT_ACCESS_EXTENSION_NAME "VK_ARM_rasterization_order_attachment_access"
@@ -533,7 +533,7 @@
 #define VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME "VK_EXT_opacity_micromap"
 #define VK_EXT_LOAD_STORE_OP_NONE_SPEC_VERSION 1
 #define VK_EXT_LOAD_STORE_OP_NONE_EXTENSION_NAME "VK_EXT_load_store_op_none"
-#define VK_HUAWEI_CLUSTER_CULLING_SHADER_SPEC_VERSION 1
+#define VK_HUAWEI_CLUSTER_CULLING_SHADER_SPEC_VERSION 2
 #define VK_HUAWEI_CLUSTER_CULLING_SHADER_EXTENSION_NAME "VK_HUAWEI_cluster_culling_shader"
 #define VK_EXT_BORDER_COLOR_SWIZZLE_SPEC_VERSION 1
 #define VK_EXT_BORDER_COLOR_SWIZZLE_EXTENSION_NAME "VK_EXT_border_color_swizzle"
@@ -577,6 +577,8 @@
 #define VK_EXT_LEGACY_DITHERING_EXTENSION_NAME "VK_EXT_legacy_dithering"
 #define VK_EXT_PIPELINE_PROTECTED_ACCESS_SPEC_VERSION 1
 #define VK_EXT_PIPELINE_PROTECTED_ACCESS_EXTENSION_NAME "VK_EXT_pipeline_protected_access"
+#define VK_KHR_RAY_TRACING_POSITION_FETCH_SPEC_VERSION 1
+#define VK_KHR_RAY_TRACING_POSITION_FETCH_EXTENSION_NAME "VK_KHR_ray_tracing_position_fetch"
 #define VK_EXT_SHADER_OBJECT_SPEC_VERSION 1
 #define VK_EXT_SHADER_OBJECT_EXTENSION_NAME "VK_EXT_shader_object"
 #define VK_QCOM_TILE_PROPERTIES_SPEC_VERSION 1
@@ -593,6 +595,8 @@
 #define VK_EXT_PIPELINE_LIBRARY_GROUP_HANDLES_EXTENSION_NAME "VK_EXT_pipeline_library_group_handles"
 #define VK_QCOM_MULTIVIEW_PER_VIEW_RENDER_AREAS_SPEC_VERSION 1
 #define VK_QCOM_MULTIVIEW_PER_VIEW_RENDER_AREAS_EXTENSION_NAME "VK_QCOM_multiview_per_view_render_areas"
+#define VK_EXT_ATTACHMENT_FEEDBACK_LOOP_DYNAMIC_STATE_SPEC_VERSION 1
+#define VK_EXT_ATTACHMENT_FEEDBACK_LOOP_DYNAMIC_STATE_EXTENSION_NAME "VK_EXT_attachment_feedback_loop_dynamic_state"
 #define VK_KHR_ACCELERATION_STRUCTURE_SPEC_VERSION 13
 #define VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME "VK_KHR_acceleration_structure"
 #define VK_KHR_RAY_TRACING_PIPELINE_SPEC_VERSION 1
@@ -619,7 +623,7 @@
 #define VK_API_VERSION_1_2 VK_MAKE_API_VERSION(0, 1, 2, 0)
 #define VK_API_VERSION_1_3 VK_MAKE_API_VERSION(0, 1, 3, 0)
 #define VKSC_API_VERSION_1_0 VK_MAKE_API_VERSION(VKSC_API_VARIANT, 1, 0, 0)
-#define VK_HEADER_VERSION 246
+#define VK_HEADER_VERSION 250
 #define VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION(0, 1, 3, VK_HEADER_VERSION)
 #define VK_DEFINE_HANDLE(object) typedef struct object##_T* object;
 #define VK_USE_64_BIT_PTR_DEFINES 0
@@ -1259,6 +1263,7 @@ typedef enum VkBuildAccelerationStructureFlagBitsKHR
     VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_OPACITY_MICROMAP_UPDATE_EXT = 0x00000040,
     VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_DISABLE_OPACITY_MICROMAPS_EXT = 0x00000080,
     VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_OPACITY_MICROMAP_DATA_UPDATE_EXT = 0x00000100,
+    VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_DATA_ACCESS_KHR = 0x00000800,
     VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_NV = VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR,
     VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_NV = VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR,
     VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_NV = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR,
@@ -1817,6 +1822,7 @@ typedef enum VkDynamicState
     VK_DYNAMIC_STATE_SHADING_RATE_IMAGE_ENABLE_NV = 1000455030,
     VK_DYNAMIC_STATE_REPRESENTATIVE_FRAGMENT_TEST_ENABLE_NV = 1000455031,
     VK_DYNAMIC_STATE_COVERAGE_REDUCTION_MODE_NV = 1000455032,
+    VK_DYNAMIC_STATE_ATTACHMENT_FEEDBACK_LOOP_ENABLE_EXT = 1000524000,
     VK_DYNAMIC_STATE_CULL_MODE_EXT = VK_DYNAMIC_STATE_CULL_MODE,
     VK_DYNAMIC_STATE_FRONT_FACE_EXT = VK_DYNAMIC_STATE_FRONT_FACE,
     VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY_EXT = VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY,
@@ -4365,6 +4371,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_OPTICAL_FLOW_SESSION_CREATE_PRIVATE_DATA_INFO_NV = 1000464010,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_DITHERING_FEATURES_EXT = 1000465000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_PROTECTED_ACCESS_FEATURES_EXT = 1000466000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_POSITION_FETCH_FEATURES_KHR = 1000481000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_FEATURES_EXT = 1000482000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_PROPERTIES_EXT = 1000482001,
     VK_STRUCTURE_TYPE_SHADER_CREATE_INFO_EXT = 1000482002,
@@ -4378,6 +4385,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_EXT = 1000498000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_RENDER_AREAS_FEATURES_QCOM = 1000510000,
     VK_STRUCTURE_TYPE_MULTIVIEW_PER_VIEW_RENDER_AREAS_RENDER_PASS_BEGIN_INFO_QCOM = 1000510001,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ATTACHMENT_FEEDBACK_LOOP_DYNAMIC_STATE_FEATURES_EXT = 1000524000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES,
     VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT,
@@ -5745,6 +5753,8 @@ typedef struct VkDeviceFaultVendorBinaryHeaderVersionOneEXT
     uint32_t applicationNameOffset;
     uint32_t applicationVersion;
     uint32_t engineNameOffset;
+    uint32_t engineVersion;
+    uint32_t apiVersion;
 } VkDeviceFaultVendorBinaryHeaderVersionOneEXT;
 
 typedef struct VkDeviceFaultVendorInfoEXT
@@ -6884,6 +6894,13 @@ typedef struct VkPhysicalDeviceAddressBindingReportFeaturesEXT
     void *pNext;
     VkBool32 reportAddressBinding;
 } VkPhysicalDeviceAddressBindingReportFeaturesEXT;
+
+typedef struct VkPhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 attachmentFeedbackLoopDynamicState;
+} VkPhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesEXT;
 
 typedef struct VkPhysicalDeviceAttachmentFeedbackLoopLayoutFeaturesEXT
 {
@@ -8445,6 +8462,13 @@ typedef struct VkPhysicalDeviceRayTracingPipelinePropertiesKHR
     uint32_t shaderGroupHandleAlignment;
     uint32_t maxRayHitAttributeSize;
 } VkPhysicalDeviceRayTracingPipelinePropertiesKHR;
+
+typedef struct VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 rayTracingPositionFetch;
+} VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR;
 
 typedef struct VkPhysicalDeviceRayTracingPropertiesNV
 {
@@ -11945,6 +11969,7 @@ typedef void (VKAPI_PTR *PFN_vkCmdResolveImage2)(VkCommandBuffer, const VkResolv
 typedef void (VKAPI_PTR *PFN_vkCmdResolveImage2KHR)(VkCommandBuffer, const VkResolveImageInfo2 *);
 typedef void (VKAPI_PTR *PFN_vkCmdSetAlphaToCoverageEnableEXT)(VkCommandBuffer, VkBool32);
 typedef void (VKAPI_PTR *PFN_vkCmdSetAlphaToOneEnableEXT)(VkCommandBuffer, VkBool32);
+typedef void (VKAPI_PTR *PFN_vkCmdSetAttachmentFeedbackLoopEnableEXT)(VkCommandBuffer, VkImageAspectFlags);
 typedef void (VKAPI_PTR *PFN_vkCmdSetBlendConstants)(VkCommandBuffer, const float[4]);
 typedef void (VKAPI_PTR *PFN_vkCmdSetCheckpointNV)(VkCommandBuffer, const void *);
 typedef void (VKAPI_PTR *PFN_vkCmdSetCoarseSampleOrderNV)(VkCommandBuffer, VkCoarseSampleOrderTypeNV, uint32_t, const VkCoarseSampleOrderCustomNV *);
@@ -12491,6 +12516,7 @@ void VKAPI_CALL vkCmdResolveImage2(VkCommandBuffer commandBuffer, const VkResolv
 void VKAPI_CALL vkCmdResolveImage2KHR(VkCommandBuffer commandBuffer, const VkResolveImageInfo2 *pResolveImageInfo);
 void VKAPI_CALL vkCmdSetAlphaToCoverageEnableEXT(VkCommandBuffer commandBuffer, VkBool32 alphaToCoverageEnable);
 void VKAPI_CALL vkCmdSetAlphaToOneEnableEXT(VkCommandBuffer commandBuffer, VkBool32 alphaToOneEnable);
+void VKAPI_CALL vkCmdSetAttachmentFeedbackLoopEnableEXT(VkCommandBuffer commandBuffer, VkImageAspectFlags aspectMask);
 void VKAPI_CALL vkCmdSetBlendConstants(VkCommandBuffer commandBuffer, const float blendConstants[4]);
 void VKAPI_CALL vkCmdSetCheckpointNV(VkCommandBuffer commandBuffer, const void *pCheckpointMarker);
 void VKAPI_CALL vkCmdSetCoarseSampleOrderNV(VkCommandBuffer commandBuffer, VkCoarseSampleOrderTypeNV sampleOrderType, uint32_t customSampleOrderCount, const VkCoarseSampleOrderCustomNV *pCustomSampleOrders);
