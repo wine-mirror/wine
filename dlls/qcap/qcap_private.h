@@ -24,6 +24,7 @@
 #define COBJMACROS
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
+#include <stdbool.h>
 #include "dshow.h"
 #include "winternl.h"
 #include "wine/unixlib.h"

@@ -33,6 +33,15 @@ struct audio_record
 
     unsigned int id;
     HWAVEIN device;
+    HANDLE event;
+    HANDLE thread;
+
+    /* FIXME: It would be nice to avoid duplicating this variable with strmbase.
+     * However, synchronization is tricky; we need access to be protected by a
+     * separate lock. */
+    FILTER_STATE state;
+    CONDITION_VARIABLE state_cv;
+    CRITICAL_SECTION state_cs;
 };
 
 static struct audio_record *impl_from_strmbase_filter(struct strmbase_filter *filter)
@@ -151,7 +160,8 @@ static HRESULT WINAPI audio_record_source_DecideBufferSize(struct strmbase_sourc
     if (FAILED(hr = IMemAllocator_SetProperties(allocator, props, &ret_props)))
         return hr;
 
-    if ((ret = waveInOpen(&filter->device, filter->id, format, 0, 0, CALLBACK_NULL)) != MMSYSERR_NOERROR)
+    if ((ret = waveInOpen(&filter->device, filter->id, format,
+            (DWORD_PTR)filter->event, 0, CALLBACK_EVENT)) != MMSYSERR_NOERROR)
     {
         ERR("Failed to open device %u, error %u.\n", filter->id, ret);
         return E_FAIL;
@@ -293,6 +303,9 @@ static void audio_record_destroy(struct strmbase_filter *iface)
 {
     struct audio_record *filter = impl_from_strmbase_filter(iface);
 
+    filter->state_cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&filter->state_cs);
+    CloseHandle(filter->event);
     strmbase_source_cleanup(&filter->source);
     strmbase_filter_cleanup(&filter->filter);
     free(filter);
@@ -311,11 +324,200 @@ static HRESULT audio_record_query_interface(struct strmbase_filter *iface, REFII
     return S_OK;
 }
 
+static DWORD WINAPI stream_thread(void *arg)
+{
+    struct audio_record *filter = arg;
+    const WAVEFORMATEX *format = (void *)filter->source.pin.mt.pbFormat;
+    bool started = false;
+    MMRESULT ret;
+
+    /* FIXME: We should probably queue several buffers instead of just one. */
+
+    EnterCriticalSection(&filter->state_cs);
+
+    for (;;)
+    {
+        IMediaSample *sample;
+        WAVEHDR header = {0};
+        HRESULT hr;
+        BYTE *data;
+
+        while (filter->state == State_Paused)
+            SleepConditionVariableCS(&filter->state_cv, &filter->state_cs, INFINITE);
+
+        if (filter->state == State_Stopped)
+            break;
+
+        if (FAILED(hr = IMemAllocator_GetBuffer(filter->source.pAllocator, &sample, NULL, NULL, 0)))
+        {
+            ERR("Failed to get sample, hr %#lx.\n", hr);
+            break;
+        }
+
+        IMediaSample_GetPointer(sample, &data);
+
+        header.lpData = (void *)data;
+        header.dwBufferLength = IMediaSample_GetSize(sample);
+        if ((ret = waveInPrepareHeader(filter->device, &header, sizeof(header))) != MMSYSERR_NOERROR)
+            ERR("Failed to prepare header, error %u.\n", ret);
+
+        if ((ret = waveInAddBuffer(filter->device, &header, sizeof(header))) != MMSYSERR_NOERROR)
+            ERR("Failed to add buffer, error %u.\n", ret);
+
+        if (!started)
+        {
+            if ((ret = waveInStart(filter->device)) != MMSYSERR_NOERROR)
+                ERR("Failed to start, error %u.\n", ret);
+            started = true;
+        }
+
+        while (!(header.dwFlags & WHDR_DONE) && filter->state == State_Running)
+        {
+            LeaveCriticalSection(&filter->state_cs);
+
+            if ((ret = WaitForSingleObject(filter->event, INFINITE)))
+                ERR("Failed to wait, error %u.\n", ret);
+
+            EnterCriticalSection(&filter->state_cs);
+        }
+
+        if (filter->state != State_Running)
+        {
+            TRACE("State is %#x; resetting.\n", filter->state);
+            if ((ret = waveInReset(filter->device)) != MMSYSERR_NOERROR)
+                ERR("Failed to reset, error %u.\n", ret);
+        }
+
+        if ((ret = waveInUnprepareHeader(filter->device, &header, sizeof(header))) != MMSYSERR_NOERROR)
+            ERR("Failed to unprepare header, error %u.\n", ret);
+
+        IMediaSample_SetActualDataLength(sample, header.dwBytesRecorded);
+
+        if (filter->state == State_Running)
+        {
+            REFERENCE_TIME start_pts, end_pts;
+            MMTIME time;
+
+            time.wType = TIME_BYTES;
+            if ((ret = waveInGetPosition(filter->device, &time, sizeof(time))) != MMSYSERR_NOERROR)
+                ERR("Failed to get position, error %u.\n", ret);
+            if (time.wType != TIME_BYTES)
+                ERR("Got unexpected type %#x.\n", time.wType);
+            end_pts = MulDiv(time.u.cb, 10000000, format->nAvgBytesPerSec);
+            start_pts = MulDiv(time.u.cb - header.dwBytesRecorded, 10000000, format->nAvgBytesPerSec);
+            IMediaSample_SetTime(sample, &start_pts, &end_pts);
+
+            TRACE("Sending buffer %p.\n", sample);
+            hr = IMemInputPin_Receive(filter->source.pMemInputPin, sample);
+            IMediaSample_Release(sample);
+            if (FAILED(hr))
+            {
+                ERR("IMemInputPin::Receive() returned %#lx.\n", hr);
+                break;
+            }
+        }
+    }
+
+    LeaveCriticalSection(&filter->state_cs);
+
+    if (started && (ret = waveInStop(filter->device)) != MMSYSERR_NOERROR)
+        ERR("Failed to stop, error %u.\n", ret);
+
+    return 0;
+}
+
+static HRESULT audio_record_init_stream(struct strmbase_filter *iface)
+{
+    struct audio_record *filter = impl_from_strmbase_filter(iface);
+    HRESULT hr;
+
+    if (!filter->source.pin.peer)
+        return S_OK;
+
+    if (FAILED(hr = IMemAllocator_Commit(filter->source.pAllocator)))
+        ERR("Failed to commit allocator, hr %#lx.\n", hr);
+
+    EnterCriticalSection(&filter->state_cs);
+    filter->state = State_Paused;
+    LeaveCriticalSection(&filter->state_cs);
+
+    filter->thread = CreateThread(NULL, 0, stream_thread, filter, 0, NULL);
+
+    return S_OK;
+}
+
+static HRESULT audio_record_start_stream(struct strmbase_filter *iface, REFERENCE_TIME time)
+{
+    struct audio_record *filter = impl_from_strmbase_filter(iface);
+
+    if (!filter->source.pin.peer)
+        return S_OK;
+
+    EnterCriticalSection(&filter->state_cs);
+    filter->state = State_Running;
+    LeaveCriticalSection(&filter->state_cs);
+    WakeConditionVariable(&filter->state_cv);
+    return S_OK;
+}
+
+static HRESULT audio_record_stop_stream(struct strmbase_filter *iface)
+{
+    struct audio_record *filter = impl_from_strmbase_filter(iface);
+
+    if (!filter->source.pin.peer)
+        return S_OK;
+
+    EnterCriticalSection(&filter->state_cs);
+    filter->state = State_Paused;
+    LeaveCriticalSection(&filter->state_cs);
+    SetEvent(filter->event);
+    return S_OK;
+}
+
+static HRESULT audio_record_cleanup_stream(struct strmbase_filter *iface)
+{
+    struct audio_record *filter = impl_from_strmbase_filter(iface);
+    HRESULT hr;
+
+    if (!filter->source.pin.peer)
+        return S_OK;
+
+    EnterCriticalSection(&filter->state_cs);
+    filter->state = State_Stopped;
+    LeaveCriticalSection(&filter->state_cs);
+    WakeConditionVariable(&filter->state_cv);
+    SetEvent(filter->event);
+
+    WaitForSingleObject(filter->thread, INFINITE);
+    CloseHandle(filter->thread);
+    filter->thread = NULL;
+
+    hr = IMemAllocator_Decommit(filter->source.pAllocator);
+    if (hr != S_OK && hr != VFW_E_NOT_COMMITTED)
+        ERR("Failed to decommit allocator, hr %#lx.\n", hr);
+
+    return S_OK;
+}
+
+static HRESULT audio_record_wait_state(struct strmbase_filter *iface, DWORD timeout)
+{
+    struct audio_record *filter = impl_from_strmbase_filter(iface);
+
+    if (filter->filter.state == State_Paused)
+        return VFW_S_CANT_CUE;
+    return S_OK;
+}
+
 static const struct strmbase_filter_ops filter_ops =
 {
     .filter_get_pin = audio_record_get_pin,
     .filter_destroy = audio_record_destroy,
     .filter_query_interface = audio_record_query_interface,
+    .filter_init_stream = audio_record_init_stream,
+    .filter_start_stream = audio_record_start_stream,
+    .filter_stop_stream = audio_record_stop_stream,
+    .filter_cleanup_stream = audio_record_cleanup_stream,
+    .filter_wait_state = audio_record_wait_state,
 };
 
 static HRESULT WINAPI PPB_QueryInterface(IPersistPropertyBag *iface, REFIID riid, LPVOID *ppv)
@@ -398,11 +600,22 @@ HRESULT audio_record_create(IUnknown *outer, IUnknown **out)
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
+    if (!(object->event = CreateEventW(NULL, FALSE, FALSE, NULL)))
+    {
+        free(object);
+        return E_OUTOFMEMORY;
+    }
+
     object->IPersistPropertyBag_iface.lpVtbl = &PersistPropertyBagVtbl;
     strmbase_filter_init(&object->filter, outer, &CLSID_AudioRecord, &filter_ops);
 
     strmbase_source_init(&object->source, &object->filter, L"Capture", &source_ops);
     object->IAMStreamConfig_iface.lpVtbl = &stream_config_vtbl;
+
+    object->state = State_Stopped;
+    InitializeConditionVariable(&object->state_cv);
+    InitializeCriticalSection(&object->state_cs);
+    object->state_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": audio_record.state_cs");
 
     TRACE("Created audio recorder %p.\n", object);
     *out = &object->filter.IUnknown_inner;
