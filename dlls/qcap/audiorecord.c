@@ -132,7 +132,16 @@ static HRESULT audio_record_source_get_media_type(struct strmbase_pin *iface,
 static HRESULT WINAPI audio_record_source_DecideBufferSize(struct strmbase_source *iface,
         IMemAllocator *allocator, ALLOCATOR_PROPERTIES *props)
 {
+    struct audio_record *filter = impl_from_strmbase_filter(iface->pin.filter);
+    const WAVEFORMATEX *format = (void *)filter->source.pin.mt.pbFormat;
     ALLOCATOR_PROPERTIES ret_props;
+
+    props->cBuffers = 4;
+    /* This is the algorithm that native uses. The alignment to an even number
+     * doesn't make much sense, and may be a bug. */
+    props->cbBuffer = (format->nAvgBytesPerSec / 2) & ~1;
+    props->cbAlign = 1;
+    props->cbPrefix = 0;
 
     return IMemAllocator_SetProperties(allocator, props, &ret_props);
 }
