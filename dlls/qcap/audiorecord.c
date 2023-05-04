@@ -29,6 +29,7 @@ struct audio_record
     IPersistPropertyBag IPersistPropertyBag_iface;
 
     struct strmbase_source source;
+    IAMBufferNegotiation IAMBufferNegotiation_iface;
     IAMStreamConfig IAMStreamConfig_iface;
     IKsPropertySet IKsPropertySet_iface;
 
@@ -56,7 +57,9 @@ static HRESULT audio_record_source_query_interface(struct strmbase_pin *iface, R
 {
     struct audio_record *filter = impl_from_strmbase_filter(iface->filter);
 
-    if (IsEqualGUID(iid, &IID_IAMStreamConfig))
+    if (IsEqualGUID(iid, &IID_IAMBufferNegotiation))
+        *out = &filter->IAMBufferNegotiation_iface;
+    else if (IsEqualGUID(iid, &IID_IAMStreamConfig))
         *out = &filter->IAMStreamConfig_iface;
     else if (IsEqualGUID(iid, &IID_IKsPropertySet))
         *out = &filter->IKsPropertySet_iface;
@@ -325,6 +328,54 @@ static const IAMStreamConfigVtbl stream_config_vtbl =
     stream_config_GetFormat,
     stream_config_GetNumberOfCapabilities,
     stream_config_GetStreamCaps,
+};
+
+static struct audio_record *impl_from_IAMBufferNegotiation(IAMBufferNegotiation *iface)
+{
+    return CONTAINING_RECORD(iface, struct audio_record, IAMBufferNegotiation_iface);
+}
+
+static HRESULT WINAPI buffer_negotiation_QueryInterface(IAMBufferNegotiation *iface, REFIID iid, void **out)
+{
+    struct audio_record *filter = impl_from_IAMBufferNegotiation(iface);
+    return IPin_QueryInterface(&filter->source.pin.IPin_iface, iid, out);
+}
+
+static ULONG WINAPI buffer_negotiation_AddRef(IAMBufferNegotiation *iface)
+{
+    struct audio_record *filter = impl_from_IAMBufferNegotiation(iface);
+    return IPin_AddRef(&filter->source.pin.IPin_iface);
+}
+
+static ULONG WINAPI buffer_negotiation_Release(IAMBufferNegotiation *iface)
+{
+    struct audio_record *filter = impl_from_IAMBufferNegotiation(iface);
+    return IPin_Release(&filter->source.pin.IPin_iface);
+}
+
+static HRESULT WINAPI buffer_negotiation_SuggestAllocatorProperties(
+        IAMBufferNegotiation *iface, const ALLOCATOR_PROPERTIES *props)
+{
+    FIXME("iface %p, props %p, stub!\n", iface, props);
+    TRACE("Requested %ld buffers, size %ld, alignment %ld, prefix %ld.\n",
+            props->cBuffers, props->cbBuffer, props->cbAlign, props->cbPrefix);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI buffer_negotiation_GetAllocatorProperties(
+        IAMBufferNegotiation *iface, ALLOCATOR_PROPERTIES *props)
+{
+    FIXME("iface %p, props %p, stub!\n", iface, props);
+    return E_NOTIMPL;
+}
+
+static const IAMBufferNegotiationVtbl buffer_negotiation_vtbl =
+{
+    buffer_negotiation_QueryInterface,
+    buffer_negotiation_AddRef,
+    buffer_negotiation_Release,
+    buffer_negotiation_SuggestAllocatorProperties,
+    buffer_negotiation_GetAllocatorProperties,
 };
 
 static struct audio_record *impl_from_IKsPropertySet(IKsPropertySet *iface)
@@ -741,6 +792,7 @@ HRESULT audio_record_create(IUnknown *outer, IUnknown **out)
     strmbase_filter_init(&object->filter, outer, &CLSID_AudioRecord, &filter_ops);
 
     strmbase_source_init(&object->source, &object->filter, L"Capture", &source_ops);
+    object->IAMBufferNegotiation_iface.lpVtbl = &buffer_negotiation_vtbl;
     object->IAMStreamConfig_iface.lpVtbl = &stream_config_vtbl;
     object->IKsPropertySet_iface.lpVtbl = &property_set_vtbl;
 
