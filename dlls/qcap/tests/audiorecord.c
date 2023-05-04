@@ -1009,26 +1009,21 @@ static void test_stream_config(IBaseFilter *filter)
     IEnumMediaTypes_Release(enummt);
 
     hr = IAMStreamConfig_GetFormat(config, &mt);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        hr = IAMStreamConfig_GetStreamCaps(config, 0, &mt2, (BYTE *)&caps);
-        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        if (hr == S_OK)
-        {
-            ok(compare_media_types(mt, mt2), "Media types didn't match.\n");
-            DeleteMediaType(mt2);
-        }
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-        hr = IAMStreamConfig_SetFormat(config, NULL);
-        todo_wine ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    hr = IAMStreamConfig_GetStreamCaps(config, 0, &mt2, (BYTE *)&caps);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(compare_media_types(mt, mt2), "Media types didn't match.\n");
+    DeleteMediaType(mt2);
 
-        mt->majortype = MEDIATYPE_Video;
-        hr = IAMStreamConfig_SetFormat(config, mt);
-        todo_wine ok(hr == VFW_E_INVALIDMEDIATYPE, "Got hr %#lx.\n", hr);
+    hr = IAMStreamConfig_SetFormat(config, NULL);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
-        DeleteMediaType(mt);
-    }
+    mt->majortype = MEDIATYPE_Video;
+    hr = IAMStreamConfig_SetFormat(config, mt);
+    todo_wine ok(hr == VFW_E_INVALIDMEDIATYPE, "Got hr %#lx.\n", hr);
+
+    DeleteMediaType(mt);
 
     for (i = 0; i < count; ++i)
     {
@@ -1038,15 +1033,12 @@ static void test_stream_config(IBaseFilter *filter)
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = IAMStreamConfig_SetFormat(config, mt);
-        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = IAMStreamConfig_GetFormat(config, &mt2);
-        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        if (hr == S_OK)
-        {
-            ok(compare_media_types(mt, mt2), "Media types didn't match.\n");
-            DeleteMediaType(mt2);
-        }
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(compare_media_types(mt, mt2), "Media types didn't match.\n");
+        DeleteMediaType(mt2);
 
         DeleteMediaType(mt);
 

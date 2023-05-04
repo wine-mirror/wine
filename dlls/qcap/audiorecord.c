@@ -42,6 +42,8 @@ struct audio_record
     FILTER_STATE state;
     CONDITION_VARIABLE state_cv;
     CRITICAL_SECTION state_cs;
+
+    AM_MEDIA_TYPE format;
 };
 
 static struct audio_record *impl_from_strmbase_filter(struct strmbase_filter *filter)
@@ -213,15 +215,52 @@ static ULONG WINAPI stream_config_Release(IAMStreamConfig *iface)
 
 static HRESULT WINAPI stream_config_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *mt)
 {
-    FIXME("iface %p, mt %p, stub!\n", iface, mt);
+    struct audio_record *filter = impl_from_IAMStreamConfig(iface);
+    HRESULT hr;
+
+    TRACE("iface %p, mt %p.\n", iface, mt);
     strmbase_dump_media_type(mt);
-    return E_NOTIMPL;
+
+    if (!mt)
+        return E_POINTER;
+
+    EnterCriticalSection(&filter->filter.filter_cs);
+
+    if ((hr = CopyMediaType(&filter->format, mt)))
+    {
+        LeaveCriticalSection(&filter->filter.filter_cs);
+        return hr;
+    }
+
+    LeaveCriticalSection(&filter->filter.filter_cs);
+
+    return S_OK;
 }
 
-static HRESULT WINAPI stream_config_GetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE **mt)
+static HRESULT WINAPI stream_config_GetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE **ret_mt)
 {
-    FIXME("iface %p, mt %p, stub!\n", iface, mt);
-    return E_NOTIMPL;
+    struct audio_record *filter = impl_from_IAMStreamConfig(iface);
+    AM_MEDIA_TYPE *mt;
+    HRESULT hr;
+
+    TRACE("iface %p, mt %p.\n", iface, ret_mt);
+
+    if (!(mt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE))))
+        return E_OUTOFMEMORY;
+
+    EnterCriticalSection(&filter->filter.filter_cs);
+
+    if ((hr = CopyMediaType(mt, &filter->format)))
+    {
+        LeaveCriticalSection(&filter->filter.filter_cs);
+        CoTaskMemFree(mt);
+        return hr;
+    }
+
+    LeaveCriticalSection(&filter->filter.filter_cs);
+
+    *ret_mt = mt;
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_config_GetNumberOfCapabilities(IAMStreamConfig *iface,
@@ -306,6 +345,7 @@ static void audio_record_destroy(struct strmbase_filter *iface)
     filter->state_cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&filter->state_cs);
     CloseHandle(filter->event);
+    FreeMediaType(&filter->format);
     strmbase_source_cleanup(&filter->source);
     strmbase_filter_cleanup(&filter->filter);
     free(filter);
@@ -596,6 +636,7 @@ static const IPersistPropertyBagVtbl PersistPropertyBagVtbl =
 HRESULT audio_record_create(IUnknown *outer, IUnknown **out)
 {
     struct audio_record *object;
+    HRESULT hr;
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -604,6 +645,13 @@ HRESULT audio_record_create(IUnknown *outer, IUnknown **out)
     {
         free(object);
         return E_OUTOFMEMORY;
+    }
+
+    if ((hr = fill_media_type(0, &object->format)))
+    {
+        CloseHandle(object->event);
+        free(object);
+        return hr;
     }
 
     object->IPersistPropertyBag_iface.lpVtbl = &PersistPropertyBagVtbl;
