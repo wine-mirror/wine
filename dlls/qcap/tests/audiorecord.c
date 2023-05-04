@@ -443,18 +443,18 @@ static void test_media_types(IBaseFilter *filter)
     init_pcm_mt(&mt, &format, 1, 44100, 8);
     mt.majortype = MEDIATYPE_Stream;
     hr = IPin_QueryAccept(pin, &mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     mt.majortype = GUID_NULL;
     hr = IPin_QueryAccept(pin, &mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     init_pcm_mt(&mt, &format, 1, 44100, 8);
     mt.formattype = FORMAT_None;
     hr = IPin_QueryAccept(pin, &mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     mt.formattype = GUID_NULL;
     hr = IPin_QueryAccept(pin, &mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     init_pcm_mt(&mt, &format, 1, 44100, 8);
     format.wFormatTag = 0xdead;

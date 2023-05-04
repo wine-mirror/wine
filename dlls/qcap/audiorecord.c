@@ -50,6 +50,17 @@ static HRESULT audio_record_source_query_interface(struct strmbase_pin *iface, R
     return S_OK;
 }
 
+static HRESULT audio_record_source_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
+{
+    if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Audio))
+        return S_FALSE;
+
+    if (!IsEqualGUID(&mt->formattype, &FORMAT_WaveFormatEx))
+        return S_FALSE;
+
+    return S_OK;
+}
+
 static const struct
 {
     unsigned int rate;
@@ -129,6 +140,7 @@ static HRESULT WINAPI audio_record_source_DecideBufferSize(struct strmbase_sourc
 static const struct strmbase_source_ops source_ops =
 {
     .base.pin_get_media_type = audio_record_source_get_media_type,
+    .base.pin_query_accept = audio_record_source_query_accept,
     .base.pin_query_interface = audio_record_source_query_interface,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
