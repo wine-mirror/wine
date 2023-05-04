@@ -951,6 +951,36 @@ static void test_connect_pin(IBaseFilter *filter)
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
+static void test_property_set(IBaseFilter *filter)
+{
+    IKsPropertySet *set;
+    GUID category;
+    IPin *source;
+    DWORD size;
+    HRESULT hr;
+
+    IBaseFilter_FindPin(filter, L"Capture", &source);
+    IPin_QueryInterface(source, &IID_IKsPropertySet, (void **)&set);
+
+    size = 0xdeadbeef;
+    memset(&category, 0xcc, sizeof(category));
+    hr = IKsPropertySet_Get(set, &AMPROPSETID_Pin, AMPROPERTY_PIN_CATEGORY,
+            NULL, 0, &category, sizeof(category) - 1, &size);
+    ok(hr == E_UNEXPECTED, "Got hr %#lx.\n", hr);
+    ok(size == sizeof(GUID), "Got size %lu.\n", size);
+
+    size = 0xdeadbeef;
+    memset(&category, 0xcc, sizeof(category));
+    hr = IKsPropertySet_Get(set, &AMPROPSETID_Pin, AMPROPERTY_PIN_CATEGORY,
+            NULL, 0, &category, sizeof(category) + 1, &size);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(IsEqualGUID(&category, &PIN_CATEGORY_CAPTURE), "Got category %s.\n", debugstr_guid(&category));
+    ok(size == sizeof(GUID), "Got size %lu.\n", size);
+
+    IKsPropertySet_Release(set);
+    IPin_Release(source);
+}
+
 static void test_stream_config(IBaseFilter *filter)
 {
     AUDIO_STREAM_CONFIG_CAPS caps;
@@ -1116,6 +1146,7 @@ START_TEST(audiorecord)
         test_pin_info(filter);
         test_media_types(filter);
         test_connect_pin(filter);
+        test_property_set(filter);
         /* This calls SetFormat() and hence should be run last. */
         test_stream_config(filter);
 

@@ -361,9 +361,33 @@ static HRESULT WINAPI property_set_Set(IKsPropertySet *iface, const GUID *set, D
 static HRESULT WINAPI property_set_Get(IKsPropertySet *iface, const GUID *set, DWORD id,
         void *instance, DWORD instance_size, void *data, DWORD size, DWORD *ret_size)
 {
-    FIXME("iface %p, set %s, id %lu, instance %p, instance_size %lu, data %p, size %lu, ret_size %p.\n",
-            iface, debugstr_guid(set), id, instance, instance_size, data, size, ret_size);
-    return E_NOTIMPL;
+    struct audio_record *filter = impl_from_IKsPropertySet(iface);
+
+    TRACE("filter %p, set %s, id %lu, instance %p, instance_size %lu, data %p, size %lu, ret_size %p.\n",
+            filter, debugstr_guid(set), id, instance, instance_size, data, size, ret_size);
+
+    if (!IsEqualGUID(set, &AMPROPSETID_Pin))
+    {
+        FIXME("Unknown set %s, returning E_PROP_SET_UNSUPPORTED.\n", debugstr_guid(set));
+        return E_PROP_SET_UNSUPPORTED;
+    }
+
+    if (id != AMPROPERTY_PIN_CATEGORY)
+    {
+        FIXME("Unknown id %lu, returning E_PROP_ID_UNSUPPORTED.\n", id);
+        return E_PROP_ID_UNSUPPORTED;
+    }
+
+    if (instance || instance_size)
+        FIXME("Unexpected instance data %p, size %lu.\n", instance, instance_size);
+
+    *ret_size = sizeof(GUID);
+
+    if (size < sizeof(GUID))
+        return E_UNEXPECTED;
+
+    *(GUID *)data = PIN_CATEGORY_CAPTURE;
+    return S_OK;
 }
 
 static HRESULT WINAPI property_set_QuerySupported(IKsPropertySet *iface,
