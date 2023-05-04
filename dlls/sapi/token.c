@@ -1073,15 +1073,21 @@ static HRESULT WINAPI token_GetData( ISpObjectToken *iface,
 static HRESULT WINAPI token_SetStringValue( ISpObjectToken *iface,
                                             LPCWSTR name, LPCWSTR value )
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    struct object_token *This = impl_from_ISpObjectToken( iface );
+
+    TRACE( "%p, %s, %s\n", This, debugstr_w(name), debugstr_w(value) );
+
+    return ISpRegDataKey_SetStringValue( This->data_key, name, value );
 }
 
 static HRESULT WINAPI token_GetStringValue( ISpObjectToken *iface,
                                             LPCWSTR name, LPWSTR *value )
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    struct object_token *This = impl_from_ISpObjectToken( iface );
+
+    TRACE( "%p, %s, %p\n", This, debugstr_w(name), value );
+
+    return ISpRegDataKey_GetStringValue( This->data_key, name, value );
 }
 
 static HRESULT WINAPI token_SetDWORD( ISpObjectToken *iface,
