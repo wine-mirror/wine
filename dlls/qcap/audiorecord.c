@@ -1,6 +1,8 @@
-/* Implementation of the Audio Capture Filter (CLSID_AudioRecord)
+/*
+ * Audio capture filter
  *
  * Copyright 2015 Damjan Jovanovic
+ * Copyright 2023 Zeb Figura for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,12 +27,29 @@ struct audio_record
 {
     struct strmbase_filter filter;
     IPersistPropertyBag IPersistPropertyBag_iface;
+
+    struct strmbase_source source;
 };
 
 static struct audio_record *impl_from_strmbase_filter(struct strmbase_filter *filter)
 {
     return CONTAINING_RECORD(filter, struct audio_record, filter);
 }
+
+static HRESULT WINAPI audio_record_source_DecideBufferSize(struct strmbase_source *iface,
+        IMemAllocator *allocator, ALLOCATOR_PROPERTIES *props)
+{
+    ALLOCATOR_PROPERTIES ret_props;
+
+    return IMemAllocator_SetProperties(allocator, props, &ret_props);
+}
+
+static const struct strmbase_source_ops source_ops =
+{
+    .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
+    .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
+    .pfnDecideBufferSize = audio_record_source_DecideBufferSize,
+};
 
 static struct audio_record *impl_from_IPersistPropertyBag(IPersistPropertyBag *iface)
 {
@@ -39,7 +58,10 @@ static struct audio_record *impl_from_IPersistPropertyBag(IPersistPropertyBag *i
 
 static struct strmbase_pin *audio_record_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
-    FIXME("iface %p, index %u, stub!\n", iface, index);
+    struct audio_record *filter = impl_from_strmbase_filter(iface);
+
+    if (!index)
+        return &filter->source.pin;
     return NULL;
 }
 
@@ -47,6 +69,7 @@ static void audio_record_destroy(struct strmbase_filter *iface)
 {
     struct audio_record *filter = impl_from_strmbase_filter(iface);
 
+    strmbase_source_cleanup(&filter->source);
     strmbase_filter_cleanup(&filter->filter);
     free(filter);
 }
@@ -153,6 +176,8 @@ HRESULT audio_record_create(IUnknown *outer, IUnknown **out)
 
     object->IPersistPropertyBag_iface.lpVtbl = &PersistPropertyBagVtbl;
     strmbase_filter_init(&object->filter, outer, &CLSID_AudioRecord, &filter_ops);
+
+    strmbase_source_init(&object->source, &object->filter, L"Capture", &source_ops);
 
     TRACE("Created audio recorder %p.\n", object);
     *out = &object->filter.IUnknown_inner;
