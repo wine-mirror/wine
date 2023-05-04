@@ -186,8 +186,37 @@ static HRESULT WINAPI data_key_GetDWORD( ISpRegDataKey *iface,
 static HRESULT WINAPI data_key_OpenKey( ISpRegDataKey *iface,
                                         LPCWSTR name, ISpDataKey **sub_key )
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    struct data_key *This = impl_from_ISpRegDataKey( iface );
+    ISpRegDataKey *spregkey;
+    HRESULT hr;
+    HKEY key;
+    LONG ret;
+
+    TRACE( "%p, %s, %p\n", This, debugstr_w(name), sub_key );
+
+    ret = RegOpenKeyExW( This->key, name, 0, KEY_ALL_ACCESS, &key );
+    if (ret != ERROR_SUCCESS)
+        return SPERR_NOT_FOUND;
+
+    hr = data_key_create( NULL, &IID_ISpRegDataKey, (void**)&spregkey );
+    if (FAILED(hr))
+    {
+        RegCloseKey( key );
+        return hr;
+    }
+
+    hr = ISpRegDataKey_SetKey( spregkey, key, FALSE );
+    if (FAILED(hr))
+    {
+        RegCloseKey( key );
+        ISpRegDataKey_Release( spregkey );
+        return hr;
+    }
+
+    hr = ISpRegDataKey_QueryInterface( spregkey, &IID_ISpDataKey, (void**)sub_key );
+    ISpRegDataKey_Release( spregkey );
+
+    return hr;
 }
 
 static HRESULT WINAPI data_key_CreateKey( ISpRegDataKey *iface,

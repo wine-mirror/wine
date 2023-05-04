@@ -71,7 +71,14 @@ static void test_data_key(void)
     ok( !wcscmp( value, L"Test" ), "got %s\n", wine_dbgstr_w(value) );
     CoTaskMemFree( value );
 
+    hr = ISpRegDataKey_OpenKey( data_key, L"Testing", &sub );
+    ok( hr == SPERR_NOT_FOUND, "got %08lx\n", hr );
+
     hr = ISpRegDataKey_CreateKey( data_key, L"Testing", &sub );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ISpDataKey_Release(sub);
+
+    hr = ISpRegDataKey_OpenKey( data_key, L"Testing", &sub );
     ok( hr == S_OK, "got %08lx\n", hr );
     ISpDataKey_Release(sub);
 
