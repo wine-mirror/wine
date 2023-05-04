@@ -1,6 +1,6 @@
 MODULE    = qcap.dll
 UNIXLIB   = qcap.so
-IMPORTS   = strmbase strmiids uuid ole32 oleaut32
+IMPORTS   = strmbase strmiids uuid ole32 oleaut32 winmm
 DELAYIMPORTS = msvfw32
 
 C_SRCS = \

@@ -30,6 +30,9 @@ struct audio_record
 
     struct strmbase_source source;
     IAMStreamConfig IAMStreamConfig_iface;
+
+    unsigned int id;
+    HWAVEIN device;
 };
 
 static struct audio_record *impl_from_strmbase_filter(struct strmbase_filter *filter)
@@ -135,6 +138,8 @@ static HRESULT WINAPI audio_record_source_DecideBufferSize(struct strmbase_sourc
     struct audio_record *filter = impl_from_strmbase_filter(iface->pin.filter);
     const WAVEFORMATEX *format = (void *)filter->source.pin.mt.pbFormat;
     ALLOCATOR_PROPERTIES ret_props;
+    MMRESULT ret;
+    HRESULT hr;
 
     props->cBuffers = 4;
     /* This is the algorithm that native uses. The alignment to an even number
@@ -143,7 +148,23 @@ static HRESULT WINAPI audio_record_source_DecideBufferSize(struct strmbase_sourc
     props->cbAlign = 1;
     props->cbPrefix = 0;
 
-    return IMemAllocator_SetProperties(allocator, props, &ret_props);
+    if (FAILED(hr = IMemAllocator_SetProperties(allocator, props, &ret_props)))
+        return hr;
+
+    if ((ret = waveInOpen(&filter->device, filter->id, format, 0, 0, CALLBACK_NULL)) != MMSYSERR_NOERROR)
+    {
+        ERR("Failed to open device %u, error %u.\n", filter->id, ret);
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
+static void audio_record_source_disconnect(struct strmbase_source *iface)
+{
+    struct audio_record *filter = impl_from_strmbase_filter(iface->pin.filter);
+
+    waveInClose(filter->device);
 }
 
 static const struct strmbase_source_ops source_ops =
@@ -154,6 +175,7 @@ static const struct strmbase_source_ops source_ops =
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
     .pfnDecideBufferSize = audio_record_source_DecideBufferSize,
+    .source_disconnect = audio_record_source_disconnect,
 };
 
 static struct audio_record *impl_from_IAMStreamConfig(IAMStreamConfig *iface)
@@ -331,21 +353,21 @@ static HRESULT WINAPI PPB_InitNew(IPersistPropertyBag *iface)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI PPB_Load(IPersistPropertyBag *iface, IPropertyBag *pPropBag,
-        IErrorLog *pErrorLog)
+static HRESULT WINAPI PPB_Load(IPersistPropertyBag *iface, IPropertyBag *bag, IErrorLog *error_log)
 {
-    struct audio_record *This = impl_from_IPersistPropertyBag(iface);
-    HRESULT hr;
+    struct audio_record *filter = impl_from_IPersistPropertyBag(iface);
     VARIANT var;
+    HRESULT hr;
 
-    TRACE("(%p/%p)->(%p, %p)\n", iface, This, pPropBag, pErrorLog);
+    TRACE("filter %p, bag %p, error_log %p.\n", filter, bag, error_log);
 
     V_VT(&var) = VT_I4;
-    hr = IPropertyBag_Read(pPropBag, L"WaveInID", &var, pErrorLog);
-    if (SUCCEEDED(hr))
-    {
-        FIXME("FIXME: implement opening waveIn device %ld\n", V_I4(&var));
-    }
+    if (FAILED(hr = IPropertyBag_Read(bag, L"WaveInID", &var, error_log)))
+        return hr;
+
+    EnterCriticalSection(&filter->filter.filter_cs);
+    filter->id = V_I4(&var);
+    LeaveCriticalSection(&filter->filter.filter_cs);
 
     return hr;
 }
