@@ -52,7 +52,7 @@ struct object_token
     ISpObjectToken ISpObjectToken_iface;
     LONG ref;
 
-    HKEY token_key;
+    ISpRegDataKey *data_key;
     WCHAR *token_id;
 };
 
@@ -496,6 +496,23 @@ static HRESULT parse_cat_id( const WCHAR *str, HKEY *root, const WCHAR **sub_key
     return S_FALSE;
 }
 
+static HRESULT WINAPI create_data_key_with_hkey( HKEY key, ISpRegDataKey **data_key )
+{
+    HRESULT hr;
+
+    if (FAILED(hr = CoCreateInstance( &CLSID_SpDataKey, NULL, CLSCTX_INPROC_SERVER,
+                                      &IID_ISpRegDataKey, (void **)data_key ) ))
+        return hr;
+
+    if (FAILED(hr = ISpRegDataKey_SetKey( *data_key, key, TRUE )))
+    {
+        ISpRegDataKey_Release( *data_key );
+        *data_key = NULL;
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI token_category_SetId( ISpObjectTokenCategory *iface,
                                             LPCWSTR id, BOOL create )
 {
@@ -518,17 +535,12 @@ static HRESULT WINAPI token_category_SetId( ISpObjectTokenCategory *iface,
         res = RegOpenKeyExW( root, subkey, 0, KEY_ALL_ACCESS, &key );
     if (res) return SPERR_INVALID_REGISTRY_KEY;
 
-    hr = CoCreateInstance( &CLSID_SpDataKey, NULL, CLSCTX_ALL,
-                           &IID_ISpRegDataKey, (void **)&This->data_key );
-    if (FAILED(hr)) goto fail;
+    if (FAILED(hr = create_data_key_with_hkey( key, &This->data_key )))
+    {
+        RegCloseKey( key );
+        return hr;
+    }
 
-    hr = ISpRegDataKey_SetKey( This->data_key, key, FALSE );
-    if (FAILED(hr)) goto fail;
-
-    return hr;
-
-fail:
-    RegCloseKey( key );
     return hr;
 }
 
@@ -748,6 +760,7 @@ static HRESULT WINAPI token_enum_Next( ISpObjectTokenEnumBuilder *iface,
     WCHAR *subkey_name;
     HKEY sub_key;
     DWORD size;
+    ISpRegDataKey *data_key;
 
     TRACE( "(%p)->(%lu %p %p)\n", This, num, tokens, fetched );
 
@@ -777,15 +790,24 @@ static HRESULT WINAPI token_enum_Next( ISpObjectTokenEnumBuilder *iface,
         return E_FAIL;
     }
 
+    hr = create_data_key_with_hkey( sub_key, &data_key );
+    if (FAILED(hr))
+    {
+        free( subkey_name );
+        RegCloseKey( sub_key );
+        return hr;
+    }
+
     hr = token_create( NULL, &IID_ISpObjectToken, (void**)tokens );
     if (FAILED(hr))
     {
         free( subkey_name );
+        ISpRegDataKey_Release( data_key );
         return hr;
     }
 
     object = impl_from_ISpObjectToken( *tokens );
-    object->token_key = sub_key;
+    object->data_key = data_key;
     object->token_id = subkey_name;
 
     if (fetched) *fetched = 1;
@@ -823,6 +845,7 @@ static HRESULT WINAPI token_enum_Item( ISpObjectTokenEnumBuilder *iface,
     DWORD size;
     LONG ret;
     HKEY key;
+    ISpRegDataKey *data_key;
 
     TRACE( "%p, %lu, %p\n", This, index, token );
 
@@ -849,15 +872,24 @@ static HRESULT WINAPI token_enum_Item( ISpObjectTokenEnumBuilder *iface,
         return HRESULT_FROM_WIN32(ret);
     }
 
+    hr = create_data_key_with_hkey( key, &data_key );
+    if (FAILED(hr))
+    {
+        free( subkey );
+        RegCloseKey( key );
+        return hr;
+    }
+
     hr = token_create( NULL, &IID_ISpObjectToken, (void**)&subtoken );
     if (FAILED(hr))
     {
         free( subkey );
+        ISpRegDataKey_Release( data_key );
         return hr;
     }
 
     object = impl_from_ISpObjectToken( subtoken );
-    object->token_key = key;
+    object->data_key = data_key;
     object->token_id = subkey;
 
     *token = subtoken;
@@ -1014,7 +1046,7 @@ static ULONG WINAPI token_Release( ISpObjectToken *iface )
 
     if (!ref)
     {
-        if (This->token_key) RegCloseKey( This->token_key );
+        if (This->data_key) ISpRegDataKey_Release( This->data_key );
         free( This->token_id );
         free( This );
     }
@@ -1070,36 +1102,10 @@ static HRESULT WINAPI token_OpenKey( ISpObjectToken *iface,
                                      LPCWSTR name, ISpDataKey **sub_key )
 {
     struct object_token *This = impl_from_ISpObjectToken( iface );
-    ISpRegDataKey *spregkey;
-    HRESULT hr;
-    HKEY key;
-    LONG ret;
 
     TRACE( "%p, %s, %p\n", This, debugstr_w(name), sub_key );
 
-    ret = RegOpenKeyExW (This->token_key, name, 0, KEY_ALL_ACCESS, &key);
-    if (ret != ERROR_SUCCESS)
-        return SPERR_NOT_FOUND;
-
-    hr = data_key_create(NULL, &IID_ISpRegDataKey, (void**)&spregkey);
-    if (FAILED(hr))
-    {
-        RegCloseKey(key);
-        return hr;
-    }
-
-    hr = ISpRegDataKey_SetKey(spregkey, key, FALSE);
-    if (FAILED(hr))
-    {
-        RegCloseKey(key);
-        ISpRegDataKey_Release(spregkey);
-        return hr;
-    }
-
-    hr = ISpRegDataKey_QueryInterface(spregkey, &IID_ISpDataKey, (void**)sub_key);
-    ISpRegDataKey_Release(spregkey);
-
-    return hr;
+    return ISpRegDataKey_OpenKey( This->data_key, name, sub_key );
 }
 
 static HRESULT WINAPI token_CreateKey( ISpObjectToken *iface,
@@ -1150,7 +1156,7 @@ static HRESULT WINAPI token_SetId( ISpObjectToken *iface,
     FIXME( "(%p)->(%s %s %d): semi-stub\n", This, debugstr_w( category_id ),
            debugstr_w(token_id), create );
 
-    if (This->token_key) return SPERR_ALREADY_INITIALIZED;
+    if (This->data_key) return SPERR_ALREADY_INITIALIZED;
 
     if (!token_id) return E_POINTER;
 
@@ -1163,7 +1169,13 @@ static HRESULT WINAPI token_SetId( ISpObjectToken *iface,
         res = RegOpenKeyExW( root, subkey, 0, KEY_ALL_ACCESS, &key );
     if (res) return SPERR_NOT_FOUND;
 
-    This->token_key = key;
+    hr = create_data_key_with_hkey( key, &This->data_key );
+    if (FAILED(hr))
+    {
+        RegCloseKey( key );
+        return hr;
+    }
+
     This->token_id = wcsdup(token_id);
 
     return S_OK;
@@ -1176,7 +1188,7 @@ static HRESULT WINAPI token_GetId( ISpObjectToken *iface,
 
     TRACE( "%p, %p\n", This, token_id);
 
-    if (!This->token_key)
+    if (!This->data_key)
         return SPERR_UNINITIALIZED;
 
     if (!token_id)
@@ -1309,7 +1321,7 @@ HRESULT token_create( IUnknown *outer, REFIID iid, void **obj )
     This->ISpObjectToken_iface.lpVtbl = &token_vtbl;
     This->ref = 1;
 
-    This->token_key = NULL;
+    This->data_key = NULL;
     This->token_id = NULL;
 
     hr = ISpObjectToken_QueryInterface( &This->ISpObjectToken_iface, iid, obj );
