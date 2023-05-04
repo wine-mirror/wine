@@ -312,6 +312,36 @@ static void test_unconnected_filter_state(IBaseFilter *filter)
     ok(state == State_Stopped, "Got state %u.\n", state);
 }
 
+static void test_pin_info(IBaseFilter *filter)
+{
+    PIN_DIRECTION dir;
+    PIN_INFO info;
+    HRESULT hr;
+    WCHAR *id;
+    IPin *pin;
+
+    hr = IBaseFilter_FindPin(filter, L"Capture", &pin);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IPin_QueryPinInfo(pin, &info);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
+    ok(info.dir == PINDIR_OUTPUT, "Got direction %d.\n", info.dir);
+    ok(!wcscmp(info.achName, L"Capture"), "Got name %s.\n", debugstr_w(info.achName));
+    IBaseFilter_Release(info.pFilter);
+
+    hr = IPin_QueryDirection(pin, &dir);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(dir == PINDIR_OUTPUT, "Got direction %d.\n", dir);
+
+    hr = IPin_QueryId(pin, &id);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(!wcscmp(id, L"Capture"), "Got id %s.\n", debugstr_w(id));
+    CoTaskMemFree(id);
+
+    IPin_Release(pin);
+}
+
 START_TEST(audiorecord)
 {
     ICreateDevEnum *devenum;
@@ -353,6 +383,7 @@ START_TEST(audiorecord)
 
         test_interfaces(filter);
         test_unconnected_filter_state(filter);
+        test_pin_info(filter);
 
         ref = IBaseFilter_Release(filter);
         ok(!ref, "Got outstanding refcount %ld.\n", ref);
