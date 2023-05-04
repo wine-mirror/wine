@@ -2,6 +2,7 @@
  * Audio capture filter unit tests
  *
  * Copyright 2018 Zebediah Figura
+ * Copyright 2023 Zebediah Figura for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -46,6 +47,9 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
 
 static void test_interfaces(IBaseFilter *filter)
 {
+    HRESULT hr;
+    IPin *pin;
+
     todo_wine check_interface(filter, &IID_IAMFilterMiscFlags, TRUE);
     check_interface(filter, &IID_IBaseFilter, TRUE);
     check_interface(filter, &IID_IMediaFilter, TRUE);
@@ -63,6 +67,20 @@ static void test_interfaces(IBaseFilter *filter)
     check_interface(filter, &IID_IQualProp, FALSE);
     check_interface(filter, &IID_IReferenceClock, FALSE);
     check_interface(filter, &IID_IVideoWindow, FALSE);
+
+    hr = IBaseFilter_FindPin(filter, L"Capture", &pin);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    todo_wine check_interface(pin, &IID_IKsPropertySet, TRUE);
+    check_interface(pin, &IID_IPin, TRUE);
+    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
+
+    check_interface(pin, &IID_IAsyncReader, FALSE);
+    check_interface(pin, &IID_IMediaPosition, FALSE);
+    check_interface(pin, &IID_IMediaSeeking, FALSE);
+
+    IPin_Release(pin);
 }
 
 static const GUID test_iid = {0x33333333};
