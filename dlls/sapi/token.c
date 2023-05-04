@@ -40,7 +40,6 @@ struct data_key
     LONG ref;
 
     HKEY key;
-    BOOL read_only;
 };
 
 static struct data_key *impl_from_ISpRegDataKey( ISpRegDataKey *iface )
@@ -253,8 +252,8 @@ static HRESULT WINAPI data_key_SetKey( ISpRegDataKey *iface,
 
     if (This->key) return SPERR_ALREADY_INITIALIZED;
 
+    /* read_only is ignored in Windows implementations. */
     This->key = key;
-    This->read_only = read_only;
     return S_OK;
 }
 
@@ -287,7 +286,6 @@ HRESULT data_key_create( IUnknown *outer, REFIID iid, void **obj )
     This->ISpRegDataKey_iface.lpVtbl = &data_key_vtbl;
     This->ref = 1;
     This->key = NULL;
-    This->read_only = FALSE;
 
     hr = ISpRegDataKey_QueryInterface( &This->ISpRegDataKey_iface, iid, obj );
 

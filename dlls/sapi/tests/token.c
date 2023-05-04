@@ -76,6 +76,30 @@ static void test_data_key(void)
     ISpDataKey_Release(sub);
 
     ISpRegDataKey_Release( data_key );
+
+    hr = CoCreateInstance( &CLSID_SpDataKey, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_ISpRegDataKey, (void **)&data_key );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    res = RegOpenKeyExA( HKEY_CURRENT_USER, "Software\\Winetest\\sapi", 0, KEY_ALL_ACCESS, &key );
+    ok( res == ERROR_SUCCESS, "got %ld\n", res );
+
+    hr = ISpRegDataKey_SetKey( data_key, key, TRUE );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = ISpRegDataKey_SetStringValue( data_key, L"Voice2", L"Test2" );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = ISpRegDataKey_GetStringValue( data_key, L"Voice2", &value );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( !wcscmp( value, L"Test2" ), "got %s\n", wine_dbgstr_w(value) );
+    CoTaskMemFree( value );
+
+    hr = ISpRegDataKey_CreateKey( data_key, L"Testing2", &sub );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ISpDataKey_Release(sub);
+
+    ISpRegDataKey_Release( data_key );
 }
 
 static void test_token_category(void)
