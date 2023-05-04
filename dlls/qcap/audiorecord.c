@@ -29,11 +29,25 @@ struct audio_record
     IPersistPropertyBag IPersistPropertyBag_iface;
 
     struct strmbase_source source;
+    IAMStreamConfig IAMStreamConfig_iface;
 };
 
 static struct audio_record *impl_from_strmbase_filter(struct strmbase_filter *filter)
 {
     return CONTAINING_RECORD(filter, struct audio_record, filter);
+}
+
+static HRESULT audio_record_source_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    struct audio_record *filter = impl_from_strmbase_filter(iface->filter);
+
+    if (IsEqualGUID(iid, &IID_IAMStreamConfig))
+        *out = &filter->IAMStreamConfig_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_record_source_DecideBufferSize(struct strmbase_source *iface,
@@ -46,9 +60,71 @@ static HRESULT WINAPI audio_record_source_DecideBufferSize(struct strmbase_sourc
 
 static const struct strmbase_source_ops source_ops =
 {
+    .base.pin_query_interface = audio_record_source_query_interface,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
     .pfnDecideBufferSize = audio_record_source_DecideBufferSize,
+};
+
+static struct audio_record *impl_from_IAMStreamConfig(IAMStreamConfig *iface)
+{
+    return CONTAINING_RECORD(iface, struct audio_record, IAMStreamConfig_iface);
+}
+
+static HRESULT WINAPI stream_config_QueryInterface(IAMStreamConfig *iface, REFIID iid, void **out)
+{
+    struct audio_record *filter = impl_from_IAMStreamConfig(iface);
+    return IPin_QueryInterface(&filter->source.pin.IPin_iface, iid, out);
+}
+
+static ULONG WINAPI stream_config_AddRef(IAMStreamConfig *iface)
+{
+    struct audio_record *filter = impl_from_IAMStreamConfig(iface);
+    return IPin_AddRef(&filter->source.pin.IPin_iface);
+}
+
+static ULONG WINAPI stream_config_Release(IAMStreamConfig *iface)
+{
+    struct audio_record *filter = impl_from_IAMStreamConfig(iface);
+    return IPin_Release(&filter->source.pin.IPin_iface);
+}
+
+static HRESULT WINAPI stream_config_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *mt)
+{
+    FIXME("iface %p, mt %p, stub!\n", iface, mt);
+    strmbase_dump_media_type(mt);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_config_GetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE **mt)
+{
+    FIXME("iface %p, mt %p, stub!\n", iface, mt);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_config_GetNumberOfCapabilities(IAMStreamConfig *iface,
+        int *count, int *size)
+{
+    FIXME("iface %p, count %p, size %p, stub!\n", iface, count, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_config_GetStreamCaps(IAMStreamConfig *iface,
+        int index, AM_MEDIA_TYPE **mt, BYTE *caps)
+{
+    FIXME("iface %p, index %d, mt %p, caps %p, stub!\n", iface, index, mt, caps);
+    return E_NOTIMPL;
+}
+
+static const IAMStreamConfigVtbl stream_config_vtbl =
+{
+    stream_config_QueryInterface,
+    stream_config_AddRef,
+    stream_config_Release,
+    stream_config_SetFormat,
+    stream_config_GetFormat,
+    stream_config_GetNumberOfCapabilities,
+    stream_config_GetStreamCaps,
 };
 
 static struct audio_record *impl_from_IPersistPropertyBag(IPersistPropertyBag *iface)
@@ -178,6 +254,7 @@ HRESULT audio_record_create(IUnknown *outer, IUnknown **out)
     strmbase_filter_init(&object->filter, outer, &CLSID_AudioRecord, &filter_ops);
 
     strmbase_source_init(&object->source, &object->filter, L"Capture", &source_ops);
+    object->IAMStreamConfig_iface.lpVtbl = &stream_config_vtbl;
 
     TRACE("Created audio recorder %p.\n", object);
     *out = &object->filter.IUnknown_inner;

@@ -71,6 +71,7 @@ static void test_interfaces(IBaseFilter *filter)
     hr = IBaseFilter_FindPin(filter, L"Capture", &pin);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
+    check_interface(pin, &IID_IAMStreamConfig, TRUE);
     todo_wine check_interface(pin, &IID_IKsPropertySet, TRUE);
     check_interface(pin, &IID_IPin, TRUE);
     todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
