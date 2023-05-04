@@ -4046,6 +4046,10 @@ static void init_wow64( CONTEXT *context )
         imports_fixup_done = TRUE;
     }
 
+    RtlAcquirePebLock();
+    InsertHeadList( &tls_links, &NtCurrentTeb()->TlsLinks );
+    RtlReleasePebLock();
+
     RtlLeaveCriticalSection( &loader_section );
     pWow64LdrpInitialize( context );
 }
