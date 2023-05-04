@@ -46,6 +46,7 @@ struct audio_record
     CRITICAL_SECTION state_cs;
 
     AM_MEDIA_TYPE format;
+    ALLOCATOR_PROPERTIES props;
 };
 
 static struct audio_record *impl_from_strmbase_filter(struct strmbase_filter *filter)
@@ -158,12 +159,18 @@ static HRESULT WINAPI audio_record_source_DecideBufferSize(struct strmbase_sourc
     MMRESULT ret;
     HRESULT hr;
 
-    props->cBuffers = 4;
+    props->cBuffers = (filter->props.cBuffers == -1) ? 4 : filter->props.cBuffers;
     /* This is the algorithm that native uses. The alignment to an even number
      * doesn't make much sense, and may be a bug. */
-    props->cbBuffer = (format->nAvgBytesPerSec / 2) & ~1;
-    props->cbAlign = 1;
-    props->cbPrefix = 0;
+    if (filter->props.cbBuffer == -1)
+        props->cbBuffer = (format->nAvgBytesPerSec / 2) & ~1;
+    else
+        props->cbBuffer = filter->props.cbBuffer & ~1;
+    if (filter->props.cbAlign == -1 || filter->props.cbAlign == 0)
+        props->cbAlign = 1;
+    else
+        props->cbAlign = filter->props.cbAlign;
+    props->cbPrefix = (filter->props.cbPrefix == -1) ? 0 : filter->props.cbPrefix;
 
     if (FAILED(hr = IMemAllocator_SetProperties(allocator, props, &ret_props)))
         return hr;
@@ -356,10 +363,17 @@ static ULONG WINAPI buffer_negotiation_Release(IAMBufferNegotiation *iface)
 static HRESULT WINAPI buffer_negotiation_SuggestAllocatorProperties(
         IAMBufferNegotiation *iface, const ALLOCATOR_PROPERTIES *props)
 {
-    FIXME("iface %p, props %p, stub!\n", iface, props);
+    struct audio_record *filter = impl_from_IAMBufferNegotiation(iface);
+
+    TRACE("filter %p, props %p.\n", filter, props);
     TRACE("Requested %ld buffers, size %ld, alignment %ld, prefix %ld.\n",
             props->cBuffers, props->cbBuffer, props->cbAlign, props->cbPrefix);
-    return E_NOTIMPL;
+
+    EnterCriticalSection(&filter->state_cs);
+    filter->props = *props;
+    LeaveCriticalSection(&filter->state_cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI buffer_negotiation_GetAllocatorProperties(
@@ -787,6 +801,11 @@ HRESULT audio_record_create(IUnknown *outer, IUnknown **out)
         free(object);
         return hr;
     }
+
+    object->props.cBuffers = -1;
+    object->props.cbBuffer = -1;
+    object->props.cbAlign = -1;
+    object->props.cbPrefix = -1;
 
     object->IPersistPropertyBag_iface.lpVtbl = &PersistPropertyBagVtbl;
     strmbase_filter_init(&object->filter, outer, &CLSID_AudioRecord, &filter_ops);

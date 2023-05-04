@@ -618,6 +618,7 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
         IPin *source, struct testfilter *testsink)
 {
     ALLOCATOR_PROPERTIES props, req_props = {2, 3200, 32, 0};
+    IAMBufferNegotiation *negotiation;
     IMemAllocator *allocator;
     IMediaSample *sample;
     WAVEFORMATEX format;
@@ -692,6 +693,56 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
 
     IFilterGraph2_Disconnect(graph, source);
     IFilterGraph2_Disconnect(graph, &testsink->sink.pin.IPin_iface);
+
+    /* Test IAMBufferNegotiation. *This* is respected. */
+
+    IPin_QueryInterface(source, &IID_IAMBufferNegotiation, (void **)&negotiation);
+
+    hr = IAMBufferNegotiation_SuggestAllocatorProperties(negotiation, &req_props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    init_pcm_mt(&mt, &format, 1, 32000, 16);
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    todo_wine ok(testsink->sink.pAllocator && testsink->sink.pAllocator != allocator,
+            "Got unexpected allocator %p.\n", testsink->sink.pAllocator);
+    hr = IMemAllocator_GetProperties(testsink->sink.pAllocator, &props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(props.cBuffers == req_props.cBuffers, "Got %ld buffers.\n", props.cBuffers);
+    ok(props.cbBuffer == req_props.cbBuffer, "Got size %ld.\n", props.cbBuffer);
+    ok(props.cbAlign == req_props.cbAlign, "Got alignment %ld.\n", props.cbAlign);
+    ok(props.cbPrefix == req_props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
+
+    IFilterGraph2_Disconnect(graph, source);
+    IFilterGraph2_Disconnect(graph, &testsink->sink.pin.IPin_iface);
+
+    for (req_props.cbBuffer = 32000; req_props.cbBuffer < 32050; ++req_props.cbBuffer)
+    {
+        req_props.cBuffers = -1;
+        req_props.cbAlign = 0;
+        hr = IAMBufferNegotiation_SuggestAllocatorProperties(negotiation, &req_props);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        init_pcm_mt(&mt, &format, 1, 32000, 8);
+        hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &mt);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        todo_wine ok(testsink->sink.pAllocator && testsink->sink.pAllocator != allocator,
+                "Got unexpected allocator %p.\n", testsink->sink.pAllocator);
+        hr = IMemAllocator_GetProperties(testsink->sink.pAllocator, &props);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(props.cBuffers == 4, "Got %ld buffers.\n", props.cBuffers);
+        ok(props.cbBuffer == (req_props.cbBuffer & ~1),
+                "Got size %ld for %ld.\n", props.cbBuffer, req_props.cbBuffer);
+        ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
+        ok(props.cbPrefix == req_props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
+
+        IFilterGraph2_Disconnect(graph, source);
+        IFilterGraph2_Disconnect(graph, &testsink->sink.pin.IPin_iface);
+    }
+
+    IAMBufferNegotiation_Release(negotiation);
 }
 
 static void test_filter_state(IFilterGraph2 *graph, IMediaControl *control,
