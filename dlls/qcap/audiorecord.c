@@ -30,6 +30,7 @@ struct audio_record
 
     struct strmbase_source source;
     IAMStreamConfig IAMStreamConfig_iface;
+    IKsPropertySet IKsPropertySet_iface;
 
     unsigned int id;
     HWAVEIN device;
@@ -57,6 +58,8 @@ static HRESULT audio_record_source_query_interface(struct strmbase_pin *iface, R
 
     if (IsEqualGUID(iid, &IID_IAMStreamConfig))
         *out = &filter->IAMStreamConfig_iface;
+    else if (IsEqualGUID(iid, &IID_IKsPropertySet))
+        *out = &filter->IKsPropertySet_iface;
     else
         return E_NOINTERFACE;
 
@@ -322,6 +325,62 @@ static const IAMStreamConfigVtbl stream_config_vtbl =
     stream_config_GetFormat,
     stream_config_GetNumberOfCapabilities,
     stream_config_GetStreamCaps,
+};
+
+static struct audio_record *impl_from_IKsPropertySet(IKsPropertySet *iface)
+{
+    return CONTAINING_RECORD(iface, struct audio_record, IKsPropertySet_iface);
+}
+
+static HRESULT WINAPI property_set_QueryInterface(IKsPropertySet *iface, REFIID iid, void **out)
+{
+    struct audio_record *filter = impl_from_IKsPropertySet(iface);
+    return IPin_QueryInterface(&filter->source.pin.IPin_iface, iid, out);
+}
+
+static ULONG WINAPI property_set_AddRef(IKsPropertySet *iface)
+{
+    struct audio_record *filter = impl_from_IKsPropertySet(iface);
+    return IPin_AddRef(&filter->source.pin.IPin_iface);
+}
+
+static ULONG WINAPI property_set_Release(IKsPropertySet *iface)
+{
+    struct audio_record *filter = impl_from_IKsPropertySet(iface);
+    return IPin_Release(&filter->source.pin.IPin_iface);
+}
+
+static HRESULT WINAPI property_set_Set(IKsPropertySet *iface, const GUID *set, DWORD id,
+        void *instance, DWORD instance_size, void *data, DWORD size)
+{
+    FIXME("iface %p, set %s, id %lu, instance %p, instance_size %lu, data %p, size %lu, stub!\n",
+            iface, debugstr_guid(set), id, instance, instance_size, data, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI property_set_Get(IKsPropertySet *iface, const GUID *set, DWORD id,
+        void *instance, DWORD instance_size, void *data, DWORD size, DWORD *ret_size)
+{
+    FIXME("iface %p, set %s, id %lu, instance %p, instance_size %lu, data %p, size %lu, ret_size %p.\n",
+            iface, debugstr_guid(set), id, instance, instance_size, data, size, ret_size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI property_set_QuerySupported(IKsPropertySet *iface,
+        const GUID *set, DWORD id, DWORD *support)
+{
+    FIXME("iface %p, set %s, id %lu, support %p, stub!\n", iface, debugstr_guid(set), id, support);
+    return E_NOTIMPL;
+}
+
+static const IKsPropertySetVtbl property_set_vtbl =
+{
+    property_set_QueryInterface,
+    property_set_AddRef,
+    property_set_Release,
+    property_set_Set,
+    property_set_Get,
+    property_set_QuerySupported,
 };
 
 static struct audio_record *impl_from_IPersistPropertyBag(IPersistPropertyBag *iface)
@@ -659,6 +718,7 @@ HRESULT audio_record_create(IUnknown *outer, IUnknown **out)
 
     strmbase_source_init(&object->source, &object->filter, L"Capture", &source_ops);
     object->IAMStreamConfig_iface.lpVtbl = &stream_config_vtbl;
+    object->IKsPropertySet_iface.lpVtbl = &property_set_vtbl;
 
     object->state = State_Stopped;
     InitializeConditionVariable(&object->state_cv);
