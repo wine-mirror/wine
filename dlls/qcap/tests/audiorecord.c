@@ -371,6 +371,8 @@ START_TEST(audiorecord)
 
     while (IEnumMoniker_Next(enummon, 1, &mon, NULL) == S_OK)
     {
+        CLSID clsid;
+
         hr = IMoniker_GetDisplayName(mon, NULL, NULL, &name);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         trace("Testing device %s.\n", wine_dbgstr_w(name));
@@ -380,6 +382,10 @@ START_TEST(audiorecord)
 
         hr = IMoniker_BindToObject(mon, NULL, NULL, &IID_IBaseFilter, (void **)&filter);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IBaseFilter_GetClassID(filter, &clsid);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(IsEqualGUID(&clsid, &CLSID_AudioRecord), "Got clsid %s.\n", debugstr_guid(&clsid));
 
         test_interfaces(filter);
         test_unconnected_filter_state(filter);
