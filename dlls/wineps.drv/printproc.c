@@ -3217,7 +3217,6 @@ BOOL WINAPI PrintDocumentOnPrintProcessor(HANDLE pp, WCHAR *doc_name)
         WARN("Failed to write header\n");
         goto cleanup;
     }
-    data->pdev->job.banding = FALSE;
     data->pdev->job.OutOfPage = TRUE;
     data->pdev->job.PageNo = 0;
     data->pdev->job.quiet = FALSE;

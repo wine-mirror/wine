@@ -166,20 +166,6 @@ INT CDECL PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_dat
 	*obi = *ibi;
 	return 1;
     }
-    case NEXTBAND:
-    {
-        RECT *r = out_data;
-	if(!physDev->job.banding) {
-	    physDev->job.banding = TRUE;
-            SetRect(r, 0, 0, physDev->horzRes, physDev->vertRes);
-            TRACE("NEXTBAND returning %s\n", wine_dbgstr_rect(r));
-	    return 1;
-	}
-        SetRectEmpty(r);
-	TRACE("NEXTBAND rect to 0,0 - 0,0\n" );
-	physDev->job.banding = FALSE;
-        return EndPage( dev->hdc );
-    }
 
     case SETCOPYCOUNT:
         {
@@ -477,7 +463,6 @@ INT CDECL PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc )
         return 0;
     }
 
-    physDev->job.banding = FALSE;
     physDev->job.OutOfPage = TRUE;
     physDev->job.PageNo = 0;
     physDev->job.quiet = FALSE;

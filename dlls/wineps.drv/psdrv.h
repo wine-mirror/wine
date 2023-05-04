@@ -353,7 +353,6 @@ typedef struct {
     DWORD		id;             /* Job id */
     HANDLE              hprinter;       /* Printer handle */
     LPWSTR              doc_name;       /* Document Name */
-    BOOL		banding;        /* Have we received a NEXTBAND */
     BOOL		OutOfPage;      /* Page header not sent yet */
     INT			PageNo;
     BOOL                quiet;          /* Don't actually output anything */
