@@ -124,8 +124,18 @@ static HRESULT WINAPI data_key_GetData( ISpRegDataKey *iface, LPCWSTR name,
 static HRESULT WINAPI data_key_SetStringValue( ISpRegDataKey *iface,
                                                LPCWSTR name, LPCWSTR value )
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    struct data_key *This = impl_from_ISpRegDataKey( iface );
+    DWORD ret, size;
+
+    TRACE( "%p, %s, %s\n", This, debugstr_w(name), debugstr_w(value) );
+
+    if (!This->key)
+        return E_HANDLE;
+
+    size = (wcslen(value) + 1) * sizeof(WCHAR);
+    ret = RegSetValueExW( This->key, name, 0, REG_SZ, (BYTE *)value, size );
+
+    return HRESULT_FROM_WIN32(ret);
 }
 
 static HRESULT WINAPI data_key_GetStringValue( ISpRegDataKey *iface,

@@ -33,7 +33,7 @@ static void test_data_key(void)
     HRESULT hr;
     HKEY key;
     LONG res;
-    WCHAR *value;
+    WCHAR *value = NULL;
 
     hr = CoCreateInstance( &CLSID_SpDataKey, NULL, CLSCTX_INPROC_SERVER,
                            &IID_ISpRegDataKey, (void **)&data_key );
@@ -49,6 +49,9 @@ static void test_data_key(void)
     hr = ISpRegDataKey_GetStringValue( data_key, L"Voice", &value );
     ok( hr == E_HANDLE, "got %08lx\n", hr );
 
+    hr = ISpRegDataKey_SetStringValue( data_key, L"Voice", L"Test" );
+    ok( hr == E_HANDLE, "got %08lx\n", hr );
+
     hr = ISpRegDataKey_SetKey( data_key, key, FALSE );
     ok( hr == S_OK, "got %08lx\n", hr );
     hr = ISpRegDataKey_SetKey( data_key, key, FALSE );
@@ -59,6 +62,14 @@ static void test_data_key(void)
 
     hr = ISpRegDataKey_GetStringValue( data_key, L"", &value );
     ok( hr == SPERR_NOT_FOUND, "got %08lx\n", hr );
+
+    hr = ISpRegDataKey_SetStringValue( data_key, L"Voice", L"Test" );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = ISpRegDataKey_GetStringValue( data_key, L"Voice", &value );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( !wcscmp( value, L"Test" ), "got %s\n", wine_dbgstr_w(value) );
+    CoTaskMemFree( value );
 
     hr = ISpRegDataKey_CreateKey( data_key, L"Testing", &sub );
     ok( hr == S_OK, "got %08lx\n", hr );
@@ -361,6 +372,7 @@ static void test_object_token(void)
 START_TEST(token)
 {
     CoInitialize( NULL );
+    RegDeleteTreeA( HKEY_CURRENT_USER, "Software\\Winetest\\sapi" );
     test_data_key();
     test_token_category();
     test_token_enum();
