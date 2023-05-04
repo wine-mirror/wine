@@ -50,6 +50,74 @@ static HRESULT audio_record_source_query_interface(struct strmbase_pin *iface, R
     return S_OK;
 }
 
+static const struct
+{
+    unsigned int rate;
+    unsigned int depth;
+    unsigned int channels;
+}
+audio_formats[] =
+{
+    {44100, 16, 2},
+    {44100, 16, 1},
+    {32000, 16, 2},
+    {32000, 16, 1},
+    {22050, 16, 2},
+    {22050, 16, 1},
+    {11025, 16, 2},
+    {11025, 16, 1},
+    { 8000, 16, 2},
+    { 8000, 16, 1},
+    {44100,  8, 2},
+    {44100,  8, 1},
+    {22050,  8, 2},
+    {22050,  8, 1},
+    {11025,  8, 2},
+    {11025,  8, 1},
+    { 8000,  8, 2},
+    { 8000,  8, 1},
+    {48000, 16, 2},
+    {48000, 16, 1},
+    {96000, 16, 2},
+    {96000, 16, 1},
+};
+
+static HRESULT fill_media_type(unsigned int index, AM_MEDIA_TYPE *mt)
+{
+    WAVEFORMATEX *format;
+
+    if (index >= ARRAY_SIZE(audio_formats))
+        return VFW_S_NO_MORE_ITEMS;
+
+    if (!(format = CoTaskMemAlloc(sizeof(*format))))
+        return E_OUTOFMEMORY;
+
+    memset(format, 0, sizeof(WAVEFORMATEX));
+    format->wFormatTag = WAVE_FORMAT_PCM;
+    format->nChannels = audio_formats[index].channels;
+    format->nSamplesPerSec = audio_formats[index].rate;
+    format->wBitsPerSample = audio_formats[index].depth;
+    format->nBlockAlign = audio_formats[index].channels * audio_formats[index].depth / 8;
+    format->nAvgBytesPerSec = format->nBlockAlign * format->nSamplesPerSec;
+
+    memset(mt, 0, sizeof(AM_MEDIA_TYPE));
+    mt->majortype = MEDIATYPE_Audio;
+    mt->subtype = MEDIASUBTYPE_PCM;
+    mt->bFixedSizeSamples = TRUE;
+    mt->lSampleSize = format->nBlockAlign;
+    mt->formattype = FORMAT_WaveFormatEx;
+    mt->cbFormat = sizeof(WAVEFORMATEX);
+    mt->pbFormat = (BYTE *)format;
+
+    return S_OK;
+}
+
+static HRESULT audio_record_source_get_media_type(struct strmbase_pin *iface,
+        unsigned int index, AM_MEDIA_TYPE *mt)
+{
+    return fill_media_type(index, mt);
+}
+
 static HRESULT WINAPI audio_record_source_DecideBufferSize(struct strmbase_source *iface,
         IMemAllocator *allocator, ALLOCATOR_PROPERTIES *props)
 {
@@ -60,6 +128,7 @@ static HRESULT WINAPI audio_record_source_DecideBufferSize(struct strmbase_sourc
 
 static const struct strmbase_source_ops source_ops =
 {
+    .base.pin_get_media_type = audio_record_source_get_media_type,
     .base.pin_query_interface = audio_record_source_query_interface,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,

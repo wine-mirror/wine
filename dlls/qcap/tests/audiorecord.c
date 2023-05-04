@@ -386,50 +386,48 @@ static void test_media_types(IBaseFilter *filter)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (hr == S_OK)
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    pformat = (void *)pmt->pbFormat;
+    ok(pformat->nChannels == 2, "Got %u channels.\n", pformat->nChannels);
+    ok(pformat->wBitsPerSample == 16, "Got depth %u.\n", pformat->wBitsPerSample);
+    ok(pformat->nSamplesPerSec == 44100, "Got sample rate %lu.\n", pformat->nSamplesPerSec);
+
+    do
     {
         pformat = (void *)pmt->pbFormat;
-        ok(pformat->nChannels == 2, "Got %u channels.\n", pformat->nChannels);
-        ok(pformat->wBitsPerSample == 16, "Got depth %u.\n", pformat->wBitsPerSample);
-        ok(pformat->nSamplesPerSec == 44100, "Got sample rate %lu.\n", pformat->nSamplesPerSec);
 
-        do
-        {
-            pformat = (void *)pmt->pbFormat;
+        ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Audio), "Got major type %s.\n",
+                debugstr_guid(&pmt->majortype));
+        ok(IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_PCM), "Got subtype %s\n",
+                debugstr_guid(&pmt->subtype));
+        ok(pmt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
+        ok(!pmt->bTemporalCompression, "Got temporal compression %d.\n", pmt->bTemporalCompression);
+        ok(pmt->lSampleSize == pformat->nBlockAlign, "Got sample size %lu.\n", pmt->lSampleSize);
+        ok(IsEqualGUID(&pmt->formattype, &FORMAT_WaveFormatEx), "Got format type %s.\n",
+                debugstr_guid(&pmt->formattype));
+        ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
+        ok(pmt->cbFormat == sizeof(WAVEFORMATEX), "Got format size %lu.\n", pmt->cbFormat);
 
-            ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Audio), "Got major type %s.\n",
-                    debugstr_guid(&pmt->majortype));
-            ok(IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_PCM), "Got subtype %s\n",
-                    debugstr_guid(&pmt->subtype));
-            ok(pmt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
-            ok(!pmt->bTemporalCompression, "Got temporal compression %d.\n", pmt->bTemporalCompression);
-            ok(pmt->lSampleSize == pformat->nBlockAlign, "Got sample size %lu.\n", pmt->lSampleSize);
-            ok(IsEqualGUID(&pmt->formattype, &FORMAT_WaveFormatEx), "Got format type %s.\n",
-                    debugstr_guid(&pmt->formattype));
-            ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
-            ok(pmt->cbFormat == sizeof(WAVEFORMATEX), "Got format size %lu.\n", pmt->cbFormat);
+        ok(pformat->wFormatTag == WAVE_FORMAT_PCM, "Got format %#x.\n", pformat->wFormatTag);
+        ok(pformat->nChannels == 1 || pformat->nChannels == 2, "Got %u channels.\n", pformat->nChannels);
+        ok(pformat->wBitsPerSample == 8 || pformat->wBitsPerSample == 16, "Got depth %u.\n", pformat->wBitsPerSample);
+        ok(pformat->nBlockAlign == pformat->nChannels * pformat->wBitsPerSample / 8,
+                "Got block align %u.\n", pformat->nBlockAlign);
+        ok(pformat->nAvgBytesPerSec == pformat->nSamplesPerSec * pformat->nBlockAlign,
+                "Got %lu bytes per second.\n", pformat->nAvgBytesPerSec);
+        ok(!pformat->cbSize, "Got size %u.\n", pformat->cbSize);
 
-            ok(pformat->wFormatTag == WAVE_FORMAT_PCM, "Got format %#x.\n", pformat->wFormatTag);
-            ok(pformat->nChannels == 1 || pformat->nChannels == 2, "Got %u channels.\n", pformat->nChannels);
-            ok(pformat->wBitsPerSample == 8 || pformat->wBitsPerSample == 16, "Got depth %u.\n", pformat->wBitsPerSample);
-            ok(pformat->nBlockAlign == pformat->nChannels * pformat->wBitsPerSample / 8,
-                    "Got block align %u.\n", pformat->nBlockAlign);
-            ok(pformat->nAvgBytesPerSec == pformat->nSamplesPerSec * pformat->nBlockAlign,
-                    "Got %lu bytes per second.\n", pformat->nAvgBytesPerSec);
-            ok(!pformat->cbSize, "Got size %u.\n", pformat->cbSize);
+        strmbase_dump_media_type(pmt);
 
-            strmbase_dump_media_type(pmt);
+        hr = IPin_QueryAccept(pin, pmt);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-            hr = IPin_QueryAccept(pin, pmt);
-            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        CoTaskMemFree(pmt->pbFormat);
+        CoTaskMemFree(pmt);
 
-            CoTaskMemFree(pmt->pbFormat);
-            CoTaskMemFree(pmt);
-
-            hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
-        } while (hr == S_OK);
-    }
+        hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    } while (hr == S_OK);
 
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
@@ -522,7 +520,7 @@ static void test_stream_config(IBaseFilter *filter)
     hr = IAMStreamConfig_GetStreamCaps(config, count, &mt, (BYTE *)&caps);
     todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     hr = IEnumMediaTypes_Next(enummt, 1, &mt2, NULL);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     IEnumMediaTypes_Release(enummt);
 
