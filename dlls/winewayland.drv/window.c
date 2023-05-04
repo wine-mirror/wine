@@ -39,6 +39,8 @@ struct wayland_win_data
     struct rb_entry entry;
     /* hwnd that this private data belongs to */
     HWND hwnd;
+    /* wayland surface (if any) for this window */
+    struct wayland_surface *wayland_surface;
 };
 
 static int wayland_win_data_cmp_rb(const void *key,
@@ -103,6 +105,7 @@ static void wayland_win_data_destroy(struct wayland_win_data *data)
 
     pthread_mutex_unlock(&win_data_mutex);
 
+    if (data->wayland_surface) wayland_surface_destroy(data->wayland_surface);
     free(data);
 }
 
@@ -136,6 +139,47 @@ static void wayland_win_data_release(struct wayland_win_data *data)
     pthread_mutex_unlock(&win_data_mutex);
 }
 
+static void wayland_win_data_update_wayland_surface(struct wayland_win_data *data)
+{
+    struct wayland_surface *surface = data->wayland_surface;
+    HWND parent = NtUserGetAncestor(data->hwnd, GA_PARENT);
+    BOOL visible, xdg_visible;
+
+    TRACE("hwnd=%p\n", data->hwnd);
+
+    /* We don't want wayland surfaces for child windows. */
+    if (parent != NtUserGetDesktopWindow() && parent != 0)
+    {
+        if (surface) wayland_surface_destroy(surface);
+        surface = NULL;
+        goto out;
+    }
+
+    /* Otherwise ensure that we have a wayland surface. */
+    if (!surface && !(surface = wayland_surface_create())) return;
+
+    visible = (NtUserGetWindowLongW(data->hwnd, GWL_STYLE) & WS_VISIBLE) == WS_VISIBLE;
+    xdg_visible = surface->xdg_toplevel != NULL;
+
+    if (visible != xdg_visible)
+    {
+        pthread_mutex_lock(&surface->mutex);
+
+        /* If we have a pre-existing surface ensure it has no role. */
+        if (data->wayland_surface) wayland_surface_clear_role(surface);
+        /* If the window is a visible toplevel make it a wayland
+         * xdg_toplevel. Otherwise keep it role-less to avoid polluting the
+         * compositor with empty xdg_toplevels. */
+        if (visible) wayland_surface_make_toplevel(surface);
+
+        pthread_mutex_unlock(&surface->mutex);
+    }
+
+out:
+    TRACE("hwnd=%p surface=%p=>%p\n", data->hwnd, data->wayland_surface, surface);
+    data->wayland_surface = surface;
+}
+
 /***********************************************************************
  *           WAYLAND_DestroyWindow
  */
@@ -167,6 +211,27 @@ BOOL WAYLAND_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags,
     wayland_win_data_release(data);
 
     return TRUE;
+}
+
+/***********************************************************************
+ *           WAYLAND_WindowPosChanged
+ */
+void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
+                              const RECT *window_rect, const RECT *client_rect,
+                              const RECT *visible_rect, const RECT *valid_rects,
+                              struct window_surface *surface)
+{
+    struct wayland_win_data *data = wayland_win_data_get(hwnd);
+
+    TRACE("hwnd %p window %s client %s visible %s after %p flags %08x\n",
+          hwnd, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
+          wine_dbgstr_rect(visible_rect), insert_after, swp_flags);
+
+    if (!data) return;
+
+    wayland_win_data_update_wayland_surface(data);
+
+    wayland_win_data_release(data);
 }
 
 static void wayland_resize_desktop(void)

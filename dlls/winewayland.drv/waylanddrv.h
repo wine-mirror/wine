@@ -28,6 +28,7 @@
 #include <pthread.h>
 #include <wayland-client.h>
 #include "xdg-output-unstable-v1-client-protocol.h"
+#include "xdg-shell-client-protocol.h"
 
 #include "windef.h"
 #include "winbase.h"
@@ -58,6 +59,8 @@ struct wayland
     struct wl_event_queue *wl_event_queue;
     struct wl_registry *wl_registry;
     struct zxdg_output_manager_v1 *zxdg_output_manager_v1;
+    struct wl_compositor *wl_compositor;
+    struct xdg_wm_base *xdg_wm_base;
     struct wl_list output_list;
     /* Protects the output_list and the wayland_output.current states. */
     pthread_mutex_t output_mutex;
@@ -91,6 +94,14 @@ struct wayland_output
     struct wayland_output_state current;
 };
 
+struct wayland_surface
+{
+    struct wl_surface *wl_surface;
+    struct xdg_surface *xdg_surface;
+    struct xdg_toplevel *xdg_toplevel;
+    pthread_mutex_t mutex;
+};
+
 /**********************************************************************
  *          Wayland initialization
  */
@@ -107,6 +118,15 @@ void wayland_output_destroy(struct wayland_output *output) DECLSPEC_HIDDEN;
 void wayland_output_use_xdg_extension(struct wayland_output *output) DECLSPEC_HIDDEN;
 
 /**********************************************************************
+ *          Wayland surface
+ */
+
+struct wayland_surface *wayland_surface_create(void) DECLSPEC_HIDDEN;
+void wayland_surface_destroy(struct wayland_surface *surface) DECLSPEC_HIDDEN;
+void wayland_surface_make_toplevel(struct wayland_surface *surface) DECLSPEC_HIDDEN;
+void wayland_surface_clear_role(struct wayland_surface *surface) DECLSPEC_HIDDEN;
+
+/**********************************************************************
  *          USER driver functions
  */
 
@@ -115,6 +135,10 @@ void WAYLAND_DestroyWindow(HWND hwnd) DECLSPEC_HIDDEN;
 BOOL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manager,
                                   BOOL force, void *param) DECLSPEC_HIDDEN;
 LRESULT WAYLAND_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) DECLSPEC_HIDDEN;
+void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
+                              const RECT *window_rect, const RECT *client_rect,
+                              const RECT *visible_rect, const RECT *valid_rects,
+                              struct window_surface *surface) DECLSPEC_HIDDEN;
 BOOL WAYLAND_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags,
                                const RECT *window_rect, const RECT *client_rect,
                                RECT *visible_rect, struct window_surface **surface) DECLSPEC_HIDDEN;
