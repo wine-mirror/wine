@@ -20,8 +20,37 @@
  */
 
 #define COBJMACROS
+#include <stdbool.h>
 #include "dshow.h"
+#include "mmreg.h"
+#include "wine/strmbase.h"
 #include "wine/test.h"
+
+static bool compare_media_types(const AM_MEDIA_TYPE *a, const AM_MEDIA_TYPE *b)
+{
+    return !memcmp(a, b, offsetof(AM_MEDIA_TYPE, pbFormat))
+            && !memcmp(a->pbFormat, b->pbFormat, a->cbFormat);
+}
+
+static void init_pcm_mt(AM_MEDIA_TYPE *mt, WAVEFORMATEX *format,
+        WORD channels, DWORD sample_rate, WORD depth)
+{
+    memset(format, 0, sizeof(WAVEFORMATEX));
+    format->wFormatTag = WAVE_FORMAT_PCM;
+    format->nChannels = channels;
+    format->nSamplesPerSec = sample_rate;
+    format->wBitsPerSample = depth;
+    format->nBlockAlign = channels * depth / 8;
+    format->nAvgBytesPerSec = format->nBlockAlign * format->nSamplesPerSec;
+    memset(mt, 0, sizeof(AM_MEDIA_TYPE));
+    mt->majortype = MEDIATYPE_Audio;
+    mt->subtype = MEDIASUBTYPE_PCM;
+    mt->bFixedSizeSamples = TRUE;
+    mt->lSampleSize = format->nBlockAlign;
+    mt->formattype = FORMAT_WaveFormatEx;
+    mt->cbFormat = sizeof(WAVEFORMATEX);
+    mt->pbFormat = (BYTE *)format;
+}
 
 static ULONG get_refcount(void *iface)
 {
@@ -343,6 +372,224 @@ static void test_pin_info(IBaseFilter *filter)
     IPin_Release(pin);
 }
 
+static void test_media_types(IBaseFilter *filter)
+{
+    WAVEFORMATEX format, *pformat;
+    IEnumMediaTypes *enummt;
+    AM_MEDIA_TYPE mt, *pmt;
+    HRESULT hr;
+    IPin *pin;
+
+    IBaseFilter_FindPin(filter, L"Capture", &pin);
+
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        pformat = (void *)pmt->pbFormat;
+        ok(pformat->nChannels == 2, "Got %u channels.\n", pformat->nChannels);
+        ok(pformat->wBitsPerSample == 16, "Got depth %u.\n", pformat->wBitsPerSample);
+        ok(pformat->nSamplesPerSec == 44100, "Got sample rate %lu.\n", pformat->nSamplesPerSec);
+
+        do
+        {
+            pformat = (void *)pmt->pbFormat;
+
+            ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Audio), "Got major type %s.\n",
+                    debugstr_guid(&pmt->majortype));
+            ok(IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_PCM), "Got subtype %s\n",
+                    debugstr_guid(&pmt->subtype));
+            ok(pmt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
+            ok(!pmt->bTemporalCompression, "Got temporal compression %d.\n", pmt->bTemporalCompression);
+            ok(pmt->lSampleSize == pformat->nBlockAlign, "Got sample size %lu.\n", pmt->lSampleSize);
+            ok(IsEqualGUID(&pmt->formattype, &FORMAT_WaveFormatEx), "Got format type %s.\n",
+                    debugstr_guid(&pmt->formattype));
+            ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
+            ok(pmt->cbFormat == sizeof(WAVEFORMATEX), "Got format size %lu.\n", pmt->cbFormat);
+
+            ok(pformat->wFormatTag == WAVE_FORMAT_PCM, "Got format %#x.\n", pformat->wFormatTag);
+            ok(pformat->nChannels == 1 || pformat->nChannels == 2, "Got %u channels.\n", pformat->nChannels);
+            ok(pformat->wBitsPerSample == 8 || pformat->wBitsPerSample == 16, "Got depth %u.\n", pformat->wBitsPerSample);
+            ok(pformat->nBlockAlign == pformat->nChannels * pformat->wBitsPerSample / 8,
+                    "Got block align %u.\n", pformat->nBlockAlign);
+            ok(pformat->nAvgBytesPerSec == pformat->nSamplesPerSec * pformat->nBlockAlign,
+                    "Got %lu bytes per second.\n", pformat->nAvgBytesPerSec);
+            ok(!pformat->cbSize, "Got size %u.\n", pformat->cbSize);
+
+            strmbase_dump_media_type(pmt);
+
+            hr = IPin_QueryAccept(pin, pmt);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            CoTaskMemFree(pmt->pbFormat);
+            CoTaskMemFree(pmt);
+
+            hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+        } while (hr == S_OK);
+    }
+
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    init_pcm_mt(&mt, &format, 1, 44100, 8);
+    mt.subtype = MEDIASUBTYPE_RGB8;
+    mt.bFixedSizeSamples = FALSE;
+    mt.bTemporalCompression = TRUE;
+    mt.lSampleSize = 123;
+    format.nAvgBytesPerSec = 123;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    init_pcm_mt(&mt, &format, 1, 44100, 8);
+    mt.majortype = MEDIATYPE_Stream;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    mt.majortype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    init_pcm_mt(&mt, &format, 1, 44100, 8);
+    mt.formattype = FORMAT_None;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    mt.formattype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    init_pcm_mt(&mt, &format, 1, 44100, 8);
+    format.wFormatTag = 0xdead;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    /* Validation of format members seems to vary across windows versions. */
+
+    IEnumMediaTypes_Release(enummt);
+    IPin_Release(pin);
+}
+
+static void test_stream_config(IBaseFilter *filter)
+{
+    AUDIO_STREAM_CONFIG_CAPS caps;
+    IEnumMediaTypes *enummt;
+    IAMStreamConfig *config;
+    AM_MEDIA_TYPE *mt, *mt2;
+    int count, size, i;
+    IPin *source;
+    HRESULT hr;
+
+    IBaseFilter_FindPin(filter, L"Capture", &source);
+    IPin_QueryInterface(source, &IID_IAMStreamConfig, (void **)&config);
+
+    count = size = 0xdeadbeef;
+    hr = IAMStreamConfig_GetNumberOfCapabilities(config, &count, &size);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(count && count != 0xdeadbeef, "Got count %d.\n", count);
+    todo_wine ok(size == sizeof(AUDIO_STREAM_CONFIG_CAPS), "Got size %d.\n", size);
+
+    hr = IPin_EnumMediaTypes(source, &enummt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    for (i = 0; i < count; ++i)
+    {
+        winetest_push_context("Caps %u", i);
+
+        hr = IAMStreamConfig_GetStreamCaps(config, i, &mt, (BYTE *)&caps);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IEnumMediaTypes_Next(enummt, 1, &mt2, NULL);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(compare_media_types(mt, mt2), "Media types didn't match.\n");
+
+        ok(IsEqualGUID(&caps.guid, &MEDIATYPE_Audio), "Got GUID %s.\n", debugstr_guid(&caps.guid));
+        ok(caps.MinimumChannels == 1, "Got minimum channels %lu.\n", caps.MinimumChannels);
+        ok(caps.MaximumChannels == 2, "Got maximum channels %lu.\n", caps.MaximumChannels);
+        ok(caps.ChannelsGranularity == 1, "Got channels granularity %lu.\n", caps.ChannelsGranularity);
+        ok(caps.MinimumBitsPerSample == 8, "Got minimum depth %lu.\n", caps.MinimumBitsPerSample);
+        ok(caps.MaximumBitsPerSample == 16, "Got maximum depth %lu.\n", caps.MaximumBitsPerSample);
+        ok(caps.BitsPerSampleGranularity == 8, "Got depth granularity %lu.\n", caps.BitsPerSampleGranularity);
+        ok(caps.MinimumSampleFrequency == 11025, "Got minimum rate %lu.\n", caps.MinimumSampleFrequency);
+        ok(caps.MaximumSampleFrequency == 44100, "Got maximum rate %lu.\n", caps.MaximumSampleFrequency);
+        ok(caps.SampleFrequencyGranularity == 11025, "Got rate granularity %lu.\n", caps.SampleFrequencyGranularity);
+
+        DeleteMediaType(mt2);
+        DeleteMediaType(mt);
+
+        winetest_pop_context();
+    }
+
+    hr = IAMStreamConfig_GetStreamCaps(config, count, &mt, (BYTE *)&caps);
+    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    hr = IEnumMediaTypes_Next(enummt, 1, &mt2, NULL);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    IEnumMediaTypes_Release(enummt);
+
+    hr = IAMStreamConfig_GetFormat(config, &mt);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        hr = IAMStreamConfig_GetStreamCaps(config, 0, &mt2, (BYTE *)&caps);
+        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        if (hr == S_OK)
+        {
+            ok(compare_media_types(mt, mt2), "Media types didn't match.\n");
+            DeleteMediaType(mt2);
+        }
+
+        hr = IAMStreamConfig_SetFormat(config, NULL);
+        todo_wine ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+
+        mt->majortype = MEDIATYPE_Video;
+        hr = IAMStreamConfig_SetFormat(config, mt);
+        todo_wine ok(hr == VFW_E_INVALIDMEDIATYPE, "Got hr %#lx.\n", hr);
+
+        DeleteMediaType(mt);
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        winetest_push_context("Caps %u", i);
+
+        hr = IAMStreamConfig_GetStreamCaps(config, i, &mt, (BYTE *)&caps);
+        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        if (hr == S_OK)
+        {
+            hr = IAMStreamConfig_SetFormat(config, mt);
+            todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            hr = IAMStreamConfig_GetFormat(config, &mt2);
+            todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            ok(compare_media_types(mt, mt2), "Media types didn't match.\n");
+            DeleteMediaType(mt2);
+
+            DeleteMediaType(mt);
+        }
+        winetest_pop_context();
+    }
+
+    /* Unlike the WDM video capture filter, IEnumMediaTypes() still enumerates
+     * all media types. */
+    IPin_EnumMediaTypes(source, &enummt);
+    for (i = 0; i < count; ++i)
+    {
+        hr = IAMStreamConfig_GetStreamCaps(config, i, &mt, (BYTE *)&caps);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IEnumMediaTypes_Next(enummt, 1, &mt2, NULL);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(compare_media_types(mt, mt2), "Media types didn't match.\n");
+
+        DeleteMediaType(mt2);
+        DeleteMediaType(mt);
+    }
+    IEnumMediaTypes_Release(enummt);
+
+    IAMStreamConfig_Release(config);
+    IPin_Release(source);
+}
+
 START_TEST(audiorecord)
 {
     ICreateDevEnum *devenum;
@@ -391,6 +638,9 @@ START_TEST(audiorecord)
         test_interfaces(filter);
         test_unconnected_filter_state(filter);
         test_pin_info(filter);
+        test_media_types(filter);
+        /* This calls SetFormat() and hence should be run last. */
+        test_stream_config(filter);
 
         ref = IBaseFilter_Release(filter);
         ok(!ref, "Got outstanding refcount %ld.\n", ref);
