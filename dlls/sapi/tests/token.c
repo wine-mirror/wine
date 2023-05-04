@@ -268,13 +268,117 @@ static void tests_token_voices(void)
     IEnumSpObjectTokens_Release(tokens);
 }
 
+
+#define TESTCLASS_CLSID L"{67DD26B6-50BA-3297-253E-619346F177F8}"
+static const GUID CLSID_TestClass = {0x67DD26B6,0x50BA,0x3297,{0x25,0x3E,0x61,0x93,0x46,0xF1,0x77,0xF8}};
+
+static ISpObjectToken *test_class_token;
+
+static HRESULT WINAPI test_class_QueryInterface(ISpObjectWithToken *iface, REFIID riid, void **ppv)
+{
+    if (IsEqualGUID( riid, &IID_IUnknown ) || IsEqualGUID( riid, &IID_ISpObjectWithToken ))
+    {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_class_AddRef(ISpObjectWithToken *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI test_class_Release(ISpObjectWithToken *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI test_class_SetObjectToken(ISpObjectWithToken *iface, ISpObjectToken *token)
+{
+    ok( token != NULL, "token == NULL\n" );
+    test_class_token = token;
+    ISpObjectToken_AddRef(test_class_token);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_class_GetObjectToken(ISpObjectWithToken *iface, ISpObjectToken **token)
+{
+    ok( 0, "unexpected call\n" );
+    return E_NOTIMPL;
+}
+
+static const ISpObjectWithTokenVtbl test_class_vtbl = {
+    test_class_QueryInterface,
+    test_class_AddRef,
+    test_class_Release,
+    test_class_SetObjectToken,
+    test_class_GetObjectToken
+};
+
+static ISpObjectWithToken test_class = { &test_class_vtbl };
+
+static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
+{
+    if (IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IClassFactory, riid ))
+    {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface,
+        IUnknown *pUnkOuter, REFIID riid, void **ppv)
+{
+    ok( pUnkOuter == NULL, "pUnkOuter != NULL\n" );
+    ok( IsEqualGUID(riid, &IID_IUnknown), "riid = %s\n", wine_dbgstr_guid(riid) );
+
+    *ppv = &test_class;
+    return S_OK;
+}
+
+static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL fLock)
+{
+    ok( 0, "unexpected call\n" );
+    return E_NOTIMPL;
+}
+
+static const IClassFactoryVtbl ClassFactoryVtbl = {
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    ClassFactory_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static IClassFactory test_class_cf = { &ClassFactoryVtbl };
+
 static void test_object_token(void)
 {
+    static const WCHAR test_token_id[] = L"HKEY_CURRENT_USER\\Software\\Winetest\\sapi\\TestToken";
+
     ISpObjectToken *token;
     ISpDataKey *sub_key;
     HRESULT hr;
     LPWSTR tempW, token_id;
     ISpObjectTokenCategory *cat;
+    DWORD regid;
+    IUnknown *obj;
 
     hr = CoCreateInstance( &CLSID_SpObjectToken, NULL, CLSCTX_INPROC_SERVER,
                            &IID_ISpObjectToken, (void **)&token );
@@ -397,6 +501,51 @@ static void test_object_token(void)
         ISpObjectTokenCategory_Release( cat );
     }
 
+    hr = CoRegisterClassObject( &CLSID_TestClass, (IUnknown *)&test_class_cf,
+                                CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &regid );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    ISpObjectToken_Release( token );
+    hr = CoCreateInstance( &CLSID_SpObjectToken, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_ISpObjectToken, (void **)&token );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = ISpObjectToken_SetId( token, NULL, test_token_id, TRUE );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = ISpObjectToken_SetStringValue( token, L"CLSID", TESTCLASS_CLSID );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    tempW = NULL;
+    hr = ISpObjectToken_GetStringValue( token, L"CLSID", &tempW );
+
+    ok( hr == S_OK, "got %08lx\n", hr );
+    if ( tempW ) {
+        ok( !wcsncmp( tempW, TESTCLASS_CLSID, wcslen(TESTCLASS_CLSID) ),
+            "got %s (expected %s)\n", wine_dbgstr_w(tempW), wine_dbgstr_w(TESTCLASS_CLSID) );
+        CoTaskMemFree( tempW );
+    }
+
+    test_class_token = NULL;
+    hr = ISpObjectToken_CreateInstance( token, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&obj );
+    if ( hr == E_ACCESSDENIED ) {
+        win_skip( "ISpObjectToken_CreateInstance returned E_ACCESSDENIED\n" );
+        return;
+    }
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( test_class_token != NULL, "test_class_token not set\n" );
+
+    tempW = NULL;
+    hr = ISpObjectToken_GetId( test_class_token, &tempW );
+    ok( tempW != NULL, "got %p\n", tempW );
+    if (tempW) {
+        ok( !wcsncmp(tempW, test_token_id, wcslen(test_token_id)),
+            "got %s (expected %s)\n", wine_dbgstr_w(tempW), wine_dbgstr_w(test_token_id) );
+        CoTaskMemFree( tempW );
+    }
+
+    ISpObjectToken_Release( test_class_token );
+    IUnknown_Release( obj );
     ISpObjectToken_Release( token );
 }
 

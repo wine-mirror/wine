@@ -1227,8 +1227,39 @@ static HRESULT WINAPI token_CreateInstance( ISpObjectToken *iface,
                                             REFIID riid,
                                             void **object )
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    WCHAR *clsid_str;
+    CLSID clsid;
+    IUnknown *unk;
+    ISpObjectWithToken *obj_token_iface;
+    HRESULT hr;
+
+    TRACE( "%p, %p, %#lx, %s, %p\n", iface, outer, class_context, debugstr_guid( riid ), object );
+
+    if (FAILED(hr = ISpObjectToken_GetStringValue( iface, L"CLSID", &clsid_str )))
+        return hr;
+
+    hr = CLSIDFromString( clsid_str, &clsid );
+    CoTaskMemFree( clsid_str );
+    if (FAILED(hr))
+        return hr;
+
+    if (FAILED(hr = CoCreateInstance( &clsid, outer, class_context, &IID_IUnknown, (void **)&unk )))
+        return hr;
+
+    /* Call ISpObjectWithToken::SetObjectToken if the interface is available. */
+    if (SUCCEEDED(IUnknown_QueryInterface( unk, &IID_ISpObjectWithToken, (void **)&obj_token_iface )))
+    {
+        hr = ISpObjectWithToken_SetObjectToken( obj_token_iface, iface );
+        ISpObjectWithToken_Release( obj_token_iface );
+        if (FAILED(hr))
+            goto done;
+    }
+
+    hr = IUnknown_QueryInterface( unk, riid, object );
+
+done:
+    IUnknown_Release( unk );
+    return hr;
 }
 
 static HRESULT WINAPI token_GetStorageFileName( ISpObjectToken *iface,
