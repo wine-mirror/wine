@@ -62,311 +62,91 @@ INT CDECL PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_dat
 
     switch(nEscape)
     {
-    case QUERYESCSUPPORT:
-        if(cbInput < sizeof(SHORT))
-        {
-	    WARN("cbInput < sizeof(SHORT) (=%d) for QUERYESCSUPPORT\n", cbInput);
-	    return 0;
-	} else {
-	    DWORD num = (cbInput < sizeof(DWORD)) ? *(const USHORT *)in_data : *(const DWORD *)in_data;
-	    TRACE("QUERYESCSUPPORT for %ld\n", num);
-
-	    switch(num) {
-	    case NEXTBAND:
-	    /*case BANDINFO:*/
-	    case SETCOPYCOUNT:
-	    case GETTECHNOLOGY:
-	    case SETLINECAP:
-	    case SETLINEJOIN:
-	    case SETMITERLIMIT:
-	    case SETCHARSET:
-	    case EXT_DEVICE_CAPS:
-	    case SET_BOUNDS:
-            case EPSPRINTING:
-	    case POSTSCRIPT_DATA:
-            case PASSTHROUGH:
-            case POSTSCRIPT_PASSTHROUGH:
-	    case POSTSCRIPT_IGNORE:
-	    case BEGIN_PATH:
-	    case CLIP_TO_PATH:
-	    case END_PATH:
-	    /*case DRAWPATTERNRECT:*/
-
-            /* PageMaker checks for it */
-            case DOWNLOADHEADER:
-
-            /* PageMaker doesn't check for DOWNLOADFACE and GETFACENAME but
-             * uses them, they are supposed to be supported by any PS printer.
-             */
-            case DOWNLOADFACE:
-
-            /* PageMaker checks for these as a part of process of detecting
-             * a "fully compatible" PS printer, but doesn't actually use them.
-             */
-            case OPENCHANNEL:
-            case CLOSECHANNEL:
-	        return TRUE;
-
-            /* Windows PS driver reports 0, but still supports this escape */
-            case GETFACENAME:
-                return FALSE; /* suppress the FIXME below */
-
-	    default:
-		FIXME("QUERYESCSUPPORT(%ld) - not supported.\n", num);
-	        return FALSE;
-	    }
-	}
-
-    case OPENCHANNEL:
-        FIXME("OPENCHANNEL: stub\n");
-        return 1;
-
-    case CLOSECHANNEL:
-        FIXME("CLOSECHANNEL: stub\n");
-        return 1;
-
-    case DOWNLOADHEADER:
-        FIXME("DOWNLOADHEADER: stub\n");
-        /* should return name of the downloaded procset */
-        *(char *)out_data = 0;
-        return 1;
-
-    case GETFACENAME:
-        FIXME("GETFACENAME: stub\n");
-        lstrcpynA(out_data, "Courier", cbOutput);
-        return 1;
-
-    case DOWNLOADFACE:
-        FIXME("DOWNLOADFACE: stub\n");
-        return 1;
-
-    case MFCOMMENT:
-    {
-	FIXME("MFCOMMENT(%p, %d)\n", in_data, cbInput);
-	return 1;
-    }
-    case DRAWPATTERNRECT:
-    {
-	DRAWPATRECT	*dpr = (DRAWPATRECT*)in_data;
-
-	FIXME("DRAWPATTERNRECT(pos (%ld,%ld), size %ldx%ld, style %d, pattern %x), stub!\n",
-		dpr->ptPosition.x, dpr->ptPosition.y,
-		dpr->ptSize.x, dpr->ptSize.y,
-		dpr->wStyle, dpr->wPattern
-	);
-	return 1;
-    }
-    case BANDINFO:
-    {
-	BANDINFOSTRUCT	*ibi = (BANDINFOSTRUCT*)in_data;
-	BANDINFOSTRUCT	*obi = (BANDINFOSTRUCT*)out_data;
-
-        FIXME("BANDINFO(graphics %d, text %d, rect %s), stub!\n", ibi->GraphicsFlag,
-                ibi->TextFlag, wine_dbgstr_rect(&ibi->GraphicsRect));
-	*obi = *ibi;
-	return 1;
-    }
-
-    case SETCOPYCOUNT:
-        {
-            const INT *NumCopies = in_data;
-            INT *ActualCopies = out_data;
-            if(cbInput != sizeof(INT)) {
-                WARN("cbInput != sizeof(INT) (=%d) for SETCOPYCOUNT\n", cbInput);
-		return 0;
-	    }
-	    TRACE("SETCOPYCOUNT %d\n", *NumCopies);
-	    *ActualCopies = 1;
-	    return 1;
-	}
-
-    case GETTECHNOLOGY:
-        {
-	    LPSTR p = out_data;
-	    strcpy(p, "PostScript");
-	    *(p + strlen(p) + 1) = '\0'; /* 2 '\0's at end of string */
-	    return 1;
-	}
-
-    case SETLINECAP:
-        {
-            INT newCap = *(const INT *)in_data;
-            if(cbInput != sizeof(INT)) {
-                WARN("cbInput != sizeof(INT) (=%d) for SETLINECAP\n", cbInput);
-		return 0;
-            }
-	    TRACE("SETLINECAP %d\n", newCap);
-	    return 0;
-	}
-
-    case SETLINEJOIN:
-        {
-            INT newJoin = *(const INT *)in_data;
-            if(cbInput != sizeof(INT)) {
-                WARN("cbInput != sizeof(INT) (=%d) for SETLINEJOIN\n", cbInput);
-		return 0;
-            }
-	    TRACE("SETLINEJOIN %d\n", newJoin);
-	    return 0;
-	}
-
-    case SETMITERLIMIT:
-        {
-            INT newLimit = *(const INT *)in_data;
-            if(cbInput != sizeof(INT)) {
-                WARN("cbInput != sizeof(INT) (=%d) for SETMITERLIMIT\n", cbInput);
-		return 0;
-            }
-	    TRACE("SETMITERLIMIT %d\n", newLimit);
-	    return 0;
-	}
-
-    case SETCHARSET:
-      /* Undocumented escape used by winword6.
-	 Switches between ANSI and a special charset.
-	 If *lpInData == 1 we require that
-	 0x91 is quoteleft
-	 0x92 is quoteright
-	 0x93 is quotedblleft
-	 0x94 is quotedblright
-	 0x95 is bullet
-	 0x96 is endash
-	 0x97 is emdash
-	 0xa0 is non break space - yeah right.
-
-	 If *lpInData == 0 we get ANSI.
-	 Since there's nothing else there, let's just make these the default
-	 anyway and see what happens...
-      */
-        return 1;
-
-    case EXT_DEVICE_CAPS:
-        {
-            UINT cap = *(const UINT *)in_data;
-            if(cbInput != sizeof(UINT)) {
-                WARN("cbInput != sizeof(UINT) (=%d) for EXT_DEVICE_CAPS\n", cbInput);
-		return 0;
-            }
-	    TRACE("EXT_DEVICE_CAPS %d\n", cap);
-	    return 0;
-	}
-
-    case SET_BOUNDS:
-        {
-            const RECT *r = in_data;
-            if(cbInput != sizeof(RECT)) {
-                WARN("cbInput != sizeof(RECT) (=%d) for SET_BOUNDS\n", cbInput);
-		return 0;
-            }
-            TRACE("SET_BOUNDS %s\n", wine_dbgstr_rect(r));
-	    return 0;
-	}
-
-    case EPSPRINTING:
-	{
-            UINT epsprint = *(const UINT*)in_data;
-	    /* FIXME: In this mode we do not need to send page intros and page
-	     * ends according to the doc. But I just ignore that detail
-	     * for now.
-	     */
-	    TRACE("EPS Printing support %sable.\n",epsprint?"en":"dis");
-	    return 1;
-        }
-
     case POSTSCRIPT_DATA:
     case PASSTHROUGH:
     case POSTSCRIPT_PASSTHROUGH:
-        {
-            /* Write directly to spool file, bypassing normal PS driver
-             * processing that is done along with writing PostScript code
-             * to the spool.
-	     * We have a WORD before the data counting the size, but
-	     * cbInput is just this +2.
-             * However Photoshop 7 has a bug that sets cbInput to 2 less than the
-             * length of the string, rather than 2 more.  So we'll use the WORD at
-             * in_data[0] instead.
-             */
-            passthrough_enter(dev);
-            return write_spool(dev, ((char*)in_data) + 2, *(const WORD*)in_data);
-        }
+    {
+        /* Write directly to spool file, bypassing normal PS driver
+         * processing that is done along with writing PostScript code
+         * to the spool.
+         * We have a WORD before the data counting the size, but
+         * cbInput is just this +2.
+         * However Photoshop 7 has a bug that sets cbInput to 2 less than the
+         * length of the string, rather than 2 more.  So we'll use the WORD at
+         * in_data[0] instead.
+         */
+        passthrough_enter(dev);
+        return write_spool(dev, ((char*)in_data) + 2, *(const WORD*)in_data);
+    }
 
     case POSTSCRIPT_IGNORE:
-      {
-	BOOL ret = physDev->job.quiet;
+    {
+        BOOL ret = physDev->job.quiet;
         TRACE("POSTSCRIPT_IGNORE %d\n", *(const short*)in_data);
-	physDev->job.quiet = *(const short*)in_data;
-	return ret;
-      }
+        physDev->job.quiet = *(const short*)in_data;
+        return ret;
+    }
 
-    case GETSETPRINTORIENT:
-	{
-	    /* If lpInData is present, it is a 20 byte structure, first 32
-	     * bit LONG value is the orientation. if lpInData is NULL, it
-	     * returns the current orientation.
-	     */
-	    FIXME("GETSETPRINTORIENT not implemented (data %p)!\n",in_data);
-	    return 1;
-	}
     case BEGIN_PATH:
         TRACE("BEGIN_PATH\n");
-	if(physDev->pathdepth)
-	    FIXME("Nested paths not yet handled\n");
-	return ++physDev->pathdepth;
+        if(physDev->pathdepth)
+            FIXME("Nested paths not yet handled\n");
+        return ++physDev->pathdepth;
 
     case END_PATH:
-      {
-	const struct PATH_INFO *info = (const struct PATH_INFO*)in_data;
+    {
+        const struct PATH_INFO *info = (const struct PATH_INFO*)in_data;
 
-	TRACE("END_PATH\n");
+        TRACE("END_PATH\n");
         if(!physDev->pathdepth) {
-	    ERR("END_PATH called without a BEGIN_PATH\n");
-	    return -1;
-	}
-	TRACE("RenderMode = %d, FillMode = %d, BkMode = %d\n",
-	      info->RenderMode, info->FillMode, info->BkMode);
-	switch(info->RenderMode) {
-	case RENDERMODE_NO_DISPLAY:
-	    PSDRV_WriteClosePath(dev); /* not sure if this is necessary, but it can't hurt */
-	    break;
-	case RENDERMODE_OPEN:
-	case RENDERMODE_CLOSED:
-	default:
-	    FIXME("END_PATH: RenderMode %d, not yet supported\n", info->RenderMode);
-	    break;
-	}
-	return --physDev->pathdepth;
-      }
+            ERR("END_PATH called without a BEGIN_PATH\n");
+            return -1;
+        }
+        TRACE("RenderMode = %d, FillMode = %d, BkMode = %d\n",
+                info->RenderMode, info->FillMode, info->BkMode);
+        switch(info->RenderMode) {
+        case RENDERMODE_NO_DISPLAY:
+            PSDRV_WriteClosePath(dev); /* not sure if this is necessary, but it can't hurt */
+            break;
+        case RENDERMODE_OPEN:
+        case RENDERMODE_CLOSED:
+        default:
+            FIXME("END_PATH: RenderMode %d, not yet supported\n", info->RenderMode);
+            break;
+        }
+        return --physDev->pathdepth;
+    }
 
     case CLIP_TO_PATH:
-      {
-	WORD mode = *(const WORD*)in_data;
+    {
+        WORD mode = *(const WORD*)in_data;
 
-	switch(mode) {
-	case CLIP_SAVE:
-	    TRACE("CLIP_TO_PATH: CLIP_SAVE\n");
-	    PSDRV_WriteGSave(dev);
-	    return 1;
-	case CLIP_RESTORE:
-	    TRACE("CLIP_TO_PATH: CLIP_RESTORE\n");
-	    PSDRV_WriteGRestore(dev);
-	    return 1;
-	case CLIP_INCLUSIVE:
-	    TRACE("CLIP_TO_PATH: CLIP_INCLUSIVE\n");
-	    /* FIXME to clip or eoclip ? (see PATH_INFO.FillMode) */
-	    PSDRV_WriteClip(dev);
+        switch(mode) {
+        case CLIP_SAVE:
+            TRACE("CLIP_TO_PATH: CLIP_SAVE\n");
+            PSDRV_WriteGSave(dev);
+            return 1;
+        case CLIP_RESTORE:
+            TRACE("CLIP_TO_PATH: CLIP_RESTORE\n");
+            PSDRV_WriteGRestore(dev);
+            return 1;
+        case CLIP_INCLUSIVE:
+            TRACE("CLIP_TO_PATH: CLIP_INCLUSIVE\n");
+            /* FIXME to clip or eoclip ? (see PATH_INFO.FillMode) */
+            PSDRV_WriteClip(dev);
             PSDRV_WriteNewPath(dev);
-	    return 1;
-	case CLIP_EXCLUSIVE:
-	    FIXME("CLIP_EXCLUSIVE: not implemented\n");
-	    return 0;
-	default:
-	    FIXME("Unknown CLIP_TO_PATH mode %d\n", mode);
-	    return 0;
-	}
-      }
+            return 1;
+        case CLIP_EXCLUSIVE:
+            FIXME("CLIP_EXCLUSIVE: not implemented\n");
+            return 0;
+        default:
+            FIXME("Unknown CLIP_TO_PATH mode %d\n", mode);
+            return 0;
+        }
+    }
+
     default:
-        FIXME("Unimplemented code %d\n", nEscape);
-	return 0;
+        return 0;
     }
 }
 

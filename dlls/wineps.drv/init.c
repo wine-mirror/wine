@@ -694,7 +694,6 @@ static struct gdi_dc_funcs psdrv_funcs =
     .pCreateDC = PSDRV_CreateDC,
     .pDeleteDC = PSDRV_DeleteDC,
     .pEnumFonts = PSDRV_EnumFonts,
-    .pExtEscape = PSDRV_ExtEscape,
     .pGetCharWidth = PSDRV_GetCharWidth,
     .pGetTextExtentExPoint = PSDRV_GetTextExtentExPoint,
     .pGetTextMetrics = PSDRV_GetTextMetrics,

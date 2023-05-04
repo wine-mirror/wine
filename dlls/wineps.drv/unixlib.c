@@ -33,6 +33,7 @@
 #include "unixlib.h"
 #include "wine/gdi_driver.h"
 #include "wine/debug.h"
+#include "wine/wingdi16.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
@@ -504,12 +505,271 @@ static BOOL CDECL reset_dc(PHYSDEV dev, const DEVMODEW *devmode)
     return TRUE;
 }
 
+static int CDECL ext_escape(PHYSDEV dev, int escape, int input_size, const void *input,
+        int output_size, void *output)
+{
+    TRACE("%p,%d,%d,%p,%d,%p\n",
+          dev->hdc, escape, input_size, input, output_size, output);
+
+    switch (escape)
+    {
+    case QUERYESCSUPPORT:
+        if (input_size < sizeof(SHORT))
+        {
+            WARN("input_size < sizeof(SHORT) (=%d) for QUERYESCSUPPORT\n", input_size);
+            return 0;
+        }
+        else
+        {
+            DWORD num = (input_size < sizeof(DWORD)) ? *(const USHORT *)input : *(const DWORD *)input;
+            TRACE("QUERYESCSUPPORT for %d\n", (int)num);
+
+            switch (num)
+            {
+            case NEXTBAND:
+            /*case BANDINFO:*/
+            case SETCOPYCOUNT:
+            case GETTECHNOLOGY:
+            case SETLINECAP:
+            case SETLINEJOIN:
+            case SETMITERLIMIT:
+            case SETCHARSET:
+            case EXT_DEVICE_CAPS:
+            case SET_BOUNDS:
+            case EPSPRINTING:
+            case POSTSCRIPT_DATA:
+            case PASSTHROUGH:
+            case POSTSCRIPT_PASSTHROUGH:
+            case POSTSCRIPT_IGNORE:
+            case BEGIN_PATH:
+            case CLIP_TO_PATH:
+            case END_PATH:
+            /*case DRAWPATTERNRECT:*/
+
+            /* PageMaker checks for it */
+            case DOWNLOADHEADER:
+
+            /* PageMaker doesn't check for DOWNLOADFACE and GETFACENAME but
+             * uses them, they are supposed to be supported by any PS printer.
+             */
+            case DOWNLOADFACE:
+
+            /* PageMaker checks for these as a part of process of detecting
+             * a "fully compatible" PS printer, but doesn't actually use them.
+             */
+            case OPENCHANNEL:
+            case CLOSECHANNEL:
+                return TRUE;
+
+            /* Windows PS driver reports 0, but still supports this escape */
+            case GETFACENAME:
+                return FALSE; /* suppress the FIXME below */
+
+            default:
+                FIXME("QUERYESCSUPPORT(%d) - not supported.\n", (int)num);
+                return FALSE;
+            }
+        }
+
+    case OPENCHANNEL:
+        FIXME("OPENCHANNEL: stub\n");
+        return 1;
+
+    case CLOSECHANNEL:
+        FIXME("CLOSECHANNEL: stub\n");
+        return 1;
+
+    case DOWNLOADHEADER:
+        FIXME("DOWNLOADHEADER: stub\n");
+        /* should return name of the downloaded procset */
+        *(char *)output = 0;
+        return 1;
+
+    case GETFACENAME:
+        FIXME("GETFACENAME: stub\n");
+        lstrcpynA(output, "Courier", output_size);
+        return 1;
+
+    case DOWNLOADFACE:
+        FIXME("DOWNLOADFACE: stub\n");
+        return 1;
+
+    case MFCOMMENT:
+    {
+        FIXME("MFCOMMENT(%p, %d)\n", input, input_size);
+        return 1;
+    }
+    case DRAWPATTERNRECT:
+    {
+        DRAWPATRECT     *dpr = (DRAWPATRECT*)input;
+
+        FIXME("DRAWPATTERNRECT(pos (%d,%d), size %dx%d, style %d, pattern %x), stub!\n",
+                (int)dpr->ptPosition.x, (int)dpr->ptPosition.y,
+                (int)dpr->ptSize.x, (int)dpr->ptSize.y,
+                dpr->wStyle, dpr->wPattern);
+        return 1;
+    }
+    case BANDINFO:
+    {
+        BANDINFOSTRUCT  *ibi = (BANDINFOSTRUCT*)input;
+        BANDINFOSTRUCT  *obi = (BANDINFOSTRUCT*)output;
+
+        FIXME("BANDINFO(graphics %d, text %d, rect %s), stub!\n", ibi->GraphicsFlag,
+                ibi->TextFlag, wine_dbgstr_rect(&ibi->GraphicsRect));
+        *obi = *ibi;
+        return 1;
+    }
+
+    case SETCOPYCOUNT:
+    {
+        const INT *NumCopies = input;
+        INT *ActualCopies = output;
+        if (input_size != sizeof(INT))
+        {
+            WARN("input_size != sizeof(INT) (=%d) for SETCOPYCOUNT\n", input_size);
+            return 0;
+        }
+        TRACE("SETCOPYCOUNT %d\n", *NumCopies);
+        *ActualCopies = 1;
+        return 1;
+    }
+
+    case GETTECHNOLOGY:
+    {
+        LPSTR p = output;
+        strcpy(p, "PostScript");
+        *(p + strlen(p) + 1) = '\0'; /* 2 '\0's at end of string */
+        return 1;
+    }
+
+    case SETLINECAP:
+    {
+        INT newCap = *(const INT *)input;
+        if (input_size != sizeof(INT))
+        {
+            WARN("input_size != sizeof(INT) (=%d) for SETLINECAP\n", input_size);
+            return 0;
+        }
+        TRACE("SETLINECAP %d\n", newCap);
+        return 0;
+    }
+
+    case SETLINEJOIN:
+    {
+        INT newJoin = *(const INT *)input;
+        if (input_size != sizeof(INT))
+        {
+            WARN("input_size != sizeof(INT) (=%d) for SETLINEJOIN\n", input_size);
+            return 0;
+        }
+        TRACE("SETLINEJOIN %d\n", newJoin);
+        return 0;
+    }
+
+    case SETMITERLIMIT:
+    {
+        INT newLimit = *(const INT *)input;
+        if (input_size != sizeof(INT))
+        {
+            WARN("input_size != sizeof(INT) (=%d) for SETMITERLIMIT\n", input_size);
+            return 0;
+        }
+        TRACE("SETMITERLIMIT %d\n", newLimit);
+        return 0;
+    }
+
+    case SETCHARSET:
+    /* Undocumented escape used by winword6.
+       Switches between ANSI and a special charset.
+       If *lpInData == 1 we require that
+       0x91 is quoteleft
+       0x92 is quoteright
+       0x93 is quotedblleft
+       0x94 is quotedblright
+       0x95 is bullet
+       0x96 is endash
+       0x97 is emdash
+       0xa0 is non break space - yeah right.
+
+       If *lpInData == 0 we get ANSI.
+       Since there's nothing else there, let's just make these the default
+       anyway and see what happens...
+       */
+    return 1;
+
+    case EXT_DEVICE_CAPS:
+    {
+        UINT cap = *(const UINT *)input;
+        if (input_size != sizeof(UINT))
+        {
+            WARN("input_size != sizeof(UINT) (=%d) for EXT_DEVICE_CAPS\n", input_size);
+            return 0;
+        }
+        TRACE("EXT_DEVICE_CAPS %d\n", cap);
+        return 0;
+    }
+
+    case SET_BOUNDS:
+    {
+        const RECT *r = input;
+        if (input_size != sizeof(RECT))
+        {
+            WARN("input_size != sizeof(RECT) (=%d) for SET_BOUNDS\n", input_size);
+            return 0;
+        }
+        TRACE("SET_BOUNDS %s\n", wine_dbgstr_rect(r));
+        return 0;
+    }
+
+    case EPSPRINTING:
+    {
+        UINT epsprint = *(const UINT*)input;
+        /* FIXME: In this mode we do not need to send page intros and page
+         * ends according to the doc. But I just ignore that detail
+         * for now.
+         */
+        TRACE("EPS Printing support %sable.\n",epsprint?"en":"dis");
+        return 1;
+    }
+
+    case POSTSCRIPT_DATA:
+    case PASSTHROUGH:
+    case POSTSCRIPT_PASSTHROUGH:
+        return 1;
+
+    case POSTSCRIPT_IGNORE:
+        return 1;
+
+    case GETSETPRINTORIENT:
+    {
+        /* If lpInData is present, it is a 20 byte structure, first 32
+         * bit LONG value is the orientation. if lpInData is NULL, it
+         * returns the current orientation.
+         */
+        FIXME("GETSETPRINTORIENT not implemented (data %p)!\n",input);
+        return 1;
+    }
+    case BEGIN_PATH:
+        return 1;
+
+    case END_PATH:
+        return 1;
+
+    case CLIP_TO_PATH:
+        return 1;
+    default:
+        FIXME("Unimplemented code %d\n", escape);
+        return 0;
+    }
+}
+
 static NTSTATUS init_dc(void *arg)
 {
     struct init_dc_params *params = arg;
 
     params->funcs->pGetDeviceCaps = get_device_caps;
     params->funcs->pResetDC = reset_dc;
+    params->funcs->pExtEscape = ext_escape;
     return TRUE;
 }
 
