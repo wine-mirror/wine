@@ -482,9 +482,9 @@ static void test_stream_config(IBaseFilter *filter)
 
     count = size = 0xdeadbeef;
     hr = IAMStreamConfig_GetNumberOfCapabilities(config, &count, &size);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(count && count != 0xdeadbeef, "Got count %d.\n", count);
-    todo_wine ok(size == sizeof(AUDIO_STREAM_CONFIG_CAPS), "Got size %d.\n", size);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count && count != 0xdeadbeef, "Got count %d.\n", count);
+    ok(size == sizeof(AUDIO_STREAM_CONFIG_CAPS), "Got size %d.\n", size);
 
     hr = IPin_EnumMediaTypes(source, &enummt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -518,9 +518,9 @@ static void test_stream_config(IBaseFilter *filter)
     }
 
     hr = IAMStreamConfig_GetStreamCaps(config, count, &mt, (BYTE *)&caps);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     hr = IEnumMediaTypes_Next(enummt, 1, &mt2, NULL);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     IEnumMediaTypes_Release(enummt);
 
@@ -551,19 +551,21 @@ static void test_stream_config(IBaseFilter *filter)
         winetest_push_context("Caps %u", i);
 
         hr = IAMStreamConfig_GetStreamCaps(config, i, &mt, (BYTE *)&caps);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IAMStreamConfig_SetFormat(config, mt);
+        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IAMStreamConfig_GetFormat(config, &mt2);
         todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
         if (hr == S_OK)
         {
-            hr = IAMStreamConfig_SetFormat(config, mt);
-            todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-            hr = IAMStreamConfig_GetFormat(config, &mt2);
-            todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
             ok(compare_media_types(mt, mt2), "Media types didn't match.\n");
             DeleteMediaType(mt2);
-
-            DeleteMediaType(mt);
         }
+
+        DeleteMediaType(mt);
+
         winetest_pop_context();
     }
 

@@ -174,15 +174,51 @@ static HRESULT WINAPI stream_config_GetFormat(IAMStreamConfig *iface, AM_MEDIA_T
 static HRESULT WINAPI stream_config_GetNumberOfCapabilities(IAMStreamConfig *iface,
         int *count, int *size)
 {
-    FIXME("iface %p, count %p, size %p, stub!\n", iface, count, size);
-    return E_NOTIMPL;
+    struct audio_record *filter = impl_from_IAMStreamConfig(iface);
+
+    TRACE("filter %p, count %p, size %p.\n", filter, count, size);
+
+    *count = ARRAY_SIZE(audio_formats);
+    *size = sizeof(AUDIO_STREAM_CONFIG_CAPS);
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_config_GetStreamCaps(IAMStreamConfig *iface,
-        int index, AM_MEDIA_TYPE **mt, BYTE *caps)
+        int index, AM_MEDIA_TYPE **ret_mt, BYTE *caps)
 {
-    FIXME("iface %p, index %d, mt %p, caps %p, stub!\n", iface, index, mt, caps);
-    return E_NOTIMPL;
+    struct audio_record *filter = impl_from_IAMStreamConfig(iface);
+    AUDIO_STREAM_CONFIG_CAPS *audio_caps = (void *)caps;
+    AM_MEDIA_TYPE *mt;
+    HRESULT hr;
+
+    TRACE("filter %p, index %d, ret_mt %p, caps %p.\n", filter, index, ret_mt, caps);
+
+    if (index >= ARRAY_SIZE(audio_formats))
+        return S_FALSE;
+
+    if (!(mt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE))))
+        return E_OUTOFMEMORY;
+
+    if ((hr = fill_media_type(index, mt)) != S_OK)
+    {
+        CoTaskMemFree(mt);
+        return hr;
+    }
+
+    *ret_mt = mt;
+
+    audio_caps->guid = MEDIATYPE_Audio;
+    audio_caps->MinimumChannels = 1;
+    audio_caps->MaximumChannels = 2;
+    audio_caps->ChannelsGranularity = 1;
+    audio_caps->MinimumBitsPerSample = 8;
+    audio_caps->MaximumBitsPerSample = 16;
+    audio_caps->BitsPerSampleGranularity = 8;
+    audio_caps->MinimumSampleFrequency = 11025;
+    audio_caps->MaximumSampleFrequency = 44100;
+    audio_caps->SampleFrequencyGranularity = 11025;
+
+    return S_OK;
 }
 
 static const IAMStreamConfigVtbl stream_config_vtbl =
