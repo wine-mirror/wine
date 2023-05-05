@@ -4762,6 +4762,8 @@ static void test_ImmSetOpenStatus(void)
     ok_eq( 0xdeadbeef, status, UINT, "%#x" );
     ok_eq( 0xdeadbeef, ctx->fOpen, UINT, "%#x" );
 
+    ok_ret( 1, ImmSetOpenStatus( default_himc, 0xdeadbeef ) );
+    ok_seq( empty_sequence );
 
     himc = ImmCreateContext();
     ok_ne( NULL, himc, HIMC, "%p" );
@@ -4777,13 +4779,9 @@ static void test_ImmSetOpenStatus(void)
     memset( ime_calls, 0, sizeof(ime_calls) );
     ime_call_count = 0;
 
-
-    ok_ret( 1, ImmSetOpenStatus( default_himc, 0xdeadbeef ) );
-    ok_seq( empty_sequence );
-
     status = ImmGetOpenStatus( default_himc );
-    ok_eq( 0xdeadbeef, status, UINT, "%#x" );
-    ok_eq( 0xdeadbeef, ctx->fOpen, UINT, "%#x" );
+    ok( status == 0xdeadbeef || status == 0 /* MS Korean IME */, "got status %#lx\n", status );
+    ok_eq( status, ctx->fOpen, UINT, "%#x" );
 
     ctx->hWnd = 0;
     ok_ret( 1, ImmSetOpenStatus( default_himc, 0xfeedcafe ) );
