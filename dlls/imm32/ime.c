@@ -83,16 +83,51 @@ static WCHAR *input_context_get_comp_str( INPUTCONTEXT *ctx, BOOL result, UINT *
     return text;
 }
 
-static void input_context_reset_comp_str( INPUTCONTEXT *ctx )
+static void input_context_set_comp_str( INPUTCONTEXT *ctx, const WCHAR *str, UINT len )
 {
     COMPOSITIONSTRING *compstr;
+    HIMCC himcc;
+    UINT size;
+    BYTE *dst;
 
-    if (!(compstr = ImmLockIMCC( ctx->hCompStr )))
+    size = sizeof(*compstr);
+    size += len * sizeof(WCHAR); /* GCS_COMPSTR */
+    size += len; /* GCS_COMPSTRATTR */
+    size += 2 * sizeof(DWORD); /* GCS_COMPSTRCLAUSE */
+
+    if (!(himcc = ImmReSizeIMCC( ctx->hCompStr, size )))
+        WARN( "Failed to resize input context composition string\n" );
+    else if (!(compstr = ImmLockIMCC( (ctx->hCompStr = himcc) )))
         WARN( "Failed to lock input context composition string\n" );
     else
     {
         memset( compstr, 0, sizeof(*compstr) );
         compstr->dwSize = sizeof(*compstr);
+
+        if (len)
+        {
+            compstr->dwCursorPos = len;
+
+            compstr->dwCompStrLen = len;
+            compstr->dwCompStrOffset = compstr->dwSize;
+            dst = (BYTE *)compstr + compstr->dwCompStrOffset;
+            memcpy( dst, str, compstr->dwCompStrLen * sizeof(WCHAR) );
+            compstr->dwSize += compstr->dwCompStrLen * sizeof(WCHAR);
+
+            compstr->dwCompClauseLen = 2 * sizeof(DWORD);
+            compstr->dwCompClauseOffset = compstr->dwSize;
+            dst = (BYTE *)compstr + compstr->dwCompClauseOffset;
+            *((DWORD *)dst + 0) = 0;
+            *((DWORD *)dst + 1) = compstr->dwCompStrLen;
+            compstr->dwSize += compstr->dwCompClauseLen;
+
+            compstr->dwCompAttrLen = compstr->dwCompStrLen;
+            compstr->dwCompAttrOffset = compstr->dwSize;
+            dst = (BYTE *)compstr + compstr->dwCompAttrOffset;
+            memset( dst, ATTR_INPUT, compstr->dwCompAttrLen );
+            compstr->dwSize += compstr->dwCompAttrLen;
+        }
+
         ImmUnlockIMCC( ctx->hCompStr );
     }
 }
@@ -437,10 +472,29 @@ DWORD WINAPI ImeConversionList( HIMC himc, const WCHAR *source, CANDIDATELIST *d
 BOOL WINAPI ImeSetCompositionString( HIMC himc, DWORD index, const void *comp, DWORD comp_len,
                                      const void *read, DWORD read_len )
 {
-    FIXME( "himc %p, index %lu, comp %p, comp_len %lu, read %p, read_len %lu stub!\n",
-           himc, index, comp, comp_len, read, read_len );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    INPUTCONTEXT *ctx;
+
+    FIXME( "himc %p, index %lu, comp %p, comp_len %lu, read %p, read_len %lu semi-stub!\n",
+            himc, index, comp, comp_len, read, read_len );
+    if (read && read_len) FIXME( "Read string unimplemented\n" );
+    if (index != SCS_SETSTR && index != SCS_CHANGECLAUSE && index != SCS_CHANGEATTR) return FALSE;
+
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
+
+    if (index != SCS_SETSTR)
+        FIXME( "index %#lx not implemented\n", index );
+    else
+    {
+        UINT flags = GCS_COMPSTR | GCS_COMPCLAUSE | GCS_COMPATTR | GCS_DELTASTART | GCS_CURSORPOS;
+        WCHAR wparam = comp && comp_len >= sizeof(WCHAR) ? *(WCHAR *)comp : 0;
+        input_context_set_comp_str( ctx, comp, comp_len / sizeof(WCHAR) );
+        ime_set_composition_status( himc, TRUE );
+        ime_send_message( himc, WM_IME_COMPOSITION, wparam, flags );
+    }
+
+    ImmUnlockIMC( himc );
+
+    return TRUE;
 }
 
 BOOL WINAPI NotifyIME( HIMC himc, DWORD action, DWORD index, DWORD value )
@@ -468,7 +522,7 @@ BOOL WINAPI NotifyIME( HIMC himc, DWORD action, DWORD index, DWORD value )
         case IMC_SETOPENSTATUS:
             if (!ctx->fOpen)
             {
-                input_context_reset_comp_str( ctx );
+                input_context_set_comp_str( ctx, NULL, 0 );
                 ime_set_composition_status( himc, FALSE );
             }
             NtUserNotifyIMEStatus( ctx->hWnd, ctx->fOpen );
@@ -511,7 +565,7 @@ BOOL WINAPI NotifyIME( HIMC himc, DWORD action, DWORD index, DWORD value )
             break;
         }
         case CPS_CANCEL:
-            input_context_reset_comp_str( ctx );
+            input_context_set_comp_str( ctx, NULL, 0 );
             ImmSetOpenStatus( himc, FALSE );
             break;
         default:

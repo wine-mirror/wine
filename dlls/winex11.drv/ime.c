@@ -529,74 +529,6 @@ UINT WINAPI ImeToAsciiEx (UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
     return 0;
 }
 
-BOOL WINAPI ImeSetCompositionString(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp,
-                                    DWORD dwCompLen, LPCVOID lpRead,
-                                    DWORD dwReadLen)
-{
-    LPINPUTCONTEXT lpIMC;
-    DWORD flags = 0;
-    WCHAR wParam  = 0;
-
-    TRACE("(%p, %ld, %p, %ld, %p, %ld):\n",
-         hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen);
-
-
-    if (hIMC != FROM_X11)
-        FIXME("PROBLEM: This only sets the wine level string\n");
-
-    /*
-    * Explanation:
-    *  this sets the composition string in the imm32.dll level
-    *  of the composition buffer. we cannot manipulate the xim level
-    *  buffer, which means that once the xim level buffer changes again
-    *  any call to this function from the application will be lost
-    */
-
-    if (lpRead && dwReadLen)
-        FIXME("Reading string unimplemented\n");
-
-    lpIMC = LockRealIMC(hIMC);
-
-    if (lpIMC == NULL)
-        return FALSE;
-
-    if (dwIndex == SCS_SETSTR)
-    {
-        HIMCC newCompStr;
-
-        ime_set_composition_status( hIMC, TRUE );
-
-        /* clear existing result */
-        newCompStr = updateResultStr(lpIMC->hCompStr, NULL, 0);
-        ImmDestroyIMCC(lpIMC->hCompStr);
-        lpIMC->hCompStr = newCompStr;
-
-        flags = GCS_COMPSTR;
-
-        if (dwCompLen && lpComp)
-        {
-            newCompStr = updateCompStr(lpIMC->hCompStr, (LPCWSTR)lpComp, dwCompLen / sizeof(WCHAR));
-            ImmDestroyIMCC(lpIMC->hCompStr);
-            lpIMC->hCompStr = newCompStr;
-
-             wParam = ((const WCHAR*)lpComp)[0];
-             flags |= GCS_COMPCLAUSE | GCS_COMPATTR | GCS_DELTASTART;
-        }
-        else
-        {
-            newCompStr = updateCompStr(lpIMC->hCompStr, NULL, 0);
-            ImmDestroyIMCC(lpIMC->hCompStr);
-            lpIMC->hCompStr = newCompStr;
-        }
-    }
-
-    GenerateIMEMessage(hIMC, WM_IME_COMPOSITION, wParam, flags);
-    ImmUnlockIMCC(lpIMC->hPrivate);
-    UnlockRealIMC(hIMC);
-
-    return TRUE;
-}
-
 /* Interfaces to XIM and other parts of winex11drv */
 
 NTSTATUS x11drv_ime_set_open_status( UINT open )
@@ -693,7 +625,7 @@ NTSTATUS x11drv_ime_update_association( UINT arg )
 
 NTSTATUS WINAPI x11drv_ime_set_composition_string( void *param, ULONG size )
 {
-    return ImeSetCompositionString(FROM_X11, SCS_SETSTR, param, size, NULL, 0);
+    return ImmSetCompositionStringW( RealIMC(FROM_X11), SCS_SETSTR, param, size, NULL, 0 );
 }
 
 NTSTATUS WINAPI x11drv_ime_set_result( void *params, ULONG len )

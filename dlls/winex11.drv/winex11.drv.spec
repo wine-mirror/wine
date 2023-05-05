@@ -13,5 +13,4 @@
 #IME Interface
 @ stdcall ImeSelect(long long)
 @ stdcall ImeToAsciiEx(long long ptr ptr long long)
-@ stdcall ImeSetCompositionString(long long ptr long ptr long)
 @ stdcall ImeProcessKey(long long long ptr)
