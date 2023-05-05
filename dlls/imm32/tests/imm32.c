@@ -4567,6 +4567,7 @@ static void test_ImmSetConversionStatus(void)
     DWORD old_conversion, old_sentence, conversion, sentence;
     HKL hkl;
     INPUTCONTEXT *ctx;
+    HWND hwnd;
 
     ok_ret( 0, ImmGetConversionStatus( 0, &old_conversion, &old_sentence ) );
     ok_ret( 1, ImmGetConversionStatus( default_himc, &old_conversion, &old_sentence ) );
@@ -4737,6 +4738,7 @@ static void test_ImmSetOpenStatus(void)
     DWORD old_status, status;
     INPUTCONTEXT *ctx;
     HIMC himc;
+    HWND hwnd;
 
     ok_ret( 0, ImmGetOpenStatus( 0 ) );
     old_status = ImmGetOpenStatus( default_himc );
@@ -4890,6 +4892,7 @@ static void test_ImmProcessKey(void)
     HKL hkl;
     UINT_PTR ret;
     HIMC himc;
+    HWND hwnd;
 
     hwnd = CreateWindowW( L"static", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                           100, 100, 100, 100, NULL, NULL, NULL, NULL );
@@ -5046,6 +5049,7 @@ static void test_ImmActivateLayout(void)
     HKL hkl;
     struct ime_windows ime_windows = {0};
     HIMC himc;
+    HWND hwnd;
     UINT ret;
 
     SET_ENABLE( ImeInquire, TRUE );
@@ -5384,6 +5388,7 @@ static void test_DefWindowProc(void)
     };
     HKL hkl;
     UINT_PTR ret;
+    HWND hwnd;
 
     ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
 
@@ -5524,6 +5529,7 @@ static void test_ImmSetActiveContext(void)
     struct ime_windows ime_windows = {0};
     INPUTCONTEXT *ctx;
     HIMC himc;
+    HWND hwnd;
 
     ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
 
@@ -5674,6 +5680,7 @@ static void test_ImmRequestMessage(void)
     LOGFONTW log_font = {0};
     INPUTCONTEXT *ctx;
     HIMC himc;
+    HWND hwnd;
 
     if (!(hkl = wineime_hkl)) return;
 
@@ -5751,6 +5758,7 @@ static void test_ImmGetCandidateList( BOOL unicode )
     CANDIDATEINFO *cand_info;
     INPUTCONTEXT *ctx;
     HIMC himc;
+    HWND hwnd;
 
     expect_listW = (CANDIDATELIST *)expect_bufW;
     expect_listW->dwSize = offsetof(CANDIDATELIST, dwOffset[2]) + 32 * sizeof(WCHAR);
@@ -5878,6 +5886,7 @@ static void test_ImmGetCandidateListCount( BOOL unicode )
     INPUTCONTEXT *ctx;
     DWORD count;
     HIMC himc;
+    HWND hwnd;
 
     winetest_push_context( unicode ? "unicode" : "ansi" );
 
@@ -5957,6 +5966,7 @@ static void test_ImmGetCandidateWindow(void)
     CANDIDATEFORM cand_form;
     INPUTCONTEXT *ctx;
     HIMC himc;
+    HWND hwnd;
 
     ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
 
@@ -6109,6 +6119,7 @@ static void test_ImmGetCompositionString( BOOL unicode )
     UINT i, len;
     BYTE *dst;
     HIMC himc;
+    HWND hwnd;
 
     SET_ENABLE( ImeSetCompositionString, TRUE );
 
@@ -6429,6 +6440,7 @@ static void test_ImmSetCompositionWindow(void)
     struct ime_windows ime_windows = {0};
     INPUTCONTEXT *ctx;
     HIMC himc;
+    HWND hwnd;
     HKL hkl;
 
     ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
@@ -6543,6 +6555,7 @@ static void test_ImmSetStatusWindowPos(void)
     INPUTCONTEXT *ctx;
     POINT pos;
     HIMC himc;
+    HWND hwnd;
     HKL hkl;
 
     ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
@@ -6674,6 +6687,7 @@ static void test_ImmSetCompositionFont( BOOL unicode )
     };
     INPUTCONTEXT *ctx;
     HIMC himc;
+    HWND hwnd;
     HKL hkl;
 
     winetest_push_context( unicode ? "unicode" : "ansi" );
@@ -6802,6 +6816,7 @@ static void test_ImmSetCandidateWindow(void)
     };
     INPUTCONTEXT *ctx;
     HIMC himc;
+    HWND hwnd;
     HKL hkl;
 
     ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
@@ -6885,6 +6900,7 @@ static void test_ImmGenerateMessage(void)
     TRANSMSG *msgs, *tmp_msgs;
     INPUTCONTEXT *ctx;
     HIMC himc;
+    HWND hwnd;
     HKL hkl;
 
     ime_info.fdwProperty = IME_PROP_END_UNLOAD | IME_PROP_UNICODE;
