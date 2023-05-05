@@ -155,18 +155,6 @@ static struct pp_data* get_handle_data(HANDLE pp)
     return ret;
 }
 
-static BOOL CDECL font_GetCharWidth(PHYSDEV dev, UINT first, UINT count, const WCHAR *chars, INT *buffer)
-{
-    XFORM old, xform = { .eM11 = 1.0f };
-    BOOL ret;
-
-    GetWorldTransform(dev->hdc, &old);
-    SetWorldTransform(dev->hdc, &xform);
-    ret = NtGdiGetCharWidthW(dev->hdc, first, count, (WCHAR *)chars, NTGDI_GETCHARWIDTH_INT, buffer);
-    SetWorldTransform(dev->hdc, &old);
-    return ret;
-}
-
 static BOOL CDECL font_GetTextExtentExPoint(PHYSDEV dev, const WCHAR *str, INT count, INT *dxs)
 {
     SIZE size;
@@ -199,7 +187,6 @@ static HFONT CDECL font_SelectFont(PHYSDEV dev, HFONT hfont, UINT *aa_flags)
 
 static const struct gdi_dc_funcs font_funcs =
 {
-    .pGetCharWidth = font_GetCharWidth,
     .pGetTextExtentExPoint = font_GetTextExtentExPoint,
     .pGetTextMetrics = font_GetTextMetrics,
     .pSelectFont = font_SelectFont,

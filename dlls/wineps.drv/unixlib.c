@@ -25,6 +25,8 @@
 #endif
 
 #include <stdarg.h>
+#include <stdlib.h>
+#include <math.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -1133,6 +1135,62 @@ static BOOL CDECL enum_fonts(PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LP
     return ret;
 }
 
+static int metrics_by_uv(const void *a, const void *b)
+{
+    return (int)(((const AFMMETRICS *)a)->UV - ((const AFMMETRICS *)b)->UV);
+}
+
+const AFMMETRICS *uv_metrics(LONG uv, const AFM *afm)
+{
+    const AFMMETRICS *needle;
+    AFMMETRICS key;
+
+    /*
+     *  Ugly work-around for symbol fonts.  Wine is sending characters which
+     *  belong in the Unicode private use range (U+F020 - U+F0FF) as ASCII
+     *  characters (U+0020 - U+00FF).
+     */
+    if ((afm->Metrics->UV & 0xff00) == 0xf000 && uv < 0x100)
+        uv |= 0xf000;
+
+    key.UV = uv;
+    needle = bsearch(&key, afm->Metrics, afm->NumofMetrics, sizeof(AFMMETRICS), metrics_by_uv);
+    if (!needle)
+    {
+        WARN("No glyph for U+%.4X in '%s'\n", (int)uv, afm->FontName);
+        needle = afm->Metrics;
+    }
+    return needle;
+}
+
+static BOOL CDECL get_char_width(PHYSDEV dev, UINT first, UINT count, const WCHAR *chars, INT *buffer)
+{
+    PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
+    UINT i, c;
+
+    if (pdev->font.fontloc == Download)
+    {
+        dev = GET_NEXT_PHYSDEV(dev, pGetCharWidth);
+        return dev->funcs->pGetCharWidth(dev, first, count, chars, buffer);
+    }
+
+    TRACE("U+%.4X +%u\n", first, count);
+
+    for (i = 0; i < count; ++i)
+    {
+        c = chars ? chars[i] : first + i;
+
+        if (c > 0xffff)
+            return FALSE;
+
+        *buffer = floor(uv_metrics(c, pdev->font.fontinfo.Builtin.afm)->WX
+                         * pdev->font.fontinfo.Builtin.scale + 0.5);
+        TRACE("U+%.4X: %i\n", i, *buffer);
+        ++buffer;
+    }
+    return TRUE;
+}
+
 static NTSTATUS init_dc(void *arg)
 {
     struct init_dc_params *params = arg;
@@ -1142,6 +1200,7 @@ static NTSTATUS init_dc(void *arg)
     params->funcs->pExtEscape = ext_escape;
     params->funcs->pSelectFont = select_font;
     params->funcs->pEnumFonts = enum_fonts;
+    params->funcs->pGetCharWidth = get_char_width;
     return TRUE;
 }
 

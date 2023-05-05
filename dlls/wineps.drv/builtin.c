@@ -339,38 +339,3 @@ BOOL CDECL PSDRV_GetTextExtentExPoint(PHYSDEV dev, LPCWSTR str, INT count, LPINT
     }
     return TRUE;
 }
-
-/***********************************************************************
- *           PSDRV_GetCharWidth
- */
-BOOL CDECL PSDRV_GetCharWidth(PHYSDEV dev, UINT first, UINT count, const WCHAR *chars, INT *buffer)
-{
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
-    UINT i, c;
-
-    if (physDev->font.fontloc == Download)
-    {
-        dev = GET_NEXT_PHYSDEV( dev, pGetCharWidth );
-        return dev->funcs->pGetCharWidth( dev, first, count, chars, buffer );
-    }
-
-    TRACE("U+%.4X +%u\n", first, count);
-
-    for (i = 0; i < count; ++i)
-    {
-        c = chars ? chars[i] : first + i;
-
-        if (c > 0xffff)
-        {
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return FALSE;
-        }
-
-        *buffer = floor( PSDRV_UVMetrics(c, physDev->font.fontinfo.Builtin.afm)->WX
-                         * physDev->font.fontinfo.Builtin.scale + 0.5 );
-	TRACE("U+%.4X: %i\n", i, *buffer);
-	++buffer;
-    }
-
-    return TRUE;
-}
