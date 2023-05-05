@@ -1206,6 +1206,28 @@ static BOOL CDECL get_text_metrics(PHYSDEV dev, TEXTMETRICW *metrics)
     return TRUE;
 }
 
+static BOOL CDECL get_text_extent_ex_point(PHYSDEV dev, const WCHAR *str, int count, int *dx)
+{
+    PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
+    int             i;
+    float           width = 0.0;
+
+    if (pdev->font.fontloc == Download)
+    {
+        dev = GET_NEXT_PHYSDEV(dev, pGetTextExtentExPoint);
+        return dev->funcs->pGetTextExtentExPoint(dev, str, count, dx);
+    }
+
+    TRACE("%s %i\n", debugstr_wn(str, count), count);
+
+    for (i = 0; i < count; ++i)
+    {
+        width += uv_metrics(str[i], pdev->font.fontinfo.Builtin.afm)->WX;
+        dx[i] = width * pdev->font.fontinfo.Builtin.scale;
+    }
+    return TRUE;
+}
+
 static NTSTATUS init_dc(void *arg)
 {
     struct init_dc_params *params = arg;
@@ -1217,6 +1239,7 @@ static NTSTATUS init_dc(void *arg)
     params->funcs->pEnumFonts = enum_fonts;
     params->funcs->pGetCharWidth = get_char_width;
     params->funcs->pGetTextMetrics = get_text_metrics;
+    params->funcs->pGetTextExtentExPoint = get_text_extent_ex_point;
     return TRUE;
 }
 

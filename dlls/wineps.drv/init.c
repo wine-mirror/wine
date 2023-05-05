@@ -693,7 +693,6 @@ static struct gdi_dc_funcs psdrv_funcs =
     .pCreateCompatibleDC = PSDRV_CreateCompatibleDC,
     .pCreateDC = PSDRV_CreateDC,
     .pDeleteDC = PSDRV_DeleteDC,
-    .pGetTextExtentExPoint = PSDRV_GetTextExtentExPoint,
     .priority = GDI_PRIORITY_GRAPHICS_DRV
 };
 
