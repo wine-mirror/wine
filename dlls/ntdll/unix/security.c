@@ -111,11 +111,15 @@ NTSTATUS WINAPI NtOpenThreadTokenEx( HANDLE thread, DWORD access, BOOLEAN self, 
  *             NtDuplicateToken  (NTDLL.@)
  */
 NTSTATUS WINAPI NtDuplicateToken( HANDLE token, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
-                                  SECURITY_IMPERSONATION_LEVEL level, TOKEN_TYPE type, HANDLE *handle )
+                                  BOOLEAN effective_only, TOKEN_TYPE type, HANDLE *handle )
 {
+    SECURITY_IMPERSONATION_LEVEL level = SecurityAnonymous;
     unsigned int status;
     data_size_t len;
     struct object_attributes *objattr;
+
+    if (effective_only)
+        FIXME( "ignoring effective-only flag\n" );
 
     *handle = 0;
     if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;

@@ -69,7 +69,7 @@ static NTSTATUS (WINAPI *pNtGetNextThread)(HANDLE process, HANDLE thread, ACCESS
                                             ULONG flags, HANDLE *handle);
 static NTSTATUS (WINAPI *pNtOpenProcessToken)(HANDLE,DWORD,HANDLE*);
 static NTSTATUS (WINAPI *pNtOpenThreadToken)(HANDLE,DWORD,BOOLEAN,HANDLE*);
-static NTSTATUS (WINAPI *pNtDuplicateToken)(HANDLE,ACCESS_MASK,OBJECT_ATTRIBUTES*,SECURITY_IMPERSONATION_LEVEL,TOKEN_TYPE,HANDLE*);
+static NTSTATUS (WINAPI *pNtDuplicateToken)(HANDLE,ACCESS_MASK,OBJECT_ATTRIBUTES*,BOOLEAN,TOKEN_TYPE,HANDLE*);
 static NTSTATUS (WINAPI *pNtDuplicateObject)(HANDLE,HANDLE,HANDLE,HANDLE*,ACCESS_MASK,ULONG,ULONG);
 static NTSTATUS (WINAPI *pNtCompareObjects)(HANDLE,HANDLE);
 
@@ -2145,13 +2145,13 @@ static void test_token(void)
 
     status = pNtOpenProcessToken( GetCurrentProcess(), TOKEN_ALL_ACCESS, &handle );
     ok( status == STATUS_SUCCESS, "NtOpenProcessToken failed: %lx\n", status);
-    status = pNtDuplicateToken( handle, TOKEN_ALL_ACCESS, NULL, 0, TokenPrimary, &handle2 );
+    status = pNtDuplicateToken( handle, TOKEN_ALL_ACCESS, NULL, FALSE, TokenPrimary, &handle2 );
     ok( status == STATUS_SUCCESS, "NtOpenProcessToken failed: %lx\n", status);
     pNtClose( handle2 );
-    status = pNtDuplicateToken( handle, TOKEN_ALL_ACCESS, NULL, 0, TokenPrimary, (HANDLE *)0xdeadbee0 );
+    status = pNtDuplicateToken( handle, TOKEN_ALL_ACCESS, NULL, FALSE, TokenPrimary, (HANDLE *)0xdeadbee0 );
     ok( status == STATUS_ACCESS_VIOLATION, "NtOpenProcessToken failed: %lx\n", status);
     handle2 = (HANDLE)0xdeadbeef;
-    status = pNtDuplicateToken( (HANDLE)0xdead, TOKEN_ALL_ACCESS, NULL, 0, TokenPrimary, &handle2 );
+    status = pNtDuplicateToken( (HANDLE)0xdead, TOKEN_ALL_ACCESS, NULL, FALSE, TokenPrimary, &handle2 );
     ok( status == STATUS_INVALID_HANDLE, "NtOpenProcessToken failed: %lx\n", status);
     ok( !handle2 || broken(handle2 == (HANDLE)0xdeadbeef) /* vista */, "handle set %p\n", handle2 );
     pNtClose( handle );

@@ -1647,8 +1647,9 @@ RtlAdjustPrivilege(ULONG Privilege,
 NTSTATUS WINAPI
 RtlImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
 {
+    SECURITY_QUALITY_OF_SERVICE qos;
     NTSTATUS Status;
-    OBJECT_ATTRIBUTES ObjectAttributes;
+    OBJECT_ATTRIBUTES attr;
     HANDLE ProcessToken;
     HANDLE ImpersonationToken;
 
@@ -1659,14 +1660,15 @@ RtlImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
     if (Status != STATUS_SUCCESS)
         return Status;
 
-    InitializeObjectAttributes( &ObjectAttributes, NULL, 0, NULL, NULL );
+    qos.Length = sizeof(qos);
+    qos.ImpersonationLevel = ImpersonationLevel;
+    qos.ContextTrackingMode = SECURITY_STATIC_TRACKING;
+    qos.EffectiveOnly = FALSE;
+    InitializeObjectAttributes( &attr, NULL, 0, NULL, NULL );
+    attr.SecurityQualityOfService = &qos;
 
-    Status = NtDuplicateToken( ProcessToken,
-                               TOKEN_IMPERSONATE,
-                               &ObjectAttributes,
-                               ImpersonationLevel,
-                               TokenImpersonation,
-                               &ImpersonationToken );
+    Status = NtDuplicateToken( ProcessToken, TOKEN_IMPERSONATE, &attr, FALSE,
+                               TokenImpersonation, &ImpersonationToken );
     if (Status != STATUS_SUCCESS)
     {
         NtClose( ProcessToken );

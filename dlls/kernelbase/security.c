@@ -682,13 +682,19 @@ BOOL WINAPI DuplicateToken( HANDLE token, SECURITY_IMPERSONATION_LEVEL level, PH
 BOOL WINAPI DuplicateTokenEx( HANDLE token, DWORD access, LPSECURITY_ATTRIBUTES sa,
                               SECURITY_IMPERSONATION_LEVEL level, TOKEN_TYPE type, PHANDLE ret )
 {
+    SECURITY_QUALITY_OF_SERVICE qos;
     OBJECT_ATTRIBUTES attr;
 
     TRACE("%p 0x%08lx 0x%08x 0x%08x %p\n", token, access, level, type, ret );
 
+    qos.Length = sizeof(qos);
+    qos.ImpersonationLevel = level;
+    qos.ContextTrackingMode = SECURITY_STATIC_TRACKING;
+    qos.EffectiveOnly = FALSE;
     InitializeObjectAttributes( &attr, NULL, (sa && sa->bInheritHandle) ? OBJ_INHERIT : 0,
                                 NULL, sa ? sa->lpSecurityDescriptor : NULL );
-    return set_ntstatus( NtDuplicateToken( token, access, &attr, level, type, ret ));
+    attr.SecurityQualityOfService = &qos;
+    return set_ntstatus( NtDuplicateToken( token, access, &attr, FALSE, type, ret ));
 }
 
 /******************************************************************************

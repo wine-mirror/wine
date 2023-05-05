@@ -162,7 +162,7 @@ NTSTATUS WINAPI wow64_NtDuplicateToken( UINT *args )
     HANDLE token = get_handle( &args );
     ACCESS_MASK access = get_ulong( &args );
     OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
-    SECURITY_IMPERSONATION_LEVEL level = get_ulong( &args );
+    BOOLEAN effective_only = get_ulong( &args );
     TOKEN_TYPE type = get_ulong( &args );
     ULONG *handle_ptr = get_ptr( &args );
 
@@ -171,7 +171,7 @@ NTSTATUS WINAPI wow64_NtDuplicateToken( UINT *args )
     NTSTATUS status;
 
     *handle_ptr = 0;
-    status = NtDuplicateToken( token, access, objattr_32to64( &attr, attr32 ), level, type, &handle );
+    status = NtDuplicateToken( token, access, objattr_32to64( &attr, attr32 ), effective_only, type, &handle );
     put_handle( handle_ptr, handle );
     return status;
 }
