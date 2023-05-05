@@ -1056,6 +1056,83 @@ static HFONT CDECL select_font(PHYSDEV dev, HFONT hfont, UINT *aa_flags)
     return hfont;
 }
 
+static UINT get_font_metric(HDC hdc, const AFM *afm,
+        NEWTEXTMETRICEXW *ntmx, ENUMLOGFONTEXW *elfx)
+{
+    /* ntmx->ntmTm is NEWTEXTMETRICW; compatible w/ TEXTMETRICW per Win32 doc */
+    TEXTMETRICW *tm = (TEXTMETRICW *)&(ntmx->ntmTm);
+    LOGFONTW *lf = &(elfx->elfLogFont);
+    PSFONT font;
+
+    memset(ntmx, 0, sizeof(*ntmx));
+    memset(elfx, 0, sizeof(*elfx));
+
+    scale_font(afm, -(LONG)afm->WinMetrics.usUnitsPerEm, &font, tm);
+
+    lf->lfHeight = tm->tmHeight;
+    lf->lfWidth = tm->tmAveCharWidth;
+    lf->lfWeight = tm->tmWeight;
+    lf->lfItalic = tm->tmItalic;
+    lf->lfCharSet = tm->tmCharSet;
+
+    lf->lfPitchAndFamily = afm->IsFixedPitch ? FIXED_PITCH : VARIABLE_PITCH;
+
+    lstrcpynW(lf->lfFaceName, afm->FamilyName, LF_FACESIZE);
+    return DEVICE_FONTTYPE;
+}
+
+static BOOL CDECL enum_fonts(PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lp)
+{
+    PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
+    PHYSDEV next = GET_NEXT_PHYSDEV(dev, pEnumFonts);
+    ENUMLOGFONTEXW lf;
+    NEWTEXTMETRICEXW tm;
+    BOOL ret;
+    AFMLISTENTRY *afmle;
+    FONTFAMILY *family;
+
+    ret = next->funcs->pEnumFonts(next, plf, proc, lp);
+    if (!ret) return FALSE;
+
+    if (plf && plf->lfFaceName[0])
+    {
+        TRACE("lfFaceName = %s\n", debugstr_w(plf->lfFaceName));
+        for (family = pdev->pi->Fonts; family; family = family->next)
+        {
+            if (!wcsncmp(plf->lfFaceName, family->FamilyName,
+                        wcslen(family->FamilyName)))
+                break;
+        }
+        if (family)
+        {
+            for (afmle = family->afmlist; afmle; afmle = afmle->next)
+            {
+                UINT fm;
+
+                TRACE("Got '%s'\n", afmle->afm->FontName);
+                fm = get_font_metric(dev->hdc, afmle->afm, &tm, &lf);
+                if (!(ret = (*proc)(&lf.elfLogFont, (TEXTMETRICW *)&tm, fm, lp)))
+                    break;
+            }
+        }
+    }
+    else
+    {
+        TRACE("lfFaceName = NULL\n");
+        for (family = pdev->pi->Fonts; family; family = family->next)
+        {
+            UINT fm;
+
+            afmle = family->afmlist;
+            TRACE("Got '%s'\n", afmle->afm->FontName);
+            fm = get_font_metric(dev->hdc, afmle->afm, &tm, &lf);
+            if (!(ret = (*proc)(&lf.elfLogFont, (TEXTMETRICW *)&tm, fm, lp)))
+                break;
+        }
+    }
+    return ret;
+}
+
 static NTSTATUS init_dc(void *arg)
 {
     struct init_dc_params *params = arg;
@@ -1064,6 +1141,7 @@ static NTSTATUS init_dc(void *arg)
     params->funcs->pResetDC = reset_dc;
     params->funcs->pExtEscape = ext_escape;
     params->funcs->pSelectFont = select_font;
+    params->funcs->pEnumFonts = enum_fonts;
     return TRUE;
 }
 

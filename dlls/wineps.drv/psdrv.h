@@ -429,7 +429,6 @@ extern BOOL CDECL PSDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bo
 extern BOOL CDECL PSDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom) DECLSPEC_HIDDEN;
 extern INT CDECL PSDRV_EndDoc( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern INT CDECL PSDRV_EndPage( PHYSDEV dev ) DECLSPEC_HIDDEN;
-extern BOOL CDECL PSDRV_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lp ) DECLSPEC_HIDDEN;
 extern INT CDECL PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
                             INT cbOutput, LPVOID out_data ) DECLSPEC_HIDDEN;
 extern BOOL CDECL PSDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
