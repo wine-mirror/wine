@@ -633,17 +633,23 @@ static NSString* WineLocalizedString(unsigned int stringID)
             {
                 [window setLevel:newLevel];
 
-                // -setLevel: puts the window at the front of its new level.  If
-                // we decreased the level, that's good (it was in front of that
-                // level before, so it should still be now).  But if we increased
-                // the level, the window should be toward the back (but still
-                // ahead of the previous windows we did this to).
                 if (origLevel < newLevel)
                 {
+                    // If we increased the level, the window should be toward the
+                    // back of its new level (but still ahead of the previous
+                    // windows we did this to).
                     if (prev)
                         [window orderWindow:NSWindowAbove relativeTo:[prev windowNumber]];
                     else
                         [window orderBack:nil];
+                }
+                else
+                {
+                    // If we decreased the level, we want the window at the top
+                    // of its new level. -setLevel: is documented to do that on
+                    // its own, but that's buggy on Ventura. Since we're looping
+                    // back-to-front here, -orderFront: will do the right thing.
+                    [window orderFront:nil];
                 }
             }
 
