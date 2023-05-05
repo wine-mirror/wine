@@ -173,17 +173,18 @@ static BOOL set_primary_monitor_effective_dpi(unsigned int primary_dpi)
     BOOL ret = FALSE;
     LONG error;
 
-#define CHECK_FUNC(func)                       \
-    if (!p##func)                              \
-    {                                          \
-        skip("%s() is unavailable.\n", #func); \
-        return FALSE;                          \
+#define CHECK_FUNC(func)                           \
+    if (!p##func)                                  \
+    {                                              \
+        win_skip("%s() is unavailable.\n", #func); \
+        ret = TRUE;                                \
     }
 
     CHECK_FUNC(D3DKMTCloseAdapter)
     CHECK_FUNC(D3DKMTOpenAdapterFromGdiDisplayName)
     CHECK_FUNC(DisplayConfigGetDeviceInfo)
-    CHECK_FUNC(DisplayConfigSetDeviceInfo)
+    todo_wine CHECK_FUNC(DisplayConfigSetDeviceInfo)
+    if (ret) return FALSE;
 
 #undef CHECK_FUNC
 
