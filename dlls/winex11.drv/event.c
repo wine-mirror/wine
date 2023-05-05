@@ -49,8 +49,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(event);
 WINE_DECLARE_DEBUG_CHANNEL(xdnd);
 
-extern BOOL ximInComposeMode;
-
 #define DndNotDnd       -1    /* OffiX drag&drop */
 #define DndUnknown      0
 #define DndRawData      1
@@ -810,7 +808,7 @@ static void focus_out( Display *display , HWND hwnd )
     int revert;
     XIC xic;
 
-    if (ximInComposeMode) return;
+    if (xim_in_compose_mode()) return;
 
     x11drv_thread_data()->last_focus = hwnd;
     if ((xic = X11DRV_get_ic( hwnd ))) XUnsetICFocus( xic );

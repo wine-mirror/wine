@@ -436,7 +436,6 @@ extern BOOL keyboard_grabbed DECLSPEC_HIDDEN;
 extern unsigned int screen_bpp DECLSPEC_HIDDEN;
 extern BOOL usexrandr DECLSPEC_HIDDEN;
 extern BOOL usexvidmode DECLSPEC_HIDDEN;
-extern BOOL ximInComposeMode DECLSPEC_HIDDEN;
 extern BOOL use_take_focus DECLSPEC_HIDDEN;
 extern BOOL use_primary_selection DECLSPEC_HIDDEN;
 extern BOOL use_system_cursors DECLSPEC_HIDDEN;
@@ -824,6 +823,7 @@ extern struct x11drv_display_device_handler desktop_handler DECLSPEC_HIDDEN;
 /* XIM support */
 extern BOOL xim_init( const WCHAR *input_style ) DECLSPEC_HIDDEN;
 extern void xim_thread_attach( struct x11drv_thread_data *data ) DECLSPEC_HIDDEN;
+extern BOOL xim_in_compose_mode(void) DECLSPEC_HIDDEN;
 extern void X11DRV_XIMLookupChars( const char *str, UINT count ) DECLSPEC_HIDDEN;
 extern XIC X11DRV_get_ic( HWND hwnd ) DECLSPEC_HIDDEN;
 

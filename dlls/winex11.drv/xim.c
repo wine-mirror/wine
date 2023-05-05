@@ -42,8 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(xim);
 #define XICProc XIMProc
 #endif
 
-BOOL ximInComposeMode=FALSE;
-
 static WCHAR *ime_comp_buf;
 
 static XIMStyle input_style = 0;
@@ -67,6 +65,11 @@ static const char *debugstr_xim_style( XIMStyle style )
     if (style & XIMStatusNone) buf += sprintf( buf, " none" );
 
     return wine_dbg_sprintf( "%s", buffer );
+}
+
+BOOL xim_in_compose_mode(void)
+{
+    return !!ime_comp_buf;
 }
 
 static void xim_update_comp_string( UINT offset, UINT old_len, const WCHAR *text, UINT new_len )
@@ -138,7 +141,9 @@ static int xic_preedit_start( XIC xic, XPointer user, XPointer arg )
     TRACE( "xic %p, hwnd %p, arg %p\n", xic, hwnd, arg );
 
     x11drv_client_call( client_ime_set_composition_status, TRUE );
-    ximInComposeMode = TRUE;
+    if ((ime_comp_buf = realloc( ime_comp_buf, sizeof(WCHAR) ))) *ime_comp_buf = 0;
+    else ERR( "Failed to allocate preedit buffer\n" );
+
     return -1;
 }
 
@@ -148,7 +153,6 @@ static int xic_preedit_done( XIC xic, XPointer user, XPointer arg )
 
     TRACE( "xic %p, hwnd %p, arg %p\n", xic, hwnd, arg );
 
-    ximInComposeMode = FALSE;
     free( ime_comp_buf );
     ime_comp_buf = NULL;
 
