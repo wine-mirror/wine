@@ -2065,19 +2065,21 @@ static void test_DisplayConfigSetDeviceInfo(void)
     HKEY key;
     LONG ret;
 
-#define CHECK_FUNC(func)                       \
-    if (!p##func)                              \
-    {                                          \
-        skip("%s() is unavailable.\n", #func); \
-        return;                                \
+#define CHECK_FUNC(func)                           \
+    if (!p##func)                                  \
+    {                                              \
+        win_skip("%s() is unavailable.\n", #func); \
+        ret = TRUE;                                \
     }
 
+    ret = FALSE;
     CHECK_FUNC(D3DKMTCloseAdapter)
     CHECK_FUNC(D3DKMTOpenAdapterFromGdiDisplayName)
     CHECK_FUNC(DisplayConfigGetDeviceInfo)
-    CHECK_FUNC(DisplayConfigSetDeviceInfo)
+    todo_wine CHECK_FUNC(DisplayConfigSetDeviceInfo)
     CHECK_FUNC(GetDpiForMonitorInternal)
     CHECK_FUNC(SetThreadDpiAwarenessContext)
+    if (ret) return;
 
 #undef CHECK_FUNC
 
