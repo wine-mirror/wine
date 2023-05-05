@@ -257,9 +257,9 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Times_Italic =
 {
     "Times-Italic",			    /* FontName */
-    "Times Italic",			    /* FullName */
-    "Times",				    /* FamilyName */
-    "AdobeStandardEncoding",		    /* EncodingScheme */
+    L"Times Italic",			    /* FullName */
+    L"Times",				    /* FamilyName */
+    L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     -15.5,				    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */

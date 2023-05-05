@@ -272,9 +272,9 @@ static const AFMMETRICS metrics[243] =
 const AFM PSDRV_Courier =
 {
     "Courier",				    /* FontName */
-    "Courier",				    /* FullName */
-    "Courier",				    /* FamilyName */
-    "AdobeStandardEncoding",		    /* EncodingScheme */
+    L"Courier",				    /* FullName */
+    L"Courier",				    /* FamilyName */
+    L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     0,					    /* ItalicAngle */
     TRUE,				    /* IsFixedPitch */

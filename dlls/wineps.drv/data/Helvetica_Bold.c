@@ -257,9 +257,9 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Helvetica_Bold =
 {
     "Helvetica-Bold",			    /* FontName */
-    "Helvetica Bold",			    /* FullName */
-    "Helvetica",			    /* FamilyName */
-    "AdobeStandardEncoding",		    /* EncodingScheme */
+    L"Helvetica Bold",			    /* FullName */
+    L"Helvetica",			    /* FamilyName */
+    L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_BOLD,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */

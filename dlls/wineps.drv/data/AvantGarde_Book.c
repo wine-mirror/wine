@@ -257,9 +257,9 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_AvantGarde_Book =
 {
     "AvantGarde-Book",			    /* FontName */
-    "ITC Avant Garde Gothic Book",	    /* FullName */
-    "ITC Avant Garde Gothic",		    /* FamilyName */
-    "AdobeStandardEncoding",		    /* EncodingScheme */
+    L"ITC Avant Garde Gothic Book",	    /* FullName */
+    L"ITC Avant Garde Gothic",		    /* FamilyName */
+    L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */

@@ -1091,7 +1091,7 @@ PPD *PSDRV_ParsePPD( const WCHAR *fname, HANDLE printer )
             TRACE("'%s'\n", fn->Name);
 
 	LIST_FOR_EACH_ENTRY(page, &ppd->PageSizes, PAGESIZE, entry) {
-	    TRACE("'%s' aka '%s' (%d) invoked by '%s'\n", page->Name,
+	    TRACE("'%s' aka %s (%d) invoked by '%s'\n", page->Name,
 	      debugstr_w(page->FullName), page->WinPage, page->InvocationString);
 	    if(page->ImageableArea)
 	        TRACE("Area = %.2f,%.2f - %.2f, %.2f\n",

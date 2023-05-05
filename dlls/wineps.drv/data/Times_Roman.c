@@ -257,9 +257,9 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Times_Roman =
 {
     "Times-Roman",			    /* FontName */
-    "Times Roman",			    /* FullName */
-    "Times",				    /* FamilyName */
-    "AdobeStandardEncoding",		    /* EncodingScheme */
+    L"Times Roman",			    /* FullName */
+    L"Times",				    /* FamilyName */
+    L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */

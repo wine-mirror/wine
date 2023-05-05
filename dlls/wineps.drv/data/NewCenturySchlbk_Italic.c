@@ -257,9 +257,9 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_NewCenturySchlbk_Italic =
 {
     "NewCenturySchlbk-Italic",		    /* FontName */
-    "New Century Schoolbook Italic",	    /* FullName */
-    "New Century Schoolbook",		    /* FamilyName */
-    "AdobeStandardEncoding",		    /* EncodingScheme */
+    L"New Century Schoolbook Italic",	    /* FullName */
+    L"New Century Schoolbook",		    /* FamilyName */
+    L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     -16,				    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */

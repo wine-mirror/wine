@@ -99,7 +99,7 @@ BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, const AFM *afm, BOOL *p_added)
     newafmle->afm = afm;
 
     while(family) {
-        if(!strcmp(family->FamilyName, afm->FamilyName))
+        if(!wcscmp(family->FamilyName, afm->FamilyName))
 	    break;
 	insert = &(family->next);
 	family = family->next;
@@ -113,12 +113,12 @@ BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, const AFM *afm, BOOL *p_added)
 	    return FALSE;
 	}
 	*insert = family;
-	if (!(family->FamilyName = HeapAlloc(PSDRV_Heap, 0, strlen(afm->FamilyName)+1 ))) {
+	if (!(family->FamilyName = HeapAlloc(PSDRV_Heap, 0, (wcslen(afm->FamilyName)+1)*sizeof(WCHAR) ))) {
 	    HeapFree(PSDRV_Heap, 0, family);
 	    HeapFree(PSDRV_Heap, 0, newafmle);
 	    return FALSE;
 	}
-	strcpy( family->FamilyName, afm->FamilyName );
+	wcscpy( family->FamilyName, afm->FamilyName );
 	family->afmlist = newafmle;
 	*p_added = TRUE;
 	return TRUE;
@@ -158,16 +158,16 @@ static void PSDRV_DumpFontList(void)
     AFMLISTENTRY    *afmle;
 
     for(family = PSDRV_AFMFontList; family; family = family->next) {
-        TRACE("Family '%s'\n", family->FamilyName);
+        TRACE("Family %s\n", debugstr_w(family->FamilyName));
 	for(afmle = family->afmlist; afmle; afmle = afmle->next)
 	{
 #if 0
 	    INT i;
 #endif
 
-	    TRACE("\tFontName '%s' (%i glyphs) - '%s' encoding:\n",
-	    	    afmle->afm->FontName, afmle->afm->NumofMetrics,
-		    afmle->afm->EncodingScheme);
+            TRACE("\tFontName '%s' (%i glyphs) - %s encoding:\n",
+                    afmle->afm->FontName, afmle->afm->NumofMetrics,
+                    debugstr_w(afmle->afm->EncodingScheme));
 
 	    /* Uncomment to regenerate font data; see afm2c.c */
 

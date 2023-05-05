@@ -319,6 +319,32 @@ static BOOL ReadString(FILE *file, CHAR buffer[], INT bufsize, LPCSTR key,
     return TRUE;
 }
 
+static BOOL ReadStringW(FILE *file, CHAR *buffer, int size, const char *key, WCHAR **out)
+{
+    char *outA;
+    int len;
+
+    if (!ReadString(file, buffer, size, key, &outA))
+        return FALSE;
+    if (!outA)
+    {
+        *out = NULL;
+        return TRUE;
+    }
+
+    len = MultiByteToWideChar(CP_ACP, 0, outA, -1, NULL, 0);
+    if (len)
+        *out = HeapAlloc(PSDRV_Heap, 0, len * sizeof(WCHAR));
+    if (!len || !*out)
+    {
+        HeapFree(PSDRV_Heap, 0, outA);
+        return FALSE;
+    }
+    MultiByteToWideChar(CP_ACP, 0, outA, -1, *out, len);
+    HeapFree(PSDRV_Heap, 0, outA);
+    return TRUE;
+}
+
 /*******************************************************************************
  *  ReadBBox
  *
@@ -851,7 +877,7 @@ static VOID Unicodify(AFM *afm, OLD_AFMMETRICS *metrics)
 {
     INT     i;
 
-    if (strcmp(afm->EncodingScheme, "FontSpecific") == 0)
+    if (wcscmp(afm->EncodingScheme, L"FontSpecific") == 0)
     {
     	for (i = 0; i < afm->NumofMetrics; ++i)
 	{
@@ -1028,8 +1054,9 @@ static BOOL BuildAFM(FILE *file)
     CHAR    	buffer[258];    	/* allow for <cr>, <lf>, and <nul> */
     AFM     	*afm;
     AFMMETRICS	*metrics;
-    LPSTR   	font_name, full_name, family_name, encoding_scheme;
-    BOOL    	retval, added;
+    WCHAR *full_name, *family_name, *encoding_scheme;
+    char *font_name;
+    BOOL retval, added;
 
     retval = ReadFontMetrics(file, buffer, sizeof(buffer), &afm);
     if (retval == FALSE || afm == NULL)
@@ -1039,16 +1066,16 @@ static BOOL BuildAFM(FILE *file)
     if (retval == FALSE || font_name == NULL)
     	goto cleanup_afm;
 
-    retval = ReadString(file, buffer, sizeof(buffer), "FullName", &full_name);
+    retval = ReadStringW(file, buffer, sizeof(buffer), "FullName", &full_name);
     if (retval == FALSE || full_name == NULL)
     	goto cleanup_font_name;
 
-    retval = ReadString(file, buffer, sizeof(buffer), "FamilyName",
+    retval = ReadStringW(file, buffer, sizeof(buffer), "FamilyName",
     	    &family_name);
     if (retval == FALSE || family_name == NULL)
     	goto cleanup_full_name;
 
-    retval = ReadString(file, buffer, sizeof(buffer), "EncodingScheme",
+    retval = ReadStringW(file, buffer, sizeof(buffer), "EncodingScheme",
     	    &encoding_scheme);
     if (retval == FALSE || encoding_scheme == NULL)
     	goto cleanup_family_name;

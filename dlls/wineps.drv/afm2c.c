@@ -81,7 +81,7 @@ static void writeHeader(FILE *of, const AFM *afm, const char *buffer)
     	fputc('*', of);
     fprintf(of, "\n"
     	    	" *\n"
-		" *\tFont metric data for %s\n"
+		" *\tFont metric data for %S\n"
 		" *\n"
 		" *\tCopyright 2001 Ian Pilcher\n"
 		" *\n"
@@ -121,11 +121,11 @@ static void writeAFM(FILE *of, const AFM *afm, const char *buffer)
     fprintf(of, "const AFM PSDRV_%s =\n{\n", buffer);
     cursorto(of, 44, fprintf(of, "    \"%s\",", afm->FontName));
     fputs("/* FontName */\n", of);
-    cursorto(of, 44, fprintf(of, "    \"%s\",", afm->FullName));
+    cursorto(of, 44, fprintf(of, "    L\"%S\",", afm->FullName));
     fputs("/* FullName */\n", of);
-    cursorto(of, 44, fprintf(of, "    \"%s\",", afm->FamilyName));
+    cursorto(of, 44, fprintf(of, "    L\"%S\",", afm->FamilyName));
     fputs("/* FamilyName */\n", of);
-    cursorto(of, 44, fprintf(of, "    \"%s\",", afm->EncodingScheme));
+    cursorto(of, 44, fprintf(of, "    L\"%S\",", afm->EncodingScheme));
     fputs("/* EncodingScheme */\n", of);
     cursorto(of, 44, fprintf(of, "    %s,",
     	    (afm->Weight > 550) ? "FW_BOLD" : "FW_NORMAL"));

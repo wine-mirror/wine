@@ -257,9 +257,9 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Helvetica =
 {
     "Helvetica",			    /* FontName */
-    "Helvetica",			    /* FullName */
-    "Helvetica",			    /* FamilyName */
-    "AdobeStandardEncoding",		    /* EncodingScheme */
+    L"Helvetica",			    /* FullName */
+    L"Helvetica",			    /* FamilyName */
+    L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */

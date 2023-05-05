@@ -459,21 +459,21 @@ BOOL CDECL PSDRV_ResetDC( PHYSDEV dev, const DEVMODEW *lpInitData )
     return TRUE;
 }
 
-static PRINTER_ENUM_VALUESA *load_font_sub_table( HANDLE printer, DWORD *num_entries )
+static PRINTER_ENUM_VALUESW *load_font_sub_table( HANDLE printer, DWORD *num_entries )
 {
     DWORD res, needed, num;
-    PRINTER_ENUM_VALUESA *table = NULL;
-    static const char fontsubkey[] = "PrinterDriverData\\FontSubTable";
+    PRINTER_ENUM_VALUESW *table = NULL;
+    static const WCHAR fontsubkey[] = L"PrinterDriverData\\FontSubTable";
 
     *num_entries = 0;
 
-    res = EnumPrinterDataExA( printer, fontsubkey, NULL, 0, &needed, &num );
+    res = EnumPrinterDataExW( printer, fontsubkey, NULL, 0, &needed, &num );
     if (res != ERROR_MORE_DATA) return NULL;
 
     table = HeapAlloc( PSDRV_Heap, 0, needed );
     if (!table) return NULL;
 
-    res = EnumPrinterDataExA( printer, fontsubkey, (LPBYTE)table, needed, &needed, &num );
+    res = EnumPrinterDataExW( printer, fontsubkey, (LPBYTE)table, needed, &needed, &num );
     if (res != ERROR_SUCCESS)
     {
         HeapFree( PSDRV_Heap, 0, table );
@@ -579,7 +579,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
     BOOL using_default_devmode = FALSE;
     int len;
 
-    TRACE("'%s'\n", debugstr_w(name));
+    TRACE("%s\n", debugstr_w(name));
 
     LIST_FOR_EACH_ENTRY( pi, &printer_list, PRINTERINFO, entry )
     {
@@ -659,7 +659,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
         afm = PSDRV_FindAFMinList(PSDRV_AFMFontList, font->Name);
 	if(!afm) {
 	    TRACE( "Couldn't find AFM file for installed printer font '%s' - "
-	    	    "ignoring\n", font->Name);
+                    "ignoring\n", font->Name);
 	}
 	else {
 	    BOOL added;

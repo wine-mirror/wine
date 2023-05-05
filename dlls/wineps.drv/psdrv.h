@@ -81,10 +81,10 @@ typedef struct {
 } WINMETRICS;
 
 typedef struct _tagAFM {
-    LPCSTR		FontName;
-    LPCSTR		FullName;
-    LPCSTR		FamilyName;
-    LPCSTR		EncodingScheme;
+    const char         *FontName;
+    const WCHAR        *FullName;
+    const WCHAR        *FamilyName;
+    const WCHAR        *EncodingScheme;
     LONG		Weight;			/* FW_NORMAL etc. */
     float		ItalicAngle;
     BOOL		IsFixedPitch;
@@ -109,7 +109,7 @@ typedef struct _tagAFMLISTENTRY {
 } AFMLISTENTRY;
 
 typedef struct _tagFONTFAMILY {
-    char			*FamilyName; /* family name */
+    WCHAR			*FamilyName; /* family name */
     AFMLISTENTRY		*afmlist;    /* list of afms for this family */
     struct _tagFONTFAMILY	*next;       /* next family */
 } FONTFAMILY;
@@ -243,7 +243,7 @@ typedef struct
     PPD			    *ppd;
     PSDRV_DEVMODE	    *Devmode;
     FONTFAMILY		    *Fonts;
-    PPRINTER_ENUM_VALUESA   FontSubTable;
+    PPRINTER_ENUM_VALUESW   FontSubTable;
     DWORD		    FontSubTableSize;
 } PRINTERINFO;
 
@@ -545,7 +545,7 @@ const AFMMETRICS *PSDRV_UVMetrics(LONG UV, const AFM *afm) DECLSPEC_HIDDEN;
 SHORT PSDRV_CalcAvgCharWidth(const AFM *afm) DECLSPEC_HIDDEN;
 
 extern BOOL PSDRV_SelectBuiltinFont(PHYSDEV dev, HFONT hfont,
-				    LOGFONTW *plf, LPSTR FaceName) DECLSPEC_HIDDEN;
+				    LOGFONTW *plf, WCHAR *face_name) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteSetBuiltinFont(PHYSDEV dev) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteBuiltinGlyphShow(PHYSDEV dev, LPCWSTR str, INT count) DECLSPEC_HIDDEN;
 

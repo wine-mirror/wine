@@ -217,9 +217,9 @@ static const AFMMETRICS metrics[188] =
 const AFM PSDRV_Symbol =
 {
     "Symbol",				    /* FontName */
-    "Symbol",				    /* FullName */
-    "Symbol",				    /* FamilyName */
-    "FontSpecific",			    /* EncodingScheme */
+    L"Symbol",				    /* FullName */
+    L"Symbol",				    /* FamilyName */
+    L"FontSpecific",			    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */

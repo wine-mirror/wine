@@ -257,9 +257,9 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_ZapfChancery_MediumItalic =
 {
     "ZapfChancery-MediumItalic",	    /* FontName */
-    "ITC Zapf Chancery Medium Italic",	    /* FullName */
-    "ITC Zapf Chancery",		    /* FamilyName */
-    "AdobeStandardEncoding",		    /* EncodingScheme */
+    L"ITC Zapf Chancery Medium Italic",	    /* FullName */
+    L"ITC Zapf Chancery",		    /* FamilyName */
+    L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     -14,				    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */

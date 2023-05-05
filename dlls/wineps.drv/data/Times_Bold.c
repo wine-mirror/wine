@@ -257,9 +257,9 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Times_Bold =
 {
     "Times-Bold",			    /* FontName */
-    "Times Bold",			    /* FullName */
-    "Times",				    /* FamilyName */
-    "AdobeStandardEncoding",		    /* EncodingScheme */
+    L"Times Bold",			    /* FullName */
+    L"Times",				    /* FamilyName */
+    L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_BOLD,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */

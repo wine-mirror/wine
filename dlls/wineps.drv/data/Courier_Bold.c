@@ -272,9 +272,9 @@ static const AFMMETRICS metrics[243] =
 const AFM PSDRV_Courier_Bold =
 {
     "Courier-Bold",			    /* FontName */
-    "Courier Bold",			    /* FullName */
-    "Courier",				    /* FamilyName */
-    "AdobeStandardEncoding",		    /* EncodingScheme */
+    L"Courier Bold",			    /* FullName */
+    L"Courier",				    /* FamilyName */
+    L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_BOLD,				    /* Weight */
     0,					    /* ItalicAngle */
     TRUE,				    /* IsFixedPitch */

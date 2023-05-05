@@ -257,9 +257,9 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Helvetica_Narrow_Bold =
 {
     "Helvetica-Narrow-Bold",		    /* FontName */
-    "Helvetica Narrow Bold",		    /* FullName */
-    "Helvetica Narrow",			    /* FamilyName */
-    "AdobeStandardEncoding",		    /* EncodingScheme */
+    L"Helvetica Narrow Bold",		    /* FullName */
+    L"Helvetica Narrow",		    /* FamilyName */
+    L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_BOLD,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */

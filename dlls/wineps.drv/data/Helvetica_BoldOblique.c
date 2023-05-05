@@ -257,9 +257,9 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Helvetica_BoldOblique =
 {
     "Helvetica-BoldOblique",		    /* FontName */
-    "Helvetica Bold Oblique",		    /* FullName */
-    "Helvetica",			    /* FamilyName */
-    "AdobeStandardEncoding",		    /* EncodingScheme */
+    L"Helvetica Bold Oblique",		    /* FullName */
+    L"Helvetica",			    /* FamilyName */
+    L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_BOLD,				    /* Weight */
     -12,				    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */

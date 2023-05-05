@@ -257,9 +257,9 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Palatino_Bold =
 {
     "Palatino-Bold",			    /* FontName */
-    "Palatino Bold",			    /* FullName */
-    "Palatino",				    /* FamilyName */
-    "AdobeStandardEncoding",		    /* EncodingScheme */
+    L"Palatino Bold",			    /* FullName */
+    L"Palatino",			    /* FamilyName */
+    L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_BOLD,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */

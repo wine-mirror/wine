@@ -217,9 +217,9 @@ static const AFMMETRICS metrics[188] =
 const AFM PSDRV_ZapfDingbats =
 {
     "ZapfDingbats",			    /* FontName */
-    "ITC Zapf Dingbats",		    /* FullName */
-    "ITC Zapf Dingbats",		    /* FamilyName */
-    "FontSpecific",			    /* EncodingScheme */
+    L"ITC Zapf Dingbats",		    /* FullName */
+    L"ITC Zapf Dingbats",		    /* FamilyName */
+    L"FontSpecific",			    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */

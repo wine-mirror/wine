@@ -257,9 +257,9 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Bookman_Light =
 {
     "Bookman-Light",			    /* FontName */
-    "ITC Bookman Light",		    /* FullName */
-    "ITC Bookman",			    /* FamilyName */
-    "AdobeStandardEncoding",		    /* EncodingScheme */
+    L"ITC Bookman Light",		    /* FullName */
+    L"ITC Bookman",			    /* FamilyName */
+    L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */

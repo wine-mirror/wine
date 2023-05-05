@@ -257,9 +257,9 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Palatino_Italic =
 {
     "Palatino-Italic",			    /* FontName */
-    "Palatino Italic",			    /* FullName */
-    "Palatino",				    /* FamilyName */
-    "AdobeStandardEncoding",		    /* EncodingScheme */
+    L"Palatino Italic",			    /* FullName */
+    L"Palatino",			    /* FamilyName */
+    L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     -10,				    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */

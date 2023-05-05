@@ -257,9 +257,9 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Bookman_DemiItalic =
 {
     "Bookman-DemiItalic",		    /* FontName */
-    "ITC Bookman Demi Italic",		    /* FullName */
-    "ITC Bookman",			    /* FamilyName */
-    "AdobeStandardEncoding",		    /* EncodingScheme */
+    L"ITC Bookman Demi Italic",		    /* FullName */
+    L"ITC Bookman",			    /* FamilyName */
+    L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_BOLD,				    /* Weight */
     -10,				    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */

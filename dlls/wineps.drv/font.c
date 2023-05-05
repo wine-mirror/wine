@@ -44,7 +44,6 @@ HFONT CDECL PSDRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
     HFONT ret;
     LOGFONTW lf;
     BOOL subst = FALSE;
-    char FaceName[LF_FACESIZE];
 
     if (!GetObjectW( hfont, sizeof(lf), &lf )) return 0;
 
@@ -54,36 +53,33 @@ HFONT CDECL PSDRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 	  debugstr_w(lf.lfFaceName), lf.lfHeight, lf.lfItalic,
 	  lf.lfWeight);
 
-    WideCharToMultiByte(CP_ACP, 0, lf.lfFaceName, -1,
-			FaceName, sizeof(FaceName), NULL, NULL);
-
-    if(FaceName[0] == '\0') {
+    if(lf.lfFaceName[0] == '\0') {
         switch(lf.lfPitchAndFamily & 0xf0) {
 	case FF_DONTCARE:
 	    break;
 	case FF_ROMAN:
 	case FF_SCRIPT:
-	    strcpy(FaceName, "Times");
+	    wcscpy(lf.lfFaceName, L"Times");
 	    break;
 	case FF_SWISS:
-	    strcpy(FaceName, "Helvetica");
+	    wcscpy(lf.lfFaceName, L"Helvetica");
 	    break;
 	case FF_MODERN:
-	    strcpy(FaceName, "Courier");
+	    wcscpy(lf.lfFaceName, L"Courier");
 	    break;
 	case FF_DECORATIVE:
-	    strcpy(FaceName, "Symbol");
+	    wcscpy(lf.lfFaceName, L"Symbol");
 	    break;
 	}
     }
 
-    if(FaceName[0] == '\0') {
+    if(lf.lfFaceName[0] == '\0') {
         switch(lf.lfPitchAndFamily & 0x0f) {
 	case VARIABLE_PITCH:
-	    strcpy(FaceName, "Times");
+	    wcscpy(lf.lfFaceName, L"Times");
 	    break;
 	default:
-	    strcpy(FaceName, "Courier");
+	    wcscpy(lf.lfFaceName, L"Courier");
 	    break;
 	}
     }
@@ -94,21 +90,19 @@ HFONT CDECL PSDRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 
 	for (i = 0; i < physDev->pi->FontSubTableSize; ++i)
 	{
-	    if (!stricmp (FaceName,
+	    if (!wcsicmp (lf.lfFaceName,
 		    physDev->pi->FontSubTable[i].pValueName))
 	    {
-		TRACE ("substituting facename '%s' for '%s'\n",
-			(LPSTR) physDev->pi->FontSubTable[i].pData, FaceName);
-		if (strlen ((LPSTR) physDev->pi->FontSubTable[i].pData) <
-			LF_FACESIZE)
+		TRACE("substituting facename %s for %s\n",
+                        debugstr_w((WCHAR *)physDev->pi->FontSubTable[i].pData), debugstr_w(lf.lfFaceName));
+                if (wcslen((WCHAR *)physDev->pi->FontSubTable[i].pData) < LF_FACESIZE)
 		{
-		    strcpy (FaceName,
-			    (LPSTR) physDev->pi->FontSubTable[i].pData);
+                    wcscpy(lf.lfFaceName, (WCHAR *)physDev->pi->FontSubTable[i].pData);
 		    subst = TRUE;
 		}
 		else
-		    WARN ("Facename '%s' is too long; ignoring substitution\n",
-			    (LPSTR) physDev->pi->FontSubTable[i].pData);
+		    WARN("Facename %s is too long; ignoring substitution\n",
+                            debugstr_w((WCHAR *)physDev->pi->FontSubTable[i].pData));
 		break;
 	    }
 	}
@@ -123,7 +117,7 @@ HFONT CDECL PSDRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
         return ret;
     }
 
-    PSDRV_SelectBuiltinFont(dev, hfont, &lf, FaceName);
+    PSDRV_SelectBuiltinFont(dev, hfont, &lf, lf.lfFaceName);
     next->funcs->pSelectFont( next, 0, aa_flags );  /* tell next driver that we selected a device font */
     return hfont;
 }

@@ -272,9 +272,9 @@ static const AFMMETRICS metrics[243] =
 const AFM PSDRV_Courier_Oblique =
 {
     "Courier-Oblique",			    /* FontName */
-    "Courier Oblique",			    /* FullName */
-    "Courier",				    /* FamilyName */
-    "AdobeStandardEncoding",		    /* EncodingScheme */
+    L"Courier Oblique",			    /* FullName */
+    L"Courier",				    /* FamilyName */
+    L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     -12,				    /* ItalicAngle */
     TRUE,				    /* IsFixedPitch */

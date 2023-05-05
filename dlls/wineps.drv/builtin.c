@@ -157,7 +157,7 @@ static VOID ScaleFont(const AFM *afm, LONG lfHeight, PSFONT *font,
  *
  */
 BOOL PSDRV_SelectBuiltinFont(PHYSDEV dev, HFONT hfont,
-			     LOGFONTW *plf, LPSTR FaceName)
+			     LOGFONTW *plf, WCHAR *face_name)
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     AFMLISTENTRY *afmle;
@@ -165,27 +165,27 @@ BOOL PSDRV_SelectBuiltinFont(PHYSDEV dev, HFONT hfont,
     BOOL bd = FALSE, it = FALSE;
     LONG height;
 
-    TRACE("Trying to find facename '%s'\n", FaceName);
+    TRACE("Trying to find facename %s\n", debugstr_w(face_name));
 
     /* Look for a matching font family */
     for(family = physDev->pi->Fonts; family; family = family->next) {
-        if(!stricmp(FaceName, family->FamilyName))
+        if(!wcsicmp(face_name, family->FamilyName))
 	    break;
     }
 
     if(!family) {
 	/* Fallback for Window's font families to common PostScript families */
-	if(!strcmp(FaceName, "Arial"))
-	    strcpy(FaceName, "Helvetica");
-	else if(!strcmp(FaceName, "System"))
-	    strcpy(FaceName, "Helvetica");
-	else if(!strcmp(FaceName, "Times New Roman"))
-	    strcpy(FaceName, "Times");
-	else if(!strcmp(FaceName, "Courier New"))
-	    strcpy(FaceName, "Courier");
+	if(!wcscmp(face_name, L"Arial"))
+	    wcscpy(face_name, L"Helvetica");
+	else if(!wcscmp(face_name, L"System"))
+	    wcscpy(face_name, L"Helvetica");
+	else if(!wcscmp(face_name, L"Times New Roman"))
+	    wcscpy(face_name, L"Times");
+	else if(!wcscmp(face_name, L"Courier New"))
+	    wcscpy(face_name, L"Courier");
 
 	for(family = physDev->pi->Fonts; family; family = family->next) {
-	    if(!strcmp(FaceName, family->FamilyName))
+	    if(!wcscmp(face_name, family->FamilyName))
 		break;
 	}
     }
@@ -193,7 +193,7 @@ BOOL PSDRV_SelectBuiltinFont(PHYSDEV dev, HFONT hfont,
     if(!family)
         family = physDev->pi->Fonts;
 
-    TRACE("Got family '%s'\n", family->FamilyName);
+    TRACE("Got family %s\n", debugstr_w(family->FamilyName));
 
     if(plf->lfItalic)
         it = TRUE;
@@ -401,8 +401,7 @@ static UINT PSDRV_GetFontMetric(HDC hdc, const AFM *afm,
 
     lf->lfPitchAndFamily = (afm->IsFixedPitch) ? FIXED_PITCH : VARIABLE_PITCH;
 
-    MultiByteToWideChar(CP_ACP, 0, afm->FamilyName, -1, lf->lfFaceName,
-    	    LF_FACESIZE);
+    lstrcpynW(lf->lfFaceName, afm->FamilyName, LF_FACESIZE);
 
     return DEVICE_FONTTYPE;
 }
@@ -419,18 +418,15 @@ BOOL CDECL PSDRV_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPA
     BOOL	  	ret;
     AFMLISTENTRY	*afmle;
     FONTFAMILY		*family;
-    char                FaceName[LF_FACESIZE];
 
     ret = next->funcs->pEnumFonts( next, plf, proc, lp );
     if (!ret) return FALSE;
 
     if( plf && plf->lfFaceName[0] ) {
-        WideCharToMultiByte(CP_ACP, 0, plf->lfFaceName, -1,
-			  FaceName, sizeof(FaceName), NULL, NULL);
-        TRACE("lfFaceName = '%s'\n", FaceName);
+        TRACE("lfFaceName = %s\n", debugstr_w(plf->lfFaceName));
         for(family = physDev->pi->Fonts; family; family = family->next) {
-            if(!strncmp(FaceName, family->FamilyName,
-			strlen(family->FamilyName)))
+            if(!wcsncmp(plf->lfFaceName, family->FamilyName,
+			wcslen(family->FamilyName)))
 	        break;
 	}
 	if(family) {
