@@ -116,7 +116,7 @@ static void test_version_flag_versus_aw(void)
             ok(0, "could not create StillImageW, hr = 0x%lX\n", hr);
     }
     else
-        skip("No StiCreateInstance function\n");
+        win_skip("No StiCreateInstance function\n");
 
     if (pStiCreateInstanceA)
     {
@@ -137,7 +137,7 @@ static void test_version_flag_versus_aw(void)
             todo_wine ok(0, "could not create StillImageA, hr = 0x%lX\n", hr);
     }
     else
-        skip("No StiCreateInstanceA function\n");
+        win_skip("No StiCreateInstanceA function\n");
 
     if (pStiCreateInstanceW)
     {
@@ -158,7 +158,7 @@ static void test_version_flag_versus_aw(void)
             ok(0, "could not create StillImageW, hr = 0x%lX\n", hr);
     }
     else
-        skip("No StiCreateInstanceW function\n");
+        win_skip("No StiCreateInstanceW function\n");
 }
 
 static void test_stillimage_aggregation(void)
@@ -225,7 +225,7 @@ static void test_stillimage_aggregation(void)
             IUnknown_Release(pUnknown);
     }
     else
-        skip("No StiCreateInstanceW function\n");
+        win_skip("No StiCreateInstanceW function\n");
 }
 
 static void test_launch_app_registry(void)
@@ -271,7 +271,7 @@ START_TEST(sti)
             FreeLibrary(sti_dll);
         }
         else
-            skip("could not load sti.dll\n");
+            win_skip("could not load sti.dll\n");
         CoUninitialize();
     }
     else
