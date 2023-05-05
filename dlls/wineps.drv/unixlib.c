@@ -1191,6 +1191,21 @@ static BOOL CDECL get_char_width(PHYSDEV dev, UINT first, UINT count, const WCHA
     return TRUE;
 }
 
+static BOOL CDECL get_text_metrics(PHYSDEV dev, TEXTMETRICW *metrics)
+{
+    PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
+
+    if (pdev->font.fontloc == Download)
+    {
+        dev = GET_NEXT_PHYSDEV(dev, pGetTextMetrics);
+        return dev->funcs->pGetTextMetrics(dev, metrics);
+    }
+
+    memcpy(metrics, &(pdev->font.fontinfo.Builtin.tm),
+            sizeof(pdev->font.fontinfo.Builtin.tm));
+    return TRUE;
+}
+
 static NTSTATUS init_dc(void *arg)
 {
     struct init_dc_params *params = arg;
@@ -1201,6 +1216,7 @@ static NTSTATUS init_dc(void *arg)
     params->funcs->pSelectFont = select_font;
     params->funcs->pEnumFonts = enum_fonts;
     params->funcs->pGetCharWidth = get_char_width;
+    params->funcs->pGetTextMetrics = get_text_metrics;
     return TRUE;
 }
 
