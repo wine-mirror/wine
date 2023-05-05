@@ -61,6 +61,7 @@ struct wayland
     struct zxdg_output_manager_v1 *zxdg_output_manager_v1;
     struct wl_compositor *wl_compositor;
     struct xdg_wm_base *xdg_wm_base;
+    struct wl_shm *wl_shm;
     struct wl_list output_list;
     /* Protects the output_list and the wayland_output.current states. */
     pthread_mutex_t output_mutex;
@@ -102,6 +103,14 @@ struct wayland_surface
     pthread_mutex_t mutex;
 };
 
+struct wayland_shm_buffer
+{
+    struct wl_buffer *wl_buffer;
+    int width, height;
+    void *map_data;
+    size_t map_size;
+};
+
 /**********************************************************************
  *          Wayland initialization
  */
@@ -125,12 +134,24 @@ struct wayland_surface *wayland_surface_create(void) DECLSPEC_HIDDEN;
 void wayland_surface_destroy(struct wayland_surface *surface) DECLSPEC_HIDDEN;
 void wayland_surface_make_toplevel(struct wayland_surface *surface) DECLSPEC_HIDDEN;
 void wayland_surface_clear_role(struct wayland_surface *surface) DECLSPEC_HIDDEN;
+void wayland_surface_attach_shm(struct wayland_surface *surface,
+                                struct wayland_shm_buffer *shm_buffer) DECLSPEC_HIDDEN;
+
+/**********************************************************************
+ *          Wayland SHM buffer
+ */
+
+struct wayland_shm_buffer *wayland_shm_buffer_create(int width, int height,
+                                                     enum wl_shm_format format) DECLSPEC_HIDDEN;
+void wayland_shm_buffer_destroy(struct wayland_shm_buffer *shm_buffer) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  *          Wayland window surface
  */
 
 struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect) DECLSPEC_HIDDEN;
+void wayland_window_surface_update_wayland_surface(struct window_surface *surface,
+                                                   struct wayland_surface *wayland_surface) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  *          USER driver functions

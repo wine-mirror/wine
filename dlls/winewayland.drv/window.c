@@ -107,7 +107,11 @@ static void wayland_win_data_destroy(struct wayland_win_data *data)
 
     pthread_mutex_unlock(&win_data_mutex);
 
-    if (data->window_surface) window_surface_release(data->window_surface);
+    if (data->window_surface)
+    {
+        wayland_window_surface_update_wayland_surface(data->window_surface, NULL);
+        window_surface_release(data->window_surface);
+    }
     if (data->wayland_surface) wayland_surface_destroy(data->wayland_surface);
     free(data);
 }
@@ -153,6 +157,8 @@ static void wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
     /* We don't want wayland surfaces for child windows. */
     if (parent != NtUserGetDesktopWindow() && parent != 0)
     {
+        if (data->window_surface)
+            wayland_window_surface_update_wayland_surface(data->window_surface, NULL);
         if (surface) wayland_surface_destroy(surface);
         surface = NULL;
         goto out;
@@ -177,6 +183,9 @@ static void wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
 
         pthread_mutex_unlock(&surface->mutex);
     }
+
+    if (data->window_surface)
+        wayland_window_surface_update_wayland_surface(data->window_surface, surface);
 
 out:
     TRACE("hwnd=%p surface=%p=>%p\n", data->hwnd, data->wayland_surface, surface);

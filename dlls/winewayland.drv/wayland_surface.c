@@ -25,11 +25,16 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "waylanddrv.h"
 #include "wine/debug.h"
+#include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
+
+/* We only use 4 byte formats. */
+#define WINEWAYLAND_BYTES_PER_PIXEL 4
 
 /* Protects access to the user data of xdg_surface */
 static pthread_mutex_t xdg_data_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -196,4 +201,131 @@ void wayland_surface_clear_role(struct wayland_surface *surface)
     wl_surface_commit(surface->wl_surface);
 
     wl_display_flush(process_wayland.wl_display);
+}
+
+/**********************************************************************
+ *          wayland_surface_attach_shm
+ *
+ * Attaches a SHM buffer to a wayland surface.
+ */
+void wayland_surface_attach_shm(struct wayland_surface *surface,
+                                struct wayland_shm_buffer *shm_buffer)
+{
+    TRACE("surface=%p shm_buffer=%p (%dx%d)\n",
+          surface, shm_buffer, shm_buffer->width, shm_buffer->height);
+
+    wl_surface_attach(surface->wl_surface, shm_buffer->wl_buffer, 0, 0);
+    wl_surface_damage_buffer(surface->wl_surface, 0, 0,
+                             shm_buffer->width, shm_buffer->height);
+}
+
+/**********************************************************************
+ *          wayland_shm_buffer_destroy
+ *
+ * Destroys a SHM buffer.
+ */
+void wayland_shm_buffer_destroy(struct wayland_shm_buffer *shm_buffer)
+{
+    TRACE("%p map=%p\n", shm_buffer, shm_buffer->map_data);
+
+    if (shm_buffer->wl_buffer)
+        wl_buffer_destroy(shm_buffer->wl_buffer);
+    if (shm_buffer->map_data)
+        NtUnmapViewOfSection(GetCurrentProcess(), shm_buffer->map_data);
+
+    free(shm_buffer);
+}
+
+/**********************************************************************
+ *          wayland_shm_buffer_create
+ *
+ * Creates a SHM buffer with the specified width, height and format.
+ */
+struct wayland_shm_buffer *wayland_shm_buffer_create(int width, int height,
+                                                     enum wl_shm_format format)
+{
+    struct wayland_shm_buffer *shm_buffer = NULL;
+    HANDLE handle = 0;
+    int fd = -1;
+    SIZE_T view_size = 0;
+    LARGE_INTEGER section_size;
+    NTSTATUS status;
+    struct wl_shm_pool *pool;
+    int stride, size;
+
+    stride = width * WINEWAYLAND_BYTES_PER_PIXEL;
+    size = stride * height;
+    if (size == 0)
+    {
+        ERR("Invalid shm_buffer size %dx%d\n", width, height);
+        goto err;
+    }
+
+    shm_buffer = calloc(1, sizeof(*shm_buffer));
+    if (!shm_buffer)
+    {
+        ERR("Failed to allocate space for SHM buffer\n");
+        goto err;
+    }
+
+    TRACE("%p %dx%d format=%d size=%d\n", shm_buffer, width, height, format, size);
+
+    shm_buffer->width = width;
+    shm_buffer->height = height;
+    shm_buffer->map_size = size;
+
+    section_size.QuadPart = size;
+    status = NtCreateSection(&handle,
+                             GENERIC_READ | SECTION_MAP_READ | SECTION_MAP_WRITE,
+                             NULL, &section_size, PAGE_READWRITE, SEC_COMMIT, 0);
+    if (status)
+    {
+        ERR("Failed to create SHM section status=0x%lx\n", (long)status);
+        goto err;
+    }
+
+    status = NtMapViewOfSection(handle, GetCurrentProcess(),
+                                (PVOID)&shm_buffer->map_data, 0, 0, NULL,
+                                &view_size, ViewUnmap, 0, PAGE_READWRITE);
+    if (status)
+    {
+        shm_buffer->map_data = NULL;
+        ERR("Failed to create map SHM handle status=0x%lx\n", (long)status);
+        goto err;
+    }
+
+    status = wine_server_handle_to_fd(handle, FILE_READ_DATA, &fd, NULL);
+    if (status)
+    {
+        ERR("Failed to get fd from SHM handle status=0x%lx\n", (long)status);
+        goto err;
+    }
+
+    pool = wl_shm_create_pool(process_wayland.wl_shm, fd, size);
+    if (!pool)
+    {
+        ERR("Failed to create SHM pool fd=%d size=%d\n", fd, size);
+        goto err;
+    }
+    shm_buffer->wl_buffer = wl_shm_pool_create_buffer(pool, 0, width, height,
+                                                      stride, format);
+    wl_shm_pool_destroy(pool);
+    if (!shm_buffer->wl_buffer)
+    {
+        ERR("Failed to create SHM buffer %dx%d\n", width, height);
+        goto err;
+    }
+
+    close(fd);
+    NtClose(handle);
+
+    TRACE("=> map=%p\n", shm_buffer->map_data);
+
+    return shm_buffer;
+
+err:
+    if (fd >= 0) close(fd);
+    if (handle) NtClose(handle);
+    if (shm_buffer) wayland_shm_buffer_destroy(shm_buffer);
+    return NULL;
 }

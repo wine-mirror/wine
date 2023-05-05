@@ -94,6 +94,10 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
                              version < 2 ? version : 2);
         xdg_wm_base_add_listener(process_wayland.xdg_wm_base, &xdg_wm_base_listener, NULL);
     }
+    else if (strcmp(interface, "wl_shm") == 0)
+    {
+        process_wayland.wl_shm = wl_registry_bind(registry, id, &wl_shm_interface, 1);
+    }
 }
 
 static void registry_handle_global_remove(void *data, struct wl_registry *registry,
@@ -174,6 +178,11 @@ BOOL wayland_process_init(void)
     if (!process_wayland.xdg_wm_base)
     {
         ERR("Wayland compositor doesn't support xdg_wm_base\n");
+        return FALSE;
+    }
+    if (!process_wayland.wl_shm)
+    {
+        ERR("Wayland compositor doesn't support wl_shm\n");
         return FALSE;
     }
 

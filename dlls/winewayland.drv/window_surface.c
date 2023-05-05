@@ -36,6 +36,7 @@ struct wayland_window_surface
 {
     struct window_surface header;
     HWND hwnd;
+    struct wayland_surface *wayland_surface;
     RECT bounds;
     void *bits;
     pthread_mutex_t mutex;
@@ -53,6 +54,15 @@ static inline void reset_bounds(RECT *bounds)
     bounds->left = bounds->top = INT_MAX;
     bounds->right = bounds->bottom = INT_MIN;
 }
+
+static void buffer_release(void *data, struct wl_buffer *buffer)
+{
+    struct wayland_shm_buffer *shm_buffer = data;
+    TRACE("shm_buffer=%p\n", shm_buffer);
+    wayland_shm_buffer_destroy(shm_buffer);
+}
+
+static const struct wl_buffer_listener buffer_listener = { buffer_release };
 
 /***********************************************************************
  *           wayland_window_surface_lock
@@ -108,7 +118,46 @@ static void wayland_window_surface_set_region(struct window_surface *window_surf
  */
 static void wayland_window_surface_flush(struct window_surface *window_surface)
 {
-    /* TODO */
+    struct wayland_window_surface *wws = wayland_window_surface_cast(window_surface);
+    struct wayland_shm_buffer *shm_buffer;
+    BOOL flushed = FALSE;
+
+    wayland_window_surface_lock(window_surface);
+
+    if (IsRectEmpty(&wws->bounds)) goto done;
+
+    if (!wws->wayland_surface)
+    {
+        ERR("missing wayland surface, returning\n");
+        goto done;
+    }
+
+    TRACE("surface=%p hwnd=%p surface_rect=%s bounds=%s\n", wws, wws->hwnd,
+          wine_dbgstr_rect(&wws->header.rect), wine_dbgstr_rect(&wws->bounds));
+
+    shm_buffer = wayland_shm_buffer_create(wws->info.bmiHeader.biWidth,
+                                           abs(wws->info.bmiHeader.biHeight),
+                                           WL_SHM_FORMAT_XRGB8888);
+    if (!shm_buffer)
+    {
+        ERR("failed to create Wayland SHM buffer, returning\n");
+        goto done;
+    }
+
+    wl_buffer_add_listener(shm_buffer->wl_buffer, &buffer_listener, shm_buffer);
+
+    memcpy(shm_buffer->map_data, wws->bits, shm_buffer->map_size);
+
+    pthread_mutex_lock(&wws->wayland_surface->mutex);
+    wayland_surface_attach_shm(wws->wayland_surface, shm_buffer);
+    wl_surface_commit(wws->wayland_surface->wl_surface);
+    pthread_mutex_unlock(&wws->wayland_surface->mutex);
+    wl_display_flush(process_wayland.wl_display);
+    flushed = TRUE;
+
+done:
+    if (flushed) reset_bounds(&wws->bounds);
+    wayland_window_surface_unlock(window_surface);
 }
 
 /***********************************************************************
@@ -181,4 +230,21 @@ struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect
 failed:
     wayland_window_surface_destroy(&wws->header);
     return NULL;
+}
+
+/***********************************************************************
+ *           wayland_window_surface_update_wayland_surface
+ */
+void wayland_window_surface_update_wayland_surface(struct window_surface *window_surface,
+                                                   struct wayland_surface *wayland_surface)
+{
+    struct wayland_window_surface *wws = wayland_window_surface_cast(window_surface);
+
+    wayland_window_surface_lock(window_surface);
+
+    TRACE("surface=%p hwnd=%p wayland_surface=%p\n", wws, wws->hwnd, wayland_surface);
+
+    wws->wayland_surface = wayland_surface;
+
+    wayland_window_surface_unlock(window_surface);
 }
