@@ -12,5 +12,6 @@ SOURCES = \
 	wayland_surface.c \
 	waylanddrv_main.c \
 	window.c \
+	window_surface.c \
 	xdg-output-unstable-v1.xml \
 	xdg-shell.xml

@@ -127,6 +127,12 @@ void wayland_surface_make_toplevel(struct wayland_surface *surface) DECLSPEC_HID
 void wayland_surface_clear_role(struct wayland_surface *surface) DECLSPEC_HIDDEN;
 
 /**********************************************************************
+ *          Wayland window surface
+ */
+
+struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect) DECLSPEC_HIDDEN;
+
+/**********************************************************************
  *          USER driver functions
  */
 

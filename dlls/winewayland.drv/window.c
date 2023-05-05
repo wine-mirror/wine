@@ -41,6 +41,8 @@ struct wayland_win_data
     HWND hwnd;
     /* wayland surface (if any) for this window */
     struct wayland_surface *wayland_surface;
+    /* wine window_surface backing this window */
+    struct window_surface *window_surface;
 };
 
 static int wayland_win_data_cmp_rb(const void *key,
@@ -105,6 +107,7 @@ static void wayland_win_data_destroy(struct wayland_win_data *data)
 
     pthread_mutex_unlock(&win_data_mutex);
 
+    if (data->window_surface) window_surface_release(data->window_surface);
     if (data->wayland_surface) wayland_surface_destroy(data->wayland_surface);
     free(data);
 }
@@ -201,6 +204,9 @@ BOOL WAYLAND_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags,
                                RECT *visible_rect, struct window_surface **surface)
 {
     struct wayland_win_data *data = wayland_win_data_get(hwnd);
+    HWND parent;
+    BOOL visible;
+    RECT surface_rect;
 
     TRACE("hwnd %p window %s client %s visible %s after %p flags %08x\n",
           hwnd, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
@@ -208,8 +214,35 @@ BOOL WAYLAND_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags,
 
     if (!data && !(data = wayland_win_data_create(hwnd))) return TRUE;
 
-    wayland_win_data_release(data);
+    /* Release the dummy surface wine provides for toplevels. */
+    if (*surface) window_surface_release(*surface);
+    *surface = NULL;
 
+    parent = NtUserGetAncestor(hwnd, GA_PARENT);
+    visible = ((NtUserGetWindowLongW(hwnd, GWL_STYLE) & WS_VISIBLE) ||
+               (swp_flags & SWP_SHOWWINDOW)) &&
+              !(swp_flags & SWP_HIDEWINDOW);
+
+    /* Check if we don't want a dedicated window surface. */
+    if ((parent && parent != NtUserGetDesktopWindow()) || !visible) goto done;
+
+    surface_rect = *window_rect;
+    OffsetRect(&surface_rect, -surface_rect.left, -surface_rect.top);
+
+    /* Check if we can reuse our current window surface. */
+    if (data->window_surface &&
+        EqualRect(&data->window_surface->rect, &surface_rect))
+    {
+        window_surface_add_ref(data->window_surface);
+        *surface = data->window_surface;
+        TRACE("reusing surface %p\n", *surface);
+        goto done;
+    }
+
+    *surface = wayland_window_surface_create(data->hwnd, &surface_rect);
+
+done:
+    wayland_win_data_release(data);
     return TRUE;
 }
 
@@ -228,6 +261,10 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
           wine_dbgstr_rect(visible_rect), insert_after, swp_flags);
 
     if (!data) return;
+
+    if (surface) window_surface_add_ref(surface);
+    if (data->window_surface) window_surface_release(data->window_surface);
+    data->window_surface = surface;
 
     wayland_win_data_update_wayland_surface(data);
 
