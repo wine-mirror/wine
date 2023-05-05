@@ -1658,7 +1658,7 @@ static void test_user_shared_data(void)
 
     if (!pRtlGetEnabledExtendedFeatures)
     {
-        skip("RtlGetEnabledExtendedFeatures is not available.\n");
+        win_skip("RtlGetEnabledExtendedFeatures is not available.\n");
         return;
     }
 

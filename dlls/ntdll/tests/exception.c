@@ -9509,7 +9509,7 @@ static void test_extended_context(void)
 
     if (!pRtlGetEnabledExtendedFeatures)
     {
-        skip("RtlGetEnabledExtendedFeatures is not available.\n");
+        win_skip("RtlGetEnabledExtendedFeatures is not available.\n");
         return;
     }
 
@@ -10492,7 +10492,7 @@ static void test_copy_context(void)
 
     if (!pRtlGetEnabledExtendedFeatures)
     {
-        skip("RtlGetEnabledExtendedFeatures is not available.\n");
+        win_skip("RtlGetEnabledExtendedFeatures is not available.\n");
         return;
     }
 
@@ -10969,7 +10969,7 @@ START_TEST(exception)
     if (pRtlAddFunctionTable && pRtlDeleteFunctionTable && pRtlInstallFunctionTableCallback && pRtlLookupFunctionEntry)
       test_dynamic_unwind();
     else
-      skip( "Dynamic unwind functions not found\n" );
+      win_skip( "Dynamic unwind functions not found\n" );
     test_extended_context();
     test_copy_context();
     test_unwind_from_apc();

@@ -2136,7 +2136,7 @@ static void test_RtlUnicodeToUTF8N(void)
 
     if (!pRtlUnicodeToUTF8N)
     {
-        skip("RtlUnicodeToUTF8N unavailable\n");
+        win_skip("RtlUnicodeToUTF8N is not available\n");
         return;
     }
 
@@ -2469,7 +2469,7 @@ static void test_RtlUTF8ToUnicodeN(void)
 
     if (!pRtlUTF8ToUnicodeN)
     {
-        skip("RtlUTF8ToUnicodeN unavailable\n");
+        win_skip("RtlUTF8ToUnicodeN is not available\n");
         return;
     }
 

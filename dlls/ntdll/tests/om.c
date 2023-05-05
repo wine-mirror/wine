@@ -2523,7 +2523,7 @@ static void test_object_identity(void)
 
     if (!pNtCompareObjects)
     {
-        skip("NtCompareObjects is not available.\n");
+        win_skip("NtCompareObjects is not available.\n");
         return;
     }
 
