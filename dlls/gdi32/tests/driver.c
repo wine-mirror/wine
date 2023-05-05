@@ -399,7 +399,7 @@ static void test_D3DKMTCheckVidPnExclusiveOwnership(void)
 
     if (!pD3DKMTCheckVidPnExclusiveOwnership || pD3DKMTCheckVidPnExclusiveOwnership(NULL) == STATUS_PROCEDURE_NOT_FOUND)
     {
-        skip("D3DKMTCheckVidPnExclusiveOwnership() is unavailable.\n");
+        win_skip("D3DKMTCheckVidPnExclusiveOwnership() is unavailable.\n");
         return;
     }
 
@@ -623,7 +623,7 @@ static void test_D3DKMTSetVidPnSourceOwner(void)
 
     if (!pD3DKMTSetVidPnSourceOwner || pD3DKMTSetVidPnSourceOwner(&set_owner_desc) == STATUS_PROCEDURE_NOT_FOUND)
     {
-        skip("D3DKMTSetVidPnSourceOwner() is unavailable.\n");
+        win_skip("D3DKMTSetVidPnSourceOwner() is unavailable.\n");
         return;
     }
 
@@ -650,7 +650,7 @@ static void test_D3DKMTCheckOcclusion(void)
 
     if (!pD3DKMTCheckOcclusion || pD3DKMTCheckOcclusion(NULL) == STATUS_PROCEDURE_NOT_FOUND)
     {
-        skip("D3DKMTCheckOcclusion() is unavailable.\n");
+        todo_wine win_skip("D3DKMTCheckOcclusion() is unavailable.\n");
         return;
     }
 

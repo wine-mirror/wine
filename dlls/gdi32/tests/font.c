@@ -2750,7 +2750,7 @@ static void test_GdiGetCodePage(void)
 
     if (!pGdiGetCodePage)
     {
-        skip("GdiGetCodePage not available on this platform\n");
+        win_skip("GdiGetCodePage not available on this platform\n");
         return;
     }
 
