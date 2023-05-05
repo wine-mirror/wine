@@ -1,6 +1,7 @@
 MODULE    = wineps.drv
 UNIXLIB   = wineps.so
 IMPORTS   = user32 gdi32 winspool advapi32 win32u
+UNIX_LIBS = -lwin32u
 
 C_SRCS = \
 	afm.c \
