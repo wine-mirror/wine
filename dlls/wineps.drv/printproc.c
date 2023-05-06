@@ -155,17 +155,6 @@ static struct pp_data* get_handle_data(HANDLE pp)
     return ret;
 }
 
-static BOOL CDECL font_GetTextExtentExPoint(PHYSDEV dev, const WCHAR *str, INT count, INT *dxs)
-{
-    SIZE size;
-    return GetTextExtentExPointW(dev->hdc, str, count, -1, NULL, dxs, &size);
-}
-
-static BOOL CDECL font_GetTextMetrics(PHYSDEV dev, TEXTMETRICW *metrics)
-{
-    return GetTextMetricsW(dev->hdc, metrics);
-}
-
 static HFONT CDECL font_SelectFont(PHYSDEV dev, HFONT hfont, UINT *aa_flags)
 {
     HFONT tt_font, old_font;
@@ -187,8 +176,6 @@ static HFONT CDECL font_SelectFont(PHYSDEV dev, HFONT hfont, UINT *aa_flags)
 
 static const struct gdi_dc_funcs font_funcs =
 {
-    .pGetTextExtentExPoint = font_GetTextExtentExPoint,
-    .pGetTextMetrics = font_GetTextMetrics,
     .pSelectFont = font_SelectFont,
     .priority = GDI_PRIORITY_FONT_DRV
 };
@@ -1151,38 +1138,9 @@ static BOOL select_hbrush(struct pp_data *data, HANDLETABLE *htable, int handle_
     return PSDRV_SelectBrush(&data->pdev->dev, brush, pattern) != NULL;
 }
 
-/* Performs a device to world transformation on the specified width (which
- * is in integer format).
- */
-static inline INT INTERNAL_XDSTOWS(HDC hdc, INT width)
-{
-    double floatWidth;
-    XFORM xform;
-
-    GetWorldTransform(hdc, &xform);
-
-    /* Perform operation with floating point */
-    floatWidth = (double)width * xform.eM11;
-    /* Round to integers */
-    return GDI_ROUND(floatWidth);
-}
-
 /* Performs a device to world transformation on the specified size (which
  * is in integer format).
  */
-static inline INT INTERNAL_YDSTOWS(HDC hdc, INT height)
-{
-    double floatHeight;
-    XFORM xform;
-
-    GetWorldTransform(hdc, &xform);
-
-    /* Perform operation with floating point */
-    floatHeight = (double)height * xform.eM22;
-    /* Round to integers */
-    return GDI_ROUND(floatHeight);
-}
-
 static inline INT INTERNAL_YWSTODS(HDC hdc, INT height)
 {
     POINT pt[2];
@@ -1191,87 +1149,6 @@ static inline INT INTERNAL_YWSTODS(HDC hdc, INT height)
     pt[1].y = height;
     LPtoDP(hdc, pt, 2);
     return pt[1].y - pt[0].y;
-}
-
-/* compute positions for text rendering, in device coords */
-static BOOL get_char_positions(struct pp_data *data, const WCHAR *str,
-        INT count, INT *dx, SIZE *size)
-{
-    TEXTMETRICW tm;
-
-    size->cx = size->cy = 0;
-    if (!count) return TRUE;
-
-    PSDRV_GetTextMetrics(&data->pdev->dev, &tm);
-    if (!PSDRV_GetTextExtentExPoint(&data->pdev->dev, str, count, dx)) return FALSE;
-
-    if (data->break_extra || data->break_rem)
-    {
-        int i, space = 0, rem = data->break_rem;
-
-        for (i = 0; i < count; i++)
-        {
-            if (str[i] == tm.tmBreakChar)
-            {
-                space += data->break_extra;
-                if (rem > 0)
-                {
-                    space++;
-                    rem--;
-                }
-            }
-            dx[i] += space;
-        }
-    }
-    size->cx = dx[count - 1];
-    size->cy = tm.tmHeight;
-    return TRUE;
-}
-
-static BOOL get_text_extent(struct pp_data *data, const WCHAR *str, INT count,
-        INT max_ext, INT *nfit, INT *dxs, SIZE *size, UINT flags)
-{
-    INT buffer[256], *pos = dxs;
-    int i, char_extra;
-    BOOL ret;
-
-    if (flags)
-        return GetTextExtentExPointI(data->pdev->dev.hdc, str, count, max_ext, nfit, dxs, size);
-    else if (data->pdev->font.fontloc == Download)
-        return GetTextExtentExPointW(data->pdev->dev.hdc, str, count, max_ext, nfit, dxs, size);
-
-    if (!dxs)
-    {
-        pos = buffer;
-        if (count > 256 && !(pos = malloc(count * sizeof(*pos))))
-            return FALSE;
-    }
-
-    if ((ret = get_char_positions(data, str, count, pos, size)))
-    {
-        char_extra = GetTextCharacterExtra(data->pdev->dev.hdc);
-        if (dxs || nfit)
-        {
-            for (i = 0; i < count; i++)
-            {
-                unsigned int dx = abs(INTERNAL_XDSTOWS(data->pdev->dev.hdc, pos[i]))
-                    + (i + 1) * char_extra;
-                if (nfit && dx > (unsigned int)max_ext) break;
-                if (dxs) dxs[i] = dx;
-            }
-            if (nfit) *nfit = i;
-        }
-
-        size->cx = abs(INTERNAL_XDSTOWS(data->pdev->dev.hdc, size->cx))
-            + count * char_extra;
-        size->cy = abs(INTERNAL_YDSTOWS(data->pdev->dev.hdc, size->cy));
-    }
-
-    if (pos != buffer && pos != dxs) free(pos);
-
-    TRACE("(%s, %d) returning %dx%d\n", debugstr_wn(str,count),
-          max_ext, (int)size->cx, (int)size->cy);
-    return ret;
 }
 
 extern const unsigned short bidi_direction_table[] DECLSPEC_HIDDEN;
@@ -1938,7 +1815,7 @@ static BOOL ext_text_out(struct pp_data *data, HANDLETABLE *htable,
         y = pt.y;
     }
 
-    PSDRV_GetTextMetrics(&data->pdev->dev, &tm);
+    GetTextMetricsW(hdc, &tm);
     GetObjectW(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), &lf);
 
     if(!(tm.tmPitchAndFamily & TMPF_VECTOR)) /* Non-scalable fonts shouldn't be rotated */
@@ -2017,7 +1894,7 @@ static BOOL ext_text_out(struct pp_data *data, HANDLETABLE *htable,
         {
             INT *dx = malloc(count * sizeof(*dx));
 
-            get_text_extent(data, str, count, -1, NULL, dx, &sz, !!(flags & ETO_GLYPH_INDEX));
+            NtGdiGetTextExtentExW(hdc, str, count, -1, NULL, dx, &sz, !!(flags & ETO_GLYPH_INDEX));
 
             deltas[0].x = dx[0];
             deltas[0].y = 0;
@@ -2062,7 +1939,7 @@ static BOOL ext_text_out(struct pp_data *data, HANDLETABLE *htable,
     {
         POINT desired[2];
 
-        get_text_extent(data, str, count, 0, NULL, NULL, &sz, !!(flags & ETO_GLYPH_INDEX));
+        NtGdiGetTextExtentExW(hdc, str, count, 0, NULL, NULL, &sz, !!(flags & ETO_GLYPH_INDEX));
         desired[0].x = desired[0].y = 0;
         desired[1].x = sz.cx;
         desired[1].y = 0;
@@ -3122,7 +2999,7 @@ HANDLE WINAPI OpenPrintProcessor(WCHAR *port, PRINTPROCESSOROPENDATA *open_data)
     data->doc_name = wcsdup(open_data->pDocumentName);
     data->out_file = wcsdup(open_data->pOutputFile);
 
-    hdc = CreateCompatibleDC(NULL);
+    hdc = CreateDCW(L"winspool", open_data->pPrinterName, NULL, open_data->pDevMode);
     if (!hdc)
     {
         LocalFree(data);

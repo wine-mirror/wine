@@ -258,24 +258,6 @@ BOOL PSDRV_WriteBuiltinGlyphShow(PHYSDEV dev, LPCWSTR str, INT count)
     return TRUE;
 }
 
-/***********************************************************************
- *           PSDRV_GetTextMetrics
- */
-BOOL CDECL PSDRV_GetTextMetrics(PHYSDEV dev, TEXTMETRICW *metrics)
-{
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
-
-    if (physDev->font.fontloc == Download)
-    {
-        dev = GET_NEXT_PHYSDEV( dev, pGetTextMetrics );
-        return dev->funcs->pGetTextMetrics( dev, metrics );
-    }
-
-    memcpy(metrics, &(physDev->font.fontinfo.Builtin.tm),
-	   sizeof(physDev->font.fontinfo.Builtin.tm));
-    return TRUE;
-}
-
 /******************************************************************************
  *  	PSDRV_UVMetrics
  *
@@ -313,29 +295,4 @@ const AFMMETRICS *PSDRV_UVMetrics(LONG UV, const AFM *afm)
     }
 
     return needle;
-}
-
-/***********************************************************************
- *           PSDRV_GetTextExtentExPoint
- */
-BOOL CDECL PSDRV_GetTextExtentExPoint(PHYSDEV dev, LPCWSTR str, INT count, LPINT alpDx)
-{
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
-    int     	    i;
-    float   	    width = 0.0;
-
-    if (physDev->font.fontloc == Download)
-    {
-        dev = GET_NEXT_PHYSDEV( dev, pGetTextExtentExPoint );
-        return dev->funcs->pGetTextExtentExPoint( dev, str, count, alpDx );
-    }
-
-    TRACE("%s %i\n", debugstr_wn(str, count), count);
-
-    for (i = 0; i < count; ++i)
-    {
-	width += PSDRV_UVMetrics(str[i], physDev->font.fontinfo.Builtin.afm)->WX;
-        alpDx[i] = width * physDev->font.fontinfo.Builtin.scale;
-    }
-    return TRUE;
 }
