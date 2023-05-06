@@ -93,12 +93,6 @@ static const PSDRV_DEVMODE DefaultDevmode =
 HINSTANCE PSDRV_hInstance = 0;
 HANDLE PSDRV_Heap = 0;
 
-static HFONT PSDRV_DefaultFont = 0;
-static const LOGFONTA DefaultLogFont = {
-    100, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, 0, 0,
-    DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, ""
-};
-
 static struct gdi_dc_funcs psdrv_funcs;
 
 /*********************************************************************
@@ -134,18 +128,11 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 		HeapDestroy(PSDRV_Heap);
 		return FALSE;
 	    }
-
-	    PSDRV_DefaultFont = CreateFontIndirectA(&DefaultLogFont);
-	    if (PSDRV_DefaultFont == NULL) {
-		HeapDestroy(PSDRV_Heap);
-		return FALSE;
-	    }
             break;
         }
 
 	case DLL_PROCESS_DETACH:
             if (reserved) break;
-	    DeleteObject( PSDRV_DefaultFont );
 	    HeapDestroy( PSDRV_Heap );
             break;
     }
@@ -391,7 +378,7 @@ PSDRV_PDEVICE *create_psdrv_physdev( HDC hdc, const WCHAR *device,
     }
 
     PSDRV_UpdateDevCaps( pdev );
-    SelectObject( hdc, PSDRV_DefaultFont );
+    SelectObject( hdc, GetStockObject( DEVICE_DEFAULT_FONT ));
     return pdev;
 }
 
