@@ -19,6 +19,8 @@
 #include "ntuser.h"
 #include "wine/unixlib.h"
 
+#define PSDRV_GET_GLYPH_NAME 0x10000
+
 enum wineps_funcs
 {
     unix_init_dc,

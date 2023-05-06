@@ -31,6 +31,7 @@
 #include "winternl.h"
 
 #include "psdrv.h"
+#include "unixlib.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
@@ -244,14 +245,12 @@ BOOL PSDRV_WriteSetBuiltinFont(PHYSDEV dev)
 
 BOOL PSDRV_WriteBuiltinGlyphShow(PHYSDEV dev, LPCWSTR str, INT count)
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+    char name[32];
     int i;
-    LPCSTR name;
 
     for (i = 0; i < count; ++i)
     {
-	name = PSDRV_UVMetrics(str[i], physDev->font.fontinfo.Builtin.afm)->N->sz;
-
+        ExtEscape(dev->hdc, PSDRV_GET_GLYPH_NAME, sizeof(str[i]), (const char *)&str[i], sizeof(name), name);
 	PSDRV_WriteGlyphShow(dev, name);
     }
 

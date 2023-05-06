@@ -518,6 +518,34 @@ static BOOL CDECL reset_dc(PHYSDEV dev, const DEVMODEW *devmode)
     return TRUE;
 }
 
+static int metrics_by_uv(const void *a, const void *b)
+{
+    return (int)(((const AFMMETRICS *)a)->UV - ((const AFMMETRICS *)b)->UV);
+}
+
+const AFMMETRICS *uv_metrics(LONG uv, const AFM *afm)
+{
+    const AFMMETRICS *needle;
+    AFMMETRICS key;
+
+    /*
+     *  Ugly work-around for symbol fonts.  Wine is sending characters which
+     *  belong in the Unicode private use range (U+F020 - U+F0FF) as ASCII
+     *  characters (U+0020 - U+00FF).
+     */
+    if ((afm->Metrics->UV & 0xff00) == 0xf000 && uv < 0x100)
+        uv |= 0xf000;
+
+    key.UV = uv;
+    needle = bsearch(&key, afm->Metrics, afm->NumofMetrics, sizeof(AFMMETRICS), metrics_by_uv);
+    if (!needle)
+    {
+        WARN("No glyph for U+%.4X in '%s'\n", (int)uv, afm->FontName);
+        needle = afm->Metrics;
+    }
+    return needle;
+}
+
 static int CDECL ext_escape(PHYSDEV dev, int escape, int input_size, const void *input,
         int output_size, void *output)
 {
@@ -770,6 +798,17 @@ static int CDECL ext_escape(PHYSDEV dev, int escape, int input_size, const void 
 
     case CLIP_TO_PATH:
         return 1;
+
+    case PSDRV_GET_GLYPH_NAME:
+    {
+        PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
+        WCHAR *uv = (WCHAR *)input;
+        const char *name = uv_metrics(*uv, pdev->font.fontinfo.Builtin.afm)->N->sz;
+
+        lstrcpynA(output, name, output_size);
+        return 1;
+    }
+
     default:
         FIXME("Unimplemented code %d\n", escape);
         return 0;
@@ -1133,34 +1172,6 @@ static BOOL CDECL enum_fonts(PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LP
         }
     }
     return ret;
-}
-
-static int metrics_by_uv(const void *a, const void *b)
-{
-    return (int)(((const AFMMETRICS *)a)->UV - ((const AFMMETRICS *)b)->UV);
-}
-
-const AFMMETRICS *uv_metrics(LONG uv, const AFM *afm)
-{
-    const AFMMETRICS *needle;
-    AFMMETRICS key;
-
-    /*
-     *  Ugly work-around for symbol fonts.  Wine is sending characters which
-     *  belong in the Unicode private use range (U+F020 - U+F0FF) as ASCII
-     *  characters (U+0020 - U+00FF).
-     */
-    if ((afm->Metrics->UV & 0xff00) == 0xf000 && uv < 0x100)
-        uv |= 0xf000;
-
-    key.UV = uv;
-    needle = bsearch(&key, afm->Metrics, afm->NumofMetrics, sizeof(AFMMETRICS), metrics_by_uv);
-    if (!needle)
-    {
-        WARN("No glyph for U+%.4X in '%s'\n", (int)uv, afm->FontName);
-        needle = afm->Metrics;
-    }
-    return needle;
 }
 
 static BOOL CDECL get_char_width(PHYSDEV dev, UINT first, UINT count, const WCHAR *chars, INT *buffer)
