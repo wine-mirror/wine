@@ -316,11 +316,6 @@ typedef struct {
 
   /* These are needed by PSDRV_ExtTextOut */
     int                 escapement;
-    int                 underlineThickness;
-    int                 underlinePosition;
-    int                 strikeoutThickness;
-    int                 strikeoutPosition;
-
 } PSFONT;
 
 typedef struct {

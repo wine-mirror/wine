@@ -904,11 +904,6 @@ static void scale_font(const AFM *afm, LONG height, PSFONT *font, TEXTMETRICW *t
     tm->tmMaxCharWidth = (LONG)gdi_round(
             (afm->FontBBox.urx - afm->FontBBox.llx) * font->fontinfo.Builtin.scale);
 
-    font->underlinePosition = afm->UnderlinePosition * font->fontinfo.Builtin.scale;
-    font->underlineThickness = afm->UnderlineThickness * font->fontinfo.Builtin.scale;
-    font->strikeoutPosition = tm->tmAscent / 2;
-    font->strikeoutThickness = font->underlineThickness;
-
     TRACE("Selected PS font '%s' size %d weight %d.\n", afm->FontName,
           font->size.xx, (int)tm->tmWeight);
     TRACE("H = %d As = %d Des = %d IL = %d EL = %d\n", (int)tm->tmHeight,

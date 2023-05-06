@@ -308,11 +308,6 @@ BOOL PSDRV_WriteSetDownloadFont(PHYSDEV dev, BOOL vertical)
     physDev->font.size.yx = -ps_round(ppem * xform.eM21);
     physDev->font.size.yy = -ps_round(ppem * xform.eM22);
 
-    physDev->font.underlineThickness = potm->otmsUnderscoreSize;
-    physDev->font.underlinePosition = potm->otmsUnderscorePosition;
-    physDev->font.strikeoutThickness = potm->otmsStrikeoutSize;
-    physDev->font.strikeoutPosition = potm->otmsStrikeoutPosition;
-
     if(physDev->font.fontinfo.Download == NULL) {
         RECT bbox;
         UINT emsize = get_bbox(dev->hdc, &bbox);

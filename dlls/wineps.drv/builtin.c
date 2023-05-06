@@ -138,11 +138,6 @@ static VOID ScaleFont(const AFM *afm, LONG lfHeight, PSFONT *font,
     tm->tmMaxCharWidth = (LONG)Round(
     	    (afm->FontBBox.urx - afm->FontBBox.llx) * font->fontinfo.Builtin.scale);
 
-    font->underlinePosition = afm->UnderlinePosition * font->fontinfo.Builtin.scale;
-    font->underlineThickness = afm->UnderlineThickness * font->fontinfo.Builtin.scale;
-    font->strikeoutPosition = tm->tmAscent / 2;
-    font->strikeoutThickness = font->underlineThickness;
-
     TRACE("Selected PS font '%s' size %d weight %ld.\n", afm->FontName,
           font->size.xx, tm->tmWeight );
     TRACE("H = %ld As = %ld Des = %ld IL = %ld EL = %ld\n", tm->tmHeight,
