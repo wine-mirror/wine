@@ -809,6 +809,22 @@ static int CDECL ext_escape(PHYSDEV dev, int escape, int input_size, const void 
         return 1;
     }
 
+    case PSDRV_GET_BUILTIN_FONT_INFO:
+    {
+        PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
+        struct font_info *font_info = (struct font_info *)output;
+
+        if (pdev->font.fontloc != Builtin)
+            return 0;
+
+        lstrcpynA(font_info->font_name, pdev->font.fontinfo.Builtin.afm->FontName,
+                sizeof(font_info->font_name));
+        font_info->size.cx = pdev->font.size.xx;
+        font_info->size.cy = pdev->font.size.yy;
+        font_info->escapement = pdev->font.escapement;
+        return 1;
+    }
+
     default:
         FIXME("Unimplemented code %d\n", escape);
         return 0;

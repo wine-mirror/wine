@@ -68,30 +68,26 @@ static VOID ScaleFont(const AFM *afm, LONG lfHeight, PSFONT *font,
     const WINMETRICS	*wm = &(afm->WinMetrics);
     USHORT  	    	usUnitsPerEm, usWinAscent, usWinDescent;
     SHORT   	    	sAscender, sDescender, sLineGap, sAvgCharWidth;
+    float scale;
 
     TRACE("'%s' %li\n", afm->FontName, lfHeight);
 
     if (lfHeight < 0)   	    	    	    	/* match em height */
-    {
-        font->fontinfo.Builtin.scale = - ((float)lfHeight / (float)(wm->usUnitsPerEm));
-    }
+        scale = - ((float)lfHeight / (float)(wm->usUnitsPerEm));
     else    	    	    	    	    	    	/* match cell height */
-    {
-    	font->fontinfo.Builtin.scale = (float)lfHeight /
-	    	(float)(wm->usWinAscent + wm->usWinDescent);
-    }
+        scale = (float)lfHeight / (float)(wm->usWinAscent + wm->usWinDescent);
 
-    font->size.xx = (INT)Round(font->fontinfo.Builtin.scale * (float)wm->usUnitsPerEm);
+    font->size.xx = (INT)Round(scale * (float)wm->usUnitsPerEm);
     font->size.xy = font->size.yx = 0;
-    font->size.yy = -(INT)Round(font->fontinfo.Builtin.scale * (float)wm->usUnitsPerEm);
+    font->size.yy = -(INT)Round(scale * (float)wm->usUnitsPerEm);
 
-    usUnitsPerEm = (USHORT)Round((float)(wm->usUnitsPerEm) * font->fontinfo.Builtin.scale);
-    sAscender = (SHORT)Round((float)(wm->sAscender) * font->fontinfo.Builtin.scale);
-    sDescender = (SHORT)Round((float)(wm->sDescender) * font->fontinfo.Builtin.scale);
-    sLineGap = (SHORT)Round((float)(wm->sLineGap) * font->fontinfo.Builtin.scale);
-    usWinAscent = (USHORT)Round((float)(wm->usWinAscent) * font->fontinfo.Builtin.scale);
-    usWinDescent = (USHORT)Round((float)(wm->usWinDescent) * font->fontinfo.Builtin.scale);
-    sAvgCharWidth = (SHORT)Round((float)(wm->sAvgCharWidth) * font->fontinfo.Builtin.scale);
+    usUnitsPerEm = (USHORT)Round((float)(wm->usUnitsPerEm) * scale);
+    sAscender = (SHORT)Round((float)(wm->sAscender) * scale);
+    sDescender = (SHORT)Round((float)(wm->sDescender) * scale);
+    sLineGap = (SHORT)Round((float)(wm->sLineGap) * scale);
+    usWinAscent = (USHORT)Round((float)(wm->usWinAscent) * scale);
+    usWinDescent = (USHORT)Round((float)(wm->usWinDescent) * scale);
+    sAvgCharWidth = (SHORT)Round((float)(wm->sAvgCharWidth) * scale);
 
     tm->tmAscent = (LONG)usWinAscent;
     tm->tmDescent = (LONG)usWinDescent;
@@ -133,10 +129,10 @@ static VOID ScaleFont(const AFM *afm, LONG lfHeight, PSFONT *font,
      *	similarly adjusted..
      */
 
-    font->fontinfo.Builtin.scale *= (float)wm->usUnitsPerEm / 1000.0;
+    scale *= (float)wm->usUnitsPerEm / 1000.0;
 
     tm->tmMaxCharWidth = (LONG)Round(
-    	    (afm->FontBBox.urx - afm->FontBBox.llx) * font->fontinfo.Builtin.scale);
+            (afm->FontBBox.urx - afm->FontBBox.llx) * scale);
 
     TRACE("Selected PS font '%s' size %d weight %ld.\n", afm->FontName,
           font->size.xx, tm->tmWeight );
@@ -159,6 +155,7 @@ BOOL PSDRV_SelectBuiltinFont(PHYSDEV dev, HFONT hfont,
     AFMLISTENTRY *afmle;
     FONTFAMILY *family;
     BOOL bd = FALSE, it = FALSE;
+    TEXTMETRICW tm;
     LONG height;
 
     TRACE("Trying to find facename %s\n", debugstr_w(face_name));
@@ -207,7 +204,6 @@ BOOL PSDRV_SelectBuiltinFont(PHYSDEV dev, HFONT hfont,
     TRACE("Got font '%s'\n", afmle->afm->FontName);
 
     physDev->font.fontloc = Builtin;
-    physDev->font.fontinfo.Builtin.afm = afmle->afm;
 
     height = plf->lfHeight;
     /* stock fonts ignore the mapping mode */
@@ -218,24 +214,29 @@ BOOL PSDRV_SelectBuiltinFont(PHYSDEV dev, HFONT hfont,
 	LPtoDP(dev->hdc, pts, 2);
 	height = pts[1].y - pts[0].y;
     }
-    ScaleFont(physDev->font.fontinfo.Builtin.afm, height,
-	      &(physDev->font), &(physDev->font.fontinfo.Builtin.tm));
+    ScaleFont(afmle->afm, height,
+	      &(physDev->font), &tm);
 
 
     /* Does anyone know if these are supposed to be reversed like this? */
-
-    physDev->font.fontinfo.Builtin.tm.tmDigitizedAspectX = physDev->logPixelsY;
-    physDev->font.fontinfo.Builtin.tm.tmDigitizedAspectY = physDev->logPixelsX;
+    tm.tmDigitizedAspectX = physDev->logPixelsY;
+    tm.tmDigitizedAspectY = physDev->logPixelsX;
 
     return TRUE;
 }
 
 BOOL PSDRV_WriteSetBuiltinFont(PHYSDEV dev)
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+    struct font_info font_info;
+    matrix size;
 
-    return PSDRV_WriteSetFont(dev, physDev->font.fontinfo.Builtin.afm->FontName,
-                              physDev->font.size, physDev->font.escapement, FALSE);
+    ExtEscape(dev->hdc, PSDRV_GET_BUILTIN_FONT_INFO, 0, NULL,
+            sizeof(font_info), (char *)&font_info);
+    size.xx = font_info.size.cx;
+    size.yy = font_info.size.cy;
+    size.xy = size.yx = 0;
+    return PSDRV_WriteSetFont(dev, font_info.font_name, size,
+            font_info.escapement, FALSE);
 }
 
 BOOL PSDRV_WriteBuiltinGlyphShow(PHYSDEV dev, LPCWSTR str, INT count)

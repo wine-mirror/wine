@@ -20,6 +20,14 @@
 #include "wine/unixlib.h"
 
 #define PSDRV_GET_GLYPH_NAME 0x10000
+#define PSDRV_GET_BUILTIN_FONT_INFO 0x10001
+
+struct font_info
+{
+    char font_name[LF_FACESIZE];
+    SIZE size;
+    int escapement;
+};
 
 enum wineps_funcs
 {
