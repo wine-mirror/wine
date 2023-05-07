@@ -30,7 +30,6 @@ static const callback_func callback_funcs[] =
 {
     x11drv_dnd_drop_event,
     x11drv_dnd_leave_event,
-    x11drv_ime_get_cursor_pos,
     x11drv_ime_set_composition_status,
     x11drv_ime_set_cursor_pos,
     x11drv_ime_set_open_status,

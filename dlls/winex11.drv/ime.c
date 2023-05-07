@@ -550,26 +550,6 @@ NTSTATUS x11drv_ime_set_composition_status( UINT open )
     return 0;
 }
 
-NTSTATUS x11drv_ime_get_cursor_pos( UINT arg )
-{
-    LPINPUTCONTEXT lpIMC;
-    INT rc = 0;
-    LPCOMPOSITIONSTRING compstr;
-
-    if (!hSelectedFrom)
-        return rc;
-
-    lpIMC = LockRealIMC(FROM_X11);
-    if (lpIMC)
-    {
-        compstr = ImmLockIMCC(lpIMC->hCompStr);
-        rc = compstr->dwCursorPos;
-        ImmUnlockIMCC(lpIMC->hCompStr);
-    }
-    UnlockRealIMC(FROM_X11);
-    return rc;
-}
-
 NTSTATUS x11drv_ime_set_cursor_pos( UINT pos )
 {
     LPINPUTCONTEXT lpIMC;

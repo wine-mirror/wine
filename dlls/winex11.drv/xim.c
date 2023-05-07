@@ -201,6 +201,7 @@ static int xic_preedit_draw( XIC xic, XPointer user, XPointer arg )
 
 static int xic_preedit_caret( XIC xic, XPointer user, XPointer arg )
 {
+    static int xim_caret_pos;
     XIMPreeditCaretCallbackStruct *params = (void *)arg;
     HWND hwnd = (HWND)user;
     int pos;
@@ -209,7 +210,7 @@ static int xic_preedit_caret( XIC xic, XPointer user, XPointer arg )
 
     if (!params) return 0;
 
-    pos = x11drv_client_call( client_ime_get_cursor_pos, 0 );
+    pos = xim_caret_pos;
     switch (params->direction)
     {
     case XIMForwardChar:
@@ -238,7 +239,7 @@ static int xic_preedit_caret( XIC xic, XPointer user, XPointer arg )
         break;
     }
     x11drv_client_call( client_ime_set_cursor_pos, pos );
-    params->position = pos;
+    params->position = xim_caret_pos = pos;
 
     return 0;
 }

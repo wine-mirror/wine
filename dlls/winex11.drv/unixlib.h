@@ -94,7 +94,6 @@ enum client_callback
 {
     client_dnd_drop_event,
     client_dnd_leave_event,
-    client_ime_get_cursor_pos,
     client_ime_set_composition_status,
     client_ime_set_cursor_pos,
     client_ime_set_open_status,
