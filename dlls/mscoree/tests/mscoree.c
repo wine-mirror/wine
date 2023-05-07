@@ -592,18 +592,14 @@ static BOOL compile_cs(const WCHAR *source, const WCHAR *target, const WCHAR *ty
     return ret;
 }
 
-static BOOL create_new_dir(WCHAR newdir[MAX_PATH], const WCHAR* parent,
-                           const WCHAR* prefix)
+static BOOL create_new_dir(WCHAR newdir[MAX_PATH], const WCHAR* prefix)
 {
     WCHAR path[MAX_PATH];
     BOOL try_tmpdir = TRUE;
     static unsigned i = 0;
 
-    if (!parent)
-    {
-        GetCurrentDirectoryW(ARRAY_SIZE(path), path);
-        parent = path;
-    }
+    GetCurrentDirectoryW(ARRAY_SIZE(path), path);
+
     while (1)
     {
         swprintf(newdir, MAX_PATH, L"%s\\%s%04d", path, prefix, i);
@@ -617,7 +613,6 @@ static BOOL create_new_dir(WCHAR newdir[MAX_PATH], const WCHAR* parent,
             try_tmpdir = FALSE;
             GetTempPathW(ARRAY_SIZE(path), path);
             path[wcslen(path) - 1] = 0; /* redundant trailing backslash */
-            parent = path;
             break;
         case ERROR_ALREADY_EXISTS:
             i++;
@@ -638,7 +633,7 @@ static void test_loadpaths_execute(const WCHAR *exe_name, const WCHAR *dll_name,
     DWORD exit_code = 0xdeadbeef;
     BOOL ret;
 
-    ok(create_new_dir(tmpdir, NULL, L"loadpaths"),
+    ok(create_new_dir(tmpdir, L"loadpaths"),
        "failed to create a new dir %lu\n", GetLastError());
     end = tmpdir + wcslen(tmpdir);
 
