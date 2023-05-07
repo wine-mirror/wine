@@ -136,7 +136,10 @@ static HRESULT parse_path(BSTR path, BSTR *provider, BSTR *server, BSTR *dn)
     if (!*p) return S_OK;
 
     if (*p++ != '/' || *p++ != '/' || !*p)
+    {
+        SysFreeString(*provider);
         return E_ADS_BAD_PATHNAME;
+    }
 
     p_server = p;
     server_len = 0;
@@ -145,7 +148,11 @@ static HRESULT parse_path(BSTR path, BSTR *provider, BSTR *server, BSTR *dn)
         p++;
         server_len++;
     }
-    if (server_len == 0) return E_ADS_BAD_PATHNAME;
+    if (server_len == 0)
+    {
+        SysFreeString(*provider);
+        return E_ADS_BAD_PATHNAME;
+    }
 
     *server = SysAllocStringLen(p_server, server_len);
     if (!*server)
