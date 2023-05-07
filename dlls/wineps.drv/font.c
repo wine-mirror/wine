@@ -30,6 +30,7 @@
 #include "winternl.h"
 
 #include "psdrv.h"
+#include "unixlib.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
@@ -40,85 +41,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 HFONT CDECL PSDRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectFont );
-    HFONT ret;
-    LOGFONTW lf;
-    BOOL subst = FALSE;
+    struct font_info font_info;
 
-    if (!GetObjectW( hfont, sizeof(lf), &lf )) return 0;
-
-    *aa_flags = GGO_BITMAP; /* no anti-aliasing on printer devices */
-
-    TRACE("FaceName = %s Height = %ld Italic = %d Weight = %ld\n",
-	  debugstr_w(lf.lfFaceName), lf.lfHeight, lf.lfItalic,
-	  lf.lfWeight);
-
-    if(lf.lfFaceName[0] == '\0') {
-        switch(lf.lfPitchAndFamily & 0xf0) {
-	case FF_DONTCARE:
-	    break;
-	case FF_ROMAN:
-	case FF_SCRIPT:
-	    wcscpy(lf.lfFaceName, L"Times");
-	    break;
-	case FF_SWISS:
-	    wcscpy(lf.lfFaceName, L"Helvetica");
-	    break;
-	case FF_MODERN:
-	    wcscpy(lf.lfFaceName, L"Courier");
-	    break;
-	case FF_DECORATIVE:
-	    wcscpy(lf.lfFaceName, L"Symbol");
-	    break;
-	}
-    }
-
-    if(lf.lfFaceName[0] == '\0') {
-        switch(lf.lfPitchAndFamily & 0x0f) {
-	case VARIABLE_PITCH:
-	    wcscpy(lf.lfFaceName, L"Times");
-	    break;
-	default:
-	    wcscpy(lf.lfFaceName, L"Courier");
-	    break;
-	}
-    }
-
-    if (physDev->pi->FontSubTableSize != 0)
+    if (ExtEscape(dev->hdc, PSDRV_GET_BUILTIN_FONT_INFO, 0, NULL,
+                sizeof(font_info), (char *)&font_info))
     {
-	DWORD i;
-
-	for (i = 0; i < physDev->pi->FontSubTableSize; ++i)
-	{
-	    if (!wcsicmp (lf.lfFaceName,
-		    physDev->pi->FontSubTable[i].pValueName))
-	    {
-		TRACE("substituting facename %s for %s\n",
-                        debugstr_w((WCHAR *)physDev->pi->FontSubTable[i].pData), debugstr_w(lf.lfFaceName));
-                if (wcslen((WCHAR *)physDev->pi->FontSubTable[i].pData) < LF_FACESIZE)
-		{
-                    wcscpy(lf.lfFaceName, (WCHAR *)physDev->pi->FontSubTable[i].pData);
-		    subst = TRUE;
-		}
-		else
-		    WARN("Facename %s is too long; ignoring substitution\n",
-                            debugstr_w((WCHAR *)physDev->pi->FontSubTable[i].pData));
-		break;
-	    }
-	}
+        physDev->font.fontloc = Builtin;
     }
-
-    physDev->font.escapement = lf.lfEscapement;
-    physDev->font.set = UNSET;
-
-    if (!subst && ((ret = next->funcs->pSelectFont( next, hfont, aa_flags ))))
+    else
     {
-        PSDRV_SelectDownloadFont(dev);
-        return ret;
+        physDev->font.fontloc = Download;
+        physDev->font.fontinfo.Download = NULL;
     }
-
-    PSDRV_SelectBuiltinFont(dev, hfont, &lf, lf.lfFaceName);
-    next->funcs->pSelectFont( next, 0, aa_flags );  /* tell next driver that we selected a device font */
     return hfont;
 }
 

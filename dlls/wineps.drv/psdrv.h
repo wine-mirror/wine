@@ -535,8 +535,6 @@ BOOL PSDRV_GetType1Metrics(void) DECLSPEC_HIDDEN;
 const AFMMETRICS *PSDRV_UVMetrics(LONG UV, const AFM *afm) DECLSPEC_HIDDEN;
 SHORT PSDRV_CalcAvgCharWidth(const AFM *afm) DECLSPEC_HIDDEN;
 
-extern BOOL PSDRV_SelectBuiltinFont(PHYSDEV dev, HFONT hfont,
-				    LOGFONTW *plf, WCHAR *face_name) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteSetBuiltinFont(PHYSDEV dev) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteBuiltinGlyphShow(PHYSDEV dev, LPCWSTR str, INT count) DECLSPEC_HIDDEN;
 

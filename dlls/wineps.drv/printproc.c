@@ -44,7 +44,6 @@ struct pp_data
     WCHAR *out_file;
 
     PSDRV_PDEVICE *pdev;
-    struct gdi_physdev font_dev;
 
     struct brush_pattern *patterns;
     BOOL path;
@@ -154,31 +153,6 @@ static struct pp_data* get_handle_data(HANDLE pp)
     }
     return ret;
 }
-
-static HFONT CDECL font_SelectFont(PHYSDEV dev, HFONT hfont, UINT *aa_flags)
-{
-    HFONT tt_font, old_font;
-    LOGFONTW lf;
-
-    *aa_flags = GGO_BITMAP;
-    if (!GetObjectW(hfont, sizeof(lf), &lf))
-        return 0;
-
-    lf.lfOutPrecision = OUT_TT_ONLY_PRECIS;
-    tt_font = CreateFontIndirectW(&lf);
-    if (!tt_font)
-        return 0;
-
-    old_font = SelectObject(dev->hdc, tt_font);
-    DeleteObject(tt_font);
-    return old_font ? hfont : 0;
-}
-
-static const struct gdi_dc_funcs font_funcs =
-{
-    .pSelectFont = font_SelectFont,
-    .priority = GDI_PRIORITY_FONT_DRV
-};
 
 static inline INT GDI_ROUND(double val)
 {
@@ -3015,9 +2989,6 @@ HANDLE WINAPI OpenPrintProcessor(WCHAR *port, PRINTPROCESSOROPENDATA *open_data)
         return NULL;
     }
     data->pdev->dev.hdc = hdc;
-    data->pdev->dev.next = &data->font_dev;
-    data->font_dev.funcs = &font_funcs;
-    data->font_dev.hdc = hdc;
     return (HANDLE)data;
 }
 
