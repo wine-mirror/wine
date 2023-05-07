@@ -4845,7 +4845,7 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
         wined3d_resource_get_desc(wined3d_texture_get_resource(old_texture), &wined3d_desc);
 
         wined3d_desc.width = width;
-        wined3d_desc.width = height;
+        wined3d_desc.height = height;
         wined3d_desc.format = format_id;
 
         if (FAILED(hr = wined3d_texture_create(ddraw->wined3d_device, &wined3d_desc, 1, 1,
@@ -4870,7 +4870,7 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
             wined3d_resource_get_desc(wined3d_texture_get_resource(old_draw_texture), &wined3d_desc);
 
             wined3d_desc.width = width;
-            wined3d_desc.width = height;
+            wined3d_desc.height = height;
             wined3d_desc.format = format_id;
 
             if (FAILED(hr = wined3d_texture_create(ddraw->wined3d_device, &wined3d_desc, 1, 1,
