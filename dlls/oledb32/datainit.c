@@ -360,7 +360,7 @@ static const struct dbproperty dbproperties[] =
     { L"Encrypt Password",        DBPROP_AUTH_ENCRYPT_PASSWORD,           DBPROPOPTIONS_REQUIRED, VT_BOOL },
     { L"General Timeout",         DBPROP_INIT_GENERALTIMEOUT,             DBPROPOPTIONS_OPTIONAL, VT_I4 },
     { L"Impersonation Level",     DBPROP_INIT_IMPERSONATION_LEVEL,        DBPROPOPTIONS_OPTIONAL, VT_I4 },
-    { L"Initial Catalog",         DBPROP_CATALOGLOCATION,                 DBPROPOPTIONS_OPTIONAL, VT_BSTR },
+    { L"Initial Catalog",         DBPROP_INIT_CATALOG,                    DBPROPOPTIONS_REQUIRED, VT_BSTR },
     { L"Integrated Security",     DBPROP_AUTH_INTEGRATED,                 DBPROPOPTIONS_OPTIONAL, VT_BSTR },
     { L"Locale Identifier",       DBPROP_INIT_LCID,                       DBPROPOPTIONS_OPTIONAL, VT_I4 },
     { L"Location",                DBPROP_INIT_LOCATION,                   DBPROPOPTIONS_OPTIONAL, VT_BSTR },

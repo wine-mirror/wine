@@ -167,9 +167,7 @@ if (propsets->cProperties == 2) {
     }
     else if (!wcscmp(V_BSTR(&propsets->rgProperties[0].vValue), L"initial_catalog_test"))
     {
-        todo_wine
         ok(propsets->rgProperties[1].dwPropertyID == DBPROP_INIT_CATALOG, "got propid[1] %lu\n", propsets->rgProperties[1].dwPropertyID);
-        todo_wine
         ok(propsets->rgProperties[1].dwOptions == DBPROPOPTIONS_REQUIRED, "got options[1] %lu\n", propsets->rgProperties[1].dwOptions);
         ok(propsets->rgProperties[1].dwStatus == 0, "got status[1] %lu\n", propsets->rgProperties[1].dwStatus);
         ok(V_VT(&propsets->rgProperties[1].vValue) == VT_BSTR, "got vartype[1] %u\n", V_VT(&propsets->rgProperties[1].vValue));
