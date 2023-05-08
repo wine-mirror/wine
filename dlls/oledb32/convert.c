@@ -826,6 +826,11 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_UI4:         hr = VarUI8FromUI4(*(DWORD*)src, d);            break;
         case DBTYPE_I8:          hr = VarUI8FromI8(*(LONGLONG*)src, d);          break;
         case DBTYPE_UI8:         *d = *(ULONGLONG*)src; hr = S_OK;               break;
+        case DBTYPE_VARIANT:
+            VariantInit(&tmp);
+            if ((hr = VariantChangeType(&tmp, src, 0, VT_UI8)) == S_OK)
+                *d = V_UI8(&tmp);
+            break;
         default: FIXME("Unimplemented conversion %04x -> UI8\n", src_type); return E_NOTIMPL;
         }
         break;
