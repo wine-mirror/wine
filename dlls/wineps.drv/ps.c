@@ -976,8 +976,8 @@ BOOL PSDRV_WriteDIBPatternDict(print_ctx *ctx, const BITMAPINFO *bmi, BYTE *bits
     PSDRV_WriteSpool(ctx, "def\n", 4);
 
     PSDRV_WriteIndexColorSpaceBegin(ctx, 1);
-    map[0] = GetTextColor( ctx->dev.hdc );
-    map[1] = GetBkColor( ctx->dev.hdc );
+    map[0] = GetTextColor( ctx->hdc );
+    map[1] = GetBkColor( ctx->hdc );
     PSDRV_WriteRGB(ctx, map, 2);
     PSDRV_WriteIndexColorSpaceEnd(ctx);
 

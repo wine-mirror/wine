@@ -175,7 +175,7 @@ TYPE42 *T42_download_header(print_ctx *ctx, char *ps_name,
     t42->num_of_written_tables = 0;
 
     for(i = 0; i < num_of_tables; i++) {
-        LoadTable(ctx->dev.hdc, t42->tables + i);
+        LoadTable(ctx->hdc, t42->tables + i);
 	if(t42->tables[i].len > 0xffff && t42->tables[i].write) break;
 	if(t42->tables[i].write) t42->num_of_written_tables++;
 	if(t42->tables[i].MS_tag == MS_MAKE_TAG('l','o','c','a'))
@@ -328,7 +328,7 @@ BOOL T42_download_glyph(print_ctx *ctx, DOWNLOAD *pdl, DWORD index,
 	    sg_index = GET_BE_WORD(sg_start + 2);
 
 	    TRACE("Sending subglyph %04lx for glyph %04lx\n", sg_index, index);
-	    get_glyph_name(ctx->dev.hdc, sg_index, sg_name);
+	    get_glyph_name(ctx->hdc, sg_index, sg_name);
 	    T42_download_glyph(ctx, pdl, sg_index, sg_name);
 	    sg_start += 4;
 	    if(sg_flags & ARG_1_AND_2_ARE_WORDS)

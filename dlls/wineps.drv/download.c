@@ -57,7 +57,7 @@ static void get_download_name(print_ctx *ctx, LPOUTLINETEXTMETRICA potm, char **
     char *p;
     DWORD size;
 
-    size = GetFontData(ctx->dev.hdc, MS_MAKE_TAG('n','a','m','e'), 0, NULL, 0);
+    size = GetFontData(ctx->hdc, MS_MAKE_TAG('n','a','m','e'), 0, NULL, 0);
     if(size != 0 && size != GDI_ERROR)
     {
         BYTE *name = HeapAlloc(GetProcessHeap(), 0, size);
@@ -75,7 +75,7 @@ static void get_download_name(print_ctx *ctx, LPOUTLINETEXTMETRICA potm, char **
                 USHORT offset;
             } *name_record;
 
-            GetFontData(ctx->dev.hdc, MS_MAKE_TAG('n','a','m','e'), 0, name, size);
+            GetFontData(ctx->hdc, MS_MAKE_TAG('n','a','m','e'), 0, name, size);
             count = GET_BE_WORD(name + 2);
             strings = name + GET_BE_WORD(name + 4);
             name_record = (struct name_record *)(name + 6);
@@ -266,7 +266,7 @@ BOOL PSDRV_WriteSetDownloadFont(print_ctx *ctx, BOOL vertical)
 {
     char *ps_name;
     LPOUTLINETEXTMETRICA potm;
-    DWORD len = GetOutlineTextMetricsA(ctx->dev.hdc, 0, NULL);
+    DWORD len = GetOutlineTextMetricsA(ctx->hdc, 0, NULL);
     DOWNLOAD *pdl;
     LOGFONTW lf;
     UINT ppem;
@@ -275,24 +275,24 @@ BOOL PSDRV_WriteSetDownloadFont(print_ctx *ctx, BOOL vertical)
 
     assert(ctx->font.fontloc == Download);
 
-    if (!GetObjectW( GetCurrentObject(ctx->dev.hdc, OBJ_FONT), sizeof(lf), &lf ))
+    if (!GetObjectW( GetCurrentObject(ctx->hdc, OBJ_FONT), sizeof(lf), &lf ))
         return FALSE;
 
     potm = HeapAlloc(GetProcessHeap(), 0, len);
     if (!potm)
         return FALSE;
 
-    GetOutlineTextMetricsA(ctx->dev.hdc, len, potm);
+    GetOutlineTextMetricsA(ctx->hdc, len, potm);
 
     get_download_name(ctx, potm, &ps_name, vertical);
     ctx->font.fontinfo.Download = is_font_downloaded(ctx, ps_name);
 
-    ppem = calc_ppem_for_height(ctx->dev.hdc, lf.lfHeight);
+    ppem = calc_ppem_for_height(ctx->hdc, lf.lfHeight);
 
     /* Retrieve the world -> device transform */
-    GetTransform(ctx->dev.hdc, 0x204, &xform);
+    GetTransform(ctx->hdc, 0x204, &xform);
 
-    if(GetGraphicsMode(ctx->dev.hdc) == GM_COMPATIBLE)
+    if(GetGraphicsMode(ctx->hdc) == GM_COMPATIBLE)
     {
         if (xform.eM22 < 0) ctx->font.escapement = -ctx->font.escapement;
         xform.eM11 = xform.eM22 = fabs(xform.eM22);
@@ -306,7 +306,7 @@ BOOL PSDRV_WriteSetDownloadFont(print_ctx *ctx, BOOL vertical)
 
     if(ctx->font.fontinfo.Download == NULL) {
         RECT bbox;
-        UINT emsize = get_bbox(ctx->dev.hdc, &bbox);
+        UINT emsize = get_bbox(ctx->hdc, &bbox);
 
         if (!emsize) {
             HeapFree(GetProcessHeap(), 0, ps_name);
@@ -335,7 +335,7 @@ BOOL PSDRV_WriteSetDownloadFont(print_ctx *ctx, BOOL vertical)
 
         if(pdl->type == Type42) {
             char g_name[MAX_G_NAME + 1];
-            get_glyph_name(ctx->dev.hdc, 0, g_name);
+            get_glyph_name(ctx->hdc, 0, g_name);
             T42_download_glyph(ctx, pdl, 0, g_name);
         }
     }
@@ -345,7 +345,7 @@ BOOL PSDRV_WriteSetDownloadFont(print_ctx *ctx, BOOL vertical)
         escapement += 900;
 
     PSDRV_WriteSetFont(ctx, ps_name, ctx->font.size, escapement,
-                        is_fake_italic( ctx->dev.hdc ));
+                        is_fake_italic( ctx->hdc ));
 
     HeapFree(GetProcessHeap(), 0, ps_name);
     HeapFree(GetProcessHeap(), 0, potm);
@@ -746,7 +746,7 @@ BOOL PSDRV_WriteDownloadGlyphShow(print_ctx *ctx, const WORD *glyphs,
     switch(ctx->font.fontinfo.Download->type) {
     case Type42:
     for(i = 0; i < count; i++) {
-        get_glyph_name(ctx->dev.hdc, glyphs[i], g_name);
+        get_glyph_name(ctx->hdc, glyphs[i], g_name);
 	T42_download_glyph(ctx, ctx->font.fontinfo.Download, glyphs[i], g_name);
 	PSDRV_WriteGlyphShow(ctx, g_name);
     }
@@ -754,7 +754,7 @@ BOOL PSDRV_WriteDownloadGlyphShow(print_ctx *ctx, const WORD *glyphs,
 
     case Type1:
     for(i = 0; i < count; i++) {
-        get_glyph_name(ctx->dev.hdc, glyphs[i], g_name);
+        get_glyph_name(ctx->hdc, glyphs[i], g_name);
 	T1_download_glyph(ctx, ctx->font.fontinfo.Download, glyphs[i], g_name);
 	PSDRV_WriteGlyphShow(ctx, g_name);
     }

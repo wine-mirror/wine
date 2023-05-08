@@ -44,7 +44,7 @@ INT PSDRV_XWStoDS( print_ctx *ctx, INT width )
     pt[0].y = 0;
     pt[1].x = width;
     pt[1].y = 0;
-    LPtoDP( ctx->dev.hdc, pt, 2 );
+    LPtoDP( ctx->hdc, pt, 2 );
     return pt[1].x - pt[0].x;
 }
 
@@ -71,10 +71,10 @@ BOOL CDECL PSDRV_LineTo(print_ctx *ctx, INT x, INT y)
 
     TRACE("%d %d\n", x, y);
 
-    GetCurrentPositionEx( ctx->dev.hdc, pt );
+    GetCurrentPositionEx( ctx->hdc, pt );
     pt[1].x = x;
     pt[1].y = y;
-    LPtoDP( ctx->dev.hdc, pt, 2 );
+    LPtoDP( ctx->hdc, pt, 2 );
 
     PSDRV_SetPen(ctx);
 
@@ -98,12 +98,12 @@ BOOL CDECL PSDRV_Rectangle( print_ctx *ctx, INT left, INT top, INT right, INT bo
     TRACE("%d %d - %d %d\n", left, top, right, bottom);
 
     SetRect(&rect, left, top, right, bottom);
-    LPtoDP( ctx->dev.hdc, (POINT *)&rect, 2 );
+    LPtoDP( ctx->hdc, (POINT *)&rect, 2 );
 
     /* Windows does something truly hacky here.  If we're in passthrough mode
        and our rop is R2_NOP, then we output the string below.  This is used in
        Office 2k when inserting eps files */
-    if (ctx->job.passthrough_state == passthrough_active && GetROP2(ctx->dev.hdc) == R2_NOP)
+    if (ctx->job.passthrough_state == passthrough_active && GetROP2(ctx->hdc) == R2_NOP)
     {
         char buf[256];
 
@@ -135,7 +135,7 @@ BOOL CDECL PSDRV_RoundRect( print_ctx *ctx, INT left, INT top, INT right,
 
     SetRect(&rect[0], left, top, right, bottom);
     SetRect(&rect[1], 0, 0, ell_width, ell_height);
-    LPtoDP( ctx->dev.hdc, (POINT *)rect, 4 );
+    LPtoDP( ctx->hdc, (POINT *)rect, 4 );
 
     left   = rect[0].left;
     top    = rect[0].top;
@@ -188,13 +188,13 @@ static BOOL PSDRV_DrawArc( print_ctx *ctx, INT left, INT top,
     POINT start, end;
 
     SetRect(&rect, left, top, right, bottom);
-    LPtoDP( ctx->dev.hdc, (POINT *)&rect, 2 );
+    LPtoDP( ctx->hdc, (POINT *)&rect, 2 );
     start.x = xstart;
     start.y = ystart;
     end.x = xend;
     end.y = yend;
-    LPtoDP( ctx->dev.hdc, &start, 1 );
-    LPtoDP( ctx->dev.hdc, &end, 1 );
+    LPtoDP( ctx->hdc, &start, 1 );
+    LPtoDP( ctx->hdc, &end, 1 );
 
     x = (rect.left + rect.right) / 2;
     y = (rect.top + rect.bottom) / 2;
@@ -223,7 +223,7 @@ static BOOL PSDRV_DrawArc( print_ctx *ctx, INT left, INT top,
     else
         PSDRV_WriteNewPath( ctx );
 
-    if(GetArcDirection(ctx->dev.hdc) == AD_COUNTERCLOCKWISE)
+    if(GetArcDirection(ctx->hdc) == AD_COUNTERCLOCKWISE)
         PSDRV_WriteArc(ctx, x, y, w, h, start_angle, end_angle);
     else
         PSDRV_WriteArc(ctx, x, y, w, h, end_angle, start_angle);
@@ -278,7 +278,7 @@ BOOL CDECL PSDRV_Ellipse( print_ctx *ctx, INT left, INT top, INT right, INT bott
     TRACE("%d %d - %d %d\n", left, top, right, bottom);
 
     SetRect(&rect, left, top, right, bottom);
-    LPtoDP( ctx->dev.hdc, (POINT *)&rect, 2 );
+    LPtoDP( ctx->hdc, (POINT *)&rect, 2 );
 
     x = (rect.left + rect.right) / 2;
     y = (rect.top + rect.bottom) / 2;
@@ -312,7 +312,7 @@ BOOL CDECL PSDRV_PolyPolyline( print_ctx *ctx, const POINT* pts, const DWORD* co
     for (polyline = total = 0; polyline < polylines; polyline++) total += counts[polyline];
     if (!(dev_pts = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*dev_pts) ))) return FALSE;
     memcpy( dev_pts, pts, total * sizeof(*dev_pts) );
-    LPtoDP( ctx->dev.hdc, dev_pts, total );
+    LPtoDP( ctx->hdc, dev_pts, total );
 
     pt = dev_pts;
 
@@ -348,7 +348,7 @@ BOOL CDECL PSDRV_PolyPolygon( print_ctx *ctx, const POINT* pts, const INT* count
     for (polygon = total = 0; polygon < polygons; polygon++) total += counts[polygon];
     if (!(dev_pts = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*dev_pts) ))) return FALSE;
     memcpy( dev_pts, pts, total * sizeof(*dev_pts) );
-    LPtoDP( ctx->dev.hdc, dev_pts, total );
+    LPtoDP( ctx->hdc, dev_pts, total );
 
     pt = dev_pts;
 
@@ -365,7 +365,7 @@ BOOL CDECL PSDRV_PolyPolygon( print_ctx *ctx, const POINT* pts, const INT* count
     }
     HeapFree( GetProcessHeap(), 0, dev_pts );
 
-    if(GetPolyFillMode( ctx->dev.hdc ) == ALTERNATE)
+    if(GetPolyFillMode( ctx->hdc ) == ALTERNATE)
         PSDRV_Brush(ctx, 1);
     else /* WINDING */
         PSDRV_Brush(ctx, 0);
@@ -383,7 +383,7 @@ static BOOL poly_bezier( print_ctx *ctx, const POINT *pt0, const POINT *pts, DWO
     TRACE( "\n" );
 
     dev_pts[0] = *pt0;
-    LPtoDP( ctx->dev.hdc, dev_pts, 1 );
+    LPtoDP( ctx->hdc, dev_pts, 1 );
 
     PSDRV_WriteSpool( ctx, "%PolyBezier\n", 12 );
     PSDRV_SetPen( ctx );
@@ -392,7 +392,7 @@ static BOOL poly_bezier( print_ctx *ctx, const POINT *pt0, const POINT *pts, DWO
     for (i = 0; i < count; i += 3)
     {
         memcpy( dev_pts, pts, sizeof(dev_pts) );
-        LPtoDP( ctx->dev.hdc, dev_pts, 3 );
+        LPtoDP( ctx->hdc, dev_pts, 3 );
         PSDRV_WriteCurveTo( ctx, dev_pts );
     }
     PSDRV_DrawLine(ctx);
@@ -416,7 +416,7 @@ BOOL CDECL PSDRV_PolyBezierTo( print_ctx *ctx, const POINT *pts, DWORD count )
 {
     POINT pt0;
 
-    GetCurrentPositionEx( ctx->dev.hdc, &pt0 );
+    GetCurrentPositionEx( ctx->hdc, &pt0 );
     return poly_bezier( ctx, &pt0, pts, count );
 }
 
@@ -431,7 +431,7 @@ COLORREF CDECL PSDRV_SetPixel( print_ctx *ctx, INT x, INT y, COLORREF color )
 
     pt.x = x;
     pt.y = y;
-    LPtoDP( ctx->dev.hdc, &pt, 1 );
+    LPtoDP( ctx->hdc, &pt, 1 );
 
     PSDRV_SetClip(ctx);
     /* we bracket the setcolor in gsave/grestore so that we don't trash
@@ -455,7 +455,7 @@ BOOL CDECL PSDRV_PaintRgn( print_ctx *ctx, HRGN hrgn )
     RECT *pRect;
     DWORD size, i;
 
-    TRACE("hdc=%p\n", ctx->dev.hdc);
+    TRACE("hdc=%p\n", ctx->hdc);
 
     size = GetRegionData(hrgn, 0, NULL);
     rgndata = HeapAlloc( GetProcessHeap(), 0, size );
@@ -468,7 +468,7 @@ BOOL CDECL PSDRV_PaintRgn( print_ctx *ctx, HRGN hrgn )
     if (rgndata->rdh.nCount == 0)
         goto end;
 
-    LPtoDP(ctx->dev.hdc, (POINT*)rgndata->Buffer, rgndata->rdh.nCount * 2);
+    LPtoDP(ctx->hdc, (POINT*)rgndata->Buffer, rgndata->rdh.nCount * 2);
 
     PSDRV_SetClip(ctx);
     for(i = 0, pRect = (RECT*)rgndata->Buffer; i < rgndata->rdh.nCount; i++, pRect++)
@@ -487,19 +487,19 @@ static BOOL paint_path( print_ctx *ctx, BOOL stroke, BOOL fill )
 {
     POINT *points;
     BYTE *types;
-    int i, size = GetPath( ctx->dev.hdc, NULL, NULL, 0 );
+    int i, size = GetPath( ctx->hdc, NULL, NULL, 0 );
 
     if (size == -1) return FALSE;
     if (!size)
     {
-        AbortPath( ctx->dev.hdc );
+        AbortPath( ctx->hdc );
         return TRUE;
     }
     points = HeapAlloc( GetProcessHeap(), 0, size * sizeof(*points) );
     types = HeapAlloc( GetProcessHeap(), 0, size * sizeof(*types) );
     if (!points || !types) goto done;
-    if (GetPath( ctx->dev.hdc, points, types, size ) == -1) goto done;
-    LPtoDP( ctx->dev.hdc, points, size );
+    if (GetPath( ctx->hdc, points, types, size ) == -1) goto done;
+    LPtoDP( ctx->hdc, points, size );
 
     if (stroke) PSDRV_SetPen(ctx);
     PSDRV_SetClip(ctx);
@@ -523,11 +523,11 @@ static BOOL paint_path( print_ctx *ctx, BOOL stroke, BOOL fill )
             break;
         }
     }
-    if (fill) PSDRV_Brush( ctx, GetPolyFillMode(ctx->dev.hdc) == ALTERNATE );
+    if (fill) PSDRV_Brush( ctx, GetPolyFillMode(ctx->hdc) == ALTERNATE );
     if (stroke) PSDRV_DrawLine(ctx);
     else PSDRV_WriteNewPath(ctx);
     PSDRV_ResetClip(ctx);
-    AbortPath( ctx->dev.hdc );
+    AbortPath( ctx->hdc );
 
 done:
     HeapFree( GetProcessHeap(), 0, points );

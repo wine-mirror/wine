@@ -65,7 +65,7 @@ static Run* build_vertical_runs(print_ctx *ctx, UINT flags, LPCWSTR str, UINT co
     int index = 0;
     LOGFONTW lf;
 
-    if (count && str && (!(flags & ETO_GLYPH_INDEX)) && GetObjectW( GetCurrentObject(ctx->dev.hdc, OBJ_FONT), sizeof(lf), &lf ) && (lf.lfFaceName[0] == '@'))
+    if (count && str && (!(flags & ETO_GLYPH_INDEX)) && GetObjectW( GetCurrentObject(ctx->hdc, OBJ_FONT), sizeof(lf), &lf ) && (lf.lfFaceName[0] == '@'))
     {
         last_vert = check_unicode_tategaki(str[0]);
         start = end = 0;
@@ -84,14 +84,14 @@ static Run* build_vertical_runs(print_ctx *ctx, UINT flags, LPCWSTR str, UINT co
             if (run[index].vertical)
             {
                 TEXTMETRICW tm;
-                GetTextMetricsW(ctx->dev.hdc, &tm);
+                GetTextMetricsW(ctx->hdc, &tm);
                 offset += PSDRV_XWStoDS(ctx, tm.tmAscent - tm.tmInternalLeading);
             }
 
             if (start > 0)
             {
                 SIZE size;
-                GetTextExtentPointW(ctx->dev.hdc, str, start, &size);
+                GetTextExtentPointW(ctx->hdc, str, start, &size);
                 offset += PSDRV_XWStoDS(ctx, size.cx);
             }
 
@@ -215,7 +215,7 @@ static BOOL PSDRV_Text(print_ctx *ctx, INT x, INT y, UINT flags, LPCWSTR str,
     if(ctx->font.fontloc == Download && !(flags & ETO_GLYPH_INDEX))
     {
         glyphs = HeapAlloc( GetProcessHeap(), 0, count * sizeof(WORD) );
-        GetGlyphIndicesW( ctx->dev.hdc, str, count, glyphs, 0 );
+        GetGlyphIndicesW( ctx->hdc, str, count, glyphs, 0 );
         str = glyphs;
     }
 

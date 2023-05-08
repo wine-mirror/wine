@@ -41,7 +41,7 @@ BOOL PSDRV_WriteSetBuiltinFont(print_ctx *ctx)
     struct font_info font_info;
     matrix size;
 
-    ExtEscape(ctx->dev.hdc, PSDRV_GET_BUILTIN_FONT_INFO, 0, NULL,
+    ExtEscape(ctx->hdc, PSDRV_GET_BUILTIN_FONT_INFO, 0, NULL,
             sizeof(font_info), (char *)&font_info);
     size.xx = font_info.size.cx;
     size.yy = font_info.size.cy;
@@ -57,7 +57,7 @@ BOOL PSDRV_WriteBuiltinGlyphShow(print_ctx *ctx, LPCWSTR str, INT count)
 
     for (i = 0; i < count; ++i)
     {
-        ExtEscape(ctx->dev.hdc, PSDRV_GET_GLYPH_NAME, sizeof(str[i]), (const char *)&str[i], sizeof(name), name);
+        ExtEscape(ctx->hdc, PSDRV_GET_GLYPH_NAME, sizeof(str[i]), (const char *)&str[i], sizeof(name), name);
 	PSDRV_WriteGlyphShow(ctx, name);
     }
 

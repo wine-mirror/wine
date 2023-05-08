@@ -68,7 +68,7 @@ HPEN CDECL PSDRV_SelectPen( print_ctx *ctx, HPEN hpen, const struct brush_patter
         if(ctx->pen.width < 0) ctx->pen.width = -ctx->pen.width;
     }
     if (hpen == GetStockObject( DC_PEN ))
-        logpen.lopnColor = GetDCPenColor( ctx->dev.hdc );
+        logpen.lopnColor = GetDCPenColor( ctx->hdc );
 
     switch (logpen.lopnStyle & PS_JOIN_MASK)
     {
@@ -142,7 +142,7 @@ HPEN CDECL PSDRV_SelectPen( print_ctx *ctx, HPEN hpen, const struct brush_patter
  */
 COLORREF CDECL PSDRV_SetDCPenColor( print_ctx *ctx, COLORREF color )
 {
-    if (GetCurrentObject( ctx->dev.hdc, OBJ_PEN ) == GetStockObject( DC_PEN ))
+    if (GetCurrentObject( ctx->hdc, OBJ_PEN ) == GetStockObject( DC_PEN ))
         PSDRV_CreateColor( ctx, &ctx->pen.color, color );
     return color;
 }

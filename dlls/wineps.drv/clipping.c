@@ -80,7 +80,7 @@ void PSDRV_SetClip( print_ctx *ctx )
 {
     HRGN hrgn;
 
-    TRACE("hdc=%p\n", ctx->dev.hdc);
+    TRACE("hdc=%p\n", ctx->hdc);
 
     if(ctx->pathdepth) {
         TRACE("inside a path, so not clipping\n");
@@ -88,7 +88,7 @@ void PSDRV_SetClip( print_ctx *ctx )
     }
 
     hrgn = CreateRectRgn(0, 0, 0, 0);
-    if (GetRandomRgn(ctx->dev.hdc, hrgn, 3) == 1) /* clip && meta */
+    if (GetRandomRgn(ctx->hdc, hrgn, 3) == 1) /* clip && meta */
     {
         PSDRV_WriteGSave(ctx);
         PSDRV_AddClip( ctx, hrgn );
@@ -107,7 +107,7 @@ void PSDRV_ResetClip( print_ctx *ctx )
     if (ctx->pathdepth) return;
 
     hrgn = CreateRectRgn(0, 0, 0, 0);
-    if (GetRandomRgn(ctx->dev.hdc, hrgn, 3) == 1) /* clip && meta */
+    if (GetRandomRgn(ctx->hdc, hrgn, 3) == 1) /* clip && meta */
         PSDRV_WriteGRestore(ctx);
     DeleteObject(hrgn);
 }

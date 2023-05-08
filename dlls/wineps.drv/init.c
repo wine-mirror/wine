@@ -372,7 +372,7 @@ print_ctx *create_print_ctx( HDC hdc, const WCHAR *device,
     }
 
     PSDRV_UpdateDevCaps( ctx );
-    ctx->dev.hdc = hdc;
+    ctx->hdc = hdc;
     SelectObject( hdc, GetStockObject( DEVICE_DEFAULT_FONT ));
     return ctx;
 }

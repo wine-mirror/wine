@@ -355,13 +355,13 @@ static int stretch_blt(print_ctx *ctx, const EMRSTRETCHBLT *blt,
     dst.log_y = blt->yDest;
     dst.log_width = blt->cxDest;
     dst.log_height = blt->cyDest;
-    dst.layout = GetLayout(ctx->dev.hdc);
+    dst.layout = GetLayout(ctx->hdc);
     if (blt->dwRop & NOMIRRORBITMAP)
         dst.layout |= LAYOUT_BITMAPORIENTATIONPRESERVED;
 
     if (!blt->cbBmiSrc)
     {
-        get_vis_rectangles(ctx->dev.hdc, &dst, NULL, 0, 0, NULL);
+        get_vis_rectangles(ctx->hdc, &dst, NULL, 0, 0, NULL);
         return PSDRV_PatBlt(ctx, &dst, blt->dwRop);
     }
 
@@ -371,7 +371,7 @@ static int stretch_blt(print_ctx *ctx, const EMRSTRETCHBLT *blt,
     src.log_height = blt->cySrc;
     src.layout = 0;
 
-    get_vis_rectangles(ctx->dev.hdc, &dst, &blt->xformSrc,
+    get_vis_rectangles(ctx->hdc, &dst, &blt->xformSrc,
             bi->bmiHeader.biWidth, abs(bi->bmiHeader.biHeight), &src);
 
     memcpy(dst_info, bi, blt->cbBmiSrc);
@@ -582,10 +582,10 @@ static int mask_blt(print_ctx *ctx, const EMRMASKBLT *p, const BITMAPINFO *src_b
     old_bmp_src = SelectObject(hdc_src, bmp_src);
 
     bmp1 = CreateBitmap(mask_bi->bmiHeader.biWidth, mask_bi->bmiHeader.biHeight, 1, 1, NULL);
-    SetDIBits(ctx->dev.hdc, bmp1, 0, mask_bi->bmiHeader.biHeight, mask_bits, mask_bi, p->iUsageMask);
+    SetDIBits(ctx->hdc, bmp1, 0, mask_bi->bmiHeader.biHeight, mask_bits, mask_bi, p->iUsageMask);
     brush_mask = CreatePatternBrush(bmp1);
     DeleteObject(bmp1);
-    brush_dest = SelectObject(ctx->dev.hdc, GetStockObject(NULL_BRUSH));
+    brush_dest = SelectObject(ctx->hdc, GetStockObject(NULL_BRUSH));
 
     /* make bitmap */
     hdc1 = CreateCompatibleDC(NULL);
@@ -642,7 +642,7 @@ static int mask_blt(print_ctx *ctx, const EMRMASKBLT *p, const BITMAPINFO *src_b
     stretch_blt(ctx, &blt, bmp2_info, bits);
 
     /* restore all objects */
-    SelectObject(ctx->dev.hdc, brush_dest);
+    SelectObject(ctx->hdc, brush_dest);
     SelectObject(hdc1, old_bmp1);
     SelectObject(hdc2, old_bmp2);
     SelectObject(hdc_src, old_bmp_src);
@@ -723,8 +723,8 @@ static int plg_blt(print_ctx *ctx, const EMRPLGBLT *p)
 
     combine_transform(&xf, &xf, &p->xformSrc);
 
-    GetTransform(ctx->dev.hdc, 0x203, &xform_dest);
-    SetWorldTransform(ctx->dev.hdc, &xf);
+    GetTransform(ctx->hdc, 0x203, &xform_dest);
+    SetWorldTransform(ctx->hdc, &xf);
     /* now destination and source DCs use same coords */
     maskblt.rclBounds = p->rclBounds;
     maskblt.xDest = p->xSrc;
@@ -753,7 +753,7 @@ static int plg_blt(print_ctx *ctx, const EMRPLGBLT *p)
     mask_bi = (const BITMAPINFO *)((BYTE *)p + p->offBmiMask);
     mask_bits = (BYTE *)p + p->offBitsMask;
     mask_blt(ctx, &maskblt, src_bi, src_bits, mask_bi, mask_bits);
-    SetWorldTransform(ctx->dev.hdc, &xform_dest);
+    SetWorldTransform(ctx->hdc, &xform_dest);
     return TRUE;
 }
 
@@ -796,7 +796,7 @@ static int set_di_bits_to_device(print_ctx *ctx, const EMRSETDIBITSTODEVICE *p)
         bi->bmiHeader.biClrUsed = 1 << info->bmiHeader.biBitCount;
         bi->bmiHeader.biClrImportant = bi->bmiHeader.biClrUsed;
 
-        hpal = GetCurrentObject(ctx->dev.hdc, OBJ_PAL);
+        hpal = GetCurrentObject(ctx->hdc, OBJ_PAL);
         size = GetPaletteEntries(hpal, 0, bi->bmiHeader.biClrUsed, pal);
         for (i = 0; i < size; i++)
         {
@@ -810,14 +810,14 @@ static int set_di_bits_to_device(print_ctx *ctx, const EMRSETDIBITSTODEVICE *p)
         bi->bmiHeader.biBitCount = 24;
     }
     bi->bmiHeader.biCompression = BI_RGB;
-    bitmap = CreateDIBSection(ctx->dev.hdc, bi, DIB_RGB_COLORS, (void **)&bits, NULL, 0);
+    bitmap = CreateDIBSection(ctx->hdc, bi, DIB_RGB_COLORS, (void **)&bits, NULL, 0);
     if (!bitmap)
         return 1;
-    old_bitmap = SelectObject(ctx->dev.hdc, bitmap);
+    old_bitmap = SelectObject(ctx->hdc, bitmap);
 
-    ret = SetDIBitsToDevice(ctx->dev.hdc, 0, 0, width, height, p->xSrc, p->ySrc,
+    ret = SetDIBitsToDevice(ctx->hdc, 0, 0, width, height, p->xSrc, p->ySrc,
             p->iStartScan, p->cScans, (const BYTE*)p + p->offBitsSrc, info, p->iUsageSrc);
-    SelectObject(ctx->dev.hdc, old_bitmap);
+    SelectObject(ctx->hdc, old_bitmap);
     if (ret)
     {
         EMRSTRETCHBLT blt;
@@ -860,7 +860,7 @@ static int stretch_di_bits(print_ctx *ctx, const EMRSTRETCHDIBITS *p)
         HPALETTE hpal;
         UINT i, size;
 
-        hpal = GetCurrentObject(ctx->dev.hdc, OBJ_PAL);
+        hpal = GetCurrentObject(ctx->hdc, OBJ_PAL);
         size = GetPaletteEntries(hpal, 0, 1 << bi->bmiHeader.biBitCount, pal);
         for (i = 0; i < size; i++)
         {
@@ -914,7 +914,7 @@ static int poly_draw(print_ctx *ctx, const POINT *points, const BYTE *types, DWO
         }
     }
 
-    GetCurrentPositionEx(ctx->dev.hdc, &cur);
+    GetCurrentPositionEx(ctx->hdc, &cur);
     first = cur;
 
     for (i = 0; i < count; i++)
@@ -980,7 +980,7 @@ static BOOL gradient_fill(print_ctx *ctx, const TRIVERTEX *vert_array, DWORD nve
     if (!(pts = malloc(nvert * sizeof(*pts)))) return FALSE;
     memcpy(pts, vert_array, sizeof(*pts) * nvert);
     for (i = 0; i < nvert; i++)
-        LPtoDP(ctx->dev.hdc, (POINT *)&pts[i], 1);
+        LPtoDP(ctx->hdc, (POINT *)&pts[i], 1);
 
     /* compute bounding rect of all the rectangles/triangles */
     reset_bounds(&dst.visrect);
@@ -997,7 +997,7 @@ static BOOL gradient_fill(print_ctx *ctx, const TRIVERTEX *vert_array, DWORD nve
     dst.y = dst.visrect.top;
     dst.width = dst.visrect.right - dst.visrect.left;
     dst.height = dst.visrect.bottom - dst.visrect.top;
-    clip_visrect(ctx->dev.hdc, &dst.visrect, &dst.visrect);
+    clip_visrect(ctx->hdc, &dst.visrect, &dst.visrect);
 
     info->bmiHeader.biSize          = sizeof(info->bmiHeader);
     info->bmiHeader.biPlanes        = 1;
@@ -1730,7 +1730,7 @@ static BOOL ext_text_out(struct pp_data *data, HANDLETABLE *htable,
         int handle_count, INT x, INT y, UINT flags, const RECT *rect,
         const WCHAR *str, UINT count, const INT *dx)
 {
-    HDC hdc = data->ctx->dev.hdc;
+    HDC hdc = data->ctx->hdc;
     BOOL ret = FALSE;
     UINT align;
     DWORD layout;
@@ -2097,7 +2097,7 @@ static BOOL fill_rgn(struct pp_data *data, HANDLETABLE *htable, int handle_count
     hbrush = get_object_handle(data, htable, brush, &pattern);
     PSDRV_SelectBrush(data->ctx, hbrush, pattern);
     ret = PSDRV_PaintRgn(data->ctx, rgn);
-    select_hbrush(data, htable, handle_count, GetCurrentObject(data->ctx->dev.hdc, OBJ_BRUSH));
+    select_hbrush(data, htable, handle_count, GetCurrentObject(data->ctx->hdc, OBJ_BRUSH));
     PSDRV_SelectBrush(data->ctx, hbrush, pattern);
     return ret;
 }
@@ -2146,7 +2146,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     struct pp_data *data = (struct pp_data *)arg;
 
     if (data->path && is_path_record(rec->iType))
-        return PlayEnhMetaFileRecord(data->ctx->dev.hdc, htable, rec, handle_count);
+        return PlayEnhMetaFileRecord(data->ctx->hdc, htable, rec, handle_count);
 
     switch (rec->iType)
     {
@@ -2182,7 +2182,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         const EMRPOLYBEZIERTO *p = (const EMRPOLYBEZIERTO *)rec;
 
         return PSDRV_PolyBezierTo(data->ctx, (const POINT *)p->aptl, p->cptl) &&
-            MoveToEx(data->ctx->dev.hdc, p->aptl[p->cptl - 1].x, p->aptl[p->cptl - 1].y, NULL);
+            MoveToEx(data->ctx->hdc, p->aptl[p->cptl - 1].x, p->aptl[p->cptl - 1].y, NULL);
     }
     case EMR_POLYLINETO:
     {
@@ -2195,10 +2195,10 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         pts = malloc(sizeof(*pts) * cnt);
         if (!pts) return 0;
 
-        GetCurrentPositionEx(data->ctx->dev.hdc, pts);
+        GetCurrentPositionEx(data->ctx->hdc, pts);
         memcpy(pts + 1, p->aptl, sizeof(*pts) * p->cptl);
         ret = PSDRV_PolyPolyline(data->ctx, pts, &cnt, 1) &&
-            MoveToEx(data->ctx->dev.hdc, pts[cnt - 1].x, pts[cnt - 1].y, NULL);
+            MoveToEx(data->ctx->hdc, pts[cnt - 1].x, pts[cnt - 1].y, NULL);
         free(pts);
         return ret;
     }
@@ -2231,7 +2231,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     {
         const EMRSETTEXTCOLOR *p = (const EMRSETTEXTCOLOR *)rec;
 
-        SetTextColor(data->ctx->dev.hdc, p->crColor);
+        SetTextColor(data->ctx->hdc, p->crColor);
         PSDRV_SetTextColor(data->ctx, p->crColor);
         return 1;
     }
@@ -2239,7 +2239,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     {
         const EMRSETBKCOLOR *p = (const EMRSETBKCOLOR *)rec;
 
-        SetBkColor(data->ctx->dev.hdc, p->crColor);
+        SetBkColor(data->ctx->hdc, p->crColor);
         PSDRV_SetBkColor(data->ctx, p->crColor);
         return 1;
     }
@@ -2274,7 +2274,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     case EMR_RESTOREDC:
     {
         const EMRRESTOREDC *p = (const EMRRESTOREDC *)rec;
-        HDC hdc = data->ctx->dev.hdc;
+        HDC hdc = data->ctx->hdc;
         int ret = PlayEnhMetaFileRecord(hdc, htable, rec, handle_count);
         UINT aa_flags;
 
@@ -2302,7 +2302,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         HGDIOBJ obj;
 
         obj = get_object_handle(data, htable, so->ihObject, &pattern);
-        SelectObject(data->ctx->dev.hdc, obj);
+        SelectObject(data->ctx->hdc, obj);
 
         switch (GetObjectType(obj))
         {
@@ -2319,12 +2319,12 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         const EMRDELETEOBJECT *p = (const EMRDELETEOBJECT *)rec;
 
         memset(&data->patterns[p->ihObject], 0, sizeof(*data->patterns));
-        return PlayEnhMetaFileRecord(data->ctx->dev.hdc, htable, rec, handle_count);
+        return PlayEnhMetaFileRecord(data->ctx->hdc, htable, rec, handle_count);
     }
     case EMR_ANGLEARC:
     {
         const EMRANGLEARC *p = (const EMRANGLEARC *)rec;
-        int arc_dir = SetArcDirection(data->ctx->dev.hdc,
+        int arc_dir = SetArcDirection(data->ctx->hdc,
                 p->eSweepAngle >= 0 ? AD_COUNTERCLOCKWISE : AD_CLOCKWISE);
         EMRARCTO arcto;
         int ret;
@@ -2344,7 +2344,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
                 sin((p->eStartAngle + p->eSweepAngle) * M_PI / 180) * p->nRadius);
 
         ret = hmf_proc(hdc, htable, (ENHMETARECORD *)&arcto, handle_count, arg);
-        SetArcDirection(data->ctx->dev.hdc, arc_dir);
+        SetArcDirection(data->ctx->hdc, arc_dir);
         return ret;
     }
     case EMR_ELLIPSE:
@@ -2398,7 +2398,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         const EMRLINETO *line = (const EMRLINETO *)rec;
 
         return PSDRV_LineTo(data->ctx, line->ptl.x, line->ptl.y) &&
-            MoveToEx(data->ctx->dev.hdc, line->ptl.x, line->ptl.y, NULL);
+            MoveToEx(data->ctx->hdc, line->ptl.x, line->ptl.y, NULL);
     }
     case EMR_ARCTO:
     {
@@ -2406,10 +2406,10 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         POINT pt;
         BOOL ret;
 
-        ret = GetCurrentPositionEx(data->ctx->dev.hdc, &pt);
+        ret = GetCurrentPositionEx(data->ctx->hdc, &pt);
         if (ret)
         {
-            ret = ArcTo(data->ctx->dev.hdc, p->rclBox.left, p->rclBox.top,
+            ret = ArcTo(data->ctx->hdc, p->rclBox.left, p->rclBox.top,
                     p->rclBox.right, p->rclBox.bottom, p->ptlStart.x,
                     p->ptlStart.y, p->ptlStart.x, p->ptlStart.y);
         }
@@ -2423,7 +2423,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         }
         if (ret)
         {
-            ret = ArcTo(data->ctx->dev.hdc, p->rclBox.left, p->rclBox.top,
+            ret = ArcTo(data->ctx->hdc, p->rclBox.left, p->rclBox.top,
                     p->rclBox.right, p->rclBox.bottom, p->ptlEnd.x,
                     p->ptlEnd.y, p->ptlEnd.x, p->ptlEnd.y);
         }
@@ -2435,17 +2435,17 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         const POINT *pts = (const POINT *)p->aptl;
 
         return poly_draw(data->ctx, pts, (BYTE *)(p->aptl + p->cptl), p->cptl) &&
-            MoveToEx(data->ctx->dev.hdc, pts[p->cptl - 1].x, pts[p->cptl - 1].y, NULL);
+            MoveToEx(data->ctx->hdc, pts[p->cptl - 1].x, pts[p->cptl - 1].y, NULL);
     }
     case EMR_BEGINPATH:
     {
         data->path = TRUE;
-        return PlayEnhMetaFileRecord(data->ctx->dev.hdc, htable, rec, handle_count);
+        return PlayEnhMetaFileRecord(data->ctx->hdc, htable, rec, handle_count);
     }
     case EMR_ENDPATH:
     {
         data->path = FALSE;
-        return PlayEnhMetaFileRecord(data->ctx->dev.hdc, htable, rec, handle_count);
+        return PlayEnhMetaFileRecord(data->ctx->hdc, htable, rec, handle_count);
     }
     case EMR_FILLPATH:
         PSDRV_FillPath(data->ctx);
@@ -2459,7 +2459,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     case EMR_ABORTPATH:
     {
         data->path = FALSE;
-        return PlayEnhMetaFileRecord(data->ctx->dev.hdc, htable, rec, handle_count);
+        return PlayEnhMetaFileRecord(data->ctx->hdc, htable, rec, handle_count);
     }
     case EMR_FILLRGN:
     {
@@ -2504,9 +2504,9 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         HRGN rgn;
 
         rgn = ExtCreateRegion(NULL, p->cbRgnData, (const RGNDATA *)p->RgnData);
-        old_rop = SetROP2(data->ctx->dev.hdc, R2_NOT);
+        old_rop = SetROP2(data->ctx->hdc, R2_NOT);
         ret = fill_rgn(data, htable, handle_count, 0x80000000 | BLACK_BRUSH, rgn);
-        SetROP2(data->ctx->dev.hdc, old_rop);
+        SetROP2(data->ctx->hdc, old_rop);
         DeleteObject(rgn);
         return ret;
     }
@@ -2579,7 +2579,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     case EMR_EXTTEXTOUTW:
     {
         const EMREXTTEXTOUTW *p = (const EMREXTTEXTOUTW *)rec;
-        HDC hdc = data->ctx->dev.hdc;
+        HDC hdc = data->ctx->hdc;
         const INT *dx = NULL;
         int old_mode, ret;
         RECT rect;
@@ -2669,7 +2669,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
             pts[i].y = p->apts[i].y;
         }
         i = PSDRV_PolyBezierTo(data->ctx, pts, p->cpts) &&
-            MoveToEx(data->ctx->dev.hdc, pts[p->cpts - 1].x, pts[p->cpts - 1].y, NULL);
+            MoveToEx(data->ctx->hdc, pts[p->cpts - 1].x, pts[p->cpts - 1].y, NULL);
         free(pts);
         return i;
     }
@@ -2683,14 +2683,14 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         cnt = p->cpts + 1;
         pts = malloc(sizeof(*pts) * cnt);
         if (!pts) return 0;
-        GetCurrentPositionEx(data->ctx->dev.hdc, pts);
+        GetCurrentPositionEx(data->ctx->hdc, pts);
         for (i = 0; i < p->cpts; i++)
         {
             pts[i + 1].x = p->apts[i].x;
             pts[i + 1].y = p->apts[i].y;
         }
         i = PSDRV_PolyPolyline(data->ctx, pts, &cnt, 1) &&
-            MoveToEx(data->ctx->dev.hdc, pts[cnt - 1].x, pts[cnt - 1].y, NULL);
+            MoveToEx(data->ctx->hdc, pts[cnt - 1].x, pts[cnt - 1].y, NULL);
         free(pts);
         return i;
     }
@@ -2742,7 +2742,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
             pts[i].y = p->apts[i].y;
         }
         i = poly_draw(data->ctx, pts, (BYTE *)(p->apts + p->cpts), p->cpts) &&
-            MoveToEx(data->ctx->dev.hdc, pts[p->cpts - 1].x, pts[p->cpts - 1].y, NULL);
+            MoveToEx(data->ctx->hdc, pts[p->cpts - 1].x, pts[p->cpts - 1].y, NULL);
         free(pts);
         return i;
     }
@@ -2750,7 +2750,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     {
         const EMRCREATEMONOBRUSH *p = (const EMRCREATEMONOBRUSH *)rec;
 
-        if (!PlayEnhMetaFileRecord(data->ctx->dev.hdc, htable, rec, handle_count))
+        if (!PlayEnhMetaFileRecord(data->ctx->hdc, htable, rec, handle_count))
             return 0;
         data->patterns[p->ihBrush].usage = p->iUsage;
         data->patterns[p->ihBrush].info = (BITMAPINFO *)((BYTE *)p + p->offBmi);
@@ -2761,7 +2761,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     {
         const EMRCREATEDIBPATTERNBRUSHPT *p = (const EMRCREATEDIBPATTERNBRUSHPT *)rec;
 
-        if (!PlayEnhMetaFileRecord(data->ctx->dev.hdc, htable, rec, handle_count))
+        if (!PlayEnhMetaFileRecord(data->ctx->hdc, htable, rec, handle_count))
             return 0;
         data->patterns[p->ihBrush].usage = p->iUsage;
         data->patterns[p->ihBrush].info = (BITMAPINFO *)((BYTE *)p + p->offBmi);
@@ -2794,7 +2794,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
 
         data->break_extra = p->break_extra / p->break_count;
         data->break_rem = p->break_extra - data->break_extra * p->break_count;
-        return PlayEnhMetaFileRecord(data->ctx->dev.hdc, htable, rec, handle_count);
+        return PlayEnhMetaFileRecord(data->ctx->hdc, htable, rec, handle_count);
     }
 
     case EMR_EXTFLOODFILL:
@@ -2836,7 +2836,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     case EMR_EXTSELECTCLIPRGN:
     case EMR_EXTCREATEFONTINDIRECTW:
     case EMR_SETLAYOUT:
-        return PlayEnhMetaFileRecord(data->ctx->dev.hdc, htable, rec, handle_count);
+        return PlayEnhMetaFileRecord(data->ctx->hdc, htable, rec, handle_count);
     default:
         FIXME("unsupported record: %ld\n", rec->iType);
     }
@@ -2882,18 +2882,18 @@ static BOOL print_metafile(struct pp_data *data, HANDLE hdata)
     if (!hmf)
         return FALSE;
 
-    AbortPath(data->ctx->dev.hdc);
-    MoveToEx(data->ctx->dev.hdc, 0, 0, NULL);
-    SetBkColor(data->ctx->dev.hdc, RGB(255, 255, 255));
-    SetBkMode(data->ctx->dev.hdc, OPAQUE);
-    SetMapMode(data->ctx->dev.hdc, MM_TEXT);
-    SetPolyFillMode(data->ctx->dev.hdc, ALTERNATE);
-    SetROP2(data->ctx->dev.hdc, R2_COPYPEN);
-    SetStretchBltMode(data->ctx->dev.hdc, BLACKONWHITE);
-    SetTextAlign(data->ctx->dev.hdc, TA_LEFT | TA_TOP);
-    SetTextColor(data->ctx->dev.hdc, 0);
-    SetTextJustification(data->ctx->dev.hdc, 0, 0);
-    SetWorldTransform(data->ctx->dev.hdc, &xform);
+    AbortPath(data->ctx->hdc);
+    MoveToEx(data->ctx->hdc, 0, 0, NULL);
+    SetBkColor(data->ctx->hdc, RGB(255, 255, 255));
+    SetBkMode(data->ctx->hdc, OPAQUE);
+    SetMapMode(data->ctx->hdc, MM_TEXT);
+    SetPolyFillMode(data->ctx->hdc, ALTERNATE);
+    SetROP2(data->ctx->hdc, R2_COPYPEN);
+    SetStretchBltMode(data->ctx->hdc, BLACKONWHITE);
+    SetTextAlign(data->ctx->hdc, TA_LEFT | TA_TOP);
+    SetTextColor(data->ctx->hdc, 0);
+    SetTextJustification(data->ctx->hdc, 0, 0);
+    SetWorldTransform(data->ctx->hdc, &xform);
     PSDRV_SetTextColor(data->ctx, 0);
     PSDRV_SetBkColor(data->ctx, RGB(255, 255, 255));
 
@@ -3158,7 +3158,7 @@ BOOL WINAPI ClosePrintProcessor(HANDLE pp)
     ClosePrinter(data->hport);
     free(data->doc_name);
     free(data->out_file);
-    DeleteDC(data->ctx->dev.hdc);
+    DeleteDC(data->ctx->hdc);
     HeapFree(GetProcessHeap(), 0, data->ctx->Devmode);
     HeapFree(GetProcessHeap(), 0, data->ctx);
     free(data->saved_dc);

@@ -55,7 +55,7 @@ INT CDECL PSDRV_ExtEscape( print_ctx *ctx, INT nEscape, INT cbInput, LPCVOID in_
                            INT cbOutput, LPVOID out_data )
 {
     TRACE("%p,%d,%d,%p,%d,%p\n",
-          ctx->dev.hdc, nEscape, cbInput, in_data, cbOutput, out_data);
+          ctx->hdc, nEscape, cbInput, in_data, cbOutput, out_data);
 
     switch(nEscape)
     {
@@ -152,7 +152,7 @@ INT CDECL PSDRV_ExtEscape( print_ctx *ctx, INT nEscape, INT cbInput, LPCVOID in_
  */
 INT CDECL PSDRV_StartPage( print_ctx *ctx )
 {
-    TRACE("%p\n", ctx->dev.hdc);
+    TRACE("%p\n", ctx->hdc);
 
     if(!ctx->job.OutOfPage) {
         FIXME("Already started a page?\n");
@@ -173,7 +173,7 @@ INT CDECL PSDRV_StartPage( print_ctx *ctx )
  */
 INT CDECL PSDRV_EndPage( print_ctx *ctx )
 {
-    TRACE("%p\n", ctx->dev.hdc);
+    TRACE("%p\n", ctx->hdc);
 
     if(ctx->job.OutOfPage) {
         FIXME("Already ended a page?\n");

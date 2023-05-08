@@ -110,7 +110,7 @@ static BOOL PSDRV_WriteImageMaskHeader(print_ctx *ctx, const BITMAPINFO *info, I
     */
     if (!info->bmiHeader.biClrUsed)
     {
-        PSDRV_CreateColor( ctx, &foregnd, GetTextColor( ctx->dev.hdc ) );
+        PSDRV_CreateColor( ctx, &foregnd, GetTextColor( ctx->hdc ) );
         bkgnd = ctx->bkColor;
     }
     else

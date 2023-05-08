@@ -36,7 +36,7 @@ HBRUSH CDECL PSDRV_SelectBrush( print_ctx *ctx, HBRUSH hbrush, const struct brus
     TRACE("hbrush = %p\n", hbrush);
 
     if (hbrush == GetStockObject( DC_BRUSH ))
-        logbrush.lbColor = GetDCBrushColor( ctx->dev.hdc );
+        logbrush.lbColor = GetDCBrushColor( ctx->hdc );
 
     switch(logbrush.lbStyle) {
 
@@ -71,7 +71,7 @@ HBRUSH CDECL PSDRV_SelectBrush( print_ctx *ctx, HBRUSH hbrush, const struct brus
  */
 COLORREF CDECL PSDRV_SetDCBrushColor( print_ctx *ctx, COLORREF color )
 {
-    if (GetCurrentObject( ctx->dev.hdc, OBJ_BRUSH ) == GetStockObject( DC_BRUSH ))
+    if (GetCurrentObject( ctx->hdc, OBJ_BRUSH ) == GetStockObject( DC_BRUSH ))
     {
         PSDRV_CreateColor( ctx, &ctx->brush.color, color );
         ctx->brush.set = FALSE;
@@ -90,7 +90,7 @@ static BOOL PSDRV_SetBrush( print_ctx *ctx )
     LOGBRUSH logbrush;
     BOOL ret = TRUE;
 
-    if (!GetObjectA( GetCurrentObject(ctx->dev.hdc,OBJ_BRUSH), sizeof(logbrush), &logbrush ))
+    if (!GetObjectA( GetCurrentObject(ctx->hdc,OBJ_BRUSH), sizeof(logbrush), &logbrush ))
     {
         ERR("Can't get BRUSHOBJ\n");
 	return FALSE;
@@ -155,7 +155,7 @@ BOOL PSDRV_Brush(print_ctx *ctx, BOOL EO)
     if(ctx->pathdepth)
         return FALSE;
 
-    if (!GetObjectA( GetCurrentObject(ctx->dev.hdc,OBJ_BRUSH), sizeof(logbrush), &logbrush ))
+    if (!GetObjectA( GetCurrentObject(ctx->hdc,OBJ_BRUSH), sizeof(logbrush), &logbrush ))
     {
         ERR("Can't get BRUSHOBJ\n");
 	return FALSE;

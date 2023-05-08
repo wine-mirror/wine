@@ -568,9 +568,9 @@ BOOL T1_download_glyph(print_ctx *ctx, DOWNLOAD *pdl, DWORD index, char *glyph_n
     outline.flags = NULL;
     outline.end_pts = NULL;
     outline.pts = NULL;
-    get_hmetrics(ctx->dev.hdc, index, &outline.lsb, &outline.advance);
+    get_hmetrics(ctx->hdc, index, &outline.lsb, &outline.advance);
 
-    if(!append_glyph_outline(ctx->dev.hdc, index, &outline)) return FALSE;
+    if(!append_glyph_outline(ctx->hdc, index, &outline)) return FALSE;
 
     charstring = str_init(100);
     curpos.x = outline.lsb;
