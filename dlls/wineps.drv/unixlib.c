@@ -60,7 +60,29 @@ struct printer_info
 
 static struct list printer_info_list = LIST_INIT( printer_info_list );
 
-typedef print_ctx PSDRV_PDEVICE;
+typedef struct
+{
+    struct gdi_physdev dev;
+    PSDRV_DEVMODE *devmode;
+    struct printer_info *pi;
+
+    /* builtin font info */
+    BOOL builtin;
+    SIZE size;
+    const AFM *afm;
+    float scale;
+    TEXTMETRICW tm;
+    int escapement;
+
+    SIZE page_size; /* Physical page size in device units */
+    RECT imageable_area; /* Imageable area in device units */
+    int horz_res; /* device caps */
+    int vert_res;
+    int horz_size;
+    int vert_size;
+    int log_pixels_x;
+    int log_pixels_y;
+} PSDRV_PDEVICE;
 
 static inline PSDRV_PDEVICE *get_psdrv_dev(PHYSDEV dev)
 {
@@ -185,13 +207,13 @@ static INT CDECL get_device_caps(PHYSDEV dev, INT cap)
     case TECHNOLOGY:
         return DT_RASPRINTER;
     case HORZSIZE:
-        return muldiv(pdev->horzSize, 100, pdev->Devmode->dmPublic.dmScale);
+        return muldiv(pdev->horz_size, 100, pdev->devmode->dmPublic.dmScale);
     case VERTSIZE:
-        return muldiv(pdev->vertSize, 100, pdev->Devmode->dmPublic.dmScale);
+        return muldiv(pdev->vert_size, 100, pdev->devmode->dmPublic.dmScale);
     case HORZRES:
-        return pdev->horzRes;
+        return pdev->horz_res;
     case VERTRES:
-        return pdev->vertRes;
+        return pdev->vert_res;
     case BITSPIXEL:
         /* Although Windows returns 1 for monochrome printers, we want
            CreateCompatibleBitmap to provide something other than 1 bpp */
@@ -210,42 +232,42 @@ static INT CDECL get_device_caps(PHYSDEV dev, INT cap)
         return (RC_BITBLT | RC_BITMAP64 | RC_GDI20_OUTPUT | RC_DIBTODEV |
                 RC_STRETCHBLT | RC_STRETCHDIB); /* psdrv 0x6e99 */
     case ASPECTX:
-        return pdev->logPixelsX;
+        return pdev->log_pixels_x;
     case ASPECTY:
-        return pdev->logPixelsY;
+        return pdev->log_pixels_y;
     case LOGPIXELSX:
-        return muldiv(pdev->logPixelsX, pdev->Devmode->dmPublic.dmScale, 100);
+        return muldiv(pdev->log_pixels_x, pdev->devmode->dmPublic.dmScale, 100);
     case LOGPIXELSY:
-        return muldiv(pdev->logPixelsY, pdev->Devmode->dmPublic.dmScale, 100);
+        return muldiv(pdev->log_pixels_y, pdev->devmode->dmPublic.dmScale, 100);
     case NUMRESERVED:
         return 0;
     case COLORRES:
         return 0;
     case PHYSICALWIDTH:
-        return (pdev->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) ?
-            pdev->PageSize.cy : pdev->PageSize.cx;
+        return (pdev->devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) ?
+            pdev->page_size.cy : pdev->page_size.cx;
     case PHYSICALHEIGHT:
-        return (pdev->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) ?
-            pdev->PageSize.cx : pdev->PageSize.cy;
+        return (pdev->devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) ?
+            pdev->page_size.cx : pdev->page_size.cy;
     case PHYSICALOFFSETX:
-        if (pdev->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE)
+        if (pdev->devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE)
         {
-            if (pdev->pi->ppd->LandscapeOrientation == -90)
-                return pdev->PageSize.cy - pdev->ImageableArea.top;
+            if (pdev->pi->pi->ppd->LandscapeOrientation == -90)
+                return pdev->page_size.cy - pdev->imageable_area.top;
             else
-                return pdev->ImageableArea.bottom;
+                return pdev->imageable_area.bottom;
         }
-        return pdev->ImageableArea.left;
+        return pdev->imageable_area.left;
 
     case PHYSICALOFFSETY:
-        if (pdev->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE)
+        if (pdev->devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE)
         {
-            if (pdev->pi->ppd->LandscapeOrientation == -90)
-                return pdev->PageSize.cx - pdev->ImageableArea.right;
+            if (pdev->pi->pi->ppd->LandscapeOrientation == -90)
+                return pdev->page_size.cx - pdev->imageable_area.right;
             else
-                return pdev->ImageableArea.left;
+                return pdev->imageable_area.left;
         }
-        return pdev->PageSize.cy - pdev->ImageableArea.top;
+        return pdev->page_size.cy - pdev->imageable_area.top;
 
     default:
         dev = GET_NEXT_PHYSDEV(dev, pGetDeviceCaps);
@@ -280,7 +302,8 @@ static PAGESIZE *unix_find_pagesize(PPD *ppd, const PSDRV_DEVMODE *dm)
     return NULL;
 }
 
-static void merge_devmodes(PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2, PRINTERINFO *pi)
+static void merge_devmodes(PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2,
+        struct printer_info *pi)
 {
     /* some sanity checks here on dm2 */
 
@@ -298,7 +321,7 @@ static void merge_devmodes(PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2, PRINTER
     /* NB PaperWidth is always < PaperLength */
     if (dm2->dmPublic.dmFields & DM_PAPERSIZE)
     {
-        PAGESIZE *page = unix_find_pagesize(pi->ppd, dm2);
+        PAGESIZE *page = unix_find_pagesize(pi->pi->ppd, dm2);
 
         if (page)
         {
@@ -355,7 +378,7 @@ static void merge_devmodes(PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2, PRINTER
 
     if (dm2->dmPublic.dmFields & DM_DEFAULTSOURCE)
     {
-        INPUTSLOT *slot = unix_find_slot(pi->ppd, dm2);
+        INPUTSLOT *slot = unix_find_slot(pi->pi->ppd, dm2);
 
         if (slot)
         {
@@ -374,7 +397,7 @@ static void merge_devmodes(PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2, PRINTER
         dm1->dmPublic.dmPrintQuality = dm2->dmPublic.dmPrintQuality;
     if (dm2->dmPublic.dmFields & DM_COLOR)
         dm1->dmPublic.dmColor = dm2->dmPublic.dmColor;
-    if (dm2->dmPublic.dmFields & DM_DUPLEX && pi->ppd->DefaultDuplex && pi->ppd->DefaultDuplex->WinDuplex != 0)
+    if (dm2->dmPublic.dmFields & DM_DUPLEX && pi->pi->ppd->DefaultDuplex && pi->pi->ppd->DefaultDuplex->WinDuplex != 0)
         dm1->dmPublic.dmDuplex = dm2->dmPublic.dmDuplex;
     if (dm2->dmPublic.dmFields & DM_YRESOLUTION)
         dm1->dmPublic.dmYResolution = dm2->dmPublic.dmYResolution;
@@ -418,109 +441,109 @@ static void update_dev_caps(PSDRV_PDEVICE *pdev)
     RESOLUTION *res;
     PAGESIZE *page;
 
-    dump_devmode(&pdev->Devmode->dmPublic);
+    dump_devmode(&pdev->devmode->dmPublic);
 
-    if (pdev->Devmode->dmPublic.dmFields & (DM_PRINTQUALITY | DM_YRESOLUTION | DM_LOGPIXELS))
+    if (pdev->devmode->dmPublic.dmFields & (DM_PRINTQUALITY | DM_YRESOLUTION | DM_LOGPIXELS))
     {
-        if (pdev->Devmode->dmPublic.dmFields & DM_PRINTQUALITY)
-            resx = resy = pdev->Devmode->dmPublic.dmPrintQuality;
+        if (pdev->devmode->dmPublic.dmFields & DM_PRINTQUALITY)
+            resx = resy = pdev->devmode->dmPublic.dmPrintQuality;
 
-        if (pdev->Devmode->dmPublic.dmFields & DM_YRESOLUTION)
-            resy = pdev->Devmode->dmPublic.dmYResolution;
+        if (pdev->devmode->dmPublic.dmFields & DM_YRESOLUTION)
+            resy = pdev->devmode->dmPublic.dmYResolution;
 
-        if (pdev->Devmode->dmPublic.dmFields & DM_LOGPIXELS)
-            resx = resy = pdev->Devmode->dmPublic.dmLogPixels;
+        if (pdev->devmode->dmPublic.dmFields & DM_LOGPIXELS)
+            resx = resy = pdev->devmode->dmPublic.dmLogPixels;
 
-        LIST_FOR_EACH_ENTRY(res, &pdev->pi->ppd->Resolutions, RESOLUTION, entry)
+        LIST_FOR_EACH_ENTRY(res, &pdev->pi->pi->ppd->Resolutions, RESOLUTION, entry)
         {
             if (res->resx == resx && res->resy == resy)
             {
-                pdev->logPixelsX = resx;
-                pdev->logPixelsY = resy;
+                pdev->log_pixels_x = resx;
+                pdev->log_pixels_y = resy;
                 break;
             }
         }
 
-        if (&res->entry == &pdev->pi->ppd->Resolutions)
+        if (&res->entry == &pdev->pi->pi->ppd->Resolutions)
         {
             WARN("Requested resolution %dx%d is not supported by device\n", resx, resy);
-            pdev->logPixelsX = pdev->pi->ppd->DefaultResolution;
-            pdev->logPixelsY = pdev->logPixelsX;
+            pdev->log_pixels_x = pdev->pi->pi->ppd->DefaultResolution;
+            pdev->log_pixels_y = pdev->log_pixels_x;
         }
     }
     else
     {
-        WARN("Using default device resolution %d\n", pdev->pi->ppd->DefaultResolution);
-        pdev->logPixelsX = pdev->pi->ppd->DefaultResolution;
-        pdev->logPixelsY = pdev->logPixelsX;
+        WARN("Using default device resolution %d\n", pdev->pi->pi->ppd->DefaultResolution);
+        pdev->log_pixels_x = pdev->pi->pi->ppd->DefaultResolution;
+        pdev->log_pixels_y = pdev->log_pixels_x;
     }
 
-    if (pdev->Devmode->dmPublic.dmFields & DM_PAPERSIZE) {
-        LIST_FOR_EACH_ENTRY(page, &pdev->pi->ppd->PageSizes, PAGESIZE, entry) {
-            if (page->WinPage == pdev->Devmode->dmPublic.dmPaperSize)
+    if (pdev->devmode->dmPublic.dmFields & DM_PAPERSIZE) {
+        LIST_FOR_EACH_ENTRY(page, &pdev->pi->pi->ppd->PageSizes, PAGESIZE, entry) {
+            if (page->WinPage == pdev->devmode->dmPublic.dmPaperSize)
                 break;
         }
 
-        if (&page->entry == &pdev->pi->ppd->PageSizes) {
+        if (&page->entry == &pdev->pi->pi->ppd->PageSizes) {
             FIXME("Can't find page\n");
-            SetRectEmpty(&pdev->ImageableArea);
-            pdev->PageSize.cx = 0;
-            pdev->PageSize.cy = 0;
+            SetRectEmpty(&pdev->imageable_area);
+            pdev->page_size.cx = 0;
+            pdev->page_size.cy = 0;
         } else if (page->ImageableArea) {
             /* pdev sizes in device units; ppd sizes in 1/72" */
-            SetRect(&pdev->ImageableArea, page->ImageableArea->llx * pdev->logPixelsX / 72,
-                    page->ImageableArea->ury * pdev->logPixelsY / 72,
-                    page->ImageableArea->urx * pdev->logPixelsX / 72,
-                    page->ImageableArea->lly * pdev->logPixelsY / 72);
-            pdev->PageSize.cx = page->PaperDimension->x *
-                pdev->logPixelsX / 72;
-            pdev->PageSize.cy = page->PaperDimension->y *
-                pdev->logPixelsY / 72;
+            SetRect(&pdev->imageable_area, page->ImageableArea->llx * pdev->log_pixels_x / 72,
+                    page->ImageableArea->ury * pdev->log_pixels_y / 72,
+                    page->ImageableArea->urx * pdev->log_pixels_x / 72,
+                    page->ImageableArea->lly * pdev->log_pixels_y / 72);
+            pdev->page_size.cx = page->PaperDimension->x *
+                pdev->log_pixels_x / 72;
+            pdev->page_size.cy = page->PaperDimension->y *
+                pdev->log_pixels_y / 72;
         } else {
-            pdev->ImageableArea.left = pdev->ImageableArea.bottom = 0;
-            pdev->ImageableArea.right = pdev->PageSize.cx =
-                page->PaperDimension->x * pdev->logPixelsX / 72;
-            pdev->ImageableArea.top = pdev->PageSize.cy =
-                page->PaperDimension->y * pdev->logPixelsY / 72;
+            pdev->imageable_area.left = pdev->imageable_area.bottom = 0;
+            pdev->imageable_area.right = pdev->page_size.cx =
+                page->PaperDimension->x * pdev->log_pixels_x / 72;
+            pdev->imageable_area.top = pdev->page_size.cy =
+                page->PaperDimension->y * pdev->log_pixels_y / 72;
         }
-    } else if ((pdev->Devmode->dmPublic.dmFields & DM_PAPERLENGTH) &&
-            (pdev->Devmode->dmPublic.dmFields & DM_PAPERWIDTH)) {
-        /* pdev sizes in device units; Devmode sizes in 1/10 mm */
-        pdev->ImageableArea.left = pdev->ImageableArea.bottom = 0;
-        pdev->ImageableArea.right = pdev->PageSize.cx =
-            pdev->Devmode->dmPublic.dmPaperWidth * pdev->logPixelsX / 254;
-        pdev->ImageableArea.top = pdev->PageSize.cy =
-            pdev->Devmode->dmPublic.dmPaperLength * pdev->logPixelsY / 254;
+    } else if ((pdev->devmode->dmPublic.dmFields & DM_PAPERLENGTH) &&
+            (pdev->devmode->dmPublic.dmFields & DM_PAPERWIDTH)) {
+        /* pdev sizes in device units; devmode sizes in 1/10 mm */
+        pdev->imageable_area.left = pdev->imageable_area.bottom = 0;
+        pdev->imageable_area.right = pdev->page_size.cx =
+            pdev->devmode->dmPublic.dmPaperWidth * pdev->log_pixels_x / 254;
+        pdev->imageable_area.top = pdev->page_size.cy =
+            pdev->devmode->dmPublic.dmPaperLength * pdev->log_pixels_y / 254;
     } else {
-        FIXME("Odd dmFields %x\n", (int)pdev->Devmode->dmPublic.dmFields);
-        SetRectEmpty(&pdev->ImageableArea);
-        pdev->PageSize.cx = 0;
-        pdev->PageSize.cy = 0;
+        FIXME("Odd dmFields %x\n", (int)pdev->devmode->dmPublic.dmFields);
+        SetRectEmpty(&pdev->imageable_area);
+        pdev->page_size.cx = 0;
+        pdev->page_size.cy = 0;
     }
 
-    TRACE("ImageableArea = %s: PageSize = %dx%d\n", wine_dbgstr_rect(&pdev->ImageableArea),
-            (int)pdev->PageSize.cx, (int)pdev->PageSize.cy);
+    TRACE("imageable_area = %s: page_size = %dx%d\n", wine_dbgstr_rect(&pdev->imageable_area),
+            (int)pdev->page_size.cx, (int)pdev->page_size.cy);
 
     /* these are in device units */
-    width = pdev->ImageableArea.right - pdev->ImageableArea.left;
-    height = pdev->ImageableArea.top - pdev->ImageableArea.bottom;
+    width = pdev->imageable_area.right - pdev->imageable_area.left;
+    height = pdev->imageable_area.top - pdev->imageable_area.bottom;
 
-    if (pdev->Devmode->dmPublic.dmOrientation == DMORIENT_PORTRAIT) {
-        pdev->horzRes = width;
-        pdev->vertRes = height;
+    if (pdev->devmode->dmPublic.dmOrientation == DMORIENT_PORTRAIT) {
+        pdev->horz_res = width;
+        pdev->vert_res = height;
     } else {
-        pdev->horzRes = height;
-        pdev->vertRes = width;
+        pdev->horz_res = height;
+        pdev->vert_res = width;
     }
 
     /* these are in mm */
-    pdev->horzSize = (pdev->horzRes * 25.4) / pdev->logPixelsX;
-    pdev->vertSize = (pdev->vertRes * 25.4) / pdev->logPixelsY;
+    pdev->horz_size = (pdev->horz_res * 25.4) / pdev->log_pixels_x;
+    pdev->vert_size = (pdev->vert_res * 25.4) / pdev->log_pixels_y;
 
-    TRACE("devcaps: horzSize = %dmm, vertSize = %dmm, "
-            "horzRes = %d, vertRes = %d\n",
-            pdev->horzSize, pdev->vertSize,
-            pdev->horzRes, pdev->vertRes);
+    TRACE("devcaps: horz_size = %dmm, vert_size = %dmm, "
+            "horz_res = %d, vert_res = %d\n",
+            pdev->horz_size, pdev->vert_size,
+            pdev->horz_res, pdev->vert_res);
 }
 
 static BOOL CDECL reset_dc(PHYSDEV dev, const DEVMODEW *devmode)
@@ -529,7 +552,7 @@ static BOOL CDECL reset_dc(PHYSDEV dev, const DEVMODEW *devmode)
 
     if (devmode)
     {
-        merge_devmodes(pdev->Devmode, (const PSDRV_DEVMODE *)devmode, pdev->pi);
+        merge_devmodes(pdev->devmode, (const PSDRV_DEVMODE *)devmode, pdev->pi);
         update_dev_caps(pdev);
     }
     return TRUE;
@@ -820,7 +843,7 @@ static int CDECL ext_escape(PHYSDEV dev, int escape, int input_size, const void 
     {
         PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
         WCHAR *uv = (WCHAR *)input;
-        const char *name = uv_metrics(*uv, pdev->font.fontinfo.Builtin.afm)->N->sz;
+        const char *name = uv_metrics(*uv, pdev->afm)->N->sz;
 
         lstrcpynA(output, name, output_size);
         return 1;
@@ -831,14 +854,12 @@ static int CDECL ext_escape(PHYSDEV dev, int escape, int input_size, const void 
         PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
         struct font_info *font_info = (struct font_info *)output;
 
-        if (pdev->font.fontloc != Builtin)
+        if (!pdev->builtin)
             return 0;
 
-        lstrcpynA(font_info->font_name, pdev->font.fontinfo.Builtin.afm->FontName,
-                sizeof(font_info->font_name));
-        font_info->size.cx = pdev->font.size.xx;
-        font_info->size.cy = pdev->font.size.yy;
-        font_info->escapement = pdev->font.escapement;
+        lstrcpynA(font_info->font_name, pdev->afm->FontName, sizeof(font_info->font_name));
+        font_info->size = pdev->size;
+        font_info->escapement = pdev->escapement;
         return 1;
     }
 
@@ -848,49 +869,36 @@ static int CDECL ext_escape(PHYSDEV dev, int escape, int input_size, const void 
     }
 }
 
-static BOOL select_download_font(PHYSDEV dev)
-{
-    PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
-
-    pdev->font.fontloc = Download;
-    pdev->font.fontinfo.Download = NULL;
-    return TRUE;
-}
-
 static inline float gdi_round(float f)
 {
     return f > 0 ? f + 0.5 : f - 0.5;
 }
 
-static void scale_font(const AFM *afm, LONG height, PSFONT *font, TEXTMETRICW *tm)
+static void scale_font(PSDRV_PDEVICE *pdev, const AFM *afm, LONG height, TEXTMETRICW *tm)
 {
     const WINMETRICS *wm = &(afm->WinMetrics);
     USHORT units_per_em, win_ascent, win_descent;
     SHORT ascender, descender, line_gap, avg_char_width;
+    float scale;
+    SIZE size;
 
     TRACE("'%s' %i\n", afm->FontName, (int)height);
 
     if (height < 0) /* match em height */
-    {
-        font->fontinfo.Builtin.scale = -((float)height / (float)wm->usUnitsPerEm);
-    }
+        scale = -(height / (float)wm->usUnitsPerEm);
     else /* match cell height */
-    {
-        font->fontinfo.Builtin.scale = (float)height /
-                (float)(wm->usWinAscent + wm->usWinDescent);
-    }
+        scale = height / (float)(wm->usWinAscent + wm->usWinDescent);
 
-    font->size.xx = (INT)gdi_round(font->fontinfo.Builtin.scale * (float)wm->usUnitsPerEm);
-    font->size.xy = font->size.yx = 0;
-    font->size.yy = -(INT)gdi_round(font->fontinfo.Builtin.scale * (float)wm->usUnitsPerEm);
+    size.cx = (INT)gdi_round(scale * (float)wm->usUnitsPerEm);
+    size.cy = -(INT)gdi_round(scale * (float)wm->usUnitsPerEm);
 
-    units_per_em = (USHORT)gdi_round((float)wm->usUnitsPerEm * font->fontinfo.Builtin.scale);
-    ascender = (SHORT)gdi_round((float)wm->sAscender * font->fontinfo.Builtin.scale);
-    descender = (SHORT)gdi_round((float)wm->sDescender * font->fontinfo.Builtin.scale);
-    line_gap = (SHORT)gdi_round((float)wm->sLineGap * font->fontinfo.Builtin.scale);
-    win_ascent = (USHORT)gdi_round((float)wm->usWinAscent * font->fontinfo.Builtin.scale);
-    win_descent = (USHORT)gdi_round((float)wm->usWinDescent * font->fontinfo.Builtin.scale);
-    avg_char_width = (SHORT)gdi_round((float)wm->sAvgCharWidth * font->fontinfo.Builtin.scale);
+    units_per_em = (USHORT)gdi_round((float)wm->usUnitsPerEm * scale);
+    ascender = (SHORT)gdi_round((float)wm->sAscender * scale);
+    descender = (SHORT)gdi_round((float)wm->sDescender * scale);
+    line_gap = (SHORT)gdi_round((float)wm->sLineGap * scale);
+    win_ascent = (USHORT)gdi_round((float)wm->usWinAscent * scale);
+    win_descent = (USHORT)gdi_round((float)wm->usWinDescent * scale);
+    avg_char_width = (SHORT)gdi_round((float)wm->sAvgCharWidth * scale);
 
     tm->tmAscent = (LONG)win_ascent;
     tm->tmDescent = (LONG)win_descent;
@@ -932,13 +940,18 @@ static void scale_font(const AFM *afm, LONG height, PSFONT *font, TEXTMETRICW *t
      *  similarly adjusted..
      */
 
-    font->fontinfo.Builtin.scale *= (float)wm->usUnitsPerEm / 1000.0;
+    scale *= (float)wm->usUnitsPerEm / 1000.0;
 
-    tm->tmMaxCharWidth = (LONG)gdi_round(
-            (afm->FontBBox.urx - afm->FontBBox.llx) * font->fontinfo.Builtin.scale);
+    tm->tmMaxCharWidth = (LONG)gdi_round((afm->FontBBox.urx - afm->FontBBox.llx) * scale);
+
+    if (pdev)
+    {
+        pdev->scale = scale;
+        pdev->size = size;
+    }
 
     TRACE("Selected PS font '%s' size %d weight %d.\n", afm->FontName,
-          font->size.xx, (int)tm->tmWeight);
+            (int)size.cx, (int)tm->tmWeight);
     TRACE("H = %d As = %d Des = %d IL = %d EL = %d\n", (int)tm->tmHeight,
             (int)tm->tmAscent, (int)tm->tmDescent, (int)tm->tmInternalLeading,
             (int)tm->tmExternalLeading);
@@ -954,8 +967,7 @@ static inline BOOL is_stock_font(HFONT font)
     return FALSE;
 }
 
-static BOOL select_builtin_font(PHYSDEV dev, HFONT hfont,
-        LOGFONTW *plf, WCHAR *face_name)
+static BOOL select_builtin_font(PHYSDEV dev, HFONT hfont, LOGFONTW *plf)
 {
     PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
     AFMLISTENTRY *afmle;
@@ -963,36 +975,36 @@ static BOOL select_builtin_font(PHYSDEV dev, HFONT hfont,
     BOOL bd = FALSE, it = FALSE;
     LONG height;
 
-    TRACE("Trying to find facename %s\n", debugstr_w(face_name));
+    TRACE("Trying to find facename %s\n", debugstr_w(plf->lfFaceName));
 
     /* Look for a matching font family */
-    for (family = pdev->pi->Fonts; family; family = family->next)
+    for (family = pdev->pi->pi->Fonts; family; family = family->next)
     {
-        if (!wcsicmp(face_name, family->FamilyName))
+        if (!wcsicmp(plf->lfFaceName, family->FamilyName))
             break;
     }
 
     if (!family)
     {
         /* Fallback for Window's font families to common PostScript families */
-        if (!wcscmp(face_name, arialW))
-            wcscpy(face_name, helveticaW);
-        else if (!wcscmp(face_name, systemW))
-            wcscpy(face_name, helveticaW);
-        else if (!wcscmp(face_name, times_new_romanW))
-            wcscpy(face_name, timesW);
-        else if (!wcscmp(face_name, courier_newW))
-            wcscpy(face_name, courierW);
+        if (!wcscmp(plf->lfFaceName, arialW))
+            wcscpy(plf->lfFaceName, helveticaW);
+        else if (!wcscmp(plf->lfFaceName, systemW))
+            wcscpy(plf->lfFaceName, helveticaW);
+        else if (!wcscmp(plf->lfFaceName, times_new_romanW))
+            wcscpy(plf->lfFaceName, timesW);
+        else if (!wcscmp(plf->lfFaceName, courier_newW))
+            wcscpy(plf->lfFaceName, courierW);
 
-        for (family = pdev->pi->Fonts; family; family = family->next)
+        for (family = pdev->pi->pi->Fonts; family; family = family->next)
         {
-            if (!wcscmp(face_name, family->FamilyName))
+            if (!wcscmp(plf->lfFaceName, family->FamilyName))
                 break;
         }
     }
     /* If all else fails, use the first font defined for the printer */
     if (!family)
-        family = pdev->pi->Fonts;
+        family = pdev->pi->pi->Fonts;
 
     TRACE("Got family %s\n", debugstr_w(family->FamilyName));
 
@@ -1012,8 +1024,8 @@ static BOOL select_builtin_font(PHYSDEV dev, HFONT hfont,
 
     TRACE("Got font '%s'\n", afmle->afm->FontName);
 
-    pdev->font.fontloc = Builtin;
-    pdev->font.fontinfo.Builtin.afm = afmle->afm;
+    pdev->builtin = TRUE;
+    pdev->afm = afmle->afm;
 
     height = plf->lfHeight;
     /* stock fonts ignore the mapping mode */
@@ -1025,13 +1037,12 @@ static BOOL select_builtin_font(PHYSDEV dev, HFONT hfont,
         NtGdiTransformPoints(dev->hdc, pts, pts, 2, NtGdiLPtoDP);
         height = pts[1].y - pts[0].y;
     }
-    scale_font(pdev->font.fontinfo.Builtin.afm, height,
-            &(pdev->font), &(pdev->font.fontinfo.Builtin.tm));
+    scale_font(pdev, pdev->afm, height, &pdev->tm);
 
 
     /* Does anyone know if these are supposed to be reversed like this? */
-    pdev->font.fontinfo.Builtin.tm.tmDigitizedAspectX = pdev->logPixelsY;
-    pdev->font.fontinfo.Builtin.tm.tmDigitizedAspectY = pdev->logPixelsX;
+    pdev->tm.tmDigitizedAspectX = pdev->log_pixels_y;
+    pdev->tm.tmDigitizedAspectY = pdev->log_pixels_x;
     return TRUE;
 }
 
@@ -1086,57 +1097,54 @@ static HFONT CDECL select_font(PHYSDEV dev, HFONT hfont, UINT *aa_flags)
         }
     }
 
-    if (pdev->pi->FontSubTableSize != 0)
+    if (pdev->pi->pi->FontSubTableSize != 0)
     {
         DWORD i;
 
-        for (i = 0; i < pdev->pi->FontSubTableSize; ++i)
+        for (i = 0; i < pdev->pi->pi->FontSubTableSize; ++i)
         {
-            if (!wcsicmp(lf.lfFaceName, pdev->pi->FontSubTable[i].pValueName))
+            if (!wcsicmp(lf.lfFaceName, pdev->pi->pi->FontSubTable[i].pValueName))
             {
                 TRACE("substituting facename %s for %s\n",
-                        debugstr_w((WCHAR *)pdev->pi->FontSubTable[i].pData), debugstr_w(lf.lfFaceName));
-                if (wcslen((WCHAR *)pdev->pi->FontSubTable[i].pData) < LF_FACESIZE)
+                        debugstr_w((WCHAR *)pdev->pi->pi->FontSubTable[i].pData), debugstr_w(lf.lfFaceName));
+                if (wcslen((WCHAR *)pdev->pi->pi->FontSubTable[i].pData) < LF_FACESIZE)
                 {
-                    wcscpy(lf.lfFaceName, (WCHAR *)pdev->pi->FontSubTable[i].pData);
+                    wcscpy(lf.lfFaceName, (WCHAR *)pdev->pi->pi->FontSubTable[i].pData);
                     subst = TRUE;
                 }
                 else
                 {
                     WARN("Facename %s is too long; ignoring substitution\n",
-                            debugstr_w((WCHAR *)pdev->pi->FontSubTable[i].pData));
+                            debugstr_w((WCHAR *)pdev->pi->pi->FontSubTable[i].pData));
                 }
                 break;
             }
         }
     }
 
-    pdev->font.escapement = lf.lfEscapement;
-    pdev->font.set = UNSET;
+    pdev->escapement = lf.lfEscapement;
 
     if (!subst && ((ret = next->funcs->pSelectFont(next, hfont, aa_flags))))
     {
-        select_download_font(dev);
+        pdev->builtin = FALSE;
         return ret;
     }
 
-    select_builtin_font(dev, hfont, &lf, lf.lfFaceName);
+    select_builtin_font(dev, hfont, &lf);
     next->funcs->pSelectFont(next, 0, aa_flags);  /* tell next driver that we selected a device font */
     return hfont;
 }
 
-static UINT get_font_metric(HDC hdc, const AFM *afm,
-        NEWTEXTMETRICEXW *ntmx, ENUMLOGFONTEXW *elfx)
+static UINT get_font_metric(const AFM *afm, NEWTEXTMETRICEXW *ntmx, ENUMLOGFONTEXW *elfx)
 {
     /* ntmx->ntmTm is NEWTEXTMETRICW; compatible w/ TEXTMETRICW per Win32 doc */
     TEXTMETRICW *tm = (TEXTMETRICW *)&(ntmx->ntmTm);
     LOGFONTW *lf = &(elfx->elfLogFont);
-    PSFONT font;
 
     memset(ntmx, 0, sizeof(*ntmx));
     memset(elfx, 0, sizeof(*elfx));
 
-    scale_font(afm, -(LONG)afm->WinMetrics.usUnitsPerEm, &font, tm);
+    scale_font(NULL, afm, -(LONG)afm->WinMetrics.usUnitsPerEm, tm);
 
     lf->lfHeight = tm->tmHeight;
     lf->lfWidth = tm->tmAveCharWidth;
@@ -1166,7 +1174,7 @@ static BOOL CDECL enum_fonts(PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LP
     if (plf && plf->lfFaceName[0])
     {
         TRACE("lfFaceName = %s\n", debugstr_w(plf->lfFaceName));
-        for (family = pdev->pi->Fonts; family; family = family->next)
+        for (family = pdev->pi->pi->Fonts; family; family = family->next)
         {
             if (!wcsncmp(plf->lfFaceName, family->FamilyName,
                         wcslen(family->FamilyName)))
@@ -1179,7 +1187,7 @@ static BOOL CDECL enum_fonts(PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LP
                 UINT fm;
 
                 TRACE("Got '%s'\n", afmle->afm->FontName);
-                fm = get_font_metric(dev->hdc, afmle->afm, &tm, &lf);
+                fm = get_font_metric(afmle->afm, &tm, &lf);
                 if (!(ret = (*proc)(&lf.elfLogFont, (TEXTMETRICW *)&tm, fm, lp)))
                     break;
             }
@@ -1188,13 +1196,13 @@ static BOOL CDECL enum_fonts(PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LP
     else
     {
         TRACE("lfFaceName = NULL\n");
-        for (family = pdev->pi->Fonts; family; family = family->next)
+        for (family = pdev->pi->pi->Fonts; family; family = family->next)
         {
             UINT fm;
 
             afmle = family->afmlist;
             TRACE("Got '%s'\n", afmle->afm->FontName);
-            fm = get_font_metric(dev->hdc, afmle->afm, &tm, &lf);
+            fm = get_font_metric(afmle->afm, &tm, &lf);
             if (!(ret = (*proc)(&lf.elfLogFont, (TEXTMETRICW *)&tm, fm, lp)))
                 break;
         }
@@ -1207,7 +1215,7 @@ static BOOL CDECL get_char_width(PHYSDEV dev, UINT first, UINT count, const WCHA
     PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
     UINT i, c;
 
-    if (pdev->font.fontloc == Download)
+    if (!pdev->builtin)
     {
         dev = GET_NEXT_PHYSDEV(dev, pGetCharWidth);
         return dev->funcs->pGetCharWidth(dev, first, count, chars, buffer);
@@ -1222,8 +1230,7 @@ static BOOL CDECL get_char_width(PHYSDEV dev, UINT first, UINT count, const WCHA
         if (c > 0xffff)
             return FALSE;
 
-        *buffer = floor(uv_metrics(c, pdev->font.fontinfo.Builtin.afm)->WX
-                         * pdev->font.fontinfo.Builtin.scale + 0.5);
+        *buffer = floor(uv_metrics(c, pdev->afm)->WX * pdev->scale + 0.5);
         TRACE("U+%.4X: %i\n", i, *buffer);
         ++buffer;
     }
@@ -1234,14 +1241,13 @@ static BOOL CDECL get_text_metrics(PHYSDEV dev, TEXTMETRICW *metrics)
 {
     PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
 
-    if (pdev->font.fontloc == Download)
+    if (!pdev->builtin)
     {
         dev = GET_NEXT_PHYSDEV(dev, pGetTextMetrics);
         return dev->funcs->pGetTextMetrics(dev, metrics);
     }
 
-    memcpy(metrics, &(pdev->font.fontinfo.Builtin.tm),
-            sizeof(pdev->font.fontinfo.Builtin.tm));
+    memcpy(metrics, &pdev->tm, sizeof(pdev->tm));
     return TRUE;
 }
 
@@ -1251,7 +1257,7 @@ static BOOL CDECL get_text_extent_ex_point(PHYSDEV dev, const WCHAR *str, int co
     int             i;
     float           width = 0.0;
 
-    if (pdev->font.fontloc == Download)
+    if (!pdev->builtin)
     {
         dev = GET_NEXT_PHYSDEV(dev, pGetTextExtentExPoint);
         return dev->funcs->pGetTextExtentExPoint(dev, str, count, dx);
@@ -1261,8 +1267,8 @@ static BOOL CDECL get_text_extent_ex_point(PHYSDEV dev, const WCHAR *str, int co
 
     for (i = 0; i < count; ++i)
     {
-        width += uv_metrics(str[i], pdev->font.fontinfo.Builtin.afm)->WX;
-        dx[i] = width * pdev->font.fontinfo.Builtin.scale;
+        width += uv_metrics(str[i], pdev->afm)->WX;
+        dx[i] = width * pdev->scale;
     }
     return TRUE;
 }
@@ -1302,22 +1308,22 @@ static PSDRV_PDEVICE *create_physdev(HDC hdc, const WCHAR *device,
     pdev = malloc(sizeof(*pdev));
     if (!pdev) return NULL;
 
-    pdev->Devmode = malloc(sizeof(PSDRV_DEVMODE));
-    if (!pdev->Devmode)
+    pdev->devmode = malloc(sizeof(PSDRV_DEVMODE));
+    if (!pdev->devmode)
     {
         free(pdev);
         return NULL;
     }
 
-    *pdev->Devmode = *pi->pi->Devmode;
-    pdev->pi = pi->pi;
-    pdev->logPixelsX = pi->pi->ppd->DefaultResolution;
-    pdev->logPixelsY = pi->pi->ppd->DefaultResolution;
+    *pdev->devmode = *pi->pi->Devmode;
+    pdev->pi = pi;
+    pdev->log_pixels_x = pi->pi->ppd->DefaultResolution;
+    pdev->log_pixels_y = pi->pi->ppd->DefaultResolution;
 
     if (devmode)
     {
         dump_devmode(&devmode->dmPublic);
-        merge_devmodes(pdev->Devmode, devmode, pi->pi);
+        merge_devmodes(pdev->devmode, devmode, pi);
     }
 
     update_dev_caps(pdev);
@@ -1343,8 +1349,8 @@ static BOOL CDECL create_compatible_dc(PHYSDEV orig, PHYSDEV *dev)
 {
     PSDRV_PDEVICE *pdev, *orig_dev = get_psdrv_dev(orig);
 
-    if (!(pdev = create_physdev((*dev)->hdc, orig_dev->pi->friendly_name,
-                    orig_dev->Devmode))) return FALSE;
+    if (!(pdev = create_physdev((*dev)->hdc, orig_dev->pi->name,
+                    orig_dev->devmode))) return FALSE;
     push_dc_driver(dev, &pdev->dev, &psdrv_funcs);
     return TRUE;
 }
@@ -1355,7 +1361,7 @@ static BOOL CDECL delete_dc(PHYSDEV dev)
 
     TRACE("\n");
 
-    free(pdev->Devmode);
+    free(pdev->devmode);
     free(pdev);
     return TRUE;
 }
