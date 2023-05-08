@@ -150,7 +150,6 @@ static HRESULT WINAPI dbprops_SetProperties(IDBProperties *iface, ULONG set_coun
     ok(set_count == 1, "got %lu\n", set_count);
 
     ok(IsEqualIID(&propsets->guidPropertySet, &DBPROPSET_DBINIT), "set guid %s\n", wine_dbgstr_guid(&propsets->guidPropertySet));
-    todo_wine_if(!wcscmp(V_BSTR(&propsets->rgProperties[0].vValue), L"provider_prop_test"))
     ok(propsets->cProperties == 2, "got propcount %lu\n", propsets->cProperties);
 
 if (propsets->cProperties == 2) {

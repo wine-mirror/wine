@@ -518,6 +518,7 @@ static const struct dbproperty *get_known_dprop_descr(BSTR name)
 
 static HRESULT get_dbpropset_from_proplist(struct dbprops *props, DBPROPSET **propset)
 {
+    BSTR provider_string = NULL;
     struct dbprop_pair *pair;
     int i = 0;
     HRESULT hr;
@@ -535,6 +536,7 @@ static HRESULT get_dbpropset_from_proplist(struct dbprops *props, DBPROPSET **pr
     }
 
     (*propset)->cProperties = 0;
+    (*propset)->guidPropertySet = DBPROPSET_DBINIT;
     LIST_FOR_EACH_ENTRY(pair, &props->props, struct dbprop_pair, entry)
     {
         const struct dbproperty *descr = get_known_dprop_descr(pair->name);
@@ -542,25 +544,26 @@ static HRESULT get_dbpropset_from_proplist(struct dbprops *props, DBPROPSET **pr
 
         if (!descr)
         {
-            BSTR str;
             int len;
 
-            /* provider specific property is always VT_BSTR */
-            len = SysStringLen(pair->name) + SysStringLen(pair->value) + 1 /* for '=' */;
-            str = SysAllocStringLen(NULL, len);
-            lstrcpyW(str, pair->name);
-            lstrcatW(str, L"=");
-            lstrcatW(str, pair->value);
+            len = SysStringLen(pair->name) + SysStringLen(pair->value) + 1; /* for '=' */
+            if (!provider_string)
+            {
+                provider_string = SysAllocStringLen(NULL, len);
+            }
+            else
+            {
+                BSTR old_string = provider_string;
 
-            (*propset)->cProperties++;
-            (*propset)->guidPropertySet = DBPROPSET_DBINIT;
-            (*propset)->rgProperties[i].dwPropertyID = DBPROP_INIT_PROVIDERSTRING;
-            (*propset)->rgProperties[i].dwOptions = DBPROPOPTIONS_REQUIRED;
-            (*propset)->rgProperties[i].dwStatus = 0;
-            memset(&(*propset)->rgProperties[i].colid, 0, sizeof(DBID));
-            V_VT(&(*propset)->rgProperties[i].vValue) = VT_BSTR;
-            V_BSTR(&(*propset)->rgProperties[i].vValue) = str;
-            i++;
+                len += SysStringLen(provider_string) + 1; /* for ';' separator */
+                provider_string = SysAllocStringLen(NULL, len);
+                lstrcpyW(provider_string, old_string);
+                lstrcatW(provider_string, L";");
+                SysFreeString(old_string);
+            }
+            lstrcatW(provider_string, pair->name);
+            lstrcatW(provider_string, L"=");
+            lstrcatW(provider_string, pair->value);
             continue;
         }
 
@@ -581,13 +584,26 @@ static HRESULT get_dbpropset_from_proplist(struct dbprops *props, DBPROPSET **pr
         }
 
         (*propset)->cProperties++;
-        (*propset)->guidPropertySet = DBPROPSET_DBINIT;
         (*propset)->rgProperties[i].dwPropertyID = descr->id;
         (*propset)->rgProperties[i].dwOptions = descr->options;
         (*propset)->rgProperties[i].dwStatus = 0;
         memset(&(*propset)->rgProperties[i].colid, 0, sizeof(DBID));
         (*propset)->rgProperties[i].vValue = dest;
         i++;
+    }
+
+    /* Provider specific property is always VT_BSTR */
+    /* DBPROP_INIT_PROVIDERSTRING should be specified only once. Otherwise, it will be considered as
+     * provider-specific rather than an initialization property */
+    if (provider_string)
+    {
+        (*propset)->cProperties++;
+        (*propset)->rgProperties[i].dwPropertyID = DBPROP_INIT_PROVIDERSTRING;
+        (*propset)->rgProperties[i].dwOptions = DBPROPOPTIONS_REQUIRED;
+        (*propset)->rgProperties[i].dwStatus = 0;
+        memset(&(*propset)->rgProperties[i].colid, 0, sizeof(DBID));
+        V_VT(&(*propset)->rgProperties[i].vValue) = VT_BSTR;
+        V_BSTR(&(*propset)->rgProperties[i].vValue) = provider_string;
     }
 
     return S_OK;
