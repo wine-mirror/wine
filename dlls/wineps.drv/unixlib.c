@@ -252,7 +252,7 @@ static INT CDECL get_device_caps(PHYSDEV dev, INT cap)
     case PHYSICALOFFSETX:
         if (pdev->devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE)
         {
-            if (pdev->pi->pi->ppd->LandscapeOrientation == -90)
+            if (pdev->devmode->landscape_orientation == -90)
                 return pdev->page_size.cy - pdev->imageable_area.top;
             else
                 return pdev->imageable_area.bottom;
@@ -262,7 +262,7 @@ static INT CDECL get_device_caps(PHYSDEV dev, INT cap)
     case PHYSICALOFFSETY:
         if (pdev->devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE)
         {
-            if (pdev->pi->pi->ppd->LandscapeOrientation == -90)
+            if (pdev->devmode->landscape_orientation == -90)
                 return pdev->page_size.cx - pdev->imageable_area.right;
             else
                 return pdev->imageable_area.left;
@@ -280,25 +280,34 @@ static inline int paper_size_from_points(float size)
     return size * 254 / 72;
 }
 
-static INPUTSLOT *unix_find_slot(PPD *ppd, const DEVMODEW *dm)
+static const struct input_slot *unix_find_slot(const struct printer_info *pi,
+        const DEVMODEW *dm)
 {
-    INPUTSLOT *slot;
+    const struct input_slot *slot = (const struct input_slot *)pi->pi->Devmode->data;
+    int i;
 
-    LIST_FOR_EACH_ENTRY(slot, &ppd->InputSlots, INPUTSLOT, entry)
-        if (slot->WinBin == dm->dmDefaultSource)
-            return slot;
-
+    for (i = 0; i < pi->pi->Devmode->input_slots; i++)
+    {
+        if (slot[i].win_bin == dm->dmDefaultSource)
+            return slot + i;
+    }
     return NULL;
 }
 
-static PAGESIZE *unix_find_pagesize(PPD *ppd, const DEVMODEW *dm)
+static const struct page_size *unix_find_pagesize(const struct printer_info *pi,
+        const DEVMODEW *dm)
 {
-    PAGESIZE *page;
+    const struct page_size *page;
+    int i;
 
-    LIST_FOR_EACH_ENTRY(page, &ppd->PageSizes, PAGESIZE, entry)
-        if (page->WinPage == dm->dmPaperSize)
-            return page;
-
+    page = (const struct page_size *)(pi->pi->Devmode->data +
+            pi->pi->Devmode->input_slots * sizeof(struct input_slot) +
+            pi->pi->Devmode->resolutions * sizeof(struct resolution));
+    for (i = 0; i < pi->pi->Devmode->page_sizes; i++)
+    {
+        if (page[i].win_page == dm->dmPaperSize)
+            return page + i;
+    }
     return NULL;
 }
 
@@ -321,21 +330,21 @@ static void merge_devmodes(PSDRV_DEVMODE *dm1, const DEVMODEW *dm2,
     /* NB PaperWidth is always < PaperLength */
     if (dm2->dmFields & DM_PAPERSIZE)
     {
-        PAGESIZE *page = unix_find_pagesize(pi->pi->ppd, dm2);
+        const struct page_size *page = unix_find_pagesize(pi, dm2);
 
         if (page)
         {
             dm1->dmPublic.dmPaperSize = dm2->dmPaperSize;
-            dm1->dmPublic.dmPaperWidth  = paper_size_from_points(page->PaperDimension->x);
-            dm1->dmPublic.dmPaperLength = paper_size_from_points(page->PaperDimension->y);
+            dm1->dmPublic.dmPaperWidth  = paper_size_from_points(page->paper_dimension.x);
+            dm1->dmPublic.dmPaperLength = paper_size_from_points(page->paper_dimension.y);
             dm1->dmPublic.dmFields |= DM_PAPERSIZE | DM_PAPERWIDTH | DM_PAPERLENGTH;
-            TRACE("Changing page to %s %d x %d\n", debugstr_w(page->FullName),
+            TRACE("Changing page to %s %d x %d\n", debugstr_w(page->name),
                     dm1->dmPublic.dmPaperWidth,
                     dm1->dmPublic.dmPaperLength);
 
             if (dm1->dmPublic.dmSize >= FIELD_OFFSET(DEVMODEW, dmFormName) + CCHFORMNAME * sizeof(WCHAR))
             {
-                lstrcpynW(dm1->dmPublic.dmFormName, page->FullName, CCHFORMNAME);
+                memcpy(dm1->dmPublic.dmFormName, page->name, sizeof(page->name));
                 dm1->dmPublic.dmFields |= DM_FORMNAME;
             }
         }
@@ -378,17 +387,12 @@ static void merge_devmodes(PSDRV_DEVMODE *dm1, const DEVMODEW *dm2,
 
     if (dm2->dmFields & DM_DEFAULTSOURCE)
     {
-        INPUTSLOT *slot = unix_find_slot(pi->pi->ppd, dm2);
+        const struct input_slot *slot = unix_find_slot(pi, dm2);
 
         if (slot)
-        {
             dm1->dmPublic.dmDefaultSource = dm2->dmDefaultSource;
-            TRACE("Changing bin to '%s'\n", slot->FullName);
-        }
         else
-        {
             TRACE("Trying to change to unsupported bin %d\n", dm2->dmDefaultSource);
-        }
     }
 
     if (dm2->dmFields & DM_DEFAULTSOURCE)
@@ -397,7 +401,7 @@ static void merge_devmodes(PSDRV_DEVMODE *dm1, const DEVMODEW *dm2,
         dm1->dmPublic.dmPrintQuality = dm2->dmPrintQuality;
     if (dm2->dmFields & DM_COLOR)
         dm1->dmPublic.dmColor = dm2->dmColor;
-    if (dm2->dmFields & DM_DUPLEX && pi->pi->ppd->DefaultDuplex && pi->pi->ppd->DefaultDuplex->WinDuplex != 0)
+    if (dm2->dmFields & DM_DUPLEX && pi->pi->Devmode->duplex)
         dm1->dmPublic.dmDuplex = dm2->dmDuplex;
     if (dm2->dmFields & DM_YRESOLUTION)
         dm1->dmPublic.dmYResolution = dm2->dmYResolution;
@@ -438,8 +442,9 @@ static void merge_devmodes(PSDRV_DEVMODE *dm1, const DEVMODEW *dm2,
 static void update_dev_caps(PSDRV_PDEVICE *pdev)
 {
     INT width = 0, height = 0, resx = 0, resy = 0;
-    RESOLUTION *res;
-    PAGESIZE *page;
+    const struct resolution *res;
+    const struct page_size *page;
+    int i;
 
     dump_devmode(&pdev->devmode->dmPublic);
 
@@ -454,9 +459,11 @@ static void update_dev_caps(PSDRV_PDEVICE *pdev)
         if (pdev->devmode->dmPublic.dmFields & DM_LOGPIXELS)
             resx = resy = pdev->devmode->dmPublic.dmLogPixels;
 
-        LIST_FOR_EACH_ENTRY(res, &pdev->pi->pi->ppd->Resolutions, RESOLUTION, entry)
+        res = (const struct resolution *)(pdev->devmode->data
+                + pdev->devmode->input_slots * sizeof(struct input_slot));
+        for (i = 0; i < pdev->devmode->resolutions; i++)
         {
-            if (res->resx == resx && res->resy == resy)
+            if (res[i].x == resx && res[i].y == resy)
             {
                 pdev->log_pixels_x = resx;
                 pdev->log_pixels_y = resy;
@@ -464,47 +471,40 @@ static void update_dev_caps(PSDRV_PDEVICE *pdev)
             }
         }
 
-        if (&res->entry == &pdev->pi->pi->ppd->Resolutions)
+        if (i == pdev->devmode->resolutions)
         {
             WARN("Requested resolution %dx%d is not supported by device\n", resx, resy);
-            pdev->log_pixels_x = pdev->pi->pi->ppd->DefaultResolution;
+            pdev->log_pixels_x = pdev->devmode->default_resolution;
             pdev->log_pixels_y = pdev->log_pixels_x;
         }
     }
     else
     {
-        WARN("Using default device resolution %d\n", pdev->pi->pi->ppd->DefaultResolution);
-        pdev->log_pixels_x = pdev->pi->pi->ppd->DefaultResolution;
+        WARN("Using default device resolution %d\n", pdev->devmode->default_resolution);
+        pdev->log_pixels_x = pdev->devmode->default_resolution;
         pdev->log_pixels_y = pdev->log_pixels_x;
     }
 
     if (pdev->devmode->dmPublic.dmFields & DM_PAPERSIZE) {
-        LIST_FOR_EACH_ENTRY(page, &pdev->pi->pi->ppd->PageSizes, PAGESIZE, entry) {
-            if (page->WinPage == pdev->devmode->dmPublic.dmPaperSize)
-                break;
-        }
+        page = unix_find_pagesize(pdev->pi, &pdev->devmode->dmPublic);
 
-        if (&page->entry == &pdev->pi->pi->ppd->PageSizes) {
+        if (!page)
+        {
             FIXME("Can't find page\n");
             SetRectEmpty(&pdev->imageable_area);
             pdev->page_size.cx = 0;
             pdev->page_size.cy = 0;
-        } else if (page->ImageableArea) {
+        }
+        else
+        {
             /* pdev sizes in device units; ppd sizes in 1/72" */
-            SetRect(&pdev->imageable_area, page->ImageableArea->llx * pdev->log_pixels_x / 72,
-                    page->ImageableArea->ury * pdev->log_pixels_y / 72,
-                    page->ImageableArea->urx * pdev->log_pixels_x / 72,
-                    page->ImageableArea->lly * pdev->log_pixels_y / 72);
-            pdev->page_size.cx = page->PaperDimension->x *
-                pdev->log_pixels_x / 72;
-            pdev->page_size.cy = page->PaperDimension->y *
-                pdev->log_pixels_y / 72;
-        } else {
-            pdev->imageable_area.left = pdev->imageable_area.bottom = 0;
-            pdev->imageable_area.right = pdev->page_size.cx =
-                page->PaperDimension->x * pdev->log_pixels_x / 72;
-            pdev->imageable_area.top = pdev->page_size.cy =
-                page->PaperDimension->y * pdev->log_pixels_y / 72;
+            SetRect(&pdev->imageable_area,
+                    page->imageable_area.left * pdev->log_pixels_x / 72,
+                    page->imageable_area.top * pdev->log_pixels_y / 72,
+                    page->imageable_area.right * pdev->log_pixels_x / 72,
+                    page->imageable_area.bottom * pdev->log_pixels_y / 72);
+            pdev->page_size.cx = page->paper_dimension.x * pdev->log_pixels_x / 72;
+            pdev->page_size.cy = page->paper_dimension.y * pdev->log_pixels_y / 72;
         }
     } else if ((pdev->devmode->dmPublic.dmFields & DM_PAPERLENGTH) &&
             (pdev->devmode->dmPublic.dmFields & DM_PAPERWIDTH)) {
@@ -1318,8 +1318,8 @@ static PSDRV_PDEVICE *create_physdev(HDC hdc, const WCHAR *device,
     memcpy(pdev->devmode, pi->pi->Devmode, pi->pi->Devmode->dmPublic.dmSize +
             pi->pi->Devmode->dmPublic.dmDriverExtra);
     pdev->pi = pi;
-    pdev->log_pixels_x = pi->pi->ppd->DefaultResolution;
-    pdev->log_pixels_y = pi->pi->ppd->DefaultResolution;
+    pdev->log_pixels_x = pdev->devmode->default_resolution;
+    pdev->log_pixels_y = pdev->devmode->default_resolution;
 
     if (devmode)
     {

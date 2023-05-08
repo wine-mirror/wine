@@ -19,6 +19,7 @@
 #include "ntuser.h"
 #include "wine/unixlib.h"
 
+/* escapes */
 #define PSDRV_GET_GLYPH_NAME 0x10000
 #define PSDRV_GET_BUILTIN_FONT_INFO 0x10001
 
@@ -29,6 +30,37 @@ struct font_info
     int escapement;
 };
 
+/* devmode */
+struct input_slot
+{
+    int win_bin;
+};
+
+struct resolution
+{
+    int x;
+    int y;
+};
+
+struct page_size
+{
+    WCHAR name[CCHFORMNAME];
+    struct
+    {
+        float left;
+        float bottom;
+        float right;
+        float top;
+    } imageable_area;
+    struct
+    {
+        float x;
+        float y;
+    } paper_dimension;
+    short win_page;
+};
+
+/* Unix calls */
 enum wineps_funcs
 {
     unix_init_dc,

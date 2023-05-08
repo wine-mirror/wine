@@ -220,7 +220,14 @@ typedef struct {
 } PPD;
 
 typedef struct {
-    DEVMODEW			dmPublic;
+    DEVMODEW dmPublic;
+    int default_resolution;
+    int landscape_orientation;
+    int duplex;
+    int input_slots;
+    int resolutions;
+    int page_sizes;
+    BYTE data[1];
 } PSDRV_DEVMODE;
 
 typedef struct

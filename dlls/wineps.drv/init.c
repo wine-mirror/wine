@@ -411,7 +411,7 @@ static PRINTER_ENUM_VALUESW *load_font_sub_table( HANDLE printer, DWORD *num_ent
     return table;
 }
 
-static PSDRV_DEVMODE *get_printer_devmode( HANDLE printer )
+static PSDRV_DEVMODE *get_printer_devmode( HANDLE printer, int size )
 {
     DWORD needed, dm_size;
     BOOL res;
@@ -421,7 +421,7 @@ static PSDRV_DEVMODE *get_printer_devmode( HANDLE printer )
     GetPrinterW( printer, 9, NULL, 0, &needed );
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return NULL;
 
-    info = HeapAlloc( PSDRV_Heap, 0, needed );
+    info = HeapAlloc( PSDRV_Heap, 0, max(needed, size) );
     res = GetPrinterW( printer, 9, (BYTE *)info, needed, &needed );
     if (!res || !info->pDevMode)
     {
@@ -442,24 +442,23 @@ static PSDRV_DEVMODE *get_printer_devmode( HANDLE printer )
     return dm;
 }
 
-static PSDRV_DEVMODE *get_devmode( HANDLE printer, const WCHAR *name, BOOL *is_default )
+static PSDRV_DEVMODE *get_devmode( HANDLE printer, const WCHAR *name, BOOL *is_default, int size )
 {
-    PSDRV_DEVMODE *dm = get_printer_devmode( printer );
+    PSDRV_DEVMODE *dm = get_printer_devmode( printer, size );
 
     *is_default = FALSE;
 
-    if (dm && dm->dmPublic.dmSize + dm->dmPublic.dmDriverExtra >= sizeof(DefaultDevmode))
+    if (dm)
     {
         TRACE( "Retrieved devmode from winspool\n" );
         return dm;
     }
-    HeapFree( PSDRV_Heap, 0, dm );
 
     TRACE( "Using default devmode\n" );
-    dm = HeapAlloc( PSDRV_Heap, 0, sizeof(DefaultDevmode) );
+    dm = HeapAlloc( PSDRV_Heap, 0, size );
     if (dm)
     {
-        *dm = DefaultDevmode;
+        memcpy( dm, &DefaultDevmode, min(sizeof(DefaultDevmode), size) );
         lstrcpynW( (WCHAR *)dm->dmPublic.dmDeviceName, name, CCHDEVICENAME );
         *is_default = TRUE;
     }
@@ -504,7 +503,13 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
     WCHAR *ppd_filename = NULL;
     char *nameA = NULL;
     BOOL using_default_devmode = FALSE;
-    int len;
+    int len, input_slots, resolutions, page_sizes, size;
+    struct input_slot *dm_slot;
+    struct resolution *dm_res;
+    struct page_size *dm_page;
+    INPUTSLOT *slot;
+    RESOLUTION *res;
+    PAGESIZE *page;
 
     TRACE("%s\n", debugstr_w(name));
 
@@ -529,9 +534,6 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
     nameA = HeapAlloc( GetProcessHeap(), 0, len );
     WideCharToMultiByte( CP_ACP, 0, name, -1, nameA, len, NULL, NULL );
 
-    pi->Devmode = get_devmode( hPrinter, name, &using_default_devmode );
-    if (!pi->Devmode) goto fail;
-
     ppd_filename = get_ppd_filename( hPrinter );
     if (!ppd_filename) goto fail;
 
@@ -541,6 +543,15 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
         WARN( "Couldn't parse PPD file %s\n", debugstr_w(ppd_filename) );
         goto fail;
     }
+
+    input_slots = list_count( &pi->ppd->InputSlots );
+    resolutions = list_count( &pi->ppd->Resolutions );
+    page_sizes = list_count( &pi->ppd->PageSizes );
+    size = FIELD_OFFSET(PSDRV_DEVMODE, data[input_slots * sizeof(struct input_slot) +
+            resolutions * sizeof(struct resolution) + page_sizes * sizeof(struct page_size)]);
+
+    pi->Devmode = get_devmode( hPrinter, name, &using_default_devmode, size );
+    if (!pi->Devmode) goto fail;
 
     if(using_default_devmode) {
         DWORD papersize;
@@ -561,6 +572,56 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
         dm.dmFields = DM_PAPERSIZE;
         dm.dmPaperSize = pi->ppd->DefaultPageSize->WinPage;
         PSDRV_MergeDevmodes(pi->Devmode, &dm, pi);
+    }
+
+    if (pi->Devmode->dmPublic.dmDriverExtra != size - pi->Devmode->dmPublic.dmSize)
+    {
+        pi->Devmode->dmPublic.dmDriverExtra = size - pi->Devmode->dmPublic.dmSize;
+        pi->Devmode->default_resolution = pi->ppd->DefaultResolution;
+        pi->Devmode->landscape_orientation = pi->ppd->LandscapeOrientation;
+        pi->Devmode->duplex = pi->ppd->DefaultDuplex ? pi->ppd->DefaultDuplex->WinDuplex : 0;
+        pi->Devmode->input_slots = input_slots;
+        pi->Devmode->resolutions = resolutions;
+        pi->Devmode->page_sizes = page_sizes;
+
+        dm_slot = (struct input_slot *)pi->Devmode->data;
+        LIST_FOR_EACH_ENTRY( slot, &pi->ppd->InputSlots, INPUTSLOT, entry )
+        {
+            dm_slot->win_bin = slot->WinBin;
+            dm_slot++;
+        }
+
+        dm_res = (struct resolution *)dm_slot;
+        LIST_FOR_EACH_ENTRY( res, &pi->ppd->Resolutions, RESOLUTION, entry )
+        {
+            dm_res->x = res->resx;
+            dm_res->y = res->resy;
+            dm_res++;
+        }
+
+        dm_page = (struct page_size *)dm_res;
+        LIST_FOR_EACH_ENTRY( page, &pi->ppd->PageSizes, PAGESIZE, entry )
+        {
+            lstrcpynW(dm_page->name, page->FullName, CCHFORMNAME);
+            if (page->ImageableArea)
+            {
+                dm_page->imageable_area.left = page->ImageableArea->llx;
+                dm_page->imageable_area.bottom = page->ImageableArea->lly;
+                dm_page->imageable_area.right = page->ImageableArea->urx;
+                dm_page->imageable_area.top = page->ImageableArea->ury;
+            }
+            else
+            {
+                dm_page->imageable_area.left = 0;
+                dm_page->imageable_area.bottom = 0;
+                dm_page->imageable_area.right = page->PaperDimension->x;
+                dm_page->imageable_area.top = page->PaperDimension->y;
+            }
+            dm_page->paper_dimension.x = page->PaperDimension->x;
+            dm_page->paper_dimension.y = page->PaperDimension->y;
+            dm_page->win_page = page->WinPage;
+            dm_page++;
+        }
     }
 
     /* Duplex is indicated by the setting of the DM_DUPLEX bit in dmFields.
