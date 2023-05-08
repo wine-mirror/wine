@@ -131,11 +131,13 @@ void (CDECL *mono_thread_manage)(void);
 void (CDECL *mono_trace_set_print_handler)(MonoPrintCallback callback);
 void (CDECL *mono_trace_set_printerr_handler)(MonoPrintCallback callback);
 static void (CDECL *wine_mono_install_assembly_preload_hook)(WineMonoAssemblyPreLoadFunc func, void *user_data);
+static void (CDECL *wine_mono_install_assembly_preload_hook_v2)(WineMonoAssemblyPreLoadFunc func, void *user_data);
 
 static BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path);
 
 static MonoAssembly* CDECL mono_assembly_preload_hook_fn(MonoAssemblyName *aname, char **assemblies_path, void *user_data);
 static MonoAssembly* CDECL wine_mono_assembly_preload_hook_fn(MonoAssemblyName *aname, char **assemblies_path, int *search_path, void *user_data);
+static MonoAssembly* CDECL wine_mono_assembly_preload_hook_v2_fn(MonoAssemblyName *aname, char **assemblies_path, int *flags, void *user_data);
 
 static void CDECL mono_shutdown_callback_fn(MonoProfiler *prof);
 
@@ -252,6 +254,7 @@ static HRESULT load_mono(LPCWSTR mono_path)
         LOAD_OPT_MONO_FUNCTION(mono_trace_set_print_handler, set_print_handler_dummy);
         LOAD_OPT_MONO_FUNCTION(mono_trace_set_printerr_handler, set_print_handler_dummy);
         LOAD_OPT_MONO_FUNCTION(wine_mono_install_assembly_preload_hook, NULL);
+        LOAD_OPT_MONO_FUNCTION(wine_mono_install_assembly_preload_hook_v2, NULL);
 
 #undef LOAD_OPT_MONO_FUNCTION
 
@@ -282,7 +285,9 @@ static HRESULT load_mono(LPCWSTR mono_path)
 
         mono_config_parse(NULL);
 
-        if (wine_mono_install_assembly_preload_hook)
+        if (wine_mono_install_assembly_preload_hook_v2)
+            wine_mono_install_assembly_preload_hook_v2(wine_mono_assembly_preload_hook_v2_fn, NULL);
+        else if (wine_mono_install_assembly_preload_hook)
             wine_mono_install_assembly_preload_hook(wine_mono_assembly_preload_hook_fn, NULL);
         else
             mono_install_assembly_preload_hook(mono_assembly_preload_hook_fn, NULL);
@@ -1707,11 +1712,20 @@ static MonoAssembly* mono_assembly_try_load(WCHAR *path)
 
 static MonoAssembly* CDECL mono_assembly_preload_hook_fn(MonoAssemblyName *aname, char **assemblies_path, void *user_data)
 {
-    int dummy;
-    return wine_mono_assembly_preload_hook_fn(aname, assemblies_path, &dummy, user_data);
+    int flags = 0;
+    return wine_mono_assembly_preload_hook_v2_fn(aname, assemblies_path, &flags, user_data);
 }
 
 static MonoAssembly* CDECL wine_mono_assembly_preload_hook_fn(MonoAssemblyName *aname, char **assemblies_path, int *halt_search, void *user_data)
+{
+    int flags = 0;
+    MonoAssembly* result = wine_mono_assembly_preload_hook_v2_fn(aname, assemblies_path, &flags, user_data);
+    if (flags & WINE_PRELOAD_SKIP_PRIVATE_PATH)
+        *halt_search = 1;
+    return result;
+}
+
+static MonoAssembly* CDECL wine_mono_assembly_preload_hook_v2_fn(MonoAssemblyName *aname, char **assemblies_path, int *flags, void *user_data)
 {
     HRESULT hr;
     MonoAssembly *result=NULL;
@@ -1784,8 +1798,6 @@ static MonoAssembly* CDECL wine_mono_assembly_preload_hook_fn(MonoAssemblyName *
         }
     }
 
-    /* FIXME: We should search the given paths before the GAC. */
-
     if ((search_flags & ASSEMBLY_SEARCH_GAC) != 0)
     {
         stringnameW_size = MultiByteToWideChar(CP_UTF8, 0, stringname, -1, NULL, 0);
@@ -1816,6 +1828,12 @@ static MonoAssembly* CDECL wine_mono_assembly_preload_hook_fn(MonoAssemblyName *
                     ERR("Failed to load %s, status=%u\n", debugstr_w(path), stat);
 
                 HeapFree(GetProcessHeap(), 0, pathA);
+
+                if (result)
+                {
+                    *flags |= WINE_PRELOAD_SET_GAC;
+                    goto done;
+                }
             }
         }
     }
@@ -1825,7 +1843,7 @@ static MonoAssembly* CDECL wine_mono_assembly_preload_hook_fn(MonoAssemblyName *
     if ((search_flags & ASSEMBLY_SEARCH_PRIVATEPATH) == 0)
     {
         TRACE("skipping AppDomain search path due to override setting\n");
-        *halt_search = 1;
+        *flags |= WINE_PRELOAD_SKIP_PRIVATE_PATH;
     }
 
 done:

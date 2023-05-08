@@ -143,7 +143,12 @@ typedef enum {
 
 typedef MonoAssembly* (CDECL *MonoAssemblyPreLoadFunc)(MonoAssemblyName *aname, char **assemblies_path, void *user_data);
 
-typedef MonoAssembly* (CDECL *WineMonoAssemblyPreLoadFunc)(MonoAssemblyName *aname, char **assemblies_path, int *halt_search, void *user_data);
+#define WINE_PRELOAD_CONTINUE 0
+#define WINE_PRELOAD_SKIP_PRIVATE_PATH 1
+#define WINE_PRELOAD_SKIP_GAC 2
+#define WINE_PRELOAD_SET_GAC 4
+
+typedef MonoAssembly* (CDECL *WineMonoAssemblyPreLoadFunc)(MonoAssemblyName *aname, char **assemblies_path, int *flags, void *user_data);
 
 typedef void (CDECL *MonoProfileFunc)(MonoProfiler *prof);
 
