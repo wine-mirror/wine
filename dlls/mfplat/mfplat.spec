@@ -62,7 +62,7 @@
 @ stub MFCreateMediaTypeFromRepresentation
 @ stdcall MFCreateMemoryBuffer(long ptr)
 @ stub MFCreateMemoryStream
-@ stub MFCreatePathFromURL
+@ stdcall MFCreatePathFromURL(wstr ptr)
 @ stdcall MFCreatePresentationDescriptor(long ptr ptr)
 @ stdcall MFCreateSample(ptr)
 @ stub MFCreateSocket

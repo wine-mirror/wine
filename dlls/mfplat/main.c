@@ -9464,3 +9464,28 @@ LONGLONG WINAPI MFllMulDiv(LONGLONG val, LONGLONG num, LONGLONG denom, LONGLONG 
     return sign ? -(LONGLONG)ret : ret;
 #undef LLOVERFLOW
 }
+
+/***********************************************************************
+ *      MFCreatePathFromURL (mfplat.@)
+ */
+HRESULT WINAPI MFCreatePathFromURL(const WCHAR *url, WCHAR **ret_path)
+{
+    WCHAR path[MAX_PATH];
+    DWORD length;
+    HRESULT hr;
+
+    TRACE("%s, %p.\n", debugstr_w(url), ret_path);
+
+    if (!url || !ret_path)
+        return E_POINTER;
+
+    length = ARRAY_SIZE(path);
+    if (FAILED(hr = PathCreateFromUrlW(url, path, &length, 0)))
+        return hr;
+
+    if (!(*ret_path = CoTaskMemAlloc((length + 1) * sizeof(*path))))
+        return E_OUTOFMEMORY;
+
+    memcpy(*ret_path, path, (length + 1) * sizeof(*path));
+    return S_OK;
+}

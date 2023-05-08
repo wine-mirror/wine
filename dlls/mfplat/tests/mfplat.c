@@ -263,6 +263,7 @@ static HRESULT (WINAPI *pMFCreate2DMediaBuffer)(DWORD width, DWORD height, DWORD
         IMFMediaBuffer **buffer);
 static HRESULT (WINAPI *pMFCreateMediaBufferFromMediaType)(IMFMediaType *media_type, LONGLONG duration, DWORD min_length,
         DWORD min_alignment, IMFMediaBuffer **buffer);
+static HRESULT (WINAPI *pMFCreatePathFromURL)(const WCHAR *url, WCHAR **path);
 static HRESULT (WINAPI *pMFCreateDXSurfaceBuffer)(REFIID riid, IUnknown *surface, BOOL bottom_up, IMFMediaBuffer **buffer);
 static HRESULT (WINAPI *pMFCreateTrackedSample)(IMFTrackedSample **sample);
 static DWORD (WINAPI *pMFMapDXGIFormatToDX9Format)(DXGI_FORMAT dxgi_format);
@@ -1123,6 +1124,7 @@ static void init_functions(void)
     X(MFCreateSourceResolver);
     X(MFCreateMediaBufferFromMediaType);
     X(MFCreateMFByteStreamOnStream);
+    X(MFCreatePathFromURL);
     X(MFCreateTrackedSample);
     X(MFCreateTransformActivate);
     X(MFCreateVideoMediaTypeFromSubtype);
@@ -8539,6 +8541,131 @@ static void test_MFInitMediaTypeFromAMMediaType(void)
     IMFMediaType_Release(media_type);
 }
 
+static void test_MFCreatePathFromURL(void)
+{
+    static const struct
+    {
+        const WCHAR *url;
+        const WCHAR *path;
+        HRESULT hr;
+    }
+    tests[] =
+    {
+        /* 0 leading slash */
+        { L"file:c:/foo/bar", L"c:\\foo\\bar" },
+        { L"file:c|/foo/bar", L"c:\\foo\\bar" },
+        { L"file:cx|/foo/bar", L"cx|\\foo\\bar" },
+        { L"file:c:foo/bar", L"c:foo\\bar" },
+        { L"file:c|foo/bar", L"c:foo\\bar" },
+        { L"file:c:/foo%20ba%2fr", L"c:\\foo ba/r" },
+        { L"file:foo%20ba%2fr", L"foo ba/r" },
+        { L"file:foo/bar/", L"foo\\bar\\" },
+
+        /* 1 leading (back)slash */
+        { L"file:/c:/foo/bar", L"c:\\foo\\bar" },
+        { L"file:\\c:/foo/bar", L"c:\\foo\\bar" },
+        { L"file:/c|/foo/bar", L"c:\\foo\\bar" },
+        { L"file:/cx|/foo/bar", L"\\cx|\\foo\\bar" },
+        { L"file:/c:foo/bar", L"c:foo\\bar" },
+        { L"file:/c|foo/bar", L"c:foo\\bar" },
+        { L"file:/c:/foo%20ba%2fr", L"c:\\foo ba/r" },
+        { L"file:/foo%20ba%2fr", L"\\foo ba/r" },
+        { L"file:/foo/bar/", L"\\foo\\bar\\" },
+
+        /* 2 leading (back)slashes */
+        { L"file://c:/foo/bar", L"c:\\foo\\bar" },
+        { L"file://c:/d:/foo/bar", L"c:\\d:\\foo\\bar" },
+        { L"file://c|/d|/foo/bar", L"c:\\d|\\foo\\bar" },
+        { L"file://cx|/foo/bar", L"\\\\cx|\\foo\\bar" },
+        { L"file://c:foo/bar", L"c:foo\\bar" },
+        { L"file://c|foo/bar", L"c:foo\\bar" },
+        { L"file://c:/foo%20ba%2fr", L"c:\\foo%20ba%2fr" },
+        { L"file://c%3a/foo/../bar", L"\\\\c:\\foo\\..\\bar" },
+        { L"file://c%7c/foo/../bar", L"\\\\c|\\foo\\..\\bar" },
+        { L"file://foo%20ba%2fr", L"\\\\foo ba/r" },
+        { L"file://localhost/c:/foo/bar", L"c:\\foo\\bar" },
+        { L"file://localhost/c:/foo%20ba%5Cr", L"c:\\foo ba\\r" },
+        { L"file://LocalHost/c:/foo/bar", L"c:\\foo\\bar" },
+        { L"file:\\\\localhost\\c:\\foo\\bar", L"c:\\foo\\bar" },
+        { L"file://incomplete", L"\\\\incomplete" },
+
+        /* 3 leading (back)slashes (omitting hostname) */
+        { L"file:///c:/foo/bar", L"c:\\foo\\bar" },
+        { L"File:///c:/foo/bar", L"c:\\foo\\bar" },
+        { L"file:///c:/foo%20ba%2fr", L"c:\\foo ba/r" },
+        { L"file:///foo%20ba%2fr", L"\\foo ba/r" },
+        { L"file:///foo/bar/", L"\\foo\\bar\\" },
+        { L"file:///localhost/c:/foo/bar", L"\\localhost\\c:\\foo\\bar" },
+
+        /* 4 leading (back)slashes */
+        { L"file:////c:/foo/bar", L"c:\\foo\\bar" },
+        { L"file:////c:/foo%20ba%2fr", L"c:\\foo%20ba%2fr" },
+        { L"file:////foo%20ba%2fr", L"\\\\foo%20ba%2fr" },
+
+        /* 5 and more leading (back)slashes */
+        { L"file://///c:/foo/bar", L"\\\\c:\\foo\\bar" },
+        { L"file://///c:/foo%20ba%2fr", L"\\\\c:\\foo ba/r" },
+        { L"file://///foo%20ba%2fr", L"\\\\foo ba/r" },
+        { L"file://////c:/foo/bar", L"\\\\c:\\foo\\bar" },
+
+        /* Leading (back)slashes cannot be escaped */
+        { L"file:%2f%2flocalhost%2fc:/foo/bar", L"//localhost/c:\\foo\\bar" },
+        { L"file:%5C%5Clocalhost%5Cc:/foo/bar", L"\\\\localhost\\c:\\foo\\bar" },
+
+        /* Hostname handling */
+        { L"file://l%6fcalhost/c:/foo/bar", L"\\\\localhostc:\\foo\\bar" },
+        { L"file://localhost:80/c:/foo/bar", L"\\\\localhost:80c:\\foo\\bar" },
+        { L"file://host/c:/foo/bar", L"\\\\hostc:\\foo\\bar" },
+        { L"file://host//c:/foo/bar", L"\\\\host\\\\c:\\foo\\bar" },
+        { L"file://host/\\c:/foo/bar", L"\\\\host\\\\c:\\foo\\bar" },
+        { L"file://host/c:foo/bar", L"\\\\hostc:foo\\bar" },
+        { L"file://host/foo/bar", L"\\\\host\\foo\\bar" },
+        { L"file:\\\\host\\c:\\foo\\bar", L"\\\\hostc:\\foo\\bar" },
+        { L"file:\\\\host\\ca\\foo\\bar", L"\\\\host\\ca\\foo\\bar" },
+        { L"file:\\\\host\\c|\\foo\\bar", L"\\\\hostc|\\foo\\bar" },
+        { L"file:\\%5Chost\\c:\\foo\\bar", L"\\\\host\\c:\\foo\\bar" },
+        { L"file:\\\\host\\cx:\\foo\\bar", L"\\\\host\\cx:\\foo\\bar" },
+        { L"file:///host/c:/foo/bar", L"\\host\\c:\\foo\\bar" },
+
+        /* Not file URLs */
+        { L"c:\\foo\\bar", NULL, E_INVALIDARG },
+        { L"foo/bar", NULL, E_INVALIDARG },
+        { L"http://foo/bar", NULL, E_INVALIDARG },
+    };
+    unsigned int i;
+    WCHAR *path;
+    HRESULT hr;
+
+    if (!pMFCreatePathFromURL)
+    {
+        win_skip("MFCreatePathFromURL() is not available.\n");
+        return;
+    }
+
+    hr = pMFCreatePathFromURL(NULL, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    path = (void *)0xdeadbeef;
+    hr = pMFCreatePathFromURL(NULL, &path);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    ok(path == (void *)0xdeadbeef, "Unexpected pointer %p.\n", path);
+
+    hr = pMFCreatePathFromURL(L"file://foo", NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        hr = pMFCreatePathFromURL(tests[i].url, &path);
+        ok(hr == tests[i].hr, "Unexpected hr %#lx, expected %#lx.\n", hr, tests[i].hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(!wcscmp(path, tests[i].path), "Unexpected path %s, expected %s.\n",
+                    debugstr_w(path), debugstr_w(tests[i].path));
+            CoTaskMemFree(path);
+        }
+    }
+}
+
 START_TEST(mfplat)
 {
     char **argv;
@@ -8622,6 +8749,7 @@ START_TEST(mfplat)
     test_MFCreateVideoMediaTypeFromVideoInfoHeader();
     test_MFInitMediaTypeFromVideoInfoHeader();
     test_MFInitMediaTypeFromAMMediaType();
+    test_MFCreatePathFromURL();
 
     CoUninitialize();
 }
