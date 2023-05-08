@@ -49,6 +49,16 @@ static const WCHAR systemW[] = {'S','y','s','t','e','m',0};
 static const WCHAR times_new_romanW[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0};
 static const WCHAR courier_newW[] = {'C','o','u','r','i','e','r',' ','N','e','w',0};
 
+static const struct gdi_dc_funcs psdrv_funcs;
+
+struct printer_info
+{
+    struct list entry;
+    const WCHAR *name;
+    PRINTERINFO *pi;
+};
+
+static struct list printer_info_list = LIST_INIT( printer_info_list );
 
 /* copied from kernelbase */
 static int muldiv(int a, int b, int c)
@@ -1250,24 +1260,150 @@ static BOOL CDECL get_text_extent_ex_point(PHYSDEV dev, const WCHAR *str, int co
     return TRUE;
 }
 
+static struct printer_info *find_printer_info(const WCHAR *name)
+{
+    struct printer_info *pi;
+
+    LIST_FOR_EACH_ENTRY(pi, &printer_info_list, struct printer_info, entry)
+    {
+        if (!wcscmp(pi->name, name))
+            return pi;
+    }
+    return NULL;
+}
+
+static PSDRV_PDEVICE *create_physdev(HDC hdc, const WCHAR *device,
+        const PSDRV_DEVMODE *devmode)
+{
+    struct printer_info *pi = find_printer_info(device);
+    PSDRV_PDEVICE *pdev;
+
+    if (!pi) return NULL;
+    if (!pi->pi->Fonts)
+    {
+        RASTERIZER_STATUS status;
+        if (!NtGdiGetRasterizerCaps(&status, sizeof(status)) ||
+                !(status.wFlags & TT_AVAILABLE) ||
+                !(status.wFlags & TT_ENABLED))
+        {
+            MESSAGE("Disabling printer %s since it has no builtin fonts and "
+                    "there are no TrueType fonts available.\n", debugstr_w(device));
+            return FALSE;
+        }
+    }
+
+    pdev = malloc(sizeof(*pdev));
+    if (!pdev) return NULL;
+
+    pdev->Devmode = malloc(sizeof(PSDRV_DEVMODE));
+    if (!pdev->Devmode)
+    {
+        free(pdev);
+        return NULL;
+    }
+
+    *pdev->Devmode = *pi->pi->Devmode;
+    pdev->pi = pi->pi;
+    pdev->logPixelsX = pi->pi->ppd->DefaultResolution;
+    pdev->logPixelsY = pi->pi->ppd->DefaultResolution;
+
+    if (devmode)
+    {
+        dump_devmode(&devmode->dmPublic);
+        merge_devmodes(pdev->Devmode, devmode, pi->pi);
+    }
+
+    update_dev_caps(pdev);
+    NtGdiSelectFont(hdc, GetStockObject(DEVICE_DEFAULT_FONT));
+    return pdev;
+}
+
+static BOOL CDECL create_dc(PHYSDEV *dev, const WCHAR *device,
+        const WCHAR *output, const DEVMODEW *devmode)
+{
+    PSDRV_PDEVICE *pdev;
+
+    TRACE("(%s %s %p)\n", debugstr_w(device), debugstr_w(output), devmode);
+
+    if (!device) return FALSE;
+    if (!(pdev = create_physdev((*dev)->hdc, device,
+                    (const PSDRV_DEVMODE *)devmode))) return FALSE;
+    push_dc_driver(dev, &pdev->dev, &psdrv_funcs);
+    return TRUE;
+}
+
+static BOOL CDECL create_compatible_dc(PHYSDEV orig, PHYSDEV *dev)
+{
+    PSDRV_PDEVICE *pdev, *orig_dev = get_psdrv_dev(orig);
+
+    if (!(pdev = create_physdev((*dev)->hdc, orig_dev->pi->friendly_name,
+                    orig_dev->Devmode))) return FALSE;
+    push_dc_driver(dev, &pdev->dev, &psdrv_funcs);
+    return TRUE;
+}
+
+static BOOL CDECL delete_dc(PHYSDEV dev)
+{
+    PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
+
+    TRACE("\n");
+
+    free(pdev->Devmode);
+    free(pdev);
+    return TRUE;
+}
+
+static const struct gdi_dc_funcs psdrv_funcs =
+{
+    .pCreateCompatibleDC = create_compatible_dc,
+    .pCreateDC = create_dc,
+    .pDeleteDC = delete_dc,
+    .pEnumFonts = enum_fonts,
+    .pExtEscape = ext_escape,
+    .pGetCharWidth = get_char_width,
+    .pGetDeviceCaps = get_device_caps,
+    .pGetTextExtentExPoint = get_text_extent_ex_point,
+    .pGetTextMetrics = get_text_metrics,
+    .pResetDC = reset_dc,
+    .pSelectFont = select_font,
+    .priority = GDI_PRIORITY_GRAPHICS_DRV
+};
+
 static NTSTATUS init_dc(void *arg)
 {
     struct init_dc_params *params = arg;
+    struct printer_info *pi;
 
-    params->funcs->pGetDeviceCaps = get_device_caps;
-    params->funcs->pResetDC = reset_dc;
-    params->funcs->pExtEscape = ext_escape;
-    params->funcs->pSelectFont = select_font;
-    params->funcs->pEnumFonts = enum_fonts;
-    params->funcs->pGetCharWidth = get_char_width;
-    params->funcs->pGetTextMetrics = get_text_metrics;
-    params->funcs->pGetTextExtentExPoint = get_text_extent_ex_point;
+    pi = find_printer_info(params->name);
+    if (!pi)
+    {
+        pi = malloc(sizeof(*pi));
+        if (!pi) return FALSE;
+
+        pi->name = params->name;
+        pi->pi = params->pi;
+        list_add_head(&printer_info_list, &pi->entry);
+    }
+
+    params->funcs = &psdrv_funcs;
     return TRUE;
+}
+
+static NTSTATUS free_printer_info(void *arg)
+{
+    struct printer_info *pi, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE(pi, next, &printer_info_list, struct printer_info, entry)
+    {
+        free(pi);
+    }
+    return 0;
 }
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     init_dc,
+    free_printer_info,
 };
 
 C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count);

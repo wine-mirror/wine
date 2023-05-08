@@ -28,8 +28,8 @@
 #include "winreg.h"
 #include "winnls.h"
 #include "winuser.h"
-#include "unixlib.h"
 #include "psdrv.h"
+#include "unixlib.h"
 #include "winspool.h"
 #include "wine/debug.h"
 
@@ -93,8 +93,6 @@ static const PSDRV_DEVMODE DefaultDevmode =
 HINSTANCE PSDRV_hInstance = 0;
 HANDLE PSDRV_Heap = 0;
 
-static struct gdi_dc_funcs psdrv_funcs;
-
 /*********************************************************************
  *	     DllMain
  *
@@ -109,16 +107,11 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 
 	case DLL_PROCESS_ATTACH:
         {
-            struct init_dc_params params = { &psdrv_funcs };
-
             PSDRV_hInstance = hinst;
             DisableThreadLibraryCalls(hinst);
 
             if (__wine_init_unix_call())
                 return FALSE;
-            if (!WINE_UNIX_CALL( unix_init_dc, &params ))
-                return FALSE;
-
 
 	    PSDRV_Heap = HeapCreate(0, 0x10000, 0);
 	    if (PSDRV_Heap == NULL)
@@ -133,6 +126,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 
 	case DLL_PROCESS_DETACH:
             if (reserved) break;
+            WINE_UNIX_CALL(unix_free_printer_info, NULL);
 	    HeapDestroy( PSDRV_Heap );
             break;
     }
@@ -383,55 +377,6 @@ PSDRV_PDEVICE *create_psdrv_physdev( HDC hdc, const WCHAR *device,
 }
 
 /**********************************************************************
- *	     PSDRV_CreateDC
- */
-static BOOL CDECL PSDRV_CreateDC( PHYSDEV *pdev, LPCWSTR device, LPCWSTR output,
-                                  const DEVMODEW *initData )
-{
-    PSDRV_PDEVICE *physDev;
-
-    TRACE("(%s %s %p)\n", debugstr_w(device), debugstr_w(output), initData);
-
-    if (!device) return FALSE;
-    if (!(physDev = create_psdrv_physdev( (*pdev)->hdc, device,
-                    (const PSDRV_DEVMODE *)initData ))) return FALSE;
-    push_dc_driver( pdev, &physDev->dev, &psdrv_funcs );
-    return TRUE;
-}
-
-
-/**********************************************************************
- *	     PSDRV_CreateCompatibleDC
- */
-static BOOL CDECL PSDRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
-{
-    PSDRV_PDEVICE *physDev, *orig_dev = get_psdrv_dev( orig );
-
-    if (!(physDev = create_psdrv_physdev( (*pdev)->hdc, orig_dev->pi->friendly_name,
-                    orig_dev->Devmode ))) return FALSE;
-    push_dc_driver( pdev, &physDev->dev, &psdrv_funcs );
-    return TRUE;
-}
-
-
-
-/**********************************************************************
- *	     PSDRV_DeleteDC
- */
-static BOOL CDECL PSDRV_DeleteDC( PHYSDEV dev )
-{
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
-
-    TRACE("\n");
-
-    HeapFree( GetProcessHeap(), 0, physDev->Devmode );
-    HeapFree( GetProcessHeap(), 0, physDev );
-
-    return TRUE;
-}
-
-
-/**********************************************************************
  *	     ResetDC   (WINEPS.@)
  */
 BOOL CDECL PSDRV_ResetDC( PHYSDEV dev, const DEVMODEW *lpInitData )
@@ -674,25 +619,22 @@ fail:
     return NULL;
 }
 
-
-static struct gdi_dc_funcs psdrv_funcs =
-{
-    .pCreateCompatibleDC = PSDRV_CreateCompatibleDC,
-    .pCreateDC = PSDRV_CreateDC,
-    .pDeleteDC = PSDRV_DeleteDC,
-    .priority = GDI_PRIORITY_GRAPHICS_DRV
-};
-
-
 /******************************************************************************
  *      PSDRV_get_gdi_driver
  */
 const struct gdi_dc_funcs * CDECL PSDRV_get_gdi_driver( unsigned int version, const WCHAR *name )
 {
+    PRINTERINFO *pi = PSDRV_FindPrinterInfo( name );
+    struct init_dc_params params = { NULL, pi, pi->friendly_name };
+
+    if (!pi)
+        return NULL;
     if (version != WINE_GDI_DRIVER_VERSION)
     {
         ERR( "version mismatch, gdi32 wants %u but wineps has %u\n", version, WINE_GDI_DRIVER_VERSION );
         return NULL;
     }
-    return &psdrv_funcs;
+    if (!WINE_UNIX_CALL( unix_init_dc, &params ))
+        return FALSE;
+    return params.funcs;
 }

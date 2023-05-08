@@ -32,10 +32,14 @@ struct font_info
 enum wineps_funcs
 {
     unix_init_dc,
+    unix_free_printer_info,
     unix_funcs_count,
 };
 
 struct init_dc_params
 {
-    struct gdi_dc_funcs *funcs;
+    const struct gdi_dc_funcs *funcs;
+    PRINTERINFO *pi;
+
+    const WCHAR *name;
 };
