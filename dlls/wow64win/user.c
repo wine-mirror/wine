@@ -704,7 +704,6 @@ static NTSTATUS WINAPI wow64_NtUserCallWindowsHook( void *arg, ULONG size )
         BOOL prev_unicode;
         BOOL next_unicode;
     } *params32;
-    void *ret_lparam = (void *)params->lparam;
     UINT lparam32_size = 0, module_size, size32;
     void *ret_ptr;
     ULONG ret_len;
@@ -738,13 +737,11 @@ static NTSTATUS WINAPI wow64_NtUserCallWindowsHook( void *arg, ULONG size )
     case WH_SYSMSGFILTER:
     case WH_MSGFILTER:
     case WH_GETMESSAGE:
-        msg_32to64( (MSG *)(params + 1), (const MSG32 *)(params32 + 1) );
-        if (ret_lparam)
+        if (params->lparam_size == sizeof(MSG))
         {
-            memcpy( ret_lparam, params + 1, params->lparam_size );
-            return ret;
+            msg_32to64( (MSG *)(params + 1), (const MSG32 *)(params32 + 1) );
+            return NtCallbackReturn( params + 1, params->lparam_size, ret );
         }
-        return NtCallbackReturn( params + 1, params->lparam_size, ret );
     }
 
     return ret;
