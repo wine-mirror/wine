@@ -82,12 +82,6 @@ static const PSDRV_DEVMODE DefaultDevmode =
 /* dmPanningWidth */    0,
 /* dmPanningHeight */   0
   },
-  { /* dmDocPrivate */
-    /* dummy */ 0
-  },
-  { /* dmDrvPrivate */
-    /* numInstalledOptions */ 0
-  }
 };
 
 HINSTANCE PSDRV_hInstance = 0;

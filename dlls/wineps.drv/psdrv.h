@@ -221,19 +221,6 @@ typedef struct {
 
 typedef struct {
     DEVMODEW			dmPublic;
-    struct _tagdocprivate {
-      int dummy;
-    }				dmDocPrivate;
-    struct _tagdrvprivate {
-      UINT	numInstalledOptions; /* Options at end of struct */
-    }				dmDrvPrivate;
-
-/* Now comes:
-
-numInstalledOptions of OPTIONs
-
-*/
-
 } PSDRV_DEVMODE;
 
 typedef struct
