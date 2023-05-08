@@ -687,7 +687,7 @@ static struct gdi_dc_funcs psdrv_funcs =
 /******************************************************************************
  *      PSDRV_get_gdi_driver
  */
-const struct gdi_dc_funcs * CDECL PSDRV_get_gdi_driver( unsigned int version )
+const struct gdi_dc_funcs * CDECL PSDRV_get_gdi_driver( unsigned int version, const WCHAR *name )
 {
     if (version != WINE_GDI_DRIVER_VERSION)
     {

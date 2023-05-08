@@ -42,7 +42,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION driver_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-typedef const void * (CDECL *driver_entry_point)( unsigned int version );
+typedef const void * (CDECL *driver_entry_point)( unsigned int version, const WCHAR *device );
 
 struct graphics_driver
 {

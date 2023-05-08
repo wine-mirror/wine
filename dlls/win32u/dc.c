@@ -719,8 +719,8 @@ HDC WINAPI NtGdiOpenDCW( UNICODE_STRING *device, const DEVMODEW *devmode, UNICOD
         funcs = get_display_driver();
     else if (hspool)
     {
-        const struct gdi_dc_funcs * (CDECL *wine_get_gdi_driver)( unsigned int ) = hspool;
-        funcs = wine_get_gdi_driver( WINE_GDI_DRIVER_VERSION );
+        const struct gdi_dc_funcs * (CDECL *wine_get_gdi_driver)( unsigned int, const WCHAR * ) = hspool;
+        funcs = wine_get_gdi_driver( WINE_GDI_DRIVER_VERSION, device ? device->Buffer : NULL );
     }
     if (!funcs)
     {
