@@ -1093,6 +1093,12 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
             hr = S_OK;
             break;
         }
+        case DBTYPE_VARIANT:
+        {
+            VariantInit(v);
+            hr = VariantCopy(v, (VARIANT *)src);
+            break;
+        }
         default: FIXME("Unimplemented conversion %04x -> VARIANT\n", src_type); return E_NOTIMPL;
         }
         break;

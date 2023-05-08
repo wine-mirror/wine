@@ -3947,15 +3947,10 @@ static void test_converttovar(void)
     V_VT(&var) = VT_UINT;
     V_UINT(&var) = 1234;
     hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_VARIANT, 0, &dst_len, &var, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    todo_wine
     ok(hr == S_OK, "got %08lx\n", hr);
-    todo_wine
     ok(dst_status == DBSTATUS_S_OK, "got %08lx\n", dst_status);
-    todo_wine
     ok(dst_len == sizeof(VARIANT), "got %Id\n", dst_len);
-    todo_wine
     ok(V_VT(&dst) == VT_UINT, "got %d\n", V_VT(&dst));
-    todo_wine
     ok(V_UINT(&dst) == 1234, "got %u\n", V_UINT(&dst));
     VariantClear(&dst);
 }
