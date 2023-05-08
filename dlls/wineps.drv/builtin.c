@@ -36,29 +36,29 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
-BOOL PSDRV_WriteSetBuiltinFont(PHYSDEV dev)
+BOOL PSDRV_WriteSetBuiltinFont(print_ctx *ctx)
 {
     struct font_info font_info;
     matrix size;
 
-    ExtEscape(dev->hdc, PSDRV_GET_BUILTIN_FONT_INFO, 0, NULL,
+    ExtEscape(ctx->dev.hdc, PSDRV_GET_BUILTIN_FONT_INFO, 0, NULL,
             sizeof(font_info), (char *)&font_info);
     size.xx = font_info.size.cx;
     size.yy = font_info.size.cy;
     size.xy = size.yx = 0;
-    return PSDRV_WriteSetFont(dev, font_info.font_name, size,
+    return PSDRV_WriteSetFont(ctx, font_info.font_name, size,
             font_info.escapement, FALSE);
 }
 
-BOOL PSDRV_WriteBuiltinGlyphShow(PHYSDEV dev, LPCWSTR str, INT count)
+BOOL PSDRV_WriteBuiltinGlyphShow(print_ctx *ctx, LPCWSTR str, INT count)
 {
     char name[32];
     int i;
 
     for (i = 0; i < count; ++i)
     {
-        ExtEscape(dev->hdc, PSDRV_GET_GLYPH_NAME, sizeof(str[i]), (const char *)&str[i], sizeof(name), name);
-	PSDRV_WriteGlyphShow(dev, name);
+        ExtEscape(ctx->dev.hdc, PSDRV_GET_GLYPH_NAME, sizeof(str[i]), (const char *)&str[i], sizeof(name), name);
+	PSDRV_WriteGlyphShow(ctx, name);
     }
 
     return TRUE;

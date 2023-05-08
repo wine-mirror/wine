@@ -217,46 +217,41 @@ static const char psbegindocument[] =
 static const char psenddocument[] =
 "\n%%EndDocument\n";
 
-void passthrough_enter(PHYSDEV dev)
+void passthrough_enter(print_ctx *ctx)
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+    if (ctx->job.passthrough_state != passthrough_none) return;
 
-    if (physDev->job.passthrough_state != passthrough_none) return;
-
-    write_spool(dev, psbegindocument, sizeof(psbegindocument) - 1);
-    physDev->job.passthrough_state = passthrough_active;
+    write_spool(ctx, psbegindocument, sizeof(psbegindocument) - 1);
+    ctx->job.passthrough_state = passthrough_active;
 }
 
-void passthrough_leave(PHYSDEV dev)
+void passthrough_leave(print_ctx *ctx)
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+    if (ctx->job.passthrough_state == passthrough_none) return;
 
-    if (physDev->job.passthrough_state == passthrough_none) return;
-
-    write_spool(dev, psenddocument, sizeof(psenddocument) - 1);
-    physDev->job.passthrough_state = passthrough_none;
+    write_spool(ctx, psenddocument, sizeof(psenddocument) - 1);
+    ctx->job.passthrough_state = passthrough_none;
 }
 
-DWORD PSDRV_WriteSpool(PHYSDEV dev, LPCSTR lpData, DWORD cch)
+DWORD PSDRV_WriteSpool(print_ctx *ctx, LPCSTR lpData, DWORD cch)
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     int num, num_left = cch;
 
-    if(physDev->job.quiet) {
+    if(ctx->job.quiet) {
         TRACE("ignoring output\n");
 	return 0;
     }
 
-    passthrough_leave(dev);
+    passthrough_leave(ctx);
 
-    if(physDev->job.OutOfPage) { /* Will get here after NEWFRAME Escape */
-        if( !PSDRV_StartPage(dev) )
+    if(ctx->job.OutOfPage) { /* Will get here after NEWFRAME Escape */
+        if( !PSDRV_StartPage(ctx) )
 	    return 0;
     }
 
     do {
         num = min(num_left, 0x8000);
-        if(write_spool( dev, lpData, num ) != num)
+        if(write_spool( ctx, lpData, num ) != num)
             return 0;
         lpData += num;
         num_left -= num;
@@ -266,16 +261,16 @@ DWORD PSDRV_WriteSpool(PHYSDEV dev, LPCSTR lpData, DWORD cch)
 }
 
 
-static INT PSDRV_WriteFeature(PHYSDEV dev, LPCSTR feature, LPCSTR value, LPCSTR invocation)
+static INT PSDRV_WriteFeature(print_ctx *ctx, LPCSTR feature, LPCSTR value, LPCSTR invocation)
 {
 
     char *buf = HeapAlloc( GetProcessHeap(), 0, sizeof(psbeginfeature) +
                            strlen(feature) + strlen(value));
 
     sprintf(buf, psbeginfeature, feature, value);
-    write_spool( dev, buf, strlen(buf) );
-    write_spool( dev, invocation, strlen(invocation) );
-    write_spool( dev, psendfeature, strlen(psendfeature) );
+    write_spool( ctx, buf, strlen(buf) );
+    write_spool( ctx, invocation, strlen(invocation) );
+    write_spool( ctx, psendfeature, strlen(psendfeature) );
 
     HeapFree( GetProcessHeap(), 0, buf );
     return 1;
@@ -350,9 +345,8 @@ struct ticket_info
     DUPLEX *duplex;
 };
 
-static void write_cups_job_ticket( PHYSDEV dev, const struct ticket_info *info )
+static void write_cups_job_ticket( print_ctx *ctx, const struct ticket_info *info )
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     char buf[256];
     int len;
 
@@ -364,7 +358,7 @@ static void write_cups_job_ticket( PHYSDEV dev, const struct ticket_info *info )
             memcpy( buf, media, sizeof(media) );
             strcat( buf, info->page->Name );
             strcat( buf, "\n");
-            write_spool( dev, buf, len - 1 );
+            write_spool( ctx, buf, len - 1 );
         }
         else
             WARN( "paper name %s will be too long for DSC\n", info->page->Name );
@@ -375,38 +369,37 @@ static void write_cups_job_ticket( PHYSDEV dev, const struct ticket_info *info )
         if (info->duplex->WinDuplex >= 1 && info->duplex->WinDuplex <= 3)
         {
             const char *str = cups_duplexes[ info->duplex->WinDuplex - 1 ];
-            write_spool( dev, str, strlen( str ) );
+            write_spool( ctx, str, strlen( str ) );
         }
     }
 
-    if (physDev->Devmode->dmPublic.dmCopies > 1)
+    if (ctx->Devmode->dmPublic.dmCopies > 1)
     {
         len = snprintf( buf, sizeof(buf), "%%cupsJobTicket: copies=%d\n",
-                        physDev->Devmode->dmPublic.dmCopies );
+                        ctx->Devmode->dmPublic.dmCopies );
         if (len > 0 && len < sizeof(buf))
-            write_spool( dev, buf, len );
+            write_spool( ctx, buf, len );
 
-        if (physDev->Devmode->dmPublic.dmFields & DM_COLLATE)
+        if (ctx->Devmode->dmPublic.dmFields & DM_COLLATE)
         {
-            if (physDev->Devmode->dmPublic.dmCollate == DMCOLLATE_FALSE)
-                write_spool( dev, cups_collate_false, sizeof(cups_collate_false) - 1 );
-            else if (physDev->Devmode->dmPublic.dmCollate == DMCOLLATE_TRUE)
-                write_spool( dev, cups_collate_true, sizeof(cups_collate_true) - 1 );
+            if (ctx->Devmode->dmPublic.dmCollate == DMCOLLATE_FALSE)
+                write_spool( ctx, cups_collate_false, sizeof(cups_collate_false) - 1 );
+            else if (ctx->Devmode->dmPublic.dmCollate == DMCOLLATE_TRUE)
+                write_spool( ctx, cups_collate_true, sizeof(cups_collate_true) - 1 );
         }
     }
 
-    if (!(physDev->Devmode->dmPublic.dmFields & DM_DEFAULTSOURCE) ||
-        physDev->Devmode->dmPublic.dmDefaultSource == DMBIN_AUTO)
-        write_spool( dev, cups_ap_d_inputslot, sizeof(cups_ap_d_inputslot) - 1 );
+    if (!(ctx->Devmode->dmPublic.dmFields & DM_DEFAULTSOURCE) ||
+        ctx->Devmode->dmPublic.dmDefaultSource == DMBIN_AUTO)
+        write_spool( ctx, cups_ap_d_inputslot, sizeof(cups_ap_d_inputslot) - 1 );
 }
 
-INT PSDRV_WriteHeader( PHYSDEV dev, LPCWSTR title )
+INT PSDRV_WriteHeader( print_ctx *ctx, LPCWSTR title )
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     char *buf, *escaped_title;
-    INPUTSLOT *slot = find_slot( physDev->pi->ppd, physDev->Devmode );
-    PAGESIZE *page = find_pagesize( physDev->pi->ppd, physDev->Devmode );
-    DUPLEX *duplex = find_duplex( physDev->pi->ppd, physDev->Devmode );
+    INPUTSLOT *slot = find_slot( ctx->pi->ppd, ctx->Devmode );
+    PAGESIZE *page = find_pagesize( ctx->pi->ppd, ctx->Devmode );
+    DUPLEX *duplex = find_duplex( ctx->pi->ppd, ctx->Devmode );
     int llx, lly, urx, ury;
     int ret, len;
     const char * dmOrientation;
@@ -416,14 +409,14 @@ INT PSDRV_WriteHeader( PHYSDEV dev, LPCWSTR title )
     TRACE("%s\n", debugstr_w(title));
 
     len = strlen( psadobe );
-    ret = write_spool( dev, psadobe, len );
+    ret = write_spool( ctx, psadobe, len );
     if (ret != len)
     {
         WARN("WriteSpool error\n");
         return 0;
     }
 
-    write_cups_job_ticket( dev, &ticket_info );
+    write_cups_job_ticket( ctx, &ticket_info );
 
     escaped_title = escape_title(title);
     buf = HeapAlloc( GetProcessHeap(), 0, sizeof(psheader) +
@@ -436,45 +429,44 @@ INT PSDRV_WriteHeader( PHYSDEV dev, LPCWSTR title )
 
     /* BBox co-ords are in default user co-ord system so urx < ury even in
        landscape mode */
-    llx = physDev->ImageableArea.left * 72.0 / physDev->logPixelsX;
-    lly = physDev->ImageableArea.bottom * 72.0 / physDev->logPixelsY;
-    urx = physDev->ImageableArea.right * 72.0 / physDev->logPixelsX;
-    ury = physDev->ImageableArea.top * 72.0 / physDev->logPixelsY;
+    llx = ctx->ImageableArea.left * 72.0 / ctx->logPixelsX;
+    lly = ctx->ImageableArea.bottom * 72.0 / ctx->logPixelsY;
+    urx = ctx->ImageableArea.right * 72.0 / ctx->logPixelsX;
+    ury = ctx->ImageableArea.top * 72.0 / ctx->logPixelsY;
     /* FIXME should do something better with BBox */
 
-    dmOrientation = (physDev->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE ? "Landscape" : "Portrait");
+    dmOrientation = (ctx->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE ? "Landscape" : "Portrait");
     sprintf(buf, psheader, escaped_title, llx, lly, urx, ury, dmOrientation);
 
     HeapFree(GetProcessHeap(), 0, escaped_title);
 
     len = strlen( buf );
-    write_spool( dev, buf, len );
+    write_spool( ctx, buf, len );
     HeapFree( GetProcessHeap(), 0, buf );
 
-    write_spool( dev, psbeginprolog, strlen(psbeginprolog) );
-    write_spool( dev, psprolog, strlen(psprolog) );
-    write_spool( dev, psendprolog, strlen(psendprolog) );
-    write_spool( dev, psbeginsetup, strlen(psbeginsetup) );
+    write_spool( ctx, psbeginprolog, strlen(psbeginprolog) );
+    write_spool( ctx, psprolog, strlen(psprolog) );
+    write_spool( ctx, psendprolog, strlen(psendprolog) );
+    write_spool( ctx, psbeginsetup, strlen(psbeginsetup) );
 
     if (slot && slot->InvocationString)
-        PSDRV_WriteFeature( dev, "*InputSlot", slot->Name, slot->InvocationString );
+        PSDRV_WriteFeature( ctx, "*InputSlot", slot->Name, slot->InvocationString );
 
     if (page && page->InvocationString)
-        PSDRV_WriteFeature( dev, "*PageSize", page->Name, page->InvocationString );
+        PSDRV_WriteFeature( ctx, "*PageSize", page->Name, page->InvocationString );
 
     if (duplex && duplex->InvocationString)
-        PSDRV_WriteFeature( dev, "*Duplex", duplex->Name, duplex->InvocationString );
+        PSDRV_WriteFeature( ctx, "*Duplex", duplex->Name, duplex->InvocationString );
 
-    write_spool( dev, psendsetup, strlen(psendsetup) );
+    write_spool( ctx, psendsetup, strlen(psendsetup) );
 
 
     return 1;
 }
 
 
-INT PSDRV_WriteFooter( PHYSDEV dev )
+INT PSDRV_WriteFooter( print_ctx *ctx )
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     char *buf;
     int ret = 1;
 
@@ -484,9 +476,9 @@ INT PSDRV_WriteFooter( PHYSDEV dev )
         return 0;
     }
 
-    sprintf(buf, psfooter, physDev->job.PageNo);
+    sprintf(buf, psfooter, ctx->job.PageNo);
 
-    if( write_spool( dev, buf, strlen(buf) ) != strlen(buf) ) {
+    if( write_spool( ctx, buf, strlen(buf) ) != strlen(buf) ) {
         WARN("WriteSpool error\n");
         ret = 0;
     }
@@ -496,9 +488,9 @@ INT PSDRV_WriteFooter( PHYSDEV dev )
 
 
 
-INT PSDRV_WriteEndPage( PHYSDEV dev )
+INT PSDRV_WriteEndPage( print_ctx *ctx )
 {
-    if( write_spool( dev, psendpage, sizeof(psendpage)-1 ) != sizeof(psendpage)-1 ) {
+    if( write_spool( ctx, psendpage, sizeof(psendpage)-1 ) != sizeof(psendpage)-1 ) {
         WARN("WriteSpool error\n");
 	return 0;
     }
@@ -508,15 +500,14 @@ INT PSDRV_WriteEndPage( PHYSDEV dev )
 
 
 
-INT PSDRV_WriteNewPage( PHYSDEV dev )
+INT PSDRV_WriteNewPage( print_ctx *ctx )
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     char *buf;
     char name[100];
     signed int xtrans, ytrans, rotation;
     int ret = 1;
 
-    sprintf(name, "%d", physDev->job.PageNo);
+    sprintf(name, "%d", ctx->job.PageNo);
 
     buf = HeapAlloc( GetProcessHeap(), 0, sizeof(psnewpage) + 200 );
     if(!buf) {
@@ -524,27 +515,27 @@ INT PSDRV_WriteNewPage( PHYSDEV dev )
         return 0;
     }
 
-    if(physDev->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) {
-        if(physDev->pi->ppd->LandscapeOrientation == -90) {
-	    xtrans = physDev->ImageableArea.right;
-	    ytrans = physDev->ImageableArea.top;
+    if(ctx->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) {
+        if(ctx->pi->ppd->LandscapeOrientation == -90) {
+	    xtrans = ctx->ImageableArea.right;
+	    ytrans = ctx->ImageableArea.top;
 	    rotation = 90;
 	} else {
-	    xtrans = physDev->ImageableArea.left;
-	    ytrans = physDev->ImageableArea.bottom;
+	    xtrans = ctx->ImageableArea.left;
+	    ytrans = ctx->ImageableArea.bottom;
 	    rotation = -90;
 	}
     } else {
-        xtrans = physDev->ImageableArea.left;
-	ytrans = physDev->ImageableArea.top;
+        xtrans = ctx->ImageableArea.left;
+	ytrans = ctx->ImageableArea.top;
 	rotation = 0;
     }
 
-    sprintf(buf, psnewpage, name, physDev->job.PageNo,
-	    physDev->logPixelsX, physDev->logPixelsY,
+    sprintf(buf, psnewpage, name, ctx->job.PageNo,
+	    ctx->logPixelsX, ctx->logPixelsY,
 	    xtrans, ytrans, rotation);
 
-    if( write_spool( dev, buf, strlen(buf) ) != strlen(buf) ) {
+    if( write_spool( ctx, buf, strlen(buf) ) != strlen(buf) ) {
         WARN("WriteSpool error\n");
         ret = 0;
     }
@@ -553,40 +544,40 @@ INT PSDRV_WriteNewPage( PHYSDEV dev )
 }
 
 
-BOOL PSDRV_WriteMoveTo(PHYSDEV dev, INT x, INT y)
+BOOL PSDRV_WriteMoveTo(print_ctx *ctx, INT x, INT y)
 {
     char buf[100];
 
     sprintf(buf, psmoveto, x, y);
-    return PSDRV_WriteSpool(dev, buf, strlen(buf));
+    return PSDRV_WriteSpool(ctx, buf, strlen(buf));
 }
 
-BOOL PSDRV_WriteLineTo(PHYSDEV dev, INT x, INT y)
+BOOL PSDRV_WriteLineTo(print_ctx *ctx, INT x, INT y)
 {
     char buf[100];
 
     sprintf(buf, pslineto, x, y);
-    return PSDRV_WriteSpool(dev, buf, strlen(buf));
+    return PSDRV_WriteSpool(ctx, buf, strlen(buf));
 }
 
 
-BOOL PSDRV_WriteStroke(PHYSDEV dev)
+BOOL PSDRV_WriteStroke(print_ctx *ctx)
 {
-    return PSDRV_WriteSpool(dev, psstroke, sizeof(psstroke)-1);
+    return PSDRV_WriteSpool(ctx, psstroke, sizeof(psstroke)-1);
 }
 
 
 
-BOOL PSDRV_WriteRectangle(PHYSDEV dev, INT x, INT y, INT width,
+BOOL PSDRV_WriteRectangle(print_ctx *ctx, INT x, INT y, INT width,
 			INT height)
 {
     char buf[100];
 
     sprintf(buf, psrectangle, x, y, width, height, -width);
-    return PSDRV_WriteSpool(dev, buf, strlen(buf));
+    return PSDRV_WriteSpool(ctx, buf, strlen(buf));
 }
 
-BOOL PSDRV_WriteArc(PHYSDEV dev, INT x, INT y, INT w, INT h, double ang1,
+BOOL PSDRV_WriteArc(print_ctx *ctx, INT x, INT y, INT w, INT h, double ang1,
 		      double ang2)
 {
     char buf[256];
@@ -596,18 +587,18 @@ BOOL PSDRV_WriteArc(PHYSDEV dev, INT x, INT y, INT w, INT h, double ang1,
     push_lc_numeric("C");
     sprintf(buf, psarc, x, y, w, h, -ang2, -ang1);
     pop_lc_numeric();
-    return PSDRV_WriteSpool(dev, buf, strlen(buf));
+    return PSDRV_WriteSpool(ctx, buf, strlen(buf));
 }
 
-BOOL PSDRV_WriteCurveTo(PHYSDEV dev, POINT pts[3])
+BOOL PSDRV_WriteCurveTo(print_ctx *ctx, POINT pts[3])
 {
     char buf[256];
 
     sprintf(buf, pscurveto, pts[0].x, pts[0].y, pts[1].x, pts[1].y, pts[2].x, pts[2].y );
-    return PSDRV_WriteSpool(dev, buf, strlen(buf));
+    return PSDRV_WriteSpool(ctx, buf, strlen(buf));
 }
 
-BOOL PSDRV_WriteSetFont(PHYSDEV dev, const char *name, matrix size, INT escapement, BOOL fake_italic)
+BOOL PSDRV_WriteSetFont(print_ctx *ctx, const char *name, matrix size, INT escapement, BOOL fake_italic)
 {
     char *buf;
 
@@ -619,46 +610,45 @@ BOOL PSDRV_WriteSetFont(PHYSDEV dev, const char *name, matrix size, INT escapeme
     }
 
     sprintf( buf, psfindfont, name );
-    PSDRV_WriteSpool( dev, buf, strlen(buf) );
+    PSDRV_WriteSpool( ctx, buf, strlen(buf) );
 
-    if (fake_italic) PSDRV_WriteSpool( dev, psfakeitalic, sizeof(psfakeitalic) - 1 );
+    if (fake_italic) PSDRV_WriteSpool( ctx, psfakeitalic, sizeof(psfakeitalic) - 1 );
 
     sprintf( buf, pssizematrix, size.xx, size.xy, size.yx, size.yy );
-    PSDRV_WriteSpool( dev, buf, strlen(buf) );
+    PSDRV_WriteSpool( ctx, buf, strlen(buf) );
 
-    if (fake_italic) PSDRV_WriteSpool( dev, psconcat, sizeof(psconcat) - 1 );
+    if (fake_italic) PSDRV_WriteSpool( ctx, psconcat, sizeof(psconcat) - 1 );
 
     if (escapement)
     {
         sprintf( buf, psrotatefont, -escapement );
-        PSDRV_WriteSpool( dev, buf, strlen(buf) );
+        PSDRV_WriteSpool( ctx, buf, strlen(buf) );
     }
 
-    PSDRV_WriteSpool( dev, pssetfont, sizeof(pssetfont) - 1 );
+    PSDRV_WriteSpool( ctx, pssetfont, sizeof(pssetfont) - 1 );
     HeapFree( GetProcessHeap(), 0, buf );
 
     return TRUE;
 }
 
-BOOL PSDRV_WriteSetColor(PHYSDEV dev, PSCOLOR *color)
+BOOL PSDRV_WriteSetColor(print_ctx *ctx, PSCOLOR *color)
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     char buf[256];
 
-    PSDRV_CopyColor(&physDev->inkColor, color);
+    PSDRV_CopyColor(&ctx->inkColor, color);
     switch(color->type) {
     case PSCOLOR_RGB:
         push_lc_numeric("C");
         sprintf(buf, pssetrgbcolor, color->value.rgb.r, color->value.rgb.g,
 		color->value.rgb.b);
         pop_lc_numeric();
-	return PSDRV_WriteSpool(dev, buf, strlen(buf));
+	return PSDRV_WriteSpool(ctx, buf, strlen(buf));
 
     case PSCOLOR_GRAY:
         push_lc_numeric("C");
         sprintf(buf, pssetgray, color->value.gray.i);
         pop_lc_numeric();
-	return PSDRV_WriteSpool(dev, buf, strlen(buf));
+	return PSDRV_WriteSpool(ctx, buf, strlen(buf));
 
     default:
         ERR("Unknown colour type %d\n", color->type);
@@ -668,31 +658,30 @@ BOOL PSDRV_WriteSetColor(PHYSDEV dev, PSCOLOR *color)
     return FALSE;
 }
 
-BOOL PSDRV_WriteSetPen(PHYSDEV dev)
+BOOL PSDRV_WriteSetPen(print_ctx *ctx)
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     char buf[256];
     DWORD i, pos;
 
-    sprintf(buf, pssetline, physDev->pen.width, physDev->pen.join, physDev->pen.endcap);
-    PSDRV_WriteSpool(dev, buf, strlen(buf));
+    sprintf(buf, pssetline, ctx->pen.width, ctx->pen.join, ctx->pen.endcap);
+    PSDRV_WriteSpool(ctx, buf, strlen(buf));
 
-    if (physDev->pen.dash_len)
+    if (ctx->pen.dash_len)
     {
-        for (i = pos = 0; i < physDev->pen.dash_len; i++)
-            pos += sprintf( buf + pos, " %lu", physDev->pen.dash[i] );
+        for (i = pos = 0; i < ctx->pen.dash_len; i++)
+            pos += sprintf( buf + pos, " %lu", ctx->pen.dash[i] );
         buf[0] = '[';
         sprintf(buf + pos, "] %u setdash\n", 0);
     }
     else
         sprintf(buf, "[] %u setdash\n", 0);
 
-   PSDRV_WriteSpool(dev, buf, strlen(buf));
+   PSDRV_WriteSpool(ctx, buf, strlen(buf));
 	
    return TRUE;
 }
 
-BOOL PSDRV_WriteGlyphShow(PHYSDEV dev, LPCSTR g_name)
+BOOL PSDRV_WriteGlyphShow(print_ctx *ctx, LPCSTR g_name)
 {
     char    buf[128];
     int     l;
@@ -704,79 +693,79 @@ BOOL PSDRV_WriteGlyphShow(PHYSDEV dev, LPCSTR g_name)
 	return FALSE;
     }
 
-    PSDRV_WriteSpool(dev, buf, l);
+    PSDRV_WriteSpool(ctx, buf, l);
     return TRUE;
 }
 
-BOOL PSDRV_WriteFill(PHYSDEV dev)
+BOOL PSDRV_WriteFill(print_ctx *ctx)
 {
-    return PSDRV_WriteSpool(dev, psfill, sizeof(psfill)-1);
+    return PSDRV_WriteSpool(ctx, psfill, sizeof(psfill)-1);
 }
 
-BOOL PSDRV_WriteEOFill(PHYSDEV dev)
+BOOL PSDRV_WriteEOFill(print_ctx *ctx)
 {
-    return PSDRV_WriteSpool(dev, pseofill, sizeof(pseofill)-1);
+    return PSDRV_WriteSpool(ctx, pseofill, sizeof(pseofill)-1);
 }
 
-BOOL PSDRV_WriteGSave(PHYSDEV dev)
+BOOL PSDRV_WriteGSave(print_ctx *ctx)
 {
-    return PSDRV_WriteSpool(dev, psgsave, sizeof(psgsave)-1);
+    return PSDRV_WriteSpool(ctx, psgsave, sizeof(psgsave)-1);
 }
 
-BOOL PSDRV_WriteGRestore(PHYSDEV dev)
+BOOL PSDRV_WriteGRestore(print_ctx *ctx)
 {
-    return PSDRV_WriteSpool(dev, psgrestore, sizeof(psgrestore)-1);
+    return PSDRV_WriteSpool(ctx, psgrestore, sizeof(psgrestore)-1);
 }
 
-BOOL PSDRV_WriteNewPath(PHYSDEV dev)
+BOOL PSDRV_WriteNewPath(print_ctx *ctx)
 {
-    return PSDRV_WriteSpool(dev, psnewpath, sizeof(psnewpath)-1);
+    return PSDRV_WriteSpool(ctx, psnewpath, sizeof(psnewpath)-1);
 }
 
-BOOL PSDRV_WriteClosePath(PHYSDEV dev)
+BOOL PSDRV_WriteClosePath(print_ctx *ctx)
 {
-    return PSDRV_WriteSpool(dev, psclosepath, sizeof(psclosepath)-1);
+    return PSDRV_WriteSpool(ctx, psclosepath, sizeof(psclosepath)-1);
 }
 
-BOOL PSDRV_WriteClip(PHYSDEV dev)
+BOOL PSDRV_WriteClip(print_ctx *ctx)
 {
-    return PSDRV_WriteSpool(dev, psclip, sizeof(psclip)-1);
+    return PSDRV_WriteSpool(ctx, psclip, sizeof(psclip)-1);
 }
 
-BOOL PSDRV_WriteEOClip(PHYSDEV dev)
+BOOL PSDRV_WriteEOClip(print_ctx *ctx)
 {
-    return PSDRV_WriteSpool(dev, pseoclip, sizeof(pseoclip)-1);
+    return PSDRV_WriteSpool(ctx, pseoclip, sizeof(pseoclip)-1);
 }
 
-BOOL PSDRV_WriteHatch(PHYSDEV dev)
+BOOL PSDRV_WriteHatch(print_ctx *ctx)
 {
-    return PSDRV_WriteSpool(dev, pshatch, sizeof(pshatch)-1);
+    return PSDRV_WriteSpool(ctx, pshatch, sizeof(pshatch)-1);
 }
 
-BOOL PSDRV_WriteRotate(PHYSDEV dev, float ang)
+BOOL PSDRV_WriteRotate(print_ctx *ctx, float ang)
 {
     char buf[256];
 
     push_lc_numeric("C");
     sprintf(buf, psrotate, ang);
     pop_lc_numeric();
-    return PSDRV_WriteSpool(dev, buf, strlen(buf));
+    return PSDRV_WriteSpool(ctx, buf, strlen(buf));
 }
 
-BOOL PSDRV_WriteIndexColorSpaceBegin(PHYSDEV dev, int size)
+BOOL PSDRV_WriteIndexColorSpaceBegin(print_ctx *ctx, int size)
 {
     char buf[256];
     sprintf(buf, "[/Indexed /DeviceRGB %d\n<\n", size);
-    return PSDRV_WriteSpool(dev, buf, strlen(buf));
+    return PSDRV_WriteSpool(ctx, buf, strlen(buf));
 }
 
-BOOL PSDRV_WriteIndexColorSpaceEnd(PHYSDEV dev)
+BOOL PSDRV_WriteIndexColorSpaceEnd(print_ctx *ctx)
 {
     static const char buf[] = ">\n] setcolorspace\n";
-    return PSDRV_WriteSpool(dev, buf, sizeof(buf) - 1);
+    return PSDRV_WriteSpool(ctx, buf, sizeof(buf) - 1);
 }
 
-static BOOL PSDRV_WriteRGB(PHYSDEV dev, COLORREF *map, int number)
+static BOOL PSDRV_WriteRGB(print_ctx *ctx, COLORREF *map, int number)
 {
     char *buf = HeapAlloc( GetProcessHeap(), 0, number * 7 + 1 ), *ptr;
     int i;
@@ -788,12 +777,12 @@ static BOOL PSDRV_WriteRGB(PHYSDEV dev, COLORREF *map, int number)
 		((i & 0x7) == 0x7) || (i == number - 1) ? '\n' : ' ');
 	ptr += 7;
     }
-    PSDRV_WriteSpool(dev, buf, number * 7);
+    PSDRV_WriteSpool(ctx, buf, number * 7);
     HeapFree( GetProcessHeap(), 0, buf );
     return TRUE;
 }
 
-BOOL PSDRV_WriteRGBQUAD(PHYSDEV dev, const RGBQUAD *rgb, int number)
+BOOL PSDRV_WriteRGBQUAD(print_ctx *ctx, const RGBQUAD *rgb, int number)
 {
     char *buf = HeapAlloc( GetProcessHeap(), 0, number * 7 + 1 ), *ptr;
     int i;
@@ -803,12 +792,12 @@ BOOL PSDRV_WriteRGBQUAD(PHYSDEV dev, const RGBQUAD *rgb, int number)
         ptr += sprintf(ptr, "%02x%02x%02x%c", rgb->rgbRed, rgb->rgbGreen, rgb->rgbBlue,
                        ((i & 0x7) == 0x7) || (i == number - 1) ? '\n' : ' ');
 
-    PSDRV_WriteSpool(dev, buf, ptr - buf);
+    PSDRV_WriteSpool(ctx, buf, ptr - buf);
     HeapFree( GetProcessHeap(), 0, buf );
     return TRUE;
 }
 
-static BOOL PSDRV_WriteImageDict(PHYSDEV dev, WORD depth, BOOL grayscale,
+static BOOL PSDRV_WriteImageDict(print_ctx *ctx, WORD depth, BOOL grayscale,
 				 INT widthSrc, INT heightSrc, char *bits, BOOL top_down)
 {
     static const char start[] = "<<\n"
@@ -829,7 +818,7 @@ static BOOL PSDRV_WriteImageDict(PHYSDEV dev, WORD depth, BOOL grayscale,
         sprintf(buf, start, widthSrc, heightSrc,
                 (depth < 8) ? depth : 8, widthSrc, -heightSrc, heightSrc);
 
-    PSDRV_WriteSpool(dev, buf, strlen(buf));
+    PSDRV_WriteSpool(ctx, buf, strlen(buf));
 
     switch(depth) {
     case 8:
@@ -852,19 +841,19 @@ static BOOL PSDRV_WriteImageDict(PHYSDEV dev, WORD depth, BOOL grayscale,
 	break;
     }
 
-    PSDRV_WriteSpool(dev, buf, strlen(buf));
+    PSDRV_WriteSpool(ctx, buf, strlen(buf));
 
     if(!bits) {
-        PSDRV_WriteSpool(dev, end, sizeof(end) - 1);
+        PSDRV_WriteSpool(ctx, end, sizeof(end) - 1);
     } else {
         sprintf(buf, endbits, bits);
-        PSDRV_WriteSpool(dev, buf, strlen(buf));
+        PSDRV_WriteSpool(ctx, buf, strlen(buf));
     }
 
     return TRUE;
 }
 
-BOOL PSDRV_WriteImage(PHYSDEV dev, WORD depth, BOOL grayscale, INT xDst, INT yDst,
+BOOL PSDRV_WriteImage(print_ctx *ctx, WORD depth, BOOL grayscale, INT xDst, INT yDst,
 		      INT widthDst, INT heightDst, INT widthSrc,
 		      INT heightSrc, BOOL mask, BOOL top_down)
 {
@@ -874,17 +863,17 @@ BOOL PSDRV_WriteImage(PHYSDEV dev, WORD depth, BOOL grayscale, INT xDst, INT yDs
     char buf[100];
 
     sprintf(buf, start, xDst, yDst, widthDst, heightDst);
-    PSDRV_WriteSpool(dev, buf, strlen(buf));
-    PSDRV_WriteImageDict(dev, depth, grayscale, widthSrc, heightSrc, NULL, top_down);
+    PSDRV_WriteSpool(ctx, buf, strlen(buf));
+    PSDRV_WriteImageDict(ctx, depth, grayscale, widthSrc, heightSrc, NULL, top_down);
     if(mask)
-        PSDRV_WriteSpool(dev, imagemask, sizeof(imagemask) - 1);
+        PSDRV_WriteSpool(ctx, imagemask, sizeof(imagemask) - 1);
     else
-        PSDRV_WriteSpool(dev, image, sizeof(image) - 1);
+        PSDRV_WriteSpool(ctx, image, sizeof(image) - 1);
     return TRUE;
 }
 
 
-BOOL PSDRV_WriteBytes(PHYSDEV dev, const BYTE *bytes, DWORD number)
+BOOL PSDRV_WriteBytes(print_ctx *ctx, const BYTE *bytes, DWORD number)
 {
     char *buf = HeapAlloc( GetProcessHeap(), 0, number * 3 + 1 );
     char *ptr;
@@ -900,19 +889,19 @@ BOOL PSDRV_WriteBytes(PHYSDEV dev, const BYTE *bytes, DWORD number)
             ptr++;
         }
     }
-    PSDRV_WriteSpool(dev, buf, ptr - buf);
+    PSDRV_WriteSpool(ctx, buf, ptr - buf);
     HeapFree( GetProcessHeap(), 0, buf );
     return TRUE;
 }
 
-BOOL PSDRV_WriteData(PHYSDEV dev, const BYTE *data, DWORD number)
+BOOL PSDRV_WriteData(print_ctx *ctx, const BYTE *data, DWORD number)
 {
     int num, num_left = number;
 
     do {
         num = min(num_left, 60);
-        PSDRV_WriteSpool(dev, (LPCSTR)data, num);
-        PSDRV_WriteSpool(dev, "\n", 1);
+        PSDRV_WriteSpool(ctx, (LPCSTR)data, num);
+        PSDRV_WriteSpool(ctx, "\n", 1);
         data += num;
         num_left -= num;
     } while(num_left);
@@ -920,45 +909,44 @@ BOOL PSDRV_WriteData(PHYSDEV dev, const BYTE *data, DWORD number)
     return TRUE;
 }
 
-BOOL PSDRV_WriteArrayPut(PHYSDEV dev, CHAR *pszArrayName, INT nIndex, LONG lObject)
+BOOL PSDRV_WriteArrayPut(print_ctx *ctx, CHAR *pszArrayName, INT nIndex, LONG lObject)
 {
     char buf[100];
 
     sprintf(buf, psarrayput, pszArrayName, nIndex, lObject);
-    return PSDRV_WriteSpool(dev, buf, strlen(buf));
+    return PSDRV_WriteSpool(ctx, buf, strlen(buf));
 }
 
-BOOL PSDRV_WriteArrayDef(PHYSDEV dev, CHAR *pszArrayName, INT nSize)
+BOOL PSDRV_WriteArrayDef(print_ctx *ctx, CHAR *pszArrayName, INT nSize)
 {
     char buf[100];
 
     sprintf(buf, psarraydef, pszArrayName, nSize);
-    return PSDRV_WriteSpool(dev, buf, strlen(buf));
+    return PSDRV_WriteSpool(ctx, buf, strlen(buf));
 }
 
-BOOL PSDRV_WriteRectClip(PHYSDEV dev, INT x, INT y, INT w, INT h)
+BOOL PSDRV_WriteRectClip(print_ctx *ctx, INT x, INT y, INT w, INT h)
 {
     char buf[100];
 
     sprintf(buf, psrectclip, x, y, w, h);
-    return PSDRV_WriteSpool(dev, buf, strlen(buf));
+    return PSDRV_WriteSpool(ctx, buf, strlen(buf));
 }
 
-BOOL PSDRV_WriteRectClip2(PHYSDEV dev, CHAR *pszArrayName)
+BOOL PSDRV_WriteRectClip2(print_ctx *ctx, CHAR *pszArrayName)
 {
     char buf[100];
 
     sprintf(buf, psrectclip2, pszArrayName);
-    return PSDRV_WriteSpool(dev, buf, strlen(buf));
+    return PSDRV_WriteSpool(ctx, buf, strlen(buf));
 }
 
-BOOL PSDRV_WriteDIBPatternDict(PHYSDEV dev, const BITMAPINFO *bmi, BYTE *bits, UINT usage)
+BOOL PSDRV_WriteDIBPatternDict(print_ctx *ctx, const BITMAPINFO *bmi, BYTE *bits, UINT usage)
 {
     static const char mypat[] = "/mypat\n";
     static const char do_pattern[] = "<<\n /PaintType 1\n /PatternType 1\n /TilingType 1\n "
       "/BBox [0 0 %d %d]\n /XStep %d\n /YStep %d\n /PaintProc {\n  begin\n  0 0 translate\n"
       "  %d %d scale\n  mypat image\n  end\n }\n>>\n matrix makepattern setpattern\n";
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     char *buf, *ptr;
     INT w, h, x, y, w_mult, h_mult, abs_height = abs( bmi->bmiHeader.biHeight );
     COLORREF map[2];
@@ -983,21 +971,21 @@ BOOL PSDRV_WriteDIBPatternDict(PHYSDEV dev, const BITMAPINFO *bmi, BYTE *bits, U
 	    ptr += 2;
 	}
     }
-    PSDRV_WriteSpool(dev, mypat, sizeof(mypat) - 1);
-    PSDRV_WriteImageDict(dev, 1, FALSE, 8, 8, buf, bmi->bmiHeader.biHeight < 0);
-    PSDRV_WriteSpool(dev, "def\n", 4);
+    PSDRV_WriteSpool(ctx, mypat, sizeof(mypat) - 1);
+    PSDRV_WriteImageDict(ctx, 1, FALSE, 8, 8, buf, bmi->bmiHeader.biHeight < 0);
+    PSDRV_WriteSpool(ctx, "def\n", 4);
 
-    PSDRV_WriteIndexColorSpaceBegin(dev, 1);
-    map[0] = GetTextColor( dev->hdc );
-    map[1] = GetBkColor( dev->hdc );
-    PSDRV_WriteRGB(dev, map, 2);
-    PSDRV_WriteIndexColorSpaceEnd(dev);
+    PSDRV_WriteIndexColorSpaceBegin(ctx, 1);
+    map[0] = GetTextColor( ctx->dev.hdc );
+    map[1] = GetBkColor( ctx->dev.hdc );
+    PSDRV_WriteRGB(ctx, map, 2);
+    PSDRV_WriteIndexColorSpaceEnd(ctx);
 
     /* Windows seems to scale patterns so that a one pixel corresponds to 1/300" */
-    w_mult = (physDev->logPixelsX + 150) / 300;
-    h_mult = (physDev->logPixelsY + 150) / 300;
+    w_mult = (ctx->logPixelsX + 150) / 300;
+    h_mult = (ctx->logPixelsY + 150) / 300;
     sprintf(buf, do_pattern, w * w_mult, h * h_mult, w * w_mult, h * h_mult, w * w_mult, h * h_mult);
-    PSDRV_WriteSpool(dev,  buf, strlen(buf));
+    PSDRV_WriteSpool(ctx,  buf, strlen(buf));
     HeapFree( GetProcessHeap(), 0, buf );
     return TRUE;
 }

@@ -28,18 +28,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
  *
  *                    PSDRV_PatBlt
  */
-BOOL CDECL PSDRV_PatBlt(PHYSDEV dev, struct bitblt_coords *dst, DWORD dwRop)
+BOOL CDECL PSDRV_PatBlt(print_ctx *ctx, struct bitblt_coords *dst, DWORD dwRop)
 {
     switch(dwRop) {
     case PATCOPY:
-        PSDRV_SetClip(dev);
-        PSDRV_WriteGSave(dev);
-        PSDRV_WriteRectangle(dev, dst->visrect.left, dst->visrect.top,
+        PSDRV_SetClip(ctx);
+        PSDRV_WriteGSave(ctx);
+        PSDRV_WriteRectangle(ctx, dst->visrect.left, dst->visrect.top,
                              dst->visrect.right - dst->visrect.left,
                              dst->visrect.bottom - dst->visrect.top );
-	PSDRV_Brush(dev, FALSE);
-	PSDRV_WriteGRestore(dev);
-        PSDRV_ResetClip(dev);
+	PSDRV_Brush(ctx, FALSE);
+	PSDRV_WriteGRestore(ctx);
+        PSDRV_ResetClip(ctx);
 	return TRUE;
 
     case BLACKNESS:
@@ -47,16 +47,16 @@ BOOL CDECL PSDRV_PatBlt(PHYSDEV dev, struct bitblt_coords *dst, DWORD dwRop)
       {
 	PSCOLOR pscol;
 
-        PSDRV_SetClip(dev);
-        PSDRV_WriteGSave(dev);
-        PSDRV_WriteRectangle(dev, dst->visrect.left, dst->visrect.top,
+        PSDRV_SetClip(ctx);
+        PSDRV_WriteGSave(ctx);
+        PSDRV_WriteRectangle(ctx, dst->visrect.left, dst->visrect.top,
                              dst->visrect.right - dst->visrect.left,
                              dst->visrect.bottom - dst->visrect.top );
-	PSDRV_CreateColor( dev, &pscol, (dwRop == BLACKNESS) ? RGB(0,0,0) : RGB(0xff,0xff,0xff) );
-	PSDRV_WriteSetColor(dev, &pscol);
-	PSDRV_WriteFill(dev);
-	PSDRV_WriteGRestore(dev);
-        PSDRV_ResetClip(dev);
+	PSDRV_CreateColor( ctx, &pscol, (dwRop == BLACKNESS) ? RGB(0,0,0) : RGB(0xff,0xff,0xff) );
+	PSDRV_WriteSetColor(ctx, &pscol);
+	PSDRV_WriteFill(ctx);
+	PSDRV_WriteGRestore(ctx);
+        PSDRV_ResetClip(ctx);
 	return TRUE;
       }
     default:

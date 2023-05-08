@@ -60,6 +60,13 @@ struct printer_info
 
 static struct list printer_info_list = LIST_INIT( printer_info_list );
 
+typedef print_ctx PSDRV_PDEVICE;
+
+static inline PSDRV_PDEVICE *get_psdrv_dev(PHYSDEV dev)
+{
+    return (PSDRV_PDEVICE *)dev;
+}
+
 /* copied from kernelbase */
 static int muldiv(int a, int b, int c)
 {

@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
  *
  * Performs a world-to-viewport transformation on the specified width.
  */
-INT PSDRV_XWStoDS( PHYSDEV dev, INT width )
+INT PSDRV_XWStoDS( print_ctx *ctx, INT width )
 {
     POINT pt[2];
 
@@ -44,47 +44,45 @@ INT PSDRV_XWStoDS( PHYSDEV dev, INT width )
     pt[0].y = 0;
     pt[1].x = width;
     pt[1].y = 0;
-    LPtoDP( dev->hdc, pt, 2 );
+    LPtoDP( ctx->dev.hdc, pt, 2 );
     return pt[1].x - pt[0].x;
 }
 
 /***********************************************************************
  *           PSDRV_DrawLine
  */
-static void PSDRV_DrawLine( PHYSDEV dev )
+static void PSDRV_DrawLine( print_ctx *ctx )
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
-
-    if(physDev->pathdepth)
+    if(ctx->pathdepth)
         return;
 
-    if (physDev->pen.style == PS_NULL)
-	PSDRV_WriteNewPath(dev);
+    if (ctx->pen.style == PS_NULL)
+	PSDRV_WriteNewPath(ctx);
     else
-	PSDRV_WriteStroke(dev);
+	PSDRV_WriteStroke(ctx);
 }
 
 /***********************************************************************
  *           PSDRV_LineTo
  */
-BOOL CDECL PSDRV_LineTo(PHYSDEV dev, INT x, INT y)
+BOOL CDECL PSDRV_LineTo(print_ctx *ctx, INT x, INT y)
 {
     POINT pt[2];
 
     TRACE("%d %d\n", x, y);
 
-    GetCurrentPositionEx( dev->hdc, pt );
+    GetCurrentPositionEx( ctx->dev.hdc, pt );
     pt[1].x = x;
     pt[1].y = y;
-    LPtoDP( dev->hdc, pt, 2 );
+    LPtoDP( ctx->dev.hdc, pt, 2 );
 
-    PSDRV_SetPen(dev);
+    PSDRV_SetPen(ctx);
 
-    PSDRV_SetClip(dev);
-    PSDRV_WriteMoveTo(dev, pt[0].x, pt[0].y );
-    PSDRV_WriteLineTo(dev, pt[1].x, pt[1].y );
-    PSDRV_DrawLine(dev);
-    PSDRV_ResetClip(dev);
+    PSDRV_SetClip(ctx);
+    PSDRV_WriteMoveTo(ctx, pt[0].x, pt[0].y );
+    PSDRV_WriteLineTo(ctx, pt[1].x, pt[1].y );
+    PSDRV_DrawLine(ctx);
+    PSDRV_ResetClip(ctx);
 
     return TRUE;
 }
@@ -93,37 +91,36 @@ BOOL CDECL PSDRV_LineTo(PHYSDEV dev, INT x, INT y)
 /***********************************************************************
  *           PSDRV_Rectangle
  */
-BOOL CDECL PSDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+BOOL CDECL PSDRV_Rectangle( print_ctx *ctx, INT left, INT top, INT right, INT bottom )
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     RECT rect;
 
     TRACE("%d %d - %d %d\n", left, top, right, bottom);
 
     SetRect(&rect, left, top, right, bottom);
-    LPtoDP( dev->hdc, (POINT *)&rect, 2 );
+    LPtoDP( ctx->dev.hdc, (POINT *)&rect, 2 );
 
     /* Windows does something truly hacky here.  If we're in passthrough mode
        and our rop is R2_NOP, then we output the string below.  This is used in
        Office 2k when inserting eps files */
-    if (physDev->job.passthrough_state == passthrough_active && GetROP2(dev->hdc) == R2_NOP)
+    if (ctx->job.passthrough_state == passthrough_active && GetROP2(ctx->dev.hdc) == R2_NOP)
     {
         char buf[256];
 
         sprintf(buf, "N %ld %ld %ld %ld B\n", rect.right - rect.left, rect.bottom - rect.top, rect.left, rect.top);
-        write_spool(dev, buf, strlen(buf));
-        physDev->job.passthrough_state = passthrough_had_rect;
+        write_spool(ctx, buf, strlen(buf));
+        ctx->job.passthrough_state = passthrough_had_rect;
         return TRUE;
     }
 
-    PSDRV_SetPen(dev);
+    PSDRV_SetPen(ctx);
 
-    PSDRV_SetClip(dev);
-    PSDRV_WriteRectangle(dev, rect.left, rect.top, rect.right - rect.left,
+    PSDRV_SetClip(ctx);
+    PSDRV_WriteRectangle(ctx, rect.left, rect.top, rect.right - rect.left,
                          rect.bottom - rect.top );
-    PSDRV_Brush(dev,0);
-    PSDRV_DrawLine(dev);
-    PSDRV_ResetClip(dev);
+    PSDRV_Brush(ctx,0);
+    PSDRV_DrawLine(ctx);
+    PSDRV_ResetClip(ctx);
     return TRUE;
 }
 
@@ -131,14 +128,14 @@ BOOL CDECL PSDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT botto
 /***********************************************************************
  *           PSDRV_RoundRect
  */
-BOOL CDECL PSDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
+BOOL CDECL PSDRV_RoundRect( print_ctx *ctx, INT left, INT top, INT right,
                             INT bottom, INT ell_width, INT ell_height )
 {
     RECT rect[2];
 
     SetRect(&rect[0], left, top, right, bottom);
     SetRect(&rect[1], 0, 0, ell_width, ell_height);
-    LPtoDP( dev->hdc, (POINT *)rect, 4 );
+    LPtoDP( ctx->dev.hdc, (POINT *)rect, 4 );
 
     left   = rect[0].left;
     top    = rect[0].top;
@@ -152,27 +149,27 @@ BOOL CDECL PSDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
     if (ell_width > right - left) ell_width = right - left;
     if (ell_height > bottom - top) ell_height = bottom - top;
 
-    PSDRV_WriteSpool(dev, "%RoundRect\n",11);
-    PSDRV_SetPen(dev);
+    PSDRV_WriteSpool(ctx, "%RoundRect\n",11);
+    PSDRV_SetPen(ctx);
 
-    PSDRV_SetClip(dev);
-    PSDRV_WriteMoveTo( dev, left, top + ell_height/2 );
-    PSDRV_WriteArc( dev, left + ell_width/2, top + ell_height/2, ell_width,
+    PSDRV_SetClip(ctx);
+    PSDRV_WriteMoveTo( ctx, left, top + ell_height/2 );
+    PSDRV_WriteArc( ctx, left + ell_width/2, top + ell_height/2, ell_width,
 		    ell_height, 90.0, 180.0);
-    PSDRV_WriteLineTo( dev, right - ell_width/2, top );
-    PSDRV_WriteArc( dev, right - ell_width/2, top + ell_height/2, ell_width,
+    PSDRV_WriteLineTo( ctx, right - ell_width/2, top );
+    PSDRV_WriteArc( ctx, right - ell_width/2, top + ell_height/2, ell_width,
 		    ell_height, 0.0, 90.0);
-    PSDRV_WriteLineTo( dev, right, bottom - ell_height/2 );
-    PSDRV_WriteArc( dev, right - ell_width/2, bottom - ell_height/2, ell_width,
+    PSDRV_WriteLineTo( ctx, right, bottom - ell_height/2 );
+    PSDRV_WriteArc( ctx, right - ell_width/2, bottom - ell_height/2, ell_width,
 		    ell_height, -90.0, 0.0);
-    PSDRV_WriteLineTo( dev, right - ell_width/2, bottom);
-    PSDRV_WriteArc( dev, left + ell_width/2, bottom - ell_height/2, ell_width,
+    PSDRV_WriteLineTo( ctx, right - ell_width/2, bottom);
+    PSDRV_WriteArc( ctx, left + ell_width/2, bottom - ell_height/2, ell_width,
 		    ell_height, 180.0, -90.0);
-    PSDRV_WriteClosePath( dev );
+    PSDRV_WriteClosePath( ctx );
 
-    PSDRV_Brush(dev,0);
-    PSDRV_DrawLine(dev);
-    PSDRV_ResetClip(dev);
+    PSDRV_Brush(ctx,0);
+    PSDRV_DrawLine(ctx);
+    PSDRV_ResetClip(ctx);
     return TRUE;
 }
 
@@ -181,7 +178,7 @@ BOOL CDECL PSDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
  *
  * Does the work of Arc, Chord and Pie. lines is 0, 1 or 2 respectively.
  */
-static BOOL PSDRV_DrawArc( PHYSDEV dev, INT left, INT top,
+static BOOL PSDRV_DrawArc( print_ctx *ctx, INT left, INT top,
                            INT right, INT bottom, INT xstart, INT ystart,
                            INT xend, INT yend, int lines )
 {
@@ -191,13 +188,13 @@ static BOOL PSDRV_DrawArc( PHYSDEV dev, INT left, INT top,
     POINT start, end;
 
     SetRect(&rect, left, top, right, bottom);
-    LPtoDP( dev->hdc, (POINT *)&rect, 2 );
+    LPtoDP( ctx->dev.hdc, (POINT *)&rect, 2 );
     start.x = xstart;
     start.y = ystart;
     end.x = xend;
     end.y = yend;
-    LPtoDP( dev->hdc, &start, 1 );
-    LPtoDP( dev->hdc, &end, 1 );
+    LPtoDP( ctx->dev.hdc, &start, 1 );
+    LPtoDP( ctx->dev.hdc, &end, 1 );
 
     x = (rect.left + rect.right) / 2;
     y = (rect.top + rect.bottom) / 2;
@@ -217,25 +214,25 @@ static BOOL PSDRV_DrawArc( PHYSDEV dev, INT left, INT top,
     start_angle *= 180.0 / M_PI;
     end_angle *= 180.0 / M_PI;
 
-    PSDRV_WriteSpool(dev,"%DrawArc\n", 9);
-    PSDRV_SetPen(dev);
+    PSDRV_WriteSpool(ctx,"%DrawArc\n", 9);
+    PSDRV_SetPen(ctx);
 
-    PSDRV_SetClip(dev);
+    PSDRV_SetClip(ctx);
     if(lines == 2) /* pie */
-        PSDRV_WriteMoveTo(dev, x, y);
+        PSDRV_WriteMoveTo(ctx, x, y);
     else
-        PSDRV_WriteNewPath( dev );
+        PSDRV_WriteNewPath( ctx );
 
-    if(GetArcDirection(dev->hdc) == AD_COUNTERCLOCKWISE)
-        PSDRV_WriteArc(dev, x, y, w, h, start_angle, end_angle);
+    if(GetArcDirection(ctx->dev.hdc) == AD_COUNTERCLOCKWISE)
+        PSDRV_WriteArc(ctx, x, y, w, h, start_angle, end_angle);
     else
-        PSDRV_WriteArc(dev, x, y, w, h, end_angle, start_angle);
+        PSDRV_WriteArc(ctx, x, y, w, h, end_angle, start_angle);
     if(lines == 1 || lines == 2) { /* chord or pie */
-        PSDRV_WriteClosePath(dev);
-	PSDRV_Brush(dev,0);
+        PSDRV_WriteClosePath(ctx);
+	PSDRV_Brush(ctx,0);
     }
-    PSDRV_DrawLine(dev);
-    PSDRV_ResetClip(dev);
+    PSDRV_DrawLine(ctx);
+    PSDRV_ResetClip(ctx);
 
     return TRUE;
 }
@@ -244,36 +241,36 @@ static BOOL PSDRV_DrawArc( PHYSDEV dev, INT left, INT top,
 /***********************************************************************
  *           PSDRV_Arc
  */
-BOOL CDECL PSDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+BOOL CDECL PSDRV_Arc( print_ctx *ctx, INT left, INT top, INT right, INT bottom,
                       INT xstart, INT ystart, INT xend, INT yend )
 {
-    return PSDRV_DrawArc( dev, left, top, right, bottom, xstart, ystart, xend, yend, 0 );
+    return PSDRV_DrawArc( ctx, left, top, right, bottom, xstart, ystart, xend, yend, 0 );
 }
 
 /***********************************************************************
  *           PSDRV_Chord
  */
-BOOL CDECL PSDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+BOOL CDECL PSDRV_Chord( print_ctx *ctx, INT left, INT top, INT right, INT bottom,
                         INT xstart, INT ystart, INT xend, INT yend )
 {
-    return PSDRV_DrawArc( dev, left, top, right, bottom, xstart, ystart, xend, yend, 1 );
+    return PSDRV_DrawArc( ctx, left, top, right, bottom, xstart, ystart, xend, yend, 1 );
 }
 
 
 /***********************************************************************
  *           PSDRV_Pie
  */
-BOOL CDECL PSDRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+BOOL CDECL PSDRV_Pie( print_ctx *ctx, INT left, INT top, INT right, INT bottom,
                       INT xstart, INT ystart, INT xend, INT yend )
 {
-    return PSDRV_DrawArc( dev, left, top, right, bottom, xstart, ystart, xend, yend, 2 );
+    return PSDRV_DrawArc( ctx, left, top, right, bottom, xstart, ystart, xend, yend, 2 );
 }
 
 
 /***********************************************************************
  *           PSDRV_Ellipse
  */
-BOOL CDECL PSDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom)
+BOOL CDECL PSDRV_Ellipse( print_ctx *ctx, INT left, INT top, INT right, INT bottom)
 {
     INT x, y, w, h;
     RECT rect;
@@ -281,23 +278,23 @@ BOOL CDECL PSDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom)
     TRACE("%d %d - %d %d\n", left, top, right, bottom);
 
     SetRect(&rect, left, top, right, bottom);
-    LPtoDP( dev->hdc, (POINT *)&rect, 2 );
+    LPtoDP( ctx->dev.hdc, (POINT *)&rect, 2 );
 
     x = (rect.left + rect.right) / 2;
     y = (rect.top + rect.bottom) / 2;
     w = rect.right - rect.left;
     h = rect.bottom - rect.top;
 
-    PSDRV_WriteSpool(dev, "%Ellipse\n", 9);
-    PSDRV_SetPen(dev);
+    PSDRV_WriteSpool(ctx, "%Ellipse\n", 9);
+    PSDRV_SetPen(ctx);
 
-    PSDRV_SetClip(dev);
-    PSDRV_WriteNewPath(dev);
-    PSDRV_WriteArc(dev, x, y, w, h, 0.0, 360.0);
-    PSDRV_WriteClosePath(dev);
-    PSDRV_Brush(dev,0);
-    PSDRV_DrawLine(dev);
-    PSDRV_ResetClip(dev);
+    PSDRV_SetClip(ctx);
+    PSDRV_WriteNewPath(ctx);
+    PSDRV_WriteArc(ctx, x, y, w, h, 0.0, 360.0);
+    PSDRV_WriteClosePath(ctx);
+    PSDRV_Brush(ctx,0);
+    PSDRV_DrawLine(ctx);
+    PSDRV_ResetClip(ctx);
     return TRUE;
 }
 
@@ -305,7 +302,7 @@ BOOL CDECL PSDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom)
 /***********************************************************************
  *           PSDRV_PolyPolyline
  */
-BOOL CDECL PSDRV_PolyPolyline( PHYSDEV dev, const POINT* pts, const DWORD* counts, DWORD polylines )
+BOOL CDECL PSDRV_PolyPolyline( print_ctx *ctx, const POINT* pts, const DWORD* counts, DWORD polylines )
 {
     DWORD polyline, line, total;
     POINT *dev_pts, *pt;
@@ -315,24 +312,24 @@ BOOL CDECL PSDRV_PolyPolyline( PHYSDEV dev, const POINT* pts, const DWORD* count
     for (polyline = total = 0; polyline < polylines; polyline++) total += counts[polyline];
     if (!(dev_pts = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*dev_pts) ))) return FALSE;
     memcpy( dev_pts, pts, total * sizeof(*dev_pts) );
-    LPtoDP( dev->hdc, dev_pts, total );
+    LPtoDP( ctx->dev.hdc, dev_pts, total );
 
     pt = dev_pts;
 
-    PSDRV_WriteSpool(dev, "%PolyPolyline\n",14);
-    PSDRV_SetPen(dev);
-    PSDRV_SetClip(dev);
+    PSDRV_WriteSpool(ctx, "%PolyPolyline\n",14);
+    PSDRV_SetPen(ctx);
+    PSDRV_SetClip(ctx);
 
     for(polyline = 0; polyline < polylines; polyline++) {
-        PSDRV_WriteMoveTo(dev, pt->x, pt->y);
+        PSDRV_WriteMoveTo(ctx, pt->x, pt->y);
 	pt++;
         for(line = 1; line < counts[polyline]; line++, pt++)
-            PSDRV_WriteLineTo(dev, pt->x, pt->y);
+            PSDRV_WriteLineTo(ctx, pt->x, pt->y);
     }
     HeapFree( GetProcessHeap(), 0, dev_pts );
 
-    PSDRV_DrawLine(dev);
-    PSDRV_ResetClip(dev);
+    PSDRV_DrawLine(ctx);
+    PSDRV_ResetClip(ctx);
     return TRUE;
 }
 
@@ -340,7 +337,7 @@ BOOL CDECL PSDRV_PolyPolyline( PHYSDEV dev, const POINT* pts, const DWORD* count
 /***********************************************************************
  *           PSDRV_PolyPolygon
  */
-BOOL CDECL PSDRV_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT* counts, UINT polygons )
+BOOL CDECL PSDRV_PolyPolygon( print_ctx *ctx, const POINT* pts, const INT* counts, UINT polygons )
 {
     DWORD polygon, total;
     INT line;
@@ -351,34 +348,34 @@ BOOL CDECL PSDRV_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT* counts, 
     for (polygon = total = 0; polygon < polygons; polygon++) total += counts[polygon];
     if (!(dev_pts = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*dev_pts) ))) return FALSE;
     memcpy( dev_pts, pts, total * sizeof(*dev_pts) );
-    LPtoDP( dev->hdc, dev_pts, total );
+    LPtoDP( ctx->dev.hdc, dev_pts, total );
 
     pt = dev_pts;
 
-    PSDRV_WriteSpool(dev, "%PolyPolygon\n",13);
-    PSDRV_SetPen(dev);
-    PSDRV_SetClip(dev);
+    PSDRV_WriteSpool(ctx, "%PolyPolygon\n",13);
+    PSDRV_SetPen(ctx);
+    PSDRV_SetClip(ctx);
 
     for(polygon = 0; polygon < polygons; polygon++) {
-        PSDRV_WriteMoveTo(dev, pt->x, pt->y);
+        PSDRV_WriteMoveTo(ctx, pt->x, pt->y);
 	pt++;
         for(line = 1; line < counts[polygon]; line++, pt++)
-            PSDRV_WriteLineTo(dev, pt->x, pt->y);
-	PSDRV_WriteClosePath(dev);
+            PSDRV_WriteLineTo(ctx, pt->x, pt->y);
+	PSDRV_WriteClosePath(ctx);
     }
     HeapFree( GetProcessHeap(), 0, dev_pts );
 
-    if(GetPolyFillMode( dev->hdc ) == ALTERNATE)
-        PSDRV_Brush(dev, 1);
+    if(GetPolyFillMode( ctx->dev.hdc ) == ALTERNATE)
+        PSDRV_Brush(ctx, 1);
     else /* WINDING */
-        PSDRV_Brush(dev, 0);
+        PSDRV_Brush(ctx, 0);
 
-    PSDRV_DrawLine(dev);
-    PSDRV_ResetClip(dev);
+    PSDRV_DrawLine(ctx);
+    PSDRV_ResetClip(ctx);
     return TRUE;
 }
 
-static BOOL poly_bezier( PHYSDEV dev, const POINT *pt0, const POINT *pts, DWORD count)
+static BOOL poly_bezier( print_ctx *ctx, const POINT *pt0, const POINT *pts, DWORD count)
 {
     POINT dev_pts[3];
     DWORD i;
@@ -386,79 +383,79 @@ static BOOL poly_bezier( PHYSDEV dev, const POINT *pt0, const POINT *pts, DWORD 
     TRACE( "\n" );
 
     dev_pts[0] = *pt0;
-    LPtoDP( dev->hdc, dev_pts, 1 );
+    LPtoDP( ctx->dev.hdc, dev_pts, 1 );
 
-    PSDRV_WriteSpool( dev, "%PolyBezier\n", 12 );
-    PSDRV_SetPen( dev );
-    PSDRV_SetClip( dev );
-    PSDRV_WriteMoveTo( dev, dev_pts[0].x, dev_pts[0].y );
+    PSDRV_WriteSpool( ctx, "%PolyBezier\n", 12 );
+    PSDRV_SetPen( ctx );
+    PSDRV_SetClip( ctx );
+    PSDRV_WriteMoveTo( ctx, dev_pts[0].x, dev_pts[0].y );
     for (i = 0; i < count; i += 3)
     {
         memcpy( dev_pts, pts, sizeof(dev_pts) );
-        LPtoDP( dev->hdc, dev_pts, 3 );
-        PSDRV_WriteCurveTo( dev, dev_pts );
+        LPtoDP( ctx->dev.hdc, dev_pts, 3 );
+        PSDRV_WriteCurveTo( ctx, dev_pts );
     }
-    PSDRV_DrawLine(dev);
-    PSDRV_ResetClip(dev);
+    PSDRV_DrawLine(ctx);
+    PSDRV_ResetClip(ctx);
     return TRUE;
 }
 
 /***********************************************************************
  *           PSDRV_PolyBezier
  */
-BOOL CDECL PSDRV_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD count )
+BOOL CDECL PSDRV_PolyBezier( print_ctx *ctx, const POINT *pts, DWORD count )
 {
-    return poly_bezier( dev, pts, pts + 1, count - 1 );
+    return poly_bezier( ctx, pts, pts + 1, count - 1 );
 }
 
 
 /***********************************************************************
  *           PSDRV_PolyBezierTo
  */
-BOOL CDECL PSDRV_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD count )
+BOOL CDECL PSDRV_PolyBezierTo( print_ctx *ctx, const POINT *pts, DWORD count )
 {
     POINT pt0;
 
-    GetCurrentPositionEx( dev->hdc, &pt0 );
-    return poly_bezier( dev, &pt0, pts, count );
+    GetCurrentPositionEx( ctx->dev.hdc, &pt0 );
+    return poly_bezier( ctx, &pt0, pts, count );
 }
 
 
 /***********************************************************************
  *           PSDRV_SetPixel
  */
-COLORREF CDECL PSDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
+COLORREF CDECL PSDRV_SetPixel( print_ctx *ctx, INT x, INT y, COLORREF color )
 {
     PSCOLOR pscolor;
     POINT pt;
 
     pt.x = x;
     pt.y = y;
-    LPtoDP( dev->hdc, &pt, 1 );
+    LPtoDP( ctx->dev.hdc, &pt, 1 );
 
-    PSDRV_SetClip(dev);
+    PSDRV_SetClip(ctx);
     /* we bracket the setcolor in gsave/grestore so that we don't trash
        the current pen colour */
-    PSDRV_WriteGSave(dev);
-    PSDRV_WriteRectangle( dev, pt.x, pt.y, 1, 1 );
-    PSDRV_CreateColor( dev, &pscolor, color );
-    PSDRV_WriteSetColor( dev, &pscolor );
-    PSDRV_WriteFill( dev );
-    PSDRV_WriteGRestore(dev);
-    PSDRV_ResetClip(dev);
+    PSDRV_WriteGSave(ctx);
+    PSDRV_WriteRectangle( ctx, pt.x, pt.y, 1, 1 );
+    PSDRV_CreateColor( ctx, &pscolor, color );
+    PSDRV_WriteSetColor( ctx, &pscolor );
+    PSDRV_WriteFill( ctx );
+    PSDRV_WriteGRestore(ctx);
+    PSDRV_ResetClip(ctx);
     return color;
 }
 
 /***********************************************************************
  *           PSDRV_PaintRgn
  */
-BOOL CDECL PSDRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
+BOOL CDECL PSDRV_PaintRgn( print_ctx *ctx, HRGN hrgn )
 {
     RGNDATA *rgndata = NULL;
     RECT *pRect;
     DWORD size, i;
 
-    TRACE("hdc=%p\n", dev->hdc);
+    TRACE("hdc=%p\n", ctx->dev.hdc);
 
     size = GetRegionData(hrgn, 0, NULL);
     rgndata = HeapAlloc( GetProcessHeap(), 0, size );
@@ -471,66 +468,66 @@ BOOL CDECL PSDRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
     if (rgndata->rdh.nCount == 0)
         goto end;
 
-    LPtoDP(dev->hdc, (POINT*)rgndata->Buffer, rgndata->rdh.nCount * 2);
+    LPtoDP(ctx->dev.hdc, (POINT*)rgndata->Buffer, rgndata->rdh.nCount * 2);
 
-    PSDRV_SetClip(dev);
+    PSDRV_SetClip(ctx);
     for(i = 0, pRect = (RECT*)rgndata->Buffer; i < rgndata->rdh.nCount; i++, pRect++)
-        PSDRV_WriteRectangle(dev, pRect->left, pRect->top, pRect->right - pRect->left, pRect->bottom - pRect->top);
+        PSDRV_WriteRectangle(ctx, pRect->left, pRect->top, pRect->right - pRect->left, pRect->bottom - pRect->top);
 
-    PSDRV_Brush(dev, 0);
-    PSDRV_WriteNewPath(dev);
-    PSDRV_ResetClip(dev);
+    PSDRV_Brush(ctx, 0);
+    PSDRV_WriteNewPath(ctx);
+    PSDRV_ResetClip(ctx);
 
  end:
     HeapFree(GetProcessHeap(), 0, rgndata);
     return TRUE;
 }
 
-static BOOL paint_path( PHYSDEV dev, BOOL stroke, BOOL fill )
+static BOOL paint_path( print_ctx *ctx, BOOL stroke, BOOL fill )
 {
     POINT *points;
     BYTE *types;
-    int i, size = GetPath( dev->hdc, NULL, NULL, 0 );
+    int i, size = GetPath( ctx->dev.hdc, NULL, NULL, 0 );
 
     if (size == -1) return FALSE;
     if (!size)
     {
-        AbortPath( dev->hdc );
+        AbortPath( ctx->dev.hdc );
         return TRUE;
     }
     points = HeapAlloc( GetProcessHeap(), 0, size * sizeof(*points) );
     types = HeapAlloc( GetProcessHeap(), 0, size * sizeof(*types) );
     if (!points || !types) goto done;
-    if (GetPath( dev->hdc, points, types, size ) == -1) goto done;
-    LPtoDP( dev->hdc, points, size );
+    if (GetPath( ctx->dev.hdc, points, types, size ) == -1) goto done;
+    LPtoDP( ctx->dev.hdc, points, size );
 
-    if (stroke) PSDRV_SetPen(dev);
-    PSDRV_SetClip(dev);
+    if (stroke) PSDRV_SetPen(ctx);
+    PSDRV_SetClip(ctx);
     for (i = 0; i < size; i++)
     {
         switch (types[i])
         {
         case PT_MOVETO:
-            PSDRV_WriteMoveTo( dev, points[i].x, points[i].y );
+            PSDRV_WriteMoveTo( ctx, points[i].x, points[i].y );
             break;
         case PT_LINETO:
         case PT_LINETO | PT_CLOSEFIGURE:
-            PSDRV_WriteLineTo( dev, points[i].x, points[i].y );
-            if (types[i] & PT_CLOSEFIGURE) PSDRV_WriteClosePath( dev );
+            PSDRV_WriteLineTo( ctx, points[i].x, points[i].y );
+            if (types[i] & PT_CLOSEFIGURE) PSDRV_WriteClosePath( ctx );
             break;
         case PT_BEZIERTO:
         case PT_BEZIERTO | PT_CLOSEFIGURE:
-            PSDRV_WriteCurveTo( dev, points + i );
-            if (types[i] & PT_CLOSEFIGURE) PSDRV_WriteClosePath( dev );
+            PSDRV_WriteCurveTo( ctx, points + i );
+            if (types[i] & PT_CLOSEFIGURE) PSDRV_WriteClosePath( ctx );
             i += 2;
             break;
         }
     }
-    if (fill) PSDRV_Brush( dev, GetPolyFillMode(dev->hdc) == ALTERNATE );
-    if (stroke) PSDRV_DrawLine(dev);
-    else PSDRV_WriteNewPath(dev);
-    PSDRV_ResetClip(dev);
-    AbortPath( dev->hdc );
+    if (fill) PSDRV_Brush( ctx, GetPolyFillMode(ctx->dev.hdc) == ALTERNATE );
+    if (stroke) PSDRV_DrawLine(ctx);
+    else PSDRV_WriteNewPath(ctx);
+    PSDRV_ResetClip(ctx);
+    AbortPath( ctx->dev.hdc );
 
 done:
     HeapFree( GetProcessHeap(), 0, points );
@@ -541,23 +538,23 @@ done:
 /***********************************************************************
  *           PSDRV_FillPath
  */
-BOOL CDECL PSDRV_FillPath( PHYSDEV dev )
+BOOL CDECL PSDRV_FillPath( print_ctx *ctx )
 {
-    return paint_path( dev, FALSE, TRUE );
+    return paint_path( ctx, FALSE, TRUE );
 }
 
 /***********************************************************************
  *           PSDRV_StrokeAndFillPath
  */
-BOOL CDECL PSDRV_StrokeAndFillPath( PHYSDEV dev )
+BOOL CDECL PSDRV_StrokeAndFillPath( print_ctx *ctx )
 {
-    return paint_path( dev, TRUE, TRUE );
+    return paint_path( ctx, TRUE, TRUE );
 }
 
 /***********************************************************************
  *           PSDRV_StrokePath
  */
-BOOL CDECL PSDRV_StrokePath( PHYSDEV dev )
+BOOL CDECL PSDRV_StrokePath( print_ctx *ctx )
 {
-    return paint_path( dev, TRUE, FALSE );
+    return paint_path( ctx, TRUE, FALSE );
 }

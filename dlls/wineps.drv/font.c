@@ -38,20 +38,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 /***********************************************************************
  *           SelectFont   (WINEPS.@)
  */
-HFONT CDECL PSDRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
+HFONT CDECL PSDRV_SelectFont( print_ctx *ctx, HFONT hfont, UINT *aa_flags )
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     struct font_info font_info;
 
-    if (ExtEscape(dev->hdc, PSDRV_GET_BUILTIN_FONT_INFO, 0, NULL,
+    if (ExtEscape(ctx->dev.hdc, PSDRV_GET_BUILTIN_FONT_INFO, 0, NULL,
                 sizeof(font_info), (char *)&font_info))
     {
-        physDev->font.fontloc = Builtin;
+        ctx->font.fontloc = Builtin;
     }
     else
     {
-        physDev->font.fontloc = Download;
-        physDev->font.fontinfo.Download = NULL;
+        ctx->font.fontloc = Download;
+        ctx->font.fontinfo.Download = NULL;
     }
     return hfont;
 }
@@ -59,29 +58,27 @@ HFONT CDECL PSDRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 /***********************************************************************
  *           PSDRV_SetFont
  */
-BOOL PSDRV_SetFont( PHYSDEV dev, BOOL vertical )
+BOOL PSDRV_SetFont( print_ctx *ctx, BOOL vertical )
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+    PSDRV_WriteSetColor(ctx, &ctx->font.color);
+    if (vertical && (ctx->font.set == VERTICAL_SET)) return TRUE;
+    if (!vertical && (ctx->font.set == HORIZONTAL_SET)) return TRUE;
 
-    PSDRV_WriteSetColor(dev, &physDev->font.color);
-    if (vertical && (physDev->font.set == VERTICAL_SET)) return TRUE;
-    if (!vertical && (physDev->font.set == HORIZONTAL_SET)) return TRUE;
-
-    switch(physDev->font.fontloc) {
+    switch(ctx->font.fontloc) {
     case Builtin:
-        PSDRV_WriteSetBuiltinFont(dev);
+        PSDRV_WriteSetBuiltinFont(ctx);
 	break;
     case Download:
-        PSDRV_WriteSetDownloadFont(dev, vertical);
+        PSDRV_WriteSetDownloadFont(ctx, vertical);
 	break;
     default:
-        ERR("fontloc = %d\n", physDev->font.fontloc);
+        ERR("fontloc = %d\n", ctx->font.fontloc);
         assert(1);
 	break;
     }
     if (vertical)
-        physDev->font.set = VERTICAL_SET;
+        ctx->font.set = VERTICAL_SET;
     else
-        physDev->font.set = HORIZONTAL_SET;
+        ctx->font.set = HORIZONTAL_SET;
     return TRUE;
 }

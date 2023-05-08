@@ -36,7 +36,7 @@ typedef struct tagRun {
     INT y;
 }Run;
 
-static BOOL PSDRV_Text(PHYSDEV dev, INT x, INT y, UINT flags,
+static BOOL PSDRV_Text(print_ctx *ctx, INT x, INT y, UINT flags,
 		       LPCWSTR str, UINT count,
 		       BOOL bDrawBackground, const INT *lpDx);
 
@@ -56,7 +56,7 @@ static BOOL check_unicode_tategaki(WCHAR uchar)
     return (orientation ==  1 || orientation == 2 || orientation == 3);
 }
 
-static Run* build_vertical_runs(PHYSDEV dev, UINT flags, LPCWSTR str, UINT count, INT *run_count)
+static Run* build_vertical_runs(print_ctx *ctx, UINT flags, LPCWSTR str, UINT count, INT *run_count)
 {
     BOOL last_vert;
     INT start, end;
@@ -65,7 +65,7 @@ static Run* build_vertical_runs(PHYSDEV dev, UINT flags, LPCWSTR str, UINT count
     int index = 0;
     LOGFONTW lf;
 
-    if (count && str && (!(flags & ETO_GLYPH_INDEX)) && GetObjectW( GetCurrentObject(dev->hdc, OBJ_FONT), sizeof(lf), &lf ) && (lf.lfFaceName[0] == '@'))
+    if (count && str && (!(flags & ETO_GLYPH_INDEX)) && GetObjectW( GetCurrentObject(ctx->dev.hdc, OBJ_FONT), sizeof(lf), &lf ) && (lf.lfFaceName[0] == '@'))
     {
         last_vert = check_unicode_tategaki(str[0]);
         start = end = 0;
@@ -84,15 +84,15 @@ static Run* build_vertical_runs(PHYSDEV dev, UINT flags, LPCWSTR str, UINT count
             if (run[index].vertical)
             {
                 TEXTMETRICW tm;
-                GetTextMetricsW(dev->hdc, &tm);
-                offset += PSDRV_XWStoDS(dev, tm.tmAscent - tm.tmInternalLeading);
+                GetTextMetricsW(ctx->dev.hdc, &tm);
+                offset += PSDRV_XWStoDS(ctx, tm.tmAscent - tm.tmInternalLeading);
             }
 
             if (start > 0)
             {
                 SIZE size;
-                GetTextExtentPointW(dev->hdc, str, start, &size);
-                offset += PSDRV_XWStoDS(dev, size.cx);
+                GetTextExtentPointW(ctx->dev.hdc, str, start, &size);
+                offset += PSDRV_XWStoDS(ctx, size.cx);
             }
 
             if (offset)
@@ -129,10 +129,9 @@ static Run* build_vertical_runs(PHYSDEV dev, UINT flags, LPCWSTR str, UINT count
 /***********************************************************************
  *           PSDRV_ExtTextOut
  */
-BOOL CDECL PSDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *lprect, LPCWSTR str, UINT count,
+BOOL CDECL PSDRV_ExtTextOut( print_ctx *ctx, INT x, INT y, UINT flags, const RECT *lprect, LPCWSTR str, UINT count,
                              const INT *lpDx )
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     BOOL bResult = TRUE;
     BOOL bClipped = FALSE;
     BOOL bOpaque = FALSE;
@@ -143,24 +142,24 @@ BOOL CDECL PSDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *
     TRACE("(x=%d, y=%d, flags=0x%08x, str=%s, count=%d, lpDx=%p)\n", x, y,
 	  flags, debugstr_wn(str, count), count, lpDx);
 
-    if(physDev->job.id == 0) return FALSE;
+    if(ctx->job.id == 0) return FALSE;
 
-    runs = build_vertical_runs(dev, flags, str, count, &run_count);
+    runs = build_vertical_runs(ctx, flags, str, count, &run_count);
 
     /* set draw background */
     if ((flags & ETO_OPAQUE) && (lprect != NULL))
     {
-        PSDRV_SetClip(dev);
-        PSDRV_WriteGSave(dev);
-        PSDRV_WriteRectangle(dev, lprect->left, lprect->top, lprect->right - lprect->left,
+        PSDRV_SetClip(ctx);
+        PSDRV_WriteGSave(ctx);
+        PSDRV_WriteRectangle(ctx, lprect->left, lprect->top, lprect->right - lprect->left,
                      lprect->bottom - lprect->top);
 
         bOpaque = TRUE;
-        PSDRV_WriteSetColor(dev, &physDev->bkColor);
-        PSDRV_WriteFill(dev);
+        PSDRV_WriteSetColor(ctx, &ctx->bkColor);
+        PSDRV_WriteFill(ctx);
 
-        PSDRV_WriteGRestore(dev);
-        PSDRV_ResetClip(dev);
+        PSDRV_WriteGRestore(ctx);
+        PSDRV_ResetClip(ctx);
     }
 
     while (i < run_count)
@@ -172,30 +171,30 @@ BOOL CDECL PSDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *
         else
             cnt = count - runs[i].start;
 
-        PSDRV_SetFont(dev, runs[i].vertical);
+        PSDRV_SetFont(ctx, runs[i].vertical);
 
-        PSDRV_SetClip(dev);
+        PSDRV_SetClip(ctx);
 
         /* set clipping */
         if ((flags & ETO_CLIPPED) && (lprect != NULL))
         {
-            PSDRV_WriteGSave(dev);
+            PSDRV_WriteGSave(ctx);
 
-            PSDRV_WriteRectangle(dev, lprect->left, lprect->top, lprect->right - lprect->left,
+            PSDRV_WriteRectangle(ctx, lprect->left, lprect->top, lprect->right - lprect->left,
                      lprect->bottom - lprect->top);
 
             bClipped = TRUE;
-            PSDRV_WriteClip(dev);
+            PSDRV_WriteClip(ctx);
 
-            bResult = PSDRV_Text(dev, runs[i].x+x, runs[i].y+y, flags, &str[runs[i].start], cnt, !(bClipped && bOpaque), (lpDx)?&lpDx[runs[i].start]:NULL);
+            bResult = PSDRV_Text(ctx, runs[i].x+x, runs[i].y+y, flags, &str[runs[i].start], cnt, !(bClipped && bOpaque), (lpDx)?&lpDx[runs[i].start]:NULL);
 
-            PSDRV_WriteGRestore(dev);
+            PSDRV_WriteGRestore(ctx);
         }
         else
-            bResult = PSDRV_Text(dev, runs[i].x+x, runs[i].y+y, flags, &str[runs[i].start], cnt, TRUE, (lpDx)?&lpDx[runs[i].start]:NULL);
+            bResult = PSDRV_Text(ctx, runs[i].x+x, runs[i].y+y, flags, &str[runs[i].start], cnt, TRUE, (lpDx)?&lpDx[runs[i].start]:NULL);
 
         i++;
-        PSDRV_ResetClip(dev);
+        PSDRV_ResetClip(ctx);
     }
 
     HeapFree(GetProcessHeap(),0,runs);
@@ -205,39 +204,38 @@ BOOL CDECL PSDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *
 /***********************************************************************
  *           PSDRV_Text
  */
-static BOOL PSDRV_Text(PHYSDEV dev, INT x, INT y, UINT flags, LPCWSTR str,
+static BOOL PSDRV_Text(print_ctx *ctx, INT x, INT y, UINT flags, LPCWSTR str,
 		       UINT count, BOOL bDrawBackground, const INT *lpDx)
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     WORD *glyphs = NULL;
 
     if (!count)
 	return TRUE;
 
-    if(physDev->font.fontloc == Download && !(flags & ETO_GLYPH_INDEX))
+    if(ctx->font.fontloc == Download && !(flags & ETO_GLYPH_INDEX))
     {
         glyphs = HeapAlloc( GetProcessHeap(), 0, count * sizeof(WORD) );
-        GetGlyphIndicesW( dev->hdc, str, count, glyphs, 0 );
+        GetGlyphIndicesW( ctx->dev.hdc, str, count, glyphs, 0 );
         str = glyphs;
     }
 
-    PSDRV_WriteMoveTo(dev, x, y);
+    PSDRV_WriteMoveTo(ctx, x, y);
 
     if(!lpDx) {
-        if(physDev->font.fontloc == Download)
-	    PSDRV_WriteDownloadGlyphShow(dev, str, count);
+        if(ctx->font.fontloc == Download)
+	    PSDRV_WriteDownloadGlyphShow(ctx, str, count);
 	else
-	    PSDRV_WriteBuiltinGlyphShow(dev, str, count);
+	    PSDRV_WriteBuiltinGlyphShow(ctx, str, count);
     }
     else {
         UINT i;
 	POINT offset = {0, 0};
 
         for(i = 0; i < count-1; i++) {
-	    if(physDev->font.fontloc == Download)
-	        PSDRV_WriteDownloadGlyphShow(dev, str + i, 1);
+	    if(ctx->font.fontloc == Download)
+	        PSDRV_WriteDownloadGlyphShow(ctx, str + i, 1);
 	    else
-	        PSDRV_WriteBuiltinGlyphShow(dev, str + i, 1);
+	        PSDRV_WriteBuiltinGlyphShow(ctx, str + i, 1);
             if(flags & ETO_PDY)
             {
                 offset.x += lpDx[i * 2];
@@ -245,12 +243,12 @@ static BOOL PSDRV_Text(PHYSDEV dev, INT x, INT y, UINT flags, LPCWSTR str,
             }
             else
                 offset.x += lpDx[i];
-	    PSDRV_WriteMoveTo(dev, x + offset.x, y + offset.y);
+	    PSDRV_WriteMoveTo(ctx, x + offset.x, y + offset.y);
 	}
-	if(physDev->font.fontloc == Download)
-	    PSDRV_WriteDownloadGlyphShow(dev, str + i, 1);
+	if(ctx->font.fontloc == Download)
+	    PSDRV_WriteDownloadGlyphShow(ctx, str + i, 1);
 	else
-	    PSDRV_WriteBuiltinGlyphShow(dev, str + i, 1);
+	    PSDRV_WriteBuiltinGlyphShow(ctx, str + i, 1);
     }
 
     HeapFree( GetProcessHeap(), 0, glyphs );

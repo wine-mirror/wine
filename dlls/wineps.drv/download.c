@@ -49,7 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 /****************************************************************************
  *  get_download_name
  */
-static void get_download_name(PHYSDEV dev, LPOUTLINETEXTMETRICA potm, char **str, BOOL vertical)
+static void get_download_name(print_ctx *ctx, LPOUTLINETEXTMETRICA potm, char **str, BOOL vertical)
 {
     static const char reserved_chars[] = " %/(){}[]<>\n\r\t\b\f";
     static const char vertical_suffix[] = "_vert";
@@ -57,7 +57,7 @@ static void get_download_name(PHYSDEV dev, LPOUTLINETEXTMETRICA potm, char **str
     char *p;
     DWORD size;
 
-    size = GetFontData(dev->hdc, MS_MAKE_TAG('n','a','m','e'), 0, NULL, 0);
+    size = GetFontData(ctx->dev.hdc, MS_MAKE_TAG('n','a','m','e'), 0, NULL, 0);
     if(size != 0 && size != GDI_ERROR)
     {
         BYTE *name = HeapAlloc(GetProcessHeap(), 0, size);
@@ -75,7 +75,7 @@ static void get_download_name(PHYSDEV dev, LPOUTLINETEXTMETRICA potm, char **str
                 USHORT offset;
             } *name_record;
 
-            GetFontData(dev->hdc, MS_MAKE_TAG('n','a','m','e'), 0, name, size);
+            GetFontData(ctx->dev.hdc, MS_MAKE_TAG('n','a','m','e'), 0, name, size);
             count = GET_BE_WORD(name + 2);
             strings = name + GET_BE_WORD(name + 4);
             name_record = (struct name_record *)(name + 6);
@@ -135,11 +135,11 @@ done:
 /****************************************************************************
  *  is_font_downloaded
  */
-static DOWNLOAD *is_font_downloaded(PSDRV_PDEVICE *physDev, char *ps_name)
+static DOWNLOAD *is_font_downloaded(print_ctx *ctx, char *ps_name)
 {
     DOWNLOAD *pdl;
 
-    for(pdl = physDev->downloaded_fonts; pdl; pdl = pdl->next)
+    for(pdl = ctx->downloaded_fonts; pdl; pdl = pdl->next)
         if(!strcmp(pdl->ps_name, ps_name))
 	    break;
     return pdl;
@@ -148,14 +148,14 @@ static DOWNLOAD *is_font_downloaded(PSDRV_PDEVICE *physDev, char *ps_name)
 /****************************************************************************
  *  is_room_for_font
  */
-static BOOL is_room_for_font(PSDRV_PDEVICE *physDev)
+static BOOL is_room_for_font(print_ctx *ctx)
 {
     DOWNLOAD *pdl;
     int count = 0;
 
     /* FIXME: should consider vm usage of each font and available printer memory.
        For now we allow up to two fonts to be downloaded at a time */
-    for(pdl = physDev->downloaded_fonts; pdl; pdl = pdl->next)
+    for(pdl = ctx->downloaded_fonts; pdl; pdl = pdl->next)
         count++;
 
     if(count > 1)
@@ -193,16 +193,13 @@ static UINT get_bbox(HDC hdc, RECT *rc)
 /****************************************************************************
  *  PSDRV_SelectDownloadFont
  *
- *  Set up physDev->font for a downloadable font
+ *  Set up ctx->font for a downloadable font
  *
  */
-BOOL PSDRV_SelectDownloadFont(PHYSDEV dev)
+BOOL PSDRV_SelectDownloadFont(print_ctx *ctx)
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
-
-    physDev->font.fontloc = Download;
-    physDev->font.fontinfo.Download = NULL;
-
+    ctx->font.fontloc = Download;
+    ctx->font.fontinfo.Download = NULL;
     return TRUE;
 }
 
@@ -265,91 +262,90 @@ static BOOL is_fake_italic( HDC hdc )
  *  Write setfont for download font.
  *
  */
-BOOL PSDRV_WriteSetDownloadFont(PHYSDEV dev, BOOL vertical)
+BOOL PSDRV_WriteSetDownloadFont(print_ctx *ctx, BOOL vertical)
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     char *ps_name;
     LPOUTLINETEXTMETRICA potm;
-    DWORD len = GetOutlineTextMetricsA(dev->hdc, 0, NULL);
+    DWORD len = GetOutlineTextMetricsA(ctx->dev.hdc, 0, NULL);
     DOWNLOAD *pdl;
     LOGFONTW lf;
     UINT ppem;
     XFORM xform;
     INT escapement;
 
-    assert(physDev->font.fontloc == Download);
+    assert(ctx->font.fontloc == Download);
 
-    if (!GetObjectW( GetCurrentObject(dev->hdc, OBJ_FONT), sizeof(lf), &lf ))
+    if (!GetObjectW( GetCurrentObject(ctx->dev.hdc, OBJ_FONT), sizeof(lf), &lf ))
         return FALSE;
 
     potm = HeapAlloc(GetProcessHeap(), 0, len);
     if (!potm)
         return FALSE;
 
-    GetOutlineTextMetricsA(dev->hdc, len, potm);
+    GetOutlineTextMetricsA(ctx->dev.hdc, len, potm);
 
-    get_download_name(dev, potm, &ps_name, vertical);
-    physDev->font.fontinfo.Download = is_font_downloaded(physDev, ps_name);
+    get_download_name(ctx, potm, &ps_name, vertical);
+    ctx->font.fontinfo.Download = is_font_downloaded(ctx, ps_name);
 
-    ppem = calc_ppem_for_height(dev->hdc, lf.lfHeight);
+    ppem = calc_ppem_for_height(ctx->dev.hdc, lf.lfHeight);
 
     /* Retrieve the world -> device transform */
-    GetTransform(dev->hdc, 0x204, &xform);
+    GetTransform(ctx->dev.hdc, 0x204, &xform);
 
-    if(GetGraphicsMode(dev->hdc) == GM_COMPATIBLE)
+    if(GetGraphicsMode(ctx->dev.hdc) == GM_COMPATIBLE)
     {
-        if (xform.eM22 < 0) physDev->font.escapement = -physDev->font.escapement;
+        if (xform.eM22 < 0) ctx->font.escapement = -ctx->font.escapement;
         xform.eM11 = xform.eM22 = fabs(xform.eM22);
         xform.eM21 = xform.eM12 = 0;
     }
 
-    physDev->font.size.xx = ps_round(ppem * xform.eM11);
-    physDev->font.size.xy = ps_round(ppem * xform.eM12);
-    physDev->font.size.yx = -ps_round(ppem * xform.eM21);
-    physDev->font.size.yy = -ps_round(ppem * xform.eM22);
+    ctx->font.size.xx = ps_round(ppem * xform.eM11);
+    ctx->font.size.xy = ps_round(ppem * xform.eM12);
+    ctx->font.size.yx = -ps_round(ppem * xform.eM21);
+    ctx->font.size.yy = -ps_round(ppem * xform.eM22);
 
-    if(physDev->font.fontinfo.Download == NULL) {
+    if(ctx->font.fontinfo.Download == NULL) {
         RECT bbox;
-        UINT emsize = get_bbox(dev->hdc, &bbox);
+        UINT emsize = get_bbox(ctx->dev.hdc, &bbox);
 
         if (!emsize) {
             HeapFree(GetProcessHeap(), 0, ps_name);
             HeapFree(GetProcessHeap(), 0, potm);
             return FALSE;
         }
-        if(!is_room_for_font(physDev))
-            PSDRV_EmptyDownloadList(dev, TRUE);
+        if(!is_room_for_font(ctx))
+            PSDRV_EmptyDownloadList(ctx, TRUE);
 
         pdl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pdl));
 	pdl->ps_name = HeapAlloc(GetProcessHeap(), 0, strlen(ps_name)+1);
 	strcpy(pdl->ps_name, ps_name);
 	pdl->next = NULL;
 
-        if(physDev->pi->ppd->TTRasterizer == RO_Type42) {
-	    pdl->typeinfo.Type42 = T42_download_header(dev, ps_name, &bbox, emsize);
+        if(ctx->pi->ppd->TTRasterizer == RO_Type42) {
+	    pdl->typeinfo.Type42 = T42_download_header(ctx, ps_name, &bbox, emsize);
 	    pdl->type = Type42;
 	}
 	if(pdl->typeinfo.Type42 == NULL) {
-	    pdl->typeinfo.Type1 = T1_download_header(dev, ps_name, &bbox, emsize);
+	    pdl->typeinfo.Type1 = T1_download_header(ctx, ps_name, &bbox, emsize);
 	    pdl->type = Type1;
 	}
-	pdl->next = physDev->downloaded_fonts;
-	physDev->downloaded_fonts = pdl;
-	physDev->font.fontinfo.Download = pdl;
+	pdl->next = ctx->downloaded_fonts;
+	ctx->downloaded_fonts = pdl;
+	ctx->font.fontinfo.Download = pdl;
 
         if(pdl->type == Type42) {
             char g_name[MAX_G_NAME + 1];
-            get_glyph_name(dev->hdc, 0, g_name);
-            T42_download_glyph(dev, pdl, 0, g_name);
+            get_glyph_name(ctx->dev.hdc, 0, g_name);
+            T42_download_glyph(ctx, pdl, 0, g_name);
         }
     }
 
-    escapement = physDev->font.escapement;
+    escapement = ctx->font.escapement;
     if (vertical)
         escapement += 900;
 
-    PSDRV_WriteSetFont(dev, ps_name, physDev->font.size, escapement,
-                        is_fake_italic( dev->hdc ));
+    PSDRV_WriteSetFont(ctx, ps_name, ctx->font.size, escapement,
+                        is_fake_italic( ctx->dev.hdc ));
 
     HeapFree(GetProcessHeap(), 0, ps_name);
     HeapFree(GetProcessHeap(), 0, potm);
@@ -740,33 +736,32 @@ cleanup:
  *  Download and write out a number of glyphs
  *
  */
-BOOL PSDRV_WriteDownloadGlyphShow(PHYSDEV dev, const WORD *glyphs,
+BOOL PSDRV_WriteDownloadGlyphShow(print_ctx *ctx, const WORD *glyphs,
 				  UINT count)
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     UINT i;
     char g_name[MAX_G_NAME + 1];
-    assert(physDev->font.fontloc == Download);
+    assert(ctx->font.fontloc == Download);
 
-    switch(physDev->font.fontinfo.Download->type) {
+    switch(ctx->font.fontinfo.Download->type) {
     case Type42:
     for(i = 0; i < count; i++) {
-        get_glyph_name(dev->hdc, glyphs[i], g_name);
-	T42_download_glyph(dev, physDev->font.fontinfo.Download, glyphs[i], g_name);
-	PSDRV_WriteGlyphShow(dev, g_name);
+        get_glyph_name(ctx->dev.hdc, glyphs[i], g_name);
+	T42_download_glyph(ctx, ctx->font.fontinfo.Download, glyphs[i], g_name);
+	PSDRV_WriteGlyphShow(ctx, g_name);
     }
     break;
 
     case Type1:
     for(i = 0; i < count; i++) {
-        get_glyph_name(dev->hdc, glyphs[i], g_name);
-	T1_download_glyph(dev, physDev->font.fontinfo.Download, glyphs[i], g_name);
-	PSDRV_WriteGlyphShow(dev, g_name);
+        get_glyph_name(ctx->dev.hdc, glyphs[i], g_name);
+	T1_download_glyph(ctx, ctx->font.fontinfo.Download, glyphs[i], g_name);
+	PSDRV_WriteGlyphShow(ctx, g_name);
     }
     break;
 
     default:
-        ERR("Type = %d\n", physDev->font.fontinfo.Download->type);
+        ERR("Type = %d\n", ctx->font.fontinfo.Download->type);
 	assert(0);
     }
     return TRUE;
@@ -778,26 +773,25 @@ BOOL PSDRV_WriteDownloadGlyphShow(PHYSDEV dev, const WORD *glyphs,
  *  Clear the list of downloaded fonts
  *
  */
-BOOL PSDRV_EmptyDownloadList(PHYSDEV dev, BOOL write_undef)
+BOOL PSDRV_EmptyDownloadList(print_ctx *ctx, BOOL write_undef)
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     DOWNLOAD *pdl, *old;
     static const char undef[] = "/%s findfont 40 scalefont setfont /%s undefinefont\n";
     char buf[sizeof(undef) + 200];
-    const char *default_font = physDev->pi->ppd->DefaultFont ?
-        physDev->pi->ppd->DefaultFont : "Courier";
+    const char *default_font = ctx->pi->ppd->DefaultFont ?
+        ctx->pi->ppd->DefaultFont : "Courier";
 
-    if(physDev->font.fontloc == Download) {
-        physDev->font.set = FALSE;
-	physDev->font.fontinfo.Download = NULL;
+    if(ctx->font.fontloc == Download) {
+        ctx->font.set = FALSE;
+	ctx->font.fontinfo.Download = NULL;
     }
 
-    pdl = physDev->downloaded_fonts;
-    physDev->downloaded_fonts = NULL;
+    pdl = ctx->downloaded_fonts;
+    ctx->downloaded_fonts = NULL;
     while(pdl) {
         if(write_undef) {
             sprintf(buf, undef, default_font, pdl->ps_name);
-            PSDRV_WriteSpool(dev, buf, strlen(buf));
+            PSDRV_WriteSpool(ctx, buf, strlen(buf));
         }
 
         switch(pdl->type) {

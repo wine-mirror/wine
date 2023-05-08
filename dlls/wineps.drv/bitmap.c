@@ -44,7 +44,7 @@ static inline int get_dib_width_bytes( int width, int depth )
  *  Uses level 2 PostScript
  */
 
-static BOOL PSDRV_WriteImageHeader(PHYSDEV dev, const BITMAPINFO *info, BOOL grayscale, INT xDst,
+static BOOL PSDRV_WriteImageHeader(print_ctx *ctx, const BITMAPINFO *info, BOOL grayscale, INT xDst,
 				   INT yDst, INT widthDst, INT heightDst,
 				   INT widthSrc, INT heightSrc)
 {
@@ -53,9 +53,9 @@ static BOOL PSDRV_WriteImageHeader(PHYSDEV dev, const BITMAPINFO *info, BOOL gra
     case 1:
     case 4:
     case 8:
-	PSDRV_WriteIndexColorSpaceBegin(dev, (1 << info->bmiHeader.biBitCount) - 1);
-	PSDRV_WriteRGBQUAD(dev, info->bmiColors, 1 << info->bmiHeader.biBitCount);
-	PSDRV_WriteIndexColorSpaceEnd(dev);
+	PSDRV_WriteIndexColorSpaceBegin(ctx, (1 << info->bmiHeader.biBitCount) - 1);
+	PSDRV_WriteRGBQUAD(ctx, info->bmiColors, 1 << info->bmiHeader.biBitCount);
+	PSDRV_WriteIndexColorSpaceEnd(ctx);
 	break;
 
     case 16:
@@ -73,12 +73,12 @@ static BOOL PSDRV_WriteImageHeader(PHYSDEV dev, const BITMAPINFO *info, BOOL gra
             pscol.type = PSCOLOR_RGB;
             pscol.value.rgb.r = pscol.value.rgb.g = pscol.value.rgb.b = 0.0;
         }
-        PSDRV_WriteSetColor(dev, &pscol);
+        PSDRV_WriteSetColor(ctx, &pscol);
         break;
       }
     }
 
-    PSDRV_WriteImage(dev, info->bmiHeader.biBitCount, grayscale, xDst, yDst,
+    PSDRV_WriteImage(ctx, info->bmiHeader.biBitCount, grayscale, xDst, yDst,
 		     widthDst, heightDst, widthSrc, heightSrc, FALSE, info->bmiHeader.biHeight < 0);
     return TRUE;
 }
@@ -96,12 +96,11 @@ static BOOL PSDRV_WriteImageHeader(PHYSDEV dev, const BITMAPINFO *info, BOOL gra
  *  Uses level 2 PostScript
  */
 
-static BOOL PSDRV_WriteImageMaskHeader(PHYSDEV dev, const BITMAPINFO *info, INT xDst,
+static BOOL PSDRV_WriteImageMaskHeader(print_ctx *ctx, const BITMAPINFO *info, INT xDst,
                                        INT yDst, INT widthDst, INT heightDst,
                                        INT widthSrc, INT heightSrc)
 {
     PSCOLOR bkgnd, foregnd;
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
     assert(info->bmiHeader.biBitCount == 1);
 
@@ -111,28 +110,28 @@ static BOOL PSDRV_WriteImageMaskHeader(PHYSDEV dev, const BITMAPINFO *info, INT 
     */
     if (!info->bmiHeader.biClrUsed)
     {
-        PSDRV_CreateColor( dev, &foregnd, GetTextColor( dev->hdc ) );
-        bkgnd = physDev->bkColor;
+        PSDRV_CreateColor( ctx, &foregnd, GetTextColor( ctx->dev.hdc ) );
+        bkgnd = ctx->bkColor;
     }
     else
     {
-        PSDRV_CreateColor( dev, &foregnd, RGB(info->bmiColors[0].rgbRed,
+        PSDRV_CreateColor( ctx, &foregnd, RGB(info->bmiColors[0].rgbRed,
                                               info->bmiColors[0].rgbGreen,
                                               info->bmiColors[0].rgbBlue) );
-        PSDRV_CreateColor( dev, &bkgnd, RGB(info->bmiColors[1].rgbRed,
+        PSDRV_CreateColor( ctx, &bkgnd, RGB(info->bmiColors[1].rgbRed,
                                             info->bmiColors[1].rgbGreen,
                                             info->bmiColors[1].rgbBlue) );
     }
 
-    PSDRV_WriteGSave(dev);
-    PSDRV_WriteNewPath(dev);
-    PSDRV_WriteRectangle(dev, xDst, yDst, widthDst, heightDst);
-    PSDRV_WriteSetColor(dev, &bkgnd);
-    PSDRV_WriteFill(dev);
-    PSDRV_WriteGRestore(dev);
+    PSDRV_WriteGSave(ctx);
+    PSDRV_WriteNewPath(ctx);
+    PSDRV_WriteRectangle(ctx, xDst, yDst, widthDst, heightDst);
+    PSDRV_WriteSetColor(ctx, &bkgnd);
+    PSDRV_WriteFill(ctx);
+    PSDRV_WriteGRestore(ctx);
 
-    PSDRV_WriteSetColor(dev, &foregnd);
-    PSDRV_WriteImage(dev, 1, FALSE, xDst, yDst, widthDst, heightDst,
+    PSDRV_WriteSetColor(ctx, &foregnd);
+    PSDRV_WriteImage(ctx, 1, FALSE, xDst, yDst, widthDst, heightDst,
 		     widthSrc, heightSrc, TRUE, info->bmiHeader.biHeight < 0);
 
     return TRUE;
@@ -156,7 +155,7 @@ static void CDECL free_heap_bits( struct gdi_image_bits *bits )
 /***************************************************************************
  *                PSDRV_WriteImageBits
  */
-static void PSDRV_WriteImageBits( PHYSDEV dev, const BITMAPINFO *info, BOOL grayscale, INT xDst, INT yDst,
+static void PSDRV_WriteImageBits( print_ctx *ctx, const BITMAPINFO *info, BOOL grayscale, INT xDst, INT yDst,
                                   INT widthDst, INT heightDst, INT widthSrc, INT heightSrc,
                                   void *bits, DWORD size )
 {
@@ -165,10 +164,10 @@ static void PSDRV_WriteImageBits( PHYSDEV dev, const BITMAPINFO *info, BOOL gray
 
     if (info->bmiHeader.biBitCount == 1)
         /* Use imagemask rather than image */
-	PSDRV_WriteImageMaskHeader(dev, info, xDst, yDst, widthDst, heightDst,
+	PSDRV_WriteImageMaskHeader(ctx, info, xDst, yDst, widthDst, heightDst,
                                    widthSrc, heightSrc);
     else
-	PSDRV_WriteImageHeader(dev, info, grayscale, xDst, yDst, widthDst, heightDst,
+	PSDRV_WriteImageHeader(ctx, info, grayscale, xDst, yDst, widthDst, heightDst,
 			       widthSrc, heightSrc);
 
     rle = HeapAlloc(GetProcessHeap(), 0, max_rle_size(size));
@@ -176,15 +175,15 @@ static void PSDRV_WriteImageBits( PHYSDEV dev, const BITMAPINFO *info, BOOL gray
     ascii85 = HeapAlloc(GetProcessHeap(), 0, max_ascii85_size(rle_len));
     ascii85_len = ASCII85_encode(rle, rle_len, ascii85);
     HeapFree(GetProcessHeap(), 0, rle);
-    PSDRV_WriteData(dev, ascii85, ascii85_len);
-    PSDRV_WriteSpool(dev, "~>\n", 3);
+    PSDRV_WriteData(ctx, ascii85, ascii85_len);
+    PSDRV_WriteSpool(ctx, "~>\n", 3);
     HeapFree(GetProcessHeap(), 0, ascii85);
 }
 
 /***********************************************************************
  *           PSDRV_PutImage
  */
-DWORD CDECL PSDRV_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
+DWORD CDECL PSDRV_PutImage( print_ctx *ctx, HRGN clip, BITMAPINFO *info,
                             const struct gdi_image_bits *bits, struct bitblt_coords *src,
                             struct bitblt_coords *dst, DWORD rop )
 {
@@ -192,8 +191,7 @@ DWORD CDECL PSDRV_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
     int dst_x, dst_y, dst_width, dst_height;
     unsigned char *src_ptr, *dst_ptr;
     struct gdi_image_bits dst_bits;
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
-    BOOL grayscale = info->bmiHeader.biBitCount == 24 && physDev->pi->ppd->ColorDevice == CD_False;
+    BOOL grayscale = info->bmiHeader.biBitCount == 24 && ctx->pi->ppd->ColorDevice == CD_False;
 
     if (info->bmiHeader.biPlanes != 1) goto update_format;
     if (info->bmiHeader.biCompression != BI_RGB) goto update_format;
@@ -286,13 +284,13 @@ DWORD CDECL PSDRV_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
         dst_height = -dst_height;
     }
 
-    PSDRV_SetClip(dev);
-    PSDRV_WriteGSave(dev);
-    if (clip) PSDRV_AddClip( dev, clip );
-    PSDRV_WriteImageBits( dev, info, grayscale, dst_x, dst_y, dst_width, dst_height,
+    PSDRV_SetClip(ctx);
+    PSDRV_WriteGSave(ctx);
+    if (clip) PSDRV_AddClip( ctx, clip );
+    PSDRV_WriteImageBits( ctx, info, grayscale, dst_x, dst_y, dst_width, dst_height,
                           width, height, dst_bits.ptr, size );
-    PSDRV_WriteGRestore(dev);
-    PSDRV_ResetClip(dev);
+    PSDRV_WriteGRestore(ctx);
+    PSDRV_ResetClip(ctx);
     if (dst_bits.free) dst_bits.free( &dst_bits );
     return ERROR_SUCCESS;
 

@@ -38,12 +38,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
-DWORD write_spool( PHYSDEV dev, const void *data, DWORD num )
+DWORD write_spool( print_ctx *ctx, const void *data, DWORD num )
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     DWORD written;
 
-    if (!WritePrinter(physDev->job.hprinter, (LPBYTE) data, num, &written) || (written != num))
+    if (!WritePrinter(ctx->job.hprinter, (LPBYTE) data, num, &written) || (written != num))
         return SP_OUTOFDISK;
 
     return num;
@@ -52,13 +51,11 @@ DWORD write_spool( PHYSDEV dev, const void *data, DWORD num )
 /**********************************************************************
  *           ExtEscape  (WINEPS.@)
  */
-INT CDECL PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
+INT CDECL PSDRV_ExtEscape( print_ctx *ctx, INT nEscape, INT cbInput, LPCVOID in_data,
                            INT cbOutput, LPVOID out_data )
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
-
     TRACE("%p,%d,%d,%p,%d,%p\n",
-          dev->hdc, nEscape, cbInput, in_data, cbOutput, out_data);
+          ctx->dev.hdc, nEscape, cbInput, in_data, cbOutput, out_data);
 
     switch(nEscape)
     {
@@ -75,30 +72,30 @@ INT CDECL PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_dat
          * length of the string, rather than 2 more.  So we'll use the WORD at
          * in_data[0] instead.
          */
-        passthrough_enter(dev);
-        return write_spool(dev, ((char*)in_data) + 2, *(const WORD*)in_data);
+        passthrough_enter(ctx);
+        return write_spool(ctx, ((char*)in_data) + 2, *(const WORD*)in_data);
     }
 
     case POSTSCRIPT_IGNORE:
     {
-        BOOL ret = physDev->job.quiet;
+        BOOL ret = ctx->job.quiet;
         TRACE("POSTSCRIPT_IGNORE %d\n", *(const short*)in_data);
-        physDev->job.quiet = *(const short*)in_data;
+        ctx->job.quiet = *(const short*)in_data;
         return ret;
     }
 
     case BEGIN_PATH:
         TRACE("BEGIN_PATH\n");
-        if(physDev->pathdepth)
+        if(ctx->pathdepth)
             FIXME("Nested paths not yet handled\n");
-        return ++physDev->pathdepth;
+        return ++ctx->pathdepth;
 
     case END_PATH:
     {
         const struct PATH_INFO *info = (const struct PATH_INFO*)in_data;
 
         TRACE("END_PATH\n");
-        if(!physDev->pathdepth) {
+        if(!ctx->pathdepth) {
             ERR("END_PATH called without a BEGIN_PATH\n");
             return -1;
         }
@@ -106,7 +103,7 @@ INT CDECL PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_dat
                 info->RenderMode, info->FillMode, info->BkMode);
         switch(info->RenderMode) {
         case RENDERMODE_NO_DISPLAY:
-            PSDRV_WriteClosePath(dev); /* not sure if this is necessary, but it can't hurt */
+            PSDRV_WriteClosePath(ctx); /* not sure if this is necessary, but it can't hurt */
             break;
         case RENDERMODE_OPEN:
         case RENDERMODE_CLOSED:
@@ -114,7 +111,7 @@ INT CDECL PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_dat
             FIXME("END_PATH: RenderMode %d, not yet supported\n", info->RenderMode);
             break;
         }
-        return --physDev->pathdepth;
+        return --ctx->pathdepth;
     }
 
     case CLIP_TO_PATH:
@@ -124,17 +121,17 @@ INT CDECL PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_dat
         switch(mode) {
         case CLIP_SAVE:
             TRACE("CLIP_TO_PATH: CLIP_SAVE\n");
-            PSDRV_WriteGSave(dev);
+            PSDRV_WriteGSave(ctx);
             return 1;
         case CLIP_RESTORE:
             TRACE("CLIP_TO_PATH: CLIP_RESTORE\n");
-            PSDRV_WriteGRestore(dev);
+            PSDRV_WriteGRestore(ctx);
             return 1;
         case CLIP_INCLUSIVE:
             TRACE("CLIP_TO_PATH: CLIP_INCLUSIVE\n");
             /* FIXME to clip or eoclip ? (see PATH_INFO.FillMode) */
-            PSDRV_WriteClip(dev);
-            PSDRV_WriteNewPath(dev);
+            PSDRV_WriteClip(ctx);
+            PSDRV_WriteNewPath(ctx);
             return 1;
         case CLIP_EXCLUSIVE:
             FIXME("CLIP_EXCLUSIVE: not implemented\n");
@@ -153,22 +150,20 @@ INT CDECL PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_dat
 /************************************************************************
  *           PSDRV_StartPage
  */
-INT CDECL PSDRV_StartPage( PHYSDEV dev )
+INT CDECL PSDRV_StartPage( print_ctx *ctx )
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+    TRACE("%p\n", ctx->dev.hdc);
 
-    TRACE("%p\n", dev->hdc);
-
-    if(!physDev->job.OutOfPage) {
+    if(!ctx->job.OutOfPage) {
         FIXME("Already started a page?\n");
 	return 1;
     }
 
-    physDev->job.PageNo++;
+    ctx->job.PageNo++;
 
-    if(!PSDRV_WriteNewPage( dev ))
+    if(!PSDRV_WriteNewPage( ctx ))
         return 0;
-    physDev->job.OutOfPage = FALSE;
+    ctx->job.OutOfPage = FALSE;
     return 1;
 }
 
@@ -176,21 +171,19 @@ INT CDECL PSDRV_StartPage( PHYSDEV dev )
 /************************************************************************
  *           PSDRV_EndPage
  */
-INT CDECL PSDRV_EndPage( PHYSDEV dev )
+INT CDECL PSDRV_EndPage( print_ctx *ctx )
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+    TRACE("%p\n", ctx->dev.hdc);
 
-    TRACE("%p\n", dev->hdc);
-
-    if(physDev->job.OutOfPage) {
+    if(ctx->job.OutOfPage) {
         FIXME("Already ended a page?\n");
 	return 1;
     }
 
-    passthrough_leave(dev);
-    if(!PSDRV_WriteEndPage( dev ))
+    passthrough_leave(ctx);
+    if(!PSDRV_WriteEndPage( ctx ))
         return 0;
-    PSDRV_EmptyDownloadList(dev, FALSE);
-    physDev->job.OutOfPage = TRUE;
+    PSDRV_EmptyDownloadList(ctx, FALSE);
+    ctx->job.OutOfPage = TRUE;
     return 1;
 }

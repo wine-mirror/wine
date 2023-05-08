@@ -27,7 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 /***********************************************************************
  *           PSDRV_AddClip
  */
-void PSDRV_AddClip( PHYSDEV dev, HRGN hrgn )
+void PSDRV_AddClip( print_ctx *ctx, HRGN hrgn )
 {
     CHAR szArrayName[] = "clippath";
     RECT *rect;
@@ -43,23 +43,23 @@ void PSDRV_AddClip( PHYSDEV dev, HRGN hrgn )
     {
     case 0:
         /* set an empty clip path. */
-        PSDRV_WriteRectClip(dev, 0, 0, 0, 0);
+        PSDRV_WriteRectClip(ctx, 0, 0, 0, 0);
         break;
     case 1:
         /* optimize when it is a simple region */
-        PSDRV_WriteRectClip(dev, rect->left, rect->top,
+        PSDRV_WriteRectClip(ctx, rect->left, rect->top,
                             rect->right - rect->left, rect->bottom - rect->top);
         break;
     default:
-        PSDRV_WriteArrayDef(dev, szArrayName, data->rdh.nCount * 4);
+        PSDRV_WriteArrayDef(ctx, szArrayName, data->rdh.nCount * 4);
         for (i = 0; i < data->rdh.nCount; i++, rect++)
         {
-            PSDRV_WriteArrayPut(dev, szArrayName, i * 4, rect->left);
-            PSDRV_WriteArrayPut(dev, szArrayName, i * 4 + 1, rect->top);
-            PSDRV_WriteArrayPut(dev, szArrayName, i * 4 + 2, rect->right - rect->left);
-            PSDRV_WriteArrayPut(dev, szArrayName, i * 4 + 3, rect->bottom - rect->top);
+            PSDRV_WriteArrayPut(ctx, szArrayName, i * 4, rect->left);
+            PSDRV_WriteArrayPut(ctx, szArrayName, i * 4 + 1, rect->top);
+            PSDRV_WriteArrayPut(ctx, szArrayName, i * 4 + 2, rect->right - rect->left);
+            PSDRV_WriteArrayPut(ctx, szArrayName, i * 4 + 3, rect->bottom - rect->top);
         }
-        PSDRV_WriteRectClip2(dev, szArrayName);
+        PSDRV_WriteRectClip2(ctx, szArrayName);
         break;
     }
     HeapFree( GetProcessHeap(), 0, data );
@@ -76,23 +76,22 @@ void PSDRV_AddClip( PHYSDEV dev, HRGN hrgn )
  * small clip area in the printer dc that it can still write raw
  * PostScript to the driver and expect this code not to be clipped.
  */
-void PSDRV_SetClip( PHYSDEV dev )
+void PSDRV_SetClip( print_ctx *ctx )
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     HRGN hrgn;
 
-    TRACE("hdc=%p\n", dev->hdc);
+    TRACE("hdc=%p\n", ctx->dev.hdc);
 
-    if(physDev->pathdepth) {
+    if(ctx->pathdepth) {
         TRACE("inside a path, so not clipping\n");
         return;
     }
 
     hrgn = CreateRectRgn(0, 0, 0, 0);
-    if (GetRandomRgn(dev->hdc, hrgn, 3) == 1) /* clip && meta */
+    if (GetRandomRgn(ctx->dev.hdc, hrgn, 3) == 1) /* clip && meta */
     {
-        PSDRV_WriteGSave(dev);
-        PSDRV_AddClip( dev, hrgn );
+        PSDRV_WriteGSave(ctx);
+        PSDRV_AddClip( ctx, hrgn );
     }
     DeleteObject(hrgn);
 }
@@ -101,15 +100,14 @@ void PSDRV_SetClip( PHYSDEV dev )
 /***********************************************************************
  *           PSDRV_ResetClip
  */
-void PSDRV_ResetClip( PHYSDEV dev )
+void PSDRV_ResetClip( print_ctx *ctx )
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     HRGN hrgn;
 
-    if (physDev->pathdepth) return;
+    if (ctx->pathdepth) return;
 
     hrgn = CreateRectRgn(0, 0, 0, 0);
-    if (GetRandomRgn(dev->hdc, hrgn, 3) == 1) /* clip && meta */
-        PSDRV_WriteGRestore(dev);
+    if (GetRandomRgn(ctx->dev.hdc, hrgn, 3) == 1) /* clip && meta */
+        PSDRV_WriteGRestore(ctx);
     DeleteObject(hrgn);
 }

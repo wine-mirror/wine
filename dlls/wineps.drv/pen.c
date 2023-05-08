@@ -37,9 +37,8 @@ static const DWORD PEN_alternate[]  = { 1 };
 /***********************************************************************
  *           SelectPen   (WINEPS.@)
  */
-HPEN CDECL PSDRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *pattern )
+HPEN CDECL PSDRV_SelectPen( print_ctx *ctx, HPEN hpen, const struct brush_pattern *pattern )
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     LOGPEN logpen;
     EXTLOGPEN *elp = NULL;
 
@@ -62,78 +61,78 @@ HPEN CDECL PSDRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *
 
     TRACE("hpen = %p colour = %08lx\n", hpen, logpen.lopnColor);
 
-    physDev->pen.width = logpen.lopnWidth.x;
-    if ((logpen.lopnStyle & PS_GEOMETRIC) || (physDev->pen.width > 1))
+    ctx->pen.width = logpen.lopnWidth.x;
+    if ((logpen.lopnStyle & PS_GEOMETRIC) || (ctx->pen.width > 1))
     {
-        physDev->pen.width = PSDRV_XWStoDS( dev, physDev->pen.width );
-        if(physDev->pen.width < 0) physDev->pen.width = -physDev->pen.width;
+        ctx->pen.width = PSDRV_XWStoDS( ctx, ctx->pen.width );
+        if(ctx->pen.width < 0) ctx->pen.width = -ctx->pen.width;
     }
     if (hpen == GetStockObject( DC_PEN ))
-        logpen.lopnColor = GetDCPenColor( dev->hdc );
+        logpen.lopnColor = GetDCPenColor( ctx->dev.hdc );
 
     switch (logpen.lopnStyle & PS_JOIN_MASK)
     {
     default:
-    case PS_JOIN_ROUND: physDev->pen.join = 1; break;
-    case PS_JOIN_BEVEL: physDev->pen.join = 2; break;
-    case PS_JOIN_MITER: physDev->pen.join = 0; break;
+    case PS_JOIN_ROUND: ctx->pen.join = 1; break;
+    case PS_JOIN_BEVEL: ctx->pen.join = 2; break;
+    case PS_JOIN_MITER: ctx->pen.join = 0; break;
     }
 
     switch (logpen.lopnStyle & PS_ENDCAP_MASK)
     {
     default:
-    case PS_ENDCAP_ROUND:  physDev->pen.endcap = 1; break;
-    case PS_ENDCAP_SQUARE: physDev->pen.endcap = 2; break;
-    case PS_ENDCAP_FLAT:   physDev->pen.endcap = 0; break;
+    case PS_ENDCAP_ROUND:  ctx->pen.endcap = 1; break;
+    case PS_ENDCAP_SQUARE: ctx->pen.endcap = 2; break;
+    case PS_ENDCAP_FLAT:   ctx->pen.endcap = 0; break;
     }
 
-    PSDRV_CreateColor(dev, &physDev->pen.color, logpen.lopnColor);
-    physDev->pen.style = logpen.lopnStyle & PS_STYLE_MASK;
+    PSDRV_CreateColor(ctx, &ctx->pen.color, logpen.lopnColor);
+    ctx->pen.style = logpen.lopnStyle & PS_STYLE_MASK;
 
-    switch(physDev->pen.style) {
+    switch(ctx->pen.style) {
     case PS_DASH:
-        memcpy( physDev->pen.dash, PEN_dash, sizeof(PEN_dash) );
-        physDev->pen.dash_len = ARRAY_SIZE( PEN_dash );
+        memcpy( ctx->pen.dash, PEN_dash, sizeof(PEN_dash) );
+        ctx->pen.dash_len = ARRAY_SIZE( PEN_dash );
 	break;
 
     case PS_DOT:
-        memcpy( physDev->pen.dash, PEN_dot, sizeof(PEN_dot) );
-        physDev->pen.dash_len = ARRAY_SIZE( PEN_dot );
+        memcpy( ctx->pen.dash, PEN_dot, sizeof(PEN_dot) );
+        ctx->pen.dash_len = ARRAY_SIZE( PEN_dot );
 	break;
 
     case PS_DASHDOT:
-        memcpy( physDev->pen.dash, PEN_dashdot, sizeof(PEN_dashdot) );
-        physDev->pen.dash_len = ARRAY_SIZE( PEN_dashdot );
+        memcpy( ctx->pen.dash, PEN_dashdot, sizeof(PEN_dashdot) );
+        ctx->pen.dash_len = ARRAY_SIZE( PEN_dashdot );
 	break;
 
     case PS_DASHDOTDOT:
-        memcpy( physDev->pen.dash, PEN_dashdotdot, sizeof(PEN_dashdotdot) );
-        physDev->pen.dash_len = ARRAY_SIZE( PEN_dashdotdot );
+        memcpy( ctx->pen.dash, PEN_dashdotdot, sizeof(PEN_dashdotdot) );
+        ctx->pen.dash_len = ARRAY_SIZE( PEN_dashdotdot );
 	break;
 
     case PS_ALTERNATE:
-        memcpy( physDev->pen.dash, PEN_alternate, sizeof(PEN_alternate) );
-        physDev->pen.dash_len = ARRAY_SIZE( PEN_alternate );
+        memcpy( ctx->pen.dash, PEN_alternate, sizeof(PEN_alternate) );
+        ctx->pen.dash_len = ARRAY_SIZE( PEN_alternate );
 	break;
 
     case PS_USERSTYLE:
-        physDev->pen.dash_len = min( elp->elpNumEntries, MAX_DASHLEN );
-        memcpy( physDev->pen.dash, elp->elpStyleEntry, physDev->pen.dash_len * sizeof(DWORD) );
+        ctx->pen.dash_len = min( elp->elpNumEntries, MAX_DASHLEN );
+        memcpy( ctx->pen.dash, elp->elpStyleEntry, ctx->pen.dash_len * sizeof(DWORD) );
 	break;
 
     default:
-	physDev->pen.dash_len = 0;
+	ctx->pen.dash_len = 0;
     }
 
-    if ((physDev->pen.width > 1) && physDev->pen.dash_len &&
-        physDev->pen.style != PS_USERSTYLE && physDev->pen.style != PS_ALTERNATE)
+    if ((ctx->pen.width > 1) && ctx->pen.dash_len &&
+        ctx->pen.style != PS_USERSTYLE && ctx->pen.style != PS_ALTERNATE)
     {
-        physDev->pen.style = PS_SOLID;
-        physDev->pen.dash_len = 0;
+        ctx->pen.style = PS_SOLID;
+        ctx->pen.dash_len = 0;
     }
 
     HeapFree( GetProcessHeap(), 0, elp );
-    physDev->pen.set = FALSE;
+    ctx->pen.set = FALSE;
     return hpen;
 }
 
@@ -141,12 +140,10 @@ HPEN CDECL PSDRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *
 /***********************************************************************
  *           SetDCPenColor (WINEPS.@)
  */
-COLORREF CDECL PSDRV_SetDCPenColor( PHYSDEV dev, COLORREF color )
+COLORREF CDECL PSDRV_SetDCPenColor( print_ctx *ctx, COLORREF color )
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
-
-    if (GetCurrentObject( dev->hdc, OBJ_PEN ) == GetStockObject( DC_PEN ))
-        PSDRV_CreateColor( dev, &physDev->pen.color, color );
+    if (GetCurrentObject( ctx->dev.hdc, OBJ_PEN ) == GetStockObject( DC_PEN ))
+        PSDRV_CreateColor( ctx, &ctx->pen.color, color );
     return color;
 }
 
@@ -156,16 +153,14 @@ COLORREF CDECL PSDRV_SetDCPenColor( PHYSDEV dev, COLORREF color )
  *	PSDRV_SetPen
  *
  */
-BOOL PSDRV_SetPen( PHYSDEV dev )
+BOOL PSDRV_SetPen( print_ctx *ctx )
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+    if (ctx->pen.style != PS_NULL) {
+	PSDRV_WriteSetColor(ctx, &ctx->pen.color);
 
-    if (physDev->pen.style != PS_NULL) {
-	PSDRV_WriteSetColor(dev, &physDev->pen.color);
-
-	if(!physDev->pen.set) {
-	    PSDRV_WriteSetPen(dev);
-	    physDev->pen.set = TRUE;
+	if(!ctx->pen.set) {
+	    PSDRV_WriteSetPen(ctx);
+	    ctx->pen.set = TRUE;
 	}
     }
 

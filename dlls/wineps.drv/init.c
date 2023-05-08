@@ -219,122 +219,122 @@ static void dump_devmode(const DEVMODEW *dm)
     TRACE("dmPelsHeight %lu\n", dm->dmPelsHeight);
 }
 
-static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
+static void PSDRV_UpdateDevCaps( print_ctx *ctx )
 {
     PAGESIZE *page;
     RESOLUTION *res;
     INT width = 0, height = 0, resx = 0, resy = 0;
 
-    dump_devmode(&physDev->Devmode->dmPublic);
+    dump_devmode(&ctx->Devmode->dmPublic);
 
-    if (physDev->Devmode->dmPublic.dmFields & (DM_PRINTQUALITY | DM_YRESOLUTION | DM_LOGPIXELS))
+    if (ctx->Devmode->dmPublic.dmFields & (DM_PRINTQUALITY | DM_YRESOLUTION | DM_LOGPIXELS))
     {
-        if (physDev->Devmode->dmPublic.dmFields & DM_PRINTQUALITY)
-            resx = resy = physDev->Devmode->dmPublic.dmPrintQuality;
+        if (ctx->Devmode->dmPublic.dmFields & DM_PRINTQUALITY)
+            resx = resy = ctx->Devmode->dmPublic.dmPrintQuality;
 
-        if (physDev->Devmode->dmPublic.dmFields & DM_YRESOLUTION)
-            resy = physDev->Devmode->dmPublic.dmYResolution;
+        if (ctx->Devmode->dmPublic.dmFields & DM_YRESOLUTION)
+            resy = ctx->Devmode->dmPublic.dmYResolution;
 
-        if (physDev->Devmode->dmPublic.dmFields & DM_LOGPIXELS)
-            resx = resy = physDev->Devmode->dmPublic.dmLogPixels;
+        if (ctx->Devmode->dmPublic.dmFields & DM_LOGPIXELS)
+            resx = resy = ctx->Devmode->dmPublic.dmLogPixels;
 
-        LIST_FOR_EACH_ENTRY(res, &physDev->pi->ppd->Resolutions, RESOLUTION, entry)
+        LIST_FOR_EACH_ENTRY(res, &ctx->pi->ppd->Resolutions, RESOLUTION, entry)
         {
             if (res->resx == resx && res->resy == resy)
             {
-                physDev->logPixelsX = resx;
-                physDev->logPixelsY = resy;
+                ctx->logPixelsX = resx;
+                ctx->logPixelsY = resy;
                 break;
             }
         }
 
-        if (&res->entry == &physDev->pi->ppd->Resolutions)
+        if (&res->entry == &ctx->pi->ppd->Resolutions)
         {
             WARN("Requested resolution %dx%d is not supported by device\n", resx, resy);
-            physDev->logPixelsX = physDev->pi->ppd->DefaultResolution;
-            physDev->logPixelsY = physDev->logPixelsX;
+            ctx->logPixelsX = ctx->pi->ppd->DefaultResolution;
+            ctx->logPixelsY = ctx->logPixelsX;
         }
     }
     else
     {
-        WARN("Using default device resolution %d\n", physDev->pi->ppd->DefaultResolution);
-        physDev->logPixelsX = physDev->pi->ppd->DefaultResolution;
-        physDev->logPixelsY = physDev->logPixelsX;
+        WARN("Using default device resolution %d\n", ctx->pi->ppd->DefaultResolution);
+        ctx->logPixelsX = ctx->pi->ppd->DefaultResolution;
+        ctx->logPixelsY = ctx->logPixelsX;
     }
 
-    if(physDev->Devmode->dmPublic.dmFields & DM_PAPERSIZE) {
-        LIST_FOR_EACH_ENTRY(page, &physDev->pi->ppd->PageSizes, PAGESIZE, entry) {
-	    if(page->WinPage == physDev->Devmode->dmPublic.dmPaperSize)
+    if(ctx->Devmode->dmPublic.dmFields & DM_PAPERSIZE) {
+        LIST_FOR_EACH_ENTRY(page, &ctx->pi->ppd->PageSizes, PAGESIZE, entry) {
+	    if(page->WinPage == ctx->Devmode->dmPublic.dmPaperSize)
 	        break;
 	}
 
-	if(&page->entry == &physDev->pi->ppd->PageSizes) {
+	if(&page->entry == &ctx->pi->ppd->PageSizes) {
 	    FIXME("Can't find page\n");
-            SetRectEmpty(&physDev->ImageableArea);
-	    physDev->PageSize.cx = 0;
-	    physDev->PageSize.cy = 0;
+            SetRectEmpty(&ctx->ImageableArea);
+	    ctx->PageSize.cx = 0;
+	    ctx->PageSize.cy = 0;
 	} else if(page->ImageableArea) {
-	  /* physDev sizes in device units; ppd sizes in 1/72" */
-            SetRect(&physDev->ImageableArea, page->ImageableArea->llx * physDev->logPixelsX / 72,
-                    page->ImageableArea->ury * physDev->logPixelsY / 72,
-                    page->ImageableArea->urx * physDev->logPixelsX / 72,
-                    page->ImageableArea->lly * physDev->logPixelsY / 72);
-	    physDev->PageSize.cx = page->PaperDimension->x *
-	      physDev->logPixelsX / 72;
-	    physDev->PageSize.cy = page->PaperDimension->y *
-	      physDev->logPixelsY / 72;
+	  /* ctx sizes in device units; ppd sizes in 1/72" */
+            SetRect(&ctx->ImageableArea, page->ImageableArea->llx * ctx->logPixelsX / 72,
+                    page->ImageableArea->ury * ctx->logPixelsY / 72,
+                    page->ImageableArea->urx * ctx->logPixelsX / 72,
+                    page->ImageableArea->lly * ctx->logPixelsY / 72);
+	    ctx->PageSize.cx = page->PaperDimension->x *
+	      ctx->logPixelsX / 72;
+	    ctx->PageSize.cy = page->PaperDimension->y *
+	      ctx->logPixelsY / 72;
 	} else {
-	    physDev->ImageableArea.left = physDev->ImageableArea.bottom = 0;
-	    physDev->ImageableArea.right = physDev->PageSize.cx =
-	      page->PaperDimension->x * physDev->logPixelsX / 72;
-	    physDev->ImageableArea.top = physDev->PageSize.cy =
-	      page->PaperDimension->y * physDev->logPixelsY / 72;
+	    ctx->ImageableArea.left = ctx->ImageableArea.bottom = 0;
+	    ctx->ImageableArea.right = ctx->PageSize.cx =
+	      page->PaperDimension->x * ctx->logPixelsX / 72;
+	    ctx->ImageableArea.top = ctx->PageSize.cy =
+	      page->PaperDimension->y * ctx->logPixelsY / 72;
 	}
-    } else if((physDev->Devmode->dmPublic.dmFields & DM_PAPERLENGTH) &&
-	      (physDev->Devmode->dmPublic.dmFields & DM_PAPERWIDTH)) {
-      /* physDev sizes in device units; Devmode sizes in 1/10 mm */
-        physDev->ImageableArea.left = physDev->ImageableArea.bottom = 0;
-	physDev->ImageableArea.right = physDev->PageSize.cx =
-	  physDev->Devmode->dmPublic.dmPaperWidth * physDev->logPixelsX / 254;
-	physDev->ImageableArea.top = physDev->PageSize.cy =
-	  physDev->Devmode->dmPublic.dmPaperLength * physDev->logPixelsY / 254;
+    } else if((ctx->Devmode->dmPublic.dmFields & DM_PAPERLENGTH) &&
+	      (ctx->Devmode->dmPublic.dmFields & DM_PAPERWIDTH)) {
+      /* ctx sizes in device units; Devmode sizes in 1/10 mm */
+        ctx->ImageableArea.left = ctx->ImageableArea.bottom = 0;
+	ctx->ImageableArea.right = ctx->PageSize.cx =
+	  ctx->Devmode->dmPublic.dmPaperWidth * ctx->logPixelsX / 254;
+	ctx->ImageableArea.top = ctx->PageSize.cy =
+	  ctx->Devmode->dmPublic.dmPaperLength * ctx->logPixelsY / 254;
     } else {
-        FIXME("Odd dmFields %lx\n", physDev->Devmode->dmPublic.dmFields);
-        SetRectEmpty(&physDev->ImageableArea);
-	physDev->PageSize.cx = 0;
-	physDev->PageSize.cy = 0;
+        FIXME("Odd dmFields %lx\n", ctx->Devmode->dmPublic.dmFields);
+        SetRectEmpty(&ctx->ImageableArea);
+	ctx->PageSize.cx = 0;
+	ctx->PageSize.cy = 0;
     }
 
-    TRACE("ImageableArea = %s: PageSize = %ldx%ld\n", wine_dbgstr_rect(&physDev->ImageableArea),
-	  physDev->PageSize.cx, physDev->PageSize.cy);
+    TRACE("ImageableArea = %s: PageSize = %ldx%ld\n", wine_dbgstr_rect(&ctx->ImageableArea),
+	  ctx->PageSize.cx, ctx->PageSize.cy);
 
     /* these are in device units */
-    width = physDev->ImageableArea.right - physDev->ImageableArea.left;
-    height = physDev->ImageableArea.top - physDev->ImageableArea.bottom;
+    width = ctx->ImageableArea.right - ctx->ImageableArea.left;
+    height = ctx->ImageableArea.top - ctx->ImageableArea.bottom;
 
-    if(physDev->Devmode->dmPublic.dmOrientation == DMORIENT_PORTRAIT) {
-        physDev->horzRes = width;
-        physDev->vertRes = height;
+    if(ctx->Devmode->dmPublic.dmOrientation == DMORIENT_PORTRAIT) {
+        ctx->horzRes = width;
+        ctx->vertRes = height;
     } else {
-        physDev->horzRes = height;
-        physDev->vertRes = width;
+        ctx->horzRes = height;
+        ctx->vertRes = width;
     }
 
     /* these are in mm */
-    physDev->horzSize = (physDev->horzRes * 25.4) / physDev->logPixelsX;
-    physDev->vertSize = (physDev->vertRes * 25.4) / physDev->logPixelsY;
+    ctx->horzSize = (ctx->horzRes * 25.4) / ctx->logPixelsX;
+    ctx->vertSize = (ctx->vertRes * 25.4) / ctx->logPixelsY;
 
     TRACE("devcaps: horzSize = %dmm, vertSize = %dmm, "
 	  "horzRes = %d, vertRes = %d\n",
-	  physDev->horzSize, physDev->vertSize,
-	  physDev->horzRes, physDev->vertRes);
+	  ctx->horzSize, ctx->vertSize,
+	  ctx->horzRes, ctx->vertRes);
 }
 
-PSDRV_PDEVICE *create_psdrv_physdev( HDC hdc, const WCHAR *device,
+print_ctx *create_print_ctx( HDC hdc, const WCHAR *device,
                                      const PSDRV_DEVMODE *devmode )
 {
     PRINTERINFO *pi = PSDRV_FindPrinterInfo( device );
-    PSDRV_PDEVICE *pdev;
+    print_ctx *ctx;
 
     if (!pi) return NULL;
     if (!pi->Fonts)
@@ -350,43 +350,42 @@ PSDRV_PDEVICE *create_psdrv_physdev( HDC hdc, const WCHAR *device,
         }
     }
 
-    pdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pdev) );
-    if (!pdev) return NULL;
+    ctx = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ctx) );
+    if (!ctx) return NULL;
 
-    pdev->Devmode = HeapAlloc( GetProcessHeap(), 0, sizeof(PSDRV_DEVMODE) );
-    if (!pdev->Devmode)
+    ctx->Devmode = HeapAlloc( GetProcessHeap(), 0, sizeof(PSDRV_DEVMODE) );
+    if (!ctx->Devmode)
     {
-        HeapFree( GetProcessHeap(), 0, pdev );
+        HeapFree( GetProcessHeap(), 0, ctx );
 	return NULL;
     }
 
-    *pdev->Devmode = *pi->Devmode;
-    pdev->pi = pi;
-    pdev->logPixelsX = pi->ppd->DefaultResolution;
-    pdev->logPixelsY = pi->ppd->DefaultResolution;
+    *ctx->Devmode = *pi->Devmode;
+    ctx->pi = pi;
+    ctx->logPixelsX = pi->ppd->DefaultResolution;
+    ctx->logPixelsY = pi->ppd->DefaultResolution;
 
     if (devmode)
     {
         dump_devmode( &devmode->dmPublic );
-        PSDRV_MergeDevmodes( pdev->Devmode, devmode, pi );
+        PSDRV_MergeDevmodes( ctx->Devmode, devmode, pi );
     }
 
-    PSDRV_UpdateDevCaps( pdev );
+    PSDRV_UpdateDevCaps( ctx );
+    ctx->dev.hdc = hdc;
     SelectObject( hdc, GetStockObject( DEVICE_DEFAULT_FONT ));
-    return pdev;
+    return ctx;
 }
 
 /**********************************************************************
  *	     ResetDC   (WINEPS.@)
  */
-BOOL CDECL PSDRV_ResetDC( PHYSDEV dev, const DEVMODEW *lpInitData )
+BOOL CDECL PSDRV_ResetDC( print_ctx *ctx, const DEVMODEW *lpInitData )
 {
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
-
     if (lpInitData)
     {
-        PSDRV_MergeDevmodes(physDev->Devmode, (const PSDRV_DEVMODE *)lpInitData, physDev->pi);
-        PSDRV_UpdateDevCaps(physDev);
+        PSDRV_MergeDevmodes(ctx->Devmode, (const PSDRV_DEVMODE *)lpInitData, ctx->pi);
+        PSDRV_UpdateDevCaps(ctx);
     }
     return TRUE;
 }
