@@ -417,7 +417,11 @@ extern "C" {
 
 /* Compile time assertion */
 
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+#define C_ASSERT(e) _Static_assert(e, #e)
+#else
 #define C_ASSERT(e) extern void __C_ASSERT__(int [(e)?1:-1])
+#endif
 
 /* Eliminate Microsoft C/C++ compiler warning 4715 */
 #if defined(_MSC_VER) && (_MSC_VER > 1200)
