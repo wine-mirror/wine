@@ -422,7 +422,6 @@ extern BOOL CDECL PSDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bott
 extern BOOL CDECL PSDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                                INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
 extern BOOL CDECL PSDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom) DECLSPEC_HIDDEN;
-extern INT CDECL PSDRV_EndDoc( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern INT CDECL PSDRV_EndPage( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern INT CDECL PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
                             INT cbOutput, LPVOID out_data ) DECLSPEC_HIDDEN;
@@ -452,7 +451,6 @@ extern COLORREF CDECL PSDRV_SetDCBrushColor( PHYSDEV dev, COLORREF color ) DECLS
 extern COLORREF CDECL PSDRV_SetDCPenColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL PSDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL PSDRV_SetTextColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
-extern INT CDECL PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc ) DECLSPEC_HIDDEN;
 extern BOOL CDECL PSDRV_StrokeAndFillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL CDECL PSDRV_StrokePath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 
