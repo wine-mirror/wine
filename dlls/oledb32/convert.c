@@ -855,6 +855,17 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         {
         case DBTYPE_EMPTY:       *d = GUID_NULL; hr = S_OK; break;
         case DBTYPE_GUID:        *d = *(GUID*)src; hr = S_OK; break;
+        case DBTYPE_VARIANT:
+            if (V_VT((VARIANT *)src) == VT_BSTR)
+            {
+                hr = CLSIDFromString(V_BSTR((VARIANT *)src), d);
+                if (FAILED(hr))
+                {
+                    *dst_len = sizeof(GUID);
+                    *dst_status = DBSTATUS_E_CANTCONVERTVALUE;
+                }
+                break;
+            }
         default: FIXME("Unimplemented conversion %04x -> GUID\n", src_type); return E_NOTIMPL;
         }
         break;
