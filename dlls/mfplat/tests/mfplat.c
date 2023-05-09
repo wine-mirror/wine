@@ -9506,6 +9506,192 @@ static void test_MFCreatePathFromURL(void)
     }
 }
 
+#define check_reset_data(a, b, c, d, e, f) check_reset_data_(__LINE__, a, b, c, d, e, f)
+static void check_reset_data_(unsigned int line, IMF2DBuffer2 *buffer2d, const BYTE *data, BOOL bottom_up,
+        DWORD width, DWORD height, BOOL todo)
+{
+    BYTE *scanline0, *buffer_start;
+    DWORD length, max_length;
+    IMFMediaBuffer *buffer;
+    LONG pitch;
+    BYTE *lock;
+    HRESULT hr;
+    int i;
+
+    hr = IMF2DBuffer2_QueryInterface(buffer2d, &IID_IMFMediaBuffer, (void **)&buffer);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = IMF2DBuffer2_Lock2DSize(buffer2d, MF2DBuffer_LockFlags_Read, &scanline0, &pitch, &buffer_start, &length);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    if (bottom_up)
+    {
+        ok(pitch < 0, "got pitch %ld.\n", pitch);
+        ok(buffer_start == scanline0 + pitch * (LONG)(height - 1), "buffer start mismatch.\n");
+    }
+    else
+    {
+        ok(pitch > 0, "got pitch %ld.\n", pitch);
+        ok(buffer_start == scanline0, "buffer start mismatch.\n");
+    }
+    for (i = 0; i < height; ++i)
+        todo_wine_if(bottom_up && todo) ok_(__FILE__,line)(!memcmp(buffer_start + abs(pitch) * i, data + width * i * 4, width * 4),
+                "2D Data mismatch, scaline %d.\n", i);
+    hr = IMF2DBuffer2_Unlock2D(buffer2d);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = IMFMediaBuffer_Lock(buffer, &lock, &max_length, &length);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ok_(__FILE__,line)(max_length == width * height * 4, "got max_length %lu.\n", max_length);
+    ok_(__FILE__,line)(length == width * height * 4, "got length %lu.\n", length);
+    todo_wine_if(bottom_up && todo) ok_(__FILE__,line)(!memcmp(lock, data, length), "contiguous data mismatch.\n");
+    memset(lock, 0xcc, length);
+    hr =  IMFMediaBuffer_Unlock(buffer);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    IMFMediaBuffer_Release(buffer);
+}
+
+static void test_2dbuffer_copy_(IMFMediaBuffer *buffer, BOOL bottom_up, DWORD width, DWORD height)
+{
+    static const unsigned int test_data[] =
+    {
+        0x01010101, 0x01010101,
+        0x02020202, 0x02020202,
+    };
+
+    BYTE data[sizeof(test_data)];
+    IMFMediaBuffer *src_buffer;
+    DWORD length, max_length;
+    IMF2DBuffer2 *buffer2d;
+    IMFSample *sample;
+    BYTE *lock;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer2, (void **)&buffer2d);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = MFCreateSample(&sample);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = MFCreateMemoryBuffer(sizeof(test_data) * 2, &src_buffer);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = IMFSample_AddBuffer(sample, src_buffer);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = IMFMediaBuffer_Lock(src_buffer, &lock, &max_length, &length);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ok(max_length == sizeof(test_data) * 2, "got %lu.\n", max_length);
+    memcpy(lock, test_data, sizeof(test_data));
+    hr =  IMFMediaBuffer_Unlock(src_buffer);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = IMFMediaBuffer_Lock(buffer, &lock, &max_length, &length);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ok(max_length == 16, "got %lu.\n", max_length);
+    ok(length == 16, "got %lu.\n", length);
+    memset(lock, 0xcc, length);
+    hr =  IMFMediaBuffer_Unlock(buffer);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = IMFMediaBuffer_SetCurrentLength(src_buffer, 1);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = IMFSample_CopyToBuffer(sample, buffer);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    memset(data, 0xcc, sizeof(data));
+    data[0] = ((BYTE *)test_data)[0];
+    check_reset_data(buffer2d, data, bottom_up, width, height, FALSE);
+
+    hr = IMF2DBuffer2_ContiguousCopyFrom(buffer2d, (BYTE *)test_data, sizeof(test_data));
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_ContiguousCopyTo(buffer2d, data, sizeof(data));
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ok(!memcmp(data, test_data, sizeof(data)), "data mismatch.\n");
+
+    check_reset_data(buffer2d, (const BYTE *)test_data, bottom_up, width, height, TRUE);
+
+    hr = IMFMediaBuffer_SetCurrentLength(src_buffer, sizeof(test_data) + 1);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = IMFSample_CopyToBuffer(sample, buffer);
+    ok(hr == MF_E_BUFFERTOOSMALL, "got hr %#lx.\n", hr);
+
+    hr = IMFMediaBuffer_SetCurrentLength(src_buffer, sizeof(test_data));
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = IMFSample_CopyToBuffer(sample, buffer);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    check_reset_data(buffer2d, (const BYTE *)test_data, bottom_up, width, height, FALSE);
+
+    IMF2DBuffer2_Release(buffer2d);
+    ref = IMFSample_Release(sample);
+    ok(!ref, "got %lu.\n", ref);
+    ref = IMFMediaBuffer_Release(src_buffer);
+    ok(!ref, "got %lu.\n", ref);
+}
+
+static void test_2dbuffer_copy(void)
+{
+    D3D11_TEXTURE2D_DESC desc;
+    ID3D11Texture2D *texture;
+    IMFMediaBuffer *buffer;
+    ID3D11Device *device;
+    HRESULT hr;
+    ULONG ref;
+
+    if (!pMFCreate2DMediaBuffer)
+    {
+        win_skip("MFCreate2DMediaBuffer() is not available.\n");
+        return;
+    }
+
+    winetest_push_context("top down");
+    hr = pMFCreate2DMediaBuffer(2, 2, D3DFMT_A8R8G8B8, FALSE, &buffer);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    test_2dbuffer_copy_(buffer, FALSE, 2, 2);
+    ref = IMFMediaBuffer_Release(buffer);
+    ok(!ref, "got %lu.\n", ref);
+    winetest_pop_context();
+
+    winetest_push_context("bottom up");
+    hr = pMFCreate2DMediaBuffer(2, 2, D3DFMT_A8R8G8B8, TRUE, &buffer);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    test_2dbuffer_copy_(buffer, TRUE, 2, 2);
+    ref = IMFMediaBuffer_Release(buffer);
+    ok(!ref, "got %lu.\n", ref);
+    winetest_pop_context();
+
+    if (!pMFCreateDXGISurfaceBuffer)
+    {
+        win_skip("MFCreateDXGISurfaceBuffer() is not available.\n");
+        return;
+    }
+
+    if (!(device = create_d3d11_device()))
+    {
+        skip("Failed to create a D3D11 device, skipping tests.\n");
+        return;
+    }
+
+    memset(&desc, 0, sizeof(desc));
+    desc.Width = 2;
+    desc.Height = 2;
+    desc.ArraySize = 1;
+    desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
+    ok(hr == S_OK, "Failed to create a texture, hr %#lx.\n", hr);
+
+    hr = pMFCreateDXGISurfaceBuffer(&IID_ID3D11Texture2D, (IUnknown *)texture, 0, FALSE, &buffer);
+    ok(hr == S_OK, "Failed to create a buffer, hr %#lx.\n", hr);
+    test_2dbuffer_copy_(buffer, FALSE, 2, 2);
+
+    ID3D11Texture2D_Release(texture);
+    ref = IMFMediaBuffer_Release(buffer);
+    ok(!ref, "got %lu.\n", ref);
+    ID3D11Device_Release(device);
+}
+
 START_TEST(mfplat)
 {
     char **argv;
@@ -9590,6 +9776,7 @@ START_TEST(mfplat)
     test_MFInitMediaTypeFromVideoInfoHeader();
     test_MFInitMediaTypeFromAMMediaType();
     test_MFCreatePathFromURL();
+    test_2dbuffer_copy();
 
     CoUninitialize();
 }
