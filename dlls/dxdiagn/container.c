@@ -42,7 +42,7 @@ static HRESULT WINAPI IDxDiagContainerImpl_QueryInterface(IDxDiagContainer *ifac
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDxDiagContainer)) {
         IUnknown_AddRef(iface);
-        *ppobj = This;
+        *ppobj = &This->IDxDiagContainer_iface;
         return S_OK;
     }
 

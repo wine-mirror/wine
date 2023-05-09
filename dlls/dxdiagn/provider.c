@@ -70,7 +70,7 @@ static HRESULT WINAPI IDxDiagProviderImpl_QueryInterface(IDxDiagProvider *iface,
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDxDiagProvider)) {
         IUnknown_AddRef(iface);
-        *ppobj = This;
+        *ppobj = &This->IDxDiagProvider_iface;
         return S_OK;
     }
 
