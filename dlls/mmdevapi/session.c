@@ -33,17 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 extern void sessions_lock(void) DECLSPEC_HIDDEN;
 extern void sessions_unlock(void) DECLSPEC_HIDDEN;
 
-void set_stream_volumes(struct audio_client *This)
-{
-    struct set_volumes_params params;
-
-    params.stream          = This->stream;
-    params.master_volume   = (This->session->mute ? 0.0f : This->session->master_vol);
-    params.volumes         = This->vols;
-    params.session_volumes = This->session->channel_vols;
-
-    WINE_UNIX_CALL(set_volumes, &params);
-}
+extern void set_stream_volumes(struct audio_client *This) DECLSPEC_HIDDEN;
 
 static inline struct audio_session_wrapper *impl_from_IAudioSessionControl2(IAudioSessionControl2 *iface)
 {

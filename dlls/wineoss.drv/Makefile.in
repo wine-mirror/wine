@@ -7,6 +7,7 @@ UNIX_LIBS    = $(OSS4_LIBS) $(PTHREAD_LIBS)
 UNIX_CFLAGS  = $(OSS4_CFLAGS)
 
 C_SRCS = \
+	client.c \
 	midi.c \
 	midipatch.c \
 	mmaux.c \
