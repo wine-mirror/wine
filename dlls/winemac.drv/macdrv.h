@@ -167,6 +167,7 @@ extern INT macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyStat
                               LPWSTR bufW, int bufW_size, UINT flags, HKL hkl) DECLSPEC_HIDDEN;
 extern UINT macdrv_GetKeyboardLayoutList(INT size, HKL *list) DECLSPEC_HIDDEN;
 extern INT macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size) DECLSPEC_HIDDEN;
+extern void macdrv_NotifyIMEStatus( HWND hwnd, UINT status ) DECLSPEC_HIDDEN;
 extern BOOL macdrv_SystemParametersInfo(UINT action, UINT int_param, void *ptr_param,
                                         UINT flags) DECLSPEC_HIDDEN;
 extern BOOL macdrv_ProcessEvents(DWORD mask) DECLSPEC_HIDDEN;

@@ -605,13 +605,6 @@ NTSTATUS macdrv_client_func(enum macdrv_client_funcs id, const void *params, ULO
 }
 
 
-static NTSTATUS macdrv_ime_clear(void *arg)
-{
-    macdrv_clear_ime_text();
-    return 0;
-}
-
-
 static NTSTATUS macdrv_ime_using_input_method(void *arg)
 {
     return macdrv_using_input_method();
@@ -633,7 +626,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     macdrv_dnd_have_format,
     macdrv_dnd_release,
     macdrv_dnd_retain,
-    macdrv_ime_clear,
     macdrv_ime_process_text_input,
     macdrv_ime_get_text_input,
     macdrv_ime_using_input_method,
@@ -758,7 +750,6 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     macdrv_dnd_have_format,
     macdrv_dnd_release,
     macdrv_dnd_retain,
-    macdrv_ime_clear,
     wow64_ime_process_text_input,
     macdrv_ime_get_text_input,
     macdrv_ime_using_input_method,

@@ -357,6 +357,16 @@ BOOL query_ime_char_rect(macdrv_query* query)
 
 
 /***********************************************************************
+ *      NotifyIMEStatus (X11DRV.@)
+ */
+void macdrv_NotifyIMEStatus( HWND hwnd, UINT status )
+{
+    TRACE_(imm)( "hwnd %p, status %#x\n", hwnd, status );
+    if (!status) macdrv_clear_ime_text();
+}
+
+
+/***********************************************************************
  *              macdrv_query_event
  *
  * Handler for QUERY_EVENT and QUERY_EVENT_NO_PREEMPT_WAIT queries.
