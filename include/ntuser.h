@@ -511,15 +511,6 @@ struct ime_driver_call_params
     COMPOSITIONSTRING *compstr;
 };
 
-/* internal IME private */
-typedef struct ime_private
-{
-    BOOL bInComposition;
-    BOOL bInternalState;
-    HFONT textfont;
-    HWND hwndDefault;
-} IMEPRIVATE, *LPIMEPRIVATE;
-
 #define WM_SYSTIMER  0x0118
 
 /* the various structures that can be sent in messages, in platform-independent layout */

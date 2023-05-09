@@ -23,6 +23,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(imm);
 
+struct ime_private
+{
+    BOOL in_composition;
+    HFONT hfont;
+};
+
 static const char *debugstr_imn( WPARAM wparam )
 {
     switch (wparam)
@@ -139,7 +145,7 @@ static HFONT input_context_select_ui_font( INPUTCONTEXT *ctx, HDC hdc )
     struct ime_private *priv;
     HFONT font = NULL;
     if (!(priv = ImmLockIMCC( ctx->hPrivate ))) return NULL;
-    if (priv->textfont) font = SelectObject( hdc, priv->textfont );
+    if (priv->hfont) font = SelectObject( hdc, priv->hfont );
     ImmUnlockIMCC( ctx->hPrivate );
     return font;
 }
@@ -175,9 +181,9 @@ static UINT ime_set_composition_status( HIMC himc, BOOL composition )
     if (!(ctx = ImmLockIMC( himc ))) return 0;
     if ((priv = ImmLockIMCC( ctx->hPrivate )))
     {
-        if (!priv->bInComposition && composition) msg = WM_IME_STARTCOMPOSITION;
-        else if (priv->bInComposition && !composition) msg = WM_IME_ENDCOMPOSITION;
-        priv->bInComposition = composition;
+        if (!priv->in_composition && composition) msg = WM_IME_STARTCOMPOSITION;
+        else if (priv->in_composition && !composition) msg = WM_IME_ENDCOMPOSITION;
+        priv->in_composition = composition;
         ImmUnlockIMCC( ctx->hPrivate );
     }
     ImmUnlockIMC( himc );
@@ -398,7 +404,6 @@ static LRESULT ime_ui_notify( HIMC himc, HWND hwnd, WPARAM wparam, LPARAM lparam
 static LRESULT WINAPI ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     HIMC himc = (HIMC)GetWindowLongPtrW( hwnd, IMMGWL_IMC );
-    INPUTCONTEXT *ctx;
 
     TRACE( "hwnd %p, himc %p, msg %s, wparam %#Ix, lparam %#Ix\n",
            hwnd, himc, debugstr_wm_ime(msg), wparam, lparam );
@@ -406,20 +411,7 @@ static LRESULT WINAPI ime_ui_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
     switch (msg)
     {
     case WM_CREATE:
-    {
-        struct ime_private *priv;
-
-        SetWindowTextA( hwnd, "Wine Ime Active" );
-
-        if (!(ctx = ImmLockIMC( himc ))) return TRUE;
-        if ((priv = ImmLockIMCC( ctx->hPrivate )))
-        {
-            priv->hwndDefault = hwnd;
-            ImmUnlockIMCC( ctx->hPrivate );
-        }
-        ImmUnlockIMC( himc );
         return TRUE;
-    }
     case WM_PAINT:
         ime_ui_paint( himc, hwnd );
         return FALSE;
@@ -468,7 +460,7 @@ BOOL WINAPI ImeInquire( IMEINFO *info, WCHAR *ui_class, DWORD flags )
 
     wcscpy( ui_class, ime_ui_class.lpszClassName );
     memset( info, 0, sizeof(*info) );
-    info->dwPrivateDataSize = sizeof(IMEPRIVATE);
+    info->dwPrivateDataSize = sizeof(struct ime_private);
     info->fdwProperty = IME_PROP_UNICODE | IME_PROP_AT_CARET;
     info->fdwConversionCaps = IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE;
     info->fdwSentenceCaps = IME_SMODE_AUTOMATIC;
@@ -656,8 +648,8 @@ BOOL WINAPI NotifyIME( HIMC himc, DWORD action, DWORD index, DWORD value )
         case IMC_SETCOMPOSITIONFONT:
             if ((priv = ImmLockIMCC( ctx->hPrivate )))
             {
-                if (priv->textfont) DeleteObject( priv->textfont );
-                priv->textfont = CreateFontIndirectW( &ctx->lfFont.W );
+                if (priv->hfont) DeleteObject( priv->hfont );
+                priv->hfont = CreateFontIndirectW( &ctx->lfFont.W );
                 ImmUnlockIMCC( ctx->hPrivate );
             }
             break;
