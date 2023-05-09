@@ -453,6 +453,25 @@ static void GenerateIMEMessage(HIMC hIMC, UINT msg, WPARAM wParam,
     UnlockRealIMC(hIMC);
 }
 
+static void ime_set_composition_status( HIMC himc, BOOL composition )
+{
+    struct ime_private *priv;
+    INPUTCONTEXT *ctx;
+    UINT msg = 0;
+
+    if (!(ctx = ImmLockIMC( himc ))) return;
+    if ((priv = ImmLockIMCC( ctx->hPrivate )))
+    {
+        if (!priv->bInComposition && composition) msg = WM_IME_STARTCOMPOSITION;
+        else if (priv->bInComposition && !composition) msg = WM_IME_ENDCOMPOSITION;
+        priv->bInComposition = composition;
+        ImmUnlockIMCC( ctx->hPrivate );
+    }
+    ImmUnlockIMC( himc );
+
+    if (msg) GenerateIMEMessage( himc, msg, 0, 0 );
+}
+
 static BOOL IME_RemoveFromSelected(HIMC hIMC)
 {
     int i;
@@ -580,16 +599,8 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                     X11DRV_CALL( xim_preedit_state, &preedit_params );
                     if (!lpIMC->fOpen)
                     {
-                        LPIMEPRIVATE myPrivate;
-
-                        myPrivate = ImmLockIMCC(lpIMC->hPrivate);
-                        if (myPrivate->bInComposition)
-                        {
-                            X11DRV_CALL( xim_reset, lpIMC->hWnd );
-                            GenerateIMEMessage(hIMC, WM_IME_ENDCOMPOSITION, 0, 0);
-                            myPrivate->bInComposition = FALSE;
-                        }
-                        ImmUnlockIMCC(lpIMC->hPrivate);
+                        X11DRV_CALL( xim_reset, lpIMC->hWnd );
+                        ime_set_composition_status( hIMC, FALSE );
                     }
 
                     break;
@@ -602,7 +613,6 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                 case CPS_COMPLETE:
                 {
                     HIMCC newCompStr;
-                    LPIMEPRIVATE myPrivate;
                     WCHAR *str;
                     UINT len;
 
@@ -614,7 +624,6 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                     ImmDestroyIMCC(lpIMC->hCompStr);
                     lpIMC->hCompStr = newCompStr;
 
-                    myPrivate = ImmLockIMCC(lpIMC->hPrivate);
                     if ((str = input_context_get_comp_str( lpIMC, FALSE, &len )))
                     {
                         WCHAR param = str[0];
@@ -631,15 +640,10 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
 
                         GenerateIMEMessage(hIMC, WM_IME_COMPOSITION, param,
                                             GCS_RESULTSTR|GCS_RESULTCLAUSE);
-
-                        GenerateIMEMessage(hIMC,WM_IME_ENDCOMPOSITION, 0, 0);
                         free( str );
                     }
-                    else if (myPrivate->bInComposition)
-                        GenerateIMEMessage(hIMC,WM_IME_ENDCOMPOSITION, 0, 0);
 
-                    myPrivate->bInComposition = FALSE;
-                    ImmUnlockIMCC(lpIMC->hPrivate);
+                    ime_set_composition_status( hIMC, FALSE );
 
                     bRet = TRUE;
                 }
@@ -648,8 +652,6 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                 case CPS_REVERT: FIXME("CPS_REVERT\n"); break;
                 case CPS_CANCEL:
                 {
-                    LPIMEPRIVATE myPrivate;
-
                     TRACE("CPS_CANCEL\n");
 
                     X11DRV_CALL( xim_reset, lpIMC->hWnd );
@@ -658,13 +660,7 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                         ImmDestroyIMCC(lpIMC->hCompStr);
                     lpIMC->hCompStr = ImeCreateBlankCompStr();
 
-                    myPrivate = ImmLockIMCC(lpIMC->hPrivate);
-                    if (myPrivate->bInComposition)
-                    {
-                        GenerateIMEMessage(hIMC, WM_IME_ENDCOMPOSITION, 0, 0);
-                        myPrivate->bInComposition = FALSE;
-                    }
-                    ImmUnlockIMCC(lpIMC->hPrivate);
+                    ime_set_composition_status( hIMC, FALSE );
                     bRet = TRUE;
                 }
                 break;
@@ -685,7 +681,6 @@ BOOL WINAPI ImeSetCompositionString(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp,
     LPINPUTCONTEXT lpIMC;
     DWORD flags = 0;
     WCHAR wParam  = 0;
-    LPIMEPRIVATE myPrivate;
 
     TRACE("(%p, %ld, %p, %ld, %p, %ld):\n",
          hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen);
@@ -710,17 +705,11 @@ BOOL WINAPI ImeSetCompositionString(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp,
     if (lpIMC == NULL)
         return FALSE;
 
-    myPrivate = ImmLockIMCC(lpIMC->hPrivate);
-
     if (dwIndex == SCS_SETSTR)
     {
         HIMCC newCompStr;
 
-        if (!myPrivate->bInComposition)
-        {
-            GenerateIMEMessage(hIMC, WM_IME_STARTCOMPOSITION, 0, 0);
-            myPrivate->bInComposition = TRUE;
-        }
+        ime_set_composition_status( hIMC, TRUE );
 
         /* clear existing result */
         newCompStr = updateResultStr(lpIMC->hCompStr, NULL, 0);
@@ -768,30 +757,25 @@ NTSTATUS x11drv_ime_set_composition_status( UINT open )
 {
     HIMC imc;
     LPINPUTCONTEXT lpIMC;
-    LPIMEPRIVATE myPrivate;
 
     imc = RealIMC(FROM_X11);
     lpIMC = ImmLockIMC(imc);
     if (lpIMC == NULL)
         return 0;
 
-    myPrivate = ImmLockIMCC(lpIMC->hPrivate);
-
-    if (open && !myPrivate->bInComposition)
+    if (!open)
     {
-        GenerateIMEMessage(imc, WM_IME_STARTCOMPOSITION, 0, 0);
-    }
-    else if (!open && myPrivate->bInComposition)
-    {
+        struct ime_private *myPrivate = ImmLockIMCC(lpIMC->hPrivate);
         ShowWindow(myPrivate->hwndDefault, SW_HIDE);
         ImmDestroyIMCC(lpIMC->hCompStr);
         lpIMC->hCompStr = ImeCreateBlankCompStr();
-        GenerateIMEMessage(imc, WM_IME_ENDCOMPOSITION, 0, 0);
+        ImmUnlockIMCC(lpIMC->hPrivate);
     }
-    myPrivate->bInComposition = open;
 
-    ImmUnlockIMCC(lpIMC->hPrivate);
     ImmUnlockIMC(imc);
+
+    ime_set_composition_status( imc, open );
+
     return 0;
 }
 
