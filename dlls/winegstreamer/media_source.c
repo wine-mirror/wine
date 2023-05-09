@@ -174,7 +174,10 @@ static ULONG WINAPI source_async_command_Release(IUnknown *iface)
     if (!refcount)
     {
         if (command->op == SOURCE_ASYNC_START)
+        {
+            IMFPresentationDescriptor_Release(command->u.start.descriptor);
             PropVariantClear(&command->u.start.position);
+        }
         else if (command->op == SOURCE_ASYNC_REQUEST_SAMPLE)
         {
             if (command->u.request_sample.token)
@@ -1376,6 +1379,7 @@ static HRESULT WINAPI media_source_Start(IMFMediaSource *iface, IMFPresentationD
     {
         struct source_async_command *command = impl_from_async_command_IUnknown(op);
         command->u.start.descriptor = descriptor;
+        IMFPresentationDescriptor_AddRef(descriptor);
         command->u.start.format = *time_format;
         PropVariantCopy(&command->u.start.position, position);
 
