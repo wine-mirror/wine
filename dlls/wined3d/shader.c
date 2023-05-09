@@ -1070,6 +1070,10 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, DWORD co
                         break;
                     }
                     reg_maps->resource_info[reg_idx].type = semantic->resource_type;
+                    if (semantic->resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_2DMS && semantic->sample_count == 1)
+                        reg_maps->resource_info[reg_idx].type = WINED3D_SHADER_RESOURCE_TEXTURE_2D;
+                    if (semantic->resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY && semantic->sample_count == 1)
+                        reg_maps->resource_info[reg_idx].type = WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY;
                     reg_maps->resource_info[reg_idx].data_type = semantic->resource_data_type;
                     wined3d_bitmap_set(reg_maps->resource_map, reg_idx);
                     break;
