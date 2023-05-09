@@ -175,6 +175,8 @@ static void *user_space_limit    = (void *)0x7fff0000;
 static void *working_set_limit   = (void *)0x7fff0000;
 #endif
 
+static UINT64 *arm64ec_map;
+
 struct _KUSER_SHARED_DATA *user_shared_data = (void *)0x7ffe0000;
 
 /* TEB allocation blocks */
@@ -998,6 +1000,52 @@ static BOOL alloc_pages_vprot( const void *addr, size_t size )
 }
 
 
+static inline UINT64 maskbits( size_t idx )
+{
+    return ~(UINT64)0 << (idx & 63);
+}
+
+/***********************************************************************
+ *           set_arm64ec_range
+ */
+#ifdef __aarch64__
+static void set_arm64ec_range( const void *addr, size_t size )
+{
+    size_t idx = (size_t)addr >> page_shift;
+    size_t end = ((size_t)addr + size + page_mask) >> page_shift;
+    size_t pos = idx / 64;
+    size_t end_pos = end / 64;
+
+    if (end_pos > pos)
+    {
+        arm64ec_map[pos++] |= maskbits( idx );
+        while (pos < end_pos) arm64ec_map[pos++] = ~(UINT64)0;
+        if (end & 63) arm64ec_map[pos] |= ~maskbits( end );
+    }
+    else arm64ec_map[pos] |= maskbits( idx ) & ~maskbits( end );
+}
+#endif
+
+/***********************************************************************
+ *           clear_arm64ec_range
+ */
+static void clear_arm64ec_range( const void *addr, size_t size )
+{
+    size_t idx = (size_t)addr >> page_shift;
+    size_t end = ((size_t)addr + size + page_mask) >> page_shift;
+    size_t pos = idx / 64;
+    size_t end_pos = end / 64;
+
+    if (end_pos > pos)
+    {
+        arm64ec_map[pos++] &= ~maskbits( idx );
+        while (pos < end_pos) arm64ec_map[pos++] = 0;
+        if (end & 63) arm64ec_map[pos] &= maskbits( end );
+    }
+    else arm64ec_map[pos] &= ~maskbits( idx ) | maskbits( end );
+}
+
+
 /***********************************************************************
  *           compare_view
  *
@@ -1526,6 +1574,7 @@ static void delete_view( struct file_view *view ) /* [in] View */
 {
     if (!(view->protect & VPROT_SYSTEM)) unmap_area( view->base, view->size );
     set_page_vprot( view->base, view->size, 0 );
+    if (arm64ec_map) clear_arm64ec_range( view->base, view->size );
     if (mmap_is_in_reserved_area( view->base, view->size ))
         free_ranges_remove_view( view );
     wine_rb_remove( &views_tree, &view->entry );
@@ -2225,9 +2274,10 @@ static void apply_arm64x_relocations( char *base, const IMAGE_BASE_RELOCATION *r
  */
 static void update_arm64x_mapping( char *base, IMAGE_NT_HEADERS *nt, IMAGE_SECTION_HEADER *sections )
 {
-    ULONG size, sec, offset;
+    ULONG i, size, sec, offset;
     const IMAGE_DATA_DIRECTORY *dir;
     const IMAGE_LOAD_CONFIG_DIRECTORY *cfg;
+    const IMAGE_ARM64EC_METADATA *metadata;
     const IMAGE_DYNAMIC_RELOCATION_TABLE *table;
     const char *ptr, *end;
 
@@ -2238,6 +2288,21 @@ static void update_arm64x_mapping( char *base, IMAGE_NT_HEADERS *nt, IMAGE_SECTI
     if (!dir->VirtualAddress || !dir->Size) return;
     cfg = (void *)(base + dir->VirtualAddress);
     size = min( dir->Size, cfg->Size );
+
+    /* update code ranges */
+
+    if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY, CHPEMetadataPointer )) return;
+    metadata = (void *)(base + (cfg->CHPEMetadataPointer - nt->OptionalHeader.ImageBase));
+    if (metadata->CodeMap && arm64ec_map)
+    {
+        const IMAGE_CHPE_RANGE_ENTRY *map = (void *)(base + metadata->CodeMap);
+
+        for (i = 0; i < metadata->CodeMapCount; i++)
+        {
+            if ((map[i].StartOffset & 0x3) != 1 /* arm64ec */) continue;
+            set_arm64ec_range( base + (map[i].StartOffset & ~3), map[i].Length );
+        }
+    }
 
     /* apply dynamic relocations */
 
@@ -3261,6 +3326,25 @@ NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR zero_bits, SI
 done:
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
     return status;
+}
+
+
+/***********************************************************************
+ *           virtual_alloc_arm64ec_map
+ */
+void *virtual_alloc_arm64ec_map(void)
+{
+#ifdef __aarch64__
+    SIZE_T size = ((ULONG_PTR)user_space_limit + page_size) >> (page_shift + 3);  /* one bit per page */
+    unsigned int status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&arm64ec_map, 0, &size,
+                                                   MEM_COMMIT, PAGE_READWRITE );
+    if (status)
+    {
+        ERR( "failed to allocate ARM64EC map: %08x\n", status );
+        exit(1);
+    }
+#endif
+    return arm64ec_map;
 }
 
 

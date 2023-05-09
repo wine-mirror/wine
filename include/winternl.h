@@ -394,7 +394,7 @@ typedef struct _PEB
     ULONG                        FlsHighIndex;                      /* 22c/350 */
     PVOID                        WerRegistrationData;               /* 230/358 */
     PVOID                        WerShipAssertPtr;                  /* 234/360 */
-    PVOID                        pUnused;                           /* 238/368 */
+    PVOID                        EcCodeBitMap;                      /* 238/368 */
     PVOID                        pImageHeaderHash;                  /* 23c/370 */
     ULONG                        HeapTracingEnabled : 1;            /* 240/378 */
     ULONG                        CritSecTracingEnabled : 1;

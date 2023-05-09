@@ -234,6 +234,7 @@ extern void virtual_free_teb( TEB *teb ) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_clear_tls_index( ULONG index ) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR zero_bits, SIZE_T reserve_size,
                                             SIZE_T commit_size, BOOL guard_page ) DECLSPEC_HIDDEN;
+extern void *virtual_alloc_arm64ec_map(void) DECLSPEC_HIDDEN;
 extern void virtual_map_user_shared_data(void) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_handle_fault( void *addr, DWORD err, void *stack ) DECLSPEC_HIDDEN;
 extern unsigned int virtual_locked_server_call( void *req_ptr ) DECLSPEC_HIDDEN;
