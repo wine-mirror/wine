@@ -53,14 +53,19 @@ WINE_DECLARE_DEBUG_CHANNEL(imports);
 
 #ifdef __i386__
 static const WCHAR pe_dir[] = L"\\i386-windows";
+static const USHORT current_machine = IMAGE_FILE_MACHINE_I386;
 #elif defined __x86_64__
 static const WCHAR pe_dir[] = L"\\x86_64-windows";
+static const USHORT current_machine = IMAGE_FILE_MACHINE_AMD64;
 #elif defined __arm__
 static const WCHAR pe_dir[] = L"\\arm-windows";
+static const USHORT current_machine = IMAGE_FILE_MACHINE_ARMNT;
 #elif defined __aarch64__
 static const WCHAR pe_dir[] = L"\\aarch64-windows";
+static const USHORT current_machine = IMAGE_FILE_MACHINE_ARM64;
 #else
 static const WCHAR pe_dir[] = L"";
+static const USHORT current_machine = IMAGE_FILE_MACHINE_UNKNOWN;
 #endif
 
 /* we don't want to include winuser.h */
@@ -2322,32 +2327,43 @@ static BOOL is_com_ilonly( HANDLE file, const SECTION_IMAGE_INFORMATION *info )
     return !!(cor_header.Flags & COMIMAGE_FLAGS_ILONLY);
 }
 
-#endif
+/* check LOAD_CONFIG header for CHPE metadata */
+static BOOL has_chpe_metadata( HANDLE file, const SECTION_IMAGE_INFORMATION *info )
+{
+    USHORT magic;
+    IMAGE_LOAD_CONFIG_DIRECTORY64 loadcfg;
+    ULONG len = read_image_directory( file, info, IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG,
+                                      &loadcfg, sizeof(loadcfg), &magic );
+
+    if (!len) return FALSE;
+    if (magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC) return FALSE;
+    len = min( len, loadcfg.Size );
+    if (len <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY64, CHPEMetadataPointer )) return FALSE;
+    return !!loadcfg.CHPEMetadataPointer;
+}
 
 /* On WoW64 setups, an image mapping can also be created for the other 32/64 CPU */
 /* but it cannot necessarily be loaded as a dll, so we need some additional checks */
 static BOOL is_valid_binary( HANDLE file, const SECTION_IMAGE_INFORMATION *info )
 {
-#ifdef __i386__
-    return info->Machine == IMAGE_FILE_MACHINE_I386;
-#elif defined(__arm__)
-    return info->Machine == IMAGE_FILE_MACHINE_ARM ||
-           info->Machine == IMAGE_FILE_MACHINE_THUMB ||
-           info->Machine == IMAGE_FILE_MACHINE_ARMNT;
-#elif defined(_WIN64)  /* support 32-bit IL-only images on 64-bit */
-#ifdef __x86_64__
-    if (info->Machine == IMAGE_FILE_MACHINE_AMD64) return TRUE;
-#else
-    if (info->Machine == IMAGE_FILE_MACHINE_ARM64) return TRUE;
-#endif
+    if (info->Machine == current_machine) return TRUE;
     if (NtCurrentTeb()->WowTebOffset) return TRUE;
+    /* support ARM64EC binaries on x86-64 */
+    if (current_machine == IMAGE_FILE_MACHINE_AMD64 && has_chpe_metadata( file, info )) return TRUE;
+    /* support 32-bit IL-only images on 64-bit */
     if (!info->ImageContainsCode) return TRUE;
     if (info->u.s.ComPlusNativeReady) return TRUE;
     return is_com_ilonly( file, info );
-#else
-    return FALSE;  /* no wow64 support on other platforms */
-#endif
 }
+
+#else  /* _WIN64 */
+
+static BOOL is_valid_binary( HANDLE file, const SECTION_IMAGE_INFORMATION *info )
+{
+    return (info->Machine == current_machine);
+}
+
+#endif  /* _WIN64 */
 
 
 /******************************************************************
