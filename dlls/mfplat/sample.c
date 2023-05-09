@@ -810,36 +810,42 @@ static HRESULT WINAPI sample_CopyToBuffer(IMFSample *iface, IMFMediaBuffer *buff
     dst_ptr = NULL;
     dst_length = current_length = 0;
     locked = SUCCEEDED(hr = IMFMediaBuffer_Lock(buffer, &dst_ptr, &dst_length, &current_length));
-    if (locked)
+    if (!locked)
+        goto done;
+
+    if (dst_length < total_length)
     {
-        if (dst_length < total_length)
-            hr = MF_E_BUFFERTOOSMALL;
-        else if (dst_ptr)
-        {
-            for (i = 0; i < sample->buffer_count && SUCCEEDED(hr); ++i)
-            {
-                src_ptr = NULL;
-                src_max_length = current_length = 0;
-                if (SUCCEEDED(hr = IMFMediaBuffer_Lock(sample->buffers[i], &src_ptr, &src_max_length, &current_length)))
-                {
-                    if (src_ptr)
-                    {
-                        if (current_length > dst_length)
-                            hr = MF_E_BUFFERTOOSMALL;
-                        else if (current_length)
-                        {
-                            memcpy(dst_ptr, src_ptr, current_length);
-                            dst_length -= current_length;
-                            dst_current_length += current_length;
-                            dst_ptr += current_length;
-                        }
-                    }
-                    IMFMediaBuffer_Unlock(sample->buffers[i]);
-                }
-            }
-        }
+        hr = MF_E_BUFFERTOOSMALL;
+        goto done;
     }
 
+    if (!dst_ptr)
+        goto done;
+
+    for (i = 0; i < sample->buffer_count && SUCCEEDED(hr); ++i)
+    {
+        src_ptr = NULL;
+        src_max_length = current_length = 0;
+
+        if (FAILED(hr = IMFMediaBuffer_Lock(sample->buffers[i], &src_ptr, &src_max_length, &current_length)))
+            continue;
+
+        if (src_ptr)
+        {
+            if (current_length > dst_length)
+                hr = MF_E_BUFFERTOOSMALL;
+            else if (current_length)
+            {
+                memcpy(dst_ptr, src_ptr, current_length);
+                dst_length -= current_length;
+                dst_current_length += current_length;
+                dst_ptr += current_length;
+            }
+        }
+        IMFMediaBuffer_Unlock(sample->buffers[i]);
+    }
+
+done:
     IMFMediaBuffer_SetCurrentLength(buffer, dst_current_length);
 
     if (locked)
