@@ -78,7 +78,7 @@ static HRESULT WINAPI enum_class_object_QueryInterface(
     if ( IsEqualGUID( riid, &IID_IEnumWbemClassObject ) ||
          IsEqualGUID( riid, &IID_IUnknown ) )
     {
-        *ppvObject = ec;
+        *ppvObject = &ec->IEnumWbemClassObject_iface;
     }
     else if ( IsEqualGUID( riid, &IID_IClientSecurity ) )
     {
@@ -324,7 +324,7 @@ static HRESULT WINAPI class_object_QueryInterface(
     if ( IsEqualGUID( riid, &IID_IWbemClassObject ) ||
          IsEqualGUID( riid, &IID_IUnknown ) )
     {
-        *ppvObject = co;
+        *ppvObject = &co->IWbemClassObject_iface;
     }
     else if (IsEqualGUID( riid, &IID_IClientSecurity ))
     {

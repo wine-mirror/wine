@@ -79,7 +79,7 @@ static HRESULT WINAPI qualifier_set_QueryInterface(
     if ( IsEqualGUID( riid, &IID_IWbemQualifierSet ) ||
          IsEqualGUID( riid, &IID_IUnknown ) )
     {
-        *ppvObject = set;
+        *ppvObject = &set->IWbemQualifierSet_iface;
     }
     else
     {

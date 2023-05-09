@@ -52,7 +52,7 @@ static HRESULT WINAPI client_security_QueryInterface(
     if ( IsEqualGUID( riid, &IID_IClientSecurity ) ||
          IsEqualGUID( riid, &IID_IUnknown ) )
     {
-        *ppvObject = cs;
+        *ppvObject = &cs->IClientSecurity_iface;
     }
     else
     {
@@ -264,7 +264,7 @@ static HRESULT WINAPI wbem_services_QueryInterface(
     if ( IsEqualGUID( riid, &IID_IWbemServices ) ||
          IsEqualGUID( riid, &IID_IUnknown ) )
     {
-        *ppvObject = ws;
+        *ppvObject = &ws->IWbemServices_iface;
     }
     else if ( IsEqualGUID( riid, &IID_IClientSecurity ) )
     {
