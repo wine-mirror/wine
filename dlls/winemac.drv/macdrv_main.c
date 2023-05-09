@@ -383,6 +383,8 @@ static void setup_options(void)
     if (!get_config_key(hkey, NULL, "RetinaMode", buffer, sizeof(buffer)))
         retina_enabled = IS_OPTION_TRUE(buffer[0]);
 
+    retina_on = retina_enabled;
+
     if (appkey) NtClose(appkey);
     if (hkey) NtClose(hkey);
 }
