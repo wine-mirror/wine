@@ -37,6 +37,8 @@ static ULONG64 (WINAPI *pRtlGetEnabledExtendedFeatures)(ULONG64);
 static NTSTATUS (WINAPI *pRtlFreeUserStack)(void *);
 static void * (WINAPI *pRtlFindExportedRoutineByName)(HMODULE,const char*);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
+static NTSTATUS (WINAPI *pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
+static BOOLEAN (WINAPI *pRtlIsEcCode)(const void *);
 static NTSTATUS (WINAPI *pNtAllocateVirtualMemoryEx)(HANDLE, PVOID *, SIZE_T *, ULONG, ULONG,
                                                      MEM_EXTENDED_PARAMETER *, ULONG);
 static NTSTATUS (WINAPI *pNtMapViewOfSectionEx)(HANDLE, HANDLE, PVOID *, const LARGE_INTEGER *, SIZE_T *,
@@ -291,6 +293,7 @@ static void check_region_size_(void *p, SIZE_T s, unsigned int line)
 
 static void test_NtAllocateVirtualMemoryEx(void)
 {
+    MEM_EXTENDED_PARAMETER ext;
     SIZE_T size, size2;
     char *p, *p1, *p2;
     NTSTATUS status;
@@ -421,6 +424,73 @@ static void test_NtAllocateVirtualMemoryEx(void)
         status = NtFreeVirtualMemory(NtCurrentProcess(), (void **)&p2, &size2, MEM_RELEASE);
         ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
     }
+
+    memset( &ext, 0, sizeof(ext) );
+    ext.Type = MemExtendedParameterAttributeFlags;
+    ext.ULong = MEM_EXTENDED_PARAMETER_EC_CODE;
+    size = 0x10000;
+    addr1 = NULL;
+    status = pNtAllocateVirtualMemoryEx( NtCurrentProcess(), &addr1, &size, MEM_RESERVE,
+                                         PAGE_EXECUTE_READWRITE, &ext, 1 );
+#ifdef __x86_64__
+    if (pRtlGetNativeSystemInformation)
+    {
+        SYSTEM_CPU_INFORMATION cpu_info;
+
+        pRtlGetNativeSystemInformation( SystemCpuInformation, &cpu_info, sizeof(cpu_info), NULL );
+        if (cpu_info.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64)
+        {
+            ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+            if (pRtlIsEcCode) ok( pRtlIsEcCode( addr1 ), "not EC code %p\n", addr1 );
+            size = 0;
+            NtFreeVirtualMemory( NtCurrentProcess(), &addr1, &size, MEM_RELEASE );
+
+            size = 0x10000;
+            addr1 = NULL;
+            status = pNtAllocateVirtualMemoryEx( NtCurrentProcess(), &addr1, &size, MEM_RESERVE,
+                                                 PAGE_EXECUTE_READWRITE, NULL, 0 );
+            ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+            if (pRtlIsEcCode) ok( !pRtlIsEcCode( addr1 ), "EC code %p\n", addr1 );
+            size = 0x1000;
+            status = pNtAllocateVirtualMemoryEx( NtCurrentProcess(), &addr1, &size, MEM_COMMIT,
+                                                 PAGE_EXECUTE_READWRITE, &ext, 1 );
+            ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+            if (pRtlIsEcCode)
+            {
+                ok( pRtlIsEcCode( addr1 ), "not EC code %p\n", addr1 );
+                ok( !pRtlIsEcCode( (char *)addr1 + 0x1000 ), "EC code %p\n", (char *)addr1 + 0x1000 );
+            }
+            size = 0x2000;
+            status = pNtAllocateVirtualMemoryEx( NtCurrentProcess(), &addr1, &size, MEM_COMMIT,
+                                                 PAGE_EXECUTE_READWRITE, NULL, 0 );
+            ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+            if (pRtlIsEcCode)
+            {
+                ok( pRtlIsEcCode( addr1 ), "not EC code %p\n", addr1 );
+                ok( !pRtlIsEcCode( (char *)addr1 + 0x1000 ), "EC code %p\n", (char *)addr1 + 0x1000 );
+            }
+
+            NtFreeVirtualMemory( NtCurrentProcess(), &addr1, &size, MEM_DECOMMIT );
+            if (pRtlIsEcCode) ok( pRtlIsEcCode( addr1 ), "not EC code %p\n", addr1 );
+
+            size = 0x2000;
+            ext.ULong = 0;
+            status = pNtAllocateVirtualMemoryEx( NtCurrentProcess(), &addr1, &size, MEM_COMMIT,
+                                                 PAGE_EXECUTE_READWRITE, &ext, 1 );
+            ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+            if (pRtlIsEcCode)
+            {
+                ok( pRtlIsEcCode( addr1 ), "not EC code %p\n", addr1 );
+                ok( !pRtlIsEcCode( (char *)addr1 + 0x1000 ), "EC code %p\n", (char *)addr1 + 0x1000 );
+            }
+
+            size = 0;
+            NtFreeVirtualMemory( NtCurrentProcess(), &addr1, &size, MEM_RELEASE );
+            return;
+        }
+    }
+#endif
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
 }
 
 static void test_NtAllocateVirtualMemoryEx_address_requirements(void)
@@ -1928,6 +1998,8 @@ START_TEST(virtual)
     pRtlFreeUserStack = (void *)GetProcAddress(mod, "RtlFreeUserStack");
     pRtlFindExportedRoutineByName = (void *)GetProcAddress(mod, "RtlFindExportedRoutineByName");
     pRtlGetEnabledExtendedFeatures = (void *)GetProcAddress(mod, "RtlGetEnabledExtendedFeatures");
+    pRtlGetNativeSystemInformation = (void *)GetProcAddress(mod, "RtlGetNativeSystemInformation");
+    pRtlIsEcCode = (void *)GetProcAddress(mod, "RtlIsEcCode");
     pNtAllocateVirtualMemoryEx = (void *)GetProcAddress(mod, "NtAllocateVirtualMemoryEx");
     pNtMapViewOfSectionEx = (void *)GetProcAddress(mod, "NtMapViewOfSectionEx");
     pNtSetInformationVirtualMemory = (void *)GetProcAddress(mod, "NtSetInformationVirtualMemory");

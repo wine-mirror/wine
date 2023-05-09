@@ -1008,7 +1008,6 @@ static inline UINT64 maskbits( size_t idx )
 /***********************************************************************
  *           set_arm64ec_range
  */
-#ifdef __aarch64__
 static void set_arm64ec_range( const void *addr, size_t size )
 {
     size_t idx = (size_t)addr >> page_shift;
@@ -1024,7 +1023,7 @@ static void set_arm64ec_range( const void *addr, size_t size )
     }
     else arm64ec_map[pos] |= maskbits( idx ) & ~maskbits( end );
 }
-#endif
+
 
 /***********************************************************************
  *           clear_arm64ec_range
@@ -3958,6 +3957,8 @@ static NTSTATUS allocate_virtual_memory( void **ret, SIZE_T *size_ptr, ULONG typ
         return STATUS_INVALID_PARAMETER;
     }
 
+    if (!arm64ec_map && (attributes & MEM_EXTENDED_PARAMETER_EC_CODE)) return STATUS_INVALID_PARAMETER;
+
     /* Reserve the memory */
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
@@ -3999,6 +4000,8 @@ static NTSTATUS allocate_virtual_memory( void **ret, SIZE_T *size_ptr, ULONG typ
             SERVER_END_REQ;
         }
     }
+
+    if (!status && (attributes & MEM_EXTENDED_PARAMETER_EC_CODE)) set_arm64ec_range( base, size );
 
     if (!status) VIRTUAL_DEBUG_DUMP_VIEW( view );
 
