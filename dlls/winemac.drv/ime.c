@@ -727,17 +727,6 @@ static BOOL IME_SetCompositionString(void* hIMC, DWORD dwIndex, LPCVOID lpComp, 
     return TRUE;
 }
 
-BOOL WINAPI ImeSetCompositionString(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen,
-                                    LPCVOID lpRead, DWORD dwReadLen)
-{
-    TRACE("(%p, %ld, %p, %ld, %p, %ld):\n", hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen);
-
-    if (lpRead && dwReadLen)
-        FIXME("Reading string unimplemented\n");
-
-    return IME_SetCompositionString(hIMC, dwIndex, lpComp, dwCompLen, 0, FALSE);
-}
-
 static void IME_NotifyComplete(void* hIMC)
 {
     ImmNotifyIME(hIMC, NI_COMPOSITIONSTR, CPS_COMPLETE, 0);
