@@ -796,8 +796,9 @@ static HRESULT WINAPI sample_CopyToBuffer(IMFSample *iface, IMFMediaBuffer *buff
     struct sample *sample = impl_from_IMFSample(iface);
     DWORD total_length, dst_length, dst_current_length, src_max_length, current_length;
     BYTE *src_ptr, *dst_ptr;
-    BOOL locked;
-    HRESULT hr;
+    IMF2DBuffer *buffer2d;
+    BOOL locked = FALSE;
+    HRESULT hr = E_FAIL;
     size_t i;
 
     TRACE("%p, %p.\n", iface, buffer);
@@ -806,6 +807,25 @@ static HRESULT WINAPI sample_CopyToBuffer(IMFSample *iface, IMFMediaBuffer *buff
 
     total_length = sample_get_total_length(sample);
     dst_current_length = 0;
+
+    if (sample->buffer_count == 1
+            && SUCCEEDED(IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&buffer2d)))
+    {
+        if (SUCCEEDED(IMFMediaBuffer_GetCurrentLength(sample->buffers[0], &current_length))
+                && SUCCEEDED(IMF2DBuffer_GetContiguousLength(buffer2d, &dst_length))
+                && current_length == dst_length
+                && SUCCEEDED(IMFMediaBuffer_Lock(sample->buffers[0], &src_ptr, &src_max_length, &current_length)))
+        {
+            hr = IMF2DBuffer_ContiguousCopyFrom(buffer2d, src_ptr, current_length);
+            IMFMediaBuffer_Unlock(sample->buffers[0]);
+        }
+        IMF2DBuffer_Release(buffer2d);
+        if (SUCCEEDED(hr))
+        {
+            dst_current_length = current_length;
+            goto done;
+        }
+    }
 
     dst_ptr = NULL;
     dst_length = current_length = 0;
