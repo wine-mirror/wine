@@ -253,11 +253,10 @@ static void ime_ui_paint( HIMC himc, HWND hwnd )
 
         if (ctx->cfCompForm.dwStyle == CFS_RECT)
         {
-            RECT client;
-            client = ctx->cfCompForm.rcArea;
+            RECT client = ctx->cfCompForm.rcArea;
             MapWindowPoints( ctx->hWnd, 0, (POINT *)&client, 2 );
             IntersectRect( &rect, &rect, &client );
-            /* TODO:  Wrap the input if needed */
+            DrawTextW( hdc, str, len, &rect, DT_WORDBREAK | DT_CALCRECT );
         }
 
         if (ctx->cfCompForm.dwStyle == CFS_DEFAULT)
@@ -286,7 +285,8 @@ static void ime_ui_paint( HIMC himc, HWND hwnd )
         }
 
         new_rect = rect;
-        TextOutW( hdc, offset.x, offset.y, str, len );
+        OffsetRect( &rect, offset.x - rect.left, offset.y - rect.top );
+        DrawTextW( hdc, str, len, &rect, DT_WORDBREAK );
 
         if (font) SelectObject( hdc, font );
         free( str );
