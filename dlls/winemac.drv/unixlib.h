@@ -91,7 +91,6 @@ enum macdrv_client_funcs
     client_func_dnd_query_drag,
     client_func_dnd_query_drop,
     client_func_dnd_query_exited,
-    client_func_ime_query_char_rect,
     client_func_last
 };
 
@@ -147,24 +146,6 @@ struct dnd_query_drop_params
 struct dnd_query_exited_params
 {
     UINT32 hwnd;
-};
-
-/* macdrv_ime_query_char_rect result */
-struct ime_query_char_rect_result
-{
-    RECT rect;
-    UINT32 location;
-    UINT32 length;
-};
-
-/* macdrv_ime_query_char_rect params */
-struct ime_query_char_rect_params
-{
-    UINT32 hwnd;
-    UINT32 location;
-    UINT32 himc;
-    UINT64 result; /* FIXME: Use NtCallbackReturn instead */
-    UINT32 length;
 };
 
 static inline void *param_ptr(UINT64 param)
