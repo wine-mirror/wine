@@ -3077,6 +3077,19 @@ static void test_converttoui8(void)
     ok(hr == S_OK, "got %08lx\n", hr);
     ok(dst_status == DBSTATUS_S_ISNULL, "got %08lx\n", dst_status);
     ok(dst_len == 44, "got %Id\n", dst_len);
+
+    V_VT(&v) = VT_UI8;
+    V_UI8(&v) = 4321;
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_UI8, 0, &dst_len, &v, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    todo_wine
+    ok(hr == S_OK, "got %08lx\n", hr);
+    todo_wine
+    ok(dst_status == DBSTATUS_S_OK, "got %08lx\n", dst_status);
+    todo_wine
+    ok(dst_len == sizeof(dst), "got %Id\n", dst_len);
+    todo_wine
+    ok(dst.QuadPart == 4321, "got %d\n", (int)dst.QuadPart);
 }
 
 static void test_getconversionsize(void)
