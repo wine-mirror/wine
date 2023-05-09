@@ -1162,22 +1162,19 @@ static const IDebugClient7Vtbl debugclientvtbl =
 static HRESULT STDMETHODCALLTYPE debugdataspaces_QueryInterface(IDebugDataSpaces *iface, REFIID riid, void **obj)
 {
     struct debug_client *debug_client = impl_from_IDebugDataSpaces(iface);
-    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
-    return IUnknown_QueryInterface(unk, riid, obj);
+    return IUnknown_QueryInterface(&debug_client->IDebugClient_iface, riid, obj);
 }
 
 static ULONG STDMETHODCALLTYPE debugdataspaces_AddRef(IDebugDataSpaces *iface)
 {
     struct debug_client *debug_client = impl_from_IDebugDataSpaces(iface);
-    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
-    return IUnknown_AddRef(unk);
+    return IUnknown_AddRef(&debug_client->IDebugClient_iface);
 }
 
 static ULONG STDMETHODCALLTYPE debugdataspaces_Release(IDebugDataSpaces *iface)
 {
     struct debug_client *debug_client = impl_from_IDebugDataSpaces(iface);
-    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
-    return IUnknown_Release(unk);
+    return IUnknown_Release(&debug_client->IDebugClient_iface);
 }
 
 static HRESULT STDMETHODCALLTYPE debugdataspaces_ReadVirtual(IDebugDataSpaces *iface, ULONG64 offset, void *buffer,
@@ -1391,22 +1388,19 @@ static const IDebugDataSpacesVtbl debugdataspacesvtbl =
 static HRESULT STDMETHODCALLTYPE debugsymbols_QueryInterface(IDebugSymbols3 *iface, REFIID riid, void **obj)
 {
     struct debug_client *debug_client = impl_from_IDebugSymbols3(iface);
-    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
-    return IUnknown_QueryInterface(unk, riid, obj);
+    return IUnknown_QueryInterface(&debug_client->IDebugClient_iface, riid, obj);
 }
 
 static ULONG STDMETHODCALLTYPE debugsymbols_AddRef(IDebugSymbols3 *iface)
 {
     struct debug_client *debug_client = impl_from_IDebugSymbols3(iface);
-    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
-    return IUnknown_AddRef(unk);
+    return IUnknown_AddRef(&debug_client->IDebugClient_iface);
 }
 
 static ULONG STDMETHODCALLTYPE debugsymbols_Release(IDebugSymbols3 *iface)
 {
     struct debug_client *debug_client = impl_from_IDebugSymbols3(iface);
-    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
-    return IUnknown_Release(unk);
+    return IUnknown_Release(&debug_client->IDebugClient_iface);
 }
 
 static HRESULT STDMETHODCALLTYPE debugsymbols_GetSymbolOptions(IDebugSymbols3 *iface, ULONG *options)
@@ -2690,22 +2684,19 @@ static const IDebugSymbols3Vtbl debugsymbolsvtbl =
 static HRESULT STDMETHODCALLTYPE debugcontrol_QueryInterface(IDebugControl4 *iface, REFIID riid, void **obj)
 {
     struct debug_client *debug_client = impl_from_IDebugControl4(iface);
-    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
-    return IUnknown_QueryInterface(unk, riid, obj);
+    return IUnknown_QueryInterface(&debug_client->IDebugClient_iface, riid, obj);
 }
 
 static ULONG STDMETHODCALLTYPE debugcontrol_AddRef(IDebugControl4 *iface)
 {
     struct debug_client *debug_client = impl_from_IDebugControl4(iface);
-    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
-    return IUnknown_AddRef(unk);
+    return IUnknown_AddRef(&debug_client->IDebugClient_iface);
 }
 
 static ULONG STDMETHODCALLTYPE debugcontrol_Release(IDebugControl4 *iface)
 {
     struct debug_client *debug_client = impl_from_IDebugControl4(iface);
-    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
-    return IUnknown_Release(unk);
+    return IUnknown_Release(&debug_client->IDebugClient_iface);
 }
 
 static HRESULT STDMETHODCALLTYPE debugcontrol_GetInterrupt(IDebugControl4 *iface)
@@ -4278,19 +4269,19 @@ static const IDebugControl4Vtbl debugcontrolvtbl =
 static HRESULT STDMETHODCALLTYPE debugadvanced_QueryInterface(IDebugAdvanced3 *iface, REFIID riid, void **obj)
 {
     struct debug_client *debug_client = impl_from_IDebugAdvanced3(iface);
-    return IUnknown_QueryInterface((IUnknown *)&debug_client->IDebugClient_iface, riid, obj);
+    return IUnknown_QueryInterface(&debug_client->IDebugClient_iface, riid, obj);
 }
 
 static ULONG STDMETHODCALLTYPE debugadvanced_AddRef(IDebugAdvanced3 *iface)
 {
     struct debug_client *debug_client = impl_from_IDebugAdvanced3(iface);
-    return IUnknown_AddRef((IUnknown *)&debug_client->IDebugClient_iface);
+    return IUnknown_AddRef(&debug_client->IDebugClient_iface);
 }
 
 static ULONG STDMETHODCALLTYPE debugadvanced_Release(IDebugAdvanced3 *iface)
 {
     struct debug_client *debug_client = impl_from_IDebugAdvanced3(iface);
-    return IUnknown_Release((IUnknown *)&debug_client->IDebugClient_iface);
+    return IUnknown_Release(&debug_client->IDebugClient_iface);
 }
 
 static HRESULT STDMETHODCALLTYPE debugadvanced_GetThreadContext(IDebugAdvanced3 *iface, void *context,
@@ -4404,22 +4395,19 @@ static const IDebugAdvanced3Vtbl debugadvancedvtbl =
 static HRESULT STDMETHODCALLTYPE debugsystemobjects_QueryInterface(IDebugSystemObjects *iface, REFIID riid, void **obj)
 {
     struct debug_client *debug_client = impl_from_IDebugSystemObjects(iface);
-    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
-    return IUnknown_QueryInterface(unk, riid, obj);
+    return IUnknown_QueryInterface(&debug_client->IDebugClient_iface, riid, obj);
 }
 
 static ULONG STDMETHODCALLTYPE debugsystemobjects_AddRef(IDebugSystemObjects *iface)
 {
     struct debug_client *debug_client = impl_from_IDebugSystemObjects(iface);
-    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
-    return IUnknown_AddRef(unk);
+    return IUnknown_AddRef(&debug_client->IDebugClient_iface);
 }
 
 static ULONG STDMETHODCALLTYPE debugsystemobjects_Release(IDebugSystemObjects *iface)
 {
     struct debug_client *debug_client = impl_from_IDebugSystemObjects(iface);
-    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
-    return IUnknown_Release(unk);
+    return IUnknown_Release(&debug_client->IDebugClient_iface);
 }
 
 static HRESULT STDMETHODCALLTYPE debugsystemobjects_GetEventThread(IDebugSystemObjects *iface, ULONG *id)
@@ -4700,7 +4688,6 @@ HRESULT WINAPI DebugExtensionInitialize(ULONG * pVersion, ULONG * pFlags)
 HRESULT WINAPI DebugCreate(REFIID riid, void **obj)
 {
     struct debug_client *debug_client;
-    IUnknown *unk;
     HRESULT hr;
 
     TRACE("%s, %p.\n", debugstr_guid(riid), obj);
@@ -4717,10 +4704,8 @@ HRESULT WINAPI DebugCreate(REFIID riid, void **obj)
     debug_client->refcount = 1;
     list_init(&debug_client->targets);
 
-    unk = (IUnknown *)&debug_client->IDebugClient_iface;
-
-    hr = IUnknown_QueryInterface(unk, riid, obj);
-    IUnknown_Release(unk);
+    hr = IUnknown_QueryInterface(&debug_client->IDebugClient_iface, riid, obj);
+    IUnknown_Release(&debug_client->IDebugClient_iface);
 
     return hr;
 }
