@@ -83,6 +83,20 @@ static WCHAR *input_context_get_comp_str( INPUTCONTEXT *ctx, BOOL result, UINT *
     return text;
 }
 
+static void input_context_reset_comp_str( INPUTCONTEXT *ctx )
+{
+    COMPOSITIONSTRING *compstr;
+
+    if (!(compstr = ImmLockIMCC( ctx->hCompStr )))
+        WARN( "Failed to lock input context composition string\n" );
+    else
+    {
+        memset( compstr, 0, sizeof(*compstr) );
+        compstr->dwSize = sizeof(*compstr);
+        ImmUnlockIMCC( ctx->hCompStr );
+    }
+}
+
 static HFONT input_context_select_ui_font( INPUTCONTEXT *ctx, HDC hdc )
 {
     struct ime_private *priv;
@@ -91,6 +105,47 @@ static HFONT input_context_select_ui_font( INPUTCONTEXT *ctx, HDC hdc )
     if (priv->textfont) font = SelectObject( hdc, priv->textfont );
     ImmUnlockIMCC( ctx->hPrivate );
     return font;
+}
+
+static void ime_send_message( HIMC himc, UINT message, WPARAM wparam, LPARAM lparam )
+{
+    INPUTCONTEXT *ctx;
+    TRANSMSG *msgs;
+    HIMCC himcc;
+
+    if (!(ctx = ImmLockIMC( himc ))) return;
+    if (!(himcc = ImmReSizeIMCC( ctx->hMsgBuf, (ctx->dwNumMsgBuf + 1) * sizeof(*msgs) )))
+        WARN( "Failed to resize input context message buffer\n" );
+    else if (!(msgs = ImmLockIMCC( (ctx->hMsgBuf = himcc) )))
+        WARN( "Failed to lock input context message buffer\n" );
+    else
+    {
+        TRANSMSG msg = {.message = message, .wParam = wparam, .lParam = lparam};
+        msgs[ctx->dwNumMsgBuf++] = msg;
+        ImmUnlockIMCC( ctx->hMsgBuf );
+    }
+
+    ImmUnlockIMC( himc );
+    ImmGenerateMessage( himc );
+}
+
+static void ime_set_composition_status( HIMC himc, BOOL composition )
+{
+    struct ime_private *priv;
+    INPUTCONTEXT *ctx;
+    UINT msg = 0;
+
+    if (!(ctx = ImmLockIMC( himc ))) return;
+    if ((priv = ImmLockIMCC( ctx->hPrivate )))
+    {
+        if (!priv->bInComposition && composition) msg = WM_IME_STARTCOMPOSITION;
+        else if (priv->bInComposition && !composition) msg = WM_IME_ENDCOMPOSITION;
+        priv->bInComposition = composition;
+        ImmUnlockIMCC( ctx->hPrivate );
+    }
+    ImmUnlockIMC( himc );
+
+    if (msg) ime_send_message( himc, msg, 0, 0 );
 }
 
 static void ime_ui_paint( HIMC himc, HWND hwnd )
@@ -390,9 +445,88 @@ BOOL WINAPI ImeSetCompositionString( HIMC himc, DWORD index, const void *comp, D
 
 BOOL WINAPI NotifyIME( HIMC himc, DWORD action, DWORD index, DWORD value )
 {
-    FIXME( "himc %p, action %lu, index %lu, value %lu stub!\n", himc, action, index, value );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    struct ime_private *priv;
+    INPUTCONTEXT *ctx;
+
+    TRACE( "himc %p, action %#lx, index %#lx, value %#lx stub!\n", himc, action, index, value );
+
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
+
+    switch (action)
+    {
+    case NI_CONTEXTUPDATED:
+        switch (value)
+        {
+        case IMC_SETCOMPOSITIONFONT:
+            if ((priv = ImmLockIMCC( ctx->hPrivate )))
+            {
+                if (priv->textfont) DeleteObject( priv->textfont );
+                priv->textfont = CreateFontIndirectW( &ctx->lfFont.W );
+                ImmUnlockIMCC( ctx->hPrivate );
+            }
+            break;
+        case IMC_SETOPENSTATUS:
+            if (!ctx->fOpen)
+            {
+                input_context_reset_comp_str( ctx );
+                ime_set_composition_status( himc, FALSE );
+            }
+            NtUserNotifyIMEStatus( ctx->hWnd, ctx->fOpen );
+            break;
+        default:
+            FIXME( "himc %p, action %#lx, index %#lx, value %#lx stub!\n", himc, action, index, value );
+            break;
+        }
+        break;
+
+    case NI_COMPOSITIONSTR:
+        switch (index)
+        {
+        case CPS_COMPLETE:
+        {
+            COMPOSITIONSTRING *compstr;
+
+            if (!(compstr = ImmLockIMCC( ctx->hCompStr )))
+                WARN( "Failed to lock input context composition string\n" );
+            else
+            {
+                WCHAR wchr = *(WCHAR *)((BYTE *)compstr + compstr->dwCompStrOffset);
+                COMPOSITIONSTRING tmp = *compstr;
+                UINT flags = 0;
+
+                memset( compstr, 0, sizeof(*compstr) );
+                compstr->dwSize = tmp.dwSize;
+                compstr->dwResultStrLen = tmp.dwCompStrLen;
+                compstr->dwResultStrOffset = tmp.dwCompStrOffset;
+                compstr->dwResultClauseLen = tmp.dwCompClauseLen;
+                compstr->dwResultClauseOffset = tmp.dwCompClauseOffset;
+                ImmUnlockIMCC( ctx->hCompStr );
+
+                if (tmp.dwCompStrLen) flags |= GCS_RESULTSTR;
+                if (tmp.dwCompClauseLen) flags |= GCS_RESULTCLAUSE;
+                if (flags) ime_send_message( himc, WM_IME_COMPOSITION, wchr, flags );
+            }
+
+            ImmSetOpenStatus( himc, FALSE );
+            break;
+        }
+        case CPS_CANCEL:
+            input_context_reset_comp_str( ctx );
+            ImmSetOpenStatus( himc, FALSE );
+            break;
+        default:
+            FIXME( "himc %p, action %#lx, index %#lx, value %#lx stub!\n", himc, action, index, value );
+            break;
+        }
+        break;
+
+    default:
+        FIXME( "himc %p, action %#lx, index %#lx, value %#lx stub!\n", himc, action, index, value );
+        break;
+    }
+
+    ImmUnlockIMC( himc );
+    return TRUE;
 }
 
 LRESULT WINAPI ImeEscape( HIMC himc, UINT escape, void *data )
