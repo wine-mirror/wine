@@ -1311,6 +1311,7 @@ struct wined3d_shader_semantic
     enum wined3d_decl_usage usage;
     UINT usage_idx;
     enum wined3d_shader_resource_type resource_type;
+    unsigned int sample_count;
     enum wined3d_data_type resource_data_type;
     struct wined3d_shader_dst_param reg;
 };

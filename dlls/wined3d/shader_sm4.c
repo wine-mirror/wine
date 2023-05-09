@@ -49,6 +49,9 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
 #define WINED3D_SM4_RESOURCE_TYPE_SHIFT         11
 #define WINED3D_SM4_RESOURCE_TYPE_MASK          (0xfu << WINED3D_SM4_RESOURCE_TYPE_SHIFT)
 
+#define WINED3D_SM4_RESOURCE_SAMPLE_COUNT_SHIFT 16
+#define WINED3D_SM4_RESOURCE_SAMPLE_COUNT_MASK  (0xfu << WINED3D_SM4_RESOURCE_SAMPLE_COUNT_SHIFT)
+
 #define WINED3D_SM4_PRIMITIVE_TYPE_SHIFT        11
 #define WINED3D_SM4_PRIMITIVE_TYPE_MASK         (0x3fu << WINED3D_SM4_PRIMITIVE_TYPE_SHIFT)
 
@@ -592,6 +595,13 @@ static void shader_sm4_read_dcl_resource(struct wined3d_shader_instruction *ins,
     {
         ins->declaration.semantic.resource_type = resource_type_table[resource_type];
     }
+
+    if (ins->declaration.semantic.resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_2DMS
+            || ins->declaration.semantic.resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY)
+    {
+        ins->declaration.semantic.sample_count = (opcode_token & WINED3D_SM4_RESOURCE_SAMPLE_COUNT_MASK) >> WINED3D_SM4_RESOURCE_SAMPLE_COUNT_SHIFT;
+    }
+
     reg_data_type = opcode == WINED3D_SM4_OP_DCL_RESOURCE ? WINED3D_DATA_RESOURCE : WINED3D_DATA_UAV;
     shader_sm4_read_dst_param(priv, &tokens, &tokens[token_count], reg_data_type, &ins->declaration.semantic.reg);
 
