@@ -680,6 +680,18 @@ void WINAPI KiUserCallbackDispatcher( ULONG id, void *args, ULONG len )
 }
 
 
+/**************************************************************************
+ *              RtlIsEcCode (NTDLL.@)
+ */
+BOOLEAN WINAPI RtlIsEcCode( const void *ptr )
+{
+    const UINT64 *map = (const UINT64 *)NtCurrentTeb()->Peb->EcCodeBitMap;
+    ULONG_PTR page = (ULONG_PTR)ptr / page_size;
+    if (!map) return FALSE;
+    return (map[page / 64] >> (page & 63)) & 1;
+}
+
+
 static ULONG64 get_int_reg( CONTEXT *context, int reg )
 {
     return *(&context->Rax + reg);

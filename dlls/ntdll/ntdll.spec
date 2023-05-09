@@ -836,6 +836,7 @@
 @ stdcall RtlIsCriticalSectionLocked(ptr)
 @ stdcall RtlIsCriticalSectionLockedByThread(ptr)
 @ stdcall RtlIsDosDeviceName_U(wstr)
+@ stdcall -arch=x86_64 -norelay RtlIsEcCode(ptr)
 @ stub RtlIsGenericTableEmpty
 # @ stub RtlIsGenericTableEmptyAvl
 @ stdcall RtlIsNameLegalDOS8Dot3(ptr ptr ptr)
