@@ -1857,6 +1857,7 @@ static void init_supported_machines(void)
     if (prefix_type == PREFIX_64BIT)
     {
         supported_machines[count++] = IMAGE_FILE_MACHINE_ARM64;
+        supported_machines[count++] = IMAGE_FILE_MACHINE_AMD64;
         supported_machines[count++] = IMAGE_FILE_MACHINE_I386;
     }
     supported_machines[count++] = IMAGE_FILE_MACHINE_ARMNT;
