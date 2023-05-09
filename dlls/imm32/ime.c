@@ -186,7 +186,7 @@ static UINT ime_set_composition_status( HIMC himc, BOOL composition )
 static void ime_ui_paint( HIMC himc, HWND hwnd )
 {
     PAINTSTRUCT ps;
-    RECT rect;
+    RECT rect, new_rect;
     HDC hdc;
     HMONITOR monitor;
     MONITORINFO mon_info;
@@ -201,6 +201,7 @@ static void ime_ui_paint( HIMC himc, HWND hwnd )
 
     GetClientRect( hwnd, &rect );
     FillRect( hdc, &rect, (HBRUSH)(COLOR_WINDOW + 1) );
+    new_rect = rect;
 
     if ((str = input_context_get_comp_str( ctx, FALSE, &len )))
     {
@@ -233,6 +234,7 @@ static void ime_ui_paint( HIMC himc, HWND hwnd )
             rect.top = cpt.y;
             rect.right = rect.left + pt.x;
             rect.bottom = rect.top + pt.y;
+            offset.x = offset.y = 0;
             monitor = MonitorFromPoint( cpt, MONITOR_DEFAULTTOPRIMARY );
         }
         else /* CFS_DEFAULT */
@@ -283,8 +285,7 @@ static void ime_ui_paint( HIMC himc, HWND hwnd )
             }
         }
 
-        SetWindowPos( hwnd, HWND_TOPMOST, rect.left, rect.top, rect.right - rect.left,
-                      rect.bottom - rect.top, SWP_NOACTIVATE );
+        new_rect = rect;
         TextOutW( hdc, offset.x, offset.y, str, len );
 
         if (font) SelectObject( hdc, font );
@@ -293,6 +294,10 @@ static void ime_ui_paint( HIMC himc, HWND hwnd )
 
     EndPaint( hwnd, &ps );
     ImmUnlockIMC( himc );
+
+    if (!EqualRect( &rect, &new_rect ))
+        SetWindowPos( hwnd, HWND_TOPMOST, new_rect.left, new_rect.top, new_rect.right - new_rect.left,
+                      new_rect.bottom - new_rect.top, SWP_NOACTIVATE );
 }
 
 static void ime_ui_update_window( INPUTCONTEXT *ctx, HWND hwnd )
