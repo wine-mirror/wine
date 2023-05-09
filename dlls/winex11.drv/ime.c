@@ -52,27 +52,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(imm);
 static HIMC *hSelectedFrom = NULL;
 static INT  hSelectedCount = 0;
 
-static WCHAR *input_context_get_comp_str( INPUTCONTEXT *ctx, BOOL result, UINT *length )
-{
-    COMPOSITIONSTRING *string;
-    WCHAR *text = NULL;
-    UINT len, off;
-
-    if (!(string = ImmLockIMCC( ctx->hCompStr ))) return NULL;
-    len = result ? string->dwResultStrLen : string->dwCompStrLen;
-    off = result ? string->dwResultStrOffset : string->dwCompStrOffset;
-
-    if (len && off && (text = malloc( (len + 1) * sizeof(WCHAR) )))
-    {
-        memcpy( text, (BYTE *)string + off, len * sizeof(WCHAR) );
-        text[len] = 0;
-        *length = len;
-    }
-
-    ImmUnlockIMCC( ctx->hCompStr );
-    return text;
-}
-
 static void input_context_reset_comp_str( INPUTCONTEXT *ctx )
 {
     COMPOSITIONSTRING *compstr;
@@ -612,35 +591,27 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
             {
                 case CPS_COMPLETE:
                 {
-                    HIMCC newCompStr;
-                    WCHAR *str;
-                    UINT len;
+                    COMPOSITIONSTRING *compstr;
 
-                    TRACE("CPS_COMPLETE\n");
-
-                    /* clear existing result */
-                    newCompStr = updateResultStr(lpIMC->hCompStr, NULL, 0);
-
-                    ImmDestroyIMCC(lpIMC->hCompStr);
-                    lpIMC->hCompStr = newCompStr;
-
-                    if ((str = input_context_get_comp_str( lpIMC, FALSE, &len )))
+                    if (!(compstr = ImmLockIMCC( lpIMC->hCompStr )))
+                        WARN( "Failed to lock input context composition string\n" );
+                    else
                     {
-                        WCHAR param = str[0];
+                        WCHAR wchr = *(WCHAR *)((BYTE *)compstr + compstr->dwCompStrOffset);
+                        COMPOSITIONSTRING tmp = *compstr;
+                        UINT flags = 0;
 
-                        newCompStr = updateResultStr( lpIMC->hCompStr, str, len );
-                        ImmDestroyIMCC(lpIMC->hCompStr);
-                        lpIMC->hCompStr = newCompStr;
-                        newCompStr = updateCompStr(lpIMC->hCompStr, NULL, 0);
-                        ImmDestroyIMCC(lpIMC->hCompStr);
-                        lpIMC->hCompStr = newCompStr;
+                        memset( compstr, 0, sizeof(*compstr) );
+                        compstr->dwSize = tmp.dwSize;
+                        compstr->dwResultStrLen = tmp.dwCompStrLen;
+                        compstr->dwResultStrOffset = tmp.dwCompStrOffset;
+                        compstr->dwResultClauseLen = tmp.dwCompClauseLen;
+                        compstr->dwResultClauseOffset = tmp.dwCompClauseOffset;
+                        ImmUnlockIMCC( lpIMC->hCompStr );
 
-                        GenerateIMEMessage(hIMC, WM_IME_COMPOSITION, 0,
-                                                  GCS_COMPSTR);
-
-                        GenerateIMEMessage(hIMC, WM_IME_COMPOSITION, param,
-                                            GCS_RESULTSTR|GCS_RESULTCLAUSE);
-                        free( str );
+                        if (tmp.dwCompStrLen) flags |= GCS_RESULTSTR;
+                        if (tmp.dwCompClauseLen) flags |= GCS_RESULTCLAUSE;
+                        if (flags) GenerateIMEMessage( hIMC, WM_IME_COMPOSITION, wchr, flags );
                     }
 
                     ImmSetOpenStatus( hIMC, FALSE );
