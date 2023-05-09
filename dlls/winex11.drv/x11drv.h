@@ -826,6 +826,7 @@ extern void xim_thread_attach( struct x11drv_thread_data *data ) DECLSPEC_HIDDEN
 extern BOOL xim_in_compose_mode(void) DECLSPEC_HIDDEN;
 extern void X11DRV_XIMLookupChars( const char *str, UINT count ) DECLSPEC_HIDDEN;
 extern XIC X11DRV_get_ic( HWND hwnd ) DECLSPEC_HIDDEN;
+extern void xim_set_focus( HWND hwnd, BOOL focus ) DECLSPEC_HIDDEN;
 
 #define XEMBED_MAPPED  (1 << 0)
 
