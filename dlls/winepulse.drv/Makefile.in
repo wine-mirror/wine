@@ -6,6 +6,7 @@ UNIX_LIBS    = $(PULSE_LIBS) $(PTHREAD_LIBS) -lm
 UNIX_CFLAGS  = $(PULSE_CFLAGS)
 
 C_SRCS = \
+	client.c \
 	mmdevdrv.c \
 	pulse.c \
 	session.c

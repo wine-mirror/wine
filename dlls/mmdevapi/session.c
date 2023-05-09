@@ -13,6 +13,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 #define COBJMACROS
 
 #include <audiopolicy.h>
@@ -32,7 +33,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 extern void sessions_lock(void) DECLSPEC_HIDDEN;
 extern void sessions_unlock(void) DECLSPEC_HIDDEN;
 
-extern const IAudioClient3Vtbl AudioClient3_Vtbl;
+void set_stream_volumes(struct audio_client *This)
+{
+    struct set_volumes_params params;
+
+    params.stream          = This->stream;
+    params.master_volume   = (This->session->mute ? 0.0f : This->session->master_vol);
+    params.volumes         = This->vols;
+    params.session_volumes = This->session->channel_vols;
+
+    WINE_UNIX_CALL(set_volumes, &params);
+}
 
 static inline struct audio_session_wrapper *impl_from_IAudioSessionControl2(IAudioSessionControl2 *iface)
 {
@@ -47,18 +58,6 @@ static inline struct audio_session_wrapper *impl_from_IChannelAudioVolume(IChann
 static inline struct audio_session_wrapper *impl_from_ISimpleAudioVolume(ISimpleAudioVolume *iface)
 {
     return CONTAINING_RECORD(iface, struct audio_session_wrapper, ISimpleAudioVolume_iface);
-}
-
-static void set_stream_volumes(struct audio_client *This)
-{
-    struct set_volumes_params params;
-
-    params.stream          = This->stream;
-    params.master_volume   = (This->session->mute ? 0.0f : This->session->master_vol);
-    params.volumes         = This->vols;
-    params.session_volumes = This->session->channel_vols;
-
-    WINE_UNIX_CALL(set_volumes, &params);
 }
 
 static HRESULT WINAPI control_QueryInterface(IAudioSessionControl2 *iface, REFIID riid, void **ppv)
