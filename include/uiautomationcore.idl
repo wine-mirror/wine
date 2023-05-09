@@ -236,6 +236,31 @@ library UIA
 
     [
         object,
+        uuid(a0a839a9-8da1-4a82-806a-8e0d44e79f56),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface IRawElementProviderSimple2 : IRawElementProviderSimple
+    {
+        HRESULT ShowContextMenu();
+    }
+
+    [
+        object,
+        uuid(fcf5d820-d7ec-4613-bdf6-42a84ce7daaf),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface IRawElementProviderSimple3 : IRawElementProviderSimple2
+    {
+        HRESULT GetMetadataValue(
+                [in] int targetId,
+                [in] METADATAID metadataId,
+                [out, retval] VARIANT *returnVal);
+    }
+
+    [
+        object,
         uuid(f8b80ada-2c44-48d0-89be-5ff23c9cd875),
         pointer_default(unique),
         oleautomation
@@ -314,6 +339,114 @@ library UIA
         HRESULT GetOverrideProviderForHwnd(
                 [in] HWND hwnd,
                 [out, retval] IRawElementProviderSimple **pRetVal);
+    }
+
+    [
+        object,
+        uuid(a407b27b-0f6d-4427-9292-473c7bf93258),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface IRawElementProviderAdviseEvents : IUnknown
+    {
+        HRESULT AdviseEventAdded(
+                [in] EVENTID eventId,
+                [in] SAFEARRAY(PROPERTYID) propertyIDs);
+        HRESULT AdviseEventRemoved(
+                [in] EVENTID eventId,
+                [in] SAFEARRAY(PROPERTYID) propertyIDs);
+    }
+
+    [
+        object,
+        uuid(4fd82b78-a43e-46ac-9803-0a6969c7c183),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface IProxyProviderWinEventSink : IUnknown
+    {
+        HRESULT AddAutomationPropertyChangedEvent(
+                [in] IRawElementProviderSimple *pProvider,
+                [in] PROPERTYID id,
+                [in] VARIANT newValue);
+
+        HRESULT AddAutomationEvent(
+                [in] IRawElementProviderSimple *pProvider,
+                [in] EVENTID id);
+
+        HRESULT AddStructureChangedEvent(
+                [in] IRawElementProviderSimple *pProvider,
+                [in] enum StructureChangeType structureChangeType,
+                [in] SAFEARRAY(int) runtimeId);
+    }
+
+    [
+        object,
+        uuid(89592ad4-f4e0-43d5-a3b6-bad7e111b435),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface IProxyProviderWinEventHandler : IUnknown
+    {
+        HRESULT RespondToWinEvent(
+                [in] DWORD idWinEvent,
+                [in] HWND hwnd,
+                [in] LONG idObject,
+                [in] LONG idChild,
+                [in] IProxyProviderWinEventSink *pSink);
+    }
+
+    [
+        object,
+        uuid(0a2a93cc-bfad-42ac-9b2e-0991fb0d3ea0),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface IRawElementProviderWindowlessSite : IUnknown
+    {
+        HRESULT GetAdjacentFragment(
+                [in] enum NavigateDirection direction,
+                [out, retval] IRawElementProviderFragment **ppParent);
+
+        HRESULT GetRuntimeIdPrefix([out, retval] SAFEARRAY(int) *pRetVal);
+    }
+
+    [
+        object,
+        uuid(33ac331b-943e-4020-b295-db37784974a3),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface IAccessibleHostingElementProviders : IUnknown
+    {
+        /*
+         * FIXME: Current versions of Windows SDK use
+         * SAFEARRAY(IRawElementProviderSimple *) instead of
+         * SAFEARRAY(VARIANT). The new type is currently unsupported
+         * in widl, we should switch to it when it is.
+         */
+        HRESULT GetEmbeddedFragmentRoots([out,retval] SAFEARRAY(VARIANT) *pRetVal);
+
+        HRESULT GetObjectIdForProvider (
+                [in] IRawElementProviderSimple *pProvider,
+                [out] long *pidObject);
+    }
+
+    [
+        object,
+        uuid(24be0b07-d37d-487a-98cf-a13ed465e9b3),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface IRawElementProviderHostingAccessibles : IUnknown
+    {
+        /*
+         * FIXME: Current versions of Windows SDK use
+         * SAFEARRAY(IAccessible *) instead of
+         * SAFEARRAY(VARIANT). The new type is currently unsupported
+         * in widl, we should switch to it when it is.
+         */
+        HRESULT GetEmbeddedAccessibles([out, retval] SAFEARRAY(VARIANT) *pRetVal);
     }
 
     [
