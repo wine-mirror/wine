@@ -5012,7 +5012,7 @@ static void test_ImmActivateLayout(void)
         {
             .hkl = expect_ime, .himc = default_himc,
             .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_OPENSTATUSWINDOW},
-            .todo = TRUE,
+            .todo = TRUE, .broken = TRUE, /* broken after SetForegroundWindow(GetDesktopWindow()) as in d3d8:device  */
         },
         {
             .hkl = expect_ime, .himc = default_himc,
@@ -5046,7 +5046,7 @@ static void test_ImmActivateLayout(void)
         {
             .hkl = expect_ime, .himc = default_himc,
             .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_CLOSESTATUSWINDOW},
-            .todo = TRUE,
+            .todo = TRUE, .broken = TRUE, /* broken after SetForegroundWindow(GetDesktopWindow()) as in d3d8:device  */
         },
         {
             .hkl = expect_ime, .himc = default_himc,
@@ -5203,7 +5203,7 @@ static void test_ImmCreateInputContext(void)
         {
             .hkl = expect_ime, .himc = default_himc,
             .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_OPENSTATUSWINDOW},
-            .todo = TRUE,
+            .todo = TRUE, .broken = TRUE, /* broken after SetForegroundWindow(GetDesktopWindow()) as in d3d8:device  */
         },
         {0},
     };
@@ -5258,7 +5258,7 @@ static void test_ImmCreateInputContext(void)
         {
             .hkl = expect_ime, .himc = default_himc,
             .func = MSG_IME_UI, .message = {.msg = WM_IME_NOTIFY, .wparam = IMN_CLOSESTATUSWINDOW},
-            .todo = TRUE,
+            .todo = TRUE, .broken = TRUE, /* broken after SetForegroundWindow(GetDesktopWindow()) as in d3d8:device  */
         },
         {
             .hkl = expect_ime, .himc = default_himc,
