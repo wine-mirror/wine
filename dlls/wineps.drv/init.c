@@ -503,10 +503,11 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
     WCHAR *ppd_filename = NULL;
     char *nameA = NULL;
     BOOL using_default_devmode = FALSE;
-    int len, input_slots, resolutions, page_sizes, size;
+    int i, len, input_slots, resolutions, page_sizes, font_subs, size;
     struct input_slot *dm_slot;
     struct resolution *dm_res;
     struct page_size *dm_page;
+    struct font_sub *dm_sub;
     INPUTSLOT *slot;
     RESOLUTION *res;
     PAGESIZE *page;
@@ -544,11 +545,17 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
         goto fail;
     }
 
+    pi->FontSubTable = load_font_sub_table( hPrinter, &pi->FontSubTableSize );
+
     input_slots = list_count( &pi->ppd->InputSlots );
     resolutions = list_count( &pi->ppd->Resolutions );
     page_sizes = list_count( &pi->ppd->PageSizes );
-    size = FIELD_OFFSET(PSDRV_DEVMODE, data[input_slots * sizeof(struct input_slot) +
-            resolutions * sizeof(struct resolution) + page_sizes * sizeof(struct page_size)]);
+    font_subs = pi->FontSubTableSize;
+    size = FIELD_OFFSET(PSDRV_DEVMODE, data[
+            input_slots * sizeof(struct input_slot) +
+            resolutions * sizeof(struct resolution) +
+            page_sizes * sizeof(struct page_size) +
+            font_subs * sizeof(struct font_sub)]);
 
     pi->Devmode = get_devmode( hPrinter, name, &using_default_devmode, size );
     if (!pi->Devmode) goto fail;
@@ -622,6 +629,14 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
             dm_page->win_page = page->WinPage;
             dm_page++;
         }
+
+        dm_sub = (struct font_sub *)dm_page;
+        for (i = 0; i < font_subs; i++)
+        {
+            lstrcpynW(dm_sub->name, pi->FontSubTable[i].pValueName, ARRAY_SIZE(dm_sub->name));
+            lstrcpynW(dm_sub->sub, (WCHAR *)pi->FontSubTable[i].pData, ARRAY_SIZE(dm_sub->sub));
+            dm_sub++;
+        }
     }
 
     /* Duplex is indicated by the setting of the DM_DUPLEX bit in dmFields.
@@ -639,8 +654,6 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
     }
 
     set_devmode( hPrinter, pi->Devmode );
-
-    pi->FontSubTable = load_font_sub_table( hPrinter, &pi->FontSubTableSize );
 
     LIST_FOR_EACH_ENTRY( font, &pi->ppd->InstalledFonts, FONTNAME, entry )
     {

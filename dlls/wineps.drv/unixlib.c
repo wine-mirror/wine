@@ -1050,9 +1050,11 @@ static HFONT CDECL select_font(PHYSDEV dev, HFONT hfont, UINT *aa_flags)
 {
     PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
     PHYSDEV next = GET_NEXT_PHYSDEV(dev, pSelectFont);
+    const struct font_sub *font_sub;
     HFONT ret;
     LOGFONTW lf;
     BOOL subst = FALSE;
+    int i;
 
     if (!NtGdiExtGetObjectW(hfont, sizeof(lf), &lf)) return 0;
 
@@ -1097,28 +1099,27 @@ static HFONT CDECL select_font(PHYSDEV dev, HFONT hfont, UINT *aa_flags)
         }
     }
 
-    if (pdev->pi->pi->FontSubTableSize != 0)
+    font_sub = (const struct font_sub *)(pdev->devmode->data +
+            pdev->devmode->input_slots * sizeof(struct input_slot) +
+            pdev->devmode->resolutions * sizeof(struct resolution) +
+            pdev->devmode->page_sizes * sizeof(struct page_size));
+    for (i = 0; i < pdev->devmode->font_subs; i++)
     {
-        DWORD i;
-
-        for (i = 0; i < pdev->pi->pi->FontSubTableSize; ++i)
+        if (!wcsicmp(lf.lfFaceName, font_sub[i].name))
         {
-            if (!wcsicmp(lf.lfFaceName, pdev->pi->pi->FontSubTable[i].pValueName))
+            TRACE("substituting facename %s for %s\n",
+                    debugstr_w(font_sub[i].sub), debugstr_w(lf.lfFaceName));
+            if (wcslen(font_sub[i].sub) < LF_FACESIZE)
             {
-                TRACE("substituting facename %s for %s\n",
-                        debugstr_w((WCHAR *)pdev->pi->pi->FontSubTable[i].pData), debugstr_w(lf.lfFaceName));
-                if (wcslen((WCHAR *)pdev->pi->pi->FontSubTable[i].pData) < LF_FACESIZE)
-                {
-                    wcscpy(lf.lfFaceName, (WCHAR *)pdev->pi->pi->FontSubTable[i].pData);
-                    subst = TRUE;
-                }
-                else
-                {
-                    WARN("Facename %s is too long; ignoring substitution\n",
-                            debugstr_w((WCHAR *)pdev->pi->pi->FontSubTable[i].pData));
-                }
-                break;
+                wcscpy(lf.lfFaceName, font_sub[i].sub);
+                subst = TRUE;
             }
+            else
+            {
+                WARN("Facename %s is too long; ignoring substitution\n",
+                        debugstr_w(font_sub[i].sub));
+            }
+            break;
         }
     }
 

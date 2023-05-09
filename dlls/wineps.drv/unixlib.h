@@ -60,6 +60,12 @@ struct page_size
     short win_page;
 };
 
+struct font_sub
+{
+    WCHAR name[LF_FACESIZE];
+    WCHAR sub[LF_FACESIZE];
+};
+
 /* Unix calls */
 enum wineps_funcs
 {

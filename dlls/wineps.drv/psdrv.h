@@ -227,6 +227,7 @@ typedef struct {
     int input_slots;
     int resolutions;
     int page_sizes;
+    int font_subs;
     BYTE data[1];
 } PSDRV_DEVMODE;
 
