@@ -3144,7 +3144,7 @@ static void test_allocate_queue(void)
 
 static void test_MFCopyImage(void)
 {
-    BYTE dest[16], src[16];
+    DWORD dest[4], src[4];
     HRESULT hr;
 
     if (!pMFCopyImage)
@@ -3156,21 +3156,36 @@ static void test_MFCopyImage(void)
     memset(dest, 0xaa, sizeof(dest));
     memset(src, 0x11, sizeof(src));
 
-    hr = pMFCopyImage(dest, 8, src, 8, 4, 1);
+    hr = pMFCopyImage((BYTE *)dest, 8, (const BYTE *)src, 8, 4, 1);
     ok(hr == S_OK, "Failed to copy image %#lx.\n", hr);
-    ok(!memcmp(dest, src, 4) && dest[4] == 0xaa, "Unexpected buffer contents.\n");
+    ok(dest[0] == src[0] && dest[1] == 0xaaaaaaaa, "Unexpected buffer contents.\n");
+
+    /* Negative destination stride. */
+    memset(dest, 0xaa, sizeof(dest));
+
+    src[0] = 0x11111111;
+    src[1] = 0x22222222;
+    src[2] = 0x33333333;
+    src[3] = 0x44444444;
+
+    hr = pMFCopyImage((BYTE *)(dest + 2), -8, (const BYTE *)src, 8, 4, 2);
+    ok(hr == S_OK, "Failed to copy image %#lx.\n", hr);
+    ok(dest[0] == 0x33333333, "Unexpected buffer contents %#lx.\n", dest[0]);
+    ok(dest[1] == 0xaaaaaaaa, "Unexpected buffer contents %#lx.\n", dest[1]);
+    ok(dest[2] == 0x11111111, "Unexpected buffer contents %#lx.\n", dest[2]);
+    ok(dest[3] == 0xaaaaaaaa, "Unexpected buffer contents %#lx.\n", dest[3]);
 
     memset(dest, 0xaa, sizeof(dest));
     memset(src, 0x11, sizeof(src));
 
-    hr = pMFCopyImage(dest, 8, src, 8, 16, 1);
+    hr = pMFCopyImage((BYTE *)dest, 8, (const BYTE *)src, 8, 16, 1);
     ok(hr == S_OK, "Failed to copy image %#lx.\n", hr);
     ok(!memcmp(dest, src, 16), "Unexpected buffer contents.\n");
 
     memset(dest, 0xaa, sizeof(dest));
     memset(src, 0x11, sizeof(src));
 
-    hr = pMFCopyImage(dest, 8, src, 8, 8, 2);
+    hr = pMFCopyImage((BYTE *)dest, 8, (const BYTE *)src, 8, 8, 2);
     ok(hr == S_OK, "Failed to copy image %#lx.\n", hr);
     ok(!memcmp(dest, src, 16), "Unexpected buffer contents.\n");
 }
