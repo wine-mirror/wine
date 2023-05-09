@@ -585,8 +585,6 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
                        (symbols->sectcontrib_size - sizeof(unsigned)) / size,
                        size,
                        (symbols->sectcontrib_size - sizeof(unsigned)) % size);
-            if ((symbols->sectcontrib_size - sizeof(unsigned)) % size)
-            if ((symbols->sectcontrib_size - sizeof(unsigned)) % size)
             src += sizeof(unsigned);
             while (src + size <= last)
             {
