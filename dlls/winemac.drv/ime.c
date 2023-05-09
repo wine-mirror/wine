@@ -41,51 +41,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(imm);
 
-#define FROM_MACDRV ((HIMC)0xcafe1337)
-
-static HIMC *hSelectedFrom = NULL;
-static INT  hSelectedCount = 0;
-
-static HIMC RealIMC(HIMC hIMC)
-{
-    if (hIMC == FROM_MACDRV)
-    {
-        INT i;
-        HWND wnd = GetFocus();
-        HIMC winHimc = ImmGetContext(wnd);
-        for (i = 0; i < hSelectedCount; i++)
-            if (winHimc == hSelectedFrom[i])
-                return winHimc;
-        return NULL;
-    }
-    else
-        return hIMC;
-}
-
-static LPINPUTCONTEXT LockRealIMC(HIMC hIMC)
-{
-    HIMC real_imc = RealIMC(hIMC);
-    if (real_imc)
-        return ImmLockIMC(real_imc);
-    else
-        return NULL;
-}
-
-static BOOL UnlockRealIMC(HIMC hIMC)
-{
-    HIMC real_imc = RealIMC(hIMC);
-    if (real_imc)
-        return ImmUnlockIMC(real_imc);
-    else
-        return FALSE;
-}
-
 static void GenerateIMEMessage(HIMC hIMC, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     LPINPUTCONTEXT lpIMC;
     LPTRANSMSG lpTransMsg;
 
-    lpIMC = LockRealIMC(hIMC);
+    lpIMC = ImmLockIMC(hIMC);
     if (lpIMC == NULL)
         return;
 
@@ -105,34 +66,8 @@ static void GenerateIMEMessage(HIMC hIMC, UINT msg, WPARAM wParam, LPARAM lParam
     ImmUnlockIMCC(lpIMC->hMsgBuf);
     lpIMC->dwNumMsgBuf++;
 
-    ImmGenerateMessage(RealIMC(hIMC));
-    UnlockRealIMC(hIMC);
-}
-
-static BOOL IME_RemoveFromSelected(HIMC hIMC)
-{
-    int i;
-    for (i = 0; i < hSelectedCount; i++)
-    {
-        if (hSelectedFrom[i] == hIMC)
-        {
-            if (i < hSelectedCount - 1)
-                memmove(&hSelectedFrom[i], &hSelectedFrom[i + 1], (hSelectedCount - i - 1) * sizeof(HIMC));
-            hSelectedCount--;
-            return TRUE;
-        }
-    }
-    return FALSE;
-}
-
-static void IME_AddToSelected(HIMC hIMC)
-{
-    hSelectedCount++;
-    if (hSelectedFrom)
-        hSelectedFrom = HeapReAlloc(GetProcessHeap(), 0, hSelectedFrom, hSelectedCount * sizeof(HIMC));
-    else
-        hSelectedFrom = HeapAlloc(GetProcessHeap(), 0, sizeof(HIMC));
-    hSelectedFrom[hSelectedCount - 1] = hIMC;
+    ImmGenerateMessage(hIMC);
+    ImmUnlockIMC(hIMC);
 }
 
 BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
@@ -140,23 +75,10 @@ BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
     LPINPUTCONTEXT lpIMC;
     TRACE("%p %s\n", hIMC, fSelect ? "TRUE" : "FALSE");
 
-    if (hIMC == FROM_MACDRV)
-    {
-        ERR("ImeSelect should never be called from Cocoa\n");
-        return FALSE;
-    }
-
-    if (!hIMC)
-        return TRUE;
-
-    /* not selected */
-    if (!fSelect)
-        return IME_RemoveFromSelected(hIMC);
-
-    IME_AddToSelected(hIMC);
+    if (!hIMC || !fSelect) return TRUE;
 
     /* Initialize our structures */
-    lpIMC = LockRealIMC(hIMC);
+    lpIMC = ImmLockIMC(hIMC);
     if (lpIMC != NULL)
     {
         LPIMEPRIVATE myPrivate;
@@ -164,13 +86,13 @@ BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
         if (myPrivate->bInComposition)
             GenerateIMEMessage(hIMC, WM_IME_ENDCOMPOSITION, 0, 0);
         if (myPrivate->bInternalState)
-            ImmSetOpenStatus(RealIMC(FROM_MACDRV), FALSE);
+            ImmSetOpenStatus( hIMC, FALSE );
         myPrivate->bInComposition = FALSE;
         myPrivate->bInternalState = FALSE;
         myPrivate->textfont = NULL;
         myPrivate->hwndDefault = NULL;
         ImmUnlockIMCC(lpIMC->hPrivate);
-        UnlockRealIMC(hIMC);
+        ImmUnlockIMC(hIMC);
     }
 
     return TRUE;
