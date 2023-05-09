@@ -3911,7 +3911,7 @@ void virtual_set_large_address_space(void)
  * NtAllocateVirtualMemory[Ex] implementation.
  */
 static NTSTATUS allocate_virtual_memory( void **ret, SIZE_T *size_ptr, ULONG type, ULONG protect,
-                                         ULONG_PTR limit, ULONG_PTR align )
+                                         ULONG_PTR limit, ULONG_PTR align, ULONG attributes )
 {
     void *base;
     unsigned int vprot;
@@ -4061,7 +4061,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_PTR z
     else
         limit = 0;
 
-    return allocate_virtual_memory( ret, size_ptr, type, protect, limit, 0 );
+    return allocate_virtual_memory( ret, size_ptr, type, protect, limit, 0, 0 );
 }
 
 
@@ -4075,35 +4075,22 @@ NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *s
 {
     ULONG_PTR limit = 0;
     ULONG_PTR align = 0;
+    ULONG attributes = 0;
+    MEM_ADDRESS_REQUIREMENTS *r = NULL;
+    unsigned int i;
 
-    TRACE("%p %p %08lx %x %08x %p %u\n",
+    TRACE( "%p %p %08lx %x %08x %p %u\n",
           process, *ret, *size_ptr, (int)type, (int)protect, parameters, (int)count );
 
     if (count && !parameters) return STATUS_INVALID_PARAMETER;
 
-    if (count)
+    for (i = 0; i < count; ++i)
     {
-        MEM_ADDRESS_REQUIREMENTS *r = NULL;
-        unsigned int i;
-
-        for (i = 0; i < count; ++i)
+        switch (parameters[i].Type)
         {
-            if (parameters[i].Type == MemExtendedParameterInvalidType || parameters[i].Type >= MemExtendedParameterMax)
-            {
-                WARN( "Invalid parameter type %d.\n", parameters[i].Type );
-                return STATUS_INVALID_PARAMETER;
-            }
-            if (parameters[i].Type != MemExtendedParameterAddressRequirements)
-            {
-                FIXME( "Parameter type %d is not supported.\n", parameters[i].Type );
-                continue;
-            }
-            if (r)
-            {
-                WARN( "Duplicate parameter.\n" );
-                return STATUS_INVALID_PARAMETER;
-            }
-            r = (MEM_ADDRESS_REQUIREMENTS *)parameters[i].Pointer;
+        case MemExtendedParameterAddressRequirements:
+            if (r) return STATUS_INVALID_PARAMETER;
+            r = parameters[i].Pointer;
 
             if (r->LowestStartingAddress)
                 FIXME( "Not supported requirements LowestStartingAddress %p, Alignment %p.\n",
@@ -4126,6 +4113,22 @@ NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *s
                 return STATUS_INVALID_PARAMETER;
             }
             TRACE( "limit %p, align %p.\n", (void *)limit, (void *)align );
+            break;
+
+        case MemExtendedParameterAttributeFlags:
+            attributes = parameters[i].ULong;
+            break;
+
+        case MemExtendedParameterNumaNode:
+        case MemExtendedParameterPartitionHandle:
+        case MemExtendedParameterUserPhysicalHandle:
+        case MemExtendedParameterImageMachine:
+            FIXME( "Parameter type %d is not supported.\n", parameters[i].Type );
+            break;
+
+        default:
+            WARN( "Invalid parameter type %u\n", parameters[i].Type );
+            return STATUS_INVALID_PARAMETER;
         }
     }
 
@@ -4146,6 +4149,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *s
         call.virtual_alloc_ex.align        = align;
         call.virtual_alloc_ex.op_type      = type;
         call.virtual_alloc_ex.prot         = protect;
+        call.virtual_alloc_ex.attributes   = attributes;
         status = server_queue_process_apc( process, &call, &result );
         if (status != STATUS_SUCCESS) return status;
 
@@ -4157,7 +4161,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *s
         return result.virtual_alloc_ex.status;
     }
 
-    return allocate_virtual_memory( ret, size_ptr, type, protect, limit, align );
+    return allocate_virtual_memory( ret, size_ptr, type, protect, limit, align, attributes );
 }
 
 

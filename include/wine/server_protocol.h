@@ -528,6 +528,7 @@ typedef union
         mem_size_t       limit;
         mem_size_t       align;
         unsigned int     prot;
+        unsigned int     attributes;
     } virtual_alloc_ex;
     struct
     {
@@ -6358,7 +6359,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 762
+#define SERVER_PROTOCOL_VERSION 763
 
 /* ### protocol_version end ### */
 

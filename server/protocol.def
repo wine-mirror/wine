@@ -544,6 +544,7 @@ typedef union
         mem_size_t       limit;        /* allocation address limit */
         mem_size_t       align;        /* allocation alignment */
         unsigned int     prot;         /* memory protection flags */
+        unsigned int     attributes;   /* memory extended attributes */
     } virtual_alloc_ex;
     struct
     {
