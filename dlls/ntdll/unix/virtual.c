@@ -2177,6 +2177,113 @@ static NTSTATUS map_pe_header( void *ptr, size_t size, int fd, BOOL *removable )
     return STATUS_SUCCESS;  /* page protections will be updated later */
 }
 
+#ifdef __aarch64__
+
+/***********************************************************************
+ *           apply_arm64x_relocations
+ */
+static void apply_arm64x_relocations( char *base, const IMAGE_BASE_RELOCATION *reloc, size_t size )
+{
+    const IMAGE_BASE_RELOCATION *reloc_end = (const IMAGE_BASE_RELOCATION *)((const char *)reloc + size);
+
+    while (reloc < reloc_end - 1 && reloc->SizeOfBlock)
+    {
+        const USHORT *rel = (const USHORT *)(reloc + 1);
+        const USHORT *rel_end = (const USHORT *)reloc + reloc->SizeOfBlock / sizeof(USHORT);
+        char *page = base + reloc->VirtualAddress;
+
+        while (rel < rel_end && *rel)
+        {
+            USHORT offset = *rel & 0xfff;
+            USHORT type = (*rel >> 12) & 3;
+            USHORT arg = *rel >> 14;
+            int val;
+            rel++;
+            switch (type)
+            {
+            case IMAGE_DVRT_ARM64X_FIXUP_TYPE_ZEROFILL:
+                memset( page + offset, 0, 1 << arg );
+                break;
+            case IMAGE_DVRT_ARM64X_FIXUP_TYPE_VALUE:
+                memcpy( page + offset, rel, 1 << arg );
+                rel += (1 << arg) / sizeof(USHORT);
+                break;
+            case IMAGE_DVRT_ARM64X_FIXUP_TYPE_DELTA:
+                val = (unsigned int)*rel++ * ((arg & 2) ? 8 : 4);
+                if (arg & 1) val = -val;
+                *(int *)(page + offset) += val;
+                break;
+            }
+        }
+        reloc = (const IMAGE_BASE_RELOCATION *)rel_end;
+    }
+}
+
+
+/***********************************************************************
+ *           update_arm64x_mapping
+ */
+static void update_arm64x_mapping( char *base, IMAGE_NT_HEADERS *nt, IMAGE_SECTION_HEADER *sections )
+{
+    ULONG size, sec, offset;
+    const IMAGE_DATA_DIRECTORY *dir;
+    const IMAGE_LOAD_CONFIG_DIRECTORY *cfg;
+    const IMAGE_DYNAMIC_RELOCATION_TABLE *table;
+    const char *ptr, *end;
+
+    /* retrieve config directory */
+
+    if (nt->OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC) return;
+    dir = nt->OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG;
+    if (!dir->VirtualAddress || !dir->Size) return;
+    cfg = (void *)(base + dir->VirtualAddress);
+    size = min( dir->Size, cfg->Size );
+
+    /* apply dynamic relocations */
+
+    if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY, DynamicValueRelocTableSection )) return;
+    offset = cfg->DynamicValueRelocTableOffset;
+    sec = cfg->DynamicValueRelocTableSection;
+    if (!sec || sec > nt->FileHeader.NumberOfSections) return;
+    if (offset >= sections[sec - 1].Misc.VirtualSize) return;
+    table = (const IMAGE_DYNAMIC_RELOCATION_TABLE *)(base + sections[sec - 1].VirtualAddress + offset);
+    ptr = (const char *)(table + 1);
+    end = ptr + table->Size;
+    switch (table->Version)
+    {
+    case 1:
+        while (ptr < end)
+        {
+            const IMAGE_DYNAMIC_RELOCATION64 *dyn = (const IMAGE_DYNAMIC_RELOCATION64 *)ptr;
+            if (dyn->Symbol == IMAGE_DYNAMIC_RELOCATION_ARM64X)
+            {
+                apply_arm64x_relocations( base, (const IMAGE_BASE_RELOCATION *)(dyn + 1),
+                                          dyn->BaseRelocSize );
+                break;
+            }
+            ptr += sizeof(*dyn) + dyn->BaseRelocSize;
+        }
+        break;
+    case 2:
+        while (ptr < end)
+        {
+            const IMAGE_DYNAMIC_RELOCATION64_V2 *dyn = (const IMAGE_DYNAMIC_RELOCATION64_V2 *)ptr;
+            if (dyn->Symbol == IMAGE_DYNAMIC_RELOCATION_ARM64X)
+            {
+                apply_arm64x_relocations( base, (const IMAGE_BASE_RELOCATION *)(dyn + 1),
+                                          dyn->FixupInfoSize );
+                break;
+            }
+            ptr += dyn->HeaderSize + dyn->FixupInfoSize;
+        }
+        break;
+    default:
+        FIXME( "unsupported version %u\n", table->Version );
+        break;
+    }
+}
+
+#endif  /* __aarch64__ */
 
 /***********************************************************************
  *           map_image_into_view
@@ -2341,6 +2448,12 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
             memset( ptr + sec->VirtualAddress + file_size, 0, end - file_size );
         }
     }
+
+#ifdef __aarch64__
+    if (main_image_info.Machine == IMAGE_FILE_MACHINE_AMD64 &&
+        nt->FileHeader.Machine == IMAGE_FILE_MACHINE_ARM64)
+        update_arm64x_mapping( ptr, nt, sections );
+#endif
 
     /* set the image protections */
 
