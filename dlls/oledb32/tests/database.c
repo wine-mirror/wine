@@ -150,6 +150,7 @@ static HRESULT WINAPI dbprops_SetProperties(IDBProperties *iface, ULONG set_coun
     ok(set_count == 1, "got %lu\n", set_count);
 
     ok(IsEqualIID(&propsets->guidPropertySet, &DBPROPSET_DBINIT), "set guid %s\n", wine_dbgstr_guid(&propsets->guidPropertySet));
+    todo_wine_if(!wcscmp(V_BSTR(&propsets->rgProperties[0].vValue), L"provider_prop_test"))
     ok(propsets->cProperties == 2, "got propcount %lu\n", propsets->cProperties);
 
 if (propsets->cProperties == 2) {
@@ -172,6 +173,15 @@ if (propsets->cProperties == 2) {
         ok(propsets->rgProperties[1].dwStatus == 0, "got status[1] %lu\n", propsets->rgProperties[1].dwStatus);
         ok(V_VT(&propsets->rgProperties[1].vValue) == VT_BSTR, "got vartype[1] %u\n", V_VT(&propsets->rgProperties[1].vValue));
         ok(!wcscmp(V_BSTR(&propsets->rgProperties[1].vValue), L"dummy_catalog"), "got initial catalog %s\n",
+           wine_dbgstr_variant(&propsets->rgProperties[1].vValue));
+    }
+    else if (!wcscmp(V_BSTR(&propsets->rgProperties[0].vValue), L"provider_prop_test"))
+    {
+        ok(propsets->rgProperties[1].dwPropertyID == DBPROP_INIT_PROVIDERSTRING, "got propid[1] %lu\n", propsets->rgProperties[1].dwPropertyID);
+        ok(propsets->rgProperties[1].dwOptions == DBPROPOPTIONS_REQUIRED, "got options[1] %lu\n", propsets->rgProperties[1].dwOptions);
+        ok(propsets->rgProperties[1].dwStatus == 0, "got status[1] %lu\n", propsets->rgProperties[1].dwStatus);
+        ok(V_VT(&propsets->rgProperties[1].vValue) == VT_BSTR, "got vartype[1] %u\n", V_VT(&propsets->rgProperties[1].vValue));
+        ok(!wcscmp(V_BSTR(&propsets->rgProperties[1].vValue), L"a=1;b=2;c=3"), "got provider string %s\n",
            wine_dbgstr_variant(&propsets->rgProperties[1].vValue));
     }
 }
@@ -313,6 +323,9 @@ static void test_database(void)
         ' ','W','i','n','e',' ','O','D','B','C',' ','d','r','i','v','e','r',';','U','I','D','=','w','i','n','e',';','\"',';',0};
     static WCHAR extended_prop2[] = {'d','a','t','a',' ','s','o','u','r','c','e','=','\'','d','u','m','m','y','\'',';',
         'c','u','s','t','o','m','p','r','o','p','=','\'','1','2','3','.','4','\'',';',0};
+    static WCHAR multi_provider_prop_test[] = {'D','a','t','a',' ','S','o','u','r','c','e','=',
+        'p','r','o','v','i','d','e','r','_','p','r','o','p','_','t','e','s','t',';',
+        'a','=','1',';','b','=','2',';','c','=','3',';',0};
     IDataInitialize *datainit = NULL;
     HRESULT hr;
 
@@ -332,6 +345,7 @@ static void test_database(void)
     test_GetDataSource2(initial_catalog_prop);
     test_GetDataSource2(extended_prop);
     test_GetDataSource2(extended_prop2);
+    test_GetDataSource2(multi_provider_prop_test);
 }
 
 static void free_dispparams(DISPPARAMS *params)
