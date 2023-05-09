@@ -73,6 +73,20 @@ static WCHAR *input_context_get_comp_str( INPUTCONTEXT *ctx, BOOL result, UINT *
     return text;
 }
 
+static void input_context_reset_comp_str( INPUTCONTEXT *ctx )
+{
+    COMPOSITIONSTRING *compstr;
+
+    if (!(compstr = ImmLockIMCC( ctx->hCompStr )))
+        WARN( "Failed to lock input context composition string\n" );
+    else
+    {
+        memset( compstr, 0, sizeof(*compstr) );
+        compstr->dwSize = sizeof(*compstr);
+        ImmUnlockIMCC( ctx->hCompStr );
+    }
+}
+
 static HIMC RealIMC(HIMC hIMC)
 {
     if (hIMC == FROM_X11)
@@ -105,18 +119,6 @@ static BOOL UnlockRealIMC(HIMC hIMC)
         return ImmUnlockIMC(real_imc);
     else
         return FALSE;
-}
-
-static HIMCC ImeCreateBlankCompStr(void)
-{
-    HIMCC rc;
-    LPCOMPOSITIONSTRING ptr;
-    rc = ImmCreateIMCC(sizeof(COMPOSITIONSTRING));
-    ptr = ImmLockIMCC(rc);
-    memset(ptr,0,sizeof(COMPOSITIONSTRING));
-    ptr->dwSize = sizeof(COMPOSITIONSTRING);
-    ImmUnlockIMCC(rc);
-    return rc;
 }
 
 static int updateField(DWORD origLen, DWORD origOffset, DWORD currentOffset,
@@ -591,8 +593,6 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                     }
                     break;
                 case IMC_SETOPENSTATUS:
-                    TRACE("IMC_SETOPENSTATUS\n");
-
                     bRet = TRUE;
                     preedit_params.hwnd = lpIMC->hWnd;
                     preedit_params.open = lpIMC->fOpen;
@@ -600,9 +600,9 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                     if (!lpIMC->fOpen)
                     {
                         X11DRV_CALL( xim_reset, lpIMC->hWnd );
+                        input_context_reset_comp_str( lpIMC );
                         ime_set_composition_status( hIMC, FALSE );
                     }
-
                     break;
                 default: FIXME("Unknown\n"); break;
             }
@@ -643,27 +643,17 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                         free( str );
                     }
 
-                    ime_set_composition_status( hIMC, FALSE );
-
+                    ImmSetOpenStatus( hIMC, FALSE );
                     bRet = TRUE;
                 }
                 break;
                 case CPS_CONVERT: FIXME("CPS_CONVERT\n"); break;
                 case CPS_REVERT: FIXME("CPS_REVERT\n"); break;
                 case CPS_CANCEL:
-                {
-                    TRACE("CPS_CANCEL\n");
-
-                    X11DRV_CALL( xim_reset, lpIMC->hWnd );
-
-                    if (lpIMC->hCompStr)
-                        ImmDestroyIMCC(lpIMC->hCompStr);
-                    lpIMC->hCompStr = ImeCreateBlankCompStr();
-
+                    input_context_reset_comp_str( lpIMC );
                     ime_set_composition_status( hIMC, FALSE );
                     bRet = TRUE;
-                }
-                break;
+                    break;
                 default: FIXME("Unknown\n"); break;
             }
             break;
@@ -767,8 +757,7 @@ NTSTATUS x11drv_ime_set_composition_status( UINT open )
     {
         struct ime_private *myPrivate = ImmLockIMCC(lpIMC->hPrivate);
         ShowWindow(myPrivate->hwndDefault, SW_HIDE);
-        ImmDestroyIMCC(lpIMC->hCompStr);
-        lpIMC->hCompStr = ImeCreateBlankCompStr();
+        input_context_reset_comp_str( lpIMC );
         ImmUnlockIMCC(lpIMC->hPrivate);
     }
 
