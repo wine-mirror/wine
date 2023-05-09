@@ -280,36 +280,36 @@ static inline int paper_size_from_points(float size)
     return size * 254 / 72;
 }
 
-static INPUTSLOT *unix_find_slot(PPD *ppd, const PSDRV_DEVMODE *dm)
+static INPUTSLOT *unix_find_slot(PPD *ppd, const DEVMODEW *dm)
 {
     INPUTSLOT *slot;
 
     LIST_FOR_EACH_ENTRY(slot, &ppd->InputSlots, INPUTSLOT, entry)
-        if (slot->WinBin == dm->dmPublic.dmDefaultSource)
+        if (slot->WinBin == dm->dmDefaultSource)
             return slot;
 
     return NULL;
 }
 
-static PAGESIZE *unix_find_pagesize(PPD *ppd, const PSDRV_DEVMODE *dm)
+static PAGESIZE *unix_find_pagesize(PPD *ppd, const DEVMODEW *dm)
 {
     PAGESIZE *page;
 
     LIST_FOR_EACH_ENTRY(page, &ppd->PageSizes, PAGESIZE, entry)
-        if (page->WinPage == dm->dmPublic.dmPaperSize)
+        if (page->WinPage == dm->dmPaperSize)
             return page;
 
     return NULL;
 }
 
-static void merge_devmodes(PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2,
+static void merge_devmodes(PSDRV_DEVMODE *dm1, const DEVMODEW *dm2,
         struct printer_info *pi)
 {
     /* some sanity checks here on dm2 */
 
-    if (dm2->dmPublic.dmFields & DM_ORIENTATION)
+    if (dm2->dmFields & DM_ORIENTATION)
     {
-        dm1->dmPublic.dmOrientation = dm2->dmPublic.dmOrientation;
+        dm1->dmPublic.dmOrientation = dm2->dmOrientation;
         TRACE("Changing orientation to %d (%s)\n",
                 dm1->dmPublic.dmOrientation,
                 dm1->dmPublic.dmOrientation == DMORIENT_PORTRAIT ?
@@ -319,13 +319,13 @@ static void merge_devmodes(PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2,
     }
 
     /* NB PaperWidth is always < PaperLength */
-    if (dm2->dmPublic.dmFields & DM_PAPERSIZE)
+    if (dm2->dmFields & DM_PAPERSIZE)
     {
         PAGESIZE *page = unix_find_pagesize(pi->pi->ppd, dm2);
 
         if (page)
         {
-            dm1->dmPublic.dmPaperSize = dm2->dmPublic.dmPaperSize;
+            dm1->dmPublic.dmPaperSize = dm2->dmPaperSize;
             dm1->dmPublic.dmPaperWidth  = paper_size_from_points(page->PaperDimension->x);
             dm1->dmPublic.dmPaperLength = paper_size_from_points(page->PaperDimension->y);
             dm1->dmPublic.dmFields |= DM_PAPERSIZE | DM_PAPERWIDTH | DM_PAPERLENGTH;
@@ -340,21 +340,21 @@ static void merge_devmodes(PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2,
             }
         }
         else
-            TRACE("Trying to change to unsupported pagesize %d\n", dm2->dmPublic.dmPaperSize);
+            TRACE("Trying to change to unsupported pagesize %d\n", dm2->dmPaperSize);
     }
 
-    else if ((dm2->dmPublic.dmFields & DM_PAPERLENGTH) &&
-            (dm2->dmPublic.dmFields & DM_PAPERWIDTH))
+    else if ((dm2->dmFields & DM_PAPERLENGTH) &&
+            (dm2->dmFields & DM_PAPERWIDTH))
     {
-        dm1->dmPublic.dmPaperLength = dm2->dmPublic.dmPaperLength;
-        dm1->dmPublic.dmPaperWidth = dm2->dmPublic.dmPaperWidth;
+        dm1->dmPublic.dmPaperLength = dm2->dmPaperLength;
+        dm1->dmPublic.dmPaperWidth = dm2->dmPaperWidth;
         TRACE("Changing PaperLength|Width to %dx%d\n",
-                dm2->dmPublic.dmPaperLength,
-                dm2->dmPublic.dmPaperWidth);
+                dm2->dmPaperLength,
+                dm2->dmPaperWidth);
         dm1->dmPublic.dmFields &= ~DM_PAPERSIZE;
         dm1->dmPublic.dmFields |= (DM_PAPERLENGTH | DM_PAPERWIDTH);
     }
-    else if (dm2->dmPublic.dmFields & (DM_PAPERLENGTH | DM_PAPERWIDTH))
+    else if (dm2->dmFields & (DM_PAPERLENGTH | DM_PAPERWIDTH))
     {
         /* You might think that this would be allowed if dm1 is in custom size
            mode, but apparently Windows reverts to standard paper mode even in
@@ -364,75 +364,75 @@ static void merge_devmodes(PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2,
         dm1->dmPublic.dmFields |= DM_PAPERSIZE;
     }
 
-    if (dm2->dmPublic.dmFields & DM_SCALE)
+    if (dm2->dmFields & DM_SCALE)
     {
-        dm1->dmPublic.dmScale = dm2->dmPublic.dmScale;
-        TRACE("Changing Scale to %d\n", dm2->dmPublic.dmScale);
+        dm1->dmPublic.dmScale = dm2->dmScale;
+        TRACE("Changing Scale to %d\n", dm2->dmScale);
     }
 
-    if (dm2->dmPublic.dmFields & DM_COPIES)
+    if (dm2->dmFields & DM_COPIES)
     {
-        dm1->dmPublic.dmCopies = dm2->dmPublic.dmCopies;
-        TRACE("Changing Copies to %d\n", dm2->dmPublic.dmCopies);
+        dm1->dmPublic.dmCopies = dm2->dmCopies;
+        TRACE("Changing Copies to %d\n", dm2->dmCopies);
     }
 
-    if (dm2->dmPublic.dmFields & DM_DEFAULTSOURCE)
+    if (dm2->dmFields & DM_DEFAULTSOURCE)
     {
         INPUTSLOT *slot = unix_find_slot(pi->pi->ppd, dm2);
 
         if (slot)
         {
-            dm1->dmPublic.dmDefaultSource = dm2->dmPublic.dmDefaultSource;
+            dm1->dmPublic.dmDefaultSource = dm2->dmDefaultSource;
             TRACE("Changing bin to '%s'\n", slot->FullName);
         }
         else
         {
-            TRACE("Trying to change to unsupported bin %d\n", dm2->dmPublic.dmDefaultSource);
+            TRACE("Trying to change to unsupported bin %d\n", dm2->dmDefaultSource);
         }
     }
 
-    if (dm2->dmPublic.dmFields & DM_DEFAULTSOURCE)
-        dm1->dmPublic.dmDefaultSource = dm2->dmPublic.dmDefaultSource;
-    if (dm2->dmPublic.dmFields & DM_PRINTQUALITY)
-        dm1->dmPublic.dmPrintQuality = dm2->dmPublic.dmPrintQuality;
-    if (dm2->dmPublic.dmFields & DM_COLOR)
-        dm1->dmPublic.dmColor = dm2->dmPublic.dmColor;
-    if (dm2->dmPublic.dmFields & DM_DUPLEX && pi->pi->ppd->DefaultDuplex && pi->pi->ppd->DefaultDuplex->WinDuplex != 0)
-        dm1->dmPublic.dmDuplex = dm2->dmPublic.dmDuplex;
-    if (dm2->dmPublic.dmFields & DM_YRESOLUTION)
-        dm1->dmPublic.dmYResolution = dm2->dmPublic.dmYResolution;
-    if (dm2->dmPublic.dmFields & DM_TTOPTION)
-        dm1->dmPublic.dmTTOption = dm2->dmPublic.dmTTOption;
-    if (dm2->dmPublic.dmFields & DM_COLLATE)
-        dm1->dmPublic.dmCollate = dm2->dmPublic.dmCollate;
-    if (dm2->dmPublic.dmFields & DM_FORMNAME)
-        lstrcpynW(dm1->dmPublic.dmFormName, dm2->dmPublic.dmFormName, CCHFORMNAME);
-    if (dm2->dmPublic.dmFields & DM_BITSPERPEL)
-        dm1->dmPublic.dmBitsPerPel = dm2->dmPublic.dmBitsPerPel;
-    if (dm2->dmPublic.dmFields & DM_PELSWIDTH)
-        dm1->dmPublic.dmPelsWidth = dm2->dmPublic.dmPelsWidth;
-    if (dm2->dmPublic.dmFields & DM_PELSHEIGHT)
-        dm1->dmPublic.dmPelsHeight = dm2->dmPublic.dmPelsHeight;
-    if (dm2->dmPublic.dmFields & DM_DISPLAYFLAGS)
-        dm1->dmPublic.dmDisplayFlags = dm2->dmPublic.dmDisplayFlags;
-    if (dm2->dmPublic.dmFields & DM_DISPLAYFREQUENCY)
-        dm1->dmPublic.dmDisplayFrequency = dm2->dmPublic.dmDisplayFrequency;
-    if (dm2->dmPublic.dmFields & DM_POSITION)
-        dm1->dmPublic.dmPosition = dm2->dmPublic.dmPosition;
-    if (dm2->dmPublic.dmFields & DM_LOGPIXELS)
-        dm1->dmPublic.dmLogPixels = dm2->dmPublic.dmLogPixels;
-    if (dm2->dmPublic.dmFields & DM_ICMMETHOD)
-        dm1->dmPublic.dmICMMethod = dm2->dmPublic.dmICMMethod;
-    if (dm2->dmPublic.dmFields & DM_ICMINTENT)
-        dm1->dmPublic.dmICMIntent = dm2->dmPublic.dmICMIntent;
-    if (dm2->dmPublic.dmFields & DM_MEDIATYPE)
-        dm1->dmPublic.dmMediaType = dm2->dmPublic.dmMediaType;
-    if (dm2->dmPublic.dmFields & DM_DITHERTYPE)
-        dm1->dmPublic.dmDitherType = dm2->dmPublic.dmDitherType;
-    if (dm2->dmPublic.dmFields & DM_PANNINGWIDTH)
-        dm1->dmPublic.dmPanningWidth = dm2->dmPublic.dmPanningWidth;
-    if (dm2->dmPublic.dmFields & DM_PANNINGHEIGHT)
-        dm1->dmPublic.dmPanningHeight = dm2->dmPublic.dmPanningHeight;
+    if (dm2->dmFields & DM_DEFAULTSOURCE)
+        dm1->dmPublic.dmDefaultSource = dm2->dmDefaultSource;
+    if (dm2->dmFields & DM_PRINTQUALITY)
+        dm1->dmPublic.dmPrintQuality = dm2->dmPrintQuality;
+    if (dm2->dmFields & DM_COLOR)
+        dm1->dmPublic.dmColor = dm2->dmColor;
+    if (dm2->dmFields & DM_DUPLEX && pi->pi->ppd->DefaultDuplex && pi->pi->ppd->DefaultDuplex->WinDuplex != 0)
+        dm1->dmPublic.dmDuplex = dm2->dmDuplex;
+    if (dm2->dmFields & DM_YRESOLUTION)
+        dm1->dmPublic.dmYResolution = dm2->dmYResolution;
+    if (dm2->dmFields & DM_TTOPTION)
+        dm1->dmPublic.dmTTOption = dm2->dmTTOption;
+    if (dm2->dmFields & DM_COLLATE)
+        dm1->dmPublic.dmCollate = dm2->dmCollate;
+    if (dm2->dmFields & DM_FORMNAME)
+        lstrcpynW(dm1->dmPublic.dmFormName, dm2->dmFormName, CCHFORMNAME);
+    if (dm2->dmFields & DM_BITSPERPEL)
+        dm1->dmPublic.dmBitsPerPel = dm2->dmBitsPerPel;
+    if (dm2->dmFields & DM_PELSWIDTH)
+        dm1->dmPublic.dmPelsWidth = dm2->dmPelsWidth;
+    if (dm2->dmFields & DM_PELSHEIGHT)
+        dm1->dmPublic.dmPelsHeight = dm2->dmPelsHeight;
+    if (dm2->dmFields & DM_DISPLAYFLAGS)
+        dm1->dmPublic.dmDisplayFlags = dm2->dmDisplayFlags;
+    if (dm2->dmFields & DM_DISPLAYFREQUENCY)
+        dm1->dmPublic.dmDisplayFrequency = dm2->dmDisplayFrequency;
+    if (dm2->dmFields & DM_POSITION)
+        dm1->dmPublic.dmPosition = dm2->dmPosition;
+    if (dm2->dmFields & DM_LOGPIXELS)
+        dm1->dmPublic.dmLogPixels = dm2->dmLogPixels;
+    if (dm2->dmFields & DM_ICMMETHOD)
+        dm1->dmPublic.dmICMMethod = dm2->dmICMMethod;
+    if (dm2->dmFields & DM_ICMINTENT)
+        dm1->dmPublic.dmICMIntent = dm2->dmICMIntent;
+    if (dm2->dmFields & DM_MEDIATYPE)
+        dm1->dmPublic.dmMediaType = dm2->dmMediaType;
+    if (dm2->dmFields & DM_DITHERTYPE)
+        dm1->dmPublic.dmDitherType = dm2->dmDitherType;
+    if (dm2->dmFields & DM_PANNINGWIDTH)
+        dm1->dmPublic.dmPanningWidth = dm2->dmPanningWidth;
+    if (dm2->dmFields & DM_PANNINGHEIGHT)
+        dm1->dmPublic.dmPanningHeight = dm2->dmPanningHeight;
 }
 
 static void update_dev_caps(PSDRV_PDEVICE *pdev)
@@ -552,7 +552,7 @@ static BOOL CDECL reset_dc(PHYSDEV dev, const DEVMODEW *devmode)
 
     if (devmode)
     {
-        merge_devmodes(pdev->devmode, (const PSDRV_DEVMODE *)devmode, pdev->pi);
+        merge_devmodes(pdev->devmode, devmode, pdev->pi);
         update_dev_caps(pdev);
     }
     return TRUE;
@@ -1286,7 +1286,7 @@ static struct printer_info *find_printer_info(const WCHAR *name)
 }
 
 static PSDRV_PDEVICE *create_physdev(HDC hdc, const WCHAR *device,
-        const PSDRV_DEVMODE *devmode)
+        const DEVMODEW *devmode)
 {
     struct printer_info *pi = find_printer_info(device);
     PSDRV_PDEVICE *pdev;
@@ -1308,21 +1308,22 @@ static PSDRV_PDEVICE *create_physdev(HDC hdc, const WCHAR *device,
     pdev = malloc(sizeof(*pdev));
     if (!pdev) return NULL;
 
-    pdev->devmode = malloc(sizeof(PSDRV_DEVMODE));
+    pdev->devmode = malloc(pi->pi->Devmode->dmPublic.dmSize + pi->pi->Devmode->dmPublic.dmDriverExtra);
     if (!pdev->devmode)
     {
         free(pdev);
         return NULL;
     }
 
-    *pdev->devmode = *pi->pi->Devmode;
+    memcpy(pdev->devmode, pi->pi->Devmode, pi->pi->Devmode->dmPublic.dmSize +
+            pi->pi->Devmode->dmPublic.dmDriverExtra);
     pdev->pi = pi;
     pdev->log_pixels_x = pi->pi->ppd->DefaultResolution;
     pdev->log_pixels_y = pi->pi->ppd->DefaultResolution;
 
     if (devmode)
     {
-        dump_devmode(&devmode->dmPublic);
+        dump_devmode(devmode);
         merge_devmodes(pdev->devmode, devmode, pi);
     }
 
@@ -1339,8 +1340,7 @@ static BOOL CDECL create_dc(PHYSDEV *dev, const WCHAR *device,
     TRACE("(%s %s %p)\n", debugstr_w(device), debugstr_w(output), devmode);
 
     if (!device) return FALSE;
-    if (!(pdev = create_physdev((*dev)->hdc, device,
-                    (const PSDRV_DEVMODE *)devmode))) return FALSE;
+    if (!(pdev = create_physdev((*dev)->hdc, device, devmode))) return FALSE;
     push_dc_driver(dev, &pdev->dev, &psdrv_funcs);
     return TRUE;
 }
@@ -1350,7 +1350,7 @@ static BOOL CDECL create_compatible_dc(PHYSDEV orig, PHYSDEV *dev)
     PSDRV_PDEVICE *pdev, *orig_dev = get_psdrv_dev(orig);
 
     if (!(pdev = create_physdev((*dev)->hdc, orig_dev->pi->name,
-                    orig_dev->devmode))) return FALSE;
+                    &orig_dev->devmode->dmPublic))) return FALSE;
     push_dc_driver(dev, &pdev->dev, &psdrv_funcs);
     return TRUE;
 }

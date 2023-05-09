@@ -397,9 +397,9 @@ static void write_cups_job_ticket( print_ctx *ctx, const struct ticket_info *inf
 INT PSDRV_WriteHeader( print_ctx *ctx, LPCWSTR title )
 {
     char *buf, *escaped_title;
-    INPUTSLOT *slot = find_slot( ctx->pi->ppd, ctx->Devmode );
-    PAGESIZE *page = find_pagesize( ctx->pi->ppd, ctx->Devmode );
-    DUPLEX *duplex = find_duplex( ctx->pi->ppd, ctx->Devmode );
+    INPUTSLOT *slot = find_slot( ctx->pi->ppd, &ctx->Devmode->dmPublic );
+    PAGESIZE *page = find_pagesize( ctx->pi->ppd, &ctx->Devmode->dmPublic );
+    DUPLEX *duplex = find_duplex( ctx->pi->ppd, &ctx->Devmode->dmPublic );
     int llx, lly, urx, ury;
     int ret, len;
     const char * dmOrientation;

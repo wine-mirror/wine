@@ -325,7 +325,7 @@ static void PSDRV_UpdateDevCaps( print_ctx *ctx )
 }
 
 print_ctx *create_print_ctx( HDC hdc, const WCHAR *device,
-                                     const PSDRV_DEVMODE *devmode )
+                                     const DEVMODEW *devmode )
 {
     PRINTERINFO *pi = PSDRV_FindPrinterInfo( device );
     print_ctx *ctx;
@@ -347,21 +347,23 @@ print_ctx *create_print_ctx( HDC hdc, const WCHAR *device,
     ctx = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ctx) );
     if (!ctx) return NULL;
 
-    ctx->Devmode = HeapAlloc( GetProcessHeap(), 0, sizeof(PSDRV_DEVMODE) );
+    ctx->Devmode = HeapAlloc( GetProcessHeap(), 0,
+            pi->Devmode->dmPublic.dmSize + pi->Devmode->dmPublic.dmDriverExtra );
     if (!ctx->Devmode)
     {
         HeapFree( GetProcessHeap(), 0, ctx );
 	return NULL;
     }
 
-    *ctx->Devmode = *pi->Devmode;
+    memcpy( ctx->Devmode, pi->Devmode,
+            pi->Devmode->dmPublic.dmSize + pi->Devmode->dmPublic.dmDriverExtra );
     ctx->pi = pi;
     ctx->logPixelsX = pi->ppd->DefaultResolution;
     ctx->logPixelsY = pi->ppd->DefaultResolution;
 
     if (devmode)
     {
-        dump_devmode( &devmode->dmPublic );
+        dump_devmode( devmode );
         PSDRV_MergeDevmodes( ctx->Devmode, devmode, pi );
     }
 
@@ -378,7 +380,7 @@ BOOL CDECL PSDRV_ResetDC( print_ctx *ctx, const DEVMODEW *lpInitData )
 {
     if (lpInitData)
     {
-        PSDRV_MergeDevmodes(ctx->Devmode, (const PSDRV_DEVMODE *)lpInitData, ctx->pi);
+        PSDRV_MergeDevmodes(ctx->Devmode, lpInitData, ctx->pi);
         PSDRV_UpdateDevCaps(ctx);
     }
     return TRUE;
@@ -545,19 +547,19 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
 
 	if(GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_IPAPERSIZE | LOCALE_RETURN_NUMBER,
 			  (LPWSTR)&papersize, sizeof(papersize)/sizeof(WCHAR))) {
-	    PSDRV_DEVMODE dm;
+	    DEVMODEW dm;
 	    memset(&dm, 0, sizeof(dm));
-	    dm.dmPublic.dmFields = DM_PAPERSIZE;
-	    dm.dmPublic.dmPaperSize = papersize;
+	    dm.dmFields = DM_PAPERSIZE;
+	    dm.dmPaperSize = papersize;
 	    PSDRV_MergeDevmodes(pi->Devmode, &dm, pi);
 	}
     }
 
     if(pi->ppd->DefaultPageSize) { /* We'll let the ppd override the devmode */
-        PSDRV_DEVMODE dm;
+        DEVMODEW dm;
         memset(&dm, 0, sizeof(dm));
-        dm.dmPublic.dmFields = DM_PAPERSIZE;
-        dm.dmPublic.dmPaperSize = pi->ppd->DefaultPageSize->WinPage;
+        dm.dmFields = DM_PAPERSIZE;
+        dm.dmPaperSize = pi->ppd->DefaultPageSize->WinPage;
         PSDRV_MergeDevmodes(pi->Devmode, &dm, pi);
     }
 

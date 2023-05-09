@@ -2980,8 +2980,7 @@ HANDLE WINAPI OpenPrintProcessor(WCHAR *port, PRINTPROCESSOROPENDATA *open_data)
         return NULL;
     }
     SetGraphicsMode(hdc, GM_ADVANCED);
-    data->ctx = create_print_ctx(hdc, open_data->pPrinterName,
-            (const PSDRV_DEVMODE *)open_data->pDevMode);
+    data->ctx = create_print_ctx(hdc, open_data->pPrinterName, open_data->pDevMode);
     if (!data->ctx)
     {
         DeleteDC(hdc);

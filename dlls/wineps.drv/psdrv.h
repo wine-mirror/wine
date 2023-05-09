@@ -370,7 +370,7 @@ typedef struct
 } print_ctx;
 
 extern print_ctx *create_print_ctx( HDC hdc, const WCHAR *device,
-        const PSDRV_DEVMODE *devmode ) DECLSPEC_HIDDEN;
+        const DEVMODEW *devmode ) DECLSPEC_HIDDEN;
 
 /*
  *  Every glyph name in the Adobe Glyph List and the 35 core PostScript fonts
@@ -394,9 +394,9 @@ extern HINSTANCE PSDRV_hInstance DECLSPEC_HIDDEN;
 extern HANDLE PSDRV_Heap DECLSPEC_HIDDEN;
 extern char *PSDRV_ANSIVector[256] DECLSPEC_HIDDEN;
 
-extern INPUTSLOT *find_slot( PPD *ppd, const PSDRV_DEVMODE *dm ) DECLSPEC_HIDDEN;
-extern PAGESIZE *find_pagesize( PPD *ppd, const PSDRV_DEVMODE *dm ) DECLSPEC_HIDDEN;
-extern DUPLEX *find_duplex( PPD *ppd, const PSDRV_DEVMODE *dm ) DECLSPEC_HIDDEN;
+extern INPUTSLOT *find_slot( PPD *ppd, const DEVMODEW *dm ) DECLSPEC_HIDDEN;
+extern PAGESIZE *find_pagesize( PPD *ppd, const DEVMODEW *dm ) DECLSPEC_HIDDEN;
+extern DUPLEX *find_duplex( PPD *ppd, const DEVMODEW *dm ) DECLSPEC_HIDDEN;
 
 /* GDI driver functions */
 extern BOOL CDECL PSDRV_Arc( print_ctx *ctx, INT left, INT top, INT right, INT bottom,
@@ -437,7 +437,7 @@ extern BOOL CDECL PSDRV_StrokeAndFillPath( print_ctx *ctx ) DECLSPEC_HIDDEN;
 extern BOOL CDECL PSDRV_StrokePath( print_ctx *ctx ) DECLSPEC_HIDDEN;
 
 extern BOOL CDECL PSDRV_ResetDC( print_ctx *ctx, const DEVMODEW *lpInitData ) DECLSPEC_HIDDEN;
-extern void PSDRV_MergeDevmodes(PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2,
+extern void PSDRV_MergeDevmodes(PSDRV_DEVMODE *dm1, const DEVMODEW *dm2,
 			 PRINTERINFO *pi) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_GetFontMetrics(void) DECLSPEC_HIDDEN;
 extern PPD *PSDRV_ParsePPD(const WCHAR *fname, HANDLE printer) DECLSPEC_HIDDEN;
