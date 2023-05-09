@@ -41,6 +41,7 @@ static const char *debugstr_imn( WPARAM wparam )
     case IMN_GUIDELINE: return "IMN_GUIDELINE";
     case IMN_SETSTATUSWINDOWPOS: return "IMN_SETSTATUSWINDOWPOS";
     case IMN_WINE_SET_OPEN_STATUS: return "IMN_WINE_SET_OPEN_STATUS";
+    case IMN_WINE_SET_COMP_STRING: return "IMN_WINE_SET_COMP_STRING";
     default: return wine_dbg_sprintf( "%#Ix", wparam );
     }
 }
@@ -338,6 +339,28 @@ static void ime_ui_start_composition( HIMC himc, HWND hwnd )
     ImmUnlockIMC( himc );
 }
 
+static UINT ime_set_comp_string( HIMC himc, LPARAM lparam )
+{
+    union
+    {
+        struct
+        {
+            UINT uMsgCount;
+            TRANSMSG TransMsg[10];
+        };
+        TRANSMSGLIST list;
+    } buffer = {.uMsgCount = ARRAY_SIZE(buffer.TransMsg)};
+    UINT count;
+
+    TRACE( "himc %p\n", himc );
+
+    count = ImeToAsciiEx( VK_PROCESSKEY, lparam, NULL, &buffer.list, 0, himc );
+    if (count >= buffer.uMsgCount)
+        WARN( "ImeToAsciiEx returned %#x messages\n", count );
+
+    return count;
+}
+
 static LRESULT ime_ui_notify( HIMC himc, HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
     TRACE( "himc %p, hwnd %p, wparam %s, lparam %#Ix\n", hwnd, himc, debugstr_imn(wparam), lparam );
@@ -346,6 +369,8 @@ static LRESULT ime_ui_notify( HIMC himc, HWND hwnd, WPARAM wparam, LPARAM lparam
     {
     case IMN_WINE_SET_OPEN_STATUS:
         return ImmSetOpenStatus( himc, lparam );
+    case IMN_WINE_SET_COMP_STRING:
+        return ime_set_comp_string( himc, lparam );
     default:
         FIXME( "himc %p, hwnd %p, wparam %s, lparam %#Ix stub!\n", hwnd, himc, debugstr_imn(wparam), lparam );
         return 0;

@@ -27,6 +27,8 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -42,6 +44,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(xim);
 #define XICProc XIMProc
 #endif
 
+struct ime_update
+{
+    struct list entry;
+    DWORD id;
+};
+
+static pthread_mutex_t ime_mutex = PTHREAD_MUTEX_INITIALIZER;
+static struct list ime_updates = LIST_INIT(ime_updates);
+static DWORD ime_update_count;
 static WCHAR *ime_comp_buf;
 
 static XIMStyle input_style = 0;
@@ -72,6 +83,21 @@ BOOL xim_in_compose_mode(void)
     return !!ime_comp_buf;
 }
 
+static void post_ime_update( HWND hwnd )
+{
+    UINT id;
+    struct ime_update *update;
+
+    if (!(update = malloc( sizeof(struct ime_update) ))) return;
+
+    pthread_mutex_lock( &ime_mutex );
+    id = update->id = ++ime_update_count;
+    list_add_tail( &ime_updates, &update->entry );
+    pthread_mutex_unlock( &ime_mutex );
+
+    NtUserPostMessage( hwnd, WM_IME_NOTIFY, IMN_WINE_SET_COMP_STRING, id );
+}
+
 static void xim_update_comp_string( UINT offset, UINT old_len, const WCHAR *text, UINT new_len )
 {
     UINT len = ime_comp_buf ? wcslen( ime_comp_buf ) : 0;
@@ -96,18 +122,20 @@ static void xim_update_comp_string( UINT offset, UINT old_len, const WCHAR *text
     x11drv_client_func( client_func_ime_set_composition_string, ime_comp_buf, len * sizeof(WCHAR) );
 }
 
-void X11DRV_XIMLookupChars( const char *str, UINT count )
+void xim_set_result_string( HWND hwnd, const char *str, UINT count )
 {
     WCHAR *output;
     DWORD len;
 
-    TRACE("%p %u\n", str, count);
+    TRACE( "hwnd %p, string %s\n", hwnd, debugstr_an(str, count) );
 
     if (!(output = malloc( (count + 1) * sizeof(WCHAR) ))) return;
     len = ntdll_umbstowcs( str, count, output, count );
     output[len] = 0;
 
+    post_ime_update( hwnd );
     x11drv_client_func( client_func_ime_set_result, output, len * sizeof(WCHAR) );
+
     free( output );
 }
 
@@ -142,6 +170,8 @@ static int xic_preedit_start( XIC xic, XPointer user, XPointer arg )
     if ((ime_comp_buf = realloc( ime_comp_buf, sizeof(WCHAR) ))) *ime_comp_buf = 0;
     else ERR( "Failed to allocate preedit buffer\n" );
 
+    post_ime_update( hwnd );
+
     return -1;
 }
 
@@ -155,6 +185,8 @@ static int xic_preedit_done( XIC xic, XPointer user, XPointer arg )
     ime_comp_buf = NULL;
 
     x11drv_client_call( client_ime_set_composition_status, FALSE );
+    post_ime_update( hwnd );
+
     return 0;
 }
 
@@ -193,6 +225,7 @@ static int xic_preedit_draw( XIC xic, XPointer user, XPointer arg )
     if (text && str != text->string.multi_byte) free( str );
 
     x11drv_client_call( client_ime_set_cursor_pos, params->caret );
+    post_ime_update( hwnd );
 
     return 0;
 }
@@ -238,6 +271,8 @@ static int xic_preedit_caret( XIC xic, XPointer user, XPointer arg )
     }
     x11drv_client_call( client_ime_set_cursor_pos, pos );
     params->position = xim_caret_pos = pos;
+
+    post_ime_update( hwnd );
 
     return 0;
 }
@@ -474,10 +509,46 @@ XIC X11DRV_get_ic( HWND hwnd )
 
 void xim_set_focus( HWND hwnd, BOOL focus )
 {
+    struct list updates = LIST_INIT(updates);
+    struct ime_update *update, *next;
     XIC xic;
 
     if (!(xic = X11DRV_get_ic( hwnd ))) return;
 
     if (focus) XSetICFocus( xic );
     else XUnsetICFocus( xic );
+
+    pthread_mutex_lock( &ime_mutex );
+    list_move_tail( &updates, &ime_updates );
+    pthread_mutex_unlock( &ime_mutex );
+
+    LIST_FOR_EACH_ENTRY_SAFE( update, next, &updates, struct ime_update, entry ) free( update );
+}
+
+static struct ime_update *find_ime_update( UINT id )
+{
+    struct ime_update *update;
+    LIST_FOR_EACH_ENTRY( update, &ime_updates, struct ime_update, entry )
+        if (update->id == id) return update;
+    return NULL;
+}
+
+/***********************************************************************
+ *      ImeToAsciiEx (X11DRV.@)
+ */
+UINT X11DRV_ImeToAsciiEx( UINT vkey, UINT lparam, const BYTE *state, COMPOSITIONSTRING *compstr, HIMC himc )
+{
+    struct ime_update *update;
+
+    TRACE( "vkey %#x, lparam %#x, state %p, compstr %p, himc %p\n", vkey, lparam, state, compstr, himc );
+
+    pthread_mutex_lock( &ime_mutex );
+
+    if ((update = find_ime_update( lparam )))
+        list_remove( &update->entry );
+
+    pthread_mutex_unlock( &ime_mutex );
+
+    free( update );
+    return 0;
 }

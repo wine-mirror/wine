@@ -1347,7 +1347,7 @@ BOOL X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
 
     if (status == XLookupChars)
     {
-        X11DRV_XIMLookupChars( Str, ascii_chars );
+        xim_set_result_string( hwnd, Str, ascii_chars );
         if (buf != Str)
             free( Str );
         return TRUE;
