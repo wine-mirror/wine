@@ -30,8 +30,6 @@ static const callback_func callback_funcs[] =
 {
     x11drv_dnd_drop_event,
     x11drv_dnd_leave_event,
-    x11drv_ime_set_composition_status,
-    x11drv_ime_set_cursor_pos,
     x11drv_ime_update_association,
 };
 
@@ -50,8 +48,6 @@ static const kernel_callback kernel_callbacks[] =
     x11drv_dnd_enter_event,
     x11drv_dnd_position_event,
     x11drv_dnd_post_drop,
-    x11drv_ime_set_composition_string,
-    x11drv_ime_set_result,
     x11drv_systray_change_owner,
 };
 

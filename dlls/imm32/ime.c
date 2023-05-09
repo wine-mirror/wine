@@ -350,13 +350,31 @@ static UINT ime_set_comp_string( HIMC himc, LPARAM lparam )
         };
         TRANSMSGLIST list;
     } buffer = {.uMsgCount = ARRAY_SIZE(buffer.TransMsg)};
+    INPUTCONTEXT *ctx;
+    TRANSMSG *msgs;
+    HIMCC himcc;
     UINT count;
 
     TRACE( "himc %p\n", himc );
 
+    if (!(ctx = ImmLockIMC( himc ))) return 0;
+
     count = ImeToAsciiEx( VK_PROCESSKEY, lparam, NULL, &buffer.list, 0, himc );
     if (count >= buffer.uMsgCount)
         WARN( "ImeToAsciiEx returned %#x messages\n", count );
+    else if (!(himcc = ImmReSizeIMCC( ctx->hMsgBuf, (ctx->dwNumMsgBuf + count) * sizeof(*msgs) )))
+        WARN( "Failed to resize input context message buffer\n" );
+    else if (!(msgs = ImmLockIMCC( (ctx->hMsgBuf = himcc) )))
+        WARN( "Failed to lock input context message buffer\n" );
+    else
+    {
+        memcpy( msgs + ctx->dwNumMsgBuf, buffer.TransMsg, count * sizeof(*msgs) );
+        ImmUnlockIMCC( ctx->hMsgBuf );
+        ctx->dwNumMsgBuf += count;
+    }
+
+    ImmUnlockIMC( himc );
+    ImmGenerateMessage( himc );
 
     return count;
 }
