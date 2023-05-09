@@ -233,6 +233,7 @@ static void * const syscalls[] =
     NtUserMessageCall,
     NtUserMoveWindow,
     NtUserMsgWaitForMultipleObjectsEx,
+    NtUserNotifyIMEStatus,
     NtUserNotifyWinEvent,
     NtUserOpenClipboard,
     NtUserOpenDesktop,

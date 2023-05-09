@@ -219,6 +219,7 @@
     SYSCALL_ENTRY( NtUserMessageCall ) \
     SYSCALL_ENTRY( NtUserMoveWindow ) \
     SYSCALL_ENTRY( NtUserMsgWaitForMultipleObjectsEx ) \
+    SYSCALL_ENTRY( NtUserNotifyIMEStatus ) \
     SYSCALL_ENTRY( NtUserNotifyWinEvent ) \
     SYSCALL_ENTRY( NtUserOpenClipboard ) \
     SYSCALL_ENTRY( NtUserOpenDesktop ) \

@@ -421,6 +421,14 @@ NTSTATUS WINAPI NtUserBuildHimcList( UINT thread_id, UINT count, HIMC *buffer, U
     return STATUS_SUCCESS;
 }
 
+/*****************************************************************************
+ *           NtUserNotifyIMEStatus (win32u.@)
+ */
+void WINAPI NtUserNotifyIMEStatus( HWND hwnd, UINT status )
+{
+    user_driver->pNotifyIMEStatus( hwnd, status );
+}
+
 BOOL WINAPI DECLSPEC_HIDDEN ImmProcessKey( HWND hwnd, HKL hkl, UINT vkey, LPARAM key_data, DWORD unknown )
 {
     struct imm_process_key_params params =

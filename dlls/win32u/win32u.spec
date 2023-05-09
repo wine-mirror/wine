@@ -1087,7 +1087,7 @@
 @ stdcall -syscall NtUserMoveWindow(long long long long long long)
 @ stdcall -syscall NtUserMsgWaitForMultipleObjectsEx(long ptr long long long)
 @ stub NtUserNavigateFocus
-@ stub NtUserNotifyIMEStatus
+@ stdcall -syscall NtUserNotifyIMEStatus(long long)
 @ stub NtUserNotifyProcessCreate
 @ stdcall -syscall NtUserNotifyWinEvent(long long long long)
 @ stdcall -syscall NtUserOpenClipboard(long long)

@@ -531,7 +531,6 @@ UINT WINAPI ImeToAsciiEx (UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
 
 BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
 {
-    struct xim_preedit_state_params preedit_params;
     BOOL bRet = FALSE;
     LPINPUTCONTEXT lpIMC;
 
@@ -572,16 +571,13 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                     }
                     break;
                 case IMC_SETOPENSTATUS:
-                    bRet = TRUE;
-                    preedit_params.hwnd = lpIMC->hWnd;
-                    preedit_params.open = lpIMC->fOpen;
-                    X11DRV_CALL( xim_preedit_state, &preedit_params );
                     if (!lpIMC->fOpen)
                     {
-                        X11DRV_CALL( xim_reset, lpIMC->hWnd );
                         input_context_reset_comp_str( lpIMC );
                         ime_set_composition_status( hIMC, FALSE );
                     }
+                    NtUserNotifyIMEStatus( lpIMC->hWnd, lpIMC->fOpen );
+                    bRet = TRUE;
                     break;
                 default: FIXME("Unknown\n"); break;
             }

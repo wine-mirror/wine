@@ -716,6 +716,10 @@ static SHORT nulldrv_VkKeyScanEx( WCHAR ch, HKL layout )
     return -256; /* use default implementation */
 }
 
+static void nulldrv_NotifyIMEStatus( HWND hwnd, UINT status )
+{
+}
+
 static LRESULT nulldrv_DesktopWindowProc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     return default_window_proc( hwnd, msg, wparam, lparam, FALSE );
@@ -1070,6 +1074,11 @@ static SHORT loaderdrv_VkKeyScanEx( WCHAR ch, HKL layout )
     return load_driver()->pVkKeyScanEx( ch, layout );
 }
 
+static void loaderdrv_NotifyIMEStatus( HWND hwnd, UINT status )
+{
+    return load_driver()->pNotifyIMEStatus( hwnd, status );
+}
+
 static LONG loaderdrv_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd,
                                              DWORD flags, LPVOID lparam )
 {
@@ -1176,6 +1185,7 @@ static const struct user_driver_funcs lazy_load_driver =
     loaderdrv_ToUnicodeEx,
     loaderdrv_UnregisterHotKey,
     loaderdrv_VkKeyScanEx,
+    loaderdrv_NotifyIMEStatus,
     /* cursor/icon functions */
     nulldrv_DestroyCursorIcon,
     loaderdrv_SetCursor,
@@ -1255,6 +1265,7 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(ToUnicodeEx);
     SET_USER_FUNC(UnregisterHotKey);
     SET_USER_FUNC(VkKeyScanEx);
+    SET_USER_FUNC(NotifyIMEStatus);
     SET_USER_FUNC(DestroyCursorIcon);
     SET_USER_FUNC(SetCursor);
     SET_USER_FUNC(GetCursorPos);

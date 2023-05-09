@@ -3154,6 +3154,15 @@ NTSTATUS WINAPI wow64_NtUserMsgWaitForMultipleObjectsEx( UINT *args )
     return NtUserMsgWaitForMultipleObjectsEx( count, handles, timeout, mask, flags );
 }
 
+NTSTATUS WINAPI wow64_NtUserNotifyIMEStatus( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    ULONG status = get_ulong( &args );
+
+    NtUserNotifyIMEStatus( hwnd, status );
+    return 0;
+}
+
 NTSTATUS WINAPI wow64_NtUserNotifyWinEvent( UINT *args )
 {
     DWORD event = get_ulong( &args );

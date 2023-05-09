@@ -1330,8 +1330,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     x11drv_tablet_get_packet,
     x11drv_tablet_info,
     x11drv_tablet_load_info,
-    x11drv_xim_preedit_state,
-    x11drv_xim_reset,
 };
 
 
@@ -1408,20 +1406,6 @@ static NTSTATUS x11drv_wow64_tablet_info( void *arg )
     return x11drv_tablet_info( &params );
 }
 
-static NTSTATUS x11drv_wow64_xim_preedit_state( void *arg )
-{
-    struct
-    {
-        ULONG hwnd;
-        BOOL open;
-    } *params32 = arg;
-    struct xim_preedit_state_params params;
-
-    params.hwnd = UlongToHandle( params32->hwnd );
-    params.open = params32->open;
-    return x11drv_xim_preedit_state( &params );
-}
-
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     x11drv_create_desktop,
@@ -1434,8 +1418,6 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     x11drv_wow64_tablet_get_packet,
     x11drv_wow64_tablet_info,
     x11drv_tablet_load_info,
-    x11drv_wow64_xim_preedit_state,
-    x11drv_xim_reset,
 };
 
 C_ASSERT( ARRAYSIZE(__wine_unix_call_wow64_funcs) == unix_funcs_count );

@@ -260,42 +260,26 @@ static int xic_status_draw( XIC xic, XPointer user, XPointer arg )
     return 0;
 }
 
-NTSTATUS x11drv_xim_reset( void *hwnd )
+/***********************************************************************
+ *      NotifyIMEStatus (X11DRV.@)
+ */
+void X11DRV_NotifyIMEStatus( HWND hwnd, UINT status )
 {
-    XIC ic = X11DRV_get_ic(hwnd);
-    if (ic)
-    {
-        char* leftover;
-        TRACE("Forcing Reset %p\n",ic);
-        leftover = XmbResetIC(ic);
-        XFree(leftover);
-    }
-    return 0;
-}
-
-NTSTATUS x11drv_xim_preedit_state( void *arg )
-{
-    struct xim_preedit_state_params *params = arg;
-    XIC ic;
-    XIMPreeditState state;
+    XIMPreeditState state = status ? XIMPreeditEnable : XIMPreeditDisable;
     XVaNestedList attr;
+    XIC xic;
 
-    ic = X11DRV_get_ic( params->hwnd );
-    if (!ic)
-        return 0;
+    TRACE( "hwnd %p, status %#x\n", hwnd, status );
 
-    if (params->open)
-        state = XIMPreeditEnable;
-    else
-        state = XIMPreeditDisable;
+    if (!(xic = X11DRV_get_ic( hwnd ))) return;
 
-    attr = XVaCreateNestedList(0, XNPreeditState, state, NULL);
-    if (attr != NULL)
+    if ((attr = XVaCreateNestedList( 0, XNPreeditState, state, NULL )))
     {
-        XSetICValues(ic, XNPreeditAttributes, attr, NULL);
-        XFree(attr);
+        XSetICValues( xic, XNPreeditAttributes, attr, NULL );
+        XFree( attr );
     }
-    return 0;
+
+    if (!status) XFree( XmbResetIC( xic ) );
 }
 
 /***********************************************************************
