@@ -9786,7 +9786,7 @@ static void test_command_list(BOOL d3d11)
     stroke_desc.dashStyle = D2D1_DASH_STYLE_DOT;
     stroke_desc.dashOffset = -1.0f;
 
-    hr = ID2D1Factory_CreateStrokeStyle((ID2D1Factory *)ctx.factory, &stroke_desc, NULL, 0, &stroke_style);
+    hr = ID2D1Factory_CreateStrokeStyle(ctx.factory, &stroke_desc, NULL, 0, &stroke_style);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     set_color(&color, 0.0f, 0.0f, 0.0f, 0.0f);

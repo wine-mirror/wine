@@ -1258,7 +1258,7 @@ static void STDMETHODCALLTYPE d2d_image_brush_GetImage(ID2D1ImageBrush *iface, I
 
     TRACE("iface %p, image %p.\n", iface, image);
 
-    if ((*image = (ID2D1Image *)brush->u.image.image))
+    if ((*image = brush->u.image.image))
         ID2D1Image_AddRef(*image);
 }
 

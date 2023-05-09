@@ -2338,7 +2338,7 @@ static void STDMETHODCALLTYPE d2d_device_context_GetDevice(ID2D1DeviceContext1 *
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    *device = (ID2D1Device *)context->device;
+    *device = context->device;
     ID2D1Device_AddRef(*device);
 }
 
