@@ -22,6 +22,7 @@
 #include <winuser.h>
 #include <wingdi.h>
 #include <imm.h>
+#include <immdev.h>
 #include <winternl.h>
 
 /* KernelCallbackTable codes, not compatible with Windows */
@@ -495,6 +496,7 @@ enum wine_internal_message
 enum wine_ime_call
 {
     WINE_IME_PROCESS_KEY,
+    WINE_IME_TO_ASCII_EX,
 };
 
 /* NtUserImeDriverCall params */
@@ -502,6 +504,7 @@ struct ime_driver_call_params
 {
     HIMC himc;
     const BYTE *state;
+    COMPOSITIONSTRING *compstr;
 };
 
 /* internal IME private */

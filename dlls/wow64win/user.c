@@ -3123,10 +3123,12 @@ NTSTATUS WINAPI wow64_NtUserMessageCall( UINT *args )
             {
                 ULONG himc;
                 ULONG state;
+                ULONG compstr;
             } *params32 = result_info;
             struct ime_driver_call_params params;
             params.himc = UlongToPtr( params32->himc );
             params.state = UlongToPtr( params32->state );
+            params.compstr = UlongToPtr( params32->compstr );
             return NtUserMessageCall( hwnd, msg, wparam, lparam, &params, type, ansi );
         }
     }

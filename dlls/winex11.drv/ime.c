@@ -514,14 +514,6 @@ BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
     return TRUE;
 }
 
-UINT WINAPI ImeToAsciiEx (UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
-                          TRANSMSGLIST *lpdwTransKey, UINT fuState, HIMC hIMC)
-{
-    /* See the comment at the head of this file */
-    TRACE("We do no processing via this route\n");
-    return 0;
-}
-
 /* Interfaces to XIM and other parts of winex11drv */
 
 NTSTATUS x11drv_ime_set_open_status( UINT open )

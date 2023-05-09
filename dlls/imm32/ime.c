@@ -455,12 +455,30 @@ BOOL WINAPI ImeProcessKey( HIMC himc, UINT vkey, LPARAM lparam, BYTE *state )
     return ret;
 }
 
-UINT WINAPI ImeToAsciiEx( UINT vkey, UINT scan_code, BYTE *key_state, TRANSMSGLIST *msgs, UINT state, HIMC himc )
+UINT WINAPI ImeToAsciiEx( UINT vkey, UINT vsc, BYTE *state, TRANSMSGLIST *msgs, UINT flags, HIMC himc )
 {
-    FIXME( "vkey %u, scan_code %u, key_state %p, msgs %p, state %u, himc %p stub!\n",
-           vkey, scan_code, key_state, msgs, state, himc );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return 0;
+    struct ime_driver_call_params params = {.himc = himc, .state = state};
+    COMPOSITIONSTRING *compstr;
+    UINT count = 0;
+    INPUTCONTEXT *ctx;
+    NTSTATUS status;
+
+    TRACE( "vkey %#x, vsc %#x, state %p, msgs %p, flags %#x, himc %p\n",
+           vkey, vsc, state, msgs, flags, himc );
+
+    if (!(ctx = ImmLockIMC( himc ))) return 0;
+    if (!(compstr = ImmLockIMCC( ctx->hCompStr ))) goto done;
+
+    params.compstr = compstr;
+    status = NtUserMessageCall( ctx->hWnd, WINE_IME_TO_ASCII_EX, vkey, vsc, &params,
+                                NtUserImeDriverCall, FALSE );
+    if (status) WARN( "WINE_IME_TO_ASCII_EX returned status %#lx\n", status );
+
+    ImmUnlockIMCC( ctx->hCompStr );
+
+done:
+    ImmUnlockIMC( himc );
+    return count;
 }
 
 BOOL WINAPI ImeConfigure( HKL hkl, HWND hwnd, DWORD mode, void *data )

@@ -721,6 +721,11 @@ static UINT nulldrv_ImeProcessKey( HIMC himc, UINT wparam, UINT lparam, const BY
     return 0;
 }
 
+static UINT nulldrv_ImeToAsciiEx( UINT vkey, UINT vsc, const BYTE *state, COMPOSITIONSTRING *compstr, HIMC himc )
+{
+    return 0;
+}
+
 static void nulldrv_NotifyIMEStatus( HWND hwnd, UINT status )
 {
 }
@@ -1084,6 +1089,11 @@ static UINT loaderdrv_ImeProcessKey( HIMC himc, UINT wparam, UINT lparam, const 
     return load_driver()->pImeProcessKey( himc, wparam, lparam, state );
 }
 
+static UINT loaderdrv_ImeToAsciiEx( UINT vkey, UINT vsc, const BYTE *state, COMPOSITIONSTRING *compstr, HIMC himc )
+{
+    return load_driver()->pImeToAsciiEx( vkey, vsc, state, compstr, himc );
+}
+
 static void loaderdrv_NotifyIMEStatus( HWND hwnd, UINT status )
 {
     return load_driver()->pNotifyIMEStatus( hwnd, status );
@@ -1196,6 +1206,7 @@ static const struct user_driver_funcs lazy_load_driver =
     loaderdrv_UnregisterHotKey,
     loaderdrv_VkKeyScanEx,
     loaderdrv_ImeProcessKey,
+    loaderdrv_ImeToAsciiEx,
     loaderdrv_NotifyIMEStatus,
     /* cursor/icon functions */
     nulldrv_DestroyCursorIcon,
@@ -1277,6 +1288,7 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(UnregisterHotKey);
     SET_USER_FUNC(VkKeyScanEx);
     SET_USER_FUNC(ImeProcessKey);
+    SET_USER_FUNC(ImeToAsciiEx);
     SET_USER_FUNC(NotifyIMEStatus);
     SET_USER_FUNC(DestroyCursorIcon);
     SET_USER_FUNC(SetCursor);

@@ -23,6 +23,7 @@
 
 #include "winternl.h"
 #include "ntuser.h"
+#include "immdev.h"
 #include "ddk/d3dkmthk.h"
 #include "wine/list.h"
 
@@ -289,6 +290,7 @@ struct user_driver_funcs
     SHORT   (*pVkKeyScanEx)(WCHAR, HKL);
     /* IME functions */
     UINT    (*pImeProcessKey)(HIMC,UINT,UINT,const BYTE*);
+    UINT    (*pImeToAsciiEx)(UINT,UINT,const BYTE*,COMPOSITIONSTRING*,HIMC);
     void    (*pNotifyIMEStatus)(HWND,UINT);
     /* cursor/icon functions */
     void    (*pDestroyCursorIcon)(HCURSOR);

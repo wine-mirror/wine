@@ -428,6 +428,8 @@ LRESULT ime_driver_call( HWND hwnd, enum wine_ime_call call, WPARAM wparam, LPAR
     {
     case WINE_IME_PROCESS_KEY:
         return user_driver->pImeProcessKey( params->himc, wparam, lparam, params->state );
+    case WINE_IME_TO_ASCII_EX:
+        return user_driver->pImeToAsciiEx( wparam, lparam, params->state, params->compstr, params->himc );
     default:
         ERR( "Unknown IME driver call %#x\n", call );
         return 0;

@@ -12,4 +12,3 @@
 
 #IME Interface
 @ stdcall ImeSelect(long long)
-@ stdcall ImeToAsciiEx(long long ptr ptr long long)
