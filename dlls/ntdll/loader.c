@@ -2255,43 +2255,73 @@ static BOOL convert_to_pe64( HMODULE module, const SECTION_IMAGE_INFORMATION *in
     return TRUE;
 }
 
-/* check COM header for ILONLY flag, ignoring runtime version */
-static BOOL get_cor_header( HANDLE file, const SECTION_IMAGE_INFORMATION *info, IMAGE_COR20_HEADER *cor )
+/* read data out of a PE image directory */
+static ULONG read_image_directory( HANDLE file, const SECTION_IMAGE_INFORMATION *info,
+                                   ULONG dir, void *buffer, ULONG maxlen, USHORT *magic )
 {
     IMAGE_DOS_HEADER mz;
-    IMAGE_NT_HEADERS32 nt;
     IO_STATUS_BLOCK io;
     LARGE_INTEGER offset;
     IMAGE_SECTION_HEADER sec[96];
     unsigned int i, count;
     DWORD va, size;
+    union
+    {
+        IMAGE_NT_HEADERS32 nt32;
+        IMAGE_NT_HEADERS64 nt64;
+    } nt;
 
     offset.QuadPart = 0;
-    if (NtReadFile( file, 0, NULL, NULL, &io, &mz, sizeof(mz), &offset, NULL )) return FALSE;
-    if (io.Information != sizeof(mz)) return FALSE;
-    if (mz.e_magic != IMAGE_DOS_SIGNATURE) return FALSE;
+    if (NtReadFile( file, 0, NULL, NULL, &io, &mz, sizeof(mz), &offset, NULL )) return 0;
+    if (io.Information != sizeof(mz)) return 0;
+    if (mz.e_magic != IMAGE_DOS_SIGNATURE) return 0;
     offset.QuadPart = mz.e_lfanew;
-    if (NtReadFile( file, 0, NULL, NULL, &io, &nt, sizeof(nt), &offset, NULL )) return FALSE;
-    if (io.Information != sizeof(nt)) return FALSE;
-    if (nt.Signature != IMAGE_NT_SIGNATURE) return FALSE;
-    if (nt.OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC) return FALSE;
-    va = nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress;
-    size = nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size;
-    if (!va || size < sizeof(*cor)) return FALSE;
-    offset.QuadPart += offsetof( IMAGE_NT_HEADERS32, OptionalHeader ) + nt.FileHeader.SizeOfOptionalHeader;
-    count = min( 96, nt.FileHeader.NumberOfSections );
-    if (NtReadFile( file, 0, NULL, NULL, &io, &sec, count * sizeof(*sec), &offset, NULL )) return FALSE;
-    if (io.Information != count * sizeof(*sec)) return FALSE;
+    if (NtReadFile( file, 0, NULL, NULL, &io, &nt, sizeof(nt), &offset, NULL )) return 0;
+    if (io.Information != sizeof(nt)) return 0;
+    if (nt.nt32.Signature != IMAGE_NT_SIGNATURE) return 0;
+    *magic = nt.nt32.OptionalHeader.Magic;
+    switch (nt.nt32.OptionalHeader.Magic)
+    {
+    case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
+        va = nt.nt32.OptionalHeader.DataDirectory[dir].VirtualAddress;
+        size = nt.nt32.OptionalHeader.DataDirectory[dir].Size;
+        break;
+    case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+        va = nt.nt64.OptionalHeader.DataDirectory[dir].VirtualAddress;
+        size = nt.nt64.OptionalHeader.DataDirectory[dir].Size;
+        break;
+    default:
+        return 0;
+    }
+    if (!va) return 0;
+    offset.QuadPart += offsetof( IMAGE_NT_HEADERS32, OptionalHeader ) + nt.nt32.FileHeader.SizeOfOptionalHeader;
+    count = min( 96, nt.nt32.FileHeader.NumberOfSections );
+    if (NtReadFile( file, 0, NULL, NULL, &io, &sec, count * sizeof(*sec), &offset, NULL )) return 0;
+    if (io.Information != count * sizeof(*sec)) return 0;
     for (i = 0; i < count; i++)
     {
         if (va < sec[i].VirtualAddress) continue;
         if (sec[i].Misc.VirtualSize && va - sec[i].VirtualAddress >= sec[i].Misc.VirtualSize) continue;
         offset.QuadPart = sec[i].PointerToRawData + va - sec[i].VirtualAddress;
-        if (NtReadFile( file, 0, NULL, NULL, &io, cor, sizeof(*cor), &offset, NULL )) return FALSE;
-        return (io.Information == sizeof(*cor));
+        if (NtReadFile( file, 0, NULL, NULL, &io, buffer, min( maxlen, size ), &offset, NULL )) return 0;
+        return io.Information;
     }
-    return FALSE;
+    return 0;
 }
+
+/* check COM header for ILONLY flag, ignoring runtime version */
+static BOOL is_com_ilonly( HANDLE file, const SECTION_IMAGE_INFORMATION *info )
+{
+    USHORT magic;
+    IMAGE_COR20_HEADER cor_header;
+    ULONG len = read_image_directory( file, info, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR,
+                                      &cor_header, sizeof(cor_header), &magic );
+
+    if (len != sizeof(cor_header)) return FALSE;
+    if (magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC) return FALSE;
+    return !!(cor_header.Flags & COMIMAGE_FLAGS_ILONLY);
+}
+
 #endif
 
 /* On WoW64 setups, an image mapping can also be created for the other 32/64 CPU */
@@ -2312,13 +2342,8 @@ static BOOL is_valid_binary( HANDLE file, const SECTION_IMAGE_INFORMATION *info 
 #endif
     if (NtCurrentTeb()->WowTebOffset) return TRUE;
     if (!info->ImageContainsCode) return TRUE;
-    if (!(info->u.s.ComPlusNativeReady))
-    {
-        IMAGE_COR20_HEADER cor_header;
-        if (!get_cor_header( file, info, &cor_header )) return FALSE;
-        if (!(cor_header.Flags & COMIMAGE_FLAGS_ILONLY)) return FALSE;
-    }
-    return TRUE;
+    if (info->u.s.ComPlusNativeReady) return TRUE;
+    return is_com_ilonly( file, info );
 #else
     return FALSE;  /* no wow64 support on other platforms */
 #endif
