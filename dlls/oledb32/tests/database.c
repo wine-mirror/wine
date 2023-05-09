@@ -158,10 +158,24 @@ if (propsets->cProperties == 2) {
     ok(propsets->rgProperties[0].dwStatus == 0, "got status[0] %lu\n", propsets->rgProperties[0].dwStatus);
     ok(V_VT(&propsets->rgProperties[0].vValue) == VT_BSTR, "got vartype[0] %u\n", V_VT(&propsets->rgProperties[0].vValue));
 
-    ok(propsets->rgProperties[1].dwPropertyID == DBPROP_INIT_PROVIDERSTRING, "got propid[1] %lu\n", propsets->rgProperties[1].dwPropertyID);
-    ok(propsets->rgProperties[1].dwOptions == DBPROPOPTIONS_REQUIRED, "got options[1] %lu\n", propsets->rgProperties[1].dwOptions);
-    ok(propsets->rgProperties[1].dwStatus == 0, "got status[1] %lu\n", propsets->rgProperties[1].dwStatus);
-    ok(V_VT(&propsets->rgProperties[1].vValue) == VT_BSTR, "got vartype[1] %u\n", V_VT(&propsets->rgProperties[1].vValue));
+    if (!wcscmp(V_BSTR(&propsets->rgProperties[0].vValue), L"dummy"))
+    {
+        ok(propsets->rgProperties[1].dwPropertyID == DBPROP_INIT_PROVIDERSTRING, "got propid[1] %lu\n", propsets->rgProperties[1].dwPropertyID);
+        ok(propsets->rgProperties[1].dwOptions == DBPROPOPTIONS_REQUIRED, "got options[1] %lu\n", propsets->rgProperties[1].dwOptions);
+        ok(propsets->rgProperties[1].dwStatus == 0, "got status[1] %lu\n", propsets->rgProperties[1].dwStatus);
+        ok(V_VT(&propsets->rgProperties[1].vValue) == VT_BSTR, "got vartype[1] %u\n", V_VT(&propsets->rgProperties[1].vValue));
+    }
+    else if (!wcscmp(V_BSTR(&propsets->rgProperties[0].vValue), L"initial_catalog_test"))
+    {
+        todo_wine
+        ok(propsets->rgProperties[1].dwPropertyID == DBPROP_INIT_CATALOG, "got propid[1] %lu\n", propsets->rgProperties[1].dwPropertyID);
+        todo_wine
+        ok(propsets->rgProperties[1].dwOptions == DBPROPOPTIONS_REQUIRED, "got options[1] %lu\n", propsets->rgProperties[1].dwOptions);
+        ok(propsets->rgProperties[1].dwStatus == 0, "got status[1] %lu\n", propsets->rgProperties[1].dwStatus);
+        ok(V_VT(&propsets->rgProperties[1].vValue) == VT_BSTR, "got vartype[1] %u\n", V_VT(&propsets->rgProperties[1].vValue));
+        ok(!wcscmp(V_BSTR(&propsets->rgProperties[1].vValue), L"dummy_catalog"), "got initial catalog %s\n",
+           wine_dbgstr_variant(&propsets->rgProperties[1].vValue));
+    }
 }
     return S_OK;
 }
@@ -293,6 +307,9 @@ static void test_database(void)
     static WCHAR initstring_lower[] = {'d','a','t','a',' ','s','o','u','r','c','e','=','d','u','m','m','y',';',0};
     static WCHAR customprop[] = {'d','a','t','a',' ','s','o','u','r','c','e','=','d','u','m','m','y',';',
         'c','u','s','t','o','m','p','r','o','p','=','1','2','3','.','4',';',0};
+    static WCHAR initial_catalog_prop[] = {'D','a','t','a',' ','S','o','u','r','c','e','=',
+        'i','n','i','t','i','a','l','_','c','a','t','a','l','o','g','_','t','e','s','t',';',
+        'I','n','i','t','i','a','l',' ','C','a','t','a','l','o','g','=','d','u','m','m','y','_','c','a','t','a','l','o','g',0};
     static WCHAR extended_prop[] = {'d','a','t','a',' ','s','o','u','r','c','e','=','d','u','m','m','y',';',
         'E','x','t','e','n','d','e','d',' ','P','r','o','p','e','r','t','i','e','s','=','\"','D','R','I','V','E','R','=','A',
         ' ','W','i','n','e',' ','O','D','B','C',' ','d','r','i','v','e','r',';','U','I','D','=','w','i','n','e',';','\"',';',0};
@@ -314,6 +331,7 @@ static void test_database(void)
     test_GetDataSource(initstring_default);
     test_GetDataSource(initstring_lower);
     test_GetDataSource2(customprop);
+    test_GetDataSource2(initial_catalog_prop);
     test_GetDataSource2(extended_prop);
     test_GetDataSource2(extended_prop2);
 }
