@@ -6,6 +6,7 @@ DELAYIMPORTS = winmm
 UNIX_LIBS    = $(COREAUDIO_LIBS)
 
 C_SRCS = \
+	client.c \
 	coreaudio.c \
 	coremidi.c \
 	midi.c \

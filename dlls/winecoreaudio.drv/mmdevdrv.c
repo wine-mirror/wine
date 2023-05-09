@@ -58,7 +58,7 @@ extern const IAudioSessionControl2Vtbl AudioSessionControl2_Vtbl;
 extern const ISimpleAudioVolumeVtbl SimpleAudioVolume_Vtbl;
 static const IAudioClockVtbl AudioClock_Vtbl;
 static const IAudioClock2Vtbl AudioClock2_Vtbl;
-static const IAudioStreamVolumeVtbl AudioStreamVolume_Vtbl;
+extern const IAudioStreamVolumeVtbl AudioStreamVolume_Vtbl;
 extern const IChannelAudioVolumeVtbl ChannelAudioVolume_Vtbl;
 
 static WCHAR drv_key_devicesW[256];
@@ -108,11 +108,6 @@ static inline ACImpl *impl_from_IAudioClock(IAudioClock *iface)
 static inline ACImpl *impl_from_IAudioClock2(IAudioClock2 *iface)
 {
     return CONTAINING_RECORD(iface, ACImpl, IAudioClock2_iface);
-}
-
-static inline ACImpl *impl_from_IAudioStreamVolume(IAudioStreamVolume *iface)
-{
-    return CONTAINING_RECORD(iface, ACImpl, IAudioStreamVolume_iface);
 }
 
 BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
@@ -1449,158 +1444,6 @@ static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client)
 
     return ret;
 }
-
-static HRESULT WINAPI AudioStreamVolume_QueryInterface(
-        IAudioStreamVolume *iface, REFIID riid, void **ppv)
-{
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
-
-    if(!ppv)
-        return E_POINTER;
-    *ppv = NULL;
-
-    if(IsEqualIID(riid, &IID_IUnknown) ||
-            IsEqualIID(riid, &IID_IAudioStreamVolume))
-        *ppv = iface;
-    if(*ppv){
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    WARN("Unknown interface %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI AudioStreamVolume_AddRef(IAudioStreamVolume *iface)
-{
-    ACImpl *This = impl_from_IAudioStreamVolume(iface);
-    return IAudioClient3_AddRef(&This->IAudioClient3_iface);
-}
-
-static ULONG WINAPI AudioStreamVolume_Release(IAudioStreamVolume *iface)
-{
-    ACImpl *This = impl_from_IAudioStreamVolume(iface);
-    return IAudioClient3_Release(&This->IAudioClient3_iface);
-}
-
-static HRESULT WINAPI AudioStreamVolume_GetChannelCount(
-        IAudioStreamVolume *iface, UINT32 *out)
-{
-    ACImpl *This = impl_from_IAudioStreamVolume(iface);
-
-    TRACE("(%p)->(%p)\n", This, out);
-
-    if(!out)
-        return E_POINTER;
-
-    *out = This->channel_count;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI AudioStreamVolume_SetChannelVolume(
-        IAudioStreamVolume *iface, UINT32 index, float level)
-{
-    ACImpl *This = impl_from_IAudioStreamVolume(iface);
-
-    TRACE("(%p)->(%d, %f)\n", This, index, level);
-
-    if(level < 0.f || level > 1.f)
-        return E_INVALIDARG;
-
-    if(index >= This->channel_count)
-        return E_INVALIDARG;
-
-    sessions_lock();
-
-    This->vols[index] = level;
-
-    set_stream_volumes(This);
-
-    sessions_unlock();
-
-    return S_OK;
-}
-
-static HRESULT WINAPI AudioStreamVolume_GetChannelVolume(
-        IAudioStreamVolume *iface, UINT32 index, float *level)
-{
-    ACImpl *This = impl_from_IAudioStreamVolume(iface);
-
-    TRACE("(%p)->(%d, %p)\n", This, index, level);
-
-    if(!level)
-        return E_POINTER;
-
-    if(index >= This->channel_count)
-        return E_INVALIDARG;
-
-    *level = This->vols[index];
-
-    return S_OK;
-}
-
-static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
-        IAudioStreamVolume *iface, UINT32 count, const float *levels)
-{
-    ACImpl *This = impl_from_IAudioStreamVolume(iface);
-    UINT32 i;
-
-    TRACE("(%p)->(%d, %p)\n", This, count, levels);
-
-    if(!levels)
-        return E_POINTER;
-
-    if(count != This->channel_count)
-        return E_INVALIDARG;
-
-    sessions_lock();
-
-    for(i = 0; i < count; ++i)
-        This->vols[i] = levels[i];
-
-    set_stream_volumes(This);
-
-    sessions_unlock();
-
-    return S_OK;
-}
-
-static HRESULT WINAPI AudioStreamVolume_GetAllVolumes(
-        IAudioStreamVolume *iface, UINT32 count, float *levels)
-{
-    ACImpl *This = impl_from_IAudioStreamVolume(iface);
-    UINT32 i;
-
-    TRACE("(%p)->(%d, %p)\n", This, count, levels);
-
-    if(!levels)
-        return E_POINTER;
-
-    if(count != This->channel_count)
-        return E_INVALIDARG;
-
-    sessions_lock();
-
-    for(i = 0; i < count; ++i)
-        levels[i] = This->vols[i];
-
-    sessions_unlock();
-
-    return S_OK;
-}
-
-static const IAudioStreamVolumeVtbl AudioStreamVolume_Vtbl =
-{
-    AudioStreamVolume_QueryInterface,
-    AudioStreamVolume_AddRef,
-    AudioStreamVolume_Release,
-    AudioStreamVolume_GetChannelCount,
-    AudioStreamVolume_SetChannelVolume,
-    AudioStreamVolume_GetChannelVolume,
-    AudioStreamVolume_SetAllVolumes,
-    AudioStreamVolume_GetAllVolumes
-};
 
 HRESULT WINAPI AUDDRV_GetAudioSessionWrapper(const GUID *guid, IMMDevice *device,
                                              AudioSessionWrapper **out)
