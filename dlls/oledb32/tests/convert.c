@@ -2680,6 +2680,33 @@ static void test_converttoguid(void)
     ok(hr == S_OK, "got %08lx\n", hr);
     ok(dst_status == DBSTATUS_S_ISNULL, "got %08lx\n", dst_status);
     ok(dst_len == 44, "got %Id\n", dst_len);
+
+    dst_len = 0x1234;
+    dst = IID_IDCInfo;
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocStringLen(L"{0c733a8d-2a1c-11ce-ade5-00aa0044773d}", 38);
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_GUID, 0, &dst_len, &v, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    todo_wine
+    ok(hr == S_OK, "got %08lx\n", hr);
+    todo_wine
+    ok(dst_status == DBSTATUS_S_OK, "got %08lx\n", dst_status);
+    todo_wine
+    ok(dst_len == sizeof(GUID), "got %Id\n", dst_len);
+    todo_wine
+    ok(IsEqualGUID(&dst, &IID_IDataConvert), "didn't get IID_IDataConvert\n");
+    SysFreeString(V_BSTR(&v));
+
+    dst_len = 0x1234;
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocStringLen(L"{invalid0-0000-0000-0000-000000000000}", 38);
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_GUID, 0, &dst_len, &v, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    todo_wine
+    ok(hr == CO_E_CLASSSTRING, "got %08lx\n", hr);
+    todo_wine
+    ok(dst_status == DBSTATUS_E_CANTCONVERTVALUE, "got %08lx\n", dst_status);
+    todo_wine
+    ok(dst_len == sizeof(GUID), "got %Id\n", dst_len);
+    SysFreeString(V_BSTR(&v));
 }
 
 static void test_converttofiletime(void)
