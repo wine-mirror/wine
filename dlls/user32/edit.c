@@ -1779,6 +1779,20 @@ static LRESULT EDIT_EM_Scroll(EDITSTATE *es, INT action)
 }
 
 
+static void EDIT_UpdateImmCompositionWindow(EDITSTATE *es, UINT x, UINT y)
+{
+    COMPOSITIONFORM form =
+    {
+        .dwStyle = CFS_RECT,
+        .ptCurrentPos = {.x = x, .y = y},
+        .rcArea = es->format_rect,
+    };
+    HIMC himc = ImmGetContext(es->hwndSelf);
+    ImmSetCompositionWindow(himc, &form);
+    ImmReleaseContext(es->hwndSelf, himc);
+}
+
+
 /*********************************************************************
  *
  *	EDIT_SetCaretPos
@@ -1794,6 +1808,7 @@ static void EDIT_SetCaretPos(EDITSTATE *es, INT pos,
 		res = EDIT_EM_PosFromChar(es, pos, after_wrap);
 		TRACE("%d - %dx%d\n", pos, (short)LOWORD(res), (short)HIWORD(res));
 		SetCaretPos((short)LOWORD(res), (short)HIWORD(res));
+		EDIT_UpdateImmCompositionWindow(es, (short)LOWORD(res), (short)HIWORD(res));
 	}
 }
 
@@ -3841,6 +3856,15 @@ static DWORD get_font_margins(HDC hdc, const TEXTMETRICW *tm, BOOL unicode)
 	return MAKELONG(left, right);
 }
 
+static void EDIT_UpdateImmCompositionFont(EDITSTATE *es)
+{
+    LOGFONTW composition_font;
+    HIMC himc = ImmGetContext(es->hwndSelf);
+    GetObjectW(es->font, sizeof(LOGFONTW), &composition_font);
+    ImmSetCompositionFontW(himc, &composition_font);
+    ImmReleaseContext(es->hwndSelf, himc);
+}
+
 /*********************************************************************
  *
  *	WM_SETFONT
@@ -3892,6 +3916,8 @@ static void EDIT_WM_SetFont(EDITSTATE *es, HFONT font, BOOL redraw)
 				 es->flags & EF_AFTER_WRAP);
 		NtUserShowCaret( es->hwndSelf );
 	}
+
+	EDIT_UpdateImmCompositionFont(es);
 }
 
 
@@ -4687,6 +4713,7 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
 {
 	EDITSTATE *es = (EDITSTATE *)GetWindowLongPtrW( hwnd, 0 );
 	LRESULT result = 0;
+	POINT pt;
 
         TRACE("hwnd=%p msg=%x (%s) wparam=%Ix lparam=%Ix\n", hwnd, msg, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
@@ -5198,6 +5225,9 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
 
 	/* IME messages to make the edit control IME aware */
 	case WM_IME_SETCONTEXT:
+		NtUserGetCaretPos(&pt);
+		EDIT_UpdateImmCompositionWindow(es, pt.x, pt.y);
+		EDIT_UpdateImmCompositionFont(es);
 		break;
 
 	case WM_IME_STARTCOMPOSITION:
