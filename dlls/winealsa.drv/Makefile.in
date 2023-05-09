@@ -8,6 +8,7 @@ UNIX_LIBS    = $(ALSA_LIBS) $(PTHREAD_LIBS)
 C_SRCS = \
 	alsa.c \
 	alsamidi.c \
+	client.c \
 	midi.c \
 	mmdevdrv.c \
 	session.c
