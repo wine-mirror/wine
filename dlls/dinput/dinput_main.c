@@ -89,28 +89,6 @@ static CRITICAL_SECTION dinput_hook_crit = { &dinput_critsect_debug, -1, 0, 0, 0
 
 static struct list acquired_device_list = LIST_INIT( acquired_device_list );
 
-void dinput_hooks_acquire_device( IDirectInputDevice8W *iface )
-{
-    struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
-
-    EnterCriticalSection( &dinput_hook_crit );
-    list_add_tail( &acquired_device_list, &impl->entry );
-    LeaveCriticalSection( &dinput_hook_crit );
-
-    SendMessageW( di_em_win, INPUT_THREAD_NOTIFY, NOTIFY_REFRESH_DEVICES, 0 );
-}
-
-void dinput_hooks_unacquire_device( IDirectInputDevice8W *iface )
-{
-    struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
-
-    EnterCriticalSection( &dinput_hook_crit );
-    list_remove( &impl->entry );
-    LeaveCriticalSection( &dinput_hook_crit );
-
-    SendMessageW( di_em_win, INPUT_THREAD_NOTIFY, NOTIFY_REFRESH_DEVICES, 0 );
-}
-
 static void unhook_device_window_foreground_changes( struct dinput_device *device )
 {
     if (!device->cbt_hook) return;
@@ -429,37 +407,67 @@ static DWORD WINAPI dinput_thread_proc( void *params )
     return 0;
 }
 
+void input_thread_start(void)
+{
+    HANDLE start_event;
+
+    TRACE( "Starting input thread.\n" );
+
+    if (!(start_event = CreateEventW( NULL, FALSE, FALSE, NULL )))
+        ERR( "Failed to create start event, error %lu\n", GetLastError() );
+    else if (!(dinput_thread = CreateThread( NULL, 0, dinput_thread_proc, start_event, 0, NULL )))
+        ERR( "Failed to create internal thread, error %lu\n", GetLastError() );
+    else
+        WaitForSingleObject( start_event, INFINITE );
+
+    CloseHandle( start_event );
+}
+
+void dinput_hooks_acquire_device( IDirectInputDevice8W *iface )
+{
+    struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
+
+    EnterCriticalSection( &dinput_hook_crit );
+    /* start the input thread now if it wasn't started already */
+    if (!dinput_thread) input_thread_start();
+    list_add_tail( &acquired_device_list, &impl->entry );
+    LeaveCriticalSection( &dinput_hook_crit );
+
+    SendMessageW( di_em_win, INPUT_THREAD_NOTIFY, NOTIFY_REFRESH_DEVICES, 0 );
+}
+
+void dinput_hooks_unacquire_device( IDirectInputDevice8W *iface )
+{
+    struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
+
+    EnterCriticalSection( &dinput_hook_crit );
+    list_remove( &impl->entry );
+    LeaveCriticalSection( &dinput_hook_crit );
+
+    SendMessageW( di_em_win, INPUT_THREAD_NOTIFY, NOTIFY_REFRESH_DEVICES, 0 );
+}
+
 void input_thread_add_user(void)
 {
+    /* we cannot start the input thread here because some games create dinput objects from their DllMain, and
+     * starting the thread will wait for it to initialize, which requires the loader lock to be released.
+     */
     EnterCriticalSection( &dinput_hook_crit );
-    if (!input_thread_user_count++)
-    {
-        HANDLE start_event;
-
-        TRACE( "Starting input thread.\n" );
-
-        if (!(start_event = CreateEventW( NULL, FALSE, FALSE, NULL )))
-            ERR( "Failed to create start event, error %lu\n", GetLastError() );
-        else if (!(dinput_thread = CreateThread( NULL, 0, dinput_thread_proc, start_event, 0, NULL )))
-            ERR( "Failed to create internal thread, error %lu\n", GetLastError() );
-        else
-            WaitForSingleObject( start_event, INFINITE );
-
-        CloseHandle( start_event );
-    }
+    input_thread_user_count++;
     LeaveCriticalSection( &dinput_hook_crit );
 }
 
 void input_thread_remove_user(void)
 {
     EnterCriticalSection( &dinput_hook_crit );
-    if (!--input_thread_user_count)
+    if (!--input_thread_user_count && dinput_thread)
     {
         TRACE( "Stopping input thread.\n" );
 
         SendMessageW( di_em_win, INPUT_THREAD_NOTIFY, NOTIFY_THREAD_STOP, 0 );
         WaitForSingleObject( dinput_thread, INFINITE );
         CloseHandle( dinput_thread );
+        dinput_thread = NULL;
     }
     LeaveCriticalSection( &dinput_hook_crit );
 }
