@@ -1186,32 +1186,6 @@ static struct file_view *find_view( const void *addr, size_t size )
 
 
 /***********************************************************************
- *           get_zero_bits_mask
- */
-static inline UINT_PTR get_zero_bits_mask( ULONG_PTR zero_bits )
-{
-    unsigned int shift;
-
-    if (zero_bits == 0) return 0;
-
-    if (zero_bits < 32) shift = 32 + zero_bits;
-    else
-    {
-        shift = 63;
-#ifdef _WIN64
-        if (zero_bits >> 32) { shift -= 32; zero_bits >>= 32; }
-#endif
-        if (zero_bits >> 16) { shift -= 16; zero_bits >>= 16; }
-        if (zero_bits >> 8) { shift -= 8; zero_bits >>= 8; }
-        if (zero_bits >> 4) { shift -= 4; zero_bits >>= 4; }
-        if (zero_bits >> 2) { shift -= 2; zero_bits >>= 2; }
-        if (zero_bits >> 1) { shift -= 1; }
-    }
-    return (UINT_PTR)((~(UINT64)0) >> shift);
-}
-
-
-/***********************************************************************
  *           is_write_watch_range
  */
 static inline BOOL is_write_watch_range( const void *addr, size_t size )
@@ -2604,7 +2578,7 @@ static unsigned int get_mapping_info( HANDLE handle, ACCESS_MASK access, unsigne
  * Map a PE image section into memory.
  */
 static NTSTATUS virtual_map_image( HANDLE mapping, ACCESS_MASK access, void **addr_ptr, SIZE_T *size_ptr,
-                                   ULONG_PTR zero_bits, HANDLE shared_file, ULONG alloc_type,
+                                   ULONG_PTR limit, HANDLE shared_file, ULONG alloc_type,
                                    pe_image_info_t *image_info, WCHAR *filename, BOOL is_builtin )
 {
     unsigned int vprot = SEC_IMAGE | SEC_FILE | VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY;
@@ -2633,9 +2607,9 @@ static NTSTATUS virtual_map_image( HANDLE mapping, ACCESS_MASK access, void **ad
     if ((ULONG_PTR)base != image_info->base) base = NULL;
 
     if ((char *)base >= (char *)address_space_start)  /* make sure the DOS area remains free */
-        status = map_view( &view, base, size, alloc_type & MEM_TOP_DOWN, vprot, get_zero_bits_mask( zero_bits ), 0 );
+        status = map_view( &view, base, size, alloc_type & MEM_TOP_DOWN, vprot, limit, 0 );
 
-    if (status) status = map_view( &view, NULL, size, alloc_type & MEM_TOP_DOWN, vprot, get_zero_bits_mask( zero_bits ), 0 );
+    if (status) status = map_view( &view, NULL, size, alloc_type & MEM_TOP_DOWN, vprot, limit, 0 );
     if (status) goto done;
 
     status = map_image_into_view( view, filename, unix_fd, base, image_info->header_size,
@@ -2674,7 +2648,7 @@ done:
  *
  * Map a file section into memory.
  */
-static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_PTR zero_bits,
+static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_PTR limit,
                                          SIZE_T commit_size, const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr,
                                          ULONG alloc_type, ULONG protect )
 {
@@ -2721,9 +2695,9 @@ static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_P
     {
         filename = (WCHAR *)(image_info + 1);
         /* check if we can replace that mapping with the builtin */
-        res = load_builtin( image_info, filename, addr_ptr, size_ptr, zero_bits );
+        res = load_builtin( image_info, filename, addr_ptr, size_ptr, limit );
         if (res == STATUS_IMAGE_ALREADY_LOADED)
-            res = virtual_map_image( handle, access, addr_ptr, size_ptr, zero_bits, shared_file,
+            res = virtual_map_image( handle, access, addr_ptr, size_ptr, limit, shared_file,
                                      alloc_type, image_info, filename, FALSE );
         if (shared_file) NtClose( shared_file );
         free( image_info );
@@ -2758,7 +2732,7 @@ static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_P
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
 
-    res = map_view( &view, base, size, alloc_type & MEM_TOP_DOWN, vprot, get_zero_bits_mask( zero_bits ), 0 );
+    res = map_view( &view, base, size, alloc_type & MEM_TOP_DOWN, vprot, limit, 0 );
     if (res) goto done;
 
     TRACE( "handle=%p size=%lx offset=%s\n", handle, size, wine_dbgstr_longlong(offset.QuadPart) );
@@ -2939,7 +2913,7 @@ void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info, BOOL wow64 )
  *           virtual_map_builtin_module
  */
 NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size, SECTION_IMAGE_INFORMATION *info,
-                                     ULONG_PTR zero_bits, WORD machine, BOOL prefer_native )
+                                     ULONG_PTR limit, WORD machine, BOOL prefer_native )
 {
     mem_size_t full_size;
     unsigned int sec_flags;
@@ -2976,7 +2950,7 @@ NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size
     else
     {
         status = virtual_map_image( mapping, SECTION_MAP_READ | SECTION_MAP_EXECUTE,
-                                    module, size, zero_bits, shared_file, 0, image_info, filename, TRUE );
+                                    module, size, limit, shared_file, 0, image_info, filename, TRUE );
         virtual_fill_image_information( image_info, info );
     }
 
@@ -3281,7 +3255,7 @@ NTSTATUS virtual_clear_tls_index( ULONG index )
 /***********************************************************************
  *           virtual_alloc_thread_stack
  */
-NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR zero_bits, SIZE_T reserve_size,
+NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR limit, SIZE_T reserve_size,
                                      SIZE_T commit_size, BOOL guard_page )
 {
     struct file_view *view;
@@ -3298,9 +3272,8 @@ NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR zero_bits, SI
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
 
-    if ((status = map_view( &view, NULL, size, FALSE, VPROT_READ | VPROT_WRITE | VPROT_COMMITTED,
-                            get_zero_bits_mask( zero_bits ), 0 )) != STATUS_SUCCESS)
-        goto done;
+    status = map_view( &view, NULL, size, FALSE, VPROT_READ | VPROT_WRITE | VPROT_COMMITTED, limit, 0 );
+    if (status != STATUS_SUCCESS) goto done;
 
 #ifdef VALGRIND_STACK_REGISTER
     VALGRIND_STACK_REGISTER( view->base, (char *)view->base + view->size );
@@ -4060,7 +4033,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_PTR z
     }
 
     if (!*ret)
-        limit = get_zero_bits_mask( zero_bits );
+        limit = get_zero_bits_limit( zero_bits );
     else
         limit = 0;
 
@@ -4875,7 +4848,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         return result.map_view.status;
     }
 
-    return virtual_map_section( handle, addr_ptr, zero_bits, commit_size,
+    return virtual_map_section( handle, addr_ptr, get_zero_bits_limit( zero_bits ), commit_size,
                                 offset_ptr, size_ptr, alloc_type, protect );
 }
 

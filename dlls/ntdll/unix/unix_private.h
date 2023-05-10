@@ -178,7 +178,7 @@ extern char **build_envp( const WCHAR *envW ) DECLSPEC_HIDDEN;
 extern char *get_alternate_wineloader( WORD machine ) DECLSPEC_HIDDEN;
 extern NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_info ) DECLSPEC_HIDDEN;
 extern NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename,
-                              void **addr_ptr, SIZE_T *size_ptr, ULONG_PTR zero_bits ) DECLSPEC_HIDDEN;
+                              void **addr_ptr, SIZE_T *size_ptr, ULONG_PTR limit ) DECLSPEC_HIDDEN;
 extern BOOL is_builtin_path( const UNICODE_STRING *path, WORD *machine ) DECLSPEC_HIDDEN;
 extern NTSTATUS load_main_exe( const WCHAR *name, const char *unix_name, const WCHAR *curdir, WCHAR **image,
                                void **module ) DECLSPEC_HIDDEN;
@@ -207,7 +207,7 @@ extern void fpux_to_fpu( I386_FLOATING_SAVE_AREA *fpu, const XSAVE_FORMAT *fpux 
 extern void fpu_to_fpux( XSAVE_FORMAT *fpux, const I386_FLOATING_SAVE_AREA *fpu ) DECLSPEC_HIDDEN;
 extern void *get_cpu_area( USHORT machine ) DECLSPEC_HIDDEN;
 extern void set_thread_id( TEB *teb, DWORD pid, DWORD tid ) DECLSPEC_HIDDEN;
-extern NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR zero_bits, SIZE_T reserve_size, SIZE_T commit_size ) DECLSPEC_HIDDEN;
+extern NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR limit, SIZE_T reserve_size, SIZE_T commit_size ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN abort_thread( int status ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN abort_process( int status ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN exit_process( int status ) DECLSPEC_HIDDEN;
@@ -225,14 +225,14 @@ extern void virtual_init(void) DECLSPEC_HIDDEN;
 extern ULONG_PTR get_system_affinity_mask(void) DECLSPEC_HIDDEN;
 extern void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info, BOOL wow64 ) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size, SECTION_IMAGE_INFORMATION *info,
-                                            ULONG_PTR zero_bits, WORD machine, BOOL prefer_native ) DECLSPEC_HIDDEN;
+                                            ULONG_PTR limit, WORD machine, BOOL prefer_native ) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING *nt_name,
                                              pe_image_info_t *info, void *so_handle ) DECLSPEC_HIDDEN;
 extern TEB *virtual_alloc_first_teb(void) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_alloc_teb( TEB **ret_teb ) DECLSPEC_HIDDEN;
 extern void virtual_free_teb( TEB *teb ) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_clear_tls_index( ULONG index ) DECLSPEC_HIDDEN;
-extern NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR zero_bits, SIZE_T reserve_size,
+extern NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR limit, SIZE_T reserve_size,
                                             SIZE_T commit_size, BOOL guard_page ) DECLSPEC_HIDDEN;
 extern void *virtual_alloc_arm64ec_map(void) DECLSPEC_HIDDEN;
 extern void virtual_map_user_shared_data(void) DECLSPEC_HIDDEN;
@@ -452,6 +452,29 @@ static inline client_ptr_t iosb_client_ptr( IO_STATUS_BLOCK *io )
 #endif
     return wine_server_client_ptr( io );
 }
+
+static inline ULONG_PTR get_zero_bits_limit( ULONG_PTR zero_bits )
+{
+    unsigned int shift;
+
+    if (zero_bits == 0) return 0;
+
+    if (zero_bits < 32) shift = 32 + zero_bits;
+    else
+    {
+        shift = 63;
+#ifdef _WIN64
+        if (zero_bits >> 32) { shift -= 32; zero_bits >>= 32; }
+#endif
+        if (zero_bits >> 16) { shift -= 16; zero_bits >>= 16; }
+        if (zero_bits >> 8) { shift -= 8; zero_bits >>= 8; }
+        if (zero_bits >> 4) { shift -= 4; zero_bits >>= 4; }
+        if (zero_bits >> 2) { shift -= 2; zero_bits >>= 2; }
+        if (zero_bits >> 1) { shift -= 1; }
+    }
+    return (~(UINT64)0) >> shift;
+}
+
 
 enum loadorder
 {
