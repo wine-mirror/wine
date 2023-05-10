@@ -30,7 +30,9 @@
 #define NONAMELESSUNION
 #include <assert.h>
 #include <X11/Xlib.h>
+#ifdef HAVE_X11_EXTENSIONS_XRANDR_H
 #include <X11/extensions/Xrandr.h>
+#endif
 #include <dlfcn.h>
 #include "x11drv.h"
 #include "wine/debug.h"
