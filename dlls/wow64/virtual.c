@@ -48,6 +48,64 @@ static MEMORY_RANGE_ENTRY *memory_range_entry_array_32to64( const MEMORY_RANGE_E
     return addresses;
 }
 
+static NTSTATUS mem_extended_parameters_32to64( MEM_EXTENDED_PARAMETER **ret_params,
+                                                const MEM_EXTENDED_PARAMETER32 *params32, ULONG *count,
+                                                BOOL set_limit )
+{
+    ULONG i;
+    MEM_EXTENDED_PARAMETER *params;
+    MEM_ADDRESS_REQUIREMENTS *req;
+    MEM_ADDRESS_REQUIREMENTS32 *req32 = NULL;
+
+    if (*count && !params32) return STATUS_INVALID_PARAMETER;
+
+    params = Wow64AllocateTemp( (*count + 1) * sizeof(*params) + sizeof(*req) );
+    req = (MEM_ADDRESS_REQUIREMENTS *)(params + *count + 1);
+
+    for (i = 0; i < *count; i++)
+    {
+        params[i].Type = params32[i].Type;
+        params[i].Reserved = 0;
+        switch (params[i].Type)
+        {
+        case MemExtendedParameterAddressRequirements:
+            req32 = ULongToPtr( params32[i].Pointer );
+            params[i].Pointer = req;
+            break;
+        case MemExtendedParameterAttributeFlags:
+        case MemExtendedParameterNumaNode:
+        case MemExtendedParameterImageMachine:
+            params[i].ULong = params32[i].ULong;
+            break;
+        case MemExtendedParameterPartitionHandle:
+        case MemExtendedParameterUserPhysicalHandle:
+            params[i].Handle = ULongToHandle( params32[i].Handle );
+            break;
+        }
+    }
+
+    if (req32)
+    {
+        if (req32->HighestEndingAddress > highest_user_address) return STATUS_INVALID_PARAMETER;
+        req->LowestStartingAddress = ULongToPtr( req32->LowestStartingAddress );
+        req->HighestEndingAddress  = ULongToPtr( req32->HighestEndingAddress );
+        req->Alignment             = req32->Alignment;
+    }
+    else if (set_limit)
+    {
+        req->LowestStartingAddress = NULL;
+        req->HighestEndingAddress  = (void *)highest_user_address;
+        req->Alignment             = 0;
+
+        params[i].Type = MemExtendedParameterAddressRequirements;
+        params[i].Reserved = 0;
+        params[i].Pointer = req;
+        *count = i + 1;
+    }
+    *ret_params = params;
+    return STATUS_SUCCESS;
+}
+
 /**********************************************************************
  *           wow64_NtAllocateVirtualMemory
  */
@@ -85,75 +143,19 @@ NTSTATUS WINAPI wow64_NtAllocateVirtualMemoryEx( UINT *args )
     ULONG *size32 = get_ptr( &args );
     ULONG type = get_ulong( &args );
     ULONG protect = get_ulong( &args );
-    MEM_EXTENDED_PARAMETER *params = get_ptr( &args );
+    MEM_EXTENDED_PARAMETER32 *params32 = get_ptr( &args );
     ULONG count = get_ulong( &args );
 
     void *addr;
     SIZE_T size;
     NTSTATUS status;
-    SIZE_T alloc_size = count * sizeof(*params);
     MEM_EXTENDED_PARAMETER *params64;
-    BOOL set_highest_address = (!*addr32 && process == GetCurrentProcess());
-    BOOL add_address_requirements = set_highest_address;
-    MEM_ADDRESS_REQUIREMENTS *buf;
-    unsigned int i;
+    BOOL set_limit = (!*addr32 && process == GetCurrentProcess());
 
-    if (count && !params) return STATUS_INVALID_PARAMETER;
-
-    for (i = 0; i < count; ++i)
-    {
-        if (params[i].Type == MemExtendedParameterAddressRequirements)
-        {
-            alloc_size += sizeof(MEM_ADDRESS_REQUIREMENTS);
-            add_address_requirements = FALSE;
-        }
-        else if (params[i].Type && params[i].Type < MemExtendedParameterMax)
-        {
-            FIXME( "Unsupported parameter type %d.\n", params[i].Type);
-        }
-    }
-
-    if (add_address_requirements)
-        alloc_size += sizeof(*params) + sizeof(MEM_ADDRESS_REQUIREMENTS);
-    params64 = Wow64AllocateTemp( alloc_size );
-    memcpy( params64, params, count * sizeof(*params64) );
-    if (add_address_requirements)
-    {
-        buf = (MEM_ADDRESS_REQUIREMENTS *)((char *)params64 + (count + 1) * sizeof(*params64));
-        params64[count].Type = MemExtendedParameterAddressRequirements;
-        params64[count].Pointer = buf;
-        memset(buf, 0, sizeof(*buf));
-        buf->HighestEndingAddress = (void *)highest_user_address;
-        ++buf;
-    }
-    else
-    {
-        buf = (MEM_ADDRESS_REQUIREMENTS *)((char *)params64 + count * sizeof(*params64));
-    }
-    for (i = 0; i < count; ++i)
-    {
-        if (params64[i].Type == MemExtendedParameterAddressRequirements)
-        {
-            MEM_ADDRESS_REQUIREMENTS32 *p = (MEM_ADDRESS_REQUIREMENTS32 *)params[i].Pointer;
-
-            buf->LowestStartingAddress = ULongToPtr(p->LowestStartingAddress);
-            if (p->HighestEndingAddress)
-            {
-                if (p->HighestEndingAddress > highest_user_address) return STATUS_INVALID_PARAMETER;
-                buf->HighestEndingAddress = ULongToPtr(p->HighestEndingAddress);
-            }
-            else
-            {
-                buf->HighestEndingAddress = set_highest_address ? (void *)highest_user_address : NULL;
-            }
-            buf->Alignment = p->Alignment;
-            params64[i].Pointer = buf;
-            ++buf;
-        }
-    }
+    if ((status = mem_extended_parameters_32to64( &params64, params32, &count, set_limit ))) return status;
 
     status = NtAllocateVirtualMemoryEx( process, addr_32to64( &addr, addr32 ), size_32to64( &size, size32 ),
-                                        type, protect, params64, count + add_address_requirements );
+                                        type, protect, params64, count );
     if (!status)
     {
         put_addr( addr32, addr );

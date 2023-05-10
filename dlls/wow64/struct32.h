@@ -667,9 +667,26 @@ typedef struct
 
 typedef struct
 {
-  ULONG LowestStartingAddress;
-  ULONG HighestEndingAddress;
-  ULONG Alignment;
+    ULONG LowestStartingAddress;
+    ULONG HighestEndingAddress;
+    ULONG Alignment;
 } MEM_ADDRESS_REQUIREMENTS32;
+
+typedef struct DECLSPEC_ALIGN(8)
+{
+    struct
+    {
+        DWORD64 Type : MEM_EXTENDED_PARAMETER_TYPE_BITS;
+        DWORD64 Reserved : 64 - MEM_EXTENDED_PARAMETER_TYPE_BITS;
+    };
+    union
+    {
+        DWORD64 ULong64;
+        ULONG   Pointer;
+        ULONG   Size;
+        ULONG   Handle;
+        ULONG   ULong;
+    };
+} MEM_EXTENDED_PARAMETER32;
 
 #endif /* __WOW64_STRUCT32_H */
