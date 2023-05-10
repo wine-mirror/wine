@@ -3864,7 +3864,7 @@ static void test_GetConsoleFontInfo(HANDLE std_output)
     pGetNumberOfConsoleFonts = (void *)GetProcAddress(hmod, "GetNumberOfConsoleFonts");
     if (!pGetNumberOfConsoleFonts)
     {
-        skip("GetNumberOfConsoleFonts is not available\n");
+        win_skip("GetNumberOfConsoleFonts is not available\n");
         return;
     }
 

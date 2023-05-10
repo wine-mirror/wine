@@ -914,7 +914,7 @@ static void test_CopyFile2(void)
 
     if (!pCopyFile2)
     {
-        skip("CopyFile2 is not available\n");
+        todo_wine win_skip("CopyFile2 is not available\n");
         return;
     }
 

@@ -2185,7 +2185,7 @@ static void test_IsWow64Process2(void)
 
     if (!pIsWow64Process2)
     {
-        skip("IsWow64Process2 is not available\n");
+        win_skip("IsWow64Process2 is not available\n");
         return;
     }
 
