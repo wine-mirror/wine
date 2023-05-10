@@ -102,7 +102,7 @@ struct uia_event
     int event_id;
     int scope;
 
-    IRawElementProviderAdviseEvents **event_advisers;
+    IWineUiaEventAdviser **event_advisers;
     int event_advisers_count;
     SIZE_T event_advisers_arr_size;
 

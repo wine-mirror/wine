@@ -13810,7 +13810,7 @@ static DWORD WINAPI uia_add_event_test_thread(LPVOID param)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
     ok(Provider2.ref == 1, "Unexpected refcnt %ld\n", Provider2.ref);
-    todo_wine ok(Provider2.last_call_tid == data->exp_thread_id ||
+    ok(Provider2.last_call_tid == data->exp_thread_id ||
             broken(Provider2.last_call_tid == GetCurrentThreadId()), "Expected method call on separate thread\n");
     ok(Provider2.advise_events_removed_event_id == UIA_AutomationFocusChangedEventId,
             "Unexpected advise event removed, event ID %d\n", Provider.advise_events_removed_event_id);

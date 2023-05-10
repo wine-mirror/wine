@@ -63,7 +63,7 @@ static ULONG WINAPI uia_event_Release(IWineUiaEvent *iface)
 
         SafeArrayDestroy(event->runtime_id);
         for (i = 0; i < event->event_advisers_count; i++)
-            IRawElementProviderAdviseEvents_Release(event->event_advisers[i]);
+            IWineUiaEventAdviser_Release(event->event_advisers[i]);
         heap_free(event->event_advisers);
         heap_free(event);
     }
@@ -81,12 +81,7 @@ static HRESULT WINAPI uia_event_advise_events(IWineUiaEvent *iface, BOOL advise_
 
     for (i = 0; i < event->event_advisers_count; i++)
     {
-        IRawElementProviderAdviseEvents *adviser = event->event_advisers[i];
-
-        if (advise_added)
-            hr = IRawElementProviderAdviseEvents_AdviseEventAdded(adviser, event->event_id, NULL);
-        else
-            hr = IRawElementProviderAdviseEvents_AdviseEventRemoved(adviser, event->event_id, NULL);
+        hr = IWineUiaEventAdviser_advise(event->event_advisers[i], advise_added, (UINT_PTR)event);
         if (FAILED(hr))
             return hr;
     }
@@ -95,7 +90,7 @@ static HRESULT WINAPI uia_event_advise_events(IWineUiaEvent *iface, BOOL advise_
     if (!advise_added)
     {
         for (i = 0; i < event->event_advisers_count; i++)
-            IRawElementProviderAdviseEvents_Release(event->event_advisers[i]);
+            IWineUiaEventAdviser_Release(event->event_advisers[i]);
         heap_free(event->event_advisers);
         event->event_advisers_count = event->event_advisers_arr_size = 0;
     }
@@ -138,14 +133,148 @@ static HRESULT create_uia_event(struct uia_event **out_event, int event_id, int 
     return S_OK;
 }
 
+/*
+ * IWineUiaEventAdviser interface.
+ */
+struct uia_event_adviser {
+    IWineUiaEventAdviser IWineUiaEventAdviser_iface;
+    LONG ref;
+
+    IRawElementProviderAdviseEvents *advise_events;
+    DWORD git_cookie;
+};
+
+static inline struct uia_event_adviser *impl_from_IWineUiaEventAdviser(IWineUiaEventAdviser *iface)
+{
+    return CONTAINING_RECORD(iface, struct uia_event_adviser, IWineUiaEventAdviser_iface);
+}
+
+static HRESULT WINAPI uia_event_adviser_QueryInterface(IWineUiaEventAdviser *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IWineUiaEventAdviser) || IsEqualIID(riid, &IID_IUnknown))
+        *ppv = iface;
+    else
+        return E_NOINTERFACE;
+
+    IWineUiaEventAdviser_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI uia_event_adviser_AddRef(IWineUiaEventAdviser *iface)
+{
+    struct uia_event_adviser *adv_events = impl_from_IWineUiaEventAdviser(iface);
+    ULONG ref = InterlockedIncrement(&adv_events->ref);
+
+    TRACE("%p, refcount %ld\n", adv_events, ref);
+    return ref;
+}
+
+static ULONG WINAPI uia_event_adviser_Release(IWineUiaEventAdviser *iface)
+{
+    struct uia_event_adviser *adv_events = impl_from_IWineUiaEventAdviser(iface);
+    ULONG ref = InterlockedDecrement(&adv_events->ref);
+
+    TRACE("%p, refcount %ld\n", adv_events, ref);
+    if (!ref)
+    {
+        if (adv_events->git_cookie)
+        {
+            if (FAILED(unregister_interface_in_git(adv_events->git_cookie)))
+                WARN("Failed to revoke advise events interface from GIT\n");
+        }
+        IRawElementProviderAdviseEvents_Release(adv_events->advise_events);
+        heap_free(adv_events);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI uia_event_adviser_advise(IWineUiaEventAdviser *iface, BOOL advise_added, LONG_PTR huiaevent)
+{
+    struct uia_event_adviser *adv_events = impl_from_IWineUiaEventAdviser(iface);
+    struct uia_event *event_data = (struct uia_event *)huiaevent;
+    IRawElementProviderAdviseEvents *advise_events;
+    HRESULT hr;
+
+    TRACE("%p, %d, %#Ix\n", adv_events, advise_added, huiaevent);
+
+    if (adv_events->git_cookie)
+    {
+        hr = get_interface_in_git(&IID_IRawElementProviderAdviseEvents, adv_events->git_cookie,
+                (IUnknown **)&advise_events);
+        if (FAILED(hr))
+            return hr;
+    }
+    else
+    {
+        advise_events = adv_events->advise_events;
+        IRawElementProviderAdviseEvents_AddRef(advise_events);
+    }
+
+    if (advise_added)
+        hr = IRawElementProviderAdviseEvents_AdviseEventAdded(advise_events, event_data->event_id, NULL);
+    else
+        hr = IRawElementProviderAdviseEvents_AdviseEventRemoved(advise_events, event_data->event_id, NULL);
+
+    IRawElementProviderAdviseEvents_Release(advise_events);
+    return hr;
+}
+
+static const IWineUiaEventAdviserVtbl uia_event_adviser_vtbl = {
+    uia_event_adviser_QueryInterface,
+    uia_event_adviser_AddRef,
+    uia_event_adviser_Release,
+    uia_event_adviser_advise,
+};
+
 HRESULT uia_event_add_provider_event_adviser(IRawElementProviderAdviseEvents *advise_events, struct uia_event *event)
 {
-    if (!uia_array_reserve((void **)&event->event_advisers, &event->event_advisers_arr_size,
-                event->event_advisers_count + 1, sizeof(*event->event_advisers)))
+    struct uia_event_adviser *adv_events;
+    IRawElementProviderSimple *elprov;
+    enum ProviderOptions prov_opts;
+    HRESULT hr;
+
+    hr = IRawElementProviderAdviseEvents_QueryInterface(advise_events, &IID_IRawElementProviderSimple,
+            (void **)&elprov);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get IRawElementProviderSimple from advise events\n");
+        return E_FAIL;
+    }
+
+    hr = IRawElementProviderSimple_get_ProviderOptions(elprov, &prov_opts);
+    IRawElementProviderSimple_Release(elprov);
+    if (FAILED(hr))
+        return hr;
+
+    if (!(adv_events = heap_alloc_zero(sizeof(*adv_events))))
         return E_OUTOFMEMORY;
 
-    event->event_advisers[event->event_advisers_count] = advise_events;
+    if (prov_opts & ProviderOptions_UseComThreading)
+    {
+        hr = register_interface_in_git((IUnknown *)advise_events, &IID_IRawElementProviderAdviseEvents,
+                &adv_events->git_cookie);
+        if (FAILED(hr))
+        {
+            heap_free(adv_events);
+            return hr;
+        }
+    }
+
+    adv_events->IWineUiaEventAdviser_iface.lpVtbl = &uia_event_adviser_vtbl;
+    adv_events->ref = 1;
+    adv_events->advise_events = advise_events;
     IRawElementProviderAdviseEvents_AddRef(advise_events);
+
+    if (!uia_array_reserve((void **)&event->event_advisers, &event->event_advisers_arr_size,
+                event->event_advisers_count + 1, sizeof(*event->event_advisers)))
+    {
+        IWineUiaEventAdviser_Release(&adv_events->IWineUiaEventAdviser_iface);
+        return E_OUTOFMEMORY;
+    }
+
+    event->event_advisers[event->event_advisers_count] = &adv_events->IWineUiaEventAdviser_iface;
     event->event_advisers_count++;
 
     return S_OK;

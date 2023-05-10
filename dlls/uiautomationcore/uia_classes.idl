@@ -56,6 +56,16 @@ library UIA_wine_private
 
     [
         object,
+        uuid(9a754e12-e570-49ab-b223-6f6871007d28),
+        pointer_default(unique),
+    ]
+    interface IWineUiaEventAdviser : IUnknown
+    {
+        HRESULT advise([in]BOOL advise_added, [in]LONG_PTR huiaevent);
+    }
+
+    [
+        object,
         uuid(5e60162c-ab0e-4e22-a61d-3a3acd442aba),
         pointer_default(unique),
     ]
