@@ -49,7 +49,7 @@ static void test_CompareObjectHandles(void)
 
     if (!pCompareObjectHandles)
     {
-        skip("CompareObjectHandles is not available.\n");
+        win_skip("CompareObjectHandles is not available.\n");
         return;
     }
 
