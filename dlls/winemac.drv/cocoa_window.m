@@ -359,7 +359,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     NSMutableAttributedString* markedText;
     NSRange markedTextSelection;
 
-    BOOL _retinaMode;
     int backingSize[2];
 
     WineMetalView *_metalView;
@@ -676,7 +675,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         [self setWantsBestResolutionOpenGLSurface:mode];
         [self updateGLContexts];
 
-        _retinaMode = !!mode;
         [self layer].contentsScale = mode ? 2.0 : 1.0;
         [self layer].minificationFilter = mode ? kCAFilterLinear : kCAFilterNearest;
         [self layer].magnificationFilter = mode ? kCAFilterLinear : kCAFilterNearest;
