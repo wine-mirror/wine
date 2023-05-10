@@ -313,8 +313,14 @@ static HRESULT WINAPI memory_1d_2d_buffer_Lock(IMFMediaBuffer *iface, BYTE **dat
             hr = E_OUTOFMEMORY;
 
         if (SUCCEEDED(hr))
-            copy_image(buffer, buffer->_2d.linear_buffer, buffer->_2d.width, buffer->data, buffer->_2d.pitch,
+        {
+            int pitch = buffer->_2d.pitch;
+
+            if (pitch < 0)
+                pitch = -pitch;
+            copy_image(buffer, buffer->_2d.linear_buffer, buffer->_2d.width, buffer->data, pitch,
                     buffer->_2d.width, buffer->_2d.height);
+        }
     }
 
     if (SUCCEEDED(hr))
@@ -342,7 +348,11 @@ static HRESULT WINAPI memory_1d_2d_buffer_Unlock(IMFMediaBuffer *iface)
 
     if (buffer->_2d.linear_buffer && !--buffer->_2d.locks)
     {
-        copy_image(buffer, buffer->data, buffer->_2d.pitch, buffer->_2d.linear_buffer, buffer->_2d.width,
+        int pitch = buffer->_2d.pitch;
+
+        if (pitch < 0)
+            pitch = -pitch;
+        copy_image(buffer, buffer->data, pitch, buffer->_2d.linear_buffer, buffer->_2d.width,
                 buffer->_2d.width, buffer->_2d.height);
 
         free(buffer->_2d.linear_buffer);
