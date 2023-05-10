@@ -4041,22 +4041,11 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_PTR z
 }
 
 
-/***********************************************************************
- *             NtAllocateVirtualMemoryEx   (NTDLL.@)
- *             ZwAllocateVirtualMemoryEx   (NTDLL.@)
- */
-NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *size_ptr, ULONG type,
-                                           ULONG protect, MEM_EXTENDED_PARAMETER *parameters,
-                                           ULONG count )
+static NTSTATUS get_extended_params( const MEM_EXTENDED_PARAMETER *parameters, ULONG count,
+                                     ULONG_PTR *limit, ULONG_PTR *align, ULONG *attributes )
 {
-    ULONG_PTR limit = 0;
-    ULONG_PTR align = 0;
-    ULONG attributes = 0;
     MEM_ADDRESS_REQUIREMENTS *r = NULL;
-    unsigned int i;
-
-    TRACE( "%p %p %08lx %x %08x %p %u\n",
-          process, *ret, *size_ptr, (int)type, (int)protect, parameters, (int)count );
+    ULONG i;
 
     if (count && !parameters) return STATUS_INVALID_PARAMETER;
 
@@ -4074,25 +4063,26 @@ NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *s
 
             if (r->Alignment)
             {
-                if (*ret || (r->Alignment & (r->Alignment - 1)) || r->Alignment - 1 < granularity_mask)
+                if ((r->Alignment & (r->Alignment - 1)) || r->Alignment - 1 < granularity_mask)
                 {
                     WARN( "Invalid alignment %lu.\n", r->Alignment );
                     return STATUS_INVALID_PARAMETER;
                 }
-                align = r->Alignment;
+                *align = r->Alignment;
             }
-
-            limit = (ULONG_PTR)r->HighestEndingAddress;
-            if (limit && (*ret || limit > (ULONG_PTR)user_space_limit || ((limit + 1) & (page_mask - 1))))
+            if (r->HighestEndingAddress)
             {
-                WARN( "Invalid limit %p.\n", r->HighestEndingAddress);
-                return STATUS_INVALID_PARAMETER;
+                *limit = (ULONG_PTR)r->HighestEndingAddress;
+                if (*limit > (ULONG_PTR)user_space_limit || ((*limit + 1) & (page_mask - 1)))
+                {
+                    WARN( "Invalid limit %p.\n", r->HighestEndingAddress );
+                    return STATUS_INVALID_PARAMETER;
+                }
             }
-            TRACE( "limit %p, align %p.\n", (void *)limit, (void *)align );
             break;
 
         case MemExtendedParameterAttributeFlags:
-            attributes = parameters[i].ULong;
+            *attributes = parameters[i].ULong;
             break;
 
         case MemExtendedParameterNumaNode:
@@ -4107,14 +4097,36 @@ NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *s
             return STATUS_INVALID_PARAMETER;
         }
     }
+    return STATUS_SUCCESS;
+}
 
+
+/***********************************************************************
+ *             NtAllocateVirtualMemoryEx   (NTDLL.@)
+ *             ZwAllocateVirtualMemoryEx   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *size_ptr, ULONG type,
+                                           ULONG protect, MEM_EXTENDED_PARAMETER *parameters,
+                                           ULONG count )
+{
+    ULONG_PTR limit = 0;
+    ULONG_PTR align = 0;
+    ULONG attributes = 0;
+    unsigned int status;
+
+    TRACE( "%p %p %08lx %x %08x %p %u\n",
+          process, *ret, *size_ptr, (int)type, (int)protect, parameters, (int)count );
+
+    status = get_extended_params( parameters, count, &limit, &align, &attributes );
+    if (status) return status;
+
+    if (*ret && (align || limit)) return STATUS_INVALID_PARAMETER;
     if (!*size_ptr) return STATUS_INVALID_PARAMETER;
 
     if (process != NtCurrentProcess())
     {
         apc_call_t call;
         apc_result_t result;
-        unsigned int status;
 
         memset( &call, 0, sizeof(call) );
 
