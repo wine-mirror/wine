@@ -375,15 +375,19 @@ NTSTATUS WINAPI wow64_NtMapViewOfSectionEx( UINT *args )
     ULONG *size32 = get_ptr( &args );
     ULONG alloc = get_ulong( &args );
     ULONG protect = get_ulong( &args );
-    MEM_EXTENDED_PARAMETER *params = get_ptr( &args );
-    ULONG params_count = get_ulong( &args );
+    MEM_EXTENDED_PARAMETER32 *params32 = get_ptr( &args );
+    ULONG count = get_ulong( &args );
 
     void *addr;
     SIZE_T size;
     NTSTATUS status;
+    MEM_EXTENDED_PARAMETER *params64;
+    BOOL set_limit = (!*addr32 && process == GetCurrentProcess());
 
-    status = NtMapViewOfSectionEx( handle, process, addr_32to64( &addr, addr32 ), offset, size_32to64( &size, size32 ), alloc,
-            protect, params, params_count );
+    if ((status = mem_extended_parameters_32to64( &params64, params32, &count, set_limit ))) return status;
+
+    status = NtMapViewOfSectionEx( handle, process, addr_32to64( &addr, addr32 ), offset,
+                                   size_32to64( &size, size32 ), alloc, protect, params64, count );
     if (NT_SUCCESS(status))
     {
         SECTION_IMAGE_INFORMATION info;
