@@ -501,6 +501,7 @@ enum apc_type
     APC_VIRTUAL_LOCK,
     APC_VIRTUAL_UNLOCK,
     APC_MAP_VIEW,
+    APC_MAP_VIEW_EX,
     APC_UNMAP_VIEW,
     APC_CREATE_THREAD,
     APC_DUP_HANDLE
@@ -600,6 +601,17 @@ typedef union
     } map_view;
     struct
     {
+        enum apc_type    type;         /* APC_MAP_VIEW_EX */
+        obj_handle_t     handle;       /* mapping handle */
+        client_ptr_t     addr;         /* requested address */
+        mem_size_t       size;         /* allocation size */
+        file_pos_t       offset;       /* file offset */
+        mem_size_t       limit;        /* allocation address limit */
+        unsigned int     alloc_type;   /* allocation type */
+        unsigned int     prot;         /* memory protection flags */
+    } map_view_ex;
+    struct
+    {
         enum apc_type    type;      /* APC_UNMAP_VIEW */
         int              __pad;
         client_ptr_t     addr;      /* view address */
@@ -643,7 +655,7 @@ typedef union
     } virtual_alloc;
     struct
     {
-        enum apc_type    type;      /* APC_VIRTUAL_ALLOC */
+        enum apc_type    type;      /* APC_VIRTUAL_ALLOC_EX */
         unsigned int     status;    /* status returned by call */
         client_ptr_t     addr;      /* resulting address */
         mem_size_t       size;      /* resulting size */
@@ -703,6 +715,13 @@ typedef union
         client_ptr_t     addr;      /* resulting address */
         mem_size_t       size;      /* resulting size */
     } map_view;
+    struct
+    {
+        enum apc_type    type;      /* APC_MAP_VIEW_EX */
+        unsigned int     status;    /* status returned by call */
+        client_ptr_t     addr;      /* resulting address */
+        mem_size_t       size;      /* resulting size */
+    } map_view_ex;
     struct
     {
         enum apc_type    type;      /* APC_UNMAP_VIEW */

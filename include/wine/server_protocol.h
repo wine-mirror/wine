@@ -485,6 +485,7 @@ enum apc_type
     APC_VIRTUAL_LOCK,
     APC_VIRTUAL_UNLOCK,
     APC_MAP_VIEW,
+    APC_MAP_VIEW_EX,
     APC_UNMAP_VIEW,
     APC_CREATE_THREAD,
     APC_DUP_HANDLE
@@ -582,6 +583,17 @@ typedef union
         unsigned int     alloc_type;
         unsigned int     prot;
     } map_view;
+    struct
+    {
+        enum apc_type    type;
+        obj_handle_t     handle;
+        client_ptr_t     addr;
+        mem_size_t       size;
+        file_pos_t       offset;
+        mem_size_t       limit;
+        unsigned int     alloc_type;
+        unsigned int     prot;
+    } map_view_ex;
     struct
     {
         enum apc_type    type;
@@ -687,6 +699,13 @@ typedef union
         client_ptr_t     addr;
         mem_size_t       size;
     } map_view;
+    struct
+    {
+        enum apc_type    type;
+        unsigned int     status;
+        client_ptr_t     addr;
+        mem_size_t       size;
+    } map_view_ex;
     struct
     {
         enum apc_type    type;
@@ -6359,7 +6378,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 763
+#define SERVER_PROTOCOL_VERSION 764
 
 /* ### protocol_version end ### */
 

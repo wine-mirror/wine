@@ -184,13 +184,13 @@ static void dump_apc_call( const char *prefix, const apc_call_t *call )
         fprintf( stderr, ",status=%s,result=%u", get_status_name(call->async_io.status), call->async_io.result );
         break;
     case APC_VIRTUAL_ALLOC:
-        dump_uint64( "APC_VIRTUAL_ALLOC,addr==", &call->virtual_alloc.addr );
+        dump_uint64( "APC_VIRTUAL_ALLOC,addr=", &call->virtual_alloc.addr );
         dump_uint64( ",size=", &call->virtual_alloc.size );
         dump_uint64( ",zero_bits=", &call->virtual_alloc.zero_bits );
         fprintf( stderr, ",op_type=%x,prot=%x", call->virtual_alloc.op_type, call->virtual_alloc.prot );
         break;
     case APC_VIRTUAL_ALLOC_EX:
-        dump_uint64( "APC_VIRTUAL_ALLOC,addr==", &call->virtual_alloc_ex.addr );
+        dump_uint64( "APC_VIRTUAL_ALLOC_EX,addr=", &call->virtual_alloc_ex.addr );
         dump_uint64( ",size=", &call->virtual_alloc_ex.size );
         dump_uint64( ",limit=", &call->virtual_alloc_ex.limit );
         dump_uint64( ",align=", &call->virtual_alloc_ex.align );
@@ -230,6 +230,14 @@ static void dump_apc_call( const char *prefix, const apc_call_t *call )
         dump_uint64( ",offset=", &call->map_view.offset );
         dump_uint64( ",zero_bits=", &call->map_view.zero_bits );
         fprintf( stderr, ",alloc_type=%x,prot=%x", call->map_view.alloc_type, call->map_view.prot );
+        break;
+    case APC_MAP_VIEW_EX:
+        fprintf( stderr, "APC_MAP_VIEW_EX,handle=%04x", call->map_view_ex.handle );
+        dump_uint64( ",addr=", &call->map_view_ex.addr );
+        dump_uint64( ",size=", &call->map_view_ex.size );
+        dump_uint64( ",offset=", &call->map_view_ex.offset );
+        dump_uint64( ",limit=", &call->map_view_ex.limit );
+        fprintf( stderr, ",alloc_type=%x,prot=%x", call->map_view_ex.alloc_type, call->map_view_ex.prot );
         break;
     case APC_UNMAP_VIEW:
         dump_uint64( "APC_UNMAP_VIEW,addr=", &call->unmap_view.addr );

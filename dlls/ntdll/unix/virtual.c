@@ -4868,13 +4868,66 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
  *             NtMapViewOfSectionEx   (NTDLL.@)
  *             ZwMapViewOfSectionEx   (NTDLL.@)
  */
-NTSTATUS WINAPI NtMapViewOfSectionEx( HANDLE handle, HANDLE process, PVOID *addr_ptr, const LARGE_INTEGER *offset_ptr,
-        SIZE_T *size_ptr, ULONG alloc_type, ULONG protect, MEM_EXTENDED_PARAMETER *params, ULONG params_count )
+NTSTATUS WINAPI NtMapViewOfSectionEx( HANDLE handle, HANDLE process, PVOID *addr_ptr,
+                                      const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr,
+                                      ULONG alloc_type, ULONG protect,
+                                      MEM_EXTENDED_PARAMETER *parameters, ULONG count )
 {
-    if (params)
-        FIXME("Ignoring extended parameters.\n");
+    ULONG_PTR limit = 0, align = 0;
+    ULONG attributes = 0;
+    unsigned int status;
+    SIZE_T mask = granularity_mask;
+    LARGE_INTEGER offset;
 
-    return NtMapViewOfSection( handle, process, addr_ptr, 0, 0, offset_ptr, size_ptr, ViewShare, alloc_type, protect );
+    offset.QuadPart = offset_ptr ? offset_ptr->QuadPart : 0;
+
+    TRACE( "handle=%p process=%p addr=%p off=%s size=%lx access=%x\n",
+           handle, process, *addr_ptr, wine_dbgstr_longlong(offset.QuadPart), *size_ptr, (int)protect );
+
+    status = get_extended_params( parameters, count, &limit, &align, &attributes );
+    if (status) return status;
+
+    if (align) return STATUS_INVALID_PARAMETER;
+    if (*addr_ptr && limit) return STATUS_INVALID_PARAMETER;
+
+#ifndef _WIN64
+    if (!is_old_wow64() && (alloc_type & AT_ROUND_TO_PAGE))
+    {
+        *addr_ptr = ROUND_ADDR( *addr_ptr, page_mask );
+        mask = page_mask;
+    }
+#endif
+
+    if ((offset.u.LowPart & mask) || (*addr_ptr && ((UINT_PTR)*addr_ptr & mask)))
+        return STATUS_MAPPED_ALIGNMENT;
+
+    if (process != NtCurrentProcess())
+    {
+        apc_call_t call;
+        apc_result_t result;
+
+        memset( &call, 0, sizeof(call) );
+
+        call.map_view_ex.type         = APC_MAP_VIEW_EX;
+        call.map_view_ex.handle       = wine_server_obj_handle( handle );
+        call.map_view_ex.addr         = wine_server_client_ptr( *addr_ptr );
+        call.map_view_ex.size         = *size_ptr;
+        call.map_view_ex.offset       = offset.QuadPart;
+        call.map_view_ex.limit        = limit;
+        call.map_view_ex.alloc_type   = alloc_type;
+        call.map_view_ex.prot         = protect;
+        status = server_queue_process_apc( process, &call, &result );
+        if (status != STATUS_SUCCESS) return status;
+
+        if (NT_SUCCESS(result.map_view_ex.status))
+        {
+            *addr_ptr = wine_server_get_ptr( result.map_view_ex.addr );
+            *size_ptr = result.map_view_ex.size;
+        }
+        return result.map_view_ex.status;
+    }
+
+    return virtual_map_section( handle, addr_ptr, limit, 0, offset_ptr, size_ptr, alloc_type, protect );
 }
 
 /***********************************************************************

@@ -1724,6 +1724,7 @@ DECL_HANDLER(queue_apc)
         process = get_process_from_handle( req->handle, PROCESS_QUERY_INFORMATION );
         break;
     case APC_MAP_VIEW:
+    case APC_MAP_VIEW_EX:
         process = get_process_from_handle( req->handle, PROCESS_VM_OPERATION );
         if (process && process != current->process)
         {
