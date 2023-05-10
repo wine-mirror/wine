@@ -95,14 +95,10 @@ static void test__environ(void)
         return;
     }
 
-    /* Examine the returned pointer from __p__environ(), if available. */
-    if (p__p__environ)
-    {
-        ok( *p__p__environ() == *p_environ,
-            "Expected _environ pointers to be identical\n" );
-    }
+    if (sizeof(void*) != sizeof(int))
+        ok( !p__p__environ, "__p__environ() should be 32-bit only\n");
     else
-        skip( "__p__environ() is not available\n" );
+        ok( *p__p__environ() == *p_environ, "Expected _environ pointers to be identical\n" );
 
     if (p_get_environ)
     {
@@ -158,14 +154,10 @@ static void test__wenviron(void)
         return;
     }
 
-    /* Examine the returned pointer from __p__wenviron(), if available. */
-    if (p__p__wenviron)
-    {
-        ok( *p__p__wenviron() == NULL,
-            "Expected _wenviron pointers to be NULL\n" );
-    }
+    if (sizeof(void*) != sizeof(int))
+        ok( !p__p__wenviron, "__p__wenviron() should be 32-bit only\n");
     else
-        skip( "__p__wenviron() is not available\n" );
+        ok( *p__p__wenviron() == NULL, "Expected _wenviron pointers to be NULL\n" );
 
     if (p_get_wenviron)
     {
