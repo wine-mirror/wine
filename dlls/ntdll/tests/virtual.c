@@ -490,7 +490,8 @@ static void test_NtAllocateVirtualMemoryEx(void)
         }
     }
 #endif
-    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+    ok(status == STATUS_INVALID_PARAMETER || status == STATUS_NOT_SUPPORTED,
+       "Unexpected status %08lx.\n", status);
 }
 
 static void test_NtAllocateVirtualMemoryEx_address_requirements(void)
@@ -1370,6 +1371,9 @@ static void test_NtMapViewOfSectionEx(void)
     static const char testfile[] = "testfile.xxx";
     static const char data[] = "test data for NtMapViewOfSectionEx";
     char buffer[sizeof(data)];
+    MEM_EXTENDED_PARAMETER ext[2];
+    MEM_ADDRESS_REQUIREMENTS a;
+    SYSTEM_INFO si;
     HANDLE file, mapping, process;
     DWORD status, written;
     SIZE_T size, result;
@@ -1384,23 +1388,24 @@ static void test_NtMapViewOfSectionEx(void)
     }
 
     if (!pIsWow64Process || !pIsWow64Process(NtCurrentProcess(), &is_wow64)) is_wow64 = FALSE;
+    GetSystemInfo(&si);
 
     file = CreateFileA(testfile, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok(file != INVALID_HANDLE_VALUE, "Failed to create test file\n");
     WriteFile(file, data, sizeof(data), &written, NULL);
-    SetFilePointer(file, 4096, NULL, FILE_BEGIN);
+    SetFilePointer(file, 0x40000, NULL, FILE_BEGIN);
     SetEndOfFile(file);
 
     /* read/write mapping */
 
-    mapping = CreateFileMappingA(file, NULL, PAGE_READWRITE, 0, 4096, NULL);
+    mapping = CreateFileMappingA(file, NULL, PAGE_READWRITE, 0, 0x40000, NULL);
     ok(mapping != 0, "CreateFileMapping failed\n");
 
     process = create_target_process("sleep");
     ok(process != NULL, "Can't start process\n");
 
     ptr = NULL;
-    size = 0;
+    size = 0x1000;
     offset.QuadPart = 0;
     status = pNtMapViewOfSectionEx(mapping, process, &ptr, &offset, &size, 0, PAGE_READWRITE, NULL, 0);
     ok(status == STATUS_SUCCESS, "Unexpected status %08lx\n", status);
@@ -1443,20 +1448,20 @@ static void test_NtMapViewOfSectionEx(void)
     {
         /* new memory region conflicts with previous mapping */
         ptr2 = ptr;
-        size = 0;
+        size = 0x1000;
         offset.QuadPart = 0;
         status = pNtMapViewOfSectionEx(mapping, process, &ptr2, &offset, &size, AT_ROUND_TO_PAGE, PAGE_READWRITE, NULL, 0);
         ok(status == STATUS_CONFLICTING_ADDRESSES, "Unexpected status %08lx\n", status);
 
         ptr2 = (char *)ptr + 42;
-        size = 0;
+        size = 0x1000;
         offset.QuadPart = 0;
         status = pNtMapViewOfSectionEx(mapping, process, &ptr2, &offset, &size, AT_ROUND_TO_PAGE, PAGE_READWRITE, NULL, 0);
         ok(status == STATUS_CONFLICTING_ADDRESSES, "Unexpected status %08lx\n", status);
 
         /* in contrary to regular NtMapViewOfSection, only 4kb align is enforced */
         ptr2 = (char *)ptr + 0x1000;
-        size = 0;
+        size = 0x1000;
         offset.QuadPart = 0;
         status = pNtMapViewOfSectionEx(mapping, process, &ptr2, &offset, &size, AT_ROUND_TO_PAGE, PAGE_READWRITE, NULL, 0);
         ok(status == STATUS_SUCCESS, "Unexpected status %08lx\n", status);
@@ -1467,7 +1472,7 @@ static void test_NtMapViewOfSectionEx(void)
 
         /* the address is rounded down if not on a page boundary */
         ptr2 = (char *)ptr + 0x1001;
-        size = 0;
+        size = 0x1000;
         offset.QuadPart = 0;
         status = pNtMapViewOfSectionEx(mapping, process, &ptr2, &offset, &size, AT_ROUND_TO_PAGE, PAGE_READWRITE, NULL, 0);
         ok(status == STATUS_SUCCESS, "Unexpected status %08lx\n", status);
@@ -1477,7 +1482,7 @@ static void test_NtMapViewOfSectionEx(void)
         ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection returned %08lx\n", status);
 
         ptr2 = (char *)ptr + 0x2000;
-        size = 0;
+        size = 0x1000;
         offset.QuadPart = 0;
         status = pNtMapViewOfSectionEx(mapping, process, &ptr2, &offset, &size, AT_ROUND_TO_PAGE, PAGE_READWRITE, NULL, 0);
         ok(status == STATUS_SUCCESS, "Unexpected status %08lx\n", status);
@@ -1499,6 +1504,103 @@ static void test_NtMapViewOfSectionEx(void)
 
     status = NtUnmapViewOfSection(process, ptr);
     ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection returned %08lx\n", status);
+
+    /* extended parameters */
+
+    memset(&ext, 0, sizeof(ext));
+    ext[0].Type = 0;
+    size = 0x1000;
+    ptr = NULL;
+    offset.QuadPart = 0;
+    status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READWRITE, ext, 1 );
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    memset(&ext, 0, sizeof(ext));
+    ext[0].Type = MemExtendedParameterMax;
+    size = 0x1000;
+    ptr = NULL;
+    status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READWRITE, ext, 1 );
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    memset(&a, 0, sizeof(a));
+    ext[0].Type = MemExtendedParameterAddressRequirements;
+    ext[0].Pointer = &a;
+    size = 0x1000;
+    ptr = NULL;
+    status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READWRITE, ext, 1 );
+    ok(!status, "Unexpected status %08lx.\n", status);
+    status = NtUnmapViewOfSection(process, ptr);
+    ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection returned %08lx\n", status);
+
+    ext[1] = ext[0];
+    size = 0x1000;
+    ptr = NULL;
+    status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READWRITE, ext, 2 );
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    a.LowestStartingAddress = NULL;
+    a.Alignment = 0;
+    a.HighestEndingAddress = (void *)(0x20001000 + 1);
+    size = 0x10000;
+    ptr = NULL;
+    status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READWRITE, ext, 1 );
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    a.HighestEndingAddress = (void *)(0x20001000 - 2);
+    size = 0x10000;
+    ptr = NULL;
+    status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READWRITE, ext, 1 );
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    a.HighestEndingAddress = (void *)(0x20000800 - 1);
+    size = 0x10000;
+    ptr = NULL;
+    status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READWRITE, ext, 1 );
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    a.HighestEndingAddress = (char *)si.lpMaximumApplicationAddress + 0x1000;
+    size = 0x10000;
+    ptr = NULL;
+    status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READWRITE, ext, 1 );
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    a.HighestEndingAddress = (char *)si.lpMaximumApplicationAddress;
+    size = 0x10000;
+    ptr = NULL;
+    status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READWRITE, ext, 1 );
+    ok(!status, "Unexpected status %08lx.\n", status);
+    status = NtUnmapViewOfSection(process, ptr);
+    ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection returned %08lx\n", status);
+
+    a.HighestEndingAddress = (void *)(0x20001000 - 1);
+    size = 0x40000;
+    ptr = NULL;
+    status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READWRITE, ext, 1 );
+    ok(!status, "Unexpected status %08lx.\n", status);
+    ok(!((ULONG_PTR)ptr & 0xffff), "Unexpected addr %p.\n", ptr);
+    ok((ULONG_PTR)ptr + size <= 0x20001000, "Unexpected addr %p.\n", ptr);
+    status = NtUnmapViewOfSection(process, ptr);
+    ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection returned %08lx\n", status);
+
+    size = 0x40000;
+    a.HighestEndingAddress = (void *)(0x20001000 - 1);
+    status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READWRITE, ext, 1 );
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    a.HighestEndingAddress = NULL;
+    a.Alignment = 0x30000;
+    size = 0x1000;
+    ptr = NULL;
+    status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READWRITE, ext, 1 );
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    for (a.Alignment = 1; a.Alignment; a.Alignment *= 2)
+    {
+        size = 0x1000;
+        ptr = NULL;
+        status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READWRITE, ext, 1 );
+        ok(status == STATUS_INVALID_PARAMETER, "Align %Ix unexpected status %08lx.\n", a.Alignment, status);
+    }
 
     NtClose(mapping);
 
