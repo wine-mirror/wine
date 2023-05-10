@@ -1932,7 +1932,7 @@ static void test_AllocateAndGetTcpExTableFromStack(void)
 
     if (!pAllocateAndGetTcpExTableFromStack)
     {
-        skip("AllocateAndGetTcpExTableFromStack not available\n");
+        win_skip("AllocateAndGetTcpExTableFromStack not available\n");
         return;
     }
 
