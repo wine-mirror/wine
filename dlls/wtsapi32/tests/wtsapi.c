@@ -157,7 +157,7 @@ static void test_WTSEnumerateProcessesW(void)
 
     if (!pWTSEnumerateProcessesExW)
     {
-        skip("WTSEnumerateProcessesEx is not available\n");
+        win_skip("WTSEnumerateProcessesEx is not available\n");
         return;
     }
 
