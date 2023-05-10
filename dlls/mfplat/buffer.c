@@ -626,7 +626,10 @@ static HRESULT WINAPI memory_2d_buffer_ContiguousCopyTo(IMF2DBuffer2 *iface, BYT
 
     if (SUCCEEDED(hr))
     {
-        copy_image(buffer, dest_buffer, buffer->_2d.width, src_scanline0, src_pitch, buffer->_2d.width, buffer->_2d.height);
+        if (src_pitch < 0)
+            src_pitch = -src_pitch;
+        copy_image(buffer, dest_buffer, buffer->_2d.width, src_buffer_start, src_pitch,
+                buffer->_2d.width, buffer->_2d.height);
 
         if (FAILED(IMF2DBuffer2_Unlock2D(iface)))
             WARN("Couldn't unlock source buffer %p, hr %#lx.\n", iface, hr);
@@ -652,7 +655,10 @@ static HRESULT WINAPI memory_2d_buffer_ContiguousCopyFrom(IMF2DBuffer2 *iface, c
 
     if (SUCCEEDED(hr))
     {
-        copy_image(buffer, dst_scanline0, dst_pitch, src_buffer, buffer->_2d.width, buffer->_2d.width, buffer->_2d.height);
+        if (dst_pitch < 0)
+            dst_pitch = -dst_pitch;
+        copy_image(buffer, dst_buffer_start, dst_pitch, src_buffer, buffer->_2d.width,
+                buffer->_2d.width, buffer->_2d.height);
 
         if (FAILED(IMF2DBuffer2_Unlock2D(iface)))
             WARN("Couldn't unlock destination buffer %p, hr %#lx.\n", iface, hr);
