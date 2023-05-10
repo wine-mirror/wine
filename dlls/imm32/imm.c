@@ -429,31 +429,6 @@ static struct imc *query_imc_data( HIMC handle )
     return ret && ret->handle == handle ? ret : NULL;
 }
 
-static HMODULE load_graphics_driver(void)
-{
-    static const WCHAR key_pathW[] = L"System\\CurrentControlSet\\Control\\Video\\{";
-    static const WCHAR displayW[] = L"}\\0000";
-
-    HMODULE ret = 0;
-    HKEY hkey;
-    DWORD size;
-    WCHAR path[MAX_PATH];
-    WCHAR key[ARRAY_SIZE( key_pathW ) + ARRAY_SIZE( displayW ) + 40];
-    UINT guid_atom = HandleToULong( GetPropW( GetDesktopWindow(), L"__wine_display_device_guid" ));
-
-    if (!guid_atom) return 0;
-    memcpy( key, key_pathW, sizeof(key_pathW) );
-    if (!GlobalGetAtomNameW( guid_atom, key + lstrlenW(key), 40 )) return 0;
-    lstrcatW( key, displayW );
-    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, key, &hkey )) return 0;
-    size = sizeof(path);
-    if (!RegQueryValueExW( hkey, L"GraphicsDriver", NULL, NULL, (BYTE *)path, &size ))
-        ret = LoadLibraryW( path );
-    RegCloseKey( hkey );
-    TRACE( "%s %p\n", debugstr_w(path), ret );
-    return ret;
-}
-
 /* lookup an IME from a HKL, must hold ime_cs */
 static struct ime *find_ime_from_hkl( HKL hkl )
 {
@@ -511,41 +486,54 @@ BOOL WINAPI ImmLoadIME( HKL hkl )
     if (use_default_ime)
     {
         if (*buffer) WARN( "Failed to load %s, falling back to default.\n", debugstr_w(buffer) );
-        if (!(ime->module = load_graphics_driver())) ime->module = LoadLibraryW( L"imm32" );
+        ime->module = LoadLibraryW( L"imm32" );
+        ime->pImeInquire = (void *)ImeInquire;
+        ime->pImeDestroy = ImeDestroy;
+        ime->pImeSelect = ImeSelect;
+        ime->pImeConfigure = ImeConfigure;
+        ime->pImeEscape = ImeEscape;
+        ime->pImeSetActiveContext = ImeSetActiveContext;
+        ime->pImeToAsciiEx = (void *)ImeToAsciiEx;
+        ime->pNotifyIME = NotifyIME;
+        ime->pImeRegisterWord = (void *)ImeRegisterWord;
+        ime->pImeUnregisterWord = (void *)ImeUnregisterWord;
+        ime->pImeEnumRegisterWord = (void *)ImeEnumRegisterWord;
+        ime->pImeSetCompositionString = ImeSetCompositionString;
+        ime->pImeConversionList = (void *)ImeConversionList;
+        ime->pImeProcessKey = (void *)ImeProcessKey;
+        ime->pImeGetRegisterWordStyle = (void *)ImeGetRegisterWordStyle;
+        ime->pImeGetImeMenuItems = (void *)ImeGetImeMenuItems;
     }
-
+    else
+    {
 #define LOAD_FUNCPTR( f )                                                \
-    if (!(ime->p##f = (void *)GetProcAddress( ime->module, #f )) &&      \
-        !(ime->p##f = use_default_ime ? (void *)f : NULL))               \
-    {                                                                    \
-        LeaveCriticalSection( &ime_cs );                                 \
-        WARN( "Can't find function %s in HKL %p IME\n", #f, hkl );       \
-        goto failed;                                                     \
-    }
-    LOAD_FUNCPTR( ImeInquire );
-    LOAD_FUNCPTR( ImeDestroy );
-    LOAD_FUNCPTR( ImeSelect );
-    LOAD_FUNCPTR( ImeConfigure );
-    LOAD_FUNCPTR( ImeEscape );
-    LOAD_FUNCPTR( ImeSetActiveContext );
-    LOAD_FUNCPTR( ImeToAsciiEx );
-    LOAD_FUNCPTR( NotifyIME );
-    LOAD_FUNCPTR( ImeRegisterWord );
-    LOAD_FUNCPTR( ImeUnregisterWord );
-    LOAD_FUNCPTR( ImeEnumRegisterWord );
-    LOAD_FUNCPTR( ImeSetCompositionString );
-    LOAD_FUNCPTR( ImeConversionList );
-    LOAD_FUNCPTR( ImeProcessKey );
-    LOAD_FUNCPTR( ImeGetRegisterWordStyle );
-    LOAD_FUNCPTR( ImeGetImeMenuItems );
+        if (!(ime->p##f = (void *)GetProcAddress( ime->module, #f )))    \
+        {                                                                \
+            WARN( "Can't find function %s in HKL %p IME\n", #f, hkl );   \
+            goto failed;                                                 \
+        }
+
+        LOAD_FUNCPTR( ImeInquire );
+        LOAD_FUNCPTR( ImeDestroy );
+        LOAD_FUNCPTR( ImeSelect );
+        LOAD_FUNCPTR( ImeConfigure );
+        LOAD_FUNCPTR( ImeEscape );
+        LOAD_FUNCPTR( ImeSetActiveContext );
+        LOAD_FUNCPTR( ImeToAsciiEx );
+        LOAD_FUNCPTR( NotifyIME );
+        LOAD_FUNCPTR( ImeRegisterWord );
+        LOAD_FUNCPTR( ImeUnregisterWord );
+        LOAD_FUNCPTR( ImeEnumRegisterWord );
+        LOAD_FUNCPTR( ImeSetCompositionString );
+        LOAD_FUNCPTR( ImeConversionList );
+        LOAD_FUNCPTR( ImeProcessKey );
+        LOAD_FUNCPTR( ImeGetRegisterWordStyle );
+        LOAD_FUNCPTR( ImeGetImeMenuItems );
 #undef LOAD_FUNCPTR
+    }
 
     ime->hkl = hkl;
-    if (!ime->pImeInquire( &ime->info, buffer, 0 ))
-    {
-        LeaveCriticalSection( &ime_cs );
-        goto failed;
-    }
+    if (!ime->pImeInquire( &ime->info, buffer, 0 )) goto failed;
 
     if (ime_is_unicode( ime )) lstrcpynW( ime->ui_class, buffer, ARRAY_SIZE(ime->ui_class) );
     else MultiByteToWideChar( CP_ACP, 0, (char *)buffer, -1, ime->ui_class, ARRAY_SIZE(ime->ui_class) );
@@ -558,6 +546,8 @@ BOOL WINAPI ImmLoadIME( HKL hkl )
     return TRUE;
 
 failed:
+    LeaveCriticalSection( &ime_cs );
+
     if (ime->module) FreeLibrary( ime->module );
     free( ime );
     return FALSE;
