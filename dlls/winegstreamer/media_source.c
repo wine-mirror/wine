@@ -947,7 +947,7 @@ static HRESULT media_stream_init_desc(struct media_stream *stream)
 
                 if (FAILED(hr = MFCreateMediaType(&iyuv_type)))
                     goto done;
-                if (FAILED(hr = IMFMediaType_CopyAllItems(iyuv_type, (IMFAttributes *)iyuv_type)))
+                if (FAILED(hr = IMFMediaType_CopyAllItems(new_type, (IMFAttributes *)iyuv_type)))
                     goto done;
                 if (FAILED(hr = IMFMediaType_SetGUID(iyuv_type, &MF_MT_SUBTYPE, &MFVideoFormat_IYUV)))
                     goto done;
