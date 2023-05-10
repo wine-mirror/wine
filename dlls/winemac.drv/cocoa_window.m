@@ -469,6 +469,20 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
 @synthesize everHadGLContext = _everHadGLContext;
 
+    - (instancetype) initWithFrame:(NSRect)frame
+    {
+        self = [super initWithFrame:frame];
+        if (self)
+        {
+            [self setWantsLayer:YES];
+            [self layer].minificationFilter = retina_on ? kCAFilterLinear : kCAFilterNearest;
+            [self layer].magnificationFilter = retina_on ? kCAFilterLinear : kCAFilterNearest;
+            [self layer].contentsScale = retina_on ? 2.0 : 1.0;
+            [self setAutoresizesSubviews:NO];
+        }
+        return self;
+    }
+
     - (void) dealloc
     {
         [markedText release];
@@ -1006,11 +1020,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         contentView = [[[WineContentView alloc] initWithFrame:NSZeroRect] autorelease];
         if (!contentView)
             return nil;
-        [contentView setWantsLayer:YES];
-        [contentView layer].minificationFilter = retina_on ? kCAFilterLinear : kCAFilterNearest;
-        [contentView layer].magnificationFilter = retina_on ? kCAFilterLinear : kCAFilterNearest;
-        [contentView layer].contentsScale = retina_on ? 2.0 : 1.0;
-        [contentView setAutoresizesSubviews:NO];
 
         /* We use tracking areas in addition to setAcceptsMouseMovedEvents:YES
            because they give us mouse moves in the background. */
@@ -3600,11 +3609,6 @@ macdrv_view macdrv_create_view(CGRect rect)
         NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
 
         view = [[WineContentView alloc] initWithFrame:NSRectFromCGRect(cgrect_mac_from_win(rect))];
-        [view setWantsLayer:YES];
-        [view layer].minificationFilter = retina_on ? kCAFilterLinear : kCAFilterNearest;
-        [view layer].magnificationFilter = retina_on ? kCAFilterLinear : kCAFilterNearest;
-        [view layer].contentsScale = retina_on ? 2.0 : 1.0;
-        [view setAutoresizesSubviews:NO];
         [view setAutoresizingMask:NSViewNotSizable];
         [view setHidden:YES];
         [view setWantsBestResolutionOpenGLSurface:retina_on];
