@@ -26,7 +26,6 @@ enum macdrv_funcs
     unix_dnd_have_format,
     unix_dnd_release,
     unix_dnd_retain,
-    unix_ime_get_text_input,
     unix_init,
     unix_notify_icon,
     unix_quit_result,

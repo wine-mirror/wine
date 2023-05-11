@@ -205,10 +205,12 @@ static void macdrv_sent_text_input(const macdrv_event *event)
 
 
 /***********************************************************************
- *              macdrv_ime_get_text_input
+ *              ImeToAsciiEx (MACDRV.@)
  */
-NTSTATUS macdrv_ime_get_text_input(void *arg)
+UINT macdrv_ImeToAsciiEx(UINT vkey, UINT vsc, const BYTE *state, COMPOSITIONSTRING *compstr, HIMC himc)
 {
+    TRACE_(imm)("vkey %#x, vsc %#x, state %p, compstr %p, himc %p\n", vkey, vsc, state, compstr, himc);
+
     if (ime_update.result_params)
     {
         macdrv_client_func(client_func_ime_set_text, ime_update.result_params, ime_update.result_size);

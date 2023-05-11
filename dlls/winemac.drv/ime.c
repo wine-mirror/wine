@@ -483,26 +483,6 @@ static void IME_AddToSelected(HIMC hIMC)
     hSelectedFrom[hSelectedCount - 1] = hIMC;
 }
 
-static void UpdateDataInDefaultIMEWindow(INPUTCONTEXT *lpIMC, HWND hwnd, BOOL showable)
-{
-    LPCOMPOSITIONSTRING compstr;
-
-    if (lpIMC->hCompStr)
-        compstr = ImmLockIMCC(lpIMC->hCompStr);
-    else
-        compstr = NULL;
-
-    if (compstr == NULL || compstr->dwCompStrLen == 0)
-        ShowWindow(hwnd, SW_HIDE);
-    else if (showable)
-        ShowWindow(hwnd, SW_SHOWNOACTIVATE);
-
-    RedrawWindow(hwnd, NULL, NULL, RDW_ERASENOW | RDW_INVALIDATE);
-
-    if (compstr != NULL)
-        ImmUnlockIMCC(lpIMC->hCompStr);
-}
-
 BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
 {
     LPINPUTCONTEXT lpIMC;
@@ -542,25 +522,6 @@ BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
     }
 
     return TRUE;
-}
-
-UINT WINAPI ImeToAsciiEx(UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
-                         TRANSMSGLIST *lpdwTransKey, UINT fuState, HIMC hIMC)
-{
-    LPINPUTCONTEXT lpIMC;
-
-    TRACE("uVKey 0x%04x uScanCode 0x%04x fuState %u hIMC %p\n", uVKey, uScanCode, fuState, hIMC);
-
-    /* trigger the pending client_func_ime_set_text call */
-    MACDRV_CALL(ime_get_text_input, NULL);
-
-    if ((lpIMC = LockRealIMC(hIMC)))
-    {
-        HWND hwnd = input_context_get_ui_hwnd( lpIMC );
-        UpdateDataInDefaultIMEWindow( lpIMC, hwnd, FALSE );
-        UnlockRealIMC(hIMC);
-    }
-    return 0;
 }
 
 static BOOL IME_SetCompositionString(void* hIMC, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, DWORD cursor_pos, BOOL cursor_valid)
