@@ -278,6 +278,7 @@ void check_attributes_(const char *file, int line, IMFAttributes *attributes,
         todo_wine_if(desc[i].todo_value)
         ok_(file, line)(ret == 0, "%s mismatch, type %u, value %s\n",
                 debugstr_a(desc[i].name), value.vt, buffer);
+        PropVariantClear(&value);
     }
 }
 
