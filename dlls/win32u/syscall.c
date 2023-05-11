@@ -339,21 +339,3 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     init,
     callbacks_init,
 };
-
-#ifdef _WIN64
-
-WINE_DEFAULT_DEBUG_CHANNEL(win32u);
-
-static NTSTATUS wow64_init( void *args )
-{
-    FIXME( "\n" );
-    return STATUS_NOT_SUPPORTED;
-}
-
-const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
-{
-    init,
-    wow64_init,
-};
-
-#endif /* _WIN64 */
