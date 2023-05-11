@@ -378,17 +378,6 @@ UINT WINAPI GetSystemDirectoryA( LPSTR path, UINT count )
 
 
 /***********************************************************************
- *           Wow64EnableWow64FsRedirection   (KERNEL32.@)
- *
- * Microsoft C++ Redistributable installers are depending on all %eax bits being set.
- */
-DWORD /*BOOLEAN*/ WINAPI KERNEL32_Wow64EnableWow64FsRedirection( BOOLEAN enable )
-{
-    return set_ntstatus( RtlWow64EnableFsRedirection( enable ));
-}
-
-
-/***********************************************************************
  *           wine_get_unix_file_name (KERNEL32.@) Not a Windows API
  *
  * Return the full Unix file name for a given path.

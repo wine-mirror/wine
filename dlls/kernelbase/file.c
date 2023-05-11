@@ -2859,6 +2859,17 @@ BOOL WINAPI DECLSPEC_HOTPATCH Wow64DisableWow64FsRedirection( PVOID *old_value )
 
 
 /***********************************************************************
+ *	Wow64EnableWow64FsRedirection   (kernelbase.@)
+ *
+ * Microsoft C++ Redistributable installers are depending on all %eax bits being set.
+ */
+DWORD /*BOOLEAN*/ WINAPI kernelbase_Wow64EnableWow64FsRedirection( BOOLEAN enable )
+{
+    return set_ntstatus( RtlWow64EnableFsRedirection( enable ));
+}
+
+
+/***********************************************************************
  *	Wow64RevertWow64FsRedirection   (kernelbase.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH Wow64RevertWow64FsRedirection( PVOID old_value )
