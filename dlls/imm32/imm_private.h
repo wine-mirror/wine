@@ -19,6 +19,8 @@
 #include <stdarg.h>
 #include <stddef.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

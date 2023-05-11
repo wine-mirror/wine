@@ -457,9 +457,8 @@ BOOL WINAPI ImeProcessKey( HIMC himc, UINT vkey, LPARAM lparam, BYTE *state )
 
 UINT WINAPI ImeToAsciiEx( UINT vkey, UINT vsc, BYTE *state, TRANSMSGLIST *msgs, UINT flags, HIMC himc )
 {
-    struct ime_driver_call_params params = {.himc = himc, .state = state};
     COMPOSITIONSTRING *compstr;
-    UINT count = 0;
+    UINT size, count = 0;
     INPUTCONTEXT *ctx;
     NTSTATUS status;
 
@@ -468,10 +467,23 @@ UINT WINAPI ImeToAsciiEx( UINT vkey, UINT vsc, BYTE *state, TRANSMSGLIST *msgs, 
 
     if (!(ctx = ImmLockIMC( himc ))) return 0;
     if (!(compstr = ImmLockIMCC( ctx->hCompStr ))) goto done;
+    size = compstr->dwSize;
 
-    params.compstr = compstr;
-    status = NtUserMessageCall( ctx->hWnd, WINE_IME_TO_ASCII_EX, vkey, vsc, &params,
-                                NtUserImeDriverCall, FALSE );
+    do
+    {
+        struct ime_driver_call_params params = {.himc = himc, .state = state};
+        HIMCC himcc;
+
+        ImmUnlockIMCC( ctx->hCompStr );
+        if (!(himcc = ImmReSizeIMCC( ctx->hCompStr, size ))) goto done;
+        if (!(compstr = ImmLockIMCC( (ctx->hCompStr = himcc) ))) goto done;
+
+        params.compstr = compstr;
+        status = NtUserMessageCall( ctx->hWnd, WINE_IME_TO_ASCII_EX, vkey, vsc, &params,
+                                    NtUserImeDriverCall, FALSE );
+        size = compstr->dwSize;
+    } while (status == STATUS_BUFFER_TOO_SMALL);
+
     if (status) WARN( "WINE_IME_TO_ASCII_EX returned status %#lx\n", status );
 
     ImmUnlockIMCC( ctx->hCompStr );
