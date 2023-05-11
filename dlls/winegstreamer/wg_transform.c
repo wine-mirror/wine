@@ -134,7 +134,10 @@ static gboolean transform_sink_query_cb(GstPad *pad, GstObject *parent, GstQuery
                     "padding-left", G_TYPE_UINT, align.padding_left,
                     "padding-right", G_TYPE_UINT, align.padding_right,
                     NULL)))
+            {
                 gst_query_add_allocation_meta(query, GST_VIDEO_META_API_TYPE, params);
+                gst_structure_free(params);
+            }
 
             if (!(config = gst_buffer_pool_get_config(pool)))
                 GST_ERROR("Failed to get pool %p config.", pool);
