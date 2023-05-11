@@ -2167,6 +2167,62 @@ static NTSTATUS decommit_pages( struct file_view *view, size_t start, size_t siz
 
 
 /***********************************************************************
+ *           free_pages
+ *
+ * Free some pages of a given view.
+ * virtual_mutex must be held by caller.
+ */
+static NTSTATUS free_pages( struct file_view *view, char *base, size_t size )
+{
+    if (size == view->size)
+    {
+        assert( base == view->base );
+        delete_view( view );
+        return STATUS_SUCCESS;
+    }
+    if (view->base != base && base + size != (char *)view->base + view->size)
+    {
+        struct file_view *new_view = alloc_view();
+
+        if (!new_view)
+        {
+            ERR( "out of memory for %p-%p\n", base, base + size );
+            return STATUS_NO_MEMORY;
+        }
+        new_view->base    = base + size;
+        new_view->size    = (char *)view->base + view->size - (char *)new_view->base;
+        new_view->protect = view->protect;
+
+        unregister_view( view );
+        view->size = base - (char *)view->base;
+        register_view( view );
+        register_view( new_view );
+
+        VIRTUAL_DEBUG_DUMP_VIEW( view );
+        VIRTUAL_DEBUG_DUMP_VIEW( new_view );
+    }
+    else
+    {
+        unregister_view( view );
+        if (view->base == base)
+        {
+            view->base = base + size;
+            view->size -= size;
+        }
+        else view->size = base - (char *)view->base;
+
+        register_view( view );
+        VIRTUAL_DEBUG_DUMP_VIEW( view );
+    }
+
+    set_page_vprot( base, size, 0 );
+    if (arm64ec_map) clear_arm64ec_range( base, size );
+    unmap_area( base, size );
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
  *           allocate_dos_memory
  *
  * Allocate the DOS memory range.
@@ -4260,85 +4316,21 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
     }
     else if (!(view = find_view( base, 0 ))) status = STATUS_MEMORY_NOT_ALLOCATED;
     else if (!is_view_valloc( view )) status = STATUS_INVALID_PARAMETER;
+    else if (!size && base != view->base) status = STATUS_FREE_VM_NOT_AT_BASE;
+    else if ((char *)view->base + view->size - base < size) status = STATUS_UNABLE_TO_FREE_VM;
+    else if (type == MEM_DECOMMIT) status = decommit_pages( view, base - (char *)view->base, size );
     else if (type == MEM_RELEASE)
     {
-        /* Free the pages */
-
-        if (size && (char *)view->base + view->size - base < size) status = STATUS_UNABLE_TO_FREE_VM;
-        else if (!size && base != view->base) status = STATUS_FREE_VM_NOT_AT_BASE;
-        else
-        {
-            if (!size) size = view->size;
-
-            if (size == view->size)
-            {
-                assert( base == view->base );
-                delete_view( view );
-            }
-            else
-            {
-                struct file_view *new_view = NULL;
-
-                if (view->base != base && base + size != (char *)view->base + view->size
-                    && !(new_view = alloc_view()))
-                {
-                    ERR( "out of memory for %p-%p\n", base, (char *)base + size );
-                    return STATUS_NO_MEMORY;
-                }
-                unregister_view( view );
-
-                if (new_view)
-                {
-                    new_view->base    = base + size;
-                    new_view->size    = (char *)view->base + view->size - (char *)new_view->base;
-                    new_view->protect = view->protect;
-
-                    view->size = base - (char *)view->base;
-                    register_view( view );
-                    register_view( new_view );
-
-                    VIRTUAL_DEBUG_DUMP_VIEW( view );
-                    VIRTUAL_DEBUG_DUMP_VIEW( new_view );
-                }
-                else
-                {
-                    if (view->base == base)
-                    {
-                        view->base = base + size;
-                        view->size -= size;
-                    }
-                    else
-                    {
-                        view->size = base - (char *)view->base;
-                    }
-                    register_view( view );
-                    VIRTUAL_DEBUG_DUMP_VIEW( view );
-                }
-
-                set_page_vprot( base, size, 0 );
-                unmap_area( base, size );
-            }
-            *addr_ptr = base;
-            *size_ptr = size;
-        }
+        if (!size) size = view->size;
+        status = free_pages( view, base, size );
     }
-    else if (type == MEM_DECOMMIT)
+    else status = STATUS_INVALID_PARAMETER;
+
+    if (status == STATUS_SUCCESS)
     {
-        if (!size && base != view->base) status = STATUS_FREE_VM_NOT_AT_BASE;
-        else if (base - (char *)view->base + size > view->size) status = STATUS_UNABLE_TO_FREE_VM;
-        else status = decommit_pages( view, base - (char *)view->base, size );
-        if (status == STATUS_SUCCESS)
-        {
-            *addr_ptr = base;
-            *size_ptr = size;
-        }
+        *addr_ptr = base;
+        *size_ptr = size;
     }
-    else
-    {
-        WARN("called with wrong free type flags (%08x) !\n", (int)type);
-        status = STATUS_INVALID_PARAMETER;
-    }
-
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
     return status;
 }
