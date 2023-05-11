@@ -36,6 +36,7 @@ WINE_DECLARE_DEBUG_CHANNEL(imm);
 
 struct ime_update
 {
+    DWORD cursor_pos;
     WCHAR *comp_str;
     WCHAR *result_str;
     struct ime_set_text_params *comp_params;
@@ -199,6 +200,7 @@ static void macdrv_im_set_text(const macdrv_event *event)
         ime_update.comp_params = params;
         ime_update.comp_size = size;
         ime_update.comp_str = params->text;
+        ime_update.cursor_pos = event->im_set_text.cursor_pos;
     }
 }
 
@@ -219,6 +221,7 @@ UINT macdrv_ImeToAsciiEx(UINT vkey, UINT vsc, const BYTE *state, COMPOSITIONSTRI
 {
     UINT needed = sizeof(COMPOSITIONSTRING), comp_len, result_len;
     struct ime_update *update = &ime_update;
+    void *dst;
 
     TRACE_(imm)("vkey %#x, vsc %#x, state %p, compstr %p, himc %p\n", vkey, vsc, state, compstr, himc);
 
@@ -239,6 +242,55 @@ UINT macdrv_ImeToAsciiEx(UINT vkey, UINT vsc, const BYTE *state, COMPOSITIONSTRI
         needed += 2 * sizeof(DWORD); /* GCS_RESULTCLAUSE */
     }
 
+    if (compstr->dwSize < needed)
+    {
+        compstr->dwSize = needed;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+
+    memset( compstr, 0, sizeof(*compstr) );
+    compstr->dwSize = sizeof(*compstr);
+
+    if (update->comp_str)
+    {
+        compstr->dwCursorPos = update->cursor_pos;
+
+        compstr->dwCompStrLen = comp_len;
+        compstr->dwCompStrOffset = compstr->dwSize;
+        dst = (BYTE *)compstr + compstr->dwCompStrOffset;
+        memcpy(dst, update->comp_str, compstr->dwCompStrLen * sizeof(WCHAR));
+        compstr->dwSize += compstr->dwCompStrLen * sizeof(WCHAR);
+
+        compstr->dwCompClauseLen = 2 * sizeof(DWORD);
+        compstr->dwCompClauseOffset = compstr->dwSize;
+        dst = (BYTE *)compstr + compstr->dwCompClauseOffset;
+        *((DWORD *)dst + 0) = 0;
+        *((DWORD *)dst + 1) = compstr->dwCompStrLen;
+        compstr->dwSize += compstr->dwCompClauseLen;
+
+        compstr->dwCompAttrLen = compstr->dwCompStrLen;
+        compstr->dwCompAttrOffset = compstr->dwSize;
+        dst = (BYTE *)compstr + compstr->dwCompAttrOffset;
+        memset(dst, ATTR_INPUT, compstr->dwCompAttrLen);
+        compstr->dwSize += compstr->dwCompAttrLen;
+    }
+
+    if (update->result_str)
+    {
+        compstr->dwResultStrLen = result_len;
+        compstr->dwResultStrOffset = compstr->dwSize;
+        dst = (BYTE *)compstr + compstr->dwResultStrOffset;
+        memcpy(dst, update->result_str, compstr->dwResultStrLen * sizeof(WCHAR));
+        compstr->dwSize += compstr->dwResultStrLen * sizeof(WCHAR);
+
+        compstr->dwResultClauseLen = 2 * sizeof(DWORD);
+        compstr->dwResultClauseOffset = compstr->dwSize;
+        dst = (BYTE *)compstr + compstr->dwResultClauseOffset;
+        *((DWORD *)dst + 0) = 0;
+        *((DWORD *)dst + 1) = compstr->dwResultStrLen;
+        compstr->dwSize += compstr->dwResultClauseLen;
+    }
+
     if (ime_update.result_params)
     {
         macdrv_client_func(client_func_ime_set_text, ime_update.result_params, ime_update.result_size);
@@ -252,12 +304,6 @@ UINT macdrv_ImeToAsciiEx(UINT vkey, UINT vsc, const BYTE *state, COMPOSITIONSTRI
         free(ime_update.comp_params);
         ime_update.comp_params = NULL;
         ime_update.comp_str = NULL;
-    }
-
-    if (compstr->dwSize < needed)
-    {
-        compstr->dwSize = needed;
-        return STATUS_BUFFER_TOO_SMALL;
     }
 
     return 0;
