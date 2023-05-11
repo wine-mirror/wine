@@ -48,10 +48,172 @@ void set_stream_volumes(struct audio_client *This)
     WINE_UNIX_CALL(set_volumes, &params);
 }
 
+static inline struct audio_client *impl_from_IAudioClock(IAudioClock *iface)
+{
+    return CONTAINING_RECORD(iface, struct audio_client, IAudioClock_iface);
+}
+
+static inline struct audio_client *impl_from_IAudioClock2(IAudioClock2 *iface)
+{
+    return CONTAINING_RECORD(iface, struct audio_client, IAudioClock2_iface);
+}
+
 static inline struct audio_client *impl_from_IAudioStreamVolume(IAudioStreamVolume *iface)
 {
     return CONTAINING_RECORD(iface, struct audio_client, IAudioStreamVolume_iface);
 }
+
+static HRESULT WINAPI clock_QueryInterface(IAudioClock *iface, REFIID riid, void **ppv)
+{
+    struct audio_client *This = impl_from_IAudioClock(iface);
+
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IAudioClock))
+        *ppv = iface;
+    else if (IsEqualIID(riid, &IID_IAudioClock2))
+        *ppv = &This->IAudioClock2_iface;
+    else if (IsEqualIID(riid, &IID_IMarshal)) {
+        return IUnknown_QueryInterface(This->marshal, riid, ppv);
+    } else {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*ppv);
+
+    return S_OK;
+}
+
+static ULONG WINAPI clock_AddRef(IAudioClock *iface)
+{
+    struct audio_client *This = impl_from_IAudioClock(iface);
+    return IAudioClient3_AddRef(&This->IAudioClient3_iface);
+}
+
+static ULONG WINAPI clock_Release(IAudioClock *iface)
+{
+    struct audio_client *This = impl_from_IAudioClock(iface);
+    return IAudioClient3_Release(&This->IAudioClient3_iface);
+}
+
+static HRESULT WINAPI clock_GetFrequency(IAudioClock *iface, UINT64 *freq)
+{
+    struct audio_client *This = impl_from_IAudioClock(iface);
+    struct get_frequency_params params;
+
+    TRACE("(%p)->(%p)\n", This, freq);
+
+    if (!This->stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
+
+    params.stream = This->stream;
+    params.freq   = freq;
+
+    WINE_UNIX_CALL(get_frequency, &params);
+
+    return params.result;
+}
+
+static HRESULT WINAPI clock_GetPosition(IAudioClock *iface, UINT64 *pos, UINT64 *qpctime)
+{
+    struct audio_client *This = impl_from_IAudioClock(iface);
+    struct get_position_params params;
+
+    TRACE("(%p)->(%p, %p)\n", This, pos, qpctime);
+
+    if (!pos)
+        return E_POINTER;
+
+    if (!This->stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
+
+    params.stream  = This->stream;
+    params.device  = FALSE;
+    params.pos     = pos;
+    params.qpctime = qpctime;
+
+    WINE_UNIX_CALL(get_position, &params);
+
+    return params.result;
+}
+
+static HRESULT WINAPI clock_GetCharacteristics(IAudioClock *iface, DWORD *chars)
+{
+    struct audio_client *This = impl_from_IAudioClock(iface);
+
+    TRACE("(%p)->(%p)\n", This, chars);
+
+    if (!chars)
+        return E_POINTER;
+
+    *chars = AUDIOCLOCK_CHARACTERISTIC_FIXED_FREQ;
+
+    return S_OK;
+}
+
+const IAudioClockVtbl AudioClock_Vtbl =
+{
+    clock_QueryInterface,
+    clock_AddRef,
+    clock_Release,
+    clock_GetFrequency,
+    clock_GetPosition,
+    clock_GetCharacteristics
+};
+
+static HRESULT WINAPI clock2_QueryInterface(IAudioClock2 *iface, REFIID riid, void **ppv)
+{
+    struct audio_client *This = impl_from_IAudioClock2(iface);
+    return IAudioClock_QueryInterface(&This->IAudioClock_iface, riid, ppv);
+}
+
+static ULONG WINAPI clock2_AddRef(IAudioClock2 *iface)
+{
+    struct audio_client *This = impl_from_IAudioClock2(iface);
+    return IAudioClient3_AddRef(&This->IAudioClient3_iface);
+}
+
+static ULONG WINAPI clock2_Release(IAudioClock2 *iface)
+{
+    struct audio_client *This = impl_from_IAudioClock2(iface);
+    return IAudioClient3_Release(&This->IAudioClient3_iface);
+}
+
+static HRESULT WINAPI clock2_GetDevicePosition(IAudioClock2 *iface, UINT64 *pos, UINT64 *qpctime)
+{
+    struct audio_client *This = impl_from_IAudioClock2(iface);
+    struct get_position_params params;
+
+    TRACE("(%p)->(%p, %p)\n", This, pos, qpctime);
+
+    if (!pos)
+        return E_POINTER;
+
+    if (!This->stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
+
+    params.stream  = This->stream;
+    params.device  = TRUE;
+    params.pos     = pos;
+    params.qpctime = qpctime;
+
+    WINE_UNIX_CALL(get_position, &params);
+
+    return params.result;
+}
+
+const IAudioClock2Vtbl AudioClock2_Vtbl =
+{
+    clock2_QueryInterface,
+    clock2_AddRef,
+    clock2_Release,
+    clock2_GetDevicePosition
+};
 
 static HRESULT WINAPI streamvolume_QueryInterface(IAudioStreamVolume *iface, REFIID riid,
                                                   void **ppv)
