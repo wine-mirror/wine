@@ -6504,7 +6504,10 @@ static void test_video_processor(void)
                 || IsEqualGUID(&expect_available_inputs[i], &MFAudioFormat_MPEG)
                 || IsEqualGUID(&expect_available_inputs[i], &MFVideoFormat_420O)
                 || IsEqualGUID(&expect_available_inputs[i], &MFVideoFormat_A16B16G16R16F) /* w1064v1507 */)
+        {
+            IMFMediaType_Release(media_type);
             continue;
+        }
 
         winetest_push_context("in %lu", i);
         ok(hr == S_OK, "GetInputAvailableType returned %#lx\n", hr);
