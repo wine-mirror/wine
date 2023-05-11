@@ -42,9 +42,6 @@ static const WORD current_machine = IMAGE_FILE_MACHINE_ARM64;
 #endif
 extern WORD native_machine DECLSPEC_HIDDEN;
 
-extern const unixlib_entry_t __wine_unix_call_funcs[] DECLSPEC_HIDDEN;
-extern const unixlib_entry_t __wine_unix_call_wow64_funcs[] DECLSPEC_HIDDEN;
-
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
 static inline BOOL is_machine_64bit( WORD machine )

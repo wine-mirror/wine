@@ -1037,77 +1037,6 @@ static const void *get_module_data_dir( HMODULE module, ULONG dir, ULONG *size )
     return get_rva( module, data->VirtualAddress );
 }
 
-static void load_ntdll_functions( HMODULE module )
-{
-    void **p__wine_unix_call_dispatcher;
-    unixlib_handle_t *p__wine_unixlib_handle;
-
-    ntdll_exports = get_module_data_dir( module, IMAGE_FILE_EXPORT_DIRECTORY, NULL );
-    assert( ntdll_exports );
-
-#define GET_FUNC(name) \
-    if (!(p##name = (void *)find_named_export( module, ntdll_exports, #name ))) \
-        ERR( "%s not found\n", #name )
-
-    GET_FUNC( DbgUiRemoteBreakin );
-    GET_FUNC( KiRaiseUserExceptionDispatcher );
-    GET_FUNC( KiUserExceptionDispatcher );
-    GET_FUNC( KiUserApcDispatcher );
-    GET_FUNC( KiUserCallbackDispatcher );
-    GET_FUNC( LdrInitializeThunk );
-    GET_FUNC( LdrSystemDllInitBlock );
-    GET_FUNC( RtlUserThreadStart );
-    GET_FUNC( __wine_ctrl_routine );
-    GET_FUNC( __wine_syscall_dispatcher );
-    GET_FUNC( __wine_unix_call_dispatcher );
-    GET_FUNC( __wine_unixlib_handle );
-    *p__wine_unix_call_dispatcher = __wine_unix_call_dispatcher;
-    *p__wine_unixlib_handle = (UINT_PTR)__wine_unix_call_funcs;
-#ifdef __aarch64__
-    {
-        void **p__wine_current_teb;
-        GET_FUNC( __wine_current_teb );
-        *p__wine_current_teb = NtCurrentTeb;
-    }
-#endif
-#undef GET_FUNC
-}
-
-static void load_ntdll_wow64_functions( HMODULE module )
-{
-    const IMAGE_EXPORT_DIRECTORY *exports;
-
-    exports = get_module_data_dir( module, IMAGE_FILE_EXPORT_DIRECTORY, NULL );
-    assert( exports );
-
-    pLdrSystemDllInitBlock->ntdll_handle = (ULONG_PTR)module;
-
-#define GET_FUNC(name) pLdrSystemDllInitBlock->p##name = find_named_export( module, exports, #name )
-    GET_FUNC( KiUserApcDispatcher );
-    GET_FUNC( KiUserCallbackDispatcher );
-    GET_FUNC( KiUserExceptionDispatcher );
-    GET_FUNC( LdrInitializeThunk );
-    GET_FUNC( LdrSystemDllInitBlock );
-    GET_FUNC( RtlUserThreadStart );
-    GET_FUNC( RtlpFreezeTimeBias );
-    GET_FUNC( RtlpQueryProcessDebugInformationRemote );
-#undef GET_FUNC
-
-    p__wine_ctrl_routine = (void *)find_named_export( module, exports, "__wine_ctrl_routine" );
-
-#ifdef _WIN64
-    {
-        unixlib_handle_t *p__wine_unixlib_handle = (void *)find_named_export( module, exports,
-                                                                              "__wine_unixlib_handle" );
-        *p__wine_unixlib_handle = (UINT_PTR)__wine_unix_call_wow64_funcs;
-    }
-#endif
-
-    /* also set the 32-bit LdrSystemDllInitBlock */
-    memcpy( (void *)(ULONG_PTR)pLdrSystemDllInitBlock->pLdrSystemDllInitBlock,
-            pLdrSystemDllInitBlock, sizeof(*pLdrSystemDllInitBlock) );
-}
-
 /* reimplementation of LdrProcessRelocationBlock */
 static const IMAGE_BASE_RELOCATION *process_relocation_block( void *module, const IMAGE_BASE_RELOCATION *rel,
                                                               INT_PTR delta )
@@ -1341,6 +1270,39 @@ static NTSTATUS load_so_dll( void *args )
     free( redir.Buffer );
     return status;
 }
+
+
+static const unixlib_entry_t unix_call_funcs[] =
+{
+    load_so_dll,
+    unwind_builtin_dll,
+    unixcall_wine_dbg_write,
+    unixcall_wine_server_call,
+    unixcall_wine_server_fd_to_handle,
+    unixcall_wine_server_handle_to_fd,
+    unixcall_wine_spawnvp,
+    system_time_precise,
+};
+
+
+#ifdef _WIN64
+
+static NTSTATUS wow64_load_so_dll( void *args ) { return STATUS_INVALID_IMAGE_FORMAT; }
+static NTSTATUS wow64_unwind_builtin_dll( void *args ) { return STATUS_UNSUCCESSFUL; }
+
+const unixlib_entry_t unix_call_wow64_funcs[] =
+{
+    wow64_load_so_dll,
+    wow64_unwind_builtin_dll,
+    wow64_wine_dbg_write,
+    wow64_wine_server_call,
+    wow64_wine_server_fd_to_handle,
+    wow64_wine_server_handle_to_fd,
+    wow64_wine_spawnvp,
+    system_time_precise,
+};
+
+#endif  /* _WIN64 */
 
 
 /* check if the library is the correct architecture */
@@ -1834,6 +1796,85 @@ NTSTATUS load_start_exe( WCHAR **image, void **module )
 
 
 /***********************************************************************
+ *           load_ntdll_functions
+ */
+static void load_ntdll_functions( HMODULE module )
+{
+    void **p__wine_unix_call_dispatcher;
+    unixlib_handle_t *p__wine_unixlib_handle;
+
+    ntdll_exports = get_module_data_dir( module, IMAGE_FILE_EXPORT_DIRECTORY, NULL );
+    assert( ntdll_exports );
+
+#define GET_FUNC(name) \
+    if (!(p##name = (void *)find_named_export( module, ntdll_exports, #name ))) \
+        ERR( "%s not found\n", #name )
+
+    GET_FUNC( DbgUiRemoteBreakin );
+    GET_FUNC( KiRaiseUserExceptionDispatcher );
+    GET_FUNC( KiUserExceptionDispatcher );
+    GET_FUNC( KiUserApcDispatcher );
+    GET_FUNC( KiUserCallbackDispatcher );
+    GET_FUNC( LdrInitializeThunk );
+    GET_FUNC( LdrSystemDllInitBlock );
+    GET_FUNC( RtlUserThreadStart );
+    GET_FUNC( __wine_ctrl_routine );
+    GET_FUNC( __wine_syscall_dispatcher );
+    GET_FUNC( __wine_unix_call_dispatcher );
+    GET_FUNC( __wine_unixlib_handle );
+    *p__wine_unix_call_dispatcher = __wine_unix_call_dispatcher;
+    *p__wine_unixlib_handle = (UINT_PTR)unix_call_funcs;
+#ifdef __aarch64__
+    {
+        void **p__wine_current_teb;
+        GET_FUNC( __wine_current_teb );
+        *p__wine_current_teb = NtCurrentTeb;
+    }
+#endif
+#undef GET_FUNC
+}
+
+
+/***********************************************************************
+ *           load_ntdll_wow64_functions
+ */
+static void load_ntdll_wow64_functions( HMODULE module )
+{
+    const IMAGE_EXPORT_DIRECTORY *exports;
+
+    exports = get_module_data_dir( module, IMAGE_FILE_EXPORT_DIRECTORY, NULL );
+    assert( exports );
+
+    pLdrSystemDllInitBlock->ntdll_handle = (ULONG_PTR)module;
+
+#define GET_FUNC(name) pLdrSystemDllInitBlock->p##name = find_named_export( module, exports, #name )
+    GET_FUNC( KiUserApcDispatcher );
+    GET_FUNC( KiUserCallbackDispatcher );
+    GET_FUNC( KiUserExceptionDispatcher );
+    GET_FUNC( LdrInitializeThunk );
+    GET_FUNC( LdrSystemDllInitBlock );
+    GET_FUNC( RtlUserThreadStart );
+    GET_FUNC( RtlpFreezeTimeBias );
+    GET_FUNC( RtlpQueryProcessDebugInformationRemote );
+#undef GET_FUNC
+
+    p__wine_ctrl_routine = (void *)find_named_export( module, exports, "__wine_ctrl_routine" );
+
+#ifdef _WIN64
+    {
+        unixlib_handle_t *p__wine_unixlib_handle = (void *)find_named_export( module, exports,
+                                                                              "__wine_unixlib_handle" );
+        *p__wine_unixlib_handle = (UINT_PTR)unix_call_wow64_funcs;
+    }
+#endif
+
+    /* also set the 32-bit LdrSystemDllInitBlock */
+    memcpy( (void *)(ULONG_PTR)pLdrSystemDllInitBlock->pLdrSystemDllInitBlock,
+            pLdrSystemDllInitBlock, sizeof(*pLdrSystemDllInitBlock) );
+}
+
+
+/***********************************************************************
  *           load_ntdll
  */
 static void load_ntdll(void)
@@ -2000,45 +2041,6 @@ static ULONG_PTR get_image_address(void)
 #endif
     return 0;
 }
-
-
-/***********************************************************************
- *           __wine_unix_call_funcs
- */
-const unixlib_entry_t __wine_unix_call_funcs[] =
-{
-    load_so_dll,
-    unwind_builtin_dll,
-    unixcall_wine_dbg_write,
-    unixcall_wine_server_call,
-    unixcall_wine_server_fd_to_handle,
-    unixcall_wine_server_handle_to_fd,
-    unixcall_wine_spawnvp,
-    system_time_precise,
-};
-
-
-#ifdef _WIN64
-
-static NTSTATUS wow64_load_so_dll( void *args ) { return STATUS_INVALID_IMAGE_FORMAT; }
-static NTSTATUS wow64_unwind_builtin_dll( void *args ) { return STATUS_UNSUCCESSFUL; }
-
-/***********************************************************************
- *           __wine_unix_call_wow64_funcs
- */
-const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
-{
-    wow64_load_so_dll,
-    wow64_unwind_builtin_dll,
-    wow64_wine_dbg_write,
-    wow64_wine_server_call,
-    wow64_wine_server_fd_to_handle,
-    wow64_wine_server_handle_to_fd,
-    wow64_wine_spawnvp,
-    system_time_precise,
-};
-
-#endif  /* _WIN64 */
 
 /***********************************************************************
  *           start_main_thread
