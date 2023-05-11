@@ -298,7 +298,7 @@ void wg_sample_queue_destroy(struct wg_sample_queue *queue)
     wg_sample_queue_flush(queue, true);
 
     queue->cs.DebugInfo->Spare[0] = 0;
-    InitializeCriticalSection(&queue->cs);
+    DeleteCriticalSection(&queue->cs);
 
     free(queue);
 }
