@@ -1616,6 +1616,12 @@ static NTSTATUS unix_get_position(void *args)
     struct coreaudio_stream *stream = handle_get_stream(params->stream);
     LARGE_INTEGER stamp, freq;
 
+    if (params->device) {
+        FIXME("Device position reporting not implemented\n");
+        params->result = E_NOTIMPL;
+        return STATUS_SUCCESS;
+    }
+
     OSSpinLockLock(&stream->lock);
 
     *params->pos = stream->written_frames - stream->held_frames;
