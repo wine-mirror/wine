@@ -1937,6 +1937,8 @@ static LRESULT OnCreate( HWND hWnd )
     GetWindowRect(hFontListWnd, &rect);
     height = max(height, rect.bottom - rect.top);
 
+    SendMessageW(hToolBarWnd, TB_SETBUTTONSIZE, 0, MAKELPARAM(height, height));
+
     rbb.cbSize = REBARBANDINFOW_V6_SIZE;
     rbb.fMask = RBBIM_SIZE | RBBIM_CHILDSIZE | RBBIM_CHILD | RBBIM_STYLE | RBBIM_ID;
     rbb.fStyle = RBBS_CHILDEDGE | RBBS_BREAK | RBBS_NOGRIPPER;
@@ -1977,6 +1979,7 @@ static LRESULT OnCreate( HWND hWnd )
          IDC_FORMATBAR, 8, hInstance, IDB_FORMATBAR, NULL, 0, 16, 16, 16, 16, sizeof(TBBUTTON));
 
     SendMessageW(hFormatBarWnd, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_DRAWDDARROWS);
+    SendMessageW(hFormatBarWnd, TB_SETBUTTONSIZE, 0, MAKELPARAM(height, height));
 
     AddButton(hFormatBarWnd, 0, ID_FORMAT_BOLD);
     AddButton(hFormatBarWnd, 1, ID_FORMAT_ITALIC);
