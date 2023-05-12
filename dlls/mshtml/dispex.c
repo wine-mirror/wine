@@ -302,8 +302,10 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
     if(info == data->funcs+data->func_cnt) {
         if(data->func_cnt == data->func_size) {
             info = realloc(data->funcs, data->func_size * 2 * sizeof(func_info_t));
-            if(!info)
+            if(!info) {
+                SysFreeString(name);
                 return;
+            }
             memset(info + data->func_size, 0, data->func_size * sizeof(func_info_t));
             data->funcs = info;
             data->func_size *= 2;
