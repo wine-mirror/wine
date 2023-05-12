@@ -82,8 +82,8 @@ static const IAudioRenderClientVtbl AudioRenderClient_Vtbl;
 static const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl;
 extern const IAudioSessionControl2Vtbl AudioSessionControl2_Vtbl;
 extern const ISimpleAudioVolumeVtbl SimpleAudioVolume_Vtbl;
-static const IAudioClockVtbl AudioClock_Vtbl;
-static const IAudioClock2Vtbl AudioClock2_Vtbl;
+extern const IAudioClockVtbl AudioClock_Vtbl;
+extern const IAudioClock2Vtbl AudioClock2_Vtbl;
 extern const IAudioStreamVolumeVtbl AudioStreamVolume_Vtbl;
 extern const IChannelAudioVolumeVtbl ChannelAudioVolume_Vtbl;
 
@@ -110,21 +110,6 @@ static inline ACImpl *impl_from_IAudioRenderClient(IAudioRenderClient *iface)
 static inline ACImpl *impl_from_IAudioCaptureClient(IAudioCaptureClient *iface)
 {
     return CONTAINING_RECORD(iface, ACImpl, IAudioCaptureClient_iface);
-}
-
-static inline ACImpl *impl_from_IAudioClock(IAudioClock *iface)
-{
-    return CONTAINING_RECORD(iface, ACImpl, IAudioClock_iface);
-}
-
-static inline ACImpl *impl_from_IAudioClock2(IAudioClock2 *iface)
-{
-    return CONTAINING_RECORD(iface, ACImpl, IAudioClock2_iface);
-}
-
-static inline ACImpl *impl_from_IAudioStreamVolume(IAudioStreamVolume *iface)
-{
-    return CONTAINING_RECORD(iface, ACImpl, IAudioStreamVolume_iface);
 }
 
 BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
@@ -1291,138 +1276,6 @@ static const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl =
     AudioCaptureClient_GetBuffer,
     AudioCaptureClient_ReleaseBuffer,
     AudioCaptureClient_GetNextPacketSize
-};
-
-static HRESULT WINAPI AudioClock_QueryInterface(IAudioClock *iface,
-        REFIID riid, void **ppv)
-{
-    ACImpl *This = impl_from_IAudioClock(iface);
-
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
-
-    if(!ppv)
-        return E_POINTER;
-    *ppv = NULL;
-
-    if(IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IAudioClock))
-        *ppv = iface;
-    else if(IsEqualIID(riid, &IID_IAudioClock2))
-        *ppv = &This->IAudioClock2_iface;
-    if(*ppv){
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    WARN("Unknown interface %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI AudioClock_AddRef(IAudioClock *iface)
-{
-    ACImpl *This = impl_from_IAudioClock(iface);
-    return IAudioClient3_AddRef(&This->IAudioClient3_iface);
-}
-
-static ULONG WINAPI AudioClock_Release(IAudioClock *iface)
-{
-    ACImpl *This = impl_from_IAudioClock(iface);
-    return IAudioClient3_Release(&This->IAudioClient3_iface);
-}
-
-static HRESULT WINAPI AudioClock_GetFrequency(IAudioClock *iface, UINT64 *freq)
-{
-    ACImpl *This = impl_from_IAudioClock(iface);
-    struct get_frequency_params params;
-
-    TRACE("(%p)->(%p)\n", This, freq);
-
-    params.stream = This->stream;
-    params.freq = freq;
-    OSS_CALL(get_frequency, &params);
-
-    return params.result;
-}
-
-static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
-        UINT64 *qpctime)
-{
-    ACImpl *This = impl_from_IAudioClock(iface);
-    struct get_position_params params;
-
-    TRACE("(%p)->(%p, %p)\n", This, pos, qpctime);
-
-    if(!pos)
-        return E_POINTER;
-
-    params.stream = This->stream;
-    params.device = FALSE;
-    params.pos = pos;
-    params.qpctime = qpctime;
-    OSS_CALL(get_position, &params);
-
-    return params.result;
-}
-
-static HRESULT WINAPI AudioClock_GetCharacteristics(IAudioClock *iface,
-        DWORD *chars)
-{
-    ACImpl *This = impl_from_IAudioClock(iface);
-
-    TRACE("(%p)->(%p)\n", This, chars);
-
-    if(!chars)
-        return E_POINTER;
-
-    *chars = AUDIOCLOCK_CHARACTERISTIC_FIXED_FREQ;
-
-    return S_OK;
-}
-
-static const IAudioClockVtbl AudioClock_Vtbl =
-{
-    AudioClock_QueryInterface,
-    AudioClock_AddRef,
-    AudioClock_Release,
-    AudioClock_GetFrequency,
-    AudioClock_GetPosition,
-    AudioClock_GetCharacteristics
-};
-
-static HRESULT WINAPI AudioClock2_QueryInterface(IAudioClock2 *iface,
-        REFIID riid, void **ppv)
-{
-    ACImpl *This = impl_from_IAudioClock2(iface);
-    return IAudioClock_QueryInterface(&This->IAudioClock_iface, riid, ppv);
-}
-
-static ULONG WINAPI AudioClock2_AddRef(IAudioClock2 *iface)
-{
-    ACImpl *This = impl_from_IAudioClock2(iface);
-    return IAudioClient3_AddRef(&This->IAudioClient3_iface);
-}
-
-static ULONG WINAPI AudioClock2_Release(IAudioClock2 *iface)
-{
-    ACImpl *This = impl_from_IAudioClock2(iface);
-    return IAudioClient3_Release(&This->IAudioClient3_iface);
-}
-
-static HRESULT WINAPI AudioClock2_GetDevicePosition(IAudioClock2 *iface,
-        UINT64 *pos, UINT64 *qpctime)
-{
-    ACImpl *This = impl_from_IAudioClock2(iface);
-
-    FIXME("(%p)->(%p, %p)\n", This, pos, qpctime);
-
-    return E_NOTIMPL;
-}
-
-static const IAudioClock2Vtbl AudioClock2_Vtbl =
-{
-    AudioClock2_QueryInterface,
-    AudioClock2_AddRef,
-    AudioClock2_Release,
-    AudioClock2_GetDevicePosition
 };
 
 static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client)

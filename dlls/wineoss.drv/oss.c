@@ -1318,6 +1318,12 @@ static NTSTATUS oss_get_position(void *args)
     struct oss_stream *stream = handle_get_stream(params->stream);
     UINT64 *pos = params->pos, *qpctime = params->qpctime;
 
+    if (params->device) {
+        FIXME("Device position reporting not implemented\n");
+        params->result = E_NOTIMPL;
+        return STATUS_SUCCESS;
+    }
+
     oss_lock(stream);
 
     if(stream->flow == eRender){
