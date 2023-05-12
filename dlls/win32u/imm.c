@@ -421,6 +421,19 @@ NTSTATUS WINAPI NtUserBuildHimcList( UINT thread_id, UINT count, HIMC *buffer, U
     return STATUS_SUCCESS;
 }
 
+LRESULT ime_driver_call( HWND hwnd, enum wine_ime_call call, WPARAM wparam, LPARAM lparam,
+                         struct ime_driver_call_params *params )
+{
+    switch (call)
+    {
+    case WINE_IME_PROCESS_KEY:
+        return user_driver->pImeProcessKey( params->himc, wparam, lparam, params->state );
+    default:
+        ERR( "Unknown IME driver call %#x\n", call );
+        return 0;
+    }
+}
+
 /*****************************************************************************
  *           NtUserNotifyIMEStatus (win32u.@)
  */

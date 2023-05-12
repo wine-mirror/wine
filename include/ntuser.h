@@ -305,6 +305,7 @@ enum
     NtUserSpyEnter            = 0x0304,
     NtUserSpyExit             = 0x0305,
     NtUserWinProcResult       = 0x0306,
+    NtUserImeDriverCall       = 0x0307,
 };
 
 /* NtUserThunkedMenuItemInfo codes */
@@ -489,6 +490,19 @@ enum wine_internal_message
 #define IME_INTERNAL_DEACTIVATE 0x18
 #define IME_INTERNAL_HKL_ACTIVATE    0x19
 #define IME_INTERNAL_HKL_DEACTIVATE  0x20
+
+/* builtin IME driver calls */
+enum wine_ime_call
+{
+    WINE_IME_PROCESS_KEY,
+};
+
+/* NtUserImeDriverCall params */
+struct ime_driver_call_params
+{
+    HIMC himc;
+    const BYTE *state;
+};
 
 /* internal IME private */
 typedef struct ime_private

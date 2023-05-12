@@ -229,6 +229,10 @@ BOOL needs_ime_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void register_builtin_classes(void) DECLSPEC_HIDDEN;
 extern void register_desktop_class(void) DECLSPEC_HIDDEN;
 
+/* imm.c */
+extern LRESULT ime_driver_call( HWND hwnd, enum wine_ime_call call, WPARAM wparam, LPARAM lparam,
+                                struct ime_driver_call_params *params ) DECLSPEC_HIDDEN;
+
 /* cursoricon.c */
 HICON alloc_cursoricon_handle( BOOL is_icon ) DECLSPEC_HIDDEN;
 

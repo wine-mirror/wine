@@ -477,13 +477,6 @@ static void IME_AddToSelected(HIMC hIMC)
     hSelectedFrom[hSelectedCount-1] = hIMC;
 }
 
-BOOL WINAPI ImeProcessKey(HIMC hIMC, UINT vKey, LPARAM lKeyData, const LPBYTE lpbKeyState)
-{
-    /* See the comment at the head of this file */
-    TRACE("We do no processing via this route\n");
-    return FALSE;
-}
-
 BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
 {
     LPINPUTCONTEXT lpIMC;

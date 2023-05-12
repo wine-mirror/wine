@@ -288,6 +288,7 @@ struct user_driver_funcs
     void    (*pUnregisterHotKey)(HWND, UINT, UINT);
     SHORT   (*pVkKeyScanEx)(WCHAR, HKL);
     /* IME functions */
+    UINT    (*pImeProcessKey)(HIMC,UINT,UINT,const BYTE*);
     void    (*pNotifyIMEStatus)(HWND,UINT);
     /* cursor/icon functions */
     void    (*pDestroyCursorIcon)(HCURSOR);

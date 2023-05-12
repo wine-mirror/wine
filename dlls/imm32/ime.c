@@ -439,11 +439,20 @@ BOOL WINAPI ImeSetActiveContext( HIMC himc, BOOL flag )
     return TRUE;
 }
 
-BOOL WINAPI ImeProcessKey( HIMC himc, UINT vkey, LPARAM key_data, BYTE *key_state )
+BOOL WINAPI ImeProcessKey( HIMC himc, UINT vkey, LPARAM lparam, BYTE *state )
 {
-    FIXME( "himc %p, vkey %u, key_data %#Ix, key_state %p stub!\n", himc, vkey, key_data, key_state );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    struct ime_driver_call_params params = {.himc = himc, .state = state};
+    INPUTCONTEXT *ctx;
+    LRESULT ret;
+
+    TRACE( "himc %p, vkey %#x, lparam %#Ix, state %p\n", himc, vkey, lparam, state );
+
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
+    ret = NtUserMessageCall( ctx->hWnd, WINE_IME_PROCESS_KEY, vkey, lparam, &params,
+                             NtUserImeDriverCall, FALSE );
+    ImmUnlockIMC( himc );
+
+    return ret;
 }
 
 UINT WINAPI ImeToAsciiEx( UINT vkey, UINT scan_code, BYTE *key_state, TRANSMSGLIST *msgs, UINT state, HIMC himc )
