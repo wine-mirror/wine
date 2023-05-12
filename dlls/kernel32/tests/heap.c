@@ -578,7 +578,6 @@ static void test_HeapCreate(void)
     todo_wine
     ok( entries[0].Region.dwCommittedSize == 0x400 * sizeof(void *),
         "got Region.dwCommittedSize %#lx\n", entries[0].Region.dwCommittedSize );
-    todo_wine
     ok( entries[0].Region.dwUnCommittedSize == 0x10000 - entries[0].Region.dwCommittedSize ||
         entries[0].Region.dwUnCommittedSize == 0x10000 * sizeof(void *) - entries[0].Region.dwCommittedSize /* win7 */,
         "got Region.dwUnCommittedSize %#lx\n", entries[0].Region.dwUnCommittedSize );
@@ -3019,9 +3018,9 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
         expect_size = max( alloc_size, 2 * sizeof(void *) );
         expect_size = ALIGN_BLOCK_SIZE( expect_size + extra_size );
         diff = min( llabs( ptr2 - ptr1 ), llabs( ptr1 - ptr0 ) );
-        todo_wine_if( (!(global_flags & ~FLG_HEAP_ENABLE_FREE_CHECK) && alloc_size < 2 * sizeof(void *)) )
+        todo_wine_if( (!global_flags && alloc_size < 2 * sizeof(void *)) ||
+                      ((heap_flags & HEAP_FREE_CHECKING_ENABLED) && diff >= 0x100000) )
         ok( diff == expect_size, "got diff %#Ix exp %#Ix\n", diff, expect_size );
-
         ok( !memcmp( ptr0 + alloc_size, tail_buf, tail_size ), "missing block tail\n" );
         ok( !memcmp( ptr1 + alloc_size, tail_buf, tail_size ), "missing block tail\n" );
         ok( !memcmp( ptr2 + alloc_size, tail_buf, tail_size ), "missing block tail\n" );
@@ -3661,7 +3660,6 @@ static void test_heap_size( SIZE_T initial_size )
     heap = HeapCreate( HEAP_NO_SERIALIZE, initial_size, 0 );
     get_valloc_info( heap, &current_base, &alloc_size );
 
-    todo_wine
     ok( alloc_size == initial_size + default_heap_size || broken( (initial_size && alloc_size == initial_size)
         || (!initial_size && (alloc_size == default_heap_size * sizeof(void*))) ) /* Win7 */,
         "got %#Ix.\n", alloc_size );
@@ -3687,11 +3685,9 @@ static void test_heap_size( SIZE_T initial_size )
                     max_size_reached = TRUE;
             }
         }
-        todo_wine_if( !initial_subheap )
         ok( alloc_size == current_subheap_size, "got %#Ix.\n", alloc_size );
         winetest_pop_context();
     }
-    todo_wine_if( sizeof(void *) == 8 )
     ok( max_size_reached, "Did not reach maximum subheap size.\n" );
 
     HeapDestroy( heap );

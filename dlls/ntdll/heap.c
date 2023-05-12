@@ -311,7 +311,12 @@ C_ASSERT( offsetof(struct heap, subheap) <= REGION_ALIGN - 1 );
 
 #define HEAP_MAGIC       ((DWORD)('H' | ('E'<<8) | ('A'<<16) | ('P'<<24)))
 
-#define HEAP_DEF_SIZE        (0x40000 * BLOCK_ALIGN)
+#define HEAP_INITIAL_SIZE      0x10000
+#define HEAP_INITIAL_GROW_SIZE 0x100000
+#define HEAP_MAX_GROW_SIZE     0xfd0000
+
+C_ASSERT( HEAP_MIN_LARGE_BLOCK_SIZE <= HEAP_INITIAL_GROW_SIZE );
+
 #define MAX_FREE_PENDING     1024    /* max number of free requests to delay */
 
 /* some undocumented flags (names are made up) */
@@ -1133,7 +1138,7 @@ static struct block *find_free_block( struct heap *heap, ULONG flags, SIZE_T blo
 
     if ((subheap = create_subheap( heap, flags, max( heap->grow_size, total_size ), total_size )))
     {
-        if (heap->grow_size <= HEAP_MAX_FREE_BLOCK_SIZE / 2) heap->grow_size *= 2;
+        heap->grow_size = min( heap->grow_size * 2, HEAP_MAX_GROW_SIZE );
     }
     else while (!subheap)  /* shrink the grow size again if we are running out of space */
     {
@@ -1517,7 +1522,7 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, void *addr, SIZE_T total_size, SIZE_T 
     flags &= ~(HEAP_TAIL_CHECKING_ENABLED|HEAP_FREE_CHECKING_ENABLED);
     if (process_heap) flags |= HEAP_PRIVATE;
     if (!process_heap || !total_size || (flags & HEAP_SHARED)) flags |= HEAP_GROWABLE;
-    if (!total_size) total_size = HEAP_DEF_SIZE;
+    if (!total_size) total_size = commit_size + HEAP_INITIAL_SIZE;
 
     if (!(heap = addr))
     {
@@ -1532,7 +1537,7 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, void *addr, SIZE_T total_size, SIZE_T 
     heap->flags         = (flags & ~HEAP_SHARED);
     heap->compat_info   = HEAP_STD;
     heap->magic         = HEAP_MAGIC;
-    heap->grow_size     = max( HEAP_DEF_SIZE, total_size );
+    heap->grow_size     = HEAP_INITIAL_GROW_SIZE;
     heap->min_size      = commit_size;
     list_init( &heap->subheap_list );
     list_init( &heap->large_list );
