@@ -34,15 +34,22 @@
 WINE_DEFAULT_DEBUG_CHANNEL(event);
 WINE_DECLARE_DEBUG_CHANNEL(imm);
 
+/* IME works synchronously, key input is passed from ImeProcessKey, to the
+ * host IME. We wait for it to be handled, or not, which is notified using
+ * the sent_text_input event. Meanwhile, while processing the key, the host
+ * IME may send one or more im_set_text events to update the input text.
+ *
+ * If ImeProcessKey returns TRUE, ImeToAsciiEx is then be called to retrieve
+ * the composition string updates. We use ime_update.comp_str != NULL as flag that
+ * composition is started, even if the preedit text is empty.
+ *
+ * If ImeProcessKey returns FALSE, ImeToAsciiEx will not be called.
+ */
 struct ime_update
 {
     DWORD cursor_pos;
     WCHAR *comp_str;
     WCHAR *result_str;
-    struct ime_set_text_params *comp_params;
-    DWORD comp_size;
-    struct ime_set_text_params *result_params;
-    DWORD result_size;
 };
 static struct ime_update ime_update;
 
@@ -164,42 +171,33 @@ static macdrv_event_mask get_event_mask(DWORD mask)
 static void macdrv_im_set_text(const macdrv_event *event)
 {
     HWND hwnd = macdrv_get_window_hwnd(event->window);
-    struct ime_set_text_params *params;
-    CFIndex length = 0, size;
+    CFIndex length = 0;
+    WCHAR *text = NULL;
 
     TRACE_(imm)("win %p/%p himc %p text %s complete %u\n", hwnd, event->window, event->im_set_text.himc,
                 debugstr_cf(event->im_set_text.text), event->im_set_text.complete);
 
     if (event->im_set_text.text)
-        length = CFStringGetLength(event->im_set_text.text);
-
-    size = offsetof(struct ime_set_text_params, text[length + 1]);
-    if (!(params = malloc(size))) return;
-    params->hwnd = HandleToUlong(hwnd);
-    params->himc = (UINT_PTR)event->im_set_text.himc;
-    params->cursor_pos = event->im_set_text.cursor_pos;
-    params->complete = event->im_set_text.complete;
-
-    if (length)
-        CFStringGetCharacters(event->im_set_text.text, CFRangeMake(0, length), params->text);
-    params->text[length] = 0;
-
-    free(ime_update.comp_params);
-    ime_update.comp_params = NULL;
-    ime_update.comp_str = NULL;
-
-    if (params->complete)
     {
-        free(ime_update.result_params);
-        ime_update.result_params = params;
-        ime_update.result_size = size;
-        ime_update.result_str = params->text;
+        length = CFStringGetLength(event->im_set_text.text);
+        if (!(text = malloc((length + 1) * sizeof(WCHAR)))) return;
+        if (length) CFStringGetCharacters(event->im_set_text.text, CFRangeMake(0, length), text);
+        text[length] = 0;
+    }
+
+    /* discard any pending comp text */
+    free(ime_update.comp_str);
+    ime_update.comp_str = NULL;
+    ime_update.cursor_pos = -1;
+
+    if (event->im_set_text.complete)
+    {
+        free(ime_update.result_str);
+        ime_update.result_str = text;
     }
     else
     {
-        ime_update.comp_params = params;
-        ime_update.comp_size = size;
-        ime_update.comp_str = params->text;
+        ime_update.comp_str = text;
         ime_update.cursor_pos = event->im_set_text.cursor_pos;
     }
 }
@@ -291,21 +289,8 @@ UINT macdrv_ImeToAsciiEx(UINT vkey, UINT vsc, const BYTE *state, COMPOSITIONSTRI
         compstr->dwSize += compstr->dwResultClauseLen;
     }
 
-    if (ime_update.result_params)
-    {
-        macdrv_client_func(client_func_ime_set_text, ime_update.result_params, ime_update.result_size);
-        free(ime_update.result_params);
-        ime_update.result_params = NULL;
-        ime_update.result_str = NULL;
-    }
-    if (ime_update.comp_params)
-    {
-        macdrv_client_func(client_func_ime_set_text, ime_update.comp_params, ime_update.comp_size);
-        free(ime_update.comp_params);
-        ime_update.comp_params = NULL;
-        ime_update.comp_str = NULL;
-    }
-
+    free(update->result_str);
+    update->result_str = NULL;
     return 0;
 }
 

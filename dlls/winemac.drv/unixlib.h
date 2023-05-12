@@ -92,7 +92,6 @@ enum macdrv_client_funcs
     client_func_dnd_query_drop,
     client_func_dnd_query_exited,
     client_func_ime_query_char_rect,
-    client_func_ime_set_text,
     client_func_last
 };
 
@@ -166,16 +165,6 @@ struct ime_query_char_rect_params
     UINT32 himc;
     UINT64 result; /* FIXME: Use NtCallbackReturn instead */
     UINT32 length;
-};
-
-/* macdrv_ime_set_text params */
-struct ime_set_text_params
-{
-    UINT32 hwnd;
-    UINT32 cursor_pos;
-    UINT32 himc;
-    UINT32 complete;
-    WCHAR text[1];
 };
 
 static inline void *param_ptr(UINT64 param)

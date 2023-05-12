@@ -164,13 +164,13 @@ static void ime_send_message( HIMC himc, UINT message, WPARAM wparam, LPARAM lpa
     ImmGenerateMessage( himc );
 }
 
-static void ime_set_composition_status( HIMC himc, BOOL composition )
+static UINT ime_set_composition_status( HIMC himc, BOOL composition )
 {
     struct ime_private *priv;
     INPUTCONTEXT *ctx;
     UINT msg = 0;
 
-    if (!(ctx = ImmLockIMC( himc ))) return;
+    if (!(ctx = ImmLockIMC( himc ))) return 0;
     if ((priv = ImmLockIMCC( ctx->hPrivate )))
     {
         if (!priv->bInComposition && composition) msg = WM_IME_STARTCOMPOSITION;
@@ -180,7 +180,7 @@ static void ime_set_composition_status( HIMC himc, BOOL composition )
     }
     ImmUnlockIMC( himc );
 
-    if (msg) ime_send_message( himc, msg, 0, 0 );
+    return msg;
 }
 
 static void ime_ui_paint( HIMC himc, HWND hwnd )
@@ -485,10 +485,35 @@ UINT WINAPI ImeToAsciiEx( UINT vkey, UINT vsc, BYTE *state, TRANSMSGLIST *msgs, 
     } while (status == STATUS_BUFFER_TOO_SMALL);
 
     if (status) WARN( "WINE_IME_TO_ASCII_EX returned status %#lx\n", status );
+    else
+    {
+        TRANSMSG status_msg = {.message = ime_set_composition_status( himc, !!compstr->dwCompStrOffset )};
+        if (status_msg.message) msgs->TransMsg[count++] = status_msg;
+
+        if (compstr->dwResultStrLen)
+        {
+            const WCHAR *result = (WCHAR *)((BYTE *)compstr + compstr->dwResultStrOffset);
+            TRANSMSG msg = {.message = WM_IME_COMPOSITION, .wParam = result[0], .lParam = GCS_RESULTSTR};
+            if (compstr->dwResultClauseOffset) msg.lParam |= GCS_RESULTCLAUSE;
+            msgs->TransMsg[count++] = msg;
+        }
+
+        if (compstr->dwCompStrLen)
+        {
+            const WCHAR *comp = (WCHAR *)((BYTE *)compstr + compstr->dwCompStrOffset);
+            TRANSMSG msg = {.message = WM_IME_COMPOSITION, .wParam = comp[0], .lParam = GCS_COMPSTR | GCS_CURSORPOS | GCS_DELTASTART};
+            if (compstr->dwCompAttrOffset) msg.lParam |= GCS_COMPATTR;
+            if (compstr->dwCompClauseOffset) msg.lParam |= GCS_COMPCLAUSE;
+            else msg.lParam |= CS_INSERTCHAR|CS_NOMOVECARET;
+            msgs->TransMsg[count++] = msg;
+        }
+    }
 
     ImmUnlockIMCC( ctx->hCompStr );
 
 done:
+    if (count >= msgs->uMsgCount) FIXME( "More than %u messages queued, messages possibly lost\n", msgs->uMsgCount );
+    else TRACE( "Returning %u messages queued\n", count );
     ImmUnlockIMC( himc );
     return count;
 }
@@ -524,10 +549,10 @@ BOOL WINAPI ImeSetCompositionString( HIMC himc, DWORD index, const void *comp, D
         FIXME( "index %#lx not implemented\n", index );
     else
     {
-        UINT flags = GCS_COMPSTR | GCS_COMPCLAUSE | GCS_COMPATTR | GCS_DELTASTART | GCS_CURSORPOS;
+        UINT msg, flags = GCS_COMPSTR | GCS_COMPCLAUSE | GCS_COMPATTR | GCS_DELTASTART | GCS_CURSORPOS;
         WCHAR wparam = comp && comp_len >= sizeof(WCHAR) ? *(WCHAR *)comp : 0;
         input_context_set_comp_str( ctx, comp, comp_len / sizeof(WCHAR) );
-        ime_set_composition_status( himc, TRUE );
+        if ((msg = ime_set_composition_status( himc, TRUE ))) ime_send_message( himc, msg, 0, 0 );
         ime_send_message( himc, WM_IME_COMPOSITION, wparam, flags );
     }
 
@@ -540,6 +565,7 @@ BOOL WINAPI NotifyIME( HIMC himc, DWORD action, DWORD index, DWORD value )
 {
     struct ime_private *priv;
     INPUTCONTEXT *ctx;
+    UINT msg;
 
     TRACE( "himc %p, action %#lx, index %#lx, value %#lx stub!\n", himc, action, index, value );
 
@@ -562,7 +588,7 @@ BOOL WINAPI NotifyIME( HIMC himc, DWORD action, DWORD index, DWORD value )
             if (!ctx->fOpen)
             {
                 input_context_set_comp_str( ctx, NULL, 0 );
-                ime_set_composition_status( himc, FALSE );
+                if ((msg = ime_set_composition_status( himc, TRUE ))) ime_send_message( himc, msg, 0, 0 );
             }
             NtUserNotifyIMEStatus( ctx->hWnd, ctx->fOpen );
             break;

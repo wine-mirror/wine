@@ -375,7 +375,6 @@ static const kernel_callback kernel_callbacks[] =
     macdrv_dnd_query_drop,
     macdrv_dnd_query_exited,
     macdrv_ime_query_char_rect,
-    macdrv_ime_set_text,
 };
 
 C_ASSERT(NtUserDriverCallbackFirst + ARRAYSIZE(kernel_callbacks) == client_func_last);

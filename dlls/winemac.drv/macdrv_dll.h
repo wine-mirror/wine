@@ -31,7 +31,6 @@ extern NTSTATUS WINAPI macdrv_dnd_query_drag(void *arg, ULONG size) DECLSPEC_HID
 extern NTSTATUS WINAPI macdrv_dnd_query_drop(void *arg, ULONG size) DECLSPEC_HIDDEN;
 extern NTSTATUS WINAPI macdrv_dnd_query_exited(void *arg, ULONG size) DECLSPEC_HIDDEN;
 
-extern NTSTATUS WINAPI macdrv_ime_set_text(void *params, ULONG size) DECLSPEC_HIDDEN;
 extern NTSTATUS WINAPI macdrv_ime_query_char_rect(void *params, ULONG size) DECLSPEC_HIDDEN;
 
 extern HMODULE macdrv_module DECLSPEC_HIDDEN;
