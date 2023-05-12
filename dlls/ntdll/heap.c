@@ -500,8 +500,8 @@ static inline void mark_block_tail( struct block *block, DWORD flags )
     if (flags & HEAP_ADD_USER_INFO)
     {
         if (flags & HEAP_TAIL_CHECKING_ENABLED || RUNNING_ON_VALGRIND) tail += BLOCK_ALIGN;
-        valgrind_make_writable( tail + sizeof(void *), sizeof(void *) );
-        memset( tail + sizeof(void *), 0, sizeof(void *) );
+        valgrind_make_writable( tail, BLOCK_ALIGN );
+        memset( tail, 0, BLOCK_ALIGN );
     }
 }
 
