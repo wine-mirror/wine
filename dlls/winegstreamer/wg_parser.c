@@ -66,7 +66,7 @@ struct wg_parser
 
     GstElement *container, *decodebin;
     GstBus *bus;
-    GstPad *my_src, *their_sink;
+    GstPad *my_src;
 
     guint64 file_size, start_offset, next_offset, stop_offset;
     guint64 next_pull_offset;
@@ -1679,11 +1679,8 @@ static NTSTATUS wg_parser_connect(void *args)
 out:
     if (parser->container)
         gst_element_set_state(parser->container, GST_STATE_NULL);
-    if (parser->their_sink)
-    {
-        gst_object_unref(parser->their_sink);
-        parser->my_src = parser->their_sink = NULL;
-    }
+    if (parser->my_src)
+        gst_object_unref(parser->my_src);
 
     for (i = 0; i < parser->stream_count; ++i)
         free_stream(parser->streams[i]);
@@ -1725,8 +1722,7 @@ static NTSTATUS wg_parser_disconnect(void *args)
 
     gst_element_set_state(parser->container, GST_STATE_NULL);
     gst_object_unref(parser->my_src);
-    gst_object_unref(parser->their_sink);
-    parser->my_src = parser->their_sink = NULL;
+    parser->my_src = NULL;
 
     pthread_mutex_lock(&parser->mutex);
     parser->sink_connected = false;
@@ -1762,7 +1758,6 @@ static NTSTATUS wg_parser_disconnect(void *args)
 static BOOL decodebin_parser_init_gst(struct wg_parser *parser)
 {
     GstElement *element;
-    int ret;
 
     if (!(element = create_element("decodebin", "base")))
         return FALSE;
@@ -1783,17 +1778,12 @@ static BOOL decodebin_parser_init_gst(struct wg_parser *parser)
     g_signal_connect(element, "autoplug-select", G_CALLBACK(autoplug_select_cb), parser);
     g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads_cb), parser);
 
-    parser->their_sink = gst_element_get_static_pad(element, "sink");
-
     pthread_mutex_lock(&parser->mutex);
     parser->no_more_pads = false;
     pthread_mutex_unlock(&parser->mutex);
 
-    if ((ret = gst_pad_link(parser->my_src, parser->their_sink)) < 0)
-    {
-        GST_ERROR("Failed to link pads, error %d.", ret);
+    if (!link_src_to_element(parser->my_src, element))
         return FALSE;
-    }
 
     return TRUE;
 }
@@ -1801,7 +1791,6 @@ static BOOL decodebin_parser_init_gst(struct wg_parser *parser)
 static BOOL avi_parser_init_gst(struct wg_parser *parser)
 {
     GstElement *element;
-    int ret;
 
     if (!(element = create_element("avidemux", "good")))
         return FALSE;
@@ -1812,17 +1801,12 @@ static BOOL avi_parser_init_gst(struct wg_parser *parser)
     g_signal_connect(element, "pad-removed", G_CALLBACK(pad_removed_cb), parser);
     g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads_cb), parser);
 
-    parser->their_sink = gst_element_get_static_pad(element, "sink");
-
     pthread_mutex_lock(&parser->mutex);
     parser->no_more_pads = false;
     pthread_mutex_unlock(&parser->mutex);
 
-    if ((ret = gst_pad_link(parser->my_src, parser->their_sink)) < 0)
-    {
-        GST_ERROR("Failed to link pads, error %d.", ret);
+    if (!link_src_to_element(parser->my_src, element))
         return FALSE;
-    }
 
     return TRUE;
 }
@@ -1838,12 +1822,8 @@ static BOOL mpeg_audio_parser_init_gst(struct wg_parser *parser)
 
     gst_bin_add(GST_BIN(parser->container), element);
 
-    parser->their_sink = gst_element_get_static_pad(element, "sink");
-    if ((ret = gst_pad_link(parser->my_src, parser->their_sink)) < 0)
-    {
-        GST_ERROR("Failed to link sink pads, error %d.", ret);
+    if (!link_src_to_element(parser->my_src, element))
         return FALSE;
-    }
 
     if (!(stream = create_stream(parser)))
         return FALSE;
@@ -1872,12 +1852,8 @@ static BOOL wave_parser_init_gst(struct wg_parser *parser)
 
     gst_bin_add(GST_BIN(parser->container), element);
 
-    parser->their_sink = gst_element_get_static_pad(element, "sink");
-    if ((ret = gst_pad_link(parser->my_src, parser->their_sink)) < 0)
-    {
-        GST_ERROR("Failed to link sink pads, error %d.", ret);
+    if (!link_src_to_element(parser->my_src, element))
         return FALSE;
-    }
 
     if (!(stream = create_stream(parser)))
         return FALSE;
