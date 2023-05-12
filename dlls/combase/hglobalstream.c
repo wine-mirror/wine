@@ -151,7 +151,10 @@ static HRESULT WINAPI stream_Read(IStream *iface, void *pv, ULONG cb, ULONG *rea
     if (!read_len)
         read_len = &dummy;
 
-    len = min(stream->handle->size - stream->position.u.LowPart, cb);
+    if (stream->handle->size >= stream->position.u.LowPart)
+        len = min(stream->handle->size - stream->position.u.LowPart, cb);
+    else
+        len = 0;
 
     buffer = GlobalLock(stream->handle->hglobal);
     if (!buffer)
