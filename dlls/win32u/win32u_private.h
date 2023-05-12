@@ -40,8 +40,8 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiAlphaBlend)( HDC hdc_dst, int x_dst, int y_dst, int width_dst, int height_dst,
                                          HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
                                          BLENDFUNCTION blend_function, HANDLE xform );
-    BOOL     (WINAPI *pNtGdiAngleArc)( HDC hdc, INT x, INT y, DWORD radius, FLOAT start_angle,
-                                       FLOAT sweep_angle );
+    BOOL     (WINAPI *pNtGdiAngleArc)( HDC hdc, INT x, INT y, DWORD radius, DWORD start_angle,
+                                       DWORD sweep_angle );
     BOOL     (WINAPI *pNtGdiArcInternal)( UINT type, HDC hdc, INT left, INT top, INT right, INT bottom,
                                           INT xstart, INT ystart, INT xend, INT yend );
     BOOL     (WINAPI *pNtGdiBeginPath)( HDC hdc );

@@ -45,7 +45,7 @@ BOOL WINAPI NtGdiAlphaBlend( HDC hdc_dst, int x_dst, int y_dst, int width_dst, i
                                          x_src, y_src, width_src, height_src, blend_function, xform );
 }
 
-BOOL WINAPI NtGdiAngleArc( HDC hdc, INT x, INT y, DWORD radius, FLOAT start_angle, FLOAT sweep_angle )
+BOOL WINAPI NtGdiAngleArc( HDC hdc, INT x, INT y, DWORD radius, DWORD start_angle, DWORD sweep_angle )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtGdiAngleArc( hdc, x, y, radius, start_angle, sweep_angle );

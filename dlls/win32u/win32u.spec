@@ -113,7 +113,7 @@
 @ stub NtGdiAddRemoteFontToDC
 @ stub NtGdiAddRemoteMMInstanceToDC
 @ stdcall NtGdiAlphaBlend(long long long long long long long long long long long ptr)
-@ stdcall NtGdiAngleArc(long long long long float float)
+@ stdcall NtGdiAngleArc(long long long long long long)
 @ stub NtGdiAnyLinkedFonts
 @ stdcall NtGdiArcInternal(long long long long long long long long long long)
 @ stub NtGdiBRUSHOBJ_DeleteRbrush
@@ -123,7 +123,7 @@
 @ stub NtGdiBRUSHOBJ_ulGetBrushColor
 @ stub NtGdiBeginGdiRendering
 @ stdcall NtGdiBeginPath(long)
-@ stdcall NtGdiBitBlt(long long long long long long long long long long float)
+@ stdcall NtGdiBitBlt(long long long long long long long long long long long)
 @ stub NtGdiCLIPOBJ_bEnum
 @ stub NtGdiCLIPOBJ_cEnumStart
 @ stub NtGdiCLIPOBJ_ppoGetPath

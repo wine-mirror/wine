@@ -1523,7 +1523,7 @@ BOOL WINAPI AngleArc( HDC hdc, INT x, INT y, DWORD radius, FLOAT start_angle, FL
     if (dc_attr->print) print_call_start_page( dc_attr );
     if (dc_attr->emf && !EMFDC_AngleArc( dc_attr, x, y, radius, start_angle, sweep_angle ))
         return FALSE;
-    return NtGdiAngleArc( hdc, x, y, radius, start_angle, sweep_angle );
+    return NtGdiAngleArc( hdc, x, y, radius, *(DWORD *)&start_angle, *(DWORD *)&sweep_angle );
 }
 
 /***********************************************************************

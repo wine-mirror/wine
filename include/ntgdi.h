@@ -251,8 +251,8 @@ INT      WINAPI NtGdiAddFontResourceW( const WCHAR *str, ULONG size, ULONG files
 BOOL     WINAPI NtGdiAlphaBlend( HDC hdc_dst, int x_dst, int y_dst, int width_dst, int height_dst,
                                  HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
                                  BLENDFUNCTION blend_function, HANDLE xform );
-BOOL     WINAPI NtGdiAngleArc( HDC hdc, INT x, INT y, DWORD radius, FLOAT start_angle,
-                               FLOAT sweep_angle );
+BOOL     WINAPI NtGdiAngleArc( HDC hdc, INT x, INT y, DWORD radius, DWORD start_angle,
+                               DWORD sweep_angle );
 BOOL     WINAPI NtGdiArcInternal( UINT type, HDC hdc, INT left, INT top, INT right, INT bottom,
                                   INT xstart, INT ystart, INT xend, INT yend );
 BOOL     WINAPI NtGdiBeginPath( HDC hdc );
@@ -351,7 +351,7 @@ DWORD    WINAPI NtGdiGetGlyphOutline( HDC hdc, UINT ch, UINT format, GLYPHMETRIC
                                       DWORD size, void *buffer, const MAT2 *mat2,
                                       BOOL ignore_rotation );
 DWORD    WINAPI NtGdiGetKerningPairs( HDC hdc, DWORD count, KERNINGPAIR *kern_pair );
-BOOL     WINAPI NtGdiGetMiterLimit( HDC hdc, FLOAT *limit );
+BOOL     WINAPI NtGdiGetMiterLimit( HDC hdc, DWORD *limit );
 COLORREF WINAPI NtGdiGetNearestColor( HDC hdc, COLORREF color );
 UINT     WINAPI NtGdiGetNearestPaletteIndex( HPALETTE hpalette, COLORREF color );
 UINT     WINAPI NtGdiGetOutlineTextMetricsInternalW( HDC hdc, UINT cbData,
@@ -435,7 +435,7 @@ BOOL     WINAPI NtGdiSetDeviceGammaRamp( HDC hdc, void *ptr );
 DWORD    WINAPI NtGdiSetLayout( HDC hdc, LONG wox, DWORD layout );
 BOOL     WINAPI NtGdiSetMagicColors( HDC hdc, DWORD magic, ULONG index );
 INT      WINAPI NtGdiSetMetaRgn( HDC hdc );
-BOOL     WINAPI NtGdiSetMiterLimit( HDC hdc, FLOAT limit, FLOAT *prev_limit );
+BOOL     WINAPI NtGdiSetMiterLimit( HDC hdc, DWORD limit, DWORD *prev_limit );
 COLORREF WINAPI NtGdiSetPixel( HDC hdc, INT x, INT y, COLORREF color );
 BOOL     WINAPI NtGdiSetPixelFormat( HDC hdc, INT format );
 BOOL     WINAPI NtGdiSetRectRgn( HRGN hrgn, INT left, INT top, INT right, INT bottom );

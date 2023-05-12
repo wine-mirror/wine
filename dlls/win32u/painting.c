@@ -637,8 +637,10 @@ BOOL WINAPI NtGdiExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, UINT fill_
 /***********************************************************************
  *      NtGdiAngleArc (win32u.@)
  */
-BOOL WINAPI NtGdiAngleArc( HDC hdc, INT x, INT y, DWORD dwRadius, FLOAT eStartAngle, FLOAT eSweepAngle )
+BOOL WINAPI NtGdiAngleArc( HDC hdc, INT x, INT y, DWORD dwRadius, DWORD start_angle, DWORD sweep_angle )
 {
+    FLOAT eStartAngle = *(FLOAT *)&start_angle;
+    FLOAT eSweepAngle = *(FLOAT *)&sweep_angle;
     PHYSDEV physdev;
     BOOL result;
     DC *dc;
