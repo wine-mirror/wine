@@ -475,9 +475,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         if (self)
         {
             [self setWantsLayer:YES];
-            [self layer].minificationFilter = retina_on ? kCAFilterLinear : kCAFilterNearest;
-            [self layer].magnificationFilter = retina_on ? kCAFilterLinear : kCAFilterNearest;
-            [self layer].contentsScale = retina_on ? 2.0 : 1.0;
+            [self setLayerRetinaProperties:retina_on];
             [self setAutoresizesSubviews:NO];
         }
         return self;
@@ -677,6 +675,13 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         return _metalView;
     }
 
+    - (void) setLayerRetinaProperties:(int)mode
+    {
+        [self layer].contentsScale = mode ? 2.0 : 1.0;
+        [self layer].minificationFilter = mode ? kCAFilterLinear : kCAFilterNearest;
+        [self layer].magnificationFilter = mode ? kCAFilterLinear : kCAFilterNearest;
+    }
+
     - (void) setRetinaMode:(int)mode
     {
         double scale = mode ? 0.5 : 2.0;
@@ -688,10 +693,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         [self setFrame:frame];
         [self setWantsBestResolutionOpenGLSurface:mode];
         [self updateGLContexts];
+        [self setLayerRetinaProperties:mode];
 
-        [self layer].contentsScale = mode ? 2.0 : 1.0;
-        [self layer].minificationFilter = mode ? kCAFilterLinear : kCAFilterNearest;
-        [self layer].magnificationFilter = mode ? kCAFilterLinear : kCAFilterNearest;
         [super setRetinaMode:mode];
     }
 
