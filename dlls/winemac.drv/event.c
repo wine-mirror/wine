@@ -26,6 +26,8 @@
 
 #include "config.h"
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "macdrv.h"
 #include "oleidl.h"
 
@@ -34,6 +36,8 @@ WINE_DECLARE_DEBUG_CHANNEL(imm);
 
 struct ime_update
 {
+    WCHAR *comp_str;
+    WCHAR *result_str;
     struct ime_set_text_params *comp_params;
     DWORD comp_size;
     struct ime_set_text_params *result_params;
@@ -168,7 +172,7 @@ static void macdrv_im_set_text(const macdrv_event *event)
     if (event->im_set_text.text)
         length = CFStringGetLength(event->im_set_text.text);
 
-    size = offsetof(struct ime_set_text_params, text[length]);
+    size = offsetof(struct ime_set_text_params, text[length + 1]);
     if (!(params = malloc(size))) return;
     params->hwnd = HandleToUlong(hwnd);
     params->himc = (UINT_PTR)event->im_set_text.himc;
@@ -177,20 +181,24 @@ static void macdrv_im_set_text(const macdrv_event *event)
 
     if (length)
         CFStringGetCharacters(event->im_set_text.text, CFRangeMake(0, length), params->text);
+    params->text[length] = 0;
 
     free(ime_update.comp_params);
     ime_update.comp_params = NULL;
+    ime_update.comp_str = NULL;
 
     if (params->complete)
     {
         free(ime_update.result_params);
         ime_update.result_params = params;
         ime_update.result_size = size;
+        ime_update.result_str = params->text;
     }
     else
     {
         ime_update.comp_params = params;
         ime_update.comp_size = size;
+        ime_update.comp_str = params->text;
     }
 }
 
@@ -200,7 +208,7 @@ static void macdrv_im_set_text(const macdrv_event *event)
 static void macdrv_sent_text_input(const macdrv_event *event)
 {
     TRACE_(imm)("handled: %s\n", event->sent_text_input.handled ? "TRUE" : "FALSE");
-    *event->sent_text_input.done = event->sent_text_input.handled || ime_update.result_params ? 1 : -1;
+    *event->sent_text_input.done = event->sent_text_input.handled || ime_update.result_str ? 1 : -1;
 }
 
 
@@ -209,19 +217,47 @@ static void macdrv_sent_text_input(const macdrv_event *event)
  */
 UINT macdrv_ImeToAsciiEx(UINT vkey, UINT vsc, const BYTE *state, COMPOSITIONSTRING *compstr, HIMC himc)
 {
+    UINT needed = sizeof(COMPOSITIONSTRING), comp_len, result_len;
+    struct ime_update *update = &ime_update;
+
     TRACE_(imm)("vkey %#x, vsc %#x, state %p, compstr %p, himc %p\n", vkey, vsc, state, compstr, himc);
+
+    if (!update->comp_str) comp_len = 0;
+    else
+    {
+        comp_len = wcslen(update->comp_str);
+        needed += comp_len * sizeof(WCHAR); /* GCS_COMPSTR */
+        needed += comp_len; /* GCS_COMPATTR */
+        needed += 2 * sizeof(DWORD); /* GCS_COMPCLAUSE */
+    }
+
+    if (!update->result_str) result_len = 0;
+    else
+    {
+        result_len = wcslen(update->result_str);
+        needed += result_len * sizeof(WCHAR); /* GCS_RESULTSTR */
+        needed += 2 * sizeof(DWORD); /* GCS_RESULTCLAUSE */
+    }
 
     if (ime_update.result_params)
     {
         macdrv_client_func(client_func_ime_set_text, ime_update.result_params, ime_update.result_size);
         free(ime_update.result_params);
         ime_update.result_params = NULL;
+        ime_update.result_str = NULL;
     }
     if (ime_update.comp_params)
     {
         macdrv_client_func(client_func_ime_set_text, ime_update.comp_params, ime_update.comp_size);
         free(ime_update.comp_params);
         ime_update.comp_params = NULL;
+        ime_update.comp_str = NULL;
+    }
+
+    if (compstr->dwSize < needed)
+    {
+        compstr->dwSize = needed;
+        return STATUS_BUFFER_TOO_SMALL;
     }
 
     return 0;
