@@ -6754,6 +6754,305 @@ static void test_MFRequireProtectedEnvironment(void)
     ok(ref == 0, "Release returned %ld\n", ref);
 }
 
+static void test_mpeg4_media_sink(void)
+{
+    IMFMediaSink *sink = NULL, *sink2 = NULL, *sink_audio = NULL, *sink_video = NULL, *sink_empty = NULL;
+    IMFByteStream *bytestream, *bytestream_audio, *bytestream_video, *bytestream_empty;
+    DWORD id, count, flags, width = 16, height = 16, fps = 10;
+    IMFMediaType *audio_type, *video_type, *media_type;
+    IMFMediaTypeHandler *type_handler = NULL;
+    IMFPresentationClock *clock;
+    IMFStreamSink *stream_sink;
+    HRESULT hr;
+    GUID guid;
+
+    /* Test sink creation. */
+    hr = MFCreateMediaType(&audio_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFCreateMediaType(&video_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaType_SetGUID(audio_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetGUID(audio_type, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(audio_type, &MF_MT_AUDIO_NUM_CHANNELS, 2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(audio_type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, 48000);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(audio_type, &MF_MT_AUDIO_BITS_PER_SAMPLE, 8);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaType_SetGUID(video_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetGUID(video_type, &MF_MT_SUBTYPE, &MFVideoFormat_RGB24);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, ((UINT64)width << 32) | height);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT64(video_type, &MF_MT_FRAME_RATE, ((UINT64)fps << 32) | 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFCreateTempFile(MF_ACCESSMODE_WRITE, MF_OPENMODE_DELETE_IF_EXIST, 0, &bytestream_audio);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFCreateTempFile(MF_ACCESSMODE_WRITE, MF_OPENMODE_DELETE_IF_EXIST, 0, &bytestream_video);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFCreateTempFile(MF_ACCESSMODE_WRITE, MF_OPENMODE_DELETE_IF_EXIST, 0, &bytestream_empty);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFCreateTempFile(MF_ACCESSMODE_WRITE, MF_OPENMODE_DELETE_IF_EXIST, 0, &bytestream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFCreateMPEG4MediaSink(NULL, NULL, NULL, NULL);
+    todo_wine
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    sink = (void *)0xdeadbeef;
+    hr = MFCreateMPEG4MediaSink(NULL, NULL, NULL, &sink);
+    todo_wine
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    ok(sink == (void *)0xdeadbeef, "Unexpected pointer %p.\n", sink);
+    sink = NULL;
+
+    hr = MFCreateMPEG4MediaSink(bytestream_empty, NULL, NULL, &sink_empty);
+    todo_wine
+    ok(hr == S_OK || broken(hr == E_INVALIDARG), "Unexpected hr %#lx.\n", hr);
+
+    hr = MFCreateMPEG4MediaSink(bytestream_audio, NULL, audio_type, &sink_audio);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFCreateMPEG4MediaSink(bytestream_video, video_type, NULL, &sink_video);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFCreateMPEG4MediaSink(bytestream, video_type, audio_type, &sink);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    if (!sink)
+    {
+        if (sink_video)
+            IMFMediaSink_Release(sink_video);
+        if (sink_audio)
+            IMFMediaSink_Release(sink_audio);
+        if (sink_empty)
+            IMFMediaSink_Release(sink_empty);
+        IMFByteStream_Release(bytestream);
+        IMFByteStream_Release(bytestream_empty);
+        IMFByteStream_Release(bytestream_video);
+        IMFByteStream_Release(bytestream_audio);
+        IMFMediaType_Release(video_type);
+        IMFMediaType_Release(audio_type);
+        return;
+    }
+
+    /* Test sink. */
+    hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(flags == MEDIASINK_RATELESS || broken(flags == (MEDIASINK_RATELESS | MEDIASINK_FIXED_STREAMS)),
+            "Unexpected flags %#lx.\n", flags);
+
+    check_interface(sink, &IID_IMFMediaEventGenerator, TRUE);
+    check_interface(sink, &IID_IMFFinalizableMediaSink, TRUE);
+    check_interface(sink, &IID_IMFClockStateSink, TRUE);
+    check_interface(sink, &IID_IMFGetService, TRUE);
+
+    /* Test sink stream count. */
+    hr = IMFMediaSink_GetStreamSinkCount(sink, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaSink_GetStreamSinkCount(sink, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 2, "Unexpected count %lu.\n", count);
+
+    hr = IMFMediaSink_GetStreamSinkCount(sink_audio, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "Unexpected count %lu.\n", count);
+
+    hr = IMFMediaSink_GetStreamSinkCount(sink_video, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "Unexpected count %lu.\n", count);
+
+    if (sink_empty)
+    {
+        hr = IMFMediaSink_GetStreamSinkCount(sink_empty, &count);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(count == 0, "Unexpected count %lu.\n", count);
+    }
+
+    /* Test GetStreamSinkByIndex. */
+    hr = IMFMediaSink_GetStreamSinkByIndex(sink_video, 0, &stream_sink);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFStreamSink_GetIdentifier(stream_sink, &id);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(id == 1, "Unexpected id %lu.\n", id);
+    IMFStreamSink_Release(stream_sink);
+
+    hr = IMFMediaSink_GetStreamSinkByIndex(sink_audio, 0, &stream_sink);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFStreamSink_GetIdentifier(stream_sink, &id);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(id == 2, "Unexpected id %lu.\n", id);
+    IMFStreamSink_Release(stream_sink);
+
+    stream_sink = (void *)0xdeadbeef;
+    hr = IMFMediaSink_GetStreamSinkByIndex(sink_audio, 1, &stream_sink);
+    ok(hr == MF_E_INVALIDINDEX, "Unexpected hr %#lx.\n", hr);
+    ok(stream_sink == (void *)0xdeadbeef, "Unexpected pointer %p.\n", stream_sink);
+
+    stream_sink = (void *)0xdeadbeef;
+    hr = IMFMediaSink_GetStreamSinkByIndex(sink_video, 1, &stream_sink);
+    ok(hr == MF_E_INVALIDINDEX, "Unexpected hr %#lx.\n", hr);
+    ok(stream_sink == (void *)0xdeadbeef, "Unexpected pointer %p.\n", stream_sink);
+
+    /* Test GetStreamSinkById. */
+    hr = IMFMediaSink_GetStreamSinkById(sink, 1, &stream_sink);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFStreamSink_Release(stream_sink);
+    hr = IMFMediaSink_GetStreamSinkById(sink, 2, &stream_sink);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFStreamSink_Release(stream_sink);
+    hr = IMFMediaSink_GetStreamSinkById(sink_video, 1, &stream_sink);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFStreamSink_Release(stream_sink);
+    hr = IMFMediaSink_GetStreamSinkById(sink_audio, 2, &stream_sink);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFStreamSink_Release(stream_sink);
+
+    stream_sink = (void *)0xdeadbeef;
+    hr = IMFMediaSink_GetStreamSinkById(sink_video, 2, &stream_sink);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
+    ok(stream_sink == (void *)0xdeadbeef, "Unexpected pointer %p.\n", stream_sink);
+
+    stream_sink = (void *)0xdeadbeef;
+    hr = IMFMediaSink_GetStreamSinkById(sink_audio, 1, &stream_sink);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
+    ok(stream_sink == (void *)0xdeadbeef, "Unexpected pointer %p.\n", stream_sink);
+
+    /* Test adding and removing stream sink. */
+    if (!(flags & MEDIASINK_FIXED_STREAMS))
+    {
+        hr = IMFMediaSink_AddStreamSink(sink, 123, video_type, &stream_sink);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        IMFStreamSink_Release(stream_sink);
+        hr = IMFMediaSink_GetStreamSinkByIndex(sink, 2, &stream_sink);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFStreamSink_GetIdentifier(stream_sink, &id);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(id == 123, "Unexpected id %lu.\n", id);
+        IMFStreamSink_Release(stream_sink);
+
+        stream_sink = (void *)0xdeadbeef;
+        hr = IMFMediaSink_AddStreamSink(sink, 1, audio_type, &stream_sink);
+        ok(hr == MF_E_STREAMSINK_EXISTS, "Unexpected hr %#lx.\n", hr);
+        ok(!stream_sink, "Unexpected pointer %p.\n", stream_sink);
+
+        hr = IMFMediaSink_RemoveStreamSink(sink, 1);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFMediaSink_AddStreamSink(sink, 1, audio_type, &stream_sink);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        IMFStreamSink_Release(stream_sink);
+        hr = IMFMediaSink_GetStreamSinkByIndex(sink, 2, &stream_sink);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFStreamSink_GetIdentifier(stream_sink, &id);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(id == 1, "Unexpected id %lu.\n", id);
+        IMFStreamSink_Release(stream_sink);
+
+        hr = IMFMediaSink_RemoveStreamSink(sink, 123);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFMediaSink_RemoveStreamSink(sink, 123);
+        ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
+    }
+
+    /* Test PresentationClock. */
+    hr = MFCreatePresentationClock(&clock);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaSink_SetPresentationClock(sink, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaSink_SetPresentationClock(sink, clock);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFPresentationClock_Release(clock);
+
+    /* Test stream. */
+    hr = IMFMediaSink_GetStreamSinkByIndex(sink_audio, 0, &stream_sink);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFStreamSink_GetMediaSink(stream_sink, &sink2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaSink_Release(sink2);
+
+    check_interface(stream_sink, &IID_IMFMediaEventGenerator, TRUE);
+    check_interface(stream_sink, &IID_IMFMediaTypeHandler, TRUE);
+
+    hr = IMFStreamSink_GetMediaTypeHandler(stream_sink, &type_handler);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMajorType(type_handler, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaTypeHandler_GetMajorType(type_handler, &guid);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&guid, &MFMediaType_Audio), "Unexpected major type.\n");
+
+    hr = IMFMediaTypeHandler_GetMediaTypeCount(type_handler, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "Unexpected count %lu.\n", count);
+
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(type_handler, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_NUM_CHANNELS, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(type_handler, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(type_handler, media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IMFMediaType_Release(media_type);
+
+    /* Test shutdown state. */
+    hr = IMFMediaSink_Shutdown(sink);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaSink_Shutdown(sink);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFStreamSink_GetMediaSink(stream_sink, &sink2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaSink_Release(sink2);
+
+    hr = IMFStreamSink_GetIdentifier(stream_sink, &id);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMajorType(type_handler, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaTypeHandler_GetMajorType(type_handler, &guid);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IMFStreamSink_Release(stream_sink);
+
+    hr = IMFMediaSink_AddStreamSink(sink, 0, audio_type, &stream_sink);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaSink_GetStreamSinkByIndex(sink, 0, &stream_sink);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaSink_GetStreamSinkById(sink, 0, &stream_sink);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    IMFMediaTypeHandler_Release(type_handler);
+    IMFMediaSink_Release(sink);
+    IMFMediaSink_Release(sink_video);
+    IMFMediaSink_Release(sink_audio);
+    if (sink_empty)
+        IMFMediaSink_Release(sink_empty);
+    IMFByteStream_Release(bytestream);
+    IMFByteStream_Release(bytestream_empty);
+    IMFByteStream_Release(bytestream_video);
+    IMFByteStream_Release(bytestream_audio);
+    IMFMediaType_Release(video_type);
+    IMFMediaType_Release(audio_type);
+}
+
 START_TEST(mf)
 {
     init_functions();
@@ -6787,4 +7086,5 @@ START_TEST(mf)
     test_MFGetSupportedSchemes();
     test_MFGetTopoNodeCurrentType();
     test_MFRequireProtectedEnvironment();
+    test_mpeg4_media_sink();
 }
