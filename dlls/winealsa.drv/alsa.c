@@ -2177,6 +2177,12 @@ static NTSTATUS alsa_get_position(void *args)
     UINT64 position;
     snd_pcm_state_t alsa_state;
 
+    if (params->device) {
+        FIXME("Device position reporting not implemented\n");
+        params->result = E_NOTIMPL;
+        return STATUS_SUCCESS;
+    }
+
     alsa_lock(stream);
 
     /* avail_update required to get accurate snd_pcm_state() */
