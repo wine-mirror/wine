@@ -3107,17 +3107,15 @@ NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING *nt_nam
             set_page_vprot( (char *)base + sec[i].VirtualAddress, sec[i].Misc.VirtualSize, flags );
         }
 
-        SERVER_START_REQ( map_view )
+        SERVER_START_REQ( map_builtin_view )
         {
-            req->base = wine_server_client_ptr( view->base );
-            req->size = size;
             wine_server_add_data( req, info, sizeof(*info) );
             wine_server_add_data( req, nt_name->Buffer, nt_name->Length );
             status = wine_server_call( req );
         }
         SERVER_END_REQ;
 
-        if (status >= 0)
+        if (!status)
         {
             add_builtin_module( view->base, so_handle );
             VIRTUAL_DEBUG_DUMP_VIEW( view );

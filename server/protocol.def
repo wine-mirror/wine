@@ -1597,13 +1597,18 @@ enum server_fd_type
 
 /* Add a memory view in the current process */
 @REQ(map_view)
-    obj_handle_t mapping;       /* file mapping handle, or 0 for .so builtin */
+    obj_handle_t mapping;       /* file mapping handle */
     unsigned int access;        /* wanted access rights */
     client_ptr_t base;          /* view base address (page-aligned) */
     mem_size_t   size;          /* view size */
     file_pos_t   start;         /* start offset in mapping */
-    VARARG(image,pe_image_info);/* image info for .so builtins */
-    VARARG(name,unicode_str);   /* image filename for .so builtins */
+@END
+
+
+/* Add a memory view for a builtin dll in the current process */
+@REQ(map_builtin_view)
+    VARARG(image,pe_image_info);/* image info */
+    VARARG(name,unicode_str);   /* image filename */
 @END
 
 
