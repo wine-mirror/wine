@@ -271,13 +271,19 @@ static int parse_spec_arguments( ORDDEF *odp, DLLSPEC *spec, int optional )
             error( "Unknown argument type '%s'\n", token );
             return 0;
         }
-        if (is_win32) switch (arg)
+        switch (arg)
         {
         case ARG_WORD:
         case ARG_SWORD:
         case ARG_SEGPTR:
         case ARG_SEGSTR:
+            if (!is_win32) break;
             error( "Argument type '%s' only allowed for Win16\n", token );
+            return 0;
+        case ARG_FLOAT:
+        case ARG_DOUBLE:
+            if (!(odp->flags & FLAG_SYSCALL)) break;
+            error( "Argument type '%s' not allowed for syscall function\n", token );
             return 0;
         }
         odp->u.func.args[i] = arg;
