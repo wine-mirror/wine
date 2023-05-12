@@ -131,6 +131,7 @@ struct work_item
     RTWQWORKITEM_KEY key;
     LONG priority;
     DWORD flags;
+    TP_WORK *work_object;
     PTP_SIMPLE_CALLBACK finalization_callback;
     union
     {
@@ -374,7 +375,6 @@ static void pool_queue_submit(struct queue *queue, struct work_item *item)
 {
     TP_CALLBACK_PRIORITY callback_priority;
     TP_CALLBACK_ENVIRON_V3 env;
-    TP_WORK *work_object;
 
     if (item->priority == 0)
         callback_priority = TP_CALLBACK_PRIORITY_NORMAL;
@@ -389,8 +389,8 @@ static void pool_queue_submit(struct queue *queue, struct work_item *item)
        we need finalization callback. */
     if (item->finalization_callback)
         IUnknown_AddRef(&item->IUnknown_iface);
-    work_object = CreateThreadpoolWork(standard_queue_worker, item, (TP_CALLBACK_ENVIRON *)&env);
-    SubmitThreadpoolWork(work_object);
+    item->work_object = CreateThreadpoolWork(standard_queue_worker, item, (TP_CALLBACK_ENVIRON *)&env);
+    SubmitThreadpoolWork(item->work_object);
 
     TRACE("dispatched %p.\n", item->result);
 }
@@ -551,6 +551,8 @@ static ULONG WINAPI work_item_Release(IUnknown *iface)
 
     if (!refcount)
     {
+        if (item->work_object)
+            CloseThreadpoolWork(item->work_object);
         if (item->reply_result)
             IRtwqAsyncResult_Release(item->reply_result);
         IRtwqAsyncResult_Release(item->result);
