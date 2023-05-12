@@ -12,7 +12,6 @@ C_SRCS = \
 	event.c \
 	gdi.c \
 	image.c \
-	ime.c \
 	keyboard.c \
 	macdrv_main.c \
 	mouse.c \

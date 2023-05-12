@@ -433,7 +433,23 @@ BOOL WINAPI ImeDestroy( UINT force )
 
 BOOL WINAPI ImeSelect( HIMC himc, BOOL select )
 {
-    FIXME( "himc %p, select %d semi-stub!\n", himc, select );
+    struct ime_private *priv;
+    INPUTCONTEXT *ctx;
+
+    TRACE( "himc %p, select %u\n", himc, select );
+
+    if (!himc || !select) return TRUE;
+    if (!(ctx = ImmLockIMC( himc ))) return FALSE;
+
+    ImmSetOpenStatus( himc, FALSE );
+
+    if ((priv = ImmLockIMCC( ctx->hPrivate )))
+    {
+        memset( priv, 0, sizeof(*priv) );
+        ImmUnlockIMCC( ctx->hPrivate );
+    }
+
+    ImmUnlockIMC( himc );
     return TRUE;
 }
 
