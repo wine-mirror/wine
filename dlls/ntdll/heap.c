@@ -2399,7 +2399,6 @@ BOOLEAN WINAPI RtlValidateHeap( HANDLE handle, ULONG flags, const void *ptr )
     return ret;
 }
 
-
 static NTSTATUS heap_walk_blocks( const struct heap *heap, const SUBHEAP *subheap,
                                   const struct block *block, struct rtl_heap_entry *entry )
 {
@@ -2423,8 +2422,8 @@ static NTSTATUS heap_walk_blocks( const struct heap *heap, const SUBHEAP *subhea
         entry->lpData = (char *)block + block_get_overhead( block );
         entry->cbData = block_get_size( block ) - block_get_overhead( block );
         /* FIXME: last free block should not include uncommitted range, which also has its own overhead */
-        if (!contains( blocks, commit_end - (char *)blocks, block, block_get_size( block ) ))
-            entry->cbData = commit_end - (char *)entry->lpData - 4 * BLOCK_ALIGN;
+        if (!contains( blocks, commit_end - 4 * BLOCK_ALIGN - (char *)blocks, block, block_get_size( block ) ))
+            entry->cbData = commit_end - 4 * BLOCK_ALIGN - (char *)entry->lpData;
         entry->cbOverhead = 2 * BLOCK_ALIGN;
         entry->iRegionIndex = 0;
         entry->wFlags = 0;
