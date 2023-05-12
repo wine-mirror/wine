@@ -3621,6 +3621,90 @@ static void test_GlobalMemoryStatus(void)
 #undef IS_WITHIN_RANGE
 }
 
+static void get_valloc_info( void *mem, char **base, SIZE_T *alloc_size )
+{
+    MEMORY_BASIC_INFORMATION info, info2;
+    SIZE_T size;
+    char *p;
+
+    size = VirtualQuery( mem, &info, sizeof(info) );
+    ok( size == sizeof(info), "got %Iu.\n", size );
+
+    info2 = info;
+    p = info.AllocationBase;
+    while (1)
+    {
+        size = VirtualQuery( p, &info2, sizeof(info2) );
+        ok( size == sizeof(info), "got %Iu.\n", size );
+        if (info2.AllocationBase != info.AllocationBase)
+            break;
+        ok( info2.State == MEM_RESERVE || info2.State == MEM_COMMIT, "got %#lx.\n", info2.State );
+        p += info2.RegionSize;
+    }
+
+    *base = info.AllocationBase;
+    *alloc_size = p - *base;
+}
+
+static void test_heap_size( SIZE_T initial_size )
+{
+    static const SIZE_T default_heap_size = 0x10000, init_grow_size = 0x100000, max_grow_size = 0xfd0000;
+
+    BOOL initial_subheap = TRUE, max_size_reached = FALSE;
+    SIZE_T alloc_size, current_subheap_size;
+    char *base, *current_base;
+    unsigned int i;
+    HANDLE heap;
+    void *p;
+
+    winetest_push_context( "init size %#Ix", initial_size );
+    heap = HeapCreate( HEAP_NO_SERIALIZE, initial_size, 0 );
+    get_valloc_info( heap, &current_base, &alloc_size );
+
+    todo_wine
+    ok( alloc_size == initial_size + default_heap_size || broken( (initial_size && alloc_size == initial_size)
+        || (!initial_size && (alloc_size == default_heap_size * sizeof(void*))) ) /* Win7 */,
+        "got %#Ix.\n", alloc_size );
+
+    current_subheap_size = alloc_size;
+    for (i = 0; i < 100; ++i)
+    {
+        winetest_push_context( "i %u, current_subheap_size %#Ix", i, current_subheap_size );
+        p = HeapAlloc( heap, 0, 0x60000 );
+        get_valloc_info( p, &base, &alloc_size );
+        if (base != current_base)
+        {
+            current_base = base;
+            if (initial_subheap)
+            {
+                current_subheap_size = init_grow_size;
+                initial_subheap = FALSE;
+            }
+            else
+            {
+                current_subheap_size = min( current_subheap_size * 2, max_grow_size );
+                if (current_subheap_size == max_grow_size)
+                    max_size_reached = TRUE;
+            }
+        }
+        todo_wine_if( !initial_subheap )
+        ok( alloc_size == current_subheap_size, "got %#Ix.\n", alloc_size );
+        winetest_pop_context();
+    }
+    todo_wine_if( sizeof(void *) == 8 )
+    ok( max_size_reached, "Did not reach maximum subheap size.\n" );
+
+    HeapDestroy( heap );
+    winetest_pop_context();
+}
+
+static void test_heap_sizes(void)
+{
+    test_heap_size( 0 );
+    test_heap_size( 0x80000 );
+    test_heap_size( 0x150000 );
+}
+
 START_TEST(heap)
 {
     int argc;
@@ -3657,4 +3741,5 @@ START_TEST(heap)
         test_debug_heap( argv[0], 0xdeadbeef );
     }
     else win_skip( "RtlGetNtGlobalFlags not found, skipping heap debug tests\n" );
+    test_heap_sizes();
 }
