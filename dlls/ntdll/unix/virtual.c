@@ -3042,7 +3042,7 @@ NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size
     *size = 0;
     filename = (WCHAR *)(image_info + 1);
 
-    if (!(image_info->image_flags & IMAGE_FLAGS_WineBuiltin)) /* ignore non-builtins */
+    if (!image_info->wine_builtin) /* ignore non-builtins */
     {
         WARN( "%s found in WINEDLLPATH but not a builtin, ignoring\n", debugstr_w(filename) );
         status = STATUS_DLL_NOT_FOUND;

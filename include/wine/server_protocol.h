@@ -834,7 +834,9 @@ typedef struct
     unsigned short image_charact;
     unsigned short dll_charact;
     unsigned short machine;
-    unsigned char  contains_code;
+    unsigned char  contains_code : 1;
+    unsigned char  wine_builtin : 1;
+    unsigned char  wine_fakedll : 1;
     unsigned char  image_flags;
     unsigned int   loader_flags;
     unsigned int   header_size;
@@ -849,8 +851,6 @@ typedef struct
 #define IMAGE_FLAGS_ImageMappedFlat           0x08
 #define IMAGE_FLAGS_BaseBelow4gb              0x10
 #define IMAGE_FLAGS_ComPlusPrefer32bit        0x20
-#define IMAGE_FLAGS_WineBuiltin               0x40
-#define IMAGE_FLAGS_WineFakeDll               0x80
 
 struct rawinput_device
 {
@@ -6393,7 +6393,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 765
+#define SERVER_PROTOCOL_VERSION 766
 
 /* ### protocol_version end ### */
 

@@ -732,7 +732,7 @@ NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_i
     ULONGLONG res_end = pe_info->base + pe_info->map_size;
     char preloader_reserve[64], socket_env[64];
 
-    if (pe_info->image_flags & IMAGE_FLAGS_WineFakeDll) res_start = res_end = 0;
+    if (pe_info->wine_fakedll) res_start = res_end = 0;
     if (pe_info->image_flags & IMAGE_FLAGS_ComPlusNativeReady) machine = native_machine;
 
     signal( SIGPIPE, SIG_DFL );
@@ -1131,12 +1131,12 @@ static void fill_builtin_image_info( void *module, pe_image_info_t *info )
     const IMAGE_DOS_HEADER *dos = (const IMAGE_DOS_HEADER *)module;
     const IMAGE_NT_HEADERS *nt = (IMAGE_NT_HEADERS *)((const BYTE *)dos + dos->e_lfanew);
 
+    memset( info, 0, sizeof(*info) );
     info->base            = nt->OptionalHeader.ImageBase;
     info->entry_point     = nt->OptionalHeader.AddressOfEntryPoint;
     info->map_size        = nt->OptionalHeader.SizeOfImage;
     info->stack_size      = nt->OptionalHeader.SizeOfStackReserve;
     info->stack_commit    = nt->OptionalHeader.SizeOfStackCommit;
-    info->zerobits        = 0;
     info->subsystem       = nt->OptionalHeader.Subsystem;
     info->subsystem_minor = nt->OptionalHeader.MinorSubsystemVersion;
     info->subsystem_major = nt->OptionalHeader.MajorSubsystemVersion;
@@ -1146,13 +1146,10 @@ static void fill_builtin_image_info( void *module, pe_image_info_t *info )
     info->dll_charact     = nt->OptionalHeader.DllCharacteristics;
     info->machine         = nt->FileHeader.Machine;
     info->contains_code   = TRUE;
-    info->image_flags     = IMAGE_FLAGS_WineBuiltin;
-    info->loader_flags    = 0;
+    info->wine_builtin    = TRUE;
     info->header_size     = nt->OptionalHeader.SizeOfHeaders;
     info->file_size       = nt->OptionalHeader.SizeOfImage;
     info->checksum        = nt->OptionalHeader.CheckSum;
-    info->dbg_offset      = 0;
-    info->dbg_size        = 0;
 }
 
 
@@ -1573,12 +1570,12 @@ NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename,
 
     if (loadorder == LO_DISABLED) return STATUS_DLL_NOT_FOUND;
 
-    if (image_info->image_flags & IMAGE_FLAGS_WineBuiltin)
+    if (image_info->wine_builtin)
     {
         if (loadorder == LO_NATIVE) return STATUS_DLL_NOT_FOUND;
         loadorder = LO_BUILTIN_NATIVE;  /* load builtin, then fallback to the file we found */
     }
-    else if (image_info->image_flags & IMAGE_FLAGS_WineFakeDll)
+    else if (image_info->wine_fakedll)
     {
         TRACE( "%s is a fake Wine dll\n", debugstr_w(filename) );
         if (loadorder == LO_NATIVE) return STATUS_DLL_NOT_FOUND;

@@ -3251,12 +3251,7 @@ typedef struct _SECTION_IMAGE_INFORMATION {
           UCHAR ImageMappedFlat           : 1;
           UCHAR BaseBelow4gb              : 1;
           UCHAR ComPlusPrefer32bit        : 1;
-#ifdef __WINESRC__  /* Wine extensions */
-          UCHAR WineBuiltin               : 1;
-          UCHAR WineFakeDll               : 1;
-#else
           UCHAR Reserved                  : 2;
-#endif
       } DUMMYSTRUCTNAME;
   } DUMMYUNIONNAME;
   ULONG LoaderFlags;
