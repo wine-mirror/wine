@@ -85,9 +85,9 @@ BOOLEAN WINAPI HidD_GetFeature( HANDLE file, void *report_buf, ULONG report_len 
     return sync_ioctl( file, IOCTL_HID_GET_FEATURE, NULL, 0, report_buf, report_len );
 }
 
-void WINAPI HidD_GetHidGuid(LPGUID guid)
+void WINAPI HidD_GetHidGuid( GUID *guid )
 {
-    TRACE( "guid %s.\n", debugstr_guid( guid ) );
+    TRACE( "guid %p.\n", guid );
     *guid = GUID_DEVINTERFACE_HID;
 }
 
