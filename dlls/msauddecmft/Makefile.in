@@ -1,1 +1,4 @@
 MODULE    = msauddecmft.dll
+
+C_SRCS = \
+	main.c
