@@ -34,7 +34,6 @@ extern NTSTATUS WINAPI x11drv_systray_change_owner( void *params, ULONG size ) D
 
 extern NTSTATUS x11drv_dnd_drop_event( UINT arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_dnd_leave_event( UINT arg ) DECLSPEC_HIDDEN;
-extern NTSTATUS x11drv_ime_update_association( UINT arg ) DECLSPEC_HIDDEN;
 
 extern LRESULT WINAPI foreign_window_proc( HWND hwnd, UINT msg, WPARAM wparam,
                                            LPARAM lparam ) DECLSPEC_HIDDEN;

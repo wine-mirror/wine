@@ -30,7 +30,6 @@ static const callback_func callback_funcs[] =
 {
     x11drv_dnd_drop_event,
     x11drv_dnd_leave_event,
-    x11drv_ime_update_association,
 };
 
 C_ASSERT( ARRAYSIZE(callback_funcs) == client_funcs_count );

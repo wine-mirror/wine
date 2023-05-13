@@ -146,16 +146,3 @@ BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
 
     return TRUE;
 }
-
-/* Interfaces to XIM and other parts of winex11drv */
-
-NTSTATUS x11drv_ime_update_association( UINT arg )
-{
-    HWND focus = UlongToHandle( arg );
-
-    ImmGetContext(focus);
-
-    if (focus && hSelectedFrom)
-        ImmAssociateContext(focus,RealIMC(FROM_X11));
-    return 0;
-}

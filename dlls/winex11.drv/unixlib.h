@@ -92,7 +92,6 @@ enum client_callback
 {
     client_dnd_drop_event,
     client_dnd_leave_event,
-    client_ime_update_association,
     client_funcs_count
 };
 

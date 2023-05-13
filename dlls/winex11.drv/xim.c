@@ -410,8 +410,6 @@ static void xim_open( Display *display, XPointer user, XPointer arg )
     TRACE( "display %p, data %p, arg %p\n", display, user, arg );
     if (!(data->xim = xim_create( data ))) return;
     XUnregisterIMInstantiateCallback( display, NULL, NULL, NULL, xim_open, user );
-
-    x11drv_client_call( client_ime_update_association, 0 );
 }
 
 static void xim_destroy( XIM xim, XPointer user, XPointer arg )
@@ -434,8 +432,8 @@ void xim_thread_attach( struct x11drv_thread_data *data )
     for (i = 0; list && i < count; ++i) TRACE( "  %d: %s\n", i, list[i] );
     if (list) XFreeStringList( list );
 
-    if ((data->xim = xim_create( data ))) x11drv_client_call( client_ime_update_association, 0 );
-    else XRegisterIMInstantiateCallback( display, NULL, NULL, NULL, xim_open, (XPointer)data );
+    if ((data->xim = xim_create( data ))) return;
+    XRegisterIMInstantiateCallback( display, NULL, NULL, NULL, xim_open, (XPointer)data );
 }
 
 static BOOL xic_destroy( XIC xic, XPointer user, XPointer arg )
