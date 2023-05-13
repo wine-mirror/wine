@@ -79,7 +79,7 @@ static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client);
 
 static const IAudioClient3Vtbl AudioClient3_Vtbl;
 static const IAudioRenderClientVtbl AudioRenderClient_Vtbl;
-static const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl;
+extern const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl;
 extern const IAudioSessionControl2Vtbl AudioSessionControl2_Vtbl;
 extern const ISimpleAudioVolumeVtbl SimpleAudioVolume_Vtbl;
 extern const IAudioClockVtbl AudioClock_Vtbl;
@@ -105,11 +105,6 @@ static inline ACImpl *impl_from_IAudioClient3(IAudioClient3 *iface)
 static inline ACImpl *impl_from_IAudioRenderClient(IAudioRenderClient *iface)
 {
     return CONTAINING_RECORD(iface, ACImpl, IAudioRenderClient_iface);
-}
-
-static inline ACImpl *impl_from_IAudioCaptureClient(IAudioCaptureClient *iface)
-{
-    return CONTAINING_RECORD(iface, ACImpl, IAudioCaptureClient_iface);
 }
 
 BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
@@ -1168,114 +1163,6 @@ static const IAudioRenderClientVtbl AudioRenderClient_Vtbl = {
     AudioRenderClient_Release,
     AudioRenderClient_GetBuffer,
     AudioRenderClient_ReleaseBuffer
-};
-
-static HRESULT WINAPI AudioCaptureClient_QueryInterface(
-        IAudioCaptureClient *iface, REFIID riid, void **ppv)
-{
-    ACImpl *This = impl_from_IAudioCaptureClient(iface);
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
-
-    if(!ppv)
-        return E_POINTER;
-    *ppv = NULL;
-
-    if(IsEqualIID(riid, &IID_IUnknown) ||
-            IsEqualIID(riid, &IID_IAudioCaptureClient))
-        *ppv = iface;
-    else if(IsEqualIID(riid, &IID_IMarshal))
-        return IUnknown_QueryInterface(This->marshal, riid, ppv);
-    if(*ppv){
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    WARN("Unknown interface %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI AudioCaptureClient_AddRef(IAudioCaptureClient *iface)
-{
-    ACImpl *This = impl_from_IAudioCaptureClient(iface);
-    return IAudioClient3_AddRef(&This->IAudioClient3_iface);
-}
-
-static ULONG WINAPI AudioCaptureClient_Release(IAudioCaptureClient *iface)
-{
-    ACImpl *This = impl_from_IAudioCaptureClient(iface);
-    return IAudioClient3_Release(&This->IAudioClient3_iface);
-}
-
-static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
-        BYTE **data, UINT32 *frames, DWORD *flags, UINT64 *devpos,
-        UINT64 *qpcpos)
-{
-    ACImpl *This = impl_from_IAudioCaptureClient(iface);
-    struct get_capture_buffer_params params;
-
-    TRACE("(%p)->(%p, %p, %p, %p, %p)\n", This, data, frames, flags,
-            devpos, qpcpos);
-
-    if(!data)
-        return E_POINTER;
-
-    *data = NULL;
-
-    if(!frames || !flags)
-        return E_POINTER;
-
-    params.stream = This->stream;
-    params.data = data;
-    params.frames = frames;
-    params.flags = (UINT*)flags;
-    params.devpos = devpos;
-    params.qpcpos = qpcpos;
-    OSS_CALL(get_capture_buffer, &params);
-
-    return params.result;
-}
-
-static HRESULT WINAPI AudioCaptureClient_ReleaseBuffer(
-        IAudioCaptureClient *iface, UINT32 done)
-{
-    ACImpl *This = impl_from_IAudioCaptureClient(iface);
-    struct release_capture_buffer_params params;
-
-    TRACE("(%p)->(%u)\n", This, done);
-
-    params.stream = This->stream;
-    params.done = done;
-    OSS_CALL(release_capture_buffer, &params);
-
-    return params.result;
-}
-
-static HRESULT WINAPI AudioCaptureClient_GetNextPacketSize(
-        IAudioCaptureClient *iface, UINT32 *frames)
-{
-    ACImpl *This = impl_from_IAudioCaptureClient(iface);
-    struct get_next_packet_size_params params;
-
-    TRACE("(%p)->(%p)\n", This, frames);
-
-    if(!frames)
-        return E_POINTER;
-
-    params.stream = This->stream;
-    params.frames = frames;
-    OSS_CALL(get_next_packet_size, &params);
-
-    return params.result;
-}
-
-static const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl =
-{
-    AudioCaptureClient_QueryInterface,
-    AudioCaptureClient_AddRef,
-    AudioCaptureClient_Release,
-    AudioCaptureClient_GetBuffer,
-    AudioCaptureClient_ReleaseBuffer,
-    AudioCaptureClient_GetNextPacketSize
 };
 
 static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client)
