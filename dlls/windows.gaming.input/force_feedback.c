@@ -646,7 +646,6 @@ static HRESULT WINAPI motor_load_effect_async( IUnknown *invoker, IUnknown *para
     {
         if (effect->effect) IDirectInputEffect_Release( effect->effect );
         effect->effect = dinput_effect;
-        IDirectInputEffect_AddRef( effect->effect );
     }
 
     LeaveCriticalSection( &effect->cs );
