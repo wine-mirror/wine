@@ -48,6 +48,11 @@ void set_stream_volumes(struct audio_client *This)
     WINE_UNIX_CALL(set_volumes, &params);
 }
 
+static inline struct audio_client *impl_from_IAudioCaptureClient(IAudioCaptureClient *iface)
+{
+    return CONTAINING_RECORD(iface, struct audio_client, IAudioCaptureClient_iface);
+}
+
 static inline struct audio_client *impl_from_IAudioClock(IAudioClock *iface)
 {
     return CONTAINING_RECORD(iface, struct audio_client, IAudioClock_iface);
@@ -62,6 +67,122 @@ static inline struct audio_client *impl_from_IAudioStreamVolume(IAudioStreamVolu
 {
     return CONTAINING_RECORD(iface, struct audio_client, IAudioStreamVolume_iface);
 }
+
+static HRESULT WINAPI capture_QueryInterface(IAudioCaptureClient *iface, REFIID riid, void **ppv)
+{
+    struct audio_client *This = impl_from_IAudioCaptureClient(iface);
+
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IAudioCaptureClient))
+        *ppv = iface;
+    else if (IsEqualIID(riid, &IID_IMarshal)) {
+        return IUnknown_QueryInterface(This->marshal, riid, ppv);
+    } else {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*ppv);
+
+    return S_OK;
+}
+
+static ULONG WINAPI capture_AddRef(IAudioCaptureClient *iface)
+{
+    struct audio_client *This = impl_from_IAudioCaptureClient(iface);
+    return IAudioClient3_AddRef(&This->IAudioClient3_iface);
+}
+
+static ULONG WINAPI capture_Release(IAudioCaptureClient *iface)
+{
+    struct audio_client *This = impl_from_IAudioCaptureClient(iface);
+    return IAudioClient3_Release(&This->IAudioClient3_iface);
+}
+
+static HRESULT WINAPI capture_GetBuffer(IAudioCaptureClient *iface, BYTE **data, UINT32 *frames,
+                                        DWORD *flags, UINT64 *devpos, UINT64 *qpcpos)
+{
+    struct audio_client *This = impl_from_IAudioCaptureClient(iface);
+    struct get_capture_buffer_params params;
+
+    TRACE("(%p)->(%p, %p, %p, %p, %p)\n", This, data, frames, flags, devpos, qpcpos);
+
+    if (!data)
+        return E_POINTER;
+
+    *data = NULL;
+
+    if (!frames || !flags)
+        return E_POINTER;
+
+    if (!This->stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
+
+    params.stream = This->stream;
+    params.data   = data;
+    params.frames = frames;
+    params.flags  = (UINT *)flags;
+    params.devpos = devpos;
+    params.qpcpos = qpcpos;
+
+    WINE_UNIX_CALL(get_capture_buffer, &params);
+
+    return params.result;
+}
+
+static HRESULT WINAPI capture_ReleaseBuffer(IAudioCaptureClient *iface, UINT32 done)
+{
+    struct audio_client *This = impl_from_IAudioCaptureClient(iface);
+    struct release_capture_buffer_params params;
+
+    TRACE("(%p)->(%u)\n", This, done);
+
+    if (!This->stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
+
+    params.stream = This->stream;
+    params.done   = done;
+
+    WINE_UNIX_CALL(release_capture_buffer, &params);
+
+    return params.result;
+}
+
+static HRESULT WINAPI capture_GetNextPacketSize(IAudioCaptureClient *iface, UINT32 *frames)
+{
+    struct audio_client *This = impl_from_IAudioCaptureClient(iface);
+    struct get_next_packet_size_params params;
+
+    TRACE("(%p)->(%p)\n", This, frames);
+
+    if (!frames)
+        return E_POINTER;
+
+    if (!This->stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
+
+    params.stream = This->stream;
+    params.frames = frames;
+
+    WINE_UNIX_CALL(get_next_packet_size, &params);
+
+    return params.result;
+}
+
+const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl =
+{
+    capture_QueryInterface,
+    capture_AddRef,
+    capture_Release,
+    capture_GetBuffer,
+    capture_ReleaseBuffer,
+    capture_GetNextPacketSize
+};
 
 static HRESULT WINAPI clock_QueryInterface(IAudioClock *iface, REFIID riid, void **ppv)
 {
