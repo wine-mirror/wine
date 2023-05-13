@@ -349,6 +349,8 @@ static void check_dinput_devices( DWORD version, DIDEVICEINSTANCEW *devinst )
 
         ref = IDirectInputDevice8_Release( device );
         ok( ref == 0, "Release returned %ld\n", ref );
+        ref = IDirectInput8_Release( di8 );
+        ok( ref == 0, "Release returned %ld\n", ref );
     }
     else
     {
@@ -403,6 +405,8 @@ static void check_dinput_devices( DWORD version, DIDEVICEINSTANCEW *devinst )
 
         hr = IDirectInput_EnumDevices( di, 0x14, enum_device_count, &count, DIEDFL_ALLDEVICES );
         ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#lx\n", hr );
+        ref = IDirectInput_Release( di );
+        ok( ref == 0, "Release returned %ld\n", ref );
     }
 }
 
