@@ -442,6 +442,7 @@ static void add_file_to_catalog( HANDLE catalog, const WCHAR *file )
                                      sizeof(L"2:6.0"), (BYTE *)L"2:6.0" );
         ok( ret, "Failed to write attr, error %lu\n", GetLastError() );
     }
+    free( indirect_data );
 }
 
 static void unload_driver( SC_HANDLE service )
