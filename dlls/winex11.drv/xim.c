@@ -48,6 +48,10 @@ struct ime_update
 {
     struct list entry;
     DWORD id;
+    DWORD cursor_pos;
+    WCHAR *comp_str;
+    WCHAR *result_str;
+    WCHAR buffer[];
 };
 
 static pthread_mutex_t ime_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -83,12 +87,18 @@ BOOL xim_in_compose_mode(void)
     return !!ime_comp_buf;
 }
 
-static void post_ime_update( HWND hwnd )
+static void post_ime_update( HWND hwnd, UINT cursor_pos, WCHAR *comp_str, WCHAR *result_str )
 {
-    UINT id;
+    UINT id, comp_len, result_len;
     struct ime_update *update;
 
-    if (!(update = malloc( sizeof(struct ime_update) ))) return;
+    comp_len = comp_str ? wcslen( comp_str ) + 1 : 0;
+    result_len = result_str ? wcslen( result_str ) + 1 : 0;
+
+    if (!(update = malloc( offsetof(struct ime_update, buffer[comp_len + result_len]) ))) return;
+    update->cursor_pos = cursor_pos;
+    update->comp_str = comp_str ? memcpy( update->buffer, comp_str, comp_len * sizeof(WCHAR) ) : NULL;
+    update->result_str = result_str ? memcpy( update->buffer + comp_len, result_str, result_len * sizeof(WCHAR) ) : NULL;
 
     pthread_mutex_lock( &ime_mutex );
     id = update->id = ++ime_update_count;
@@ -133,7 +143,7 @@ void xim_set_result_string( HWND hwnd, const char *str, UINT count )
     len = ntdll_umbstowcs( str, count, output, count );
     output[len] = 0;
 
-    post_ime_update( hwnd );
+    post_ime_update( hwnd, 0, ime_comp_buf, output );
     x11drv_client_func( client_func_ime_set_result, output, len * sizeof(WCHAR) );
 
     free( output );
@@ -170,7 +180,7 @@ static int xic_preedit_start( XIC xic, XPointer user, XPointer arg )
     if ((ime_comp_buf = realloc( ime_comp_buf, sizeof(WCHAR) ))) *ime_comp_buf = 0;
     else ERR( "Failed to allocate preedit buffer\n" );
 
-    post_ime_update( hwnd );
+    post_ime_update( hwnd, 0, ime_comp_buf, NULL );
 
     return -1;
 }
@@ -185,7 +195,7 @@ static int xic_preedit_done( XIC xic, XPointer user, XPointer arg )
     ime_comp_buf = NULL;
 
     x11drv_client_call( client_ime_set_composition_status, FALSE );
-    post_ime_update( hwnd );
+    post_ime_update( hwnd, 0, NULL, NULL );
 
     return 0;
 }
@@ -225,7 +235,7 @@ static int xic_preedit_draw( XIC xic, XPointer user, XPointer arg )
     if (text && str != text->string.multi_byte) free( str );
 
     x11drv_client_call( client_ime_set_cursor_pos, params->caret );
-    post_ime_update( hwnd );
+    post_ime_update( hwnd, params->caret, ime_comp_buf, NULL );
 
     return 0;
 }
@@ -272,7 +282,7 @@ static int xic_preedit_caret( XIC xic, XPointer user, XPointer arg )
     x11drv_client_call( client_ime_set_cursor_pos, pos );
     params->position = xim_caret_pos = pos;
 
-    post_ime_update( hwnd );
+    post_ime_update( hwnd, pos, ime_comp_buf, NULL );
 
     return 0;
 }
@@ -538,15 +548,44 @@ static struct ime_update *find_ime_update( UINT id )
  */
 UINT X11DRV_ImeToAsciiEx( UINT vkey, UINT lparam, const BYTE *state, COMPOSITIONSTRING *compstr, HIMC himc )
 {
+    UINT needed = sizeof(COMPOSITIONSTRING), comp_len, result_len;
     struct ime_update *update;
 
     TRACE( "vkey %#x, lparam %#x, state %p, compstr %p, himc %p\n", vkey, lparam, state, compstr, himc );
 
     pthread_mutex_lock( &ime_mutex );
 
-    if ((update = find_ime_update( lparam )))
-        list_remove( &update->entry );
+    if (!(update = find_ime_update( lparam )))
+    {
+        pthread_mutex_unlock( &ime_mutex );
+        return 0;
+    }
 
+    if (!update->comp_str) comp_len = 0;
+    else
+    {
+        comp_len = wcslen( update->comp_str );
+        needed += comp_len * sizeof(WCHAR); /* GCS_COMPSTR */
+        needed += comp_len; /* GCS_COMPATTR */
+        needed += 2 * sizeof(DWORD); /* GCS_COMPCLAUSE */
+    }
+
+    if (!update->result_str) result_len = 0;
+    else
+    {
+        result_len = wcslen( update->result_str );
+        needed += result_len * sizeof(WCHAR); /* GCS_RESULTSTR */
+        needed += 2 * sizeof(DWORD); /* GCS_RESULTCLAUSE */
+    }
+
+    if (compstr->dwSize < needed)
+    {
+        compstr->dwSize = needed;
+        pthread_mutex_unlock( &ime_mutex );
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+
+    list_remove( &update->entry );
     pthread_mutex_unlock( &ime_mutex );
 
     free( update );
