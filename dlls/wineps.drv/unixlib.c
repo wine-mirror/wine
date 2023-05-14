@@ -839,13 +839,14 @@ static int CDECL ext_escape(PHYSDEV dev, int escape, int input_size, const void 
     case CLIP_TO_PATH:
         return 1;
 
-    case PSDRV_GET_GLYPH_NAME:
+    case PSDRV_CHECK_WCHAR:
     {
         PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
         WCHAR *uv = (WCHAR *)input;
-        const char *name = uv_metrics(*uv, pdev->afm)->N->sz;
+        WCHAR out = uv_metrics(*uv, pdev->afm)->UV;
 
-        lstrcpynA(output, name, output_size);
+        if ((out & 0xff00) == 0xf000) out &= ~0xf000;
+        *(WCHAR *)output = out;
         return 1;
     }
 

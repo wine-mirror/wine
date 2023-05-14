@@ -50,14 +50,36 @@ BOOL PSDRV_WriteSetBuiltinFont(print_ctx *ctx)
             font_info.escapement, FALSE);
 }
 
+static int __cdecl agl_by_uv(const void *a, const void *b)
+{
+    return (int)(((const UNICODEGLYPH *)a)->UV - ((const UNICODEGLYPH *)b)->UV);
+}
+
+static const char *find_ag_name(WCHAR wch)
+{
+    UNICODEGLYPH key = { .UV = wch };
+    UNICODEGLYPH *needle;
+
+    needle = bsearch(&key, PSDRV_AGLbyUV, PSDRV_AGLbyUVSize, sizeof(key), agl_by_uv);
+    return needle ? needle->name->sz : NULL;
+}
+
 BOOL PSDRV_WriteBuiltinGlyphShow(print_ctx *ctx, LPCWSTR str, INT count)
 {
-    char name[32];
+    const char *name;
+    WCHAR wch;
     int i;
 
     for (i = 0; i < count; ++i)
     {
-        ExtEscape(ctx->hdc, PSDRV_GET_GLYPH_NAME, sizeof(str[i]), (const char *)&str[i], sizeof(name), name);
+        ExtEscape(ctx->hdc, PSDRV_CHECK_WCHAR, sizeof(str[i]),
+                (const char *)&str[i], sizeof(wch), (char *)&wch);
+        name = find_ag_name(wch);
+        if (!name)
+        {
+            ERR("can't find glyph name for %x\n", wch);
+            continue;
+        }
 	PSDRV_WriteGlyphShow(ctx, name);
     }
 
