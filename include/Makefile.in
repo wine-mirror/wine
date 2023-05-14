@@ -213,6 +213,7 @@ SOURCES = \
 	ddk/usbioctl.h \
 	ddk/usbiodef.h \
 	ddk/wdm.h \
+	ddk/winddi.h \
 	ddk/winddiui.h \
 	ddk/winsplp.h \
 	ddk/wsk.h \
