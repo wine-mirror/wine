@@ -182,38 +182,41 @@ GpStatus WINGDIPAPI GdipInvertMatrix(GpMatrix *matrix)
 {
     GpMatrix copy;
     REAL det;
-    BOOL invertible;
 
     TRACE("(%p)\n", matrix);
 
     if(!matrix)
         return InvalidParameter;
 
-    GdipIsMatrixInvertible(matrix, &invertible);
-    if(!invertible)
-        return InvalidParameter;
-
     /* optimize inverting simple scaling and translation matrices */
     if(matrix->matrix[1] == 0 && matrix->matrix[2] == 0)
     {
-        matrix->matrix[4] = -matrix->matrix[4] / matrix->matrix[0];
-        matrix->matrix[5] = -matrix->matrix[5] / matrix->matrix[3];
-        matrix->matrix[0] = 1 / matrix->matrix[0];
-        matrix->matrix[3] = 1 / matrix->matrix[3];
+        if (matrix->matrix[0] != 0 && matrix->matrix[3] != 0)
+        {
+            matrix->matrix[4] = -matrix->matrix[4] / matrix->matrix[0];
+            matrix->matrix[5] = -matrix->matrix[5] / matrix->matrix[3];
+            matrix->matrix[0] = 1 / matrix->matrix[0];
+            matrix->matrix[3] = 1 / matrix->matrix[3];
 
-        return Ok;
+            return Ok;
+        }
+        else
+            return InvalidParameter;
     }
-
     det = matrix_det(matrix);
+    if (!(fabs(det) >= 1e-5))
+        return InvalidParameter;
+
+    det = 1 / det;
 
     copy = *matrix;
     /* store result */
-    matrix->matrix[0] =   copy.matrix[3] / det;
-    matrix->matrix[1] =  -copy.matrix[1] / det;
-    matrix->matrix[2] =  -copy.matrix[2] / det;
-    matrix->matrix[3] =   copy.matrix[0] / det;
-    matrix->matrix[4] =  (copy.matrix[2]*copy.matrix[5]-copy.matrix[3]*copy.matrix[4]) / det;
-    matrix->matrix[5] = -(copy.matrix[0]*copy.matrix[5]-copy.matrix[1]*copy.matrix[4]) / det;
+    matrix->matrix[0] =   copy.matrix[3] * det;
+    matrix->matrix[1] =  -copy.matrix[1] * det;
+    matrix->matrix[2] =  -copy.matrix[2] * det;
+    matrix->matrix[3] =   copy.matrix[0] * det;
+    matrix->matrix[4] =  (copy.matrix[2]*copy.matrix[5]-copy.matrix[3]*copy.matrix[4]) * det;
+    matrix->matrix[5] = -(copy.matrix[0]*copy.matrix[5]-copy.matrix[1]*copy.matrix[4]) * det;
 
     return Ok;
 }
