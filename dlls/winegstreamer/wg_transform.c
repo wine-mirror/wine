@@ -393,6 +393,9 @@ NTSTATUS wg_transform_create(void *args)
 
         case WG_MAJOR_TYPE_VIDEO:
         case WG_MAJOR_TYPE_VIDEO_WMV:
+            if (!(element = create_element("videoconvert", "base"))
+                    || !append_element(transform->container, element, &first, &last))
+                goto out;
             if (!(transform->video_flip = create_element("videoflip", "base"))
                     || !append_element(transform->container, transform->video_flip, &first, &last))
                 goto out;
