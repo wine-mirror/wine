@@ -503,11 +503,12 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
     WCHAR *ppd_filename = NULL;
     char *nameA = NULL;
     BOOL using_default_devmode = FALSE;
-    int i, len, input_slots, resolutions, page_sizes, font_subs, size;
+    int i, len, input_slots, resolutions, page_sizes, font_subs, installed_fonts, size;
     struct input_slot *dm_slot;
     struct resolution *dm_res;
     struct page_size *dm_page;
     struct font_sub *dm_sub;
+    struct installed_font *dm_font;
     INPUTSLOT *slot;
     RESOLUTION *res;
     PAGESIZE *page;
@@ -551,11 +552,13 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
     resolutions = list_count( &pi->ppd->Resolutions );
     page_sizes = list_count( &pi->ppd->PageSizes );
     font_subs = pi->FontSubTableSize;
+    installed_fonts = list_count( &pi->ppd->InstalledFonts );
     size = FIELD_OFFSET(PSDRV_DEVMODE, data[
             input_slots * sizeof(struct input_slot) +
             resolutions * sizeof(struct resolution) +
             page_sizes * sizeof(struct page_size) +
-            font_subs * sizeof(struct font_sub)]);
+            font_subs * sizeof(struct font_sub) +
+            installed_fonts * sizeof(struct installed_font)]);
 
     pi->Devmode = get_devmode( hPrinter, name, &using_default_devmode, size );
     if (!pi->Devmode) goto fail;
@@ -590,6 +593,8 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
         pi->Devmode->input_slots = input_slots;
         pi->Devmode->resolutions = resolutions;
         pi->Devmode->page_sizes = page_sizes;
+        pi->Devmode->font_subs = font_subs;
+        pi->Devmode->installed_fonts = installed_fonts;
 
         dm_slot = (struct input_slot *)pi->Devmode->data;
         LIST_FOR_EACH_ENTRY( slot, &pi->ppd->InputSlots, INPUTSLOT, entry )
@@ -636,6 +641,13 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
             lstrcpynW(dm_sub->name, pi->FontSubTable[i].pValueName, ARRAY_SIZE(dm_sub->name));
             lstrcpynW(dm_sub->sub, (WCHAR *)pi->FontSubTable[i].pData, ARRAY_SIZE(dm_sub->sub));
             dm_sub++;
+        }
+
+        dm_font = (struct installed_font *)dm_sub;
+        LIST_FOR_EACH_ENTRY( font, &pi->ppd->InstalledFonts, FONTNAME, entry )
+        {
+            lstrcpynA(dm_font->name, font->Name, ARRAY_SIZE(dm_font->name));
+            dm_font++;
         }
     }
 

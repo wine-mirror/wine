@@ -66,6 +66,11 @@ struct font_sub
     WCHAR sub[LF_FACESIZE];
 };
 
+struct installed_font
+{
+    char name[LF_FACESIZE];
+};
+
 /* Unix calls */
 enum wineps_funcs
 {

@@ -228,6 +228,7 @@ typedef struct {
     int resolutions;
     int page_sizes;
     int font_subs;
+    int installed_fonts;
     BYTE data[1];
 } PSDRV_DEVMODE;
 
