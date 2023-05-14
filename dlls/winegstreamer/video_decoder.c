@@ -310,8 +310,6 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
     {
         mf_media_type_to_wg_format(decoder->output_type, &output_format);
 
-        output_format.u.video.width = frame_size >> 32;
-        output_format.u.video.height = (UINT32)frame_size;
         output_format.u.video.fps_d = 0;
         output_format.u.video.fps_n = 0;
 
