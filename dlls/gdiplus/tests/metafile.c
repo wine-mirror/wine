@@ -3987,7 +3987,6 @@ static void test_pen(void)
 
     stat = GdipBitmapGetPixel(bitmap, 40, 90, &color);
     expect(Ok, stat);
-    todo_wine
     expect(0xffff0000, color);
 
     stat = GdipDisposeImage((GpImage *)clone_metafile);

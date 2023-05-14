@@ -2671,7 +2671,12 @@ static GpStatus METAFILE_PlaybackObject(GpMetafile *metafile, UINT flags, UINT d
         if (pendata->PenDataFlags & PenDataCustomEndCap)
         {
             EmfPlusCustomEndCapData *endcap = (EmfPlusCustomEndCapData *)((BYTE *)pendata + offset);
-            FIXME("PenDataCustomEndCap is not supported.\n");
+            if ((status = metafile_deserialize_custom_line_cap((BYTE *)endcap, data_size, &custom_line_cap)) != Ok)
+                goto penfailed;
+            status = GdipSetPenCustomEndCap(pen, custom_line_cap);
+            GdipDeleteCustomLineCap(custom_line_cap);
+            if (status != Ok)
+                goto penfailed;
             offset += FIELD_OFFSET(EmfPlusCustomEndCapData, data) + endcap->CustomEndCapSize;
         }
 
