@@ -88,8 +88,7 @@ struct import_ntf_params
 
 struct init_dc_params
 {
-    const struct gdi_dc_funcs *funcs;
-    PRINTERINFO *pi;
-
     const WCHAR *name;
+    PSDRV_DEVMODE *devmode;
+    const struct gdi_dc_funcs *funcs;
 };

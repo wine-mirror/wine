@@ -902,7 +902,7 @@ fail:
 const struct gdi_dc_funcs * CDECL PSDRV_get_gdi_driver( unsigned int version, const WCHAR *name )
 {
     PRINTERINFO *pi = PSDRV_FindPrinterInfo( name );
-    struct init_dc_params params = { NULL, pi, pi->friendly_name };
+    struct init_dc_params params;
 
     if (!pi)
         return NULL;
@@ -911,6 +911,9 @@ const struct gdi_dc_funcs * CDECL PSDRV_get_gdi_driver( unsigned int version, co
         ERR( "version mismatch, gdi32 wants %u but wineps has %u\n", version, WINE_GDI_DRIVER_VERSION );
         return NULL;
     }
+    params.name = pi->friendly_name;
+    params.devmode = pi->Devmode;
+    params.funcs = NULL;
     if (!WINE_UNIX_CALL( unix_init_dc, &params ))
         return FALSE;
     return params.funcs;

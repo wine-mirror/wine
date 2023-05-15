@@ -76,7 +76,7 @@ struct printer_info
 {
     struct list entry;
     const WCHAR *name;
-    PRINTERINFO *pi;
+    PSDRV_DEVMODE *devmode;
 };
 
 static struct list printer_info_list = LIST_INIT(printer_info_list);
@@ -90,7 +90,6 @@ typedef struct
     /* builtin font info */
     BOOL builtin;
     SIZE size;
-    const AFM *afm;
     const struct font_data *font;
     float scale;
     TEXTMETRICW tm;
@@ -305,10 +304,10 @@ static inline int paper_size_from_points(float size)
 static const struct input_slot *unix_find_slot(const struct printer_info *pi,
         const DEVMODEW *dm)
 {
-    const struct input_slot *slot = (const struct input_slot *)pi->pi->Devmode->data;
+    const struct input_slot *slot = (const struct input_slot *)pi->devmode->data;
     int i;
 
-    for (i = 0; i < pi->pi->Devmode->input_slots; i++)
+    for (i = 0; i < pi->devmode->input_slots; i++)
     {
         if (slot[i].win_bin == dm->dmDefaultSource)
             return slot + i;
@@ -322,10 +321,10 @@ static const struct page_size *unix_find_pagesize(const struct printer_info *pi,
     const struct page_size *page;
     int i;
 
-    page = (const struct page_size *)(pi->pi->Devmode->data +
-            pi->pi->Devmode->input_slots * sizeof(struct input_slot) +
-            pi->pi->Devmode->resolutions * sizeof(struct resolution));
-    for (i = 0; i < pi->pi->Devmode->page_sizes; i++)
+    page = (const struct page_size *)(pi->devmode->data +
+            pi->devmode->input_slots * sizeof(struct input_slot) +
+            pi->devmode->resolutions * sizeof(struct resolution));
+    for (i = 0; i < pi->devmode->page_sizes; i++)
     {
         if (page[i].win_page == dm->dmPaperSize)
             return page + i;
@@ -423,7 +422,7 @@ static void merge_devmodes(PSDRV_DEVMODE *dm1, const DEVMODEW *dm2,
         dm1->dmPublic.dmPrintQuality = dm2->dmPrintQuality;
     if (dm2->dmFields & DM_COLOR)
         dm1->dmPublic.dmColor = dm2->dmColor;
-    if (dm2->dmFields & DM_DUPLEX && pi->pi->Devmode->duplex)
+    if (dm2->dmFields & DM_DUPLEX && pi->devmode->duplex)
         dm1->dmPublic.dmDuplex = dm2->dmDuplex;
     if (dm2->dmFields & DM_YRESOLUTION)
         dm1->dmPublic.dmYResolution = dm2->dmYResolution;
@@ -586,7 +585,7 @@ static int cmp_glyph_info(const void *a, const void *b)
         (int)((const struct glyph_info *)b)->wch;
 }
 
-const struct glyph_info *uv_metrics_ntf(WCHAR wch, const struct font_data *font)
+const struct glyph_info *uv_metrics(WCHAR wch, const struct font_data *font)
 {
     const struct glyph_info *needle;
     struct glyph_info key;
@@ -605,34 +604,6 @@ const struct glyph_info *uv_metrics_ntf(WCHAR wch, const struct font_data *font)
     {
         WARN("No glyph for U+%.4X in '%s'\n", wch, font->name);
         needle = font->glyphs;
-    }
-    return needle;
-}
-
-static int metrics_by_uv(const void *a, const void *b)
-{
-    return (int)(((const AFMMETRICS *)a)->UV - ((const AFMMETRICS *)b)->UV);
-}
-
-const AFMMETRICS *uv_metrics(LONG uv, const AFM *afm)
-{
-    const AFMMETRICS *needle;
-    AFMMETRICS key;
-
-    /*
-     *  Ugly work-around for symbol fonts.  Wine is sending characters which
-     *  belong in the Unicode private use range (U+F020 - U+F0FF) as ASCII
-     *  characters (U+0020 - U+00FF).
-     */
-    if ((afm->Metrics->UV & 0xff00) == 0xf000 && uv < 0x100)
-        uv |= 0xf000;
-
-    key.UV = uv;
-    needle = bsearch(&key, afm->Metrics, afm->NumofMetrics, sizeof(AFMMETRICS), metrics_by_uv);
-    if (!needle)
-    {
-        WARN("No glyph for U+%.4X in '%s'\n", (int)uv, afm->FontName);
-        needle = afm->Metrics;
     }
     return needle;
 }
@@ -894,7 +865,7 @@ static int CDECL ext_escape(PHYSDEV dev, int escape, int input_size, const void 
     {
         PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
         WCHAR *uv = (WCHAR *)input;
-        WCHAR out = pdev->font ? uv_metrics_ntf(*uv, pdev->font)->wch : uv_metrics(*uv, pdev->afm)->UV;
+        WCHAR out = uv_metrics(*uv, pdev->font)->wch;
 
         if ((out & 0xff00) == 0xf000) out &= ~0xf000;
         *(WCHAR *)output = out;
@@ -909,10 +880,7 @@ static int CDECL ext_escape(PHYSDEV dev, int escape, int input_size, const void 
         if (!pdev->builtin)
             return 0;
 
-        if (pdev->font)
-            lstrcpynA(font_info->font_name, pdev->font->name, sizeof(font_info->font_name));
-        else
-            lstrcpynA(font_info->font_name, pdev->afm->FontName, sizeof(font_info->font_name));
+        lstrcpynA(font_info->font_name, pdev->font->name, sizeof(font_info->font_name));
         font_info->size = pdev->size;
         font_info->escapement = pdev->escapement;
         return 1;
@@ -929,7 +897,7 @@ static inline float gdi_round(float f)
     return f > 0 ? f + 0.5 : f - 0.5;
 }
 
-static void scale_font_ntf(PSDRV_PDEVICE *pdev, const struct font_data *font, LONG height, TEXTMETRICW *tm)
+static void scale_font(PSDRV_PDEVICE *pdev, const struct font_data *font, LONG height, TEXTMETRICW *tm)
 {
     SHORT ascender, descender, line_gap, avg_char_width;
     USHORT units_per_em, win_ascent, win_descent;
@@ -1012,89 +980,6 @@ static void scale_font_ntf(PSDRV_PDEVICE *pdev, const struct font_data *font, LO
             (int)tm->tmExternalLeading);
 }
 
-static void scale_font(PSDRV_PDEVICE *pdev, const AFM *afm, LONG height, TEXTMETRICW *tm)
-{
-    const WINMETRICS *wm = &(afm->WinMetrics);
-    USHORT units_per_em, win_ascent, win_descent;
-    SHORT ascender, descender, line_gap, avg_char_width;
-    float scale;
-    SIZE size;
-
-    TRACE("'%s' %i\n", afm->FontName, (int)height);
-
-    if (height < 0) /* match em height */
-        scale = -(height / (float)wm->usUnitsPerEm);
-    else /* match cell height */
-        scale = height / (float)(wm->usWinAscent + wm->usWinDescent);
-
-    size.cx = (INT)gdi_round(scale * (float)wm->usUnitsPerEm);
-    size.cy = -(INT)gdi_round(scale * (float)wm->usUnitsPerEm);
-
-    units_per_em = (USHORT)gdi_round((float)wm->usUnitsPerEm * scale);
-    ascender = (SHORT)gdi_round((float)wm->sAscender * scale);
-    descender = (SHORT)gdi_round((float)wm->sDescender * scale);
-    line_gap = (SHORT)gdi_round((float)wm->sLineGap * scale);
-    win_ascent = (USHORT)gdi_round((float)wm->usWinAscent * scale);
-    win_descent = (USHORT)gdi_round((float)wm->usWinDescent * scale);
-    avg_char_width = (SHORT)gdi_round((float)wm->sAvgCharWidth * scale);
-
-    tm->tmAscent = (LONG)win_ascent;
-    tm->tmDescent = (LONG)win_descent;
-    tm->tmHeight = tm->tmAscent + tm->tmDescent;
-
-    tm->tmInternalLeading = tm->tmHeight - (LONG)units_per_em;
-    if (tm->tmInternalLeading < 0)
-        tm->tmInternalLeading = 0;
-
-    tm->tmExternalLeading =
-            (LONG)(ascender - descender + line_gap) - tm->tmHeight;
-    if (tm->tmExternalLeading < 0)
-        tm->tmExternalLeading = 0;
-
-    tm->tmAveCharWidth = (LONG)avg_char_width;
-
-    tm->tmWeight = afm->Weight;
-    tm->tmItalic = (afm->ItalicAngle != 0.0);
-    tm->tmUnderlined = 0;
-    tm->tmStruckOut = 0;
-    tm->tmFirstChar = (WCHAR)(afm->Metrics[0].UV);
-    tm->tmLastChar = (WCHAR)(afm->Metrics[afm->NumofMetrics - 1].UV);
-    tm->tmDefaultChar = 0x001f; /* Win2K does this - FIXME? */
-    tm->tmBreakChar = tm->tmFirstChar; /* should be 'space' */
-
-    tm->tmPitchAndFamily = TMPF_DEVICE | TMPF_VECTOR;
-    if (!afm->IsFixedPitch)
-        tm->tmPitchAndFamily |= TMPF_FIXED_PITCH; /* yes, it's backwards */
-    if (wm->usUnitsPerEm != 1000)
-        tm->tmPitchAndFamily |= TMPF_TRUETYPE;
-
-    tm->tmCharSet = ANSI_CHARSET; /* FIXME */
-    tm->tmOverhang = 0;
-
-    /*
-     *  This is kludgy.  font->scale is used in several places in the driver
-     *  to adjust PostScript-style metrics.  Since these metrics have been
-     *  "normalized" to an em-square size of 1000, font->scale needs to be
-     *  similarly adjusted..
-     */
-
-    scale *= (float)wm->usUnitsPerEm / 1000.0;
-
-    tm->tmMaxCharWidth = (LONG)gdi_round((afm->FontBBox.urx - afm->FontBBox.llx) * scale);
-
-    if (pdev)
-    {
-        pdev->scale = scale;
-        pdev->size = size;
-    }
-
-    TRACE("Selected PS font '%s' size %d weight %d.\n", afm->FontName,
-            (int)size.cx, (int)tm->tmWeight);
-    TRACE("H = %d As = %d Des = %d IL = %d EL = %d\n", (int)tm->tmHeight,
-            (int)tm->tmAscent, (int)tm->tmDescent, (int)tm->tmInternalLeading,
-            (int)tm->tmExternalLeading);
-}
-
 static inline BOOL is_stock_font(HFONT font)
 {
     int i;
@@ -1117,10 +1002,9 @@ static struct font_data *find_font_data(const char *name)
     return NULL;
 }
 
-static struct font_data *find_builtin_font(PSDRV_PDEVICE *pdev,
+static struct font_data *find_builtin_font(PSDRV_DEVMODE *devmode,
         const WCHAR *facename, BOOL it, BOOL bd)
 {
-    PSDRV_DEVMODE *devmode = pdev->devmode;
     struct installed_font *installed_font;
     BOOL best_it, best_bd, cur_it, cur_bd;
     struct font_data *best = NULL, *cur;
@@ -1160,7 +1044,7 @@ static struct font_data *find_builtin_font(PSDRV_PDEVICE *pdev,
     return best;
 }
 
-static BOOL select_builtin_font_ntf(PSDRV_PDEVICE *pdev, HFONT hfont, LOGFONTW *plf)
+static BOOL select_builtin_font(PSDRV_PDEVICE *pdev, HFONT hfont, LOGFONTW *plf)
 {
     struct font_data *font_data;
     BOOL bd = FALSE, it = FALSE;
@@ -1174,7 +1058,7 @@ static BOOL select_builtin_font_ntf(PSDRV_PDEVICE *pdev, HFONT hfont, LOGFONTW *
         bd = TRUE;
 
     /* Look for a matching font family */
-    font_data = find_builtin_font(pdev, plf->lfFaceName, it, bd);
+    font_data = find_builtin_font(pdev->devmode, plf->lfFaceName, it, bd);
     if (!font_data)
     {
         /* Fallback for Window's font families to common PostScript families */
@@ -1187,18 +1071,17 @@ static BOOL select_builtin_font_ntf(PSDRV_PDEVICE *pdev, HFONT hfont, LOGFONTW *
         else if (!wcscmp(plf->lfFaceName, courier_newW))
             wcscpy(plf->lfFaceName, courierW);
 
-        font_data = find_builtin_font(pdev, plf->lfFaceName, it, bd);
+        font_data = find_builtin_font(pdev->devmode, plf->lfFaceName, it, bd);
     }
     /* If all else fails, use the first font defined for the printer */
     if (!font_data)
-        font_data = find_builtin_font(pdev, NULL, it, bd);
+        font_data = find_builtin_font(pdev->devmode, NULL, it, bd);
 
     TRACE("Got family %s font '%s'\n", debugstr_w((WCHAR *)((char *)font_data->metrics +
                     font_data->metrics->dpwszFaceName)), font_data->name);
 
     pdev->builtin = TRUE;
     pdev->font = NULL;
-    pdev->afm = NULL;
     pdev->font = font_data;
 
     height = plf->lfHeight;
@@ -1211,89 +1094,7 @@ static BOOL select_builtin_font_ntf(PSDRV_PDEVICE *pdev, HFONT hfont, LOGFONTW *
         NtGdiTransformPoints(pdev->dev.hdc, pts, pts, 2, NtGdiLPtoDP);
         height = pts[1].y - pts[0].y;
     }
-    scale_font_ntf(pdev, font_data, height, &pdev->tm);
-
-    /* Does anyone know if these are supposed to be reversed like this? */
-    pdev->tm.tmDigitizedAspectX = pdev->log_pixels_y;
-    pdev->tm.tmDigitizedAspectY = pdev->log_pixels_x;
-    return TRUE;
-}
-
-static BOOL select_builtin_font(PSDRV_PDEVICE *pdev, HFONT hfont, LOGFONTW *plf)
-{
-    AFMLISTENTRY *afmle;
-    FONTFAMILY *family;
-    BOOL bd = FALSE, it = FALSE;
-    LONG height;
-
-    if (select_builtin_font_ntf(pdev, hfont, plf))
-        return TRUE;
-
-    TRACE("Trying to find facename %s\n", debugstr_w(plf->lfFaceName));
-
-    /* Look for a matching font family */
-    for (family = pdev->pi->pi->Fonts; family; family = family->next)
-    {
-        if (!wcsicmp(plf->lfFaceName, family->FamilyName))
-            break;
-    }
-
-    if (!family)
-    {
-        /* Fallback for Window's font families to common PostScript families */
-        if (!wcscmp(plf->lfFaceName, arialW))
-            wcscpy(plf->lfFaceName, helveticaW);
-        else if (!wcscmp(plf->lfFaceName, systemW))
-            wcscpy(plf->lfFaceName, helveticaW);
-        else if (!wcscmp(plf->lfFaceName, times_new_romanW))
-            wcscpy(plf->lfFaceName, timesW);
-        else if (!wcscmp(plf->lfFaceName, courier_newW))
-            wcscpy(plf->lfFaceName, courierW);
-
-        for (family = pdev->pi->pi->Fonts; family; family = family->next)
-        {
-            if (!wcscmp(plf->lfFaceName, family->FamilyName))
-                break;
-        }
-    }
-    /* If all else fails, use the first font defined for the printer */
-    if (!family)
-        family = pdev->pi->pi->Fonts;
-
-    TRACE("Got family %s\n", debugstr_w(family->FamilyName));
-
-    if (plf->lfItalic)
-        it = TRUE;
-    if (plf->lfWeight > 550)
-        bd = TRUE;
-
-    for (afmle = family->afmlist; afmle; afmle = afmle->next)
-    {
-        if (bd == (afmle->afm->Weight == FW_BOLD) &&
-                it == (afmle->afm->ItalicAngle != 0.0))
-            break;
-    }
-    if (!afmle)
-        afmle = family->afmlist; /* not ideal */
-
-    TRACE("Got font '%s'\n", afmle->afm->FontName);
-
-    pdev->builtin = TRUE;
-    pdev->afm = afmle->afm;
-    pdev->font = NULL;
-
-    height = plf->lfHeight;
-    /* stock fonts ignore the mapping mode */
-    if (!is_stock_font(hfont))
-    {
-        POINT pts[2];
-        pts[0].x = pts[0].y = pts[1].x = 0;
-        pts[1].y = height;
-        NtGdiTransformPoints(pdev->dev.hdc, pts, pts, 2, NtGdiLPtoDP);
-        height = pts[1].y - pts[0].y;
-    }
-    scale_font(pdev, pdev->afm, height, &pdev->tm);
-
+    scale_font(pdev, font_data, height, &pdev->tm);
 
     /* Does anyone know if these are supposed to be reversed like this? */
     pdev->tm.tmDigitizedAspectX = pdev->log_pixels_y;
@@ -1391,7 +1192,7 @@ static HFONT CDECL select_font(PHYSDEV dev, HFONT hfont, UINT *aa_flags)
     return hfont;
 }
 
-static UINT get_font_metric_ntf(const struct font_data *font,
+static UINT get_font_metric(const struct font_data *font,
         NEWTEXTMETRICEXW *ntmx, ENUMLOGFONTEXW *elfx)
 {
     /* ntmx->ntmTm is NEWTEXTMETRICW; compatible w/ TEXTMETRICW per Win32 doc */
@@ -1401,7 +1202,7 @@ static UINT get_font_metric_ntf(const struct font_data *font,
     memset(ntmx, 0, sizeof(*ntmx));
     memset(elfx, 0, sizeof(*elfx));
 
-    scale_font_ntf(NULL, font, -(LONG)font->metrics->fwdUnitsPerEm, tm);
+    scale_font(NULL, font, -(LONG)font->metrics->fwdUnitsPerEm, tm);
 
     lf->lfHeight = tm->tmHeight;
     lf->lfWidth = tm->tmAveCharWidth;
@@ -1415,29 +1216,6 @@ static UINT get_font_metric_ntf(const struct font_data *font,
     return DEVICE_FONTTYPE;
 }
 
-static UINT get_font_metric(const AFM *afm, NEWTEXTMETRICEXW *ntmx, ENUMLOGFONTEXW *elfx)
-{
-    /* ntmx->ntmTm is NEWTEXTMETRICW; compatible w/ TEXTMETRICW per Win32 doc */
-    TEXTMETRICW *tm = (TEXTMETRICW *)&(ntmx->ntmTm);
-    LOGFONTW *lf = &(elfx->elfLogFont);
-
-    memset(ntmx, 0, sizeof(*ntmx));
-    memset(elfx, 0, sizeof(*elfx));
-
-    scale_font(NULL, afm, -(LONG)afm->WinMetrics.usUnitsPerEm, tm);
-
-    lf->lfHeight = tm->tmHeight;
-    lf->lfWidth = tm->tmAveCharWidth;
-    lf->lfWeight = tm->tmWeight;
-    lf->lfItalic = tm->tmItalic;
-    lf->lfCharSet = tm->tmCharSet;
-
-    lf->lfPitchAndFamily = afm->IsFixedPitch ? FIXED_PITCH : VARIABLE_PITCH;
-
-    lstrcpynW(lf->lfFaceName, afm->FamilyName, LF_FACESIZE);
-    return DEVICE_FONTTYPE;
-}
-
 static BOOL CDECL enum_fonts(PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lp)
 {
     PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
@@ -1447,8 +1225,6 @@ static BOOL CDECL enum_fonts(PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LP
     struct font_data *cur;
     ENUMLOGFONTEXW lf;
     NEWTEXTMETRICEXW tm;
-    AFMLISTENTRY *afmle;
-    FONTFAMILY *family;
     const WCHAR *name;
     BOOL ret;
     UINT fm;
@@ -1476,26 +1252,9 @@ static BOOL CDECL enum_fonts(PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LP
                 continue;
 
             TRACE("Got '%s'\n", cur->name);
-            fm = get_font_metric_ntf(cur, &tm, &lf);
+            fm = get_font_metric(cur, &tm, &lf);
             if (!(ret = (*proc)(&lf.elfLogFont, (TEXTMETRICW *)&tm, fm, lp)))
-                return ret;
-        }
-
-        for (family = pdev->pi->pi->Fonts; family; family = family->next)
-        {
-            if (!wcsncmp(plf->lfFaceName, family->FamilyName,
-                        wcslen(family->FamilyName)))
                 break;
-        }
-        if (family)
-        {
-            for (afmle = family->afmlist; afmle; afmle = afmle->next)
-            {
-                TRACE("Got '%s'\n", afmle->afm->FontName);
-                fm = get_font_metric(afmle->afm, &tm, &lf);
-                if (!(ret = (*proc)(&lf.elfLogFont, (TEXTMETRICW *)&tm, fm, lp)))
-                    break;
-            }
         }
     }
     else
@@ -1509,16 +1268,7 @@ static BOOL CDECL enum_fonts(PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LP
 
             name = (WCHAR *)((char *)cur->metrics + cur->metrics->dpwszFaceName);
             TRACE("Got '%s'\n", cur->name);
-            fm = get_font_metric_ntf(cur, &tm, &lf);
-            if (!(ret = (*proc)(&lf.elfLogFont, (TEXTMETRICW *)&tm, fm, lp)))
-                return ret;
-        }
-
-        for (family = pdev->pi->pi->Fonts; family; family = family->next)
-        {
-            afmle = family->afmlist;
-            TRACE("Got '%s'\n", afmle->afm->FontName);
-            fm = get_font_metric(afmle->afm, &tm, &lf);
+            fm = get_font_metric(cur, &tm, &lf);
             if (!(ret = (*proc)(&lf.elfLogFont, (TEXTMETRICW *)&tm, fm, lp)))
                 break;
         }
@@ -1546,8 +1296,7 @@ static BOOL CDECL get_char_width(PHYSDEV dev, UINT first, UINT count, const WCHA
         if (c > 0xffff)
             return FALSE;
 
-        *buffer = floor((pdev->font ? uv_metrics_ntf(c, pdev->font)->width :
-                    uv_metrics(c, pdev->afm)->WX) * pdev->scale + 0.5);
+        *buffer = floor(uv_metrics(c, pdev->font)->width * pdev->scale + 0.5);
         TRACE("U+%.4X: %i\n", i, *buffer);
         ++buffer;
     }
@@ -1584,8 +1333,7 @@ static BOOL CDECL get_text_extent_ex_point(PHYSDEV dev, const WCHAR *str, int co
 
     for (i = 0; i < count; ++i)
     {
-        width += pdev->font ? uv_metrics_ntf(str[i], pdev->font)->width :
-            uv_metrics(str[i], pdev->afm)->WX;
+        width += uv_metrics(str[i], pdev->font)->width;
         dx[i] = width * pdev->scale;
     }
     return TRUE;
@@ -1610,7 +1358,7 @@ static PSDRV_PDEVICE *create_physdev(HDC hdc, const WCHAR *device,
     PSDRV_PDEVICE *pdev;
 
     if (!pi) return NULL;
-    if (!pi->pi->Fonts)
+    if (!find_builtin_font(pi->devmode, NULL, FALSE, FALSE))
     {
         RASTERIZER_STATUS status;
         if (!NtGdiGetRasterizerCaps(&status, sizeof(status)) ||
@@ -1626,15 +1374,15 @@ static PSDRV_PDEVICE *create_physdev(HDC hdc, const WCHAR *device,
     pdev = malloc(sizeof(*pdev));
     if (!pdev) return NULL;
 
-    pdev->devmode = malloc(pi->pi->Devmode->dmPublic.dmSize + pi->pi->Devmode->dmPublic.dmDriverExtra);
+    pdev->devmode = malloc(pi->devmode->dmPublic.dmSize + pi->devmode->dmPublic.dmDriverExtra);
     if (!pdev->devmode)
     {
         free(pdev);
         return NULL;
     }
 
-    memcpy(pdev->devmode, pi->pi->Devmode, pi->pi->Devmode->dmPublic.dmSize +
-            pi->pi->Devmode->dmPublic.dmDriverExtra);
+    memcpy(pdev->devmode, pi->devmode, pi->devmode->dmPublic.dmSize +
+            pi->devmode->dmPublic.dmDriverExtra);
     pdev->pi = pi;
     pdev->log_pixels_x = pdev->devmode->default_resolution;
     pdev->log_pixels_y = pdev->devmode->default_resolution;
@@ -1952,7 +1700,7 @@ static NTSTATUS init_dc(void *arg)
         if (!pi) return FALSE;
 
         pi->name = params->name;
-        pi->pi = params->pi;
+        pi->devmode = params->devmode;
         list_add_head(&printer_info_list, &pi->entry);
     }
 
