@@ -7081,7 +7081,7 @@ static void test_h264_with_dxgi_manager(void)
 
     if (!pMFCreateDXGIDeviceManager)
     {
-        win_skip("MFCreateDXGIDeviceManager() is not avaliable, skipping tests.\n");
+        win_skip("MFCreateDXGIDeviceManager() is not available, skipping tests.\n");
         return;
     }
 
