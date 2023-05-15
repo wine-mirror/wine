@@ -2975,7 +2975,7 @@ static void test_uia_prov_from_acc_ia2(void)
         CHECK_CALLED(Accessible2_get_accRole);
         CHECK_CALLED(Accessible2_QI_IAccIdentity);
         CHECK_CALLED(Accessible2_get_accParent);
-        win_skip("Win10v1909 doesn't support IAccessible2 interface comparsion, skipping tests.\n");
+        win_skip("Win10v1909 doesn't support IAccessible2 interface comparison, skipping tests.\n");
         return;
     }
     called_Accessible_get_accRole = expect_Accessible_get_accRole = 0;
@@ -13188,7 +13188,7 @@ static void test_default_clientside_providers(void)
     UiaNodeRelease(node);
 
     /*
-     * Create a node repesenting an HWND that is a top-level window, but is
+     * Create a node representing an HWND that is a top-level window, but is
      * owned by another window. For top-level HWNDs, parent navigation will go
      * to the owner instead of the parent.
      */
