@@ -29,6 +29,8 @@
 #include "winnls.h"
 #include "winuser.h"
 #include "psdrv.h"
+#include "ddk/winddi.h"
+#include "ntf.h"
 #include "unixlib.h"
 #include "winspool.h"
 #include "wine/debug.h"
@@ -132,6 +134,148 @@ static BOOL import_ntf_from_reg(void)
     return ret;
 }
 
+static BOOL convert_afm_to_ntf(void)
+{
+    int i, count, size, off, metrics_size;
+    struct import_ntf_params params;
+    struct width_range *width_range;
+    struct glyph_set *glyph_set;
+    struct ntf_header *header;
+    struct font_mtx *font_mtx;
+    struct list_entry *list;
+    struct code_page *cp;
+    char glyph_set_name[9];
+    char *data, *new_data;
+    AFMLISTENTRY *afmle;
+    IFIMETRICS *metrics;
+    FONTFAMILY *family;
+
+    count = 0;
+    for (family = PSDRV_AFMFontList; family; family = family->next)
+    {
+        for(afmle = family->afmlist; afmle; afmle = afmle->next)
+            count++;
+    }
+    size = sizeof(*header) + sizeof(*list) * count * 2;
+    data = calloc(size, 1);
+
+    if (!data)
+        return FALSE;
+    header = (void *)data;
+    header->glyph_set_count = count;
+    header->glyph_set_off = sizeof(*header);
+    header->font_mtx_count = count;
+    header->font_mtx_off = header->glyph_set_off + sizeof(*list) * count;
+
+    count = 0;
+    off = size;
+    for (family = PSDRV_AFMFontList; family; family = family->next)
+    {
+        for(afmle = family->afmlist; afmle; afmle = afmle->next)
+        {
+            sprintf(glyph_set_name, "%x", count);
+
+            list = (void *)(data + header->glyph_set_off + sizeof(*list) * count);
+            list->name_off = off + sizeof(*glyph_set);
+            list->size = sizeof(*glyph_set) + strlen(glyph_set_name) + 1 + sizeof(*cp) +
+                sizeof(short) * afmle->afm->NumofMetrics;
+            list->off = off;
+            size += list->size;
+            new_data = realloc(data, size);
+            if (!new_data)
+            {
+                free(data);
+                return FALSE;
+            }
+            data = new_data;
+            header = (void *)data;
+            memset(data + off, 0, size - off);
+
+            glyph_set = (void *)(data + off);
+            glyph_set->size = size - off;
+            glyph_set->flags = 1;
+            glyph_set->name_off = sizeof(*glyph_set);
+            glyph_set->glyph_count = afmle->afm->NumofMetrics;
+            glyph_set->cp_count = 1;
+            glyph_set->cp_off = glyph_set->name_off + strlen(glyph_set_name) + 1;
+            glyph_set->glyph_set_off = glyph_set->cp_off + sizeof(*cp);
+            strcpy(data + off + glyph_set->name_off, glyph_set_name);
+            cp = (void *)(data + off + glyph_set->cp_off);
+            cp->cp = 0xffff;
+            for (i = 0; i < afmle->afm->NumofMetrics; i++)
+                *(WCHAR*)(data + off + glyph_set->glyph_set_off + i * sizeof(short)) = afmle->afm->Metrics[i].UV;
+            off = size;
+
+            metrics_size = sizeof(IFIMETRICS) +
+                (wcslen(afmle->afm->FullName) + 1) * sizeof(WCHAR);
+            list = (void *)(data + header->font_mtx_off + sizeof(*list) * count);
+            list->name_off = off + sizeof(*font_mtx);
+            list->size = sizeof(*font_mtx) + strlen(afmle->afm->FontName) + 1 +
+                strlen(glyph_set_name) + 1 + metrics_size +
+                (afmle->afm->IsFixedPitch ? 0 : sizeof(*width_range) * afmle->afm->NumofMetrics);
+            list->off = off;
+            size += list->size;
+            new_data = realloc(data, size);
+            if (!new_data)
+            {
+                free(data);
+                return FALSE;
+            }
+            data = new_data;
+            header = (void *)data;
+            memset(data + off, 0, size - off);
+
+            font_mtx = (void *)(data + off);
+            font_mtx->size = size - off;
+            font_mtx->name_off = sizeof(*font_mtx);
+            font_mtx->glyph_set_name_off = font_mtx->name_off + strlen(afmle->afm->FontName) + 1;
+            font_mtx->glyph_count = afmle->afm->NumofMetrics;
+            font_mtx->metrics_off = font_mtx->glyph_set_name_off + strlen(glyph_set_name) + 1;
+            font_mtx->width_count = afmle->afm->IsFixedPitch ? 0 : afmle->afm->NumofMetrics;
+            font_mtx->width_off = font_mtx->metrics_off + metrics_size;
+            font_mtx->def_width = afmle->afm->Metrics[0].WX;
+            strcpy(data + off + font_mtx->name_off, afmle->afm->FontName);
+            strcpy(data + off + font_mtx->glyph_set_name_off, glyph_set_name);
+            metrics = (void *)(data + off + font_mtx->metrics_off);
+            metrics->cjThis = metrics_size;
+            metrics->dpwszFaceName = sizeof(*metrics);
+            if (afmle->afm->IsFixedPitch)
+                metrics->jWinPitchAndFamily |= FIXED_PITCH;
+            metrics->usWinWeight = afmle->afm->Weight;
+            if (afmle->afm->ItalicAngle != 0.0)
+                metrics->fsSelection |= FM_SEL_ITALIC;
+            if (afmle->afm->Weight == FW_BOLD)
+                metrics->fsSelection |= FM_SEL_BOLD;
+            metrics->fwdUnitsPerEm = afmle->afm->WinMetrics.usUnitsPerEm;
+            metrics->fwdWinAscender = afmle->afm->WinMetrics.usWinAscent;
+            metrics->fwdWinDescender = afmle->afm->WinMetrics.usWinDescent;
+            metrics->fwdMacAscender = afmle->afm->WinMetrics.sAscender;
+            metrics->fwdMacDescender = afmle->afm->WinMetrics.sDescender;
+            metrics->fwdMacLineGap = afmle->afm->WinMetrics.sLineGap;
+            metrics->fwdAveCharWidth = afmle->afm->WinMetrics.sAvgCharWidth;
+            metrics->rclFontBox.left = afmle->afm->FontBBox.llx;
+            metrics->rclFontBox.top = afmle->afm->FontBBox.ury;
+            metrics->rclFontBox.right = afmle->afm->FontBBox.urx;
+            metrics->rclFontBox.bottom = afmle->afm->FontBBox.lly;
+            wcscpy((WCHAR *)((char *)metrics + metrics->dpwszFaceName), afmle->afm->FullName);
+            width_range = (void *)(data + off + font_mtx->width_off);
+            for (i = 0; i < font_mtx->width_count; i++)
+            {
+                width_range[i].first = i;
+                width_range[i].count = 1;
+                width_range[i].width = afmle->afm->Metrics[i].WX;
+            }
+            off = size;
+
+            count++;
+        }
+    }
+
+    params.data = data;
+    params.size = size;
+    return WINE_UNIX_CALL(unix_import_ntf, &params);
+}
+
 /*********************************************************************
  *	     DllMain
  *
@@ -161,7 +305,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 		return FALSE;
 	    }
 
-            if (!import_ntf_from_reg())
+            if (!convert_afm_to_ntf() || !import_ntf_from_reg())
             {
                 WINE_UNIX_CALL(unix_free_printer_info, NULL);
                 HeapDestroy(PSDRV_Heap);

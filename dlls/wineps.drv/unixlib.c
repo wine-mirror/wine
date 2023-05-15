@@ -1764,6 +1764,9 @@ static WCHAR convert_ntf_cp(unsigned short c, unsigned short cp)
     case 0xfff1:
         ret = c < ARRAY_SIZE(map_fff1) ? map_fff1[c] : 0;
         break;
+    case 0xffff: /* Wine extension */
+        ret = c;
+        break;
     }
 
     if (!ret && c)
