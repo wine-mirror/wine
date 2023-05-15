@@ -1391,6 +1391,30 @@ static HFONT CDECL select_font(PHYSDEV dev, HFONT hfont, UINT *aa_flags)
     return hfont;
 }
 
+static UINT get_font_metric_ntf(const struct font_data *font,
+        NEWTEXTMETRICEXW *ntmx, ENUMLOGFONTEXW *elfx)
+{
+    /* ntmx->ntmTm is NEWTEXTMETRICW; compatible w/ TEXTMETRICW per Win32 doc */
+    TEXTMETRICW *tm = (TEXTMETRICW *)&(ntmx->ntmTm);
+    LOGFONTW *lf = &(elfx->elfLogFont);
+
+    memset(ntmx, 0, sizeof(*ntmx));
+    memset(elfx, 0, sizeof(*elfx));
+
+    scale_font_ntf(NULL, font, -(LONG)font->metrics->fwdUnitsPerEm, tm);
+
+    lf->lfHeight = tm->tmHeight;
+    lf->lfWidth = tm->tmAveCharWidth;
+    lf->lfWeight = tm->tmWeight;
+    lf->lfItalic = tm->tmItalic;
+    lf->lfCharSet = tm->tmCharSet;
+
+    lf->lfPitchAndFamily = font->metrics->jWinPitchAndFamily & FIXED_PITCH ? FIXED_PITCH : VARIABLE_PITCH;
+
+    lstrcpynW(lf->lfFaceName, (WCHAR *)((char *)font->metrics + font->metrics->dpwszFaceName), LF_FACESIZE);
+    return DEVICE_FONTTYPE;
+}
+
 static UINT get_font_metric(const AFM *afm, NEWTEXTMETRICEXW *ntmx, ENUMLOGFONTEXW *elfx)
 {
     /* ntmx->ntmTm is NEWTEXTMETRICW; compatible w/ TEXTMETRICW per Win32 doc */
@@ -1418,18 +1442,45 @@ static BOOL CDECL enum_fonts(PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LP
 {
     PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
     PHYSDEV next = GET_NEXT_PHYSDEV(dev, pEnumFonts);
+    PSDRV_DEVMODE *devmode = pdev->devmode;
+    struct installed_font *installed_font;
+    struct font_data *cur;
     ENUMLOGFONTEXW lf;
     NEWTEXTMETRICEXW tm;
-    BOOL ret;
     AFMLISTENTRY *afmle;
     FONTFAMILY *family;
+    const WCHAR *name;
+    BOOL ret;
+    UINT fm;
+    int i;
 
     ret = next->funcs->pEnumFonts(next, plf, proc, lp);
     if (!ret) return FALSE;
 
+    installed_font = (struct installed_font *)(devmode->data +
+            devmode->input_slots * sizeof(struct input_slot) +
+            devmode->resolutions * sizeof(struct resolution) +
+            devmode->page_sizes * sizeof(struct page_size) +
+            devmode->font_subs * sizeof(struct font_sub));
     if (plf && plf->lfFaceName[0])
     {
         TRACE("lfFaceName = %s\n", debugstr_w(plf->lfFaceName));
+
+        for (i = 0; i < devmode->installed_fonts; i++)
+        {
+            cur = find_font_data(installed_font[i].name);
+            if (!cur) continue;
+
+            name = (WCHAR *)((char *)cur->metrics + cur->metrics->dpwszFaceName);
+            if (wcsncmp(plf->lfFaceName, name, wcslen(name)))
+                continue;
+
+            TRACE("Got '%s'\n", cur->name);
+            fm = get_font_metric_ntf(cur, &tm, &lf);
+            if (!(ret = (*proc)(&lf.elfLogFont, (TEXTMETRICW *)&tm, fm, lp)))
+                return ret;
+        }
+
         for (family = pdev->pi->pi->Fonts; family; family = family->next)
         {
             if (!wcsncmp(plf->lfFaceName, family->FamilyName,
@@ -1440,8 +1491,6 @@ static BOOL CDECL enum_fonts(PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LP
         {
             for (afmle = family->afmlist; afmle; afmle = afmle->next)
             {
-                UINT fm;
-
                 TRACE("Got '%s'\n", afmle->afm->FontName);
                 fm = get_font_metric(afmle->afm, &tm, &lf);
                 if (!(ret = (*proc)(&lf.elfLogFont, (TEXTMETRICW *)&tm, fm, lp)))
@@ -1452,10 +1501,21 @@ static BOOL CDECL enum_fonts(PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LP
     else
     {
         TRACE("lfFaceName = NULL\n");
+
+        for (i = 0; i < devmode->installed_fonts; i++)
+        {
+            cur = find_font_data(installed_font[i].name);
+            if (!cur) continue;
+
+            name = (WCHAR *)((char *)cur->metrics + cur->metrics->dpwszFaceName);
+            TRACE("Got '%s'\n", cur->name);
+            fm = get_font_metric_ntf(cur, &tm, &lf);
+            if (!(ret = (*proc)(&lf.elfLogFont, (TEXTMETRICW *)&tm, fm, lp)))
+                return ret;
+        }
+
         for (family = pdev->pi->pi->Fonts; family; family = family->next)
         {
-            UINT fm;
-
             afmle = family->afmlist;
             TRACE("Got '%s'\n", afmle->afm->FontName);
             fm = get_font_metric(afmle->afm, &tm, &lf);
