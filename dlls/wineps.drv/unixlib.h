@@ -74,9 +74,16 @@ struct installed_font
 /* Unix calls */
 enum wineps_funcs
 {
+    unix_import_ntf,
     unix_init_dc,
     unix_free_printer_info,
     unix_funcs_count,
+};
+
+struct import_ntf_params
+{
+    const char *data;
+    int size;
 };
 
 struct init_dc_params

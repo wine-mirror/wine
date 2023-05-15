@@ -87,6 +87,51 @@ static const PSDRV_DEVMODE DefaultDevmode =
 HINSTANCE PSDRV_hInstance = 0;
 HANDLE PSDRV_Heap = 0;
 
+static BOOL import_ntf_from_reg(void)
+{
+    struct import_ntf_params params;
+    HANDLE hfile, hmap = NULL;
+    WCHAR path[MAX_PATH];
+    LARGE_INTEGER size;
+    char *data = NULL;
+    LSTATUS status;
+    HKEY hkey;
+    DWORD len;
+    BOOL ret;
+
+    if (RegOpenKeyW(HKEY_CURRENT_USER, L"Software\\Wine\\Fonts", &hkey))
+        return TRUE;
+    status = RegQueryValueExW(hkey, L"NTFFile", NULL, NULL, (BYTE *)path, &len);
+    RegCloseKey(hkey);
+    if (status)
+        return TRUE;
+
+    hfile = CreateFileW(path, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+    if (hfile != INVALID_HANDLE_VALUE)
+    {
+        if (!GetFileSizeEx(hfile, &size))
+            size.QuadPart = 0;
+        hmap = CreateFileMappingW(hfile, NULL, PAGE_READONLY, 0, 0, NULL);
+        CloseHandle(hfile);
+    }
+    if (hmap)
+    {
+        data = MapViewOfFile(hmap, FILE_MAP_READ, 0, 0, 0);
+        CloseHandle(hmap);
+    }
+    if (!data)
+    {
+        WARN("Error loading NTF file: %s\n", debugstr_w(path));
+        return TRUE;
+    }
+
+    params.data = data;
+    params.size = size.QuadPart;
+    ret = WINE_UNIX_CALL(unix_import_ntf, &params);
+    UnmapViewOfFile(data);
+    return ret;
+}
+
 /*********************************************************************
  *	     DllMain
  *
@@ -115,6 +160,13 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 		HeapDestroy(PSDRV_Heap);
 		return FALSE;
 	    }
+
+            if (!import_ntf_from_reg())
+            {
+                WINE_UNIX_CALL(unix_free_printer_info, NULL);
+                HeapDestroy(PSDRV_Heap);
+                return FALSE;
+            }
             break;
         }
 

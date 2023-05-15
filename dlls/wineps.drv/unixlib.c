@@ -31,9 +31,11 @@
 #include "windef.h"
 #include "winbase.h"
 
+#include "ntf.h"
 #include "psdrv.h"
 #include "unixlib.h"
 #include "ntgdi.h"
+#include "ddk/winddi.h"
 #include "wine/gdi_driver.h"
 #include "wine/debug.h"
 #include "wine/wingdi16.h"
@@ -51,6 +53,25 @@ static const WCHAR courier_newW[] = {'C','o','u','r','i','e','r',' ','N','e','w'
 
 static const struct gdi_dc_funcs psdrv_funcs;
 
+struct glyph_info
+{
+    WCHAR wch;
+    int width;
+};
+
+struct font_data
+{
+    struct list entry;
+
+    char *name;
+    IFIMETRICS *metrics;
+    int glyph_count;
+    struct glyph_info *glyphs;
+    struct glyph_info def_glyph;
+};
+
+static struct list fonts = LIST_INIT(fonts);
+
 struct printer_info
 {
     struct list entry;
@@ -58,7 +79,7 @@ struct printer_info
     PRINTERINFO *pi;
 };
 
-static struct list printer_info_list = LIST_INIT( printer_info_list );
+static struct list printer_info_list = LIST_INIT(printer_info_list);
 
 typedef struct
 {
@@ -70,6 +91,7 @@ typedef struct
     BOOL builtin;
     SIZE size;
     const AFM *afm;
+    const struct font_data *font;
     float scale;
     TEXTMETRICW tm;
     int escapement;
@@ -558,6 +580,35 @@ static BOOL CDECL reset_dc(PHYSDEV dev, const DEVMODEW *devmode)
     return TRUE;
 }
 
+static int cmp_glyph_info(const void *a, const void *b)
+{
+    return (int)((const struct glyph_info *)a)->wch -
+        (int)((const struct glyph_info *)b)->wch;
+}
+
+const struct glyph_info *uv_metrics_ntf(WCHAR wch, const struct font_data *font)
+{
+    const struct glyph_info *needle;
+    struct glyph_info key;
+
+    /*
+     *  Ugly work-around for symbol fonts.  Wine is sending characters which
+     *  belong in the Unicode private use range (U+F020 - U+F0FF) as ASCII
+     *  characters (U+0020 - U+00FF).
+     */
+    if ((font->glyphs->wch & 0xff00) == 0xf000 && wch < 0x100)
+        wch |= 0xf000;
+
+    key.wch = wch;
+    needle = bsearch(&key, font->glyphs, font->glyph_count, sizeof(*font->glyphs), cmp_glyph_info);
+    if (!needle)
+    {
+        WARN("No glyph for U+%.4X in '%s'\n", wch, font->name);
+        needle = font->glyphs;
+    }
+    return needle;
+}
+
 static int metrics_by_uv(const void *a, const void *b)
 {
     return (int)(((const AFMMETRICS *)a)->UV - ((const AFMMETRICS *)b)->UV);
@@ -843,7 +894,7 @@ static int CDECL ext_escape(PHYSDEV dev, int escape, int input_size, const void 
     {
         PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
         WCHAR *uv = (WCHAR *)input;
-        WCHAR out = uv_metrics(*uv, pdev->afm)->UV;
+        WCHAR out = pdev->font ? uv_metrics_ntf(*uv, pdev->font)->wch : uv_metrics(*uv, pdev->afm)->UV;
 
         if ((out & 0xff00) == 0xf000) out &= ~0xf000;
         *(WCHAR *)output = out;
@@ -858,7 +909,10 @@ static int CDECL ext_escape(PHYSDEV dev, int escape, int input_size, const void 
         if (!pdev->builtin)
             return 0;
 
-        lstrcpynA(font_info->font_name, pdev->afm->FontName, sizeof(font_info->font_name));
+        if (pdev->font)
+            lstrcpynA(font_info->font_name, pdev->font->name, sizeof(font_info->font_name));
+        else
+            lstrcpynA(font_info->font_name, pdev->afm->FontName, sizeof(font_info->font_name));
         font_info->size = pdev->size;
         font_info->escapement = pdev->escapement;
         return 1;
@@ -873,6 +927,89 @@ static int CDECL ext_escape(PHYSDEV dev, int escape, int input_size, const void 
 static inline float gdi_round(float f)
 {
     return f > 0 ? f + 0.5 : f - 0.5;
+}
+
+static void scale_font_ntf(PSDRV_PDEVICE *pdev, const struct font_data *font, LONG height, TEXTMETRICW *tm)
+{
+    SHORT ascender, descender, line_gap, avg_char_width;
+    USHORT units_per_em, win_ascent, win_descent;
+    const IFIMETRICS *m = font->metrics;
+    float scale;
+    SIZE size;
+
+    TRACE("'%s' %i\n", font->name, (int)height);
+
+    if (height < 0) /* match em height */
+        scale = -(height / (float)m->fwdUnitsPerEm);
+    else /* match cell height */
+        scale = height / (float)(m->fwdWinAscender + m->fwdWinDescender);
+
+    size.cx = (INT)gdi_round(scale * (float)m->fwdUnitsPerEm);
+    size.cy = -(INT)gdi_round(scale * (float)m->fwdUnitsPerEm);
+
+    units_per_em = (USHORT)gdi_round((float)m->fwdUnitsPerEm * scale);
+    ascender = (SHORT)gdi_round((float)m->fwdMacAscender * scale);
+    descender = (SHORT)gdi_round((float)m->fwdMacDescender * scale);
+    line_gap = (SHORT)gdi_round((float)m->fwdMacLineGap * scale);
+    win_ascent = (USHORT)gdi_round((float)m->fwdWinAscender * scale);
+    win_descent = (USHORT)gdi_round((float)m->fwdWinDescender * scale);
+    avg_char_width = (SHORT)gdi_round((float)m->fwdAveCharWidth * scale);
+
+    tm->tmAscent = (LONG)win_ascent;
+    tm->tmDescent = (LONG)win_descent;
+    tm->tmHeight = tm->tmAscent + tm->tmDescent;
+
+    tm->tmInternalLeading = tm->tmHeight - (LONG)units_per_em;
+    if (tm->tmInternalLeading < 0)
+        tm->tmInternalLeading = 0;
+
+    tm->tmExternalLeading =
+            (LONG)(ascender - descender + line_gap) - tm->tmHeight;
+    if (tm->tmExternalLeading < 0)
+        tm->tmExternalLeading = 0;
+
+    tm->tmAveCharWidth = (LONG)avg_char_width;
+
+    tm->tmWeight = m->usWinWeight;
+    tm->tmItalic = !!(m->fsSelection & FM_SEL_ITALIC);
+    tm->tmUnderlined = !!(m->fsSelection & FM_SEL_UNDERSCORE);
+    tm->tmStruckOut = !!(m->fsSelection & FM_SEL_STRIKEOUT);
+    tm->tmFirstChar = font->glyphs[0].wch;
+    tm->tmLastChar = font->glyphs[font->glyph_count - 1].wch;
+    tm->tmDefaultChar = 0x001f; /* Win2K does this - FIXME? */
+    tm->tmBreakChar = tm->tmFirstChar; /* should be 'space' */
+
+    tm->tmPitchAndFamily = TMPF_DEVICE | TMPF_VECTOR;
+    if (!(m->jWinPitchAndFamily & FIXED_PITCH))
+        tm->tmPitchAndFamily |= TMPF_FIXED_PITCH; /* yes, it's backwards */
+    if (m->fwdUnitsPerEm != 1000)
+        tm->tmPitchAndFamily |= TMPF_TRUETYPE;
+
+    tm->tmCharSet = ANSI_CHARSET; /* FIXME */
+    tm->tmOverhang = 0;
+
+    /*
+     *  This is kludgy.  font->scale is used in several places in the driver
+     *  to adjust PostScript-style metrics.  Since these metrics have been
+     *  "normalized" to an em-square size of 1000, font->scale needs to be
+     *  similarly adjusted..
+     */
+
+    scale *= (float)m->fwdUnitsPerEm / 1000.0;
+
+    tm->tmMaxCharWidth = (LONG)gdi_round((m->rclFontBox.right - m->rclFontBox.left) * scale);
+
+    if (pdev)
+    {
+        pdev->scale = scale;
+        pdev->size = size;
+    }
+
+    TRACE("Selected PS font '%s' size %d weight %d.\n", font->name,
+            (int)size.cx, (int)tm->tmWeight);
+    TRACE("H = %d As = %d Des = %d IL = %d EL = %d\n", (int)tm->tmHeight,
+            (int)tm->tmAscent, (int)tm->tmDescent, (int)tm->tmInternalLeading,
+            (int)tm->tmExternalLeading);
 }
 
 static void scale_font(PSDRV_PDEVICE *pdev, const AFM *afm, LONG height, TEXTMETRICW *tm)
@@ -968,13 +1105,129 @@ static inline BOOL is_stock_font(HFONT font)
     return FALSE;
 }
 
-static BOOL select_builtin_font(PHYSDEV dev, HFONT hfont, LOGFONTW *plf)
+static struct font_data *find_font_data(const char *name)
 {
-    PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
+    struct font_data *font;
+
+    LIST_FOR_EACH_ENTRY(font, &fonts, struct font_data, entry)
+    {
+        if (!strcmp(font->name, name))
+            return font;
+    }
+    return NULL;
+}
+
+static struct font_data *find_builtin_font(PSDRV_PDEVICE *pdev,
+        const WCHAR *facename, BOOL it, BOOL bd)
+{
+    PSDRV_DEVMODE *devmode = pdev->devmode;
+    struct installed_font *installed_font;
+    BOOL best_it, best_bd, cur_it, cur_bd;
+    struct font_data *best = NULL, *cur;
+    const WCHAR *name;
+    int i;
+
+    installed_font = (struct installed_font *)(devmode->data +
+            devmode->input_slots * sizeof(struct input_slot) +
+            devmode->resolutions * sizeof(struct resolution) +
+            devmode->page_sizes * sizeof(struct page_size) +
+            devmode->font_subs * sizeof(struct font_sub));
+    for (i = 0; i < devmode->installed_fonts; i++)
+    {
+        cur = find_font_data(installed_font[i].name);
+        if (!cur) continue;
+
+        name = (WCHAR *)((char *)cur->metrics + cur->metrics->dpwszFaceName);
+        cur_it = !!(cur->metrics->fsSelection & FM_SEL_ITALIC);
+        cur_bd = !!(cur->metrics->fsSelection & FM_SEL_BOLD);
+
+        if (!facename && it == cur_it && bd == cur_bd)
+            return cur;
+        if (facename && !wcscmp(facename, name) && it == cur_it && bd == cur_bd)
+            return cur;
+        if (facename && wcscmp(facename, name))
+            continue;
+
+        if (!best || (best_it != it && cur_it == it) ||
+                (best_it != it && best_bd != bd && cur_bd == bd))
+        {
+            best = cur;
+            best_it = cur_it;
+            best_bd = cur_bd;
+        }
+    }
+
+    return best;
+}
+
+static BOOL select_builtin_font_ntf(PSDRV_PDEVICE *pdev, HFONT hfont, LOGFONTW *plf)
+{
+    struct font_data *font_data;
+    BOOL bd = FALSE, it = FALSE;
+    LONG height;
+
+    TRACE("Trying to find facename %s\n", debugstr_w(plf->lfFaceName));
+
+    if (plf->lfItalic)
+        it = TRUE;
+    if (plf->lfWeight > 550)
+        bd = TRUE;
+
+    /* Look for a matching font family */
+    font_data = find_builtin_font(pdev, plf->lfFaceName, it, bd);
+    if (!font_data)
+    {
+        /* Fallback for Window's font families to common PostScript families */
+        if (!wcscmp(plf->lfFaceName, arialW))
+            wcscpy(plf->lfFaceName, helveticaW);
+        else if (!wcscmp(plf->lfFaceName, systemW))
+            wcscpy(plf->lfFaceName, helveticaW);
+        else if (!wcscmp(plf->lfFaceName, times_new_romanW))
+            wcscpy(plf->lfFaceName, timesW);
+        else if (!wcscmp(plf->lfFaceName, courier_newW))
+            wcscpy(plf->lfFaceName, courierW);
+
+        font_data = find_builtin_font(pdev, plf->lfFaceName, it, bd);
+    }
+    /* If all else fails, use the first font defined for the printer */
+    if (!font_data)
+        font_data = find_builtin_font(pdev, NULL, it, bd);
+
+    TRACE("Got family %s font '%s'\n", debugstr_w((WCHAR *)((char *)font_data->metrics +
+                    font_data->metrics->dpwszFaceName)), font_data->name);
+
+    pdev->builtin = TRUE;
+    pdev->font = NULL;
+    pdev->afm = NULL;
+    pdev->font = font_data;
+
+    height = plf->lfHeight;
+    /* stock fonts ignore the mapping mode */
+    if (!is_stock_font(hfont))
+    {
+        POINT pts[2];
+        pts[0].x = pts[0].y = pts[1].x = 0;
+        pts[1].y = height;
+        NtGdiTransformPoints(pdev->dev.hdc, pts, pts, 2, NtGdiLPtoDP);
+        height = pts[1].y - pts[0].y;
+    }
+    scale_font_ntf(pdev, font_data, height, &pdev->tm);
+
+    /* Does anyone know if these are supposed to be reversed like this? */
+    pdev->tm.tmDigitizedAspectX = pdev->log_pixels_y;
+    pdev->tm.tmDigitizedAspectY = pdev->log_pixels_x;
+    return TRUE;
+}
+
+static BOOL select_builtin_font(PSDRV_PDEVICE *pdev, HFONT hfont, LOGFONTW *plf)
+{
     AFMLISTENTRY *afmle;
     FONTFAMILY *family;
     BOOL bd = FALSE, it = FALSE;
     LONG height;
+
+    if (select_builtin_font_ntf(pdev, hfont, plf))
+        return TRUE;
 
     TRACE("Trying to find facename %s\n", debugstr_w(plf->lfFaceName));
 
@@ -1027,6 +1280,7 @@ static BOOL select_builtin_font(PHYSDEV dev, HFONT hfont, LOGFONTW *plf)
 
     pdev->builtin = TRUE;
     pdev->afm = afmle->afm;
+    pdev->font = NULL;
 
     height = plf->lfHeight;
     /* stock fonts ignore the mapping mode */
@@ -1035,7 +1289,7 @@ static BOOL select_builtin_font(PHYSDEV dev, HFONT hfont, LOGFONTW *plf)
         POINT pts[2];
         pts[0].x = pts[0].y = pts[1].x = 0;
         pts[1].y = height;
-        NtGdiTransformPoints(dev->hdc, pts, pts, 2, NtGdiLPtoDP);
+        NtGdiTransformPoints(pdev->dev.hdc, pts, pts, 2, NtGdiLPtoDP);
         height = pts[1].y - pts[0].y;
     }
     scale_font(pdev, pdev->afm, height, &pdev->tm);
@@ -1132,7 +1386,7 @@ static HFONT CDECL select_font(PHYSDEV dev, HFONT hfont, UINT *aa_flags)
         return ret;
     }
 
-    select_builtin_font(dev, hfont, &lf);
+    select_builtin_font(pdev, hfont, &lf);
     next->funcs->pSelectFont(next, 0, aa_flags);  /* tell next driver that we selected a device font */
     return hfont;
 }
@@ -1232,7 +1486,8 @@ static BOOL CDECL get_char_width(PHYSDEV dev, UINT first, UINT count, const WCHA
         if (c > 0xffff)
             return FALSE;
 
-        *buffer = floor(uv_metrics(c, pdev->afm)->WX * pdev->scale + 0.5);
+        *buffer = floor((pdev->font ? uv_metrics_ntf(c, pdev->font)->width :
+                    uv_metrics(c, pdev->afm)->WX) * pdev->scale + 0.5);
         TRACE("U+%.4X: %i\n", i, *buffer);
         ++buffer;
     }
@@ -1269,7 +1524,8 @@ static BOOL CDECL get_text_extent_ex_point(PHYSDEV dev, const WCHAR *str, int co
 
     for (i = 0; i < count; ++i)
     {
-        width += uv_metrics(str[i], pdev->afm)->WX;
+        width += pdev->font ? uv_metrics_ntf(str[i], pdev->font)->width :
+            uv_metrics(str[i], pdev->afm)->WX;
         dx[i] = width * pdev->scale;
     }
     return TRUE;
@@ -1384,6 +1640,243 @@ static const struct gdi_dc_funcs psdrv_funcs =
     .priority = GDI_PRIORITY_GRAPHICS_DRV
 };
 
+static BOOL check_ntf_str(const char *data, UINT64 size, const char *str)
+{
+    if (str < data || str >= data + size)
+        return FALSE;
+    size -= str - data;
+    while (*str && size)
+    {
+        size--;
+        str++;
+    }
+    return size != 0;
+}
+
+static void free_font_data(struct font_data *font_data)
+{
+    free(font_data->name);
+    free(font_data->metrics);
+    free(font_data->glyphs);
+    free(font_data);
+}
+
+static WCHAR convert_ntf_cp(unsigned short c, unsigned short cp)
+{
+    static const WCHAR map_fff1[256] = {
+        0x0000, 0x02d8, 0x02c7, 0x02d9, 0x0131, 0xfb01, 0xfb02, 0x2044,
+        0x02dd, 0x0141, 0x0142, 0x2212, 0x02db, 0x02da, 0x017d, 0x017e,
+        0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+        0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+        0x0020, 0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
+        0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
+        0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
+        0x0038, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
+        0x0040, 0x0041, 0x0042, 0x0043, 0x0044, 0x0045, 0x0046, 0x0047,
+        0x0048, 0x0049, 0x004a, 0x004b, 0x004c, 0x004d, 0x004e, 0x004f,
+        0x0050, 0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057,
+        0x0058, 0x0059, 0x005a, 0x005b, 0x005c, 0x005d, 0x005e, 0x005f,
+        0x0060, 0x0061, 0x0062, 0x0063, 0x0064, 0x0065, 0x0066, 0x0067,
+        0x0068, 0x0069, 0x006a, 0x006b, 0x006c, 0x006d, 0x006e, 0x006f,
+        0x0070, 0x0071, 0x0072, 0x0073, 0x0074, 0x0075, 0x0076, 0x0077,
+        0x0078, 0x0079, 0x007a, 0x007b, 0x007c, 0x007d, 0x007e, 0x0000,
+        0x20ac, 0x0000, 0x201a, 0x0192, 0x201e, 0x2026, 0x2020, 0x2021,
+        0x02c6, 0x2030, 0x0160, 0x2039, 0x0152, 0x0000, 0x0000, 0x0000,
+        0x0000, 0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014,
+        0x02dc, 0x2122, 0x0161, 0x203a, 0x0153, 0x0000, 0x0000, 0x0178,
+        0x0000, 0x00a1, 0x00a2, 0x00a3, 0x00a4, 0x00a5, 0x00a6, 0x00a7,
+        0x00a8, 0x00a9, 0x00aa, 0x00ab, 0x00ac, 0x0000, 0x00ae, 0x00af,
+        0x00b0, 0x00b1, 0x00b2, 0x00b3, 0x00b4, 0x00b5, 0x00b6, 0x00b7,
+        0x00b8, 0x00b9, 0x00ba, 0x00bb, 0x00bc, 0x00bd, 0x00be, 0x00bf,
+        0x00c0, 0x00c1, 0x00c2, 0x00c3, 0x00c4, 0x00c5, 0x00c6, 0x00c7,
+        0x00c8, 0x00c9, 0x00ca, 0x00cb, 0x00cc, 0x00cd, 0x00ce, 0x00cf,
+        0x00d0, 0x00d1, 0x00d2, 0x00d3, 0x00d4, 0x00d5, 0x00d6, 0x00d7,
+        0x00d8, 0x00d9, 0x00da, 0x00db, 0x00dc, 0x00dd, 0x00de, 0x00df,
+        0x00e0, 0x00e1, 0x00e2, 0x00e3, 0x00e4, 0x00e5, 0x00e6, 0x00e7,
+        0x00e8, 0x00e9, 0x00ea, 0x00eb, 0x00ec, 0x00ed, 0x00ee, 0x00ef,
+        0x00f0, 0x00f1, 0x00f2, 0x00f3, 0x00f4, 0x00f5, 0x00f6, 0x00f7,
+        0x00f8, 0x00f9, 0x00fa, 0x00fb, 0x00fc, 0x00fd, 0x00fe, 0x00ff,
+    };
+    WCHAR ret = 0;
+
+    switch (cp)
+    {
+    case 0xfff1:
+        ret = c < ARRAY_SIZE(map_fff1) ? map_fff1[c] : 0;
+        break;
+    }
+
+    if (!ret && c)
+        FIXME("unrecognized character %x in %x\n", c, cp);
+    return ret;
+}
+
+static BOOL map_glyph_to_unicode(struct font_data *font_data,
+        const char *data, UINT64 size, const char *name)
+{
+    const struct ntf_header *header = (const struct ntf_header *)data;
+    const struct list_entry *list_elem;
+    const struct glyph_set *glyph_set;
+    const unsigned short *p;
+    int i, j;
+
+    list_elem = (const struct list_entry *)(data + header->glyph_set_off);
+    for (i = 0; i < header->glyph_set_count; i++)
+    {
+        if (!check_ntf_str(data, size, data + list_elem->name_off))
+            return FALSE;
+        if (strcmp(data + list_elem->name_off, name))
+        {
+            list_elem++;
+            continue;
+        }
+        if (list_elem->off + list_elem->size > size)
+            return FALSE;
+
+        glyph_set = (const struct glyph_set *)(data + list_elem->off);
+        if (font_data->glyph_count > glyph_set->glyph_count)
+            return FALSE;
+
+        p = (const unsigned short *)((const char *)glyph_set + glyph_set->glyph_set_off);
+        if (glyph_set->flags & GLYPH_SET_OMMIT_CP)
+        {
+            const struct code_page *code_page = (const struct code_page *)((const char *)glyph_set + glyph_set->cp_off);
+            unsigned short def_cp;
+
+            if (glyph_set->cp_off + sizeof(*code_page) * glyph_set->cp_count > list_elem->size)
+                return FALSE;
+            if (glyph_set->cp_count != 1)
+                return FALSE;
+            if (glyph_set->glyph_set_off + sizeof(short) * font_data->glyph_count > list_elem->size)
+                return FALSE;
+
+            def_cp = code_page->cp;
+            for (j = 0; j < font_data->glyph_count; j++)
+            {
+                font_data->glyphs[j].wch = convert_ntf_cp(p[0], def_cp);
+                p++;
+            }
+        }
+        else
+        {
+            if (glyph_set->glyph_set_off + sizeof(short[2]) * font_data->glyph_count > list_elem->size)
+                return FALSE;
+
+            for (j = 0; j < font_data->glyph_count; j++)
+            {
+                font_data->glyphs[j].wch = convert_ntf_cp(p[0], p[1]);
+                p += 2;
+            }
+        }
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL add_ntf_fonts(const char *data, int size)
+{
+    const struct ntf_header *header = (const struct ntf_header *)data;
+    const struct width_range *width_range;
+    const struct list_entry *list_elem;
+    const struct font_mtx *font_mtx;
+    struct font_data *font_data;
+    const IFIMETRICS *metrics;
+    const char *name;
+    int i, j, k;
+
+    if (size < sizeof(*header) ||
+            size < header->glyph_set_off + header->glyph_set_count * sizeof(*list_elem) ||
+            size < header->font_mtx_off + header->font_mtx_count * sizeof(*list_elem))
+        return FALSE;
+
+    list_elem = (const struct list_entry *)(data + header->font_mtx_off);
+    for (i = 0; i < header->font_mtx_count; i++)
+    {
+        name = data + list_elem->name_off;
+        if (!check_ntf_str(data, size, name))
+            return FALSE;
+        TRACE("adding %s font\n", name);
+
+        if (list_elem->size + list_elem->off > size)
+            return FALSE;
+        font_mtx = (const struct font_mtx *)(data + list_elem->off);
+        if (list_elem->off + font_mtx->metrics_off + FIELD_OFFSET(IFIMETRICS, panose) > size)
+            return FALSE;
+        metrics = (const IFIMETRICS *)((const char *)font_mtx + font_mtx->metrics_off);
+        if (list_elem->off + font_mtx->metrics_off + metrics->cjThis > size)
+            return FALSE;
+        if (list_elem->off + font_mtx->width_off + sizeof(*width_range) * font_mtx->width_count > size)
+            return FALSE;
+        width_range = (const struct width_range *)((const char *)font_mtx + font_mtx->width_off);
+        if (!check_ntf_str(data, size, (const char *)font_mtx + font_mtx->glyph_set_name_off))
+            return FALSE;
+
+        if (!font_mtx->glyph_count)
+        {
+            list_elem++;
+            continue;
+        }
+
+        font_data = calloc(sizeof(*font_data), 1);
+        if (!font_data)
+            return FALSE;
+
+        font_data->glyph_count = font_mtx->glyph_count;
+        font_data->name = malloc(strlen(name) + 1);
+        font_data->metrics = malloc(metrics->cjThis);
+        font_data->glyphs = malloc(sizeof(*font_data->glyphs) * font_data->glyph_count);
+        if (!font_data->name || !font_data->metrics || !font_data->glyphs)
+        {
+            free_font_data(font_data);
+            return FALSE;
+        }
+        memcpy(font_data->name, name, strlen(name) + 1);
+        memcpy(font_data->metrics, metrics, metrics->cjThis);
+
+        for (j = 0; j < font_mtx->glyph_count; j++)
+            font_data->glyphs[j].width = font_mtx->def_width;
+        for (j = 0; j < font_mtx->width_count; j++)
+        {
+            /* Use default width */
+            if (width_range[j].width == 0x80000008)
+                continue;
+
+            for (k = 0; k < width_range[j].count; k++)
+            {
+                if (width_range[j].first + k >= font_data->glyph_count)
+                    break;
+                font_data->glyphs[width_range[j].first + k].width = width_range[j].width;
+            }
+        }
+
+        if (!map_glyph_to_unicode(font_data, data, size,
+                    (const char *)font_mtx + font_mtx->glyph_set_name_off))
+        {
+            free_font_data(font_data);
+            WARN("error loading %s font\n", name);
+            list_elem++;
+            continue;
+        }
+        font_data->def_glyph = font_data->glyphs[0];
+
+        qsort(font_data->glyphs, font_data->glyph_count,
+                sizeof(*font_data->glyphs), cmp_glyph_info);
+        list_add_head(&fonts, &font_data->entry);
+        list_elem++;
+        TRACE("%s font added\n", name);
+    }
+
+    return TRUE;
+}
+
+static NTSTATUS import_ntf(void *arg)
+{
+    struct import_ntf_params *params = arg;
+
+    return add_ntf_fonts(params->data, params->size);
+}
+
 static NTSTATUS init_dc(void *arg)
 {
     struct init_dc_params *params = arg;
@@ -1406,17 +1899,24 @@ static NTSTATUS init_dc(void *arg)
 
 static NTSTATUS free_printer_info(void *arg)
 {
+    struct font_data *font, *font_next;
     struct printer_info *pi, *next;
 
     LIST_FOR_EACH_ENTRY_SAFE(pi, next, &printer_info_list, struct printer_info, entry)
     {
         free(pi);
     }
+
+    LIST_FOR_EACH_ENTRY_SAFE(font, font_next, &fonts, struct font_data, entry)
+    {
+        free_font_data(font);
+    }
     return 0;
 }
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
+    import_ntf,
     init_dc,
     free_printer_info,
 };
