@@ -84,6 +84,14 @@ static const IWineUiaEventVtbl uia_event_vtbl = {
     uia_event_Release,
 };
 
+static struct uia_event *unsafe_impl_from_IWineUiaEvent(IWineUiaEvent *iface)
+{
+    if (!iface || (iface->lpVtbl != &uia_event_vtbl))
+        return NULL;
+
+    return CONTAINING_RECORD(iface, struct uia_event, IWineUiaEvent_iface);
+}
+
 static HRESULT create_uia_event(struct uia_event **out_event, int event_id, int scope, UiaEventCallback *cback,
         SAFEARRAY *runtime_id)
 {
@@ -144,5 +152,21 @@ HRESULT WINAPI UiaAddEvent(HUIANODE huianode, EVENTID event_id, UiaEventCallback
 
     *huiaevent = (HUIAEVENT)event;
 
+    return S_OK;
+}
+
+/***********************************************************************
+ *          UiaRemoveEvent (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaRemoveEvent(HUIAEVENT huiaevent)
+{
+    struct uia_event *event = unsafe_impl_from_IWineUiaEvent((IWineUiaEvent *)huiaevent);
+
+    TRACE("(%p)\n", event);
+
+    if (!event)
+        return E_INVALIDARG;
+
+    IWineUiaEvent_Release(&event->IWineUiaEvent_iface);
     return S_OK;
 }

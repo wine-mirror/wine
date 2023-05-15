@@ -13807,7 +13807,7 @@ static DWORD WINAPI uia_add_event_test_thread(LPVOID param)
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     hr = UiaRemoveEvent(data->event);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
     ok(Provider2.ref == 1, "Unexpected refcnt %ld\n", Provider2.ref);
     todo_wine ok(Provider2.last_call_tid == data->exp_thread_id ||
@@ -13855,7 +13855,18 @@ static void test_UiaAddEvent_args(HUIANODE node)
     ok(!!event, "event == NULL\n");
 
     hr = UiaRemoveEvent(event);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+}
+
+static void test_UiaRemoveEvent_args(HUIANODE node)
+{
+    HRESULT hr;
+
+    hr = UiaRemoveEvent(NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = UiaRemoveEvent((HUIAEVENT)node);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 }
 
 static void test_UiaAddEvent(void)
@@ -13896,6 +13907,7 @@ static void test_UiaAddEvent(void)
 
     /* Test valid function input arguments. */
     test_UiaAddEvent_args(node);
+    test_UiaRemoveEvent_args(node);
 
     /*
      * Raise event without any registered event handlers.
@@ -13933,10 +13945,9 @@ static void test_UiaAddEvent(void)
         ok_method_sequence(event_seq3, "event_seq3");
 
     hr = UiaRemoveEvent(event);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
-    if (SUCCEEDED(hr))
-        ok_method_sequence(event_seq4, "event_seq4");
+    ok_method_sequence(event_seq4, "event_seq4");
 
     /*
      * Register an event on the same node again, except this time we have a
@@ -13985,10 +13996,9 @@ static void test_UiaAddEvent(void)
 
     method_sequences_enabled = TRUE;
     hr = UiaRemoveEvent(event);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
-    if (SUCCEEDED(hr))
-        ok_method_sequence(event_seq4, "event_seq4");
+    ok_method_sequence(event_seq4, "event_seq4");
 
     /* Create an event with TreeScope_Children. */
     hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Children, NULL, 0, &cache_req,
@@ -14034,7 +14044,7 @@ static void test_UiaAddEvent(void)
     set_provider_prop_override(&Provider_child, NULL, 0);
 
     hr = UiaRemoveEvent(event);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
 
     /* Create an event with TreeScope_Descendants. */
@@ -14054,7 +14064,7 @@ static void test_UiaAddEvent(void)
     todo_wine CHECK_CALLED(uia_event_callback);
 
     hr = UiaRemoveEvent(event);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
 
     CoUninitialize();
@@ -14122,12 +14132,11 @@ static void test_UiaAddEvent(void)
 
     method_sequences_enabled = TRUE;
     hr = UiaRemoveEvent(event);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
     ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
     ok(Provider_child2.ref == 1, "Unexpected refcnt %ld\n", Provider_child2.ref);
-    if (SUCCEEDED(hr))
-        ok_method_sequence(event_seq6, "event_seq6");
+    ok_method_sequence(event_seq6, "event_seq6");
 
     UiaNodeRelease(node);
     ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
@@ -14204,7 +14213,7 @@ static void test_UiaAddEvent(void)
     todo_wine CHECK_CALLED(uia_event_callback);
 
     hr = UiaRemoveEvent(event);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     UiaNodeRelease(node);
 
     method_sequences_enabled = TRUE;
