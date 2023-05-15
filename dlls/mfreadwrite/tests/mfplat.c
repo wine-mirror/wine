@@ -1415,7 +1415,7 @@ done:
     DestroyWindow(window);
 }
 
-static void test_sink_writer(void)
+static void test_sink_writer_create(void)
 {
     IMFSinkWriter *writer;
     HRESULT hr;
@@ -1437,6 +1437,83 @@ static void test_sink_writer(void)
     ok(!writer, "Unexpected pointer %p.\n", writer);
 }
 
+static void test_sink_writer_mp4(void)
+{
+    WCHAR tmp_file[MAX_PATH];
+    IMFSinkWriter *writer;
+    IMFByteStream *stream;
+    IMFAttributes *attr;
+    IMFMediaSink *sink;
+    HRESULT hr;
+
+    GetTempPathW(ARRAY_SIZE(tmp_file), tmp_file);
+    wcscat(tmp_file, L"tmp.mp4");
+
+    hr = MFCreateAttributes(&attr, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFAttributes_SetGUID(attr, &MF_TRANSCODE_CONTAINERTYPE, &MFTranscodeContainerType_MPEG4);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFCreateTempFile(MF_ACCESSMODE_READWRITE, MF_OPENMODE_DELETE_IF_EXIST, MF_FILEFLAGS_NONE, &stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Test MFCreateSinkWriterFromURL. */
+    writer = (void *)0xdeadbeef;
+    hr = MFCreateSinkWriterFromURL(NULL, NULL, attr, &writer);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(!writer, "Unexpected pointer %p.\n", writer);
+
+    writer = (void *)0xdeadbeef;
+    hr = MFCreateSinkWriterFromURL(NULL, stream, NULL, &writer);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(!writer, "Unexpected pointer %p.\n", writer);
+
+    hr = MFCreateSinkWriterFromURL(NULL, stream, attr, &writer);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        IMFSinkWriter_Release(writer);
+
+    hr = MFCreateSinkWriterFromURL(tmp_file, NULL, NULL, &writer);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        IMFSinkWriter_Release(writer);
+
+    hr = MFCreateSinkWriterFromURL(tmp_file, NULL, attr, &writer);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        IMFSinkWriter_Release(writer);
+
+    hr = MFCreateSinkWriterFromURL(tmp_file, stream, NULL, &writer);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        IMFSinkWriter_Release(writer);
+
+    hr = MFCreateSinkWriterFromURL(tmp_file, stream, attr, &writer);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr != S_OK)
+    {
+        IMFByteStream_Release(stream);
+        IMFAttributes_Release(attr);
+        return;
+    }
+
+    /* Test GetServiceForStream. */
+    sink = (void *)0xdeadbeef;
+    hr = IMFSinkWriter_GetServiceForStream(writer, MF_SINK_WRITER_MEDIASINK,
+            &GUID_NULL, &IID_IMFMediaSink, (void **)&sink);
+    ok(hr == MF_E_UNSUPPORTED_SERVICE, "Unexpected hr %#lx.\n", hr);
+    ok(!sink, "Unexpected pointer %p.\n", sink);
+
+    DeleteFileW(tmp_file);
+    IMFSinkWriter_Release(writer);
+    IMFByteStream_Release(stream);
+    IMFAttributes_Release(attr);
+}
+
 START_TEST(mfplat)
 {
     HRESULT hr;
@@ -1451,7 +1528,8 @@ START_TEST(mfplat)
     test_source_reader("test.mp4", true);
     test_source_reader_from_media_source();
     test_reader_d3d9();
-    test_sink_writer();
+    test_sink_writer_create();
+    test_sink_writer_mp4();
 
     hr = MFShutdown();
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
