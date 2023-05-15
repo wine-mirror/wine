@@ -2992,6 +2992,8 @@ struct wined3d_light_info
     float cutoff;
 
     struct list entry;
+    struct list changed_entry;
+    bool changed;
 };
 
 /* The default light parameters */
@@ -5016,6 +5018,8 @@ struct wined3d_saved_states
     DWORD lights : 1;
     DWORD transforms : 1;
     DWORD padding : 1;
+
+    struct list changed_lights;
 };
 
 struct StageState {

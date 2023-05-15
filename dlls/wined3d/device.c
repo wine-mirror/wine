@@ -3965,15 +3965,14 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
     if (changed->lights)
     {
-        for (i = 0; i < ARRAY_SIZE(state->light_state->light_map); ++i)
-        {
-            const struct wined3d_light_info *light;
+        struct wined3d_light_info *light, *cursor;
 
-            LIST_FOR_EACH_ENTRY(light, &state->light_state->light_map[i], struct wined3d_light_info, entry)
-            {
-                wined3d_device_context_set_light(context, light->OriginalIndex, &light->OriginalParms);
-                wined3d_device_set_light_enable(device, light->OriginalIndex, light->glIndex != -1);
-            }
+        LIST_FOR_EACH_ENTRY_SAFE(light, cursor, &changed->changed_lights, struct wined3d_light_info, changed_entry)
+        {
+            wined3d_device_context_set_light(context, light->OriginalIndex, &light->OriginalParms);
+            wined3d_device_set_light_enable(device, light->OriginalIndex, light->glIndex != -1);
+            list_remove(&light->changed_entry);
+            light->changed = false;
         }
     }
 
@@ -4499,7 +4498,9 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         wined3d_device_set_clip_plane(device, i, &state->clip_planes[i]);
     }
 
+    assert(list_empty(&stateblock->changed.changed_lights));
     memset(&stateblock->changed, 0, sizeof(stateblock->changed));
+    list_init(&stateblock->changed.changed_lights);
 
     TRACE("Applied stateblock %p.\n", stateblock);
 }
