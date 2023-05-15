@@ -22,18 +22,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(uiautomation);
 
-struct uia_event
-{
-    IWineUiaEvent IWineUiaEvent_iface;
-    LONG ref;
-
-    SAFEARRAY *runtime_id;
-    int event_id;
-    int scope;
-
-    UiaEventCallback *cback;
-};
-
 /*
  * IWineUiaEvent interface.
  */
@@ -71,17 +59,55 @@ static ULONG WINAPI uia_event_Release(IWineUiaEvent *iface)
     TRACE("%p, refcount %ld\n", event, ref);
     if (!ref)
     {
+        int i;
+
         SafeArrayDestroy(event->runtime_id);
+        for (i = 0; i < event->event_advisers_count; i++)
+            IRawElementProviderAdviseEvents_Release(event->event_advisers[i]);
+        heap_free(event->event_advisers);
         heap_free(event);
     }
 
     return ref;
 }
 
+static HRESULT WINAPI uia_event_advise_events(IWineUiaEvent *iface, BOOL advise_added)
+{
+    struct uia_event *event = impl_from_IWineUiaEvent(iface);
+    HRESULT hr;
+    int i;
+
+    TRACE("%p, %d\n", event, advise_added);
+
+    for (i = 0; i < event->event_advisers_count; i++)
+    {
+        IRawElementProviderAdviseEvents *adviser = event->event_advisers[i];
+
+        if (advise_added)
+            hr = IRawElementProviderAdviseEvents_AdviseEventAdded(adviser, event->event_id, NULL);
+        else
+            hr = IRawElementProviderAdviseEvents_AdviseEventRemoved(adviser, event->event_id, NULL);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    /* Once we've advised of removal, no need to keep the advisers around. */
+    if (!advise_added)
+    {
+        for (i = 0; i < event->event_advisers_count; i++)
+            IRawElementProviderAdviseEvents_Release(event->event_advisers[i]);
+        heap_free(event->event_advisers);
+        event->event_advisers_count = event->event_advisers_arr_size = 0;
+    }
+
+    return S_OK;
+}
+
 static const IWineUiaEventVtbl uia_event_vtbl = {
     uia_event_QueryInterface,
     uia_event_AddRef,
     uia_event_Release,
+    uia_event_advise_events,
 };
 
 static struct uia_event *unsafe_impl_from_IWineUiaEvent(IWineUiaEvent *iface)
@@ -109,6 +135,19 @@ static HRESULT create_uia_event(struct uia_event **out_event, int event_id, int 
     event->cback = cback;
 
     *out_event = event;
+    return S_OK;
+}
+
+HRESULT uia_event_add_provider_event_adviser(IRawElementProviderAdviseEvents *advise_events, struct uia_event *event)
+{
+    if (!uia_array_reserve((void **)&event->event_advisers, &event->event_advisers_arr_size,
+                event->event_advisers_count + 1, sizeof(*event->event_advisers)))
+        return E_OUTOFMEMORY;
+
+    event->event_advisers[event->event_advisers_count] = advise_events;
+    IRawElementProviderAdviseEvents_AddRef(advise_events);
+    event->event_advisers_count++;
+
     return S_OK;
 }
 
@@ -150,9 +189,21 @@ HRESULT WINAPI UiaAddEvent(HUIANODE huianode, EVENTID event_id, UiaEventCallback
         return hr;
     }
 
+    hr = attach_event_to_uia_node(huianode, event);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = IWineUiaEvent_advise_events(&event->IWineUiaEvent_iface, TRUE);
+    if (FAILED(hr))
+        goto exit;
+
     *huiaevent = (HUIAEVENT)event;
 
-    return S_OK;
+exit:
+    if (FAILED(hr))
+        IWineUiaEvent_Release(&event->IWineUiaEvent_iface);
+
+    return hr;
 }
 
 /***********************************************************************
@@ -161,12 +212,17 @@ HRESULT WINAPI UiaAddEvent(HUIANODE huianode, EVENTID event_id, UiaEventCallback
 HRESULT WINAPI UiaRemoveEvent(HUIAEVENT huiaevent)
 {
     struct uia_event *event = unsafe_impl_from_IWineUiaEvent((IWineUiaEvent *)huiaevent);
+    HRESULT hr;
 
     TRACE("(%p)\n", event);
 
     if (!event)
         return E_INVALIDARG;
 
+    hr = IWineUiaEvent_advise_events(&event->IWineUiaEvent_iface, FALSE);
     IWineUiaEvent_Release(&event->IWineUiaEvent_iface);
+    if (FAILED(hr))
+        WARN("advise_events failed with hr %#lx\n", hr);
+
     return S_OK;
 }

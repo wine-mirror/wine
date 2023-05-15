@@ -93,6 +93,22 @@ static inline struct uia_provider *impl_from_IWineUiaProvider(IWineUiaProvider *
     return CONTAINING_RECORD(iface, struct uia_provider, IWineUiaProvider_iface);
 }
 
+struct uia_event
+{
+    IWineUiaEvent IWineUiaEvent_iface;
+    LONG ref;
+
+    SAFEARRAY *runtime_id;
+    int event_id;
+    int scope;
+
+    IRawElementProviderAdviseEvents **event_advisers;
+    int event_advisers_count;
+    SIZE_T event_advisers_arr_size;
+
+    UiaEventCallback *cback;
+};
+
 static inline void variant_init_bool(VARIANT *v, BOOL val)
 {
     V_VT(v) = VT_BOOL;
@@ -139,11 +155,16 @@ static inline BOOL uia_array_reserve(void **elements, SIZE_T *capacity, SIZE_T c
 HRESULT get_safearray_bounds(SAFEARRAY *sa, LONG *lbound, LONG *elems) DECLSPEC_HIDDEN;
 int uia_compare_safearrays(SAFEARRAY *sa1, SAFEARRAY *sa2, int prop_type) DECLSPEC_HIDDEN;
 int get_node_provider_type_at_idx(struct uia_node *node, int idx) DECLSPEC_HIDDEN;
+HRESULT attach_event_to_uia_node(HUIANODE node, struct uia_event *event) DECLSPEC_HIDDEN;
 HRESULT create_uia_node_from_elprov(IRawElementProviderSimple *elprov, HUIANODE *out_node,
         BOOL get_hwnd_providers) DECLSPEC_HIDDEN;
 
 /* uia_com_client.c */
 HRESULT create_uia_iface(IUnknown **iface, BOOL is_cui8) DECLSPEC_HIDDEN;
+
+/* uia_event.c */
+HRESULT uia_event_add_provider_event_adviser(IRawElementProviderAdviseEvents *advise_events,
+        struct uia_event *event) DECLSPEC_HIDDEN;
 
 /* uia_ids.c */
 const struct uia_prop_info *uia_prop_info_from_id(PROPERTYID prop_id) DECLSPEC_HIDDEN;

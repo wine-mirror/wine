@@ -462,6 +462,21 @@ static HRESULT get_focus_from_node_provider(IWineUiaNode *node, int idx, VARIANT
     return hr;
 }
 
+static HRESULT attach_event_to_node_provider(IWineUiaNode *node, int idx, HUIAEVENT huiaevent)
+{
+    IWineUiaProvider *prov;
+    HRESULT hr;
+
+    hr = IWineUiaNode_get_provider(node, idx, &prov);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IWineUiaProvider_attach_event(prov, (LONG_PTR)huiaevent);
+    IWineUiaProvider_Release(prov);
+
+    return hr;
+}
+
 /*
  * IWineUiaNode interface.
  */
@@ -1285,6 +1300,22 @@ exit:
     return hr;
 }
 
+HRESULT attach_event_to_uia_node(HUIANODE node, struct uia_event *event)
+{
+    struct uia_node *node_data = impl_from_IWineUiaNode((IWineUiaNode *)node);
+    HRESULT hr = S_OK;
+    int i;
+
+    for (i = 0; i < node_data->prov_count; i++)
+    {
+        hr = attach_event_to_node_provider(&node_data->IWineUiaNode_iface, i, (HUIAEVENT)event);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    return hr;
+}
+
 /*
  * IWineUiaProvider interface.
  */
@@ -1813,6 +1844,44 @@ static HRESULT WINAPI uia_provider_get_focus(IWineUiaProvider *iface, VARIANT *o
     return hr;
 }
 
+static HRESULT WINAPI uia_provider_attach_event(IWineUiaProvider *iface, LONG_PTR huiaevent)
+{
+    struct uia_provider *prov = impl_from_IWineUiaProvider(iface);
+    struct uia_event *event = (struct uia_event *)huiaevent;
+    IRawElementProviderFragmentRoot *elroot;
+    IRawElementProviderFragment *elfrag;
+    HRESULT hr;
+
+    TRACE("%p, %#Ix\n", iface, huiaevent);
+
+    hr = IRawElementProviderSimple_QueryInterface(prov->elprov, &IID_IRawElementProviderFragment, (void **)&elfrag);
+    if (FAILED(hr))
+        return S_OK;
+
+    hr = IRawElementProviderFragment_get_FragmentRoot(elfrag, &elroot);
+    IRawElementProviderFragment_Release(elfrag);
+    if (FAILED(hr))
+        return hr;
+
+    if (elroot)
+    {
+        IRawElementProviderAdviseEvents *advise_events;
+
+        hr = IRawElementProviderFragmentRoot_QueryInterface(elroot, &IID_IRawElementProviderAdviseEvents,
+                (void **)&advise_events);
+        IRawElementProviderFragmentRoot_Release(elroot);
+        if (SUCCEEDED(hr))
+        {
+            hr = uia_event_add_provider_event_adviser(advise_events, event);
+            IRawElementProviderAdviseEvents_Release(advise_events);
+            if (FAILED(hr))
+                return hr;
+        }
+    }
+
+    return S_OK;
+}
+
 static const IWineUiaProviderVtbl uia_provider_vtbl = {
     uia_provider_QueryInterface,
     uia_provider_AddRef,
@@ -1822,6 +1891,7 @@ static const IWineUiaProviderVtbl uia_provider_vtbl = {
     uia_provider_has_parent,
     uia_provider_navigate,
     uia_provider_get_focus,
+    uia_provider_attach_event,
 };
 
 static HRESULT create_wine_uia_provider(struct uia_node *node, IRawElementProviderSimple *elprov,
@@ -2246,6 +2316,12 @@ static HRESULT WINAPI uia_nested_node_provider_get_focus(IWineUiaProvider *iface
     return S_OK;
 }
 
+static HRESULT WINAPI uia_nested_node_provider_attach_event(IWineUiaProvider *iface, LONG_PTR huiaevent)
+{
+    FIXME("%p, %#Ix: stub\n", iface, huiaevent);
+    return E_NOTIMPL;
+}
+
 static const IWineUiaProviderVtbl uia_nested_node_provider_vtbl = {
     uia_nested_node_provider_QueryInterface,
     uia_nested_node_provider_AddRef,
@@ -2255,6 +2331,7 @@ static const IWineUiaProviderVtbl uia_nested_node_provider_vtbl = {
     uia_nested_node_provider_has_parent,
     uia_nested_node_provider_navigate,
     uia_nested_node_provider_get_focus,
+    uia_nested_node_provider_attach_event,
 };
 
 static BOOL is_nested_node_provider(IWineUiaProvider *iface)

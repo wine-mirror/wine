@@ -13714,12 +13714,12 @@ static const struct prov_method_sequence event_seq1[] = {
 static const struct prov_method_sequence event_seq2[] = {
     { &Provider, FRAG_GET_RUNTIME_ID },
     { &Provider, FRAG_GET_RUNTIME_ID, METHOD_OPTIONAL }, /* Only done on Win10v1809+. */
-    { &Provider, FRAG_GET_FRAGMENT_ROOT, METHOD_TODO },
+    { &Provider, FRAG_GET_FRAGMENT_ROOT },
     { &Provider, FRAG_GET_FRAGMENT_ROOT, METHOD_OPTIONAL }, /* Called twice on Win11. */
     NODE_CREATE_SEQ_OPTIONAL(&Provider), /* Only done in Win11. */
     { &Provider, FRAG_GET_RUNTIME_ID, METHOD_OPTIONAL }, /* Only done on Win8+. */
     { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL }, /* Only done on Win10v1809+. */
-    { &Provider, ADVISE_EVENTS_EVENT_ADDED, METHOD_TODO },
+    { &Provider, ADVISE_EVENTS_EVENT_ADDED },
     { 0 },
 };
 
@@ -13737,25 +13737,25 @@ static const struct prov_method_sequence event_seq3[] = {
 };
 
 static const struct prov_method_sequence event_seq4[] = {
-    { &Provider, ADVISE_EVENTS_EVENT_REMOVED, METHOD_TODO },
+    { &Provider, ADVISE_EVENTS_EVENT_REMOVED },
     { 0 },
 };
 
 static const struct prov_method_sequence event_seq5[] = {
     { &Provider, FRAG_GET_RUNTIME_ID },
     { &Provider, FRAG_GET_RUNTIME_ID, METHOD_OPTIONAL }, /* Only done on Win10v1809+. */
-    { &Provider, FRAG_GET_FRAGMENT_ROOT, METHOD_TODO },
+    { &Provider, FRAG_GET_FRAGMENT_ROOT },
     { &Provider, FRAG_GET_FRAGMENT_ROOT, METHOD_OPTIONAL }, /* Called twice on Win11. */
     { &Provider, FRAG_GET_EMBEDDED_FRAGMENT_ROOTS, METHOD_TODO },
     NODE_CREATE_SEQ_OPTIONAL(&Provider), /* Only done in Win11. */
     { &Provider, FRAG_GET_RUNTIME_ID, METHOD_OPTIONAL }, /* Only done on Win8+. */
     { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL }, /* Only done on Win10v1809+. */
-    { &Provider, ADVISE_EVENTS_EVENT_ADDED, METHOD_TODO },
+    { &Provider, ADVISE_EVENTS_EVENT_ADDED },
     { 0 },
 };
 
 static const struct prov_method_sequence event_seq6[] = {
-    { &Provider, ADVISE_EVENTS_EVENT_REMOVED, METHOD_TODO },
+    { &Provider, ADVISE_EVENTS_EVENT_REMOVED },
     { &Provider_child, ADVISE_EVENTS_EVENT_REMOVED, METHOD_TODO },
     { &Provider_child2, ADVISE_EVENTS_EVENT_REMOVED, METHOD_TODO },
     { 0 },
@@ -13812,7 +13812,7 @@ static DWORD WINAPI uia_add_event_test_thread(LPVOID param)
     ok(Provider2.ref == 1, "Unexpected refcnt %ld\n", Provider2.ref);
     todo_wine ok(Provider2.last_call_tid == data->exp_thread_id ||
             broken(Provider2.last_call_tid == GetCurrentThreadId()), "Expected method call on separate thread\n");
-    todo_wine ok(Provider2.advise_events_removed_event_id == UIA_AutomationFocusChangedEventId,
+    ok(Provider2.advise_events_removed_event_id == UIA_AutomationFocusChangedEventId,
             "Unexpected advise event removed, event ID %d\n", Provider.advise_events_removed_event_id);
 
     CoUninitialize();
@@ -13931,7 +13931,7 @@ static void test_UiaAddEvent(void)
             &event);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!event, "event == NULL\n");
-    todo_wine ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
+    ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
     ok_method_sequence(event_seq2, "event_seq2");
 
     /*
@@ -13965,7 +13965,7 @@ static void test_UiaAddEvent(void)
             &event);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!event, "event == NULL\n");
-    todo_wine ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
+    ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
     ok_method_sequence(event_seq2, "event_seq2");
 
     /* Event callback is now invoked since we can match by runtime ID. */
@@ -14005,7 +14005,7 @@ static void test_UiaAddEvent(void)
             &event);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!event, "event == NULL\n");
-    todo_wine ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
+    ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
     ok_method_sequence(event_seq5, "event_seq5");
 
     /*
@@ -14052,7 +14052,7 @@ static void test_UiaAddEvent(void)
             &cache_req, &event);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!event, "event == NULL\n");
-    todo_wine ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
+    ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
 
     /* Raised an event on Provider_child_child. */
     init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), NULL);
@@ -14086,9 +14086,9 @@ static void test_UiaAddEvent(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!event, "event == NULL\n");
     ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
-    todo_wine ok(Provider2.ref > 1, "Unexpected refcnt %ld\n", Provider2.ref);
+    ok(Provider2.ref > 1, "Unexpected refcnt %ld\n", Provider2.ref);
     ok(!Provider.advise_events_added_event_id, "Unexpected advise event added, event ID %d\n", Provider.advise_events_added_event_id);
-    todo_wine ok(Provider2.advise_events_added_event_id == UIA_AutomationFocusChangedEventId,
+    ok(Provider2.advise_events_added_event_id == UIA_AutomationFocusChangedEventId,
             "Unexpected advise event added, event ID %d\n", Provider.advise_events_added_event_id);
 
     thread_data.exp_thread_id = GetCurrentThreadId();
@@ -14120,10 +14120,10 @@ static void test_UiaAddEvent(void)
             &cache_req, &event);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!event, "event == NULL\n");
-    todo_wine ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
+    ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
     todo_wine ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
     todo_wine ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
-    todo_wine ok(Provider.advise_events_added_event_id == UIA_AutomationFocusChangedEventId,
+    ok(Provider.advise_events_added_event_id == UIA_AutomationFocusChangedEventId,
             "Unexpected advise event added, event ID %d\n", Provider.advise_events_added_event_id);
     todo_wine ok(Provider_child.advise_events_added_event_id == UIA_AutomationFocusChangedEventId,
             "Unexpected advise event added, event ID %d\n", Provider_child.advise_events_added_event_id);

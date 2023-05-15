@@ -61,6 +61,7 @@ library UIA_wine_private
     ]
     interface IWineUiaEvent : IUnknown
     {
+        HRESULT advise_events([in]BOOL advise_added);
     }
 
     [
@@ -76,6 +77,7 @@ library UIA_wine_private
         HRESULT has_parent([out, retval]BOOL *out_val);
         HRESULT navigate([in]int nav_dir, [out, retval]VARIANT *ret_val);
         HRESULT get_focus([out, retval]VARIANT *ret_val);
+        HRESULT attach_event([in]LONG_PTR huiaevent);
     }
 
     [
