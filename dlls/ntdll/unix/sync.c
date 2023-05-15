@@ -1022,7 +1022,7 @@ static NTSTATUS event_data_to_state_change( const debug_event_t *data, DBGUI_WAI
 }
 
 #ifndef _WIN64
-/* helper to NtWaitForDebugEvent; retrive machine from PE image */
+/* helper to NtWaitForDebugEvent; retrieve machine from PE image */
 static NTSTATUS get_image_machine( HANDLE handle, USHORT *machine )
 {
     IMAGE_DOS_HEADER dos_hdr;

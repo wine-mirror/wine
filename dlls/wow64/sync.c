@@ -1490,7 +1490,7 @@ NTSTATUS WINAPI wow64_NtWaitForAlertByThreadId( UINT *args )
 }
 
 
-/* helper to wow64_NtWaitForDebugEvent; retrive machine from PE image */
+/* helper to wow64_NtWaitForDebugEvent; retrieve machine from PE image */
 static NTSTATUS get_image_machine( HANDLE handle, USHORT *machine )
 {
     IMAGE_DOS_HEADER dos_hdr;
