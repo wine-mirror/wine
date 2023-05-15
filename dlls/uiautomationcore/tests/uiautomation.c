@@ -13819,6 +13819,45 @@ static DWORD WINAPI uia_add_event_test_thread(LPVOID param)
     return 0;
 }
 
+static void test_UiaAddEvent_args(HUIANODE node)
+{
+    struct UiaCacheRequest cache_req;
+    HUIAEVENT event;
+    HRESULT hr;
+
+    set_cache_request(&cache_req, (struct UiaCondition *)&UiaTrueCondition, TreeScope_Element, NULL, 0, NULL, 0,
+            AutomationElementMode_Full);
+
+    /* NULL node. */
+    hr = UiaAddEvent(NULL, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Element, NULL, 0, &cache_req,
+            &event);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    /* NULL event callback. */
+    hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, NULL, TreeScope_Element, NULL, 0, &cache_req,
+            &event);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    /* NULL cache request. */
+    hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Element, NULL, 0, NULL,
+            &event);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    /* NULL event handle. */
+    hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Element, NULL, 0, &cache_req,
+            NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    /* Event IDs aren't checked for validity, 1 is not a valid UIA event ID. */
+    event = NULL;
+    hr = UiaAddEvent(node, 1, uia_event_callback, TreeScope_Element, NULL, 0, &cache_req, &event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!event, "event == NULL\n");
+
+    hr = UiaRemoveEvent(event);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+}
+
 static void test_UiaAddEvent(void)
 {
     IRawElementProviderFragmentRoot *embedded_roots[2] = { &Provider_child.IRawElementProviderFragmentRoot_iface,
@@ -13855,6 +13894,9 @@ static void test_UiaAddEvent(void)
     check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider", TRUE);
     VariantClear(&v);
 
+    /* Test valid function input arguments. */
+    test_UiaAddEvent_args(node);
+
     /*
      * Raise event without any registered event handlers.
      */
@@ -13875,11 +13917,10 @@ static void test_UiaAddEvent(void)
             AutomationElementMode_Full);
     hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Element, NULL, 0, &cache_req,
             &event);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!!event, "event == NULL\n");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!event, "event == NULL\n");
     todo_wine ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
-    if (SUCCEEDED(hr))
-        ok_method_sequence(event_seq2, "event_seq2");
+    ok_method_sequence(event_seq2, "event_seq2");
 
     /*
      * Even though we raise an event on the same provider as the one our node
@@ -13911,11 +13952,10 @@ static void test_UiaAddEvent(void)
     Provider.runtime_id[0] = Provider.runtime_id[1] = 0xdeadbeef;
     hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Element, NULL, 0, &cache_req,
             &event);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!!event, "event == NULL\n");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!event, "event == NULL\n");
     todo_wine ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
-    if (SUCCEEDED(hr))
-        ok_method_sequence(event_seq2, "event_seq2");
+    ok_method_sequence(event_seq2, "event_seq2");
 
     /* Event callback is now invoked since we can match by runtime ID. */
     method_sequences_enabled = FALSE;
@@ -13953,11 +13993,10 @@ static void test_UiaAddEvent(void)
     /* Create an event with TreeScope_Children. */
     hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Children, NULL, 0, &cache_req,
             &event);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!!event, "event == NULL\n");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!event, "event == NULL\n");
     todo_wine ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
-    if (SUCCEEDED(hr))
-        ok_method_sequence(event_seq5, "event_seq5");
+    ok_method_sequence(event_seq5, "event_seq5");
 
     /*
      * Only TreeScope_Children and not TreeScope_Element, handler won't be
@@ -14001,8 +14040,8 @@ static void test_UiaAddEvent(void)
     /* Create an event with TreeScope_Descendants. */
     hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Element | TreeScope_Descendants, NULL, 0,
             &cache_req, &event);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!!event, "event == NULL\n");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!event, "event == NULL\n");
     todo_wine ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
 
     /* Raised an event on Provider_child_child. */
@@ -14034,8 +14073,8 @@ static void test_UiaAddEvent(void)
     Provider.frag_root = &Provider2.IRawElementProviderFragmentRoot_iface;
     hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Element | TreeScope_Descendants, NULL, 0,
             &cache_req, &event);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!!event, "event == NULL\n");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!event, "event == NULL\n");
     ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
     todo_wine ok(Provider2.ref > 1, "Unexpected refcnt %ld\n", Provider2.ref);
     ok(!Provider.advise_events_added_event_id, "Unexpected advise event added, event ID %d\n", Provider.advise_events_added_event_id);
@@ -14069,8 +14108,8 @@ static void test_UiaAddEvent(void)
 
     hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Element | TreeScope_Descendants, NULL, 0,
             &cache_req, &event);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!!event, "event == NULL\n");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!event, "event == NULL\n");
     todo_wine ok(Provider.ref == 3, "Unexpected refcnt %ld\n", Provider.ref);
     todo_wine ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
     todo_wine ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
@@ -14132,8 +14171,8 @@ static void test_UiaAddEvent(void)
             AutomationElementMode_Full);
     hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Element | TreeScope_Children, NULL, 0,
             &cache_req, &event);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!!event, "event == NULL\n");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!event, "event == NULL\n");
 
     /*
      * Raising an event on a serverside provider results in no clientside

@@ -3514,17 +3514,6 @@ exit:
 }
 
 /***********************************************************************
- *          UiaAddEvent (uiautomationcore.@)
- */
-HRESULT WINAPI UiaAddEvent(HUIANODE huianode, EVENTID event_id, UiaEventCallback *callback, enum TreeScope scope,
-        PROPERTYID *prop_ids, int prop_ids_count, struct UiaCacheRequest *cache_req, HUIAEVENT *huiaevent)
-{
-    FIXME("(%p, %d, %p, %#x, %p, %d, %p, %p)\n", huianode, event_id, callback, scope, prop_ids, prop_ids_count,
-            cache_req, huiaevent);
-    return E_NOTIMPL;
-}
-
-/***********************************************************************
  *          UiaRemoveEvent (uiautomationcore.@)
  */
 HRESULT WINAPI UiaRemoveEvent(HUIAEVENT huiaevent)

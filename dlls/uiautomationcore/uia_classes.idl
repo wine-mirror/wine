@@ -56,6 +56,15 @@ library UIA_wine_private
 
     [
         object,
+        uuid(5e60162c-ab0e-4e22-a61d-3a3acd442aba),
+        pointer_default(unique),
+    ]
+    interface IWineUiaEvent : IUnknown
+    {
+    }
+
+    [
+        object,
         uuid(57865755-6c05-4522-98df-4ca658b768ef),
         pointer_default(unique),
         oleautomation,

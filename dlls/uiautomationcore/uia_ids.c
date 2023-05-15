@@ -413,6 +413,17 @@ static const struct uia_event_info default_uia_events[] = {
       EventArgsType_Simple, },
 };
 
+static const int event_id_idx[] = {
+    0x23, 0x1d, 0x0d, 0x0b, 0x19, 0x06, 0x07, 0x0f,
+    0x0a, 0x1e, 0x1b, 0x1a, 0x22, 0x00, 0x18, 0x10,
+    0x01, 0x20, 0x08, 0x17, 0x15, 0x13, 0x0e, 0x0c,
+    0x14, 0x09, 0x03, 0x21, 0x12, 0x16, 0x05, 0x1c,
+    0x02, 0x11, 0x04, 0x1f,
+};
+
+#define EVENT_ID_MIN 20000
+#define EVENT_ID_MAX (EVENT_ID_MIN + ARRAY_SIZE(default_uia_events))
+
 static const struct uia_event_info *uia_event_info_from_guid(const GUID *guid)
 {
     struct uia_event_info *event;
@@ -422,6 +433,14 @@ static const struct uia_event_info *uia_event_info_from_guid(const GUID *guid)
         return event;
 
     return NULL;
+}
+
+const struct uia_event_info *uia_event_info_from_id(EVENTID event_id)
+{
+    if ((event_id < EVENT_ID_MIN) || (event_id >= EVENT_ID_MAX))
+        return NULL;
+
+    return &default_uia_events[event_id_idx[event_id - EVENT_ID_MIN]];
 }
 
 /* Sorted by GUID. */
