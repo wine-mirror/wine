@@ -1035,7 +1035,7 @@ static void test_SetSourceFromByteStream(void)
     struct media_engine_notify *notify;
     IMFMediaEngineEx *media_engine;
     PROPVARIANT propvar;
-    DWORD flags;
+    DWORD count, flags;
     HRESULT hr;
 
     notify = create_callback();
@@ -1062,6 +1062,14 @@ static void test_SetSourceFromByteStream(void)
 
     hr = IMFMediaEngineEx_GetStreamAttribute(media_engine, 0, &MF_SD_PROTECTED, &propvar);
     ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaEngineEx_GetNumberOfStreams(media_engine, NULL);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+
+    count = 123;
+    hr = IMFMediaEngineEx_GetNumberOfStreams(media_engine, &count);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    ok(count == 123, "Unexpected value %lu.\n", count);
 
     IMFMediaEngineEx_Release(media_engine);
     IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
@@ -1203,7 +1211,7 @@ static IMFMediaEngineNotifyVtbl test_transfer_notify_vtbl =
     test_transfer_notify_EventNotify,
 };
 
-static void test_TransferVideoFrames(void)
+static void test_TransferVideoFrame(void)
 {
     struct test_transfer_notify notify = {{&test_transfer_notify_vtbl}};
     WCHAR url[] = {L"i420-64x64.avi"};
@@ -1266,6 +1274,11 @@ static void test_TransferVideoFrames(void)
         win_skip("Media engine reported error %#lx, skipping tests.\n", notify.error);
         goto done;
     }
+
+    res = 0;
+    hr = IMFMediaEngineEx_GetNumberOfStreams(media_engine, &res);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(res == 1, "Unexpected stream count %lu.\n", res);
 
     /* FIXME: Wine first video frame is often full of garbage, wait for another update */
     res = WaitForSingleObject(notify.ready_event, 500);
@@ -1343,7 +1356,7 @@ START_TEST(mfmediaengine)
     test_time_range();
     test_SetSourceFromByteStream();
     test_audio_configuration();
-    test_TransferVideoFrames();
+    test_TransferVideoFrame();
 
     IMFMediaEngineClassFactory_Release(factory);
 
