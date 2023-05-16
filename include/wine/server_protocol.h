@@ -5334,8 +5334,6 @@ struct set_cursor_request
     int            x;
     int            y;
     rectangle_t    clip;
-    unsigned int   clip_msg;
-    char __pad_52[4];
 };
 struct set_cursor_reply
 {
@@ -6415,7 +6413,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 771
+#define SERVER_PROTOCOL_VERSION 772
 
 /* ### protocol_version end ### */
 

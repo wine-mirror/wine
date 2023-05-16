@@ -34,6 +34,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winternl.h"
+#include "ntuser.h"
 
 #include "handle.h"
 #include "file.h"
@@ -467,8 +468,7 @@ static void set_clip_rectangle( struct desktop *desktop, const rectangle_t *rect
     }
     else desktop->cursor.clip = top_rect;
 
-    if (desktop->cursor.clip_msg && send_clip_msg)
-        post_desktop_message( desktop, desktop->cursor.clip_msg, rect != NULL, 0 );
+    if (send_clip_msg) post_desktop_message( desktop, WM_WINE_CLIPCURSOR, rect != NULL, 0 );
 
     /* warp the mouse to be inside the clip rect */
     x = max( min( desktop->cursor.x, desktop->cursor.clip.right - 1 ), desktop->cursor.clip.left );
@@ -3294,11 +3294,6 @@ DECL_HANDLER(set_cursor)
     if (req->flags & (SET_CURSOR_CLIP | SET_CURSOR_NOCLIP))
     {
         struct desktop *desktop = input->desktop;
-
-        /* only the desktop owner can set the message */
-        if (req->clip_msg && get_top_window_owner(desktop) == current->process)
-            desktop->cursor.clip_msg = req->clip_msg;
-
         set_clip_rectangle( desktop, (req->flags & SET_CURSOR_NOCLIP) ? NULL : &req->clip, 0 );
     }
 

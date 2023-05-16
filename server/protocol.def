@@ -3700,7 +3700,6 @@ struct handle_info
     int            x;             /* cursor position */
     int            y;
     rectangle_t    clip;          /* cursor clip rectangle */
-    unsigned int   clip_msg;      /* message to post on cursor clip changes */
 @REPLY
     user_handle_t  prev_handle;   /* previous handle */
     int            prev_count;    /* previous show count */

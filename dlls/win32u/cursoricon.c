@@ -174,7 +174,6 @@ BOOL WINAPI NtUserClipCursor( const RECT *rect )
 
     SERVER_START_REQ( set_cursor )
     {
-        req->clip_msg = WM_WINE_CLIPCURSOR;
         if (rect)
         {
             req->flags       = SET_CURSOR_CLIP;
