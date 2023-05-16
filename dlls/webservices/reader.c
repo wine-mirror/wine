@@ -6184,6 +6184,7 @@ static WS_READ_OPTION get_field_read_option( WS_TYPE type, ULONG options )
     case WS_BYTES_TYPE:
     case WS_XML_STRING_TYPE:
     case WS_XML_QNAME_TYPE:
+    case WS_XML_BUFFER_TYPE:
     case WS_STRUCT_TYPE:
     case WS_ENUM_TYPE:
     case WS_UNION_TYPE:
