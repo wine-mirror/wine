@@ -1380,7 +1380,7 @@ static void create_action(ITaskDefinition *taskdef)
 {
     static WCHAR task1_exe[] = L"task1.exe";
     static WCHAR workdir[] = L"workdir";
-    static WCHAR args[] = L"argumens";
+    static WCHAR args[] = L"arguments";
     static WCHAR comment[] = L"comment";
     HRESULT hr;
     IActionCollection *actions;
