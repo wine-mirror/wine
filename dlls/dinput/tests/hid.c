@@ -591,7 +591,7 @@ static BOOL find_hid_device_path( WCHAR *device_path )
 
 BOOL bus_device_start(void)
 {
-    static const WCHAR bus_hardware_id[] = L"WINETEST\\BUS";
+    static const WCHAR bus_hardware_ids[] = L"WINETEST\\BUS\0";
     SP_DEVINFO_DATA device = {sizeof(SP_DEVINFO_DATA)};
     const WCHAR *service_name = L"winetest_bus";
     WCHAR path[MAX_PATH], filename[MAX_PATH];
@@ -666,7 +666,7 @@ BOOL bus_device_start(void)
     ret = SetupDiCreateDeviceInfoW( set, L"root\\winetest\\0", &GUID_NULL, NULL, NULL, 0, &device );
     ok( ret, "failed to create device, error %#lx\n", GetLastError() );
 
-    ret = SetupDiSetDeviceRegistryPropertyW( set, &device, SPDRP_HARDWAREID, (const BYTE *)bus_hardware_id, sizeof(bus_hardware_id) );
+    ret = SetupDiSetDeviceRegistryPropertyW( set, &device, SPDRP_HARDWAREID, (const BYTE *)bus_hardware_ids, sizeof(bus_hardware_ids) );
     ok( ret, "failed to create set hardware ID, error %lu\n", GetLastError() );
 
     ret = SetupDiCallClassInstaller( DIF_REGISTERDEVICE, set, &device );
@@ -677,7 +677,7 @@ BOOL bus_device_start(void)
 
     GetFullPathNameW( L"winetest.inf", ARRAY_SIZE(path), path, NULL );
 
-    ret = UpdateDriverForPlugAndPlayDevicesW( NULL, bus_hardware_id, path, INSTALLFLAG_FORCE, &need_reboot );
+    ret = UpdateDriverForPlugAndPlayDevicesW( NULL, bus_hardware_ids, path, INSTALLFLAG_FORCE, &need_reboot );
     ok( ret, "failed to install device, error %lu\n", GetLastError() );
     ok( !need_reboot, "expected no reboot necessary\n" );
 
