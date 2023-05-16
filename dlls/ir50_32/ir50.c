@@ -145,6 +145,7 @@ static LRESULT IV50_DecompressBegin( IMFTransform *decoder, LPBITMAPINFO in, LPB
     IMFMediaType *input_type, *output_type;
     const GUID *output_subtype;
     LRESULT r = ICERR_INTERNAL;
+    unsigned int stride;
 
     TRACE("ICM_DECOMPRESS_BEGIN %p %p %p\n", decoder, in, out);
 
@@ -159,6 +160,10 @@ static LRESULT IV50_DecompressBegin( IMFTransform *decoder, LPBITMAPINFO in, LPB
         output_subtype = &MFVideoFormat_RGB555;
     else
         return ICERR_BADFORMAT;
+
+    stride = (out->bmiHeader.biWidth + 3) & ~3;
+    if (out->bmiHeader.biHeight >= 0)
+        stride = -stride;
 
     if ( FAILED(MFCreateMediaType( &input_type )) )
         return ICERR_INTERNAL;
@@ -183,6 +188,8 @@ static LRESULT IV50_DecompressBegin( IMFTransform *decoder, LPBITMAPINFO in, LPB
     if ( FAILED(IMFMediaType_SetUINT64(
                     output_type, &MF_MT_FRAME_SIZE,
                     make_uint64( out->bmiHeader.biWidth, abs(out->bmiHeader.biHeight) ) )) )
+        goto done;
+    if ( FAILED(IMFMediaType_SetUINT32( output_type, &MF_MT_DEFAULT_STRIDE, stride)) )
         goto done;
 
     if ( FAILED(IMFTransform_SetInputType( decoder, 0, input_type, 0 )) ||
@@ -252,17 +259,13 @@ static LRESULT IV50_Decompress( IMFTransform *decoder, ICDECOMPRESS *icd, DWORD 
     {
         LONG width = icd->lpbiOutput->biWidth * (icd->lpbiOutput->biBitCount / 8);
         LONG height = abs( icd->lpbiOutput->biHeight );
-        LONG data_stride = (width + 3) & ~3;
-        LONG out_stride = icd->lpbiOutput->biHeight >= 0 ? -data_stride : data_stride;
-        BYTE *output_start = (BYTE *)icd->lpOutput;
-
-        if (out_stride < 0)
-            output_start += (height - 1) * abs(out_stride);
+        LONG stride = (width + 3) & ~3;
+        BYTE *output = (BYTE *)icd->lpOutput;
 
         if ( FAILED(IMFMediaBuffer_Lock( out_buf, &data, NULL, NULL )))
             goto done;
 
-        MFCopyImage( output_start, out_stride, data, data_stride, width, height );
+        MFCopyImage( output, stride, data, stride, width, height );
 
         IMFMediaBuffer_Unlock( out_buf );
         r = ICERR_OK;
