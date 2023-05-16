@@ -764,16 +764,34 @@ static void test_loaded_modules(void)
             ret = wrapper_EnumerateLoadedModulesW64(pi.hProcess, aggregate_cb, &aggregation);
             ok(ret, "EnumerateLoadedModulesW64 failed: %lu\n", GetLastError());
 
-            todo_wine
-            ok(aggregation.count_32bit == 1 && aggregation.count_64bit, "Wrong bitness aggregation count %u %u\n",
-               aggregation.count_32bit, aggregation.count_64bit);
-            ok(aggregation.count_exe == 1 && aggregation.count_ntdll == 1, "Wrong kind aggregation count %u %u\n",
-               aggregation.count_exe, aggregation.count_ntdll);
-            todo_wine
-            ok(aggregation.count_systemdir > 2 && aggregation.count_64bit == aggregation.count_systemdir && aggregation.count_wowdir == 1,
-               "Wrong directory aggregation count %u %u\n",
-               aggregation.count_systemdir, aggregation.count_wowdir);
-
+            switch (get_process_kind(pi.hProcess))
+            {
+            default:
+                ok(0, "Unknown process kind\n");
+                break;
+            case PCSKIND_WINE_OLD_WOW64:
+                todo_wine
+                ok(aggregation.count_32bit == 1 && !aggregation.count_64bit, "Wrong bitness aggregation count %u %u\n",
+                   aggregation.count_32bit, aggregation.count_64bit);
+                todo_wine
+                ok(aggregation.count_exe == 1 && aggregation.count_ntdll == 0, "Wrong kind aggregation count %u %u\n",
+                   aggregation.count_exe, aggregation.count_ntdll);
+                todo_wine
+                ok(aggregation.count_systemdir == 0 && aggregation.count_wowdir == 1,
+                   "Wrong directory aggregation count %u %u\n",
+                   aggregation.count_systemdir, aggregation.count_wowdir);
+                break;
+            case PCSKIND_WOW64:
+                todo_wine
+                ok(aggregation.count_32bit == 1 && aggregation.count_64bit, "Wrong bitness aggregation count %u %u\n",
+                   aggregation.count_32bit, aggregation.count_64bit);
+                ok(aggregation.count_exe == 1 && aggregation.count_ntdll == 1, "Wrong kind aggregation count %u %u\n",
+                   aggregation.count_exe, aggregation.count_ntdll);
+                todo_wine
+                ok(aggregation.count_systemdir > 2 && aggregation.count_64bit == aggregation.count_systemdir && aggregation.count_wowdir == 1,
+                   "Wrong directory aggregation count %u %u\n",
+                   aggregation.count_systemdir, aggregation.count_wowdir);
+            }
             ret = SymRefreshModuleList(pi.hProcess);
             ok(ret, "SymRefreshModuleList failed: %lu\n", GetLastError());
 
@@ -805,15 +823,34 @@ static void test_loaded_modules(void)
             ret = wrapper_EnumerateLoadedModulesW64(pi.hProcess, aggregate_cb, &aggregation2);
             ok(ret, "EnumerateLoadedModulesW64 failed: %lu\n", GetLastError());
 
-            ok(aggregation2.count_32bit && aggregation2.count_64bit, "Wrong bitness aggregation count %u %u\n",
-               aggregation2.count_32bit, aggregation2.count_64bit);
-            todo_wine
-            ok(aggregation2.count_exe == 2 && aggregation2.count_ntdll == 2, "Wrong kind aggregation count %u %u\n",
-               aggregation2.count_exe, aggregation2.count_ntdll);
-            todo_wine
-            ok(aggregation2.count_systemdir > 2 && aggregation2.count_64bit == aggregation2.count_systemdir && aggregation2.count_wowdir > 2,
-               "Wrong directory aggregation count %u %u\n",
-               aggregation2.count_systemdir, aggregation2.count_wowdir);
+            switch (get_process_kind(pi.hProcess))
+            {
+            case PCSKIND_ERROR:
+                break;
+            case PCSKIND_WINE_OLD_WOW64:
+                todo_wine
+                ok(aggregation2.count_32bit && !aggregation2.count_64bit, "Wrong bitness aggregation count %u %u\n",
+                   aggregation2.count_32bit, aggregation2.count_64bit);
+                todo_wine
+                ok(aggregation2.count_exe == 2 && aggregation2.count_ntdll == 1, "Wrong kind aggregation count %u %u\n",
+                   aggregation2.count_exe, aggregation2.count_ntdll);
+                todo_wine
+                ok(aggregation2.count_systemdir == 0 && aggregation2.count_32bit == aggregation2.count_wowdir + 1 && aggregation2.count_wowdir > 2,
+                   "Wrong directory aggregation count %u %u\n",
+                   aggregation2.count_systemdir, aggregation2.count_wowdir);
+                break;
+            default:
+                ok(aggregation2.count_32bit && aggregation2.count_64bit, "Wrong bitness aggregation count %u %u\n",
+                   aggregation2.count_32bit, aggregation2.count_64bit);
+                todo_wine
+                ok(aggregation2.count_exe == 2 && aggregation2.count_ntdll == 2, "Wrong kind aggregation count %u %u\n",
+                   aggregation2.count_exe, aggregation2.count_ntdll);
+                todo_wine
+                ok(aggregation2.count_systemdir > 2 && aggregation2.count_64bit == aggregation2.count_systemdir && aggregation2.count_wowdir > 2,
+                   "Wrong directory aggregation count %u %u\n",
+                   aggregation2.count_systemdir, aggregation2.count_wowdir);
+                break;
+            }
 
             ret = SymRefreshModuleList(pi.hProcess);
             ok(ret, "SymRefreshModuleList failed: %lu\n", GetLastError());
