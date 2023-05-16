@@ -1554,15 +1554,15 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
         rsp = (rsp - sizeof(XSTATE)) & ~63;
         stack = (struct stack_layout *)rsp - 1;
         assert( !((ULONG_PTR)stack->xstate & 63) );
+        memmove( &stack->context, context, sizeof(*context) );
         context_init_xstate( &stack->context, stack->xstate );
         memcpy( stack->xstate, &frame->xstate, sizeof(frame->xstate) );
     }
-
-    memmove( &stack->context, context, sizeof(*context) );
+    else memmove( &stack->context, context, sizeof(*context) );
     stack->rec = *rec;
     /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
     if (stack->rec.ExceptionCode == EXCEPTION_BREAKPOINT) stack->context.Rip--;
-    frame->rbp = context->Rbp;
+    frame->rbp = stack->context.Rbp;
     frame->rsp = (ULONG64)stack;
     frame->rip = (ULONG64)pKiUserExceptionDispatcher;
     frame->restore_flags |= CONTEXT_CONTROL;
