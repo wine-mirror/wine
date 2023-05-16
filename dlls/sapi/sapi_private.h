@@ -25,6 +25,7 @@ HRESULT file_stream_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_H
 HRESULT resource_manager_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_HIDDEN;
 HRESULT speech_stream_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_HIDDEN;
 HRESULT speech_voice_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_HIDDEN;
+HRESULT mmaudio_out_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_HIDDEN;
 HRESULT token_category_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_HIDDEN;
 HRESULT token_enum_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_HIDDEN;
 HRESULT token_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_HIDDEN;

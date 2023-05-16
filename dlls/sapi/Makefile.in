@@ -4,6 +4,7 @@ IMPORTS   = uuid ole32 user32 advapi32
 C_SRCS = \
 	automation.c \
 	main.c \
+	mmaudio.c \
 	resource.c \
 	stream.c \
 	token.c \

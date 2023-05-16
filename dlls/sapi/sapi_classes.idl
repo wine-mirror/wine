@@ -103,3 +103,18 @@ coclass SpFileStream
     interface ISpStream;
     [default] interface ISpeechFileStream;
 }
+
+[
+    uuid(a8c680eb-3d32-11d2-9ee7-00c04f797396),
+    helpstring("SpMMAudioOut"),
+    progid("SAPI.SpMMAudioOut.1"),
+    vi_progid("SAPI.SpMMAudioOut"),
+    threading(both)
+]
+coclass SpMMAudioOut
+{
+    interface ISpEventSource;
+    interface ISpEventSink;
+    interface ISpObjectWithToken;
+    interface ISpMMSysAudio;
+}
