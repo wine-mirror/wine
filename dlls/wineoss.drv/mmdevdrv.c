@@ -78,7 +78,7 @@ static struct list g_sessions = LIST_INIT(g_sessions);
 static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client);
 
 static const IAudioClient3Vtbl AudioClient3_Vtbl;
-static const IAudioRenderClientVtbl AudioRenderClient_Vtbl;
+extern const IAudioRenderClientVtbl AudioRenderClient_Vtbl;
 extern const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl;
 extern const IAudioSessionControl2Vtbl AudioSessionControl2_Vtbl;
 extern const ISimpleAudioVolumeVtbl SimpleAudioVolume_Vtbl;
@@ -100,11 +100,6 @@ void DECLSPEC_HIDDEN sessions_unlock(void)
 static inline ACImpl *impl_from_IAudioClient3(IAudioClient3 *iface)
 {
     return CONTAINING_RECORD(iface, ACImpl, IAudioClient3_iface);
-}
-
-static inline ACImpl *impl_from_IAudioRenderClient(IAudioRenderClient *iface)
-{
-    return CONTAINING_RECORD(iface, ACImpl, IAudioRenderClient_iface);
 }
 
 BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
@@ -1082,87 +1077,6 @@ static const IAudioClient3Vtbl AudioClient3_Vtbl =
     AudioClient_GetSharedModeEnginePeriod,
     AudioClient_GetCurrentSharedModeEnginePeriod,
     AudioClient_InitializeSharedAudioStream,
-};
-
-static HRESULT WINAPI AudioRenderClient_QueryInterface(
-        IAudioRenderClient *iface, REFIID riid, void **ppv)
-{
-    ACImpl *This = impl_from_IAudioRenderClient(iface);
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
-
-    if(!ppv)
-        return E_POINTER;
-    *ppv = NULL;
-
-    if(IsEqualIID(riid, &IID_IUnknown) ||
-            IsEqualIID(riid, &IID_IAudioRenderClient))
-        *ppv = iface;
-    else if(IsEqualIID(riid, &IID_IMarshal))
-        return IUnknown_QueryInterface(This->marshal, riid, ppv);
-    if(*ppv){
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    WARN("Unknown interface %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI AudioRenderClient_AddRef(IAudioRenderClient *iface)
-{
-    ACImpl *This = impl_from_IAudioRenderClient(iface);
-    return IAudioClient3_AddRef(&This->IAudioClient3_iface);
-}
-
-static ULONG WINAPI AudioRenderClient_Release(IAudioRenderClient *iface)
-{
-    ACImpl *This = impl_from_IAudioRenderClient(iface);
-    return IAudioClient3_Release(&This->IAudioClient3_iface);
-}
-
-static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
-        UINT32 frames, BYTE **data)
-{
-    ACImpl *This = impl_from_IAudioRenderClient(iface);
-    struct get_render_buffer_params params;
-
-    TRACE("(%p)->(%u, %p)\n", This, frames, data);
-
-    if(!data)
-        return E_POINTER;
-
-    *data = NULL;
-
-    params.stream = This->stream;
-    params.frames = frames;
-    params.data = data;
-    OSS_CALL(get_render_buffer, &params);
-
-    return params.result;
-}
-
-static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
-        IAudioRenderClient *iface, UINT32 written_frames, DWORD flags)
-{
-    ACImpl *This = impl_from_IAudioRenderClient(iface);
-    struct release_render_buffer_params params;
-
-    TRACE("(%p)->(%u, %lx)\n", This, written_frames, flags);
-
-    params.stream = This->stream;
-    params.written_frames = written_frames;
-    params.flags = flags;
-    OSS_CALL(release_render_buffer, &params);
-
-    return params.result;
-}
-
-static const IAudioRenderClientVtbl AudioRenderClient_Vtbl = {
-    AudioRenderClient_QueryInterface,
-    AudioRenderClient_AddRef,
-    AudioRenderClient_Release,
-    AudioRenderClient_GetBuffer,
-    AudioRenderClient_ReleaseBuffer
 };
 
 static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client)
