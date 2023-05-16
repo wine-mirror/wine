@@ -776,24 +776,19 @@ static void test_loaded_modules(void)
                 ok(0, "Unknown process kind\n");
                 break;
             case PCSKIND_WINE_OLD_WOW64:
-                todo_wine
                 ok(aggregation.count_32bit == 1 && !aggregation.count_64bit, "Wrong bitness aggregation count %u %u\n",
                    aggregation.count_32bit, aggregation.count_64bit);
-                todo_wine
                 ok(aggregation.count_exe == 1 && aggregation.count_ntdll == 0, "Wrong kind aggregation count %u %u\n",
                    aggregation.count_exe, aggregation.count_ntdll);
-                todo_wine
                 ok(aggregation.count_systemdir == 0 && aggregation.count_wowdir == 1,
                    "Wrong directory aggregation count %u %u\n",
                    aggregation.count_systemdir, aggregation.count_wowdir);
                 break;
             case PCSKIND_WOW64:
-                todo_wine
                 ok(aggregation.count_32bit == 1 && aggregation.count_64bit, "Wrong bitness aggregation count %u %u\n",
                    aggregation.count_32bit, aggregation.count_64bit);
                 ok(aggregation.count_exe == 1 && aggregation.count_ntdll == 1, "Wrong kind aggregation count %u %u\n",
                    aggregation.count_exe, aggregation.count_ntdll);
-                todo_wine
                 ok(aggregation.count_systemdir > 2 && aggregation.count_64bit == aggregation.count_systemdir && aggregation.count_wowdir == 1,
                    "Wrong directory aggregation count %u %u\n",
                    aggregation.count_systemdir, aggregation.count_wowdir);
@@ -834,13 +829,10 @@ static void test_loaded_modules(void)
             case PCSKIND_ERROR:
                 break;
             case PCSKIND_WINE_OLD_WOW64:
-                todo_wine
                 ok(aggregation2.count_32bit && !aggregation2.count_64bit, "Wrong bitness aggregation count %u %u\n",
                    aggregation2.count_32bit, aggregation2.count_64bit);
-                todo_wine
                 ok(aggregation2.count_exe == 2 && aggregation2.count_ntdll == 1, "Wrong kind aggregation count %u %u\n",
                    aggregation2.count_exe, aggregation2.count_ntdll);
-                todo_wine
                 ok(aggregation2.count_systemdir == 0 && aggregation2.count_32bit == aggregation2.count_wowdir + 1 && aggregation2.count_wowdir > 2,
                    "Wrong directory aggregation count %u %u\n",
                    aggregation2.count_systemdir, aggregation2.count_wowdir);
@@ -848,10 +840,8 @@ static void test_loaded_modules(void)
             default:
                 ok(aggregation2.count_32bit && aggregation2.count_64bit, "Wrong bitness aggregation count %u %u\n",
                    aggregation2.count_32bit, aggregation2.count_64bit);
-                todo_wine
                 ok(aggregation2.count_exe == 2 && aggregation2.count_ntdll == 2, "Wrong kind aggregation count %u %u\n",
                    aggregation2.count_exe, aggregation2.count_ntdll);
-                todo_wine
                 ok(aggregation2.count_systemdir > 2 && aggregation2.count_64bit == aggregation2.count_systemdir && aggregation2.count_wowdir > 2,
                    "Wrong directory aggregation count %u %u\n",
                    aggregation2.count_systemdir, aggregation2.count_wowdir);
@@ -1168,41 +1158,30 @@ static void test_live_modules_proc(WCHAR* exename, BOOL with_32)
                                                  /* in fact the first ntdll is reported twice (at same address) in two consecutive events */
                                                                 "Unexpected event.count_ntdll %u\n",     aggregation_event.count_ntdll);
 
-        todo_wine_if(with_32)
         ok(aggregation_enum.count_exe == 1 + XTRAEXE,           "Unexpected enum.count_exe %u\n",        aggregation_enum.count_exe);
         if (with_32)
             ok(aggregation_enum.count_32bit >= MODCOUNT,        "Unexpected enum.count_32bit %u\n",      aggregation_enum.count_32bit);
         else
-            todo_wine
             ok(aggregation_enum.count_32bit == 1,               "Unexpected enum.count_32bit %u\n",      aggregation_enum.count_32bit);
-        todo_wine
         ok(aggregation_enum.count_64bit >= MODWOWCOUNT,         "Unexpected enum.count_64bit %u\n",      aggregation_enum.count_64bit);
-        todo_wine
         ok(aggregation_enum.count_systemdir >= MODWOWCOUNT,     "Unexpected enum.count_systemdir %u\n",  aggregation_enum.count_systemdir);
         if (with_32)
             ok(aggregation_enum.count_wowdir >= MODCOUNT,       "Unexpected enum.count_wowdir %u\n",     aggregation_enum.count_wowdir);
         else
-            todo_wine
             ok(aggregation_enum.count_wowdir == 1,              "Unexpected enum.count_wowdir %u\n",     aggregation_enum.count_wowdir);
-        todo_wine_if(with_32)
         ok(aggregation_enum.count_ntdll == 1 + XTRANTDLL,       "Unexpected enum.count_ntdll %u\n",      aggregation_enum.count_ntdll);
 
         ok(aggregation_sym.count_exe == 1,                      "Unexpected sym.count_exe %u\n",         aggregation_sym.count_exe);
         if (with_32)
             ok(aggregation_sym.count_32bit >= MODCOUNT,         "Unexpected sym.count_32bit %u\n",       aggregation_sym.count_32bit);
         else
-            todo_wine
             ok(aggregation_sym.count_32bit == 1,                "Unexpected sym.count_32bit %u\n",       aggregation_sym.count_32bit);
-        todo_wine
         ok(aggregation_sym.count_64bit >= MODWOWCOUNT,          "Unexpected sym.count_64bit %u\n",       aggregation_sym.count_64bit);
-        todo_wine
         ok(aggregation_sym.count_systemdir >= MODWOWCOUNT,      "Unexpected sym.count_systemdir %u\n",   aggregation_sym.count_systemdir);
         if (with_32)
             ok(aggregation_sym.count_wowdir >= MODCOUNT,        "Unexpected sym.count_wowdir %u\n",      aggregation_sym.count_wowdir);
         else
-            todo_wine
             ok(aggregation_sym.count_wowdir == 1,               "Unexpected sym.count_wowdir %u\n",      aggregation_sym.count_wowdir);
-        todo_wine_if(with_32)
         ok(aggregation_sym.count_ntdll == 1 + XTRANTDLL,        "Unexpected sym.count_ntdll %u\n",       aggregation_sym.count_ntdll);
     }
     else if (!is_win64 && pcskind == PCSKIND_WOW64) /* 32/32 */
@@ -1244,40 +1223,30 @@ static void test_live_modules_proc(WCHAR* exename, BOOL with_32)
         ok(aggregation_event.count_wowdir >= MODCOUNT - 1,      "Unexpected event.count_wowdir %u\n",    aggregation_event.count_wowdir);
         ok(aggregation_event.count_ntdll == 1,                  "Unexpected event.count_ntdll %u\n",     aggregation_event.count_ntdll);
 
-        todo_wine_if(with_32)
         ok(aggregation_enum.count_exe == 1 + XTRAEXE,           "Unexpected enum.count_exe %u\n",        aggregation_enum.count_exe);
         if (with_32)
             ok(aggregation_enum.count_32bit >= MODCOUNT,        "Unexpected enum.count_32bit %u\n",      aggregation_enum.count_32bit);
         else
-            todo_wine
             ok(aggregation_enum.count_32bit <= 1,               "Unexpected enum.count_32bit %u\n",      aggregation_enum.count_32bit);
         ok(aggregation_enum.count_64bit == 0,                   "Unexpected enum.count_64bit %u\n",      aggregation_enum.count_64bit);
-        todo_wine
         ok(aggregation_enum.count_systemdir == 0,               "Unexpected enum.count_systemdir %u\n",  aggregation_enum.count_systemdir);
         if (with_32)
             ok(aggregation_enum.count_wowdir >= MODCOUNT,       "Unexpected enum.count_wowdir %u\n",     aggregation_enum.count_wowdir);
         else
-            todo_wine
             ok(aggregation_enum.count_wowdir <= 1,              "Unexpected enum.count_wowdir %u\n",     aggregation_enum.count_wowdir);
-        todo_wine_if(!with_32)
         ok(aggregation_enum.count_ntdll == XTRANTDLL,           "Unexpected enum.count_ntdll %u\n",      aggregation_enum.count_ntdll);
 
         ok(aggregation_sym.count_exe == 1,                      "Unexpected sym.count_exe %u\n",         aggregation_sym.count_exe);
         if (with_32)
             ok(aggregation_sym.count_32bit >= MODCOUNT,         "Unexpected sym.count_32bit %u\n",       aggregation_sym.count_32bit);
         else
-            todo_wine
             ok(aggregation_sym.count_wowdir <= 1,               "Unexpected sym.count_32bit %u\n",       aggregation_sym.count_32bit);
-        todo_wine
         ok(aggregation_sym.count_64bit == 0,                    "Unexpected sym.count_64bit %u\n",       aggregation_sym.count_64bit);
-        todo_wine
         ok(aggregation_sym.count_systemdir == 0,                "Unexpected sym.count_systemdir %u\n",   aggregation_sym.count_systemdir);
         if (with_32)
             ok(aggregation_sym.count_wowdir >= MODCOUNT,        "Unexpected sym.count_wowdir %u\n",      aggregation_sym.count_wowdir);
         else
-            todo_wine
             ok(aggregation_sym.count_wowdir <= 1,               "Unexpected sym.count_wowdir %u\n",      aggregation_sym.count_wowdir);
-        todo_wine_if(!with_32)
         ok(aggregation_sym.count_ntdll == XTRANTDLL,            "Unexpected sym.count_ntdll %u\n",       aggregation_sym.count_ntdll);
     }
     else if (!is_win64 && pcskind == PCSKIND_WINE_OLD_WOW64) /* 32/32 */
@@ -1313,18 +1282,14 @@ static void test_live_modules_proc(WCHAR* exename, BOOL with_32)
         ok(0, "Unexpected process kind %u\n", pcskind);
 
     /* main module is enumerated twice in enum when including 32bit modules */
-    todo_wine_if(is_win64 && (pcskind == PCSKIND_WOW64 || pcskind == PCSKIND_WINE_OLD_WOW64) && !with_32)
     ok(aggregation_sym.count_32bit + XTRAEXE == aggregation_enum.count_32bit, "Different sym/enum count32_bit (%u/%u)\n",
        aggregation_sym.count_32bit, aggregation_enum.count_32bit);
-    todo_wine_if(is_win64 && (pcskind == PCSKIND_WOW64 || pcskind == PCSKIND_WINE_OLD_WOW64))
     ok(aggregation_sym.count_64bit == aggregation_enum.count_64bit, "Different sym/enum count64_bit (%u/%u)\n",
        aggregation_sym.count_64bit, aggregation_enum.count_64bit);
     ok(aggregation_sym.count_systemdir == aggregation_enum.count_systemdir, "Different sym/enum systemdir (%u/%u)\n",
        aggregation_sym.count_systemdir, aggregation_enum.count_systemdir);
-    todo_wine_if(with_32)
     ok(aggregation_sym.count_wowdir + XTRAEXE == aggregation_enum.count_wowdir, "Different sym/enum wowdir (%u/%u)\n",
        aggregation_sym.count_wowdir, aggregation_enum.count_wowdir);
-    todo_wine_if(with_32)
     ok(aggregation_sym.count_exe + XTRAEXE == aggregation_enum.count_exe, "Different sym/enum exe (%u/%u)\n",
        aggregation_sym.count_exe, aggregation_enum.count_exe);
     ok(aggregation_sym.count_ntdll == aggregation_enum.count_ntdll, "Different sym/enum exe (%u/%u)\n",

@@ -1262,53 +1262,118 @@ BOOL  WINAPI EnumerateLoadedModules(HANDLE hProcess,
     return EnumerateLoadedModulesW64(hProcess, enum_load_modW64_32, &x);
 }
 
+static unsigned int load_and_grow_modules(HANDLE process, HMODULE** hmods, unsigned start, unsigned* alloc, DWORD filter)
+{
+    DWORD needed;
+    BOOL ret;
+
+    while ((ret = EnumProcessModulesEx(process, *hmods + start, (*alloc - start) * sizeof(HMODULE),
+                                       &needed, filter)) &&
+           needed > (*alloc - start) * sizeof(HMODULE))
+    {
+        HMODULE* new = HeapReAlloc(GetProcessHeap(), 0, *hmods, (*alloc) * 2 * sizeof(HMODULE));
+        if (!new) return 0;
+        *hmods = new;
+        *alloc *= 2;
+    }
+    return ret ? needed / sizeof(HMODULE) : 0;
+}
+
 /******************************************************************
  *		EnumerateLoadedModulesW64 (DBGHELP.@)
  *
  */
-BOOL  WINAPI EnumerateLoadedModulesW64(HANDLE hProcess,
-                                       PENUMLOADED_MODULES_CALLBACKW64 EnumLoadedModulesCallback,
-                                       PVOID UserContext)
+BOOL  WINAPI EnumerateLoadedModulesW64(HANDLE process,
+                                       PENUMLOADED_MODULES_CALLBACKW64 enum_cb,
+                                       PVOID user)
 {
-    HMODULE*    hMods;
-    WCHAR       imagenameW[MAX_PATH];
-    DWORD       i, sz;
-    MODULEINFO  mi;
-    BOOL        wow64;
-    DWORD       filter = LIST_MODULES_DEFAULT;
+    HMODULE*            hmods;
+    unsigned            alloc = 256, count, count32, i;
+    USHORT              pcs_machine, native_machine;
+    BOOL                with_32bit_modules;
+    WCHAR               imagenameW[MAX_PATH];
+    MODULEINFO          mi;
+    WCHAR*              sysdir = NULL;
+    WCHAR*              wowdir = NULL;
+    size_t              sysdir_len = 0, wowdir_len = 0;
 
-    hMods = HeapAlloc(GetProcessHeap(), 0, 256 * sizeof(hMods[0]));
-    if (!hMods) return FALSE;
+    /* process might not be a handle to a live process */
+    if (!IsWow64Process2(process, &pcs_machine, &native_machine)) return FALSE;
+    with_32bit_modules = sizeof(void*) > sizeof(int) &&
+        pcs_machine != IMAGE_FILE_MACHINE_UNKNOWN &&
+        (dbghelp_options & SYMOPT_INCLUDE_32BIT_MODULES);
 
-    if (sizeof(void*) > sizeof(int) &&
-        IsWow64Process(hProcess, &wow64) &&
-        wow64)
-        filter = LIST_MODULES_32BIT;
-
-    if (!EnumProcessModulesEx(hProcess, hMods, 256 * sizeof(hMods[0]), &sz, filter))
-    {
-        /* hProcess should also be a valid process handle !! */
-        HeapFree(GetProcessHeap(), 0, hMods);
+    if (!(hmods = HeapAlloc(GetProcessHeap(), 0, alloc * sizeof(hmods[0]))))
         return FALSE;
-    }
-    if (sz > 256 * sizeof(hMods[0]))
-    {
-        hMods = HeapReAlloc(GetProcessHeap(), 0, hMods, sz);
-        if (!hMods || !EnumProcessModulesEx(hProcess, hMods, sz, &sz, filter))
-            return FALSE;
-    }
-    sz /= sizeof(HMODULE);
-    for (i = 0; i < sz; i++)
-    {
-        if (!GetModuleInformation(hProcess, hMods[i], &mi, sizeof(mi)) ||
-            !GetModuleFileNameExW(hProcess, hMods[i], imagenameW, ARRAY_SIZE(imagenameW)))
-            continue;
-        EnumLoadedModulesCallback(imagenameW, (DWORD_PTR)mi.lpBaseOfDll, mi.SizeOfImage,
-                                  UserContext);
-    }
-    HeapFree(GetProcessHeap(), 0, hMods);
 
-    return sz != 0 && i == sz;
+    /* Note:
+     * - we report modules returned from kernelbase.EnumProcessModulesEx
+     * - appending 32bit modules when possible and requested
+     *
+     * When considering 32bit modules in a wow64 child process, required from
+     * a 64bit process:
+     * - native returns from kernelbase.EnumProcessModulesEx
+     *   redirected paths (that is in system32 directory), while
+     *   dbghelp.EnumerateLoadedModulesWine returns the effective path
+     *   (eg. syswow64 for x86_64).
+     * - (Except for the main module, if gotten from syswow64, where kernelbase
+     *    will return the effective path)
+     * - Wine kernelbase (and ntdll) incorrectly return these modules from
+     *   syswow64 (except for ntdll which is returned from system32).
+     * => for these modules, always perform a system32 => syswow64 path
+     *    conversion (it'll work even if ntdll/kernelbase is fixed).
+     */
+    if ((count = load_and_grow_modules(process, &hmods, 0, &alloc, LIST_MODULES_DEFAULT)) && with_32bit_modules)
+    {
+        /* append 32bit modules when required */
+        if ((count32 = load_and_grow_modules(process, &hmods, count, &alloc, LIST_MODULES_32BIT)))
+        {
+            sysdir_len = GetSystemDirectoryW(NULL, 0);
+            wowdir_len = GetSystemWow64Directory2W(NULL, 0, pcs_machine);
+
+            if (!sysdir_len || !wowdir_len ||
+                !(sysdir = HeapAlloc(GetProcessHeap(), 0, (sysdir_len + 1 + wowdir_len + 1) * sizeof(WCHAR))))
+            {
+                HeapFree(GetProcessHeap(), 0, hmods);
+                return FALSE;
+            }
+            wowdir = sysdir + sysdir_len + 1;
+            if (GetSystemDirectoryW(sysdir, sysdir_len) >= sysdir_len)
+                FIXME("shouldn't happen\n");
+            if (GetSystemWow64Directory2W(wowdir, wowdir_len, pcs_machine) >= wowdir_len)
+                FIXME("shouldn't happen\n");
+            wcscat(sysdir, L"\\");
+            wcscat(wowdir, L"\\");
+        }
+    }
+    else count32 = 0;
+
+    for (i = 0; i < count + count32; i++)
+    {
+        if (GetModuleInformation(process, hmods[i], &mi, sizeof(mi)) &&
+            GetModuleFileNameExW(process, hmods[i], imagenameW, ARRAY_SIZE(imagenameW)))
+        {
+            /* rewrite path in system32 into syswow64 for 32bit modules */
+            if (i >= count)
+            {
+                size_t len = wcslen(imagenameW);
+
+                if (!wcsnicmp(imagenameW, sysdir, sysdir_len) &&
+                    (len - sysdir_len + wowdir_len) + 1 <= ARRAY_SIZE(imagenameW))
+                {
+                    memmove(&imagenameW[wowdir_len], &imagenameW[sysdir_len], (len - sysdir_len) * sizeof(WCHAR));
+                    memcpy(imagenameW, wowdir, wowdir_len * sizeof(WCHAR));
+                }
+            }
+            if (!enum_cb(imagenameW, (DWORD_PTR)mi.lpBaseOfDll, mi.SizeOfImage, user))
+                break;
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, hmods);
+    HeapFree(GetProcessHeap(), 0, sysdir);
+
+    return count != 0;
 }
 
 static void dbghelp_str_WtoA(const WCHAR *src, char *dst, int dst_len)
