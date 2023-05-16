@@ -2087,7 +2087,7 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
         return hr;
 
     /* We want to create the field member variable without mapping the rowset fields, this will
-     * save quering the fields twice.  Fields will be added while we create the bindings
+     * save querying the fields twice. Fields will be added while we create the bindings.
      */
     hr = fields_create( recordset, &recordset->fields );
     if (FAILED(hr))
