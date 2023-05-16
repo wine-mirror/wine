@@ -63,6 +63,11 @@ static inline struct audio_client *impl_from_IAudioClock2(IAudioClock2 *iface)
     return CONTAINING_RECORD(iface, struct audio_client, IAudioClock2_iface);
 }
 
+static inline struct audio_client *impl_from_IAudioRenderClient(IAudioRenderClient *iface)
+{
+    return CONTAINING_RECORD(iface, struct audio_client, IAudioRenderClient_iface);
+}
+
 static inline struct audio_client *impl_from_IAudioStreamVolume(IAudioStreamVolume *iface)
 {
     return CONTAINING_RECORD(iface, struct audio_client, IAudioStreamVolume_iface);
@@ -334,6 +339,94 @@ const IAudioClock2Vtbl AudioClock2_Vtbl =
     clock2_AddRef,
     clock2_Release,
     clock2_GetDevicePosition
+};
+
+static HRESULT WINAPI render_QueryInterface(IAudioRenderClient *iface, REFIID riid, void **ppv)
+{
+    struct audio_client *This = impl_from_IAudioRenderClient(iface);
+
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IAudioRenderClient))
+        *ppv = iface;
+    else if (IsEqualIID(riid, &IID_IMarshal)) {
+        return IUnknown_QueryInterface(This->marshal, riid, ppv);
+    } else {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*ppv);
+
+    return S_OK;
+}
+
+static ULONG WINAPI render_AddRef(IAudioRenderClient *iface)
+{
+    struct audio_client *This = impl_from_IAudioRenderClient(iface);
+    return IAudioClient3_AddRef(&This->IAudioClient3_iface);
+}
+
+static ULONG WINAPI render_Release(IAudioRenderClient *iface)
+{
+    struct audio_client *This = impl_from_IAudioRenderClient(iface);
+    return IAudioClient3_Release(&This->IAudioClient3_iface);
+}
+
+static HRESULT WINAPI render_GetBuffer(IAudioRenderClient *iface, UINT32 frames, BYTE **data)
+{
+    struct audio_client *This = impl_from_IAudioRenderClient(iface);
+    struct get_render_buffer_params params;
+
+    TRACE("(%p)->(%u, %p)\n", This, frames, data);
+
+    if (!data)
+        return E_POINTER;
+
+    if (!This->stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
+
+    *data = NULL;
+
+    params.stream = This->stream;
+    params.frames = frames;
+    params.data   = data;
+
+    WINE_UNIX_CALL(get_render_buffer, &params);
+
+    return params.result;
+}
+
+static HRESULT WINAPI render_ReleaseBuffer(IAudioRenderClient *iface, UINT32 written_frames,
+                                           DWORD flags)
+{
+    struct audio_client *This = impl_from_IAudioRenderClient(iface);
+    struct release_render_buffer_params params;
+
+    TRACE("(%p)->(%u, %lx)\n", This, written_frames, flags);
+
+    if (!This->stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
+
+    params.stream         = This->stream;
+    params.written_frames = written_frames;
+    params.flags          = flags;
+
+    WINE_UNIX_CALL(release_render_buffer, &params);
+
+    return params.result;
+}
+
+const IAudioRenderClientVtbl AudioRenderClient_Vtbl = {
+    render_QueryInterface,
+    render_AddRef,
+    render_Release,
+    render_GetBuffer,
+    render_ReleaseBuffer
 };
 
 static HRESULT WINAPI streamvolume_QueryInterface(IAudioStreamVolume *iface, REFIID riid,
