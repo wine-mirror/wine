@@ -1305,7 +1305,7 @@ static BOOL is_hidden_file( const char *name )
     while (p > name && p[-1] != '/') p--;
     if (*p++ != '.') return FALSE;
     if (!*p || *p == '/') return FALSE;  /* "." directory */
-    if (*p++ != '.') return FALSE;
+    if (*p++ != '.') return TRUE;
     if (!*p || *p == '/') return FALSE;  /* ".." directory */
     return TRUE;
 }
