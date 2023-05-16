@@ -426,6 +426,9 @@ typedef [hidden] enum SPSTREAMFORMAT
     SPSF_NUM_FORMATS
 } SPSTREAMFORMAT;
 
+cpp_quote("EXTERN_C const GUID SPDFID_Text;")
+cpp_quote("EXTERN_C const GUID SPDFID_WaveFormatEx;")
+
 typedef unsigned short SPPHONEID;
 
 typedef [restricted, hidden] struct SPPHRASEELEMENT

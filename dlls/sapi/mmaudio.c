@@ -29,11 +29,16 @@
 #include "sapiddk.h"
 #include "sperror.h"
 
+#include "initguid.h"
+
 #include "wine/debug.h"
 
 #include "sapi_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(sapi);
+
+DEFINE_GUID(SPDFID_Text, 0x7ceef9f9, 0x3d13, 0x11d2, 0x9e, 0xe7, 0x00, 0xc0, 0x4f, 0x79, 0x73, 0x96);
+DEFINE_GUID(SPDFID_WaveFormatEx, 0xc31adbae, 0x527f, 0x4ff5, 0xa2, 0x30, 0xf6, 0x2b, 0xb6, 0x1f, 0xf7, 0x0c);
 
 enum flow_type { FLOW_IN, FLOW_OUT };
 
