@@ -644,14 +644,16 @@ static PSDRV_DEVMODE *get_devmode( HANDLE printer, const WCHAR *name, BOOL *is_d
 
     *is_default = FALSE;
 
-    if (dm)
+    if (dm && (dm->dmPublic.dmFields & DefaultDevmode.dmPublic.dmFields) ==
+            DefaultDevmode.dmPublic.dmFields)
     {
         TRACE( "Retrieved devmode from winspool\n" );
         return dm;
     }
 
     TRACE( "Using default devmode\n" );
-    dm = HeapAlloc( PSDRV_Heap, 0, size );
+    if (!dm)
+        dm = HeapAlloc( PSDRV_Heap, 0, size );
     if (dm)
     {
         memcpy( dm, &DefaultDevmode, min(sizeof(DefaultDevmode), size) );
