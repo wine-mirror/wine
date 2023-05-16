@@ -110,7 +110,7 @@ static void test_DnsQuery(void)
     {
         ok(wcscmp(domain, ptr->pName), "did not expect a record for %s\n",
            wine_dbgstr_w(ptr->pName));
-        ok(ptr->wType == DNS_TYPE_A || ptr->wType == DNS_TYPE_AAAA,
+        ok(ptr->wType == DNS_TYPE_A || ptr->wType == DNS_TYPE_AAAA || ptr->wType == DNS_TYPE_OPT,
            "unexpected record type %d\n", ptr->wType);
         ptr = ptr->pNext;
     }
@@ -145,10 +145,13 @@ static void test_DnsQuery(void)
 
     while (ptr)
     {
-        ok(wcscmp(domain, ptr->pName), "did not expect a record for %s\n",
-           wine_dbgstr_w(ptr->pName));
-        ok(ptr->wType == DNS_TYPE_A || ptr->wType == DNS_TYPE_AAAA,
-           "unexpected record type %d\n", ptr->wType);
+        if (ptr->wType != DNS_TYPE_OPT)
+        {
+            ok(wcscmp(domain, ptr->pName), "did not expect a record for %s\n",
+               wine_dbgstr_w(ptr->pName));
+            ok(ptr->wType == DNS_TYPE_A || ptr->wType == DNS_TYPE_AAAA,
+               "unexpected record type %d\n", ptr->wType);
+        }
         ptr = ptr->pNext;
     }
     DnsRecordListFree(rec, DnsFreeRecordList);
