@@ -3924,7 +3924,7 @@ static void test_ImmGetProperty(void)
     else if (hkl == (HKL)0x08040804) expect = &expect_ime_info_0804;
     else expect = &expect_ime_info;
 
-    /* IME_PROP_COMPLETE_ON_UNSELECT seems to be somtimes set on CJK locales IMEs, sometimes not */
+    /* IME_PROP_COMPLETE_ON_UNSELECT seems to be sometimes set on CJK locales IMEs, sometimes not */
     ok_ret( expect->fdwProperty,       ImmGetProperty( hkl, IGP_PROPERTY ) & ~IME_PROP_COMPLETE_ON_UNSELECT );
     todo_wine
     ok_ret( expect->fdwConversionCaps, ImmGetProperty( hkl, IGP_CONVERSION ) );
