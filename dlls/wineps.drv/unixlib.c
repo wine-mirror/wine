@@ -1742,3 +1742,55 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 };
 
 C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count);
+
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+static NTSTATUS wow64_import_ntf(void *args)
+{
+    struct
+    {
+        PTR32 data;
+        int size;
+    } const *params32 = args;
+    struct import_ntf_params params = { ULongToPtr(params32->data), params32->size };
+
+    return import_ntf(&params);
+}
+
+static NTSTATUS wow64_open_dc(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        PTR32 devmode;
+        PTR32 output;
+        PTR32 def_devmode;
+        PTR32 hdc;
+    } *params32 = args;
+    struct open_dc_params params =
+    {
+        ULongToPtr(params32->device),
+        ULongToPtr(params32->devmode),
+        ULongToPtr(params32->output),
+        ULongToPtr(params32->def_devmode),
+        0
+    };
+    NTSTATUS ret;
+
+    ret = open_dc(&params);
+    params32->hdc = PtrToUlong(params.hdc);
+    return ret;
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    free_printer_info,
+    wow64_import_ntf,
+    wow64_open_dc,
+};
+
+C_ASSERT(ARRAYSIZE(__wine_unix_call_wow64_funcs) == unix_funcs_count);
+
+#endif  /* _WIN64 */
