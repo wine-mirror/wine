@@ -1688,23 +1688,32 @@ static NTSTATUS import_ntf(void *arg)
     return add_ntf_fonts(params->data, params->size);
 }
 
-static NTSTATUS init_dc(void *arg)
+static NTSTATUS open_dc(void *arg)
 {
-    struct init_dc_params *params = arg;
+    UNICODE_STRING device_str, output_str;
+    struct open_dc_params *params = arg;
     struct printer_info *pi;
 
-    pi = find_printer_info(params->name);
+    pi = find_printer_info(params->device);
     if (!pi)
     {
         pi = malloc(sizeof(*pi));
         if (!pi) return FALSE;
 
-        pi->name = params->name;
-        pi->devmode = params->devmode;
+        pi->name = params->device;
+        pi->devmode = params->def_devmode;
         list_add_head(&printer_info_list, &pi->entry);
     }
 
-    params->funcs = &psdrv_funcs;
+    device_str.Length = device_str.MaximumLength = lstrlenW(params->device) + 1;
+    device_str.Buffer = (WCHAR *)params->device;
+    if (params->output)
+    {
+        output_str.Length = output_str.MaximumLength = lstrlenW(params->output) + 1;
+        output_str.Buffer = (WCHAR *)params->output;
+    }
+    params->hdc = NtGdiOpenDCW(&device_str, params->devmode, params->output ? &output_str : NULL,
+            WINE_GDI_DRIVER_VERSION, 0, (HANDLE)&psdrv_funcs, NULL, NULL);
     return TRUE;
 }
 
@@ -1727,9 +1736,9 @@ static NTSTATUS free_printer_info(void *arg)
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
-    import_ntf,
-    init_dc,
     free_printer_info,
+    import_ntf,
+    open_dc,
 };
 
 C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count);

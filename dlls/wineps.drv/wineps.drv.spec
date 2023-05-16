@@ -1,4 +1,4 @@
-@ cdecl wine_get_gdi_driver(long str) PSDRV_get_gdi_driver
+@ cdecl wine_driver_open_dc(wstr ptr wstr) PSDRV_open_printer_dc
 @ stdcall -private DllRegisterServer()
 
 # Printer driver config exports

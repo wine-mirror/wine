@@ -42,7 +42,8 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION driver_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-typedef const void * (CDECL *driver_entry_point)( unsigned int version, const WCHAR *device );
+typedef HDC (CDECL *driver_entry_point)( const WCHAR *device,
+        const DEVMODEW *devmode, const WCHAR *output );
 
 struct graphics_driver
 {
@@ -138,7 +139,7 @@ static struct graphics_driver *create_driver( HMODULE module )
     driver->module = module;
 
     if (module)
-        driver->entry_point = (void *)GetProcAddress( module, "wine_get_gdi_driver" );
+        driver->entry_point = (void *)GetProcAddress( module, "wine_driver_open_dc" );
     else
         driver->entry_point = NULL;
 
@@ -312,8 +313,12 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         device_str.Buffer = (WCHAR *)device;
     }
 
-    ret = NtGdiOpenDCW( device || display ? &device_str : NULL, devmode, output ? &output_str : NULL,
-                        0, is_display, entry_point, NULL, NULL );
+    if (entry_point)
+        ret = entry_point( device, devmode, output );
+    else
+        ret = NtGdiOpenDCW( device || display ? &device_str : NULL, devmode,
+                            output ? &output_str : NULL,
+                            0, is_display, entry_point, NULL, NULL );
 
     if (ret && hspool && (dc_attr = get_dc_attr( ret )))
     {

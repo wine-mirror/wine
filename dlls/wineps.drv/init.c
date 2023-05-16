@@ -897,24 +897,27 @@ fail:
 }
 
 /******************************************************************************
- *      PSDRV_get_gdi_driver
+ *      PSDRV_open_printer_dc
  */
-const struct gdi_dc_funcs * CDECL PSDRV_get_gdi_driver( unsigned int version, const WCHAR *name )
+HDC CDECL PSDRV_open_printer_dc( const WCHAR *device,
+        const DEVMODEW *devmode, const WCHAR *output )
 {
-    PRINTERINFO *pi = PSDRV_FindPrinterInfo( name );
-    struct init_dc_params params;
+    struct open_dc_params params;
+    PRINTERINFO *pi;
 
+    if (!device)
+        return 0;
+
+    pi = PSDRV_FindPrinterInfo( device );
     if (!pi)
-        return NULL;
-    if (version != WINE_GDI_DRIVER_VERSION)
-    {
-        ERR( "version mismatch, gdi32 wants %u but wineps has %u\n", version, WINE_GDI_DRIVER_VERSION );
-        return NULL;
-    }
-    params.name = pi->friendly_name;
-    params.devmode = pi->Devmode;
-    params.funcs = NULL;
-    if (!WINE_UNIX_CALL( unix_init_dc, &params ))
-        return FALSE;
-    return params.funcs;
+        return 0;
+
+    params.device = pi->friendly_name;
+    params.devmode = devmode;
+    params.output = output;
+    params.def_devmode = pi->Devmode;
+    params.hdc = 0;
+    if (!WINE_UNIX_CALL( unix_open_dc, &params ))
+        return 0;
+    return params.hdc;
 }

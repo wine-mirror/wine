@@ -74,9 +74,9 @@ struct installed_font
 /* Unix calls */
 enum wineps_funcs
 {
-    unix_import_ntf,
-    unix_init_dc,
     unix_free_printer_info,
+    unix_import_ntf,
+    unix_open_dc,
     unix_funcs_count,
 };
 
@@ -86,9 +86,11 @@ struct import_ntf_params
     int size;
 };
 
-struct init_dc_params
+struct open_dc_params
 {
-    const WCHAR *name;
-    PSDRV_DEVMODE *devmode;
-    const struct gdi_dc_funcs *funcs;
+    const WCHAR *device;
+    const DEVMODEW *devmode;
+    const WCHAR *output;
+    PSDRV_DEVMODE *def_devmode;
+    HDC hdc;
 };
