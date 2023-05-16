@@ -649,6 +649,8 @@ static BOOL add_printer_driver( const WCHAR *name, const WCHAR *ppd_dir )
     res = !UNIX_CALL( get_ppd, &ppd_params ) || get_internal_fallback_ppd( ppd );
     if (!res) goto end;
 
+    AddPrintProcessorW(NULL, NULL, driver_nt, (WCHAR *)L"wineps");
+
     memset( &di3, 0, sizeof(DRIVER_INFO_3W) );
     di3.cVersion         = 3;
     di3.pName            = (WCHAR *)name;
