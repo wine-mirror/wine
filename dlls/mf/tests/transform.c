@@ -1140,13 +1140,16 @@ static DWORD check_mf_media_buffer_(const char *file, int line, IMFMediaBuffer *
     todo_wine_if(expect->todo_length)
     ok_(file, line)(length == expect_length, "got length %#lx\n", length);
 
-    if (*expect_data_len < length)
-        todo_wine_if(expect->todo_length)
-        ok_(file, line)(0, "missing %#lx bytes\n", length - *expect_data_len);
-    else if (!expect->compare)
-        diff = compare_bytes(data, &length, NULL, *expect_data);
-    else
-        diff = expect->compare(data, &length, &expect->rect, *expect_data);
+    if (*expect_data)
+    {
+        if (*expect_data_len < length)
+            todo_wine_if(expect->todo_length)
+            ok_(file, line)(0, "missing %#lx bytes\n", length - *expect_data_len);
+        else if (!expect->compare)
+            diff = compare_bytes(data, &length, NULL, *expect_data);
+        else
+            diff = expect->compare(data, &length, &expect->rect, *expect_data);
+    }
 
     hr = IMFMediaBuffer_Unlock(buffer);
     ok_(file, line)(hr == S_OK, "Unlock returned %#lx\n", hr);
@@ -1202,14 +1205,14 @@ static DWORD check_mf_sample_(const char *file, int line, IMFSample *sample, con
     timestamp = 0xdeadbeef;
     hr = IMFSample_GetSampleTime(sample, &timestamp);
     ok_(file, line)(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
-    todo_wine_if(expect->todo_time && timestamp == expect->todo_time)
+    todo_wine_if(expect->todo_time && (timestamp == expect->todo_time || expect->todo_time == -1))
     ok_(file, line)(llabs(timestamp - expect->sample_time) <= 50,
             "got sample time %I64d\n", timestamp);
 
     timestamp = 0xdeadbeef;
     hr = IMFSample_GetSampleDuration(sample, &timestamp);
     ok_(file, line)(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
-    todo_wine_if(expect->todo_length)
+    todo_wine_if(expect->todo_duration && expect->todo_duration == timestamp)
     ok_(file, line)(llabs(timestamp - expect->sample_duration) <= 1,
             "got sample duration %I64d\n", timestamp);
 
@@ -1221,7 +1224,7 @@ static DWORD check_mf_sample_(const char *file, int line, IMFSample *sample, con
     todo_wine_if(expect->todo_length)
     ok_(file, line)(total_length == ctx.total_length,
             "got total length %#lx\n", total_length);
-    ok_(file, line)(*expect_data_len >= ctx.total_length,
+    ok_(file, line)(!*expect_data || *expect_data_len >= ctx.total_length,
             "missing %#lx data\n", ctx.total_length - *expect_data_len);
 
     *expect_data = ctx.data;
@@ -1243,10 +1246,10 @@ DWORD check_mf_sample_collection_(const char *file, int line, IMFCollection *sam
     DWORD count;
     HRESULT hr;
 
-    load_resource(expect_data_filename, &ctx.data, &ctx.data_len);
+    if (expect_data_filename) load_resource(expect_data_filename, &ctx.data, &ctx.data_len);
     enum_mf_samples(samples, expect_samples, check_mf_sample_collection_enum, &ctx);
 
-    dump_mf_sample_collection(samples, expect_samples, expect_data_filename);
+    if (expect_data_filename) dump_mf_sample_collection(samples, expect_samples, expect_data_filename);
 
     hr = IMFCollection_GetElementCount(samples, &count);
     ok_(file, line)(hr == S_OK, "GetElementCount returned %#lx\n", hr);
@@ -3159,7 +3162,7 @@ static void test_wma_decoder(void)
         },
         {
             .attributes = output_sample_attributes + 1, /* not MFT_OUTPUT_DATA_BUFFER_INCOMPLETE */
-            .sample_time = 2786394, .sample_duration = 464399,
+            .sample_time = 2786394, .sample_duration = 464399, .todo_duration = 928798,
             .buffer_count = 1, .buffers = output_buffer_desc + 1, .todo_length = TRUE,
         },
     };
@@ -4016,6 +4019,217 @@ failed:
     CoUninitialize();
 }
 
+static void test_h264_decoder_concat_streams(void)
+{
+    const struct buffer_desc output_buffer_desc[] =
+    {
+        {.length = 0x3600},
+        {.length = 0x4980},
+        {.length = 0x4980, .todo_length = TRUE},
+    };
+    const struct attribute_desc output_sample_attributes[] =
+    {
+        ATTR_UINT32(MFSampleExtension_CleanPoint, 1),
+        {0},
+    };
+    const struct sample_desc output_sample_desc[] =
+    {
+        {
+            .attributes = output_sample_attributes + 0,
+            .sample_time = 0, .sample_duration = 400000,
+            .todo_duration = 333666,
+            .buffer_count = 1, .buffers = output_buffer_desc + 0,
+        },
+        {
+            .attributes = output_sample_attributes + 0,
+            .sample_time = 400000, .sample_duration = 400000,
+            .buffer_count = 1, .buffers = output_buffer_desc + 0, .repeat_count = 26,
+            .todo_time = -1, .todo_duration = 333666,
+        },
+        {
+            .attributes = output_sample_attributes + 0,
+            .sample_time = 11200000, .sample_duration = 400000,
+            .buffer_count = 1, .buffers = output_buffer_desc + 0, .repeat_count = 1,
+            .todo_time = -1, .todo_duration = 333666,
+        },
+        {
+            .attributes = output_sample_attributes + 0,
+            .sample_time = 12000000, .sample_duration = 400000,
+            .buffer_count = 1, .buffers = output_buffer_desc + 2, .repeat_count = 29,
+            .todo_time = -1, .todo_duration = 333666, .todo_length = TRUE,
+        },
+        {
+            .attributes = output_sample_attributes + 0,
+            .sample_time = 0, .sample_duration = 400000,
+            .buffer_count = 1, .buffers = output_buffer_desc + 0, .repeat_count = 29,
+        },
+        {
+            .attributes = output_sample_attributes + 0,
+            .sample_time = 12000000, .sample_duration = 400000,
+            .buffer_count = 1, .buffers = output_buffer_desc + 1, .repeat_count = 6,
+        },
+        {0},
+    };
+    const WCHAR *filenames[] =
+    {
+        L"h264data-1.bin",
+        L"h264data-2.bin",
+        L"h264data-1.bin",
+        L"h264data-2.bin",
+        NULL,
+    };
+    DWORD output_status, input_count, output_count;
+    const WCHAR **filename = filenames;
+    const BYTE *h264_encoded_data;
+    IMFCollection *output_samples;
+    ULONG h264_encoded_data_len;
+    IMFAttributes *attributes;
+    IMFMediaType *media_type;
+    IMFTransform *transform;
+    IMFSample *input_sample;
+    HRESULT hr;
+    LONG ret;
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_MSH264DecoderMFT, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform)))
+        goto failed;
+    ok(hr == S_OK, "hr %#lx\n", hr);
+
+    hr = IMFTransform_GetAttributes(transform, &attributes);
+    ok(hr == S_OK, "GetAttributes returned %#lx\n", hr);
+    hr = IMFAttributes_SetUINT32(attributes, &MF_LOW_LATENCY, 1);
+    ok(hr == S_OK, "SetUINT32 returned %#lx\n", hr);
+    IMFAttributes_Release(attributes);
+
+    hr = IMFTransform_GetInputAvailableType(transform, 0, 0, &media_type);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_RATE, (UINT64)25000 << 32 | 1000);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IMFMediaType_Release(media_type);
+
+    hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_RATE, (UINT64)50000 << 32 | 1000);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IMFMediaType_Release(media_type);
+
+    load_resource(*filename, &h264_encoded_data, &h264_encoded_data_len);
+
+    hr = MFCreateCollection(&output_samples);
+    ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
+
+    input_count = 0;
+    input_sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
+    while (input_sample)
+    {
+        MFT_OUTPUT_STREAM_INFO info = {0};
+
+        hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+        ok(hr == S_OK || hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
+
+        if (hr == S_OK && input_count < 2)
+        {
+            MFT_OUTPUT_DATA_BUFFER data = {.pSample = create_sample(NULL, 1)};
+            hr = IMFTransform_ProcessOutput(transform, 0, 1, &data, &output_status);
+            todo_wine
+            ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
+            IMFSample_Release(data.pSample);
+            hr = S_OK;
+        }
+
+        if (hr == S_OK)
+        {
+            IMFSample_Release(input_sample);
+
+            hr = IMFCollection_GetElementCount(output_samples, &output_count);
+            ok(hr == S_OK, "GetElementCount returned %#lx\n", hr);
+
+            if (output_count == 96)
+            {
+                hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_FLUSH, 0);
+                ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
+            }
+
+            if (h264_encoded_data_len <= 4 && *++filename)
+            {
+                load_resource(*filename, &h264_encoded_data, &h264_encoded_data_len);
+
+                if (!wcscmp(*filename, L"h264data-1.bin"))
+                {
+                    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
+                    ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
+                }
+            }
+
+            if (h264_encoded_data_len > 4)
+            {
+                input_count++;
+                input_sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
+            }
+            else
+            {
+                hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
+                ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
+                input_sample = NULL;
+            }
+        }
+
+        hr = IMFTransform_GetOutputStreamInfo(transform, 0, &info);
+        ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
+
+        while (hr != MF_E_TRANSFORM_NEED_MORE_INPUT)
+        {
+            MFT_OUTPUT_DATA_BUFFER data = {.pSample = create_sample(NULL, info.cbSize)};
+
+            hr = IMFTransform_ProcessOutput(transform, 0, 1, &data, &output_status);
+            todo_wine_if(hr == 0xd0000001)
+            ok(hr == S_OK || hr == MF_E_TRANSFORM_NEED_MORE_INPUT || hr == MF_E_TRANSFORM_STREAM_CHANGE,
+               "ProcessOutput returned %#lx\n", hr);
+
+            if (hr == S_OK)
+            {
+                hr = IMFCollection_AddElement(output_samples, (IUnknown *)data.pSample);
+                ok(hr == S_OK, "AddElement returned %#lx\n", hr);
+            }
+            if (hr == MF_E_TRANSFORM_STREAM_CHANGE)
+            {
+                hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
+                ok(hr == S_OK, "got %#lx\n", hr);
+                hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_RATE, (UINT64)50000 << 32 | 1000);
+                ok(hr == S_OK, "got %#lx\n", hr);
+                hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+                ok(hr == S_OK, "got %#lx\n", hr);
+                IMFMediaType_Release(media_type);
+                hr = IMFTransform_GetOutputStreamInfo(transform, 0, &info);
+                ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
+            }
+
+            IMFSample_Release(data.pSample);
+        }
+    }
+
+    hr = IMFCollection_GetElementCount(output_samples, &output_count);
+    ok(hr == S_OK, "GetElementCount returned %#lx\n", hr);
+    todo_wine
+    ok(output_count == 96, "GetElementCount returned %#lx\n", output_count);
+
+    ret = check_mf_sample_collection(output_samples, output_sample_desc, NULL);
+    ok(ret == 0, "got %lu%% diff\n", ret);
+
+    ret = IMFTransform_Release(transform);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+failed:
+    CoUninitialize();
+}
+
 static void test_audio_convert(void)
 {
     const GUID *const class_id = &CLSID_CResamplerMediaObject;
@@ -4180,7 +4394,7 @@ static void test_audio_convert(void)
         },
         {
             .attributes = output_sample_attributes + 1, /* not MFT_OUTPUT_DATA_BUFFER_INCOMPLETE */
-            .sample_time = 9287980, .sample_duration = 897506,
+            .sample_time = 9287980, .sample_duration = 897506, .todo_duration = 897280,
             .buffer_count = 1, .buffers = output_buffer_desc + 1, .todo_length = TRUE,
         },
         {
@@ -7691,4 +7905,5 @@ START_TEST(transform)
     test_iv50_decoder();
 
     test_h264_with_dxgi_manager();
+    test_h264_decoder_concat_streams();
 }

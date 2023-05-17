@@ -63,6 +63,24 @@ mp3decdata.bin RCDATA mp3decdata.bin
 /* @makedep: h264data.bin */
 h264data.bin RCDATA h264data.bin
 
+/* Generated with:
+  gst-launch-1.0 videotestsrc num-buffers=30 pattern=smpte100 ! \
+      video/x-raw,format=I420,width=84,height=82,framerate=30000/1001 ! \
+      videoflip method=clockwise ! videoconvert ! \
+      x264enc ! filesink location=dlls/mf/tests/h264data-1.bin
+ */
+/* @makedep: h264data-1.bin */
+h264data-1.bin RCDATA h264data-1.bin
+
+/* Generated with:
+  gst-launch-1.0 videotestsrc num-buffers=30 pattern=smpte100 ! \
+      video/x-raw,format=I420,width=100,height=98,framerate=60000/1001 ! \
+      videoflip method=clockwise ! videoconvert ! \
+      x264enc ! filesink location=dlls/mf/tests/h264data-2.bin
+ */
+/* @makedep: h264data-2.bin */
+h264data-2.bin RCDATA h264data-2.bin
+
 /* Generated from running the tests on Windows */
 /* @makedep: nv12frame.bmp */
 nv12frame.bmp RCDATA nv12frame.bmp

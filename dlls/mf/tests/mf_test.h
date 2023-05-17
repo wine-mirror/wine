@@ -94,6 +94,7 @@ struct sample_desc
     const struct buffer_desc *buffers;
     DWORD repeat_count;
     BOOL todo_length;
+    BOOL todo_duration;
     LONGLONG todo_time;
 };
 
