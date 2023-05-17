@@ -634,7 +634,7 @@ HRESULT wined3d_light_state_set_light(struct wined3d_light_state *state, DWORD l
     return WINED3D_OK;
 }
 
-void wined3d_light_state_enable_light(struct wined3d_light_state *state, const struct wined3d_d3d_info *d3d_info,
+bool wined3d_light_state_enable_light(struct wined3d_light_state *state, const struct wined3d_d3d_info *d3d_info,
         struct wined3d_light_info *light_info, BOOL enable)
 {
     unsigned int light_count, i;
@@ -644,18 +644,18 @@ void wined3d_light_state_enable_light(struct wined3d_light_state *state, const s
         if (light_info->glIndex == -1)
         {
             TRACE("Light already disabled, nothing to do.\n");
-            return;
+            return false;
         }
 
         state->lights[light_info->glIndex] = NULL;
         light_info->glIndex = -1;
-        return;
+        return true;
     }
 
     if (light_info->glIndex != -1)
     {
         TRACE("Light already enabled, nothing to do.\n");
-        return;
+        return false;
     }
 
     /* Find a free light. */
@@ -667,7 +667,7 @@ void wined3d_light_state_enable_light(struct wined3d_light_state *state, const s
 
         state->lights[i] = light_info;
         light_info->glIndex = i;
-        return;
+        return true;
     }
 
     /* Our tests show that Windows returns D3D_OK in this situation, even with
@@ -677,6 +677,7 @@ void wined3d_light_state_enable_light(struct wined3d_light_state *state, const s
      *
      * TODO: Test how this affects rendering. */
     WARN("Too many concurrently active lights.\n");
+    return false;
 }
 
 static void wined3d_state_record_lights(struct wined3d_light_state *dst_state,
@@ -1616,8 +1617,10 @@ HRESULT CDECL wined3d_stateblock_set_light_enable(struct wined3d_stateblock *sta
         if (FAILED(hr = wined3d_light_state_set_light(light_state, light_idx, &WINED3D_default_light, &light_info)))
             return hr;
     }
-    wined3d_light_state_enable_light(light_state, &stateblock->device->adapter->d3d_info, light_info, enable);
-    stateblock->changed.lights = 1;
+
+    if (wined3d_light_state_enable_light(light_state, &stateblock->device->adapter->d3d_info, light_info, enable))
+        stateblock->changed.lights = 1;
+
     return S_OK;
 }
 

@@ -1695,8 +1695,8 @@ static void wined3d_device_set_light_enable(struct wined3d_device *device, UINT 
         }
     }
 
-    wined3d_light_state_enable_light(light_state, &device->adapter->d3d_info, light_info, enable);
-    wined3d_device_context_emit_set_light_enable(&device->cs->c, light_idx, enable);
+    if (wined3d_light_state_enable_light(light_state, &device->adapter->d3d_info, light_info, enable))
+        wined3d_device_context_emit_set_light_enable(&device->cs->c, light_idx, enable);
 }
 
 static HRESULT wined3d_device_set_clip_plane(struct wined3d_device *device,

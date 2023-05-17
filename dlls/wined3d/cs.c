@@ -2057,8 +2057,7 @@ static void wined3d_cs_exec_set_light_enable(struct wined3d_cs *cs, const void *
     }
 
     prev_idx = light_info->glIndex;
-    wined3d_light_state_enable_light(&cs->state.light_state, &device->adapter->d3d_info, light_info, op->enable);
-    if (light_info->glIndex != prev_idx)
+    if (wined3d_light_state_enable_light(&cs->state.light_state, &device->adapter->d3d_info, light_info, op->enable))
     {
         device_invalidate_state(device, STATE_LIGHT_TYPE);
         device_invalidate_state(device, STATE_ACTIVELIGHT(op->enable ? light_info->glIndex : prev_idx));
