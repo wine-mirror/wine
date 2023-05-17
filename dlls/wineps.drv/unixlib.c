@@ -1549,7 +1549,7 @@ static BOOL map_glyph_to_unicode(struct font_data *font_data,
             return FALSE;
 
         p = (const unsigned short *)((const char *)glyph_set + glyph_set->glyph_set_off);
-        if (glyph_set->flags & GLYPH_SET_OMMIT_CP)
+        if (glyph_set->flags & GLYPH_SET_OMIT_CP)
         {
             const struct code_page *code_page = (const struct code_page *)((const char *)glyph_set + glyph_set->cp_off);
             unsigned short def_cp;

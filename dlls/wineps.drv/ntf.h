@@ -37,7 +37,7 @@ struct list_entry
     int unk[4];
 };
 
-#define GLYPH_SET_OMMIT_CP 1
+#define GLYPH_SET_OMIT_CP 1
 struct glyph_set
 {
     int size;
