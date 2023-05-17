@@ -6134,12 +6134,19 @@ static void test_video_processor(void)
 
     static const MFVideoArea actual_aperture = {.Area={82,84}};
     static const DWORD actual_width = 96, actual_height = 96;
+    const struct attribute_desc rgb32_with_aperture[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
+        ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
+        {0},
+    };
     const struct attribute_desc nv12_default_stride[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
         ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12, .required = TRUE),
         ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
-        ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
         {0},
     };
     const struct attribute_desc rgb32_default_stride[] =
@@ -6147,7 +6154,6 @@ static void test_video_processor(void)
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
         ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .required = TRUE),
         ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
-        ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
         {0},
     };
     const struct attribute_desc rgb32_negative_stride[] =
@@ -6155,7 +6161,6 @@ static void test_video_processor(void)
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
         ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .required = TRUE),
         ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
-        ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
         ATTR_UINT32(MF_MT_DEFAULT_STRIDE, -actual_width * 4),
         {0},
     };
@@ -6164,7 +6169,6 @@ static void test_video_processor(void)
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
         ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .required = TRUE),
         ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
-        ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
         ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width * 4),
         {0},
     };
@@ -6197,6 +6201,7 @@ static void test_video_processor(void)
         const struct sample_desc *output_sample_desc;
         const WCHAR *result_bitmap;
         ULONG delta;
+        BOOL broken;
     }
     video_processor_tests[] =
     {
@@ -6215,6 +6220,11 @@ static void test_video_processor(void)
             .output_sample_desc = &rgb32_sample_desc, .result_bitmap = L"rgb32frame.bmp",
             .delta = 6,
         },
+        {
+            .input_type_desc = rgb32_with_aperture, .output_type_desc = rgb32_with_aperture,
+            .output_sample_desc = &rgb32_sample_desc, .result_bitmap = L"rgb32frame.bmp",
+            .broken = TRUE /* old Windows version incorrectly rescale */
+        },
     };
 
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
@@ -6224,10 +6234,10 @@ static void test_video_processor(void)
     IMFSample *input_sample, *output_sample;
     IMFMediaType *media_type, *media_type2;
     IMFCollection *output_samples;
-    const BYTE *nv12frame_data;
-    ULONG nv12frame_data_len;
     IMFTransform *transform;
     IMFMediaBuffer *buffer;
+    const BYTE *input_data;
+    ULONG input_data_len;
     UINT32 count;
     HRESULT hr;
     ULONG ret;
@@ -6541,19 +6551,35 @@ static void test_video_processor(void)
         check_mft_set_output_type(transform, test->output_type_desc, S_OK);
         check_mft_get_output_current_type(transform, test->output_type_desc);
 
-        input_info.cbSize = actual_width * actual_height * 3 / 2;
         output_info.cbSize = actual_width * actual_height * 4;
-        check_mft_get_input_stream_info(transform, S_OK, &input_info);
         check_mft_get_output_stream_info(transform, S_OK, &output_info);
 
-        load_resource(L"nv12frame.bmp", &nv12frame_data, &nv12frame_data_len);
-        /* skip BMP header and RGB data from the dump */
-        length = *(DWORD *)(nv12frame_data + 2);
-        nv12frame_data_len = nv12frame_data_len - length;
-        nv12frame_data = nv12frame_data + length;
-        ok(nv12frame_data_len == 13824, "got length %lu\n", nv12frame_data_len);
+        if (test->input_type_desc == nv12_default_stride)
+        {
+            input_info.cbSize = actual_width * actual_height * 3 / 2;
+            check_mft_get_input_stream_info(transform, S_OK, &input_info);
 
-        input_sample = create_sample(nv12frame_data, nv12frame_data_len);
+            load_resource(L"nv12frame.bmp", &input_data, &input_data_len);
+            /* skip BMP header and RGB data from the dump */
+            length = *(DWORD *)(input_data + 2);
+            input_data_len = input_data_len - length;
+            ok(input_data_len == 13824, "got length %lu\n", input_data_len);
+            input_data = input_data + length;
+        }
+        else
+        {
+            input_info.cbSize = actual_width * actual_height * 4;
+            check_mft_get_input_stream_info(transform, S_OK, &input_info);
+
+            load_resource(L"rgb32frame.bmp", &input_data, &input_data_len);
+            /* skip BMP header and RGB data from the dump */
+            length = *(DWORD *)(input_data + 2 + 2 * sizeof(DWORD));
+            input_data_len -= length;
+            ok(input_data_len == 36864, "got length %lu\n", input_data_len);
+            input_data += length;
+        }
+
+        input_sample = create_sample(input_data, input_data_len);
         hr = IMFSample_SetSampleTime(input_sample, 0);
         ok(hr == S_OK, "SetSampleTime returned %#lx\n", hr);
         hr = IMFSample_SetSampleDuration(input_sample, 10000000);
@@ -6588,10 +6614,7 @@ static void test_video_processor(void)
             ok(ref == 1, "Release returned %ld\n", ref);
 
             ret = check_mf_sample_collection(output_samples, test->output_sample_desc, test->result_bitmap);
-            ok(ret <= test->delta
-                   /* w1064v1507 / w1064v1809 incorrectly rescale */
-                   || broken(ret == 25) || broken(ret == 32),
-               "got %lu%% diff\n", ret);
+            ok(ret <= test->delta || broken(test->broken), "got %lu%% diff\n", ret);
             IMFCollection_Release(output_samples);
 
             output_sample = create_sample(NULL, output_info.cbSize);
