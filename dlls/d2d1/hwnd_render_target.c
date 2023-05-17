@@ -652,10 +652,32 @@ static BOOL STDMETHODCALLTYPE d2d_hwnd_render_target_IsSupported(ID2D1HwndRender
         const D2D1_RENDER_TARGET_PROPERTIES *desc)
 {
     struct d2d_hwnd_render_target *render_target = impl_from_ID2D1HwndRenderTarget(iface);
+    const D2D1_RENDER_TARGET_PROPERTIES *target_desc = &render_target->desc;
+    D2D1_PIXEL_FORMAT pixel_format;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
-    return ID2D1RenderTarget_IsSupported(render_target->dxgi_target, desc);
+    if (desc->type != D2D1_RENDER_TARGET_TYPE_DEFAULT
+            && target_desc->type != desc->type)
+    {
+        return FALSE;
+    }
+
+    pixel_format = ID2D1RenderTarget_GetPixelFormat(render_target->dxgi_target);
+
+    if (desc->pixelFormat.format != DXGI_FORMAT_UNKNOWN
+            && pixel_format.format != desc->pixelFormat.format)
+    {
+        return FALSE;
+    }
+
+    if (desc->pixelFormat.alphaMode != D2D1_ALPHA_MODE_UNKNOWN
+            && pixel_format.alphaMode != desc->pixelFormat.alphaMode)
+    {
+        return FALSE;
+    }
+
+    return (target_desc->usage & desc->usage) == desc->usage;
 }
 
 static D2D1_WINDOW_STATE STDMETHODCALLTYPE d2d_hwnd_render_target_CheckWindowState(ID2D1HwndRenderTarget *iface)
@@ -839,6 +861,11 @@ HRESULT d2d_hwnd_render_target_init(struct d2d_hwnd_render_target *render_target
 
     if (dxgi_rt_desc.pixelFormat.alphaMode == D2D1_ALPHA_MODE_UNKNOWN)
         dxgi_rt_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+
+    render_target->desc = dxgi_rt_desc;
+    /* FIXME: should be resolved to either HW or SW type. */
+    if (render_target->desc.type == D2D1_RENDER_TARGET_TYPE_DEFAULT)
+        render_target->desc.type = D2D1_RENDER_TARGET_TYPE_HARDWARE;
 
     swapchain_desc.BufferDesc.Width = hwnd_rt_desc->pixelSize.width;
     swapchain_desc.BufferDesc.Height = hwnd_rt_desc->pixelSize.height;

@@ -13429,7 +13429,6 @@ static void test_hwnd_target_is_supported(BOOL d3d11)
     hr = ID2D1Factory_CreateHwndRenderTarget(ctx.factory, &template_desc, &hwnd_rt_desc, &rt);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     supported = ID2D1HwndRenderTarget_IsSupported(rt, &template_desc);
-    todo_wine
     ok(supported, "Expected supported.\n");
     ID2D1HwndRenderTarget_Release(rt);
 
@@ -13476,7 +13475,6 @@ static void test_hwnd_target_is_supported(BOOL d3d11)
     ok(pixel_format.format == DXGI_FORMAT_R8G8B8A8_UNORM, "Got unexpected format %#x.\n", pixel_format.format);
     ok(pixel_format.alphaMode == D2D1_ALPHA_MODE_PREMULTIPLIED, "Got unexpected alpha %u.\n", pixel_format.alphaMode);
     supported = ID2D1HwndRenderTarget_IsSupported(rt, &test_desc);
-    todo_wine
     ok(supported, "Expected supported.\n");
     ID2D1Bitmap1_Release(bitmap);
 
@@ -13497,7 +13495,6 @@ static void test_hwnd_target_is_supported(BOOL d3d11)
             test_desc = template_desc;
             test_desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
             supported = ID2D1HwndRenderTarget_IsSupported(rt, &test_desc);
-            todo_wine
             ok(supported, "Unexpected return value %d.\n", supported);
         }
         else
@@ -13514,7 +13511,6 @@ static void test_hwnd_target_is_supported(BOOL d3d11)
                 supported = ID2D1HwndRenderTarget_IsSupported(rt, &test_desc);
                 expected = target_types[j] == D2D1_RENDER_TARGET_TYPE_DEFAULT
                         || target_types[i] == target_types[j];
-                todo_wine_if(expected)
                 ok(supported == expected, "Unexpected return value %d.\n", supported);
 
                 winetest_pop_context();
@@ -13556,7 +13552,6 @@ static void test_hwnd_target_is_supported(BOOL d3d11)
             alpha_mode_supported = pixel_formats[j].alphaMode == D2D1_ALPHA_MODE_UNKNOWN
                     || pixel_formats[j].alphaMode == desc.pixelFormat.alphaMode;
             expected = format_supported && alpha_mode_supported;
-            todo_wine_if(expected)
             ok(supported == expected, "Unexpected return value.\n");
 
             winetest_pop_context();
@@ -13589,7 +13584,6 @@ static void test_hwnd_target_is_supported(BOOL d3d11)
             desc.usage = usages[j];
             supported = ID2D1HwndRenderTarget_IsSupported(rt, &desc);
             expected = (usages[i] & usages[j]) == usages[j];
-            todo_wine_if(expected)
             ok(supported == expected, "Unexpected result %d.\n", supported);
 
             winetest_pop_context();

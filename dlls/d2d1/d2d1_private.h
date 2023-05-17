@@ -264,6 +264,8 @@ struct d2d_hwnd_render_target
     IDXGISwapChain *swapchain;
     UINT sync_interval;
     HWND hwnd;
+
+    D2D1_RENDER_TARGET_PROPERTIES desc;
 };
 
 HRESULT d2d_hwnd_render_target_init(struct d2d_hwnd_render_target *render_target, ID2D1Factory1 *factory,
