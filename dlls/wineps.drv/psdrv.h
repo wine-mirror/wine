@@ -346,9 +346,6 @@ typedef struct
 					  are not rotated in landscape mode,
 					  so PageSize.cx is generally
 					  < PageSize.cy */
-    int                 logPixelsX;
-    int                 logPixelsY;
-
     int                 pathdepth;
 } print_ctx;
 

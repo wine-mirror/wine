@@ -410,46 +410,11 @@ static void dump_devmode(const DEVMODEW *dm)
 
 static void PSDRV_UpdateDevCaps( print_ctx *ctx )
 {
+    int log_pixels_x = GetDeviceCaps(ctx->hdc, ASPECTX);
+    int log_pixels_y = GetDeviceCaps(ctx->hdc, ASPECTY);
     PAGESIZE *page;
-    RESOLUTION *res;
-    INT resx = 0, resy = 0;
 
     dump_devmode(&ctx->Devmode->dmPublic);
-
-    if (ctx->Devmode->dmPublic.dmFields & (DM_PRINTQUALITY | DM_YRESOLUTION | DM_LOGPIXELS))
-    {
-        if (ctx->Devmode->dmPublic.dmFields & DM_PRINTQUALITY)
-            resx = resy = ctx->Devmode->dmPublic.dmPrintQuality;
-
-        if (ctx->Devmode->dmPublic.dmFields & DM_YRESOLUTION)
-            resy = ctx->Devmode->dmPublic.dmYResolution;
-
-        if (ctx->Devmode->dmPublic.dmFields & DM_LOGPIXELS)
-            resx = resy = ctx->Devmode->dmPublic.dmLogPixels;
-
-        LIST_FOR_EACH_ENTRY(res, &ctx->pi->ppd->Resolutions, RESOLUTION, entry)
-        {
-            if (res->resx == resx && res->resy == resy)
-            {
-                ctx->logPixelsX = resx;
-                ctx->logPixelsY = resy;
-                break;
-            }
-        }
-
-        if (&res->entry == &ctx->pi->ppd->Resolutions)
-        {
-            WARN("Requested resolution %dx%d is not supported by device\n", resx, resy);
-            ctx->logPixelsX = ctx->pi->ppd->DefaultResolution;
-            ctx->logPixelsY = ctx->logPixelsX;
-        }
-    }
-    else
-    {
-        WARN("Using default device resolution %d\n", ctx->pi->ppd->DefaultResolution);
-        ctx->logPixelsX = ctx->pi->ppd->DefaultResolution;
-        ctx->logPixelsY = ctx->logPixelsX;
-    }
 
     if(ctx->Devmode->dmPublic.dmFields & DM_PAPERSIZE) {
         LIST_FOR_EACH_ENTRY(page, &ctx->pi->ppd->PageSizes, PAGESIZE, entry) {
@@ -462,25 +427,23 @@ static void PSDRV_UpdateDevCaps( print_ctx *ctx )
             SetRectEmpty(&ctx->ImageableArea);
 	} else if(page->ImageableArea) {
 	  /* ctx sizes in device units; ppd sizes in 1/72" */
-            SetRect(&ctx->ImageableArea, page->ImageableArea->llx * ctx->logPixelsX / 72,
-                    page->ImageableArea->ury * ctx->logPixelsY / 72,
-                    page->ImageableArea->urx * ctx->logPixelsX / 72,
-                    page->ImageableArea->lly * ctx->logPixelsY / 72);
+            SetRect(&ctx->ImageableArea, page->ImageableArea->llx * log_pixels_x / 72,
+                    page->ImageableArea->ury * log_pixels_y / 72,
+                    page->ImageableArea->urx * log_pixels_x / 72,
+                    page->ImageableArea->lly * log_pixels_y / 72);
 	} else {
 	    ctx->ImageableArea.left = ctx->ImageableArea.bottom = 0;
-	    ctx->ImageableArea.right =
-	      page->PaperDimension->x * ctx->logPixelsX / 72;
-	    ctx->ImageableArea.top =
-	      page->PaperDimension->y * ctx->logPixelsY / 72;
+            ctx->ImageableArea.right = page->PaperDimension->x * log_pixels_x / 72;
+            ctx->ImageableArea.top = page->PaperDimension->y * log_pixels_y / 72;
 	}
     } else if((ctx->Devmode->dmPublic.dmFields & DM_PAPERLENGTH) &&
 	      (ctx->Devmode->dmPublic.dmFields & DM_PAPERWIDTH)) {
       /* ctx sizes in device units; Devmode sizes in 1/10 mm */
         ctx->ImageableArea.left = ctx->ImageableArea.bottom = 0;
 	ctx->ImageableArea.right =
-	  ctx->Devmode->dmPublic.dmPaperWidth * ctx->logPixelsX / 254;
+	  ctx->Devmode->dmPublic.dmPaperWidth * log_pixels_x / 254;
 	ctx->ImageableArea.top =
-	  ctx->Devmode->dmPublic.dmPaperLength * ctx->logPixelsY / 254;
+	  ctx->Devmode->dmPublic.dmPaperLength * log_pixels_y / 254;
     } else {
         FIXME("Odd dmFields %lx\n", ctx->Devmode->dmPublic.dmFields);
         SetRectEmpty(&ctx->ImageableArea);
@@ -523,8 +486,7 @@ print_ctx *create_print_ctx( HDC hdc, const WCHAR *device,
     memcpy( ctx->Devmode, pi->Devmode,
             pi->Devmode->dmPublic.dmSize + pi->Devmode->dmPublic.dmDriverExtra );
     ctx->pi = pi;
-    ctx->logPixelsX = pi->ppd->DefaultResolution;
-    ctx->logPixelsY = pi->ppd->DefaultResolution;
+    ctx->hdc = hdc;
 
     if (devmode)
     {
@@ -533,7 +495,6 @@ print_ctx *create_print_ctx( HDC hdc, const WCHAR *device,
     }
 
     PSDRV_UpdateDevCaps( ctx );
-    ctx->hdc = hdc;
     SelectObject( hdc, GetStockObject( DEVICE_DEFAULT_FONT ));
     return ctx;
 }
