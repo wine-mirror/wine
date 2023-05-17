@@ -255,8 +255,7 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
 
     i = Cursel = 0;
     LIST_FOR_EACH_ENTRY(ps, &di->pi->ppd->PageSizes, PAGESIZE, entry) {
-      SendDlgItemMessageA(hwnd, IDD_PAPERS, LB_INSERTSTRING, i,
-			  (LPARAM)ps->FullName);
+      SendDlgItemMessageW(hwnd, IDD_PAPERS, LB_INSERTSTRING, i, (LPARAM)ps->FullName);
       if(di->pi->Devmode->dmPublic.dmPaperSize == ps->WinPage)
 	Cursel = i;
       i++;
