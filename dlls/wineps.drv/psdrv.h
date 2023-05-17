@@ -338,20 +338,14 @@ typedef struct
     PSPEN		pen;
     PSBRUSH		brush;
     PSCOLOR		bkColor;
-    PSCOLOR		inkColor;	/* Last colour set */
     JOB			job;
     PSDRV_DEVMODE	*Devmode;
     PRINTERINFO		*pi;
-    SIZE                PageSize;      /* Physical page size in device units */
     RECT                ImageableArea; /* Imageable area in device units */
                                        /* NB both PageSize and ImageableArea
 					  are not rotated in landscape mode,
 					  so PageSize.cx is generally
 					  < PageSize.cy */
-    int                 horzRes;       /* device caps */
-    int                 vertRes;
-    int                 horzSize;
-    int                 vertSize;
     int                 logPixelsX;
     int                 logPixelsY;
 
@@ -446,7 +440,6 @@ extern void PSDRV_AddClip( print_ctx *ctx, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern void PSDRV_SetClip( print_ctx *ctx ) DECLSPEC_HIDDEN;
 extern void PSDRV_ResetClip( print_ctx *ctx ) DECLSPEC_HIDDEN;
 
-extern BOOL PSDRV_CopyColor(PSCOLOR *col1, PSCOLOR *col2) DECLSPEC_HIDDEN;
 extern void PSDRV_CreateColor( print_ctx *ctx, PSCOLOR *pscolor,
 		     COLORREF wincolor ) DECLSPEC_HIDDEN;
 extern PSRGB rgb_to_grayscale_scale( void ) DECLSPEC_HIDDEN;

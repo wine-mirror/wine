@@ -635,7 +635,6 @@ BOOL PSDRV_WriteSetColor(print_ctx *ctx, PSCOLOR *color)
 {
     char buf[256];
 
-    PSDRV_CopyColor(&ctx->inkColor, color);
     switch(color->type) {
     case PSCOLOR_RGB:
         push_lc_numeric("C");

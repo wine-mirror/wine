@@ -412,7 +412,7 @@ static void PSDRV_UpdateDevCaps( print_ctx *ctx )
 {
     PAGESIZE *page;
     RESOLUTION *res;
-    INT width = 0, height = 0, resx = 0, resy = 0;
+    INT resx = 0, resy = 0;
 
     dump_devmode(&ctx->Devmode->dmPublic);
 
@@ -460,63 +460,33 @@ static void PSDRV_UpdateDevCaps( print_ctx *ctx )
 	if(&page->entry == &ctx->pi->ppd->PageSizes) {
 	    FIXME("Can't find page\n");
             SetRectEmpty(&ctx->ImageableArea);
-	    ctx->PageSize.cx = 0;
-	    ctx->PageSize.cy = 0;
 	} else if(page->ImageableArea) {
 	  /* ctx sizes in device units; ppd sizes in 1/72" */
             SetRect(&ctx->ImageableArea, page->ImageableArea->llx * ctx->logPixelsX / 72,
                     page->ImageableArea->ury * ctx->logPixelsY / 72,
                     page->ImageableArea->urx * ctx->logPixelsX / 72,
                     page->ImageableArea->lly * ctx->logPixelsY / 72);
-	    ctx->PageSize.cx = page->PaperDimension->x *
-	      ctx->logPixelsX / 72;
-	    ctx->PageSize.cy = page->PaperDimension->y *
-	      ctx->logPixelsY / 72;
 	} else {
 	    ctx->ImageableArea.left = ctx->ImageableArea.bottom = 0;
-	    ctx->ImageableArea.right = ctx->PageSize.cx =
+	    ctx->ImageableArea.right =
 	      page->PaperDimension->x * ctx->logPixelsX / 72;
-	    ctx->ImageableArea.top = ctx->PageSize.cy =
+	    ctx->ImageableArea.top =
 	      page->PaperDimension->y * ctx->logPixelsY / 72;
 	}
     } else if((ctx->Devmode->dmPublic.dmFields & DM_PAPERLENGTH) &&
 	      (ctx->Devmode->dmPublic.dmFields & DM_PAPERWIDTH)) {
       /* ctx sizes in device units; Devmode sizes in 1/10 mm */
         ctx->ImageableArea.left = ctx->ImageableArea.bottom = 0;
-	ctx->ImageableArea.right = ctx->PageSize.cx =
+	ctx->ImageableArea.right =
 	  ctx->Devmode->dmPublic.dmPaperWidth * ctx->logPixelsX / 254;
-	ctx->ImageableArea.top = ctx->PageSize.cy =
+	ctx->ImageableArea.top =
 	  ctx->Devmode->dmPublic.dmPaperLength * ctx->logPixelsY / 254;
     } else {
         FIXME("Odd dmFields %lx\n", ctx->Devmode->dmPublic.dmFields);
         SetRectEmpty(&ctx->ImageableArea);
-	ctx->PageSize.cx = 0;
-	ctx->PageSize.cy = 0;
     }
 
-    TRACE("ImageableArea = %s: PageSize = %ldx%ld\n", wine_dbgstr_rect(&ctx->ImageableArea),
-	  ctx->PageSize.cx, ctx->PageSize.cy);
-
-    /* these are in device units */
-    width = ctx->ImageableArea.right - ctx->ImageableArea.left;
-    height = ctx->ImageableArea.top - ctx->ImageableArea.bottom;
-
-    if(ctx->Devmode->dmPublic.dmOrientation == DMORIENT_PORTRAIT) {
-        ctx->horzRes = width;
-        ctx->vertRes = height;
-    } else {
-        ctx->horzRes = height;
-        ctx->vertRes = width;
-    }
-
-    /* these are in mm */
-    ctx->horzSize = (ctx->horzRes * 25.4) / ctx->logPixelsX;
-    ctx->vertSize = (ctx->vertRes * 25.4) / ctx->logPixelsY;
-
-    TRACE("devcaps: horzSize = %dmm, vertSize = %dmm, "
-	  "horzRes = %d, vertRes = %d\n",
-	  ctx->horzSize, ctx->vertSize,
-	  ctx->horzRes, ctx->vertRes);
+    TRACE("ImageableArea = %s\n", wine_dbgstr_rect(&ctx->ImageableArea));
 }
 
 print_ctx *create_print_ctx( HDC hdc, const WCHAR *device,
