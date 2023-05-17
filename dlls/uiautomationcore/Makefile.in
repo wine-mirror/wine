@@ -10,7 +10,8 @@ C_SRCS = \
 	uia_event.c \
 	uia_ids.c \
 	uia_main.c \
-	uia_provider.c
+	uia_provider.c \
+	uia_utils.c
 
 IDL_SRCS = \
 	uia_classes.idl \

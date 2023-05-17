@@ -152,8 +152,6 @@ static inline BOOL uia_array_reserve(void **elements, SIZE_T *capacity, SIZE_T c
 }
 
 /* uia_client.c */
-HRESULT get_safearray_bounds(SAFEARRAY *sa, LONG *lbound, LONG *elems) DECLSPEC_HIDDEN;
-int uia_compare_safearrays(SAFEARRAY *sa1, SAFEARRAY *sa2, int prop_type) DECLSPEC_HIDDEN;
 int get_node_provider_type_at_idx(struct uia_node *node, int idx) DECLSPEC_HIDDEN;
 HRESULT attach_event_to_uia_node(HUIANODE node, struct uia_event *event) DECLSPEC_HIDDEN;
 HRESULT create_uia_node_from_elprov(IRawElementProviderSimple *elprov, HUIANODE *out_node,
@@ -179,3 +177,8 @@ void uia_provider_thread_remove_node(HUIANODE node) DECLSPEC_HIDDEN;
 LRESULT uia_lresult_from_node(HUIANODE huianode) DECLSPEC_HIDDEN;
 HRESULT create_msaa_provider(IAccessible *acc, long child_id, HWND hwnd, BOOL known_root_acc,
         IRawElementProviderSimple **elprov) DECLSPEC_HIDDEN;
+
+/* uia_utils.c */
+HRESULT get_safearray_dim_bounds(SAFEARRAY *sa, UINT dim, LONG *lbound, LONG *elems) DECLSPEC_HIDDEN;
+HRESULT get_safearray_bounds(SAFEARRAY *sa, LONG *lbound, LONG *elems) DECLSPEC_HIDDEN;
+int uia_compare_safearrays(SAFEARRAY *sa1, SAFEARRAY *sa2, int prop_type) DECLSPEC_HIDDEN;
