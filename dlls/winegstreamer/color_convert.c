@@ -98,6 +98,7 @@ static inline struct color_convert *impl_from_IUnknown(IUnknown *iface)
 static HRESULT try_create_wg_transform(struct color_convert *impl)
 {
     struct wg_format input_format, output_format;
+    struct wg_transform_attrs attrs = {0};
 
     if (impl->wg_transform)
         wg_transform_destroy(impl->wg_transform);
@@ -111,7 +112,7 @@ static HRESULT try_create_wg_transform(struct color_convert *impl)
     if (output_format.major_type == WG_MAJOR_TYPE_UNKNOWN)
         return MF_E_INVALIDMEDIATYPE;
 
-    if (!(impl->wg_transform = wg_transform_create(&input_format, &output_format)))
+    if (!(impl->wg_transform = wg_transform_create(&input_format, &output_format, &attrs)))
         return E_FAIL;
 
     return S_OK;
@@ -936,13 +937,14 @@ HRESULT color_convert_create(IUnknown *outer, IUnknown **out)
             .height = 1080,
         },
     };
+    struct wg_transform_attrs attrs = {0};
     struct wg_transform *transform;
     struct color_convert *impl;
     HRESULT hr;
 
     TRACE("outer %p, out %p.\n", outer, out);
 
-    if (!(transform = wg_transform_create(&input_format, &output_format)))
+    if (!(transform = wg_transform_create(&input_format, &output_format, &attrs)))
     {
         ERR_(winediag)("GStreamer doesn't support video conversion, please install appropriate plugins.\n");
         return E_FAIL;

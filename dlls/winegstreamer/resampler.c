@@ -56,6 +56,7 @@ struct resampler
 static HRESULT try_create_wg_transform(struct resampler *impl)
 {
     struct wg_format input_format, output_format;
+    struct wg_transform_attrs attrs = {0};
 
     if (impl->wg_transform)
         wg_transform_destroy(impl->wg_transform);
@@ -69,7 +70,7 @@ static HRESULT try_create_wg_transform(struct resampler *impl)
     if (output_format.major_type == WG_MAJOR_TYPE_UNKNOWN)
         return MF_E_INVALIDMEDIATYPE;
 
-    if (!(impl->wg_transform = wg_transform_create(&input_format, &output_format)))
+    if (!(impl->wg_transform = wg_transform_create(&input_format, &output_format, &attrs)))
         return E_FAIL;
 
     return S_OK;
@@ -895,13 +896,14 @@ HRESULT resampler_create(IUnknown *outer, IUnknown **out)
             .rate = 44100,
         },
     };
+    struct wg_transform_attrs attrs = {0};
     struct wg_transform *transform;
     struct resampler *impl;
     HRESULT hr;
 
     TRACE("outer %p, out %p.\n", outer, out);
 
-    if (!(transform = wg_transform_create(&input_format, &output_format)))
+    if (!(transform = wg_transform_create(&input_format, &output_format, &attrs)))
     {
         ERR_(winediag)("GStreamer doesn't support audio resampling, please install appropriate plugins.\n");
         return E_FAIL;

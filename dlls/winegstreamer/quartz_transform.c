@@ -98,6 +98,7 @@ static HRESULT transform_init_stream(struct strmbase_filter *iface)
 {
     struct transform *filter = impl_from_strmbase_filter(iface);
     struct wg_format input_format, output_format;
+    struct wg_transform_attrs attrs = {0};
     HRESULT hr;
 
     if (filter->source.pin.peer)
@@ -111,7 +112,7 @@ static HRESULT transform_init_stream(struct strmbase_filter *iface)
         if (FAILED(hr = wg_sample_queue_create(&filter->sample_queue)))
             return hr;
 
-        filter->transform = wg_transform_create(&input_format, &output_format);
+        filter->transform = wg_transform_create(&input_format, &output_format, &attrs);
         if (!filter->transform)
         {
             wg_sample_queue_destroy(filter->sample_queue);
@@ -710,11 +711,12 @@ HRESULT mpeg_audio_codec_create(IUnknown *outer, IUnknown **out)
             .rate = 44100,
         },
     };
+    struct wg_transform_attrs attrs = {0};
     struct wg_transform *transform;
     struct transform *object;
     HRESULT hr;
 
-    transform = wg_transform_create(&input_format, &output_format);
+    transform = wg_transform_create(&input_format, &output_format, &attrs);
     if (!transform)
     {
         ERR_(winediag)("GStreamer doesn't support MPEG-1 audio decoding, please install appropriate plugins.\n");
@@ -844,11 +846,12 @@ HRESULT mpeg_layer3_decoder_create(IUnknown *outer, IUnknown **out)
             .rate = 44100,
         },
     };
+    struct wg_transform_attrs attrs = {0};
     struct wg_transform *transform;
     struct transform *object;
     HRESULT hr;
 
-    transform = wg_transform_create(&input_format, &output_format);
+    transform = wg_transform_create(&input_format, &output_format, &attrs);
     if (!transform)
     {
         ERR_(winediag)("GStreamer doesn't support MPEG-1 audio decoding, please install appropriate plugins.\n");

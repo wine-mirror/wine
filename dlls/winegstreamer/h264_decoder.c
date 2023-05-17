@@ -76,6 +76,10 @@ static struct h264_decoder *impl_from_IMFTransform(IMFTransform *iface)
 
 static HRESULT try_create_wg_transform(struct h264_decoder *decoder)
 {
+    struct wg_transform_attrs attrs =
+    {
+        .output_plane_align = 15,
+    };
     struct wg_format input_format;
     struct wg_format output_format;
 
@@ -99,7 +103,7 @@ static HRESULT try_create_wg_transform(struct h264_decoder *decoder)
     output_format.u.video.fps_d = 0;
     output_format.u.video.fps_n = 0;
 
-    if (!(decoder->wg_transform = wg_transform_create(&input_format, &output_format)))
+    if (!(decoder->wg_transform = wg_transform_create(&input_format, &output_format, &attrs)))
         return E_FAIL;
 
     return S_OK;
@@ -832,13 +836,14 @@ HRESULT h264_decoder_create(REFIID riid, void **ret)
         },
     };
     static const struct wg_format input_format = {.major_type = WG_MAJOR_TYPE_VIDEO_H264};
+    struct wg_transform_attrs attrs = {0};
     struct wg_transform *transform;
     struct h264_decoder *decoder;
     HRESULT hr;
 
     TRACE("riid %s, ret %p.\n", debugstr_guid(riid), ret);
 
-    if (!(transform = wg_transform_create(&input_format, &output_format)))
+    if (!(transform = wg_transform_create(&input_format, &output_format, &attrs)))
     {
         ERR_(winediag)("GStreamer doesn't support H.264 decoding, please install appropriate plugins\n");
         return E_FAIL;

@@ -337,12 +337,13 @@ void wg_parser_stream_seek(struct wg_parser_stream *stream, double rate,
 }
 
 struct wg_transform *wg_transform_create(const struct wg_format *input_format,
-        const struct wg_format *output_format)
+        const struct wg_format *output_format, const struct wg_transform_attrs *attrs)
 {
     struct wg_transform_create_params params =
     {
         .input_format = input_format,
         .output_format = output_format,
+        .attrs = attrs,
     };
 
     TRACE("input_format %p, output_format %p.\n", input_format, output_format);

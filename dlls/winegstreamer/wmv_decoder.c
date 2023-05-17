@@ -540,6 +540,7 @@ static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD inde
         const DMO_MEDIA_TYPE *type, DWORD flags)
 {
     struct wmv_decoder *decoder = impl_from_IMediaObject(iface);
+    struct wg_transform_attrs attrs = {0};
     struct wg_format wg_format;
     unsigned int i;
 
@@ -593,7 +594,7 @@ static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD inde
         wg_transform_destroy(decoder->wg_transform);
         decoder->wg_transform = NULL;
     }
-    if (!(decoder->wg_transform = wg_transform_create(&decoder->input_format, &decoder->output_format)))
+    if (!(decoder->wg_transform = wg_transform_create(&decoder->input_format, &decoder->output_format, &attrs)))
         return E_FAIL;
 
     return S_OK;
@@ -885,13 +886,14 @@ HRESULT wmv_decoder_create(IUnknown *outer, IUnknown **out)
             .height = 1080,
         },
     };
+    struct wg_transform_attrs attrs = {0};
     struct wg_transform *transform;
     struct wmv_decoder *decoder;
     HRESULT hr;
 
     TRACE("outer %p, out %p.\n", outer, out);
 
-    if (!(transform = wg_transform_create(&input_format, &output_format)))
+    if (!(transform = wg_transform_create(&input_format, &output_format, &attrs)))
     {
         ERR_(winediag)("GStreamer doesn't support WMV decoding, please install appropriate plugins.\n");
         return E_FAIL;

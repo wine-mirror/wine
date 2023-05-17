@@ -305,11 +305,17 @@ struct wg_parser_stream_seek_params
     DWORD start_flags, stop_flags;
 };
 
+struct wg_transform_attrs
+{
+    UINT32 output_plane_align;
+};
+
 struct wg_transform_create_params
 {
     struct wg_transform *transform;
     const struct wg_format *input_format;
     const struct wg_format *output_format;
+    const struct wg_transform_attrs *attrs;
 };
 
 struct wg_transform_push_data_params

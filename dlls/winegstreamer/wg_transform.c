@@ -43,6 +43,8 @@
 
 struct wg_transform
 {
+    struct wg_transform_attrs attrs;
+
     GstElement *container;
     GstAllocator *allocator;
     GstPad *my_src, *my_sink;
@@ -55,7 +57,6 @@ struct wg_transform
     bool input_is_flipped;
     GstElement *video_flip;
 
-    guint output_plane_align;
     struct wg_format output_format;
     struct wg_sample *output_wg_sample;
     GstAtomicQueue *output_queue;
@@ -111,7 +112,7 @@ static gboolean transform_sink_query_cb(GstPad *pad, GstObject *parent, GstQuery
     {
         case GST_QUERY_ALLOCATION:
         {
-            gsize plane_align = transform->output_plane_align;
+            gsize plane_align = transform->attrs.output_plane_align;
             GstStructure *config, *params;
             GstVideoAlignment align;
             gboolean needs_pool;
@@ -300,8 +301,8 @@ NTSTATUS wg_transform_create(void *args)
         goto out;
     if (!(transform->allocator = wg_allocator_create(transform_request_sample, transform)))
         goto out;
+    transform->attrs = *params->attrs;
     transform->input_max_length = 1;
-    transform->output_plane_align = 0;
     transform->output_format = output_format;
 
     if (!(src_caps = wg_format_to_caps(&input_format)))
@@ -344,7 +345,6 @@ NTSTATUS wg_transform_create(void *args)
              * to match its expectations.
              */
             transform->input_max_length = 16;
-            transform->output_plane_align = 15;
             /* fallthrough */
         case WG_MAJOR_TYPE_AUDIO_MPEG1:
         case WG_MAJOR_TYPE_AUDIO_MPEG4:
@@ -795,7 +795,7 @@ NTSTATUS wg_transform_read_data(void *args)
 
         if (format)
         {
-            gsize plane_align = transform->output_plane_align;
+            gsize plane_align = transform->attrs.output_plane_align;
             GstVideoAlignment align;
             GstVideoInfo info;
 
@@ -827,7 +827,7 @@ NTSTATUS wg_transform_read_data(void *args)
     }
 
     if ((status = read_transform_output_data(output_buffer, output_caps,
-                transform->output_plane_align, sample)))
+                transform->attrs.output_plane_align, sample)))
     {
         wg_allocator_release_sample(transform->allocator, sample, false);
         return status;
