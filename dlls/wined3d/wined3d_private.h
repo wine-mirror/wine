@@ -2991,7 +2991,7 @@ struct wined3d_light_info
     float exponent;
     float cutoff;
 
-    struct list entry;
+    struct rb_entry entry;
     struct list changed_entry;
     bool changed;
 };
@@ -3880,13 +3880,9 @@ struct wined3d_rasterizer_state
     struct wine_rb_entry entry;
 };
 
-#define LIGHTMAP_SIZE 43
-#define LIGHTMAP_HASHFUNC(x) ((x) % LIGHTMAP_SIZE)
-
 struct wined3d_light_state
 {
-    /* Light hashmap. Collisions are handled using linked lists. */
-    struct list light_map[LIGHTMAP_SIZE];
+    struct rb_tree lights_tree;
     const struct wined3d_light_info *lights[WINED3D_MAX_ACTIVE_LIGHTS];
 };
 

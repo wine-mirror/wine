@@ -340,24 +340,19 @@ void CDECL wined3d_stateblock_init_contained_states(struct wined3d_stateblock *s
     }
 }
 
-static void stateblock_init_lights(struct wined3d_stateblock *stateblock, const struct list *src_map)
+static void stateblock_init_lights(struct wined3d_stateblock *stateblock, const struct rb_tree *src_tree)
 {
-    struct list *dst_map = stateblock->stateblock_state.light_state->light_map;
-    unsigned int i;
+    struct rb_tree *dst_tree = &stateblock->stateblock_state.light_state->lights_tree;
+    struct wined3d_light_info *src_light;
 
-    for (i = 0; i < LIGHTMAP_SIZE; ++i)
+    RB_FOR_EACH_ENTRY(src_light, src_tree, struct wined3d_light_info, entry)
     {
-        const struct wined3d_light_info *src_light;
+        struct wined3d_light_info *dst_light = heap_alloc(sizeof(*dst_light));
 
-        LIST_FOR_EACH_ENTRY(src_light, &src_map[i], struct wined3d_light_info, entry)
-        {
-            struct wined3d_light_info *dst_light = heap_alloc(sizeof(*dst_light));
-
-            *dst_light = *src_light;
-            list_add_tail(&dst_map[i], &dst_light->entry);
-            dst_light->changed = true;
-            list_add_tail(&stateblock->changed.changed_lights, &dst_light->changed_entry);
-        }
+        *dst_light = *src_light;
+        rb_put(dst_tree, (void *)(ULONG_PTR)dst_light->OriginalIndex, &dst_light->entry);
+        dst_light->changed = true;
+        list_add_tail(&stateblock->changed.changed_lights, &dst_light->changed_entry);
     }
 }
 
@@ -544,41 +539,34 @@ void wined3d_stateblock_state_cleanup(struct wined3d_stateblock_state *state)
         }
     }
 
-    for (i = 0; i < LIGHTMAP_SIZE; ++i)
+    RB_FOR_EACH_ENTRY_DESTRUCTOR(light, cursor, &state->light_state->lights_tree, struct wined3d_light_info, entry)
     {
-        LIST_FOR_EACH_ENTRY_SAFE(light, cursor, &state->light_state->light_map[i], struct wined3d_light_info, entry)
-        {
-            if (light->changed)
-                list_remove(&light->changed_entry);
-            list_remove(&light->entry);
-            heap_free(light);
-        }
+        if (light->changed)
+            list_remove(&light->changed_entry);
+        rb_remove(&state->light_state->lights_tree, &light->entry);
+        heap_free(light);
     }
 }
 
 void state_cleanup(struct wined3d_state *state)
 {
-    unsigned int counter;
+    struct wined3d_light_info *light, *cursor;
+    unsigned int i;
 
     if (!(state->flags & WINED3D_STATE_NO_REF))
         state_unbind_resources(state);
 
-    for (counter = 0; counter < WINED3D_MAX_ACTIVE_LIGHTS; ++counter)
+    for (i = 0; i < WINED3D_MAX_ACTIVE_LIGHTS; ++i)
     {
-        state->light_state.lights[counter] = NULL;
+        state->light_state.lights[i] = NULL;
     }
 
-    for (counter = 0; counter < LIGHTMAP_SIZE; ++counter)
+    RB_FOR_EACH_ENTRY_DESTRUCTOR(light, cursor, &state->light_state.lights_tree, struct wined3d_light_info, entry)
     {
-        struct list *e1, *e2;
-        LIST_FOR_EACH_SAFE(e1, e2, &state->light_state.light_map[counter])
-        {
-            struct wined3d_light_info *light = LIST_ENTRY(e1, struct wined3d_light_info, entry);
-            list_remove(&light->entry);
-            if (light->changed)
-                list_remove(&light->changed_entry);
-            heap_free(light);
-        }
+        if (light->changed)
+            list_remove(&light->changed_entry);
+        rb_remove(&state->light_state.lights_tree, &light->entry);
+        heap_free(light);
     }
 }
 
@@ -601,17 +589,12 @@ ULONG CDECL wined3d_stateblock_decref(struct wined3d_stateblock *stateblock)
 
 struct wined3d_light_info *wined3d_light_state_get_light(const struct wined3d_light_state *state, unsigned int idx)
 {
-    struct wined3d_light_info *light_info;
-    unsigned int hash_idx;
+    struct rb_entry *entry;
 
-    hash_idx = LIGHTMAP_HASHFUNC(idx);
-    LIST_FOR_EACH_ENTRY(light_info, &state->light_map[hash_idx], struct wined3d_light_info, entry)
-    {
-        if (light_info->OriginalIndex == idx)
-            return light_info;
-    }
+    if (!(entry = rb_get(&state->lights_tree, (void *)(ULONG_PTR)idx)))
+        return NULL;
 
-    return NULL;
+    return RB_ENTRY_VALUE(entry, struct wined3d_light_info, entry);
 }
 
 static void set_light_changed(struct wined3d_stateblock *stateblock, struct wined3d_light_info *light_info)
@@ -628,7 +611,6 @@ HRESULT wined3d_light_state_set_light(struct wined3d_light_state *state, DWORD l
         const struct wined3d_light *params, struct wined3d_light_info **light_info)
 {
     struct wined3d_light_info *object;
-    unsigned int hash_idx;
 
     if (!(object = wined3d_light_state_get_light(state, light_idx)))
     {
@@ -639,10 +621,9 @@ HRESULT wined3d_light_state_set_light(struct wined3d_light_state *state, DWORD l
             return E_OUTOFMEMORY;
         }
 
-        hash_idx = LIGHTMAP_HASHFUNC(light_idx);
-        list_add_head(&state->light_map[hash_idx], &object->entry);
         object->glIndex = -1;
         object->OriginalIndex = light_idx;
+        rb_put(&state->lights_tree, (void *)(ULONG_PTR)light_idx, &object->entry);
     }
 
     object->OriginalParms = *params;
@@ -702,44 +683,40 @@ static void wined3d_state_record_lights(struct wined3d_light_state *dst_state,
 {
     const struct wined3d_light_info *src;
     struct wined3d_light_info *dst;
-    UINT i;
 
     /* Lights... For a recorded state block, we just had a chain of actions
      * to perform, so we need to walk that chain and update any actions which
      * differ. */
-    for (i = 0; i < LIGHTMAP_SIZE; ++i)
+    RB_FOR_EACH_ENTRY(dst, &dst_state->lights_tree, struct wined3d_light_info, entry)
     {
-        LIST_FOR_EACH_ENTRY(dst, &dst_state->light_map[i], struct wined3d_light_info, entry)
+        if ((src = wined3d_light_state_get_light(src_state, dst->OriginalIndex)))
         {
-            if ((src = wined3d_light_state_get_light(src_state, dst->OriginalIndex)))
-            {
-                dst->OriginalParms = src->OriginalParms;
+            dst->OriginalParms = src->OriginalParms;
 
-                if (src->glIndex == -1 && dst->glIndex != -1)
-                {
-                    /* Light disabled. */
-                    dst_state->lights[dst->glIndex] = NULL;
-                }
-                else if (src->glIndex != -1 && dst->glIndex == -1)
-                {
-                    /* Light enabled. */
-                    dst_state->lights[src->glIndex] = dst;
-                }
-                dst->glIndex = src->glIndex;
+            if (src->glIndex == -1 && dst->glIndex != -1)
+            {
+                /* Light disabled. */
+                dst_state->lights[dst->glIndex] = NULL;
             }
-            else
+            else if (src->glIndex != -1 && dst->glIndex == -1)
             {
-                /* This can happen if the light was originally created as a
-                 * default light for SetLightEnable() while recording. */
-                WARN("Light %u in dst_state %p does not exist in src_state %p.\n",
-                        dst->OriginalIndex, dst_state, src_state);
+                /* Light enabled. */
+                dst_state->lights[src->glIndex] = dst;
+            }
+            dst->glIndex = src->glIndex;
+        }
+        else
+        {
+            /* This can happen if the light was originally created as a
+             * default light for SetLightEnable() while recording. */
+            WARN("Light %u in dst_state %p does not exist in src_state %p.\n",
+                    dst->OriginalIndex, dst_state, src_state);
 
-                dst->OriginalParms = WINED3D_default_light;
-                if (dst->glIndex != -1)
-                {
-                    dst_state->lights[dst->glIndex] = NULL;
-                    dst->glIndex = -1;
-                }
+            dst->OriginalParms = WINED3D_default_light;
+            if (dst->glIndex != -1)
+            {
+                dst_state->lights[dst->glIndex] = NULL;
+                dst->glIndex = -1;
             }
         }
     }
@@ -1895,18 +1872,21 @@ static void state_init_default(struct wined3d_state *state, const struct wined3d
     }
 }
 
+static int lights_compare(const void *key, const struct rb_entry *entry)
+{
+    const struct wined3d_light_info *light = RB_ENTRY_VALUE(entry, struct wined3d_light_info, entry);
+    unsigned int original_index = (ULONG_PTR)key;
+
+    return wined3d_uint32_compare(light->OriginalIndex, original_index);
+}
+
 void state_init(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info,
         uint32_t flags, enum wined3d_feature_level feature_level)
 {
-    unsigned int i;
-
     state->feature_level = feature_level;
     state->flags = flags;
 
-    for (i = 0; i < LIGHTMAP_SIZE; i++)
-    {
-        list_init(&state->light_state.light_map[i]);
-    }
+    rb_init(&state->light_state.lights_tree, lights_compare);
 
     if (flags & WINED3D_STATE_INIT_DEFAULT)
         state_init_default(state, d3d_info);
@@ -2001,12 +1981,7 @@ static void stateblock_state_init_default(struct wined3d_stateblock_state *state
 void wined3d_stateblock_state_init(struct wined3d_stateblock_state *state,
         const struct wined3d_device *device, uint32_t flags)
 {
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(state->light_state->light_map); i++)
-    {
-        list_init(&state->light_state->light_map[i]);
-    }
+    rb_init(&state->light_state->lights_tree, lights_compare);
 
     if (flags & WINED3D_STATE_INIT_DEFAULT)
         stateblock_state_init_default(state, &device->adapter->d3d_info);
@@ -2035,7 +2010,7 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock, const stru
     switch (type)
     {
         case WINED3D_SBT_ALL:
-            stateblock_init_lights(stateblock, device_state->stateblock_state.light_state->light_map);
+            stateblock_init_lights(stateblock, &device_state->stateblock_state.light_state->lights_tree);
             stateblock_savedstates_set_all(&stateblock->changed,
                     d3d_info->limits.vs_uniform_count, d3d_info->limits.ps_uniform_count);
             break;
@@ -2046,7 +2021,7 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock, const stru
             break;
 
         case WINED3D_SBT_VERTEX_STATE:
-            stateblock_init_lights(stateblock, device_state->stateblock_state.light_state->light_map);
+            stateblock_init_lights(stateblock, &device_state->stateblock_state.light_state->lights_tree);
             stateblock_savedstates_set_vertex(&stateblock->changed,
                     d3d_info->limits.vs_uniform_count);
             break;

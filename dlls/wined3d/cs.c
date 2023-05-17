@@ -1998,7 +1998,7 @@ static void wined3d_cs_exec_set_light(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_set_light *op = data;
     struct wined3d_light_info *light_info;
-    unsigned int light_idx, hash_idx;
+    unsigned int light_idx;
 
     light_idx = op->light.OriginalIndex;
 
@@ -2011,10 +2011,9 @@ static void wined3d_cs_exec_set_light(struct wined3d_cs *cs, const void *data)
             return;
         }
 
-        hash_idx = LIGHTMAP_HASHFUNC(light_idx);
-        list_add_head(&cs->state.light_state.light_map[hash_idx], &light_info->entry);
         light_info->glIndex = -1;
         light_info->OriginalIndex = light_idx;
+        rb_put(&cs->state.light_state.lights_tree, (void *)(ULONG_PTR)light_idx, &light_info->entry);
     }
 
     if (light_info->glIndex != -1)
