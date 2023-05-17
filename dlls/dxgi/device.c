@@ -490,7 +490,6 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     struct wined3d_device_parent *wined3d_device_parent;
     struct wined3d_swapchain_desc swapchain_desc;
     IWineDXGIDeviceParent *dxgi_device_parent;
-    struct d3d11_swapchain *swapchain;
     struct dxgi_adapter *dxgi_adapter;
     struct dxgi_factory *dxgi_factory;
     struct dxgi_output *dxgi_output;
@@ -572,29 +571,16 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     swapchain_desc.output = dxgi_output->wined3d_output;
     IDXGIOutput_Release(output);
 
-    if (!(swapchain = heap_alloc_zero(sizeof(*swapchain))))
+    if (FAILED(hr = wined3d_swapchain_create(device->wined3d_device, &swapchain_desc,
+            NULL, NULL, &dxgi_null_wined3d_parent_ops, &device->implicit_swapchain)))
     {
-        ERR("Failed to allocate swapchain memory.\n");
+        ERR("Failed to create implicit swapchain, hr %#lx.\n", hr);
         wined3d_device_decref(device->wined3d_device);
         IUnknown_Release(device->child_layer);
         wined3d_private_store_cleanup(&device->private_store);
         wined3d_mutex_unlock();
         return E_OUTOFMEMORY;
     }
-
-    if (FAILED(hr = d3d11_swapchain_init(swapchain, device, &swapchain_desc)))
-    {
-        WARN("Failed to initialize swapchain, hr %#lx.\n", hr);
-        heap_free(swapchain);
-        wined3d_device_decref(device->wined3d_device);
-        IUnknown_Release(device->child_layer);
-        wined3d_private_store_cleanup(&device->private_store);
-        wined3d_mutex_unlock();
-        return hr;
-    }
-    device->implicit_swapchain = swapchain->wined3d_swapchain;
-
-    TRACE("Created swapchain %p.\n", swapchain);
 
     wined3d_mutex_unlock();
 

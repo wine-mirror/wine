@@ -236,11 +236,9 @@ static ULONG STDMETHODCALLTYPE d3d11_swapchain_Release(IDXGISwapChain1 *iface)
             WARN("Releasing fullscreen swapchain.\n");
             IDXGIOutput_Release(swapchain->target);
         }
-        if (swapchain->factory)
-            IWineDXGIFactory_Release(swapchain->factory);
+        IWineDXGIFactory_Release(swapchain->factory);
         wined3d_swapchain_decref(swapchain->wined3d_swapchain);
-        if (device)
-            IWineDXGIDevice_Release(device);
+        IWineDXGIDevice_Release(device);
     }
 
     return refcount;
@@ -284,13 +282,6 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetParent(IDXGISwapChain1 *ifac
 
     TRACE("iface %p, riid %s, parent %p.\n", iface, debugstr_guid(riid), parent);
 
-    if (!swapchain->factory)
-    {
-        ERR("Implicit swapchain does not store reference to parent.\n");
-        *parent = NULL;
-        return E_NOINTERFACE;
-    }
-
     return IWineDXGIFactory_QueryInterface(swapchain->factory, riid, parent);
 }
 
@@ -301,13 +292,6 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetDevice(IDXGISwapChain1 *ifac
     struct d3d11_swapchain *swapchain = d3d11_swapchain_from_IDXGISwapChain1(iface);
 
     TRACE("iface %p, riid %s, device %p.\n", iface, debugstr_guid(riid), device);
-
-    if (!swapchain->device)
-    {
-        ERR("Implicit swapchain does not store reference to device.\n");
-        *device = NULL;
-        return E_NOINTERFACE;
-    }
 
     return IWineDXGIDevice_QueryInterface(swapchain->device, riid, device);
 }
@@ -585,12 +569,6 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetContainingOutput(IDXGISwapCh
     {
         IDXGIOutput_AddRef(*output = swapchain->target);
         return S_OK;
-    }
-
-    if (!swapchain->factory)
-    {
-        ERR("Implicit swapchain does not store a reference to factory.\n");
-        return E_NOINTERFACE;
     }
 
     window = d3d11_swapchain_get_hwnd(swapchain);
@@ -889,27 +867,16 @@ HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_devi
     BOOL fullscreen;
     HRESULT hr;
 
-    /* A reference to the implicit swapchain is held by the wined3d device. In
-     * order to avoid circular references we do not keep a reference to the
-     * device in the implicit swapchain. */
-    if (!(desc->flags & WINED3D_SWAPCHAIN_IMPLICIT))
-    {
-        if (desc->backbuffer_format == WINED3DFMT_UNKNOWN)
-            return E_INVALIDARG;
+    if (desc->backbuffer_format == WINED3DFMT_UNKNOWN)
+        return E_INVALIDARG;
 
-        if (FAILED(hr = IWineDXGIAdapter_GetParent(device->adapter,
-                &IID_IWineDXGIFactory, (void **)&swapchain->factory)))
-        {
-            WARN("Failed to get adapter parent, hr %#lx.\n", hr);
-            return hr;
-        }
-        IWineDXGIDevice_AddRef(swapchain->device = &device->IWineDXGIDevice_iface);
-    }
-    else
+    if (FAILED(hr = IWineDXGIAdapter_GetParent(device->adapter,
+            &IID_IWineDXGIFactory, (void **)&swapchain->factory)))
     {
-        swapchain->device = NULL;
-        swapchain->factory = NULL;
+        WARN("Failed to get adapter parent, hr %#lx.\n", hr);
+        return hr;
     }
+    IWineDXGIDevice_AddRef(swapchain->device = &device->IWineDXGIDevice_iface);
 
     swapchain->IDXGISwapChain1_iface.lpVtbl = &d3d11_swapchain_vtbl;
     swapchain->state_parent.ops = &d3d11_swapchain_state_parent_ops;
@@ -969,10 +936,8 @@ HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_devi
 cleanup:
     wined3d_private_store_cleanup(&swapchain->private_store);
     wined3d_mutex_unlock();
-    if (swapchain->factory)
-        IWineDXGIFactory_Release(swapchain->factory);
-    if (swapchain->device)
-        IWineDXGIDevice_Release(swapchain->device);
+    IWineDXGIFactory_Release(swapchain->factory);
+    IWineDXGIDevice_Release(swapchain->device);
     return hr;
 }
 
