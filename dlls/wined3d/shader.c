@@ -2481,7 +2481,7 @@ static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device 
         shader->byte_code_size = desc->byte_code_size;
 
         max_version = shader_max_version_from_feature_level(device->cs->c.state->feature_level);
-        if (FAILED(hr = shader_extract_from_dxbc(shader, max_version, &source_type)))
+        if (FAILED(hr = wined3d_shader_extract_from_dxbc(shader, max_version, &source_type)))
             goto fail;
 
         if (!(shader->frontend = shader_select_frontend(source_type)))

@@ -2077,7 +2077,7 @@ static HRESULT shader_dxbc_process_section(struct wined3d_shader *shader, unsign
     return S_OK;
 }
 
-HRESULT shader_extract_from_dxbc(struct wined3d_shader *shader,
+HRESULT wined3d_shader_extract_from_dxbc(struct wined3d_shader *shader,
         unsigned int max_shader_version, enum vkd3d_shader_source_type *source_type)
 {
     const struct vkd3d_shader_code dxbc = {.code = shader->byte_code, .size = shader->byte_code_size};
