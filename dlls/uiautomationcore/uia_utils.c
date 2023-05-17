@@ -98,6 +98,48 @@ HRESULT get_interface_in_git(REFIID riid, DWORD git_cookie, IUnknown **ret_iface
     return S_OK;
 }
 
+/*
+ * UiaCacheRequest cloning functions.
+ */
+void uia_cache_request_destroy(struct UiaCacheRequest *cache_req)
+{
+    heap_free(cache_req->pProperties);
+    heap_free(cache_req->pPatterns);
+}
+
+HRESULT uia_cache_request_clone(struct UiaCacheRequest *dst, struct UiaCacheRequest *src)
+{
+    FIXME("Cache request condition cloning currently unimplemented\n");
+
+    dst->Scope = src->Scope;
+    dst->automationElementMode = src->automationElementMode;
+    if (src->cProperties)
+    {
+        if (!(dst->pProperties = heap_alloc_zero(sizeof(*dst->pProperties) * src->cProperties)))
+        {
+            uia_cache_request_destroy(dst);
+            return E_OUTOFMEMORY;
+        }
+
+        dst->cProperties = src->cProperties;
+        memcpy(dst->pProperties, src->pProperties, sizeof(*dst->pProperties) * dst->cProperties);
+    }
+
+    if (src->cPatterns)
+    {
+        if (!(dst->pPatterns = heap_alloc_zero(sizeof(*dst->pPatterns) * src->cPatterns)))
+        {
+            uia_cache_request_destroy(dst);
+            return E_OUTOFMEMORY;
+        }
+
+        dst->cPatterns = src->cPatterns;
+        memcpy(dst->pPatterns, src->pPatterns, sizeof(*dst->pPatterns) * dst->cPatterns);
+    }
+
+    return S_OK;
+}
+
 HRESULT get_safearray_dim_bounds(SAFEARRAY *sa, UINT dim, LONG *lbound, LONG *elems)
 {
     LONG ubound;

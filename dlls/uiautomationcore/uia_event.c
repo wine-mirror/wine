@@ -194,6 +194,7 @@ static ULONG WINAPI uia_event_Release(IWineUiaEvent *iface)
         assert(!event->event_map_entry);
 
         SafeArrayDestroy(event->runtime_id);
+        uia_cache_request_destroy(&event->cache_req);
         for (i = 0; i < event->event_advisers_count; i++)
             IWineUiaEventAdviser_Release(event->event_advisers[i]);
         heap_free(event->event_advisers);
@@ -456,6 +457,10 @@ HRESULT WINAPI UiaAddEvent(HUIANODE huianode, EVENTID event_id, UiaEventCallback
         SafeArrayDestroy(sa);
         return hr;
     }
+
+    hr = uia_cache_request_clone(&event->cache_req, cache_req);
+    if (FAILED(hr))
+        goto exit;
 
     hr = attach_event_to_uia_node(huianode, event);
     if (FAILED(hr))

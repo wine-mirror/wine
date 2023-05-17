@@ -110,6 +110,7 @@ struct uia_event
     struct uia_event_map_entry *event_map_entry;
     LONG event_defunct;
 
+    struct UiaCacheRequest cache_req;
     UiaEventCallback *cback;
 };
 
@@ -186,6 +187,8 @@ HRESULT create_msaa_provider(IAccessible *acc, long child_id, HWND hwnd, BOOL kn
 HRESULT register_interface_in_git(IUnknown *iface, REFIID riid, DWORD *ret_cookie) DECLSPEC_HIDDEN;
 HRESULT unregister_interface_in_git(DWORD git_cookie) DECLSPEC_HIDDEN;
 HRESULT get_interface_in_git(REFIID riid, DWORD git_cookie, IUnknown **ret_iface) DECLSPEC_HIDDEN;
+void uia_cache_request_destroy(struct UiaCacheRequest *cache_req) DECLSPEC_HIDDEN;
+HRESULT uia_cache_request_clone(struct UiaCacheRequest *dst, struct UiaCacheRequest *src) DECLSPEC_HIDDEN;
 HRESULT get_safearray_dim_bounds(SAFEARRAY *sa, UINT dim, LONG *lbound, LONG *elems) DECLSPEC_HIDDEN;
 HRESULT get_safearray_bounds(SAFEARRAY *sa, LONG *lbound, LONG *elems) DECLSPEC_HIDDEN;
 int uia_compare_safearrays(SAFEARRAY *sa1, SAFEARRAY *sa2, int prop_type) DECLSPEC_HIDDEN;
