@@ -101,6 +101,16 @@ GstElement *find_element(GstElementFactoryListType type, GstCaps *src_caps, GstC
     for (tmp = transforms; tmp != NULL && element == NULL; tmp = tmp->next)
     {
         name = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(tmp->data));
+
+        if (!strcmp(name, "vaapidecodebin"))
+        {
+            /* vaapidecodebin adds asynchronicity which breaks wg_transform synchronous drain / flush
+             * requirements. Ignore it and use VA-API decoders directly instead.
+             */
+            GST_WARNING("Ignoring vaapidecodebin decoder.");
+            continue;
+        }
+
         if (!(element = gst_element_factory_create(GST_ELEMENT_FACTORY(tmp->data), NULL)))
             GST_WARNING("Failed to create %s element.", name);
     }
