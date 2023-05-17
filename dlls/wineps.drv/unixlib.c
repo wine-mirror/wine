@@ -81,6 +81,13 @@ struct printer_info
 
 static struct list printer_info_list = LIST_INIT(printer_info_list);
 
+struct band_info
+{
+    BOOL graphics_flag;
+    BOOL text_flag;
+    RECT graphics_rect;
+};
+
 typedef struct
 {
     struct gdi_physdev dev;
@@ -714,11 +721,11 @@ static int CDECL ext_escape(PHYSDEV dev, int escape, int input_size, const void 
     }
     case BANDINFO:
     {
-        BANDINFOSTRUCT  *ibi = (BANDINFOSTRUCT*)input;
-        BANDINFOSTRUCT  *obi = (BANDINFOSTRUCT*)output;
+        struct band_info *ibi = (struct band_info *)input;
+        struct band_info *obi = (struct band_info *)output;
 
-        FIXME("BANDINFO(graphics %d, text %d, rect %s), stub!\n", ibi->GraphicsFlag,
-                ibi->TextFlag, wine_dbgstr_rect(&ibi->GraphicsRect));
+        FIXME("BANDINFO(graphics %d, text %d, rect %s), stub!\n", ibi->graphics_flag,
+                ibi->text_flag, wine_dbgstr_rect(&ibi->graphics_rect));
         *obi = *ibi;
         return 1;
     }

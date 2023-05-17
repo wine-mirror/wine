@@ -143,15 +143,6 @@ typedef struct _tagPAGESIZE {
     WORD		WinPage; /*eg DMPAPER_A4. Doesn't really belong here */
 } PAGESIZE;
 
-
-/* For BANDINFO Escape */
-typedef struct _BANDINFOSTRUCT
-{
-    BOOL GraphicsFlag;
-    BOOL TextFlag;
-    RECT GraphicsRect;
-} BANDINFOSTRUCT, *PBANDINFOSTRUCT;
-
 typedef struct
 {
     struct list                 entry;
