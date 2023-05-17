@@ -72,6 +72,10 @@ nv12frame.bmp RCDATA nv12frame.bmp
 nv12frame-grabber.bmp RCDATA nv12frame-grabber.bmp
 
 /* Generated from running the tests on Windows */
+/* @makedep: nv12frame-flip.bmp */
+nv12frame-flip.bmp RCDATA nv12frame-flip.bmp
+
+/* Generated from running the tests on Windows */
 /* @makedep: i420frame.bmp */
 i420frame.bmp RCDATA i420frame.bmp
 
@@ -86,6 +90,14 @@ rgb32frame-flip.bmp RCDATA rgb32frame-flip.bmp
 /* Generated from running the tests on Windows */
 /* @makedep: rgb32frame-grabber.bmp */
 rgb32frame-grabber.bmp RCDATA rgb32frame-grabber.bmp
+
+/* Generated from running the tests on Windows */
+/* @makedep: rgb555frame.bmp */
+rgb555frame.bmp RCDATA rgb555frame.bmp
+
+/* Generated from running the tests on Windows */
+/* @makedep: rgb555frame-flip.bmp */
+rgb555frame-flip.bmp RCDATA rgb555frame-flip.bmp
 
 /* Generated with:
  *  gst-launch-1.0 videotestsrc num-buffers=60 pattern=smpte100 ! \

@@ -65,10 +65,12 @@ typedef DWORD (*compare_cb)(const BYTE *data, DWORD *length, const RECT *rect, c
 extern DWORD compare_nv12(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect);
 extern DWORD compare_i420(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect);
 extern DWORD compare_rgb32(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect);
+extern DWORD compare_rgb16(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect);
 extern DWORD compare_pcm16(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect);
 
 typedef void (*dump_cb)(const BYTE *data, DWORD length, const RECT *rect, HANDLE output);
 extern void dump_rgb32(const BYTE *data, DWORD length, const RECT *rect, HANDLE output);
+extern void dump_rgb16(const BYTE *data, DWORD length, const RECT *rect, HANDLE output);
 extern void dump_nv12(const BYTE *data, DWORD length, const RECT *rect, HANDLE output);
 extern void dump_i420(const BYTE *data, DWORD length, const RECT *rect, HANDLE output);
 
