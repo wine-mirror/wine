@@ -75,7 +75,7 @@ struct printer_info
 {
     struct list entry;
     const WCHAR *name;
-    PSDRV_DEVMODE *devmode;
+    const PSDRV_DEVMODE *devmode;
 };
 
 static struct list printer_info_list = LIST_INIT(printer_info_list);
@@ -91,7 +91,7 @@ typedef struct
 {
     struct gdi_physdev dev;
     PSDRV_DEVMODE *devmode;
-    struct printer_info *pi;
+    const struct printer_info *pi;
 
     /* builtin font info */
     BOOL builtin;
@@ -339,7 +339,7 @@ static const struct page_size *find_pagesize(const struct printer_info *pi,
 }
 
 static void merge_devmodes(PSDRV_DEVMODE *dm1, const DEVMODEW *dm2,
-        struct printer_info *pi)
+        const struct printer_info *pi)
 {
     /* some sanity checks here on dm2 */
 
@@ -1008,7 +1008,7 @@ static struct font_data *find_font_data(const char *name)
     return NULL;
 }
 
-static struct font_data *find_builtin_font(PSDRV_DEVMODE *devmode,
+static struct font_data *find_builtin_font(const PSDRV_DEVMODE *devmode,
         const WCHAR *facename, BOOL it, BOOL bd)
 {
     struct installed_font *installed_font;

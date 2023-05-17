@@ -107,7 +107,7 @@ struct open_dc_params
     const WCHAR *device;
     const DEVMODEW *devmode;
     const WCHAR *output;
-    PSDRV_DEVMODE *def_devmode;
+    const PSDRV_DEVMODE *def_devmode;
     HDC hdc;
 };
 
