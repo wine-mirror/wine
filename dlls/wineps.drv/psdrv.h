@@ -501,7 +501,6 @@ INT PSDRV_GlyphListInit(void) DECLSPEC_HIDDEN;
 const GLYPHNAME *PSDRV_GlyphName(LPCSTR szName) DECLSPEC_HIDDEN;
 VOID PSDRV_IndexGlyphList(void) DECLSPEC_HIDDEN;
 BOOL PSDRV_GetType1Metrics(void) DECLSPEC_HIDDEN;
-const AFMMETRICS *PSDRV_UVMetrics(LONG UV, const AFM *afm) DECLSPEC_HIDDEN;
 SHORT PSDRV_CalcAvgCharWidth(const AFM *afm) DECLSPEC_HIDDEN;
 
 extern BOOL PSDRV_WriteSetBuiltinFont(print_ctx *ctx) DECLSPEC_HIDDEN;

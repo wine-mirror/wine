@@ -22,6 +22,7 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "psdrv.h"
 #include "wine/debug.h"
@@ -185,6 +186,33 @@ static void PSDRV_DumpFontList(void)
     return;
 }
 
+/******************************************************************************
+ *  	PSDRV_UVMetrics
+ *
+ *  Find the AFMMETRICS for a given UV.  Returns NULL if the font does not
+ *  have a glyph for the given UV.
+ */
+static int __cdecl MetricsByUV(const void *a, const void *b)
+{
+    return (int)(((const AFMMETRICS *)a)->UV - ((const AFMMETRICS *)b)->UV);
+}
+
+static const AFMMETRICS *PSDRV_UVMetrics(LONG UV, const AFM *afm)
+{
+    AFMMETRICS key;
+
+    /*
+     * Ugly work-around for symbol fonts.  Wine is sending characters which
+     * belong in the Unicode private use range (U+F020 - U+F0FF) as ASCII
+     * characters (U+0020 - U+00FF).
+     */
+
+    if ((afm->Metrics->UV & 0xff00) == 0xf000 && UV < 0x100)
+        UV |= 0xf000;
+
+    key.UV = UV;
+    return bsearch(&key, afm->Metrics, afm->NumofMetrics, sizeof(AFMMETRICS), MetricsByUV);
+}
 
 /*******************************************************************************
  *  PSDRV_CalcAvgCharWidth
@@ -208,7 +236,7 @@ static inline SHORT MeanCharWidth(const AFM *afm)
     return (SHORT)(w + 0.5);
 }
 
-static const struct { LONG UV; int weight; } UVweight[27] =
+static const struct { LONG UV; int weight; } UVweight[] =
 {
     { 0x0061,  64 }, { 0x0062,  14 }, { 0x0063,  27 }, { 0x0064,  35 },
     { 0x0065, 100 }, { 0x0066,  20 }, { 0x0067,  14 }, { 0x0068,  42 },
@@ -224,13 +252,13 @@ SHORT PSDRV_CalcAvgCharWidth(const AFM *afm)
     float   w = 0.0;
     int     i;
 
-    for (i = 0; i < 27; ++i)
+    for (i = 0; i < ARRAY_SIZE(UVweight); ++i)
     {
     	const AFMMETRICS    *afmm;
 
 	afmm = PSDRV_UVMetrics(UVweight[i].UV, afm);
-	if (afmm->UV != UVweight[i].UV)     /* UVMetrics returns first glyph */
-	    return MeanCharWidth(afm);	    /*   in font if UV is missing    */
+        if (!afmm)
+            return MeanCharWidth(afm);
 
 	w += afmm->WX * (float)(UVweight[i].weight);
     }
