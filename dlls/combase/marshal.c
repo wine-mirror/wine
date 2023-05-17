@@ -1949,7 +1949,7 @@ static BOOL find_proxy_manager(struct apartment * apt, OXID oxid, OID oid, struc
             /* be careful of a race with ClientIdentity_Release, which would
              * cause us to return a proxy which is in the process of being
              * destroyed */
-            if (IMultiQI_AddRef(&proxy->IMultiQI_iface) != 0)
+            if (IMultiQI_AddRef(&proxy->IMultiQI_iface) != 1)
             {
                 *proxy_found = proxy;
                 found = TRUE;
