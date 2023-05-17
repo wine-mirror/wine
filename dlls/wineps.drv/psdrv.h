@@ -341,11 +341,6 @@ typedef struct
     JOB			job;
     PSDRV_DEVMODE	*Devmode;
     PRINTERINFO		*pi;
-    RECT                ImageableArea; /* Imageable area in device units */
-                                       /* NB both PageSize and ImageableArea
-					  are not rotated in landscape mode,
-					  so PageSize.cx is generally
-					  < PageSize.cy */
     int                 pathdepth;
 } print_ctx;
 

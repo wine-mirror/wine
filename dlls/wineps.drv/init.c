@@ -408,50 +408,6 @@ static void dump_devmode(const DEVMODEW *dm)
     TRACE("dmPelsHeight %lu\n", dm->dmPelsHeight);
 }
 
-static void PSDRV_UpdateDevCaps( print_ctx *ctx )
-{
-    int log_pixels_x = GetDeviceCaps(ctx->hdc, ASPECTX);
-    int log_pixels_y = GetDeviceCaps(ctx->hdc, ASPECTY);
-    PAGESIZE *page;
-
-    dump_devmode(&ctx->Devmode->dmPublic);
-
-    if(ctx->Devmode->dmPublic.dmFields & DM_PAPERSIZE) {
-        LIST_FOR_EACH_ENTRY(page, &ctx->pi->ppd->PageSizes, PAGESIZE, entry) {
-	    if(page->WinPage == ctx->Devmode->dmPublic.dmPaperSize)
-	        break;
-	}
-
-	if(&page->entry == &ctx->pi->ppd->PageSizes) {
-	    FIXME("Can't find page\n");
-            SetRectEmpty(&ctx->ImageableArea);
-	} else if(page->ImageableArea) {
-	  /* ctx sizes in device units; ppd sizes in 1/72" */
-            SetRect(&ctx->ImageableArea, page->ImageableArea->llx * log_pixels_x / 72,
-                    page->ImageableArea->ury * log_pixels_y / 72,
-                    page->ImageableArea->urx * log_pixels_x / 72,
-                    page->ImageableArea->lly * log_pixels_y / 72);
-	} else {
-	    ctx->ImageableArea.left = ctx->ImageableArea.bottom = 0;
-            ctx->ImageableArea.right = page->PaperDimension->x * log_pixels_x / 72;
-            ctx->ImageableArea.top = page->PaperDimension->y * log_pixels_y / 72;
-	}
-    } else if((ctx->Devmode->dmPublic.dmFields & DM_PAPERLENGTH) &&
-	      (ctx->Devmode->dmPublic.dmFields & DM_PAPERWIDTH)) {
-      /* ctx sizes in device units; Devmode sizes in 1/10 mm */
-        ctx->ImageableArea.left = ctx->ImageableArea.bottom = 0;
-	ctx->ImageableArea.right =
-	  ctx->Devmode->dmPublic.dmPaperWidth * log_pixels_x / 254;
-	ctx->ImageableArea.top =
-	  ctx->Devmode->dmPublic.dmPaperLength * log_pixels_y / 254;
-    } else {
-        FIXME("Odd dmFields %lx\n", ctx->Devmode->dmPublic.dmFields);
-        SetRectEmpty(&ctx->ImageableArea);
-    }
-
-    TRACE("ImageableArea = %s\n", wine_dbgstr_rect(&ctx->ImageableArea));
-}
-
 print_ctx *create_print_ctx( HDC hdc, const WCHAR *device,
                                      const DEVMODEW *devmode )
 {
@@ -494,7 +450,6 @@ print_ctx *create_print_ctx( HDC hdc, const WCHAR *device,
         PSDRV_MergeDevmodes( ctx->Devmode, devmode, pi );
     }
 
-    PSDRV_UpdateDevCaps( ctx );
     SelectObject( hdc, GetStockObject( DEVICE_DEFAULT_FONT ));
     return ctx;
 }
@@ -502,12 +457,12 @@ print_ctx *create_print_ctx( HDC hdc, const WCHAR *device,
 /**********************************************************************
  *	     ResetDC   (WINEPS.@)
  */
-BOOL CDECL PSDRV_ResetDC( print_ctx *ctx, const DEVMODEW *lpInitData )
+BOOL CDECL PSDRV_ResetDC( print_ctx *ctx, const DEVMODEW *devmode )
 {
-    if (lpInitData)
+    if (devmode)
     {
-        PSDRV_MergeDevmodes(ctx->Devmode, lpInitData, ctx->pi);
-        PSDRV_UpdateDevCaps(ctx);
+        dump_devmode( devmode );
+        PSDRV_MergeDevmodes( ctx->Devmode, devmode, ctx->pi );
     }
     return TRUE;
 }

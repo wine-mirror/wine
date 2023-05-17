@@ -400,7 +400,7 @@ INT PSDRV_WriteHeader( print_ctx *ctx, LPCWSTR title )
     INPUTSLOT *slot = find_slot( ctx->pi->ppd, &ctx->Devmode->dmPublic );
     PAGESIZE *page = find_pagesize( ctx->pi->ppd, &ctx->Devmode->dmPublic );
     DUPLEX *duplex = find_duplex( ctx->pi->ppd, &ctx->Devmode->dmPublic );
-    int llx, lly, urx, ury, log_pixels_x, log_pixels_y;
+    int llx, lly, urx, ury;
     int ret, len;
     const char * dmOrientation;
 
@@ -429,12 +429,34 @@ INT PSDRV_WriteHeader( print_ctx *ctx, LPCWSTR title )
 
     /* BBox co-ords are in default user co-ord system so urx < ury even in
        landscape mode */
-    log_pixels_x = GetDeviceCaps(ctx->hdc, ASPECTX);
-    log_pixels_y = GetDeviceCaps(ctx->hdc, ASPECTY);
-    llx = ctx->ImageableArea.left * 72.0 / log_pixels_x;
-    lly = ctx->ImageableArea.bottom * 72.0 / log_pixels_y;
-    urx = ctx->ImageableArea.right * 72.0 / log_pixels_x;
-    ury = ctx->ImageableArea.top * 72.0 / log_pixels_y;
+    if ((ctx->Devmode->dmPublic.dmFields & DM_PAPERSIZE) && page)
+    {
+        if (page->ImageableArea)
+        {
+            llx = page->ImageableArea->llx;
+            lly = page->ImageableArea->lly;
+            urx = page->ImageableArea->urx;
+            ury = page->ImageableArea->ury;
+        }
+        else
+        {
+            llx = lly = 0;
+            urx = page->PaperDimension->x;
+            ury = page->PaperDimension->y;
+        }
+    }
+    else if ((ctx->Devmode->dmPublic.dmFields & DM_PAPERLENGTH) &&
+            (ctx->Devmode->dmPublic.dmFields & DM_PAPERWIDTH))
+    {
+        /* Devmode sizes in 1/10 mm */
+        llx = lly = 0;
+        urx = ctx->Devmode->dmPublic.dmPaperWidth * 72.0 / 254.0;
+        ury = ctx->Devmode->dmPublic.dmPaperLength * 72.0 / 254.0;
+    }
+    else
+    {
+        llx = lly = urx = ury = 0;
+    }
     /* FIXME should do something better with BBox */
 
     dmOrientation = (ctx->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE ? "Landscape" : "Portrait");
@@ -519,18 +541,21 @@ INT PSDRV_WriteNewPage( print_ctx *ctx )
 
     if(ctx->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) {
         if(ctx->pi->ppd->LandscapeOrientation == -90) {
-	    xtrans = ctx->ImageableArea.right;
-	    ytrans = ctx->ImageableArea.top;
-	    rotation = 90;
-	} else {
-	    xtrans = ctx->ImageableArea.left;
-	    ytrans = ctx->ImageableArea.bottom;
-	    rotation = -90;
-	}
+            xtrans = GetDeviceCaps(ctx->hdc, PHYSICALHEIGHT) -
+                GetDeviceCaps(ctx->hdc, PHYSICALOFFSETY);
+            ytrans = GetDeviceCaps(ctx->hdc, PHYSICALWIDTH) -
+                GetDeviceCaps(ctx->hdc, PHYSICALOFFSETX);
+            rotation = 90;
+        } else {
+            xtrans = GetDeviceCaps(ctx->hdc, PHYSICALOFFSETY);
+            ytrans = GetDeviceCaps(ctx->hdc, PHYSICALOFFSETX);
+            rotation = -90;
+        }
     } else {
-        xtrans = ctx->ImageableArea.left;
-	ytrans = ctx->ImageableArea.top;
-	rotation = 0;
+        xtrans = GetDeviceCaps(ctx->hdc, PHYSICALOFFSETX);
+        ytrans = GetDeviceCaps(ctx->hdc, PHYSICALHEIGHT) -
+            GetDeviceCaps(ctx->hdc, PHYSICALOFFSETY);
+        rotation = 0;
     }
 
     sprintf(buf, psnewpage, name, ctx->job.PageNo,
