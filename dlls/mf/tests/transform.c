@@ -35,6 +35,7 @@
 #include "wmcodecdsp.h"
 #include "mediaerr.h"
 #include "amvideo.h"
+#include "vfw.h"
 
 #include "mf_test.h"
 
@@ -54,6 +55,7 @@ DEFINE_GUID(MFVideoFormat_ABGR32,0x00000020,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x
 DEFINE_GUID(MFVideoFormat_P208,0x38303250,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
 DEFINE_GUID(MFVideoFormat_VC1S,0x53314356,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
 DEFINE_GUID(MFVideoFormat_WMV_Unknown,0x7ce12ca9,0xbfbf,0x43d9,0x9d,0x00,0x82,0xb8,0xed,0x54,0x31,0x6b);
+DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_IV50,MAKEFOURCC('I','V','5','0'));
 
 DEFINE_GUID(mft_output_sample_incomplete,0xffffff,0xffff,0xffff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
 
@@ -888,6 +890,11 @@ DWORD compare_rgb32(const BYTE *data, DWORD *length, const RECT *rect, const BYT
     return compare_rgb(data, length, rect, expect, 32);
 }
 
+DWORD compare_rgb24(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
+{
+    return compare_rgb(data, length, rect, expect, 24);
+}
+
 DWORD compare_rgb16(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
 {
     return compare_rgb(data, length, rect, expect, 16);
@@ -950,6 +957,11 @@ static void dump_rgb(const BYTE *data, DWORD length, const RECT *rect, HANDLE ou
 void dump_rgb32(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
 {
     return dump_rgb(data, length, rect, output, 32);
+}
+
+void dump_rgb24(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
+{
+    return dump_rgb(data, length, rect, output, 24);
 }
 
 void dump_rgb16(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
@@ -7418,6 +7430,198 @@ failed:
     CoUninitialize();
 }
 
+static void test_iv50_encoder(void)
+{
+    static const BITMAPINFOHEADER expect_iv50 =
+    {
+        .biSize = sizeof(BITMAPINFOHEADER),
+        .biWidth = 0x60, .biHeight = 0x60,
+        .biPlanes = 1, .biBitCount = 0x18,
+        .biCompression = mmioFOURCC('I','V','5','0'),
+        .biSizeImage = 0x5100,
+    };
+    const struct buffer_desc iv50_buffer_desc =
+    {
+        .length = 0x2e8,
+    };
+    const struct sample_desc iv50_sample_desc =
+    {
+        .buffer_count = 1, .buffers = &iv50_buffer_desc,
+    };
+    const BYTE *res_data;
+    BYTE rgb_data[0x6c00], iv50_data[0x5100];
+    BITMAPINFO rgb_info, iv50_info;
+    IMFCollection *collection;
+    DWORD flags, res_len, ret;
+    IMFSample *sample;
+    LRESULT res;
+    HRESULT hr;
+    HIC hic;
+
+    load_resource(L"rgb555frame.bmp", (const BYTE **)&res_data, &res_len);
+    res_data += 2 + 3 * sizeof(DWORD);
+    res_len -= 2 + 3 * sizeof(DWORD);
+    rgb_info.bmiHeader = *(BITMAPINFOHEADER *)res_data;
+    memcpy(rgb_data, res_data + sizeof(BITMAPINFOHEADER), res_len - sizeof(BITMAPINFOHEADER));
+
+    hic = ICOpen(ICTYPE_VIDEO, expect_iv50.biCompression, ICMODE_COMPRESS);
+    if (!hic)
+    {
+        todo_wine
+        win_skip("ICOpen failed to created IV50 compressor.\n");
+        return;
+    }
+
+    res = ICCompressQuery(hic, &rgb_info, NULL);
+    todo_wine
+    ok(!res, "got res %#Ix\n", res);
+    if (res)
+        goto done;
+
+    res = ICCompressGetSize(hic, &rgb_info, NULL);
+    ok(res == expect_iv50.biSizeImage, "got res %#Ix\n", res);
+
+    res = ICCompressGetFormatSize(hic, &rgb_info);
+    ok(res == sizeof(BITMAPINFOHEADER), "got res %#Ix\n", res);
+    res = ICCompressGetFormat(hic, &rgb_info, &iv50_info);
+    ok(!res, "got res %#Ix\n", res);
+    check_member(iv50_info.bmiHeader, expect_iv50, "%#lx", biSize);
+    check_member(iv50_info.bmiHeader, expect_iv50, "%#lx", biWidth);
+    check_member(iv50_info.bmiHeader, expect_iv50, "%#lx", biHeight);
+    check_member(iv50_info.bmiHeader, expect_iv50, "%#x", biPlanes);
+    check_member(iv50_info.bmiHeader, expect_iv50, "%#x", biBitCount);
+    check_member(iv50_info.bmiHeader, expect_iv50, "%#lx", biCompression);
+    check_member(iv50_info.bmiHeader, expect_iv50, "%#lx", biSizeImage);
+    check_member(iv50_info.bmiHeader, expect_iv50, "%#lx", biXPelsPerMeter);
+    check_member(iv50_info.bmiHeader, expect_iv50, "%#lx", biYPelsPerMeter);
+    check_member(iv50_info.bmiHeader, expect_iv50, "%#lx", biClrUsed);
+    check_member(iv50_info.bmiHeader, expect_iv50, "%#lx", biClrImportant);
+    res = ICCompressQuery(hic, &rgb_info, &iv50_info);
+    ok(!res, "got res %#Ix\n", res);
+
+    res = ICCompressBegin(hic, &rgb_info, &iv50_info);
+    ok(!res, "got res %#Ix\n", res);
+    memset(iv50_data, 0xcd, sizeof(iv50_data));
+    res = ICCompress(hic, ICCOMPRESS_KEYFRAME, &iv50_info.bmiHeader, iv50_data, &rgb_info.bmiHeader, rgb_data,
+            NULL, &flags, 1, 0, 0, NULL, NULL);
+    ok(!res, "got res %#Ix\n", res);
+    ok(flags == 0x10, "got flags %#lx\n", flags);
+    ok(iv50_info.bmiHeader.biSizeImage == 0x2e8, "got res %#Ix\n", res);
+    res = ICCompressEnd(hic);
+    ok(!res, "got res %#Ix\n", res);
+
+    hr = MFCreateCollection(&collection);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    sample = create_sample(iv50_data, iv50_info.bmiHeader.biSizeImage);
+    ok(!!sample, "got sample %p\n", sample);
+    hr = IMFSample_SetSampleTime(sample, 0);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    hr = IMFSample_SetSampleDuration(sample, 0);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    hr = IMFCollection_AddElement(collection, (IUnknown *)sample);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    ret = check_mf_sample_collection(collection, &iv50_sample_desc, L"iv50frame.bin");
+    ok(ret == 0, "got %lu%% diff\n", ret);
+    IMFCollection_Release(collection);
+
+done:
+    res = ICClose(hic);
+    ok(!res, "got res %#Ix\n", res);
+}
+
+static void test_iv50_decoder(void)
+{
+    static const BITMAPINFOHEADER expect_iv50 =
+    {
+        .biSize = sizeof(BITMAPINFOHEADER),
+        .biWidth = 0x60, .biHeight = 0x60,
+        .biPlanes = 1, .biBitCount = 24,
+        .biCompression = mmioFOURCC('I','V','5','0'),
+        .biSizeImage = 0x2e8,
+    };
+    static const BITMAPINFOHEADER expect_rgb =
+    {
+        .biSize = sizeof(BITMAPINFOHEADER),
+        .biWidth = 0x60, .biHeight = 0x60,
+        .biPlanes = 1, .biBitCount = 24,
+        .biCompression = BI_RGB,
+        .biSizeImage = 96 * 96 * 3,
+    };
+    const struct buffer_desc rgb_buffer_desc =
+    {
+        .length = 96 * 96 * 3, .compare = compare_rgb24, .dump = dump_rgb24,
+        .rect = {.right = 82, .bottom = 84},
+    };
+    const struct sample_desc rgb_sample_desc =
+    {
+        .buffer_count = 1, .buffers = &rgb_buffer_desc,
+    };
+    const BYTE *res_data;
+    BYTE rgb_data[0x6c00], iv50_data[0x5100];
+    BITMAPINFO rgb_info, iv50_info;
+    IMFCollection *collection;
+    DWORD res_len, ret;
+    IMFSample *sample;
+    LRESULT res;
+    HRESULT hr;
+    HIC hic;
+
+    load_resource(L"iv50frame.bin", (const BYTE **)&res_data, &res_len);
+    memcpy(iv50_data, res_data, res_len);
+
+    iv50_info.bmiHeader = expect_iv50;
+    hic = ICOpen(ICTYPE_VIDEO, expect_iv50.biCompression, ICMODE_DECOMPRESS);
+    if (!hic)
+    {
+        todo_wine
+        win_skip("ICOpen failed to created IV50 decompressor.\n");
+        return;
+    }
+
+    res = ICDecompressGetFormat(hic, &iv50_info, &rgb_info);
+    ok(!res, "got res %#Ix\n", res);
+    check_member(rgb_info.bmiHeader, expect_rgb, "%#lx", biSize);
+    check_member(rgb_info.bmiHeader, expect_rgb, "%#lx", biWidth);
+    check_member(rgb_info.bmiHeader, expect_rgb, "%#lx", biHeight);
+    check_member(rgb_info.bmiHeader, expect_rgb, "%#x", biPlanes);
+    todo_wine
+    check_member(rgb_info.bmiHeader, expect_rgb, "%#x", biBitCount);
+    check_member(rgb_info.bmiHeader, expect_rgb, "%#lx", biCompression);
+    todo_wine
+    check_member(rgb_info.bmiHeader, expect_rgb, "%#lx", biSizeImage);
+    check_member(rgb_info.bmiHeader, expect_rgb, "%#lx", biXPelsPerMeter);
+    check_member(rgb_info.bmiHeader, expect_rgb, "%#lx", biYPelsPerMeter);
+    check_member(rgb_info.bmiHeader, expect_rgb, "%#lx", biClrUsed);
+    check_member(rgb_info.bmiHeader, expect_rgb, "%#lx", biClrImportant);
+    rgb_info.bmiHeader = expect_rgb;
+
+    res = ICDecompressBegin(hic, &iv50_info, &rgb_info);
+    ok(!res, "got res %#Ix\n", res);
+    res = ICDecompress(hic, 0, &iv50_info.bmiHeader, iv50_data, &rgb_info.bmiHeader, rgb_data);
+    ok(!res, "got res %#Ix\n", res);
+    res = ICDecompressEnd(hic);
+    todo_wine
+    ok(!res, "got res %#Ix\n", res);
+
+    res = ICClose(hic);
+    ok(!res, "got res %#Ix\n", res);
+
+
+    hr = MFCreateCollection(&collection);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    sample = create_sample(rgb_data, rgb_info.bmiHeader.biSizeImage);
+    ok(!!sample, "got sample %p\n", sample);
+    hr = IMFSample_SetSampleTime(sample, 0);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    hr = IMFSample_SetSampleDuration(sample, 0);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    hr = IMFCollection_AddElement(collection, (IUnknown *)sample);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    ret = check_mf_sample_collection(collection, &rgb_sample_desc, L"rgb24frame.bmp");
+    ok(ret <= 4, "got %lu%% diff\n", ret);
+    IMFCollection_Release(collection);
+}
+
 START_TEST(transform)
 {
     init_functions();
@@ -7436,5 +7640,8 @@ START_TEST(transform)
     test_color_convert();
     test_video_processor();
     test_mp3_decoder();
+    test_iv50_encoder();
+    test_iv50_decoder();
+
     test_h264_with_dxgi_manager();
 }
