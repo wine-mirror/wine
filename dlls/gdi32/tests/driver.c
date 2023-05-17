@@ -399,7 +399,8 @@ static void test_D3DKMTCheckVidPnExclusiveOwnership(void)
 
     if (!pD3DKMTCheckVidPnExclusiveOwnership || pD3DKMTCheckVidPnExclusiveOwnership(NULL) == STATUS_PROCEDURE_NOT_FOUND)
     {
-        win_skip("D3DKMTCheckVidPnExclusiveOwnership() is unavailable.\n");
+        /* This is a stub in some drivers (e.g. nulldrv) */
+        skip("D3DKMTCheckVidPnExclusiveOwnership() is unavailable.\n");
         return;
     }
 
@@ -623,7 +624,8 @@ static void test_D3DKMTSetVidPnSourceOwner(void)
 
     if (!pD3DKMTSetVidPnSourceOwner || pD3DKMTSetVidPnSourceOwner(&set_owner_desc) == STATUS_PROCEDURE_NOT_FOUND)
     {
-        win_skip("D3DKMTSetVidPnSourceOwner() is unavailable.\n");
+        /* This is a stub in some drivers (e.g. nulldrv) */
+        skip("D3DKMTSetVidPnSourceOwner() is unavailable.\n");
         return;
     }
 
