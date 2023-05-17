@@ -6059,63 +6059,44 @@ static void test_video_processor(void)
             {.subtype = &MFVideoFormat_YVYU},
         },
     };
-    const GUID expect_available_inputs_w8[] =
+    const struct input_type_desc
     {
-        MFVideoFormat_IYUV,
-        MFVideoFormat_YV12,
-        MFVideoFormat_NV12,
-        MFVideoFormat_420O,
-        MFVideoFormat_UYVY,
-        MFVideoFormat_YUY2,
-        MFVideoFormat_P208,
-        MFVideoFormat_NV11,
-        MFVideoFormat_AYUV,
-        MFVideoFormat_ARGB32,
-        MFVideoFormat_RGB32,
-        MFVideoFormat_RGB24,
-        MFVideoFormat_I420,
-        MFVideoFormat_YVYU,
-        MFVideoFormat_RGB555,
-        MFVideoFormat_RGB565,
-        MFVideoFormat_RGB8,
-        MFVideoFormat_Y216,
-        MFVideoFormat_v410,
-        MFVideoFormat_Y41P,
-        MFVideoFormat_Y41T,
-        MFVideoFormat_Y42T,
-    };
-    const GUID expect_available_inputs_w10[] =
+        GUID guid;
+        BOOL optional;
+    }
+    expect_available_inputs[] =
     {
-        MFVideoFormat_L8,
-        MFVideoFormat_L16,
-        MFAudioFormat_MPEG,
-        MFVideoFormat_IYUV,
-        MFVideoFormat_YV12,
-        MFVideoFormat_NV12,
-        MFVideoFormat_420O,
-        MFVideoFormat_P010,
-        MFVideoFormat_P016,
-        MFVideoFormat_UYVY,
-        MFVideoFormat_YUY2,
-        MFVideoFormat_P208,
-        MFVideoFormat_NV11,
-        MFVideoFormat_AYUV,
-        MFVideoFormat_ARGB32,
-        MFVideoFormat_ABGR32,
-        MFVideoFormat_RGB32,
-        MFVideoFormat_A2R10G10B10,
-        MFVideoFormat_A16B16G16R16F,
-        MFVideoFormat_RGB24,
-        MFVideoFormat_I420,
-        MFVideoFormat_YVYU,
-        MFVideoFormat_RGB555,
-        MFVideoFormat_RGB565,
-        MFVideoFormat_RGB8,
-        MFVideoFormat_Y216,
-        MFVideoFormat_v410,
-        MFVideoFormat_Y41P,
-        MFVideoFormat_Y41T,
-        MFVideoFormat_Y42T,
+        {MFVideoFormat_L8, .optional = TRUE /* >= W10 */},
+        {MFVideoFormat_L16, .optional = TRUE /* >= W10 */},
+        {MFAudioFormat_MPEG, .optional = TRUE /* >= W10 */},
+        {MFVideoFormat_IYUV},
+        {MFVideoFormat_YV12},
+        {MFVideoFormat_NV12},
+        {MFVideoFormat_NV21, .optional = TRUE /* >= W11 */},
+        {MFVideoFormat_420O},
+        {MFVideoFormat_P010, .optional = TRUE /* >= W10 */},
+        {MFVideoFormat_P016, .optional = TRUE /* >= W10 */},
+        {MFVideoFormat_UYVY},
+        {MFVideoFormat_YUY2},
+        {MFVideoFormat_P208},
+        {MFVideoFormat_NV11},
+        {MFVideoFormat_AYUV},
+        {MFVideoFormat_ARGB32},
+        {MFVideoFormat_ABGR32, .optional = TRUE /* >= W10 */},
+        {MFVideoFormat_RGB32},
+        {MFVideoFormat_A2R10G10B10, .optional = TRUE /* >= W10 */},
+        {MFVideoFormat_A16B16G16R16F, .optional = TRUE /* >= W10 */},
+        {MFVideoFormat_RGB24},
+        {MFVideoFormat_I420},
+        {MFVideoFormat_YVYU},
+        {MFVideoFormat_RGB555},
+        {MFVideoFormat_RGB565},
+        {MFVideoFormat_RGB8},
+        {MFVideoFormat_Y216},
+        {MFVideoFormat_v410},
+        {MFVideoFormat_Y41P},
+        {MFVideoFormat_Y41T},
+        {MFVideoFormat_Y42T},
     };
     const GUID expect_available_outputs[] =
     {
@@ -6138,6 +6119,7 @@ static void test_video_processor(void)
         MFVideoFormat_AYUV, /* some inputs enumerate MFVideoFormat_AYUV after RGB565 */
         MFVideoFormat_NV12, /* P010 enumerates NV12 after (A)RGB32 formats */
         MFVideoFormat_A16B16G16R16F, /* enumerated with MFVideoFormat_P010 input */
+        MFVideoFormat_NV21, /* enumerated with some input formats */
     };
     static const media_type_desc expect_available_common =
     {
@@ -6246,10 +6228,10 @@ static void test_video_processor(void)
 
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_I420};
+    const struct input_type_desc *expect_input = expect_available_inputs;
     DWORD i, j, k, flags, length, output_status;
     IMFSample *input_sample, *output_sample;
     IMFMediaType *media_type, *media_type2;
-    const GUID *expect_available_inputs;
     IMFCollection *output_samples;
     const BYTE *nv12frame_data;
     ULONG nv12frame_data_len;
@@ -6361,7 +6343,9 @@ static void test_video_processor(void)
         ok(flags == MFT_INPUT_STATUS_ACCEPT_DATA, "Unexpected input status %#lx.\n", flags);
 
         input_info.cbSize = 0;
-        if (!IsEqualGUID(&guid, &MFVideoFormat_P208) && !IsEqualGUID(&guid, &MEDIASUBTYPE_Y41T)
+        if (IsEqualGUID(&guid, &MFVideoFormat_NV21))
+            input_info.cbSize = 0x180;
+        else if (!IsEqualGUID(&guid, &MFVideoFormat_P208) && !IsEqualGUID(&guid, &MEDIASUBTYPE_Y41T)
                 && !IsEqualGUID(&guid, &MEDIASUBTYPE_Y42T))
         {
             hr = MFCalculateImageSize(&guid, 16, 16, (UINT32 *)&input_info.cbSize);
@@ -6481,51 +6465,38 @@ static void test_video_processor(void)
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
     ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#lx\n", hr);
 
-    hr = IMFTransform_GetInputAvailableType(transform, 0, 23, &media_type);
-    ok(hr == S_OK || hr == MF_E_NO_MORE_TYPES /* w8 */, "GetOutputAvailableType returned %#lx\n", hr);
-    if (hr == MF_E_NO_MORE_TYPES)
-        expect_available_inputs = expect_available_inputs_w8;
-    else
-    {
-        hr = IMFTransform_GetInputAvailableType(transform, 0, 27, &media_type);
-        ok(hr == S_OK || broken(hr == MF_E_NO_MORE_TYPES) /* w1064v1507 */, "GetOutputAvailableType returned %#lx\n", hr);
-        if (hr == MF_E_NO_MORE_TYPES)
-            expect_available_inputs = expect_available_inputs_w10 + 3;
-        else
-            expect_available_inputs = expect_available_inputs_w10;
-    }
-
     i = -1;
     while (SUCCEEDED(hr = IMFTransform_GetInputAvailableType(transform, 0, ++i, &media_type)))
     {
-        /* FIXME: Skip exotic input types which aren't directly accepted */
-        if (IsEqualGUID(&expect_available_inputs[i], &MFVideoFormat_L8)
-                || IsEqualGUID(&expect_available_inputs[i], &MFVideoFormat_L16)
-                || IsEqualGUID(&expect_available_inputs[i], &MFAudioFormat_MPEG)
-                || IsEqualGUID(&expect_available_inputs[i], &MFVideoFormat_420O)
-                || IsEqualGUID(&expect_available_inputs[i], &MFVideoFormat_A16B16G16R16F) /* w1064v1507 */)
-        {
-            IMFMediaType_Release(media_type);
-            continue;
-        }
-
         winetest_push_context("in %lu", i);
+
         ok(hr == S_OK, "GetInputAvailableType returned %#lx\n", hr);
         check_media_type(media_type, expect_available_common, -1);
 
         hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &guid);
         ok(hr == S_OK, "GetGUID returned %#lx\n", hr);
 
-        /* w1064v1507 doesn't expose MFVideoFormat_ABGR32 input */
-        if (broken(IsEqualGUID(&expect_available_inputs[i], &MFVideoFormat_ABGR32)
-                && IsEqualGUID(&guid, &MFVideoFormat_RGB32)))
-            expect_available_inputs++;
+        while (!IsEqualGUID(&expect_input->guid, &guid))
+        {
+            if (!expect_input->optional)
+                break;
+            expect_input++;
+        }
+        ok(IsEqualGUID(&expect_input->guid, &guid), "got subtype %s\n", debugstr_guid(&guid));
+        expect_input++;
 
-        ok(IsEqualGUID(&expect_available_inputs[i], &guid), "got subtype %s\n", debugstr_guid(&guid));
+        /* FIXME: Skip exotic input types which aren't directly accepted */
+        if (IsEqualGUID(&guid, &MFVideoFormat_L8) || IsEqualGUID(&guid, &MFVideoFormat_L16)
+                || IsEqualGUID(&guid, &MFAudioFormat_MPEG) || IsEqualGUID(&guid, &MFVideoFormat_420O)
+                || IsEqualGUID(&guid, &MFVideoFormat_A16B16G16R16F) /* w1064v1507 */)
+        {
+            IMFMediaType_Release(media_type);
+            winetest_pop_context();
+            continue;
+        }
 
         hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
         ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetInputType returned %#lx.\n", hr);
-
         hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, (UINT64)actual_width << 32 | actual_height);
         ok(hr == S_OK, "SetUINT64 returned %#lx.\n", hr);
         hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
@@ -6564,7 +6535,6 @@ static void test_video_processor(void)
         winetest_pop_context();
     }
     ok(hr == MF_E_NO_MORE_TYPES, "GetInputAvailableType returned %#lx\n", hr);
-    ok(i == 22 || i == 30 || broken(i == 26) /* w1064v1507 */, "%lu input media types\n", i);
 
     for (i = 0; i < ARRAY_SIZE(video_processor_tests); i++)
     {
