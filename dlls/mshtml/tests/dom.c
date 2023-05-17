@@ -11980,6 +11980,29 @@ static void test_document_mode_lock(void)
     IHTMLDocument2_Release(doc);
 }
 
+static DWORD WINAPI create_document_proc(void *param)
+{
+    IHTMLDocument2 *doc = NULL;
+    HRESULT hres;
+
+    CoInitialize(NULL);
+
+    hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IHTMLDocument2, (void**)&doc);
+    todo_wine
+    ok(hres == S_OK, "Creation of an HTMLDocument in a separate thread failed: %08lx\n", hres);
+
+    if (doc) IHTMLDocument2_Release(doc);
+    return 0;
+}
+
+static void test_threads(void)
+{
+    HANDLE thread = CreateThread(NULL, 0, create_document_proc, 0, 0, NULL);
+    DWORD ret = WaitForSingleObject(thread, 2000);
+    ok(!ret, "Document creation thread failed to complete\n");
+}
+
 static void test_custom_user_agent(IHTMLDocument2 *doc)
 {
     static const WCHAR ua[] = L"1234567890xxxABC";
@@ -12080,6 +12103,7 @@ START_TEST(dom)
 
     test_quirks_mode();
     test_document_mode_lock();
+    test_threads();
 
     /* Run this last since it messes with the process-wide user agent */
     if (winetest_interactive || ! is_ie_hardened()) {
