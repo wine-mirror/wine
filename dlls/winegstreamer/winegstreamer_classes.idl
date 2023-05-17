@@ -111,3 +111,9 @@ coclass CResamplerMediaObject {}
     uuid(98230571-0087-4204-b020-3282538e57d3)
 ]
 coclass CColorConvertDMO {}
+
+[
+    threading(both),
+    uuid(11275a82-5e5a-47fd-a01c-3683c12fb196)
+]
+coclass MFMP3SinkClassFactory {}

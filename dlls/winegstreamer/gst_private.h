@@ -35,6 +35,7 @@
 #include "mfidl.h"
 #include "wine/debug.h"
 #include "wine/strmbase.h"
+#include "wine/mfinternal.h"
 
 #include "unixlib.h"
 
@@ -121,6 +122,7 @@ HRESULT wma_decoder_create(IUnknown *outer, IUnknown **out);
 HRESULT wmv_decoder_create(IUnknown *outer, IUnknown **out);
 HRESULT resampler_create(IUnknown *outer, IUnknown **out);
 HRESULT color_convert_create(IUnknown *outer, IUnknown **out);
+HRESULT sink_class_factory_create(IUnknown *outer, IUnknown **out);
 
 bool amt_from_wg_format(AM_MEDIA_TYPE *mt, const struct wg_format *format, bool wm);
 bool amt_to_wg_format(const AM_MEDIA_TYPE *mt, struct wg_format *format);
