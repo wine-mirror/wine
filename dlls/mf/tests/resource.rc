@@ -80,8 +80,8 @@ i420frame.bmp RCDATA i420frame.bmp
 rgb32frame.bmp RCDATA rgb32frame.bmp
 
 /* Generated from running the tests on Windows */
-/* @makedep: rgb32frame-vp.bmp */
-rgb32frame-vp.bmp RCDATA rgb32frame-vp.bmp
+/* @makedep: rgb32frame-flip.bmp */
+rgb32frame-flip.bmp RCDATA rgb32frame-flip.bmp
 
 /* Generated from running the tests on Windows */
 /* @makedep: rgb32frame-grabber.bmp */

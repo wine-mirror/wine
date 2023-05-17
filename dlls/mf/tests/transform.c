@@ -5146,7 +5146,7 @@ static void test_wmv_decoder(void)
             .expect_input_info = &expect_input_info_rgb,
             .expect_output_info = &expect_output_info_rgb,
             .output_sample_desc = &output_sample_desc_rgb,
-            .result_bitmap = L"rgb32frame-vp.bmp",
+            .result_bitmap = L"rgb32frame-flip.bmp",
             .delta = 5,
         },
 
@@ -5157,7 +5157,7 @@ static void test_wmv_decoder(void)
             .expect_input_info = &expect_input_info_rgb,
             .expect_output_info = &expect_output_info_rgb,
             .output_sample_desc = &output_sample_desc_rgb,
-            .result_bitmap = L"rgb32frame-vp.bmp",
+            .result_bitmap = L"rgb32frame-flip.bmp",
             .delta = 5,
         },
 
@@ -5168,7 +5168,7 @@ static void test_wmv_decoder(void)
             .expect_input_info = &expect_input_info_rgb,
             .expect_output_info = &expect_output_info_rgb,
             .output_sample_desc = &output_sample_desc_rgb,
-            .result_bitmap = L"rgb32frame-vp.bmp",
+            .result_bitmap = L"rgb32frame-flip.bmp",
             .delta = 5,
         },
 
@@ -5849,7 +5849,7 @@ static void test_color_convert(void)
             /* YUV -> RGB (negative stride) */
             .output_type_desc = output_type_desc_negative_stride,
             .expect_output_type_desc = expect_output_type_desc_negative_stride,
-            .result_bitmap = L"rgb32frame-vp.bmp",
+            .result_bitmap = L"rgb32frame-flip.bmp",
             .delta = 6,
         },
 
@@ -6134,7 +6134,7 @@ static void test_video_processor(void)
 
     static const MFVideoArea actual_aperture = {.Area={82,84}};
     static const DWORD actual_width = 96, actual_height = 96;
-    const struct attribute_desc input_type_desc[] =
+    const struct attribute_desc nv12_default_stride[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
         ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12, .required = TRUE),
@@ -6142,7 +6142,7 @@ static void test_video_processor(void)
         ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
         {0},
     };
-    const struct attribute_desc output_type_desc[] =
+    const struct attribute_desc rgb32_default_stride[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
         ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .required = TRUE),
@@ -6150,7 +6150,7 @@ static void test_video_processor(void)
         ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
         {0},
     };
-    const struct attribute_desc output_type_desc_negative_stride[] =
+    const struct attribute_desc rgb32_negative_stride[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
         ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .required = TRUE),
@@ -6159,7 +6159,7 @@ static void test_video_processor(void)
         ATTR_UINT32(MF_MT_DEFAULT_STRIDE, -actual_width * 4),
         {0},
     };
-    const struct attribute_desc output_type_desc_positive_stride[] =
+    const struct attribute_desc rgb32_positive_stride[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
         ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .required = TRUE),
@@ -6173,57 +6173,48 @@ static void test_video_processor(void)
     MFT_OUTPUT_STREAM_INFO output_info = {0};
     MFT_INPUT_STREAM_INFO input_info = {0};
 
-    const struct buffer_desc output_buffer_desc =
-    {
-        .length = actual_width * actual_height * 4,
-        .compare = compare_rgb32, .dump = dump_rgb32, .rect = {.top = 12, .right = 82, .bottom = 96},
-    };
     const struct attribute_desc output_sample_attributes[] =
     {
         ATTR_UINT32(MFSampleExtension_CleanPoint, 1, .todo = TRUE),
         {0},
     };
-    const struct sample_desc output_sample_desc =
+    const struct buffer_desc rgb32_buffer_desc =
+    {
+        .length = actual_width * actual_height * 4,
+        .compare = compare_rgb32, .dump = dump_rgb32, .rect = {.top = 12, .right = 82, .bottom = 96},
+    };
+    const struct sample_desc rgb32_sample_desc =
     {
         .attributes = output_sample_attributes,
         .sample_time = 0, .sample_duration = 10000000,
-        .buffer_count = 1, .buffers = &output_buffer_desc,
+        .buffer_count = 1, .buffers = &rgb32_buffer_desc,
     };
 
     const struct transform_desc
     {
+        const struct attribute_desc *input_type_desc;
         const struct attribute_desc *output_type_desc;
-        const struct attribute_desc *expect_output_type_desc;
+        const struct sample_desc *output_sample_desc;
         const WCHAR *result_bitmap;
         ULONG delta;
     }
     video_processor_tests[] =
     {
-
         {
-            /* YUV -> RGB */
-            .output_type_desc = output_type_desc,
-            .expect_output_type_desc = output_type_desc,
-            .result_bitmap = L"rgb32frame-vp.bmp",
+            .input_type_desc = nv12_default_stride, .output_type_desc = rgb32_default_stride,
+            .output_sample_desc = &rgb32_sample_desc, .result_bitmap = L"rgb32frame-flip.bmp",
             .delta = 2, /* Windows returns 0, Wine needs 2 */
         },
-
         {
-            /* YUV -> RGB (negative stride) */
-            .output_type_desc = output_type_desc_negative_stride,
-            .expect_output_type_desc = output_type_desc_negative_stride,
-            .result_bitmap = L"rgb32frame-vp.bmp",
+            .input_type_desc = nv12_default_stride, .output_type_desc = rgb32_negative_stride,
+            .output_sample_desc = &rgb32_sample_desc, .result_bitmap = L"rgb32frame-flip.bmp",
             .delta = 2, /* Windows returns 0, Wine needs 2 */
         },
-
         {
-            /* YUV -> RGB (positive stride) */
-            .output_type_desc = output_type_desc_positive_stride,
-            .expect_output_type_desc = output_type_desc_positive_stride,
-            .result_bitmap = L"rgb32frame.bmp",
+            .input_type_desc = nv12_default_stride, .output_type_desc = rgb32_positive_stride,
+            .output_sample_desc = &rgb32_sample_desc, .result_bitmap = L"rgb32frame.bmp",
             .delta = 6,
         },
-
     };
 
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
@@ -6538,15 +6529,17 @@ static void test_video_processor(void)
 
     for (i = 0; i < ARRAY_SIZE(video_processor_tests); i++)
     {
+        const struct transform_desc *test = video_processor_tests + i;
+
         winetest_push_context("transform #%lu", i);
 
-        check_mft_set_input_type_required(transform, input_type_desc);
-        check_mft_set_input_type(transform, input_type_desc);
-        check_mft_get_input_current_type(transform, input_type_desc);
+        check_mft_set_input_type_required(transform, test->input_type_desc);
+        check_mft_set_input_type(transform, test->input_type_desc);
+        check_mft_get_input_current_type(transform, test->input_type_desc);
 
-        check_mft_set_output_type_required(transform, video_processor_tests[i].output_type_desc);
-        check_mft_set_output_type(transform, video_processor_tests[i].output_type_desc, S_OK);
-        check_mft_get_output_current_type(transform, video_processor_tests[i].output_type_desc);
+        check_mft_set_output_type_required(transform, test->output_type_desc);
+        check_mft_set_output_type(transform, test->output_type_desc, S_OK);
+        check_mft_get_output_current_type(transform, test->output_type_desc);
 
         input_info.cbSize = actual_width * actual_height * 3 / 2;
         output_info.cbSize = actual_width * actual_height * 4;
@@ -6594,9 +6587,8 @@ static void test_video_processor(void)
             ref = IMFSample_Release(output_sample);
             ok(ref == 1, "Release returned %ld\n", ref);
 
-            ret = check_mf_sample_collection(output_samples, &output_sample_desc,
-                                             video_processor_tests[i].result_bitmap);
-            ok(ret <= video_processor_tests[i].delta
+            ret = check_mf_sample_collection(output_samples, test->output_sample_desc, test->result_bitmap);
+            ok(ret <= test->delta
                    /* w1064v1507 / w1064v1809 incorrectly rescale */
                    || broken(ret == 25) || broken(ret == 32),
                "got %lu%% diff\n", ret);
