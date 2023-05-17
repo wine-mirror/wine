@@ -1194,6 +1194,56 @@ static void test_topology(void)
     ok(ref == 0, "Release returned %ld\n", ref);
     ref = IMFTopologyNode_Release(node2);
     ok(ref == 0, "Release returned %ld\n", ref);
+
+    /* Try cloning a topology without all outputs connected */
+    hr = MFCreateTopology(&topology);
+    ok(hr == S_OK, "Failed to create topology, hr %#lx.\n", hr);
+
+    hr = MFCreateTopology(&topology2);
+    ok(hr == S_OK, "Failed to create topology, hr %#lx.\n", hr);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &node);
+    ok(hr == S_OK, "Failed to create topology node, hr %#lx.\n", hr);
+
+    hr = IMFTopology_AddNode(topology, node);
+    ok(hr == S_OK, "Failed to add a node, hr %#lx.\n", hr);
+    EXPECT_REF(node, 2);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &node2);
+    ok(hr == S_OK, "Failed to create topology node, hr %#lx.\n", hr);
+
+    hr = IMFTopology_AddNode(topology, node2);
+    ok(hr == S_OK, "Failed to add a node, hr %#lx.\n", hr);
+    EXPECT_REF(node, 2);
+
+    hr = IMFTopologyNode_ConnectOutput(node, 1, node2, 0);
+    ok(hr == S_OK, "Failed to connect output, hr %#lx.\n", hr);
+
+    hr = IMFTopology_CloneFrom(topology2, topology);
+    ok(hr == S_OK, "Failed to clone from topology, hr %#lx.\n", hr);
+
+    hr = IMFTopology_GetNodeCount(topology2, &node_count);
+    ok(hr == S_OK, "Failed to get node count, hr %#lx.\n", hr);
+    ok(node_count == 2, "Unexpected node count %u.\n", node_count);
+
+    hr = IMFTopology_GetNode(topology2, 0, &node3);
+    ok(hr == S_OK, "Failed to get node, hr %#lx.\n", hr);
+
+    hr = IMFTopologyNode_GetOutputCount(node3, &size);
+    ok(hr == S_OK, "Failed to get output count, hr %#lx.\n", hr);
+    ok(size == 2, "Unexpected output count %lu.\n", size);
+
+    IMFTopologyNode_Release(node3);
+
+    ref = IMFTopology_Release(topology2);
+    ok(ref == 0, "Release returned %ld\n", ref);
+    ref = IMFTopology_Release(topology);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+    ref = IMFTopologyNode_Release(node2);
+    ok(ref == 0, "Release returned %ld\n", ref);
+    ref = IMFTopologyNode_Release(node);
+    ok(ref == 0, "Release returned %ld\n", ref);
 }
 
 static void test_topology_tee_node(void)
