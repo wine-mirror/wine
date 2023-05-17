@@ -307,7 +307,7 @@ static inline int paper_size_from_points(float size)
     return size * 254 / 72;
 }
 
-static const struct input_slot *unix_find_slot(const struct printer_info *pi,
+static const struct input_slot *find_slot(const struct printer_info *pi,
         const DEVMODEW *dm)
 {
     const struct input_slot *slot = (const struct input_slot *)pi->devmode->data;
@@ -321,7 +321,7 @@ static const struct input_slot *unix_find_slot(const struct printer_info *pi,
     return NULL;
 }
 
-static const struct page_size *unix_find_pagesize(const struct printer_info *pi,
+static const struct page_size *find_pagesize(const struct printer_info *pi,
         const DEVMODEW *dm)
 {
     const struct page_size *page;
@@ -357,7 +357,7 @@ static void merge_devmodes(PSDRV_DEVMODE *dm1, const DEVMODEW *dm2,
     /* NB PaperWidth is always < PaperLength */
     if (dm2->dmFields & DM_PAPERSIZE)
     {
-        const struct page_size *page = unix_find_pagesize(pi, dm2);
+        const struct page_size *page = find_pagesize(pi, dm2);
 
         if (page)
         {
@@ -414,7 +414,7 @@ static void merge_devmodes(PSDRV_DEVMODE *dm1, const DEVMODEW *dm2,
 
     if (dm2->dmFields & DM_DEFAULTSOURCE)
     {
-        const struct input_slot *slot = unix_find_slot(pi, dm2);
+        const struct input_slot *slot = find_slot(pi, dm2);
 
         if (slot)
             dm1->dmPublic.dmDefaultSource = dm2->dmDefaultSource;
@@ -513,7 +513,7 @@ static void update_dev_caps(PSDRV_PDEVICE *pdev)
     }
 
     if (pdev->devmode->dmPublic.dmFields & DM_PAPERSIZE) {
-        page = unix_find_pagesize(pdev->pi, &pdev->devmode->dmPublic);
+        page = find_pagesize(pdev->pi, &pdev->devmode->dmPublic);
 
         if (!page)
         {
