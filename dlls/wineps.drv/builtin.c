@@ -31,7 +31,6 @@
 #include "winternl.h"
 
 #include "psdrv.h"
-#include "unixlib.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);

@@ -31,7 +31,6 @@
 #include "psdrv.h"
 #include "ddk/winddi.h"
 #include "ntf.h"
-#include "unixlib.h"
 #include "winspool.h"
 #include "wine/debug.h"
 

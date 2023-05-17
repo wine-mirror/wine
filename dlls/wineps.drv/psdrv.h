@@ -28,6 +28,8 @@
 #include "wingdi.h"
 #include "winspool.h"
 
+#include "unixlib.h"
+
 #include "wine/gdi_driver.h"
 #include "wine/list.h"
 
@@ -209,19 +211,6 @@ typedef struct {
     struct list         Duplexes;
     DUPLEX              *DefaultDuplex;
 } PPD;
-
-typedef struct {
-    DEVMODEW dmPublic;
-    int default_resolution;
-    int landscape_orientation;
-    int duplex;
-    int input_slots;
-    int resolutions;
-    int page_sizes;
-    int font_subs;
-    int installed_fonts;
-    BYTE data[1];
-} PSDRV_DEVMODE;
 
 typedef struct
 {
@@ -554,7 +543,6 @@ extern void passthrough_leave(print_ctx *ctx) DECLSPEC_HIDDEN;
 	setlocale(LC_NUMERIC,tmplocale);			\
 } while (0)
 
-#ifndef WINE_UNIX_LIB
 static inline WCHAR *strdupW( const WCHAR *str )
 {
     int size;
@@ -566,6 +554,5 @@ static inline WCHAR *strdupW( const WCHAR *str )
     if (ret) memcpy( ret, str, size );
     return ret;
 }
-#endif
 
 #endif

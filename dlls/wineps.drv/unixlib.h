@@ -16,6 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef __PSDRV_UNIXLIB_H
+#define __PSDRV_UNIXLIB_H
+
 #include "ntuser.h"
 #include "wine/unixlib.h"
 
@@ -71,6 +74,19 @@ struct installed_font
     char name[LF_FACESIZE];
 };
 
+typedef struct {
+    DEVMODEW dmPublic;
+    int default_resolution;
+    int landscape_orientation;
+    int duplex;
+    int input_slots;
+    int resolutions;
+    int page_sizes;
+    int font_subs;
+    int installed_fonts;
+    BYTE data[1];
+} PSDRV_DEVMODE;
+
 /* Unix calls */
 enum wineps_funcs
 {
@@ -94,3 +110,5 @@ struct open_dc_params
     PSDRV_DEVMODE *def_devmode;
     HDC hdc;
 };
+
+#endif

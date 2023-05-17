@@ -32,7 +32,6 @@
 #include "winbase.h"
 
 #include "ntf.h"
-#include "psdrv.h"
 #include "unixlib.h"
 #include "ntgdi.h"
 #include "ddk/winddi.h"
