@@ -1896,6 +1896,7 @@ static void init_toolbar(FileDialogImpl *This, HWND hwnd)
     HWND htoolbar;
     TBADDBITMAP tbab;
     TBBUTTON button[2];
+    int height;
 
     htoolbar = CreateWindowExW(0, TOOLBARCLASSNAMEW, NULL, TBSTYLE_FLAT | WS_CHILD | WS_VISIBLE,
                                0, 0, 0, 0,
@@ -1920,7 +1921,8 @@ static void init_toolbar(FileDialogImpl *This, HWND hwnd)
     button[1].iString = 0;
 
     SendMessageW(htoolbar, TB_ADDBUTTONSW, 2, (LPARAM)button);
-    SendMessageW(htoolbar, TB_SETBUTTONSIZE, 0, MAKELPARAM(24,24));
+    height = MulDiv(24, This->dpi_y, USER_DEFAULT_SCREEN_DPI);
+    SendMessageW(htoolbar, TB_SETBUTTONSIZE, 0, MAKELPARAM(height, height));
     SendMessageW(htoolbar, TB_AUTOSIZE, 0, 0);
 }
 
