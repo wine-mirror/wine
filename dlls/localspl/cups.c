@@ -520,9 +520,9 @@ static NTSTATUS wow64_start_doc(void *args)
     struct
     {
         unsigned int type;
-        const PTR32 port;
-        const PTR32 document_title;
-        INT64 *doc;
+        PTR32 port;
+        PTR32 document_title;
+        PTR32 doc;
     } const *params32 = args;
 
     struct start_doc_params params =
@@ -530,7 +530,7 @@ static NTSTATUS wow64_start_doc(void *args)
         params32->type,
         ULongToPtr(params32->port),
         ULongToPtr(params32->document_title),
-        params32->doc,
+        ULongToPtr(params32->doc),
     };
 
     return start_doc(&params);
@@ -541,7 +541,7 @@ static NTSTATUS wow64_write_doc(void *args)
     struct
     {
         INT64 doc;
-        const PTR32 buf;
+        PTR32 buf;
         unsigned int size;
     } const *params32 = args;
 
