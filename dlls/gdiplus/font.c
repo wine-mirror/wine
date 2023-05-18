@@ -969,18 +969,21 @@ GpStatus WINGDIPAPI GdipIsStyleAvailable(GDIPCONST GpFontFamily* family,
 /*****************************************************************************
  * GdipGetGenericFontFamilyMonospace [GDIPLUS.@]
  *
- * Obtains a serif family (Courier New on Windows)
+ * Obtains a monospace family (Courier New on Windows)
  *
  * PARAMS
- *  **nativeFamily         [I] Where the font will be stored
+ *  **nativeFamily         [O] Where the font will be stored
  *
  * RETURNS
  *  InvalidParameter if nativeFamily is NULL.
+ *  FontFamilyNotFound if unable to get font.
  *  Ok otherwise.
  */
 GpStatus WINGDIPAPI GdipGetGenericFontFamilyMonospace(GpFontFamily **nativeFamily)
 {
     GpStatus stat;
+
+    TRACE("(%p)\n", nativeFamily);
 
     if (nativeFamily == NULL) return InvalidParameter;
 
@@ -990,7 +993,7 @@ GpStatus WINGDIPAPI GdipGetGenericFontFamilyMonospace(GpFontFamily **nativeFamil
         stat = GdipCreateFontFamilyFromName(L"Liberation Mono", NULL, nativeFamily);
 
     if (stat == FontFamilyNotFound)
-        ERR("Missing 'Courier New' font\n");
+        stat = GdipCreateFontFamilyFromName(L"Courier", NULL, nativeFamily);
 
     return stat;
 }
@@ -1001,10 +1004,11 @@ GpStatus WINGDIPAPI GdipGetGenericFontFamilyMonospace(GpFontFamily **nativeFamil
  * Obtains a serif family (Times New Roman on Windows)
  *
  * PARAMS
- *  **nativeFamily         [I] Where the font will be stored
+ *  **nativeFamily         [O] Where the font will be stored
  *
  * RETURNS
  *  InvalidParameter if nativeFamily is NULL.
+ *  FontFamilyNotFound if unable to get font.
  *  Ok otherwise.
  */
 GpStatus WINGDIPAPI GdipGetGenericFontFamilySerif(GpFontFamily **nativeFamily)
@@ -1021,7 +1025,7 @@ GpStatus WINGDIPAPI GdipGetGenericFontFamilySerif(GpFontFamily **nativeFamily)
         stat = GdipCreateFontFamilyFromName(L"Liberation Serif", NULL, nativeFamily);
 
     if (stat == FontFamilyNotFound)
-        ERR("Missing 'Times New Roman' font\n");
+        stat = GdipGetGenericFontFamilySansSerif(nativeFamily);
 
     return stat;
 }
@@ -1029,13 +1033,14 @@ GpStatus WINGDIPAPI GdipGetGenericFontFamilySerif(GpFontFamily **nativeFamily)
 /*****************************************************************************
  * GdipGetGenericFontFamilySansSerif [GDIPLUS.@]
  *
- * Obtains a serif family (Microsoft Sans Serif on Windows)
+ * Obtains a sans serif family (Microsoft Sans Serif or Arial on Windows)
  *
  * PARAMS
- *  **nativeFamily         [I] Where the font will be stored
+ *  **nativeFamily         [O] Where the font will be stored
  *
  * RETURNS
  *  InvalidParameter if nativeFamily is NULL.
+ *  FontFamilyNotFound if unable to get font.
  *  Ok otherwise.
  */
 GpStatus WINGDIPAPI GdipGetGenericFontFamilySansSerif(GpFontFamily **nativeFamily)
@@ -1049,7 +1054,12 @@ GpStatus WINGDIPAPI GdipGetGenericFontFamilySansSerif(GpFontFamily **nativeFamil
     stat = GdipCreateFontFamilyFromName(L"Microsoft Sans Serif", NULL, nativeFamily);
 
     if (stat == FontFamilyNotFound)
-        /* FIXME: Microsoft Sans Serif is not installed on Wine. */
+        stat = GdipCreateFontFamilyFromName(L"Arial", NULL, nativeFamily);
+
+    if (stat == FontFamilyNotFound)
+        stat = GdipCreateFontFamilyFromName(L"Liberation Sans", NULL, nativeFamily);
+
+    if (stat == FontFamilyNotFound)
         stat = GdipCreateFontFamilyFromName(L"Tahoma", NULL, nativeFamily);
 
     return stat;
