@@ -221,6 +221,9 @@ void wayland_surface_clear_role(struct wayland_surface *surface)
  *          wayland_surface_attach_shm
  *
  * Attaches a SHM buffer to a wayland surface.
+ *
+ * The buffer is marked as unavailable until committed and subsequently
+ * released by the compositor.
  */
 void wayland_surface_attach_shm(struct wayland_surface *surface,
                                 struct wayland_shm_buffer *shm_buffer)
@@ -228,19 +231,34 @@ void wayland_surface_attach_shm(struct wayland_surface *surface,
     TRACE("surface=%p shm_buffer=%p (%dx%d)\n",
           surface, shm_buffer, shm_buffer->width, shm_buffer->height);
 
+    shm_buffer->busy = TRUE;
+    wayland_shm_buffer_ref(shm_buffer);
+
     wl_surface_attach(surface->wl_surface, shm_buffer->wl_buffer, 0, 0);
     wl_surface_damage_buffer(surface->wl_surface, 0, 0,
                              shm_buffer->width, shm_buffer->height);
 }
 
 /**********************************************************************
- *          wayland_shm_buffer_destroy
+ *          wayland_shm_buffer_ref
  *
- * Destroys a SHM buffer.
+ * Increases the reference count of a SHM buffer.
  */
-void wayland_shm_buffer_destroy(struct wayland_shm_buffer *shm_buffer)
+void wayland_shm_buffer_ref(struct wayland_shm_buffer *shm_buffer)
 {
-    TRACE("%p map=%p\n", shm_buffer, shm_buffer->map_data);
+    InterlockedIncrement(&shm_buffer->ref);
+}
+
+/**********************************************************************
+ *          wayland_shm_buffer_unref
+ *
+ * Decreases the reference count of a SHM buffer (and may destroy it).
+ */
+void wayland_shm_buffer_unref(struct wayland_shm_buffer *shm_buffer)
+{
+    if (InterlockedDecrement(&shm_buffer->ref) > 0) return;
+
+    TRACE("destroying %p map=%p\n", shm_buffer, shm_buffer->map_data);
 
     if (shm_buffer->wl_buffer)
         wl_buffer_destroy(shm_buffer->wl_buffer);
@@ -284,6 +302,7 @@ struct wayland_shm_buffer *wayland_shm_buffer_create(int width, int height,
 
     TRACE("%p %dx%d format=%d size=%d\n", shm_buffer, width, height, format, size);
 
+    shm_buffer->ref = 1;
     shm_buffer->width = width;
     shm_buffer->height = height;
     shm_buffer->map_size = size;
@@ -340,6 +359,6 @@ struct wayland_shm_buffer *wayland_shm_buffer_create(int width, int height,
 err:
     if (fd >= 0) close(fd);
     if (handle) NtClose(handle);
-    if (shm_buffer) wayland_shm_buffer_destroy(shm_buffer);
+    if (shm_buffer) wayland_shm_buffer_unref(shm_buffer);
     return NULL;
 }

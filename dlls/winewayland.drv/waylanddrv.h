@@ -107,10 +107,13 @@ struct wayland_surface
 
 struct wayland_shm_buffer
 {
+    struct wl_list link;
     struct wl_buffer *wl_buffer;
     int width, height;
     void *map_data;
     size_t map_size;
+    BOOL busy;
+    LONG ref;
 };
 
 /**********************************************************************
@@ -145,7 +148,8 @@ void wayland_surface_attach_shm(struct wayland_surface *surface,
 
 struct wayland_shm_buffer *wayland_shm_buffer_create(int width, int height,
                                                      enum wl_shm_format format) DECLSPEC_HIDDEN;
-void wayland_shm_buffer_destroy(struct wayland_shm_buffer *shm_buffer) DECLSPEC_HIDDEN;
+void wayland_shm_buffer_ref(struct wayland_shm_buffer *shm_buffer) DECLSPEC_HIDDEN;
+void wayland_shm_buffer_unref(struct wayland_shm_buffer *shm_buffer) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  *          Wayland window surface
