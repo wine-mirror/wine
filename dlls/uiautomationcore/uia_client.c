@@ -2692,29 +2692,11 @@ HRESULT WINAPI UiaGetPropertyValue(HUIANODE huianode, PROPERTYID prop_id, VARIAN
     return hr;
 }
 
-#define UIA_RUNTIME_ID_PREFIX 42
-
 enum fragment_root_prov_type_ids {
     FRAGMENT_ROOT_NONCLIENT_TYPE_ID = 0x03,
     FRAGMENT_ROOT_MAIN_TYPE_ID      = 0x04,
     FRAGMENT_ROOT_OVERRIDE_TYPE_ID  = 0x05,
 };
-
-static HRESULT write_runtime_id_base(SAFEARRAY *sa, HWND hwnd)
-{
-    const int rt_id[2] = { UIA_RUNTIME_ID_PREFIX, HandleToUlong(hwnd) };
-    HRESULT hr;
-    LONG idx;
-
-    for (idx = 0; idx < ARRAY_SIZE(rt_id); idx++)
-    {
-        hr = SafeArrayPutElement(sa, &idx, (void *)&rt_id[idx]);
-        if (FAILED(hr))
-            return hr;
-    }
-
-    return S_OK;
-}
 
 static SAFEARRAY *append_uia_runtime_id(SAFEARRAY *sa, HWND hwnd, enum ProviderOptions root_opts)
 {

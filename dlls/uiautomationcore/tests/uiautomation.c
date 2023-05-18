@@ -14239,6 +14239,49 @@ static void test_UiaAddEvent(void)
 
     hr = UiaRemoveEvent(event);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /*
+     * Register an event on the desktop HWND with a scope of TreeScope_Element
+     * and TreeScope_Descendants. This is a special case where all providers
+     * will match, regardless of whether or not they can navigate to the
+     * desktop node.
+     */
+    set_cache_request(&cache_req, (struct UiaCondition *)&UiaTrueCondition, TreeScope_Element, NULL, 0, NULL, 0,
+            AutomationElementMode_Full);
+    hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Element | TreeScope_Descendants, NULL, 0,
+            &cache_req, &event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!event, "event == NULL\n");
+
+    /*
+     * Raise an event on Provider2 - completely disconnected from all other
+     * providers, will still trigger the event callback.
+     */
+    initialize_provider(&Provider2, ProviderOptions_ServerSideProvider, NULL, TRUE);
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), NULL);
+    add_provider_desc(&exp_node_desc, L"Main", L"Provider2", TRUE);
+    set_event_data(0, 0, 1, 1, &exp_node_desc, L"P)");
+    SET_EXPECT(uia_event_callback);
+    hr = UiaRaiseAutomationEvent(&Provider2.IRawElementProviderSimple_iface, UIA_AutomationFocusChangedEventId);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    CHECK_CALLED(uia_event_callback);
+
+    /*
+     * No clientside providers to match us to the desktop node through
+     * navigation, but event will still be triggered.
+     */
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), hwnd);
+    add_provider_desc(&exp_node_desc, L"Main", L"Provider_hwnd2", TRUE);
+    set_event_data(0, 0, 1, 1, &exp_node_desc, L"P)");
+    SET_EXPECT(uia_event_callback);
+    Provider_hwnd2.prov_opts = ProviderOptions_ServerSideProvider;
+    Provider_hwnd2.ignore_hwnd_prop = TRUE;
+    hr = UiaRaiseAutomationEvent(&Provider_hwnd2.IRawElementProviderSimple_iface, UIA_AutomationFocusChangedEventId);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    CHECK_CALLED(uia_event_callback);
+
+    hr = UiaRemoveEvent(event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     UiaNodeRelease(node);
 
     method_sequences_enabled = TRUE;

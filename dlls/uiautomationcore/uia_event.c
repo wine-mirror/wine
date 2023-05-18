@@ -24,6 +24,32 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(uiautomation);
 
+static SAFEARRAY *uia_desktop_node_rt_id;
+static BOOL WINAPI uia_init_desktop_rt_id(INIT_ONCE *once, void *param, void **ctx)
+{
+    SAFEARRAY *sa;
+
+    if ((sa = SafeArrayCreateVector(VT_I4, 0, 2)))
+    {
+        if (SUCCEEDED(write_runtime_id_base(sa, GetDesktopWindow())))
+            uia_desktop_node_rt_id = sa;
+        else
+            SafeArrayDestroy(sa);
+    }
+
+    return !!uia_desktop_node_rt_id;
+}
+
+static SAFEARRAY *uia_get_desktop_rt_id(void)
+{
+    static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
+
+    if (!uia_desktop_node_rt_id)
+        InitOnceExecuteOnce(&once, uia_init_desktop_rt_id, NULL, NULL);
+
+    return uia_desktop_node_rt_id;
+}
+
 /*
  * UI Automation event map.
  */
@@ -81,7 +107,12 @@ static struct uia_event_map_entry *uia_get_event_map_entry_for_event(int event_i
 
 static HRESULT uia_event_map_add_event(struct uia_event *event)
 {
+    const int subtree_scope = TreeScope_Element | TreeScope_Descendants;
     struct uia_event_map_entry *event_entry;
+
+    if (((event->scope & subtree_scope) == subtree_scope) && event->runtime_id &&
+            !uia_compare_safearrays(uia_get_desktop_rt_id(), event->runtime_id, UIAutomationType_IntArray))
+        event->desktop_subtree_event = TRUE;
 
     EnterCriticalSection(&event_map_cs);
 
@@ -538,6 +569,9 @@ static HRESULT uia_event_check_match(HUIANODE node, SAFEARRAY *rt_id, struct Uia
     /* Can't match an event that doesn't have a runtime ID, early out. */
     if (!event->runtime_id)
         return S_OK;
+
+    if (event->desktop_subtree_event)
+        return uia_event_invoke(node, args, event);
 
     if (rt_id && !uia_compare_safearrays(rt_id, event->runtime_id, UIAutomationType_IntArray))
     {

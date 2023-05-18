@@ -98,6 +98,7 @@ struct uia_event
     IWineUiaEvent IWineUiaEvent_iface;
     LONG ref;
 
+    BOOL desktop_subtree_event;
     SAFEARRAY *runtime_id;
     int event_id;
     int scope;
@@ -190,6 +191,7 @@ HRESULT create_msaa_provider(IAccessible *acc, long child_id, HWND hwnd, BOOL kn
 HRESULT register_interface_in_git(IUnknown *iface, REFIID riid, DWORD *ret_cookie) DECLSPEC_HIDDEN;
 HRESULT unregister_interface_in_git(DWORD git_cookie) DECLSPEC_HIDDEN;
 HRESULT get_interface_in_git(REFIID riid, DWORD git_cookie, IUnknown **ret_iface) DECLSPEC_HIDDEN;
+HRESULT write_runtime_id_base(SAFEARRAY *sa, HWND hwnd) DECLSPEC_HIDDEN;
 void uia_cache_request_destroy(struct UiaCacheRequest *cache_req) DECLSPEC_HIDDEN;
 HRESULT uia_cache_request_clone(struct UiaCacheRequest *dst, struct UiaCacheRequest *src) DECLSPEC_HIDDEN;
 HRESULT get_safearray_dim_bounds(SAFEARRAY *sa, UINT dim, LONG *lbound, LONG *elems) DECLSPEC_HIDDEN;

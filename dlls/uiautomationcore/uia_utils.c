@@ -98,6 +98,23 @@ HRESULT get_interface_in_git(REFIID riid, DWORD git_cookie, IUnknown **ret_iface
     return S_OK;
 }
 
+#define UIA_RUNTIME_ID_PREFIX 42
+HRESULT write_runtime_id_base(SAFEARRAY *sa, HWND hwnd)
+{
+    const int rt_id[2] = { UIA_RUNTIME_ID_PREFIX, HandleToUlong(hwnd) };
+    HRESULT hr;
+    LONG idx;
+
+    for (idx = 0; idx < ARRAY_SIZE(rt_id); idx++)
+    {
+        hr = SafeArrayPutElement(sa, &idx, (void *)&rt_id[idx]);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    return S_OK;
+}
+
 /*
  * UiaCondition cloning functions.
  */
