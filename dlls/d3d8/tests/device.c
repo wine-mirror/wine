@@ -10910,6 +10910,72 @@ static void test_window_position(void)
     IDirect3D8_Release(d3d);
 }
 
+static void test_filter(void)
+{
+    unsigned int mag, min, mip;
+    IDirect3DTexture8 *texture;
+    IDirect3DDevice8 *device;
+    BOOL has_texture;
+    IDirect3D8 *d3d;
+    ULONG refcount;
+    DWORD passes;
+    HWND window;
+    HRESULT hr;
+
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    window = create_window();
+    if (!(device = create_device(d3d, window, NULL)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D8_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice8_CreateTexture(device, 128, 128, 0, 0, D3DFMT_X8R8G8B8, D3DPOOL_MANAGED, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#lx.\n", hr);
+
+    for (has_texture = FALSE; has_texture <= TRUE; ++has_texture)
+    for (mag = 0; mag <= D3DTEXF_GAUSSIANCUBIC + 1; ++mag)
+    for (min = 0; min <= D3DTEXF_GAUSSIANCUBIC + 1; ++min)
+    for (mip = 0; mip <= D3DTEXF_GAUSSIANCUBIC + 1; ++mip)
+    {
+        if (has_texture)
+        {
+            hr = IDirect3DDevice8_SetTexture(device, 0, (IDirect3DBaseTexture8 *)texture);
+            ok(SUCCEEDED(hr), "Failed to set texture, hr %#lx.\n", hr);
+        }
+        else
+        {
+            hr = IDirect3DDevice8_SetTexture(device, 0, NULL);
+            ok(SUCCEEDED(hr), "Failed to set texture, hr %#lx.\n", hr);
+        }
+
+        hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MAGFILTER, mag);
+        ok(SUCCEEDED(hr), "Failed to set sampler state, hr %#lx.\n", hr);
+        hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MINFILTER, min);
+        ok(SUCCEEDED(hr), "Failed to set sampler state, hr %#lx.\n", hr);
+        hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MIPFILTER, mip);
+        ok(SUCCEEDED(hr), "Failed to set sampler state, hr %#lx.\n", hr);
+
+        passes = 0xdeadbeef;
+        hr = IDirect3DDevice8_ValidateDevice(device, &passes);
+        ok(SUCCEEDED(hr), "Failed to validate device, hr %#lx.\n", hr);
+        ok(passes && passes != 0xdeadbeef, "Got unexpected passes %#lx.\n", passes);
+    }
+
+    hr = IDirect3DDevice8_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#lx.\n", hr);
+    IDirect3DTexture8_Release(texture);
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = GetModuleHandleA("d3d8.dll");
@@ -11031,6 +11097,7 @@ START_TEST(device)
     test_creation_parameters();
     test_cursor_clipping();
     test_window_position();
+    test_filter();
 
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
