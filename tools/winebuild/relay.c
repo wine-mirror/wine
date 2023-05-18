@@ -134,10 +134,10 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
     {
         output( "\tcall 1f\n" );
         output( "1:\tpopl %%ecx\n" );
-        output( "\t.byte 0x2e\n\tmovl %s-1b(%%ecx),%%edx\n", asm_name("CallTo16_DataSelector") );
+        output( "\tmovl %%cs:%s-1b(%%ecx),%%edx\n", asm_name("CallTo16_DataSelector") );
     }
     else
-        output( "\t.byte 0x2e\n\tmovl %s,%%edx\n", asm_name("CallTo16_DataSelector") );
+        output( "\tmovl %%cs:%s,%%edx\n", asm_name("CallTo16_DataSelector") );
 
     /* Load 32-bit segment registers */
     output( "\tmovw %%dx, %%ds\n" );
@@ -148,7 +148,7 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
     else
         output( "\tmovw %s, %%fs\n", asm_name("CallTo16_TebSelector") );
 
-    output( "\t.byte 0x64\n\tmov (%d),%%gs\n", GS_OFFSET );
+    output( "\tmov %%fs:(%d),%%gs\n", GS_OFFSET );
 
     /* Translate STACK16FRAME base to flat offset in %edx */
     output( "\tmovw %%ss, %%dx\n" );
@@ -166,12 +166,12 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
     if (reg_func) output( "\tpopl %%ecx\n" );
 
     /* Get the 32-bit stack pointer from the TEB and complete STACK16FRAME */
-    output( "\t.byte 0x64\n\tmovl (%d), %%ebp\n", STACKOFFSET );
+    output( "\tmovl %%fs:(%d), %%ebp\n", STACKOFFSET );
     output( "\tpushl %%ebp\n" );
 
     /* Switch stacks */
-    output( "\t.byte 0x64\n\tmovw %%ss, (%d)\n", STACKOFFSET + 2 );
-    output( "\t.byte 0x64\n\tmovw %%sp, (%d)\n", STACKOFFSET );
+    output( "\tmovw %%ss, %%fs:(%d)\n", STACKOFFSET + 2 );
+    output( "\tmovw %%sp, %%fs:(%d)\n", STACKOFFSET );
     output( "\tpushl %%ds\n" );
     output( "\tpopl %%ss\n" );
     output( "\tmovl %%ebp, %%esp\n" );
@@ -198,9 +198,9 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
         output( "\tcall *0x26(%%edx)\n");  /* FIELD_OFFSET(STACK16FRAME,entry_point) */
 
         /* Switch stack back */
-        output( "\t.byte 0x64\n\tmovw (%d), %%ss\n", STACKOFFSET+2 );
-        output( "\t.byte 0x64\n\tmovzwl (%d), %%esp\n", STACKOFFSET );
-        output( "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
+        output( "\tmovw %%fs:(%d), %%ss\n", STACKOFFSET+2 );
+        output( "\tmovzwl %%fs:(%d), %%esp\n", STACKOFFSET );
+        output( "\tpopl %%fs:(%d)\n", STACKOFFSET );
 
         /* Restore registers and return directly to caller */
         output( "\taddl $8, %%esp\n" );
@@ -257,9 +257,9 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
         output( "\tmovzwl 0x2c(%%edx),%%eax\n"); /* FIELD_OFFSET(STACK16FRAME,ip) */
         output( "\tmovl %%eax,0xb8(%%esp)\n" );  /* Eip */
 
-        output( "\t.byte 0x64\n\tmovzwl (%d), %%eax\n", STACKOFFSET+2 );
+        output( "\tmovzwl %%fs:(%d), %%eax\n", STACKOFFSET+2 );
         output( "\tmovl %%eax,0xc8(%%esp)\n" );  /* SegSs */
-        output( "\t.byte 0x64\n\tmovzwl (%d), %%eax\n", STACKOFFSET );
+        output( "\tmovzwl %%fs:(%d), %%eax\n", STACKOFFSET );
         output( "\taddl $0x2c,%%eax\n");         /* FIELD_OFFSET(STACK16FRAME,ip) */
         output( "\tmovl %%eax,0xc4(%%esp)\n" );  /* Esp */
 #if 0
@@ -290,9 +290,9 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
         output( "\tleal -748(%%ebp),%%ebx\n" ); /* sizeof(CONTEXT) + FIELD_OFFSET(STACK32FRAME,ebp) */
 
         /* Switch stack back */
-        output( "\t.byte 0x64\n\tmovw (%d), %%ss\n", STACKOFFSET+2 );
-        output( "\t.byte 0x64\n\tmovzwl (%d), %%esp\n", STACKOFFSET );
-        output( "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
+        output( "\tmovw %%fs:(%d), %%ss\n", STACKOFFSET+2 );
+        output( "\tmovzwl %%fs:(%d), %%esp\n", STACKOFFSET );
+        output( "\tpopl %%fs:(%d)\n", STACKOFFSET );
 
         /* Get return address to CallFrom16 stub */
         output( "\taddw $0x14,%%sp\n" ); /* FIELD_OFFSET(STACK16FRAME,callfrom_ip)-4 */
@@ -335,9 +335,9 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
     else
     {
         /* Switch stack back */
-        output( "\t.byte 0x64\n\tmovw (%d), %%ss\n", STACKOFFSET+2 );
-        output( "\t.byte 0x64\n\tmovzwl (%d), %%esp\n", STACKOFFSET );
-        output( "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
+        output( "\tmovw %%fs:(%d), %%ss\n", STACKOFFSET+2 );
+        output( "\tmovzwl %%fs:(%d), %%esp\n", STACKOFFSET );
+        output( "\tpopl %%fs:(%d)\n", STACKOFFSET );
 
         /* Restore registers */
         output( "\tpopl %%edx\n" );
@@ -398,22 +398,22 @@ static void BuildCallTo16Core( int reg_func )
     output_cfi( ".cfi_rel_offset %%esi,-8" );
     output( "\tpushl %%edi\n" );
     output_cfi( ".cfi_rel_offset %%edi,-12" );
-    output( "\t.byte 0x64\n\tmov %%gs,(%d)\n", GS_OFFSET );
+    output( "\tmov %%gs,%%fs:(%d)\n", GS_OFFSET );
 
     /* Setup exception frame */
-    output( "\t.byte 0x64\n\tpushl (%d)\n", STACKOFFSET );
+    output( "\tpushl %%fs:(%d)\n", STACKOFFSET );
     output( "\tpushl 16(%%ebp)\n" ); /* handler */
-    output( "\t.byte 0x64\n\tpushl (0)\n" );
-    output( "\t.byte 0x64\n\tmovl %%esp,(0)\n" );
+    output( "\tpushl %%fs:(0)\n" );
+    output( "\tmovl %%esp,%%fs:(0)\n" );
 
     /* Call the actual CallTo16 routine (simulate a lcall) */
     output( "\tpushl %%cs\n" );
     output( "\tcall .L%s\n", name );
 
     /* Remove exception frame */
-    output( "\t.byte 0x64\n\tpopl (0)\n" );
+    output( "\tpopl %%fs:(0)\n" );
     output( "\taddl $4, %%esp\n" );
-    output( "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
+    output( "\tpopl %%fs:(%d)\n", STACKOFFSET );
 
     if ( !reg_func )
     {
@@ -468,9 +468,9 @@ static void BuildCallTo16Core( int reg_func )
 
     /* Switch to the 16-bit stack */
     output( "\tmovl %%esp,%%edx\n" );
-    output( "\t.byte 0x64\n\tmovw (%d),%%ss\n", STACKOFFSET + 2);
-    output( "\t.byte 0x64\n\tmovw (%d),%%sp\n", STACKOFFSET );
-    output( "\t.byte 0x64\n\tmovl %%edx,(%d)\n", STACKOFFSET );
+    output( "\tmovw %%fs:(%d),%%ss\n", STACKOFFSET + 2);
+    output( "\tmovw %%fs:(%d),%%sp\n", STACKOFFSET );
+    output( "\tmovl %%edx,%%fs:(%d)\n", STACKOFFSET );
 
     /* Make %bp point to the previous stackframe (built by CallFrom16) */
     output( "\tmovzwl %%sp,%%ebp\n" );
@@ -541,20 +541,20 @@ static void BuildRet16Func(void)
 
     /* Restore 32-bit segment registers */
 
-    output( "\t.byte 0x2e\n\tmovl %s", asm_name("CallTo16_DataSelector") );
+    output( "\tmovl %%cs:%s", asm_name("CallTo16_DataSelector") );
     output( "-%s,%%edi\n", asm_name("__wine_call16_start") );
     output( "\tmovw %%di,%%ds\n" );
     output( "\tmovw %%di,%%es\n" );
 
-    output( "\t.byte 0x2e\n\tmov %s", asm_name("CallTo16_TebSelector") );
+    output( "\tmov %%cs:%s", asm_name("CallTo16_TebSelector") );
     output( "-%s,%%fs\n", asm_name("__wine_call16_start") );
 
-    output( "\t.byte 0x64\n\tmov (%d),%%gs\n", GS_OFFSET );
+    output( "\tmov %%fs:(%d),%%gs\n", GS_OFFSET );
 
     /* Restore the 32-bit stack */
 
     output( "\tmovw %%di,%%ss\n" );
-    output( "\t.byte 0x64\n\tmovl (%d),%%esp\n", STACKOFFSET );
+    output( "\tmovl %%fs:(%d),%%esp\n", STACKOFFSET );
 
     /* Return to caller */
 
