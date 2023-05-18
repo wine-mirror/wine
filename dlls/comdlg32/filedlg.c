@@ -180,7 +180,7 @@ static void    FILEDLG95_FILETYPE_Clean(HWND hwnd);
 
 /* Functions used by the Look In combo box */
 static void    FILEDLG95_LOOKIN_Init(HWND hwndCombo);
-static LRESULT FILEDLG95_LOOKIN_DrawItem(LPDRAWITEMSTRUCT pDIStruct);
+static LRESULT FILEDLG95_LOOKIN_DrawItem(HWND hwnd, LPDRAWITEMSTRUCT pDIStruct);
 static BOOL    FILEDLG95_LOOKIN_OnCommand(HWND hwnd, WORD wNotifyCode);
 static int     FILEDLG95_LOOKIN_AddItem(HWND hwnd,LPITEMIDLIST pidl, int iInsertId);
 static int     FILEDLG95_LOOKIN_SearchItem(HWND hwnd,WPARAM searchArg,int iSearchMethod);
@@ -1392,7 +1392,7 @@ INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
         switch(((LPDRAWITEMSTRUCT)lParam)->CtlID)
         {
         case IDC_LOOKIN:
-          FILEDLG95_LOOKIN_DrawItem((LPDRAWITEMSTRUCT) lParam);
+          FILEDLG95_LOOKIN_DrawItem(hwnd, (LPDRAWITEMSTRUCT)lParam);
           return TRUE;
         }
       }
@@ -3368,13 +3368,12 @@ static void FILEDLG95_LOOKIN_Init(HWND hwndCombo)
  *
  * WM_DRAWITEM message handler
  */
-static LRESULT FILEDLG95_LOOKIN_DrawItem(LPDRAWITEMSTRUCT pDIStruct)
+static LRESULT FILEDLG95_LOOKIN_DrawItem(HWND hwnd, LPDRAWITEMSTRUCT pDIStruct)
 {
   COLORREF crWin = GetSysColor(COLOR_WINDOW);
   COLORREF crHighLight = GetSysColor(COLOR_HIGHLIGHT);
   COLORREF crText = GetSysColor(COLOR_WINDOWTEXT);
-  RECT rectText;
-  RECT rectIcon;
+  RECT rectText, rectIcon, lookin_rect;
   SHFILEINFOW sfi;
   HIMAGELIST ilItemImage;
   int iIndentation;
@@ -3382,6 +3381,8 @@ static LRESULT FILEDLG95_LOOKIN_DrawItem(LPDRAWITEMSTRUCT pDIStruct)
   LPSFOLDER tmpFolder;
   UINT shgfi_flags = SHGFI_PIDL | SHGFI_OPENICON | SHGFI_SYSICONINDEX | SHGFI_DISPLAYNAME;
   UINT icon_width, icon_height;
+  FileOpenDlgInfos *dialog;
+  int height;
 
   TRACE("\n");
 
@@ -3452,6 +3453,12 @@ static LRESULT FILEDLG95_LOOKIN_DrawItem(LPDRAWITEMSTRUCT pDIStruct)
 
   /* Draw the associated text */
   TextOutW(pDIStruct->hDC,rectText.left,rectText.top,sfi.szDisplayName,lstrlenW(sfi.szDisplayName));
+
+  dialog = get_filedlg_infoptr(hwnd);
+  GetWindowRect(dialog->DlgInfos.hwndLookInCB, &lookin_rect);
+  height = lookin_rect.bottom - lookin_rect.top;
+  SendMessageW(dialog->DlgInfos.hwndTB, TB_SETBUTTONSIZE, 0, MAKELPARAM(height, height));
+
   return NOERROR;
 }
 
