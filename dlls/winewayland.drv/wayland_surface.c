@@ -33,9 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
-/* We only use 4 byte formats. */
-#define WINEWAYLAND_BYTES_PER_PIXEL 4
-
 /* Protects access to the user data of xdg_surface */
 static pthread_mutex_t xdg_data_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -264,6 +261,8 @@ void wayland_shm_buffer_unref(struct wayland_shm_buffer *shm_buffer)
         wl_buffer_destroy(shm_buffer->wl_buffer);
     if (shm_buffer->map_data)
         NtUnmapViewOfSection(GetCurrentProcess(), shm_buffer->map_data);
+    if (shm_buffer->damage_region)
+        NtGdiDeleteObjectApp(shm_buffer->damage_region);
 
     free(shm_buffer);
 }
@@ -306,6 +305,13 @@ struct wayland_shm_buffer *wayland_shm_buffer_create(int width, int height,
     shm_buffer->width = width;
     shm_buffer->height = height;
     shm_buffer->map_size = size;
+
+    shm_buffer->damage_region = NtGdiCreateRectRgn(0, 0, width, height);
+    if (!shm_buffer->damage_region)
+    {
+        ERR("Failed to create buffer damage region\n");
+        goto err;
+    }
 
     section_size.QuadPart = size;
     status = NtCreateSection(&handle,

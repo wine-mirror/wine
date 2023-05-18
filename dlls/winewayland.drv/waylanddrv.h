@@ -32,10 +32,14 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "ntgdi.h"
 #include "wine/gdi_driver.h"
 #include "wine/rbtree.h"
 
 #include "unixlib.h"
+
+/* We only use 4 byte formats. */
+#define WINEWAYLAND_BYTES_PER_PIXEL 4
 
 /**********************************************************************
  *          Globals
@@ -114,6 +118,7 @@ struct wayland_shm_buffer
     size_t map_size;
     BOOL busy;
     LONG ref;
+    HRGN damage_region;
 };
 
 /**********************************************************************
@@ -159,6 +164,19 @@ struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect
 void wayland_window_surface_update_wayland_surface(struct window_surface *surface,
                                                    struct wayland_surface *wayland_surface) DECLSPEC_HIDDEN;
 void wayland_window_flush(HWND hwnd) DECLSPEC_HIDDEN;
+
+/**********************************************************************
+ *          Helpers
+ */
+
+static inline BOOL intersect_rect(RECT *dst, const RECT *src1, const RECT *src2)
+{
+    dst->left = max(src1->left, src2->left);
+    dst->top = max(src1->top, src2->top);
+    dst->right = min(src1->right, src2->right);
+    dst->bottom = min(src1->bottom, src2->bottom);
+    return !IsRectEmpty(dst);
+}
 
 /**********************************************************************
  *          USER driver functions
