@@ -519,8 +519,7 @@ static void BuildCallTo16Core( int reg_func )
     }
 
     /* Jump to the called routine */
-    output( "\t.byte 0x66\n" );
-    output( "\tlret\n" );
+    output( "\tlretw\n" );
 
     /* Function footer */
     output_function_size( func_name );
