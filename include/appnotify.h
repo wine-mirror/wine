@@ -36,9 +36,12 @@ extern "C" {
 #endif
 
 typedef void (__cdecl *PAPPSTATE_CHANGE_ROUTINE)(BOOLEAN quiesced, void *context);
+typedef void (__cdecl *PAPPCONSTRAIN_CHANGE_ROUTINE)(BOOLEAN constrained, void *context);
 
 typedef struct _APPSTATE_REGISTRATION *PAPPSTATE_REGISTRATION;
+typedef struct _APPCONSTRAIN_REGISTRATION *PAPPCONSTRAIN_REGISTRATION;
 
+APICONTRACT ULONG NTAPI RegisterAppConstrainedChangeNotification(PAPPCONSTRAIN_CHANGE_ROUTINE,void *,PAPPCONSTRAIN_REGISTRATION *);
 APICONTRACT ULONG NTAPI RegisterAppStateChangeNotification(PAPPSTATE_CHANGE_ROUTINE,void *,PAPPSTATE_REGISTRATION *);
 APICONTRACT void  NTAPI UnregisterAppStateChangeNotification(PAPPSTATE_REGISTRATION);
 

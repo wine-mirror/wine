@@ -121,7 +121,7 @@
 @ stub PsmUnblockAppStateChangeCompletion
 @ stub PsmUnregisterAppStateChangeNotification
 @ stub PsmWaitForAppResume
-@ stub RegisterAppConstrainedChangeNotification
+@ stdcall RegisterAppConstrainedChangeNotification(ptr ptr ptr)
 @ stdcall RegisterAppStateChangeNotification(ptr ptr ptr)
 @ stub UnregisterAppConstrainedChangeNotification
 @ stdcall UnregisterAppStateChangeNotification(ptr)
