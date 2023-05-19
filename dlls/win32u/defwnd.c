@@ -2562,8 +2562,9 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
         break;
 
     case WM_MOUSEWHEEL:
+    case WM_MOUSEHWHEEL:
         if (get_window_long( hwnd, GWL_STYLE ) & WS_CHILD)
-            result = send_message( get_parent( hwnd ), WM_MOUSEWHEEL, wparam, lparam );
+            result = send_message( get_parent( hwnd ), msg, wparam, lparam );
         break;
 
     case WM_ERASEBKGND:
