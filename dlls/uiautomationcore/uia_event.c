@@ -225,7 +225,15 @@ static ULONG WINAPI uia_event_Release(IWineUiaEvent *iface)
         assert(!event->event_map_entry);
 
         SafeArrayDestroy(event->runtime_id);
-        uia_cache_request_destroy(&event->cache_req);
+        if (event->event_type == EVENT_TYPE_CLIENTSIDE)
+        {
+            uia_cache_request_destroy(&event->u.clientside.cache_req);
+            if (event->u.clientside.mta_cookie)
+                CoDecrementMTAUsage(event->u.clientside.mta_cookie);
+        }
+        else if (event->u.serverside.node)
+            IWineUiaNode_Release(event->u.serverside.node);
+
         for (i = 0; i < event->event_advisers_count; i++)
             IWineUiaEventAdviser_Release(event->event_advisers[i]);
         heap_free(event->event_advisers);
@@ -298,9 +306,39 @@ static HRESULT create_uia_event(struct uia_event **out_event, int event_id, int 
     event->runtime_id = runtime_id;
     event->event_id = event_id;
     event->scope = scope;
-    event->cback = cback;
+    event->u.clientside.cback = cback;
+    event->event_type = EVENT_TYPE_CLIENTSIDE;
 
     *out_event = event;
+    return S_OK;
+}
+
+HRESULT create_serverside_uia_event(struct uia_event **out_event)
+{
+    struct uia_event *event = heap_alloc_zero(sizeof(*event));
+
+    *out_event = NULL;
+    if (!event)
+        return E_OUTOFMEMORY;
+
+    event->IWineUiaEvent_iface.lpVtbl = &uia_event_vtbl;
+    event->ref = 1;
+    event->event_type = EVENT_TYPE_SERVERSIDE;
+
+    *out_event = event;
+    return S_OK;
+}
+
+static HRESULT uia_event_add_event_adviser(IWineUiaEventAdviser *adviser, struct uia_event *event)
+{
+    if (!uia_array_reserve((void **)&event->event_advisers, &event->event_advisers_arr_size,
+                event->event_advisers_count + 1, sizeof(*event->event_advisers)))
+        return E_OUTOFMEMORY;
+
+    event->event_advisers[event->event_advisers_count] = adviser;
+    IWineUiaEventAdviser_AddRef(adviser);
+    event->event_advisers_count++;
+
     return S_OK;
 }
 
@@ -438,17 +476,111 @@ HRESULT uia_event_add_provider_event_adviser(IRawElementProviderAdviseEvents *ad
     adv_events->advise_events = advise_events;
     IRawElementProviderAdviseEvents_AddRef(advise_events);
 
-    if (!uia_array_reserve((void **)&event->event_advisers, &event->event_advisers_arr_size,
-                event->event_advisers_count + 1, sizeof(*event->event_advisers)))
+    hr = uia_event_add_event_adviser(&adv_events->IWineUiaEventAdviser_iface, event);
+    IWineUiaEventAdviser_Release(&adv_events->IWineUiaEventAdviser_iface);
+
+    return hr;
+}
+
+/*
+ * IWineUiaEventAdviser interface for serverside events.
+ */
+struct uia_serverside_event_adviser {
+    IWineUiaEventAdviser IWineUiaEventAdviser_iface;
+    LONG ref;
+
+    IWineUiaEvent *event_iface;
+};
+
+static inline struct uia_serverside_event_adviser *impl_from_serverside_IWineUiaEventAdviser(IWineUiaEventAdviser *iface)
+{
+    return CONTAINING_RECORD(iface, struct uia_serverside_event_adviser, IWineUiaEventAdviser_iface);
+}
+
+static HRESULT WINAPI uia_serverside_event_adviser_QueryInterface(IWineUiaEventAdviser *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IWineUiaEventAdviser) || IsEqualIID(riid, &IID_IUnknown))
+        *ppv = iface;
+    else
+        return E_NOINTERFACE;
+
+    IWineUiaEventAdviser_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI uia_serverside_event_adviser_AddRef(IWineUiaEventAdviser *iface)
+{
+    struct uia_serverside_event_adviser *adv_events = impl_from_serverside_IWineUiaEventAdviser(iface);
+    ULONG ref = InterlockedIncrement(&adv_events->ref);
+
+    TRACE("%p, refcount %ld\n", adv_events, ref);
+    return ref;
+}
+
+static ULONG WINAPI uia_serverside_event_adviser_Release(IWineUiaEventAdviser *iface)
+{
+    struct uia_serverside_event_adviser *adv_events = impl_from_serverside_IWineUiaEventAdviser(iface);
+    ULONG ref = InterlockedDecrement(&adv_events->ref);
+
+    TRACE("%p, refcount %ld\n", adv_events, ref);
+    if (!ref)
     {
-        IWineUiaEventAdviser_Release(&adv_events->IWineUiaEventAdviser_iface);
-        return E_OUTOFMEMORY;
+        IWineUiaEvent_Release(adv_events->event_iface);
+        heap_free(adv_events);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI uia_serverside_event_adviser_advise(IWineUiaEventAdviser *iface, BOOL advise_added, LONG_PTR huiaevent)
+{
+    FIXME("%p, %d, %#Ix: stub\n", iface, advise_added, huiaevent);
+    return S_OK;
+}
+
+static const IWineUiaEventAdviserVtbl uia_serverside_event_adviser_vtbl = {
+    uia_serverside_event_adviser_QueryInterface,
+    uia_serverside_event_adviser_AddRef,
+    uia_serverside_event_adviser_Release,
+    uia_serverside_event_adviser_advise,
+};
+
+HRESULT uia_event_add_serverside_event_adviser(IWineUiaEvent *serverside_event, struct uia_event *event)
+{
+    struct uia_serverside_event_adviser *adv_events;
+    HRESULT hr;
+
+    /*
+     * Need to create a proxy IWineUiaEvent for our clientside event to use
+     * this serverside IWineUiaEvent proxy from the appropriate apartment.
+     */
+    if (!event->u.clientside.git_cookie)
+    {
+        hr = CoIncrementMTAUsage(&event->u.clientside.mta_cookie);
+        if (FAILED(hr))
+            return hr;
+
+        hr = register_interface_in_git((IUnknown *)&event->IWineUiaEvent_iface, &IID_IWineUiaEvent,
+                &event->u.clientside.git_cookie);
+        if (FAILED(hr))
+        {
+            CoDecrementMTAUsage(event->u.clientside.mta_cookie);
+            return hr;
+        }
     }
 
-    event->event_advisers[event->event_advisers_count] = &adv_events->IWineUiaEventAdviser_iface;
-    event->event_advisers_count++;
+    if (!(adv_events = heap_alloc_zero(sizeof(*adv_events))))
+        return E_OUTOFMEMORY;
 
-    return S_OK;
+    adv_events->IWineUiaEventAdviser_iface.lpVtbl = &uia_serverside_event_adviser_vtbl;
+    adv_events->ref = 1;
+    adv_events->event_iface = serverside_event;
+    IWineUiaEvent_AddRef(serverside_event);
+
+    hr = uia_event_add_event_adviser(&adv_events->IWineUiaEventAdviser_iface, event);
+    IWineUiaEventAdviser_Release(&adv_events->IWineUiaEventAdviser_iface);
+
+    return hr;
 }
 
 /***********************************************************************
@@ -489,7 +621,7 @@ HRESULT WINAPI UiaAddEvent(HUIANODE huianode, EVENTID event_id, UiaEventCallback
         return hr;
     }
 
-    hr = uia_cache_request_clone(&event->cache_req, cache_req);
+    hr = uia_cache_request_clone(&event->u.clientside.cache_req, cache_req);
     if (FAILED(hr))
         goto exit;
 
@@ -520,6 +652,7 @@ exit:
 HRESULT WINAPI UiaRemoveEvent(HUIAEVENT huiaevent)
 {
     struct uia_event *event = unsafe_impl_from_IWineUiaEvent((IWineUiaEvent *)huiaevent);
+    IWineUiaEvent *event_iface;
     HRESULT hr;
 
     TRACE("(%p)\n", event);
@@ -527,8 +660,31 @@ HRESULT WINAPI UiaRemoveEvent(HUIAEVENT huiaevent)
     if (!event)
         return E_INVALIDARG;
 
-    hr = IWineUiaEvent_advise_events(&event->IWineUiaEvent_iface, FALSE);
-    IWineUiaEvent_Release(&event->IWineUiaEvent_iface);
+    assert(event->event_type == EVENT_TYPE_CLIENTSIDE);
+    if (event->u.clientside.git_cookie)
+    {
+        hr = get_interface_in_git(&IID_IWineUiaEvent, event->u.clientside.git_cookie, (IUnknown **)&event_iface);
+        if (FAILED(hr))
+            return hr;
+
+        hr = unregister_interface_in_git(event->u.clientside.git_cookie);
+        if (FAILED(hr))
+        {
+            IWineUiaEvent_Release(event_iface);
+            return hr;
+        }
+
+        /*
+         * We want the release of the event_iface proxy to set the reference
+         * count to 0, so we release our reference here.
+         */
+        IWineUiaEvent_Release(&event->IWineUiaEvent_iface);
+    }
+    else
+        event_iface = &event->IWineUiaEvent_iface;
+
+    hr = IWineUiaEvent_advise_events(event_iface, FALSE);
+    IWineUiaEvent_Release(event_iface);
     if (FAILED(hr))
         WARN("advise_events failed with hr %#lx\n", hr);
 
@@ -541,11 +697,11 @@ static HRESULT uia_event_invoke(HUIANODE node, struct UiaEventArgs *args, struct
     BSTR tree_struct;
     HRESULT hr;
 
-    hr = UiaGetUpdatedCache(node, &event->cache_req, NormalizeState_View, NULL, &out_req,
+    hr = UiaGetUpdatedCache(node, &event->u.clientside.cache_req, NormalizeState_View, NULL, &out_req,
             &tree_struct);
     if (SUCCEEDED(hr))
     {
-        event->cback(args, out_req, tree_struct);
+        event->u.clientside.cback(args, out_req, tree_struct);
         SafeArrayDestroy(out_req);
         SysFreeString(tree_struct);
     }

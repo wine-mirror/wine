@@ -539,6 +539,37 @@ static HRESULT WINAPI uia_node_get_hwnd(IWineUiaNode *iface, ULONG *out_hwnd)
     return S_OK;
 }
 
+static HRESULT WINAPI uia_node_attach_event(IWineUiaNode *iface, IWineUiaEvent **ret_event)
+{
+    struct uia_node *node = impl_from_IWineUiaNode(iface);
+    struct uia_event *event = NULL;
+    HRESULT hr;
+
+    TRACE("%p, %p\n", node, ret_event);
+
+    *ret_event = NULL;
+    hr = create_serverside_uia_event(&event);
+    if (FAILED(hr))
+        return hr;
+
+    hr = attach_event_to_node_provider(iface, 0, (HUIAEVENT)event);
+    if (FAILED(hr))
+    {
+        IWineUiaEvent_Release(&event->IWineUiaEvent_iface);
+        return hr;
+    }
+
+    /*
+     * Attach this nested node to the serverside event to keep the provider
+     * thread alive.
+     */
+    IWineUiaNode_AddRef(iface);
+    event->u.serverside.node = iface;
+    *ret_event = &event->IWineUiaEvent_iface;
+
+    return hr;
+}
+
 static const IWineUiaNodeVtbl uia_node_vtbl = {
     uia_node_QueryInterface,
     uia_node_AddRef,
@@ -547,6 +578,7 @@ static const IWineUiaNodeVtbl uia_node_vtbl = {
     uia_node_get_prop_val,
     uia_node_disconnect,
     uia_node_get_hwnd,
+    uia_node_attach_event,
 };
 
 static struct uia_node *unsafe_impl_from_IWineUiaNode(IWineUiaNode *iface)
@@ -2243,8 +2275,21 @@ static HRESULT WINAPI uia_nested_node_provider_get_focus(IWineUiaProvider *iface
 
 static HRESULT WINAPI uia_nested_node_provider_attach_event(IWineUiaProvider *iface, LONG_PTR huiaevent)
 {
-    FIXME("%p, %#Ix: stub\n", iface, huiaevent);
-    return E_NOTIMPL;
+    struct uia_nested_node_provider *prov = impl_from_nested_node_IWineUiaProvider(iface);
+    struct uia_event *event = (struct uia_event *)huiaevent;
+    IWineUiaEvent *remote_event = NULL;
+    HRESULT hr;
+
+    TRACE("%p, %#Ix\n", iface, huiaevent);
+
+    hr = IWineUiaNode_attach_event(prov->nested_node, &remote_event);
+    if (FAILED(hr) || !remote_event)
+        return hr;
+
+    hr = uia_event_add_serverside_event_adviser(remote_event, event);
+    IWineUiaEvent_Release(remote_event);
+
+    return hr;
 }
 
 static const IWineUiaProviderVtbl uia_nested_node_provider_vtbl = {

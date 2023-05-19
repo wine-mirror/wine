@@ -14027,8 +14027,8 @@ static void test_UiaAddEvent_client_proc(void)
     SET_EXPECT_MULTI(prov_callback_proxy, 3);
     hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Descendants,
             NULL, 0, &cache_req, &event);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!!event, "event == NULL\n");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!event, "event == NULL\n");
     ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
     CHECK_CALLED_AT_MOST(prov_callback_base_hwnd, 2);
     CHECK_CALLED_AT_MOST(prov_callback_nonclient, 3);
@@ -14070,7 +14070,7 @@ static void test_UiaAddEvent_client_proc(void)
     todo_wine CHECK_CALLED(uia_event_callback);
 
     hr = UiaRemoveEvent(event);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     post_event_message(hwnd, WM_UIA_TEST_CHECK_EVENT_ADVISE_REMOVED, UIA_AutomationFocusChangedEventId, PROVIDER_ID, TRUE);
 
     /*

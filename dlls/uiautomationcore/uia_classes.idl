@@ -68,6 +68,7 @@ library UIA_wine_private
         object,
         uuid(5e60162c-ab0e-4e22-a61d-3a3acd442aba),
         pointer_default(unique),
+        oleautomation,
     ]
     interface IWineUiaEvent : IUnknown
     {
@@ -102,5 +103,6 @@ library UIA_wine_private
         HRESULT get_prop_val([in]const GUID *prop_guid, [out, retval]VARIANT *ret_val);
         HRESULT disconnect();
         HRESULT get_hwnd([out, retval]ULONG *out_hwnd);
+        HRESULT attach_event([out, retval]IWineUiaEvent **ret_event);
     }
 }
