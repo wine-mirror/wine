@@ -40,6 +40,14 @@ ULONG WINAPI RegisterAppStateChangeNotification( PAPPSTATE_CHANGE_ROUTINE routin
 }
 
 /***********************************************************************
+ *           UnregisterAppConstrainedChangeNotification (twinapi.appcore.@)
+ */
+void WINAPI UnregisterAppConstrainedChangeNotification( PAPPCONSTRAIN_REGISTRATION reg )
+{
+    FIXME( "reg %p - stub.\n", reg );
+}
+
+/***********************************************************************
  *           UnregisterAppStateChangeNotification (twinapi.appcore.@)
  */
 void WINAPI UnregisterAppStateChangeNotification( PAPPSTATE_REGISTRATION reg )
