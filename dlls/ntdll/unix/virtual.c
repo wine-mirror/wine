@@ -1980,6 +1980,23 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
     void *ptr;
     NTSTATUS status;
 
+    if (alloc_type & MEM_REPLACE_PLACEHOLDER)
+    {
+        struct file_view *view;
+
+        if (!(view = find_view( base, 0 ))) return STATUS_INVALID_PARAMETER;
+        if (view->base != base || view->size != size) return STATUS_CONFLICTING_ADDRESSES;
+        if (!(view->protect & VPROT_FREE_PLACEHOLDER)) return STATUS_INVALID_PARAMETER;
+
+        TRACE( "found view %p, size %p, protect %#x.\n", view->base, (void *)view->size, view->protect );
+
+        view->protect = vprot | VPROT_PLACEHOLDER;
+        set_vprot( view, base, size, vprot );
+        if (vprot & VPROT_WRITEWATCH) reset_write_watches( base, size );
+        *view_ret = view;
+        return STATUS_SUCCESS;
+    }
+
     if (base)
     {
         if (is_beyond_limit( base, size, address_space_limit ))
