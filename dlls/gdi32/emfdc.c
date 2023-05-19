@@ -2521,7 +2521,11 @@ static void emf_reset( DC_ATTR *dc_attr, const RECT *rect )
 {
     struct emf *emf = get_dc_emf( dc_attr );
     HDC hdc = dc_attr_handle( dc_attr );
+    int i;
 
+    for (i = 0; i < emf->handles_size; i++)
+        if (emf->handles[i])
+            GDI_hdc_not_using_object( emf->handles[i], dc_attr_handle( emf->dc_attr ));
     memset( emf->handles, 0, emf->handles_size * sizeof(emf->handles[0]) );
     emf->cur_handles = 1;
     emf->file = 0;
