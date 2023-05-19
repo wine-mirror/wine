@@ -323,19 +323,20 @@ int dinput_device_object_index_from_id( IDirectInputDevice8W *iface, DWORD id )
  * Retrieves an open registry key to save the mapping, parametrized for an username,
  * specific device and specific action mapping guid.
  */
-static HKEY get_mapping_key(const WCHAR *device, const WCHAR *username, const WCHAR *guid)
+static HKEY get_mapping_key( const WCHAR *device, const WCHAR *username, const WCHAR *guid, BOOL delete )
 {
-    static const WCHAR *subkey = L"Software\\Wine\\DirectInput\\Mappings\\%s\\%s\\%s";
-    HKEY hkey;
+    static const WCHAR format[] = L"Software\\Wine\\DirectInput\\Mappings\\%s\\%s\\%s";
+    SIZE_T len = wcslen( format ) + wcslen( username ) + wcslen( device ) + wcslen( guid ) + 1;
     WCHAR *keyname;
+    HKEY hkey;
 
-    SIZE_T len = wcslen( subkey ) + wcslen( username ) + wcslen( device ) + wcslen( guid ) + 1;
-    keyname = malloc( sizeof(WCHAR) * len );
-    swprintf( keyname, len, subkey, username, device, guid );
+    if (!(keyname = malloc( sizeof(WCHAR) * len ))) return 0;
 
     /* The key used is HKCU\Software\Wine\DirectInput\Mappings\[username]\[device]\[mapping_guid] */
-    if (RegCreateKeyW(HKEY_CURRENT_USER, keyname, &hkey))
-        hkey = 0;
+    swprintf( keyname, len, format, username, device, guid );
+
+    if (delete) RegDeleteTreeW( HKEY_CURRENT_USER, keyname );
+    if (RegCreateKeyW( HKEY_CURRENT_USER, keyname, &hkey )) hkey = 0;
 
     free( keyname );
 
@@ -355,9 +356,7 @@ static HRESULT save_mapping_settings(IDirectInputDevice8W *iface, LPDIACTIONFORM
     if (StringFromCLSID(&lpdiaf->guidActionMap, &guid_str) != S_OK)
         return DI_SETTINGSNOTSAVED;
 
-    hkey = get_mapping_key(didev.tszInstanceName, lpszUsername, guid_str);
-
-    if (!hkey)
+    if (!(hkey = get_mapping_key( didev.tszInstanceName, lpszUsername, guid_str, TRUE )))
     {
         CoTaskMemFree(guid_str);
         return DI_SETTINGSNOTSAVED;
@@ -398,9 +397,7 @@ static BOOL load_mapping_settings( struct dinput_device *This, LPDIACTIONFORMATW
     if (StringFromCLSID(&lpdiaf->guidActionMap, &guid_str) != S_OK)
         return FALSE;
 
-    hkey = get_mapping_key(didev.tszInstanceName, username, guid_str);
-
-    if (!hkey)
+    if (!(hkey = get_mapping_key( didev.tszInstanceName, username, guid_str, FALSE )))
     {
         CoTaskMemFree(guid_str);
         return FALSE;
