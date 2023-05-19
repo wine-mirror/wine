@@ -2488,6 +2488,153 @@ static void test_sys_keyboard_action_format(void)
     ok( ref == 0, "Release returned %ld\n", ref );
 }
 
+static UINT key_down_count;
+static UINT key_up_count;
+
+static LRESULT CALLBACK keyboard_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    BOOL us_kbd = (GetKeyboardLayout(0) == (HKL)(ULONG_PTR)0x04090409);
+
+    if (msg == WM_KEYDOWN)
+    {
+        key_down_count++;
+        if (us_kbd) ok( wparam == 'A', "got wparam %#Ix\n", wparam );
+        ok( lparam == 0x1e0001, "got lparam %#Ix\n", lparam );
+    }
+    if (msg == WM_KEYUP)
+    {
+        key_up_count++;
+        if (us_kbd) ok( wparam == 'A', "got wparam %#Ix\n", wparam );
+        ok( lparam == 0xc01e0001, "got lparam %#Ix\n", lparam );
+    }
+    return DefWindowProcA( hwnd, msg, wparam, lparam );
+}
+
+static void test_hid_keyboard(void)
+{
+#include "psh_hid_macros.h"
+    const unsigned char report_desc[] =
+    {
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        USAGE(1, HID_USAGE_GENERIC_KEYBOARD),
+        COLLECTION(1, Application),
+            USAGE(1, HID_USAGE_GENERIC_KEYBOARD),
+            COLLECTION(1, Physical),
+                REPORT_ID(1, 1),
+
+                USAGE_PAGE(1, HID_USAGE_PAGE_KEYBOARD),
+                USAGE_MINIMUM(1, HID_USAGE_KEYBOARD_aA),
+                USAGE_MAXIMUM(1, HID_USAGE_KEYBOARD_zZ),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 1),
+                REPORT_COUNT(1, 32),
+                INPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+        END_COLLECTION,
+    };
+    C_ASSERT(sizeof(report_desc) < MAX_HID_DESCRIPTOR_LEN);
+#include "pop_hid_macros.h"
+
+    const HID_DEVICE_ATTRIBUTES attributes =
+    {
+        .Size = sizeof(HID_DEVICE_ATTRIBUTES),
+        .VendorID = LOWORD(EXPECT_VIDPID),
+        .ProductID = 0x0003,
+        .VersionNumber = 0x0100,
+    };
+    struct hid_device_desc desc =
+    {
+        .caps = { .InputReportByteLength = 5 },
+        .attributes = attributes,
+        .use_report_id = 1,
+    };
+    struct hid_expect key_press_release[] =
+    {
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x01,0x00,0x00,0x00},
+        },
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x00,0x00,0x00,0x00},
+        },
+    };
+
+    WCHAR device_path[MAX_PATH];
+    HANDLE file;
+    DWORD res;
+    HWND hwnd;
+    BOOL ret;
+
+    winetest_push_context( "keyboard" );
+
+    desc.report_descriptor_len = sizeof(report_desc);
+    memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
+    fill_context( desc.context, ARRAY_SIZE(desc.context) );
+
+    if (!hid_device_start_( &desc, 1, 5000 /* needs a long timeout on Win7 */ )) goto done;
+
+    swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", desc.attributes.VendorID,
+              desc.attributes.ProductID );
+    ret = find_hid_device_path( device_path );
+    ok( ret, "Failed to find HID device matching %s\n", debugstr_w( device_path ) );
+
+
+    /* windows doesn't let us open HID keyboard devices */
+
+    file = CreateFileW( device_path, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
+    todo_wine
+    ok( file == INVALID_HANDLE_VALUE, "CreateFileW succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_ACCESS_DENIED, "got error %lu\n", GetLastError() );
+    CloseHandle( file );
+
+    file = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
+                        NULL, OPEN_EXISTING, 0, NULL );
+    ok( file != INVALID_HANDLE_VALUE, "CreateFile failed, error %lu\n", GetLastError() );
+
+
+    /* check basic keyboard input injection to window message */
+
+    hwnd = create_foreground_window( FALSE );
+    SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)keyboard_wndproc );
+
+    key_down_count = 0;
+    key_up_count = 0;
+    bus_send_hid_input( file, &desc, &key_press_release[0], sizeof(key_press_release[0]) );
+
+    res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 500, QS_KEY );
+    todo_wine
+    ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
+    msg_wait_for_events( 0, NULL, 5 ); /* process pending messages */
+    todo_wine
+    ok( key_down_count == 1, "got key_down_count %u\n", key_down_count );
+    ok( key_up_count == 0, "got key_up_count %u\n", key_up_count );
+
+    bus_send_hid_input( file, &desc, &key_press_release[1], sizeof(key_press_release[1]) );
+
+    res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 500, QS_KEY );
+    todo_wine
+    ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
+    msg_wait_for_events( 0, NULL, 5 ); /* process pending messages */
+    todo_wine
+    ok( key_down_count == 1, "got key_down_count %u\n", key_down_count );
+    todo_wine
+    ok( key_up_count == 1, "got key_up_count %u\n", key_up_count );
+
+    DestroyWindow( hwnd );
+
+
+    CloseHandle( file );
+
+done:
+    hid_device_stop( &desc, 1 );
+
+    winetest_pop_context();
+}
+
 START_TEST(device8)
 {
     dinput_test_init();
@@ -2517,6 +2664,7 @@ START_TEST(device8)
     if (!bus_device_start()) goto done;
 
     test_hid_mouse();
+    test_hid_keyboard();
 
 done:
     bus_device_stop();
