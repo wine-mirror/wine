@@ -53,6 +53,9 @@ static HRESULT (WINAPI *pUiaDisconnectProvider)(IRawElementProviderSimple *);
         expect_ ## func--; \
     }while(0)
 
+#define CALLED_COUNT(func) \
+    called_ ## func
+
 #define CHECK_CALLED(func) \
     do { \
         ok(called_ ## func, "expected " #func "\n"); \
@@ -62,6 +65,18 @@ static HRESULT (WINAPI *pUiaDisconnectProvider)(IRawElementProviderSimple *);
 #define CHECK_CALLED_MULTI(func, num) \
     do { \
         ok(called_ ## func == num, "expected " #func " %d times (got %d)\n", num, called_ ## func); \
+        expect_ ## func = called_ ## func = 0; \
+    }while(0)
+
+#define CHECK_CALLED_AT_LEAST(func, num) \
+    do { \
+        ok(called_ ## func >= num, "expected " #func " at least %d time(s) (got %d)\n", num, called_ ## func); \
+        expect_ ## func = called_ ## func = 0; \
+    }while(0)
+
+#define CHECK_CALLED_AT_MOST(func, num) \
+    do { \
+        ok(called_ ## func <= num, "expected " #func " at most %d time(s) (got %d)\n", num, called_ ## func); \
         expect_ ## func = called_ ## func = 0; \
     }while(0)
 
@@ -7912,6 +7927,7 @@ struct node_provider_desc {
     const WCHAR *prov_type[MAX_NODE_PROVIDERS];
     const WCHAR *prov_name[MAX_NODE_PROVIDERS];
     BOOL parent_link[MAX_NODE_PROVIDERS];
+    struct node_provider_desc *nested_desc[MAX_NODE_PROVIDERS];
     int prov_count;
 };
 
@@ -7922,13 +7938,20 @@ static void init_node_provider_desc(struct node_provider_desc *desc, DWORD pid, 
     desc->hwnd = hwnd;
 }
 
-static void add_provider_desc(struct node_provider_desc *desc, const WCHAR *prov_type, const WCHAR *prov_name,
-        BOOL parent_link)
+static void add_nested_provider_desc(struct node_provider_desc *desc, const WCHAR *prov_type, const WCHAR *prov_name,
+        BOOL parent_link, struct node_provider_desc *nested_desc)
 {
     desc->prov_type[desc->prov_count] = prov_type;
     desc->prov_name[desc->prov_count] = prov_name;
     desc->parent_link[desc->prov_count] = parent_link;
+    desc->nested_desc[desc->prov_count] = nested_desc;
     desc->prov_count++;
+}
+
+static void add_provider_desc(struct node_provider_desc *desc, const WCHAR *prov_type, const WCHAR *prov_name,
+        BOOL parent_link)
+{
+    add_nested_provider_desc(desc, prov_type, prov_name, parent_link, NULL);
 }
 
 #define test_node_provider_desc( desc, desc_str ) \
@@ -7939,7 +7962,18 @@ static void test_node_provider_desc_(struct node_provider_desc *desc, BSTR desc_
 
     check_node_provider_desc_prefix_(desc_str, desc->pid, desc->hwnd, file, line);
     for (i = 0; i < desc->prov_count; i++)
-        check_node_provider_desc_(desc_str, desc->prov_type[i], desc->prov_name[i], desc->parent_link[i], FALSE, file, line);
+    {
+        if (desc->nested_desc[i])
+        {
+            WCHAR buf[2048];
+
+            ok_(file, line)(get_nested_provider_desc(desc_str, desc->prov_type[i], desc->parent_link[i], buf),
+                    "Failed to get nested provider description\n");
+            test_node_provider_desc_(desc->nested_desc[i], buf, file, line);
+        }
+        else
+            check_node_provider_desc_(desc_str, desc->prov_type[i], desc->prov_name[i], desc->parent_link[i], FALSE, file, line);
+    }
 }
 
 /*
@@ -13766,6 +13800,9 @@ static struct EventData {
     LONG exp_elems[2];
     struct node_provider_desc exp_node_desc;
     const WCHAR *exp_tree_struct;
+
+    struct node_provider_desc exp_nested_node_desc;
+    HANDLE event_handle;
 } EventData;
 
 static void set_event_data(LONG exp_lbound0, LONG exp_lbound1, LONG exp_elems0, LONG exp_elems1,
@@ -13776,7 +13813,20 @@ static void set_event_data(LONG exp_lbound0, LONG exp_lbound1, LONG exp_elems0, 
     EventData.exp_elems[0] = exp_elems0;
     EventData.exp_elems[1] = exp_elems1;
     if (exp_node_desc)
+    {
+        int i;
+
         EventData.exp_node_desc = *exp_node_desc;
+        for (i = 0; i < exp_node_desc->prov_count; i++)
+        {
+            if (exp_node_desc->nested_desc[i])
+            {
+                EventData.exp_nested_node_desc = *exp_node_desc->nested_desc[i];
+                EventData.exp_node_desc.nested_desc[i] = &EventData.exp_nested_node_desc;
+                break;
+            }
+        }
+    }
     else
         memset(&EventData.exp_node_desc, 0, sizeof(EventData.exp_node_desc));
     EventData.exp_tree_struct = exp_tree_struct;
@@ -13792,6 +13842,280 @@ static void WINAPI uia_event_callback(struct UiaEventArgs *args, SAFEARRAY *req_
         test_cache_req_sa(req_data, EventData.exp_lbound, EventData.exp_elems, &EventData.exp_node_desc);
 
     ok(!wcscmp(tree_struct, EventData.exp_tree_struct), "tree structure %s\n", debugstr_w(tree_struct));
+    if (EventData.event_handle)
+        SetEvent(EventData.event_handle);
+}
+
+enum {
+    WM_UIA_TEST_RESET_EVENT_PROVIDERS = WM_APP,
+    WM_UIA_TEST_SET_EVENT_PROVIDER_DATA,
+    WM_UIA_TEST_RAISE_EVENT,
+    WM_UIA_TEST_RAISE_EVENT_RT_ID,
+    WM_UIA_TEST_CHECK_EVENT_ADVISE_ADDED,
+    WM_UIA_TEST_CHECK_EVENT_ADVISE_REMOVED,
+};
+
+enum {
+    PROVIDER_ID,
+    PROVIDER2_ID,
+    PROVIDER_CHILD_ID,
+};
+
+static struct Provider *event_test_provs[] = { &Provider, &Provider2, &Provider_child };
+static struct Provider *get_event_test_prov(int idx)
+{
+    if (idx >= ARRAY_SIZE(event_test_provs))
+        return NULL;
+    else
+        return event_test_provs[idx];
+}
+
+static void post_event_message(HWND hwnd, int msg, WPARAM wparam, int prov_id, int lparam_lower)
+{
+    PostMessageW(hwnd, msg, wparam, MAKELONG(lparam_lower, prov_id));
+}
+
+static void test_UiaAddEvent_client_proc(void)
+{
+    IRawElementProviderFragmentRoot *embedded_root = &Provider_hwnd2.IRawElementProviderFragmentRoot_iface;
+    struct node_provider_desc exp_node_desc, exp_nested_node_desc;
+    struct UiaCacheRequest cache_req;
+    HUIAEVENT event;
+    HUIANODE node;
+    BOOL is_win11;
+    HRESULT hr;
+    DWORD pid;
+    HWND hwnd;
+
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    hwnd = FindWindowA("UiaAddEvent test class", "Test window");
+    UiaRegisterProviderCallback(test_uia_provider_callback);
+    EventData.event_handle = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    /* Provider_proxy/hwnd/nc are desktop providers. */
+    set_clientside_providers_for_hwnd(&Provider_proxy, &Provider_nc, &Provider_hwnd, GetDesktopWindow());
+    base_hwnd_prov = &Provider_hwnd.IRawElementProviderSimple_iface;
+    proxy_prov = &Provider_proxy.IRawElementProviderSimple_iface;
+    nc_prov = &Provider_nc.IRawElementProviderSimple_iface;
+
+    /*
+     * Provider_nc2/Provider_hwnd2 are clientside providers for our test
+     * window.
+     */
+    set_clientside_providers_for_hwnd(NULL, &Provider_nc2, &Provider_hwnd2, hwnd);
+    provider_add_child(&Provider_hwnd, &Provider_hwnd2);
+
+    method_sequences_enabled = FALSE;
+    SET_EXPECT(prov_callback_base_hwnd);
+    SET_EXPECT(prov_callback_nonclient);
+    SET_EXPECT(prov_callback_proxy);
+    hr = UiaGetRootNode(&node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!node, "Node == NULL.\n");
+    ok(Provider_proxy.ref == 2, "Unexpected refcnt %ld\n", Provider_proxy.ref);
+    ok(Provider_hwnd.ref == 2, "Unexpected refcnt %ld\n", Provider_hwnd.ref);
+    ok(Provider_nc.ref == 2, "Unexpected refcnt %ld\n", Provider_nc.ref);
+    CHECK_CALLED(prov_callback_base_hwnd);
+    CHECK_CALLED(prov_callback_nonclient);
+    CHECK_CALLED(prov_callback_proxy);
+
+    PostMessageW(hwnd, WM_UIA_TEST_RESET_EVENT_PROVIDERS, 0, 0);
+
+    /* Register an event on the desktop HWND with a scope of all elements. */
+    set_cache_request(&cache_req, (struct UiaCondition *)&UiaTrueCondition, TreeScope_Element, NULL, 0, NULL, 0,
+            AutomationElementMode_Full);
+    event = NULL;
+    /* Only done on Win11. */
+    SET_EXPECT_MULTI(prov_callback_base_hwnd, 2);
+    SET_EXPECT_MULTI(prov_callback_nonclient, 2);
+    SET_EXPECT_MULTI(prov_callback_proxy, 2);
+    hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Element | TreeScope_Descendants,
+            NULL, 0, &cache_req, &event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!event, "event == NULL\n");
+    is_win11 = !!CALLED_COUNT(prov_callback_base_hwnd);
+    CHECK_CALLED_AT_MOST(prov_callback_base_hwnd, 2);
+    CHECK_CALLED_AT_MOST(prov_callback_nonclient, 2);
+    CHECK_CALLED_AT_MOST(prov_callback_proxy, 2);
+    method_sequences_enabled = TRUE;
+
+    /*
+     * Raise event in another process, prior to calling UiaEventAddWindow.
+     * Event handler will not get triggered.
+     */
+    post_event_message(hwnd, WM_UIA_TEST_RAISE_EVENT, HandleToUlong(hwnd), PROVIDER_ID, ProviderOptions_ServerSideProvider);
+    ok(WaitForSingleObject(EventData.event_handle, 300) == WAIT_TIMEOUT, "Wait for event_handle didn't timeout.\n");
+    post_event_message(hwnd, WM_UIA_TEST_CHECK_EVENT_ADVISE_ADDED, 0, PROVIDER_ID, FALSE);
+
+    /* Call UiaEventAddWindow, the event will now be connected. */
+    SET_EXPECT_MULTI(prov_callback_base_hwnd, 2);
+    SET_EXPECT_MULTI(prov_callback_nonclient, 2);
+    SET_EXPECT_MULTI(prov_callback_proxy, 3);
+    hr = UiaEventAddWindow(event, hwnd);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine CHECK_CALLED(prov_callback_base_hwnd);
+    todo_wine CHECK_CALLED(prov_callback_nonclient);
+    todo_wine CHECK_CALLED(prov_callback_proxy);
+    post_event_message(hwnd, WM_UIA_TEST_CHECK_EVENT_ADVISE_ADDED, UIA_AutomationFocusChangedEventId, PROVIDER_ID, TRUE);
+
+    /* Successfully raise event. */
+    GetWindowThreadProcessId(hwnd, &pid);
+    init_node_provider_desc(&exp_nested_node_desc, pid, hwnd);
+    add_provider_desc(&exp_nested_node_desc, L"Main", L"Provider", TRUE);
+
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), hwnd);
+    add_provider_desc(&exp_node_desc, L"Hwnd", L"Provider_hwnd2", TRUE);
+    add_provider_desc(&exp_node_desc, L"Nonclient", L"Provider_nc2", FALSE);
+    add_nested_provider_desc(&exp_node_desc, L"Main", NULL, FALSE, &exp_nested_node_desc);
+    set_event_data(0, 0, 1, 1, &exp_node_desc, L"P)");
+
+    SET_EXPECT(prov_callback_base_hwnd);
+    SET_EXPECT(prov_callback_nonclient);
+    SET_EXPECT(prov_callback_proxy);
+    SET_EXPECT(uia_event_callback);
+    post_event_message(hwnd, WM_UIA_TEST_RAISE_EVENT, HandleToUlong(hwnd), PROVIDER_ID, ProviderOptions_ServerSideProvider);
+    todo_wine ok(!WaitForSingleObject(EventData.event_handle, 2000), "Wait for event_handle failed.\n");
+    todo_wine CHECK_CALLED(uia_event_callback);
+    todo_wine CHECK_CALLED(prov_callback_base_hwnd);
+    todo_wine CHECK_CALLED(prov_callback_nonclient);
+    todo_wine CHECK_CALLED(prov_callback_proxy);
+
+    /*
+     * If a clientside provider raises an event, it stays within its own
+     * process.
+     */
+    post_event_message(hwnd, WM_UIA_TEST_RAISE_EVENT, 0, PROVIDER2_ID, ProviderOptions_ClientSideProvider);
+    ok(WaitForSingleObject(EventData.event_handle, 300) == WAIT_TIMEOUT, "Wait for event_handle didn't timeout.\n");
+
+    /* Raise serverside event. */
+    GetWindowThreadProcessId(hwnd, &pid);
+    init_node_provider_desc(&exp_node_desc, pid, NULL);
+    add_provider_desc(&exp_node_desc, L"Main", L"Provider2", TRUE);
+    set_event_data(0, 0, 1, 1, &exp_node_desc, L"P)");
+
+    SET_EXPECT(uia_event_callback);
+    post_event_message(hwnd, WM_UIA_TEST_RAISE_EVENT, 0, PROVIDER2_ID, ProviderOptions_ServerSideProvider);
+    todo_wine ok(!WaitForSingleObject(EventData.event_handle, 2000), "Wait for event_handle failed.\n");
+    todo_wine CHECK_CALLED(uia_event_callback);
+
+    hr = UiaRemoveEvent(event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    post_event_message(hwnd, WM_UIA_TEST_CHECK_EVENT_ADVISE_REMOVED, UIA_AutomationFocusChangedEventId, PROVIDER_ID, TRUE);
+
+    PostMessageW(hwnd, WM_UIA_TEST_RESET_EVENT_PROVIDERS, 0, 0);
+    post_event_message(hwnd, WM_UIA_TEST_SET_EVENT_PROVIDER_DATA, HandleToUlong(hwnd), PROVIDER_ID,
+            ProviderOptions_ServerSideProvider);
+
+    /*
+     * Register an event on the desktop node, except this time the scope
+     * doesn't include the desktop node itself. In this case, navigation will
+     * have to be done to confirm a provider that raised an event is a
+     * descendant of the desktop, but not the desktop itself.
+     *
+     * No need for UiaEventAddWindow this time, because Provider_hwnd2 is an
+     * embedded root. This method no longer works on Windows 11, which breaks
+     * the managed UI Automation API. We match the old behavior instead.
+     */
+    Provider_hwnd.embedded_frag_roots = &embedded_root;
+    Provider_hwnd.embedded_frag_roots_count = 1;
+    Provider_hwnd2.frag_root = &Provider_hwnd2.IRawElementProviderFragmentRoot_iface;
+
+    event = NULL;
+    /* Only done on Win11. */
+    SET_EXPECT_MULTI(prov_callback_base_hwnd, 2);
+    SET_EXPECT_MULTI(prov_callback_nonclient, 3);
+    SET_EXPECT_MULTI(prov_callback_proxy, 3);
+    hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Descendants,
+            NULL, 0, &cache_req, &event);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!event, "event == NULL\n");
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
+    CHECK_CALLED_AT_MOST(prov_callback_base_hwnd, 2);
+    CHECK_CALLED_AT_MOST(prov_callback_nonclient, 3);
+    CHECK_CALLED_AT_MOST(prov_callback_proxy, 3);
+
+    if (is_win11)
+    {
+        post_event_message(hwnd, WM_UIA_TEST_CHECK_EVENT_ADVISE_ADDED, 0, PROVIDER_ID, FALSE);
+        SET_EXPECT_MULTI(prov_callback_base_hwnd, 2);
+        SET_EXPECT_MULTI(prov_callback_nonclient, 2);
+        SET_EXPECT_MULTI(prov_callback_proxy, 3);
+        hr = UiaEventAddWindow(event, hwnd);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        CHECK_CALLED_MULTI(prov_callback_base_hwnd, 2);
+        CHECK_CALLED_MULTI(prov_callback_nonclient, 2);
+        CHECK_CALLED_MULTI(prov_callback_proxy, 3);
+    }
+
+    post_event_message(hwnd, WM_UIA_TEST_CHECK_EVENT_ADVISE_ADDED, UIA_AutomationFocusChangedEventId, PROVIDER_ID, TRUE);
+
+    /*
+     * Starts navigation in server process, then completes navigation in the
+     * client process.
+     */
+    GetWindowThreadProcessId(hwnd, &pid);
+    init_node_provider_desc(&exp_node_desc, pid, NULL);
+    add_provider_desc(&exp_node_desc, L"Main", L"Provider_child", TRUE);
+    set_event_data(0, 0, 1, 1, &exp_node_desc, L"P)");
+    SET_EXPECT(prov_callback_base_hwnd);
+    SET_EXPECT_MULTI(prov_callback_nonclient, 2);
+    SET_EXPECT_MULTI(prov_callback_proxy, 2);
+    SET_EXPECT(uia_event_callback);
+
+    post_event_message(hwnd, WM_UIA_TEST_RAISE_EVENT, 0, PROVIDER_CHILD_ID, ProviderOptions_ServerSideProvider);
+    todo_wine ok(!WaitForSingleObject(EventData.event_handle, 2000), "Wait for event_handle failed.\n");
+    todo_wine CHECK_CALLED(prov_callback_base_hwnd);
+    todo_wine CHECK_CALLED_MULTI(prov_callback_nonclient, 2);
+    todo_wine CHECK_CALLED_MULTI(prov_callback_proxy, 2);
+    todo_wine CHECK_CALLED(uia_event_callback);
+
+    hr = UiaRemoveEvent(event);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    post_event_message(hwnd, WM_UIA_TEST_CHECK_EVENT_ADVISE_REMOVED, UIA_AutomationFocusChangedEventId, PROVIDER_ID, TRUE);
+
+    /*
+     * Register an event on a node that won't require any navigation to reach.
+     */
+    initialize_provider(&Provider, ProviderOptions_ServerSideProvider, NULL, TRUE);
+    Provider.runtime_id[0] = 0x1337;
+    Provider.runtime_id[1] = 0xbeef;
+    hr = UiaNodeFromProvider(&Provider.IRawElementProviderSimple_iface, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+
+    hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Element,
+            NULL, 0, &cache_req, &event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!event, "event == NULL\n");
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
+
+    SET_EXPECT_MULTI(prov_callback_base_hwnd, 2);
+    SET_EXPECT_MULTI(prov_callback_nonclient, 2);
+    SET_EXPECT_MULTI(prov_callback_proxy, 3);
+    hr = UiaEventAddWindow(event, hwnd);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine CHECK_CALLED(prov_callback_base_hwnd);
+    todo_wine CHECK_CALLED(prov_callback_nonclient);
+    todo_wine CHECK_CALLED(prov_callback_proxy);
+
+    /* Wrong runtime ID, no match. */
+    post_event_message(hwnd, WM_UIA_TEST_RAISE_EVENT_RT_ID, 0xb33f, PROVIDER2_ID, 0x1337);
+    ok(WaitForSingleObject(EventData.event_handle, 500) == WAIT_TIMEOUT, "Wait for event_handle didn't timeout.\n");
+
+    /* Successfully raise event. */
+    GetWindowThreadProcessId(hwnd, &pid);
+    init_node_provider_desc(&exp_node_desc, pid, NULL);
+    add_provider_desc(&exp_node_desc, L"Main", L"Provider2", TRUE);
+    set_event_data(0, 0, 1, 1, &exp_node_desc, L"P)");
+    SET_EXPECT(uia_event_callback);
+    post_event_message(hwnd, WM_UIA_TEST_RAISE_EVENT_RT_ID, 0xbeef, PROVIDER2_ID, 0x1337);
+    todo_wine ok(!WaitForSingleObject(EventData.event_handle, 2000), "Wait for event_handle failed.\n");
+    todo_wine CHECK_CALLED(uia_event_callback);
+
+    hr = UiaRemoveEvent(event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    CloseHandle(EventData.event_handle);
+    CoUninitialize();
 }
 
 struct event_test_thread_data {
@@ -13895,7 +14219,7 @@ static void test_UiaRaiseAutomationEvent_args(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 }
 
-static void test_UiaAddEvent(void)
+static void test_UiaAddEvent(const char *name)
 {
     IRawElementProviderFragmentRoot *embedded_roots[2] = { &Provider_child.IRawElementProviderFragmentRoot_iface,
                                                            &Provider_child2.IRawElementProviderFragmentRoot_iface };
@@ -13904,7 +14228,11 @@ static void test_UiaAddEvent(void)
     struct node_provider_desc exp_node_desc;
     struct UiaPropertyCondition prop_cond;
     struct UiaCacheRequest cache_req;
+    PROCESS_INFORMATION proc;
+    char cmdline[MAX_PATH];
+    STARTUPINFOA startup;
     HUIAEVENT event;
+    DWORD exit_code;
     HUIANODE node;
     HANDLE thread;
     HRESULT hr;
@@ -14283,10 +14611,101 @@ static void test_UiaAddEvent(void)
     hr = UiaRemoveEvent(event);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     UiaNodeRelease(node);
+    CoUninitialize();
+
+    /* Cross process event tests. */
+    UiaRegisterProviderCallback(NULL);
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    initialize_provider(&Provider, ProviderOptions_ServerSideProvider, hwnd, TRUE);
+    Provider.frag_root = &Provider.IRawElementProviderFragmentRoot_iface;
+    initialize_provider(&Provider_child, ProviderOptions_ServerSideProvider, NULL, TRUE);
+    provider_add_child(&Provider, &Provider_child);
+
+    prov_root = &Provider.IRawElementProviderSimple_iface;
+    sprintf(cmdline, "\"%s\" uiautomation UiaAddEvent_client_proc", name);
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    SET_EXPECT_MULTI(winproc_GETOBJECT_UiaRoot, 22);
+    /* Only sent on Win7. */
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+
+    CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &proc);
+    while (MsgWaitForMultipleObjects(1, &proc.hProcess, FALSE, INFINITE, QS_ALLINPUT) != WAIT_OBJECT_0)
+    {
+        struct Provider *prov;
+        MSG msg = { 0 };
+
+        while (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE))
+        {
+            switch (msg.message)
+            {
+            case WM_UIA_TEST_RESET_EVENT_PROVIDERS:
+            {
+                int i;
+
+                for (i = 0; i < ARRAY_SIZE(event_test_provs); i++)
+                    initialize_provider(event_test_provs[i], ProviderOptions_ServerSideProvider, NULL, FALSE);
+                break;
+            }
+
+            case WM_UIA_TEST_CHECK_EVENT_ADVISE_ADDED:
+            case WM_UIA_TEST_CHECK_EVENT_ADVISE_REMOVED:
+                if (!(prov = get_event_test_prov(HIWORD(msg.lParam))))
+                    break;
+
+                if (msg.message == WM_UIA_TEST_CHECK_EVENT_ADVISE_ADDED)
+                    todo_wine_if(LOWORD(msg.lParam)) ok(prov->advise_events_added_event_id == msg.wParam,
+                            "Unexpected advise event added, event ID %d\n", Provider.advise_events_added_event_id);
+                else
+                    todo_wine_if(LOWORD(msg.lParam)) ok(prov->advise_events_removed_event_id == msg.wParam,
+                            "Unexpected advise event removed, event ID %d\n", Provider.advise_events_removed_event_id);
+                break;
+
+            case WM_UIA_TEST_RAISE_EVENT:
+            case WM_UIA_TEST_RAISE_EVENT_RT_ID:
+            case WM_UIA_TEST_SET_EVENT_PROVIDER_DATA:
+                if (!(prov = get_event_test_prov(HIWORD(msg.lParam))))
+                    break;
+
+                if ((msg.message == WM_UIA_TEST_RAISE_EVENT) || (msg.message == WM_UIA_TEST_SET_EVENT_PROVIDER_DATA))
+                {
+                    prov->prov_opts = LOWORD(msg.lParam);
+                    prov->hwnd = UlongToHandle(msg.wParam);
+                    prov->ignore_hwnd_prop = !!prov->hwnd;
+                }
+                else if (msg.message == WM_UIA_TEST_RAISE_EVENT_RT_ID)
+                {
+                    prov->runtime_id[0] = LOWORD(msg.lParam);
+                    prov->runtime_id[1] = msg.wParam;
+                }
+
+                if (msg.message != WM_UIA_TEST_SET_EVENT_PROVIDER_DATA)
+                {
+                    hr = UiaRaiseAutomationEvent(&prov->IRawElementProviderSimple_iface, UIA_AutomationFocusChangedEventId);
+                    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+                }
+                break;
+
+            default:
+                prov = NULL;
+                break;
+            }
+
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    }
+
+    todo_wine CHECK_CALLED_AT_LEAST(winproc_GETOBJECT_UiaRoot, 5);
+    GetExitCodeProcess(proc.hProcess, &exit_code);
+    if (exit_code > 255)
+        ok(0, "unhandled exception %08x in child process %04x\n", (UINT)exit_code, (UINT)GetProcessId(proc.hProcess));
+    else if (exit_code)
+        ok(0, "%u failures in child process\n", (UINT)exit_code);
+    CloseHandle(proc.hProcess);
 
     method_sequences_enabled = TRUE;
     CoUninitialize();
-    UiaRegisterProviderCallback(NULL);
     DestroyWindow(hwnd);
     UnregisterClassA("UiaAddEvent test class", NULL);
 }
@@ -14340,6 +14759,8 @@ START_TEST(uiautomation)
             test_UiaNodeFromHandle_client_proc();
         else if (!strcmp(argv[2], "UiaRegisterProviderCallback"))
             test_UiaRegisterProviderCallback();
+        else if (!strcmp(argv[2], "UiaAddEvent_client_proc"))
+            test_UiaAddEvent_client_proc();
 
         FreeLibrary(uia_dll);
         return;
@@ -14361,7 +14782,7 @@ START_TEST(uiautomation)
     test_default_clientside_providers();
     test_UiaGetRootNode();
     test_UiaNodeFromFocus();
-    test_UiaAddEvent();
+    test_UiaAddEvent(argv[0]);
     if (uia_dll)
     {
         pUiaProviderFromIAccessible = (void *)GetProcAddress(uia_dll, "UiaProviderFromIAccessible");
