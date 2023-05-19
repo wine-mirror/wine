@@ -1920,7 +1920,7 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
             callback->callback_tid = GetCurrentThreadId();
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
             ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
-            ok(context == (void *)callback->expect_context, "Got unexpected context %p.\n", context);
+            ok(context == callback->expect_context, "Got unexpected context %p.\n", context);
             ret = WaitForSingleObject(callback->expect_started, 100);
             ok(!ret, "Wait timed out.\n");
             callback->end_of_streaming_count = callback->eof_count = callback->sample_count = 0;
@@ -1933,7 +1933,7 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
             ok(callback->callback_tid == GetCurrentThreadId(), "got wrong thread\n");
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
             ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
-            ok(context == (void *)callback->expect_context, "Got unexpected context %p.\n", context);
+            ok(context == callback->expect_context, "Got unexpected context %p.\n", context);
             ret = WaitForSingleObject(callback->expect_stopped, 100);
             ok(!ret, "Wait timed out.\n");
             SetEvent(callback->got_stopped);
@@ -1942,7 +1942,7 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
         case WMT_CLOSED:
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
             ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
-            ok(context == (void *)callback->expect_context, "Got unexpected context %p.\n", context);
+            ok(context == callback->expect_context, "Got unexpected context %p.\n", context);
             ++callback->closed_count;
             break;
 
@@ -1950,7 +1950,7 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
             ok(callback->callback_tid == GetCurrentThreadId(), "got wrong thread\n");
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
             ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
-            ok(context == (void *)callback->expect_context, "Got unexpected context %p.\n", context);
+            ok(context == callback->expect_context, "Got unexpected context %p.\n", context);
             ++callback->end_of_streaming_count;
             break;
 
@@ -1958,7 +1958,7 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
             ok(callback->callback_tid == GetCurrentThreadId(), "got wrong thread\n");
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
             ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
-            ok(context == (void *)callback->expect_context, "Got unexpected context %p.\n", context);
+            ok(context == callback->expect_context, "Got unexpected context %p.\n", context);
             if (callback->all_streams_off)
                 ok(callback->sample_count == 0, "Got %u samples.\n", callback->sample_count);
             else
@@ -1976,7 +1976,7 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
             ok(callback->callback_tid == GetCurrentThreadId(), "got wrong thread\n");
             ok(type == WMT_TYPE_QWORD, "Got type %#x.\n", type);
             ok(*(QWORD *)value == 3000, "Got value %#lx.\n", *(DWORD *)value);
-            ok(context == (void *)callback->expect_context, "Got unexpected context %p.\n", context);
+            ok(context == callback->expect_context, "Got unexpected context %p.\n", context);
             if (callback->all_streams_off)
                 ok(callback->sample_count == 0, "Got %u samples.\n", callback->sample_count);
             else
@@ -2082,7 +2082,7 @@ static HRESULT WINAPI callback_OnSample(IWMReaderCallback *iface, DWORD output,
     if (stream)
         ok(stream->input_tid != GetCurrentThreadId(), "got wrong thread\n");
 
-    ok(context == (void *)callback->expect_context, "Got unexpected context %p.\n", context);
+    ok(context == callback->expect_context, "Got unexpected context %p.\n", context);
 
     check_async_sample(callback, sample);
 
@@ -2166,7 +2166,7 @@ static HRESULT WINAPI callback_advanced_OnStreamSample(IWMReaderCallbackAdvanced
     if (stream)
         ok(stream->input_tid != GetCurrentThreadId(), "got wrong thread\n");
 
-    ok(context == (void *)callback->expect_context, "Got unexpected context %p.\n", context);
+    ok(context == callback->expect_context, "Got unexpected context %p.\n", context);
 
     check_async_sample(callback, sample);
 
@@ -2191,7 +2191,7 @@ static HRESULT WINAPI callback_advanced_OnTime(IWMReaderCallbackAdvanced *iface,
 
     todo_wine_if(time % 10000)
     ok(time == callback->expect_time, "Got time %I64u.\n", time);
-    ok(context == (void *)callback->expect_context, "Got unexpected context %p.\n", context);
+    ok(context == callback->expect_context, "Got unexpected context %p.\n", context);
     ret = WaitForSingleObject(callback->expect_ontime, 100);
     ok(!ret, "Wait timed out.\n");
     SetEvent(callback->got_ontime);

@@ -1932,7 +1932,7 @@ static HRESULT WINAPI async_reader_create(IWMReader **reader)
     list_init(&object->async_ops);
 
     TRACE("Created async reader %p.\n", object);
-    *reader = (IWMReader *)&object->IWMReader_iface;
+    *reader = &object->IWMReader_iface;
     return S_OK;
 
 failed:
