@@ -2683,7 +2683,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                                                                             (const unsigned char*)sym + length);
                 if (inlined)
                 {
-                    curr_func = (struct symt_function*)inlined;
+                    curr_func = inlined;
                     block = NULL;
                 }
                 else
@@ -2704,7 +2704,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                                                                             (const unsigned char*)sym + length);
                 if (inlined)
                 {
-                    curr_func = (struct symt_function*)inlined;
+                    curr_func = inlined;
                     block = NULL;
                 }
                 else

@@ -2148,7 +2148,7 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
                                   subpgm->current_block ? &subpgm->current_block->symt : &subpgm->current_func->symt,
                                   dwarf2_get_cpp_name(di, name.u.string),
                                   &sig_type->symt, num_ranges);
-    subpgm->current_func = (struct symt_function*)inlined;
+    subpgm->current_func = inlined;
     subpgm->current_block = NULL;
 
     if (!dwarf2_fill_ranges(di, inlined->ranges, num_ranges))
