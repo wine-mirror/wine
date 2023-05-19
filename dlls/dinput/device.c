@@ -1866,6 +1866,23 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
 
     if (!(mapped = calloc( impl->device_format.dwNumObjs, sizeof(*mapped) ))) return DIERR_OUTOFMEMORY;
 
+    /* check already mapped objects */
+    action_end = format->rgoAction + format->dwNumActions;
+    for (action = format->rgoAction; action < action_end; action++)
+    {
+        if (!action->dwHow || !action->dwObjID) continue;
+        if (!IsEqualGUID(&action->guidInstance, &impl->guid)) continue;
+
+        object_end = impl->device_format.rgodf + impl->device_format.dwNumObjs;
+        for (object = impl->device_format.rgodf; object < object_end; object++)
+        {
+            if (action->dwObjID != object->dwType) continue;
+            mapped[object - impl->device_format.rgodf] = TRUE;
+            break;
+        }
+    }
+
+    /* map any unmapped priority 1 objects */
     action_end = format->rgoAction + format->dwNumActions;
     for (action = format->rgoAction; action < action_end; action++)
     {
@@ -1886,6 +1903,7 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
         }
     }
 
+    /* map any unmapped priority 2 objects */
     for (action = format->rgoAction; action < action_end; action++)
     {
         if (action->dwHow || (action->dwFlags & DIA_APPNOMAP)) continue; /* already mapped */
