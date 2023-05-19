@@ -1850,6 +1850,8 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
             !IsEqualCLSID( &action->guidInstance, &impl->guid )) continue;
         if (action->dwFlags & DIA_APPMAPPED) action->dwHow = DIAH_APPREQUESTED;
         else action->dwHow = 0;
+        if (action->dwHow == DIAH_APPREQUESTED || action->dwHow == DIAH_USERCONFIG) continue;
+        if (!(action->dwFlags & DIA_APPNOMAP)) action->guidInstance = GUID_NULL;
     }
 
     /* Unless asked the contrary by these flags, try to load a previous mapping */
@@ -1859,17 +1861,6 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
         if (username == NULL) GetUserNameW( username_buf, &username_len );
         else lstrcpynW( username_buf, username, MAX_PATH );
         load_mapping_settings( impl, format, username_buf );
-    }
-
-    action_end = format->rgoAction + format->dwNumActions;
-    for (action = format->rgoAction; action < action_end; action++)
-    {
-        if (action->dwHow == DIAH_APPREQUESTED || action->dwHow == DIAH_USERCONFIG) continue;
-        if (flags == DIDBAM_PRESERVE && !IsEqualCLSID( &action->guidInstance, &GUID_NULL ) &&
-            !IsEqualCLSID( &action->guidInstance, &impl->guid )) continue;
-        if (action->dwFlags & DIA_APPNOMAP) continue;
-        action->guidInstance = GUID_NULL;
-        action->dwHow = 0;
     }
 
     if (!(mapped = calloc( impl->device_format.dwNumObjs, sizeof(*mapped) ))) return DIERR_OUTOFMEMORY;
