@@ -1851,6 +1851,7 @@ static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface,
         if (action->dwFlags & DIA_APPMAPPED) action->dwHow = DIAH_APPREQUESTED;
         else action->dwHow = 0;
         if (action->dwHow == DIAH_APPREQUESTED || action->dwHow == DIAH_USERCONFIG) continue;
+        if ((action->dwSemantic & 0xf0000000) == 0x80000000) action->dwFlags &= ~DIA_APPNOMAP;
         if (!(action->dwFlags & DIA_APPNOMAP)) action->guidInstance = GUID_NULL;
     }
 

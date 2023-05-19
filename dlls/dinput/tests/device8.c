@@ -1727,17 +1727,13 @@ static void check_diactionA_( int line, const DIACTIONA *actual, const DIACTIONA
 {
     check_member_( __FILE__, line, *actual, *expected, "%#Ix", uAppData );
     check_member_( __FILE__, line, *actual, *expected, "%#lx", dwSemantic );
-    todo_wine_if( expected->dwSemantic == 0x810004c8 )
     check_member_( __FILE__, line, *actual, *expected, "%#lx", dwFlags );
     if (actual->lptszActionName && expected->lptszActionName)
         check_member_str_( __FILE__, line, *actual, *expected, lptszActionName );
     else
         check_member_( __FILE__, line, *actual, *expected, "%p", lptszActionName );
-    todo_wine_if( expected->dwSemantic == 0x810004c8 )
     check_member_guid_( __FILE__, line, *actual, *expected, guidInstance );
-    todo_wine_if( expected->dwSemantic == 0x810004c8 )
     check_member_( __FILE__, line, *actual, *expected, "%#lx", dwObjID );
-    todo_wine_if( expected->dwSemantic == 0x810004c8 )
     check_member_( __FILE__, line, *actual, *expected, "%#lx", dwHow );
 }
 
