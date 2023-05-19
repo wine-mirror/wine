@@ -242,13 +242,14 @@ struct d2d_dc_render_target
     LONG refcount;
 
     IDXGISurface1 *dxgi_surface;
-    D2D1_PIXEL_FORMAT pixel_format;
     ID3D10Device1 *d3d_device;
     ID2D1RenderTarget *dxgi_target;
     IUnknown *dxgi_inner;
 
     RECT dst_rect;
     HDC hdc;
+
+    D2D1_RENDER_TARGET_PROPERTIES desc;
 };
 
 HRESULT d2d_dc_render_target_init(struct d2d_dc_render_target *render_target, ID2D1Factory1 *factory,

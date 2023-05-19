@@ -13597,6 +13597,238 @@ static void test_hwnd_target_is_supported(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_dc_target_is_supported(BOOL d3d11)
+{
+    static const unsigned int target_types[] =
+    {
+        D2D1_RENDER_TARGET_TYPE_DEFAULT,
+        D2D1_RENDER_TARGET_TYPE_SOFTWARE,
+        D2D1_RENDER_TARGET_TYPE_HARDWARE,
+    };
+    static const unsigned int usages[] =
+    {
+        D2D1_RENDER_TARGET_USAGE_NONE,
+        D2D1_RENDER_TARGET_USAGE_FORCE_BITMAP_REMOTING,
+        D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE,
+        D2D1_RENDER_TARGET_USAGE_FORCE_BITMAP_REMOTING | D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE,
+    };
+    static const D2D1_PIXEL_FORMAT pixel_formats[] =
+    {
+        { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_UNKNOWN },
+        { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED },
+        { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_IGNORE },
+        { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_STRAIGHT },
+
+        { DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_UNKNOWN },
+        { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_UNKNOWN },
+
+        { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED },
+        { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE },
+    };
+    static const D2D1_PIXEL_FORMAT unsupported_pixel_formats[] =
+    {
+        { DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED },
+        { DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_IGNORE },
+        { DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_STRAIGHT },
+
+        { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_STRAIGHT },
+
+        { DXGI_FORMAT_R16G16B16A16_UNORM, D2D1_ALPHA_MODE_UNKNOWN },
+    };
+    D2D1_RENDER_TARGET_PROPERTIES desc, template_desc, test_desc;
+    D2D1_BITMAP_PROPERTIES1 bitmap_desc;
+    ID2D1DeviceContext *device_context;
+    D2D1_PIXEL_FORMAT pixel_format;
+    struct d2d1_test_context ctx;
+    BOOL expected, supported;
+    ID2D1DCRenderTarget *rt;
+    ID2D1Bitmap1 *bitmap;
+    unsigned int i, j;
+    D2D1_SIZE_U size;
+    HRESULT hr;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    template_desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+    template_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    template_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+    template_desc.dpiX = 96.0f;
+    template_desc.dpiY = 96.0f;
+    template_desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+    template_desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+
+    /* Make sure the render target description template is valid. */
+    hr = ID2D1Factory_CreateDCRenderTarget(ctx.factory, &template_desc, &rt);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    supported = ID2D1DCRenderTarget_IsSupported(rt, &template_desc);
+    ok(supported, "Expected supported.\n");
+    ID2D1DCRenderTarget_Release(rt);
+
+    /* Test that SetTarget() with a bitmap of a different usage doesn't change the render target usage. */
+    hr = ID2D1Factory_CreateDCRenderTarget(ctx.factory, &template_desc, &rt);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1DCRenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&device_context);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    test_desc = template_desc;
+    test_desc.usage = D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE;
+    supported = ID2D1DCRenderTarget_IsSupported(rt, &test_desc);
+    ok(supported, "Expected unsupported.\n");
+
+    memset(&bitmap_desc, 0, sizeof(bitmap_desc));
+    bitmap_desc.pixelFormat = ID2D1DeviceContext_GetPixelFormat(device_context);
+    bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET;
+    size.width = 4;
+    size.height = 4;
+    hr = ID2D1DeviceContext_CreateBitmap(device_context, size, NULL, 0, &bitmap_desc, &bitmap);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1DeviceContext_SetTarget(device_context, (ID2D1Image *)bitmap);
+    supported = ID2D1DCRenderTarget_IsSupported(rt, &test_desc);
+    ok(supported, "Expected unsupported.\n");
+    ID2D1Bitmap1_Release(bitmap);
+
+    /* Test that SetTarget() with a bitmap of a different format changes the render target format. */
+    test_desc = template_desc;
+    test_desc.pixelFormat.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    test_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+    supported = ID2D1DCRenderTarget_IsSupported(rt, &test_desc);
+    ok(!supported, "Expected unsupported.\n");
+
+    memset(&bitmap_desc, 0, sizeof(bitmap_desc));
+    bitmap_desc.pixelFormat.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+    bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET;
+    size.width = 4;
+    size.height = 4;
+    hr = ID2D1DeviceContext_CreateBitmap(device_context, size, NULL, 0, &bitmap_desc, &bitmap);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1DeviceContext_SetTarget(device_context, (ID2D1Image *)bitmap);
+    pixel_format = ID2D1DeviceContext_GetPixelFormat(device_context);
+    ok(pixel_format.format == DXGI_FORMAT_R8G8B8A8_UNORM, "Got unexpected format %#x.\n", pixel_format.format);
+    ok(pixel_format.alphaMode == D2D1_ALPHA_MODE_PREMULTIPLIED, "Got unexpected alpha %u.\n", pixel_format.alphaMode);
+    supported = ID2D1DCRenderTarget_IsSupported(rt, &test_desc);
+    ok(supported, "Expected supported.\n");
+    ID2D1Bitmap1_Release(bitmap);
+
+    ID2D1DeviceContext_Release(device_context);
+    ID2D1DCRenderTarget_Release(rt);
+
+    /* Target type. */
+    for (i = 0; i < ARRAY_SIZE(target_types); ++i)
+    {
+        /* Default target type resolves to either HW or SW, there is no way to tell. */
+        desc = template_desc;
+        desc.type = target_types[i];
+        hr = ID2D1Factory_CreateDCRenderTarget(ctx.factory, &desc, &rt);
+        if (desc.type == D2D1_RENDER_TARGET_TYPE_DEFAULT)
+        {
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+            test_desc = template_desc;
+            test_desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+            supported = ID2D1DCRenderTarget_IsSupported(rt, &test_desc);
+            ok(supported, "Unexpected return value %d.\n", supported);
+        }
+        else
+        {
+            if (FAILED(hr))
+                continue;
+
+            for (j = 0; j < ARRAY_SIZE(target_types); ++j)
+            {
+                winetest_push_context("type test %u/%u", i, j);
+
+                test_desc = template_desc;
+                test_desc.type = target_types[j];
+                supported = ID2D1DCRenderTarget_IsSupported(rt, &test_desc);
+                expected = target_types[j] == D2D1_RENDER_TARGET_TYPE_DEFAULT
+                        || target_types[i] == target_types[j];
+                ok(supported == expected, "Unexpected return value %d.\n", supported);
+
+                winetest_pop_context();
+            }
+        }
+
+        ID2D1DCRenderTarget_Release(rt);
+    }
+
+    /* Pixel formats. */
+    for (i = 0; i < ARRAY_SIZE(pixel_formats); ++i)
+    {
+        desc = template_desc;
+        desc.pixelFormat = pixel_formats[i];
+        hr = ID2D1Factory_CreateDCRenderTarget(ctx.factory, &desc, &rt);
+        if (pixel_formats[i].format == DXGI_FORMAT_UNKNOWN
+                || pixel_formats[i].alphaMode == D2D1_ALPHA_MODE_UNKNOWN)
+        {
+            ok(hr == D2DERR_UNSUPPORTED_PIXEL_FORMAT, "%u: unexpected hr %#lx.\n", i, hr);
+            continue;
+        }
+        ok(hr == S_OK, "%u: unexpected hr %#lx.\n", i, hr);
+
+        for (j = 0; j < ARRAY_SIZE(pixel_formats); ++j)
+        {
+            BOOL format_supported, alpha_mode_supported;
+
+            winetest_push_context("format test %u/%u.", i, j);
+
+            test_desc = template_desc;
+            test_desc.pixelFormat = pixel_formats[j];
+            supported = ID2D1DCRenderTarget_IsSupported(rt, &test_desc);
+
+            format_supported = pixel_formats[j].format == DXGI_FORMAT_UNKNOWN
+                    || pixel_formats[j].format == desc.pixelFormat.format;
+            alpha_mode_supported = pixel_formats[j].alphaMode == D2D1_ALPHA_MODE_UNKNOWN
+                    || pixel_formats[j].alphaMode == desc.pixelFormat.alphaMode;
+            expected = format_supported && alpha_mode_supported;
+            ok(supported == expected, "Unexpected return value.\n");
+
+            winetest_pop_context();
+        }
+
+        for (j = 0; j < ARRAY_SIZE(unsupported_pixel_formats); ++j)
+        {
+            winetest_push_context("unsupported format test %u/%u.", i, j);
+
+            test_desc = template_desc;
+            test_desc.pixelFormat = unsupported_pixel_formats[j];
+            supported = ID2D1DCRenderTarget_IsSupported(rt, &test_desc);
+            ok(!supported, "Unexpected return value.\n");
+
+            winetest_pop_context();
+        }
+
+        ID2D1DCRenderTarget_Release(rt);
+    }
+
+    /* Target usage. */
+    for (i = 0; i < ARRAY_SIZE(usages); ++i)
+    {
+        desc = template_desc;
+        desc.usage = usages[i];
+        hr = ID2D1Factory_CreateDCRenderTarget(ctx.factory, &desc, &rt);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        for (j = 0; j < ARRAY_SIZE(usages); ++j)
+        {
+            winetest_push_context("usage %#x testing usage %#x", usages[i], usages[j]);
+
+            desc = template_desc;
+            desc.usage = usages[j];
+            supported = ID2D1DCRenderTarget_IsSupported(rt, &desc);
+            expected = ((usages[i] | D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE) & usages[j]) == usages[j];
+            ok(supported == expected, "Unexpected result %d.\n", supported);
+
+            winetest_pop_context();
+        }
+
+        ID2D1DCRenderTarget_Release(rt);
+    }
+
+    release_test_context(&ctx);
+}
+
 START_TEST(d2d1)
 {
     HMODULE d2d1_dll = GetModuleHandleA("d2d1.dll");
@@ -13682,6 +13914,7 @@ START_TEST(d2d1)
     queue_test(test_bitmap_map);
     queue_test(test_bitmap_create);
     queue_test(test_hwnd_target_is_supported);
+    queue_test(test_dc_target_is_supported);
 
     run_queued_tests();
 }
