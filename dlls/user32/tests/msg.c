@@ -5793,7 +5793,7 @@ static void test_messages(void)
     test_WM_SETREDRAW(hchild);
 
     ShowWindow(hchild, SW_SHOW);
-    ok_sequence(WmShowChildSeq, "ShowWindow(SW_SHOW):child", TRUE);
+    ok_sequence(WmShowChildSeq, "ShowWindow(SW_SHOW):child", FALSE);
 
     /* check parent messages too */
     log_all_parent_messages++;
@@ -9467,12 +9467,10 @@ static void test_swp_paint_region_on_show(void)
         "GetUpdateRgn on child shall succeed\n" );
 
     result = GetRgnBox( hrgn_actual, &rect_actual );
-    todo_wine_if (result == NULLREGION)
     ok( result == SIMPLEREGION, "GetRgnBox (on parent) returned %d\n", result );
     if (result == COMPLEXREGION) dump_region( hrgn_actual );
 
     rect_expect = rect_1;
-    todo_wine_if (IsRectEmpty( &rect_actual ))
     ok( EqualRect( &rect_actual, &rect_expect ), "parent update region: got %s, expected %s\n",
         wine_dbgstr_rect( &rect_actual ), wine_dbgstr_rect( &rect_expect ) );
 
@@ -9506,12 +9504,10 @@ static void test_swp_paint_region_on_show(void)
         "GetUpdateRgn on child shall succeed\n" );
 
     result = GetRgnBox( hrgn_actual, &rect_actual );
-    todo_wine_if (result == NULLREGION)
     ok( result == SIMPLEREGION, "GetRgnBox (on parent) returned %d\n", result );
     if (result == COMPLEXREGION) dump_region( hrgn_actual );
 
     rect_expect = rect_2;
-    todo_wine_if (IsRectEmpty( &rect_actual ))
     ok( EqualRect( &rect_actual, &rect_expect ), "parent update region: got %s, expected %s\n",
         wine_dbgstr_rect( &rect_actual ), wine_dbgstr_rect( &rect_expect ) );
 
@@ -9565,12 +9561,10 @@ static void test_swp_paint_region_on_extend_zerosize(void)
         "GetUpdateRgn on child shall succeed\n" );
 
     result = GetRgnBox( hrgn_actual, &rect_actual );
-    todo_wine_if (result == NULLREGION)
     ok( result == SIMPLEREGION, "GetRgnBox (on parent) returned %d\n", result );
     if (result == COMPLEXREGION) dump_region( hrgn_actual );
 
     rect_expect = rect_1;
-    todo_wine_if (IsRectEmpty( &rect_actual ))
     ok( EqualRect( &rect_actual, &rect_expect ), "parent update region: got %s, expected %s\n",
         wine_dbgstr_rect( &rect_actual ), wine_dbgstr_rect( &rect_expect ) );
 
