@@ -9430,6 +9430,164 @@ static void test_swp_paint_regions(void)
     subtest_swp_paint_regions( 0, "SimpleWindowClassWithParentDC", "SimpleWindowClass" );
 }
 
+static void test_swp_paint_region_on_show(void)
+{
+    HRGN hrgn_actual_child = CreateRectRgn( 0, 0, 0, 0 );
+    HRGN hrgn_actual = CreateRectRgn( 0, 0, 0, 0 );
+    const RECT rect_1 = { 10, 10, 100, 100 };
+    const RECT rect_2 = { 20, 20, 120, 120 };
+    RECT rect_expect_child, rect_expect;
+    RECT rect_actual_child, rect_actual;
+    HWND hparent, hchild;
+    int result;
+
+    hparent = CreateWindowExA( 0, "SimpleWindowClass", "Test parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                               80, 80, 200, 200, NULL, 0, 0, NULL );
+    ok( hparent != 0, "Creating parent window returned error %lu\n", GetLastError() );
+
+    hchild = CreateWindowExA( 0, "SimpleWindowClass", "Test child", WS_CHILD | WS_BORDER,
+                              0, 0, 100, 100, hparent, 0, 0, NULL );
+    ok( hchild != 0, "Creating child window returned error %lu\n", GetLastError() );
+
+    if (winetest_debug > 1) trace("testing show window (no move / size)\n");
+
+    SetWindowPos( hchild, HWND_TOP,
+                  rect_1.left, rect_1.top, rect_1.right - rect_1.left, rect_1.bottom - rect_1.top,
+                  SWP_HIDEWINDOW | SWP_NOACTIVATE | SWP_NOZORDER );
+
+    UpdateWindow( hparent );
+    flush_events();
+
+    SetWindowPos( hchild, HWND_TOP, 0, 0, 0, 0,
+                  SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE | SWP_NOMOVE );
+
+    ok( GetUpdateRgn( hparent, hrgn_actual, FALSE ) != ERROR,
+        "GetUpdateRgn on parent shall succeed\n" );
+    ok( GetUpdateRgn( hchild, hrgn_actual_child, FALSE ) != ERROR,
+        "GetUpdateRgn on child shall succeed\n" );
+
+    result = GetRgnBox( hrgn_actual, &rect_actual );
+    todo_wine_if (result == NULLREGION)
+    ok( result == SIMPLEREGION, "GetRgnBox (on parent) returned %d\n", result );
+    if (result == COMPLEXREGION) dump_region( hrgn_actual );
+
+    rect_expect = rect_1;
+    todo_wine_if (IsRectEmpty( &rect_actual ))
+    ok( EqualRect( &rect_actual, &rect_expect ), "parent update region: got %s, expected %s\n",
+        wine_dbgstr_rect( &rect_actual ), wine_dbgstr_rect( &rect_expect ) );
+
+    result = GetRgnBox( hrgn_actual_child, &rect_actual_child );
+    ok( result == SIMPLEREGION, "GetRgnBox (on child) returned %d\n", result );
+    if (result == COMPLEXREGION) dump_region( hrgn_actual_child );
+
+    ok( GetClientRect( hchild, &rect_expect_child ), "GetClientRect failed\n" );
+    ok( EqualRect( &rect_actual_child, &rect_expect_child ), "child update region: got %s, expected %s\n",
+        wine_dbgstr_rect( &rect_actual_child ), wine_dbgstr_rect( &rect_expect_child ) );
+
+    if (winetest_debug > 1) trace("testing show window (with move / resize)\n");
+
+    SetWindowPos( hchild, HWND_TOP,
+                  rect_1.left, rect_1.top, rect_1.right - rect_1.left, rect_1.bottom - rect_1.top,
+                  SWP_HIDEWINDOW | SWP_NOACTIVATE | SWP_NOZORDER );
+
+    UpdateWindow( hparent );
+    flush_events();
+
+    SetWindowPos( hchild, HWND_TOP,
+                  rect_2.left,
+                  rect_2.top,
+                  rect_2.right - rect_2.left,
+                  rect_2.bottom - rect_2.top,
+                  SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER );
+
+    ok( GetUpdateRgn( hparent, hrgn_actual, FALSE ) != ERROR,
+        "GetUpdateRgn on parent shall succeed\n" );
+    ok( GetUpdateRgn( hchild, hrgn_actual_child, FALSE ) != ERROR,
+        "GetUpdateRgn on child shall succeed\n" );
+
+    result = GetRgnBox( hrgn_actual, &rect_actual );
+    todo_wine_if (result == NULLREGION)
+    ok( result == SIMPLEREGION, "GetRgnBox (on parent) returned %d\n", result );
+    if (result == COMPLEXREGION) dump_region( hrgn_actual );
+
+    rect_expect = rect_2;
+    todo_wine_if (IsRectEmpty( &rect_actual ))
+    ok( EqualRect( &rect_actual, &rect_expect ), "parent update region: got %s, expected %s\n",
+        wine_dbgstr_rect( &rect_actual ), wine_dbgstr_rect( &rect_expect ) );
+
+    result = GetRgnBox( hrgn_actual_child, &rect_actual_child );
+    ok( result == SIMPLEREGION, "GetRgnBox (on child) returned %d\n", result );
+    if (result == COMPLEXREGION) dump_region( hrgn_actual_child );
+
+    ok( GetClientRect( hchild, &rect_expect_child ), "GetClientRect failed\n" );
+    ok( EqualRect( &rect_actual_child, &rect_expect_child ), "child update region: got %s, expected %s\n",
+        wine_dbgstr_rect( &rect_actual_child ), wine_dbgstr_rect( &rect_expect_child ) );
+
+    DestroyWindow( hchild );
+    DestroyWindow( hparent );
+    DeleteObject( hrgn_actual_child );
+    DeleteObject( hrgn_actual );
+}
+
+static void test_swp_paint_region_on_extend_zerosize(void)
+{
+    HRGN hrgn_actual_child = CreateRectRgn( 0, 0, 0, 0 );
+    HRGN hrgn_actual = CreateRectRgn( 0, 0, 0, 0 );
+    const RECT rect_1 = { 10, 10, 100, 100 };
+    RECT rect_expect_child, rect_expect;
+    RECT rect_actual_child, rect_actual;
+    HWND hparent, hchild;
+    int result;
+
+    hparent = CreateWindowExA( 0, "SimpleWindowClass", "Test parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                               80, 80, 200, 200, NULL, 0, 0, NULL );
+    ok( hparent != 0, "Creating parent window returned error %lu\n", GetLastError() );
+
+    hchild = CreateWindowExA( 0, "SimpleWindowClass", "Test child (no border)", WS_CHILD | WS_VISIBLE,
+                              10, 10, 0, 0, hparent, 0, 0, NULL );
+    ok( hchild != 0, "Creating child window returned error %lu\n", GetLastError() );
+
+    if (winetest_debug > 1) trace("testing extending zero-size window\n");
+
+    UpdateWindow( hparent );
+    flush_events();
+
+    SetWindowPos( hchild, HWND_TOP,
+                  rect_1.left,
+                  rect_1.top,
+                  rect_1.right - rect_1.left,
+                  rect_1.bottom - rect_1.top,
+                  SWP_NOACTIVATE | SWP_NOZORDER );
+
+    ok( GetUpdateRgn( hparent, hrgn_actual, FALSE ) != ERROR,
+        "GetUpdateRgn on parent shall succeed\n" );
+    ok( GetUpdateRgn( hchild, hrgn_actual_child, FALSE ) != ERROR,
+        "GetUpdateRgn on child shall succeed\n" );
+
+    result = GetRgnBox( hrgn_actual, &rect_actual );
+    todo_wine_if (result == NULLREGION)
+    ok( result == SIMPLEREGION, "GetRgnBox (on parent) returned %d\n", result );
+    if (result == COMPLEXREGION) dump_region( hrgn_actual );
+
+    rect_expect = rect_1;
+    todo_wine_if (IsRectEmpty( &rect_actual ))
+    ok( EqualRect( &rect_actual, &rect_expect ), "parent update region: got %s, expected %s\n",
+        wine_dbgstr_rect( &rect_actual ), wine_dbgstr_rect( &rect_expect ) );
+
+    result = GetRgnBox( hrgn_actual_child, &rect_actual_child );
+    ok( result == SIMPLEREGION, "GetRgnBox (on child) returned %d\n", result );
+    if (result == COMPLEXREGION) dump_region( hrgn_actual_child );
+
+    ok( GetClientRect( hchild, &rect_expect_child ), "GetClientRect failed\n" );
+    ok( EqualRect( &rect_actual_child, &rect_expect_child ), "child update region: got %s, expected %s\n",
+        wine_dbgstr_rect( &rect_actual_child ), wine_dbgstr_rect( &rect_expect_child ) );
+
+    DestroyWindow( hchild );
+    DestroyWindow( hparent );
+    DeleteObject( hrgn_actual_child );
+    DeleteObject( hrgn_actual );
+}
+
 static void subtest_hvredraw(HWND hparent, const char *classname, DWORD style)
 {
     static const struct movesize_test {
@@ -19693,6 +19851,8 @@ START_TEST(msg)
     test_wmime_keydown_message();
     test_paint_messages();
     test_swp_paint_regions();
+    test_swp_paint_region_on_show();
+    test_swp_paint_region_on_extend_zerosize();
     test_hvredraw();
     test_interthread_messages();
     test_message_conversion();
