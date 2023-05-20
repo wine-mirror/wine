@@ -98,10 +98,11 @@ static HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
 {
     HRESULT hres;
 
-    if (!typelib)
+    if (!typelib) {
         hres = load_typelib();
-    if (!typelib)
-        return hres;
+        if (!typelib)
+            return hres;
+    }
 
     if (!typeinfos[tid]) {
         ITypeInfo *ti;
