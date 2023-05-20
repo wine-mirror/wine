@@ -657,7 +657,7 @@ BOOL WINAPI NotifyIME( HIMC himc, DWORD action, DWORD index, DWORD value )
             if (!ctx->fOpen)
             {
                 input_context_set_comp_str( ctx, NULL, 0 );
-                if ((msg = ime_set_composition_status( himc, TRUE ))) ime_send_message( himc, msg, 0, 0 );
+                if ((msg = ime_set_composition_status( himc, FALSE ))) ime_send_message( himc, msg, 0, 0 );
             }
             NtUserNotifyIMEStatus( ctx->hWnd, ctx->fOpen );
             break;
