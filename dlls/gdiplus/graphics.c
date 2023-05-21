@@ -3152,14 +3152,10 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             GpRectF graphics_bounds;
             GpRect src_area;
             int i, x, y, src_stride, dst_stride;
-            GpMatrix dst_to_src;
-            REAL m11, m12, m21, m22, mdx, mdy;
             LPBYTE src_data, dst_data, dst_dyn_data=NULL;
             BitmapData lockeddata;
             InterpolationMode interpolation = graphics->interpolation;
             PixelOffsetMode offset_mode = graphics->pixeloffset;
-            GpPointF dst_to_src_points[3] = {{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}};
-            REAL x_dx, x_dy, y_dx, y_dy;
             static const GpImageAttributes defaultImageAttributes = {WrapModeClamp, 0, FALSE};
 
             if (!imageAttributes)
@@ -3186,18 +3182,6 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             TRACE("dst_area: %s\n", wine_dbgstr_rect(&dst_area));
 
             if (IsRectEmpty(&dst_area)) return Ok;
-
-            m11 = (ptf[1].X - ptf[0].X) / srcwidth;
-            m21 = (ptf[2].X - ptf[0].X) / srcheight;
-            mdx = ptf[0].X - m11 * srcx - m21 * srcy;
-            m12 = (ptf[1].Y - ptf[0].Y) / srcwidth;
-            m22 = (ptf[2].Y - ptf[0].Y) / srcheight;
-            mdy = ptf[0].Y - m12 * srcx - m22 * srcy;
-
-            GdipSetMatrixElements(&dst_to_src, m11, m12, m21, m22, mdx, mdy);
-
-            stat = GdipInvertMatrix(&dst_to_src);
-            if (stat != Ok) return stat;
 
             if (do_resampling)
             {
@@ -3248,6 +3232,23 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
             if (do_resampling)
             {
+                GpMatrix dst_to_src;
+                REAL m11, m12, m21, m22, mdx, mdy;
+                GpPointF dst_to_src_points[3] = {{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}};
+                REAL x_dx, x_dy, y_dx, y_dy;
+
+                m11 = (ptf[1].X - ptf[0].X) / srcwidth;
+                m21 = (ptf[2].X - ptf[0].X) / srcheight;
+                m12 = (ptf[1].Y - ptf[0].Y) / srcwidth;
+                m22 = (ptf[2].Y - ptf[0].Y) / srcheight;
+                mdx = ptf[0].X - m11 * srcx - m21 * srcy;
+                mdy = ptf[0].Y - m12 * srcx - m22 * srcy;
+
+                GdipSetMatrixElements(&dst_to_src, m11, m12, m21, m22, mdx, mdy);
+
+                stat = GdipInvertMatrix(&dst_to_src);
+                if (stat != Ok) return stat;
+
                 /* Transform the bits as needed to the destination. */
                 dst_data = dst_dyn_data = heap_alloc_zero(sizeof(ARGB) * (dst_area.right - dst_area.left) * (dst_area.bottom - dst_area.top));
                 if (!dst_data)
