@@ -3236,6 +3236,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 REAL m11, m12, m21, m22, mdx, mdy;
                 GpPointF dst_to_src_points[3] = {{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}};
                 REAL x_dx, x_dy, y_dx, y_dy;
+                ARGB *dst_color;
 
                 m11 = (ptf[1].X - ptf[0].X) / srcwidth;
                 m21 = (ptf[2].X - ptf[0].X) / srcheight;
@@ -3249,14 +3250,6 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 stat = GdipInvertMatrix(&dst_to_src);
                 if (stat != Ok) return stat;
 
-                /* Transform the bits as needed to the destination. */
-                dst_data = dst_dyn_data = heap_alloc_zero(sizeof(ARGB) * (dst_area.right - dst_area.left) * (dst_area.bottom - dst_area.top));
-                if (!dst_data)
-                {
-                    heap_free(src_data);
-                    return OutOfMemory;
-                }
-
                 dst_stride = sizeof(ARGB) * (dst_area.right - dst_area.left);
 
                 GdipTransformMatrixPoints(&dst_to_src, dst_to_src_points, 3);
@@ -3266,23 +3259,28 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 y_dx = dst_to_src_points[2].X - dst_to_src_points[0].X;
                 y_dy = dst_to_src_points[2].Y - dst_to_src_points[0].Y;
 
-                for (x=dst_area.left; x<dst_area.right; x++)
+                /* Transform the bits as needed to the destination. */
+                dst_data = dst_dyn_data = heap_alloc_zero(sizeof(ARGB) * (dst_area.right - dst_area.left) * (dst_area.bottom - dst_area.top));
+                if (!dst_data)
                 {
-                    for (y=dst_area.top; y<dst_area.bottom; y++)
+                    heap_free(src_data);
+                    return OutOfMemory;
+                }
+
+                dst_color = (ARGB*)(dst_data);
+                for (y = dst_area.top; y < dst_area.bottom; y++)
+                {
+                    for (x = dst_area.left; x < dst_area.right; x++)
                     {
                         GpPointF src_pointf;
-                        ARGB *dst_color;
-
                         src_pointf.X = dst_to_src_points[0].X + x * x_dx + y * y_dx;
                         src_pointf.Y = dst_to_src_points[0].Y + x * x_dy + y * y_dy;
 
-                        dst_color = (ARGB*)(dst_data + dst_stride * (y - dst_area.top) + sizeof(ARGB) * (x - dst_area.left));
-
-                        if (src_pointf.X >= srcx && src_pointf.X < srcx + srcwidth && src_pointf.Y >= srcy && src_pointf.Y < srcy+srcheight)
+                        if (src_pointf.X >= srcx && src_pointf.X < srcx + srcwidth &&
+                            src_pointf.Y >= srcy && src_pointf.Y < srcy + srcheight)
                             *dst_color = resample_bitmap_pixel(&src_area, src_data, bitmap->width, bitmap->height, &src_pointf,
                                                                imageAttributes, interpolation, offset_mode);
-                        else
-                            *dst_color = 0;
+                        dst_color++;
                     }
                 }
             }
