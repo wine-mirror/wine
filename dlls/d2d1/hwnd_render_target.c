@@ -862,6 +862,13 @@ HRESULT d2d_hwnd_render_target_init(struct d2d_hwnd_render_target *render_target
     if (dxgi_rt_desc.pixelFormat.alphaMode == D2D1_ALPHA_MODE_UNKNOWN)
         dxgi_rt_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
 
+    if (dxgi_rt_desc.pixelFormat.alphaMode == D2D1_ALPHA_MODE_STRAIGHT)
+    {
+        IDXGIFactory_Release(dxgi_factory);
+        WARN("Alpha mode %u is not supported.\n", dxgi_rt_desc.pixelFormat.alphaMode);
+        return D2DERR_UNSUPPORTED_PIXEL_FORMAT;
+    }
+
     render_target->desc = dxgi_rt_desc;
     /* FIXME: should be resolved to either HW or SW type. */
     if (render_target->desc.type == D2D1_RENDER_TARGET_TYPE_DEFAULT)

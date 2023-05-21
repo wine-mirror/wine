@@ -6214,10 +6214,7 @@ static void test_hwnd_target(BOOL d3d11)
         hr = ID2D1Factory_CreateHwndRenderTarget(ctx.factory, &desc, &hwnd_rt_desc, &rt);
         if (format_tests[i].expected_failure)
         {
-            todo_wine
-            ok(FAILED(hr), "Got unexpected hr %#lx.\n", hr);
-            if (SUCCEEDED(hr))
-                ID2D1HwndRenderTarget_Release(rt);
+            ok(hr == D2DERR_UNSUPPORTED_PIXEL_FORMAT, "Got unexpected hr %#lx.\n", hr);
             winetest_pop_context();
             continue;
         }
