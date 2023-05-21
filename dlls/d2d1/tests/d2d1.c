@@ -1303,10 +1303,10 @@ static void check_bitmap_surface_(unsigned int line, ID2D1Bitmap *bitmap, BOOL h
     hr = ID2D1Bitmap1_GetSurface(bitmap1, &surface);
     if (has_surface)
     {
+        unsigned int bind_flags = 0, misc_flags = 0;
         D3D10_TEXTURE2D_DESC desc;
         ID3D10Texture2D *texture;
         D2D1_SIZE_U pixel_size;
-        DWORD bind_flags = 0;
 
         ok_(__FILE__, line)(hr == S_OK, "Failed to get bitmap surface, hr %#lx.\n", hr);
         ok_(__FILE__, line)(!!surface, "Expected surface instance.\n");
@@ -1322,11 +1322,14 @@ static void check_bitmap_surface_(unsigned int line, ID2D1Bitmap *bitmap, BOOL h
             bind_flags |= D3D10_BIND_RENDER_TARGET;
         if (!(options & D2D1_BITMAP_OPTIONS_CANNOT_DRAW))
             bind_flags |= D3D10_BIND_SHADER_RESOURCE;
+        if (options & D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE)
+            misc_flags |= D3D10_RESOURCE_MISC_GDI_COMPATIBLE;
 
         ok_(__FILE__, line)(desc.BindFlags == bind_flags, "Unexpected bind flags %#x for bitmap options %#x.\n",
                 desc.BindFlags, options);
         ok_(__FILE__, line)(!desc.CPUAccessFlags, "Unexpected cpu access flags %#x.\n", desc.CPUAccessFlags);
-        ok_(__FILE__, line)(!desc.MiscFlags, "Unexpected misc flags %#x.\n", desc.MiscFlags);
+        ok_(__FILE__, line)(desc.MiscFlags == misc_flags, "Unexpected misc flags %#x for bitmap options %#x.\n",
+                desc.MiscFlags, options);
 
         pixel_size = ID2D1Bitmap_GetPixelSize(bitmap);
         if (!pixel_size.width || !pixel_size.height)
@@ -6127,6 +6130,70 @@ static void test_dc_target(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_dc_target_gdi_interop(BOOL d3d11)
+{
+    ID2D1GdiInteropRenderTarget *interop;
+    D2D1_RENDER_TARGET_PROPERTIES desc;
+    struct d2d1_test_context ctx;
+    ID2D1DCRenderTarget *rt;
+    HDC hdc, target_hdc;
+    HRESULT hr;
+    RECT rect;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    target_hdc = CreateCompatibleDC(NULL);
+    ok(!!target_hdc, "Failed to create an HDC.\n");
+    create_target_dibsection(target_hdc, 16, 16);
+
+    desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+    desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+    desc.dpiX = 96.0f;
+    desc.dpiY = 96.0f;
+    desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+    desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+    hr = ID2D1Factory_CreateDCRenderTarget(ctx.factory, &desc, &rt);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Default usage. */
+    hr = ID2D1DCRenderTarget_QueryInterface(rt, &IID_ID2D1GdiInteropRenderTarget, (void **)&interop);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID2D1DCRenderTarget_BeginDraw(rt);
+    hdc = (void *)0xdeadbeef;
+    hr = ID2D1GdiInteropRenderTarget_GetDC(interop, D2D1_DC_INITIALIZE_MODE_COPY, &hdc);
+    todo_wine
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
+    todo_wine ok(!hdc, "Got unexpected DC %p.\n", hdc);
+    hr = ID2D1DCRenderTarget_EndDraw(rt, NULL, NULL);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
+
+    /* Default usage with set target context. */
+
+    SetRect(&rect, 0, 0, 16, 16);
+    hr = ID2D1DCRenderTarget_BindDC(rt, target_hdc, &rect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID2D1DCRenderTarget_BeginDraw(rt);
+    hdc = NULL;
+    hr = ID2D1GdiInteropRenderTarget_GetDC(interop, D2D1_DC_INITIALIZE_MODE_COPY, &hdc);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!!hdc, "Got unexpected DC %p.\n", hdc);
+    hr = ID2D1GdiInteropRenderTarget_ReleaseDC(interop, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1DCRenderTarget_EndDraw(rt, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID2D1GdiInteropRenderTarget_Release(interop);
+
+    DeleteDC(target_hdc);
+
+    ID2D1DCRenderTarget_Release(rt);
+    release_test_context(&ctx);
+}
+
 static void test_hwnd_target(BOOL d3d11)
 {
     D2D1_HWND_RENDER_TARGET_PROPERTIES hwnd_rt_desc;
@@ -6231,6 +6298,220 @@ static void test_hwnd_target(BOOL d3d11)
     }
 
     DestroyWindow(hwnd_rt_desc.hwnd);
+    release_test_context(&ctx);
+}
+
+static void test_hwnd_target_gdi_interop(BOOL d3d11)
+{
+    D2D1_HWND_RENDER_TARGET_PROPERTIES hwnd_rt_desc;
+    ID2D1GdiInteropRenderTarget *interop;
+    D2D1_RENDER_TARGET_PROPERTIES desc;
+    struct d2d1_test_context ctx;
+    ID2D1HwndRenderTarget *rt;
+    HRESULT hr;
+    HDC dc;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+    desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+    desc.dpiX = 0.0f;
+    desc.dpiY = 0.0f;
+    desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+    desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+
+    hwnd_rt_desc.hwnd = create_window();
+    hwnd_rt_desc.pixelSize.width = 64;
+    hwnd_rt_desc.pixelSize.height = 64;
+    hwnd_rt_desc.presentOptions = D2D1_PRESENT_OPTIONS_NONE;
+
+    hr = ID2D1Factory_CreateHwndRenderTarget(ctx.factory, &desc, &hwnd_rt_desc, &rt);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1HwndRenderTarget_QueryInterface(rt, &IID_ID2D1GdiInteropRenderTarget, (void **)&interop);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1HwndRenderTarget_BeginDraw(rt);
+    dc = (void *)0xdeadbeef;
+    hr = ID2D1GdiInteropRenderTarget_GetDC(interop, D2D1_DC_INITIALIZE_MODE_COPY, &dc);
+    todo_wine
+    ok(hr == D2DERR_TARGET_NOT_GDI_COMPATIBLE, "Got unexpected hr %#lx.\n", hr);
+    todo_wine ok(!dc, "Got unexpected DC %p.\n", dc);
+    hr = ID2D1HwndRenderTarget_EndDraw(rt, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1GdiInteropRenderTarget_Release(interop);
+
+    ID2D1HwndRenderTarget_Release(rt);
+
+    /* GDI-compatible. */
+    desc.usage = D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE;
+
+    hr = ID2D1Factory_CreateHwndRenderTarget(ctx.factory, &desc, &hwnd_rt_desc, &rt);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1HwndRenderTarget_QueryInterface(rt, &IID_ID2D1GdiInteropRenderTarget, (void **)&interop);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1HwndRenderTarget_BeginDraw(rt);
+    dc = (void *)0xdeadbeef;
+    hr = ID2D1GdiInteropRenderTarget_GetDC(interop, D2D1_DC_INITIALIZE_MODE_COPY, &dc);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!!dc, "Got unexpected DC %p.\n", dc);
+    hr = ID2D1GdiInteropRenderTarget_ReleaseDC(interop, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1HwndRenderTarget_EndDraw(rt, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1GdiInteropRenderTarget_Release(interop);
+
+    ID2D1HwndRenderTarget_Release(rt);
+
+    DestroyWindow(hwnd_rt_desc.hwnd);
+    release_test_context(&ctx);
+}
+
+static IDXGISurface *create_surface(IDXGIDevice *dxgi_device, unsigned int width,
+        unsigned int height, unsigned int bind_flags, unsigned int misc_flags, DXGI_FORMAT format)
+{
+    D3D10_TEXTURE2D_DESC texture_desc;
+    ID3D10Texture2D *texture;
+    ID3D10Device *d3d_device;
+    IDXGISurface *surface;
+    HRESULT hr;
+
+    texture_desc.Width = width;
+    texture_desc.Height = height;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = format;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D10_USAGE_DEFAULT;
+    texture_desc.BindFlags = bind_flags;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = misc_flags;
+
+    hr = IDXGIDevice_QueryInterface(dxgi_device, &IID_ID3D10Device, (void **)&d3d_device);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID3D10Device_CreateTexture2D(d3d_device, &texture_desc, NULL, &texture);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID3D10Texture2D_QueryInterface(texture, &IID_IDXGISurface, (void **)&surface);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID3D10Device_Release(d3d_device);
+    ID3D10Texture2D_Release(texture);
+
+    return surface;
+}
+
+static void test_dxgi_surface_target_gdi_interop(BOOL d3d11)
+{
+    ID2D1GdiInteropRenderTarget *interop;
+    D2D1_RENDER_TARGET_PROPERTIES desc;
+    ID2D1DeviceContext *device_context;
+    struct d2d1_test_context ctx;
+    ID2D1RenderTarget *rt;
+    IDXGISurface *surface;
+    ID2D1Bitmap *bitmap;
+    ULONG refcount;
+    HRESULT hr;
+    HDC dc;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    surface = create_surface(ctx.device, 64, 64, D3D10_BIND_RENDER_TARGET,
+            0, DXGI_FORMAT_B8G8R8A8_UNORM);
+    ok(!!surface, "Failed to create a surface.\n");
+
+    desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+    desc.pixelFormat.format = DXGI_FORMAT_UNKNOWN;
+    desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+    desc.dpiX = 0.0f;
+    desc.dpiY = 0.0f;
+    desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+    desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+
+    hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(ctx.factory, surface, &desc, &rt);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1GdiInteropRenderTarget, (void **)&interop);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1RenderTarget_BeginDraw(rt);
+    dc = (void *)0xdeadbeef;
+    hr = ID2D1GdiInteropRenderTarget_GetDC(interop, D2D1_DC_INITIALIZE_MODE_COPY, &dc);
+    todo_wine
+    ok(hr == D2DERR_TARGET_NOT_GDI_COMPATIBLE, "Got unexpected hr %#lx.\n", hr);
+    todo_wine ok(!dc, "Got unexpected DC %p.\n", dc);
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1GdiInteropRenderTarget_Release(interop);
+    ID2D1RenderTarget_Release(rt);
+
+    /* GDI-compatible, requested usage does not match the surface. */
+    desc.usage = D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE;
+
+    hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(ctx.factory, surface, &desc, &rt);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        ID2D1RenderTarget_Release(rt);
+
+    refcount = IDXGISurface_Release(surface);
+    ok(!refcount, "Unexpected refcount %lu.\n", refcount);
+
+    /* GDI-compatible, surface is GDI-compatible. */
+    surface = create_surface(ctx.device, 64, 64, D3D10_BIND_RENDER_TARGET,
+            D3D10_RESOURCE_MISC_GDI_COMPATIBLE, DXGI_FORMAT_B8G8R8A8_UNORM);
+    ok(!!surface, "Failed to create a surface.\n");
+
+    hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(ctx.factory, surface, &desc, &rt);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    if (SUCCEEDED(ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&device_context)))
+    {
+        ID2D1DeviceContext_GetTarget(device_context, (ID2D1Image **)&bitmap);
+        check_bitmap_surface(bitmap, TRUE, D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE);
+        ID2D1Bitmap_Release(bitmap);
+        ID2D1DeviceContext_Release(device_context);
+    }
+
+    hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1GdiInteropRenderTarget, (void **)&interop);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1RenderTarget_BeginDraw(rt);
+    dc = (void *)0xdeadbeef;
+    hr = ID2D1GdiInteropRenderTarget_GetDC(interop, D2D1_DC_INITIALIZE_MODE_COPY, &dc);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!!dc, "Got unexpected DC %p.\n", dc);
+    hr = ID2D1GdiInteropRenderTarget_ReleaseDC(interop, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1GdiInteropRenderTarget_Release(interop);
+    ID2D1RenderTarget_Release(rt);
+
+    /* GDI-compatible target wasn't requested, used surface is compatible. */
+    desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+
+    hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(ctx.factory, surface, &desc, &rt);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1GdiInteropRenderTarget, (void **)&interop);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1RenderTarget_BeginDraw(rt);
+    dc = (void *)0xdeadbeef;
+    hr = ID2D1GdiInteropRenderTarget_GetDC(interop, D2D1_DC_INITIALIZE_MODE_COPY, &dc);
+    todo_wine ok(hr == D2DERR_TARGET_NOT_GDI_COMPATIBLE, "Got unexpected hr %#lx.\n", hr);
+    todo_wine ok(!dc, "Got unexpected DC %p.\n", dc);
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1GdiInteropRenderTarget_Release(interop);
+    ID2D1RenderTarget_Release(rt);
+
+    refcount = IDXGISurface_Release(surface);
+    ok(!refcount, "Unexpected refcount %lu.\n", refcount);
+
     release_test_context(&ctx);
 }
 
@@ -8458,7 +8739,7 @@ static void test_fill_geometry(BOOL d3d11)
     release_test_context(&ctx);
 }
 
-static void test_gdi_interop(BOOL d3d11)
+static void test_wic_gdi_interop(BOOL d3d11)
 {
     ID2D1GdiInteropRenderTarget *interop;
     D2D1_RENDER_TARGET_PROPERTIES desc;
@@ -8503,7 +8784,8 @@ static void test_gdi_interop(BOOL d3d11)
     ID2D1RenderTarget_BeginDraw(rt);
     dc = (void *)0xdeadbeef;
     hr = ID2D1GdiInteropRenderTarget_GetDC(interop, D2D1_DC_INITIALIZE_MODE_COPY, &dc);
-    ok(hr != S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(hr == D2DERR_TARGET_NOT_GDI_COMPATIBLE, "Got unexpected hr %#lx.\n", hr);
     todo_wine ok(!dc, "Got unexpected DC %p.\n", dc);
     ID2D1GdiInteropRenderTarget_Release(interop);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
@@ -8525,7 +8807,8 @@ static void test_gdi_interop(BOOL d3d11)
     hr = ID2D1GdiInteropRenderTarget_GetDC(interop, D2D1_DC_INITIALIZE_MODE_COPY, &dc);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(dc != NULL, "Expected NULL dc, got %p.\n", dc);
-    ID2D1GdiInteropRenderTarget_ReleaseDC(interop, NULL);
+    hr = ID2D1GdiInteropRenderTarget_ReleaseDC(interop, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
@@ -8546,7 +8829,8 @@ static void test_gdi_interop(BOOL d3d11)
 
     SetRect(&rect, 0, 0, 16, 16);
     FillRect(dc, &rect, GetStockObject(BLACK_BRUSH));
-    ID2D1GdiInteropRenderTarget_ReleaseDC(interop, NULL);
+    hr = ID2D1GdiInteropRenderTarget_ReleaseDC(interop, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -8580,6 +8864,8 @@ static void test_gdi_interop(BOOL d3d11)
 
     IWICBitmap_Release(wic_bitmap);
     release_test_context(&ctx);
+
+    CoUninitialize();
 }
 
 static void test_layer(BOOL d3d11)
@@ -8949,41 +9235,6 @@ static void check_rt_bitmap_surface_(unsigned int line, ID2D1RenderTarget *rt, B
         ID2D1DCRenderTarget_Release(dc_rt);
 }
 
-static IDXGISurface *create_surface(IDXGIDevice *dxgi_device, DXGI_FORMAT format)
-{
-    D3D10_TEXTURE2D_DESC texture_desc;
-    ID3D10Texture2D *texture;
-    ID3D10Device *d3d_device;
-    IDXGISurface *surface;
-    HRESULT hr;
-
-    texture_desc.Width = 1;
-    texture_desc.Height = 1;
-    texture_desc.MipLevels = 1;
-    texture_desc.ArraySize = 1;
-    texture_desc.Format = format;
-    texture_desc.SampleDesc.Count = 1;
-    texture_desc.SampleDesc.Quality = 0;
-    texture_desc.Usage = D3D10_USAGE_DEFAULT;
-    texture_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
-    texture_desc.CPUAccessFlags = 0;
-    texture_desc.MiscFlags = 0;
-
-    hr = IDXGIDevice_QueryInterface(dxgi_device, &IID_ID3D10Device, (void **)&d3d_device);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-
-    hr = ID3D10Device_CreateTexture2D(d3d_device, &texture_desc, NULL, &texture);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-
-    hr = ID3D10Texture2D_QueryInterface(texture, &IID_IDXGISurface, (void **)&surface);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-
-    ID3D10Device_Release(d3d_device);
-    ID3D10Texture2D_Release(texture);
-
-    return surface;
-}
-
 static void test_bitmap_surface(BOOL d3d11)
 {
     static const struct bitmap_format_test
@@ -9086,7 +9337,7 @@ static void test_bitmap_surface(BOOL d3d11)
     }
 
     /* A8 surface */
-    surface2 = create_surface(ctx.device, DXGI_FORMAT_A8_UNORM);
+    surface2 = create_surface(ctx.device, 1, 1, D3D10_BIND_SHADER_RESOURCE, 0, DXGI_FORMAT_A8_UNORM);
 
     hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(device_context, surface2, NULL, &bitmap);
     ok(hr == S_OK || broken(hr == D2DERR_UNSUPPORTED_PIXEL_FORMAT) /* Win7 */,
@@ -13825,16 +14076,21 @@ START_TEST(d2d1)
     queue_test(test_bitmap_updates);
     queue_test(test_opacity_brush);
     queue_test(test_create_target);
+    queue_test(test_dxgi_surface_target_gdi_interop);
     queue_test(test_draw_text_layout);
     queue_test(test_dc_target);
+    queue_test(test_dc_target_gdi_interop);
+    queue_test(test_dc_target_is_supported);
     queue_test(test_hwnd_target);
+    queue_test(test_hwnd_target_gdi_interop);
+    queue_test(test_hwnd_target_is_supported);
     queue_test(test_bitmap_target);
     queue_d3d10_test(test_desktop_dpi);
     queue_d3d10_test(test_stroke_style);
     queue_test(test_gradient);
     queue_test(test_draw_geometry);
     queue_test(test_fill_geometry);
-    queue_test(test_gdi_interop);
+    queue_test(test_wic_gdi_interop);
     queue_test(test_layer);
     queue_test(test_bezier_intersect);
     queue_test(test_create_device);
@@ -13867,8 +14123,6 @@ START_TEST(d2d1)
     queue_test(test_image_bounds);
     queue_test(test_bitmap_map);
     queue_test(test_bitmap_create);
-    queue_test(test_hwnd_target_is_supported);
-    queue_test(test_dc_target_is_supported);
 
     run_queued_tests();
 }
