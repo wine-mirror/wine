@@ -3237,6 +3237,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 GpPointF dst_to_src_points[3] = {{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}};
                 REAL x_dx, x_dy, y_dx, y_dy;
                 ARGB *dst_color;
+                GpPointF src_pointf_row, src_pointf;
 
                 m11 = (ptf[1].X - ptf[0].X) / srcwidth;
                 m21 = (ptf[2].X - ptf[0].X) / srcheight;
@@ -3266,16 +3267,21 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                     heap_free(src_data);
                     return OutOfMemory;
                 }
-
                 dst_color = (ARGB*)(dst_data);
-                for (y = dst_area.top; y < dst_area.bottom; y++)
-                {
-                    for (x = dst_area.left; x < dst_area.right; x++)
-                    {
-                        GpPointF src_pointf;
-                        src_pointf.X = dst_to_src_points[0].X + x * x_dx + y * y_dx;
-                        src_pointf.Y = dst_to_src_points[0].Y + x * x_dy + y * y_dy;
 
+                /* Calculate top left point of transformed image.
+                   It would be used as reference point for adding */
+                src_pointf_row.X = dst_to_src_points[0].X +
+                                   dst_area.left * x_dx + dst_area.top * y_dx;
+                src_pointf_row.Y = dst_to_src_points[0].Y +
+                                   dst_area.left * x_dy + dst_area.top * y_dy;
+
+                for (y = dst_area.top; y < dst_area.bottom;
+                     y++, src_pointf_row.X += y_dx, src_pointf_row.Y += y_dy)
+                {
+                    for (x = dst_area.left, src_pointf = src_pointf_row; x < dst_area.right;
+                         x++, src_pointf.X += x_dx, src_pointf.Y += x_dy)
+                    {
                         if (src_pointf.X >= srcx && src_pointf.X < srcx + srcwidth &&
                             src_pointf.Y >= srcy && src_pointf.Y < srcy + srcheight)
                             *dst_color = resample_bitmap_pixel(&src_area, src_data, bitmap->width, bitmap->height, &src_pointf,
