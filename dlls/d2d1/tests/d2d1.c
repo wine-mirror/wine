@@ -4377,10 +4377,10 @@ static void test_rectangle_geometry(BOOL d3d11)
 {
     ID2D1TransformedGeometry *transformed_geometry;
     ID2D1RectangleGeometry *geometry;
+    struct d2d1_test_context ctx;
     struct geometry_sink sink;
     D2D1_MATRIX_3X2_F matrix;
     D2D1_RECT_F rect, rect2;
-    ID2D1Factory *factory;
     D2D1_POINT_2F point;
     BOOL contains;
     HRESULT hr;
@@ -4434,11 +4434,11 @@ static void test_rectangle_geometry(BOOL d3d11)
         {D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_CLOSED, {0.0f, 8.99519043e+01f}, 3, &expected_segments[21]},
     };
 
-    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (!init_test_context(&ctx, d3d11))
+        return;
 
     set_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f);
-    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &geometry);
+    hr = ID2D1Factory_CreateRectangleGeometry(ctx.factory, &rect, &geometry);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID2D1RectangleGeometry_GetRect(geometry, &rect2);
     match = compare_rect(&rect2, 0.0f, 0.0f, 0.0f, 0.0f, 0);
@@ -4447,7 +4447,7 @@ static void test_rectangle_geometry(BOOL d3d11)
     ID2D1RectangleGeometry_Release(geometry);
 
     set_rect(&rect, 50.0f, 0.0f, 40.0f, 100.0f);
-    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &geometry);
+    hr = ID2D1Factory_CreateRectangleGeometry(ctx.factory, &rect, &geometry);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID2D1RectangleGeometry_GetRect(geometry, &rect2);
     match = compare_rect(&rect2, 50.0f, 0.0f, 40.0f, 100.0f, 0);
@@ -4456,7 +4456,7 @@ static void test_rectangle_geometry(BOOL d3d11)
     ID2D1RectangleGeometry_Release(geometry);
 
     set_rect(&rect, 0.0f, 100.0f, 40.0f, 50.0f);
-    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &geometry);
+    hr = ID2D1Factory_CreateRectangleGeometry(ctx.factory, &rect, &geometry);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID2D1RectangleGeometry_GetRect(geometry, &rect2);
     match = compare_rect(&rect2, 0.0f, 100.0f, 40.0f, 50.0f, 0);
@@ -4465,7 +4465,7 @@ static void test_rectangle_geometry(BOOL d3d11)
     ID2D1RectangleGeometry_Release(geometry);
 
     set_rect(&rect, 50.0f, 100.0f, 40.0f, 50.0f);
-    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &geometry);
+    hr = ID2D1Factory_CreateRectangleGeometry(ctx.factory, &rect, &geometry);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID2D1RectangleGeometry_GetRect(geometry, &rect2);
     match = compare_rect(&rect2, 50.0f, 100.0f, 40.0f, 50.0f, 0);
@@ -4474,7 +4474,7 @@ static void test_rectangle_geometry(BOOL d3d11)
     ID2D1RectangleGeometry_Release(geometry);
 
     set_rect(&rect, 0.0f, 0.0f, 10.0f, 20.0f);
-    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &geometry);
+    hr = ID2D1Factory_CreateRectangleGeometry(ctx.factory, &rect, &geometry);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Edge. */
@@ -4585,7 +4585,7 @@ static void test_rectangle_geometry(BOOL d3d11)
     scale_matrix(&matrix, 4.0f, 5.0f);
     rotate_matrix(&matrix, M_PI / 3.0f);
     translate_matrix(&matrix, 30.0f, 20.0f);
-    hr = ID2D1Factory_CreateTransformedGeometry(factory, (ID2D1Geometry *)geometry, &matrix, &transformed_geometry);
+    hr = ID2D1Factory_CreateTransformedGeometry(ctx.factory, (ID2D1Geometry *)geometry, &matrix, &transformed_geometry);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1TransformedGeometry_GetBounds(transformed_geometry, NULL, &rect);
@@ -4651,21 +4651,22 @@ static void test_rectangle_geometry(BOOL d3d11)
 
     ID2D1TransformedGeometry_Release(transformed_geometry);
     ID2D1RectangleGeometry_Release(geometry);
-    ID2D1Factory_Release(factory);
+
+    release_test_context(&ctx);
 }
 
 static void test_rounded_rectangle_geometry(BOOL d3d11)
 {
     ID2D1RoundedRectangleGeometry *geometry;
     D2D1_ROUNDED_RECT rect, rect2;
-    ID2D1Factory *factory;
+    struct d2d1_test_context ctx;
     HRESULT hr;
 
-    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (!init_test_context(&ctx, d3d11))
+        return;
 
     set_rounded_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-    hr = ID2D1Factory_CreateRoundedRectangleGeometry(factory, &rect, &geometry);
+    hr = ID2D1Factory_CreateRoundedRectangleGeometry(ctx.factory, &rect, &geometry);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID2D1RoundedRectangleGeometry_GetRoundedRect(geometry, &rect2);
@@ -4675,7 +4676,7 @@ static void test_rounded_rectangle_geometry(BOOL d3d11)
 
     /* X radius larger than half width. */
     set_rounded_rect(&rect, 0.0f, 0.0f, 50.0f, 40.0f, 30.0f, 5.0f);
-    hr = ID2D1Factory_CreateRoundedRectangleGeometry(factory, &rect, &geometry);
+    hr = ID2D1Factory_CreateRoundedRectangleGeometry(ctx.factory, &rect, &geometry);
     ID2D1RoundedRectangleGeometry_GetRoundedRect(geometry, &rect2);
     ok(!memcmp(&rect, &rect2, sizeof(rect)), "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
             rect2.rect.left, rect2.rect.top, rect2.rect.right, rect2.rect.bottom, rect2.radiusX, rect2.radiusY);
@@ -4683,7 +4684,7 @@ static void test_rounded_rectangle_geometry(BOOL d3d11)
 
     /* Y radius larger than half height. */
     set_rounded_rect(&rect, 0.0f, 0.0f, 50.0f, 40.0f, 5.0f, 30.0f);
-    hr = ID2D1Factory_CreateRoundedRectangleGeometry(factory, &rect, &geometry);
+    hr = ID2D1Factory_CreateRoundedRectangleGeometry(ctx.factory, &rect, &geometry);
     ID2D1RoundedRectangleGeometry_GetRoundedRect(geometry, &rect2);
     ok(!memcmp(&rect, &rect2, sizeof(rect)), "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
             rect2.rect.left, rect2.rect.top, rect2.rect.right, rect2.rect.bottom, rect2.radiusX, rect2.radiusY);
@@ -4691,13 +4692,13 @@ static void test_rounded_rectangle_geometry(BOOL d3d11)
 
     /* Both exceed rectangle size. */
     set_rounded_rect(&rect, 0.0f, 0.0f, 50.0f, 40.0f, 30.0f, 25.0f);
-    hr = ID2D1Factory_CreateRoundedRectangleGeometry(factory, &rect, &geometry);
+    hr = ID2D1Factory_CreateRoundedRectangleGeometry(ctx.factory, &rect, &geometry);
     ID2D1RoundedRectangleGeometry_GetRoundedRect(geometry, &rect2);
     ok(!memcmp(&rect, &rect2, sizeof(rect)), "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
             rect2.rect.left, rect2.rect.top, rect2.rect.right, rect2.rect.bottom, rect2.radiusX, rect2.radiusY);
     ID2D1RoundedRectangleGeometry_Release(geometry);
 
-    ID2D1Factory_Release(factory);
+    release_test_context(&ctx);
 }
 
 static void test_bitmap_formats(BOOL d3d11)
@@ -5623,7 +5624,6 @@ static void test_opacity_brush(BOOL d3d11)
 static void test_create_target(BOOL d3d11)
 {
     struct d2d1_test_context ctx;
-    ID2D1Factory *factory;
     ID2D1RenderTarget *rt;
     HRESULT hr;
     static const struct
@@ -5646,9 +5646,6 @@ static void test_create_target(BOOL d3d11)
     if (!init_test_context(&ctx, d3d11))
         return;
 
-    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-
     for (i = 0; i < ARRAY_SIZE(create_dpi_tests); ++i)
     {
         ID2D1GdiInteropRenderTarget *interop;
@@ -5665,7 +5662,7 @@ static void test_create_target(BOOL d3d11)
         desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
         desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
 
-        hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory, ctx.surface, &desc, &rt);
+        hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(ctx.factory, ctx.surface, &desc, &rt);
         ok(hr == create_dpi_tests[i].hr, "Test %u: Got unexpected hr %#lx, expected %#lx.\n",
                 i, hr, create_dpi_tests[i].hr);
 
@@ -5694,7 +5691,6 @@ static void test_create_target(BOOL d3d11)
         ID2D1RenderTarget_Release(rt);
     }
 
-    ID2D1Factory_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -5732,13 +5728,13 @@ static void test_draw_text_layout(BOOL d3d11)
         { D2D1_TEXT_ANTIALIAS_MODE_ALIASED, DWRITE_RENDERING_MODE_CLEARTYPE_GDI_CLASSIC, E_INVALIDARG },
     };
     D2D1_RENDER_TARGET_PROPERTIES desc;
-    ID2D1Factory *factory, *factory2;
     ID2D1RenderTarget *rt, *rt2;
     HRESULT hr;
     IDWriteFactory *dwrite_factory;
     IDWriteTextFormat *text_format;
     IDWriteTextLayout *text_layout;
     struct d2d1_test_context ctx;
+    ID2D1Factory *factory2;
     D2D1_POINT_2F origin;
     DWRITE_TEXT_RANGE range;
     D2D1_COLOR_F color;
@@ -5750,13 +5746,9 @@ static void test_draw_text_layout(BOOL d3d11)
     if (!init_test_context(&ctx, d3d11))
         return;
 
-
-    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory2);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ok(factory != factory2, "got same factory\n");
+    ok(ctx.factory != factory2, "got same factory\n");
 
     desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
     desc.pixelFormat.format = DXGI_FORMAT_UNKNOWN;
@@ -5766,7 +5758,7 @@ static void test_draw_text_layout(BOOL d3d11)
     desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
     desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
 
-    hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory, ctx.surface, &desc, &rt);
+    hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(ctx.factory, ctx.surface, &desc, &rt);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory2, ctx.surface, &desc, &rt2);
@@ -5805,7 +5797,7 @@ static void test_draw_text_layout(BOOL d3d11)
 
     /* Effect is d2d resource, but not a brush. */
     set_rect(&rect, 0.0f, 0.0f, 10.0f, 10.0f);
-    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &geometry);
+    hr = ID2D1Factory_CreateRectangleGeometry(ctx.factory, &rect, &geometry);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     range.startPosition = 0;
@@ -5852,7 +5844,6 @@ static void test_draw_text_layout(BOOL d3d11)
     ID2D1RenderTarget_Release(rt);
     ID2D1RenderTarget_Release(rt2);
 
-    ID2D1Factory_Release(factory);
     ID2D1Factory_Release(factory2);
     release_test_context(&ctx);
 }
@@ -5894,7 +5885,6 @@ static void test_dc_target(BOOL d3d11)
     D2D1_ANTIALIAS_MODE aa_mode;
     ID2D1SolidColorBrush *brush;
     ID2D1RenderTarget *rt3;
-    ID2D1Factory *factory;
     FLOAT dpi_x, dpi_y;
     D2D1_COLOR_F color;
     HENHMETAFILE hemf;
@@ -5912,10 +5902,6 @@ static void test_dc_target(BOOL d3d11)
 
     if (!init_test_context(&ctx, d3d11))
         return;
-    release_test_context(&ctx);
-
-    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(invalid_formats); ++i)
     {
@@ -5926,7 +5912,7 @@ static void test_dc_target(BOOL d3d11)
         desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
         desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
 
-        hr = ID2D1Factory_CreateDCRenderTarget(factory, &desc, &rt);
+        hr = ID2D1Factory_CreateDCRenderTarget(ctx.factory, &desc, &rt);
         ok(hr == D2DERR_UNSUPPORTED_PIXEL_FORMAT, "Got unexpected hr %#lx.\n", hr);
     }
 
@@ -5937,7 +5923,7 @@ static void test_dc_target(BOOL d3d11)
     desc.dpiY = 96.0f;
     desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
     desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
-    hr = ID2D1Factory_CreateDCRenderTarget(factory, &desc, &rt);
+    hr = ID2D1Factory_CreateDCRenderTarget(ctx.factory, &desc, &rt);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1DCRenderTarget_QueryInterface(rt, &IID_ID2D1GdiInteropRenderTarget, (void **)&interop);
@@ -5973,7 +5959,7 @@ static void test_dc_target(BOOL d3d11)
     ID2D1DCRenderTarget_Release(rt);
 
     /* BindDC() */
-    hr = ID2D1Factory_CreateDCRenderTarget(factory, &desc, &rt);
+    hr = ID2D1Factory_CreateDCRenderTarget(ctx.factory, &desc, &rt);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     aa_mode = ID2D1DCRenderTarget_GetAntialiasMode(rt);
@@ -6138,7 +6124,7 @@ static void test_dc_target(BOOL d3d11)
     DestroyWindow(hwnd);
 
     ID2D1DCRenderTarget_Release(rt);
-    ID2D1Factory_Release(factory);
+    release_test_context(&ctx);
 }
 
 static void test_hwnd_target(BOOL d3d11)
@@ -6150,11 +6136,9 @@ static void test_hwnd_target(BOOL d3d11)
     D2D1_PIXEL_FORMAT pixel_format;
     struct d2d1_test_context ctx;
     ID2D1RenderTarget *rt3;
-    ID2D1Factory *factory;
     D2D1_SIZE_U size;
     unsigned int i;
     HRESULT hr;
-    ULONG ref;
 
     static const struct format_test
     {
@@ -6176,10 +6160,6 @@ static void test_hwnd_target(BOOL d3d11)
 
     if (!init_test_context(&ctx, d3d11))
         return;
-    release_test_context(&ctx);
-
-    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
     desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -6194,16 +6174,16 @@ static void test_hwnd_target(BOOL d3d11)
     hwnd_rt_desc.pixelSize.height = 64;
     hwnd_rt_desc.presentOptions = D2D1_PRESENT_OPTIONS_NONE;
 
-    hr = ID2D1Factory_CreateHwndRenderTarget(factory, &desc, &hwnd_rt_desc, &rt);
+    hr = ID2D1Factory_CreateHwndRenderTarget(ctx.factory, &desc, &hwnd_rt_desc, &rt);
     ok(hr != S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hwnd_rt_desc.hwnd = (HWND)0xdeadbeef;
-    hr = ID2D1Factory_CreateHwndRenderTarget(factory, &desc, &hwnd_rt_desc, &rt);
+    hr = ID2D1Factory_CreateHwndRenderTarget(ctx.factory, &desc, &hwnd_rt_desc, &rt);
     ok(hr != S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hwnd_rt_desc.hwnd = CreateWindowA("static", "d2d_test", 0, 0, 0, 0, 0, 0, 0, 0, 0);
     ok(!!hwnd_rt_desc.hwnd, "Failed to create target window.\n");
-    hr = ID2D1Factory_CreateHwndRenderTarget(factory, &desc, &hwnd_rt_desc, &rt);
+    hr = ID2D1Factory_CreateHwndRenderTarget(ctx.factory, &desc, &hwnd_rt_desc, &rt);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1HwndRenderTarget_QueryInterface(rt, &IID_ID2D1GdiInteropRenderTarget, (void **)&interop);
@@ -6231,7 +6211,7 @@ static void test_hwnd_target(BOOL d3d11)
         winetest_push_context("test %d", i);
 
         desc.pixelFormat = format_tests[i].format;
-        hr = ID2D1Factory_CreateHwndRenderTarget(factory, &desc, &hwnd_rt_desc, &rt);
+        hr = ID2D1Factory_CreateHwndRenderTarget(ctx.factory, &desc, &hwnd_rt_desc, &rt);
         if (format_tests[i].expected_failure)
         {
             todo_wine
@@ -6254,8 +6234,7 @@ static void test_hwnd_target(BOOL d3d11)
     }
 
     DestroyWindow(hwnd_rt_desc.hwnd);
-    ref = ID2D1Factory_Release(factory);
-    ok(!ref, "Factory has %lu references left.\n", ref);
+    release_test_context(&ctx);
 }
 
 #define test_compatible_target_size(r) test_compatible_target_size_(__LINE__, r)
@@ -6364,7 +6343,6 @@ static void test_bitmap_target(BOOL d3d11)
     ID2D1DCRenderTarget *dc_rt;
     D2D1_SIZE_F size, size2;
     ID2D1RenderTarget *rt3;
-    ID2D1Factory *factory;
     float dpi[2], dpi2[2];
     D2D1_COLOR_F color;
     ULONG refcount;
@@ -6372,10 +6350,6 @@ static void test_bitmap_target(BOOL d3d11)
 
     if (!init_test_context(&ctx, d3d11))
         return;
-    release_test_context(&ctx);
-
-    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
     desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -6391,7 +6365,7 @@ static void test_bitmap_target(BOOL d3d11)
     hwnd_rt_desc.pixelSize.height = 64;
     hwnd_rt_desc.presentOptions = D2D1_PRESENT_OPTIONS_NONE;
 
-    hr = ID2D1Factory_CreateHwndRenderTarget(factory, &desc, &hwnd_rt_desc, &hwnd_rt);
+    hr = ID2D1Factory_CreateHwndRenderTarget(ctx.factory, &desc, &hwnd_rt_desc, &hwnd_rt);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     test_compatible_target_size((ID2D1RenderTarget *)hwnd_rt);
@@ -6513,7 +6487,7 @@ static void test_bitmap_target(BOOL d3d11)
     desc.dpiY = 96.0f;
     desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
     desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
-    hr = ID2D1Factory_CreateDCRenderTarget(factory, &desc, &dc_rt);
+    hr = ID2D1Factory_CreateDCRenderTarget(ctx.factory, &desc, &dc_rt);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     test_compatible_target_size((ID2D1RenderTarget *)dc_rt);
@@ -6534,7 +6508,7 @@ static void test_bitmap_target(BOOL d3d11)
     ID2D1BitmapRenderTarget_Release(rt);
     ID2D1DCRenderTarget_Release(dc_rt);
 
-    ID2D1Factory_Release(factory);
+    release_test_context(&ctx);
 }
 
 static void test_desktop_dpi(BOOL d3d11)
@@ -6570,8 +6544,8 @@ static void test_stroke_style(BOOL d3d11)
         {D2D1_DASH_STYLE_DASH_DOT_DOT, 6, {2.0f, 2.0f, 0.0f, 2.0f, 0.0f, 2.0f}},
     };
     D2D1_STROKE_STYLE_PROPERTIES desc;
+    struct d2d1_test_context ctx;
     ID2D1StrokeStyle *style;
-    ID2D1Factory *factory;
     UINT32 count;
     HRESULT hr;
     D2D1_CAP_STYLE cap_style;
@@ -6581,8 +6555,8 @@ static void test_stroke_style(BOOL d3d11)
     unsigned int i;
     float dashes[2];
 
-    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (!init_test_context(&ctx, d3d11))
+        return;
 
     desc.startCap = D2D1_CAP_STYLE_SQUARE;
     desc.endCap = D2D1_CAP_STYLE_ROUND;
@@ -6592,7 +6566,7 @@ static void test_stroke_style(BOOL d3d11)
     desc.dashStyle = D2D1_DASH_STYLE_DOT;
     desc.dashOffset = -1.0f;
 
-    hr = ID2D1Factory_CreateStrokeStyle(factory, &desc, NULL, 0, &style);
+    hr = ID2D1Factory_CreateStrokeStyle(ctx.factory, &desc, NULL, 0, &style);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     cap_style = ID2D1StrokeStyle_GetStartCap(style);
@@ -6621,24 +6595,24 @@ static void test_stroke_style(BOOL d3d11)
 
     ID2D1StrokeStyle_Release(style);
 
-    hr = ID2D1Factory_CreateStrokeStyle(factory, &desc, NULL, 0, &style);
+    hr = ID2D1Factory_CreateStrokeStyle(ctx.factory, &desc, NULL, 0, &style);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
-    hr = ID2D1Factory_CreateStrokeStyle(factory, &desc, dashes, 0, &style);
+    hr = ID2D1Factory_CreateStrokeStyle(ctx.factory, &desc, dashes, 0, &style);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
-    hr = ID2D1Factory_CreateStrokeStyle(factory, &desc, dashes, 1, &style);
+    hr = ID2D1Factory_CreateStrokeStyle(ctx.factory, &desc, dashes, 1, &style);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID2D1StrokeStyle_Release(style);
 
     /* Builtin style, dashes are specified. */
     desc.dashStyle = D2D1_DASH_STYLE_DOT;
-    hr = ID2D1Factory_CreateStrokeStyle(factory, &desc, dashes, 1, &style);
+    hr = ID2D1Factory_CreateStrokeStyle(ctx.factory, &desc, dashes, 1, &style);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     /* Invalid style. */
     desc.dashStyle = 100;
-    hr = ID2D1Factory_CreateStrokeStyle(factory, &desc, NULL, 0, &style);
+    hr = ID2D1Factory_CreateStrokeStyle(ctx.factory, &desc, NULL, 0, &style);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     /* Test returned dash pattern for builtin styles. */
@@ -6656,7 +6630,7 @@ static void test_stroke_style(BOOL d3d11)
 
         desc.dashStyle = dash_style_tests[i].dash_style;
 
-        hr = ID2D1Factory_CreateStrokeStyle(factory, &desc, NULL, 0, &style);
+        hr = ID2D1Factory_CreateStrokeStyle(ctx.factory, &desc, NULL, 0, &style);
         ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         dash_count = ID2D1StrokeStyle_GetDashesCount(style);
@@ -6686,7 +6660,7 @@ static void test_stroke_style(BOOL d3d11)
 
     /* NULL dashes array, non-zero length. */
     memset(&desc, 0, sizeof(desc));
-    hr = ID2D1Factory_CreateStrokeStyle(factory, &desc, NULL, 1, &style);
+    hr = ID2D1Factory_CreateStrokeStyle(ctx.factory, &desc, NULL, 1, &style);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     count = ID2D1StrokeStyle_GetDashesCount(style);
@@ -6694,7 +6668,7 @@ static void test_stroke_style(BOOL d3d11)
 
     ID2D1StrokeStyle_Release(style);
 
-    ID2D1Factory_Release(factory);
+    release_test_context(&ctx);
 }
 
 static void test_gradient(BOOL d3d11)
@@ -8496,7 +8470,6 @@ static void test_gdi_interop(BOOL d3d11)
     IWICBitmapLock *wic_lock;
     IWICBitmap *wic_bitmap;
     ID2D1RenderTarget *rt;
-    ID2D1Factory *factory;
     D2D1_COLOR_F color;
     HRESULT hr;
     BOOL match;
@@ -8505,9 +8478,6 @@ static void test_gdi_interop(BOOL d3d11)
 
     if (!init_test_context(&ctx, d3d11))
         return;
-
-    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
     hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
@@ -8527,7 +8497,7 @@ static void test_gdi_interop(BOOL d3d11)
     desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
     desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
 
-    hr = ID2D1Factory_CreateWicBitmapRenderTarget(factory, wic_bitmap, &desc, &rt);
+    hr = ID2D1Factory_CreateWicBitmapRenderTarget(ctx.factory, wic_bitmap, &desc, &rt);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1GdiInteropRenderTarget, (void **)&interop);
@@ -8547,7 +8517,7 @@ static void test_gdi_interop(BOOL d3d11)
     /* WIC target, gdi compatible */
     desc.usage = D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE;
 
-    hr = ID2D1Factory_CreateWicBitmapRenderTarget(factory, wic_bitmap, &desc, &rt);
+    hr = ID2D1Factory_CreateWicBitmapRenderTarget(ctx.factory, wic_bitmap, &desc, &rt);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1GdiInteropRenderTarget, (void **)&interop);
@@ -8612,7 +8582,6 @@ static void test_gdi_interop(BOOL d3d11)
     ID2D1RenderTarget_Release(rt);
 
     IWICBitmap_Release(wic_bitmap);
-    ID2D1Factory_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -8792,27 +8761,25 @@ static void test_create_device(BOOL d3d11)
 {
     D2D1_CREATION_PROPERTIES properties = {0};
     struct d2d1_test_context ctx;
-    ID2D1Factory1 *factory;
     ID2D1Factory *factory2;
     ID2D1Device *device;
-    ULONG refcount;
     HRESULT hr;
 
     if (!init_test_context(&ctx, d3d11))
         return;
 
-    if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
+    if (!ctx.factory1)
     {
         win_skip("ID2D1Factory1 is not supported.\n");
         release_test_context(&ctx);
         return;
     }
 
-    hr = ID2D1Factory1_CreateDevice(factory, ctx.device, &device);
+    hr = ID2D1Factory1_CreateDevice(ctx.factory1, ctx.device, &device);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID2D1Device_GetFactory(device, &factory2);
-    ok(factory2 == (ID2D1Factory *)factory, "Got unexpected factory %p, expected %p.\n", factory2, factory);
+    ok(factory2 == (ID2D1Factory *)ctx.factory1, "Got unexpected factory.\n");
     ID2D1Factory_Release(factory2);
     ID2D1Device_Release(device);
 
@@ -8830,9 +8797,6 @@ static void test_create_device(BOOL d3d11)
         win_skip("D2D1CreateDevice() is unavailable.\n");
 
     release_test_context(&ctx);
-
-    refcount = ID2D1Factory1_Release(factory);
-    ok(!refcount, "Factory has %lu references left.\n", refcount);
 }
 
 #define check_rt_bitmap_surface(r, s, o) check_rt_bitmap_surface_(__LINE__, r, s, o)
@@ -9057,7 +9021,6 @@ static void test_bitmap_surface(BOOL d3d11)
     IDXGISurface *surface2;
     D2D1_PIXEL_FORMAT pixel_format;
     struct d2d1_test_context ctx;
-    ID2D1Factory1 *factory;
     ID2D1RenderTarget *rt;
     ID2D1Bitmap1 *bitmap;
     ID2D1Device *device;
@@ -9073,7 +9036,7 @@ static void test_bitmap_surface(BOOL d3d11)
     if (!init_test_context(&ctx, d3d11))
         return;
 
-    if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
+    if (!ctx.factory1)
     {
         win_skip("ID2D1Factory1 is not supported.\n");
         release_test_context(&ctx);
@@ -9095,7 +9058,7 @@ static void test_bitmap_surface(BOOL d3d11)
     ID2D1DeviceContext_Release(device_context);
 
     /* Bitmap created from DXGI surface. */
-    hr = ID2D1Factory1_CreateDevice(factory, ctx.device, &device);
+    hr = ID2D1Factory1_CreateDevice(ctx.factory1, ctx.device, &device);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1Device_CreateDeviceContext(device, D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &device_context);
@@ -9210,7 +9173,7 @@ static void test_bitmap_surface(BOOL d3d11)
     rt_desc.dpiY = 96.0f;
     rt_desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
     rt_desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
-    hr = ID2D1Factory1_CreateDCRenderTarget(factory, &rt_desc, (ID2D1DCRenderTarget **)&rt);
+    hr = ID2D1Factory1_CreateDCRenderTarget(ctx.factory1, &rt_desc, (ID2D1DCRenderTarget **)&rt);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&device_context);
@@ -9230,7 +9193,7 @@ static void test_bitmap_surface(BOOL d3d11)
     hwnd_rt_desc.hwnd = CreateWindowA("static", "d2d_test", 0, 0, 0, 0, 0, 0, 0, 0, 0);
     ok(!!hwnd_rt_desc.hwnd, "Failed to create target window.\n");
 
-    hr = ID2D1Factory1_CreateHwndRenderTarget(factory, &rt_desc, &hwnd_rt_desc, (ID2D1HwndRenderTarget **)&rt);
+    hr = ID2D1Factory1_CreateHwndRenderTarget(ctx.factory1, &rt_desc, &hwnd_rt_desc, (ID2D1HwndRenderTarget **)&rt);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     check_rt_bitmap_surface(rt, FALSE, D2D1_BITMAP_OPTIONS_NONE);
@@ -9248,7 +9211,7 @@ static void test_bitmap_surface(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     IWICImagingFactory_Release(wic_factory);
 
-    hr = ID2D1Factory1_CreateWicBitmapRenderTarget(factory, wic_bitmap, &rt_desc, &rt);
+    hr = ID2D1Factory1_CreateWicBitmapRenderTarget(ctx.factory1, wic_bitmap, &rt_desc, &rt);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     IWICBitmap_Release(wic_bitmap);
 
@@ -9257,7 +9220,6 @@ static void test_bitmap_surface(BOOL d3d11)
 
     CoUninitialize();
 
-    ID2D1Factory1_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -9272,7 +9234,6 @@ static void test_device_context(BOOL d3d11)
     D2D1_BITMAP_OPTIONS options;
     ID2D1DCRenderTarget *dc_rt;
     D2D1_UNIT_MODE unit_mode;
-    ID2D1Factory1 *factory;
     ID2D1RenderTarget *rt;
     ID2D1Bitmap1 *bitmap;
     ID2D1Image *target;
@@ -9286,14 +9247,14 @@ static void test_device_context(BOOL d3d11)
     if (!init_test_context(&ctx, d3d11))
         return;
 
-    if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
+    if (!ctx.factory1)
     {
         win_skip("ID2D1Factory1 is not supported.\n");
         release_test_context(&ctx);
         return;
     }
 
-    hr = ID2D1Factory1_CreateDevice(factory, ctx.device, &device);
+    hr = ID2D1Factory1_CreateDevice(ctx.factory1, ctx.device, &device);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1Device_CreateDeviceContext(device, D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &device_context);
@@ -9372,7 +9333,7 @@ static void test_device_context(BOOL d3d11)
     rt_desc.dpiY = 96.0f;
     rt_desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
     rt_desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
-    hr = ID2D1Factory1_CreateWicBitmapRenderTarget(factory, wic_bitmap, &rt_desc, &rt);
+    hr = ID2D1Factory1_CreateWicBitmapRenderTarget(ctx.factory1, wic_bitmap, &rt_desc, &rt);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&device_context);
@@ -9402,7 +9363,7 @@ static void test_device_context(BOOL d3d11)
     hwnd_rt_desc.hwnd = CreateWindowA("static", "d2d_test", 0, 0, 0, 0, 0, 0, 0, 0, 0);
     ok(!!hwnd_rt_desc.hwnd, "Failed to create target window.\n");
 
-    hr = ID2D1Factory1_CreateHwndRenderTarget(factory, &rt_desc, &hwnd_rt_desc, (ID2D1HwndRenderTarget **)&rt);
+    hr = ID2D1Factory1_CreateHwndRenderTarget(ctx.factory1, &rt_desc, &hwnd_rt_desc, (ID2D1HwndRenderTarget **)&rt);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&device_context);
@@ -9424,7 +9385,7 @@ static void test_device_context(BOOL d3d11)
     DestroyWindow(hwnd_rt_desc.hwnd);
 
     /* DC target */
-    hr = ID2D1Factory1_CreateDCRenderTarget(factory, &rt_desc, &dc_rt);
+    hr = ID2D1Factory1_CreateDCRenderTarget(ctx.factory1, &rt_desc, &dc_rt);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1DCRenderTarget_QueryInterface(dc_rt, &IID_ID2D1DeviceContext, (void **)&device_context);
@@ -9458,7 +9419,6 @@ static void test_device_context(BOOL d3d11)
     DeleteDC(hdc);
 
     ID2D1Device_Release(device);
-    ID2D1Factory1_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -9855,8 +9815,8 @@ static void test_max_bitmap_size(BOOL d3d11)
 {
     D2D1_RENDER_TARGET_PROPERTIES desc;
     D2D1_BITMAP_PROPERTIES bitmap_desc;
+    struct d2d1_test_context ctx;
     IDXGISwapChain *swapchain;
-    ID2D1Factory *factory;
     IDXGISurface *surface;
     ID2D1RenderTarget *rt;
     ID3D10Device1 *device;
@@ -9888,8 +9848,8 @@ static void test_max_bitmap_size(BOOL d3d11)
         { "HW",      D2D1_RENDER_TARGET_TYPE_HARDWARE },
     };
 
-    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (!init_test_context(&ctx, d3d11))
+        return;
 
     for (i = 0; i < ARRAY_SIZE(device_types); ++i)
     {
@@ -9919,7 +9879,7 @@ static void test_max_bitmap_size(BOOL d3d11)
             desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
             desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
 
-            hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory, surface, &desc, &rt);
+            hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(ctx.factory, surface, &desc, &rt);
             ok(hr == S_OK, "%s/%s: Got unexpected hr %#lx.\n", device_types[i].name, target_types[j].name, hr);
 
             bitmap_size = ID2D1RenderTarget_GetMaximumBitmapSize(rt);
@@ -9965,7 +9925,7 @@ static void test_max_bitmap_size(BOOL d3d11)
         ID3D10Device1_Release(device);
     }
 
-    ID2D1Factory_Release(factory);
+    release_test_context(&ctx);
 }
 
 static void test_dpi(BOOL d3d11)
@@ -9974,7 +9934,6 @@ static void test_dpi(BOOL d3d11)
     ID2D1DeviceContext *device_context;
     IWICImagingFactory *wic_factory;
     struct d2d1_test_context ctx;
-    ID2D1Factory1 *factory;
     ID2D1Bitmap1 *bitmap;
     float dpi_x, dpi_y;
     HRESULT hr;
@@ -10002,15 +9961,14 @@ static void test_dpi(BOOL d3d11)
     if (!init_test_context(&ctx, d3d11))
         return;
 
-    if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
+    if (!ctx.factory1)
     {
         win_skip("ID2D1Factory1 is not supported.\n");
         release_test_context(&ctx);
         return;
     }
 
-
-    device_context = create_device_context(factory, ctx.device, d3d11);
+    device_context = create_device_context(ctx.factory1, ctx.device, d3d11);
     ok(!!device_context, "Failed to create device context.\n");
 
     ID2D1DeviceContext_GetDpi(device_context, &dpi_x, &dpi_y);
@@ -10176,7 +10134,6 @@ static void test_dpi(BOOL d3d11)
     ok(dpi_y == dc_dpi_y, "Got unexpected dpi_y %.8e, expected %.8e.\n", dpi_y, dc_dpi_y);
 
     ID2D1DeviceContext_Release(device_context);
-    ID2D1Factory1_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -10435,26 +10392,26 @@ static void test_colour_space(BOOL d3d11)
 
 static void test_geometry_group(BOOL d3d11)
 {
-    ID2D1Factory *factory;
-    ID2D1GeometryGroup *group;
+    struct d2d1_test_context ctx;
     ID2D1Geometry *geometries[2];
+    ID2D1GeometryGroup *group;
+    D2D1_MATRIX_3X2_F matrix;
     D2D1_RECT_F rect;
     HRESULT hr;
-    D2D1_MATRIX_3X2_F matrix;
     BOOL match;
 
-    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (!init_test_context(&ctx, d3d11))
+        return;
 
     set_rect(&rect, -1.0f, -1.0f, 1.0f, 1.0f);
-    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, (ID2D1RectangleGeometry **)&geometries[0]);
+    hr = ID2D1Factory_CreateRectangleGeometry(ctx.factory, &rect, (ID2D1RectangleGeometry **)&geometries[0]);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     set_rect(&rect, -2.0f, -2.0f, 0.0f, 2.0f);
-    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, (ID2D1RectangleGeometry **)&geometries[1]);
+    hr = ID2D1Factory_CreateRectangleGeometry(ctx.factory, &rect, (ID2D1RectangleGeometry **)&geometries[1]);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    hr = ID2D1Factory_CreateGeometryGroup(factory, D2D1_FILL_MODE_ALTERNATE, geometries, 2, &group);
+    hr = ID2D1Factory_CreateGeometryGroup(ctx.factory, D2D1_FILL_MODE_ALTERNATE, geometries, 2, &group);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     set_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f);
@@ -10478,7 +10435,7 @@ static void test_geometry_group(BOOL d3d11)
     ID2D1Geometry_Release(geometries[0]);
     ID2D1Geometry_Release(geometries[1]);
 
-    ID2D1Factory_Release(factory);
+    release_test_context(&ctx);
 }
 
 static DWORD WINAPI mt_factory_test_thread_func(void *param)
@@ -12621,10 +12578,10 @@ static void test_stroke_contains_point(BOOL d3d11)
 {
     ID2D1TransformedGeometry *transformed_geometry;
     ID2D1RectangleGeometry *rectangle;
+    struct d2d1_test_context ctx;
     D2D1_MATRIX_3X2_F matrix;
     ID2D1GeometrySink *sink;
     ID2D1PathGeometry *path;
-    ID2D1Factory *factory;
     D2D1_POINT_2F point;
     D2D1_RECT_F rect;
     unsigned int i;
@@ -12816,11 +12773,11 @@ static void test_stroke_contains_point(BOOL d3d11)
         {{{{0.0f}}}, {0.75f,  2.5f},  0.25f,  1.0f, FALSE, FALSE},
     };
 
-    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (!init_test_context(&ctx, d3d11))
+        return;
 
     set_rect(&rect, 0.0f, 0.0f, 10.0f, 20.0f);
-    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &rectangle);
+    hr = ID2D1Factory_CreateRectangleGeometry(ctx.factory, &rect, &rectangle);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     for (i = 0; i < ARRAY_SIZE(rectangle_tests); ++i)
     {
@@ -12838,7 +12795,7 @@ static void test_stroke_contains_point(BOOL d3d11)
     }
     ID2D1RectangleGeometry_Release(rectangle);
 
-    hr = ID2D1Factory_CreatePathGeometry(factory, &path);
+    hr = ID2D1Factory_CreatePathGeometry(ctx.factory, &path);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1PathGeometry_Open(path, &sink);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -12904,11 +12861,11 @@ static void test_stroke_contains_point(BOOL d3d11)
     ID2D1PathGeometry_Release(path);
 
     set_rect(&rect, 0.0f, 0.0f, 5.0f, 5.0f);
-    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &rectangle);
+    hr = ID2D1Factory_CreateRectangleGeometry(ctx.factory, &rect, &rectangle);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     set_matrix_identity(&matrix);
     scale_matrix(&matrix, 2.0f, 4.0f);
-    hr = ID2D1Factory_CreateTransformedGeometry(factory, (ID2D1Geometry *)rectangle, &matrix,
+    hr = ID2D1Factory_CreateTransformedGeometry(ctx.factory, (ID2D1Geometry *)rectangle, &matrix,
                 &transformed_geometry);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
@@ -12930,7 +12887,7 @@ static void test_stroke_contains_point(BOOL d3d11)
     ID2D1TransformedGeometry_Release(transformed_geometry);
     ID2D1RectangleGeometry_Release(rectangle);
 
-    ID2D1Factory_Release(factory);
+    release_test_context(&ctx);
 }
 
 static void test_image_bounds(BOOL d3d11)
