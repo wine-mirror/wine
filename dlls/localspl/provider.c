@@ -3823,6 +3823,43 @@ static BOOL WINAPI fpScheduleJob(HANDLE hprinter, DWORD job_id)
     return ret;
 }
 
+static BOOL WINAPI fpAbortPrinter(HANDLE hprinter)
+{
+    printer_t *printer = (printer_t *)hprinter;
+    job_info_t *job;
+
+    TRACE("%p\n", hprinter);
+
+    if (!printer)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return 0;
+    }
+
+    if (printer->header.type != HANDLE_PRINTER)
+    {
+        FIXME("%x handle not supported\n", printer->header.type);
+        return FALSE;
+    }
+
+    if (!printer->doc)
+    {
+        SetLastError(ERROR_SPL_NO_STARTDOC);
+        return FALSE;
+    }
+
+    CloseHandle(printer->doc->hf);
+    printer->doc->hf = NULL;
+
+    EnterCriticalSection(&printer->info->jobs_cs);
+    job = get_job(printer->info, printer->doc->id);
+    if (job) free_job(job);
+    LeaveCriticalSection(&printer->info->jobs_cs);
+
+    printer->doc = NULL;
+    return TRUE;
+}
+
 static BOOL WINAPI fpReadPrinter(HANDLE hprinter, void *buf, DWORD size, DWORD *bytes_read)
 {
     job_t *job = (job_t *)hprinter;
@@ -4003,7 +4040,7 @@ static const PRINTPROVIDOR backend = {
         NULL,   /* fpStartPagePrinter */
         fpWritePrinter,
         NULL,   /* fpEndPagePrinter */
-        NULL,   /* fpAbortPrinter */
+        fpAbortPrinter,
         fpReadPrinter,
         fpEndDocPrinter,
         fpAddJob,
