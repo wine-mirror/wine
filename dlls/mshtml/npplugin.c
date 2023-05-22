@@ -301,6 +301,7 @@ static NPError CDECL NPP_New(NPMIMEType pluginType, NPP instance, UINT16 mode, I
     }
 
     instance->pdata = container->plugin_host;
+    IOleClientSite_AddRef(&container->plugin_host->IOleClientSite_iface);
 
     node_release(&container->element.node);
     return err;
