@@ -5090,6 +5090,12 @@ static void test_windows_gaming_input(void)
     ok( tmp_raw_controller == raw_controller, "got unexpected IGameController interface\n" );
     IRawGameController_Release( tmp_raw_controller );
 
+    hr = IRawGameControllerStatics_FromGameController( controller_statics, (IGameController *)raw_controller, &tmp_raw_controller );
+    ok( hr == S_OK, "FromGameController returned %#lx\n", hr );
+    todo_wine
+    ok( tmp_raw_controller == raw_controller, "got unexpected IGameController interface\n" );
+    if (tmp_raw_controller) IRawGameController_Release( tmp_raw_controller );
+
     IGameController_Release( game_controller );
     IRawGameController_Release( raw_controller );
 
