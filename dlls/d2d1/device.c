@@ -3097,7 +3097,7 @@ static ULONG STDMETHODCALLTYPE d2d_gdi_interop_render_target_Release(ID2D1GdiInt
     return IUnknown_Release(render_target->outer_unknown);
 }
 
-static HRESULT d2d_device_context_get_surface(struct d2d_device_context *context, IDXGISurface1 **surface)
+static HRESULT d2d_gdi_interop_get_surface(struct d2d_device_context *context, IDXGISurface1 **surface)
 {
     ID3D11Resource *resource;
     HRESULT hr;
@@ -3107,6 +3107,9 @@ static HRESULT d2d_device_context_get_surface(struct d2d_device_context *context
         FIXME("Unimplemented for target type %u.\n", context->target.type);
         return E_NOTIMPL;
     }
+
+    if (!(context->target.bitmap->options & D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE))
+        return D2DERR_TARGET_NOT_GDI_COMPATIBLE;
 
     ID3D11RenderTargetView_GetResource(context->target.bitmap->rtv, &resource);
     hr = ID3D11Resource_QueryInterface(resource, &IID_IDXGISurface1, (void **)surface);
@@ -3130,11 +3133,19 @@ static HRESULT STDMETHODCALLTYPE d2d_gdi_interop_render_target_GetDC(ID2D1GdiInt
 
     TRACE("iface %p, mode %d, dc %p.\n", iface, mode, dc);
 
-    if (FAILED(hr = d2d_device_context_get_surface(render_target, &surface)))
+    *dc = NULL;
+
+    if (render_target->target.hdc)
+        return D2DERR_WRONG_STATE;
+
+    if (FAILED(hr = d2d_gdi_interop_get_surface(render_target, &surface)))
         return hr;
 
-    hr = IDXGISurface1_GetDC(surface, mode != D2D1_DC_INITIALIZE_MODE_COPY, dc);
+    hr = IDXGISurface1_GetDC(surface, mode != D2D1_DC_INITIALIZE_MODE_COPY, &render_target->target.hdc);
     IDXGISurface1_Release(surface);
+
+    if (SUCCEEDED(hr))
+        *dc = render_target->target.hdc;
 
     return hr;
 }
@@ -3149,9 +3160,13 @@ static HRESULT STDMETHODCALLTYPE d2d_gdi_interop_render_target_ReleaseDC(ID2D1Gd
 
     TRACE("iface %p, update rect %s.\n", iface, wine_dbgstr_rect(update));
 
-    if (FAILED(hr = d2d_device_context_get_surface(render_target, &surface)))
+    if (!render_target->target.hdc)
+        return D2DERR_WRONG_STATE;
+
+    if (FAILED(hr = d2d_gdi_interop_get_surface(render_target, &surface)))
         return hr;
 
+    render_target->target.hdc = NULL;
     if (update)
         update_rect = *update;
     hr = IDXGISurface1_ReleaseDC(surface, update ? &update_rect : NULL);

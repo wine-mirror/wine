@@ -183,6 +183,7 @@ struct d2d_device_context
             struct d2d_bitmap *bitmap;
             struct d2d_command_list *command_list;
         };
+        HDC hdc;
     } target;
     struct d2d_shape_resources shape_resources[D2D_SHAPE_TYPE_COUNT];
     ID3D11Buffer *vs_cb;

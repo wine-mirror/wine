@@ -6166,7 +6166,7 @@ static void test_dc_target_gdi_interop(BOOL d3d11)
     hr = ID2D1GdiInteropRenderTarget_GetDC(interop, D2D1_DC_INITIALIZE_MODE_COPY, &hdc);
     todo_wine
     ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
-    todo_wine ok(!hdc, "Got unexpected DC %p.\n", hdc);
+    ok(!hdc, "Got unexpected DC %p.\n", hdc);
     hr = ID2D1DCRenderTarget_EndDraw(rt, NULL, NULL);
     ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
 
@@ -6335,9 +6335,8 @@ static void test_hwnd_target_gdi_interop(BOOL d3d11)
     ID2D1HwndRenderTarget_BeginDraw(rt);
     dc = (void *)0xdeadbeef;
     hr = ID2D1GdiInteropRenderTarget_GetDC(interop, D2D1_DC_INITIALIZE_MODE_COPY, &dc);
-    todo_wine
     ok(hr == D2DERR_TARGET_NOT_GDI_COMPATIBLE, "Got unexpected hr %#lx.\n", hr);
-    todo_wine ok(!dc, "Got unexpected DC %p.\n", dc);
+    ok(!dc, "Got unexpected DC %p.\n", dc);
     hr = ID2D1HwndRenderTarget_EndDraw(rt, NULL, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID2D1GdiInteropRenderTarget_Release(interop);
@@ -6441,9 +6440,10 @@ static void test_dxgi_surface_target_gdi_interop(BOOL d3d11)
     ID2D1RenderTarget_BeginDraw(rt);
     dc = (void *)0xdeadbeef;
     hr = ID2D1GdiInteropRenderTarget_GetDC(interop, D2D1_DC_INITIALIZE_MODE_COPY, &dc);
-    todo_wine
     ok(hr == D2DERR_TARGET_NOT_GDI_COMPATIBLE, "Got unexpected hr %#lx.\n", hr);
-    todo_wine ok(!dc, "Got unexpected DC %p.\n", dc);
+    ok(!dc, "Got unexpected DC %p.\n", dc);
+    hr = ID2D1GdiInteropRenderTarget_ReleaseDC(interop, NULL);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID2D1GdiInteropRenderTarget_Release(interop);
@@ -6481,6 +6481,9 @@ static void test_dxgi_surface_target_gdi_interop(BOOL d3d11)
     hr = ID2D1GdiInteropRenderTarget_GetDC(interop, D2D1_DC_INITIALIZE_MODE_COPY, &dc);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!!dc, "Got unexpected DC %p.\n", dc);
+    hr = ID2D1GdiInteropRenderTarget_GetDC(interop, D2D1_DC_INITIALIZE_MODE_COPY, &dc);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
+    ok(!dc, "Got unexpected DC %p.\n", dc);
     hr = ID2D1GdiInteropRenderTarget_ReleaseDC(interop, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
@@ -6499,8 +6502,10 @@ static void test_dxgi_surface_target_gdi_interop(BOOL d3d11)
     ID2D1RenderTarget_BeginDraw(rt);
     dc = (void *)0xdeadbeef;
     hr = ID2D1GdiInteropRenderTarget_GetDC(interop, D2D1_DC_INITIALIZE_MODE_COPY, &dc);
-    todo_wine ok(hr == D2DERR_TARGET_NOT_GDI_COMPATIBLE, "Got unexpected hr %#lx.\n", hr);
-    todo_wine ok(!dc, "Got unexpected DC %p.\n", dc);
+    ok(hr == D2DERR_TARGET_NOT_GDI_COMPATIBLE, "Got unexpected hr %#lx.\n", hr);
+    ok(!dc, "Got unexpected DC %p.\n", dc);
+    hr = ID2D1GdiInteropRenderTarget_ReleaseDC(interop, NULL);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID2D1GdiInteropRenderTarget_Release(interop);
@@ -8781,9 +8786,8 @@ static void test_wic_gdi_interop(BOOL d3d11)
     ID2D1RenderTarget_BeginDraw(rt);
     dc = (void *)0xdeadbeef;
     hr = ID2D1GdiInteropRenderTarget_GetDC(interop, D2D1_DC_INITIALIZE_MODE_COPY, &dc);
-    todo_wine
     ok(hr == D2DERR_TARGET_NOT_GDI_COMPATIBLE, "Got unexpected hr %#lx.\n", hr);
-    todo_wine ok(!dc, "Got unexpected DC %p.\n", dc);
+    ok(!dc, "Got unexpected DC %p.\n", dc);
     ID2D1GdiInteropRenderTarget_Release(interop);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
