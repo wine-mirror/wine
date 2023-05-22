@@ -6029,10 +6029,13 @@ DWORD WINAPI EnumPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
 /******************************************************************************
  *      AbortPrinter (WINSPOOL.@)
  */
-BOOL WINAPI AbortPrinter( HANDLE hPrinter )
+BOOL WINAPI AbortPrinter(HANDLE printer)
 {
-    FIXME("(%p), stub!\n", hPrinter);
-    return TRUE;
+    HANDLE handle = get_backend_handle(printer);
+
+    TRACE("(%p)\n", printer);
+
+    return backend->fpAbortPrinter(handle);
 }
 
 /******************************************************************************
