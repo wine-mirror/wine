@@ -41,6 +41,8 @@ HFONT CDECL PSDRV_SelectFont( print_ctx *ctx, HFONT hfont, UINT *aa_flags )
 {
     struct font_info font_info;
 
+    ctx->font.set = UNSET;
+
     if (ExtEscape(ctx->hdc, PSDRV_GET_BUILTIN_FONT_INFO, 0, NULL,
                 sizeof(font_info), (char *)&font_info))
     {
