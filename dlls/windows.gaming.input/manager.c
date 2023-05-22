@@ -372,14 +372,18 @@ statics2_TryGetFactoryControllerFromGameController( IGameControllerFactoryManage
                                                     IGameController *controller, IGameController **value )
 {
     struct controller *entry, *other;
+    IGameController *tmp_controller;
     BOOL found = FALSE;
 
     TRACE( "iface %p, factory %p, controller %p, value %p.\n", iface, factory, controller, value );
 
+    /* Spider Man Remastered passes a IRawGameController instead of IGameController, query the iface again */
+    if (FAILED(IGameController_QueryInterface( controller, &IID_IGameController, (void **)&tmp_controller ))) goto done;
+
     EnterCriticalSection( &manager_cs );
 
     LIST_FOR_EACH_ENTRY( entry, &controller_list, struct controller, entry )
-        if ((found = &entry->IGameController_iface == controller)) break;
+        if ((found = &entry->IGameController_iface == tmp_controller)) break;
 
     if (!found) WARN( "Failed to find controller %p\n", controller );
     else
@@ -392,6 +396,9 @@ statics2_TryGetFactoryControllerFromGameController( IGameControllerFactoryManage
 
     LeaveCriticalSection( &manager_cs );
 
+    IGameController_Release( tmp_controller );
+
+done:
     if (!found) *value = NULL;
     return S_OK;
 }

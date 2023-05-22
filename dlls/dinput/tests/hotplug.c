@@ -1184,13 +1184,13 @@ static void test_windows_gaming_input(void)
 
     IGameController_Release( tmp_game_controller );
 
-next:
     hr = IRawGameControllerStatics_FromGameController( statics, custom_controller.IGameController_outer, &tmp_raw_controller );
     ok( hr == S_OK, "FromGameController returned %#lx\n", hr );
     todo_wine
     ok( tmp_raw_controller == raw_controller, "got controller %p\n", tmp_raw_controller );
     if (tmp_raw_controller) IRawGameController_Release( tmp_raw_controller );
 
+next:
     IGameController_Release( game_controller );
     IRawGameController_Release( raw_controller );
     SetEvent( stop_event );
