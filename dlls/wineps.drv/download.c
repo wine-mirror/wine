@@ -258,7 +258,6 @@ BOOL PSDRV_WriteSetDownloadFont(print_ctx *ctx, BOOL vertical)
     LOGFONTW lf;
     UINT ppem;
     XFORM xform;
-    INT escapement;
 
     assert(ctx->font.fontloc == Download);
 
@@ -281,7 +280,7 @@ BOOL PSDRV_WriteSetDownloadFont(print_ctx *ctx, BOOL vertical)
 
     if(GetGraphicsMode(ctx->hdc) == GM_COMPATIBLE)
     {
-        if (xform.eM22 < 0) ctx->font.escapement = -ctx->font.escapement;
+        if (xform.eM22 < 0) lf.lfEscapement = -lf.lfEscapement;
         xform.eM11 = xform.eM22 = fabs(xform.eM22);
         xform.eM21 = xform.eM12 = 0;
     }
@@ -327,11 +326,10 @@ BOOL PSDRV_WriteSetDownloadFont(print_ctx *ctx, BOOL vertical)
         }
     }
 
-    escapement = ctx->font.escapement;
     if (vertical)
-        escapement += 900;
+        lf.lfEscapement += 900;
 
-    PSDRV_WriteSetFont(ctx, ps_name, ctx->font.size, escapement,
+    PSDRV_WriteSetFont(ctx, ps_name, ctx->font.size, lf.lfEscapement,
                         is_fake_italic( ctx->hdc ));
 
     HeapFree(GetProcessHeap(), 0, ps_name);

@@ -289,9 +289,6 @@ typedef struct {
     matrix              size;
     PSCOLOR             color;
     enum fontset        set;    /* Have we done a setfont yet */
-
-  /* These are needed by PSDRV_ExtTextOut */
-    int                 escapement;
 } PSFONT;
 
 typedef struct {
