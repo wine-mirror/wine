@@ -2672,14 +2672,15 @@ void detach_plugin_host(PluginHost *host)
 
     release_plugin_ifaces(host);
 
-    if(host->element) {
-        host->element->plugin_host = NULL;
-        host->element = NULL;
-    }
-
     list_remove(&host->entry);
     list_init(&host->entry);
     host->doc = NULL;
+
+    if(host->element) {
+        host->element->plugin_host = NULL;
+        host->element = NULL;
+        IOleClientSite_Release(&host->IOleClientSite_iface);
+    }
 }
 
 HRESULT create_plugin_host(HTMLDocumentNode *doc, HTMLPluginContainer *container)
