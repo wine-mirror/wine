@@ -491,7 +491,6 @@ SHORT PSDRV_CalcAvgCharWidth(const AFM *afm) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteSetBuiltinFont(print_ctx *ctx) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteBuiltinGlyphShow(print_ctx *ctx, LPCWSTR str, INT count) DECLSPEC_HIDDEN;
 
-extern BOOL PSDRV_SelectDownloadFont(print_ctx *ctx) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteSetDownloadFont(print_ctx *ctx, BOOL vertical) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteDownloadGlyphShow(print_ctx *ctx, const WORD *glyphs, UINT count) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_EmptyDownloadList(print_ctx *ctx, BOOL write_undef) DECLSPEC_HIDDEN;

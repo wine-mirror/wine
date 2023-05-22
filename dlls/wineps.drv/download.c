@@ -190,19 +190,6 @@ static UINT get_bbox(HDC hdc, RECT *rc)
     return GET_BE_WORD(head + 18); /* unitsPerEm */
 }
 
-/****************************************************************************
- *  PSDRV_SelectDownloadFont
- *
- *  Set up ctx->font for a downloadable font
- *
- */
-BOOL PSDRV_SelectDownloadFont(print_ctx *ctx)
-{
-    ctx->font.fontloc = Download;
-    ctx->font.fontinfo.Download = NULL;
-    return TRUE;
-}
-
 static UINT calc_ppem_for_height(HDC hdc, LONG height)
 {
     BYTE os2[78]; /* size of version 0 table */
