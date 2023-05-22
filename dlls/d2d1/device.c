@@ -4456,6 +4456,8 @@ HRESULT d2d_d3d_create_render_target(ID2D1Device *device, IDXGISurface *surface,
     {
         bitmap_desc.pixelFormat = desc->pixelFormat;
         bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
+        if (desc->usage & D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE)
+            bitmap_desc.bitmapOptions |= D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE;
         bitmap_desc.colorContext = NULL;
 
         if (FAILED(hr = ID2D1DeviceContext1_CreateBitmapFromDxgiSurface(&object->ID2D1DeviceContext1_iface,

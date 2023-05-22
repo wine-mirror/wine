@@ -6453,10 +6453,7 @@ static void test_dxgi_surface_target_gdi_interop(BOOL d3d11)
     desc.usage = D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE;
 
     hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(ctx.factory, surface, &desc, &rt);
-    todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-        ID2D1RenderTarget_Release(rt);
 
     refcount = IDXGISurface_Release(surface);
     ok(!refcount, "Unexpected refcount %lu.\n", refcount);
