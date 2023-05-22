@@ -164,6 +164,7 @@ typedef nsISupports nsIControllers;
 typedef nsISupports nsIDOMValidityState;
 typedef nsISupports nsIPluginInstanceOwner;
 typedef nsISupports nsIPluginStreamListener;
+typedef nsISupports nsIPluginTag;
 typedef nsISupports nsIContentSink;
 typedef nsISupports nsIParserFilter;
 typedef nsISupports nsIDTD;
@@ -180,6 +181,7 @@ typedef nsISupports nsIDOMStorageList;
 typedef nsISupports nsILocalFile;
 typedef nsISupports nsIDOMHTMLMenuElement;
 typedef nsISupports nsIDOMCaretPosition;
+typedef nsISupports nsIFrame;
 typedef nsISupports nsIFrameRequestCallback;
 typedef nsISupports nsICycleCollectorListener;
 typedef nsISupports nsIDOMHTMLCanvasElement;
@@ -199,6 +201,7 @@ typedef nsISupports nsIClassInfo;
 typedef nsISupports nsILoadContext;
 typedef nsISupports nsIDomainPolicy;
 typedef nsISupports nsIScriptContext;
+typedef nsISupports nsIObjectFrame;
 typedef nsISupports nsIObjectInputStream;
 typedef nsISupports nsIObjectOutputStream;
 
@@ -4297,6 +4300,54 @@ interface nsIAudioChannelAgentCallback : nsISupports
 interface nsIPluginInstance : nsIAudioChannelAgentCallback
 {
     nsresult GetDOMElement(nsIDOMElement **aDOMElement);
+}
+
+[
+    object,
+    uuid(2eb3195e-3eea-4083-bb1d-d2d70fa35ccb),
+    local
+]
+interface nsIObjectLoadingContent : nsISupports
+{
+    const UINT TYPE_LOADING  = 0;
+    const UINT TYPE_IMAGE    = 1;
+    const UINT TYPE_PLUGIN   = 2;
+    const UINT TYPE_DOCUMENT = 3;
+    const UINT TYPE_NULL     = 4;
+
+    const UINT PLUGIN_UNSUPPORTED          = 0;
+    const UINT PLUGIN_ALTERNATE            = 1;
+    const UINT PLUGIN_DISABLED             = 2;
+    const UINT PLUGIN_BLOCKLISTED          = 3;
+    const UINT PLUGIN_OUTDATED             = 4;
+    const UINT PLUGIN_CRASHED              = 5;
+    const UINT PLUGIN_SUPPRESSED           = 6;
+    const UINT PLUGIN_USER_DISABLED        = 7;
+    const UINT PLUGIN_CLICK_TO_PLAY        = 8;
+    const UINT PLUGIN_VULNERABLE_UPDATABLE = 9;
+    const UINT PLUGIN_VULNERABLE_NO_UPDATE = 10;
+    const UINT PLUGIN_ACTIVE               = 255;
+
+    nsresult GetActualType(nsACString *aType);
+    nsresult GetDisplayedType(uint32_t *aType);
+    nsresult GetContentTypeForMIMEType(const nsACString *aMIMEType, uint32_t *aType);
+    nsresult GetBaseURI(nsIURI **aResult);
+    nsresult GetPluginInstance(void /*nsNPAPIPluginInstance*/ **aInstance);
+    nsresult HasNewFrame(nsIObjectFrame *aFrame);
+    nsresult GetPrintFrame(nsIFrame **aFrame);
+    nsresult PluginDestroyed();
+    nsresult PluginCrashed(nsIPluginTag *aPluginTag, const nsAString *pluginDumpID, const nsAString *browserDumpID, bool submittedCrashReport);
+    nsresult PlayPlugin();
+    nsresult Reload(bool aClearActivation);
+    nsresult GetActivated(bool *aActivated);
+    nsresult StopPluginInstance();
+    nsresult SyncStartPluginInstance();
+    nsresult AsyncStartPluginInstance();
+    nsresult InitializeFromChannel(nsIRequest *aChannel);
+    nsresult GetSrcURI(nsIURI **aURI);
+    nsresult GetPluginFallbackType(uint32_t *aPluginFallbackType);
+    nsresult GetHasRunningPlugin(bool *aHasPlugin);
+    nsresult GetRunID(uint32_t *aRunID);
 }
 
 [

@@ -2677,8 +2677,16 @@ void detach_plugin_host(PluginHost *host)
     host->doc = NULL;
 
     if(host->element) {
+        nsIDOMElement *nselem = host->element->element.dom_element;
+        nsIObjectLoadingContent *olc;
+
         host->element->plugin_host = NULL;
         host->element = NULL;
+
+        if(NS_SUCCEEDED(nsIDOMElement_QueryInterface(nselem, &IID_nsIObjectLoadingContent, (void**)&olc))) {
+            nsIObjectLoadingContent_StopPluginInstance(olc);
+            nsIObjectLoadingContent_Release(olc);
+        }
         IOleClientSite_Release(&host->IOleClientSite_iface);
     }
 }
