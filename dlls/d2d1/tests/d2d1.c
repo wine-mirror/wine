@@ -13732,10 +13732,7 @@ static void test_hwnd_target_is_supported(BOOL d3d11)
         desc = template_desc;
         desc.pixelFormat = pixel_formats[i];
         hr = ID2D1Factory_CreateHwndRenderTarget(ctx.factory, &desc, &hwnd_rt_desc, &rt);
-        todo_wine_if(i == 3 || i == 4 || i == 5)
         ok(hr == S_OK, "%u: unexpected hr %#lx.\n", i, hr);
-        if (FAILED(hr))
-            continue;
 
         /* Resolve to default format. */
         if (desc.pixelFormat.format == DXGI_FORMAT_UNKNOWN)
