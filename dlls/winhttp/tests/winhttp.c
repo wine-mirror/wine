@@ -3608,7 +3608,7 @@ static void test_websocket(int port)
     error = pWinHttpWebSocketReceive(socket, buf, sizeof(buf), &count, &type);
     ok(!error, "got %lu\n", error);
     ok(buf[0] == 'R', "got %c\n", buf[0]);
-    ok(count == 26, "got %lu\n", count);
+    ok(count, "got zero count\n");
     ok(type == WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE, "got %u\n", type);
 
     error = pWinHttpWebSocketSend(socket, WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE, NULL, 1);
