@@ -479,7 +479,12 @@ BOOL WINAPI DeleteDC( HDC hdc )
 
     if (is_meta_dc( hdc )) return METADC_DeleteDC( hdc );
     if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
-    if (dc_attr->print) delete_print_dc( dc_attr );
+    if (dc_attr->print)
+    {
+        if (dc_attr->emf)
+            AbortDoc( hdc );
+        delete_print_dc( dc_attr );
+    }
     if (dc_attr->emf) EMFDC_DeleteDC( dc_attr );
     return NtGdiDeleteObjectApp( hdc );
 }
