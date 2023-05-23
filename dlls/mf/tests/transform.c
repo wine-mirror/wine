@@ -5578,6 +5578,27 @@ static void test_wmv_decoder_media_object(void)
     diff = check_dmo_output_data_buffer(&output_data_buffer, &output_buffer_desc_nv12, L"nv12frame.bmp", 0, 0);
     ok(diff == 0, "Got %lu%% diff.\n", diff);
 
+    /* Test GetInputStatus. */
+    hr = IMediaObject_GetInputStatus(media_object, 0xdeadbeef, NULL);
+    todo_wine
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputStatus returned %#lx.\n", hr);
+
+    status = 0xdeadbeef;
+    hr = IMediaObject_GetInputStatus(media_object, 0xdeadbeef, &status);
+    todo_wine
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputStatus returned %#lx.\n", hr);
+    ok(status == 0xdeadbeef, "Unexpected status %#lx.\n", status);
+
+    hr = IMediaObject_GetInputStatus(media_object, 0, NULL);
+    todo_wine
+    ok(hr == E_POINTER, "GetInputStatus returned %#lx.\n", hr);
+
+    hr = IMediaObject_GetInputStatus(media_object, 0, &status);
+    todo_wine
+    ok(hr == S_OK, "GetInputStatus returned %#lx.\n", hr);
+    todo_wine
+    ok(status == DMO_INPUT_STATUSF_ACCEPT_DATA, "Unexpected status %#lx.\n", status);
+
     /* Test ProcessOutput with setting framerate. */
     init_dmo_media_type_video(type, &MEDIASUBTYPE_WMV1, data_width, data_height);
     ((VIDEOINFOHEADER *)type->pbFormat)->AvgTimePerFrame = 100000;
