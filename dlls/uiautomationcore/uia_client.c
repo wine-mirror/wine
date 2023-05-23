@@ -1722,6 +1722,7 @@ static HRESULT WINAPI uia_provider_attach_event(IWineUiaProvider *iface, LONG_PT
     struct uia_event *event = (struct uia_event *)huiaevent;
     IRawElementProviderFragmentRoot *elroot;
     IRawElementProviderFragment *elfrag;
+    SAFEARRAY *embedded_roots = NULL;
     HRESULT hr;
 
     TRACE("%p, %#Ix\n", iface, huiaevent);
@@ -1731,9 +1732,19 @@ static HRESULT WINAPI uia_provider_attach_event(IWineUiaProvider *iface, LONG_PT
         return S_OK;
 
     hr = IRawElementProviderFragment_get_FragmentRoot(elfrag, &elroot);
-    IRawElementProviderFragment_Release(elfrag);
     if (FAILED(hr))
-        return hr;
+        goto exit;
+
+    /*
+     * For now, we only support embedded fragment roots on providers that
+     * don't represent a nested node.
+     */
+    if (event->scope & (TreeScope_Descendants | TreeScope_Children) && !prov->return_nested_node)
+    {
+        hr = IRawElementProviderFragment_GetEmbeddedFragmentRoots(elfrag, &embedded_roots);
+        if (FAILED(hr))
+            WARN("GetEmbeddedFragmentRoots failed with hr %#lx\n", hr);
+    }
 
     if (elroot)
     {
@@ -1747,11 +1758,55 @@ static HRESULT WINAPI uia_provider_attach_event(IWineUiaProvider *iface, LONG_PT
             hr = uia_event_add_provider_event_adviser(advise_events, event);
             IRawElementProviderAdviseEvents_Release(advise_events);
             if (FAILED(hr))
-                return hr;
+                goto exit;
         }
     }
 
-    return S_OK;
+    if (embedded_roots)
+    {
+        LONG lbound, elems, i;
+        HUIANODE node;
+
+        hr = get_safearray_bounds(embedded_roots, &lbound, &elems);
+        if (FAILED(hr))
+            goto exit;
+
+        for (i = 0; i < elems; i++)
+        {
+            IRawElementProviderSimple *elprov;
+            IUnknown *unk;
+            LONG idx;
+
+            idx = lbound + i;
+            hr = SafeArrayGetElement(embedded_roots, &idx, &unk);
+            if (FAILED(hr))
+                goto exit;
+
+            hr = IUnknown_QueryInterface(unk, &IID_IRawElementProviderSimple, (void **)&elprov);
+            IUnknown_Release(unk);
+            if (FAILED(hr))
+                goto exit;
+
+            hr = create_uia_node_from_elprov(elprov, &node, !prov->return_nested_node);
+            IRawElementProviderSimple_Release(elprov);
+            if (SUCCEEDED(hr))
+            {
+                hr = attach_event_to_uia_node(node, event);
+                UiaNodeRelease(node);
+                if (FAILED(hr))
+                {
+                    WARN("attach_event_to_uia_node failed with hr %#lx\n", hr);
+                    goto exit;
+                }
+            }
+        }
+    }
+
+exit:
+    IRawElementProviderFragment_Release(elfrag);
+    SafeArrayDestroy(embedded_roots);
+
+    return hr;
 }
 
 static const IWineUiaProviderVtbl uia_provider_vtbl = {
