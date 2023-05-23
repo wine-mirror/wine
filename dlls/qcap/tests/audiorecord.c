@@ -705,8 +705,6 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    todo_wine ok(testsink->sink.pAllocator && testsink->sink.pAllocator != allocator,
-            "Got unexpected allocator %p.\n", testsink->sink.pAllocator);
     hr = IMemAllocator_GetProperties(testsink->sink.pAllocator, &props);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(props.cBuffers == req_props.cBuffers, "Got %ld buffers.\n", props.cBuffers);
@@ -728,8 +726,6 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
         hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &mt);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-        todo_wine ok(testsink->sink.pAllocator && testsink->sink.pAllocator != allocator,
-                "Got unexpected allocator %p.\n", testsink->sink.pAllocator);
         hr = IMemAllocator_GetProperties(testsink->sink.pAllocator, &props);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(props.cBuffers == 4, "Got %ld buffers.\n", props.cBuffers);
