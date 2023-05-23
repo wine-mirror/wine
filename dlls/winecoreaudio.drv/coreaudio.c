@@ -100,6 +100,9 @@ struct coreaudio_stream
     BYTE *local_buffer, *cap_buffer, *wrap_buffer, *resamp_buffer, *tmp_buffer;
 };
 
+static const REFERENCE_TIME def_period = 100000;
+static const REFERENCE_TIME min_period = 50000;
+
 static NTSTATUS unix_not_implemented(void *args)
 {
     return STATUS_SUCCESS;
@@ -1087,6 +1090,20 @@ unsupported:
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS unix_get_device_period(void *args)
+{
+    struct get_device_period_params *params = args;
+
+    if (params->def_period)
+        *params->def_period = def_period;
+    if (params->min_period)
+        *params->min_period = min_period;
+
+    params->result = S_OK;
+
+    return STATUS_SUCCESS;
+}
+
 static UINT buf_ptr_diff(UINT left, UINT right, UINT bufsize)
 {
     if(left <= right)
@@ -1739,7 +1756,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     unix_release_capture_buffer,
     unix_is_format_supported,
     unix_get_mix_format,
-    unix_not_implemented,
+    unix_get_device_period,
     unix_get_buffer_size,
     unix_get_latency,
     unix_get_current_padding,
@@ -1934,6 +1951,28 @@ static NTSTATUS unix_wow64_get_mix_format(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS unix_wow64_get_device_period(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        EDataFlow flow;
+        HRESULT result;
+        PTR32 def_period;
+        PTR32 min_period;
+    } *params32 = args;
+    struct get_device_period_params params =
+    {
+        .device = ULongToPtr(params32->device),
+        .flow = params32->flow,
+        .def_period = ULongToPtr(params32->def_period),
+        .min_period = ULongToPtr(params32->min_period),
+    };
+    unix_get_device_period(&params);
+    params32->result = params.result;
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS unix_wow64_get_buffer_size(void *args)
 {
     struct
@@ -2099,7 +2138,7 @@ unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     unix_release_capture_buffer,
     unix_wow64_is_format_supported,
     unix_wow64_get_mix_format,
-    unix_not_implemented,
+    unix_wow64_get_device_period,
     unix_wow64_get_buffer_size,
     unix_wow64_get_latency,
     unix_wow64_get_current_padding,
