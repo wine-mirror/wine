@@ -5599,6 +5599,22 @@ static void test_wmv_decoder_media_object(void)
     todo_wine
     ok(status == DMO_INPUT_STATUSF_ACCEPT_DATA, "Unexpected status %#lx.\n", status);
 
+    /* Test Discontinuity.  */
+    hr = IMediaObject_Discontinuity(media_object, 0xdeadbeef);
+    todo_wine
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "Discontinuity returned %#lx.\n", hr);
+    hr = IMediaObject_Discontinuity(media_object, 0);
+    todo_wine
+    ok(hr == S_OK, "Discontinuity returned %#lx.\n", hr);
+    hr = IMediaObject_Discontinuity(media_object, 0);
+    todo_wine
+    ok(hr == S_OK, "Discontinuity returned %#lx.\n", hr);
+    hr = IMediaObject_GetInputStatus(media_object, 0, &status);
+    todo_wine
+    ok(hr == S_OK, "GetInputStatus returned %#lx.\n", hr);
+    todo_wine
+    ok(status == DMO_INPUT_STATUSF_ACCEPT_DATA, "Unexpected status %#lx.\n", status);
+
     /* Test ProcessOutput with setting framerate. */
     init_dmo_media_type_video(type, &MEDIASUBTYPE_WMV1, data_width, data_height);
     ((VIDEOINFOHEADER *)type->pbFormat)->AvgTimePerFrame = 100000;
