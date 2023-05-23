@@ -1429,7 +1429,7 @@ static void test_recv(void)
     ret = listen(listener, 1);
     ok(!ret, "got error %u\n", WSAGetLastError());
     len = sizeof(addr);
-    ret = getsockname(listener, (struct sockaddr *)&addr, &len);
+    ret = getsockname(listener, &addr, &len);
     ok(!ret, "got error %u\n", WSAGetLastError());
 
     memset(&io, 0, sizeof(io));
@@ -1439,7 +1439,7 @@ static void test_recv(void)
     ok(!io.Information, "got information %#Ix\n", io.Information);
 
     client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    ret = connect(client, (struct sockaddr *)&addr, sizeof(addr));
+    ret = connect(client, &addr, sizeof(addr));
     ok(!ret, "got error %u\n", WSAGetLastError());
     server = accept(listener, NULL, NULL);
     ok(server != -1, "got error %u\n", WSAGetLastError());
@@ -1717,7 +1717,7 @@ static void test_recv(void)
     ret = bind(client, (const struct sockaddr *)&bind_addr, sizeof(bind_addr));
     ok(!ret, "got error %u\n", WSAGetLastError());
     len = sizeof(addr);
-    ret = getsockname(client, (struct sockaddr *)&addr, &len);
+    ret = getsockname(client, &addr, &len);
     ok(!ret, "got error %u\n", WSAGetLastError());
 
     memset(buffer, 0xcc, sizeof(buffer));
@@ -1725,7 +1725,7 @@ static void test_recv(void)
             IOCTL_AFD_RECV, &params, sizeof(params), NULL, 0);
     ok(ret == STATUS_PENDING, "got %#x\n", ret);
 
-    ret = sendto(server, "data", 5, 0, (struct sockaddr *)&addr, sizeof(addr));
+    ret = sendto(server, "data", 5, 0, &addr, sizeof(addr));
     ok(ret == 5, "got %d\n", ret);
 
     ret = WaitForSingleObject(event, 200);
@@ -1741,7 +1741,7 @@ static void test_recv(void)
             IOCTL_AFD_RECV, &params, sizeof(params), NULL, 0);
     ok(ret == STATUS_PENDING, "got %#x\n", ret);
 
-    ret = sendto(server, "moredata", 9, 0, (struct sockaddr *)&addr, sizeof(addr));
+    ret = sendto(server, "moredata", 9, 0, &addr, sizeof(addr));
     ok(ret == 9, "got %d\n", ret);
 
     ret = WaitForSingleObject(event, 200);
@@ -1750,7 +1750,7 @@ static void test_recv(void)
     ok(io.Information == 6, "got %#Ix\n", io.Information);
     ok(!memcmp(buffer, "mo\xccreda\xcc", 7), "got %s\n", debugstr_an(buffer, io.Information));
 
-    ret = sendto(server, "moredata", 9, 0, (struct sockaddr *)&addr, sizeof(addr));
+    ret = sendto(server, "moredata", 9, 0, &addr, sizeof(addr));
     ok(ret == 9, "got %d\n", ret);
 
     /* wait for the data to be available */
@@ -2352,7 +2352,7 @@ static void test_getsockname(void)
     ok(!io.Status, "got %#lx\n", io.Status);
     ok(io.Information == sizeof(addr), "got %#Ix\n", io.Information);
     len = sizeof(addr2);
-    ret = getsockname(client, (struct sockaddr *)&addr2, &len);
+    ret = getsockname(client, &addr2, &len);
     ok(!ret, "got error %u\n", WSAGetLastError());
     ok(!memcmp(&addr, &addr2, sizeof(struct sockaddr)), "addresses didn't match\n");
 
@@ -2364,7 +2364,7 @@ static void test_getsockname(void)
     ok(!io.Status, "got %#lx\n", io.Status);
     ok(io.Information == sizeof(addr), "got %#Ix\n", io.Information);
     len = sizeof(addr2);
-    ret = getsockname(server, (struct sockaddr *)&addr2, &len);
+    ret = getsockname(server, &addr2, &len);
     ok(!ret, "got error %u\n", WSAGetLastError());
     ok(!memcmp(&addr, &addr2, sizeof(struct sockaddr)), "addresses didn't match\n");
 
@@ -2392,7 +2392,7 @@ static void test_getsockname(void)
     ok(!io.Status, "got %#lx\n", io.Status);
     ok(io.Information == sizeof(addr), "got %#Ix\n", io.Information);
     len = sizeof(addr2);
-    ret = getsockname(client, (struct sockaddr *)&addr2, &len);
+    ret = getsockname(client, &addr2, &len);
     ok(!ret, "got error %u\n", WSAGetLastError());
     ok(!memcmp(&addr, &addr2, sizeof(struct sockaddr)), "addresses didn't match\n");
 

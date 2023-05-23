@@ -836,12 +836,7 @@ static VOID WINAPI simple_mixed_client ( client_params *par )
     ((struct sockaddr_in*)&test)->sin_addr.s_addr = inet_addr("0.0.0.0");
 
     /* Receive data echoed back & check it */
-    n_recvd = do_synchronous_recvfrom ( mem->s,
-					mem->recv_buf,
-					n_expected,
-					0,
-					(struct sockaddr *)&test,
-					&fromLen,
+    n_recvd = do_synchronous_recvfrom ( mem->s, mem->recv_buf, n_expected, 0, &test, &fromLen,
 					par->buflen );
     ok ( n_recvd == n_expected,
          "simple_client (%x): received less data than expected: %d of %d\n", id, n_recvd, n_expected );
