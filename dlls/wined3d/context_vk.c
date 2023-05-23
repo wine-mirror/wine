@@ -1109,19 +1109,31 @@ void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk, const 
     wined3d_context_vk_destroy_vk_memory(context_vk, bo->vk_memory, bo->command_buffer_id);
 }
 
+static void free_command_buffer(struct wined3d_context_vk *context_vk, struct wined3d_command_buffer_vk *buffer)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+
+    if (buffer->vk_fence)
+        VK_CALL(vkDestroyFence(device_vk->vk_device, buffer->vk_fence, NULL));
+    VK_CALL(vkFreeCommandBuffers(device_vk->vk_device,
+            context_vk->vk_command_pool, 1, &buffer->vk_command_buffer));
+}
+
 static void wined3d_context_vk_remove_command_buffer(struct wined3d_context_vk *context_vk,
         unsigned int submit_index)
 {
     struct wined3d_command_buffer_vk *buffer = &context_vk->submitted.buffers[submit_index];
-    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
-    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
-
-    VK_CALL(vkDestroyFence(device_vk->vk_device, buffer->vk_fence, NULL));
-    VK_CALL(vkFreeCommandBuffers(device_vk->vk_device,
-            context_vk->vk_command_pool, 1, &buffer->vk_command_buffer));
 
     if (buffer->id > context_vk->completed_command_buffer_id)
         context_vk->completed_command_buffer_id = buffer->id;
+
+    if (wined3d_array_reserve((void **)&context_vk->completed.buffers, &context_vk->completed.buffers_size,
+            context_vk->completed.buffer_count + 1, sizeof(*context_vk->completed.buffers)))
+        context_vk->completed.buffers[context_vk->completed.buffer_count++] = *buffer;
+    else
+        free_command_buffer(context_vk, buffer);
+
     *buffer = context_vk->submitted.buffers[--context_vk->submitted.buffer_count];
 }
 
@@ -1685,13 +1697,14 @@ void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk)
 
     if (buffer->vk_command_buffer)
     {
-        VK_CALL(vkFreeCommandBuffers(device_vk->vk_device,
-                context_vk->vk_command_pool, 1, &buffer->vk_command_buffer));
+        free_command_buffer(context_vk, buffer);
         buffer->vk_command_buffer = VK_NULL_HANDLE;
     }
 
     wined3d_context_vk_wait_command_buffer(context_vk, buffer->id - 1);
     context_vk->completed_command_buffer_id = buffer->id;
+    for (i = 0; i < context_vk->completed.buffer_count; ++i)
+        free_command_buffer(context_vk, &context_vk->completed.buffers[i]);
 
     heap_free(context_vk->compute.bindings.bindings);
     heap_free(context_vk->graphics.bindings.bindings);
@@ -1713,6 +1726,7 @@ void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk)
     wined3d_context_vk_destroy_query_pools(context_vk, &context_vk->free_stream_output_statistics_query_pools);
     wine_rb_destroy(&context_vk->bo_slab_available, wined3d_context_vk_destroy_bo_slab, context_vk);
     heap_free(context_vk->submitted.buffers);
+    heap_free(context_vk->completed.buffers);
     heap_free(context_vk->retired.objects);
 
     wined3d_shader_descriptor_writes_vk_cleanup(&context_vk->descriptor_writes);
@@ -1727,7 +1741,6 @@ VkCommandBuffer wined3d_context_vk_get_command_buffer(struct wined3d_context_vk 
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
-    VkCommandBufferAllocateInfo command_buffer_info;
     struct wined3d_command_buffer_vk *buffer;
     VkCommandBufferBeginInfo begin_info;
     struct wined3d_query_vk *query_vk;
@@ -1748,16 +1761,31 @@ VkCommandBuffer wined3d_context_vk_get_command_buffer(struct wined3d_context_vk 
         }
     }
 
-    command_buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    command_buffer_info.pNext = NULL;
-    command_buffer_info.commandPool = context_vk->vk_command_pool;
-    command_buffer_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    command_buffer_info.commandBufferCount = 1;
-    if ((vr = VK_CALL(vkAllocateCommandBuffers(device_vk->vk_device,
-            &command_buffer_info, &buffer->vk_command_buffer))) < 0)
+    if (context_vk->completed.buffer_count)
     {
-        WARN("Failed to allocate Vulkan command buffer, vr %s.\n", wined3d_debug_vkresult(vr));
-        return VK_NULL_HANDLE;
+        const struct wined3d_command_buffer_vk *old_buffer;
+
+        old_buffer = &context_vk->completed.buffers[--context_vk->completed.buffer_count];
+        buffer->vk_command_buffer = old_buffer->vk_command_buffer;
+        buffer->vk_fence = old_buffer->vk_fence;
+    }
+    else
+    {
+        VkCommandBufferAllocateInfo command_buffer_info;
+
+        command_buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        command_buffer_info.pNext = NULL;
+        command_buffer_info.commandPool = context_vk->vk_command_pool;
+        command_buffer_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        command_buffer_info.commandBufferCount = 1;
+        if ((vr = VK_CALL(vkAllocateCommandBuffers(device_vk->vk_device,
+                &command_buffer_info, &buffer->vk_command_buffer))) < 0)
+        {
+            WARN("Failed to allocate Vulkan command buffer, vr %s.\n", wined3d_debug_vkresult(vr));
+            return VK_NULL_HANDLE;
+        }
+
+        buffer->vk_fence = VK_NULL_HANDLE;
     }
 
     begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -1842,11 +1870,18 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
 
     VK_CALL(vkEndCommandBuffer(buffer->vk_command_buffer));
 
-    fence_desc.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fence_desc.pNext = NULL;
-    fence_desc.flags = 0;
-    if ((vr = VK_CALL(vkCreateFence(device_vk->vk_device, &fence_desc, NULL, &buffer->vk_fence))) < 0)
-        ERR("Failed to create fence, vr %s.\n", wined3d_debug_vkresult(vr));
+    if (buffer->vk_fence)
+    {
+        VK_CALL(vkResetFences(device_vk->vk_device, 1, &buffer->vk_fence));
+    }
+    else
+    {
+        fence_desc.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fence_desc.pNext = NULL;
+        fence_desc.flags = 0;
+        if ((vr = VK_CALL(vkCreateFence(device_vk->vk_device, &fence_desc, NULL, &buffer->vk_fence))) < 0)
+            ERR("Failed to create fence, vr %s.\n", wined3d_debug_vkresult(vr));
+    }
 
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submit_info.pNext = NULL;
@@ -3825,7 +3860,7 @@ HRESULT wined3d_context_vk_init(struct wined3d_context_vk *context_vk, struct wi
 
     command_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     command_pool_info.pNext = NULL;
-    command_pool_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+    command_pool_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     command_pool_info.queueFamilyIndex = device_vk->vk_queue_family_index;
     if ((vr = VK_CALL(vkCreateCommandPool(device_vk->vk_device,
             &command_pool_info, NULL, &context_vk->vk_command_pool))) < 0)

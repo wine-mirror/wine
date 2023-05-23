@@ -2729,7 +2729,7 @@ struct wined3d_context_vk
         struct wined3d_command_buffer_vk *buffers;
         SIZE_T buffers_size;
         SIZE_T buffer_count;
-    } submitted;
+    } submitted, completed;
 
     struct wined3d_shader_descriptor_writes_vk descriptor_writes;
 
