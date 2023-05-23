@@ -824,18 +824,21 @@ static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient3 *iface,
         REFERENCE_TIME *defperiod, REFERENCE_TIME *minperiod)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    struct get_device_period_params params;
 
     TRACE("(%p)->(%p, %p)\n", This, defperiod, minperiod);
 
-    if(!defperiod && !minperiod)
+    if (!defperiod && !minperiod)
         return E_POINTER;
 
-    if(defperiod)
-        *defperiod = DefaultPeriod;
-    if(minperiod)
-        *minperiod = DefaultPeriod;
+    params.device     = This->device_name;
+    params.flow       = This->dataflow;
+    params.def_period = defperiod;
+    params.min_period = minperiod;
 
-    return S_OK;
+    ALSA_CALL(get_device_period, &params);
+
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)

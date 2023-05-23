@@ -82,7 +82,9 @@ struct alsa_stream
     pthread_mutex_t lock;
 };
 
-#define                     EXTRA_SAFE_RT   40000
+#define EXTRA_SAFE_RT 40000
+
+static const REFERENCE_TIME def_period = 100000;
 
 static const WCHAR drv_keyW[] = {'S','o','f','t','w','a','r','e','\\',
     'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
@@ -2096,6 +2098,20 @@ exit:
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS alsa_get_device_period(void *args)
+{
+    struct get_device_period_params *params = args;
+
+    if (params->def_period)
+        *params->def_period = def_period;
+    if (params->min_period)
+        *params->min_period = def_period;
+
+    params->result = S_OK;
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS alsa_get_buffer_size(void *args)
 {
     struct get_buffer_size_params *params = args;
@@ -2458,7 +2474,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     alsa_release_capture_buffer,
     alsa_is_format_supported,
     alsa_get_mix_format,
-    alsa_not_implemented,
+    alsa_get_device_period,
     alsa_get_buffer_size,
     alsa_get_latency,
     alsa_get_current_padding,
@@ -2649,6 +2665,28 @@ static NTSTATUS alsa_wow64_get_mix_format(void *args)
         .fmt = ULongToPtr(params32->fmt)
     };
     alsa_get_mix_format(&params);
+    params32->result = params.result;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS alsa_wow64_get_device_period(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        EDataFlow flow;
+        HRESULT result;
+        PTR32 def_period;
+        PTR32 min_period;
+    } *params32 = args;
+    struct get_device_period_params params =
+    {
+        .device = ULongToPtr(params32->device),
+        .flow = params32->flow,
+        .def_period = ULongToPtr(params32->def_period),
+        .min_period = ULongToPtr(params32->min_period),
+    };
+    alsa_get_device_period(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
@@ -2877,7 +2915,7 @@ unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     alsa_release_capture_buffer,
     alsa_wow64_is_format_supported,
     alsa_wow64_get_mix_format,
-    alsa_not_implemented,
+    alsa_wow64_get_device_period,
     alsa_wow64_get_buffer_size,
     alsa_wow64_get_latency,
     alsa_wow64_get_current_padding,
