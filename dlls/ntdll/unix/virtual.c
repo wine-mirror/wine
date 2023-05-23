@@ -3050,7 +3050,7 @@ NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size
     else if (machine && image_info->machine != machine)
     {
         TRACE( "%s is for arch %04x, continuing search\n", debugstr_w(filename), image_info->machine );
-        status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
+        status = STATUS_NOT_SUPPORTED;
     }
     else if (prefer_native && (image_info->dll_charact & IMAGE_DLLCHARACTERISTICS_PREFER_NATIVE))
     {

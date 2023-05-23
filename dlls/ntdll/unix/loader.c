@@ -1440,7 +1440,7 @@ static NTSTATUS open_builtin_so_file( const char *name, OBJECT_ATTRIBUTES *attr,
             status = STATUS_PROCEDURE_NOT_FOUND;
         }
     }
-    else status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
+    else status = STATUS_NOT_SUPPORTED;
 
     close( fd );
     return status;
@@ -1525,7 +1525,7 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
         file[pos + len + 1] = 0;
         ptr = prepend( file + pos, dll_paths[i], strlen(dll_paths[i]) );
         status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, limit, machine, prefer_native );
-        if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH)
+        if (status == STATUS_NOT_SUPPORTED)
         {
             found_image = TRUE;
             continue;
@@ -1533,11 +1533,11 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
         if (status != STATUS_DLL_NOT_FOUND) goto done;
         strcpy( file + pos + len + 1, ".so" );
         status = open_builtin_so_file( ptr, &attr, module, image_info, machine, prefer_native );
-        if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH) found_image = TRUE;
+        if (status == STATUS_NOT_SUPPORTED) found_image = TRUE;
         else if (status != STATUS_DLL_NOT_FOUND) goto done;
     }
 
-    if (found_image) status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
+    if (found_image) status = STATUS_NOT_SUPPORTED;
     WARN( "cannot find builtin library for %s\n", debugstr_us(nt_name) );
 done:
     if (status >= 0 && ext)
@@ -1591,7 +1591,7 @@ NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename,
         return find_builtin_dll( &nt_name, module, size, &info, limit, machine, FALSE );
     default:
         status = find_builtin_dll( &nt_name, module, size, &info, limit, machine, (loadorder == LO_DEFAULT) );
-        if (status == STATUS_DLL_NOT_FOUND || status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH)
+        if (status == STATUS_DLL_NOT_FOUND || status == STATUS_NOT_SUPPORTED)
             return STATUS_IMAGE_ALREADY_LOADED;
         return status;
     }
