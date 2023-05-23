@@ -299,15 +299,6 @@ HRESULT WINAPI UiaGetReservedNotSupportedValue(IUnknown **value)
 }
 
 /***********************************************************************
- *          UiaRaiseAutomationEvent (uiautomationcore.@)
- */
-HRESULT WINAPI UiaRaiseAutomationEvent(IRawElementProviderSimple *provider, EVENTID id)
-{
-    FIXME("(%p, %d): stub\n", provider, id);
-    return S_OK;
-}
-
-/***********************************************************************
  *          UiaRaiseAutomationPropertyChangedEvent (uiautomationcore.@)
  */
 HRESULT WINAPI UiaRaiseAutomationPropertyChangedEvent(IRawElementProviderSimple *provider, PROPERTYID id, VARIANT old, VARIANT new)

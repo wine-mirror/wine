@@ -747,7 +747,7 @@ static HRESULT get_child_for_node(struct uia_node *node, int start_prov_idx, int
     return S_OK;
 }
 
-static HRESULT navigate_uia_node(struct uia_node *node, int nav_dir, HUIANODE *out_node)
+HRESULT navigate_uia_node(struct uia_node *node, int nav_dir, HUIANODE *out_node)
 {
     HRESULT hr;
     VARIANT v;
@@ -835,8 +835,6 @@ static HRESULT navigate_uia_node(struct uia_node *node, int nav_dir, HUIANODE *o
     return S_OK;
 }
 
-static HRESULT uia_condition_check(HUIANODE node, struct UiaCondition *condition);
-static BOOL uia_condition_matched(HRESULT hr);
 static HRESULT conditional_navigate_uia_node(struct uia_node *node, int nav_dir, struct UiaCondition *cond,
         HUIANODE *out_node)
 {
@@ -3024,7 +3022,7 @@ void WINAPI UiaRegisterProviderCallback(UiaProviderCallback *callback)
         uia_provider_callback = default_uia_provider_callback;
 }
 
-static BOOL uia_condition_matched(HRESULT hr)
+BOOL uia_condition_matched(HRESULT hr)
 {
     if (hr == S_FALSE)
         return FALSE;
@@ -3085,7 +3083,7 @@ static HRESULT uia_property_condition_check(HUIANODE node, struct UiaPropertyCon
     return hr;
 }
 
-static HRESULT uia_condition_check(HUIANODE node, struct UiaCondition *condition)
+HRESULT uia_condition_check(HUIANODE node, struct UiaCondition *condition)
 {
     HRESULT hr;
 

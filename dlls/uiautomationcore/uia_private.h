@@ -159,8 +159,11 @@ static inline BOOL uia_array_reserve(void **elements, SIZE_T *capacity, SIZE_T c
 /* uia_client.c */
 int get_node_provider_type_at_idx(struct uia_node *node, int idx) DECLSPEC_HIDDEN;
 HRESULT attach_event_to_uia_node(HUIANODE node, struct uia_event *event) DECLSPEC_HIDDEN;
+HRESULT navigate_uia_node(struct uia_node *node, int nav_dir, HUIANODE *out_node) DECLSPEC_HIDDEN;
 HRESULT create_uia_node_from_elprov(IRawElementProviderSimple *elprov, HUIANODE *out_node,
         BOOL get_hwnd_providers) DECLSPEC_HIDDEN;
+HRESULT uia_condition_check(HUIANODE node, struct UiaCondition *condition) DECLSPEC_HIDDEN;
+BOOL uia_condition_matched(HRESULT hr) DECLSPEC_HIDDEN;
 
 /* uia_com_client.c */
 HRESULT create_uia_iface(IUnknown **iface, BOOL is_cui8) DECLSPEC_HIDDEN;

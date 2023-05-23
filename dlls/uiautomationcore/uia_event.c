@@ -503,3 +503,170 @@ HRESULT WINAPI UiaRemoveEvent(HUIAEVENT huiaevent)
 
     return S_OK;
 }
+
+static HRESULT uia_event_invoke(HUIANODE node, struct UiaEventArgs *args, struct uia_event *event)
+{
+    SAFEARRAY *out_req;
+    BSTR tree_struct;
+    HRESULT hr;
+
+    hr = UiaGetUpdatedCache(node, &event->cache_req, NormalizeState_View, NULL, &out_req,
+            &tree_struct);
+    if (SUCCEEDED(hr))
+    {
+        event->cback(args, out_req, tree_struct);
+        SafeArrayDestroy(out_req);
+        SysFreeString(tree_struct);
+    }
+
+    return hr;
+}
+
+/*
+ * Check if the provider that raised the event matches this particular event.
+ */
+static HRESULT uia_event_check_match(HUIANODE node, SAFEARRAY *rt_id, struct UiaEventArgs *args, struct uia_event *event)
+{
+    struct UiaPropertyCondition prop_cond = { ConditionType_Property, UIA_RuntimeIdPropertyId };
+    struct uia_node *node_data = impl_from_IWineUiaNode((IWineUiaNode *)node);
+    HRESULT hr = S_OK;
+
+    /* Event is no longer valid. */
+    if (InterlockedCompareExchange(&event->event_defunct, 0, 0) != 0)
+        return S_OK;
+
+    /* Can't match an event that doesn't have a runtime ID, early out. */
+    if (!event->runtime_id)
+        return S_OK;
+
+    if (rt_id && !uia_compare_safearrays(rt_id, event->runtime_id, UIAutomationType_IntArray))
+    {
+        if (event->scope & TreeScope_Element)
+            hr = uia_event_invoke(node, args, event);
+        return hr;
+    }
+
+    if (!(event->scope & (TreeScope_Descendants | TreeScope_Children)))
+        return S_OK;
+
+    V_VT(&prop_cond.Value) = VT_I4 | VT_ARRAY;
+    V_ARRAY(&prop_cond.Value) = event->runtime_id;
+
+    IWineUiaNode_AddRef(&node_data->IWineUiaNode_iface);
+    while (1)
+    {
+        HUIANODE node2 = NULL;
+
+        hr = navigate_uia_node(node_data, NavigateDirection_Parent, &node2);
+        IWineUiaNode_Release(&node_data->IWineUiaNode_iface);
+        if (FAILED(hr) || !node2)
+            return hr;
+
+        node_data = impl_from_IWineUiaNode((IWineUiaNode *)node2);
+        hr = uia_condition_check(node2, (struct UiaCondition *)&prop_cond);
+        if (FAILED(hr))
+            break;
+
+        if (uia_condition_matched(hr))
+        {
+            hr = uia_event_invoke(node, args, event);
+            break;
+        }
+
+        if (!(event->scope & TreeScope_Descendants))
+            break;
+    }
+    IWineUiaNode_Release(&node_data->IWineUiaNode_iface);
+
+    return hr;
+}
+
+static HRESULT uia_raise_event(IRawElementProviderSimple *elprov, struct UiaEventArgs *args)
+{
+    struct uia_event_map_entry *event_entry;
+    enum ProviderOptions prov_opts = 0;
+    struct list *cursor, *cursor2;
+    HUIANODE node;
+    SAFEARRAY *sa;
+    HRESULT hr;
+
+    hr = IRawElementProviderSimple_get_ProviderOptions(elprov, &prov_opts);
+    if (FAILED(hr))
+        return hr;
+
+    EnterCriticalSection(&event_map_cs);
+    if ((event_entry = uia_get_event_map_entry_for_event(args->EventId)))
+        InterlockedIncrement(&event_entry->refs);
+    LeaveCriticalSection(&event_map_cs);
+
+    if (!event_entry)
+        return S_OK;
+
+    /*
+     * For events raised on server-side providers, we don't want to add any
+     * clientside HWND providers.
+     */
+    if (prov_opts & ProviderOptions_ServerSideProvider)
+        hr = create_uia_node_from_elprov(elprov, &node, FALSE);
+    else
+        hr = create_uia_node_from_elprov(elprov, &node, TRUE);
+    if (FAILED(hr))
+    {
+        uia_event_map_entry_release(event_entry);
+        return hr;
+    }
+
+    hr = UiaGetRuntimeId(node, &sa);
+    if (FAILED(hr))
+    {
+        uia_event_map_entry_release(event_entry);
+        UiaNodeRelease(node);
+        return hr;
+    }
+
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &event_entry->events_list)
+    {
+        struct uia_event *event = LIST_ENTRY(cursor, struct uia_event, event_list_entry);
+
+        hr = uia_event_check_match(node, sa, args, event);
+        if (FAILED(hr))
+            break;
+    }
+
+    uia_event_map_entry_release(event_entry);
+    SafeArrayDestroy(sa);
+    UiaNodeRelease(node);
+
+    return hr;
+}
+
+/***********************************************************************
+ *          UiaRaiseAutomationEvent (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaRaiseAutomationEvent(IRawElementProviderSimple *elprov, EVENTID id)
+{
+    const struct uia_event_info *event_info = uia_event_info_from_id(id);
+    struct UiaEventArgs args = { EventArgsType_Simple, id };
+    HRESULT hr;
+
+    TRACE("(%p, %d)\n", elprov, id);
+
+    if (!elprov)
+        return E_INVALIDARG;
+
+    if (!event_info || event_info->event_arg_type != EventArgsType_Simple)
+    {
+        if (!event_info)
+            FIXME("No event info structure for event id %d\n", id);
+        else
+            WARN("Wrong event raising function for event args type %d\n", event_info->event_arg_type);
+
+        return S_OK;
+    }
+
+    hr = uia_raise_event(elprov, &args);
+    if (FAILED(hr))
+        return hr;
+
+    return S_OK;
+}
