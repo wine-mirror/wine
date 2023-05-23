@@ -293,7 +293,7 @@ static void check_region_size_(void *p, SIZE_T s, unsigned int line)
 
 static void test_NtAllocateVirtualMemoryEx(void)
 {
-    MEM_EXTENDED_PARAMETER ext;
+    MEM_EXTENDED_PARAMETER ext[2];
     SIZE_T size, size2;
     char *p, *p1, *p2;
     NTSTATUS status;
@@ -425,13 +425,28 @@ static void test_NtAllocateVirtualMemoryEx(void)
         ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
     }
 
-    memset( &ext, 0, sizeof(ext) );
-    ext.Type = MemExtendedParameterAttributeFlags;
-    ext.ULong = MEM_EXTENDED_PARAMETER_EC_CODE;
+    memset( ext, 0, sizeof(ext) );
+    ext[0].Type = MemExtendedParameterAttributeFlags;
+    ext[0].ULong = 0;
+    ext[1].Type = MemExtendedParameterAttributeFlags;
+    ext[1].ULong = 0;
     size = 0x10000;
     addr1 = NULL;
     status = pNtAllocateVirtualMemoryEx( NtCurrentProcess(), &addr1, &size, MEM_RESERVE,
-                                         PAGE_EXECUTE_READWRITE, &ext, 1 );
+                                         PAGE_EXECUTE_READWRITE, ext, 1 );
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    NtFreeVirtualMemory( NtCurrentProcess(), &addr1, &size, MEM_DECOMMIT );
+    status = pNtAllocateVirtualMemoryEx( NtCurrentProcess(), &addr1, &size, MEM_RESERVE,
+                                         PAGE_EXECUTE_READWRITE, ext, 2 );
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    memset( ext, 0, sizeof(ext) );
+    ext[0].Type = MemExtendedParameterAttributeFlags;
+    ext[0].ULong = MEM_EXTENDED_PARAMETER_EC_CODE;
+    size = 0x10000;
+    addr1 = NULL;
+    status = pNtAllocateVirtualMemoryEx( NtCurrentProcess(), &addr1, &size, MEM_RESERVE,
+                                         PAGE_EXECUTE_READWRITE, ext, 1 );
 #ifdef __x86_64__
     if (pRtlGetNativeSystemInformation)
     {
@@ -453,7 +468,7 @@ static void test_NtAllocateVirtualMemoryEx(void)
             if (pRtlIsEcCode) ok( !pRtlIsEcCode( addr1 ), "EC code %p\n", addr1 );
             size = 0x1000;
             status = pNtAllocateVirtualMemoryEx( NtCurrentProcess(), &addr1, &size, MEM_COMMIT,
-                                                 PAGE_EXECUTE_READWRITE, &ext, 1 );
+                                                 PAGE_EXECUTE_READWRITE, ext, 1 );
             ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
             if (pRtlIsEcCode)
             {
@@ -474,9 +489,9 @@ static void test_NtAllocateVirtualMemoryEx(void)
             if (pRtlIsEcCode) ok( pRtlIsEcCode( addr1 ), "not EC code %p\n", addr1 );
 
             size = 0x2000;
-            ext.ULong = 0;
+            ext[0].ULong = 0;
             status = pNtAllocateVirtualMemoryEx( NtCurrentProcess(), &addr1, &size, MEM_COMMIT,
-                                                 PAGE_EXECUTE_READWRITE, &ext, 1 );
+                                                 PAGE_EXECUTE_READWRITE, ext, 1 );
             ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
             if (pRtlIsEcCode)
             {
@@ -1606,6 +1621,47 @@ static void test_NtMapViewOfSectionEx(void)
 
     CloseHandle(file);
     DeleteFileA(testfile);
+
+    file = CreateFileA( "c:\\windows\\system32\\version.dll", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "Failed to open version.dll\n" );
+    mapping = CreateFileMappingA( file, NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, NULL );
+    ok( mapping != 0, "CreateFileMapping failed\n" );
+
+    memset(&ext, 0, sizeof(ext));
+    ext[0].Type = MemExtendedParameterImageMachine;
+    ext[0].ULong = 0;
+    ptr = NULL;
+    size = 0;
+    status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READONLY, ext, 1 );
+    if (status != STATUS_INVALID_PARAMETER)
+    {
+        ok(status == STATUS_SUCCESS || status == STATUS_IMAGE_NOT_AT_BASE, "NtMapViewOfSection returned %08lx\n", status);
+        NtUnmapViewOfSection(process, ptr);
+
+        ext[1].Type = MemExtendedParameterImageMachine;
+        ext[1].ULong = 0;
+        ptr = NULL;
+        size = 0;
+        status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READONLY, ext, 2 );
+        ok(status == STATUS_INVALID_PARAMETER, "NtMapViewOfSection returned %08lx\n", status);
+
+        ext[0].ULong = IMAGE_FILE_MACHINE_R3000;
+        ext[1].ULong = IMAGE_FILE_MACHINE_R4000;
+        ptr = NULL;
+        size = 0;
+        status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READONLY, ext, 2 );
+        ok(status == STATUS_INVALID_PARAMETER, "NtMapViewOfSection returned %08lx\n", status);
+
+        ptr = NULL;
+        size = 0;
+        status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READONLY, ext, 1 );
+        todo_wine
+        ok(status == STATUS_NOT_SUPPORTED, "NtMapViewOfSection returned %08lx\n", status);
+    }
+    else win_skip( "MemExtendedParameterImageMachine not supported\n" );
+
+    NtClose(mapping);
+    CloseHandle(file);
 
     TerminateProcess(process, 0);
     CloseHandle(process);

@@ -4152,18 +4152,21 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_PTR z
 static NTSTATUS get_extended_params( const MEM_EXTENDED_PARAMETER *parameters, ULONG count,
                                      ULONG_PTR *limit, ULONG_PTR *align, ULONG *attributes )
 {
-    MEM_ADDRESS_REQUIREMENTS *r = NULL;
-    ULONG i;
+    ULONG i, present = 0;
 
     if (count && !parameters) return STATUS_INVALID_PARAMETER;
 
     for (i = 0; i < count; ++i)
     {
+        if (parameters[i].Type >= 32) return STATUS_INVALID_PARAMETER;
+        if (present & (1u << parameters[i].Type)) return STATUS_INVALID_PARAMETER;
+        present |= 1u << parameters[i].Type;
+
         switch (parameters[i].Type)
         {
         case MemExtendedParameterAddressRequirements:
-            if (r) return STATUS_INVALID_PARAMETER;
-            r = parameters[i].Pointer;
+        {
+            MEM_ADDRESS_REQUIREMENTS *r = parameters[i].Pointer;
 
             if (r->LowestStartingAddress)
                 FIXME( "Not supported requirements LowestStartingAddress %p, Alignment %p.\n",
@@ -4188,6 +4191,7 @@ static NTSTATUS get_extended_params( const MEM_EXTENDED_PARAMETER *parameters, U
                 }
             }
             break;
+        }
 
         case MemExtendedParameterAttributeFlags:
             *attributes = parameters[i].ULong;
