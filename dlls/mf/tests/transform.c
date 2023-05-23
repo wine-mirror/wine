@@ -5615,6 +5615,26 @@ static void test_wmv_decoder_media_object(void)
     todo_wine
     ok(status == DMO_INPUT_STATUSF_ACCEPT_DATA, "Unexpected status %#lx.\n", status);
 
+    /* Test Flush. */
+    hr = IMediaObject_ProcessInput(media_object, 0, &input_media_buffer->IMediaBuffer_iface, 0, 0, 0);
+    ok(hr == S_OK, "ProcessInput returned %#lx.\n", hr);
+    hr = IMediaObject_Flush(media_object);
+    todo_wine
+    ok(hr == S_OK, "Flush returned %#lx.\n", hr);
+    hr = IMediaObject_Flush(media_object);
+    todo_wine
+    ok(hr == S_OK, "Flush returned %#lx.\n", hr);
+    output_media_buffer->length = 0;
+    output_data_buffer.pBuffer = &output_media_buffer->IMediaBuffer_iface;
+    output_data_buffer.dwStatus = 0xdeadbeef;
+    output_data_buffer.rtTimestamp = 0xdeadbeef;
+    output_data_buffer.rtTimelength = 0xdeadbeef;
+    hr = IMediaObject_ProcessOutput(media_object, 0, 1, &output_data_buffer, &status);
+    todo_wine
+    ok(hr == S_FALSE, "ProcessOutput returned %#lx.\n", hr);
+    todo_wine
+    ok(output_media_buffer->length == 0, "Unexpected length %#lx.\n", output_media_buffer->length);
+
     /* Test ProcessOutput with setting framerate. */
     init_dmo_media_type_video(type, &MEDIASUBTYPE_WMV1, data_width, data_height);
     ((VIDEOINFOHEADER *)type->pbFormat)->AvgTimePerFrame = 100000;
