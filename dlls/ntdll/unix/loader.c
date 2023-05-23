@@ -1663,7 +1663,7 @@ BOOL is_builtin_path( const UNICODE_STRING *path, WORD *machine )
  *           open_main_image
  */
 static NTSTATUS open_main_image( WCHAR *image, void **module, SECTION_IMAGE_INFORMATION *info,
-                                 enum loadorder loadorder )
+                                 enum loadorder loadorder, USHORT machine )
 {
     static const WCHAR soW[] = {'.','s','o',0};
     UNICODE_STRING nt_name;
@@ -1684,14 +1684,8 @@ static NTSTATUS open_main_image( WCHAR *image, void **module, SECTION_IMAGE_INFO
     status = open_dll_file( unix_name, &attr, &mapping );
     if (!status)
     {
-        *module = NULL;
-        status = NtMapViewOfSection( mapping, NtCurrentProcess(), module, 0, 0, NULL, &size,
-                                     ViewShare, 0, PAGE_EXECUTE_READ );
-        if (!status)
-        {
-            NtQuerySection( mapping, SectionImageInformation, info, sizeof(*info), NULL );
-            if (info->u.s.ComPlusNativeReady) info->Machine = native_machine;
-        }
+        status = virtual_map_module( mapping, module, &size, info, 0, machine );
+        if (!status && info->u.s.ComPlusNativeReady) info->Machine = native_machine;
         NtClose( mapping );
     }
     else if (status == STATUS_INVALID_IMAGE_NOT_MZ && loadorder != LO_NATIVE)
@@ -1732,7 +1726,7 @@ NTSTATUS load_main_exe( const WCHAR *dos_name, const char *unix_name, const WCHA
         if ((status = unix_to_nt_file_name( unix_name, image ))) goto failed;
         init_unicode_string( &nt_name, *image );
         loadorder = get_load_order( &nt_name );
-        status = open_main_image( *image, module, &main_image_info, loadorder );
+        status = open_main_image( *image, module, &main_image_info, loadorder, 0 );
         if (status != STATUS_DLL_NOT_FOUND) return status;
         free( *image );
     }
@@ -1752,7 +1746,7 @@ NTSTATUS load_main_exe( const WCHAR *dos_name, const char *unix_name, const WCHA
     init_unicode_string( &nt_name, *image );
     if (loadorder == LO_INVALID) loadorder = get_load_order( &nt_name );
 
-    status = open_main_image( *image, module, &main_image_info, loadorder );
+    status = open_main_image( *image, module, &main_image_info, loadorder, 0 );
     if (status != STATUS_DLL_NOT_FOUND) return status;
 
     /* if path is in system dir, we can load the builtin even if the file itself doesn't exist */

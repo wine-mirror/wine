@@ -3074,6 +3074,42 @@ NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size
 
 
 /***********************************************************************
+ *           virtual_map_module
+ */
+NTSTATUS virtual_map_module( HANDLE mapping, void **module, SIZE_T *size, SECTION_IMAGE_INFORMATION *info,
+                             ULONG_PTR limit, USHORT machine )
+{
+    unsigned int status;
+    mem_size_t full_size;
+    unsigned int sec_flags;
+    HANDLE shared_file;
+    pe_image_info_t *image_info = NULL;
+    ACCESS_MASK access = SECTION_MAP_READ | SECTION_MAP_EXECUTE;
+    WCHAR *filename;
+
+    if ((status = get_mapping_info( mapping, access, &sec_flags, &full_size, &shared_file, &image_info )))
+        return status;
+
+    if (!image_info) return STATUS_INVALID_PARAMETER;
+
+    *module = NULL;
+    *size = 0;
+    filename = (WCHAR *)(image_info + 1);
+
+    /* check if we can replace that mapping with the builtin */
+    status = load_builtin( image_info, filename, machine, module, size, limit );
+    if (status == STATUS_IMAGE_ALREADY_LOADED)
+        status = virtual_map_image( mapping, access, module, size, shared_file, limit, 0,
+                                    machine, image_info, filename, FALSE );
+
+    virtual_fill_image_information( image_info, info );
+    if (shared_file) NtClose( shared_file );
+    free( image_info );
+    return status;
+}
+
+
+/***********************************************************************
  *           virtual_create_builtin_view
  */
 NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING *nt_name,
