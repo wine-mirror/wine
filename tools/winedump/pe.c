@@ -59,6 +59,9 @@ const char *get_machine_str(int mach)
     case IMAGE_FILE_MACHINE_CHPE_X86:	return "CHPE-x86";
     case IMAGE_FILE_MACHINE_ARM64EC:	return "ARM64EC";
     case IMAGE_FILE_MACHINE_ARM64X:	return "ARM64X";
+    case IMAGE_FILE_MACHINE_RISCV32:	return "RISC-V 32-bit";
+    case IMAGE_FILE_MACHINE_RISCV64:	return "RISC-V 64-bit";
+    case IMAGE_FILE_MACHINE_RISCV128:	return "RISC-V 128-bit";
     }
     return "???";
 }
