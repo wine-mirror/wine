@@ -1655,7 +1655,6 @@ static void test_NtMapViewOfSectionEx(void)
         ptr = NULL;
         size = 0;
         status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READONLY, ext, 1 );
-        todo_wine
         ok(status == STATUS_NOT_SUPPORTED, "NtMapViewOfSection returned %08lx\n", status);
     }
     else win_skip( "MemExtendedParameterImageMachine not supported\n" );

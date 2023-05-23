@@ -237,7 +237,8 @@ static void dump_apc_call( const char *prefix, const apc_call_t *call )
         dump_uint64( ",size=", &call->map_view_ex.size );
         dump_uint64( ",offset=", &call->map_view_ex.offset );
         dump_uint64( ",limit=", &call->map_view_ex.limit );
-        fprintf( stderr, ",alloc_type=%x,prot=%x", call->map_view_ex.alloc_type, call->map_view_ex.prot );
+        fprintf( stderr, ",alloc_type=%x,prot=%x,machine=%04x",
+                 call->map_view_ex.alloc_type, call->map_view_ex.prot, call->map_view_ex.machine );
         break;
     case APC_UNMAP_VIEW:
         dump_uint64( "APC_UNMAP_VIEW,addr=", &call->unmap_view.addr );

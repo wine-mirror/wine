@@ -30,6 +30,7 @@ static USHORT   (WINAPI *pRtlWow64GetCurrentMachine)(void);
 static NTSTATUS (WINAPI *pRtlWow64GetProcessMachines)(HANDLE,WORD*,WORD*);
 static NTSTATUS (WINAPI *pRtlWow64GetThreadContext)(HANDLE,WOW64_CONTEXT*);
 static NTSTATUS (WINAPI *pRtlWow64IsWowGuestMachineSupported)(USHORT,BOOLEAN*);
+static NTSTATUS (WINAPI *pNtMapViewOfSectionEx)(HANDLE,HANDLE,PVOID*,const LARGE_INTEGER*,SIZE_T*,ULONG,ULONG,MEM_EXTENDED_PARAMETER*,ULONG);
 #ifdef _WIN64
 static NTSTATUS (WINAPI *pRtlWow64GetCpuAreaInfo)(WOW64_CPURESERVED*,ULONG,WOW64_CPU_AREA_INFO*);
 static NTSTATUS (WINAPI *pRtlWow64GetThreadSelectorEntry)(HANDLE,THREAD_DESCRIPTOR_INFORMATION*,ULONG,ULONG*);
@@ -80,6 +81,7 @@ static void init(void)
     }
 
 #define GET_PROC(func) p##func = (void *)GetProcAddress( ntdll, #func )
+    GET_PROC( NtMapViewOfSectionEx );
     GET_PROC( NtQuerySystemInformation );
     GET_PROC( NtQuerySystemInformationEx );
     GET_PROC( RtlGetNativeSystemInformation );
@@ -99,7 +101,7 @@ static void init(void)
 #endif
 #undef GET_PROC
 
-    if (is_wow64)
+    if (pRtlGetNativeSystemInformation)
     {
         SYSTEM_CPU_INFORMATION info;
         ULONG len;
@@ -593,6 +595,153 @@ static void test_selectors(void)
         }
     }
 #undef GET_ENTRY
+}
+
+static void test_image_mappings(void)
+{
+    MEM_EXTENDED_PARAMETER ext = { .Type = MemExtendedParameterImageMachine };
+    HANDLE file, mapping, process = GetCurrentProcess();
+    NTSTATUS status;
+    SIZE_T size;
+    LARGE_INTEGER offset;
+    void *ptr;
+
+    if (!pNtMapViewOfSectionEx)
+    {
+        win_skip( "NtMapViewOfSectionEx() not supported\n" );
+        return;
+    }
+
+    offset.QuadPart = 0;
+    file = CreateFileA( "c:\\windows\\system32\\version.dll", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "Failed to open version.dll\n" );
+    mapping = CreateFileMappingA( file, NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, NULL );
+    ok( mapping != 0, "CreateFileMapping failed\n" );
+    CloseHandle( file );
+
+    ptr = NULL;
+    size = 0;
+    ext.ULong = IMAGE_FILE_MACHINE_AMD64;
+    status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READONLY, &ext, 1 );
+    if (status == STATUS_INVALID_PARAMETER)
+    {
+        win_skip( "MemExtendedParameterImageMachine not supported\n" );
+        NtClose( mapping );
+        return;
+    }
+    if (current_machine == IMAGE_FILE_MACHINE_AMD64)
+    {
+        ok( status == STATUS_SUCCESS || status == STATUS_IMAGE_NOT_AT_BASE,
+            "NtMapViewOfSection returned %08lx\n", status );
+        NtUnmapViewOfSection( process, ptr );
+    }
+    else if (current_machine == IMAGE_FILE_MACHINE_ARM64)
+    {
+        ok( status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH, "NtMapViewOfSection returned %08lx\n", status );
+        NtUnmapViewOfSection( process, ptr );
+    }
+    else ok( status == STATUS_NOT_SUPPORTED, "NtMapViewOfSection returned %08lx\n", status );
+
+    ptr = NULL;
+    size = 0;
+    ext.ULong = IMAGE_FILE_MACHINE_I386;
+    status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READONLY, &ext, 1 );
+    if (current_machine == IMAGE_FILE_MACHINE_I386)
+    {
+        ok( status == STATUS_SUCCESS || status == STATUS_IMAGE_NOT_AT_BASE,
+            "NtMapViewOfSection returned %08lx\n", status );
+        NtUnmapViewOfSection( process, ptr );
+    }
+    else ok( status == STATUS_NOT_SUPPORTED, "NtMapViewOfSection returned %08lx\n", status );
+
+    ptr = NULL;
+    size = 0;
+    ext.ULong = IMAGE_FILE_MACHINE_ARM64;
+    status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READONLY, &ext, 1 );
+    if (native_machine == IMAGE_FILE_MACHINE_ARM64)
+    {
+        switch (current_machine)
+        {
+        case IMAGE_FILE_MACHINE_ARM64:
+            ok( status == STATUS_SUCCESS || status == STATUS_IMAGE_NOT_AT_BASE,
+                "NtMapViewOfSection returned %08lx\n", status );
+            NtUnmapViewOfSection( process, ptr );
+            break;
+        case IMAGE_FILE_MACHINE_AMD64:
+            ok( status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH, "NtMapViewOfSection returned %08lx\n", status );
+            NtUnmapViewOfSection( process, ptr );
+            break;
+        default:
+            ok( status == STATUS_NOT_SUPPORTED, "NtMapViewOfSection returned %08lx\n", status );
+            break;
+        }
+    }
+    else ok( status == STATUS_NOT_SUPPORTED, "NtMapViewOfSection returned %08lx\n", status );
+
+    ptr = NULL;
+    size = 0;
+    ext.ULong = IMAGE_FILE_MACHINE_R3000;
+    status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READONLY, &ext, 1 );
+    ok( status == STATUS_NOT_SUPPORTED, "NtMapViewOfSection returned %08lx\n", status );
+
+    ptr = NULL;
+    size = 0;
+    ext.ULong = 0;
+    status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READONLY, &ext, 1 );
+    ok( status == STATUS_SUCCESS || status == STATUS_IMAGE_NOT_AT_BASE,
+        "NtMapViewOfSection returned %08lx\n", status );
+    NtUnmapViewOfSection( process, ptr );
+
+    NtClose( mapping );
+
+    if (is_wow64)
+    {
+        file = CreateFileA( "c:\\windows\\sysnative\\version.dll", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0 );
+        ok( file != INVALID_HANDLE_VALUE, "Failed to open version.dll\n" );
+
+        mapping = CreateFileMappingA( file, NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, NULL );
+        ok( mapping != 0, "CreateFileMapping failed\n" );
+        CloseHandle( file );
+
+        ptr = NULL;
+        size = 0;
+        ext.ULong = native_machine;
+        status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READONLY, &ext, 1 );
+        ok( status == STATUS_SUCCESS || status == STATUS_IMAGE_NOT_AT_BASE,
+            "NtMapViewOfSection returned %08lx\n", status );
+        NtUnmapViewOfSection( process, ptr );
+
+        ptr = NULL;
+        size = 0;
+        ext.ULong = IMAGE_FILE_MACHINE_I386;
+        status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READONLY, &ext, 1 );
+        ok( status == STATUS_NOT_SUPPORTED, "NtMapViewOfSection returned %08lx\n", status );
+        NtClose( mapping );
+    }
+    else if (native_machine == IMAGE_FILE_MACHINE_AMD64 || native_machine == IMAGE_FILE_MACHINE_ARM64)
+    {
+        file = CreateFileA( "c:\\windows\\syswow64\\version.dll", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0 );
+        ok( file != INVALID_HANDLE_VALUE, "Failed to open version.dll\n" );
+
+        mapping = CreateFileMappingA( file, NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, NULL );
+        ok( mapping != 0, "CreateFileMapping failed\n" );
+        CloseHandle( file );
+
+        ptr = NULL;
+        size = 0;
+        ext.ULong = native_machine;
+        status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READONLY, &ext, 1 );
+        ok( status == STATUS_NOT_SUPPORTED, "NtMapViewOfSection returned %08lx\n", status );
+
+        ptr = NULL;
+        size = 0;
+        ext.ULong = IMAGE_FILE_MACHINE_I386;
+        status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READONLY, &ext, 1 );
+        todo_wine
+        ok( status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH, "NtMapViewOfSection returned %08lx\n", status );
+        NtUnmapViewOfSection( process, ptr );
+        NtClose( mapping );
+    }
 }
 
 #ifdef _WIN64
@@ -1396,6 +1545,7 @@ START_TEST(wow64)
     test_query_architectures();
     test_peb_teb();
     test_selectors();
+    test_image_mappings();
 #ifndef _WIN64
     test_nt_wow64();
     test_modules();

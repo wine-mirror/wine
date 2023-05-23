@@ -569,7 +569,7 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOO
     case APC_MAP_VIEW_EX:
     {
         MEM_ADDRESS_REQUIREMENTS addr_req;
-        MEM_EXTENDED_PARAMETER ext[1];
+        MEM_EXTENDED_PARAMETER ext[2];
         ULONG count = 0;
         LARGE_INTEGER offset;
 
@@ -594,6 +594,12 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOO
             addr_req.Alignment = 0;
             ext[count].Type = MemExtendedParameterAddressRequirements;
             ext[count].Pointer = &addr_req;
+            count++;
+        }
+        if (call->map_view_ex.machine)
+        {
+            ext[count].Type = MemExtendedParameterImageMachine;
+            ext[count].ULong = call->map_view_ex.machine;
             count++;
         }
         result->map_view_ex.status = NtMapViewOfSectionEx( wine_server_ptr_handle(call->map_view_ex.handle),

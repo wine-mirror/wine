@@ -592,7 +592,8 @@ typedef union
         file_pos_t       offset;
         mem_size_t       limit;
         unsigned int     alloc_type;
-        unsigned int     prot;
+        unsigned short   prot;
+        unsigned short   machine;
     } map_view_ex;
     struct
     {
@@ -6393,7 +6394,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 766
+#define SERVER_PROTOCOL_VERSION 767
 
 /* ### protocol_version end ### */
 

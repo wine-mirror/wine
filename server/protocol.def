@@ -608,7 +608,8 @@ typedef union
         file_pos_t       offset;       /* file offset */
         mem_size_t       limit;        /* allocation address limit */
         unsigned int     alloc_type;   /* allocation type */
-        unsigned int     prot;         /* memory protection flags */
+        unsigned short   prot;         /* memory protection flags */
+        unsigned short   machine;      /* requested machine for image mappings */
     } map_view_ex;
     struct
     {
