@@ -5596,13 +5596,10 @@ static void test_wmv_decoder_media_object(void)
 
     /* Test Discontinuity.  */
     hr = IMediaObject_Discontinuity(media_object, 0xdeadbeef);
-    todo_wine
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "Discontinuity returned %#lx.\n", hr);
     hr = IMediaObject_Discontinuity(media_object, 0);
-    todo_wine
     ok(hr == S_OK, "Discontinuity returned %#lx.\n", hr);
     hr = IMediaObject_Discontinuity(media_object, 0);
-    todo_wine
     ok(hr == S_OK, "Discontinuity returned %#lx.\n", hr);
     hr = IMediaObject_GetInputStatus(media_object, 0, &status);
     ok(hr == S_OK, "GetInputStatus returned %#lx.\n", hr);
