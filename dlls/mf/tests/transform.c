@@ -5580,23 +5580,18 @@ static void test_wmv_decoder_media_object(void)
 
     /* Test GetInputStatus. */
     hr = IMediaObject_GetInputStatus(media_object, 0xdeadbeef, NULL);
-    todo_wine
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputStatus returned %#lx.\n", hr);
 
     status = 0xdeadbeef;
     hr = IMediaObject_GetInputStatus(media_object, 0xdeadbeef, &status);
-    todo_wine
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputStatus returned %#lx.\n", hr);
     ok(status == 0xdeadbeef, "Unexpected status %#lx.\n", status);
 
     hr = IMediaObject_GetInputStatus(media_object, 0, NULL);
-    todo_wine
     ok(hr == E_POINTER, "GetInputStatus returned %#lx.\n", hr);
 
     hr = IMediaObject_GetInputStatus(media_object, 0, &status);
-    todo_wine
     ok(hr == S_OK, "GetInputStatus returned %#lx.\n", hr);
-    todo_wine
     ok(status == DMO_INPUT_STATUSF_ACCEPT_DATA, "Unexpected status %#lx.\n", status);
 
     /* Test Discontinuity.  */
@@ -5610,9 +5605,7 @@ static void test_wmv_decoder_media_object(void)
     todo_wine
     ok(hr == S_OK, "Discontinuity returned %#lx.\n", hr);
     hr = IMediaObject_GetInputStatus(media_object, 0, &status);
-    todo_wine
     ok(hr == S_OK, "GetInputStatus returned %#lx.\n", hr);
-    todo_wine
     ok(status == DMO_INPUT_STATUSF_ACCEPT_DATA, "Unexpected status %#lx.\n", status);
 
     /* Test Flush. */
