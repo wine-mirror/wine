@@ -3234,14 +3234,13 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             {
                 GpMatrix dst_to_src;
                 REAL m11, m12, m21, m22, mdx, mdy;
-                GpPointF dst_to_src_points[3] = {{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}};
                 REAL x_dx, x_dy, y_dx, y_dy;
                 ARGB *dst_color;
                 GpPointF src_pointf_row, src_pointf;
 
                 m11 = (ptf[1].X - ptf[0].X) / srcwidth;
-                m21 = (ptf[2].X - ptf[0].X) / srcheight;
                 m12 = (ptf[1].Y - ptf[0].Y) / srcwidth;
+                m21 = (ptf[2].X - ptf[0].X) / srcheight;
                 m22 = (ptf[2].Y - ptf[0].Y) / srcheight;
                 mdx = ptf[0].X - m11 * srcx - m21 * srcy;
                 mdy = ptf[0].Y - m12 * srcx - m22 * srcy;
@@ -3252,13 +3251,10 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 if (stat != Ok) return stat;
 
                 dst_stride = sizeof(ARGB) * (dst_area.right - dst_area.left);
-
-                GdipTransformMatrixPoints(&dst_to_src, dst_to_src_points, 3);
-
-                x_dx = dst_to_src_points[1].X - dst_to_src_points[0].X;
-                x_dy = dst_to_src_points[1].Y - dst_to_src_points[0].Y;
-                y_dx = dst_to_src_points[2].X - dst_to_src_points[0].X;
-                y_dy = dst_to_src_points[2].Y - dst_to_src_points[0].Y;
+                x_dx = dst_to_src.matrix[0];
+                x_dy = dst_to_src.matrix[1];
+                y_dx = dst_to_src.matrix[2];
+                y_dy = dst_to_src.matrix[3];
 
                 /* Transform the bits as needed to the destination. */
                 dst_data = dst_dyn_data = heap_alloc_zero(sizeof(ARGB) * (dst_area.right - dst_area.left) * (dst_area.bottom - dst_area.top));
@@ -3271,9 +3267,9 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
                 /* Calculate top left point of transformed image.
                    It would be used as reference point for adding */
-                src_pointf_row.X = dst_to_src_points[0].X +
+                src_pointf_row.X = dst_to_src.matrix[4] +
                                    dst_area.left * x_dx + dst_area.top * y_dx;
-                src_pointf_row.Y = dst_to_src_points[0].Y +
+                src_pointf_row.Y = dst_to_src.matrix[5] +
                                    dst_area.left * x_dy + dst_area.top * y_dy;
 
                 for (y = dst_area.top; y < dst_area.bottom;
