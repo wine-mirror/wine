@@ -948,9 +948,10 @@ struct get_startup_info_reply
 {
     struct reply_header __header;
     data_size_t  info_size;
+    unsigned short machine;
     /* VARARG(info,startup_info,info_size); */
     /* VARARG(env,unicode_str); */
-    char __pad_12[4];
+    char __pad_14[2];
 };
 
 
@@ -6394,7 +6395,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 767
+#define SERVER_PROTOCOL_VERSION 768
 
 /* ### protocol_version end ### */
 

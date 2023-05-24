@@ -1431,6 +1431,7 @@ static void dump_get_startup_info_request( const struct get_startup_info_request
 static void dump_get_startup_info_reply( const struct get_startup_info_reply *req )
 {
     fprintf( stderr, " info_size=%u", req->info_size );
+    fprintf( stderr, ", machine=%04x", req->machine );
     dump_varargs_startup_info( ", info=", min(cur_size,req->info_size) );
     dump_varargs_unicode_str( ", env=", cur_size );
 }

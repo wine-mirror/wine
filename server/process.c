@@ -1296,6 +1296,7 @@ DECL_HANDLER(new_process)
                                     handles, req->handles_size / sizeof(*handles), token )))
         goto done;
 
+    process->machine = req->machine;
     process->startup_info = (struct startup_info *)grab_object( info );
 
     job = parent->job;
@@ -1396,6 +1397,7 @@ DECL_HANDLER(get_startup_info)
     if (!info) return;
 
     /* we return the data directly without making a copy so this can only be called once */
+    reply->machine = process->machine;
     reply->info_size = info->info_size;
     size = info->data_size;
     if (size > get_reply_max_size()) size = get_reply_max_size();

@@ -1937,7 +1937,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
     add_registry_environment( &env, &env_pos, &env_size );
     env[env_pos++] = 0;
 
-    status = load_main_exe( NULL, main_argv[1], curdir, &image, module );
+    status = load_main_exe( NULL, main_argv[1], curdir, 0, &image, module );
     if (!status)
     {
         char *loader;
@@ -2017,6 +2017,7 @@ void init_startup_info(void)
     SIZE_T size, info_size, env_size, env_pos;
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
     startup_info_t *info;
+    USHORT machine;
 
     if (!startup_info_size)
     {
@@ -2031,6 +2032,7 @@ void init_startup_info(void)
     {
         wine_server_set_reply( req, info, startup_info_size );
         status = wine_server_call( req );
+        machine = reply->machine;
         info_size = reply->info_size;
         env_size = (wine_server_reply_size( reply ) - info_size) / sizeof(WCHAR);
     }
@@ -2109,8 +2111,8 @@ void init_startup_info(void)
     free( env );
     free( info );
 
-    status = load_main_exe( params->ImagePathName.Buffer, NULL,
-                            params->CommandLine.Buffer, &image, &module );
+    status = load_main_exe( params->ImagePathName.Buffer, NULL, params->CommandLine.Buffer,
+                            machine, &image, &module );
     if (status)
     {
         MESSAGE( "wine: failed to start %s\n", debugstr_us(&params->ImagePathName) );

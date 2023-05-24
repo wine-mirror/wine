@@ -745,6 +745,7 @@ C_ASSERT( FIELD_OFFSET(struct new_thread_reply, handle) == 12 );
 C_ASSERT( sizeof(struct new_thread_reply) == 16 );
 C_ASSERT( sizeof(struct get_startup_info_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_startup_info_reply, info_size) == 8 );
+C_ASSERT( FIELD_OFFSET(struct get_startup_info_reply, machine) == 12 );
 C_ASSERT( sizeof(struct get_startup_info_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct init_process_done_request, teb) == 16 );
 C_ASSERT( FIELD_OFFSET(struct init_process_done_request, peb) == 24 );

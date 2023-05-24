@@ -177,8 +177,8 @@ extern NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_
 extern NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename, USHORT machine,
                               void **addr_ptr, SIZE_T *size_ptr, ULONG_PTR limit ) DECLSPEC_HIDDEN;
 extern BOOL is_builtin_path( const UNICODE_STRING *path, WORD *machine ) DECLSPEC_HIDDEN;
-extern NTSTATUS load_main_exe( const WCHAR *name, const char *unix_name, const WCHAR *curdir, WCHAR **image,
-                               void **module ) DECLSPEC_HIDDEN;
+extern NTSTATUS load_main_exe( const WCHAR *name, const char *unix_name, const WCHAR *curdir,
+                               USHORT load_machine, WCHAR **image, void **module ) DECLSPEC_HIDDEN;
 extern NTSTATUS load_start_exe( WCHAR **image, void **module ) DECLSPEC_HIDDEN;
 extern void start_server( BOOL debug ) DECLSPEC_HIDDEN;
 
