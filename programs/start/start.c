@@ -400,6 +400,7 @@ static struct
     SHELLEXECUTEINFOW sei;
     WCHAR            *title;
     DWORD             creation_flags;
+    USHORT            machine;
 } opts;
 
 static void parse_command_line( int argc, WCHAR *argv[] )
@@ -471,6 +472,14 @@ static void parse_command_line( int argc, WCHAR *argv[] )
             TRACE("/node is ignored\n"); /* FIXME */
         else if (is_option_with_arg(argv, &i, L"/affinity"))
             TRACE("/affinity is ignored\n"); /* FIXME */
+        else if (is_option_with_arg(argv, &i, L"/machine"))
+        {
+            if (is_option( argv[i], L"x86" )) opts.machine = IMAGE_FILE_MACHINE_I386;
+            else if (is_option( argv[i], L"amd64" )) opts.machine = IMAGE_FILE_MACHINE_AMD64;
+            else if (is_option( argv[i], L"arm" )) opts.machine = IMAGE_FILE_MACHINE_ARMNT;
+            else if (is_option( argv[i], L"arm64" )) opts.machine = IMAGE_FILE_MACHINE_ARM64;
+            else usage();
+        }
 
         /* Wine extensions */
 
@@ -547,32 +556,34 @@ int __cdecl wmain (int argc, WCHAR *argv[])
 
         if (GetBinaryTypeW(opts.sei.lpFile, &binary_type)) {
                     WCHAR *commandline;
-                    STARTUPINFOW startup_info;
+                    STARTUPINFOEXW si = {{ sizeof(si.StartupInfo) }};
                     PROCESS_INFORMATION process_information;
                     int len = lstrlenW(opts.sei.lpFile) + 4 + lstrlenW(opts.sei.lpParameters);
 
                     /* explorer on windows always quotes the filename when running a binary on windows (see bug 5224) so we have to use CreateProcessW in this case */
 
+                    if (opts.machine)
+                    {
+                        SIZE_T size = 1024;
+                        struct _PROC_THREAD_ATTRIBUTE_LIST *list = malloc( size );
+
+                        InitializeProcThreadAttributeList( list, 1, 0, &size );
+                        UpdateProcThreadAttribute( list, 0, PROC_THREAD_ATTRIBUTE_MACHINE_TYPE, &opts.machine, sizeof(opts.machine), NULL, NULL );
+                        si.StartupInfo.cb = sizeof(si);
+                        si.lpAttributeList = list;
+                        opts.creation_flags |= EXTENDED_STARTUPINFO_PRESENT;
+                    }
+
                     commandline = malloc(len * sizeof(WCHAR));
                     swprintf(commandline, len, L"\"%s\" %s", opts.sei.lpFile, opts.sei.lpParameters);
 
-                    ZeroMemory(&startup_info, sizeof(startup_info));
-                    startup_info.cb = sizeof(startup_info);
-                    startup_info.wShowWindow = opts.sei.nShow;
-                    startup_info.dwFlags |= STARTF_USESHOWWINDOW;
-                    startup_info.lpTitle = opts.title;
+                    si.StartupInfo.wShowWindow = opts.sei.nShow;
+                    si.StartupInfo.dwFlags |= STARTF_USESHOWWINDOW;
+                    si.StartupInfo.lpTitle = opts.title;
 
-                    if (!CreateProcessW(
-                            opts.sei.lpFile, /* lpApplicationName */
-                            commandline, /* lpCommandLine */
-                            NULL, /* lpProcessAttributes */
-                            NULL, /* lpThreadAttributes */
-                            FALSE, /* bInheritHandles */
-                            opts.creation_flags, /* dwCreationFlags */
-                            NULL, /* lpEnvironment */
-                            opts.sei.lpDirectory, /* lpCurrentDirectory */
-                            &startup_info, /* lpStartupInfo */
-                            &process_information /* lpProcessInformation */ ))
+                    if (!CreateProcessW( opts.sei.lpFile, commandline, NULL, NULL, FALSE,
+                                         opts.creation_flags, NULL, opts.sei.lpDirectory,
+                                         &si.StartupInfo, &process_information ))
                     {
 			fatal_string_error(STRING_EXECFAIL, GetLastError(), opts.sei.lpFile);
                     }

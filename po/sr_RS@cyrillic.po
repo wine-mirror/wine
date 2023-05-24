@@ -17601,7 +17601,7 @@ msgstr ""
 msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
 msgstr ""
 
-#: programs/start/start.rc:57
+#: programs/start/start.rc:56
 msgid ""
 "Start a program, or open a document in the program normally used for files\n"
 "with that suffix.\n"
@@ -17624,23 +17624,24 @@ msgid ""
 "/belownormal   Start the program in the belownormal priority class.\n"
 "/node n        Start the program on the specified NUMA node.\n"
 "/affinity mask Start the program with the specified affinity mask.\n"
-"/wait          Wait for the started program to finish, then exit with its\n"
-"exit code.\n"
-"/unix          Use a Unix filename and start the file like Windows\n"
+"/machine arch  Force using a specific architecture (x86,arm,amd64,arm64).\n"
+"/wait          Wait for the program to finish, then exit with its exit "
+"code.\n"
+"/unix          Use a Unix filename and start the file like Windows "
 "Explorer.\n"
 "/exec          Exec the specified file (for internal Wine usage).\n"
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
 
-#: programs/start/start.rc:59
+#: programs/start/start.rc:58
 msgid ""
 "Application could not be started, or no application associated with the "
 "specified file.\n"
 "ShellExecuteEx failed"
 msgstr ""
 
-#: programs/start/start.rc:61
+#: programs/start/start.rc:60
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr ""
 

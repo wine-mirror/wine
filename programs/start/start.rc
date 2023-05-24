@@ -47,10 +47,9 @@ Options:\n\
 /belownormal   Start the program in the belownormal priority class.\n\
 /node n        Start the program on the specified NUMA node.\n\
 /affinity mask Start the program with the specified affinity mask.\n\
-/wait          Wait for the started program to finish, then exit with its\n\
-               exit code.\n\
-/unix          Use a Unix filename and start the file like Windows\n\
-               Explorer.\n\
+/machine arch  Force using a specific architecture (x86,arm,amd64,arm64).\n\
+/wait          Wait for the program to finish, then exit with its exit code.\n\
+/unix          Use a Unix filename and start the file like Windows Explorer.\n\
 /exec          Exec the specified file (for internal Wine usage).\n\
 /ProgIDOpen    Open a document using the specified progID.\n\
 /?             Display this help and exit.\n"
