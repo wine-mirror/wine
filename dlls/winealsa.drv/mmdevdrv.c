@@ -53,9 +53,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(alsa);
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
-static const REFERENCE_TIME DefaultPeriod = 100000;
-static const REFERENCE_TIME MinimumPeriod = 50000;
-
 static CRITICAL_SECTION g_sessions_lock;
 static CRITICAL_SECTION_DEBUG g_sessions_lock_debug =
 {
@@ -605,34 +602,6 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
                 AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM)){
         FIXME("Unknown flags: %08lx\n", flags);
         return E_INVALIDARG;
-    }
-
-    if(mode == AUDCLNT_SHAREMODE_SHARED){
-        period = DefaultPeriod;
-        if( duration < 3 * period)
-            duration = 3 * period;
-    }else{
-        if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
-            if(((WAVEFORMATEXTENSIBLE*)fmt)->dwChannelMask == 0 ||
-                    ((WAVEFORMATEXTENSIBLE*)fmt)->dwChannelMask & SPEAKER_RESERVED)
-                return AUDCLNT_E_UNSUPPORTED_FORMAT;
-        }
-
-        if(!period)
-            period = DefaultPeriod; /* not minimum */
-        if(period < MinimumPeriod || period > 5000000)
-            return AUDCLNT_E_INVALID_DEVICE_PERIOD;
-        if(duration > 20000000) /* the smaller the period, the lower this limit */
-            return AUDCLNT_E_BUFFER_SIZE_ERROR;
-        if(flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK){
-            if(duration != period)
-                return AUDCLNT_E_BUFDURATION_PERIOD_NOT_EQUAL;
-            FIXME("EXCLUSIVE mode with EVENTCALLBACK\n");
-            return AUDCLNT_E_DEVICE_IN_USE;
-        }else{
-            if( duration < 8 * period)
-                duration = 8 * period; /* may grow above 2s */
-        }
     }
 
     sessions_lock();
