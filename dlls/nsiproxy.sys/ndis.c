@@ -170,6 +170,9 @@ static NTSTATUS if_get_physical( const char *name, UINT *type, IF_PHYSICAL_ADDRE
             break;
         }
 
+    if (*type == MIB_IF_TYPE_OTHER && !ioctl( fd, SIOCGIFFLAGS, &ifr ) && ifr.ifr_flags & IFF_POINTOPOINT)
+        *type = MIB_IF_TYPE_PPP;
+
 err:
     close( fd );
     return ret;
