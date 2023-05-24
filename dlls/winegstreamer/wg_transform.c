@@ -51,7 +51,6 @@ struct wg_transform
     GstSegment segment;
     GstQuery *drain_query;
 
-    guint input_max_length;
     GstAtomicQueue *input_queue;
 
     bool input_is_flipped;
@@ -302,7 +301,6 @@ NTSTATUS wg_transform_create(void *args)
     if (!(transform->allocator = wg_allocator_create(transform_request_sample, transform)))
         goto out;
     transform->attrs = *params->attrs;
-    transform->input_max_length = 1;
     transform->output_format = output_format;
 
     if (!(src_caps = wg_format_to_caps(&input_format)))
@@ -339,13 +337,6 @@ NTSTATUS wg_transform_create(void *args)
     switch (input_format.major_type)
     {
         case WG_MAJOR_TYPE_VIDEO_H264:
-            /* Call of Duty: Black Ops 3 doesn't care about the ProcessInput/ProcessOutput
-             * return values, it calls them in a specific order and expects the decoder
-             * transform to be able to queue its input buffers. We need to use a buffer list
-             * to match its expectations.
-             */
-            transform->input_max_length = 16;
-            /* fallthrough */
         case WG_MAJOR_TYPE_AUDIO_MPEG1:
         case WG_MAJOR_TYPE_AUDIO_MPEG4:
         case WG_MAJOR_TYPE_AUDIO_WMA:
@@ -561,7 +552,7 @@ NTSTATUS wg_transform_push_data(void *args)
     guint length;
 
     length = gst_atomic_queue_length(transform->input_queue);
-    if (length >= transform->input_max_length)
+    if (length >= transform->attrs.input_queue_length + 1)
     {
         GST_INFO("Refusing %u bytes, %u buffers already queued", sample->size, length);
         params->result = MF_E_NOTACCEPTING;
@@ -866,7 +857,7 @@ NTSTATUS wg_transform_get_status(void *args)
     struct wg_transform_get_status_params *params = args;
     struct wg_transform *transform = params->transform;
 
-    params->accepts_input = gst_atomic_queue_length(transform->input_queue) < transform->input_max_length;
+    params->accepts_input = gst_atomic_queue_length(transform->input_queue) < transform->attrs.input_queue_length + 1;
     return STATUS_SUCCESS;
 }
 

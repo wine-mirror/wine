@@ -76,9 +76,15 @@ static struct h264_decoder *impl_from_IMFTransform(IMFTransform *iface)
 
 static HRESULT try_create_wg_transform(struct h264_decoder *decoder)
 {
+    /* Call of Duty: Black Ops 3 doesn't care about the ProcessInput/ProcessOutput
+     * return values, it calls them in a specific order and expects the decoder
+     * transform to be able to queue its input buffers. We need to use a buffer list
+     * to match its expectations.
+     */
     struct wg_transform_attrs attrs =
     {
         .output_plane_align = 15,
+        .input_queue_length = 15,
     };
     struct wg_format input_format;
     struct wg_format output_format;
