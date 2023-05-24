@@ -331,7 +331,7 @@ static const struct uia_prop_info *uia_prop_info_from_guid(const GUID *guid)
 
 const struct uia_prop_info *uia_prop_info_from_id(PROPERTYID prop_id)
 {
-    if ((prop_id < PROP_ID_MIN) || (prop_id > PROP_ID_MAX))
+    if ((prop_id < PROP_ID_MIN) || (prop_id >= PROP_ID_MAX))
         return NULL;
 
     return &default_uia_properties[prop_id_idx[prop_id - PROP_ID_MIN]];
@@ -520,7 +520,7 @@ static const struct uia_pattern_info *uia_pattern_info_from_guid(const GUID *gui
 
 const struct uia_pattern_info *uia_pattern_info_from_id(PATTERNID pattern_id)
 {
-    if ((pattern_id < PATTERN_ID_MIN) || (pattern_id > PATTERN_ID_MAX))
+    if ((pattern_id < PATTERN_ID_MIN) || (pattern_id >= PATTERN_ID_MAX))
         return NULL;
 
     return &default_uia_patterns[pattern_id_idx[pattern_id - PATTERN_ID_MIN]];
@@ -596,7 +596,7 @@ static const struct uia_control_type_info *uia_control_type_info_from_guid(const
 
 const struct uia_control_type_info *uia_control_type_info_from_id(CONTROLTYPEID control_type_id)
 {
-    if ((control_type_id < CONTROL_TYPE_ID_MIN) || (control_type_id > CONTROL_TYPE_ID_MAX))
+    if ((control_type_id < CONTROL_TYPE_ID_MIN) || (control_type_id >= CONTROL_TYPE_ID_MAX))
         return NULL;
 
     return &default_uia_control_types[control_type_id_idx[control_type_id - CONTROL_TYPE_ID_MIN]];
