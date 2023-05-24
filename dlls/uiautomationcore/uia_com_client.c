@@ -1186,6 +1186,8 @@ struct uia_element {
 
     struct uia_cache_property *cached_props;
     int cached_props_count;
+
+    IUnknown *marshal;
 };
 
 static inline struct uia_element *impl_from_IUIAutomationElement9(IUIAutomationElement9 *iface)
@@ -1203,6 +1205,8 @@ static HRESULT WINAPI uia_element_QueryInterface(IUIAutomationElement9 *iface, R
             IsEqualIID(riid, &IID_IUIAutomationElement6) || IsEqualIID(riid, &IID_IUIAutomationElement7) ||
             IsEqualIID(riid, &IID_IUIAutomationElement8) || IsEqualIID(riid, &IID_IUIAutomationElement9))))
         *ppv = iface;
+    else if (IsEqualIID(riid, &IID_IMarshal))
+        return IUnknown_QueryInterface(element->marshal, riid, ppv);
     else
         return E_NOINTERFACE;
 
@@ -1235,6 +1239,7 @@ static ULONG WINAPI uia_element_Release(IUIAutomationElement9 *iface)
                 VariantClear(&element->cached_props[i].prop_val);
         }
 
+        IUnknown_Release(element->marshal);
         heap_free(element->cached_props);
         UiaNodeRelease(element->node);
         heap_free(element);
@@ -2484,6 +2489,7 @@ static const IUIAutomationElement9Vtbl uia_element_vtbl = {
 static HRESULT create_uia_element(IUIAutomationElement **iface, BOOL from_cui8, HUIANODE node)
 {
     struct uia_element *element = heap_alloc_zero(sizeof(*element));
+    HRESULT hr;
 
     *iface = NULL;
     if (!element)
@@ -2493,6 +2499,13 @@ static HRESULT create_uia_element(IUIAutomationElement **iface, BOOL from_cui8, 
     element->ref = 1;
     element->from_cui8 = from_cui8;
     element->node = node;
+
+    hr = CoCreateFreeThreadedMarshaler((IUnknown *)&element->IUIAutomationElement9_iface, &element->marshal);
+    if (FAILED(hr))
+    {
+        heap_free(element);
+        return hr;
+    }
 
     *iface = (IUIAutomationElement *)&element->IUIAutomationElement9_iface;
     return S_OK;

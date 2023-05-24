@@ -10620,6 +10620,79 @@ static void test_UiaFind(void)
     CoUninitialize();
 }
 
+struct marshal_thread_data {
+    IUnknown *iface;
+    const GUID *iface_iid;
+    BOOL expect_proxy;
+    const char *file;
+    int line;
+
+    IStream *marshal_stream;
+};
+
+static DWORD WINAPI interface_marshal_proxy_thread(LPVOID param)
+{
+    struct marshal_thread_data *data = (struct marshal_thread_data *)param;
+    IUnknown *proxy_iface, *unk, *unk2;
+    HRESULT hr;
+
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    proxy_iface = unk = unk2 = NULL;
+    hr = CoGetInterfaceAndReleaseStream(data->marshal_stream, data->iface_iid, (void **)&proxy_iface);
+    ok_(data->file, data->line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IUnknown_QueryInterface(data->iface, &IID_IUnknown, (void **)&unk);
+    ok_(data->file, data->line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok_(data->file, data->line)(!!unk, "unk == NULL\n");
+
+    hr = IUnknown_QueryInterface(proxy_iface, &IID_IUnknown, (void **)&unk2);
+    ok_(data->file, data->line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok_(data->file, data->line)(!!unk2, "unk2 == NULL\n");
+
+    if (data->expect_proxy)
+        ok_(data->file, data->line)(unk != unk2, "unk == unk2\n");
+    else
+        ok_(data->file, data->line)(unk == unk2, "unk != unk2\n");
+
+    IUnknown_Release(proxy_iface);
+    IUnknown_Release(unk);
+    IUnknown_Release(unk2);
+
+    CoUninitialize();
+    return 0;
+}
+
+#define check_interface_marshal_proxy_creation( iface, iid, expect_proxy ) \
+        check_interface_marshal_proxy_creation_( (iface), (iid), (expect_proxy), __FILE__, __LINE__)
+static void check_interface_marshal_proxy_creation_(IUnknown *iface, REFIID iid, BOOL expect_proxy, const char *file,
+        int line)
+{
+    struct marshal_thread_data data = { NULL, iid, expect_proxy, file, line };
+    HANDLE thread;
+    HRESULT hr;
+
+    hr = IUnknown_QueryInterface(iface, data.iface_iid, (void **)&data.iface);
+    ok_(file, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = CoMarshalInterThreadInterfaceInStream(data.iface_iid, data.iface, &data.marshal_stream);
+    ok_(file, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    thread = CreateThread(NULL, 0, interface_marshal_proxy_thread, (void *)&data, 0, NULL);
+    while (MsgWaitForMultipleObjects(1, &thread, FALSE, INFINITE, QS_ALLINPUT) != WAIT_OBJECT_0)
+    {
+        MSG msg;
+        while(PeekMessageW(&msg, 0, 0, 0, PM_REMOVE))
+        {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    }
+    CloseHandle(thread);
+
+    IUnknown_Release(data.iface);
+}
+
 static HWND create_test_hwnd(const char *class_name)
 {
     WNDCLASSA cls = { 0 };
@@ -10716,6 +10789,12 @@ static void test_ElementFromHandle(IUIAutomation *uia_iface, BOOL is_cui8)
     }
     else
         ok(hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
+
+    /*
+     * The IUIAutomationElement interface uses the free threaded marshaler, so
+     * no actual proxy interface will be created.
+     */
+    check_interface_marshal_proxy_creation((IUnknown *)element, &IID_IUIAutomationElement, FALSE);
 
     IUIAutomationElement_Release(element);
     ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
