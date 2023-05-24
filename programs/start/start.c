@@ -220,7 +220,7 @@ static BOOL is_option(const WCHAR* arg, const WCHAR* opt)
                           arg, -1, opt, -1) == CSTR_EQUAL;
 }
 
-static void parse_title(const WCHAR *arg, WCHAR *title, int size)
+static WCHAR *parse_title(const WCHAR *arg)
 {
     /* See:
      *     WCMD_start() in programs/cmd/builtins.c
@@ -228,15 +228,13 @@ static void parse_title(const WCHAR *arg, WCHAR *title, int size)
      * The shell has already tokenized the command line for us.
      * All we need to do is filter out all the quotes.
      */
-
     int next;
     const WCHAR *p = arg;
+    WCHAR *title = malloc( wcslen(arg) * sizeof(WCHAR) );
 
-    for (next = 0; next < (size-1) && *p; p++) {
-        if (*p != '"')
-            title[next++] = *p;
-    }
-    title[next] = '\0';
+    for (next = 0; *p; p++) if (*p != '"') title[next++] = *p;
+    title[next] = 0;
+    return title;
 }
 
 static BOOL search_path(const WCHAR *firstParam, WCHAR **full_path)
@@ -417,15 +415,7 @@ int __cdecl wmain (int argc, WCHAR *argv[])
 	for (i=1; i<argc; i++) {
                 /* parse first quoted argument as console title */
                 if (!title && argv[i][0] == '"') {
-			/* it will remove at least 1 quote */
-			int maxChars = lstrlenW(argv[1]);
-			title = HeapAlloc(GetProcessHeap(), 0, maxChars*sizeof(WCHAR));
-			if (title)
-				parse_title(argv[i], title, maxChars);
-			else {
-				WINE_ERR("out of memory\n");
-				ExitProcess(1);
-			}
+			title = parse_title(argv[i]);
 			continue;
 		}
 		if (argv[i][0] != '/')
@@ -669,7 +659,6 @@ done:
 	HeapFree( GetProcessHeap(), 0, dos_filename );
 	HeapFree( GetProcessHeap(), 0, fullpath );
 	HeapFree( GetProcessHeap(), 0, parent_directory );
-	HeapFree( GetProcessHeap(), 0, title );
 
 	if (sei.fMask & SEE_MASK_NOCLOSEPROCESS) {
 		DWORD exitcode;
