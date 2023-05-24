@@ -740,30 +740,25 @@ static NTSTATUS read_transform_output_data(GstBuffer *buffer, GstCaps *caps, gsi
 
 static bool get_transform_output(struct wg_transform *transform, struct wg_sample *sample)
 {
-    GstFlowReturn ret = GST_FLOW_OK;
     GstBuffer *input_buffer;
+    GstFlowReturn ret;
 
     /* Provide the sample for transform_request_sample to pick it up */
     InterlockedIncrement(&sample->refcount);
     InterlockedExchangePointer((void **)&transform->output_wg_sample, sample);
 
-    while (!(transform->output_sample = gst_atomic_queue_pop(transform->output_queue)))
+    while (!(transform->output_sample = gst_atomic_queue_pop(transform->output_queue))
+            && (input_buffer = gst_atomic_queue_pop(transform->input_queue)))
     {
-        if (!(input_buffer = gst_atomic_queue_pop(transform->input_queue)))
-            break;
-
         if ((ret = gst_pad_push(transform->my_src, input_buffer)))
-        {
-            GST_ERROR("Failed to push transform input, error %d", ret);
-            break;
-        }
+            GST_WARNING("Failed to push transform input, error %d", ret);
     }
 
     /* Remove the sample so transform_request_sample cannot use it */
     if (InterlockedExchangePointer((void **)&transform->output_wg_sample, NULL))
         InterlockedDecrement(&sample->refcount);
 
-    return ret == GST_FLOW_OK;
+    return !!transform->output_sample;
 }
 
 NTSTATUS wg_transform_read_data(void *args)
@@ -778,12 +773,6 @@ NTSTATUS wg_transform_read_data(void *args)
     NTSTATUS status;
 
     if (!transform->output_sample && !get_transform_output(transform, sample))
-    {
-        wg_allocator_release_sample(transform->allocator, sample, false);
-        return STATUS_UNSUCCESSFUL;
-    }
-
-    if (!transform->output_sample)
     {
         sample->size = 0;
         params->result = MF_E_TRANSFORM_NEED_MORE_INPUT;
