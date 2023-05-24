@@ -1418,14 +1418,12 @@ static NTSTATUS open_builtin_pe_file( const char *name, OBJECT_ATTRIBUTES *attr,
  *           open_builtin_so_file
  */
 static NTSTATUS open_builtin_so_file( const char *name, OBJECT_ATTRIBUTES *attr, void **module,
-                                      SECTION_IMAGE_INFORMATION *image_info,
-                                      WORD machine, BOOL prefer_native )
+                                      SECTION_IMAGE_INFORMATION *image_info, BOOL prefer_native )
 {
     NTSTATUS status;
     int fd;
 
     *module = NULL;
-    if (machine != current_machine) return STATUS_DLL_NOT_FOUND;
     if ((fd = open( name, O_RDONLY )) == -1) return STATUS_DLL_NOT_FOUND;
 
     if (check_library_arch( fd ))
@@ -1461,6 +1459,7 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
     OBJECT_ATTRIBUTES attr;
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
     BOOL found_image = FALSE;
+    BOOL try_so = (search_machine == current_machine && (!load_machine || load_machine == search_machine));
 
     for (i = namepos = 0; i < len; i++)
         if (nt_name->Buffer[i] == '/' || nt_name->Buffer[i] == '\\') namepos = i + 1;
@@ -1493,9 +1492,12 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
                                        limit, load_machine, prefer_native );
         ptr = prepend_build_dir_path( file + pos, ".dll", "", "/dlls" );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
-        strcpy( file + pos + len + 1, ".so" );
-        status = open_builtin_so_file( ptr, &attr, module, image_info, load_machine, prefer_native );
-        if (status != STATUS_DLL_NOT_FOUND) goto done;
+        if (try_so)
+        {
+            strcpy( file + pos + len + 1, ".so" );
+            status = open_builtin_so_file( ptr, &attr, module, image_info, prefer_native );
+            if (status != STATUS_DLL_NOT_FOUND) goto done;
+        }
 
         /* now as a program */
         file[pos + len + 1] = 0;
@@ -1504,9 +1506,12 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
                                        limit, load_machine, prefer_native );
         ptr = prepend_build_dir_path( file + pos, ".exe", "", "/programs" );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
-        strcpy( file + pos + len + 1, ".so" );
-        status = open_builtin_so_file( ptr, &attr, module, image_info, load_machine, prefer_native );
-        if (status != STATUS_DLL_NOT_FOUND) goto done;
+        if (try_so)
+        {
+            strcpy( file + pos + len + 1, ".so" );
+            status = open_builtin_so_file( ptr, &attr, module, image_info, prefer_native );
+            if (status != STATUS_DLL_NOT_FOUND) goto done;
+        }
     }
 
     for (i = 0; dll_paths[i]; i++)
@@ -1522,9 +1527,12 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
         ptr = prepend( ptr, so_dir, strlen(so_dir) );
         ptr = prepend( ptr, dll_paths[i], strlen(dll_paths[i]) );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
-        strcpy( file + pos + len + 1, ".so" );
-        status = open_builtin_so_file( ptr, &attr, module, image_info, load_machine, prefer_native );
-        if (status != STATUS_DLL_NOT_FOUND) goto done;
+        if (try_so)
+        {
+            strcpy( file + pos + len + 1, ".so" );
+            status = open_builtin_so_file( ptr, &attr, module, image_info, prefer_native );
+            if (status != STATUS_DLL_NOT_FOUND) goto done;
+        }
         file[pos + len + 1] = 0;
         ptr = prepend( file + pos, dll_paths[i], strlen(dll_paths[i]) );
         status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, limit,
@@ -1535,8 +1543,9 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
             continue;
         }
         if (status != STATUS_DLL_NOT_FOUND) goto done;
+        if (!try_so) continue;
         strcpy( file + pos + len + 1, ".so" );
-        status = open_builtin_so_file( ptr, &attr, module, image_info, load_machine, prefer_native );
+        status = open_builtin_so_file( ptr, &attr, module, image_info, prefer_native );
         if (status == STATUS_NOT_SUPPORTED) found_image = TRUE;
         else if (status != STATUS_DLL_NOT_FOUND) goto done;
     }
@@ -1896,7 +1905,7 @@ static void load_ntdll(void)
     if (status == STATUS_DLL_NOT_FOUND)
     {
         sprintf( name, "%s/ntdll.dll.so", ntdll_dir );
-        status = open_builtin_so_file( name, &attr, &module, &info, current_machine, FALSE );
+        status = open_builtin_so_file( name, &attr, &module, &info, FALSE );
     }
     if (status == STATUS_IMAGE_NOT_AT_BASE) relocate_ntdll( module );
     else if (status) fatal_error( "failed to load %s error %x\n", name, status );
