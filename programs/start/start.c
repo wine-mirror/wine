@@ -51,11 +51,11 @@ static void output(const WCHAR *message)
 		char  *mesA;
 		/* Convert to OEM, then output */
 		len = WideCharToMultiByte( GetOEMCP(), 0, message, wlen, NULL, 0, NULL, NULL );
-		mesA = HeapAlloc(GetProcessHeap(), 0, len*sizeof(char));
+		mesA = malloc(len);
 		if (!mesA) return;
 		WideCharToMultiByte( GetOEMCP(), 0, message, wlen, mesA, len, NULL, NULL );
 		WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), mesA, len, &count, FALSE);
-		HeapFree(GetProcessHeap(), 0, mesA);
+		free(mesA);
 	}
 }
 
@@ -207,7 +207,7 @@ static WCHAR *get_parent_dir(WCHAR* path)
 	else
 		len = last_slash - path + 1;
 
-	result = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+	result = malloc( len * sizeof(WCHAR) );
 	CopyMemory(result, path, (len-1)*sizeof(WCHAR));
 	result[len-1] = '\0';
 
@@ -387,10 +387,8 @@ static BOOL search_path(const WCHAR *firstParam, WCHAR **full_path)
         }
 
         if (found) {
-            int needed_size = lstrlenW(thisDir) + 1;
-            *full_path = HeapAlloc(GetProcessHeap(), 0, needed_size * sizeof(WCHAR));
-            if (*full_path)
-                lstrcpyW(*full_path, thisDir);
+            *full_path = wcsdup(thisDir);
+            if (!*full_path) fatal_string_error(STRING_EXECFAIL, ERROR_OUTOFMEMORY, firstParam);
             return TRUE;
         }
     }
@@ -535,11 +533,7 @@ static void parse_command_line( int argc, WCHAR *argv[] )
     {
 	WCHAR *fullpath;
 
-        if (search_path(file, &fullpath))
-        {
-            if (!fullpath) fatal_string_error(STRING_EXECFAIL, ERROR_OUTOFMEMORY, file);
-            opts.sei.lpFile = fullpath;
-        }
+        if (search_path(file, &fullpath)) opts.sei.lpFile = fullpath;
         else opts.sei.lpFile = file;
     }
 }
@@ -555,12 +549,12 @@ int __cdecl wmain (int argc, WCHAR *argv[])
                     WCHAR *commandline;
                     STARTUPINFOW startup_info;
                     PROCESS_INFORMATION process_information;
+                    int len = lstrlenW(opts.sei.lpFile) + 4 + lstrlenW(opts.sei.lpParameters);
 
                     /* explorer on windows always quotes the filename when running a binary on windows (see bug 5224) so we have to use CreateProcessW in this case */
 
-                    commandline = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(opts.sei.lpFile)+4+lstrlenW(opts.sei.lpParameters))*sizeof(WCHAR));
-                    swprintf(commandline, lstrlenW(opts.sei.lpFile) + 4 + lstrlenW(opts.sei.lpParameters),
-                             L"\"%s\" %s", opts.sei.lpFile, opts.sei.lpParameters);
+                    commandline = malloc(len * sizeof(WCHAR));
+                    swprintf(commandline, len, L"\"%s\" %s", opts.sei.lpFile, opts.sei.lpParameters);
 
                     ZeroMemory(&startup_info, sizeof(startup_info));
                     startup_info.cb = sizeof(startup_info);
@@ -597,13 +591,13 @@ int __cdecl wmain (int argc, WCHAR *argv[])
             {
                 WCHAR *start, *ptr;
 
-                env = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+                env = malloc(size * sizeof(WCHAR));
                 if (!env)
                     fatal_string_error(STRING_EXECFAIL, ERROR_OUTOFMEMORY, opts.sei.lpFile);
                 GetEnvironmentVariableW(L"PATHEXT", env, size);
 
                 filename_len = lstrlenW(filename);
-                name = HeapAlloc(GetProcessHeap(), 0, (filename_len + size) * sizeof(WCHAR));
+                name = malloc((filename_len + size) * sizeof(WCHAR));
                 if (!name)
                     fatal_string_error(STRING_EXECFAIL, ERROR_OUTOFMEMORY, opts.sei.lpFile);
 
@@ -621,13 +615,7 @@ int __cdecl wmain (int argc, WCHAR *argv[])
                     memcpy(&name[filename_len], start, (ptr - start) * sizeof(WCHAR));
                     name[filename_len + (ptr - start)] = 0;
 
-                    if (ShellExecuteExW(&opts.sei))
-                    {
-                        HeapFree(GetProcessHeap(), 0, name);
-                        HeapFree(GetProcessHeap(), 0, env);
-                        goto done;
-                    }
-
+                    if (ShellExecuteExW(&opts.sei)) goto done;
                     start = ptr + 1;
                 }
 
