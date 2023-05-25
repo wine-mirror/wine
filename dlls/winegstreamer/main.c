@@ -441,6 +441,21 @@ HRESULT wg_transform_drain(struct wg_transform *transform)
     return S_OK;
 }
 
+HRESULT wg_transform_flush(struct wg_transform *transform)
+{
+    NTSTATUS status;
+
+    TRACE("transform %p.\n", transform);
+
+    if ((status = WINE_UNIX_CALL(unix_wg_transform_flush, transform)))
+    {
+        WARN("wg_transform_flush returned status %#lx\n", status);
+        return HRESULT_FROM_NT(status);
+    }
+
+    return S_OK;
+}
+
 #define ALIGN(n, alignment) (((n) + (alignment) - 1) & ~((alignment) - 1))
 
 unsigned int wg_format_get_stride(const struct wg_format *format)

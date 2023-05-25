@@ -630,6 +630,9 @@ static HRESULT WINAPI transform_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_
     case MFT_MESSAGE_COMMAND_DRAIN:
         return wg_transform_drain(decoder->wg_transform);
 
+    case MFT_MESSAGE_COMMAND_FLUSH:
+        return wg_transform_flush(decoder->wg_transform);
+
     default:
         FIXME("Ignoring message %#x.\n", message);
         return S_OK;

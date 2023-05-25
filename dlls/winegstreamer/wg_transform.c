@@ -904,3 +904,27 @@ error:
     GST_ERROR("Failed to drain transform %p.", transform);
     return STATUS_UNSUCCESSFUL;
 }
+
+NTSTATUS wg_transform_flush(void *args)
+{
+    struct wg_transform *transform = args;
+    GstBuffer *input_buffer;
+    GstSample *sample;
+    NTSTATUS status;
+
+    GST_LOG("transform %p", transform);
+
+    while ((input_buffer = gst_atomic_queue_pop(transform->input_queue)))
+        gst_buffer_unref(input_buffer);
+
+    if ((status = wg_transform_drain(transform)))
+        return status;
+
+    while ((sample = gst_atomic_queue_pop(transform->output_queue)))
+        gst_sample_unref(sample);
+    if ((sample = transform->output_sample))
+        gst_sample_unref(sample);
+    transform->output_sample = NULL;
+
+    return STATUS_SUCCESS;
+}

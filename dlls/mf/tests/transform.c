@@ -4026,7 +4026,6 @@ static void test_h264_decoder_concat_streams(void)
     {
         {.length = 0x3600},
         {.length = 0x4980},
-        {.length = 0, .todo_length = TRUE},
     };
     const struct attribute_desc output_sample_attributes[] =
     {
@@ -4056,13 +4055,6 @@ static void test_h264_decoder_concat_streams(void)
             .sample_time = 12000000, .sample_duration = 400000,
             .buffer_count = 1, .buffers = output_buffer_desc + 1, .repeat_count = 6,
             .todo_time = TRUE,
-        },
-        {
-            /* Wine outputs spurious buffers */
-            .attributes = output_sample_attributes + 0,
-            .sample_time = 0, .sample_duration = 400000,
-            .buffer_count = 1, .buffers = output_buffer_desc + 2, .repeat_count = 22,
-            .todo_time = TRUE, .todo_length = TRUE,
         },
         {0},
     };
@@ -4212,7 +4204,6 @@ static void test_h264_decoder_concat_streams(void)
 
     hr = IMFCollection_GetElementCount(output_samples, &output_count);
     ok(hr == S_OK, "GetElementCount returned %#lx\n", hr);
-    todo_wine
     ok(output_count == 96, "GetElementCount returned %#lx\n", output_count);
 
     ret = check_mf_sample_collection(output_samples, output_sample_desc, NULL);
