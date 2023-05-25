@@ -2185,6 +2185,7 @@ static void dump_map_image_view_request( const struct map_image_view_request *re
     fprintf( stderr, " mapping=%04x", req->mapping );
     dump_uint64( ", base=", &req->base );
     dump_uint64( ", size=", &req->size );
+    fprintf( stderr, ", machine=%04x", req->machine );
 }
 
 static void dump_map_builtin_view_request( const struct map_builtin_view_request *req )
@@ -5436,6 +5437,7 @@ static const struct
     { "HANDLE_NOT_CLOSABLE",         STATUS_HANDLE_NOT_CLOSABLE },
     { "HOST_UNREACHABLE",            STATUS_HOST_UNREACHABLE },
     { "ILLEGAL_FUNCTION",            STATUS_ILLEGAL_FUNCTION },
+    { "IMAGE_MACHINE_TYPE_MISMATCH", STATUS_IMAGE_MACHINE_TYPE_MISMATCH },
     { "IMAGE_NOT_AT_BASE",           STATUS_IMAGE_NOT_AT_BASE },
     { "INFO_LENGTH_MISMATCH",        STATUS_INFO_LENGTH_MISMATCH },
     { "INSTANCE_NOT_AVAILABLE",      STATUS_INSTANCE_NOT_AVAILABLE },

@@ -801,7 +801,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
         }
         goto done;
     }
-    if (!machine) machine = (pe_info.image_flags & IMAGE_FLAGS_ComPlusNativeReady) ? native_machine : pe_info.machine;
+    if (!machine) machine = pe_info.machine;
     if (!(startup_info = create_startup_info( attr.ObjectName, params, &startup_info_size ))) goto done;
     env_size = get_env_size( params, &winedebug );
 

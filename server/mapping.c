@@ -385,14 +385,10 @@ struct memory_view *get_exe_view( struct process *process )
 
 static void set_process_machine( struct process *process, struct memory_view *view )
 {
-    unsigned short machine = view->image.machine;
-
-    if (machine == IMAGE_FILE_MACHINE_I386 && (view->image.image_flags & IMAGE_FLAGS_ComPlusNativeReady))
-    {
-        if (is_machine_supported( IMAGE_FILE_MACHINE_AMD64 )) machine = IMAGE_FILE_MACHINE_AMD64;
-        else if (is_machine_supported( IMAGE_FILE_MACHINE_ARM64 )) machine = IMAGE_FILE_MACHINE_ARM64;
-    }
-    process->machine = machine;
+    if (view->image.image_flags & IMAGE_FLAGS_ComPlusNativeReady)
+        process->machine = native_machine;
+    else
+        process->machine = view->image.machine;
 }
 
 static int generate_dll_event( struct thread *thread, int code, struct memory_view *view )
@@ -1274,8 +1270,16 @@ DECL_HANDLER(map_image_view)
         view->committed = NULL;
         view->shared    = mapping->shared ? (struct shared_map *)grab_object( mapping->shared ) : NULL;
         view->image     = mapping->image;
+        view->image.machine = req->machine;
         add_process_view( current, view );
+
         if (view->base != mapping->image.base) set_error( STATUS_IMAGE_NOT_AT_BASE );
+        if (view->image.machine != current->process->machine)
+        {
+            /* on 32-bit, the native 64-bit machine is allowed */
+            if (is_machine_64bit( current->process->machine ) || view->image.machine != native_machine)
+                set_error( STATUS_IMAGE_MACHINE_TYPE_MISMATCH );
+        }
     }
 
 done:

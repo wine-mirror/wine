@@ -1998,6 +1998,8 @@ struct map_image_view_request
     obj_handle_t mapping;
     client_ptr_t base;
     mem_size_t   size;
+    unsigned short machine;
+    char __pad_34[6];
 };
 struct map_image_view_reply
 {
@@ -6412,7 +6414,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 768
+#define SERVER_PROTOCOL_VERSION 769
 
 /* ### protocol_version end ### */
 

@@ -737,7 +737,6 @@ static void test_image_mappings(void)
         size = 0;
         ext.ULong = IMAGE_FILE_MACHINE_I386;
         status = pNtMapViewOfSectionEx( mapping, process, &ptr, &offset, &size, 0, PAGE_READONLY, &ext, 1 );
-        todo_wine
         ok( status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH, "NtMapViewOfSection returned %08lx\n", status );
         NtUnmapViewOfSection( process, ptr );
         NtClose( mapping );

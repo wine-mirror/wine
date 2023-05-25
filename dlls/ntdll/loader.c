@@ -2630,8 +2630,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, const UNICODE_STRING *nt_nam
     NTSTATUS status = NtMapViewOfSection( mapping, NtCurrentProcess(), &module, 0, 0, NULL, &len,
                                           ViewShare, 0, PAGE_EXECUTE_READ );
 
-    if (status == STATUS_IMAGE_NOT_AT_BASE) status = STATUS_SUCCESS;
-    if (status) return status;
+    if (!NT_SUCCESS(status)) return status;
 
     if ((*pwm = find_existing_module( module )))  /* already loaded */
     {
@@ -2643,9 +2642,10 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, const UNICODE_STRING *nt_nam
         return STATUS_SUCCESS;
     }
 #ifdef _WIN64
-    if (!convert_to_pe64( module, image_info )) status = STATUS_INVALID_IMAGE_FORMAT;
+    if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH && !convert_to_pe64( module, image_info ))
+        status = STATUS_INVALID_IMAGE_FORMAT;
 #endif
-    if (!status) status = build_module( load_path, nt_name, &module, image_info, id, flags, system, pwm );
+    if (NT_SUCCESS(status)) status = build_module( load_path, nt_name, &module, image_info, id, flags, system, pwm );
     if (status && module) NtUnmapViewOfSection( NtCurrentProcess(), module );
     return status;
 }

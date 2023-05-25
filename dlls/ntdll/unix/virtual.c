@@ -2810,6 +2810,7 @@ static NTSTATUS virtual_map_image( HANDLE mapping, void **addr_ptr, SIZE_T *size
             req->mapping = wine_server_obj_handle( mapping );
             req->base    = wine_server_client_ptr( view->base );
             req->size    = size;
+            req->machine = image_info->machine;
             status = wine_server_call( req );
         }
         SERVER_END_REQ;

@@ -1553,7 +1553,7 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
     if (found_image) status = STATUS_NOT_SUPPORTED;
     WARN( "cannot find builtin library for %s\n", debugstr_us(nt_name) );
 done:
-    if (status >= 0 && ext)
+    if (NT_SUCCESS(status) && ext)
     {
         strcpy( ext, ".so" );
         load_builtin_unixlib( *module, ptr );
@@ -1694,7 +1694,11 @@ static NTSTATUS open_main_image( WCHAR *image, void **module, SECTION_IMAGE_INFO
     if (!status)
     {
         status = virtual_map_module( mapping, module, &size, info, 0, machine );
-        if (!status && info->u.s.ComPlusNativeReady) info->Machine = native_machine;
+        if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH && info->u.s.ComPlusNativeReady)
+        {
+            info->Machine = native_machine;
+            status = STATUS_SUCCESS;
+        }
         NtClose( mapping );
     }
     else if (status == STATUS_INVALID_IMAGE_NOT_MZ && loadorder != LO_NATIVE)
