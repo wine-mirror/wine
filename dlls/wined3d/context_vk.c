@@ -244,6 +244,22 @@ static VkStencilOp vk_stencil_op_from_wined3d(enum wined3d_stencil_op op)
     }
 }
 
+static bool wined3d_get_unused_stream_index(const struct wined3d_state *state, uint32_t *index)
+{
+    uint32_t i;
+
+    for (i = 0; i < ARRAY_SIZE(state->streams); ++i)
+    {
+        if (!state->streams[i].buffer)
+        {
+            *index = i;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 static void wined3d_allocator_chunk_vk_lock(struct wined3d_allocator_chunk_vk *chunk_vk)
 {
     wined3d_device_vk_allocator_lock(wined3d_device_vk_from_allocator(chunk_vk->c.allocator));
@@ -2339,16 +2355,7 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
             struct wined3d_shader_signature *signature;
             uint32_t null_binding, location;
 
-            for (i = 0; i < ARRAY_SIZE(state->streams); ++i)
-            {
-                if (!state->streams[i].buffer)
-                {
-                    null_binding = i;
-                    break;
-                }
-            }
-
-            if (i == ARRAY_SIZE(state->streams))
+            if (!wined3d_get_unused_stream_index(state, &null_binding))
             {
                 ERR("No streams left for a null buffer binding.\n");
             }
