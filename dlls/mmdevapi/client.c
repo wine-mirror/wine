@@ -194,6 +194,59 @@ const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl =
     capture_GetNextPacketSize
 };
 
+HRESULT WINAPI client_IsOffloadCapable(IAudioClient3 *iface, AUDIO_STREAM_CATEGORY category,
+                                       BOOL *offload_capable)
+{
+    struct audio_client *This = impl_from_IAudioClient3(iface);
+
+    TRACE("(%p)->(0x%x, %p)\n", This, category, offload_capable);
+
+    if (!offload_capable)
+        return E_INVALIDARG;
+
+    *offload_capable = FALSE;
+
+    return S_OK;
+}
+
+HRESULT WINAPI client_SetClientProperties(IAudioClient3 *iface,
+                                          const AudioClientProperties *prop)
+{
+    struct audio_client *This = impl_from_IAudioClient3(iface);
+    const Win8AudioClientProperties *legacy_prop = (const Win8AudioClientProperties *)prop;
+
+    TRACE("(%p)->(%p)\n", This, prop);
+
+    if (!legacy_prop)
+        return E_POINTER;
+
+    if (legacy_prop->cbSize == sizeof(AudioClientProperties)) {
+        TRACE("{ bIsOffload: %u, eCategory: 0x%x, Options: 0x%x }\n", legacy_prop->bIsOffload,
+                                                                      legacy_prop->eCategory,
+                                                                      prop->Options);
+    } else if(legacy_prop->cbSize == sizeof(Win8AudioClientProperties)) {
+        TRACE("{ bIsOffload: %u, eCategory: 0x%x }\n", legacy_prop->bIsOffload,
+                                                       legacy_prop->eCategory);
+    } else {
+        WARN("Unsupported Size = %d\n", legacy_prop->cbSize);
+        return E_INVALIDARG;
+    }
+
+    if (legacy_prop->bIsOffload)
+        return AUDCLNT_E_ENDPOINT_OFFLOAD_NOT_CAPABLE;
+
+    return S_OK;
+}
+
+HRESULT WINAPI client_GetBufferSizeLimits(IAudioClient3 *iface, const WAVEFORMATEX *format,
+                                          BOOL event_driven, REFERENCE_TIME *min_duration,
+                                          REFERENCE_TIME *max_duration)
+{
+    struct audio_client *This = impl_from_IAudioClient3(iface);
+    FIXME("(%p)->(%p, %u, %p, %p) - stub\n", This, format, event_driven, min_duration, max_duration);
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI client_GetSharedModeEnginePeriod(IAudioClient3 *iface,
                                                 const WAVEFORMATEX *format,
                                                 UINT32 *default_period_frames,
