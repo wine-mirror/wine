@@ -1972,7 +1972,7 @@ BOOL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
     if (!(ret = NtGdiAlphaBlend(hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
                                 info->hdcSrc, src_rect.left, src_rect.top,
                                 src_rect.right - src_rect.left, src_rect.bottom - src_rect.top,
-                                blend, 0)))
+                                *(DWORD *)&blend, 0)))
         goto done;
 
     if ((data = get_win_data(hwnd)))

@@ -250,7 +250,7 @@ INT      WINAPI NtGdiAddFontResourceW( const WCHAR *str, ULONG size, ULONG files
                                        DWORD tid, void *dv );
 BOOL     WINAPI NtGdiAlphaBlend( HDC hdc_dst, int x_dst, int y_dst, int width_dst, int height_dst,
                                  HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
-                                 BLENDFUNCTION blend_function, HANDLE xform );
+                                 DWORD blend_function, HANDLE xform );
 BOOL     WINAPI NtGdiAngleArc( HDC hdc, INT x, INT y, DWORD radius, DWORD start_angle,
                                DWORD sweep_angle );
 BOOL     WINAPI NtGdiArcInternal( UINT type, HDC hdc, INT left, INT top, INT right, INT bottom,

@@ -37,7 +37,7 @@ struct unix_funcs
     /* win32u functions */
     BOOL     (WINAPI *pNtGdiAlphaBlend)( HDC hdc_dst, int x_dst, int y_dst, int width_dst, int height_dst,
                                          HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
-                                         BLENDFUNCTION blend_function, HANDLE xform );
+                                         DWORD blend_function, HANDLE xform );
     BOOL     (WINAPI *pNtGdiBitBlt)( HDC hdc_dst, INT x_dst, INT y_dst, INT width, INT height, HDC hdc_src,
                                      INT x_src, INT y_src, DWORD rop, DWORD bk_color, FLONG fl );
     BOOL     (WINAPI *pNtGdiComputeXformCoefficients)( HDC hdc );

@@ -26,7 +26,7 @@ static const struct unix_funcs *unix_funcs;
 
 BOOL WINAPI NtGdiAlphaBlend( HDC hdc_dst, int x_dst, int y_dst, int width_dst, int height_dst,
                              HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
-                             BLENDFUNCTION blend_function, HANDLE xform )
+                             DWORD blend_function, HANDLE xform )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtGdiAlphaBlend( hdc_dst, x_dst, y_dst, width_dst, height_dst, hdc_src,

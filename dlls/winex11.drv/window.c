@@ -2948,10 +2948,11 @@ BOOL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
     if (info->pptSrc) OffsetRect( &src_rect, info->pptSrc->x, info->pptSrc->y );
     NtGdiTransformPoints( info->hdcSrc, (POINT *)&src_rect, (POINT *)&src_rect, 2, NtGdiDPtoLP );
 
+    if (info->dwFlags & ULW_ALPHA) blend = *info->pblend;
     ret = NtGdiAlphaBlend( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
                            info->hdcSrc, src_rect.left, src_rect.top,
                            src_rect.right - src_rect.left, src_rect.bottom - src_rect.top,
-                           (info->dwFlags & ULW_ALPHA) ? *info->pblend : blend, 0 );
+                           *(DWORD *)&blend, 0 );
     if (ret)
     {
         memcpy( dst_bits, src_bits, bmi->bmiHeader.biSizeImage );

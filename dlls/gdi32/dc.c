@@ -1967,7 +1967,7 @@ BOOL WINAPI GdiAlphaBlend( HDC hdc_dst, int x_dst, int y_dst, int width_dst, int
         return FALSE;
     return NtGdiAlphaBlend( hdc_dst, x_dst, y_dst, width_dst, height_dst,
                             hdc_src, x_src, y_src, width_src, height_src,
-                            blend_function, 0 /* FIXME */ );
+                            *(DWORD *)&blend_function, 0 /* FIXME */ );
 }
 
 /***********************************************************************

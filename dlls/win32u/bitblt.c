@@ -955,8 +955,9 @@ error:
  */
 BOOL WINAPI NtGdiAlphaBlend( HDC hdcDst, int xDst, int yDst, int widthDst, int heightDst,
                              HDC hdcSrc, int xSrc, int ySrc, int widthSrc, int heightSrc,
-                             BLENDFUNCTION blendFunction, HANDLE xform )
+                             DWORD blend_func, HANDLE xform )
 {
+    BLENDFUNCTION blendFunction = *(BLENDFUNCTION *)&blend_func;
     BOOL ret = FALSE;
     DC *dcDst, *dcSrc;
 

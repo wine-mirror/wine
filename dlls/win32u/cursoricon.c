@@ -707,11 +707,11 @@ BOOL WINAPI NtUserDrawIconEx( HDC hdc, INT x0, INT y0, HICON icon, INT width,
         }
         if (alpha_blend)
         {
-            BLENDFUNCTION pixelblend = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
             NtGdiSelectBitmap( mem_dc, obj->frame.alpha );
             if (NtGdiAlphaBlend( hdc_dest, x, y, width, height, mem_dc,
                                  0, 0, obj->frame.width, obj->frame.height,
-                                 pixelblend, 0 )) goto done;
+                                 MAKEFOURCC( AC_SRC_OVER, 0, 255, AC_SRC_ALPHA ), 0 ))
+                goto done;
         }
     }
 
