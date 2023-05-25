@@ -53,6 +53,7 @@ struct h264_decoder
     IMFAttributes *attributes;
     IMFAttributes *output_attributes;
 
+    UINT64 sample_time;
     IMFMediaType *input_type;
     MFT_INPUT_STREAM_INFO input_info;
     IMFMediaType *output_type;
@@ -700,8 +701,9 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
     struct h264_decoder *decoder = impl_from_IMFTransform(iface);
     struct wg_format wg_format;
     UINT32 sample_size;
+    LONGLONG duration;
     IMFSample *sample;
-    UINT64 frame_size;
+    UINT64 frame_size, frame_rate;
     GUID subtype;
     DWORD size;
     HRESULT hr;
@@ -748,7 +750,19 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
 
     if (SUCCEEDED(hr = wg_transform_read_mf(decoder->wg_transform, sample,
             sample_size, &wg_format, &samples->dwStatus)))
+    {
         wg_sample_queue_flush(decoder->wg_sample_queue, false);
+
+        if (FAILED(IMFMediaType_GetUINT64(decoder->input_type, &MF_MT_FRAME_RATE, &frame_rate)))
+            frame_rate = (UINT64)30000 << 32 | 1001;
+
+        duration = (UINT64)10000000 * (UINT32)frame_rate / (frame_rate >> 32);
+        if (FAILED(IMFSample_SetSampleTime(sample, decoder->sample_time)))
+            WARN("Failed to set sample time\n");
+        if (FAILED(IMFSample_SetSampleDuration(sample, duration)))
+            WARN("Failed to set sample duration\n");
+        decoder->sample_time += duration;
+    }
 
     if (hr == MF_E_TRANSFORM_STREAM_CHANGE)
     {

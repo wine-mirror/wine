@@ -1205,7 +1205,6 @@ static DWORD check_mf_sample_(const char *file, int line, IMFSample *sample, con
     timestamp = 0xdeadbeef;
     hr = IMFSample_GetSampleTime(sample, &timestamp);
     ok_(file, line)(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
-    todo_wine_if(expect->todo_time && (timestamp == expect->todo_time || expect->todo_time == -1))
     ok_(file, line)(llabs(timestamp - expect->sample_time) <= 50,
             "got sample time %I64d\n", timestamp);
 
@@ -3711,7 +3710,7 @@ static void test_h264_decoder(void)
     const struct sample_desc expect_output_sample_i420 =
     {
         .attributes = output_sample_attributes,
-        .sample_time = 333667, .sample_duration = 333667, .todo_time = 1334666 /* with VA-API */,
+        .sample_time = 333667, .sample_duration = 333667,
         .buffer_count = 1, .buffers = &output_buffer_desc_i420,
     };
 
@@ -4037,26 +4036,13 @@ static void test_h264_decoder_concat_streams(void)
         {
             .attributes = output_sample_attributes + 0,
             .sample_time = 0, .sample_duration = 400000,
-            .todo_duration = 333666,
-            .buffer_count = 1, .buffers = output_buffer_desc + 0,
-        },
-        {
-            .attributes = output_sample_attributes + 0,
-            .sample_time = 400000, .sample_duration = 400000,
-            .buffer_count = 1, .buffers = output_buffer_desc + 0, .repeat_count = 26,
-            .todo_time = -1, .todo_duration = 333666,
-        },
-        {
-            .attributes = output_sample_attributes + 0,
-            .sample_time = 11200000, .sample_duration = 400000,
-            .buffer_count = 1, .buffers = output_buffer_desc + 0, .repeat_count = 1,
-            .todo_time = -1, .todo_duration = 333666,
+            .buffer_count = 1, .buffers = output_buffer_desc + 0, .repeat_count = 29,
         },
         {
             .attributes = output_sample_attributes + 0,
             .sample_time = 12000000, .sample_duration = 400000,
             .buffer_count = 1, .buffers = output_buffer_desc + 2, .repeat_count = 29,
-            .todo_time = -1, .todo_duration = 333666, .todo_length = TRUE,
+            .todo_length = TRUE,
         },
         {
             .attributes = output_sample_attributes + 0,
