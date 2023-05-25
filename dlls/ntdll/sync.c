@@ -299,6 +299,8 @@ NTSTATUS WINAPI RtlDeleteCriticalSection( RTL_CRITICAL_SECTION *crit )
  */
 NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
+    unsigned int timeout = 5;
+
     /* Don't allow blocking on a critical section during process termination */
     if (RtlDllShutdownInProgress())
     {
@@ -309,24 +311,14 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
 
     for (;;)
     {
-        NTSTATUS status = wait_semaphore( crit, 5 );
+        NTSTATUS status = wait_semaphore( crit, timeout );
 
-        if ( status == STATUS_TIMEOUT )
-        {
-            const char *name = crit_section_get_name( crit );
-
-            ERR( "section %p %s wait timed out in thread %04lx, blocked by %04lx, retrying (60 sec)\n",
-                 crit, debugstr_a(name), GetCurrentThreadId(), HandleToULong(crit->OwningThread) );
-            status = wait_semaphore( crit, 60 );
-
-            if ( status == STATUS_TIMEOUT && TRACE_ON(relay) )
-            {
-                ERR( "section %p %s wait timed out in thread %04lx, blocked by %04lx, retrying (5 min)\n",
-                     crit, debugstr_a(name), GetCurrentThreadId(), HandleToULong(crit->OwningThread) );
-                status = wait_semaphore( crit, 300 );
-            }
-        }
         if (status == STATUS_WAIT_0) break;
+
+        timeout = (TRACE_ON(relay) ? 300 : 60);
+
+        ERR( "section %p %s wait timed out in thread %04lx, blocked by %04lx, retrying (%u sec)\n",
+             crit, debugstr_a(crit_section_get_name(crit)), GetCurrentThreadId(), HandleToULong(crit->OwningThread), timeout );
     }
     if (crit_section_has_debuginfo( crit )) crit->DebugInfo->ContentionCount++;
     return STATUS_SUCCESS;
