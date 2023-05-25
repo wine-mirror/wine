@@ -1205,6 +1205,7 @@ static DWORD check_mf_sample_(const char *file, int line, IMFSample *sample, con
     timestamp = 0xdeadbeef;
     hr = IMFSample_GetSampleTime(sample, &timestamp);
     ok_(file, line)(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
+    todo_wine_if(expect->todo_time)
     ok_(file, line)(llabs(timestamp - expect->sample_time) <= 50,
             "got sample time %I64d\n", timestamp);
 
@@ -4024,7 +4025,7 @@ static void test_h264_decoder_concat_streams(void)
     {
         {.length = 0x3600},
         {.length = 0x4980},
-        {.length = 0x4980, .todo_length = TRUE},
+        {.length = 0, .todo_length = TRUE},
     };
     const struct attribute_desc output_sample_attributes[] =
     {
@@ -4041,18 +4042,26 @@ static void test_h264_decoder_concat_streams(void)
         {
             .attributes = output_sample_attributes + 0,
             .sample_time = 12000000, .sample_duration = 400000,
-            .buffer_count = 1, .buffers = output_buffer_desc + 2, .repeat_count = 29,
-            .todo_length = TRUE,
+            .buffer_count = 1, .buffers = output_buffer_desc + 1, .repeat_count = 29,
         },
         {
             .attributes = output_sample_attributes + 0,
             .sample_time = 0, .sample_duration = 400000,
             .buffer_count = 1, .buffers = output_buffer_desc + 0, .repeat_count = 29,
+            .todo_time = TRUE,
         },
         {
             .attributes = output_sample_attributes + 0,
             .sample_time = 12000000, .sample_duration = 400000,
             .buffer_count = 1, .buffers = output_buffer_desc + 1, .repeat_count = 6,
+            .todo_time = TRUE,
+        },
+        {
+            /* Wine outputs spurious buffers */
+            .attributes = output_sample_attributes + 0,
+            .sample_time = 0, .sample_duration = 400000,
+            .buffer_count = 1, .buffers = output_buffer_desc + 2, .repeat_count = 22,
+            .todo_time = TRUE, .todo_length = TRUE,
         },
         {0},
     };

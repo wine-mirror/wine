@@ -56,6 +56,7 @@ struct wg_transform
     GstElement *video_flip;
 
     guint output_plane_align;
+    struct wg_format output_format;
     struct wg_sample *output_wg_sample;
     GstAtomicQueue *output_queue;
     GstSample *output_sample;
@@ -174,7 +175,8 @@ static gboolean transform_sink_query_cb(GstPad *pad, GstObject *parent, GstQuery
             gchar *str;
 
             gst_query_parse_caps(query, &filter);
-            caps = gst_caps_ref(transform->output_caps);
+            if (!(caps = wg_format_to_caps(&transform->output_format)))
+                break;
 
             if (filter)
             {
@@ -300,6 +302,7 @@ NTSTATUS wg_transform_create(void *args)
         goto out;
     transform->input_max_length = 1;
     transform->output_plane_align = 0;
+    transform->output_format = output_format;
 
     if (!(src_caps = wg_format_to_caps(&input_format)))
         goto out;
@@ -493,6 +496,7 @@ NTSTATUS wg_transform_set_output_format(void *args)
         GST_ERROR("Failed to convert format %p to caps.", format);
         return STATUS_UNSUCCESSFUL;
     }
+    transform->output_format = *format;
 
     if (gst_caps_is_always_compatible(transform->output_caps, caps))
     {

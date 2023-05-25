@@ -95,6 +95,7 @@ struct sample_desc
     DWORD repeat_count;
     BOOL todo_length;
     BOOL todo_duration;
+    BOOL todo_time;
 };
 
 #define check_mf_sample_collection(a, b, c) check_mf_sample_collection_(__FILE__, __LINE__, a, b, c)
