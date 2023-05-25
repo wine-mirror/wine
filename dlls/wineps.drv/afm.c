@@ -310,16 +310,11 @@ static BOOL AddBuiltinAFMs(void)
 
 BOOL PSDRV_GetFontMetrics(void)
 {
-    if (PSDRV_GlyphListInit() != 0)
-    	return FALSE;
-
     if (PSDRV_GetType1Metrics() == FALSE)
     	return FALSE;
 
     if (AddBuiltinAFMs() == FALSE)
     	return FALSE;
-
-    PSDRV_IndexGlyphList(); 	    /* Enable fast searching of glyph names */
 
     PSDRV_DumpFontList();
 

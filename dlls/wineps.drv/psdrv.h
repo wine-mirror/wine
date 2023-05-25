@@ -508,9 +508,6 @@ extern BOOL PSDRV_WriteArrayDef(print_ctx *ctx, CHAR *pszArrayName, INT nSize);
 
 extern INT PSDRV_StartPage( print_ctx *ctx );
 
-INT PSDRV_GlyphListInit(void);
-const GLYPHNAME *PSDRV_GlyphName(LPCSTR szName);
-VOID PSDRV_IndexGlyphList(void);
 BOOL PSDRV_GetType1Metrics(void);
 SHORT PSDRV_CalcAvgCharWidth(const AFM *afm);
 
