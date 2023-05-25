@@ -978,63 +978,15 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
     return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI AudioClient_IsOffloadCapable(IAudioClient3 *iface,
-        AUDIO_STREAM_CATEGORY category, BOOL *offload_capable)
-{
-    ACImpl *This = impl_from_IAudioClient3(iface);
+extern HRESULT WINAPI client_IsOffloadCapable(IAudioClient3 *iface,
+        AUDIO_STREAM_CATEGORY category, BOOL *offload_capable);
 
-    TRACE("(%p)->(0x%x, %p)\n", This, category, offload_capable);
+extern HRESULT WINAPI client_SetClientProperties(IAudioClient3 *iface,
+        const AudioClientProperties *prop);
 
-    if(!offload_capable)
-        return E_INVALIDARG;
-
-    *offload_capable = FALSE;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI AudioClient_SetClientProperties(IAudioClient3 *iface,
-        const AudioClientProperties *prop)
-{
-    ACImpl *This = impl_from_IAudioClient3(iface);
-    const Win8AudioClientProperties *legacy_prop = (const Win8AudioClientProperties *)prop;
-
-    TRACE("(%p)->(%p)\n", This, prop);
-
-    if(!legacy_prop)
-        return E_POINTER;
-
-    if(legacy_prop->cbSize == sizeof(AudioClientProperties)){
-        TRACE("{ bIsOffload: %u, eCategory: 0x%x, Options: 0x%x }\n",
-                legacy_prop->bIsOffload,
-                legacy_prop->eCategory,
-                prop->Options);
-    }else if(legacy_prop->cbSize == sizeof(Win8AudioClientProperties)){
-        TRACE("{ bIsOffload: %u, eCategory: 0x%x }\n",
-                legacy_prop->bIsOffload,
-                legacy_prop->eCategory);
-    }else{
-        WARN("Unsupported Size = %d\n", legacy_prop->cbSize);
-        return E_INVALIDARG;
-    }
-
-
-    if(legacy_prop->bIsOffload)
-        return AUDCLNT_E_ENDPOINT_OFFLOAD_NOT_CAPABLE;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI AudioClient_GetBufferSizeLimits(IAudioClient3 *iface,
+extern HRESULT WINAPI client_GetBufferSizeLimits(IAudioClient3 *iface,
         const WAVEFORMATEX *format, BOOL event_driven, REFERENCE_TIME *min_duration,
-        REFERENCE_TIME *max_duration)
-{
-    ACImpl *This = impl_from_IAudioClient3(iface);
-
-    FIXME("(%p)->(%p, %u, %p, %p)\n", This, format, event_driven, min_duration, max_duration);
-
-    return E_NOTIMPL;
-}
+        REFERENCE_TIME *max_duration);
 
 extern HRESULT WINAPI client_GetSharedModeEnginePeriod(IAudioClient3 *iface,
         const WAVEFORMATEX *format, UINT32 *default_period_frames, UINT32 *unit_period_frames,
@@ -1064,9 +1016,9 @@ static const IAudioClient3Vtbl AudioClient3_Vtbl =
     AudioClient_Reset,
     AudioClient_SetEventHandle,
     AudioClient_GetService,
-    AudioClient_IsOffloadCapable,
-    AudioClient_SetClientProperties,
-    AudioClient_GetBufferSizeLimits,
+    client_IsOffloadCapable,
+    client_SetClientProperties,
+    client_GetBufferSizeLimits,
     client_GetSharedModeEnginePeriod,
     client_GetCurrentSharedModeEnginePeriod,
     client_InitializeSharedAudioStream,
