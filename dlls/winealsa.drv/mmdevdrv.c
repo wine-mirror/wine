@@ -895,89 +895,8 @@ static HRESULT WINAPI AudioClient_SetEventHandle(IAudioClient3 *iface,
     return params.result;
 }
 
-static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
-        void **ppv)
-{
-    ACImpl *This = impl_from_IAudioClient3(iface);
-
-    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
-
-    if(!ppv)
-        return E_POINTER;
-    *ppv = NULL;
-
-    sessions_lock();
-
-    if(!This->stream){
-        sessions_unlock();
-        return AUDCLNT_E_NOT_INITIALIZED;
-    }
-
-    if(IsEqualIID(riid, &IID_IAudioRenderClient)){
-        if(This->dataflow != eRender){
-            sessions_unlock();
-            return AUDCLNT_E_WRONG_ENDPOINT_TYPE;
-        }
-        IAudioRenderClient_AddRef(&This->IAudioRenderClient_iface);
-        *ppv = &This->IAudioRenderClient_iface;
-    }else if(IsEqualIID(riid, &IID_IAudioCaptureClient)){
-        if(This->dataflow != eCapture){
-            sessions_unlock();
-            return AUDCLNT_E_WRONG_ENDPOINT_TYPE;
-        }
-        IAudioCaptureClient_AddRef(&This->IAudioCaptureClient_iface);
-        *ppv = &This->IAudioCaptureClient_iface;
-    }else if(IsEqualIID(riid, &IID_IAudioClock)){
-        IAudioClock_AddRef(&This->IAudioClock_iface);
-        *ppv = &This->IAudioClock_iface;
-    }else if(IsEqualIID(riid, &IID_IAudioStreamVolume)){
-        IAudioStreamVolume_AddRef(&This->IAudioStreamVolume_iface);
-        *ppv = &This->IAudioStreamVolume_iface;
-    }else if(IsEqualIID(riid, &IID_IAudioSessionControl)){
-        if(!This->session_wrapper){
-            This->session_wrapper = session_wrapper_create(This);
-            if(!This->session_wrapper){
-                sessions_unlock();
-                return E_OUTOFMEMORY;
-            }
-        }else
-            IAudioSessionControl2_AddRef(&This->session_wrapper->IAudioSessionControl2_iface);
-
-        *ppv = &This->session_wrapper->IAudioSessionControl2_iface;
-    }else if(IsEqualIID(riid, &IID_IChannelAudioVolume)){
-        if(!This->session_wrapper){
-            This->session_wrapper = session_wrapper_create(This);
-            if(!This->session_wrapper){
-                sessions_unlock();
-                return E_OUTOFMEMORY;
-            }
-        }else
-            IChannelAudioVolume_AddRef(&This->session_wrapper->IChannelAudioVolume_iface);
-
-        *ppv = &This->session_wrapper->IChannelAudioVolume_iface;
-    }else if(IsEqualIID(riid, &IID_ISimpleAudioVolume)){
-        if(!This->session_wrapper){
-            This->session_wrapper = session_wrapper_create(This);
-            if(!This->session_wrapper){
-                sessions_unlock();
-                return E_OUTOFMEMORY;
-            }
-        }else
-            ISimpleAudioVolume_AddRef(&This->session_wrapper->ISimpleAudioVolume_iface);
-
-        *ppv = &This->session_wrapper->ISimpleAudioVolume_iface;
-    }
-
-    if(*ppv){
-        sessions_unlock();
-        return S_OK;
-    }
-
-    sessions_unlock();
-
-    FIXME("stub %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
-}
+extern HRESULT WINAPI client_GetService(IAudioClient3 *iface, REFIID riid,
+        void **ppv);
 
 extern HRESULT WINAPI client_IsOffloadCapable(IAudioClient3 *iface,
         AUDIO_STREAM_CATEGORY category, BOOL *offload_capable);
@@ -1016,7 +935,7 @@ static const IAudioClient3Vtbl AudioClient3_Vtbl =
     AudioClient_Stop,
     AudioClient_Reset,
     AudioClient_SetEventHandle,
-    AudioClient_GetService,
+    client_GetService,
     client_IsOffloadCapable,
     client_SetClientProperties,
     client_GetBufferSizeLimits,
