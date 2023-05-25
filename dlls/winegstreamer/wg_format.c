@@ -571,11 +571,10 @@ static GstCaps *wg_format_to_caps_video_h264(const struct wg_format *format)
             GST_FIXME("H264 profile attribute %u not implemented.", format->u.video_h264.profile);
             /* fallthrough */
         case eAVEncH264VProfile_unknown:
-            profile = NULL;
+            profile = "baseline";
             break;
     }
-    if (profile)
-        gst_caps_set_simple(caps, "profile", G_TYPE_STRING, profile, NULL);
+    gst_caps_set_simple(caps, "profile", G_TYPE_STRING, profile, NULL);
 
     switch (format->u.video_h264.level)
     {
