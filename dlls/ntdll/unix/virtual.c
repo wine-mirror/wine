@@ -2766,7 +2766,7 @@ static unsigned int get_mapping_info( HANDLE handle, ACCESS_MASK access, unsigne
  *
  * Map a PE image section into memory.
  */
-static NTSTATUS virtual_map_image( HANDLE mapping, ACCESS_MASK access, void **addr_ptr, SIZE_T *size_ptr, HANDLE shared_file,
+static NTSTATUS virtual_map_image( HANDLE mapping, void **addr_ptr, SIZE_T *size_ptr, HANDLE shared_file,
                                    ULONG_PTR limit, ULONG alloc_type, USHORT machine,
                                    pe_image_info_t *image_info, WCHAR *filename, BOOL is_builtin )
 {
@@ -2805,10 +2805,9 @@ static NTSTATUS virtual_map_image( HANDLE mapping, ACCESS_MASK access, void **ad
                                   machine, shared_fd, needs_close );
     if (status == STATUS_SUCCESS)
     {
-        SERVER_START_REQ( map_view )
+        SERVER_START_REQ( map_image_view )
         {
             req->mapping = wine_server_obj_handle( mapping );
-            req->access  = access;
             req->base    = wine_server_client_ptr( view->base );
             req->size    = size;
             status = wine_server_call( req );
@@ -2887,7 +2886,7 @@ static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_P
         /* check if we can replace that mapping with the builtin */
         res = load_builtin( image_info, filename, machine, addr_ptr, size_ptr, limit );
         if (res == STATUS_IMAGE_ALREADY_LOADED)
-            res = virtual_map_image( handle, access, addr_ptr, size_ptr, shared_file, limit,
+            res = virtual_map_image( handle, addr_ptr, size_ptr, shared_file, limit,
                                      alloc_type, machine, image_info, filename, FALSE );
         if (shared_file) NtClose( shared_file );
         free( image_info );
@@ -3109,11 +3108,11 @@ NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size
     unsigned int sec_flags;
     HANDLE shared_file;
     pe_image_info_t *image_info = NULL;
-    ACCESS_MASK access = SECTION_MAP_READ | SECTION_MAP_EXECUTE;
     NTSTATUS status;
     WCHAR *filename;
 
-    if ((status = get_mapping_info( mapping, access, &sec_flags, &full_size, &shared_file, &image_info )))
+    if ((status = get_mapping_info( mapping, SECTION_MAP_READ,
+                                    &sec_flags, &full_size, &shared_file, &image_info )))
         return status;
 
     if (!image_info) return STATUS_INVALID_PARAMETER;
@@ -3134,7 +3133,7 @@ NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size
     }
     else
     {
-        status = virtual_map_image( mapping, access, module, size, shared_file, limit, 0,
+        status = virtual_map_image( mapping, module, size, shared_file, limit, 0,
                                     machine, image_info, filename, TRUE );
         virtual_fill_image_information( image_info, info );
     }
@@ -3156,10 +3155,10 @@ NTSTATUS virtual_map_module( HANDLE mapping, void **module, SIZE_T *size, SECTIO
     unsigned int sec_flags;
     HANDLE shared_file;
     pe_image_info_t *image_info = NULL;
-    ACCESS_MASK access = SECTION_MAP_READ | SECTION_MAP_EXECUTE;
     WCHAR *filename;
 
-    if ((status = get_mapping_info( mapping, access, &sec_flags, &full_size, &shared_file, &image_info )))
+    if ((status = get_mapping_info( mapping, SECTION_MAP_READ,
+                                    &sec_flags, &full_size, &shared_file, &image_info )))
         return status;
 
     if (!image_info) return STATUS_INVALID_PARAMETER;
@@ -3171,7 +3170,7 @@ NTSTATUS virtual_map_module( HANDLE mapping, void **module, SIZE_T *size, SECTIO
     /* check if we can replace that mapping with the builtin */
     status = load_builtin( image_info, filename, machine, module, size, limit );
     if (status == STATUS_IMAGE_ALREADY_LOADED)
-        status = virtual_map_image( mapping, access, module, size, shared_file, limit, 0,
+        status = virtual_map_image( mapping, module, size, shared_file, limit, 0,
                                     machine, image_info, filename, FALSE );
 
     virtual_fill_image_information( image_info, info );

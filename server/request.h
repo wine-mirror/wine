@@ -184,6 +184,7 @@ DECL_HANDLER(create_mapping);
 DECL_HANDLER(open_mapping);
 DECL_HANDLER(get_mapping_info);
 DECL_HANDLER(map_view);
+DECL_HANDLER(map_image_view);
 DECL_HANDLER(map_builtin_view);
 DECL_HANDLER(unmap_view);
 DECL_HANDLER(get_mapping_committed_range);
@@ -469,6 +470,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_open_mapping,
     (req_handler)req_get_mapping_info,
     (req_handler)req_map_view,
+    (req_handler)req_map_image_view,
     (req_handler)req_map_builtin_view,
     (req_handler)req_unmap_view,
     (req_handler)req_get_mapping_committed_range,
@@ -1121,6 +1123,10 @@ C_ASSERT( FIELD_OFFSET(struct map_view_request, base) == 24 );
 C_ASSERT( FIELD_OFFSET(struct map_view_request, size) == 32 );
 C_ASSERT( FIELD_OFFSET(struct map_view_request, start) == 40 );
 C_ASSERT( sizeof(struct map_view_request) == 48 );
+C_ASSERT( FIELD_OFFSET(struct map_image_view_request, mapping) == 12 );
+C_ASSERT( FIELD_OFFSET(struct map_image_view_request, base) == 16 );
+C_ASSERT( FIELD_OFFSET(struct map_image_view_request, size) == 24 );
+C_ASSERT( sizeof(struct map_image_view_request) == 32 );
 C_ASSERT( sizeof(struct map_builtin_view_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct unmap_view_request, base) == 16 );
 C_ASSERT( sizeof(struct unmap_view_request) == 24 );

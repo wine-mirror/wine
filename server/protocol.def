@@ -1607,6 +1607,14 @@ enum server_fd_type
 @END
 
 
+/* Add a memory view for an image mapping in the current process */
+@REQ(map_image_view)
+    obj_handle_t mapping;       /* file mapping handle */
+    client_ptr_t base;          /* view base address (page-aligned) */
+    mem_size_t   size;          /* view size */
+@END
+
+
 /* Add a memory view for a builtin dll in the current process */
 @REQ(map_builtin_view)
     VARARG(image,pe_image_info);/* image info */

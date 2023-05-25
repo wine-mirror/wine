@@ -1206,7 +1206,7 @@ DECL_HANDLER(get_mapping_info)
 /* add a memory view in the current process */
 DECL_HANDLER(map_view)
 {
-    struct mapping *mapping = NULL;
+    struct mapping *mapping;
     struct memory_view *view;
 
     if (!is_valid_view_addr( current->process, req->base, req->size ))
@@ -1217,17 +1217,10 @@ DECL_HANDLER(map_view)
 
     if (!(mapping = get_mapping_obj( current->process, req->mapping, req->access ))) return;
 
-    if (mapping->flags & SEC_IMAGE)
-    {
-        if (req->start || req->size > mapping->image.map_size)
-        {
-            set_error( STATUS_INVALID_PARAMETER );
-            goto done;
-        }
-    }
-    else if (req->start >= mapping->size ||
-             req->start + req->size < req->start ||
-             req->start + req->size > ((mapping->size + page_mask) & ~(mem_size_t)page_mask))
+    if ((mapping->flags & SEC_IMAGE) ||
+        req->start >= mapping->size ||
+        req->start + req->size < req->start ||
+        req->start + req->size > ((mapping->size + page_mask) & ~(mem_size_t)page_mask))
     {
         set_error( STATUS_INVALID_PARAMETER );
         goto done;
@@ -1242,11 +1235,47 @@ DECL_HANDLER(map_view)
         view->namelen   = 0;
         view->fd        = !is_fd_removable( mapping->fd ) ? (struct fd *)grab_object( mapping->fd ) : NULL;
         view->committed = mapping->committed ? (struct ranges *)grab_object( mapping->committed ) : NULL;
-        view->shared    = mapping->shared ? (struct shared_map *)grab_object( mapping->shared ) : NULL;
-        if (view->flags & SEC_IMAGE) view->image = mapping->image;
+        view->shared    = NULL;
         add_process_view( current, view );
-        if (view->flags & SEC_IMAGE && view->base != mapping->image.base)
-            set_error( STATUS_IMAGE_NOT_AT_BASE );
+    }
+
+done:
+    release_object( mapping );
+}
+
+/* add a memory view for an image mapping in the current process */
+DECL_HANDLER(map_image_view)
+{
+    struct mapping *mapping;
+    struct memory_view *view;
+
+    if (!is_valid_view_addr( current->process, req->base, req->size ))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    if (!(mapping = get_mapping_obj( current->process, req->mapping, SECTION_MAP_READ ))) return;
+
+    if (!(mapping->flags & SEC_IMAGE) || req->size > mapping->image.map_size)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        goto done;
+    }
+
+    if ((view = mem_alloc( sizeof(*view) )))
+    {
+        view->base      = req->base;
+        view->size      = req->size;
+        view->flags     = mapping->flags;
+        view->start     = 0;
+        view->namelen   = 0;
+        view->fd        = !is_fd_removable( mapping->fd ) ? (struct fd *)grab_object( mapping->fd ) : NULL;
+        view->committed = NULL;
+        view->shared    = mapping->shared ? (struct shared_map *)grab_object( mapping->shared ) : NULL;
+        view->image     = mapping->image;
+        add_process_view( current, view );
+        if (view->base != mapping->image.base) set_error( STATUS_IMAGE_NOT_AT_BASE );
     }
 
 done:
