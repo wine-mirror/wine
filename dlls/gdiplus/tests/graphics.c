@@ -3197,6 +3197,7 @@ static void test_string_functions(void)
     HDC hdc = GetDC( hwnd );
     const WCHAR teststring[] = L"MM M\nM";
     const WCHAR teststring2[] = L"j";
+    const WCHAR teststring3[] = L"MM M\r\nM\0";
     REAL char_width, char_height;
     INT codepointsfitted, linesfilled;
     GpStringFormat *format;
@@ -3267,6 +3268,12 @@ static void test_string_functions(void)
 
     status = GdipMeasureString(graphics, teststring, 6, font, &rc, NULL, &bounds, &codepointsfitted, NULL);
     expect(Ok, status);
+
+    /* new line handling */
+    status = GdipMeasureString(graphics, teststring3, -1, font, &rc, NULL, &bounds, &codepointsfitted, &linesfilled);
+    expect(Ok, status);
+    expect(7, codepointsfitted);
+    expect(2, linesfilled);
 
     status = GdipMeasureString(graphics, teststring, 1, font, &rc, NULL, &char_bounds, &codepointsfitted, &linesfilled);
     expect(Ok, status);

@@ -5186,7 +5186,7 @@ GpStatus gdip_format_string(HDC hdc,
     INT *hotkeyprefix_offsets=NULL;
     INT hotkeyprefix_count=0;
     INT hotkeyprefix_pos=0, hotkeyprefix_end_pos=0;
-    BOOL seen_prefix = FALSE;
+    BOOL seen_prefix = FALSE, unixstyle_newline = TRUE;
 
     if(length == -1) length = lstrlenW(string);
 
@@ -5259,9 +5259,20 @@ GpStatus gdip_format_string(HDC hdc,
         if(fit == 0)
             break;
 
-        for(lret = 0; lret < fit; lret++)
+        for(lret = 0; lret < fit; lret++) {
             if(*(stringdup + sum + lret) == '\n')
-                break;
+            {
+               unixstyle_newline = TRUE;
+               break;
+            }
+
+            if(*(stringdup + sum + lret) == '\r' && lret + 1 < fit
+               && *(stringdup + sum + lret + 1) == '\n')
+            {
+               unixstyle_newline = FALSE;
+               break;
+            }
+        }
 
         /* Line break code (may look strange, but it imitates windows). */
         if(lret < fit)
@@ -5332,9 +5343,19 @@ GpStatus gdip_format_string(HDC hdc,
         if (stat != Ok)
             break;
 
-        sum += fit + (lret < fitcpy ? 1 : 0);
-        height += size.cy;
-        lineno++;
+
+        if (unixstyle_newline)
+        {
+            height += size.cy;
+            lineno++;
+            sum += fit + (lret < fitcpy ? 1 : 0);
+        }
+        else
+        {
+            height += size.cy;
+            lineno++;
+            sum += fit + (lret < fitcpy ? 2 : 0);
+        }
 
         hotkeyprefix_pos = hotkeyprefix_end_pos;
 
