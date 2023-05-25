@@ -21090,7 +21090,7 @@ test "$srcdir" = . || wine_srcdir="$srcdir/"
 
 ac_config_links="$ac_config_links wine:tools/winewrapper"
 wine_fn_config_symlink wine
-if test "$HOST_ARCH" = x86_64 -o -n "$with_wine64"; then
+if test "$wine_binary" = wine64 -o -n "$with_wine64"; then
 ac_config_links="$ac_config_links wine64:tools/winewrapper"
 wine_fn_config_symlink wine64
 fi
