@@ -88,6 +88,7 @@ static HRESULT try_create_wg_transform(struct h264_decoder *decoder)
     };
     struct wg_format input_format;
     struct wg_format output_format;
+    UINT32 low_latency;
 
     if (decoder->wg_transform)
         wg_transform_destroy(decoder->wg_transform);
@@ -108,6 +109,9 @@ static HRESULT try_create_wg_transform(struct h264_decoder *decoder)
     output_format.u.video.height = 0;
     output_format.u.video.fps_d = 0;
     output_format.u.video.fps_n = 0;
+
+    if (SUCCEEDED(IMFAttributes_GetUINT32(decoder->attributes, &MF_LOW_LATENCY, &low_latency)))
+        attrs.low_latency = !!low_latency;
 
     if (!(decoder->wg_transform = wg_transform_create(&input_format, &output_format, &attrs)))
         return E_FAIL;

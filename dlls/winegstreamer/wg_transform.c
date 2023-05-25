@@ -101,6 +101,26 @@ static GstFlowReturn transform_sink_chain_cb(GstPad *pad, GstObject *parent, Gst
     return GST_FLOW_OK;
 }
 
+static gboolean transform_src_query_latency(struct wg_transform *transform, GstQuery *query)
+{
+    GST_LOG("transform %p, query %p", transform, query);
+    gst_query_set_latency(query, transform->attrs.low_latency, 0, 0);
+    return true;
+}
+
+static gboolean transform_src_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
+{
+    struct wg_transform *transform = gst_pad_get_element_private(pad);
+
+    switch (query->type)
+    {
+    case GST_QUERY_LATENCY:
+        return transform_src_query_latency(transform, query);
+    default:
+        return gst_pad_query_default(pad, parent, query);
+    }
+}
+
 static gboolean transform_sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
 {
     struct wg_transform *transform = gst_pad_get_element_private(pad);
@@ -311,6 +331,9 @@ NTSTATUS wg_transform_create(void *args)
     g_object_unref(template);
     if (!transform->my_src)
         goto out;
+
+    gst_pad_set_element_private(transform->my_src, transform);
+    gst_pad_set_query_function(transform->my_src, transform_src_query_cb);
 
     if (!(transform->output_caps = wg_format_to_caps(&output_format)))
         goto out;
