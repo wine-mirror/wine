@@ -31,6 +31,95 @@
 
 static const WCHAR sink_id[] = L"EVR Input0";
 
+static void load_resource(const WCHAR *filename, const BYTE **data, DWORD *length)
+{
+    HRSRC resource = FindResourceW(NULL, filename, (const WCHAR *)RT_RCDATA);
+    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
+    *data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
+    *length = SizeofResource(GetModuleHandleW(NULL), resource);
+}
+
+static DWORD compare_rgb32(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
+{
+    DWORD x, y, size, diff = 0, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+
+    /* skip BMP header from the dump */
+    size = *(DWORD *)(expect + 2 + 2 * sizeof(DWORD));
+    *length = *length + size;
+    expect = expect + size;
+
+    for (y = 0; y < height; y++, data += width * 4, expect += width * 4)
+    {
+        if (y < rect->top || y >= rect->bottom) continue;
+        for (x = 0; x < width; x++)
+        {
+            if (x < rect->left || x >= rect->right) continue;
+            diff += abs((int)expect[4 * x + 0] - (int)data[4 * x + 0]);
+            diff += abs((int)expect[4 * x + 1] - (int)data[4 * x + 1]);
+            diff += abs((int)expect[4 * x + 2] - (int)data[4 * x + 2]);
+        }
+    }
+
+    size = (rect->right - rect->left) * (rect->bottom - rect->top) * 3;
+    return diff * 100 / 256 / size;
+}
+
+static void dump_rgb32(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
+{
+    DWORD width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+    static const char magic[2] = "BM";
+    struct
+    {
+        DWORD length;
+        DWORD reserved;
+        DWORD offset;
+        BITMAPINFOHEADER biHeader;
+    } header =
+    {
+        .length = length + sizeof(header) + 2, .offset = sizeof(header) + 2,
+        .biHeader =
+        {
+            .biSize = sizeof(BITMAPINFOHEADER), .biWidth = width, .biHeight = height, .biPlanes = 1,
+            .biBitCount = 32, .biCompression = BI_RGB, .biSizeImage = width * height * 4,
+        },
+    };
+    DWORD written;
+    BOOL ret;
+
+    ret = WriteFile(output, magic, sizeof(magic), &written, NULL);
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
+    ok(written == sizeof(magic), "written %lu bytes\n", written);
+    ret = WriteFile(output, &header, sizeof(header), &written, NULL);
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
+    ok(written == sizeof(header), "written %lu bytes\n", written);
+    ret = WriteFile(output, data, length, &written, NULL);
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
+    ok(written == length, "written %lu bytes\n", written);
+}
+
+#define check_rgb32_data(a, b, c, d) check_rgb32_data_(__LINE__, a, b, c, d)
+static DWORD check_rgb32_data_(int line, const WCHAR *filename, const BYTE *data, DWORD length, const RECT *rect)
+{
+    WCHAR output_path[MAX_PATH];
+    const BYTE *expect_data;
+    HRSRC resource;
+    HANDLE output;
+
+    GetTempPathW(ARRAY_SIZE(output_path), output_path);
+    lstrcatW(output_path, filename);
+    output = CreateFileW(output_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(output != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
+    dump_rgb32(data, length, rect, output);
+    trace("created %s\n", debugstr_w(output_path));
+    CloseHandle(output);
+
+    resource = FindResourceW(NULL, filename, (const WCHAR *)RT_RCDATA);
+    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
+    expect_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
+
+    return compare_rgb32(data, &length, rect, expect_data);
+}
+
 static void set_rect(MFVideoNormalizedRect *rect, float left, float top, float right, float bottom)
 {
     rect->left = left;
@@ -2912,8 +3001,8 @@ static void test_mixer_zorder(void)
     IMFTransform_Release(mixer);
 }
 
-static IDirect3DSurface9 * create_surface(IDirect3DDeviceManager9 *manager, unsigned int width,
-        unsigned int height)
+static IDirect3DSurface9 * create_surface(IDirect3DDeviceManager9 *manager, UINT fourcc,
+        unsigned int width, unsigned int height)
 {
     IDirectXVideoAccelerationService *service;
     IDirect3DSurface9 *surface = NULL;
@@ -2931,7 +3020,7 @@ static IDirect3DSurface9 * create_surface(IDirect3DDeviceManager9 *manager, unsi
             (void **)&service);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    hr = IDirectXVideoAccelerationService_CreateSurface(service, width, height, 0, D3DFMT_A8R8G8B8,
+    hr = IDirectXVideoAccelerationService_CreateSurface(service, width, height, 0, fourcc,
             D3DPOOL_DEFAULT, 0, DXVA2_VideoProcessorRenderTarget, &surface, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -3080,7 +3169,7 @@ static void test_mixer_samples(void)
 
     IMFSample_Release(sample);
 
-    surface = create_surface(manager, 64, 64);
+    surface = create_surface(manager, D3DFMT_A8R8G8B8, 64, 64);
 
     hr = MFCreateVideoSampleFromSurface((IUnknown *)surface, &sample);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -3229,6 +3318,174 @@ done:
     DestroyWindow(window);
 }
 
+static void test_presenter_orientation(const GUID *subtype)
+{
+    IMFTopologyServiceLookupClient *lookup_client;
+    static const BITMAPINFOHEADER expect_header =
+    {
+        .biSize = sizeof(BITMAPINFOHEADER),
+        .biWidth = 96, .biHeight = 96,
+        .biPlanes = 1, .biBitCount = 32,
+        .biCompression = BI_RGB,
+        .biSizeImage = 96 * 96 * 4,
+    };
+    BITMAPINFOHEADER header = {.biSize = sizeof(BITMAPINFOHEADER)};
+    IMFVideoDisplayControl *display_control;
+    DWORD diff, data_size, frame_data_len;
+    IDirect3DDeviceManager9 *manager;
+    D3DLOCKED_RECT d3d_rect = {0};
+    IMFVideoPresenter *presenter;
+    IDirect3DSurface9 *surface;
+    IMFMediaType *video_type;
+    const BYTE *frame_data;
+    struct test_host host;
+    IMFTransform *mixer;
+    LONGLONG timestamp;
+    IMFSample *sample;
+    LONG stride;
+    HWND window;
+    BYTE *data;
+    HRESULT hr;
+    RECT rect;
+
+    window = create_window();
+
+    hr = MFCreateVideoMixer(NULL, &IID_IDirect3DDevice9, &IID_IMFTransform, (void **)&mixer);
+    ok(hr == S_OK, "Failed to create a mixer, hr %#lx.\n", hr);
+    hr = MFCreateVideoPresenter(NULL, &IID_IDirect3DDevice9, &IID_IMFVideoPresenter, (void **)&presenter);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    init_test_host(&host, mixer, presenter);
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFTopologyServiceLookupClient, (void **)&lookup_client);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTopologyServiceLookupClient_InitServicePointers(lookup_client, &host.IMFTopologyServiceLookup_iface);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFTopologyServiceLookupClient_Release(lookup_client);
+
+    /* Configure device and media types. */
+
+    hr = MFGetService((IUnknown *)presenter, &MR_VIDEO_ACCELERATION_SERVICE, &IID_IDirect3DDeviceManager9, (void **)&manager);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTransform_ProcessMessage(mixer, MFT_MESSAGE_SET_D3D_MANAGER, (ULONG_PTR)manager);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IDirect3DDeviceManager9_Release(manager);
+
+    video_type = create_video_type(subtype);
+    hr = IMFMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64)expect_header.biWidth << 32 | expect_header.biHeight);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFTransform_SetInputType(mixer, 0, video_type, 0);
+    if (broken(IsEqualGUID(subtype, &MFVideoFormat_NV12) && hr == E_FAIL))
+    {
+        win_skip("Skipping unsupported NV12 format\n");
+        IMFMediaType_Release(video_type);
+        goto skip_tests;
+    }
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTransform_SetOutputType(mixer, 0, video_type, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(video_type);
+
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_INVALIDATEMEDIATYPE, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_BEGINSTREAMING, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    if (IsEqualGUID(subtype, &MFVideoFormat_NV12))
+    {
+        load_resource(L"nv12frame.bmp", &frame_data, &frame_data_len);
+        /* skip BMP header and RGB data from the dump */
+        data_size = *(DWORD *)(frame_data + 2);
+        frame_data_len = frame_data_len - data_size;
+        frame_data = frame_data + data_size;
+        ok(frame_data_len == 13824, "got length %lu\n", frame_data_len);
+    }
+    else
+    {
+        load_resource(L"rgb32frame.bmp", &frame_data, &frame_data_len);
+        /* skip BMP header from the dump */
+        data_size = *(DWORD *)(frame_data + 2 + 2 * sizeof(DWORD));
+        frame_data_len -= data_size;
+        frame_data += data_size;
+        ok(frame_data_len == 36864, "got length %lu\n", frame_data_len);
+    }
+
+    surface = create_surface(manager, subtype->Data1, expect_header.biWidth, expect_header.biHeight);
+    ok(!!surface, "Failed to create input surface.\n");
+    hr = IDirect3DSurface9_LockRect(surface, &d3d_rect, NULL, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (IsEqualGUID(subtype, &MFVideoFormat_RGB32))
+        memcpy(d3d_rect.pBits, frame_data, frame_data_len);
+    else if (IsEqualGUID(subtype, &MFVideoFormat_NV12))
+    {
+        hr = MFGetStrideForBitmapInfoHeader(subtype->Data1, expect_header.biWidth, &stride);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = MFCopyImage(d3d_rect.pBits, d3d_rect.Pitch, frame_data, stride, expect_header.biWidth, expect_header.biHeight);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        frame_data += stride * expect_header.biHeight;
+        d3d_rect.pBits = (BYTE *)d3d_rect.pBits + d3d_rect.Pitch * expect_header.biHeight;
+        hr = MFCopyImage(d3d_rect.pBits, d3d_rect.Pitch, frame_data, stride, expect_header.biWidth, expect_header.biHeight / 2);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    }
+    hr = IDirect3DSurface9_UnlockRect(surface);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFCreateVideoSampleFromSurface((IUnknown *)surface, &sample);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IDirect3DSurface9_Release(surface);
+
+    hr = IMFTransform_ProcessInput(mixer, 0, sample, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_PROCESSINPUTNOTIFY, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFSample_Release(sample);
+
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDisplayControl, (void **)&display_control);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFVideoDisplayControl_GetCurrentImage(display_control, &header, &data, &data_size, &timestamp);
+    if (hr == MF_E_INVALIDREQUEST)
+    {
+        Sleep(500);
+        hr = IMFVideoDisplayControl_GetCurrentImage(display_control, &header, &data, &data_size, &timestamp);
+    }
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFVideoDisplayControl_Release(display_control);
+
+    ok(header.biSize == expect_header.biSize, "Unexpected biSize %#lx\n", header.biSize);
+    ok(header.biWidth == expect_header.biWidth, "Unexpected biWidth %#lx\n", header.biWidth);
+    ok(header.biHeight == expect_header.biHeight, "Unexpected biHeight %#lx\n", header.biHeight);
+    ok(header.biPlanes == expect_header.biPlanes, "Unexpected biPlanes %#x\n", header.biPlanes);
+    ok(header.biBitCount == expect_header.biBitCount, "Unexpected biBitCount %#x\n", header.biBitCount);
+    ok(header.biCompression == expect_header.biCompression, "Unexpected biCompression %#lx\n", header.biCompression);
+    ok(header.biSizeImage == expect_header.biSizeImage, "Unexpected biSizeImage %#lx\n", header.biSizeImage);
+    ok(header.biXPelsPerMeter == expect_header.biXPelsPerMeter, "Unexpected biXPelsPerMeter %#lx\n", header.biXPelsPerMeter);
+    ok(header.biYPelsPerMeter == expect_header.biYPelsPerMeter, "Unexpected biYPelsPerMeter %#lx\n", header.biYPelsPerMeter);
+    ok(header.biClrUsed == expect_header.biClrUsed, "Unexpected biClrUsed %#lx\n", header.biClrUsed);
+    ok(header.biClrImportant == expect_header.biClrImportant, "Unexpected biClrImportant %#lx\n", header.biClrImportant);
+
+    SetRect(&rect, 0, 0, header.biWidth, header.biHeight);
+    diff = check_rgb32_data(L"rgb32frame-flip.bmp", data, header.biSizeImage, &rect);
+    todo_wine
+    ok(diff <= 3, "Unexpected %lu%% diff\n", diff);
+    CoTaskMemFree(data);
+
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_ENDSTREAMING, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+skip_tests:
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFTopologyServiceLookupClient, (void **)&lookup_client);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTopologyServiceLookupClient_ReleaseServicePointers(lookup_client);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFTopologyServiceLookupClient_Release(lookup_client);
+
+    IMFTransform_Release(mixer);
+    IMFVideoPresenter_Release(presenter);
+
+    DestroyWindow(window);
+}
+
 static void test_MFIsFormatYUV(void)
 {
     static const DWORD formats[] =
@@ -3332,7 +3589,7 @@ static void test_mixer_render(void)
     IMFMediaType_Release(output_type);
     IMFMediaType_Release(video_type);
 
-    surface = create_surface(manager, 64, 64);
+    surface = create_surface(manager, D3DFMT_A8R8G8B8, 64, 64);
     ok(!!surface, "Failed to create input surface.\n");
 
     hr = MFCreateVideoSampleFromSurface((IUnknown *)surface, &sample);
@@ -3421,6 +3678,8 @@ START_TEST(evr)
     test_presenter_video_window();
     test_presenter_quality_control();
     test_presenter_media_type();
+    test_presenter_orientation(&MFVideoFormat_NV12);
+    test_presenter_orientation(&MFVideoFormat_RGB32);
     test_presenter_shutdown();
     test_mixer_output_rectangle();
     test_mixer_zorder();
