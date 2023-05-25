@@ -45,12 +45,6 @@ BOOL WINAPI NtGdiAlphaBlend( HDC hdc_dst, int x_dst, int y_dst, int width_dst, i
                                          x_src, y_src, width_src, height_src, blend_function, xform );
 }
 
-BOOL WINAPI NtGdiAngleArc( HDC hdc, INT x, INT y, DWORD radius, DWORD start_angle, DWORD sweep_angle )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiAngleArc( hdc, x, y, radius, start_angle, sweep_angle );
-}
-
 BOOL WINAPI NtGdiBeginPath( HDC hdc )
 {
     if (!unix_funcs) return FALSE;
@@ -164,12 +158,6 @@ INT WINAPI NtGdiExtEscape( HDC hdc, WCHAR *driver, INT driver_id, INT escape, IN
                                         output_size, output );
 }
 
-BOOL WINAPI NtGdiExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, UINT type )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiExtFloodFill( hdc, x, y, color, type );
-}
-
 BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
                               const WCHAR *str, UINT count, const INT *dx, DWORD cp )
 {
@@ -189,22 +177,10 @@ BOOL WINAPI NtGdiFillPath( HDC hdc )
     return unix_funcs->pNtGdiFillPath( hdc );
 }
 
-BOOL WINAPI NtGdiFillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiFillRgn( hdc, hrgn, hbrush );
-}
-
 BOOL WINAPI NtGdiFontIsLinked( HDC hdc )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtGdiFontIsLinked( hdc );
-}
-
-BOOL WINAPI NtGdiFrameRgn( HDC hdc, HRGN hrgn, HBRUSH brush, INT width, INT height )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiFrameRgn( hdc, hrgn, brush, width, height );
 }
 
 BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *result )
@@ -355,23 +331,10 @@ BOOL WINAPI NtGdiGetTextMetricsW( HDC hdc, TEXTMETRICW *metrics, ULONG flags )
     return unix_funcs->pNtGdiGetTextMetricsW( hdc, metrics, flags );
 }
 
-BOOL WINAPI NtGdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
-                               void *grad_array, ULONG ngrad, ULONG mode )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiGradientFill( hdc, vert_array, nvert, grad_array, ngrad, mode );
-}
-
 INT WINAPI NtGdiIntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
     if (!unix_funcs) return ERROR;
     return unix_funcs->pNtGdiIntersectClipRect( hdc, left, top, right, bottom );
-}
-
-BOOL WINAPI NtGdiInvertRgn( HDC hdc, HRGN hrgn )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiInvertRgn( hdc, hrgn );
 }
 
 BOOL WINAPI NtGdiMaskBlt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
@@ -408,19 +371,6 @@ BOOL WINAPI NtGdiPlgBlt( HDC hdc, const POINT *point, HDC hdc_src, INT x_src, IN
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtGdiPlgBlt( hdc, point, hdc_src, x_src, y_src, width, height, mask,
                                      x_mask, y_mask, bk_color );
-}
-
-BOOL WINAPI NtGdiPolyDraw( HDC hdc, const POINT *points, const BYTE *types, DWORD count )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiPolyDraw( hdc, points, types, count );
-}
-
-ULONG WINAPI NtGdiPolyPolyDraw( HDC hdc, const POINT *points, const ULONG *counts,
-                                DWORD count, UINT function )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiPolyPolyDraw( hdc, points, counts, count, function );
 }
 
 BOOL WINAPI NtGdiPtVisible( HDC hdc, INT x, INT y )

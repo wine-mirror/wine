@@ -79,6 +79,18 @@ NTSTATUS WINAPI wow64_NtGdiAddFontResourceW( UINT *args )
     return NtGdiAddFontResourceW( str, size, files, flags, tid, dv );
 }
 
+NTSTATUS WINAPI wow64_NtGdiAngleArc( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT x = get_ulong( &args );
+    INT y = get_ulong( &args );
+    DWORD radius = get_ulong( &args );
+    DWORD start_angle = get_ulong( &args );
+    DWORD sweep_angle = get_ulong( &args );
+
+    return NtGdiAngleArc( hdc, x, y, radius, start_angle, sweep_angle );
+}
+
 NTSTATUS WINAPI wow64_NtGdiArcInternal( UINT *args )
 {
     UINT type = get_ulong( &args );
@@ -381,6 +393,17 @@ NTSTATUS WINAPI wow64_NtGdiExtCreateRegion( UINT *args )
     return HandleToUlong( NtGdiExtCreateRegion( xform, count, data ));
 }
 
+NTSTATUS WINAPI wow64_NtGdiExtFloodFill( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT x = get_ulong( &args );
+    INT y = get_ulong( &args );
+    COLORREF color = get_ulong( &args );
+    UINT type = get_ulong( &args );
+
+    return NtGdiExtFloodFill( hdc, x, y, color, type );
+}
+
 NTSTATUS WINAPI wow64_NtGdiExtGetObjectW( UINT *args )
 {
     HGDIOBJ handle = get_handle( &args );
@@ -474,6 +497,15 @@ NTSTATUS WINAPI wow64_NtGdiExtGetObjectW( UINT *args )
     }
 }
 
+NTSTATUS WINAPI wow64_NtGdiFillRgn( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    HRGN hrgn = get_handle( &args );
+    HBRUSH hbrush = get_handle( &args );
+
+    return NtGdiFillRgn( hdc, hrgn, hbrush );
+}
+
 NTSTATUS WINAPI wow64_NtGdiFlattenPath( UINT *args )
 {
     HDC hdc = get_handle( &args );
@@ -484,6 +516,17 @@ NTSTATUS WINAPI wow64_NtGdiFlattenPath( UINT *args )
 NTSTATUS WINAPI wow64_NtGdiFlush( UINT *args )
 {
     return NtGdiFlush();
+}
+
+NTSTATUS WINAPI wow64_NtGdiFrameRgn( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    HRGN hrgn = get_handle( &args );
+    HBRUSH brush = get_handle( &args );
+    INT width = get_ulong( &args );
+    INT height = get_ulong( &args );
+
+    return NtGdiFrameRgn( hdc, hrgn, brush, width, height );
 }
 
 NTSTATUS WINAPI wow64_NtGdiGetBitmapBits( UINT *args )
@@ -591,6 +634,26 @@ NTSTATUS WINAPI wow64_NtGdiGetPixel( UINT *args )
     return NtGdiGetPixel( hdc, x, y );
 }
 
+NTSTATUS WINAPI wow64_NtGdiGradientFill( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    TRIVERTEX *vert_array = get_ptr( &args );
+    ULONG nvert = get_ulong( &args );
+    void *grad_array = get_ptr( &args );
+    ULONG ngrad = get_ulong( &args );
+    ULONG mode = get_ulong( &args );
+
+    return NtGdiGradientFill( hdc, vert_array, nvert, grad_array, ngrad, mode );
+}
+
+NTSTATUS WINAPI wow64_NtGdiInvertRgn( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    HRGN hrgn = get_handle( &args );
+
+    return NtGdiInvertRgn( hdc, hrgn );
+}
+
 NTSTATUS WINAPI wow64_NtGdiLineTo( UINT *args )
 {
     HDC hdc = get_handle( &args );
@@ -608,6 +671,27 @@ NTSTATUS WINAPI wow64_NtGdiMoveTo( UINT *args )
     POINT *pt = get_ptr( &args );
 
     return NtGdiMoveTo( hdc, x, y, pt );
+}
+
+NTSTATUS WINAPI wow64_NtGdiPolyDraw( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    const POINT *points = get_ptr( &args );
+    const BYTE *types = get_ptr( &args );
+    DWORD count = get_ulong( &args );
+
+    return NtGdiPolyDraw( hdc, points, types, count );
+}
+
+NTSTATUS WINAPI wow64_NtGdiPolyPolyDraw( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    const POINT *points = get_ptr( &args );
+    const ULONG *counts = get_ptr( &args );
+    DWORD count = get_ulong( &args );
+    UINT function = get_ulong( &args );
+
+    return NtGdiPolyPolyDraw( hdc, points, counts, count, function );
 }
 
 NTSTATUS WINAPI wow64_NtGdiRectangle( UINT *args )

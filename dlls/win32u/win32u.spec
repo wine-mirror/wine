@@ -113,7 +113,7 @@
 @ stub NtGdiAddRemoteFontToDC
 @ stub NtGdiAddRemoteMMInstanceToDC
 @ stdcall NtGdiAlphaBlend(long long long long long long long long long long long ptr)
-@ stdcall NtGdiAngleArc(long long long long long long)
+@ stdcall -syscall NtGdiAngleArc(long long long long long long)
 @ stub NtGdiAnyLinkedFonts
 @ stdcall -syscall NtGdiArcInternal(long long long long long long long long long long)
 @ stub NtGdiBRUSHOBJ_DeleteRbrush
@@ -421,7 +421,7 @@
 @ stdcall -syscall NtGdiExtCreatePen(long long long long long long long ptr long long long)
 @ stdcall -syscall NtGdiExtCreateRegion(ptr long ptr)
 @ stdcall NtGdiExtEscape(long wstr long long long ptr long ptr)
-@ stdcall NtGdiExtFloodFill(long long long long long)
+@ stdcall -syscall NtGdiExtFloodFill(long long long long long)
 @ stdcall -syscall NtGdiExtGetObjectW(long long ptr)
 @ stdcall NtGdiExtSelectClipRgn(long long long)
 @ stdcall NtGdiExtTextOutW(long long long long ptr ptr long ptr long)
@@ -434,12 +434,12 @@
 @ stub NtGdiFONTOBJ_pxoGetXform
 @ stub NtGdiFONTOBJ_vGetInfo
 @ stdcall NtGdiFillPath(long)
-@ stdcall NtGdiFillRgn(long long long)
+@ stdcall -syscall NtGdiFillRgn(long long long)
 @ stdcall -syscall NtGdiFlattenPath(long)
 @ stdcall -syscall NtGdiFlush()
 @ stdcall NtGdiFontIsLinked(long)
 @ stub NtGdiForceUFIMapping
-@ stdcall NtGdiFrameRgn(long long long long long)
+@ stdcall -syscall NtGdiFrameRgn(long long long long long)
 @ stub NtGdiFullscreenControl
 @ stdcall NtGdiGetAndSetDCDword(long long long ptr)
 @ stdcall NtGdiGetAppClipBox(long ptr)
@@ -524,7 +524,7 @@
 @ stub NtGdiGetUFI
 @ stub NtGdiGetUFIPathname
 @ stub NtGdiGetWidthTable
-@ stdcall NtGdiGradientFill(long ptr long ptr long long)
+@ stdcall -syscall NtGdiGradientFill(long ptr long ptr long long)
 @ stub NtGdiHLSurfGetInformation
 @ stub NtGdiHLSurfSetInformation
 @ stub NtGdiHT_Get8BPPFormatPalette
@@ -534,7 +534,7 @@
 @ stub NtGdiInit
 @ stdcall -syscall NtGdiInitSpool()
 @ stdcall NtGdiIntersectClipRect(long long long long long)
-@ stdcall NtGdiInvertRgn(long long)
+@ stdcall -syscall NtGdiInvertRgn(long long)
 @ stdcall -syscall NtGdiLineTo(long long long)
 @ stub NtGdiMakeFontDir
 @ stub NtGdiMakeInfoDC
@@ -556,9 +556,9 @@
 @ stdcall NtGdiPatBlt(long long long long long long)
 @ stdcall -syscall NtGdiPathToRegion(long)
 @ stdcall NtGdiPlgBlt(long ptr long long long long long long long long long)
-@ stdcall NtGdiPolyDraw(long ptr ptr long)
+@ stdcall -syscall NtGdiPolyDraw(long ptr ptr long)
 @ stub NtGdiPolyPatBlt
-@ stdcall NtGdiPolyPolyDraw(long ptr ptr long long)
+@ stdcall -syscall NtGdiPolyPolyDraw(long ptr ptr long long)
 @ stub NtGdiPolyTextOutW
 @ stdcall -syscall NtGdiPtInRegion(long long long)
 @ stdcall NtGdiPtVisible(long long long)

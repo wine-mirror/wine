@@ -24,6 +24,7 @@
 #define ALL_WIN32_SYSCALLS \
     SYSCALL_ENTRY( NtGdiAddFontMemResourceEx ) \
     SYSCALL_ENTRY( NtGdiAddFontResourceW ) \
+    SYSCALL_ENTRY( NtGdiAngleArc ) \
     SYSCALL_ENTRY( NtGdiArcInternal ) \
     SYSCALL_ENTRY( NtGdiCombineRgn ) \
     SYSCALL_ENTRY( NtGdiCreateBitmap ) \
@@ -50,9 +51,12 @@
     SYSCALL_ENTRY( NtGdiEqualRgn ) \
     SYSCALL_ENTRY( NtGdiExtCreatePen ) \
     SYSCALL_ENTRY( NtGdiExtCreateRegion ) \
+    SYSCALL_ENTRY( NtGdiExtFloodFill ) \
     SYSCALL_ENTRY( NtGdiExtGetObjectW ) \
+    SYSCALL_ENTRY( NtGdiFillRgn ) \
     SYSCALL_ENTRY( NtGdiFlattenPath ) \
     SYSCALL_ENTRY( NtGdiFlush ) \
+    SYSCALL_ENTRY( NtGdiFrameRgn ) \
     SYSCALL_ENTRY( NtGdiGetBitmapBits ) \
     SYSCALL_ENTRY( NtGdiGetBitmapDimension ) \
     SYSCALL_ENTRY( NtGdiGetColorAdjustment ) \
@@ -69,13 +73,17 @@
     SYSCALL_ENTRY( NtGdiGetSpoolMessage ) \
     SYSCALL_ENTRY( NtGdiGetSystemPaletteUse ) \
     SYSCALL_ENTRY( NtGdiGetTransform ) \
+    SYSCALL_ENTRY( NtGdiGradientFill ) \
     SYSCALL_ENTRY( NtGdiHfontCreate ) \
     SYSCALL_ENTRY( NtGdiInitSpool ) \
+    SYSCALL_ENTRY( NtGdiInvertRgn ) \
     SYSCALL_ENTRY( NtGdiLineTo ) \
     SYSCALL_ENTRY( NtGdiMoveTo ) \
     SYSCALL_ENTRY( NtGdiOffsetRgn ) \
     SYSCALL_ENTRY( NtGdiOpenDCW ) \
     SYSCALL_ENTRY( NtGdiPathToRegion ) \
+    SYSCALL_ENTRY( NtGdiPolyDraw ) \
+    SYSCALL_ENTRY( NtGdiPolyPolyDraw ) \
     SYSCALL_ENTRY( NtGdiPtInRegion ) \
     SYSCALL_ENTRY( NtGdiRectInRegion ) \
     SYSCALL_ENTRY( NtGdiRectangle ) \

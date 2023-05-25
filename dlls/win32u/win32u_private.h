@@ -40,8 +40,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiAlphaBlend)( HDC hdc_dst, int x_dst, int y_dst, int width_dst, int height_dst,
                                          HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
                                          BLENDFUNCTION blend_function, HANDLE xform );
-    BOOL     (WINAPI *pNtGdiAngleArc)( HDC hdc, INT x, INT y, DWORD radius, DWORD start_angle,
-                                       DWORD sweep_angle );
     BOOL     (WINAPI *pNtGdiBeginPath)( HDC hdc );
     BOOL     (WINAPI *pNtGdiBitBlt)( HDC hdc_dst, INT x_dst, INT y_dst, INT width, INT height, HDC hdc_src,
                                      INT x_src, INT y_src, DWORD rop, DWORD bk_color, FLONG fl );
@@ -75,14 +73,11 @@ struct unix_funcs
     INT      (WINAPI *pNtGdiExcludeClipRect)( HDC hdc, INT left, INT top, INT right, INT bottom );
     INT      (WINAPI *pNtGdiExtEscape)( HDC hdc, WCHAR *driver, INT driver_id, INT escape, INT input_size,
                                         const char *input, INT output_size, char *output );
-    BOOL     (WINAPI *pNtGdiExtFloodFill)( HDC hdc, INT x, INT y, COLORREF color, UINT type );
     BOOL     (WINAPI *pNtGdiExtTextOutW)( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
                                           const WCHAR *str, UINT count, const INT *dx, DWORD cp );
     INT      (WINAPI *pNtGdiExtSelectClipRgn)( HDC hdc, HRGN region, INT mode );
     BOOL     (WINAPI *pNtGdiFillPath)( HDC hdc );
-    BOOL     (WINAPI *pNtGdiFillRgn)( HDC hdc, HRGN hrgn, HBRUSH hbrush );
     BOOL     (WINAPI *pNtGdiFontIsLinked)( HDC hdc );
-    BOOL     (WINAPI *pNtGdiFrameRgn)( HDC hdc, HRGN hrgn, HBRUSH brush, INT width, INT height );
     BOOL     (WINAPI *pNtGdiGetAndSetDCDword)( HDC hdc, UINT method, DWORD value, DWORD *result );
     INT      (WINAPI *pNtGdiGetAppClipBox)( HDC hdc, RECT *rect );
     UINT     (WINAPI *pNtGdiGetBoundsRect)( HDC hdc, RECT *rect, UINT flags );
@@ -115,10 +110,7 @@ struct unix_funcs
                                                INT *nfit, INT *dxs, SIZE *size, UINT flags );
     INT      (WINAPI *pNtGdiGetTextFaceW)( HDC hdc, INT count, WCHAR *name, BOOL alias_name );
     BOOL     (WINAPI *pNtGdiGetTextMetricsW)( HDC hdc, TEXTMETRICW *metrics, ULONG flags );
-    BOOL     (WINAPI *pNtGdiGradientFill)( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
-                                           void *grad_array, ULONG ngrad, ULONG mode );
     INT      (WINAPI *pNtGdiIntersectClipRect)( HDC hdc, INT left, INT top, INT right, INT bottom );
-    BOOL     (WINAPI *pNtGdiInvertRgn)( HDC hdc, HRGN hrgn );
     BOOL     (WINAPI *pNtGdiMaskBlt)( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
                                       HDC hdc_src, INT x_src, INT y_src, HBITMAP mask,
                                       INT x_mask, INT y_mask, DWORD rop, DWORD bk_color );
@@ -128,9 +120,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiPlgBlt)( HDC hdc, const POINT *point, HDC hdc_src, INT x_src, INT y_src,
                                      INT width, INT height, HBITMAP mask, INT x_mask, INT y_mask,
                                      DWORD bk_color );
-    BOOL     (WINAPI *pNtGdiPolyDraw)(HDC hdc, const POINT *points, const BYTE *types, DWORD count );
-    ULONG    (WINAPI *pNtGdiPolyPolyDraw)( HDC hdc, const POINT *points, const ULONG *counts,
-                                           DWORD count, UINT function );
     BOOL     (WINAPI *pNtGdiPtVisible)( HDC hdc, INT x, INT y );
     BOOL     (WINAPI *pNtGdiRectVisible)( HDC hdc, const RECT *rect );
     BOOL     (WINAPI *pNtGdiResetDC)( HDC hdc, const DEVMODEW *devmode, BOOL *banding,
