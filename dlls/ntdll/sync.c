@@ -299,8 +299,6 @@ NTSTATUS WINAPI RtlDeleteCriticalSection( RTL_CRITICAL_SECTION *crit )
  */
 NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
-    LONGLONG timeout = NtCurrentTeb()->Peb->CriticalSectionTimeout.QuadPart / -10000000;
-
     /* Don't allow blocking on a critical section during process termination */
     if (RtlDllShutdownInProgress())
     {
@@ -311,9 +309,7 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
 
     for (;;)
     {
-        EXCEPTION_RECORD rec;
         NTSTATUS status = wait_semaphore( crit, 5 );
-        timeout -= 5;
 
         if ( status == STATUS_TIMEOUT )
         {
@@ -322,31 +318,15 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
             ERR( "section %p %s wait timed out in thread %04lx, blocked by %04lx, retrying (60 sec)\n",
                  crit, debugstr_a(name), GetCurrentThreadId(), HandleToULong(crit->OwningThread) );
             status = wait_semaphore( crit, 60 );
-            timeout -= 60;
 
             if ( status == STATUS_TIMEOUT && TRACE_ON(relay) )
             {
                 ERR( "section %p %s wait timed out in thread %04lx, blocked by %04lx, retrying (5 min)\n",
                      crit, debugstr_a(name), GetCurrentThreadId(), HandleToULong(crit->OwningThread) );
                 status = wait_semaphore( crit, 300 );
-                timeout -= 300;
             }
         }
         if (status == STATUS_WAIT_0) break;
-
-        /* Throw exception only for Wine internal locks */
-        if (!crit_section_has_debuginfo( crit ) || !crit->DebugInfo->Spare[0]) continue;
-
-        /* only throw deadlock exception if configured timeout is reached */
-        if (timeout > 0) continue;
-
-        rec.ExceptionCode    = STATUS_POSSIBLE_DEADLOCK;
-        rec.ExceptionFlags   = 0;
-        rec.ExceptionRecord  = NULL;
-        rec.ExceptionAddress = RtlRaiseException;  /* sic */
-        rec.NumberParameters = 1;
-        rec.ExceptionInformation[0] = (ULONG_PTR)crit;
-        RtlRaiseException( &rec );
     }
     if (crit_section_has_debuginfo( crit )) crit->DebugInfo->ContentionCount++;
     return STATUS_SUCCESS;
