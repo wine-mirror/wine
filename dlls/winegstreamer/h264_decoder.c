@@ -614,8 +614,9 @@ static HRESULT WINAPI transform_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_
 
     TRACE("iface %p, message %#x, param %Ix.\n", iface, message, param);
 
-    if (message == MFT_MESSAGE_SET_D3D_MANAGER)
+    switch (message)
     {
+    case MFT_MESSAGE_SET_D3D_MANAGER:
         if (FAILED(hr = IMFVideoSampleAllocatorEx_SetDirectXManager(decoder->allocator, (IUnknown *)param)))
             return hr;
 
@@ -625,10 +626,14 @@ static HRESULT WINAPI transform_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_
         else
             decoder->output_info.dwFlags &= ~MFT_OUTPUT_STREAM_PROVIDES_SAMPLES;
         return S_OK;
-    }
 
-    FIXME("Ignoring message %#x.\n", message);
-    return S_OK;
+    case MFT_MESSAGE_COMMAND_DRAIN:
+        return wg_transform_drain(decoder->wg_transform);
+
+    default:
+        FIXME("Ignoring message %#x.\n", message);
+        return S_OK;
+    }
 }
 
 static HRESULT WINAPI transform_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)

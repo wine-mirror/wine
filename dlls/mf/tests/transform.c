@@ -3879,10 +3879,10 @@ static void test_h264_decoder(void)
 
         hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
         ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
+        hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
+        ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
     }
-    todo_wine
     ok(i == 2, "got %lu iterations\n", i);
-    todo_wine
     ok(h264_encoded_data_len == 2425, "got h264_encoded_data_len %lu\n", h264_encoded_data_len);
     ok(hr == MF_E_TRANSFORM_STREAM_CHANGE, "ProcessOutput returned %#lx\n", hr);
     ok(output_status == MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE, "got output[0].dwStatus %#lx\n", output_status);
@@ -3981,6 +3981,7 @@ static void test_h264_decoder(void)
     ok(ref == 1, "Release returned %ld\n", ref);
 
     ret = check_mf_sample_collection(output_samples, &expect_output_sample_i420, L"i420frame.bmp");
+    todo_wine /* wg_transform_set_output_format() should convert already processed samples instead of dropping */
     ok(ret == 0, "got %lu%% diff\n", ret);
     IMFCollection_Release(output_samples);
 

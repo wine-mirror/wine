@@ -869,3 +869,38 @@ NTSTATUS wg_transform_get_status(void *args)
     params->accepts_input = gst_atomic_queue_length(transform->input_queue) < transform->input_max_length;
     return STATUS_SUCCESS;
 }
+
+NTSTATUS wg_transform_drain(void *args)
+{
+    struct wg_transform *transform = args;
+    GstBuffer *input_buffer;
+    GstFlowReturn ret;
+    GstEvent *event;
+
+    GST_LOG("transform %p", transform);
+
+    while ((input_buffer = gst_atomic_queue_pop(transform->input_queue)))
+    {
+        if ((ret = gst_pad_push(transform->my_src, input_buffer)))
+            GST_WARNING("Failed to push transform input, error %d", ret);
+    }
+
+    if (!(event = gst_event_new_segment_done(GST_FORMAT_TIME, -1))
+            || !gst_pad_push_event(transform->my_src, event))
+        goto error;
+    if (!(event = gst_event_new_eos())
+            || !gst_pad_push_event(transform->my_src, event))
+        goto error;
+    if (!(event = gst_event_new_stream_start("stream"))
+            || !gst_pad_push_event(transform->my_src, event))
+        goto error;
+    if (!(event = gst_event_new_segment(&transform->segment))
+            || !gst_pad_push_event(transform->my_src, event))
+        goto error;
+
+    return STATUS_SUCCESS;
+
+error:
+    GST_ERROR("Failed to drain transform %p.", transform);
+    return STATUS_UNSUCCESSFUL;
+}
