@@ -1564,19 +1564,8 @@ BOOL X11DRV_ClipCursor( const RECT *clip, BOOL reset )
     if (!reset && grab_pointer)
     {
         RECT virtual_rect = NtUserGetVirtualScreenRect();
-        HWND foreground = NtUserGetForegroundWindow();
-        DWORD tid, pid;
 
         if (!clip) clip = &virtual_rect;
-
-        /* forward request to the foreground window if it's in a different thread */
-        tid = NtUserGetWindowThread( foreground, &pid );
-        if (tid && tid != GetCurrentThreadId() && pid == GetCurrentProcessId())
-        {
-            TRACE( "forwarding clip request to %p\n", foreground );
-            send_notify_message( foreground, WM_X11DRV_CLIP_CURSOR_REQUEST, FALSE, FALSE );
-            return TRUE;
-        }
 
         /* we are clipping if the clip rectangle is smaller than the screen */
         if (clip->left > virtual_rect.left || clip->right < virtual_rect.right ||
@@ -1589,8 +1578,8 @@ BOOL X11DRV_ClipCursor( const RECT *clip, BOOL reset )
             struct x11drv_thread_data *data = x11drv_thread_data();
             if (data && data->clip_hwnd)
             {
-                if (EqualRect( clip, &clip_rect ) || clip_fullscreen_window( foreground, TRUE ))
-                    return TRUE;
+                if (EqualRect( clip, &clip_rect )) return TRUE;
+                if (clip_fullscreen_window( NtUserGetForegroundWindow(), TRUE )) return TRUE;
             }
         }
     }
@@ -1605,20 +1594,12 @@ BOOL X11DRV_ClipCursor( const RECT *clip, BOOL reset )
  */
 LRESULT clip_cursor_request( HWND hwnd, BOOL fullscreen, BOOL reset )
 {
-    RECT clip;
-
     if (hwnd == NtUserGetDesktopWindow())
         WARN( "ignoring clip cursor request on desktop window.\n" );
     else if (hwnd != NtUserGetForegroundWindow())
         WARN( "ignoring clip cursor request on non-foreground window.\n" );
     else if (fullscreen)
         clip_fullscreen_window( hwnd, reset );
-    else
-    {
-        NtUserGetClipCursor( &clip );
-        X11DRV_ClipCursor( &clip, FALSE );
-    }
-
     return 0;
 }
 
