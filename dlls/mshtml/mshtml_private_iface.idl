@@ -159,6 +159,14 @@ interface IWineDOMTokenList : IDispatch
     [id(2)]
     HRESULT remove([in] BSTR token);
     [id(3)]
+    HRESULT toggle([in] BSTR token, [retval, out] VARIANT_BOOL *p);
+    [id(4)]
+    HRESULT contains([in] BSTR token, [retval, out] VARIANT_BOOL *p);
+    [propget, id(5)]
+    HRESULT length([retval, out] LONG *p);
+    [id(6)]
+    HRESULT item([in] LONG index, [retval, out] VARIANT *p);
+    [id(7)]
     HRESULT toString([retval, out] BSTR *String);
 }
 

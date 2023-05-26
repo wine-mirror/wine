@@ -7561,6 +7561,42 @@ static HRESULT WINAPI token_list_remove(IWineDOMTokenList *iface, BSTR token)
     return token_list_add_remove(iface, token, TRUE);
 }
 
+static HRESULT WINAPI token_list_toggle(IWineDOMTokenList *iface, BSTR token, VARIANT_BOOL *p)
+{
+    struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
+
+    FIXME("(%p)->(%s %p)\n", token_list, debugstr_w(token), p);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_list_contains(IWineDOMTokenList *iface, BSTR token, VARIANT_BOOL *p)
+{
+    struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
+
+    FIXME("(%p)->(%s %p)\n", token_list, debugstr_w(token), p);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_list_get_length(IWineDOMTokenList *iface, LONG *p)
+{
+    struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
+
+    FIXME("(%p)->(%p)\n", token_list, p);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_list_item(IWineDOMTokenList *iface, LONG index, VARIANT *p)
+{
+    struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
+
+    FIXME("(%p)->(%ld %p)\n", token_list, index, p);
+
+    return E_NOTIMPL;
+}
+
 static HRESULT WINAPI token_list_toString(IWineDOMTokenList *iface, BSTR *String)
 {
     struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
@@ -7580,6 +7616,10 @@ static const IWineDOMTokenListVtbl WineDOMTokenListVtbl = {
     token_list_Invoke,
     token_list_add,
     token_list_remove,
+    token_list_toggle,
+    token_list_contains,
+    token_list_get_length,
+    token_list_item,
     token_list_toString
 };
 

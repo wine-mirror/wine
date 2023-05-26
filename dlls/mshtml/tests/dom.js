@@ -623,7 +623,15 @@ sync_test("hasAttribute", function() {
 
 sync_test("classList", function() {
     var elem = document.createElement("div");
-    var classList = elem.classList;
+    var classList = elem.classList, i;
+
+    var props = [ "add", "contains", "item", "length", "remove", "toggle" ];
+    for(i = 0; i < props.length; i++)
+        ok(props[i] in classList, props[i] + " not found in classList.");
+
+    props = [ "entries", "forEach", "keys", "replace", "supports", "value", "values"];
+    for(i = 0; i < props.length; i++)
+        ok(!(props[i] in classList), props[i] + " found in classList.");
 
     classList.add("a");
     ok(elem.className === "a", "Expected className 'a', got " + elem.className);
