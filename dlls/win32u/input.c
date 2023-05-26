@@ -2468,3 +2468,78 @@ BOOL WINAPI NtUserGetPointerInfoList( UINT32 id, POINTER_INPUT_TYPE type, UINT_P
     RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }
+
+BOOL get_clip_cursor( RECT *rect )
+{
+    UINT dpi;
+    BOOL ret;
+
+    if (!rect) return FALSE;
+
+    SERVER_START_REQ( set_cursor )
+    {
+        req->flags = 0;
+        if ((ret = !wine_server_call( req )))
+        {
+            rect->left   = reply->new_clip.left;
+            rect->top    = reply->new_clip.top;
+            rect->right  = reply->new_clip.right;
+            rect->bottom = reply->new_clip.bottom;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (ret && (dpi = get_thread_dpi()))
+    {
+        HMONITOR monitor = monitor_from_rect( rect, MONITOR_DEFAULTTOPRIMARY, 0 );
+        *rect = map_dpi_rect( *rect, get_monitor_dpi( monitor ), dpi );
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *       NtUserClipCursor (win32u.@)
+ */
+BOOL WINAPI NtUserClipCursor( const RECT *rect )
+{
+    UINT dpi;
+    BOOL ret;
+    RECT new_rect;
+
+    TRACE( "Clipping to %s\n", wine_dbgstr_rect(rect) );
+
+    if (rect)
+    {
+        if (rect->left > rect->right || rect->top > rect->bottom) return FALSE;
+        if ((dpi = get_thread_dpi()))
+        {
+            HMONITOR monitor = monitor_from_rect( rect, MONITOR_DEFAULTTOPRIMARY, dpi );
+            new_rect = map_dpi_rect( *rect, dpi, get_monitor_dpi( monitor ));
+            rect = &new_rect;
+        }
+    }
+
+    SERVER_START_REQ( set_cursor )
+    {
+        if (rect)
+        {
+            req->flags       = SET_CURSOR_CLIP;
+            req->clip.left   = rect->left;
+            req->clip.top    = rect->top;
+            req->clip.right  = rect->right;
+            req->clip.bottom = rect->bottom;
+        }
+        else req->flags = SET_CURSOR_NOCLIP;
+
+        if ((ret = !wine_server_call( req )))
+        {
+            new_rect.left   = reply->new_clip.left;
+            new_rect.top    = reply->new_clip.top;
+            new_rect.right  = reply->new_clip.right;
+            new_rect.bottom = reply->new_clip.bottom;
+        }
+    }
+    SERVER_END_REQ;
+    if (ret) user_driver->pClipCursor( &new_rect );
+    return ret;
+}

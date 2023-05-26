@@ -39,7 +39,6 @@ extern void release_clipboard_owner( HWND hwnd ) DECLSPEC_HIDDEN;
 
 /* cursoricon.c */
 extern HICON alloc_cursoricon_handle( BOOL is_icon ) DECLSPEC_HIDDEN;
-extern BOOL get_clip_cursor( RECT *rect ) DECLSPEC_HIDDEN;
 extern ULONG_PTR get_icon_param( HICON handle ) DECLSPEC_HIDDEN;
 extern ULONG_PTR set_icon_param( HICON handle, ULONG_PTR param ) DECLSPEC_HIDDEN;
 
@@ -101,6 +100,7 @@ extern BOOL set_caret_pos( int x, int y ) DECLSPEC_HIDDEN;
 extern BOOL set_foreground_window( HWND hwnd, BOOL mouse ) DECLSPEC_HIDDEN;
 extern void toggle_caret( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void update_mouse_tracking_info( HWND hwnd ) DECLSPEC_HIDDEN;
+extern BOOL get_clip_cursor( RECT *rect ) DECLSPEC_HIDDEN;
 
 /* menu.c */
 extern HMENU create_menu( BOOL is_popup ) DECLSPEC_HIDDEN;
