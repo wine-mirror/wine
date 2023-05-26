@@ -708,7 +708,7 @@ DECLARE_INTERFACE(IXACTWaveBank)
 #define INTERFACE IXACTEngine
 DECLARE_INTERFACE_(IXACTEngine,IUnknown)
 {
-    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID iid, void **out) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID iid, void **out) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     STDMETHOD(GetRendererCount)(THIS_ XACTINDEX *count) PURE;

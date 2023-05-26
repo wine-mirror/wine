@@ -664,7 +664,7 @@ DECLARE_INTERFACE(IXACT3WaveBank)
 DECLARE_INTERFACE_(IXACT3Engine,IUnknown)
 {
     /*** IUnknown methods ***/
-    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IXACT3Engine methods ***/
