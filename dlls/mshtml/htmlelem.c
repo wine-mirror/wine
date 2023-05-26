@@ -7464,7 +7464,7 @@ static const WCHAR *find_token(const WCHAR *list, const WCHAR *token, unsigned i
     return NULL;
 }
 
-static HRESULT token_list_add_remove(IWineDOMTokenList *iface, BSTR token, BOOL remove)
+static HRESULT token_list_add_remove(IWineDOMTokenList *iface, BSTR token, BOOL remove, VARIANT_BOOL *toggle_ret)
 {
     struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
     unsigned int i, len, old_len, new_len;
@@ -7472,7 +7472,7 @@ static HRESULT token_list_add_remove(IWineDOMTokenList *iface, BSTR token, BOOL 
     BSTR new, old;
     HRESULT hr;
 
-    TRACE("iface %p, token %s, remove %#x.\n", iface, debugstr_w(token), remove);
+    TRACE("token_list %p, token %s, remove %#x, toggle_ret %p.\n", token_list, debugstr_w(token), remove, toggle_ret);
 
     len = token ? lstrlenW(token) : 0;
     if (!len)
@@ -7493,8 +7493,13 @@ static HRESULT token_list_add_remove(IWineDOMTokenList *iface, BSTR token, BOOL 
 
     TRACE("old %s.\n", debugstr_w(old));
 
-    if (((old_pos = find_token(old, token, len)) && !remove)
-            || (!old_pos && remove))
+    old_pos = find_token(old, token, len);
+    if (toggle_ret)
+    {
+        remove = !!old_pos;
+        *toggle_ret = !remove;
+    }
+    else if (!!old_pos != remove)
     {
         SysFreeString(old);
         return S_OK;
@@ -7553,21 +7558,17 @@ static HRESULT token_list_add_remove(IWineDOMTokenList *iface, BSTR token, BOOL 
 
 static HRESULT WINAPI token_list_add(IWineDOMTokenList *iface, BSTR token)
 {
-    return token_list_add_remove(iface, token, FALSE);
+    return token_list_add_remove(iface, token, FALSE, NULL);
 }
 
 static HRESULT WINAPI token_list_remove(IWineDOMTokenList *iface, BSTR token)
 {
-    return token_list_add_remove(iface, token, TRUE);
+    return token_list_add_remove(iface, token, TRUE, NULL);
 }
 
 static HRESULT WINAPI token_list_toggle(IWineDOMTokenList *iface, BSTR token, VARIANT_BOOL *p)
 {
-    struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
-
-    FIXME("(%p)->(%s %p)\n", token_list, debugstr_w(token), p);
-
-    return E_NOTIMPL;
+    return token_list_add_remove(iface, token, FALSE, p);
 }
 
 static HRESULT WINAPI token_list_contains(IWineDOMTokenList *iface, BSTR token, VARIANT_BOOL *p)

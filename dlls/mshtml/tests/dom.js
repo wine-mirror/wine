@@ -623,7 +623,7 @@ sync_test("hasAttribute", function() {
 
 sync_test("classList", function() {
     var elem = document.createElement("div");
-    var classList = elem.classList, i;
+    var classList = elem.classList, i, r;
 
     var props = [ "add", "contains", "item", "length", "remove", "toggle" ];
     for(i = 0; i < props.length; i++)
@@ -764,6 +764,60 @@ sync_test("classList", function() {
 
     classList.remove("b");
     ok(elem.className === "", "remove: expected className '', got " + elem.className);
+
+    exception = false;
+    try
+    {
+        classList.toggle();
+    }
+    catch(e)
+    {
+        exception = true;
+    }
+    ok(exception, "Expected exception for classList.toggle()");
+
+    exception = false;
+    try
+    {
+        classList.toggle("");
+    }
+    catch(e)
+    {
+        exception = true;
+    }
+    ok(exception, "Expected exception for classList.toggle(\"\")");
+
+    exception = false;
+    try
+    {
+        classList.toggle("a b");
+    }
+    catch(e)
+    {
+        exception = true;
+    }
+    ok(exception, "Expected exception for classList.toggle(\"a b\")");
+
+    // toggle's second arg is not implemented by IE, and ignored
+    r = classList.toggle("abc");
+    ok(r === true, "toggle('abc') returned " + r);
+    ok(elem.className === "abc", "toggle('abc'): got className " + elem.className);
+
+    r = classList.toggle("def", false);
+    ok(r === true, "toggle('def', false) returned " + r);
+    ok(elem.className === "abc def", "toggle('def', false): got className " + elem.className);
+
+    r = classList.toggle("123", 1234);
+    ok(r === true, "toggle('123', 1234) returned " + r);
+    ok(elem.className === "abc def 123", "toggle('123', 1234): got className " + elem.className);
+
+    r = classList.toggle("def", true);
+    ok(r === false, "toggle('def', true) returned " + r);
+    ok(elem.className === "abc 123", "toggle('def', true): got className " + elem.className);
+
+    r = classList.toggle("123", null);
+    ok(r === false, "toggle('123', null) returned " + r);
+    ok(elem.className === "abc", "toggle('123', null): got className " + elem.className);
 
     elem.className = "  testclass    foobar  ";
     ok(("" + classList) === "  testclass    foobar  ", "Expected classList value '  testclass    foobar  ', got " + classList);
