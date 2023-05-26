@@ -2687,7 +2687,7 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
         {
             release_win_data( data );
             unmap_window( hwnd );
-            if (NtUserIsWindowRectFullScreen( &old_window_rect )) reset_clipping_window();
+            if (NtUserIsWindowRectFullScreen( &old_window_rect )) NtUserClipCursor( NULL );
             if (!(data = get_win_data( hwnd ))) return;
         }
     }

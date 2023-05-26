@@ -470,17 +470,6 @@ static void ungrab_clipping_window(void)
 }
 
 /***********************************************************************
- *		reset_clipping_window
- *
- * Forcibly reset the window clipping on external events.
- */
-void reset_clipping_window(void)
-{
-    ungrab_clipping_window();
-    NtUserClipCursor( NULL );  /* make sure the clip rectangle is reset too */
-}
-
-/***********************************************************************
  *      retry_grab_clipping_window
  *
  * Restore the current clip rectangle or retry the last one if it has
