@@ -840,6 +840,39 @@ sync_test("classList", function() {
     ok(classList.length === 2, "Expected length 2 for className '  testclass    foobar  ', got " + classList.length);
     ok(("" + classList) === "  testclass    foobar  ", "Expected classList value '  testclass    foobar  ', got " + classList);
     ok(classList.toString() === "  testclass    foobar  ", "Expected classList toString '  testclass    foobar  ', got " + classList.toString());
+
+    r = classList[-1];
+    ok(r === null, "classList[-1] = " + r);
+    r = classList[0];
+    ok(r === "testclass", "classList[0] = " + r);
+    r = classList[1];
+    ok(r === "foobar", "classList[1] = " + r);
+    r = classList[2];
+    ok(r === null, "classList[2] = " + r);
+
+    classList[0] = "barfoo";
+    classList[2] = "added";
+    ok(classList.toString() === "  testclass    foobar  ", "Expected classList toString to not be changed after setting indexed props, got " + classList.toString());
+
+    try
+    {
+        classList[0]();
+        ok(false, "Expected exception calling classList[0]");
+    }
+    catch(e)
+    {
+        ok(e.number === 0xa138a - 0x80000000, "Calling classList[0] threw " + e.number);
+    }
+
+    try
+    {
+        new classList[0]();
+        ok(false, "Expected exception calling classList[0] as constructor");
+    }
+    catch(e)
+    {
+        ok(e.number === 0xa01bd - 0x80000000, "Calling classList[0] as constructor threw " + e.number);
+    }
 });
 
 sync_test("importNode", function() {

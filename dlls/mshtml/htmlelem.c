@@ -7710,6 +7710,9 @@ static const IWineDOMTokenListVtbl WineDOMTokenListVtbl = {
     token_list_toString
 };
 
+/* idx can be negative, so offset it halfway through custom dispids */
+#define DISPID_TOKENLIST_0 (MSHTML_DISPID_CUSTOM_MIN + (MSHTML_DISPID_CUSTOM_MAX+1 - MSHTML_DISPID_CUSTOM_MIN) / 2)
+
 static inline struct token_list *token_list_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, struct token_list, dispex);
@@ -7736,8 +7739,64 @@ static HRESULT token_list_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
     return S_OK;
 }
 
+static HRESULT token_list_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
+{
+    WCHAR *end;
+    LONG idx;
+    ULONG i;
+
+    idx = wcstol(name, &end, 10);
+    if(*end)
+        return DISP_E_UNKNOWNNAME;
+
+    i = idx + DISPID_TOKENLIST_0 - MSHTML_DISPID_CUSTOM_MIN;
+    if(i > MSHTML_CUSTOM_DISPID_CNT)
+        return DISP_E_UNKNOWNNAME;
+
+    *dispid = MSHTML_DISPID_CUSTOM_MIN + i;
+    return S_OK;
+}
+
+static HRESULT token_list_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
+{
+    LONG idx = id - MSHTML_DISPID_CUSTOM_MIN;
+    WCHAR buf[12];
+    UINT len;
+
+    len = swprintf(buf, ARRAY_SIZE(buf), L"%d", idx);
+    return (*name = SysAllocStringLen(buf, len)) ? S_OK : E_OUTOFMEMORY;
+}
+
+static HRESULT token_list_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    struct token_list *token_list = token_list_from_DispatchEx(dispex);
+
+    TRACE("(%p)->(%lx %lx %x %p %p %p %p)\n", token_list, id, lcid, flags, params, res, ei, caller);
+
+    switch(flags) {
+    case DISPATCH_PROPERTYGET:
+        return token_list_item(&token_list->IWineDOMTokenList_iface, id - DISPID_TOKENLIST_0, res);
+    case DISPATCH_PROPERTYPUTREF|DISPATCH_PROPERTYPUT:
+    case DISPATCH_PROPERTYPUTREF:
+    case DISPATCH_PROPERTYPUT:
+        /* Ignored by IE */
+        return S_OK;
+    case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
+    case DISPATCH_METHOD:
+        return MSHTML_E_NOT_FUNC;
+    default:
+        break;
+    }
+
+    return MSHTML_E_INVALID_ACTION;
+}
+
 static const dispex_static_data_vtbl_t token_list_dispex_vtbl = {
-    token_list_value
+    token_list_value,
+    token_list_get_dispid,
+    token_list_get_name,
+    token_list_invoke
 };
 
 static const tid_t token_list_iface_tids[] = {
