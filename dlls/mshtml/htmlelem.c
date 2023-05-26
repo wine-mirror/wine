@@ -7635,10 +7635,53 @@ static HRESULT WINAPI token_list_get_length(IWineDOMTokenList *iface, LONG *p)
 static HRESULT WINAPI token_list_item(IWineDOMTokenList *iface, LONG index, VARIANT *p)
 {
     struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
+    BSTR list, token = NULL;
+    unsigned i = 0;
+    HRESULT hres;
+    WCHAR *ptr;
 
-    FIXME("(%p)->(%ld %p)\n", token_list, index, p);
+    TRACE("(%p)->(%ld %p)\n", token_list, index, p);
 
-    return E_NOTIMPL;
+    hres = IHTMLElement_get_className(token_list->element, &list);
+    if(FAILED(hres))
+        return hres;
+
+    if(!list) {
+        V_VT(p) = VT_NULL;
+        return S_OK;
+    }
+
+    ptr = list;
+    do {
+        while(iswspace(*ptr))
+            ptr++;
+        if(!*ptr)
+            break;
+        if(i == index) {
+            token = ptr++;
+            while(*ptr && !iswspace(*ptr))
+                ptr++;
+            token = SysAllocStringLen(token, ptr - token);
+            if(!token) {
+                SysFreeString(list);
+                return E_OUTOFMEMORY;
+            }
+            break;
+        }
+        i++;
+        ptr++;
+        while(*ptr && !iswspace(*ptr))
+            ptr++;
+    } while(*ptr++);
+
+    SysFreeString(list);
+    if(!token)
+        V_VT(p) = VT_NULL;
+    else {
+        V_VT(p) = VT_BSTR;
+        V_BSTR(p) = token;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI token_list_toString(IWineDOMTokenList *iface, BSTR *String)

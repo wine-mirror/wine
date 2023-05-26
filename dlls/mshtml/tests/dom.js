@@ -726,6 +726,19 @@ sync_test("classList", function() {
     ok(classList.contains("b") === true, "contains: expected 'b' to return true");
     ok(classList.contains("d") === false, "contains: expected 'd' to return false");
 
+    r = classList.item(-1);
+    ok(r === null, "item(-1) = " + r);
+    r = classList.item(0);
+    ok(r === "a", "item(0) = " + r);
+    r = classList.item(1);
+    ok(r === "b", "item(1) = " + r);
+    r = classList.item(2);
+    ok(r === "c", "item(2) = " + r);
+    r = classList.item(3);
+    ok(r === "4", "item(3) = " + r);
+    r = classList.item(4);
+    ok(r === null, "item(4) = " + r);
+
     classList.remove("e");
     ok(elem.className === "a b c 4", "remove: expected className 'a b c 4', got " + elem.className);
 
