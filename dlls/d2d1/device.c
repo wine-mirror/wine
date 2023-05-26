@@ -2097,10 +2097,10 @@ static BOOL d2d_bitmap_check_options_with_surface(unsigned int options, unsigned
 
     if (options && (options & D2D1_BITMAP_OPTIONS_TARGET) != (surface_options & D2D1_BITMAP_OPTIONS_TARGET))
         return FALSE;
+    if (!(options & D2D1_BITMAP_OPTIONS_CANNOT_DRAW) && (surface_options & D2D1_BITMAP_OPTIONS_CANNOT_DRAW))
+        return FALSE;
     if (options & D2D1_BITMAP_OPTIONS_TARGET)
     {
-        if (!(options & D2D1_BITMAP_OPTIONS_CANNOT_DRAW) && (surface_options & D2D1_BITMAP_OPTIONS_CANNOT_DRAW))
-            return FALSE;
         if (options & D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE && !(surface_options & D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE))
             return FALSE;
         return TRUE;
