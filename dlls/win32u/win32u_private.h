@@ -94,16 +94,11 @@ extern HWND get_capture(void) DECLSPEC_HIDDEN;
 extern BOOL get_cursor_pos( POINT *pt ) DECLSPEC_HIDDEN;
 extern HWND get_focus(void) DECLSPEC_HIDDEN;
 extern DWORD get_input_state(void) DECLSPEC_HIDDEN;
-extern HWND get_progman_window(void) DECLSPEC_HIDDEN;
-extern HWND get_shell_window(void) DECLSPEC_HIDDEN;
-extern HWND get_taskman_window(void) DECLSPEC_HIDDEN;
 extern BOOL release_capture(void) DECLSPEC_HIDDEN;
 extern BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret ) DECLSPEC_HIDDEN;
 extern BOOL set_caret_blink_time( unsigned int time ) DECLSPEC_HIDDEN;
 extern BOOL set_caret_pos( int x, int y ) DECLSPEC_HIDDEN;
 extern BOOL set_foreground_window( HWND hwnd, BOOL mouse ) DECLSPEC_HIDDEN;
-extern HWND set_progman_window( HWND hwnd ) DECLSPEC_HIDDEN;
-extern HWND set_taskman_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void toggle_caret( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void update_mouse_tracking_info( HWND hwnd ) DECLSPEC_HIDDEN;
 
@@ -232,6 +227,11 @@ extern ULONG set_window_style( HWND hwnd, ULONG set_bits, ULONG clear_bits ) DEC
 extern BOOL show_owned_popups( HWND owner, BOOL show ) DECLSPEC_HIDDEN;
 extern void update_window_state( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND window_from_point( HWND hwnd, POINT pt, INT *hittest ) DECLSPEC_HIDDEN;
+extern HWND get_shell_window(void) DECLSPEC_HIDDEN;
+extern HWND get_progman_window(void) DECLSPEC_HIDDEN;
+extern HWND set_progman_window( HWND hwnd ) DECLSPEC_HIDDEN;
+extern HWND get_taskman_window(void) DECLSPEC_HIDDEN;
+extern HWND set_taskman_window( HWND hwnd ) DECLSPEC_HIDDEN;
 
 /* to release pointers retrieved by win_get_ptr */
 static inline void release_win_ptr( struct tagWND *ptr )
