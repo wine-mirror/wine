@@ -1272,13 +1272,7 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         return call_current_hook( h_extra->handle, HC_ACTION, wparam, h_extra->lparam );
     }
     case WM_WINE_CLIPCURSOR:
-        if (wparam)
-        {
-            RECT rect;
-            get_clip_cursor( &rect );
-            return user_driver->pClipCursor( &rect );
-        }
-        return user_driver->pClipCursor( NULL );
+        return process_wine_clipcursor( !wparam );
     case WM_WINE_UPDATEWINDOWSTATE:
         update_window_state( hwnd );
         return 0;

@@ -2497,6 +2497,18 @@ BOOL get_clip_cursor( RECT *rect )
     return ret;
 }
 
+BOOL process_wine_clipcursor( BOOL empty )
+{
+    RECT rect;
+
+    TRACE( "empty %u\n", empty );
+
+    if (empty) return user_driver->pClipCursor( NULL );
+
+    get_clip_cursor( &rect );
+    return user_driver->pClipCursor( &rect );
+}
+
 /***********************************************************************
  *       NtUserClipCursor (win32u.@)
  */
