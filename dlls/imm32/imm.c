@@ -2337,15 +2337,10 @@ BOOL WINAPI ImmRegisterWordW( HKL hkl, const WCHAR *readingW, DWORD style, const
 /***********************************************************************
  *		ImmReleaseContext (IMM32.@)
  */
-BOOL WINAPI ImmReleaseContext(HWND hWnd, HIMC hIMC)
+BOOL WINAPI ImmReleaseContext( HWND hwnd, HIMC himc )
 {
-  static BOOL shown = FALSE;
-
-  if (!shown) {
-     FIXME("(%p, %p): stub\n", hWnd, hIMC);
-     shown = TRUE;
-  }
-  return TRUE;
+    TRACE( "hwnd %p, himc %p\n", hwnd, himc );
+    return TRUE;
 }
 
 /***********************************************************************
