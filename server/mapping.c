@@ -1270,7 +1270,8 @@ DECL_HANDLER(map_image_view)
         view->committed = NULL;
         view->shared    = mapping->shared ? (struct shared_map *)grab_object( mapping->shared ) : NULL;
         view->image     = mapping->image;
-        view->image.machine = req->machine;
+        view->image.machine     = req->machine;
+        view->image.entry_point = req->entry;
         add_process_view( current, view );
 
         if (view->base != mapping->image.base) set_error( STATUS_IMAGE_NOT_AT_BASE );

@@ -2185,6 +2185,7 @@ static void dump_map_image_view_request( const struct map_image_view_request *re
     fprintf( stderr, " mapping=%04x", req->mapping );
     dump_uint64( ", base=", &req->base );
     dump_uint64( ", size=", &req->size );
+    fprintf( stderr, ", entry=%08x", req->entry );
     fprintf( stderr, ", machine=%04x", req->machine );
 }
 

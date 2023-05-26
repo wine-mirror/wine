@@ -2677,7 +2677,9 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
         (!machine && main_image_info.Machine == IMAGE_FILE_MACHINE_AMD64))
     {
         update_arm64x_mapping( ptr, nt, sections );
-        image_info->machine = nt->FileHeader.Machine;  /* reload changed machine from NT header */
+        /* reload changed data from NT header */
+        image_info->machine     = nt->FileHeader.Machine;
+        image_info->entry_point = nt->OptionalHeader.AddressOfEntryPoint;
     }
 #endif
     if (machine && machine != nt->FileHeader.Machine) return STATUS_NOT_SUPPORTED;
@@ -2810,6 +2812,7 @@ static NTSTATUS virtual_map_image( HANDLE mapping, void **addr_ptr, SIZE_T *size
             req->mapping = wine_server_obj_handle( mapping );
             req->base    = wine_server_client_ptr( view->base );
             req->size    = size;
+            req->entry   = image_info->entry_point;
             req->machine = image_info->machine;
             status = wine_server_call( req );
         }
