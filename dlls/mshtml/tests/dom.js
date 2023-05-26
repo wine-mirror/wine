@@ -685,6 +685,43 @@ sync_test("classList", function() {
     }
     ok(exception, "Expected exception for classList.add(\"e f\")");
 
+    exception = false;
+    try
+    {
+        classList.contains();
+    }
+    catch(e)
+    {
+        exception = true;
+    }
+    ok(exception, "Expected exception for classList.contains()");
+
+    exception = false;
+    try
+    {
+        classList.contains("");
+    }
+    catch(e)
+    {
+        exception = true;
+    }
+    ok(exception, "Expected exception for classList.contains(\"\")");
+
+    exception = false;
+    try
+    {
+        classList.contains("a b");
+    }
+    catch(e)
+    {
+        exception = true;
+    }
+    ok(exception, "Expected exception for classList.contains(\"a b\")");
+
+    ok(classList.contains("4") === true, "contains: expected '4' to return true");
+    ok(classList.contains("b") === true, "contains: expected 'b' to return true");
+    ok(classList.contains("d") === false, "contains: expected 'd' to return false");
+
     classList.remove("e");
     ok(elem.className === "a b c 4", "remove: expected className 'a b c 4', got " + elem.className);
 

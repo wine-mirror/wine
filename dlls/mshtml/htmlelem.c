@@ -7573,10 +7573,26 @@ static HRESULT WINAPI token_list_toggle(IWineDOMTokenList *iface, BSTR token, VA
 static HRESULT WINAPI token_list_contains(IWineDOMTokenList *iface, BSTR token, VARIANT_BOOL *p)
 {
     struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
+    unsigned len;
+    HRESULT hres;
+    BSTR list;
 
-    FIXME("(%p)->(%s %p)\n", token_list, debugstr_w(token), p);
+    TRACE("(%p)->(%s %p)\n", token_list, debugstr_w(token), p);
 
-    return E_NOTIMPL;
+    if(!token || !*token)
+        return E_INVALIDARG;
+
+    for(len = 0; token[len]; len++)
+        if(iswspace(token[len]))
+            return E_INVALIDARG;
+
+    hres = IHTMLElement_get_className(token_list->element, &list);
+    if(FAILED(hres))
+        return hres;
+
+    *p = find_token(list, token, len) ? VARIANT_TRUE : VARIANT_FALSE;
+    SysFreeString(list);
+    return S_OK;
 }
 
 static HRESULT WINAPI token_list_get_length(IWineDOMTokenList *iface, LONG *p)
