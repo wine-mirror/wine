@@ -2384,6 +2384,23 @@ static NTSTATUS map_pe_header( void *ptr, size_t size, int fd, BOOL *removable )
 #ifdef __aarch64__
 
 /***********************************************************************
+ *           alloc_arm64ec_map
+ */
+static void alloc_arm64ec_map(void)
+{
+    SIZE_T size = ((ULONG_PTR)user_space_limit + page_size) >> (page_shift + 3);  /* one bit per page */
+    unsigned int status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&arm64ec_map, 0, &size,
+                                                   MEM_COMMIT, PAGE_READWRITE );
+    if (status)
+    {
+        ERR( "failed to allocate ARM64EC map: %08x\n", status );
+        exit(1);
+    }
+    peb->EcCodeBitMap = arm64ec_map;
+}
+
+
+/***********************************************************************
  *           apply_arm64x_relocations
  */
 static void apply_arm64x_relocations( char *base, const IMAGE_BASE_RELOCATION *reloc, size_t size )
@@ -2449,8 +2466,9 @@ static void update_arm64x_mapping( char *base, IMAGE_NT_HEADERS *nt, IMAGE_SECTI
 
     if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY, CHPEMetadataPointer )) return;
     if (!cfg->CHPEMetadataPointer) return;
+    if (!arm64ec_map) alloc_arm64ec_map();
     metadata = (void *)(base + (cfg->CHPEMetadataPointer - nt->OptionalHeader.ImageBase));
-    if (metadata->CodeMap && arm64ec_map)
+    if (metadata->CodeMap)
     {
         const IMAGE_CHPE_RANGE_ENTRY *map = (void *)(base + metadata->CodeMap);
 
@@ -3520,25 +3538,6 @@ NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR limit, SIZE_T
 done:
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
     return status;
-}
-
-
-/***********************************************************************
- *           virtual_alloc_arm64ec_map
- */
-void *virtual_alloc_arm64ec_map(void)
-{
-#ifdef __aarch64__
-    SIZE_T size = ((ULONG_PTR)user_space_limit + page_size) >> (page_shift + 3);  /* one bit per page */
-    unsigned int status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&arm64ec_map, 0, &size,
-                                                   MEM_COMMIT, PAGE_READWRITE );
-    if (status)
-    {
-        ERR( "failed to allocate ARM64EC map: %08x\n", status );
-        exit(1);
-    }
-#endif
-    return arm64ec_map;
 }
 
 

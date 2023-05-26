@@ -1869,7 +1869,6 @@ static void init_peb( RTL_USER_PROCESS_PARAMETERS *params, void *module )
         break;
     case IMAGE_FILE_MACHINE_AMD64:
         if (main_image_info.Machine == current_machine) break;
-        peb->EcCodeBitMap = virtual_alloc_arm64ec_map();
         ERR( "starting %s in experimental ARM64EC mode\n", debugstr_us(&params->ImagePathName) );
         break;
     }
