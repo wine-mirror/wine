@@ -47,6 +47,7 @@
 
 #define SPERR_UNINITIALIZED                       0x80045001
 #define SPERR_ALREADY_INITIALIZED                 0x80045002
+#define SPERR_UNSUPPORTED_FORMAT                  0x80045003
 #define SPERR_INVALID_FLAGS                       0x80045004
 #define SPERR_DEVICE_BUSY                         0x80045006
 #define SPERR_DEVICE_NOT_SUPPORTED                0x80045007
