@@ -2698,6 +2698,7 @@ static LONG apply_display_settings( const WCHAR *devname, const DEVMODEW *devmod
         if (!adapter_get_current_settings( adapter, &current_mode )) WARN( "Failed to get primary adapter current display settings.\n" );
         adapter_release( adapter );
 
+        NtUserClipCursor( NULL );
         send_notify_message( NtUserGetDesktopWindow(), WM_DISPLAYCHANGE, current_mode.dmBitsPerPel,
                              MAKELPARAM( current_mode.dmPelsWidth, current_mode.dmPelsHeight ), FALSE );
         send_message_timeout( HWND_BROADCAST, WM_DISPLAYCHANGE, current_mode.dmBitsPerPel,
