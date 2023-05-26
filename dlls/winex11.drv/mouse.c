@@ -442,7 +442,6 @@ static BOOL grab_clipping_window( const RECT *clip )
     if (!data->clip_hwnd) sync_window_cursor( clip_window );
     InterlockedExchangePointer( (void **)&cursor_window, msg_hwnd );
     data->clip_hwnd = msg_hwnd;
-    send_notify_message( NtUserGetDesktopWindow(), WM_X11DRV_CLIP_CURSOR_NOTIFY, 0, (LPARAM)msg_hwnd );
     return TRUE;
 #else
     WARN( "XInput2 was not available at compile time\n" );
@@ -457,16 +456,19 @@ static BOOL grab_clipping_window( const RECT *clip )
  */
 static void ungrab_clipping_window(void)
 {
-    Display *display = thread_init_display();
+    struct x11drv_thread_data *data = x11drv_init_thread_data();
     Window clip_window = init_clip_window();
 
     if (!clip_window) return;
 
     TRACE( "no longer clipping\n" );
-    XUnmapWindow( display, clip_window );
-    if (clipping_cursor) XUngrabPointer( display, CurrentTime );
+    XUnmapWindow( data->display, clip_window );
+    if (clipping_cursor) XUngrabPointer( data->display, CurrentTime );
     clipping_cursor = FALSE;
-    send_notify_message( NtUserGetDesktopWindow(), WM_X11DRV_CLIP_CURSOR_NOTIFY, 0, 0 );
+    NtUserDestroyWindow( data->clip_hwnd );
+    data->clip_hwnd = 0;
+    data->clip_reset = NtGetTickCount();
+    disable_xinput2();
 }
 
 /***********************************************************************
@@ -481,43 +483,6 @@ void retry_grab_clipping_window(void)
         NtUserClipCursor( &clip_rect );
     else if (last_clip_refused && NtUserGetForegroundWindow() == last_clip_foreground_window)
         NtUserClipCursor( &last_clip_rect );
-}
-
-/***********************************************************************
- *             clip_cursor_notify
- *
- * Notification function called upon receiving a WM_X11DRV_CLIP_CURSOR_NOTIFY.
- */
-LRESULT clip_cursor_notify( HWND hwnd, HWND prev_clip_hwnd, HWND new_clip_hwnd )
-{
-    struct x11drv_thread_data *data = x11drv_init_thread_data();
-
-    if (hwnd == NtUserGetDesktopWindow())  /* change the clip window stored in the desktop process */
-    {
-        static HWND clip_hwnd;
-
-        HWND prev = clip_hwnd;
-        clip_hwnd = new_clip_hwnd;
-        if (prev || new_clip_hwnd) TRACE( "clip hwnd changed from %p to %p\n", prev, new_clip_hwnd );
-        if (prev) send_notify_message( prev, WM_X11DRV_CLIP_CURSOR_NOTIFY, (WPARAM)prev, 0 );
-    }
-    else if (hwnd == data->clip_hwnd)  /* this is a notification that clipping has been reset */
-    {
-        TRACE( "clip hwnd reset from %p\n", hwnd );
-        data->clip_hwnd = 0;
-        data->clip_reset = NtGetTickCount();
-        disable_xinput2();
-        NtUserDestroyWindow( hwnd );
-    }
-    else if (prev_clip_hwnd)
-    {
-        /* This is a notification send by the desktop window to an old
-         * dangling clip window.
-         */
-        TRACE( "destroying old clip hwnd %p\n", prev_clip_hwnd );
-        NtUserDestroyWindow( prev_clip_hwnd );
-    }
-    return 0;
 }
 
 /***********************************************************************

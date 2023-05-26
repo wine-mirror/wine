@@ -3085,8 +3085,6 @@ LRESULT X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
         }
         return 0;
     }
-    case WM_X11DRV_CLIP_CURSOR_NOTIFY:
-        return clip_cursor_notify( hwnd, (HWND)wp, (HWND)lp );
     case WM_X11DRV_CLIP_CURSOR_REQUEST:
         return clip_cursor_request( hwnd, (BOOL)wp, (BOOL)lp );
     case WM_X11DRV_DELETE_TAB:
