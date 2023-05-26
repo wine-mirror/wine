@@ -635,15 +635,19 @@ sync_test("classList", function() {
 
     classList.add("a");
     ok(elem.className === "a", "Expected className 'a', got " + elem.className);
+    ok(classList.length === 1, "Expected length 1 for className 'a', got " + classList.length);
 
     classList.add("b");
     ok(elem.className === "a b", "Expected className 'a b', got " + elem.className);
+    ok(classList.length === 2, "Expected length 2 for className 'a b', got " + classList.length);
 
     classList.add("c");
     ok(elem.className === "a b c", "Expected className 'a b c', got " + elem.className);
+    ok(classList.length === 3, "Expected length 3 for className 'a b c', got " + classList.length);
 
     classList.add(4);
     ok(elem.className === "a b c 4", "Expected className 'a b c 4', got " + elem.className);
+    ok(classList.length === 4, "Expected length 4 for className 'a b c 4', got " + classList.length);
 
     classList.add("c");
     ok(elem.className === "a b c 4", "(2) Expected className 'a b c 4', got " + elem.className);
@@ -820,6 +824,7 @@ sync_test("classList", function() {
     ok(elem.className === "abc", "toggle('123', null): got className " + elem.className);
 
     elem.className = "  testclass    foobar  ";
+    ok(classList.length === 2, "Expected length 2 for className '  testclass    foobar  ', got " + classList.length);
     ok(("" + classList) === "  testclass    foobar  ", "Expected classList value '  testclass    foobar  ', got " + classList);
     ok(classList.toString() === "  testclass    foobar  ", "Expected classList toString '  testclass    foobar  ', got " + classList.toString());
 });

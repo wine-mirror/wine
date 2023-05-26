@@ -7599,10 +7599,37 @@ static HRESULT WINAPI token_list_contains(IWineDOMTokenList *iface, BSTR token, 
 static HRESULT WINAPI token_list_get_length(IWineDOMTokenList *iface, LONG *p)
 {
     struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
+    unsigned length = 0;
+    const WCHAR *ptr;
+    HRESULT hres;
+    BSTR list;
 
-    FIXME("(%p)->(%p)\n", token_list, p);
+    TRACE("(%p)->(%p)\n", token_list, p);
 
-    return E_NOTIMPL;
+    hres = IHTMLElement_get_className(token_list->element, &list);
+    if(FAILED(hres))
+        return hres;
+
+    if(!list) {
+        *p = 0;
+        return S_OK;
+    }
+
+    ptr = list;
+    do {
+        while(iswspace(*ptr))
+            ptr++;
+        if(!*ptr)
+            break;
+        length++;
+        ptr++;
+        while(*ptr && !iswspace(*ptr))
+            ptr++;
+    } while(*ptr++);
+
+    SysFreeString(list);
+    *p = length;
+    return S_OK;
 }
 
 static HRESULT WINAPI token_list_item(IWineDOMTokenList *iface, LONG index, VARIANT *p)
