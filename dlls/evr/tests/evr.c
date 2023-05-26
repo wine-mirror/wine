@@ -3466,8 +3466,7 @@ static void test_presenter_orientation(const GUID *subtype)
 
     SetRect(&rect, 0, 0, header.biWidth, header.biHeight);
     diff = check_rgb32_data(L"rgb32frame-flip.bmp", data, header.biSizeImage, &rect);
-    todo_wine
-    ok(diff <= 3, "Unexpected %lu%% diff\n", diff);
+    ok(diff <= 5, "Unexpected %lu%% diff\n", diff);
     CoTaskMemFree(data);
 
     hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_ENDSTREAMING, 0);

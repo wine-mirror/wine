@@ -1531,7 +1531,8 @@ static HRESULT WINAPI video_presenter_control_GetCurrentImage(IMFVideoDisplayCon
         {
             if (SUCCEEDED(hr = IDirect3DSurface9_LockRect(readback, &mapped_rect, NULL, D3DLOCK_READONLY)))
             {
-                memcpy(*dib, mapped_rect.pBits, *dib_size);
+                hr = MFCopyImage(stride < 0 ? *dib + *dib_size + stride : *dib, stride,
+                        mapped_rect.pBits, mapped_rect.Pitch, abs(stride), surface_desc.Height);
                 IDirect3DSurface9_UnlockRect(readback);
             }
         }
