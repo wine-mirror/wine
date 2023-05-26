@@ -513,6 +513,10 @@ static void test_object_token(void)
     hr = ISpObjectToken_SetId( token, NULL, test_token_id, TRUE );
     ok( hr == S_OK, "got %08lx\n", hr );
 
+    hr = ISpObjectToken_CreateKey( token, L"Attributes", &sub_key );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ISpDataKey_Release( sub_key );
+
     hr = ISpObjectToken_SetStringValue( token, L"CLSID", TESTCLASS_CLSID );
     ok( hr == S_OK, "got %08lx\n", hr );
 

@@ -1117,8 +1117,11 @@ static HRESULT WINAPI token_OpenKey( ISpObjectToken *iface,
 static HRESULT WINAPI token_CreateKey( ISpObjectToken *iface,
                                        LPCWSTR name, ISpDataKey **sub_key )
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    struct object_token *This = impl_from_ISpObjectToken( iface );
+
+    TRACE( "%p, %s, %p\n", iface, debugstr_w(name), sub_key );
+
+    return ISpRegDataKey_CreateKey( This->data_key, name, sub_key );
 }
 
 static HRESULT WINAPI token_DeleteKey( ISpObjectToken *iface,
