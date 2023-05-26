@@ -53,6 +53,11 @@ static inline struct audio_client *impl_from_IAudioCaptureClient(IAudioCaptureCl
     return CONTAINING_RECORD(iface, struct audio_client, IAudioCaptureClient_iface);
 }
 
+static inline struct audio_client *impl_from_IAudioClient3(IAudioClient3 *iface)
+{
+    return CONTAINING_RECORD(iface, struct audio_client, IAudioClient3_iface);
+}
+
 static inline struct audio_client *impl_from_IAudioClock(IAudioClock *iface)
 {
     return CONTAINING_RECORD(iface, struct audio_client, IAudioClock_iface);
@@ -188,6 +193,39 @@ const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl =
     capture_ReleaseBuffer,
     capture_GetNextPacketSize
 };
+
+HRESULT WINAPI client_GetSharedModeEnginePeriod(IAudioClient3 *iface,
+                                                const WAVEFORMATEX *format,
+                                                UINT32 *default_period_frames,
+                                                UINT32 *unit_period_frames,
+                                                UINT32 *min_period_frames,
+                                                UINT32 *max_period_frames)
+{
+    struct audio_client *This = impl_from_IAudioClient3(iface);
+    FIXME("(%p)->(%p, %p, %p, %p, %p) - stub\n", This, format, default_period_frames,
+                                                 unit_period_frames, min_period_frames,
+                                                 max_period_frames);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI client_GetCurrentSharedModeEnginePeriod(IAudioClient3 *iface,
+                                                       WAVEFORMATEX **cur_format,
+                                                       UINT32 *cur_period_frames)
+{
+    struct audio_client *This = impl_from_IAudioClient3(iface);
+    FIXME("(%p)->(%p, %p) - stub\n", This, cur_format, cur_period_frames);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI client_InitializeSharedAudioStream(IAudioClient3 *iface, DWORD flags,
+                                                  UINT32 period_frames,
+                                                  const WAVEFORMATEX *format,
+                                                  const GUID *session_guid)
+{
+    struct audio_client *This = impl_from_IAudioClient3(iface);
+    FIXME("(%p)->(0x%lx, %u, %p, %s) - stub\n", This, flags, period_frames, format, debugstr_guid(session_guid));
+    return E_NOTIMPL;
+}
 
 static HRESULT WINAPI clock_QueryInterface(IAudioClock *iface, REFIID riid, void **ppv)
 {

@@ -1129,38 +1129,16 @@ static HRESULT WINAPI AudioClient_GetBufferSizeLimits(IAudioClient3 *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI AudioClient_GetSharedModeEnginePeriod(IAudioClient3 *iface,
+extern HRESULT WINAPI client_GetSharedModeEnginePeriod(IAudioClient3 *iface,
         const WAVEFORMATEX *format, UINT32 *default_period_frames, UINT32 *unit_period_frames,
-        UINT32 *min_period_frames, UINT32 *max_period_frames)
-{
-    ACImpl *This = impl_from_IAudioClient3(iface);
+        UINT32 *min_period_frames, UINT32 *max_period_frames);
 
-    FIXME("(%p)->(%p, %p, %p, %p, %p)\n", This, format, default_period_frames, unit_period_frames,
-            min_period_frames, max_period_frames);
+extern HRESULT WINAPI client_GetCurrentSharedModeEnginePeriod(IAudioClient3 *iface,
+        WAVEFORMATEX **cur_format, UINT32 *cur_period_frames);
 
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI AudioClient_GetCurrentSharedModeEnginePeriod(IAudioClient3 *iface,
-        WAVEFORMATEX **cur_format, UINT32 *cur_period_frames)
-{
-    ACImpl *This = impl_from_IAudioClient3(iface);
-
-    FIXME("(%p)->(%p, %p)\n", This, cur_format, cur_period_frames);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI AudioClient_InitializeSharedAudioStream(IAudioClient3 *iface,
+extern HRESULT WINAPI client_InitializeSharedAudioStream(IAudioClient3 *iface,
         DWORD flags, UINT32 period_frames, const WAVEFORMATEX *format,
-        const GUID *session_guid)
-{
-    ACImpl *This = impl_from_IAudioClient3(iface);
-
-    FIXME("(%p)->(0x%lx, %u, %p, %s)\n", This, flags, period_frames, format, debugstr_guid(session_guid));
-
-    return E_NOTIMPL;
-}
+        const GUID *session_guid);
 
 static const IAudioClient3Vtbl AudioClient3_Vtbl =
 {
@@ -1182,9 +1160,9 @@ static const IAudioClient3Vtbl AudioClient3_Vtbl =
     AudioClient_IsOffloadCapable,
     AudioClient_SetClientProperties,
     AudioClient_GetBufferSizeLimits,
-    AudioClient_GetSharedModeEnginePeriod,
-    AudioClient_GetCurrentSharedModeEnginePeriod,
-    AudioClient_InitializeSharedAudioStream,
+    client_GetSharedModeEnginePeriod,
+    client_GetCurrentSharedModeEnginePeriod,
+    client_InitializeSharedAudioStream,
 };
 
 static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client)
