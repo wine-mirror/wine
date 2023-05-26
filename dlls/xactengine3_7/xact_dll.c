@@ -316,7 +316,7 @@ static HRESULT WINAPI IXACT3CueImpl_GetProperties(IXACT3Cue *iface,
 }
 #endif
 
-#if XACT3_VER >= 0x0300
+#if XACT3_VER >= 0x0305
 static HRESULT WINAPI IXACT3CueImpl_SetOutputVoices(IXACT3Cue *iface,
         const XAUDIO2_VOICE_SENDS *pSendList)
 {
@@ -356,7 +356,7 @@ static const IXACT3CueVtbl XACT3Cue_Vtbl =
 #if XACT3_VER >= 0x0205
     IXACT3CueImpl_GetProperties,
 #endif
-#if XACT3_VER >= 0x0300
+#if XACT3_VER >= 0x0305
     IXACT3CueImpl_SetOutputVoices,
     IXACT3CueImpl_SetOutputVoiceMatrix
 #endif
