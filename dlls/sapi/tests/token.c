@@ -172,6 +172,10 @@ static void test_token_category(void)
     IEnumSpObjectTokens *enum_tokens;
     HRESULT hr;
     ULONG count;
+    int i;
+    ISpObjectToken *token;
+    WCHAR *token_id;
+    WCHAR tmp[MAX_PATH];
 
     hr = CoCreateInstance( &CLSID_SpObjectTokenCategory, NULL, CLSCTX_INPROC_SERVER,
                            &IID_ISpObjectTokenCategory, (void **)&cat );
@@ -198,6 +202,43 @@ static void test_token_category(void)
     ok( count == 5, "got %lu\n", count );
 
     IEnumSpObjectTokens_Release( enum_tokens );
+
+    hr = ISpObjectTokenCategory_EnumTokens( cat, L"Language=409", NULL, &enum_tokens );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    count = 0xdeadbeef;
+    hr = IEnumSpObjectTokens_GetCount( enum_tokens, &count );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( count == 3, "got %lu\n", count );
+
+    IEnumSpObjectTokens_Release( enum_tokens );
+
+    hr = ISpObjectTokenCategory_EnumTokens( cat, L"Language=409", L"Vendor=Vendor1;Age=Child;Gender=Female",
+                                            &enum_tokens );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    count = 0xdeadbeef;
+    hr = IEnumSpObjectTokens_GetCount( enum_tokens, &count );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( count == 3, "got %lu\n", count );
+
+    for ( i = 0; i < 3; i++ ) {
+        token = NULL;
+        hr = IEnumSpObjectTokens_Item( enum_tokens, i, &token );
+        ok( hr == S_OK, "i = %d: got %08lx\n", i, hr );
+
+        token_id = NULL;
+        hr = ISpObjectToken_GetId( token, &token_id );
+        ok( hr == S_OK, "i = %d: got %08lx\n", i, hr );
+        swprintf( tmp, MAX_PATH, L"%ls\\Tokens\\Voice%d", test_cat, 3 - i );
+        ok( !wcscmp( token_id, tmp ), "i = %d: got %s\n", i, wine_dbgstr_w(token_id) );
+
+        CoTaskMemFree( token_id );
+        ISpObjectToken_Release( token );
+    }
+
+    IEnumSpObjectTokens_Release( enum_tokens );
+
     ISpObjectTokenCategory_Release( cat );
 }
 
@@ -205,8 +246,8 @@ static void test_token_enum(void)
 {
     ISpObjectTokenEnumBuilder *token_enum;
     HRESULT hr;
-    ISpObjectToken *tokens[3];
-    ISpObjectToken *out_tokens[3];
+    ISpObjectToken *tokens[5];
+    ISpObjectToken *out_tokens[5];
     WCHAR token_id[MAX_PATH];
     ULONG count;
     int i;
@@ -234,7 +275,7 @@ static void test_token_enum(void)
     ok( hr == S_FALSE, "got %08lx\n", hr );
     ok( count == 0, "got %lu\n", count );
 
-    for ( i = 0; i < 3; i++ ) {
+    for ( i = 0; i < 5; i++ ) {
         hr = CoCreateInstance( &CLSID_SpObjectToken, NULL, CLSCTX_INPROC_SERVER,
                                &IID_ISpObjectToken, (void **)&tokens[i] );
         ok( hr == S_OK, "got %08lx\n", hr );
@@ -273,7 +314,96 @@ static void test_token_enum(void)
 
     ISpObjectTokenEnumBuilder_Release( token_enum );
 
-    for ( i = 0; i < 3; i++ ) ISpObjectToken_Release( tokens[i] );
+    hr = CoCreateInstance( &CLSID_SpObjectTokenEnum, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_ISpObjectTokenEnumBuilder, (void **)&token_enum );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    /* Vendor attribute must exist */
+    hr = ISpObjectTokenEnumBuilder_SetAttribs( token_enum, L"Vendor", NULL );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    hr = ISpObjectTokenEnumBuilder_AddTokens( token_enum, 5, tokens );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    count = 0xdeadbeef;
+    hr = ISpObjectTokenEnumBuilder_Next( token_enum, 5, &out_tokens[0], &count );
+    ok( hr == S_FALSE, "got %08lx\n", hr );
+    ok( count == 4, "got %lu\n", count );
+
+    ISpObjectTokenEnumBuilder_Release( token_enum );
+
+    hr = CoCreateInstance( &CLSID_SpObjectTokenEnum, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_ISpObjectTokenEnumBuilder, (void **)&token_enum );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    /* Vendor attribute must contain Vendor1 */
+    hr = ISpObjectTokenEnumBuilder_SetAttribs( token_enum, L"Vendor=Vendor1", NULL );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    hr = ISpObjectTokenEnumBuilder_AddTokens( token_enum, 5, tokens );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    count = 0xdeadbeef;
+    hr = ISpObjectTokenEnumBuilder_Next( token_enum, 5, &out_tokens[0], &count );
+    ok( hr == S_FALSE, "got %08lx\n", hr );
+    ok( count == 2, "got %lu\n", count );
+
+    ISpObjectTokenEnumBuilder_Release( token_enum );
+
+    hr = CoCreateInstance( &CLSID_SpObjectTokenEnum, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_ISpObjectTokenEnumBuilder, (void **)&token_enum );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    /* Vendor attribute must not contain Vendor1 */
+    hr = ISpObjectTokenEnumBuilder_SetAttribs( token_enum, L"Vendor!=Vendor1", NULL );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    hr = ISpObjectTokenEnumBuilder_AddTokens( token_enum, 5, tokens );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    count = 0xdeadbeef;
+    hr = ISpObjectTokenEnumBuilder_Next( token_enum, 5, &out_tokens[0], &count );
+    ok( hr == S_FALSE, "got %08lx\n", hr );
+    ok( count == 3, "got %lu\n", count );
+
+    ISpObjectTokenEnumBuilder_Release( token_enum );
+
+    hr = CoCreateInstance( &CLSID_SpObjectTokenEnum, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_ISpObjectTokenEnumBuilder, (void **)&token_enum );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    /* Vendor attribute must contain Vendor1 and Language attribute must contain 407 */
+    hr = ISpObjectTokenEnumBuilder_SetAttribs( token_enum, L"Vendor=Vendor1;Language=407", NULL );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    hr = ISpObjectTokenEnumBuilder_AddTokens( token_enum, 5, tokens );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    count = 0xdeadbeef;
+    hr = ISpObjectTokenEnumBuilder_Next( token_enum, 5, &out_tokens[0], &count );
+    ok( hr == S_FALSE, "got %08lx\n", hr );
+    ok( count == 1, "got %lu\n", count );
+
+    hr = CoCreateInstance( &CLSID_SpObjectTokenEnum, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_ISpObjectTokenEnumBuilder, (void **)&token_enum );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = ISpObjectTokenEnumBuilder_SetAttribs( token_enum, L"Language=409",
+                                               L"Vendor=Vendor1;Age=Child;Gender=Female" );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    hr = ISpObjectTokenEnumBuilder_AddTokens( token_enum, 5, tokens );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = ISpObjectTokenEnumBuilder_Sort( token_enum, NULL );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    count = 0xdeadbeef;
+    hr = ISpObjectTokenEnumBuilder_Next( token_enum, 5, &out_tokens[0], &count );
+    ok( hr == S_FALSE, "got %08lx\n", hr );
+    ok( count == 3, "got %lu\n", count );
+    ok( out_tokens[0] == tokens[2], "got %p\n", out_tokens[0] );
+    ok( out_tokens[1] == tokens[1], "got %p\n", out_tokens[1] );
+    ok( out_tokens[2] == tokens[0], "got %p\n", out_tokens[2] );
+
+    ISpObjectTokenEnumBuilder_Release( token_enum );
+
+    for ( i = 0; i < 5; i++ ) ISpObjectToken_Release( tokens[i] );
 }
 
 static void test_default_token_id(void)

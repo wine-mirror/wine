@@ -908,6 +908,104 @@ out_of_mem:
     return E_OUTOFMEMORY;
 }
 
+static HRESULT score_attributes( ISpObjectToken *token, const WCHAR *attrs,
+                                 BOOL match_all, uint64_t *score )
+{
+    ISpDataKey *attrs_key;
+    WCHAR *attr, *attr_ctx, *buf;
+    BOOL match[64];
+    unsigned int i, j;
+    HRESULT hr;
+
+    if (!attrs)
+    {
+        *score = 1;
+        return S_OK;
+    }
+    *score = 0;
+
+    if (FAILED(hr = ISpObjectToken_OpenKey( token, L"Attributes", &attrs_key )))
+        return hr == SPERR_NOT_FOUND ? S_OK : hr;
+
+    memset( match, 0, sizeof(match) );
+
+    /* attrs is a semicolon-separated list of attribute clauses.
+     * Each clause consists of an attribute name and an optional operator and value.
+     * The meaning of a clause depends on the operator given:
+     *   If no operator is given, the attribute must exist.
+     *   If the operator is '=', the attribute must contain the given value.
+     *   If the operator is '!=', the attribute must not exist or contain the given value.
+     */
+    if (!(buf = wcsdup( attrs ))) return E_OUTOFMEMORY;
+    for ( attr = wcstok_s( buf, L";", &attr_ctx ), i = 0; attr && i < 64;
+          attr = wcstok_s( NULL, L";", &attr_ctx ), i++ )
+    {
+        WCHAR *p = wcspbrk( attr, L"!=" );
+        WCHAR op = p ? *p : L'\0';
+        WCHAR *value = NULL, *res;
+        if ( p )
+        {
+            if ( op == L'=' )
+                value = p + 1;
+            else if ( op == L'!' )
+            {
+                if ( *(p + 1) != L'=' )
+                {
+                    WARN( "invalid attr operator '!%lc'.\n", *(p + 1) );
+                    hr = E_INVALIDARG;
+                    goto done;
+                }
+                value = p + 2;
+            }
+            *p = L'\0';
+        }
+
+        hr = ISpDataKey_GetStringValue( attrs_key, attr, &res );
+        if ( p ) *p = op;
+        if (SUCCEEDED(hr))
+        {
+            if ( !op )
+                match[i] = TRUE;
+            else
+            {
+                WCHAR *val, *val_ctx;
+
+                match[i] = FALSE;
+                for ( val = wcstok_s( res,  L";", &val_ctx ); val && !match[i];
+                      val = wcstok_s( NULL, L";", &val_ctx ) )
+                    match[i] = !wcscmp( val, value );
+
+                if (op == L'!') match[i] = !match[i];
+            }
+            CoTaskMemFree( res );
+        }
+        else if (hr == SPERR_NOT_FOUND)
+        {
+            hr = S_OK;
+            if (op == L'!') match[i] = TRUE;
+        }
+        else
+            goto done;
+
+        if ( match_all && !match[i] )
+            goto done;
+    }
+
+    if ( attr )
+        hr = E_INVALIDARG;
+    else
+    {
+        /* Attributes in attrs are ordered from highest to lowest priority. */
+        for ( j = 0; j < i; j++ )
+            if ( match[j] )
+                *score |= 1ULL << (i - 1 - j);
+    }
+
+done:
+    free( buf );
+    return hr;
+}
+
 static BOOL grow_tokens_array( struct token_enum *This )
 {
     struct token_with_score *new_tokens;
@@ -938,26 +1036,29 @@ static HRESULT WINAPI token_enum_AddTokens( ISpObjectTokenEnumBuilder *iface,
 {
     struct token_enum *This = impl_from_ISpObjectTokenEnumBuilder( iface );
     ULONG i;
+    uint64_t score;
+    HRESULT hr;
 
     TRACE( "(%p)->(%lu %p)\n", iface, num, tokens );
 
     if (!This->init) return SPERR_UNINITIALIZED;
     if (!tokens) return E_POINTER;
 
-    if (This->req || This->opt)
-    {
-        FIXME( "filtering and sorting of tokens is not implemented\n" );
-        return E_NOTIMPL;
-    }
-
     for ( i = 0; i < num; i++ )
     {
         if (!tokens[i]) return E_POINTER;
 
+        hr = score_attributes( tokens[i], This->req, TRUE, &score );
+        if (FAILED(hr)) return hr;
+        if (!score) continue;
+
+        hr = score_attributes( tokens[i], This->opt, FALSE, &score );
+        if (FAILED(hr)) return hr;
+
         if (!grow_tokens_array( This )) return E_OUTOFMEMORY;
         ISpObjectToken_AddRef( tokens[i] );
         This->tokens[This->count].token = tokens[i];
-        This->tokens[This->count].score = 0;
+        This->tokens[This->count].score = score;
         This->count++;
     }
 
@@ -979,12 +1080,21 @@ static HRESULT WINAPI token_enum_AddTokensFromTokenEnum( ISpObjectTokenEnumBuild
     return E_NOTIMPL;
 }
 
+static int __cdecl token_with_score_cmp( const void *a, const void *b )
+{
+    const struct token_with_score *ta = a, *tb = b;
+
+    if (ta->score > tb->score) return -1;
+    else if (ta->score < tb->score) return 1;
+    else return 0;
+}
+
 static HRESULT WINAPI token_enum_Sort( ISpObjectTokenEnumBuilder *iface,
                                        LPCWSTR first )
 {
     struct token_enum *This = impl_from_ISpObjectTokenEnumBuilder( iface );
 
-    FIXME( "(%p)->(%s): semi-stub\n", iface, debugstr_w(first) );
+    TRACE( "(%p)->(%s).\n", iface, debugstr_w(first) );
 
     if (!This->init) return SPERR_UNINITIALIZED;
     if (!This->tokens) return S_OK;
@@ -996,10 +1106,7 @@ static HRESULT WINAPI token_enum_Sort( ISpObjectTokenEnumBuilder *iface,
     }
 
     if (This->opt)
-    {
-        FIXME( "sorting with optional attributes is not implemented.\n" );
-        return E_NOTIMPL;
-    }
+        qsort( This->tokens, This->count, sizeof(*This->tokens), token_with_score_cmp );
 
     return S_OK;
 }
