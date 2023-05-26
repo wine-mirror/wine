@@ -242,9 +242,9 @@ static void test_VirtualAlloc2(void)
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "Got ret %d, error %lu.\n", ret, GetLastError());
 
     ret = pUnmapViewOfFile2(GetCurrentProcess(), view1, MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER);
-    todo_wine ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "Got ret %d, error %lu.\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "Got ret %d, error %lu.\n", ret, GetLastError());
     ret = pUnmapViewOfFile2(GetCurrentProcess(), view1, MEM_PRESERVE_PLACEHOLDER);
-    todo_wine ok(ret, "Got error %lu.\n", GetLastError());
+    ok(ret, "Got error %lu.\n", GetLastError());
 
     memset(&info, 0, sizeof(info));
     VirtualQuery(placeholder1, &info, sizeof(info));

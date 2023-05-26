@@ -5298,7 +5298,14 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
  */
 NTSTATUS WINAPI NtUnmapViewOfSectionEx( HANDLE process, PVOID addr, ULONG flags )
 {
-    if (flags) FIXME("Ignoring flags %#x.\n", (int)flags);
+    static const ULONG type_mask = MEM_UNMAP_WITH_TRANSIENT_BOOST | MEM_PRESERVE_PLACEHOLDER;
+
+    if (flags & ~type_mask)
+    {
+        WARN( "Unsupported flags %#x.\n", (int)flags );
+        return STATUS_INVALID_PARAMETER;
+    }
+    if (flags) FIXME( "Ignoring flags %#x.\n", (int)flags );
     return unmap_view_of_section( process, addr );
 }
 
