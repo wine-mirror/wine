@@ -446,7 +446,6 @@ void X11DRV_resize_desktop(void)
     NtUserSetWindowPos( hwnd, 0, virtual_rect.left, virtual_rect.top,
                         virtual_rect.right - virtual_rect.left, virtual_rect.bottom - virtual_rect.top,
                         SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE );
-    ungrab_clipping_window();
 
     if (old_virtual_rect.left != virtual_rect.left || old_virtual_rect.top != virtual_rect.top)
         send_message_timeout( HWND_BROADCAST, WM_X11DRV_DESKTOP_RESIZED, old_virtual_rect.left,

@@ -455,7 +455,7 @@ static BOOL grab_clipping_window( const RECT *clip )
  *
  * Release the pointer grab on the clip window.
  */
-void ungrab_clipping_window(void)
+static void ungrab_clipping_window(void)
 {
     Display *display = thread_init_display();
     Window clip_window = init_clip_window();
