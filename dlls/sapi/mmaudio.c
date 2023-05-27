@@ -47,6 +47,8 @@ struct mmaudio
 
     enum flow_type flow;
     ISpObjectToken *token;
+    UINT device_id;
+    CRITICAL_SECTION cs;
 };
 
 static inline struct mmaudio *impl_from_ISpEventSource(ISpEventSource *iface)
@@ -356,6 +358,7 @@ static ULONG WINAPI mmsysaudio_Release(ISpMMSysAudio *iface)
     if (!ref)
     {
         if (This->token) ISpObjectToken_Release(This->token);
+        DeleteCriticalSection(&This->cs);
 
         heap_free(This);
     }
@@ -531,16 +534,33 @@ static HRESULT WINAPI mmsysaudio_SetBufferNotifySize(ISpMMSysAudio *iface, ULONG
 
 static HRESULT WINAPI mmsysaudio_GetDeviceId(ISpMMSysAudio *iface, UINT *id)
 {
-    FIXME("(%p, %p): stub.\n", iface, id);
+    struct mmaudio *This = impl_from_ISpMMSysAudio(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p).\n", iface, id);
+
+    if (!id) return E_POINTER;
+
+    EnterCriticalSection(&This->cs);
+    *id = This->device_id;
+    LeaveCriticalSection(&This->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mmsysaudio_SetDeviceId(ISpMMSysAudio *iface, UINT id)
 {
-    FIXME("(%p, %u): stub.\n", iface, id);
+    struct mmaudio *This = impl_from_ISpMMSysAudio(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %u).\n", iface, id);
+
+    if (id != WAVE_MAPPER && id >= waveOutGetNumDevs())
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&This->cs);
+    This->device_id = id;
+    LeaveCriticalSection(&This->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mmsysaudio_GetMMHandle(ISpMMSysAudio *iface, void **handle)
@@ -620,9 +640,11 @@ static HRESULT mmaudio_create(IUnknown *outer, REFIID iid, void **obj, enum flow
 
     This->flow = flow;
     This->token = NULL;
+    This->device_id = WAVE_MAPPER;
+
+    InitializeCriticalSection(&This->cs);
 
     hr = ISpMMSysAudio_QueryInterface(&This->ISpMMSysAudio_iface, iid, obj);
-
     ISpMMSysAudio_Release(&This->ISpMMSysAudio_iface);
     return hr;
 }

@@ -60,9 +60,49 @@ static void test_interfaces(void)
     ISpObjectWithToken_Release(obj_with_token);
 }
 
+static void test_device_id(void)
+{
+    ISpMMSysAudio *mmaudio;
+    UINT id, num_devs;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_SpMMAudioOut, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_ISpMMSysAudio, (void **)&mmaudio);
+    ok(hr == S_OK, "failed to create SpMMAudioOut instance: %#lx.\n", hr);
+
+    id = 0xdeadbeef;
+    hr = ISpMMSysAudio_GetDeviceId(mmaudio, &id);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(id == WAVE_MAPPER, "got %#x.\n", id);
+
+    hr = ISpMMSysAudio_SetDeviceId(mmaudio, WAVE_MAPPER);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    num_devs = waveOutGetNumDevs();
+    if (num_devs == 0) {
+        skip("no wave out devices.\n");
+        ISpMMSysAudio_Release(mmaudio);
+        return;
+    }
+
+    hr = ISpMMSysAudio_SetDeviceId(mmaudio, num_devs);
+    ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+
+    hr = ISpMMSysAudio_SetDeviceId(mmaudio, 0);
+    ok(hr == S_OK || broken(hr == S_FALSE) /* Windows */, "got %#lx.\n", hr);
+
+    id = 0xdeadbeef;
+    hr = ISpMMSysAudio_GetDeviceId(mmaudio, &id);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(id == 0, "got %u.\n", id);
+
+    ISpMMSysAudio_Release(mmaudio);
+}
+
 START_TEST(mmaudio)
 {
     CoInitialize(NULL);
     test_interfaces();
+    test_device_id();
     CoUninitialize();
 }

@@ -1,5 +1,5 @@
 TESTDLL   = sapi.dll
-IMPORTS   = ole32 user32 advapi32
+IMPORTS   = ole32 user32 advapi32 winmm
 
 C_SRCS = \
 	automation.c \
