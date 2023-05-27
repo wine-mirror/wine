@@ -294,16 +294,12 @@ AntiMonikerImpl_ComposeWith(IMoniker* iface, IMoniker* pmkRight,
         return CreateGenericComposite(iface,pmkRight,ppmkComposite);
 }
 
-/******************************************************************************
- *        AntiMoniker_Enum
- ******************************************************************************/
-static HRESULT WINAPI
-AntiMonikerImpl_Enum(IMoniker* iface,BOOL fForward, IEnumMoniker** ppenumMoniker)
+static HRESULT WINAPI AntiMonikerImpl_Enum(IMoniker *iface, BOOL forward, IEnumMoniker **ppenumMoniker)
 {
-    TRACE("(%p,%d,%p)\n",iface,fForward,ppenumMoniker);
+    TRACE("%p, %d, %p.\n", iface, forward, ppenumMoniker);
 
     if (ppenumMoniker == NULL)
-        return E_POINTER;
+        return E_INVALIDARG;
 
     *ppenumMoniker = NULL;
 

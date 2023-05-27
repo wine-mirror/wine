@@ -3037,7 +3037,9 @@ static void test_anti_moniker(void)
     ok(!enummoniker, "Unexpected pointer.\n");
 
     hr = IMoniker_Enum(moniker, FALSE, NULL);
-    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMoniker_Enum(moniker, TRUE, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     /* CommonPrefixWith() */
