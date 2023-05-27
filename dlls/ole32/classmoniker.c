@@ -30,7 +30,6 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "ole2.h"
 #include "moniker.h"
 
@@ -138,8 +137,8 @@ static ULONG WINAPI ClassMoniker_Release(IMoniker* iface)
     if (!ref)
     {
         if (moniker->pMarshal) IUnknown_Release(moniker->pMarshal);
-        heap_free(moniker->data);
-        heap_free(moniker);
+        free(moniker->data);
+        free(moniker);
     }
 
     return ref;
@@ -187,8 +186,8 @@ static HRESULT WINAPI ClassMoniker_Load(IMoniker *iface, IStream *stream)
 
     if (moniker->header.data_len)
     {
-        heap_free(moniker->data);
-        if (!(moniker->data = heap_alloc(moniker->header.data_len)))
+        free(moniker->data);
+        if (!(moniker->data = malloc(moniker->header.data_len)))
         {
             WARN("Failed to allocate moniker data of size %lu.\n", moniker->header.data_len);
             moniker->header.data_len = 0;
@@ -597,7 +596,7 @@ static HRESULT create_class_moniker(const CLSID *clsid, const WCHAR *data,
 {
     ClassMoniker *object;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMoniker_iface.lpVtbl = &ClassMonikerVtbl;
@@ -608,7 +607,7 @@ static HRESULT create_class_moniker(const CLSID *clsid, const WCHAR *data,
     {
         object->header.data_len = (data_len + 1) * sizeof(WCHAR);
 
-        if (!(object->data = heap_alloc(object->header.data_len)))
+        if (!(object->data = malloc(object->header.data_len)))
         {
             IMoniker_Release(&object->IMoniker_iface);
             return E_OUTOFMEMORY;
