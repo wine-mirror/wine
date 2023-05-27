@@ -1027,14 +1027,6 @@ BOOL WINAPI NtGdiSetColorAdjustment( HDC hdc, const COLORADJUSTMENT *ca )
     return FALSE;
 }
 
-
-static struct unix_funcs unix_funcs =
-{
-    __wine_get_file_outline_text_metric,
-    __wine_get_icm_profile,
-    __wine_send_input,
-};
-
 void gdi_init(void)
 {
     pthread_mutexattr_t attr;
@@ -1051,10 +1043,4 @@ void gdi_init(void)
 
     dpi = font_init();
     init_stock_objects( dpi );
-}
-
-NTSTATUS callbacks_init( void *args )
-{
-    *(const struct unix_funcs **)args = &unix_funcs;
-    return 0;
 }

@@ -417,6 +417,9 @@
     SYSCALL_ENTRY( NtUserWaitForInputIdle ) \
     SYSCALL_ENTRY( NtUserWaitMessage ) \
     SYSCALL_ENTRY( NtUserWindowFromDC ) \
-    SYSCALL_ENTRY( NtUserWindowFromPoint )
+    SYSCALL_ENTRY( NtUserWindowFromPoint ) \
+    SYSCALL_ENTRY( __wine_get_file_outline_text_metric ) \
+    SYSCALL_ENTRY( __wine_get_icm_profile ) \
+    SYSCALL_ENTRY( __wine_send_input )
 
 #endif /* __WOW64WIN_SYSCALL_H */

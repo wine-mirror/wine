@@ -598,7 +598,7 @@ BOOL WINAPI NtUserAttachThreadInput( DWORD from, DWORD to, BOOL attach )
  *
  * Internal SendInput function to allow the graphics driver to inject real events.
  */
-BOOL CDECL __wine_send_input( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput )
+BOOL WINAPI __wine_send_input( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput )
 {
     return set_ntstatus( send_hardware_message( hwnd, input, rawinput, 0 ));
 }

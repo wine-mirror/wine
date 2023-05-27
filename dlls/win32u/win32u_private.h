@@ -32,14 +32,6 @@
 #include "wine/debug.h"
 #include "wine/server.h"
 
-struct unix_funcs
-{
-    /* Wine-specific functions */
-    BOOL (WINAPI *get_file_outline_text_metric)( const WCHAR *path, TEXTMETRICW *otm,
-                                                 UINT *em_square, WCHAR *face_name );
-    BOOL (CDECL *get_icm_profile)( HDC hdc, BOOL allow_default, DWORD *size, WCHAR *filename );
-    BOOL (CDECL *wine_send_input)( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput );
-};
 
 /* clipboard.c */
 extern UINT enum_clipboard_formats( UINT format ) DECLSPEC_HIDDEN;
@@ -247,9 +239,7 @@ static inline void release_win_ptr( struct tagWND *ptr )
     user_unlock();
 }
 
-extern void wrappers_init( unixlib_handle_t handle ) DECLSPEC_HIDDEN;
 extern void gdi_init(void) DECLSPEC_HIDDEN;
-extern NTSTATUS callbacks_init( void *args ) DECLSPEC_HIDDEN;
 extern void winstation_init(void) DECLSPEC_HIDDEN;
 extern void sysparams_init(void) DECLSPEC_HIDDEN;
 extern int muldiv( int a, int b, int c ) DECLSPEC_HIDDEN;

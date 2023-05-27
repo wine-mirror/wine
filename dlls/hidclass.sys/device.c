@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include "hid.h"
 #include "winreg.h"
-#include "winuser.h"
+#include "ntuser.h"
 
 #include "ddk/hidsdi.h"
 #include "ddk/hidtypes.h"

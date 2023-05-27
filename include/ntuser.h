@@ -1527,4 +1527,7 @@ static inline BOOL NtUserShowOwnedPopups( HWND hwnd, BOOL show )
     return NtUserCallHwndParam( hwnd, show, NtUserCallHwndParam_ShowOwnedPopups );
 }
 
+/* Wine extensions */
+BOOL WINAPI __wine_send_input( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput );
+
 #endif /* _NTUSER_ */

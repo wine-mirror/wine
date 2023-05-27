@@ -29,7 +29,7 @@
 #include "ddk/hidtypes.h"
 #include "ddk/wdm.h"
 #include "regstr.h"
-#include "winuser.h"
+#include "ntuser.h"
 #include "wine/debug.h"
 #include "wine/asm.h"
 #include "wine/list.h"

@@ -432,6 +432,9 @@ static void * const syscalls[] =
     NtUserWaitMessage,
     NtUserWindowFromDC,
     NtUserWindowFromPoint,
+    __wine_get_file_outline_text_metric,
+    __wine_get_icm_profile,
+    __wine_send_input
 };
 
 static BYTE arguments[ARRAY_SIZE(syscalls)];
@@ -452,5 +455,4 @@ static NTSTATUS init( void *dispatcher )
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     init,
-    callbacks_init,
 };
