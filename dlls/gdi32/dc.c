@@ -1970,6 +1970,21 @@ BOOL WINAPI GdiAlphaBlend( HDC hdc_dst, int x_dst, int y_dst, int width_dst, int
                             *(DWORD *)&blend_function, 0 /* FIXME */ );
 }
 
+/******************************************************************************
+ *           SetDIBits    (GDI32.@)
+ *
+ * Sets pixels in a bitmap using colors from DIB.
+ */
+INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
+		      UINT lines, const void *bits, const BITMAPINFO *info,
+		      UINT coloruse )
+{
+    /* Wine-specific: pass hbitmap to NtGdiSetDIBitsToDeviceInternal */
+    return NtGdiSetDIBitsToDeviceInternal( hdc, 0, 0, 0, 0, 0, 0,
+                                           startscan, lines, bits, info, coloruse,
+                                           0, 0, FALSE, hbitmap );
+}
+
 /***********************************************************************
  *           SetDIBitsToDevice   (GDI32.@)
  */

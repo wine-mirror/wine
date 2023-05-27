@@ -1324,6 +1324,5 @@
 @ cdecl __wine_send_input(long ptr ptr)
 
 # gdi32
-@ stdcall SetDIBits(long long long long ptr ptr long)
 @ cdecl __wine_get_icm_profile(long long ptr ptr)
 @ cdecl __wine_get_file_outline_text_metric(wstr ptr)

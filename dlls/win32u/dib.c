@@ -655,27 +655,10 @@ INT WINAPI NtGdiStretchDIBitsInternal( HDC hdc, INT xDst, INT yDst, INT widthDst
 }
 
 
-/******************************************************************************
- * SetDIBits [GDI32.@]
- *
- * Sets pixels in a bitmap using colors from DIB.
- *
- * PARAMS
- *    hdc       [I] Handle to device context
- *    hbitmap   [I] Handle to bitmap
- *    startscan [I] Starting scan line
- *    lines     [I] Number of scan lines
- *    bits      [I] Array of bitmap bits
- *    info      [I] Address of structure with data
- *    coloruse  [I] Type of color indexes to use
- *
- * RETURNS
- *    Success: Number of scan lines copied
- *    Failure: 0
- */
-INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
-		      UINT lines, LPCVOID bits, const BITMAPINFO *info,
-		      UINT coloruse )
+/* Sets pixels in a bitmap using colors from DIB, see SetDIBits */
+static int set_di_bits( HDC hdc, HBITMAP hbitmap, UINT startscan,
+                        UINT lines, LPCVOID bits, const BITMAPINFO *info,
+                        UINT coloruse )
 {
     BITMAPOBJ *bitmap;
     char src_bmibuf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
@@ -912,6 +895,8 @@ INT WINAPI NtGdiSetDIBitsToDeviceInternal( HDC hdc, INT xDest, INT yDest, DWORD 
     PHYSDEV physdev;
     INT ret = 0;
     DC *dc;
+
+    if (xform) return set_di_bits( hdc, xform, startscan, lines, bits, bmi, coloruse );
 
     if (!bits) return 0;
     if (!bitmapinfo_from_user_bitmapinfo( info, bmi, coloruse, TRUE ))
@@ -1468,7 +1453,7 @@ HBITMAP WINAPI NtGdiCreateDIBitmapInternal( HDC hdc, INT width, INT height, DWOR
     {
         if (init & CBM_INIT)
         {
-            if (SetDIBits( hdc, handle, 0, height, bits, data, coloruse ) == 0)
+            if (set_di_bits( hdc, handle, 0, height, bits, data, coloruse ) == 0)
             {
                 NtGdiDeleteObjectApp( handle );
                 handle = 0;

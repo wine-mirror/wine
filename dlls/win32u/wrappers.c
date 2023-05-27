@@ -24,14 +24,6 @@
 
 static const struct unix_funcs *unix_funcs;
 
-INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
-                      UINT lines, const void *bits, const BITMAPINFO *info,
-                      UINT coloruse )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pSetDIBits( hdc, hbitmap, startscan, lines, bits, info, coloruse );
-}
-
 BOOL CDECL __wine_get_icm_profile( HDC hdc, BOOL allow_default, DWORD *size, WCHAR *filename )
 {
     if (!unix_funcs) return FALSE;

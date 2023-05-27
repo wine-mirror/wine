@@ -1497,7 +1497,9 @@ Pixmap create_pixmap_from_image( HDC hdc, const XVisualInfo *vis, const BITMAPIN
         {
             if (src_info->bmiHeader.biBitCount == 1 && !src_info->bmiHeader.biClrUsed)
                 memcpy( src_info->bmiColors, default_colortable, sizeof(default_colortable) );
-            SetDIBits( hdc, dib, 0, abs(info->bmiHeader.biHeight), bits->ptr, src_info, coloruse );
+            NtGdiSetDIBitsToDeviceInternal( hdc, 0, 0, 0, 0, 0, 0, 0,
+                                            abs(info->bmiHeader.biHeight), bits->ptr, src_info, coloruse,
+                                            0, 0, FALSE, dib ); /* SetDIBits */
             dst_bits.free = NULL;
             dst_bits.is_copy = TRUE;
             err = put_pixmap_image( pixmap, vis, dst_info, &dst_bits );
