@@ -32,7 +32,6 @@
 #include "moniker.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -153,7 +152,7 @@ static ULONG WINAPI CompositeMonikerImpl_Release(IMoniker* iface)
     {
         if (moniker->left) IMoniker_Release(moniker->left);
         if (moniker->right) IMoniker_Release(moniker->right);
-        heap_free(moniker);
+        free(moniker);
     }
 
     return refcount;
@@ -483,7 +482,7 @@ static HRESULT composite_get_components_alloc(IMoniker *iface, unsigned int *cou
     else
         *count = 1;
 
-    if (!(*components = heap_alloc(*count * sizeof(**components))))
+    if (!(*components = malloc(*count * sizeof(**components))))
         return E_OUTOFMEMORY;
 
     index = 0;
@@ -507,7 +506,7 @@ static HRESULT WINAPI CompositeMonikerImpl_Enum(IMoniker *iface, BOOL forward, I
         return hr;
 
     hr = create_enumerator(monikers, count, forward, ret_enum);
-    heap_free(monikers);
+    free(monikers);
 
     return hr;
 }
@@ -533,7 +532,7 @@ static HRESULT WINAPI CompositeMonikerImpl_IsEqual(IMoniker *iface, IMoniker *ot
     if (FAILED(hr = composite_get_components_alloc(iface, &count, &components))) return hr;
     if (FAILED(hr = composite_get_components_alloc(other, &count, &other_components)))
     {
-        heap_free(components);
+        free(components);
         return hr;
     }
 
@@ -543,8 +542,8 @@ static HRESULT WINAPI CompositeMonikerImpl_IsEqual(IMoniker *iface, IMoniker *ot
             break;
     }
 
-    heap_free(other_components);
-    heap_free(components);
+    free(other_components);
+    free(components);
 
     return hr;
 }
@@ -724,15 +723,15 @@ static HRESULT WINAPI CompositeMonikerImpl_CommonPrefixWith(IMoniker *iface, IMo
         if (FAILED(hr = composite_get_components_alloc(iface, &count, &components))) return hr;
         if (FAILED(hr = composite_get_components_alloc(other, &count, &other_components)))
         {
-            heap_free(components);
+            free(components);
             return hr;
         }
 
         count = min(moniker->comp_count, other_moniker->comp_count);
-        if (!(prefix_components = heap_calloc(count, sizeof(*prefix_components))))
+        if (!(prefix_components = calloc(count, sizeof(*prefix_components))))
         {
-            heap_free(components);
-            heap_free(other_components);
+            free(components);
+            free(other_components);
             return E_OUTOFMEMORY;
         }
 
@@ -748,12 +747,12 @@ static HRESULT WINAPI CompositeMonikerImpl_CommonPrefixWith(IMoniker *iface, IMo
             if (hr == S_OK) break;
         }
 
-        heap_free(components);
-        heap_free(other_components);
+        free(components);
+        free(other_components);
 
         if (!prefix_len)
         {
-            heap_free(prefix_components);
+            free(prefix_components);
             return MK_E_NOPREFIX;
         }
 
@@ -766,7 +765,7 @@ static HRESULT WINAPI CompositeMonikerImpl_CommonPrefixWith(IMoniker *iface, IMo
             if (FAILED(hr)) break;
             last = c;
         }
-        heap_free(prefix_components);
+        free(prefix_components);
 
         if (SUCCEEDED(hr))
         {
@@ -839,7 +838,7 @@ static HRESULT WINAPI CompositeMonikerImpl_RelativePathTo(IMoniker *iface, IMoni
     if (FAILED(hr = composite_get_components_alloc(iface, &this_count, &components))) return hr;
     if (FAILED(hr = composite_get_components_alloc(other, &other_count, &other_components)))
     {
-        heap_free(components);
+        free(components);
         return hr;
     }
 
@@ -897,8 +896,8 @@ static HRESULT WINAPI CompositeMonikerImpl_RelativePathTo(IMoniker *iface, IMoni
     if (other_tail)
         IMoniker_Release(other_tail);
 
-    heap_free(other_components);
-    heap_free(components);
+    free(other_components);
+    free(components);
 
     return hr;
 }
@@ -1296,8 +1295,8 @@ static ULONG WINAPI EnumMonikerImpl_Release(IEnumMoniker *iface)
     {
         for (i = 0; i < e->count; ++i)
             IMoniker_Release(e->monikers[i]);
-        heap_free(e->monikers);
-        heap_free(e);
+        free(e->monikers);
+        free(e);
     }
 
     return refcount;
@@ -1385,16 +1384,16 @@ static HRESULT create_enumerator(IMoniker **components, unsigned int count, BOOL
     EnumMonikerImpl *object;
     unsigned int i;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IEnumMoniker_iface.lpVtbl = &VT_EnumMonikerImpl;
     object->ref = 1;
     object->count = count;
 
-    if (!(object->monikers = heap_calloc(count, sizeof(*object->monikers))))
+    if (!(object->monikers = calloc(count, sizeof(*object->monikers))))
     {
-        heap_free(object);
+        free(object);
         return E_OUTOFMEMORY;
     }
 
@@ -1473,7 +1472,7 @@ static HRESULT moniker_get_tree_representation(IMoniker *moniker, struct comp_no
     CompositeMonikerImpl *comp_moniker;
     struct comp_node *node;
 
-    if (!(node = heap_alloc_zero(sizeof(*node))))
+    if (!(node = calloc(1, sizeof(*node))))
         return E_OUTOFMEMORY;
     node->parent = parent;
 
@@ -1511,7 +1510,7 @@ static void moniker_tree_node_release(struct comp_node *node)
 {
     if (node->moniker)
         IMoniker_Release(node->moniker);
-    heap_free(node);
+    free(node);
 }
 
 static void moniker_tree_release(struct comp_node *node)
@@ -1750,7 +1749,7 @@ static HRESULT create_composite(IMoniker *left, IMoniker *right, IMoniker **moni
 
     *moniker = NULL;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMoniker_iface.lpVtbl = &VT_CompositeMonikerImpl;
