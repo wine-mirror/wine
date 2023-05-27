@@ -8443,6 +8443,28 @@ static void test_connect(void)
     WSACloseEvent(overlapped.hEvent);
     closesocket(connector);
 
+    if (0)
+    {
+        /* Wait in connect() is alertable. This may take a very long time before connection fails,
+         * so disable the test. Testing with localhost is unreliable as that may avoid waiting in
+         * accept(). */
+        connector = socket(AF_INET, SOCK_STREAM, 0);
+        ok(connector != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
+        address.sin_addr.s_addr = inet_addr("8.8.8.8");
+        address.sin_port = htons(255);
+
+        apc_count = 0;
+        SleepEx(0, TRUE);
+        ok(apc_count == 0, "got apc_count %d.\n", apc_count);
+        bret = QueueUserAPC(apc_func, GetCurrentThread(), (ULONG_PTR)&apc_count);
+        ok(bret, "QueueUserAPC returned %d\n", bret);
+        iret = connect(connector, (struct sockaddr *)&address, sizeof(address));
+        ok(apc_count == 1, "got apc_count %d.\n", apc_count);
+        ok(iret == -1 && (WSAGetLastError() == WSAECONNREFUSED || WSAGetLastError() == WSAETIMEDOUT),
+                "unexpected iret %d, error %d.\n", iret, WSAGetLastError());
+        closesocket(connector);
+    }
+
     /* Test connect after previous connect attempt failure. */
     connector = socket(AF_INET, SOCK_STREAM, 0);
     ok(connector != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());

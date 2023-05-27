@@ -1240,7 +1240,7 @@ int WINAPI connect( SOCKET s, const struct sockaddr *addr, int len )
     free( params );
     if (status == STATUS_PENDING)
     {
-        if (WaitForSingleObject( sync_event, INFINITE ) == WAIT_FAILED) return -1;
+        if (wait_event_alertable( sync_event ) == WAIT_FAILED) return -1;
         status = io.u.Status;
     }
     if (status)
