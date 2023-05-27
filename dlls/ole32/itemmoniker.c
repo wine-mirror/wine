@@ -31,7 +31,6 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "ole2.h"
 #include "moniker.h"
 
@@ -100,7 +99,7 @@ static ULONG WINAPI container_lock_Release(IUnknown *iface)
     {
         IOleItemContainer_LockContainer(lock->container, FALSE);
         IOleItemContainer_Release(lock->container);
-        heap_free(lock);
+        free(lock);
     }
 
     return refcount;
@@ -118,12 +117,12 @@ static HRESULT set_container_lock(IOleItemContainer *container, IBindCtx *pbc)
     struct container_lock *lock;
     HRESULT hr;
 
-    if (!(lock = heap_alloc(sizeof(*lock))))
+    if (!(lock = malloc(sizeof(*lock))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = IOleItemContainer_LockContainer(container, TRUE)))
     {
-        heap_free(lock);
+        free(lock);
         return hr;
     }
 
@@ -203,9 +202,9 @@ static ULONG WINAPI ItemMonikerImpl_Release(IMoniker* iface)
     if (!refcount)
     {
         if (moniker->pMarshal) IUnknown_Release(moniker->pMarshal);
-        heap_free(moniker->itemName);
-        heap_free(moniker->itemDelimiter);
-        heap_free(moniker);
+        free(moniker->itemName);
+        free(moniker->itemDelimiter);
+        free(moniker);
     }
 
     return refcount;
@@ -253,18 +252,18 @@ static HRESULT item_moniker_load_string_record(IStream *stream, WCHAR **ret)
 
     if (!str_len)
     {
-        heap_free(*ret);
+        free(*ret);
         *ret = NULL;
         return S_OK;
     }
 
-    if (!(buffer = heap_alloc(str_len)))
+    if (!(buffer = malloc(str_len)))
         return E_OUTOFMEMORY;
 
     IStream_Read(stream, buffer, str_len, &read_len);
     if (read_len != str_len)
     {
-        heap_free(buffer);
+        free(buffer);
         return E_FAIL;
     }
 
@@ -291,7 +290,7 @@ static HRESULT item_moniker_load_string_record(IStream *stream, WCHAR **ret)
             goto end;
         }
 
-        str = heap_alloc(str_len + sizeof(WCHAR));
+        str = malloc(str_len + sizeof(WCHAR));
         if (str)
         {
             memcpy(str, &buffer[i + 1], str_len);
@@ -301,21 +300,21 @@ static HRESULT item_moniker_load_string_record(IStream *stream, WCHAR **ret)
     else
     {
         lenW = MultiByteToWideChar(CP_ACP, 0, buffer, -1, NULL, 0);
-        str = heap_alloc(lenW * sizeof(WCHAR));
+        str = malloc(lenW * sizeof(WCHAR));
         if (str)
             MultiByteToWideChar(CP_ACP, 0, buffer, -1, str, lenW);
     }
 
     if (str)
     {
-        heap_free(*ret);
+        free(*ret);
         *ret = str;
     }
     else
         hr = E_OUTOFMEMORY;
 
 end:
-    heap_free(buffer);
+    free(buffer);
 
     return hr;
 }
@@ -361,13 +360,13 @@ static HRESULT WINAPI ItemMonikerImpl_Save(IMoniker *iface, IStream *stream, BOO
     if (This->itemDelimiter)
     {
         str_len = WideCharToMultiByte(CP_ACP, 0, This->itemDelimiter, -1, NULL, 0, NULL, NULL);
-        str = heap_alloc(str_len);
+        str = malloc(str_len);
         WideCharToMultiByte(CP_ACP, 0, This->itemDelimiter, -1, str, str_len, NULL, NULL);
 
         hr = IStream_Write(stream, &str_len, sizeof(str_len), NULL);
         hr = IStream_Write(stream, str, str_len, NULL);
 
-        heap_free(str);
+        free(str);
     }
     else
     {
@@ -376,11 +375,11 @@ static HRESULT WINAPI ItemMonikerImpl_Save(IMoniker *iface, IStream *stream, BOO
     }
 
     str_len = WideCharToMultiByte(CP_ACP, 0, This->itemName, -1, NULL, 0, NULL, NULL);
-    str = heap_alloc(str_len);
+    str = malloc(str_len);
     WideCharToMultiByte(CP_ACP, 0, This->itemName, -1, str, str_len, NULL, NULL);
     hr = IStream_Write(stream, &str_len, sizeof(str_len), NULL);
     hr = IStream_Write(stream, str, str_len, NULL);
-    heap_free(str);
+    free(str);
 
     return hr;
 }
@@ -940,7 +939,7 @@ HRESULT WINAPI CreateItemMoniker(const WCHAR *delimiter, const WCHAR *name, IMon
 
     TRACE("%s, %s, %p.\n", debugstr_w(delimiter), debugstr_w(name), ret);
 
-    if (!(moniker = heap_alloc_zero(sizeof(*moniker))))
+    if (!(moniker = calloc(1, sizeof(*moniker))))
         return E_OUTOFMEMORY;
 
     moniker->IMoniker_iface.lpVtbl = &VT_ItemMonikerImpl;
@@ -948,7 +947,7 @@ HRESULT WINAPI CreateItemMoniker(const WCHAR *delimiter, const WCHAR *name, IMon
     moniker->ref = 1;
 
     str_len = (lstrlenW(name) + 1) * sizeof(WCHAR);
-    moniker->itemName = heap_alloc(str_len);
+    moniker->itemName = malloc(str_len);
     if (!moniker->itemName)
     {
         hr = E_OUTOFMEMORY;
@@ -959,7 +958,7 @@ HRESULT WINAPI CreateItemMoniker(const WCHAR *delimiter, const WCHAR *name, IMon
     if (delimiter)
     {
         str_len = (lstrlenW(delimiter) + 1) * sizeof(WCHAR);
-        moniker->itemDelimiter = heap_alloc(str_len);
+        moniker->itemDelimiter = malloc(str_len);
         if (!moniker->itemDelimiter)
         {
             hr = E_OUTOFMEMORY;
