@@ -12657,6 +12657,20 @@ static void test_WSAGetOverlappedResult(void)
         }
     }
 
+    overlapped.Internal = STATUS_PENDING;
+    overlapped.hEvent = CreateEventW(NULL, TRUE, TRUE, NULL);
+
+    apc_count = 0;
+    ret = QueueUserAPC(apc_func, GetCurrentThread(), (ULONG_PTR)&apc_count);
+    ok(ret, "QueueUserAPC returned %d\n", ret);
+    ret = WSAGetOverlappedResult(s, &overlapped, &size, TRUE, &flags);
+    ok(ret && (GetLastError() == ERROR_IO_PENDING || !WSAGetLastError()),
+            "Got ret %d, err %lu.\n", ret, GetLastError());
+    ok(!apc_count, "got apc_count %d.\n", apc_count);
+    SleepEx(0, TRUE);
+    ok(apc_count == 1, "got apc_count %d.\n", apc_count);
+
+    CloseHandle(overlapped.hEvent);
     closesocket(s);
 }
 
