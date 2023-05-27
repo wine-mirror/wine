@@ -8122,7 +8122,11 @@ static void test_WSAPoll(void)
     fds[0].fd = client;
     fds[0].events = POLLRDNORM | POLLRDBAND;
     fds[0].revents = 0xdead;
+    apc_count = 0;
+    ret = QueueUserAPC(apc_func, GetCurrentThread(), (ULONG_PTR)&apc_count);
+    ok(ret, "QueueUserAPC returned %d\n", ret);
     ret = pWSAPoll(fds, 1, 2000);
+    ok(apc_count == 1, "APC was called %u times\n", apc_count);
     ok(ret == 1, "got %d\n", ret);
     ok(fds[0].revents == POLLNVAL, "got events %#x\n", fds[0].revents);
     ret = WaitForSingleObject(thread_handle, 1000);
