@@ -4643,10 +4643,37 @@ static SOCKET setup_connector_socket(const struct sockaddr_in *addr, int len, BO
     return connector;
 }
 
+struct connect_apc_func_param
+{
+    HANDLE event;
+    struct sockaddr_in addr;
+    SOCKET connector;
+    unsigned int apc_count;
+};
+
+static DWORD WINAPI test_accept_connect_thread(void *param)
+{
+    struct connect_apc_func_param *p = (struct connect_apc_func_param *)param;
+
+    WaitForSingleObject(p->event, INFINITE);
+    p->connector = setup_connector_socket(&p->addr, sizeof(p->addr), FALSE);
+    ok(p->connector != INVALID_SOCKET, "failed connecting from APC func.\n");
+    return 0;
+}
+
+static void WINAPI connect_apc_func(ULONG_PTR param)
+{
+    struct connect_apc_func_param *p = (struct connect_apc_func_param *)param;
+
+    ++p->apc_count;
+    SetEvent(p->event);
+}
+
 static void test_accept(void)
 {
     int ret;
     SOCKET server_socket, accepted = INVALID_SOCKET, connector;
+    struct connect_apc_func_param apc_param;
     struct sockaddr_in address;
     SOCKADDR_STORAGE ss, ss_empty;
     int socklen;
@@ -4660,6 +4687,23 @@ static void test_accept(void)
 
     socklen = sizeof(address);
     server_socket = setup_server_socket(&address, &socklen);
+
+    memset(&apc_param, 0, sizeof(apc_param));
+    apc_param.event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    apc_param.addr = address;
+    /* Connecting directly from APC function randomly crashes on Windows for some reason,
+     * so do it from a thread and only signal it from the APC when we are in accept() call. */
+    thread_handle = CreateThread(NULL, 0, test_accept_connect_thread, &apc_param, 0, NULL);
+    ret = QueueUserAPC(connect_apc_func, GetCurrentThread(), (ULONG_PTR)&apc_param);
+    ok(ret, "QueueUserAPC returned %d\n", ret);
+    accepted = accept(server_socket, NULL, NULL);
+    ok(accepted != INVALID_SOCKET, "Failed to accept connection, %d\n", WSAGetLastError());
+    ok(apc_param.apc_count == 1, "APC was called %u times\n", apc_param.apc_count);
+    closesocket(accepted);
+    closesocket(apc_param.connector);
+    WaitForSingleObject(thread_handle, INFINITE);
+    CloseHandle(thread_handle);
+    CloseHandle(apc_param.event);
 
     connector = setup_connector_socket(&address, socklen, FALSE);
     if (connector == INVALID_SOCKET) goto done;

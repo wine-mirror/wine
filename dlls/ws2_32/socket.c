@@ -765,7 +765,7 @@ SOCKET WINAPI accept( SOCKET s, struct sockaddr *addr, int *len )
                                     NULL, 0, &accept_handle, sizeof(accept_handle) );
     if (status == STATUS_PENDING)
     {
-        if (WaitForSingleObject( sync_event, INFINITE ) == WAIT_FAILED)
+        if (wait_event_alertable( sync_event ) == WAIT_FAILED)
             return SOCKET_ERROR;
         status = io.u.Status;
     }
