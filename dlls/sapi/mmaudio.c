@@ -53,6 +53,7 @@ struct mmaudio
     enum flow_type flow;
     ISpObjectToken *token;
     UINT device_id;
+    WAVEFORMATEX *wfx;
     CRITICAL_SECTION cs;
 };
 
@@ -363,6 +364,7 @@ static ULONG WINAPI mmsysaudio_Release(ISpMMSysAudio *iface)
     if (!ref)
     {
         if (This->token) ISpObjectToken_Release(This->token);
+        heap_free(This->wfx);
         DeleteCriticalSection(&This->cs);
 
         heap_free(This);
@@ -455,9 +457,26 @@ static HRESULT WINAPI mmsysaudio_Clone(ISpMMSysAudio *iface, IStream **stream)
 
 static HRESULT WINAPI mmsysaudio_GetFormat(ISpMMSysAudio *iface, GUID *format, WAVEFORMATEX **wfx)
 {
-    FIXME("(%p, %p, %p): stub.\n", iface, format, wfx);
+    struct mmaudio *This = impl_from_ISpMMSysAudio(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %p).\n", iface, format, wfx);
+
+    if (!format || !wfx)
+        return E_POINTER;
+
+    EnterCriticalSection(&This->cs);
+
+    if (!(*wfx = CoTaskMemAlloc(sizeof(WAVEFORMATEX) + This->wfx->cbSize)))
+    {
+        LeaveCriticalSection(&This->cs);
+        return E_OUTOFMEMORY;
+    }
+    *format = SPDFID_WaveFormatEx;
+    memcpy(*wfx, This->wfx, sizeof(WAVEFORMATEX) + This->wfx->cbSize);
+
+    LeaveCriticalSection(&This->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mmsysaudio_SetState(ISpMMSysAudio *iface, SPAUDIOSTATE state, ULONGLONG reserved)
@@ -469,9 +488,37 @@ static HRESULT WINAPI mmsysaudio_SetState(ISpMMSysAudio *iface, SPAUDIOSTATE sta
 
 static HRESULT WINAPI mmsysaudio_SetFormat(ISpMMSysAudio *iface, const GUID *guid, const WAVEFORMATEX *wfx)
 {
-    FIXME("(%p, %s, %p): stub.\n", iface, debugstr_guid(guid), wfx);
+    struct mmaudio *This = impl_from_ISpMMSysAudio(iface);
+    MMRESULT res;
+    WAVEFORMATEX *new_wfx;
 
-    return E_NOTIMPL;
+    TRACE("(%p, %s, %p).\n", iface, debugstr_guid(guid), wfx);
+
+    if (!guid || !wfx || !IsEqualGUID(guid, &SPDFID_WaveFormatEx))
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&This->cs);
+
+    /* Determine whether the device supports the requested format. */
+    res = waveOutOpen(NULL, This->device_id, wfx, 0, 0, WAVE_FORMAT_QUERY);
+    if (res != MMSYSERR_NOERROR)
+    {
+        LeaveCriticalSection(&This->cs);
+        return res == WAVERR_BADFORMAT ? SPERR_UNSUPPORTED_FORMAT : SPERR_GENERIC_MMSYS_ERROR;
+    }
+
+    if (!(new_wfx = heap_alloc(sizeof(*wfx) + wfx->cbSize)))
+    {
+        LeaveCriticalSection(&This->cs);
+        return E_OUTOFMEMORY;
+    }
+    memcpy(new_wfx, wfx, sizeof(*wfx) + wfx->cbSize);
+    heap_free(This->wfx);
+    This->wfx = new_wfx;
+
+    LeaveCriticalSection(&This->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mmsysaudio_GetStatus(ISpMMSysAudio *iface, SPAUDIOSTATUS *status)
@@ -646,6 +693,19 @@ static HRESULT mmaudio_create(IUnknown *outer, REFIID iid, void **obj, enum flow
     This->flow = flow;
     This->token = NULL;
     This->device_id = WAVE_MAPPER;
+
+    if (!(This->wfx = heap_alloc(sizeof(*This->wfx))))
+    {
+        heap_free(This);
+        return E_OUTOFMEMORY;
+    }
+    This->wfx->wFormatTag = WAVE_FORMAT_PCM;
+    This->wfx->nChannels = 1;
+    This->wfx->nSamplesPerSec = 22050;
+    This->wfx->nAvgBytesPerSec = 22050 * 2;
+    This->wfx->nBlockAlign = 2;
+    This->wfx->wBitsPerSample = 16;
+    This->wfx->cbSize = 0;
 
     InitializeCriticalSection(&This->cs);
 

@@ -22,8 +22,12 @@
 
 #include "sapiddk.h"
 #include "sperror.h"
+#include "initguid.h"
 
 #include "wine/test.h"
+
+DEFINE_GUID(SPDFID_Text, 0x7ceef9f9, 0x3d13, 0x11d2, 0x9e, 0xe7, 0x00, 0xc0, 0x4f, 0x79, 0x73, 0x96);
+DEFINE_GUID(SPDFID_WaveFormatEx, 0xc31adbae, 0x527f, 0x4ff5, 0xa2, 0x30, 0xf6, 0x2b, 0xb6, 0x1f, 0xf7, 0x0c);
 
 static void test_interfaces(void)
 {
@@ -99,10 +103,66 @@ static void test_device_id(void)
     ISpMMSysAudio_Release(mmaudio);
 }
 
+static void test_formats(void)
+{
+    ISpMMSysAudio *mmaudio;
+    GUID fmtid;
+    WAVEFORMATEX *wfx;
+    WAVEFORMATEX wfx2;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_SpMMAudioOut, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_ISpMMSysAudio, (void **)&mmaudio);
+    ok(hr == S_OK, "failed to create SpMMAudioOut instance: %#lx.\n", hr);
+
+    wfx = NULL;
+    hr = ISpMMSysAudio_GetFormat(mmaudio, &fmtid, &wfx);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(IsEqualGUID(&fmtid, &SPDFID_WaveFormatEx), "got %s.\n", wine_dbgstr_guid(&fmtid));
+    ok(wfx != NULL, "wfx == NULL.\n");
+    ok(wfx->wFormatTag == WAVE_FORMAT_PCM, "got %u.\n", wfx->wFormatTag);
+    ok(wfx->nChannels == 1, "got %u.\n", wfx->nChannels);
+    ok(wfx->nSamplesPerSec == 22050, "got %lu.\n", wfx->nSamplesPerSec);
+    ok(wfx->nAvgBytesPerSec == 22050 * 2, "got %lu.\n", wfx->nAvgBytesPerSec);
+    ok(wfx->nBlockAlign == 2, "got %u.\n", wfx->nBlockAlign);
+    ok(wfx->wBitsPerSample == 16, "got %u.\n", wfx->wBitsPerSample);
+    ok(wfx->cbSize == 0, "got %u.\n", wfx->cbSize);
+    CoTaskMemFree(wfx);
+
+    hr = ISpMMSysAudio_SetFormat(mmaudio, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+
+    hr = ISpMMSysAudio_SetFormat(mmaudio, &SPDFID_Text, NULL);
+    ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+
+    hr = ISpMMSysAudio_SetFormat(mmaudio, &SPDFID_WaveFormatEx, NULL);
+    ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+
+    if (waveOutGetNumDevs() == 0) {
+        skip("no wave out devices.\n");
+        ISpMMSysAudio_Release(mmaudio);
+        return;
+    }
+
+    wfx2.wFormatTag = WAVE_FORMAT_PCM;
+    wfx2.nChannels = 2;
+    wfx2.nSamplesPerSec = 16000;
+    wfx2.nAvgBytesPerSec = 16000 * 2 * 2;
+    wfx2.nBlockAlign = 2 * 2;
+    wfx2.wBitsPerSample = 16;
+    wfx2.cbSize = 0;
+
+    hr = ISpMMSysAudio_SetFormat(mmaudio, &SPDFID_WaveFormatEx, &wfx2);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    ISpMMSysAudio_Release(mmaudio);
+}
+
 START_TEST(mmaudio)
 {
     CoInitialize(NULL);
     test_interfaces();
     test_device_id();
+    test_formats();
     CoUninitialize();
 }
