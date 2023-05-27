@@ -131,6 +131,7 @@
     SYSCALL_ENTRY( NtGdiGetTransform ) \
     SYSCALL_ENTRY( NtGdiGradientFill ) \
     SYSCALL_ENTRY( NtGdiHfontCreate ) \
+    SYSCALL_ENTRY( NtGdiIcmBrushInfo ) \
     SYSCALL_ENTRY( NtGdiInitSpool ) \
     SYSCALL_ENTRY( NtGdiIntersectClipRect ) \
     SYSCALL_ENTRY( NtGdiInvertRgn ) \

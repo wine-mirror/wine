@@ -38,12 +38,6 @@ BOOL CDECL __wine_get_icm_profile( HDC hdc, BOOL allow_default, DWORD *size, WCH
     return unix_funcs->get_icm_profile( hdc, allow_default, size, filename );
 }
 
-BOOL CDECL __wine_get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void *bits, UINT *usage )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->get_brush_bitmap_info( handle, info, bits, usage );
-}
-
 BOOL CDECL __wine_get_file_outline_text_metric( const WCHAR *path, OUTLINETEXTMETRICW *otm )
 {
     if (!unix_funcs) return FALSE;

@@ -1377,6 +1377,20 @@ NTSTATUS WINAPI wow64_NtGdiGradientFill( UINT *args )
     return NtGdiGradientFill( hdc, vert_array, nvert, grad_array, ngrad, mode );
 }
 
+NTSTATUS WINAPI wow64_NtGdiIcmBrushInfo( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    HBRUSH handle = get_handle( &args );
+    BITMAPINFO *info = get_ptr( &args );
+    void *bits = get_ptr( &args );
+    ULONG *bits_size = get_ptr( &args );
+    UINT *usage = get_ptr( &args );
+    BOOL *unk = get_ptr( &args );
+    UINT mode = get_ulong( &args );
+
+    return NtGdiIcmBrushInfo( hdc, handle, info, bits, bits_size, usage, unk, mode );
+}
+
 NTSTATUS WINAPI wow64_NtGdiInvertRgn( UINT *args )
 {
     HDC hdc = get_handle( &args );

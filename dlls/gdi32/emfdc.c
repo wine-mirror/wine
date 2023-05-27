@@ -489,7 +489,7 @@ static DWORD emfdc_create_brush( struct emf *emf, HBRUSH brush )
             DWORD info_size;
             UINT usage;
 
-            if (!__wine_get_brush_bitmap_info( brush, info, NULL, &usage )) break;
+            if (!NtGdiIcmBrushInfo( 0, brush, info, NULL, NULL, &usage, NULL, 0 )) break;
             info_size = get_dib_info_size( info, usage );
 
             emr = HeapAlloc( GetProcessHeap(), 0,
@@ -530,7 +530,7 @@ static DWORD emfdc_create_brush( struct emf *emf, HBRUSH brush )
             if (info->bmiHeader.biClrUsed == 1 << info->bmiHeader.biBitCount)
                 info->bmiHeader.biClrUsed = 0;
             memcpy( (BYTE *)emr + emr->offBmi, info, emr->cbBmi );
-            __wine_get_brush_bitmap_info( brush, NULL, (char *)emr + emr->offBits, NULL );
+            NtGdiIcmBrushInfo( 0, brush, NULL, (char *)emr + emr->offBits, NULL, NULL, NULL, 0 );
 
             if (!emfdc_record( emf, &emr->emr )) index = 0;
             HeapFree( GetProcessHeap(), 0, emr );

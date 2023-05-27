@@ -375,6 +375,8 @@ BOOL     WINAPI NtGdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
                                    void *grad_array, ULONG ngrad, ULONG mode );
 HFONT    WINAPI NtGdiHfontCreate( const void *logfont, ULONG unk2, ULONG unk3,
                                   ULONG unk4, void *data );
+BOOL     WINAPI NtGdiIcmBrushInfo( HDC hdc, HBRUSH handle, BITMAPINFO *info, void *bits,
+                                   ULONG *bits_size, UINT *usage, BOOL *unk, UINT mode );
 DWORD    WINAPI NtGdiInitSpool(void);
 INT      WINAPI NtGdiIntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom );
 BOOL     WINAPI NtGdiInvertRgn( HDC hdc, HRGN hrgn );
@@ -481,8 +483,6 @@ NTSTATUS WINAPI NtGdiDdDDISetQueuedLimit( D3DKMT_SETQUEUEDLIMIT *desc );
 NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER *desc );
 
 /* Wine extensions */
-extern BOOL CDECL __wine_get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void *bits,
-                                                UINT *usage );
 extern BOOL CDECL __wine_get_icm_profile( HDC hdc, BOOL allow_default, DWORD *size,
                                           WCHAR *filename );
 extern BOOL CDECL __wine_get_file_outline_text_metric( const WCHAR *path,

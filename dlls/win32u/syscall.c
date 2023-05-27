@@ -145,6 +145,7 @@ static void * const syscalls[] =
     NtGdiGetTransform,
     NtGdiGradientFill,
     NtGdiHfontCreate,
+    NtGdiIcmBrushInfo,
     NtGdiInitSpool,
     NtGdiIntersectClipRect,
     NtGdiInvertRgn,

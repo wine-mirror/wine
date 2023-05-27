@@ -530,7 +530,7 @@
 @ stub NtGdiHT_Get8BPPFormatPalette
 @ stub NtGdiHT_Get8BPPMaskPalette
 @ stdcall -syscall NtGdiHfontCreate(ptr long long long ptr)
-@ stub NtGdiIcmBrushInfo
+@ stdcall -syscall NtGdiIcmBrushInfo(long long ptr ptr ptr ptr ptr long)
 @ stub NtGdiInit
 @ stdcall -syscall NtGdiInitSpool()
 @ stdcall -syscall NtGdiIntersectClipRect(long long long long long)
@@ -1325,6 +1325,5 @@
 
 # gdi32
 @ stdcall SetDIBits(long long long long ptr ptr long)
-@ cdecl __wine_get_brush_bitmap_info(long ptr ptr ptr)
 @ cdecl __wine_get_icm_profile(long long ptr ptr)
 @ cdecl __wine_get_file_outline_text_metric(wstr ptr)
