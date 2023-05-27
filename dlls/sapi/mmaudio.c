@@ -53,7 +53,13 @@ struct mmaudio
     enum flow_type flow;
     ISpObjectToken *token;
     UINT device_id;
+    SPAUDIOSTATE state;
     WAVEFORMATEX *wfx;
+    union
+    {
+        HWAVEIN in;
+        HWAVEOUT out;
+    } hwave;
     CRITICAL_SECTION cs;
 };
 
@@ -363,6 +369,8 @@ static ULONG WINAPI mmsysaudio_Release(ISpMMSysAudio *iface)
 
     if (!ref)
     {
+        ISpMMSysAudio_SetState(iface, SPAS_CLOSED, 0);
+
         if (This->token) ISpObjectToken_Release(This->token);
         heap_free(This->wfx);
         DeleteCriticalSection(&This->cs);
@@ -481,9 +489,45 @@ static HRESULT WINAPI mmsysaudio_GetFormat(ISpMMSysAudio *iface, GUID *format, W
 
 static HRESULT WINAPI mmsysaudio_SetState(ISpMMSysAudio *iface, SPAUDIOSTATE state, ULONGLONG reserved)
 {
-    FIXME("(%p, %u, %s): stub.\n", iface, state, wine_dbgstr_longlong(reserved));
+    struct mmaudio *This = impl_from_ISpMMSysAudio(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("(%p, %u, %s).\n", iface, state, wine_dbgstr_longlong(reserved));
+
+    if (state != SPAS_CLOSED && state != SPAS_RUN)
+    {
+        FIXME("state %#x not implemented.\n", state);
+        return E_NOTIMPL;
+    }
+
+    EnterCriticalSection(&This->cs);
+
+    if (This->state == state)
+        goto done;
+
+    if (This->state == SPAS_CLOSED)
+    {
+        if (waveOutOpen(&This->hwave.out, This->device_id, This->wfx, 0, 0, 0) != MMSYSERR_NOERROR)
+        {
+            hr = SPERR_GENERIC_MMSYS_ERROR;
+            goto done;
+        }
+    }
+
+    if (state == SPAS_CLOSED && This->state != SPAS_CLOSED)
+    {
+        if (waveOutClose(This->hwave.out) != MMSYSERR_NOERROR)
+        {
+            hr = SPERR_GENERIC_MMSYS_ERROR;
+            goto done;
+        }
+    }
+
+    This->state = state;
+
+done:
+    LeaveCriticalSection(&This->cs);
+    return hr;
 }
 
 static HRESULT WINAPI mmsysaudio_SetFormat(ISpMMSysAudio *iface, const GUID *guid, const WAVEFORMATEX *wfx)
@@ -498,6 +542,18 @@ static HRESULT WINAPI mmsysaudio_SetFormat(ISpMMSysAudio *iface, const GUID *gui
         return E_INVALIDARG;
 
     EnterCriticalSection(&This->cs);
+
+    if (!memcmp(wfx, This->wfx, sizeof(*wfx)) && !memcmp(wfx + 1, This->wfx + 1, wfx->cbSize))
+    {
+        LeaveCriticalSection(&This->cs);
+        return S_OK;
+    }
+
+    if (This->state != SPAS_CLOSED)
+    {
+        LeaveCriticalSection(&This->cs);
+        return SPERR_DEVICE_BUSY;
+    }
 
     /* Determine whether the device supports the requested format. */
     res = waveOutOpen(NULL, This->device_id, wfx, 0, 0, WAVE_FORMAT_QUERY);
@@ -609,7 +665,19 @@ static HRESULT WINAPI mmsysaudio_SetDeviceId(ISpMMSysAudio *iface, UINT id)
         return E_INVALIDARG;
 
     EnterCriticalSection(&This->cs);
+
+    if (id == This->device_id)
+    {
+        LeaveCriticalSection(&This->cs);
+        return S_OK;
+    }
+    if (This->state != SPAS_CLOSED)
+    {
+        LeaveCriticalSection(&This->cs);
+        return SPERR_DEVICE_BUSY;
+    }
     This->device_id = id;
+
     LeaveCriticalSection(&This->cs);
 
     return S_OK;
@@ -693,6 +761,7 @@ static HRESULT mmaudio_create(IUnknown *outer, REFIID iid, void **obj, enum flow
     This->flow = flow;
     This->token = NULL;
     This->device_id = WAVE_MAPPER;
+    This->state = SPAS_CLOSED;
 
     if (!(This->wfx = heap_alloc(sizeof(*This->wfx))))
     {
