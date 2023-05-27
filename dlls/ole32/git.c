@@ -182,7 +182,7 @@ StdGlobalInterfaceTable_RegisterInterfaceInGlobal(
   zero.QuadPart = 0;
   IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
 
-  entry = HeapAlloc(GetProcessHeap(), 0, sizeof(StdGITEntry));
+  entry = malloc(sizeof(*entry));
   if (!entry)
   {
       CoReleaseMarshalData(stream);
@@ -240,8 +240,8 @@ StdGlobalInterfaceTable_RevokeInterfaceFromGlobal(
     return hr;
   }
   IStream_Release(entry->stream);
-		    
-  HeapFree(GetProcessHeap(), 0, entry);
+
+  free(entry);
   return S_OK;
 }
 
@@ -306,7 +306,7 @@ HRESULT WINAPI GlobalInterfaceTable_CreateInstance(IClassFactory *iface, IUnknow
 
     if (!std_git)
     {
-        git = heap_alloc(sizeof(*git));
+        git = malloc(sizeof(*git));
         if (!git) return E_OUTOFMEMORY;
 
         git->IGlobalInterfaceTable_iface.lpVtbl = &StdGlobalInterfaceTableImpl_Vtbl;
@@ -315,7 +315,7 @@ HRESULT WINAPI GlobalInterfaceTable_CreateInstance(IClassFactory *iface, IUnknow
 
         if (InterlockedCompareExchangePointer((void **)&std_git, &git->IGlobalInterfaceTable_iface, NULL))
         {
-            heap_free(git);
+            free(git);
         }
         else
             TRACE("Created the GIT %p\n", git);
@@ -326,20 +326,20 @@ HRESULT WINAPI GlobalInterfaceTable_CreateInstance(IClassFactory *iface, IUnknow
 
 void release_std_git(void)
 {
-  StdGlobalInterfaceTableImpl *git;
-  StdGITEntry *entry, *entry2;
+    StdGlobalInterfaceTableImpl *git;
+    StdGITEntry *entry, *entry2;
 
-  if (!std_git) return;
+    if (!std_git) return;
 
-  git = impl_from_IGlobalInterfaceTable(std_git);
-  LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &git->list, StdGITEntry, entry)
-  {
-      list_remove(&entry->entry);
+    git = impl_from_IGlobalInterfaceTable(std_git);
+    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &git->list, StdGITEntry, entry)
+    {
+        list_remove(&entry->entry);
 
-      CoReleaseMarshalData(entry->stream);
-      IStream_Release(entry->stream);
-      HeapFree(GetProcessHeap(), 0, entry);
-  }
+        CoReleaseMarshalData(entry->stream);
+        IStream_Release(entry->stream);
+        free(entry);
+    }
 
-  HeapFree(GetProcessHeap(), 0, git);
+    free(git);
 }
