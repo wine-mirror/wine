@@ -30,10 +30,11 @@ BOOL CDECL __wine_get_icm_profile( HDC hdc, BOOL allow_default, DWORD *size, WCH
     return unix_funcs->get_icm_profile( hdc, allow_default, size, filename );
 }
 
-BOOL CDECL __wine_get_file_outline_text_metric( const WCHAR *path, OUTLINETEXTMETRICW *otm )
+BOOL WINAPI __wine_get_file_outline_text_metric( const WCHAR *path, TEXTMETRICW *otm,
+                                                 UINT *em_square, WCHAR *face_name )
 {
     if (!unix_funcs) return FALSE;
-    return unix_funcs->get_file_outline_text_metric( path, otm );
+    return unix_funcs->get_file_outline_text_metric( path, otm, em_square, face_name );
 }
 
 BOOL CDECL __wine_send_input( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput )

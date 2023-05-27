@@ -35,7 +35,8 @@
 struct unix_funcs
 {
     /* Wine-specific functions */
-    BOOL (CDECL *get_file_outline_text_metric)( const WCHAR *path, OUTLINETEXTMETRICW *otm );
+    BOOL (WINAPI *get_file_outline_text_metric)( const WCHAR *path, TEXTMETRICW *otm,
+                                                 UINT *em_square, WCHAR *face_name );
     BOOL (CDECL *get_icm_profile)( HDC hdc, BOOL allow_default, DWORD *size, WCHAR *filename );
     BOOL (CDECL *wine_send_input)( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput );
 };

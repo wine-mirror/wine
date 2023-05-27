@@ -6341,7 +6341,8 @@ DWORD WINAPI NtGdiGetGlyphOutline( HDC hdc, UINT ch, UINT format, GLYPHMETRICS *
 /**********************************************************************
  *           __wine_get_file_outline_text_metric    (win32u.@)
  */
-BOOL CDECL __wine_get_file_outline_text_metric( const WCHAR *path, OUTLINETEXTMETRICW *otm )
+BOOL WINAPI __wine_get_file_outline_text_metric( const WCHAR *path, TEXTMETRICW *otm,
+                                                 UINT *em_square, WCHAR *face_name )
 {
     struct gdi_font *font = NULL;
 
@@ -6351,7 +6352,9 @@ BOOL CDECL __wine_get_file_outline_text_metric( const WCHAR *path, OUTLINETEXTME
     font->lf.lfHeight = 100;
     if (!font_funcs->load_font( font )) goto done;
     if (!font_funcs->set_outline_text_metrics( font )) goto done;
-    *otm = font->otm;
+    *otm = font->otm.otmTextMetrics;
+    *em_square = font->otm.otmEMSquare;
+    wcscpy( face_name, (const WCHAR *)font->otm.otmpFamilyName );
     free_gdi_font( font );
     return TRUE;
 

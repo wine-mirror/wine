@@ -485,7 +485,7 @@ NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER 
 /* Wine extensions */
 extern BOOL CDECL __wine_get_icm_profile( HDC hdc, BOOL allow_default, DWORD *size,
                                           WCHAR *filename );
-extern BOOL CDECL __wine_get_file_outline_text_metric( const WCHAR *path,
-                                                       OUTLINETEXTMETRICW *otm );
+BOOL WINAPI __wine_get_file_outline_text_metric( const WCHAR *path, TEXTMETRICW *otm,
+                                                 UINT *em_square, WCHAR *face_name );
 
 #endif /* _NTGDI_ */

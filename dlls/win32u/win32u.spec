@@ -1325,4 +1325,4 @@
 
 # gdi32
 @ cdecl __wine_get_icm_profile(long long ptr ptr)
-@ cdecl __wine_get_file_outline_text_metric(wstr ptr)
+@ stdcall __wine_get_file_outline_text_metric(wstr ptr ptr ptr)
