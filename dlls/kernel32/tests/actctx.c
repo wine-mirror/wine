@@ -3804,7 +3804,6 @@ static void test_manifest_resource_name_omitted(void)
     handle = CreateActCtxW(&ctx);
     err = GetLastError();
     ok(handle == INVALID_HANDLE_VALUE, "CreateActCtxW shall fail\n");
-    todo_wine
     ok(err == ERROR_INVALID_PARAMETER, "got %lu\n", err);
 
     len = GetModuleFileNameW(NULL, pathbuf, ARRAY_SIZE(pathbuf));
@@ -3828,7 +3827,6 @@ static void test_manifest_resource_name_omitted(void)
     handle = CreateActCtxW(&ctx);
     err = GetLastError();
     ok(handle == INVALID_HANDLE_VALUE, "CreateActCtxW shall fail\n");
-    todo_wine
     ok(err == ERROR_INVALID_PARAMETER, "got %lu\n", err);
 }
 

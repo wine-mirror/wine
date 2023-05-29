@@ -2951,8 +2951,6 @@ static NTSTATUS get_manifest_in_module( struct actctx_loader* acl, struct assemb
                     hModule, debugstr_w(filename) );
     }
 
-    if (!resname) return STATUS_INVALID_PARAMETER;
-
     info.Type = RT_MANIFEST;
     info.Language = lang;
     if (!((ULONG_PTR)resname >> 16))
@@ -5230,6 +5228,9 @@ NTSTATUS WINAPI RtlCreateActivationContext( HANDLE *handle, const void *ptr )
 
     if (!pActCtx || pActCtx->cbSize < sizeof(*pActCtx) ||
         (pActCtx->dwFlags & ~ACTCTX_FLAGS_ALL))
+        return STATUS_INVALID_PARAMETER;
+
+    if ((pActCtx->dwFlags & ACTCTX_FLAG_RESOURCE_NAME_VALID) && !pActCtx->lpResourceName)
         return STATUS_INVALID_PARAMETER;
 
     if (!(actctx = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*actctx) )))
