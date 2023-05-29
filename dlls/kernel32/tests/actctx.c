@@ -3704,6 +3704,426 @@ cleanup:
     }
 }
 
+struct manifest_res_spec
+{
+    const char *name;
+    LANGID lang;
+    const char *override_manifest;
+};
+
+struct manifest_res_spec_list
+{
+    size_t count;
+    const struct manifest_res_spec *items;
+};
+
+static void add_sxs_dll_manifest(const char *pathname,
+                                 const struct manifest_res_spec_list *res_lists,
+                                 size_t num_lists,
+                                 const char *manifest)
+{
+    HANDLE update_h;
+    BOOL ret;
+    size_t i, j;
+
+    update_h = BeginUpdateResourceA(pathname, FALSE);
+    ok(update_h != NULL, "BeginUpdateResourceA returned error %lu.\n", GetLastError());
+
+    for (i = 0; i < num_lists; i++)
+    {
+        for (j = 0; j < res_lists[i].count; j++)
+        {
+            const struct manifest_res_spec *res_spec = &res_lists[i].items[j];
+            const char *cur_manifest = res_spec->override_manifest ? res_spec->override_manifest : manifest;
+            ret = UpdateResourceA(update_h,
+                                  MAKEINTRESOURCEA(RT_MANIFEST),
+                                  res_spec->name,
+                                  res_spec->lang,
+                                  (void *)cur_manifest,
+                                  strlen(cur_manifest));
+            ok(ret, "UpdateResourceA returned error %lu.\n", GetLastError());
+        }
+    }
+
+    ret = EndUpdateResourceA(update_h, FALSE);
+    ok(ret, "EndUpdateResourceA returned error %lu.\n", GetLastError());
+}
+
+struct multiple_manifest_test
+{
+    struct manifest_res_spec manifest_inline; /* optional */
+    const struct manifest_res_spec *manifests; /* optional */
+    DWORD expected_error;
+    BOOL is_todo_wine;
+};
+
+#define subtest_manifest_res(d,e,t,l) subtest_manifest_res_(__LINE__,d,e,t,l)
+static DWORD subtest_manifest_res_(int line, const char *manifest_exe, const char *manifest_dll,
+                                   const struct multiple_manifest_test *test_data, LANGID lang)
+{
+    char path_tmp[MAX_PATH] = "", path_dll[MAX_PATH] = "", path_manifest_exe[MAX_PATH] = "";
+    static const char path_tmp_suffix[] = "winek32t\\";
+    WCHAR locale_name[LOCALE_NAME_MAX_LENGTH] = {0};
+    struct manifest_res_spec_list res_lists[2];
+    char path_tmp_lang[MAX_PATH] = "";
+    static volatile LONG last_uniqid;
+    DWORD err, prefix_len;
+    ACTCTXA actctx;
+    HANDLE handle;
+    BOOL ret;
+    int r;
+
+    prefix_len = GetTempPathA(MAX_PATH - ARRAY_SIZE(path_tmp_suffix), path_tmp);
+    ok_(__FILE__, line)(prefix_len > 0, "GetTempPathA returned error %lu.\n", GetLastError());
+
+    memcpy(&path_tmp[prefix_len], path_tmp_suffix, sizeof(path_tmp_suffix) - sizeof(*path_tmp_suffix));
+    ret = CreateDirectoryA(path_tmp, NULL);
+    ok_(__FILE__, line)(ret || GetLastError() == ERROR_ALREADY_EXISTS,
+       "CreateDirectoryA returned error %lu.\n", GetLastError());
+
+    if (lang)
+    {
+        r = LCIDToLocaleName(MAKELCID(lang, SORT_DEFAULT),
+                             locale_name, ARRAY_SIZE(locale_name), LOCALE_ALLOW_NEUTRAL_NAMES);
+        ok(r > 0, "lang 0x%04x, error %lu.\n", lang, GetLastError());
+    }
+
+    if (locale_name[0])
+    {
+        r = snprintf(path_tmp_lang, ARRAY_SIZE(path_tmp_lang), "%s%ls\\", path_tmp, locale_name);
+        ok_(__FILE__, line)(r > 0 && r < ARRAY_SIZE(path_tmp_lang), "got %d\n", r);
+
+        ret = CreateDirectoryA(path_tmp_lang, NULL);
+        ok_(__FILE__, line)(ret || GetLastError() == ERROR_ALREADY_EXISTS,
+           "CreateDirectoryA returned error %lu.\n", GetLastError());
+    }
+    else
+    {
+        r = snprintf(path_tmp_lang, ARRAY_SIZE(path_tmp_lang), "%s", path_tmp);
+        ok_(__FILE__, line)(r > 0 && r < ARRAY_SIZE(path_tmp_lang), "got %d\n", r);
+    }
+
+    r = snprintf(path_dll, ARRAY_SIZE(path_dll), "%s%s", path_tmp_lang, "sxs_dll.dll");
+    ok_(__FILE__, line)(r > 0 && r < ARRAY_SIZE(path_dll), "got %d\n", r);
+
+    r = snprintf(path_manifest_exe, ARRAY_SIZE(path_manifest_exe), "%sexe%08lx.manifest",
+                 path_tmp, InterlockedIncrement(&last_uniqid));
+    ok_(__FILE__, line)(r > 0 && r < ARRAY_SIZE(path_manifest_exe), "got %d\n", r);
+    create_manifest_file(path_manifest_exe, manifest_exe, -1, NULL, NULL);
+
+    extract_resource("dummy.dll", "TESTDLL", path_dll);
+
+    res_lists[0].count = test_data->manifest_inline.name ? 1 : 0;
+    res_lists[0].items = &test_data->manifest_inline;
+
+    if (test_data->manifests)
+    {
+        size_t n = 0;
+
+        while (test_data->manifests[n].name)
+            n++;
+
+        res_lists[1].count = n;
+        res_lists[1].items = test_data->manifests;
+    }
+    else
+    {
+        res_lists[1].count = 0;
+        res_lists[1].items = NULL;
+    }
+
+    add_sxs_dll_manifest(path_dll, res_lists, ARRAY_SIZE(res_lists), manifest_dll);
+
+    memset(&actctx, 0, sizeof(actctx));
+    actctx.cbSize = sizeof(actctx);
+    actctx.lpSource = path_manifest_exe;
+    actctx.lpAssemblyDirectory = path_tmp;
+    actctx.dwFlags = ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID;
+
+    SetLastError(0xccccccccUL);
+    handle = CreateActCtxA(&actctx);
+    if (handle == INVALID_HANDLE_VALUE)
+    {
+        err = GetLastError();
+        ok_(__FILE__, line)(err != ERROR_SUCCESS, "got %#lx.\n", err);
+    }
+    else
+    {
+        err = ERROR_SUCCESS;
+        ok_(__FILE__, line)(handle != NULL, "CreateActCtxA returned %p (error %lu)\n", handle, err);
+        ReleaseActCtx(handle);
+    }
+    todo_wine_if(test_data->is_todo_wine)
+    ok_(__FILE__, line)(err == test_data->expected_error,
+                        "expected error %lu, got %lu\n", test_data->expected_error, err);
+
+    ret = DeleteFileA(path_manifest_exe);
+    ok_(__FILE__, line)(ret, "DeleteFileA(%s) returned error %lu\n.",
+                        debugstr_a(path_manifest_exe), GetLastError());
+
+    ret = DeleteFileA(path_dll);
+    ok_(__FILE__, line)(ret, "DeleteFileA(%s) returned error %lu\n.", debugstr_a(path_dll), GetLastError());
+
+    if (locale_name[0])
+    {
+        ret = RemoveDirectoryA(path_tmp_lang);
+        ok_(__FILE__, line)(ret, "RemoveDirectoryA(%s) returned error %lu\n.",
+                            debugstr_a(path_tmp_lang), GetLastError());
+    }
+
+    ret = RemoveDirectoryA(path_tmp);
+    ok_(__FILE__, line)(ret, "RemoveDirectoryA(%s) returned error %lu %s\n.",
+                        debugstr_a(path_tmp), GetLastError(), debugstr_a(path_tmp_lang));
+
+    return err;
+}
+
+/* Test loading DLL with dependency assembly in manifest resource */
+static void test_manifest_resources(void)
+{
+    static const struct manifest_res_spec wrong_manifest_resources_numbered[] = {
+        { (char *)2, MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT), wrong_manifest1 },
+        { (char *)2, MAKELANGID(LANG_FRENCH,SUBLANG_DEFAULT), wrong_manifest1 },
+        { (char *)3, 0, wrong_manifest1 },
+        { (char *)0x1234, 0, wrong_manifest1 },
+        { NULL },
+    };
+    static const struct manifest_res_spec correct_manifest_resources_numbered[] = {
+        { (char *)2, MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT) },
+        { (char *)2, MAKELANGID(LANG_FRENCH,SUBLANG_DEFAULT) },
+        { (char *)3, 0 },
+        { (char *)0x1234, 0 },
+        { NULL },
+    };
+    static const struct manifest_res_spec wrong_manifest_resources_gte_3[] = {
+        { (char *)3, 0, wrong_manifest1 },
+        { (char *)3, MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT), wrong_manifest1 },
+        { NULL },
+    };
+    static const struct manifest_res_spec correct_manifest_resources_gte_3[] = {
+        { (char *)3, 0 },
+        { (char *)3, MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT) },
+        { NULL },
+    };
+    static const struct manifest_res_spec wrong_manifest_resources_named[] = {
+        { "foo", 0, wrong_manifest1 },
+        { "bar", MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT), wrong_manifest1 },
+        { NULL },
+    };
+    static const struct manifest_res_spec correct_manifest_resources_named[] = {
+        { "foo", 0 },
+        { "bar", MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT) },
+        { NULL },
+    };
+    struct multiple_manifest_test tests[] = {
+        /* Test well-known manifest resource IDs */
+        { { (char *)CREATEPROCESS_MANIFEST_RESOURCE_ID }, NULL, ERROR_SUCCESS, FALSE },
+        { { (char *)ISOLATIONAWARE_MANIFEST_RESOURCE_ID }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)ISOLATIONAWARE_NOSTATICIMPORT_MANIFEST_RESOURCE_ID }, NULL, ERROR_SUCCESS, TRUE },
+
+        /* Test remaining reserved manifest resource IDs */
+        { { (char *)4 }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)5 }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)6 }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)7 }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)8 }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)9 }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)10 }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)11 }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)12 }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)13 }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)14 }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)15 }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)MAXIMUM_RESERVED_MANIFEST_RESOURCE_ID }, NULL, ERROR_SUCCESS, TRUE },
+
+        /* Test arbitrary resource IDs */
+        { { (char *)0x1234 }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)0x89ab }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)0xffff }, NULL, ERROR_SUCCESS, TRUE },
+
+        /* Test arbitrary LANGID */
+        { { (char *)2, MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT) }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)2, MAKELANGID(LANG_FRENCH,SUBLANG_DEFAULT) }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)2, 0x1234 }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)2, 0xffff }, NULL, ERROR_SUCCESS, TRUE },
+
+        /* Test multiple manifest resources coexisting inside a module */
+        { { (char *)2, 0 }, wrong_manifest_resources_numbered, ERROR_SUCCESS, TRUE },
+        { { (char *)2, 0, wrong_manifest1 }, correct_manifest_resources_numbered,
+          ERROR_SXS_CANT_GEN_ACTCTX, FALSE },
+
+        /* Test that smaller resource ID takes precedence regardless of language ID */
+        { { (char *)2, MAKELANGID(LANG_INVARIANT,SUBLANG_NEUTRAL) },
+          wrong_manifest_resources_gte_3, ERROR_SUCCESS, TRUE },
+        { { (char *)2, MAKELANGID(LANG_INVARIANT,SUBLANG_NEUTRAL), wrong_manifest1 },
+          correct_manifest_resources_gte_3, ERROR_SXS_CANT_GEN_ACTCTX, FALSE },
+
+        /* Test multiple manifest resources (ID / name) coexisting inside a module */
+        { { (char *)2, 0 }, wrong_manifest_resources_named, ERROR_SUCCESS, TRUE },
+        { { (char *)2, 0, wrong_manifest1 },
+          correct_manifest_resources_named, ERROR_SXS_CANT_GEN_ACTCTX, FALSE },
+
+        /* Test name-only RT_MANIFEST resources */
+        { { NULL }, correct_manifest_resources_named, ERROR_SXS_CANT_GEN_ACTCTX, FALSE },
+    };
+    size_t i;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context("tests[%Iu] (%p 0x%04x)", i,
+                              tests[i].manifest_inline.name, tests[i].manifest_inline.lang);
+        subtest_manifest_res(two_dll_manifest_exe, two_dll_manifest_dll, &tests[i], 0);
+        winetest_pop_context();
+    }
+}
+
+#define LANGID_PREC_MAX_COUNT 5
+
+static void get_langid_precedence(LANGID *langs_arr, size_t *lang_count)
+{
+    LANGID src_langs[LANGID_PREC_MAX_COUNT];
+    LANGID user_ui_lang;
+    size_t i, j, n = 0;
+
+    user_ui_lang = GetUserDefaultUILanguage();
+
+    src_langs[0] = MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
+    src_langs[1] = user_ui_lang;
+    src_langs[2] = MAKELANGID(PRIMARYLANGID(user_ui_lang), SUBLANG_NEUTRAL);
+    src_langs[3] = MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT);
+    src_langs[4] = 0x1;  /* least number that is a valid LANGID */
+
+    for (i = 0; i < ARRAY_SIZE(src_langs); i++)
+    {
+        LANGID item = src_langs[i];
+        BOOL is_item_duplicate = FALSE;
+
+        for (j = 0; j < n; j++)
+        {
+            if (langs_arr[j] == item)
+            {
+                is_item_duplicate = TRUE;
+                break;
+            }
+        }
+
+        if (!is_item_duplicate)
+        {
+            langs_arr[n++] = item;
+        }
+    }
+
+    *lang_count = n;
+}
+
+static void subtest_valid_manifest_resources_locale(LANGID actctx_lang)
+{
+    static const char manifest_exe_fmt[] =
+        "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
+        "<dependency>"
+        "<dependentAssembly>"
+        "<assemblyIdentity type=\"win32\" name=\"sxs_dll\" version=\"1.0.0.0\""
+        " processorArchitecture=\"" ARCH "\" publicKeyToken=\"0000000000000000\" language=\"%ls\"/>"
+        "</dependentAssembly>"
+        "</dependency>"
+        "</assembly>";
+    static const char manifest_dll_fmt[] =
+        "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v3\" manifestVersion=\"1.0\">"
+        "<assemblyIdentity type=\"win32\" name=\"sxs_dll\" version=\"1.0.0.0\""
+        " processorArchitecture=\"" ARCH "\" publicKeyToken=\"0000000000000000\" language=\"%ls\"/>"
+        "</assembly>";
+    static const char manifest_dll_nofmt[] =
+        "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v3\" manifestVersion=\"1.0\">"
+        "<assemblyIdentity type=\"win32\" name=\"sxs_dll\" version=\"1.0.0.0\""
+        " processorArchitecture=\"" ARCH "\" publicKeyToken=\"0000000000000000\"/>"
+        "</assembly>";
+    char manifest_exe[1024], manifest_dll[1024];
+    WCHAR locale_name[LOCALE_NAME_MAX_LENGTH];
+    UINT16 langs_arr[LANGID_PREC_MAX_COUNT];
+    size_t lang_count = 0, i, j;
+    int ret;
+
+    if (actctx_lang == MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL))
+    {
+        wcscpy(locale_name, L"*");
+        strcpy(manifest_dll, manifest_dll_nofmt);
+    }
+    else
+    {
+        actctx_lang = ConvertDefaultLocale(actctx_lang);
+        ok(actctx_lang != MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL),
+           "unexpected neutral locale\n");
+        ret = LCIDToLocaleName(MAKELCID(actctx_lang, SORT_DEFAULT),
+                               locale_name, ARRAY_SIZE(locale_name), LOCALE_ALLOW_NEUTRAL_NAMES);
+        ok(ret > 0, "error %lu.\n", GetLastError());
+
+        ret = snprintf(manifest_dll, ARRAY_SIZE(manifest_dll), manifest_dll_fmt, locale_name);
+        ok(ret > 0 && ret < ARRAY_SIZE(manifest_dll), "ret %d.\n", ret);
+    }
+
+    ret = snprintf(manifest_exe, ARRAY_SIZE(manifest_exe), manifest_exe_fmt, locale_name);
+    ok(ret > 0 && ret < ARRAY_SIZE(manifest_exe), "ret %d.\n", ret);
+
+    get_langid_precedence(langs_arr, &lang_count);
+
+    for (i = 0; i < lang_count; i++)
+    {
+        struct manifest_res_spec specs[ARRAY_SIZE(langs_arr) + 1];
+        struct multiple_manifest_test test = { { NULL } };
+        size_t num_specs;
+        DWORD err;
+
+        winetest_push_context("langs[%Id:]", i);
+
+        /* Generate manifest spec list from language IDs.
+         *
+         * All manifest spec items point to the wrong manifest, expect for the
+         * current language ID.
+         */
+        num_specs = 0;
+        for (j = i; j < lang_count; j++)
+        {
+            struct manifest_res_spec spec = {(char *)2};
+            spec.lang = langs_arr[j];
+            if (j != i) spec.override_manifest = wrong_manifest1;
+            ok(num_specs < ARRAY_SIZE(specs), "overrun\n");
+            specs[num_specs++] = spec;
+        }
+        memset(&specs[num_specs++], 0, sizeof(*specs));
+
+        test.manifests = specs;
+        test.expected_error = ERROR_SUCCESS;
+        test.is_todo_wine = TRUE;
+        err = subtest_manifest_res(manifest_exe, manifest_dll, &test, actctx_lang);
+
+        if (winetest_debug > 1 && err != ERROR_SUCCESS)
+        {
+            for (j = 0; j < lang_count; j++)
+            {
+                trace("langs[%Id] = 0x%04x %c\n", j, langs_arr[j], j == i ? '<' : ' ');
+            }
+        }
+
+        winetest_pop_context();
+    }
+}
+
+static void test_valid_manifest_resources_locale(void)
+{
+    static const LANGID langs[] = {
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL),
+        MAKELANGID(LANG_INVARIANT, SUBLANG_NEUTRAL),
+    };
+    size_t i;
+
+    for (i = 0; i < ARRAY_SIZE(langs); i++)
+    {
+        winetest_push_context("[%Iu]lang=0x%04x", i, langs[i]);
+        subtest_valid_manifest_resources_locale(langs[i]);
+        winetest_pop_context();
+    }
+}
+
 static void run_sxs_test(int run)
 {
     switch(run)
@@ -3858,6 +4278,8 @@ START_TEST(actctx)
 
     test_manifest_in_module();
     test_manifest_resource_name_omitted();
+    test_manifest_resources();
+    test_valid_manifest_resources_locale();
     test_actctx();
     test_create_fail();
     test_CreateActCtx();
