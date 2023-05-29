@@ -783,6 +783,11 @@ static BOOL nulldrv_UpdateDisplayDevices( const struct gdi_device_manager *manag
     return FALSE;
 }
 
+static BOOL nulldrv_CreateDesktop( const WCHAR *name, UINT width, UINT height )
+{
+    return TRUE;
+}
+
 static BOOL nodrv_CreateWindow( HWND hwnd )
 {
     static int warned;
@@ -1149,6 +1154,11 @@ static BOOL loaderdrv_UpdateDisplayDevices( const struct gdi_device_manager *man
     return load_driver()->pUpdateDisplayDevices( manager, force, param );
 }
 
+static BOOL loaderdrv_CreateDesktop( const WCHAR *name, UINT width, UINT height )
+{
+    return load_driver()->pCreateDesktop( name, width, height );
+}
+
 static BOOL loaderdrv_CreateWindow( HWND hwnd )
 {
     return load_driver()->pCreateWindow( hwnd );
@@ -1222,6 +1232,7 @@ static const struct user_driver_funcs lazy_load_driver =
     loaderdrv_GetDisplayDepth,
     loaderdrv_UpdateDisplayDevices,
     /* windowing functions */
+    loaderdrv_CreateDesktop,
     loaderdrv_CreateWindow,
     nulldrv_DesktopWindowProc,
     nulldrv_DestroyWindow,
@@ -1300,6 +1311,7 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(GetCurrentDisplaySettings);
     SET_USER_FUNC(GetDisplayDepth);
     SET_USER_FUNC(UpdateDisplayDevices);
+    SET_USER_FUNC(CreateDesktop);
     SET_USER_FUNC(CreateWindow);
     SET_USER_FUNC(DesktopWindowProc);
     SET_USER_FUNC(DestroyWindow);
