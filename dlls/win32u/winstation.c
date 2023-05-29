@@ -496,9 +496,8 @@ HWND get_desktop_window(void)
         SERVER_END_REQ;
     }
 
-    if (!thread_info->top_window ||
-        !user_driver->pCreateDesktopWindow( UlongToHandle( thread_info->top_window )))
-        ERR_(win)( "failed to create desktop window\n" );
+    if (!thread_info->top_window) ERR_(win)( "failed to create desktop window\n" );
+    else user_driver->pSetDesktopWindow( UlongToHandle( thread_info->top_window ));
 
     register_builtin_classes();
     return UlongToHandle( thread_info->top_window );

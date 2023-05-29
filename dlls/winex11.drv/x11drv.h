@@ -222,7 +222,6 @@ extern BOOL X11DRV_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, LPD
 extern INT X11DRV_GetDisplayDepth( LPCWSTR name, BOOL is_primary ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
                                          BOOL force, void *param ) DECLSPEC_HIDDEN;
-extern BOOL X11DRV_CreateDesktopWindow( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_CreateWindow( HWND hwnd ) DECLSPEC_HIDDEN;
 extern LRESULT X11DRV_DesktopWindowProc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ) DECLSPEC_HIDDEN;
 extern void X11DRV_DestroyWindow( HWND hwnd ) DECLSPEC_HIDDEN;
@@ -232,6 +231,7 @@ extern void X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
 extern void X11DRV_ReleaseDC( HWND hwnd, HDC hdc ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, HRGN update ) DECLSPEC_HIDDEN;
 extern void X11DRV_SetCapture( HWND hwnd, UINT flags ) DECLSPEC_HIDDEN;
+extern void X11DRV_SetDesktopWindow( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha,
                                                DWORD flags ) DECLSPEC_HIDDEN;
 extern void X11DRV_SetParent( HWND hwnd, HWND parent, HWND old_parent ) DECLSPEC_HIDDEN;

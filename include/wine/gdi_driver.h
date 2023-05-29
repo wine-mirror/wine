@@ -307,7 +307,6 @@ struct user_driver_funcs
     INT     (*pGetDisplayDepth)(LPCWSTR,BOOL);
     BOOL    (*pUpdateDisplayDevices)(const struct gdi_device_manager *,BOOL,void*);
     /* windowing functions */
-    BOOL    (*pCreateDesktopWindow)(HWND);
     BOOL    (*pCreateWindow)(HWND);
     LRESULT (*pDesktopWindowProc)(HWND,UINT,WPARAM,LPARAM);
     void    (*pDestroyWindow)(HWND);
@@ -317,6 +316,7 @@ struct user_driver_funcs
     void    (*pReleaseDC)(HWND,HDC);
     BOOL    (*pScrollDC)(HDC,INT,INT,HRGN);
     void    (*pSetCapture)(HWND,UINT);
+    void    (*pSetDesktopWindow)(HWND);
     void    (*pSetFocus)(HWND);
     void    (*pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD);
     void    (*pSetParent)(HWND,HWND,HWND);

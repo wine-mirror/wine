@@ -1536,9 +1536,9 @@ static void perform_window_command(HWND hwnd, unsigned int style_any, unsigned i
 
 
 /**********************************************************************
- *              CreateDesktopWindow   (MACDRV.@)
+ *              SetDesktopWindow   (MACDRV.@)
  */
-BOOL macdrv_CreateDesktopWindow(HWND hwnd)
+void macdrv_SetDesktopWindow(HWND hwnd)
 {
     unsigned int width, height;
 
@@ -1575,7 +1575,6 @@ BOOL macdrv_CreateDesktopWindow(HWND hwnd)
     }
 
     set_app_icon();
-    return TRUE;
 }
 
 void macdrv_resize_desktop(void)

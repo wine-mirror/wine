@@ -1864,9 +1864,9 @@ BOOL create_desktop_win_data( Window win )
 }
 
 /**********************************************************************
- *		CreateDesktopWindow   (X11DRV.@)
+ *		SetDesktopWindow   (X11DRV.@)
  */
-BOOL X11DRV_CreateDesktopWindow( HWND hwnd )
+void X11DRV_SetDesktopWindow( HWND hwnd )
 {
     unsigned int width, height;
 
@@ -1904,7 +1904,6 @@ BOOL X11DRV_CreateDesktopWindow( HWND hwnd )
         Window win = (Window)NtUserGetProp( hwnd, whole_window_prop );
         if (win && win != root_window) X11DRV_init_desktop( win, width, height );
     }
-    return TRUE;
 }
 
 

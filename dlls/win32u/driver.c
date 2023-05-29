@@ -783,11 +783,6 @@ static BOOL nulldrv_UpdateDisplayDevices( const struct gdi_device_manager *manag
     return FALSE;
 }
 
-static BOOL nulldrv_CreateDesktopWindow( HWND hwnd )
-{
-    return TRUE;
-}
-
 static BOOL nodrv_CreateWindow( HWND hwnd )
 {
     static int warned;
@@ -839,6 +834,10 @@ static BOOL nulldrv_ScrollDC( HDC hdc, INT dx, INT dy, HRGN update )
 }
 
 static void nulldrv_SetCapture( HWND hwnd, UINT flags )
+{
+}
+
+static void nulldrv_SetDesktopWindow( HWND hwnd )
 {
 }
 
@@ -1150,11 +1149,6 @@ static BOOL loaderdrv_UpdateDisplayDevices( const struct gdi_device_manager *man
     return load_driver()->pUpdateDisplayDevices( manager, force, param );
 }
 
-static BOOL loaderdrv_CreateDesktopWindow( HWND hwnd )
-{
-    return load_driver()->pCreateDesktopWindow( hwnd );
-}
-
 static BOOL loaderdrv_CreateWindow( HWND hwnd )
 {
     return load_driver()->pCreateWindow( hwnd );
@@ -1169,6 +1163,11 @@ static void loaderdrv_GetDC( HDC hdc, HWND hwnd, HWND top_win, const RECT *win_r
 static void loaderdrv_FlashWindowEx( FLASHWINFO *info )
 {
     load_driver()->pFlashWindowEx( info );
+}
+
+static void loaderdrv_SetDesktopWindow( HWND hwnd )
+{
+    load_driver()->pSetDesktopWindow( hwnd );
 }
 
 static void loaderdrv_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
@@ -1223,7 +1222,6 @@ static const struct user_driver_funcs lazy_load_driver =
     loaderdrv_GetDisplayDepth,
     loaderdrv_UpdateDisplayDevices,
     /* windowing functions */
-    loaderdrv_CreateDesktopWindow,
     loaderdrv_CreateWindow,
     nulldrv_DesktopWindowProc,
     nulldrv_DestroyWindow,
@@ -1233,6 +1231,7 @@ static const struct user_driver_funcs lazy_load_driver =
     nulldrv_ReleaseDC,
     nulldrv_ScrollDC,
     nulldrv_SetCapture,
+    loaderdrv_SetDesktopWindow,
     nulldrv_SetFocus,
     loaderdrv_SetLayeredWindowAttributes,
     nulldrv_SetParent,
@@ -1301,7 +1300,6 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(GetCurrentDisplaySettings);
     SET_USER_FUNC(GetDisplayDepth);
     SET_USER_FUNC(UpdateDisplayDevices);
-    SET_USER_FUNC(CreateDesktopWindow);
     SET_USER_FUNC(CreateWindow);
     SET_USER_FUNC(DesktopWindowProc);
     SET_USER_FUNC(DestroyWindow);
@@ -1311,6 +1309,7 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(ReleaseDC);
     SET_USER_FUNC(ScrollDC);
     SET_USER_FUNC(SetCapture);
+    SET_USER_FUNC(SetDesktopWindow);
     SET_USER_FUNC(SetFocus);
     SET_USER_FUNC(SetLayeredWindowAttributes);
     SET_USER_FUNC(SetParent);

@@ -134,9 +134,9 @@ extern BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device
 extern BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp) DECLSPEC_HIDDEN;
 extern BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp) DECLSPEC_HIDDEN;
 extern BOOL macdrv_ClipCursor(LPCRECT clip) DECLSPEC_HIDDEN;
-extern BOOL macdrv_CreateDesktopWindow(HWND hwnd) DECLSPEC_HIDDEN;
 extern LRESULT macdrv_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) DECLSPEC_HIDDEN;
 extern void macdrv_DestroyWindow(HWND hwnd) DECLSPEC_HIDDEN;
+extern void macdrv_SetDesktopWindow(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_SetFocus(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_SetLayeredWindowAttributes(HWND hwnd, COLORREF key, BYTE alpha,
                                               DWORD flags) DECLSPEC_HIDDEN;
