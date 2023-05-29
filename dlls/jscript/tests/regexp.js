@@ -625,6 +625,18 @@ ok(tmp === "x*y", '"x/y".replace(/[/]/, "*") = ' + tmp);
 tmp = "x/y".replace(/[xy/]/g, "*");
 ok(tmp === "***", '"x/y".replace(/[xy/]/, "*") = ' + tmp);
 
+tmp = /()/.exec("")[1];
+ok(tmp === "", "/()/ captured: " + tmp);
+tmp = /()?/.exec("")[1];
+ok(tmp === "", "/()?/ captured: " + tmp);
+tmp = /()??/.exec("")[1];
+ok(tmp === "", "/()??/ captured: " + tmp);
+tmp = /()*/.exec("")[1];
+ok(tmp === "", "/()*/ captured: " + tmp);
+tmp = /()??()/.exec("");
+ok(tmp[1] === "", "/()??()/ [1] captured: " + tmp);
+ok(tmp[2] === "", "/()??()/ [2] captured: " + tmp);
+
 /(b)/.exec("abc");
 ok(RegExp.$1 === "b", "RegExp.$1 = " + RegExp.$1);
 ok("$2" in RegExp, "RegExp.$2 doesn't exist");

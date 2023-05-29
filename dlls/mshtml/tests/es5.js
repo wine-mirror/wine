@@ -1610,6 +1610,22 @@ sync_test("isFrozen", function() {
     }
 });
 
+sync_test("RegExp", function() {
+    var r;
+
+    r = /()/.exec("")[1];
+    ok(r === "", "/()/ captured: " + r);
+    r = /()?/.exec("")[1];
+    ok(r === undefined, "/()?/ captured: " + r);
+    r = /()??/.exec("")[1];
+    ok(r === undefined, "/()??/ captured: " + r);
+    r = /()*/.exec("")[1];
+    ok(r === undefined, "/()*/ captured: " + r);
+    r = /()??()/.exec("");
+    ok(r[1] === undefined, "/()??()/ [1] captured: " + r);
+    ok(r[2] === "", "/()??()/ [2] captured: " + r);
+});
+
 sync_test("builtin_context", function() {
     var nullDisp = external.nullDisp;
     var tests = [

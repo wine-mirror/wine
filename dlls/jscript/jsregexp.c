@@ -361,17 +361,22 @@ static HRESULT create_match_array(script_ctx_t *ctx, jsstr_t *input_str,
         return hres;
 
     for(i=0; i < result->paren_count; i++) {
-        if(result->parens[i].index != -1)
-            str = jsstr_substr(input_str, result->parens[i].index, result->parens[i].length);
-        else
-            str = jsstr_empty();
-        if(!str) {
-            hres = E_OUTOFMEMORY;
-            break;
+        jsval_t val;
+
+        if(result->parens[i].index != -1) {
+            if(!(str = jsstr_substr(input_str, result->parens[i].index, result->parens[i].length))) {
+                hres = E_OUTOFMEMORY;
+                break;
+            }
+            val = jsval_string(str);
+        }else if(ctx->version < SCRIPTLANGUAGEVERSION_ES5) {
+            val = jsval_string(jsstr_empty());
+        }else {
+            val = jsval_undefined();
         }
 
-        hres = jsdisp_propput_idx(array, i+1, jsval_string(str));
-        jsstr_release(str);
+        hres = jsdisp_propput_idx(array, i+1, val);
+        jsval_release(val);
         if(FAILED(hres))
             break;
     }
