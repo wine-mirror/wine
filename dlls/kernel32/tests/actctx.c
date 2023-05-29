@@ -3779,6 +3779,59 @@ static void test_manifest_in_module(void)
     ReleaseActCtx(handle);
 }
 
+static void test_manifest_resource_name_omitted(void)
+{
+    WCHAR pathbuf[MAX_PATH];
+    HANDLE handle;
+    ACTCTXW ctx;
+    DWORD err, len;
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.cbSize = sizeof(ctx);
+    ctx.dwFlags = ACTCTX_FLAG_HMODULE_VALID;
+    ctx.hModule = GetModuleHandleW(NULL);
+    handle = CreateActCtxW(&ctx);
+    err = GetLastError();
+    ok(handle == INVALID_HANDLE_VALUE, "CreateActCtxW shall fail\n");
+    todo_wine
+    ok(err == ERROR_RESOURCE_TYPE_NOT_FOUND, "got %lu\n", err);
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.cbSize = sizeof(ctx);
+    ctx.dwFlags = ACTCTX_FLAG_HMODULE_VALID | ACTCTX_FLAG_RESOURCE_NAME_VALID;
+    ctx.hModule = GetModuleHandleW(NULL);
+    ctx.lpResourceName = NULL;
+    handle = CreateActCtxW(&ctx);
+    err = GetLastError();
+    ok(handle == INVALID_HANDLE_VALUE, "CreateActCtxW shall fail\n");
+    todo_wine
+    ok(err == ERROR_INVALID_PARAMETER, "got %lu\n", err);
+
+    len = GetModuleFileNameW(NULL, pathbuf, ARRAY_SIZE(pathbuf));
+    ok(len > 0 && len < ARRAY_SIZE(pathbuf), "GetModuleFileNameW returned error %lu\n", GetLastError());
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.cbSize = sizeof(ctx);
+    ctx.lpSource = pathbuf;
+    ctx.dwFlags = 0;
+    handle = CreateActCtxW(&ctx);
+    err = GetLastError();
+    ok(handle == INVALID_HANDLE_VALUE, "CreateActCtxW shall fail\n");
+    todo_wine
+    ok(err == ERROR_RESOURCE_TYPE_NOT_FOUND, "got %lu\n", err);
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.cbSize = sizeof(ctx);
+    ctx.lpSource = pathbuf;
+    ctx.dwFlags = ACTCTX_FLAG_RESOURCE_NAME_VALID;
+    ctx.lpResourceName = NULL;
+    handle = CreateActCtxW(&ctx);
+    err = GetLastError();
+    ok(handle == INVALID_HANDLE_VALUE, "CreateActCtxW shall fail\n");
+    todo_wine
+    ok(err == ERROR_INVALID_PARAMETER, "got %lu\n", err);
+}
+
 START_TEST(actctx)
 {
     int argc;
@@ -3806,6 +3859,7 @@ START_TEST(actctx)
     }
 
     test_manifest_in_module();
+    test_manifest_resource_name_omitted();
     test_actctx();
     test_create_fail();
     test_CreateActCtx();
