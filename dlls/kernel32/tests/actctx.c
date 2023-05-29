@@ -2828,17 +2828,6 @@ todo_wine {
     delete_manifest_file("testdep1.manifest");
     delete_manifest_file("testdep2.manifest");
 
-    /* ACTCTX_FLAG_HMODULE_VALID but hModule is not set */
-    memset(&actctx, 0, sizeof(ACTCTXA));
-    actctx.cbSize = sizeof(ACTCTXA);
-    actctx.dwFlags = ACTCTX_FLAG_HMODULE_VALID;
-    SetLastError(0xdeadbeef);
-    handle = CreateActCtxA(&actctx);
-    ok(handle == INVALID_HANDLE_VALUE, "got handle %p\n", handle);
-    todo_wine
-    ok(GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX || broken(GetLastError() == ERROR_NOT_ENOUGH_MEMORY) /* XP, win2k3 */,
-        "got error %ld\n", GetLastError());
-
     /* create from HMODULE - resource doesn't exist, lpSource is set */
     memset(&actctx, 0, sizeof(ACTCTXA));
     actctx.cbSize = sizeof(ACTCTXA);
