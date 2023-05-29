@@ -774,7 +774,7 @@ static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPAR
 /* create the desktop and the associated driver window, and make it the current desktop */
 static BOOL create_desktop( HMODULE driver, const WCHAR *name, unsigned int width, unsigned int height )
 {
-    BOOL ret = FALSE;
+    BOOL ret = TRUE;
     BOOL (CDECL *create_desktop_func)(unsigned int, unsigned int);
 
     if (driver)
