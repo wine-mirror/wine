@@ -42,7 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(explorer);
 
 static const WCHAR default_driver[] = {'m','a','c',',','x','1','1',0};
 
-static BOOL using_root;
+static BOOL using_root = TRUE;
 
 struct launcher
 {
@@ -1089,6 +1089,8 @@ void manage_desktop( WCHAR *arg )
 
     if (name && width && height)
     {
+        /* magic: desktop "root" means use the root window */
+        using_root = !wcsicmp( name, L"root" );
         if (!(desktop = CreateDesktopW( name, NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL )))
         {
             WINE_ERR( "failed to create desktop %s error %ld\n", wine_dbgstr_w(name), GetLastError() );
@@ -1109,7 +1111,7 @@ void manage_desktop( WCHAR *arg )
 
         desktop_orig_wndproc = (WNDPROC)SetWindowLongPtrW( hwnd, GWLP_WNDPROC,
             (LONG_PTR)desktop_wnd_proc );
-        using_root = !desktop || !create_desktop( graphics_driver, name, width, height );
+        if (!using_root) using_root = !create_desktop( graphics_driver, name, width, height );
         SendMessageW( hwnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIconW( 0, MAKEINTRESOURCEW(OIC_WINLOGO)));
         if (name) set_desktop_window_title( hwnd, name );
         SetWindowPos( hwnd, 0, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN),

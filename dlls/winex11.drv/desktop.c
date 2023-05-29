@@ -359,21 +359,10 @@ void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
  */
 NTSTATUS x11drv_create_desktop( void *arg )
 {
-    static const WCHAR rootW[] = {'r','o','o','t',0};
     const struct create_desktop_params *params = arg;
     XSetWindowAttributes win_attr;
     Window win;
     Display *display = thread_init_display();
-    WCHAR name[MAX_PATH];
-
-    if (!NtUserGetObjectInformation( NtUserGetThreadDesktop( GetCurrentThreadId() ),
-                                     UOI_NAME, name, sizeof(name), NULL ))
-        name[0] = 0;
-
-    TRACE( "%s %ux%u\n", debugstr_w(name), params->width, params->height );
-
-    /* magic: desktop "root" means use the root window */
-    if (!wcsicmp( name, rootW )) return FALSE;
 
     /* Create window */
     win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask | EnterWindowMask |
