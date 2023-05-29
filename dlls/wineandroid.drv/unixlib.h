@@ -21,7 +21,6 @@
 
 enum android_funcs
 {
-    unix_create_desktop,
     unix_dispatch_ioctl,
     unix_init,
     unix_java_init,

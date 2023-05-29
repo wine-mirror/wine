@@ -132,12 +132,3 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 
     return TRUE;
 }
-
-
-/***********************************************************************
- *           wine_create_desktop (wineandroid.@)
- */
-BOOL CDECL wine_create_desktop( UINT width, UINT height )
-{
-    return ANDROID_CALL( create_desktop, NULL );
-}

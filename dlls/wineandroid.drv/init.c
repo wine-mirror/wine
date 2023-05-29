@@ -350,6 +350,7 @@ static const struct user_driver_funcs android_drv_funcs =
     .pChangeDisplaySettings = ANDROID_ChangeDisplaySettings,
     .pGetCurrentDisplaySettings = ANDROID_GetCurrentDisplaySettings,
     .pUpdateDisplayDevices = ANDROID_UpdateDisplayDevices,
+    .pCreateDesktop = ANDROID_CreateDesktop,
     .pCreateWindow = ANDROID_CreateWindow,
     .pDesktopWindowProc = ANDROID_DesktopWindowProc,
     .pDestroyWindow = ANDROID_DestroyWindow,
@@ -610,7 +611,6 @@ static HRESULT android_init( void *arg )
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
-    android_create_desktop,
     android_dispatch_ioctl,
     android_init,
     android_java_init,

@@ -1670,9 +1670,9 @@ LRESULT ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 
 
 /***********************************************************************
- *           android_create_desktop
+ *           ANDROID_CreateDesktop
  */
-NTSTATUS android_create_desktop( void *arg )
+BOOL ANDROID_CreateDesktop( const WCHAR *name, UINT width, UINT height )
 {
     /* wait until we receive the surface changed event */
     while (!screen_width)

@@ -87,6 +87,7 @@ extern INT ANDROID_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size ) DECLSP
 extern UINT ANDROID_MapVirtualKeyEx( UINT code, UINT maptype, HKL hkl ) DECLSPEC_HIDDEN;
 extern SHORT ANDROID_VkKeyScanEx( WCHAR ch, HKL hkl ) DECLSPEC_HIDDEN;
 extern void ANDROID_SetCursor( HCURSOR handle ) DECLSPEC_HIDDEN;
+extern BOOL ANDROID_CreateDesktop( const WCHAR *name, UINT width, UINT height ) DECLSPEC_HIDDEN;
 extern BOOL ANDROID_CreateWindow( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void ANDROID_DestroyWindow( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL ANDROID_ProcessEvents( DWORD mask ) DECLSPEC_HIDDEN;
@@ -112,7 +113,6 @@ extern void ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_fla
 
 /* unixlib interface */
 
-extern NTSTATUS android_create_desktop( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS android_dispatch_ioctl( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS android_java_init( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS android_java_uninit( void *arg ) DECLSPEC_HIDDEN;
