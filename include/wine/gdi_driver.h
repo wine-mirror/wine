@@ -301,7 +301,7 @@ struct user_driver_funcs
     void    (*pSetCursor)(HCURSOR);
     BOOL    (*pGetCursorPos)(LPPOINT);
     BOOL    (*pSetCursorPos)(INT,INT);
-    BOOL    (*pClipCursor)(LPCRECT);
+    BOOL    (*pClipCursor)(const RECT*,BOOL);
     /* clipboard functions */
     LRESULT (*pClipboardWindowProc)(HWND,UINT,WPARAM,LPARAM);
     void    (*pUpdateClipboard)(void);

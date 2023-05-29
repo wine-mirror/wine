@@ -2497,16 +2497,16 @@ BOOL get_clip_cursor( RECT *rect )
     return ret;
 }
 
-BOOL process_wine_clipcursor( BOOL empty )
+BOOL process_wine_clipcursor( BOOL empty, BOOL reset )
 {
     RECT rect;
 
-    TRACE( "empty %u\n", empty );
+    TRACE( "empty %u, reset %u\n", empty, reset );
 
-    if (empty) return user_driver->pClipCursor( NULL );
+    if (empty || reset) return user_driver->pClipCursor( NULL, reset );
 
     get_clip_cursor( &rect );
-    return user_driver->pClipCursor( &rect );
+    return user_driver->pClipCursor( &rect, FALSE );
 }
 
 /***********************************************************************
@@ -2552,6 +2552,6 @@ BOOL WINAPI NtUserClipCursor( const RECT *rect )
         }
     }
     SERVER_END_REQ;
-    if (ret) user_driver->pClipCursor( &new_rect );
+    if (ret) user_driver->pClipCursor( &new_rect, FALSE );
     return ret;
 }

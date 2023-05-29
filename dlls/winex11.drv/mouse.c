@@ -1557,16 +1557,17 @@ BOOL X11DRV_GetCursorPos(LPPOINT pos)
 /***********************************************************************
  *		ClipCursor (X11DRV.@)
  */
-BOOL X11DRV_ClipCursor( LPCRECT clip )
+BOOL X11DRV_ClipCursor( const RECT *clip, BOOL reset )
 {
-    RECT virtual_rect = NtUserGetVirtualScreenRect();
+    TRACE( "clip %p, reset %u\n", clip, reset );
 
-    if (!clip) clip = &virtual_rect;
-
-    if (grab_pointer)
+    if (!reset && grab_pointer)
     {
+        RECT virtual_rect = NtUserGetVirtualScreenRect();
         HWND foreground = NtUserGetForegroundWindow();
         DWORD tid, pid;
+
+        if (!clip) clip = &virtual_rect;
 
         /* forward request to the foreground window if it's in a different thread */
         tid = NtUserGetWindowThread( foreground, &pid );
@@ -1615,7 +1616,7 @@ LRESULT clip_cursor_request( HWND hwnd, BOOL fullscreen, BOOL reset )
     else
     {
         NtUserGetClipCursor( &clip );
-        X11DRV_ClipCursor( &clip );
+        X11DRV_ClipCursor( &clip, FALSE );
     }
 
     return 0;

@@ -133,7 +133,7 @@ extern BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device
                                          BOOL force, void *param ) DECLSPEC_HIDDEN;
 extern BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp) DECLSPEC_HIDDEN;
 extern BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp) DECLSPEC_HIDDEN;
-extern BOOL macdrv_ClipCursor(LPCRECT clip) DECLSPEC_HIDDEN;
+extern BOOL macdrv_ClipCursor(const RECT *clip, BOOL reset) DECLSPEC_HIDDEN;
 extern LRESULT macdrv_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) DECLSPEC_HIDDEN;
 extern void macdrv_DestroyWindow(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_SetDesktopWindow(HWND hwnd) DECLSPEC_HIDDEN;
@@ -157,7 +157,6 @@ extern void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags
                                     const RECT *visible_rect, const RECT *valid_rects,
                                     struct window_surface *surface) DECLSPEC_HIDDEN;
 extern void macdrv_DestroyCursorIcon(HCURSOR cursor) DECLSPEC_HIDDEN;
-extern BOOL macdrv_ClipCursor(LPCRECT clip) DECLSPEC_HIDDEN;
 extern BOOL macdrv_GetCursorPos(LPPOINT pos) DECLSPEC_HIDDEN;
 extern void macdrv_SetCapture(HWND hwnd, UINT flags) DECLSPEC_HIDDEN;
 extern void macdrv_SetCursor(HCURSOR cursor) DECLSPEC_HIDDEN;

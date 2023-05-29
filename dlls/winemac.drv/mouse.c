@@ -659,11 +659,13 @@ void macdrv_DestroyCursorIcon(HCURSOR cursor)
  *
  * Set the cursor clipping rectangle.
  */
-BOOL macdrv_ClipCursor(LPCRECT clip)
+BOOL macdrv_ClipCursor(const RECT *clip, BOOL reset)
 {
     CGRect rect;
 
-    TRACE("%s\n", wine_dbgstr_rect(clip));
+    TRACE("%s %u\n", wine_dbgstr_rect(clip), reset);
+
+    if (reset) return TRUE;
 
     if (clip)
     {
