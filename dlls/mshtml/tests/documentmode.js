@@ -2147,6 +2147,12 @@ sync_test("builtins_diffs", function() {
     }catch(e) {
         ok(e.number === 0xa1398 - 0x80000000, "RegExp.toString with non-regexp: exception = " + e.number);
     }
+    try {
+        RegExp.prototype.toString.call({source: "abc", global: true, ignoreCase: true, multiline: true});
+        ok(false, "RegExp.toString with non-regexp 2: expected exception");
+    }catch(e) {
+        ok(e.number === 0xa1398 - 0x80000000, "RegExp.toString with non-regexp 2: exception = " + e.number);
+    }
 
     try {
         /a/.lastIndex();
