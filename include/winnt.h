@@ -2398,6 +2398,18 @@ static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
 {
     return (struct _TEB *)(ULONG_PTR)_MoveFromCoprocessor(15, 0, 13, 0, 2);
 }
+#elif defined(__aarch64__) && defined(__MINGW32__)
+register struct _TEB *__wine_current_teb __asm__("x18");
+static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
+{
+    return __wine_current_teb;
+}
+#elif defined(__aarch64__) && defined(_MSC_VER)
+#pragma intrinsic(__getReg)
+static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
+{
+    return (struct _TEB *)__getReg(18);
+}
 #elif defined(__GNUC__)
 extern struct _TEB * WINAPI NtCurrentTeb(void) __attribute__((pure));
 #else

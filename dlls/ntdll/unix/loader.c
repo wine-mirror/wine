@@ -1834,13 +1834,6 @@ static void load_ntdll_functions( HMODULE module )
     GET_FUNC( __wine_unixlib_handle );
     *p__wine_unix_call_dispatcher = __wine_unix_call_dispatcher;
     *p__wine_unixlib_handle = (UINT_PTR)unix_call_funcs;
-#ifdef __aarch64__
-    {
-        void **p__wine_current_teb;
-        GET_FUNC( __wine_current_teb );
-        *p__wine_current_teb = NtCurrentTeb;
-    }
-#endif
 #undef GET_FUNC
 }
 

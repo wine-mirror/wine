@@ -1694,22 +1694,6 @@ __ASM_GLOBAL_FUNC( signal_exit_thread,
  *           __wine_syscall_dispatcher
  */
 __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
-                   /* FIXME: use x18 directly instead */
-                   "stp x0, x1, [sp, #-96]!\n\t"
-                   "stp x2, x3, [sp, #16]\n\t"
-                   "stp x4, x5, [sp, #32]\n\t"
-                   "stp x6, x7, [sp, #48]\n\t"
-                   "stp x8, x9, [sp, #64]\n\t"
-                   "str x30,    [sp, #80]\n\t"
-                   "bl " __ASM_NAME("NtCurrentTeb") "\n\t"
-                   "mov x18, x0\n\t"
-                   "ldp x2, x3, [sp, #16]\n\t"
-                   "ldp x4, x5, [sp, #32]\n\t"
-                   "ldp x6, x7, [sp, #48]\n\t"
-                   "ldp x8, x9, [sp, #64]\n\t"
-                   "ldr x30,    [sp, #80]\n\t"
-                   "ldp x0, x1, [sp], #96\n\t"
-
                    "ldr x10, [x18, #0x2f8]\n\t" /* arm64_thread_data()->syscall_frame */
                    "stp x18, x19, [x10, #0x90]\n\t"
                    "stp x20, x21, [x10, #0xa0]\n\t"
@@ -1822,14 +1806,6 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
  *           __wine_unix_call_dispatcher
  */
 __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
-                   /* FIXME: use x18 directly instead */
-                   "stp x0, x1, [sp, #-32]!\n\t"
-                   "stp x2, x30,[sp, #16]\n\t"
-                   "bl " __ASM_NAME("NtCurrentTeb") "\n\t"
-                   "mov x18, x0\n\t"
-                   "ldp x2, x30,[sp, #16]\n\t"
-                   "ldp x0, x1, [sp], #32\n\t"
-
                    "ldr x10, [x18, #0x2f8]\n\t" /* arm64_thread_data()->syscall_frame */
                    "stp x18, x19, [x10, #0x90]\n\t"
                    "stp x20, x21, [x10, #0xa0]\n\t"
