@@ -7568,7 +7568,8 @@ static HRESULT WINAPI token_list_remove(IWineDOMTokenList *iface, BSTR token)
 
 static HRESULT WINAPI token_list_toggle(IWineDOMTokenList *iface, BSTR token, VARIANT_BOOL *p)
 {
-    return token_list_add_remove(iface, token, FALSE, p);
+    VARIANT_BOOL tmp;
+    return token_list_add_remove(iface, token, FALSE, p ? p : &tmp);
 }
 
 static HRESULT WINAPI token_list_contains(IWineDOMTokenList *iface, BSTR token, VARIANT_BOOL *p)
