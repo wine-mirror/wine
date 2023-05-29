@@ -26,6 +26,7 @@ var JS_E_BOOLEAN_EXPECTED = 0x800a1392;
 var JS_E_VBARRAY_EXPECTED = 0x800a1395;
 var JS_E_ENUMERATOR_EXPECTED = 0x800a1397;
 var JS_E_REGEXP_EXPECTED = 0x800a1398;
+var JS_E_UNEXPECTED_QUANTIFIER = 0x800a139a;
 var JS_E_INVALID_WRITABLE_PROP_DESC = 0x800a13ac;
 var JS_E_NONCONFIGURABLE_REDEFINED = 0x800a13d6;
 var JS_E_NONWRITABLE_MODIFIED = 0x800a13d7;
@@ -1624,6 +1625,14 @@ sync_test("RegExp", function() {
     r = /()??()/.exec("");
     ok(r[1] === undefined, "/()??()/ [1] captured: " + r);
     ok(r[2] === "", "/()??()/ [2] captured: " + r);
+
+    try {
+        r = new RegExp("(?<a>b)", "g");
+        ok(false, "expected exception with /(?<a>b)/ regex");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_UNEXPECTED_QUANTIFIER, "/(?<a>b)/ regex threw " + n);
+    }
 });
 
 sync_test("builtin_context", function() {

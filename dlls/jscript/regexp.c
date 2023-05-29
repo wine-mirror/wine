@@ -41,13 +41,13 @@
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
 /* FIXME: Better error handling */
-#define ReportRegExpError(a,b,c)
-#define ReportRegExpErrorHelper(a,b,c,d)
-#define JS_ReportErrorNumber(a,b,c,d)
-#define JS_ReportErrorFlagsAndNumber(a,b,c,d,e,f)
-#define js_ReportOutOfScriptQuota(a)
-#define JS_ReportOutOfMemory(a)
-#define JS_COUNT_OPERATION(a,b)
+#define ReportRegExpError(a,b,c) throw_error((a)->context, E_FAIL, L"")
+#define ReportRegExpErrorHelper(a,b,c,d) throw_error((a)->context, E_FAIL, L"")
+#define JS_ReportErrorNumber(a,b,c,d) throw_error((a), E_FAIL, L"")
+#define JS_ReportErrorFlagsAndNumber(a,b,c,d,e,f) throw_error((a), E_FAIL, L"")
+#define js_ReportOutOfScriptQuota(a) throw_error((a), E_FAIL, L"")
+#define JS_ReportOutOfMemory(a) throw_error((a), E_FAIL, L"")
+#define JS_COUNT_OPERATION(a,b) throw_error((a), E_FAIL, L"")
 
 
 typedef BYTE JSPackedBool;
@@ -292,7 +292,7 @@ struct RENode {
 #define CLASS_CACHE_SIZE    4
 
 typedef struct CompilerState {
-    void            *context;
+    script_ctx_t    *context;
     const WCHAR     *cpbegin;
     const WCHAR     *cpend;
     const WCHAR     *cp;
@@ -1622,8 +1622,7 @@ doSimple:
       case '*':
       case '+':
       case '?':
-        ReportRegExpErrorHelper(state, JSREPORT_ERROR,
-                                JSMSG_BAD_QUANTIFIER, state->cp - 1);
+        throw_error(state->context, state->context->version < SCRIPTLANGUAGEVERSION_ES5 ? JS_E_REGEXP_SYNTAX : JS_E_UNEXPECTED_QUANTIFIER, L"");
         return FALSE;
       default:
 asFlat:

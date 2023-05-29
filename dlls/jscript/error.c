@@ -456,6 +456,7 @@ jsdisp_t *create_builtin_error(script_ctx_t *ctx)
         case JS_E_EXPECTED_CCEND:
         case JS_E_DISABLED_CC:
         case JS_E_EXPECTED_AT:
+        case JS_E_UNEXPECTED_QUANTIFIER:
             constr = ctx->syntax_error_constr;
             break;
 

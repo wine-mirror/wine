@@ -649,7 +649,7 @@ HRESULT create_regexp(script_ctx_t *ctx, jsstr_t *src, DWORD flags, jsdisp_t **r
     if(!regexp->jsregexp) {
         WARN("regexp_new failed\n");
         jsdisp_release(&regexp->dispex);
-        return E_FAIL;
+        return DISP_E_EXCEPTION;
     }
 
     *ret = &regexp->dispex;

@@ -60,6 +60,7 @@
 #define IDS_ENUMERATOR_EXPECTED             0x1397
 #define IDS_REGEXP_EXPECTED                 0x1398
 #define IDS_REGEXP_SYNTAX_ERROR             0x1399
+#define IDS_UNEXPECTED_QUANTIFIER           0x139A
 #define IDS_EXCEPTION_THROWN                0x139E
 #define IDS_URI_INVALID_CHAR                0x13A0
 #define IDS_URI_INVALID_CODING              0x13A1
