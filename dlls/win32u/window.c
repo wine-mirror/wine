@@ -4950,10 +4950,10 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
 
         if (name->Buffer == (const WCHAR *)DESKTOP_CLASS_ATOM)
         {
-            if (!thread_info->top_window)
-                thread_info->top_window = HandleToUlong( full_parent ? full_parent : handle );
+            if (!thread_info->top_window) thread_info->top_window = HandleToUlong( full_parent ? full_parent : handle );
             else assert( full_parent == UlongToHandle( thread_info->top_window ));
-            if (full_parent) user_driver->pSetDesktopWindow( UlongToHandle( thread_info->top_window ));
+            if (!thread_info->top_window) ERR_(win)( "failed to create desktop window\n" );
+            else user_driver->pSetDesktopWindow( UlongToHandle( thread_info->top_window ));
             register_builtin_classes();
         }
         else  /* HWND_MESSAGE parent */
