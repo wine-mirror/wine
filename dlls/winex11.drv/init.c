@@ -409,6 +409,7 @@ static const struct user_driver_funcs x11drv_funcs =
     .pGetCurrentDisplaySettings = X11DRV_GetCurrentDisplaySettings,
     .pGetDisplayDepth = X11DRV_GetDisplayDepth,
     .pUpdateDisplayDevices = X11DRV_UpdateDisplayDevices,
+    .pCreateDesktop = X11DRV_CreateDesktop,
     .pCreateWindow = X11DRV_CreateWindow,
     .pDesktopWindowProc = X11DRV_DesktopWindowProc,
     .pDestroyWindow = X11DRV_DestroyWindow,

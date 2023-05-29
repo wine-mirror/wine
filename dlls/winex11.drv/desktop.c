@@ -348,21 +348,21 @@ void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
     desktop_handler.free_monitors = X11DRV_desktop_free_monitors;
     desktop_handler.register_event_handlers = NULL;
     TRACE("Display device functions are now handled by: Virtual Desktop\n");
-    X11DRV_DisplayDevices_Init( TRUE );
 }
 
 
 /***********************************************************************
- *           x11drv_create_desktop
+ *           X11DRV_CreateDesktop
  *
  * Create the X11 desktop window for the desktop mode.
  */
-NTSTATUS x11drv_create_desktop( void *arg )
+BOOL X11DRV_CreateDesktop( const WCHAR *name, UINT width, UINT height )
 {
-    const struct create_desktop_params *params = arg;
     XSetWindowAttributes win_attr;
     Window win;
     Display *display = thread_init_display();
+
+    TRACE( "%s %ux%u\n", debugstr_w(name), width, height );
 
     /* Create window */
     win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask | EnterWindowMask |
@@ -376,20 +376,12 @@ NTSTATUS x11drv_create_desktop( void *arg )
         win_attr.colormap = None;
 
     win = XCreateWindow( display, DefaultRootWindow(display),
-                         0, 0, params->width, params->height, 0, default_visual.depth, InputOutput,
+                         0, 0, width, height, 0, default_visual.depth, InputOutput,
                          default_visual.visual, CWEventMask | CWCursor | CWColormap, &win_attr );
     if (!win) return FALSE;
-    if (!create_desktop_win_data( win )) return FALSE;
-
-    X11DRV_init_desktop( win, params->width, params->height );
-    if (is_desktop_fullscreen())
-    {
-        TRACE("setting desktop to fullscreen\n");
-        XChangeProperty( display, win, x11drv_atom(_NET_WM_STATE), XA_ATOM, 32,
-            PropModeReplace, (unsigned char*)&x11drv_atom(_NET_WM_STATE_FULLSCREEN),
-            1);
-    }
     XFlush( display );
+
+    X11DRV_init_desktop( win, width, height );
     return TRUE;
 }
 

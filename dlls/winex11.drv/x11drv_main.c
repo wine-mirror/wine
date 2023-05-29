@@ -1320,7 +1320,6 @@ NTSTATUS x11drv_client_call( enum client_callback func, UINT arg )
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
-    x11drv_create_desktop,
     x11drv_init,
     x11drv_systray_clear,
     x11drv_systray_dock,
@@ -1408,7 +1407,6 @@ static NTSTATUS x11drv_wow64_tablet_info( void *arg )
 
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
-    x11drv_create_desktop,
     x11drv_wow64_init,
     x11drv_wow64_systray_clear,
     x11drv_wow64_systray_dock,

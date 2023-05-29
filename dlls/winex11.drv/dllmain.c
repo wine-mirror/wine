@@ -74,16 +74,6 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
     return TRUE;
 }
 
-
-/***********************************************************************
- *           wine_create_desktop (winex11.@)
- */
-BOOL CDECL wine_create_desktop( UINT width, UINT height )
-{
-    struct create_desktop_params params = { .width = width, .height = height };
-    return X11DRV_CALL( create_desktop, &params );
-}
-
 /***********************************************************************
  *           AttachEventQueueToTablet (winex11.@)
  */

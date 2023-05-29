@@ -222,6 +222,7 @@ extern BOOL X11DRV_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, LPD
 extern INT X11DRV_GetDisplayDepth( LPCWSTR name, BOOL is_primary ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
                                          BOOL force, void *param ) DECLSPEC_HIDDEN;
+extern BOOL X11DRV_CreateDesktop( const WCHAR *name, UINT width, UINT height ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_CreateWindow( HWND hwnd ) DECLSPEC_HIDDEN;
 extern LRESULT X11DRV_DesktopWindowProc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ) DECLSPEC_HIDDEN;
 extern void X11DRV_DestroyWindow( HWND hwnd ) DECLSPEC_HIDDEN;
@@ -765,7 +766,6 @@ extern void X11DRV_resize_desktop(void) DECLSPEC_HIDDEN;
 extern BOOL is_virtual_desktop(void) DECLSPEC_HIDDEN;
 extern BOOL is_desktop_fullscreen(void) DECLSPEC_HIDDEN;
 extern BOOL is_detached_mode(const DEVMODEW *) DECLSPEC_HIDDEN;
-extern BOOL create_desktop_win_data( Window win ) DECLSPEC_HIDDEN;
 void X11DRV_Settings_Init(void) DECLSPEC_HIDDEN;
 
 void X11DRV_XF86VM_Init(void) DECLSPEC_HIDDEN;
@@ -843,7 +843,6 @@ static inline BOOL is_window_rect_mapped( const RECT *rect )
 
 /* unixlib interface */
 
-extern NTSTATUS x11drv_create_desktop( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_systray_clear( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_systray_dock( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_systray_hide( void *arg ) DECLSPEC_HIDDEN;

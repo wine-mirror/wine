@@ -1847,13 +1847,13 @@ BOOL X11DRV_DestroyNotify( HWND hwnd, XEvent *event )
 
 
 /* initialize the desktop window id in the desktop manager process */
-BOOL create_desktop_win_data( Window win )
+static BOOL create_desktop_win_data( Window win, HWND hwnd )
 {
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
     Display *display = thread_data->display;
     struct x11drv_win_data *data;
 
-    if (!(data = alloc_win_data( display, NtUserGetDesktopWindow() ))) return FALSE;
+    if (!(data = alloc_win_data( display, hwnd ))) return FALSE;
     data->whole_window = win;
     data->managed = TRUE;
     NtUserSetProp( data->hwnd, whole_window_prop, (HANDLE)win );
@@ -1883,7 +1883,10 @@ void X11DRV_SetDesktopWindow( HWND hwnd )
 
     if (!width && !height)  /* not initialized yet */
     {
-        RECT rect = NtUserGetVirtualScreenRect();
+        RECT rect;
+
+        X11DRV_DisplayDevices_Init( TRUE );
+        rect = NtUserGetVirtualScreenRect();
 
         SERVER_START_REQ( set_window_pos )
         {
@@ -1898,11 +1901,29 @@ void X11DRV_SetDesktopWindow( HWND hwnd )
             wine_server_call( req );
         }
         SERVER_END_REQ;
+
+        if (!is_virtual_desktop()) return;
+        if (!create_desktop_win_data( root_window, hwnd ))
+        {
+            ERR( "Failed to create virtual desktop window data\n" );
+            root_window = DefaultRootWindow( gdi_display );
+        }
+        else if (is_desktop_fullscreen())
+        {
+            Display *display = x11drv_thread_data()->display;
+            TRACE("setting desktop to fullscreen\n");
+            XChangeProperty( display, root_window, x11drv_atom(_NET_WM_STATE), XA_ATOM, 32, PropModeReplace,
+                             (unsigned char*)&x11drv_atom(_NET_WM_STATE_FULLSCREEN), 1 );
+        }
     }
     else
     {
         Window win = (Window)NtUserGetProp( hwnd, whole_window_prop );
-        if (win && win != root_window) X11DRV_init_desktop( win, width, height );
+        if (win && win != root_window)
+        {
+            X11DRV_init_desktop( win, width, height );
+            X11DRV_DisplayDevices_Init( TRUE );
+        }
     }
 }
 
