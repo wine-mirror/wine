@@ -3754,7 +3754,6 @@ struct multiple_manifest_test
     struct manifest_res_spec manifest_inline; /* optional */
     const struct manifest_res_spec *manifests; /* optional */
     DWORD expected_error;
-    BOOL is_todo_wine;
 };
 
 #define subtest_manifest_res(d,e,t,l) subtest_manifest_res_(__LINE__,d,e,t,l)
@@ -3853,7 +3852,6 @@ static DWORD subtest_manifest_res_(int line, const char *manifest_exe, const cha
         ok_(__FILE__, line)(handle != NULL, "CreateActCtxA returned %p (error %lu)\n", handle, err);
         ReleaseActCtx(handle);
     }
-    todo_wine_if(test_data->is_todo_wine)
     ok_(__FILE__, line)(err == test_data->expected_error,
                         "expected error %lu, got %lu\n", test_data->expected_error, err);
 
@@ -3917,54 +3915,54 @@ static void test_manifest_resources(void)
     };
     struct multiple_manifest_test tests[] = {
         /* Test well-known manifest resource IDs */
-        { { (char *)CREATEPROCESS_MANIFEST_RESOURCE_ID }, NULL, ERROR_SUCCESS, FALSE },
-        { { (char *)ISOLATIONAWARE_MANIFEST_RESOURCE_ID }, NULL, ERROR_SUCCESS, TRUE },
-        { { (char *)ISOLATIONAWARE_NOSTATICIMPORT_MANIFEST_RESOURCE_ID }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)CREATEPROCESS_MANIFEST_RESOURCE_ID }, NULL, ERROR_SUCCESS },
+        { { (char *)ISOLATIONAWARE_MANIFEST_RESOURCE_ID }, NULL, ERROR_SUCCESS },
+        { { (char *)ISOLATIONAWARE_NOSTATICIMPORT_MANIFEST_RESOURCE_ID }, NULL, ERROR_SUCCESS },
 
         /* Test remaining reserved manifest resource IDs */
-        { { (char *)4 }, NULL, ERROR_SUCCESS, TRUE },
-        { { (char *)5 }, NULL, ERROR_SUCCESS, TRUE },
-        { { (char *)6 }, NULL, ERROR_SUCCESS, TRUE },
-        { { (char *)7 }, NULL, ERROR_SUCCESS, TRUE },
-        { { (char *)8 }, NULL, ERROR_SUCCESS, TRUE },
-        { { (char *)9 }, NULL, ERROR_SUCCESS, TRUE },
-        { { (char *)10 }, NULL, ERROR_SUCCESS, TRUE },
-        { { (char *)11 }, NULL, ERROR_SUCCESS, TRUE },
-        { { (char *)12 }, NULL, ERROR_SUCCESS, TRUE },
-        { { (char *)13 }, NULL, ERROR_SUCCESS, TRUE },
-        { { (char *)14 }, NULL, ERROR_SUCCESS, TRUE },
-        { { (char *)15 }, NULL, ERROR_SUCCESS, TRUE },
-        { { (char *)MAXIMUM_RESERVED_MANIFEST_RESOURCE_ID }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)4 }, NULL, ERROR_SUCCESS },
+        { { (char *)5 }, NULL, ERROR_SUCCESS },
+        { { (char *)6 }, NULL, ERROR_SUCCESS },
+        { { (char *)7 }, NULL, ERROR_SUCCESS },
+        { { (char *)8 }, NULL, ERROR_SUCCESS },
+        { { (char *)9 }, NULL, ERROR_SUCCESS },
+        { { (char *)10 }, NULL, ERROR_SUCCESS },
+        { { (char *)11 }, NULL, ERROR_SUCCESS },
+        { { (char *)12 }, NULL, ERROR_SUCCESS },
+        { { (char *)13 }, NULL, ERROR_SUCCESS },
+        { { (char *)14 }, NULL, ERROR_SUCCESS },
+        { { (char *)15 }, NULL, ERROR_SUCCESS },
+        { { (char *)MAXIMUM_RESERVED_MANIFEST_RESOURCE_ID }, NULL, ERROR_SUCCESS },
 
         /* Test arbitrary resource IDs */
-        { { (char *)0x1234 }, NULL, ERROR_SUCCESS, TRUE },
-        { { (char *)0x89ab }, NULL, ERROR_SUCCESS, TRUE },
-        { { (char *)0xffff }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)0x1234 }, NULL, ERROR_SUCCESS },
+        { { (char *)0x89ab }, NULL, ERROR_SUCCESS },
+        { { (char *)0xffff }, NULL, ERROR_SUCCESS },
 
         /* Test arbitrary LANGID */
-        { { (char *)2, MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT) }, NULL, ERROR_SUCCESS, TRUE },
-        { { (char *)2, MAKELANGID(LANG_FRENCH,SUBLANG_DEFAULT) }, NULL, ERROR_SUCCESS, TRUE },
-        { { (char *)2, 0x1234 }, NULL, ERROR_SUCCESS, TRUE },
-        { { (char *)2, 0xffff }, NULL, ERROR_SUCCESS, TRUE },
+        { { (char *)2, MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT) }, NULL, ERROR_SUCCESS },
+        { { (char *)2, MAKELANGID(LANG_FRENCH,SUBLANG_DEFAULT) }, NULL, ERROR_SUCCESS },
+        { { (char *)2, 0x1234 }, NULL, ERROR_SUCCESS },
+        { { (char *)2, 0xffff }, NULL, ERROR_SUCCESS },
 
         /* Test multiple manifest resources coexisting inside a module */
-        { { (char *)2, 0 }, wrong_manifest_resources_numbered, ERROR_SUCCESS, TRUE },
+        { { (char *)2, 0 }, wrong_manifest_resources_numbered, ERROR_SUCCESS },
         { { (char *)2, 0, wrong_manifest1 }, correct_manifest_resources_numbered,
-          ERROR_SXS_CANT_GEN_ACTCTX, FALSE },
+          ERROR_SXS_CANT_GEN_ACTCTX },
 
         /* Test that smaller resource ID takes precedence regardless of language ID */
         { { (char *)2, MAKELANGID(LANG_INVARIANT,SUBLANG_NEUTRAL) },
-          wrong_manifest_resources_gte_3, ERROR_SUCCESS, TRUE },
+          wrong_manifest_resources_gte_3, ERROR_SUCCESS },
         { { (char *)2, MAKELANGID(LANG_INVARIANT,SUBLANG_NEUTRAL), wrong_manifest1 },
-          correct_manifest_resources_gte_3, ERROR_SXS_CANT_GEN_ACTCTX, FALSE },
+          correct_manifest_resources_gte_3, ERROR_SXS_CANT_GEN_ACTCTX },
 
         /* Test multiple manifest resources (ID / name) coexisting inside a module */
-        { { (char *)2, 0 }, wrong_manifest_resources_named, ERROR_SUCCESS, TRUE },
+        { { (char *)2, 0 }, wrong_manifest_resources_named, ERROR_SUCCESS },
         { { (char *)2, 0, wrong_manifest1 },
-          correct_manifest_resources_named, ERROR_SXS_CANT_GEN_ACTCTX, FALSE },
+          correct_manifest_resources_named, ERROR_SXS_CANT_GEN_ACTCTX },
 
         /* Test name-only RT_MANIFEST resources */
-        { { NULL }, correct_manifest_resources_named, ERROR_SXS_CANT_GEN_ACTCTX, FALSE },
+        { { NULL }, correct_manifest_resources_named, ERROR_SXS_CANT_GEN_ACTCTX },
     };
     size_t i;
 
@@ -4093,7 +4091,6 @@ static void subtest_valid_manifest_resources_locale(LANGID actctx_lang)
 
         test.manifests = specs;
         test.expected_error = ERROR_SUCCESS;
-        test.is_todo_wine = TRUE;
         err = subtest_manifest_res(manifest_exe, manifest_dll, &test, actctx_lang);
 
         if (winetest_debug > 1 && err != ERROR_SUCCESS)
