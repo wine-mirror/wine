@@ -2782,6 +2782,13 @@ typedef struct VkPhysicalDeviceShaderCoreBuiltinsFeaturesARM32
     VkBool32 shaderCoreBuiltins;
 } VkPhysicalDeviceShaderCoreBuiltinsFeaturesARM32;
 
+typedef struct VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 dynamicRenderingUnusedAttachments;
+} VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT32;
+
 typedef struct VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT32
 {
     VkStructureType sType;
@@ -11641,6 +11648,17 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_FEATURES_EXT:
+        {
+            VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT *in_ext = (const VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->dynamicRenderingUnusedAttachments = in_ext->dynamicRenderingUnusedAttachments;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SWAPCHAIN_MAINTENANCE_1_FEATURES_EXT:
         {
             VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -13578,6 +13596,17 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_FEATURES_ARM;
             out_ext->pNext = NULL;
             out_ext->shaderCoreBuiltins = in_ext->shaderCoreBuiltins;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_FEATURES_EXT:
+        {
+            VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT32 *in_ext = (const VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->dynamicRenderingUnusedAttachments = in_ext->dynamicRenderingUnusedAttachments;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -20118,6 +20147,17 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_FEATURES_EXT:
+        {
+            VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT32 *in_ext = (const VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->dynamicRenderingUnusedAttachments = in_ext->dynamicRenderingUnusedAttachments;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SWAPCHAIN_MAINTENANCE_1_FEATURES_EXT:
         {
             VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -21706,6 +21746,15 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             const VkPhysicalDeviceShaderCoreBuiltinsFeaturesARM *in_ext = (const VkPhysicalDeviceShaderCoreBuiltinsFeaturesARM *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_FEATURES_ARM;
             out_ext->shaderCoreBuiltins = in_ext->shaderCoreBuiltins;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_FEATURES_EXT:
+        {
+            VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_FEATURES_EXT);
+            const VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT *in_ext = (const VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_FEATURES_EXT;
+            out_ext->dynamicRenderingUnusedAttachments = in_ext->dynamicRenderingUnusedAttachments;
             out_header = (void *)out_ext;
             break;
         }
@@ -41115,6 +41164,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_device_address_binding_report",
     "VK_EXT_device_fault",
     "VK_EXT_discard_rectangles",
+    "VK_EXT_dynamic_rendering_unused_attachments",
     "VK_EXT_extended_dynamic_state",
     "VK_EXT_extended_dynamic_state2",
     "VK_EXT_extended_dynamic_state3",
