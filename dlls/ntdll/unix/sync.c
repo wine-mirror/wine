@@ -57,7 +57,6 @@
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#define NONAMELESSUNION
 #include "windef.h"
 #include "winternl.h"
 #include "ddk/wdm.h"
@@ -1686,7 +1685,7 @@ NTSTATUS WINAPI NtSetIntervalProfile( ULONG interval, KPROFILE_SOURCE source )
 ULONG WINAPI NtGetTickCount(void)
 {
     /* note: we ignore TickCountMultiplier */
-    return user_shared_data->u.TickCount.LowPart;
+    return user_shared_data->TickCount.LowPart;
 }
 
 
@@ -1899,7 +1898,7 @@ NTSTATUS WINAPI NtRemoveIoCompletion( HANDLE handle, ULONG_PTR *key, ULONG_PTR *
                 *key            = reply->ckey;
                 *value          = reply->cvalue;
                 io->Information = reply->information;
-                io->u.Status    = reply->status;
+                io->Status      = reply->status;
             }
         }
         SERVER_END_REQ;
@@ -1933,7 +1932,7 @@ NTSTATUS WINAPI NtRemoveIoCompletionEx( HANDLE handle, FILE_IO_COMPLETION_INFORM
                     info[i].CompletionKey             = reply->ckey;
                     info[i].CompletionValue           = reply->cvalue;
                     info[i].IoStatusBlock.Information = reply->information;
-                    info[i].IoStatusBlock.u.Status    = reply->status;
+                    info[i].IoStatusBlock.Status      = reply->status;
                 }
             }
             SERVER_END_REQ;

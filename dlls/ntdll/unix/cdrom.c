@@ -117,7 +117,6 @@ typedef struct
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#define NONAMELESSUNION
 #include "windef.h"
 #include "winternl.h"
 #include "winioctl.h"
@@ -3123,7 +3122,7 @@ NTSTATUS cdrom_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc
     }
     if (needs_close) close( fd );
  error:
-    io->u.Status = status;
+    io->Status = status;
     io->Information = sz;
     if (event) NtSetEvent(event, NULL);
     return status;

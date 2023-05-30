@@ -49,7 +49,6 @@
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#define NONAMELESSUNION
 #include "windef.h"
 #include "winternl.h"
 #include "winioctl.h"
@@ -1310,7 +1309,7 @@ static NTSTATUS io_control( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc, vo
     }
     if (needs_close) close( fd );
  error:
-    io->u.Status = status;
+    io->Status = status;
     io->Information = sz;
     if (event && status != STATUS_PENDING) NtSetEvent(event, NULL);
     return status;

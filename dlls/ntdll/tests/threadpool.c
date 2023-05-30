@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
 #include "ntdll_test.h"
 
 static NTSTATUS (WINAPI *pTpAllocCleanupGroup)(TP_CLEANUP_GROUP **);
@@ -2018,7 +2016,7 @@ static void CALLBACK io_cb(TP_CALLBACK_INSTANCE *instance, void *userdata,
     struct io_cb_ctx *ctx = userdata;
     ++ctx->count;
     ctx->ovl = cvalue;
-    ctx->ret = iosb->u.Status;
+    ctx->ret = iosb->Status;
     ctx->length = iosb->Information;
     ctx->io = io;
 }

@@ -433,21 +433,13 @@ static inline void set_async_iosb( client_ptr_t iosb, NTSTATUS status, ULONG_PTR
     {
         IO_STATUS_BLOCK *io = wine_server_get_ptr( iosb );
         io->Information = info;
-#ifdef NONAMELESSUNION
-        WriteRelease( &io->u.Status, status );
-#else
         WriteRelease( &io->Status, status );
-#endif
     }
 }
 
 static inline client_ptr_t iosb_client_ptr( IO_STATUS_BLOCK *io )
 {
-#ifdef NONAMELESSUNION
-    if (io && in_wow64_call()) return wine_server_client_ptr( io->u.Pointer );
-#else
     if (io && in_wow64_call()) return wine_server_client_ptr( io->Pointer );
-#endif
     return wine_server_client_ptr( io );
 }
 

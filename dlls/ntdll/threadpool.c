@@ -23,7 +23,6 @@
 #include <stdarg.h>
 #include <limits.h>
 
-#define NONAMELESSUNION
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "winternl.h"
@@ -483,10 +482,10 @@ static DWORD CALLBACK iocp_poller(LPVOID Arg)
             DWORD transferred = 0;
             DWORD err = 0;
 
-            if (iosb.u.Status == STATUS_SUCCESS)
+            if (iosb.Status == STATUS_SUCCESS)
                 transferred = iosb.Information;
             else
-                err = RtlNtStatusToDosError(iosb.u.Status);
+                err = RtlNtStatusToDosError(iosb.Status);
 
             callback( err, transferred, overlapped );
         }
@@ -1537,7 +1536,7 @@ static void CALLBACK ioqueue_thread_proc( void *param )
         destroy = skip = FALSE;
         io = (struct threadpool_object *)key;
 
-        TRACE( "io %p, iosb.Status %#lx.\n", io, iosb.u.Status );
+        TRACE( "io %p, iosb.Status %#lx.\n", io, iosb.Status );
 
         if (io && (io->shutdown || io->u.io.shutting_down))
         {
