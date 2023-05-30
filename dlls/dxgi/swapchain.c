@@ -1044,26 +1044,37 @@ struct d3d12_swapchain
     struct wined3d_swapchain_state *state;
     struct wined3d_swapchain_state_parent state_parent;
 
-    VkSwapchainKHR vk_swapchain;
     VkSurfaceKHR vk_surface;
     VkFence vk_fence;
     VkInstance vk_instance;
     VkDevice vk_device;
     VkPhysicalDevice vk_physical_device;
+
+    /* D3D12 side of the swapchain: these objects are visible to the
+     * IDXGISwapChain client, so they must never be recreated, except
+     * when ResizeBuffers*() is called. */
+    unsigned int buffer_count;
     VkDeviceMemory vk_memory;
-    VkCommandPool vk_cmd_pool;
     VkImage vk_images[DXGI_MAX_SWAP_CHAIN_BUFFERS];
+    ID3D12Resource *buffers[DXGI_MAX_SWAP_CHAIN_BUFFERS];
+    unsigned int current_buffer_index;
+
+    /* Vulkan side of the swapchain: these objects are also destroyed
+     * and recreated when the Vulkan swapchain becomes out of date or
+     * when the synchronization interval is changed; this operation
+     * should be transparent to the IDXGISwapChain client (except for
+     * timings: recreating the Vulkan swapchain creates a noticeable
+     * delay, unfortunately). */
+    VkSwapchainKHR vk_swapchain;
+    VkCommandPool vk_cmd_pool;
     VkImage vk_swapchain_images[DXGI_MAX_SWAP_CHAIN_BUFFERS];
     VkCommandBuffer vk_cmd_buffers[DXGI_MAX_SWAP_CHAIN_BUFFERS];
     VkSemaphore vk_semaphores[DXGI_MAX_SWAP_CHAIN_BUFFERS];
-    ID3D12Resource *buffers[DXGI_MAX_SWAP_CHAIN_BUFFERS];
-    unsigned int buffer_count;
     unsigned int vk_swapchain_width;
     unsigned int vk_swapchain_height;
     VkPresentModeKHR present_mode;
-
     uint32_t vk_image_index;
-    unsigned int current_buffer_index;
+
     struct dxgi_vk_funcs vk_funcs;
 
     ID3D12CommandQueue *command_queue;
