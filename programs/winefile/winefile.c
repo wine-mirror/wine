@@ -26,12 +26,6 @@
 #include "winefile.h"
 #include "resource.h"
 
-#ifdef NONAMELESSUNION
-#define	UNION_MEMBER(x) DUMMYUNIONNAME.x
-#else
-#define	UNION_MEMBER(x) x
-#endif
-
 #define	DEFAULT_SPLIT_POS	300
 
 static const WCHAR registry_key[] = { 'S','o','f','t','w','a','r','e','\\',
@@ -449,7 +443,7 @@ static Entry* read_tree_win(Root* root, LPCWSTR path, SORT_ORDER sortOrder, HWND
 static void free_strret(STRRET* str)
 {
 	if (str->uType == STRRET_WSTR)
-		IMalloc_Free(Globals.iMalloc, str->UNION_MEMBER(pOleStr));
+		IMalloc_Free(Globals.iMalloc, str->pOleStr);
 }
 
 static LPWSTR wcscpyn(LPWSTR dest, LPCWSTR source, size_t count)
@@ -467,15 +461,15 @@ static void get_strretW(STRRET* str, const SHITEMID* shiid, LPWSTR buffer, int l
 {
  switch(str->uType) {
   case STRRET_WSTR:
-	wcscpyn(buffer, str->UNION_MEMBER(pOleStr), len);
+	wcscpyn(buffer, str->pOleStr, len);
 	break;
 
   case STRRET_OFFSET:
-	MultiByteToWideChar(CP_ACP, 0, (LPCSTR)shiid+str->UNION_MEMBER(uOffset), -1, buffer, len);
+	MultiByteToWideChar(CP_ACP, 0, (LPCSTR)shiid+str->uOffset, -1, buffer, len);
 	break;
 
   case STRRET_CSTR:
-	MultiByteToWideChar(CP_ACP, 0, str->UNION_MEMBER(cStr), -1, buffer, len);
+	MultiByteToWideChar(CP_ACP, 0, str->cStr, -1, buffer, len);
  }
 }
 
@@ -673,7 +667,7 @@ static void fill_w32fdata_shell(IShellFolder* folder, LPCITEMIDLIST pidl, SFGAOF
 			IDataObject_Release(pDataObj);
 
 			if (SUCCEEDED(hr)) {
-				LPCWSTR path = GlobalLock(medium.UNION_MEMBER(hGlobal));
+				LPCWSTR path = GlobalLock(medium.hGlobal);
 				UINT sem_org = SetErrorMode(SEM_FAILCRITICALERRORS);
 
 				if (GetFileAttributesExW(path, GetFileExInfoStandard, &fad)) {
@@ -690,8 +684,8 @@ static void fill_w32fdata_shell(IShellFolder* folder, LPCITEMIDLIST pidl, SFGAOF
 
 				SetErrorMode(sem_org);
 
-				GlobalUnlock(medium.UNION_MEMBER(hGlobal));
-				GlobalFree(medium.UNION_MEMBER(hGlobal));
+				GlobalUnlock(medium.hGlobal);
+				GlobalFree(medium.hGlobal);
 			}
 		}
 	}
