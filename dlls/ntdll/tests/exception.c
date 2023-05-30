@@ -5031,6 +5031,104 @@ static void test_syscall_clobbered_regs(void)
     ok(regs.r11 == regs.eflags, "Expected r11 (%#I64x) to equal EFLAGS (%#x).\n", regs.r11, regs.eflags);
 
 }
+
+static CONTEXT test_raiseexception_regs_context;
+static LONG CALLBACK test_raiseexception_regs_handle(EXCEPTION_POINTERS *exception_info)
+{
+    EXCEPTION_RECORD *rec = exception_info->ExceptionRecord;
+    unsigned int i;
+
+    test_raiseexception_regs_context = *exception_info->ContextRecord;
+    ok(rec->NumberParameters == EXCEPTION_MAXIMUM_PARAMETERS, "got %lu.\n", rec->NumberParameters);
+    ok(rec->ExceptionCode == 0xdeadbeaf, "got %#lx.\n", rec->ExceptionCode);
+    ok(!rec->ExceptionRecord, "got %p.\n", rec->ExceptionRecord);
+    ok(!rec->ExceptionFlags, "got %#lx.\n", rec->ExceptionFlags);
+    for (i = 0; i < rec->NumberParameters; ++i)
+        ok(rec->ExceptionInformation[i] == i, "got %Iu, i %u.\n", rec->ExceptionInformation[i], i);
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
+static void test_raiseexception_regs(void)
+{
+    static const BYTE code[] =
+    {
+        0xb8, 0x00, 0xb0, 0xad, 0xde,       /* mov $0xdeadb000,%eax */
+        0x53,                               /* push %rbx */
+        0x48, 0x89, 0xc3,                   /* mov %rax,%rbx */
+        0x56,                               /* push %rsi */
+        0x48, 0xff, 0xc0,                   /* inc %rax */
+        0x48, 0x89, 0xc6,                   /* mov %rax,%rsi */
+        0x57,                               /* push %rdi */
+        0x48, 0xff, 0xc0,                   /* inc %rax */
+        0x48, 0x89, 0xc7,                   /* mov %rax,%rdi */
+        0x55,                               /* push %rbp */
+        0x48, 0xff, 0xc0,                   /* inc %rax */
+        0x48, 0x89, 0xc5,                   /* mov %rax,%rbp */
+        0x41, 0x54,                         /* push %r12 */
+        0x48, 0xff, 0xc0,                   /* inc %rax */
+        0x49, 0x89, 0xc4,                   /* mov %rax,%r12 */
+        0x41, 0x55,                         /* push %r13 */
+        0x48, 0xff, 0xc0,                   /* inc %rax */
+        0x49, 0x89, 0xc5,                   /* mov %rax,%r13 */
+        0x41, 0x56,                         /* push %r14 */
+        0x48, 0xff, 0xc0,                   /* inc %rax */
+        0x49, 0x89, 0xc6,                   /* mov %rax,%r14 */
+        0x41, 0x57,                         /* push %r15 */
+        0x48, 0xff, 0xc0,                   /* inc %rax */
+        0x49, 0x89, 0xc7,                   /* mov %rax,%r15 */
+
+        0x50,                               /* push %rax */ /* align stack */
+        0x48, 0x89, 0xc8,                   /* mov %rcx,%rax */
+        0xb9, 0xaf, 0xbe, 0xad, 0xde,       /* mov $0xdeadbeaf,%ecx */
+        0xff, 0xd0,                         /* call *%rax */
+        0x58,                               /* pop %rax */
+
+        0x41, 0x5f,                         /* pop %r15 */
+        0x41, 0x5e,                         /* pop %r14 */
+        0x41, 0x5d,                         /* pop %r13 */
+        0x41, 0x5c,                         /* pop %r12 */
+        0x5d,                               /* pop %rbp */
+        0x5f,                               /* pop %rdi */
+        0x5e,                               /* pop %rsi */
+        0x5b,                               /* pop %rbx */
+        0xc3,                               /* ret */
+    };
+    void (WINAPI *pRaiseException)( DWORD code, DWORD flags, DWORD count, const ULONG_PTR *args ) = RaiseException;
+    void (WINAPI *func)(void *raise_exception, DWORD flags, DWORD count, const ULONG_PTR *args);
+    void *vectored_handler;
+    ULONG_PTR args[20];
+    ULONG64 expected;
+    unsigned int i;
+
+    vectored_handler = AddVectoredExceptionHandler(TRUE, test_raiseexception_regs_handle);
+    ok(!!vectored_handler, "failed.\n");
+
+    memcpy(code_mem, code, sizeof(code));
+    func = code_mem;
+
+    for (i = 0; i < ARRAY_SIZE(args); ++i)
+        args[i] = i;
+
+    func(pRaiseException, 0, ARRAY_SIZE(args), args);
+    expected = 0xdeadb000;
+    ok(test_raiseexception_regs_context.Rbx == expected, "got %#I64x.\n", test_raiseexception_regs_context.Rbx);
+    ++expected;
+    ok(test_raiseexception_regs_context.Rsi == expected, "got %#I64x.\n", test_raiseexception_regs_context.Rsi);
+    ++expected;
+    ok(test_raiseexception_regs_context.Rdi == expected, "got %#I64x.\n", test_raiseexception_regs_context.Rdi);
+    ++expected;
+    ok(test_raiseexception_regs_context.Rbp == expected, "got %#I64x.\n", test_raiseexception_regs_context.Rbp);
+    ++expected;
+    ok(test_raiseexception_regs_context.R12 == expected, "got %#I64x.\n", test_raiseexception_regs_context.R12);
+    ++expected;
+    ok(test_raiseexception_regs_context.R13 == expected, "got %#I64x.\n", test_raiseexception_regs_context.R13);
+    ++expected;
+    ok(test_raiseexception_regs_context.R14 == expected, "got %#I64x.\n", test_raiseexception_regs_context.R14);
+    ++expected;
+    ok(test_raiseexception_regs_context.R15 == expected, "got %#I64x.\n", test_raiseexception_regs_context.R15);
+
+    RemoveVectoredExceptionHandler(vectored_handler);
+}
 #elif defined(__arm__)
 
 #define UNW_FLAG_NHANDLER  0
@@ -10974,6 +11072,7 @@ START_TEST(exception)
     test_copy_context();
     test_unwind_from_apc();
     test_syscall_clobbered_regs();
+    test_raiseexception_regs();
 
 #elif defined(__aarch64__)
 

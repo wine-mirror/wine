@@ -283,6 +283,51 @@ void WINAPI DECLSPEC_HOTPATCH OutputDebugStringW( LPCWSTR str )
 /*******************************************************************
  *           RaiseException  (kernelbase.@)
  */
+#if defined(__x86_64__)
+/* Some DRMs depend on RaiseException not altering non-volatile registers. */
+__ASM_GLOBAL_FUNC( RaiseException,
+                   ".byte 0x48,0x8d,0xa4,0x24,0x00,0x00,0x00,0x00\n\t" /* hotpatch prolog */
+                   "sub $0xc8,%rsp\n\t"
+                   __ASM_SEH(".seh_stackalloc 0xc8\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
+                   __ASM_CFI(".cfi_adjust_cfa_offset 0xc8\n\t")
+                   "leaq 0x20(%rsp),%rax\n\t"
+                   "movl %ecx,(%rax)\n\t" /* ExceptionCode */
+                   "and $1,%edx\n\t"
+                   "movl %edx,4(%rax)\n\t" /* ExceptionFlags */
+                   "movq $0,8(%rax)\n\t" /* ExceptionRecord */
+                   "leaq " __ASM_NAME("RaiseException") "(%rip),%rcx\n\t"
+                   "movq %rcx,0x10(%rax)\n\t" /* ExceptionAddress */
+                   "movq %rax,%rcx\n\t"
+                   "movl $0,0x18(%rcx)\n\t" /* NumberParameters */
+                   "testl %r8d,%r8d\n\t"
+                   "jz 2f\n\t"
+                   "testq %r9,%r9\n\t"
+                   "jz 2f\n\t"
+                   "movl $15,%edx\n\t"
+                   "cmp %edx,%r8d\n\t"
+                   "cmovb %r8d,%edx\n\t"
+                   "movl %edx,0x18(%rcx)\n\t" /* NumberParameters */
+                   "leaq 0x20(%rcx),%rax\n" /* ExceptionInformation */
+                   "1:\tmovq (%r9),%r8\n\t"
+                   "movq %r8,(%rax)\n\t"
+                   "decl %edx\n\t"
+                   "jz 2f\n\t"
+                   "addq $8,%rax\n\t"
+                   "addq $8,%r9\n\t"
+                   "jmp 1b\n"
+                   "2:\tcall " __ASM_NAME("RtlRaiseException") "\n\t"
+                   "add $0xc8,%rsp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset -0xc8\n\t")
+                   "ret" )
+
+C_ASSERT( offsetof(EXCEPTION_RECORD, ExceptionCode) == 0 );
+C_ASSERT( offsetof(EXCEPTION_RECORD, ExceptionFlags) == 4 );
+C_ASSERT( offsetof(EXCEPTION_RECORD, ExceptionRecord) == 8 );
+C_ASSERT( offsetof(EXCEPTION_RECORD, ExceptionAddress) == 0x10 );
+C_ASSERT( offsetof(EXCEPTION_RECORD, NumberParameters) == 0x18 );
+C_ASSERT( offsetof(EXCEPTION_RECORD, ExceptionInformation) == 0x20 );
+#else
 void WINAPI DECLSPEC_HOTPATCH RaiseException( DWORD code, DWORD flags, DWORD count, const ULONG_PTR *args )
 {
     EXCEPTION_RECORD record;
@@ -301,6 +346,7 @@ void WINAPI DECLSPEC_HOTPATCH RaiseException( DWORD code, DWORD flags, DWORD cou
 
     RtlRaiseException( &record );
 }
+#endif
 __ASM_STDCALL_IMPORT(RaiseException,16)
 
 /*******************************************************************
