@@ -4374,7 +4374,7 @@ static DWORD WINAPI get_key_state_thread(void *arg)
     struct get_key_state_test_desc* test;
     HANDLE *semaphores = params->semaphores;
     DWORD result;
-    BYTE keystate[256];
+    BYTE keystate[256] = {0};
     BOOL has_queue;
     BOOL expect_x, expect_c;
     MSG msg;
@@ -4436,7 +4436,7 @@ static void test_GetKeyState(void)
     struct get_key_state_thread_params params;
     HANDLE thread;
     DWORD result;
-    BYTE keystate[256];
+    BYTE keystate[256] = {0};
     BOOL expect_x, expect_c;
     HWND hwnd;
     MSG msg;
@@ -4449,7 +4449,6 @@ static void test_GetKeyState(void)
         return;
     }
 
-    memset(keystate, 0, sizeof(keystate));
     params.semaphores[0] = CreateSemaphoreA(NULL, 0, 1, NULL);
     ok(params.semaphores[0] != NULL, "CreateSemaphoreA failed %lu\n", GetLastError());
     params.semaphores[1] = CreateSemaphoreA(NULL, 0, 1, NULL);
