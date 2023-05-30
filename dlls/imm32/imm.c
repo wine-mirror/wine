@@ -1038,6 +1038,7 @@ BOOL WINAPI ImmAssociateContextEx( HWND hwnd, HIMC new_himc, DWORD flags )
     ret = NtUserAssociateInputContext( hwnd, new_himc, flags );
     if (ret == AICR_FOCUS_CHANGED)
     {
+        if (flags == IACE_DEFAULT) new_himc = NtUserGetWindowInputContext( hwnd );
         ImmSetActiveContext( hwnd, old_himc, FALSE );
         ImmSetActiveContext( hwnd, new_himc, TRUE );
         if (hwnd == GetFocus()) set_ime_ui_window_himc( new_himc );
