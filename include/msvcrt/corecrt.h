@@ -82,7 +82,7 @@
 #define __has_attribute(x) 0
 #endif
 
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
 # undef __stdcall
 # ifdef __i386__
 #  ifdef __GNUC__
@@ -100,16 +100,13 @@
 #  else
 #   define __stdcall __attribute__((ms_abi))
 #  endif
-# elif defined(__arm__) && defined (__GNUC__) && !defined(__SOFTFP__) && !defined(__MINGW32__) && !defined(__CYGWIN__)
+# elif defined(__arm__) && defined (__GNUC__) && !defined(__SOFTFP__) && !defined(__CYGWIN__)
 #   define __stdcall __attribute__((pcs("aapcs-vfp")))
 # elif defined(__aarch64__) && defined (__GNUC__) && __has_attribute(ms_abi)
 #  define __stdcall __attribute__((ms_abi))
 # else  /* __i386__ */
 #  define __stdcall
 # endif  /* __i386__ */
-#endif /* __stdcall */
-
-#ifndef _MSC_VER
 # undef __cdecl
 # if defined(__i386__) && defined(__GNUC__)
 #  if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2)) || defined(__APPLE__)
@@ -120,7 +117,7 @@
 # else
 #  define __cdecl __stdcall
 # endif
-#endif
+#endif  /* _MSC_VER || __MINGW32__ */
 
 #ifndef WINAPIV
 # if defined(__arm__) && defined (__GNUC__) && !defined(__SOFTFP__) && !defined(__MINGW32__) && !defined(__CYGWIN__)
