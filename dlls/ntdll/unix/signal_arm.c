@@ -1213,14 +1213,6 @@ NTSTATUS WINAPI KeUserModeCallback( ULONG id, const void *args, ULONG len, void 
     void *args_data = (void *)((frame->sp - len) & ~15);
     ULONG_PTR *stack = args_data;
 
-    /* if we have no syscall frame, call the callback directly */
-    if ((char *)&frame < (char *)ntdll_get_thread_data()->kernel_stack ||
-        (char *)&frame > (char *)arm_thread_data()->syscall_frame)
-    {
-        NTSTATUS (WINAPI *func)(const void *, ULONG) = ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[id];
-        return func( args, len );
-    }
-
     if ((char *)ntdll_get_thread_data()->kernel_stack + min_kernel_stack > (char *)&frame)
         return STATUS_STACK_OVERFLOW;
 
@@ -1254,7 +1246,7 @@ static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
     struct syscall_frame *frame = arm_thread_data()->syscall_frame;
     UINT i;
 
-    if (!is_inside_syscall( context ) && !ntdll_get_thread_data()->jmp_buf) return FALSE;
+    if (!is_inside_syscall( context )) return FALSE;
 
     TRACE( "code=%lx flags=%lx addr=%p pc=%08lx\n",
            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, (DWORD)PC_sig(context) );
