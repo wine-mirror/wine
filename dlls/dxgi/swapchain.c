@@ -1579,7 +1579,7 @@ static VkResult d3d12_swapchain_acquire_next_vulkan_image(struct d3d12_swapchain
     return vr;
 }
 
-static void d3d12_swapchain_destroy_buffers(struct d3d12_swapchain *swapchain, BOOL destroy_user_buffers)
+static void d3d12_swapchain_destroy_vulkan_resources(struct d3d12_swapchain *swapchain)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
     VkQueue vk_queue;
@@ -1599,20 +1599,6 @@ static void d3d12_swapchain_destroy_buffers(struct d3d12_swapchain *swapchain, B
         }
     }
 
-    for (i = 0; i < swapchain->desc.BufferCount; ++i)
-    {
-        if (swapchain->buffers[i] && destroy_user_buffers)
-        {
-            vkd3d_resource_decref(swapchain->buffers[i]);
-            swapchain->buffers[i] = NULL;
-        }
-        if (swapchain->vk_device && destroy_user_buffers)
-        {
-            vk_funcs->p_vkDestroyImage(swapchain->vk_device, swapchain->vk_images[i], NULL);
-            swapchain->vk_images[i] = VK_NULL_HANDLE;
-        }
-    }
-
     if (swapchain->vk_device)
     {
         for (i = 0; i < swapchain->buffer_count; ++i)
@@ -1620,13 +1606,34 @@ static void d3d12_swapchain_destroy_buffers(struct d3d12_swapchain *swapchain, B
             vk_funcs->p_vkDestroySemaphore(swapchain->vk_device, swapchain->vk_semaphores[i], NULL);
             swapchain->vk_semaphores[i] = VK_NULL_HANDLE;
         }
-        if (destroy_user_buffers)
+
+        vk_funcs->p_vkDestroyCommandPool(swapchain->vk_device, swapchain->vk_cmd_pool, NULL);
+        swapchain->vk_cmd_pool = VK_NULL_HANDLE;
+    }
+}
+
+static void d3d12_swapchain_destroy_resources(struct d3d12_swapchain *swapchain)
+{
+    const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
+    unsigned int i;
+
+    d3d12_swapchain_destroy_vulkan_resources(swapchain);
+
+    for (i = 0; i < swapchain->desc.BufferCount; ++i)
+    {
+        if (swapchain->buffers[i])
         {
+            vkd3d_resource_decref(swapchain->buffers[i]);
+            swapchain->buffers[i] = NULL;
+        }
+        if (swapchain->vk_device)
+        {
+            vk_funcs->p_vkDestroyImage(swapchain->vk_device, swapchain->vk_images[i], NULL);
+            swapchain->vk_images[i] = VK_NULL_HANDLE;
+
             vk_funcs->p_vkFreeMemory(swapchain->vk_device, swapchain->vk_memory, NULL);
             swapchain->vk_memory = VK_NULL_HANDLE;
         }
-        vk_funcs->p_vkDestroyCommandPool(swapchain->vk_device, swapchain->vk_cmd_pool, NULL);
-        swapchain->vk_cmd_pool = VK_NULL_HANDLE;
     }
 }
 
@@ -1831,7 +1838,7 @@ static void d3d12_swapchain_destroy(struct d3d12_swapchain *swapchain)
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
     void *vulkan_module = vk_funcs->vulkan_module;
 
-    d3d12_swapchain_destroy_buffers(swapchain, TRUE);
+    d3d12_swapchain_destroy_resources(swapchain);
 
     if (swapchain->frame_latency_event)
         CloseHandle(swapchain->frame_latency_event);
@@ -1966,7 +1973,7 @@ static HRESULT d3d12_swapchain_set_sync_interval(struct d3d12_swapchain *swapcha
         return S_OK;
     }
 
-    d3d12_swapchain_destroy_buffers(swapchain, FALSE);
+    d3d12_swapchain_destroy_vulkan_resources(swapchain);
     swapchain->present_mode = present_mode;
     return d3d12_swapchain_create_vulkan_resources(swapchain);
 }
@@ -2074,7 +2081,7 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
 
         TRACE("Recreating Vulkan swapchain.\n");
 
-        d3d12_swapchain_destroy_buffers(swapchain, FALSE);
+        d3d12_swapchain_destroy_vulkan_resources(swapchain);
         if (FAILED(hr = d3d12_swapchain_create_vulkan_resources(swapchain)))
             return hr;
 
@@ -2352,7 +2359,7 @@ static HRESULT d3d12_swapchain_resize_buffers(struct d3d12_swapchain *swapchain,
             && desc->Format == new_desc.Format && desc->BufferCount == new_desc.BufferCount)
         return S_OK;
 
-    d3d12_swapchain_destroy_buffers(swapchain, TRUE);
+    d3d12_swapchain_destroy_resources(swapchain);
     swapchain->desc = new_desc;
     return d3d12_swapchain_create_resources(swapchain);
 }
