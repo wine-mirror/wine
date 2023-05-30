@@ -3161,6 +3161,7 @@ static HRESULT WINAPI window_private_matchMedia(IWineHTMLWindowPrivate *iface, B
 
 static HRESULT check_target_origin(HTMLInnerWindow *window, const WCHAR *target_origin)
 {
+    BOOL no_port = FALSE;
     IUri *uri, *target;
     DWORD port, port2;
     BSTR bstr, bstr2;
@@ -3219,11 +3220,20 @@ static HRESULT check_target_origin(HTMLInnerWindow *window, const WCHAR *target_
         goto done;
 
     hres = IUri_GetPort(uri, &port);
-    if(hres != S_OK)
-        goto done;
+    if(hres != S_OK) {
+        if(FAILED(hres))
+            goto done;
+        no_port = TRUE;    /* some protocols don't have ports (e.g. res) */
+    }
     hres = IUri_GetPort(target, &port2);
-    if(hres == S_OK && port != port2)
+    if(hres != S_OK) {
+        if(FAILED(hres))
+            goto done;
+        if(no_port)
+            hres = S_OK;
+    }else if(no_port || port != port2) {
         hres = S_FALSE;
+    }
 
 done:
     IUri_Release(target);
