@@ -63,8 +63,6 @@
 #include <mach/mach.h>
 #endif
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "winternl.h"
@@ -420,7 +418,7 @@ static NTSTATUS context_to_server( context_t *to, USHORT to_machine, const void 
         if (flags & CONTEXT_AMD64_FLOATING_POINT)
         {
             to->flags |= SERVER_CTX_FLOATING_POINT;
-            memcpy( to->fp.x86_64_regs.fpregs, &from->u.FltSave, sizeof(to->fp.x86_64_regs.fpregs) );
+            memcpy( to->fp.x86_64_regs.fpregs, &from->FltSave, sizeof(to->fp.x86_64_regs.fpregs) );
         }
         if (flags & CONTEXT_AMD64_DEBUG_REGISTERS)
         {
@@ -481,8 +479,8 @@ static NTSTATUS context_to_server( context_t *to, USHORT to_machine, const void 
             I386_FLOATING_SAVE_AREA fpu;
 
             to->flags |= SERVER_CTX_EXTENDED_REGISTERS | SERVER_CTX_FLOATING_POINT;
-            memcpy( to->ext.i386_regs, &from->u.FltSave, sizeof(to->ext.i386_regs) );
-            fpux_to_fpu( &fpu, &from->u.FltSave );
+            memcpy( to->ext.i386_regs, &from->FltSave, sizeof(to->ext.i386_regs) );
+            fpux_to_fpu( &fpu, &from->FltSave );
             to->fp.i386_regs.ctrl     = fpu.ControlWord;
             to->fp.i386_regs.status   = fpu.StatusWord;
             to->fp.i386_regs.tag      = fpu.TagWord;
@@ -547,7 +545,7 @@ static NTSTATUS context_to_server( context_t *to, USHORT to_machine, const void 
         if (flags & CONTEXT_ARM_FLOATING_POINT)
         {
             to->flags |= SERVER_CTX_FLOATING_POINT;
-            for (i = 0; i < 32; i++) to->fp.arm_regs.d[i] = from->u.D[i];
+            for (i = 0; i < 32; i++) to->fp.arm_regs.d[i] = from->D[i];
             to->fp.arm_regs.fpscr = from->Fpscr;
         }
         if (flags & CONTEXT_ARM_DEBUG_REGISTERS)
@@ -569,8 +567,8 @@ static NTSTATUS context_to_server( context_t *to, USHORT to_machine, const void 
         if (flags & CONTEXT_ARM64_CONTROL)
         {
             to->flags |= SERVER_CTX_CONTROL;
-            to->integer.arm64_regs.x[29] = from->u.s.Fp;
-            to->integer.arm64_regs.x[30] = from->u.s.Lr;
+            to->integer.arm64_regs.x[29] = from->Fp;
+            to->integer.arm64_regs.x[30] = from->Lr;
             to->ctl.arm64_regs.sp     = from->Sp;
             to->ctl.arm64_regs.pc     = from->Pc;
             to->ctl.arm64_regs.pstate = from->Cpsr;
@@ -578,15 +576,15 @@ static NTSTATUS context_to_server( context_t *to, USHORT to_machine, const void 
         if (flags & CONTEXT_ARM64_INTEGER)
         {
             to->flags |= SERVER_CTX_INTEGER;
-            for (i = 0; i <= 28; i++) to->integer.arm64_regs.x[i] = from->u.X[i];
+            for (i = 0; i <= 28; i++) to->integer.arm64_regs.x[i] = from->X[i];
         }
         if (flags & CONTEXT_ARM64_FLOATING_POINT)
         {
             to->flags |= SERVER_CTX_FLOATING_POINT;
             for (i = 0; i < 32; i++)
             {
-                to->fp.arm64_regs.q[i].low = from->V[i].s.Low;
-                to->fp.arm64_regs.q[i].high = from->V[i].s.High;
+                to->fp.arm64_regs.q[i].low = from->V[i].Low;
+                to->fp.arm64_regs.q[i].high = from->V[i].High;
             }
             to->fp.arm64_regs.fpcr = from->Fpcr;
             to->fp.arm64_regs.fpsr = from->Fpsr;
@@ -820,8 +818,8 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
         if ((from->flags & SERVER_CTX_FLOATING_POINT) && (to_flags & CONTEXT_AMD64_FLOATING_POINT))
         {
             to->ContextFlags |= CONTEXT_AMD64_FLOATING_POINT;
-            memcpy( &to->u.FltSave, from->fp.x86_64_regs.fpregs, sizeof(from->fp.x86_64_regs.fpregs) );
-            to->MxCsr = to->u.FltSave.MxCsr;
+            memcpy( &to->FltSave, from->fp.x86_64_regs.fpregs, sizeof(from->fp.x86_64_regs.fpregs) );
+            to->MxCsr = to->FltSave.MxCsr;
         }
         if ((from->flags & SERVER_CTX_DEBUG_REGISTERS) && (to_flags & CONTEXT_AMD64_DEBUG_REGISTERS))
         {
@@ -887,7 +885,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
         if ((from->flags & SERVER_CTX_EXTENDED_REGISTERS) && (to_flags & CONTEXT_AMD64_FLOATING_POINT))
         {
             to->ContextFlags |= CONTEXT_AMD64_FLOATING_POINT;
-            memcpy( &to->u.FltSave, from->ext.i386_regs, sizeof(to->u.FltSave) );
+            memcpy( &to->FltSave, from->ext.i386_regs, sizeof(to->FltSave) );
         }
         else if ((from->flags & SERVER_CTX_FLOATING_POINT) && (to_flags & CONTEXT_AMD64_FLOATING_POINT))
         {
@@ -903,7 +901,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             fpu.DataSelector  = from->fp.i386_regs.data_sel;
             fpu.Cr0NpxState   = from->fp.i386_regs.cr0npx;
             memcpy( fpu.RegisterArea, from->fp.i386_regs.regs, sizeof(fpu.RegisterArea) );
-            fpu_to_fpux( &to->u.FltSave, &fpu );
+            fpu_to_fpux( &to->FltSave, &fpu );
         }
         if ((from->flags & SERVER_CTX_DEBUG_REGISTERS) && (to_flags & CONTEXT_AMD64_DEBUG_REGISTERS))
         {
@@ -966,7 +964,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
         if ((from->flags & SERVER_CTX_FLOATING_POINT) && (to_flags & CONTEXT_ARM_FLOATING_POINT))
         {
             to->ContextFlags |= CONTEXT_ARM_FLOATING_POINT;
-            for (i = 0; i < 32; i++) to->u.D[i] = from->fp.arm_regs.d[i];
+            for (i = 0; i < 32; i++) to->D[i] = from->fp.arm_regs.d[i];
             to->Fpscr = from->fp.arm_regs.fpscr;
         }
         if ((from->flags & SERVER_CTX_DEBUG_REGISTERS) && (to_flags & CONTEXT_ARM_DEBUG_REGISTERS))
@@ -988,24 +986,24 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
         if ((from->flags & SERVER_CTX_CONTROL) && (to_flags & CONTEXT_ARM64_CONTROL))
         {
             to->ContextFlags |= CONTEXT_ARM64_CONTROL;
-            to->u.s.Fp = from->integer.arm64_regs.x[29];
-            to->u.s.Lr = from->integer.arm64_regs.x[30];
-            to->Sp     = from->ctl.arm64_regs.sp;
-            to->Pc     = from->ctl.arm64_regs.pc;
-            to->Cpsr   = from->ctl.arm64_regs.pstate;
+            to->Fp   = from->integer.arm64_regs.x[29];
+            to->Lr   = from->integer.arm64_regs.x[30];
+            to->Sp   = from->ctl.arm64_regs.sp;
+            to->Pc   = from->ctl.arm64_regs.pc;
+            to->Cpsr = from->ctl.arm64_regs.pstate;
         }
         if ((from->flags & SERVER_CTX_INTEGER) && (to_flags & CONTEXT_ARM64_INTEGER))
         {
             to->ContextFlags |= CONTEXT_ARM64_INTEGER;
-            for (i = 0; i <= 28; i++) to->u.X[i] = from->integer.arm64_regs.x[i];
+            for (i = 0; i <= 28; i++) to->X[i] = from->integer.arm64_regs.x[i];
         }
         if ((from->flags & SERVER_CTX_FLOATING_POINT) && (to_flags & CONTEXT_ARM64_FLOATING_POINT))
         {
             to->ContextFlags |= CONTEXT_ARM64_FLOATING_POINT;
             for (i = 0; i < 32; i++)
             {
-                to->V[i].s.Low = from->fp.arm64_regs.q[i].low;
-                to->V[i].s.High = from->fp.arm64_regs.q[i].high;
+                to->V[i].Low = from->fp.arm64_regs.q[i].low;
+                to->V[i].High = from->fp.arm64_regs.q[i].high;
             }
             to->Fpcr = from->fp.arm64_regs.fpcr;
             to->Fpsr = from->fp.arm64_regs.fpsr;

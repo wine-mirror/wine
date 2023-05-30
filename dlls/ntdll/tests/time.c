@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "ntdll_test.h"
 #include "ddk/wdm.h"
 #include "intrin.h"
@@ -160,18 +158,18 @@ static void test_RtlQueryPerformanceCounter(void)
         return;
     }
 
-    if (!(usd->u3.s.QpcBypassEnabled & SHARED_GLOBAL_FLAGS_QPC_BYPASS_ENABLED))
+    if (!(usd->QpcBypassEnabled & SHARED_GLOBAL_FLAGS_QPC_BYPASS_ENABLED))
     {
         todo_wine win_skip("QpcBypassEnabled is not set, skipping tests\n");
         return;
     }
 
-    if ((usd->u3.s.QpcBypassEnabled & SHARED_GLOBAL_FLAGS_QPC_BYPASS_USE_HV_PAGE))
+    if ((usd->QpcBypassEnabled & SHARED_GLOBAL_FLAGS_QPC_BYPASS_USE_HV_PAGE))
     {
-        ok( usd->u3.s.QpcBypassEnabled == (SHARED_GLOBAL_FLAGS_QPC_BYPASS_ENABLED|SHARED_GLOBAL_FLAGS_QPC_BYPASS_USE_HV_PAGE|SHARED_GLOBAL_FLAGS_QPC_BYPASS_USE_RDTSCP),
-            "unexpected QpcBypassEnabled %x, expected 0x83\n", usd->u3.s.QpcBypassEnabled );
+        ok( usd->QpcBypassEnabled == (SHARED_GLOBAL_FLAGS_QPC_BYPASS_ENABLED|SHARED_GLOBAL_FLAGS_QPC_BYPASS_USE_HV_PAGE|SHARED_GLOBAL_FLAGS_QPC_BYPASS_USE_RDTSCP),
+            "unexpected QpcBypassEnabled %x, expected 0x83\n", usd->QpcBypassEnabled );
         ok( usd->QpcFrequency == 10000000, "unexpected QpcFrequency %I64d, expected 10000000\n", usd->QpcFrequency );
-        ok( !usd->u3.s.QpcShift, "unexpected QpcShift %d, expected 0\n", usd->u3.s.QpcShift );
+        ok( !usd->QpcShift, "unexpected QpcShift %d, expected 0\n", usd->QpcShift );
 
         hsd = NULL;
         status = pNtQuerySystemInformation( SystemHypervisorSharedPageInformation, &hsd, sizeof(void *), &len );
@@ -192,7 +190,7 @@ static void test_RtlQueryPerformanceCounter(void)
     }
     else
     {
-        ok( usd->u3.s.QpcShift == 10, "unexpected QpcShift %d, expected 10\n", usd->u3.s.QpcShift );
+        ok( usd->QpcShift == 10, "unexpected QpcShift %d, expected 10\n", usd->QpcShift );
 
         tsc0 = __rdtsc();
         ret = pRtlQueryPerformanceCounter( &counter );
@@ -200,9 +198,9 @@ static void test_RtlQueryPerformanceCounter(void)
         ok( ret, "RtlQueryPerformanceCounter failed\n" );
 
         tsc0 += usd->QpcBias;
-        tsc0 >>= usd->u3.s.QpcShift;
+        tsc0 >>= usd->QpcShift;
         tsc1 += usd->QpcBias;
-        tsc1 >>= usd->u3.s.QpcShift;
+        tsc1 >>= usd->QpcShift;
 
         ok( tsc0 <= counter.QuadPart, "rdtscp %I64d and RtlQueryPerformanceCounter %I64d are out of order\n", tsc0, counter.QuadPart );
         ok( counter.QuadPart <= tsc1, "RtlQueryPerformanceCounter %I64d and rdtscp %I64d are out of order\n", counter.QuadPart, tsc1 );
@@ -422,7 +420,7 @@ static void test_user_shared_data_time(void)
         if (user_shared_data->NtMajorVersion <= 5 && user_shared_data->NtMinorVersion <= 1)
             t2 = (DWORD)((*(volatile ULONG*)&user_shared_data->TickCountLowDeprecated * (ULONG64)user_shared_data->TickCountMultiplier) >> 24);
         else
-            t2 = (DWORD)((read_ksystem_time(&user_shared_data->u.TickCount) * user_shared_data->TickCountMultiplier) >> 24);
+            t2 = (DWORD)((read_ksystem_time(&user_shared_data->TickCount) * user_shared_data->TickCountMultiplier) >> 24);
         t3 = GetTickCount();
     } while(t3 < t1 && i++ < 1); /* allow for wrap, but only once */
 

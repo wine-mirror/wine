@@ -24,8 +24,6 @@
 #include <signal.h>
 #include <stdarg.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -312,7 +310,7 @@ static ULONG_PTR get_runtime_function_end( RUNTIME_FUNCTION *func, ULONG_PTR add
 #ifdef __x86_64__
     return func->EndAddress;
 #elif defined(__arm__)
-    if (func->u.s.Flag) return func->BeginAddress + func->u.s.FunctionLength * 2;
+    if (func->Flag) return func->BeginAddress + func->FunctionLength * 2;
     else
     {
         struct unwind_info
@@ -324,11 +322,11 @@ static ULONG_PTR get_runtime_function_end( RUNTIME_FUNCTION *func, ULONG_PTR add
             DWORD f : 1;
             DWORD count : 5;
             DWORD words : 4;
-        } *info = (struct unwind_info *)(addr + func->u.UnwindData);
+        } *info = (struct unwind_info *)(addr + func->UnwindData);
         return func->BeginAddress + info->function_length * 2;
     }
 #else  /* __aarch64__ */
-    if (func->u.s.Flag) return func->BeginAddress + func->u.s.FunctionLength * 4;
+    if (func->Flag) return func->BeginAddress + func->FunctionLength * 4;
     else
     {
         struct unwind_info
@@ -339,7 +337,7 @@ static ULONG_PTR get_runtime_function_end( RUNTIME_FUNCTION *func, ULONG_PTR add
             DWORD e : 1;
             DWORD epilog : 5;
             DWORD codes : 5;
-        } *info = (struct unwind_info *)(addr + func->u.UnwindData);
+        } *info = (struct unwind_info *)(addr + func->UnwindData);
         return func->BeginAddress + info->function_length * 4;
     }
 #endif

@@ -67,7 +67,6 @@
 # include <mach/vm_map.h>
 #endif
 
-#define NONAMELESSUNION
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -619,12 +618,12 @@ static BOOL logical_proc_info_ex_add_by_id( LOGICAL_PROCESSOR_RELATIONSHIP rel, 
     while (ofs < logical_proc_info_ex_size)
     {
         dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((char *)logical_proc_info_ex + ofs);
-        if (rel == RelationProcessorPackage && dataex->Relationship == rel && dataex->u.Processor.Reserved[1] == id)
+        if (rel == RelationProcessorPackage && dataex->Relationship == rel && dataex->Processor.Reserved[1] == id)
         {
-            dataex->u.Processor.GroupMask[0].Mask |= mask;
+            dataex->Processor.GroupMask[0].Mask |= mask;
             return TRUE;
         }
-        else if (rel == RelationProcessorCore && dataex->Relationship == rel && dataex->u.Processor.Reserved[1] == id)
+        else if (rel == RelationProcessorCore && dataex->Relationship == rel && dataex->Processor.Reserved[1] == id)
         {
             return TRUE;
         }
@@ -640,16 +639,16 @@ static BOOL logical_proc_info_ex_add_by_id( LOGICAL_PROCESSOR_RELATIONSHIP rel, 
     dataex->Relationship = rel;
     dataex->Size = log_proc_ex_size_plus( sizeof(PROCESSOR_RELATIONSHIP) );
     if (rel == RelationProcessorCore)
-        dataex->u.Processor.Flags = count_bits( mask ) > 1 ? LTP_PC_SMT : 0;
+        dataex->Processor.Flags = count_bits( mask ) > 1 ? LTP_PC_SMT : 0;
     else
-        dataex->u.Processor.Flags = 0;
-    dataex->u.Processor.EfficiencyClass = 0;
-    dataex->u.Processor.GroupCount = 1;
-    dataex->u.Processor.GroupMask[0].Mask = mask;
-    dataex->u.Processor.GroupMask[0].Group = 0;
+        dataex->Processor.Flags = 0;
+    dataex->Processor.EfficiencyClass = 0;
+    dataex->Processor.GroupCount = 1;
+    dataex->Processor.GroupMask[0].Mask = mask;
+    dataex->Processor.GroupMask[0].Group = 0;
     /* mark for future lookup */
-    dataex->u.Processor.Reserved[0] = 0;
-    dataex->u.Processor.Reserved[1] = id;
+    dataex->Processor.Reserved[0] = 0;
+    dataex->Processor.Reserved[1] = id;
 
     logical_proc_info_ex_size += dataex->Size;
     return TRUE;
@@ -668,13 +667,13 @@ static BOOL logical_proc_info_add_by_id( LOGICAL_PROCESSOR_RELATIONSHIP rel, DWO
     for (i = 0; i < logical_proc_info_len; i++)
     {
         if (rel == RelationProcessorPackage && logical_proc_info[i].Relationship == rel
-            && logical_proc_info[i].u.Reserved[1] == id)
+            && logical_proc_info[i].Reserved[1] == id)
         {
             logical_proc_info[i].ProcessorMask |= mask;
             return logical_proc_info_ex_add_by_id( rel, id, mask );
         }
         else if (rel == RelationProcessorCore && logical_proc_info[i].Relationship == rel
-                 && logical_proc_info[i].u.Reserved[1] == id)
+                 && logical_proc_info[i].Reserved[1] == id)
             return logical_proc_info_ex_add_by_id( rel, id, mask );
     }
 
@@ -683,9 +682,9 @@ static BOOL logical_proc_info_add_by_id( LOGICAL_PROCESSOR_RELATIONSHIP rel, DWO
     logical_proc_info[i].Relationship = rel;
     logical_proc_info[i].ProcessorMask = mask;
     if (rel == RelationProcessorCore)
-        logical_proc_info[i].u.ProcessorCore.Flags = count_bits( mask ) > 1 ? LTP_PC_SMT : 0;
-    logical_proc_info[i].u.Reserved[0] = 0;
-    logical_proc_info[i].u.Reserved[1] = id;
+        logical_proc_info[i].ProcessorCore.Flags = count_bits( mask ) > 1 ? LTP_PC_SMT : 0;
+    logical_proc_info[i].Reserved[0] = 0;
+    logical_proc_info[i].Reserved[1] = id;
     logical_proc_info_len = i + 1;
 
     return logical_proc_info_ex_add_by_id( rel, id, mask );
@@ -699,7 +698,7 @@ static BOOL logical_proc_info_add_cache( ULONG_PTR mask, CACHE_DESCRIPTOR *cache
     for (i = 0; i < logical_proc_info_len; i++)
     {
         if (logical_proc_info[i].Relationship==RelationCache && logical_proc_info[i].ProcessorMask==mask
-            && logical_proc_info[i].u.Cache.Level==cache->Level && logical_proc_info[i].u.Cache.Type==cache->Type)
+            && logical_proc_info[i].Cache.Level==cache->Level && logical_proc_info[i].Cache.Type==cache->Type)
             return TRUE;
     }
 
@@ -707,14 +706,14 @@ static BOOL logical_proc_info_add_cache( ULONG_PTR mask, CACHE_DESCRIPTOR *cache
 
     logical_proc_info[i].Relationship = RelationCache;
     logical_proc_info[i].ProcessorMask = mask;
-    logical_proc_info[i].u.Cache = *cache;
+    logical_proc_info[i].Cache = *cache;
     logical_proc_info_len = i + 1;
 
     for (ofs = 0; ofs < logical_proc_info_ex_size; )
     {
         dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((char *)logical_proc_info_ex + ofs);
-        if (dataex->Relationship == RelationCache && dataex->u.Cache.GroupMask.Mask == mask
-            && dataex->u.Cache.Level == cache->Level && dataex->u.Cache.Type == cache->Type)
+        if (dataex->Relationship == RelationCache && dataex->Cache.GroupMask.Mask == mask
+            && dataex->Cache.Level == cache->Level && dataex->Cache.Type == cache->Type)
             return TRUE;
         ofs += dataex->Size;
     }
@@ -725,13 +724,13 @@ static BOOL logical_proc_info_add_cache( ULONG_PTR mask, CACHE_DESCRIPTOR *cache
 
     dataex->Relationship = RelationCache;
     dataex->Size = log_proc_ex_size_plus( sizeof(CACHE_RELATIONSHIP) );
-    dataex->u.Cache.Level = cache->Level;
-    dataex->u.Cache.Associativity = cache->Associativity;
-    dataex->u.Cache.LineSize = cache->LineSize;
-    dataex->u.Cache.CacheSize = cache->Size;
-    dataex->u.Cache.Type = cache->Type;
-    dataex->u.Cache.GroupMask.Mask = mask;
-    dataex->u.Cache.GroupMask.Group = 0;
+    dataex->Cache.Level = cache->Level;
+    dataex->Cache.Associativity = cache->Associativity;
+    dataex->Cache.LineSize = cache->LineSize;
+    dataex->Cache.CacheSize = cache->Size;
+    dataex->Cache.Type = cache->Type;
+    dataex->Cache.GroupMask.Mask = mask;
+    dataex->Cache.GroupMask.Group = 0;
 
     logical_proc_info_ex_size += dataex->Size;
 
@@ -746,7 +745,7 @@ static BOOL logical_proc_info_add_numa_node( ULONG_PTR mask, DWORD node_id )
 
     logical_proc_info[logical_proc_info_len].Relationship = RelationNumaNode;
     logical_proc_info[logical_proc_info_len].ProcessorMask = mask;
-    logical_proc_info[logical_proc_info_len].u.NumaNode.NodeNumber = node_id;
+    logical_proc_info[logical_proc_info_len].NumaNode.NodeNumber = node_id;
     ++logical_proc_info_len;
 
     if (!grow_logical_proc_ex_buf( log_proc_ex_size_plus( sizeof(NUMA_NODE_RELATIONSHIP) ))) return FALSE;
@@ -755,9 +754,9 @@ static BOOL logical_proc_info_add_numa_node( ULONG_PTR mask, DWORD node_id )
 
     dataex->Relationship = RelationNumaNode;
     dataex->Size = log_proc_ex_size_plus( sizeof(NUMA_NODE_RELATIONSHIP) );
-    dataex->u.NumaNode.NodeNumber = node_id;
-    dataex->u.NumaNode.GroupMask.Mask = mask;
-    dataex->u.NumaNode.GroupMask.Group = 0;
+    dataex->NumaNode.NodeNumber = node_id;
+    dataex->NumaNode.GroupMask.Mask = mask;
+    dataex->NumaNode.GroupMask.Group = 0;
 
     logical_proc_info_ex_size += dataex->Size;
 
@@ -774,11 +773,11 @@ static BOOL logical_proc_info_add_group( DWORD num_cpus, ULONG_PTR mask )
 
     dataex->Relationship = RelationGroup;
     dataex->Size = log_proc_ex_size_plus( sizeof(GROUP_RELATIONSHIP) );
-    dataex->u.Group.MaximumGroupCount = 1;
-    dataex->u.Group.ActiveGroupCount = 1;
-    dataex->u.Group.GroupInfo[0].MaximumProcessorCount = num_cpus;
-    dataex->u.Group.GroupInfo[0].ActiveProcessorCount = num_cpus;
-    dataex->u.Group.GroupInfo[0].ActiveProcessorMask = mask;
+    dataex->Group.MaximumGroupCount = 1;
+    dataex->Group.ActiveGroupCount = 1;
+    dataex->Group.GroupInfo[0].MaximumProcessorCount = num_cpus;
+    dataex->Group.GroupInfo[0].ActiveProcessorCount = num_cpus;
+    dataex->Group.GroupInfo[0].ActiveProcessorMask = mask;
 
     logical_proc_info_ex_size += dataex->Size;
     return TRUE;
@@ -1259,8 +1258,8 @@ static NTSTATUS create_cpuset_info(SYSTEM_CPU_SET_INFORMATION *info)
     {
         if (proc_info->Relationship == RelationCache)
         {
-            if (max_cache_level < proc_info->u.Cache.Level)
-                max_cache_level = proc_info->u.Cache.Level;
+            if (max_cache_level < proc_info->Cache.Level)
+                max_cache_level = proc_info->Cache.Level;
         }
         proc_info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((BYTE *)proc_info + proc_info->Size);
     }
@@ -1274,45 +1273,45 @@ static NTSTATUS create_cpuset_info(SYSTEM_CPU_SET_INFORMATION *info)
     {
         info[i].Size = sizeof(*info);
         info[i].Type = CpuSetInformation;
-        info[i].u.CpuSet.Id = 0x100 + i;
-        info[i].u.CpuSet.LogicalProcessorIndex = i;
+        info[i].CpuSet.Id = 0x100 + i;
+        info[i].CpuSet.LogicalProcessorIndex = i;
     }
 
     for (i = 0; (char *)proc_info != (char *)logical_proc_info_ex + cpu_info_size; ++i)
     {
         if (proc_info->Relationship == RelationProcessorCore)
         {
-            if (proc_info->u.Processor.GroupCount != 1)
+            if (proc_info->Processor.GroupCount != 1)
             {
-                FIXME("Unsupported group count %u.\n", proc_info->u.Processor.GroupCount);
+                FIXME("Unsupported group count %u.\n", proc_info->Processor.GroupCount);
                 continue;
             }
-            cpu_mask = proc_info->u.Processor.GroupMask[0].Mask;
+            cpu_mask = proc_info->Processor.GroupMask[0].Mask;
             for (j = 0; j < count; ++j)
                 if (((ULONG64)1 << j) & cpu_mask)
                 {
-                    info[j].u.CpuSet.CoreIndex = core_index;
-                    info[j].u.CpuSet.EfficiencyClass = proc_info->u.Processor.EfficiencyClass;
+                    info[j].CpuSet.CoreIndex = core_index;
+                    info[j].CpuSet.EfficiencyClass = proc_info->Processor.EfficiencyClass;
                 }
             ++core_index;
         }
         else if (proc_info->Relationship == RelationCache)
         {
-            if (proc_info->u.Cache.Level == max_cache_level)
+            if (proc_info->Cache.Level == max_cache_level)
             {
-                cpu_mask = proc_info->u.Cache.GroupMask.Mask;
+                cpu_mask = proc_info->Cache.GroupMask.Mask;
                 for (j = 0; j < count; ++j)
                     if (((ULONG64)1 << j) & cpu_mask)
-                        info[j].u.CpuSet.LastLevelCacheIndex = cache_index;
+                        info[j].CpuSet.LastLevelCacheIndex = cache_index;
             }
             ++cache_index;
         }
         else if (proc_info->Relationship == RelationNumaNode)
         {
-            cpu_mask = proc_info->u.NumaNode.GroupMask.Mask;
+            cpu_mask = proc_info->NumaNode.GroupMask.Mask;
             for (j = 0; j < count; ++j)
                 if (((ULONG64)1 << j) & cpu_mask)
-                    info[j].u.CpuSet.NumaNodeIndex = proc_info->u.NumaNode.NodeNumber;
+                    info[j].CpuSet.NumaNodeIndex = proc_info->NumaNode.NodeNumber;
         }
         proc_info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((char *)proc_info + proc_info->Size);
     }

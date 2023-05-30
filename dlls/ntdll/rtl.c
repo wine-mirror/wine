@@ -26,8 +26,6 @@
 #include <stdarg.h>
 
 #include "ntstatus.h"
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #define WIN32_NO_STATUS
 #include "winsock2.h"
 #include "windef.h"
@@ -1567,7 +1565,7 @@ PVOID WINAPI RtlDecodePointer( PVOID ptr )
 VOID WINAPI RtlInitializeSListHead(PSLIST_HEADER list)
 {
 #ifdef _WIN64
-    list->s.Alignment = list->s.Region = 0;
+    list->Alignment = list->Region = 0;
     list->Header16.HeaderType = 1;  /* we use the 16-byte header */
 #else
     list->Alignment = 0;
@@ -1582,7 +1580,7 @@ WORD WINAPI RtlQueryDepthSList(PSLIST_HEADER list)
 #ifdef _WIN64
     return list->Header16.Depth;
 #else
-    return list->s.Depth;
+    return list->Depth;
 #endif
 }
 
@@ -1594,7 +1592,7 @@ PSLIST_ENTRY WINAPI RtlFirstEntrySList(const SLIST_HEADER* list)
 #ifdef _WIN64
     return (SLIST_ENTRY *)((ULONG_PTR)list->Header16.NextEntry << 4);
 #else
-    return list->s.Next.Next;
+    return list->Next.Next;
 #endif
 }
 
@@ -1607,24 +1605,24 @@ PSLIST_ENTRY WINAPI RtlInterlockedFlushSList(PSLIST_HEADER list)
 
 #ifdef _WIN64
     if (!list->Header16.NextEntry) return NULL;
-    new.s.Alignment = new.s.Region = 0;
+    new.Alignment = new.Region = 0;
     new.Header16.HeaderType = 1;  /* we use the 16-byte header */
     do
     {
         old = *list;
         new.Header16.Sequence = old.Header16.Sequence + 1;
-    } while (!InterlockedCompareExchange128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
+    } while (!InterlockedCompareExchange128((__int64 *)list, new.Region, new.Alignment, (__int64 *)&old));
     return (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
 #else
-    if (!list->s.Next.Next) return NULL;
+    if (!list->Next.Next) return NULL;
     new.Alignment = 0;
     do
     {
         old = *list;
-        new.s.Sequence = old.s.Sequence + 1;
+        new.Sequence = old.Sequence + 1;
     } while (InterlockedCompareExchange64((__int64 *)&list->Alignment, new.Alignment,
                                           old.Alignment) != old.Alignment);
-    return old.s.Next.Next;
+    return old.Next.Next;
 #endif
 }
 
@@ -1643,19 +1641,19 @@ PSLIST_ENTRY WINAPI RtlInterlockedPushEntrySList(PSLIST_HEADER list, PSLIST_ENTR
         entry->Next = (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
         new.Header16.Depth = old.Header16.Depth + 1;
         new.Header16.Sequence = old.Header16.Sequence + 1;
-    } while (!InterlockedCompareExchange128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
+    } while (!InterlockedCompareExchange128((__int64 *)list, new.Region, new.Alignment, (__int64 *)&old));
     return (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
 #else
-    new.s.Next.Next = entry;
+    new.Next.Next = entry;
     do
     {
         old = *list;
-        entry->Next = old.s.Next.Next;
-        new.s.Depth = old.s.Depth + 1;
-        new.s.Sequence = old.s.Sequence + 1;
+        entry->Next = old.Next.Next;
+        new.Depth = old.Depth + 1;
+        new.Sequence = old.Sequence + 1;
     } while (InterlockedCompareExchange64((__int64 *)&list->Alignment, new.Alignment,
                                           old.Alignment) != old.Alignment);
-    return old.s.Next.Next;
+    return old.Next.Next;
 #endif
 }
 
@@ -1683,18 +1681,18 @@ PSLIST_ENTRY WINAPI RtlInterlockedPopEntrySList(PSLIST_HEADER list)
         {
         }
         __ENDTRY
-    } while (!InterlockedCompareExchange128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
+    } while (!InterlockedCompareExchange128((__int64 *)list, new.Region, new.Alignment, (__int64 *)&old));
 #else
     do
     {
         old = *list;
-        if (!(entry = old.s.Next.Next)) return NULL;
+        if (!(entry = old.Next.Next)) return NULL;
         /* entry could be deleted by another thread */
         __TRY
         {
-            new.s.Next.Next = entry->Next;
-            new.s.Depth = old.s.Depth - 1;
-            new.s.Sequence = old.s.Sequence + 1;
+            new.Next.Next = entry->Next;
+            new.Depth = old.Depth - 1;
+            new.Sequence = old.Sequence + 1;
         }
         __EXCEPT_PAGE_FAULT
         {
@@ -1722,19 +1720,19 @@ PSLIST_ENTRY WINAPI RtlInterlockedPushListSListEx(PSLIST_HEADER list, PSLIST_ENT
         new.Header16.Depth = old.Header16.Depth + count;
         new.Header16.Sequence = old.Header16.Sequence + 1;
         last->Next = (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
-    } while (!InterlockedCompareExchange128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
+    } while (!InterlockedCompareExchange128((__int64 *)list, new.Region, new.Alignment, (__int64 *)&old));
     return (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
 #else
-    new.s.Next.Next = first;
+    new.Next.Next = first;
     do
     {
         old = *list;
-        new.s.Depth = old.s.Depth + count;
-        new.s.Sequence = old.s.Sequence + 1;
-        last->Next = old.s.Next.Next;
+        new.Depth = old.Depth + count;
+        new.Sequence = old.Sequence + 1;
+        last->Next = old.Next.Next;
     } while (InterlockedCompareExchange64((__int64 *)&list->Alignment, new.Alignment,
                                           old.Alignment) != old.Alignment);
-    return old.s.Next.Next;
+    return old.Next.Next;
 #endif
 }
 
