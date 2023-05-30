@@ -6823,6 +6823,7 @@ static void test_connect_events(struct event_test_ctx *ctx)
     const struct sockaddr_in addr = {.sin_family = AF_INET, .sin_addr.s_addr = htonl(INADDR_LOOPBACK)};
     SOCKET listener, server, client;
     struct sockaddr_in destaddr;
+    struct sockaddr_in invalid_addr;
     int len, ret;
 
     listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -6937,6 +6938,95 @@ static void test_connect_events(struct event_test_ctx *ctx)
     closesocket(server);
 
     closesocket(listener);
+
+    memset( &invalid_addr, 0, sizeof(invalid_addr) );
+    invalid_addr.sin_family = AF_INET;
+    invalid_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    invalid_addr.sin_port = htons(255);
+
+    /* Test events getting cleared on second connect after connection got refused.
+     * w10pro64 sometimes takes over 2 seconds for an error to be reported,
+     * so make the test interactive-only. */
+
+    if (winetest_interactive)
+    {
+        client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        ok(client != -1, "failed to create socket, error %u\n", WSAGetLastError());
+
+        select_events(ctx, client, FD_ACCEPT | FD_CLOSE | FD_CONNECT | FD_OOB | FD_READ | FD_WRITE);
+        check_events(ctx, 0, 0, 0);
+        check_events(ctx, 0, 0, 0);
+
+        /* set event by connecting to closed port */
+        ret = connect(client, (struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
+        ok(ret == SOCKET_ERROR, "expected SOCKET_ERROR, got %d\n", ret);
+        check_events(ctx, MAKELONG(FD_CONNECT, WSAECONNREFUSED), 0, 4000);
+        check_events(ctx, 0, 0, 0);
+
+        /* set event by connecting to closed port, second try, should behave the same */
+        ret = connect(client, (struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
+        ok(ret == SOCKET_ERROR, "expected SOCKET_ERROR, got %d\n", ret);
+        check_events(ctx, MAKELONG(FD_CONNECT, WSAECONNREFUSED), 0, 4000);
+        check_events(ctx, 0, 0, 0);
+
+        /* set event by connecting to closed port */
+        ret = connect(client, (struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
+        ok(ret == SOCKET_ERROR, "expected SOCKET_ERROR, got %d\n", ret);
+        /* try with invalid size, after event was set */
+        ret = connect(client, (struct sockaddr *)&invalid_addr, 1);
+        ok(ret == SOCKET_ERROR, "expected SOCKET_ERROR, got %d\n", ret);
+        check_events(ctx, MAKELONG(FD_CONNECT, WSAECONNREFUSED), 0, 4000);
+        check_events(ctx, 0, 0, 0);
+
+        /* set event by connecting to closed port */
+        ret = connect(client, (struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
+        ok(ret == SOCKET_ERROR, "expected SOCKET_ERROR, got %d\n", ret);
+        /* try with invalid sin_family, after event was set */
+        invalid_addr.sin_family = 0xf1;
+        ret = connect(client, (struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
+        ok(ret == SOCKET_ERROR, "expected SOCKET_ERROR, got %d\n", ret);
+        check_events(ctx, MAKELONG(FD_CONNECT, WSAECONNREFUSED), 0, 4000);
+        check_events(ctx, 0, 0, 0);
+        invalid_addr.sin_family = AF_INET;
+
+        closesocket(client);
+    }
+
+    if (winetest_interactive && !ctx->is_message)
+    {
+        /* setup listener */
+        listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        ok(listener != -1, "failed to create socket, error %u\n", WSAGetLastError());
+        ret = bind(listener, (const struct sockaddr *)&addr, sizeof(addr));
+        ok(!ret, "failed to bind, error %u\n", WSAGetLastError());
+        len = sizeof(destaddr);
+        ret = getsockname(listener, (struct sockaddr *)&destaddr, &len);
+        ok(!ret, "failed to get address, error %u\n", WSAGetLastError());
+        ret = listen(listener, 2);
+        ok(!ret, "failed to listen, error %u\n", WSAGetLastError());
+        client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        ok(client != -1, "failed to create socket, error %u\n", WSAGetLastError());
+        select_events(ctx, client, FD_ACCEPT | FD_CLOSE | FD_CONNECT | FD_OOB | FD_READ | FD_WRITE);
+        check_events(ctx, 0, 0, 0);
+        check_events(ctx, 0, 0, 0);
+
+        /* set event by connecting to closed port */
+        ret = connect(client, (struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
+        ok(ret == SOCKET_ERROR, "expected SOCKET_ERROR, got %d\n", ret);
+        check_poll_todo(client, 0);
+        Sleep(2000);
+        /* try successful connect, after event was set */
+        ret = connect(client, (struct sockaddr *)&destaddr, sizeof(destaddr));
+        ok(ret == SOCKET_ERROR, "expected SOCKET_ERROR, got %d\n", ret);
+        ok(WSAGetLastError() == WSAEWOULDBLOCK, "expected WSAEWOULDBLOCK, got %u\n", WSAGetLastError());
+        check_poll(client, POLLWRNORM);
+        check_events(ctx, MAKELONG(FD_CONNECT | FD_WRITE, WSAECONNREFUSED), 0, 4000);
+        check_events(ctx, 0, 0, 0);
+
+        closesocket(client);
+
+        closesocket(listener);
+    }
 }
 
 /* perform a blocking recv() even on a nonblocking socket */
@@ -7415,6 +7505,7 @@ static void test_events(void)
     struct event_test_ctx ctx;
 
     ctx.is_message = FALSE;
+    winetest_push_context("is_message=0");
     ctx.event = CreateEventW(NULL, TRUE, FALSE, NULL);
 
     test_accept_events(&ctx);
@@ -7426,7 +7517,9 @@ static void test_events(void)
 
     CloseHandle(ctx.event);
 
+    winetest_pop_context();
     ctx.is_message = TRUE;
+    winetest_push_context("is_message=1");
     ctx.window = CreateWindowA("Message", NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
 
     test_accept_events(&ctx);
@@ -7437,6 +7530,7 @@ static void test_events(void)
     test_oob_events(&ctx);
 
     DestroyWindow(ctx.window);
+    winetest_pop_context();
 }
 
 static void test_ipv6only(void)
