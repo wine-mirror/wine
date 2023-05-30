@@ -23,7 +23,6 @@
 #include <limits.h>
 #include <sys/types.h>
 
-#define NONAMELESSUNION
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "winternl.h"

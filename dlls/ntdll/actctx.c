@@ -28,7 +28,6 @@
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#define NONAMELESSUNION
 #include "winternl.h"
 #include "ddk/wdm.h"
 #include "ntdll_misc.h"
@@ -2942,7 +2941,7 @@ static NTSTATUS find_first_manifest_resource_in_module( HANDLE hModule, const WC
     if (!resdir->NumberOfIdEntries) return STATUS_RESOURCE_NAME_NOT_FOUND;
     entry_base = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(resdir + 1);
     entry = entry_base + resdir->NumberOfNamedEntries;
-    *resname = (const WCHAR *)(ULONG_PTR)entry->u.Id;
+    *resname = (const WCHAR *)(ULONG_PTR)entry->Id;
 
     return STATUS_SUCCESS;
 }
@@ -3285,14 +3284,14 @@ static NTSTATUS lookup_winsxs(struct actctx_loader* acl, struct assembly_identit
 
     if (!open_nt_file( &handle, &path_us ))
     {
-        io.u.Status = get_manifest_in_manifest_file(acl, &sxs_ai, path_us.Buffer, file, TRUE, handle);
+        io.Status = get_manifest_in_manifest_file(acl, &sxs_ai, path_us.Buffer, file, TRUE, handle);
         NtClose( handle );
     }
-    else io.u.Status = STATUS_NO_SUCH_FILE;
+    else io.Status = STATUS_NO_SUCH_FILE;
 
     RtlFreeHeap( GetProcessHeap(), 0, file );
     RtlFreeUnicodeString( &path_us );
-    return io.u.Status;
+    return io.Status;
 }
 
 static NTSTATUS lookup_assembly(struct actctx_loader* acl,
