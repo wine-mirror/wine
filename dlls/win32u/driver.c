@@ -114,7 +114,7 @@ static INT nulldrv_EndPage( PHYSDEV dev )
     return 0;
 }
 
-static BOOL nulldrv_EnumFonts( PHYSDEV dev, LOGFONTW *logfont, FONTENUMPROCW proc, LPARAM lParam )
+static BOOL nulldrv_EnumFonts( PHYSDEV dev, LOGFONTW *logfont, font_enum_proc proc, LPARAM lParam )
 {
     return TRUE;
 }

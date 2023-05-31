@@ -71,6 +71,8 @@ struct brush_pattern
     UINT                  usage;    /* color usage for DIB info */
 };
 
+typedef int (*font_enum_proc)(const LOGFONTW *, const TEXTMETRICW *, DWORD, LPARAM);
+
 struct gdi_dc_funcs
 {
     INT      (*pAbortDoc)(PHYSDEV);
@@ -91,7 +93,7 @@ struct gdi_dc_funcs
     INT      (*pEndDoc)(PHYSDEV);
     INT      (*pEndPage)(PHYSDEV);
     BOOL     (*pEndPath)(PHYSDEV);
-    BOOL     (*pEnumFonts)(PHYSDEV,LPLOGFONTW,FONTENUMPROCW,LPARAM);
+    BOOL     (*pEnumFonts)(PHYSDEV,LPLOGFONTW,font_enum_proc,LPARAM);
     INT      (*pExtEscape)(PHYSDEV,INT,INT,LPCVOID,INT,LPVOID);
     BOOL     (*pExtFloodFill)(PHYSDEV,INT,INT,COLORREF,UINT);
     BOOL     (*pExtTextOut)(PHYSDEV,INT,INT,UINT,const RECT*,LPCWSTR,UINT,const INT*);
@@ -173,7 +175,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 82
+#define WINE_GDI_DRIVER_VERSION 83
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */

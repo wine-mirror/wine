@@ -1222,7 +1222,7 @@ static UINT get_font_metric(const struct font_data *font,
     return DEVICE_FONTTYPE;
 }
 
-static BOOL enum_fonts(PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lp)
+static BOOL enum_fonts(PHYSDEV dev, LPLOGFONTW plf, font_enum_proc proc, LPARAM lp)
 {
     PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
     PHYSDEV next = GET_NEXT_PHYSDEV(dev, pEnumFonts);

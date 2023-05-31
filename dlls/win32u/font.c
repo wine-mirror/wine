@@ -3453,7 +3453,7 @@ static BOOL face_matches( const WCHAR *family_name, struct gdi_font_face *face, 
 }
 
 static BOOL enum_face_charsets( const struct gdi_font_family *family, struct gdi_font_face *face,
-                                struct enum_charset *list, DWORD count, FONTENUMPROCW proc, LPARAM lparam,
+                                struct enum_charset *list, DWORD count, font_enum_proc proc, LPARAM lparam,
                                 const WCHAR *subst )
 {
     ENUMLOGFONTEXW elf;
@@ -3517,7 +3517,7 @@ static BOOL enum_face_charsets( const struct gdi_font_family *family, struct gdi
 /*************************************************************
  * font_EnumFonts
  */
-static BOOL font_EnumFonts( PHYSDEV dev, LOGFONTW *lf, FONTENUMPROCW proc, LPARAM lparam )
+static BOOL font_EnumFonts( PHYSDEV dev, LOGFONTW *lf, font_enum_proc proc, LPARAM lparam )
 {
     struct gdi_font_family *family;
     struct gdi_font_face *face;
@@ -5207,8 +5207,7 @@ struct font_enum
     ULONG charset;
 };
 
-static INT WINAPI font_enum_proc( const LOGFONTW *lf, const TEXTMETRICW *tm,
-                                  DWORD type, LPARAM lp )
+static INT enum_fonts( const LOGFONTW *lf, const TEXTMETRICW *tm, DWORD type, LPARAM lp )
 {
     struct font_enum *fe = (struct font_enum *)lp;
 
@@ -5251,7 +5250,7 @@ BOOL WINAPI NtGdiEnumFonts( HDC hdc, ULONG type, ULONG win32_compat, ULONG face_
     fe.charset = charset;
 
     physdev = GET_DC_PHYSDEV( dc, pEnumFonts );
-    ret = physdev->funcs->pEnumFonts( physdev, &lf, font_enum_proc, (LPARAM)&fe );
+    ret = physdev->funcs->pEnumFonts( physdev, &lf, enum_fonts, (LPARAM)&fe );
     if (ret && buf) ret = fe.count <= fe.size;
     *count = fe.count * sizeof(*fe.buf);
 
