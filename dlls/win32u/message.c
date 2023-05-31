@@ -1766,6 +1766,8 @@ static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardwar
         ret = process_keyboard_message( msg, hw_id, hwnd_filter, first, last, remove );
     else if (is_mouse_message( msg->message ))
         ret = process_mouse_message( msg, hw_id, msg_data->info, hwnd_filter, first, last, remove );
+    else if (msg->message == WM_WINE_CLIPCURSOR)
+        process_wine_clipcursor( msg->wParam, msg->lParam );
     else
         ERR( "unknown message type %x\n", msg->message );
     SetThreadDpiAwarenessContext( context );
