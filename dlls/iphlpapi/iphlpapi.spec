@@ -80,7 +80,7 @@
 @ stdcall GetBestRoute( long long ptr )
 @ stdcall GetBestRoute2( ptr long ptr ptr long ptr ptr )
 @ stub GetBestRouteFromStack
-#@ stub GetCurrentThreadCompartmentId
+@ stdcall GetCurrentThreadCompartmentId()
 @ stdcall GetExtendedTcpTable( ptr ptr long long long long )
 @ stdcall GetExtendedUdpTable( ptr ptr long long long long )
 @ stdcall GetFriendlyIfIndex( long )

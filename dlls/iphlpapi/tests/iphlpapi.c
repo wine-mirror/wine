@@ -2893,6 +2893,14 @@ static void test_ConvertGuidToString( void )
     ok( err == ERROR_INVALID_PARAMETER, "got %ld\n", err );
 }
 
+static void test_compartments(void)
+{
+    NET_IF_COMPARTMENT_ID id;
+
+    id = GetCurrentThreadCompartmentId();
+    ok(id == NET_IF_COMPARTMENT_ID_PRIMARY, "got %u\n", id);
+}
+
 START_TEST(iphlpapi)
 {
 
@@ -2927,6 +2935,7 @@ START_TEST(iphlpapi)
     test_ParseNetworkString();
     test_NotifyUnicastIpAddressChange();
     test_ConvertGuidToString();
+    test_compartments();
     freeIPHlpApi();
   }
 }

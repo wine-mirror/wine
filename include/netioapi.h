@@ -250,6 +250,7 @@ DWORD WINAPI ConvertInterfaceNameToLuidA(const char*,NET_LUID*);
 DWORD WINAPI ConvertInterfaceNameToLuidW(const WCHAR*,NET_LUID*);
 DWORD WINAPI ConvertLengthToIpv4Mask(ULONG,ULONG*);
 void WINAPI FreeMibTable(void*);
+NET_IF_COMPARTMENT_ID WINAPI GetCurrentThreadCompartmentId(void);
 DWORD WINAPI GetIfEntry2(MIB_IF_ROW2*);
 DWORD WINAPI GetIfEntry2Ex(MIB_IF_TABLE_LEVEL,MIB_IF_ROW2*);
 DWORD WINAPI GetIfTable2(MIB_IF_TABLE2**);

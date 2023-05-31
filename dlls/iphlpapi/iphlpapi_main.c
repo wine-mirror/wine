@@ -4750,3 +4750,12 @@ DWORD WINAPI Icmp6SendEcho2( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_ro
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return 0;
 }
+
+/***********************************************************************
+ *    GetCurrentThreadCompartmentId (IPHLPAPI.@)
+ */
+NET_IF_COMPARTMENT_ID WINAPI GetCurrentThreadCompartmentId( void )
+{
+    FIXME( "stub\n" );
+    return NET_IF_COMPARTMENT_ID_PRIMARY;
+}
