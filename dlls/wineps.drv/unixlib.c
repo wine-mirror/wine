@@ -221,7 +221,7 @@ static void dump_devmode(const DEVMODEW *dm)
     TRACE("dmPelsHeight %u\n", (unsigned int)dm->dmPelsHeight);
 }
 
-static INT CDECL get_device_caps(PHYSDEV dev, INT cap)
+static INT get_device_caps(PHYSDEV dev, INT cap)
 {
     PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
 
@@ -573,7 +573,7 @@ static void update_dev_caps(PSDRV_PDEVICE *pdev)
             pdev->horz_res, pdev->vert_res);
 }
 
-static BOOL CDECL reset_dc(PHYSDEV dev, const DEVMODEW *devmode)
+static BOOL reset_dc(PHYSDEV dev, const DEVMODEW *devmode)
 {
     PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
 
@@ -614,7 +614,7 @@ const struct glyph_info *uv_metrics(WCHAR wch, const struct font_data *font)
     return needle;
 }
 
-static int CDECL ext_escape(PHYSDEV dev, int escape, int input_size, const void *input,
+static int ext_escape(PHYSDEV dev, int escape, int input_size, const void *input,
         int output_size, void *output)
 {
     TRACE("%p,%d,%d,%p,%d,%p\n",
@@ -1108,7 +1108,7 @@ static BOOL select_builtin_font(PSDRV_PDEVICE *pdev, HFONT hfont, LOGFONTW *plf)
     return TRUE;
 }
 
-static HFONT CDECL select_font(PHYSDEV dev, HFONT hfont, UINT *aa_flags)
+static HFONT select_font(PHYSDEV dev, HFONT hfont, UINT *aa_flags)
 {
     PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
     PHYSDEV next = GET_NEXT_PHYSDEV(dev, pSelectFont);
@@ -1222,7 +1222,7 @@ static UINT get_font_metric(const struct font_data *font,
     return DEVICE_FONTTYPE;
 }
 
-static BOOL CDECL enum_fonts(PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lp)
+static BOOL enum_fonts(PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lp)
 {
     PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
     PHYSDEV next = GET_NEXT_PHYSDEV(dev, pEnumFonts);
@@ -1282,7 +1282,7 @@ static BOOL CDECL enum_fonts(PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LP
     return ret;
 }
 
-static BOOL CDECL get_char_width(PHYSDEV dev, UINT first, UINT count, const WCHAR *chars, INT *buffer)
+static BOOL get_char_width(PHYSDEV dev, UINT first, UINT count, const WCHAR *chars, INT *buffer)
 {
     PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
     UINT i, c;
@@ -1309,7 +1309,7 @@ static BOOL CDECL get_char_width(PHYSDEV dev, UINT first, UINT count, const WCHA
     return TRUE;
 }
 
-static BOOL CDECL get_text_metrics(PHYSDEV dev, TEXTMETRICW *metrics)
+static BOOL get_text_metrics(PHYSDEV dev, TEXTMETRICW *metrics)
 {
     PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
 
@@ -1323,7 +1323,7 @@ static BOOL CDECL get_text_metrics(PHYSDEV dev, TEXTMETRICW *metrics)
     return TRUE;
 }
 
-static BOOL CDECL get_text_extent_ex_point(PHYSDEV dev, const WCHAR *str, int count, int *dx)
+static BOOL get_text_extent_ex_point(PHYSDEV dev, const WCHAR *str, int count, int *dx)
 {
     PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
     int             i;
@@ -1404,7 +1404,7 @@ static PSDRV_PDEVICE *create_physdev(HDC hdc, const WCHAR *device,
     return pdev;
 }
 
-static BOOL CDECL create_dc(PHYSDEV *dev, const WCHAR *device,
+static BOOL create_dc(PHYSDEV *dev, const WCHAR *device,
         const WCHAR *output, const DEVMODEW *devmode)
 {
     PSDRV_PDEVICE *pdev;
@@ -1417,7 +1417,7 @@ static BOOL CDECL create_dc(PHYSDEV *dev, const WCHAR *device,
     return TRUE;
 }
 
-static BOOL CDECL create_compatible_dc(PHYSDEV orig, PHYSDEV *dev)
+static BOOL create_compatible_dc(PHYSDEV orig, PHYSDEV *dev)
 {
     PSDRV_PDEVICE *pdev, *orig_dev = get_psdrv_dev(orig);
 
@@ -1427,7 +1427,7 @@ static BOOL CDECL create_compatible_dc(PHYSDEV orig, PHYSDEV *dev)
     return TRUE;
 }
 
-static BOOL CDECL delete_dc(PHYSDEV dev)
+static BOOL delete_dc(PHYSDEV dev)
 {
     PSDRV_PDEVICE *pdev = get_psdrv_dev(dev);
 

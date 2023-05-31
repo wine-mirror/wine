@@ -112,51 +112,51 @@ typedef struct dibdrv_physdev
     BOOL   (* pen_lines)(struct dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN region);
 } dibdrv_physdev;
 
-extern BOOL     CDECL dibdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
-                                         PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION blend ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                                  INT start_x, INT start_y, INT end_x, INT end_y ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                                    INT start_x, INT start_y, INT end_x, INT end_y ) DECLSPEC_HIDDEN;
-extern DWORD    CDECL dibdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
-                                         struct bitblt_coords *src, struct bitblt_coords *dst, BLENDFUNCTION func ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                                    INT start_x, INT start_y, INT end_x, INT end_y ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
-                                         const RECT *rect, LPCWSTR str, UINT count, const INT *dx ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_FillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
-extern DWORD    CDECL dibdrv_GetImage( PHYSDEV dev, BITMAPINFO *info, struct gdi_image_bits *bits,
-                                       struct bitblt_coords *src ) DECLSPEC_HIDDEN;
-extern COLORREF CDECL dibdrv_GetNearestColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
-extern COLORREF CDECL dibdrv_GetPixel( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
-                                           void *grad_array, ULONG ngrad, ULONG mode ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_LineTo( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_PaintRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                                  INT start_x, INT start_y, INT end_x, INT end_y ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, UINT polygons ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts,
-                                           DWORD polylines ) DECLSPEC_HIDDEN;
-extern DWORD    CDECL dibdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
-                                       const struct gdi_image_bits *bits, struct bitblt_coords *src,
-                                       struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                                        INT ellipse_width, INT ellipse_height ) DECLSPEC_HIDDEN;
-extern HBRUSH   CDECL dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
-extern HFONT    CDECL dibdrv_SelectFont( PHYSDEV dev, HFONT font, UINT *aa_flags ) DECLSPEC_HIDDEN;
-extern HPEN     CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
-extern COLORREF CDECL dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
-extern COLORREF CDECL dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
-extern COLORREF CDECL dibdrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
-                                         PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_StrokeAndFillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_StrokePath( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                                   PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION blend ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                            INT start_x, INT start_y, INT end_x, INT end_y ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                              INT start_x, INT start_y, INT end_x, INT end_y ) DECLSPEC_HIDDEN;
+extern DWORD    dibdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
+                                   struct bitblt_coords *src, struct bitblt_coords *dst, BLENDFUNCTION func ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                              INT start_x, INT start_y, INT end_x, INT end_y ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
+                                   const RECT *rect, LPCWSTR str, UINT count, const INT *dx ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_FillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern DWORD    dibdrv_GetImage( PHYSDEV dev, BITMAPINFO *info, struct gdi_image_bits *bits,
+                                 struct bitblt_coords *src ) DECLSPEC_HIDDEN;
+extern COLORREF dibdrv_GetNearestColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
+extern COLORREF dibdrv_GetPixel( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
+                                     void *grad_array, ULONG ngrad, ULONG mode ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_LineTo( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_PaintRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                            INT start_x, INT start_y, INT end_x, INT end_y ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, UINT polygons ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts,
+                                     DWORD polylines ) DECLSPEC_HIDDEN;
+extern DWORD    dibdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
+                                 const struct gdi_image_bits *bits, struct bitblt_coords *src,
+                                 struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                                  INT ellipse_width, INT ellipse_height ) DECLSPEC_HIDDEN;
+extern HBRUSH   dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
+extern HFONT    dibdrv_SelectFont( PHYSDEV dev, HFONT font, UINT *aa_flags ) DECLSPEC_HIDDEN;
+extern HPEN     dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
+extern COLORREF dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
+extern COLORREF dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
+extern COLORREF dibdrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                                   PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_StrokeAndFillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_StrokePath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 
 static inline dibdrv_physdev *get_dibdrv_pdev( PHYSDEV dev )
 {

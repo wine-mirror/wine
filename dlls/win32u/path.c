@@ -733,7 +733,7 @@ BOOL WINAPI NtGdiSelectClipPath( HDC hdc, INT mode )
 /***********************************************************************
  *           pathdrv_BeginPath
  */
-static BOOL CDECL pathdrv_BeginPath( PHYSDEV dev )
+static BOOL pathdrv_BeginPath( PHYSDEV dev )
 {
     /* path already open, nothing to do */
     return TRUE;
@@ -743,7 +743,7 @@ static BOOL CDECL pathdrv_BeginPath( PHYSDEV dev )
 /***********************************************************************
  *           pathdrv_AbortPath
  */
-static BOOL CDECL pathdrv_AbortPath( PHYSDEV dev )
+static BOOL pathdrv_AbortPath( PHYSDEV dev )
 {
     DC *dc = get_physdev_dc( dev );
 
@@ -755,7 +755,7 @@ static BOOL CDECL pathdrv_AbortPath( PHYSDEV dev )
 /***********************************************************************
  *           pathdrv_EndPath
  */
-static BOOL CDECL pathdrv_EndPath( PHYSDEV dev )
+static BOOL pathdrv_EndPath( PHYSDEV dev )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
     DC *dc = get_physdev_dc( dev );
@@ -770,8 +770,7 @@ static BOOL CDECL pathdrv_EndPath( PHYSDEV dev )
 /***********************************************************************
  *           pathdrv_CreateDC
  */
-static BOOL CDECL pathdrv_CreateDC( PHYSDEV *dev, LPCWSTR device, LPCWSTR output,
-                                    const DEVMODEW *devmode )
+static BOOL pathdrv_CreateDC( PHYSDEV *dev, LPCWSTR device, LPCWSTR output, const DEVMODEW *devmode )
 {
     struct path_physdev *physdev = malloc( sizeof(*physdev) );
 
@@ -784,7 +783,7 @@ static BOOL CDECL pathdrv_CreateDC( PHYSDEV *dev, LPCWSTR device, LPCWSTR output
 /*************************************************************
  *           pathdrv_DeleteDC
  */
-static BOOL CDECL pathdrv_DeleteDC( PHYSDEV dev )
+static BOOL pathdrv_DeleteDC( PHYSDEV dev )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
 
@@ -843,7 +842,7 @@ BOOL PATH_RestorePath( DC *dst, DC *src )
 /*************************************************************
  *           pathdrv_MoveTo
  */
-static BOOL CDECL pathdrv_MoveTo( PHYSDEV dev, INT x, INT y )
+static BOOL pathdrv_MoveTo( PHYSDEV dev, INT x, INT y )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
     DC *dc = get_physdev_dc( dev );
@@ -859,7 +858,7 @@ static BOOL CDECL pathdrv_MoveTo( PHYSDEV dev, INT x, INT y )
 /*************************************************************
  *           pathdrv_LineTo
  */
-static BOOL CDECL pathdrv_LineTo( PHYSDEV dev, INT x, INT y )
+static BOOL pathdrv_LineTo( PHYSDEV dev, INT x, INT y )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
     DC *dc = get_physdev_dc( dev );
@@ -874,7 +873,7 @@ static BOOL CDECL pathdrv_LineTo( PHYSDEV dev, INT x, INT y )
 /*************************************************************
  *           pathdrv_Rectangle
  */
-static BOOL CDECL pathdrv_Rectangle( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
+static BOOL pathdrv_Rectangle( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
     DC *dc = get_physdev_dc( dev );
@@ -901,7 +900,7 @@ static BOOL CDECL pathdrv_Rectangle( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2
 /*************************************************************
  *           pathdrv_RoundRect
  */
-static BOOL CDECL pathdrv_RoundRect( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2, INT ell_width, INT ell_height )
+static BOOL pathdrv_RoundRect( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2, INT ell_width, INT ell_height )
 {
     const double factor = 0.55428475; /* 4 / 3 * (sqrt(2) - 1) */
     struct path_physdev *physdev = get_path_physdev( dev );
@@ -976,7 +975,7 @@ static BOOL CDECL pathdrv_RoundRect( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2
 /*************************************************************
  *           pathdrv_Ellipse
  */
-static BOOL CDECL pathdrv_Ellipse( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
+static BOOL pathdrv_Ellipse( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
 {
     const double factor = 0.55428475; /* 4 / 3 * (sqrt(2) - 1) */
     struct path_physdev *physdev = get_path_physdev( dev );
@@ -1183,7 +1182,7 @@ static BOOL PATH_Arc( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2,
 /*************************************************************
  *           pathdrv_AngleArc
  */
-static BOOL CDECL pathdrv_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT eStartAngle, FLOAT eSweepAngle)
+static BOOL pathdrv_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT eStartAngle, FLOAT eSweepAngle)
 {
     int x1 = GDI_ROUND( x + cos(eStartAngle*M_PI/180) * radius );
     int y1 = GDI_ROUND( y - sin(eStartAngle*M_PI/180) * radius );
@@ -1197,8 +1196,8 @@ static BOOL CDECL pathdrv_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLO
 /*************************************************************
  *           pathdrv_Arc
  */
-static BOOL CDECL pathdrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                               INT xstart, INT ystart, INT xend, INT yend )
+static BOOL pathdrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                         INT xstart, INT ystart, INT xend, INT yend )
 {
     DC *dc = get_physdev_dc( dev );
     return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend,
@@ -1209,8 +1208,8 @@ static BOOL CDECL pathdrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bo
 /*************************************************************
  *           pathdrv_ArcTo
  */
-static BOOL CDECL pathdrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                                 INT xstart, INT ystart, INT xend, INT yend )
+static BOOL pathdrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                           INT xstart, INT ystart, INT xend, INT yend )
 {
     DC *dc = get_physdev_dc( dev );
     return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend,
@@ -1221,8 +1220,8 @@ static BOOL CDECL pathdrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT 
 /*************************************************************
  *           pathdrv_Chord
  */
-static BOOL CDECL pathdrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                                 INT xstart, INT ystart, INT xend, INT yend )
+static BOOL pathdrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                           INT xstart, INT ystart, INT xend, INT yend )
 {
     DC *dc = get_physdev_dc( dev );
     return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend,
@@ -1233,8 +1232,8 @@ static BOOL CDECL pathdrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT 
 /*************************************************************
  *           pathdrv_Pie
  */
-static BOOL CDECL pathdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                               INT xstart, INT ystart, INT xend, INT yend )
+static BOOL pathdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                         INT xstart, INT ystart, INT xend, INT yend )
 {
     DC *dc = get_physdev_dc( dev );
     return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend,
@@ -1245,7 +1244,7 @@ static BOOL CDECL pathdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bo
 /*************************************************************
  *           pathdrv_PolyBezierTo
  */
-static BOOL CDECL pathdrv_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD cbPoints )
+static BOOL pathdrv_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD cbPoints )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
     DC *dc = get_physdev_dc( dev );
@@ -1257,7 +1256,7 @@ static BOOL CDECL pathdrv_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD cbP
 /*************************************************************
  *           pathdrv_PolyBezier
  */
-static BOOL CDECL pathdrv_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD cbPoints )
+static BOOL pathdrv_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD cbPoints )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
     DC *dc = get_physdev_dc( dev );
@@ -1272,7 +1271,7 @@ static BOOL CDECL pathdrv_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD cbPoi
 /*************************************************************
  *           pathdrv_PolyDraw
  */
-static BOOL CDECL pathdrv_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, DWORD cbPoints )
+static BOOL pathdrv_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, DWORD cbPoints )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
     struct gdi_path *path = physdev->path;
@@ -1325,7 +1324,7 @@ static BOOL CDECL pathdrv_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *t
 /*************************************************************
  *           pathdrv_PolylineTo
  */
-static BOOL CDECL pathdrv_PolylineTo( PHYSDEV dev, const POINT *pts, INT count )
+static BOOL pathdrv_PolylineTo( PHYSDEV dev, const POINT *pts, INT count )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
     DC *dc = get_physdev_dc( dev );
@@ -1338,7 +1337,7 @@ static BOOL CDECL pathdrv_PolylineTo( PHYSDEV dev, const POINT *pts, INT count )
 /*************************************************************
  *           pathdrv_PolyPolygon
  */
-static BOOL CDECL pathdrv_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT* counts, UINT polygons )
+static BOOL pathdrv_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT* counts, UINT polygons )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
     DC *dc = get_physdev_dc( dev );
@@ -1368,7 +1367,7 @@ static BOOL CDECL pathdrv_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT*
 /*************************************************************
  *           pathdrv_PolyPolyline
  */
-static BOOL CDECL pathdrv_PolyPolyline( PHYSDEV dev, const POINT* pts, const DWORD* counts, DWORD polylines )
+static BOOL pathdrv_PolyPolyline( PHYSDEV dev, const POINT* pts, const DWORD* counts, DWORD polylines )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
     DC *dc = get_physdev_dc( dev );
@@ -1521,8 +1520,8 @@ static BOOL PATH_add_outline(struct path_physdev *physdev, INT x, INT y,
 /*************************************************************
  *           pathdrv_ExtTextOut
  */
-static BOOL CDECL pathdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *lprc,
-                                      LPCWSTR str, UINT count, const INT *dx )
+static BOOL pathdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *lprc,
+                                LPCWSTR str, UINT count, const INT *dx )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
     unsigned int idx, ggo_flags = GGO_NATIVE;
@@ -1576,7 +1575,7 @@ static BOOL CDECL pathdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, con
 /*************************************************************
  *           pathdrv_CloseFigure
  */
-static BOOL CDECL pathdrv_CloseFigure( PHYSDEV dev )
+static BOOL pathdrv_CloseFigure( PHYSDEV dev )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
 
@@ -1965,7 +1964,7 @@ BOOL WINAPI NtGdiWidenPath( HDC hdc )
  *           null driver fallback implementations
  */
 
-BOOL CDECL nulldrv_BeginPath( PHYSDEV dev )
+BOOL nulldrv_BeginPath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
     struct path_physdev *physdev;
@@ -1986,13 +1985,13 @@ BOOL CDECL nulldrv_BeginPath( PHYSDEV dev )
     return TRUE;
 }
 
-BOOL CDECL nulldrv_EndPath( PHYSDEV dev )
+BOOL nulldrv_EndPath( PHYSDEV dev )
 {
     RtlSetLastWin32Error( ERROR_CAN_NOT_COMPLETE );
     return FALSE;
 }
 
-BOOL CDECL nulldrv_AbortPath( PHYSDEV dev )
+BOOL nulldrv_AbortPath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
 
@@ -2001,27 +2000,27 @@ BOOL CDECL nulldrv_AbortPath( PHYSDEV dev )
     return TRUE;
 }
 
-BOOL CDECL nulldrv_CloseFigure( PHYSDEV dev )
+BOOL nulldrv_CloseFigure( PHYSDEV dev )
 {
     RtlSetLastWin32Error( ERROR_CAN_NOT_COMPLETE );
     return FALSE;
 }
 
-BOOL CDECL nulldrv_FillPath( PHYSDEV dev )
+BOOL nulldrv_FillPath( PHYSDEV dev )
 {
     if (NtGdiGetPath( dev->hdc, NULL, NULL, 0 ) == -1) return FALSE;
     NtGdiAbortPath( dev->hdc );
     return TRUE;
 }
 
-BOOL CDECL nulldrv_StrokeAndFillPath( PHYSDEV dev )
+BOOL nulldrv_StrokeAndFillPath( PHYSDEV dev )
 {
     if (NtGdiGetPath( dev->hdc, NULL, NULL, 0 ) == -1) return FALSE;
     NtGdiAbortPath( dev->hdc );
     return TRUE;
 }
 
-BOOL CDECL nulldrv_StrokePath( PHYSDEV dev )
+BOOL nulldrv_StrokePath( PHYSDEV dev )
 {
     if (NtGdiGetPath( dev->hdc, NULL, NULL, 0 ) == -1) return FALSE;
     NtGdiAbortPath( dev->hdc );

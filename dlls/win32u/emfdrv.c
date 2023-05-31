@@ -73,7 +73,7 @@ static void emfdrv_update_bounds( DC *dc, RECTL *rect )
     }
 }
 
-static BOOL CDECL EMFDRV_LineTo( PHYSDEV dev, INT x, INT y )
+static BOOL EMFDRV_LineTo( PHYSDEV dev, INT x, INT y )
 {
     DC *dc = get_physdev_dc( dev );
     RECTL bounds;
@@ -89,8 +89,8 @@ static BOOL CDECL EMFDRV_LineTo( PHYSDEV dev, INT x, INT y )
     return TRUE;
 }
 
-static BOOL CDECL EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
-                                    INT bottom, INT ell_width, INT ell_height )
+static BOOL EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
+                              INT bottom, INT ell_width, INT ell_height )
 {
     DC *dc = get_physdev_dc( dev );
     RECTL bounds;
@@ -218,35 +218,35 @@ static BOOL EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT b
     return TRUE;
 }
 
-static BOOL CDECL EMFDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                              INT xstart, INT ystart, INT xend, INT yend )
+static BOOL EMFDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                        INT xstart, INT ystart, INT xend, INT yend )
 {
     return EMFDRV_ArcChordPie( dev, left, top, right, bottom, xstart, ystart,
                                xend, yend, EMR_ARC );
 }
 
-static BOOL CDECL EMFDRV_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                                INT xstart, INT ystart, INT xend, INT yend )
+static BOOL EMFDRV_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                          INT xstart, INT ystart, INT xend, INT yend )
 {
     return EMFDRV_ArcChordPie( dev, left, top, right, bottom, xstart, ystart,
                                xend, yend, EMR_ARCTO );
 }
 
-static BOOL CDECL EMFDRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                              INT xstart, INT ystart, INT xend, INT yend )
+static BOOL EMFDRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                        INT xstart, INT ystart, INT xend, INT yend )
 {
     return EMFDRV_ArcChordPie( dev, left, top, right, bottom, xstart, ystart,
                                xend, yend, EMR_PIE );
 }
 
-static BOOL CDECL EMFDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                                INT xstart, INT ystart, INT xend, INT yend )
+static BOOL EMFDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                          INT xstart, INT ystart, INT xend, INT yend )
 {
     return EMFDRV_ArcChordPie( dev, left, top, right, bottom, xstart, ystart,
                                xend, yend, EMR_CHORD );
 }
 
-static BOOL CDECL EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+static BOOL EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     DC *dc = get_physdev_dc( dev );
     RECTL bounds;
@@ -267,7 +267,7 @@ static BOOL CDECL EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT
     return TRUE;
 }
 
-static BOOL CDECL EMFDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+static BOOL EMFDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     DC *dc = get_physdev_dc( dev );
     RECTL bounds;
@@ -288,7 +288,7 @@ static BOOL CDECL EMFDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, I
     return TRUE;
 }
 
-static COLORREF CDECL EMFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
+static COLORREF EMFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 {
     DC *dc = get_physdev_dc( dev );
     RECTL bounds;
@@ -299,115 +299,112 @@ static COLORREF CDECL EMFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color
     return CLR_INVALID;
 }
 
-static BOOL CDECL EMFDRV_PolylineTo( PHYSDEV dev, const POINT *pt, INT count )
+static BOOL EMFDRV_PolylineTo( PHYSDEV dev, const POINT *pt, INT count )
 {
     /* FIXME: update bounding rect */
     return TRUE;
 }
 
-static BOOL CDECL EMFDRV_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD count )
+static BOOL EMFDRV_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD count )
 {
     /* FIXME: update bounding rect */
     return TRUE;
 }
 
-static BOOL CDECL EMFDRV_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD count )
+static BOOL EMFDRV_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD count )
 {
     /* FIXME: update bounding rect */
     return TRUE;
 }
 
-static BOOL CDECL EMFDRV_PolyPolyline( PHYSDEV dev, const POINT *pt,
-                                       const DWORD *counts, DWORD polys )
+static BOOL EMFDRV_PolyPolyline( PHYSDEV dev, const POINT *pt, const DWORD *counts, DWORD polys )
 {
     /* FIXME: update bounding rect */
     return TRUE;
 }
 
-static BOOL CDECL EMFDRV_PolyPolygon( PHYSDEV dev, const POINT *pt,
-                                      const INT *counts, UINT polys )
+static BOOL EMFDRV_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, UINT polys )
 {
     /* FIXME: update bounding rect */
     return TRUE;
 }
 
-static BOOL CDECL EMFDRV_PolyDraw( PHYSDEV dev, const POINT *pts,
-                                   const BYTE *types, DWORD count )
+static BOOL EMFDRV_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, DWORD count )
 {
     /* FIXME: update bounding rect */
     return TRUE;
 }
 
-static BOOL CDECL EMFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush )
+static BOOL EMFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush )
 {
     /* FIXME: update bounding rect */
     return TRUE;
 }
 
-static BOOL CDECL EMFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT width, INT height )
+static BOOL EMFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT width, INT height )
 {
     /* FIXME: update bounding rect */
     return TRUE;
 }
 
-static BOOL CDECL EMFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn )
+static BOOL EMFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn )
 {
     /* FIXME: update bounding rect */
     return TRUE;
 }
 
-static BOOL CDECL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *lprect,
-                                     LPCWSTR str, UINT count, const INT *lpDx )
+static BOOL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *lprect,
+                               LPCWSTR str, UINT count, const INT *lpDx )
 {
     /* FIXME: update bounding rect */
     return TRUE;
 }
 
-static BOOL CDECL EMFDRV_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
-                                       void *grad_array, ULONG ngrad, ULONG mode )
+static BOOL EMFDRV_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
+                                 void *grad_array, ULONG ngrad, ULONG mode )
 {
     /* FIXME: update bounding rect */
     return TRUE;
 }
 
-static BOOL CDECL EMFDRV_FillPath( PHYSDEV dev )
+static BOOL EMFDRV_FillPath( PHYSDEV dev )
 {
     /* FIXME: update bound rect */
     return TRUE;
 }
 
-static BOOL CDECL EMFDRV_StrokeAndFillPath( PHYSDEV dev )
+static BOOL EMFDRV_StrokeAndFillPath( PHYSDEV dev )
 {
     /* FIXME: update bound rect */
     return TRUE;
 }
 
-static BOOL CDECL EMFDRV_StrokePath( PHYSDEV dev )
+static BOOL EMFDRV_StrokePath( PHYSDEV dev )
 {
     /* FIXME: update bound rect */
     return TRUE;
 }
 
-static BOOL CDECL EMFDRV_AlphaBlend( PHYSDEV dev_dst, struct bitblt_coords *dst,
-                                     PHYSDEV dev_src, struct bitblt_coords *src,
-                                     BLENDFUNCTION func )
+static BOOL EMFDRV_AlphaBlend( PHYSDEV dev_dst, struct bitblt_coords *dst,
+                               PHYSDEV dev_src, struct bitblt_coords *src,
+                               BLENDFUNCTION func )
 {
     /* FIXME: update bound rect */
     return TRUE;
 }
 
-static BOOL CDECL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
+static BOOL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 {
     /* FIXME: update bound rect */
     return TRUE;
 }
 
-static HBITMAP CDECL EMFDRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
+static HBITMAP EMFDRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
 {
     return 0;
 }
 
-static HFONT CDECL EMFDRV_SelectFont( PHYSDEV dev, HFONT font, UINT *aa_flags )
+static HFONT EMFDRV_SelectFont( PHYSDEV dev, HFONT font, UINT *aa_flags )
 {
     *aa_flags = GGO_BITMAP;  /* no point in anti-aliasing on metafiles */
 
@@ -415,7 +412,7 @@ static HFONT CDECL EMFDRV_SelectFont( PHYSDEV dev, HFONT font, UINT *aa_flags )
     return dev->funcs->pSelectFont( dev, font, aa_flags );
 }
 
-static INT CDECL EMFDRV_GetDeviceCaps( PHYSDEV dev, INT cap )
+static INT EMFDRV_GetDeviceCaps( PHYSDEV dev, INT cap )
 {
     EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
 
@@ -424,7 +421,7 @@ static INT CDECL EMFDRV_GetDeviceCaps( PHYSDEV dev, INT cap )
     return 0;
 }
 
-static BOOL CDECL EMFDRV_DeleteDC( PHYSDEV dev )
+static BOOL EMFDRV_DeleteDC( PHYSDEV dev )
 {
     EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     free( physDev );

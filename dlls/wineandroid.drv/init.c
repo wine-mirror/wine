@@ -223,8 +223,7 @@ static ANDROID_PDEVICE *create_android_physdev(void)
 /**********************************************************************
  *           ANDROID_CreateDC
  */
-static BOOL CDECL ANDROID_CreateDC( PHYSDEV *pdev, LPCWSTR device, LPCWSTR output,
-                                    const DEVMODEW *initData )
+static BOOL ANDROID_CreateDC( PHYSDEV *pdev, LPCWSTR device, LPCWSTR output, const DEVMODEW *initData )
 {
     ANDROID_PDEVICE *physdev = create_android_physdev();
 
@@ -238,7 +237,7 @@ static BOOL CDECL ANDROID_CreateDC( PHYSDEV *pdev, LPCWSTR device, LPCWSTR outpu
 /**********************************************************************
  *           ANDROID_CreateCompatibleDC
  */
-static BOOL CDECL ANDROID_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
+static BOOL ANDROID_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 {
     ANDROID_PDEVICE *physdev = create_android_physdev();
 
@@ -252,7 +251,7 @@ static BOOL CDECL ANDROID_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 /**********************************************************************
  *           ANDROID_DeleteDC
  */
-static BOOL CDECL ANDROID_DeleteDC( PHYSDEV dev )
+static BOOL ANDROID_DeleteDC( PHYSDEV dev )
 {
     free( dev );
     return TRUE;

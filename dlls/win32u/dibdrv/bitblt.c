@@ -885,8 +885,8 @@ DWORD get_image_from_bitmap( BITMAPOBJ *bmp, BITMAPINFO *info,
 /***********************************************************************
  *           dibdrv_GetImage
  */
-DWORD CDECL dibdrv_GetImage( PHYSDEV dev, BITMAPINFO *info, struct gdi_image_bits *bits,
-                             struct bitblt_coords *src )
+DWORD dibdrv_GetImage( PHYSDEV dev, BITMAPINFO *info, struct gdi_image_bits *bits,
+                       struct bitblt_coords *src )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
 
@@ -988,9 +988,9 @@ static inline BOOL rop_uses_pat(DWORD rop)
 /***********************************************************************
  *           dibdrv_PutImage
  */
-DWORD CDECL dibdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
-                             const struct gdi_image_bits *bits, struct bitblt_coords *src,
-                             struct bitblt_coords *dst, DWORD rop )
+DWORD dibdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
+                       const struct gdi_image_bits *bits, struct bitblt_coords *src,
+                       struct bitblt_coords *dst, DWORD rop )
 {
     DC *dc = get_physdev_dc( dev );
     struct clipped_rects clipped_rects;
@@ -1051,8 +1051,8 @@ update_format:
 /***********************************************************************
  *           dibdrv_BlendImage
  */
-DWORD CDECL dibdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
-                               struct bitblt_coords *src, struct bitblt_coords *dst, BLENDFUNCTION blend )
+DWORD dibdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
+                         struct bitblt_coords *src, struct bitblt_coords *dst, BLENDFUNCTION blend )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
     dib_info src_dib;
@@ -1404,8 +1404,8 @@ COLORREF get_pixel_bitmapinfo( const BITMAPINFO *info, void *bits, struct bitblt
 /***********************************************************************
  *           dibdrv_StretchBlt
  */
-BOOL CDECL dibdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
-                              PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
+BOOL dibdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                        PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
 {
     DC *dc_dst = get_physdev_dc( dst_dev );
 
@@ -1418,8 +1418,8 @@ BOOL CDECL dibdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
 /***********************************************************************
  *           dibdrv_AlphaBlend
  */
-BOOL CDECL dibdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
-                              PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION blend )
+BOOL dibdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                        PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION blend )
 {
     DC *dc_dst = get_physdev_dc( dst_dev );
 
@@ -1429,8 +1429,8 @@ BOOL CDECL dibdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
 /***********************************************************************
  *           dibdrv_GradientFill
  */
-BOOL CDECL dibdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
-                                void *grad_array, ULONG ngrad, ULONG mode )
+BOOL dibdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
+                          void *grad_array, ULONG ngrad, ULONG mode )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
     DC *dc = get_physdev_dc( dev );

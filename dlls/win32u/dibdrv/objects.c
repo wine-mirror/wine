@@ -1774,7 +1774,7 @@ static inline int get_pen_device_width( DC *dc, int width )
 /***********************************************************************
  *           dibdrv_SetDCPenColor
  */
-COLORREF CDECL dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
+COLORREF dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     DC *dc = get_physdev_dc( dev );
@@ -2135,7 +2135,7 @@ static void select_brush( dibdrv_physdev *pdev, dib_brush *brush,
 /***********************************************************************
  *           dibdrv_SelectBrush
  */
-HBRUSH CDECL dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern )
+HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     DC *dc = get_physdev_dc( dev );
@@ -2155,7 +2155,7 @@ HBRUSH CDECL dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_
 /***********************************************************************
  *           dibdrv_SelectPen
  */
-HPEN CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *pattern )
+HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *pattern )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     DC *dc = get_physdev_dc( dev );
@@ -2260,7 +2260,7 @@ HPEN CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern 
 /***********************************************************************
  *           dibdrv_SetDCBrushColor
  */
-COLORREF CDECL dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color )
+COLORREF dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     DC *dc = get_physdev_dc( dev );

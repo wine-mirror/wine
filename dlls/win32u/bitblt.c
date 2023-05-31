@@ -163,7 +163,7 @@ static BOOL get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
     return intersect_vis_rectangles( dst, src );
 }
 
-void CDECL free_heap_bits( struct gdi_image_bits *bits )
+void free_heap_bits( struct gdi_image_bits *bits )
 {
     free( bits->ptr );
 }
@@ -274,8 +274,8 @@ void get_mono_dc_colors( DC *dc, int color_table_size, BITMAPINFO *info, int cou
  *           null driver fallback implementations
  */
 
-BOOL CDECL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
-                               PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
+BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                         PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
 {
     DC *dc_src = get_physdev_dc( src_dev ), *dc_dst = get_nulldrv_dc( dst_dev );
     char src_buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
@@ -326,8 +326,8 @@ BOOL CDECL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
 }
 
 
-BOOL CDECL nulldrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
-                               PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION func )
+BOOL nulldrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                         PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION func )
 {
     DC *dc_src = get_physdev_dc( src_dev ), *dc_dst = get_nulldrv_dc( dst_dev );
     char src_buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
@@ -365,8 +365,8 @@ done:
 }
 
 
-DWORD CDECL nulldrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
-                                struct bitblt_coords *src, struct bitblt_coords *dst, BLENDFUNCTION blend )
+DWORD nulldrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
+                          struct bitblt_coords *src, struct bitblt_coords *dst, BLENDFUNCTION blend )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *dst_info = (BITMAPINFO *)buffer;
@@ -414,8 +414,8 @@ update_format:
     return ERROR_BAD_FORMAT;
 }
 
-BOOL CDECL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
-                                 void * grad_array, ULONG ngrad, ULONG mode )
+BOOL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
+                           void * grad_array, ULONG ngrad, ULONG mode )
 {
     DC *dc = get_nulldrv_dc( dev );
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
@@ -499,7 +499,7 @@ done:
     return ret;
 }
 
-COLORREF CDECL nulldrv_GetPixel( PHYSDEV dev, INT x, INT y )
+COLORREF nulldrv_GetPixel( PHYSDEV dev, INT x, INT y )
 {
     DC *dc = get_nulldrv_dc( dev );
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];

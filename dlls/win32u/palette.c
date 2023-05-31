@@ -33,7 +33,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(palette);
 
-typedef BOOL (CDECL *unrealize_function)(HPALETTE);
+typedef BOOL (*unrealize_function)(HPALETTE);
 
 typedef struct tagPALETTEOBJ
 {
@@ -344,7 +344,7 @@ static UINT get_system_palette_entries( HDC hdc, UINT start, UINT count, PALETTE
 
 
 /* null driver fallback implementation for GetSystemPaletteEntries */
-UINT CDECL nulldrv_GetSystemPaletteEntries( PHYSDEV dev, UINT start, UINT count, PALETTEENTRY *entries )
+UINT nulldrv_GetSystemPaletteEntries( PHYSDEV dev, UINT start, UINT count, PALETTEENTRY *entries )
 {
     return 0;
 }
@@ -390,7 +390,7 @@ UINT WINAPI NtGdiGetNearestPaletteIndex( HPALETTE hpalette, COLORREF color )
 
 
 /* null driver fallback implementation for GetNearestColor */
-COLORREF CDECL nulldrv_GetNearestColor( PHYSDEV dev, COLORREF color )
+COLORREF nulldrv_GetNearestColor( PHYSDEV dev, COLORREF color )
 {
     unsigned char spec_type;
     DC *dc = get_nulldrv_dc( dev );

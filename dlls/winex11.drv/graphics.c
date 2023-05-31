@@ -298,7 +298,7 @@ void restore_clipping_region( X11DRV_PDEVICE *dev )
 /***********************************************************************
  *           X11DRV_SetDeviceClipping
  */
-void CDECL X11DRV_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
+void X11DRV_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
 
@@ -547,7 +547,7 @@ INT X11DRV_YWStoDS( HDC hdc, INT height )
 /***********************************************************************
  *           X11DRV_LineTo
  */
-BOOL CDECL X11DRV_LineTo( PHYSDEV dev, INT x, INT y )
+BOOL X11DRV_LineTo( PHYSDEV dev, INT x, INT y )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     POINT pt[2];
@@ -719,8 +719,8 @@ static BOOL X11DRV_DrawArc( PHYSDEV dev, INT left, INT top, INT right, INT botto
 /***********************************************************************
  *           X11DRV_Arc
  */
-BOOL CDECL X11DRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                       INT xstart, INT ystart, INT xend, INT yend )
+BOOL X11DRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                 INT xstart, INT ystart, INT xend, INT yend )
 {
     return X11DRV_DrawArc( dev, left, top, right, bottom, xstart, ystart, xend, yend, 0 );
 }
@@ -729,8 +729,8 @@ BOOL CDECL X11DRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           X11DRV_Pie
  */
-BOOL CDECL X11DRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                       INT xstart, INT ystart, INT xend, INT yend )
+BOOL X11DRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                 INT xstart, INT ystart, INT xend, INT yend )
 {
     return X11DRV_DrawArc( dev, left, top, right, bottom, xstart, ystart, xend, yend, 2 );
 }
@@ -738,8 +738,8 @@ BOOL CDECL X11DRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           X11DRV_Chord
  */
-BOOL CDECL X11DRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                         INT xstart, INT ystart, INT xend, INT yend )
+BOOL X11DRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                   INT xstart, INT ystart, INT xend, INT yend )
 {
     return X11DRV_DrawArc( dev, left, top, right, bottom, xstart, ystart, xend, yend, 1 );
 }
@@ -748,7 +748,7 @@ BOOL CDECL X11DRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           X11DRV_Ellipse
  */
-BOOL CDECL X11DRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+BOOL X11DRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     INT width, oldwidth;
@@ -791,7 +791,7 @@ BOOL CDECL X11DRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom
 /***********************************************************************
  *           X11DRV_Rectangle
  */
-BOOL CDECL X11DRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
+BOOL X11DRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     INT width, oldwidth, oldjoinstyle;
@@ -844,8 +844,8 @@ BOOL CDECL X11DRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT botto
 /***********************************************************************
  *           X11DRV_RoundRect
  */
-BOOL CDECL X11DRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                             INT ell_width, INT ell_height )
+BOOL X11DRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                       INT ell_width, INT ell_height )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     INT width, oldwidth, oldendcap;
@@ -1035,7 +1035,7 @@ BOOL CDECL X11DRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bott
 /***********************************************************************
  *           X11DRV_SetPixel
  */
-COLORREF CDECL X11DRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
+COLORREF X11DRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     unsigned long pixel;
@@ -1061,7 +1061,7 @@ COLORREF CDECL X11DRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 /***********************************************************************
  *           X11DRV_PaintRgn
  */
-BOOL CDECL X11DRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
+BOOL X11DRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     RECT rc;
@@ -1136,7 +1136,7 @@ static BOOL X11DRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
 /**********************************************************************
  *          X11DRV_PolyPolygon
  */
-BOOL CDECL X11DRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polygons )
+BOOL X11DRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polygons )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     DWORD total = 0, max = 0, pos, i;
@@ -1212,7 +1212,7 @@ done:
 /**********************************************************************
  *          X11DRV_PolyPolyline
  */
-BOOL CDECL X11DRV_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD polylines )
+BOOL X11DRV_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD polylines )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     DWORD total = 0, max = 0, pos, i, j;
@@ -1335,7 +1335,7 @@ done:
 /**********************************************************************
  *          X11DRV_FillPath
  */
-BOOL CDECL X11DRV_FillPath( PHYSDEV dev )
+BOOL X11DRV_FillPath( PHYSDEV dev )
 {
     return x11drv_stroke_and_fill_path( dev, FALSE, TRUE );
 }
@@ -1343,7 +1343,7 @@ BOOL CDECL X11DRV_FillPath( PHYSDEV dev )
 /**********************************************************************
  *          X11DRV_StrokeAndFillPath
  */
-BOOL CDECL X11DRV_StrokeAndFillPath( PHYSDEV dev )
+BOOL X11DRV_StrokeAndFillPath( PHYSDEV dev )
 {
     return x11drv_stroke_and_fill_path( dev, TRUE, TRUE );
 }
@@ -1351,7 +1351,7 @@ BOOL CDECL X11DRV_StrokeAndFillPath( PHYSDEV dev )
 /**********************************************************************
  *          X11DRV_StrokePath
  */
-BOOL CDECL X11DRV_StrokePath( PHYSDEV dev )
+BOOL X11DRV_StrokePath( PHYSDEV dev )
 {
     return x11drv_stroke_and_fill_path( dev, TRUE, FALSE );
 }
@@ -1438,7 +1438,7 @@ static int ExtFloodFillXGetImageErrorHandler( Display *dpy, XErrorEvent *event, 
 /**********************************************************************
  *          X11DRV_ExtFloodFill
  */
-BOOL CDECL X11DRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType )
+BOOL X11DRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     XImage *image;
@@ -1501,8 +1501,8 @@ BOOL CDECL X11DRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT 
 /**********************************************************************
  *          X11DRV_GradientFill
  */
-BOOL CDECL X11DRV_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
-                                void *grad_array, ULONG ngrad, ULONG mode )
+BOOL X11DRV_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
+                          void *grad_array, ULONG ngrad, ULONG mode )
 {
     X11DRV_PDEVICE *physdev = get_x11drv_dev( dev );
     const GRADIENT_RECT *rect = grad_array;
@@ -1656,7 +1656,7 @@ static const WCHAR color_path[] =
 /***********************************************************************
  *              GetICMProfile (X11DRV.@)
  */
-BOOL CDECL X11DRV_GetICMProfile( PHYSDEV dev, BOOL allow_default, LPDWORD size, LPWSTR filename )
+BOOL X11DRV_GetICMProfile( PHYSDEV dev, BOOL allow_default, LPDWORD size, LPWSTR filename )
 {
     static const WCHAR srgb[] =
         {'s','R','G','B',' ','C','o','l','o','r',' ','S','p','a','c','e',' ',

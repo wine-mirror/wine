@@ -754,7 +754,7 @@ void execute_rop( X11DRV_PDEVICE *physdev, Pixmap src_pixmap, GC gc, const RECT 
 /***********************************************************************
  *           X11DRV_PatBlt
  */
-BOOL CDECL X11DRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
+BOOL X11DRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     BOOL usePat = (((rop >> 4) & 0x0f0000) != (rop & 0x0f0000));
@@ -806,8 +806,8 @@ BOOL CDECL X11DRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 /***********************************************************************
  *           X11DRV_StretchBlt
  */
-BOOL CDECL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
-                              PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
+BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                        PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
 {
     X11DRV_PDEVICE *physDevDst = get_x11drv_dev( dst_dev );
     X11DRV_PDEVICE *physDevSrc = get_x11drv_dev( src_dev );
@@ -926,12 +926,12 @@ BOOL CDECL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
 }
 
 
-static void CDECL free_heap_bits( struct gdi_image_bits *bits )
+static void free_heap_bits( struct gdi_image_bits *bits )
 {
     free( bits->ptr );
 }
 
-static void CDECL free_ximage_bits( struct gdi_image_bits *bits )
+static void free_ximage_bits( struct gdi_image_bits *bits )
 {
     XFree( bits->ptr );
 }
@@ -1220,9 +1220,9 @@ DWORD copy_image_bits( BITMAPINFO *info, BOOL is_r8g8b8, XImage *image,
 /***********************************************************************
  *           X11DRV_PutImage
  */
-DWORD CDECL X11DRV_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
-                             const struct gdi_image_bits *bits, struct bitblt_coords *src,
-                             struct bitblt_coords *dst, DWORD rop )
+DWORD X11DRV_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
+                       const struct gdi_image_bits *bits, struct bitblt_coords *src,
+                       struct bitblt_coords *dst, DWORD rop )
 {
     X11DRV_PDEVICE *physdev = get_x11drv_dev( dev );
     DWORD ret;
@@ -1312,8 +1312,8 @@ update_format:
 /***********************************************************************
  *           X11DRV_GetImage
  */
-DWORD CDECL X11DRV_GetImage( PHYSDEV dev, BITMAPINFO *info,
-                             struct gdi_image_bits *bits, struct bitblt_coords *src )
+DWORD X11DRV_GetImage( PHYSDEV dev, BITMAPINFO *info,
+                       struct gdi_image_bits *bits, struct bitblt_coords *src )
 {
     X11DRV_PDEVICE *physdev = get_x11drv_dev( dev );
     DWORD ret = ERROR_SUCCESS;

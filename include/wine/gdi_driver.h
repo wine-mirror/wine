@@ -60,7 +60,7 @@ struct gdi_image_bits
 {
     void   *ptr;       /* pointer to the bits */
     BOOL    is_copy;   /* whether this is a copy of the bits that can be modified */
-    void  (CDECL *free)(struct gdi_image_bits *);  /* callback for freeing the bits */
+    void  (*free)(struct gdi_image_bits *);  /* callback for freeing the bits */
     void   *param;     /* extra parameter for callback private use */
 };
 
@@ -73,107 +73,107 @@ struct brush_pattern
 
 struct gdi_dc_funcs
 {
-    INT      (CDECL *pAbortDoc)(PHYSDEV);
-    BOOL     (CDECL *pAbortPath)(PHYSDEV);
-    BOOL     (CDECL *pAlphaBlend)(PHYSDEV,struct bitblt_coords*,PHYSDEV,struct bitblt_coords*,BLENDFUNCTION);
-    BOOL     (CDECL *pAngleArc)(PHYSDEV,INT,INT,DWORD,FLOAT,FLOAT);
-    BOOL     (CDECL *pArc)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
-    BOOL     (CDECL *pArcTo)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
-    BOOL     (CDECL *pBeginPath)(PHYSDEV);
-    DWORD    (CDECL *pBlendImage)(PHYSDEV,BITMAPINFO*,const struct gdi_image_bits*,struct bitblt_coords*,struct bitblt_coords*,BLENDFUNCTION);
-    BOOL     (CDECL *pChord)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
-    BOOL     (CDECL *pCloseFigure)(PHYSDEV);
-    BOOL     (CDECL *pCreateCompatibleDC)(PHYSDEV,PHYSDEV*);
-    BOOL     (CDECL *pCreateDC)(PHYSDEV*,LPCWSTR,LPCWSTR,const DEVMODEW*);
-    BOOL     (CDECL *pDeleteDC)(PHYSDEV);
-    BOOL     (CDECL *pDeleteObject)(PHYSDEV,HGDIOBJ);
-    BOOL     (CDECL *pEllipse)(PHYSDEV,INT,INT,INT,INT);
-    INT      (CDECL *pEndDoc)(PHYSDEV);
-    INT      (CDECL *pEndPage)(PHYSDEV);
-    BOOL     (CDECL *pEndPath)(PHYSDEV);
-    BOOL     (CDECL *pEnumFonts)(PHYSDEV,LPLOGFONTW,FONTENUMPROCW,LPARAM);
-    INT      (CDECL *pExtEscape)(PHYSDEV,INT,INT,LPCVOID,INT,LPVOID);
-    BOOL     (CDECL *pExtFloodFill)(PHYSDEV,INT,INT,COLORREF,UINT);
-    BOOL     (CDECL *pExtTextOut)(PHYSDEV,INT,INT,UINT,const RECT*,LPCWSTR,UINT,const INT*);
-    BOOL     (CDECL *pFillPath)(PHYSDEV);
-    BOOL     (CDECL *pFillRgn)(PHYSDEV,HRGN,HBRUSH);
-    BOOL     (CDECL *pFontIsLinked)(PHYSDEV);
-    BOOL     (CDECL *pFrameRgn)(PHYSDEV,HRGN,HBRUSH,INT,INT);
-    UINT     (CDECL *pGetBoundsRect)(PHYSDEV,RECT*,UINT);
-    BOOL     (CDECL *pGetCharABCWidths)(PHYSDEV,UINT,UINT,WCHAR*,LPABC);
-    BOOL     (CDECL *pGetCharABCWidthsI)(PHYSDEV,UINT,UINT,WORD*,LPABC);
-    BOOL     (CDECL *pGetCharWidth)(PHYSDEV,UINT,UINT,const WCHAR*,LPINT);
-    BOOL     (CDECL *pGetCharWidthInfo)(PHYSDEV,void*);
-    INT      (CDECL *pGetDeviceCaps)(PHYSDEV,INT);
-    BOOL     (CDECL *pGetDeviceGammaRamp)(PHYSDEV,LPVOID);
-    DWORD    (CDECL *pGetFontData)(PHYSDEV,DWORD,DWORD,LPVOID,DWORD);
-    BOOL     (CDECL *pGetFontRealizationInfo)(PHYSDEV,void*);
-    DWORD    (CDECL *pGetFontUnicodeRanges)(PHYSDEV,LPGLYPHSET);
-    DWORD    (CDECL *pGetGlyphIndices)(PHYSDEV,LPCWSTR,INT,LPWORD,DWORD);
-    DWORD    (CDECL *pGetGlyphOutline)(PHYSDEV,UINT,UINT,LPGLYPHMETRICS,DWORD,LPVOID,const MAT2*);
-    BOOL     (CDECL *pGetICMProfile)(PHYSDEV,BOOL,LPDWORD,LPWSTR);
-    DWORD    (CDECL *pGetImage)(PHYSDEV,BITMAPINFO*,struct gdi_image_bits*,struct bitblt_coords*);
-    DWORD    (CDECL *pGetKerningPairs)(PHYSDEV,DWORD,LPKERNINGPAIR);
-    COLORREF (CDECL *pGetNearestColor)(PHYSDEV,COLORREF);
-    UINT     (CDECL *pGetOutlineTextMetrics)(PHYSDEV,UINT,LPOUTLINETEXTMETRICW);
-    COLORREF (CDECL *pGetPixel)(PHYSDEV,INT,INT);
-    UINT     (CDECL *pGetSystemPaletteEntries)(PHYSDEV,UINT,UINT,LPPALETTEENTRY);
-    UINT     (CDECL *pGetTextCharsetInfo)(PHYSDEV,LPFONTSIGNATURE,DWORD);
-    BOOL     (CDECL *pGetTextExtentExPoint)(PHYSDEV,LPCWSTR,INT,LPINT);
-    BOOL     (CDECL *pGetTextExtentExPointI)(PHYSDEV,const WORD*,INT,LPINT);
-    INT      (CDECL *pGetTextFace)(PHYSDEV,INT,LPWSTR);
-    BOOL     (CDECL *pGetTextMetrics)(PHYSDEV,TEXTMETRICW*);
-    BOOL     (CDECL *pGradientFill)(PHYSDEV,TRIVERTEX*,ULONG,void*,ULONG,ULONG);
-    BOOL     (CDECL *pInvertRgn)(PHYSDEV,HRGN);
-    BOOL     (CDECL *pLineTo)(PHYSDEV,INT,INT);
-    BOOL     (CDECL *pMoveTo)(PHYSDEV,INT,INT);
-    BOOL     (CDECL *pPaintRgn)(PHYSDEV,HRGN);
-    BOOL     (CDECL *pPatBlt)(PHYSDEV,struct bitblt_coords*,DWORD);
-    BOOL     (CDECL *pPie)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
-    BOOL     (CDECL *pPolyBezier)(PHYSDEV,const POINT*,DWORD);
-    BOOL     (CDECL *pPolyBezierTo)(PHYSDEV,const POINT*,DWORD);
-    BOOL     (CDECL *pPolyDraw)(PHYSDEV,const POINT*,const BYTE *,DWORD);
-    BOOL     (CDECL *pPolyPolygon)(PHYSDEV,const POINT*,const INT*,UINT);
-    BOOL     (CDECL *pPolyPolyline)(PHYSDEV,const POINT*,const DWORD*,DWORD);
-    BOOL     (CDECL *pPolylineTo)(PHYSDEV,const POINT*,INT);
-    DWORD    (CDECL *pPutImage)(PHYSDEV,HRGN,BITMAPINFO*,const struct gdi_image_bits*,struct bitblt_coords*,struct bitblt_coords*,DWORD);
-    UINT     (CDECL *pRealizeDefaultPalette)(PHYSDEV);
-    UINT     (CDECL *pRealizePalette)(PHYSDEV,HPALETTE,BOOL);
-    BOOL     (CDECL *pRectangle)(PHYSDEV,INT,INT,INT,INT);
-    BOOL     (CDECL *pResetDC)(PHYSDEV,const DEVMODEW*);
-    BOOL     (CDECL *pRoundRect)(PHYSDEV,INT,INT,INT,INT,INT,INT);
-    HBITMAP  (CDECL *pSelectBitmap)(PHYSDEV,HBITMAP);
-    HBRUSH   (CDECL *pSelectBrush)(PHYSDEV,HBRUSH,const struct brush_pattern*);
-    HFONT    (CDECL *pSelectFont)(PHYSDEV,HFONT,UINT*);
-    HPEN     (CDECL *pSelectPen)(PHYSDEV,HPEN,const struct brush_pattern*);
-    COLORREF (CDECL *pSetBkColor)(PHYSDEV,COLORREF);
-    UINT     (CDECL *pSetBoundsRect)(PHYSDEV,RECT*,UINT);
-    COLORREF (CDECL *pSetDCBrushColor)(PHYSDEV, COLORREF);
-    COLORREF (CDECL *pSetDCPenColor)(PHYSDEV, COLORREF);
-    INT      (CDECL *pSetDIBitsToDevice)(PHYSDEV,INT,INT,DWORD,DWORD,INT,INT,UINT,UINT,LPCVOID,BITMAPINFO*,UINT);
-    VOID     (CDECL *pSetDeviceClipping)(PHYSDEV,HRGN);
-    BOOL     (CDECL *pSetDeviceGammaRamp)(PHYSDEV,LPVOID);
-    COLORREF (CDECL *pSetPixel)(PHYSDEV,INT,INT,COLORREF);
-    COLORREF (CDECL *pSetTextColor)(PHYSDEV,COLORREF);
-    INT      (CDECL *pStartDoc)(PHYSDEV,const DOCINFOW*);
-    INT      (CDECL *pStartPage)(PHYSDEV);
-    BOOL     (CDECL *pStretchBlt)(PHYSDEV,struct bitblt_coords*,PHYSDEV,struct bitblt_coords*,DWORD);
-    INT      (CDECL *pStretchDIBits)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT,const void*,BITMAPINFO*,UINT,DWORD);
-    BOOL     (CDECL *pStrokeAndFillPath)(PHYSDEV);
-    BOOL     (CDECL *pStrokePath)(PHYSDEV);
-    BOOL     (CDECL *pUnrealizePalette)(HPALETTE);
-    NTSTATUS (CDECL *pD3DKMTCheckVidPnExclusiveOwnership)(const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *);
-    NTSTATUS (CDECL *pD3DKMTCloseAdapter)(const D3DKMT_CLOSEADAPTER *);
-    NTSTATUS (CDECL *pD3DKMTOpenAdapterFromLuid)(D3DKMT_OPENADAPTERFROMLUID *);
-    NTSTATUS (CDECL *pD3DKMTQueryVideoMemoryInfo)(D3DKMT_QUERYVIDEOMEMORYINFO *);
-    NTSTATUS (CDECL *pD3DKMTSetVidPnSourceOwner)(const D3DKMT_SETVIDPNSOURCEOWNER *);
+    INT      (*pAbortDoc)(PHYSDEV);
+    BOOL     (*pAbortPath)(PHYSDEV);
+    BOOL     (*pAlphaBlend)(PHYSDEV,struct bitblt_coords*,PHYSDEV,struct bitblt_coords*,BLENDFUNCTION);
+    BOOL     (*pAngleArc)(PHYSDEV,INT,INT,DWORD,FLOAT,FLOAT);
+    BOOL     (*pArc)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
+    BOOL     (*pArcTo)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
+    BOOL     (*pBeginPath)(PHYSDEV);
+    DWORD    (*pBlendImage)(PHYSDEV,BITMAPINFO*,const struct gdi_image_bits*,struct bitblt_coords*,struct bitblt_coords*,BLENDFUNCTION);
+    BOOL     (*pChord)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
+    BOOL     (*pCloseFigure)(PHYSDEV);
+    BOOL     (*pCreateCompatibleDC)(PHYSDEV,PHYSDEV*);
+    BOOL     (*pCreateDC)(PHYSDEV*,LPCWSTR,LPCWSTR,const DEVMODEW*);
+    BOOL     (*pDeleteDC)(PHYSDEV);
+    BOOL     (*pDeleteObject)(PHYSDEV,HGDIOBJ);
+    BOOL     (*pEllipse)(PHYSDEV,INT,INT,INT,INT);
+    INT      (*pEndDoc)(PHYSDEV);
+    INT      (*pEndPage)(PHYSDEV);
+    BOOL     (*pEndPath)(PHYSDEV);
+    BOOL     (*pEnumFonts)(PHYSDEV,LPLOGFONTW,FONTENUMPROCW,LPARAM);
+    INT      (*pExtEscape)(PHYSDEV,INT,INT,LPCVOID,INT,LPVOID);
+    BOOL     (*pExtFloodFill)(PHYSDEV,INT,INT,COLORREF,UINT);
+    BOOL     (*pExtTextOut)(PHYSDEV,INT,INT,UINT,const RECT*,LPCWSTR,UINT,const INT*);
+    BOOL     (*pFillPath)(PHYSDEV);
+    BOOL     (*pFillRgn)(PHYSDEV,HRGN,HBRUSH);
+    BOOL     (*pFontIsLinked)(PHYSDEV);
+    BOOL     (*pFrameRgn)(PHYSDEV,HRGN,HBRUSH,INT,INT);
+    UINT     (*pGetBoundsRect)(PHYSDEV,RECT*,UINT);
+    BOOL     (*pGetCharABCWidths)(PHYSDEV,UINT,UINT,WCHAR*,LPABC);
+    BOOL     (*pGetCharABCWidthsI)(PHYSDEV,UINT,UINT,WORD*,LPABC);
+    BOOL     (*pGetCharWidth)(PHYSDEV,UINT,UINT,const WCHAR*,LPINT);
+    BOOL     (*pGetCharWidthInfo)(PHYSDEV,void*);
+    INT      (*pGetDeviceCaps)(PHYSDEV,INT);
+    BOOL     (*pGetDeviceGammaRamp)(PHYSDEV,LPVOID);
+    DWORD    (*pGetFontData)(PHYSDEV,DWORD,DWORD,LPVOID,DWORD);
+    BOOL     (*pGetFontRealizationInfo)(PHYSDEV,void*);
+    DWORD    (*pGetFontUnicodeRanges)(PHYSDEV,LPGLYPHSET);
+    DWORD    (*pGetGlyphIndices)(PHYSDEV,LPCWSTR,INT,LPWORD,DWORD);
+    DWORD    (*pGetGlyphOutline)(PHYSDEV,UINT,UINT,LPGLYPHMETRICS,DWORD,LPVOID,const MAT2*);
+    BOOL     (*pGetICMProfile)(PHYSDEV,BOOL,LPDWORD,LPWSTR);
+    DWORD    (*pGetImage)(PHYSDEV,BITMAPINFO*,struct gdi_image_bits*,struct bitblt_coords*);
+    DWORD    (*pGetKerningPairs)(PHYSDEV,DWORD,LPKERNINGPAIR);
+    COLORREF (*pGetNearestColor)(PHYSDEV,COLORREF);
+    UINT     (*pGetOutlineTextMetrics)(PHYSDEV,UINT,LPOUTLINETEXTMETRICW);
+    COLORREF (*pGetPixel)(PHYSDEV,INT,INT);
+    UINT     (*pGetSystemPaletteEntries)(PHYSDEV,UINT,UINT,LPPALETTEENTRY);
+    UINT     (*pGetTextCharsetInfo)(PHYSDEV,LPFONTSIGNATURE,DWORD);
+    BOOL     (*pGetTextExtentExPoint)(PHYSDEV,LPCWSTR,INT,LPINT);
+    BOOL     (*pGetTextExtentExPointI)(PHYSDEV,const WORD*,INT,LPINT);
+    INT      (*pGetTextFace)(PHYSDEV,INT,LPWSTR);
+    BOOL     (*pGetTextMetrics)(PHYSDEV,TEXTMETRICW*);
+    BOOL     (*pGradientFill)(PHYSDEV,TRIVERTEX*,ULONG,void*,ULONG,ULONG);
+    BOOL     (*pInvertRgn)(PHYSDEV,HRGN);
+    BOOL     (*pLineTo)(PHYSDEV,INT,INT);
+    BOOL     (*pMoveTo)(PHYSDEV,INT,INT);
+    BOOL     (*pPaintRgn)(PHYSDEV,HRGN);
+    BOOL     (*pPatBlt)(PHYSDEV,struct bitblt_coords*,DWORD);
+    BOOL     (*pPie)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
+    BOOL     (*pPolyBezier)(PHYSDEV,const POINT*,DWORD);
+    BOOL     (*pPolyBezierTo)(PHYSDEV,const POINT*,DWORD);
+    BOOL     (*pPolyDraw)(PHYSDEV,const POINT*,const BYTE *,DWORD);
+    BOOL     (*pPolyPolygon)(PHYSDEV,const POINT*,const INT*,UINT);
+    BOOL     (*pPolyPolyline)(PHYSDEV,const POINT*,const DWORD*,DWORD);
+    BOOL     (*pPolylineTo)(PHYSDEV,const POINT*,INT);
+    DWORD    (*pPutImage)(PHYSDEV,HRGN,BITMAPINFO*,const struct gdi_image_bits*,struct bitblt_coords*,struct bitblt_coords*,DWORD);
+    UINT     (*pRealizeDefaultPalette)(PHYSDEV);
+    UINT     (*pRealizePalette)(PHYSDEV,HPALETTE,BOOL);
+    BOOL     (*pRectangle)(PHYSDEV,INT,INT,INT,INT);
+    BOOL     (*pResetDC)(PHYSDEV,const DEVMODEW*);
+    BOOL     (*pRoundRect)(PHYSDEV,INT,INT,INT,INT,INT,INT);
+    HBITMAP  (*pSelectBitmap)(PHYSDEV,HBITMAP);
+    HBRUSH   (*pSelectBrush)(PHYSDEV,HBRUSH,const struct brush_pattern*);
+    HFONT    (*pSelectFont)(PHYSDEV,HFONT,UINT*);
+    HPEN     (*pSelectPen)(PHYSDEV,HPEN,const struct brush_pattern*);
+    COLORREF (*pSetBkColor)(PHYSDEV,COLORREF);
+    UINT     (*pSetBoundsRect)(PHYSDEV,RECT*,UINT);
+    COLORREF (*pSetDCBrushColor)(PHYSDEV, COLORREF);
+    COLORREF (*pSetDCPenColor)(PHYSDEV, COLORREF);
+    INT      (*pSetDIBitsToDevice)(PHYSDEV,INT,INT,DWORD,DWORD,INT,INT,UINT,UINT,LPCVOID,BITMAPINFO*,UINT);
+    VOID     (*pSetDeviceClipping)(PHYSDEV,HRGN);
+    BOOL     (*pSetDeviceGammaRamp)(PHYSDEV,LPVOID);
+    COLORREF (*pSetPixel)(PHYSDEV,INT,INT,COLORREF);
+    COLORREF (*pSetTextColor)(PHYSDEV,COLORREF);
+    INT      (*pStartDoc)(PHYSDEV,const DOCINFOW*);
+    INT      (*pStartPage)(PHYSDEV);
+    BOOL     (*pStretchBlt)(PHYSDEV,struct bitblt_coords*,PHYSDEV,struct bitblt_coords*,DWORD);
+    INT      (*pStretchDIBits)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT,const void*,BITMAPINFO*,UINT,DWORD);
+    BOOL     (*pStrokeAndFillPath)(PHYSDEV);
+    BOOL     (*pStrokePath)(PHYSDEV);
+    BOOL     (*pUnrealizePalette)(HPALETTE);
+    NTSTATUS (*pD3DKMTCheckVidPnExclusiveOwnership)(const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *);
+    NTSTATUS (*pD3DKMTCloseAdapter)(const D3DKMT_CLOSEADAPTER *);
+    NTSTATUS (*pD3DKMTOpenAdapterFromLuid)(D3DKMT_OPENADAPTERFROMLUID *);
+    NTSTATUS (*pD3DKMTQueryVideoMemoryInfo)(D3DKMT_QUERYVIDEOMEMORYINFO *);
+    NTSTATUS (*pD3DKMTSetVidPnSourceOwner)(const D3DKMT_SETVIDPNSOURCEOWNER *);
 
     /* priority order for the driver on the stack */
     UINT       priority;
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 81
+#define WINE_GDI_DRIVER_VERSION 82
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
