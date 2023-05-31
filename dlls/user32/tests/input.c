@@ -180,6 +180,34 @@ static void init_function_pointers(void)
         is_wow64 = FALSE;
 }
 
+static const char *debugstr_ok( const char *cond )
+{
+    int c, n = 0;
+    /* skip possible casts */
+    while ((c = *cond++))
+    {
+        if (c == '(') n++;
+        if (!n) break;
+        if (c == ')') n--;
+    }
+    if (!strchr( cond - 1, '(' )) return wine_dbg_sprintf( "got %s", cond - 1 );
+    return wine_dbg_sprintf( "%.*s returned", (int)strcspn( cond - 1, "( " ), cond - 1 );
+}
+
+#define ok_eq( e, r, t, f, ... )                                                                   \
+    do                                                                                             \
+    {                                                                                              \
+        t v = (r);                                                                                 \
+        ok( v == (e), "%s " f "\n", debugstr_ok( #r ), v, ##__VA_ARGS__ );                         \
+    } while (0)
+#define ok_rect( e, r )                                                                            \
+    do                                                                                             \
+    {                                                                                              \
+        RECT v = (r);                                                                              \
+        ok( EqualRect( &v, &(e) ), "%s %s\n", debugstr_ok(#r), wine_dbgstr_rect(&v) );             \
+    } while (0)
+#define ok_ret( e, r ) ok_eq( e, r, UINT_PTR, "%Iu, error %ld", GetLastError() )
+
 #define run_in_process( a, b ) run_in_process_( __FILE__, __LINE__, a, b )
 static void run_in_process_( const char *file, int line, char **argv, const char *args )
 {
@@ -196,6 +224,72 @@ static void run_in_process_( const char *file, int line, char **argv, const char
     wait_child_process( info.hProcess );
     CloseHandle( info.hThread );
     CloseHandle( info.hProcess );
+}
+
+#define run_in_desktop( a, b, c ) run_in_desktop_( __FILE__, __LINE__, a, b, c )
+static void run_in_desktop_( const char *file, int line, char **argv,
+                             const char *args, BOOL input )
+{
+    const char *desktop_name = "WineTest Desktop";
+    STARTUPINFOA startup = {.cb = sizeof(STARTUPINFOA)};
+    PROCESS_INFORMATION info = {0};
+    HDESK old_desktop, desktop;
+    char cmdline[MAX_PATH * 2];
+    DWORD ret;
+
+    old_desktop = OpenInputDesktop( 0, FALSE, DESKTOP_ALL_ACCESS );
+    ok_(file, line)( !!old_desktop, "OpenInputDesktop failed, error %lu\n", GetLastError() );
+    desktop = CreateDesktopA( desktop_name, NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );
+    ok_(file, line)( !!desktop, "CreateDesktopA failed, error %lu\n", GetLastError() );
+    if (input)
+    {
+        ret = SwitchDesktop( desktop );
+        ok_(file, line)( ret, "SwitchDesktop failed, error %lu\n", GetLastError() );
+    }
+
+    startup.lpDesktop = (char *)desktop_name;
+    sprintf( cmdline, "%s %s %s", argv[0], argv[1], args );
+    ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info );
+    ok_(file, line)( ret, "CreateProcessA failed, error %lu\n", GetLastError() );
+    if (!ret) return;
+
+    wait_child_process( info.hProcess );
+    CloseHandle( info.hThread );
+    CloseHandle( info.hProcess );
+
+    if (input)
+    {
+        ret = SwitchDesktop( old_desktop );
+        ok_(file, line)( ret, "SwitchDesktop failed, error %lu\n", GetLastError() );
+    }
+    ret = CloseDesktop( desktop );
+    ok_(file, line)( ret, "CloseDesktop failed, error %lu\n", GetLastError() );
+    ret = CloseDesktop( old_desktop );
+    ok_(file, line)( ret, "CloseDesktop failed, error %lu\n", GetLastError() );
+}
+
+#define msg_wait_for_events( a, b, c ) msg_wait_for_events_( __FILE__, __LINE__, a, b, c )
+static DWORD msg_wait_for_events_( const char *file, int line, DWORD count, HANDLE *events, DWORD timeout )
+{
+    DWORD ret, end = GetTickCount() + min( timeout, 5000 );
+    MSG msg;
+
+    while ((ret = MsgWaitForMultipleObjects( count, events, FALSE, min( timeout, 5000 ), QS_ALLINPUT )) <= count)
+    {
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
+        {
+            TranslateMessage( &msg );
+            DispatchMessageW( &msg );
+        }
+        if (ret < count) return ret;
+        if (timeout >= 5000) continue;
+        if (end <= GetTickCount()) timeout = 0;
+        else timeout = end - GetTickCount();
+    }
+
+    if (timeout >= 5000) ok_(file, line)( 0, "MsgWaitForMultipleObjects returned %#lx\n", ret );
+    else ok_(file, line)( ret == WAIT_TIMEOUT, "MsgWaitForMultipleObjects returned %#lx\n", ret );
+    return ret;
 }
 
 static int KbdMessage( KEV kev, WPARAM *pwParam, LPARAM *plParam )
@@ -5083,6 +5177,198 @@ static void test_EnableMouseInPointer( const char *arg )
     winetest_pop_context();
 }
 
+static BOOL CALLBACK get_virtual_screen_proc( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
+{
+    RECT *virtual_rect = (RECT *)lp;
+    UnionRect( virtual_rect, virtual_rect, rect );
+    return TRUE;
+}
+
+RECT get_virtual_screen_rect(void)
+{
+    RECT rect = {0};
+    EnumDisplayMonitors( 0, NULL, get_virtual_screen_proc, (LPARAM)&rect );
+    return rect;
+}
+
+static void test_ClipCursor_dirty( const char *arg )
+{
+    RECT rect, expect_rect = {1, 2, 3, 4};
+
+    /* check leaked clip rect from another desktop or process */
+    ok_ret( 1, GetClipCursor( &rect ) );
+    todo_wine_if( !strcmp( arg, "desktop" ) )
+    ok_rect( expect_rect, rect );
+
+    /* intentionally leaking clipping rect */
+}
+
+static DWORD CALLBACK test_ClipCursor_thread( void *arg )
+{
+    RECT rect, clip_rect, virtual_rect = get_virtual_screen_rect();
+    HWND hwnd;
+
+    clip_rect.left = clip_rect.right = (virtual_rect.left + virtual_rect.right) / 2;
+    clip_rect.top = clip_rect.bottom = (virtual_rect.top + virtual_rect.bottom) / 2;
+
+    /* creating a window doesn't reset clipping rect */
+    hwnd = CreateWindowW( L"static", NULL, WS_OVERLAPPEDWINDOW, 0, 0, 0, 0,
+                          NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    ok_ret( 1, GetClipCursor( &rect ) );
+    ok_rect( clip_rect, rect );
+
+    /* setting a window foreground does, even from the same process */
+    ok_ret( 1, SetForegroundWindow( hwnd ) );
+    ok_ret( 1, GetClipCursor( &rect ) );
+    ok_rect( virtual_rect, rect );
+
+    /* destroying the window doesn't reset the clipping rect */
+    InflateRect( &clip_rect, +1, +1 );
+    ok_ret( 1, ClipCursor( &clip_rect ) );
+    ok_ret( 1, DestroyWindow( hwnd ) );
+    ok_ret( 1, GetClipCursor( &rect ) );
+    ok_rect( clip_rect, rect );
+
+    /* intentionally leaking clipping rect */
+    return 0;
+}
+
+static void test_ClipCursor_process(void)
+{
+    RECT rect, clip_rect, virtual_rect = get_virtual_screen_rect();
+    HWND hwnd, tmp_hwnd;
+    HANDLE thread;
+
+    clip_rect.left = clip_rect.right = (virtual_rect.left + virtual_rect.right) / 2;
+    clip_rect.top = clip_rect.bottom = (virtual_rect.top + virtual_rect.bottom) / 2;
+
+    ok_ret( 1, GetClipCursor( &rect ) );
+    ok_rect( clip_rect, rect );
+
+    /* creating an invisible window doesn't reset clip cursor */
+    hwnd = CreateWindowW( L"static", NULL, WS_OVERLAPPEDWINDOW, 0, 0, 0, 0,
+                          NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    ok_ret( 1, DestroyWindow( hwnd ) );
+    ok_ret( 1, GetClipCursor( &rect ) );
+    ok_rect( clip_rect, rect );
+
+    /* setting a window foreground, even invisible, resets it */
+    hwnd = CreateWindowW( L"static", NULL, WS_OVERLAPPEDWINDOW, 0, 0, 0, 0,
+                          NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    ok_ret( 1, SetForegroundWindow( hwnd ) );
+    ok_ret( 1, GetClipCursor( &rect ) );
+    ok_rect( virtual_rect, rect );
+
+    ok_ret( 1, ClipCursor( &clip_rect ) );
+
+    /* creating and setting another window foreground doesn't reset it */
+    tmp_hwnd = CreateWindowW( L"static", NULL, WS_OVERLAPPEDWINDOW, 0, 0, 0, 0,
+                              NULL, NULL, NULL, NULL );
+    ok( !!tmp_hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    ok_ret( 1, SetForegroundWindow( tmp_hwnd ) );
+    ok_ret( 1, DestroyWindow( tmp_hwnd ) );
+    ok_ret( 1, GetClipCursor( &rect ) );
+    ok_rect( clip_rect, rect );
+
+    /* but changing foreground to another thread in the same process reset it */
+    thread = CreateThread( NULL, 0, test_ClipCursor_thread, NULL, 0, NULL );
+    ok( !!thread, "CreateThread failed, error %lu\n", GetLastError() );
+    msg_wait_for_events( 1, &thread, 5000 );
+
+    /* thread exit and foreground window destruction doesn't reset the clipping rect */
+    InflateRect( &clip_rect, +1, +1 );
+    ok_ret( 1, DestroyWindow( hwnd ) );
+    ok_ret( 1, GetClipCursor( &rect ) );
+    todo_wine
+    ok_rect( clip_rect, rect );
+
+    /* intentionally leaking clipping rect */
+}
+
+static void test_ClipCursor_desktop( char **argv )
+{
+    RECT rect, clip_rect, virtual_rect = get_virtual_screen_rect();
+
+    ok_ret( 1, GetClipCursor( &rect ) );
+    ok_rect( virtual_rect, rect );
+
+    /* ClipCursor clips rectangle to the virtual screen rect */
+    clip_rect = virtual_rect;
+    InflateRect( &clip_rect, +1, +1 );
+    ok_ret( 1, ClipCursor( &clip_rect ) );
+    ok_ret( 1, GetClipCursor( &rect ) );
+    ok_rect( virtual_rect, rect );
+
+    clip_rect = virtual_rect;
+    InflateRect( &clip_rect, -1, -1 );
+    ok_ret( 1, ClipCursor( &clip_rect ) );
+    ok_ret( 1, GetClipCursor( &rect ) );
+    ok_rect( clip_rect, rect );
+
+    /* ClipCursor(NULL) resets to the virtual screen rect */
+    ok_ret( 1, ClipCursor( NULL ) );
+    ok_ret( 1, GetClipCursor( &rect ) );
+    ok_rect( virtual_rect, rect );
+
+    clip_rect.left = clip_rect.right = (virtual_rect.left + virtual_rect.right) / 2;
+    clip_rect.top = clip_rect.bottom = (virtual_rect.top + virtual_rect.bottom) / 2;
+    ok_ret( 1, ClipCursor( &clip_rect ) );
+    ok_ret( 1, GetClipCursor( &rect ) );
+    ok_rect( clip_rect, rect );
+
+    /* ClipCursor rejects invalid rectangles */
+    clip_rect.right -= 1;
+    clip_rect.bottom -= 1;
+    SetLastError( 0xdeadbeef );
+    ok_ret( 0, ClipCursor( &clip_rect ) );
+    todo_wine
+    ok_ret( ERROR_ACCESS_DENIED, GetLastError() );
+
+    /* which doesn't reset the previous clip rect */
+    clip_rect.right += 1;
+    clip_rect.bottom += 1;
+    ok_ret( 1, GetClipCursor( &rect ) );
+    ok_rect( clip_rect, rect );
+
+    /* running a process causes it to leak until foreground actually changes */
+    run_in_process( argv, "test_ClipCursor_process" );
+
+    /* as foreground window is now transient, cursor clipping isn't reset */
+    InflateRect( &clip_rect, +1, +1 );
+    ok_ret( 1, GetClipCursor( &rect ) );
+    todo_wine
+    ok_rect( clip_rect, rect );
+
+    /* intentionally leaking clipping rect */
+}
+
+static void test_ClipCursor( char **argv )
+{
+    RECT rect, clip_rect = {1, 2, 3, 4}, virtual_rect = get_virtual_screen_rect();
+
+    ok_ret( 1, ClipCursor( &clip_rect ) );
+
+    /* running a new process doesn't reset clipping rectangle */
+    run_in_process( argv, "test_ClipCursor_dirty process" );
+
+    /* running in a separate desktop, without switching desktop as well */
+    run_in_desktop( argv, "test_ClipCursor_dirty desktop", 0 );
+
+    ok_ret( 1, GetClipCursor( &rect ) );
+    ok_rect( clip_rect, rect );
+
+    /* running in a desktop and switching input resets the clipping rect */
+    run_in_desktop( argv, "test_ClipCursor_desktop", 1 );
+
+    ok_ret( 1, GetClipCursor( &rect ) );
+    todo_wine
+    ok_rect( virtual_rect, rect );
+    if (!EqualRect( &rect, &virtual_rect )) ok_ret( 1, ClipCursor( NULL ) );
+}
+
 START_TEST(input)
 {
     char **argv;
@@ -5099,6 +5385,12 @@ START_TEST(input)
         return test_GetMouseMovePointsEx_process();
     if (argc >= 4 && !strcmp( argv[2], "test_EnableMouseInPointer" ))
         return test_EnableMouseInPointer( argv[3] );
+    if (argc >= 4 && !strcmp( argv[2], "test_ClipCursor_dirty" ))
+        return test_ClipCursor_dirty( argv[3] );
+    if (argc >= 3 && !strcmp( argv[2], "test_ClipCursor_process" ))
+        return test_ClipCursor_process();
+    if (argc >= 3 && !strcmp( argv[2], "test_ClipCursor_desktop" ))
+        return test_ClipCursor_desktop( argv );
 
     test_SendInput();
     test_Input_blackbox();
@@ -5154,4 +5446,6 @@ START_TEST(input)
         run_in_process( argv, "test_EnableMouseInPointer 0" );
         run_in_process( argv, "test_EnableMouseInPointer 1" );
     }
+
+    test_ClipCursor( argv );
 }
