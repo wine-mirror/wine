@@ -3302,7 +3302,7 @@ void __thiscall reader_writer_lock_unlock(reader_writer_lock *this)
         count = InterlockedDecrement(&this->count);
         if (count != WRITER_WAITING)
             return;
-        NtReleaseKeyedEvent(keyed_event, this->writer_head, 0, NULL);
+        call_Context_Unblock(this->writer_head->ctx);
         return;
     }
 
