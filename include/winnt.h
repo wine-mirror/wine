@@ -2406,6 +2406,7 @@ static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
     return __wine_current_teb;
 }
 #elif defined(__aarch64__) && defined(_MSC_VER)
+unsigned __int64 __getReg(int);
 #pragma intrinsic(__getReg)
 static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
 {
