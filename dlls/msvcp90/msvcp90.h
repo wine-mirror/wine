@@ -45,6 +45,7 @@ extern void* (__cdecl *MSVCRT_set_new_handler)(void*);
 /* keep in sync with msvcrt/lock.c */
 typedef struct cs_queue
 {
+    void *ctx;
     struct cs_queue *next;
     BOOL free;
     int unknown;
@@ -52,7 +53,6 @@ typedef struct cs_queue
 
 typedef struct
 {
-    ULONG_PTR unk_thread_id;
     cs_queue unk_active;
     void *unknown[2];
     cs_queue *head;

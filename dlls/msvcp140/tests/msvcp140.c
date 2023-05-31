@@ -150,6 +150,7 @@ typedef struct
 
 typedef struct cs_queue
 {
+    void *ctx;
     struct cs_queue *next;
     BOOL free;
     int unknown;
@@ -157,7 +158,6 @@ typedef struct cs_queue
 
 typedef struct
 {
-    ULONG_PTR unk_thread_id;
     cs_queue unk_active;
     void *unknown[2];
     cs_queue *head;

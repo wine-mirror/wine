@@ -216,6 +216,7 @@ struct scheduled_chore {
 /* keep in sync with msvcp90/msvcp90.h */
 typedef struct cs_queue
 {
+    Context *ctx;
     struct cs_queue *next;
 #if _MSVCR_VER >= 110
     LONG free;
@@ -225,7 +226,6 @@ typedef struct cs_queue
 
 typedef struct
 {
-    ULONG_PTR unk_thread_id;
     cs_queue unk_active;
 #if _MSVCR_VER >= 110
     void *unknown[2];
@@ -2425,7 +2425,7 @@ critical_section* __thiscall critical_section_ctor(critical_section *this)
             NtClose(event);
     }
 
-    this->unk_thread_id = 0;
+    this->unk_active.ctx = NULL;
     this->head = this->tail = NULL;
     return this;
 }
@@ -2458,7 +2458,7 @@ static inline void spin_wait_for_next_cs(cs_queue *q)
 
 static inline void cs_set_head(critical_section *cs, cs_queue *q)
 {
-    cs->unk_thread_id = GetCurrentThreadId();
+    cs->unk_active.ctx = get_current_context();
     cs->unk_active.next = q->next;
     cs->head = &cs->unk_active;
 }
@@ -2467,7 +2467,7 @@ static inline void cs_lock(critical_section *cs, cs_queue *q)
 {
     cs_queue *last;
 
-    if(cs->unk_thread_id == GetCurrentThreadId()) {
+    if(cs->unk_active.ctx == get_current_context()) {
         improper_lock e;
         improper_lock_ctor_str(&e, "Already locked");
         _CxxThrowException(&e, &improper_lock_exception_type);
@@ -2507,7 +2507,7 @@ bool __thiscall critical_section_try_lock(critical_section *this)
 
     TRACE("(%p)\n", this);
 
-    if(this->unk_thread_id == GetCurrentThreadId())
+    if(this->unk_active.ctx == get_current_context())
         return FALSE;
 
     memset(&q, 0, sizeof(q));
@@ -2529,7 +2529,7 @@ void __thiscall critical_section_unlock(critical_section *this)
 {
     TRACE("(%p)\n", this);
 
-    this->unk_thread_id = 0;
+    this->unk_active.ctx = NULL;
     this->head = NULL;
     if(InterlockedCompareExchangePointer(&this->tail, NULL, &this->unk_active)
             == &this->unk_active) return;
@@ -2577,7 +2577,7 @@ bool __thiscall critical_section_try_lock_for(
 
     TRACE("(%p %d)\n", this, timeout);
 
-    if(this->unk_thread_id == GetCurrentThreadId()) {
+    if(this->unk_active.ctx == get_current_context()) {
         improper_lock e;
         improper_lock_ctor_str(&e, "Already locked");
         _CxxThrowException(&e, &improper_lock_exception_type);
