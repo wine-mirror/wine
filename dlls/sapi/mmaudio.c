@@ -60,7 +60,12 @@ struct mmaudio
         HWAVEIN in;
         HWAVEOUT out;
     } hwave;
+    HANDLE event;
+    struct async_queue queue;
     CRITICAL_SECTION cs;
+
+    size_t pending_buf_count;
+    CRITICAL_SECTION pending_cs;
 };
 
 static inline struct mmaudio *impl_from_ISpEventSource(ISpEventSource *iface)
@@ -371,8 +376,13 @@ static ULONG WINAPI mmsysaudio_Release(ISpMMSysAudio *iface)
     {
         ISpMMSysAudio_SetState(iface, SPAS_CLOSED, 0);
 
+        async_wait_queue_empty(&This->queue, INFINITE);
+        async_cancel_queue(&This->queue);
+
         if (This->token) ISpObjectToken_Release(This->token);
         heap_free(This->wfx);
+        CloseHandle(This->event);
+        DeleteCriticalSection(&This->pending_cs);
         DeleteCriticalSection(&This->cs);
 
         heap_free(This);
@@ -487,6 +497,57 @@ static HRESULT WINAPI mmsysaudio_GetFormat(ISpMMSysAudio *iface, GUID *format, W
     return S_OK;
 }
 
+struct free_buf_task
+{
+    struct async_task task;
+    struct mmaudio *audio;
+    WAVEHDR *buf;
+};
+
+static void free_out_buf_proc(struct async_task *task)
+{
+    struct free_buf_task *fbt = (struct free_buf_task *)task;
+    size_t buf_count;
+
+    TRACE("(%p).\n", task);
+
+    waveOutUnprepareHeader(fbt->audio->hwave.out, fbt->buf, sizeof(WAVEHDR));
+    heap_free(fbt->buf);
+
+    EnterCriticalSection(&fbt->audio->pending_cs);
+    buf_count = --fbt->audio->pending_buf_count;
+    LeaveCriticalSection(&fbt->audio->pending_cs);
+    if (!buf_count)
+        SetEvent(fbt->audio->event);
+    TRACE("pending_buf_count = %Iu.\n", buf_count);
+}
+
+static void CALLBACK wave_out_proc(HWAVEOUT hwo, UINT msg, DWORD_PTR instance, DWORD_PTR param1, DWORD_PTR param2)
+{
+    struct mmaudio *This = (struct mmaudio *)instance;
+    struct free_buf_task *task;
+
+    TRACE("(%p, %#x, %08Ix, %08Ix, %08Ix).\n", hwo, msg, instance, param1, param2);
+
+    switch (msg)
+    {
+    case WOM_DONE:
+        if (!(task = heap_alloc(sizeof(*task))))
+        {
+            ERR("failed to allocate free_buf_task.\n");
+            break;
+        }
+        task->task.proc = free_out_buf_proc;
+        task->audio = This;
+        task->buf = (WAVEHDR *)param1;
+        async_queue_task(&This->queue, (struct async_task *)task);
+        break;
+
+    default:
+        break;
+    }
+}
+
 static HRESULT WINAPI mmsysaudio_SetState(ISpMMSysAudio *iface, SPAUDIOSTATE state, ULONGLONG reserved)
 {
     struct mmaudio *This = impl_from_ISpMMSysAudio(iface);
@@ -507,7 +568,14 @@ static HRESULT WINAPI mmsysaudio_SetState(ISpMMSysAudio *iface, SPAUDIOSTATE sta
 
     if (This->state == SPAS_CLOSED)
     {
-        if (waveOutOpen(&This->hwave.out, This->device_id, This->wfx, 0, 0, 0) != MMSYSERR_NOERROR)
+        if (FAILED(hr = async_start_queue(&This->queue)))
+        {
+            ERR("Failed to start async queue: %#lx.\n", hr);
+            goto done;
+        }
+
+        if (waveOutOpen(&This->hwave.out, This->device_id, This->wfx, (DWORD_PTR)wave_out_proc,
+                        (DWORD_PTR)This, CALLBACK_FUNCTION) != MMSYSERR_NOERROR)
         {
             hr = SPERR_GENERIC_MMSYS_ERROR;
             goto done;
@@ -516,6 +584,10 @@ static HRESULT WINAPI mmsysaudio_SetState(ISpMMSysAudio *iface, SPAUDIOSTATE sta
 
     if (state == SPAS_CLOSED && This->state != SPAS_CLOSED)
     {
+        waveOutReset(This->hwave.out);
+        /* Wait until all buffers are freed. */
+        WaitForSingleObject(This->event, INFINITE);
+
         if (waveOutClose(This->hwave.out) != MMSYSERR_NOERROR)
         {
             hr = SPERR_GENERIC_MMSYS_ERROR;
@@ -776,7 +848,11 @@ static HRESULT mmaudio_create(IUnknown *outer, REFIID iid, void **obj, enum flow
     This->wfx->wBitsPerSample = 16;
     This->wfx->cbSize = 0;
 
+    This->pending_buf_count = 0;
+    This->event = CreateEventW(NULL, TRUE, TRUE, NULL);
+
     InitializeCriticalSection(&This->cs);
+    InitializeCriticalSection(&This->pending_cs);
 
     hr = ISpMMSysAudio_QueryInterface(&This->ISpMMSysAudio_iface, iid, obj);
     ISpMMSysAudio_Release(&This->ISpMMSysAudio_iface);

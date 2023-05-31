@@ -3,6 +3,7 @@ IMPORTS   = uuid ole32 user32 advapi32
 DELAYIMPORTS = winmm
 
 C_SRCS = \
+	async.c \
 	automation.c \
 	main.c \
 	mmaudio.c \

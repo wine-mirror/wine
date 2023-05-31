@@ -19,6 +19,30 @@
  */
 
 #include "wine/heap.h"
+#include "wine/list.h"
+
+struct async_task
+{
+    struct list entry;
+    void (*proc)(struct async_task *);
+};
+
+struct async_queue
+{
+    BOOL init;
+    HANDLE wait;
+    HANDLE ready;
+    HANDLE empty;
+    HANDLE cancel;
+    struct list tasks;
+    CRITICAL_SECTION cs;
+};
+
+HRESULT async_start_queue(struct async_queue *queue);
+void async_empty_queue(struct async_queue *queue);
+void async_cancel_queue(struct async_queue *queue);
+HRESULT async_queue_task(struct async_queue *queue, struct async_task *task);
+void async_wait_queue_empty(struct async_queue *queue, DWORD timeout);
 
 HRESULT data_key_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_HIDDEN;
 HRESULT file_stream_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_HIDDEN;
