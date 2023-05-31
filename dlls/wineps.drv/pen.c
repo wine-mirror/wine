@@ -35,9 +35,9 @@ static const DWORD PEN_dashdotdot[] = { 40, 20, 20, 20, 20, 20 }; /* ----  --  -
 static const DWORD PEN_alternate[]  = { 1 };
 
 /***********************************************************************
- *           SelectPen   (WINEPS.@)
+ *           SelectPen
  */
-HPEN CDECL PSDRV_SelectPen( print_ctx *ctx, HPEN hpen, const struct ps_brush_pattern *pattern )
+HPEN PSDRV_SelectPen( print_ctx *ctx, HPEN hpen, const struct ps_brush_pattern *pattern )
 {
     LOGPEN logpen;
     EXTLOGPEN *elp = NULL;
@@ -138,9 +138,9 @@ HPEN CDECL PSDRV_SelectPen( print_ctx *ctx, HPEN hpen, const struct ps_brush_pat
 
 
 /***********************************************************************
- *           SetDCPenColor (WINEPS.@)
+ *           SetDCPenColor
  */
-COLORREF CDECL PSDRV_SetDCPenColor( print_ctx *ctx, COLORREF color )
+COLORREF PSDRV_SetDCPenColor( print_ctx *ctx, COLORREF color )
 {
     if (GetCurrentObject( ctx->hdc, OBJ_PEN ) == GetStockObject( DC_PEN ))
         PSDRV_CreateColor( ctx, &ctx->pen.color, color );

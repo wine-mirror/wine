@@ -25,9 +25,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
 /***********************************************************************
- *           SelectBrush   (WINEPS.@)
+ *           SelectBrush
  */
-HBRUSH CDECL PSDRV_SelectBrush( print_ctx *ctx, HBRUSH hbrush, const struct ps_brush_pattern *pattern )
+HBRUSH PSDRV_SelectBrush( print_ctx *ctx, HBRUSH hbrush, const struct ps_brush_pattern *pattern )
 {
     LOGBRUSH logbrush;
 
@@ -67,9 +67,9 @@ HBRUSH CDECL PSDRV_SelectBrush( print_ctx *ctx, HBRUSH hbrush, const struct ps_b
 
 
 /***********************************************************************
- *           SetDCBrushColor (WINEPS.@)
+ *           SetDCBrushColor
  */
-COLORREF CDECL PSDRV_SetDCBrushColor( print_ctx *ctx, COLORREF color )
+COLORREF PSDRV_SetDCBrushColor( print_ctx *ctx, COLORREF color )
 {
     if (GetCurrentObject( ctx->hdc, OBJ_BRUSH ) == GetStockObject( DC_BRUSH ))
     {

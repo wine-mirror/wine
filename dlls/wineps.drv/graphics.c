@@ -65,7 +65,7 @@ static void PSDRV_DrawLine( print_ctx *ctx )
 /***********************************************************************
  *           PSDRV_LineTo
  */
-BOOL CDECL PSDRV_LineTo(print_ctx *ctx, INT x, INT y)
+BOOL PSDRV_LineTo(print_ctx *ctx, INT x, INT y)
 {
     POINT pt[2];
 
@@ -91,7 +91,7 @@ BOOL CDECL PSDRV_LineTo(print_ctx *ctx, INT x, INT y)
 /***********************************************************************
  *           PSDRV_Rectangle
  */
-BOOL CDECL PSDRV_Rectangle( print_ctx *ctx, INT left, INT top, INT right, INT bottom )
+BOOL PSDRV_Rectangle( print_ctx *ctx, INT left, INT top, INT right, INT bottom )
 {
     RECT rect;
 
@@ -128,8 +128,8 @@ BOOL CDECL PSDRV_Rectangle( print_ctx *ctx, INT left, INT top, INT right, INT bo
 /***********************************************************************
  *           PSDRV_RoundRect
  */
-BOOL CDECL PSDRV_RoundRect( print_ctx *ctx, INT left, INT top, INT right,
-                            INT bottom, INT ell_width, INT ell_height )
+BOOL PSDRV_RoundRect( print_ctx *ctx, INT left, INT top, INT right,
+                      INT bottom, INT ell_width, INT ell_height )
 {
     RECT rect[2];
 
@@ -241,8 +241,8 @@ static BOOL PSDRV_DrawArc( print_ctx *ctx, INT left, INT top,
 /***********************************************************************
  *           PSDRV_Arc
  */
-BOOL CDECL PSDRV_Arc( print_ctx *ctx, INT left, INT top, INT right, INT bottom,
-                      INT xstart, INT ystart, INT xend, INT yend )
+BOOL PSDRV_Arc( print_ctx *ctx, INT left, INT top, INT right, INT bottom,
+                INT xstart, INT ystart, INT xend, INT yend )
 {
     return PSDRV_DrawArc( ctx, left, top, right, bottom, xstart, ystart, xend, yend, 0 );
 }
@@ -250,8 +250,8 @@ BOOL CDECL PSDRV_Arc( print_ctx *ctx, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           PSDRV_Chord
  */
-BOOL CDECL PSDRV_Chord( print_ctx *ctx, INT left, INT top, INT right, INT bottom,
-                        INT xstart, INT ystart, INT xend, INT yend )
+BOOL PSDRV_Chord( print_ctx *ctx, INT left, INT top, INT right, INT bottom,
+                  INT xstart, INT ystart, INT xend, INT yend )
 {
     return PSDRV_DrawArc( ctx, left, top, right, bottom, xstart, ystart, xend, yend, 1 );
 }
@@ -260,8 +260,8 @@ BOOL CDECL PSDRV_Chord( print_ctx *ctx, INT left, INT top, INT right, INT bottom
 /***********************************************************************
  *           PSDRV_Pie
  */
-BOOL CDECL PSDRV_Pie( print_ctx *ctx, INT left, INT top, INT right, INT bottom,
-                      INT xstart, INT ystart, INT xend, INT yend )
+BOOL PSDRV_Pie( print_ctx *ctx, INT left, INT top, INT right, INT bottom,
+                INT xstart, INT ystart, INT xend, INT yend )
 {
     return PSDRV_DrawArc( ctx, left, top, right, bottom, xstart, ystart, xend, yend, 2 );
 }
@@ -270,7 +270,7 @@ BOOL CDECL PSDRV_Pie( print_ctx *ctx, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           PSDRV_Ellipse
  */
-BOOL CDECL PSDRV_Ellipse( print_ctx *ctx, INT left, INT top, INT right, INT bottom)
+BOOL PSDRV_Ellipse( print_ctx *ctx, INT left, INT top, INT right, INT bottom)
 {
     INT x, y, w, h;
     RECT rect;
@@ -302,7 +302,7 @@ BOOL CDECL PSDRV_Ellipse( print_ctx *ctx, INT left, INT top, INT right, INT bott
 /***********************************************************************
  *           PSDRV_PolyPolyline
  */
-BOOL CDECL PSDRV_PolyPolyline( print_ctx *ctx, const POINT* pts, const DWORD* counts, DWORD polylines )
+BOOL PSDRV_PolyPolyline( print_ctx *ctx, const POINT* pts, const DWORD* counts, DWORD polylines )
 {
     DWORD polyline, line, total;
     POINT *dev_pts, *pt;
@@ -337,7 +337,7 @@ BOOL CDECL PSDRV_PolyPolyline( print_ctx *ctx, const POINT* pts, const DWORD* co
 /***********************************************************************
  *           PSDRV_PolyPolygon
  */
-BOOL CDECL PSDRV_PolyPolygon( print_ctx *ctx, const POINT* pts, const INT* counts, UINT polygons )
+BOOL PSDRV_PolyPolygon( print_ctx *ctx, const POINT* pts, const INT* counts, UINT polygons )
 {
     DWORD polygon, total;
     INT line;
@@ -403,7 +403,7 @@ static BOOL poly_bezier( print_ctx *ctx, const POINT *pt0, const POINT *pts, DWO
 /***********************************************************************
  *           PSDRV_PolyBezier
  */
-BOOL CDECL PSDRV_PolyBezier( print_ctx *ctx, const POINT *pts, DWORD count )
+BOOL PSDRV_PolyBezier( print_ctx *ctx, const POINT *pts, DWORD count )
 {
     return poly_bezier( ctx, pts, pts + 1, count - 1 );
 }
@@ -412,7 +412,7 @@ BOOL CDECL PSDRV_PolyBezier( print_ctx *ctx, const POINT *pts, DWORD count )
 /***********************************************************************
  *           PSDRV_PolyBezierTo
  */
-BOOL CDECL PSDRV_PolyBezierTo( print_ctx *ctx, const POINT *pts, DWORD count )
+BOOL PSDRV_PolyBezierTo( print_ctx *ctx, const POINT *pts, DWORD count )
 {
     POINT pt0;
 
@@ -424,7 +424,7 @@ BOOL CDECL PSDRV_PolyBezierTo( print_ctx *ctx, const POINT *pts, DWORD count )
 /***********************************************************************
  *           PSDRV_SetPixel
  */
-COLORREF CDECL PSDRV_SetPixel( print_ctx *ctx, INT x, INT y, COLORREF color )
+COLORREF PSDRV_SetPixel( print_ctx *ctx, INT x, INT y, COLORREF color )
 {
     PSCOLOR pscolor;
     POINT pt;
@@ -449,7 +449,7 @@ COLORREF CDECL PSDRV_SetPixel( print_ctx *ctx, INT x, INT y, COLORREF color )
 /***********************************************************************
  *           PSDRV_PaintRgn
  */
-BOOL CDECL PSDRV_PaintRgn( print_ctx *ctx, HRGN hrgn )
+BOOL PSDRV_PaintRgn( print_ctx *ctx, HRGN hrgn )
 {
     RGNDATA *rgndata = NULL;
     RECT *pRect;
@@ -463,7 +463,7 @@ BOOL CDECL PSDRV_PaintRgn( print_ctx *ctx, HRGN hrgn )
         ERR("Can't allocate buffer\n");
         return FALSE;
     }
-    
+
     GetRegionData(hrgn, size, rgndata);
     if (rgndata->rdh.nCount == 0)
         goto end;
@@ -538,7 +538,7 @@ done:
 /***********************************************************************
  *           PSDRV_FillPath
  */
-BOOL CDECL PSDRV_FillPath( print_ctx *ctx )
+BOOL PSDRV_FillPath( print_ctx *ctx )
 {
     return paint_path( ctx, FALSE, TRUE );
 }
@@ -546,7 +546,7 @@ BOOL CDECL PSDRV_FillPath( print_ctx *ctx )
 /***********************************************************************
  *           PSDRV_StrokeAndFillPath
  */
-BOOL CDECL PSDRV_StrokeAndFillPath( print_ctx *ctx )
+BOOL PSDRV_StrokeAndFillPath( print_ctx *ctx )
 {
     return paint_path( ctx, TRUE, TRUE );
 }
@@ -554,7 +554,7 @@ BOOL CDECL PSDRV_StrokeAndFillPath( print_ctx *ctx )
 /***********************************************************************
  *           PSDRV_StrokePath
  */
-BOOL CDECL PSDRV_StrokePath( print_ctx *ctx )
+BOOL PSDRV_StrokePath( print_ctx *ctx )
 {
     return paint_path( ctx, TRUE, FALSE );
 }

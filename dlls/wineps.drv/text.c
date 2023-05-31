@@ -129,8 +129,8 @@ static Run* build_vertical_runs(print_ctx *ctx, UINT flags, LPCWSTR str, UINT co
 /***********************************************************************
  *           PSDRV_ExtTextOut
  */
-BOOL CDECL PSDRV_ExtTextOut( print_ctx *ctx, INT x, INT y, UINT flags, const RECT *lprect, LPCWSTR str, UINT count,
-                             const INT *lpDx )
+BOOL PSDRV_ExtTextOut( print_ctx *ctx, INT x, INT y, UINT flags, const RECT *lprect, LPCWSTR str, UINT count,
+                       const INT *lpDx )
 {
     BOOL bResult = TRUE;
     BOOL bClipped = FALSE;

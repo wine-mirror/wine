@@ -455,9 +455,9 @@ print_ctx *create_print_ctx( HDC hdc, const WCHAR *device,
 }
 
 /**********************************************************************
- *	     ResetDC   (WINEPS.@)
+ *	     ResetDC
  */
-BOOL CDECL PSDRV_ResetDC( print_ctx *ctx, const DEVMODEW *devmode )
+BOOL PSDRV_ResetDC( print_ctx *ctx, const DEVMODEW *devmode )
 {
     if (devmode)
     {

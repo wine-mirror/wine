@@ -49,10 +49,10 @@ DWORD write_spool( print_ctx *ctx, const void *data, DWORD num )
 }
 
 /**********************************************************************
- *           ExtEscape  (WINEPS.@)
+ *           ExtEscape
  */
-INT CDECL PSDRV_ExtEscape( print_ctx *ctx, INT nEscape, INT cbInput, LPCVOID in_data,
-                           INT cbOutput, LPVOID out_data )
+INT PSDRV_ExtEscape( print_ctx *ctx, INT nEscape, INT cbInput, LPCVOID in_data,
+                     INT cbOutput, LPVOID out_data )
 {
     TRACE("%p,%d,%d,%p,%d,%p\n",
           ctx->hdc, nEscape, cbInput, in_data, cbOutput, out_data);
@@ -150,7 +150,7 @@ INT CDECL PSDRV_ExtEscape( print_ctx *ctx, INT nEscape, INT cbInput, LPCVOID in_
 /************************************************************************
  *           PSDRV_StartPage
  */
-INT CDECL PSDRV_StartPage( print_ctx *ctx )
+INT PSDRV_StartPage( print_ctx *ctx )
 {
     TRACE("%p\n", ctx->hdc);
 
@@ -171,7 +171,7 @@ INT CDECL PSDRV_StartPage( print_ctx *ctx )
 /************************************************************************
  *           PSDRV_EndPage
  */
-INT CDECL PSDRV_EndPage( print_ctx *ctx )
+INT PSDRV_EndPage( print_ctx *ctx )
 {
     TRACE("%p\n", ctx->hdc);
 

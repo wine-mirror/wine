@@ -67,7 +67,7 @@ void PSDRV_CreateColor( print_ctx *ctx, PSCOLOR *pscolor, COLORREF wincolor )
 /***********************************************************************
  *           PSDRV_SetBkColor
  */
-COLORREF CDECL PSDRV_SetBkColor( print_ctx *ctx, COLORREF color )
+COLORREF PSDRV_SetBkColor( print_ctx *ctx, COLORREF color )
 {
     PSDRV_CreateColor(ctx, &ctx->bkColor, color);
     return color;
@@ -77,7 +77,7 @@ COLORREF CDECL PSDRV_SetBkColor( print_ctx *ctx, COLORREF color )
 /***********************************************************************
  *           PSDRV_SetTextColor
  */
-COLORREF CDECL PSDRV_SetTextColor( print_ctx *ctx, COLORREF color )
+COLORREF PSDRV_SetTextColor( print_ctx *ctx, COLORREF color )
 {
     PSDRV_CreateColor(ctx, &ctx->font.color, color);
     ctx->font.set = FALSE;

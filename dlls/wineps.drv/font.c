@@ -35,9 +35,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
 /***********************************************************************
- *           SelectFont   (WINEPS.@)
+ *           SelectFont
  */
-HFONT CDECL PSDRV_SelectFont( print_ctx *ctx, HFONT hfont, UINT *aa_flags )
+HFONT PSDRV_SelectFont( print_ctx *ctx, HFONT hfont, UINT *aa_flags )
 {
     struct font_info font_info;
 
