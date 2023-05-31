@@ -500,6 +500,8 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     BOOL fullscreen;
 
     if (hwnd == NtUserGetDesktopWindow()) return FALSE;
+    if (hwnd != NtUserGetForegroundWindow()) return FALSE;
+
     style = NtUserGetWindowLongW( hwnd, GWL_STYLE );
     if (!(style & WS_VISIBLE)) return FALSE;
     if ((style & (WS_POPUP | WS_CHILD)) == WS_CHILD) return FALSE;
@@ -628,12 +630,8 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
         last_cursor_change = input->u.mi.time;
     }
 
-    if (hwnd != NtUserGetDesktopWindow())
-    {
-        hwnd = NtUserGetAncestor( hwnd, GA_ROOT );
-        if ((input->u.mi.dwFlags & (MOUSEEVENTF_LEFTDOWN|MOUSEEVENTF_RIGHTDOWN)) && hwnd == NtUserGetForegroundWindow())
-            clip_fullscreen_window( hwnd, FALSE );
-    }
+    if (input->u.mi.dwFlags & (MOUSEEVENTF_LEFTDOWN|MOUSEEVENTF_RIGHTDOWN))
+        clip_fullscreen_window( hwnd, FALSE );
 
     /* update the wine server Z-order */
 
