@@ -147,7 +147,7 @@ static inline DWORD max_ascii85_size(DWORD size)
     return (size + 3) / 4 * 5;
 }
 
-static void CDECL free_heap_bits( struct gdi_image_bits *bits )
+static void free_heap_bits( struct ps_image_bits *bits )
 {
     HeapFree( GetProcessHeap(), 0, bits->ptr );
 }
@@ -184,13 +184,13 @@ static void PSDRV_WriteImageBits( print_ctx *ctx, const BITMAPINFO *info, BOOL g
  *           PSDRV_PutImage
  */
 DWORD CDECL PSDRV_PutImage( print_ctx *ctx, HRGN clip, BITMAPINFO *info,
-                            const struct gdi_image_bits *bits, struct bitblt_coords *src,
-                            struct bitblt_coords *dst, DWORD rop )
+                            const struct ps_image_bits *bits, struct ps_bitblt_coords *src,
+                            struct ps_bitblt_coords *dst, DWORD rop )
 {
     int src_stride, dst_stride, size, x, y, width, height, bit_offset;
     int dst_x, dst_y, dst_width, dst_height;
     unsigned char *src_ptr, *dst_ptr;
-    struct gdi_image_bits dst_bits;
+    struct ps_image_bits dst_bits;
     BOOL grayscale = info->bmiHeader.biBitCount == 24 && ctx->pi->ppd->ColorDevice == CD_False;
 
     if (info->bmiHeader.biPlanes != 1) goto update_format;

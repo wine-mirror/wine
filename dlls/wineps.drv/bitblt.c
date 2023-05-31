@@ -28,7 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
  *
  *                    PSDRV_PatBlt
  */
-BOOL CDECL PSDRV_PatBlt(print_ctx *ctx, struct bitblt_coords *dst, DWORD dwRop)
+BOOL CDECL PSDRV_PatBlt(print_ctx *ctx, struct ps_bitblt_coords *dst, DWORD dwRop)
 {
     switch(dwRop) {
     case PATCOPY:

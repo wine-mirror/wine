@@ -21,6 +21,10 @@
 #ifndef __WINE_WINE_GDI_DRIVER_H
 #define __WINE_WINE_GDI_DRIVER_H
 
+#ifndef WINE_UNIX_LIB
+#error The GDI driver can only be used on the Unix side
+#endif
+
 #include "winternl.h"
 #include "ntuser.h"
 #include "immdev.h"
@@ -197,8 +201,6 @@ static inline void push_dc_driver( PHYSDEV *dev, PHYSDEV physdev, const struct g
 
 /* support for window surfaces */
 
-#ifdef WINE_UNIX_LIB
-
 struct window_surface;
 
 struct window_surface_funcs
@@ -347,7 +349,5 @@ extern void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT 
 
 extern BOOL win32u_set_window_pixel_format( HWND hwnd, int format, BOOL internal );
 extern int win32u_get_window_pixel_format( HWND hwnd );
-
-#endif /* WINE_UNIX_LIB */
 
 #endif /* __WINE_WINE_GDI_DRIVER_H */

@@ -37,7 +37,7 @@ static const DWORD PEN_alternate[]  = { 1 };
 /***********************************************************************
  *           SelectPen   (WINEPS.@)
  */
-HPEN CDECL PSDRV_SelectPen( print_ctx *ctx, HPEN hpen, const struct brush_pattern *pattern )
+HPEN CDECL PSDRV_SelectPen( print_ctx *ctx, HPEN hpen, const struct ps_brush_pattern *pattern )
 {
     LOGPEN logpen;
     EXTLOGPEN *elp = NULL;

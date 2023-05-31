@@ -45,7 +45,7 @@ struct pp_data
 
     print_ctx *ctx;
 
-    struct brush_pattern *patterns;
+    struct ps_brush_pattern *patterns;
     BOOL path;
     INT break_extra;
     INT break_rem;
@@ -210,7 +210,7 @@ static inline void order_rect(RECT *rect)
     }
 }
 
-static BOOL intersect_vis_rectangles(struct bitblt_coords *dst, struct bitblt_coords *src)
+static BOOL intersect_vis_rectangles(struct ps_bitblt_coords *dst, struct ps_bitblt_coords *src)
 {
     RECT rect;
 
@@ -299,8 +299,8 @@ static void clip_visrect(HDC hdc, RECT *dst, const RECT *src)
     DeleteObject(hrgn);
 }
 
-static void get_vis_rectangles(HDC hdc, struct bitblt_coords *dst,
-        const XFORM *xform, DWORD width, DWORD height, struct bitblt_coords *src)
+static void get_vis_rectangles(HDC hdc, struct ps_bitblt_coords *dst,
+        const XFORM *xform, DWORD width, DWORD height, struct ps_bitblt_coords *src)
 {
     RECT rect;
 
@@ -347,8 +347,8 @@ static int stretch_blt(print_ctx *ctx, const EMRSTRETCHBLT *blt,
 {
     char dst_buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
     BITMAPINFO *dst_info = (BITMAPINFO *)dst_buffer;
-    struct bitblt_coords src, dst;
-    struct gdi_image_bits bits;
+    struct ps_bitblt_coords src, dst;
+    struct ps_image_bits bits;
     DWORD err;
 
     dst.log_x = blt->xDest;
@@ -968,8 +968,8 @@ static BOOL gradient_fill(print_ctx *ctx, const TRIVERTEX *vert_array, DWORD nve
 {
     char buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
-    struct bitblt_coords src, dst;
-    struct gdi_image_bits bits;
+    struct ps_bitblt_coords src, dst;
+    struct ps_image_bits bits;
     HBITMAP bmp, old_bmp;
     BOOL ret = FALSE;
     TRIVERTEX *pts;
@@ -1084,7 +1084,7 @@ static BOOL gradient_fill(print_ctx *ctx, const TRIVERTEX *vert_array, DWORD nve
 }
 
 static HGDIOBJ get_object_handle(struct pp_data *data, HANDLETABLE *handletable,
-        DWORD i, struct brush_pattern **pattern)
+        DWORD i, struct ps_brush_pattern **pattern)
 {
     if (i & 0x80000000)
     {
@@ -1097,7 +1097,7 @@ static HGDIOBJ get_object_handle(struct pp_data *data, HANDLETABLE *handletable,
 
 static BOOL select_hbrush(struct pp_data *data, HANDLETABLE *htable, int handle_count, HBRUSH brush)
 {
-    struct brush_pattern *pattern = NULL;
+    struct ps_brush_pattern *pattern = NULL;
     int i;
 
     for (i = 0; i < handle_count; i++)
@@ -2090,7 +2090,7 @@ done:
 
 static BOOL fill_rgn(struct pp_data *data, HANDLETABLE *htable, int handle_count, DWORD brush, HRGN rgn)
 {
-    struct brush_pattern *pattern;
+    struct ps_brush_pattern *pattern;
     HBRUSH hbrush;
     int ret;
 
@@ -2297,7 +2297,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     case EMR_SELECTOBJECT:
     {
         const EMRSELECTOBJECT *so = (const EMRSELECTOBJECT *)rec;
-        struct brush_pattern *pattern;
+        struct ps_brush_pattern *pattern;
         UINT aa_flags;
         HGDIOBJ obj;
 
