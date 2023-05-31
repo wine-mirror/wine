@@ -400,9 +400,58 @@ static HRESULT WINAPI mmsysaudio_Read(ISpMMSysAudio *iface, void *pv, ULONG cb, 
 
 static HRESULT WINAPI mmsysaudio_Write(ISpMMSysAudio *iface, const void *pv, ULONG cb, ULONG *cb_written)
 {
-    FIXME("(%p, %p, %lu, %p): stub.\n", iface, pv, cb, cb_written);
+    struct mmaudio *This = impl_from_ISpMMSysAudio(iface);
+    HRESULT hr = S_OK;
+    WAVEHDR *buf;
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %lu, %p).\n", iface, pv, cb, cb_written);
+
+    if (This->flow != FLOW_OUT)
+        return STG_E_ACCESSDENIED;
+
+    if (cb_written)
+        *cb_written = 0;
+
+    EnterCriticalSection(&This->cs);
+
+    if (This->state == SPAS_CLOSED || This->state == SPAS_STOP)
+    {
+        LeaveCriticalSection(&This->cs);
+        return SP_AUDIO_STOPPED;
+    }
+
+    if (!(buf = heap_alloc(sizeof(WAVEHDR) + cb)))
+    {
+        LeaveCriticalSection(&This->cs);
+        return E_OUTOFMEMORY;
+    }
+    memcpy((char *)(buf + 1), pv, cb);
+    buf->lpData = (char *)(buf + 1);
+    buf->dwBufferLength = cb;
+    buf->dwFlags = 0;
+
+    if (waveOutPrepareHeader(This->hwave.out, buf, sizeof(WAVEHDR)) != MMSYSERR_NOERROR)
+    {
+        LeaveCriticalSection(&This->cs);
+        heap_free(buf);
+        return E_FAIL;
+    }
+
+    waveOutWrite(This->hwave.out, buf, sizeof(WAVEHDR));
+
+    EnterCriticalSection(&This->pending_cs);
+    ++This->pending_buf_count;
+    TRACE("pending_buf_count = %Iu\n", This->pending_buf_count);
+    LeaveCriticalSection(&This->pending_cs);
+
+    ResetEvent(This->event);
+
+    LeaveCriticalSection(&This->cs);
+
+    if (cb_written)
+        *cb_written = cb;
+
+    return hr;
 }
 
 static HRESULT WINAPI mmsysaudio_Seek(ISpMMSysAudio *iface, LARGE_INTEGER move, DWORD origin, ULARGE_INTEGER *new_pos)
