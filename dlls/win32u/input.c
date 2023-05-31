@@ -1768,7 +1768,7 @@ HWND WINAPI NtUserSetCapture( HWND hwnd )
 /**********************************************************************
  *           release_capture
  */
-BOOL WINAPI release_capture(void)
+BOOL release_capture(void)
 {
     BOOL ret = set_capture_window( 0, 0, NULL );
 
