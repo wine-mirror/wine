@@ -90,11 +90,11 @@ static struct wine_preload_info preload_info[] =
     { (void *)0x00001000, 0x0000f000 },  /* low 64k */
     { (void *)0x00010000, 0x00100000 },  /* DOS area */
     { (void *)0x00110000, 0x67ef0000 },  /* low memory area */
-    { (void *)0x7f000000, 0x03000000 },  /* top-down allocations + shared heap + virtual heap */
+    { (void *)0x7f000000, 0x03000000 },  /* top-down allocations + shared user data + virtual heap */
 #else  /* __i386__ */
     { (void *)0x000000010000, 0x00100000 },  /* DOS area */
     { (void *)0x000000110000, 0x67ef0000 },  /* low memory area */
-    { (void *)0x00007ff00000, 0x000f0000 },  /* shared user data */
+    { (void *)0x00007f000000, 0x00ff0000 },  /* 32-bit top-down allocations + shared user data */
     { (void *)0x000100000000, 0x14000000 },  /* WINE_4GB_RESERVE section */
     { (void *)0x7ff000000000, 0x01ff0000 },  /* top-down allocations + virtual heap */
 #endif /* __i386__ */
