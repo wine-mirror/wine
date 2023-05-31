@@ -55,10 +55,7 @@ extern HANDLE render_synthesized_format( UINT format, UINT from ) DECLSPEC_HIDDE
 extern void CLIPBOARD_ReleaseOwner( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HDC get_display_dc(void) DECLSPEC_HIDDEN;
 extern void release_display_dc( HDC hdc ) DECLSPEC_HIDDEN;
-extern void wait_graphics_driver_ready(void) DECLSPEC_HIDDEN;
 extern void *get_hook_proc( void *proc, const WCHAR *module, HMODULE *free_module ) DECLSPEC_HIDDEN;
-extern RECT get_virtual_screen_rect(void) DECLSPEC_HIDDEN;
-extern RECT get_primary_monitor_rect(void) DECLSPEC_HIDDEN;
 extern DWORD get_input_codepage( void ) DECLSPEC_HIDDEN;
 extern BOOL map_wparam_AtoW( UINT message, WPARAM *wparam, enum wm_char_mapping mapping ) DECLSPEC_HIDDEN;
 extern HPEN SYSCOLOR_GetPen( INT index ) DECLSPEC_HIDDEN;

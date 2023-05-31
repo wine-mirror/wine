@@ -160,43 +160,6 @@ static void SYSPARAMS_NonClientMetrics32ATo32W( const NONCLIENTMETRICSA* lpnm32A
 
 /* Helper functions to retrieve monitors info */
 
-static BOOL CALLBACK get_virtual_screen_proc( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
-{
-    RECT *virtual_rect = (RECT *)lp;
-
-    UnionRect( virtual_rect, virtual_rect, rect );
-    return TRUE;
-}
-
-RECT get_virtual_screen_rect(void)
-{
-    RECT rect = {0};
-
-    NtUserEnumDisplayMonitors( 0, NULL, get_virtual_screen_proc, (LPARAM)&rect );
-    return rect;
-}
-
-static BOOL CALLBACK get_primary_monitor_proc( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
-{
-    RECT *primary_rect = (RECT *)lp;
-
-    if (!rect->top && !rect->left && rect->right && rect->bottom)
-    {
-        *primary_rect = *rect;
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-RECT get_primary_monitor_rect(void)
-{
-    RECT rect = {0};
-
-    NtUserEnumDisplayMonitors( 0, NULL, get_primary_monitor_proc, (LPARAM)&rect );
-    return rect;
-}
-
 HDC get_display_dc(void)
 {
     EnterCriticalSection( &display_dc_section );
@@ -235,7 +198,7 @@ static void release_display_device_init_mutex( HANDLE mutex )
 }
 
 /* Wait until graphics driver is loaded by explorer */
-void wait_graphics_driver_ready(void)
+static void wait_graphics_driver_ready(void)
 {
     static BOOL ready = FALSE;
 
