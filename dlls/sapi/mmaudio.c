@@ -728,9 +728,11 @@ static HRESULT WINAPI mmsysaudio_GetDefaultFormat(ISpMMSysAudio *iface, GUID *gu
 
 static HANDLE WINAPI mmsysaudio_EventHandle(ISpMMSysAudio *iface)
 {
-    FIXME("(%p): stub.\n", iface);
+    struct mmaudio *This = impl_from_ISpMMSysAudio(iface);
 
-    return NULL;
+    TRACE("(%p).\n", iface);
+
+    return This->event;
 }
 
 static HRESULT WINAPI mmsysaudio_GetVolumeLevel(ISpMMSysAudio *iface, ULONG *level)

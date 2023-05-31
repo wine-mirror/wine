@@ -167,6 +167,8 @@ static void test_audio_out(void)
     UINT devid;
     char *buf = NULL;
     ULONG written;
+    DWORD start, end;
+    HANDLE event = NULL;
     HRESULT hr;
 
     if (waveOutGetNumDevs() == 0) {
@@ -257,6 +259,20 @@ static void test_audio_out(void)
     hr = ISpMMSysAudio_Write(mmaudio, buf, wfx->nAvgBytesPerSec * 200 / 1000, &written);
     ok(hr == S_OK, "got %#lx.\n", hr);
     ok(written == wfx->nAvgBytesPerSec * 200 / 1000, "got %lu.\n", written);
+
+    hr = ISpMMSysAudio_Write(mmaudio, buf, wfx->nAvgBytesPerSec * 200 / 1000, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    start = GetTickCount();
+
+    event = ISpMMSysAudio_EventHandle(mmaudio);
+    ok(event != NULL, "event == NULL.\n");
+
+    hr = WaitForSingleObject(event, 1000);
+    ok(hr == WAIT_OBJECT_0, "got %#lx.\n", hr);
+
+    end = GetTickCount();
+    ok(end - start <= 500, "waited for %lu ms.\n", end - start);
 
     hr = ISpMMSysAudio_SetState(mmaudio, SPAS_CLOSED, 0);
     ok(hr == S_OK, "got %#lx.\n", hr);
