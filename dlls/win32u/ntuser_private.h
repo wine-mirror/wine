@@ -130,6 +130,7 @@ struct user_thread_info
     UINT                          kbd_layout_id;          /* Current keyboard layout ID */
     struct rawinput_thread_data  *rawinput;               /* RawInput thread local data / buffer */
     UINT                          spy_indent;             /* Current spy indent */
+    BOOL                          clipping_cursor;        /* thread is currently clipping */
     DWORD                         clipping_reset;         /* time when clipping was last reset */
 };
 
