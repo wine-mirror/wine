@@ -5282,7 +5282,6 @@ static void test_ClipCursor_process(void)
     InflateRect( &clip_rect, +1, +1 );
     ok_ret( 1, DestroyWindow( hwnd ) );
     ok_ret( 1, GetClipCursor( &rect ) );
-    todo_wine
     ok_rect( clip_rect, rect );
 
     /* intentionally leaking clipping rect */
@@ -5339,7 +5338,6 @@ static void test_ClipCursor_desktop( char **argv )
     /* as foreground window is now transient, cursor clipping isn't reset */
     InflateRect( &clip_rect, +1, +1 );
     ok_ret( 1, GetClipCursor( &rect ) );
-    todo_wine
     ok_rect( clip_rect, rect );
 
     /* intentionally leaking clipping rect */

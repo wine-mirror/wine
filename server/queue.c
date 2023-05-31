@@ -1093,12 +1093,13 @@ static void thread_input_dump( struct object *obj, int verbose )
 static void thread_input_destroy( struct object *obj )
 {
     struct thread_input *input = (struct thread_input *)obj;
+    struct desktop *desktop;
 
     empty_msg_list( &input->msg_list );
-    if (input->desktop)
+    if ((desktop = input->desktop))
     {
-        if (input->desktop->foreground_input == input) set_foreground_input( input->desktop, NULL );
-        release_object( input->desktop );
+        if (desktop->foreground_input == input) desktop->foreground_input = NULL;
+        release_object( desktop );
     }
 }
 
