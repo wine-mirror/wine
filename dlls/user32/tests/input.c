@@ -180,6 +180,24 @@ static void init_function_pointers(void)
         is_wow64 = FALSE;
 }
 
+#define run_in_process( a, b ) run_in_process_( __FILE__, __LINE__, a, b )
+static void run_in_process_( const char *file, int line, char **argv, const char *args )
+{
+    STARTUPINFOA startup = {.cb = sizeof(STARTUPINFOA)};
+    PROCESS_INFORMATION info = {0};
+    char cmdline[MAX_PATH * 2];
+    DWORD ret;
+
+    sprintf( cmdline, "%s %s %s", argv[0], argv[1], args );
+    ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info );
+    ok_(file, line)( ret, "CreateProcessA failed, error %lu\n", GetLastError() );
+    if (!ret) return;
+
+    wait_child_process( info.hProcess );
+    CloseHandle( info.hThread );
+    CloseHandle( info.hProcess );
+}
+
 static int KbdMessage( KEV kev, WPARAM *pwParam, LPARAM *plParam )
 {
     UINT message;
@@ -1471,13 +1489,10 @@ done:
     SetCursorPos(pt_org.x, pt_org.y);
 }
 
-static void test_GetMouseMovePointsEx(const char *argv0)
+static void test_GetMouseMovePointsEx( char **argv )
 {
 #define BUFLIM  64
 #define MYERROR 0xdeadbeef
-    PROCESS_INFORMATION process_info;
-    STARTUPINFOA startup_info;
-    char path[MAX_PATH];
     int i, count, retval;
     MOUSEMOVEPOINT in;
     MOUSEMOVEPOINT out[200];
@@ -1695,16 +1710,7 @@ static void test_GetMouseMovePointsEx(const char *argv0)
     retval = pGetMouseMovePointsEx( sizeof(MOUSEMOVEPOINT), &in, out, BUFLIM, GMMP_USE_HIGH_RESOLUTION_POINTS );
     todo_wine ok( retval == 64, "expected to get 64 high resolution mouse move points but got %d\n", retval );
 
-    sprintf(path, "%s input get_mouse_move_points_test", argv0);
-    memset(&startup_info, 0, sizeof(startup_info));
-    startup_info.cb = sizeof(startup_info);
-    startup_info.dwFlags = STARTF_USESHOWWINDOW;
-    startup_info.wShowWindow = SW_SHOWNORMAL;
-    retval = CreateProcessA(NULL, path, NULL, NULL, TRUE, 0, NULL, NULL, &startup_info, &process_info );
-    ok(retval, "CreateProcess \"%s\" failed err %lu.\n", path, GetLastError());
-    winetest_wait_child_process(process_info.hProcess);
-    CloseHandle(process_info.hProcess);
-    CloseHandle(process_info.hThread);
+    run_in_process( argv, "test_GetMouseMovePointsEx_process" );
 #undef BUFLIM
 #undef MYERROR
 }
@@ -5045,10 +5051,12 @@ static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
     ok( ret, "UnregisterClassW failed: %lu\n", GetLastError() );
 }
 
-static void test_EnableMouseInPointer_process( const char *arg )
+static void test_EnableMouseInPointer( const char *arg )
 {
     DWORD enable = strtoul( arg, 0, 10 );
     BOOL ret;
+
+    winetest_push_context( "enable %lu", enable );
 
     ret = pEnableMouseInPointer( enable );
     todo_wine
@@ -5071,23 +5079,8 @@ static void test_EnableMouseInPointer_process( const char *arg )
     ok( ret == enable, "IsMouseInPointerEnabled returned %u, error %lu\n", ret, GetLastError() );
 
     test_GetPointerInfo( enable );
-}
 
-static void test_EnableMouseInPointer( char **argv, BOOL enable )
-{
-    STARTUPINFOA startup = {.cb = sizeof(STARTUPINFOA)};
-    PROCESS_INFORMATION info = {0};
-    char cmdline[MAX_PATH * 2];
-    BOOL ret;
-
-    sprintf( cmdline, "%s %s EnableMouseInPointer %u", argv[0], argv[1], enable );
-    ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info );
-    ok( ret, "CreateProcessA failed, error %lu\n", GetLastError() );
-    if (!ret) return;
-
-    wait_child_process( info.hProcess );
-    CloseHandle( info.hThread );
-    CloseHandle( info.hProcess );
+    winetest_pop_context();
 }
 
 START_TEST(input)
@@ -5100,25 +5093,12 @@ START_TEST(input)
     GetCursorPos( &pos );
 
     argc = winetest_get_mainargs(&argv);
-    if (argc >= 3 && strcmp(argv[2], "rawinput_test") == 0)
-    {
-        rawinput_test_process();
-        return;
-    }
-
-    if (argc >= 3 && strcmp(argv[2], "get_mouse_move_points_test") == 0)
-    {
-        test_GetMouseMovePointsEx_process();
-        return;
-    }
-
-    if (argc >= 4 && strcmp( argv[2], "EnableMouseInPointer" ) == 0)
-    {
-        winetest_push_context( "enable %s", argv[3] );
-        test_EnableMouseInPointer_process( argv[3] );
-        winetest_pop_context();
-        return;
-    }
+    if (argc >= 3 && !strcmp( argv[2], "rawinput_test" ))
+        return rawinput_test_process();
+    if (argc >= 3 && !strcmp( argv[2], "test_GetMouseMovePointsEx_process" ))
+        return test_GetMouseMovePointsEx_process();
+    if (argc >= 4 && !strcmp( argv[2], "test_EnableMouseInPointer" ))
+        return test_EnableMouseInPointer( argv[3] );
 
     test_SendInput();
     test_Input_blackbox();
@@ -5144,7 +5124,7 @@ START_TEST(input)
     test_DefRawInputProc();
 
     if(pGetMouseMovePointsEx)
-        test_GetMouseMovePointsEx(argv[0]);
+        test_GetMouseMovePointsEx( argv );
     else
         win_skip("GetMouseMovePointsEx is not available\n");
 
@@ -5171,7 +5151,7 @@ START_TEST(input)
         win_skip( "EnableMouseInPointer not found, skipping tests\n" );
     else
     {
-        test_EnableMouseInPointer( argv, FALSE );
-        test_EnableMouseInPointer( argv, TRUE );
+        run_in_process( argv, "test_EnableMouseInPointer 0" );
+        run_in_process( argv, "test_EnableMouseInPointer 1" );
     }
 }
