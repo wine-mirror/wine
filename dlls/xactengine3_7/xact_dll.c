@@ -1170,7 +1170,7 @@ static HRESULT WINAPI IXACT3EngineImpl_CreateSoundBank(IXACT3Engine *iface,
     UINT ret;
     HRESULT hr;
 
-    TRACE("(%p)->(%p, %lu, 0x%lx, 0x%lx, %p): stub!\n", This, pvBuffer, dwSize, dwFlags,
+    TRACE("(%p)->(%p, %lu, 0x%lx, 0x%lx, %p)\n", This, pvBuffer, dwSize, dwFlags,
             dwAllocAttributes, ppSoundBank);
 
     ret = FACTAudioEngine_CreateSoundBank(This->fact_engine, pvBuffer, dwSize,
