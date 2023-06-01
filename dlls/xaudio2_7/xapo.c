@@ -409,3 +409,41 @@ HRESULT make_xapo_factory(REFCLSID clsid, REFIID riid, void **ppv)
         HeapFree(GetProcessHeap(), 0, ret);
     return hr;
 }
+
+#if XAUDIO2_VER >= 8
+HRESULT WINAPI CreateAudioVolumeMeter(IUnknown **out)
+{
+    IClassFactory *cf;
+    HRESULT hr;
+
+    TRACE("%p\n", out);
+
+    hr = make_xapo_factory(&CLSID_AudioVolumeMeter27, &IID_IClassFactory, (void**)&cf);
+    if(FAILED(hr))
+        return hr;
+
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)out);
+
+    IClassFactory_Release(cf);
+
+    return hr;
+}
+
+HRESULT WINAPI CreateAudioReverb(IUnknown **out)
+{
+    IClassFactory *cf;
+    HRESULT hr;
+
+    TRACE("%p\n", out);
+
+    hr = make_xapo_factory(&CLSID_AudioReverb27, &IID_IClassFactory, (void**)&cf);
+    if(FAILED(hr))
+        return hr;
+
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)out);
+
+    IClassFactory_Release(cf);
+
+    return hr;
+}
+#endif
