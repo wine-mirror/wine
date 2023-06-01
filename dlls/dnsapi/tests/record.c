@@ -224,11 +224,8 @@ static void test_DnsExtractRecordsFromMessage(void)
 
     rec = NULL;
     ret = DnsExtractRecordsFromMessage_UTF8( (DNS_MESSAGE_BUFFER *)msg_full_srv, sizeof(msg_full_srv), &rec );
-    todo_wine
     ok( !ret, "failed %ld\n", ret );
-    todo_wine
     ok( rec != NULL, "record not set\n" );
-    if (!rec) goto next;
     ok( !strcmp( rec->pName, "_ldap._tcp.dc._msdcs.winehq.org" ), "wrong name %s\n", rec->pName );
     ok( rec->Flags.S.Section == DnsSectionAnswer, "wrong section %u\n", rec->Flags.S.Section );
     ok( rec->Flags.S.CharSet == DnsCharSetUtf8, "wrong charset %u\n", rec->Flags.S.CharSet );
@@ -240,7 +237,6 @@ static void test_DnsExtractRecordsFromMessage(void)
     ok( !rec->pNext, "next record %p\n", rec->pNext );
     DnsRecordListFree( (DNS_RECORD *)rec, DnsFreeRecordList );
 
-next:
     rec = (void *)0xdeadbeef;
     ret = DnsExtractRecordsFromMessage_UTF8( (DNS_MESSAGE_BUFFER *)msg_question_srv, sizeof(msg_question_srv), &rec );
     ok( !ret, "failed %ld\n", ret );
@@ -248,11 +244,8 @@ next:
 
     rec = NULL;
     ret = DnsExtractRecordsFromMessage_UTF8( (DNS_MESSAGE_BUFFER *)msg_answer_srv, sizeof(msg_answer_srv), &rec );
-    todo_wine
     ok( !ret, "failed %ld\n", ret );
-    todo_wine
     ok( rec != NULL, "record not set\n" );
-    if (!rec) goto next2;
     ok( !strcmp( rec->pName, "_ldap._tcp.dc._msdcs.winehq.org" ), "wrong name %s\n", rec->pName );
     ok( rec->Flags.S.Section == DnsSectionAnswer, "wrong section %u\n", rec->Flags.S.Section );
     ok( rec->Flags.S.CharSet == DnsCharSetUtf8, "wrong charset %u\n", rec->Flags.S.CharSet );
@@ -264,7 +257,6 @@ next:
     ok( !rec->pNext, "next record %p\n", rec->pNext );
     DnsRecordListFree( (DNS_RECORD *)rec, DnsFreeRecordList );
 
-next2:
     ret = DnsExtractRecordsFromMessage_UTF8( (DNS_MESSAGE_BUFFER *)msg_empty, sizeof(msg_empty) - 1, &rec );
     ok( ret == ERROR_INVALID_PARAMETER || broken(ret == DNS_ERROR_BAD_PACKET) /* win7 */,
         "failed %ld\n", ret );

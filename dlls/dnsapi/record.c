@@ -199,7 +199,7 @@ static const BYTE *get_name( const BYTE *base, const BYTE *end, const BYTE *ptr,
             return NULL;
         }
     }
-    if (ptr >= end) return NULL;
+    if (ptr > end) return NULL;
     if (out == name) *out++ = '.';
     *out = 0;
     return next ? next : ptr;
