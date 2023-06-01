@@ -149,7 +149,7 @@ HRESULT wg_transform_read_mf(struct wg_transform *transform, IMFSample *sample,
 HRESULT wg_transform_read_quartz(struct wg_transform *transform, struct wg_sample *sample);
 HRESULT wg_transform_read_dmo(struct wg_transform *transform, DMO_OUTPUT_DATA_BUFFER *buffer);
 
-HRESULT winegstreamer_stream_handler_create(REFIID riid, void **obj);
+HRESULT gstreamer_byte_stream_handler_create(REFIID riid, void **obj);
 
 unsigned int wg_format_get_stride(const struct wg_format *format);
 

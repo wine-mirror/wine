@@ -1689,7 +1689,7 @@ static void result_entry_destroy(struct result_entry *entry)
     free(entry);
 }
 
-struct winegstreamer_stream_handler
+struct stream_handler
 {
     IMFByteStreamHandler IMFByteStreamHandler_iface;
     IMFAsyncCallback IMFAsyncCallback_iface;
@@ -1698,17 +1698,17 @@ struct winegstreamer_stream_handler
     CRITICAL_SECTION cs;
 };
 
-static struct winegstreamer_stream_handler *impl_from_IMFByteStreamHandler(IMFByteStreamHandler *iface)
+static struct stream_handler *impl_from_IMFByteStreamHandler(IMFByteStreamHandler *iface)
 {
-    return CONTAINING_RECORD(iface, struct winegstreamer_stream_handler, IMFByteStreamHandler_iface);
+    return CONTAINING_RECORD(iface, struct stream_handler, IMFByteStreamHandler_iface);
 }
 
-static struct winegstreamer_stream_handler *impl_from_IMFAsyncCallback(IMFAsyncCallback *iface)
+static struct stream_handler *impl_from_IMFAsyncCallback(IMFAsyncCallback *iface)
 {
-    return CONTAINING_RECORD(iface, struct winegstreamer_stream_handler, IMFAsyncCallback_iface);
+    return CONTAINING_RECORD(iface, struct stream_handler, IMFAsyncCallback_iface);
 }
 
-static HRESULT WINAPI winegstreamer_stream_handler_QueryInterface(IMFByteStreamHandler *iface, REFIID riid, void **obj)
+static HRESULT WINAPI stream_handler_QueryInterface(IMFByteStreamHandler *iface, REFIID riid, void **obj)
 {
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
 
@@ -1725,9 +1725,9 @@ static HRESULT WINAPI winegstreamer_stream_handler_QueryInterface(IMFByteStreamH
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI winegstreamer_stream_handler_AddRef(IMFByteStreamHandler *iface)
+static ULONG WINAPI stream_handler_AddRef(IMFByteStreamHandler *iface)
 {
-    struct winegstreamer_stream_handler *handler = impl_from_IMFByteStreamHandler(iface);
+    struct stream_handler *handler = impl_from_IMFByteStreamHandler(iface);
     ULONG refcount = InterlockedIncrement(&handler->refcount);
 
     TRACE("%p, refcount %lu.\n", handler, refcount);
@@ -1735,9 +1735,9 @@ static ULONG WINAPI winegstreamer_stream_handler_AddRef(IMFByteStreamHandler *if
     return refcount;
 }
 
-static ULONG WINAPI winegstreamer_stream_handler_Release(IMFByteStreamHandler *iface)
+static ULONG WINAPI stream_handler_Release(IMFByteStreamHandler *iface)
 {
-    struct winegstreamer_stream_handler *handler = impl_from_IMFByteStreamHandler(iface);
+    struct stream_handler *handler = impl_from_IMFByteStreamHandler(iface);
     ULONG refcount = InterlockedDecrement(&handler->refcount);
     struct result_entry *result, *next;
 
@@ -1823,10 +1823,10 @@ static const IUnknownVtbl create_object_context_vtbl =
     create_object_context_Release,
 };
 
-static HRESULT WINAPI winegstreamer_stream_handler_BeginCreateObject(IMFByteStreamHandler *iface, IMFByteStream *stream, const WCHAR *url, DWORD flags,
+static HRESULT WINAPI stream_handler_BeginCreateObject(IMFByteStreamHandler *iface, IMFByteStream *stream, const WCHAR *url, DWORD flags,
         IPropertyStore *props, IUnknown **cancel_cookie, IMFAsyncCallback *callback, IUnknown *state)
 {
-    struct winegstreamer_stream_handler *this = impl_from_IMFByteStreamHandler(iface);
+    struct stream_handler *handler = impl_from_IMFByteStreamHandler(iface);
     struct create_object_context *context;
     IMFAsyncResult *caller, *item;
     HRESULT hr;
@@ -1863,7 +1863,7 @@ static HRESULT WINAPI winegstreamer_stream_handler_BeginCreateObject(IMFByteStre
         return E_OUTOFMEMORY;
     }
 
-    hr = MFCreateAsyncResult(&context->IUnknown_iface, &this->IMFAsyncCallback_iface, (IUnknown *)caller, &item);
+    hr = MFCreateAsyncResult(&context->IUnknown_iface, &handler->IMFAsyncCallback_iface, (IUnknown *)caller, &item);
     IUnknown_Release(&context->IUnknown_iface);
     if (SUCCEEDED(hr))
     {
@@ -1883,18 +1883,18 @@ static HRESULT WINAPI winegstreamer_stream_handler_BeginCreateObject(IMFByteStre
     return hr;
 }
 
-static HRESULT WINAPI winegstreamer_stream_handler_EndCreateObject(IMFByteStreamHandler *iface, IMFAsyncResult *result,
+static HRESULT WINAPI stream_handler_EndCreateObject(IMFByteStreamHandler *iface, IMFAsyncResult *result,
         MF_OBJECT_TYPE *obj_type, IUnknown **object)
 {
-    struct winegstreamer_stream_handler *this = impl_from_IMFByteStreamHandler(iface);
+    struct stream_handler *handler = impl_from_IMFByteStreamHandler(iface);
     struct result_entry *found = NULL, *cur;
     HRESULT hr;
 
     TRACE("%p, %p, %p, %p.\n", iface, result, obj_type, object);
 
-    EnterCriticalSection(&this->cs);
+    EnterCriticalSection(&handler->cs);
 
-    LIST_FOR_EACH_ENTRY(cur, &this->results, struct result_entry, entry)
+    LIST_FOR_EACH_ENTRY(cur, &handler->results, struct result_entry, entry)
     {
         if (result == cur->result)
         {
@@ -1904,7 +1904,7 @@ static HRESULT WINAPI winegstreamer_stream_handler_EndCreateObject(IMFByteStream
         }
     }
 
-    LeaveCriticalSection(&this->cs);
+    LeaveCriticalSection(&handler->cs);
 
     if (found)
     {
@@ -1924,16 +1924,16 @@ static HRESULT WINAPI winegstreamer_stream_handler_EndCreateObject(IMFByteStream
     return hr;
 }
 
-static HRESULT WINAPI winegstreamer_stream_handler_CancelObjectCreation(IMFByteStreamHandler *iface, IUnknown *cancel_cookie)
+static HRESULT WINAPI stream_handler_CancelObjectCreation(IMFByteStreamHandler *iface, IUnknown *cancel_cookie)
 {
-    struct winegstreamer_stream_handler *this = impl_from_IMFByteStreamHandler(iface);
+    struct stream_handler *handler = impl_from_IMFByteStreamHandler(iface);
     struct result_entry *found = NULL, *cur;
 
     TRACE("%p, %p.\n", iface, cancel_cookie);
 
-    EnterCriticalSection(&this->cs);
+    EnterCriticalSection(&handler->cs);
 
-    LIST_FOR_EACH_ENTRY(cur, &this->results, struct result_entry, entry)
+    LIST_FOR_EACH_ENTRY(cur, &handler->results, struct result_entry, entry)
     {
         if (cancel_cookie == (IUnknown *)cur->result)
         {
@@ -1943,7 +1943,7 @@ static HRESULT WINAPI winegstreamer_stream_handler_CancelObjectCreation(IMFByteS
         }
     }
 
-    LeaveCriticalSection(&this->cs);
+    LeaveCriticalSection(&handler->cs);
 
     if (found)
         result_entry_destroy(found);
@@ -1951,24 +1951,24 @@ static HRESULT WINAPI winegstreamer_stream_handler_CancelObjectCreation(IMFByteS
     return found ? S_OK : MF_E_UNEXPECTED;
 }
 
-static HRESULT WINAPI winegstreamer_stream_handler_GetMaxNumberOfBytesRequiredForResolution(IMFByteStreamHandler *iface, QWORD *bytes)
+static HRESULT WINAPI stream_handler_GetMaxNumberOfBytesRequiredForResolution(IMFByteStreamHandler *iface, QWORD *bytes)
 {
     FIXME("stub (%p %p)\n", iface, bytes);
     return E_NOTIMPL;
 }
 
-static const IMFByteStreamHandlerVtbl winegstreamer_stream_handler_vtbl =
+static const IMFByteStreamHandlerVtbl stream_handler_vtbl =
 {
-    winegstreamer_stream_handler_QueryInterface,
-    winegstreamer_stream_handler_AddRef,
-    winegstreamer_stream_handler_Release,
-    winegstreamer_stream_handler_BeginCreateObject,
-    winegstreamer_stream_handler_EndCreateObject,
-    winegstreamer_stream_handler_CancelObjectCreation,
-    winegstreamer_stream_handler_GetMaxNumberOfBytesRequiredForResolution,
+    stream_handler_QueryInterface,
+    stream_handler_AddRef,
+    stream_handler_Release,
+    stream_handler_BeginCreateObject,
+    stream_handler_EndCreateObject,
+    stream_handler_CancelObjectCreation,
+    stream_handler_GetMaxNumberOfBytesRequiredForResolution,
 };
 
-static HRESULT WINAPI winegstreamer_stream_handler_callback_QueryInterface(IMFAsyncCallback *iface, REFIID riid, void **obj)
+static HRESULT WINAPI stream_handler_callback_QueryInterface(IMFAsyncCallback *iface, REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IMFAsyncCallback) ||
             IsEqualIID(riid, &IID_IUnknown))
@@ -1983,27 +1983,27 @@ static HRESULT WINAPI winegstreamer_stream_handler_callback_QueryInterface(IMFAs
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI winegstreamer_stream_handler_callback_AddRef(IMFAsyncCallback *iface)
+static ULONG WINAPI stream_handler_callback_AddRef(IMFAsyncCallback *iface)
 {
-    struct winegstreamer_stream_handler *handler = impl_from_IMFAsyncCallback(iface);
+    struct stream_handler *handler = impl_from_IMFAsyncCallback(iface);
     return IMFByteStreamHandler_AddRef(&handler->IMFByteStreamHandler_iface);
 }
 
-static ULONG WINAPI winegstreamer_stream_handler_callback_Release(IMFAsyncCallback *iface)
+static ULONG WINAPI stream_handler_callback_Release(IMFAsyncCallback *iface)
 {
-    struct winegstreamer_stream_handler *handler = impl_from_IMFAsyncCallback(iface);
+    struct stream_handler *handler = impl_from_IMFAsyncCallback(iface);
     return IMFByteStreamHandler_Release(&handler->IMFByteStreamHandler_iface);
 }
 
-static HRESULT WINAPI winegstreamer_stream_handler_callback_GetParameters(IMFAsyncCallback *iface, DWORD *flags, DWORD *queue)
+static HRESULT WINAPI stream_handler_callback_GetParameters(IMFAsyncCallback *iface, DWORD *flags, DWORD *queue)
 {
     return E_NOTIMPL;
 }
 
-static HRESULT winegstreamer_stream_handler_create_object(struct winegstreamer_stream_handler *This, WCHAR *url, IMFByteStream *stream, DWORD flags,
+static HRESULT stream_handler_create_object(struct stream_handler *handler, WCHAR *url, IMFByteStream *stream, DWORD flags,
                                             IPropertyStore *props, IUnknown **out_object, MF_OBJECT_TYPE *out_obj_type)
 {
-    TRACE("%p, %s, %p, %#lx, %p, %p, %p.\n", This, debugstr_w(url), stream, flags, props, out_object, out_obj_type);
+    TRACE("%p, %s, %p, %#lx, %p, %p, %p.\n", handler, debugstr_w(url), stream, flags, props, out_object, out_obj_type);
 
     if (flags & MF_RESOLUTION_MEDIASOURCE)
     {
@@ -2027,9 +2027,9 @@ static HRESULT winegstreamer_stream_handler_create_object(struct winegstreamer_s
     }
 }
 
-static HRESULT WINAPI winegstreamer_stream_handler_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+static HRESULT WINAPI stream_handler_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
-    struct winegstreamer_stream_handler *handler = impl_from_IMFAsyncCallback(iface);
+    struct stream_handler *handler = impl_from_IMFAsyncCallback(iface);
     MF_OBJECT_TYPE obj_type = MF_OBJECT_INVALID;
     IUnknown *object = NULL, *context_object;
     struct create_object_context *context;
@@ -2047,7 +2047,7 @@ static HRESULT WINAPI winegstreamer_stream_handler_callback_Invoke(IMFAsyncCallb
 
     context = impl_from_IUnknown(context_object);
 
-    if (FAILED(hr = winegstreamer_stream_handler_create_object(handler, context->url, context->stream,
+    if (FAILED(hr = stream_handler_create_object(handler, context->url, context->stream,
             context->flags, context->props, &object, &obj_type)))
         WARN("Failed to create object, hr %#lx\n", hr);
     else
@@ -2072,34 +2072,34 @@ static HRESULT WINAPI winegstreamer_stream_handler_callback_Invoke(IMFAsyncCallb
     return S_OK;
 }
 
-static const IMFAsyncCallbackVtbl winegstreamer_stream_handler_callback_vtbl =
+static const IMFAsyncCallbackVtbl stream_handler_callback_vtbl =
 {
-    winegstreamer_stream_handler_callback_QueryInterface,
-    winegstreamer_stream_handler_callback_AddRef,
-    winegstreamer_stream_handler_callback_Release,
-    winegstreamer_stream_handler_callback_GetParameters,
-    winegstreamer_stream_handler_callback_Invoke,
+    stream_handler_callback_QueryInterface,
+    stream_handler_callback_AddRef,
+    stream_handler_callback_Release,
+    stream_handler_callback_GetParameters,
+    stream_handler_callback_Invoke,
 };
 
-HRESULT winegstreamer_stream_handler_create(REFIID riid, void **obj)
+HRESULT gstreamer_byte_stream_handler_create(REFIID riid, void **obj)
 {
-    struct winegstreamer_stream_handler *this;
+    struct stream_handler *handler;
     HRESULT hr;
 
     TRACE("%s, %p.\n", debugstr_guid(riid), obj);
 
-    if (!(this = calloc(1, sizeof(*this))))
+    if (!(handler = calloc(1, sizeof(*handler))))
         return E_OUTOFMEMORY;
 
-    list_init(&this->results);
-    InitializeCriticalSection(&this->cs);
+    list_init(&handler->results);
+    InitializeCriticalSection(&handler->cs);
 
-    this->IMFByteStreamHandler_iface.lpVtbl = &winegstreamer_stream_handler_vtbl;
-    this->IMFAsyncCallback_iface.lpVtbl = &winegstreamer_stream_handler_callback_vtbl;
-    this->refcount = 1;
+    handler->IMFByteStreamHandler_iface.lpVtbl = &stream_handler_vtbl;
+    handler->IMFAsyncCallback_iface.lpVtbl = &stream_handler_callback_vtbl;
+    handler->refcount = 1;
 
-    hr = IMFByteStreamHandler_QueryInterface(&this->IMFByteStreamHandler_iface, riid, obj);
-    IMFByteStreamHandler_Release(&this->IMFByteStreamHandler_iface);
+    hr = IMFByteStreamHandler_QueryInterface(&handler->IMFByteStreamHandler_iface, riid, obj);
+    IMFByteStreamHandler_Release(&handler->IMFByteStreamHandler_iface);
 
     return hr;
 }

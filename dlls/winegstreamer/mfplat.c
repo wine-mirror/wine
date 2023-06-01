@@ -126,7 +126,7 @@ static const struct class_object
 class_objects[] =
 {
     { &CLSID_VideoProcessorMFT, &video_processor_create },
-    { &CLSID_GStreamerByteStreamHandler, &winegstreamer_stream_handler_create },
+    { &CLSID_GStreamerByteStreamHandler, &gstreamer_byte_stream_handler_create },
     { &CLSID_MSAACDecMFT, &aac_decoder_create },
     { &CLSID_MSH264DecoderMFT, &h264_decoder_create },
 };
