@@ -21,9 +21,9 @@
 #ifndef __WINE_WINE_UNIXLIB_H
 #define __WINE_WINE_UNIXLIB_H
 
-typedef UINT64 unixlib_handle_t;
+#include "winternl.h"
 
-extern NTSTATUS WINAPI __wine_unix_call( unixlib_handle_t handle, unsigned int code, void *args );
+typedef UINT64 unixlib_handle_t;
 
 #ifdef WINE_UNIX_LIB
 
@@ -267,6 +267,7 @@ static inline ULONG ntdll_wcstoul( const WCHAR *s, WCHAR **end, int base )
 
 #else /* WINE_UNIX_LIB */
 
+extern NTSTATUS WINAPI __wine_unix_call( unixlib_handle_t handle, unsigned int code, void *args );
 extern unixlib_handle_t __wine_unixlib_handle DECLSPEC_HIDDEN;
 extern NTSTATUS (WINAPI *__wine_unix_call_dispatcher)( unixlib_handle_t, unsigned int, void * ) DECLSPEC_HIDDEN;
 extern NTSTATUS WINAPI __wine_init_unix_call(void) DECLSPEC_HIDDEN;
