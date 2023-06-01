@@ -70,7 +70,8 @@ static CRITICAL_SECTION_DEBUG g_sessions_lock_debug =
 static CRITICAL_SECTION g_sessions_lock = { &g_sessions_lock_debug, -1, 0, 0, 0, 0 };
 static struct list g_sessions = LIST_INIT(g_sessions);
 
-static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client);
+extern struct audio_session_wrapper *session_wrapper_create(
+    struct audio_client *client) DECLSPEC_HIDDEN;
 
 void DECLSPEC_HIDDEN sessions_lock(void)
 {
@@ -899,7 +900,7 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
         *ppv = &This->IAudioStreamVolume_iface;
     }else if(IsEqualIID(riid, &IID_IAudioSessionControl)){
         if(!This->session_wrapper){
-            This->session_wrapper = AudioSessionWrapper_Create(This);
+            This->session_wrapper = session_wrapper_create(This);
             if(!This->session_wrapper){
                 hr = E_OUTOFMEMORY;
                 goto end;
@@ -910,7 +911,7 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
         *ppv = &This->session_wrapper->IAudioSessionControl2_iface;
     }else if(IsEqualIID(riid, &IID_IChannelAudioVolume)){
         if(!This->session_wrapper){
-            This->session_wrapper = AudioSessionWrapper_Create(This);
+            This->session_wrapper = session_wrapper_create(This);
             if(!This->session_wrapper){
                 hr = E_OUTOFMEMORY;
                 goto end;
@@ -921,7 +922,7 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
         *ppv = &This->session_wrapper->IChannelAudioVolume_iface;
     }else if(IsEqualIID(riid, &IID_ISimpleAudioVolume)){
         if(!This->session_wrapper){
-            This->session_wrapper = AudioSessionWrapper_Create(This);
+            This->session_wrapper = session_wrapper_create(This);
             if(!This->session_wrapper){
                 hr = E_OUTOFMEMORY;
                 goto end;
@@ -989,30 +990,6 @@ static const IAudioClient3Vtbl AudioClient3_Vtbl =
     client_InitializeSharedAudioStream,
 };
 
-static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client)
-{
-    AudioSessionWrapper *ret;
-
-    ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(AudioSessionWrapper));
-    if(!ret)
-        return NULL;
-
-    ret->IAudioSessionControl2_iface.lpVtbl = &AudioSessionControl2_Vtbl;
-    ret->ISimpleAudioVolume_iface.lpVtbl = &SimpleAudioVolume_Vtbl;
-    ret->IChannelAudioVolume_iface.lpVtbl = &ChannelAudioVolume_Vtbl;
-
-    ret->ref = 1;
-
-    ret->client = client;
-    if(client){
-        ret->session = client->session;
-        IAudioClient3_AddRef(&client->IAudioClient3_iface);
-    }
-
-    return ret;
-}
-
 HRESULT WINAPI AUDDRV_GetAudioSessionWrapper(const GUID *guid, IMMDevice *device,
                                              AudioSessionWrapper **out)
 {
@@ -1022,7 +999,7 @@ HRESULT WINAPI AUDDRV_GetAudioSessionWrapper(const GUID *guid, IMMDevice *device
     if(FAILED(hr))
         return hr;
 
-    *out = AudioSessionWrapper_Create(NULL);
+    *out = session_wrapper_create(NULL);
     if(!*out)
         return E_OUTOFMEMORY;
 
