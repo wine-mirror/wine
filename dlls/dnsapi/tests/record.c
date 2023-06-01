@@ -230,7 +230,6 @@ static void test_DnsExtractRecordsFromMessage(void)
     ok( rec->Flags.S.Section == DnsSectionAnswer, "wrong section %u\n", rec->Flags.S.Section );
     ok( rec->Flags.S.CharSet == DnsCharSetUtf8, "wrong charset %u\n", rec->Flags.S.CharSet );
     ok( rec->wType == DNS_TYPE_SRV, "wrong type %u\n", rec->wType );
-    todo_wine
     ok( rec->wDataLength == sizeof(DNS_SRV_DATAA) + strlen( "dc.winehq.org" ) + 1, "wrong len %u\n", rec->wDataLength );
     ok( rec->dwTtl == 0x04050607, "wrong ttl %#lx\n", rec->dwTtl );
     ok( !strcmp( rec->Data.SRV.pNameTarget, "dc.winehq.org"), "wrong target %s\n", rec->Data.SRV.pNameTarget );
@@ -250,7 +249,6 @@ static void test_DnsExtractRecordsFromMessage(void)
     ok( rec->Flags.S.Section == DnsSectionAnswer, "wrong section %u\n", rec->Flags.S.Section );
     ok( rec->Flags.S.CharSet == DnsCharSetUtf8, "wrong charset %u\n", rec->Flags.S.CharSet );
     ok( rec->wType == DNS_TYPE_SRV, "wrong type %u\n", rec->wType );
-    todo_wine
     ok( rec->wDataLength == sizeof(DNS_SRV_DATAA) + strlen( "dc.winehq.org" ) + 1, "wrong len %u\n", rec->wDataLength );
     ok( rec->dwTtl == 0x04050607, "wrong ttl %#lx\n", rec->dwTtl );
     ok( !strcmp( rec->Data.SRV.pNameTarget, "dc.winehq.org"), "wrong target %s\n", rec->Data.SRV.pNameTarget );
