@@ -104,14 +104,14 @@ static const char so_dir[] = "/aarch64-unix";
 static const char so_dir[] = "";
 #endif
 
-void     (WINAPI *pDbgUiRemoteBreakin)( void *arg ) = NULL;
-NTSTATUS (WINAPI *pKiRaiseUserExceptionDispatcher)(void) = NULL;
-NTSTATUS (WINAPI *pKiUserExceptionDispatcher)(EXCEPTION_RECORD*,CONTEXT*) = NULL;
-void     (WINAPI *pKiUserApcDispatcher)(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR,PNTAPCFUNC) = NULL;
-void     (WINAPI *pKiUserCallbackDispatcher)(ULONG,void*,ULONG) = NULL;
-void     (WINAPI *pLdrInitializeThunk)(CONTEXT*,void**,ULONG_PTR,ULONG_PTR) = NULL;
-void     (WINAPI *pRtlUserThreadStart)( PRTL_THREAD_START_ROUTINE entry, void *arg ) = NULL;
-void     (WINAPI *p__wine_ctrl_routine)(void*);
+void *pDbgUiRemoteBreakin = NULL;
+void *pKiRaiseUserExceptionDispatcher = NULL;
+void *pKiUserExceptionDispatcher = NULL;
+void *pKiUserApcDispatcher = NULL;
+void *pKiUserCallbackDispatcher = NULL;
+void *pLdrInitializeThunk = NULL;
+void *pRtlUserThreadStart = NULL;
+void *p__wine_ctrl_routine = NULL;
 SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock = NULL;
 
 static void *p__wine_syscall_dispatcher;
