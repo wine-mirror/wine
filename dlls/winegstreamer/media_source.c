@@ -925,6 +925,10 @@ static HRESULT media_stream_init_desc(struct media_stream *stream)
 
     wg_parser_stream_get_preferred_format(stream->wg_stream, &format);
 
+    if (!(stream_types[0] = mf_media_type_from_wg_format(&format)))
+        return MF_E_INVALIDMEDIATYPE;
+    type_count = 1;
+
     if (format.major_type == WG_MAJOR_TYPE_VIDEO)
     {
         /* Try to prefer YUV formats over RGB ones. Most decoders output in the
@@ -937,20 +941,9 @@ static HRESULT media_stream_init_desc(struct media_stream *stream)
             WG_VIDEO_FORMAT_YUY2,
             WG_VIDEO_FORMAT_I420,
         };
-
-        IMFMediaType *base_type = mf_media_type_from_wg_format(&format);
         GUID base_subtype;
 
-        if (!base_type)
-        {
-            hr = MF_E_INVALIDMEDIATYPE;
-            goto done;
-        }
-
-        IMFMediaType_GetGUID(base_type, &MF_MT_SUBTYPE, &base_subtype);
-
-        stream_types[0] = base_type;
-        type_count = 1;
+        IMFMediaType_GetGUID(stream_types[0], &MF_MT_SUBTYPE, &base_subtype);
 
         for (i = 0; i < ARRAY_SIZE(video_formats); ++i)
         {
@@ -990,9 +983,6 @@ static HRESULT media_stream_init_desc(struct media_stream *stream)
             WG_AUDIO_FORMAT_F32LE,
         };
 
-        if ((stream_types[0] = mf_media_type_from_wg_format(&format)))
-            type_count = 1;
-
         for (i = 0; i < ARRAY_SIZE(audio_types); i++)
         {
             struct wg_format new_format;
@@ -1004,19 +994,8 @@ static HRESULT media_stream_init_desc(struct media_stream *stream)
                 type_count++;
         }
     }
-    else
-    {
-        if ((stream_types[0] = mf_media_type_from_wg_format(&format)))
-            type_count = 1;
-    }
 
     assert(type_count <= ARRAY_SIZE(stream_types));
-
-    if (!type_count)
-    {
-        ERR("Failed to establish an IMFMediaType from any of the possible stream caps!\n");
-        return E_FAIL;
-    }
 
     if (FAILED(hr = MFCreateStreamDescriptor(stream->stream_id, type_count, stream_types, &stream->descriptor)))
         goto done;
