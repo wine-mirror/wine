@@ -1656,13 +1656,38 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
     return hr;
 }
 
-struct winegstreamer_stream_handler_result
+struct result_entry
 {
     struct list entry;
     IMFAsyncResult *result;
-    MF_OBJECT_TYPE obj_type;
+    MF_OBJECT_TYPE type;
     IUnknown *object;
 };
+
+static HRESULT result_entry_create(IMFAsyncResult *result, MF_OBJECT_TYPE type,
+        IUnknown *object, struct result_entry **out)
+{
+    struct result_entry *entry;
+
+    if (!(entry = malloc(sizeof(*entry))))
+        return E_OUTOFMEMORY;
+
+    entry->result = result;
+    IMFAsyncResult_AddRef(entry->result);
+    entry->object = object;
+    IUnknown_AddRef(entry->object);
+    entry->type = type;
+
+    *out = entry;
+    return S_OK;
+}
+
+static void result_entry_destroy(struct result_entry *entry)
+{
+    IMFAsyncResult_Release(entry->result);
+    IUnknown_Release(entry->object);
+    free(entry);
+}
 
 struct winegstreamer_stream_handler
 {
@@ -1714,20 +1739,14 @@ static ULONG WINAPI winegstreamer_stream_handler_Release(IMFByteStreamHandler *i
 {
     struct winegstreamer_stream_handler *handler = impl_from_IMFByteStreamHandler(iface);
     ULONG refcount = InterlockedDecrement(&handler->refcount);
-    struct winegstreamer_stream_handler_result *result, *next;
+    struct result_entry *result, *next;
 
     TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
-        LIST_FOR_EACH_ENTRY_SAFE(result, next, &handler->results, struct winegstreamer_stream_handler_result, entry)
-        {
-            list_remove(&result->entry);
-            IMFAsyncResult_Release(result->result);
-            if (result->object)
-                IUnknown_Release(result->object);
-            free(result);
-        }
+        LIST_FOR_EACH_ENTRY_SAFE(result, next, &handler->results, struct result_entry, entry)
+            result_entry_destroy(result);
         DeleteCriticalSection(&handler->cs);
         free(handler);
     }
@@ -1868,14 +1887,14 @@ static HRESULT WINAPI winegstreamer_stream_handler_EndCreateObject(IMFByteStream
         MF_OBJECT_TYPE *obj_type, IUnknown **object)
 {
     struct winegstreamer_stream_handler *this = impl_from_IMFByteStreamHandler(iface);
-    struct winegstreamer_stream_handler_result *found = NULL, *cur;
+    struct result_entry *found = NULL, *cur;
     HRESULT hr;
 
     TRACE("%p, %p, %p, %p.\n", iface, result, obj_type, object);
 
     EnterCriticalSection(&this->cs);
 
-    LIST_FOR_EACH_ENTRY(cur, &this->results, struct winegstreamer_stream_handler_result, entry)
+    LIST_FOR_EACH_ENTRY(cur, &this->results, struct result_entry, entry)
     {
         if (result == cur->result)
         {
@@ -1889,11 +1908,11 @@ static HRESULT WINAPI winegstreamer_stream_handler_EndCreateObject(IMFByteStream
 
     if (found)
     {
-        *obj_type = found->obj_type;
-        *object = found->object;
         hr = IMFAsyncResult_GetStatus(found->result);
-        IMFAsyncResult_Release(found->result);
-        free(found);
+        *obj_type = found->type;
+        *object = found->object;
+        IUnknown_AddRef(*object);
+        result_entry_destroy(found);
     }
     else
     {
@@ -1908,13 +1927,13 @@ static HRESULT WINAPI winegstreamer_stream_handler_EndCreateObject(IMFByteStream
 static HRESULT WINAPI winegstreamer_stream_handler_CancelObjectCreation(IMFByteStreamHandler *iface, IUnknown *cancel_cookie)
 {
     struct winegstreamer_stream_handler *this = impl_from_IMFByteStreamHandler(iface);
-    struct winegstreamer_stream_handler_result *found = NULL, *cur;
+    struct result_entry *found = NULL, *cur;
 
     TRACE("%p, %p.\n", iface, cancel_cookie);
 
     EnterCriticalSection(&this->cs);
 
-    LIST_FOR_EACH_ENTRY(cur, &this->results, struct winegstreamer_stream_handler_result, entry)
+    LIST_FOR_EACH_ENTRY(cur, &this->results, struct result_entry, entry)
     {
         if (cancel_cookie == (IUnknown *)cur->result)
         {
@@ -1927,12 +1946,7 @@ static HRESULT WINAPI winegstreamer_stream_handler_CancelObjectCreation(IMFByteS
     LeaveCriticalSection(&this->cs);
 
     if (found)
-    {
-        IMFAsyncResult_Release(found->result);
-        if (found->object)
-            IUnknown_Release(found->object);
-        free(found);
-    }
+        result_entry_destroy(found);
 
     return found ? S_OK : MF_E_UNEXPECTED;
 }
@@ -2016,10 +2030,10 @@ static HRESULT winegstreamer_stream_handler_create_object(struct winegstreamer_s
 static HRESULT WINAPI winegstreamer_stream_handler_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct winegstreamer_stream_handler *handler = impl_from_IMFAsyncCallback(iface);
-    struct winegstreamer_stream_handler_result *handler_result;
     MF_OBJECT_TYPE obj_type = MF_OBJECT_INVALID;
     IUnknown *object = NULL, *context_object;
     struct create_object_context *context;
+    struct result_entry *entry;
     IMFAsyncResult *caller;
     HRESULT hr;
 
@@ -2033,24 +2047,21 @@ static HRESULT WINAPI winegstreamer_stream_handler_callback_Invoke(IMFAsyncCallb
 
     context = impl_from_IUnknown(context_object);
 
-    hr = winegstreamer_stream_handler_create_object(handler, context->url, context->stream, context->flags, context->props, &object, &obj_type);
-
-    if ((handler_result = malloc(sizeof(*handler_result))))
-    {
-        handler_result->result = caller;
-        IMFAsyncResult_AddRef(handler_result->result);
-        handler_result->obj_type = obj_type;
-        handler_result->object = object;
-
-        EnterCriticalSection(&handler->cs);
-        list_add_tail(&handler->results, &handler_result->entry);
-        LeaveCriticalSection(&handler->cs);
-    }
+    if (FAILED(hr = winegstreamer_stream_handler_create_object(handler, context->url, context->stream,
+            context->flags, context->props, &object, &obj_type)))
+        WARN("Failed to create object, hr %#lx\n", hr);
     else
     {
-        if (object)
-            IUnknown_Release(object);
-        hr = E_OUTOFMEMORY;
+        if (FAILED(hr = result_entry_create(caller, obj_type, object, &entry)))
+            WARN("Failed to create handler result, hr %#lx\n", hr);
+        else
+        {
+            EnterCriticalSection(&handler->cs);
+            list_add_tail(&handler->results, &entry->entry);
+            LeaveCriticalSection(&handler->cs);
+        }
+
+        IUnknown_Release(object);
     }
 
     IUnknown_Release(&context->IUnknown_iface);
