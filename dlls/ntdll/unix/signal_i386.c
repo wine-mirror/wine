@@ -1652,7 +1652,7 @@ __ASM_GLOBAL_FUNC( user_mode_callback_return,
 /***********************************************************************
  *           KeUserModeCallback
  */
-NTSTATUS WINAPI KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_ptr, ULONG *ret_len )
+NTSTATUS KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_ptr, ULONG *ret_len )
 {
     struct syscall_frame *frame = x86_thread_data()->syscall_frame;
     void *args_data = (void *)((frame->esp - len) & ~15);
