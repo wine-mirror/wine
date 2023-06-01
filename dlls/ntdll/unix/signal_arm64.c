@@ -1092,14 +1092,11 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
 /***********************************************************************
  *           call_user_mode_callback
  */
-extern NTSTATUS CDECL call_user_mode_callback( void *func, void *stack, void **ret_ptr,
-                                               ULONG *ret_len, TEB *teb ) DECLSPEC_HIDDEN;
+extern NTSTATUS call_user_mode_callback( ULONG id, void *args, ULONG len, void **ret_ptr,
+                                         ULONG *ret_len, void *func, TEB *teb ) DECLSPEC_HIDDEN;
 __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "stp x29, x30, [sp,#-0xc0]!\n\t"
                    "mov x29, sp\n\t"
-                   "mov x16, x0\n\t"              /* func */
-                   "mov x17, x1\n\t"              /* stack */
-                   "mov x18, x4\n\t"              /* teb */
                    "stp x19, x20, [x29, #0x10]\n\t"
                    "stp x21, x22, [x29, #0x20]\n\t"
                    "stp x23, x24, [x29, #0x30]\n\t"
@@ -1109,29 +1106,28 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "stp d10, d11, [x29, #0x70]\n\t"
                    "stp d12, d13, [x29, #0x80]\n\t"
                    "stp d14, d15, [x29, #0x90]\n\t"
-                   "stp x2, x3, [x29, #0xa0]\n\t" /* ret_ptr, ret_len */
-                   "mrs x5, fpcr\n\t"
-                   "mrs x6, fpsr\n\t"
-                   "bfi x5, x6, #0, #32\n\t"
-                   "ldr x6, [x18]\n\t"            /* teb->Tib.ExceptionList */
-                   "stp x5, x6, [x29, #0xb0]\n\t"
+                   "stp x3, x4, [x29, #0xa0]\n\t" /* ret_ptr, ret_len */
+                   "mov x18, x6\n\t"              /* teb */
+                   "mrs x3, fpcr\n\t"
+                   "mrs x4, fpsr\n\t"
+                   "bfi x3, x4, #0, #32\n\t"
+                   "ldr x4, [x18]\n\t"            /* teb->Tib.ExceptionList */
+                   "stp x3, x4, [x29, #0xb0]\n\t"
 
                    "ldr x7, [x18, #0x2f8]\n\t"    /* arm64_thread_data()->syscall_frame */
-                   "sub x5, sp, #0x330\n\t"       /* sizeof(struct syscall_frame) */
-                   "str x5, [x18, #0x2f8]\n\t"    /* arm64_thread_data()->syscall_frame */
+                   "sub x3, sp, #0x330\n\t"       /* sizeof(struct syscall_frame) */
+                   "str x3, [x18, #0x2f8]\n\t"    /* arm64_thread_data()->syscall_frame */
                    "ldr x8, [x7, #0x118]\n\t"     /* prev_frame->syscall_table */
-                   "ldp x0, x1, [x17]\n\t"        /* id, args */
-                   "ldr x2, [x17, #0x10]\n\t"     /* len */
-                   "mov sp, x17\n\t"
-                   "stp x7, x8, [x5, #0x110]\n\t" /* frame->prev_frame, frame->syscall_table */
-                   "br x16" )
+                   "mov sp, x1\n\t"               /* stack */
+                   "stp x7, x8, [x3, #0x110]\n\t" /* frame->prev_frame, frame->syscall_table */
+                   "br x5" )
 
 
 /***********************************************************************
  *           user_mode_callback_return
  */
-extern void CDECL DECLSPEC_NORETURN user_mode_callback_return( void *ret_ptr, ULONG ret_len,
-                                                               NTSTATUS status, TEB *teb ) DECLSPEC_HIDDEN;
+extern void DECLSPEC_NORETURN user_mode_callback_return( void *ret_ptr, ULONG ret_len,
+                                                         NTSTATUS status, TEB *teb ) DECLSPEC_HIDDEN;
 __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    "ldr x4, [x3, #0x2f8]\n\t"     /* arm64_thread_data()->syscall_frame */
                    "ldr x5, [x4, #0x110]\n\t"     /* prev_frame */
@@ -1167,18 +1163,13 @@ NTSTATUS WINAPI KeUserModeCallback( ULONG id, const void *args, ULONG len, void 
 {
     struct syscall_frame *frame = arm64_thread_data()->syscall_frame;
     void *args_data = (void *)((frame->sp - len) & ~15);
-    ULONG_PTR *stack = args_data;
 
     if ((char *)ntdll_get_thread_data()->kernel_stack + min_kernel_stack > (char *)&frame)
         return STATUS_STACK_OVERFLOW;
 
     memcpy( args_data, args, len );
-    *(--stack) = 0;
-    *(--stack) = len;
-    *(--stack) = (ULONG_PTR)args_data;
-    *(--stack) = id;
-
-    return call_user_mode_callback( pKiUserCallbackDispatcher, stack, ret_ptr, ret_len, NtCurrentTeb() );
+    return call_user_mode_callback( id, args_data, len, ret_ptr, ret_len,
+                                    pKiUserCallbackDispatcher, NtCurrentTeb() );
 }
 
 
