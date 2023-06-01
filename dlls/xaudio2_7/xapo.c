@@ -256,6 +256,57 @@ static const IXAPOParametersVtbl XAPOFXParameters_Vtbl = {
     XAPOFXParams_GetParameters
 };
 
+static HRESULT xapo_create(FAPO *fapo, XA2XAPOFXImpl **out)
+{
+    XA2XAPOFXImpl *object;
+
+    if (!(object = heap_alloc(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IXAPO_iface.lpVtbl = &XAPOFX_Vtbl;
+    object->IXAPOParameters_iface.lpVtbl = &XAPOFXParameters_Vtbl;
+    object->fapo = fapo;
+
+    *out = object;
+    return S_OK;
+}
+
+#ifndef XAPOFX1_VER
+static HRESULT reverb_create(XA2XAPOFXImpl **out)
+{
+    FAPO *fapo;
+    HRESULT hr;
+
+#if XAUDIO2_VER >= 9
+    hr = FAudioCreateReverb9WithCustomAllocatorEXT(&fapo, 0,
+            XAudio_Internal_Malloc, XAudio_Internal_Free, XAudio_Internal_Realloc);
+#else
+    hr = FAudioCreateReverbWithCustomAllocatorEXT(&fapo, 0,
+            XAudio_Internal_Malloc, XAudio_Internal_Free, XAudio_Internal_Realloc);
+#endif
+    if (FAILED(hr))
+        return hr;
+
+    if (FAILED(hr = xapo_create(fapo, out)))
+        fapo->Release(fapo);
+    return hr;
+}
+
+static HRESULT volume_meter_create(XA2XAPOFXImpl **out)
+{
+    FAPO *fapo;
+    HRESULT hr;
+
+    if (FAILED(hr = FAudioCreateVolumeMeterWithCustomAllocatorEXT(&fapo, 0,
+            XAudio_Internal_Malloc, XAudio_Internal_Free, XAudio_Internal_Realloc)))
+        return hr;
+
+    if (FAILED(hr = xapo_create(fapo, out)))
+        fapo->Release(fapo);
+    return hr;
+}
+#endif /* XAPOFX1_VER */
+
 struct xapo_cf {
     IClassFactory IClassFactory_iface;
     LONG ref;
@@ -300,56 +351,6 @@ static ULONG WINAPI xapocf_Release(IClassFactory *iface)
     return ref;
 }
 
-static inline HRESULT get_fapo_from_clsid(REFCLSID clsid, FAPO **fapo)
-{
-#ifndef XAPOFX1_VER
-    if(IsEqualGUID(clsid, &CLSID_AudioVolumeMeter27))
-        return FAudioCreateVolumeMeterWithCustomAllocatorEXT(
-            fapo,
-            0,
-            XAudio_Internal_Malloc,
-            XAudio_Internal_Free,
-            XAudio_Internal_Realloc
-        );
-#if XAUDIO2_VER >= 9
-    if(IsEqualGUID(clsid, &CLSID_AudioReverb27))
-        return FAudioCreateReverb9WithCustomAllocatorEXT(
-            fapo,
-            0,
-            XAudio_Internal_Malloc,
-            XAudio_Internal_Free,
-            XAudio_Internal_Realloc
-        );
-#else
-    if(IsEqualGUID(clsid, &CLSID_AudioReverb27))
-        return FAudioCreateReverbWithCustomAllocatorEXT(
-            fapo,
-            0,
-            XAudio_Internal_Malloc,
-            XAudio_Internal_Free,
-            XAudio_Internal_Realloc
-        );
-#endif
-#endif
-#if XAUDIO2_VER >= 8 || defined XAPOFX1_VER
-    if(IsEqualGUID(clsid, &CLSID_FXReverb) ||
-            IsEqualGUID(clsid, &CLSID_FXEQ) ||
-            IsEqualGUID(clsid, &CLSID_FXEcho) ||
-            IsEqualGUID(clsid, &CLSID_FXMasteringLimiter))
-        return FAPOFX_CreateFXWithCustomAllocatorEXT(
-            (const FAudioGUID*) clsid,
-            fapo,
-            NULL,
-            0,
-            XAudio_Internal_Malloc,
-            XAudio_Internal_Free,
-            XAudio_Internal_Realloc
-        );
-#endif
-    ERR("Invalid XAPO CLSID!\n");
-    return E_INVALIDARG;
-}
-
 static HRESULT WINAPI xapocf_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
         REFIID riid, void **ppobj)
 {
@@ -364,16 +365,42 @@ static HRESULT WINAPI xapocf_CreateInstance(IClassFactory *iface, IUnknown *pOut
     if(pOuter)
         return CLASS_E_NOAGGREGATION;
 
-    object = heap_alloc(sizeof(*object));
-    object->IXAPO_iface.lpVtbl = &XAPOFX_Vtbl;
-    object->IXAPOParameters_iface.lpVtbl = &XAPOFXParameters_Vtbl;
-
-    hr = get_fapo_from_clsid(This->class, &object->fapo);
-
-    if(FAILED(hr)){
-        HeapFree(GetProcessHeap(), 0, object);
-        return hr;
+#if XAUDIO2_VER < 8 && !defined(XAPOFX1_VER)
+    if (IsEqualGUID(This->class, &CLSID_AudioVolumeMeter27))
+    {
+        hr = volume_meter_create(&object);
     }
+    else if (IsEqualGUID(This->class, &CLSID_AudioReverb27))
+    {
+        hr = reverb_create(&object);
+    }
+#else
+    if (IsEqualGUID(This->class, &CLSID_FXReverb)
+            || IsEqualGUID(This->class, &CLSID_FXEQ)
+            || IsEqualGUID(This->class, &CLSID_FXEcho)
+            || IsEqualGUID(This->class, &CLSID_FXMasteringLimiter))
+    {
+        FAPO *fapo;
+
+        if (FAILED(hr = FAPOFX_CreateFXWithCustomAllocatorEXT((const FAudioGUID *)This->class, &fapo, NULL,
+                0, XAudio_Internal_Malloc, XAudio_Internal_Free, XAudio_Internal_Realloc)))
+            return hr;
+
+        if (FAILED(hr = xapo_create(fapo, &object)))
+        {
+            fapo->Release(fapo);
+            return hr;
+        }
+    }
+#endif
+    else
+    {
+        FIXME("Unknown CLSID %s.\n", debugstr_guid(This->class));
+        return E_INVALIDARG;
+    }
+
+    if (FAILED(hr))
+        return hr;
 
     hr = IXAPO_QueryInterface(&object->IXAPO_iface, riid, ppobj);
     IXAPO_Release(&object->IXAPO_iface);
@@ -413,37 +440,25 @@ HRESULT make_xapo_factory(REFCLSID clsid, REFIID riid, void **ppv)
 #if XAUDIO2_VER >= 8
 HRESULT WINAPI CreateAudioVolumeMeter(IUnknown **out)
 {
-    IClassFactory *cf;
+    XA2XAPOFXImpl *object;
     HRESULT hr;
 
     TRACE("%p\n", out);
 
-    hr = make_xapo_factory(&CLSID_AudioVolumeMeter27, &IID_IClassFactory, (void**)&cf);
-    if(FAILED(hr))
-        return hr;
-
-    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)out);
-
-    IClassFactory_Release(cf);
-
+    if (SUCCEEDED(hr = volume_meter_create(&object)))
+        *out = (IUnknown *)&object->IXAPO_iface;
     return hr;
 }
 
 HRESULT WINAPI CreateAudioReverb(IUnknown **out)
 {
-    IClassFactory *cf;
+    XA2XAPOFXImpl *object;
     HRESULT hr;
 
     TRACE("%p\n", out);
 
-    hr = make_xapo_factory(&CLSID_AudioReverb27, &IID_IClassFactory, (void**)&cf);
-    if(FAILED(hr))
-        return hr;
-
-    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)out);
-
-    IClassFactory_Release(cf);
-
+    if (SUCCEEDED(hr = reverb_create(&object)))
+        *out = (IUnknown *)&object->IXAPO_iface;
     return hr;
 }
 #endif
