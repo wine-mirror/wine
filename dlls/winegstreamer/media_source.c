@@ -1698,6 +1698,25 @@ struct stream_handler
     CRITICAL_SECTION cs;
 };
 
+static struct result_entry *handler_find_result_entry(struct stream_handler *handler, IMFAsyncResult *result)
+{
+    struct result_entry *entry;
+
+    EnterCriticalSection(&handler->cs);
+    LIST_FOR_EACH_ENTRY(entry, &handler->results, struct result_entry, entry)
+    {
+        if (result == entry->result)
+        {
+            list_remove(&entry->entry);
+            LeaveCriticalSection(&handler->cs);
+            return entry;
+        }
+    }
+    LeaveCriticalSection(&handler->cs);
+
+    return NULL;
+}
+
 static struct stream_handler *impl_from_IMFByteStreamHandler(IMFByteStreamHandler *iface)
 {
     return CONTAINING_RECORD(iface, struct stream_handler, IMFByteStreamHandler_iface);
@@ -1884,71 +1903,42 @@ static HRESULT WINAPI stream_handler_BeginCreateObject(IMFByteStreamHandler *ifa
 }
 
 static HRESULT WINAPI stream_handler_EndCreateObject(IMFByteStreamHandler *iface, IMFAsyncResult *result,
-        MF_OBJECT_TYPE *obj_type, IUnknown **object)
+        MF_OBJECT_TYPE *type, IUnknown **object)
 {
     struct stream_handler *handler = impl_from_IMFByteStreamHandler(iface);
-    struct result_entry *found = NULL, *cur;
+    struct result_entry *entry;
     HRESULT hr;
 
-    TRACE("%p, %p, %p, %p.\n", iface, result, obj_type, object);
+    TRACE("%p, %p, %p, %p.\n", iface, result, type, object);
 
-    EnterCriticalSection(&handler->cs);
-
-    LIST_FOR_EACH_ENTRY(cur, &handler->results, struct result_entry, entry)
+    if (!(entry = handler_find_result_entry(handler, result)))
     {
-        if (result == cur->result)
-        {
-            list_remove(&cur->entry);
-            found = cur;
-            break;
-        }
-    }
-
-    LeaveCriticalSection(&handler->cs);
-
-    if (found)
-    {
-        hr = IMFAsyncResult_GetStatus(found->result);
-        *obj_type = found->type;
-        *object = found->object;
-        IUnknown_AddRef(*object);
-        result_entry_destroy(found);
-    }
-    else
-    {
-        *obj_type = MF_OBJECT_INVALID;
+        *type = MF_OBJECT_INVALID;
         *object = NULL;
-        hr = MF_E_UNEXPECTED;
+        return MF_E_UNEXPECTED;
     }
 
+    hr = IMFAsyncResult_GetStatus(entry->result);
+    *type = entry->type;
+    *object = entry->object;
+    IUnknown_AddRef(*object);
+    result_entry_destroy(entry);
     return hr;
 }
 
-static HRESULT WINAPI stream_handler_CancelObjectCreation(IMFByteStreamHandler *iface, IUnknown *cancel_cookie)
+static HRESULT WINAPI stream_handler_CancelObjectCreation(IMFByteStreamHandler *iface, IUnknown *cookie)
 {
     struct stream_handler *handler = impl_from_IMFByteStreamHandler(iface);
-    struct result_entry *found = NULL, *cur;
+    IMFAsyncResult *result = (IMFAsyncResult *)cookie;
+    struct result_entry *entry;
 
-    TRACE("%p, %p.\n", iface, cancel_cookie);
+    TRACE("%p, %p.\n", iface, cookie);
 
-    EnterCriticalSection(&handler->cs);
+    if (!(entry = handler_find_result_entry(handler, result)))
+        return MF_E_UNEXPECTED;
 
-    LIST_FOR_EACH_ENTRY(cur, &handler->results, struct result_entry, entry)
-    {
-        if (cancel_cookie == (IUnknown *)cur->result)
-        {
-            list_remove(&cur->entry);
-            found = cur;
-            break;
-        }
-    }
-
-    LeaveCriticalSection(&handler->cs);
-
-    if (found)
-        result_entry_destroy(found);
-
-    return found ? S_OK : MF_E_UNEXPECTED;
+    result_entry_destroy(entry);
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_handler_GetMaxNumberOfBytesRequiredForResolution(IMFByteStreamHandler *iface, QWORD *bytes)
