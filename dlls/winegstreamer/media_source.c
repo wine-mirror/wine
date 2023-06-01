@@ -371,6 +371,31 @@ done:
     return hr;
 }
 
+static HRESULT init_audio_media_types(struct wg_format *format, IMFMediaType *types[6], DWORD *types_count)
+{
+    /* Expose at least one PCM and one floating point type for the
+       consumer to pick from. */
+    static const enum wg_audio_format audio_types[] =
+    {
+        WG_AUDIO_FORMAT_S16LE,
+        WG_AUDIO_FORMAT_F32LE,
+    };
+    UINT count = *types_count, i;
+
+    for (i = 0; i < ARRAY_SIZE(audio_types); i++)
+    {
+        struct wg_format new_format = *format;
+        if (new_format.u.audio.format == audio_types[i])
+            continue;
+        new_format.u.audio.format = audio_types[i];
+        if ((types[count] = mf_media_type_from_wg_format(&new_format)))
+            count++;
+    }
+
+    *types_count = count;
+    return S_OK;
+}
+
 static BOOL enqueue_token(struct media_stream *stream, IUnknown *token)
 {
     if (stream->token_queue_count == stream->token_queue_cap)
@@ -988,24 +1013,8 @@ static HRESULT media_stream_init_desc(struct media_stream *stream)
     }
     else if (format.major_type == WG_MAJOR_TYPE_AUDIO)
     {
-        /* Expose at least one PCM and one floating point type for the
-           consumer to pick from. */
-        static const enum wg_audio_format audio_types[] =
-        {
-            WG_AUDIO_FORMAT_S16LE,
-            WG_AUDIO_FORMAT_F32LE,
-        };
-
-        for (i = 0; i < ARRAY_SIZE(audio_types); i++)
-        {
-            struct wg_format new_format;
-            if (format.u.audio.format == audio_types[i])
-                continue;
-            new_format = format;
-            new_format.u.audio.format = audio_types[i];
-            if ((stream_types[type_count] = mf_media_type_from_wg_format(&new_format)))
-                type_count++;
-        }
+        if (FAILED(hr = init_audio_media_types(&format, stream_types, &type_count)))
+            goto done;
     }
 
     assert(type_count <= ARRAY_SIZE(stream_types));
