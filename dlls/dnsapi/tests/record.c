@@ -193,6 +193,28 @@ static BYTE msg_types[] =  /* various record types */
 /* KEY */   0xc0, 0x0c, 0x00, 0x19, 0x00, 0x01, 0x04, 0x05, 0x06, 0x07, 0x00, 0x06, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66,
 /* TXT */   0x01, 't', 0x01, 'x', 0x00, 0x00, 0x10, 0x00, 0x01, 0x04, 0x05, 0x06, 0x07, 0x00, 0x09, 0x02, 'z', 'y', 0x00, 0x04, 'X', 'Y', 0xc3, 0xa9
 };
+static BYTE msg_question_srv[] =  /* SRV question only */
+{
+    0x12, 0x34, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    5,'_','l','d','a','p',4,'_','t','c','p',2,'d','c',6,'_','m','s','d','c','s',6,'w','i','n','e','h','q',3,'o','r','g',0x00,0x00,0x00,0x21,0x00
+};
+static BYTE msg_answer_srv[] =  /* SRV answer only */
+{
+    0x12, 0x34, 0x81, 0x80, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
+    5,'_','l','d','a','p',4,'_','t','c','p',2,'d','c',6,'_','m','s','d','c','s',6,'w','i','n','e','h','q',3,'o','r','g',0x00,
+    0x00,0x21,0x00,0x01,0x04,0x05,0x06,0x07,
+    0x00,0x15,0x00,0x00,0x00,0x00,0x01,0x85,
+    2,'d','c',6,'w','i','n','e','h','q',3,'o','r','g',0x00
+};
+static BYTE msg_full_srv[] =  /* SRV question + answer */
+{
+    0x12, 0x34, 0x81, 0x80, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
+    5,'_','l','d','a','p',4,'_','t','c','p',2,'d','c',6,'_','m','s','d','c','s',6,'w','i','n','e','h','q',3,'o','r','g',0x00,
+    0x00,0x21,0x00,0x01,
+    0xc0,0x0c,0x00,0x21,0x00,0x01,0x04,0x05,0x06,0x07,
+    0x00,0x15,0x00,0x00,0x00,0x00,0x01,0x85,
+    2,'d','c',6,'w','i','n','e','h','q',3,'o','r','g',0x00
+};
 
 static void test_DnsExtractRecordsFromMessage(void)
 {
@@ -200,6 +222,49 @@ static void test_DnsExtractRecordsFromMessage(void)
     DNS_RECORDA *rec, *r;
     DNS_RECORDW *recW, *rW;
 
+    rec = NULL;
+    ret = DnsExtractRecordsFromMessage_UTF8( (DNS_MESSAGE_BUFFER *)msg_full_srv, sizeof(msg_full_srv), &rec );
+    todo_wine
+    ok( !ret, "failed %ld\n", ret );
+    todo_wine
+    ok( rec != NULL, "record not set\n" );
+    if (!rec) goto next;
+    ok( !strcmp( rec->pName, "_ldap._tcp.dc._msdcs.winehq.org" ), "wrong name %s\n", rec->pName );
+    ok( rec->Flags.S.Section == DnsSectionAnswer, "wrong section %u\n", rec->Flags.S.Section );
+    ok( rec->Flags.S.CharSet == DnsCharSetUtf8, "wrong charset %u\n", rec->Flags.S.CharSet );
+    ok( rec->wType == DNS_TYPE_SRV, "wrong type %u\n", rec->wType );
+    todo_wine
+    ok( rec->wDataLength == sizeof(DNS_SRV_DATAA) + strlen( "dc.winehq.org" ) + 1, "wrong len %u\n", rec->wDataLength );
+    ok( rec->dwTtl == 0x04050607, "wrong ttl %#lx\n", rec->dwTtl );
+    ok( !strcmp( rec->Data.SRV.pNameTarget, "dc.winehq.org"), "wrong target %s\n", rec->Data.SRV.pNameTarget );
+    ok( !rec->pNext, "next record %p\n", rec->pNext );
+    DnsRecordListFree( (DNS_RECORD *)rec, DnsFreeRecordList );
+
+next:
+    rec = (void *)0xdeadbeef;
+    ret = DnsExtractRecordsFromMessage_UTF8( (DNS_MESSAGE_BUFFER *)msg_question_srv, sizeof(msg_question_srv), &rec );
+    ok( !ret, "failed %ld\n", ret );
+    ok( !rec, "record %p\n", rec );
+
+    rec = NULL;
+    ret = DnsExtractRecordsFromMessage_UTF8( (DNS_MESSAGE_BUFFER *)msg_answer_srv, sizeof(msg_answer_srv), &rec );
+    todo_wine
+    ok( !ret, "failed %ld\n", ret );
+    todo_wine
+    ok( rec != NULL, "record not set\n" );
+    if (!rec) goto next2;
+    ok( !strcmp( rec->pName, "_ldap._tcp.dc._msdcs.winehq.org" ), "wrong name %s\n", rec->pName );
+    ok( rec->Flags.S.Section == DnsSectionAnswer, "wrong section %u\n", rec->Flags.S.Section );
+    ok( rec->Flags.S.CharSet == DnsCharSetUtf8, "wrong charset %u\n", rec->Flags.S.CharSet );
+    ok( rec->wType == DNS_TYPE_SRV, "wrong type %u\n", rec->wType );
+    todo_wine
+    ok( rec->wDataLength == sizeof(DNS_SRV_DATAA) + strlen( "dc.winehq.org" ) + 1, "wrong len %u\n", rec->wDataLength );
+    ok( rec->dwTtl == 0x04050607, "wrong ttl %#lx\n", rec->dwTtl );
+    ok( !strcmp( rec->Data.SRV.pNameTarget, "dc.winehq.org"), "wrong target %s\n", rec->Data.SRV.pNameTarget );
+    ok( !rec->pNext, "next record %p\n", rec->pNext );
+    DnsRecordListFree( (DNS_RECORD *)rec, DnsFreeRecordList );
+
+next2:
     ret = DnsExtractRecordsFromMessage_UTF8( (DNS_MESSAGE_BUFFER *)msg_empty, sizeof(msg_empty) - 1, &rec );
     ok( ret == ERROR_INVALID_PARAMETER || broken(ret == DNS_ERROR_BAD_PACKET) /* win7 */,
         "failed %ld\n", ret );
