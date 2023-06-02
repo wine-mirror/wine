@@ -1853,8 +1853,8 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, EXCEPTION_RECORD *rec,
     if (ntdll_get_thread_data()->jmp_buf)
     {
         TRACE_(seh)( "returning to handler\n" );
-        RCX_sig(sigcontext) = (ULONG_PTR)ntdll_get_thread_data()->jmp_buf;
-        RDX_sig(sigcontext) = 1;
+        RDI_sig(sigcontext) = (ULONG_PTR)ntdll_get_thread_data()->jmp_buf;
+        RSI_sig(sigcontext) = 1;
         RIP_sig(sigcontext) = (ULONG_PTR)__wine_longjmp;
         ntdll_get_thread_data()->jmp_buf = NULL;
     }
@@ -2921,31 +2921,19 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
  *           __wine_setjmpex
  */
 __ASM_GLOBAL_FUNC( __wine_setjmpex,
-                   "movq %rdx,(%rcx)\n\t"          /* jmp_buf->Frame */
-                   "movq %rbx,0x8(%rcx)\n\t"       /* jmp_buf->Rbx */
+                   "movq %rsi,(%rdi)\n\t"          /* jmp_buf->Frame */
+                   "movq %rbx,0x8(%rdi)\n\t"       /* jmp_buf->Rbx */
                    "leaq 0x8(%rsp),%rax\n\t"
-                   "movq %rax,0x10(%rcx)\n\t"      /* jmp_buf->Rsp */
-                   "movq %rbp,0x18(%rcx)\n\t"      /* jmp_buf->Rbp */
-                   "movq %rsi,0x20(%rcx)\n\t"      /* jmp_buf->Rsi */
-                   "movq %rdi,0x28(%rcx)\n\t"      /* jmp_buf->Rdi */
-                   "movq %r12,0x30(%rcx)\n\t"      /* jmp_buf->R12 */
-                   "movq %r13,0x38(%rcx)\n\t"      /* jmp_buf->R13 */
-                   "movq %r14,0x40(%rcx)\n\t"      /* jmp_buf->R14 */
-                   "movq %r15,0x48(%rcx)\n\t"      /* jmp_buf->R15 */
+                   "movq %rax,0x10(%rdi)\n\t"      /* jmp_buf->Rsp */
+                   "movq %rbp,0x18(%rdi)\n\t"      /* jmp_buf->Rbp */
+                   "movq %r12,0x30(%rdi)\n\t"      /* jmp_buf->R12 */
+                   "movq %r13,0x38(%rdi)\n\t"      /* jmp_buf->R13 */
+                   "movq %r14,0x40(%rdi)\n\t"      /* jmp_buf->R14 */
+                   "movq %r15,0x48(%rdi)\n\t"      /* jmp_buf->R15 */
                    "movq (%rsp),%rax\n\t"
-                   "movq %rax,0x50(%rcx)\n\t"      /* jmp_buf->Rip */
-                   "stmxcsr 0x58(%rcx)\n\t"        /* jmp_buf->MxCsr */
-                   "fnstcw 0x5c(%rcx)\n\t"         /* jmp_buf->FpCsr */
-                   "movdqa %xmm6,0x60(%rcx)\n\t"   /* jmp_buf->Xmm6 */
-                   "movdqa %xmm7,0x70(%rcx)\n\t"   /* jmp_buf->Xmm7 */
-                   "movdqa %xmm8,0x80(%rcx)\n\t"   /* jmp_buf->Xmm8 */
-                   "movdqa %xmm9,0x90(%rcx)\n\t"   /* jmp_buf->Xmm9 */
-                   "movdqa %xmm10,0xa0(%rcx)\n\t"  /* jmp_buf->Xmm10 */
-                   "movdqa %xmm11,0xb0(%rcx)\n\t"  /* jmp_buf->Xmm11 */
-                   "movdqa %xmm12,0xc0(%rcx)\n\t"  /* jmp_buf->Xmm12 */
-                   "movdqa %xmm13,0xd0(%rcx)\n\t"  /* jmp_buf->Xmm13 */
-                   "movdqa %xmm14,0xe0(%rcx)\n\t"  /* jmp_buf->Xmm14 */
-                   "movdqa %xmm15,0xf0(%rcx)\n\t"  /* jmp_buf->Xmm15 */
+                   "movq %rax,0x50(%rdi)\n\t"      /* jmp_buf->Rip */
+                   "stmxcsr 0x58(%rdi)\n\t"        /* jmp_buf->MxCsr */
+                   "fnstcw 0x5c(%rdi)\n\t"         /* jmp_buf->FpCsr */
                    "xorq %rax,%rax\n\t"
                    "retq" )
 
@@ -2954,30 +2942,18 @@ __ASM_GLOBAL_FUNC( __wine_setjmpex,
  *           __wine_longjmp
  */
 __ASM_GLOBAL_FUNC( __wine_longjmp,
-                   "movq %rdx,%rax\n\t"            /* retval */
-                   "movq 0x8(%rcx),%rbx\n\t"       /* jmp_buf->Rbx */
-                   "movq 0x18(%rcx),%rbp\n\t"      /* jmp_buf->Rbp */
-                   "movq 0x20(%rcx),%rsi\n\t"      /* jmp_buf->Rsi */
-                   "movq 0x28(%rcx),%rdi\n\t"      /* jmp_buf->Rdi */
-                   "movq 0x30(%rcx),%r12\n\t"      /* jmp_buf->R12 */
-                   "movq 0x38(%rcx),%r13\n\t"      /* jmp_buf->R13 */
-                   "movq 0x40(%rcx),%r14\n\t"      /* jmp_buf->R14 */
-                   "movq 0x48(%rcx),%r15\n\t"      /* jmp_buf->R15 */
-                   "ldmxcsr 0x58(%rcx)\n\t"        /* jmp_buf->MxCsr */
+                   "movq %rsi,%rax\n\t"            /* retval */
+                   "movq 0x8(%rdi),%rbx\n\t"       /* jmp_buf->Rbx */
+                   "movq 0x18(%rdi),%rbp\n\t"      /* jmp_buf->Rbp */
+                   "movq 0x30(%rdi),%r12\n\t"      /* jmp_buf->R12 */
+                   "movq 0x38(%rdi),%r13\n\t"      /* jmp_buf->R13 */
+                   "movq 0x40(%rdi),%r14\n\t"      /* jmp_buf->R14 */
+                   "movq 0x48(%rdi),%r15\n\t"      /* jmp_buf->R15 */
+                   "ldmxcsr 0x58(%rdi)\n\t"        /* jmp_buf->MxCsr */
                    "fnclex\n\t"
-                   "fldcw 0x5c(%rcx)\n\t"          /* jmp_buf->FpCsr */
-                   "movdqa 0x60(%rcx),%xmm6\n\t"   /* jmp_buf->Xmm6 */
-                   "movdqa 0x70(%rcx),%xmm7\n\t"   /* jmp_buf->Xmm7 */
-                   "movdqa 0x80(%rcx),%xmm8\n\t"   /* jmp_buf->Xmm8 */
-                   "movdqa 0x90(%rcx),%xmm9\n\t"   /* jmp_buf->Xmm9 */
-                   "movdqa 0xa0(%rcx),%xmm10\n\t"  /* jmp_buf->Xmm10 */
-                   "movdqa 0xb0(%rcx),%xmm11\n\t"  /* jmp_buf->Xmm11 */
-                   "movdqa 0xc0(%rcx),%xmm12\n\t"  /* jmp_buf->Xmm12 */
-                   "movdqa 0xd0(%rcx),%xmm13\n\t"  /* jmp_buf->Xmm13 */
-                   "movdqa 0xe0(%rcx),%xmm14\n\t"  /* jmp_buf->Xmm14 */
-                   "movdqa 0xf0(%rcx),%xmm15\n\t"  /* jmp_buf->Xmm15 */
-                   "movq 0x50(%rcx),%rdx\n\t"      /* jmp_buf->Rip */
-                   "movq 0x10(%rcx),%rsp\n\t"      /* jmp_buf->Rsp */
+                   "fldcw 0x5c(%rdi)\n\t"          /* jmp_buf->FpCsr */
+                   "movq 0x50(%rdi),%rdx\n\t"      /* jmp_buf->Rip */
+                   "movq 0x10(%rdi),%rsp\n\t"      /* jmp_buf->Rsp */
                    "jmp *%rdx" )
 
 #endif  /* __x86_64__ */

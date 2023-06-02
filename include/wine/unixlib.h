@@ -52,9 +52,9 @@ typedef struct { __int64 reg[24]; } __wine_jmp_buf;
 typedef struct { int reg; } __wine_jmp_buf;
 #endif
 
-extern int __cdecl __attribute__ ((__nothrow__,__returns_twice__)) __wine_setjmpex( __wine_jmp_buf *buf,
+extern int __attribute__ ((__nothrow__,__returns_twice__)) __wine_setjmpex( __wine_jmp_buf *buf,
                                                    EXCEPTION_REGISTRATION_RECORD *frame );
-extern void DECLSPEC_NORETURN __cdecl __wine_longjmp( __wine_jmp_buf *buf, int retval );
+extern void DECLSPEC_NORETURN __wine_longjmp( __wine_jmp_buf *buf, int retval );
 extern void ntdll_set_exception_jmp_buf( __wine_jmp_buf *jmp );
 
 #define __TRY \
