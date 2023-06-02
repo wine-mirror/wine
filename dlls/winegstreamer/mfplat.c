@@ -531,7 +531,8 @@ static IMFMediaType *mf_media_type_from_wg_format_video(const struct wg_format *
                 stride = -stride;
             IMFMediaType_SetUINT32(type, &MF_MT_DEFAULT_STRIDE, stride);
 
-            if (!IsRectEmpty(&format->u.video.padding))
+            if (format->u.video.padding.left || format->u.video.padding.right
+                || format->u.video.padding.top || format->u.video.padding.bottom)
             {
                 MFVideoArea aperture =
                 {
