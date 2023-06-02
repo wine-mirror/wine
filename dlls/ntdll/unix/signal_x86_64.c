@@ -88,17 +88,17 @@ WINE_DECLARE_DEBUG_CHANNEL(seh);
 #include <asm/prctl.h>
 static inline int arch_prctl( int func, void *ptr ) { return syscall( __NR_arch_prctl, func, ptr ); }
 
-extern int CDECL alloc_fs_sel( int sel, void *base ) DECLSPEC_HIDDEN;
+extern int alloc_fs_sel( int sel, void *base ) DECLSPEC_HIDDEN;
 __ASM_GLOBAL_FUNC( alloc_fs_sel,
                    /* switch to 32-bit stack */
                    "pushq %rbx\n\t"
-                   "pushq %rdi\n\t"
-                   "movq %rsp,%rdi\n\t"
-                   "movl 0x4(%rdx),%esp\n\t"  /* Tib.StackBase */
+                   "pushq %r12\n\t"
+                   "movq %rsp,%r12\n\t"
+                   "movl 0x4(%rsi),%esp\n\t"  /* Tib.StackBase */
                    "subl $0x20,%esp\n\t"
                    /* setup modify_ldt struct on 32-bit stack */
-                   "movl %ecx,(%rsp)\n\t"     /* entry_number */
-                   "movl %edx,4(%rsp)\n\t"    /* base */
+                   "movl %edi,(%rsp)\n\t"     /* entry_number */
+                   "movl %esi,4(%rsp)\n\t"    /* base */
                    "movl $~0,8(%rsp)\n\t"     /* limit */
                    "movl $0x41,12(%rsp)\n\t"  /* seg_32bit | usable */
                    /* invoke 32-bit syscall */
@@ -107,8 +107,8 @@ __ASM_GLOBAL_FUNC( alloc_fs_sel,
                    "int $0x80\n\t"
                    /* restore stack */
                    "movl (%rsp),%eax\n\t"     /* entry_number */
-                   "movq %rdi,%rsp\n\t"
-                   "popq %rdi\n\t"
+                   "movq %r12,%rsp\n\t"
+                   "popq %r12\n\t"
                    "popq %rbx\n\t"
                    "ret" );
 
