@@ -2492,8 +2492,8 @@ static void test_rsa_encrypt(void)
     decrypted = malloc(decrypted_size);
     BCryptDecrypt(key, encrypted_a, encrypted_size, &oaep_pad, NULL, 0, decrypted, decrypted_size, &decrypted_size, BCRYPT_PAD_OAEP);
     ok(!memcmp(decrypted, input, sizeof(input)), "Decrypted output it's not what expected\n");
-    }
     free(decrypted);
+    }
 
     free(encrypted_a);
     free(encrypted_b);
