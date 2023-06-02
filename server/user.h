@@ -109,6 +109,7 @@ extern void queue_cleanup_window( struct thread *thread, user_handle_t win );
 extern int init_thread_queue( struct thread *thread );
 extern int attach_thread_input( struct thread *thread_from, struct thread *thread_to );
 extern void detach_thread_input( struct thread *thread_from );
+extern void set_clip_rectangle( struct desktop *desktop, const rectangle_t *rect, int send_clip_msg );
 extern void post_message( user_handle_t win, unsigned int message,
                           lparam_t wparam, lparam_t lparam );
 extern void send_notify_message( user_handle_t win, unsigned int message,
