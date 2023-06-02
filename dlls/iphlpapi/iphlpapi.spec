@@ -130,7 +130,7 @@
 @ stdcall GetPerAdapterInfo( long ptr ptr )
 #@ stub GetPerTcp6ConnectionEStats
 #@ stub GetPerTcp6ConnectionStats
-#@ stub GetPerTcpConnectionEStats
+@ stdcall GetPerTcpConnectionEStats( ptr long ptr long long ptr long long ptr long long )
 #@ stub GetPerTcpConnectionStats
 @ stdcall GetRTTAndHopCount( long ptr long ptr )
 #@ stub GetSessionCompartmentId

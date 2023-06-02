@@ -25,6 +25,7 @@ extern "C" {
 #include <iprtrmib.h>
 #include <ipexport.h>
 #include <iptypes.h>
+#include <tcpestats.h>
 
 #define NET_STRING_IPV4_ADDRESS           0x00000001
 #define NET_STRING_IPV4_SERVICE           0x00000002
@@ -85,6 +86,11 @@ DWORD WINAPI GetTcpStatistics(PMIB_TCPSTATS pStats);
 
 DWORD WINAPI GetTcpStatisticsEx(PMIB_TCPSTATS pStats, DWORD dwFamily);
 
+ULONG WINAPI GetPerTcpConnectionEStats(MIB_TCPROW *row, TCP_ESTATS_TYPE stats, UCHAR *rw, ULONG rw_version,
+                                       ULONG rw_size, UCHAR *ro_static, ULONG ro_static_version,
+                                       ULONG ro_static_size, UCHAR *ro_dynamic, ULONG ro_dynamic_version,
+                                       ULONG ro_dynamic_size);
+
 DWORD WINAPI GetUdpStatistics(PMIB_UDPSTATS pStats);
 
 DWORD WINAPI GetUdpStatisticsEx(PMIB_UDPSTATS pStats, DWORD dwFamily);
@@ -98,6 +104,9 @@ DWORD WINAPI SetIpForwardEntry(PMIB_IPFORWARDROW pRoute);
 DWORD WINAPI DeleteIpForwardEntry(PMIB_IPFORWARDROW pRoute);
 
 DWORD WINAPI SetIpStatistics(PMIB_IPSTATS pIpStats);
+
+DWORD WINAPI SetPerTcpConnectionEStats(MIB_TCPROW *row, TCP_ESTATS_TYPE state, BYTE *rw,
+                                       ULONG version, ULONG size, ULONG offset);
 
 DWORD WINAPI SetIpTTL(UINT nTTL);
 
