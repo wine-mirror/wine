@@ -1035,7 +1035,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH ConvertFiberToThread(void)
 /***********************************************************************
  *           ConvertThreadToFiber   (kernelbase.@)
  */
-LPVOID WINAPI DECLSPEC_HOTPATCH ConvertThreadToFiber( LPVOID param )
+LPVOID WINAPI /* DECLSPEC_HOTPATCH */ ConvertThreadToFiber( LPVOID param )
 {
     return ConvertThreadToFiberEx( param, 0 );
 }
