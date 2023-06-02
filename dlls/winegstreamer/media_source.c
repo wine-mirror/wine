@@ -616,7 +616,7 @@ static DWORD CALLBACK read_thread(void *arg)
     struct media_source *source = arg;
     IMFByteStream *byte_stream = source->byte_stream;
     size_t buffer_size = 4096;
-    uint64_t file_size;
+    QWORD file_size;
     void *data;
 
     if (!(data = malloc(buffer_size)))
@@ -1482,7 +1482,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
     struct media_source *object;
     struct wg_parser *parser;
     DWORD bytestream_caps;
-    uint64_t file_size;
+    QWORD file_size;
     unsigned int i;
     HRESULT hr;
 
