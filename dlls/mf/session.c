@@ -2397,6 +2397,7 @@ static HRESULT session_get_renderer_node_service(struct media_session *session,
                             if (FAILED(hr = MFGetService((IUnknown *)sink, service, riid, obj)))
                                 WARN("Failed to get service from renderer node, %#lx.\n", hr);
                         }
+                        IMFMediaSink_Release(sink);
                     }
                     IMFStreamSink_Release(stream_sink);
                 }
