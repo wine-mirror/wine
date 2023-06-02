@@ -2694,10 +2694,12 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "leaq -0x98(%rbp),%rcx\n"
                    "2:\n\t"
 #endif
-                   "leaq 0x28(%rsp),%rsi\n\t"      /* first argument */
+                   "movq 0x28(%rsp),%r12\n\t"      /* 5th argument */
+                   "movq 0x30(%rsp),%r13\n\t"      /* 6th argument */
+                   "leaq 0x38(%rsp),%rsi\n\t"      /* 7th argument */
                    "movq %rcx,%rsp\n\t"
                    "movq 0x00(%rcx),%rax\n\t"
-                   "movq 0x18(%rcx),%rdx\n\t"
+                   "movq 0x18(%rcx),%r11\n\t"      /* 2nd argument */
                    "movl %eax,%ebx\n\t"
                    "shrl $8,%ebx\n\t"
                    "andl $0x30,%ebx\n\t"           /* syscall table number */
@@ -2708,7 +2710,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "jae 5f\n\t"
                    "movq 24(%rbx),%rcx\n\t"        /* table->ArgumentTable */
                    "movzbl (%rcx,%rax),%ecx\n\t"
-                   "subq $0x20,%rcx\n\t"
+                   "subq $0x30,%rcx\n\t"
                    "jbe 1f\n\t"
                    "subq %rcx,%rsp\n\t"
                    "shrq $3,%rcx\n\t"
@@ -2716,8 +2718,12 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movq %rsp,%rdi\n\t"
                    "cld\n\t"
                    "rep; movsq\n"
-                   "1:\tmovq %r10,%rcx\n\t"
-                   "subq $0x20,%rsp\n\t"
+                   "1:\tmovq %r10,%rdi\n\t"        /* 1st argument */
+                   "movq %r11,%rsi\n\t"            /* 2nd argument */
+                   "movq %r8,%rdx\n\t"             /* 3rd argument */
+                   "movq %r9,%rcx\n\t"             /* 4th argument */
+                   "movq %r12,%r8\n\t"             /* 5th argument */
+                   "movq %r13,%r9\n\t"             /* 6th argument */
                    "movq (%rbx),%r10\n\t"          /* table->ServiceTable */
                    "callq *(%r10,%rax,8)\n\t"
                    "leaq -0x98(%rbp),%rcx\n\t"
@@ -2732,8 +2738,19 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "1:\n\t"
 #endif
                    "testl $0x48,%edx\n\t"          /* CONTEXT_FLOATING_POINT | CONTEXT_XSTATE */
-                   "jz 4f\n\t"
-                   "testl $3,%r14d\n\t"            /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
+                   "jnz 2f\n\t"
+                   "movaps 0x1c0(%rcx),%xmm6\n\t"
+                   "movaps 0x1d0(%rcx),%xmm7\n\t"
+                   "movaps 0x1e0(%rcx),%xmm8\n\t"
+                   "movaps 0x1f0(%rcx),%xmm9\n\t"
+                   "movaps 0x200(%rcx),%xmm10\n\t"
+                   "movaps 0x210(%rcx),%xmm11\n\t"
+                   "movaps 0x220(%rcx),%xmm12\n\t"
+                   "movaps 0x230(%rcx),%xmm13\n\t"
+                   "movaps 0x240(%rcx),%xmm14\n\t"
+                   "movaps 0x250(%rcx),%xmm15\n\t"
+                   "jmp 4f\n"
+                   "2:\ttestl $3,%r14d\n\t"        /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
                    "jz 3f\n\t"
                    "movq %rax,%r11\n\t"
                    "movl $7,%eax\n\t"

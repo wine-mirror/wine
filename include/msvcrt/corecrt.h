@@ -29,6 +29,10 @@
 # error You cannot use config.h with msvcrt
 #endif
 
+#ifdef WINE_UNIX_LIB
+# error msvcrt headers cannot be used in Unix code
+#endif
+
 #ifndef _WIN32
 # define _WIN32
 #endif
