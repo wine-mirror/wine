@@ -165,7 +165,7 @@ static BOOL is_compressed_subtype(const GUID *subtype)
     return FALSE;
 }
 
-static DWORD subtype_to_compression(const GUID *subtype)
+static DWORD subtype_to_tag(const GUID *subtype)
 {
     if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB32)
             || IsEqualGUID(subtype, &MEDIASUBTYPE_RGB24)
@@ -174,6 +174,8 @@ static DWORD subtype_to_compression(const GUID *subtype)
         return BI_RGB;
     else if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB565))
         return BI_BITFIELDS;
+    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_PCM))
+        return WAVE_FORMAT_PCM;
     else
         return subtype->Data1;
 }
@@ -248,7 +250,7 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
 }
 
 #define check_member_(file, line, val, exp, fmt, member)                                           \
-    ok_ (file, line)((val).member == (exp).member, "got " #member " " fmt "\n", (val).member)
+    ok_ (file, line)((val).member == (exp).member, "Got " #member " " fmt ", expected " fmt ".\n", (val).member, (exp).member)
 #define check_member(val, exp, fmt, member) check_member_(__FILE__, __LINE__, val, exp, fmt, member)
 
 void check_attributes_(const char *file, int line, IMFAttributes *attributes,
@@ -444,7 +446,7 @@ static void init_dmo_media_type_video(DMO_MEDIA_TYPE *media_type,
     header->bmiHeader.biHeight = height;
     header->bmiHeader.biPlanes = 1;
     header->bmiHeader.biBitCount = subtype_to_bpp(subtype);
-    header->bmiHeader.biCompression = subtype_to_compression(subtype);
+    header->bmiHeader.biCompression = subtype_to_tag(subtype);
 
     media_type->majortype = MEDIATYPE_Video;
     media_type->subtype = *subtype;
@@ -475,7 +477,7 @@ static void init_dmo_media_type_audio(DMO_MEDIA_TYPE *media_type,
     media_type->cbFormat = sizeof(*format) + extra_bytes;
     media_type->pbFormat = (BYTE *)format;
 
-    format->wFormatTag = subtype->Data1;
+    format->wFormatTag = subtype_to_tag(subtype);
     format->nChannels = channel_count;
     format->nSamplesPerSec = rate;
     format->wBitsPerSample = bits_per_sample;
@@ -1313,50 +1315,34 @@ static void check_video_info_header_(int line, VIDEOINFOHEADER *info, const VIDE
             "Got unexpected rcTarget {%ld, %ld, %ld, %ld}, expected {%ld, %ld, %ld, %ld}.\n",
             info->rcTarget.left, info->rcTarget.top, info->rcTarget.right, info->rcTarget.bottom,
             expected->rcTarget.left, expected->rcTarget.top, expected->rcTarget.right, expected->rcTarget.bottom);
-    ok_(__FILE__, line)(info->dwBitRate == expected->dwBitRate,
-            "Got unexpected dwBitRate %lu, expected %lu.\n",
-            info->dwBitRate, expected->dwBitRate);
-    ok_(__FILE__, line)(info->dwBitErrorRate == expected->dwBitErrorRate,
-            "Got unexpected dwBitErrorRate %lu, expected %lu.\n",
-            info->dwBitErrorRate, expected->dwBitErrorRate);
-    ok_(__FILE__, line)(info->AvgTimePerFrame == expected->AvgTimePerFrame,
-            "Got unexpected AvgTimePerFrame %I64d, expected %I64d.\n",
-            info->AvgTimePerFrame, expected->AvgTimePerFrame);
-    ok_(__FILE__, line)(info->bmiHeader.biSize == expected->bmiHeader.biSize,
-            "Got unexpected bmiHeader.biSize %lu, expected %lu.\n",
-            info->bmiHeader.biSize, expected->bmiHeader.biSize);
-    ok_(__FILE__, line)(info->bmiHeader.biWidth == expected->bmiHeader.biWidth,
-            "Got unexpected bmiHeader.biWidth %ld, expected %ld.\n",
-            info->bmiHeader.biWidth, expected->bmiHeader.biWidth);
-    ok_(__FILE__, line)(info->bmiHeader.biHeight == expected->bmiHeader.biHeight,
-            "Got unexpected bmiHeader.biHeight %ld, expected %ld.\n",
-            info->bmiHeader.biHeight, expected->bmiHeader.biHeight);
-    ok_(__FILE__, line)(info->bmiHeader.biPlanes == expected->bmiHeader.biPlanes,
-            "Got unexpected bmiHeader.biPlanes %u, expected %u.\n",
-            info->bmiHeader.biPlanes, expected->bmiHeader.biPlanes);
-    ok_(__FILE__, line)(info->bmiHeader.biBitCount == expected->bmiHeader.biBitCount,
-            "Got unexpected bmiHeader.biBitCount %u, expected %u.\n",
-            info->bmiHeader.biBitCount, expected->bmiHeader.biBitCount);
-    ok_(__FILE__, line)(info->bmiHeader.biCompression == expected->bmiHeader.biCompression,
-            "Got unexpected bmiHeader.biCompression %#lx, expected %#lx.\n",
-            info->bmiHeader.biCompression, expected->bmiHeader.biCompression);
-    ok_(__FILE__, line)(info->bmiHeader.biSizeImage == expected->bmiHeader.biSizeImage,
-            "Got unexpected bmiHeader.biSizeImage %lu, expected %lu.\n",
-            info->bmiHeader.biSizeImage, expected->bmiHeader.biSizeImage);
-    ok_(__FILE__, line)(info->bmiHeader.biXPelsPerMeter == expected->bmiHeader.biXPelsPerMeter,
-            "Got unexpected bmiHeader.biXPelsPerMeter %ld, expected %ld.\n",
-            info->bmiHeader.biXPelsPerMeter, expected->bmiHeader.biXPelsPerMeter);
-    ok_(__FILE__, line)(info->bmiHeader.biYPelsPerMeter == expected->bmiHeader.biYPelsPerMeter,
-            "Got unexpected bmiHeader.xxxxxx %ld, expected %ld.\n",
-            info->bmiHeader.biYPelsPerMeter, expected->bmiHeader.biYPelsPerMeter);
+    check_member_(__FILE__, line, *info, *expected, "%lu",   dwBitRate);
+    check_member_(__FILE__, line, *info, *expected, "%lu",   dwBitErrorRate);
+    check_member_(__FILE__, line, *info, *expected, "%I64d", AvgTimePerFrame);
+    check_member_(__FILE__, line, *info, *expected, "%lu",   bmiHeader.biSize);
+    check_member_(__FILE__, line, *info, *expected, "%ld",   bmiHeader.biWidth);
+    check_member_(__FILE__, line, *info, *expected, "%ld",   bmiHeader.biHeight);
+    check_member_(__FILE__, line, *info, *expected, "%u",    bmiHeader.biPlanes);
+    check_member_(__FILE__, line, *info, *expected, "%u",    bmiHeader.biBitCount);
+    check_member_(__FILE__, line, *info, *expected, "%lx",   bmiHeader.biCompression);
+    check_member_(__FILE__, line, *info, *expected, "%lu",   bmiHeader.biSizeImage);
+    check_member_(__FILE__, line, *info, *expected, "%ld",   bmiHeader.biXPelsPerMeter);
+    check_member_(__FILE__, line, *info, *expected, "%ld",   bmiHeader.biYPelsPerMeter);
     todo_wine_if(expected->bmiHeader.biClrUsed != 0)
-    ok_(__FILE__, line)(info->bmiHeader.biClrUsed == expected->bmiHeader.biClrUsed,
-            "Got unexpected bmiHeader.biClrUsed %lu, expected %lu.\n",
-            info->bmiHeader.biClrUsed, expected->bmiHeader.biClrUsed);
+    check_member_(__FILE__, line, *info, *expected, "%lu",   bmiHeader.biClrUsed);
     todo_wine_if(expected->bmiHeader.biClrImportant != 0)
-    ok_(__FILE__, line)(info->bmiHeader.biClrImportant == expected->bmiHeader.biClrImportant,
-            "Got unexpected bmiHeader.biClrImportant %lu, expected %lu.\n",
-            info->bmiHeader.biClrImportant, expected->bmiHeader.biClrImportant);
+    check_member_(__FILE__, line, *info, *expected, "%lu",   bmiHeader.biClrImportant);
+}
+
+#define check_wave_format(a, b) check_wave_format_(__LINE__, a, b)
+static void check_wave_format_(int line, WAVEFORMATEX *info, const WAVEFORMATEX *expected)
+{
+    check_member_(__FILE__, line, *info, *expected, "%#x", wFormatTag);
+    check_member_(__FILE__, line, *info, *expected, "%u",  nChannels);
+    check_member_(__FILE__, line, *info, *expected, "%lu", nSamplesPerSec);
+    check_member_(__FILE__, line, *info, *expected, "%lu", nAvgBytesPerSec);
+    check_member_(__FILE__, line, *info, *expected, "%u",  nBlockAlign);
+    check_member_(__FILE__, line, *info, *expected, "%u",  wBitsPerSample);
+    check_member_(__FILE__, line, *info, *expected, "%u",  cbSize);
 }
 
 #define check_dmo_media_type(a, b) check_dmo_media_type_(__LINE__, a, b)
@@ -1370,24 +1356,16 @@ static void check_dmo_media_type_(int line, DMO_MEDIA_TYPE *media_type, const DM
             debugstr_guid(&media_type->subtype), debugstr_guid(&expected->subtype));
     if (IsEqualGUID(&expected->majortype, &MEDIATYPE_Video))
     {
-        ok_(__FILE__, line)(media_type->bFixedSizeSamples == expected->bFixedSizeSamples,
-                "Got unexpected bFixedSizeSamples %d, expected %d.\n",
-                media_type->bFixedSizeSamples, expected->bFixedSizeSamples);
-        ok_(__FILE__, line)(media_type->bTemporalCompression == expected->bTemporalCompression,
-                "Got unexpected bTemporalCompression %d, expected %d.\n",
-                media_type->bTemporalCompression, expected->bTemporalCompression);
-        ok_(__FILE__, line)(media_type->lSampleSize == expected->lSampleSize,
-                "Got unexpected lSampleSize %lu, expected %lu.\n",
-                media_type->lSampleSize, expected->lSampleSize);
+        check_member_(__FILE__, line, *media_type, *expected, "%d",  bFixedSizeSamples);
+        check_member_(__FILE__, line, *media_type, *expected, "%d",  bTemporalCompression);
+        check_member_(__FILE__, line, *media_type, *expected, "%lu", lSampleSize);
     }
     ok_(__FILE__, line)(IsEqualGUID(&media_type->formattype, &expected->formattype),
             "Got unexpected formattype %s.\n",
             debugstr_guid(&media_type->formattype));
     ok_(__FILE__, line)(media_type->pUnk == NULL, "Got unexpected pUnk %p.\n", media_type->pUnk);
     todo_wine_if(expected->cbFormat && expected->cbFormat != sizeof(VIDEOINFOHEADER))
-    ok_(__FILE__, line)(media_type->cbFormat == expected->cbFormat,
-            "Got unexpected cbFormat %lu, expected %lu.\n",
-            media_type->cbFormat, expected->cbFormat);
+    check_member_(__FILE__, line, *media_type, *expected, "%lu", cbFormat);
 
     if (expected->pbFormat)
     {
@@ -1398,6 +1376,9 @@ static void check_dmo_media_type_(int line, DMO_MEDIA_TYPE *media_type, const DM
         if (IsEqualGUID(&media_type->formattype, &FORMAT_VideoInfo)
                 && IsEqualGUID(&expected->formattype, &FORMAT_VideoInfo))
             check_video_info_header((VIDEOINFOHEADER *)media_type->pbFormat, (VIDEOINFOHEADER *)expected->pbFormat);
+        else if (IsEqualGUID(&media_type->formattype, &FORMAT_WaveFormatEx)
+                && IsEqualGUID(&expected->formattype, &FORMAT_WaveFormatEx))
+            check_wave_format((WAVEFORMATEX *)media_type->pbFormat, (WAVEFORMATEX *)expected->pbFormat);
     }
 }
 
@@ -3597,6 +3578,243 @@ static void test_wma_decoder_dmo_input_type(void)
         check_dmo_media_type(&type, good_input_type);
         MoFreeMediaType(&type);
     }
+
+    /* Cleanup. */
+    ret = IMediaObject_Release(dmo);
+    ok(ret == 0, "Release returned %lu\n", ret);
+    CoUninitialize();
+    winetest_pop_context();
+}
+
+static void test_wma_decoder_dmo_output_type(void)
+{
+    const UINT channel_count = 2, rate = 22050, bits_per_sample = WMAUDIO_BITS_PER_SAMPLE;
+    const GUID* input_subtype = &MEDIASUBTYPE_WMAUDIO2;
+    const WAVEFORMATEX expected_output_info =
+    {
+        WAVE_FORMAT_PCM, channel_count, rate, bits_per_sample * rate * channel_count / 8,
+        bits_per_sample * channel_count / 8, WMAUDIO_BITS_PER_SAMPLE, 0
+    };
+    const DMO_MEDIA_TYPE expected_output_type =
+    {
+        MEDIATYPE_Audio, MEDIASUBTYPE_PCM, TRUE, FALSE, 0, FORMAT_WaveFormatEx, NULL,
+        sizeof(expected_output_info), (BYTE *)&expected_output_info
+    };
+
+    char buffer_good_output[1024], buffer_bad_output[1024], buffer_input[1024];
+    DMO_MEDIA_TYPE *good_output_type, *bad_output_type, *input_type, type;
+    DWORD count, i, ret;
+    IMediaObject *dmo;
+    HRESULT hr;
+
+    winetest_push_context("wmadec");
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "CoInitialize failed, hr %#lx.\n", hr);
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_CWMADecMediaObject, NULL, CLSCTX_INPROC_SERVER, &IID_IMediaObject, (void **)&dmo)))
+    {
+        CoUninitialize();
+        winetest_pop_context();
+        return;
+    }
+
+    /* Initialize media types. */
+    input_type = (void *)buffer_input;
+    good_output_type = (void *)buffer_good_output;
+    bad_output_type = (void *)buffer_bad_output;
+    init_dmo_media_type_audio(input_type, input_subtype, channel_count, rate, 32);
+    init_dmo_media_type_audio(good_output_type, &MEDIASUBTYPE_PCM, channel_count, rate, bits_per_sample);
+    memset(bad_output_type, 0, sizeof(buffer_bad_output));
+
+    /* Test GetOutputType. */
+    hr = IMediaObject_GetOutputType(dmo, 1, 0, NULL);
+    todo_wine
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputType(dmo, 0, 0, NULL);
+    todo_wine
+    ok(hr == DMO_E_TYPE_NOT_SET, "GetOutputType returned %#lx.\n", hr);
+
+    hr = IMediaObject_SetInputType(dmo, 0, input_type, 0);
+    todo_wine
+    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+
+    todo_wine
+    {
+    count = 1;
+    hr = IMediaObject_GetOutputType(dmo, 1, 0, NULL);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputType(dmo, 1, 0, &type);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputType(dmo, 1, count, &type);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputType(dmo, 0, count, &type);
+    ok(hr == DMO_E_NO_MORE_ITEMS, "GetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputType(dmo, 0, count, NULL);
+    ok(hr == DMO_E_NO_MORE_ITEMS, "GetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputType(dmo, 0, 0xdeadbeef, NULL);
+    ok(hr == DMO_E_NO_MORE_ITEMS, "GetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputType(dmo, 0, count - 1, NULL);
+    ok(hr == S_OK, "GetOutputType returned %#lx.\n", hr);
+    }
+
+    i = -1;
+    while (SUCCEEDED(hr = IMediaObject_GetOutputType(dmo, 0, ++i, &type)))
+    {
+        winetest_push_context("type %lu", i);
+        check_dmo_media_type(&type, &expected_output_type);
+        MoFreeMediaType(&type);
+        winetest_pop_context();
+    }
+    todo_wine
+    ok(hr == DMO_E_NO_MORE_ITEMS, "GetInputType returned %#lx.\n", hr);
+    todo_wine
+    ok(i == count, "%lu types.\n", i);
+
+    /* Test SetOutputType. */
+    hr = IMediaObject_SetInputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
+    todo_wine
+    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+    todo_wine
+    {
+    hr = IMediaObject_SetOutputType(dmo, 1, NULL, 0);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 1, good_output_type, 0);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, NULL, 0);
+    ok(hr == E_POINTER, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
+    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, bad_output_type, 0);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, bad_output_type, DMO_SET_TYPEF_CLEAR);
+    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, good_output_type, 0);
+    ok(hr == DMO_E_TYPE_NOT_SET, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, good_output_type, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == DMO_E_TYPE_NOT_SET, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, good_output_type, DMO_SET_TYPEF_CLEAR);
+    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, good_output_type, 0x4);
+    ok(hr == E_INVALIDARG, "SetOutputType returned %#lx.\n", hr);
+    }
+
+    hr = IMediaObject_SetInputType(dmo, 0, input_type, 0);
+    todo_wine
+    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+
+    todo_wine
+    {
+    hr = IMediaObject_SetOutputType(dmo, 1, NULL, 0);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 1, bad_output_type, 0);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 1, good_output_type, 0);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 1, NULL, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 1, bad_output_type, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 1, good_output_type, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 1, NULL, DMO_SET_TYPEF_CLEAR);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 1, bad_output_type, DMO_SET_TYPEF_CLEAR);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 1, good_output_type, DMO_SET_TYPEF_CLEAR);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 1, NULL, 0x4);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 1, bad_output_type, 0x4);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 1, good_output_type, 0x4);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetOutputType returned %#lx.\n", hr);
+
+    hr = IMediaObject_SetOutputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
+    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR | DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == E_INVALIDARG, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR | 0x4);
+    ok(hr == E_INVALIDARG, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, NULL, 0);
+    ok(hr == E_POINTER, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, NULL, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == E_POINTER, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, NULL, 0x4);
+    ok(hr == E_POINTER, "SetOutputType returned %#lx.\n", hr);
+
+    hr = IMediaObject_SetOutputType(dmo, 0, bad_output_type, 0);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, bad_output_type, DMO_SET_TYPEF_CLEAR);
+    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, bad_output_type, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, bad_output_type, 0x4);
+    ok(hr == E_INVALIDARG, "SetOutputType returned %#lx.\n", hr);
+
+    hr = IMediaObject_SetOutputType(dmo, 0, good_output_type, 0);
+    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, good_output_type, DMO_SET_TYPEF_CLEAR);
+    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, good_output_type, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, good_output_type, 0x4);
+    ok(hr == E_INVALIDARG, "SetOutputType returned %#lx.\n", hr);
+    }
+
+    /* Test GetOutputCurrentType. */
+    hr = IMediaObject_SetOutputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
+    todo_wine
+    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+    todo_wine
+    {
+    hr = IMediaObject_GetOutputCurrentType(dmo, 1, NULL);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputCurrentType returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputCurrentType(dmo, 0, NULL);
+    ok(hr == DMO_E_TYPE_NOT_SET, "GetOutputCurrentType returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputCurrentType(dmo, 1, &type);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputCurrentType returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputCurrentType(dmo, 0, &type);
+    ok(hr == DMO_E_TYPE_NOT_SET, "GetOutputCurrentType returned %#lx.\n", hr);
+    }
+
+    hr = IMediaObject_SetOutputType(dmo, 0, good_output_type, 0);
+    todo_wine
+    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+    todo_wine
+    {
+    hr = IMediaObject_GetOutputCurrentType(dmo, 1, NULL);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputCurrentType returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputCurrentType(dmo, 0, NULL);
+    ok(hr == E_POINTER, "GetOutputCurrentType returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputCurrentType(dmo, 1, &type);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputCurrentType returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputCurrentType(dmo, 0, &type);
+    ok(hr == S_OK, "GetOutputCurrentType returned %#lx.\n", hr);
+    }
+    if (hr == S_OK)
+    {
+        check_dmo_media_type(&type, good_output_type);
+        MoFreeMediaType(&type);
+    }
+
+    hr = IMediaObject_GetInputCurrentType(dmo, 0, input_type);
+    todo_wine
+    ok(hr == S_OK, "GetInputCurrentType returned %#lx.\n", hr);
+    hr = IMediaObject_SetInputType(dmo, 0, input_type, 0);
+    todo_wine
+    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputCurrentType(dmo, 0, &type);
+    todo_wine
+    ok(hr == S_OK, "GetOutputCurrentType returned %#lx.\n", hr);
+
+    init_dmo_media_type_audio(input_type, input_subtype, channel_count, rate * 2, 32);
+    hr = IMediaObject_SetInputType(dmo, 0, input_type, 0);
+    todo_wine
+    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputCurrentType(dmo, 0, &type);
+    todo_wine
+    ok(hr == DMO_E_TYPE_NOT_SET, "GetOutputCurrentType returned %#lx.\n", hr);
 
     /* Cleanup. */
     ret = IMediaObject_Release(dmo);
@@ -8094,6 +8312,7 @@ START_TEST(transform)
     test_wma_encoder();
     test_wma_decoder();
     test_wma_decoder_dmo_input_type();
+    test_wma_decoder_dmo_output_type();
     test_h264_decoder();
     test_wmv_encoder();
     test_wmv_decoder();
