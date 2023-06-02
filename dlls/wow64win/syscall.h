@@ -341,6 +341,7 @@
     SYSCALL_ENTRY( NtUserPostMessage ) \
     SYSCALL_ENTRY( NtUserPostThreadMessage ) \
     SYSCALL_ENTRY( NtUserPrintWindow ) \
+    SYSCALL_ENTRY( NtUserQueryDisplayConfig ) \
     SYSCALL_ENTRY( NtUserQueryInputContext ) \
     SYSCALL_ENTRY( NtUserRealChildWindowFromPoint ) \
     SYSCALL_ENTRY( NtUserRedrawWindow ) \

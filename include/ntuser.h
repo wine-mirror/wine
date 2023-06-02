@@ -843,6 +843,9 @@ BOOL    WINAPI NtUserPerMonitorDPIPhysicalToLogicalPoint( HWND hwnd, POINT *pt )
 BOOL    WINAPI NtUserPostMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
 BOOL    WINAPI NtUserPostThreadMessage( DWORD thread, UINT msg, WPARAM wparam, LPARAM lparam );
 BOOL    WINAPI NtUserPrintWindow( HWND hwnd, HDC hdc, UINT flags );
+LONG    WINAPI NtUserQueryDisplayConfig( UINT32 flags, UINT32 *numpathelements, DISPLAYCONFIG_PATH_INFO *pathinfo,
+                                        UINT32 *numinfoelements, DISPLAYCONFIG_MODE_INFO *modeinfo,
+                                        DISPLAYCONFIG_TOPOLOGY_ID *topologyid);
 UINT_PTR WINAPI NtUserQueryInputContext( HIMC handle, UINT attr );
 HWND    WINAPI NtUserRealChildWindowFromPoint( HWND parent, LONG x, LONG y );
 BOOL    WINAPI NtUserRedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags );

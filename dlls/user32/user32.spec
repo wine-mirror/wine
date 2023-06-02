@@ -587,7 +587,7 @@
 # @ stub PrivateSetDbgTag
 # @ stub PrivateSetRipFlags
 @ stdcall PtInRect(ptr int64)
-@ stdcall QueryDisplayConfig(long ptr ptr ptr ptr ptr)
+@ stdcall QueryDisplayConfig(long ptr ptr ptr ptr ptr) NtUserQueryDisplayConfig
 @ stub QuerySendMessage
 # @ stub QueryUserCounters
 @ stdcall RealChildWindowFromPoint(long int64)

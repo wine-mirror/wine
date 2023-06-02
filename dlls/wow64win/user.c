@@ -3318,6 +3318,18 @@ NTSTATUS WINAPI wow64_NtUserPrintWindow( UINT *args )
     return NtUserPrintWindow( hwnd, hdc, flags );
 }
 
+NTSTATUS WINAPI wow64_NtUserQueryDisplayConfig( UINT *args )
+{
+    UINT32 flags = get_ulong( &args );
+    UINT32 *paths_count = get_ptr( &args );
+    DISPLAYCONFIG_PATH_INFO *paths = get_ptr( &args );
+    UINT32 *modes_count = get_ptr( &args );
+    DISPLAYCONFIG_MODE_INFO *modes = get_ptr( &args );
+    DISPLAYCONFIG_TOPOLOGY_ID *topology_id = get_ptr( &args );
+
+    return NtUserQueryDisplayConfig( flags, paths_count, paths, modes_count, modes, topology_id );
+}
+
 NTSTATUS WINAPI wow64_NtUserQueryInputContext( UINT *args )
 {
     HIMC handle = get_handle( &args );
