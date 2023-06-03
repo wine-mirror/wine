@@ -842,11 +842,13 @@ do
 
     saved_CC=$CC
     saved_CFLAGS=$CFLAGS
+    saved_LDFLAGS=$LDFLAGS
 
     CFLAGS=${CROSSCFLAGS:-"-g -O2"}
+    LDFLAGS=$CROSSLDFLAGS
     AS_VAR_COPY([CC],[${wine_arch}_CC])
     AS_VAR_COPY([${wine_arch}_CFLAGS],[CFLAGS])
-    AS_VAR_COPY([${wine_arch}_LDFLAGS],[CROSSLDFLAGS])
+    AS_VAR_COPY([${wine_arch}_LDFLAGS],[LDFLAGS])
     AS_VAR_SET([${wine_arch}_EXTRACFLAGS],["-D__WINE_PE_BUILD -Wall"])
 
     target=""
@@ -892,6 +894,7 @@ do
     then
         CC=$saved_CC
         CFLAGS=$saved_CFLAGS
+        LDFLAGS=$saved_LDFLAGS
         continue
     fi
     AS_VAR_APPEND([PE_ARCHS],[" $wine_arch"])
@@ -982,6 +985,7 @@ do
 
     CC=$saved_CC
     CFLAGS=$saved_CFLAGS
+    LDFLAGS=$saved_LDFLAGS
 done
 
 if test $HOST_ARCH = aarch64 -a "x$PE_ARCHS" = x

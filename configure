@@ -10591,11 +10591,13 @@ fi
 
     saved_CC=$CC
     saved_CFLAGS=$CFLAGS
+    saved_LDFLAGS=$LDFLAGS
 
     CFLAGS=${CROSSCFLAGS:-"-g -O2"}
+    LDFLAGS=$CROSSLDFLAGS
     eval CC=\$${wine_arch}_CC
     eval ${wine_arch}_CFLAGS=\$CFLAGS
-    eval ${wine_arch}_LDFLAGS=\$CROSSLDFLAGS
+    eval ${wine_arch}_LDFLAGS=\$LDFLAGS
     eval "${wine_arch}_EXTRACFLAGS=\"-D__WINE_PE_BUILD -Wall\""
 
     target=""
@@ -10699,6 +10701,7 @@ fi
     then
         CC=$saved_CC
         CFLAGS=$saved_CFLAGS
+        LDFLAGS=$saved_LDFLAGS
         continue
     fi
     as_fn_append PE_ARCHS " $wine_arch"
@@ -11672,6 +11675,7 @@ fi }
 
     CC=$saved_CC
     CFLAGS=$saved_CFLAGS
+    LDFLAGS=$saved_LDFLAGS
 done
 
 if test $HOST_ARCH = aarch64 -a "x$PE_ARCHS" = x
