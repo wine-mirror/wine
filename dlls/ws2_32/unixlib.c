@@ -66,6 +66,7 @@
 
 #ifdef HAVE_NETIPX_IPX_H
 # include <netipx/ipx.h>
+# define HAS_IPX
 #elif defined(HAVE_LINUX_IPX_H)
 # ifdef HAVE_ASM_TYPES_H
 #  include <asm/types.h>
@@ -74,8 +75,6 @@
 #  include <linux/types.h>
 # endif
 # include <linux/ipx.h>
-#endif
-#if defined(SOL_IPX) || defined(SO_DEFAULT_HEADERS)
 # define HAS_IPX
 #endif
 
