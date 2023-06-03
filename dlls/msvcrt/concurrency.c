@@ -214,12 +214,14 @@ struct scheduled_chore {
 };
 
 /* keep in sync with msvcp90/msvcp90.h */
+#define CS_UNLOCK 1
+#define CS_TIMEOUT 2
 typedef struct cs_queue
 {
     Context *ctx;
     struct cs_queue *next;
 #if _MSVCR_VER >= 110
-    LONG free;
+    LONG status;
     int unknown;
 #endif
 } cs_queue;
@@ -2417,14 +2419,6 @@ critical_section* __thiscall critical_section_ctor(critical_section *this)
 {
     TRACE("(%p)\n", this);
 
-    if(!keyed_event) {
-        HANDLE event;
-
-        NtCreateKeyedEvent(&event, GENERIC_READ|GENERIC_WRITE, NULL, 0);
-        if(InterlockedCompareExchangePointer(&keyed_event, event, NULL) != NULL)
-            NtClose(event);
-    }
-
     this->unk_active.ctx = NULL;
     this->head = this->tail = NULL;
     return this;
@@ -2474,10 +2468,11 @@ static inline void cs_lock(critical_section *cs, cs_queue *q)
     }
 
     memset(q, 0, sizeof(*q));
+    q->ctx = get_current_context();
     last = InterlockedExchangePointer(&cs->tail, q);
     if(last) {
         last->next = q;
-        NtWaitForKeyedEvent(keyed_event, q, 0, NULL);
+        call_Context_Block(q->ctx);
     }
 
     cs_set_head(cs, q);
@@ -2539,7 +2534,7 @@ void __thiscall critical_section_unlock(critical_section *this)
     while(1) {
         cs_queue *next;
 
-        if(!InterlockedExchange(&this->unk_active.next->free, TRUE))
+        if(!InterlockedCompareExchange(&this->unk_active.next->status, CS_UNLOCK, 0))
             break;
 
         next = this->unk_active.next;
@@ -2554,7 +2549,7 @@ void __thiscall critical_section_unlock(critical_section *this)
     }
 #endif
 
-    NtReleaseKeyedEvent(keyed_event, this->unk_active.next, 0, NULL);
+    call_Context_Unblock(this->unk_active.next->ctx);
 }
 
 /* ?native_handle@critical_section@Concurrency@@QAEAAV12@XZ */
@@ -2567,17 +2562,26 @@ critical_section* __thiscall critical_section_native_handle(critical_section *th
 }
 
 #if _MSVCR_VER >= 110
+static void WINAPI timeout_unlock(TP_CALLBACK_INSTANCE *instance, void *ctx, TP_TIMER *timer)
+{
+    cs_queue *q = ctx;
+
+    if(!InterlockedCompareExchange(&q->status, CS_TIMEOUT, 0))
+        call_Context_Unblock(q->ctx);
+}
+
 /* ?try_lock_for@critical_section@Concurrency@@QAE_NI@Z */
 /* ?try_lock_for@critical_section@Concurrency@@QEAA_NI@Z */
 DEFINE_THISCALL_WRAPPER(critical_section_try_lock_for, 8)
 bool __thiscall critical_section_try_lock_for(
         critical_section *this, unsigned int timeout)
 {
+    Context *ctx = get_current_context();
     cs_queue *q, *last;
 
     TRACE("(%p %d)\n", this, timeout);
 
-    if(this->unk_active.ctx == get_current_context()) {
+    if(this->unk_active.ctx == ctx) {
         improper_lock e;
         improper_lock_ctor_str(&e, "Already locked");
         _CxxThrowException(&e, &improper_lock_exception_type);
@@ -2585,25 +2589,36 @@ bool __thiscall critical_section_try_lock_for(
 
     if(!(q = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*q))))
         return critical_section_try_lock(this);
+    q->ctx = ctx;
 
     last = InterlockedExchangePointer(&this->tail, q);
     if(last) {
+        TP_TIMER *tp_timer;
         LARGE_INTEGER to;
-        NTSTATUS status;
         FILETIME ft;
 
         last->next = q;
         GetSystemTimeAsFileTime(&ft);
         to.QuadPart = ((LONGLONG)ft.dwHighDateTime << 32) +
             ft.dwLowDateTime + (LONGLONG)timeout * TICKSPERMSEC;
-        status = NtWaitForKeyedEvent(keyed_event, q, 0, &to);
-        if(status == STATUS_TIMEOUT) {
-            if(!InterlockedExchange(&q->free, TRUE))
-                return FALSE;
-            /* A thread has signaled the event and is block waiting. */
-            /* We need to catch the event to wake the thread.        */
-            NtWaitForKeyedEvent(keyed_event, q, 0, NULL);
+        ft.dwHighDateTime = to.QuadPart >> 32;
+        ft.dwLowDateTime = to.QuadPart;
+
+        tp_timer = CreateThreadpoolTimer(timeout_unlock, q, NULL);
+        if(!tp_timer) {
+            FIXME("throw exception?\n");
+            return FALSE;
         }
+        SetThreadpoolTimer(tp_timer, &ft, 0, 0);
+
+        call_Context_Block(q->ctx);
+
+        SetThreadpoolTimer(tp_timer, NULL, 0, 0);
+        WaitForThreadpoolTimerCallbacks(tp_timer, TRUE);
+        CloseThreadpoolTimer(tp_timer);
+
+        if(q->status == CS_TIMEOUT)
+            return FALSE;
     }
 
     cs_set_head(this, q);
@@ -2862,6 +2877,14 @@ DEFINE_THISCALL_WRAPPER(event_ctor, 4)
 event* __thiscall event_ctor(event *this)
 {
     TRACE("(%p)\n", this);
+
+    if(!keyed_event) {
+        HANDLE event;
+
+        NtCreateKeyedEvent(&event, GENERIC_READ|GENERIC_WRITE, NULL, 0);
+        if(InterlockedCompareExchangePointer(&keyed_event, event, NULL) != NULL)
+            NtClose(event);
+    }
 
     this->waiters = NULL;
     this->signaled = FALSE;
