@@ -45,6 +45,7 @@
 
 #ifdef HAVE_NETIPX_IPX_H
 # include <netipx/ipx.h>
+# define HAS_IPX
 #elif defined(HAVE_LINUX_IPX_H)
 # ifdef HAVE_ASM_TYPES_H
 #  include <asm/types.h>
@@ -53,8 +54,6 @@
 #  include <linux/types.h>
 # endif
 # include <linux/ipx.h>
-#endif
-#if defined(SOL_IPX) || defined(SO_DEFAULT_HEADERS)
 # define HAS_IPX
 #endif
 
@@ -2406,6 +2405,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             break;
         }
 
+#ifdef HAS_IPX
 #ifdef SOL_IPX
         case IOCTL_AFD_WINE_GET_IPX_PTYPE:
             return do_getsockopt( handle, io, SOL_IPX, IPX_TYPE, out_buffer, out_size );
@@ -2443,6 +2443,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             value.ipx_pt = *(DWORD *)in_buffer;
             return do_setsockopt( handle, io, 0, SO_DEFAULT_HEADERS, &value, sizeof(value) );
         }
+#endif
 #endif
 
 #ifdef HAS_IRDA
