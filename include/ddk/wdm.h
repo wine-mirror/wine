@@ -1705,13 +1705,17 @@ void      WINAPI ExUnregisterCallback(void*);
 
 #define PLUGPLAY_PROPERTY_PERSISTENT 0x0001
 
+void      WINAPI IoFreeErrorLogEntry(void*);
+void      WINAPI IoFreeIrp(IRP*);
+void      WINAPI IoFreeMdl(MDL*);
+void      WINAPI IoFreeWorkItem(PIO_WORKITEM);
 void      WINAPI IoAcquireCancelSpinLock(KIRQL*);
 NTSTATUS  WINAPI IoAcquireRemoveLockEx(IO_REMOVE_LOCK*,void*,const char*,ULONG, ULONG);
 NTSTATUS  WINAPI IoAllocateDriverObjectExtension(PDRIVER_OBJECT,PVOID,ULONG,PVOID*);
-PVOID     WINAPI IoAllocateErrorLogEntry(PVOID,UCHAR);
-PIRP      WINAPI IoAllocateIrp(CCHAR,BOOLEAN);
-PMDL      WINAPI IoAllocateMdl(PVOID,ULONG,BOOLEAN,BOOLEAN,IRP*);
-PIO_WORKITEM WINAPI IoAllocateWorkItem(PDEVICE_OBJECT);
+void*     WINAPI IoAllocateErrorLogEntry(void*,unsigned char) __WINE_ALLOC_SIZE(2) __WINE_DEALLOC(IoFreeErrorLogEntry) __WINE_MALLOC;
+IRP*      WINAPI IoAllocateIrp(char,BOOLEAN) __WINE_DEALLOC(IoFreeIrp);
+MDL*      WINAPI IoAllocateMdl(void*,ULONG,BOOLEAN,BOOLEAN,IRP*) __WINE_DEALLOC(IoFreeMdl);
+PIO_WORKITEM WINAPI IoAllocateWorkItem(DEVICE_OBJECT*) __WINE_DEALLOC(IoFreeWorkItem);
 void      WINAPI IoDetachDevice(PDEVICE_OBJECT);
 PDEVICE_OBJECT WINAPI IoAttachDeviceToDeviceStack(PDEVICE_OBJECT,PDEVICE_OBJECT);
 PIRP      WINAPI IoBuildAsynchronousFsdRequest(ULONG,DEVICE_OBJECT*,void*,ULONG,LARGE_INTEGER*,IO_STATUS_BLOCK*);
@@ -1728,9 +1732,6 @@ PKEVENT   WINAPI IoCreateSynchronizationEvent(UNICODE_STRING*,HANDLE*);
 void      WINAPI IoDeleteDevice(DEVICE_OBJECT*);
 void      WINAPI IoDeleteDriver(DRIVER_OBJECT*);
 NTSTATUS  WINAPI IoDeleteSymbolicLink(UNICODE_STRING*);
-void      WINAPI IoFreeIrp(IRP*);
-void      WINAPI IoFreeMdl(MDL*);
-void      WINAPI IoFreeWorkItem(PIO_WORKITEM);
 DEVICE_OBJECT * WINAPI IoGetAttachedDeviceReference(DEVICE_OBJECT*);
 PEPROCESS WINAPI IoGetCurrentProcess(void);
 NTSTATUS  WINAPI IoGetDeviceInterfaces(const GUID*,PDEVICE_OBJECT,ULONG,PWSTR*);
