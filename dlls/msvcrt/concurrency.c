@@ -299,6 +299,7 @@ typedef struct thread_wait_entry
 
 typedef struct thread_wait
 {
+    Context *ctx;
     void *signaled;
     LONG pending_waits;
     thread_wait_entry entries[1];
@@ -416,8 +417,6 @@ static CRITICAL_SECTION_DEBUG default_scheduler_cs_debug =
 static CRITICAL_SECTION default_scheduler_cs = { &default_scheduler_cs_debug, -1, 0, 0, 0, 0 };
 static SchedulerPolicy default_scheduler_policy;
 static ThreadScheduler *default_scheduler;
-
-static HANDLE keyed_event;
 
 static void create_default_scheduler(void);
 
@@ -2561,6 +2560,17 @@ critical_section* __thiscall critical_section_native_handle(critical_section *th
     return this;
 }
 
+static void set_timeout(FILETIME *ft, unsigned int timeout)
+{
+    LARGE_INTEGER to;
+
+    GetSystemTimeAsFileTime(ft);
+    to.QuadPart = ((LONGLONG)ft->dwHighDateTime << 32) +
+        ft->dwLowDateTime + (LONGLONG)timeout * TICKSPERMSEC;
+    ft->dwHighDateTime = to.QuadPart >> 32;
+    ft->dwLowDateTime = to.QuadPart;
+}
+
 #if _MSVCR_VER >= 110
 static void WINAPI timeout_unlock(TP_CALLBACK_INSTANCE *instance, void *ctx, TP_TIMER *timer)
 {
@@ -2594,21 +2604,16 @@ bool __thiscall critical_section_try_lock_for(
     last = InterlockedExchangePointer(&this->tail, q);
     if(last) {
         TP_TIMER *tp_timer;
-        LARGE_INTEGER to;
         FILETIME ft;
 
         last->next = q;
-        GetSystemTimeAsFileTime(&ft);
-        to.QuadPart = ((LONGLONG)ft.dwHighDateTime << 32) +
-            ft.dwLowDateTime + (LONGLONG)timeout * TICKSPERMSEC;
-        ft.dwHighDateTime = to.QuadPart >> 32;
-        ft.dwLowDateTime = to.QuadPart;
 
         tp_timer = CreateThreadpoolTimer(timeout_unlock, q, NULL);
         if(!tp_timer) {
             FIXME("throw exception?\n");
             return FALSE;
         }
+        set_timeout(&ft, timeout);
         SetThreadpoolTimer(tp_timer, &ft, 0, 0);
 
         call_Context_Block(q->ctx);
@@ -2790,13 +2795,6 @@ unsigned int __cdecl _GetConcurrency(void)
     return val;
 }
 
-static inline PLARGE_INTEGER evt_timeout(PLARGE_INTEGER pTime, unsigned int timeout)
-{
-    if(timeout == COOPERATIVE_TIMEOUT_INFINITE) return NULL;
-    pTime->QuadPart = (ULONGLONG)timeout * -TICKSPERMSEC;
-    return pTime;
-}
-
 static void evt_add_queue(thread_wait_entry **head, thread_wait_entry *entry)
 {
     entry->next = *head;
@@ -2833,11 +2831,18 @@ static inline int evt_transition(void **state, void *from, void *to)
     return InterlockedCompareExchangePointer(state, to, from) == from;
 }
 
+static void WINAPI evt_timeout(TP_CALLBACK_INSTANCE *instance, void *ctx, TP_TIMER *timer)
+{
+    thread_wait *wait = ctx;
+
+    if(evt_transition(&wait->signaled, EVT_WAITING, EVT_RUNNING))
+        call_Context_Unblock(wait->ctx);
+}
+
 static size_t evt_wait(thread_wait *wait, event **events, int count, bool wait_all, unsigned int timeout)
 {
+    TP_TIMER *tp_timer = NULL;
     int i;
-    NTSTATUS status;
-    LARGE_INTEGER ntto;
 
     wait->signaled = EVT_RUNNING;
     wait->pending_waits = wait_all ? count : 1;
@@ -2860,13 +2865,30 @@ static size_t evt_wait(thread_wait *wait, event **events, int count, bool wait_a
     if(!timeout)
         return evt_end_wait(wait, events, count);
 
+    if (timeout != COOPERATIVE_TIMEOUT_INFINITE)
+    {
+        FILETIME ft;
+
+        tp_timer = CreateThreadpoolTimer(evt_timeout, wait, NULL);
+        if(!tp_timer) {
+            FIXME("throw exception?\n");
+            return COOPERATIVE_WAIT_TIMEOUT;
+        }
+        set_timeout(&ft, timeout);
+        SetThreadpoolTimer(tp_timer, &ft, 0, 0);
+    }
+
     if(!evt_transition(&wait->signaled, EVT_RUNNING, EVT_WAITING))
         return evt_end_wait(wait, events, count);
 
-    status = NtWaitForKeyedEvent(keyed_event, wait, 0, evt_timeout(&ntto, timeout));
+    call_Context_Block(wait->ctx);
 
-    if(status && !evt_transition(&wait->signaled, EVT_WAITING, EVT_RUNNING))
-        NtWaitForKeyedEvent(keyed_event, wait, 0, NULL);
+    if (tp_timer)
+    {
+        SetThreadpoolTimer(tp_timer, NULL, 0, 0);
+        WaitForThreadpoolTimerCallbacks(tp_timer, TRUE);
+        CloseThreadpoolTimer(tp_timer);
+    }
 
     return evt_end_wait(wait, events, count);
 }
@@ -2877,14 +2899,6 @@ DEFINE_THISCALL_WRAPPER(event_ctor, 4)
 event* __thiscall event_ctor(event *this)
 {
     TRACE("(%p)\n", this);
-
-    if(!keyed_event) {
-        HANDLE event;
-
-        NtCreateKeyedEvent(&event, GENERIC_READ|GENERIC_WRITE, NULL, 0);
-        if(InterlockedCompareExchangePointer(&keyed_event, event, NULL) != NULL)
-            NtClose(event);
-    }
 
     this->waiters = NULL;
     this->signaled = FALSE;
@@ -2950,7 +2964,7 @@ void __thiscall event_set(event *this)
     for(entry=wakeup; entry; entry=next) {
         next = entry->next;
         entry->next = entry->prev = NULL;
-        NtReleaseKeyedEvent(keyed_event, entry->wait, 0, NULL);
+        call_Context_Unblock(entry->wait->ctx);
     }
 }
 
@@ -2969,6 +2983,7 @@ size_t __thiscall event_wait(event *this, unsigned int timeout)
     critical_section_unlock(&this->cs);
 
     if(!timeout) return signaled ? 0 : COOPERATIVE_WAIT_TIMEOUT;
+    wait.ctx = get_current_context();
     return signaled ? 0 : evt_wait(&wait, &this, 1, FALSE, timeout);
 }
 
@@ -2985,6 +3000,7 @@ int __cdecl event_wait_for_multiple(event **events, size_t count, bool wait_all,
         return 0;
 
     wait = operator_new(FIELD_OFFSET(thread_wait, entries[count]));
+    wait->ctx = get_current_context();
     ret = evt_wait(wait, events, count, wait_all, timeout);
     operator_delete(wait);
 
@@ -3683,9 +3699,6 @@ void msvcrt_free_concurrency(void)
         ThreadScheduler_dtor(default_scheduler);
         operator_delete(default_scheduler);
     }
-
-    if(keyed_event)
-      NtClose(keyed_event);
 }
 
 void msvcrt_free_scheduler_thread(void)
