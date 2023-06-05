@@ -810,6 +810,7 @@ BOOL WINAPI EnumColorProfilesA( PCSTR machine, PENUMTYPEA record, PBYTE buffer,
         if (!(ret = header_from_file( fileW, &header )))
         {
             free( fileW );
+            fileW = NULL;
             continue;
         }
 
