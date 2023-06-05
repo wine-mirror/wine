@@ -62,7 +62,11 @@ HRESULT create_view( enum view_type type, enum wbm_namespace ns, const WCHAR *pa
             free( view );
             return hr;
         }
-        else if (!table && ns == WBEMPROX_NAMESPACE_LAST) return WBEM_E_INVALID_CLASS;
+        else if (!table && ns == WBEMPROX_NAMESPACE_LAST)
+        {
+            free( view );
+            return WBEM_E_INVALID_CLASS;
+        }
         view->proplist = proplist;
         view->cond     = cond;
         break;
