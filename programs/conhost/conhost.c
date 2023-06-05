@@ -715,6 +715,7 @@ static void edit_line_move_to_history( struct console *console, int index )
         }
         else
         {
+            free( line );
             ctx->status = STATUS_NO_MEMORY;
             return;
         }
