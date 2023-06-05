@@ -773,7 +773,7 @@ class VkFunction(object):
             body += "    UNIX_CALL({0}, &params);\n".format(self.name)
         else:
             body += "    status = UNIX_CALL({0}, &params);\n".format(self.name)
-            body += "    assert(!status);\n"
+            body += "    assert(!status && \"{0}\");\n".format(self.name)
 
         if self.type != "void":
             body += "    return params.result;\n"
