@@ -3459,14 +3459,33 @@ bool __thiscall _ReentrantBlockingLock__TryAcquire(_ReentrantBlockingLock *this)
     return TryEnterCriticalSection(&this->cs);
 }
 
+static void WINAPI wait_timeout(TP_CALLBACK_INSTANCE *instance, void *arg, TP_TIMER *timer)
+{
+    Context *ctx = arg;
+
+    call_Context_Unblock(ctx);
+}
+
 /* ?wait@Concurrency@@YAXI@Z */
 void __cdecl Concurrency_wait(unsigned int time)
 {
-    static int once;
+    Context *ctx = get_current_context();
+    TP_TIMER *tp_timer;
+    FILETIME ft;
 
-    if (!once++) FIXME("(%d) stub!\n", time);
+    TRACE("(%d)\n", time);
 
-    Sleep(time);
+    tp_timer = CreateThreadpoolTimer(wait_timeout, ctx, NULL);
+    if(!tp_timer) {
+        FIXME("throw exception?\n");
+        Sleep(time);
+        return;
+    }
+    set_timeout(&ft, time);
+    SetThreadpoolTimer(tp_timer, &ft, 0, 0);
+
+    call_Context_Block(ctx);
+    CloseThreadpoolTimer(tp_timer);
 }
 
 #if _MSVCR_VER>=110
