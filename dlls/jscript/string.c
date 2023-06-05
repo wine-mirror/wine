@@ -627,10 +627,7 @@ static BOOL strbuf_ensure_size(strbuf_t *buf, unsigned len)
     new_size = buf->size ? buf->size<<1 : 16;
     if(new_size < len)
         new_size = len;
-    if(buf->buf)
-        new_buf = realloc(buf->buf, new_size*sizeof(WCHAR));
-    else
-        new_buf = malloc(new_size*sizeof(WCHAR));
+    new_buf = realloc(buf->buf, new_size * sizeof(WCHAR));
     if(!new_buf)
         return FALSE;
 
