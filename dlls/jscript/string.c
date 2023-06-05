@@ -926,8 +926,10 @@ static HRESULT String_replace(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsi
         jsstr_t *ret_str;
 
         ret_str = jsstr_alloc_len(ret.buf, ret.len);
-        if(!ret_str)
+        if(!ret_str) {
+            free(ret.buf);
             return E_OUTOFMEMORY;
+        }
 
         TRACE("= %s\n", debugstr_jsstr(ret_str));
         *r = jsval_string(ret_str);
