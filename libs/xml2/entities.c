@@ -26,7 +26,8 @@
 #include <libxml/globals.h>
 #include <libxml/dict.h>
 
-#include "save.h"
+#include "private/entities.h"
+#include "private/error.h"
 
 /*
  * The XML predefined entities.
@@ -37,35 +38,35 @@ static xmlEntity xmlEntityLt = {
     NULL, NULL, NULL, NULL, NULL, NULL,
     BAD_CAST "<", BAD_CAST "<", 1,
     XML_INTERNAL_PREDEFINED_ENTITY,
-    NULL, NULL, NULL, NULL, 0, 1
+    NULL, NULL, NULL, NULL, 0, 0, 0
 };
 static xmlEntity xmlEntityGt = {
     NULL, XML_ENTITY_DECL, BAD_CAST "gt",
     NULL, NULL, NULL, NULL, NULL, NULL,
     BAD_CAST ">", BAD_CAST ">", 1,
     XML_INTERNAL_PREDEFINED_ENTITY,
-    NULL, NULL, NULL, NULL, 0, 1
+    NULL, NULL, NULL, NULL, 0, 0, 0
 };
 static xmlEntity xmlEntityAmp = {
     NULL, XML_ENTITY_DECL, BAD_CAST "amp",
     NULL, NULL, NULL, NULL, NULL, NULL,
     BAD_CAST "&", BAD_CAST "&", 1,
     XML_INTERNAL_PREDEFINED_ENTITY,
-    NULL, NULL, NULL, NULL, 0, 1
+    NULL, NULL, NULL, NULL, 0, 0, 0
 };
 static xmlEntity xmlEntityQuot = {
     NULL, XML_ENTITY_DECL, BAD_CAST "quot",
     NULL, NULL, NULL, NULL, NULL, NULL,
     BAD_CAST "\"", BAD_CAST "\"", 1,
     XML_INTERNAL_PREDEFINED_ENTITY,
-    NULL, NULL, NULL, NULL, 0, 1
+    NULL, NULL, NULL, NULL, 0, 0, 0
 };
 static xmlEntity xmlEntityApos = {
     NULL, XML_ENTITY_DECL, BAD_CAST "apos",
     NULL, NULL, NULL, NULL, NULL, NULL,
     BAD_CAST "'", BAD_CAST "'", 1,
     XML_INTERNAL_PREDEFINED_ENTITY,
-    NULL, NULL, NULL, NULL, 0, 1
+    NULL, NULL, NULL, NULL, 0, 0, 0
 };
 
 /**
@@ -162,7 +163,6 @@ xmlCreateEntity(xmlDictPtr dict, const xmlChar *name, int type,
     }
     memset(ret, 0, sizeof(xmlEntity));
     ret->type = XML_ENTITY_DECL;
-    ret->checked = 0;
 
     /*
      * fill the structure.
@@ -604,7 +604,7 @@ xmlEncodeEntitiesInternal(xmlDocPtr doc, const xmlChar *input, int attr) {
      * allocate an translation buffer.
      */
     buffer_size = 1000;
-    buffer = (xmlChar *) xmlMalloc(buffer_size * sizeof(xmlChar));
+    buffer = (xmlChar *) xmlMalloc(buffer_size);
     if (buffer == NULL) {
         xmlEntitiesErrMemory("xmlEncodeEntities: malloc failed");
 	return(NULL);
@@ -844,7 +844,7 @@ xmlEncodeSpecialChars(const xmlDoc *doc ATTRIBUTE_UNUSED, const xmlChar *input) 
      * allocate an translation buffer.
      */
     buffer_size = 1000;
-    buffer = (xmlChar *) xmlMalloc(buffer_size * sizeof(xmlChar));
+    buffer = (xmlChar *) xmlMalloc(buffer_size);
     if (buffer == NULL) {
         xmlEntitiesErrMemory("xmlEncodeSpecialChars: malloc failed");
 	return(NULL);
@@ -1010,7 +1010,6 @@ xmlCopyEntitiesTable(xmlEntitiesTablePtr table) {
  */
 static void
 xmlDumpEntityContent(xmlBufferPtr buf, const xmlChar *content) {
-    if (buf->alloc == XML_BUFFER_ALLOC_IMMUTABLE) return;
     if (xmlStrchr(content, '%')) {
         const xmlChar * base, *cur;
 

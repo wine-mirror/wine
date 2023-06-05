@@ -23,6 +23,9 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "private/dict.h"
+#include "private/threads.h"
+
 /*
  * Following http://www.ocert.org/advisories/ocert-2011-003.html
  * it seems that having hash randomization might be a good idea
@@ -127,12 +130,7 @@ struct _xmlDict {
  * A mutex for modifying the reference counter for shared
  * dictionaries.
  */
-static xmlMutexPtr xmlDictMutex = NULL;
-
-/*
- * Whether the dictionary mutex was initialized.
- */
-static int xmlDictInitialized = 0;
+static xmlMutex xmlDictMutex;
 
 #ifdef DICT_RANDOMIZATION
 #ifdef HAVE_RAND_R
@@ -146,15 +144,10 @@ static unsigned int rand_seed = 0;
 /**
  * xmlInitializeDict:
  *
- * DEPRECATED: This function will be made private. Call xmlInitParser to
- * initialize the library.
- *
- * Do the dictionary mutex initialization.
- *
- * Returns 0 if initialization was already done, and 1 if that
- * call led to the initialization
+ * DEPRECATED: Alias for xmlInitParser.
  */
 int xmlInitializeDict(void) {
+    xmlInitParser();
     return(0);
 }
 
@@ -163,20 +156,9 @@ int xmlInitializeDict(void) {
  *
  * This function is not public
  * Do the dictionary mutex initialization.
- * this function is not thread safe, initialization should
- * normally be done once at setup when called from xmlOnceInit()
- * we may also land in this code if thread support is not compiled in
- *
- * Returns 0 if initialization was already done, and 1 if that
- * call led to the initialization
  */
 int __xmlInitializeDict(void) {
-    if (xmlDictInitialized)
-        return(1);
-
-    if ((xmlDictMutex = xmlNewMutex()) == NULL)
-        return(0);
-    xmlMutexLock(xmlDictMutex);
+    xmlInitMutex(&xmlDictMutex);
 
 #ifdef DICT_RANDOMIZATION
 #ifdef HAVE_RAND_R
@@ -186,8 +168,6 @@ int __xmlInitializeDict(void) {
     srand(time(NULL));
 #endif
 #endif
-    xmlDictInitialized = 1;
-    xmlMutexUnlock(xmlDictMutex);
     return(1);
 }
 
@@ -195,16 +175,13 @@ int __xmlInitializeDict(void) {
 int __xmlRandom(void) {
     int ret;
 
-    if (xmlDictInitialized == 0)
-        __xmlInitializeDict();
-
-    xmlMutexLock(xmlDictMutex);
+    xmlMutexLock(&xmlDictMutex);
 #ifdef HAVE_RAND_R
     ret = rand_r(& rand_seed);
 #else
     ret = rand();
 #endif
-    xmlMutexUnlock(xmlDictMutex);
+    xmlMutexUnlock(&xmlDictMutex);
     return(ret);
 }
 #endif
@@ -212,22 +189,23 @@ int __xmlRandom(void) {
 /**
  * xmlDictCleanup:
  *
- * DEPRECATED: This function will be made private. Call xmlCleanupParser
+ * DEPRECATED: This function is a no-op. Call xmlCleanupParser
  * to free global state but see the warnings there. xmlCleanupParser
  * should be only called once at program exit. In most cases, you don't
  * have call cleanup functions at all.
- *
- * Free the dictionary mutex. Do not call unless sure the library
- * is not in use anymore !
  */
 void
 xmlDictCleanup(void) {
-    if (!xmlDictInitialized)
-        return;
+}
 
-    xmlFreeMutex(xmlDictMutex);
-
-    xmlDictInitialized = 0;
+/**
+ * xmlCleanupDictInternal:
+ *
+ * Free the dictionary mutex.
+ */
+void
+xmlCleanupDictInternal(void) {
+    xmlCleanupMutex(&xmlDictMutex);
 }
 
 /*
@@ -376,6 +354,7 @@ found_pool:
 
 #ifdef __clang__
 ATTRIBUTE_NO_SANITIZE("unsigned-integer-overflow")
+ATTRIBUTE_NO_SANITIZE("unsigned-shift-base")
 #endif
 static uint32_t
 xmlDictComputeBigKey(const xmlChar* data, int namelen, int seed) {
@@ -411,6 +390,7 @@ xmlDictComputeBigKey(const xmlChar* data, int namelen, int seed) {
  */
 #ifdef __clang__
 ATTRIBUTE_NO_SANITIZE("unsigned-integer-overflow")
+ATTRIBUTE_NO_SANITIZE("unsigned-shift-base")
 #endif
 static unsigned long
 xmlDictComputeBigQKey(const xmlChar *prefix, int plen,
@@ -453,7 +433,8 @@ static unsigned long
 xmlDictComputeFastKey(const xmlChar *name, int namelen, int seed) {
     unsigned long value = seed;
 
-    if (name == NULL) return(0);
+    if ((name == NULL) || (namelen <= 0))
+        return(value);
     value += *name;
     value <<= 5;
     if (namelen > 10) {
@@ -496,10 +477,10 @@ static unsigned long
 xmlDictComputeFastQKey(const xmlChar *prefix, int plen,
                        const xmlChar *name, int len, int seed)
 {
-    unsigned long value = (unsigned long) seed;
+    unsigned long value = seed;
 
     if (plen == 0)
-	value += 30 * (unsigned long) ':';
+	value += 30 * ':';
     else
 	value += 30 * (*prefix);
 
@@ -537,7 +518,7 @@ xmlDictComputeFastQKey(const xmlChar *prefix, int plen,
     }
     len -= plen;
     if (len > 0) {
-        value += (unsigned long) ':';
+        value += ':';
 	len--;
     }
     switch (len) {
@@ -577,9 +558,7 @@ xmlDictPtr
 xmlDictCreate(void) {
     xmlDictPtr dict;
 
-    if (!xmlDictInitialized)
-        if (!__xmlInitializeDict())
-            return(NULL);
+    xmlInitParser();
 
 #ifdef DICT_DEBUG_PATTERNS
     fprintf(stderr, "C");
@@ -645,14 +624,10 @@ xmlDictCreateSub(xmlDictPtr sub) {
  */
 int
 xmlDictReference(xmlDictPtr dict) {
-    if (!xmlDictInitialized)
-        if (!__xmlInitializeDict())
-            return(-1);
-
     if (dict == NULL) return -1;
-    xmlMutexLock(xmlDictMutex);
+    xmlMutexLock(&xmlDictMutex);
     dict->ref_counter++;
-    xmlMutexUnlock(xmlDictMutex);
+    xmlMutexUnlock(&xmlDictMutex);
     return(0);
 }
 
@@ -809,19 +784,15 @@ xmlDictFree(xmlDictPtr dict) {
     if (dict == NULL)
 	return;
 
-    if (!xmlDictInitialized)
-        if (!__xmlInitializeDict())
-            return;
-
     /* decrement the counter, it may be shared by a parser and docs */
-    xmlMutexLock(xmlDictMutex);
+    xmlMutexLock(&xmlDictMutex);
     dict->ref_counter--;
     if (dict->ref_counter > 0) {
-        xmlMutexUnlock(xmlDictMutex);
+        xmlMutexUnlock(&xmlDictMutex);
         return;
     }
 
-    xmlMutexUnlock(xmlDictMutex);
+    xmlMutexUnlock(&xmlDictMutex);
 
     if (dict->subdict != NULL) {
         xmlDictFree(dict->subdict);
@@ -1005,7 +976,7 @@ xmlDictLookup(xmlDictPtr dict, const xmlChar *name, int len) {
  */
 const xmlChar *
 xmlDictExists(xmlDictPtr dict, const xmlChar *name, int len) {
-    unsigned long key, okey, nbi = 0;
+    unsigned long key, okey;
     xmlDictEntryPtr insert;
     unsigned int l;
 
@@ -1040,7 +1011,6 @@ xmlDictExists(xmlDictPtr dict, const xmlChar *name, int len) {
 	        (!xmlStrncmp(insert->name, name, l)))
 		return(insert->name);
 #endif
-	    nbi++;
 	}
 #ifdef __GNUC__
 	if ((insert->okey == okey) && (insert->len == l)) {
@@ -1082,7 +1052,6 @@ xmlDictExists(xmlDictPtr dict, const xmlChar *name, int len) {
 		    (!xmlStrncmp(tmp->name, name, l)))
 		    return(tmp->name);
 #endif
-		nbi++;
 	    }
 #ifdef __GNUC__
 	    if ((tmp->okey == skey) && (tmp->len == l)) {

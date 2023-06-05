@@ -2039,22 +2039,12 @@ xmlStreamPushInternal(xmlStreamCtxtPtr stream,
 #endif /* if 0 ------------------------------------------------------- */
 	    if (match) {
 		final = step.flags & XML_STREAM_STEP_FINAL;
-		if (desc) {
-		    if (final) {
-			ret = 1;
-		    } else {
-			/* descending match create a new state */
-			xmlStreamCtxtAddState(stream, stepNr + 1,
-			                      stream->level + 1);
-		    }
-		} else {
-		    if (final) {
-			ret = 1;
-		    } else {
-			xmlStreamCtxtAddState(stream, stepNr + 1,
-			                      stream->level + 1);
-		    }
-		}
+                if (final) {
+                    ret = 1;
+                } else {
+                    xmlStreamCtxtAddState(stream, stepNr + 1,
+                                          stream->level + 1);
+                }
 		if ((ret != 1) && (step.flags & XML_STREAM_STEP_IN_SET)) {
 		    /*
 		    * Check if we have a special case like "foo/bar//.", where
@@ -2207,7 +2197,7 @@ stream_next:
 int
 xmlStreamPush(xmlStreamCtxtPtr stream,
               const xmlChar *name, const xmlChar *ns) {
-    return (xmlStreamPushInternal(stream, name, ns, (int) XML_ELEMENT_NODE));
+    return (xmlStreamPushInternal(stream, name, ns, XML_ELEMENT_NODE));
 }
 
 /**
@@ -2257,7 +2247,7 @@ xmlStreamPushNode(xmlStreamCtxtPtr stream,
 int
 xmlStreamPushAttr(xmlStreamCtxtPtr stream,
 		  const xmlChar *name, const xmlChar *ns) {
-    return (xmlStreamPushInternal(stream, name, ns, (int) XML_ATTRIBUTE_NODE));
+    return (xmlStreamPushInternal(stream, name, ns, XML_ATTRIBUTE_NODE));
 }
 
 /**

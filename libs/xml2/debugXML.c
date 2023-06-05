@@ -30,6 +30,8 @@
 #include <libxml/relaxng.h>
 #endif
 
+#include "private/error.h"
+
 #define DUMP_TEXT_TYPE 1
 
 typedef struct _xmlDebugCtxt xmlDebugCtxt;
@@ -2633,7 +2635,7 @@ xmlShellValidate(xmlShellCtxtPtr ctxt, char *dtd,
     int res = -1;
 
     if ((ctxt == NULL) || (ctxt->doc == NULL)) return(-1);
-    vctxt.userData = NULL;
+    memset(&vctxt, 0, sizeof(vctxt));
     vctxt.error = xmlGenericError;
     vctxt.warning = xmlGenericError;
 
