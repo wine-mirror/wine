@@ -21,7 +21,6 @@
 #include <libxml/xmlstring.h>
 #include <libxslt/xslt.h>
 #include "xsltexports.h"
-#include "xsltlocale.h"
 #include "numbersInternals.h"
 
 #ifdef __cplusplus
@@ -1047,7 +1046,6 @@ struct _xsltStyleItemSort {
     int      descending;	/* sort */
     const xmlChar *lang;	/* sort */
     int      has_lang;		/* sort */
-    xsltLocale locale;		/* sort */
     const xmlChar *case_order;	/* sort */
     int      lower_first;	/* sort */
 
@@ -1377,7 +1375,6 @@ struct _xsltStylePreComp {
     int      descending;	/* sort */
     const xmlChar *lang;	/* sort */
     int      has_lang;		/* sort */
-    xsltLocale locale;		/* sort */
     const xmlChar *case_order;	/* sort */
     int      lower_first;	/* sort */
 
@@ -1663,6 +1660,13 @@ typedef enum {
     XSLT_OUTPUT_TEXT
 } xsltOutputType;
 
+typedef void *
+(*xsltNewLocaleFunc)(const xmlChar *lang, int lowerFirst);
+typedef void
+(*xsltFreeLocaleFunc)(void *locale);
+typedef xmlChar *
+(*xsltGenSortKeyFunc)(void *locale, const xmlChar *lang);
+
 typedef enum {
     XSLT_STATE_OK = 0,
     XSLT_STATE_ERROR,
@@ -1786,6 +1790,12 @@ struct _xsltTransformContext {
     int maxTemplateVars;
     unsigned long opLimit;
     unsigned long opCount;
+    int sourceDocDirty;
+    unsigned long currentId; /* For generate-id() */
+
+    xsltNewLocaleFunc newLocale;
+    xsltFreeLocaleFunc freeLocale;
+    xsltGenSortKeyFunc genSortKey;
 };
 
 /**
@@ -1915,7 +1925,7 @@ XSLTPUBFUN int XSLTCALL
 			xsltFlagRVTs(
 						 xsltTransformContextPtr ctxt,
 						 xmlXPathObjectPtr obj,
-						 void *val);
+						 int val);
 XSLTPUBFUN void XSLTCALL
 			xsltFreeRVTs		(xsltTransformContextPtr ctxt);
 XSLTPUBFUN void XSLTCALL

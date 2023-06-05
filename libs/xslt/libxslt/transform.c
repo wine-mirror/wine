@@ -40,6 +40,7 @@
 #include "xslt.h"
 #include "xsltInternals.h"
 #include "xsltutils.h"
+#include "xsltlocale.h"
 #include "pattern.h"
 #include "transform.h"
 #include "variables.h"
@@ -119,26 +120,18 @@ xsltApplyXSLTTemplate(xsltTransformContextPtr ctxt,
 static int
 templPush(xsltTransformContextPtr ctxt, xsltTemplatePtr value)
 {
-    if (ctxt->templMax == 0) {
-        ctxt->templMax = 4;
-        ctxt->templTab =
-            (xsltTemplatePtr *) xmlMalloc(ctxt->templMax *
-                                          sizeof(ctxt->templTab[0]));
-        if (ctxt->templTab == NULL) {
-            xmlGenericError(xmlGenericErrorContext, "malloc failed !\n");
-            return (0);
-        }
-    }
-    else if (ctxt->templNr >= ctxt->templMax) {
-        ctxt->templMax *= 2;
-        ctxt->templTab =
-            (xsltTemplatePtr *) xmlRealloc(ctxt->templTab,
-                                           ctxt->templMax *
-                                           sizeof(ctxt->templTab[0]));
-        if (ctxt->templTab == NULL) {
+    if (ctxt->templNr >= ctxt->templMax) {
+        xsltTemplatePtr *tmp;
+        int newMax = ctxt->templMax == 0 ? 4 : ctxt->templMax * 2;
+
+        tmp = (xsltTemplatePtr *) xmlRealloc(ctxt->templTab,
+                newMax * sizeof(*tmp));
+        if (tmp == NULL) {
             xmlGenericError(xmlGenericErrorContext, "realloc failed !\n");
             return (0);
         }
+        ctxt->templTab = tmp;
+        ctxt->templMax = newMax;
     }
     ctxt->templTab[ctxt->templNr] = value;
     ctxt->templ = value;
@@ -492,7 +485,7 @@ void xsltDebugSetDefaultTrace(xsltDebugTraceCodes val) {
  *
  * Returns the current default debug tracing level mask
  */
-xsltDebugTraceCodes xsltDebugGetDefaultTrace() {
+xsltDebugTraceCodes xsltDebugGetDefaultTrace(void) {
 	return xsltDefaultTrace;
 }
 
@@ -706,6 +699,10 @@ xsltNewTransformContext(xsltStylesheetPtr style, xmlDocPtr doc) {
     cur->xinclude = xsltGetXIncludeDefault();
     cur->keyInitLevel = 0;
 
+    cur->newLocale = xsltNewLocale;
+    cur->freeLocale = xsltFreeLocale;
+    cur->genSortKey = xsltStrxfrm;
+
     return(cur);
 
 internal_err:
@@ -716,7 +713,7 @@ internal_err:
 
 /**
  * xsltFreeTransformContext:
- * @ctxt:  an XSLT parser context
+ * @ctxt:  an XSLT transform context
  *
  * Free up the memory allocated by @ctxt
  */
@@ -1090,8 +1087,10 @@ xsltCopyText(xsltTransformContextPtr ctxt, xmlNodePtr target,
 	if (xmlDictOwns(ctxt->dict, cur->content))
 	    copy->content = cur->content;
 	else {
-	    if ((copy->content = xmlStrdup(cur->content)) == NULL)
+	    if ((copy->content = xmlStrdup(cur->content)) == NULL) {
+                xmlFreeNode(copy);
 		return NULL;
+            }
 	}
 
 	ctxt->lasttext = NULL;
@@ -2224,26 +2223,18 @@ xsltLocalVariablePush(xsltTransformContextPtr ctxt,
 		      xsltStackElemPtr variable,
 		      int level)
 {
-    if (ctxt->varsMax == 0) {
-	ctxt->varsMax = 10;
-	ctxt->varsTab =
-	    (xsltStackElemPtr *) xmlMalloc(ctxt->varsMax *
-	    sizeof(ctxt->varsTab[0]));
-	if (ctxt->varsTab == NULL) {
-	    xmlGenericError(xmlGenericErrorContext, "malloc failed !\n");
-	    return (-1);
-	}
-    }
     if (ctxt->varsNr >= ctxt->varsMax) {
-	ctxt->varsMax *= 2;
-	ctxt->varsTab =
-	    (xsltStackElemPtr *) xmlRealloc(ctxt->varsTab,
-	    ctxt->varsMax *
-	    sizeof(ctxt->varsTab[0]));
-	if (ctxt->varsTab == NULL) {
+        xsltStackElemPtr *tmp;
+        int newMax = ctxt->varsMax == 0 ? 10 : 2 * ctxt->varsMax;
+
+	tmp = (xsltStackElemPtr *) xmlRealloc(ctxt->varsTab,
+                newMax * sizeof(*tmp));
+	if (tmp == NULL) {
 	    xmlGenericError(xmlGenericErrorContext, "realloc failed !\n");
 	    return (-1);
 	}
+        ctxt->varsTab = tmp;
+        ctxt->varsMax = newMax;
     }
     ctxt->varsTab[ctxt->varsNr++] = variable;
     ctxt->vars = variable;
@@ -2275,17 +2266,17 @@ xsltReleaseLocalRVTs(xsltTransformContextPtr ctxt, xmlDocPtr base)
     do {
         tmp = cur;
         cur = (xmlDocPtr) cur->next;
-        if (tmp->psvi == XSLT_RVT_LOCAL) {
+        if (tmp->compression == XSLT_RVT_LOCAL) {
             xsltReleaseRVT(ctxt, tmp);
-        } else if (tmp->psvi == XSLT_RVT_GLOBAL) {
+        } else if (tmp->compression == XSLT_RVT_GLOBAL) {
             xsltRegisterPersistRVT(ctxt, tmp);
-        } else if (tmp->psvi == XSLT_RVT_FUNC_RESULT) {
+        } else if (tmp->compression == XSLT_RVT_FUNC_RESULT) {
             /*
              * This will either register the RVT again or move it to the
              * context variable.
              */
             xsltRegisterLocalRVT(ctxt, tmp);
-            tmp->psvi = XSLT_RVT_FUNC_RESULT;
+            tmp->compression = XSLT_RVT_FUNC_RESULT;
         } else {
             xmlGenericError(xmlGenericErrorContext,
                     "xsltReleaseLocalRVTs: Unexpected RVT flag %p\n",
@@ -5747,6 +5738,49 @@ xsltCountKeys(xsltTransformContextPtr ctxt)
 }
 
 /**
+ * xsltCleanupSourceDoc:
+ * @doc:  Document
+ *
+ * Resets source node flags and ids stored in 'psvi' member.
+ */
+static void
+xsltCleanupSourceDoc(xmlDocPtr doc) {
+    xmlNodePtr cur = (xmlNodePtr) doc;
+    void **psviPtr;
+
+    while (1) {
+        xsltClearSourceNodeFlags(cur, XSLT_SOURCE_NODE_MASK);
+        psviPtr = xsltGetPSVIPtr(cur);
+        if (psviPtr)
+            *psviPtr = NULL;
+
+        if (cur->type == XML_ELEMENT_NODE) {
+            xmlAttrPtr prop = cur->properties;
+
+            while (prop) {
+                prop->atype &= ~(XSLT_SOURCE_NODE_MASK << 27);
+                prop->psvi = NULL;
+                prop = prop->next;
+            }
+        }
+
+        if (cur->children != NULL && cur->type != XML_ENTITY_REF_NODE) {
+            cur = cur->children;
+        } else {
+            if (cur == (xmlNodePtr) doc)
+                return;
+            while (cur->next == NULL) {
+                cur = cur->parent;
+                if (cur == (xmlNodePtr) doc)
+                    return;
+            }
+
+            cur = cur->next;
+        }
+    }
+}
+
+/**
  * xsltApplyStylesheetInternal:
  * @style:  a parsed XSLT stylesheet
  * @doc:  a parsed XML document
@@ -6143,6 +6177,9 @@ xsltApplyStylesheetInternal(xsltStylesheetPtr style, xmlDocPtr doc,
     printf("# Reused tree fragments: %d\n", ctxt->cache->dbgReusedRVTs);
     printf("# Reused variables     : %d\n", ctxt->cache->dbgReusedVars);
 #endif
+
+    if (ctxt->sourceDocDirty)
+        xsltCleanupSourceDoc(doc);
 
     if ((ctxt != NULL) && (userCtxt == NULL))
 	xsltFreeTransformContext(ctxt);

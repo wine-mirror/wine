@@ -91,13 +91,7 @@ const xmlChar *xsltXSLTAttrMarker = (const xmlChar *) "LRE XSLT Attr";
 #ifdef XSLT_LOCALE_WINAPI
 extern xmlRMutexPtr xsltLocaleMutex;
 #endif
-/*
- * Harmless but avoiding a problem when compiling against a
- * libxml <= 2.3.11 without LIBXML_DEBUG_ENABLED
- */
-#ifndef LIBXML_DEBUG_ENABLED
-double xmlXPathStringEvalNumber(const xmlChar *str);
-#endif
+
 /*
  * Useful macros
  */
@@ -157,31 +151,23 @@ exclPrefixPush(xsltStylesheetPtr style, xmlChar * value)
 {
     int i;
 
-    if (style->exclPrefixMax == 0) {
-        style->exclPrefixMax = 4;
-        style->exclPrefixTab =
-            (xmlChar * *)xmlMalloc(style->exclPrefixMax *
-                                   sizeof(style->exclPrefixTab[0]));
-        if (style->exclPrefixTab == NULL) {
-            xmlGenericError(xmlGenericErrorContext, "malloc failed !\n");
-            return (-1);
-        }
-    }
     /* do not push duplicates */
     for (i = 0;i < style->exclPrefixNr;i++) {
         if (xmlStrEqual(style->exclPrefixTab[i], value))
 	    return(-1);
     }
     if (style->exclPrefixNr >= style->exclPrefixMax) {
-        style->exclPrefixMax *= 2;
-        style->exclPrefixTab =
-            (xmlChar * *)xmlRealloc(style->exclPrefixTab,
-                                    style->exclPrefixMax *
-                                    sizeof(style->exclPrefixTab[0]));
-        if (style->exclPrefixTab == NULL) {
+        xmlChar **tmp;
+        size_t max = style->exclPrefixMax ? style->exclPrefixMax * 2 : 4;
+
+        tmp = xmlRealloc(style->exclPrefixTab,
+                         max * sizeof(style->exclPrefixTab[0]));
+        if (tmp == NULL) {
             xmlGenericError(xmlGenericErrorContext, "realloc failed !\n");
             return (-1);
         }
+        style->exclPrefixTab = tmp;
+        style->exclPrefixMax = max;
     }
     style->exclPrefixTab[style->exclPrefixNr] = value;
     style->exclPrefix = value;
@@ -1117,9 +1103,9 @@ xsltGetInheritedNsList(xsltStylesheetPtr style,
 	               xmlNodePtr node)
 {
     xmlNsPtr cur;
-    xmlNsPtr *ret = NULL;
+    xmlNsPtr *ret = NULL, *tmp;
     int nbns = 0;
-    int maxns = 10;
+    int maxns = 0;
     int i;
 
     if ((style == NULL) || (template == NULL) || (node == NULL) ||
@@ -1144,17 +1130,6 @@ xsltGetInheritedNsList(xsltStylesheetPtr style,
 		    if (xmlStrEqual(cur->href, style->exclPrefixTab[i]))
 			goto skip_ns;
 		}
-                if (ret == NULL) {
-                    ret =
-                        (xmlNsPtr *) xmlMalloc((maxns + 1) *
-                                               sizeof(xmlNsPtr));
-                    if (ret == NULL) {
-                        xmlGenericError(xmlGenericErrorContext,
-                                        "xsltGetInheritedNsList : out of memory!\n");
-                        return(0);
-                    }
-                    ret[nbns] = NULL;
-                }
 		/*
 		* Skip shadowed namespace bindings.
 		*/
@@ -1165,16 +1140,16 @@ xsltGetInheritedNsList(xsltStylesheetPtr style,
                 }
                 if (i >= nbns) {
                     if (nbns >= maxns) {
-                        maxns *= 2;
-                        ret = (xmlNsPtr *) xmlRealloc(ret,
-                                                      (maxns +
-                                                       1) *
-                                                      sizeof(xmlNsPtr));
-                        if (ret == NULL) {
+                        maxns = (maxns == 0) ? 10 : 2 * maxns;
+                        tmp = (xmlNsPtr *) xmlRealloc(ret,
+                                (maxns + 1) * sizeof(xmlNsPtr));
+                        if (tmp == NULL) {
                             xmlGenericError(xmlGenericErrorContext,
                                             "xsltGetInheritedNsList : realloc failed!\n");
+                            xmlFree(ret);
                             return(0);
                         }
+                        ret = tmp;
                     }
                     ret[nbns++] = cur;
                     ret[nbns] = NULL;
@@ -1330,8 +1305,10 @@ xsltParseStylesheetOutput(xsltStylesheetPtr style, xmlNodePtr cur)
     if (elements != NULL) {
         if (style->cdataSection == NULL)
             style->cdataSection = xmlHashCreate(10);
-        if (style->cdataSection == NULL)
+        if (style->cdataSection == NULL) {
+            xmlFree(elements);
             return;
+        }
 
         element = elements;
         while (*element != 0) {
@@ -1569,8 +1546,10 @@ xsltParseStylesheetPreserveSpace(xsltStylesheetPtr style, xmlNodePtr cur) {
 
     if (style->stripSpaces == NULL)
 	style->stripSpaces = xmlHashCreate(10);
-    if (style->stripSpaces == NULL)
+    if (style->stripSpaces == NULL) {
+        xmlFree(elements);
 	return;
+    }
 
     element = elements;
     while (*element != 0) {
@@ -1698,6 +1677,11 @@ xsltParseStylesheetStripSpace(xsltStylesheetPtr style, xmlNodePtr cur) {
     if ((cur == NULL) || (style == NULL) || (cur->type != XML_ELEMENT_NODE))
 	return;
 
+    if (style->stripSpaces == NULL)
+	style->stripSpaces = xmlHashCreate(10);
+    if (style->stripSpaces == NULL)
+	return;
+
     elements = xmlGetNsProp(cur, (const xmlChar *)"elements", NULL);
     if (elements == NULL) {
 	xsltTransformError(NULL, style, cur,
@@ -1705,11 +1689,6 @@ xsltParseStylesheetStripSpace(xsltStylesheetPtr style, xmlNodePtr cur) {
 	if (style != NULL) style->warnings++;
 	return;
     }
-
-    if (style->stripSpaces == NULL)
-	style->stripSpaces = xmlHashCreate(10);
-    if (style->stripSpaces == NULL)
-	return;
 
     element = elements;
     while (*element != 0) {
@@ -5526,9 +5505,6 @@ xsltCompileXSLTIncludeElem(xsltCompilerCtxtPtr cctxt, xmlNodePtr node) {
     return(item);
 }
 
-/**
- * xsltParseFindTopLevelElem:
- */
 static int
 xsltParseFindTopLevelElem(xsltCompilerCtxtPtr cctxt,
 			      xmlNodePtr cur,
@@ -6687,6 +6663,9 @@ xsltParseStylesheetUser(xsltStylesheetPtr style, xmlDocPtr doc) {
     }
 #endif /* else of XSLT_REFACTORED */
 
+    if (style->parent == NULL)
+        xsltResolveStylesheetAttributeSet(style);
+
     if (style->errors != 0) {
         /*
         * Detach the doc from the stylesheet; otherwise the doc
@@ -6701,15 +6680,12 @@ xsltParseStylesheetUser(xsltStylesheetPtr style, xmlDocPtr doc) {
         return(-1);
     }
 
-    if (style->parent == NULL)
-        xsltResolveStylesheetAttributeSet(style);
-
     return(0);
 }
 
 /**
  * xsltParseStylesheetDoc:
- * @doc:  and xmlDoc parsed XML
+ * @doc:  an xmlDoc parsed XML
  *
  * parse an XSLT stylesheet, building the associated structures.  doc
  * is kept as a reference within the returned stylesheet, so changes
@@ -6844,7 +6820,8 @@ xsltParseStylesheetPI(const xmlChar *value) {
 	    if (val == NULL)
 		return(NULL);
 	    if ((xmlStrcasecmp(val, BAD_CAST "text/xml")) &&
-		(xmlStrcasecmp(val, BAD_CAST "text/xsl"))) {
+		(xmlStrcasecmp(val, BAD_CAST "text/xsl")) &&
+		(xmlStrcasecmp(val, BAD_CAST "application/xslt+xml"))) {
                 xmlFree(val);
 		break;
 	    }
