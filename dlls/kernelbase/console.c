@@ -29,7 +29,6 @@
 #include <string.h>
 #include <limits.h>
 
-#define NONAMELESSUNION
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"

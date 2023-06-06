@@ -24,7 +24,6 @@
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
 #include "wincon.h"
@@ -183,7 +182,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetSystemTimes( FILETIME *idle, FILETIME *kernel, 
 ULONG WINAPI DECLSPEC_HOTPATCH GetTickCount(void)
 {
     /* note: we ignore TickCountMultiplier */
-    return user_shared_data->u.TickCount.LowPart;
+    return user_shared_data->TickCount.LowPart;
 }
 
 
@@ -196,10 +195,10 @@ ULONGLONG WINAPI DECLSPEC_HOTPATCH GetTickCount64(void)
 
     do
     {
-        high = user_shared_data->u.TickCount.High1Time;
-        low = user_shared_data->u.TickCount.LowPart;
+        high = user_shared_data->TickCount.High1Time;
+        low = user_shared_data->TickCount.LowPart;
     }
-    while (high != user_shared_data->u.TickCount.High2Time);
+    while (high != user_shared_data->TickCount.High2Time);
     /* note: we ignore TickCountMultiplier */
     return (ULONGLONG)high << 32 | low;
 }
@@ -1128,8 +1127,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetQueuedCompletionStatus( HANDLE port, LPDWORD co
     if (status == STATUS_SUCCESS)
     {
         *count = iosb.Information;
-        if (iosb.u.Status >= 0) return TRUE;
-        SetLastError( RtlNtStatusToDosError(iosb.u.Status) );
+        if (iosb.Status >= 0) return TRUE;
+        SetLastError( RtlNtStatusToDosError(iosb.Status) );
         return FALSE;
     }
 
@@ -1231,7 +1230,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH ConnectNamedPipe( HANDLE pipe, LPOVERLAPPED overla
     if (status == STATUS_PENDING && !overlapped)
     {
         WaitForSingleObject( pipe, INFINITE );
-        status = status_block.u.Status;
+        status = status_block.Status;
     }
     return set_ntstatus( status );
 }
@@ -1533,7 +1532,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH TransactNamedPipe( HANDLE handle, LPVOID write_buf
     if (status == STATUS_PENDING && !overlapped)
     {
         WaitForSingleObject(handle, INFINITE);
-        status = iosb->u.Status;
+        status = iosb->Status;
     }
 
     if (bytes_read) *bytes_read = overlapped && status ? 0 : iosb->Information;
