@@ -577,13 +577,12 @@ static inline unsigned int get_unique_id(void)
     return id;
 }
 
-/* try to merge a message with the last in the list; return 1 if successful */
-static int merge_message( struct thread_input *input, const struct message *msg )
+/* try to merge a WM_MOUSEMOVE message with the last in the list; return 1 if successful */
+static int merge_mousemove( struct thread_input *input, const struct message *msg )
 {
     struct message *prev;
     struct list *ptr;
 
-    if (msg->msg != WM_MOUSEMOVE) return 0;
     for (ptr = list_tail( &input->msg_list ); ptr; ptr = list_prev( &input->msg_list, ptr ))
     {
         prev = LIST_ENTRY( ptr, struct message, entry );
@@ -609,6 +608,13 @@ static int merge_message( struct thread_input *input, const struct message *msg 
     list_remove( ptr );
     list_add_tail( &input->msg_list, ptr );
     return 1;
+}
+
+/* try to merge a message with the messages in the list; return 1 if successful */
+static int merge_message( struct thread_input *input, const struct message *msg )
+{
+    if (msg->msg == WM_MOUSEMOVE) return merge_mousemove( input, msg );
+    return 0;
 }
 
 /* free a result structure */
