@@ -22,8 +22,6 @@
 
 #include <stdarg.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -541,10 +539,10 @@ static LPWSTR resource_dup_string( const IMAGE_RESOURCE_DIRECTORY *root, const I
     const IMAGE_RESOURCE_DIR_STRING_U* string;
     LPWSTR s;
 
-    if (!entry->u.s.NameIsString)
-        return UIntToPtr(entry->u.Id);
+    if (!entry->NameIsString)
+        return UIntToPtr(entry->Id);
 
-    string = (const IMAGE_RESOURCE_DIR_STRING_U*) (((const char *)root) + entry->u.s.NameOffset);
+    string = (const IMAGE_RESOURCE_DIR_STRING_U*) (((const char *)root) + entry->NameOffset);
     s = HeapAlloc(GetProcessHeap(), 0, (string->Length + 1)*sizeof (WCHAR) );
     memcpy( s, string->NameString, (string->Length + 1)*sizeof (WCHAR) );
     s[string->Length] = 0;
@@ -573,7 +571,7 @@ static BOOL enumerate_mapped_resources( QUEUEDUPDATES *updates,
 
         Type = resource_dup_string( root, e1 );
 
-        namedir = (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + e1->u2.s2.OffsetToDirectory);
+        namedir = (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + e1->OffsetToDirectory);
         for (j = 0; j < namedir->NumberOfNamedEntries + namedir->NumberOfIdEntries; j++)
         {
             LPWSTR Name;
@@ -582,7 +580,7 @@ static BOOL enumerate_mapped_resources( QUEUEDUPDATES *updates,
 
             Name = resource_dup_string( root, e2 );
 
-            langdir = (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + e2->u2.s2.OffsetToDirectory);
+            langdir = (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + e2->OffsetToDirectory);
             for (k = 0; k < langdir->NumberOfNamedEntries + langdir->NumberOfIdEntries; k++)
             {
                 LANGID Lang;
@@ -591,9 +589,9 @@ static BOOL enumerate_mapped_resources( QUEUEDUPDATES *updates,
 
                 e3 = (const IMAGE_RESOURCE_DIRECTORY_ENTRY*)(langdir + 1) + k;
 
-                Lang = e3->u.Id;
+                Lang = e3->Id;
 
-                data = (const IMAGE_RESOURCE_DATA_ENTRY *)((const char *)root + e3->u2.OffsetToData);
+                data = (const IMAGE_RESOURCE_DATA_ENTRY *)((const char *)root + e3->OffsetToData);
 
                 p = address_from_rva( base, mapping_size, data->OffsetToData, data->Size );
 
@@ -828,8 +826,8 @@ static BOOL write_resources( QUEUEDUPDATES *updates, LPBYTE base, struct resourc
             DWORD len;
 
             root->NumberOfNamedEntries++;
-            e1->u.s.NameIsString = 1;
-            e1->u.s.NameOffset = si->strings_ofs;
+            e1->NameIsString = 1;
+            e1->NameOffset = si->strings_ofs;
 
             strings = (WCHAR*) &base[si->strings_ofs];
             len = lstrlenW( types->id );
@@ -840,10 +838,10 @@ static BOOL write_resources( QUEUEDUPDATES *updates, LPBYTE base, struct resourc
         else
         {
             root->NumberOfIdEntries++;
-            e1->u.Id = LOWORD( types->id );
+            e1->Id = LOWORD( types->id );
         }
-        e1->u2.s2.OffsetToDirectory = si->names_ofs;
-        e1->u2.s2.DataIsDirectory = TRUE;
+        e1->OffsetToDirectory = si->names_ofs;
+        e1->DataIsDirectory = TRUE;
         si->types_ofs += sizeof (IMAGE_RESOURCE_DIRECTORY_ENTRY);
 
         namedir = (IMAGE_RESOURCE_DIRECTORY*) &base[si->names_ofs];
@@ -864,8 +862,8 @@ static BOOL write_resources( QUEUEDUPDATES *updates, LPBYTE base, struct resourc
                 DWORD len;
 
                 namedir->NumberOfNamedEntries++;
-                e2->u.s.NameIsString = 1;
-                e2->u.s.NameOffset = si->strings_ofs;
+                e2->NameIsString = 1;
+                e2->NameOffset = si->strings_ofs;
 
                 strings = (WCHAR*) &base[si->strings_ofs];
                 len = lstrlenW( names->id );
@@ -876,10 +874,10 @@ static BOOL write_resources( QUEUEDUPDATES *updates, LPBYTE base, struct resourc
             else
             {
                 namedir->NumberOfIdEntries++;
-                e2->u.Id = LOWORD( names->id );
+                e2->Id = LOWORD( names->id );
             }
-            e2->u2.s2.OffsetToDirectory = si->langs_ofs;
-            e2->u2.s2.DataIsDirectory = TRUE;
+            e2->OffsetToDirectory = si->langs_ofs;
+            e2->DataIsDirectory = TRUE;
             si->names_ofs += sizeof (IMAGE_RESOURCE_DIRECTORY_ENTRY);
 
             langdir = (IMAGE_RESOURCE_DIRECTORY*) &base[si->langs_ofs];
@@ -896,8 +894,8 @@ static BOOL write_resources( QUEUEDUPDATES *updates, LPBYTE base, struct resourc
                 e3 = (IMAGE_RESOURCE_DIRECTORY_ENTRY*) &base[si->langs_ofs];
                 memset( e3, 0, sizeof *e3 );
                 langdir->NumberOfIdEntries++;
-                e3->u.Id = LOWORD( data->lang );
-                e3->u2.OffsetToData = si->data_entry_ofs;
+                e3->Id = LOWORD( data->lang );
+                e3->OffsetToData = si->data_entry_ofs;
 
                 si->langs_ofs += sizeof (IMAGE_RESOURCE_DIRECTORY_ENTRY);
 

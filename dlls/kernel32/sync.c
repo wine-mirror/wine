@@ -25,7 +25,6 @@
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
 #include "wincon.h"
@@ -87,10 +86,10 @@ ULONGLONG WINAPI DECLSPEC_HOTPATCH GetTickCount64(void)
 
     do
     {
-        high = user_shared_data->u.TickCount.High1Time;
-        low = user_shared_data->u.TickCount.LowPart;
+        high = user_shared_data->TickCount.High1Time;
+        low = user_shared_data->TickCount.LowPart;
     }
-    while (high != user_shared_data->u.TickCount.High2Time);
+    while (high != user_shared_data->TickCount.High2Time);
     /* note: we ignore TickCountMultiplier */
     return (ULONGLONG)high << 32 | low;
 }
@@ -101,7 +100,7 @@ ULONGLONG WINAPI DECLSPEC_HOTPATCH GetTickCount64(void)
 DWORD WINAPI DECLSPEC_HOTPATCH GetTickCount(void)
 {
     /* note: we ignore TickCountMultiplier */
-    return user_shared_data->u.TickCount.LowPart;
+    return user_shared_data->TickCount.LowPart;
 }
 
 /***********************************************************************
