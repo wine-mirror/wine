@@ -639,6 +639,7 @@ NTSTATUS WINAPI wow64_NtWow64IsProcessorFeaturePresent( UINT *args )
  */
 static DWORD get_syscall_num( const BYTE *syscall )
 {
+    WORD *arm_syscall = (WORD *)((ULONG_PTR)syscall & ~1);
     DWORD id = ~0u;
 
     if (!syscall) return id;
@@ -650,9 +651,9 @@ static DWORD get_syscall_num( const BYTE *syscall )
         break;
 
     case IMAGE_FILE_MACHINE_ARMNT:
-        if (*(WORD *)syscall == 0xb40f)
+        if (*arm_syscall == 0xb40f)
         {
-            DWORD inst = *(DWORD *)((WORD *)syscall + 1);
+            DWORD inst = *(DWORD *)(arm_syscall + 1);
             id = ((inst << 1) & 0x0800) + ((inst << 12) & 0xf000) +
                 ((inst >> 20) & 0x0700) + ((inst >> 16) & 0x00ff);
         }
