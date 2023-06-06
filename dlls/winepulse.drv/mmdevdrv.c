@@ -134,7 +134,8 @@ extern const IAudioClockVtbl AudioClock_Vtbl;
 extern const IAudioClock2Vtbl AudioClock2_Vtbl;
 extern const IAudioStreamVolumeVtbl AudioStreamVolume_Vtbl;
 
-static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client);
+extern struct audio_session_wrapper *session_wrapper_create(
+    struct audio_client *client) DECLSPEC_HIDDEN;
 
 static inline ACImpl *impl_from_IAudioClient3(IAudioClient3 *iface)
 {
@@ -1057,7 +1058,7 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
                IsEqualIID(riid, &IID_ISimpleAudioVolume)) {
         const BOOLEAN new_session = !This->session_wrapper;
         if (new_session) {
-            This->session_wrapper = AudioSessionWrapper_Create(This);
+            This->session_wrapper = session_wrapper_create(This);
             if (!This->session_wrapper)
                 return E_OUTOFMEMORY;
         }
@@ -1125,30 +1126,6 @@ static const IAudioClient3Vtbl AudioClient3_Vtbl =
     client_InitializeSharedAudioStream,
 };
 
-static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client)
-{
-    AudioSessionWrapper *ret;
-
-    ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(AudioSessionWrapper));
-    if (!ret)
-        return NULL;
-
-    ret->IAudioSessionControl2_iface.lpVtbl = &AudioSessionControl2_Vtbl;
-    ret->ISimpleAudioVolume_iface.lpVtbl = &SimpleAudioVolume_Vtbl;
-    ret->IChannelAudioVolume_iface.lpVtbl = &ChannelAudioVolume_Vtbl;
-
-    ret->ref = 1;
-
-    ret->client = client;
-    if (client) {
-        ret->session = client->session;
-        IAudioClient3_AddRef(&client->IAudioClient3_iface);
-    }
-
-    return ret;
-}
-
 HRESULT WINAPI AUDDRV_GetAudioSessionWrapper(const GUID *guid, IMMDevice *device,
                                              AudioSessionWrapper **out)
 {
@@ -1158,7 +1135,7 @@ HRESULT WINAPI AUDDRV_GetAudioSessionWrapper(const GUID *guid, IMMDevice *device
     if(FAILED(hr))
         return hr;
 
-    *out = AudioSessionWrapper_Create(NULL);
+    *out = session_wrapper_create(NULL);
     if(!*out)
         return E_OUTOFMEMORY;
 

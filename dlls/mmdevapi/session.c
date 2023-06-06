@@ -1,4 +1,9 @@
 /*
+ * Copyright 2011-2012 Maarten Lankhorst
+ * Copyright 2010-2011 Maarten Lankhorst for CodeWeavers
+ * Copyright 2011 Andrew Eikum for CodeWeavers
+ * Copyright 2022 Huw Davies
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -545,3 +550,26 @@ const ISimpleAudioVolumeVtbl SimpleAudioVolume_Vtbl =
     simplevolume_SetMute,
     simplevolume_GetMute
 };
+
+struct audio_session_wrapper *session_wrapper_create(struct audio_client *client)
+{
+    struct audio_session_wrapper *ret;
+
+    ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct audio_session_wrapper));
+    if (!ret)
+        return NULL;
+
+    ret->IAudioSessionControl2_iface.lpVtbl = &AudioSessionControl2_Vtbl;
+    ret->IChannelAudioVolume_iface.lpVtbl   = &ChannelAudioVolume_Vtbl;
+    ret->ISimpleAudioVolume_iface.lpVtbl    = &SimpleAudioVolume_Vtbl;
+
+    ret->ref    = 1;
+    ret->client = client;
+
+    if (client) {
+        ret->session = client->session;
+        IAudioClient3_AddRef(&client->IAudioClient3_iface);
+    }
+
+    return ret;
+}
