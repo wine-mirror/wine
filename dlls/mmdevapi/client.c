@@ -196,6 +196,61 @@ const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl =
     capture_GetNextPacketSize
 };
 
+HRESULT WINAPI client_Stop(IAudioClient3 *iface)
+{
+    struct audio_client *This = impl_from_IAudioClient3(iface);
+    struct stop_params params;
+
+    TRACE("(%p)\n", This);
+
+    if (!This->stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
+
+    params.stream = This->stream;
+
+    WINE_UNIX_CALL(stop, &params);
+
+    return params.result;
+}
+
+HRESULT WINAPI client_Reset(IAudioClient3 *iface)
+{
+    struct audio_client *This = impl_from_IAudioClient3(iface);
+    struct reset_params params;
+
+    TRACE("(%p)\n", This);
+
+    if (!This->stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
+
+    params.stream = This->stream;
+
+    WINE_UNIX_CALL(reset, &params);
+
+    return params.result;
+}
+
+HRESULT WINAPI client_SetEventHandle(IAudioClient3 *iface, HANDLE event)
+{
+    struct audio_client *This = impl_from_IAudioClient3(iface);
+    struct set_event_handle_params params;
+
+    TRACE("(%p)->(%p)\n", This, event);
+
+    if (!event)
+        return E_INVALIDARG;
+
+    if (!This->stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
+
+    params.stream = This->stream;
+    params.event  = event;
+
+    WINE_UNIX_CALL(set_event_handle, &params);
+
+    return params.result;
+}
+
 HRESULT WINAPI client_GetService(IAudioClient3 *iface, REFIID riid, void **ppv)
 {
     struct audio_client *This = impl_from_IAudioClient3(iface);
