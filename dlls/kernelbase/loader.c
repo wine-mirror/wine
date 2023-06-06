@@ -22,8 +22,6 @@
 
 #include <stdarg.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -683,7 +681,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumResourceLanguagesExA( HMODULE module, LPCSTR t
     {
         for (i = 0; i < resdir->NumberOfNamedEntries + resdir->NumberOfIdEntries; i++)
         {
-            ret = func( module, type, name, et[i].u.Id, param );
+            ret = func( module, type, name, et[i].Id, param );
             if (!ret) break;
         }
     }
@@ -743,7 +741,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumResourceLanguagesExW( HMODULE module, LPCWSTR 
     {
         for (i = 0; i < resdir->NumberOfNamedEntries + resdir->NumberOfIdEntries; i++)
         {
-            ret = func( module, type, name, et[i].u.Id, param );
+            ret = func( module, type, name, et[i].Id, param );
             if (!ret) break;
         }
     }
@@ -801,9 +799,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumResourceNamesExA( HMODULE module, LPCSTR type,
     {
         for (i = 0; i < resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries; i++)
         {
-            if (et[i].u.s.NameIsString)
+            if (et[i].NameIsString)
             {
-                str = (const IMAGE_RESOURCE_DIR_STRING_U *)((const BYTE *)basedir + et[i].u.s.NameOffset);
+                str = (const IMAGE_RESOURCE_DIR_STRING_U *)((const BYTE *)basedir + et[i].NameOffset);
                 newlen = WideCharToMultiByte(CP_ACP, 0, str->NameString, str->Length, NULL, 0, NULL, NULL);
                 if (newlen + 1 > len)
                 {
@@ -821,7 +819,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumResourceNamesExA( HMODULE module, LPCSTR type,
             }
             else
             {
-                ret = func( module, type, UIntToPtr(et[i].u.Id), param );
+                ret = func( module, type, UIntToPtr(et[i].Id), param );
             }
             if (!ret) break;
         }
@@ -880,9 +878,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumResourceNamesExW( HMODULE module, LPCWSTR type
     {
         for (i = 0; i < resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries; i++)
         {
-            if (et[i].u.s.NameIsString)
+            if (et[i].NameIsString)
             {
-                str = (const IMAGE_RESOURCE_DIR_STRING_U *)((const BYTE *)basedir + et[i].u.s.NameOffset);
+                str = (const IMAGE_RESOURCE_DIR_STRING_U *)((const BYTE *)basedir + et[i].NameOffset);
                 if (str->Length + 1 > len)
                 {
                     len = str->Length + 1;
@@ -899,7 +897,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumResourceNamesExW( HMODULE module, LPCWSTR type
             }
             else
             {
-                ret = func( module, type, UIntToPtr(et[i].u.Id), param );
+                ret = func( module, type, UIntToPtr(et[i].Id), param );
             }
             if (!ret) break;
         }
@@ -957,9 +955,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumResourceTypesExA( HMODULE module, ENUMRESTYPEP
     et = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(resdir + 1);
     for (i = 0; i < resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries; i++)
     {
-        if (et[i].u.s.NameIsString)
+        if (et[i].NameIsString)
         {
-            str = (const IMAGE_RESOURCE_DIR_STRING_U *)((const BYTE *)resdir + et[i].u.s.NameOffset);
+            str = (const IMAGE_RESOURCE_DIR_STRING_U *)((const BYTE *)resdir + et[i].NameOffset);
             newlen = WideCharToMultiByte( CP_ACP, 0, str->NameString, str->Length, NULL, 0, NULL, NULL);
             if (newlen + 1 > len)
             {
@@ -973,7 +971,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumResourceTypesExA( HMODULE module, ENUMRESTYPEP
         }
         else
         {
-            ret = func( module, UIntToPtr(et[i].u.Id), param );
+            ret = func( module, UIntToPtr(et[i].Id), param );
         }
         if (!ret) break;
     }
@@ -1007,9 +1005,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumResourceTypesExW( HMODULE module, ENUMRESTYPEP
     et = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(resdir + 1);
     for (i = 0; i < resdir->NumberOfNamedEntries + resdir->NumberOfIdEntries; i++)
     {
-        if (et[i].u.s.NameIsString)
+        if (et[i].NameIsString)
         {
-            str = (const IMAGE_RESOURCE_DIR_STRING_U *)((const BYTE *)resdir + et[i].u.s.NameOffset);
+            str = (const IMAGE_RESOURCE_DIR_STRING_U *)((const BYTE *)resdir + et[i].NameOffset);
             if (str->Length + 1 > len)
             {
                 len = str->Length + 1;
@@ -1022,7 +1020,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumResourceTypesExW( HMODULE module, ENUMRESTYPEP
         }
         else
         {
-            ret = func( module, UIntToPtr(et[i].u.Id), param );
+            ret = func( module, UIntToPtr(et[i].Id), param );
         }
         if (!ret) break;
     }
