@@ -241,11 +241,11 @@ static BOOL remap_synonym(char *name)
 #define FOUND_COUNTRY          0x1
 
 typedef struct {
-  char search_language[MAX_ELEM_LEN];
-  char search_country[MAX_ELEM_LEN];
+  WCHAR search_language[MAX_ELEM_LEN];
+  WCHAR search_country[MAX_ELEM_LEN];
+  WCHAR found_lang_sname[LOCALE_NAME_MAX_LENGTH];
   DWORD found_codepage;
   unsigned int match_flags;
-  LANGID found_lang_id;
   BOOL allow_sname;
 } locale_search_t;
 
@@ -253,50 +253,48 @@ typedef struct {
 #define STOP_LOOKING     FALSE
 
 /* INTERNAL: Get and compare locale info with a given string */
-static int compare_info(LCID lcid, DWORD flags, char* buff, const char* cmp, BOOL exact)
+static int compare_info(WCHAR *name, DWORD flags, WCHAR *buff, const WCHAR *cmp, BOOL exact)
 {
   int len;
 
   if(!cmp[0])
-      return 0;
+    return 0;
 
   buff[0] = 0;
-  GetLocaleInfoA(lcid, flags|LOCALE_NOUSEROVERRIDE, buff, MAX_ELEM_LEN);
+  GetLocaleInfoEx(name, flags|LOCALE_NOUSEROVERRIDE, buff, MAX_ELEM_LEN);
   if (!buff[0])
     return 0;
 
   /* Partial matches are only allowed on language/country names */
-  len = strlen(cmp);
+  len = wcslen(cmp);
+
   if(exact || len<=3)
-    return !_stricmp(cmp, buff);
+    return !_wcsicmp(cmp, buff);
   else
-    return !_strnicmp(cmp, buff, len);
+    return !_wcsnicmp(cmp, buff, len);
 }
 
 static BOOL CALLBACK
 find_best_locale_proc( WCHAR *name, DWORD locale_flags, LPARAM lParam )
 {
   locale_search_t *res = (locale_search_t *)lParam;
-  const LCID lcid = LocaleNameToLCID( name, LCID_CONVERSION_FLAGS );
-  char buff[MAX_ELEM_LEN];
+  WCHAR buff[MAX_ELEM_LEN];
   unsigned int flags = 0;
 
-  if (lcid == LOCALE_CUSTOM_UNSPECIFIED) return CONTINUE_LOOKING;
-
-  if (res->allow_sname && compare_info(lcid,LOCALE_SNAME,buff,res->search_language, TRUE))
+  if (res->allow_sname && compare_info(name,LOCALE_SNAME,buff,res->search_language, TRUE))
   {
-    TRACE(":Found locale: %s->%s\n", res->search_language, buff);
+    TRACE(":Found locale: %s->%s\n", wine_dbgstr_w(res->search_language), wine_dbgstr_w(buff));
     res->match_flags = FOUND_SNAME;
-    res->found_lang_id = LANGIDFROMLCID(lcid);
+    wcscpy(res->found_lang_sname, name);
     return STOP_LOOKING;
   }
 
   /* Check Language */
-  if (compare_info(lcid,LOCALE_SISO639LANGNAME,buff,res->search_language, TRUE) ||
-      compare_info(lcid,LOCALE_SABBREVLANGNAME,buff,res->search_language, TRUE) ||
-      compare_info(lcid,LOCALE_SENGLANGUAGE,buff,res->search_language, FALSE))
+  if (compare_info(name,LOCALE_SISO639LANGNAME,buff,res->search_language, TRUE) ||
+      compare_info(name,LOCALE_SABBREVLANGNAME,buff,res->search_language, TRUE) ||
+      compare_info(name,LOCALE_SENGLANGUAGE,buff,res->search_language, FALSE))
   {
-    TRACE(":Found language: %s->%s\n", res->search_language, buff);
+    TRACE(":Found language: %s->%s\n", wine_dbgstr_w(res->search_language), wine_dbgstr_w(buff));
     flags |= FOUND_LANGUAGE;
   }
   else if (res->match_flags & FOUND_LANGUAGE)
@@ -305,11 +303,11 @@ find_best_locale_proc( WCHAR *name, DWORD locale_flags, LPARAM lParam )
   }
 
   /* Check Country */
-  if (compare_info(lcid,LOCALE_SISO3166CTRYNAME,buff,res->search_country, TRUE) ||
-      compare_info(lcid,LOCALE_SABBREVCTRYNAME,buff,res->search_country, TRUE) ||
-      compare_info(lcid,LOCALE_SENGCOUNTRY,buff,res->search_country, FALSE))
+  if (compare_info(name,LOCALE_SISO3166CTRYNAME,buff,res->search_country, TRUE) ||
+      compare_info(name,LOCALE_SABBREVCTRYNAME,buff,res->search_country, TRUE) ||
+      compare_info(name,LOCALE_SENGCOUNTRY,buff,res->search_country, FALSE))
   {
-    TRACE("Found country:%s->%s\n", res->search_country, buff);
+    TRACE("Found country:%s->%s\n", wine_dbgstr_w(res->search_country), wine_dbgstr_w(buff));
     flags |= FOUND_COUNTRY;
   }
   else if (!flags && (res->match_flags & FOUND_COUNTRY))
@@ -321,7 +319,7 @@ find_best_locale_proc( WCHAR *name, DWORD locale_flags, LPARAM lParam )
   {
     /* Found a better match than previously */
     res->match_flags = flags;
-    res->found_lang_id = LANGIDFROMLCID(lcid);
+    wcscpy(res->found_lang_sname, name);
   }
   if ((flags & (FOUND_LANGUAGE | FOUND_COUNTRY)) ==
         (FOUND_LANGUAGE | FOUND_COUNTRY))
@@ -354,27 +352,27 @@ BOOL locale_to_sname(const char *locale, unsigned short *codepage, BOOL *sname_m
     if(!locale[0] || (cp == locale && !region)) {
         GetUserDefaultLocaleName(sname, sname_size);
     } else {
-        WCHAR wbuf[LOCALE_NAME_MAX_LENGTH];
+        char search_language_buf[MAX_ELEM_LEN] = { 0 }, search_country_buf[MAX_ELEM_LEN] = { 0 };
         locale_search_t search;
         BOOL remapped = FALSE;
 
         memset(&search, 0, sizeof(locale_search_t));
-        lstrcpynA(search.search_language, locale, MAX_ELEM_LEN);
+        lstrcpynA(search_language_buf, locale, MAX_ELEM_LEN);
         if(region) {
-            lstrcpynA(search.search_country, region+1, MAX_ELEM_LEN);
+            lstrcpynA(search_country_buf, region+1, MAX_ELEM_LEN);
             if(region-locale < MAX_ELEM_LEN)
-                search.search_language[region-locale] = '\0';
+                search_language_buf[region-locale] = '\0';
         } else
-            search.search_country[0] = '\0';
+            search_country_buf[0] = '\0';
 
         if(cp) {
             if(region && cp-region-1<MAX_ELEM_LEN)
-                search.search_country[cp-region-1] = '\0';
+                search_country_buf[cp-region-1] = '\0';
             if(cp-locale < MAX_ELEM_LEN)
-                search.search_language[cp-locale] = '\0';
+                search_language_buf[cp-locale] = '\0';
         }
 
-        if ((remapped = remap_synonym(search.search_language)))
+        if ((remapped = remap_synonym(search_language_buf)))
         {
             search.allow_sname = TRUE;
         }
@@ -386,14 +384,15 @@ BOOL locale_to_sname(const char *locale, unsigned short *codepage, BOOL *sname_m
         }
 #endif
 
-        MultiByteToWideChar(CP_ACP, 0, search.search_language, -1, wbuf, LOCALE_NAME_MAX_LENGTH);
-        if (search.allow_sname && IsValidLocaleName(wbuf))
+        MultiByteToWideChar(CP_ACP, 0, search_language_buf, -1, search.search_language, MAX_ELEM_LEN);
+        if (search.allow_sname && IsValidLocaleName(search.search_language))
         {
             search.match_flags = FOUND_SNAME;
-            wcsncpy(sname, wbuf, sname_size);
+            wcsncpy(sname, search.search_language, sname_size);
         }
         else
         {
+            MultiByteToWideChar(CP_ACP, 0, search_country_buf, -1, search.search_country, MAX_ELEM_LEN);
             EnumSystemLocalesEx( find_best_locale_proc, 0, (LPARAM)&search, NULL);
 
             if (!search.match_flags)
@@ -405,7 +404,7 @@ BOOL locale_to_sname(const char *locale, unsigned short *codepage, BOOL *sname_m
             if (search.search_country[0] && !(search.match_flags & FOUND_COUNTRY))
                 return FALSE;
 
-            LCIDToLocaleName(search.found_lang_id, sname, sname_size, LOCALE_ALLOW_NEUTRAL_NAMES);
+            wcsncpy(sname, search.found_lang_sname, sname_size);
         }
 
         is_sname = !remapped && (search.match_flags & FOUND_SNAME) != 0;
