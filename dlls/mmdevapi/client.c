@@ -36,6 +36,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 extern void sessions_lock(void) DECLSPEC_HIDDEN;
 extern void sessions_unlock(void) DECLSPEC_HIDDEN;
 
+extern struct audio_session_wrapper *session_wrapper_create(struct audio_client *client) DECLSPEC_HIDDEN;
+
 void set_stream_volumes(struct audio_client *This)
 {
     struct set_volumes_params params;
@@ -193,6 +195,81 @@ const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl =
     capture_ReleaseBuffer,
     capture_GetNextPacketSize
 };
+
+HRESULT WINAPI client_GetService(IAudioClient3 *iface, REFIID riid, void **ppv)
+{
+    struct audio_client *This = impl_from_IAudioClient3(iface);
+    HRESULT hr;
+
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+
+    *ppv = NULL;
+
+    sessions_lock();
+
+    if (!This->stream) {
+        hr = AUDCLNT_E_NOT_INITIALIZED;
+        goto exit;
+    }
+
+    if (IsEqualIID(riid, &IID_IAudioRenderClient)) {
+        if (This->dataflow != eRender) {
+            hr = AUDCLNT_E_WRONG_ENDPOINT_TYPE;
+            goto exit;
+        }
+
+        IAudioRenderClient_AddRef(&This->IAudioRenderClient_iface);
+        *ppv = &This->IAudioRenderClient_iface;
+    } else if (IsEqualIID(riid, &IID_IAudioCaptureClient)) {
+        if (This->dataflow != eCapture) {
+            hr = AUDCLNT_E_WRONG_ENDPOINT_TYPE;
+            goto exit;
+        }
+
+        IAudioCaptureClient_AddRef(&This->IAudioCaptureClient_iface);
+        *ppv = &This->IAudioCaptureClient_iface;
+    } else if (IsEqualIID(riid, &IID_IAudioClock)) {
+        IAudioClock_AddRef(&This->IAudioClock_iface);
+        *ppv = &This->IAudioClock_iface;
+    } else if (IsEqualIID(riid, &IID_IAudioStreamVolume)) {
+        IAudioStreamVolume_AddRef(&This->IAudioStreamVolume_iface);
+        *ppv = &This->IAudioStreamVolume_iface;
+    } else if (IsEqualIID(riid, &IID_IAudioSessionControl) ||
+               IsEqualIID(riid, &IID_IChannelAudioVolume) ||
+               IsEqualIID(riid, &IID_ISimpleAudioVolume)) {
+        const BOOLEAN new_session = !This->session_wrapper;
+        if (new_session) {
+            This->session_wrapper = session_wrapper_create(This);
+            if (!This->session_wrapper) {
+                hr = E_OUTOFMEMORY;
+                goto exit;
+            }
+        }
+
+        if (IsEqualIID(riid, &IID_IAudioSessionControl))
+            *ppv = &This->session_wrapper->IAudioSessionControl2_iface;
+        else if (IsEqualIID(riid, &IID_IChannelAudioVolume))
+            *ppv = &This->session_wrapper->IChannelAudioVolume_iface;
+        else if (IsEqualIID(riid, &IID_ISimpleAudioVolume))
+            *ppv = &This->session_wrapper->ISimpleAudioVolume_iface;
+
+        if (!new_session)
+            IUnknown_AddRef((IUnknown *)*ppv);
+    } else {
+            FIXME("stub %s\n", debugstr_guid(riid));
+            hr = E_NOINTERFACE;
+            goto exit;
+    }
+
+    hr = S_OK;
+exit:
+    sessions_unlock();
+
+    return hr;
+}
 
 HRESULT WINAPI client_IsOffloadCapable(IAudioClient3 *iface, AUDIO_STREAM_CATEGORY category,
                                        BOOL *offload_capable)
