@@ -339,22 +339,30 @@ done:
     return status;
 }
 
+static void free_tickets_in_list( struct ticket_list *list )
+{
+    ULONG i;
+
+    for (i = 0; i < list->count; i++)
+    {
+        free( list->tickets[i].RealmName.Buffer );
+        free( list->tickets[i].ServerName.Buffer );
+    }
+
+    free( list->tickets );
+}
+
 static NTSTATUS query_ticket_cache( void *args )
 {
     struct query_ticket_cache_params *params = args;
     struct ticket_list list = { 0 };
     NTSTATUS status;
-    ULONG i;
 
     status = kerberos_fill_ticket_list( &list );
 
     if (status == STATUS_SUCCESS) status = copy_tickets_to_client( &list, params->resp, params->out_size );
 
-    for (i = 0; i < list.count; i++)
-    {
-        free( list.tickets[i].RealmName.Buffer );
-        free( list.tickets[i].ServerName.Buffer );
-    }
+    free_tickets_in_list( &list );
     return status;
 }
 
@@ -1237,17 +1245,12 @@ static NTSTATUS wow64_query_ticket_cache( void *args )
     } const *params32 = args;
     struct ticket_list list = { 0 };
     NTSTATUS status;
-    ULONG i;
 
     status = kerberos_fill_ticket_list( &list );
     if (status == STATUS_SUCCESS)
         status = copy_tickets_to_client32( &list, ULongToPtr(params32->resp), ULongToPtr(params32->out_size) );
 
-    for (i = 0; i < list.count; i++)
-    {
-        free( list.tickets[i].RealmName.Buffer );
-        free( list.tickets[i].ServerName.Buffer );
-    }
+    free_tickets_in_list( &list );
     return status;
 
 }
