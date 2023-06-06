@@ -1823,8 +1823,7 @@ static ULONG WINAPI create_object_context_Release(IUnknown *iface)
 
     if (!refcount)
     {
-        if (context->stream)
-            IMFByteStream_Release(context->stream);
+        IMFByteStream_Release(context->stream);
         free(context->url);
         free(context);
     }
@@ -1852,6 +1851,8 @@ static HRESULT WINAPI stream_handler_BeginCreateObject(IMFByteStreamHandler *ifa
     if (cancel_cookie)
         *cancel_cookie = NULL;
 
+    if (!stream)
+        return E_INVALIDARG;
     if (FAILED(hr = MFCreateAsyncResult(NULL, callback, state, &caller)))
         return hr;
 
@@ -1865,16 +1866,9 @@ static HRESULT WINAPI stream_handler_BeginCreateObject(IMFByteStreamHandler *ifa
     context->refcount = 1;
     context->flags = flags;
     context->stream = stream;
-    if (context->stream)
-        IMFByteStream_AddRef(context->stream);
+    IMFByteStream_AddRef(context->stream);
     if (url)
         context->url = wcsdup(url);
-    if (!context->stream)
-    {
-        IMFAsyncResult_Release(caller);
-        IUnknown_Release(&context->IUnknown_iface);
-        return E_OUTOFMEMORY;
-    }
 
     hr = MFCreateAsyncResult(&context->IUnknown_iface, &handler->IMFAsyncCallback_iface, (IUnknown *)caller, &item);
     IUnknown_Release(&context->IUnknown_iface);
