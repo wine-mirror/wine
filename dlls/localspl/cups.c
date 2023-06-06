@@ -219,12 +219,15 @@ static BOOL lpr_start_doc(doc_t *doc, const WCHAR *printer_name)
     static const WCHAR quote[] = { '\'',0 };
     int printer_len = wcslen(printer_name);
     WCHAR *cmd;
+    BOOL ret;
 
     cmd = malloc(printer_len * sizeof(WCHAR) + sizeof(lpr) + sizeof(quote));
     memcpy(cmd, lpr, sizeof(lpr));
     memcpy(cmd + ARRAY_SIZE(lpr), printer_name, printer_len * sizeof(WCHAR));
     memcpy(cmd + ARRAY_SIZE(lpr) + printer_len, quote, sizeof(quote));
-    return pipe_start_doc(doc, cmd);
+    ret = pipe_start_doc(doc, cmd);
+    free(cmd);
+    return ret;
 }
 
 #ifdef SONAME_LIBCUPS
