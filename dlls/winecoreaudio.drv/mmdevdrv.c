@@ -811,55 +811,12 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
     return S_OK;
 }
 
-static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
-{
-    ACImpl *This = impl_from_IAudioClient3(iface);
-    struct stop_params params;
+extern HRESULT WINAPI client_Stop(IAudioClient3 *iface);
 
-    TRACE("(%p)\n", This);
+extern HRESULT WINAPI client_Reset(IAudioClient3 *iface);
 
-    if(!This->stream)
-        return AUDCLNT_E_NOT_INITIALIZED;
-
-    params.stream = This->stream;
-    UNIX_CALL(stop, &params);
-    return params.result;
-}
-
-static HRESULT WINAPI AudioClient_Reset(IAudioClient3 *iface)
-{
-    ACImpl *This = impl_from_IAudioClient3(iface);
-    struct reset_params params;
-
-    TRACE("(%p)\n", This);
-
-    if(!This->stream)
-        return AUDCLNT_E_NOT_INITIALIZED;
-
-    params.stream = This->stream;
-    UNIX_CALL(reset, &params);
-    return params.result;
-}
-
-static HRESULT WINAPI AudioClient_SetEventHandle(IAudioClient3 *iface,
-        HANDLE event)
-{
-    ACImpl *This = impl_from_IAudioClient3(iface);
-    struct set_event_handle_params params;
-
-    TRACE("(%p)->(%p)\n", This, event);
-
-    if(!event)
-        return E_INVALIDARG;
-
-    if(!This->stream)
-        return AUDCLNT_E_NOT_INITIALIZED;
-
-    params.stream = This->stream;
-    params.event = event;
-    UNIX_CALL(set_event_handle, &params);
-    return params.result;
-}
+extern HRESULT WINAPI client_SetEventHandle(IAudioClient3 *iface,
+        HANDLE event);
 
 extern HRESULT WINAPI client_GetService(IAudioClient3 *iface, REFIID riid,
         void **ppv);
@@ -898,9 +855,9 @@ static const IAudioClient3Vtbl AudioClient3_Vtbl =
     AudioClient_GetMixFormat,
     AudioClient_GetDevicePeriod,
     AudioClient_Start,
-    AudioClient_Stop,
-    AudioClient_Reset,
-    AudioClient_SetEventHandle,
+    client_Stop,
+    client_Reset,
+    client_SetEventHandle,
     client_GetService,
     client_IsOffloadCapable,
     client_SetClientProperties,
