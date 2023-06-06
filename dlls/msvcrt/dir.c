@@ -824,7 +824,7 @@ wchar_t* CDECL _wgetcwd(wchar_t * buf, int size)
       if (size <= dir_len) size = dir_len + 1;
       if (!(buf = malloc( size * sizeof(WCHAR) ))) return NULL;
   }
-  if (dir_len >= size)
+  else if (dir_len >= size)
   {
     *_errno() = ERANGE;
     return NULL; /* buf too small */
