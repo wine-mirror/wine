@@ -4677,6 +4677,7 @@ sub build_locale_data()
         my $snativelangname = loc_query( $loc, "/ldml/localeDisplayNames/languages/language[\@type='$language' and not(\@alt)]" );
         my $snativectryname = loc_query( $loc, "/ldml/localeDisplayNames/territories/territory[\@type='$territory' and not(\@alt)]" );
         $sengcountry =~ s/South Korea/Korea/;
+        $sengcountry =~ s/T\xfcrkiye/Turkey/;
         $snativelangname ||= $senglanguage;
         $snativectryname ||= $sengcountry;
         if ($script)
