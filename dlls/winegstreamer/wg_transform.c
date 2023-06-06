@@ -401,7 +401,6 @@ NTSTATUS wg_transform_create(void *args)
             break;
 
         case WG_MAJOR_TYPE_VIDEO:
-        case WG_MAJOR_TYPE_VIDEO_WMV:
             if (!(element = create_element("videoconvert", "base"))
                     || !append_element(transform->container, element, &first, &last))
                 goto out;
@@ -418,13 +417,14 @@ NTSTATUS wg_transform_create(void *args)
             gst_util_set_object_arg(G_OBJECT(element), "n-threads", "0");
             break;
 
+        case WG_MAJOR_TYPE_UNKNOWN:
         case WG_MAJOR_TYPE_AUDIO_MPEG1:
         case WG_MAJOR_TYPE_AUDIO_MPEG4:
         case WG_MAJOR_TYPE_AUDIO_WMA:
         case WG_MAJOR_TYPE_VIDEO_CINEPAK:
         case WG_MAJOR_TYPE_VIDEO_H264:
-        case WG_MAJOR_TYPE_UNKNOWN:
         case WG_MAJOR_TYPE_VIDEO_INDEO:
+        case WG_MAJOR_TYPE_VIDEO_WMV:
             GST_FIXME("Format %u not implemented!", output_format.major_type);
             goto out;
     }
