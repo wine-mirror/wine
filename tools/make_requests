@@ -45,7 +45,6 @@ my %formats =
     "timeout_t"     => [  8,   8,  "&dump_timeout" ],
     "abstime_t"     => [  8,   8,  "&dump_abstime" ],
     "rectangle_t"   => [  16,  4,  "&dump_rectangle" ],
-    "apc_call_t"    => [  48,  8,  "&dump_apc_call" ],
     "apc_result_t"  => [  40,  8,  "&dump_apc_result" ],
     "async_data_t"  => [  40,  8,  "&dump_async_data" ],
     "irp_params_t"  => [  32,  8,  "&dump_irp_params" ],

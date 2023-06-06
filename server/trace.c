@@ -1752,9 +1752,9 @@ static void dump_select_request( const struct select_request *req )
 
 static void dump_select_reply( const struct select_reply *req )
 {
-    dump_apc_call( " call=", &req->call );
-    fprintf( stderr, ", apc_handle=%04x", req->apc_handle );
+    fprintf( stderr, " apc_handle=%04x", req->apc_handle );
     fprintf( stderr, ", signaled=%d", req->signaled );
+    dump_varargs_apc_call( ", call=", cur_size );
     dump_varargs_contexts( ", contexts=", cur_size );
 }
 

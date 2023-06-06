@@ -691,10 +691,15 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
     int cookie;
     obj_handle_t apc_handle = 0;
     BOOL suspend_context = !!context;
-    apc_call_t call;
     apc_result_t result;
     sigset_t old_set;
     int signaled;
+    data_size_t reply_size;
+    struct
+    {
+        apc_call_t call;
+        context_t  context[2];
+    } reply_data;
 
     memset( &result, 0, sizeof(result) );
 
@@ -718,16 +723,17 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
                     wine_server_add_data( req, context, ctx_size );
                     suspend_context = FALSE; /* server owns the context now */
                 }
-                if (context) wine_server_set_reply( req, context, 2 * sizeof(*context) );
+                wine_server_set_reply( req, &reply_data,
+                                       context ? sizeof(reply_data) : sizeof(reply_data.call) );
                 ret = server_call_unlocked( req );
                 signaled    = reply->signaled;
                 apc_handle  = reply->apc_handle;
-                call        = reply->call;
+                reply_size  = wine_server_reply_size( reply );
             }
             SERVER_END_REQ;
 
             if (ret != STATUS_KERNEL_APC) break;
-            invoke_system_apc( &call, &result, FALSE );
+            invoke_system_apc( &reply_data.call, &result, FALSE );
 
             /* don't signal multiple times */
             if (size >= sizeof(select_op->signal_and_wait) && select_op->op == SELECT_SIGNAL_AND_WAIT)
@@ -740,7 +746,9 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
     }
     while (ret == STATUS_USER_APC || ret == STATUS_KERNEL_APC);
 
-    if (ret == STATUS_USER_APC) *user_apc = call.user;
+    if (ret == STATUS_USER_APC) *user_apc = reply_data.call.user;
+    if (reply_size > sizeof(reply_data.call))
+        memcpy( context, reply_data.context, reply_size - sizeof(reply_data.call) );
     return ret;
 }
 

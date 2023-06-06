@@ -1221,9 +1221,9 @@ typedef struct
     VARARG(data,select_op,size); /* operation-specific data */
     VARARG(contexts,contexts);   /* suspend context(s) */
 @REPLY
-    apc_call_t   call;         /* APC call arguments */
     obj_handle_t apc_handle;   /* handle to next APC */
     int          signaled;     /* were the handles immediately signaled? */
+    VARARG(call,apc_call);     /* APC call arguments */
     VARARG(contexts,contexts); /* suspend context(s) */
 @END
 #define SELECT_ALERTABLE     1
