@@ -1778,7 +1778,6 @@ struct create_object_context
     IUnknown IUnknown_iface;
     LONG refcount;
 
-    IPropertyStore *props;
     IMFByteStream *stream;
     WCHAR *url;
     DWORD flags;
@@ -1824,8 +1823,6 @@ static ULONG WINAPI create_object_context_Release(IUnknown *iface)
 
     if (!refcount)
     {
-        if (context->props)
-            IPropertyStore_Release(context->props);
         if (context->stream)
             IMFByteStream_Release(context->stream);
         free(context->url);
@@ -1866,9 +1863,6 @@ static HRESULT WINAPI stream_handler_BeginCreateObject(IMFByteStreamHandler *ifa
 
     context->IUnknown_iface.lpVtbl = &create_object_context_vtbl;
     context->refcount = 1;
-    context->props = props;
-    if (context->props)
-        IPropertyStore_AddRef(context->props);
     context->flags = flags;
     context->stream = stream;
     if (context->stream)
@@ -1991,9 +1985,9 @@ static HRESULT WINAPI stream_handler_callback_GetParameters(IMFAsyncCallback *if
 }
 
 static HRESULT stream_handler_create_object(struct stream_handler *handler, WCHAR *url, IMFByteStream *stream, DWORD flags,
-                                            IPropertyStore *props, IUnknown **out_object, MF_OBJECT_TYPE *out_obj_type)
+                                            IUnknown **out_object, MF_OBJECT_TYPE *out_obj_type)
 {
-    TRACE("%p, %s, %p, %#lx, %p, %p, %p.\n", handler, debugstr_w(url), stream, flags, props, out_object, out_obj_type);
+    TRACE("%p, %s, %p, %#lx, %p, %p.\n", handler, debugstr_w(url), stream, flags, out_object, out_obj_type);
 
     if (flags & MF_RESOLUTION_MEDIASOURCE)
     {
@@ -2038,7 +2032,7 @@ static HRESULT WINAPI stream_handler_callback_Invoke(IMFAsyncCallback *iface, IM
     context = impl_from_IUnknown(context_object);
 
     if (FAILED(hr = stream_handler_create_object(handler, context->url, context->stream,
-            context->flags, context->props, &object, &obj_type)))
+            context->flags, &object, &obj_type)))
         WARN("Failed to create object, hr %#lx\n", hr);
     else
     {
