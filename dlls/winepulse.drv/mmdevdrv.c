@@ -1025,6 +1025,7 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
         void **ppv)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    HRESULT hr;
 
     TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
 
@@ -1032,18 +1033,26 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
         return E_POINTER;
     *ppv = NULL;
 
-    if (!This->stream)
-        return AUDCLNT_E_NOT_INITIALIZED;
+    sessions_lock();
+
+    if (!This->stream) {
+        hr = AUDCLNT_E_NOT_INITIALIZED;
+        goto exit;
+    }
 
     if (IsEqualIID(riid, &IID_IAudioRenderClient)) {
-        if (This->dataflow != eRender)
-            return AUDCLNT_E_WRONG_ENDPOINT_TYPE;
+        if (This->dataflow != eRender) {
+            hr = AUDCLNT_E_WRONG_ENDPOINT_TYPE;
+            goto exit;
+        }
 
         IAudioRenderClient_AddRef(&This->IAudioRenderClient_iface);
         *ppv = &This->IAudioRenderClient_iface;
     } else if (IsEqualIID(riid, &IID_IAudioCaptureClient)) {
-        if (This->dataflow != eCapture)
-            return AUDCLNT_E_WRONG_ENDPOINT_TYPE;
+        if (This->dataflow != eCapture) {
+            hr = AUDCLNT_E_WRONG_ENDPOINT_TYPE;
+            goto exit;
+        }
 
         IAudioCaptureClient_AddRef(&This->IAudioCaptureClient_iface);
         *ppv = &This->IAudioCaptureClient_iface;
@@ -1059,8 +1068,10 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
         const BOOLEAN new_session = !This->session_wrapper;
         if (new_session) {
             This->session_wrapper = session_wrapper_create(This);
-            if (!This->session_wrapper)
-                return E_OUTOFMEMORY;
+            if (!This->session_wrapper) {
+                hr = E_OUTOFMEMORY;
+                goto exit;
+            }
         }
 
         if (IsEqualIID(riid, &IID_IAudioSessionControl))
@@ -1074,10 +1085,15 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
             IUnknown_AddRef((IUnknown *)*ppv);
     } else {
             FIXME("stub %s\n", debugstr_guid(riid));
-            return E_NOINTERFACE;
+            hr = E_NOINTERFACE;
+            goto exit;
     }
 
-    return S_OK;
+    hr = S_OK;
+exit:
+    sessions_unlock();
+
+    return hr;
 }
 
 extern HRESULT WINAPI client_IsOffloadCapable(IAudioClient3 *iface,
