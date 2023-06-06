@@ -26,8 +26,6 @@
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -86,8 +84,8 @@ SIZE_T WINAPI GetLargePageMinimum(void)
 static void fill_system_info( SYSTEM_INFO *si, const SYSTEM_BASIC_INFORMATION *basic_info,
                               const SYSTEM_CPU_INFORMATION *cpu_info )
 {
-    si->u.s.wProcessorArchitecture  = cpu_info->ProcessorArchitecture;
-    si->u.s.wReserved               = 0;
+    si->wProcessorArchitecture      = cpu_info->ProcessorArchitecture;
+    si->wReserved                   = 0;
     si->dwPageSize                  = basic_info->PageSize;
     si->lpMinimumApplicationAddress = basic_info->LowestUserAddress;
     si->lpMaximumApplicationAddress = basic_info->HighestUserAddress;
@@ -146,7 +144,7 @@ void WINAPI DECLSPEC_HOTPATCH GetNativeSystemInfo( SYSTEM_INFO *si )
         if (native_machine != IMAGE_FILE_MACHINE_AMD64)
         {
             GetSystemInfo( si );
-            si->u.s.wProcessorArchitecture = PROCESSOR_ARCHITECTURE_AMD64;
+            si->wProcessorArchitecture = PROCESSOR_ARCHITECTURE_AMD64;
             return;
         }
     }
@@ -715,7 +713,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH HeapWalk( HANDLE heap, PROCESS_HEAP_ENTRY *entry )
         rtl_entry.wFlags |= RTL_HEAP_ENTRY_REGION;
     if (entry->wFlags & PROCESS_HEAP_UNCOMMITTED_RANGE)
         rtl_entry.wFlags |= RTL_HEAP_ENTRY_UNCOMMITTED;
-    memcpy( &rtl_entry.Region, &entry->u.Region, sizeof(entry->u.Region) );
+    memcpy( &rtl_entry.Region, &entry->Region, sizeof(entry->Region) );
 
     if (!(status = RtlWalkHeap( heap, &rtl_entry )))
     {
@@ -733,7 +731,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH HeapWalk( HANDLE heap, PROCESS_HEAP_ENTRY *entry )
         else
             entry->wFlags = 0;
 
-        memcpy( &entry->u.Region, &rtl_entry.Region, sizeof(entry->u.Region) );
+        memcpy( &entry->Region, &rtl_entry.Region, sizeof(entry->Region) );
     }
 
     return set_ntstatus( status );
@@ -1542,13 +1540,13 @@ void * WINAPI LocateXStateFeature( CONTEXT *context, DWORD feature_id, DWORD *le
         if (length)
             *length = sizeof(M128A) * 16;
 
-        return &context->u.FltSave.XmmRegisters;
+        return &context->FltSave.XmmRegisters;
     }
 
     if (length)
         *length = offsetof(XSAVE_FORMAT, XmmRegisters);
 
-    return &context->u.FltSave;
+    return &context->FltSave;
 }
 
 /***********************************************************************
