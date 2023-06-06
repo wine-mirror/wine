@@ -819,7 +819,7 @@ unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *call, a
         SERVER_START_REQ( queue_apc )
         {
             req->handle = wine_server_obj_handle( process );
-            req->call = *call;
+            wine_server_add_data( req, call, sizeof(*call) );
             if (!(ret = wine_server_call( req )))
             {
                 handle = wine_server_ptr_handle( reply->handle );

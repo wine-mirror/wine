@@ -514,7 +514,8 @@ static struct thread_apc *create_apc( struct object *owner, const apc_call_t *ca
 
     if ((apc = alloc_object( &thread_apc_ops )))
     {
-        apc->call        = *call_data;
+        if (call_data) apc->call = *call_data;
+        else apc->call.type = APC_NONE;
         apc->caller      = NULL;
         apc->owner       = owner;
         apc->executed    = 0;
@@ -1701,8 +1702,11 @@ DECL_HANDLER(queue_apc)
     struct thread *thread = NULL;
     struct process *process = NULL;
     struct thread_apc *apc;
+    const apc_call_t *call = get_req_data();
 
-    if (!(apc = create_apc( NULL, &req->call ))) return;
+    if (get_req_data_size() < sizeof(*call)) call = NULL;
+
+    if (!(apc = create_apc( NULL, call ))) return;
 
     switch (apc->call.type)
     {

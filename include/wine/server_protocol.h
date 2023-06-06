@@ -1236,7 +1236,7 @@ struct queue_apc_request
 {
     struct request_header __header;
     obj_handle_t handle;
-    apc_call_t   call;
+    /* VARARG(call,apc_call); */
 };
 struct queue_apc_reply
 {
@@ -6413,7 +6413,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 772
+#define SERVER_PROTOCOL_VERSION 773
 
 /* ### protocol_version end ### */
 

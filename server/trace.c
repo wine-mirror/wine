@@ -540,6 +540,18 @@ static void dump_varargs_ushorts( const char *prefix, data_size_t size )
     remove_data( size );
 }
 
+static void dump_varargs_apc_call( const char *prefix, data_size_t size )
+{
+    const apc_call_t *call = cur_data;
+
+    if (size >= sizeof(*call))
+    {
+        dump_apc_call( prefix, call );
+        size = sizeof(*call);
+    }
+    remove_data( size );
+}
+
 static void dump_varargs_apc_result( const char *prefix, data_size_t size )
 {
     const apc_result_t *result = cur_data;
@@ -1640,7 +1652,7 @@ static void dump_resume_thread_reply( const struct resume_thread_reply *req )
 static void dump_queue_apc_request( const struct queue_apc_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
-    dump_apc_call( ", call=", &req->call );
+    dump_varargs_apc_call( ", call=", cur_size );
 }
 
 static void dump_queue_apc_reply( const struct queue_apc_reply *req )
