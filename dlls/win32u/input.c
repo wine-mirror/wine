@@ -2499,11 +2499,16 @@ BOOL get_clip_cursor( RECT *rect )
 
 BOOL process_wine_clipcursor( BOOL empty, BOOL reset )
 {
+    struct user_thread_info *thread_info = get_user_thread_info();
     RECT rect;
 
     TRACE( "empty %u, reset %u\n", empty, reset );
 
-    if (reset) return user_driver->pClipCursor( NULL, TRUE );
+    if (reset)
+    {
+        thread_info->clipping_reset = NtGetTickCount();
+        return user_driver->pClipCursor( NULL, TRUE );
+    }
 
     if (!grab_pointer) return TRUE;
     if (empty) return user_driver->pClipCursor( NULL, reset );
