@@ -450,14 +450,12 @@ ULONG CDECL ldap_start_tls_sW( LDAP *ld, ULONG *retval, LDAPMessage **result, LD
     }
 
     if (!ld) return ~0u;
+    if (CONNECTED(ld)) return WLDAP32_LDAP_LOCAL_ERROR;
 
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
-    else
-    {
-        if (CONNECTED(ld)) return WLDAP32_LDAP_LOCAL_ERROR;
-        ret = map_error( ldap_start_tls_s( CTX(ld), serverctrlsU, clientctrlsU ) );
-    }
+
+    ret = map_error( ldap_start_tls_s( CTX(ld), serverctrlsU, clientctrlsU ) );
 
 exit:
     controlarrayfreeU( serverctrlsU );
