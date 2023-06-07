@@ -77,6 +77,7 @@ static DNS_STATUS do_query_netbios( PCSTR name, DNS_RECORDA **recp )
             if (!record->pName)
             {
                 status = ERROR_NOT_ENOUGH_MEMORY;
+                free( record );
                 goto exit;
             }
 
