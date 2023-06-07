@@ -1390,7 +1390,7 @@ static void *map_free_area( void *base, void *end, size_t size, int top_down, in
  *
  * Find a free area between views inside the specified range.
  * virtual_mutex must be held by caller.
- * The range must be inside the preloader reserved range.
+ * The range must be inside a reserved area.
  */
 static void *find_reserved_free_area( void *base, void *end, size_t size, int top_down, size_t align_mask )
 {
@@ -1831,52 +1831,88 @@ static inline void *unmap_extra_space( void *ptr, size_t total_size, size_t want
 }
 
 
-struct alloc_area
-{
-    size_t size;
-    int    top_down;
-    void  *limit;
-    void  *result;
-    size_t align_mask;
-};
-
 /***********************************************************************
- *           alloc_reserved_area_callback
+ *           find_reserved_free_area_outside_preloader
  *
- * Try to map some space inside a reserved area. Callback for mmap_enum_reserved_areas.
+ * Find a free area inside a reserved area, skipping the preloader reserved range.
+ * virtual_mutex must be held by caller.
  */
-static int alloc_reserved_area_callback( void *start, SIZE_T size, void *arg )
+static void *find_reserved_free_area_outside_preloader( void *start, void *end, size_t size,
+                                                        int top_down, size_t align_mask )
 {
-    struct alloc_area *alloc = arg;
-    void *end = (char *)start + size;
+    void *ret;
 
-    if (start < address_space_start) start = address_space_start;
-    if (is_beyond_limit( start, size, alloc->limit )) end = alloc->limit;
-    if (start >= end) return 0;
-
-    /* make sure we don't touch the preloader reserved range */
-    if (preload_reserve_end >= start)
+    if (preload_reserve_end >= end)
     {
-        if (preload_reserve_end >= end)
+        if (preload_reserve_start <= start) return NULL;  /* no space in that area */
+        if (preload_reserve_start < end) end = preload_reserve_start;
+    }
+    else if (preload_reserve_start <= start)
+    {
+        if (preload_reserve_end > start) start = preload_reserve_end;
+    }
+    else /* range is split in two by the preloader reservation, try both parts */
+    {
+        if (top_down)
         {
-            if (preload_reserve_start <= start) return 0;  /* no space in that area */
-            if (preload_reserve_start < end) end = preload_reserve_start;
+            ret = find_reserved_free_area( preload_reserve_end, end, size, top_down, align_mask );
+            if (ret) return ret;
+            end = preload_reserve_start;
         }
-        else if (preload_reserve_start <= start) start = preload_reserve_end;
         else
         {
-            /* range is split in two by the preloader reservation, try first part */
-            if ((alloc->result = find_reserved_free_area( start, preload_reserve_start, alloc->size,
-                                                          alloc->top_down, alloc->align_mask )))
-                return 1;
-            /* then fall through to try second part */
+            ret = find_reserved_free_area( start, preload_reserve_start, size, top_down, align_mask );
+            if (ret) return ret;
             start = preload_reserve_end;
         }
     }
-    if ((alloc->result = find_reserved_free_area( start, end, alloc->size, alloc->top_down, alloc->align_mask )))
-        return 1;
+    return find_reserved_free_area( start, end, size, top_down, align_mask );
+}
 
-    return 0;
+/***********************************************************************
+ *           map_reserved_area
+ *
+ * Try to map some space inside a reserved area.
+ * virtual_mutex must be held by caller.
+ */
+static void *map_reserved_area( void *limit_low, void *limit_high, size_t size, int top_down,
+                                int unix_prot, size_t align_mask )
+{
+    void *ptr = NULL;
+    struct reserved_area *area = LIST_ENTRY( ptr, struct reserved_area, entry );
+
+    if (top_down)
+    {
+        LIST_FOR_EACH_ENTRY_REV( area, &reserved_areas, struct reserved_area, entry )
+        {
+            void *start = area->base;
+            void *end = (char *)start + area->size;
+
+            if (start >= limit_high) continue;
+            if (end <= limit_low) return NULL;
+            if (start < limit_low) start = limit_low;
+            if (end > limit_high) end = limit_high;
+            ptr = find_reserved_free_area_outside_preloader( start, end, size, top_down, align_mask );
+            if (ptr) break;
+        }
+    }
+    else
+    {
+        LIST_FOR_EACH_ENTRY( area, &reserved_areas, struct reserved_area, entry )
+        {
+            void *start = area->base;
+            void *end = (char *)start + area->size;
+
+            if (start >= limit_high) return NULL;
+            if (end <= limit_low) continue;
+            if (start < limit_low) start = limit_low;
+            if (end > limit_high) end = limit_high;
+            ptr = find_reserved_free_area_outside_preloader( start, end, size, top_down, align_mask );
+            if (ptr) break;
+        }
+    }
+    if (ptr && anon_mmap_fixed( ptr, size, unix_prot, 0 ) != ptr) ptr = NULL;
+    return ptr;
 }
 
 /***********************************************************************
@@ -1966,30 +2002,24 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
     }
     else
     {
-        struct alloc_area alloc;
+        void *start = address_space_start;
+        void *end = user_space_limit;
         size_t view_size, unmap_size;
 
         if (!align_mask) align_mask = granularity_mask;
         view_size = size + align_mask + 1;
 
-        alloc.size = size;
-        alloc.top_down = top_down;
-        alloc.limit = limit ? min( (void *)(limit + 1), user_space_limit ) : user_space_limit;
-        alloc.align_mask = align_mask;
+        if (limit && (void *)limit < end) end = (char *)limit + 1;
 
-        if (mmap_enum_reserved_areas( alloc_reserved_area_callback, &alloc, top_down ))
+        if ((ptr = map_reserved_area( start, end, size, top_down, get_unix_prot(vprot), align_mask )))
         {
-            ptr = alloc.result;
             TRACE( "got mem in reserved area %p-%p\n", ptr, (char *)ptr + size );
-            if (anon_mmap_fixed( ptr, size, get_unix_prot(vprot), 0 ) != ptr)
-                return STATUS_INVALID_PARAMETER;
             goto done;
         }
 
         if (limit)
         {
-            if (!(ptr = map_free_area( address_space_start, alloc.limit, size,
-                                       top_down, get_unix_prot(vprot), align_mask )))
+            if (!(ptr = map_free_area( start, end, size, top_down, get_unix_prot(vprot), align_mask )))
                 return STATUS_NO_MEMORY;
             TRACE( "got mem with map_free_area %p-%p\n", ptr, (char *)ptr + size );
             goto done;
