@@ -148,7 +148,14 @@ static BOOL resolve_filename(const WCHAR *env_filename, WCHAR *fullname, DWORD b
 
     free(filename);
 
-    return (GetFileAttributesW(fullname) != INVALID_FILE_ATTRIBUTES);
+    if (GetFileAttributesW(fullname) == INVALID_FILE_ATTRIBUTES)
+    {
+        if (window) free(*window);
+        if (index) free(*index);
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /******************************************************************
