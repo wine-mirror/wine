@@ -1320,9 +1320,9 @@ static HRESULT WINAPI RegExp2_Execute(IRegExp2 *iface,
                 break;
 
             hres = add_match(match_collection, add);
+            IMatch2_Release(add);
             if(FAILED(hres))
                 break;
-            IMatch2_Release(add);
 
             if(!(This->flags & REG_GLOB))
                 break;
