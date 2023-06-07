@@ -362,7 +362,7 @@ static BOOL cups_write_doc(doc_t *doc, const BYTE *buf, unsigned int size)
         }
 
         if (pcupsStartDocument(CUPS_HTTP_DEFAULT, doc->cups.queue, job_id,
-                    doc->cups.doc_title, format, TRUE) != HTTP_STATUS_CONTINUE)
+                    NULL, format, TRUE) != HTTP_STATUS_CONTINUE)
         {
             if (pcupsLastErrorString)
                 WARN("cupsStartDocument failed: %s\n", debugstr_a(pcupsLastErrorString()));
