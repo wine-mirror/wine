@@ -275,16 +275,6 @@ static WCHAR *get_application_name(BOOL query_app_name)
     return wcsdup(name);
 }
 
-static DWORD WINAPI pulse_timer_cb(void *user)
-{
-    struct timer_loop_params params;
-    ACImpl *This = user;
-    params.stream = This->stream;
-    SetThreadDescription(GetCurrentThread(), L"winepulse_timer_loop");
-    pulse_call(timer_loop, &params);
-    return 0;
-}
-
 static void set_stream_volumes(ACImpl *This)
 {
     struct set_volumes_params params;
@@ -948,33 +938,7 @@ static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient3 *iface,
     return params.result;
 }
 
-static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
-{
-    ACImpl *This = impl_from_IAudioClient3(iface);
-    struct start_params params;
-
-    TRACE("(%p)\n", This);
-
-    sessions_lock();
-
-    if (!This->stream) {
-        sessions_unlock();
-        return AUDCLNT_E_NOT_INITIALIZED;
-    }
-
-    params.stream = This->stream;
-
-    pulse_call(start, &params);
-
-    if (SUCCEEDED(params.result) && !This->timer_thread) {
-        This->timer_thread = CreateThread(NULL, 0, pulse_timer_cb, This, 0, NULL);
-        SetThreadPriority(This->timer_thread, THREAD_PRIORITY_TIME_CRITICAL);
-    }
-
-    sessions_unlock();
-
-    return params.result;
-}
+extern HRESULT WINAPI client_Start(IAudioClient3 *iface);
 
 extern HRESULT WINAPI client_Stop(IAudioClient3 *iface);
 
@@ -1019,7 +983,7 @@ static const IAudioClient3Vtbl AudioClient3_Vtbl =
     AudioClient_IsFormatSupported,
     AudioClient_GetMixFormat,
     AudioClient_GetDevicePeriod,
-    AudioClient_Start,
+    client_Start,
     client_Stop,
     client_Reset,
     client_SetEventHandle,

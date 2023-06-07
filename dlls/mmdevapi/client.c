@@ -80,6 +80,20 @@ static inline struct audio_client *impl_from_IAudioStreamVolume(IAudioStreamVolu
     return CONTAINING_RECORD(iface, struct audio_client, IAudioStreamVolume_iface);
 }
 
+static DWORD CALLBACK timer_loop_func(void *user)
+{
+    struct timer_loop_params params;
+    struct audio_client *This = user;
+
+    SetThreadDescription(GetCurrentThread(), L"audio_client_timer");
+
+    params.stream = This->stream;
+
+    WINE_UNIX_CALL(timer_loop, &params);
+
+    return 0;
+}
+
 static HRESULT WINAPI capture_QueryInterface(IAudioCaptureClient *iface, REFIID riid, void **ppv)
 {
     struct audio_client *This = impl_from_IAudioCaptureClient(iface);
@@ -195,6 +209,33 @@ const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl =
     capture_ReleaseBuffer,
     capture_GetNextPacketSize
 };
+
+HRESULT WINAPI client_Start(IAudioClient3 *iface)
+{
+    struct audio_client *This = impl_from_IAudioClient3(iface);
+    struct start_params params;
+
+    TRACE("(%p)\n", This);
+
+    sessions_lock();
+
+    if (!This->stream) {
+        sessions_unlock();
+        return AUDCLNT_E_NOT_INITIALIZED;
+    }
+
+    params.stream = This->stream;
+    WINE_UNIX_CALL(start, &params);
+
+    if (SUCCEEDED(params.result) && !This->timer_thread) {
+        This->timer_thread = CreateThread(NULL, 0, timer_loop_func, This, 0, NULL);
+        SetThreadPriority(This->timer_thread, THREAD_PRIORITY_TIME_CRITICAL);
+    }
+
+    sessions_unlock();
+
+    return params.result;
+}
 
 HRESULT WINAPI client_Stop(IAudioClient3 *iface)
 {
