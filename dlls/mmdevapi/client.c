@@ -408,8 +408,12 @@ HRESULT WINAPI client_Start(IAudioClient3 *iface)
     WINE_UNIX_CALL(start, &params);
 
     if (SUCCEEDED(params.result) && !This->timer_thread) {
-        This->timer_thread = CreateThread(NULL, 0, timer_loop_func, This, 0, NULL);
-        SetThreadPriority(This->timer_thread, THREAD_PRIORITY_TIME_CRITICAL);
+        if ((This->timer_thread = CreateThread(NULL, 0, timer_loop_func, This, 0, NULL)))
+            SetThreadPriority(This->timer_thread, THREAD_PRIORITY_TIME_CRITICAL);
+        else {
+            IAudioClient3_Stop(&This->IAudioClient3_iface);
+            params.result = E_FAIL;
+        }
     }
 
     sessions_unlock();
