@@ -1951,6 +1951,7 @@ static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source, DWORD_P
         memcpy(ret->source, source, len * sizeof(WCHAR));
     ret->source[len] = 0;
 
+    ret->ref = 1;
     ret->cookie = cookie;
     ret->start_line = start_line;
 
@@ -1966,7 +1967,6 @@ static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source, DWORD_P
 
     ret->main_code.type = FUNC_GLOBAL;
     ret->main_code.code_ctx = ret;
-    ret->ref = 1;
 
     list_init(&ret->entry);
     return ret;
