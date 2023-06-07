@@ -244,42 +244,43 @@ void *anon_mmap_alloc( size_t size, int prot )
 static void mmap_add_reserved_area( void *addr, SIZE_T size )
 {
     struct reserved_area *area;
-    struct list *ptr;
+    struct list *ptr, *next;
+    void *end, *area_end;
 
     if (!((intptr_t)addr + size)) size--;  /* avoid wrap-around */
+    end = (char *)addr + size;
 
     LIST_FOR_EACH( ptr, &reserved_areas )
     {
         area = LIST_ENTRY( ptr, struct reserved_area, entry );
+        area_end = (char *)area->base + area->size;
+
+        if (area->base > end) break;
+        if (area_end < addr) continue;
         if (area->base > addr)
         {
-            /* try to merge with the next one */
-            if ((char *)addr + size == (char *)area->base)
-            {
-                area->base = addr;
-                area->size += size;
-                return;
-            }
-            break;
+            area->size += (char *)area->base - (char *)addr;
+            area->base = addr;
         }
-        else if ((char *)area->base + area->size == (char *)addr)
-        {
-            /* merge with the previous one */
-            area->size += size;
+        if (area_end >= end) return;
 
-            /* try to merge with the next one too */
-            if ((ptr = list_next( &reserved_areas, ptr )))
+        /* try to merge with the following ones */
+        while ((next = list_next( &reserved_areas, ptr )))
+        {
+            struct reserved_area *area_next = LIST_ENTRY( next, struct reserved_area, entry );
+            void *next_end = (char *)area_next->base + area_next->size;
+
+            if (area_next->base > end) break;
+            list_remove( next );
+            free( area_next );
+            if (next_end >= end)
             {
-                struct reserved_area *next = LIST_ENTRY( ptr, struct reserved_area, entry );
-                if ((char *)addr + size == (char *)next->base)
-                {
-                    area->size += next->size;
-                    list_remove( &next->entry );
-                    free( next );
-                }
+                end = next_end;
+                break;
             }
-            return;
         }
+        area->size = (char *)end - (char *)area->base;
+        return;
     }
 
     if ((area = malloc( sizeof(*area) )))
