@@ -791,24 +791,28 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
     struct start_params params;
-    HRESULT hr;
 
     TRACE("(%p)\n", This);
 
-    if(!This->stream)
+    sessions_lock();
+
+    if(!This->stream) {
+        sessions_unlock();
         return AUDCLNT_E_NOT_INITIALIZED;
+    }
 
     params.stream = This->stream;
-    UNIX_CALL(start, &params);
-    if(FAILED(hr = params.result))
-        return hr;
 
-    if(!This->timer_thread) {
+    UNIX_CALL(start, &params);
+
+    if(SUCCEEDED(params.result) && !This->timer_thread) {
         This->timer_thread = CreateThread(NULL, 0, ca_timer_thread, This, 0, NULL);
         SetThreadPriority(This->timer_thread, THREAD_PRIORITY_TIME_CRITICAL);
     }
 
-    return S_OK;
+    sessions_unlock();
+
+    return params.result;
 }
 
 extern HRESULT WINAPI client_Stop(IAudioClient3 *iface);
