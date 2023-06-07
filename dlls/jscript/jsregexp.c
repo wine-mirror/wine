@@ -766,8 +766,10 @@ HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, jsstr_t *jsstr, jsv
     }
 
     hres = create_array(ctx, match_cnt, &array);
-    if(FAILED(hres))
+    if(FAILED(hres)) {
+        free(match_result);
         return hres;
+    }
 
     for(i=0; i < match_cnt; i++) {
         jsstr_t *tmp_str;
