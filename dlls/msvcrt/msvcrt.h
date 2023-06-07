@@ -170,8 +170,7 @@ struct __thread_data {
     int                             processing_throw;
     frame_info                     *frame_info_head;
     void                           *unk8[6];
-    LCID                            cached_lcid;
-    BOOL                            cached_sname;
+    WCHAR                           cached_sname[LOCALE_NAME_MAX_LENGTH];
     int                             unk9[2];
     DWORD                           cached_cp;
     char                            cached_locale[131];
@@ -186,7 +185,7 @@ typedef struct __thread_data thread_data_t;
 
 extern thread_data_t *CDECL msvcrt_get_thread_data(void) DECLSPEC_HIDDEN;
 
-LCID locale_to_LCID(const char*, unsigned short*, BOOL*) DECLSPEC_HIDDEN;
+BOOL locale_to_sname(const char*, unsigned short*, BOOL*, WCHAR*, int) DECLSPEC_HIDDEN;
 extern _locale_t MSVCRT_locale DECLSPEC_HIDDEN;
 extern __lc_time_data cloc_time_data DECLSPEC_HIDDEN;
 extern unsigned int MSVCRT___lc_codepage;

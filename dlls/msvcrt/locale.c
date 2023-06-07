@@ -321,28 +321,27 @@ find_best_locale_proc( WCHAR *name, DWORD locale_flags, LPARAM lParam )
   return CONTINUE_LOOKING;
 }
 
-/* Internal: Find the LCID for a locale specification */
-LCID locale_to_LCID(const char *locale, unsigned short *codepage, BOOL *sname)
+/* Internal: Find the sname for a locale specification */
+BOOL locale_to_sname(const char *locale, unsigned short *codepage, BOOL *sname_match, WCHAR *sname, int sname_size)
 {
     thread_data_t *data = msvcrt_get_thread_data();
     const char *cp, *region;
     BOOL is_sname = FALSE;
     DWORD locale_cp;
-    LCID lcid;
 
     if (!strcmp(locale, data->cached_locale)) {
         if (codepage)
             *codepage = data->cached_cp;
         if (sname)
-            *sname = data->cached_sname;
-        return data->cached_lcid;
+            wcsncpy(sname, data->cached_sname, sname_size);
+        return TRUE;
     }
 
     cp = strchr(locale, '.');
     region = strchr(locale, '_');
 
     if(!locale[0] || (cp == locale && !region)) {
-        lcid = GetUserDefaultLCID();
+        GetUserDefaultLocaleName(sname, sname_size);
     } else {
         locale_search_t search;
 
@@ -371,26 +370,26 @@ LCID locale_to_LCID(const char *locale, unsigned short *codepage, BOOL *sname)
         EnumSystemLocalesEx( find_best_locale_proc, 0, (LPARAM)&search, NULL);
 
         if (!search.match_flags)
-            return -1;
+            return FALSE;
 
         /* If we were given something that didn't match, fail */
         if (search.search_language[0] && !(search.match_flags & (FOUND_SNAME | FOUND_LANGUAGE)))
-            return -1;
+            return FALSE;
         if (search.search_country[0] && !(search.match_flags & FOUND_COUNTRY))
-            return -1;
+            return FALSE;
 
-        lcid =  MAKELCID(search.found_lang_id, SORT_DEFAULT);
+        LCIDToLocaleName(search.found_lang_id, sname, sname_size, LOCALE_ALLOW_NEUTRAL_NAMES);
         is_sname = (search.match_flags & FOUND_SNAME) != 0;
     }
 
     /* Obtain code page */
     if (!cp || !cp[1] || !_strnicmp(cp, ".ACP", 4)) {
-        GetLocaleInfoW(lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
+        GetLocaleInfoEx(sname, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
                 (WCHAR *)&locale_cp, sizeof(DWORD)/sizeof(WCHAR));
         if (!locale_cp)
             locale_cp = GetACP();
     } else if (!_strnicmp(cp, ".OCP", 4)) {
-        GetLocaleInfoW(lcid, LOCALE_IDEFAULTCODEPAGE | LOCALE_RETURN_NUMBER,
+        GetLocaleInfoEx(sname, LOCALE_IDEFAULTCODEPAGE | LOCALE_RETURN_NUMBER,
                 (WCHAR *)&locale_cp, sizeof(DWORD)/sizeof(WCHAR));
 #if _MSVCR_VER >= 140
     } else if (!_strnicmp(cp, ".UTF-8", 6)
@@ -401,24 +400,23 @@ LCID locale_to_LCID(const char *locale, unsigned short *codepage, BOOL *sname)
         locale_cp = atoi(cp + 1);
     }
     if (!IsValidCodePage(locale_cp))
-        return -1;
+        return FALSE;
 
     if (!locale_cp)
-        return -1;
+        return FALSE;
 
     if (codepage)
         *codepage = locale_cp;
-    if (sname)
-        *sname = is_sname;
+    if (sname_match)
+        *sname_match = is_sname;
 
     if (strlen(locale) < sizeof(data->cached_locale)) {
         strcpy(data->cached_locale, locale);
-        data->cached_lcid = lcid;
         data->cached_cp = locale_cp;
-        data->cached_sname = is_sname;
+        wcscpy(data->cached_sname, sname);
     }
 
-    return lcid;
+    return TRUE;
 }
 
 static void copy_threadlocinfo_category(pthreadlocinfo locinfo,
@@ -1286,7 +1284,6 @@ static pthreadlocinfo create_locinfo(int category,
         locale_sname[0] = NULL;
         cp[0] = CP_ACP;
     } else if (locale[0] == 'L' && locale[1] == 'C' && locale[2] == '_') {
-        LCID lcid;
         const char *p;
 
         while(1) {
@@ -1311,34 +1308,31 @@ static pthreadlocinfo create_locinfo(int category,
 
             p = strchr(locale, ';');
             if(locale[0]=='C' && (locale[1]==';' || locale[1]=='\0')) {
-                lcid = 0;
                 locale_sname[i] = NULL;
                 cp[i] = CP_ACP;
-            } else if(p) {
-                memcpy(buf, locale, p-locale);
-                buf[p-locale] = '\0';
-                lcid = locale_to_LCID(buf, &cp[i], &sname_match);
-                if(sname_match) {
-                    locale_name[i] = locale;
-                    locale_len[i] = p-locale;
-                }
             } else {
-                lcid = locale_to_LCID(locale, &cp[i], &sname_match);
-                if(sname_match) {
-                    locale_name[i] = locale;
-                    locale_len[i] = strlen(locale);
+                BOOL locale_found = FALSE;
+
+                if(p) {
+                    memcpy(buf, locale, p-locale);
+                    buf[p-locale] = '\0';
+                    locale_found = locale_to_sname(buf, &cp[i], &sname_match, wbuf, LOCALE_NAME_MAX_LENGTH);
+                    locale_sname[i] = wcsdup(wbuf);
+                    if(sname_match) {
+                        locale_name[i] = locale;
+                        locale_len[i] = p-locale;
+                    }
+                } else {
+                    locale_found = locale_to_sname(buf, &cp[i], &sname_match, wbuf, LOCALE_NAME_MAX_LENGTH);
+                    locale_sname[i] = wcsdup(wbuf);
+                    if(sname_match) {
+                        locale_name[i] = locale;
+                        locale_len[i] = strlen(locale);
+                    }
                 }
-            }
 
-            if(lcid == -1)
-                goto fail;
-
-            if(lcid) {
-                int sname_size = LCIDToLocaleName(lcid, NULL, 0, LCID_CONVERSION_FLAGS);
-                locale_sname[i] = malloc(sname_size * sizeof(WCHAR));
-                if(!locale_sname[i])
+                if(!locale_found || !locale_sname[i])
                     goto fail;
-                LCIDToLocaleName(lcid, locale_sname[i], sname_size, LCID_CONVERSION_FLAGS);
             }
 
             if(!p || *(p+1)!='L' || *(p+2)!='C' || *(p+3)!='_')
@@ -1347,16 +1341,15 @@ static pthreadlocinfo create_locinfo(int category,
             locale = p+1;
         }
     } else {
-        LCID lcid = locale_to_LCID(locale, &cp[0], &sname_match);
-        if(lcid == -1)
+        BOOL locale_found = locale_to_sname(locale, &cp[0], &sname_match, wbuf, LOCALE_NAME_MAX_LENGTH);
+
+        if(!locale_found)
             return NULL;
-        if(lcid) {
-            int sname_size = LCIDToLocaleName(lcid, NULL, 0, LCID_CONVERSION_FLAGS);
-            locale_sname[0] = malloc(sname_size * sizeof(WCHAR));
-            if(!locale_sname[0])
-                return NULL;
-            LCIDToLocaleName(lcid, locale_sname[0], sname_size, LCID_CONVERSION_FLAGS);
-        }
+
+        locale_sname[0] = wcsdup(wbuf);
+        if(!locale_sname[0])
+            return NULL;
+
         if(sname_match) {
             locale_name[0] = locale;
             locale_len[0] = strlen(locale);
