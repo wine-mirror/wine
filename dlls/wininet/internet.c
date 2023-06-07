@@ -637,6 +637,7 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
                 if (!(szProxy = malloc( len )))
                 {
                     RegCloseKey( key );
+                    FreeProxyInfo( lpwpi );
                     return ERROR_OUTOFMEMORY;
                 }
                 RegQueryValueExW( key, L"ProxyOverride", NULL, &type, (BYTE*)szProxy, &len );
@@ -661,6 +662,7 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
             if (!(envproxyW = malloc( wcslen(envproxy) * sizeof(WCHAR) )))
             {
                 RegCloseKey( key );
+                FreeProxyInfo( lpwpi );
                 return ERROR_OUTOFMEMORY;
             }
             lstrcpyW( envproxyW, envproxy );
