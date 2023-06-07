@@ -1437,30 +1437,6 @@ static void *find_reserved_free_area( void *base, void *end, size_t size, int to
 
 
 /***********************************************************************
- *           add_reserved_area
- *
- * Add a reserved area to the list maintained by libwine.
- * virtual_mutex must be held by caller.
- */
-static void add_reserved_area( void *addr, size_t size )
-{
-    TRACE( "adding %p-%p\n", addr, (char *)addr + size );
-
-    if (addr < user_space_limit)
-    {
-        /* unmap the part of the area that is below the limit */
-        assert( (char *)addr + size > (char *)user_space_limit );
-        munmap( addr, (char *)user_space_limit - (char *)addr );
-        size -= (char *)user_space_limit - (char *)addr;
-        addr = user_space_limit;
-    }
-    /* blow away existing mappings */
-    anon_mmap_fixed( addr, size, PROT_NONE, MAP_NORESERVE );
-    mmap_add_reserved_area( addr, size );
-}
-
-
-/***********************************************************************
  *           remove_reserved_area
  *
  * Remove a reserved area from the list maintained by libwine.
@@ -1529,34 +1505,36 @@ static int get_area_boundary_callback( void *start, SIZE_T size, void *arg )
  * Unmap an area, or simply replace it by an empty mapping if it is
  * in a reserved area. virtual_mutex must be held by caller.
  */
-static inline void unmap_area( void *addr, size_t size )
+static void unmap_area( void *start, size_t size )
 {
-    switch (mmap_is_in_reserved_area( addr, size ))
+    struct reserved_area *area;
+    void *end;
+
+    if (!(size = unmap_area_above_user_limit( start, size ))) return;
+
+    end = (char *)start + size;
+
+    LIST_FOR_EACH_ENTRY( area, &reserved_areas, struct reserved_area, entry )
     {
-    case -1: /* partially in a reserved area */
-    {
-        struct area_boundary area;
-        size_t lower_size;
-        area.base = addr;
-        area.size = size;
-        mmap_enum_reserved_areas( get_area_boundary_callback, &area, 0 );
-        assert( area.boundary );
-        lower_size = (char *)area.boundary - (char *)addr;
-        unmap_area( addr, lower_size );
-        unmap_area( area.boundary, size - lower_size );
-        break;
+        void *area_start = area->base;
+        void *area_end = (char *)area_start + area->size;
+
+        if (area_start >= end) break;
+        if (area_end <= start) continue;
+        if (area_start > start)
+        {
+            munmap( start, (char *)area_start - (char *)start );
+            start = area_start;
+        }
+        if (area_end >= end)
+        {
+            anon_mmap_fixed( start, (char *)end - (char *)start, PROT_NONE, MAP_NORESERVE );
+            return;
+        }
+        anon_mmap_fixed( start, (char *)area_end - (char *)start, PROT_NONE, MAP_NORESERVE );
+        start = area_end;
     }
-    case 1:  /* in a reserved area */
-        anon_mmap_fixed( addr, size, PROT_NONE, MAP_NORESERVE );
-        break;
-    default:
-    case 0:  /* not in a reserved area */
-        if (is_beyond_limit( addr, size, user_space_limit ))
-            add_reserved_area( addr, size );
-        else
-            munmap( addr, size );
-        break;
-    }
+    munmap( start, (char *)end - (char *)start );
 }
 
 
