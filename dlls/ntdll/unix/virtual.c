@@ -393,6 +393,30 @@ static int mmap_enum_reserved_areas( int (*enum_func)(void *base, SIZE_T size, v
     return ret;
 }
 
+
+/***********************************************************************
+ *           unmap_area_above_user_limit
+ *
+ * Unmap memory that's above the user space limit, by replacing it with an empty mapping,
+ * and return the remaining size below the limit. virtual_mutex must be held by caller.
+ */
+static size_t unmap_area_above_user_limit( void *addr, size_t size )
+{
+    size_t ret = 0;
+
+    if (addr < user_space_limit)
+    {
+        ret = (char *)user_space_limit - (char *)addr;
+        if (ret >= size) return size;  /* nothing is above limit */
+        size -= ret;
+        addr = user_space_limit;
+    }
+    anon_mmap_fixed( addr, size, PROT_NONE, MAP_NORESERVE );
+    mmap_add_reserved_area( addr, size );
+    return ret;
+}
+
+
 static void *anon_mmap_tryfixed( void *start, size_t size, int prot, int flags )
 {
     void *ptr;
@@ -424,12 +448,8 @@ static void *anon_mmap_tryfixed( void *start, size_t size, int prot, int flags )
 #endif
     if (ptr != MAP_FAILED && ptr != start)
     {
-        if (is_beyond_limit( ptr, size, user_space_limit ))
-        {
-            anon_mmap_fixed( ptr, size, PROT_NONE, MAP_NORESERVE );
-            mmap_add_reserved_area( ptr, size );
-        }
-        else munmap( ptr, size );
+        size = unmap_area_above_user_limit( ptr, size );
+        if (size) munmap( ptr, size );
         ptr = MAP_FAILED;
         errno = EEXIST;
     }
@@ -2011,7 +2031,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
     else
     {
         struct alloc_area alloc;
-        size_t view_size;
+        size_t view_size, unmap_size;
 
         if (!align_mask) align_mask = granularity_mask;
         view_size = size + align_mask + 1;
@@ -2048,8 +2068,9 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
             }
             TRACE( "got mem with anon mmap %p-%p\n", ptr, (char *)ptr + size );
             /* if we got something beyond the user limit, unmap it and retry */
-            if (is_beyond_limit( ptr, view_size, user_space_limit )) add_reserved_area( ptr, view_size );
-            else break;
+            if (!is_beyond_limit( ptr, view_size, user_space_limit )) break;
+            unmap_size = unmap_area_above_user_limit( ptr, view_size );
+            if (unmap_size) munmap( ptr, unmap_size );
         }
         ptr = unmap_extra_space( ptr, view_size, size, align_mask );
     }
