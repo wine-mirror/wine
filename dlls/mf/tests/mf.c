@@ -4962,9 +4962,6 @@ static void test_sample_grabber_orientation(GUID subtype)
     grabber_callback->done_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     ok(!!grabber_callback->done_event, "CreateEventW failed, error %lu\n", GetLastError());
 
-    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
-    ok(hr == S_OK, "Startup failure, hr %#lx.\n", hr);
-
     hr = MFCreateMediaSession(NULL, &session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
