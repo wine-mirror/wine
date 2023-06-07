@@ -596,6 +596,14 @@ static void test____lc_locale_name_func(void)
         }
     }
 
+    p_setlocale(LC_ALL, "zh-Hans");
+    lc_names = p____lc_locale_name_func();
+    todo_wine ok(!lstrcmpW(lc_names[1], L"zh-Hans"), "lc_names[1] expected zh-Hans got %s\n", wine_dbgstr_w(lc_names[1]));
+
+    p_setlocale(LC_ALL, "zh-Hant");
+    lc_names = p____lc_locale_name_func();
+    todo_wine ok(!lstrcmpW(lc_names[1], L"zh-Hant"), "lc_names[1] expected zh-Hant got %s\n", wine_dbgstr_w(lc_names[1]));
+
     p_setlocale(LC_ALL, "C");
     lc_names = p____lc_locale_name_func();
     ok(!lc_names[1], "___lc_locale_name_func()[1] = %s\n", wine_dbgstr_w(lc_names[1]));
