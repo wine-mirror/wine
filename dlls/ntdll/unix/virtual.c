@@ -567,7 +567,7 @@ static void mmap_init( const struct preload_info *preload_info )
 static void *get_wow_user_space_limit(void)
 {
 #ifdef _WIN64
-    if (main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE) return (void *)0xc0000000;
+    if (main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE) return (void *)0xffff0000;
     return (void *)0x7fff0000;
 #endif
     return user_space_limit;
