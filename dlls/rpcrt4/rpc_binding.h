@@ -143,7 +143,6 @@ typedef struct _RpcBinding
   LPWSTR CookieAuth;
 } RpcBinding;
 
-LPSTR RPCRT4_strndupA(LPCSTR src, INT len) DECLSPEC_HIDDEN;
 LPWSTR RPCRT4_strndupW(LPCWSTR src, INT len) DECLSPEC_HIDDEN;
 LPSTR RPCRT4_strdupWtoA(LPCWSTR src) DECLSPEC_HIDDEN;
 LPWSTR RPCRT4_strdupAtoW(LPCSTR src) DECLSPEC_HIDDEN;
