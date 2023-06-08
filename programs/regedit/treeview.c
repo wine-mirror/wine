@@ -99,7 +99,10 @@ LPWSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey)
     pathBuffer = malloc(maxLen * sizeof(WCHAR));
     if (!pathBuffer) return NULL;
     *pathBuffer = 0;
-    if (!get_item_path(hwndTV, hItem, phRootKey, &pathBuffer, &pathLen, &maxLen)) return NULL;
+    if (!get_item_path(hwndTV, hItem, phRootKey, &pathBuffer, &pathLen, &maxLen)) {
+        free(pathBuffer);
+        return NULL;
+    }
     return pathBuffer;
 }
 
