@@ -554,7 +554,7 @@ static void mmap_init( const struct preload_info *preload_info )
     if (preload_info) return;
     /* if we don't have a preloader, try to reserve the space now */
     reserve_area( (void *)0x000000010000, (void *)0x000068000000 );
-    reserve_area( (void *)0x00007ff00000, (void *)0x00007fff0000 );
+    reserve_area( (void *)0x00007f000000, (void *)0x00007fff0000 );
     reserve_area( (void *)0x7ffffe000000, (void *)0x7fffffff0000 );
 
 #endif
