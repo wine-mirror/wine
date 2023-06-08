@@ -3013,34 +3013,37 @@ done:
 }
 
 
-struct alloc_virtual_heap
+/* allocate some space for the virtual heap, if possible from a reserved area */
+static void *alloc_virtual_heap( SIZE_T size )
 {
-    void  *base;
-    size_t size;
-};
+    struct reserved_area *area;
+    void *ret;
 
-/* callback for mmap_enum_reserved_areas to allocate space for the virtual heap */
-static int alloc_virtual_heap( void *base, SIZE_T size, void *arg )
-{
-    struct alloc_virtual_heap *alloc = arg;
-    void *end = (char *)base + size;
+    LIST_FOR_EACH_ENTRY_REV( area, &reserved_areas, struct reserved_area, entry )
+    {
+        void *base = area->base;
+        void *end = (char *)base + area->size;
 
-    if (is_beyond_limit( base, size, address_space_limit )) address_space_limit = (char *)base + size;
-    if (is_win64 && base < (void *)0x80000000) return 0;
-    if (preload_reserve_end >= end)
-    {
-        if (preload_reserve_start <= base) return 0;  /* no space in that area */
-        if (preload_reserve_start < end) end = preload_reserve_start;
+        if (is_beyond_limit( base, area->size, address_space_limit )) address_space_limit = end;
+        if (is_win64 && base < (void *)0x80000000) break;
+        if (preload_reserve_end >= end)
+        {
+            if (preload_reserve_start <= base) continue;  /* no space in that area */
+            if (preload_reserve_start < end) end = preload_reserve_start;
+        }
+        else if (preload_reserve_end > base)
+        {
+            if (preload_reserve_start <= base) base = preload_reserve_end;
+            else if ((char *)end - (char *)preload_reserve_end >= size) base = preload_reserve_end;
+            else end = preload_reserve_start;
+        }
+        if ((char *)end - (char *)base < size) continue;
+        ret = anon_mmap_fixed( (char *)end - size, size, PROT_READ | PROT_WRITE, 0 );
+        if (ret == MAP_FAILED) continue;
+        mmap_remove_reserved_area( ret, size );
+        return ret;
     }
-    else if (preload_reserve_end > base)
-    {
-        if (preload_reserve_start <= base) base = preload_reserve_end;
-        else if ((char *)end - (char *)preload_reserve_end >= alloc->size) base = preload_reserve_end;
-        else end = preload_reserve_start;
-    }
-    if ((char *)end - (char *)base < alloc->size) return 0;
-    alloc->base = anon_mmap_fixed( (char *)end - alloc->size, alloc->size, PROT_READ|PROT_WRITE, 0 );
-    return (alloc->base != MAP_FAILED);
+    return anon_mmap_alloc( size, PROT_READ | PROT_WRITE );
 }
 
 /***********************************************************************
@@ -3050,7 +3053,6 @@ void virtual_init(void)
 {
     const struct preload_info **preload_info = dlsym( RTLD_DEFAULT, "wine_main_preload_info" );
     const char *preload = getenv( "WINEPRELOADRESERVE" );
-    struct alloc_virtual_heap alloc_views;
     size_t size;
     int i;
     pthread_mutexattr_t attr;
@@ -3082,20 +3084,15 @@ void virtual_init(void)
     /* try to find space in a reserved area for the views and pages protection table */
 #ifdef _WIN64
     pages_vprot_size = ((size_t)address_space_limit >> page_shift >> pages_vprot_shift) + 1;
-    alloc_views.size = 2 * view_block_size + pages_vprot_size * sizeof(*pages_vprot);
+    size = 2 * view_block_size + pages_vprot_size * sizeof(*pages_vprot);
 #else
-    alloc_views.size = 2 * view_block_size + (1U << (32 - page_shift));
+    size = 2 * view_block_size + (1U << (32 - page_shift));
 #endif
-    if (mmap_enum_reserved_areas( alloc_virtual_heap, &alloc_views, 1 ))
-        mmap_remove_reserved_area( alloc_views.base, alloc_views.size );
-    else
-        alloc_views.base = anon_mmap_alloc( alloc_views.size, PROT_READ | PROT_WRITE );
-
-    assert( alloc_views.base != MAP_FAILED );
-    view_block_start = alloc_views.base;
+    view_block_start = alloc_virtual_heap( size );
+    assert( view_block_start != MAP_FAILED );
     view_block_end = view_block_start + view_block_size / sizeof(*view_block_start);
-    free_ranges = (void *)((char *)alloc_views.base + view_block_size);
-    pages_vprot = (void *)((char *)alloc_views.base + 2 * view_block_size);
+    free_ranges = (void *)((char *)view_block_start + view_block_size);
+    pages_vprot = (void *)((char *)view_block_start + 2 * view_block_size);
     wine_rb_init( &views_tree, compare_view );
 
     free_ranges[0].base = (void *)0;
