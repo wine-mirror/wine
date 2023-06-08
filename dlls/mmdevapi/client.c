@@ -244,6 +244,69 @@ const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl =
     capture_GetNextPacketSize
 };
 
+HRESULT WINAPI client_GetBufferSize(IAudioClient3 *iface, UINT32 *out)
+{
+    struct audio_client *This = impl_from_IAudioClient3(iface);
+    struct get_buffer_size_params params;
+
+    TRACE("(%p)->(%p)\n", This, out);
+
+    if (!out)
+        return E_POINTER;
+
+    if (!This->stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
+
+    params.stream = This->stream;
+    params.frames = out;
+
+    WINE_UNIX_CALL(get_buffer_size, &params);
+
+    return params.result;
+}
+
+HRESULT WINAPI client_GetStreamLatency(IAudioClient3 *iface, REFERENCE_TIME *latency)
+{
+    struct audio_client *This = impl_from_IAudioClient3(iface);
+    struct get_latency_params params;
+
+    TRACE("(%p)->(%p)\n", This, latency);
+
+    if (!latency)
+        return E_POINTER;
+
+    if (!This->stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
+
+    params.stream  = This->stream;
+    params.latency = latency;
+
+    WINE_UNIX_CALL(get_latency, &params);
+
+    return params.result;
+}
+
+HRESULT WINAPI client_GetCurrentPadding(IAudioClient3 *iface, UINT32 *out)
+{
+    struct audio_client *This = impl_from_IAudioClient3(iface);
+    struct get_current_padding_params params;
+
+    TRACE("(%p)->(%p)\n", This, out);
+
+    if (!out)
+        return E_POINTER;
+
+    if (!This->stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
+
+    params.stream  = This->stream;
+    params.padding = out;
+
+    WINE_UNIX_CALL(get_current_padding, &params);
+
+    return params.result;
+}
+
 HRESULT WINAPI client_IsFormatSupported(IAudioClient3 *iface, AUDCLNT_SHAREMODE mode,
                                         const WAVEFORMATEX *fmt, WAVEFORMATEX **out)
 {
