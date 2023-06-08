@@ -170,7 +170,7 @@ static void test_setlocale(void)
     ret = p_setlocale(LC_ALL, "chinese");
     ok(ret != NULL, "expected success, but got NULL\n");
     if (ret)
-        todo_wine ok((!strcmp(ret, "Chinese_China.936")
+        ok((!strcmp(ret, "Chinese_China.936")
             || broken(!strcmp(ret, "Chinese (Simplified)_People's Republic of China.936")) /* Vista */
             || broken(!strcmp(ret, "Chinese_People's Republic of China.936"))), /* 7 */
             "setlocale chinese failed, got %s\n", ret);
@@ -179,7 +179,7 @@ static void test_setlocale(void)
     ret = p_setlocale(LC_ALL, "Chinese_China.936");
     ok(ret != NULL, "expected success, but got NULL\n");
     if (ret)
-        todo_wine ok((!strcmp(ret, "Chinese_China.936")
+        ok((!strcmp(ret, "Chinese_China.936")
             || broken(!strcmp(ret, "Chinese (Simplified)_People's Republic of China.936")) /* Vista */
             || broken(!strcmp(ret, "Chinese_People's Republic of China.936"))), /* 7 */
             "setlocale Chinese_China.936 failed, got %s\n", ret);
@@ -188,7 +188,7 @@ static void test_setlocale(void)
     ret = p_setlocale(LC_ALL, "chinese-simplified");
     ok(ret != NULL, "expected success, but got NULL\n");
     if (ret)
-        todo_wine ok((!strcmp(ret, "Chinese_China.936")
+        ok((!strcmp(ret, "Chinese_China.936")
             || broken(!strcmp(ret, "Chinese (Simplified)_People's Republic of China.936"))), /* Vista */
             "setlocale chinese-simplified failed, got %s\n", ret);
 
@@ -196,7 +196,7 @@ static void test_setlocale(void)
     ret = p_setlocale(LC_ALL, "chs");
     ok(ret != NULL, "expected success, but got NULL\n");
     if (ret)
-        todo_wine ok((!strcmp(ret, "Chinese_China.936")
+        ok((!strcmp(ret, "Chinese_China.936")
             || broken(!strcmp(ret, "Chinese (Simplified)_People's Republic of China.936"))), /* Vista */
             "setlocale chs failed, got %s\n", ret);
 
@@ -219,14 +219,14 @@ static void test_setlocale(void)
     ret = p_setlocale(LC_ALL, "norwegian-nynorsk");
     ok(ret != NULL, "expected success, but got NULL\n");
     if (ret)
-        todo_wine ok((!strcmp(ret, "Norwegian Nynorsk_Norway.1252")
+        ok((!strcmp(ret, "Norwegian Nynorsk_Norway.1252")
             || broken(!strcmp(ret, "Norwegian (Nynorsk)_Norway.1252"))), /* Vista - 7 */
              "setlocale norwegian-nynorsk failed, got %s\n", ret);
 
     ret = p_setlocale(LC_ALL, "non");
     ok(ret != NULL, "expected success, but got NULL\n");
     if (ret)
-        todo_wine ok((!strcmp(ret, "Norwegian Nynorsk_Norway.1252")
+        ok((!strcmp(ret, "Norwegian Nynorsk_Norway.1252")
             || broken(!strcmp(ret, "Norwegian (Nynorsk)_Norway.1252"))), /* Vista - 7 */
              "setlocale norwegian-nynorsk failed, got %s\n", ret);
 
