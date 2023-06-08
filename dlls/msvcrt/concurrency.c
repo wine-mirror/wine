@@ -2569,7 +2569,6 @@ static void set_timeout(FILETIME *ft, unsigned int timeout)
     ft->dwLowDateTime = to.QuadPart;
 }
 
-#if _MSVCR_VER >= 110
 struct timeout_unlock
 {
     Context *ctx;
@@ -2611,6 +2610,7 @@ static BOOL block_context_for(Context *ctx, unsigned int timeout)
     return tu.timed_out;
 }
 
+#if _MSVCR_VER >= 110
 /* ?try_lock_for@critical_section@Concurrency@@QAE_NI@Z */
 /* ?try_lock_for@critical_section@Concurrency@@QEAA_NI@Z */
 DEFINE_THISCALL_WRAPPER(critical_section_try_lock_for, 8)
@@ -3478,33 +3478,11 @@ bool __thiscall _ReentrantBlockingLock__TryAcquire(_ReentrantBlockingLock *this)
     return TryEnterCriticalSection(&this->cs);
 }
 
-static void WINAPI wait_timeout(TP_CALLBACK_INSTANCE *instance, void *arg, TP_TIMER *timer)
-{
-    Context *ctx = arg;
-
-    call_Context_Unblock(ctx);
-}
-
 /* ?wait@Concurrency@@YAXI@Z */
 void __cdecl Concurrency_wait(unsigned int time)
 {
-    Context *ctx = get_current_context();
-    TP_TIMER *tp_timer;
-    FILETIME ft;
-
     TRACE("(%d)\n", time);
-
-    tp_timer = CreateThreadpoolTimer(wait_timeout, ctx, NULL);
-    if(!tp_timer) {
-        FIXME("throw exception?\n");
-        Sleep(time);
-        return;
-    }
-    set_timeout(&ft, time);
-    SetThreadpoolTimer(tp_timer, &ft, 0, 0);
-
-    call_Context_Block(ctx);
-    CloseThreadpoolTimer(tp_timer);
+    block_context_for(get_current_context(), time);
 }
 
 #if _MSVCR_VER>=110
