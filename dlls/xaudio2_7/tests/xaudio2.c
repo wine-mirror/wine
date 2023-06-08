@@ -335,7 +335,7 @@ static void test_simple_streaming(IXAudio2 *xa)
 #endif
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    hr = IUnknown_QueryInterface(vumeter, &IID_IXAPO27, (void **)&xapo);
+    hr = IUnknown_QueryInterface(vumeter, xaudio27 ? &IID_IXAPO27 : &IID_IXAPO, (void **)&xapo);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     IXAPO_Release(xapo);
 
