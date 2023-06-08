@@ -87,6 +87,7 @@ extern void unregister_imm_window( HWND hwnd ) DECLSPEC_HIDDEN;
 
 /* input.c */
 extern BOOL grab_pointer DECLSPEC_HIDDEN;
+extern BOOL grab_fullscreen DECLSPEC_HIDDEN;
 extern BOOL destroy_caret(void) DECLSPEC_HIDDEN;
 extern LONG global_key_state_counter DECLSPEC_HIDDEN;
 extern HWND get_active_window(void) DECLSPEC_HIDDEN;
@@ -102,7 +103,8 @@ extern BOOL set_foreground_window( HWND hwnd, BOOL mouse ) DECLSPEC_HIDDEN;
 extern void toggle_caret( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void update_mouse_tracking_info( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL get_clip_cursor( RECT *rect ) DECLSPEC_HIDDEN;
-extern BOOL process_wine_clipcursor( BOOL empty, BOOL reset ) DECLSPEC_HIDDEN;
+extern BOOL process_wine_clipcursor( HWND hwnd, BOOL empty, BOOL reset ) DECLSPEC_HIDDEN;
+extern BOOL clip_fullscreen_window( HWND hwnd, BOOL reset ) DECLSPEC_HIDDEN;
 
 /* menu.c */
 extern HMENU create_menu( BOOL is_popup ) DECLSPEC_HIDDEN;
@@ -182,6 +184,9 @@ extern HMONITOR monitor_from_window( HWND hwnd, UINT flags, UINT dpi ) DECLSPEC_
 extern void user_lock(void) DECLSPEC_HIDDEN;
 extern void user_unlock(void) DECLSPEC_HIDDEN;
 extern void user_check_not_lock(void) DECLSPEC_HIDDEN;
+
+/* winstation.c */
+extern BOOL is_virtual_desktop(void) DECLSPEC_HIDDEN;
 
 /* window.c */
 struct tagWND;
@@ -345,6 +350,15 @@ static inline const char *debugstr_color( COLORREF color )
     if (color >> 16 == 0x10ff)  /* DIBINDEX */
         return wine_dbg_sprintf( "DIBINDEX(%u)", LOWORD(color) );
     return wine_dbg_sprintf( "RGB(%02x,%02x,%02x)", GetRValue(color), GetGValue(color), GetBValue(color) );
+}
+
+static inline BOOL intersect_rect( RECT *dst, const RECT *src1, const RECT *src2 )
+{
+    dst->left   = max( src1->left, src2->left );
+    dst->top    = max( src1->top, src2->top );
+    dst->right  = min( src1->right, src2->right );
+    dst->bottom = min( src1->bottom, src2->bottom );
+    return !IsRectEmpty( dst );
 }
 
 #endif /* __WINE_WIN32U_PRIVATE */

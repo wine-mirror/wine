@@ -451,8 +451,5 @@ void X11DRV_resize_desktop(void)
         send_message_timeout( HWND_BROADCAST, WM_X11DRV_DESKTOP_RESIZED, old_virtual_rect.left,
                               old_virtual_rect.top, SMTO_ABORTIFHUNG, 2000, FALSE );
 
-    /* forward clip_fullscreen_window request to the foreground window */
-    send_notify_message( NtUserGetForegroundWindow(), WM_X11DRV_CLIP_CURSOR_REQUEST, TRUE, TRUE );
-
     old_virtual_rect = virtual_rect;
 }

@@ -1272,7 +1272,8 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         return call_current_hook( h_extra->handle, HC_ACTION, wparam, h_extra->lparam );
     }
     case WM_WINE_CLIPCURSOR:
-        return process_wine_clipcursor( wparam, lparam );
+        if (wparam && lparam) return clip_fullscreen_window( hwnd, FALSE );
+        return process_wine_clipcursor( hwnd, wparam, lparam );
     case WM_WINE_UPDATEWINDOWSTATE:
         update_window_state( hwnd );
         return 0;
@@ -1767,7 +1768,7 @@ static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardwar
     else if (is_mouse_message( msg->message ))
         ret = process_mouse_message( msg, hw_id, msg_data->info, hwnd_filter, first, last, remove );
     else if (msg->message == WM_WINE_CLIPCURSOR)
-        process_wine_clipcursor( msg->wParam, msg->lParam );
+        process_wine_clipcursor( msg->hwnd, msg->wParam, msg->lParam );
     else
         ERR( "unknown message type %x\n", msg->message );
     SetThreadDpiAwarenessContext( context );
@@ -2593,6 +2594,9 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *r
     info.flags    = 0;
     info.timeout  = 0;
     info.params   = NULL;
+
+    if (input->type == INPUT_MOUSE && (input->mi.dwFlags & (MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_RIGHTDOWN)))
+        clip_fullscreen_window( hwnd, FALSE );
 
     if (input->type == INPUT_HARDWARE && rawinput->header.dwType == RIM_TYPEHID)
     {

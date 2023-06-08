@@ -40,6 +40,19 @@ WINE_DECLARE_DEBUG_CHANNEL(win);
 
 #define DESKTOP_ALL_ACCESS 0x01ff
 
+BOOL is_virtual_desktop(void)
+{
+    HANDLE desktop = NtUserGetThreadDesktop( GetCurrentThreadId() );
+    USEROBJECTFLAGS flags = {0};
+    NTSTATUS status;
+    DWORD len;
+
+    status = NtUserGetObjectInformation( desktop, UOI_FLAGS, &flags, sizeof(flags), &len );
+    if (status) return FALSE;
+
+    return !!(flags.dwFlags & DF_WINE_CREATE_DESKTOP);
+}
+
 /***********************************************************************
  *           NtUserCreateWindowStation  (win32u.@)
  */

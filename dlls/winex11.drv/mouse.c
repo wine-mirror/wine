@@ -467,7 +467,6 @@ static void ungrab_clipping_window(void)
     clipping_cursor = FALSE;
     NtUserDestroyWindow( data->clip_hwnd );
     data->clip_hwnd = 0;
-    data->clip_reset = NtGetTickCount();
     disable_xinput2();
 }
 
@@ -483,50 +482,6 @@ void retry_grab_clipping_window(void)
         NtUserClipCursor( &clip_rect );
     else if (last_clip_refused && NtUserGetForegroundWindow() == last_clip_foreground_window)
         NtUserClipCursor( &last_clip_rect );
-}
-
-/***********************************************************************
- *		clip_fullscreen_window
- *
- * Turn on clipping if the active window is fullscreen.
- */
-BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
-{
-    struct x11drv_win_data *data;
-    struct x11drv_thread_data *thread_data;
-    MONITORINFO monitor_info;
-    HMONITOR monitor;
-    DWORD style;
-    BOOL fullscreen;
-
-    if (hwnd == NtUserGetDesktopWindow()) return FALSE;
-    if (hwnd != NtUserGetForegroundWindow()) return FALSE;
-
-    style = NtUserGetWindowLongW( hwnd, GWL_STYLE );
-    if (!(style & WS_VISIBLE)) return FALSE;
-    if ((style & (WS_POPUP | WS_CHILD)) == WS_CHILD) return FALSE;
-    /* maximized windows don't count as full screen */
-    if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION) return FALSE;
-    if (!(data = get_win_data( hwnd ))) return FALSE;
-    fullscreen = NtUserIsWindowRectFullScreen( &data->whole_rect );
-    release_win_data( data );
-    if (!fullscreen) return FALSE;
-    if (!(thread_data = x11drv_thread_data())) return FALSE;
-    if (NtGetTickCount() - thread_data->clip_reset < 1000) return FALSE;
-    if (!reset && clipping_cursor && thread_data->clip_hwnd) return FALSE;  /* already clipping */
-
-    monitor = NtUserMonitorFromWindow( hwnd, MONITOR_DEFAULTTONEAREST );
-    if (!monitor) return FALSE;
-    monitor_info.cbSize = sizeof(monitor_info);
-    if (!NtUserGetMonitorInfo( monitor, &monitor_info )) return FALSE;
-    if (!grab_fullscreen)
-    {
-        RECT virtual_rect = NtUserGetVirtualScreenRect();
-        if (!EqualRect( &monitor_info.rcMonitor, &virtual_rect )) return FALSE;
-        if (is_virtual_desktop()) return FALSE;
-    }
-    TRACE( "win %p clipping fullscreen\n", hwnd );
-    return grab_clipping_window( &monitor_info.rcMonitor );
 }
 
 
@@ -629,9 +584,6 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
         sync_window_cursor( win );
         last_cursor_change = input->u.mi.time;
     }
-
-    if (input->u.mi.dwFlags & (MOUSEEVENTF_LEFTDOWN|MOUSEEVENTF_RIGHTDOWN))
-        clip_fullscreen_window( hwnd, FALSE );
 
     /* update the wine server Z-order */
 
@@ -1522,48 +1474,9 @@ BOOL X11DRV_GetCursorPos(LPPOINT pos)
  */
 BOOL X11DRV_ClipCursor( const RECT *clip, BOOL reset )
 {
-    TRACE( "clip %p, reset %u\n", clip, reset );
-
-    if (!reset)
-    {
-        RECT virtual_rect = NtUserGetVirtualScreenRect();
-
-        if (!clip) clip = &virtual_rect;
-
-        /* we are clipping if the clip rectangle is smaller than the screen */
-        if (clip->left > virtual_rect.left || clip->right < virtual_rect.right ||
-            clip->top > virtual_rect.top || clip->bottom < virtual_rect.bottom)
-        {
-            if (grab_clipping_window( clip )) return TRUE;
-        }
-        else /* if currently clipping, check if we should switch to fullscreen clipping */
-        {
-            struct x11drv_thread_data *data = x11drv_thread_data();
-            if (data && data->clip_hwnd)
-            {
-                if (EqualRect( clip, &clip_rect )) return TRUE;
-                if (clip_fullscreen_window( NtUserGetForegroundWindow(), TRUE )) return TRUE;
-            }
-        }
-    }
+    if (!reset && clip && grab_clipping_window( clip )) return TRUE;
     ungrab_clipping_window();
     return TRUE;
-}
-
-/***********************************************************************
- *             clip_cursor_request
- *
- * Function called upon receiving a WM_X11DRV_CLIP_CURSOR_REQUEST.
- */
-LRESULT clip_cursor_request( HWND hwnd, BOOL fullscreen, BOOL reset )
-{
-    if (hwnd == NtUserGetDesktopWindow())
-        WARN( "ignoring clip cursor request on desktop window.\n" );
-    else if (hwnd != NtUserGetForegroundWindow())
-        WARN( "ignoring clip cursor request on non-foreground window.\n" );
-    else if (fullscreen)
-        clip_fullscreen_window( hwnd, reset );
-    return 0;
 }
 
 /***********************************************************************

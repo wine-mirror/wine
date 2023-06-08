@@ -2704,6 +2704,8 @@ static LONG apply_display_settings( const WCHAR *devname, const DEVMODEW *devmod
         send_message_timeout( HWND_BROADCAST, WM_DISPLAYCHANGE, current_mode.dmBitsPerPel,
                               MAKELPARAM( current_mode.dmPelsWidth, current_mode.dmPelsHeight ),
                               SMTO_ABORTIFHUNG, 2000, FALSE );
+        /* post clip_fullscreen_window request to the foreground window */
+        NtUserPostMessage( NtUserGetForegroundWindow(), WM_WINE_CLIPCURSOR, TRUE, TRUE );
     }
 
     return ret;
@@ -4242,6 +4244,8 @@ void sysparams_init(void)
 
     if (!get_config_key( hkey, appkey, "GrabPointer", buffer, sizeof(buffer) ))
         grab_pointer = IS_OPTION_TRUE( buffer[0] );
+    if (!get_config_key( hkey, appkey, "GrabFullscreen", buffer, sizeof(buffer) ))
+        grab_fullscreen = IS_OPTION_TRUE( buffer[0] );
 
 #undef IS_OPTION_TRUE
 }

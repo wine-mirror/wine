@@ -531,15 +531,6 @@ static inline DC *get_physdev_dc( PHYSDEV dev )
     return get_nulldrv_dc( dev );
 }
 
-static inline BOOL intersect_rect( RECT *dst, const RECT *src1, const RECT *src2 )
-{
-    dst->left   = max( src1->left, src2->left );
-    dst->top    = max( src1->top, src2->top );
-    dst->right  = min( src1->right, src2->right );
-    dst->bottom = min( src1->bottom, src2->bottom );
-    return !IsRectEmpty( dst );
-}
-
 static inline void order_rect( RECT *rect )
 {
     if (rect->left > rect->right)

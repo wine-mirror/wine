@@ -780,11 +780,7 @@ static BOOL X11DRV_FocusIn( HWND hwnd, XEvent *xev )
 
     xim_set_focus( hwnd, TRUE );
 
-    if (use_take_focus)
-    {
-        clip_fullscreen_window( hwnd, FALSE );
-        return TRUE;
-    }
+    if (use_take_focus) return TRUE;
 
     if (!can_activate_window(hwnd))
     {
