@@ -1447,6 +1447,44 @@ static DWORD check_dmo_output_data_buffer_(int line, DMO_OUTPUT_DATA_BUFFER *out
     return diff;
 }
 
+#define check_dmo_get_output_size_info_video(a, b, c, d, e) check_dmo_get_output_size_info_video_(__LINE__, a, b, c, d, e)
+static void check_dmo_get_output_size_info_video_(int line, IMediaObject *dmo,
+        const GUID *input_subtype, const GUID *output_subtype, const LONG width, const LONG height)
+{
+    DWORD size, alignment, expected_size;
+    DMO_MEDIA_TYPE *type;
+    char buffer[1024];
+    HRESULT hr;
+
+    type = (void *)buffer;
+
+    hr = IMediaObject_SetInputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to clear input type, hr %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to clear output type, hr %#lx.\n", hr);
+
+    init_dmo_media_type_video(type, input_subtype, width, height);
+    hr = IMediaObject_SetInputType(dmo, 0, type, 0);
+    ok_(__FILE__, line)(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+
+    init_dmo_media_type_video(type, output_subtype, width, height);
+    hr = IMediaObject_SetOutputType(dmo, 0, type, 0);
+    todo_wine_if(IsEqualGUID(output_subtype, &MEDIASUBTYPE_NV11)
+            || IsEqualGUID(output_subtype, &MEDIASUBTYPE_IYUV))
+    ok_(__FILE__, line)(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+    if (hr != S_OK)
+        return;
+
+    size = 0xdeadbeef;
+    alignment = 0xdeadbeef;
+    hr = MFCalculateImageSize(output_subtype, width, height, (UINT32 *)&expected_size);
+    ok_(__FILE__, line)(hr == S_OK, "MFCalculateImageSize returned %#lx.\n", hr);
+
+    hr = IMediaObject_GetOutputSizeInfo(dmo, 0, &size, &alignment);
+    ok_(__FILE__, line)(hr == S_OK, "GetOutputSizeInfo returned %#lx.\n", hr);
+    ok_(__FILE__, line)(size == expected_size, "Unexpected size %lu, expected %lu.\n", size, expected_size);
+    ok_(__FILE__, line)(alignment == 1, "Unexpected alignment %lu.\n", alignment);
+}
 
 static HRESULT WINAPI test_unk_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
 {
@@ -4705,6 +4743,23 @@ failed:
     CoUninitialize();
 }
 
+const GUID *wmv_decoder_output_subtypes[] =
+{
+    &MEDIASUBTYPE_NV12,
+    &MEDIASUBTYPE_YV12,
+    &MEDIASUBTYPE_IYUV,
+    &MEDIASUBTYPE_I420,
+    &MEDIASUBTYPE_YUY2,
+    &MEDIASUBTYPE_UYVY,
+    &MEDIASUBTYPE_YVYU,
+    &MEDIASUBTYPE_NV11,
+    &MEDIASUBTYPE_RGB32,
+    &MEDIASUBTYPE_RGB24,
+    &MEDIASUBTYPE_RGB565,
+    &MEDIASUBTYPE_RGB555,
+    &MEDIASUBTYPE_RGB8,
+};
+
 static void test_wmv_encoder(void)
 {
     const GUID *const class_id = &CLSID_CWMVXEncMediaObject;
@@ -5984,23 +6039,6 @@ static void test_wmv_decoder_dmo_input_type(void)
 
 static void test_wmv_decoder_dmo_output_type(void)
 {
-    const GUID *output_subtypes[] =
-    {
-        &MEDIASUBTYPE_NV12,
-        &MEDIASUBTYPE_YV12,
-        &MEDIASUBTYPE_IYUV,
-        &MEDIASUBTYPE_I420,
-        &MEDIASUBTYPE_YUY2,
-        &MEDIASUBTYPE_UYVY,
-        &MEDIASUBTYPE_YVYU,
-        &MEDIASUBTYPE_NV11,
-        &MEDIASUBTYPE_RGB32,
-        &MEDIASUBTYPE_RGB24,
-        &MEDIASUBTYPE_RGB565,
-        &MEDIASUBTYPE_RGB555,
-        &MEDIASUBTYPE_RGB8,
-    };
-
     char buffer_good_output[1024], buffer_bad_output[1024], buffer_input[1024];
     DMO_MEDIA_TYPE *good_output_type, *bad_output_type, *input_type, type;
     const GUID* input_subtype = &MEDIASUBTYPE_WMV1;
@@ -6046,7 +6084,7 @@ static void test_wmv_decoder_dmo_output_type(void)
     hr = IMediaObject_SetInputType(dmo, 0, input_type, 0);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
 
-    count = ARRAY_SIZE(output_subtypes);
+    count = ARRAY_SIZE(wmv_decoder_output_subtypes);
     hr = IMediaObject_GetOutputType(dmo, 1, 0, NULL);
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputType(dmo, 1, 0, &type);
@@ -6068,7 +6106,7 @@ static void test_wmv_decoder_dmo_output_type(void)
     while (SUCCEEDED(hr = IMediaObject_GetOutputType(dmo, 0, ++i, &type)))
     {
         winetest_push_context("type %lu", i);
-        init_dmo_media_type_video(good_output_type, output_subtypes[i], width, height);
+        init_dmo_media_type_video(good_output_type, wmv_decoder_output_subtypes[i], width, height);
         check_dmo_media_type(&type, good_output_type);
         MoFreeMediaType(&type);
         winetest_pop_context();
@@ -6171,42 +6209,85 @@ static void test_wmv_decoder_dmo_output_type(void)
     winetest_pop_context();
 }
 
+static void test_wmv_decoder_dmo_get_size_info(void)
+{
+    DWORD i, ret, size, alignment;
+    IMediaObject *dmo;
+    HRESULT hr;
+
+    winetest_push_context("wmvdec");
+
+    if (!has_video_processor)
+    {
+        win_skip("Skipping WMV decoder DMO tests on Win7.\n");
+        winetest_pop_context();
+        return;
+    }
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "CoInitialize failed, hr %#lx.\n", hr);
+    hr = CoCreateInstance(&CLSID_CWMVDecMediaObject, NULL, CLSCTX_INPROC_SERVER, &IID_IMediaObject, (void **)&dmo);
+    ok(hr == S_OK, "CoCreateInstance failed, hr %#lx.\n", hr);
+
+    /* Test GetOutputSizeInfo. */
+    hr = IMediaObject_GetOutputSizeInfo(dmo, 1, NULL, NULL);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputSizeInfo returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputSizeInfo(dmo, 0, NULL, NULL);
+    todo_wine
+    ok(hr == E_POINTER, "GetOutputSizeInfo returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputSizeInfo(dmo, 0, &size, NULL);
+    todo_wine
+    ok(hr == E_POINTER, "GetOutputSizeInfo returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputSizeInfo(dmo, 0, NULL, &alignment);
+    todo_wine
+    ok(hr == E_POINTER, "GetOutputSizeInfo returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputSizeInfo(dmo, 0, &size, &alignment);
+    ok(hr == DMO_E_TYPE_NOT_SET, "GetOutputSizeInfo returned %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(wmv_decoder_output_subtypes); ++i)
+    {
+        const GUID *subtype = wmv_decoder_output_subtypes[i];
+
+        if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB565) || IsEqualGUID(subtype, &MEDIASUBTYPE_RGB8))
+        {
+            skip("Skipping GetOutputSizeInfo tests for output subtype %s.\n", debugstr_guid(subtype));
+            continue;
+        }
+
+        winetest_push_context("out %lu", i);
+
+        check_dmo_get_output_size_info_video(dmo, &MEDIASUBTYPE_WMV1, subtype, 16, 16);
+        check_dmo_get_output_size_info_video(dmo, &MEDIASUBTYPE_WMV1, subtype, 96, 96);
+        check_dmo_get_output_size_info_video(dmo, &MEDIASUBTYPE_WMV1, subtype, 320, 240);
+
+        winetest_pop_context();
+    }
+
+    ret = IMediaObject_Release(dmo);
+    ok(ret == 0, "Release returned %lu\n", ret);
+    CoUninitialize();
+    winetest_pop_context();
+}
+
 static void test_wmv_decoder_media_object(void)
 {
     const GUID *const class_id = &CLSID_CWMVDecMediaObject;
-    const GUID *output_subtypes[] =
-    {
-        &MEDIASUBTYPE_NV12,
-        &MEDIASUBTYPE_YV12,
-        &MEDIASUBTYPE_IYUV,
-        &MEDIASUBTYPE_I420,
-        &MEDIASUBTYPE_YUY2,
-        &MEDIASUBTYPE_UYVY,
-        &MEDIASUBTYPE_YVYU,
-        &MEDIASUBTYPE_NV11,
-        &MEDIASUBTYPE_RGB32,
-        &MEDIASUBTYPE_RGB24,
-        &MEDIASUBTYPE_RGB565,
-        &MEDIASUBTYPE_RGB555,
-        &MEDIASUBTYPE_RGB8,
-    };
 
     const DWORD data_width = 96, data_height = 96;
-    const POINT test_size[] = {{16, 16}, {96, 96}, {320, 240}};
     const struct buffer_desc output_buffer_desc_nv12 =
     {
         .length = data_width * data_height * 3 / 2,
         .compare = compare_nv12, .dump = dump_nv12, .rect = {.right = 82, .bottom = 84},
     };
-    DWORD in_count, out_count, size, expected_size, alignment, wmv_data_length, status, expected_status, diff;
+    DWORD in_count, out_count, size, alignment, wmv_data_length, status, expected_status, diff;
     struct media_buffer *input_media_buffer = NULL, *output_media_buffer = NULL;
     DMO_OUTPUT_DATA_BUFFER output_data_buffer;
     IMediaObject *media_object;
     DMO_MEDIA_TYPE *type;
     const BYTE *wmv_data;
     char buffer[1024];
-    ULONG ret, i, j;
     HRESULT hr;
+    ULONG ret;
 
     winetest_push_context("wmvdec");
 
@@ -6244,48 +6325,6 @@ static void test_wmv_decoder_media_object(void)
     hr = IMediaObject_GetStreamCount(media_object, &in_count, NULL);
     ok(hr == E_POINTER, "GetStreamCount returned %#lx.\n", hr);
     ok(in_count == 0xdeadbeef, "Got unexpected in_count %lu.\n", in_count);
-
-    /* Test GetOutputSizeInfo. */
-    init_dmo_media_type_video(type, &MEDIASUBTYPE_WMV1, 16, 16);
-    hr = IMediaObject_SetInputType(media_object, 0, type, 0);
-    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
-    hr = IMediaObject_SetOutputType(media_object, 0, NULL, DMO_SET_TYPEF_CLEAR);
-    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
-    hr = IMediaObject_GetOutputSizeInfo(media_object, 0, &size, &alignment);
-    ok(hr == DMO_E_TYPE_NOT_SET, "GetOutputSizeInfo returned %#lx.\n", hr);
-
-    for (i = 0; i < ARRAY_SIZE(output_subtypes); ++i)
-    {
-        const GUID *subtype = output_subtypes[i];
-        if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB565)
-                || IsEqualGUID(subtype, &MEDIASUBTYPE_RGB8))
-        {
-            skip("Skipping GetOutputSizeInfo tests for video subtype %s.\n", debugstr_guid(subtype));
-            continue;
-        }
-
-        winetest_push_context("out %lu", i);
-        for (j = 0; j < ARRAY_SIZE(test_size); ++j)
-        {
-            init_dmo_media_type_video(type, output_subtypes[i], test_size[j].x, test_size[j].y);
-            hr = IMediaObject_SetOutputType(media_object, 0, type, 0);
-            todo_wine_if(IsEqualGUID(subtype, &MEDIASUBTYPE_NV11)
-                    || IsEqualGUID(subtype, &MEDIASUBTYPE_IYUV))
-            ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
-            if (hr != S_OK)
-                continue;
-
-            size = 0xdeadbeef;
-            alignment = 0xdeadbeef;
-            hr = MFCalculateImageSize(subtype, test_size[j].x, test_size[j].y, (UINT32 *)&expected_size);
-            ok(hr == S_OK, "MFCalculateImageSize returned %#lx.\n", hr);
-            hr = IMediaObject_GetOutputSizeInfo(media_object, 0, &size, &alignment);
-            ok(hr == S_OK, "GetOutputSizeInfo returned %#lx.\n", hr);
-            ok(size == expected_size, "Got unexpected size %lu, expected %lu.\n", size, expected_size);
-            ok(alignment == 1, "Got unexpected alignment %lu.\n", alignment);
-        }
-        winetest_pop_context();
-    }
 
     /* Test ProcessInput. */
     load_resource(L"wmvencdata.bin", &wmv_data, &wmv_data_length);
@@ -8430,6 +8469,7 @@ START_TEST(transform)
     test_wmv_decoder();
     test_wmv_decoder_dmo_input_type();
     test_wmv_decoder_dmo_output_type();
+    test_wmv_decoder_dmo_get_size_info();
     test_wmv_decoder_media_object();
     test_audio_convert();
     test_color_convert();
