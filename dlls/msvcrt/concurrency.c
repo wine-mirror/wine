@@ -214,14 +214,12 @@ struct scheduled_chore {
 };
 
 /* keep in sync with msvcp90/msvcp90.h */
-#define CS_UNLOCK 1
-#define CS_TIMEOUT 2
 typedef struct cs_queue
 {
     Context *ctx;
     struct cs_queue *next;
 #if _MSVCR_VER >= 110
-    LONG status;
+    LONG free;
     int unknown;
 #endif
 } cs_queue;
@@ -2533,7 +2531,7 @@ void __thiscall critical_section_unlock(critical_section *this)
     while(1) {
         cs_queue *next;
 
-        if(!InterlockedCompareExchange(&this->unk_active.next->status, CS_UNLOCK, 0))
+        if(!InterlockedExchange(&this->unk_active.next->free, TRUE))
             break;
 
         next = this->unk_active.next;
@@ -2572,12 +2570,40 @@ static void set_timeout(FILETIME *ft, unsigned int timeout)
 }
 
 #if _MSVCR_VER >= 110
+struct timeout_unlock
+{
+    Context *ctx;
+    BOOL timed_out;
+};
+
 static void WINAPI timeout_unlock(TP_CALLBACK_INSTANCE *instance, void *ctx, TP_TIMER *timer)
 {
-    cs_queue *q = ctx;
+    struct timeout_unlock *tu = ctx;
+    tu->timed_out = TRUE;
+    call_Context_Unblock(tu->ctx);
+}
 
-    if(!InterlockedCompareExchange(&q->status, CS_TIMEOUT, 0))
-        call_Context_Unblock(q->ctx);
+/* returns TRUE if wait has timed out */
+static BOOL block_context_for(Context *ctx, unsigned int timeout)
+{
+    struct timeout_unlock tu = { ctx };
+    TP_TIMER *tp_timer;
+    FILETIME ft;
+
+    tp_timer = CreateThreadpoolTimer(timeout_unlock, &tu, NULL);
+    if(!tp_timer) {
+        FIXME("throw exception?\n");
+        return TRUE;
+    }
+    set_timeout(&ft, timeout);
+    SetThreadpoolTimer(tp_timer, &ft, 0, 0);
+
+    call_Context_Block(ctx);
+
+    SetThreadpoolTimer(tp_timer, NULL, 0, 0);
+    WaitForThreadpoolTimerCallbacks(tp_timer, TRUE);
+    CloseThreadpoolTimer(tp_timer);
+    return tu.timed_out;
 }
 
 /* ?try_lock_for@critical_section@Concurrency@@QAE_NI@Z */
@@ -2603,27 +2629,15 @@ bool __thiscall critical_section_try_lock_for(
 
     last = InterlockedExchangePointer(&this->tail, q);
     if(last) {
-        TP_TIMER *tp_timer;
-        FILETIME ft;
-
         last->next = q;
 
-        tp_timer = CreateThreadpoolTimer(timeout_unlock, q, NULL);
-        if(!tp_timer) {
-            FIXME("throw exception?\n");
-            return FALSE;
+        if(block_context_for(q->ctx, timeout))
+        {
+            if(!InterlockedExchange(&q->free, TRUE))
+                return FALSE;
+            /* Context was unblocked because of timeout and unlock operation */
+            call_Context_Block(ctx);
         }
-        set_timeout(&ft, timeout);
-        SetThreadpoolTimer(tp_timer, &ft, 0, 0);
-
-        call_Context_Block(q->ctx);
-
-        SetThreadpoolTimer(tp_timer, NULL, 0, 0);
-        WaitForThreadpoolTimerCallbacks(tp_timer, TRUE);
-        CloseThreadpoolTimer(tp_timer);
-
-        if(q->status == CS_TIMEOUT)
-            return FALSE;
     }
 
     cs_set_head(this, q);

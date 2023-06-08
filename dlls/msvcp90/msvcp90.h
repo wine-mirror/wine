@@ -47,7 +47,7 @@ typedef struct cs_queue
 {
     void *ctx;
     struct cs_queue *next;
-    LONG status;
+    LONG free;
     int unknown;
 } cs_queue;
 
