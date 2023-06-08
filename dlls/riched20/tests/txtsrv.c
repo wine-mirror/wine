@@ -38,6 +38,27 @@
 #include <oleauto.h>
 #include <limits.h>
 
+#define DEFINE_EXPECT(func) \
+    static UINT called_count_ ## func = 0
+
+#define INCREASE_CALL_COUNTER(func) \
+    do { \
+        called_count_ ## func++;     \
+    }while(0)
+
+#define CHECK_CALLED(func) \
+    do { \
+        ok(called_count_ ## func, "expected " #func "\n"); \
+    }while(0)
+
+#define CHECK_NOT_CALLED(func) \
+    do { \
+        ok(!called_count_ ## func, "unexpected " #func "\n"); \
+    }while(0)
+
+#define CLEAR_COUNTER(func) \
+    called_count_ ## func = 0
+
 static HMODULE hmoduleRichEdit;
 static IID *pIID_ITextServices;
 static IID *pIID_ITextHost;
@@ -80,6 +101,8 @@ static ITextServicesVtbl itextServicesStdcallVtbl;
 
 /************************************************************************/
 /* ITextHost implementation for conformance testing. */
+
+DEFINE_EXPECT(ITextHostImpl_TxViewChange);
 
 typedef struct ITextHostTestImpl
 {
@@ -198,6 +221,7 @@ static void __thiscall ITextHostImpl_TxViewChange(ITextHost *iface, BOOL fUpdate
     ITextHostTestImpl *This = impl_from_ITextHost(iface);
     TRACECALL("Call to TxViewChange(%p, fUpdate=%d)\n",
                This, fUpdate);
+    INCREASE_CALL_COUNTER(ITextHostImpl_TxViewChange);
 }
 
 static BOOL __thiscall ITextHostImpl_TxCreateCaret(ITextHost *iface, HBITMAP hbmp, INT xWidth, INT yHeight)
@@ -620,7 +644,7 @@ static BOOL init_texthost(ITextServices **txtserv, ITextHost **ret)
     memset(&dummyTextHost->char_format, 0, sizeof(dummyTextHost->char_format));
     dummyTextHost->char_format.cbSize = sizeof(dummyTextHost->char_format);
     dummyTextHost->char_format.dwMask = CFM_ALL2;
-    dummyTextHost->scrollbars = 0;
+    dummyTextHost->scrollbars = ES_AUTOVSCROLL;
     dummyTextHost->props = 0;
     hf = GetStockObject(DEFAULT_GUI_FONT);
     hf_to_cf(hf, &dummyTextHost->char_format);
@@ -1240,6 +1264,34 @@ static void test_notifications( void )
     ITextHost_Release( host );
 }
 
+static void test_set_selection_message( void )
+{
+    ITextServices *txtserv;
+    ITextHost *host;
+    LRESULT result;
+    HRESULT hr;
+
+    if (!init_texthost(&txtserv, &host))
+        return;
+
+    CLEAR_COUNTER(ITextHostImpl_TxViewChange);
+    hr = ITextServices_TxSendMessage(txtserv, EM_SETSEL, 0, 20, &result);
+    ok( hr == S_OK, "got %08lx\n", hr );
+    CHECK_CALLED(ITextHostImpl_TxViewChange);
+
+    CLEAR_COUNTER(ITextHostImpl_TxViewChange);
+    ITextServices_TxSetText(txtserv, lorem);
+    CHECK_CALLED(ITextHostImpl_TxViewChange);
+
+    CLEAR_COUNTER(ITextHostImpl_TxViewChange);
+    hr = ITextServices_TxSendMessage(txtserv, EM_SETSEL, 0, 20, &result);
+    ok( hr == S_OK, "got %08lx\n", hr );
+    CHECK_CALLED(ITextHostImpl_TxViewChange);
+
+    ITextServices_Release( txtserv );
+    ITextHost_Release( host );
+}
+
 START_TEST( txtsrv )
 {
     ITextServices *txtserv;
@@ -1273,6 +1325,7 @@ START_TEST( txtsrv )
         test_default_format();
         test_TxGetScroll();
         test_notifications();
+        test_set_selection_message();
     }
     if (wrapperCodeMem) VirtualFree(wrapperCodeMem, 0, MEM_RELEASE);
 }
