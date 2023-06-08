@@ -2850,17 +2850,8 @@ static inline int evt_transition(void **state, void *from, void *to)
     return InterlockedCompareExchangePointer(state, to, from) == from;
 }
 
-static void WINAPI evt_timeout(TP_CALLBACK_INSTANCE *instance, void *ctx, TP_TIMER *timer)
-{
-    thread_wait *wait = ctx;
-
-    if(evt_transition(&wait->signaled, EVT_WAITING, EVT_RUNNING))
-        call_Context_Unblock(wait->ctx);
-}
-
 static size_t evt_wait(thread_wait *wait, event **events, int count, bool wait_all, unsigned int timeout)
 {
-    TP_TIMER *tp_timer = NULL;
     int i;
 
     wait->signaled = EVT_RUNNING;
@@ -2884,30 +2875,12 @@ static size_t evt_wait(thread_wait *wait, event **events, int count, bool wait_a
     if(!timeout)
         return evt_end_wait(wait, events, count);
 
-    if (timeout != COOPERATIVE_TIMEOUT_INFINITE)
-    {
-        FILETIME ft;
-
-        tp_timer = CreateThreadpoolTimer(evt_timeout, wait, NULL);
-        if(!tp_timer) {
-            FIXME("throw exception?\n");
-            return COOPERATIVE_WAIT_TIMEOUT;
-        }
-        set_timeout(&ft, timeout);
-        SetThreadpoolTimer(tp_timer, &ft, 0, 0);
-    }
-
     if(!evt_transition(&wait->signaled, EVT_RUNNING, EVT_WAITING))
         return evt_end_wait(wait, events, count);
 
-    call_Context_Block(wait->ctx);
-
-    if (tp_timer)
-    {
-        SetThreadpoolTimer(tp_timer, NULL, 0, 0);
-        WaitForThreadpoolTimerCallbacks(tp_timer, TRUE);
-        CloseThreadpoolTimer(tp_timer);
-    }
+    if(block_context_for(wait->ctx, timeout) &&
+            !evt_transition(&wait->signaled, EVT_WAITING, EVT_RUNNING))
+        call_Context_Block(wait->ctx);
 
     return evt_end_wait(wait, events, count);
 }
