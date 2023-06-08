@@ -129,7 +129,7 @@ static inline ME_DisplayItem *row_get_di( ME_Row *row )
 void cursor_from_char_ofs( ME_TextEditor *editor, int char_ofs, ME_Cursor *cursor ) DECLSPEC_HIDDEN;
 BOOL cursor_next_run( ME_Cursor *cursor, BOOL all_para ) DECLSPEC_HIDDEN;
 BOOL cursor_prev_run( ME_Cursor *cursor, BOOL all_para ) DECLSPEC_HIDDEN;
-void editor_propagate_char_ofs( ME_Paragraph *para, ME_Run *run, int shift ) DECLSPEC_HIDDEN;
+void editor_propagate_char_ofs( ME_TextEditor *editor, ME_Paragraph *para, ME_Run *run, int shift ) DECLSPEC_HIDDEN;
 int run_char_ofs( ME_Run *run, int ofs ) DECLSPEC_HIDDEN;
 ME_Run *run_create( ME_Style *s, int nFlags ) DECLSPEC_HIDDEN;
 ME_Run *run_insert( ME_TextEditor *editor, ME_Cursor *cursor,

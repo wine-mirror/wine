@@ -8889,6 +8889,8 @@ static void test_rtf(void)
                                      0x201d,0x200e,0x200f,0x200d,0x200c};
     const char *pard = "{\\rtf1 ABC\\rtlpar\\par DEF\\par HIJ\\pard\\par}";
     const char *highlight = "{\\rtf1{\\colortbl;\\red0\\green0\\blue0;\\red128\\green128\\blue128;\\red192\\green192\\blue192;}\\cf2\\highlight3 foo\\par}";
+    const char *crash = "{\\rtf2 {\\par \\pard \\trowd \\cellx6000 \\intbl \\cell \\row \\par \\pard \\li300 \\bullet packages... \\par }";
+    const char *crash2 = "{\\rtf1 \\trowd row1 \\intbl \\cell \\row \\par \\trowd row2 \\intbl \\cell \\row}";
 
     HWND edit = new_richeditW( NULL );
     EDITSTREAM es;
@@ -8939,6 +8941,15 @@ static void test_rtf(void)
     ok( (cf.dwEffects & (CFE_AUTOCOLOR | CFE_AUTOBACKCOLOR)) == 0, "got %08lx\n", cf.dwEffects );
     ok( cf.crTextColor == RGB(128,128,128), "got %08lx\n", cf.crTextColor );
     ok( cf.crBackColor == RGB(192,192,192), "got %08lx\n", cf.crBackColor );
+
+    /* Test cases that crash */
+    es.dwCookie = (DWORD_PTR)&crash;
+    es.dwError = 0;
+    SendMessageA( edit, EM_STREAMIN, SF_RTF, (LPARAM)&es );
+
+    es.dwCookie = (DWORD_PTR)&crash2;
+    es.dwError = 0;
+    SendMessageA( edit, EM_STREAMIN, SF_RTF, (LPARAM)&es );
 
     DestroyWindow( edit );
 }

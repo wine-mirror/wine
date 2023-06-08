@@ -144,7 +144,7 @@ BOOL ME_CanJoinRuns(const ME_Run *run1, const ME_Run *run2)
  * the document) of the part of the text starting from given place.
  * Call with only one of para or run non-NULL.
  */ 
-void editor_propagate_char_ofs( ME_Paragraph *para, ME_Run *run, int shift )
+void editor_propagate_char_ofs( ME_TextEditor *editor, ME_Paragraph *para, ME_Run *run, int shift )
 {
     assert( !para ^ !run );
 
@@ -160,7 +160,12 @@ void editor_propagate_char_ofs( ME_Paragraph *para, ME_Run *run, int shift )
 
     do
     {
+        /* update position in marked tree, if added */
+        if (para->nFlags & MEPF_REWRAP)
+            para_mark_remove( editor, para );
         para->nCharOfs += shift;
+        if (para->nFlags & MEPF_REWRAP)
+            para_mark_add( editor, para );
         para = para_next( para );
     } while (para);
 }
@@ -400,7 +405,7 @@ ME_Run *run_insert( ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
   ME_InsertString( run->para->text, run->nCharOfs, str, len );
   ME_InsertBefore( run_get_di( insert_before ), run_get_di( run ) );
   TRACE("Shift length:%d\n", len);
-  editor_propagate_char_ofs( NULL, insert_before, len );
+  editor_propagate_char_ofs( editor, NULL, insert_before, len );
   para_mark_rewrap( editor, insert_before->para );
 
   /* Move any cursors that were at the end of the previous run to the end of the inserted run */

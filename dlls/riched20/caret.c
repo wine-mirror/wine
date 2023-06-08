@@ -416,7 +416,7 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
       /* c = updated data now */
 
       if (c.run == cursor.run) c.run->nCharOfs -= shift;
-      editor_propagate_char_ofs( NULL, c.run, shift );
+      editor_propagate_char_ofs( editor, NULL, c.run, shift );
 
       if (!cursor.run->len)
       {
