@@ -1526,7 +1526,7 @@ BOOL X11DRV_ClipCursor( const RECT *clip, BOOL reset )
 {
     TRACE( "clip %p, reset %u\n", clip, reset );
 
-    if (!reset && grab_pointer)
+    if (!reset)
     {
         RECT virtual_rect = NtUserGetVirtualScreenRect();
 

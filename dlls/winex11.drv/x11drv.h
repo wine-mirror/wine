@@ -443,7 +443,6 @@ extern BOOL use_take_focus DECLSPEC_HIDDEN;
 extern BOOL use_primary_selection DECLSPEC_HIDDEN;
 extern BOOL use_system_cursors DECLSPEC_HIDDEN;
 extern BOOL show_systray DECLSPEC_HIDDEN;
-extern BOOL grab_pointer DECLSPEC_HIDDEN;
 extern BOOL grab_fullscreen DECLSPEC_HIDDEN;
 extern BOOL usexcomposite DECLSPEC_HIDDEN;
 extern BOOL managed_mode DECLSPEC_HIDDEN;

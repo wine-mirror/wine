@@ -4099,13 +4099,47 @@ static union sysparam_all_entry * const default_entries[] =
     (union sysparam_all_entry *)&entry_AUDIODESC_ON,
 };
 
+/***********************************************************************
+ *      get_config_key
+ *
+ * Get a config key from either the app-specific or the default config
+ */
+static DWORD get_config_key( HKEY defkey, HKEY appkey, const char *name,
+                             WCHAR *buffer, DWORD size )
+{
+    WCHAR nameW[128];
+    char buf[2048];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (void *)buf;
+
+    asciiz_to_unicode( nameW, name );
+
+    if (appkey && query_reg_value( appkey, nameW, info, sizeof(buf) ))
+    {
+        size = min( info->DataLength, size - sizeof(WCHAR) );
+        memcpy( buffer, info->Data, size );
+        buffer[size / sizeof(WCHAR)] = 0;
+        return 0;
+    }
+
+    if (defkey && query_reg_value( defkey, nameW, info, sizeof(buf) ))
+    {
+        size = min( info->DataLength, size - sizeof(WCHAR) );
+        memcpy( buffer, info->Data, size );
+        buffer[size / sizeof(WCHAR)] = 0;
+        return 0;
+    }
+
+    return ERROR_FILE_NOT_FOUND;
+}
+
 void sysparams_init(void)
 {
-
+    WCHAR buffer[MAX_PATH+16], *p, *appname;
     DWORD i, dispos, dpi_scaling;
     WCHAR layout[KL_NAMELENGTH];
     pthread_mutexattr_t attr;
-    HKEY hkey;
+    HKEY hkey, appkey = 0;
+    DWORD len;
 
     static const WCHAR software_wineW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e'};
     static const WCHAR temporary_system_parametersW[] =
@@ -4114,6 +4148,7 @@ void sysparams_init(void)
     static const WCHAR oneW[] = {'1',0};
     static const WCHAR kl_preloadW[] =
         {'K','e','y','b','o','a','r','d',' ','L','a','y','o','u','t','\\','P','r','e','l','o','a','d'};
+    static const WCHAR x11driverW[] = {'\\','X','1','1',' ','D','r','i','v','e','r',0};
 
     pthread_mutexattr_init( &attr );
     pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
@@ -4173,6 +4208,42 @@ void sysparams_init(void)
         for (i = 0; i < ARRAY_SIZE( default_entries ); i++)
             default_entries[i]->hdr.init( default_entries[i] );
     }
+
+    /* @@ Wine registry key: HKCU\Software\Wine\X11 Driver */
+    hkey = reg_open_hkcu_key( "Software\\Wine\\X11 Driver" );
+
+    /* open the app-specific key */
+
+    appname = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
+    if ((p = wcsrchr( appname, '/' ))) appname = p + 1;
+    if ((p = wcsrchr( appname, '\\' ))) appname = p + 1;
+    len = lstrlenW( appname );
+
+    if (len && len < MAX_PATH)
+    {
+        HKEY tmpkey;
+        int i;
+
+        for (i = 0; appname[i]; i++) buffer[i] = RtlDowncaseUnicodeChar( appname[i] );
+        buffer[i] = 0;
+        appname = buffer;
+        memcpy( appname + i, x11driverW, sizeof(x11driverW) );
+
+        /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\X11 Driver */
+        if ((tmpkey = reg_open_hkcu_key( "Software\\Wine\\AppDefaults" )))
+        {
+            appkey = reg_open_key( tmpkey, appname, lstrlenW( appname ) * sizeof(WCHAR) );
+            NtClose( tmpkey );
+        }
+    }
+
+#define IS_OPTION_TRUE(ch) \
+    ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
+
+    if (!get_config_key( hkey, appkey, "GrabPointer", buffer, sizeof(buffer) ))
+        grab_pointer = IS_OPTION_TRUE( buffer[0] );
+
+#undef IS_OPTION_TRUE
 }
 
 static BOOL update_desktop_wallpaper(void)

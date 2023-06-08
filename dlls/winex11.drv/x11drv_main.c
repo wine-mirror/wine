@@ -74,7 +74,6 @@ BOOL use_take_focus = TRUE;
 BOOL use_primary_selection = FALSE;
 BOOL use_system_cursors = TRUE;
 BOOL show_systray = TRUE;
-BOOL grab_pointer = TRUE;
 BOOL grab_fullscreen = FALSE;
 BOOL managed_mode = TRUE;
 BOOL decorated_mode = TRUE;
@@ -497,9 +496,6 @@ static void setup_options(void)
 
     if (!get_config_key( hkey, appkey, "ShowSystray", buffer, sizeof(buffer) ))
         show_systray = IS_OPTION_TRUE( buffer[0] );
-
-    if (!get_config_key( hkey, appkey, "GrabPointer", buffer, sizeof(buffer) ))
-        grab_pointer = IS_OPTION_TRUE( buffer[0] );
 
     if (!get_config_key( hkey, appkey, "GrabFullscreen", buffer, sizeof(buffer) ))
         grab_fullscreen = IS_OPTION_TRUE( buffer[0] );
