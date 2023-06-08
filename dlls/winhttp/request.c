@@ -218,7 +218,6 @@ static DWORD queue_task( struct queue *queue, TASK_CALLBACK task, struct task_he
     if (!callback_running)
     {
         release_object( obj );
-        free( task_hdr );
         ERR( "Submiting threadpool callback failed, err %lu.\n", GetLastError() );
         return ERROR_OUTOFMEMORY;
     }
