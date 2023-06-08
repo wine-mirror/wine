@@ -354,11 +354,9 @@ static void mmap_remove_reserved_area( void *addr, SIZE_T size )
 static int mmap_is_in_reserved_area( void *addr, SIZE_T size )
 {
     struct reserved_area *area;
-    struct list *ptr;
 
-    LIST_FOR_EACH( ptr, &reserved_areas )
+    LIST_FOR_EACH_ENTRY( area, &reserved_areas, struct reserved_area, entry )
     {
-        area = LIST_ENTRY( ptr, struct reserved_area, entry );
         if (area->base > addr) break;
         if ((char *)area->base + area->size <= (char *)addr) continue;
         /* area must contain block completely */
@@ -366,31 +364,6 @@ static int mmap_is_in_reserved_area( void *addr, SIZE_T size )
         return 1;
     }
     return 0;
-}
-
-static int mmap_enum_reserved_areas( int (*enum_func)(void *base, SIZE_T size, void *arg),
-                                     void *arg, int top_down )
-{
-    int ret = 0;
-    struct list *ptr;
-
-    if (top_down)
-    {
-        for (ptr = reserved_areas.prev; ptr != &reserved_areas; ptr = ptr->prev)
-        {
-            struct reserved_area *area = LIST_ENTRY( ptr, struct reserved_area, entry );
-            if ((ret = enum_func( area->base, area->size, arg ))) break;
-        }
-    }
-    else
-    {
-        for (ptr = reserved_areas.next; ptr != &reserved_areas; ptr = ptr->next)
-        {
-            struct reserved_area *area = LIST_ENTRY( ptr, struct reserved_area, entry );
-            if ((ret = enum_func( area->base, area->size, arg ))) break;
-        }
-    }
-    return ret;
 }
 
 
@@ -4068,21 +4041,30 @@ struct free_range
     char *limit;
 };
 
-/* free reserved areas above the limit; callback for mmap_enum_reserved_areas */
-static int free_reserved_memory( void *base, SIZE_T size, void *arg )
+/* free reserved areas within a given range */
+static void free_reserved_memory( char *base, char *limit )
 {
-    struct free_range *range = arg;
+    struct reserved_area *area;
 
-    if ((char *)base >= range->limit) return 0;
-    if ((char *)base + size <= range->base) return 0;
-    if ((char *)base < range->base)
+    for (;;)
     {
-        size -= range->base - (char *)base;
-        base = range->base;
+        int removed = 0;
+
+        LIST_FOR_EACH_ENTRY( area, &reserved_areas, struct reserved_area, entry )
+        {
+            char *area_base = area->base;
+            char *area_end = area_base + area->size;
+
+            if (area_end <= base) continue;
+            if (area_base >= limit) return;
+            if (area_base < base) area_base = base;
+            if (area_end > limit) area_end = limit;
+            remove_reserved_area( area_base, (char *)area_end - (char *)area_base );
+            removed = 1;
+            break;
+        }
+        if (!removed) return;
     }
-    if ((char *)base + size > range->limit) size = range->limit - (char *)base;
-    remove_reserved_area( base, size );
-    return 1;  /* stop enumeration since the list has changed */
 }
 
 /***********************************************************************
@@ -4092,27 +4074,24 @@ static int free_reserved_memory( void *base, SIZE_T size, void *arg )
  */
 static void virtual_release_address_space(void)
 {
-    struct free_range range;
+    char *base = (char *)0x82000000;
+    char *limit = get_wow_user_space_limit();
 
-    range.base  = (char *)0x82000000;
-    range.limit = get_wow_user_space_limit();
+    if (limit > (char *)0xfffff000) return;  /* 64-bit limit, nothing to do */
 
-    if (range.limit > (char *)0xfffff000) return;  /* 64-bit limit, nothing to do */
-
-    if (range.limit > range.base)
+    if (limit > base)
     {
-        while (mmap_enum_reserved_areas( free_reserved_memory, &range, 1 )) /* nothing */;
+        free_reserved_memory( base, limit );
 #ifdef __APPLE__
         /* On macOS, we still want to free some of low memory, for OpenGL resources */
-        range.base = (char *)0x40000000;
+        base = (char *)0x40000000;
 #else
         return;
 #endif
     }
-    else range.base = (char *)0x20000000;
+    else base = (char *)0x20000000;
 
-    range.limit = (char *)0x7f000000;
-    while (mmap_enum_reserved_areas( free_reserved_memory, &range, 0 )) /* nothing */;
+    free_reserved_memory( base, (char *)0x7f000000 );
 }
 
 
