@@ -1591,7 +1591,6 @@ static HRESULT media_source_create(IMFByteStream *bytestream, IMFMediaSource **o
     if (!(object->descriptors = calloc(stream_count, sizeof(*object->descriptors)))
             || !(object->streams = calloc(stream_count, sizeof(*object->streams))))
     {
-        free(object->descriptors);
         hr = E_OUTOFMEMORY;
         goto fail;
     }
