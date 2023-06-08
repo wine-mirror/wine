@@ -2590,6 +2590,11 @@ static BOOL block_context_for(Context *ctx, unsigned int timeout)
     TP_TIMER *tp_timer;
     FILETIME ft;
 
+    if(timeout == COOPERATIVE_TIMEOUT_INFINITE) {
+        call_Context_Block(ctx);
+        return FALSE;
+    }
+
     tp_timer = CreateThreadpoolTimer(timeout_unlock, &tu, NULL);
     if(!tp_timer) {
         FIXME("throw exception?\n");
