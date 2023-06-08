@@ -853,90 +853,15 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,
     return params.result;
 }
 
-static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient3 *iface,
+extern HRESULT WINAPI client_IsFormatSupported(IAudioClient3 *iface,
         AUDCLNT_SHAREMODE mode, const WAVEFORMATEX *fmt,
-        WAVEFORMATEX **out)
-{
-    ACImpl *This = impl_from_IAudioClient3(iface);
-    struct is_format_supported_params params;
+        WAVEFORMATEX **out);
 
-    TRACE("(%p)->(%x, %p, %p)\n", This, mode, fmt, out);
+extern HRESULT WINAPI client_GetMixFormat(IAudioClient3 *iface,
+        WAVEFORMATEX **pwfx);
 
-    if (fmt)
-        dump_fmt(fmt);
-
-    params.device  = This->device_name;
-    params.flow    = This->dataflow;
-    params.share   = mode;
-    params.fmt_in  = fmt;
-    params.fmt_out = NULL;
-
-    if (out) {
-        *out = NULL;
-        if (mode == AUDCLNT_SHAREMODE_SHARED)
-            params.fmt_out = CoTaskMemAlloc(sizeof(*params.fmt_out));
-    }
-
-    pulse_call(is_format_supported, &params);
-
-    if (params.result == S_FALSE)
-        *out = &params.fmt_out->Format;
-    else
-        CoTaskMemFree(params.fmt_out);
-
-    return params.result;
-}
-
-static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
-        WAVEFORMATEX **pwfx)
-{
-    ACImpl *This = impl_from_IAudioClient3(iface);
-    struct get_mix_format_params params;
-
-    TRACE("(%p)->(%p)\n", This, pwfx);
-
-    if (!pwfx)
-        return E_POINTER;
-    *pwfx = NULL;
-
-    params.device = This->device_name;
-    params.flow = This->dataflow;
-    params.fmt = CoTaskMemAlloc(sizeof(WAVEFORMATEXTENSIBLE));
-    if (!params.fmt)
-        return E_OUTOFMEMORY;
-
-    pulse_call(get_mix_format, &params);
-
-    if (SUCCEEDED(params.result)) {
-        *pwfx = &params.fmt->Format;
-        dump_fmt(*pwfx);
-    } else {
-        CoTaskMemFree(params.fmt);
-    }
-
-    return params.result;
-}
-
-static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient3 *iface,
-        REFERENCE_TIME *defperiod, REFERENCE_TIME *minperiod)
-{
-    struct get_device_period_params params;
-    ACImpl *This = impl_from_IAudioClient3(iface);
-
-    TRACE("(%p)->(%p, %p)\n", This, defperiod, minperiod);
-
-    if (!defperiod && !minperiod)
-        return E_POINTER;
-
-    params.flow = This->dataflow;
-    params.device = This->device_name;
-    params.def_period = defperiod;
-    params.min_period = minperiod;
-
-    pulse_call(get_device_period, &params);
-
-    return params.result;
-}
+extern HRESULT WINAPI client_GetDevicePeriod(IAudioClient3 *iface,
+        REFERENCE_TIME *defperiod, REFERENCE_TIME *minperiod);
 
 extern HRESULT WINAPI client_Start(IAudioClient3 *iface);
 
@@ -980,9 +905,9 @@ static const IAudioClient3Vtbl AudioClient3_Vtbl =
     AudioClient_GetBufferSize,
     AudioClient_GetStreamLatency,
     AudioClient_GetCurrentPadding,
-    AudioClient_IsFormatSupported,
-    AudioClient_GetMixFormat,
-    AudioClient_GetDevicePeriod,
+    client_IsFormatSupported,
+    client_GetMixFormat,
+    client_GetDevicePeriod,
     client_Start,
     client_Stop,
     client_Reset,

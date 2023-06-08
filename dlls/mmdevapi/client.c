@@ -80,6 +80,40 @@ static inline struct audio_client *impl_from_IAudioStreamVolume(IAudioStreamVolu
     return CONTAINING_RECORD(iface, struct audio_client, IAudioStreamVolume_iface);
 }
 
+static void dump_fmt(const WAVEFORMATEX *fmt)
+{
+    TRACE("wFormatTag: 0x%x (", fmt->wFormatTag);
+    switch (fmt->wFormatTag) {
+        case WAVE_FORMAT_PCM:
+            TRACE("WAVE_FORMAT_PCM");
+            break;
+        case WAVE_FORMAT_IEEE_FLOAT:
+            TRACE("WAVE_FORMAT_IEEE_FLOAT");
+            break;
+        case WAVE_FORMAT_EXTENSIBLE:
+            TRACE("WAVE_FORMAT_EXTENSIBLE");
+            break;
+        default:
+            TRACE("Unknown");
+            break;
+    }
+    TRACE(")\n");
+
+    TRACE("nChannels: %u\n", fmt->nChannels);
+    TRACE("nSamplesPerSec: %lu\n", fmt->nSamplesPerSec);
+    TRACE("nAvgBytesPerSec: %lu\n", fmt->nAvgBytesPerSec);
+    TRACE("nBlockAlign: %u\n", fmt->nBlockAlign);
+    TRACE("wBitsPerSample: %u\n", fmt->wBitsPerSample);
+    TRACE("cbSize: %u\n", fmt->cbSize);
+
+    if (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
+        WAVEFORMATEXTENSIBLE *fmtex = (void *)fmt;
+        TRACE("dwChannelMask: %08lx\n", fmtex->dwChannelMask);
+        TRACE("Samples: %04x\n", fmtex->Samples.wReserved);
+        TRACE("SubFormat: %s\n", wine_dbgstr_guid(&fmtex->SubFormat));
+    }
+}
+
 static DWORD CALLBACK timer_loop_func(void *user)
 {
     struct timer_loop_params params;
@@ -209,6 +243,89 @@ const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl =
     capture_ReleaseBuffer,
     capture_GetNextPacketSize
 };
+
+HRESULT WINAPI client_IsFormatSupported(IAudioClient3 *iface, AUDCLNT_SHAREMODE mode,
+                                        const WAVEFORMATEX *fmt, WAVEFORMATEX **out)
+{
+    struct audio_client *This = impl_from_IAudioClient3(iface);
+    struct is_format_supported_params params;
+
+    TRACE("(%p)->(%x, %p, %p)\n", This, mode, fmt, out);
+
+    if (fmt)
+        dump_fmt(fmt);
+
+    params.device  = This->device_name;
+    params.flow    = This->dataflow;
+    params.share   = mode;
+    params.fmt_in  = fmt;
+    params.fmt_out = NULL;
+
+    if (out) {
+        *out = NULL;
+        if (mode == AUDCLNT_SHAREMODE_SHARED)
+            params.fmt_out = CoTaskMemAlloc(sizeof(*params.fmt_out));
+    }
+
+    WINE_UNIX_CALL(is_format_supported, &params);
+
+    if (params.result == S_FALSE)
+        *out = &params.fmt_out->Format;
+    else
+        CoTaskMemFree(params.fmt_out);
+
+    return params.result;
+}
+
+HRESULT WINAPI client_GetMixFormat(IAudioClient3 *iface, WAVEFORMATEX **pwfx)
+{
+    struct audio_client *This = impl_from_IAudioClient3(iface);
+    struct get_mix_format_params params;
+
+    TRACE("(%p)->(%p)\n", This, pwfx);
+
+    if (!pwfx)
+        return E_POINTER;
+
+    *pwfx = NULL;
+
+    params.device = This->device_name;
+    params.flow   = This->dataflow;
+    params.fmt    = CoTaskMemAlloc(sizeof(WAVEFORMATEXTENSIBLE));
+    if (!params.fmt)
+        return E_OUTOFMEMORY;
+
+    WINE_UNIX_CALL(get_mix_format, &params);
+
+    if (SUCCEEDED(params.result)) {
+        *pwfx = &params.fmt->Format;
+        dump_fmt(*pwfx);
+    } else
+        CoTaskMemFree(params.fmt);
+
+    return params.result;
+}
+
+HRESULT WINAPI client_GetDevicePeriod(IAudioClient3 *iface, REFERENCE_TIME *defperiod,
+                                      REFERENCE_TIME *minperiod)
+{
+    struct audio_client *This = impl_from_IAudioClient3(iface);
+    struct get_device_period_params params;
+
+    TRACE("(%p)->(%p, %p)\n", This, defperiod, minperiod);
+
+    if (!defperiod && !minperiod)
+        return E_POINTER;
+
+    params.device     = This->device_name;
+    params.flow       = This->dataflow;
+    params.def_period = defperiod;
+    params.min_period = minperiod;
+
+    WINE_UNIX_CALL(get_device_period, &params);
+
+    return params.result;
+}
 
 HRESULT WINAPI client_Start(IAudioClient3 *iface)
 {
