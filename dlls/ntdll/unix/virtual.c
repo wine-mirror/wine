@@ -4589,50 +4589,6 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
 }
 
 
-/* retrieve state for a free memory area; callback for mmap_enum_reserved_areas */
-static int get_free_mem_state_callback( void *start, SIZE_T size, void *arg )
-{
-    MEMORY_BASIC_INFORMATION *info = arg;
-    void *end = (char *)start + size;
-
-    if ((char *)info->BaseAddress + info->RegionSize <= (char *)start) return 0;
-
-    if (info->BaseAddress >= end)
-    {
-        if (info->AllocationBase < end) info->AllocationBase = end;
-        return 0;
-    }
-
-    if (info->BaseAddress >= start || start <= address_space_start)
-    {
-        /* it's a real free area */
-        info->State             = MEM_FREE;
-        info->Protect           = PAGE_NOACCESS;
-        info->AllocationBase    = 0;
-        info->AllocationProtect = 0;
-        info->Type              = 0;
-        if ((char *)info->BaseAddress + info->RegionSize > (char *)end)
-            info->RegionSize = (char *)end - (char *)info->BaseAddress;
-    }
-    else /* outside of the reserved area, pretend it's allocated */
-    {
-        info->RegionSize        = (char *)start - (char *)info->BaseAddress;
-#ifdef __i386__
-        info->State             = MEM_RESERVE;
-        info->Protect           = PAGE_NOACCESS;
-        info->AllocationProtect = PAGE_NOACCESS;
-        info->Type              = MEM_PRIVATE;
-#else
-        info->State             = MEM_FREE;
-        info->Protect           = PAGE_NOACCESS;
-        info->AllocationBase    = 0;
-        info->AllocationProtect = 0;
-        info->Type              = 0;
-#endif
-    }
-    return 1;
-}
-
 static unsigned int fill_basic_memory_info( const void *addr, MEMORY_BASIC_INFORMATION *info )
 {
     char *base, *alloc_base = 0, *alloc_end = working_set_limit;
@@ -4671,38 +4627,55 @@ static unsigned int fill_basic_memory_info( const void *addr, MEMORY_BASIC_INFOR
 
     /* Fill the info structure */
 
-    info->AllocationBase = alloc_base;
-    info->BaseAddress    = base;
-    info->RegionSize     = alloc_end - base;
+    info->BaseAddress = base;
+    info->RegionSize  = alloc_end - base;
 
     if (!ptr)
     {
-        if (!mmap_enum_reserved_areas( get_free_mem_state_callback, info, 0 ))
-        {
-            /* not in a reserved area at all, pretend it's allocated */
+        info->State             = MEM_FREE;
+        info->Protect           = PAGE_NOACCESS;
+        info->AllocationBase    = 0;
+        info->AllocationProtect = 0;
+        info->Type              = 0;
+
 #ifdef __i386__
-            if (base >= (char *)address_space_start)
+        /* on i386, pretend that space outside of a reserved area is allocated,
+         * so that the app doesn't believe it's fully available */
+        {
+            struct reserved_area *area;
+
+            LIST_FOR_EACH_ENTRY( area, &reserved_areas, struct reserved_area, entry )
             {
+                char *area_start = area->base;
+                char *area_end = (char *)area_start + area->size;
+
+                if (area_end <= base)
+                {
+                    if (alloc_base < area_end) alloc_base = area_end;
+                    continue;
+                }
+                if (area_start <= base || area_start <= (char *)address_space_start)
+                {
+                    if (area_end < alloc_end) info->RegionSize = area_end - base;
+                    break;
+                }
+                /* pretend it's allocated */
+                if (area_start < alloc_end) info->RegionSize = area_start - base;
                 info->State             = MEM_RESERVE;
                 info->Protect           = PAGE_NOACCESS;
+                info->AllocationBase    = alloc_base;
                 info->AllocationProtect = PAGE_NOACCESS;
                 info->Type              = MEM_PRIVATE;
-            }
-            else
-#endif
-            {
-                info->State             = MEM_FREE;
-                info->Protect           = PAGE_NOACCESS;
-                info->AllocationBase    = 0;
-                info->AllocationProtect = 0;
-                info->Type              = 0;
+                break;
             }
         }
+#endif
     }
     else
     {
         BYTE vprot;
 
+        info->AllocationBase = alloc_base;
         info->RegionSize = get_committed_size( view, base, &vprot, ~VPROT_WRITEWATCH );
         info->State = (vprot & VPROT_COMMITTED) ? MEM_COMMIT : MEM_RESERVE;
         info->Protect = (vprot & VPROT_COMMITTED) ? get_win32_prot( vprot, view->protect ) : 0;
