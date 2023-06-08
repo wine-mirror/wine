@@ -620,71 +620,14 @@ exit:
     return params.result;
 }
 
-static HRESULT WINAPI AudioClient_GetBufferSize(IAudioClient3 *iface,
-        UINT32 *frames)
-{
-    ACImpl *This = impl_from_IAudioClient3(iface);
-    struct get_buffer_size_params params;
+extern HRESULT WINAPI client_GetBufferSize(IAudioClient3 *iface,
+        UINT32 *frames);
 
-    TRACE("(%p)->(%p)\n", This, frames);
+extern HRESULT WINAPI client_GetStreamLatency(IAudioClient3 *iface,
+        REFERENCE_TIME *latency);
 
-    if(!frames)
-        return E_POINTER;
-
-    if(!This->stream)
-        return AUDCLNT_E_NOT_INITIALIZED;
-
-    params.stream = This->stream;
-    params.frames = frames;
-
-    OSS_CALL(get_buffer_size, &params);
-    TRACE("buffer size: %u\n", *frames);
-
-    return params.result;
-}
-
-static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
-        REFERENCE_TIME *latency)
-{
-    ACImpl *This = impl_from_IAudioClient3(iface);
-    struct get_latency_params params;
-
-    TRACE("(%p)->(%p)\n", This, latency);
-
-    if(!latency)
-        return E_POINTER;
-
-    if(!This->stream)
-        return AUDCLNT_E_NOT_INITIALIZED;
-
-    params.stream = This->stream;
-    params.latency = latency;
-    OSS_CALL(get_latency, &params);
-
-    return params.result;
-}
-
-static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,
-        UINT32 *numpad)
-{
-    ACImpl *This = impl_from_IAudioClient3(iface);
-    struct get_current_padding_params params;
-
-    TRACE("(%p)->(%p)\n", This, numpad);
-
-    if(!numpad)
-        return E_POINTER;
-
-    if(!This->stream)
-        return AUDCLNT_E_NOT_INITIALIZED;
-
-    params.stream = This->stream;
-    params.padding = numpad;
-    OSS_CALL(get_current_padding, &params);
-    TRACE("padding: %u\n", *numpad);
-
-    return params.result;
-}
+extern HRESULT WINAPI client_GetCurrentPadding(IAudioClient3 *iface,
+        UINT32 *numpad);
 
 extern HRESULT WINAPI client_IsFormatSupported(IAudioClient3 *iface,
         AUDCLNT_SHAREMODE mode, const WAVEFORMATEX *fmt,
@@ -735,9 +678,9 @@ static const IAudioClient3Vtbl AudioClient3_Vtbl =
     AudioClient_AddRef,
     AudioClient_Release,
     AudioClient_Initialize,
-    AudioClient_GetBufferSize,
-    AudioClient_GetStreamLatency,
-    AudioClient_GetCurrentPadding,
+    client_GetBufferSize,
+    client_GetStreamLatency,
+    client_GetCurrentPadding,
     client_IsFormatSupported,
     client_GetMixFormat,
     client_GetDevicePeriod,
