@@ -2667,7 +2667,7 @@ static const char *get_resource_type( unsigned int id )
         "ANICURSOR",
         "ANIICON",
         "HTML",
-        "RT_MANIFEST"
+        "MANIFEST"
     };
 
     if ((size_t)id < ARRAY_SIZE(types)) return types[id];
@@ -2944,6 +2944,20 @@ static void dump_version_data( const void *ptr, unsigned int size, const char *p
     dump_version_children( info, prefix, 0 );
 }
 
+/* dump data for a HTML/MANIFEST resource */
+static void dump_xml_data( const void *ptr, unsigned int size, const char *prefix )
+{
+    const char *p = ptr, *end = p + size;
+
+    while (p < end)
+    {
+        const char *start = p;
+        while (p < end && *p != '\r' && *p != '\n') p++;
+        printf( "%s%.*s\n", prefix, (int)(p - start), start );
+        while (p < end && (*p == '\r' || *p == '\n')) p++;
+    }
+}
+
 static void dump_dir_resource(void)
 {
     const IMAGE_RESOURCE_DIRECTORY *root = get_dir(IMAGE_FILE_RESOURCE_DIRECTORY);
@@ -3008,6 +3022,10 @@ static void dump_dir_resource(void)
                     break;
                 case 16:  /* RT_VERSION */
                     dump_version_data( RVA( data->OffsetToData, data->Size ), data->Size, "  |  " );
+                    break;
+                case 23:  /* RT_HTML */
+                case 24:  /* RT_MANIFEST */
+                    dump_xml_data( RVA( data->OffsetToData, data->Size ), data->Size, "  |  " );
                     break;
                 default:
                     dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "    " );
