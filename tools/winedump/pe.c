@@ -28,6 +28,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "verrsrc.h"
 #include "winedump.h"
 
 #define IMAGE_DLLCHARACTERISTICS_PREFER_NATIVE 0x0010 /* Wine extension */
@@ -2783,7 +2784,7 @@ static void dump_string_data( const WCHAR *ptr, unsigned int size, unsigned int 
 }
 
 /* dump data for a MESSAGETABLE resource */
-static void dump_msgtable_data( const void *ptr, unsigned int size, unsigned int id, const char *prefix )
+static void dump_msgtable_data( const void *ptr, unsigned int size, const char *prefix )
 {
     const MESSAGE_RESOURCE_DATA *data = ptr;
     const MESSAGE_RESOURCE_BLOCK *block = data->Blocks;
@@ -2813,6 +2814,134 @@ static void dump_msgtable_data( const void *ptr, unsigned int size, unsigned int
             entry = (const MESSAGE_RESOURCE_ENTRY *)((const char *)entry + entry->Length);
         }
     }
+}
+
+struct version_info
+{
+    WORD  len;
+    WORD  val_len;
+    WORD  type;
+    WCHAR key[1];
+};
+#define GET_VALUE(info) ((void *)((char *)info + ((offsetof(struct version_info, key[strlenW(info->key) + 1]) + 3) & ~3)))
+#define GET_CHILD(info) ((void *)((char *)GET_VALUE(info) + ((info->val_len * (info->type ? 2 : 1) + 3) & ~3)))
+#define GET_NEXT(info)  ((void *)((char *)info + ((info->len + 3) & ~3)))
+
+static void dump_version_children( const struct version_info *info, const char *prefix, int indent )
+{
+    const struct version_info *child = GET_CHILD( info );
+
+    while ((char *)child < (char *)info + info->len)
+    {
+        printf( "%s%*s", prefix, indent * 2, "" );
+        if (child->val_len)
+        {
+            printf( "VALUE \"" );
+            dump_strW( child->key, strlenW(child->key) );
+            if (child->type)
+            {
+                printf( "\", \"" );
+                dump_strW( GET_VALUE(child), child->val_len );
+                printf( "\"\n" );
+            }
+            else
+            {
+                const WORD *data = GET_VALUE(child);
+                unsigned int i;
+                printf( "\"," );
+                for (i = 0; i < child->val_len / sizeof(WORD); i++) printf( " %#x", data[i] );
+                printf( "\n" );
+            }
+        }
+        else
+        {
+            printf( "BLOCK \"" );
+            dump_strW( child->key, strlenW(child->key) );
+            printf( "\"\n" );
+        }
+        dump_version_children( child, prefix, indent + 1 );
+        child = GET_NEXT( child );
+    }
+}
+
+/* dump data for a VERSION resource */
+static void dump_version_data( const void *ptr, unsigned int size, const char *prefix )
+{
+    const struct version_info *info = ptr;
+    const VS_FIXEDFILEINFO *fileinfo = GET_VALUE( info );
+
+    printf( "%sSIGNATURE      %08x\n", prefix, (UINT)fileinfo->dwSignature );
+    printf( "%sVERSION        %u.%u\n", prefix,
+            HIWORD(fileinfo->dwStrucVersion), LOWORD(fileinfo->dwStrucVersion) );
+    printf( "%sFILEVERSION    %u.%u.%u.%u\n", prefix,
+            HIWORD(fileinfo->dwFileVersionMS), LOWORD(fileinfo->dwFileVersionMS),
+            HIWORD(fileinfo->dwFileVersionLS), LOWORD(fileinfo->dwFileVersionLS) );
+    printf( "%sPRODUCTVERSION %u.%u.%u.%u\n", prefix,
+            HIWORD(fileinfo->dwProductVersionMS), LOWORD(fileinfo->dwProductVersionMS),
+            HIWORD(fileinfo->dwProductVersionLS), LOWORD(fileinfo->dwProductVersionLS) );
+    printf( "%sFILEFLAGSMASK  %08x\n", prefix, (UINT)fileinfo->dwFileFlagsMask );
+    printf( "%sFILEFLAGS      %08x\n", prefix, (UINT)fileinfo->dwFileFlags );
+
+    switch (fileinfo->dwFileOS)
+    {
+#define CASE(x) case x: printf( "%sFILEOS         %s\n", prefix, #x ); break
+        CASE(VOS_UNKNOWN);
+        CASE(VOS_DOS_WINDOWS16);
+        CASE(VOS_DOS_WINDOWS32);
+        CASE(VOS_OS216_PM16);
+        CASE(VOS_OS232_PM32);
+        CASE(VOS_NT_WINDOWS32);
+#undef CASE
+    default:
+        printf( "%sFILEOS         %u.%u\n", prefix,
+                (WORD)(fileinfo->dwFileOS >> 16), (WORD)fileinfo->dwFileOS );
+        break;
+    }
+
+    switch (fileinfo->dwFileType)
+    {
+#define CASE(x) case x: printf( "%sFILETYPE       %s\n", prefix, #x ); break
+        CASE(VFT_UNKNOWN);
+        CASE(VFT_APP);
+        CASE(VFT_DLL);
+        CASE(VFT_DRV);
+        CASE(VFT_FONT);
+        CASE(VFT_VXD);
+        CASE(VFT_STATIC_LIB);
+#undef CASE
+    default:
+        printf( "%sFILETYPE       %08x\n", prefix, (UINT)fileinfo->dwFileType );
+        break;
+    }
+
+    switch (((ULONGLONG)fileinfo->dwFileType << 32) + fileinfo->dwFileSubtype)
+    {
+#define CASE(t,x) case (((ULONGLONG)t << 32) + x): printf( "%sFILESUBTYPE    %s\n", prefix, #x ); break
+        CASE(VFT_DRV, VFT2_UNKNOWN);
+        CASE(VFT_DRV, VFT2_DRV_PRINTER);
+        CASE(VFT_DRV, VFT2_DRV_KEYBOARD);
+        CASE(VFT_DRV, VFT2_DRV_LANGUAGE);
+        CASE(VFT_DRV, VFT2_DRV_DISPLAY);
+        CASE(VFT_DRV, VFT2_DRV_MOUSE);
+        CASE(VFT_DRV, VFT2_DRV_NETWORK);
+        CASE(VFT_DRV, VFT2_DRV_SYSTEM);
+        CASE(VFT_DRV, VFT2_DRV_INSTALLABLE);
+        CASE(VFT_DRV, VFT2_DRV_SOUND);
+        CASE(VFT_DRV, VFT2_DRV_COMM);
+        CASE(VFT_DRV, VFT2_DRV_INPUTMETHOD);
+        CASE(VFT_DRV, VFT2_DRV_VERSIONED_PRINTER);
+        CASE(VFT_FONT, VFT2_FONT_RASTER);
+        CASE(VFT_FONT, VFT2_FONT_VECTOR);
+        CASE(VFT_FONT, VFT2_FONT_TRUETYPE);
+#undef CASE
+    default:
+        printf( "%sFILESUBTYPE    %08x\n", prefix, (UINT)fileinfo->dwFileSubtype );
+        break;
+    }
+
+    printf( "%sFILEDATE       %08x.%08x\n", prefix,
+            (UINT)fileinfo->dwFileDateMS, (UINT)fileinfo->dwFileDateLS );
+    dump_version_children( info, prefix, 0 );
 }
 
 static void dump_dir_resource(void)
@@ -2871,11 +3000,14 @@ static void dump_dir_resource(void)
                 }
                 else switch(e1->Id)
                 {
-                case 6:
+                case 6:  /* RT_STRING */
                     dump_string_data( RVA( data->OffsetToData, data->Size ), data->Size, e2->Id, "    " );
                     break;
-                case 11:
-                    dump_msgtable_data( RVA( data->OffsetToData, data->Size ), data->Size, e2->Id, "    " );
+                case 11:  /* RT_MESSAGETABLE */
+                    dump_msgtable_data( RVA( data->OffsetToData, data->Size ), data->Size, "    " );
+                    break;
+                case 16:  /* RT_VERSION */
+                    dump_version_data( RVA( data->OffsetToData, data->Size ), data->Size, "  |  " );
                     break;
                 default:
                     dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "    " );
