@@ -206,7 +206,7 @@ static BOOL convert_afm_to_ntf(void)
             off = size;
 
             metrics_size = sizeof(IFIMETRICS) +
-                (wcslen(afmle->afm->FullName) + 1) * sizeof(WCHAR);
+                (wcslen(afmle->afm->FamilyName) + 1) * sizeof(WCHAR);
             list = (void *)(data + header->font_mtx_off + sizeof(*list) * count);
             list->name_off = off + sizeof(*font_mtx);
             list->size = sizeof(*font_mtx) + strlen(afmle->afm->FontName) + 1 +
@@ -237,7 +237,7 @@ static BOOL convert_afm_to_ntf(void)
             strcpy(data + off + font_mtx->glyph_set_name_off, glyph_set_name);
             metrics = (void *)(data + off + font_mtx->metrics_off);
             metrics->cjThis = metrics_size;
-            metrics->dpwszFaceName = sizeof(*metrics);
+            metrics->dpwszFamilyName = sizeof(*metrics);
             if (afmle->afm->IsFixedPitch)
                 metrics->jWinPitchAndFamily |= FIXED_PITCH;
             metrics->usWinWeight = afmle->afm->Weight;
@@ -256,7 +256,7 @@ static BOOL convert_afm_to_ntf(void)
             metrics->rclFontBox.top = afmle->afm->FontBBox.ury;
             metrics->rclFontBox.right = afmle->afm->FontBBox.urx;
             metrics->rclFontBox.bottom = afmle->afm->FontBBox.lly;
-            wcscpy((WCHAR *)((char *)metrics + metrics->dpwszFaceName), afmle->afm->FullName);
+            wcscpy((WCHAR *)((char *)metrics + metrics->dpwszFamilyName), afmle->afm->FamilyName);
             width_range = (void *)(data + off + font_mtx->width_off);
             for (i = 0; i < font_mtx->width_count; i++)
             {

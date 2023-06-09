@@ -1027,7 +1027,7 @@ static struct font_data *find_builtin_font(const PSDRV_DEVMODE *devmode,
         cur = find_font_data(installed_font[i].name);
         if (!cur) continue;
 
-        name = (WCHAR *)((char *)cur->metrics + cur->metrics->dpwszFaceName);
+        name = (WCHAR *)((char *)cur->metrics + cur->metrics->dpwszFamilyName);
         cur_it = !!(cur->metrics->fsSelection & FM_SEL_ITALIC);
         cur_bd = !!(cur->metrics->fsSelection & FM_SEL_BOLD);
 
@@ -1084,7 +1084,7 @@ static BOOL select_builtin_font(PSDRV_PDEVICE *pdev, HFONT hfont, LOGFONTW *plf)
         font_data = find_builtin_font(pdev->devmode, NULL, it, bd);
 
     TRACE("Got family %s font '%s'\n", debugstr_w((WCHAR *)((char *)font_data->metrics +
-                    font_data->metrics->dpwszFaceName)), font_data->name);
+                    font_data->metrics->dpwszFamilyName)), font_data->name);
 
     pdev->builtin = TRUE;
     pdev->font = NULL;
@@ -1218,7 +1218,7 @@ static UINT get_font_metric(const struct font_data *font,
 
     lf->lfPitchAndFamily = font->metrics->jWinPitchAndFamily & FIXED_PITCH ? FIXED_PITCH : VARIABLE_PITCH;
 
-    lstrcpynW(lf->lfFaceName, (WCHAR *)((char *)font->metrics + font->metrics->dpwszFaceName), LF_FACESIZE);
+    lstrcpynW(lf->lfFaceName, (WCHAR *)((char *)font->metrics + font->metrics->dpwszFamilyName), LF_FACESIZE);
     return DEVICE_FONTTYPE;
 }
 
@@ -1253,7 +1253,7 @@ static BOOL enum_fonts(PHYSDEV dev, LPLOGFONTW plf, font_enum_proc proc, LPARAM 
             cur = find_font_data(installed_font[i].name);
             if (!cur) continue;
 
-            name = (WCHAR *)((char *)cur->metrics + cur->metrics->dpwszFaceName);
+            name = (WCHAR *)((char *)cur->metrics + cur->metrics->dpwszFamilyName);
             if (wcsncmp(plf->lfFaceName, name, wcslen(name)))
                 continue;
 
@@ -1272,7 +1272,7 @@ static BOOL enum_fonts(PHYSDEV dev, LPLOGFONTW plf, font_enum_proc proc, LPARAM 
             cur = find_font_data(installed_font[i].name);
             if (!cur) continue;
 
-            name = (WCHAR *)((char *)cur->metrics + cur->metrics->dpwszFaceName);
+            name = (WCHAR *)((char *)cur->metrics + cur->metrics->dpwszFamilyName);
             TRACE("Got '%s'\n", cur->name);
             fm = get_font_metric(cur, &tm, &lf);
             if (!(ret = (*proc)(&lf.elfLogFont, (TEXTMETRICW *)&tm, fm, lp)))
