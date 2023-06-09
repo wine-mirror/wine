@@ -172,43 +172,54 @@ static struct lconv cloc_lconv =
 /* Friendly country strings & language names abbreviations. */
 static const char * const _country_synonyms[] =
 {
-    "american", "enu",
-    "american english", "enu",
-    "american-english", "enu",
-    "english-american", "enu",
-    "english-us", "enu",
-    "english-usa", "enu",
-    "us", "enu",
-    "usa", "enu",
-    "australian", "ena",
-    "english-aus", "ena",
-    "belgian", "nlb",
-    "french-belgian", "frb",
-    "canadian", "enc",
-    "english-can", "enc",
-    "french-canadian", "frc",
-    "chinese", "chs",
-    "chinese-simplified", "chs",
-    "chinese-traditional", "cht",
-    "dutch-belgian", "nlb",
-    "english-nz", "enz",
-    "uk", "eng",
-    "english-uk", "eng",
-    "french-swiss", "frs",
-    "swiss", "des",
-    "german-swiss", "des",
-    "italian-swiss", "its",
-    "german-austrian", "dea",
-    "portuguese", "ptb",
-    "portuguese-brazil", "ptb",
-    "spanish-mexican", "esm",
-    "norwegian-bokmal", "nor",
-    "norwegian-nynorsk", "non",
-    "spanish-modern", "esn"
+    "american", "en",
+    "american english", "en-US",
+    "american-english", "en-US",
+    "english-american", "en-US",
+    "english-us", "en-US",
+    "english-usa", "en-US",
+    "us", "en-US",
+    "usa", "en-US",
+    "australian", "en-AU",
+    "english-aus", "en-AU",
+    "belgian", "nl-BE",
+    "french-belgian", "fr-BE",
+    "canadian", "en-CA",
+    "english-can", "en-CA",
+    "french-canadian", "fr-CA",
+#if _MSVCR_VER >= 110
+    "chinese", "zh",
+    "chinese-simplified", "zh",
+    "chinese-traditional", "zh-HK",
+    "chs", "zh",
+    "cht", "zh-HK",
+#else
+    "chinese", "zh-CN",
+    "chinese-simplified", "zh-CN",
+    "chinese-traditional", "zh-TW",
+    "chs", "zh-CN",
+    "cht", "zh-TW",
+#endif
+    "dutch-belgian", "nl-BE",
+    "english-nz", "en-NZ",
+    "uk", "en-GB",
+    "english-uk", "en-GB",
+    "french-swiss", "fr-CH",
+    "swiss", "de-CH",
+    "german-swiss", "de-CH",
+    "italian-swiss", "it-CH",
+    "german-austrian", "de-AT",
+    "portuguese", "pt-BR",
+    "portuguese-brazil", "pt-BR",
+    "spanish-mexican", "es-MX",
+    "norwegian-bokmal", "nb",
+    "norwegian-nynorsk", "nn-NO",
+    "spanish-modern", "es-ES"
 };
 
+
 /* INTERNAL: Map a synonym to an ISO code */
-static void remap_synonym(char *name)
+static BOOL remap_synonym(char *name)
 {
   unsigned int i;
   for (i = 0; i < ARRAY_SIZE(_country_synonyms); i += 2)
@@ -217,9 +228,11 @@ static void remap_synonym(char *name)
     {
       TRACE(":Mapping synonym %s to %s\n",name,_country_synonyms[i+1]);
       strcpy(name, _country_synonyms[i+1]);
-      return;
+      return TRUE;
     }
   }
+
+  return FALSE;
 }
 
 /* Note: Flags are weighted in order of matching importance */
@@ -270,7 +283,6 @@ find_best_locale_proc( WCHAR *name, DWORD locale_flags, LPARAM lParam )
 
   if (lcid == LOCALE_CUSTOM_UNSPECIFIED) return CONTINUE_LOOKING;
 
-#if _MSVCR_VER >= 110
   if (res->allow_sname && compare_info(lcid,LOCALE_SNAME,buff,res->search_language, TRUE))
   {
     TRACE(":Found locale: %s->%s\n", res->search_language, buff);
@@ -278,7 +290,6 @@ find_best_locale_proc( WCHAR *name, DWORD locale_flags, LPARAM lParam )
     res->found_lang_id = LANGIDFROMLCID(lcid);
     return STOP_LOOKING;
   }
-#endif
 
   /* Check Language */
   if (compare_info(lcid,LOCALE_SISO639LANGNAME,buff,res->search_language, TRUE) ||
@@ -345,6 +356,7 @@ BOOL locale_to_sname(const char *locale, unsigned short *codepage, BOOL *sname_m
     } else {
         WCHAR wbuf[LOCALE_NAME_MAX_LENGTH];
         locale_search_t search;
+        BOOL remapped = FALSE;
 
         memset(&search, 0, sizeof(locale_search_t));
         lstrcpynA(search.search_language, locale, MAX_ELEM_LEN);
@@ -362,13 +374,17 @@ BOOL locale_to_sname(const char *locale, unsigned short *codepage, BOOL *sname_m
                 search.search_language[cp-locale] = '\0';
         }
 
+        if ((remapped = remap_synonym(search.search_language)))
+        {
+            search.allow_sname = TRUE;
+        }
+
+#if _MSVCR_VER >= 110
         if(!cp && !region)
         {
-            remap_synonym(search.search_language);
-#if _MSVCR_VER >= 110
             search.allow_sname = TRUE;
-#endif
         }
+#endif
 
         MultiByteToWideChar(CP_ACP, 0, search.search_language, -1, wbuf, LOCALE_NAME_MAX_LENGTH);
         if (search.allow_sname && IsValidLocaleName(wbuf))
@@ -392,7 +408,7 @@ BOOL locale_to_sname(const char *locale, unsigned short *codepage, BOOL *sname_m
             LCIDToLocaleName(search.found_lang_id, sname, sname_size, LOCALE_ALLOW_NEUTRAL_NAMES);
         }
 
-        is_sname = (search.match_flags & FOUND_SNAME) != 0;
+        is_sname = !remapped && (search.match_flags & FOUND_SNAME) != 0;
     }
 
     /* Obtain code page */
