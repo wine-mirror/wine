@@ -640,6 +640,11 @@ int main(int argc, char **argv)
             spec->characteristics |= IMAGE_FILE_DLL;
         /* fall through */
     case MODE_EXE:
+        if (get_ptr_size() == 4)
+            spec->characteristics |= IMAGE_FILE_32BIT_MACHINE;
+        else
+            spec->characteristics |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
+
         files = load_resources( files, spec );
         if (spec_file_name && !parse_input_file( spec )) break;
         if (!spec->init_func) spec->init_func = xstrdup( get_default_entry_point( spec ));

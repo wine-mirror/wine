@@ -629,10 +629,6 @@ DLLSPEC *alloc_dll_spec(void)
     spec->subsystem_major    = 4;
     spec->subsystem_minor    = 0;
     spec->syscall_table      = 0;
-    if (get_ptr_size() > 4)
-        spec->characteristics |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
-    else
-        spec->characteristics |= IMAGE_FILE_32BIT_MACHINE;
     spec->dll_characteristics = IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
     return spec;
 }
