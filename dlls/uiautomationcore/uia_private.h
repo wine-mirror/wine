@@ -106,6 +106,10 @@ struct uia_event
     int event_advisers_count;
     SIZE_T event_advisers_arr_size;
 
+    struct list event_list_entry;
+    struct uia_event_map_entry *event_map_entry;
+    LONG event_defunct;
+
     UiaEventCallback *cback;
 };
 

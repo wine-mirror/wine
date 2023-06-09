@@ -19,8 +19,134 @@
 #include "uia_private.h"
 
 #include "wine/debug.h"
+#include "wine/rbtree.h"
+#include "assert.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(uiautomation);
+
+/*
+ * UI Automation event map.
+ */
+static struct uia_event_map
+{
+    struct rb_tree event_map;
+    LONG event_count;
+} uia_event_map;
+
+struct uia_event_map_entry
+{
+    struct rb_entry entry;
+    LONG refs;
+
+    int event_id;
+
+    /*
+     * List of registered events for this event ID. Events are only removed
+     * from the list when the event map entry reference count hits 0 and the
+     * entry is destroyed. This avoids dealing with mid-list removal while
+     * iterating over the list when an event is raised. Rather than remove
+     * an event from the list, we mark an event as being defunct so it is
+     * ignored.
+     */
+    struct list events_list;
+};
+
+static CRITICAL_SECTION event_map_cs;
+static CRITICAL_SECTION_DEBUG event_map_cs_debug =
+{
+    0, 0, &event_map_cs,
+    { &event_map_cs_debug.ProcessLocksList, &event_map_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": event_map_cs") }
+};
+static CRITICAL_SECTION event_map_cs = { &event_map_cs_debug, -1, 0, 0, 0, 0 };
+
+static int uia_event_map_id_compare(const void *key, const struct rb_entry *entry)
+{
+    struct uia_event_map_entry *event_entry = RB_ENTRY_VALUE(entry, struct uia_event_map_entry, entry);
+    int event_id = *((int *)key);
+
+    return (event_entry->event_id > event_id) - (event_entry->event_id < event_id);
+}
+
+static struct uia_event_map_entry *uia_get_event_map_entry_for_event(int event_id)
+{
+    struct uia_event_map_entry *map_entry = NULL;
+    struct rb_entry *rb_entry;
+
+    if (uia_event_map.event_count && (rb_entry = rb_get(&uia_event_map.event_map, &event_id)))
+        map_entry = RB_ENTRY_VALUE(rb_entry, struct uia_event_map_entry, entry);
+
+    return map_entry;
+}
+
+static HRESULT uia_event_map_add_event(struct uia_event *event)
+{
+    struct uia_event_map_entry *event_entry;
+
+    EnterCriticalSection(&event_map_cs);
+
+    if (!(event_entry = uia_get_event_map_entry_for_event(event->event_id)))
+    {
+        if (!(event_entry = heap_alloc_zero(sizeof(*event_entry))))
+        {
+            LeaveCriticalSection(&event_map_cs);
+            return E_OUTOFMEMORY;
+        }
+
+        event_entry->event_id = event->event_id;
+        list_init(&event_entry->events_list);
+
+        if (!uia_event_map.event_count)
+            rb_init(&uia_event_map.event_map, uia_event_map_id_compare);
+        rb_put(&uia_event_map.event_map, &event->event_id, &event_entry->entry);
+        uia_event_map.event_count++;
+    }
+
+    IWineUiaEvent_AddRef(&event->IWineUiaEvent_iface);
+    list_add_head(&event_entry->events_list, &event->event_list_entry);
+    InterlockedIncrement(&event_entry->refs);
+
+    event->event_map_entry = event_entry;
+    LeaveCriticalSection(&event_map_cs);
+
+    return S_OK;
+}
+
+static void uia_event_map_entry_release(struct uia_event_map_entry *entry)
+{
+    ULONG ref = InterlockedDecrement(&entry->refs);
+
+    if (!ref)
+    {
+        struct list *cursor, *cursor2;
+
+        EnterCriticalSection(&event_map_cs);
+
+        /*
+         * Someone grabbed this while we were waiting to enter the CS, abort
+         * destruction.
+         */
+        if (InterlockedCompareExchange(&entry->refs, 0, 0) != 0)
+        {
+            LeaveCriticalSection(&event_map_cs);
+            return;
+        }
+
+        rb_remove(&uia_event_map.event_map, &entry->entry);
+        uia_event_map.event_count--;
+        LeaveCriticalSection(&event_map_cs);
+
+        /* Release all events in the list. */
+        LIST_FOR_EACH_SAFE(cursor, cursor2, &entry->events_list)
+        {
+            struct uia_event *event = LIST_ENTRY(cursor, struct uia_event, event_list_entry);
+
+            IWineUiaEvent_Release(&event->IWineUiaEvent_iface);
+        }
+
+        heap_free(entry);
+    }
+}
 
 /*
  * IWineUiaEvent interface.
@@ -61,6 +187,12 @@ static ULONG WINAPI uia_event_Release(IWineUiaEvent *iface)
     {
         int i;
 
+        /*
+         * If this event has an event_map_entry, it should've been released
+         * before hitting a reference count of 0.
+         */
+        assert(!event->event_map_entry);
+
         SafeArrayDestroy(event->runtime_id);
         for (i = 0; i < event->event_advisers_count; i++)
             IWineUiaEventAdviser_Release(event->event_advisers[i]);
@@ -86,9 +218,16 @@ static HRESULT WINAPI uia_event_advise_events(IWineUiaEvent *iface, BOOL advise_
             return hr;
     }
 
-    /* Once we've advised of removal, no need to keep the advisers around. */
+    /*
+     * Once we've advised of removal, no need to keep the advisers around.
+     * We can also release our reference to the event map.
+     */
     if (!advise_added)
     {
+        InterlockedIncrement(&event->event_defunct);
+        uia_event_map_entry_release(event->event_map_entry);
+        event->event_map_entry = NULL;
+
         for (i = 0; i < event->event_advisers_count; i++)
             IWineUiaEventAdviser_Release(event->event_advisers[i]);
         heap_free(event->event_advisers);
@@ -323,6 +462,10 @@ HRESULT WINAPI UiaAddEvent(HUIANODE huianode, EVENTID event_id, UiaEventCallback
         goto exit;
 
     hr = IWineUiaEvent_advise_events(&event->IWineUiaEvent_iface, TRUE);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = uia_event_map_add_event(event);
     if (FAILED(hr))
         goto exit;
 
