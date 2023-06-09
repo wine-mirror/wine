@@ -1113,8 +1113,16 @@ static void output_pe_file( DLLSPEC *spec, const char signature[32] )
     put_dword( 0 );                                  /* SizeOfUninitializedData */
     put_dword( code_size ? pe.sec[0].rva : 0 );      /* AddressOfEntryPoint */
     put_dword( code_size ? pe.sec[0].rva : 0 );      /* BaseOfCode */
-    if (get_ptr_size() == 4) put_dword( 0 );         /* BaseOfData */
-    put_pword( 0x10000000 );                         /* ImageBase */
+    if (get_ptr_size() == 4)
+    {
+        put_dword( 0 );                              /* BaseOfData */
+        put_dword( 0x10000000 );                     /* ImageBase */
+    }
+    else
+    {
+        put_dword( 0x80000000 );                     /* ImageBase */
+        put_dword( 0x00000001 );
+    }
     put_dword( pe.section_align );                   /* SectionAlignment */
     put_dword( pe.file_align );                      /* FileAlignment */
     put_word( 1 );                                   /* MajorOperatingSystemVersion */
