@@ -2052,9 +2052,8 @@ void *WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE handle, ULONG flags, SIZE
     ULONG heap_flags;
     NTSTATUS status;
 
-    if (!(heap = unsafe_heap_from_handle( handle, flags, &heap_flags )))
-        status = STATUS_INVALID_HANDLE;
-    else if ((block_size = heap_get_block_size( heap, heap_flags, size )) == ~0U)
+    heap = unsafe_heap_from_handle( handle, flags, &heap_flags );
+    if ((block_size = heap_get_block_size( heap, heap_flags, size )) == ~0U)
         status = STATUS_NO_MEMORY;
     else if (block_size >= HEAP_MIN_LARGE_BLOCK_SIZE)
         status = heap_allocate_large( heap, heap_flags, block_size, size, &ptr );
