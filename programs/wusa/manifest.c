@@ -275,6 +275,7 @@ static BOOL read_identity(IXMLDOMElement *root, struct assembly_identity *identi
 
 error:
     clear_identity(identity);
+    memset(identity, 0, sizeof(*identity));
     return FALSE;
 }
 
