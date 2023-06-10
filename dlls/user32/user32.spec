@@ -386,6 +386,7 @@
 @ stdcall GetSubMenu(long long)
 @ stdcall GetSysColor(long)
 @ stdcall GetSysColorBrush(long)
+@ stdcall GetSystemDpiForProcess(long) NtUserGetSystemDpiForProcess
 @ stdcall GetSystemMenu(long long) NtUserGetSystemMenu
 @ stdcall GetSystemMetrics(long)
 @ stdcall GetSystemMetricsForDpi(long long)
