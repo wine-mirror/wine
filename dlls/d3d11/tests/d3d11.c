@@ -16638,8 +16638,8 @@ static void test_clear_buffer_unordered_access_view(void)
     U(uav_desc).Buffer.Flags = 0;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    U(uav_desc).Buffer.FirstElement = 9;
-    U(uav_desc).Buffer.NumElements = 7;
+    U(uav_desc).Buffer.FirstElement = 8;
+    U(uav_desc).Buffer.NumElements = 8;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav2);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
