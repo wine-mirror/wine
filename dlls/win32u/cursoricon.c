@@ -74,6 +74,12 @@ static struct cursoricon_object *get_icon_ptr( HICON handle )
     return obj;
 }
 
+BOOL process_wine_setcursor( HWND hwnd, HWND window, HCURSOR handle )
+{
+    TRACE( "hwnd %p, window %p, hcursor %p\n", hwnd, window, handle );
+    return TRUE;
+}
+
 /***********************************************************************
  *	     NtUserShowCursor    (win32u.@)
  */

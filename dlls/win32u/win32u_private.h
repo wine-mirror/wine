@@ -38,6 +38,7 @@ extern UINT enum_clipboard_formats( UINT format ) DECLSPEC_HIDDEN;
 extern void release_clipboard_owner( HWND hwnd ) DECLSPEC_HIDDEN;
 
 /* cursoricon.c */
+extern BOOL process_wine_setcursor( HWND hwnd, HWND window, HCURSOR handle ) DECLSPEC_HIDDEN;
 extern HICON alloc_cursoricon_handle( BOOL is_icon ) DECLSPEC_HIDDEN;
 extern ULONG_PTR get_icon_param( HICON handle ) DECLSPEC_HIDDEN;
 extern ULONG_PTR set_icon_param( HICON handle, ULONG_PTR param ) DECLSPEC_HIDDEN;
