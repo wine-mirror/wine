@@ -574,12 +574,12 @@ static inline int filter_contains_hw_range( unsigned int first, unsigned int las
 }
 
 /* get the QS_* bit corresponding to a given hardware message */
-static inline int get_hardware_msg_bit( struct message *msg )
+static inline int get_hardware_msg_bit( unsigned int message )
 {
-    if (msg->msg == WM_INPUT_DEVICE_CHANGE || msg->msg == WM_INPUT) return QS_RAWINPUT;
-    if (msg->msg == WM_MOUSEMOVE || msg->msg == WM_NCMOUSEMOVE) return QS_MOUSEMOVE;
-    if (msg->msg >= WM_KEYFIRST && msg->msg <= WM_KEYLAST) return QS_KEY;
-    if (msg->msg == WM_WINE_CLIPCURSOR) return QS_RAWINPUT;
+    if (message == WM_INPUT_DEVICE_CHANGE || message == WM_INPUT) return QS_RAWINPUT;
+    if (message == WM_MOUSEMOVE || message == WM_NCMOUSEMOVE) return QS_MOUSEMOVE;
+    if (message >= WM_KEYFIRST && message <= WM_KEYLAST) return QS_KEY;
+    if (message == WM_WINE_CLIPCURSOR) return QS_RAWINPUT;
     return QS_MOUSEBUTTON;
 }
 
@@ -1494,10 +1494,10 @@ static void release_hardware_message( struct msg_queue *queue, unsigned int hw_i
     if (&msg->entry == &input->msg_list) return;  /* not found */
 
     /* clear the queue bit for that message */
-    clr_bit = get_hardware_msg_bit( msg );
+    clr_bit = get_hardware_msg_bit( msg->msg );
     LIST_FOR_EACH_ENTRY( other, &input->msg_list, struct message, entry )
     {
-        if (other != msg && get_hardware_msg_bit( other ) == clr_bit)
+        if (other != msg && get_hardware_msg_bit( other->msg ) == clr_bit)
         {
             clr_bit = 0;
             break;
@@ -1556,7 +1556,7 @@ static user_handle_t find_hardware_message_window( struct desktop *desktop, stru
 
     *thread = NULL;
     *msg_code = msg->msg;
-    switch (get_hardware_msg_bit( msg ))
+    switch (get_hardware_msg_bit( msg->msg ))
     {
     case QS_RAWINPUT:
         if (!(win = msg->win) && input) win = input->focus;
@@ -1620,7 +1620,7 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
     last_input_time = get_tick_count();
     if (msg->msg != WM_MOUSEMOVE) always_queue = 1;
 
-    switch (get_hardware_msg_bit( msg ))
+    switch (get_hardware_msg_bit( msg->msg ))
     {
     case QS_KEY:
         if (queue_hotkey_message( desktop, msg )) return;
@@ -1669,7 +1669,7 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
     {
         msg->unique_id = 0;  /* will be set once we return it to the app */
         list_add_tail( &input->msg_list, &msg->entry );
-        set_queue_bits( thread->queue, get_hardware_msg_bit(msg) );
+        set_queue_bits( thread->queue, get_hardware_msg_bit( msg->msg ) );
     }
     release_object( thread );
 }
@@ -2195,7 +2195,7 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
             if (win_thread->queue->input == input)
             {
                 /* wake the other thread */
-                set_queue_bits( win_thread->queue, get_hardware_msg_bit(msg) );
+                set_queue_bits( win_thread->queue, get_hardware_msg_bit( msg->msg ) );
                 got_one = 1;
             }
             else
@@ -2214,7 +2214,7 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
          * match the filter we skip it */
         if (got_one || !check_hw_message_filter( win, msg_code, filter_win, first, last ))
         {
-            clear_bits &= ~get_hardware_msg_bit( msg );
+            clear_bits &= ~get_hardware_msg_bit( msg->msg );
             continue;
         }
 
@@ -2238,7 +2238,7 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
 
         data->hw_id = msg->unique_id;
         set_reply_data( msg->data, msg->data_size );
-        if (get_hardware_msg_bit( msg ) == QS_RAWINPUT && (flags & PM_REMOVE))
+        if (get_hardware_msg_bit( msg->msg ) == QS_RAWINPUT && (flags & PM_REMOVE))
             release_hardware_message( current->queue, data->hw_id );
         return 1;
     }
