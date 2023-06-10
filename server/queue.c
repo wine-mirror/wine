@@ -2114,19 +2114,19 @@ static void queue_custom_hardware_message( struct desktop *desktop, user_handle_
 static int check_hw_message_filter( user_handle_t win, unsigned int msg_code,
                                     user_handle_t filter_win, unsigned int first, unsigned int last )
 {
-    if (msg_code >= WM_KEYFIRST && msg_code <= WM_KEYLAST)
+    switch (get_hardware_msg_bit( msg_code ))
     {
+    case QS_KEY:
         /* we can only test the window for a keyboard message since the
          * dest window for a mouse message depends on hittest */
         if (filter_win && win != filter_win && !is_child_window( filter_win, win ))
             return 0;
         /* the message code is final for a keyboard message, we can simply check it */
         return check_msg_filter( msg_code, first, last );
-    }
-    else  /* mouse message */
-    {
-        /* we need to check all possible values that the message can have in the end */
 
+    case QS_MOUSEMOVE:
+    case QS_MOUSEBUTTON:
+        /* we need to check all possible values that the message can have in the end */
         if (check_msg_filter( msg_code, first, last )) return 1;
         if (msg_code == WM_MOUSEWHEEL) return 0;  /* no other possible value for this one */
 
@@ -2141,6 +2141,9 @@ static int check_hw_message_filter( user_handle_t win, unsigned int msg_code,
             if (check_msg_filter( msg_code + (WM_NCLBUTTONDBLCLK - WM_LBUTTONDOWN), first, last )) return 1;
         }
         return 0;
+
+    default:
+        return check_msg_filter( msg_code, first, last );
     }
 }
 
