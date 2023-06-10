@@ -63,28 +63,33 @@ ULONG CDECL ldap_get_optionA( LDAP *ld, int option, void *value )
         LDAPAPIInfoW infoW;
         LDAPAPIInfoA *infoA = value;
 
-        memset( &infoW, 0, sizeof(infoW) );
         infoW.ldapai_info_version = infoA->ldapai_info_version;
 
         ret = ldap_get_optionW( ld, option, &infoW );
-        if (ret == WLDAP32_LDAP_SUCCESS)
+        if (ret != WLDAP32_LDAP_SUCCESS) return ret;
+
+        infoA->ldapai_extensions = strarrayWtoA( infoW.ldapai_extensions );
+        if (infoW.ldapai_extensions && !infoA->ldapai_extensions)
         {
-            infoA->ldapai_api_version = infoW.ldapai_api_version;
-            infoA->ldapai_protocol_version = infoW.ldapai_protocol_version;
-
-            if (infoW.ldapai_extensions && !(infoA->ldapai_extensions = strarrayWtoA( infoW.ldapai_extensions )))
-                return WLDAP32_LDAP_NO_MEMORY;
-            if (infoW.ldapai_vendor_name && !(infoA->ldapai_vendor_name = strWtoA( infoW.ldapai_vendor_name )))
-            {
-                ldap_value_freeW( infoW.ldapai_extensions );
-                return WLDAP32_LDAP_NO_MEMORY;
-            }
-            infoA->ldapai_vendor_version = infoW.ldapai_vendor_version;
-
-            ldap_value_freeW( infoW.ldapai_extensions );
-            ldap_memfreeW( infoW.ldapai_vendor_name );
+            strarrayfreeW( infoW.ldapai_extensions );
+            free( infoW.ldapai_vendor_name );
+            return WLDAP32_LDAP_NO_MEMORY;
         }
-        return ret;
+
+        infoA->ldapai_vendor_name = strWtoA( infoW.ldapai_vendor_name );
+        if (infoW.ldapai_vendor_name && !infoA->ldapai_vendor_name)
+        {
+            strarrayfreeW( infoW.ldapai_extensions );
+            free( infoW.ldapai_vendor_name );
+            strarrayfreeA( infoA->ldapai_extensions );
+            return WLDAP32_LDAP_NO_MEMORY;
+        }
+
+        infoA->ldapai_api_version = infoW.ldapai_api_version;
+        infoA->ldapai_protocol_version = infoW.ldapai_protocol_version;
+        infoA->ldapai_vendor_version = infoW.ldapai_vendor_version;
+
+        return WLDAP32_LDAP_SUCCESS;
     }
 
     case WLDAP32_LDAP_OPT_DEREF:
@@ -184,28 +189,34 @@ ULONG CDECL ldap_get_optionW( LDAP *ld, int option, void *value )
         LDAPAPIInfo infoU;
         LDAPAPIInfoW *infoW = value;
 
-        memset( &infoU, 0, sizeof(infoU) );
         infoU.ldapai_info_version = infoW->ldapai_info_version;
 
-        ret = map_error( ldap_get_option( CTX(ld), option, &infoU ) );
-        if (ret == WLDAP32_LDAP_SUCCESS)
+        ret = ldap_get_option( CTX(ld), option, &infoU );
+        if (ret != LDAP_SUCCESS) return map_error( ret );
+
+        infoW->ldapai_extensions = strarrayUtoW( infoU.ldapai_extensions );
+        if (infoU.ldapai_extensions && !infoW->ldapai_extensions)
         {
-            infoW->ldapai_api_version = infoU.ldapai_api_version;
-            infoW->ldapai_protocol_version = infoU.ldapai_protocol_version;
-
-            if (infoU.ldapai_extensions && !(infoW->ldapai_extensions = strarrayUtoW( infoU.ldapai_extensions )))
-                return WLDAP32_LDAP_NO_MEMORY;
-            if (infoU.ldapai_vendor_name && !(infoW->ldapai_vendor_name = strUtoW( infoU.ldapai_vendor_name )))
-            {
-                ldap_memvfree( (void **)infoU.ldapai_extensions );
-                return WLDAP32_LDAP_NO_MEMORY;
-            }
-            infoW->ldapai_vendor_version = infoU.ldapai_vendor_version;
-
-            ldap_memvfree( (void **)infoU.ldapai_extensions );
-            ldap_memfree( infoU.ldapai_vendor_name );
+            ret = WLDAP32_LDAP_NO_MEMORY;
+            strarrayfreeU( infoU.ldapai_extensions );
+            free( infoU.ldapai_vendor_name );
+            return WLDAP32_LDAP_NO_MEMORY;
         }
-        return ret;
+
+        infoW->ldapai_vendor_name = strUtoW( infoU.ldapai_vendor_name );
+        if (infoU.ldapai_vendor_name && !infoW->ldapai_vendor_name)
+        {
+            strarrayfreeU( infoU.ldapai_extensions );
+            free( infoU.ldapai_vendor_name );
+            strarrayfreeW( infoW->ldapai_extensions );
+            return WLDAP32_LDAP_NO_MEMORY;
+        }
+
+        infoW->ldapai_api_version = infoU.ldapai_api_version;
+        infoW->ldapai_protocol_version = infoU.ldapai_protocol_version;
+        infoW->ldapai_vendor_version = infoU.ldapai_vendor_version;
+
+        return WLDAP32_LDAP_SUCCESS;
     }
 
     case WLDAP32_LDAP_OPT_DEREF:
