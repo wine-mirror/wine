@@ -790,13 +790,12 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDetailsEx (IShellFolder2 * iface,
     return E_NOTIMPL;
 }
 
-/* FIXME: drive size >4GB is rolling over */
 static HRESULT WINAPI ISF_MyComputer_fnGetDetailsOf (IShellFolder2 *iface,
                LPCITEMIDLIST pidl, UINT iColumn, SHELLDETAILS *psd)
 {
     IMyComputerFolderImpl *This = impl_from_IShellFolder2(iface);
-    char szPath[MAX_PATH];
-    ULARGE_INTEGER ulBytes;
+    WCHAR path[MAX_PATH];
+    ULARGE_INTEGER bytes;
     HRESULT hr = S_OK;
 
     TRACE ("(%p)->(%p %i %p)\n", This, pidl, iColumn, psd);
@@ -813,22 +812,27 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDetailsOf (IShellFolder2 *iface,
     switch (iColumn)
     {
         case 2:        /* total size */
-            if (_ILIsDrive (pidl))
-            {
-                _ILSimpleGetText (pidl, szPath, MAX_PATH);
-                GetDiskFreeSpaceExA (szPath, NULL, &ulBytes, NULL);
-                StrFormatByteSizeA (ulBytes.u.LowPart, psd->str.u.cStr, MAX_PATH);
-            }
+            if (!_ILIsDrive (pidl))
+                break;
+
+            _ILSimpleGetTextW(pidl, path, MAX_PATH);
+            GetDiskFreeSpaceExW(path, NULL, &bytes, NULL);
+
+            psd->str.uType = STRRET_WSTR;
+            psd->str.u.pOleStr = CoTaskMemAlloc((MAX_PATH + 1) * sizeof(WCHAR));
+            StrFormatByteSizeW(bytes.QuadPart, psd->str.u.pOleStr, MAX_PATH);
             break;
         case 3:        /* free size */
-            if (_ILIsDrive (pidl))
-            {
-                _ILSimpleGetText (pidl, szPath, MAX_PATH);
-                GetDiskFreeSpaceExA (szPath, &ulBytes, NULL, NULL);
-                StrFormatByteSizeA (ulBytes.u.LowPart, psd->str.u.cStr, MAX_PATH);
-            }
-            break;
+            if (!_ILIsDrive (pidl))
+                break;
 
+            _ILSimpleGetTextW(pidl, path, MAX_PATH);
+            GetDiskFreeSpaceExW(path, &bytes, NULL, NULL);
+
+            psd->str.uType = STRRET_WSTR;
+            psd->str.u.pOleStr = CoTaskMemAlloc((MAX_PATH + 1) * sizeof(WCHAR));
+            StrFormatByteSizeW(bytes.QuadPart, psd->str.u.pOleStr, MAX_PATH);
+            break;
         default:
             return shellfolder_get_file_details( iface, pidl, mycomputer_header, iColumn, psd );
     }
