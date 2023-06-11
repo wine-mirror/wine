@@ -2239,7 +2239,7 @@ static void set_path_target_info( DISPLAYCONFIG_PATH_TARGET_INFO *info, const LU
 static void set_mode_source_info( DISPLAYCONFIG_MODE_INFO *info, const LUID *gpu_luid,
                                   UINT32 source_id, const DEVMODEW *devmode )
 {
-    DISPLAYCONFIG_SOURCE_MODE *mode = &(info->sourceMode);
+    DISPLAYCONFIG_SOURCE_MODE *mode = &info->sourceMode;
 
     info->infoType = DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE;
     info->adapterId = *gpu_luid;
@@ -2268,15 +2268,15 @@ static void set_path_source_info( DISPLAYCONFIG_PATH_SOURCE_INFO *info, const LU
     info->statusFlags = DISPLAYCONFIG_SOURCE_IN_USE;
 }
 
-static BOOL source_mode_exists( const DISPLAYCONFIG_MODE_INFO *modeinfo, UINT32 num_modes,
+static BOOL source_mode_exists( const DISPLAYCONFIG_MODE_INFO *modes, UINT32 modes_count,
                                 UINT32 source_id, UINT32 *found_mode_index )
 {
     UINT32 i;
 
-    for (i = 0; i < num_modes; i++)
+    for (i = 0; i < modes_count; i++)
     {
-        if (modeinfo[i].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE &&
-            modeinfo[i].id == source_id)
+        if (modes[i].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE &&
+            modes[i].id == source_id)
         {
             *found_mode_index = i;
             return TRUE;
@@ -2288,9 +2288,9 @@ static BOOL source_mode_exists( const DISPLAYCONFIG_MODE_INFO *modeinfo, UINT32 
 /***********************************************************************
  *              NtUserQueryDisplayConfig (win32u.@)
  */
-LONG WINAPI NtUserQueryDisplayConfig( UINT32 flags, UINT32 *numpathelements, DISPLAYCONFIG_PATH_INFO *pathinfo,
-                                      UINT32 *numinfoelements, DISPLAYCONFIG_MODE_INFO *modeinfo,
-                                      DISPLAYCONFIG_TOPOLOGY_ID *topologyid )
+LONG WINAPI NtUserQueryDisplayConfig( UINT32 flags, UINT32 *paths_count, DISPLAYCONFIG_PATH_INFO *paths,
+                                      UINT32 *modes_count, DISPLAYCONFIG_MODE_INFO *modes,
+                                      DISPLAYCONFIG_TOPOLOGY_ID *topology_id )
 {
     ULONG adapter_index;
     LONG ret;
@@ -2299,12 +2299,13 @@ LONG WINAPI NtUserQueryDisplayConfig( UINT32 flags, UINT32 *numpathelements, DIS
     DEVMODEW devmode;
     struct monitor *monitor;
 
-    FIXME( "(%08x %p %p %p %p %p): semi-stub\n", flags, numpathelements, pathinfo, numinfoelements, modeinfo, topologyid );
+    FIXME( "flags %#x, paths_count %p, paths %p, modes_count %p, modes %p, topology_id %p semi-stub\n",
+           flags, paths_count, paths, modes_count, modes, topology_id );
 
-    if (!numpathelements || !numinfoelements)
+    if (!paths_count || !modes_count)
         return ERROR_INVALID_PARAMETER;
 
-    if (!*numpathelements || !*numinfoelements)
+    if (!*paths_count || !*modes_count)
         return ERROR_INVALID_PARAMETER;
 
     if (flags != QDC_ALL_PATHS &&
@@ -2312,17 +2313,17 @@ LONG WINAPI NtUserQueryDisplayConfig( UINT32 flags, UINT32 *numpathelements, DIS
         flags != QDC_DATABASE_CURRENT)
         return ERROR_INVALID_PARAMETER;
 
-    if (((flags == QDC_DATABASE_CURRENT) && !topologyid) ||
-        ((flags != QDC_DATABASE_CURRENT) && topologyid))
+    if (((flags == QDC_DATABASE_CURRENT) && !topology_id) ||
+        ((flags != QDC_DATABASE_CURRENT) && topology_id))
         return ERROR_INVALID_PARAMETER;
 
     if (flags != QDC_ONLY_ACTIVE_PATHS)
         FIXME( "only returning active paths\n" );
 
-    if (topologyid)
+    if (topology_id)
     {
         FIXME( "setting toplogyid to DISPLAYCONFIG_TOPOLOGY_INTERNAL\n" );
-        *topologyid = DISPLAYCONFIG_TOPOLOGY_INTERNAL;
+        *topology_id = DISPLAYCONFIG_TOPOLOGY_INTERNAL;
     }
 
     if (!lock_display_devices())
@@ -2346,18 +2347,18 @@ LONG WINAPI NtUserQueryDisplayConfig( UINT32 flags, UINT32 *numpathelements, DIS
             goto done;
         }
 
-        if (path_index == *numpathelements || mode_index == *numinfoelements)
+        if (path_index == *paths_count || mode_index == *modes_count)
         {
             ret = ERROR_INSUFFICIENT_BUFFER;
             goto done;
         }
 
-        pathinfo[path_index].flags = DISPLAYCONFIG_PATH_ACTIVE;
-        set_mode_target_info( &modeinfo[mode_index], gpu_luid, output_id, flags, &devmode );
-        set_path_target_info( &(pathinfo[path_index].targetInfo), gpu_luid, output_id, mode_index, &devmode );
+        paths[path_index].flags = DISPLAYCONFIG_PATH_ACTIVE;
+        set_mode_target_info( &modes[mode_index], gpu_luid, output_id, flags, &devmode );
+        set_path_target_info( &paths[path_index].targetInfo, gpu_luid, output_id, mode_index, &devmode );
 
         mode_index++;
-        if (mode_index == *numinfoelements)
+        if (mode_index == *modes_count)
         {
             ret = ERROR_INSUFFICIENT_BUFFER;
             goto done;
@@ -2366,18 +2367,18 @@ LONG WINAPI NtUserQueryDisplayConfig( UINT32 flags, UINT32 *numpathelements, DIS
         /* Multiple targets can be driven by the same source, ensure a mode
          * hasn't already been added for this source.
          */
-        if (!source_mode_exists( modeinfo, mode_index, adapter_index, &source_mode_index ))
+        if (!source_mode_exists( modes, mode_index, adapter_index, &source_mode_index ))
         {
-            set_mode_source_info( &modeinfo[mode_index], gpu_luid, adapter_index, &devmode );
+            set_mode_source_info( &modes[mode_index], gpu_luid, adapter_index, &devmode );
             source_mode_index = mode_index;
             mode_index++;
         }
-        set_path_source_info( &(pathinfo[path_index].sourceInfo), gpu_luid, adapter_index, source_mode_index );
+        set_path_source_info( &paths[path_index].sourceInfo, gpu_luid, adapter_index, source_mode_index );
         path_index++;
     }
 
-    *numpathelements = path_index;
-    *numinfoelements = mode_index;
+    *paths_count = path_index;
+    *modes_count = mode_index;
     ret = ERROR_SUCCESS;
 
 done:
