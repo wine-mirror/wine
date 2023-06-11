@@ -395,13 +395,13 @@ static void test_strokecap(void)
     stat = GdipCreateCustomLineCap(NULL, path, LineCapFlat, 0.0, &cap);
     ok(stat == Ok, "Failed to create cap, %d\n", stat);
 
-    stat = GdipSetCustomLineCapStrokeCaps((GpCustomLineCap*)cap, LineCapSquare, LineCapFlat);
+    stat = GdipSetCustomLineCapStrokeCaps(cap, LineCapSquare, LineCapFlat);
     ok(stat == Ok, "Unexpected return code, %d\n", stat);
 
-    stat = GdipSetCustomLineCapStrokeCaps((GpCustomLineCap*)cap, LineCapSquareAnchor, LineCapFlat);
+    stat = GdipSetCustomLineCapStrokeCaps(cap, LineCapSquareAnchor, LineCapFlat);
     ok(stat == InvalidParameter, "Unexpected return code, %d\n", stat);
 
-    stat = GdipSetCustomLineCapStrokeCaps((GpCustomLineCap*)cap, LineCapFlat, LineCapSquareAnchor);
+    stat = GdipSetCustomLineCapStrokeCaps(cap, LineCapFlat, LineCapSquareAnchor);
     ok(stat == InvalidParameter, "Unexpected return code, %d\n", stat);
     GdipDeleteCustomLineCap(cap);
     GdipDeletePath(path);
