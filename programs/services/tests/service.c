@@ -26,12 +26,6 @@
 
 #include "wine/test.h"
 
-#if !defined(__WINE_USE_MSVCRT) || defined(__MINGW32__)
-#define __WINE_PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
-#else
-#define __WINE_PRINTF_ATTR(fmt,args)
-#endif
-
 static SERVICE_STATUS_HANDLE (WINAPI *pRegisterServiceCtrlHandlerExA)(LPCSTR,LPHANDLER_FUNCTION_EX,LPVOID);
 
 static HANDLE pipe_handle = INVALID_HANDLE_VALUE;

@@ -177,7 +177,7 @@ static inline const char *debugstr_ioctl( ULONG code )
 
 #ifndef __WINE_WINE_TEST_H
 
-#if !defined( __WINE_USE_MSVCRT ) || defined( __MINGW32__ )
+#ifdef __MINGW32__
 #define __WINE_PRINTF_ATTR( fmt, args ) __attribute__((format( printf, fmt, args )))
 #else
 #define __WINE_PRINTF_ATTR( fmt, args )

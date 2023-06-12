@@ -30,7 +30,7 @@
 
 #include <ddk/wdm.h>
 
-#if !defined(__WINE_USE_MSVCRT) || defined(__MINGW32__)
+#ifdef __MINGW32__
 #define __WINE_PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
 #else
 #define __WINE_PRINTF_ATTR(fmt,args)

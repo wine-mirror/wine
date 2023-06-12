@@ -4823,10 +4823,6 @@ NTSYSAPI void      WINAPI TpWaitForWork(TP_WORK *,BOOL);
 NTSYSAPI NTSTATUS  WINAPI vDbgPrintEx(ULONG,ULONG,LPCSTR,__ms_va_list);
 NTSYSAPI NTSTATUS  WINAPI vDbgPrintExWithPrefix(LPCSTR,ULONG,ULONG,LPCSTR,__ms_va_list);
 
-#ifndef __WINE_USE_MSVCRT
-NTSYSAPI int __cdecl _strnicmp(LPCSTR,LPCSTR,size_t);
-#endif
-
 /* 32-bit or 64-bit only functions */
 
 #ifdef _WIN64
