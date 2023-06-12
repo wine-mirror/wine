@@ -305,24 +305,18 @@ static struct strarray build_tool_name( struct options *opts, enum tool tool )
 
 static struct strarray get_translator(struct options *opts)
 {
-    enum tool tool;
-
     switch(opts->processor)
     {
     case proc_cpp:
-        tool = TOOL_CPP;
-        break;
+        return build_tool_name( opts, TOOL_CPP );
     case proc_cc:
     case proc_as:
-        tool = TOOL_CC;
-        break;
+        return build_tool_name( opts, TOOL_CC );
     case proc_cxx:
-        tool = TOOL_CXX;
-        break;
-    default:
-        assert(0);
+        return build_tool_name( opts, TOOL_CXX );
     }
-    return build_tool_name( opts, tool );
+    assert(0);
+    return empty_strarray;
 }
 
 static int try_link( struct strarray prefix, struct strarray link_tool, const char *cflags )
