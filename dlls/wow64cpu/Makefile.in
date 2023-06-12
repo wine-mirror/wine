@@ -1,6 +1,6 @@
 MODULE    = wow64cpu.dll
 IMPORTS   = wow64 ntdll winecrt0
 
-EXTRADLLFLAGS = -nodefaultlibs -Wl,--image-base,0x6f400000
+EXTRADLLFLAGS = -nodefaultlibs -Wl,--image-base,0x7a400000
 
 C_SRCS = cpu.c
