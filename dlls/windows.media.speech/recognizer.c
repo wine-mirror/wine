@@ -193,7 +193,7 @@ static DWORD CALLBACK session_worker_thread_cb( void *args )
     struct session *impl = impl_from_ISpeechContinuousRecognitionSession(iface);
     BOOLEAN running = TRUE, paused = FALSE;
     UINT32 frame_count, tmp_buf_size;
-    BYTE *audio_buf, *tmp_buf;
+    BYTE *audio_buf, *tmp_buf = NULL;
     DWORD flags, status;
     HANDLE events[2];
     HRESULT hr;
@@ -285,6 +285,7 @@ static DWORD CALLBACK session_worker_thread_cb( void *args )
 
 error:
     ERR("The recognition session worker encountered a serious error and needs to stop. hr: %lx.\n", hr);
+    free(tmp_buf);
     return 1;
 }
 
