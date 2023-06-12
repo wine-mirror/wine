@@ -519,6 +519,38 @@ static void test_DrawTextCalcRect(void)
             ok(textheight==0,"Got textheight from DrawTextExW\n");
             ok(dtp.uiLengthDrawn==1337, "invalid dtp.uiLengthDrawn = %i\n",dtp.uiLengthDrawn);
         }
+
+        /* When passing invalid DC, other parameters must be ignored - no crashes on invalid pointers */
+        SetLastError(0xdeadbeef);
+        textheight = DrawTextExW((HDC)0xdeadbeef, emptystringW, 100000, (LPRECT)0xdeadbeef, 0, 0);
+        ok(textheight == 0, "Got textheight from DrawTextExW\n");
+        ok(GetLastError() == 0xdeadbeef,"Got error %lu\n", GetLastError());
+
+        SetLastError(0xdeadbeef);
+        textheight = DrawTextExW((HDC)0xdeadbeef, (LPWSTR)0xdeadbeef, 100000, &rect, 0, 0);
+        ok(textheight == 0, "Got textheight from DrawTextExW\n");
+        ok(GetLastError() == 0xdeadbeef,"Got error %lu\n", GetLastError());
+
+        SetLastError(0xdeadbeef);
+        textheight = DrawTextExW((HDC)0xdeadbeef, 0, -1, (LPRECT)0xdeadbeef, DT_CALCRECT, 0);
+        ok(textheight == 0, "Got textheight from DrawTextExW\n");
+        ok(GetLastError() == 0xdeadbeef,"Got error %lu\n", GetLastError());
+
+        SetLastError(0xdeadbeef);
+        textheight = DrawTextExA((HDC)0xdeadbeef, emptystring, 100000, (LPRECT)0xdeadbeef, 0, 0);
+        ok(textheight == 0, "Got textheight from DrawTextExA\n");
+        ok(GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_INVALID_HANDLE,"Got error %lu\n", GetLastError());
+
+        SetLastError(0xdeadbeef);
+        textheight = DrawTextExA((HDC)0xdeadbeef, 0, -1, (LPRECT)0xdeadbeef, DT_CALCRECT, 0);
+        ok(textheight == 0, "Got textheight from DrawTextExA\n");
+        ok(GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_INVALID_HANDLE,"Got error %lu\n", GetLastError());
+
+        if (0)
+        {
+            /* Crashes */
+            textheight = DrawTextExA((HDC)0xdeadbeef, (LPSTR)0xdeadbeef, 100, &rect, 0, 0);
+        }
     }
 
     /* More test cases from bug 12226 */
