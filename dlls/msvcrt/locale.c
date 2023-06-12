@@ -343,6 +343,7 @@ BOOL locale_to_sname(const char *locale, unsigned short *codepage, BOOL *sname_m
     if(!locale[0] || (cp == locale && !region)) {
         GetUserDefaultLocaleName(sname, sname_size);
     } else {
+        WCHAR wbuf[LOCALE_NAME_MAX_LENGTH];
         locale_search_t search;
 
         memset(&search, 0, sizeof(locale_search_t));
@@ -364,21 +365,33 @@ BOOL locale_to_sname(const char *locale, unsigned short *codepage, BOOL *sname_m
         if(!cp && !region)
         {
             remap_synonym(search.search_language);
+#if _MSVCR_VER >= 110
             search.allow_sname = TRUE;
+#endif
         }
 
-        EnumSystemLocalesEx( find_best_locale_proc, 0, (LPARAM)&search, NULL);
+        MultiByteToWideChar(CP_ACP, 0, search.search_language, -1, wbuf, LOCALE_NAME_MAX_LENGTH);
+        if (search.allow_sname && IsValidLocaleName(wbuf))
+        {
+            search.match_flags = FOUND_SNAME;
+            wcsncpy(sname, wbuf, sname_size);
+        }
+        else
+        {
+            EnumSystemLocalesEx( find_best_locale_proc, 0, (LPARAM)&search, NULL);
 
-        if (!search.match_flags)
-            return FALSE;
+            if (!search.match_flags)
+                return FALSE;
 
-        /* If we were given something that didn't match, fail */
-        if (search.search_language[0] && !(search.match_flags & (FOUND_SNAME | FOUND_LANGUAGE)))
-            return FALSE;
-        if (search.search_country[0] && !(search.match_flags & FOUND_COUNTRY))
-            return FALSE;
+            /* If we were given something that didn't match, fail */
+            if (search.search_language[0] && !(search.match_flags & (FOUND_SNAME | FOUND_LANGUAGE)))
+                return FALSE;
+            if (search.search_country[0] && !(search.match_flags & FOUND_COUNTRY))
+                return FALSE;
 
-        LCIDToLocaleName(search.found_lang_id, sname, sname_size, LOCALE_ALLOW_NEUTRAL_NAMES);
+            LCIDToLocaleName(search.found_lang_id, sname, sname_size, LOCALE_ALLOW_NEUTRAL_NAMES);
+        }
+
         is_sname = (search.match_flags & FOUND_SNAME) != 0;
     }
 

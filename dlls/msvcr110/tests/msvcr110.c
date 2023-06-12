@@ -153,14 +153,14 @@ static void test_setlocale(void)
     ok(!ret, "setlocale(en-us.1250) succeeded (%s)\n", ret);
 
     ret = p_setlocale(LC_ALL, "zh-Hans");
-    todo_wine ok((ret != NULL
+    ok((ret != NULL
         || broken(ret == NULL)), /* Vista */
         "expected success, but got NULL\n");
     if (ret)
         ok(!strcmp(ret, "zh-Hans"), "setlocale zh-Hans failed\n");
 
     ret = p_setlocale(LC_ALL, "zh-Hant");
-    todo_wine ok((ret != NULL
+    ok((ret != NULL
         || broken(ret == NULL)), /* Vista */
         "expected success, but got NULL\n");
     if (ret)
