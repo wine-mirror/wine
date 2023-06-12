@@ -366,7 +366,9 @@ static UINT ime_set_comp_string( HIMC himc, LPARAM lparam )
     if (!(ctx = ImmLockIMC( himc ))) return 0;
 
     count = ImeToAsciiEx( VK_PROCESSKEY, lparam, NULL, &buffer.list, 0, himc );
-    if (count >= buffer.uMsgCount)
+    if (!count)
+        TRACE( "ImeToAsciiEx returned no messages\n" );
+    else if (count >= buffer.uMsgCount)
         WARN( "ImeToAsciiEx returned %#x messages\n", count );
     else if (!(himcc = ImmReSizeIMCC( ctx->hMsgBuf, (ctx->dwNumMsgBuf + count) * sizeof(*msgs) )))
         WARN( "Failed to resize input context message buffer\n" );
@@ -534,7 +536,7 @@ UINT WINAPI ImeToAsciiEx( UINT vkey, UINT vsc, BYTE *state, TRANSMSGLIST *msgs, 
 
     if (!(ctx = ImmLockIMC( himc ))) return 0;
     if (!(compstr = ImmLockIMCC( ctx->hCompStr ))) goto done;
-    size = compstr->dwSize;
+    size = max( compstr->dwSize, sizeof(COMPOSITIONSTRING) );
 
     do
     {
