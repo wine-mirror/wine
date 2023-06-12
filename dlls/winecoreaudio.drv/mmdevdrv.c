@@ -70,6 +70,8 @@ static CRITICAL_SECTION_DEBUG g_sessions_lock_debug =
 static CRITICAL_SECTION g_sessions_lock = { &g_sessions_lock_debug, -1, 0, 0, 0, 0 };
 static struct list g_sessions = LIST_INIT(g_sessions);
 
+extern HRESULT main_loop_start(void) DECLSPEC_HIDDEN;
+
 extern struct audio_session_wrapper *session_wrapper_create(
     struct audio_client *client) DECLSPEC_HIDDEN;
 
@@ -585,6 +587,11 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     if(This->stream){
         sessions_unlock();
         return AUDCLNT_E_ALREADY_INITIALIZED;
+    }
+
+    if(FAILED(params.result = main_loop_start())){
+        sessions_unlock();
+        return params.result;
     }
 
     params.name = NULL;
