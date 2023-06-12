@@ -80,4 +80,6 @@ extern HRESULT SpatialAudioClient_Create(IMMDevice *device, ISpatialAudioClient 
 extern HRESULT load_devices_from_reg(void) DECLSPEC_HIDDEN;
 extern HRESULT load_driver_devices(EDataFlow flow) DECLSPEC_HIDDEN;
 
+extern void main_loop_stop(void) DECLSPEC_HIDDEN;
+
 extern const WCHAR drv_keyW[] DECLSPEC_HIDDEN;

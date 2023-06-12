@@ -56,7 +56,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(pulse);
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
-static HANDLE pulse_thread;
 static struct list g_sessions = LIST_INIT(g_sessions);
 static struct list g_devices_cache = LIST_INIT(g_devices_cache);
 
@@ -115,11 +114,6 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
 
         LIST_FOR_EACH_ENTRY_SAFE(device, device_next, &g_devices_cache, struct device_cache, entry)
             free(device);
-
-        if (pulse_thread) {
-            WaitForSingleObject(pulse_thread, INFINITE);
-            CloseHandle(pulse_thread);
-        }
     }
     return TRUE;
 }
@@ -133,6 +127,8 @@ extern const IChannelAudioVolumeVtbl ChannelAudioVolume_Vtbl;
 extern const IAudioClockVtbl AudioClock_Vtbl;
 extern const IAudioClock2Vtbl AudioClock2_Vtbl;
 extern const IAudioStreamVolumeVtbl AudioStreamVolume_Vtbl;
+
+extern HRESULT main_loop_start(void) DECLSPEC_HIDDEN;
 
 extern struct audio_session_wrapper *session_wrapper_create(
     struct audio_client *client) DECLSPEC_HIDDEN;
@@ -155,15 +151,6 @@ static void pulse_release_stream(stream_handle stream, HANDLE timer)
     params.stream       = stream;
     params.timer_thread = timer;
     pulse_call(release_stream, &params);
-}
-
-static DWORD CALLBACK pulse_mainloop_thread(void *event)
-{
-    struct main_loop_params params;
-    params.event = event;
-    SetThreadDescription(GetCurrentThread(), L"winepulse_mainloop");
-    pulse_call(main_loop, &params);
-    return 0;
 }
 
 typedef struct tagLANGANDCODEPAGE
@@ -735,19 +722,10 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         return AUDCLNT_E_ALREADY_INITIALIZED;
     }
 
-    if (!pulse_thread)
+    if (FAILED(hr = main_loop_start()))
     {
-        HANDLE event = CreateEventW(NULL, TRUE, FALSE, NULL);
-        if (!(pulse_thread = CreateThread(NULL, 0, pulse_mainloop_thread, event, 0, NULL)))
-        {
-            ERR("Failed to create mainloop thread.\n");
-            sessions_unlock();
-            CloseHandle(event);
-            return E_FAIL;
-        }
-        SetThreadPriority(pulse_thread, THREAD_PRIORITY_TIME_CRITICAL);
-        WaitForSingleObject(event, INFINITE);
-        CloseHandle(event);
+        sessions_unlock();
+        return hr;
     }
 
     params.name = name = get_application_name(TRUE);

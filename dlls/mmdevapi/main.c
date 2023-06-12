@@ -202,6 +202,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
                     WARN("Unable to deinitialize library: %lx\n", status);
             }
 
+            main_loop_stop();
+
             if (!lpvReserved)
                 MMDevEnum_Free();
             break;
