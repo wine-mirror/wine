@@ -816,7 +816,8 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDetailsOf (IShellFolder2 *iface,
                 break;
 
             _ILSimpleGetTextW(pidl, path, MAX_PATH);
-            GetDiskFreeSpaceExW(path, NULL, &bytes, NULL);
+            if (!GetDiskFreeSpaceExW(path, NULL, &bytes, NULL))
+                break;
 
             psd->str.uType = STRRET_WSTR;
             psd->str.u.pOleStr = CoTaskMemAlloc((MAX_PATH + 1) * sizeof(WCHAR));
@@ -827,7 +828,8 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDetailsOf (IShellFolder2 *iface,
                 break;
 
             _ILSimpleGetTextW(pidl, path, MAX_PATH);
-            GetDiskFreeSpaceExW(path, &bytes, NULL, NULL);
+            if (!GetDiskFreeSpaceExW(path, &bytes, NULL, NULL))
+                break;
 
             psd->str.uType = STRRET_WSTR;
             psd->str.u.pOleStr = CoTaskMemAlloc((MAX_PATH + 1) * sizeof(WCHAR));
