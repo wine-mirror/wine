@@ -2494,8 +2494,7 @@ static NTSTATUS pulse_get_prop_value(void *args)
         if (strcmp(params->device, dev->pulse_name))
             continue;
         if (IsEqualPropertyKey(*params->prop, devicepath_key)) {
-            if (!get_device_path(dev, params))
-                break;
+            get_device_path(dev, params);
             return STATUS_SUCCESS;
         } else if (IsEqualGUID(&params->prop->fmtid, &PKEY_AudioEndpoint_GUID)) {
             switch (params->prop->pid) {
