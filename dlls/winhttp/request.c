@@ -5493,6 +5493,7 @@ static DWORD request_get_codepage( struct winhttp_request *request, UINT *codepa
         if (!(buffer = malloc( size ))) return ERROR_OUTOFMEMORY;
         if (!WinHttpQueryHeaders( request->hrequest, WINHTTP_QUERY_CONTENT_TYPE, NULL, buffer, &size, NULL ))
         {
+            free( buffer );
             return GetLastError();
         }
         if ((p = wcsstr( buffer, L"charset" )))
