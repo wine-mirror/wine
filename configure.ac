@@ -770,7 +770,7 @@ case $host_os in
     WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
 
     case $host_cpu in
-      *i[[3456789]]86* | x86_64 | *aarch64* | arm*)
+      *i[[3456789]]86* | arm*)
         WINE_TRY_CFLAGS([-Wl,-Ttext-segment=0x7bc00000],
                         [case $host_os in
                          freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x60000000" ;;
@@ -783,6 +783,10 @@ case $host_os in
                                          esac])])
         WINE_TRY_CFLAGS([-Wl,-z,max-page-size=0x1000],
                         [WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-z,max-page-size=0x1000"])
+        ;;
+      *)
+        WINE_TRY_CFLAGS([-Wl,-pie],
+                        [WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-pie"])
         ;;
     esac
     ;;
