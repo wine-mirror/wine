@@ -2351,7 +2351,6 @@ static struct strarray get_source_defines( struct makefile *make, struct incl_fi
     }
     strarray_addall( &ret, make->define_args );
     strarray_addall( &ret, get_expanded_file_local_var( make, obj, "EXTRADEFS" ));
-    if (source->file->flags & FLAG_C_UNIX) strarray_add( &ret, "-DWINE_UNIX_LIB" );
     return ret;
 }
 
@@ -4247,6 +4246,7 @@ static void load_sources( struct makefile *make )
     make->define_args = empty_strarray;
     make->unix_cflags = empty_strarray;
     if (!make->extlib) strarray_add( &make->define_args, "-D__WINESRC__" );
+    strarray_add( &make->unix_cflags, "-DWINE_UNIX_LIB" );
 
     value = get_expanded_make_var_array( make, "EXTRAINCL" );
     for (i = 0; i < value.count; i++)

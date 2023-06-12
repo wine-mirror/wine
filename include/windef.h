@@ -54,11 +54,13 @@ extern "C" {
 # endif
 #endif
 
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
+
 #ifdef WINE_UNIX_LIB
 # define __stdcall
 # define __cdecl
 # define __fastcall
-#elif !defined(_MSC_VER) && !defined(__MINGW32__)
+#else
 # undef __stdcall
 # ifdef __i386__
 #  ifdef __GNUC__
@@ -99,6 +101,8 @@ extern "C" {
 # ifndef __thiscall
 #  define __thiscall __stdcall
 # endif
+#endif  /* WINE_UNIX_LIB */
+
 #endif  /* _MSC_VER || __MINGW32__ */
 
 #ifndef __ms_va_list
