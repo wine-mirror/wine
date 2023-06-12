@@ -82,6 +82,8 @@ extern const IAudioClock2Vtbl AudioClock2_Vtbl;
 extern const IAudioStreamVolumeVtbl AudioStreamVolume_Vtbl;
 extern const IChannelAudioVolumeVtbl ChannelAudioVolume_Vtbl;
 
+extern HRESULT main_loop_start(void) DECLSPEC_HIDDEN;
+
 extern struct audio_session_wrapper *session_wrapper_create(
     struct audio_client *client) DECLSPEC_HIDDEN;
 
@@ -573,6 +575,11 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     if(This->stream){
         sessions_unlock();
         return AUDCLNT_E_ALREADY_INITIALIZED;
+    }
+
+    if(FAILED(params.result = main_loop_start())){
+        sessions_unlock();
+        return params.result;
     }
 
     params.name = NULL;
