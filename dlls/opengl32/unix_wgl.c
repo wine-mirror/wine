@@ -43,6 +43,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
+static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
+
+static BOOL is_wow64(void)
+{
+    return !!NtCurrentTeb()->WowTebOffset;
+}
+
 static pthread_mutex_t wgl_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /* handle management */
@@ -168,7 +175,13 @@ static GLubyte *filter_extensions_list( const char *extensions, const char *disa
         memcpy( p, extensions, end - extensions );
         p[end - extensions] = 0;
 
-        if (!has_extension( disabled, p, strlen( p ) ))
+        /* We do not support GL_MAP_PERSISTENT_BIT, and hence
+         * ARB_buffer_storage, on wow64. */
+        if (is_win64 && is_wow64() && (!strcmp( p, "GL_ARB_buffer_storage" ) || !strcmp( p, "GL_EXT_buffer_storage" )))
+        {
+            TRACE( "-- %s (disabled due to wow64)\n", p );
+        }
+        else if (!has_extension( disabled, p, strlen( p ) ))
         {
             TRACE( "++ %s\n", p );
             p += end - extensions;
@@ -208,7 +221,15 @@ static GLuint *filter_extensions_index( TEB *teb, const char *disabled )
     for (j = 0; j < extensions_count; ++j)
     {
         ext = (const char *)funcs->ext.p_glGetStringi( GL_EXTENSIONS, j );
-        if (!has_extension( disabled, ext, strlen( ext ) ))
+
+        /* We do not support GL_MAP_PERSISTENT_BIT, and hence
+         * ARB_buffer_storage, on wow64. */
+        if (is_win64 && is_wow64() && (!strcmp( ext, "GL_ARB_buffer_storage" ) || !strcmp( ext, "GL_EXT_buffer_storage" )))
+        {
+            TRACE( "-- %s (disabled due to wow64)\n", ext );
+            disabled_index[i++] = j;
+        }
+        else if (!has_extension( disabled, ext, strlen( ext ) ))
         {
             TRACE( "++ %s\n", ext );
         }
@@ -329,7 +350,6 @@ static BOOL filter_extensions( TEB * teb, const char *extensions, GLubyte **exts
         else disabled = "";
     }
 
-    if (!disabled[0]) return FALSE;
     if (extensions && !*exts_list) *exts_list = filter_extensions_list( extensions, disabled );
     if (!*disabled_exts) *disabled_exts = filter_extensions_index( teb, disabled );
     return (exts_list && *exts_list) || *disabled_exts;
