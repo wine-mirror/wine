@@ -30,7 +30,7 @@
 
 struct connection
 {
-    char *servername;
+    char *target;
     CredHandle cred_handle;
     CtxtHandle ctxt_handle;
     sasl_interact_t prompts[4];
@@ -145,21 +145,35 @@ int sasl_client_new( const char *service, const char *server, const char *localp
     struct connection *conn;
     SECURITY_STATUS status;
     SecPkgInfoA *info;
+    int len;
 
     if (!check_callback( prompt, SASL_CB_AUTHNAME ) || !check_callback( prompt, SASL_CB_GETREALM ) ||
         !check_callback( prompt, SASL_CB_PASS )) return SASL_BADPARAM;
 
     if (!(conn = calloc( 1, sizeof(*conn) ))) return SASL_NOMEM;
-    if (!(conn->servername = strdup( server )))
+
+    if (service && !*service) service = NULL;
+
+    len =  strlen( server ) + 1; /* '\0' */;
+    if (service) len += strlen( service ) + 1; /* '/' */
+    if (!(conn->target = malloc( len )))
     {
         free( conn );
         return SASL_NOMEM;
     }
+    if (service)
+    {
+        strcpy( conn->target, service );
+        strcat( conn->target, "/" );
+        strcat( conn->target, server );
+    }
+    else
+        strcpy( conn->target, server );
 
     status = QuerySecurityPackageInfoA( (SEC_CHAR *)"Negotiate", &info );
     if (status != SEC_E_OK)
     {
-        free( conn->servername );
+        free( conn->target );
         free( conn );
         return SASL_FAIL;
     }
@@ -168,7 +182,7 @@ int sasl_client_new( const char *service, const char *server, const char *localp
 
     if (!(conn->buf = malloc( conn->buf_size )))
     {
-        free( conn->servername );
+        free( conn->target );
         free( conn );
         return SASL_NOMEM;
     }
@@ -188,7 +202,7 @@ void sasl_dispose( sasl_conn_t **handle_ptr )
 
     DeleteSecurityContext( &conn->ctxt_handle );
     FreeCredentialsHandle( &conn->cred_handle );
-    free( conn->servername );
+    free( conn->target );
     free( conn->buf );
     free( conn );
 }
@@ -262,7 +276,7 @@ int sasl_client_start( sasl_conn_t *handle, const char *mechlist, sasl_interact_
                                         (SEC_WINNT_AUTH_IDENTITY_A *)&id, NULL, NULL, &conn->cred_handle, NULL );
     if (status != SEC_E_OK) return SASL_FAIL;
 
-    status = InitializeSecurityContextA( &conn->cred_handle, NULL, (SEC_CHAR *)conn->servername, flags,
+    status = InitializeSecurityContextA( &conn->cred_handle, NULL, conn->target, flags,
                                          0, 0, NULL, 0, &conn->ctxt_handle, &out_buf_desc, &attrs, NULL );
     if (status == SEC_E_OK || status == SEC_I_CONTINUE_NEEDED)
     {
@@ -300,7 +314,7 @@ int sasl_client_step( sasl_conn_t *handle, const char *serverin, unsigned int se
     ULONG attrs, flags = ISC_REQ_INTEGRITY | ISC_REQ_CONFIDENTIALITY;
     SECURITY_STATUS status;
 
-    status = InitializeSecurityContextA( NULL, &conn->ctxt_handle, (SEC_CHAR *)conn->servername, flags, 0, 0,
+    status = InitializeSecurityContextA( NULL, &conn->ctxt_handle, conn->target, flags, 0, 0,
                                          &in_buf_desc, 0, &conn->ctxt_handle, &out_buf_desc, &attrs, NULL );
     if (status == SEC_E_OK || status == SEC_I_CONTINUE_NEEDED)
     {
