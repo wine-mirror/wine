@@ -2829,9 +2829,15 @@ static NTSTATUS virtual_map_image( HANDLE mapping, void **addr_ptr, SIZE_T *size
     base = wine_server_get_ptr( image_info->base );
     if ((ULONG_PTR)base != image_info->base) base = NULL;
 
-    if ((char *)base >= (char *)address_space_start)  /* make sure the DOS area remains free */
-        status = map_view( &view, base, size, alloc_type, vprot, limit_low, limit_high, 0 );
-
+    limit_low = max( limit_low, (ULONG_PTR)address_space_start );  /* make sure the DOS area remains free */
+    status = map_view( &view, base, size, alloc_type, vprot, limit_low, limit_high, 0 );
+    if (status && limit_low < limit_4g)
+    {
+        if ((ULONG_PTR)base >= limit_4g) status = map_view( &view, NULL, size, alloc_type, vprot,
+                                                            limit_4g, limit_high, 0 );
+        else if (limit_high > limit_2g) status = map_view( &view, NULL, size, alloc_type, vprot,
+                                                           limit_low, limit_2g - 1, 0 );
+    }
     if (status) status = map_view( &view, NULL, size, alloc_type, vprot, limit_low, limit_high, 0 );
     if (status) goto done;
 
