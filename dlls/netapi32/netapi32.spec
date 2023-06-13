@@ -9,7 +9,8 @@
 @ stdcall DsGetDcNameA(str str ptr str long ptr)
 @ stdcall DsGetDcNameW(wstr wstr ptr wstr long ptr)
 @ stub DsGetDcNext
-@ stub DsGetDcOpen
+@ stdcall DsGetDcOpenA(str long str ptr str long ptr)
+@ stdcall DsGetDcOpenW(wstr long wstr ptr wstr long ptr)
 @ stub DsGetDcSiteCoverage
 @ stub DsGetForestTrustInformationW
 @ stdcall DsGetSiteNameA(str ptr)
