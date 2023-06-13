@@ -123,7 +123,8 @@ struct file_view
 #define VPROT_COMMITTED  0x20
 #define VPROT_WRITEWATCH 0x40
 /* per-mapping protection flags */
-#define VPROT_SYSTEM     0x0200  /* system view (underlying mmap not under our control) */
+#define VPROT_ARM64EC          0x0100  /* view may contain ARM64EC code */
+#define VPROT_SYSTEM           0x0200  /* system view (underlying mmap not under our control) */
 #define VPROT_PLACEHOLDER      0x0400
 #define VPROT_FREE_PLACEHOLDER 0x0800
 
@@ -178,7 +179,7 @@ static void *user_space_limit    = (void *)0x7fff0000;
 static void *working_set_limit   = (void *)0x7fff0000;
 #endif
 
-static UINT64 *arm64ec_map;
+static struct file_view *arm64ec_view;
 
 struct _KUSER_SHARED_DATA *user_shared_data = (void *)0x7ffe0000;
 
@@ -1027,6 +1028,7 @@ static inline UINT64 maskbits( size_t idx )
  */
 static void set_arm64ec_range( const void *addr, size_t size )
 {
+    UINT64 *map = arm64ec_view->base;
     size_t idx = (size_t)addr >> page_shift;
     size_t end = ((size_t)addr + size + page_mask) >> page_shift;
     size_t pos = idx / 64;
@@ -1034,11 +1036,11 @@ static void set_arm64ec_range( const void *addr, size_t size )
 
     if (end_pos > pos)
     {
-        arm64ec_map[pos++] |= maskbits( idx );
-        while (pos < end_pos) arm64ec_map[pos++] = ~(UINT64)0;
-        if (end & 63) arm64ec_map[pos] |= ~maskbits( end );
+        map[pos++] |= maskbits( idx );
+        while (pos < end_pos) map[pos++] = ~(UINT64)0;
+        if (end & 63) map[pos] |= ~maskbits( end );
     }
-    else arm64ec_map[pos] |= maskbits( idx ) & ~maskbits( end );
+    else map[pos] |= maskbits( idx ) & ~maskbits( end );
 }
 
 
@@ -1047,6 +1049,7 @@ static void set_arm64ec_range( const void *addr, size_t size )
  */
 static void clear_arm64ec_range( const void *addr, size_t size )
 {
+    UINT64 *map = arm64ec_view->base;
     size_t idx = (size_t)addr >> page_shift;
     size_t end = ((size_t)addr + size + page_mask) >> page_shift;
     size_t pos = idx / 64;
@@ -1054,11 +1057,11 @@ static void clear_arm64ec_range( const void *addr, size_t size )
 
     if (end_pos > pos)
     {
-        arm64ec_map[pos++] &= ~maskbits( idx );
-        while (pos < end_pos) arm64ec_map[pos++] = 0;
-        if (end & 63) arm64ec_map[pos] &= maskbits( end );
+        map[pos++] &= ~maskbits( idx );
+        while (pos < end_pos) map[pos++] = 0;
+        if (end & 63) map[pos] &= maskbits( end );
     }
-    else arm64ec_map[pos] &= ~maskbits( idx ) | maskbits( end );
+    else map[pos] &= ~maskbits( idx ) | maskbits( end );
 }
 
 
@@ -1533,7 +1536,7 @@ static void delete_view( struct file_view *view ) /* [in] View */
 {
     if (!(view->protect & VPROT_SYSTEM)) unmap_area( view->base, view->size );
     set_page_vprot( view->base, view->size, 0 );
-    if (arm64ec_map) clear_arm64ec_range( view->base, view->size );
+    if (view->protect & VPROT_ARM64EC) clear_arm64ec_range( view->base, view->size );
     unregister_view( view );
     free_view( view );
 }
@@ -1756,6 +1759,24 @@ static NTSTATUS set_protection( struct file_view *view, void *base, SIZE_T size,
 
     if (!set_vprot( view, base, size, vprot | VPROT_COMMITTED )) return STATUS_ACCESS_DENIED;
     return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *           commit_arm64ec_map
+ *
+ * Make sure that the pages corresponding to the address range of the view
+ * are committed in the ARM64EC code map.
+ */
+static void commit_arm64ec_map( struct file_view *view )
+{
+    size_t start = ((size_t)view->base >> page_shift) / 8;
+    size_t end = (((size_t)view->base + view->size) >> page_shift) / 8;
+    size_t size = ROUND_SIZE( start, end + 1 - start );
+    void *base = ROUND_ADDR( (char *)arm64ec_view->base + start, page_mask );
+
+    view->protect |= VPROT_ARM64EC;
+    set_vprot( arm64ec_view, base, size, VPROT_READ | VPROT_WRITE | VPROT_COMMITTED );
 }
 
 
@@ -2253,7 +2274,7 @@ static NTSTATUS free_pages( struct file_view *view, char *base, size_t size )
     if (!status)
     {
         set_page_vprot( base, size, 0 );
-        if (arm64ec_map) clear_arm64ec_range( base, size );
+        if (view->protect & VPROT_ARM64EC) clear_arm64ec_range( base, size );
         unmap_area( base, size );
     }
     return status;
@@ -2401,15 +2422,17 @@ static NTSTATUS map_pe_header( void *ptr, size_t size, int fd, BOOL *removable )
  */
 static void alloc_arm64ec_map(void)
 {
-    SIZE_T size = ((ULONG_PTR)user_space_limit + page_size) >> (page_shift + 3);  /* one bit per page */
-    unsigned int status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&arm64ec_map, 0, &size,
-                                                   MEM_COMMIT, PAGE_READWRITE );
+    unsigned int status;
+    SIZE_T size = ((ULONG_PTR)address_space_limit + page_size) >> (page_shift + 3);  /* one bit per page */
+
+    size = ROUND_SIZE( 0, size );
+    status = map_view( &arm64ec_view, NULL, size, 0, VPROT_READ | VPROT_COMMITTED, 0, 0, granularity_mask );
     if (status)
     {
         ERR( "failed to allocate ARM64EC map: %08x\n", status );
         exit(1);
     }
-    peb->EcCodeBitMap = arm64ec_map;
+    peb->EcCodeBitMap = arm64ec_view->base;
 }
 
 
@@ -2457,7 +2480,8 @@ static void apply_arm64x_relocations( char *base, const IMAGE_BASE_RELOCATION *r
 /***********************************************************************
  *           update_arm64x_mapping
  */
-static void update_arm64x_mapping( char *base, IMAGE_NT_HEADERS *nt, IMAGE_SECTION_HEADER *sections )
+static void update_arm64x_mapping( struct file_view *view, IMAGE_NT_HEADERS *nt,
+                                   IMAGE_SECTION_HEADER *sections )
 {
     ULONG i, size, sec, offset;
     const IMAGE_DATA_DIRECTORY *dir;
@@ -2465,6 +2489,7 @@ static void update_arm64x_mapping( char *base, IMAGE_NT_HEADERS *nt, IMAGE_SECTI
     const IMAGE_ARM64EC_METADATA *metadata;
     const IMAGE_DYNAMIC_RELOCATION_TABLE *table;
     const char *ptr, *end;
+    char *base = view->base;
 
     /* retrieve config directory */
 
@@ -2479,7 +2504,8 @@ static void update_arm64x_mapping( char *base, IMAGE_NT_HEADERS *nt, IMAGE_SECTI
 
     if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY, CHPEMetadataPointer )) return;
     if (!cfg->CHPEMetadataPointer) return;
-    if (!arm64ec_map) alloc_arm64ec_map();
+    if (!arm64ec_view) alloc_arm64ec_map();
+    commit_arm64ec_map( view );
     metadata = (void *)(base + (cfg->CHPEMetadataPointer - nt->OptionalHeader.ImageBase));
     if (metadata->CodeMap)
     {
@@ -2707,7 +2733,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
     if (machine == IMAGE_FILE_MACHINE_AMD64 ||
         (!machine && main_image_info.Machine == IMAGE_FILE_MACHINE_AMD64))
     {
-        update_arm64x_mapping( ptr, nt, sections );
+        update_arm64x_mapping( view, nt, sections );
         /* reload changed data from NT header */
         image_info->machine     = nt->FileHeader.Machine;
         image_info->entry_point = nt->OptionalHeader.AddressOfEntryPoint;
@@ -4179,7 +4205,7 @@ static NTSTATUS allocate_virtual_memory( void **ret, SIZE_T *size_ptr, ULONG typ
     }
 
     if (type & MEM_RESERVE_PLACEHOLDER && (protect != PAGE_NOACCESS)) return STATUS_INVALID_PARAMETER;
-    if (!arm64ec_map && (attributes & MEM_EXTENDED_PARAMETER_EC_CODE)) return STATUS_INVALID_PARAMETER;
+    if (!arm64ec_view && (attributes & MEM_EXTENDED_PARAMETER_EC_CODE)) return STATUS_INVALID_PARAMETER;
 
     /* Reserve the memory */
 
@@ -4225,7 +4251,11 @@ static NTSTATUS allocate_virtual_memory( void **ret, SIZE_T *size_ptr, ULONG typ
         }
     }
 
-    if (!status && (attributes & MEM_EXTENDED_PARAMETER_EC_CODE)) set_arm64ec_range( base, size );
+    if (!status && (attributes & MEM_EXTENDED_PARAMETER_EC_CODE))
+    {
+        commit_arm64ec_map( view );
+        set_arm64ec_range( base, size );
+    }
 
     if (!status) VIRTUAL_DEBUG_DUMP_VIEW( view );
 
