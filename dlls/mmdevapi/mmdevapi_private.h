@@ -23,8 +23,8 @@
 #include <wine/list.h>
 #include <wine/unixlib.h>
 
-#include "mmdevdrv.h"
 #include "unixlib.h"
+#include "mmdevdrv.h"
 
 extern HRESULT MMDevEnum_Create(REFIID riid, void **ppv) DECLSPEC_HIDDEN;
 extern void MMDevEnum_Free(void) DECLSPEC_HIDDEN;

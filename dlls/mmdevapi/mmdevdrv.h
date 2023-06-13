@@ -19,8 +19,6 @@
 
 #include <wine/list.h>
 
-typedef UINT64 stream_handle;
-
 typedef struct audio_client ACImpl;
 
 typedef struct audio_session {

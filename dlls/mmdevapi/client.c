@@ -28,8 +28,8 @@
 #include <wine/debug.h>
 #include <wine/unixlib.h>
 
-#include "mmdevdrv.h"
 #include "unixlib.h"
+#include "mmdevdrv.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 

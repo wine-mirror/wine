@@ -28,8 +28,8 @@
 #include <wine/debug.h>
 #include <wine/unixlib.h>
 
-#include "mmdevdrv.h"
 #include "unixlib.h"
+#include "mmdevdrv.h"
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
