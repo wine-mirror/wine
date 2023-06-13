@@ -140,7 +140,7 @@ void xim_set_result_string( HWND hwnd, const char *str, UINT count )
     len = ntdll_umbstowcs( str, count, output, count );
     output[len] = 0;
 
-    post_ime_update( hwnd, 0, ime_comp_buf, output );
+    post_ime_update( hwnd, 0, NULL, output );
 
     free( output );
 }
