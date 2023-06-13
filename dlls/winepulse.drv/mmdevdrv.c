@@ -698,8 +698,6 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
     if (mode != AUDCLNT_SHAREMODE_SHARED && mode != AUDCLNT_SHAREMODE_EXCLUSIVE)
         return E_INVALIDARG;
-    if (mode == AUDCLNT_SHAREMODE_EXCLUSIVE)
-        return AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED;
 
     if (flags & ~(AUDCLNT_STREAMFLAGS_CROSSPROCESS |
                 AUDCLNT_STREAMFLAGS_LOOPBACK |

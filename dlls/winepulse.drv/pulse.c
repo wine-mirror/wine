@@ -1116,12 +1116,17 @@ static NTSTATUS pulse_create_stream(void *args)
     struct pulse_stream *stream;
     unsigned int i, bufsize_bytes;
     HRESULT hr;
-    char *name = wstr_to_str(params->name);
+    char *name;
+
+    if (params->share == AUDCLNT_SHAREMODE_EXCLUSIVE) {
+        params->result = AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED;
+        return STATUS_SUCCESS;
+    }
 
     pulse_lock();
 
+    name = wstr_to_str(params->name);
     params->result = pulse_connect(name);
-
     free(name);
 
     if (FAILED(params->result))
