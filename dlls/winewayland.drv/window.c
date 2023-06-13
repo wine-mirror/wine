@@ -165,7 +165,7 @@ static void wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
     }
 
     /* Otherwise ensure that we have a wayland surface. */
-    if (!surface && !(surface = wayland_surface_create())) return;
+    if (!surface && !(surface = wayland_surface_create(data->hwnd))) return;
 
     visible = (NtUserGetWindowLongW(data->hwnd, GWL_STYLE) & WS_VISIBLE) == WS_VISIBLE;
     xdg_visible = surface->xdg_toplevel != NULL;
@@ -320,4 +320,21 @@ LRESULT WAYLAND_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     }
 
     return NtUserMessageCall(hwnd, msg, wp, lp, 0, NtUserDefWindowProc, FALSE);
+}
+
+/**********************************************************************
+ *           wayland_window_flush
+ *
+ *  Flush the window_surface associated with a HWND.
+ */
+void wayland_window_flush(HWND hwnd)
+{
+    struct wayland_win_data *data = wayland_win_data_get(hwnd);
+
+    if (!data) return;
+
+    if (data->window_surface)
+        data->window_surface->funcs->flush(data->window_surface);
+
+    wayland_win_data_release(data);
 }

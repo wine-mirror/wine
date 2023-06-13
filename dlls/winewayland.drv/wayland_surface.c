@@ -55,6 +55,8 @@ static void xdg_surface_handle_configure(void *data, struct xdg_surface *xdg_sur
                                          uint32_t serial)
 {
     struct wayland_surface *surface;
+    BOOL initial_configure = FALSE;
+    HWND hwnd;
 
     TRACE("serial=%u\n", serial);
 
@@ -63,9 +65,18 @@ static void xdg_surface_handle_configure(void *data, struct xdg_surface *xdg_sur
     /* Handle this event only if wayland_surface is still associated with
      * the target xdg_surface. */
     if (surface->xdg_surface == xdg_surface)
+    {
+        initial_configure = surface->current_serial == 0;
+        hwnd = surface->hwnd;
+        surface->current_serial = serial;
         xdg_surface_ack_configure(xdg_surface, serial);
+    }
 
     pthread_mutex_unlock(&surface->mutex);
+
+    /* Flush the window surface in case there is content that we weren't
+     * able to flush before due to the lack of the initial configure. */
+    if (initial_configure) wayland_window_flush(hwnd);
 }
 
 static const struct xdg_surface_listener xdg_surface_listener =
@@ -78,7 +89,7 @@ static const struct xdg_surface_listener xdg_surface_listener =
  *
  * Creates a role-less wayland surface.
  */
-struct wayland_surface *wayland_surface_create(void)
+struct wayland_surface *wayland_surface_create(HWND hwnd)
 {
     struct wayland_surface *surface;
 
@@ -93,6 +104,7 @@ struct wayland_surface *wayland_surface_create(void)
 
     pthread_mutex_init(&surface->mutex, NULL);
 
+    surface->hwnd = hwnd;
     surface->wl_surface = wl_compositor_create_surface(process_wayland.wl_compositor);
     if (!surface->wl_surface)
     {
@@ -195,6 +207,8 @@ void wayland_surface_clear_role(struct wayland_surface *surface)
         xdg_surface_destroy(surface->xdg_surface);
         surface->xdg_surface = NULL;
     }
+
+    surface->current_serial = 0;
 
     /* Ensure no buffer is attached, otherwise future role assignments may fail. */
     wl_surface_attach(surface->wl_surface, NULL, 0, 0);

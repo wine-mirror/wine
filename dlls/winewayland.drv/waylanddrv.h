@@ -97,10 +97,12 @@ struct wayland_output
 
 struct wayland_surface
 {
+    HWND hwnd;
     struct wl_surface *wl_surface;
     struct xdg_surface *xdg_surface;
     struct xdg_toplevel *xdg_toplevel;
     pthread_mutex_t mutex;
+    uint32_t current_serial;
 };
 
 struct wayland_shm_buffer
@@ -130,7 +132,7 @@ void wayland_output_use_xdg_extension(struct wayland_output *output) DECLSPEC_HI
  *          Wayland surface
  */
 
-struct wayland_surface *wayland_surface_create(void) DECLSPEC_HIDDEN;
+struct wayland_surface *wayland_surface_create(HWND hwnd) DECLSPEC_HIDDEN;
 void wayland_surface_destroy(struct wayland_surface *surface) DECLSPEC_HIDDEN;
 void wayland_surface_make_toplevel(struct wayland_surface *surface) DECLSPEC_HIDDEN;
 void wayland_surface_clear_role(struct wayland_surface *surface) DECLSPEC_HIDDEN;
@@ -152,6 +154,7 @@ void wayland_shm_buffer_destroy(struct wayland_shm_buffer *shm_buffer) DECLSPEC_
 struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect) DECLSPEC_HIDDEN;
 void wayland_window_surface_update_wayland_surface(struct window_surface *surface,
                                                    struct wayland_surface *wayland_surface) DECLSPEC_HIDDEN;
+void wayland_window_flush(HWND hwnd) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  *          USER driver functions

@@ -149,11 +149,19 @@ static void wayland_window_surface_flush(struct window_surface *window_surface)
     memcpy(shm_buffer->map_data, wws->bits, shm_buffer->map_size);
 
     pthread_mutex_lock(&wws->wayland_surface->mutex);
-    wayland_surface_attach_shm(wws->wayland_surface, shm_buffer);
-    wl_surface_commit(wws->wayland_surface->wl_surface);
+    if (wws->wayland_surface->current_serial)
+    {
+        wayland_surface_attach_shm(wws->wayland_surface, shm_buffer);
+        wl_surface_commit(wws->wayland_surface->wl_surface);
+        flushed = TRUE;
+    }
+    else
+    {
+        TRACE("Wayland surface not configured yet, not flushing\n");
+        wayland_shm_buffer_destroy(shm_buffer);
+    }
     pthread_mutex_unlock(&wws->wayland_surface->mutex);
     wl_display_flush(process_wayland.wl_display);
-    flushed = TRUE;
 
 done:
     if (flushed) reset_bounds(&wws->bounds);
