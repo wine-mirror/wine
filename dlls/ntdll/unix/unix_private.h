@@ -44,6 +44,9 @@ extern WORD native_machine DECLSPEC_HIDDEN;
 
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
+static const ULONG_PTR limit_2g = (ULONG_PTR)1 << 31;
+static const ULONG_PTR limit_4g = (ULONG_PTR)((ULONGLONG)1 << 32);
+
 static inline BOOL is_machine_64bit( WORD machine )
 {
     return (machine == IMAGE_FILE_MACHINE_AMD64 || machine == IMAGE_FILE_MACHINE_ARM64);
@@ -513,7 +516,7 @@ static inline NTSTATUS map_section( HANDLE mapping, void **ptr, SIZE_T *size, UL
 {
     *ptr = NULL;
     *size = 0;
-    return NtMapViewOfSection( mapping, NtCurrentProcess(), ptr, is_win64 && wow_peb ? 0x7fffffff : 0,
+    return NtMapViewOfSection( mapping, NtCurrentProcess(), ptr, is_win64 && wow_peb ? limit_2g - 1 : 0,
                                0, NULL, size, ViewShare, 0, protect );
 }
 
