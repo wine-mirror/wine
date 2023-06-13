@@ -456,6 +456,7 @@ typedef union
     {
         enum select_op  op;
         obj_handle_t    handles[MAXIMUM_WAIT_OBJECTS];
+        int             __pad;
     } wait;
     struct
     {
@@ -6413,7 +6414,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 774
+#define SERVER_PROTOCOL_VERSION 775
 
 /* ### protocol_version end ### */
 

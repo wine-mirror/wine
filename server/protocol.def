@@ -472,6 +472,7 @@ typedef union
     {
         enum select_op  op;      /* SELECT_WAIT or SELECT_WAIT_ALL */
         obj_handle_t    handles[MAXIMUM_WAIT_OBJECTS];
+        int             __pad;
     } wait;
     struct
     {
