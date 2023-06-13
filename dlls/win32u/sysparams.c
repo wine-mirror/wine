@@ -31,7 +31,6 @@
 #define WIN32_NO_STATUS
 #include "ntgdi_private.h"
 #include "ntuser_private.h"
-#include "d3dkmdt.h"
 #include "devpropdef.h"
 #include "cfgmgr32.h"
 #include "d3dkmdt.h"
