@@ -388,7 +388,7 @@ struct x11drv_thread_data
     Window   selection_wnd;        /* window used for selection interactions */
     unsigned long warp_serial;     /* serial number of last pointer warp request */
     Window   clip_window;          /* window used for cursor clipping */
-    HWND     clip_hwnd;            /* message window stored in desktop while clipping is active */
+    BOOL     clipping_cursor;      /* whether thread is currently clipping the cursor */
 #ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
     enum { xi_unavailable = -1, xi_unknown, xi_disabled, xi_enabled } xi2_state; /* XInput2 state */
     void    *xi2_devices;          /* list of XInput2 devices (valid when state is enabled) */
