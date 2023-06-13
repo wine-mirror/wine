@@ -1021,6 +1021,7 @@ static UINT HANDLE_CustomType23( MSIPACKAGE *package, const WCHAR *source, const
     if (!(args = build_msiexec_args( filename, target )))
     {
         free( dir );
+        free( filename );
         return ERROR_OUTOFMEMORY;
     }
 
@@ -1028,6 +1029,7 @@ static UINT HANDLE_CustomType23( MSIPACKAGE *package, const WCHAR *source, const
 
     handle = execute_command( L"msiexec", args, dir );
     free( dir );
+    free( filename );
     free( args );
     if (handle == INVALID_HANDLE_VALUE) return ERROR_SUCCESS;
     return wait_process_handle( package, type, handle, action );
