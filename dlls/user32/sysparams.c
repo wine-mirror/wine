@@ -18,40 +18,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <assert.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <wchar.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "winnls.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "winreg.h"
-#include "wine/wingdi16.h"
-#include "winerror.h"
-
-#include "initguid.h"
-#include "devguid.h"
-#include "setupapi.h"
-#include "controls.h"
 #include "user_private.h"
+#include "controls.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(system);
-
-
-DEFINE_DEVPROPKEY(DEVPROPKEY_MONITOR_GPU_LUID, 0xca085853, 0x16ce, 0x48aa, 0xb1, 0x14, 0xde, 0x9c, 0x72, 0x33, 0x42, 0x23, 1);
-DEFINE_DEVPROPKEY(DEVPROPKEY_MONITOR_OUTPUT_ID, 0xca085853, 0x16ce, 0x48aa, 0xb1, 0x14, 0xde, 0x9c, 0x72, 0x33, 0x42, 0x23, 2);
-
-/* Wine specific monitor properties */
-DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_STATEFLAGS, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 2);
-DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_ADAPTERNAME, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 5);
 
 
 static HDC display_dc;
