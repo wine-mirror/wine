@@ -206,7 +206,7 @@ struct ld_sb
 typedef struct ldap
 {
     struct ld_sb ld_sb;
-    char *ld_host;
+    WCHAR *ld_host;
     ULONG ld_version;
     UCHAR ld_lberoptions;
     ULONG ld_deref;
