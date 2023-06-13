@@ -114,7 +114,7 @@ static LPDLGTEMPLATEA convert_dialog( const char *p, DWORD size )
         }
         else copy_string( &out, &p, end - out );
 
-        if (*p & 0x80)  /* window */
+        if ((BYTE)*p == 0xff)  /* window */
         {
             *out++ = 0xffff;
             *out++ = get_word( &p );
