@@ -423,21 +423,22 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOO
             result->virtual_alloc_ex.status = STATUS_WORKING_SET_LIMIT_RANGE;
             break;
         }
-        if (call->virtual_alloc_ex.limit || call->virtual_alloc_ex.align)
+        if (call->virtual_alloc_ex.limit_low || call->virtual_alloc_ex.limit_high || call->virtual_alloc_ex.align)
         {
             SYSTEM_BASIC_INFORMATION sbi;
-            SIZE_T limit, align;
+            SIZE_T limit_low, limit_high, align;
 
             virtual_get_system_info( &sbi, is_wow64() );
-            limit = min( (ULONG_PTR)sbi.HighestUserAddress, call->virtual_alloc_ex.limit );
+            limit_low = call->virtual_alloc_ex.limit_low;
+            limit_high = min( (ULONG_PTR)sbi.HighestUserAddress, call->virtual_alloc_ex.limit_high );
             align = call->virtual_alloc_ex.align;
-            if (align != call->virtual_alloc_ex.align)
+            if (limit_low != call->virtual_alloc_ex.limit_low || align != call->virtual_alloc_ex.align)
             {
                 result->virtual_alloc_ex.status = STATUS_WORKING_SET_LIMIT_RANGE;
                 break;
             }
-            r.LowestStartingAddress = NULL;
-            r.HighestEndingAddress = (void *)limit;
+            r.LowestStartingAddress = (void *)limit_low;
+            r.HighestEndingAddress = (void *)limit_high;
             r.Alignment = align;
             ext[count].Type = MemExtendedParameterAddressRequirements;
             ext[count].Pointer = &r;
@@ -572,25 +573,27 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOO
         MEM_EXTENDED_PARAMETER ext[2];
         ULONG count = 0;
         LARGE_INTEGER offset;
+        ULONG_PTR limit_low, limit_high;
 
         result->type = call->type;
         addr = wine_server_get_ptr( call->map_view_ex.addr );
         size = call->map_view_ex.size;
         offset.QuadPart = call->map_view_ex.offset;
-        if ((ULONG_PTR)addr != call->map_view_ex.addr || size != call->map_view_ex.size)
+        limit_low = call->map_view_ex.limit_low;
+        if ((ULONG_PTR)addr != call->map_view_ex.addr || size != call->map_view_ex.size ||
+            limit_low != call->map_view_ex.limit_low)
         {
             result->map_view_ex.status = STATUS_WORKING_SET_LIMIT_RANGE;
             break;
         }
-        if (call->map_view_ex.limit)
+        if (call->map_view_ex.limit_low || call->map_view_ex.limit_high)
         {
             SYSTEM_BASIC_INFORMATION sbi;
-            ULONG_PTR limit;
 
             virtual_get_system_info( &sbi, is_wow64() );
-            limit = min( (ULONG_PTR)sbi.HighestUserAddress, call->map_view_ex.limit );
-            addr_req.LowestStartingAddress = NULL;
-            addr_req.HighestEndingAddress = (void *)limit;
+            limit_high = min( (ULONG_PTR)sbi.HighestUserAddress, call->map_view_ex.limit_high );
+            addr_req.LowestStartingAddress = (void *)limit_low;
+            addr_req.HighestEndingAddress = (void *)limit_high;
             addr_req.Alignment = 0;
             ext[count].Type = MemExtendedParameterAddressRequirements;
             ext[count].Pointer = &addr_req;

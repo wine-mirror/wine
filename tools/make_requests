@@ -53,7 +53,7 @@ my %formats =
     "ioctl_code_t"  => [  4,   4,  "&dump_ioctl_code" ],
     "hw_input_t"    => [  40,  8,  "&dump_hw_input" ],
     # varargs-only structures
-    "apc_call_t"               => [  48,  8 ],
+    "apc_call_t"               => [  64,  8 ],
     "context_t"                => [  1720,  8 ],
     "cursor_pos_t"             => [  24,  8 ],
     "debug_event_t"            => [  160,  8 ],

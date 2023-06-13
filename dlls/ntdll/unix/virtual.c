@@ -1942,7 +1942,8 @@ failed:
  * virtual_mutex must be held by caller.
  */
 static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
-                          unsigned int alloc_type, unsigned int vprot, ULONG_PTR limit, size_t align_mask )
+                          unsigned int alloc_type, unsigned int vprot,
+                          ULONG_PTR limit_low, ULONG_PTR limit_high, size_t align_mask )
 {
     int top_down = alloc_type & MEM_TOP_DOWN;
     void *ptr;
@@ -1965,10 +1966,13 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
         return STATUS_SUCCESS;
     }
 
+    if (limit_high && limit_low >= limit_high) return STATUS_INVALID_PARAMETER;
+
     if (base)
     {
         if (is_beyond_limit( base, size, address_space_limit )) return STATUS_WORKING_SET_LIMIT_RANGE;
-        if (limit && is_beyond_limit( base, size, (void *)limit )) return STATUS_CONFLICTING_ADDRESSES;
+        if (limit_low && base < (void *)limit_low) return STATUS_CONFLICTING_ADDRESSES;
+        if (limit_high && is_beyond_limit( base, size, (void *)limit_high )) return STATUS_CONFLICTING_ADDRESSES;
         if ((status = map_fixed_area( base, size, vprot ))) return status;
         if (is_beyond_limit( base, size, working_set_limit )) working_set_limit = address_space_limit;
         ptr = base;
@@ -1982,7 +1986,8 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
         if (!align_mask) align_mask = granularity_mask;
         view_size = size + align_mask + 1;
 
-        if (limit && (void *)limit < end) end = (char *)limit + 1;
+        if (limit_low && (void *)limit_low > start) start = (void *)limit_low;
+        if (limit_high && (void *)limit_high < end) end = (char *)limit_high + 1;
 
         if ((ptr = map_reserved_area( start, end, size, top_down, get_unix_prot(vprot), align_mask )))
         {
@@ -1990,7 +1995,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
             goto done;
         }
 
-        if (limit)
+        if (limit_low || limit_high)
         {
             if (!(ptr = map_free_area( start, end, size, top_down, get_unix_prot(vprot), align_mask )))
                 return STATUS_NO_MEMORY;
@@ -2324,7 +2329,7 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
     if (mmap_is_in_reserved_area( low_64k, dosmem_size - 0x10000 ) != 1)
     {
         addr = anon_mmap_tryfixed( low_64k, dosmem_size - 0x10000, unix_prot, 0 );
-        if (addr == MAP_FAILED) return map_view( view, NULL, dosmem_size, 0, vprot, 0, 0 );
+        if (addr == MAP_FAILED) return map_view( view, NULL, dosmem_size, 0, vprot, 0, 0, 0 );
     }
 
     /* now try to allocate the low 64K too */
@@ -2795,8 +2800,9 @@ static unsigned int get_mapping_info( HANDLE handle, ACCESS_MASK access, unsigne
  * Map a PE image section into memory.
  */
 static NTSTATUS virtual_map_image( HANDLE mapping, void **addr_ptr, SIZE_T *size_ptr, HANDLE shared_file,
-                                   ULONG_PTR limit, ULONG alloc_type, USHORT machine,
-                                   pe_image_info_t *image_info, WCHAR *filename, BOOL is_builtin )
+                                   ULONG_PTR limit_low, ULONG_PTR limit_high, ULONG alloc_type,
+                                   USHORT machine, pe_image_info_t *image_info,
+                                   WCHAR *filename, BOOL is_builtin )
 {
     unsigned int vprot = SEC_IMAGE | SEC_FILE | VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY;
     int unix_fd = -1, needs_close;
@@ -2824,9 +2830,9 @@ static NTSTATUS virtual_map_image( HANDLE mapping, void **addr_ptr, SIZE_T *size
     if ((ULONG_PTR)base != image_info->base) base = NULL;
 
     if ((char *)base >= (char *)address_space_start)  /* make sure the DOS area remains free */
-        status = map_view( &view, base, size, alloc_type, vprot, limit, 0 );
+        status = map_view( &view, base, size, alloc_type, vprot, limit_low, limit_high, 0 );
 
-    if (status) status = map_view( &view, NULL, size, alloc_type, vprot, limit, 0 );
+    if (status) status = map_view( &view, NULL, size, alloc_type, vprot, limit_low, limit_high, 0 );
     if (status) goto done;
 
     status = map_image_into_view( view, filename, unix_fd, base, image_info,
@@ -2866,10 +2872,10 @@ done:
  *
  * Map a file section into memory.
  */
-static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_PTR limit,
-                                         SIZE_T commit_size, const LARGE_INTEGER *offset_ptr,
-                                         SIZE_T *size_ptr, ULONG alloc_type, ULONG protect,
-                                         USHORT machine )
+static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_PTR limit_low,
+                                         ULONG_PTR limit_high, SIZE_T commit_size,
+                                         const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr,
+                                         ULONG alloc_type, ULONG protect, USHORT machine )
 {
     unsigned int res;
     mem_size_t full_size;
@@ -2914,9 +2920,9 @@ static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_P
     {
         filename = (WCHAR *)(image_info + 1);
         /* check if we can replace that mapping with the builtin */
-        res = load_builtin( image_info, filename, machine, addr_ptr, size_ptr, limit );
+        res = load_builtin( image_info, filename, machine, addr_ptr, size_ptr, limit_low, limit_high );
         if (res == STATUS_IMAGE_ALREADY_LOADED)
-            res = virtual_map_image( handle, addr_ptr, size_ptr, shared_file, limit,
+            res = virtual_map_image( handle, addr_ptr, size_ptr, shared_file, limit_low, limit_high,
                                      alloc_type, machine, image_info, filename, FALSE );
         if (shared_file) NtClose( shared_file );
         free( image_info );
@@ -2951,7 +2957,7 @@ static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_P
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
 
-    res = map_view( &view, base, size, alloc_type, vprot, limit, 0 );
+    res = map_view( &view, base, size, alloc_type, vprot, limit_low, limit_high, 0 );
     if (res) goto done;
 
     TRACE( "handle=%p size=%lx offset=%s\n", handle, size, wine_dbgstr_longlong(offset.QuadPart) );
@@ -3128,8 +3134,9 @@ void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info, BOOL wow64 )
 /***********************************************************************
  *           virtual_map_builtin_module
  */
-NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size, SECTION_IMAGE_INFORMATION *info,
-                                     ULONG_PTR limit, WORD machine, BOOL prefer_native )
+NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size,
+                                     SECTION_IMAGE_INFORMATION *info, ULONG_PTR limit_low,
+                                     ULONG_PTR limit_high, WORD machine, BOOL prefer_native )
 {
     mem_size_t full_size;
     unsigned int sec_flags;
@@ -3160,7 +3167,7 @@ NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size
     }
     else
     {
-        status = virtual_map_image( mapping, module, size, shared_file, limit, 0,
+        status = virtual_map_image( mapping, module, size, shared_file, limit_low, limit_high, 0,
                                     machine, image_info, filename, TRUE );
         virtual_fill_image_information( image_info, info );
     }
@@ -3175,7 +3182,7 @@ NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size
  *           virtual_map_module
  */
 NTSTATUS virtual_map_module( HANDLE mapping, void **module, SIZE_T *size, SECTION_IMAGE_INFORMATION *info,
-                             ULONG_PTR limit, USHORT machine )
+                             ULONG_PTR limit_low, ULONG_PTR limit_high, USHORT machine )
 {
     unsigned int status;
     mem_size_t full_size;
@@ -3195,9 +3202,9 @@ NTSTATUS virtual_map_module( HANDLE mapping, void **module, SIZE_T *size, SECTIO
     filename = (WCHAR *)(image_info + 1);
 
     /* check if we can replace that mapping with the builtin */
-    status = load_builtin( image_info, filename, machine, module, size, limit );
+    status = load_builtin( image_info, filename, machine, module, size, limit_low, limit_high );
     if (status == STATUS_IMAGE_ALREADY_LOADED)
-        status = virtual_map_image( mapping, module, size, shared_file, limit, 0,
+        status = virtual_map_image( mapping, module, size, shared_file, limit_low, limit_high, 0,
                                     machine, image_info, filename, FALSE );
 
     virtual_fill_image_information( image_info, info );
@@ -3500,8 +3507,8 @@ NTSTATUS virtual_clear_tls_index( ULONG index )
 /***********************************************************************
  *           virtual_alloc_thread_stack
  */
-NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR limit, SIZE_T reserve_size,
-                                     SIZE_T commit_size, BOOL guard_page )
+NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR limit_low, ULONG_PTR limit_high,
+                                     SIZE_T reserve_size, SIZE_T commit_size, BOOL guard_page )
 {
     struct file_view *view;
     NTSTATUS status;
@@ -3517,7 +3524,8 @@ NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR limit, SIZE_T
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
 
-    status = map_view( &view, NULL, size, 0, VPROT_READ | VPROT_WRITE | VPROT_COMMITTED, limit, 0 );
+    status = map_view( &view, NULL, size, 0, VPROT_READ | VPROT_WRITE | VPROT_COMMITTED,
+                       limit_low, limit_high, 0 );
     if (status != STATUS_SUCCESS) goto done;
 
 #ifdef VALGRIND_STACK_REGISTER
@@ -4115,7 +4123,8 @@ void virtual_set_large_address_space(void)
  * NtAllocateVirtualMemory[Ex] implementation.
  */
 static NTSTATUS allocate_virtual_memory( void **ret, SIZE_T *size_ptr, ULONG type, ULONG protect,
-                                         ULONG_PTR limit, ULONG_PTR align, ULONG attributes )
+                                         ULONG_PTR limit_low, ULONG_PTR limit_high,
+                                         ULONG_PTR align, ULONG attributes )
 {
     void *base;
     unsigned int vprot;
@@ -4180,7 +4189,7 @@ static NTSTATUS allocate_virtual_memory( void **ret, SIZE_T *size_ptr, ULONG typ
 
             if (vprot & VPROT_WRITECOPY) status = STATUS_INVALID_PAGE_PROTECTION;
             else if (is_dos_memory) status = allocate_dos_memory( &view, vprot );
-            else status = map_view( &view, base, size, type, vprot, limit,
+            else status = map_view( &view, base, size, type, vprot, limit_low, limit_high,
                                     align ? align - 1 : granularity_mask );
 
             if (status == STATUS_SUCCESS) base = view->base;
@@ -4274,13 +4283,13 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_PTR z
     else
         limit = 0;
 
-    return allocate_virtual_memory( ret, size_ptr, type, protect, limit, 0, 0 );
+    return allocate_virtual_memory( ret, size_ptr, type, protect, 0, limit, 0, 0 );
 }
 
 
 static NTSTATUS get_extended_params( const MEM_EXTENDED_PARAMETER *parameters, ULONG count,
-                                     ULONG_PTR *limit, ULONG_PTR *align, ULONG *attributes,
-                                     USHORT *machine )
+                                     ULONG_PTR *limit_low, ULONG_PTR *limit_high, ULONG_PTR *align,
+                                     ULONG *attributes, USHORT *machine )
 {
     ULONG i, present = 0;
 
@@ -4298,10 +4307,6 @@ static NTSTATUS get_extended_params( const MEM_EXTENDED_PARAMETER *parameters, U
         {
             MEM_ADDRESS_REQUIREMENTS *r = parameters[i].Pointer;
 
-            if (r->LowestStartingAddress)
-                FIXME( "Not supported requirements LowestStartingAddress %p, Alignment %p.\n",
-                       r->LowestStartingAddress, (void *)r->Alignment );
-
             if (r->Alignment)
             {
                 if ((r->Alignment & (r->Alignment - 1)) || r->Alignment - 1 < granularity_mask)
@@ -4311,10 +4316,21 @@ static NTSTATUS get_extended_params( const MEM_EXTENDED_PARAMETER *parameters, U
                 }
                 *align = r->Alignment;
             }
+            if (r->LowestStartingAddress)
+            {
+                *limit_low = (ULONG_PTR)r->LowestStartingAddress;
+                if (*limit_low >= (ULONG_PTR)user_space_limit || (*limit_low & granularity_mask))
+                {
+                    WARN( "Invalid limit %p.\n", r->LowestStartingAddress );
+                    return STATUS_INVALID_PARAMETER;
+                }
+            }
             if (r->HighestEndingAddress)
             {
-                *limit = (ULONG_PTR)r->HighestEndingAddress;
-                if (*limit > (ULONG_PTR)user_space_limit || ((*limit + 1) & (page_mask - 1)))
+                *limit_high = (ULONG_PTR)r->HighestEndingAddress;
+                if (*limit_high > (ULONG_PTR)user_space_limit ||
+                    *limit_high <= *limit_low ||
+                    ((*limit_high + 1) & (page_mask - 1)))
                 {
                     WARN( "Invalid limit %p.\n", r->HighestEndingAddress );
                     return STATUS_INVALID_PARAMETER;
@@ -4356,7 +4372,8 @@ NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *s
 {
     static const ULONG type_mask = MEM_COMMIT | MEM_RESERVE | MEM_TOP_DOWN | MEM_WRITE_WATCH
                                    | MEM_RESET | MEM_RESERVE_PLACEHOLDER | MEM_REPLACE_PLACEHOLDER;
-    ULONG_PTR limit = 0;
+    ULONG_PTR limit_low = 0;
+    ULONG_PTR limit_high = 0;
     ULONG_PTR align = 0;
     ULONG attributes = 0;
     USHORT machine = 0;
@@ -4365,11 +4382,12 @@ NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *s
     TRACE( "%p %p %08lx %x %08x %p %u\n",
           process, *ret, *size_ptr, (int)type, (int)protect, parameters, (int)count );
 
-    status = get_extended_params( parameters, count, &limit, &align, &attributes, &machine );
+    status = get_extended_params( parameters, count, &limit_low, &limit_high,
+                                  &align, &attributes, &machine );
     if (status) return status;
 
     if (type & ~type_mask) return STATUS_INVALID_PARAMETER;
-    if (*ret && (align || limit)) return STATUS_INVALID_PARAMETER;
+    if (*ret && (align || limit_low || limit_high)) return STATUS_INVALID_PARAMETER;
     if (!*size_ptr) return STATUS_INVALID_PARAMETER;
 
     if (process != NtCurrentProcess())
@@ -4382,7 +4400,8 @@ NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *s
         call.virtual_alloc_ex.type         = APC_VIRTUAL_ALLOC_EX;
         call.virtual_alloc_ex.addr         = wine_server_client_ptr( *ret );
         call.virtual_alloc_ex.size         = *size_ptr;
-        call.virtual_alloc_ex.limit        = limit;
+        call.virtual_alloc_ex.limit_low    = limit_low;
+        call.virtual_alloc_ex.limit_high   = limit_high;
         call.virtual_alloc_ex.align        = align;
         call.virtual_alloc_ex.op_type      = type;
         call.virtual_alloc_ex.prot         = protect;
@@ -4398,7 +4417,8 @@ NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *s
         return result.virtual_alloc_ex.status;
     }
 
-    return allocate_virtual_memory( ret, size_ptr, type, protect, limit, align, attributes );
+    return allocate_virtual_memory( ret, size_ptr, type, protect,
+                                    limit_low, limit_high, align, attributes );
 }
 
 
@@ -5094,7 +5114,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         return result.map_view.status;
     }
 
-    return virtual_map_section( handle, addr_ptr, get_zero_bits_limit( zero_bits ), commit_size,
+    return virtual_map_section( handle, addr_ptr, 0, get_zero_bits_limit( zero_bits ), commit_size,
                                 offset_ptr, size_ptr, alloc_type, protect, 0 );
 }
 
@@ -5107,7 +5127,7 @@ NTSTATUS WINAPI NtMapViewOfSectionEx( HANDLE handle, HANDLE process, PVOID *addr
                                       ULONG alloc_type, ULONG protect,
                                       MEM_EXTENDED_PARAMETER *parameters, ULONG count )
 {
-    ULONG_PTR limit = 0, align = 0;
+    ULONG_PTR limit_low = 0, limit_high = 0, align = 0;
     ULONG attributes = 0;
     USHORT machine = 0;
     unsigned int status;
@@ -5119,11 +5139,12 @@ NTSTATUS WINAPI NtMapViewOfSectionEx( HANDLE handle, HANDLE process, PVOID *addr
     TRACE( "handle=%p process=%p addr=%p off=%s size=%lx access=%x\n",
            handle, process, *addr_ptr, wine_dbgstr_longlong(offset.QuadPart), *size_ptr, (int)protect );
 
-    status = get_extended_params( parameters, count, &limit, &align, &attributes, &machine );
+    status = get_extended_params( parameters, count, &limit_low, &limit_high,
+                                  &align, &attributes, &machine );
     if (status) return status;
 
     if (align) return STATUS_INVALID_PARAMETER;
-    if (*addr_ptr && limit) return STATUS_INVALID_PARAMETER;
+    if (*addr_ptr && (limit_low || limit_high)) return STATUS_INVALID_PARAMETER;
 
 #ifndef _WIN64
     if (!is_old_wow64() && (alloc_type & AT_ROUND_TO_PAGE))
@@ -5148,11 +5169,11 @@ NTSTATUS WINAPI NtMapViewOfSectionEx( HANDLE handle, HANDLE process, PVOID *addr
         call.map_view_ex.addr         = wine_server_client_ptr( *addr_ptr );
         call.map_view_ex.size         = *size_ptr;
         call.map_view_ex.offset       = offset.QuadPart;
-        call.map_view_ex.limit        = limit;
+        call.map_view_ex.limit_low    = limit_low;
+        call.map_view_ex.limit_high   = limit_high;
         call.map_view_ex.alloc_type   = alloc_type;
         call.map_view_ex.prot         = protect;
         call.map_view_ex.machine      = machine;
-        if (call.map_view_ex.prot != protect) return STATUS_INVALID_PARAMETER;
         status = server_queue_process_apc( process, &call, &result );
         if (status != STATUS_SUCCESS) return status;
 
@@ -5164,8 +5185,8 @@ NTSTATUS WINAPI NtMapViewOfSectionEx( HANDLE handle, HANDLE process, PVOID *addr
         return result.map_view_ex.status;
     }
 
-    return virtual_map_section( handle, addr_ptr, limit, 0, offset_ptr, size_ptr,
-                                alloc_type, protect, machine );
+    return virtual_map_section( handle, addr_ptr, limit_low, limit_high, 0,
+                                offset_ptr, size_ptr, alloc_type, protect, machine );
 }
 
 

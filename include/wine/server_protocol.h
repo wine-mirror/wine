@@ -527,7 +527,8 @@ typedef union
         unsigned int     op_type;
         client_ptr_t     addr;
         mem_size_t       size;
-        mem_size_t       limit;
+        mem_size_t       limit_low;
+        mem_size_t       limit_high;
         mem_size_t       align;
         unsigned int     prot;
         unsigned int     attributes;
@@ -591,10 +592,12 @@ typedef union
         client_ptr_t     addr;
         mem_size_t       size;
         file_pos_t       offset;
-        mem_size_t       limit;
+        mem_size_t       limit_low;
+        mem_size_t       limit_high;
         unsigned int     alloc_type;
-        unsigned short   prot;
+        unsigned int     prot;
         unsigned short   machine;
+        unsigned short   __pad[3];
     } map_view_ex;
     struct
     {
@@ -6414,7 +6417,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 775
+#define SERVER_PROTOCOL_VERSION 776
 
 /* ### protocol_version end ### */
 

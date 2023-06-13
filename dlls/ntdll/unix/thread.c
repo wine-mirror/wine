@@ -1180,7 +1180,7 @@ NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR limit, SIZE_T reserve_size, SIZE
     NTSTATUS status;
 
     /* kernel stack */
-    if ((status = virtual_alloc_thread_stack( &stack, 0, kernel_stack_size, kernel_stack_size, FALSE )))
+    if ((status = virtual_alloc_thread_stack( &stack, 0, 0, kernel_stack_size, kernel_stack_size, FALSE )))
         return status;
     thread_data->kernel_stack = stack.DeallocationStack;
 
@@ -1191,7 +1191,7 @@ NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR limit, SIZE_T reserve_size, SIZE
             ((get_machine_context_size( main_image_info.Machine ) + 7) & ~7) + sizeof(ULONG64);
 
         /* 64-bit stack */
-        if ((status = virtual_alloc_thread_stack( &stack, 0, 0x40000, 0x40000, TRUE ))) return status;
+        if ((status = virtual_alloc_thread_stack( &stack, 0, 0, 0x40000, 0x40000, TRUE ))) return status;
         cpu = (WOW64_CPURESERVED *)(((ULONG_PTR)stack.StackBase - cpusize) & ~15);
         cpu->Machine = main_image_info.Machine;
 
@@ -1201,7 +1201,7 @@ NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR limit, SIZE_T reserve_size, SIZE
         teb->DeallocationStack = stack.DeallocationStack;
 
         /* 32-bit stack */
-        if ((status = virtual_alloc_thread_stack( &stack, limit ? limit : 0x7fffffff,
+        if ((status = virtual_alloc_thread_stack( &stack, 0, limit ? limit : 0x7fffffff,
                                                   reserve_size, commit_size, TRUE )))
             return status;
         wow_teb->Tib.StackBase = PtrToUlong( stack.StackBase );
@@ -1216,7 +1216,7 @@ NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR limit, SIZE_T reserve_size, SIZE
     }
 
     /* native stack */
-    if ((status = virtual_alloc_thread_stack( &stack, limit, reserve_size, commit_size, TRUE )))
+    if ((status = virtual_alloc_thread_stack( &stack, 0, limit, reserve_size, commit_size, TRUE )))
         return status;
     teb->Tib.StackBase = stack.StackBase;
     teb->Tib.StackLimit = stack.StackLimit;

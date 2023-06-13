@@ -689,7 +689,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
 
 C_ASSERT( sizeof(abstime_t) == 8 );
 C_ASSERT( sizeof(affinity_t) == 8 );
-C_ASSERT( sizeof(apc_call_t) == 48 );
+C_ASSERT( sizeof(apc_call_t) == 64 );
 C_ASSERT( sizeof(apc_param_t) == 8 );
 C_ASSERT( sizeof(apc_result_t) == 40 );
 C_ASSERT( sizeof(async_data_t) == 40 );

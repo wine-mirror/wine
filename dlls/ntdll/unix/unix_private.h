@@ -174,7 +174,7 @@ extern char **build_envp( const WCHAR *envW ) DECLSPEC_HIDDEN;
 extern char *get_alternate_wineloader( WORD machine ) DECLSPEC_HIDDEN;
 extern NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_info ) DECLSPEC_HIDDEN;
 extern NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename, USHORT machine,
-                              void **addr_ptr, SIZE_T *size_ptr, ULONG_PTR limit ) DECLSPEC_HIDDEN;
+                              void **addr_ptr, SIZE_T *size_ptr, ULONG_PTR limit_low, ULONG_PTR limit_high ) DECLSPEC_HIDDEN;
 extern BOOL is_builtin_path( const UNICODE_STRING *path, WORD *machine ) DECLSPEC_HIDDEN;
 extern NTSTATUS load_main_exe( const WCHAR *name, const char *unix_name, const WCHAR *curdir,
                                USHORT load_machine, WCHAR **image, void **module ) DECLSPEC_HIDDEN;
@@ -220,18 +220,20 @@ extern void *anon_mmap_alloc( size_t size, int prot ) DECLSPEC_HIDDEN;
 extern void virtual_init(void) DECLSPEC_HIDDEN;
 extern ULONG_PTR get_system_affinity_mask(void) DECLSPEC_HIDDEN;
 extern void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info, BOOL wow64 ) DECLSPEC_HIDDEN;
-extern NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size, SECTION_IMAGE_INFORMATION *info,
-                                            ULONG_PTR limit, WORD machine, BOOL prefer_native ) DECLSPEC_HIDDEN;
-extern NTSTATUS virtual_map_module( HANDLE mapping, void **module, SIZE_T *size, SECTION_IMAGE_INFORMATION *info,
-                                    ULONG_PTR limit, USHORT machine ) DECLSPEC_HIDDEN;
+extern NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size,
+                                            SECTION_IMAGE_INFORMATION *info, ULONG_PTR limit_low,
+                                            ULONG_PTR limit_high, WORD machine, BOOL prefer_native ) DECLSPEC_HIDDEN;
+extern NTSTATUS virtual_map_module( HANDLE mapping, void **module, SIZE_T *size,
+                                    SECTION_IMAGE_INFORMATION *info, ULONG_PTR limit_low,
+                                    ULONG_PTR limit_high, USHORT machine ) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING *nt_name,
                                              pe_image_info_t *info, void *so_handle ) DECLSPEC_HIDDEN;
 extern TEB *virtual_alloc_first_teb(void) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_alloc_teb( TEB **ret_teb ) DECLSPEC_HIDDEN;
 extern void virtual_free_teb( TEB *teb ) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_clear_tls_index( ULONG index ) DECLSPEC_HIDDEN;
-extern NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR limit, SIZE_T reserve_size,
-                                            SIZE_T commit_size, BOOL guard_page ) DECLSPEC_HIDDEN;
+extern NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR limit_low, ULONG_PTR limit_high,
+                                            SIZE_T reserve_size, SIZE_T commit_size, BOOL guard_page ) DECLSPEC_HIDDEN;
 extern void virtual_map_user_shared_data(void) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_handle_fault( void *addr, DWORD err, void *stack ) DECLSPEC_HIDDEN;
 extern unsigned int virtual_locked_server_call( void *req_ptr ) DECLSPEC_HIDDEN;

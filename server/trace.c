@@ -192,7 +192,8 @@ static void dump_apc_call( const char *prefix, const apc_call_t *call )
     case APC_VIRTUAL_ALLOC_EX:
         dump_uint64( "APC_VIRTUAL_ALLOC_EX,addr=", &call->virtual_alloc_ex.addr );
         dump_uint64( ",size=", &call->virtual_alloc_ex.size );
-        dump_uint64( ",limit=", &call->virtual_alloc_ex.limit );
+        dump_uint64( ",limit_low=", &call->virtual_alloc_ex.limit_low );
+        dump_uint64( ",limit_high=", &call->virtual_alloc_ex.limit_high );
         dump_uint64( ",align=", &call->virtual_alloc_ex.align );
         fprintf( stderr, ",op_type=%x,prot=%x,attributes=%x",
                  call->virtual_alloc_ex.op_type, call->virtual_alloc_ex.prot,
@@ -236,7 +237,8 @@ static void dump_apc_call( const char *prefix, const apc_call_t *call )
         dump_uint64( ",addr=", &call->map_view_ex.addr );
         dump_uint64( ",size=", &call->map_view_ex.size );
         dump_uint64( ",offset=", &call->map_view_ex.offset );
-        dump_uint64( ",limit=", &call->map_view_ex.limit );
+        dump_uint64( ",limit_low=", &call->map_view_ex.limit_low );
+        dump_uint64( ",limit_high=", &call->map_view_ex.limit_high );
         fprintf( stderr, ",alloc_type=%x,prot=%x,machine=%04x",
                  call->map_view_ex.alloc_type, call->map_view_ex.prot, call->map_view_ex.machine );
         break;
@@ -549,6 +551,7 @@ static void dump_varargs_apc_call( const char *prefix, data_size_t size )
         dump_apc_call( prefix, call );
         size = sizeof(*call);
     }
+    else fprintf( stderr, "%s{}", prefix );
     remove_data( size );
 }
 

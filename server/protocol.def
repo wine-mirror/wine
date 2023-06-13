@@ -543,7 +543,8 @@ typedef union
         unsigned int     op_type;      /* type of operation */
         client_ptr_t     addr;         /* requested address */
         mem_size_t       size;         /* allocation size */
-        mem_size_t       limit;        /* allocation address limit */
+        mem_size_t       limit_low;    /* allocation address limits */
+        mem_size_t       limit_high;
         mem_size_t       align;        /* allocation alignment */
         unsigned int     prot;         /* memory protection flags */
         unsigned int     attributes;   /* memory extended attributes */
@@ -607,10 +608,12 @@ typedef union
         client_ptr_t     addr;         /* requested address */
         mem_size_t       size;         /* allocation size */
         file_pos_t       offset;       /* file offset */
-        mem_size_t       limit;        /* allocation address limit */
+        mem_size_t       limit_low;    /* allocation address limits */
+        mem_size_t       limit_high;
         unsigned int     alloc_type;   /* allocation type */
-        unsigned short   prot;         /* memory protection flags */
+        unsigned int     prot;         /* memory protection flags */
         unsigned short   machine;      /* requested machine for image mappings */
+        unsigned short   __pad[3];
     } map_view_ex;
     struct
     {

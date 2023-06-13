@@ -906,6 +906,68 @@ static void test_NtAllocateVirtualMemoryEx_address_requirements(void)
     status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
                                         PAGE_EXECUTE_READWRITE, ext, 1);
     ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    a.LowestStartingAddress = (void *)0x20001000;
+    a.Alignment = 0;
+    size = 0x1000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    a.LowestStartingAddress = (void *)(0x20001000 - 1);
+    size = 0x1000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    a.LowestStartingAddress = (void *)(0x20001000 + 1);
+    size = 0x1000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    a.LowestStartingAddress = (void *)0x30000000;
+    a.HighestEndingAddress = (void *)0x20000000;
+    size = 0x1000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    a.LowestStartingAddress = (void *)0x20000000;
+    a.HighestEndingAddress = 0;
+    size = 0x1000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(!status, "Unexpected status %08lx.\n", status);
+    ok(addr >= (void *)0x20000000, "Unexpected addr %p.\n", addr);
+    size = 0;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
+    ok(!status, "Unexpected status %08lx.\n", status);
+
+    a.LowestStartingAddress = (void *)0x20000000;
+    a.HighestEndingAddress = (void *)0x2fffffff;
+    size = 0x1000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(!status, "Unexpected status %08lx.\n", status);
+    ok(addr >= (void *)0x20000000 && addr < (void *)0x30000000, "Unexpected addr %p.\n", addr);
+    size = 0;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
+    ok(!status, "Unexpected status %08lx.\n", status);
+
+    a.LowestStartingAddress = (char *)si.lpMaximumApplicationAddress + 1;
+    a.HighestEndingAddress = 0;
+    size = 0x10000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
 }
 
 struct test_stack_size_thread_args
