@@ -33,14 +33,6 @@
 # define __ASM_LOCAL_LABEL(label) ".L" label
 #endif
 
-#if defined(__WINE_PE_BUILD) && defined(__i386__)
-# define __ASM_STDCALL(name,args)  "_" name "@" #args
-# define __ASM_FASTCALL(name,args) "@" name "@" #args
-#else
-# define __ASM_STDCALL(name,args)  __ASM_NAME(name)
-# define __ASM_FASTCALL(name,args) __ASM_NAME("__fastcall_" name)
-#endif
-
 #if defined(__GCC_HAVE_DWARF2_CFI_ASM) || ((defined(__APPLE__) || defined(__clang__)) && defined(__GNUC__) && !defined(__SEH__))
 # define __ASM_CFI(str) str
 #else
@@ -102,29 +94,40 @@
     __ASM_BLOCK_END
 
 #define __ASM_GLOBAL_FUNC(name,code) __ASM_DEFINE_FUNC(__ASM_NAME(#name),code)
-#define __ASM_STDCALL_FUNC(name,args,code) __ASM_DEFINE_FUNC(__ASM_STDCALL(#name,args),code)
-#define __ASM_FASTCALL_FUNC(name,args,code) __ASM_DEFINE_FUNC(__ASM_FASTCALL(#name,args),code)
 
 /* import variables */
 
-#ifdef _WIN64
-#define __ASM_DEFINE_IMPORT(name) \
+#ifdef __WINE_PE_BUILD
+# ifdef _WIN64
+#  define __ASM_DEFINE_IMPORT(name) \
     __ASM_BLOCK_BEGIN(__LINE__) \
     asm(".data\n\t.balign 8\n\t.globl __imp_" name "\n__imp_" name ":\n\t.quad " name "\n\t.text"); \
     __ASM_BLOCK_END
-#else
-#define __ASM_DEFINE_IMPORT(name) \
+# else
+#  define __ASM_DEFINE_IMPORT(name) \
     __ASM_BLOCK_BEGIN(__LINE__) \
     asm(".data\n\t.balign 4\n\t.globl __imp_" name "\n__imp_" name ":\n\t.long " name "\n\t.text"); \
     __ASM_BLOCK_END
+# endif
+# define __ASM_GLOBAL_IMPORT(name) __ASM_DEFINE_IMPORT(__ASM_NAME(#name))
+#else
+# define __ASM_GLOBAL_IMPORT(name) /* nothing */
 #endif
 
-#ifdef __WINE_PE_BUILD
-#define __ASM_GLOBAL_IMPORT(name) __ASM_DEFINE_IMPORT(__ASM_NAME(#name))
-#define __ASM_STDCALL_IMPORT(name,args) __ASM_DEFINE_IMPORT(__ASM_STDCALL(#name,args))
-#else
-#define __ASM_GLOBAL_IMPORT(name) /* nothing */
-#define __ASM_STDCALL_IMPORT(name,args) /* nothing */
+/* stdcall support */
+
+#ifdef __i386__
+# ifdef __WINE_PE_BUILD
+#  define __ASM_STDCALL(name,args)  "_" name "@" #args
+#  define __ASM_FASTCALL(name,args) "@" name "@" #args
+#  define __ASM_STDCALL_IMPORT(name,args) __ASM_DEFINE_IMPORT(__ASM_STDCALL(#name,args))
+# else
+#  define __ASM_STDCALL(name,args)  __ASM_NAME(name)
+#  define __ASM_FASTCALL(name,args) __ASM_NAME("__fastcall_" name)
+#  define __ASM_STDCALL_IMPORT(name,args) /* nothing */
+# endif
+# define __ASM_STDCALL_FUNC(name,args,code) __ASM_DEFINE_FUNC(__ASM_STDCALL(#name,args),code)
+# define __ASM_FASTCALL_FUNC(name,args,code) __ASM_DEFINE_FUNC(__ASM_FASTCALL(#name,args),code)
 #endif
 
 /* fastcall support */
@@ -187,11 +190,5 @@
 # define THISCALL_NAME(func) __ASM_NAME(#func)
 
 #endif  /* __i386__ */
-
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)) && !defined(__WINE_PE_BUILD) && !defined(__APPLE__) && !defined(__ANDROID__)
-#define __ASM_OBSOLETE(func) __asm__( ".symver " #func "_obsolete," #func "@WINE_1.0" )
-#else
-#undef __ASM_OBSOLETE
-#endif
 
 #endif  /* __WINE_WINE_ASM_H */
