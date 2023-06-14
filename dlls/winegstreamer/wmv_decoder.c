@@ -657,8 +657,17 @@ static HRESULT WINAPI media_object_SetInputMaxLatency(IMediaObject *iface, DWORD
 
 static HRESULT WINAPI media_object_Flush(IMediaObject *iface)
 {
-    FIXME("iface %p stub!\n", iface);
-    return E_NOTIMPL;
+    struct wmv_decoder *decoder = impl_from_IMediaObject(iface);
+    HRESULT hr;
+
+    TRACE("iface %p.\n", iface);
+
+    if (FAILED(hr = wg_transform_flush(decoder->wg_transform)))
+        return hr;
+
+    wg_sample_queue_flush(decoder->wg_sample_queue, TRUE);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_object_Discontinuity(IMediaObject *iface, DWORD index)
