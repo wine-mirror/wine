@@ -267,7 +267,7 @@ __ASM_GLOBAL_FUNC( unix_call_32to64,
 /**********************************************************************
  *           BTCpuSimulate  (wow64cpu.@)
  */
-__ASM_STDCALL_FUNC( BTCpuSimulate, 0,
+__ASM_GLOBAL_FUNC( BTCpuSimulate,
                     "subq $0x28,%rsp\n"
                    __ASM_SEH(".seh_stackalloc 0x28\n\t")
                    __ASM_SEH(".seh_endprologue\n\t")
