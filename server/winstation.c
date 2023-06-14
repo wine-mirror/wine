@@ -30,6 +30,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winternl.h"
+#include "ntuser.h"
 
 #include "object.h"
 #include "handle.h"
@@ -240,7 +241,11 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
             list_add_tail( &winstation->desktops, &desktop->entry );
             list_init( &desktop->hotkeys );
         }
-        else clear_error();
+        else
+        {
+            desktop->flags |= (flags & DF_WINE_CREATE_DESKTOP);
+            clear_error();
+        }
     }
     return desktop;
 }
