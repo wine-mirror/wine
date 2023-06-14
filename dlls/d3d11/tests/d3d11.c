@@ -30316,60 +30316,6 @@ static void test_combined_clip_and_cull_distances(void)
 
 static void test_generate_mips(void)
 {
-    static const DWORD ps_code[] =
-    {
-#if 0
-        Texture2D t;
-        SamplerState s;
-
-        float4 main(float4 position : SV_POSITION) : SV_Target
-        {
-            float2 p;
-
-            p.x = position.x / 640.0f;
-            p.y = position.y / 480.0f;
-            return t.Sample(s, p);
-        }
-#endif
-        0x43425844, 0x1ce9b612, 0xc8176faa, 0xd37844af, 0xdb515605, 0x00000001, 0x00000134, 0x00000003,
-        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
-        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
-        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
-        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000098, 0x00000040,
-        0x00000026, 0x0300005a, 0x00106000, 0x00000000, 0x04001858, 0x00107000, 0x00000000, 0x00005555,
-        0x04002064, 0x00101032, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068,
-        0x00000001, 0x0a000038, 0x00100032, 0x00000000, 0x00101046, 0x00000000, 0x00004002, 0x3acccccd,
-        0x3b088889, 0x00000000, 0x00000000, 0x09000045, 0x001020f2, 0x00000000, 0x00100046, 0x00000000,
-        0x00107e46, 0x00000000, 0x00106000, 0x00000000, 0x0100003e,
-    };
-    static const DWORD ps_code_3d[] =
-    {
-#if 0
-        Texture3D t;
-        SamplerState s;
-
-        float4 main(float4 position : SV_POSITION) : SV_Target
-        {
-            float3 p;
-
-            p.x = position.x / 640.0f;
-            p.y = position.y / 480.0f;
-            p.z = 0.5f;
-            return t.Sample(s, p);
-        }
-#endif
-        0x43425844, 0xa1e26083, 0xeb45763e, 0x1e5a5089, 0xdfbbe0df, 0x00000001, 0x00000148, 0x00000003,
-        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
-        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
-        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
-        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x000000ac, 0x00000040,
-        0x0000002b, 0x0300005a, 0x00106000, 0x00000000, 0x04002858, 0x00107000, 0x00000000, 0x00005555,
-        0x04002064, 0x00101032, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068,
-        0x00000001, 0x0a000038, 0x00100032, 0x00000000, 0x00101046, 0x00000000, 0x00004002, 0x3acccccd,
-        0x3b088889, 0x00000000, 0x00000000, 0x05000036, 0x00100042, 0x00000000, 0x00004001, 0x3f000000,
-        0x09000045, 0x001020f2, 0x00000000, 0x00100246, 0x00000000, 0x00107e46, 0x00000000, 0x00106000,
-        0x00000000, 0x0100003e,
-    };
     static const struct
     {
         D3D11_RESOURCE_DIMENSION dim;
@@ -30423,66 +30369,38 @@ static void test_generate_mips(void)
     }
     expected[] =
     {
-        {{200, 200}, 0xffff0000},
-        {{280, 200}, 0xffff0000},
-        {{360, 200}, 0xff00ff00},
-        {{440, 200}, 0xff00ff00},
-        {{200, 270}, 0xff0000ff},
-        {{280, 270}, 0xff0000ff},
-        {{360, 270}, 0xff000000},
-        {{440, 270}, 0xff000000},
+        {{10, 12}, 0xffff0000},
+        {{14, 12}, 0xffff0000},
+        {{18, 12}, 0xff00ff00},
+        {{22, 12}, 0xff00ff00},
+        {{10, 18}, 0xff0000ff},
+        {{14, 18}, 0xff0000ff},
+        {{18, 18}, 0xff000000},
+        {{22, 18}, 0xff000000},
     };
-    static const struct vec4 white = {1.0f, 1.0f, 1.0f, 1.0f};
     static const RECT r1 = {8, 8, 16, 16};
     static const RECT r2 = {16, 8, 24, 16};
     static const RECT r3 = {8, 16, 16, 24};
     static const RECT r4 = {16, 16, 24, 24};
     DWORD *data, *zero_data, color, expected_color;
-    ID3D11ShaderResourceView *srv, *srv_sampling;
     D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
     struct d3d11_test_context test_context;
     D3D11_TEXTURE2D_DESC texture2d_desc;
     D3D11_TEXTURE3D_DESC texture3d_desc;
-    ID3D11SamplerState *sampler_state;
-    D3D11_SAMPLER_DESC sampler_desc;
+    ID3D11ShaderResourceView *srv;
     D3D11_BUFFER_DESC buffer_desc;
     unsigned int i, j, k, x, y, z;
-    ID3D11PixelShader *ps, *ps_3d;
     ID3D11DeviceContext *context;
     struct resource_readback rb;
     ID3D11Resource *resource;
     ID3D11Device *device;
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     if (!init_test_context(&test_context, NULL))
         return;
 
     device = test_context.device;
     context = test_context.immediate_context;
-
-    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-
-    hr = ID3D11Device_CreatePixelShader(device, ps_code_3d, sizeof(ps_code_3d), NULL, &ps_3d);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-
-    sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
-    sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-    sampler_desc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-    sampler_desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-    sampler_desc.MipLODBias = 0.0f;
-    sampler_desc.MaxAnisotropy = 0;
-    sampler_desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-    sampler_desc.BorderColor[0] = 0.0f;
-    sampler_desc.BorderColor[1] = 0.0f;
-    sampler_desc.BorderColor[2] = 0.0f;
-    sampler_desc.BorderColor[3] = 0.0f;
-    sampler_desc.MinLOD = 0.0f;
-    sampler_desc.MaxLOD = D3D11_FLOAT32_MAX;
-
-    hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler_state);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler_state);
 
     data = heap_alloc(sizeof(*data) * 32 * 32 * 32);
 
@@ -30634,34 +30552,17 @@ static void test_generate_mips(void)
 
             ID3D11DeviceContext_GenerateMips(context, srv);
 
-            clear_rtv(context, test_context.backbuffer_rtv, &white);
-
-            srv_desc.Format = tests[j].texture_format == DXGI_FORMAT_R8G8B8A8_UINT
-                    ? DXGI_FORMAT_R8G8B8A8_UINT : DXGI_FORMAT_R8G8B8A8_UNORM;
-            srv_desc.ViewDimension = resource_types[i].dim == D3D11_RESOURCE_DIMENSION_TEXTURE3D
-                    ? D3D11_SRV_DIMENSION_TEXTURE3D : D3D11_SRV_DIMENSION_TEXTURE2D;
-            srv_desc.Texture2D.MostDetailedMip = tests[j].base_level + 1;
-            srv_desc.Texture2D.MipLevels = ~0u;
-            hr = ID3D11Device_CreateShaderResourceView(device, resource, &srv_desc, &srv_sampling);
-            ok(hr == S_OK, "Resource type %u, test %u: Got unexpected hr %#lx.\n", i, j, hr);
-            ID3D11DeviceContext_PSSetShader(context, resource_types[i].dim
-                    == D3D11_RESOURCE_DIMENSION_TEXTURE3D ? ps_3d : ps, NULL, 0);
-            ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv_sampling);
-
-            draw_quad(&test_context);
-
-            get_texture_readback(test_context.backbuffer, 0, &rb);
+            get_resource_readback(resource, tests[j].base_level + 1, &rb);
             for (k = 0; k < ARRAY_SIZE(expected); ++k)
             {
-                color = get_readback_color(&rb, expected[k].pos.x, expected[k].pos.y, 0);
+                color = get_readback_color(&rb, expected[k].pos.x >> 1, expected[k].pos.y >> 1, 0);
                 expected_color = tests[j].expected_mips ? expected[k].color : 0;
                 ok(color == expected_color, "Resource type %u, test %u: pixel (%lu, %lu) "
                         "has colour %08lx, expected %08lx.\n",
-                        i, j, expected[k].pos.x, expected[k].pos.y, color, expected_color);
+                        i, j, expected[k].pos.x >> 1, expected[k].pos.y >> 1, color, expected_color);
             }
             release_resource_readback(&rb);
 
-            ID3D11ShaderResourceView_Release(srv_sampling);
             ID3D11ShaderResourceView_Release(srv);
             ID3D11Resource_Release(resource);
         }
@@ -30703,26 +30604,12 @@ static void test_generate_mips(void)
 
     ID3D11DeviceContext_GenerateMips(context, srv);
 
-    clear_rtv(context, test_context.backbuffer_rtv, &white);
-
-    srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-    srv_desc.Texture2D.MostDetailedMip = 1;
-    srv_desc.Texture2D.MipLevels = ~0u;
-    hr = ID3D11Device_CreateShaderResourceView(device, resource, &srv_desc, &srv_sampling);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
-    ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv_sampling);
-
-    draw_quad(&test_context);
-
-    get_texture_readback(test_context.backbuffer, 0, &rb);
-    color = get_readback_color(&rb, 320, 240, 0);
+    get_resource_readback(resource, 1, &rb);
+    color = get_readback_color(&rb, 8, 8, 0);
     ok(compare_color(color, 0x7fbcbcbc, 1) || broken(compare_color(color, 0x7f7f7f7f, 1)), /* AMD */
             "Got unexpected colour %08lx.\n", color);
     release_resource_readback(&rb);
 
-    ID3D11ShaderResourceView_Release(srv_sampling);
     ID3D11ShaderResourceView_Release(srv);
 
     srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -30735,24 +30622,10 @@ static void test_generate_mips(void)
 
     ID3D11DeviceContext_GenerateMips(context, srv);
 
-    clear_rtv(context, test_context.backbuffer_rtv, &white);
-
-    srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-    srv_desc.Texture2D.MostDetailedMip = 1;
-    srv_desc.Texture2D.MipLevels = ~0u;
-    hr = ID3D11Device_CreateShaderResourceView(device, resource, &srv_desc, &srv_sampling);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
-    ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv_sampling);
-
-    draw_quad(&test_context);
-
-    get_texture_readback(test_context.backbuffer, 0, &rb);
+    get_resource_readback(resource, 1, &rb);
     check_readback_data_color(&rb, NULL, 0x7f7f7f7f, 1);
     release_resource_readback(&rb);
 
-    ID3D11ShaderResourceView_Release(srv_sampling);
     ID3D11ShaderResourceView_Release(srv);
 
     ID3D11Resource_Release(resource);
@@ -30760,9 +30633,6 @@ static void test_generate_mips(void)
     heap_free(zero_data);
     heap_free(data);
 
-    ID3D11SamplerState_Release(sampler_state);
-    ID3D11PixelShader_Release(ps_3d);
-    ID3D11PixelShader_Release(ps);
     release_test_context(&test_context);
 }
 
