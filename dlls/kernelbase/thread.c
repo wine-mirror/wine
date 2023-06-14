@@ -807,7 +807,7 @@ __ASM_STDCALL_FUNC( switch_fiber, 8,
                     "movl 0xc4(%ecx),%esp\n\t"  /* new->Esp */
                     "jmp *0xb8(%ecx)" )         /* new->Eip */
 #elif defined(__x86_64__)
-__ASM_STDCALL_FUNC( switch_fiber, 8,
+__ASM_GLOBAL_FUNC( switch_fiber,
                     "movq %rbx,0x90(%rcx)\n\t"       /* old->Rbx */
                     "leaq 0x8(%rsp),%rax\n\t"
                     "movq %rax,0x98(%rcx)\n\t"       /* old->Rsp */
@@ -851,7 +851,7 @@ __ASM_STDCALL_FUNC( switch_fiber, 8,
                     "movq 0x98(%rdx),%rsp\n\t"       /* new->Rsp */
                     "jmp *0xf8(%rdx)" )              /* new->Rip */
 #elif defined(__arm__)
-__ASM_STDCALL_FUNC( switch_fiber, 8,
+__ASM_GLOBAL_FUNC( switch_fiber,
                    "str r4, [r0, #0x14]\n\t"   /* old->R4 */
                    "str r5, [r0, #0x18]\n\t"   /* old->R5 */
                    "str r6, [r0, #0x1c]\n\t"   /* old->R6 */
@@ -874,7 +874,7 @@ __ASM_STDCALL_FUNC( switch_fiber, 8,
                    "ldr r2, [r1, #0x40]\n\t"   /* new->Pc */
                    "bx r2" )
 #elif defined(__aarch64__)
-__ASM_STDCALL_FUNC( switch_fiber, 8,
+__ASM_GLOBAL_FUNC( switch_fiber,
                    "stp x19, x20, [x0, #0xa0]\n\t"  /* old->X19,X20 */
                    "stp x21, x22, [x0, #0xb0]\n\t"  /* old->X21,X22 */
                    "stp x23, x24, [x0, #0xc0]\n\t"  /* old->X23,X24 */
