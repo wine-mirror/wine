@@ -341,7 +341,7 @@ static void test_hash_value(void)
     };
 
     static const FLOAT float_hash_tests[] = {
-        0.0, -1.0, 100.0, 1.0, 255.0, 1.234
+        0.0, -1.0, 100.0, 1.0, 255.0, 1.234, 2175.0, 6259.0
     };
 
     IDictionary *dict;
@@ -848,6 +848,29 @@ static void test_Keys(void)
 
     VariantClear(&keys);
 
+    hr = IDictionary_RemoveAll(dict);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Integer key type. */
+    V_VT(&key) = VT_I4;
+    V_I4(&key) = 0;
+    VariantInit(&item);
+    hr = IDictionary_Add(dict, &key, &item);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    VariantInit(&keys);
+    hr = IDictionary_Keys(dict, &keys);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&keys) == (VT_ARRAY|VT_VARIANT), "got %d\n", V_VT(&keys));
+
+    VariantInit(&key);
+    index = 0;
+    hr = SafeArrayGetElement(V_ARRAY(&keys), &index, &key);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&key) == VT_I4, "got %d\n", V_VT(&key));
+
+    VariantClear(&keys);
+
     IDictionary_Release(dict);
 }
 
@@ -910,7 +933,7 @@ static void test_Item(void)
 
 static void test_Add(void)
 {
-    VARIANT key, item;
+    VARIANT item, key1, key2, hash1, hash2;
     IDictionary *dict;
     HRESULT hr;
     BSTR str;
@@ -920,18 +943,51 @@ static void test_Add(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     str = SysAllocString(L"testW");
-    V_VT(&key) = VT_I2;
-    V_I2(&key) = 1;
+    V_VT(&key1) = VT_I2;
+    V_I2(&key1) = 1;
     V_VT(&item) = VT_BSTR|VT_BYREF;
     V_BSTRREF(&item) = &str;
-    hr = IDictionary_Add(dict, &key, &item);
+    hr = IDictionary_Add(dict, &key1, &item);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    hr = IDictionary_get_Item(dict, &key, &item);
+    hr = IDictionary_get_Item(dict, &key1, &item);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(V_VT(&item) == VT_BSTR, "got %d\n", V_VT(&item));
 
     SysFreeString(str);
+
+    /* Items with matching key hashes, float keys. */
+    V_VT(&key1) = VT_R4;
+    V_R4(&key1) = 2175.0;
+
+    V_VT(&key2) = VT_R4;
+    V_R4(&key2) = 6259.0;
+
+    VariantInit(&hash1);
+    hr = IDictionary_get_HashVal(dict, &key1, &hash1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    VariantInit(&hash2);
+    hr = IDictionary_get_HashVal(dict, &key1, &hash2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&hash1) == VT_I4, "Unexpected type %d.\n", V_VT(&hash1));
+    ok(V_VT(&hash2) == VT_I4, "Unexpected type %d.\n", V_VT(&hash2));
+    ok(V_I4(&hash1) == V_I4(&hash2), "Unexpected hash %#lx.\n", V_I4(&hash1));
+
+    V_VT(&item) = VT_BSTR;
+    V_BSTR(&item) = SysAllocString(L"float1");
+
+    hr = IDictionary_Add(dict, &key1, &item);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDictionary_Add(dict, &key2, &item);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&key1) = VT_I4;
+    V_I4(&key1) = 2175;
+
+    hr = IDictionary_Add(dict, &key1, &item);
+    ok(hr == CTL_E_KEY_ALREADY_EXISTS, "Unexpected hr %#lx.\n", hr);
+
+    VariantClear(&item);
 
     IDictionary_Release(dict);
 }

@@ -101,7 +101,28 @@ static inline struct list *get_bucket_head(struct dictionary *dict, DWORD hash)
 
 static inline BOOL is_string_key(const VARIANT *key)
 {
-    return V_VT(key) == VT_BSTR || V_VT(key) == (VT_BSTR|VT_BYREF);
+    return V_VT(key) == VT_BSTR;
+}
+
+static inline BOOL is_ptr_key(const VARIANT *key)
+{
+    return V_VT(key) == VT_UNKNOWN || V_VT(key) == VT_DISPATCH;
+}
+
+static inline BOOL is_numeric_key(const VARIANT *key)
+{
+    switch (V_VT(key))
+    {
+        case VT_UI1:
+        case VT_I2:
+        case VT_I4:
+        case VT_DATE:
+        case VT_R4:
+        case VT_R8:
+            return TRUE;
+        default:
+            return FALSE;
+    }
 }
 
 /* Only for VT_BSTR or VT_BSTR|VT_BYREF types */
@@ -126,28 +147,59 @@ static inline int strcmp_key(const struct dictionary *dict, const VARIANT *key1,
     return dict->method == BinaryCompare ? wcscmp(str1, str2) : wcsicmp(str1, str2);
 }
 
-static BOOL is_matching_key(const struct dictionary *dict, const struct keyitem_pair *pair, const VARIANT *key, DWORD hash)
+static inline BOOL numeric_key_eq(const VARIANT *key1, const VARIANT *key2)
 {
-    if (is_string_key(key) && is_string_key(&pair->key)) {
-        if (hash != pair->hash)
-            return FALSE;
+    VARIANT v1, v2;
 
-        return strcmp_key(dict, key, &pair->key) == 0;
-    }
-
-    if ((is_string_key(key) && !is_string_key(&pair->key)) ||
-        (!is_string_key(key) && is_string_key(&pair->key)))
+    VariantInit(&v1);
+    if (FAILED(VariantChangeType(&v1, key1, 0, VT_R4)))
         return FALSE;
 
-    /* for numeric keys only check hash */
-    return hash == pair->hash;
+    VariantInit(&v2);
+    if (FAILED(VariantChangeType(&v2, key2, 0, VT_R4)))
+        return FALSE;
+
+    return V_R4(&v1) == V_R4(&v2);
+}
+
+static BOOL is_matching_key(const struct dictionary *dict, const struct keyitem_pair *pair, const VARIANT *key, DWORD hash)
+{
+    if (is_string_key(key) != is_string_key(&pair->key))
+    {
+        return FALSE;
+    }
+    else if (is_string_key(key) && is_string_key(&pair->key))
+    {
+        return hash == pair->hash && !strcmp_key(dict, key, &pair->key);
+    }
+    else if (is_ptr_key(key) != is_ptr_key(&pair->key))
+    {
+        return FALSE;
+    }
+    else if (is_ptr_key(key) && is_ptr_key(&pair->key))
+    {
+        return hash == pair->hash && V_UNKNOWN(key) == V_UNKNOWN(&pair->key);
+    }
+    else if (is_numeric_key(key) != is_numeric_key(&pair->key))
+    {
+        return FALSE;
+    }
+    else if (is_numeric_key(key) && is_numeric_key(&pair->key))
+    {
+        return hash == pair->hash && numeric_key_eq(key, &pair->key);
+    }
+    else
+    {
+        WARN("Unexpected key type %#x.\n", V_VT(key));
+        return FALSE;
+    }
 }
 
 static struct keyitem_pair *get_keyitem_pair(struct dictionary *dict, VARIANT *key)
 {
     struct keyitem_pair *pair;
     struct list *head, *entry;
-    VARIANT hash;
+    VARIANT hash, v;
     HRESULT hr;
 
     hr = IDictionary_get_HashVal(&dict->IDictionary_iface, key, &hash);
@@ -158,11 +210,22 @@ static struct keyitem_pair *get_keyitem_pair(struct dictionary *dict, VARIANT *k
     if (!head->next || list_empty(head))
         return NULL;
 
+    VariantInit(&v);
+    if (FAILED(VariantCopyInd(&v, key)))
+        return NULL;
+
     entry = list_head(head);
-    do {
+    do
+    {
         pair = LIST_ENTRY(entry, struct keyitem_pair, bucket);
-        if (is_matching_key(dict, pair, key, V_I4(&hash))) return pair;
+        if (is_matching_key(dict, pair, &v, V_I4(&hash)))
+        {
+            VariantClear(&v);
+            return pair;
+        }
     } while ((entry = list_next(head, entry)));
+
+    VariantClear(&v);
 
     return NULL;
 }
