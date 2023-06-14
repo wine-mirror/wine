@@ -103,7 +103,7 @@ __ASM_GLOBAL_FUNC( __chkstk, "lsl r4, r4, #2\n\t"
 /***********************************************************************
  *		RtlCaptureContext (NTDLL.@)
  */
-__ASM_STDCALL_FUNC( RtlCaptureContext, 4,
+__ASM_GLOBAL_FUNC( RtlCaptureContext,
                     "str r1, [r0, #0x8]\n\t"   /* context->R1 */
                     "mov r1, #0x0200000\n\t"   /* CONTEXT_ARM */
                     "add r1, r1, #0x7\n\t"     /* CONTEXT_CONTROL|CONTEXT_INTEGER|CONTEXT_FLOATING_POINT */
@@ -1451,7 +1451,7 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
 /***********************************************************************
  *		RtlRaiseException (NTDLL.@)
  */
-__ASM_STDCALL_FUNC( RtlRaiseException, 4,
+__ASM_GLOBAL_FUNC( RtlRaiseException,
                     "push {r0, lr}\n\t"
                     __ASM_EHABI(".save {r0, lr}\n\t")
                     __ASM_SEH(".seh_save_regs {r0, lr}\n\t")
@@ -1498,11 +1498,11 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
 /**********************************************************************
  *              DbgBreakPoint   (NTDLL.@)
  */
-__ASM_STDCALL_FUNC( DbgBreakPoint, 0, "udf #0xfe; bx lr; nop; nop; nop; nop" );
+__ASM_GLOBAL_FUNC( DbgBreakPoint, "udf #0xfe; bx lr; nop; nop; nop; nop" );
 
 /**********************************************************************
  *              DbgUserBreakPoint   (NTDLL.@)
  */
-__ASM_STDCALL_FUNC( DbgUserBreakPoint, 0, "udf #0xfe; bx lr; nop; nop; nop; nop" );
+__ASM_GLOBAL_FUNC( DbgUserBreakPoint, "udf #0xfe; bx lr; nop; nop; nop; nop" );
 
 #endif  /* __arm__ */
