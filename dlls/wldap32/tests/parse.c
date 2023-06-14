@@ -25,6 +25,9 @@
 #include <winbase.h>
 #include <winldap.h>
 #include <winber.h>
+#include <dsgetdc.h>
+#include <lmcons.h>
+#include <lmapibuf.h>
 
 #include "wine/test.h"
 
@@ -671,10 +674,63 @@ static void test_ldap_host_name(void)
     ldap_unbind( ld );
 }
 
+static void test_ldap_search_dc(void)
+{
+    DOMAIN_CONTROLLER_INFOW *info;
+    char *attrs[] = { (char *)"defaultNamingContext", NULL };
+    LDAP *ld;
+    int version;
+    LDAPMessage *res, *entry;
+    char **values;
+    ULONG ret;
+
+    ret = DsGetDcNameW( NULL, NULL, NULL, NULL, DS_RETURN_DNS_NAME, &info );
+    if (ret != ERROR_SUCCESS)
+    {
+        skip( "Computer is not part of an Active Directory Domain\n" );
+        return;
+    }
+    trace( "Computer is part of domain %s\n", wine_dbgstr_w(info->DomainName) );
+    NetApiBufferFree( info );
+
+    ld = ldap_initA( NULL, 389 );
+    ok( ld != NULL, "ldap_init failed\n" );
+
+    version = LDAP_VERSION3;
+    ret = ldap_set_optionW( ld, LDAP_OPT_PROTOCOL_VERSION, &version );
+    if (ret == LDAP_SERVER_DOWN || ret == LDAP_UNAVAILABLE)
+    {
+        skip( "test server can't be reached\n" );
+        ldap_unbind( ld );
+        return;
+    }
+
+    ret = ldap_search_sA( ld, NULL, LDAP_SCOPE_BASE, (char *)"(objectclass=*)", attrs, FALSE, &res );
+    ok( !ret, "ldap_search_s error %#lx\n", ret );
+    if (ret)
+    {
+        ldap_unbind( ld );
+        return;
+    }
+
+    entry = ldap_first_entry( ld, res );
+    ok( entry != NULL, "expected entry != NULL\n" );
+
+    values = ldap_get_valuesA( ld, entry, attrs[0] );
+    ok( entry != NULL, "expected values != NULL\n" );
+    trace( "%s[0]: %s\n", attrs[0], values[0] );
+
+    ldap_value_freeA( values );
+    ldap_msgfree( res );
+
+    ldap_unbind( ld );
+}
+
 START_TEST (parse)
 {
     LDAP *ld;
 
+    test_ldap_search_dc();
     test_ldap_host_name();
     test_ldap_paged_search();
     test_ldap_server_control();
