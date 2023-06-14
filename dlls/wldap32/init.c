@@ -334,15 +334,17 @@ LDAP *  CDECL ldap_initA( const PCHAR hostname, ULONG portnumber )
 LDAP * CDECL ldap_initW( const PWCHAR hostname, ULONG portnumber )
 {
     LDAP *ld = NULL;
-    char *hostnameU, *url = NULL;
-    WCHAR *hostnameW;
+    char *hostnameU = NULL, *url = NULL;
+    WCHAR *hostnameW = NULL;
 
     TRACE( "(%s, %lu)\n", debugstr_w(hostname), portnumber );
 
-    if (!(hostnameW = wcsdup( hostname ? hostname : L"localhost" ))) return NULL;
-    if (!(hostnameU = strWtoU( hostnameW ))) goto exit;
-    if (!(url = urlify_hostnames( "ldap://", hostnameU, portnumber ))) goto exit;
-
+    if (hostname)
+    {
+        if (!(hostnameW = wcsdup( hostname ))) return NULL;
+        if (!(hostnameU = strWtoU( hostnameW ))) goto exit;
+        if (!(url = urlify_hostnames( "ldap://", hostnameU, portnumber ))) goto exit;
+    }
     ld = create_context( url );
 exit:
     if (ld)
@@ -378,15 +380,17 @@ LDAP * CDECL ldap_openA( char *hostname, ULONG portnumber )
 LDAP * CDECL ldap_openW( WCHAR *hostname, ULONG portnumber )
 {
     LDAP *ld = NULL;
-    char *hostnameU, *url = NULL;
-    WCHAR *hostnameW;
+    char *hostnameU = NULL, *url = NULL;
+    WCHAR *hostnameW = NULL;
 
     TRACE( "(%s, %lu)\n", debugstr_w(hostname), portnumber );
 
-    if (!(hostnameW = wcsdup( hostname ? hostname : L"localhost" ))) return NULL;
-    if (!(hostnameU = strWtoU( hostnameW ))) goto exit;
-    if (!(url = urlify_hostnames( "ldap://", hostnameU, portnumber ))) goto exit;
-
+    if (hostname)
+    {
+        if (!(hostnameW = wcsdup( hostname ))) return NULL;
+        if (!(hostnameU = strWtoU( hostnameW ))) goto exit;
+        if (!(url = urlify_hostnames( "ldap://", hostnameU, portnumber ))) goto exit;
+    }
     ld = create_context( url );
 exit:
     if (ld)
@@ -422,20 +426,22 @@ LDAP * CDECL ldap_sslinitA( char *hostname, ULONG portnumber, int secure )
 LDAP * CDECL ldap_sslinitW( WCHAR *hostname, ULONG portnumber, int secure )
 {
     LDAP *ld = NULL;
-    char *hostnameU, *url = NULL;
-    WCHAR *hostnameW;
+    char *hostnameU = NULL, *url = NULL;
+    WCHAR *hostnameW = NULL;
 
     TRACE( "(%s, %lu, %d)\n", debugstr_w(hostname), portnumber, secure );
 
-    if (!(hostnameW = wcsdup( hostname ? hostname : L"localhost" ))) return NULL;
-    if (!(hostnameU = strWtoU( hostnameW ))) goto exit;
+    if (hostname)
+    {
+        if (!(hostnameW = wcsdup( hostname ))) return NULL;
+        if (!(hostnameU = strWtoU( hostnameW ))) goto exit;
 
-    if (secure)
-        url = urlify_hostnames( "ldaps://", hostnameU, portnumber );
-    else
-        url = urlify_hostnames( "ldap://", hostnameU, portnumber );
-    if (!url) goto exit;
-
+        if (secure)
+            url = urlify_hostnames( "ldaps://", hostnameU, portnumber );
+        else
+            url = urlify_hostnames( "ldap://", hostnameU, portnumber );
+        if (!url) goto exit;
+    }
     ld = create_context( url );
 exit:
     if (ld)
