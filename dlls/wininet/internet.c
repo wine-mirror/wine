@@ -2440,6 +2440,8 @@ static WCHAR *detect_proxy_autoconfig_url_dhcp(void)
             TRACE("returning %s\n", debugstr_w(ret));
             break;
         }
+        free( buf );
+        buf = NULL;
     }
 
 done:
