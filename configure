@@ -11712,12 +11712,12 @@ fi }
     LDFLAGS=$saved_LDFLAGS
 done
 
-if test $HOST_ARCH = aarch64 -a "x$PE_ARCHS" = x
+if test $HOST_ARCH = aarch64
 then
-    as_fn_error $? "PE cross-compilation is required for ARM64, please install clang/llvm-dlltool/lld, or llvm-mingw." "$LINENO" 5
-fi
-
-if test "x$PE_ARCHS" = "x"
+    test "x$PE_ARCHS" != x || as_fn_error $? "PE cross-compilation is required for ARM64, please install clang/llvm-dlltool/lld, or llvm-mingw." "$LINENO" 5
+    DLLEXT=""
+else
+    if test "x$PE_ARCHS" = "x"
 then :
   case "x$with_mingw" in
   x)   as_fn_append wine_notices "|MinGW compiler not found, cross-compiling PE files won't be supported." ;;
@@ -11726,6 +11726,7 @@ then :
 This is an error since --with-mingw was requested." "$LINENO" 5 ;;
 esac
 
+fi
 fi
 
 

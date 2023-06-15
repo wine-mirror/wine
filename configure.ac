@@ -994,13 +994,14 @@ do
     LDFLAGS=$saved_LDFLAGS
 done
 
-if test $HOST_ARCH = aarch64 -a "x$PE_ARCHS" = x
+if test $HOST_ARCH = aarch64
 then
-    AC_MSG_ERROR([PE cross-compilation is required for ARM64, please install clang/llvm-dlltool/lld, or llvm-mingw.])
-fi
-
-WINE_NOTICE_WITH(mingw,[test "x$PE_ARCHS" = "x"],
+    test "x$PE_ARCHS" != x || AC_MSG_ERROR([PE cross-compilation is required for ARM64, please install clang/llvm-dlltool/lld, or llvm-mingw.])
+    DLLEXT=""
+else
+    WINE_NOTICE_WITH(mingw,[test "x$PE_ARCHS" = "x"],
                  [MinGW compiler not found, cross-compiling PE files won't be supported.])
+fi
 
 dnl **** External libraries ****
 
