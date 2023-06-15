@@ -2499,7 +2499,8 @@ static void set_fd_disposition( struct fd *fd, unsigned int flags )
         }
         if (S_ISREG( st.st_mode ))  /* can't unlink files we don't have permission to write */
         {
-            if (!(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
+            if (!(flags & FILE_DISPOSITION_IGNORE_READONLY_ATTRIBUTE) &&
+                !(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
             {
                 set_error( STATUS_CANNOT_DELETE );
                 return;

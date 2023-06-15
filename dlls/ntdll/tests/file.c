@@ -3098,14 +3098,12 @@ static void test_file_disposition_information(void)
     ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
     fdie.Flags = FILE_DISPOSITION_DELETE | FILE_DISPOSITION_IGNORE_READONLY_ATTRIBUTE;
     res = pNtSetInformationFile( handle, &io, &fdie, sizeof fdie, FileDispositionInformationEx );
-    todo_wine
     ok( res == STATUS_SUCCESS || broken(res == STATUS_INVALID_INFO_CLASS),
         "unexpected FileDispositionInformationEx result (expected STATUS_SUCCESS or SSTATUS_INVALID_INFO_CLASS, got %lx)\n", res );
     CloseHandle( handle );
     if ( res == STATUS_SUCCESS )
     {
         fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
-        todo_wine
         ok( fileDeleted, "File should have been deleted\n" );
     }
     SetFileAttributesA( buffer, FILE_ATTRIBUTE_NORMAL );
