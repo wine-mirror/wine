@@ -145,7 +145,6 @@ static const char *root_src_dir;
 static const char *tools_dir;
 static const char *tools_ext;
 static const char *exe_ext;
-static const char *dll_ext;
 static const char *fontforge;
 static const char *convert;
 static const char *flex;
@@ -158,7 +157,9 @@ static const char *msgfmt;
 static const char *ln_s;
 static const char *sed_cmd;
 static const char *wayland_scanner;
+static int unix_lib_supported;
 /* per-architecture global variables */
+static const char *dll_ext[MAX_ARCHS];
 static const char *arch_dirs[MAX_ARCHS];
 static const char *arch_pe_dirs[MAX_ARCHS];
 static const char *arch_install_dirs[MAX_ARCHS];
@@ -612,7 +613,7 @@ static int is_using_msvcrt( struct makefile *make )
  */
 static char *arch_module_name( const char *module, unsigned int arch )
 {
-    return strmake( "%s%s%s", arch_dirs[arch], module, arch ? "" : dll_ext );
+    return strmake( "%s%s%s", arch_dirs[arch], module, dll_ext[arch] );
 }
 
 
@@ -3151,7 +3152,7 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
     }
     else if (source->file->flags & FLAG_C_UNIX)
     {
-        if (!*dll_ext) return;
+        if (!unix_lib_supported) return;
     }
     else if (archs.count > 1 && is_using_msvcrt( make ) &&
              !(source->file->flags & FLAG_C_IMPLIB) &&
@@ -3184,7 +3185,7 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
         {
             output_filenames( dll_flags );
             if (source->use_msvcrt) output_filenames( msvcrt_flags );
-            if (!*dll_ext && make->module && is_crt_module( make->module ))
+            if (!unix_lib_supported && make->module && is_crt_module( make->module ))
                 output_filename( "-fno-builtin" );
         }
     }
@@ -3360,7 +3361,7 @@ static void output_module( struct makefile *make, unsigned int arch )
     else
         add_install_rule( make, make->module, arch, module_name,
                           strmake( "%c%s%s%s", '0' + arch, arch_install_dirs[arch], make->module,
-                                   arch ? "" : dll_ext ));
+                                   dll_ext[arch] ));
 
     output( "%s:", obj_dir_path( make, module_name ));
     if (spec_file) output_filename( spec_file );
@@ -3387,7 +3388,7 @@ static void output_module( struct makefile *make, unsigned int arch )
     output_filename( arch_make_variable( "LDFLAGS", arch ));
     output( "\n" );
 
-    if (!make->data_only && !arch && *dll_ext) output_fake_module( make );
+    if (!make->data_only && !arch && unix_lib_supported) output_fake_module( make );
 }
 
 
@@ -3789,7 +3790,7 @@ static void output_sources( struct makefile *make )
         for (arch = 0; arch < archs.count; arch++) if (is_multiarch( arch )) output_module( make, arch );
         if (make->unixlib) output_unix_lib( make );
         if (make->importlib) for (arch = 0; arch < archs.count; arch++) output_import_lib( make, arch );
-        if (make->is_exe && !make->is_win16 && *dll_ext && strendswith( make->module, ".exe" ))
+        if (make->is_exe && !make->is_win16 && unix_lib_supported && strendswith( make->module, ".exe" ))
         {
             char *binary = replace_extension( make->module, ".exe", "" );
             add_install_rule( make, binary, 0, "wineapploader", strmake( "t$(bindir)/%s", binary ));
@@ -4204,7 +4205,7 @@ static void load_sources( struct makefile *make )
     make->staticlib     = get_expanded_make_variable( make, "STATICLIB" );
     make->importlib     = get_expanded_make_variable( make, "IMPORTLIB" );
     make->extlib        = get_expanded_make_variable( make, "EXTLIB" );
-    if (*dll_ext) make->unixlib = get_expanded_make_variable( make, "UNIXLIB" );
+    if (unix_lib_supported) make->unixlib = get_expanded_make_variable( make, "UNIXLIB" );
 
     make->programs      = get_expanded_make_var_array( make, "PROGRAMS" );
     make->scripts       = get_expanded_make_var_array( make, "SCRIPTS" );
@@ -4407,7 +4408,7 @@ int main( int argc, char *argv[] )
     tools_dir          = get_expanded_make_variable( top_makefile, "toolsdir" );
     tools_ext          = get_expanded_make_variable( top_makefile, "toolsext" );
     exe_ext            = get_expanded_make_variable( top_makefile, "EXEEXT" );
-    dll_ext            = get_expanded_make_variable( top_makefile, "DLLEXT" );
+    dll_ext[0]         = get_expanded_make_variable( top_makefile, "DLLEXT" );
     fontforge          = get_expanded_make_variable( top_makefile, "FONTFORGE" );
     convert            = get_expanded_make_variable( top_makefile, "CONVERT" );
     flex               = get_expanded_make_variable( top_makefile, "FLEX" );
@@ -4424,15 +4425,17 @@ int main( int argc, char *argv[] )
     if (root_src_dir && !strcmp( root_src_dir, "." )) root_src_dir = NULL;
     if (tools_dir && !strcmp( tools_dir, "." )) tools_dir = NULL;
     if (!exe_ext) exe_ext = "";
-    if (!dll_ext) dll_ext = "";
+    if (!dll_ext[0]) dll_ext[0] = "";
     if (!tools_ext) tools_ext = "";
+
+    unix_lib_supported = !!strcmp( exe_ext, ".exe" );
 
     strarray_add( &archs, get_expanded_make_variable( top_makefile, "HOST_ARCH" ));
     strarray_addall( &archs, get_expanded_make_var_array( top_makefile, "PE_ARCHS" ));
 
     arch_dirs[0] = "";
     arch_pe_dirs[0] = strmake( "%s-windows/", archs.str[0] );
-    arch_install_dirs[0] = *dll_ext ? strmake( "$(dlldir)/%s-unix/", archs.str[0] ) : "$(dlldir)/";
+    arch_install_dirs[0] = unix_lib_supported ? strmake( "$(dlldir)/%s-unix/", archs.str[0] ) : "$(dlldir)/";
     strip_progs[0] = "\"$(STRIP)\"";
 
     for (arch = 1; arch < archs.count; arch++)
@@ -4444,6 +4447,7 @@ int main( int argc, char *argv[] )
         arch_pe_dirs[arch] = arch_dirs[arch];
         arch_install_dirs[arch] = strmake( "$(dlldir)/%s", arch_dirs[arch] );
         strip_progs[arch] = strmake( "%s-strip", target );
+        dll_ext[arch] = "";
     }
 
     for (arch = 0; arch < archs.count; arch++)
@@ -4456,7 +4460,7 @@ int main( int argc, char *argv[] )
         debug_flags[arch] = get_expanded_arch_var( top_makefile, "DEBUG", arch );
     }
 
-    if (*dll_ext)
+    if (unix_lib_supported)
     {
         delay_load_flags[0] = "-Wl,-delayload,";
         debug_flags[0] = NULL;
