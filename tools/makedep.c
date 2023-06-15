@@ -157,6 +157,7 @@ static const char *msgfmt;
 static const char *ln_s;
 static const char *sed_cmd;
 static const char *wayland_scanner;
+static int so_dll_supported;
 static int unix_lib_supported;
 /* per-architecture global variables */
 static const char *dll_ext[MAX_ARCHS];
@@ -577,6 +578,9 @@ static char *concat_paths( const char *base, const char *path )
 static int is_native_arch_disabled( struct makefile *make )
 {
     unsigned int arch;
+
+    if (archs.count == 1) return 0;
+    if (!so_dll_supported) return 1;
 
     for (arch = 1; arch < archs.count; arch++)
         if (make->disabled[arch] && !strcmp( archs.str[0], archs.str[arch] ))
@@ -3154,9 +3158,11 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
     {
         if (!unix_lib_supported) return;
     }
-    else if (archs.count > 1 && is_using_msvcrt( make ) &&
-             !(source->file->flags & FLAG_C_IMPLIB) &&
-             (!make->staticlib || make->extlib)) return;
+    else if (archs.count > 1 && is_using_msvcrt( make ))
+    {
+        if (!so_dll_supported) return;
+        if (!(source->file->flags & FLAG_C_IMPLIB) && (!make->staticlib || make->extlib)) return;
+    }
 
     obj_name = strmake( "%s%s.o", source->arch ? "" : arch_dirs[arch], obj );
     strarray_add( targets, obj_name );
@@ -3418,8 +3424,6 @@ static void output_import_lib( struct makefile *make, unsigned int arch )
     output_filename( spec_file );
     output_filenames_obj_dir( make, make->implib_files[arch] );
     output( "\n" );
-
-    if (!arch && is_native_arch_disabled( make )) return;
 
     add_install_rule( make, make->importlib, arch, name,
                       strmake( "d%slib%s.a", arch_install_dirs[arch], make->importlib ));
@@ -3783,13 +3787,18 @@ static void output_sources( struct makefile *make )
     if (make->staticlib)
     {
         for (arch = 0; arch < archs.count; arch++)
-            if (is_multiarch( arch ) || !make->extlib) output_static_lib( make, arch );
+            if (is_multiarch( arch ) || (so_dll_supported && !make->extlib))
+                output_static_lib( make, arch );
     }
     else if (make->module)
     {
-        for (arch = 0; arch < archs.count; arch++) if (is_multiarch( arch )) output_module( make, arch );
+        for (arch = 0; arch < archs.count; arch++)
+        {
+            if (is_multiarch( arch )) output_module( make, arch );
+            if (make->importlib && (is_multiarch( arch ) || !is_native_arch_disabled( make )))
+                output_import_lib( make, arch );
+        }
         if (make->unixlib) output_unix_lib( make );
-        if (make->importlib) for (arch = 0; arch < archs.count; arch++) output_import_lib( make, arch );
         if (make->is_exe && !make->is_win16 && unix_lib_supported && strendswith( make->module, ".exe" ))
         {
             char *binary = replace_extension( make->module, ".exe", "" );
@@ -4429,6 +4438,7 @@ int main( int argc, char *argv[] )
     if (!tools_ext) tools_ext = "";
 
     unix_lib_supported = !!strcmp( exe_ext, ".exe" );
+    so_dll_supported = !!dll_ext[0][0];  /* non-empty dll ext means supported */
 
     strarray_add( &archs, get_expanded_make_variable( top_makefile, "HOST_ARCH" ));
     strarray_addall( &archs, get_expanded_make_var_array( top_makefile, "PE_ARCHS" ));
