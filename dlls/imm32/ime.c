@@ -559,7 +559,7 @@ UINT WINAPI ImeToAsciiEx( UINT vkey, UINT vsc, BYTE *state, TRANSMSGLIST *msgs, 
         TRANSMSG status_msg = {.message = ime_set_composition_status( himc, !!compstr->dwCompStrOffset )};
         if (status_msg.message) msgs->TransMsg[count++] = status_msg;
 
-        if (compstr->dwResultStrLen)
+        if (compstr->dwResultStrOffset)
         {
             const WCHAR *result = (WCHAR *)((BYTE *)compstr + compstr->dwResultStrOffset);
             TRANSMSG msg = {.message = WM_IME_COMPOSITION, .wParam = result[0], .lParam = GCS_RESULTSTR};
@@ -567,7 +567,7 @@ UINT WINAPI ImeToAsciiEx( UINT vkey, UINT vsc, BYTE *state, TRANSMSGLIST *msgs, 
             msgs->TransMsg[count++] = msg;
         }
 
-        if (compstr->dwCompStrLen)
+        if (compstr->dwCompStrOffset)
         {
             const WCHAR *comp = (WCHAR *)((BYTE *)compstr + compstr->dwCompStrOffset);
             TRANSMSG msg = {.message = WM_IME_COMPOSITION, .wParam = comp[0], .lParam = GCS_COMPSTR | GCS_CURSORPOS | GCS_DELTASTART};
