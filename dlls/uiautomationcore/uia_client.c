@@ -673,6 +673,73 @@ static HRESULT prepare_uia_node(struct uia_node *node)
     return S_OK;
 }
 
+static HRESULT create_wine_uia_provider(struct uia_node *node, IRawElementProviderSimple *elprov, int prov_type);
+HRESULT clone_uia_node(HUIANODE in_node, HUIANODE *out_node)
+{
+    struct uia_node *in_node_data = impl_from_IWineUiaNode((IWineUiaNode *)in_node);
+    struct uia_node *node;
+    HRESULT hr = S_OK;
+    int i;
+
+    *out_node = NULL;
+    if (in_node_data->nested_node)
+    {
+        FIXME("Cloning of nested nodes currently unimplemented\n");
+        return E_NOTIMPL;
+    }
+
+    for (i = 0; i < PROV_TYPE_COUNT; i++)
+    {
+        if (in_node_data->prov[i] && is_nested_node_provider(in_node_data->prov[i]))
+        {
+            FIXME("Cloning of nested node providers currently unimplemented\n");
+            return E_NOTIMPL;
+        }
+    }
+
+    if (!(node = heap_alloc_zero(sizeof(*node))))
+        return E_OUTOFMEMORY;
+
+    node->IWineUiaNode_iface.lpVtbl = &uia_node_vtbl;
+    list_init(&node->prov_thread_list_entry);
+    list_init(&node->node_map_list_entry);
+    node->ref = 1;
+    node->hwnd = in_node_data->hwnd;
+
+    for (i = 0; i < PROV_TYPE_COUNT; i++)
+    {
+        struct uia_provider *in_prov_data;
+
+        if (!in_node_data->prov[i])
+            continue;
+
+        in_prov_data = impl_from_IWineUiaProvider(in_node_data->prov[i]);
+        hr = create_wine_uia_provider(node, in_prov_data->elprov, i);
+        if (FAILED(hr))
+            goto exit;
+
+        if (in_node_data->git_cookie[i])
+        {
+            hr = register_interface_in_git((IUnknown *)node->prov[i], &IID_IWineUiaProvider, &node->git_cookie[i]);
+            if (FAILED(hr))
+                goto exit;
+        }
+    }
+
+    node->parent_link_idx = in_node_data->parent_link_idx;
+    node->creator_prov_idx = in_node_data->creator_prov_idx;
+    node->creator_prov_type = in_node_data->creator_prov_type;
+
+    *out_node = (void *)&node->IWineUiaNode_iface;
+    TRACE("Created clone node %p from node %p\n", *out_node, in_node);
+
+exit:
+    if (FAILED(hr))
+        IWineUiaNode_Release(&node->IWineUiaNode_iface);
+
+    return hr;
+}
+
 static BOOL node_creator_is_parent_link(struct uia_node *node)
 {
     if (node->creator_prov_idx == node->parent_link_idx)

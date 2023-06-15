@@ -1147,17 +1147,24 @@ static HRESULT uia_event_invoke(HUIANODE node, struct uia_event_args *args, stru
     else
     {
         struct uia_queue_event *queue_event;
+        HUIANODE node2;
 
         if (!(queue_event = heap_alloc_zero(sizeof(*queue_event))))
             return E_OUTOFMEMORY;
 
+        hr = clone_uia_node(node, &node2);
+        if (FAILED(hr))
+        {
+            heap_free(queue_event);
+            return hr;
+        }
+
         queue_event->args = args;
         queue_event->event = event;
-        queue_event->node = node;
+        queue_event->node = node2;
 
         InterlockedIncrement(&args->ref);
         IWineUiaEvent_AddRef(&event->IWineUiaEvent_iface);
-        IWineUiaNode_AddRef((IWineUiaNode *)node);
         uia_event_queue_push(queue_event);
     }
 
