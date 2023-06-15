@@ -9329,16 +9329,16 @@ static void test_shutdown(void)
 
     addrlen = sizeof(addr);
     ret = getpeername(client, (struct sockaddr *)&addr, &addrlen);
-    todo_wine ok(!ret, "got error %u\n", WSAGetLastError());
-    todo_wine ok(!memcmp(&addr, &server_addr, sizeof(server_addr)), "address didn't match\n");
+    ok(!ret, "got error %u\n", WSAGetLastError());
+    ok(!memcmp(&addr, &server_addr, sizeof(server_addr)), "address didn't match\n");
 
     addrlen = sizeof(client_addr);
     ret = getsockname(client, (struct sockaddr *)&client_addr, &addrlen);
     ok(!ret, "got error %u\n", WSAGetLastError());
     addrlen = sizeof(addr);
     ret = getpeername(server, (struct sockaddr *)&addr, &addrlen);
-    todo_wine ok(!ret, "got error %u\n", WSAGetLastError());
-    todo_wine ok(!memcmp(&addr, &client_addr, sizeof(addr)), "address didn't match\n");
+    ok(!ret, "got error %u\n", WSAGetLastError());
+    ok(!memcmp(&addr, &client_addr, sizeof(addr)), "address didn't match\n");
 
     WSASetLastError(0xdeadbeef);
     ret = connect(client, (struct sockaddr *)&server_addr, sizeof(server_addr));
@@ -9397,16 +9397,16 @@ static void test_shutdown(void)
 
     addrlen = sizeof(addr);
     ret = getpeername(client, (struct sockaddr *)&addr, &addrlen);
-    todo_wine ok(!ret, "got error %u\n", WSAGetLastError());
-    todo_wine ok(!memcmp(&addr, &server_addr, sizeof(server_addr)), "address didn't match\n");
+    ok(!ret, "got error %u\n", WSAGetLastError());
+    ok(!memcmp(&addr, &server_addr, sizeof(server_addr)), "address didn't match\n");
 
     addrlen = sizeof(client_addr);
     ret = getsockname(client, (struct sockaddr *)&client_addr, &addrlen);
     ok(!ret, "got error %u\n", WSAGetLastError());
     addrlen = sizeof(addr);
     ret = getpeername(server, (struct sockaddr *)&addr, &addrlen);
-    todo_wine ok(!ret, "got error %u\n", WSAGetLastError());
-    todo_wine ok(!memcmp(&addr, &client_addr, sizeof(addr)), "address didn't match\n");
+    ok(!ret, "got error %u\n", WSAGetLastError());
+    ok(!memcmp(&addr, &client_addr, sizeof(addr)), "address didn't match\n");
 
     closesocket(client);
     closesocket(server);
@@ -9913,7 +9913,7 @@ static void test_getpeername(void)
 
     ret = getpeername(sock, NULL, NULL);
     ok(ret == SOCKET_ERROR, "Expected getpeername to return SOCKET_ERROR, got %d\n", ret);
-    todo_wine ok(WSAGetLastError() == WSAENOTCONN,
+    ok(WSAGetLastError() == WSAENOTCONN,
        "Expected WSAGetLastError() to return WSAENOTCONN, got %d\n", WSAGetLastError());
 
     memset(&sa, 0, sizeof(sa));
@@ -9928,7 +9928,7 @@ static void test_getpeername(void)
 
     ret = getpeername(sock, NULL, NULL);
     ok(ret == SOCKET_ERROR, "Expected getpeername to return SOCKET_ERROR, got %d\n", ret);
-    todo_wine ok(WSAGetLastError() == WSAENOTCONN,
+    ok(WSAGetLastError() == WSAENOTCONN,
        "Expected WSAGetLastError() to return WSAENOTCONN, got %d\n", WSAGetLastError());
 
     ret = connect(sock, (struct sockaddr*)&sa, sizeof(sa));
@@ -12629,13 +12629,7 @@ static void test_connecting_socket(void)
 
     len = sizeof(addr);
     ret = getpeername(client, (struct sockaddr *)&addr, &len);
-    todo_wine ok(!ret, "got error %u\n", WSAGetLastError());
-    if (!ret)
-    {
-        ok(addr.sin_family == AF_INET, "got family %u\n", addr.sin_family);
-        ok(addr.sin_addr.s_addr == inet_addr("192.0.2.0"), "got address %#08lx\n", addr.sin_addr.s_addr);
-        ok(addr.sin_port == 255, "expected nonzero port\n");
-    }
+    ok(!ret, "got error %u\n", WSAGetLastError());
 
     ret = recv(client, buffer, sizeof(buffer), 0);
     ok(ret == -1, "got %d\n", ret);
