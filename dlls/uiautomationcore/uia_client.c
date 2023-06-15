@@ -1266,17 +1266,6 @@ static ULONG WINAPI uia_provider_Release(IWineUiaProvider *iface)
     return ref;
 }
 
-static void get_variant_for_node(HUIANODE node, VARIANT *v)
-{
-#ifdef _WIN64
-            V_VT(v) = VT_I8;
-            V_I8(v) = (UINT64)node;
-#else
-            V_VT(v) = VT_I4;
-            V_I4(v) = (UINT32)node;
-#endif
-}
-
 static HRESULT get_variant_for_elprov_node(IRawElementProviderSimple *elprov, BOOL out_nested,
         VARIANT *v)
 {
@@ -2171,7 +2160,6 @@ static ULONG WINAPI uia_nested_node_provider_Release(IWineUiaProvider *iface)
     return ref;
 }
 
-static HRESULT uia_node_from_lresult(LRESULT lr, HUIANODE *huianode);
 static HRESULT WINAPI uia_nested_node_provider_get_prop_val(IWineUiaProvider *iface,
         const struct uia_prop_info *prop_info, VARIANT *ret_val)
 {
@@ -2430,7 +2418,7 @@ static HRESULT create_wine_uia_nested_node_provider(struct uia_node *node, LRESU
     return S_OK;
 }
 
-static HRESULT uia_node_from_lresult(LRESULT lr, HUIANODE *huianode)
+HRESULT uia_node_from_lresult(LRESULT lr, HUIANODE *huianode)
 {
     struct uia_node *node;
     HRESULT hr;

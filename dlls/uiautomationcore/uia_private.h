@@ -148,6 +148,17 @@ static inline void variant_init_i4(VARIANT *v, int val)
     V_I4(v) = val;
 }
 
+static inline void get_variant_for_node(HUIANODE node, VARIANT *v)
+{
+#ifdef _WIN64
+    V_VT(v) = VT_I8;
+    V_I8(v) = (UINT64)node;
+#else
+    V_VT(v) = VT_I4;
+    V_I4(v) = (UINT32)node;
+#endif
+}
+
 static inline BOOL uia_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, SIZE_T size)
 {
     SIZE_T max_capacity, new_capacity;
@@ -184,6 +195,7 @@ HRESULT attach_event_to_uia_node(HUIANODE node, struct uia_event *event) DECLSPE
 HRESULT navigate_uia_node(struct uia_node *node, int nav_dir, HUIANODE *out_node) DECLSPEC_HIDDEN;
 HRESULT create_uia_node_from_elprov(IRawElementProviderSimple *elprov, HUIANODE *out_node,
         BOOL get_hwnd_providers) DECLSPEC_HIDDEN;
+HRESULT uia_node_from_lresult(LRESULT lr, HUIANODE *huianode) DECLSPEC_HIDDEN;
 HRESULT uia_condition_check(HUIANODE node, struct UiaCondition *condition) DECLSPEC_HIDDEN;
 BOOL uia_condition_matched(HRESULT hr) DECLSPEC_HIDDEN;
 

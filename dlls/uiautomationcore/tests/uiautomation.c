@@ -13976,8 +13976,8 @@ static void test_UiaAddEvent_client_proc(void)
     post_event_message(hwnd, WM_UIA_TEST_RAISE_EVENT, HandleToUlong(hwnd), PROVIDER_ID, ProviderOptions_ServerSideProvider);
     todo_wine ok(!WaitForSingleObject(EventData.event_handle, 2000), "Wait for event_handle failed.\n");
     todo_wine CHECK_CALLED(uia_event_callback);
-    todo_wine CHECK_CALLED(prov_callback_base_hwnd);
-    todo_wine CHECK_CALLED(prov_callback_nonclient);
+    CHECK_CALLED(prov_callback_base_hwnd);
+    CHECK_CALLED(prov_callback_nonclient);
     todo_wine CHECK_CALLED(prov_callback_proxy);
 
     /*

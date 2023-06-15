@@ -75,6 +75,7 @@ library UIA_wine_private
         HRESULT advise_events([in]BOOL advise_added, [in]long adviser_start_idx);
         HRESULT set_event_data([in]const GUID *event_guid, [in]long scope, [in]VARIANT runtime_id,
                                [in]IWineUiaEvent *event_iface);
+        HRESULT raise_event([in]VARIANT in_node);
     }
 
     [

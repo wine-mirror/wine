@@ -79,6 +79,7 @@ struct uia_event_map_entry
      * ignored.
      */
     struct list events_list;
+    struct list serverside_events_list;
 };
 
 struct uia_event_identifier {
@@ -146,6 +147,7 @@ static HRESULT uia_event_map_add_event(struct uia_event *event)
 
         event_entry->event_id = event->event_id;
         list_init(&event_entry->events_list);
+        list_init(&event_entry->serverside_events_list);
 
         if (!uia_event_map.event_count)
             rb_init(&uia_event_map.event_map, uia_event_map_id_compare);
@@ -154,7 +156,10 @@ static HRESULT uia_event_map_add_event(struct uia_event *event)
     }
 
     IWineUiaEvent_AddRef(&event->IWineUiaEvent_iface);
-    list_add_head(&event_entry->events_list, &event->event_list_entry);
+    if (event->event_type == EVENT_TYPE_SERVERSIDE)
+        list_add_head(&event_entry->serverside_events_list, &event->event_list_entry);
+    else
+        list_add_head(&event_entry->events_list, &event->event_list_entry);
     InterlockedIncrement(&event_entry->refs);
 
     event->event_map_entry = event_entry;
@@ -189,6 +194,13 @@ static void uia_event_map_entry_release(struct uia_event_map_entry *entry)
 
         /* Release all events in the list. */
         LIST_FOR_EACH_SAFE(cursor, cursor2, &entry->events_list)
+        {
+            struct uia_event *event = LIST_ENTRY(cursor, struct uia_event, event_list_entry);
+
+            IWineUiaEvent_Release(&event->IWineUiaEvent_iface);
+        }
+
+        LIST_FOR_EACH_SAFE(cursor, cursor2, &entry->serverside_events_list)
         {
             struct uia_event *event = LIST_ENTRY(cursor, struct uia_event, event_list_entry);
 
@@ -239,9 +251,12 @@ struct uia_event_thread
     HANDLE hthread;
     HWND hwnd;
     LONG ref;
+
+    struct list *event_queue;
 };
 
 #define WM_UIA_EVENT_THREAD_STOP (WM_USER + 1)
+#define WM_UIA_EVENT_THREAD_PROCESS_QUEUE (WM_USER + 2)
 static struct uia_event_thread event_thread;
 static CRITICAL_SECTION event_thread_cs;
 static CRITICAL_SECTION_DEBUG event_thread_cs_debug =
@@ -252,12 +267,82 @@ static CRITICAL_SECTION_DEBUG event_thread_cs_debug =
 };
 static CRITICAL_SECTION event_thread_cs = { &event_thread_cs_debug, -1, 0, 0, 0, 0 };
 
+struct uia_queue_event
+{
+    struct list event_queue_entry;
+
+    struct uia_event_args *args;
+    struct uia_event *event;
+    HUIANODE node;
+};
+
+static void uia_event_queue_push(struct uia_queue_event *event)
+{
+    EnterCriticalSection(&event_thread_cs);
+
+    assert(event_thread.event_queue);
+    list_add_tail(event_thread.event_queue, &event->event_queue_entry);
+    PostMessageW(event_thread.hwnd, WM_UIA_EVENT_THREAD_PROCESS_QUEUE, 0, 0);
+
+    LeaveCriticalSection(&event_thread_cs);
+}
+
+static struct uia_queue_event *uia_event_queue_pop(struct list *event_queue)
+{
+    struct uia_queue_event *queue_event = NULL;
+
+    EnterCriticalSection(&event_thread_cs);
+
+    if (!list_empty(event_queue))
+    {
+        queue_event = LIST_ENTRY(list_head(event_queue), struct uia_queue_event, event_queue_entry);
+        list_remove(list_head(event_queue));
+    }
+
+    LeaveCriticalSection(&event_thread_cs);
+    return queue_event;
+}
+
+static void uia_event_thread_process_queue(struct list *event_queue)
+{
+    while (1)
+    {
+        struct uia_queue_event *event;
+        LRESULT lr;
+        HRESULT hr;
+
+        if (!(event = uia_event_queue_pop(event_queue)))
+            break;
+
+        /*
+         * uia_lresult_from_node is expected to release the node here upon
+         * failure.
+         */
+        if ((lr = uia_lresult_from_node(event->node)))
+        {
+            VARIANT v;
+
+            V_VT(&v) = VT_I4;
+            V_I4(&v) = lr;
+            hr = IWineUiaEvent_raise_event(event->event->u.serverside.event_iface, v);
+            if (FAILED(hr))
+                WARN("IWineUiaEvent_raise_event failed with hr %#lx\n", hr);
+        }
+
+        uia_event_args_release(event->args);
+        IWineUiaEvent_Release(&event->event->IWineUiaEvent_iface);
+        heap_free(event);
+    }
+}
+
 static DWORD WINAPI uia_event_thread_proc(void *arg)
 {
     HANDLE initialized_event = arg;
+    struct list event_queue;
     HWND hwnd;
     MSG msg;
 
+    list_init(&event_queue);
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
     hwnd = CreateWindowW(L"Message", NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
     if (!hwnd)
@@ -268,14 +353,20 @@ static DWORD WINAPI uia_event_thread_proc(void *arg)
     }
 
     event_thread.hwnd = hwnd;
+    event_thread.event_queue = &event_queue;
 
     /* Initialization complete, thread can now process window messages. */
     SetEvent(initialized_event);
     TRACE("Event thread started.\n");
     while (GetMessageW(&msg, NULL, 0, 0))
     {
-        if ((msg.hwnd == hwnd) && (msg.message == WM_UIA_EVENT_THREAD_STOP))
-            break;
+        if ((msg.hwnd == hwnd) && ((msg.message == WM_UIA_EVENT_THREAD_STOP) ||
+                    (msg.message == WM_UIA_EVENT_THREAD_PROCESS_QUEUE)))
+        {
+            uia_event_thread_process_queue(&event_queue);
+            if (msg.message == WM_UIA_EVENT_THREAD_STOP)
+                break;
+        }
 
         TranslateMessage(&msg);
         DispatchMessageW(&msg);
@@ -432,15 +523,24 @@ static HRESULT WINAPI uia_event_advise_events(IWineUiaEvent *iface, BOOL advise_
     }
 
     /*
+     * First call to advise events on a serverside provider, add it to the
+     * events list so it can be raised.
+     */
+    if (!adviser_start_idx && advise_added && event->event_type == EVENT_TYPE_SERVERSIDE)
+    {
+        hr = uia_event_map_add_event(event);
+        if (FAILED(hr))
+            WARN("Failed to add event to event map, hr %#lx\n", hr);
+    }
+
+    /*
      * Once we've advised of removal, no need to keep the advisers around.
      * We can also release our reference to the event map.
      */
     if (!advise_added)
     {
         InterlockedIncrement(&event->event_defunct);
-        /* FIXME: Remove this check once we can raise serverside events. */
-        if (event->event_type == EVENT_TYPE_CLIENTSIDE)
-            uia_event_map_entry_release(event->event_map_entry);
+        uia_event_map_entry_release(event->event_map_entry);
         event->event_map_entry = NULL;
 
         for (i = 0; i < event->event_advisers_count; i++)
@@ -480,12 +580,31 @@ static HRESULT WINAPI uia_event_set_event_data(IWineUiaEvent *iface, const GUID 
     return S_OK;
 }
 
+static HRESULT WINAPI uia_event_raise_event(IWineUiaEvent *iface, VARIANT in_node)
+{
+    struct uia_event *event = impl_from_IWineUiaEvent(iface);
+    HUIANODE node;
+    HRESULT hr;
+
+    FIXME("%p, %s: stub\n", iface, debugstr_variant(&in_node));
+
+    assert(event->event_type != EVENT_TYPE_SERVERSIDE);
+
+    hr = uia_node_from_lresult((LRESULT)V_I4(&in_node), &node);
+    if (FAILED(hr))
+        return hr;
+
+    UiaNodeRelease(node);
+    return S_OK;
+}
+
 static const IWineUiaEventVtbl uia_event_vtbl = {
     uia_event_QueryInterface,
     uia_event_AddRef,
     uia_event_Release,
     uia_event_advise_events,
     uia_event_set_event_data,
+    uia_event_raise_event,
 };
 
 static struct uia_event *unsafe_impl_from_IWineUiaEvent(IWineUiaEvent *iface)
@@ -1009,17 +1128,37 @@ HRESULT WINAPI UiaRemoveEvent(HUIAEVENT huiaevent)
 
 static HRESULT uia_event_invoke(HUIANODE node, struct uia_event_args *args, struct uia_event *event)
 {
-    SAFEARRAY *out_req;
-    BSTR tree_struct;
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
-    hr = UiaGetUpdatedCache(node, &event->u.clientside.cache_req, NormalizeState_View, NULL, &out_req,
-            &tree_struct);
-    if (SUCCEEDED(hr))
+    if (event->event_type == EVENT_TYPE_CLIENTSIDE)
     {
-        event->u.clientside.cback(&args->simple_args, out_req, tree_struct);
-        SafeArrayDestroy(out_req);
-        SysFreeString(tree_struct);
+        SAFEARRAY *out_req;
+        BSTR tree_struct;
+
+        hr = UiaGetUpdatedCache(node, &event->u.clientside.cache_req, NormalizeState_View, NULL, &out_req,
+                &tree_struct);
+        if (SUCCEEDED(hr))
+        {
+            event->u.clientside.cback(&args->simple_args, out_req, tree_struct);
+            SafeArrayDestroy(out_req);
+            SysFreeString(tree_struct);
+        }
+    }
+    else
+    {
+        struct uia_queue_event *queue_event;
+
+        if (!(queue_event = heap_alloc_zero(sizeof(*queue_event))))
+            return E_OUTOFMEMORY;
+
+        queue_event->args = args;
+        queue_event->event = event;
+        queue_event->node = node;
+
+        InterlockedIncrement(&args->ref);
+        IWineUiaEvent_AddRef(&event->IWineUiaEvent_iface);
+        IWineUiaNode_AddRef((IWineUiaNode *)node);
+        uia_event_queue_push(queue_event);
     }
 
     return hr;
@@ -1055,6 +1194,12 @@ static HRESULT uia_event_check_match(HUIANODE node, SAFEARRAY *rt_id, struct uia
 
     if (!(event->scope & (TreeScope_Descendants | TreeScope_Children)))
         return S_OK;
+
+    if (event->event_type == EVENT_TYPE_SERVERSIDE)
+    {
+        FIXME("Matching serverside events through navigation currently unimplemented\n");
+        return S_OK;
+    }
 
     V_VT(&prop_cond.Value) = VT_I4 | VT_ARRAY;
     V_ARRAY(&prop_cond.Value) = event->runtime_id;
@@ -1138,6 +1283,18 @@ static HRESULT uia_raise_event(IRawElementProviderSimple *elprov, struct uia_eve
         hr = uia_event_check_match(node, sa, args, event);
         if (FAILED(hr))
             break;
+    }
+
+    if (prov_opts & ProviderOptions_ServerSideProvider)
+    {
+        LIST_FOR_EACH_SAFE(cursor, cursor2, &event_entry->serverside_events_list)
+        {
+            struct uia_event *event = LIST_ENTRY(cursor, struct uia_event, event_list_entry);
+
+            hr = uia_event_check_match(node, sa, args, event);
+            if (FAILED(hr))
+                break;
+        }
     }
 
     uia_event_map_entry_release(event_entry);
