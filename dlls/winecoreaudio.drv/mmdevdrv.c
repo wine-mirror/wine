@@ -75,6 +75,8 @@ extern HRESULT main_loop_start(void) DECLSPEC_HIDDEN;
 extern struct audio_session_wrapper *session_wrapper_create(
     struct audio_client *client) DECLSPEC_HIDDEN;
 
+extern WCHAR *get_application_name(void);
+
 void DECLSPEC_HIDDEN sessions_lock(void)
 {
     EnterCriticalSection(&g_sessions_lock);
@@ -556,6 +558,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     struct create_stream_params params;
     stream_handle stream;
     UINT32 i;
+    WCHAR *name;
 
     TRACE("(%p)->(%x, %lx, %s, %s, %p, %s)\n", This, mode, flags,
           wine_dbgstr_longlong(duration), wine_dbgstr_longlong(period), fmt, debugstr_guid(sessionguid));
@@ -594,7 +597,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         return params.result;
     }
 
-    params.name = NULL;
+    params.name = name = get_application_name();
     params.device = This->device_name;
     params.flow = This->dataflow;
     params.share = mode;
@@ -606,6 +609,9 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     params.stream = &stream;
 
     UNIX_CALL(create_stream, &params);
+
+    free(name);
+
     if(FAILED(params.result)){
         sessions_unlock();
         return params.result;
