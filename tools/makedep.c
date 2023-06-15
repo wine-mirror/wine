@@ -4407,7 +4407,7 @@ int main( int argc, char *argv[] )
     tools_dir          = get_expanded_make_variable( top_makefile, "toolsdir" );
     tools_ext          = get_expanded_make_variable( top_makefile, "toolsext" );
     exe_ext            = get_expanded_make_variable( top_makefile, "EXEEXT" );
-    dll_ext            = (exe_ext && !strcmp( exe_ext, ".exe" )) ? "" : ".so";
+    dll_ext            = get_expanded_make_variable( top_makefile, "DLLEXT" );
     fontforge          = get_expanded_make_variable( top_makefile, "FONTFORGE" );
     convert            = get_expanded_make_variable( top_makefile, "CONVERT" );
     flex               = get_expanded_make_variable( top_makefile, "FLEX" );
@@ -4424,6 +4424,7 @@ int main( int argc, char *argv[] )
     if (root_src_dir && !strcmp( root_src_dir, "." )) root_src_dir = NULL;
     if (tools_dir && !strcmp( tools_dir, "." )) tools_dir = NULL;
     if (!exe_ext) exe_ext = "";
+    if (!dll_ext) dll_ext = "";
     if (!tools_ext) tools_ext = "";
 
     strarray_add( &archs, get_expanded_make_variable( top_makefile, "HOST_ARCH" ));

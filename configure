@@ -766,6 +766,7 @@ SUBDIRS
 READELF
 OTOOL
 LDD
+DLLEXT
 WINEPRELOADER_LDFLAGS
 WINELOADER_LDFLAGS
 TOP_INSTALL_DEV
@@ -9146,6 +9147,8 @@ WINELOADER_LDFLAGS=""
 
 WINEPRELOADER_LDFLAGS=""
 
+DLLEXT=".so"
+
 LIBEXT="so"
 # Extract the first word of "ldd", so it can be a program name with args.
 set dummy ldd; ac_word=$2
@@ -9437,6 +9440,7 @@ $ac_links:
 case $host_os in
   cygwin*|mingw32*)
     LIBEXT="dll"
+    DLLEXT=""
     EXTRACFLAGS="-D__WINE_PE_BUILD"
         case $host_cpu in
       *i[3456]86*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--disable-stdcall-fixup" >&5
@@ -23204,6 +23208,7 @@ TOP_INSTALL_LIB = $TOP_INSTALL_LIB
 TOP_INSTALL_DEV = $TOP_INSTALL_DEV
 WINELOADER_LDFLAGS = $WINELOADER_LDFLAGS
 WINEPRELOADER_LDFLAGS = $WINEPRELOADER_LDFLAGS
+DLLEXT = $DLLEXT
 LDD = $LDD
 OTOOL = $OTOOL
 READELF = $READELF
