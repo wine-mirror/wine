@@ -1334,13 +1334,14 @@ static ULONG WINAPI uia_provider_Release(IWineUiaProvider *iface)
 }
 
 static HRESULT get_variant_for_elprov_node(IRawElementProviderSimple *elprov, BOOL out_nested,
-        VARIANT *v)
+        BOOL refuse_hwnd_providers, VARIANT *v)
 {
     HUIANODE node;
     HRESULT hr;
 
     VariantInit(v);
-    hr = create_uia_node_from_elprov(elprov, &node, !out_nested);
+
+    hr = create_uia_node_from_elprov(elprov, &node, !refuse_hwnd_providers);
     IRawElementProviderSimple_Release(elprov);
     if (SUCCEEDED(hr))
     {
@@ -1444,7 +1445,7 @@ static HRESULT uia_provider_get_elem_prop_val(struct uia_provider *prov,
         if (FAILED(hr))
             goto exit;
 
-        hr = get_variant_for_elprov_node(elprov, prov->return_nested_node, ret_val);
+        hr = get_variant_for_elprov_node(elprov, prov->return_nested_node, prov->refuse_hwnd_node_providers, ret_val);
         if (FAILED(hr))
             return hr;
 
@@ -1770,7 +1771,7 @@ static HRESULT WINAPI uia_provider_navigate(IWineUiaProvider *iface, int nav_dir
         if (FAILED(hr) || !elprov)
             return hr;
 
-        hr = get_variant_for_elprov_node(elprov, prov->return_nested_node, out_val);
+        hr = get_variant_for_elprov_node(elprov, prov->return_nested_node, prov->refuse_hwnd_node_providers, out_val);
         if (FAILED(hr))
             return hr;
     }
@@ -1802,7 +1803,7 @@ static HRESULT WINAPI uia_provider_get_focus(IWineUiaProvider *iface, VARIANT *o
     IRawElementProviderFragment_Release(elfrag);
     if (SUCCEEDED(hr))
     {
-        hr = get_variant_for_elprov_node(elprov, prov->return_nested_node, out_val);
+        hr = get_variant_for_elprov_node(elprov, prov->return_nested_node, prov->refuse_hwnd_node_providers, out_val);
         if (FAILED(hr))
             VariantClear(out_val);
     }
@@ -1881,7 +1882,7 @@ static HRESULT WINAPI uia_provider_attach_event(IWineUiaProvider *iface, LONG_PT
             if (FAILED(hr))
                 goto exit;
 
-            hr = create_uia_node_from_elprov(elprov, &node, !prov->return_nested_node);
+            hr = create_uia_node_from_elprov(elprov, &node, !prov->refuse_hwnd_node_providers);
             IRawElementProviderSimple_Release(elprov);
             if (SUCCEEDED(hr))
             {
@@ -2437,6 +2438,7 @@ static HRESULT create_wine_uia_nested_node_provider(struct uia_node *node, LRESU
 
         IWineUiaProvider_AddRef(provider_iface);
         prov_data = impl_from_IWineUiaProvider(provider_iface);
+        prov_data->refuse_hwnd_node_providers = FALSE;
         prov_data->return_nested_node = FALSE;
         prov_data->parent_check_ran = FALSE;
 

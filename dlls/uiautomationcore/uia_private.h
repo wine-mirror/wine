@@ -84,6 +84,7 @@ struct uia_provider {
     LONG ref;
 
     IRawElementProviderSimple *elprov;
+    BOOL refuse_hwnd_node_providers;
     BOOL return_nested_node;
     BOOL parent_check_ran;
     BOOL has_parent;

@@ -1751,7 +1751,7 @@ static HRESULT uia_provider_thread_add_node(HUIANODE node, SAFEARRAY *rt_id)
     HRESULT hr = S_OK;
 
     prov_data = impl_from_IWineUiaProvider(node_data->prov[prov_type]);
-    node_data->nested_node = prov_data->return_nested_node = TRUE;
+    node_data->nested_node = prov_data->return_nested_node = prov_data->refuse_hwnd_node_providers = TRUE;
 
     TRACE("Adding node %p\n", node);
 
