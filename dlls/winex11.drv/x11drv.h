@@ -680,6 +680,7 @@ extern BOOL is_current_process_focused(void) DECLSPEC_HIDDEN;
 extern void X11DRV_SetFocus( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void set_window_cursor( Window window, HCURSOR handle ) DECLSPEC_HIDDEN;
 extern void retry_grab_clipping_window(void) DECLSPEC_HIDDEN;
+extern void ungrab_clipping_window(void) DECLSPEC_HIDDEN;
 extern void move_resize_window( HWND hwnd, int dir ) DECLSPEC_HIDDEN;
 extern void X11DRV_InitKeyboard( Display *display ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_ProcessEvents( DWORD mask ) DECLSPEC_HIDDEN;

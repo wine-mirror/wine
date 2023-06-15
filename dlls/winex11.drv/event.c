@@ -764,31 +764,23 @@ BOOL is_current_process_focused(void)
 static BOOL X11DRV_FocusIn( HWND hwnd, XEvent *xev )
 {
     XFocusChangeEvent *event = &xev->xfocus;
+    BOOL was_grabbed;
 
     if (!hwnd) return FALSE;
 
     TRACE( "win %p xwin %lx detail=%s mode=%s\n", hwnd, event->window, focus_details[event->detail], focus_modes[event->mode] );
 
     if (event->detail == NotifyPointer) return FALSE;
+    /* when focusing in the virtual desktop window, re-apply the cursor clipping rect */
+    if (is_virtual_desktop() && hwnd == NtUserGetDesktopWindow()) retry_grab_clipping_window();
     if (hwnd == NtUserGetDesktopWindow()) return FALSE;
 
-    switch (event->mode)
-    {
-    case NotifyGrab:
-        /* these are received when moving undecorated managed windows on mutter */
-        keyboard_grabbed = TRUE;
-        return FALSE;
-    case NotifyWhileGrabbed:
-        keyboard_grabbed = TRUE;
-        break;
-    case NotifyNormal:
-        keyboard_grabbed = FALSE;
-        break;
-    case NotifyUngrab:
-        keyboard_grabbed = FALSE;
-        retry_grab_clipping_window();
-        return TRUE; /* ignore wm specific NotifyUngrab / NotifyGrab events w.r.t focus */
-    }
+    /* when keyboard grab is released, re-apply the cursor clipping rect */
+    was_grabbed = keyboard_grabbed;
+    keyboard_grabbed = event->mode == NotifyGrab || event->mode == NotifyWhileGrabbed;
+    if (was_grabbed > keyboard_grabbed) retry_grab_clipping_window();
+    /* ignore wm specific NotifyUngrab / NotifyGrab events w.r.t focus */
+    if (event->mode == NotifyGrab || event->mode == NotifyUngrab) return FALSE;
 
     xim_set_focus( hwnd, TRUE );
 
@@ -816,11 +808,7 @@ static void focus_out( Display *display , HWND hwnd )
     x11drv_thread_data()->last_focus = hwnd;
     xim_set_focus( hwnd, FALSE );
 
-    if (is_virtual_desktop())
-    {
-        if (hwnd == NtUserGetDesktopWindow()) NtUserClipCursor( NULL );
-        return;
-    }
+    if (is_virtual_desktop()) return;
     if (hwnd != NtUserGetForegroundWindow()) return;
     if (!(NtUserGetWindowLongW( hwnd, GWL_STYLE ) & WS_MINIMIZE))
         send_message( hwnd, WM_CANCELMODE, 0, 0 );
@@ -860,29 +848,11 @@ static BOOL X11DRV_FocusOut( HWND hwnd, XEvent *xev )
     }
     if (!hwnd) return FALSE;
 
-    switch (event->mode)
-    {
-    case NotifyUngrab:
-        /* these are received when moving undecorated managed windows on mutter */
-        keyboard_grabbed = FALSE;
-        return FALSE;
-    case NotifyNormal:
-        keyboard_grabbed = FALSE;
-        break;
-    case NotifyWhileGrabbed:
-        keyboard_grabbed = TRUE;
-        break;
-    case NotifyGrab:
-        keyboard_grabbed = TRUE;
-
-        /* This will do nothing due to keyboard_grabbed == TRUE, but it
-         * will save the current clipping rect so we can restore it on
-         * FocusIn with NotifyUngrab mode.
-         */
-        retry_grab_clipping_window();
-
-        return TRUE; /* ignore wm specific NotifyUngrab / NotifyGrab events w.r.t focus */
-    }
+    /* in virtual desktop mode or when keyboard is grabbed, release any cursor grab but keep the clipping rect */
+    keyboard_grabbed = event->mode == NotifyGrab || event->mode == NotifyWhileGrabbed;
+    if (is_virtual_desktop() || keyboard_grabbed) ungrab_clipping_window();
+    /* ignore wm specific NotifyUngrab / NotifyGrab events w.r.t focus */
+    if (event->mode == NotifyGrab || event->mode == NotifyUngrab) return FALSE;
 
     focus_out( event->display, hwnd );
     return TRUE;
