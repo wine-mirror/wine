@@ -21,8 +21,6 @@
 
 #define WIN32_LEAN_AND_MEAN     /* Exclude rarely-used stuff from Windows headers */
 
-#define NONAMELESSUNION
-
 #include <windows.h>
 #include <commctrl.h>
 #include <shlwapi.h>
@@ -189,13 +187,13 @@ static HTREEITEM AddEntryToTree(HWND hwndTV, HTREEITEM hParent, LPWSTR label, HK
         }
     }
 
-    tvins.u.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN | TVIF_PARAM;
-    tvins.u.item.pszText = label;
-    tvins.u.item.cchTextMax = lstrlenW(label);
-    tvins.u.item.iImage = Image_Closed;
-    tvins.u.item.iSelectedImage = Image_Open;
-    tvins.u.item.cChildren = dwChildren;
-    tvins.u.item.lParam = (LPARAM)hKey;
+    tvins.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN | TVIF_PARAM;
+    tvins.item.pszText = label;
+    tvins.item.cchTextMax = lstrlenW(label);
+    tvins.item.iImage = Image_Closed;
+    tvins.item.iSelectedImage = Image_Open;
+    tvins.item.cChildren = dwChildren;
+    tvins.item.lParam = (LPARAM)hKey;
     tvins.hInsertAfter = hKey ? TVI_LAST : TVI_SORT;
     tvins.hParent = hParent;
 
@@ -551,16 +549,16 @@ static BOOL InitTreeViewItems(HWND hwndTV, LPWSTR pHostName)
                  hkcc[] = L"HKEY_CURRENT_CONFIG",
                  hkdd[] = L"HKEY_DYN_DATA";
 
-    tvins.u.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN | TVIF_PARAM;
+    tvins.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN | TVIF_PARAM;
     /* Set the text of the item.  */
-    tvins.u.item.pszText = pHostName;
-    tvins.u.item.cchTextMax = lstrlenW(pHostName);
+    tvins.item.pszText = pHostName;
+    tvins.item.cchTextMax = lstrlenW(pHostName);
     /* Assume the item is not a parent item, so give it an image.  */
-    tvins.u.item.iImage = Image_Root;
-    tvins.u.item.iSelectedImage = Image_Root;
-    tvins.u.item.cChildren = 5;
+    tvins.item.iImage = Image_Root;
+    tvins.item.iSelectedImage = Image_Root;
+    tvins.item.cChildren = 5;
     /* Save the heading level in the item's application-defined data area.  */
-    tvins.u.item.lParam = 0;
+    tvins.item.lParam = 0;
     tvins.hInsertAfter = TVI_FIRST;
     tvins.hParent = TVI_ROOT;
     /* Add the item to the tree view control.  */
