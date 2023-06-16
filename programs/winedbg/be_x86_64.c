@@ -19,9 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
-
 #include "debugger.h"
 #include "wine/debug.h"
 
@@ -109,67 +106,67 @@ static void be_x86_64_print_context(HANDLE hThread, const dbg_ctx_t *pctx,
     dbg_printf(" dr6:%016I64x dr7:%016I64x\n", ctx->Dr6, ctx->Dr7 );
 
     dbg_printf("Floating point:\n");
-    dbg_printf(" flcw:%04x ", LOWORD(ctx->u.FltSave.ControlWord));
-    dbg_printf(" fltw:%04x ", LOWORD(ctx->u.FltSave.TagWord));
-    dbg_printf(" flsw:%04x", LOWORD(ctx->u.FltSave.StatusWord));
+    dbg_printf(" flcw:%04x ", LOWORD(ctx->FltSave.ControlWord));
+    dbg_printf(" fltw:%04x ", LOWORD(ctx->FltSave.TagWord));
+    dbg_printf(" flsw:%04x", LOWORD(ctx->FltSave.StatusWord));
 
-    dbg_printf("(cc:%d%d%d%d", (ctx->u.FltSave.StatusWord & 0x00004000) >> 14,
-               (ctx->u.FltSave.StatusWord & 0x00000400) >> 10,
-               (ctx->u.FltSave.StatusWord & 0x00000200) >> 9,
-               (ctx->u.FltSave.StatusWord & 0x00000100) >> 8);
+    dbg_printf("(cc:%d%d%d%d", (ctx->FltSave.StatusWord & 0x00004000) >> 14,
+               (ctx->FltSave.StatusWord & 0x00000400) >> 10,
+               (ctx->FltSave.StatusWord & 0x00000200) >> 9,
+               (ctx->FltSave.StatusWord & 0x00000100) >> 8);
 
-    dbg_printf(" top:%01x", (unsigned int) (ctx->u.FltSave.StatusWord & 0x00003800) >> 11);
+    dbg_printf(" top:%01x", (unsigned int) (ctx->FltSave.StatusWord & 0x00003800) >> 11);
 
-    if (ctx->u.FltSave.StatusWord & 0x00000001)     /* Invalid Fl OP */
+    if (ctx->FltSave.StatusWord & 0x00000001)     /* Invalid Fl OP */
     {
-       if (ctx->u.FltSave.StatusWord & 0x00000040)  /* Stack Fault */
+       if (ctx->FltSave.StatusWord & 0x00000040)  /* Stack Fault */
        {
-          if (ctx->u.FltSave.StatusWord & 0x00000200) /* C1 says Overflow */
+          if (ctx->FltSave.StatusWord & 0x00000200) /* C1 says Overflow */
              dbg_printf(" #IE(Stack Overflow)");
           else
              dbg_printf(" #IE(Stack Underflow)");     /* Underflow */
        }
        else  dbg_printf(" #IE(Arithmetic error)");    /* Invalid Fl OP */
     }
-    if (ctx->u.FltSave.StatusWord & 0x00000002) dbg_printf(" #DE"); /* Denormalised OP */
-    if (ctx->u.FltSave.StatusWord & 0x00000004) dbg_printf(" #ZE"); /* Zero Divide */
-    if (ctx->u.FltSave.StatusWord & 0x00000008) dbg_printf(" #OE"); /* Overflow */
-    if (ctx->u.FltSave.StatusWord & 0x00000010) dbg_printf(" #UE"); /* Underflow */
-    if (ctx->u.FltSave.StatusWord & 0x00000020) dbg_printf(" #PE"); /* Precision error */
-    if (ctx->u.FltSave.StatusWord & 0x00000040)
-       if (!(ctx->u.FltSave.StatusWord & 0x00000001))
+    if (ctx->FltSave.StatusWord & 0x00000002) dbg_printf(" #DE"); /* Denormalised OP */
+    if (ctx->FltSave.StatusWord & 0x00000004) dbg_printf(" #ZE"); /* Zero Divide */
+    if (ctx->FltSave.StatusWord & 0x00000008) dbg_printf(" #OE"); /* Overflow */
+    if (ctx->FltSave.StatusWord & 0x00000010) dbg_printf(" #UE"); /* Underflow */
+    if (ctx->FltSave.StatusWord & 0x00000020) dbg_printf(" #PE"); /* Precision error */
+    if (ctx->FltSave.StatusWord & 0x00000040)
+       if (!(ctx->FltSave.StatusWord & 0x00000001))
            dbg_printf(" #SE");                 /* Stack Fault (don't think this can occur) */
-    if (ctx->u.FltSave.StatusWord & 0x00000080) dbg_printf(" #ES"); /* Error Summary */
-    if (ctx->u.FltSave.StatusWord & 0x00008000) dbg_printf(" #FB"); /* FPU Busy */
+    if (ctx->FltSave.StatusWord & 0x00000080) dbg_printf(" #ES"); /* Error Summary */
+    if (ctx->FltSave.StatusWord & 0x00008000) dbg_printf(" #FB"); /* FPU Busy */
     dbg_printf(")\n");
     dbg_printf(" flerr:%04x:%08lx   fldata:%04x:%08lx\n",
-               ctx->u.FltSave.ErrorSelector, ctx->u.FltSave.ErrorOffset,
-               ctx->u.FltSave.DataSelector, ctx->u.FltSave.DataOffset );
+               ctx->FltSave.ErrorSelector, ctx->FltSave.ErrorOffset,
+               ctx->FltSave.DataSelector, ctx->FltSave.DataOffset );
 
     for (i = 0; i < 8; i++)
     {
-        M128A reg = ctx->u.FltSave.FloatRegisters[i];
+        M128A reg = ctx->FltSave.FloatRegisters[i];
         if (i == 4) dbg_printf("\n");
         dbg_printf(" ST%u:%016I64x%16I64x ", i, reg.High, reg.Low );
     }
     dbg_printf("\n");
 
-    dbg_printf(" mxcsr: %04lx (", ctx->u.FltSave.MxCsr );
+    dbg_printf(" mxcsr: %04lx (", ctx->FltSave.MxCsr );
     for (i = 0; i < 16; i++)
-        if (ctx->u.FltSave.MxCsr & (1 << i)) dbg_printf( " %s", mxcsr_flags[i] );
+        if (ctx->FltSave.MxCsr & (1 << i)) dbg_printf( " %s", mxcsr_flags[i] );
     dbg_printf(" )\n");
 
     for (i = 0; i < 16; i++)
     {
         dbg_printf( " %sxmm%u: uint=%016I64x%016I64x", (i > 9) ? "" : " ", i,
-                    ctx->u.FltSave.XmmRegisters[i].High, ctx->u.FltSave.XmmRegisters[i].Low );
-        dbg_printf( " double={%g; %g}", *(double *)&ctx->u.FltSave.XmmRegisters[i].Low,
-                    *(double *)&ctx->u.FltSave.XmmRegisters[i].High );
+                    ctx->FltSave.XmmRegisters[i].High, ctx->FltSave.XmmRegisters[i].Low );
+        dbg_printf( " double={%g; %g}", *(double *)&ctx->FltSave.XmmRegisters[i].Low,
+                    *(double *)&ctx->FltSave.XmmRegisters[i].High );
         dbg_printf( " float={%g; %g; %g; %g}\n",
-                    (double)*((float *)&ctx->u.FltSave.XmmRegisters[i] + 0),
-                    (double)*((float *)&ctx->u.FltSave.XmmRegisters[i] + 1),
-                    (double)*((float *)&ctx->u.FltSave.XmmRegisters[i] + 2),
-                    (double)*((float *)&ctx->u.FltSave.XmmRegisters[i] + 3) );
+                    (double)*((float *)&ctx->FltSave.XmmRegisters[i] + 0),
+                    (double)*((float *)&ctx->FltSave.XmmRegisters[i] + 1),
+                    (double)*((float *)&ctx->FltSave.XmmRegisters[i] + 2),
+                    (double)*((float *)&ctx->FltSave.XmmRegisters[i] + 3) );
     }
 }
 
@@ -228,31 +225,31 @@ static struct dbg_internal_var be_x86_64_ctx[] =
     {CV_AMD64_R13,      "R13",          (void*)FIELD_OFFSET(CONTEXT, R13),     dbg_itype_unsigned_int64},
     {CV_AMD64_R14,      "R14",          (void*)FIELD_OFFSET(CONTEXT, R14),     dbg_itype_unsigned_int64},
     {CV_AMD64_R15,      "R15",          (void*)FIELD_OFFSET(CONTEXT, R15),     dbg_itype_unsigned_int64},
-    {CV_AMD64_ST0,      "ST0",          (void*)FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[0]), dbg_itype_long_real},
-    {CV_AMD64_ST0+1,    "ST1",          (void*)FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[1]), dbg_itype_long_real},
-    {CV_AMD64_ST0+2,    "ST2",          (void*)FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[2]), dbg_itype_long_real},
-    {CV_AMD64_ST0+3,    "ST3",          (void*)FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[3]), dbg_itype_long_real},
-    {CV_AMD64_ST0+4,    "ST4",          (void*)FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[4]), dbg_itype_long_real},
-    {CV_AMD64_ST0+5,    "ST5",          (void*)FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[5]), dbg_itype_long_real},
-    {CV_AMD64_ST0+6,    "ST6",          (void*)FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[6]), dbg_itype_long_real},
-    {CV_AMD64_ST0+7,    "ST7",          (void*)FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[7]), dbg_itype_long_real},
-    {CV_AMD64_XMM0,     "XMM0",         (void*)FIELD_OFFSET(CONTEXT, u.s.Xmm0),  dbg_itype_m128a},
-    {CV_AMD64_XMM0+1,   "XMM1",         (void*)FIELD_OFFSET(CONTEXT, u.s.Xmm1),  dbg_itype_m128a},
-    {CV_AMD64_XMM0+2,   "XMM2",         (void*)FIELD_OFFSET(CONTEXT, u.s.Xmm2),  dbg_itype_m128a},
-    {CV_AMD64_XMM0+3,   "XMM3",         (void*)FIELD_OFFSET(CONTEXT, u.s.Xmm3),  dbg_itype_m128a},
-    {CV_AMD64_XMM0+4,   "XMM4",         (void*)FIELD_OFFSET(CONTEXT, u.s.Xmm4),  dbg_itype_m128a},
-    {CV_AMD64_XMM0+5,   "XMM5",         (void*)FIELD_OFFSET(CONTEXT, u.s.Xmm5),  dbg_itype_m128a},
-    {CV_AMD64_XMM0+6,   "XMM6",         (void*)FIELD_OFFSET(CONTEXT, u.s.Xmm6),  dbg_itype_m128a},
-    {CV_AMD64_XMM0+7,   "XMM7",         (void*)FIELD_OFFSET(CONTEXT, u.s.Xmm7),  dbg_itype_m128a},
-    {CV_AMD64_XMM8,     "XMM8",         (void*)FIELD_OFFSET(CONTEXT, u.s.Xmm8),  dbg_itype_m128a},
-    {CV_AMD64_XMM8+1,   "XMM9",         (void*)FIELD_OFFSET(CONTEXT, u.s.Xmm9),  dbg_itype_m128a},
-    {CV_AMD64_XMM8+2,   "XMM10",        (void*)FIELD_OFFSET(CONTEXT, u.s.Xmm10), dbg_itype_m128a},
-    {CV_AMD64_XMM8+3,   "XMM11",        (void*)FIELD_OFFSET(CONTEXT, u.s.Xmm11), dbg_itype_m128a},
-    {CV_AMD64_XMM8+4,   "XMM12",        (void*)FIELD_OFFSET(CONTEXT, u.s.Xmm12), dbg_itype_m128a},
-    {CV_AMD64_XMM8+5,   "XMM13",        (void*)FIELD_OFFSET(CONTEXT, u.s.Xmm13), dbg_itype_m128a},
-    {CV_AMD64_XMM8+6,   "XMM14",        (void*)FIELD_OFFSET(CONTEXT, u.s.Xmm14), dbg_itype_m128a},
-    {CV_AMD64_XMM8+7,   "XMM15",        (void*)FIELD_OFFSET(CONTEXT, u.s.Xmm15), dbg_itype_m128a},
-    {0,                 NULL,           0,                                       dbg_itype_none}
+    {CV_AMD64_ST0,      "ST0",          (void*)FIELD_OFFSET(CONTEXT, FltSave.FloatRegisters[0]), dbg_itype_long_real},
+    {CV_AMD64_ST0+1,    "ST1",          (void*)FIELD_OFFSET(CONTEXT, FltSave.FloatRegisters[1]), dbg_itype_long_real},
+    {CV_AMD64_ST0+2,    "ST2",          (void*)FIELD_OFFSET(CONTEXT, FltSave.FloatRegisters[2]), dbg_itype_long_real},
+    {CV_AMD64_ST0+3,    "ST3",          (void*)FIELD_OFFSET(CONTEXT, FltSave.FloatRegisters[3]), dbg_itype_long_real},
+    {CV_AMD64_ST0+4,    "ST4",          (void*)FIELD_OFFSET(CONTEXT, FltSave.FloatRegisters[4]), dbg_itype_long_real},
+    {CV_AMD64_ST0+5,    "ST5",          (void*)FIELD_OFFSET(CONTEXT, FltSave.FloatRegisters[5]), dbg_itype_long_real},
+    {CV_AMD64_ST0+6,    "ST6",          (void*)FIELD_OFFSET(CONTEXT, FltSave.FloatRegisters[6]), dbg_itype_long_real},
+    {CV_AMD64_ST0+7,    "ST7",          (void*)FIELD_OFFSET(CONTEXT, FltSave.FloatRegisters[7]), dbg_itype_long_real},
+    {CV_AMD64_XMM0,     "XMM0",         (void*)FIELD_OFFSET(CONTEXT, Xmm0),  dbg_itype_m128a},
+    {CV_AMD64_XMM0+1,   "XMM1",         (void*)FIELD_OFFSET(CONTEXT, Xmm1),  dbg_itype_m128a},
+    {CV_AMD64_XMM0+2,   "XMM2",         (void*)FIELD_OFFSET(CONTEXT, Xmm2),  dbg_itype_m128a},
+    {CV_AMD64_XMM0+3,   "XMM3",         (void*)FIELD_OFFSET(CONTEXT, Xmm3),  dbg_itype_m128a},
+    {CV_AMD64_XMM0+4,   "XMM4",         (void*)FIELD_OFFSET(CONTEXT, Xmm4),  dbg_itype_m128a},
+    {CV_AMD64_XMM0+5,   "XMM5",         (void*)FIELD_OFFSET(CONTEXT, Xmm5),  dbg_itype_m128a},
+    {CV_AMD64_XMM0+6,   "XMM6",         (void*)FIELD_OFFSET(CONTEXT, Xmm6),  dbg_itype_m128a},
+    {CV_AMD64_XMM0+7,   "XMM7",         (void*)FIELD_OFFSET(CONTEXT, Xmm7),  dbg_itype_m128a},
+    {CV_AMD64_XMM8,     "XMM8",         (void*)FIELD_OFFSET(CONTEXT, Xmm8),  dbg_itype_m128a},
+    {CV_AMD64_XMM8+1,   "XMM9",         (void*)FIELD_OFFSET(CONTEXT, Xmm9),  dbg_itype_m128a},
+    {CV_AMD64_XMM8+2,   "XMM10",        (void*)FIELD_OFFSET(CONTEXT, Xmm10), dbg_itype_m128a},
+    {CV_AMD64_XMM8+3,   "XMM11",        (void*)FIELD_OFFSET(CONTEXT, Xmm11), dbg_itype_m128a},
+    {CV_AMD64_XMM8+4,   "XMM12",        (void*)FIELD_OFFSET(CONTEXT, Xmm12), dbg_itype_m128a},
+    {CV_AMD64_XMM8+5,   "XMM13",        (void*)FIELD_OFFSET(CONTEXT, Xmm13), dbg_itype_m128a},
+    {CV_AMD64_XMM8+6,   "XMM14",        (void*)FIELD_OFFSET(CONTEXT, Xmm14), dbg_itype_m128a},
+    {CV_AMD64_XMM8+7,   "XMM15",        (void*)FIELD_OFFSET(CONTEXT, Xmm15), dbg_itype_m128a},
+    {0,                 NULL,           0,                                   dbg_itype_none}
 };
 
 #define	f_mod(b)	((b)>>6)
@@ -735,40 +732,40 @@ static struct gdb_register be_x86_64_gdb_register_map[] = {
     REG(NULL,   "es",     NULL,          SegEs),
     REG(NULL,   "fs",     NULL,          SegFs),
     REG(NULL,   "gs",     NULL,          SegGs),
-    { NULL,     "st0",    "i387_ext",    FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 0]), 10},
-    { NULL,     "st1",    "i387_ext",    FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 1]), 10},
-    { NULL,     "st2",    "i387_ext",    FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 2]), 10},
-    { NULL,     "st3",    "i387_ext",    FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 3]), 10},
-    { NULL,     "st4",    "i387_ext",    FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 4]), 10},
-    { NULL,     "st5",    "i387_ext",    FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 5]), 10},
-    { NULL,     "st6",    "i387_ext",    FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 6]), 10},
-    { NULL,     "st7",    "i387_ext",    FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 7]), 10},
-    REG(NULL,   "fctrl",  NULL,          u.FltSave.ControlWord),
-    REG(NULL,   "fstat",  NULL,          u.FltSave.StatusWord),
-    REG(NULL,   "ftag",   NULL,          u.FltSave.TagWord),
-    REG(NULL,   "fiseg",  NULL,          u.FltSave.ErrorSelector),
-    REG(NULL,   "fioff",  NULL,          u.FltSave.ErrorOffset),
-    REG(NULL,   "foseg",  NULL,          u.FltSave.DataSelector),
-    REG(NULL,   "fooff",  NULL,          u.FltSave.DataOffset),
-    REG(NULL,   "fop",    NULL,          u.FltSave.ErrorOpcode),
+    { NULL,     "st0",    "i387_ext",    FIELD_OFFSET(CONTEXT, FltSave.FloatRegisters[ 0]), 10},
+    { NULL,     "st1",    "i387_ext",    FIELD_OFFSET(CONTEXT, FltSave.FloatRegisters[ 1]), 10},
+    { NULL,     "st2",    "i387_ext",    FIELD_OFFSET(CONTEXT, FltSave.FloatRegisters[ 2]), 10},
+    { NULL,     "st3",    "i387_ext",    FIELD_OFFSET(CONTEXT, FltSave.FloatRegisters[ 3]), 10},
+    { NULL,     "st4",    "i387_ext",    FIELD_OFFSET(CONTEXT, FltSave.FloatRegisters[ 4]), 10},
+    { NULL,     "st5",    "i387_ext",    FIELD_OFFSET(CONTEXT, FltSave.FloatRegisters[ 5]), 10},
+    { NULL,     "st6",    "i387_ext",    FIELD_OFFSET(CONTEXT, FltSave.FloatRegisters[ 6]), 10},
+    { NULL,     "st7",    "i387_ext",    FIELD_OFFSET(CONTEXT, FltSave.FloatRegisters[ 7]), 10},
+    REG(NULL,   "fctrl",  NULL,          FltSave.ControlWord),
+    REG(NULL,   "fstat",  NULL,          FltSave.StatusWord),
+    REG(NULL,   "ftag",   NULL,          FltSave.TagWord),
+    REG(NULL,   "fiseg",  NULL,          FltSave.ErrorSelector),
+    REG(NULL,   "fioff",  NULL,          FltSave.ErrorOffset),
+    REG(NULL,   "foseg",  NULL,          FltSave.DataSelector),
+    REG(NULL,   "fooff",  NULL,          FltSave.DataOffset),
+    REG(NULL,   "fop",    NULL,          FltSave.ErrorOpcode),
 
-    REG("sse", "xmm0",  "vec128",     u.s.Xmm0),
-    REG(NULL,  "xmm1",  "vec128",     u.s.Xmm1),
-    REG(NULL,  "xmm2",  "vec128",     u.s.Xmm2),
-    REG(NULL,  "xmm3",  "vec128",     u.s.Xmm3),
-    REG(NULL,  "xmm4",  "vec128",     u.s.Xmm4),
-    REG(NULL,  "xmm5",  "vec128",     u.s.Xmm5),
-    REG(NULL,  "xmm6",  "vec128",     u.s.Xmm6),
-    REG(NULL,  "xmm7",  "vec128",     u.s.Xmm7),
-    REG(NULL,  "xmm8",  "vec128",     u.s.Xmm8),
-    REG(NULL,  "xmm9",  "vec128",     u.s.Xmm9),
-    REG(NULL,  "xmm10", "vec128",     u.s.Xmm10),
-    REG(NULL,  "xmm11", "vec128",     u.s.Xmm11),
-    REG(NULL,  "xmm12", "vec128",     u.s.Xmm12),
-    REG(NULL,  "xmm13", "vec128",     u.s.Xmm13),
-    REG(NULL,  "xmm14", "vec128",     u.s.Xmm14),
-    REG(NULL,  "xmm15", "vec128",     u.s.Xmm15),
-    REG(NULL,  "mxcsr", "i386_mxcsr", u.FltSave.MxCsr),
+    REG("sse",  "xmm0",    "vec128",     Xmm0),
+    REG(NULL,   "xmm1",    "vec128",     Xmm1),
+    REG(NULL,   "xmm2",    "vec128",     Xmm2),
+    REG(NULL,   "xmm3",    "vec128",     Xmm3),
+    REG(NULL,   "xmm4",    "vec128",     Xmm4),
+    REG(NULL,   "xmm5",    "vec128",     Xmm5),
+    REG(NULL,   "xmm6",    "vec128",     Xmm6),
+    REG(NULL,   "xmm7",    "vec128",     Xmm7),
+    REG(NULL,   "xmm8",    "vec128",     Xmm8),
+    REG(NULL,   "xmm9",    "vec128",     Xmm9),
+    REG(NULL,   "xmm10",   "vec128",     Xmm10),
+    REG(NULL,   "xmm11",   "vec128",     Xmm11),
+    REG(NULL,   "xmm12",   "vec128",     Xmm12),
+    REG(NULL,   "xmm13",   "vec128",     Xmm13),
+    REG(NULL,   "xmm14",   "vec128",     Xmm14),
+    REG(NULL,   "xmm15",   "vec128",     Xmm15),
+    REG(NULL,   "mxcsr",   "i386_mxcsr", FltSave.MxCsr),
 };
 
 struct backend_cpu be_x86_64 =

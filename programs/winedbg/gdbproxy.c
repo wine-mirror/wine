@@ -24,9 +24,6 @@
  * http://sources.redhat.com/gdb/onlinedocs/gdb/Maintenance-Commands.html
  */
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-
 #include <assert.h>
 #include <fcntl.h>
 #include <stdarg.h>

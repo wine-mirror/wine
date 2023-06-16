@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -308,8 +305,8 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             break;
         }
         dbg_printf("  %ls was running on #%d %s CPU%s",
-                   exec_name, msi->u.s.NumberOfProcessors, str,
-                   msi->u.s.NumberOfProcessors < 2 ? "" : "s");
+                   exec_name, msi->NumberOfProcessors, str,
+                   msi->NumberOfProcessors < 2 ? "" : "s");
         switch (msi->MajorVersion)
         {
         case 3:
@@ -334,8 +331,8 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             case 0: str = "2000"; break;
             case 1: str = "XP"; break;
             case 2:
-                if (msi->u.s.ProductType == 1) str = "XP";
-                else if (msi->u.s.ProductType == 3) str = "Server 2003";
+                if (msi->ProductType == 1) str = "XP";
+                else if (msi->ProductType == 3) str = "Server 2003";
                 else str = "5-????";
                 break;
             default: str = "5-????"; break;
@@ -345,23 +342,23 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             switch (msi->MinorVersion)
             {
             case 0:
-                if (msi->u.s.ProductType == 1) str = "Vista";
-                else if (msi->u.s.ProductType == 3) str = "Server 2008";
+                if (msi->ProductType == 1) str = "Vista";
+                else if (msi->ProductType == 3) str = "Server 2008";
                 else str = "6-????";
                 break;
             case 1:
-                if (msi->u.s.ProductType == 1) str = "Win7";
-                else if (msi->u.s.ProductType == 3) str = "Server 2008";
+                if (msi->ProductType == 1) str = "Win7";
+                else if (msi->ProductType == 3) str = "Server 2008";
                 else str = "6-????";
                 break;
             case 2:
-                if (msi->u.s.ProductType == 1) str = "Win8";
-                else if (msi->u.s.ProductType == 3) str = "Server 2012";
+                if (msi->ProductType == 1) str = "Win8";
+                else if (msi->ProductType == 3) str = "Server 2012";
                 else str = "6-????";
                 break;
             case 3:
-                if (msi->u.s.ProductType == 1) str = "Win8.1";
-                else if (msi->u.s.ProductType == 3) str = "Server 2012 R2";
+                if (msi->ProductType == 1) str = "Win8.1";
+                else if (msi->ProductType == 3) str = "Server 2012 R2";
                 else str = "6-????";
                 break;
             default: str = "6-????"; break;
@@ -371,7 +368,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             switch (msi->MinorVersion)
             {
             case 0:
-                if (msi->u.s.ProductType == 1) str = "Win10";
+                if (msi->ProductType == 1) str = "Win10";
                 else str = "10-????";
                 break;
             default: str = "10-????"; break;
