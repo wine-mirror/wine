@@ -69,8 +69,6 @@
 #include <stdarg.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include <windows.h>
 #include <winternl.h>
 #include <shlobj.h>
@@ -2364,9 +2362,9 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
     WINE_TRACE("path       : %s\n", wine_dbgstr_w(urlPath));
 
     ps[0].ulKind = PRSPEC_PROPID;
-    ps[0].u.propid = PID_IS_ICONFILE;
+    ps[0].propid = PID_IS_ICONFILE;
     ps[1].ulKind = PRSPEC_PROPID;
-    ps[1].u.propid = PID_IS_ICONINDEX;
+    ps[1].propid = PID_IS_ICONINDEX;
 
     hr = url->lpVtbl->QueryInterface(url, &IID_IPropertySetStorage, (void **) &pPropSetStg);
     if (SUCCEEDED(hr))
