@@ -972,21 +972,19 @@ SHORT WINAPI NtUserGetKeyState( INT vkey )
  */
 BOOL WINAPI NtUserGetKeyboardState( BYTE *state )
 {
-    BOOL ret;
+    struct object_lock lock = OBJECT_LOCK_INIT;
+    const input_shm_t *input_shm;
+    NTSTATUS status;
     UINT i;
 
     TRACE("(%p)\n", state);
 
-    memset( state, 0, 256 );
-    SERVER_START_REQ( get_key_state )
-    {
-        req->key = -1;
-        wine_server_set_reply( req, state, 256 );
-        ret = !wine_server_call_err( req );
-        for (i = 0; i < 256; i++) state[i] &= 0x81;
-    }
-    SERVER_END_REQ;
-    return ret;
+    while ((status = get_shared_input( GetCurrentThreadId(), &lock, &input_shm )) == STATUS_PENDING)
+        memcpy( state, (const void *)input_shm->keystate, 256 );
+    if (status) memset( state, 0, 256 );
+
+    for (i = 0; i < 256; i++) state[i] &= 0x81;
+    return TRUE;
 }
 
 /***********************************************************************
