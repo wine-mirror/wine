@@ -1,6 +1,6 @@
 MODULE    = winealsa.drv
 UNIXLIB   = winealsa.so
-IMPORTS   = uuid ole32 advapi32
+IMPORTS   = uuid ole32 advapi32 version
 PARENTSRC = ../mmdevapi
 DELAYIMPORTS = winmm
 UNIX_LIBS    = $(ALSA_LIBS) $(PTHREAD_LIBS)

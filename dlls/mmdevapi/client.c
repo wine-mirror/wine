@@ -21,6 +21,8 @@
 
 #define COBJMACROS
 
+#include <wchar.h>
+
 #include <audiopolicy.h>
 #include <mmdeviceapi.h>
 #include <winternl.h>
@@ -32,6 +34,12 @@
 #include "mmdevdrv.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
+
+typedef struct tagLANGANDCODEPAGE
+{
+    WORD wLanguage;
+    WORD wCodePage;
+} LANGANDCODEPAGE;
 
 extern void sessions_lock(void) DECLSPEC_HIDDEN;
 extern void sessions_unlock(void) DECLSPEC_HIDDEN;
@@ -167,6 +175,105 @@ static DWORD CALLBACK timer_loop_func(void *user)
     WINE_UNIX_CALL(timer_loop, &params);
 
     return 0;
+}
+
+static BOOL query_productname(void *data, LANGANDCODEPAGE *lang, LPVOID *buffer, UINT *len)
+{
+    WCHAR pn[37];
+    swprintf(pn, ARRAY_SIZE(pn), L"\\StringFileInfo\\%04x%04x\\ProductName", lang->wLanguage, lang->wCodePage);
+    return VerQueryValueW(data, pn, buffer, len) && *len;
+}
+
+WCHAR *get_application_name(void)
+{
+    WCHAR path[MAX_PATH], *name;
+    UINT translate_size, productname_size;
+    LANGANDCODEPAGE *translate;
+    LPVOID productname;
+    BOOL found = FALSE;
+    void *data = NULL;
+    unsigned int i;
+    LCID locale;
+    DWORD size;
+
+    GetModuleFileNameW(NULL, path, ARRAY_SIZE(path));
+
+    size = GetFileVersionInfoSizeW(path, NULL);
+    if (!size)
+        goto skip;
+
+    data = malloc(size);
+    if (!data)
+        goto skip;
+
+    if (!GetFileVersionInfoW(path, 0, size, data))
+        goto skip;
+
+    if (!VerQueryValueW(data, L"\\VarFileInfo\\Translation", (LPVOID *)&translate, &translate_size))
+        goto skip;
+
+    /* No translations found. */
+    if (translate_size < sizeof(LANGANDCODEPAGE))
+        goto skip;
+
+    /* The following code will try to find the best translation. We first search for an
+     * exact match of the language, then a match of the language PRIMARYLANGID, then we
+     * search for a LANG_NEUTRAL match, and if that still doesn't work we pick the
+     * first entry which contains a proper productname. */
+    locale = GetThreadLocale();
+
+    for (i = 0; i < translate_size / sizeof(LANGANDCODEPAGE); i++) {
+        if (translate[i].wLanguage == locale &&
+            query_productname(data, &translate[i], &productname, &productname_size)) {
+            found = TRUE;
+            break;
+        }
+    }
+
+    if (!found) {
+        for (i = 0; i < translate_size / sizeof(LANGANDCODEPAGE); i++) {
+            if (PRIMARYLANGID(translate[i].wLanguage) == PRIMARYLANGID(locale) &&
+                query_productname(data, &translate[i], &productname, &productname_size)) {
+                found = TRUE;
+                break;
+            }
+        }
+    }
+
+    if (!found) {
+        for (i = 0; i < translate_size / sizeof(LANGANDCODEPAGE); i++) {
+            if (PRIMARYLANGID(translate[i].wLanguage) == LANG_NEUTRAL &&
+                query_productname(data, &translate[i], &productname, &productname_size)) {
+                found = TRUE;
+                break;
+            }
+        }
+    }
+
+    if (!found) {
+        for (i = 0; i < translate_size / sizeof(LANGANDCODEPAGE); i++) {
+            if (query_productname(data, &translate[i], &productname, &productname_size)) {
+                found = TRUE;
+                break;
+            }
+        }
+    }
+skip:
+    if (found) {
+        name = wcsdup(productname);
+        free(data);
+        return name;
+    }
+
+    free(data);
+
+    name = wcsrchr(path, '\\');
+    if (!name)
+        name = path;
+    else
+        name++;
+
+    return wcsdup(name);
 }
 
 static HRESULT WINAPI capture_QueryInterface(IAudioCaptureClient *iface, REFIID riid, void **ppv)
