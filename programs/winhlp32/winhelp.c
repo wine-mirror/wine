@@ -28,8 +28,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -1565,12 +1563,12 @@ BOOL WINHELP_CreateIndexWindow(BOOL is_search)
     psp.dwFlags = 0;
     psp.hInstance = Globals.hInstance;
 
-    psp.u.pszTemplate = MAKEINTRESOURCEA(IDD_INDEX);
+    psp.pszTemplate = MAKEINTRESOURCEA(IDD_INDEX);
     psp.lParam = (LPARAM)&id;
     psp.pfnDlgProc = WINHELP_IndexDlgProc;
     psPage[0] = CreatePropertySheetPageA(&psp);
 
-    psp.u.pszTemplate = MAKEINTRESOURCEA(IDD_SEARCH);
+    psp.pszTemplate = MAKEINTRESOURCEA(IDD_SEARCH);
     psp.lParam = (LPARAM)&id;
     psp.pfnDlgProc = WINHELP_SearchDlgProc;
     psPage[1] = CreatePropertySheetPageA(&psp);
@@ -1583,9 +1581,9 @@ BOOL WINHELP_CreateIndexWindow(BOOL is_search)
 
     psHead.pszCaption = buf;
     psHead.nPages = 2;
-    psHead.u2.nStartPage = is_search ? 1 : 0;
+    psHead.nStartPage = is_search ? 1 : 0;
     psHead.hwndParent = Globals.active_win->hMainWnd;
-    psHead.u3.phpage = psPage;
+    psHead.phpage = psPage;
     psHead.dwFlags = PSH_NOAPPLYNOW;
 
     PropertySheetA(&psHead);
