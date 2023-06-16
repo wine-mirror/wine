@@ -2614,13 +2614,7 @@ BOOL WINAPI NtUserClipCursor( const RECT *rect )
         }
         else req->flags = SET_CURSOR_NOCLIP;
 
-        if ((ret = !wine_server_call( req )))
-        {
-            new_rect.left   = reply->new_clip.left;
-            new_rect.top    = reply->new_clip.top;
-            new_rect.right  = reply->new_clip.right;
-            new_rect.bottom = reply->new_clip.bottom;
-        }
+        ret = !wine_server_call( req );
     }
     SERVER_END_REQ;
 
