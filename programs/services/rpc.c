@@ -19,8 +19,6 @@
  */
 
 #define WIN32_LEAN_AND_MEAN
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
 
 #include <stdarg.h>
 #include <windows.h>
@@ -1143,8 +1141,8 @@ static BOOL process_send_command(struct process_entry *process, const void *data
     DWORD count, ret;
     BOOL r;
 
-    overlapped.u.s.Offset = 0;
-    overlapped.u.s.OffsetHigh = 0;
+    overlapped.Offset = 0;
+    overlapped.OffsetHigh = 0;
     overlapped.hEvent = process->overlapped_event;
     r = WriteFile(process->control_pipe, data, size, &count, &overlapped);
     if (!r && GetLastError() == ERROR_IO_PENDING)
