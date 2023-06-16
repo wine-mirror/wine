@@ -22,7 +22,6 @@
  */
 
 #define WIN32_LEAN_AND_MEAN
-#define NONAMELESSUNION
 
 #include <windows.h>
 #include <commctrl.h>
@@ -74,8 +73,8 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
     psp[pg].dwSize = sizeof (PROPSHEETPAGEW);
     psp[pg].dwFlags = PSP_USETITLE;
     psp[pg].hInstance = hInstance;
-    psp[pg].u.pszTemplate = MAKEINTRESOURCEW (IDD_APPCFG);
-    psp[pg].u2.pszIcon = NULL;
+    psp[pg].pszTemplate = MAKEINTRESOURCEW (IDD_APPCFG);
+    psp[pg].pszIcon = NULL;
     psp[pg].pfnDlgProc = AppDlgProc;
     psp[pg].pszTitle = load_string (IDS_TAB_APPLICATIONS);
     psp[pg].lParam = 0;
@@ -88,8 +87,8 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
     psp[pg].dwSize = sizeof (PROPSHEETPAGEW);
     psp[pg].dwFlags = PSP_USETITLE;
     psp[pg].hInstance = hInstance;
-    psp[pg].u.pszTemplate = MAKEINTRESOURCEW (IDD_DLLCFG);
-    psp[pg].u2.pszIcon = NULL;
+    psp[pg].pszTemplate = MAKEINTRESOURCEW (IDD_DLLCFG);
+    psp[pg].pszIcon = NULL;
     psp[pg].pfnDlgProc = LibrariesDlgProc;
     psp[pg].pszTitle = load_string (IDS_TAB_DLLS);
     psp[pg].lParam = 0;
@@ -102,8 +101,8 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
     psp[pg].dwSize = sizeof (PROPSHEETPAGEW);
     psp[pg].dwFlags = PSP_USETITLE;
     psp[pg].hInstance = hInstance;
-    psp[pg].u.pszTemplate = MAKEINTRESOURCEW (IDD_GRAPHCFG);
-    psp[pg].u2.pszIcon = NULL;
+    psp[pg].pszTemplate = MAKEINTRESOURCEW (IDD_GRAPHCFG);
+    psp[pg].pszIcon = NULL;
     psp[pg].pfnDlgProc = GraphDlgProc;
     psp[pg].pszTitle =  load_string (IDS_TAB_GRAPHICS);
     psp[pg].lParam = 0;
@@ -112,8 +111,8 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
     psp[pg].dwSize = sizeof (PROPSHEETPAGEW);
     psp[pg].dwFlags = PSP_USETITLE;
     psp[pg].hInstance = hInstance;
-    psp[pg].u.pszTemplate = MAKEINTRESOURCEW (IDD_DESKTOP_INTEGRATION);
-    psp[pg].u2.pszIcon = NULL;
+    psp[pg].pszTemplate = MAKEINTRESOURCEW (IDD_DESKTOP_INTEGRATION);
+    psp[pg].pszIcon = NULL;
     psp[pg].pfnDlgProc = ThemeDlgProc;
     psp[pg].pszTitle =  load_string (IDS_TAB_DESKTOP_INTEGRATION);
     psp[pg].lParam = 0;
@@ -122,8 +121,8 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
     psp[pg].dwSize = sizeof (PROPSHEETPAGEW);
     psp[pg].dwFlags = PSP_USETITLE;
     psp[pg].hInstance = hInstance;
-    psp[pg].u.pszTemplate = MAKEINTRESOURCEW (IDD_DRIVECFG);
-    psp[pg].u2.pszIcon = NULL;
+    psp[pg].pszTemplate = MAKEINTRESOURCEW (IDD_DRIVECFG);
+    psp[pg].pszIcon = NULL;
     psp[pg].pfnDlgProc = DriveDlgProc;
     psp[pg].pszTitle =  load_string (IDS_TAB_DRIVES);
     psp[pg].lParam = 0;
@@ -132,8 +131,8 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
     psp[pg].dwSize = sizeof (PROPSHEETPAGEW);
     psp[pg].dwFlags = PSP_USETITLE;
     psp[pg].hInstance = hInstance;
-    psp[pg].u.pszTemplate = MAKEINTRESOURCEW (IDD_AUDIOCFG);
-    psp[pg].u2.pszIcon = NULL;
+    psp[pg].pszTemplate = MAKEINTRESOURCEW (IDD_AUDIOCFG);
+    psp[pg].pszIcon = NULL;
     psp[pg].pfnDlgProc = AudioDlgProc;
     psp[pg].pszTitle =  load_string (IDS_TAB_AUDIO);
     psp[pg].lParam = 0;
@@ -146,8 +145,8 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
     psp[pg].dwSize = sizeof (PROPSHEETPAGEW);
     psp[pg].dwFlags = PSP_USETITLE;
     psp[pg].hInstance = hInstance;
-    psp[pg].u.pszTemplate = MAKEINTRESOURCEW (IDD_ABOUTCFG);
-    psp[pg].u2.pszIcon = NULL;
+    psp[pg].pszTemplate = MAKEINTRESOURCEW (IDD_ABOUTCFG);
+    psp[pg].pszIcon = NULL;
     psp[pg].pfnDlgProc = AboutDlgProc;
     psp[pg].pszTitle =  load_string (IDS_TAB_ABOUT);
     psp[pg].lParam = 0;
@@ -160,12 +159,12 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
     psh.dwFlags = PSH_PROPSHEETPAGE | PSH_USEICONID | PSH_USECALLBACK;
     psh.hwndParent = hOwner;
     psh.hInstance = hInstance;
-    psh.u.pszIcon = MAKEINTRESOURCEW (IDI_WINECFG);
+    psh.pszIcon = MAKEINTRESOURCEW (IDI_WINECFG);
     psh.pszCaption =  load_string (IDS_WINECFG_TITLE);
     psh.nPages = NUM_PROPERTY_PAGES;
-    psh.u3.ppsp = psp;
+    psh.ppsp = psp;
     psh.pfnCallback = PropSheetCallback;
-    psh.u2.nStartPage = 0;
+    psh.nStartPage = 0;
 
     /*
      * Display the modal property sheet
