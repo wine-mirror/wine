@@ -551,15 +551,16 @@ static WCHAR kbd_tables_vkey_to_wchar( const KBDTABLES *tables, UINT vkey, const
  */
 HWND WINAPI NtUserGetForegroundWindow(void)
 {
-    HWND ret = 0;
+    struct object_lock lock = OBJECT_LOCK_INIT;
+    const input_shm_t *input_shm;
+    NTSTATUS status;
+    HWND hwnd = 0;
 
-    SERVER_START_REQ( get_thread_input_data )
-    {
-        req->tid = 0;
-        if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->foreground );
-    }
-    SERVER_END_REQ;
-    return ret;
+    while ((status = get_shared_input( 0, &lock, &input_shm )) == STATUS_PENDING)
+        hwnd = wine_server_ptr_handle( input_shm->active );
+    if (status) hwnd = 0;
+
+    return hwnd;
 }
 
 /* see GetActiveWindow */
