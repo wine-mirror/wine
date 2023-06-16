@@ -75,10 +75,10 @@ void CreateInst(HTREEITEM item, WCHAR *wszMachineName)
     tvi.pszText = wszTreeName;
 
     memset(&tvis, 0, sizeof(TVINSERTSTRUCTW));
-    U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM;
-    U(tvis).item.cchTextMax = MAX_LOAD_STRING;
+    tvis.item.mask = TVIF_TEXT|TVIF_PARAM;
+    tvis.item.cchTextMax = MAX_LOAD_STRING;
     tvis.hInsertAfter = TVI_FIRST;
-    U(tvis).item.pszText = tvi.pszText;
+    tvis.item.pszText = tvi.pszText;
     tvis.hParent = item;
     tvis.hInsertAfter = TVI_LAST;
 
@@ -168,7 +168,7 @@ void CreateInst(HTREEITEM item, WCHAR *wszMachineName)
 
             lstrcpyW(wszRegPath, wszInterface);
             lstrcpyW(&wszRegPath[lstrlenW(wszRegPath)], ((ITEM_INFO *)tvi.lParam)->clsid);
-            U(tvis).item.lParam = CreateITEM_INFO(REGTOP|INTERFACE|REGPATH,
+            tvis.item.lParam = CreateITEM_INFO(REGTOP|INTERFACE|REGPATH,
                     wszRegPath, ((ITEM_INFO *)tvi.lParam)->clsid, NULL);
             SendMessageW(globals.hTree, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
         }
@@ -260,9 +260,9 @@ static void AddCOMandAll(void)
     int i=-1;
 
     memset(&tvi, 0, sizeof(TVITEMW));
-    U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM|TVIF_CHILDREN;
-    U(tvis).item.cchTextMax = MAX_LOAD_STRING;
-    U(tvis).item.cChildren = 1;
+    tvis.item.mask = TVIF_TEXT|TVIF_PARAM|TVIF_CHILDREN;
+    tvis.item.cchTextMax = MAX_LOAD_STRING;
+    tvis.item.cChildren = 1;
     tvis.hInsertAfter = TVI_FIRST;
 
     if(RegOpenKeyW(HKEY_CLASSES_ROOT, wszCLSID, &hKey) != ERROR_SUCCESS) return;
@@ -292,10 +292,10 @@ static void AddCOMandAll(void)
         lenBuffer = sizeof(WCHAR[MAX_LOAD_STRING]);
 
         if(RegQueryValueW(hCurKey, NULL, buffer, &lenBuffer) == ERROR_SUCCESS && *buffer)
-            U(tvis).item.pszText = buffer;
-        else U(tvis).item.pszText = valName;
+            tvis.item.pszText = buffer;
+        else tvis.item.pszText = valName;
 
-        U(tvis).item.lParam = CreateITEM_INFO(REGPATH|SHOWALL, valName, valName, NULL);
+        tvis.item.lParam = CreateITEM_INFO(REGPATH|SHOWALL, valName, valName, NULL);
         if(tvis.hParent) SendMessageW(globals.hTree, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
 
         if(RegOpenKeyW(hCurKey, wszImplementedCategories, &hInfo) == ERROR_SUCCESS)
@@ -320,7 +320,7 @@ static void AddCOMandAll(void)
 
                     memmove(&valName[6], valName, sizeof(WCHAR[MAX_LOAD_STRING-6]));
                     memmove(valName, wszCLSID, sizeof(WCHAR[6]));
-                    U(tvis).item.lParam = CreateITEM_INFO(REGTOP|REGPATH|SHOWALL,
+                    tvis.item.lParam = CreateITEM_INFO(REGTOP|REGPATH|SHOWALL,
                             valName, &valName[6], NULL);
 
                     SendMessageW(globals.hTree, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
@@ -347,8 +347,8 @@ static void AddApplicationID(void)
     LONG lenBuffer;
     int i=-1;
 
-    U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM;
-    U(tvis).item.cchTextMax = MAX_LOAD_STRING;
+    tvis.item.mask = TVIF_TEXT|TVIF_PARAM;
+    tvis.item.cchTextMax = MAX_LOAD_STRING;
     tvis.hInsertAfter = TVI_FIRST;
     tvis.hParent = tree.hAID;
 
@@ -365,12 +365,12 @@ static void AddApplicationID(void)
         lenBuffer = sizeof(WCHAR[MAX_LOAD_STRING]);
 
         if(RegQueryValueW(hCurKey, NULL, buffer, &lenBuffer) == ERROR_SUCCESS && *buffer)
-            U(tvis).item.pszText = buffer;
-        else U(tvis).item.pszText = valName;
+            tvis.item.pszText = buffer;
+        else tvis.item.pszText = valName;
 
         RegCloseKey(hCurKey);
 
-        U(tvis).item.lParam = CreateITEM_INFO(REGPATH, valName, valName, NULL);
+        tvis.item.lParam = CreateITEM_INFO(REGPATH, valName, valName, NULL);
         SendMessageW(globals.hTree, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
     }
     RegCloseKey(hKey);
@@ -392,8 +392,8 @@ static void AddTypeLib(void)
     LONG lenBuffer;
     int i=-1, j;
 
-    U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM;
-    U(tvis).item.cchTextMax = MAX_LOAD_STRING;
+    tvis.item.mask = TVIF_TEXT|TVIF_PARAM;
+    tvis.item.cchTextMax = MAX_LOAD_STRING;
     tvis.hInsertAfter = TVI_FIRST;
     tvis.hParent = tree.hTL;
 
@@ -424,19 +424,19 @@ static void AddTypeLib(void)
                 LoadStringW(globals.hMainInst, IDS_TL_VER, wszVer, ARRAY_SIZE(wszVer));
 
                 wsprintfW(&buffer[lstrlenW(buffer)], wszFormat, wszVer, valName);
-                U(tvis).item.pszText = buffer;
+                tvis.item.pszText = buffer;
 
                 lenBuffer = MAX_LOAD_STRING;
                 RegOpenKeyW(hInfoKey, wszGetPath, &hPath);
                 RegQueryValueW(hPath, NULL, wszPath, &lenBuffer);
                 RegCloseKey(hPath);
             }
-            else U(tvis).item.pszText = valName;
+            else tvis.item.pszText = valName;
 
             RegCloseKey(hInfoKey);
 
             wsprintfW(wszVer, wszFormat2, valParent, valName);
-            U(tvis).item.lParam = CreateITEM_INFO(REGPATH, wszVer, valParent, wszPath);
+            tvis.item.lParam = CreateITEM_INFO(REGPATH, wszVer, valParent, wszPath);
 
             SendMessageW(globals.hTree, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
         }
@@ -457,8 +457,8 @@ static void AddInterfaces(void)
     LONG lenBuffer;
     int i=-1;
 
-    U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM;
-    U(tvis).item.cchTextMax = MAX_LOAD_STRING;
+    tvis.item.mask = TVIF_TEXT|TVIF_PARAM;
+    tvis.item.cchTextMax = MAX_LOAD_STRING;
     tvis.hInsertAfter = TVI_FIRST;
     tvis.hParent = tree.hI;
 
@@ -475,12 +475,12 @@ static void AddInterfaces(void)
         lenBuffer = sizeof(WCHAR[MAX_LOAD_STRING]);
 
         if(RegQueryValueW(hCurKey, NULL, buffer, &lenBuffer) == ERROR_SUCCESS && *buffer)
-            U(tvis).item.pszText = buffer;
-        else U(tvis).item.pszText = valName;
+            tvis.item.pszText = buffer;
+        else tvis.item.pszText = valName;
 
         RegCloseKey(hCurKey);
 
-        U(tvis).item.lParam = CreateITEM_INFO(REGPATH|INTERFACE, valName, valName, NULL);
+        tvis.item.lParam = CreateITEM_INFO(REGPATH|INTERFACE, valName, valName, NULL);
         SendMessageW(globals.hTree, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
     }
 
@@ -501,12 +501,12 @@ static void AddComponentCategories(void)
     DWORD lenValName;
     int i=-1;
 
-    U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM|TVIF_CHILDREN;
-    U(tvis).item.cchTextMax = MAX_LOAD_STRING;
+    tvis.item.mask = TVIF_TEXT|TVIF_PARAM|TVIF_CHILDREN;
+    tvis.item.cchTextMax = MAX_LOAD_STRING;
     tvis.hInsertAfter = TVI_FIRST;
     if(tree.hGBCC) tvis.hParent = tree.hGBCC;
     else tvis.hParent = TVI_ROOT;
-    U(tvis).item.cChildren = 1;
+    tvis.item.cChildren = 1;
 
     if(RegOpenKeyW(HKEY_CLASSES_ROOT, wszComponentCategories, &hKey) != ERROR_SUCCESS)
         return;
@@ -524,15 +524,15 @@ static void AddComponentCategories(void)
         lenValName = sizeof(WCHAR[MAX_LOAD_STRING]);
 
         if(RegQueryValueW(hCurKey, NULL, buffer, &lenBuffer) == ERROR_SUCCESS && *buffer)
-            U(tvis).item.pszText = buffer;
+            tvis.item.pszText = buffer;
         else if(RegEnumValueW(hCurKey, 0, valName, &lenValName, NULL, NULL,
                     (LPBYTE)buffer, &lenBufferHlp) == ERROR_SUCCESS && *buffer)
-            U(tvis).item.pszText = buffer;
+            tvis.item.pszText = buffer;
         else continue;
 
         RegCloseKey(hCurKey);
 
-        U(tvis).item.lParam = CreateITEM_INFO(REGTOP, keyName, keyName, NULL);
+        tvis.item.lParam = CreateITEM_INFO(REGTOP, keyName, keyName, NULL);
         SendMessageW(globals.hTree, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
     }
 
@@ -546,53 +546,53 @@ static void AddBaseEntries(void)
     TVINSERTSTRUCTW tvis;
     WCHAR name[MAX_LOAD_STRING];
 
-    U(tvis).item.mask = TVIF_TEXT|TVIF_CHILDREN|TVIF_PARAM;
+    tvis.item.mask = TVIF_TEXT|TVIF_CHILDREN|TVIF_PARAM;
     /* FIXME add TVIF_IMAGE */
-    U(tvis).item.pszText = name;
-    U(tvis).item.cchTextMax = MAX_LOAD_STRING;
-    U(tvis).item.cChildren = 1;
+    tvis.item.pszText = name;
+    tvis.item.cchTextMax = MAX_LOAD_STRING;
+    tvis.item.cChildren = 1;
     tvis.hInsertAfter = TVI_FIRST;
     tvis.hParent = TVI_ROOT;
 
-    LoadStringW(globals.hMainInst, IDS_TREE_I, U(tvis).item.pszText,
+    LoadStringW(globals.hMainInst, IDS_TREE_I, tvis.item.pszText,
             MAX_LOAD_STRING);
-    U(tvis).item.lParam = CreateITEM_INFO(REGTOP, wszInterface, NULL, NULL);
+    tvis.item.lParam = CreateITEM_INFO(REGTOP, wszInterface, NULL, NULL);
     tree.hI = TreeView_InsertItemW(globals.hTree, &tvis);
 
-    LoadStringW(globals.hMainInst, IDS_TREE_TL, U(tvis).item.pszText,
+    LoadStringW(globals.hMainInst, IDS_TREE_TL, tvis.item.pszText,
             MAX_LOAD_STRING);
-    U(tvis).item.lParam = CreateITEM_INFO(REGTOP, wszTypeLib, NULL, NULL);
+    tvis.item.lParam = CreateITEM_INFO(REGTOP, wszTypeLib, NULL, NULL);
     tree.hTL = TreeView_InsertItemW(globals.hTree, &tvis);
 
-    LoadStringW(globals.hMainInst, IDS_TREE_AID, U(tvis).item.pszText,
+    LoadStringW(globals.hMainInst, IDS_TREE_AID, tvis.item.pszText,
             MAX_LOAD_STRING);
-    U(tvis).item.lParam = CreateITEM_INFO(REGTOP|REGPATH, wszAppID, NULL, NULL);
+    tvis.item.lParam = CreateITEM_INFO(REGTOP|REGPATH, wszAppID, NULL, NULL);
     tree.hAID = TreeView_InsertItemW(globals.hTree, &tvis);
 
-    LoadStringW(globals.hMainInst, IDS_TREE_OC, U(tvis).item.pszText,
+    LoadStringW(globals.hMainInst, IDS_TREE_OC, tvis.item.pszText,
             MAX_LOAD_STRING);
-    U(tvis).item.lParam = 0;
+    tvis.item.lParam = 0;
     tree.hOC = TreeView_InsertItemW(globals.hTree, &tvis);
 
 
     tvis.hParent = tree.hOC;
-    LoadStringW(globals.hMainInst, IDS_TREE_AO, U(tvis).item.pszText,
+    LoadStringW(globals.hMainInst, IDS_TREE_AO, tvis.item.pszText,
             MAX_LOAD_STRING);
-    U(tvis).item.lParam = CreateITEM_INFO(REGTOP, wszCLSID, NULL, NULL);
+    tvis.item.lParam = CreateITEM_INFO(REGTOP, wszCLSID, NULL, NULL);
     tree.hAO = TreeView_InsertItemW(globals.hTree, &tvis);
 
-    LoadStringW(globals.hMainInst, IDS_TREE_CLO, U(tvis).item.pszText,
+    LoadStringW(globals.hMainInst, IDS_TREE_CLO, tvis.item.pszText,
             MAX_LOAD_STRING);
     tree.hCLO = TreeView_InsertItemW(globals.hTree, &tvis);
 
-    LoadStringW(globals.hMainInst, IDS_TREE_O1O, U(tvis).item.pszText,
+    LoadStringW(globals.hMainInst, IDS_TREE_O1O, tvis.item.pszText,
             MAX_LOAD_STRING);
-    U(tvis).item.lParam = 0;
+    tvis.item.lParam = 0;
     tree.hO1O = TreeView_InsertItemW(globals.hTree, &tvis);
 
-    LoadStringW(globals.hMainInst, IDS_TREE_GBCC, U(tvis).item.pszText,
+    LoadStringW(globals.hMainInst, IDS_TREE_GBCC, tvis.item.pszText,
             MAX_LOAD_STRING);
-    U(tvis).item.lParam = CreateITEM_INFO(REGTOP|REGPATH,
+    tvis.item.lParam = CreateITEM_INFO(REGTOP|REGPATH,
             wszComponentCategories, NULL, NULL);
     tree.hGBCC = TreeView_InsertItemW(globals.hTree, &tvis);
 

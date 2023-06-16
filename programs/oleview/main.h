@@ -26,12 +26,6 @@
 #include <commdlg.h>
 #include <unknwn.h>
 
-#ifdef NONAMELESSUNION
-# define U(x)  (x).u
-#else
-# define U(x)  (x)
-#endif
-
 #include "resource.h"
 
 #define MAX_LOAD_STRING 256

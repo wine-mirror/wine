@@ -107,7 +107,7 @@ static INT_PTR CALLBACK InterfaceViewerProc(HWND hDlgWnd, UINT uMsg,
                 IPersistStream_GetSizeMax((IPersistStream *)unk, &size);
                 IUnknown_Release(unk);
                 LoadStringW(globals.hMainInst, IDS_BYTES, wszBuf, ARRAY_SIZE(wszBuf));
-                wsprintfW(wszSize, wszFormat, U(size).LowPart, wszBuf);
+                wsprintfW(wszSize, wszFormat, size.LowPart, wszBuf);
                 hObject = GetDlgItem(hDlgWnd, IDC_GETSIZEMAX);
                 SetWindowTextW(hObject, wszSize);
                 return TRUE;
