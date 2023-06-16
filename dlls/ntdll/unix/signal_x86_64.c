@@ -2239,6 +2239,34 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 }
 
 
+#ifdef __APPLE__
+/**********************************************************************
+ *		sigsys_handler
+ *
+ * Handler for SIGSYS, signals that a non-existent system call was invoked.
+ * Only called on macOS 14 Sonoma and later.
+ */
+static void sigsys_handler( int signal, siginfo_t *siginfo, void *sigcontext )
+{
+    extern const void *__wine_syscall_dispatcher_prolog_end_ptr;
+    ucontext_t *ucontext = init_handler( sigcontext );
+    struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
+
+    TRACE_(seh)("SIGSYS, rax %#llx, rip %#llx.\n", RAX_sig(ucontext), RIP_sig(ucontext));
+
+    frame->rip = RIP_sig(ucontext) + 0xb;
+    frame->rcx = RIP_sig(ucontext);
+    frame->eflags = EFL_sig(ucontext);
+    frame->restore_flags = 0;
+    if (instrumentation_callback) frame->restore_flags |= RESTORE_FLAGS_INSTRUMENTATION;
+    RCX_sig(ucontext) = (ULONG_PTR)frame;
+    R11_sig(ucontext) = frame->eflags;
+    EFL_sig(ucontext) &= ~0x100;  /* clear single-step flag */
+    RIP_sig(ucontext) = (ULONG64)__wine_syscall_dispatcher_prolog_end_ptr;
+}
+#endif
+
+
 /***********************************************************************
  *           LDT support
  */
@@ -2532,6 +2560,10 @@ void signal_init_process(void)
     if (sigaction( SIGSEGV, &sig_act, NULL ) == -1) goto error;
     if (sigaction( SIGILL, &sig_act, NULL ) == -1) goto error;
     if (sigaction( SIGBUS, &sig_act, NULL ) == -1) goto error;
+#ifdef __APPLE__
+    sig_act.sa_sigaction = sigsys_handler;
+    if (sigaction( SIGSYS, &sig_act, NULL ) == -1) goto error;
+#endif
     return;
 
  error:
