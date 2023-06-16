@@ -219,6 +219,7 @@ struct vulkan_device_funcs
     void (*p_vkCmdSetCullMode)(VkCommandBuffer, VkCullModeFlags);
     void (*p_vkCmdSetCullModeEXT)(VkCommandBuffer, VkCullModeFlags);
     void (*p_vkCmdSetDepthBias)(VkCommandBuffer, float, float, float);
+    void (*p_vkCmdSetDepthBias2EXT)(VkCommandBuffer, const VkDepthBiasInfoEXT *);
     void (*p_vkCmdSetDepthBiasEnable)(VkCommandBuffer, VkBool32);
     void (*p_vkCmdSetDepthBiasEnableEXT)(VkCommandBuffer, VkBool32);
     void (*p_vkCmdSetDepthBounds)(VkCommandBuffer, float, float);
@@ -757,6 +758,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCmdSetCullMode) \
     USE_VK_FUNC(vkCmdSetCullModeEXT) \
     USE_VK_FUNC(vkCmdSetDepthBias) \
+    USE_VK_FUNC(vkCmdSetDepthBias2EXT) \
     USE_VK_FUNC(vkCmdSetDepthBiasEnable) \
     USE_VK_FUNC(vkCmdSetDepthBiasEnableEXT) \
     USE_VK_FUNC(vkCmdSetDepthBounds) \

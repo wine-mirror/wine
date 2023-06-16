@@ -1592,6 +1592,14 @@ void WINAPI vkCmdSetDepthBias(VkCommandBuffer commandBuffer, float depthBiasCons
     UNIX_CALL(vkCmdSetDepthBias, &params);
 }
 
+void WINAPI vkCmdSetDepthBias2EXT(VkCommandBuffer commandBuffer, const VkDepthBiasInfoEXT *pDepthBiasInfo)
+{
+    struct vkCmdSetDepthBias2EXT_params params;
+    params.commandBuffer = commandBuffer;
+    params.pDepthBiasInfo = pDepthBiasInfo;
+    UNIX_CALL(vkCmdSetDepthBias2EXT, &params);
+}
+
 void WINAPI vkCmdSetDepthBiasEnable(VkCommandBuffer commandBuffer, VkBool32 depthBiasEnable)
 {
     struct vkCmdSetDepthBiasEnable_params params;
@@ -5945,6 +5953,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdSetCullMode", vkCmdSetCullMode},
     {"vkCmdSetCullModeEXT", vkCmdSetCullModeEXT},
     {"vkCmdSetDepthBias", vkCmdSetDepthBias},
+    {"vkCmdSetDepthBias2EXT", vkCmdSetDepthBias2EXT},
     {"vkCmdSetDepthBiasEnable", vkCmdSetDepthBiasEnable},
     {"vkCmdSetDepthBiasEnableEXT", vkCmdSetDepthBiasEnableEXT},
     {"vkCmdSetDepthBounds", vkCmdSetDepthBounds},

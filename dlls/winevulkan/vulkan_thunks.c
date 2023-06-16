@@ -909,6 +909,13 @@ typedef struct VkMemoryBarrier32
     VkAccessFlags dstAccessMask;
 } VkMemoryBarrier32;
 
+typedef struct VkExternalMemoryAcquireUnmodifiedEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 acquireUnmodifiedMemory;
+} VkExternalMemoryAcquireUnmodifiedEXT32;
+
 typedef struct VkBufferMemoryBarrier32
 {
     VkStructureType sType;
@@ -1079,6 +1086,23 @@ typedef struct VkCoarseSampleOrderCustomNV32
     uint32_t sampleLocationCount;
     PTR32 pSampleLocations;
 } VkCoarseSampleOrderCustomNV32;
+
+typedef struct VkDepthBiasRepresentationInfoEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkDepthBiasRepresentationEXT depthBiasRepresentation;
+    VkBool32 depthBiasExact;
+} VkDepthBiasRepresentationInfoEXT32;
+
+typedef struct VkDepthBiasInfoEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    float depthBiasConstantFactor;
+    float depthBiasClamp;
+    float depthBiasSlopeFactor;
+} VkDepthBiasInfoEXT32;
 
 typedef struct VkPerformanceMarkerInfoINTEL32
 {
@@ -2060,6 +2084,13 @@ typedef struct VkPhysicalDevicePerformanceQueryFeaturesKHR32
     VkBool32 performanceCounterMultipleQueryPools;
 } VkPhysicalDevicePerformanceQueryFeaturesKHR32;
 
+typedef struct VkPerformanceQueryReservationInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t maxPerformanceQueriesPerPool;
+} VkPerformanceQueryReservationInfoKHR32;
+
 typedef struct VkPhysicalDeviceCoverageReductionModeFeaturesNV32
 {
     VkStructureType sType;
@@ -2795,6 +2826,16 @@ typedef struct VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT32
     PTR32 pNext;
     VkBool32 swapchainMaintenance1;
 } VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT32;
+
+typedef struct VkPhysicalDeviceDepthBiasControlFeaturesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 depthBiasControl;
+    VkBool32 leastRepresentableValueForceUnormRepresentation;
+    VkBool32 floatRepresentation;
+    VkBool32 depthBiasExact;
+} VkPhysicalDeviceDepthBiasControlFeaturesEXT32;
 
 typedef struct VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV32
 {
@@ -8222,8 +8263,11 @@ static inline const VkMemoryBarrier *convert_VkMemoryBarrier_array_win32_to_host
     return out;
 }
 
-static inline void convert_VkBufferMemoryBarrier_win32_to_host(const VkBufferMemoryBarrier32 *in, VkBufferMemoryBarrier *out)
+static inline void convert_VkBufferMemoryBarrier_win32_to_host(struct conversion_context *ctx, const VkBufferMemoryBarrier32 *in, VkBufferMemoryBarrier *out)
 {
+    const VkBaseInStructure32 *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
     if (!in) return;
 
     out->sType = in->sType;
@@ -8235,8 +8279,27 @@ static inline void convert_VkBufferMemoryBarrier_win32_to_host(const VkBufferMem
     out->buffer = in->buffer;
     out->offset = in->offset;
     out->size = in->size;
-    if (in->pNext)
-        FIXME("Unexpected pNext\n");
+
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_ACQUIRE_UNMODIFIED_EXT:
+        {
+            VkExternalMemoryAcquireUnmodifiedEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkExternalMemoryAcquireUnmodifiedEXT32 *in_ext = (const VkExternalMemoryAcquireUnmodifiedEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_ACQUIRE_UNMODIFIED_EXT;
+            out_ext->pNext = NULL;
+            out_ext->acquireUnmodifiedMemory = in_ext->acquireUnmodifiedMemory;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.\n", in_header->sType);
+            break;
+        }
+    }
 }
 
 static inline const VkBufferMemoryBarrier *convert_VkBufferMemoryBarrier_array_win32_to_host(struct conversion_context *ctx, const VkBufferMemoryBarrier32 *in, uint32_t count)
@@ -8249,7 +8312,7 @@ static inline const VkBufferMemoryBarrier *convert_VkBufferMemoryBarrier_array_w
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkBufferMemoryBarrier_win32_to_host(&in[i], &out[i]);
+        convert_VkBufferMemoryBarrier_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
@@ -8287,6 +8350,17 @@ static inline void convert_VkImageMemoryBarrier_win32_to_host(struct conversion_
             out_ext->sampleLocationGridSize = in_ext->sampleLocationGridSize;
             out_ext->sampleLocationsCount = in_ext->sampleLocationsCount;
             out_ext->pSampleLocations = (const VkSampleLocationEXT *)UlongToPtr(in_ext->pSampleLocations);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_ACQUIRE_UNMODIFIED_EXT:
+        {
+            VkExternalMemoryAcquireUnmodifiedEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkExternalMemoryAcquireUnmodifiedEXT32 *in_ext = (const VkExternalMemoryAcquireUnmodifiedEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_ACQUIRE_UNMODIFIED_EXT;
+            out_ext->pNext = NULL;
+            out_ext->acquireUnmodifiedMemory = in_ext->acquireUnmodifiedMemory;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -8344,8 +8418,11 @@ static inline const VkMemoryBarrier2 *convert_VkMemoryBarrier2_array_win32_to_ho
     return out;
 }
 
-static inline void convert_VkBufferMemoryBarrier2_win32_to_host(const VkBufferMemoryBarrier232 *in, VkBufferMemoryBarrier2 *out)
+static inline void convert_VkBufferMemoryBarrier2_win32_to_host(struct conversion_context *ctx, const VkBufferMemoryBarrier232 *in, VkBufferMemoryBarrier2 *out)
 {
+    const VkBaseInStructure32 *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
     if (!in) return;
 
     out->sType = in->sType;
@@ -8359,8 +8436,27 @@ static inline void convert_VkBufferMemoryBarrier2_win32_to_host(const VkBufferMe
     out->buffer = in->buffer;
     out->offset = in->offset;
     out->size = in->size;
-    if (in->pNext)
-        FIXME("Unexpected pNext\n");
+
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_ACQUIRE_UNMODIFIED_EXT:
+        {
+            VkExternalMemoryAcquireUnmodifiedEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkExternalMemoryAcquireUnmodifiedEXT32 *in_ext = (const VkExternalMemoryAcquireUnmodifiedEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_ACQUIRE_UNMODIFIED_EXT;
+            out_ext->pNext = NULL;
+            out_ext->acquireUnmodifiedMemory = in_ext->acquireUnmodifiedMemory;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.\n", in_header->sType);
+            break;
+        }
+    }
 }
 
 static inline const VkBufferMemoryBarrier2 *convert_VkBufferMemoryBarrier2_array_win32_to_host(struct conversion_context *ctx, const VkBufferMemoryBarrier232 *in, uint32_t count)
@@ -8373,7 +8469,7 @@ static inline const VkBufferMemoryBarrier2 *convert_VkBufferMemoryBarrier2_array
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkBufferMemoryBarrier2_win32_to_host(&in[i], &out[i]);
+        convert_VkBufferMemoryBarrier2_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
@@ -8413,6 +8509,17 @@ static inline void convert_VkImageMemoryBarrier2_win32_to_host(struct conversion
             out_ext->sampleLocationGridSize = in_ext->sampleLocationGridSize;
             out_ext->sampleLocationsCount = in_ext->sampleLocationsCount;
             out_ext->pSampleLocations = (const VkSampleLocationEXT *)UlongToPtr(in_ext->pSampleLocations);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_ACQUIRE_UNMODIFIED_EXT:
+        {
+            VkExternalMemoryAcquireUnmodifiedEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkExternalMemoryAcquireUnmodifiedEXT32 *in_ext = (const VkExternalMemoryAcquireUnmodifiedEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_ACQUIRE_UNMODIFIED_EXT;
+            out_ext->pNext = NULL;
+            out_ext->acquireUnmodifiedMemory = in_ext->acquireUnmodifiedMemory;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -8659,6 +8766,42 @@ static inline const VkCoarseSampleOrderCustomNV *convert_VkCoarseSampleOrderCust
     }
 
     return out;
+}
+
+static inline void convert_VkDepthBiasInfoEXT_win32_to_host(struct conversion_context *ctx, const VkDepthBiasInfoEXT32 *in, VkDepthBiasInfoEXT *out)
+{
+    const VkBaseInStructure32 *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->depthBiasConstantFactor = in->depthBiasConstantFactor;
+    out->depthBiasClamp = in->depthBiasClamp;
+    out->depthBiasSlopeFactor = in->depthBiasSlopeFactor;
+
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_DEPTH_BIAS_REPRESENTATION_INFO_EXT:
+        {
+            VkDepthBiasRepresentationInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkDepthBiasRepresentationInfoEXT32 *in_ext = (const VkDepthBiasRepresentationInfoEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_DEPTH_BIAS_REPRESENTATION_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->depthBiasRepresentation = in_ext->depthBiasRepresentation;
+            out_ext->depthBiasExact = in_ext->depthBiasExact;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.\n", in_header->sType);
+            break;
+        }
+    }
 }
 
 static inline void convert_VkPerformanceMarkerInfoINTEL_win32_to_host(const VkPerformanceMarkerInfoINTEL32 *in, VkPerformanceMarkerInfoINTEL *out)
@@ -10615,6 +10758,17 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PERFORMANCE_QUERY_RESERVATION_INFO_KHR:
+        {
+            VkPerformanceQueryReservationInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPerformanceQueryReservationInfoKHR *in_ext = (const VkPerformanceQueryReservationInfoKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PERFORMANCE_QUERY_RESERVATION_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->maxPerformanceQueriesPerPool = in_ext->maxPerformanceQueriesPerPool;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COVERAGE_REDUCTION_MODE_FEATURES_NV:
         {
             VkPhysicalDeviceCoverageReductionModeFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -11670,6 +11824,20 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_BIAS_CONTROL_FEATURES_EXT:
+        {
+            VkPhysicalDeviceDepthBiasControlFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceDepthBiasControlFeaturesEXT *in_ext = (const VkPhysicalDeviceDepthBiasControlFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_BIAS_CONTROL_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->depthBiasControl = in_ext->depthBiasControl;
+            out_ext->leastRepresentableValueForceUnormRepresentation = in_ext->leastRepresentableValueForceUnormRepresentation;
+            out_ext->floatRepresentation = in_ext->floatRepresentation;
+            out_ext->depthBiasExact = in_ext->depthBiasExact;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV:
         {
             VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -12563,6 +12731,17 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_ext->pNext = NULL;
             out_ext->performanceCounterQueryPools = in_ext->performanceCounterQueryPools;
             out_ext->performanceCounterMultipleQueryPools = in_ext->performanceCounterMultipleQueryPools;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PERFORMANCE_QUERY_RESERVATION_INFO_KHR:
+        {
+            VkPerformanceQueryReservationInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPerformanceQueryReservationInfoKHR32 *in_ext = (const VkPerformanceQueryReservationInfoKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PERFORMANCE_QUERY_RESERVATION_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->maxPerformanceQueriesPerPool = in_ext->maxPerformanceQueriesPerPool;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -13622,6 +13801,20 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_BIAS_CONTROL_FEATURES_EXT:
+        {
+            VkPhysicalDeviceDepthBiasControlFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceDepthBiasControlFeaturesEXT32 *in_ext = (const VkPhysicalDeviceDepthBiasControlFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_BIAS_CONTROL_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->depthBiasControl = in_ext->depthBiasControl;
+            out_ext->leastRepresentableValueForceUnormRepresentation = in_ext->leastRepresentableValueForceUnormRepresentation;
+            out_ext->floatRepresentation = in_ext->floatRepresentation;
+            out_ext->depthBiasExact = in_ext->depthBiasExact;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV:
         {
             VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -14254,6 +14447,18 @@ static inline void convert_VkPipelineRasterizationStateCreateInfo_win32_to_host(
             out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_PROVOKING_VERTEX_STATE_CREATE_INFO_EXT;
             out_ext->pNext = NULL;
             out_ext->provokingVertexMode = in_ext->provokingVertexMode;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_DEPTH_BIAS_REPRESENTATION_INFO_EXT:
+        {
+            VkDepthBiasRepresentationInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkDepthBiasRepresentationInfoEXT32 *in_ext = (const VkDepthBiasRepresentationInfoEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_DEPTH_BIAS_REPRESENTATION_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->depthBiasRepresentation = in_ext->depthBiasRepresentation;
+            out_ext->depthBiasExact = in_ext->depthBiasExact;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -20169,6 +20374,20 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_BIAS_CONTROL_FEATURES_EXT:
+        {
+            VkPhysicalDeviceDepthBiasControlFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceDepthBiasControlFeaturesEXT32 *in_ext = (const VkPhysicalDeviceDepthBiasControlFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_BIAS_CONTROL_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->depthBiasControl = in_ext->depthBiasControl;
+            out_ext->leastRepresentableValueForceUnormRepresentation = in_ext->leastRepresentableValueForceUnormRepresentation;
+            out_ext->floatRepresentation = in_ext->floatRepresentation;
+            out_ext->depthBiasExact = in_ext->depthBiasExact;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV:
         {
             VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -21764,6 +21983,18 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             const VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT *in_ext = (const VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SWAPCHAIN_MAINTENANCE_1_FEATURES_EXT;
             out_ext->swapchainMaintenance1 = in_ext->swapchainMaintenance1;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_BIAS_CONTROL_FEATURES_EXT:
+        {
+            VkPhysicalDeviceDepthBiasControlFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_BIAS_CONTROL_FEATURES_EXT);
+            const VkPhysicalDeviceDepthBiasControlFeaturesEXT *in_ext = (const VkPhysicalDeviceDepthBiasControlFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_BIAS_CONTROL_FEATURES_EXT;
+            out_ext->depthBiasControl = in_ext->depthBiasControl;
+            out_ext->leastRepresentableValueForceUnormRepresentation = in_ext->leastRepresentableValueForceUnormRepresentation;
+            out_ext->floatRepresentation = in_ext->floatRepresentation;
+            out_ext->depthBiasExact = in_ext->depthBiasExact;
             out_header = (void *)out_ext;
             break;
         }
@@ -30061,6 +30292,31 @@ static void thunk32_vkCmdSetDepthBias(void *args)
     } *params = args;
 
     wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->funcs.p_vkCmdSetDepthBias(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->command_buffer, params->depthBiasConstantFactor, params->depthBiasClamp, params->depthBiasSlopeFactor);
+}
+
+#ifdef _WIN64
+static void thunk64_vkCmdSetDepthBias2EXT(void *args)
+{
+    struct vkCmdSetDepthBias2EXT_params *params = args;
+
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetDepthBias2EXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pDepthBiasInfo);
+}
+#endif /* _WIN64 */
+
+static void thunk32_vkCmdSetDepthBias2EXT(void *args)
+{
+    struct
+    {
+        PTR32 commandBuffer;
+        PTR32 pDepthBiasInfo;
+    } *params = args;
+    VkDepthBiasInfoEXT pDepthBiasInfo_host;
+    struct conversion_context ctx;
+
+    init_conversion_context(&ctx);
+    convert_VkDepthBiasInfoEXT_win32_to_host(&ctx, (const VkDepthBiasInfoEXT32 *)UlongToPtr(params->pDepthBiasInfo), &pDepthBiasInfo_host);
+    wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->funcs.p_vkCmdSetDepthBias2EXT(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->command_buffer, &pDepthBiasInfo_host);
+    free_conversion_context(&ctx);
 }
 
 #ifdef _WIN64
@@ -41155,6 +41411,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_conservative_rasterization",
     "VK_EXT_custom_border_color",
     "VK_EXT_debug_marker",
+    "VK_EXT_depth_bias_control",
     "VK_EXT_depth_clamp_zero_one",
     "VK_EXT_depth_clip_control",
     "VK_EXT_depth_clip_enable",
@@ -41168,6 +41425,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_extended_dynamic_state",
     "VK_EXT_extended_dynamic_state2",
     "VK_EXT_extended_dynamic_state3",
+    "VK_EXT_external_memory_acquire_unmodified",
     "VK_EXT_external_memory_host",
     "VK_EXT_filter_cubic",
     "VK_EXT_fragment_density_map",
@@ -41590,6 +41848,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     (void *)thunk64_vkCmdSetCullMode,
     (void *)thunk64_vkCmdSetCullModeEXT,
     (void *)thunk64_vkCmdSetDepthBias,
+    (void *)thunk64_vkCmdSetDepthBias2EXT,
     (void *)thunk64_vkCmdSetDepthBiasEnable,
     (void *)thunk64_vkCmdSetDepthBiasEnableEXT,
     (void *)thunk64_vkCmdSetDepthBounds,
@@ -42144,6 +42403,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     (void *)thunk32_vkCmdSetCullMode,
     (void *)thunk32_vkCmdSetCullModeEXT,
     (void *)thunk32_vkCmdSetDepthBias,
+    (void *)thunk32_vkCmdSetDepthBias2EXT,
     (void *)thunk32_vkCmdSetDepthBiasEnable,
     (void *)thunk32_vkCmdSetDepthBiasEnableEXT,
     (void *)thunk32_vkCmdSetDepthBounds,

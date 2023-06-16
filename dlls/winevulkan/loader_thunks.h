@@ -174,6 +174,7 @@ enum unix_call
     unix_vkCmdSetCullMode,
     unix_vkCmdSetCullModeEXT,
     unix_vkCmdSetDepthBias,
+    unix_vkCmdSetDepthBias2EXT,
     unix_vkCmdSetDepthBiasEnable,
     unix_vkCmdSetDepthBiasEnableEXT,
     unix_vkCmdSetDepthBounds,
@@ -1799,6 +1800,12 @@ struct vkCmdSetDepthBias_params
     float depthBiasConstantFactor;
     float depthBiasClamp;
     float depthBiasSlopeFactor;
+};
+
+struct vkCmdSetDepthBias2EXT_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkDepthBiasInfoEXT *pDepthBiasInfo;
 };
 
 struct vkCmdSetDepthBiasEnable_params
