@@ -1272,7 +1272,9 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         return call_current_hook( h_extra->handle, HC_ACTION, wparam, h_extra->lparam );
     }
     case WM_WINE_CLIPCURSOR:
-        if (wparam && lparam) return clip_fullscreen_window( hwnd, FALSE );
+        /* non-hardware message, posted on display mode change to trigger fullscreen
+           clipping or to the desktop window to forcefully release the cursor grabs */
+        if (!wparam) return clip_fullscreen_window( hwnd, FALSE );
         return process_wine_clipcursor( hwnd, wparam, lparam );
     case WM_WINE_SETCURSOR:
         FIXME( "Unexpected non-hardware WM_WINE_SETCURSOR message\n" );

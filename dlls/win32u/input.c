@@ -2544,13 +2544,13 @@ BOOL get_clip_cursor( RECT *rect )
     return ret;
 }
 
-BOOL process_wine_clipcursor( HWND hwnd, BOOL empty, BOOL reset )
+BOOL process_wine_clipcursor( HWND hwnd, UINT flags, BOOL reset )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
     RECT rect, virtual_rect = NtUserGetVirtualScreenRect();
-    BOOL was_clipping;
+    BOOL was_clipping, empty = !!(flags & SET_CURSOR_NOCLIP);
 
-    TRACE( "hwnd %p, empty %u, reset %u\n", hwnd, empty, reset );
+    TRACE( "hwnd %p, flags %#x, reset %u\n", hwnd, flags, reset );
 
     if ((was_clipping = thread_info->clipping_cursor)) InterlockedDecrement( &clipping_cursor );
     thread_info->clipping_cursor = FALSE;

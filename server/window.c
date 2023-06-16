@@ -1829,7 +1829,7 @@ static void set_window_pos( struct window *win, struct window *previous,
     }
 
     /* reset cursor clip rectangle when the desktop changes size */
-    if (win == win->desktop->top_window) set_clip_rectangle( win->desktop, NULL, 1 );
+    if (win == win->desktop->top_window) set_clip_rectangle( win->desktop, NULL, SET_CURSOR_NOCLIP, 1 );
 
     /* if the window is not visible, everything is easy */
     if (!visible) return;
