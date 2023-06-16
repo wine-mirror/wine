@@ -2929,7 +2929,7 @@ static LONG apply_display_settings( const WCHAR *devname, const DEVMODEW *devmod
                               MAKELPARAM( current_mode.dmPelsWidth, current_mode.dmPelsHeight ),
                               SMTO_ABORTIFHUNG, 2000, FALSE );
         /* post clip_fullscreen_window request to the foreground window */
-        NtUserPostMessage( NtUserGetForegroundWindow(), WM_WINE_CLIPCURSOR, 0, 0 );
+        NtUserPostMessage( NtUserGetForegroundWindow(), WM_WINE_CLIPCURSOR, SET_CURSOR_FSCLIP, 0 );
     }
 
     return ret;

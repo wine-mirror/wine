@@ -2470,9 +2470,10 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
     MONITORINFO monitor_info = {.cbSize = sizeof(MONITORINFO)};
-    RECT rect, virtual_rect = NtUserGetVirtualScreenRect();
+    RECT rect;
     HMONITOR monitor;
     DWORD style;
+    BOOL ret;
 
     if (hwnd == NtUserGetDesktopWindow()) return FALSE;
     if (hwnd != NtUserGetForegroundWindow()) return FALSE;
@@ -2497,11 +2498,20 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
         if (is_virtual_desktop()) return FALSE;
     }
 
-    /* shrink the clipping rect to make sure it is not ignored for being fullscreen */
-    if (EqualRect( &monitor_info.rcMonitor, &virtual_rect )) InflateRect( &monitor_info.rcMonitor, -1, -1 );
-
     TRACE( "win %p clipping fullscreen\n", hwnd );
-    return NtUserClipCursor( &monitor_info.rcMonitor );
+
+    SERVER_START_REQ( set_cursor )
+    {
+        req->flags = SET_CURSOR_CLIP | SET_CURSOR_FSCLIP;
+        req->clip.left   = monitor_info.rcMonitor.left;
+        req->clip.top    = monitor_info.rcMonitor.top;
+        req->clip.right  = monitor_info.rcMonitor.right;
+        req->clip.bottom = monitor_info.rcMonitor.bottom;
+        ret = !wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 /**********************************************************************
@@ -2567,7 +2577,7 @@ BOOL process_wine_clipcursor( HWND hwnd, UINT flags, BOOL reset )
     get_clip_cursor( &rect );
     intersect_rect( &rect, &rect, &virtual_rect );
     if (EqualRect( &rect, &virtual_rect )) empty = TRUE;
-    if (empty)
+    if (empty && !(flags & SET_CURSOR_FSCLIP))
     {
         /* if currently clipping, check if we should switch to fullscreen clipping */
         if (was_clipping && clip_fullscreen_window( hwnd, TRUE )) return TRUE;
