@@ -7082,11 +7082,14 @@ static FORCEINLINE void MemoryBarrier(void)
  */
 #if _MSC_VER >= 1700
 #pragma intrinsic(__iso_volatile_load32)
+#pragma intrinsic(__iso_volatile_load64)
 #pragma intrinsic(__iso_volatile_store32)
 #define __WINE_LOAD32_NO_FENCE(src) (__iso_volatile_load32(src))
+#define __WINE_LOAD64_NO_FENCE(src) (__iso_volatile_load64(src))
 #define __WINE_STORE32_NO_FENCE(dest, value) (__iso_volatile_store32(dest, value))
 #else  /* _MSC_VER >= 1700 */
 #define __WINE_LOAD32_NO_FENCE(src) (*(src))
+#define __WINE_LOAD64_NO_FENCE(src) (*(src))
 #define __WINE_STORE32_NO_FENCE(dest, value) ((void)(*(dest) = (value)))
 #endif  /* _MSC_VER >= 1700 */
 
@@ -7117,6 +7120,12 @@ static FORCEINLINE LONG ReadAcquire( LONG const volatile *src )
 static FORCEINLINE LONG ReadNoFence( LONG const volatile *src )
 {
     LONG value = __WINE_LOAD32_NO_FENCE( (int const volatile *)src );
+    return value;
+}
+
+static FORCEINLINE LONG64 ReadNoFence64( LONG64 const volatile *src )
+{
+    LONG64 value = __WINE_LOAD64_NO_FENCE( (__int64 const volatile *)src );
     return value;
 }
 
@@ -7302,6 +7311,13 @@ static FORCEINLINE LONG ReadAcquire( LONG const volatile *src )
 static FORCEINLINE LONG ReadNoFence( LONG const volatile *src )
 {
     LONG value;
+    __WINE_ATOMIC_LOAD_RELAXED( src, &value );
+    return value;
+}
+
+static FORCEINLINE LONG64 ReadNoFence64( LONG64 const volatile *src )
+{
+    LONG64 value;
     __WINE_ATOMIC_LOAD_RELAXED( src, &value );
     return value;
 }
