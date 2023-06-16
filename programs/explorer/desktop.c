@@ -22,8 +22,6 @@
 #include <stdio.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #define OEMRESOURCE
 #include <windows.h>
 #include <rpc.h>
@@ -973,8 +971,7 @@ static void initialize_display_settings(void)
 
         WINE_TRACE( "Device %s current display mode %lux%lu %luBits %luHz at %ld,%ld.\n",
                     wine_dbgstr_w( ddW.DeviceName ), dmW.dmPelsWidth, dmW.dmPelsHeight,
-                    dmW.dmBitsPerPel, dmW.dmDisplayFrequency, dmW.u1.s2.dmPosition.x,
-                    dmW.u1.s2.dmPosition.y );
+                    dmW.dmBitsPerPel, dmW.dmDisplayFrequency, dmW.dmPosition.x, dmW.dmPosition.y );
 
         if (ChangeDisplaySettingsExW( ddW.DeviceName, &dmW, 0,
                                       CDS_GLOBAL | CDS_NORESET | CDS_UPDATEREGISTRY, 0 ))

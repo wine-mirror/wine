@@ -20,7 +20,6 @@
 
 #include <assert.h>
 
-#define NONAMELESSUNION
 #include <windows.h>
 #include <commctrl.h>
 #include <shellapi.h>
@@ -412,7 +411,7 @@ static BOOL modify_icon( struct icon *icon, NOTIFYICONDATAW *nid )
         lstrcpynW( icon->info_text, nid->szInfo, ARRAY_SIZE( icon->info_text ));
         lstrcpynW( icon->info_title, nid->szInfoTitle, ARRAY_SIZE( icon->info_title ));
         icon->info_flags = nid->dwInfoFlags;
-        icon->info_timeout = max(min(nid->u.uTimeout, BALLOON_SHOW_MAX_TIMEOUT), BALLOON_SHOW_MIN_TIMEOUT);
+        icon->info_timeout = max(min(nid->uTimeout, BALLOON_SHOW_MAX_TIMEOUT), BALLOON_SHOW_MIN_TIMEOUT);
         icon->info_icon = nid->hBalloonIcon;
         update_balloon( icon );
     }
@@ -536,7 +535,7 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
     nid.hIcon            = 0;
     nid.dwState          = data->dwState;
     nid.dwStateMask      = data->dwStateMask;
-    nid.u.uTimeout       = data->u.uTimeout;
+    nid.uTimeout         = data->u.uTimeout;
     nid.dwInfoFlags      = data->dwInfoFlags;
     nid.guidItem         = data->guidItem;
     lstrcpyW( nid.szTip, data->szTip );
@@ -589,7 +588,7 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
     case NIM_SETVERSION:
         if (icon)
         {
-            icon->version = nid.u.uVersion;
+            icon->version = nid.uVersion;
             ret = TRUE;
         }
         break;
