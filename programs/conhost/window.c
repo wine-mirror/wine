@@ -17,7 +17,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
 #include <stdlib.h>
 
 #include "conhost.h"
@@ -1924,15 +1923,15 @@ static BOOL config_dialog( struct console *console, BOOL current )
     psp.hInstance = wndclass.hInstance;
     psp.lParam = (LPARAM)&di;
 
-    psp.u.pszTemplate = MAKEINTRESOURCEW(IDD_OPTION);
+    psp.pszTemplate = MAKEINTRESOURCEW(IDD_OPTION);
     psp.pfnDlgProc = option_dialog_proc;
     pages[0] = CreatePropertySheetPageW( &psp );
 
-    psp.u.pszTemplate = MAKEINTRESOURCEW(IDD_FONT);
+    psp.pszTemplate = MAKEINTRESOURCEW(IDD_FONT);
     psp.pfnDlgProc = font_dialog_proc;
     pages[1] = CreatePropertySheetPageW( &psp );
 
-    psp.u.pszTemplate = MAKEINTRESOURCEW(IDD_CONFIG);
+    psp.pszTemplate = MAKEINTRESOURCEW(IDD_CONFIG);
     psp.pfnDlgProc = config_dialog_proc;
     pages[2] = CreatePropertySheetPageW( &psp );
 
@@ -1947,7 +1946,7 @@ static BOOL config_dialog( struct console *console, BOOL current )
     header.pszCaption = buff;
     header.nPages     = 3;
     header.hwndParent = console->win;
-    header.u3.phpage  = pages;
+    header.phpage     = pages;
     header.dwFlags    = PSH_NOAPPLYNOW;
     if (PropertySheetW( &header ) < 1)
         return TRUE;
