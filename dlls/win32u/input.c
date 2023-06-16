@@ -992,17 +992,17 @@ BOOL WINAPI NtUserGetKeyboardState( BYTE *state )
  */
 BOOL get_async_keyboard_state( BYTE state[256] )
 {
-    BOOL ret;
+    struct object_lock lock = OBJECT_LOCK_INIT;
+    const desktop_shm_t *desktop_shm;
+    NTSTATUS status;
 
-    SERVER_START_REQ( get_key_state )
-    {
-        req->async = 1;
-        req->key = -1;
-        wine_server_set_reply( req, state, 256 );
-        ret = !wine_server_call( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+    TRACE("(%p)\n", state);
+
+    while ((status = get_shared_desktop( &lock, &desktop_shm )) == STATUS_PENDING)
+        memcpy( state, (const void *)desktop_shm->keystate, 256 );
+    if (status) memset( state, 0, 256 );
+
+    return !status;
 }
 
 /**********************************************************************
