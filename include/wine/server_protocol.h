@@ -4094,7 +4094,6 @@ struct get_key_state_reply
 {
     struct reply_header __header;
     unsigned char  state;
-    /* VARARG(keystate,bytes); */
     char __pad_9[7];
 };
 
@@ -6598,7 +6597,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 831
+#define SERVER_PROTOCOL_VERSION 832
 
 /* ### protocol_version end ### */
 

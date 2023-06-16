@@ -2947,10 +2947,9 @@ enum coords_relative
 /* Retrieve queue keyboard state for current thread or global async state */
 @REQ(get_key_state)
     int            async;         /* whether to query the async state */
-    int            key;           /* optional key code or -1 */
+    int            key;           /* key code */
 @REPLY
     unsigned char  state;         /* state of specified key */
-    VARARG(keystate,bytes);       /* state array for all the keys */
 @END
 
 /* Set queue keyboard state for current thread */

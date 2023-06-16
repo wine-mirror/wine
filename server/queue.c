@@ -3717,21 +3717,16 @@ DECL_HANDLER(get_thread_input)
 DECL_HANDLER(get_key_state)
 {
     struct desktop *desktop;
-    data_size_t size = min( 256, get_reply_max_size() );
 
     if (req->async)  /* get global async key state */
     {
         if (!(desktop = get_thread_desktop( current, 0 ))) return;
-        if (req->key >= 0)
+        SHARED_WRITE_BEGIN( desktop->shared, desktop_shm_t )
         {
-            SHARED_WRITE_BEGIN( desktop->shared, desktop_shm_t )
-            {
-                reply->state = shared->keystate[req->key & 0xff];
-                shared->keystate[req->key & 0xff] &= ~0x40;
-            }
-            SHARED_WRITE_END;
+            reply->state = shared->keystate[req->key & 0xff];
+            shared->keystate[req->key & 0xff] &= ~0x40;
         }
-        set_reply_data( (const void *)desktop->shared->keystate, size );
+        SHARED_WRITE_END;
         release_object( desktop );
     }
     else
@@ -3739,12 +3734,8 @@ DECL_HANDLER(get_key_state)
         struct msg_queue *queue = get_current_queue();
         const input_shm_t *input_shm = queue->input->shared;
         unsigned char *keystate = (void *)input_shm->keystate;
-        if (req->key >= 0)
-        {
-            sync_input_keystate( queue->input );
-            reply->state = keystate[req->key & 0xff];
-        }
-        set_reply_data( keystate, size );
+        sync_input_keystate( queue->input );
+        reply->state = keystate[req->key & 0xff];
     }
 }
 
