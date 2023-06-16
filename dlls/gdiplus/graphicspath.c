@@ -127,13 +127,15 @@ static BOOL flatten_bezier(path_list_node_t *start, REAL x2, REAL y2, REAL x3, R
     GpPointF mp[5];
     GpPointF pt, pt_st;
     path_list_node_t *node;
+    REAL area_triangle, distance_start_end;
+
+    /* middle point between control points */
+    pt.X = (x2 + x3) / 2.0;
+    pt.Y = (y2 + y3) / 2.0;
 
     /* calculate bezier curve middle points == new control points */
     mp[0].X = (start->pt.X + x2) / 2.0;
     mp[0].Y = (start->pt.Y + y2) / 2.0;
-    /* middle point between control points */
-    pt.X = (x2 + x3) / 2.0;
-    pt.Y = (y2 + y3) / 2.0;
     mp[1].X = (mp[0].X + pt.X) / 2.0;
     mp[1].Y = (mp[0].Y + pt.Y) / 2.0;
     mp[4].X = (end->pt.X + x3) / 2.0;
@@ -141,19 +143,28 @@ static BOOL flatten_bezier(path_list_node_t *start, REAL x2, REAL y2, REAL x3, R
     mp[3].X = (mp[4].X + pt.X) / 2.0;
     mp[3].Y = (mp[4].Y + pt.Y) / 2.0;
 
+    /* middle point between new control points */
     mp[2].X = (mp[1].X + mp[3].X) / 2.0;
     mp[2].Y = (mp[1].Y + mp[3].Y) / 2.0;
 
+    /* Is one pair of the new control points equal to the old control points? */
     if ((x2 == mp[0].X && y2 == mp[0].Y && x3 == mp[1].X && y3 == mp[1].Y) ||
         (x2 == mp[3].X && y2 == mp[3].Y && x3 == mp[4].X && y3 == mp[4].Y))
         return TRUE;
 
     pt = end->pt;
     pt_st = start->pt;
-    /* check flatness as a half of distance between middle point and a linearized path */
-    if(fabs(((pt.Y - pt_st.Y)*mp[2].X + (pt_st.X - pt.X)*mp[2].Y +
-        (pt_st.Y*pt.X - pt_st.X*pt.Y))) <=
-        (0.5 * flatness*sqrtf((powf(pt.Y - pt_st.Y, 2.0) + powf(pt_st.X - pt.X, 2.0))))){
+
+    /* check flatness as a half of distance between middle point and a linearized path
+     * formula for distance point from line for point (x0, y0) and line (x1, y1) (x2, y2)
+     * is defined as (area_triangle / distance_start_end):
+     *     | (x2 - x1) * (y1 - y0) - (x1 - x0) * (y2 - y1) / sqrt( (x2 - x1)^2 + (y2 - y1)^2 ) |
+     * Here rearranged to avoid division and simplified:
+     *     x0(y2 - y1) + y0(x1 - x2) + (x2*y1 - x1*y2)
+     */
+    area_triangle = (pt.Y - pt_st.Y)*mp[2].X + (pt_st.X - pt.X)*mp[2].Y + (pt_st.Y*pt.X - pt_st.X*pt.Y);
+    distance_start_end = sqrtf(powf(pt.Y - pt_st.Y, 2.0) + powf(pt_st.X - pt.X, 2.0));
+    if(fabs(area_triangle) <= (0.5 * flatness * distance_start_end)){
         return TRUE;
     }
     else
