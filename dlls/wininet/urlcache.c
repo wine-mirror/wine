@@ -1926,7 +1926,7 @@ static BOOL urlcache_encode_url_alloc(const WCHAR *url, char **encoded_url)
     if(!encoded_len)
         return FALSE;
 
-    ret = malloc(encoded_len * sizeof(WCHAR));
+    ret = malloc(encoded_len);
     if(!ret)
         return FALSE;
 
