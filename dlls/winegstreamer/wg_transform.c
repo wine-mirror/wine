@@ -57,7 +57,6 @@ struct wg_transform
     GstElement *video_flip;
 
     struct wg_format output_format;
-    struct wg_sample *output_wg_sample;
     GstAtomicQueue *output_queue;
     GstSample *output_sample;
     bool output_caps_changed;
@@ -281,15 +280,6 @@ NTSTATUS wg_transform_destroy(void *args)
     return STATUS_SUCCESS;
 }
 
-static struct wg_sample *transform_request_sample(gsize size, void *context)
-{
-    struct wg_transform *transform = context;
-
-    GST_LOG("size %#zx, context %p", size, transform);
-
-    return InterlockedExchangePointer((void **)&transform->output_wg_sample, NULL);
-}
-
 static bool wg_format_video_is_flipped(const struct wg_format *format)
 {
     return format->major_type == WG_MAJOR_TYPE_VIDEO && (format->u.video.height < 0);
@@ -318,7 +308,7 @@ NTSTATUS wg_transform_create(void *args)
         goto out;
     if (!(transform->drain_query = gst_query_new_drain()))
         goto out;
-    if (!(transform->allocator = wg_allocator_create(transform_request_sample, transform)))
+    if (!(transform->allocator = wg_allocator_create()))
         goto out;
     transform->attrs = *params->attrs;
     transform->output_format = output_format;
@@ -762,9 +752,7 @@ static bool get_transform_output(struct wg_transform *transform, struct wg_sampl
     GstBuffer *input_buffer;
     GstFlowReturn ret;
 
-    /* Provide the sample for transform_request_sample to pick it up */
-    InterlockedIncrement(&sample->refcount);
-    InterlockedExchangePointer((void **)&transform->output_wg_sample, sample);
+    wg_allocator_provide_sample(transform->allocator, sample);
 
     while (!(transform->output_sample = gst_atomic_queue_pop(transform->output_queue))
             && (input_buffer = gst_atomic_queue_pop(transform->input_queue)))
@@ -773,9 +761,8 @@ static bool get_transform_output(struct wg_transform *transform, struct wg_sampl
             GST_WARNING("Failed to push transform input, error %d", ret);
     }
 
-    /* Remove the sample so transform_request_sample cannot use it */
-    if (InterlockedExchangePointer((void **)&transform->output_wg_sample, NULL))
-        InterlockedDecrement(&sample->refcount);
+    /* Remove the sample so the allocator cannot use it */
+    wg_allocator_provide_sample(transform->allocator, NULL);
 
     return !!transform->output_sample;
 }

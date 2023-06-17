@@ -51,12 +51,11 @@ typedef struct
 {
     GstAllocator parent;
 
-    wg_allocator_request_sample_cb request_sample;
-    void *request_sample_context;
-
     pthread_mutex_t mutex;
     pthread_cond_t release_cond;
     struct list memory_list;
+
+    struct wg_sample *next_sample;
 } WgAllocator;
 
 typedef struct
@@ -147,7 +146,6 @@ static GstMemory *wg_allocator_alloc(GstAllocator *gst_allocator, gsize size,
         GstAllocationParams *params)
 {
     WgAllocator *allocator = (WgAllocator *)gst_allocator;
-    struct wg_sample *sample;
     WgMemory *memory;
 
     GST_LOG("allocator %p, size %#zx, params %p", allocator, size, params);
@@ -160,11 +158,11 @@ static GstMemory *wg_allocator_alloc(GstAllocator *gst_allocator, gsize size,
 
     pthread_mutex_lock(&allocator->mutex);
 
-    sample = allocator->request_sample(size, allocator->request_sample_context);
-    if (sample && sample->max_size < size)
-        InterlockedDecrement(&sample->refcount);
+    memory->sample = allocator->next_sample;
+    if (memory->sample && memory->sample->max_size >= size)
+        allocator->next_sample = NULL;
     else
-        memory->sample = sample;
+        memory->sample = NULL;
 
     list_add_tail(&allocator->memory_list, &memory->entry);
 
@@ -209,15 +207,13 @@ static void wg_allocator_class_init(WgAllocatorClass *klass)
     root_class->finalize = wg_allocator_finalize;
 }
 
-GstAllocator *wg_allocator_create(wg_allocator_request_sample_cb request_sample, void *request_sample_context)
+GstAllocator *wg_allocator_create(void)
 {
     WgAllocator *allocator;
 
     if (!(allocator = g_object_new(wg_allocator_get_type(), NULL)))
         return NULL;
 
-    allocator->request_sample = request_sample;
-    allocator->request_sample_context = request_sample_context;
     return GST_ALLOCATOR(allocator);
 }
 
@@ -271,6 +267,25 @@ static WgMemory *find_sample_memory(WgAllocator *allocator, struct wg_sample *sa
             return memory;
 
     return NULL;
+}
+
+void wg_allocator_provide_sample(GstAllocator *gst_allocator, struct wg_sample *sample)
+{
+    WgAllocator *allocator = (WgAllocator *)gst_allocator;
+    struct wg_sample *previous;
+
+    GST_LOG("allocator %p, sample %p", allocator, sample);
+
+    if (sample)
+        InterlockedIncrement(&sample->refcount);
+
+    pthread_mutex_lock(&allocator->mutex);
+    previous = allocator->next_sample;
+    allocator->next_sample = sample;
+    pthread_mutex_unlock(&allocator->mutex);
+
+    if (previous)
+        InterlockedDecrement(&previous->refcount);
 }
 
 void wg_allocator_release_sample(GstAllocator *gst_allocator, struct wg_sample *sample,

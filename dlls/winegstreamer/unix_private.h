@@ -60,9 +60,9 @@ extern NTSTATUS wg_transform_flush(void *args) DECLSPEC_HIDDEN;
 
 /* wg_allocator_release_sample can be used to release any sample that was requested. */
 typedef struct wg_sample *(*wg_allocator_request_sample_cb)(gsize size, void *context);
-extern GstAllocator *wg_allocator_create(wg_allocator_request_sample_cb request_sample,
-        void *request_sample_context) DECLSPEC_HIDDEN;
+extern GstAllocator *wg_allocator_create(void) DECLSPEC_HIDDEN;
 extern void wg_allocator_destroy(GstAllocator *allocator) DECLSPEC_HIDDEN;
+extern void wg_allocator_provide_sample(GstAllocator *allocator, struct wg_sample *sample) DECLSPEC_HIDDEN;
 extern void wg_allocator_release_sample(GstAllocator *allocator, struct wg_sample *sample,
         bool discard_data) DECLSPEC_HIDDEN;
 
