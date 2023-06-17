@@ -40,6 +40,7 @@ typedef struct
     GstMemory parent;
     struct list entry;
 
+    GstAllocationParams alloc_params;
     GstMemory *unix_memory;
     GstMapInfo unix_map_info;
 
@@ -65,6 +66,19 @@ typedef struct
 
 G_DEFINE_TYPE(WgAllocator, wg_allocator, GST_TYPE_ALLOCATOR);
 
+static void *get_unix_memory_data(WgMemory *memory)
+{
+    if (!memory->unix_memory)
+    {
+        memory->unix_memory = gst_allocator_alloc(NULL, memory->parent.maxsize, &memory->alloc_params);
+        gst_memory_map(memory->unix_memory, &memory->unix_map_info, GST_MAP_WRITE);
+        GST_INFO("Allocated unix memory %p, data %p for memory %p, sample %p", memory->unix_memory,
+                memory->unix_map_info.data, memory, memory->sample);
+    }
+
+    return memory->unix_map_info.data;
+}
+
 static void release_memory_sample(WgAllocator *allocator, WgMemory *memory, bool discard_data)
 {
     struct wg_sample *sample;
@@ -82,7 +96,7 @@ static void release_memory_sample(WgAllocator *allocator, WgMemory *memory, bool
     if (memory->written && !discard_data)
     {
         GST_WARNING("Copying %#zx bytes from sample %p, back to memory %p", memory->written, sample, memory);
-        memcpy(memory->unix_map_info.data, memory->sample->data, memory->written);
+        memcpy(get_unix_memory_data(memory), memory->sample->data, memory->written);
     }
 
     memory->sample = NULL;
@@ -102,7 +116,7 @@ static gpointer wg_allocator_map(GstMemory *gst_memory, GstMapInfo *info, gsize 
     pthread_mutex_lock(&allocator->mutex);
 
     if (!memory->sample)
-        info->data = memory->unix_map_info.data;
+        info->data = get_unix_memory_data(memory);
     else
     {
         InterlockedIncrement(&memory->sample->refcount);
@@ -177,8 +191,7 @@ static GstMemory *wg_allocator_alloc(GstAllocator *gst_allocator, gsize size,
     memory = g_slice_new0(WgMemory);
     gst_memory_init(GST_MEMORY_CAST(memory), 0, GST_ALLOCATOR_CAST(allocator),
             NULL, size, 0, 0, size);
-    memory->unix_memory = gst_allocator_alloc(NULL, size, params);
-    gst_memory_map(memory->unix_memory, &memory->unix_map_info, GST_MAP_WRITE);
+    memory->alloc_params = *params;
 
     pthread_mutex_lock(&allocator->mutex);
 
@@ -186,14 +199,13 @@ static GstMemory *wg_allocator_alloc(GstAllocator *gst_allocator, gsize size,
     if (memory->sample && memory->sample->max_size >= size)
         allocator->next_sample = NULL;
     else
-        memory->sample = NULL;
+        release_memory_sample(allocator, memory, true);
 
     list_add_tail(&allocator->memory_list, &memory->entry);
 
     pthread_mutex_unlock(&allocator->mutex);
 
-    GST_INFO("Allocated memory %p, sample %p, unix_memory %p, data %p", memory,
-            memory->sample, memory->unix_memory, memory->unix_map_info.data);
+    GST_INFO("Allocated memory %p, sample %p", memory, memory->sample);
     return (GstMemory *)memory;
 }
 
@@ -214,8 +226,11 @@ static void wg_allocator_free(GstAllocator *gst_allocator, GstMemory *gst_memory
 
     pthread_mutex_unlock(&allocator->mutex);
 
-    gst_memory_unmap(memory->unix_memory, &memory->unix_map_info);
-    gst_memory_unref(memory->unix_memory);
+    if (memory->unix_memory)
+    {
+        gst_memory_unmap(memory->unix_memory, &memory->unix_map_info);
+        gst_memory_unref(memory->unix_memory);
+    }
     g_slice_free(WgMemory, memory);
 }
 
