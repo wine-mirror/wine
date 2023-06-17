@@ -81,6 +81,8 @@ extern HRESULT main_loop_start(void) DECLSPEC_HIDDEN;
 extern struct audio_session_wrapper *session_wrapper_create(
     struct audio_client *client) DECLSPEC_HIDDEN;
 
+extern HRESULT stream_release(stream_handle stream, HANDLE timer_thread);
+
 extern WCHAR *get_application_name(void);
 
 void DECLSPEC_HIDDEN sessions_lock(void)
@@ -125,18 +127,6 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
         break;
     }
     return TRUE;
-}
-
-static HRESULT alsa_stream_release(stream_handle stream, HANDLE timer_thread)
-{
-    struct release_stream_params params;
-
-    params.stream = stream;
-    params.timer_thread = timer_thread;
-
-    ALSA_CALL(release_stream, &params);
-
-    return params.result;
 }
 
 static void set_device_guid(EDataFlow flow, HKEY drv_key, const WCHAR *key_name,
@@ -443,7 +433,7 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
         }
         HeapFree(GetProcessHeap(), 0, This->vols);
         if (This->stream)
-            alsa_stream_release(This->stream, This->timer_thread);
+            stream_release(This->stream, This->timer_thread);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -648,7 +638,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
 exit:
     if(FAILED(params.result)){
-        alsa_stream_release(stream, NULL);
+        stream_release(stream, NULL);
         HeapFree(GetProcessHeap(), 0, This->vols);
         This->vols = NULL;
     }else{
