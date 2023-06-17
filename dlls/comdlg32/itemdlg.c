@@ -599,7 +599,7 @@ static HRESULT on_default_action(FileDialogImpl *This)
             }
         }
 
-        pidla[i] = COMDLG32_SHSimpleIDListFromPathAW(canon_filename);
+        pidla[i] = SHSimpleIDListFromPath(canon_filename);
 
         if(psf_parent && !(open_action == ONOPEN_BROWSE))
             IShellFolder_Release(psf_parent);

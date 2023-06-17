@@ -43,11 +43,6 @@ DECLSPEC_HIDDEN HINSTANCE	COMDLG32_hInstance = 0;
 
 static DWORD COMDLG32_TlsIndex = TLS_OUT_OF_INDEXES;
 
-static HINSTANCE	SHELL32_hInstance;
-
-/* SHELL */
-LPITEMIDLIST (WINAPI *COMDLG32_SHSimpleIDListFromPathAW)(LPCVOID) DECLSPEC_HIDDEN;
-
 /***********************************************************************
  *	DllMain  (COMDLG32.init)
  *
@@ -57,14 +52,6 @@ LPITEMIDLIST (WINAPI *COMDLG32_SHSimpleIDListFromPathAW)(LPCVOID) DECLSPEC_HIDDE
  *	FALSE if sibling could not be loaded or instantiated twice, TRUE
  *	otherwise.
  */
-static const char GPA_string[] = "Failed to get entry point %s for hinst = %p\n";
-#define GPA(dest, hinst, name) \
-	if(!(dest = (void*)GetProcAddress(hinst,name)))\
-	{ \
-	  ERR(GPA_string, debugstr_a(name), hinst); \
-	  return FALSE; \
-	}
-
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD Reason, LPVOID Reserved)
 {
 	TRACE("(%p, %ld, %p)\n", hInstance, Reason, Reserved);
@@ -74,11 +61,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD Reason, LPVOID Reserved)
 	case DLL_PROCESS_ATTACH:
 		COMDLG32_hInstance = hInstance;
 		DisableThreadLibraryCalls(hInstance);
-
-		SHELL32_hInstance = GetModuleHandleA("SHELL32.DLL");
-
-		/* SHELL */
-		GPA(COMDLG32_SHSimpleIDListFromPathAW, SHELL32_hInstance, (LPCSTR)162);
 		break;
 
 	case DLL_PROCESS_DETACH:

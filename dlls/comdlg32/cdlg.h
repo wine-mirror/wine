@@ -182,9 +182,6 @@ void FILEDLG95_OnOpenMessage(HWND hwnd, int idCaption, int idText) DECLSPEC_HIDD
 extern BOOL GetFileName31A( OPENFILENAMEA *lpofn, UINT dlgType ) DECLSPEC_HIDDEN;
 extern BOOL GetFileName31W( OPENFILENAMEW *lpofn, UINT dlgType ) DECLSPEC_HIDDEN;
 
-/* SHELL */
-extern LPITEMIDLIST (WINAPI *COMDLG32_SHSimpleIDListFromPathAW)(LPCVOID);
-
 #define ONOPEN_BROWSE 1
 #define ONOPEN_OPEN   2
 #define ONOPEN_SEARCH 3
