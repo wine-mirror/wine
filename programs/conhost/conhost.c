@@ -865,7 +865,7 @@ static void edit_line_transpose_words( struct console *console )
     {
         unsigned int len_r = right_offset - ctx->cursor;
         unsigned int len_l = ctx->cursor - left_offset;
-        char *tmp = malloc( len_r * sizeof(WCHAR) );
+        WCHAR *tmp = malloc( len_r * sizeof(WCHAR) );
         if (!tmp)
         {
             ctx->status = STATUS_NO_MEMORY;
