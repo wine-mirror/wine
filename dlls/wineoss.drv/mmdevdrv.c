@@ -87,6 +87,8 @@ extern HRESULT main_loop_start(void) DECLSPEC_HIDDEN;
 extern struct audio_session_wrapper *session_wrapper_create(
     struct audio_client *client) DECLSPEC_HIDDEN;
 
+extern HRESULT stream_release(stream_handle stream, HANDLE timer_thread);
+
 extern WCHAR *get_application_name(void);
 
 void DECLSPEC_HIDDEN sessions_lock(void)
@@ -139,17 +141,6 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
         break;
     }
     return TRUE;
-}
-
-static HRESULT stream_release(stream_handle stream, HANDLE timer_thread)
-{
-    struct release_stream_params params;
-
-    params.stream = stream;
-    params.timer_thread = timer_thread;
-    OSS_CALL(release_stream, &params);
-
-    return params.result;
 }
 
 static void set_device_guid(EDataFlow flow, HKEY drv_key, const WCHAR *key_name,
