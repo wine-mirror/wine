@@ -133,6 +133,8 @@ extern HRESULT main_loop_start(void) DECLSPEC_HIDDEN;
 extern struct audio_session_wrapper *session_wrapper_create(
     struct audio_client *client) DECLSPEC_HIDDEN;
 
+extern HRESULT stream_release(stream_handle stream, HANDLE timer_thread);
+
 extern WCHAR *get_application_name(void);
 
 static inline ACImpl *impl_from_IAudioClient3(IAudioClient3 *iface)
@@ -145,14 +147,6 @@ static void pulse_call(enum unix_funcs code, void *params)
     NTSTATUS status;
     status = WINE_UNIX_CALL(code, params);
     assert(!status);
-}
-
-static void pulse_release_stream(stream_handle stream, HANDLE timer)
-{
-    struct release_stream_params params;
-    params.stream       = stream;
-    params.timer_thread = timer;
-    pulse_call(release_stream, &params);
 }
 
 static void set_stream_volumes(ACImpl *This)
@@ -444,7 +438,7 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
     TRACE("(%p) Refcount now %lu\n", This, ref);
     if (!ref) {
         if (This->stream) {
-            pulse_release_stream(This->stream, This->timer_thread);
+            stream_release(This->stream, This->timer_thread);
             This->stream = 0;
             sessions_lock();
             list_remove(&This->entry);
@@ -639,7 +633,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
     if (!(This->vols = malloc(channel_count * sizeof(*This->vols))))
     {
-        pulse_release_stream(stream, NULL);
+        stream_release(stream, NULL);
         sessions_unlock();
         return E_OUTOFMEMORY;
     }
@@ -652,7 +646,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         free(This->vols);
         This->vols = NULL;
         sessions_unlock();
-        pulse_release_stream(stream, NULL);
+        stream_release(stream, NULL);
         return E_OUTOFMEMORY;
     }
 

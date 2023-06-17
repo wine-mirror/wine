@@ -177,6 +177,18 @@ static DWORD CALLBACK timer_loop_func(void *user)
     return 0;
 }
 
+HRESULT stream_release(stream_handle stream, HANDLE timer_thread)
+{
+    struct release_stream_params params;
+
+    params.stream       = stream;
+    params.timer_thread = timer_thread;
+
+    WINE_UNIX_CALL(release_stream, &params);
+
+    return params.result;
+}
+
 static BOOL query_productname(void *data, LANGANDCODEPAGE *lang, LPVOID *buffer, UINT *len)
 {
     WCHAR pn[37];
