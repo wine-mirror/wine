@@ -61,7 +61,7 @@ extern LONG URLMON_refCount DECLSPEC_HIDDEN;
 static inline void URLMON_LockModule(void) { InterlockedIncrement( &URLMON_refCount ); }
 static inline void URLMON_UnlockModule(void) { InterlockedDecrement( &URLMON_refCount ); }
 
-extern HINSTANCE urlmon_instance;
+extern HINSTANCE urlmon_instance DECLSPEC_HIDDEN;
 
 IInternetProtocolInfo *get_protocol_info(LPCWSTR) DECLSPEC_HIDDEN;
 HRESULT get_protocol_handler(IUri*,CLSID*,IClassFactory**) DECLSPEC_HIDDEN;
