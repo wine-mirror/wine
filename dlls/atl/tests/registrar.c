@@ -49,6 +49,10 @@ static const char textA[] =
 "        val 'dword_unquoted_dec' = d 1 \n"
 "        val 'dword_quoted_hex' = d '0xA' \n"
 "        val 'dword_unquoted_hex' = d 0xA \n"
+"        val 'dword_negative' = d -2147483648 \n"
+"        val 'dword_ulong' = d 2147483649 \n"
+"        val 'dword_max' = d 4294967295 \n"
+"        val 'dword_overrange' = d 4294967296 \n"
 "        val 'binary_quoted' = b 'deadbeef' \n"
 "        val 'binary_unquoted' = b dead0123 \n"
 "    } \n"
@@ -72,6 +76,10 @@ static void test_registrar(void)
         { "dword_quoted_dec",   TRUE,  1 },
         { "dword_quoted_hex",   FALSE, 0xA },
         { "dword_unquoted_hex", FALSE, 0xA },
+        { "dword_negative",     FALSE, -2147483648 },
+        { "dword_ulong",        TRUE,  2147483649 },
+        { "dword_max",          TRUE,  4294967295 },
+        { "dword_overrange",    FALSE, 4294967296 },
     };
 
     if (!GetProcAddress(GetModuleHandleA("atl.dll"), "AtlAxAttachControl"))

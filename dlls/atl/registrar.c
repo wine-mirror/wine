@@ -280,7 +280,7 @@ static HRESULT do_process_key(LPCOLESTR *pstr, HKEY parent_key, strbuf *buf, BOO
                     hres = get_word(&iter, buf);
                     if(FAILED(hres))
                         break;
-                    dw = wcstol(buf->str, NULL, 10);
+                    dw = wcstoul(buf->str, NULL, 10);
                     lres = RegSetValueExW(hkey, name.len ? name.str :  NULL, 0, REG_DWORD,
                             (PBYTE)&dw, sizeof(dw));
                     if(lres != ERROR_SUCCESS) {
