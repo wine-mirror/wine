@@ -533,7 +533,7 @@ static HRESULT DoInfInstallW(const SETUPCOMMAND_PARAMSW *setup)
 done:
     install_release(&info);
 
-    return S_OK;
+    return hr;
 }
 
 /***********************************************************************
