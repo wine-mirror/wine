@@ -19,7 +19,7 @@
 
 #include "wine/list.h"
 
-extern HINSTANCE hProxyDll;
+extern HINSTANCE hProxyDll DECLSPEC_HIDDEN;
 
 struct apartment
 {
@@ -132,7 +132,7 @@ HRESULT rpc_register_channel_hook(REFGUID rguid, IChannelHook *hook) DECLSPEC_HI
 void rpc_unregister_channel_hooks(void) DECLSPEC_HIDDEN;
 
 struct dispatch_params;
-void rpc_execute_call(struct dispatch_params *params);
+void rpc_execute_call(struct dispatch_params *params) DECLSPEC_HIDDEN;
 
 enum class_reg_data_origin
 {
