@@ -65,6 +65,30 @@ typedef struct
 
 G_DEFINE_TYPE(WgAllocator, wg_allocator, GST_TYPE_ALLOCATOR);
 
+static void release_memory_sample(WgAllocator *allocator, WgMemory *memory, bool discard_data)
+{
+    struct wg_sample *sample;
+
+    if (!(sample = memory->sample))
+        return;
+
+    while (sample->refcount > 1)
+    {
+        GST_WARNING("Waiting for sample %p to be unmapped", sample);
+        pthread_cond_wait(&allocator->release_cond, &allocator->mutex);
+    }
+    InterlockedDecrement(&sample->refcount);
+
+    if (memory->written && !discard_data)
+    {
+        GST_WARNING("Copying %#zx bytes from sample %p, back to memory %p", memory->written, sample, memory);
+        memcpy(memory->unix_map_info.data, memory->sample->data, memory->written);
+    }
+
+    memory->sample = NULL;
+    GST_INFO("Released sample %p from memory %p", sample, memory);
+}
+
 static gpointer wg_allocator_map(GstMemory *gst_memory, GstMapInfo *info, gsize maxsize)
 {
     WgAllocator *allocator = (WgAllocator *)gst_memory->allocator;
@@ -215,30 +239,6 @@ GstAllocator *wg_allocator_create(void)
         return NULL;
 
     return GST_ALLOCATOR(allocator);
-}
-
-static void release_memory_sample(WgAllocator *allocator, WgMemory *memory, bool discard_data)
-{
-    struct wg_sample *sample;
-
-    if (!(sample = memory->sample))
-        return;
-
-    while (sample->refcount > 1)
-    {
-        GST_WARNING("Waiting for sample %p to be unmapped", sample);
-        pthread_cond_wait(&allocator->release_cond, &allocator->mutex);
-    }
-    InterlockedDecrement(&sample->refcount);
-
-    if (memory->written && !discard_data)
-    {
-        GST_WARNING("Copying %#zx bytes from sample %p, back to memory %p", memory->written, sample, memory);
-        memcpy(memory->unix_map_info.data, memory->sample->data, memory->written);
-    }
-
-    memory->sample = NULL;
-    GST_INFO("Released sample %p from memory %p", sample, memory);
 }
 
 void wg_allocator_destroy(GstAllocator *gst_allocator)
