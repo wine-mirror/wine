@@ -75,6 +75,8 @@ extern HRESULT main_loop_start(void) DECLSPEC_HIDDEN;
 extern struct audio_session_wrapper *session_wrapper_create(
     struct audio_client *client) DECLSPEC_HIDDEN;
 
+extern HRESULT stream_release(stream_handle stream, HANDLE timer_thread);
+
 extern WCHAR *get_application_name(void);
 
 void DECLSPEC_HIDDEN sessions_lock(void)
@@ -417,10 +419,7 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
     TRACE("(%p) Refcount now %lu\n", This, ref);
     if(!ref){
         if(This->stream){
-            struct release_stream_params params;
-            params.stream = This->stream;
-            params.timer_thread = This->timer_thread;
-            UNIX_CALL(release_stream, &params);
+            stream_release(This->stream, This->timer_thread);
             This->stream = 0;
 
             sessions_lock();
@@ -554,7 +553,6 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         const GUID *sessionguid)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    struct release_stream_params release_params;
     struct create_stream_params params;
     stream_handle stream;
     UINT32 i;
@@ -635,8 +633,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
 end:
     if(FAILED(params.result)){
-        release_params.stream = stream;
-        UNIX_CALL(release_stream, &release_params);
+        stream_release(stream, NULL);
         HeapFree(GetProcessHeap(), 0, This->vols);
         This->vols = NULL;
     }else{
