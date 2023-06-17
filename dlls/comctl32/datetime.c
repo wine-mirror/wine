@@ -81,10 +81,6 @@ typedef struct
     int pendingUpdown;
 } DATETIME_INFO, *LPDATETIME_INFO;
 
-/* in monthcal.c */
-extern int MONTHCAL_MonthLength(int month, int year);
-extern int MONTHCAL_CalculateDayOfWeek(SYSTEMTIME *date, BOOL inplace);
-
 /* this list of defines is closely related to `allowedformatchars' defined
  * in datetime.c; the high nibble indicates the `base type' of the format
  * specifier.
