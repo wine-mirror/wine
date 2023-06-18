@@ -1615,19 +1615,9 @@ static HRESULT media_source_create(struct object_context *context, IMFMediaSourc
     unsigned int stream_count = UINT_MAX;
     struct media_source *object;
     struct wg_parser *parser;
-    DWORD bytestream_caps;
     QWORD file_size;
     unsigned int i;
     HRESULT hr;
-
-    if (FAILED(hr = IMFByteStream_GetCapabilities(context->stream, &bytestream_caps)))
-        return hr;
-
-    if (!(bytestream_caps & MFBYTESTREAM_IS_SEEKABLE))
-    {
-        FIXME("Non-seekable bytestreams not supported.\n");
-        return MF_E_BYTESTREAM_NOT_SEEKABLE;
-    }
 
     if (FAILED(hr = IMFByteStream_GetLength(context->stream, &file_size)))
     {
@@ -1870,6 +1860,7 @@ static HRESULT WINAPI stream_handler_BeginCreateObject(IMFByteStreamHandler *ifa
     IMFAsyncResult *result;
     IUnknown *context;
     HRESULT hr;
+    DWORD caps;
 
     TRACE("%p, %s, %#lx, %p, %p, %p, %p.\n", iface, debugstr_w(url), flags, props, cancel_cookie, callback, state);
 
@@ -1880,6 +1871,14 @@ static HRESULT WINAPI stream_handler_BeginCreateObject(IMFByteStreamHandler *ifa
         return E_INVALIDARG;
     if (flags != MF_RESOLUTION_MEDIASOURCE)
         FIXME("Unimplemented flags %#lx\n", flags);
+
+    if (FAILED(hr = IMFByteStream_GetCapabilities(stream, &caps)))
+        return hr;
+    if (!(caps & MFBYTESTREAM_IS_SEEKABLE))
+    {
+        FIXME("Non-seekable bytestreams not supported.\n");
+        return MF_E_BYTESTREAM_NOT_SEEKABLE;
+    }
 
     if (FAILED(hr = MFCreateAsyncResult(NULL, callback, state, &result)))
         return hr;
