@@ -93,6 +93,30 @@ static const IUnknownVtbl object_context_vtbl =
     object_context_Release,
 };
 
+static HRESULT object_context_create(DWORD flags, IMFByteStream *stream, const WCHAR *url,
+        IMFAsyncResult *result, IUnknown **out)
+{
+    WCHAR *tmp_url = url ? wcsdup(url) : NULL;
+    struct object_context *context;
+
+    if (!(context = calloc(1, sizeof(*context))))
+    {
+        free(tmp_url);
+        return E_OUTOFMEMORY;
+    }
+
+    context->IUnknown_iface.lpVtbl = &object_context_vtbl;
+    context->refcount = 1;
+    context->stream = stream;
+    IMFByteStream_AddRef(context->stream);
+    context->url = tmp_url;
+    context->result = result;
+    IMFAsyncResult_AddRef(context->result);
+
+    *out = &context->IUnknown_iface;
+    return S_OK;
+}
+
 struct media_stream
 {
     IMFMediaStream IMFMediaStream_iface;
@@ -1843,8 +1867,8 @@ static HRESULT WINAPI stream_handler_BeginCreateObject(IMFByteStreamHandler *ifa
         IPropertyStore *props, IUnknown **cancel_cookie, IMFAsyncCallback *callback, IUnknown *state)
 {
     struct stream_handler *handler = impl_from_IMFByteStreamHandler(iface);
-    struct object_context *context;
     IMFAsyncResult *result;
+    IUnknown *context;
     HRESULT hr;
 
     TRACE("%p, %s, %#lx, %p, %p, %p, %p.\n", iface, debugstr_w(url), flags, props, cancel_cookie, callback, state);
@@ -1860,23 +1884,14 @@ static HRESULT WINAPI stream_handler_BeginCreateObject(IMFByteStreamHandler *ifa
     if (FAILED(hr = MFCreateAsyncResult(NULL, callback, state, &result)))
         return hr;
 
-    if (!(context = calloc(1, sizeof(*context))))
+    if (FAILED(hr = object_context_create(flags, stream, url, result, &context)))
     {
         IMFAsyncResult_Release(result);
-        return E_OUTOFMEMORY;
+        return hr;
     }
 
-    context->IUnknown_iface.lpVtbl = &object_context_vtbl;
-    context->refcount = 1;
-    context->stream = stream;
-    IMFByteStream_AddRef(context->stream);
-    context->result = result;
-    IMFAsyncResult_AddRef(context->result);
-    if (url)
-        context->url = wcsdup(url);
-
-    hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_IO, &handler->IMFAsyncCallback_iface, &context->IUnknown_iface);
-    IUnknown_Release(&context->IUnknown_iface);
+    hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_IO, &handler->IMFAsyncCallback_iface, context);
+    IUnknown_Release(context);
 
     if (SUCCEEDED(hr) && cancel_cookie)
     {
