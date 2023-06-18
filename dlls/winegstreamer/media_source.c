@@ -27,6 +27,72 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
+struct object_context
+{
+    IUnknown IUnknown_iface;
+    LONG refcount;
+
+    IMFAsyncResult *result;
+    IMFByteStream *stream;
+    WCHAR *url;
+};
+
+static struct object_context *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct object_context, IUnknown_iface);
+}
+
+static HRESULT WINAPI object_context_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI object_context_AddRef(IUnknown *iface)
+{
+    struct object_context *context = impl_from_IUnknown(iface);
+    ULONG refcount = InterlockedIncrement(&context->refcount);
+
+    TRACE("%p, refcount %lu.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI object_context_Release(IUnknown *iface)
+{
+    struct object_context *context = impl_from_IUnknown(iface);
+    ULONG refcount = InterlockedDecrement(&context->refcount);
+
+    TRACE("%p, refcount %lu.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        IMFAsyncResult_Release(context->result);
+        IMFByteStream_Release(context->stream);
+        free(context->url);
+        free(context);
+    }
+
+    return refcount;
+}
+
+static const IUnknownVtbl object_context_vtbl =
+{
+    object_context_QueryInterface,
+    object_context_AddRef,
+    object_context_Release,
+};
+
 struct media_stream
 {
     IMFMediaStream IMFMediaStream_iface;
@@ -1773,77 +1839,11 @@ static ULONG WINAPI stream_handler_Release(IMFByteStreamHandler *iface)
     return refcount;
 }
 
-struct create_object_context
-{
-    IUnknown IUnknown_iface;
-    LONG refcount;
-
-    IMFAsyncResult *result;
-    IMFByteStream *stream;
-    WCHAR *url;
-};
-
-static struct create_object_context *impl_from_IUnknown(IUnknown *iface)
-{
-    return CONTAINING_RECORD(iface, struct create_object_context, IUnknown_iface);
-}
-
-static HRESULT WINAPI create_object_context_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
-{
-    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-    {
-        *obj = iface;
-        IUnknown_AddRef(iface);
-        return S_OK;
-    }
-
-    WARN("Unsupported %s.\n", debugstr_guid(riid));
-    *obj = NULL;
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI create_object_context_AddRef(IUnknown *iface)
-{
-    struct create_object_context *context = impl_from_IUnknown(iface);
-    ULONG refcount = InterlockedIncrement(&context->refcount);
-
-    TRACE("%p, refcount %lu.\n", iface, refcount);
-
-    return refcount;
-}
-
-static ULONG WINAPI create_object_context_Release(IUnknown *iface)
-{
-    struct create_object_context *context = impl_from_IUnknown(iface);
-    ULONG refcount = InterlockedDecrement(&context->refcount);
-
-    TRACE("%p, refcount %lu.\n", iface, refcount);
-
-    if (!refcount)
-    {
-        IMFAsyncResult_Release(context->result);
-        IMFByteStream_Release(context->stream);
-        free(context->url);
-        free(context);
-    }
-
-    return refcount;
-}
-
-static const IUnknownVtbl create_object_context_vtbl =
-{
-    create_object_context_QueryInterface,
-    create_object_context_AddRef,
-    create_object_context_Release,
-};
-
 static HRESULT WINAPI stream_handler_BeginCreateObject(IMFByteStreamHandler *iface, IMFByteStream *stream, const WCHAR *url, DWORD flags,
         IPropertyStore *props, IUnknown **cancel_cookie, IMFAsyncCallback *callback, IUnknown *state)
 {
     struct stream_handler *handler = impl_from_IMFByteStreamHandler(iface);
-    struct create_object_context *context;
+    struct object_context *context;
     IMFAsyncResult *result;
     HRESULT hr;
 
@@ -1866,7 +1866,7 @@ static HRESULT WINAPI stream_handler_BeginCreateObject(IMFByteStreamHandler *ifa
         return E_OUTOFMEMORY;
     }
 
-    context->IUnknown_iface.lpVtbl = &create_object_context_vtbl;
+    context->IUnknown_iface.lpVtbl = &object_context_vtbl;
     context->refcount = 1;
     context->stream = stream;
     IMFByteStream_AddRef(context->stream);
@@ -1981,7 +1981,7 @@ static HRESULT WINAPI stream_handler_callback_Invoke(IMFAsyncCallback *iface, IM
 {
     struct stream_handler *handler = impl_from_IMFAsyncCallback(iface);
     IUnknown *object, *state = IMFAsyncResult_GetStateNoAddRef(result);
-    struct create_object_context *context;
+    struct object_context *context;
     struct result_entry *entry;
     HRESULT hr;
 
