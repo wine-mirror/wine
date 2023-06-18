@@ -480,12 +480,17 @@ static GstCaps *wg_format_to_caps_video(const struct wg_format *format)
     {
         for (i = 0; i < gst_caps_get_size(caps); ++i)
         {
+            GstStructure *structure = gst_caps_get_structure(caps, i);
+
             if (!format->u.video.width)
-                gst_structure_remove_fields(gst_caps_get_structure(caps, i), "width", NULL);
+                gst_structure_remove_fields(structure, "width", NULL);
             if (!format->u.video.height)
-                gst_structure_remove_fields(gst_caps_get_structure(caps, i), "height", NULL);
+                gst_structure_remove_fields(structure, "height", NULL);
             if (!format->u.video.fps_d && !format->u.video.fps_n)
-                gst_structure_remove_fields(gst_caps_get_structure(caps, i), "framerate", NULL);
+                gst_structure_remove_fields(structure, "framerate", NULL);
+
+            /* Remove fields which we don't specify but might have some default value */
+            gst_structure_remove_fields(structure, "colorimetry", "chroma-site", NULL);
         }
     }
     return caps;

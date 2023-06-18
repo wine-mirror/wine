@@ -721,7 +721,7 @@ static gboolean sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
             /* Clear some fields that shouldn't prevent us from connecting. */
             for (i = 0; i < gst_caps_get_size(caps); ++i)
                 gst_structure_remove_fields(gst_caps_get_structure(caps, i),
-                        "framerate", "pixel-aspect-ratio", "colorimetry", "chroma-site", NULL);
+                        "framerate", "pixel-aspect-ratio", NULL);
 
             str = gst_caps_to_string(caps);
             GST_LOG("Stream caps are \"%s\".", str);
