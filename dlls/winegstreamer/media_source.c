@@ -34,6 +34,7 @@ struct object_context
 
     IMFAsyncResult *result;
     IMFByteStream *stream;
+    UINT64 file_size;
     WCHAR *url;
 };
 
@@ -94,7 +95,7 @@ static const IUnknownVtbl object_context_vtbl =
 };
 
 static HRESULT object_context_create(DWORD flags, IMFByteStream *stream, const WCHAR *url,
-        IMFAsyncResult *result, IUnknown **out)
+        QWORD file_size, IMFAsyncResult *result, IUnknown **out)
 {
     WCHAR *tmp_url = url ? wcsdup(url) : NULL;
     struct object_context *context;
@@ -109,6 +110,7 @@ static HRESULT object_context_create(DWORD flags, IMFByteStream *stream, const W
     context->refcount = 1;
     context->stream = stream;
     IMFByteStream_AddRef(context->stream);
+    context->file_size = file_size;
     context->url = tmp_url;
     context->result = result;
     IMFAsyncResult_AddRef(context->result);
@@ -181,6 +183,7 @@ struct media_source
     CRITICAL_SECTION cs;
 
     struct wg_parser *wg_parser;
+    UINT64 file_size;
     UINT64 duration;
 
     IMFStreamDescriptor **descriptors;
@@ -1615,15 +1618,8 @@ static HRESULT media_source_create(struct object_context *context, IMFMediaSourc
     unsigned int stream_count = UINT_MAX;
     struct media_source *object;
     struct wg_parser *parser;
-    QWORD file_size;
     unsigned int i;
     HRESULT hr;
-
-    if (FAILED(hr = IMFByteStream_GetLength(context->stream, &file_size)))
-    {
-        FIXME("Failed to get byte stream length, hr %#lx.\n", hr);
-        return hr;
-    }
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -1636,6 +1632,7 @@ static HRESULT media_source_create(struct object_context *context, IMFMediaSourc
     object->ref = 1;
     object->byte_stream = context->stream;
     IMFByteStream_AddRef(context->stream);
+    object->file_size = context->file_size;
     object->rate = 1.0f;
     InitializeCriticalSection(&object->cs);
     object->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
@@ -1663,7 +1660,7 @@ static HRESULT media_source_create(struct object_context *context, IMFMediaSourc
 
     object->state = SOURCE_OPENING;
 
-    if (FAILED(hr = wg_parser_connect(parser, file_size)))
+    if (FAILED(hr = wg_parser_connect(parser, object->file_size)))
         goto fail;
 
     stream_count = wg_parser_get_stream_count(parser);
@@ -1859,6 +1856,7 @@ static HRESULT WINAPI stream_handler_BeginCreateObject(IMFByteStreamHandler *ifa
     struct stream_handler *handler = impl_from_IMFByteStreamHandler(iface);
     IMFAsyncResult *result;
     IUnknown *context;
+    QWORD file_size;
     HRESULT hr;
     DWORD caps;
 
@@ -1879,11 +1877,15 @@ static HRESULT WINAPI stream_handler_BeginCreateObject(IMFByteStreamHandler *ifa
         FIXME("Non-seekable bytestreams not supported.\n");
         return MF_E_BYTESTREAM_NOT_SEEKABLE;
     }
+    if (FAILED(hr = IMFByteStream_GetLength(stream, &file_size)))
+    {
+        FIXME("Failed to get byte stream length, hr %#lx.\n", hr);
+        return hr;
+    }
 
     if (FAILED(hr = MFCreateAsyncResult(NULL, callback, state, &result)))
         return hr;
-
-    if (FAILED(hr = object_context_create(flags, stream, url, result, &context)))
+    if (FAILED(hr = object_context_create(flags, stream, url, file_size, result, &context)))
     {
         IMFAsyncResult_Release(result);
         return hr;
