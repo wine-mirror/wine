@@ -1010,8 +1010,11 @@ GpStatus WINGDIPAPI GdipAddPathString(GpPath* path, GDIPCONST WCHAR* string, INT
     TEXTMETRICW textmetric;
 
     TRACE("(%p, %s, %d, %p, %d, %f, %p, %p)\n", path, debugstr_w(string), length, family, style, emSize, layoutRect, format);
-    if (!path || !string || !family || !emSize || !layoutRect || !format)
+    if (!path || !string || !family || !emSize || !layoutRect)
         return InvalidParameter;
+
+    if (!format)
+        format = &default_drawstring_format;
 
     status = GdipGetEmHeight(family, style, &native_height);
     if (status != Ok)
