@@ -1610,7 +1610,7 @@ static void media_source_init_descriptors(struct media_source *source)
     }
 }
 
-static HRESULT media_source_create(IMFByteStream *bytestream, IMFMediaSource **out)
+static HRESULT media_source_create(struct object_context *context, IMFMediaSource **out)
 {
     unsigned int stream_count = UINT_MAX;
     struct media_source *object;
@@ -1620,7 +1620,7 @@ static HRESULT media_source_create(IMFByteStream *bytestream, IMFMediaSource **o
     unsigned int i;
     HRESULT hr;
 
-    if (FAILED(hr = IMFByteStream_GetCapabilities(bytestream, &bytestream_caps)))
+    if (FAILED(hr = IMFByteStream_GetCapabilities(context->stream, &bytestream_caps)))
         return hr;
 
     if (!(bytestream_caps & MFBYTESTREAM_IS_SEEKABLE))
@@ -1629,7 +1629,7 @@ static HRESULT media_source_create(IMFByteStream *bytestream, IMFMediaSource **o
         return MF_E_BYTESTREAM_NOT_SEEKABLE;
     }
 
-    if (FAILED(hr = IMFByteStream_GetLength(bytestream, &file_size)))
+    if (FAILED(hr = IMFByteStream_GetLength(context->stream, &file_size)))
     {
         FIXME("Failed to get byte stream length, hr %#lx.\n", hr);
         return hr;
@@ -1644,8 +1644,8 @@ static HRESULT media_source_create(IMFByteStream *bytestream, IMFMediaSource **o
     object->IMFRateControl_iface.lpVtbl = &media_source_rate_control_vtbl;
     object->async_commands_callback.lpVtbl = &source_async_commands_callback_vtbl;
     object->ref = 1;
-    object->byte_stream = bytestream;
-    IMFByteStream_AddRef(bytestream);
+    object->byte_stream = context->stream;
+    IMFByteStream_AddRef(context->stream);
     object->rate = 1.0f;
     InitializeCriticalSection(&object->cs);
     object->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
@@ -2003,7 +2003,7 @@ static HRESULT WINAPI stream_handler_callback_Invoke(IMFAsyncCallback *iface, IM
     if (!state || !(context = impl_from_IUnknown(state)))
         return E_INVALIDARG;
 
-    if (FAILED(hr = media_source_create(context->stream, (IMFMediaSource **)&object)))
+    if (FAILED(hr = media_source_create(context, (IMFMediaSource **)&object)))
         WARN("Failed to create media source, hr %#lx\n", hr);
     else
     {
