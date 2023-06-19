@@ -13,6 +13,7 @@ C_SRCS = \
 	quality.c \
 	samplegrabber.c \
 	sar.c \
+	scheme_handler.c \
 	session.c \
 	topology.c \
 	topology_loader.c
