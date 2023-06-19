@@ -442,7 +442,7 @@ static HRESULT WINAPI async_bool_put_Completed( IAsyncOperation_boolean *iface, 
     IWineAsyncOperationCompletedHandler *handler = (IWineAsyncOperationCompletedHandler *)bool_handler;
     struct async_bool *impl = impl_from_IAsyncOperation_boolean( iface );
     TRACE( "iface %p, handler %p.\n", iface, handler );
-    return IWineAsyncInfoImpl_put_Completed( impl->IWineAsyncInfoImpl_inner, (IWineAsyncOperationCompletedHandler *)handler );
+    return IWineAsyncInfoImpl_put_Completed( impl->IWineAsyncInfoImpl_inner, handler );
 }
 
 static HRESULT WINAPI async_bool_get_Completed( IAsyncOperation_boolean *iface, IAsyncOperationCompletedHandler_boolean **bool_handler )
@@ -450,7 +450,7 @@ static HRESULT WINAPI async_bool_get_Completed( IAsyncOperation_boolean *iface, 
     IWineAsyncOperationCompletedHandler **handler = (IWineAsyncOperationCompletedHandler **)bool_handler;
     struct async_bool *impl = impl_from_IAsyncOperation_boolean( iface );
     TRACE( "iface %p, handler %p.\n", iface, handler );
-    return IWineAsyncInfoImpl_get_Completed( impl->IWineAsyncInfoImpl_inner, (IWineAsyncOperationCompletedHandler **)handler );
+    return IWineAsyncInfoImpl_get_Completed( impl->IWineAsyncInfoImpl_inner, handler );
 }
 
 static HRESULT WINAPI async_bool_GetResults( IAsyncOperation_boolean *iface, BOOLEAN *results )
