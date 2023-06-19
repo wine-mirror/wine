@@ -186,6 +186,7 @@ static HRESULT enum_key( HKEY root, const WCHAR *subkey, VARIANT *names, IWbemCo
             if (!(tmp = realloc( strings, count * sizeof(BSTR) )))
             {
                 RegCloseKey( hkey );
+                free( strings );
                 return E_OUTOFMEMORY;
             }
             strings = tmp;
