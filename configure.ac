@@ -769,25 +769,24 @@ case $host_os in
 
     WINE_TRY_CFLAGS([-Wl,-z,defs],[UNIXLDFLAGS="$UNIXLDFLAGS -Wl,-z,defs"])
     WINE_TRY_CFLAGS([-Wl,--export-dynamic],[WINELOADER_LDFLAGS="-Wl,--export-dynamic"])
-    WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
 
-    case $host_cpu in
-      *i[[3456789]]86* | arm*)
-        WINE_TRY_CFLAGS([-Wl,-Ttext-segment=0x7bc00000],
-                        [case $host_os in
-                         freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x60000000" ;;
-                         *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x7d000000" ;;
-                         esac],
-                        [WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x7d000400],
-                                         [case $host_os in
-                                            freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x60000400" ;;
-                                            *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x7d000400" ;;
-                                         esac])])
-        WINE_TRY_CFLAGS([-Wl,-z,max-page-size=0x1000],
-                        [WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-z,max-page-size=0x1000"])
+    case $host_os in
+      linux*)
+        AS_VAR_APPEND([WINELOADER_LDFLAGS],[" -pie"])
+        WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
         ;;
       *)
-        WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -pie"
+        case $HOST_ARCH in
+          i386|arm)
+            WINE_TRY_CFLAGS([-Wl,-Ttext-segment=0x60000000],
+                            [AS_VAR_APPEND([WINELOADER_LDFLAGS],[" -Wl,-Ttext-segment=0x60000000"])],
+                            [WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x60000400],
+                                [AS_VAR_APPEND([WINELOADER_LDFLAGS],[" -Wl,--section-start,.interp=0x60000400"])])])
+            ;;
+          *)
+            AS_VAR_APPEND([WINELOADER_LDFLAGS],[" -pie"])
+            ;;
+        esac
         ;;
     esac
     ;;

@@ -10245,104 +10245,77 @@ if test "x$ac_cv_cflags__Wl___export_dynamic" = xyes
 then :
   WINELOADER_LDFLAGS="-Wl,--export-dynamic"
 fi
-    WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
 
-    case $host_cpu in
-      *i[3456789]86* | arm*)
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-Ttext-segment=0x7bc00000" >&5
-printf %s "checking whether the compiler supports -Wl,-Ttext-segment=0x7bc00000... " >&6; }
-if test ${ac_cv_cflags__Wl__Ttext_segment_0x7bc00000+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Wl,-Ttext-segment=0x7bc00000"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_cflags__Wl__Ttext_segment_0x7bc00000=yes
-else $as_nop
-  ac_cv_cflags__Wl__Ttext_segment_0x7bc00000=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__Ttext_segment_0x7bc00000" >&5
-printf "%s\n" "$ac_cv_cflags__Wl__Ttext_segment_0x7bc00000" >&6; }
-if test "x$ac_cv_cflags__Wl__Ttext_segment_0x7bc00000" = xyes
-then :
-  case $host_os in
-                         freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x60000000" ;;
-                         *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x7d000000" ;;
-                         esac
-else $as_nop
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--section-start,.interp=0x7d000400" >&5
-printf %s "checking whether the compiler supports -Wl,--section-start,.interp=0x7d000400... " >&6; }
-if test ${ac_cv_cflags__Wl___section_start__interp_0x7d000400+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Wl,--section-start,.interp=0x7d000400"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_cflags__Wl___section_start__interp_0x7d000400=yes
-else $as_nop
-  ac_cv_cflags__Wl___section_start__interp_0x7d000400=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl___section_start__interp_0x7d000400" >&5
-printf "%s\n" "$ac_cv_cflags__Wl___section_start__interp_0x7d000400" >&6; }
-if test "x$ac_cv_cflags__Wl___section_start__interp_0x7d000400" = xyes
-then :
-  case $host_os in
-                                            freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x60000400" ;;
-                                            *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x7d000400" ;;
-                                         esac
-fi
-fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-z,max-page-size=0x1000" >&5
-printf %s "checking whether the compiler supports -Wl,-z,max-page-size=0x1000... " >&6; }
-if test ${ac_cv_cflags__Wl__z_max_page_size_0x1000+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Wl,-z,max-page-size=0x1000"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_cflags__Wl__z_max_page_size_0x1000=yes
-else $as_nop
-  ac_cv_cflags__Wl__z_max_page_size_0x1000=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__z_max_page_size_0x1000" >&5
-printf "%s\n" "$ac_cv_cflags__Wl__z_max_page_size_0x1000" >&6; }
-if test "x$ac_cv_cflags__Wl__z_max_page_size_0x1000" = xyes
-then :
-  WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-z,max-page-size=0x1000"
-fi
+    case $host_os in
+      linux*)
+        as_fn_append WINELOADER_LDFLAGS " -pie"
+        WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
         ;;
       *)
-        WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -pie"
+        case $HOST_ARCH in
+          i386|arm)
+            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-Ttext-segment=0x60000000" >&5
+printf %s "checking whether the compiler supports -Wl,-Ttext-segment=0x60000000... " >&6; }
+if test ${ac_cv_cflags__Wl__Ttext_segment_0x60000000+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Wl,-Ttext-segment=0x60000000"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_cflags__Wl__Ttext_segment_0x60000000=yes
+else $as_nop
+  ac_cv_cflags__Wl__Ttext_segment_0x60000000=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__Ttext_segment_0x60000000" >&5
+printf "%s\n" "$ac_cv_cflags__Wl__Ttext_segment_0x60000000" >&6; }
+if test "x$ac_cv_cflags__Wl__Ttext_segment_0x60000000" = xyes
+then :
+  as_fn_append WINELOADER_LDFLAGS " -Wl,-Ttext-segment=0x60000000"
+else $as_nop
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--section-start,.interp=0x60000400" >&5
+printf %s "checking whether the compiler supports -Wl,--section-start,.interp=0x60000400... " >&6; }
+if test ${ac_cv_cflags__Wl___section_start__interp_0x60000400+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Wl,--section-start,.interp=0x60000400"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_cflags__Wl___section_start__interp_0x60000400=yes
+else $as_nop
+  ac_cv_cflags__Wl___section_start__interp_0x60000400=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl___section_start__interp_0x60000400" >&5
+printf "%s\n" "$ac_cv_cflags__Wl___section_start__interp_0x60000400" >&6; }
+if test "x$ac_cv_cflags__Wl___section_start__interp_0x60000400" = xyes
+then :
+  as_fn_append WINELOADER_LDFLAGS " -Wl,--section-start,.interp=0x60000400"
+fi
+fi
+            ;;
+          *)
+            as_fn_append WINELOADER_LDFLAGS " -pie"
+            ;;
+        esac
         ;;
     esac
     ;;
