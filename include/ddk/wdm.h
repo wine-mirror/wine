@@ -1665,6 +1665,8 @@ static inline void IoCopyCurrentIrpStackLocationToNext(IRP *irp)
 #define SYMBOLIC_LINK_QUERY             0x0001
 #define SYMBOLIC_LINK_ALL_ACCESS        (STANDARD_RIGHTS_REQUIRED | 0x1)
 
+#ifndef WINE_UNIX_LIB
+
 NTSTATUS  WINAPI DbgQueryDebugFilterState(ULONG, ULONG);
 
 void    FASTCALL ExAcquireFastMutex(FAST_MUTEX*);
@@ -1775,10 +1777,6 @@ void      WINAPI KeInitializeDpc(KDPC*,PKDEFERRED_ROUTINE,void*);
 void      WINAPI KeInitializeEvent(PRKEVENT,EVENT_TYPE,BOOLEAN);
 void      WINAPI KeInitializeMutex(PRKMUTEX,ULONG);
 void      WINAPI KeInitializeSemaphore(PRKSEMAPHORE,LONG,LONG);
-static FORCEINLINE void WINAPI KeInitializeSpinLock( KSPIN_LOCK *lock )
-{
-  *lock = 0;
-}
 void      WINAPI KeInitializeTimerEx(PKTIMER,TIMER_TYPE);
 void      WINAPI KeInitializeTimer(KTIMER*);
 BOOLEAN   WINAPI KeInsertDeviceQueue(KDEVICE_QUEUE*,KDEVICE_QUEUE_ENTRY*);
@@ -1820,14 +1818,6 @@ PVOID     WINAPI MmMapLockedPagesSpecifyCache(PMDLX,KPROCESSOR_MODE,MEMORY_CACHI
 MM_SYSTEMSIZE WINAPI MmQuerySystemSize(void);
 void      WINAPI MmProbeAndLockPages(PMDLX, KPROCESSOR_MODE, LOCK_OPERATION);
 void      WINAPI MmUnmapLockedPages(void*, PMDL);
-
-static inline void *MmGetSystemAddressForMdlSafe(MDL *mdl, ULONG priority)
-{
-    if (mdl->MdlFlags & (MDL_MAPPED_TO_SYSTEM_VA | MDL_SOURCE_IS_NONPAGED_POOL))
-        return mdl->MappedSystemVa;
-    else
-        return MmMapLockedPagesSpecifyCache(mdl, KernelMode, MmCached, NULL, FALSE, priority);
-}
 
 void    FASTCALL ObfReferenceObject(void*);
 void      WINAPI ObDereferenceObject(void*);
@@ -1971,5 +1961,20 @@ static inline void ExInitializeFastMutex( FAST_MUTEX *mutex )
     mutex->Contention = 0;
     KeInitializeEvent( &mutex->Event, SynchronizationEvent, FALSE );
 }
+
+static FORCEINLINE void WINAPI KeInitializeSpinLock( KSPIN_LOCK *lock )
+{
+  *lock = 0;
+}
+
+static inline void *MmGetSystemAddressForMdlSafe(MDL *mdl, ULONG priority)
+{
+    if (mdl->MdlFlags & (MDL_MAPPED_TO_SYSTEM_VA | MDL_SOURCE_IS_NONPAGED_POOL))
+        return mdl->MappedSystemVa;
+    else
+        return MmMapLockedPagesSpecifyCache(mdl, KernelMode, MmCached, NULL, FALSE, priority);
+}
+
+#endif /* WINE_UNIX_LIB */
 
 #endif

@@ -59,7 +59,7 @@ extern "C" {
 #ifdef WINE_UNIX_LIB
 # define __stdcall
 # define __cdecl
-# define __fastcall
+# undef __fastcall
 #else
 # undef __stdcall
 # ifdef __i386__
