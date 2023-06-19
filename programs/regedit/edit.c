@@ -680,9 +680,7 @@ BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCWSTR keyPath, LPCWSTR newName)
 
 done:
     RegCloseKey(destKey);
-    if (parentKey) {
-        RegCloseKey(parentKey); 
-        free(parentPath);
-    }
+    RegCloseKey(parentKey);
+    free(parentPath);
     return result;
 }
