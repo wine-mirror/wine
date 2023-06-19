@@ -1230,6 +1230,8 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
     static const WCHAR ramdacW[] =
         {'I','n','t','e','r','g','r','a','t','e','d',' ','R','A','M','D','A','C',0};
     static const WCHAR driver_dateW[] = {'D','r','i','v','e','r','D','a','t','e',0};
+    static const WCHAR driver_versionW[] =
+        {'D','r','i','v','e','r','V','e','r','s','i','o','n',0};
 
     TRACE( "%s %04X %04X %08X %02X\n", debugstr_w(gpu->name),
            gpu->vendor_id, gpu->device_id, gpu->subsys_id, gpu->revision_id );
@@ -1373,6 +1375,31 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
     set_reg_value( hkey, bios_stringW, REG_BINARY, desc, size );
     set_reg_value( hkey, chip_typeW, REG_BINARY, desc, size );
     set_reg_value( hkey, dac_typeW, REG_BINARY, ramdacW, sizeof(ramdacW) );
+
+    if (gpu->vendor_id && gpu->device_id)
+    {
+        /* The last seven digits are the driver number. */
+        switch (gpu->vendor_id)
+        {
+        /* Intel */
+        case 0x8086:
+            sprintf( buffer, "31.0.101.4576" );
+            break;
+        /* AMD */
+        case 0x1002:
+            sprintf( buffer, "31.0.14051.5006" );
+            break;
+        /* Nvidia */
+        case 0x10de:
+            sprintf( buffer, "31.0.15.3625" );
+            break;
+        /* Default value for any other vendor. */
+        default:
+            sprintf( buffer, "31.0.10.1000" );
+            break;
+        }
+        set_reg_value( hkey, driver_versionW, REG_SZ, bufferW, asciiz_to_unicode( bufferW, buffer ) );
+    }
 
     NtClose( hkey );
 
