@@ -787,8 +787,7 @@ case $host_os in
                         [WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-z,max-page-size=0x1000"])
         ;;
       *)
-        WINE_TRY_CFLAGS([-Wl,-pie],
-                        [WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-pie"])
+        WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -pie"
         ;;
     esac
     ;;

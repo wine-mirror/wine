@@ -10342,34 +10342,7 @@ then :
 fi
         ;;
       *)
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-pie" >&5
-printf %s "checking whether the compiler supports -Wl,-pie... " >&6; }
-if test ${ac_cv_cflags__Wl__pie+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Wl,-pie"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_cflags__Wl__pie=yes
-else $as_nop
-  ac_cv_cflags__Wl__pie=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__pie" >&5
-printf "%s\n" "$ac_cv_cflags__Wl__pie" >&6; }
-if test "x$ac_cv_cflags__Wl__pie" = xyes
-then :
-  WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-pie"
-fi
+        WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -pie"
         ;;
     esac
     ;;
