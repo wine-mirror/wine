@@ -1779,6 +1779,7 @@ struct create_object_context
     IUnknown IUnknown_iface;
     LONG refcount;
 
+    IMFAsyncResult *result;
     IMFByteStream *stream;
     WCHAR *url;
 };
@@ -1823,6 +1824,7 @@ static ULONG WINAPI create_object_context_Release(IUnknown *iface)
 
     if (!refcount)
     {
+        IMFAsyncResult_Release(context->result);
         IMFByteStream_Release(context->stream);
         free(context->url);
         free(context);
@@ -1843,7 +1845,7 @@ static HRESULT WINAPI stream_handler_BeginCreateObject(IMFByteStreamHandler *ifa
 {
     struct stream_handler *handler = impl_from_IMFByteStreamHandler(iface);
     struct create_object_context *context;
-    IMFAsyncResult *caller, *item;
+    IMFAsyncResult *result;
     HRESULT hr;
 
     TRACE("%p, %s, %#lx, %p, %p, %p, %p.\n", iface, debugstr_w(url), flags, props, cancel_cookie, callback, state);
@@ -1856,12 +1858,12 @@ static HRESULT WINAPI stream_handler_BeginCreateObject(IMFByteStreamHandler *ifa
     if (flags != MF_RESOLUTION_MEDIASOURCE)
         FIXME("Unimplemented flags %#lx\n", flags);
 
-    if (FAILED(hr = MFCreateAsyncResult(NULL, callback, state, &caller)))
+    if (FAILED(hr = MFCreateAsyncResult(NULL, callback, state, &result)))
         return hr;
 
     if (!(context = calloc(1, sizeof(*context))))
     {
-        IMFAsyncResult_Release(caller);
+        IMFAsyncResult_Release(result);
         return E_OUTOFMEMORY;
     }
 
@@ -1869,25 +1871,21 @@ static HRESULT WINAPI stream_handler_BeginCreateObject(IMFByteStreamHandler *ifa
     context->refcount = 1;
     context->stream = stream;
     IMFByteStream_AddRef(context->stream);
+    context->result = result;
+    IMFAsyncResult_AddRef(context->result);
     if (url)
         context->url = wcsdup(url);
 
-    hr = MFCreateAsyncResult(&context->IUnknown_iface, &handler->IMFAsyncCallback_iface, (IUnknown *)caller, &item);
+    hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_IO, &handler->IMFAsyncCallback_iface, &context->IUnknown_iface);
     IUnknown_Release(&context->IUnknown_iface);
-    if (SUCCEEDED(hr))
-    {
-        if (SUCCEEDED(hr = MFPutWorkItemEx(MFASYNC_CALLBACK_QUEUE_IO, item)))
-        {
-            if (cancel_cookie)
-            {
-                *cancel_cookie = (IUnknown *)caller;
-                IUnknown_AddRef(*cancel_cookie);
-            }
-        }
 
-        IMFAsyncResult_Release(item);
+    if (SUCCEEDED(hr) && cancel_cookie)
+    {
+        *cancel_cookie = (IUnknown *)result;
+        IUnknown_AddRef(*cancel_cookie);
     }
-    IMFAsyncResult_Release(caller);
+
+    IMFAsyncResult_Release(result);
 
     return hr;
 }
@@ -1983,27 +1981,19 @@ static HRESULT WINAPI stream_handler_callback_GetParameters(IMFAsyncCallback *if
 static HRESULT WINAPI stream_handler_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct stream_handler *handler = impl_from_IMFAsyncCallback(iface);
-    IUnknown *object, *context_object;
+    IUnknown *object, *state = IMFAsyncResult_GetStateNoAddRef(result);
     struct create_object_context *context;
     struct result_entry *entry;
-    IMFAsyncResult *caller;
     HRESULT hr;
 
-    caller = (IMFAsyncResult *)IMFAsyncResult_GetStateNoAddRef(result);
-
-    if (FAILED(hr = IMFAsyncResult_GetObject(result, &context_object)))
-    {
-        WARN("Expected context set for callee result.\n");
-        return hr;
-    }
-
-    context = impl_from_IUnknown(context_object);
+    if (!state || !(context = impl_from_IUnknown(state)))
+        return E_INVALIDARG;
 
     if (FAILED(hr = media_source_create(context->stream, (IMFMediaSource **)&object)))
         WARN("Failed to create media source, hr %#lx\n", hr);
     else
     {
-        if (FAILED(hr = result_entry_create(caller, MF_OBJECT_MEDIASOURCE, object, &entry)))
+        if (FAILED(hr = result_entry_create(context->result, MF_OBJECT_MEDIASOURCE, object, &entry)))
             WARN("Failed to create handler result, hr %#lx\n", hr);
         else
         {
@@ -2015,10 +2005,8 @@ static HRESULT WINAPI stream_handler_callback_Invoke(IMFAsyncCallback *iface, IM
         IUnknown_Release(object);
     }
 
-    IUnknown_Release(&context->IUnknown_iface);
-
-    IMFAsyncResult_SetStatus(caller, hr);
-    MFInvokeCallback(caller);
+    IMFAsyncResult_SetStatus(context->result, hr);
+    MFInvokeCallback(context->result);
 
     return S_OK;
 }
