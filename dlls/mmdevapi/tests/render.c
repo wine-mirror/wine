@@ -139,10 +139,22 @@ static void test_audioclient(void)
     HRESULT hr;
     ULONG ref;
     WAVEFORMATEX *pwfx, *pwfx2;
+    WAVEFORMATEXTENSIBLE format_float_error;
     REFERENCE_TIME t1, t2;
     HANDLE handle;
     BOOL offload_capable;
     AudioClientProperties client_props;
+
+    format_float_error.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE);
+    format_float_error.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+    format_float_error.Format.nAvgBytesPerSec = 384000;
+    format_float_error.Format.nBlockAlign = 8;
+    format_float_error.Format.nChannels = 2;
+    format_float_error.Format.nSamplesPerSec = 48000;
+    format_float_error.Format.wBitsPerSample = 32;
+    format_float_error.Samples.wValidBitsPerSample = 4;
+    format_float_error.dwChannelMask = 3;
+    format_float_error.SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
 
     hr = IMMDevice_Activate(dev, &IID_IAudioClient3, CLSCTX_INPROC_SERVER,
             NULL, (void**)&ac3);
@@ -257,6 +269,10 @@ static void test_audioclient(void)
         ok(hr == S_OK || hr == AUDCLNT_E_UNSUPPORTED_FORMAT || hr == AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED,
            "IsFormatSupported(Exclusive) call returns %08lx\n", hr);
         hexcl = hr;
+
+        hr = IAudioClient_IsFormatSupported(ac, AUDCLNT_SHAREMODE_EXCLUSIVE, &format_float_error.Format, NULL);
+        ok(hr == S_OK || hr == AUDCLNT_E_UNSUPPORTED_FORMAT || hr == AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED,
+                  "IsFormatSupported(Exclusive) call returns %08lx\n", hr);
 
         pwfx2 = (WAVEFORMATEX*)0xDEADF00D;
         hr = IAudioClient_IsFormatSupported(ac, AUDCLNT_SHAREMODE_EXCLUSIVE, pwfx, &pwfx2);
