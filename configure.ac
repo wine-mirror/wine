@@ -769,11 +769,20 @@ case $host_os in
 
     WINE_TRY_CFLAGS([-Wl,-z,defs],[UNIXLDFLAGS="$UNIXLDFLAGS -Wl,-z,defs"])
     WINE_TRY_CFLAGS([-Wl,--export-dynamic],[WINELOADER_LDFLAGS="-Wl,--export-dynamic"])
+    WINEPRELOADER_LDFLAGS="-nostartfiles -nodefaultlibs"
 
     case $host_os in
       linux*)
         AS_VAR_APPEND([WINELOADER_LDFLAGS],[" -pie"])
-        WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
+        case $HOST_ARCH in
+          i386|arm)
+            AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -static -Wl,-Ttext=0x7d400000"]) ;;
+          *)
+            WINE_TRY_CFLAGS([-static-pie],
+                            [AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -static-pie"])],
+                            [AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -static -Wl,-Ttext=0x7d7d00000000"])])
+            ;;
+        esac
         ;;
       *)
         case $HOST_ARCH in

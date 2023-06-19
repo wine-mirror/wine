@@ -10245,11 +10245,47 @@ if test "x$ac_cv_cflags__Wl___export_dynamic" = xyes
 then :
   WINELOADER_LDFLAGS="-Wl,--export-dynamic"
 fi
+    WINEPRELOADER_LDFLAGS="-nostartfiles -nodefaultlibs"
 
     case $host_os in
       linux*)
         as_fn_append WINELOADER_LDFLAGS " -pie"
-        WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
+        case $HOST_ARCH in
+          i386|arm)
+            as_fn_append WINEPRELOADER_LDFLAGS " -static -Wl,-Ttext=0x7d400000" ;;
+          *)
+            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -static-pie" >&5
+printf %s "checking whether the compiler supports -static-pie... " >&6; }
+if test ${ac_cv_cflags__static_pie+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -static-pie"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_cflags__static_pie=yes
+else $as_nop
+  ac_cv_cflags__static_pie=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__static_pie" >&5
+printf "%s\n" "$ac_cv_cflags__static_pie" >&6; }
+if test "x$ac_cv_cflags__static_pie" = xyes
+then :
+  as_fn_append WINEPRELOADER_LDFLAGS " -static-pie"
+else $as_nop
+  as_fn_append WINEPRELOADER_LDFLAGS " -static -Wl,-Ttext=0x7d7d00000000"
+fi
+            ;;
+        esac
         ;;
       *)
         case $HOST_ARCH in

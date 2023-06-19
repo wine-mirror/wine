@@ -351,7 +351,7 @@ __ASM_GLOBAL_FUNC(_start,
                   "movq %rsp,%rax\n\t"
                   "leaq -144(%rsp),%rsp\n\t" /* allocate some space for extra aux values */
                   "movq %rax,(%rsp)\n\t"     /* orig stack pointer */
-                  "movq $thread_data,%rsi\n\t"
+                  "movq thread_data(%rip),%rsi\n\t"
                   "movq $0x1002,%rdi\n\t"    /* ARCH_SET_FS */
                   "movq $158,%rax\n\t"       /* SYS_arch_prctl */
                   "syscall\n\t"
@@ -439,7 +439,8 @@ __ASM_GLOBAL_FUNC(_start,
                   "mov x0, SP\n\t"
                   "sub SP, SP, #144\n\t" /* allocate some space for extra aux values */
                   "str x0, [SP]\n\t"     /* orig stack pointer */
-                  "ldr x0, =thread_data\n\t"
+                  "adrp x0, thread_data\n\t"
+                  "add x0, x0, :lo12:thread_data\n\t"
                   "msr tpidr_el0, x0\n\t"
                   "mov x0, SP\n\t"       /* ptr to orig stack pointer */
                   "bl wld_start\n\t"
@@ -1398,7 +1399,7 @@ void* wld_start( void **stack )
     page_size = get_auxiliary( av, AT_PAGESZ, 4096 );
     page_mask = page_size - 1;
 
-    preloader_start = (char *)_start - ((unsigned long)_start & page_mask);
+    preloader_start = (char *)((unsigned long)_start & ~page_mask);
     preloader_end = (char *)((unsigned long)(_end + page_mask) & ~page_mask);
 
 #ifdef DUMP_AUX_INFO
