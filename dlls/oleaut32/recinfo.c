@@ -595,7 +595,7 @@ HRESULT WINAPI GetRecordInfoFromGuids(REFGUID rGuidTypeLib, ULONG uVerMajor,
     ITypeLib *pTypeLib;
     HRESULT hres;
 
-    TRACE("%p, %lu, %lu, %#lx, %s, %p.\n", rGuidTypeLib, uVerMajor, uVerMinor,
+    TRACE("%s, %lu, %lu, %#lx, %s, %p.\n", debugstr_guid(rGuidTypeLib), uVerMajor, uVerMinor,
             lcid, debugstr_guid(rGuidTypeInfo), ppRecInfo);
 
     hres = LoadRegTypeLib(rGuidTypeLib, uVerMajor, uVerMinor, lcid, &pTypeLib);
