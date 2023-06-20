@@ -839,3 +839,81 @@ BOOL search_unix_path(const WCHAR *name, const WCHAR *path, BOOL (*match)(void*,
     heap_free(buf);
     return ret;
 }
+
+/******************************************************************
+ *      SymSrvGetFileIndexInfo (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymSrvGetFileIndexInfo(const char *file, SYMSRV_INDEX_INFO* info, DWORD flags)
+{
+    SYMSRV_INDEX_INFOW infoW;
+    WCHAR fileW[MAX_PATH];
+    BOOL ret;
+
+    TRACE("(%s, %p, 0x%08lx)\n", debugstr_a(file), info, flags);
+
+    if (info->sizeofstruct < sizeof(*info))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    MultiByteToWideChar(CP_ACP, 0, file, -1, fileW, ARRAY_SIZE(fileW));
+    infoW.sizeofstruct = sizeof(infoW);
+    ret = SymSrvGetFileIndexInfoW(fileW, &infoW, flags);
+    if (ret)
+    {
+        WideCharToMultiByte(CP_ACP, 0, infoW.file, -1, info->file, ARRAY_SIZE(info->file), NULL, NULL);
+        info->stripped = infoW.stripped;
+        info->timestamp = infoW.timestamp;
+        info->size = infoW.size;
+        WideCharToMultiByte(CP_ACP, 0, infoW.dbgfile, -1, info->dbgfile, ARRAY_SIZE(info->dbgfile), NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, infoW.pdbfile, -1, info->pdbfile, ARRAY_SIZE(info->pdbfile), NULL, NULL);
+        info->guid = infoW.guid;
+        info->sig = infoW.sig;
+        info->age = infoW.age;
+    }
+    return ret;
+}
+
+/******************************************************************
+ *      SymSrvGetFileIndexInfoW (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymSrvGetFileIndexInfoW(const WCHAR *file, SYMSRV_INDEX_INFOW* info, DWORD flags)
+{
+    FIXME("(%s, %p, 0x%08lx): stub!\n", debugstr_w(file), info, flags);
+
+    if (info->sizeofstruct < sizeof(*info))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/******************************************************************
+ *      SymSrvGetFileIndexes (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymSrvGetFileIndexes(PCSTR file, GUID* guid, PDWORD pdw1, PDWORD pdw2, DWORD flags)
+{
+    WCHAR fileW[MAX_PATH];
+
+    TRACE("(%s, %p, %p, %p, 0x%08lx)\n", debugstr_a(file), guid, pdw1, pdw2, flags);
+
+    MultiByteToWideChar(CP_ACP, 0, file, -1, fileW, ARRAY_SIZE(fileW));
+    return SymSrvGetFileIndexesW(fileW, guid, pdw1, pdw2, flags);
+}
+
+/******************************************************************
+ *      SymSrvGetFileIndexesW (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymSrvGetFileIndexesW(PCWSTR file, GUID* guid, PDWORD pdw1, PDWORD pdw2, DWORD flags)
+{
+    FIXME("(%s, %p, %p, %p, 0x%08lx): stub!\n", debugstr_w(file), guid, pdw1, pdw2, flags);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}

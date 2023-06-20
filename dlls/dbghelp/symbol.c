@@ -2851,14 +2851,3 @@ BOOL WINAPI SymQueryInlineTrace(HANDLE hProcess, DWORD64 StartAddress, DWORD Sta
     }
     return TRUE;
 }
-
-/******************************************************************
- *      SymSrvGetFileIndexInfo (DBGHELP.@)
- *
- */
-BOOL WINAPI SymSrvGetFileIndexInfo(const char *file, SYMSRV_INDEX_INFO* info, DWORD flags)
-{
-    FIXME("(%s, %p, 0x%08lx): stub!\n", debugstr_a(file), info, flags);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}

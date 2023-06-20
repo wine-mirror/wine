@@ -176,11 +176,11 @@
 @ stub SymSrvDeltaName
 @ stub SymSrvDeltaNameW
 @ stdcall SymSrvGetFileIndexInfo(str ptr long)
-@ stub SymSrvGetFileIndexInfoW
+@ stdcall SymSrvGetFileIndexInfoW(wstr ptr long)
 @ stub SymSrvGetFileIndexString
 @ stub SymSrvGetFileIndexStringW
-@ stub SymSrvGetFileIndexes
-@ stub SymSrvGetFileIndexesW
+@ stdcall SymSrvGetFileIndexes(str ptr ptr ptr long)
+@ stdcall SymSrvGetFileIndexesW(wstr ptr ptr ptr long)
 @ stub SymSrvGetSupplement
 @ stub SymSrvGetSupplementW
 @ stub SymSrvIsStore
