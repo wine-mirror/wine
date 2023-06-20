@@ -3682,54 +3682,21 @@ static void CRYPT_MakeCertInfo(PCERT_INFO info, const CRYPT_DATA_BLOB *pSerialNu
     }
 }
  
-typedef RPC_STATUS (RPC_ENTRY *UuidCreateFunc)(UUID *);
-typedef RPC_STATUS (RPC_ENTRY *UuidToStringFunc)(UUID *, unsigned char **);
-typedef RPC_STATUS (RPC_ENTRY *RpcStringFreeFunc)(unsigned char **);
-
 static HCRYPTPROV CRYPT_CreateKeyProv(void)
 {
-    HCRYPTPROV hProv = 0;
-    HMODULE rpcrt = LoadLibraryW(L"rpcrt4");
+    HCRYPTPROV prov;
+    HCRYPTKEY key;
 
-    if (rpcrt)
+    if (!CryptAcquireContextA(&prov, NULL, MS_DEF_PROV_A, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_NEWKEYSET))
+        return 0;
+
+    if (!CryptGenKey(prov, AT_SIGNATURE, 0, &key))
     {
-        UuidCreateFunc uuidCreate = (UuidCreateFunc)GetProcAddress(rpcrt,
-         "UuidCreate");
-        UuidToStringFunc uuidToString = (UuidToStringFunc)GetProcAddress(rpcrt,
-         "UuidToStringA");
-        RpcStringFreeFunc rpcStringFree = (RpcStringFreeFunc)GetProcAddress(
-         rpcrt, "RpcStringFreeA");
-
-        if (uuidCreate && uuidToString && rpcStringFree)
-        {
-            UUID uuid;
-            RPC_STATUS status = uuidCreate(&uuid);
-
-            if (status == RPC_S_OK || status == RPC_S_UUID_LOCAL_ONLY)
-            {
-                unsigned char *uuidStr;
-
-                status = uuidToString(&uuid, &uuidStr);
-                if (status == RPC_S_OK)
-                {
-                    BOOL ret = CryptAcquireContextA(&hProv, (LPCSTR)uuidStr,
-                     MS_DEF_PROV_A, PROV_RSA_FULL, CRYPT_NEWKEYSET);
-
-                    if (ret)
-                    {
-                        HCRYPTKEY key;
-
-                        ret = CryptGenKey(hProv, AT_SIGNATURE, 0, &key);
-                        if (ret)
-                            CryptDestroyKey(key);
-                    }
-                    rpcStringFree(&uuidStr);
-                }
-            }
-        }
-        FreeLibrary(rpcrt);
+        CryptReleaseContext(prov, 0);
+        return 0;
     }
-    return hProv;
+    CryptDestroyKey(key);
+    return prov;
 }
 
 PCCERT_CONTEXT WINAPI CertCreateSelfSignCertificate(HCRYPTPROV_OR_NCRYPT_KEY_HANDLE hProv,
