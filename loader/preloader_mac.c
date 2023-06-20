@@ -49,18 +49,15 @@
 #include "main.h"
 
 #if defined(__x86_64__)
-/* Rosetta on Apple Silicon allocates memory starting at 0x100000000 (the 4GB line)
- * before the preloader runs, which prevents any nonrelocatable EXEs with that
- * base address from running.
- *
- * This empty linker section forces Rosetta's allocations (currently ~132 MB)
- * to start at 0x114000000, and they should end below 0x120000000.
+/* Reserve the low 8GB using a zero-fill section, this is the only way to
+ * prevent system frameworks from using any of it (including allocations
+ * before any preloader code runs)
  */
-__asm__(".zerofill WINE_4GB_RESERVE,WINE_4GB_RESERVE,___wine_4gb_reserve,0x14000000");
+__asm__(".zerofill WINE_RESERVE,WINE_RESERVE,___wine_reserve,0x1fffff000");
 
 static const struct wine_preload_info zerofill_sections[] =
 {
-    { (void *)0x000100000000, 0x14000000 },  /* WINE_4GB_RESERVE section */
+    { (void *)0x000000001000, 0x1fffff000 }, /* WINE_RESERVE section */
     { 0, 0 }                                 /* end of list */
 };
 #else
@@ -92,10 +89,7 @@ static struct wine_preload_info preload_info[] =
     { (void *)0x00110000, 0x67ef0000 },  /* low memory area */
     { (void *)0x7f000000, 0x03000000 },  /* top-down allocations + shared user data + virtual heap */
 #else  /* __i386__ */
-    { (void *)0x000000010000, 0x00100000 },  /* DOS area */
-    { (void *)0x000000110000, 0x67ef0000 },  /* low memory area */
-    { (void *)0x00007f000000, 0x00ff0000 },  /* 32-bit top-down allocations + shared user data */
-    { (void *)0x000100000000, 0x14000000 },  /* WINE_4GB_RESERVE section */
+    { (void *)0x000000001000, 0x1fffff000 }, /* WINE_RESERVE section */
     { (void *)0x7ff000000000, 0x01ff0000 },  /* top-down allocations + virtual heap */
 #endif /* __i386__ */
     { 0, 0 },                            /* PE exe range set with WINEPRELOADRESERVE */
@@ -439,7 +433,7 @@ static int preloader_overlaps_range( const void *start, const void *end )
             struct target_segment_command *seg = (struct target_segment_command*)cmd;
             const void *seg_start = (const void*)(seg->vmaddr + slide);
             const void *seg_end = (const char*)seg_start + seg->vmsize;
-            static const char reserved_segname[] = "WINE_4GB_RESERVE";
+            static const char reserved_segname[] = "WINE_RESERVE";
 
             if (!wld_strncmp( seg->segname, reserved_segname, sizeof(reserved_segname)-1 ))
                 continue;
@@ -653,7 +647,9 @@ static void set_program_vars( void *stack, void *mod )
 
 void *wld_start( void *stack, int *is_unix_thread )
 {
+#ifdef __i386__
     struct wine_preload_info builtin_dlls = { (void *)0x7a000000, 0x02000000 };
+#endif
     struct wine_preload_info **wine_main_preload_info;
     char **argv, **p, *reserve = NULL;
     struct target_mach_header *mh;
@@ -692,15 +688,19 @@ void *wld_start( void *stack, int *is_unix_thread )
         }
     }
 
+#ifdef __i386__
     if (!map_region( &builtin_dlls ))
         builtin_dlls.size = 0;
+#endif
 
     /* load the main binary */
     if (!(mod = pdlopen( argv[1], RTLD_NOW )))
         fatal_error( "%s: could not load binary\n", argv[1] );
 
+#ifdef __i386__
     if (builtin_dlls.size)
         wld_munmap( builtin_dlls.addr, builtin_dlls.size );
+#endif
 
     /* store pointer to the preload info into the appropriate main binary variable */
     wine_main_preload_info = pdlsym( mod, "wine_main_preload_info" );
