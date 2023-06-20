@@ -1135,6 +1135,12 @@ void WCMD_run_program (WCHAR *command, BOOL called)
         else
             lstrcpyW(temp, thisDir + 1);
 
+        /* When temp is an empty string, skip over it. This needs
+           to be done before the expansion, because WCMD_get_fullpath
+           fails when given an empty string                         */
+        if (*temp == '\0')
+            continue;
+
         /* Since you can have eg. ..\.. on the path, need to expand
            to full information                                      */
         if (!WCMD_get_fullpath(temp, ARRAY_SIZE(thisDir), thisDir, NULL)) return;
