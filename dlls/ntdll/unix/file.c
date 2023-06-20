@@ -4768,8 +4768,6 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         {
             FILE_DISPOSITION_INFORMATION_EX *info = ptr;
 
-            if (info->Flags & FILE_DISPOSITION_POSIX_SEMANTICS)
-                FIXME( "FILE_DISPOSITION_POSIX_SEMANTICS not supported\n" );
             if (info->Flags & FILE_DISPOSITION_FORCE_IMAGE_SECTION_CHECK)
                 FIXME( "FILE_DISPOSITION_FORCE_IMAGE_SECTION_CHECK not supported\n" );
 

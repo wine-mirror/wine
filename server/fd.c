@@ -1103,9 +1103,19 @@ static void device_destroy( struct object *obj )
     list_remove( &device->entry );  /* remove it from the hash table */
 }
 
-
 /****************************************************************/
 /* inode functions */
+
+static void unlink_closed_fd( struct inode *inode, struct closed_fd *fd )
+{
+    /* make sure it is still the same file */
+    struct stat st;
+    if (!stat( fd->unix_name, &st ) && st.st_dev == inode->device->dev && st.st_ino == inode->ino)
+    {
+        if (S_ISDIR(st.st_mode)) rmdir( fd->unix_name );
+        else unlink( fd->unix_name );
+    }
+}
 
 /* close all pending file descriptors in the closed list */
 static void inode_close_pending( struct inode *inode, int keep_unlinks )
@@ -1158,15 +1168,7 @@ static void inode_destroy( struct object *obj )
         list_remove( ptr );
         if (fd->unix_fd != -1) close( fd->unix_fd );
         if (fd->disp_flags & FILE_DISPOSITION_DELETE)
-        {
-            /* make sure it is still the same file */
-            struct stat st;
-            if (!stat( fd->unix_name, &st ) && st.st_dev == inode->device->dev && st.st_ino == inode->ino)
-            {
-                if (S_ISDIR(st.st_mode)) rmdir( fd->unix_name );
-                else unlink( fd->unix_name );
-            }
-        }
+            unlink_closed_fd( inode, fd );
         free( fd->unix_name );
         free( fd );
     }
@@ -1213,7 +1215,16 @@ static void inode_add_closed_fd( struct inode *inode, struct closed_fd *fd )
     {
         list_add_head( &inode->closed, &fd->entry );
     }
-    else if (fd->disp_flags & FILE_DISPOSITION_ON_CLOSE)
+    else if ((fd->disp_flags & FILE_DISPOSITION_DELETE) &&
+        (fd->disp_flags & FILE_DISPOSITION_POSIX_SEMANTICS))
+    {
+        /* close the fd and unlink it at once */
+        if (fd->unix_fd != -1) close( fd->unix_fd );
+        unlink_closed_fd( inode, fd );
+        free( fd->unix_name );
+        free( fd );
+    }
+    else if (fd->disp_flags & FILE_DISPOSITION_DELETE)
     {
         /* close the fd but keep the structure around for unlink */
         if (fd->unix_fd != -1) close( fd->unix_fd );
@@ -2532,7 +2543,8 @@ static void set_fd_disposition( struct fd *fd, unsigned int flags )
     if (flags & FILE_DISPOSITION_ON_CLOSE)
         fd->options &= ~FILE_DELETE_ON_CLOSE;
 
-    fd->closed->disp_flags = (flags & FILE_DISPOSITION_DELETE) |
+    fd->closed->disp_flags =
+        (flags & (FILE_DISPOSITION_DELETE | FILE_DISPOSITION_POSIX_SEMANTICS)) |
         ((fd->options & FILE_DELETE_ON_CLOSE) ? FILE_DISPOSITION_DELETE : 0);
 }
 
