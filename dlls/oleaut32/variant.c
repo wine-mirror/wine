@@ -686,11 +686,12 @@ static HRESULT VARIANT_CopyIRecordInfo(VARIANT *dest, const VARIANT *src)
   hr = IRecordInfo_GetSize(src_rec->pRecInfo, &size);
   if (FAILED(hr)) return hr;
 
-  /* This could look cleaner if only RecordCreate() was used, but native doesn't use it.
-     Memory should be allocated in a same way as RecordCreate() does, so RecordDestroy()
+  /* Windows does not use RecordCreate() here, memory should be allocated in compatible way so RecordDestroy()
      could free it later. */
-  dest_rec->pvRecord = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+  dest_rec->pvRecord = CoTaskMemAlloc(size);
   if (!dest_rec->pvRecord) return E_OUTOFMEMORY;
+  if (size)
+      memset(dest_rec->pvRecord, 0, size);
 
   dest_rec->pRecInfo = src_rec->pRecInfo;
   IRecordInfo_AddRef(src_rec->pRecInfo);

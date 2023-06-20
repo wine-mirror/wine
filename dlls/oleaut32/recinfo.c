@@ -524,7 +524,7 @@ static PVOID WINAPI IRecordInfoImpl_RecordCreate(IRecordInfo *iface)
 
     TRACE("(%p)\n", This);
 
-    record = HeapAlloc(GetProcessHeap(), 0, This->size);
+    record = CoTaskMemAlloc(This->size);
     IRecordInfo_RecordInit(iface, record);
     TRACE("created record at %p\n", record);
     return record;
@@ -555,9 +555,7 @@ static HRESULT WINAPI IRecordInfoImpl_RecordDestroy(IRecordInfo *iface, PVOID pv
     if(FAILED(hres))
         return hres;
 
-    if(!HeapFree(GetProcessHeap(), 0, pvRecord))
-        return E_INVALIDARG;
-
+    CoTaskMemFree(pvRecord);
     return S_OK;
 }
 
