@@ -183,6 +183,8 @@ HDESK WINAPI NtUserCreateDesktopEx( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *dev
         return 0;
     }
 
+    /* force update display cache to use virtual desktop display settings */
+    if (flags & DF_WINE_CREATE_DESKTOP) update_display_cache( TRUE );
     return ret;
 }
 

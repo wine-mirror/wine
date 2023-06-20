@@ -29,7 +29,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
 static struct x11drv_display_device_handler host_handler;
-struct x11drv_display_device_handler desktop_handler;
 static struct x11drv_settings_handler settings_handler;
 
 #define NEXT_DEVMODEW(mode) ((DEVMODEW *)((char *)((mode) + 1) + (mode)->dmDriverExtra))
@@ -414,21 +413,6 @@ RECT get_host_primary_monitor_rect(void)
     return rect;
 }
 
-BOOL get_host_primary_gpu(struct gdi_gpu *gpu)
-{
-    struct gdi_gpu *gpus;
-    INT gpu_count;
-
-    if (host_handler.get_gpus(&gpus, &gpu_count) && gpu_count)
-    {
-        *gpu = gpus[0];
-        host_handler.free_gpus(gpus);
-        return TRUE;
-    }
-
-    return FALSE;
-}
-
 RECT get_work_area(const RECT *monitor_rect)
 {
     Atom type;
@@ -499,10 +483,7 @@ void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler
 
 void X11DRV_DisplayDevices_RegisterEventHandlers(void)
 {
-    struct x11drv_display_device_handler *handler = is_virtual_desktop() ? &desktop_handler : &host_handler;
-
-    if (handler->register_event_handlers)
-        handler->register_event_handlers();
+    if (host_handler.register_event_handlers) host_handler.register_event_handlers();
 }
 
 /* Report whether a display device handler supports detecting dynamic device changes */
@@ -534,7 +515,6 @@ static const char *debugstr_devmodew( const DEVMODEW *devmode )
 
 BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )
 {
-    struct x11drv_display_device_handler *handler;
     struct gdi_adapter *adapters;
     struct gdi_monitor *monitors;
     struct gdi_gpu *gpus;
@@ -542,17 +522,14 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     INT gpu, adapter, monitor;
     DEVMODEW *modes, *mode;
     UINT mode_count;
-    BOOL virtual_desktop;
 
     if (!force && !force_display_devices_refresh) return TRUE;
     force_display_devices_refresh = FALSE;
-    virtual_desktop = is_virtual_desktop();
-    handler = virtual_desktop ? &desktop_handler : &host_handler;
 
-    TRACE("via %s\n", wine_dbgstr_a(handler->name));
+    TRACE( "via %s\n", debugstr_a(host_handler.name) );
 
     /* Initialize GPUs */
-    if (!handler->get_gpus( &gpus, &gpu_count )) return FALSE;
+    if (!host_handler.get_gpus( &gpus, &gpu_count )) return FALSE;
     TRACE("GPU count: %d\n", gpu_count);
 
     for (gpu = 0; gpu < gpu_count; gpu++)
@@ -560,7 +537,7 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
         device_manager->add_gpu( &gpus[gpu], param );
 
         /* Initialize adapters */
-        if (!handler->get_adapters(gpus[gpu].id, &adapters, &adapter_count)) break;
+        if (!host_handler.get_adapters( gpus[gpu].id, &adapters, &adapter_count )) break;
         TRACE("GPU: %#lx %s, adapter count: %d\n", gpus[gpu].id, wine_dbgstr_w(gpus[gpu].name), adapter_count);
 
         for (adapter = 0; adapter < adapter_count; adapter++)
@@ -573,25 +550,21 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
 
             device_manager->add_adapter( &adapters[adapter], param );
 
-            if (!handler->get_monitors(adapters[adapter].id, &monitors, &monitor_count)) break;
+            if (!host_handler.get_monitors( adapters[adapter].id, &monitors, &monitor_count )) break;
             TRACE("adapter: %#lx, monitor count: %d\n", adapters[adapter].id, monitor_count);
 
             /* Initialize monitors */
             for (monitor = 0; monitor < monitor_count; monitor++)
                 device_manager->add_monitor( &monitors[monitor], param );
 
-            handler->free_monitors(monitors, monitor_count);
+            host_handler.free_monitors( monitors, monitor_count );
 
             /* Get the settings handler id for the adapter */
             snprintf( buffer, sizeof(buffer), "\\\\.\\DISPLAY%d", adapter + 1 );
             asciiz_to_unicode( devname, buffer );
             if (!settings_handler.get_id( devname, is_primary, &settings_id )) break;
 
-            /* We don't need to set the win32u current mode when we are in
-             * virtual desktop mode, and, additionally, skipping this avoids a
-             * deadlock, since the desktop get_current_mode() implementation
-             * recurses into win32u. */
-            if (!virtual_desktop) settings_handler.get_current_mode( settings_id, &current_mode );
+            settings_handler.get_current_mode( settings_id, &current_mode );
             if (!settings_handler.get_modes( settings_id, EDS_ROTATEDMODE, &modes, &mode_count ))
                 continue;
 
@@ -613,10 +586,10 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
             settings_handler.free_modes( modes );
         }
 
-        handler->free_adapters(adapters);
+        host_handler.free_adapters( adapters );
     }
 
-    handler->free_gpus(gpus);
+    host_handler.free_gpus( gpus );
     return TRUE;
 }
 
