@@ -2151,14 +2151,10 @@ DECL_HANDLER(destroy_window)
 DECL_HANDLER(get_desktop_window)
 {
     struct desktop *desktop = get_thread_desktop( current, 0 );
-    int force;
 
     if (!desktop) return;
 
-    /* if winstation is invisible, then avoid roundtrip */
-    force = req->force || !(desktop->winstation->flags & WSF_VISIBLE);
-
-    if (!desktop->top_window && force)  /* create it */
+    if (!desktop->top_window && req->force)  /* create it */
     {
         if ((desktop->top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0 )))
         {
@@ -2167,7 +2163,7 @@ DECL_HANDLER(get_desktop_window)
         }
     }
 
-    if (!desktop->msg_window && force)  /* create it */
+    if (!desktop->msg_window && req->force)  /* create it */
     {
         static const WCHAR messageW[] = {'M','e','s','s','a','g','e'};
         static const struct unicode_str name = { messageW, sizeof(messageW) };

@@ -1049,7 +1049,6 @@ static void test_invisible_winstation_child(char *expected_info)
     ok(!!hwnd, "GetDesktopWindow failed, error %lu.\n", GetLastError());
 
     ret = SendMessageW(hwnd, WM_NCHITTEST, 0, 0);
-    todo_wine
     ok(ret == HTCLIENT, "SendMessageW failed, error %lu.\n", GetLastError());
 }
 

@@ -420,14 +420,24 @@ static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiB
 
 HWND get_desktop_window(void)
 {
+    static const WCHAR wine_service_station_name[] =
+        {'_','_','w','i','n','e','s','e','r','v','i','c','e','_','w','i','n','s','t','a','t','i','o','n',0};
     struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
+    WCHAR name[MAX_PATH];
+    BOOL is_service;
 
     if (thread_info->top_window) return UlongToHandle( thread_info->top_window );
 
+    /* don't create an actual explorer desktop window for services */
+    if (NtUserGetObjectInformation( NtUserGetProcessWindowStation(), UOI_NAME, name, sizeof(name), NULL )
+        && !wcscmp( name, wine_service_station_name ))
+        is_service = TRUE;
+    else
+        is_service = FALSE;
 
     SERVER_START_REQ( get_desktop_window )
     {
-        req->force = 0;
+        req->force = is_service;
         if (!wine_server_call( req ))
         {
             thread_info->top_window = reply->top_window;
