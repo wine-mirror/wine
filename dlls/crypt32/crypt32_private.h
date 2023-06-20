@@ -46,7 +46,7 @@ BOOL CNG_ImportPubKey(CERT_PUBLIC_KEY_INFO *pubKeyInfo, BCRYPT_KEY_HANDLE *key) 
 /* Copies `len` bytes from `src` to `dst`,
  * reversing the order of the bytes
  */
-void CRYPT_CopyReversed(BYTE *dst, const BYTE *src, size_t len);
+void CRYPT_CopyReversed(BYTE *dst, const BYTE *src, size_t len) DECLSPEC_HIDDEN;
 
 BOOL CRYPT_EncodeLen(DWORD len, BYTE *pbEncoded, DWORD *pcbEncoded) DECLSPEC_HIDDEN;
 
