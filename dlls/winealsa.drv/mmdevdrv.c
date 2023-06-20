@@ -85,6 +85,8 @@ extern HRESULT stream_release(stream_handle stream, HANDLE timer_thread);
 
 extern WCHAR *get_application_name(void);
 
+extern void set_stream_volumes(struct audio_client *This);
+
 void DECLSPEC_HIDDEN sessions_lock(void)
 {
     EnterCriticalSection(&g_sessions_lock);
@@ -199,18 +201,6 @@ static void get_device_guid(EDataFlow flow, const char *device, GUID *guid)
 
     if(key)
         RegCloseKey(key);
-}
-
-static void set_stream_volumes(ACImpl *This)
-{
-    struct set_volumes_params params;
-
-    params.stream = This->stream;
-    params.master_volume = (This->session->mute ? 0.0f : This->session->master_vol);
-    params.volumes = This->vols;
-    params.session_volumes = This->session->channel_vols;
-
-    ALSA_CALL(set_volumes, &params);
 }
 
 HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **guids_out,
