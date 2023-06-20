@@ -1994,14 +1994,16 @@ static BOOL desktop_update_display_devices( BOOL force, struct device_manager_ct
 
 BOOL update_display_cache( BOOL force )
 {
+    static const WCHAR wine_service_station_name[] =
+        {'_','_','w','i','n','e','s','e','r','v','i','c','e','_','w','i','n','s','t','a','t','i','o','n',0};
     HWINSTA winstation = NtUserGetProcessWindowStation();
     struct device_manager_ctx ctx = {0};
     BOOL was_virtual_desktop, ret;
-    USEROBJECTFLAGS flags;
+    WCHAR name[MAX_PATH];
 
     /* services do not have any adapters, only a virtual monitor */
-    if (NtUserGetObjectInformation( winstation, UOI_FLAGS, &flags, sizeof(flags), NULL )
-        && !(flags.dwFlags & WSF_VISIBLE))
+    if (NtUserGetObjectInformation( winstation, UOI_NAME, name, sizeof(name), NULL )
+        && !wcscmp( name, wine_service_station_name ))
     {
         pthread_mutex_lock( &display_lock );
         clear_display_devices();

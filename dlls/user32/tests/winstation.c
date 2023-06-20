@@ -1042,7 +1042,6 @@ static void test_invisible_winstation_child(char *expected_info)
     sprintf(buffer, "%d,%d,%d,%d,%d", GetSystemMetrics(SM_XVIRTUALSCREEN),
             GetSystemMetrics(SM_YVIRTUALSCREEN), GetSystemMetrics(SM_CXVIRTUALSCREEN),
             GetSystemMetrics(SM_CYVIRTUALSCREEN), GetSystemMetrics(SM_CMONITORS));
-    todo_wine_if(strcmp(buffer, "0,0,1024,768,1"))
     ok(!strcmp(buffer, expected_info), "Expected %s, got %s.\n", expected_info, buffer);
 }
 
