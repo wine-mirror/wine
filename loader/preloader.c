@@ -89,6 +89,8 @@
 #include "wine/asm.h"
 #include "main.h"
 
+#pragma GCC visibility push(hidden)
+
 /* ELF definitions */
 #define ELF_PREFERRED_ADDRESS(loader, maplength, mapstartpref) (mapstartpref)
 #define ELF_FIXED_ADDRESS(loader, mapstart) ((void) 0)
@@ -1496,5 +1498,7 @@ void* wld_start( void **stack )
 
     return (void *)ld_so_map.l_entry;
 }
+
+#pragma GCC visibility pop
 
 #endif /* __linux__ */
