@@ -137,6 +137,8 @@ extern HRESULT stream_release(stream_handle stream, HANDLE timer_thread);
 
 extern WCHAR *get_application_name(void);
 
+extern void set_stream_volumes(struct audio_client *This);
+
 static inline ACImpl *impl_from_IAudioClient3(IAudioClient3 *iface)
 {
     return CONTAINING_RECORD(iface, ACImpl, IAudioClient3_iface);
@@ -147,16 +149,6 @@ static void pulse_call(enum unix_funcs code, void *params)
     NTSTATUS status;
     status = WINE_UNIX_CALL(code, params);
     assert(!status);
-}
-
-static void set_stream_volumes(ACImpl *This)
-{
-    struct set_volumes_params params;
-    params.stream          = This->stream;
-    params.master_volume   = This->session->mute ? 0.0f : This->session->master_vol;
-    params.volumes         = This->vols;
-    params.session_volumes = This->session->channel_vols;
-    pulse_call(set_volumes, &params);
 }
 
 static void get_device_guid(HKEY drv_key, EDataFlow flow, const char *pulse_name, GUID *guid)
