@@ -63,7 +63,9 @@ struct schan_context
     ULONG req_ctx_attr;
     const CERT_CONTEXT *cert;
     SIZE_T header_size;
-    BOOL shutdown_requested;
+    enum control_token control_token;
+    unsigned int alert_type;
+    unsigned int alert_number;
 };
 
 static struct schan_handle *schan_handle_table;
@@ -865,9 +867,9 @@ static SECURITY_STATUS establish_context(
         unsigned char *ptr;
 
         if (phContext && !(ctx = schan_get_object(phContext->dwLower, SCHAN_HANDLE_CTX))) return SEC_E_INVALID_HANDLE;
-        if (!pInput && !ctx->shutdown_requested && !is_dtls_context(ctx)) return SEC_E_INCOMPLETE_MESSAGE;
+        if (!pInput && !ctx->control_token && !is_dtls_context(ctx)) return SEC_E_INCOMPLETE_MESSAGE;
 
-        if (!ctx->shutdown_requested && pInput)
+        if (!ctx->control_token && pInput)
         {
             if (!validate_input_buffers(pInput)) return SEC_E_INVALID_TOKEN;
             if ((idx = schan_find_sec_buffer_idx(pInput, 0, SECBUFFER_TOKEN)) == -1) return SEC_E_INCOMPLETE_MESSAGE;
@@ -940,8 +942,10 @@ static SECURITY_STATUS establish_context(
     params.input_offset = &input_offset;
     params.output_buffer_idx = &output_buffer_idx;
     params.output_offset = &output_offset;
-    params.control_token = ctx->shutdown_requested ? control_token_shutdown : control_token_none;
-    ctx->shutdown_requested = FALSE;
+    params.control_token = ctx->control_token;
+    params.alert_type = ctx->alert_type;
+    params.alert_number = ctx->alert_number;
+    ctx->control_token = CONTROL_TOKEN_NONE;
     ret = GNUTLS_CALL( handshake, &params );
 
     if (output_buffer_idx != -1)
@@ -1588,23 +1592,43 @@ static SECURITY_STATUS SEC_ENTRY schan_DeleteSecurityContext(PCtxtHandle context
 static SECURITY_STATUS SEC_ENTRY schan_ApplyControlToken(PCtxtHandle context_handle, PSecBufferDesc input)
 {
     struct schan_context *ctx;
+    DWORD type;
 
     TRACE("%p %p\n", context_handle, input);
 
     dump_buffer_desc(input);
 
-    if (!context_handle) return SEC_E_INVALID_HANDLE;
+    if (!context_handle || !(ctx = schan_get_object(context_handle->dwLower, SCHAN_HANDLE_CTX)))
+        return SEC_E_INVALID_HANDLE;
     if (!input) return SEC_E_INTERNAL_ERROR;
 
     if (input->cBuffers != 1) return SEC_E_INVALID_TOKEN;
     if (input->pBuffers[0].BufferType != SECBUFFER_TOKEN) return SEC_E_INVALID_TOKEN;
-    if (input->pBuffers[0].cbBuffer < sizeof(DWORD)) return SEC_E_UNSUPPORTED_FUNCTION;
-    if (*(DWORD *)input->pBuffers[0].pvBuffer != SCHANNEL_SHUTDOWN) return SEC_E_UNSUPPORTED_FUNCTION;
+    if (input->pBuffers[0].cbBuffer < sizeof(type)) return SEC_E_UNSUPPORTED_FUNCTION;
+    type = *(DWORD *)input->pBuffers[0].pvBuffer;
 
-    ctx = schan_get_object(context_handle->dwLower, SCHAN_HANDLE_CTX);
-    ctx->shutdown_requested = TRUE;
+    switch (type)
+    {
+    case SCHANNEL_SHUTDOWN:
+        ctx->control_token = CONTROL_TOKEN_SHUTDOWN;
+        ctx->alert_type = TLS1_ALERT_WARNING;
+        ctx->alert_number = TLS1_ALERT_CLOSE_NOTIFY;
+        return SEC_E_OK;
 
-    return SEC_E_OK;
+    case SCHANNEL_ALERT:
+    {
+        SCHANNEL_ALERT_TOKEN *alert = input->pBuffers[0].pvBuffer;
+        if (input->pBuffers[0].cbBuffer < sizeof(*alert)) return SEC_E_INVALID_TOKEN;
+        ctx->control_token = CONTROL_TOKEN_ALERT;
+        ctx->alert_type = alert->dwAlertType;
+        ctx->alert_number = alert->dwAlertNumber;
+        return SEC_E_OK;
+    }
+
+    default:
+        FIXME("token type %lu not supported\n", type);
+        return SEC_E_UNSUPPORTED_FUNCTION;
+    }
 }
 
 static const SecurityFunctionTableA schanTableA = {

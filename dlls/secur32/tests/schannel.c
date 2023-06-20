@@ -1963,6 +1963,7 @@ static void test_connection_shutdown(void)
     CredHandle cred_handle;
     SCHANNEL_CRED cred;
     SecBuffer *buf;
+    SCHANNEL_ALERT_TOKEN alert;
     ULONG attrs;
     void *tmp;
 
@@ -2074,6 +2075,18 @@ static void test_connection_shutdown(void)
     ok( status == SEC_E_OK, "got %08lx.\n", status );
     ok( buf->cbBuffer == sizeof(message), "got cbBuffer %#lx.\n", buf->cbBuffer );
     ok( !memcmp( buf->pvBuffer, message, sizeof(message) ), "message data mismatch.\n" );
+
+    alert.dwTokenType = SCHANNEL_ALERT;
+    alert.dwAlertType = TLS1_ALERT_FATAL;
+    alert.dwAlertNumber = TLS1_ALERT_BAD_CERTIFICATE;
+    memcpy(buf->pvBuffer, &alert, sizeof(alert));
+    buf->cbBuffer = sizeof(alert);
+    status = ApplyControlToken( &context, buffers );
+    ok( status == SEC_E_OK, "got %08lx.\n", status );
+
+    status = InitializeSecurityContextA( &cred_handle, &context, NULL, 0, 0, 0,
+                                         NULL, 0, NULL, &buffers[1], &attrs, NULL );
+    ok( status == SEC_E_OK, "got %08lx.\n", status );
 
     free_buffers( &buffers[0] );
     free_buffers( &buffers[1] );

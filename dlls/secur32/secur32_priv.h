@@ -147,8 +147,9 @@ struct get_unique_channel_binding_params
 
 enum control_token
 {
-    control_token_none,
-    control_token_shutdown,
+    CONTROL_TOKEN_NONE,
+    CONTROL_TOKEN_SHUTDOWN,
+    CONTROL_TOKEN_ALERT,
 };
 
 struct handshake_params
@@ -161,6 +162,8 @@ struct handshake_params
     int *output_buffer_idx;
     ULONG *output_offset;
     enum control_token control_token;
+    unsigned int alert_type;
+    unsigned int alert_number;
 };
 
 struct recv_params

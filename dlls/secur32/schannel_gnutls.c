@@ -84,6 +84,7 @@ static void *libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(gnutls_alert_get);
 MAKE_FUNCPTR(gnutls_alert_get_name);
+MAKE_FUNCPTR(gnutls_alert_send);
 MAKE_FUNCPTR(gnutls_certificate_allocate_credentials);
 MAKE_FUNCPTR(gnutls_certificate_free_credentials);
 MAKE_FUNCPTR(gnutls_certificate_get_peers);
@@ -121,7 +122,6 @@ MAKE_FUNCPTR(gnutls_x509_crt_deinit);
 MAKE_FUNCPTR(gnutls_x509_crt_import);
 MAKE_FUNCPTR(gnutls_x509_crt_init);
 MAKE_FUNCPTR(gnutls_x509_privkey_deinit);
-MAKE_FUNCPTR(gnutls_alert_send);
 #undef MAKE_FUNCPTR
 
 #if GNUTLS_VERSION_MAJOR < 3
@@ -566,6 +566,74 @@ static NTSTATUS schan_set_session_target( void *args )
     return STATUS_SUCCESS;
 }
 
+static gnutls_alert_level_t map_alert_type(unsigned int type)
+{
+    switch (type)
+    {
+    case TLS1_ALERT_WARNING: return GNUTLS_AL_WARNING;
+    case TLS1_ALERT_FATAL:   return GNUTLS_AL_FATAL;
+    default:
+        FIXME( "unknown type %u\n", type );
+        return -1;
+    }
+}
+
+static gnutls_alert_description_t map_alert_number(unsigned int number)
+{
+    switch (number)
+    {
+    case TLS1_ALERT_CLOSE_NOTIFY:           return GNUTLS_A_CLOSE_NOTIFY;
+    case TLS1_ALERT_UNEXPECTED_MESSAGE:     return GNUTLS_A_UNEXPECTED_MESSAGE;
+    case TLS1_ALERT_BAD_RECORD_MAC:         return GNUTLS_A_BAD_RECORD_MAC;
+    case TLS1_ALERT_DECRYPTION_FAILED:      return GNUTLS_A_DECRYPTION_FAILED;
+    case TLS1_ALERT_RECORD_OVERFLOW:        return GNUTLS_A_RECORD_OVERFLOW;
+    case TLS1_ALERT_DECOMPRESSION_FAIL:     return GNUTLS_A_DECOMPRESSION_FAILURE;
+    case TLS1_ALERT_HANDSHAKE_FAILURE:      return GNUTLS_A_HANDSHAKE_FAILURE;
+    case TLS1_ALERT_BAD_CERTIFICATE:        return GNUTLS_A_BAD_CERTIFICATE;
+    case TLS1_ALERT_UNSUPPORTED_CERT:       return GNUTLS_A_UNSUPPORTED_CERTIFICATE;
+    case TLS1_ALERT_CERTIFICATE_REVOKED:    return GNUTLS_A_CERTIFICATE_REVOKED;
+    case TLS1_ALERT_CERTIFICATE_EXPIRED:    return GNUTLS_A_CERTIFICATE_EXPIRED;
+    case TLS1_ALERT_CERTIFICATE_UNKNOWN:    return GNUTLS_A_CERTIFICATE_UNKNOWN;
+    case TLS1_ALERT_ILLEGAL_PARAMETER:      return GNUTLS_A_ILLEGAL_PARAMETER;
+    case TLS1_ALERT_UNKNOWN_CA:             return GNUTLS_A_UNKNOWN_CA;
+    case TLS1_ALERT_ACCESS_DENIED:          return GNUTLS_A_ACCESS_DENIED;
+    case TLS1_ALERT_DECODE_ERROR:           return GNUTLS_A_DECODE_ERROR;
+    case TLS1_ALERT_DECRYPT_ERROR:          return GNUTLS_A_DECRYPT_ERROR;
+    case TLS1_ALERT_EXPORT_RESTRICTION:     return GNUTLS_A_EXPORT_RESTRICTION;
+    case TLS1_ALERT_PROTOCOL_VERSION:       return GNUTLS_A_PROTOCOL_VERSION;
+    case TLS1_ALERT_INSUFFIENT_SECURITY:    return GNUTLS_A_INSUFFICIENT_SECURITY;
+    case TLS1_ALERT_INTERNAL_ERROR:         return GNUTLS_A_INTERNAL_ERROR;
+    case TLS1_ALERT_USER_CANCELED:          return GNUTLS_A_USER_CANCELED;
+    case TLS1_ALERT_NO_RENEGOTIATION:       return GNUTLS_A_NO_RENEGOTIATION;
+    case TLS1_ALERT_UNSUPPORTED_EXT:        return GNUTLS_A_UNSUPPORTED_EXTENSION;
+    case TLS1_ALERT_UNKNOWN_PSK_IDENTITY:   return GNUTLS_A_UNKNOWN_PSK_IDENTITY;
+    case TLS1_ALERT_NO_APP_PROTOCOL:        return GNUTLS_A_NO_APPLICATION_PROTOCOL;
+    default:
+        FIXME("unhandled alert %u\n", number);
+        return -1;
+    }
+}
+
+static NTSTATUS send_alert(gnutls_session_t session, unsigned int type, unsigned int number)
+{
+    gnutls_alert_level_t level = map_alert_type(type);
+    gnutls_alert_description_t desc = map_alert_number(number);
+    int ret;
+
+    do
+    {
+        ret = pgnutls_alert_send(session, level, desc);
+    }
+    while (ret == GNUTLS_E_INTERRUPTED || ret == GNUTLS_E_AGAIN);
+
+    if (ret < 0)
+    {
+        pgnutls_perror(ret);
+        return SEC_E_INTERNAL_ERROR;
+    }
+    return SEC_E_OK;
+}
+
 static NTSTATUS schan_handshake( void *args )
 {
     const struct handshake_params *params = args;
@@ -578,22 +646,9 @@ static NTSTATUS schan_handshake( void *args )
     t->in.limit = params->input_size;
     init_schan_buffers(&t->out, params->output);
 
-    if (params->control_token == control_token_shutdown)
+    if (params->control_token)
     {
-        err = pgnutls_alert_send(s, GNUTLS_AL_WARNING, GNUTLS_A_CLOSE_NOTIFY);
-        if (err == GNUTLS_E_SUCCESS)
-        {
-            status = SEC_E_OK;
-        }
-        else if (err == GNUTLS_E_AGAIN)
-        {
-            status = SEC_E_INVALID_TOKEN;
-        }
-        else
-        {
-            pgnutls_perror(err);
-            status = SEC_E_INTERNAL_ERROR;
-        }
+        status = send_alert(s, params->alert_type, params->alert_number);
         goto done;
     }
 
@@ -1431,6 +1486,7 @@ static NTSTATUS process_attach( void *args )
 
     LOAD_FUNCPTR(gnutls_alert_get)
     LOAD_FUNCPTR(gnutls_alert_get_name)
+    LOAD_FUNCPTR(gnutls_alert_send)
     LOAD_FUNCPTR(gnutls_certificate_allocate_credentials)
     LOAD_FUNCPTR(gnutls_certificate_free_credentials)
     LOAD_FUNCPTR(gnutls_certificate_get_peers)
@@ -1468,7 +1524,6 @@ static NTSTATUS process_attach( void *args )
     LOAD_FUNCPTR(gnutls_x509_crt_import)
     LOAD_FUNCPTR(gnutls_x509_crt_init)
     LOAD_FUNCPTR(gnutls_x509_privkey_deinit)
-    LOAD_FUNCPTR(gnutls_alert_send)
 #undef LOAD_FUNCPTR
 
     if (!(pgnutls_cipher_get_block_size = dlsym(libgnutls_handle, "gnutls_cipher_get_block_size")))
@@ -1751,6 +1806,8 @@ static NTSTATUS wow64_schan_handshake( void *args )
         PTR32 output_buffer_idx;
         PTR32 output_offset;
         enum control_token control_token;
+        unsigned int alert_type;
+        unsigned int alert_number;
     } const *params32 = args;
     struct handshake_params params =
     {
@@ -1762,6 +1819,8 @@ static NTSTATUS wow64_schan_handshake( void *args )
         ULongToPtr(params32->output_buffer_idx),
         ULongToPtr(params32->output_offset),
         params32->control_token,
+        params32->alert_type,
+        params32->alert_number,
     };
     if (params32->input)
     {
