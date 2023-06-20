@@ -179,9 +179,9 @@ static ULONG WINAPI IRecordInfoImpl_Release(IRecordInfo *iface)
         for(i=0; i<This->n_vars; i++)
             SysFreeString(This->fields[i].name);
         SysFreeString(This->name);
-        HeapFree(GetProcessHeap(), 0, This->fields);
+        free(This->fields);
         ITypeInfo_Release(This->pTypeInfo);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
     return ref;
 }
@@ -667,7 +667,7 @@ HRESULT WINAPI GetRecordInfoFromTypeInfo(ITypeInfo* pTI, IRecordInfo** ppRecInfo
         return E_INVALIDARG;
     }
 
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     ret->IRecordInfo_iface.lpVtbl = &IRecordInfoImplVtbl;
     ret->ref = 1;
     ret->pTypeInfo = pTypeInfo;
@@ -687,7 +687,7 @@ HRESULT WINAPI GetRecordInfoFromTypeInfo(ITypeInfo* pTI, IRecordInfo** ppRecInfo
         ret->name = NULL;
     }
 
-    ret->fields = HeapAlloc(GetProcessHeap(), 0, ret->n_vars*sizeof(fieldstr));
+    ret->fields = calloc(ret->n_vars, sizeof(fieldstr));
     for(i = 0; i<ret->n_vars; i++) {
         VARDESC *vardesc;
         hres = ITypeInfo_GetVarDesc(pTypeInfo, i, &vardesc);
