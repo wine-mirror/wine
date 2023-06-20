@@ -32,6 +32,8 @@ static const IMAGE_DOS_HEADER dos_header =
 };
 
 static const GUID null_guid;
+static const GUID guid1 = {0x1234abcd, 0x3456, 0x5678, {0xa0, 0xb0, 0xc0, 0xd0, 0xe0, 0xf0, 0x0a, 0x0b}};
+static const GUID guid2 = {0x1234abcd, 0x3456, 0x5678, {0xa0, 0xb0, 0xc0, 0xd0, 0xe0, 0xf0, 0x0a, 0x0c}};
 
 #define ALIGN(v, a)          (((v - 1) / (a) + 1) * (a))
 #define NUM_OF(x, a)         (((x) + (a) - 1) / (a))
@@ -260,9 +262,94 @@ static struct debug_directory_blob* make_empty_blob(void)
     return blob;
 }
 
+static struct debug_directory_blob* make_pdb_jg_blob(DWORD dd_timestamp, DWORD jg_timestamp, DWORD age, const char* name)
+{
+    struct debug_directory_blob* blob;
+    DWORD size;
+
+    size = ALIGN(16 + strlen(name) + 1, 4);
+    blob = malloc(offsetof(struct debug_directory_blob, content[size]));
+
+    blob->debug_directory.AddressOfRawData = 0;
+    blob->debug_directory.Characteristics = 0;
+    blob->debug_directory.MajorVersion = 0;
+    blob->debug_directory.MinorVersion = 0;
+    blob->debug_directory.PointerToRawData = 0;
+    blob->debug_directory.SizeOfData = size;
+    blob->debug_directory.TimeDateStamp = dd_timestamp;
+    blob->debug_directory.Type = IMAGE_DEBUG_TYPE_CODEVIEW;
+
+    blob->content[0] = 'N';                       /* signature */
+    blob->content[1] = 'B';
+    blob->content[2] = '1';
+    blob->content[3] = '0';
+    *(DWORD*)(blob->content +  4) = 0;            /* file pos */
+    *(DWORD*)(blob->content +  8) = jg_timestamp; /* timestamp */
+    *(DWORD*)(blob->content + 12) = age;          /* age */
+    strcpy(blob->content + 16, name);             /* name */
+
+    return blob;
+}
+
+static struct debug_directory_blob* make_pdb_ds_blob(DWORD dd_timestamp, const GUID* guid, DWORD age, const char* name)
+{
+    struct debug_directory_blob* blob;
+    DWORD size;
+
+    size = ALIGN(4 + sizeof(GUID) + 4 + strlen(name) + 1, 4);
+    blob = malloc(offsetof(struct debug_directory_blob, content[size]));
+
+    blob->debug_directory.AddressOfRawData = 0;
+    blob->debug_directory.Characteristics = 0;
+    blob->debug_directory.MajorVersion = 0;
+    blob->debug_directory.MinorVersion = 0;
+    blob->debug_directory.PointerToRawData = 0;
+    blob->debug_directory.SizeOfData = size;
+    blob->debug_directory.TimeDateStamp = dd_timestamp;
+    blob->debug_directory.Type = IMAGE_DEBUG_TYPE_CODEVIEW;
+
+    blob->content[0] = 'R';                              /* signature */
+    blob->content[1] = 'S';
+    blob->content[2] = 'D';
+    blob->content[3] = 'S';
+    memcpy(blob->content + 4, guid, sizeof(*guid));      /* guid */
+    *(DWORD*)(blob->content + 4 + sizeof(GUID)) = age;   /* age */
+    strcpy(blob->content + 4 + sizeof(GUID) + 4, name);  /* name */
+
+    return blob;
+}
+
+static struct debug_directory_blob* make_dbg_blob(DWORD dd_timestamp, const char* name)
+{
+    struct debug_directory_blob* blob;
+    DWORD size;
+
+    size = ALIGN(sizeof(IMAGE_DEBUG_MISC) + strlen(name), 4);
+    blob = malloc(offsetof(struct debug_directory_blob, content[size]));
+
+    blob->debug_directory.AddressOfRawData = 0;
+    blob->debug_directory.Characteristics = 0;
+    blob->debug_directory.MajorVersion = 0;
+    blob->debug_directory.MinorVersion = 0;
+    blob->debug_directory.PointerToRawData = 0;
+    blob->debug_directory.SizeOfData = size;
+    blob->debug_directory.TimeDateStamp = dd_timestamp;
+    blob->debug_directory.Type = IMAGE_DEBUG_TYPE_MISC;
+
+    *(DWORD*)blob->content = IMAGE_DEBUG_MISC_EXENAME; /* DataType */
+    *(DWORD*)(blob->content + 4) = size;               /* Length */
+    blob->content[8] = 0;                              /* Unicode */
+    blob->content[9] = 0;                              /* Reserved */
+    blob->content[10] = 0;                             /* Reserved */
+    blob->content[11] = 0;                             /* Reserved */
+    strcpy(blob->content + 12, name);                  /* Data */
+
+    return blob;
+}
+
 static void test_srvgetindexes(void)
 {
-    struct debug_directory_blob* blob_refs[1];
+    struct debug_directory_blob* blob_refs[7];
     struct debug_directory_blob* blob_used[4];
     SYMSRV_INDEX_INFOW ssii;
     union nt_header hdr;
@@ -286,15 +373,44 @@ static void test_srvgetindexes(void)
     indexes[] =
     {
         /* error cases */
-        {0,                         {-1, -1, -1}, .in_error = TRUE},
+/*  0 */{0,                         {-1, -1, -1}, .in_error = TRUE},
         {IMAGE_FILE_DEBUG_STRIPPED, { 0, -1, -1}, .in_error = TRUE},
+        {IMAGE_FILE_DEBUG_STRIPPED, { 1, -1, -1}, .in_error = TRUE},
+        {IMAGE_FILE_DEBUG_STRIPPED, { 2, -1, -1}, .in_error = TRUE},
         {IMAGE_FILE_DEBUG_STRIPPED, {-1, -1, -1}, .in_error = TRUE}, /* not 100% logical ! */
         /* success */
-        {0,                         { 0, -1, -1}, 0,   &null_guid, 0,          L""},
-    };
+/*  5 */{0,                         { 0, -1, -1}, 0,   &null_guid, 0           },
+        {0,                         { 1, -1, -1}, 123, &null_guid, 0xaaaabbbb, .pdb_name = L"pdbjg.pdb"},
+        {0,                         { 2, -1, -1}, 124, &guid1,     0,          .pdb_name = L"pdbds.pdb"},
+        {IMAGE_FILE_DEBUG_STRIPPED, { 3, -1, -1}, 0,   &null_guid, 0,          .dbg_name = L".\\ascii.dbg"},
+        {0,                         { 3, -1, -1}, 0,   &null_guid, 0,          },
+        /* PDB (JS & DS) records are cumulated (age from JS & guid from DS) */
+/* 10 */{0,                         { 1,  2, -1}, 124, &guid1,     0xaaaabbbb, .pdb_name = L"pdbds.pdb"},
+        {0,                         { 2,  1, -1}, 123, &guid1,     0xaaaabbbb, .pdb_name = L"pdbjg.pdb"},
+        /* cumulative records of same type */
+        {0,                         { 1,  4, -1}, 125, &null_guid, 0xaaaacccc, .pdb_name = L"pdbjg2.pdb"},
+        {0,                         { 2,  5, -1}, 126, &guid2,     0,          .pdb_name = L"pdbds2.pdb"},
+        {0,                         { 3,  6, -1},   0, &null_guid, 0,          },
+/* 15 */{IMAGE_FILE_DEBUG_STRIPPED, { 3,  6, -1},   0, &null_guid, 0,          .dbg_name = L".\\ascii.dbg"},
+        /* Mixing MISC with PDB (JG or DS) records */
+        {IMAGE_FILE_DEBUG_STRIPPED, { 3,  1, -1}, 123, &null_guid, 0xaaaabbbb, .pdb_name = L"pdbjg.pdb", .dbg_name = L".\\ascii.dbg"},
+        {0,                         { 3,  1, -1}, 123, &null_guid, 0xaaaabbbb, .pdb_name = L"pdbjg.pdb"},
+        {IMAGE_FILE_DEBUG_STRIPPED, { 3,  2, -1}, 124, &guid1,     0,          .pdb_name = L"pdbds.pdb", .dbg_name = L".\\ascii.dbg"},
+        {0,                         { 3,  2, -1}, 124, &guid1,     0,          .pdb_name = L"pdbds.pdb"},
+/* 20 */{IMAGE_FILE_DEBUG_STRIPPED, { 1,  3, -1}, 123, &null_guid, 0xaaaabbbb, .pdb_name = L"pdbjg.pdb", .dbg_name = L".\\ascii.dbg"},
+        {0,                         { 1,  3, -1}, 123, &null_guid, 0xaaaabbbb, .pdb_name = L"pdbjg.pdb"},
+        {IMAGE_FILE_DEBUG_STRIPPED, { 2,  3, -1}, 124, &guid1,     0,          .pdb_name = L"pdbds.pdb", .dbg_name = L".\\ascii.dbg"},
+        {0,                         { 2,  3, -1}, 124, &guid1,     0,          .pdb_name = L"pdbds.pdb"},
+   };
 
     /* testing PE header with debug directory content */
     blob_refs[0] = make_empty_blob();
+    blob_refs[1] = make_pdb_jg_blob(0x67899876, 0xaaaabbbb, 123, "pdbjg.pdb");
+    blob_refs[2] = make_pdb_ds_blob(0x67899877, &guid1,     124, "pdbds.pdb");
+    blob_refs[3] = make_dbg_blob   (0x67899878, ".\\ascii.dbg"); /* doesn't seem to be returned without path */
+    blob_refs[4] = make_pdb_jg_blob(0x67899879, 0xaaaacccc, 125, "pdbjg2.pdb");
+    blob_refs[5] = make_pdb_ds_blob(0x67899880, &guid2,     126, "pdbds2.pdb");
+    blob_refs[6] = make_dbg_blob   (0x67899801, ".\\ascii.dbg"); /* doesn't seem to be returned without path */
 
     for (bitness = 32; bitness <= 64; bitness += 32)
     {
