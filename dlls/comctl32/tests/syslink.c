@@ -30,6 +30,7 @@
 #define SYSLINK_SEQ_INDEX 1
 
 static HWND hWndParent;
+static int g_link_id;
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCE];
 
@@ -99,6 +100,20 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
         add_message(sequences, PARENT_SEQ_INDEX, &msg);
     }
 
+    switch(message)
+    {
+       case WM_NOTIFY:
+       {
+           NMLINK *nml = ((NMLINK *)lParam);
+           if (nml && NM_CLICK == nml->hdr.code)
+           {
+               g_link_id = nml->item.iLink;
+           }
+           break;
+       }
+       default:
+            break;
+    }
     defwndproc_counter++;
     ret = DefWindowProcW(hwnd, message, wParam, lParam);
     defwndproc_counter--;
@@ -238,6 +253,28 @@ static void test_LM_GETIDEALSIZE(void)
     DestroyWindow(hwnd);
 }
 
+static void test_link_id(void)
+{
+    HWND hwnd;
+
+    hwnd = create_syslink(WS_CHILD | WS_TABSTOP | WS_VISIBLE, hWndParent);
+    ok(hwnd != NULL, "Failed to create SysLink window.\n");
+
+    /* test link1 at (50, 10) */
+    g_link_id = 0;
+    SendMessageA(hwnd, WM_LBUTTONDOWN, 1, MAKELPARAM(50, 10));
+    SendMessageA(hwnd, WM_LBUTTONUP, 0, MAKELPARAM(50, 10));
+    todo_wine ok(g_link_id == 0, "Got unexpected link id %d.\n", g_link_id);
+
+    /* test link2 at (25, 25) */
+    g_link_id = 0;
+    SendMessageA(hwnd, WM_LBUTTONDOWN, 1, MAKELPARAM(25, 25));
+    SendMessageA(hwnd, WM_LBUTTONUP, 0, MAKELPARAM(25, 25));
+    todo_wine ok(g_link_id == 1, "Got unexpected link id %d.\n", g_link_id);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(syslink)
 {
     ULONG_PTR ctx_cookie;
@@ -266,6 +303,7 @@ START_TEST(syslink)
     test_create_syslink();
     test_LM_GETIDEALHEIGHT();
     test_LM_GETIDEALSIZE();
+    test_link_id();
 
     DestroyWindow(hWndParent);
     unload_v6_module(ctx_cookie, hCtx);
