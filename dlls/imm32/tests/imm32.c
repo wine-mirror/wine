@@ -7219,6 +7219,20 @@ static void test_ga_na_da(void)
             .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\u3131", .result = L"",
             .message = {.msg = WM_IME_COMPOSITION, .wparam = 0x3131, .lparam = GCS_COMPSTR|GCS_COMPATTR|CS_INSERTCHAR|CS_NOMOVECARET},
         },
+
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"", .result = L"",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0x1b, .lparam = GCS_CURSORPOS|GCS_DELTASTART|GCS_COMPSTR|GCS_COMPATTR|GCS_COMPCLAUSE|
+                                                                             GCS_COMPREADSTR|GCS_COMPREADATTR|GCS_COMPREADCLAUSE},
+        },
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_ENDCOMPOSITION, .wparam = 0, .lparam = 0}},
+
+        /* G */
+        {.hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_STARTCOMPOSITION, .wparam = 0, .lparam = 0}},
+        {
+            .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\u3131", .result = L"",
+            .message = {.msg = WM_IME_COMPOSITION, .wparam = 0x3131, .lparam = GCS_COMPSTR|GCS_COMPATTR|CS_INSERTCHAR|CS_NOMOVECARET},
+        },
         /* A */
         {
             .hkl = default_hkl, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .comp = L"\uac00", .result = L"",
@@ -7372,6 +7386,14 @@ static void test_ga_na_da(void)
     for (i = 0; i < ARRAY_SIZE(partial_d_seq); i++) partial_d_seq[i].himc = himc;
     for (i = 0; i < ARRAY_SIZE(partial_da_seq); i++) partial_da_seq[i].himc = himc;
     for (i = 0; i < ARRAY_SIZE(partial_return_seq); i++) partial_return_seq[i].himc = himc;
+
+    keybd_event( 'R', 0x13, 0, 0 );
+    flush_events();
+    keybd_event( 'R', 0x13, KEYEVENTF_KEYUP, 0 );
+
+    keybd_event( VK_BACK, 0x0e, 0, 0 );
+    flush_events();
+    keybd_event( VK_BACK, 0x0e, KEYEVENTF_KEYUP, 0 );
 
     keybd_event( 'R', 0x13, 0, 0 );
     flush_events();
