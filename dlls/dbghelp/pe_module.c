@@ -962,3 +962,30 @@ PVOID WINAPI ImageDirectoryEntryToData( PVOID base, BOOLEAN image, USHORT dir, P
 {
     return ImageDirectoryEntryToDataEx( base, image, dir, size, NULL );
 }
+
+DWORD pe_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info)
+{
+    const IMAGE_NT_HEADERS* nthdr;
+    const IMAGE_DEBUG_DIRECTORY* dbg;
+    ULONG dirsize;
+
+    if (!(nthdr = RtlImageNtHeader(image))) return ERROR_BAD_FORMAT;
+
+    dbg = RtlImageDirectoryEntryToData(image, FALSE, IMAGE_DIRECTORY_ENTRY_DEBUG, &dirsize);
+    if (!dbg || dirsize < sizeof(dbg)) return ERROR_BAD_EXE_FORMAT;
+
+    /* fill in information from NT header */
+    info->timestamp = nthdr->FileHeader.TimeDateStamp;
+    info->stripped = (nthdr->FileHeader.Characteristics & IMAGE_FILE_DEBUG_STRIPPED) != 0;
+    if (nthdr->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+    {
+        const IMAGE_NT_HEADERS64* nthdr64 = (const IMAGE_NT_HEADERS64*)nthdr;
+        info->size = nthdr64->OptionalHeader.SizeOfImage;
+    }
+    else if (nthdr->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+    {
+        const IMAGE_NT_HEADERS32* nthdr32 = (const IMAGE_NT_HEADERS32*)nthdr;
+        info->size = nthdr32->OptionalHeader.SizeOfImage;
+    }
+    return msc_get_file_indexinfo(image, dbg, dirsize / sizeof(*dbg), info);
+}

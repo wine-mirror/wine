@@ -881,15 +881,42 @@ BOOL WINAPI SymSrvGetFileIndexInfo(const char *file, SYMSRV_INDEX_INFO* info, DW
  */
 BOOL WINAPI SymSrvGetFileIndexInfoW(const WCHAR *file, SYMSRV_INDEX_INFOW* info, DWORD flags)
 {
-    FIXME("(%s, %p, 0x%08lx): stub!\n", debugstr_w(file), info, flags);
+    HANDLE      hFile, hMap = NULL;
+    void*       image = NULL;
+    DWORD       fsize, ret;
+
+    TRACE("(%s, %p, 0x%08lx)\n", debugstr_w(file), info, flags);
 
     if (info->sizeofstruct < sizeof(*info))
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+
+    if ((hFile = CreateFileW(file, GENERIC_READ, FILE_SHARE_READ, NULL,
+                             OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) != INVALID_HANDLE_VALUE &&
+        ((hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != NULL) &&
+        ((image = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL))
+    {
+        /* must handle PE, or .dbg or .pdb files. So each helper will return:
+         * - ERROR_SUCCESS: if the file format is recognized and index info filled,
+         * - ERROR_BAD_FORMAT: if the file doesn't match the expected format,
+         * - any other error: if the file has expected format, but internal errors
+         */
+        fsize = GetFileSize(hFile, NULL);
+        /* try PE module first */
+        ret = pe_get_file_indexinfo(image, fsize, info);
+        /* handle (ret == ERROR_BAD_FORMAT) with .dbg and .pdb format */
+    }
+    else ret = ERROR_FILE_NOT_FOUND;
+
+    if (image) UnmapViewOfFile(image);
+    if (hMap) CloseHandle(hMap);
+    if (hFile != INVALID_HANDLE_VALUE) CloseHandle(hFile);
+
+    if (ret == ERROR_SUCCESS) wcscpy(info->file, file_name(file)); /* overflow? */
+    SetLastError(ret);
+    return ret == ERROR_SUCCESS;
 }
 
 /******************************************************************

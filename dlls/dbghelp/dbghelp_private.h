@@ -759,10 +759,12 @@ extern WCHAR*       get_wine_loader_name(struct process *pcs) __WINE_DEALLOC(Hea
 
 /* msc.c */
 extern BOOL         pe_load_debug_directory(const struct process* pcs,
-                                            struct module* module, 
+                                            struct module* module,
                                             const BYTE* mapping,
                                             const IMAGE_SECTION_HEADER* sectp, DWORD nsect,
                                             const IMAGE_DEBUG_DIRECTORY* dbg, int nDbg) DECLSPEC_HIDDEN;
+extern DWORD        msc_get_file_indexinfo(void* image, const IMAGE_DEBUG_DIRECTORY* dbgdir, DWORD size,
+                                           SYMSRV_INDEX_INFOW* info) DECLSPEC_HIDDEN;
 extern BOOL         pdb_fetch_file_info(const struct pdb_lookup* pdb_lookup, unsigned* matched) DECLSPEC_HIDDEN;
 struct pdb_cmd_pair {
     const char*         name;
@@ -793,6 +795,7 @@ extern struct module*
 extern BOOL         pe_load_debug_info(const struct process* pcs,
                                        struct module* module) DECLSPEC_HIDDEN;
 extern const char*  pe_map_directory(struct module* module, int dirno, DWORD* size) DECLSPEC_HIDDEN;
+extern DWORD        pe_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info) DECLSPEC_HIDDEN;
 
 /* source.c */
 extern unsigned     source_new(struct module* module, const char* basedir, const char* source) DECLSPEC_HIDDEN;

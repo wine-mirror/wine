@@ -4465,3 +4465,47 @@ typedef struct _FPO_DATA
     __ENDTRY
     return ret;
 }
+
+DWORD msc_get_file_indexinfo(void* image, const IMAGE_DEBUG_DIRECTORY* debug_dir, DWORD num_dir, SYMSRV_INDEX_INFOW* info)
+{
+    DWORD i;
+    unsigned num_misc_records = 0;
+
+    info->age = 0;
+    memset(&info->guid, 0, sizeof(info->guid));
+    info->sig = 0;
+    info->dbgfile[0] = L'\0';
+    info->pdbfile[0] = L'\0';
+
+    for (i = 0; i < num_dir; i++)
+    {
+        if (debug_dir[i].Type == IMAGE_DEBUG_TYPE_CODEVIEW)
+        {
+            const CODEVIEW_PDB_DATA* data = (const CODEVIEW_PDB_DATA*)((char*)image + debug_dir[i].PointerToRawData);
+            const OMFSignatureRSDS* rsds_data = (const OMFSignatureRSDS*)data;
+            if (!memcmp(data->Signature, "NB10", 4))
+            {
+                info->age = data->age;
+                info->sig = data->timestamp;
+                MultiByteToWideChar(CP_ACP, 0, data->name, -1, info->pdbfile, ARRAY_SIZE(info->pdbfile));
+            }
+            if (!memcmp(rsds_data->Signature, "RSDS", 4))
+            {
+                info->age = rsds_data->age;
+                info->guid = rsds_data->guid;
+                MultiByteToWideChar(CP_ACP, 0, rsds_data->name, -1, info->pdbfile, ARRAY_SIZE(info->pdbfile));
+            }
+        }
+        else if (debug_dir[i].Type == IMAGE_DEBUG_TYPE_MISC && info->stripped)
+        {
+            const IMAGE_DEBUG_MISC* misc = (const IMAGE_DEBUG_MISC*)
+                ((const char*)image + debug_dir[i].PointerToRawData);
+            if (misc->Unicode)
+                wcscpy(info->dbgfile, (WCHAR*)misc->Data);
+            else
+                MultiByteToWideChar(CP_ACP, 0, (const char*)misc->Data, -1, info->dbgfile, ARRAY_SIZE(info->dbgfile));
+            num_misc_records++;
+        }
+    }
+    return info->stripped && !num_misc_records ? ERROR_BAD_EXE_FORMAT : ERROR_SUCCESS;
+}

@@ -442,10 +442,9 @@ static void test_srvgetindexes(void)
             if (indexes[i].in_error)
             {
                 ok(!ret, "SymSrvGetFileIndexInfo should have failed\n");
-                todo_wine
                 ok(GetLastError() == ERROR_BAD_EXE_FORMAT, "Mismatch in GetLastError: %lu\n", GetLastError());
             }
-            else todo_wine
+            else
             {
                 ok(ret, "SymSrvGetFileIndexInfo failed: %lu\n", GetLastError());
 
