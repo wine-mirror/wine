@@ -257,7 +257,7 @@ static int create_item(HDC hdc, const struct option_descriptor *opt,
     tpl->style=styles;
     tpl->dwExtendedStyle = 0;
     if (lead_static)
-        tpl->x = lead_static->x + lead_static->cx + 1;
+        tpl->x = rc->x + rc->cx + 1;
     else if (opt->type == TYPE_GROUP)
         tpl->x = 2;
     else
@@ -274,7 +274,7 @@ static int create_item(HDC hdc, const struct option_descriptor *opt,
     else
     {
         if (lead_static)
-            tpl->cy = lead_static->cy;
+            tpl->cy = rc->cy;
         else
             tpl->cy = 15;
 
