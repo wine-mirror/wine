@@ -4772,8 +4772,6 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                 FIXME( "FILE_DISPOSITION_POSIX_SEMANTICS not supported\n" );
             if (info->Flags & FILE_DISPOSITION_FORCE_IMAGE_SECTION_CHECK)
                 FIXME( "FILE_DISPOSITION_FORCE_IMAGE_SECTION_CHECK not supported\n" );
-            if (info->Flags & FILE_DISPOSITION_ON_CLOSE)
-                FIXME( "FILE_DISPOSITION_ON_CLOSE not supported\n" );
 
             SERVER_START_REQ( set_fd_disp_info )
             {

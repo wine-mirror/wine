@@ -3163,7 +3163,6 @@ static void test_file_disposition_information(void)
     if ( res == STATUS_SUCCESS )
     {
         fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
-        todo_wine
         ok( !fileDeleted, "File shouldn't have been deleted\n" );
         DeleteFileA( buffer );
     }

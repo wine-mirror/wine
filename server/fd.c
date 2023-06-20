@@ -2525,6 +2525,9 @@ static void set_fd_disposition( struct fd *fd, unsigned int flags )
         }
     }
 
+    if (flags & FILE_DISPOSITION_ON_CLOSE)
+        fd->options &= ~FILE_DELETE_ON_CLOSE;
+
     fd->closed->unlink = (flags & FILE_DISPOSITION_DELETE) ? 1 : 0;
     if (fd->options & FILE_DELETE_ON_CLOSE)
         fd->closed->unlink = -1;
