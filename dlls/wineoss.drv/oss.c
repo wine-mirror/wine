@@ -551,7 +551,7 @@ static HRESULT setup_oss_device(AUDCLNT_SHAREMODE share, int fd,
     if(ret == S_FALSE && !out)
         ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
 
-    if(ret == S_FALSE && out){
+    if(ret == S_FALSE){
         closest->Format.nBlockAlign =
             closest->Format.nChannels * closest->Format.wBitsPerSample / 8;
         closest->Format.nAvgBytesPerSec =
