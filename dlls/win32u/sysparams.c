@@ -1718,11 +1718,75 @@ static BOOL is_same_devmode( const DEVMODEW *a, const DEVMODEW *b )
            a->dmDisplayFrequency == b->dmDisplayFrequency;
 }
 
+static BOOL default_update_display_devices( const struct gdi_device_manager *manager, BOOL force, struct device_manager_ctx *ctx )
+{
+    /* default implementation: expose an adapter and a monitor with a few standard modes,
+     * and read / write current display settings from / to the registry.
+     */
+    static const DEVMODEW modes[] =
+    {
+        { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+          .dmBitsPerPel = 32, .dmPelsWidth = 640, .dmPelsHeight = 480, .dmDisplayFrequency = 60, },
+        { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+          .dmBitsPerPel = 32, .dmPelsWidth = 800, .dmPelsHeight = 600, .dmDisplayFrequency = 60, },
+        { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+          .dmBitsPerPel = 32, .dmPelsWidth = 1024, .dmPelsHeight = 768, .dmDisplayFrequency = 60, },
+        { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+          .dmBitsPerPel = 16, .dmPelsWidth = 640, .dmPelsHeight = 480, .dmDisplayFrequency = 60, },
+        { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+          .dmBitsPerPel = 16, .dmPelsWidth = 800, .dmPelsHeight = 600, .dmDisplayFrequency = 60, },
+        { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+          .dmBitsPerPel = 16, .dmPelsWidth = 1024, .dmPelsHeight = 768, .dmDisplayFrequency = 60, },
+    };
+    static const struct gdi_gpu gpu;
+    static const struct gdi_adapter adapter =
+    {
+        .state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE,
+    };
+    struct gdi_monitor monitor =
+    {
+        .state_flags = DISPLAY_DEVICE_ACTIVE | DISPLAY_DEVICE_ATTACHED,
+    };
+    DEVMODEW mode = {{0}};
+    UINT i;
+
+    if (!force) return TRUE;
+
+    manager->add_gpu( &gpu, ctx );
+    manager->add_adapter( &adapter, ctx );
+
+    if (!read_adapter_mode( ctx->adapter_key, ENUM_CURRENT_SETTINGS, &mode ))
+    {
+        mode = modes[2];
+        mode.dmFields |= DM_POSITION;
+    }
+    monitor.rc_monitor.right = mode.dmPelsWidth;
+    monitor.rc_monitor.bottom = mode.dmPelsHeight;
+    monitor.rc_work.right = mode.dmPelsWidth;
+    monitor.rc_work.bottom = mode.dmPelsHeight;
+
+    manager->add_monitor( &monitor, ctx );
+    for (i = 0; i < ARRAY_SIZE(modes); ++i)
+    {
+        if (is_same_devmode( modes + i, &mode )) manager->add_mode( &mode, TRUE, ctx );
+        else manager->add_mode( modes + i, FALSE, ctx );
+    }
+
+    return TRUE;
+}
+
+static BOOL update_display_devices( const struct gdi_device_manager *manager, BOOL force, struct device_manager_ctx *ctx )
+{
+    if (user_driver->pUpdateDisplayDevices( manager, force, ctx )) return TRUE;
+    return default_update_display_devices( manager, force, ctx );
+}
+
 static BOOL update_display_cache( BOOL force )
 {
     HWINSTA winstation = NtUserGetProcessWindowStation();
     struct device_manager_ctx ctx = {0};
     USEROBJECTFLAGS flags;
+    BOOL ret;
 
     /* services do not have any adapters, only a virtual monitor */
     if (NtUserGetObjectInformation( winstation, UOI_FLAGS, &flags, sizeof(flags), NULL )
@@ -1735,59 +1799,9 @@ static BOOL update_display_cache( BOOL force )
         return TRUE;
     }
 
-    if (!user_driver->pUpdateDisplayDevices( &device_manager, force, &ctx ) && force)
-    {
-        /* default implementation: expose an adapter and a monitor with a few standard modes,
-         * and read / write current display settings from / to the registry.
-         */
-        static const DEVMODEW modes[] =
-        {
-            { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
-              .dmBitsPerPel = 32, .dmPelsWidth = 640, .dmPelsHeight = 480, .dmDisplayFrequency = 60, },
-            { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
-              .dmBitsPerPel = 32, .dmPelsWidth = 800, .dmPelsHeight = 600, .dmDisplayFrequency = 60, },
-            { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
-              .dmBitsPerPel = 32, .dmPelsWidth = 1024, .dmPelsHeight = 768, .dmDisplayFrequency = 60, },
-            { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
-              .dmBitsPerPel = 16, .dmPelsWidth = 640, .dmPelsHeight = 480, .dmDisplayFrequency = 60, },
-            { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
-              .dmBitsPerPel = 16, .dmPelsWidth = 800, .dmPelsHeight = 600, .dmDisplayFrequency = 60, },
-            { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
-              .dmBitsPerPel = 16, .dmPelsWidth = 1024, .dmPelsHeight = 768, .dmDisplayFrequency = 60, },
-        };
-        static const struct gdi_gpu gpu;
-        static const struct gdi_adapter adapter =
-        {
-            .state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE,
-        };
-        struct gdi_monitor monitor =
-        {
-            .state_flags = DISPLAY_DEVICE_ACTIVE | DISPLAY_DEVICE_ATTACHED,
-        };
-        DEVMODEW mode = {{0}};
-        UINT i;
-
-        add_gpu( &gpu, &ctx );
-        add_adapter( &adapter, &ctx );
-
-        if (!read_adapter_mode( ctx.adapter_key, ENUM_CURRENT_SETTINGS, &mode ))
-        {
-            mode = modes[2];
-            mode.dmFields |= DM_POSITION;
-        }
-        monitor.rc_monitor.right = mode.dmPelsWidth;
-        monitor.rc_monitor.bottom = mode.dmPelsHeight;
-        monitor.rc_work.right = mode.dmPelsWidth;
-        monitor.rc_work.bottom = mode.dmPelsHeight;
-
-        add_monitor( &monitor, &ctx );
-        for (i = 0; i < ARRAY_SIZE(modes); ++i)
-        {
-            if (is_same_devmode( modes + i, &mode )) add_mode( &mode, TRUE, &ctx );
-            else add_mode( modes + i, FALSE, &ctx );
-        }
-    }
+    ret = update_display_devices( &device_manager, force, &ctx );
     release_display_manager_ctx( &ctx );
+    if (!ret) WARN( "Failed to update display devices\n" );
 
     if (!update_display_cache_from_registry())
     {
