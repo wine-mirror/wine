@@ -3061,6 +3061,47 @@ static void test_file_disposition_information(void)
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
     ok( fileDeleted, "File should have been deleted\n" );
 
+    /* file is deleted after handle with FILE_DISPOSITION_POSIX_SEMANTICS is closed */
+    /* FileDispositionInformationEx is only supported on Windows 10 build 1809 and later */
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
+    handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, FILE_SHARE_DELETE, NULL, CREATE_ALWAYS, 0, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
+    handle2 = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+    ok( handle2 != INVALID_HANDLE_VALUE, "failed to open temp file\n" );
+    fdie.Flags = FILE_DISPOSITION_DELETE | FILE_DISPOSITION_POSIX_SEMANTICS;
+    res = pNtSetInformationFile( handle, &io, &fdie, sizeof fdie, FileDispositionInformationEx );
+    ok( res == STATUS_INVALID_INFO_CLASS || res == STATUS_SUCCESS,
+        "unexpected FileDispositionInformationEx result (expected STATUS_SUCCESS or SSTATUS_INVALID_INFO_CLASS, got %lx)\n", res );
+    CloseHandle( handle );
+    if ( res == STATUS_SUCCESS )
+    {
+        fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+        todo_wine
+        ok( fileDeleted, "File should have been deleted\n" );
+    }
+    CloseHandle( handle2 );
+
+    /* file is deleted after handle with FILE_DISPOSITION_POSIX_SEMANTICS is closed */
+    /* FileDispositionInformationEx is only supported on Windows 10 build 1809 and later */
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
+    handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, FILE_SHARE_DELETE, NULL, CREATE_ALWAYS, 0, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
+    handle2 = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+    ok( handle2 != INVALID_HANDLE_VALUE, "failed to open temp file\n" );
+    fdie.Flags = FILE_DISPOSITION_DELETE | FILE_DISPOSITION_POSIX_SEMANTICS;
+    res = pNtSetInformationFile( handle, &io, &fdie, sizeof fdie, FileDispositionInformationEx );
+    ok( res == STATUS_INVALID_INFO_CLASS || res == STATUS_SUCCESS,
+        "unexpected FileDispositionInformationEx result (expected STATUS_SUCCESS or SSTATUS_INVALID_INFO_CLASS, got %lx)\n", res );
+    CloseHandle( handle2 );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( !fileDeleted, "File shouldn't have been deleted\n" );
+    CloseHandle( handle );
+    if ( res == STATUS_SUCCESS )
+    {
+        fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+        ok( fileDeleted, "File should have been deleted\n" );
+    }
+
     /* cannot set disposition on readonly file */
     GetTempFileNameA( tmp_path, "dis", 0, buffer );
     DeleteFileA( buffer );
