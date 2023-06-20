@@ -2,4 +2,5 @@ TESTDLL   = dbghelp.dll
 IMPORTS   = dbghelp user32
 
 C_SRCS = \
-	dbghelp.c
+	dbghelp.c \
+	path.c
