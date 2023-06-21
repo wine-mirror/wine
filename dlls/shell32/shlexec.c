@@ -1764,6 +1764,14 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     TRACE("execute:%s,%s,%s\n", debugstr_w(wszApplicationName), debugstr_w(wszParameters), debugstr_w(wszDir));
     lpFile = sei_tmp.lpFile;
     wcmd = wcmdBuffer;
+    len = lstrlenW(wszApplicationName) + 3;
+    if (sei_tmp.lpParameters[0])
+        len += 1 + lstrlenW(wszParameters);
+    if (len > wcmdLen)
+    {
+        wcmd = heap_alloc(len * sizeof(WCHAR));
+        wcmdLen = len;
+    }
     lstrcpyW(wcmd, wszApplicationName);
     if (sei_tmp.lpDirectory)
     {
