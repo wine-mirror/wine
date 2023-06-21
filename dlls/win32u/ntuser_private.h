@@ -23,6 +23,7 @@
 #define __WINE_NTUSER_PRIVATE_H
 
 #include "ntuser.h"
+#include "shellapi.h"
 #include "wine/list.h"
 
 
@@ -248,6 +249,9 @@ extern void invalidate_dce( WND *win, const RECT *extra_rect );
 
 /* message.c */
 extern BOOL set_keyboard_auto_repeat( BOOL enable );
+
+/* systray.c */
+extern LRESULT system_tray_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void *data );
 
 /* window.c */
 HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type );

@@ -23,6 +23,7 @@
 #include <wingdi.h>
 #include <imm.h>
 #include <immdev.h>
+#include <shellapi.h>
 #include <winternl.h>
 
 #ifndef W32KAPI
@@ -314,6 +315,7 @@ enum
     NtUserSpyEnter            = 0x0303,
     NtUserSpyExit             = 0x0304,
     NtUserImeDriverCall       = 0x0305,
+    NtUserSystemTrayCall      = 0x0306,
 };
 
 /* NtUserThunkedMenuItemInfo codes */
@@ -517,6 +519,13 @@ struct ime_driver_call_params
     HIMC himc;
     const BYTE *state;
     COMPOSITIONSTRING *compstr;
+};
+
+/* NtUserSystemTrayCall calls */
+enum wine_systray_call
+{
+    WINE_SYSTRAY_NOTIFY_ICON,
+    WINE_SYSTRAY_CLEANUP_ICONS,
 };
 
 #define WM_SYSTIMER  0x0118

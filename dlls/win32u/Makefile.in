@@ -50,6 +50,7 @@ SOURCES = \
 	spy.c \
 	syscall.c \
 	sysparams.c \
+	systray.c \
 	vertical.c \
 	vulkan.c \
 	window.c \

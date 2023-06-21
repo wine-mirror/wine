@@ -766,6 +766,15 @@ static BOOL nulldrv_ClipCursor( const RECT *clip, BOOL reset )
     return TRUE;
 }
 
+static LRESULT nulldrv_NotifyIcon( HWND hwnd, UINT msg, NOTIFYICONDATAW *data )
+{
+    return -1;
+}
+
+static void nulldrv_CleanupIcons( HWND hwnd )
+{
+}
+
 static void nulldrv_UpdateClipboard(void)
 {
 }
@@ -1157,6 +1166,16 @@ static BOOL loaderdrv_ClipCursor( const RECT *clip, BOOL reset )
     return load_driver()->pClipCursor( clip, reset );
 }
 
+static LRESULT loaderdrv_NotifyIcon( HWND hwnd, UINT msg, NOTIFYICONDATAW *data )
+{
+    return load_driver()->pNotifyIcon( hwnd, msg, data );
+}
+
+static void loaderdrv_CleanupIcons( HWND hwnd )
+{
+    load_driver()->pCleanupIcons( hwnd );
+}
+
 static LRESULT nulldrv_ClipboardWindowProc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     return 0;
@@ -1243,6 +1262,9 @@ static const struct user_driver_funcs lazy_load_driver =
     loaderdrv_GetCursorPos,
     loaderdrv_SetCursorPos,
     loaderdrv_ClipCursor,
+    /* systray functions */
+    loaderdrv_NotifyIcon,
+    loaderdrv_CleanupIcons,
     /* clipboard functions */
     nulldrv_ClipboardWindowProc,
     loaderdrv_UpdateClipboard,
@@ -1327,6 +1349,8 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(GetCursorPos);
     SET_USER_FUNC(SetCursorPos);
     SET_USER_FUNC(ClipCursor);
+    SET_USER_FUNC(NotifyIcon);
+    SET_USER_FUNC(CleanupIcons);
     SET_USER_FUNC(ClipboardWindowProc);
     SET_USER_FUNC(UpdateClipboard);
     SET_USER_FUNC(ChangeDisplaySettings);

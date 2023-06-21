@@ -4362,6 +4362,9 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
     case NtUserImeDriverCall:
         return ime_driver_call( hwnd, msg, wparam, lparam, result_info );
 
+    case NtUserSystemTrayCall:
+        return system_tray_call( hwnd, msg, wparam, lparam, result_info );
+
     default:
         FIXME( "%p %x %lx %lx %p %x %x\n", hwnd, msg, (long)wparam, lparam, result_info, (int)type, ansi );
     }

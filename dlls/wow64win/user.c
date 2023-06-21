@@ -25,6 +25,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "ntuser.h"
+#include "shellapi.h"
 #include "wow64win_private.h"
 #include "wine/debug.h"
 
@@ -3599,6 +3600,58 @@ NTSTATUS WINAPI wow64_NtUserMessageCall( UINT *args )
             params.state = UlongToPtr( params32->state );
             params.compstr = UlongToPtr( params32->compstr );
             return NtUserMessageCall( hwnd, msg, wparam, lparam, &params, type, ansi );
+        }
+
+    case NtUserSystemTrayCall:
+        switch (msg)
+        {
+        case WINE_SYSTRAY_NOTIFY_ICON:
+        {
+            struct
+            {
+                DWORD cbSize;
+                ULONG hWnd;
+                UINT uID;
+                UINT uFlags;
+                UINT uCallbackMessage;
+                ULONG hIcon;
+                WCHAR szTip[128];
+                DWORD dwState;
+                DWORD dwStateMask;
+                WCHAR szInfo[256];
+                UINT uTimeout;
+                WCHAR szInfoTitle[64];
+                DWORD dwInfoFlags;
+                GUID guidItem;
+                ULONG hBalloonIcon;
+            } *params32 = result_info;
+
+            NOTIFYICONDATAW params = {.cbSize = sizeof(params)};
+            params.hWnd = UlongToHandle( params32->hWnd );
+            params.uID = params32->uID;
+            params.uFlags = params32->uFlags;
+            params.uCallbackMessage = params32->uCallbackMessage;
+            params.hIcon = UlongToHandle( params32->hIcon );
+            if (params.uFlags & NIF_TIP) wcscpy( params.szTip, params32->szTip );
+            params.dwState = params32->dwState;
+            params.dwStateMask = params32->dwStateMask;
+
+            if (params.uFlags & NIF_INFO)
+            {
+                wcscpy( params.szInfoTitle, params32->szInfoTitle );
+                wcscpy( params.szInfo, params32->szInfo );
+                params.uTimeout = params32->uTimeout;
+                params.dwInfoFlags = params32->dwInfoFlags;
+            }
+
+            params.guidItem = params32->guidItem;
+            params.hBalloonIcon = UlongToHandle( params32->hBalloonIcon );
+
+            return NtUserMessageCall( hwnd, msg, wparam, lparam, &params, type, ansi );
+        }
+
+        default:
+            return NtUserMessageCall( hwnd, msg, wparam, lparam, result_info, type, ansi );
         }
     }
 

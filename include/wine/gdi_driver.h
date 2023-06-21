@@ -28,6 +28,7 @@
 #include "winternl.h"
 #include "ntuser.h"
 #include "immdev.h"
+#include "shellapi.h"
 #include "ddk/d3dkmthk.h"
 #include "kbd.h"
 #include "wine/list.h"
@@ -305,6 +306,9 @@ struct user_driver_funcs
     BOOL    (*pGetCursorPos)(LPPOINT);
     BOOL    (*pSetCursorPos)(INT,INT);
     BOOL    (*pClipCursor)(const RECT*,BOOL);
+    /* notify icon functions */
+    LRESULT (*pNotifyIcon)(HWND,UINT,NOTIFYICONDATAW *);
+    void    (*pCleanupIcons)(HWND);
     /* clipboard functions */
     LRESULT (*pClipboardWindowProc)(HWND,UINT,WPARAM,LPARAM);
     void    (*pUpdateClipboard)(void);

@@ -21,6 +21,7 @@
 #include <assert.h>
 
 #include <windows.h>
+#include <ntuser.h>
 #include <commctrl.h>
 #include <shellapi.h>
 
@@ -627,16 +628,14 @@ static BOOL delete_icon( struct icon *icon )
 /* cleanup icons belonging to a window that has been destroyed */
 static void cleanup_systray_window( HWND hwnd )
 {
+    NOTIFYICONDATAW nid = {.cbSize = sizeof(nid), .hWnd = hwnd};
     struct icon *icon, *next;
 
     LIST_FOR_EACH_ENTRY_SAFE( icon, next, &icon_list, struct icon, entry )
         if (icon->owner == hwnd) delete_icon( icon );
 
-    if (wine_notify_icon)
-    {
-        NOTIFYICONDATAW nid = { sizeof(nid), hwnd };
-        wine_notify_icon( 0xdead, &nid );
-    }
+    NtUserMessageCall( hwnd, WINE_SYSTRAY_CLEANUP_ICONS, 0, 0, NULL, NtUserSystemTrayCall, FALSE );
+    if (wine_notify_icon) wine_notify_icon( 0xdead, &nid );
 }
 
 /* update the taskbar buttons when something changed */
@@ -732,11 +731,11 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
     /* try forwarding to the display driver first */
     if (cds->dwData == NIM_ADD || !(icon = get_icon( nid.hWnd, nid.uID )))
     {
+        if ((ret = NtUserMessageCall( hwndSource, WINE_SYSTRAY_NOTIFY_ICON, cds->dwData, 0,
+                                      &nid, NtUserSystemTrayCall, FALSE )) != -1)
+            goto done;
         if (wine_notify_icon && ((ret = wine_notify_icon( cds->dwData, &nid )) != -1))
-        {
-            if (nid.hIcon) DestroyIcon( nid.hIcon );
-            return ret;
-        }
+            goto done;
         ret = FALSE;
     }
 
@@ -763,6 +762,7 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
         break;
     }
 
+done:
     if (nid.hIcon) DestroyIcon( nid.hIcon );
     sync_taskbar_buttons();
     return ret;
