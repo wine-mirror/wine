@@ -2446,6 +2446,49 @@ ok(bool.toLocaleString() === bool.toString(), "bool.toLocaleString() = " + bool.
 tmp = Object.prototype.valueOf.call(nullDisp);
 ok(tmp === nullDisp, "nullDisp.valueOf != nullDisp");
 
+(function(global) {
+    var i, context, code = "this.foobar = 1234";
+
+    var direct = [
+        function() { eval(code); },
+        function() { (eval)(code); },
+        function() { (function(eval) { eval(code); }).call(this, eval); },
+        function() { eval("eval(" + code + ")"); }
+    ];
+
+    for(i = 0; i < direct.length; i++) {
+        context = {};
+        direct[i].call(context);
+        ok(context.foobar === 1234, "direct[" + i + "] context foobar = " + context.foobar);
+    }
+
+    var indirect = [
+        function() { (true, eval)(code); },
+        function() { (eval, eval)(code); },
+        function() { (true ? eval : false)(code); },
+        function() { [eval][0](code); },
+        function() { eval.call(this, code); },
+        function() { var f; (f = eval)(code); },
+        function() { var f = eval; f(code); },
+        function() { (function(f) { f(code); }).call(this, eval); },
+        function() { (function(f) { return f; }).call(this, eval)(code); },
+        function() { (function() { arguments[0](code) }).call(this, eval); },
+        function() { eval("eval")(code); }
+    ];
+
+    for(i = 0; i < indirect.length; i++) {
+        context = {};
+        ok(!("foobar" in global), "indirect[" + i + "] has global foobar before call");
+        indirect[i].call(context);
+        ok(context.foobar === 1234, "indirect[" + i + "] context foobar = " + context.foobar);
+        ok(!("foobar" in global), "indirect[" + i + "] has global foobar");
+    }
+
+    context = {};
+    (function(eval) { eval(code); })(function() { context.barfoo = 4321; });
+    ok(context.barfoo === 4321, "context.barfoo = " + context.barfoo);
+})(this);
+
 ok(ActiveXObject instanceof Function, "ActiveXObject is not instance of Function");
 ok(ActiveXObject.prototype instanceof Object, "ActiveXObject.prototype is not instance of Object");
 

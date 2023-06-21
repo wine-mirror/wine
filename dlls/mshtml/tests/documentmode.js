@@ -756,6 +756,57 @@ sync_test("JS objs", function() {
     test_parses("if(false) { o.if; }", v >= 9);
 });
 
+sync_test("eval", function() {
+    var i, context, code = "this.foobar = 1234", v = document.documentMode;
+
+    var direct = [
+        function() { eval(code); },
+        function() { (eval)(code); },
+        function() { (function(eval) { eval(code); }).call(this, eval); },
+        function() { eval("eval(" + code + ")"); }
+    ];
+
+    for(i = 0; i < direct.length; i++) {
+        context = {};
+        direct[i].call(context);
+        ok(context.foobar === 1234, "direct[" + i + "] context foobar = " + context.foobar);
+    }
+
+    var indirect = [
+        function() { (true, eval)(code); },
+        function() { (eval, eval)(code); },
+        function() { (true ? eval : false)(code); },
+        function() { [eval][0](code); },
+        function() { eval.call(this, code); },
+        function() { var f; (f = eval)(code); },
+        function() { var f = eval; f(code); },
+        function() { (function(f) { f(code); }).call(this, eval); },
+        function() { (function(f) { return f; }).call(this, eval)(code); },
+        function() { (function() { arguments[0](code) }).call(this, eval); },
+        function() { window.eval(code); },
+        function() { window["eval"](code); },
+        function() { eval("eval")(code); }
+    ];
+
+    for(i = 0; i < indirect.length; i++) {
+        context = {};
+        ok(!("foobar" in window), "indirect[" + i + "] has global foobar before call");
+        indirect[i].call(context);
+        if(v < 9) {
+            ok(context.foobar === 1234, "indirect[" + i + "] context foobar = " + context.foobar);
+            ok(!("foobar" in window), "indirect[" + i + "] has global foobar");
+        }else {
+            ok(!("foobar" in context), "indirect[" + i + "] has foobar");
+            ok(window.foobar === 1234, "indirect[" + i + "] global foobar = " + context.foobar);
+            delete window.foobar;
+        }
+    }
+
+    context = {};
+    (function(eval) { eval(code); })(function() { context.barfoo = 4321; });
+    ok(context.barfoo === 4321, "context.barfoo = " + context.barfoo);
+});
+
 sync_test("for..in", function() {
     var v = document.documentMode, found = 0, r;
 

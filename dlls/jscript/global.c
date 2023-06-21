@@ -130,10 +130,9 @@ static HRESULT JSGlobal_escape(script_ctx_t *ctx, jsval_t vthis, WORD flags, uns
 }
 
 /* ECMA-262 3rd Edition    15.1.2.1 */
-HRESULT JSGlobal_eval(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
+HRESULT builtin_eval(script_ctx_t *ctx, call_frame_t *frame, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    call_frame_t *frame = ctx->call_ctx;
     DWORD exec_flags = EXEC_EVAL;
     bytecode_t *code;
     const WCHAR *src;
@@ -172,6 +171,12 @@ HRESULT JSGlobal_eval(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned arg
             frame ? frame->this_obj : NULL, NULL, 0, NULL, r);
     release_bytecode(code);
     return hres;
+}
+
+HRESULT JSGlobal_eval(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    return builtin_eval(ctx, ctx->version < SCRIPTLANGUAGEVERSION_ES5 ? ctx->call_ctx : NULL, flags, argc, argv, r);
 }
 
 static HRESULT JSGlobal_isNaN(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,

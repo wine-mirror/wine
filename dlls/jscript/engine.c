@@ -1459,6 +1459,40 @@ static HRESULT interp_call_member(script_ctx_t *ctx)
             argn, stack_args(ctx, argn), do_ret ? &ctx->acc : NULL);
 }
 
+/* ECMA-262 5th Edition 15.1.2.1.1 */
+static HRESULT interp_call_eval(script_ctx_t *ctx)
+{
+    const unsigned argn = get_op_uint(ctx, 0);
+    const int do_ret = get_op_int(ctx, 1);
+    HRESULT hres = S_OK;
+    exprval_t exprval;
+    jsdisp_t *jsdisp;
+    BSTR identifier;
+    jsval_t v;
+
+    TRACE("%d %d\n", argn, do_ret);
+
+    identifier = SysAllocString(L"eval");
+    hres = identifier_eval(ctx, identifier, &exprval);
+    SysFreeString(identifier);
+    if(FAILED(hres))
+        return hres;
+
+    clear_acc(ctx);
+    hres = exprval_propget(ctx, &exprval, &v);
+    if(SUCCEEDED(hres)) {
+        if(is_object_instance(v) && (jsdisp = to_jsdisp(get_object(v))) && jsdisp->ctx == ctx && is_builtin_eval_func(jsdisp))
+            hres = builtin_eval(ctx, ctx->call_ctx, DISPATCH_METHOD | DISPATCH_JSCRIPT_CALLEREXECSSOURCE,
+                                argn, stack_args(ctx, argn), do_ret ? &ctx->acc : NULL);
+        else
+            hres = exprval_call(ctx, &exprval, DISPATCH_METHOD | DISPATCH_JSCRIPT_CALLEREXECSSOURCE,
+                                argn, stack_args(ctx, argn), do_ret ? &ctx->acc : NULL);
+        jsval_release(v);
+    }
+    exprval_release(&exprval);
+    return hres;
+}
+
 /* ECMA-262 3rd Edition    11.1.1 */
 static HRESULT interp_this(script_ctx_t *ctx)
 {

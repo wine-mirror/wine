@@ -1140,6 +1140,12 @@ static HRESULT FunctionProt_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, 
     return E_NOTIMPL;
 }
 
+BOOL is_builtin_eval_func(jsdisp_t *jsdisp)
+{
+    return is_class(jsdisp, JSCLASS_FUNCTION) && function_from_jsdisp(jsdisp)->vtbl == &NativeFunctionVtbl &&
+           ((NativeFunction*)function_from_jsdisp(jsdisp))->proc == JSGlobal_eval;
+}
+
 HRESULT init_function_constr(script_ctx_t *ctx, jsdisp_t *object_prototype)
 {
     NativeFunction *prot, *constr;
