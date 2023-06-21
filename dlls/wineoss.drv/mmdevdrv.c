@@ -487,7 +487,7 @@ static AudioSession *create_session(const GUID *guid, IMMDevice *device,
 
 /* if channels == 0, then this will return or create a session with
  * matching dataflow and GUID. otherwise, channels must also match */
-static HRESULT get_audio_session(const GUID *sessionguid,
+HRESULT get_audio_session(const GUID *sessionguid,
         IMMDevice *device, UINT channels, AudioSession **out)
 {
     AudioSession *session;

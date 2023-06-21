@@ -128,16 +128,10 @@ extern const IAudioClockVtbl AudioClock_Vtbl;
 extern const IAudioClock2Vtbl AudioClock2_Vtbl;
 extern const IAudioStreamVolumeVtbl AudioStreamVolume_Vtbl;
 
-extern HRESULT main_loop_start(void) DECLSPEC_HIDDEN;
-
 extern struct audio_session_wrapper *session_wrapper_create(
     struct audio_client *client) DECLSPEC_HIDDEN;
 
 extern HRESULT stream_release(stream_handle stream, HANDLE timer_thread);
-
-extern WCHAR *get_application_name(void);
-
-extern void set_stream_volumes(struct audio_client *This);
 
 static inline ACImpl *impl_from_IAudioClient3(IAudioClient3 *iface)
 {
@@ -443,40 +437,6 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
     return ref;
 }
 
-static void dump_fmt(const WAVEFORMATEX *fmt)
-{
-    TRACE("wFormatTag: 0x%x (", fmt->wFormatTag);
-    switch(fmt->wFormatTag) {
-    case WAVE_FORMAT_PCM:
-        TRACE("WAVE_FORMAT_PCM");
-        break;
-    case WAVE_FORMAT_IEEE_FLOAT:
-        TRACE("WAVE_FORMAT_IEEE_FLOAT");
-        break;
-    case WAVE_FORMAT_EXTENSIBLE:
-        TRACE("WAVE_FORMAT_EXTENSIBLE");
-        break;
-    default:
-        TRACE("Unknown");
-        break;
-    }
-    TRACE(")\n");
-
-    TRACE("nChannels: %u\n", fmt->nChannels);
-    TRACE("nSamplesPerSec: %lu\n", fmt->nSamplesPerSec);
-    TRACE("nAvgBytesPerSec: %lu\n", fmt->nAvgBytesPerSec);
-    TRACE("nBlockAlign: %u\n", fmt->nBlockAlign);
-    TRACE("wBitsPerSample: %u\n", fmt->wBitsPerSample);
-    TRACE("cbSize: %u\n", fmt->cbSize);
-
-    if (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
-        WAVEFORMATEXTENSIBLE *fmtex = (void*)fmt;
-        TRACE("dwChannelMask: %08lx\n", fmtex->dwChannelMask);
-        TRACE("Samples: %04x\n", fmtex->Samples.wReserved);
-        TRACE("SubFormat: %s\n", wine_dbgstr_guid(&fmtex->SubFormat));
-    }
-}
-
 static void session_init_vols(AudioSession *session, UINT channels)
 {
     if (session->channel_count < channels) {
@@ -524,7 +484,7 @@ static AudioSession *create_session(const GUID *guid, IMMDevice *device,
 
 /* if channels == 0, then this will return or create a session with
  * matching dataflow and GUID. otherwise, channels must also match */
-static HRESULT get_audio_session(const GUID *sessionguid,
+HRESULT get_audio_session(const GUID *sessionguid,
         IMMDevice *device, UINT channels, AudioSession **out)
 {
     AudioSession *session;
@@ -556,98 +516,10 @@ static HRESULT get_audio_session(const GUID *sessionguid,
     return S_OK;
 }
 
-static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
+extern HRESULT WINAPI client_Initialize(IAudioClient3 *iface,
         AUDCLNT_SHAREMODE mode, DWORD flags, REFERENCE_TIME duration,
         REFERENCE_TIME period, const WAVEFORMATEX *fmt,
-        const GUID *sessionguid)
-{
-    ACImpl *This = impl_from_IAudioClient3(iface);
-    struct create_stream_params params;
-    UINT32 i, channel_count;
-    stream_handle stream;
-    WCHAR *name;
-
-    TRACE("(%p)->(%x, %lx, %s, %s, %p, %s)\n", This, mode, flags,
-          wine_dbgstr_longlong(duration), wine_dbgstr_longlong(period), fmt, debugstr_guid(sessionguid));
-
-    if (!fmt)
-        return E_POINTER;
-    dump_fmt(fmt);
-
-    if (mode != AUDCLNT_SHAREMODE_SHARED && mode != AUDCLNT_SHAREMODE_EXCLUSIVE)
-        return E_INVALIDARG;
-
-    if (flags & ~(AUDCLNT_STREAMFLAGS_CROSSPROCESS |
-                AUDCLNT_STREAMFLAGS_LOOPBACK |
-                AUDCLNT_STREAMFLAGS_EVENTCALLBACK |
-                AUDCLNT_STREAMFLAGS_NOPERSIST |
-                AUDCLNT_STREAMFLAGS_RATEADJUST |
-                AUDCLNT_SESSIONFLAGS_EXPIREWHENUNOWNED |
-                AUDCLNT_SESSIONFLAGS_DISPLAY_HIDE |
-                AUDCLNT_SESSIONFLAGS_DISPLAY_HIDEWHENEXPIRED |
-                AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY |
-                AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM)) {
-        FIXME("Unknown flags: %08lx\n", flags);
-        return E_INVALIDARG;
-    }
-
-    sessions_lock();
-
-    if (This->stream) {
-        sessions_unlock();
-        return AUDCLNT_E_ALREADY_INITIALIZED;
-    }
-
-    if (FAILED(params.result = main_loop_start()))
-    {
-        sessions_unlock();
-        return params.result;
-    }
-
-    params.name = name = get_application_name();
-    params.device   = This->device_name;
-    params.flow     = This->dataflow;
-    params.share    = mode;
-    params.flags    = flags;
-    params.duration = duration;
-    params.period   = period;
-    params.fmt      = fmt;
-    params.stream   = &stream;
-    params.channel_count = &channel_count;
-    pulse_call(create_stream, &params);
-    free(name);
-    if (FAILED(params.result))
-    {
-        sessions_unlock();
-        return params.result;
-    }
-
-    if (!(This->vols = malloc(channel_count * sizeof(*This->vols))))
-    {
-        params.result = E_OUTOFMEMORY;
-        goto exit;
-    }
-    for (i = 0; i < channel_count; i++)
-        This->vols[i] = 1.f;
-
-    params.result = get_audio_session(sessionguid, This->parent, channel_count, &This->session);
-
-exit:
-    if (FAILED(params.result)) {
-        stream_release(stream, NULL);
-        free(This->vols);
-        This->vols = NULL;
-    } else {
-        list_add_tail(&This->session->clients, &This->entry);
-        This->stream = stream;
-        This->channel_count = channel_count;
-        set_stream_volumes(This);
-    }
-
-    sessions_unlock();
-
-    return params.result;
-}
+        const GUID *sessionguid);
 
 extern HRESULT WINAPI client_GetBufferSize(IAudioClient3 *iface,
         UINT32 *out);
@@ -706,7 +578,7 @@ static const IAudioClient3Vtbl AudioClient3_Vtbl =
     AudioClient_QueryInterface,
     AudioClient_AddRef,
     AudioClient_Release,
-    AudioClient_Initialize,
+    client_Initialize,
     client_GetBufferSize,
     client_GetStreamLatency,
     client_GetCurrentPadding,
