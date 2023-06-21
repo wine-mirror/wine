@@ -101,10 +101,9 @@ static inline BOOL is_function_prop(dispex_prop_t *prop)
 
     if (is_object_instance(prop->u.val))
     {
-        jsdisp_t *jsdisp = iface_to_jsdisp(get_object(prop->u.val));
+        jsdisp_t *jsdisp = to_jsdisp(get_object(prop->u.val));
 
         if (jsdisp) ret = is_class(jsdisp, JSCLASS_FUNCTION);
-        jsdisp_release(jsdisp);
     }
     return ret;
 }

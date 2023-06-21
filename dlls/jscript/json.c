@@ -754,14 +754,13 @@ static HRESULT stringify(stringify_ctx_t *ctx, jsdisp_t *object, const WCHAR *na
         jsdisp_t *obj;
         DISPID id;
 
-        obj = iface_to_jsdisp(get_object(value));
+        obj = to_jsdisp(get_object(value));
         if(!obj) {
             jsval_release(value);
             return S_FALSE;
         }
 
         hres = jsdisp_get_id(obj, L"toJSON", 0, &id);
-        jsdisp_release(obj);
         if(hres == S_OK)
             FIXME("Use toJSON.\n");
     }

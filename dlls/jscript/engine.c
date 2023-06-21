@@ -514,12 +514,9 @@ static HRESULT disp_get_id(script_ctx_t *ctx, IDispatch *disp, const WCHAR *name
     BSTR bstr;
     HRESULT hres;
 
-    jsdisp = iface_to_jsdisp(disp);
-    if(jsdisp) {
-        hres = jsdisp_get_id(jsdisp, name, flags, id);
-        jsdisp_release(jsdisp);
-        return hres;
-    }
+    jsdisp = to_jsdisp(disp);
+    if(jsdisp)
+        return jsdisp_get_id(jsdisp, name, flags, id);
 
     if(name_bstr) {
         bstr = name_bstr;
@@ -1771,7 +1768,7 @@ static HRESULT interp_obj_prop(script_ctx_t *ctx)
         jsdisp_t *func;
 
         assert(is_object_instance(val));
-        func = iface_to_jsdisp(get_object(val));
+        func = to_jsdisp(get_object(val));
 
         desc.mask = desc.flags;
         if(type == PROPERTY_DEFINITION_GETTER) {
@@ -1783,7 +1780,6 @@ static HRESULT interp_obj_prop(script_ctx_t *ctx)
         }
 
         hres = jsdisp_define_property(obj, name, &desc);
-        jsdisp_release(func);
     }
 
     jsval_release(val);
@@ -1927,15 +1923,12 @@ static HRESULT interp_instanceof(script_ctx_t *ctx)
         hres = JS_E_OBJECT_EXPECTED;
     else if(is_object_instance(prot)) {
         if(is_object_instance(v))
-            tmp = iface_to_jsdisp(get_object(v));
+            tmp = to_jsdisp(get_object(v));
         for(iter = tmp; !ret && iter; iter = iter->prototype) {
             hres = disp_cmp(get_object(prot), to_disp(iter), &ret);
             if(FAILED(hres))
                 break;
         }
-
-        if(tmp)
-            jsdisp_release(tmp);
     }else {
         FIXME("prototype is not an object\n");
         hres = E_FAIL;
@@ -2221,9 +2214,8 @@ static HRESULT typeof_string(jsval_t v, const WCHAR **ret)
     case JSV_OBJECT: {
         jsdisp_t *dispex;
 
-        if((dispex = iface_to_jsdisp(get_object(v)))) {
+        if((dispex = to_jsdisp(get_object(v)))) {
             *ret = is_class(dispex, JSCLASS_FUNCTION) ? L"function" : L"object";
-            jsdisp_release(dispex);
         }else {
             *ret = L"object";
         }
