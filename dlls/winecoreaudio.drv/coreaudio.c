@@ -776,8 +776,10 @@ end:
         if(stream->unit) AudioComponentInstanceDispose(stream->unit);
         free(stream->fmt);
         free(stream);
-    } else
+    } else {
+        *params->channel_count = params->fmt->nChannels;
         *params->stream = (stream_handle)(UINT_PTR)stream;
+    }
 
     return STATUS_SUCCESS;
 }
