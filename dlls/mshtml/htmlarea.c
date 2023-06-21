@@ -461,6 +461,26 @@ fallback:
     return HTMLElement_handle_event(&This->element.node, eid, event, prevent_default);
 }
 
+static void HTMLAreaElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLAreaElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsarea)
+        note_cc_edge((nsISupports*)This->nsarea, "nsarea", cb);
+}
+
+static void HTMLAreaElement_unlink(HTMLDOMNode *iface)
+{
+    HTMLAreaElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsarea) {
+        nsIDOMHTMLAreaElement *nsarea = This->nsarea;
+
+        This->nsarea = NULL;
+        nsIDOMHTMLAreaElement_Release(nsarea);
+    }
+}
+
 static const NodeImplVtbl HTMLAreaElementImplVtbl = {
     &CLSID_HTMLAreaElement,
     HTMLAreaElement_QI,
@@ -468,7 +488,18 @@ static const NodeImplVtbl HTMLAreaElementImplVtbl = {
     HTMLElement_cpc,
     HTMLElement_clone,
     HTMLAreaElement_handle_event,
-    HTMLElement_get_attr_col
+    HTMLElement_get_attr_col,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    HTMLAreaElement_traverse,
+    HTMLAreaElement_unlink
 };
 
 static const tid_t HTMLAreaElement_iface_tids[] = {
