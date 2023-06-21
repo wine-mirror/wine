@@ -1067,7 +1067,7 @@ static void test_SpeechSynthesizer(void)
         ISpeechSynthesizerOptions *options;
 
         hr = ISpeechSynthesizer2_get_Options(synthesizer2, &options);
-        todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         if (hr == S_OK)
         {
