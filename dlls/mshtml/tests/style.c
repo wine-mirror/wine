@@ -3424,6 +3424,7 @@ static void test_style_filters(IHTMLElement *elem)
     ok(hres == S_OK, "get_style failed: %08lx\n", hres);
 
     current_style2 = get_current_style2_iface((IUnknown*)current_style);
+    IHTMLCurrentStyle_Release(current_style);
 
     test_style_filter(style, NULL);
     test_current_style_filter(current_style2, NULL);
