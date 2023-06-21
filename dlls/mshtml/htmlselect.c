@@ -283,6 +283,7 @@ static HRESULT WINAPI HTMLOptionElement_put_text(IHTMLOptionElement *iface, BSTR
     }
 
     nsres = nsIDOMElement_AppendChild(This->element.dom_element, (nsIDOMNode*)text_node, &tmp);
+    nsIDOMText_Release(text_node);
     if(NS_SUCCEEDED(nsres))
         nsIDOMNode_Release(tmp);
     else
