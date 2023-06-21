@@ -673,6 +673,66 @@ static HRESULT WINAPI iterable_hstring_create_static( struct iterable_hstring *i
     return S_OK;
 }
 
+#define check_comparable_presence(a, b) _check_comparable_presence( __LINE__, (a), (b))
+static void _check_comparable_presence( unsigned line, IVectorView_VoiceInformation *voices, IVoiceInformation *voice)
+{
+    HSTRING in_display, in_id, in_language;
+    HSTRING vc_display, vc_id, vc_language;
+    IVoiceInformation *vc_voice;
+    enum VoiceGender in_gender, vc_gender;
+    UINT32 size, idx, found_count = 0;
+    HRESULT hr;
+    INT32 cmp;
+
+    hr = IVoiceInformation_get_DisplayName(voice, &in_display);
+    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IVoiceInformation_get_Id(voice, &in_id);
+    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IVoiceInformation_get_Language(voice, &in_language);
+    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IVoiceInformation_get_Gender(voice, &in_gender);
+    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IVectorView_VoiceInformation_get_Size(voices, &size);
+    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    for (idx = 0; SUCCEEDED(hr = IVectorView_VoiceInformation_GetAt(voices, idx, &vc_voice)); idx++)
+    {
+        hr = IVoiceInformation_get_DisplayName(vc_voice, &vc_display);
+        ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = IVoiceInformation_get_Id(vc_voice, &vc_id);
+        ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = IVoiceInformation_get_Language(vc_voice, &vc_language);
+        ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = IVoiceInformation_get_Gender(vc_voice, &vc_gender);
+        ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        trace("%2u] %s | %s | %s | %u\n",
+              idx, debugstr_hstring(vc_display), debugstr_hstring(vc_id), debugstr_hstring(vc_language), vc_gender);
+
+        if (SUCCEEDED(WindowsCompareStringOrdinal(in_display, vc_display, &cmp)) && !cmp &&
+            SUCCEEDED(WindowsCompareStringOrdinal(in_id, vc_id, &cmp)) && !cmp &&
+            SUCCEEDED(WindowsCompareStringOrdinal(in_language, vc_language, &cmp)) && !cmp &&
+            in_gender == vc_gender)
+        {
+            found_count++;
+        }
+        WindowsDeleteString(vc_display);
+        WindowsDeleteString(vc_id);
+        WindowsDeleteString(vc_language);
+        IVoiceInformation_Release(vc_voice);
+    }
+    ok(hr == E_BOUNDS, "Got unexpected hr %#lx.\n", hr);
+    ok(idx != 0, "Vector view shouldn't be empty!\n");
+    ok(idx == size, "Incoherent index/size %u/%u!\n", idx, size);
+
+    ok_(__FILE__, line)(found_count == 1, "Found several (%u) instances of %s | %s | %s | %u\n",
+                        found_count,
+                        debugstr_hstring(in_display), debugstr_hstring(in_id), debugstr_hstring(in_language), in_gender);
+
+    WindowsDeleteString(in_display);
+    WindowsDeleteString(in_id);
+    WindowsDeleteString(in_language);
+}
+
 static void test_ActivationFactory(void)
 {
     static const WCHAR *synthesizer_name = L"Windows.Media.SpeechSynthesis.SpeechSynthesizer";
@@ -804,7 +864,8 @@ static void test_SpeechSynthesizer(void)
     HSTRING str, str2;
     UINT64 value;
     HRESULT hr;
-    UINT32 size;
+    UINT32 size, idx;
+    BOOLEAN found;
     ULONG ref;
 
     hr = RoInitialize(RO_INIT_MULTITHREADED);
@@ -898,13 +959,19 @@ static void test_SpeechSynthesizer(void)
     ok(hr == S_OK, "IVectorView_VoiceInformation_GetMany failed, hr %#lx\n", hr);
     ok(size == 0, "IVectorView_VoiceInformation_GetMany returned count %u\n", size);
 
-    IVectorView_VoiceInformation_Release(voices);
-
     hr = IInstalledVoicesStatic_get_DefaultVoice(voices_static, &voice);
     todo_wine ok(hr == S_OK, "IInstalledVoicesStatic_get_DefaultVoice failed, hr %#lx\n", hr);
 
     if (hr == S_OK)
     {
+        /* check that VoiceInformation in static vector voice are not shared when exposed to user */
+        idx = size;
+        hr = IVectorView_VoiceInformation_IndexOf(voices, voice, &idx, &found);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(!found, "Shouldn't find default element\n");
+
+        check_comparable_presence(voices, voice);
+
         IVoiceInformation_get_Description(voice, &str2);
         trace("SpeechSynthesizer default voice %s.\n", debugstr_hstring(str2));
 
