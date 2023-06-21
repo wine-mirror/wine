@@ -657,7 +657,7 @@ static HRESULT detach_scope(script_ctx_t *ctx, call_frame_t *frame, scope_chain_
 
         if (FAILED(hres = jsdisp_propput_name(scope->jsobj, name, ctx->stack[local_off(frame, ref)])))
             return hres;
-        if (frame->function->variables[ref].func_id != -1 && scope != frame->base_scope
+        if (scope != frame->base_scope && frame->function->variables[ref].func_id != -1
                 && FAILED(hres = jsdisp_propput_name(frame->variable_obj, name, ctx->stack[local_off(frame, ref)])))
             return hres;
     }
