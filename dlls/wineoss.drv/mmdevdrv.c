@@ -527,7 +527,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     ACImpl *This = impl_from_IAudioClient3(iface);
     struct create_stream_params params;
     stream_handle stream;
-    unsigned int i;
+    unsigned int i, channel_count;
     WCHAR *name;
 
     TRACE("(%p)->(%x, %lx, %s, %s, %p, %s)\n", This, mode, flags,
@@ -575,7 +575,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     params.duration = duration;
     params.period = period;
     params.fmt = fmt;
-    params.channel_count = NULL;
+    params.channel_count = &channel_count;
     params.stream = &stream;
 
     OSS_CALL(create_stream, &params);
@@ -587,17 +587,15 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         return params.result;
     }
 
-    This->channel_count = fmt->nChannels;
-    This->vols = HeapAlloc(GetProcessHeap(), 0, This->channel_count * sizeof(float));
+    This->vols = HeapAlloc(GetProcessHeap(), 0, channel_count * sizeof(float));
     if(!This->vols){
         params.result = E_OUTOFMEMORY;
         goto exit;
     }
-    for(i = 0; i < This->channel_count; ++i)
+    for(i = 0; i < channel_count; ++i)
         This->vols[i] = 1.f;
 
-    params.result = get_audio_session(sessionguid, This->parent, This->channel_count,
-            &This->session);
+    params.result = get_audio_session(sessionguid, This->parent, channel_count, &This->session);
 
 exit:
     if(FAILED(params.result)){
@@ -607,6 +605,7 @@ exit:
     } else {
         list_add_tail(&This->session->clients, &This->entry);
         This->stream = stream;
+        This->channel_count = channel_count;
         set_stream_volumes(This);
     }
 
