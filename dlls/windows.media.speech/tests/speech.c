@@ -861,7 +861,7 @@ static void test_SpeechSynthesizer(void)
     IClosable *closable;
     struct async_inspectable_handler async_inspectable_handler;
     HMODULE hdll;
-    HSTRING str, str2;
+    HSTRING str, str2, default_voice_id;
     UINT64 value;
     HRESULT hr;
     UINT32 size, idx;
@@ -999,13 +999,18 @@ static void test_SpeechSynthesizer(void)
 
         check_comparable_presence(voices, voice);
 
-        IVoiceInformation_get_Description(voice, &str2);
+        hr = IVoiceInformation_get_Description(voice, &str2);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         trace("SpeechSynthesizer default voice %s.\n", debugstr_hstring(str2));
-
         WindowsDeleteString(str2);
+
+        hr = IVoiceInformation_get_Id(voice, &default_voice_id);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
         ref = IVoiceInformation_Release(voice);
         ok(ref == 0, "Got unexpected ref %lu.\n", ref);
     }
+    else default_voice_id =  NULL;
 
     ref = IVectorView_VoiceInformation_Release(voices);
     ok(!ref, "Got unexpected ref %lu.\n", ref);
@@ -1024,6 +1029,29 @@ static void test_SpeechSynthesizer(void)
 
     hr = IInspectable_QueryInterface(inspectable, &IID_ISpeechSynthesizer, (void **)&synthesizer);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ISpeechSynthesizer_get_Voice(synthesizer, &voice);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    if (default_voice_id)
+    {
+        if (hr == S_OK)
+        {
+            INT32 cmp;
+            hr = IVoiceInformation_get_Id(voice, &str);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            hr = WindowsCompareStringOrdinal(str, default_voice_id, &cmp);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+            hr = WindowsDeleteString(str);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+            IVoiceInformation_Release(voice);
+        }
+
+        hr = WindowsDeleteString(default_voice_id);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    }
 
     /* Test SynthesizeTextToStreamAsync */
     hr = WindowsCreateString(simple_synth_text, wcslen(simple_synth_text), &str);
