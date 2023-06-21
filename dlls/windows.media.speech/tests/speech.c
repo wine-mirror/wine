@@ -853,7 +853,7 @@ static void test_SpeechSynthesizer(void)
     IRandomAccessStream *ra_stream;
     IInputStream *inp_stream;
     IBuffer *buffer = NULL, *buffer2 = NULL;
-    IVoiceInformation *voice;
+    IVoiceInformation *voice, *voice2;
     IInspectable *inspectable = NULL, *tmp_inspectable = NULL;
     IAgileObject *agile_object = NULL, *tmp_agile_object = NULL;
     ISpeechSynthesizer *synthesizer;
@@ -951,6 +951,23 @@ static void test_SpeechSynthesizer(void)
     todo_wine ok(size != 0 && size != 0xdeadbeef, "IVectorView_VoiceInformation_get_Size returned %u\n", size);
 
     voice = (IVoiceInformation *)0xdeadbeef;
+    hr = IVectorView_VoiceInformation_GetAt(voices, 0, &voice);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IVectorView_VoiceInformation_GetAt(voices, 0, &voice2);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(voice == voice2, "Didn't get the same object\n");
+
+    if (voice && voice != (IVoiceInformation *)0xdeadbeef){
+        ref = IVoiceInformation_Release(voice);
+        ok(ref == 2, "Unexpected ref count %ld\n", ref);
+    }
+    if (voice2 && voice2 != (IVoiceInformation *)0xdeadbeef){
+        ref = IVoiceInformation_Release(voice2);
+        ok(ref == 1, "Unexpected ref count %ld\n", ref);
+    }
+
+    voice = (IVoiceInformation *)0xdeadbeef;
     hr = IVectorView_VoiceInformation_GetAt(voices, size, &voice);
     ok(hr == E_BOUNDS, "IVectorView_VoiceInformation_GetAt failed, hr %#lx\n", hr);
     ok(voice == NULL, "IVectorView_VoiceInformation_GetAt returned %p\n", voice);
@@ -958,6 +975,16 @@ static void test_SpeechSynthesizer(void)
     hr = IVectorView_VoiceInformation_GetMany(voices, size, 1, &voice, &size);
     ok(hr == S_OK, "IVectorView_VoiceInformation_GetMany failed, hr %#lx\n", hr);
     ok(size == 0, "IVectorView_VoiceInformation_GetMany returned count %u\n", size);
+
+    hr = IVectorView_VoiceInformation_GetMany(voices, 0, 1, &voice, &size);
+    ok(hr == S_OK, "IVectorView_VoiceInformation_GetMany failed, hr %#lx\n", hr);
+    todo_wine ok(size == 1, "IVectorView_VoiceInformation_GetMany returned count %u\n", size);
+    ok(voice == voice2, "Didn't get the same object\n");
+    if (size)
+    {
+        ref = IVoiceInformation_Release(voice);
+        ok(ref == 1, "Unexpected ref count %ld\n", ref);
+    }
 
     hr = IInstalledVoicesStatic_get_DefaultVoice(voices_static, &voice);
     todo_wine ok(hr == S_OK, "IInstalledVoicesStatic_get_DefaultVoice failed, hr %#lx\n", hr);
@@ -979,6 +1006,9 @@ static void test_SpeechSynthesizer(void)
         ref = IVoiceInformation_Release(voice);
         ok(ref == 0, "Got unexpected ref %lu.\n", ref);
     }
+
+    ref = IVectorView_VoiceInformation_Release(voices);
+    ok(!ref, "Got unexpected ref %lu.\n", ref);
 
     IInstalledVoicesStatic_Release(voices_static);
     IAgileObject_Release(agile_object);
