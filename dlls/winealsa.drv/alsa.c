@@ -1050,6 +1050,7 @@ exit:
         free(stream->vols);
         free(stream);
     }else{
+        *params->channel_count = params->fmt->nChannels;
         *params->stream = (stream_handle)(UINT_PTR)stream;
     }
 
