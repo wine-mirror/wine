@@ -40,6 +40,9 @@ struct speech_voice
     ISpVoice ISpVoice_iface;
     IConnectionPointContainer IConnectionPointContainer_iface;
     LONG ref;
+
+    ISpStreamFormat *output;
+    CRITICAL_SECTION cs;
 };
 
 static inline struct speech_voice *impl_from_ISpeechVoice(ISpeechVoice *iface)
@@ -102,6 +105,9 @@ static ULONG WINAPI speech_voice_Release(ISpeechVoice *iface)
 
     if (!ref)
     {
+        if (This->output) ISpStreamFormat_Release(This->output);
+        DeleteCriticalSection(&This->cs);
+
         heap_free(This);
     }
 
@@ -515,11 +521,51 @@ static HRESULT WINAPI spvoice_GetInfo(ISpVoice *iface, SPEVENTSOURCEINFO *info)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI spvoice_SetOutput(ISpVoice *iface, IUnknown *unk, BOOL changes)
+static HRESULT WINAPI spvoice_SetOutput(ISpVoice *iface, IUnknown *unk, BOOL allow_format_changes)
 {
-    FIXME("(%p, %p, %d): stub.\n", iface, unk, changes);
+    struct speech_voice *This = impl_from_ISpVoice(iface);
+    ISpStreamFormat *stream = NULL;
+    ISpObjectToken *token = NULL;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %d).\n", iface, unk, allow_format_changes);
+
+    if (!allow_format_changes)
+        FIXME("ignoring allow_format_changes = FALSE.\n");
+
+    if (!unk)
+    {
+        /* TODO: Create the default SpAudioOut token here once SpMMAudioEnum is implemented. */
+        if (FAILED(hr = CoCreateInstance(&CLSID_SpMMAudioOut, NULL, CLSCTX_INPROC_SERVER,
+                                         &IID_ISpStreamFormat, (void **)&stream)))
+            return hr;
+    }
+    else
+    {
+        if (FAILED(IUnknown_QueryInterface(unk, &IID_ISpStreamFormat, (void **)&stream)))
+        {
+            if (FAILED(IUnknown_QueryInterface(unk, &IID_ISpObjectToken, (void **)&token)))
+                return E_INVALIDARG;
+        }
+    }
+
+    if (!stream)
+    {
+        hr = ISpObjectToken_CreateInstance(token, NULL, CLSCTX_ALL, &IID_ISpStreamFormat, (void **)&stream);
+        ISpObjectToken_Release(token);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    EnterCriticalSection(&This->cs);
+
+    if (This->output)
+        ISpStreamFormat_Release(This->output);
+    This->output = stream;
+
+    LeaveCriticalSection(&This->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI spvoice_GetOutputObjectToken(ISpVoice *iface, ISpObjectToken **token)
@@ -797,6 +843,10 @@ HRESULT speech_voice_create(IUnknown *outer, REFIID iid, void **obj)
     This->ISpVoice_iface.lpVtbl = &spvoice_vtbl;
     This->IConnectionPointContainer_iface.lpVtbl = &container_vtbl;
     This->ref = 1;
+
+    This->output = NULL;
+
+    InitializeCriticalSection(&This->cs);
 
     hr = ISpeechVoice_QueryInterface(&This->ISpeechVoice_iface, iid, obj);
 

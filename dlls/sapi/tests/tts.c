@@ -93,9 +93,39 @@ static void test_interfaces(void)
     ISpeechVoice_Release(speech_voice);
 }
 
+static void test_spvoice(void)
+{
+    ISpVoice *voice;
+    ISpMMSysAudio *audio_out;
+    HRESULT hr;
+
+    if (waveOutGetNumDevs() == 0) {
+        skip("no wave out devices.\n");
+        return;
+    }
+
+    hr = CoCreateInstance(&CLSID_SpVoice, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_ISpVoice, (void **)&voice);
+    ok(hr == S_OK, "Failed to create SpVoice: %#lx.\n", hr);
+
+    hr = ISpVoice_SetOutput(voice, NULL, TRUE);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = CoCreateInstance(&CLSID_SpMMAudioOut, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_ISpMMSysAudio, (void **)&audio_out);
+    ok(hr == S_OK, "Failed to create SpMMAudioOut: %#lx.\n", hr);
+
+    hr = ISpVoice_SetOutput(voice, (IUnknown *)audio_out, TRUE);
+    todo_wine ok(hr == S_FALSE, "got %#lx.\n", hr);
+
+    ISpVoice_Release(voice);
+    ISpMMSysAudio_Release(audio_out);
+}
+
 START_TEST(tts)
 {
     CoInitialize(NULL);
     test_interfaces();
+    test_spvoice();
     CoUninitialize();
 }
