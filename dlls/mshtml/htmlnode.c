@@ -338,6 +338,7 @@ static HRESULT WINAPI HTMLDOMChildrenCollection_item(IHTMLDOMChildrenCollection 
     }
 
     hres = get_node(nsnode, TRUE, &node);
+    nsIDOMNode_Release(nsnode);
     if(FAILED(hres))
         return hres;
 
