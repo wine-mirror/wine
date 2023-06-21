@@ -978,7 +978,10 @@ static HRESULT scope_init_locals(script_ctx_t *ctx)
                 return hres;
             val = jsval_obj(func_obj);
             if (detached_vars && FAILED(hres = jsdisp_propput_name(frame->variable_obj, name, jsval_obj(func_obj))))
+            {
+                jsdisp_release(func_obj);
                 return hres;
+            }
         }
         else
         {
@@ -987,7 +990,9 @@ static HRESULT scope_init_locals(script_ctx_t *ctx)
 
         if (detached_vars)
         {
-            if (FAILED(hres = jsdisp_propput_name(scope->jsobj, name, val)))
+            hres = jsdisp_propput_name(scope->jsobj, name, val);
+            jsval_release(val);
+            if (FAILED(hres))
                 return hres;
         }
         else
