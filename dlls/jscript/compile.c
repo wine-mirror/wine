@@ -2567,7 +2567,7 @@ static HRESULT compile_function(compiler_ctx_t *ctx, statement_t *source, functi
         }
     }
 
-    for(i = 0; i < func->param_cnt; i++) {
+    for(i = func->param_cnt; i--;) {
         if(!find_local(ctx, func->params[i], 0) && !alloc_local(ctx, func->params[i], -i-1, 0))
             return E_OUTOFMEMORY;
     }

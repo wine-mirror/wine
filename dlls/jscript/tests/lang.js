@@ -306,6 +306,38 @@ argumentsTest();
     ok(arguments === 1, "arguments = " + arguments);
 })();
 
+// duplicated argument names are shadowed by the last argument with the same name
+(function() {
+    var args, get_a, set_a;
+
+    (function(a, a, b, c) {
+        get_a = function() { return a; }
+        set_a = function(v) { a = v; }
+        ok(get_a() === 2, "function(a, a, b, c) get_a() = " + get_a());
+        ok(a === 2, "function(a, a, b, c) a = " + a);
+        ok(b === 3, "function(a, a, b, c) b = " + b);
+        ok(c === 4, "function(a, a, b, c) c = " + c);
+        a = 42;
+        ok(arguments[0] === 1, "function(a, a, b, c) arguments[0] = " + arguments[0]);
+        ok(arguments[1] === 42, "function(a, a, b, c) arguments[1] = " + arguments[1]);
+        ok(get_a() === 42, "function(a, a, b, c) get_a() = " + get_a() + " expected 42");
+        args = arguments;
+    })(1, 2, 3, 4);
+
+    ok(get_a() === 42, "function(a, a, b, c) get_a() after detach = " + get_a());
+    set_a(100);
+    ok(get_a() === 100, "function(a, a, b, c) get_a() = " + get_a() + " expected 100");
+    ok(args[0] === 1, "function(a, a, b, c) detached args[0] = " + args[0]);
+    ok(args[1] === 42, "function(a, a, b, c) detached args[1] = " + args[1]);
+
+    (function(a, a) {
+        eval("var a = 7;");
+        ok(a === 7, "function(a, a) a = " + a);
+        ok(arguments[0] === 5, "function(a, a) arguments[0] = " + arguments[0]);
+        ok(arguments[1] === 7, "function(a, a) arguments[1] = " + arguments[1]);
+    })(5, 6);
+})();
+
 (function callAsExprTest() {
     ok(callAsExprTest.arguments === null, "callAsExprTest.arguments = " + callAsExprTest.arguments);
 })(1,2);
