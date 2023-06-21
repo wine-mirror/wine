@@ -1514,6 +1514,7 @@
 @ cdecl -norelay -arch=i386 -ret64 _aullrem(int64 int64)
 @ cdecl -norelay -arch=i386 -ret64 _aullshr(int64 long)
 @ cdecl -arch=i386 -norelay _chkstk()
+@ cdecl _errno()
 @ stub _fltused
 @ cdecl -arch=i386 -ret64 _ftol()
 @ cdecl -arch=i386 -ret64 _ftol2() _ftol

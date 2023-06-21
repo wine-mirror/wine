@@ -39,6 +39,8 @@
 
 #define MAX_NT_PATH_LENGTH 277
 
+#define NTDLL_TLS_ERRNO 16  /* TLS slot for _errno() */
+
 #if defined(__i386__) || defined(__x86_64__) || defined(__arm__) || defined(__aarch64__)
 static const UINT_PTR page_size = 0x1000;
 #else

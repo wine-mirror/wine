@@ -24,12 +24,14 @@
 static NTSTATUS (WINAPI *pNtCreateThreadEx)( HANDLE *, ACCESS_MASK, OBJECT_ATTRIBUTES *,
                                              HANDLE, PRTL_THREAD_START_ROUTINE, void *,
                                              ULONG, ULONG_PTR, SIZE_T, SIZE_T, PS_ATTRIBUTE_LIST * );
+static int * (CDECL *p_errno)(void);
 
 static void init_function_pointers(void)
 {
     HMODULE hntdll = GetModuleHandleA( "ntdll.dll" );
 #define GET_FUNC(name) p##name = (void *)GetProcAddress( hntdll, #name );
     GET_FUNC( NtCreateThreadEx );
+    GET_FUNC( _errno );
 #undef GET_FUNC
 }
 
@@ -177,10 +179,29 @@ static void test_unique_teb(void)
     ok( args1.teb != args2.teb, "Multiple threads have TEB %p.\n", args1.teb );
 }
 
+static void test_errno(void)
+{
+    int val;
+
+    if (!p_errno)
+    {
+        win_skip( "_errno not available\n" );
+        return;
+    }
+    ok( NtCurrentTeb()->Peb->TlsBitmap->Buffer[0] & (1 << 16), "TLS entry 16 not allocated\n" );
+    *p_errno() = 0xdead;
+    val = PtrToLong( TlsGetValue( 16 ));
+    ok( val == 0xdead, "wrong value %x\n", val );
+    *p_errno() = 0xbeef;
+    val = PtrToLong( TlsGetValue( 16 ));
+    ok( val == 0xbeef, "wrong value %x\n", val );
+}
+
 START_TEST(thread)
 {
     init_function_pointers();
 
     test_dbg_hidden_thread_creation();
     test_unique_teb();
+    test_errno();
 }
