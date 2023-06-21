@@ -948,14 +948,14 @@ static void test_SpeechSynthesizer(void)
     size = 0xdeadbeef;
     hr = IVectorView_VoiceInformation_get_Size(voices, &size);
     ok(hr == S_OK, "IVectorView_VoiceInformation_get_Size voices failed, hr %#lx\n", hr);
-    todo_wine ok(size != 0 && size != 0xdeadbeef, "IVectorView_VoiceInformation_get_Size returned %u\n", size);
+    ok(size != 0 && size != 0xdeadbeef, "IVectorView_VoiceInformation_get_Size returned %u\n", size);
 
     voice = (IVoiceInformation *)0xdeadbeef;
     hr = IVectorView_VoiceInformation_GetAt(voices, 0, &voice);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = IVectorView_VoiceInformation_GetAt(voices, 0, &voice2);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(voice == voice2, "Didn't get the same object\n");
 
     if (voice && voice != (IVoiceInformation *)0xdeadbeef){
@@ -978,7 +978,7 @@ static void test_SpeechSynthesizer(void)
 
     hr = IVectorView_VoiceInformation_GetMany(voices, 0, 1, &voice, &size);
     ok(hr == S_OK, "IVectorView_VoiceInformation_GetMany failed, hr %#lx\n", hr);
-    todo_wine ok(size == 1, "IVectorView_VoiceInformation_GetMany returned count %u\n", size);
+    ok(size == 1, "IVectorView_VoiceInformation_GetMany returned count %u\n", size);
     ok(voice == voice2, "Didn't get the same object\n");
     if (size)
     {
