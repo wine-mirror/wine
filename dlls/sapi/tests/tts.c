@@ -100,6 +100,7 @@ static void test_spvoice(void)
     ISpObjectTokenCategory *token_cat;
     ISpObjectToken *token;
     WCHAR *token_id = NULL, *default_token_id = NULL;
+    LONG rate;
     HRESULT hr;
 
     if (waveOutGetNumDevs() == 0) {
@@ -148,6 +149,35 @@ static void test_spvoice(void)
         ISpObjectToken_Release(token);
         ISpObjectTokenCategory_Release(token_cat);
     }
+
+    rate = 0xdeadbeef;
+    hr = ISpVoice_GetRate(voice, &rate);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(rate == 0, "rate = %ld\n", rate);
+
+    hr = ISpVoice_SetRate(voice, 1);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    rate = 0xdeadbeef;
+    hr = ISpVoice_GetRate(voice, &rate);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(rate == 1, "rate = %ld\n", rate);
+
+    hr = ISpVoice_SetRate(voice, -1000);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    rate = 0xdeadbeef;
+    hr = ISpVoice_GetRate(voice, &rate);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(rate == -1000, "rate = %ld\n", rate);
+
+    hr = ISpVoice_SetRate(voice, 1000);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    rate = 0xdeadbeef;
+    hr = ISpVoice_GetRate(voice, &rate);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(rate == 1000, "rate = %ld\n", rate);
 
     ISpVoice_Release(voice);
     ISpMMSysAudio_Release(audio_out);
