@@ -135,8 +135,9 @@ static HRESULT WINAPI HTMLDOMChildrenCollectionEnum_Next(IEnumVARIANT *iface, UL
         hres = get_node(nsnode, TRUE, &node);
         nsIDOMNode_Release(nsnode);
         if(FAILED(hres)) {
-            ERR("get_node failed: %08lx\n", hres);
-            break;
+            while(fetched--)
+                VariantClear(rgVar+fetched);
+            return hres;
         }
 
         V_VT(rgVar+fetched) = VT_DISPATCH;
