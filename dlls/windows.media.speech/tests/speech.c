@@ -987,30 +987,26 @@ static void test_SpeechSynthesizer(void)
     }
 
     hr = IInstalledVoicesStatic_get_DefaultVoice(voices_static, &voice);
-    todo_wine ok(hr == S_OK, "IInstalledVoicesStatic_get_DefaultVoice failed, hr %#lx\n", hr);
+    ok(hr == S_OK, "IInstalledVoicesStatic_get_DefaultVoice failed, hr %#lx\n", hr);
 
-    if (hr == S_OK)
-    {
-        /* check that VoiceInformation in static vector voice are not shared when exposed to user */
-        idx = size;
-        hr = IVectorView_VoiceInformation_IndexOf(voices, voice, &idx, &found);
-        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-        ok(!found, "Shouldn't find default element\n");
+    /* check that VoiceInformation in static vector voice are not shared when exposed to user */
+    idx = size;
+    hr = IVectorView_VoiceInformation_IndexOf(voices, voice, &idx, &found);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!found, "Shouldn't find default element\n");
 
-        check_comparable_presence(voices, voice);
+    check_comparable_presence(voices, voice);
 
-        hr = IVoiceInformation_get_Description(voice, &str2);
-        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-        trace("SpeechSynthesizer default voice %s.\n", debugstr_hstring(str2));
-        WindowsDeleteString(str2);
+    hr = IVoiceInformation_get_Description(voice, &str2);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    trace("SpeechSynthesizer default voice %s.\n", debugstr_hstring(str2));
+    WindowsDeleteString(str2);
 
-        hr = IVoiceInformation_get_Id(voice, &default_voice_id);
-        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IVoiceInformation_get_Id(voice, &default_voice_id);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-        ref = IVoiceInformation_Release(voice);
-        ok(ref == 0, "Got unexpected ref %lu.\n", ref);
-    }
-    else default_voice_id =  NULL;
+    ref = IVoiceInformation_Release(voice);
+    ok(ref == 0, "Got unexpected ref %lu.\n", ref);
 
     ref = IVectorView_VoiceInformation_Release(voices);
     ok(!ref, "Got unexpected ref %lu.\n", ref);
@@ -1033,25 +1029,22 @@ static void test_SpeechSynthesizer(void)
     hr = ISpeechSynthesizer_get_Voice(synthesizer, &voice);
     todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    if (default_voice_id)
+    if (hr == S_OK)
     {
-        if (hr == S_OK)
-        {
-            INT32 cmp;
-            hr = IVoiceInformation_get_Id(voice, &str);
-            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-            hr = WindowsCompareStringOrdinal(str, default_voice_id, &cmp);
-            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-
-            hr = WindowsDeleteString(str);
-            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-
-            IVoiceInformation_Release(voice);
-        }
-
-        hr = WindowsDeleteString(default_voice_id);
+        INT32 cmp;
+        hr = IVoiceInformation_get_Id(voice, &str);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = WindowsCompareStringOrdinal(str, default_voice_id, &cmp);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = WindowsDeleteString(str);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        IVoiceInformation_Release(voice);
     }
+
+    hr = WindowsDeleteString(default_voice_id);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Test SynthesizeTextToStreamAsync */
     hr = WindowsCreateString(simple_synth_text, wcslen(simple_synth_text), &str);

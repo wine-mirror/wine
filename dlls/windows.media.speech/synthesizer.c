@@ -212,6 +212,35 @@ static HRESULT voice_information_create( const WCHAR *display_name, const WCHAR 
     return hr;
 }
 
+HRESULT voice_information_clone( IVoiceInformation *voice, IVoiceInformation **out )
+{
+    struct voice_information *voice_info;
+    HRESULT hr;
+
+    if (!(voice_info = calloc(1, sizeof(*voice_info))))
+        return E_OUTOFMEMORY;
+
+    hr = IVoiceInformation_get_DisplayName(voice, &voice_info->display_name);
+    if (SUCCEEDED(hr))
+        hr = IVoiceInformation_get_Id(voice, &voice_info->id);
+    if (SUCCEEDED(hr))
+        hr = IVoiceInformation_get_Language(voice, &voice_info->language);
+    if (SUCCEEDED(hr))
+        hr = IVoiceInformation_get_Description(voice, &voice_info->description);
+    if (SUCCEEDED(hr))
+        hr = IVoiceInformation_get_Gender(voice, &voice_info->gender);
+    if (SUCCEEDED(hr))
+    {
+        voice_info->IVoiceInformation_iface.lpVtbl = &voice_information_vtbl;
+        voice_info->ref = 1;
+        *out = &voice_info->IVoiceInformation_iface;
+    }
+    else
+        voice_information_delete(voice_info);
+
+    return hr;
+}
+
 /*
  *
  * IVectorView_VoiceInformation
@@ -1710,8 +1739,22 @@ static HRESULT WINAPI installed_voices_static_get_AllVoices( IInstalledVoicesSta
 
 static HRESULT WINAPI installed_voices_static_get_DefaultVoice( IInstalledVoicesStatic *iface, IVoiceInformation **value )
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    struct IVoiceInformation *static_voice;
+    HRESULT hr;
+
+    TRACE("iface %p, value %p\n", iface, value);
+
+    EnterCriticalSection(&allvoices_cs);
+
+    if (SUCCEEDED(hr = IVectorView_VoiceInformation_GetAt(&all_voices.IVectorView_VoiceInformation_iface, 0, &static_voice)))
+    {
+        hr = voice_information_clone(static_voice, value);
+        IVoiceInformation_Release(static_voice);
+    }
+
+    LeaveCriticalSection(&allvoices_cs);
+
+    return hr;
 }
 
 static const struct IInstalledVoicesStaticVtbl installed_voices_static_vtbl =
