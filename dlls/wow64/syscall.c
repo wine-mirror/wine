@@ -745,6 +745,46 @@ void init_image_mapping( HMODULE module )
 
 
 /**********************************************************************
+ *           load_32bit_module
+ */
+static HMODULE load_32bit_module( const WCHAR *name, WORD machine )
+{
+    NTSTATUS status;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    LARGE_INTEGER size;
+    UNICODE_STRING str;
+    SIZE_T len = 0;
+    void *ptr = NULL;
+    HANDLE handle, mapping;
+    WCHAR path[MAX_PATH];
+    const WCHAR *dir = get_machine_wow64_dir( machine );
+
+    swprintf( path, MAX_PATH, L"%s\\%s", dir, name );
+    RtlInitUnicodeString( &str, path );
+    InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL );
+
+    status = NtOpenFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io,
+                         FILE_SHARE_READ | FILE_SHARE_DELETE,
+                         FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE );
+    if (status) return NULL;
+
+    size.QuadPart = 0;
+    status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |
+                              SECTION_MAP_READ | SECTION_MAP_EXECUTE,
+                              NULL, &size, PAGE_EXECUTE_READ, SEC_IMAGE, handle );
+    NtClose( handle );
+    if (status) return NULL;
+
+    status = NtMapViewOfSection( mapping, NtCurrentProcess(), &ptr, 0, 0, NULL, &len,
+                                 ViewShare, 0, PAGE_EXECUTE_READ );
+    NtClose( mapping );
+    if (!NT_SUCCESS( status )) ptr = NULL;
+    return ptr;
+}
+
+
+/**********************************************************************
  *           load_64bit_module
  */
 static HMODULE load_64bit_module( const WCHAR *name )
@@ -813,7 +853,7 @@ static const WCHAR *get_cpu_dll_name(void)
 static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **context )
 {
     TEB32 *teb32 = (TEB32 *)((char *)NtCurrentTeb() + NtCurrentTeb()->WowTebOffset);
-    HMODULE module;
+    HMODULE module, ntdll;
     UNICODE_STRING str = RTL_CONSTANT_STRING( L"ntdll.dll" );
     SYSTEM_BASIC_INFORMATION info;
 
@@ -853,10 +893,16 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
 
     module = (HMODULE)(ULONG_PTR)pLdrSystemDllInitBlock->ntdll_handle;
     init_image_mapping( module );
-    init_syscall_table( module, 0, &ntdll_syscall_table );
     *(void **)RtlFindExportedRoutineByName( module, "__wine_syscall_dispatcher" ) = pBTCpuGetBopCode();
     *(void **)RtlFindExportedRoutineByName( module, "__wine_unix_call_dispatcher" ) = p__wine_get_unix_opcode();
     GET_PTR( KiRaiseUserExceptionDispatcher );
+
+    if ((ntdll = load_32bit_module( L"ntdll.dll", current_machine )))
+    {
+        init_syscall_table( ntdll, 0, &ntdll_syscall_table );
+        NtUnmapViewOfSection( NtCurrentProcess(), ntdll );
+    }
+    else init_syscall_table( module, 0, &ntdll_syscall_table );
 
     init_file_redirects();
     return TRUE;
