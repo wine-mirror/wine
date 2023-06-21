@@ -145,7 +145,7 @@ static HRESULT Arguments_idx_get(jsdisp_t *jsdisp, unsigned idx, jsval_t *r)
         return jsval_copy(*ref, r);
 
     /* FIXME: Accessing by name won't work for duplicated argument names */
-    return jsdisp_propget_name(arguments->frame->base_scope->jsobj,
+    return jsdisp_propget_name(as_jsdisp(arguments->frame->base_scope->obj),
                                arguments->function->func_code->params[idx], r);
 }
 
@@ -169,7 +169,7 @@ static HRESULT Arguments_idx_put(jsdisp_t *jsdisp, unsigned idx, jsval_t val)
     }
 
     /* FIXME: Accessing by name won't work for duplicated argument names */
-    return jsdisp_propput_name(arguments->frame->base_scope->jsobj,
+    return jsdisp_propput_name(as_jsdisp(arguments->frame->base_scope->obj),
                                arguments->function->func_code->params[idx], val);
 }
 
@@ -227,7 +227,7 @@ HRESULT setup_arguments_object(script_ctx_t *ctx, call_frame_t *frame)
         hres = jsdisp_define_data_property(&args->jsdisp, L"callee", PROPF_WRITABLE | PROPF_CONFIGURABLE,
                                            jsval_obj(&args->function->function.dispex));
     if(SUCCEEDED(hres))
-        hres = jsdisp_propput(frame->base_scope->jsobj, L"arguments", PROPF_WRITABLE, TRUE, jsval_obj(&args->jsdisp));
+        hres = jsdisp_propput(as_jsdisp(frame->base_scope->obj), L"arguments", PROPF_WRITABLE, TRUE, jsval_obj(&args->jsdisp));
     if(FAILED(hres)) {
         jsdisp_release(&args->jsdisp);
         return hres;
@@ -242,11 +242,12 @@ void detach_arguments_object(jsdisp_t *args_disp)
     ArgumentsInstance *arguments = arguments_from_jsdisp(args_disp);
     call_frame_t *frame = arguments->frame;
     const BOOL on_stack = frame->base_scope->frame == frame;
+    jsdisp_t *jsobj = as_jsdisp(frame->base_scope->obj);
     HRESULT hres;
 
     /* Reset arguments value to cut the reference cycle. Note that since all activation contexts have
      * their own arguments property, it's impossible to use prototype's one during name lookup */
-    jsdisp_propput_name(frame->base_scope->jsobj, L"arguments", jsval_undefined());
+    jsdisp_propput_name(jsobj, L"arguments", jsval_undefined());
     arguments->frame = NULL;
 
     /* Don't bother coppying arguments if call frame holds the last reference. */
@@ -259,7 +260,7 @@ void detach_arguments_object(jsdisp_t *args_disp)
                 if(on_stack || i >= frame->function->param_cnt)
                     hres = jsval_copy(arguments->jsdisp.ctx->stack[frame->arguments_off + i], arguments->buf+i);
                 else
-                    hres = jsdisp_propget_name(frame->base_scope->jsobj, frame->function->params[i], arguments->buf+i);
+                    hres = jsdisp_propget_name(jsobj, frame->function->params[i], arguments->buf+i);
                 if(FAILED(hres))
                     arguments->buf[i] = jsval_undefined();
             }

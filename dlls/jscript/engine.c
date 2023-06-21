@@ -207,6 +207,7 @@ static BOOL stack_topn_exprval(script_ctx_t *ctx, unsigned n, exprval_t *r)
         unsigned off = get_number(v);
 
         if(!frame->base_scope->frame && off >= frame->arguments_off) {
+            jsdisp_t *jsobj;
             DISPID id;
             BSTR name;
             HRESULT hres = E_FAIL;
@@ -227,7 +228,7 @@ static BOOL stack_topn_exprval(script_ctx_t *ctx, unsigned n, exprval_t *r)
 
             while (1)
             {
-                if (scope->jsobj && SUCCEEDED(hres = jsdisp_get_id(scope->jsobj, name, 0, &id)))
+                if ((jsobj = to_jsdisp(scope->obj)) && SUCCEEDED(hres = jsdisp_get_id(jsobj, name, 0, &id)))
                     break;
                 if (scope == frame->base_scope)
                 {
@@ -238,10 +239,10 @@ static BOOL stack_topn_exprval(script_ctx_t *ctx, unsigned n, exprval_t *r)
                 scope = scope->next;
             }
 
-            *stack_top_ref(ctx, n+1) = jsval_obj(jsdisp_addref(scope->jsobj));
+            *stack_top_ref(ctx, n+1) = jsval_obj(jsdisp_addref(jsobj));
             *stack_top_ref(ctx, n) = jsval_number(id);
             r->type = EXPRVAL_IDREF;
-            r->u.idref.disp = scope->obj;
+            r->u.idref.disp = to_disp(jsobj);
             r->u.idref.id = id;
             return TRUE;
         }
@@ -437,6 +438,7 @@ static void scope_destructor(jsdisp_t *dispex)
 static HRESULT scope_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op op, jsdisp_t *dispex)
 {
     scope_chain_t *scope = CONTAINING_RECORD(dispex, scope_chain_t, dispex);
+    jsdisp_t *jsobj;
     HRESULT hres;
 
     if(scope->next) {
@@ -454,7 +456,7 @@ static HRESULT scope_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op op, 
         return S_OK;
     }
 
-    return scope->jsobj ? gc_process_linked_obj(gc_ctx, op, dispex, scope->jsobj, (void**)&scope->obj) : S_OK;
+    return scope->obj && (jsobj = to_jsdisp(scope->obj)) ? gc_process_linked_obj(gc_ctx, op, dispex, jsobj, (void**)&scope->obj) : S_OK;
 }
 
 static const builtin_info_t scope_info = {
@@ -470,7 +472,7 @@ static const builtin_info_t scope_info = {
     scope_gc_traverse
 };
 
-static HRESULT scope_push(script_ctx_t *ctx, scope_chain_t *scope, jsdisp_t *jsobj, IDispatch *obj, scope_chain_t **ret)
+static HRESULT scope_push(script_ctx_t *ctx, scope_chain_t *scope, IDispatch *obj, scope_chain_t **ret)
 {
     scope_chain_t *new_scope;
     HRESULT hres;
@@ -487,7 +489,6 @@ static HRESULT scope_push(script_ctx_t *ctx, scope_chain_t *scope, jsdisp_t *jso
 
     if (obj)
         IDispatch_AddRef(obj);
-    new_scope->jsobj = jsobj;
     new_scope->obj = obj;
     new_scope->frame = NULL;
     new_scope->next = scope ? scope_addref(scope) : NULL;
@@ -628,6 +629,7 @@ static HRESULT detach_scope(script_ctx_t *ctx, call_frame_t *frame, scope_chain_
 {
     function_code_t *func = frame->function;
     unsigned int i, index;
+    jsdisp_t *jsobj;
     HRESULT hres;
 
     if (!scope->frame)
@@ -636,18 +638,18 @@ static HRESULT detach_scope(script_ctx_t *ctx, call_frame_t *frame, scope_chain_
     assert(scope->frame == frame);
     scope->frame = NULL;
 
-    if (!scope->jsobj)
+    if (!scope->obj)
     {
-        assert(!scope->obj);
-
-        if (FAILED(hres = create_object(ctx, NULL, &scope->jsobj)))
+        if (FAILED(hres = create_object(ctx, NULL, &jsobj)))
             return hres;
-        scope->obj = to_disp(scope->jsobj);
+        scope->obj = to_disp(jsobj);
     }
+    else
+        jsobj = as_jsdisp(scope->obj);
 
     if (scope == frame->base_scope && func->name && func->local_ref == INVALID_LOCAL_REF &&
         ctx->version >= SCRIPTLANGUAGEVERSION_ES5)
-        jsdisp_propput_name(scope->jsobj, func->name, jsval_obj(jsdisp_addref(frame->function_instance)));
+        jsdisp_propput_name(jsobj, func->name, jsval_obj(jsdisp_addref(frame->function_instance)));
 
     index = scope->scope_index;
     for(i = 0; i < frame->function->local_scopes[index].locals_cnt; i++)
@@ -655,7 +657,7 @@ static HRESULT detach_scope(script_ctx_t *ctx, call_frame_t *frame, scope_chain_
         WCHAR *name = frame->function->local_scopes[index].locals[i].name;
         int ref = frame->function->local_scopes[index].locals[i].ref;
 
-        if (FAILED(hres = jsdisp_propput_name(scope->jsobj, name, ctx->stack[local_off(frame, ref)])))
+        if (FAILED(hres = jsdisp_propput_name(jsobj, name, ctx->stack[local_off(frame, ref)])))
             return hres;
         if (scope != frame->base_scope && frame->function->variables[ref].func_id != -1
                 && FAILED(hres = jsdisp_propput_name(frame->variable_obj, name, ctx->stack[local_off(frame, ref)])))
@@ -687,7 +689,7 @@ static HRESULT detach_variable_object(script_ctx_t *ctx, call_frame_t *frame, BO
     TRACE("detaching %p\n", frame);
 
     assert(frame == frame->base_scope->frame);
-    assert(frame->variable_obj == frame->base_scope->jsobj);
+    assert(to_disp(frame->variable_obj) == frame->base_scope->obj);
 
     if(!from_release && !frame->arguments_obj) {
         hres = setup_arguments_object(ctx, frame);
@@ -784,13 +786,10 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
                 }
             }
 
-            if (!scope->jsobj && !scope->obj)
+            if (!scope->obj)
                 continue;
 
-            if(scope->jsobj)
-                hres = jsdisp_get_id(scope->jsobj, identifier, fdexNameImplicit, &id);
-            else
-                hres = disp_get_id(ctx, scope->obj, identifier, identifier, fdexNameImplicit, &id);
+            hres = disp_get_id(ctx, scope->obj, identifier, identifier, fdexNameImplicit, &id);
             if(SUCCEEDED(hres)) {
                 exprval_set_disp_ref(ret, scope->obj, id);
                 return S_OK;
@@ -943,6 +942,7 @@ static HRESULT scope_init_locals(script_ctx_t *ctx)
     unsigned int i, off, index;
     scope_chain_t *scope;
     BOOL detached_vars;
+    jsdisp_t *jsobj;
     HRESULT hres;
 
     scope = frame->scope;
@@ -954,13 +954,14 @@ static HRESULT scope_init_locals(script_ctx_t *ctx)
         assert(frame->base_scope->frame == frame);
         frame->scope->frame = ctx->call_ctx;
     }
-    else if (!scope->jsobj)
+    else if (!scope->obj)
     {
-        assert(!scope->obj);
-        if (FAILED(hres = create_object(ctx, NULL, &scope->jsobj)))
+        if (FAILED(hres = create_object(ctx, NULL, &jsobj)))
             return hres;
-        scope->obj = to_disp(scope->jsobj);
+        scope->obj = to_disp(jsobj);
     }
+    else
+        jsobj = as_jsdisp(scope->obj);
 
     for(i = 0; i < frame->function->local_scopes[index].locals_cnt; i++)
     {
@@ -990,7 +991,7 @@ static HRESULT scope_init_locals(script_ctx_t *ctx)
 
         if (detached_vars)
         {
-            hres = jsdisp_propput_name(scope->jsobj, name, val);
+            hres = jsdisp_propput_name(jsobj, name, val);
             jsval_release(val);
             if (FAILED(hres))
                 return hres;
@@ -1020,7 +1021,7 @@ static HRESULT interp_push_with_scope(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    hres = scope_push(ctx, ctx->call_ctx->scope, to_jsdisp(disp), disp, &ctx->call_ctx->scope);
+    hres = scope_push(ctx, ctx->call_ctx->scope, disp, &ctx->call_ctx->scope);
     IDispatch_Release(disp);
     return hres;
 }
@@ -1034,7 +1035,7 @@ static HRESULT interp_push_block_scope(script_ctx_t *ctx)
 
     TRACE("scope_index %u.\n", scope_index);
 
-    hres = scope_push(ctx, ctx->call_ctx->scope, NULL, NULL, &frame->scope);
+    hres = scope_push(ctx, ctx->call_ctx->scope, NULL, &frame->scope);
 
     if (FAILED(hres) || !scope_index)
         return hres;
@@ -1246,7 +1247,7 @@ static HRESULT interp_enter_catch(script_ctx_t *ctx)
     hres = jsdisp_propput_name(scope_obj, ident, v);
     jsval_release(v);
     if(SUCCEEDED(hres))
-        hres = scope_push(ctx, ctx->call_ctx->scope, scope_obj, to_disp(scope_obj), &ctx->call_ctx->scope);
+        hres = scope_push(ctx, ctx->call_ctx->scope, to_disp(scope_obj), &ctx->call_ctx->scope);
     jsdisp_release(scope_obj);
     return hres;
 }
@@ -3270,7 +3271,7 @@ static HRESULT setup_scope(script_ctx_t *ctx, call_frame_t *frame, scope_chain_t
 
     frame->pop_variables = i;
 
-    hres = scope_push(ctx, scope_chain, variable_object, to_disp(variable_object), &scope);
+    hres = scope_push(ctx, scope_chain, to_disp(variable_object), &scope);
     if(FAILED(hres)) {
         stack_popn(ctx, ctx->stack_top - orig_stack);
         return hres;

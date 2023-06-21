@@ -224,7 +224,6 @@ static inline bytecode_t *bytecode_addref(bytecode_t *code)
 
 typedef struct _scope_chain_t {
     jsdisp_t dispex;  /* FIXME: don't wrap it in a jsdisp (it holds ref and traverse for the garbage collector) */
-    jsdisp_t *jsobj;
     IDispatch *obj;
     unsigned int scope_index;
     struct _call_frame_t *frame;
