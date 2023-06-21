@@ -101,6 +101,7 @@ static void test_spvoice(void)
     ISpObjectToken *token;
     WCHAR *token_id = NULL, *default_token_id = NULL;
     LONG rate;
+    USHORT volume;
     HRESULT hr;
 
     if (waveOutGetNumDevs() == 0) {
@@ -178,6 +179,30 @@ static void test_spvoice(void)
     hr = ISpVoice_GetRate(voice, &rate);
     ok(hr == S_OK, "got %#lx.\n", hr);
     ok(rate == 1000, "rate = %ld\n", rate);
+
+    volume = 0xbeef;
+    hr = ISpVoice_GetVolume(voice, &volume);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(volume == 100, "volume = %d\n", volume);
+
+    hr = ISpVoice_SetVolume(voice, 0);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    volume = 0xbeef;
+    hr = ISpVoice_GetVolume(voice, &volume);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(volume == 0, "volume = %d\n", volume);
+
+    hr = ISpVoice_SetVolume(voice, 100);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    volume = 0xbeef;
+    hr = ISpVoice_GetVolume(voice, &volume);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(volume == 100, "volume = %d\n", volume);
+
+    hr = ISpVoice_SetVolume(voice, 101);
+    ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
 
     ISpVoice_Release(voice);
     ISpMMSysAudio_Release(audio_out);

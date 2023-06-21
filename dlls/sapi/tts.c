@@ -43,6 +43,7 @@ struct speech_voice
 
     ISpStreamFormat *output;
     ISpTTSEngine *engine;
+    USHORT volume;
     LONG rate;
     CRITICAL_SECTION cs;
 };
@@ -779,16 +780,31 @@ static HRESULT WINAPI spvoice_GetRate(ISpVoice *iface, LONG *rate)
 
 static HRESULT WINAPI spvoice_SetVolume(ISpVoice *iface, USHORT volume)
 {
-    FIXME("(%p, %d): stub.\n", iface, volume);
+    struct speech_voice *This = impl_from_ISpVoice(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %d).\n", iface, volume);
+
+    if (volume > 100)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&This->cs);
+    This->volume = volume;
+    LeaveCriticalSection(&This->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI spvoice_GetVolume(ISpVoice *iface, USHORT *volume)
 {
-    FIXME("(%p, %p): stub.\n", iface, volume);
+    struct speech_voice *This = impl_from_ISpVoice(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p).\n", iface, volume);
+
+    EnterCriticalSection(&This->cs);
+    *volume = This->volume;
+    LeaveCriticalSection(&This->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI spvoice_WaitUntilDone(ISpVoice *iface, ULONG timeout)
@@ -943,6 +959,7 @@ HRESULT speech_voice_create(IUnknown *outer, REFIID iid, void **obj)
 
     This->output = NULL;
     This->engine = NULL;
+    This->volume = 100;
     This->rate = 0;
 
     InitializeCriticalSection(&This->cs);
