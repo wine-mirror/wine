@@ -802,7 +802,8 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
         goto done;
     }
     if (!machine) machine = pe_info.machine;
-    if (!(startup_info = create_startup_info( attr.ObjectName, params, &startup_info_size ))) goto done;
+    if (!(startup_info = create_startup_info( attr.ObjectName, params, &pe_info, &startup_info_size )))
+        goto done;
     env_size = get_env_size( params, &winedebug );
 
     if ((status = alloc_object_attributes( process_attr, &objattr, &attr_len ))) goto done;

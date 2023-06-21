@@ -172,7 +172,7 @@ extern struct ldt_copy __wine_ldt_copy DECLSPEC_HIDDEN;
 extern void init_environment( int argc, char *argv[], char *envp[] ) DECLSPEC_HIDDEN;
 extern void init_startup_info(void) DECLSPEC_HIDDEN;
 extern void *create_startup_info( const UNICODE_STRING *nt_image, const RTL_USER_PROCESS_PARAMETERS *params,
-                                  DWORD *info_size ) DECLSPEC_HIDDEN;
+                                  const pe_image_info_t *pe_info, DWORD *info_size ) DECLSPEC_HIDDEN;
 extern char **build_envp( const WCHAR *envW ) DECLSPEC_HIDDEN;
 extern char *get_alternate_wineloader( WORD machine ) DECLSPEC_HIDDEN;
 extern NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_info ) DECLSPEC_HIDDEN;

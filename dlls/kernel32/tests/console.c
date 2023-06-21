@@ -4951,7 +4951,7 @@ static void test_CreateProcessCUI(void)
     },
     with_console_tests[] =
     {
-/* 0*/  {FALSE, 0,                                     NULL_STD,        0, TRUE},
+/* 0*/  {FALSE, 0,                                     NULL_STD,        0},
         {FALSE, DETACHED_PROCESS,                      NULL_STD,        0},
         {FALSE, CREATE_NEW_CONSOLE,                    NULL_STD,        0},
         {FALSE, CREATE_NO_WINDOW,                      NULL_STD,        0},

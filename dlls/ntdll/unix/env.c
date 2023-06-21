@@ -2128,7 +2128,7 @@ void init_startup_info(void)
  *           create_startup_info
  */
 void *create_startup_info( const UNICODE_STRING *nt_image, const RTL_USER_PROCESS_PARAMETERS *params,
-                           DWORD *info_size )
+                           const pe_image_info_t *pe_info, DWORD *info_size )
 {
     startup_info_t *info;
     UNICODE_STRING dos_image = *nt_image;
@@ -2154,7 +2154,8 @@ void *create_startup_info( const UNICODE_STRING *nt_image, const RTL_USER_PROCES
 
     info->debug_flags   = params->DebugFlags;
     info->console_flags = params->ConsoleFlags;
-    info->console       = wine_server_obj_handle( params->ConsoleHandle );
+    if (pe_info->subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+        info->console   = wine_server_obj_handle( params->ConsoleHandle );
     info->hstdin        = wine_server_obj_handle( params->hStdInput );
     info->hstdout       = wine_server_obj_handle( params->hStdOutput );
     info->hstderr       = wine_server_obj_handle( params->hStdError );
