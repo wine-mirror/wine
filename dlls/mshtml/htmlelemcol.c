@@ -778,8 +778,8 @@ HRESULT get_elem_source_index(HTMLElement *elem, LONG *ret)
     nsIDOMNode *parent_node, *iter;
     UINT16 parent_type;
     HTMLDOMNode *node;
-    int i;
     nsresult nsres;
+    unsigned i, j;
     HRESULT hres;
 
     iter = elem->node.nsnode;
@@ -830,7 +830,11 @@ HRESULT get_elem_source_index(HTMLElement *elem, LONG *ret)
             break;
     }
     IHTMLDOMNode_Release(&node->IHTMLDOMNode_iface);
+
+    for(j = 0; j < buf.len; j++)
+        IHTMLDOMNode_Release(&buf.buf[j]->node.IHTMLDOMNode_iface);
     free(buf.buf);
+
     if(i == buf.len) {
         FIXME("The element is not in parent's child list?\n");
         return E_UNEXPECTED;
