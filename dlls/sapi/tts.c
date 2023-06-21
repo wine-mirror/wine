@@ -42,6 +42,7 @@ struct speech_voice
     LONG ref;
 
     ISpStreamFormat *output;
+    ISpTTSEngine *engine;
     CRITICAL_SECTION cs;
 };
 
@@ -58,6 +59,41 @@ static inline struct speech_voice *impl_from_ISpVoice(ISpVoice *iface)
 static inline struct speech_voice *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
 {
     return CONTAINING_RECORD(iface, struct speech_voice, IConnectionPointContainer_iface);
+}
+
+static HRESULT create_default_token(const WCHAR *cat_id, ISpObjectToken **token)
+{
+    ISpObjectTokenCategory *cat;
+    WCHAR *default_token_id = NULL;
+    HRESULT hr;
+
+    TRACE("(%s, %p).\n", debugstr_w(cat_id), token);
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_SpObjectTokenCategory, NULL, CLSCTX_INPROC_SERVER,
+                                     &IID_ISpObjectTokenCategory, (void **)&cat)))
+        return hr;
+
+    if (FAILED(hr = ISpObjectTokenCategory_SetId(cat, cat_id, FALSE)) ||
+        FAILED(hr = ISpObjectTokenCategory_GetDefaultTokenId(cat, &default_token_id)))
+    {
+        ISpObjectTokenCategory_Release(cat);
+        return hr;
+    }
+    ISpObjectTokenCategory_Release(cat);
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_SpObjectToken, NULL, CLSCTX_INPROC_SERVER,
+                                     &IID_ISpObjectToken, (void **)token)))
+        goto done;
+
+    if (FAILED(hr = ISpObjectToken_SetId(*token, NULL, default_token_id, FALSE)))
+    {
+        ISpObjectToken_Release(*token);
+        *token = NULL;
+    }
+
+done:
+    CoTaskMemFree(default_token_id);
+    return hr;
 }
 
 /* ISpeechVoice interface */
@@ -106,6 +142,7 @@ static ULONG WINAPI speech_voice_Release(ISpeechVoice *iface)
     if (!ref)
     {
         if (This->output) ISpStreamFormat_Release(This->output);
+        if (This->engine) ISpTTSEngine_Release(This->engine);
         DeleteCriticalSection(&This->cs);
 
         heap_free(This);
@@ -598,16 +635,63 @@ static HRESULT WINAPI spvoice_Resume(ISpVoice *iface)
 
 static HRESULT WINAPI spvoice_SetVoice(ISpVoice *iface, ISpObjectToken *token)
 {
-    FIXME("(%p, %p): stub.\n", iface, token);
+    struct speech_voice *This = impl_from_ISpVoice(iface);
+    ISpTTSEngine *engine;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+
+    TRACE("(%p, %p).\n", iface, token);
+
+    if (!token)
+    {
+        if (FAILED(hr = create_default_token(SPCAT_VOICES, &token)))
+            return hr;
+    }
+
+    hr = ISpObjectToken_CreateInstance(token, NULL, CLSCTX_ALL, &IID_ISpTTSEngine, (void **)&engine);
+    ISpObjectToken_Release(token);
+    if (FAILED(hr))
+        return hr;
+
+    EnterCriticalSection(&This->cs);
+
+    if (This->engine)
+        ISpTTSEngine_Release(This->engine);
+    This->engine = engine;
+
+    LeaveCriticalSection(&This->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI spvoice_GetVoice(ISpVoice *iface, ISpObjectToken **token)
 {
-    FIXME("(%p, %p): stub.\n", iface, token);
+    struct speech_voice *This = impl_from_ISpVoice(iface);
+    ISpObjectWithToken *engine_token_iface;
+    HRESULT hr;
 
-    return token_create(NULL, &IID_ISpObjectToken, (void **)token);
+    TRACE("(%p, %p).\n", iface, token);
+
+    if (!token)
+        return E_POINTER;
+
+    EnterCriticalSection(&This->cs);
+
+    if (!This->engine)
+    {
+        LeaveCriticalSection(&This->cs);
+        return create_default_token(SPCAT_VOICES, token);
+    }
+
+    if (SUCCEEDED(hr = ISpTTSEngine_QueryInterface(This->engine, &IID_ISpObjectWithToken, (void **)&engine_token_iface)))
+    {
+        hr = ISpObjectWithToken_GetObjectToken(engine_token_iface, token);
+        ISpObjectWithToken_Release(engine_token_iface);
+    }
+
+    LeaveCriticalSection(&This->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWORD flags, ULONG *number)
@@ -845,6 +929,7 @@ HRESULT speech_voice_create(IUnknown *outer, REFIID iid, void **obj)
     This->ref = 1;
 
     This->output = NULL;
+    This->engine = NULL;
 
     InitializeCriticalSection(&This->cs);
 

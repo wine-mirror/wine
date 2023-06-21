@@ -97,6 +97,9 @@ static void test_spvoice(void)
 {
     ISpVoice *voice;
     ISpMMSysAudio *audio_out;
+    ISpObjectTokenCategory *token_cat;
+    ISpObjectToken *token;
+    WCHAR *token_id = NULL, *default_token_id = NULL;
     HRESULT hr;
 
     if (waveOutGetNumDevs() == 0) {
@@ -117,6 +120,34 @@ static void test_spvoice(void)
 
     hr = ISpVoice_SetOutput(voice, (IUnknown *)audio_out, TRUE);
     todo_wine ok(hr == S_FALSE, "got %#lx.\n", hr);
+
+    hr = ISpVoice_SetVoice(voice, NULL);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = ISpVoice_GetVoice(voice, &token);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = ISpObjectToken_GetId(token, &token_id);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+
+        hr = CoCreateInstance(&CLSID_SpObjectTokenCategory, NULL, CLSCTX_INPROC_SERVER,
+                              &IID_ISpObjectTokenCategory, (void **)&token_cat);
+        ok(hr == S_OK, "Failed to create SpObjectTokenCategory: %#lx.\n", hr);
+
+        hr = ISpObjectTokenCategory_SetId(token_cat, SPCAT_VOICES, FALSE);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        hr = ISpObjectTokenCategory_GetDefaultTokenId(token_cat, &default_token_id);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+
+        ok(!wcscmp(token_id, default_token_id), "token_id != default_token_id\n");
+
+        CoTaskMemFree(token_id);
+        CoTaskMemFree(default_token_id);
+        ISpObjectToken_Release(token);
+        ISpObjectTokenCategory_Release(token_cat);
+    }
 
     ISpVoice_Release(voice);
     ISpMMSysAudio_Release(audio_out);
