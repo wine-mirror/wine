@@ -65,7 +65,6 @@ typedef struct {
 
 typedef struct {
     jsdisp_t jsdisp;
-    InterpretedFunction *function;
     jsval_t *buf;
     call_frame_t *frame;
     unsigned argc;
@@ -114,8 +113,6 @@ static void Arguments_destructor(jsdisp_t *jsdisp)
         free(arguments->buf);
     }
 
-    if(arguments->function)
-        jsdisp_release(&arguments->function->function.dispex);
     free(arguments);
 }
 
@@ -175,7 +172,7 @@ static HRESULT Arguments_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op 
         }
     }
 
-    return gc_process_linked_obj(gc_ctx, op, jsdisp, &arguments->function->function.dispex, (void**)&arguments->function);
+    return S_OK;
 }
 
 static const builtin_info_t Arguments_info = {
@@ -205,7 +202,6 @@ HRESULT setup_arguments_object(script_ctx_t *ctx, call_frame_t *frame)
         return hres;
     }
 
-    args->function = (InterpretedFunction*)function_from_jsdisp(jsdisp_addref(frame->function_instance));
     args->argc = frame->argc;
     args->frame = frame;
 
@@ -213,7 +209,7 @@ HRESULT setup_arguments_object(script_ctx_t *ctx, call_frame_t *frame)
                                        jsval_number(args->argc));
     if(SUCCEEDED(hres))
         hres = jsdisp_define_data_property(&args->jsdisp, L"callee", PROPF_WRITABLE | PROPF_CONFIGURABLE,
-                                           jsval_obj(&args->function->function.dispex));
+                                           jsval_obj(frame->function_instance));
     if(SUCCEEDED(hres))
         hres = jsdisp_propput(as_jsdisp(frame->base_scope->obj), L"arguments", PROPF_WRITABLE, TRUE, jsval_obj(&args->jsdisp));
     if(FAILED(hres)) {
