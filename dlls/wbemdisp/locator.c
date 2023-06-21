@@ -1286,7 +1286,8 @@ static HRESULT WINAPI object_Invoke(
     if (!(name = get_member_name( object, member, &type )))
         return DISP_E_MEMBERNOTFOUND;
 
-    if (flags == (DISPATCH_METHOD|DISPATCH_PROPERTYGET))
+    if (flags == (DISPATCH_METHOD|DISPATCH_PROPERTYGET) ||
+        flags == DISPATCH_PROPERTYGET)
     {
         memset( params, 0, sizeof(*params) );
         return IWbemClassObject_Get( object->object, name, 0, result, NULL, NULL );

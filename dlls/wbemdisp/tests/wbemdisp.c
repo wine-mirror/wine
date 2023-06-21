@@ -223,6 +223,21 @@ static void test_ParseDisplayName(void)
                         ok( V_VT( &res ) == VT_BSTR, "got %u\n", V_VT( &res ) );
                         ok( V_BSTR( &res ) != (BSTR)0xdeadbeef, "got %u\n", V_VT( &res ) );
                         VariantClear( &res );
+
+                        V_VT( &res ) = VT_ERROR;
+                        V_BSTR( &res ) = (BSTR)0xdeadbeef;
+                        memset( &params, 0, sizeof(params) );
+                        hr = IDispatch_Invoke( dispatch, dispid, &IID_NULL, LOCALE_USER_DEFAULT,
+                                               DISPATCH_PROPERTYGET,
+                                               &params, &res, NULL, NULL );
+                        ok( hr == S_OK, "got %#lx\n", hr );
+                        ok( params.rgvarg == NULL, "got %p\n", params.rgvarg );
+                        ok( params.rgdispidNamedArgs == NULL, "got %p\n", params.rgdispidNamedArgs );
+                        ok( !params.cArgs, "got %u\n", params.cArgs );
+                        ok( !params.cNamedArgs, "got %u\n", params.cNamedArgs );
+                        ok( V_VT( &res ) == VT_BSTR, "got %u\n", V_VT( &res ) );
+                        ok( V_BSTR( &res ) != (BSTR)0xdeadbeef, "got %u\n", V_VT( &res ) );
+                        VariantClear( &res );
                         VariantClear( &var );
 
                         fetched = 0xdeadbeef;
