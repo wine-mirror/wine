@@ -10099,6 +10099,7 @@ HRESULT HTMLStyle_Create(HTMLElement *elem, HTMLStyle **ret)
 
     init_css_style(&style->css_style, nsstyle, HTMLStyle_QI, &HTMLStyle_dispex,
                    dispex_compat_mode(&elem->node.event_target.dispex));
+    nsIDOMCSSStyleDeclaration_Release(nsstyle);
 
     *ret = style;
     return S_OK;
