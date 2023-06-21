@@ -140,7 +140,6 @@ static HRESULT WINAPI HTMLDOMChildrenCollectionEnum_Next(IEnumVARIANT *iface, UL
         }
 
         V_VT(rgVar+fetched) = VT_DISPATCH;
-        IHTMLDOMNode_AddRef(&node->IHTMLDOMNode_iface);
         V_DISPATCH(rgVar+fetched) = (IDispatch*)&node->IHTMLDOMNode_iface;
         fetched++;
     }
