@@ -2339,6 +2339,7 @@ static HRESULT WINAPI HTMLElement_put_innerText(IHTMLElement *iface, BSTR v)
     }
 
     nsres = nsIDOMElement_AppendChild(This->dom_element, (nsIDOMNode*)text_node, &tmp);
+    nsIDOMText_Release(text_node);
     if(NS_FAILED(nsres)) {
         ERR("AppendChild failed: %08lx\n", nsres);
         return E_FAIL;
