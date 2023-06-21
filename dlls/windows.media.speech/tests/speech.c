@@ -1071,16 +1071,57 @@ static void test_SpeechSynthesizer(void)
 
         if (hr == S_OK)
         {
+            enum SpeechPunctuationSilence punctuation_value;
+            enum SpeechAppendedSilence silence_value;
+            ISpeechSynthesizerOptions2 *options2;
             ISpeechSynthesizerOptions3 *options3;
+            boolean bool_value;
+            DOUBLE double_value;
 
             check_interface(options, &IID_IAgileObject, TRUE);
-            check_optional_interface(options, &IID_ISpeechSynthesizerOptions2, TRUE); /* Requires Win10 >= 1709 */
+            bool_value = 0xff;
+            hr = ISpeechSynthesizerOptions_get_IncludeSentenceBoundaryMetadata(options, &bool_value);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            ok(! bool_value, "Got unepected option %u\n",  bool_value);
+            bool_value = 0xff;
+            hr = ISpeechSynthesizerOptions_get_IncludeWordBoundaryMetadata(options, &bool_value);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            ok(!bool_value, "Got unepected option %u\n", bool_value);
+
+            hr = ISpeechSynthesizerOptions_QueryInterface(options, &IID_ISpeechSynthesizerOptions2, (void **)&options2);
+            ok(hr == S_OK || broken(hr == E_NOINTERFACE), "Got unexpected hr %#lx.\n", hr); /* Requires Win10 >= 1709 */
+
+            if (hr == S_OK)
+            {
+                hr = ISpeechSynthesizerOptions2_get_AudioPitch(options2, &double_value);
+                ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+                ok(double_value == 1.0f, "Got unepected option %f\n", double_value);
+
+                hr = ISpeechSynthesizerOptions2_get_AudioVolume(options2, &double_value);
+                ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+                ok(double_value == 1.0f, "Got unepected option %f\n", double_value);
+
+                hr = ISpeechSynthesizerOptions2_get_SpeakingRate(options2, &double_value);
+                ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+                ok(double_value == 1.0f, "Got unepected option %f\n", double_value);
+
+                ref = ISpeechSynthesizerOptions2_Release(options2);
+                ok(ref == 2, "Got unexpected ref %lu.\n", ref);
+            }
 
             hr = ISpeechSynthesizerOptions_QueryInterface(options, &IID_ISpeechSynthesizerOptions3, (void **)&options3);
             ok(hr == S_OK || broken(hr == E_NOINTERFACE), "Got unexpected hr %#lx.\n", hr); /* Requires Win10 >= 1803 */
 
             if (hr == S_OK)
             {
+                hr = ISpeechSynthesizerOptions3_get_AppendedSilence(options3, &silence_value);
+                ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+                ok(silence_value == SpeechAppendedSilence_Default, "Got unepected option %u\n", silence_value);
+
+                hr = ISpeechSynthesizerOptions3_get_PunctuationSilence(options3, &punctuation_value);
+                ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+                ok(punctuation_value == SpeechPunctuationSilence_Default, "Got unepected option %u\n", punctuation_value);
+
                 ref = ISpeechSynthesizerOptions3_Release(options3);
                 ok(ref == 2, "Got unexpected ref %lu.\n", ref);
             }
