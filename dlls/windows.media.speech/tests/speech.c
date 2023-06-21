@@ -867,6 +867,7 @@ static void test_SpeechSynthesizer(void)
     UINT32 size, idx;
     BOOLEAN found;
     ULONG ref;
+    INT32 cmp;
 
     hr = RoInitialize(RO_INIT_MULTITHREADED);
     ok(hr == S_OK, "RoInitialize failed, hr %#lx\n", hr);
@@ -1027,21 +1028,18 @@ static void test_SpeechSynthesizer(void)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ISpeechSynthesizer_get_Voice(synthesizer, &voice);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    if (hr == S_OK)
-    {
-        INT32 cmp;
-        hr = IVoiceInformation_get_Id(voice, &str);
-        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-        hr = WindowsCompareStringOrdinal(str, default_voice_id, &cmp);
-        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IVoiceInformation_get_Id(voice, &str);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-        hr = WindowsDeleteString(str);
-        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = WindowsCompareStringOrdinal(str, default_voice_id, &cmp);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-        IVoiceInformation_Release(voice);
-    }
+    hr = WindowsDeleteString(str);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    IVoiceInformation_Release(voice);
 
     hr = WindowsDeleteString(default_voice_id);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
