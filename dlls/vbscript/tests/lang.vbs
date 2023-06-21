@@ -421,6 +421,69 @@ end if
 Call ok(x = 1, "if ""-1"" not executed")
 
 x = 0
+if 0.1 then
+   x = 1
+else
+   ok false, "if ""0.1"" else executed"
+end if
+Call ok(x = 1, "if ""0.1"" not executed")
+
+x = 0
+if "TRUE" then
+   x = 1
+else
+   ok false, "if ""TRUE"" else executed"
+end if
+Call ok(x = 1, "if ""TRUE"" not executed")
+
+x = 0
+if "#TRUE#" then
+   x = 1
+else
+   ok false, "if ""#TRUE#"" else executed"
+end if
+Call ok(x = 1, "if ""#TRUE#"" not executed")
+
+x = 0
+if (not "#FALSE#") then
+   x = 1
+else
+   ok false, "if ""not #FALSE#"" else executed"
+end if
+Call ok(x = 1, "if ""not #FALSE#"" not executed")
+
+Class ValClass
+    Public myval
+
+    Public default Property Get defprop
+        defprop = myval
+    End Property
+End Class
+
+Dim MyObject
+Set MyObject = New ValClass
+
+MyObject.myval = 1
+Call ok(CBool(MyObject) = True, "CBool(MyObject) = " & CBool(MyObject))
+x = 0
+if MyObject then
+   x = 1
+else
+   ok false, "if ""MyObject(1)"" else executed"
+end if
+Call ok(x = 1, "if ""MyObject(1)"" not executed")
+
+MyObject.myval = 0
+Call ok(CBool(MyObject) = False, "CBool(MyObject) = " & CBool(MyObject))
+x = 0
+if not MyObject then
+   x = 1
+else
+   ok false, "if ""MyObject(0)"" else executed"
+end if
+Call ok(x = 1, "if ""MyObject(0)"" not executed")
+
+x = 0
 WHILE x < 3 : x = x + 1 : Wend
 Call ok(x = 3, "x not equal to 3")
 

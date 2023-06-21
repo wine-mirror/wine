@@ -413,43 +413,30 @@ static HRESULT stack_assume_val(exec_ctx_t *ctx, unsigned n)
     return S_OK;
 }
 
-static int stack_pop_bool(exec_ctx_t *ctx, BOOL *b)
+static HRESULT stack_pop_bool(exec_ctx_t *ctx, BOOL *b)
 {
     variant_val_t val;
     HRESULT hres;
-    VARIANT_BOOL vb;
+    VARIANT v;
 
     hres = stack_pop_val(ctx, &val);
     if(FAILED(hres))
         return hres;
 
-    switch (V_VT(val.v))
+    if (V_VT(val.v) == VT_NULL)
     {
-    case VT_BOOL:
-        *b = V_BOOL(val.v);
-        break;
-    case VT_NULL:
-    case VT_EMPTY:
         *b = FALSE;
-        break;
-    case VT_I2:
-        *b = V_I2(val.v);
-        break;
-    case VT_I4:
-        *b = V_I4(val.v);
-        break;
-    case VT_BSTR:
-        hres = VarBoolFromStr(V_BSTR(val.v), ctx->script->lcid, 0, &vb);
-        if(FAILED(hres))
-            return hres;
-        *b=vb;
-        break;
-    default:
-        FIXME("unsupported for %s\n", debugstr_variant(val.v));
-        release_val(&val);
-        return E_NOTIMPL;
     }
-    return S_OK;
+    else
+    {
+        V_VT(&v) = VT_EMPTY;
+        if (SUCCEEDED(hres = VariantChangeType(&v, val.v, VARIANT_LOCALBOOL, VT_BOOL)))
+            *b = !!V_BOOL(&v);
+    }
+
+    release_val(&val);
+
+    return hres;
 }
 
 static HRESULT stack_pop_disp(exec_ctx_t *ctx, IDispatch **ret)
