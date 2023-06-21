@@ -222,10 +222,17 @@ static inline bytecode_t *bytecode_addref(bytecode_t *code)
     return code;
 }
 
+struct vars_buffer {
+    function_code_t *func_code;
+    unsigned argc;
+    jsval_t var[];
+};
+
 typedef struct _scope_chain_t {
-    jsdisp_t dispex;  /* FIXME: don't wrap it in a jsdisp (it holds ref and traverse for the garbage collector) */
+    jsdisp_t dispex;
     IDispatch *obj;
     unsigned int scope_index;
+    struct vars_buffer *detached_vars;
     struct _call_frame_t *frame;
     struct _scope_chain_t *next;
 } scope_chain_t;

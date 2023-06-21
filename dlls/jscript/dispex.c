@@ -2332,6 +2332,14 @@ HRESULT jsdisp_get_id(jsdisp_t *jsdisp, const WCHAR *name, DWORD flags, DISPID *
     return DISP_E_UNKNOWNNAME;
 }
 
+HRESULT jsdisp_get_idx_id(jsdisp_t *jsdisp, DWORD idx, DISPID *id)
+{
+    WCHAR name[11];
+
+    swprintf(name, ARRAY_SIZE(name), L"%u", idx);
+    return jsdisp_get_id(jsdisp, name, 0, id);
+}
+
 HRESULT jsdisp_call_value(jsdisp_t *jsfunc, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     HRESULT hres;

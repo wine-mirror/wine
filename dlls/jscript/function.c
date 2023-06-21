@@ -129,48 +129,36 @@ static jsval_t *get_argument_ref(ArgumentsInstance *arguments, unsigned idx)
 {
     if(arguments->buf)
         return arguments->buf + idx;
-    if(arguments->frame->base_scope->frame || idx >= arguments->frame->function->param_cnt)
+    if(!arguments->frame->base_scope->detached_vars)
         return arguments->jsdisp.ctx->stack + arguments->frame->arguments_off + idx;
-    return NULL;
+    return arguments->frame->base_scope->detached_vars->var + idx;
 }
 
 static HRESULT Arguments_idx_get(jsdisp_t *jsdisp, unsigned idx, jsval_t *r)
 {
     ArgumentsInstance *arguments = arguments_from_jsdisp(jsdisp);
-    jsval_t *ref;
 
     TRACE("%p[%u]\n", arguments, idx);
 
-    if((ref = get_argument_ref(arguments, idx)))
-        return jsval_copy(*ref, r);
-
-    /* FIXME: Accessing by name won't work for duplicated argument names */
-    return jsdisp_propget_name(as_jsdisp(arguments->frame->base_scope->obj),
-                               arguments->function->func_code->params[idx], r);
+    return jsval_copy(*get_argument_ref(arguments, idx), r);
 }
 
 static HRESULT Arguments_idx_put(jsdisp_t *jsdisp, unsigned idx, jsval_t val)
 {
     ArgumentsInstance *arguments = arguments_from_jsdisp(jsdisp);
-    jsval_t *ref;
+    jsval_t copy, *ref;
     HRESULT hres;
 
     TRACE("%p[%u] = %s\n", arguments, idx, debugstr_jsval(val));
 
-    if((ref = get_argument_ref(arguments, idx))) {
-        jsval_t copy;
-        hres = jsval_copy(val, &copy);
-        if(FAILED(hres))
-            return hres;
+    hres = jsval_copy(val, &copy);
+    if(FAILED(hres))
+        return hres;
 
-        jsval_release(*ref);
-        *ref = copy;
-        return S_OK;
-    }
-
-    /* FIXME: Accessing by name won't work for duplicated argument names */
-    return jsdisp_propput_name(as_jsdisp(arguments->frame->base_scope->obj),
-                               arguments->function->func_code->params[idx], val);
+    ref = get_argument_ref(arguments, idx);
+    jsval_release(*ref);
+    *ref = copy;
+    return S_OK;
 }
 
 static HRESULT Arguments_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op op, jsdisp_t *jsdisp)
@@ -243,7 +231,6 @@ void detach_arguments_object(jsdisp_t *args_disp)
     call_frame_t *frame = arguments->frame;
     const BOOL on_stack = frame->base_scope->frame == frame;
     jsdisp_t *jsobj = as_jsdisp(frame->base_scope->obj);
-    HRESULT hres;
 
     /* Reset arguments value to cut the reference cycle. Note that since all activation contexts have
      * their own arguments property, it's impossible to use prototype's one during name lookup */
@@ -254,14 +241,11 @@ void detach_arguments_object(jsdisp_t *args_disp)
     if(arguments->jsdisp.ref > 1) {
         arguments->buf = malloc(arguments->argc * sizeof(*arguments->buf));
         if(arguments->buf) {
+            const jsval_t *args = on_stack ? arguments->jsdisp.ctx->stack + frame->arguments_off : frame->base_scope->detached_vars->var;
             int i;
 
             for(i = 0; i < arguments->argc ; i++) {
-                if(on_stack || i >= frame->function->param_cnt)
-                    hres = jsval_copy(arguments->jsdisp.ctx->stack[frame->arguments_off + i], arguments->buf+i);
-                else
-                    hres = jsdisp_propget_name(jsobj, frame->function->params[i], arguments->buf+i);
-                if(FAILED(hres))
+                if(FAILED(jsval_copy(args[i], &arguments->buf[i])))
                     arguments->buf[i] = jsval_undefined();
             }
         }else {
