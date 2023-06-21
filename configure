@@ -11527,6 +11527,39 @@ printf "%s\n" "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
   as_fn_append ${wine_arch}_EXTRACFLAGS " -mcx16"
+fi }
+              { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-mcmodel=small" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -mcmodel=small" >&5
+printf %s "checking whether $CC supports -mcmodel=small... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -mcmodel=small"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else $as_nop
+  eval "$as_ac_var=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -mcmodel=small"
 fi } ;;
     esac
 
