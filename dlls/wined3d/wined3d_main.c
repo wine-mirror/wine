@@ -129,6 +129,11 @@ struct wined3d_settings wined3d_settings =
     .shader_backend = WINED3D_SHADER_BACKEND_AUTO,
 };
 
+enum wined3d_renderer CDECL wined3d_get_renderer(void)
+{
+    return wined3d_settings.renderer;
+}
+
 struct wined3d * CDECL wined3d_create(uint32_t flags)
 {
     struct wined3d *object;
@@ -490,6 +495,9 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
     }
 
     vkd3d_set_log_callback(vkd3d_log_callback);
+
+    if (wined3d_settings.renderer == WINED3D_RENDERER_AUTO)
+        wined3d_settings.renderer = WINED3D_RENDERER_OPENGL;
 
     return TRUE;
 }

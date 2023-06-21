@@ -514,14 +514,6 @@ static inline int wined3d_uint64_compare(uint64_t x, uint64_t y)
 #define PCI_VENDOR_NONE 0xffff /* e.g. 0x8086 for Intel and 0x10de for Nvidia */
 #define PCI_DEVICE_NONE 0xffff /* e.g. 0x14f for a Geforce6200 */
 
-enum wined3d_renderer
-{
-    WINED3D_RENDERER_AUTO,
-    WINED3D_RENDERER_VULKAN,
-    WINED3D_RENDERER_OPENGL,
-    WINED3D_RENDERER_NO3D,
-};
-
 enum wined3d_shader_backend
 {
     WINED3D_SHADER_BACKEND_AUTO,
