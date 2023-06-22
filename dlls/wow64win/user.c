@@ -4357,6 +4357,6 @@ NTSTATUS WINAPI wow64_NtUserDisplayConfigGetDeviceInfo( UINT *args )
 
 NTSTATUS WINAPI wow64___wine_send_input( UINT *args )
 {
-    ERR( "not supported\n ");
+    ERR( "not supported\n" );
     return 0;
 }
