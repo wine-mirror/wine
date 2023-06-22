@@ -3456,7 +3456,6 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
     struct wined3d_unordered_access_view *uav;
     struct wined3d_shader_resource_view *srv;
     struct wined3d_buffer_vk *buffer_vk;
-    struct wined3d_sampler *sampler;
     struct wined3d_buffer *buffer;
     size_t i;
 
@@ -3551,11 +3550,7 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
                 break;
 
             case WINED3D_SHADER_DESCRIPTOR_TYPE_UAV_COUNTER:
-                break;
-
             case WINED3D_SHADER_DESCRIPTOR_TYPE_SAMPLER:
-                if (!(sampler = state->sampler[binding->shader_type][binding->resource_idx]))
-                    sampler = context_vk->c.device->null_sampler;
                 break;
 
             default:
