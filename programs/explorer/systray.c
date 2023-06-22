@@ -119,6 +119,10 @@ static HWND balloon_window;
 static LRESULT WINAPI shell_traywnd_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
 static LRESULT WINAPI tray_icon_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
 
+static BOOL show_icon( struct icon *icon );
+static BOOL hide_icon( struct icon *icon );
+static BOOL delete_icon( struct icon *icon );
+
 static WNDCLASSEXW shell_traywnd_class =
 {
     .cbSize = sizeof(WNDCLASSEXW),
@@ -320,6 +324,30 @@ static void update_tooltip_position( struct icon *icon )
     if (balloon_icon == icon) set_balloon_position( icon );
 }
 
+static BOOL notify_owner( struct icon *icon, UINT msg, LPARAM lparam )
+{
+    WPARAM wp = icon->id;
+    LPARAM lp = msg;
+
+    if (icon->version >= NOTIFYICON_VERSION_4)
+    {
+        POINT pt = {.x = (short)LOWORD(lparam), .y = (short)HIWORD(lparam)};
+        ClientToScreen( icon->window, &pt );
+        wp = MAKEWPARAM( pt.x, pt.y );
+        lp = MAKELPARAM( msg, icon->id );
+    }
+
+    TRACE( "relaying 0x%x\n", msg );
+    if (!SendNotifyMessageW( icon->owner, icon->callback_message, wp, lp ) &&
+        (GetLastError() == ERROR_INVALID_WINDOW_HANDLE))
+    {
+        WARN( "application window was destroyed, removing icon %u\n", icon->id );
+        delete_icon( icon );
+        return FALSE;
+    }
+    return TRUE;
+}
+
 /* window procedure for the individual tray icon window */
 static LRESULT WINAPI tray_icon_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
@@ -342,45 +370,60 @@ static LRESULT WINAPI tray_icon_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPA
         icon->window = hwnd;
         create_tooltip( icon );
         break;
+
+    case WM_PAINT:
+    {
+        PAINTSTRUCT ps;
+        RECT rc;
+        HDC hdc;
+        int cx = GetSystemMetrics( SM_CXSMICON );
+        int cy = GetSystemMetrics( SM_CYSMICON );
+
+        hdc = BeginPaint( hwnd, &ps );
+        GetClientRect( hwnd, &rc );
+        TRACE( "painting rect %s\n", wine_dbgstr_rect( &rc ) );
+        DrawIconEx( hdc, (rc.left + rc.right - cx) / 2, (rc.top + rc.bottom - cy) / 2,
+                    icon->image, cx, cy, 0, 0, DI_DEFAULTSIZE | DI_NORMAL );
+        EndPaint( hwnd, &ps );
+        return 0;
+    }
+
+    case WM_MOUSEMOVE:
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_LBUTTONDBLCLK:
+    case WM_RBUTTONDBLCLK:
+    case WM_MBUTTONDBLCLK:
+    {
+        MSG message = {.hwnd = hwnd, .message = msg, .wParam = wparam, .lParam = lparam};
+        SendMessageW( icon->tooltip, TTM_RELAYEVENT, 0, (LPARAM)&message );
+        if (!notify_owner( icon, msg, lparam )) break;
+        if (icon->version > 0)
+        {
+            if (msg == WM_LBUTTONUP) notify_owner( icon, NIN_SELECT, lparam );
+            if (msg == WM_RBUTTONUP) notify_owner( icon, WM_CONTEXTMENU, lparam );
+        }
+        break;
+    }
     }
 
     return DefWindowProcW( hwnd, msg, wparam, lparam );
 }
 
-/* find the icon located at a certain point in the tray window */
-static struct icon *icon_from_point( int x, int y )
-{
-    struct icon *icon;
-    POINT pt = {x, y};
-
-    LIST_FOR_EACH_ENTRY(icon, &icon_list, struct icon, entry)
-    {
-        RECT rect = get_icon_rect( icon );
-        if (PtInRect(&rect, pt)) return icon;
-    }
-
-    return NULL;
-}
-
-/* invalidate the portion of the tray window that contains the specified icons */
-static void invalidate_icons( unsigned int start, unsigned int end )
-{
-    RECT rect;
-
-    rect.left = tray_width - (end + 1) * icon_cx;
-    rect.top  = (tray_height - icon_cy) / 2;
-    rect.right = tray_width - start * icon_cx;
-    rect.bottom = rect.top + icon_cy;
-    InvalidateRect( tray_window, &rect, TRUE );
-}
-
 /* add an icon to the system tray window */
 static void systray_add_icon( struct icon *icon )
 {
+    POINT pos;
+
     if (icon->display != -1) return;  /* already added */
 
     icon->display = nb_displayed++;
-    invalidate_icons( icon->display, icon->display );
+    pos = get_icon_pos( icon );
+    SetWindowPos( icon->window, 0, pos.x, pos.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW );
 
     if (nb_displayed == 1 && !hide_systray) do_show_systray();
     TRACE( "added %u now %d icons\n", icon->id, nb_displayed );
@@ -408,7 +451,6 @@ static void systray_remove_icon( struct icon *icon )
     if (!--nb_displayed && !enable_shell) do_hide_systray();
     TRACE( "removed %u now %d icons\n", icon->id, nb_displayed );
 
-    invalidate_icons( icon->display, nb_displayed );
     icon->display = -1;
 }
 
@@ -433,6 +475,7 @@ static BOOL hide_icon(struct icon *icon)
 
     if (icon->display == -1) return TRUE;  /* already hidden */
 
+    ShowWindow( icon->window, SW_HIDE );
     systray_remove_icon( icon );
 
     update_balloon( icon );
@@ -461,7 +504,7 @@ static BOOL modify_icon( struct icon *icon, NOTIFYICONDATAW *nid )
     {
         if (icon->image) DestroyIcon(icon->image);
         icon->image = CopyIcon(nid->hIcon);
-        if (icon->display != -1) invalidate_icons( icon->display, icon->display );
+        if (icon->display != -1) InvalidateRect( icon->window, NULL, TRUE );
     }
 
     if (nid->uFlags & NIF_MESSAGE)
@@ -787,29 +830,6 @@ static void do_hide_systray(void)
     ShowWindow( tray_window, SW_HIDE );
 }
 
-static BOOL notify_owner( struct icon *icon, UINT msg, POINT pt )
-{
-    WPARAM wp = icon->id;
-    LPARAM lp = msg;
-
-    if (icon->version >= NOTIFYICON_VERSION_4)
-    {
-        ClientToScreen( tray_window, &pt );
-        wp = MAKEWPARAM( pt.x, pt.y );
-        lp = MAKELPARAM( msg, icon->id );
-    }
-
-    TRACE( "relaying 0x%x\n", msg );
-    if (!SendNotifyMessageW( icon->owner, icon->callback_message, wp, lp ) &&
-        (GetLastError() == ERROR_INVALID_WINDOW_HANDLE))
-    {
-        WARN( "application window was destroyed, removing icon %u\n", icon->id );
-        delete_icon( icon );
-        return FALSE;
-    }
-    return TRUE;
-}
-
 static void do_show_systray(void)
 {
     SIZE size;
@@ -858,64 +878,6 @@ static LRESULT WINAPI shell_traywnd_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
         case BALLOON_SHOW_TIMER:   balloon_timer(); break;
         }
         break;
-
-    case WM_PAINT:
-        {
-            struct icon *icon;
-            PAINTSTRUCT ps;
-            HDC hdc;
-
-            hdc = BeginPaint( hwnd, &ps );
-            LIST_FOR_EACH_ENTRY( icon, &icon_list, struct icon, entry )
-            {
-                RECT dummy, rect = get_icon_rect( icon );
-                if (icon->display != -1 && IntersectRect( &dummy, &rect, &ps.rcPaint ))
-                    DrawIconEx( hdc, rect.left + ICON_BORDER, rect.top + ICON_BORDER, icon->image,
-                                icon_cx - 2*ICON_BORDER, icon_cy - 2*ICON_BORDER,
-                            0, 0, DI_DEFAULTSIZE|DI_NORMAL);
-            }
-            EndPaint( hwnd, &ps );
-            break;
-        }
-
-    case WM_MOUSEMOVE:
-    case WM_LBUTTONDOWN:
-    case WM_LBUTTONUP:
-    case WM_RBUTTONDOWN:
-    case WM_RBUTTONUP:
-    case WM_MBUTTONDOWN:
-    case WM_MBUTTONUP:
-    case WM_LBUTTONDBLCLK:
-    case WM_RBUTTONDBLCLK:
-    case WM_MBUTTONDBLCLK:
-        {
-            MSG message;
-            POINT pt = { (short)LOWORD(lparam), (short)HIWORD(lparam) };
-            struct icon *icon = icon_from_point( pt.x, pt.y );
-            if (!icon) break;
-
-            message.hwnd = hwnd;
-            message.message = msg;
-            message.wParam = wparam;
-            message.lParam = lparam;
-            SendMessageW( icon->tooltip, TTM_RELAYEVENT, 0, (LPARAM)&message );
-
-            if (!notify_owner( icon, msg, pt )) break;
-
-            if (icon->version > 0)
-            {
-                switch (msg)
-                {
-                case WM_RBUTTONUP:
-                    notify_owner( icon, WM_CONTEXTMENU, pt );
-                    break;
-                case WM_LBUTTONUP:
-                    notify_owner( icon, NIN_SELECT, pt );
-                    break;
-                }
-            }
-            break;
-        }
 
     case WM_CLOSE:
         /* don't destroy the tray window, just hide it */
