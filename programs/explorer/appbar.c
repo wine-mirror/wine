@@ -288,14 +288,13 @@ static LRESULT CALLBACK appbar_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
 void initialize_appbar(void)
 {
     WNDCLASSEXW class;
-    static const WCHAR classname[] = {'W','i','n','e','A','p','p','B','a','r',0};
 
     /* register the appbar window class */
     ZeroMemory(&class, sizeof(class));
     class.cbSize = sizeof(class);
     class.lpfnWndProc = appbar_wndproc;
     class.hInstance = NULL;
-    class.lpszClassName = classname;
+    class.lpszClassName = L"WineAppBar";
 
     if (!RegisterClassExW(&class))
     {
@@ -303,7 +302,7 @@ void initialize_appbar(void)
         return;
     }
 
-    appbarmsg_window = CreateWindowW(classname, classname, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
+    appbarmsg_window = CreateWindowW(class.lpszClassName, class.lpszClassName, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
     if (!appbarmsg_window)
     {
         ERR( "Could not create appbar message window\n" );

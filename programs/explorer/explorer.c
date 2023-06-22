@@ -50,9 +50,6 @@ static int default_width;
 static int default_height;
 
 
-static const WCHAR EXPLORER_CLASS[] = {'E','x','p','l','o','r','e','r','W','C','l','a','s','s',0};
-static const WCHAR PATH_BOX_NAME[] = {'\0'};
-
 HINSTANCE explorer_hInstance;
 
 typedef struct parametersTAG {
@@ -462,7 +459,7 @@ static void make_explorer_window(parameters_struct *params)
     }
     info->rebar_height=0;
     info->main_window
-        = CreateWindowW(EXPLORER_CLASS,explorer_title,WS_OVERLAPPEDWINDOW,
+        = CreateWindowW(L"ExplorerWClass",explorer_title,WS_OVERLAPPEDWINDOW,
                         CW_USEDEFAULT,CW_USEDEFAULT,default_width,
                         default_height,NULL,NULL,explorer_hInstance,NULL);
 
@@ -519,7 +516,7 @@ static void make_explorer_window(parameters_struct *params)
     band_info.cyMinChild=nav_toolbar_height;
     band_info.cxMinChild=0;
     SendMessageW(rebar,RB_INSERTBANDW,-1,(LPARAM)&band_info);
-    info->path_box = CreateWindowW(WC_COMBOBOXEXW,PATH_BOX_NAME,
+    info->path_box = CreateWindowW(WC_COMBOBOXEXW,L"",
                                    WS_CHILD | WS_VISIBLE | CBS_DROPDOWN,
                                    0,0,default_width,pathbox_height,rebar,NULL,
                                    explorer_hInstance,NULL);
@@ -771,7 +768,7 @@ static void register_explorer_window_class(void)
     window_class.hCursor = NULL;
     window_class.hbrBackground = (HBRUSH)COLOR_BACKGROUND;
     window_class.lpszMenuName = NULL;
-    window_class.lpszClassName = EXPLORER_CLASS;
+    window_class.lpszClassName = L"ExplorerWClass";
     window_class.hIconSm = NULL;
     RegisterClassExW(&window_class);
 }
@@ -834,13 +831,13 @@ static void copy_path_root(LPWSTR root, LPWSTR path)
  */
 static void parse_command_line(LPWSTR commandline,parameters_struct *parameters)
 {
-    static const WCHAR arg_n[] = {'/','n'};
-    static const WCHAR arg_e[] = {'/','e',','};
-    static const WCHAR arg_cd[] = {'/','c','d',','};
-    static const WCHAR arg_root[] = {'/','r','o','o','t',','};
-    static const WCHAR arg_select[] = {'/','s','e','l','e','c','t',','};
-    static const WCHAR arg_desktop[] = {'/','d','e','s','k','t','o','p'};
-    static const WCHAR arg_desktop_quotes[] = {'"','/','d','e','s','k','t','o','p'};
+    static const WCHAR arg_n[] = L"/n";
+    static const WCHAR arg_e[] = L"/e,";
+    static const WCHAR arg_cd[] = L"/cd,";
+    static const WCHAR arg_root[] = L"/root,";
+    static const WCHAR arg_select[] = L"/select,";
+    static const WCHAR arg_desktop[] = L"/desktop";
+    static const WCHAR arg_desktop_quotes[] = L"\"/desktop";
 
     LPWSTR p = commandline;
 

@@ -892,7 +892,6 @@ void handle_parent_notify( HWND hwnd, WPARAM wp )
 void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enable_shell )
 {
     WNDCLASSEXW class;
-    static const WCHAR classname[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
     RECT work_rect, primary_rect, taskbar_rect;
 
     if (using_root && graphics_driver) wine_notify_icon = (void *)GetProcAddress( graphics_driver, "wine_notify_icon" );
@@ -911,7 +910,7 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enab
     class.hIcon         = LoadIconW(0, (LPCWSTR)IDI_WINLOGO);
     class.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
     class.hbrBackground = (HBRUSH) COLOR_WINDOW;
-    class.lpszClassName = classname;
+    class.lpszClassName = L"Shell_TrayWnd";
 
     if (!RegisterClassExW(&class))
     {
@@ -923,7 +922,7 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enab
     SetRect( &primary_rect, 0, 0, GetSystemMetrics( SM_CXSCREEN ), GetSystemMetrics( SM_CYSCREEN ) );
     SubtractRect( &taskbar_rect, &primary_rect, &work_rect );
 
-    tray_window = CreateWindowExW( WS_EX_NOACTIVATE, classname, NULL, WS_POPUP, taskbar_rect.left,
+    tray_window = CreateWindowExW( WS_EX_NOACTIVATE, class.lpszClassName, NULL, WS_POPUP, taskbar_rect.left,
                                    taskbar_rect.top, taskbar_rect.right - taskbar_rect.left,
                                    taskbar_rect.bottom - taskbar_rect.top, 0, 0, 0, 0 );
     if (!tray_window)

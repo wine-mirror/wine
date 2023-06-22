@@ -276,12 +276,6 @@ static void draw_launchers( HDC hdc, RECT update_rect )
     SetBkMode( hdc, mode );
 }
 
-static void do_launch( const struct launcher *launcher )
-{
-    static const WCHAR openW[] = {'o','p','e','n',0};
-    ShellExecuteW( NULL, openW, launcher->path, NULL, NULL, 0 );
-}
-
 static WCHAR *append_path( const WCHAR *path, const WCHAR *filename, int len_filename )
 {
     int len_path = lstrlenW( path );
@@ -547,7 +541,7 @@ error:
 
 static void add_folder( const WCHAR *folder )
 {
-    static const WCHAR lnkW[] = {'\\','*','.','l','n','k',0};
+    static const WCHAR lnkW[] = L"\\*.lnk";
     int len = lstrlenW( folder ) + lstrlenW( lnkW );
     WIN32_FIND_DATAW data;
     HANDLE handle;
@@ -747,7 +741,7 @@ static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPAR
         if (!using_root)
         {
             const struct launcher *launcher = launcher_from_point( (short)LOWORD(lp), (short)HIWORD(lp) );
-            if (launcher) do_launch( launcher );
+            if (launcher) ShellExecuteW( NULL, L"open", launcher->path, NULL, NULL, 0 );
         }
         return 0;
 
@@ -784,10 +778,6 @@ static BOOL parse_size( const WCHAR *size, unsigned int *width, unsigned int *he
 /* retrieve the desktop name to use if not specified on the command line */
 static const WCHAR *get_default_desktop_name(void)
 {
-    static const WCHAR desktopW[] = {'D','e','s','k','t','o','p',0};
-    static const WCHAR defaultW[] = {'D','e','f','a','u','l','t',0};
-    static const WCHAR explorer_keyW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
-                                          'E','x','p','l','o','r','e','r',0};
     static WCHAR buffer[MAX_PATH];
     DWORD size = sizeof(buffer);
     HDESK desk = GetThreadDesktop( GetCurrentThreadId() );
@@ -796,13 +786,13 @@ static const WCHAR *get_default_desktop_name(void)
 
     if (desk && GetUserObjectInformationW( desk, UOI_NAME, buffer, ARRAY_SIZE( buffer ), NULL ))
     {
-        if (wcsicmp( buffer, defaultW )) return buffer;
+        if (wcsicmp( buffer, L"Default" )) return buffer;
     }
 
     /* @@ Wine registry key: HKCU\Software\Wine\Explorer */
-    if (!RegOpenKeyW( HKEY_CURRENT_USER, explorer_keyW, &hkey ))
+    if (!RegOpenKeyW( HKEY_CURRENT_USER, L"Software\\Wine\\Explorer", &hkey ))
     {
-        if (!RegQueryValueExW( hkey, desktopW, 0, NULL, (LPBYTE)buffer, &size ) && *buffer) ret = buffer;
+        if (!RegQueryValueExW( hkey, L"Desktop", 0, NULL, (LPBYTE)buffer, &size ) && *buffer) ret = buffer;
         RegCloseKey( hkey );
     }
     return ret;
@@ -811,9 +801,6 @@ static const WCHAR *get_default_desktop_name(void)
 /* retrieve the default desktop size from the registry */
 static BOOL get_default_desktop_size( const WCHAR *name, unsigned int *width, unsigned int *height )
 {
-    static const WCHAR desktop_keyW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
-                                         'E','x','p','l','o','r','e','r','\\',
-                                         'D','e','s','k','t','o','p','s',0};
     HKEY hkey;
     WCHAR buffer[64];
     DWORD size = sizeof(buffer);
@@ -823,7 +810,7 @@ static BOOL get_default_desktop_size( const WCHAR *name, unsigned int *width, un
     *height = 600;
 
     /* @@ Wine registry key: HKCU\Software\Wine\Explorer\Desktops */
-    if (!RegOpenKeyW( HKEY_CURRENT_USER, desktop_keyW, &hkey ))
+    if (!RegOpenKeyW( HKEY_CURRENT_USER, L"Software\\Wine\\Explorer\\Desktops", &hkey ))
     {
         if (!RegQueryValueExW( hkey, name, 0, NULL, (LPBYTE)buffer, &size ))
         {
@@ -837,44 +824,26 @@ static BOOL get_default_desktop_size( const WCHAR *name, unsigned int *width, un
 
 static BOOL get_default_enable_shell( const WCHAR *name )
 {
-    static const WCHAR desktop_keyW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
-                                         'E','x','p','l','o','r','e','r','\\',
-                                         'D','e','s','k','t','o','p','s',0};
-    static const WCHAR enable_shellW[] = {'E','n','a','b','l','e','S','h','e','l','l',0};
-    static const WCHAR shellW[] = {'s','h','e','l','l',0};
     HKEY hkey;
     BOOL found = FALSE;
     BOOL result;
     DWORD size = sizeof(result);
 
     /* @@ Wine registry key: HKCU\Software\Wine\Explorer\Desktops */
-    if (!RegOpenKeyW( HKEY_CURRENT_USER, desktop_keyW, &hkey ))
+    if (!RegOpenKeyW( HKEY_CURRENT_USER, L"Software\\Wine\\Explorer\\Desktops", &hkey ))
     {
-        if (!RegGetValueW( hkey, name, enable_shellW, RRF_RT_REG_DWORD, NULL, &result, &size ))
+        if (!RegGetValueW( hkey, name, L"EnableShell", RRF_RT_REG_DWORD, NULL, &result, &size ))
             found = TRUE;
         RegCloseKey( hkey );
     }
     /* Default off, except for the magic desktop name "shell" */
-    if (!found)
-        result = (lstrcmpiW( name, shellW ) == 0);
+    if (!found) result = (lstrcmpiW( name, L"shell" ) == 0);
     return result;
 }
 
 static HMODULE load_graphics_driver( const WCHAR *driver, GUID *guid )
 {
-    static const WCHAR device_keyW[] = {
-        'S','y','s','t','e','m','\\',
-        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-        'C','o','n','t','r','o','l','\\',
-        'V','i','d','e','o','\\',
-        '{','%','0','8','x','-','%','0','4','x','-','%','0','4','x','-',
-        '%','0','2','x','%','0','2','x','-','%','0','2','x','%','0','2','x','%','0','2','x',
-        '%','0','2','x','%','0','2','x','%','0','2','x','}','\\','0','0','0','0',0};
-    static const WCHAR graphics_driverW[] = {'G','r','a','p','h','i','c','s','D','r','i','v','e','r',0};
-    static const WCHAR driversW[] = {'S','o','f','t','w','a','r','e','\\',
-                                     'W','i','n','e','\\','D','r','i','v','e','r','s',0};
-    static const WCHAR graphicsW[] = {'G','r','a','p','h','i','c','s',0};
-    static const WCHAR drv_formatW[] = {'w','i','n','e','%','s','.','d','r','v',0};
+    static const WCHAR device_keyW[] = L"System\\CurrentControlSet\\Control\\Video\\{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\\0000";
 
     WCHAR buffer[MAX_PATH], libname[32], *name, *next;
     WCHAR key[ARRAY_SIZE( device_keyW ) + 39];
@@ -888,10 +857,10 @@ static HMODULE load_graphics_driver( const WCHAR *driver, GUID *guid )
         lstrcpyW( buffer, default_driver );
 
         /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
-        if (!RegOpenKeyW( HKEY_CURRENT_USER, driversW, &hkey ))
+        if (!RegOpenKeyW( HKEY_CURRENT_USER, L"Software\\Wine\\Drivers", &hkey ))
         {
             DWORD count = sizeof(buffer);
-            RegQueryValueExW( hkey, graphicsW, 0, NULL, (LPBYTE)buffer, &count );
+            RegQueryValueExW( hkey, L"Graphics", 0, NULL, (LPBYTE)buffer, &count );
             RegCloseKey( hkey );
         }
     }
@@ -912,7 +881,7 @@ static HMODULE load_graphics_driver( const WCHAR *driver, GUID *guid )
             break;
         }
 
-        swprintf( libname, ARRAY_SIZE( libname ), drv_formatW, name );
+        swprintf( libname, ARRAY_SIZE( libname ), L"wine%s.drv", name );
         if ((module = LoadLibraryW( libname )) != 0) break;
         switch (GetLastError())
         {
@@ -939,7 +908,7 @@ static HMODULE load_graphics_driver( const WCHAR *driver, GUID *guid )
                           REG_OPTION_VOLATILE, KEY_SET_VALUE, NULL, &hkey, NULL  ))
     {
         if (module || null_driver)
-            RegSetValueExW( hkey, graphics_driverW, 0, REG_SZ,
+            RegSetValueExW( hkey, L"GraphicsDriver", 0, REG_SZ,
                             (BYTE *)libname, (lstrlenW(libname) + 1) * sizeof(WCHAR) );
         else
             RegSetValueExA( hkey, "DriverError", 0, REG_SZ, (BYTE *)error, strlen(error) + 1 );
@@ -979,8 +948,8 @@ static void initialize_display_settings(void)
 
 static void set_desktop_window_title( HWND hwnd, const WCHAR *name )
 {
-    static const WCHAR desktop_nameW[] = {'W','i','n','e',' ','d','e','s','k','t','o','p',0};
-    static const WCHAR desktop_name_separatorW[] = {' ', '-', ' ', 0};
+    static const WCHAR desktop_nameW[] = L"Wine desktop";
+    static const WCHAR desktop_name_separatorW[] = L" - ";
     WCHAR *window_titleW = NULL;
     int window_title_len;
 
@@ -1016,7 +985,6 @@ static inline BOOL is_whitespace(WCHAR c)
 /* main desktop management function */
 void manage_desktop( WCHAR *arg )
 {
-    static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
     HDESK desktop = 0;
     GUID guid;
     MSG msg;
@@ -1088,7 +1056,7 @@ void manage_desktop( WCHAR *arg )
     if (hwnd)
     {
         /* create the HWND_MESSAGE parent */
-        CreateWindowExW( 0, messageW, NULL, WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+        CreateWindowExW( 0, L"Message", NULL, WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
                          0, 0, 100, 100, 0, 0, 0, NULL );
 
         desktop_orig_wndproc = (WNDPROC)SetWindowLongPtrW( hwnd, GWLP_WNDPROC,
