@@ -603,12 +603,8 @@ static void handle_manager_message( HWND hwnd, XClientMessageEvent *event )
 
     if (systray_atom && event->data.l[1] == systray_atom)
     {
-        struct systray_change_owner_params params;
-
         TRACE( "new owner %lx\n", event->data.l[2] );
-
-        params.event_handle = (UINT_PTR)event;
-        x11drv_client_func( client_func_systray_change_owner, &params, sizeof(params) );
+        NtUserPostMessage( systray_hwnd, WM_USER + 1, 0, 0 );
     }
 }
 

@@ -65,6 +65,7 @@ XVisualInfo argb_visual = { 0 };
 Colormap default_colormap = None;
 XPixmapFormatValues **pixmap_formats;
 Atom systray_atom = 0;
+HWND systray_hwnd = 0;
 unsigned int screen_bpp;
 Window root_window;
 BOOL usexvidmode = TRUE;
@@ -73,7 +74,6 @@ BOOL usexcomposite = TRUE;
 BOOL use_take_focus = TRUE;
 BOOL use_primary_selection = FALSE;
 BOOL use_system_cursors = TRUE;
-BOOL show_systray = TRUE;
 BOOL grab_fullscreen = FALSE;
 BOOL managed_mode = TRUE;
 BOOL decorated_mode = TRUE;
@@ -494,9 +494,6 @@ static void setup_options(void)
     if (!get_config_key( hkey, appkey, "UseSystemCursors", buffer, sizeof(buffer) ))
         use_system_cursors = IS_OPTION_TRUE( buffer[0] );
 
-    if (!get_config_key( hkey, appkey, "ShowSystray", buffer, sizeof(buffer) ))
-        show_systray = IS_OPTION_TRUE( buffer[0] );
-
     if (!get_config_key( hkey, appkey, "GrabFullscreen", buffer, sizeof(buffer) ))
         grab_fullscreen = IS_OPTION_TRUE( buffer[0] );
 
@@ -708,7 +705,6 @@ static NTSTATUS x11drv_init( void *arg )
 
     init_user_driver();
     X11DRV_DisplayDevices_Init(FALSE);
-    *params->show_systray = show_systray;
     return STATUS_SUCCESS;
 }
 
@@ -1319,10 +1315,6 @@ NTSTATUS x11drv_client_call( enum client_callback func, UINT arg )
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     x11drv_init,
-    x11drv_systray_clear,
-    x11drv_systray_dock,
-    x11drv_systray_hide,
-    x11drv_systray_init,
     x11drv_tablet_attach_queue,
     x11drv_tablet_get_packet,
     x11drv_tablet_info,
@@ -1340,45 +1332,11 @@ static NTSTATUS x11drv_wow64_init( void *arg )
     struct
     {
         ULONG foreign_window_proc;
-        ULONG show_systray;
     } *params32 = arg;
     struct init_params params;
 
     params.foreign_window_proc = UlongToPtr( params32->foreign_window_proc );
-    params.show_systray = UlongToPtr( params32->show_systray );
     return x11drv_init( &params );
-}
-
-static NTSTATUS x11drv_wow64_systray_clear( void *arg )
-{
-    HWND hwnd = UlongToPtr( *(ULONG *)arg );
-    return x11drv_systray_clear( &hwnd );
-}
-
-static NTSTATUS x11drv_wow64_systray_dock( void *arg )
-{
-    struct
-    {
-        UINT64 event_handle;
-        ULONG icon;
-        int cx;
-        int cy;
-        ULONG layered;
-    } *params32 = arg;
-    struct systray_dock_params params;
-
-    params.event_handle = params32->event_handle;
-    params.icon = UlongToPtr( params32->icon );
-    params.cx = params32->cx;
-    params.cy = params32->cy;
-    params.layered = UlongToPtr( params32->layered );
-    return x11drv_systray_dock( &params );
-}
-
-static NTSTATUS x11drv_wow64_systray_hide( void *arg )
-{
-    HWND hwnd = UlongToPtr( *(ULONG *)arg );
-    return x11drv_systray_hide( &hwnd );
 }
 
 static NTSTATUS x11drv_wow64_tablet_get_packet( void *arg )
@@ -1406,10 +1364,6 @@ static NTSTATUS x11drv_wow64_tablet_info( void *arg )
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     x11drv_wow64_init,
-    x11drv_wow64_systray_clear,
-    x11drv_wow64_systray_dock,
-    x11drv_wow64_systray_hide,
-    x11drv_systray_init,
     x11drv_tablet_attach_queue,
     x11drv_wow64_tablet_get_packet,
     x11drv_wow64_tablet_info,

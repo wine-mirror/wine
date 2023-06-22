@@ -47,7 +47,6 @@ static const kernel_callback kernel_callbacks[] =
     x11drv_dnd_enter_event,
     x11drv_dnd_position_event,
     x11drv_dnd_post_drop,
-    x11drv_systray_change_owner,
 };
 
 C_ASSERT( NtUserDriverCallbackFirst + ARRAYSIZE(kernel_callbacks) == client_func_last );
@@ -59,7 +58,6 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
     struct init_params params =
     {
         foreign_window_proc,
-        &show_systray,
     };
 
     if (reason != DLL_PROCESS_ATTACH) return TRUE;

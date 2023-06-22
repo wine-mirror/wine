@@ -217,6 +217,10 @@ extern void X11DRV_SetCursor( HWND hwnd, HCURSOR handle );
 extern BOOL X11DRV_SetCursorPos( INT x, INT y );
 extern BOOL X11DRV_GetCursorPos( LPPOINT pos );
 extern BOOL X11DRV_ClipCursor( const RECT *clip, BOOL reset );
+extern void X11DRV_SystrayDockInit( HWND systray );
+extern BOOL X11DRV_SystrayDockInsert( HWND owner, UINT cx, UINT cy, void *icon );
+extern void X11DRV_SystrayDockClear( HWND hwnd );
+extern BOOL X11DRV_SystrayDockRemove( HWND hwnd );
 extern LONG X11DRV_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd, DWORD flags, LPVOID lpvoid );
 extern BOOL X11DRV_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, LPDEVMODEW devmode );
 extern INT X11DRV_GetDisplayDepth( LPCWSTR name, BOOL is_primary );
@@ -442,7 +446,6 @@ extern BOOL usexvidmode;
 extern BOOL use_take_focus;
 extern BOOL use_primary_selection;
 extern BOOL use_system_cursors;
-extern BOOL show_systray;
 extern BOOL grab_fullscreen;
 extern BOOL usexcomposite;
 extern BOOL managed_mode;
@@ -554,6 +557,7 @@ enum x11drv_atoms
 
 extern Atom X11DRV_Atoms[NB_XATOMS - FIRST_XATOM];
 extern Atom systray_atom;
+extern HWND systray_hwnd;
 
 #define x11drv_atom(name) (X11DRV_Atoms[XATOM_##name - FIRST_XATOM])
 
@@ -835,10 +839,6 @@ static inline BOOL is_window_rect_mapped( const RECT *rect )
 
 /* unixlib interface */
 
-extern NTSTATUS x11drv_systray_clear( void *arg );
-extern NTSTATUS x11drv_systray_dock( void *arg );
-extern NTSTATUS x11drv_systray_hide( void *arg );
-extern NTSTATUS x11drv_systray_init( void *arg );
 extern NTSTATUS x11drv_tablet_attach_queue( void *arg );
 extern NTSTATUS x11drv_tablet_get_packet( void *arg );
 extern NTSTATUS x11drv_tablet_load_info( void *arg );

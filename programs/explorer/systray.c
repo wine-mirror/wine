@@ -1069,6 +1069,24 @@ static LRESULT WINAPI shell_traywnd_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
     case WM_MENUCOMMAND:
         return menu_wndproc(hwnd, msg, wparam, lparam);
 
+    case WM_USER + 0:
+        update_systray_balloon_position();
+        return 0;
+
+    case WM_USER + 1:
+    {
+        struct icon *icon;
+
+        LIST_FOR_EACH_ENTRY( icon, &icon_list, struct icon, entry )
+        {
+            if (!icon->window) continue;
+            hide_icon( icon );
+            show_icon( icon );
+        }
+
+        return 0;
+    }
+
     default:
         return DefWindowProcW( hwnd, msg, wparam, lparam );
     }
