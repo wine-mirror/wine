@@ -327,9 +327,7 @@ static BOOL show_icon(struct icon *icon)
     {
         unsigned int new_count = max( alloc_displayed * 2, 32 );
         struct icon **ptr;
-        if (displayed) ptr = HeapReAlloc( GetProcessHeap(), 0, displayed, new_count * sizeof(*ptr) );
-        else ptr = HeapAlloc( GetProcessHeap(), 0, new_count * sizeof(*ptr) );
-        if (!ptr) return FALSE;
+        if (!(ptr = realloc( displayed, new_count * sizeof(*ptr) ))) return FALSE;
         displayed = ptr;
         alloc_displayed = new_count;
     }
@@ -433,7 +431,7 @@ static BOOL add_icon(NOTIFYICONDATAW *nid)
         return FALSE;
     }
 
-    if (!(icon = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*icon))))
+    if (!(icon = calloc( 1, sizeof(*icon) )))
     {
         WINE_ERR("out of memory\n");
         return FALSE;
@@ -455,7 +453,7 @@ static BOOL delete_icon(struct icon *icon)
     hide_icon(icon);
     list_remove(&icon->entry);
     DestroyIcon(icon->image);
-    HeapFree(GetProcessHeap(), 0, icon);
+    free( icon );
     return TRUE;
 }
 
@@ -615,7 +613,7 @@ static void add_taskbar_button( HWND hwnd )
         if (!GetWindowThreadProcessId( hwnd, &process ) || process == GetCurrentProcessId()) return;
     }
 
-    if (!(win = HeapAlloc( GetProcessHeap(), 0, sizeof(*win) ))) return;
+    if (!(win = malloc( sizeof(*win) ))) return;
     win->hwnd = hwnd;
     win->button = CreateWindowW( WC_BUTTONW, NULL, WS_CHILD | BS_OWNERDRAW,
                                  0, 0, 0, 0, tray_window, (HMENU)hwnd, 0, 0 );
@@ -639,7 +637,7 @@ static void remove_taskbar_button( HWND hwnd )
     if (!win) return;
     list_remove( &win->entry );
     DestroyWindow( win->button );
-    HeapFree( GetProcessHeap(), 0, win );
+    free( win );
 }
 
 static void paint_taskbar_button( const DRAWITEMSTRUCT *dis )

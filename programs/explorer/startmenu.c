@@ -185,7 +185,7 @@ static struct menu_item* add_shell_item(struct menu_item* parent, LPITEMIDLIST p
     BOOL match = FALSE;
     SFGAOF flags;
 
-    item = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct menu_item));
+    item = calloc( 1, sizeof(struct menu_item) );
 
     if (parent->pidl == NULL)
     {
@@ -208,8 +208,8 @@ static struct menu_item* add_shell_item(struct menu_item* parent, LPITEMIDLIST p
     if (item->folder && shell_folder_is_empty(item->folder))
     {
         IShellFolder_Release(item->folder);
-        HeapFree(GetProcessHeap(), 0, item->displayname);
-        HeapFree(GetProcessHeap(), 0, item);
+        free( item->displayname );
+        free( item );
         CoTaskMemFree(pidl);
         return NULL;
     }
@@ -303,8 +303,8 @@ static struct menu_item* add_shell_item(struct menu_item* parent, LPITEMIDLIST p
     }
     else {
         /* duplicate shortcut, do nothing */
-        HeapFree(GetProcessHeap(), 0, item->displayname);
-        HeapFree(GetProcessHeap(), 0, item);
+        free( item->displayname );
+        free( item );
         CoTaskMemFree(pidl);
         item = NULL;
     }
@@ -350,7 +350,7 @@ static void destroy_menus(void)
         CoTaskMemFree(item->displayname);
 
         list_remove(&item->entry);
-        HeapFree(GetProcessHeap(), 0, item);
+        free( item );
     }
 }
 

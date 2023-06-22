@@ -23,7 +23,6 @@
 #define COBJMACROS
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "explorer_private.h"
 #include "resource.h"
 
@@ -114,8 +113,7 @@ static ULONG WINAPI IExplorerBrowserEventsImpl_fnRelease(IExplorerBrowserEvents 
 {
     IExplorerBrowserEventsImpl *This = impl_from_IExplorerBrowserEvents(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
-    if(!ref)
-        HeapFree(GetProcessHeap(),0,This);
+    if(!ref) free(This);
     return ref;
 }
 
@@ -334,8 +332,7 @@ static IExplorerBrowserEventsVtbl vt_IExplorerBrowserEvents =
 
 static IExplorerBrowserEvents *make_explorer_events(explorer_info *info)
 {
-    IExplorerBrowserEventsImpl *ret
-        = HeapAlloc(GetProcessHeap(), 0, sizeof(IExplorerBrowserEventsImpl));
+    IExplorerBrowserEventsImpl *ret = malloc( sizeof(IExplorerBrowserEventsImpl) );
     ret->IExplorerBrowserEvents_iface.lpVtbl = &vt_IExplorerBrowserEvents;
     ret->info = info;
     ret->ref = 1;
@@ -447,7 +444,7 @@ static void make_explorer_window(parameters_struct *params)
     default_width = MulDiv(DEFAULT_WIDTH, dpix, USER_DEFAULT_SCREEN_DPI);
     default_height = MulDiv(DEFAULT_HEIGHT, dpiy, USER_DEFAULT_SCREEN_DPI);
 
-    info = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(explorer_info));
+    info = calloc( 1, sizeof(explorer_info) );
     if(!info)
     {
         WINE_ERR("Could not allocate an explorer_info struct\n");
@@ -459,8 +456,8 @@ static void make_explorer_window(parameters_struct *params)
                             &IID_IExplorerBrowser,(LPVOID*)&info->browser);
     if(FAILED(hres))
     {
-        WINE_ERR("Could not obtain an instance of IExplorerBrowser\n");
-        HeapFree(GetProcessHeap(),0,info);
+        WINE_ERR( "Could not obtain an instance of IExplorerBrowser\n" );
+        free(info);
         IShellWindows_Release(sw);
         free(path);
         return;
@@ -727,7 +724,7 @@ static LRESULT CALLBACK explorer_wnd_proc(HWND hwnd, UINT uMsg, WPARAM wParam, L
         IExplorerBrowser_Release(browser);
         ILFree(info->pidl);
         IImageList_Release(info->icon_list);
-        HeapFree(GetProcessHeap(),0,info);
+        free(info);
         SetWindowLongPtrW(hwnd,EXPLORER_INFO_INDEX,0);
         PostQuitMessage(0);
         break;

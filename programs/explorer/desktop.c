@@ -288,8 +288,7 @@ static WCHAR *append_path( const WCHAR *path, const WCHAR *filename, int len_fil
     WCHAR *ret;
 
     if (len_filename == -1) len_filename = lstrlenW( filename );
-    if (!(ret = HeapAlloc( GetProcessHeap(), 0, (len_path + len_filename + 2) * sizeof(WCHAR) )))
-        return NULL;
+    if (!(ret = malloc( (len_path + len_filename + 2) * sizeof(WCHAR) ))) return NULL;
     memcpy( ret, path, len_path * sizeof(WCHAR) );
     ret[len_path] = '\\';
     memcpy( ret + len_path + 1, filename, len_filename * sizeof(WCHAR) );
@@ -358,7 +357,7 @@ static WCHAR *build_title( const WCHAR *filename, int len )
             break;
         }
     }
-    if (!(ret = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = malloc( (len + 1) * sizeof(WCHAR) ))) return NULL;
     memcpy( ret, filename, len * sizeof(WCHAR) );
     ret[len] = 0;
     return ret;
@@ -372,13 +371,13 @@ static BOOL add_launcher( const WCHAR *folder, const WCHAR *filename, int len_fi
     if (nb_launchers == nb_allocated)
     {
         unsigned int count = nb_allocated * 2;
-        struct launcher **tmp = HeapReAlloc( GetProcessHeap(), 0, launchers, count * sizeof(*tmp) );
+        struct launcher **tmp = realloc( launchers, count * sizeof(*tmp) );
         if (!tmp) return FALSE;
         launchers = tmp;
         nb_allocated = count;
     }
 
-    if (!(launcher = HeapAlloc( GetProcessHeap(), 0, sizeof(*launcher) ))) return FALSE;
+    if (!(launcher = malloc( sizeof(*launcher) ))) return FALSE;
     if (!(launcher->path = append_path( folder, filename, len_filename ))) goto error;
     if (!(link = load_shelllink( launcher->path ))) goto error;
 
@@ -390,21 +389,21 @@ static BOOL add_launcher( const WCHAR *folder, const WCHAR *filename, int len_fi
         launchers[nb_launchers++] = launcher;
         return TRUE;
     }
-    HeapFree( GetProcessHeap(), 0, launcher->title );
+    free( launcher->title );
     DestroyIcon( launcher->icon );
 
 error:
-    HeapFree( GetProcessHeap(), 0, launcher->path );
-    HeapFree( GetProcessHeap(), 0, launcher );
+    free( launcher->path );
+    free( launcher );
     return FALSE;
 }
 
 static void free_launcher( struct launcher *launcher )
 {
     DestroyIcon( launcher->icon );
-    HeapFree( GetProcessHeap(), 0, launcher->path );
-    HeapFree( GetProcessHeap(), 0, launcher->title );
-    HeapFree( GetProcessHeap(), 0, launcher );
+    free( launcher->path );
+    free( launcher->title );
+    free( launcher );
 }
 
 static BOOL remove_launcher( const WCHAR *folder, const WCHAR *filename, int len_filename )
@@ -425,7 +424,7 @@ static BOOL remove_launcher( const WCHAR *folder, const WCHAR *filename, int len
             break;
         }
     }
-    HeapFree( GetProcessHeap(), 0, path );
+    free( path );
     return ret;
 }
 
@@ -498,8 +497,8 @@ static DWORD CALLBACK watch_desktop_folders( LPVOID param )
     }
     if (!(ovl0.hEvent = events[0] = CreateEventW( NULL, FALSE, FALSE, NULL ))) goto error;
     if (!(ovl1.hEvent = events[1] = CreateEventW( NULL, FALSE, FALSE, NULL ))) goto error;
-    if (!(buf0 = HeapAlloc( GetProcessHeap(), 0, size ))) goto error;
-    if (!(buf1 = HeapAlloc( GetProcessHeap(), 0, size ))) goto error;
+    if (!(buf0 = malloc( size ))) goto error;
+    if (!(buf1 = malloc( size ))) goto error;
 
     for (;;)
     {
@@ -540,8 +539,8 @@ error:
     CloseHandle( dir1 );
     CloseHandle( events[0] );
     CloseHandle( events[1] );
-    HeapFree( GetProcessHeap(), 0, buf0 );
-    HeapFree( GetProcessHeap(), 0, buf1 );
+    free( buf0 );
+    free( buf1 );
     if (SUCCEEDED( init )) CoUninitialize();
     return error;
 }
@@ -554,7 +553,7 @@ static void add_folder( const WCHAR *folder )
     HANDLE handle;
     WCHAR *glob;
 
-    if (!(glob = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) return;
+    if (!(glob = malloc( (len + 1) * sizeof(WCHAR) ))) return;
     lstrcpyW( glob, folder );
     lstrcatW( glob, lnkW );
 
@@ -563,7 +562,7 @@ static void add_folder( const WCHAR *folder )
         do { add_launcher( folder, data.cFileName, -1 ); } while (FindNextFileW( handle, &data ));
         FindClose( handle );
     }
-    HeapFree( GetProcessHeap(), 0, glob );
+    free( glob );
 }
 
 #define BORDER_SIZE  4
@@ -605,7 +604,7 @@ static void initialize_launchers( HWND hwnd )
         CoTaskMemFree( desktop_folder );
         return;
     }
-    if ((launchers = HeapAlloc( GetProcessHeap(), 0, 2 * sizeof(launchers[0]) )))
+    if ((launchers = malloc( 2 * sizeof(launchers[0]) )))
     {
         nb_allocated = 2;
 
@@ -996,7 +995,7 @@ static void set_desktop_window_title( HWND hwnd, const WCHAR *name )
     window_title_len = lstrlenW(name) * sizeof(WCHAR)
                      + sizeof(desktop_name_separatorW)
                      + sizeof(desktop_nameW);
-    window_titleW = HeapAlloc( GetProcessHeap(), 0, window_title_len );
+    window_titleW = malloc( window_title_len );
     if (!window_titleW)
     {
         SetWindowTextW( hwnd, desktop_nameW );
@@ -1008,7 +1007,7 @@ static void set_desktop_window_title( HWND hwnd, const WCHAR *name )
     lstrcatW( window_titleW, desktop_nameW );
 
     SetWindowTextW( hwnd, window_titleW );
-    HeapFree( GetProcessHeap(), 0, window_titleW );
+    free( window_titleW );
 }
 
 static inline BOOL is_whitespace(WCHAR c)
