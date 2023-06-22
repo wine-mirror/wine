@@ -93,9 +93,7 @@ static struct list taskbar_buttons = LIST_INIT( taskbar_buttons );
 
 static HWND tray_window;
 
-static unsigned int alloc_displayed;
 static unsigned int nb_displayed;
-static struct icon **displayed;  /* array of currently displayed icons */
 
 static BOOL hide_systray, enable_shell;
 static int icon_cx, icon_cy, tray_width, tray_height;
@@ -298,10 +296,16 @@ static void update_tooltip_position( struct icon *icon )
 /* find the icon located at a certain point in the tray window */
 static struct icon *icon_from_point( int x, int y )
 {
-    if (y < 0 || y >= icon_cy) return NULL;
-    x = tray_width - x;
-    if (x < 0 || x >= icon_cx * nb_displayed) return NULL;
-    return displayed[x / icon_cx];
+    struct icon *icon;
+    POINT pt = {x, y};
+
+    LIST_FOR_EACH_ENTRY(icon, &icon_list, struct icon, entry)
+    {
+        RECT rect = get_icon_rect( icon );
+        if (PtInRect(&rect, pt)) return icon;
+    }
+
+    return NULL;
 }
 
 /* invalidate the portion of the tray window that contains the specified icons */
@@ -323,17 +327,7 @@ static BOOL show_icon(struct icon *icon)
 
     if (icon->display != -1) return TRUE;  /* already displayed */
 
-    if (nb_displayed >= alloc_displayed)
-    {
-        unsigned int new_count = max( alloc_displayed * 2, 32 );
-        struct icon **ptr;
-        if (!(ptr = realloc( displayed, new_count * sizeof(*ptr) ))) return FALSE;
-        displayed = ptr;
-        alloc_displayed = new_count;
-    }
-
-    icon->display = nb_displayed;
-    displayed[nb_displayed++] = icon;
+    icon->display = nb_displayed++;
     update_tooltip_position( icon );
     invalidate_icons( nb_displayed-1, nb_displayed-1 );
 
@@ -347,18 +341,19 @@ static BOOL show_icon(struct icon *icon)
 /* make an icon invisible */
 static BOOL hide_icon(struct icon *icon)
 {
-    unsigned int i;
+    struct icon *ptr;
 
     TRACE( "id=0x%x, hwnd=%p\n", icon->id, icon->owner );
 
     if (icon->display == -1) return TRUE;  /* already hidden */
 
     assert( nb_displayed );
-    for (i = icon->display; i < nb_displayed - 1; i++)
+    LIST_FOR_EACH_ENTRY( ptr, &icon_list, struct icon, entry )
     {
-        displayed[i] = displayed[i + 1];
-        displayed[i]->display = i;
-        update_tooltip_position( displayed[i] );
+        if (ptr == icon) continue;
+        if (ptr->display < icon->display) continue;
+        ptr->display--;
+        update_tooltip_position( ptr );
     }
     nb_displayed--;
     invalidate_icons( icon->display, nb_displayed );
@@ -786,16 +781,16 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
     case WM_PAINT:
         {
-            unsigned int i;
+            struct icon *icon;
             PAINTSTRUCT ps;
             HDC hdc;
 
             hdc = BeginPaint( hwnd, &ps );
-            for (i = 0; i < nb_displayed; i++)
+            LIST_FOR_EACH_ENTRY( icon, &icon_list, struct icon, entry )
             {
-                RECT dummy, rect = get_icon_rect( displayed[i] );
-                if (IntersectRect( &dummy, &rect, &ps.rcPaint ))
-                    DrawIconEx( hdc, rect.left + ICON_BORDER, rect.top + ICON_BORDER, displayed[i]->image,
+                RECT dummy, rect = get_icon_rect( icon );
+                if (icon->display != -1 && IntersectRect( &dummy, &rect, &ps.rcPaint ))
+                    DrawIconEx( hdc, rect.left + ICON_BORDER, rect.top + ICON_BORDER, icon->image,
                                 icon_cx - 2*ICON_BORDER, icon_cy - 2*ICON_BORDER,
                             0, 0, DI_DEFAULTSIZE|DI_NORMAL);
             }
