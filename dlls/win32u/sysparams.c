@@ -2569,6 +2569,9 @@ LONG WINAPI NtUserQueryDisplayConfig( UINT32 flags, UINT32 *paths_count, DISPLAY
         if (!(monitor->dev.state_flags & DISPLAY_DEVICE_ACTIVE))
             continue;
 
+        if (!monitor->adapter)
+            continue;
+
         adapter_index = monitor->adapter->id;
         gpu_luid = &monitor->adapter->gpu_luid;
         output_id = monitor->output_id;
