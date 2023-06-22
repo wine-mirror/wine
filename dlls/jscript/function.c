@@ -270,6 +270,26 @@ HRESULT Function_invoke(jsdisp_t *func_this, jsval_t vthis, WORD flags, unsigned
     return function->vtbl->call(function->dispex.ctx, function, vthis, flags, argc, argv, r);
 }
 
+static HRESULT Function_get_caller(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
+{
+    FunctionInstance *function = function_from_jsdisp(jsthis);
+    call_frame_t *frame;
+
+    TRACE("%p\n", jsthis);
+
+    for(frame = ctx->call_ctx; frame; frame = frame->prev_frame) {
+        if(frame->function_instance == &function->dispex) {
+            if(!frame->prev_frame || !frame->prev_frame->function_instance)
+                break;
+            *r = jsval_obj(jsdisp_addref(frame->prev_frame->function_instance));
+            return S_OK;
+        }
+    }
+
+    *r = jsval_null();
+    return S_OK;
+}
+
 static HRESULT Function_get_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
     TRACE("%p\n", jsthis);
@@ -565,6 +585,7 @@ static const builtin_prop_t Function_props[] = {
     {L"arguments",           NULL, 0,                        Function_get_arguments},
     {L"bind",                Function_bind,                  PROPF_METHOD|PROPF_ES5|1},
     {L"call",                Function_call,                  PROPF_METHOD|1},
+    {L"caller",              NULL, PROPF_HTML,               Function_get_caller},
     {L"length",              NULL, 0,                        Function_get_length},
     {L"toString",            Function_toString,              PROPF_METHOD}
 };
@@ -584,6 +605,7 @@ static const builtin_info_t Function_info = {
 
 static const builtin_prop_t FunctionInst_props[] = {
     {L"arguments",           NULL, 0,                        Function_get_arguments},
+    {L"caller",              NULL, PROPF_HTML,               Function_get_caller},
     {L"length",              NULL, 0,                        Function_get_length}
 };
 
@@ -769,6 +791,7 @@ static HRESULT InterpretedFunction_set_prototype(script_ctx_t *ctx, jsdisp_t *js
 
 static const builtin_prop_t InterpretedFunction_props[] = {
     {L"arguments",           NULL, 0,                        Function_get_arguments},
+    {L"caller",              NULL, PROPF_HTML,               Function_get_caller},
     {L"length",              NULL, 0,                        Function_get_length},
     {L"prototype",           NULL, 0,                        InterpretedFunction_get_prototype, InterpretedFunction_set_prototype}
 };
@@ -889,6 +912,30 @@ HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, function_cod
     return S_OK;
 }
 
+static HRESULT BindFunction_get_caller(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
+{
+    return JS_E_INVALID_ACTION;
+}
+
+static const builtin_prop_t BindFunction_props[] = {
+    {L"arguments",           NULL, 0,                        Function_get_arguments},
+    {L"caller",              NULL, 0,                        BindFunction_get_caller},
+    {L"length",              NULL, 0,                        Function_get_length}
+};
+
+static const builtin_info_t BindFunction_info = {
+    JSCLASS_FUNCTION,
+    Function_value,
+    ARRAY_SIZE(BindFunction_props),
+    BindFunction_props,
+    Function_destructor,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    Function_gc_traverse
+};
+
 static HRESULT BindFunction_call(script_ctx_t *ctx, FunctionInstance *func, jsval_t vthis, unsigned flags,
          unsigned argc, jsval_t *argv, jsval_t *r)
 {
@@ -975,7 +1022,7 @@ static HRESULT create_bind_function(script_ctx_t *ctx, FunctionInstance *target,
     BindFunction *function;
     HRESULT hres;
 
-    hres = create_function(ctx, NULL, &BindFunctionVtbl, FIELD_OFFSET(BindFunction, args[argc]), PROPF_METHOD,
+    hres = create_function(ctx, &BindFunction_info, &BindFunctionVtbl, FIELD_OFFSET(BindFunction, args[argc]), PROPF_METHOD,
                            FALSE, NULL, (void**)&function);
     if(FAILED(hres))
         return hres;

@@ -840,6 +840,27 @@ sync_test("for..in", function() {
     ok(found === 1, "ondragstart enumerated " + found + " times in document after set to empty string");
 });
 
+sync_test("function caller", function() {
+    ok(Function.prototype.hasOwnProperty("caller"), "caller not prop of Function.prototype");
+
+    function test_caller(expected_caller, stop) {
+        ok(test_caller.caller === expected_caller, "caller = " + test_caller.caller);
+        if(stop) return;
+        function nested() {
+            ok(nested.caller === test_caller, "nested caller = " + nested.caller);
+            test_caller(nested, true);
+            ok(test_caller.caller === expected_caller, "caller within nested = " + test_caller.caller);
+        }
+        nested();
+        ok(test_caller.caller === expected_caller, "caller after nested = " + test_caller.caller);
+    }
+    ok(test_caller.hasOwnProperty("caller"), "caller not prop of test_caller");
+    ok(test_caller.caller === null, "test_caller.caller = " + test_caller.caller);
+
+    function f1() { test_caller(f1); } f1();
+    function f2() { test_caller(f2); } f2();
+});
+
 sync_test("elem_by_id", function() {
     document.body.innerHTML = '<form id="testid" name="testname"></form>';
     var v = document.documentMode, found, i;

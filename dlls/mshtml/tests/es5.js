@@ -18,6 +18,7 @@
 
 var E_INVALIDARG = 0x80070057;
 var JS_E_PROP_DESC_MISMATCH = 0x800a01bd;
+var JS_E_INVALID_ACTION = 0x800a01bd;
 var JS_E_NUMBER_EXPECTED = 0x800a1389;
 var JS_E_FUNCTION_EXPECTED = 0x800a138a;
 var JS_E_DATE_EXPECTED = 0x800a138e;
@@ -525,11 +526,14 @@ sync_test("getOwnPropertyDescriptor", function() {
     (function() {
         test_own_data_prop_desc(arguments, "length", true, false, true);
         test_own_data_prop_desc(arguments, "callee", true, false, true);
+        ok(!("caller" in arguments), "caller in arguments");
     })();
 
     test_own_data_prop_desc(String, "prototype", false, false, false);
     test_own_data_prop_desc(function(){}, "prototype", true, false, false);
+    test_own_data_prop_desc(function(){}, "caller", false, false, false);
     test_own_data_prop_desc(Function, "prototype", false, false, false);
+    test_own_data_prop_desc(Function.prototype, "caller", false, false, false);
     test_own_data_prop_desc(String.prototype, "constructor", true, false, true);
 
     try {
@@ -1135,6 +1139,14 @@ sync_test("bind", function() {
     ok(f.length === 0, "f.length = " + f.length);
     r = f.call(o2);
     ok(r === 1, "r = " + r);
+
+    try {
+        f.caller;
+        ok(false, "expected exception getting f.caller");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_INVALID_ACTION, "f.caller threw " + n);
+    }
 
     f = (function() {
         ok(this === o, "this != o");
