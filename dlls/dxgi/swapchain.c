@@ -1586,12 +1586,10 @@ static void d3d12_swapchain_destroy_vulkan_resources(struct d3d12_swapchain *swa
     }
 }
 
-static void d3d12_swapchain_destroy_resources(struct d3d12_swapchain *swapchain)
+static void d3d12_swapchain_destroy_d3d12_resources(struct d3d12_swapchain *swapchain)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
     unsigned int i;
-
-    d3d12_swapchain_destroy_vulkan_resources(swapchain);
 
     for (i = 0; i < swapchain->desc.BufferCount; ++i)
     {
@@ -1749,7 +1747,7 @@ static HRESULT d3d12_swapchain_create_vulkan_resources(struct d3d12_swapchain *s
     return d3d12_swapchain_create_command_buffers(swapchain);
 }
 
-static HRESULT d3d12_swapchain_create_resources(struct d3d12_swapchain *swapchain)
+static HRESULT d3d12_swapchain_create_d3d12_resources(struct d3d12_swapchain *swapchain)
 {
     HRESULT hr;
 
@@ -1762,10 +1760,7 @@ static HRESULT d3d12_swapchain_create_resources(struct d3d12_swapchain *swapchai
     if (FAILED(hr = d3d12_swapchain_create_user_buffers(swapchain)))
         return hr;
 
-    if (FAILED(hr = d3d12_swapchain_create_image_resources(swapchain)))
-        return hr;
-
-    return d3d12_swapchain_create_vulkan_resources(swapchain);
+    return d3d12_swapchain_create_image_resources(swapchain);
 }
 
 static inline struct d3d12_swapchain *d3d12_swapchain_from_IDXGISwapChain4(IDXGISwapChain4 *iface)
@@ -1814,7 +1809,8 @@ static void d3d12_swapchain_destroy(struct d3d12_swapchain *swapchain)
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
     void *vulkan_module = vk_funcs->vulkan_module;
 
-    d3d12_swapchain_destroy_resources(swapchain);
+    d3d12_swapchain_destroy_vulkan_resources(swapchain);
+    d3d12_swapchain_destroy_d3d12_resources(swapchain);
 
     if (swapchain->frame_latency_event)
         CloseHandle(swapchain->frame_latency_event);
@@ -2286,6 +2282,7 @@ static HRESULT d3d12_swapchain_resize_buffers(struct d3d12_swapchain *swapchain,
     DXGI_SWAP_CHAIN_DESC1 *desc, new_desc;
     unsigned int i;
     ULONG refcount;
+    HRESULT hr;
 
     if (flags)
         FIXME("Ignoring flags %#x.\n", flags);
@@ -2335,9 +2332,14 @@ static HRESULT d3d12_swapchain_resize_buffers(struct d3d12_swapchain *swapchain,
             && desc->Format == new_desc.Format && desc->BufferCount == new_desc.BufferCount)
         return S_OK;
 
-    d3d12_swapchain_destroy_resources(swapchain);
+    d3d12_swapchain_destroy_vulkan_resources(swapchain);
+    d3d12_swapchain_destroy_d3d12_resources(swapchain);
     swapchain->desc = new_desc;
-    return d3d12_swapchain_create_resources(swapchain);
+
+    if (FAILED(hr = d3d12_swapchain_create_d3d12_resources(swapchain)))
+        return hr;
+
+    return d3d12_swapchain_create_vulkan_resources(swapchain);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_ResizeBuffers(IDXGISwapChain4 *iface,
@@ -3019,7 +3021,13 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     ID3D12CommandQueue_AddRef(swapchain->command_queue = queue);
     ID3D12Device_AddRef(swapchain->device = device);
 
-    if (FAILED(hr = d3d12_swapchain_create_resources(swapchain)))
+    if (FAILED(hr = d3d12_swapchain_create_d3d12_resources(swapchain)))
+    {
+        d3d12_swapchain_destroy(swapchain);
+        return hr;
+    }
+
+    if (FAILED(hr = d3d12_swapchain_create_vulkan_resources(swapchain)))
     {
         d3d12_swapchain_destroy(swapchain);
         return hr;
