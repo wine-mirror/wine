@@ -1028,6 +1028,8 @@ struct d3d12_swapchain
     CRITICAL_SECTION worker_cs;
     CONDITION_VARIABLE worker_cv;
     bool worker_running;
+    struct list worker_ops;
+    HANDLE worker_event;
 
     /* D3D12 side of the swapchain (frontend): these objects are
      * visible to the IDXGISwapChain client, so they must never be
@@ -1075,6 +1077,33 @@ struct d3d12_swapchain
     uint32_t frame_latency;
 };
 
+enum d3d12_swapchain_op_type
+{
+    D3D12_SWAPCHAIN_OP_PRESENT,
+};
+
+struct d3d12_swapchain_op
+{
+    struct list entry;
+    enum d3d12_swapchain_op_type type;
+    union
+    {
+        struct
+        {
+            unsigned int sync_interval;
+            VkImage vk_image;
+            unsigned int frame_number;
+        } present;
+    };
+};
+
+static void d3d12_swapchain_op_destroy(struct d3d12_swapchain_op *op)
+{
+    heap_free(op);
+}
+
+static HRESULT d3d12_swapchain_op_present_execute(struct d3d12_swapchain *swapchain, struct d3d12_swapchain_op *op);
+
 static DWORD WINAPI d3d12_swapchain_worker_proc(void *data)
 {
     struct d3d12_swapchain *swapchain = data;
@@ -1083,7 +1112,29 @@ static DWORD WINAPI d3d12_swapchain_worker_proc(void *data)
 
     while (swapchain->worker_running)
     {
-        if (!SleepConditionVariableCS(&swapchain->worker_cv, &swapchain->worker_cs, INFINITE))
+        if (!list_empty(&swapchain->worker_ops))
+        {
+            struct d3d12_swapchain_op *op = LIST_ENTRY(list_head(&swapchain->worker_ops), struct d3d12_swapchain_op, entry);
+
+            list_remove(&op->entry);
+
+            LeaveCriticalSection(&swapchain->worker_cs);
+
+            switch (op->type)
+            {
+                case D3D12_SWAPCHAIN_OP_PRESENT:
+                    d3d12_swapchain_op_present_execute(swapchain, op);
+                    break;
+            }
+
+            d3d12_swapchain_op_destroy(op);
+
+            if (!SetEvent(swapchain->worker_event))
+                ERR("Cannot set event, last error %ld.\n", GetLastError());
+
+            EnterCriticalSection(&swapchain->worker_cs);
+        }
+        else if (!SleepConditionVariableCS(&swapchain->worker_cv, &swapchain->worker_cs, INFINITE))
         {
             ERR("Cannot sleep on condition variable, last error %ld.\n", GetLastError());
             break;
@@ -1833,6 +1884,7 @@ static void d3d12_swapchain_destroy(struct d3d12_swapchain *swapchain)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
     void *vulkan_module = vk_funcs->vulkan_module;
+    struct d3d12_swapchain_op *op, *op2;
     DWORD ret;
 
     EnterCriticalSection(&swapchain->worker_cs);
@@ -1849,7 +1901,15 @@ static void d3d12_swapchain_destroy(struct d3d12_swapchain *swapchain)
             ERR("Failed to close worker thread, last error %ld.\n", GetLastError());
     }
 
+    if (!CloseHandle(swapchain->worker_event))
+        ERR("Failed to close worker event, last error %ld.\n", GetLastError());
+
     DeleteCriticalSection(&swapchain->worker_cs);
+
+    LIST_FOR_EACH_ENTRY_SAFE(op, op2, &swapchain->worker_ops, struct d3d12_swapchain_op, entry)
+    {
+        d3d12_swapchain_op_destroy(op);
+    }
 
     d3d12_swapchain_destroy_vulkan_resources(swapchain);
     d3d12_swapchain_destroy_d3d12_resources(swapchain);
@@ -2055,29 +2115,13 @@ static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain,
     return vr;
 }
 
-static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
-        unsigned int sync_interval, unsigned int flags)
+static HRESULT d3d12_swapchain_op_present_execute(struct d3d12_swapchain *swapchain, struct d3d12_swapchain_op *op)
 {
-    HANDLE frame_latency_event;
     VkQueue vk_queue;
     VkResult vr;
     HRESULT hr;
 
-    if (sync_interval > 4)
-    {
-        WARN("Invalid sync interval %u.\n", sync_interval);
-        return DXGI_ERROR_INVALID_CALL;
-    }
-
-    if (flags & ~DXGI_PRESENT_TEST)
-        FIXME("Unimplemented flags %#x.\n", flags);
-    if (flags & DXGI_PRESENT_TEST)
-    {
-        WARN("Returning S_OK for DXGI_PRESENT_TEST.\n");
-        return S_OK;
-    }
-
-    if (FAILED(hr = d3d12_swapchain_set_sync_interval(swapchain, sync_interval)))
+    if (FAILED(hr = d3d12_swapchain_set_sync_interval(swapchain, op->present.sync_interval)))
         return hr;
 
     if (!(vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue)))
@@ -2086,8 +2130,7 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
         return E_FAIL;
     }
 
-    vr = d3d12_swapchain_queue_present(swapchain, vk_queue,
-            swapchain->vk_images[swapchain->current_buffer_index]);
+    vr = d3d12_swapchain_queue_present(swapchain, vk_queue, op->present.vk_image);
     if (vr == VK_ERROR_OUT_OF_DATE_KHR)
     {
         vkd3d_release_vk_queue(swapchain->command_queue);
@@ -2104,8 +2147,7 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
             return E_FAIL;
         }
 
-        if ((vr = d3d12_swapchain_queue_present(swapchain, vk_queue,
-                swapchain->vk_images[swapchain->current_buffer_index])) < 0)
+        if ((vr = d3d12_swapchain_queue_present(swapchain, vk_queue, op->present.vk_image)) < 0)
             ERR("Failed to present after recreating swapchain, vr %d.\n", vr);
     }
 
@@ -2117,12 +2159,11 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
         return hresult_from_vk_result(vr);
     }
 
-    ++swapchain->frame_number;
-    if ((frame_latency_event = swapchain->frame_latency_event))
+    if (swapchain->frame_latency_fence)
     {
-        /* Bias the frame number to avoid underflowing in
-         * SetEventOnCompletion(). */
-        uint64_t number = swapchain->frame_number + DXGI_MAX_SWAP_CHAIN_BUFFERS;
+        /* Use the same bias as d3d12_swapchain_present(). Add one to
+         * account for the "++swapchain->frame_numer" there. */
+        uint64_t number = op->present.frame_number + DXGI_MAX_SWAP_CHAIN_BUFFERS + 1;
 
         if (FAILED(hr = ID3D12CommandQueue_Signal(swapchain->command_queue,
                 swapchain->frame_latency_fence, number)))
@@ -2130,6 +2171,56 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
             ERR("Failed to signal frame latency fence, hr %#lx.\n", hr);
             return hr;
         }
+    }
+
+    return S_OK;
+}
+
+static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
+        unsigned int sync_interval, unsigned int flags)
+{
+    struct d3d12_swapchain_op *op;
+    HANDLE frame_latency_event;
+    HRESULT hr;
+
+    if (sync_interval > 4)
+    {
+        WARN("Invalid sync interval %u.\n", sync_interval);
+        return DXGI_ERROR_INVALID_CALL;
+    }
+
+    if (flags & ~DXGI_PRESENT_TEST)
+        FIXME("Unimplemented flags %#x.\n", flags);
+    if (flags & DXGI_PRESENT_TEST)
+    {
+        WARN("Returning S_OK for DXGI_PRESENT_TEST.\n");
+        return S_OK;
+    }
+
+    if (!(op = heap_alloc_zero(sizeof(*op))))
+    {
+        WARN("Cannot allocate memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    op->type = D3D12_SWAPCHAIN_OP_PRESENT;
+    op->present.sync_interval = sync_interval;
+    op->present.vk_image = swapchain->vk_images[swapchain->current_buffer_index];
+    op->present.frame_number = swapchain->frame_number;
+
+    EnterCriticalSection(&swapchain->worker_cs);
+    list_add_tail(&swapchain->worker_ops, &op->entry);
+    WakeAllConditionVariable(&swapchain->worker_cv);
+    LeaveCriticalSection(&swapchain->worker_cs);
+
+    WaitForSingleObject(swapchain->worker_event, INFINITE);
+
+    ++swapchain->frame_number;
+    if ((frame_latency_event = swapchain->frame_latency_event))
+    {
+        /* Bias the frame number to avoid underflowing in
+         * SetEventOnCompletion(). */
+        uint64_t number = swapchain->frame_number + DXGI_MAX_SWAP_CHAIN_BUFFERS;
 
         if (FAILED(hr = ID3D12Fence_SetEventOnCompletion(swapchain->frame_latency_fence,
                 number - swapchain->frame_latency, frame_latency_event)))
@@ -3041,6 +3132,15 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     InitializeCriticalSection(&swapchain->worker_cs);
     InitializeConditionVariable(&swapchain->worker_cv);
     swapchain->worker_running = true;
+    list_init(&swapchain->worker_ops);
+
+    if (!(swapchain->worker_event = CreateEventA(NULL, FALSE, FALSE, NULL)))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        WARN("Failed to create worker event, hr %#lx.\n", hr);
+        d3d12_swapchain_destroy(swapchain);
+        return hr;
+    }
 
     surface_desc.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
     surface_desc.pNext = NULL;
