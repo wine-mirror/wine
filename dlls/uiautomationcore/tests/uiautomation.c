@@ -89,6 +89,7 @@ DEFINE_EXPECT(prov_callback_nonclient);
 DEFINE_EXPECT(prov_callback_proxy);
 DEFINE_EXPECT(prov_callback_parent_proxy);
 DEFINE_EXPECT(uia_event_callback);
+DEFINE_EXPECT(uia_com_event_callback);
 DEFINE_EXPECT(winproc_GETOBJECT_UiaRoot);
 DEFINE_EXPECT(child_winproc_GETOBJECT_UiaRoot);
 DEFINE_EXPECT(Accessible_accNavigate);
@@ -12896,6 +12897,372 @@ static void test_GetFocusedElement(IUIAutomation *uia_iface)
     UnregisterClassA("test_GetFocusedElement child class", NULL);
 }
 
+static void set_uia_hwnd_expects(int proxy_cback_count, int base_hwnd_cback_count, int nc_cback_count,
+        int win_get_uia_obj_count, int win_get_client_obj_count)
+{
+    SET_EXPECT_MULTI(prov_callback_base_hwnd, base_hwnd_cback_count);
+    SET_EXPECT_MULTI(prov_callback_nonclient, nc_cback_count);
+    SET_EXPECT_MULTI(prov_callback_proxy, proxy_cback_count);
+    SET_EXPECT_MULTI(winproc_GETOBJECT_UiaRoot, win_get_uia_obj_count);
+    SET_EXPECT_MULTI(winproc_GETOBJECT_CLIENT, win_get_client_obj_count);
+}
+
+static void check_uia_hwnd_expects(int proxy_cback_count, BOOL proxy_cback_todo,
+        int base_hwnd_cback_count, BOOL base_hwnd_cback_todo, int nc_cback_count, BOOL nc_cback_todo,
+        int win_get_uia_obj_count, BOOL win_get_uia_obj_todo, int win_get_client_obj_count, BOOL win_get_client_obj_todo)
+{
+    todo_wine_if(proxy_cback_todo) CHECK_CALLED_MULTI(prov_callback_proxy, proxy_cback_count);
+    todo_wine_if(base_hwnd_cback_todo) CHECK_CALLED_MULTI(prov_callback_base_hwnd, base_hwnd_cback_count);
+    todo_wine_if(nc_cback_todo) CHECK_CALLED_MULTI(prov_callback_nonclient, nc_cback_count);
+    todo_wine_if(win_get_uia_obj_todo) CHECK_CALLED_MULTI(winproc_GETOBJECT_UiaRoot, win_get_uia_obj_count);
+    if (win_get_client_obj_count)
+        todo_wine_if(win_get_client_obj_todo) CHECK_CALLED_MULTI(winproc_GETOBJECT_CLIENT, win_get_client_obj_count);
+}
+
+static void check_uia_hwnd_expects_at_most(int proxy_cback_count, int base_hwnd_cback_count, int nc_cback_count,
+        int win_get_uia_obj_count, int win_get_client_obj_count)
+{
+    CHECK_CALLED_AT_MOST(prov_callback_proxy, proxy_cback_count);
+    CHECK_CALLED_AT_MOST(prov_callback_base_hwnd, base_hwnd_cback_count);
+    CHECK_CALLED_AT_MOST(prov_callback_nonclient, nc_cback_count);
+    CHECK_CALLED_AT_MOST(winproc_GETOBJECT_UiaRoot, win_get_uia_obj_count);
+    CHECK_CALLED_AT_MOST(winproc_GETOBJECT_CLIENT, win_get_client_obj_count);
+}
+
+static struct ComEventData {
+    struct node_provider_desc exp_node_desc;
+    struct node_provider_desc exp_nested_node_desc;
+
+    HWND event_hwnd;
+    DWORD last_call_tid;
+} ComEventData;
+
+static void set_com_event_data(struct node_provider_desc *exp_node_desc)
+{
+    if (exp_node_desc)
+    {
+        int i;
+
+        ComEventData.exp_node_desc = *exp_node_desc;
+        for (i = 0; i < exp_node_desc->prov_count; i++)
+        {
+            if (exp_node_desc->nested_desc[i])
+            {
+                ComEventData.exp_nested_node_desc = *exp_node_desc->nested_desc[i];
+                ComEventData.exp_node_desc.nested_desc[i] = &ComEventData.exp_nested_node_desc;
+                break;
+            }
+        }
+    }
+    else
+        memset(&ComEventData.exp_node_desc, 0, sizeof(ComEventData.exp_node_desc));
+    ComEventData.last_call_tid = 0;
+    SET_EXPECT(uia_com_event_callback);
+}
+
+#define test_com_event_data( sender ) \
+        test_com_event_data_( (sender), __FILE__, __LINE__)
+static void test_com_event_data_(IUIAutomationElement *sender, const char *file, int line)
+{
+    HRESULT hr;
+    VARIANT v;
+
+    CHECK_EXPECT(uia_com_event_callback);
+
+    VariantInit(&v);
+    hr = IUIAutomationElement_GetCurrentPropertyValueEx(sender, UIA_ProviderDescriptionPropertyId, TRUE, &v);
+    ok_(file, line)(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    test_node_provider_desc_(&ComEventData.exp_node_desc, V_BSTR(&v), file, line);
+    VariantClear(&v);
+
+    ComEventData.last_call_tid = GetCurrentThreadId();
+}
+
+/*
+ * IUIAutomationEventHandler.
+ */
+static struct AutomationEventHandler
+{
+    IUIAutomationEventHandler IUIAutomationEventHandler_iface;
+    LONG ref;
+} AutomationEventHandler;
+
+static inline struct AutomationEventHandler *impl_from_AutomationEventHandler(IUIAutomationEventHandler *iface)
+{
+    return CONTAINING_RECORD(iface, struct AutomationEventHandler, IUIAutomationEventHandler_iface);
+}
+
+static HRESULT WINAPI AutomationEventHandler_QueryInterface(IUIAutomationEventHandler *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUIAutomationEventHandler) || IsEqualIID(riid, &IID_IUnknown))
+        *ppv = iface;
+    else
+        return E_NOINTERFACE;
+
+    IUIAutomationEventHandler_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI AutomationEventHandler_AddRef(IUIAutomationEventHandler* iface)
+{
+    struct AutomationEventHandler *handler = impl_from_AutomationEventHandler(iface);
+    return InterlockedIncrement(&handler->ref);
+}
+
+static ULONG WINAPI AutomationEventHandler_Release(IUIAutomationEventHandler* iface)
+{
+    struct AutomationEventHandler *handler = impl_from_AutomationEventHandler(iface);
+    return InterlockedDecrement(&handler->ref);
+}
+
+static HRESULT WINAPI AutomationEventHandler_HandleAutomationEvent(IUIAutomationEventHandler *iface,
+        IUIAutomationElement *sender, EVENTID event_id)
+{
+    test_com_event_data(sender);
+
+    return S_OK;
+}
+
+static const IUIAutomationEventHandlerVtbl AutomationEventHandlerVtbl = {
+    AutomationEventHandler_QueryInterface,
+    AutomationEventHandler_AddRef,
+    AutomationEventHandler_Release,
+    AutomationEventHandler_HandleAutomationEvent,
+};
+
+static struct AutomationEventHandler AutomationEventHandler =
+{
+    { &AutomationEventHandlerVtbl },
+    1,
+};
+
+static DWORD WINAPI uia_com_event_handler_test_thread(LPVOID param)
+{
+    struct node_provider_desc exp_node_desc;
+    HRESULT hr;
+
+    /*
+     * Raise an event from inside of an MTA - the event handler proxy will be
+     * called from the current thread because it was registered in an MTA.
+     */
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), NULL);
+    add_provider_desc(&exp_node_desc, L"Main", L"Provider2", TRUE);
+    set_com_event_data(&exp_node_desc);
+    hr = UiaRaiseAutomationEvent(&Provider2.IRawElementProviderSimple_iface, UIA_LiveRegionChangedEventId);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine CHECK_CALLED(uia_com_event_callback);
+    todo_wine ok(ComEventData.last_call_tid == GetCurrentThreadId(), "Event handler called on unexpected thread %ld\n",
+            ComEventData.last_call_tid);
+    CoUninitialize();
+
+    /*
+     * Raise an event from inside of an STA - an event handler proxy will be
+     * created, and our handler will be invoked from another thread.
+     */
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    set_com_event_data(&exp_node_desc);
+    hr = UiaRaiseAutomationEvent(&Provider2.IRawElementProviderSimple_iface, UIA_LiveRegionChangedEventId);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine CHECK_CALLED(uia_com_event_callback);
+    ok(ComEventData.last_call_tid != GetCurrentThreadId(), "Event handler called on unexpected thread %ld\n",
+            ComEventData.last_call_tid);
+    CoUninitialize();
+
+    return 0;
+}
+
+static void test_IUIAutomationEventHandler(IUIAutomation *uia_iface, IUIAutomationElement *elem)
+{
+    struct Provider_prop_override prop_override;
+    struct node_provider_desc exp_node_desc;
+    IUIAutomationElement *elem2;
+    HANDLE thread;
+    HRESULT hr;
+    VARIANT v;
+
+    /*
+     * Invalid input argument tests.
+     */
+    hr = IUIAutomation_AddAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, NULL, TreeScope_SubTree, NULL,
+            &AutomationEventHandler.IUIAutomationEventHandler_iface);
+    todo_wine ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IUIAutomation_AddAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, elem, TreeScope_SubTree, NULL,
+            NULL);
+    todo_wine ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    /*
+     * Passing in a NULL element to this method results in an access violation
+     * on Windows.
+     */
+    if (0)
+    {
+        IUIAutomation_RemoveAutomationEventHandler(uia_iface, 1, NULL, &AutomationEventHandler.IUIAutomationEventHandler_iface);
+    }
+
+    hr = IUIAutomation_RemoveAutomationEventHandler(uia_iface, 1, elem, NULL);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IUIAutomation_RemoveAutomationEventHandler(uia_iface, UIA_AutomationFocusChangedEventId, elem,
+            &AutomationEventHandler.IUIAutomationEventHandler_iface);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /*
+     * UIA_AutomationFocusChangedEventId can only be listened for with
+     * AddFocusChangedEventHandler. Trying to register it on a regular event
+     * handler returns E_INVALIDARG.
+     */
+    hr = IUIAutomation_AddAutomationEventHandler(uia_iface, UIA_AutomationFocusChangedEventId, elem, TreeScope_SubTree, NULL,
+            &AutomationEventHandler.IUIAutomationEventHandler_iface);
+    todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    /* Windows 11 queries the HWND for the element when adding a new handler. */
+    set_uia_hwnd_expects(3, 2, 2, 3, 0);
+    /* All other event IDs are fine, only focus events are blocked. */
+    hr = IUIAutomation_AddAutomationEventHandler(uia_iface, 1, elem, TreeScope_SubTree, NULL,
+            &AutomationEventHandler.IUIAutomationEventHandler_iface);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(AutomationEventHandler.ref > 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
+    check_uia_hwnd_expects_at_most(3, 2, 2, 3, 0);
+
+    hr = IUIAutomation_RemoveAutomationEventHandler(uia_iface, 1, elem,
+            &AutomationEventHandler.IUIAutomationEventHandler_iface);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(AutomationEventHandler.ref == 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
+
+    /*
+     * Test event raising behavior.
+     */
+    set_uia_hwnd_expects(3, 2, 2, 3, 0);
+    hr = IUIAutomation_AddAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, elem, TreeScope_SubTree, NULL,
+            &AutomationEventHandler.IUIAutomationEventHandler_iface);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(AutomationEventHandler.ref > 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
+    check_uia_hwnd_expects_at_most(3, 2, 2, 3, 0);
+
+    /* Same behavior as HUIAEVENTs, events are matched by runtime ID. */
+    initialize_provider(&Provider2, ProviderOptions_ServerSideProvider, NULL, TRUE);
+    Provider2.runtime_id[0] = 0x2a;
+    Provider2.runtime_id[1] = HandleToUlong(ComEventData.event_hwnd);
+
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), NULL);
+    add_provider_desc(&exp_node_desc, L"Main", L"Provider2", TRUE);
+    set_com_event_data(&exp_node_desc);
+    hr = UiaRaiseAutomationEvent(&Provider2.IRawElementProviderSimple_iface, UIA_LiveRegionChangedEventId);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine CHECK_CALLED(uia_com_event_callback);
+
+    /*
+     * If no cache request is provided by the user in
+     * AddAutomationEventHandler, the default cache request is used. If no
+     * elements match the view condition, the event handler isn't invoked.
+     */
+    variant_init_bool(&v, FALSE);
+    set_property_override(&prop_override, UIA_IsControlElementPropertyId, &v);
+    set_provider_prop_override(&Provider2, &prop_override, 1);
+    hr = UiaRaiseAutomationEvent(&Provider2.IRawElementProviderSimple_iface, UIA_LiveRegionChangedEventId);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    set_provider_prop_override(&Provider2, NULL, 0);
+    thread = CreateThread(NULL, 0, uia_com_event_handler_test_thread, NULL, 0, NULL);
+    while (MsgWaitForMultipleObjects(1, &thread, FALSE, INFINITE, QS_ALLINPUT) != WAIT_OBJECT_0)
+    {
+        MSG msg;
+
+        while (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE))
+        {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    }
+    CloseHandle(thread);
+
+    hr = IUIAutomation_RemoveAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, elem,
+            &AutomationEventHandler.IUIAutomationEventHandler_iface);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(AutomationEventHandler.ref == 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
+
+    VariantInit(&v);
+    initialize_provider(&Provider_child, ProviderOptions_ServerSideProvider, NULL, TRUE);
+    hr = IUIAutomationElement_GetCurrentPropertyValueEx(elem, UIA_LabeledByPropertyId, TRUE, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_UNKNOWN, "Unexpected vt %d\n", V_VT(&v));
+    ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+
+    hr = IUnknown_QueryInterface(V_UNKNOWN(&v), &IID_IUIAutomationElement, (void **)&elem2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elem2, "elem2 == NULL\n");
+    VariantClear(&v);
+
+    /*
+     * Register an event on an element that has no runtime ID. The only way to
+     * remove an individual event handler is by matching a combination of
+     * runtime-id, property ID, and event handler interface pointer. Without a
+     * runtime-id, the only way to unregister the event handler is to call
+     * RemoveAllEventHandlers().
+     */
+    hr = IUIAutomation_AddAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, elem2, TreeScope_SubTree, NULL,
+            &AutomationEventHandler.IUIAutomationEventHandler_iface);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(AutomationEventHandler.ref > 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
+
+    /* No removal will occur due to a lack of a runtime ID to match. */
+    hr = IUIAutomation_RemoveAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, elem2,
+            &AutomationEventHandler.IUIAutomationEventHandler_iface);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(AutomationEventHandler.ref > 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
+
+    hr = IUIAutomation_RemoveAllEventHandlers(uia_iface);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(AutomationEventHandler.ref == 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
+
+    IUIAutomationElement_Release(elem2);
+}
+
+static void test_CUIAutomation_event_handlers(IUIAutomation *uia_iface)
+{
+    IUIAutomationElement *elem;
+    HRESULT hr;
+    HWND hwnd;
+
+    ComEventData.event_hwnd = hwnd = create_test_hwnd("test_CUIAutomation_event_handlers class");
+
+    /* Set up providers for the desktop window and our test HWND. */
+    set_clientside_providers_for_hwnd(&Provider_proxy, &Provider_nc, &Provider_hwnd, GetDesktopWindow());
+    base_hwnd_prov = &Provider_hwnd.IRawElementProviderSimple_iface;
+    proxy_prov = &Provider_proxy.IRawElementProviderSimple_iface;
+    nc_prov = &Provider_nc.IRawElementProviderSimple_iface;
+
+    set_clientside_providers_for_hwnd(NULL, &Provider_nc2, &Provider_hwnd2, hwnd);
+    initialize_provider(&Provider, ProviderOptions_ServerSideProvider, hwnd, TRUE);
+    Provider.frag_root = &Provider.IRawElementProviderFragmentRoot_iface;
+    Provider.ignore_hwnd_prop = TRUE;
+    prov_root = &Provider.IRawElementProviderSimple_iface;
+
+    method_sequences_enabled = FALSE;
+    set_uia_hwnd_expects(1, 1, 1, 1, 1);
+    UiaRegisterProviderCallback(test_uia_provider_callback);
+    hr = IUIAutomation_ElementFromHandle(uia_iface, hwnd, &elem);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elem, "elem == NULL\n");
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+    ok(Provider_hwnd2.ref == 2, "Unexpected refcnt %ld\n", Provider_hwnd2.ref);
+    ok(Provider_nc2.ref == 2, "Unexpected refcnt %ld\n", Provider_nc2.ref);
+    check_uia_hwnd_expects(1, TRUE, 1, FALSE, 1, FALSE, 1, FALSE, 0, FALSE);
+
+    test_IUIAutomationEventHandler(uia_iface, elem);
+
+    IUIAutomationElement_Release(elem);
+    UiaRegisterProviderCallback(NULL);
+    DestroyWindow(hwnd);
+    UnregisterClassA("test_CUIAutomation_event_handlers class", NULL);
+    method_sequences_enabled = TRUE;
+}
+
 struct uia_com_classes {
     const GUID *clsid;
     const GUID *iid;
@@ -13004,6 +13371,7 @@ static void test_CUIAutomation(void)
     test_Element_Find(uia_iface);
     test_GetRootElement(uia_iface);
     test_GetFocusedElement(uia_iface);
+    test_CUIAutomation_event_handlers(uia_iface);
 
     IUIAutomation_Release(uia_iface);
     CoUninitialize();
