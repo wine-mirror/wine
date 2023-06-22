@@ -843,7 +843,7 @@ static HRESULT WINAPI mqw_SetMetadataByName(IWICMetadataQueryWriter *iface, LPCW
 {
     FIXME("iface %p, name %s, value %p stub.\n", iface, debugstr_w(name), value);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI mqw_RemoveMetadataByName(IWICMetadataQueryWriter *iface, LPCWSTR name)
