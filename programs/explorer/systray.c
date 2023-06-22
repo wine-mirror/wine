@@ -154,17 +154,6 @@ static struct icon *get_icon(HWND owner, UINT id)
     return NULL;
 }
 
-static RECT get_icon_rect( struct icon *icon )
-{
-    RECT rect;
-
-    rect.right = tray_width - icon_cx * icon->display;
-    rect.left = rect.right - icon_cx;
-    rect.top = (tray_height - icon_cy) / 2;
-    rect.bottom = rect.top + icon_cy;
-    return rect;
-}
-
 static void init_common_controls(void)
 {
     static BOOL initialized = FALSE;
@@ -202,10 +191,10 @@ static void create_tooltip(struct icon *icon)
 
 static void set_balloon_position( struct icon *icon )
 {
-    RECT rect = get_icon_rect( icon );
+    RECT rect;
     POINT pos;
 
-    MapWindowPoints( tray_window, 0, (POINT *)&rect, 2 );
+    GetWindowRect( icon->window, &rect );
     pos.x = (rect.left + rect.right) / 2;
     pos.y = (rect.top + rect.bottom) / 2;
     SendMessageW( balloon_window, TTM_TRACKPOSITION, 0, MAKELONG( pos.x, pos.y ));
@@ -308,8 +297,12 @@ static void update_tooltip_text(struct icon *icon)
 /* get the position of an icon in the stand-alone tray */
 static POINT get_icon_pos( struct icon *icon )
 {
-    RECT rect = get_icon_rect( icon );
-    return *(POINT *)&rect;
+    POINT pos;
+
+    pos.x = tray_width - icon_cx * (icon->display + 1);
+    pos.y = (tray_height - icon_cy) / 2;
+
+    return pos;
 }
 
 /* synchronize tooltip position with tooltip window */
