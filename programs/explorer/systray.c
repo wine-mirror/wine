@@ -200,7 +200,19 @@ static void set_balloon_position( struct icon *icon )
     SendMessageW( balloon_window, TTM_TRACKPOSITION, 0, MAKELONG( pos.x, pos.y ));
 }
 
-static void balloon_create_timer(void)
+static void update_systray_balloon_position(void)
+{
+    RECT rect;
+    POINT pos;
+
+    if (!balloon_icon) return;
+    GetWindowRect( balloon_icon->window, &rect );
+    pos.x = (rect.left + rect.right) / 2;
+    pos.y = (rect.top + rect.bottom) / 2;
+    SendMessageW( balloon_window, TTM_TRACKPOSITION, 0, MAKELONG( pos.x, pos.y ));
+}
+
+static void balloon_create_timer( struct icon *icon )
 {
     TTTOOLINFOW ti;
 
@@ -208,24 +220,24 @@ static void balloon_create_timer(void)
     balloon_window = CreateWindowExW( WS_EX_TOPMOST, TOOLTIPS_CLASSW, NULL,
                                       WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX | TTS_BALLOON | TTS_CLOSE,
                                       CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                                      tray_window, NULL, NULL, NULL);
+                                      icon->window, NULL, NULL, NULL );
 
     memset( &ti, 0, sizeof(ti) );
     ti.cbSize = sizeof(TTTOOLINFOW);
-    ti.hwnd = tray_window;
-    ti.uFlags = TTF_TRACK;
-    ti.lpszText = balloon_icon->info_text;
+    ti.hwnd = icon->window;
+    ti.uId = (UINT_PTR)icon->window;
+    ti.uFlags = TTF_TRACK | TTF_IDISHWND;
+    ti.lpszText = icon->info_text;
     SendMessageW( balloon_window, TTM_ADDTOOLW, 0, (LPARAM)&ti );
-    if ((balloon_icon->info_flags & NIIF_ICONMASK) == NIIF_USER)
-        SendMessageW( balloon_window, TTM_SETTITLEW, (WPARAM)balloon_icon->info_icon,
-                      (LPARAM)balloon_icon->info_title );
+    if ((icon->info_flags & NIIF_ICONMASK) == NIIF_USER)
+        SendMessageW( balloon_window, TTM_SETTITLEW, (WPARAM)icon->info_icon, (LPARAM)icon->info_title );
     else
-        SendMessageW( balloon_window, TTM_SETTITLEW, balloon_icon->info_flags,
-                      (LPARAM)balloon_icon->info_title );
-    set_balloon_position( balloon_icon );
+        SendMessageW( balloon_window, TTM_SETTITLEW, icon->info_flags, (LPARAM)icon->info_title );
+    balloon_icon = icon;
+    update_systray_balloon_position();
     SendMessageW( balloon_window, TTM_TRACKACTIVATE, TRUE, (LPARAM)&ti );
-    KillTimer( tray_window, BALLOON_CREATE_TIMER );
-    SetTimer( tray_window, BALLOON_SHOW_TIMER, balloon_icon->info_timeout, NULL );
+    KillTimer( icon->window, BALLOON_CREATE_TIMER );
+    SetTimer( icon->window, BALLOON_SHOW_TIMER, icon->info_timeout, NULL );
 }
 
 static BOOL show_balloon( struct icon *icon )
@@ -233,20 +245,20 @@ static BOOL show_balloon( struct icon *icon )
     if (icon->display == -1) return FALSE;  /* not displayed */
     if (!icon->info_text[0]) return FALSE;  /* no balloon */
     balloon_icon = icon;
-    SetTimer( tray_window, BALLOON_CREATE_TIMER, BALLOON_CREATE_TIMEOUT, NULL );
+    SetTimer( icon->window, BALLOON_CREATE_TIMER, BALLOON_CREATE_TIMEOUT, NULL );
     return TRUE;
 }
 
-static void hide_balloon(void)
+static void hide_balloon( struct icon *icon )
 {
     if (!balloon_icon) return;
     if (balloon_window)
     {
-        KillTimer( tray_window, BALLOON_SHOW_TIMER );
+        KillTimer( balloon_icon->window, BALLOON_SHOW_TIMER );
         DestroyWindow( balloon_window );
         balloon_window = 0;
     }
-    else KillTimer( tray_window, BALLOON_CREATE_TIMER );
+    else KillTimer( balloon_icon->window, BALLOON_CREATE_TIMER );
     balloon_icon = NULL;
 }
 
@@ -262,20 +274,19 @@ static void update_balloon( struct icon *icon )
 {
     if (balloon_icon == icon)
     {
-        hide_balloon();
+        hide_balloon( icon );
         show_balloon( icon );
     }
     else if (!balloon_icon)
     {
-        if (!show_balloon( icon )) return;
+        show_balloon( icon );
     }
-    if (!balloon_icon) show_next_balloon();
 }
 
-static void balloon_timer(void)
+static void balloon_timer( struct icon *icon )
 {
-    if (balloon_icon) balloon_icon->info_text[0] = 0;  /* clear text now that balloon has been shown */
-    hide_balloon();
+    icon->info_text[0] = 0;  /* clear text now that balloon has been shown */
+    hide_balloon( icon );
     show_next_balloon();
 }
 
@@ -405,6 +416,18 @@ static LRESULT WINAPI tray_icon_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPA
         }
         break;
     }
+
+    case WM_WINDOWPOSCHANGED:
+        update_systray_balloon_position();
+        break;
+
+    case WM_TIMER:
+        switch (wparam)
+        {
+        case BALLOON_CREATE_TIMER: balloon_create_timer( icon ); break;
+        case BALLOON_SHOW_TIMER: balloon_timer( icon ); break;
+        }
+        return 0;
     }
 
     return DefWindowProcW( hwnd, msg, wparam, lparam );
@@ -867,12 +890,8 @@ static LRESULT WINAPI shell_traywnd_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
         else do_show_systray();
         break;
 
-    case WM_TIMER:
-        switch (wparam)
-        {
-        case BALLOON_CREATE_TIMER: balloon_create_timer(); break;
-        case BALLOON_SHOW_TIMER:   balloon_timer(); break;
-        }
+    case WM_MOVE:
+        update_systray_balloon_position();
         break;
 
     case WM_CLOSE:
