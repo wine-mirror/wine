@@ -532,8 +532,10 @@ sync_test("getOwnPropertyDescriptor", function() {
     test_own_data_prop_desc(String, "prototype", false, false, false);
     test_own_data_prop_desc(function(){}, "prototype", true, false, false);
     test_own_data_prop_desc(function(){}, "caller", false, false, false);
+    test_own_data_prop_desc(function(){}, "arguments", false, false, false);
     test_own_data_prop_desc(Function, "prototype", false, false, false);
     test_own_data_prop_desc(Function.prototype, "caller", false, false, false);
+    test_own_data_prop_desc(Function.prototype, "arguments", false, false, false);
     test_own_data_prop_desc(String.prototype, "constructor", true, false, true);
 
     try {
@@ -1140,6 +1142,13 @@ sync_test("bind", function() {
     r = f.call(o2);
     ok(r === 1, "r = " + r);
 
+    try {
+        f.arguments;
+        ok(false, "expected exception getting f.arguments");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_INVALID_ACTION, "f.arguments threw " + n);
+    }
     try {
         f.caller;
         ok(false, "expected exception getting f.caller");

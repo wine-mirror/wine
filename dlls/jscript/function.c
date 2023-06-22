@@ -912,13 +912,18 @@ HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, function_cod
     return S_OK;
 }
 
+static HRESULT BindFunction_get_arguments(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
+{
+    return JS_E_INVALID_ACTION;
+}
+
 static HRESULT BindFunction_get_caller(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
     return JS_E_INVALID_ACTION;
 }
 
 static const builtin_prop_t BindFunction_props[] = {
-    {L"arguments",           NULL, 0,                        Function_get_arguments},
+    {L"arguments",           NULL, 0,                        BindFunction_get_arguments},
     {L"caller",              NULL, 0,                        BindFunction_get_caller},
     {L"length",              NULL, 0,                        Function_get_length}
 };
