@@ -1228,6 +1228,56 @@ sync_test("delete_prop", function() {
     ok(!("globalprop4" in obj), "globalprop4 is still in obj");
 });
 
+sync_test("detached arguments", function() {
+    var args, get_a, set_a, get_x, set_x;
+
+    function test_args() {
+        ok(args[0] === 1, "args[0] = " + args[0]);
+        set_x(2);
+        ok(args[0] === 2, "args[0] = " + args[0]);
+        args[0] = 3;
+        ok(get_x() === 3, "get_x() = " + get_x());
+        ok(args[0] === 3, "args[0] = " + args[0]);
+    }
+
+    (function(x) {
+        args = arguments;
+        get_x = function() { return x; };
+        set_x = function(v) { x = v; };
+
+        test_args();
+        x = 1;
+    })(1);
+    test_args();
+
+    (function(a, a, b, c) {
+        get_a = function() { return a; }
+        set_a = function(v) { a = v; }
+        ok(get_a() === 2, "get_a() = " + get_a());
+        ok(a === 2, "a = " + a);
+        ok(b === 3, "b = " + b);
+        ok(c === 4, "c = " + c);
+        a = 42;
+        ok(arguments[0] === 1, "arguments[0] = " + arguments[0]);
+        ok(arguments[1] === 42, "arguments[1] = " + arguments[1]);
+        ok(get_a() === 42, "get_a() after assign = " + get_a());
+        args = arguments;
+    })(1, 2, 3, 4);
+
+    ok(get_a() === 42, "get_a() after detach = " + get_a());
+    set_a(100);
+    ok(get_a() === 100, "get_a() after set_a() = " + get_a());
+    ok(args[0] === 1, "detached args[0] = " + args[0]);
+    ok(args[1] === 100, "detached args[1] = " + args[1]);
+
+    (function(a, a) {
+        eval("var a = 7;");
+        ok(a === 7, "function(a, a) a = " + a);
+        ok(arguments[0] === 5, "function(a, a) arguments[0] = " + arguments[0]);
+        ok(arguments[1] === 7, "function(a, a) arguments[1] = " + arguments[1]);
+    })(5, 6);
+});
+
 var func_scope_val = 1;
 var func_scope_val2 = 2;
 

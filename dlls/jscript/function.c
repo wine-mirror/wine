@@ -242,7 +242,7 @@ void detach_arguments_object(call_frame_t *frame)
     jsdisp_propput_name(jsobj, L"arguments", jsval_undefined());
 
     /* Don't bother coppying arguments if call frame holds the last reference. */
-    if(arguments->jsdisp.ref > 1) {
+    if(arguments->jsdisp.ref > 1 && !arguments->jsdisp.ctx->html_mode) {
         arguments->buf = malloc(arguments->argc * sizeof(*arguments->buf));
         if(arguments->buf) {
             const jsval_t *args = on_stack ? arguments->jsdisp.ctx->stack + frame->arguments_off : scope->detached_vars->var;
