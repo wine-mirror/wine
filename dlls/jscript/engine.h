@@ -310,4 +310,4 @@ HRESULT exec_source(script_ctx_t*,DWORD,bytecode_t*,function_code_t*,scope_chain
 
 HRESULT create_source_function(script_ctx_t*,bytecode_t*,function_code_t*,scope_chain_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT setup_arguments_object(script_ctx_t*,call_frame_t*) DECLSPEC_HIDDEN;
-void detach_arguments_object(jsdisp_t*) DECLSPEC_HIDDEN;
+void detach_arguments_object(call_frame_t*) DECLSPEC_HIDDEN;

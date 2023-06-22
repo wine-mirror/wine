@@ -66,7 +66,7 @@ typedef struct {
 typedef struct {
     jsdisp_t jsdisp;
     jsval_t *buf;
-    call_frame_t *frame;
+    scope_chain_t *scope;
     unsigned argc;
 } ArgumentsInstance;
 
@@ -113,6 +113,9 @@ static void Arguments_destructor(jsdisp_t *jsdisp)
         free(arguments->buf);
     }
 
+    if(arguments->scope)
+        scope_release(arguments->scope);
+
     free(arguments);
 }
 
@@ -126,9 +129,9 @@ static jsval_t *get_argument_ref(ArgumentsInstance *arguments, unsigned idx)
 {
     if(arguments->buf)
         return arguments->buf + idx;
-    if(!arguments->frame->base_scope->detached_vars)
-        return arguments->jsdisp.ctx->stack + arguments->frame->arguments_off + idx;
-    return arguments->frame->base_scope->detached_vars->var + idx;
+    if(!arguments->scope->detached_vars)
+        return arguments->jsdisp.ctx->stack + arguments->scope->frame->arguments_off + idx;
+    return arguments->scope->detached_vars->var + idx;
 }
 
 static HRESULT Arguments_idx_get(jsdisp_t *jsdisp, unsigned idx, jsval_t *r)
@@ -172,6 +175,12 @@ static HRESULT Arguments_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op 
         }
     }
 
+    if(arguments->scope) {
+        hres = gc_process_linked_obj(gc_ctx, op, jsdisp, &arguments->scope->dispex, (void**)&arguments->scope);
+        if(FAILED(hres))
+            return hres;
+    }
+
     return S_OK;
 }
 
@@ -203,7 +212,7 @@ HRESULT setup_arguments_object(script_ctx_t *ctx, call_frame_t *frame)
     }
 
     args->argc = frame->argc;
-    args->frame = frame;
+    args->scope = scope_addref(frame->base_scope);
 
     hres = jsdisp_define_data_property(&args->jsdisp, L"length", PROPF_WRITABLE | PROPF_CONFIGURABLE,
                                        jsval_number(args->argc));
@@ -221,23 +230,22 @@ HRESULT setup_arguments_object(script_ctx_t *ctx, call_frame_t *frame)
     return S_OK;
 }
 
-void detach_arguments_object(jsdisp_t *args_disp)
+void detach_arguments_object(call_frame_t *frame)
 {
-    ArgumentsInstance *arguments = arguments_from_jsdisp(args_disp);
-    call_frame_t *frame = arguments->frame;
-    const BOOL on_stack = frame->base_scope->frame == frame;
-    jsdisp_t *jsobj = as_jsdisp(frame->base_scope->obj);
+    ArgumentsInstance *arguments = arguments_from_jsdisp(frame->arguments_obj);
+    scope_chain_t *scope = arguments->scope;
+    const BOOL on_stack = scope->frame == frame;
+    jsdisp_t *jsobj = as_jsdisp(scope->obj);
 
     /* Reset arguments value to cut the reference cycle. Note that since all activation contexts have
      * their own arguments property, it's impossible to use prototype's one during name lookup */
     jsdisp_propput_name(jsobj, L"arguments", jsval_undefined());
-    arguments->frame = NULL;
 
     /* Don't bother coppying arguments if call frame holds the last reference. */
     if(arguments->jsdisp.ref > 1) {
         arguments->buf = malloc(arguments->argc * sizeof(*arguments->buf));
         if(arguments->buf) {
-            const jsval_t *args = on_stack ? arguments->jsdisp.ctx->stack + frame->arguments_off : frame->base_scope->detached_vars->var;
+            const jsval_t *args = on_stack ? arguments->jsdisp.ctx->stack + frame->arguments_off : scope->detached_vars->var;
             int i;
 
             for(i = 0; i < arguments->argc ; i++) {
@@ -248,9 +256,12 @@ void detach_arguments_object(jsdisp_t *args_disp)
             ERR("out of memory\n");
             arguments->argc = 0;
         }
+
+        arguments->scope = NULL;
+        scope_release(scope);
     }
 
-    jsdisp_release(frame->arguments_obj);
+    jsdisp_release(&arguments->jsdisp);
 }
 
 HRESULT Function_invoke(jsdisp_t *func_this, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)

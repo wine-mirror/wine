@@ -3116,7 +3116,7 @@ static void pop_call_frame(script_ctx_t *ctx)
     }
 
     if(frame->arguments_obj)
-        detach_arguments_object(frame->arguments_obj);
+        detach_arguments_object(frame);
     if(frame->scope)
         scope_release(frame->scope);
 
