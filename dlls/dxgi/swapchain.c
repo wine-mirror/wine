@@ -1024,6 +1024,11 @@ struct d3d12_swapchain
     VkDevice vk_device;
     VkPhysicalDevice vk_physical_device;
 
+    HANDLE worker_thread;
+    CRITICAL_SECTION worker_cs;
+    CONDITION_VARIABLE worker_cv;
+    bool worker_running;
+
     /* D3D12 side of the swapchain (frontend): these objects are
      * visible to the IDXGISwapChain client, so they must never be
      * recreated, except when ResizeBuffers*() is called. */
@@ -1069,6 +1074,26 @@ struct d3d12_swapchain
     uint64_t frame_number;
     uint32_t frame_latency;
 };
+
+static DWORD WINAPI d3d12_swapchain_worker_proc(void *data)
+{
+    struct d3d12_swapchain *swapchain = data;
+
+    EnterCriticalSection(&swapchain->worker_cs);
+
+    while (swapchain->worker_running)
+    {
+        if (!SleepConditionVariableCS(&swapchain->worker_cv, &swapchain->worker_cs, INFINITE))
+        {
+            ERR("Cannot sleep on condition variable, last error %ld.\n", GetLastError());
+            break;
+        }
+    }
+
+    LeaveCriticalSection(&swapchain->worker_cs);
+
+    return 0;
+}
 
 static DXGI_FORMAT dxgi_format_from_vk_format(VkFormat vk_format)
 {
@@ -1808,6 +1833,23 @@ static void d3d12_swapchain_destroy(struct d3d12_swapchain *swapchain)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
     void *vulkan_module = vk_funcs->vulkan_module;
+    DWORD ret;
+
+    EnterCriticalSection(&swapchain->worker_cs);
+    swapchain->worker_running = false;
+    WakeAllConditionVariable(&swapchain->worker_cv);
+    LeaveCriticalSection(&swapchain->worker_cs);
+
+    if (swapchain->worker_thread)
+    {
+        if ((ret = WaitForSingleObject(swapchain->worker_thread, INFINITE)) != WAIT_OBJECT_0)
+            ERR("Failed to wait for worker thread, return value %ld.\n", ret);
+
+        if (!CloseHandle(swapchain->worker_thread))
+            ERR("Failed to close worker thread, last error %ld.\n", GetLastError());
+    }
+
+    DeleteCriticalSection(&swapchain->worker_cs);
 
     d3d12_swapchain_destroy_vulkan_resources(swapchain);
     d3d12_swapchain_destroy_d3d12_resources(swapchain);
@@ -2996,6 +3038,10 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
 
     wined3d_private_store_init(&swapchain->private_store);
 
+    InitializeCriticalSection(&swapchain->worker_cs);
+    InitializeConditionVariable(&swapchain->worker_cv);
+    swapchain->worker_running = true;
+
     surface_desc.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
     surface_desc.pNext = NULL;
     surface_desc.flags = 0;
@@ -3068,6 +3114,14 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     }
 
     IWineDXGIFactory_AddRef(swapchain->factory = factory);
+
+    if (!(swapchain->worker_thread = CreateThread(NULL, 0, d3d12_swapchain_worker_proc, swapchain, 0, NULL)))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        WARN("Failed to create worker thread, hr %#lx.\n", hr);
+        d3d12_swapchain_destroy(swapchain);
+        return hr;
+    }
 
     return S_OK;
 }
