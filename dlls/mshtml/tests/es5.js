@@ -1127,6 +1127,9 @@ sync_test("toString", function() {
     obj = Object.create(Number.prototype);
     tmp = Object.prototype.toString.call(obj);
     ok(tmp === "[object Object]", "toString.call(Object.create(Number.prototype)) = " + tmp);
+
+    tmp = (new Number(303)).toString(undefined);
+    ok(tmp === "303", "Number 303 toString(undefined) = " + tmp);
 });
 
 sync_test("bind", function() {

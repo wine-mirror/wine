@@ -2709,6 +2709,7 @@ testException(function() {Number.prototype.toFixed.call(arr);}, "E_NOT_NUM");
 testException(function() {Number.prototype.toLocaleString.call(arr);}, "E_NOT_NUM");
 testException(function() {Number.prototype.toLocaleString.call(null);}, "E_NOT_NUM");
 testException(function() {(new Number(3)).toString(1);}, "E_INVALID_CALL_ARG");
+testException(function() {(new Number(3)).toString(undefined);}, "E_INVALID_CALL_ARG");
 testException(function() {(new Number(3)).toFixed(21);}, "E_FRACTION_DIGITS_OUT_OF_RANGE");
 testException(function() {(new Number(1)).toPrecision(0);}, "E_PRECISION_OUT_OF_RANGE");
 if(invokeVersion < 2)
