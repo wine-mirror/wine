@@ -582,7 +582,7 @@ static HRESULT Function_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op o
 
 static const builtin_prop_t Function_props[] = {
     {L"apply",               Function_apply,                 PROPF_METHOD|2},
-    {L"arguments",           NULL, 0,                        Function_get_arguments},
+    {L"arguments",           NULL, PROPF_HTML,               Function_get_arguments},
     {L"bind",                Function_bind,                  PROPF_METHOD|PROPF_ES5|1},
     {L"call",                Function_call,                  PROPF_METHOD|1},
     {L"caller",              NULL, PROPF_HTML,               Function_get_caller},
