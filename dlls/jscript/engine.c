@@ -749,7 +749,7 @@ static HRESULT detach_scope(script_ctx_t *ctx, call_frame_t *frame, scope_chain_
 
     if (!scope->obj)
     {
-        if (FAILED(hres = create_object(ctx, NULL, &jsobj)))
+        if (FAILED(hres = create_dispex(ctx, NULL, NULL, &jsobj)))
             return hres;
         scope->obj = to_disp(jsobj);
     }
@@ -1071,7 +1071,7 @@ static HRESULT scope_init_locals(script_ctx_t *ctx)
     }
     else if (!scope->obj)
     {
-        if (FAILED(hres = create_object(ctx, NULL, &jsobj)))
+        if (FAILED(hres = create_dispex(ctx, NULL, NULL, &jsobj)))
             return hres;
         scope->obj = to_disp(jsobj);
     }
