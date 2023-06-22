@@ -187,17 +187,16 @@ static void create_tooltip(struct icon *icon)
     TTTOOLINFOW ti;
 
     init_common_controls();
-    icon->tooltip = CreateWindowExW(WS_EX_TOPMOST, TOOLTIPS_CLASSW, NULL,
-                                   WS_POPUP | TTS_ALWAYSTIP,
-                                   CW_USEDEFAULT, CW_USEDEFAULT,
-                                   CW_USEDEFAULT, CW_USEDEFAULT,
-                                   tray_window, NULL, NULL, NULL);
+    icon->tooltip = CreateWindowExW( WS_EX_TOPMOST, TOOLTIPS_CLASSW, NULL, WS_POPUP | TTS_ALWAYSTIP,
+                                     CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+                                     icon->window, NULL, NULL, NULL );
 
     ZeroMemory(&ti, sizeof(ti));
     ti.cbSize = sizeof(TTTOOLINFOW);
-    ti.hwnd = tray_window;
+    ti.uFlags = TTF_SUBCLASS | TTF_IDISHWND;
+    ti.hwnd = icon->window;
+    ti.uId = (UINT_PTR)icon->window;
     ti.lpszText = icon->tiptext;
-    if (icon->display != -1) ti.rect = get_icon_rect( icon );
     SendMessageW(icon->tooltip, TTM_ADDTOOLW, 0, (LPARAM)&ti);
 }
 
@@ -298,7 +297,9 @@ static void update_tooltip_text(struct icon *icon)
 
     ZeroMemory(&ti, sizeof(ti));
     ti.cbSize = sizeof(TTTOOLINFOW);
-    ti.hwnd = tray_window;
+    ti.uFlags = TTF_SUBCLASS | TTF_IDISHWND;
+    ti.hwnd = icon->window;
+    ti.uId = (UINT_PTR)icon->window;
     ti.lpszText = icon->tiptext;
 
     SendMessageW(icon->tooltip, TTM_UPDATETIPTEXTW, 0, (LPARAM)&ti);
@@ -318,8 +319,10 @@ static void update_tooltip_position( struct icon *icon )
 
     ZeroMemory(&ti, sizeof(ti));
     ti.cbSize = sizeof(TTTOOLINFOW);
-    ti.hwnd = tray_window;
-    if (icon->display != -1) ti.rect = get_icon_rect( icon );
+    ti.uFlags = TTF_SUBCLASS | TTF_IDISHWND;
+    ti.hwnd = icon->window;
+    ti.uId = (UINT_PTR)icon->window;
+    ti.lpszText = icon->tiptext;
     SendMessageW( icon->tooltip, TTM_NEWTOOLRECTW, 0, (LPARAM)&ti );
     if (balloon_icon == icon) set_balloon_position( icon );
 }
