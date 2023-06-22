@@ -563,10 +563,9 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
     struct create_stream_params params;
-    unsigned int i, channel_count;
+    UINT32 i, channel_count;
     stream_handle stream;
     WCHAR *name;
-    HRESULT hr;
 
     TRACE("(%p)->(%x, %lx, %s, %s, %p, %s)\n", This, mode, flags,
           wine_dbgstr_longlong(duration), wine_dbgstr_longlong(period), fmt, debugstr_guid(sessionguid));
@@ -599,10 +598,10 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         return AUDCLNT_E_ALREADY_INITIALIZED;
     }
 
-    if (FAILED(hr = main_loop_start()))
+    if (FAILED(params.result = main_loop_start()))
     {
         sessions_unlock();
-        return hr;
+        return params.result;
     }
 
     params.name = name = get_application_name();
@@ -617,38 +616,37 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     params.channel_count = &channel_count;
     pulse_call(create_stream, &params);
     free(name);
-    if (FAILED(hr = params.result))
+    if (FAILED(params.result))
     {
         sessions_unlock();
-        return hr;
+        return params.result;
     }
 
     if (!(This->vols = malloc(channel_count * sizeof(*This->vols))))
     {
-        stream_release(stream, NULL);
-        sessions_unlock();
-        return E_OUTOFMEMORY;
+        params.result = E_OUTOFMEMORY;
+        goto exit;
     }
     for (i = 0; i < channel_count; i++)
         This->vols[i] = 1.f;
 
-    hr = get_audio_session(sessionguid, This->parent, channel_count, &This->session);
-    if (FAILED(hr))
-    {
+    params.result = get_audio_session(sessionguid, This->parent, channel_count, &This->session);
+
+exit:
+    if (FAILED(params.result)) {
+        stream_release(stream, NULL);
         free(This->vols);
         This->vols = NULL;
-        sessions_unlock();
-        stream_release(stream, NULL);
-        return E_OUTOFMEMORY;
+    } else {
+        list_add_tail(&This->session->clients, &This->entry);
+        This->stream = stream;
+        This->channel_count = channel_count;
+        set_stream_volumes(This);
     }
 
-    This->stream = stream;
-    This->channel_count = channel_count;
-    list_add_tail(&This->session->clients, &This->entry);
-    set_stream_volumes(This);
-
     sessions_unlock();
-    return S_OK;
+
+    return params.result;
 }
 
 extern HRESULT WINAPI client_GetBufferSize(IAudioClient3 *iface,
