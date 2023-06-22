@@ -40,6 +40,9 @@ static void test_taskbar(void)
     SystemParametersInfoW(SPI_GETWORKAREA, 0, &work_rect, 0);
     SetRect(&primary_rect, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
     SubtractRect(&expected_rect, &primary_rect, &work_rect);
+
+    /* In standalone mode, the systray window is floating */
+    todo_wine_if(!(GetWindowLongW(hwnd, GWL_STYLE) & WS_POPUP))
     ok(EqualRect(&taskbar_rect, &expected_rect), "Expected %s, got %s.\n",
        wine_dbgstr_rect(&expected_rect), wine_dbgstr_rect(&taskbar_rect));
 }

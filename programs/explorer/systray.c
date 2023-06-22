@@ -98,7 +98,7 @@ static HWND tray_window;
 
 static unsigned int nb_displayed;
 
-static BOOL hide_systray, enable_shell;
+static BOOL show_systray = TRUE, enable_shell, enable_taskbar;
 static int icon_cx, icon_cy, tray_width, tray_height;
 static int start_button_width, taskbar_button_width;
 static WCHAR start_label[50];
@@ -312,10 +312,34 @@ static POINT get_icon_pos( struct icon *icon )
 {
     POINT pos;
 
-    pos.x = tray_width - icon_cx * (icon->display + 1);
-    pos.y = (tray_height - icon_cy) / 2;
+    if (enable_taskbar)
+    {
+        pos.x = tray_width - icon_cx * (icon->display + 1);
+        pos.y = (tray_height - icon_cy) / 2;
+    }
+    else
+    {
+        pos.x = icon_cx * icon->display;
+        pos.y = 0;
+    }
 
     return pos;
+}
+
+/* get the size of the stand-alone tray window */
+static SIZE get_window_size(void)
+{
+    SIZE size;
+    RECT rect;
+
+    rect.left = 0;
+    rect.top = 0;
+    rect.right = icon_cx * max( nb_displayed, MIN_DISPLAYED );
+    rect.bottom = icon_cy;
+    AdjustWindowRect( &rect, WS_CAPTION, FALSE );
+    size.cx = rect.right - rect.left;
+    size.cy = rect.bottom - rect.top;
+    return size;
 }
 
 /* synchronize tooltip position with tooltip window */
@@ -446,7 +470,7 @@ static void systray_add_icon( struct icon *icon )
     pos = get_icon_pos( icon );
     SetWindowPos( icon->window, 0, pos.x, pos.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW );
 
-    if (nb_displayed == 1 && !hide_systray) do_show_systray();
+    if (nb_displayed == 1 && show_systray) do_show_systray();
     TRACE( "added %u now %d icons\n", icon->id, nb_displayed );
 }
 
@@ -620,6 +644,7 @@ static void sync_taskbar_buttons(void)
     int right = tray_width - nb_displayed * icon_cx;
     HWND foreground = GetAncestor( GetForegroundWindow(), GA_ROOTOWNER );
 
+    if (!enable_taskbar) return;
     if (!IsWindowVisible( tray_window )) return;
 
     LIST_FOR_EACH_ENTRY( win, &taskbar_buttons, struct taskbar_button, entry )
@@ -743,7 +768,7 @@ static void add_taskbar_button( HWND hwnd )
 {
     struct taskbar_button *win;
 
-    if (hide_systray) return;
+    if (!enable_taskbar || !show_systray) return;
 
     /* ignore our own windows */
     if (hwnd)
@@ -856,7 +881,16 @@ static void do_show_systray(void)
     SIZE size;
     NONCLIENTMETRICSW ncm;
     HFONT font;
-    HDC hdc = GetDC( 0 );
+    HDC hdc;
+
+    if (!enable_taskbar)
+    {
+        size = get_window_size();
+        SetWindowPos( tray_window, 0, 0, 0, size.cx, size.cy, SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW );
+        return;
+    }
+
+    hdc = GetDC( 0 );
 
     ncm.cbSize = sizeof(NONCLIENTMETRICSW);
     SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSW), &ncm, 0 );
@@ -888,7 +922,8 @@ static LRESULT WINAPI shell_traywnd_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
         return handle_incoming((HWND)wparam, (COPYDATASTRUCT *)lparam);
 
     case WM_DISPLAYCHANGE:
-        if (hide_systray || (!nb_displayed && !enable_shell)) do_hide_systray();
+        if (!show_systray) do_hide_systray();
+        else if (!nb_displayed && !enable_shell) do_hide_systray();
         else do_show_systray();
         break;
 
@@ -956,8 +991,8 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enab
 
     icon_cx = GetSystemMetrics( SM_CXSMICON ) + 2*ICON_BORDER;
     icon_cy = GetSystemMetrics( SM_CYSMICON ) + 2*ICON_BORDER;
-    hide_systray = using_root;
     enable_shell = arg_enable_shell;
+    enable_taskbar = enable_shell || !using_root;
 
     /* register the systray listener window class */
     if (!RegisterClassExW( &shell_traywnd_class ))
@@ -971,13 +1006,23 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enab
         return;
     }
 
-    SystemParametersInfoW( SPI_GETWORKAREA, 0, &work_rect, 0 );
-    SetRect( &primary_rect, 0, 0, GetSystemMetrics( SM_CXSCREEN ), GetSystemMetrics( SM_CYSCREEN ) );
-    SubtractRect( &taskbar_rect, &primary_rect, &work_rect );
+    if (enable_taskbar)
+    {
+        SystemParametersInfoW( SPI_GETWORKAREA, 0, &work_rect, 0 );
+        SetRect( &primary_rect, 0, 0, GetSystemMetrics( SM_CXSCREEN ), GetSystemMetrics( SM_CYSCREEN ) );
+        SubtractRect( &taskbar_rect, &primary_rect, &work_rect );
 
-    tray_window = CreateWindowExW( WS_EX_NOACTIVATE, shell_traywnd_class.lpszClassName, NULL, WS_POPUP, taskbar_rect.left,
-                                   taskbar_rect.top, taskbar_rect.right - taskbar_rect.left,
-                                   taskbar_rect.bottom - taskbar_rect.top, 0, 0, 0, 0 );
+        tray_window = CreateWindowExW( WS_EX_NOACTIVATE, shell_traywnd_class.lpszClassName, NULL, WS_POPUP,
+                                       taskbar_rect.left, taskbar_rect.top, taskbar_rect.right - taskbar_rect.left,
+                                       taskbar_rect.bottom - taskbar_rect.top, 0, 0, 0, 0 );
+    }
+    else
+    {
+        SIZE size = get_window_size();
+        tray_window = CreateWindowExW( 0, shell_traywnd_class.lpszClassName, L"", WS_CAPTION | WS_SYSMENU,
+                                       CW_USEDEFAULT, CW_USEDEFAULT, size.cx, size.cy, 0, 0, 0, 0 );
+    }
+
     if (!tray_window)
     {
         ERR( "Could not create tray window\n" );
@@ -988,6 +1033,6 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enab
 
     add_taskbar_button( 0 );
 
-    if (hide_systray) do_hide_systray();
-    else if (enable_shell) do_show_systray();
+    if (enable_taskbar) do_show_systray();
+    else do_hide_systray();
 }
