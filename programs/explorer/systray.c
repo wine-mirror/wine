@@ -320,32 +320,24 @@ static void invalidate_icons( unsigned int start, unsigned int end )
     InvalidateRect( tray_window, &rect, TRUE );
 }
 
-/* make an icon visible */
-static BOOL show_icon(struct icon *icon)
+/* add an icon to the system tray window */
+static void systray_add_icon( struct icon *icon )
 {
-    TRACE( "id=0x%x, hwnd=%p\n", icon->id, icon->owner );
-
-    if (icon->display != -1) return TRUE;  /* already displayed */
+    if (icon->display != -1) return;  /* already added */
 
     icon->display = nb_displayed++;
-    update_tooltip_position( icon );
-    invalidate_icons( nb_displayed-1, nb_displayed-1 );
+    invalidate_icons( icon->display, icon->display );
 
     if (nb_displayed == 1 && !hide_systray) do_show_systray();
-
-    create_tooltip(icon);
-    update_balloon( icon );
-    return TRUE;
+    TRACE( "added %u now %d icons\n", icon->id, nb_displayed );
 }
 
-/* make an icon invisible */
-static BOOL hide_icon(struct icon *icon)
+/* remove an icon from the stand-alone tray */
+static void systray_remove_icon( struct icon *icon )
 {
     struct icon *ptr;
 
-    TRACE( "id=0x%x, hwnd=%p\n", icon->id, icon->owner );
-
-    if (icon->display == -1) return TRUE;  /* already hidden */
+    if (icon->display == -1) return;  /* already removed */
 
     assert( nb_displayed );
     LIST_FOR_EACH_ENTRY( ptr, &icon_list, struct icon, entry )
@@ -355,11 +347,37 @@ static BOOL hide_icon(struct icon *icon)
         ptr->display--;
         update_tooltip_position( ptr );
     }
-    nb_displayed--;
+
+    if (!--nb_displayed && !enable_shell) do_hide_systray();
+    TRACE( "removed %u now %d icons\n", icon->id, nb_displayed );
+
     invalidate_icons( icon->display, nb_displayed );
     icon->display = -1;
+}
 
-    if (!nb_displayed && !enable_shell) do_hide_systray();
+/* make an icon visible */
+static BOOL show_icon(struct icon *icon)
+{
+    TRACE( "id=0x%x, hwnd=%p\n", icon->id, icon->owner );
+
+    if (icon->display != -1) return TRUE;  /* already displayed */
+
+    systray_add_icon( icon );
+
+    update_tooltip_position( icon );
+    create_tooltip( icon );
+    update_balloon( icon );
+    return TRUE;
+}
+
+/* make an icon invisible */
+static BOOL hide_icon(struct icon *icon)
+{
+    TRACE( "id=0x%x, hwnd=%p\n", icon->id, icon->owner );
+
+    if (icon->display == -1) return TRUE;  /* already hidden */
+
+    systray_remove_icon( icon );
 
     update_balloon( icon );
     update_tooltip_position( icon );
