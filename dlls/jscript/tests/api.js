@@ -1432,6 +1432,10 @@ tmp = (new Number(1.182e30)).toPrecision(5);
 ok(tmp == "1.1820e+30", "num(1.182e30)).toPrecision(5) = " + tmp);
 tmp = (new Number(1.123)).toPrecision();
 ok(tmp == "1.123", "num(1.123).toPrecision() = " + tmp);
+if(invokeVersion >= 2) {
+    tmp = (new Number(1.123)).toPrecision(undefined);
+    ok(tmp == "1.123", "num(1.123).toPrecision(undefined) = " + tmp);
+}
 
 ok(Number() === 0, "Number() = " + Number());
 ok(Number(false) === 0, "Number(false) = " + Number(false));
@@ -2707,6 +2711,8 @@ testException(function() {Number.prototype.toLocaleString.call(null);}, "E_NOT_N
 testException(function() {(new Number(3)).toString(1);}, "E_INVALID_CALL_ARG");
 testException(function() {(new Number(3)).toFixed(21);}, "E_FRACTION_DIGITS_OUT_OF_RANGE");
 testException(function() {(new Number(1)).toPrecision(0);}, "E_PRECISION_OUT_OF_RANGE");
+if(invokeVersion < 2)
+    testException(function() {(new Number(1)).toPrecision(undefined);}, "E_PRECISION_OUT_OF_RANGE");
 testException(function() {not_existing_variable.something();}, "E_UNDEFINED");
 testException(function() {date();}, "E_NOT_FUNC");
 testException(function() {arr();}, "E_NOT_FUNC");
