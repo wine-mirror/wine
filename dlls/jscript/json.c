@@ -396,13 +396,11 @@ static HRESULT JSON_parse(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned
 
         if(SUCCEEDED(hres)) {
             struct transform_json_object_ctx proc_ctx = { ctx, get_object(argv[1]), S_OK };
-            if(!(str = jsstr_alloc(L"")))
-                hres = E_OUTOFMEMORY;
-            else {
-                ret = transform_json_object(&proc_ctx, root, str);
-                jsstr_release(str);
-                hres = proc_ctx.hres;
-            }
+
+            str = jsstr_empty();
+            ret = transform_json_object(&proc_ctx, root, str);
+            jsstr_release(str);
+            hres = proc_ctx.hres;
         }
         jsdisp_release(root);
         if(FAILED(hres))
