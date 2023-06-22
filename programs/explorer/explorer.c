@@ -131,7 +131,7 @@ static BOOL create_combobox_item(IShellFolder *folder, LPCITEMIDLIST child_pidl,
         hres = StrRetToStrW(&strret, child_pidl, &item->pszText);
     if(FAILED(hres))
     {
-        WINE_WARN("Could not get name for pidl\n");
+        WARN( "Could not get name for pidl\n" );
         return FALSE;
     }
 
@@ -198,8 +198,8 @@ static void update_path_box(explorer_info *info)
             hres = IEnumIDList_Next(ids,1,&curr_pidl,NULL);
             if(FAILED(hres) || hres == S_FALSE)
                 break;
-            if(!create_combobox_item(desktop,curr_pidl,info->icon_list,&item))
-                WINE_WARN("Could not create a combobox item\n");
+            if (!create_combobox_item( desktop, curr_pidl, info->icon_list, &item ))
+                WARN( "Could not create a combobox item\n" );
             else
             {
                 LPITEMIDLIST full_pidl = ILCombine(desktop_pidl,curr_pidl);
@@ -215,8 +215,7 @@ static void update_path_box(explorer_info *info)
                     hres = IShellFolder_BindToObject(desktop,curr_pidl,NULL,
                                                      &IID_IShellFolder,
                                                      (void**)&curr_folder);
-                    if(FAILED(hres))
-                        WINE_WARN("Could not get an IShellFolder\n");
+                    if (FAILED(hres)) WARN( "Could not get an IShellFolder\n" );
                     while(!ILIsEmpty(next_pidl))
                     {
                         LPITEMIDLIST first = ILCloneFirst(next_pidl);
@@ -224,7 +223,7 @@ static void update_path_box(explorer_info *info)
                         if(!create_combobox_item(curr_folder,first,
                                                  info->icon_list,&item))
                         {
-                            WINE_WARN("Could not create a combobox item\n");
+                            WARN( "Could not create a combobox item\n" );
                             break;
                         }
                         ++item.iIndent;
@@ -237,7 +236,7 @@ static void update_path_box(explorer_info *info)
                                                          (void**)&temp);
                         if(FAILED(hres))
                         {
-                            WINE_WARN("Could not get an IShellFolder\n");
+                            WARN( "Could not get an IShellFolder\n" );
                             break;
                         }
                         IShellFolder_Release(curr_folder);
@@ -258,8 +257,7 @@ static void update_path_box(explorer_info *info)
         ILFree(curr_pidl);
         IEnumIDList_Release(ids);
     }
-    else
-        WINE_WARN("Could not enumerate the desktop\n");
+    else WARN( "Could not enumerate the desktop\n" );
     SendMessageW(info->path_box,CBEM_SETITEMW,0,(LPARAM)&main_item);
     CoTaskMemFree(main_item.pszText);
 }
@@ -447,7 +445,7 @@ static void make_explorer_window(parameters_struct *params)
     info = calloc( 1, sizeof(explorer_info) );
     if(!info)
     {
-        WINE_ERR("Could not allocate an explorer_info struct\n");
+        ERR( "Could not allocate an explorer_info struct\n" );
         IShellWindows_Release(sw);
         free(path);
         return;
@@ -456,7 +454,7 @@ static void make_explorer_window(parameters_struct *params)
                             &IID_IExplorerBrowser,(LPVOID*)&info->browser);
     if(FAILED(hres))
     {
-        WINE_ERR( "Could not obtain an instance of IExplorerBrowser\n" );
+        ERR( "Could not obtain an instance of IExplorerBrowser\n" );
         free(info);
         IShellWindows_Release(sw);
         free(path);
@@ -574,7 +572,7 @@ static LRESULT explorer_on_end_edit(explorer_info *info,NMCBEENDEDITW *edit_info
 {
     LPITEMIDLIST pidl = NULL;
 
-    WINE_TRACE("iWhy=%x\n",edit_info->iWhy);
+    TRACE( "iWhy=%x\n", edit_info->iWhy );
     switch(edit_info->iWhy)
     {
     case CBENF_DROPDOWN:
@@ -623,7 +621,7 @@ static LRESULT update_rebar_size(explorer_info* info,NMRBAUTOSIZE *size_info)
 
 static LRESULT explorer_on_notify(explorer_info* info,NMHDR* notification)
 {
-    WINE_TRACE("code=%i\n",notification->code);
+    TRACE( "code=%i\n", notification->code );
     switch(notification->code)
     {
     case CBEN_BEGINEDIT:
@@ -707,7 +705,7 @@ static LRESULT CALLBACK explorer_wnd_proc(HWND hwnd, UINT uMsg, WPARAM wParam, L
         = (explorer_info*)GetWindowLongPtrW(hwnd,EXPLORER_INFO_INDEX);
     IExplorerBrowser *browser = NULL;
 
-    WINE_TRACE("(hwnd=%p,uMsg=%u,wParam=%Ix,lParam=%Ix)\n",hwnd,uMsg,wParam,lParam);
+    TRACE( "(hwnd=%p,uMsg=%u,wParam=%Ix,lParam=%Ix)\n", hwnd, uMsg, wParam, lParam );
     if(info)
         browser = info->browser;
     switch(uMsg)
@@ -913,7 +911,7 @@ int WINAPI wWinMain(HINSTANCE hinstance,
     hres = OleInitialize(NULL);
     if(FAILED(hres))
     {
-        WINE_ERR("Could not initialize COM\n");
+        ERR( "Could not initialize COM\n" );
         ExitProcess(EXIT_FAILURE);
     }
     if(parameters.root[0] && !PathIsDirectoryW(parameters.root))
@@ -923,7 +921,7 @@ int WINAPI wWinMain(HINSTANCE hinstance,
     init_info.dwICC = ICC_USEREX_CLASSES | ICC_BAR_CLASSES | ICC_COOL_CLASSES;
     if(!InitCommonControlsEx(&init_info))
     {
-        WINE_ERR("Could not initialize Comctl\n");
+        ERR( "Could not initialize Comctl\n" );
         ExitProcess(EXIT_FAILURE);
     }
     register_explorer_window_class();

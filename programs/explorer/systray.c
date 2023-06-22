@@ -319,7 +319,7 @@ static void invalidate_icons( unsigned int start, unsigned int end )
 /* make an icon visible */
 static BOOL show_icon(struct icon *icon)
 {
-    WINE_TRACE("id=0x%x, hwnd=%p\n", icon->id, icon->owner);
+    TRACE( "id=0x%x, hwnd=%p\n", icon->id, icon->owner );
 
     if (icon->display != -1) return TRUE;  /* already displayed */
 
@@ -349,7 +349,7 @@ static BOOL hide_icon(struct icon *icon)
 {
     unsigned int i;
 
-    WINE_TRACE("id=0x%x, hwnd=%p\n", icon->id, icon->owner);
+    TRACE( "id=0x%x, hwnd=%p\n", icon->id, icon->owner );
 
     if (icon->display == -1) return TRUE;  /* already hidden */
 
@@ -374,12 +374,12 @@ static BOOL hide_icon(struct icon *icon)
 /* Modifies an existing icon record */
 static BOOL modify_icon( struct icon *icon, NOTIFYICONDATAW *nid )
 {
-    WINE_TRACE("id=0x%x, hwnd=%p\n", nid->uID, nid->hWnd);
+    TRACE( "id=0x%x, hwnd=%p\n", nid->uID, nid->hWnd );
 
     /* demarshal the request from the NID */
     if (!icon)
     {
-        WINE_WARN("Invalid icon ID (0x%x) for HWND %p\n", nid->uID, nid->hWnd);
+        WARN( "Invalid icon ID (0x%x) for HWND %p\n", nid->uID, nid->hWnd );
         return FALSE;
     }
 
@@ -423,17 +423,17 @@ static BOOL add_icon(NOTIFYICONDATAW *nid)
 {
     struct icon  *icon;
 
-    WINE_TRACE("id=0x%x, hwnd=%p\n", nid->uID, nid->hWnd);
+    TRACE( "id=0x%x, hwnd=%p\n", nid->uID, nid->hWnd );
 
     if ((icon = get_icon(nid->hWnd, nid->uID)))
     {
-        WINE_WARN("duplicate tray icon add, buggy app?\n");
+        WARN( "duplicate tray icon add, buggy app?\n" );
         return FALSE;
     }
 
     if (!(icon = calloc( 1, sizeof(*icon) )))
     {
-        WINE_ERR("out of memory\n");
+        ERR( "out of memory\n" );
         return FALSE;
     }
 
@@ -554,7 +554,7 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
 
         if (cds->cbData < sizeof(*data) + cbMaskBits + cbColourBits)
         {
-            WINE_ERR("buffer underflow\n");
+            ERR( "buffer underflow\n" );
             return FALSE;
         }
         nid.hIcon = CreateIcon(NULL, data->width, data->height, data->planes, data->bpp,
@@ -591,7 +591,7 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
         }
         break;
     default:
-        WINE_FIXME("unhandled tray message: %Id\n", cds->dwData);
+        FIXME( "unhandled tray message: %Id\n", cds->dwData );
         break;
     }
 
@@ -915,7 +915,7 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enab
 
     if (!RegisterClassExW(&class))
     {
-        WINE_ERR("Could not register SysTray window class\n");
+        ERR( "Could not register SysTray window class\n" );
         return;
     }
 
@@ -928,7 +928,7 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enab
                                    taskbar_rect.bottom - taskbar_rect.top, 0, 0, 0, 0 );
     if (!tray_window)
     {
-        WINE_ERR("Could not create tray window\n");
+        ERR( "Could not create tray window\n" );
         return;
     }
 

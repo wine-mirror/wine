@@ -594,13 +594,13 @@ static void initialize_launchers( HWND hwnd )
     hr = SHGetKnownFolderPath( &FOLDERID_Desktop, KF_FLAG_CREATE, NULL, &desktop_folder );
     if (FAILED( hr ))
     {
-        WINE_ERR("Could not get user desktop folder\n");
+        ERR( "Could not get user desktop folder\n" );
         return;
     }
     hr = SHGetKnownFolderPath( &FOLDERID_PublicDesktop, KF_FLAG_CREATE, NULL, &desktop_folder_public );
     if (FAILED( hr ))
     {
-        WINE_ERR("Could not get public desktop folder\n");
+        ERR( "Could not get public desktop folder\n" );
         CoTaskMemFree( desktop_folder );
         return;
     }
@@ -707,7 +707,7 @@ static WNDPROC desktop_orig_wndproc;
 /* window procedure for the desktop window */
 static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 {
-    WINE_TRACE( "got msg %04x wp %Ix lp %Ix\n", message, wp, lp );
+    TRACE( "got msg %04x wp %Ix lp %Ix\n", message, wp, lp );
 
     switch(message)
     {
@@ -963,19 +963,17 @@ static void initialize_display_settings(void)
     {
         if (!EnumDisplaySettingsExW( ddW.DeviceName, ENUM_CURRENT_SETTINGS, &dmW, 0))
         {
-            WINE_ERR( "Failed to query current display settings for %s.\n",
-                      wine_dbgstr_w( ddW.DeviceName ) );
+            ERR( "Failed to query current display settings for %s.\n", debugstr_w(ddW.DeviceName) );
             continue;
         }
 
-        WINE_TRACE( "Device %s current display mode %lux%lu %luBits %luHz at %ld,%ld.\n",
-                    wine_dbgstr_w( ddW.DeviceName ), dmW.dmPelsWidth, dmW.dmPelsHeight,
-                    dmW.dmBitsPerPel, dmW.dmDisplayFrequency, dmW.dmPosition.x, dmW.dmPosition.y );
+        TRACE( "Device %s current display mode %lux%lu %luBits %luHz at %ld,%ld.\n",
+               debugstr_w( ddW.DeviceName ), dmW.dmPelsWidth, dmW.dmPelsHeight,
+               dmW.dmBitsPerPel, dmW.dmDisplayFrequency, dmW.dmPosition.x, dmW.dmPosition.y );
 
         if (ChangeDisplaySettingsExW( ddW.DeviceName, &dmW, 0,
                                       CDS_GLOBAL | CDS_NORESET | CDS_UPDATEREGISTRY, 0 ))
-            WINE_ERR( "Failed to initialize registry display settings for %s.\n",
-                       wine_dbgstr_w( ddW.DeviceName ) );
+            ERR( "Failed to initialize registry display settings for %s.\n", debugstr_w(ddW.DeviceName) );
     }
 }
 
@@ -1077,7 +1075,7 @@ void manage_desktop( WCHAR *arg )
         else desktop = CreateDesktopW( name, NULL, &devmode, DF_WINE_CREATE_DESKTOP, DESKTOP_ALL_ACCESS, NULL );
         if (!desktop)
         {
-            WINE_ERR( "failed to create desktop %s error %ld\n", wine_dbgstr_w(name), GetLastError() );
+            ERR( "failed to create desktop %s error %ld\n", debugstr_w(name), GetLastError() );
             ExitProcess( 1 );
         }
         SetThreadDesktop( desktop );
@@ -1127,7 +1125,7 @@ void manage_desktop( WCHAR *arg )
 
         memset( &si, 0, sizeof(si) );
         si.cb = sizeof(si);
-        WINE_TRACE( "starting %s\n", wine_dbgstr_w(cmdline) );
+        TRACE( "starting %s\n", debugstr_w(cmdline) );
         if (CreateProcessW( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi ))
         {
             CloseHandle( pi.hThread );
@@ -1141,9 +1139,9 @@ void manage_desktop( WCHAR *arg )
     /* run the desktop message loop */
     if (hwnd)
     {
-        WINE_TRACE( "desktop message loop starting on hwnd %p\n", hwnd );
+        TRACE( "desktop message loop starting on hwnd %p\n", hwnd );
         while (GetMessageW( &msg, 0, 0, 0 )) DispatchMessageW( &msg );
-        WINE_TRACE( "desktop message loop exiting for hwnd %p\n", hwnd );
+        TRACE( "desktop message loop exiting for hwnd %p\n", hwnd );
     }
 
     if (pShellDDEInit) pShellDDEInit( FALSE );

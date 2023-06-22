@@ -440,7 +440,7 @@ void do_startmenu(HWND hwnd)
 
     destroy_menus();
 
-    WINE_TRACE("creating start menu\n");
+    TRACE( "creating start menu\n" );
 
     root_menu.menuhandle = public_startmenu.menuhandle = user_startmenu.menuhandle = CreatePopupMenu();
     if (!root_menu.menuhandle)
@@ -498,6 +498,6 @@ void do_startmenu(HWND hwnd)
         TPM_LEFTALIGN|TPM_BOTTOMALIGN|TPM_VERTICAL,
         rc.left, rc.top, hwnd, &tpm))
     {
-        WINE_ERR("couldn't display menu\n");
+        ERR( "couldn't display menu\n" );
     }
 }

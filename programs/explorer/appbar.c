@@ -149,7 +149,7 @@ static UINT_PTR handle_appbarmessage(DWORD msg, struct appbar_data_msg *abd)
         data = calloc( 1, sizeof(struct appbar_data) );
         if (!data)
         {
-            WINE_ERR("out of memory\n");
+            ERR( "out of memory\n" );
             return FALSE;
         }
         data->hwnd = hwnd;
@@ -167,18 +167,16 @@ static UINT_PTR handle_appbarmessage(DWORD msg, struct appbar_data_msg *abd)
 
             free( data );
         }
-        else
-            WINE_WARN("removing hwnd %p not on the list\n", hwnd);
+        else WARN( "removing hwnd %p not on the list\n", hwnd );
         return TRUE;
     case ABM_QUERYPOS:
-        if (abd->uEdge > ABE_BOTTOM)
-            WINE_WARN("invalid edge %i for %p\n", abd->uEdge, hwnd);
+        if (abd->uEdge > ABE_BOTTOM) WARN( "invalid edge %i for %p\n", abd->uEdge, hwnd );
         appbar_cliprect( hwnd, &abd->rc );
         return TRUE;
     case ABM_SETPOS:
         if (abd->uEdge > ABE_BOTTOM)
         {
-            WINE_WARN("invalid edge %i for %p\n", abd->uEdge, hwnd);
+            WARN( "invalid edge %i for %p\n", abd->uEdge, hwnd );
             return TRUE;
         }
         if ((data = get_appbar(hwnd)))
@@ -196,14 +194,14 @@ static UINT_PTR handle_appbarmessage(DWORD msg, struct appbar_data_msg *abd)
         }
         else
         {
-            WINE_WARN("app sent ABM_SETPOS message for %p without ABM_ADD\n", hwnd);
+            WARN( "app sent ABM_SETPOS message for %p without ABM_ADD\n", hwnd );
         }
         return TRUE;
     case ABM_GETSTATE:
-        WINE_FIXME("SHAppBarMessage(ABM_GETSTATE): stub\n");
+        FIXME( "SHAppBarMessage(ABM_GETSTATE): stub\n" );
         return ABS_ALWAYSONTOP | ABS_AUTOHIDE;
     case ABM_GETTASKBARPOS:
-        WINE_FIXME("SHAppBarMessage(ABM_GETTASKBARPOS, hwnd=%p): stub\n", hwnd);
+        FIXME( "SHAppBarMessage(ABM_GETTASKBARPOS, hwnd=%p): stub\n", hwnd );
         /* Report the taskbar is at the bottom of the screen. */
         abd->rc.left = 0;
         abd->rc.right = GetSystemMetrics(SM_CXSCREEN);
@@ -214,16 +212,16 @@ static UINT_PTR handle_appbarmessage(DWORD msg, struct appbar_data_msg *abd)
     case ABM_ACTIVATE:
         return TRUE;
     case ABM_GETAUTOHIDEBAR:
-        WINE_FIXME("SHAppBarMessage(ABM_GETAUTOHIDEBAR, hwnd=%p, edge=%x): stub\n", hwnd, abd->uEdge);
+        FIXME( "SHAppBarMessage(ABM_GETAUTOHIDEBAR, hwnd=%p, edge=%x): stub\n", hwnd, abd->uEdge );
         return 0;
     case ABM_SETAUTOHIDEBAR:
-        WINE_FIXME("SHAppBarMessage(ABM_SETAUTOHIDEBAR, hwnd=%p, edge=%x, lparam=%s): stub\n",
-                   hwnd, abd->uEdge, wine_dbgstr_longlong(abd->lParam));
+        FIXME( "SHAppBarMessage(ABM_SETAUTOHIDEBAR, hwnd=%p, edge=%x, lparam=%s): stub\n", hwnd,
+               abd->uEdge, wine_dbgstr_longlong( abd->lParam ) );
         return TRUE;
     case ABM_WINDOWPOSCHANGED:
         return TRUE;
     default:
-        WINE_FIXME("SHAppBarMessage(%lx) unimplemented\n", msg);
+        FIXME( "SHAppBarMessage(%lx) unimplemented\n", msg );
         return FALSE;
     }
 }
@@ -252,14 +250,14 @@ static LRESULT CALLBACK appbar_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
             return_hproc = OpenProcess(PROCESS_DUP_HANDLE, FALSE, cmd.return_process);
             if (return_hproc == NULL)
             {
-                WINE_ERR("couldn't open calling process\n");
+                ERR( "couldn't open calling process\n" );
                 return TRUE;
             }
 
             if (!DuplicateHandle(return_hproc, UlongToHandle(cmd.return_map),
                                  GetCurrentProcess(), &return_map, 0, FALSE, DUPLICATE_SAME_ACCESS))
             {
-                WINE_ERR("couldn't duplicate handle\n");
+                ERR( "couldn't duplicate handle\n" );
                 CloseHandle(return_hproc);
                 return TRUE;
             }
@@ -275,8 +273,7 @@ static LRESULT CALLBACK appbar_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
 
                 UnmapViewOfFile(return_view);
             }
-            else
-                WINE_ERR("couldn't map view of file\n");
+            else ERR( "couldn't map view of file\n" );
 
             CloseHandle(return_map);
             return TRUE;
@@ -302,14 +299,14 @@ void initialize_appbar(void)
 
     if (!RegisterClassExW(&class))
     {
-        WINE_ERR("Could not register appbar message window class\n");
+        ERR( "Could not register appbar message window class\n" );
         return;
     }
 
     appbarmsg_window = CreateWindowW(classname, classname, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
     if (!appbarmsg_window)
     {
-        WINE_ERR("Could not create appbar message window\n");
+        ERR( "Could not create appbar message window\n" );
         return;
     }
 }
