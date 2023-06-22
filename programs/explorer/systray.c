@@ -57,8 +57,6 @@ struct notify_data  /* platform-independent format for NOTIFYICONDATA */
     UINT bpp;
 };
 
-static int (CDECL *wine_notify_icon)(DWORD,NOTIFYICONDATAW *);
-
 #define ICON_DISPLAY_HIDDEN -1
 #define ICON_DISPLAY_DOCKED -2
 
@@ -743,7 +741,6 @@ static void cleanup_systray_window( HWND hwnd )
         if (icon->owner == hwnd) delete_icon( icon );
 
     NtUserMessageCall( hwnd, WINE_SYSTRAY_CLEANUP_ICONS, 0, 0, NULL, NtUserSystemTrayCall, FALSE );
-    if (wine_notify_icon) wine_notify_icon( 0xdead, &nid );
 }
 
 /* update the taskbar buttons when something changed */
@@ -841,8 +838,6 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
     {
         if ((ret = NtUserMessageCall( hwndSource, WINE_SYSTRAY_NOTIFY_ICON, cds->dwData, 0,
                                       &nid, NtUserSystemTrayCall, FALSE )) != -1)
-            goto done;
-        if (wine_notify_icon && ((ret = wine_notify_icon( cds->dwData, &nid )) != -1))
             goto done;
         ret = FALSE;
     }
@@ -1110,11 +1105,9 @@ void handle_parent_notify( HWND hwnd, WPARAM wp )
 }
 
 /* this function creates the listener window */
-void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enable_shell )
+void initialize_systray( BOOL using_root, BOOL arg_enable_shell )
 {
     RECT work_rect, primary_rect, taskbar_rect;
-
-    if (using_root && graphics_driver) wine_notify_icon = (void *)GetProcAddress( graphics_driver, "wine_notify_icon" );
 
     shell_traywnd_class.hIcon = LoadIconW( 0, (const WCHAR *)IDI_WINLOGO );
     shell_traywnd_class.hCursor = LoadCursorW( 0, (const WCHAR *)IDC_ARROW );
@@ -1132,7 +1125,7 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enab
         ERR( "Could not register SysTray window class\n" );
         return;
     }
-    if (!wine_notify_icon && !RegisterClassExW( &tray_icon_class ))
+    if (!RegisterClassExW( &tray_icon_class ))
     {
         ERR( "Could not register Wine SysTray window classes\n" );
         return;
