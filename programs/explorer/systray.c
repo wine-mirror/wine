@@ -105,6 +105,7 @@ static WCHAR start_label[50];
 
 static struct icon *balloon_icon;
 static HWND balloon_window;
+static POINT balloon_pos;
 
 #define MIN_DISPLAYED 8
 #define ICON_BORDER  2
@@ -211,6 +212,8 @@ static void update_systray_balloon_position(void)
     GetWindowRect( balloon_icon->window, &rect );
     pos.x = (rect.left + rect.right) / 2;
     pos.y = (rect.top + rect.bottom) / 2;
+    if (pos.x == balloon_pos.x && pos.y == balloon_pos.y) return; /* nothing changed */
+    balloon_pos = pos;
     SendMessageW( balloon_window, TTM_TRACKPOSITION, 0, MAKELONG( pos.x, pos.y ));
 }
 
@@ -236,6 +239,7 @@ static void balloon_create_timer( struct icon *icon )
     else
         SendMessageW( balloon_window, TTM_SETTITLEW, icon->info_flags, (LPARAM)icon->info_title );
     balloon_icon = icon;
+    balloon_pos.x = balloon_pos.y = MAXLONG;
     update_systray_balloon_position();
     SendMessageW( balloon_window, TTM_TRACKACTIVATE, TRUE, (LPARAM)&ti );
     KillTimer( icon->window, BALLOON_CREATE_TIMER );
