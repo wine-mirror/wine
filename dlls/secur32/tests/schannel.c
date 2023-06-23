@@ -2018,6 +2018,7 @@ static void test_connection_shutdown(void)
     ok( status == SEC_E_OK, "got %08lx.\n", status );
     ok( buf->cbBuffer == sizeof(message), "got cbBuffer %#lx.\n", buf->cbBuffer );
     ok( !memcmp( buf->pvBuffer, message, sizeof(message) ), "message data mismatch.\n" );
+    free_buffers( &buffers[0] );
 
     alert.dwTokenType = SCHANNEL_ALERT;
     alert.dwAlertType = TLS1_ALERT_FATAL;
@@ -2031,7 +2032,6 @@ static void test_connection_shutdown(void)
                                          NULL, 0, NULL, &buffers[1], &attrs, NULL );
     ok( status == SEC_E_OK, "got %08lx.\n", status );
 
-    free_buffers( &buffers[0] );
     free_buffers( &buffers[1] );
     DeleteSecurityContext( &context );
     FreeCredentialsHandle( &cred_handle );
