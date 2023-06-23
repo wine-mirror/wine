@@ -1299,7 +1299,7 @@ static HRESULT WINAPI search_ExecuteSearch(IDirectorySearch *iface, LPWSTR filte
 {
     LDAP_namespace *ldap = impl_from_IDirectorySearch(iface);
     ULONG err, i;
-    WCHAR **props;
+    WCHAR **props, *object;
     LDAPControlW **ctrls = NULL, *ctrls_a[2], tombstone;
     struct ldap_search_context *ldap_ctx;
 
@@ -1347,9 +1347,13 @@ static HRESULT WINAPI search_ExecuteSearch(IDirectorySearch *iface, LPWSTR filte
         ctrls = ctrls_a;
     }
 
+    object = ldap->object;
+    if (object && !wcsicmp(object, L"rootDSE"))
+        object = NULL;
+
     if (ldap->search.pagesize)
     {
-        ldap_ctx->page = ldap_search_init_pageW(ldap->ld, ldap->object, ldap->search.scope,
+        ldap_ctx->page = ldap_search_init_pageW(ldap->ld, object, ldap->search.scope,
                                                 filter, props, ldap->search.attribtypes_only,
                                                 ctrls, NULL, 0, ldap->search.size_limit, NULL);
         if (ldap_ctx->page)
@@ -1359,7 +1363,7 @@ static HRESULT WINAPI search_ExecuteSearch(IDirectorySearch *iface, LPWSTR filte
             err = LDAP_NO_MEMORY;
     }
     else
-        err = ldap_search_ext_sW(ldap->ld, ldap->object, ldap->search.scope, filter, props,
+        err = ldap_search_ext_sW(ldap->ld, object, ldap->search.scope, filter, props,
                                  ldap->search.attribtypes_only, ctrls, NULL, NULL, ldap->search.size_limit,
                                  &ldap_ctx->res);
     free(props);
