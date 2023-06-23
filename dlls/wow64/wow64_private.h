@@ -47,11 +47,6 @@ struct object_attr64
     SECURITY_DESCRIPTOR sd;
 };
 
-static inline void *get_rva( HMODULE module, DWORD va )
-{
-    return (void *)((char *)module + va);
-}
-
 /* cf. GetSystemWow64Directory2 */
 static inline const WCHAR *get_machine_wow64_dir( USHORT machine )
 {

@@ -664,34 +664,47 @@ static DWORD get_syscall_num( const BYTE *syscall )
 
 
 /**********************************************************************
+ *           get_rva
+ */
+static void *get_rva( const IMAGE_NT_HEADERS *nt, HMODULE module, DWORD rva,
+                      IMAGE_SECTION_HEADER **section, BOOL image )
+{
+    if (image) return (void *)((char *)module + rva);
+    return RtlImageRvaToVa( nt, module, rva, section );
+}
+
+
+/**********************************************************************
  *           init_syscall_table
  */
-static void init_syscall_table( HMODULE module, ULONG idx, const SYSTEM_SERVICE_TABLE *orig_table )
+static void init_syscall_table( HMODULE module, ULONG idx, const SYSTEM_SERVICE_TABLE *orig_table, BOOL image )
 {
     static syscall_thunk thunks[2048];
     static ULONG start_pos;
 
+    const IMAGE_NT_HEADERS *nt = RtlImageNtHeader( module );
+    IMAGE_SECTION_HEADER *section = NULL;
     const IMAGE_EXPORT_DIRECTORY *exports;
     const ULONG *functions, *names;
     const USHORT *ordinals;
     ULONG id, exp_size, exp_pos, wrap_pos, max_pos = 0;
     const char **syscall_names = (const char **)orig_table->CounterTable;
 
-    exports = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size );
-    ordinals = get_rva( module, exports->AddressOfNameOrdinals );
-    functions = get_rva( module, exports->AddressOfFunctions );
-    names = get_rva( module, exports->AddressOfNames );
+    exports = RtlImageDirectoryEntryToData( module, image, IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size );
+    ordinals = get_rva( nt, module, exports->AddressOfNameOrdinals, &section, image );
+    functions = get_rva( nt, module, exports->AddressOfFunctions, &section, image );
+    names = get_rva( nt, module, exports->AddressOfNames, &section, image );
 
     for (exp_pos = wrap_pos = 0; exp_pos < exports->NumberOfNames; exp_pos++)
     {
-        char *name = get_rva( module, names[exp_pos] );
+        char *name = get_rva( nt, module, names[exp_pos], &section, image );
         int res = -1;
 
         if (strncmp( name, "Nt", 2 ) && strncmp( name, "wine", 4 ) && strncmp( name, "__wine", 6 ))
             continue;  /* not a syscall */
 
-        if ((id = get_syscall_num( get_rva( module, functions[ordinals[exp_pos]] ))) == ~0u)
-            continue; /* not a syscall */
+        id = get_syscall_num( get_rva( nt, module, functions[ordinals[exp_pos]], &section, image ));
+        if (id == ~0u) continue; /* not a syscall */
 
         if (wrap_pos < orig_table->ServiceLimit) res = strcmp( name, syscall_names[wrap_pos] );
 
@@ -739,7 +752,7 @@ void init_image_mapping( HMODULE module )
     if (!win32u_module && RtlFindExportedRoutineByName( module, "NtUserInitializeClientPfnArrays" ))
     {
         win32u_module = module;
-        init_syscall_table( win32u_module, 1, psdwhwin32 );
+        init_syscall_table( win32u_module, 1, psdwhwin32, TRUE );
     }
 }
 
@@ -747,7 +760,7 @@ void init_image_mapping( HMODULE module )
 /**********************************************************************
  *           load_32bit_module
  */
-static HMODULE load_32bit_module( const WCHAR *name, WORD machine )
+static HMODULE load_32bit_module( const WCHAR *name, WORD machine, BOOL image )
 {
     NTSTATUS status;
     OBJECT_ATTRIBUTES attr;
@@ -771,8 +784,8 @@ static HMODULE load_32bit_module( const WCHAR *name, WORD machine )
 
     size.QuadPart = 0;
     status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |
-                              SECTION_MAP_READ | SECTION_MAP_EXECUTE,
-                              NULL, &size, PAGE_EXECUTE_READ, SEC_IMAGE, handle );
+                              SECTION_MAP_READ | SECTION_MAP_EXECUTE, NULL,
+                              &size, PAGE_EXECUTE_READ, image ? SEC_IMAGE : SEC_COMMIT, handle );
     NtClose( handle );
     if (status) return NULL;
 
@@ -897,12 +910,12 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
     *(void **)RtlFindExportedRoutineByName( module, "__wine_unix_call_dispatcher" ) = p__wine_get_unix_opcode();
     GET_PTR( KiRaiseUserExceptionDispatcher );
 
-    if ((ntdll = load_32bit_module( L"ntdll.dll", current_machine )))
+    if ((ntdll = load_32bit_module( L"ntdll.dll", current_machine, FALSE )))
     {
-        init_syscall_table( ntdll, 0, &ntdll_syscall_table );
+        init_syscall_table( ntdll, 0, &ntdll_syscall_table, FALSE );
         NtUnmapViewOfSection( NtCurrentProcess(), ntdll );
     }
-    else init_syscall_table( module, 0, &ntdll_syscall_table );
+    else init_syscall_table( module, 0, &ntdll_syscall_table, TRUE );
 
     init_file_redirects();
     return TRUE;
