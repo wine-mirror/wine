@@ -24,6 +24,7 @@
 #include "wine/test.h"
 #include "winternl.h"
 #include "winnt.h"
+#include "wine/mscvpdb.h"
 
 static const IMAGE_DOS_HEADER dos_header =
 {
@@ -48,6 +49,11 @@ static void _check_write_file(unsigned line, HANDLE file, const void* ptr, size_
     ok_(__FILE__, line)(ret, "WriteFile error %ld\n", GetLastError());
     ok_(__FILE__, line)(written == len, "Unexpected written len %lu (%Iu)\n", written, len);
 }
+
+/* ==============================================
+ *       Helpers for generating PE files
+ * ==============================================
+ */
 
 static void init_headers64(IMAGE_NT_HEADERS64* header, DWORD timestamp, DWORD size_of_image, DWORD charac)
 {
@@ -347,7 +353,330 @@ static struct debug_directory_blob* make_dbg_blob(DWORD dd_timestamp, const char
     return blob;
 }
 
-static void test_srvgetindexes(void)
+/* ==============================================
+ *      Helpers for generating PDB files
+ * ==============================================
+ */
+
+struct pdb_stream
+{
+    unsigned int size;
+    unsigned int num_buffers;
+    struct
+    {
+        const void*    ptr;
+        unsigned int   size;
+        unsigned short been_aligned;
+        unsigned short padding;
+    } buffers[16];
+};
+
+struct pdb_file
+{
+    unsigned int        block_size;
+    unsigned short      num_streams;
+    struct pdb_stream   streams[16];
+};
+
+static void pdb_append_to_stream(struct pdb_stream* stream, const void* buffer, unsigned int len)
+{
+    assert(stream->num_buffers < ARRAYSIZE(stream->buffers));
+    stream->size += len;
+    stream->buffers[stream->num_buffers].ptr = buffer;
+    stream->buffers[stream->num_buffers].size = len;
+    stream->buffers[stream->num_buffers].been_aligned = 0;
+    stream->buffers[stream->num_buffers].padding = 0;
+    stream->num_buffers++;
+}
+
+static struct pdb_stream* pdb_add_stream(struct pdb_file* pdb, unsigned short* strno, const void* buffer, unsigned int len)
+{
+    struct pdb_stream* stream = &pdb->streams[pdb->num_streams];
+
+    assert(pdb->num_streams < ARRAYSIZE(pdb->streams));
+    stream->size = 0;
+    stream->num_buffers = 0;
+
+    if (buffer && len)
+        pdb_append_to_stream(stream, buffer, len);
+    if (strno) *strno = pdb->num_streams;
+    pdb->num_streams++;
+    return stream;
+}
+
+static unsigned int pdb_align_stream(struct pdb_stream* stream, unsigned int align)
+{
+    assert(stream->num_buffers && !stream->buffers[stream->num_buffers - 1].been_aligned);
+    stream->buffers[stream->num_buffers - 1].been_aligned = 1;
+    stream->buffers[stream->num_buffers - 1].padding = ALIGN(stream->size, align) - stream->size;
+    return stream->size = ALIGN(stream->size, align);
+}
+
+static void pdb_init(struct pdb_file* pdb)
+{
+    pdb->block_size = 0x400;
+    pdb->num_streams = 0;
+}
+
+static void pdb_write(HANDLE hfile, struct pdb_file* pdb)
+{
+    DWORD toc[32], dummy, other;
+    unsigned int i, j;
+    unsigned num_blocks, toc_where;
+    BOOL ret;
+    struct PDB_DS_HEADER ds_header =
+    {
+        "Microsoft C/C++ MSF 7.00\r\n\032DS\0\0",
+        pdb->block_size, 1, 4 /* hdr, free list 1 & 2, toc block list */, 0, 0, 3
+    };
+
+    /* we use always the same layout:
+     * block   0: header
+     * block   1: free list (active)   = always filled with 0
+     * block   2: free list (inactive) = always filled with 0
+     * block   3: block numbers of toc
+     * block   4: toc for streams (FIXME only 1 block for toc)
+     * block   5: stream 1 (first block)
+     * block   x: stream 1 (last block)
+     * block x+1: stream 2 (first block)
+     * block   y: stream 2 (last block)
+     * ...
+     * block   z: stream n (last block)
+     * (NB: entry is omitted when stream's size is 0)
+     * pad to align to block size
+     */
+    toc[0] = pdb->num_streams; /* number of streams */
+
+    num_blocks = 5; /* header, free lists 1 & 2, block number of toc, toc */
+    toc_where = 1 + pdb->num_streams;
+    for (i = 0; i < pdb->num_streams; i++)
+    {
+        char filler[16];
+        struct pdb_stream* stream = &pdb->streams[i];
+        memset(filler, 0, ARRAY_SIZE(filler));
+        if (stream->size)
+        {
+            /* write stream #i */
+            SetFilePointer(hfile, num_blocks * pdb->block_size, NULL, FILE_BEGIN);
+            for (j = 0; j < stream->num_buffers; j++)
+            {
+                ret = WriteFile(hfile, stream->buffers[j].ptr, stream->buffers[j].size, &dummy, NULL);
+                ok(ret, "WriteFile error %ld\n", GetLastError());
+                if (stream->buffers[j].been_aligned && stream->buffers[j].padding)
+                {
+                    ret = WriteFile(hfile, filler, stream->buffers[j].padding, &dummy, NULL);
+                    ok(ret, "WriteFile error %ld\n", GetLastError());
+                }
+            }
+        }
+        toc[1 + i] = stream->size;
+        for (j = 0; j < NUM_OF(stream->size, pdb->block_size); j++)
+        {
+            assert(toc_where < ARRAYSIZE(toc));
+            toc[toc_where++] = num_blocks++;
+        }
+    }
+    ds_header.num_blocks = num_blocks;
+
+    /* write toc */
+    ds_header.toc_size = toc_where * sizeof(toc[0]);
+    assert(ds_header.toc_size < pdb->block_size); /* FIXME: only supporting one block for toc */
+    SetFilePointer(hfile, 4 * pdb->block_size, NULL, FILE_BEGIN);
+    ret = WriteFile(hfile, toc, ds_header.toc_size, &dummy, NULL);
+    ok(ret, "WriteFile error %ld\n", GetLastError());
+
+    /* write header toc's block_list */
+    other = 4;
+    SetFilePointer(hfile, 3 * pdb->block_size, NULL, FILE_BEGIN);
+    ret = WriteFile(hfile, &other, sizeof(other), &dummy, NULL);
+    ok(ret, "WriteFile error %ld\n", GetLastError());
+
+    /* skip free list blocks 1 & 2 (will be zero:ed) */
+
+    /* write ds header */
+    SetFilePointer(hfile, 0, NULL, FILE_BEGIN);
+    ret = WriteFile(hfile, &ds_header, sizeof(ds_header), &dummy, NULL);
+    ok(ret, "WriteFile error %ld\n", GetLastError());
+
+    /* align file size to block size */
+    SetFilePointer(hfile, num_blocks * pdb->block_size, NULL, FILE_BEGIN);
+    SetEndOfFile(hfile);
+}
+
+static BOOL create_test_pdb_ds(const char* pdb_name, const GUID* guid, DWORD age)
+{
+    struct PDB_DS_ROOT root =
+    {
+        .Version = 20000404,
+        .TimeDateStamp = 0x32323232, /* it's not reported, so anything will do */
+        .Age = ~age, /* actually, it's the age field in DBI which is used, mark to discriminate */
+        .guid = *guid,
+        .cbNames = 0,
+        /* names[] set from root_table */
+    };
+    unsigned int root_table[] = {0, 1, 0, 0, 0, 0};
+    PDB_TYPES TPI =
+    {
+        .version = /*19990903*/ 20040203 /* llvm chokes on VC 7.0 value */,
+        .type_offset = sizeof(TPI),
+        .first_index = 0x1000,
+        .last_index = 0x1000,
+        .type_size = 0,
+        .hash_stream = 0xffff,
+        .pad = 0xffff,
+        .hash_value_size = 4,
+        .hash_num_buckets = 0x3ffff,
+        .hash_offset = 0,
+        .hash_size = 0,
+        .search_offset = 0,
+        .search_size = 0,
+        .type_remap_size = 0,
+        .type_remap_offset = 0
+    };
+    PDB_TYPES IPI = TPI;
+    PDB_SYMBOLS DBI =
+    {
+        .signature = 0xffffffff,
+        .version = 19990903, /* VC 7.0 */
+        .age = age,
+        .global_hash_stream = 0,
+        .flags = 0x8700, /* VC 7.0 */
+        .public_stream = 0xffff,
+        .bldVer = 0,
+        .gsym_stream = 0xffff,
+        .rbldVer = 0,
+        .module_size = 0,
+        .sectcontrib_size = 0,
+        .segmap_size = 0,
+        .srcmodule_size = 0,
+        .pdbimport_size = 0,
+        .resvd0 = 0,
+        .stream_index_size = 0,
+        .unknown2_size = 0,
+        .resvd3 = 0,
+        .machine = IMAGE_FILE_MACHINE_AMD64,
+        .resvd4 = 0,
+    };
+    struct {
+        unsigned short count[2];
+    } DBI_segments = {{0, 0}};
+    PDB_SYMBOL_FILE_EX DBI_modules =
+    {
+        .unknown1 = 0,
+        .range = {1, 0, 0, 1, 0x60500020, 0, 0, 0, 0},
+        .flag = 0,
+        .stream = 0xffff,
+        .symbol_size = 0,
+        .lineno_size = 0,
+        .lineno2_size = 0,
+        .nSrcFiles = 0,
+        .attribute = 0,
+        .reserved = {0, 0},
+        /* filename set on its own */
+    };
+    PDB_SYMBOL_SOURCE DBI_srcmodules = {1, 0};
+    struct {
+        unsigned short        the_shorts[2];
+        unsigned int          the_long;
+        char                  the_names[4];
+    } DBI_srcmodules_table = {{0 /* indices */, 0, /* file count */}, 0, {"a.c"}};
+    DBI_HASH_HEADER GHASH =
+    {
+        .signature = 0xffffffff,
+        .version = 0xeffe0000 + 19990810,
+        .hash_records_size = 0,
+        .unknown = 0
+    };
+    PDB_STREAM_INDEXES pddt = {0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, };
+    char unknown[] =
+    {
+        0xfe, 0xef, 0xfe, 0xef, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    };
+    static IMAGE_SECTION_HEADER ro_section =
+    {
+        .Name = ".rodata",
+        .Misc.VirtualSize = 0,
+        .VirtualAddress = 0,
+        .SizeOfRawData = 0,
+        .PointerToRawData = 0,
+        .PointerToRelocations = 0,
+        .PointerToLinenumbers = 0,
+        .NumberOfRelocations = 0,
+        .NumberOfLinenumbers = 0,
+        .Characteristics = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ,
+    };
+    HANDLE hfile;
+    struct pdb_file pdb;
+    unsigned int mark;
+    struct pdb_stream* stream;
+
+    DBI.age = age;
+
+    pdb_init(&pdb);
+    stream = pdb_add_stream(&pdb, NULL, NULL,   0);             /* empty  stream #0 */
+
+                                                                /* always stream #1 */
+    stream = pdb_add_stream(&pdb, NULL, &root,  offsetof(struct PDB_DS_ROOT, names));
+    pdb_append_to_stream(stream, root_table, sizeof(root_table));
+
+    stream = pdb_add_stream(&pdb, NULL, &TPI,   sizeof(TPI));   /* always stream #2 */
+
+    stream = pdb_add_stream(&pdb, NULL, &DBI,   sizeof(DBI));   /* always stream #3 */
+    mark = stream->size;
+    pdb_append_to_stream(stream, &DBI_modules, offsetof(PDB_SYMBOL_FILE_EX, filename[0]));
+    pdb_append_to_stream(stream, "ab.obj", 7);
+    pdb_append_to_stream(stream, "ab.obj", 7);
+    DBI.module_size =  pdb_align_stream(stream, 4) - mark;
+
+    /* ranges_size: must be aligned on 4 bytes */
+
+    mark = stream->size;
+    pdb_append_to_stream(stream, &DBI_segments, sizeof(DBI_segments));
+    DBI.segmap_size = pdb_align_stream(stream, 4) - mark;
+
+    mark = stream->size;
+    pdb_append_to_stream(stream, &DBI_srcmodules, offsetof(PDB_SYMBOL_SOURCE, table[0]));
+    pdb_append_to_stream(stream, &DBI_srcmodules_table, 4);
+    DBI.srcmodule_size = pdb_align_stream(stream, 4) - mark;
+
+    /* pdbimport_size: must be aligned on 4 bytes */
+
+    mark = stream->size;
+    /* not really sure of this content, but without it native dbghelp returns error
+     * for the PDB file.
+     */
+    pdb_append_to_stream(stream, unknown, sizeof(unknown));
+    DBI.unknown2_size = stream->size - mark;
+
+    mark = stream->size;
+    pdb_append_to_stream(stream, &pddt, sizeof(pddt));
+    DBI.stream_index_size = stream->size - mark;
+
+    stream = pdb_add_stream(&pdb, NULL, &IPI, sizeof(IPI)); /* always stream #4 */
+
+    stream = pdb_add_stream(&pdb, &DBI.global_hash_stream, &GHASH, sizeof(GHASH));
+    stream = pdb_add_stream(&pdb, &DBI.gsym_stream, NULL, 0);
+
+    stream = pdb_add_stream(&pdb, &pddt.sections_stream, &ro_section, sizeof(ro_section));
+
+    hfile = CreateFileA(pdb_name, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "failed to create %s err %lu\n", pdb_name, GetLastError());
+    if (hfile == INVALID_HANDLE_VALUE) return FALSE;
+
+    pdb_write(hfile, &pdb);
+
+    CloseHandle(hfile);
+
+    return TRUE;
+}
+
+/* ==============================================
+ *                   the tests
+ * ==============================================
+ */
+
+static void test_srvgetindexes_pe(void)
 {
     struct debug_directory_blob* blob_refs[7];
     struct debug_directory_blob* blob_used[4];
@@ -471,11 +800,63 @@ static void test_srvgetindexes(void)
     for (i = 0; i < ARRAY_SIZE(blob_refs); i++) free(blob_refs[i]);
 }
 
+static void test_srvgetindexes_pdb(void)
+{
+    unsigned int i;
+    char filename[128];
+    SYMSRV_INDEX_INFO ssii;
+    BOOL ret;
+
+    static struct
+    {
+        /* input parameters */
+        const GUID* guid;
+    }
+    indexes[] =
+    {
+        {&null_guid},
+        {&guid1},
+    };
+    for (i = 0; i < ARRAYSIZE(indexes); i++)
+    {
+        winetest_push_context("pdb#%02u", i);
+
+        /* create dll */
+        snprintf(filename, ARRAYSIZE(filename), "winetest%02u.pdb", i);
+        create_test_pdb_ds(filename, indexes[i].guid, 240 + i);
+
+        memset(&ssii, 0x45, sizeof(ssii));
+        ssii.sizeofstruct = sizeof(ssii);
+        ret = SymSrvGetFileIndexInfo(filename, &ssii, 0);
+        todo_wine
+        ok(ret, "SymSrvGetFileIndexInfo failed: %lu\n", GetLastError());
+
+        if (ret) {
+        ok(ssii.age == 240 + i, "Mismatch in age: %lx\n", ssii.age);
+        ok(!memcmp(&ssii.guid, indexes[i].guid, sizeof(GUID)),
+           "Mismatch in guid: guid=%s\n", wine_dbgstr_guid(&ssii.guid));
+
+        /* DS PDB don't have signature, only JG PDB have */
+        ok(ssii.sig == 0, "Mismatch in sig: %lx\n", ssii.sig);
+        ok(ssii.size == 0, "Mismatch in size: %lx\n", ssii.size);
+        ok(!ssii.stripped, "Mismatch in stripped: %x\n", ssii.stripped);
+        ok(ssii.timestamp == 0, "Mismatch in timestamp: %lx\n", ssii.timestamp);
+        ok(!strcmp(ssii.file, filename), "Mismatch in file: %s\n", ssii.file);
+        ok(!ssii.pdbfile[0], "Mismatch in pdbfile: %s\n", ssii.pdbfile);
+        ok(!ssii.dbgfile[0], "Mismatch in dbgfile: %s\n", ssii.dbgfile);
+        }
+
+        DeleteFileA(filename);
+        winetest_pop_context();
+    }
+}
+
 START_TEST(path)
 {
     /* cleanup env variables that affect dbghelp's behavior */
     SetEnvironmentVariableW(L"_NT_SYMBOL_PATH", NULL);
     SetEnvironmentVariableW(L"_NT_ALT_SYMBOL_PATH", NULL);
 
-    test_srvgetindexes();
+    test_srvgetindexes_pe();
+    test_srvgetindexes_pdb();
 }
