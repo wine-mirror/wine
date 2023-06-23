@@ -342,13 +342,7 @@ void macdrv_status_item_mouse_button(const macdrv_event *event)
             else if (event->status_item_mouse_button.count % 2 == 0)
                 msg += WM_LBUTTONDBLCLK - WM_LBUTTONDOWN;
 
-            if (!send_message(icon->owner, WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS, 0, 0) &&
-                RtlGetLastWin32Error() == ERROR_INVALID_WINDOW_HANDLE)
-            {
-                WARN("window %p was destroyed, removing icon 0x%x\n", icon->owner, icon->id);
-                delete_icon(icon);
-                return;
-            }
+            send_message(icon->owner, WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS, 0, 0);
 
             if (!notify_owner(icon, msg, event->status_item_mouse_button.x, event->status_item_mouse_button.y))
                 return;
