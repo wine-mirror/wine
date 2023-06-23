@@ -1029,7 +1029,6 @@ struct d3d12_swapchain
     CONDITION_VARIABLE worker_cv;
     bool worker_running;
     struct list worker_ops;
-    HANDLE worker_event;
 
     /* D3D12 side of the swapchain (frontend): these objects are
      * visible to the IDXGISwapChain client, so they must never be
@@ -1158,9 +1157,6 @@ static DWORD WINAPI d3d12_swapchain_worker_proc(void *data)
             }
 
             d3d12_swapchain_op_destroy(swapchain, op);
-
-            if (!SetEvent(swapchain->worker_event))
-                ERR("Cannot set event, last error %ld.\n", GetLastError());
 
             EnterCriticalSection(&swapchain->worker_cs);
         }
@@ -1931,9 +1927,6 @@ static void d3d12_swapchain_destroy(struct d3d12_swapchain *swapchain)
             ERR("Failed to close worker thread, last error %ld.\n", GetLastError());
     }
 
-    if (!CloseHandle(swapchain->worker_event))
-        ERR("Failed to close worker event, last error %ld.\n", GetLastError());
-
     DeleteCriticalSection(&swapchain->worker_cs);
 
     LIST_FOR_EACH_ENTRY_SAFE(op, op2, &swapchain->worker_ops, struct d3d12_swapchain_op, entry)
@@ -2243,8 +2236,6 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
     WakeAllConditionVariable(&swapchain->worker_cv);
     LeaveCriticalSection(&swapchain->worker_cs);
 
-    WaitForSingleObject(swapchain->worker_event, INFINITE);
-
     ++swapchain->frame_number;
     if ((frame_latency_event = swapchain->frame_latency_event))
     {
@@ -2522,8 +2513,6 @@ static HRESULT d3d12_swapchain_resize_buffers(struct d3d12_swapchain *swapchain,
     list_add_tail(&swapchain->worker_ops, &op->entry);
     WakeAllConditionVariable(&swapchain->worker_cv);
     LeaveCriticalSection(&swapchain->worker_cs);
-
-    WaitForSingleObject(swapchain->worker_event, INFINITE);
 
     swapchain->current_buffer_index = 0;
 
@@ -3193,14 +3182,6 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     InitializeConditionVariable(&swapchain->worker_cv);
     swapchain->worker_running = true;
     list_init(&swapchain->worker_ops);
-
-    if (!(swapchain->worker_event = CreateEventA(NULL, FALSE, FALSE, NULL)))
-    {
-        hr = HRESULT_FROM_WIN32(GetLastError());
-        WARN("Failed to create worker event, hr %#lx.\n", hr);
-        d3d12_swapchain_destroy(swapchain);
-        return hr;
-    }
 
     surface_desc.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
     surface_desc.pNext = NULL;
