@@ -58,6 +58,8 @@ struct notify_data  /* platform-independent format for NOTIFYICONDATA */
 
 static int (CDECL *wine_notify_icon)(DWORD,NOTIFYICONDATAW *);
 
+#define ICON_DISPLAY_HIDDEN -1
+
 /* an individual systray icon, unpacked from the NOTIFYICONDATA and always in unicode */
 struct icon
 {
@@ -242,7 +244,7 @@ static void balloon_create_timer( struct icon *icon )
 
 static BOOL show_balloon( struct icon *icon )
 {
-    if (icon->display == -1) return FALSE;  /* not displayed */
+    if (icon->display == ICON_DISPLAY_HIDDEN) return FALSE;  /* not displayed */
     if (!icon->info_text[0]) return FALSE;  /* no balloon */
     balloon_icon = icon;
     SetTimer( icon->window, BALLOON_CREATE_TIMER, BALLOON_CREATE_TIMEOUT, NULL );
@@ -438,7 +440,7 @@ static void systray_add_icon( struct icon *icon )
 {
     POINT pos;
 
-    if (icon->display != -1) return;  /* already added */
+    if (icon->display != ICON_DISPLAY_HIDDEN) return;  /* already added */
 
     icon->display = nb_displayed++;
     pos = get_icon_pos( icon );
@@ -454,7 +456,7 @@ static void systray_remove_icon( struct icon *icon )
     struct icon *ptr;
     POINT pos;
 
-    if (icon->display == -1) return;  /* already removed */
+    if (icon->display == ICON_DISPLAY_HIDDEN) return;  /* already removed */
 
     assert( nb_displayed );
     LIST_FOR_EACH_ENTRY( ptr, &icon_list, struct icon, entry )
@@ -470,7 +472,7 @@ static void systray_remove_icon( struct icon *icon )
     if (!--nb_displayed && !enable_shell) do_hide_systray();
     TRACE( "removed %u now %d icons\n", icon->id, nb_displayed );
 
-    icon->display = -1;
+    icon->display = ICON_DISPLAY_HIDDEN;
 }
 
 /* make an icon visible */
@@ -478,7 +480,7 @@ static BOOL show_icon(struct icon *icon)
 {
     TRACE( "id=0x%x, hwnd=%p\n", icon->id, icon->owner );
 
-    if (icon->display != -1) return TRUE;  /* already displayed */
+    if (icon->display != ICON_DISPLAY_HIDDEN) return TRUE;  /* already displayed */
 
     systray_add_icon( icon );
 
@@ -492,7 +494,7 @@ static BOOL hide_icon(struct icon *icon)
 {
     TRACE( "id=0x%x, hwnd=%p\n", icon->id, icon->owner );
 
-    if (icon->display == -1) return TRUE;  /* already hidden */
+    if (icon->display == ICON_DISPLAY_HIDDEN) return TRUE;  /* already hidden */
 
     ShowWindow( icon->window, SW_HIDE );
     systray_remove_icon( icon );
@@ -523,7 +525,7 @@ static BOOL modify_icon( struct icon *icon, NOTIFYICONDATAW *nid )
     {
         if (icon->image) DestroyIcon(icon->image);
         icon->image = CopyIcon(nid->hIcon);
-        if (icon->display != -1) InvalidateRect( icon->window, NULL, TRUE );
+        if (icon->display >= 0) InvalidateRect( icon->window, NULL, TRUE );
     }
 
     if (nid->uFlags & NIF_MESSAGE)
@@ -533,7 +535,7 @@ static BOOL modify_icon( struct icon *icon, NOTIFYICONDATAW *nid )
     if (nid->uFlags & NIF_TIP)
     {
         lstrcpynW( icon->tiptext, nid->szTip, ARRAY_SIZE( icon->tiptext ));
-        if (icon->display != -1) update_tooltip_text(icon);
+        if (icon->display != ICON_DISPLAY_HIDDEN) update_tooltip_text(icon);
     }
     if (nid->uFlags & NIF_INFO && nid->cbSize >= NOTIFYICONDATAA_V2_SIZE)
     {
@@ -571,7 +573,7 @@ static BOOL add_icon(NOTIFYICONDATAW *nid)
     ZeroMemory(icon, sizeof(struct icon));
     icon->id     = nid->uID;
     icon->owner  = nid->hWnd;
-    icon->display = -1;
+    icon->display = ICON_DISPLAY_HIDDEN;
 
     CreateWindowW( tray_icon_class.lpszClassName, NULL, WS_CHILD,
                    0, 0, icon_cx, icon_cy, tray_window, NULL, NULL, icon );
