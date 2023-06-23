@@ -1416,7 +1416,7 @@ static void sync_client_position( struct x11drv_win_data *data,
     {
         TRACE( "setting client win %lx pos %d,%d,%dx%d changes=%x\n",
                data->client_window, changes.x, changes.y, changes.width, changes.height, mask );
-        XConfigureWindow( data->display, data->client_window, mask, &changes );
+        XConfigureWindow( gdi_display, data->client_window, mask, &changes );
     }
 }
 
@@ -1583,6 +1583,7 @@ Window create_client_window( HWND hwnd, const XVisualInfo *visual )
     cx = min( max( 1, data->client_rect.right - data->client_rect.left ), 65535 );
     cy = min( max( 1, data->client_rect.bottom - data->client_rect.top ), 65535 );
 
+    XSync( gdi_display, False ); /* make sure whole_window is known from gdi_display */
     ret = data->client_window = XCreateWindow( gdi_display,
                                                data->whole_window ? data->whole_window : dummy_parent,
                                                x, y, cx, cy, 0, default_visual.depth, InputOutput,
@@ -1592,8 +1593,12 @@ Window create_client_window( HWND hwnd, const XVisualInfo *visual )
     {
         XSaveContext( data->display, data->client_window, winContext, (char *)data->hwnd );
         XMapWindow( gdi_display, data->client_window );
-        XSync( gdi_display, False );
-        if (data->whole_window) XSelectInput( data->display, data->client_window, ExposureMask );
+        if (data->whole_window)
+        {
+            XFlush( gdi_display ); /* make sure client_window is created for XSelectInput */
+            XSync( data->display, False ); /* make sure client_window is known from data->display */
+            XSelectInput( data->display, data->client_window, ExposureMask );
+        }
         TRACE( "%p xwin %lx/%lx\n", data->hwnd, data->whole_window, data->client_window );
     }
     release_win_data( data );
@@ -1701,11 +1706,15 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
         if (data->client_window && !already_destroyed)
         {
             XSelectInput( data->display, data->client_window, 0 );
-            XReparentWindow( data->display, data->client_window, get_dummy_parent(), 0, 0 );
-            XSync( data->display, False );
+            XFlush( data->display ); /* make sure XSelectInput doesn't use client_window after this point */
+            XReparentWindow( gdi_display, data->client_window, get_dummy_parent(), 0, 0 );
         }
         XDeleteContext( data->display, data->whole_window, winContext );
-        if (!already_destroyed) XDestroyWindow( data->display, data->whole_window );
+        if (!already_destroyed)
+        {
+            XSync( gdi_display, False ); /* make sure XReparentWindow requests have completed before destroying whole_window */
+            XDestroyWindow( data->display, data->whole_window );
+        }
     }
     if (data->whole_colormap) XFreeColormap( data->display, data->whole_colormap );
     data->whole_window = data->client_window = 0;
@@ -1749,10 +1758,11 @@ void set_window_visual( struct x11drv_win_data *data, const XVisualInfo *vis, BO
     create_whole_window( data );
     if (!client_window) return;
     /* move the client to the new parent */
-    XReparentWindow( data->display, client_window, data->whole_window,
+    XReparentWindow( gdi_display, client_window, data->whole_window,
                      data->client_rect.left - data->whole_rect.left,
                      data->client_rect.top - data->whole_rect.top );
     data->client_window = client_window;
+    XSync( gdi_display, False ); /* make sure XReparentWindow requests have completed before destroying whole_window */
     XDestroyWindow( data->display, whole_window );
 }
 
