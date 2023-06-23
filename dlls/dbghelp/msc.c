@@ -3615,6 +3615,76 @@ static BOOL pdb_process_internal(const struct process* pcs,
                                  struct pdb_module_info* pdb_module_info,
                                  unsigned module_index);
 
+DWORD pdb_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info)
+{
+    /* check the file header, and if ok, load the TOC */
+    TRACE("PDB: %.40s\n", debugstr_an(image, 40));
+
+    if (!memcmp(image, PDB_JG_IDENT, sizeof(PDB_JG_IDENT)))
+    {
+        FIXME("Unsupported for PDB files in JG format\n");
+        return ERROR_FILE_CORRUPT;
+    }
+    if (!memcmp(image, PDB_DS_IDENT, sizeof(PDB_DS_IDENT)))
+    {
+        const struct PDB_DS_HEADER* pdb = (const struct PDB_DS_HEADER*)image;
+        struct PDB_DS_TOC*          ds_toc;
+        struct PDB_DS_ROOT*         root;
+        DWORD                       ec = ERROR_SUCCESS;
+
+        ds_toc = pdb_ds_read(pdb, (const UINT*)((const char*)pdb + pdb->toc_block * pdb->block_size),
+                             pdb->toc_size);
+        root = pdb_read_ds_stream(pdb, ds_toc, 1);
+        if (!root)
+        {
+            pdb_free(ds_toc);
+            return ERROR_FILE_CORRUPT;
+        }
+        switch (root->Version)
+        {
+        case 20000404:
+            break;
+        default:
+            ERR("-Unknown root block version %u\n", root->Version);
+            ec = ERROR_FILE_CORRUPT;
+        }
+        /* The age field is present twice (in PDB_ROOT and in PDB_SYMBOLS ),
+         * It's the one in PDB_SYMBOLS which is reported.
+         */
+        if (ec == ERROR_SUCCESS)
+        {
+            PDB_SYMBOLS* symbols = pdb_read_ds_stream(pdb, ds_toc, 3);
+
+            if (symbols && symbols->version == 19990903)
+            {
+                info->age = symbols->age;
+            }
+            else
+            {
+                if (symbols)
+                    ERR("-Unknown symbol info version %u %08x\n", symbols->version, symbols->version);
+                ec = ERROR_FILE_CORRUPT;
+            }
+            pdb_free(symbols);
+        }
+        if (ec == ERROR_SUCCESS)
+        {
+            info->dbgfile[0] = '\0';
+            info->guid = root->guid;
+            info->pdbfile[0] = '\0';
+            info->sig = 0;
+            info->size = 0;
+            info->stripped = FALSE;
+            info->timestamp = 0;
+        }
+
+        pdb_free(ds_toc);
+        pdb_free(root);
+        return ec;
+    }
+    return ERROR_BAD_FORMAT;
+}
+
 static void pdb_process_symbol_imports(const struct process* pcs, 
                                        const struct msc_debug_info* msc_dbg,
                                        const PDB_SYMBOLS* symbols,

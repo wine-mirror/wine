@@ -906,7 +906,8 @@ BOOL WINAPI SymSrvGetFileIndexInfoW(const WCHAR *file, SYMSRV_INDEX_INFOW* info,
         fsize = GetFileSize(hFile, NULL);
         /* try PE module first */
         ret = pe_get_file_indexinfo(image, fsize, info);
-        /* handle (ret == ERROR_BAD_FORMAT) with .dbg and .pdb format */
+        if (ret == ERROR_BAD_FORMAT)
+            ret = pdb_get_file_indexinfo(image, fsize, info);
     }
     else ret = ERROR_FILE_NOT_FOUND;
 

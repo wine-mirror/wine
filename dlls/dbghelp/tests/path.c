@@ -828,10 +828,8 @@ static void test_srvgetindexes_pdb(void)
         memset(&ssii, 0x45, sizeof(ssii));
         ssii.sizeofstruct = sizeof(ssii);
         ret = SymSrvGetFileIndexInfo(filename, &ssii, 0);
-        todo_wine
         ok(ret, "SymSrvGetFileIndexInfo failed: %lu\n", GetLastError());
 
-        if (ret) {
         ok(ssii.age == 240 + i, "Mismatch in age: %lx\n", ssii.age);
         ok(!memcmp(&ssii.guid, indexes[i].guid, sizeof(GUID)),
            "Mismatch in guid: guid=%s\n", wine_dbgstr_guid(&ssii.guid));
@@ -844,7 +842,6 @@ static void test_srvgetindexes_pdb(void)
         ok(!strcmp(ssii.file, filename), "Mismatch in file: %s\n", ssii.file);
         ok(!ssii.pdbfile[0], "Mismatch in pdbfile: %s\n", ssii.pdbfile);
         ok(!ssii.dbgfile[0], "Mismatch in dbgfile: %s\n", ssii.dbgfile);
-        }
 
         DeleteFileA(filename);
         winetest_pop_context();
