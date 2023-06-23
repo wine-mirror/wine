@@ -763,14 +763,16 @@ static void test_loaded_modules(void)
         }
     }
 
+    pcskind = get_process_kind(pi.hProcess);
+
     ret = SymRefreshModuleList(pi.hProcess);
-    todo_wine_if(pcskind != PCSKIND_32BIT && pcskind != PCSKIND_WINE_OLD_WOW64)
+    todo_wine_if(pcskind == PCSKIND_WOW64)
     ok(ret || broken(GetLastError() == STATUS_PARTIAL_COPY /* Win11 in some cases */), "SymRefreshModuleList failed: %lu\n", GetLastError());
 
     if (!strcmp(winetest_platform, "wine"))
     {
         unsigned count = get_native_module_count(pi.hProcess);
-        todo_wine_if(pcskind != PCSKIND_32BIT && pcskind != PCSKIND_WINE_OLD_WOW64)
+        todo_wine_if(pcskind == PCSKIND_WOW64)
         ok(count > 0, "Didn't find any native (ELF/Macho) modules\n");
     }
 
@@ -823,14 +825,12 @@ static void test_loaded_modules(void)
                    "Wrong directory aggregation count %u %u\n",
                    aggregation.count_systemdir, aggregation.count_wowdir);
             }
-            todo_wine_if(pcskind != PCSKIND_WINE_OLD_WOW64)
             ret = SymRefreshModuleList(pi.hProcess);
             ok(ret, "SymRefreshModuleList failed: %lu\n", GetLastError());
 
             if (!strcmp(winetest_platform, "wine"))
             {
                 unsigned count = get_native_module_count(pi.hProcess);
-                todo_wine_if(pcskind != PCSKIND_WINE_OLD_WOW64)
                 ok(count > 0, "Didn't find any native (ELF/Macho) modules\n");
             }
 
@@ -887,14 +887,12 @@ static void test_loaded_modules(void)
                 break;
             }
 
-            todo_wine_if(pcskind != PCSKIND_WINE_OLD_WOW64)
             ret = SymRefreshModuleList(pi.hProcess);
             ok(ret, "SymRefreshModuleList failed: %lu\n", GetLastError());
 
             if (!strcmp(winetest_platform, "wine"))
             {
                 unsigned count = get_native_module_count(pi.hProcess);
-                todo_wine_if(pcskind != PCSKIND_WINE_OLD_WOW64)
                 ok(count > 0, "Didn't find any native (ELF/Macho) modules\n");
             }
 

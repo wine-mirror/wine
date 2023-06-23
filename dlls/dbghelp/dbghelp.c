@@ -387,7 +387,7 @@ static BOOL check_live_target(struct process* pcs, BOOL wow64, BOOL child_wow64)
 
         if (!pcs->is_64bit) peb_addr -= 0x1000; /* PEB32 => PEB64 */
         if (!ReadProcessMemory(pcs->handle, peb_addr, &peb, sizeof(peb), NULL)) return FALSE;
-        base = peb.CloudFileFlags;
+        base = *(const DWORD64*)&peb.CloudFileFlags;
         pcs->is_system_64bit = TRUE;
         if (pcs->is_64bit)
             ReadProcessMemory(pcs->handle,
