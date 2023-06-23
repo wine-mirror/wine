@@ -1604,10 +1604,12 @@ static void d3d12_swapchain_destroy_resources(struct d3d12_swapchain *swapchain)
         {
             vk_funcs->p_vkDestroyImage(swapchain->vk_device, swapchain->vk_images[i], NULL);
             swapchain->vk_images[i] = VK_NULL_HANDLE;
-
-            vk_funcs->p_vkFreeMemory(swapchain->vk_device, swapchain->vk_memory, NULL);
-            swapchain->vk_memory = VK_NULL_HANDLE;
         }
+    }
+    if (swapchain->vk_device)
+    {
+        vk_funcs->p_vkFreeMemory(swapchain->vk_device, swapchain->vk_memory, NULL);
+        swapchain->vk_memory = VK_NULL_HANDLE;
     }
 }
 
