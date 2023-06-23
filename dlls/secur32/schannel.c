@@ -312,7 +312,7 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryCredentialsAttributesA(
     {
     case SECPKG_CRED_ATTR_NAMES:
         FIXME("SECPKG_CRED_ATTR_NAMES: stub\n");
-        ret = SEC_E_UNSUPPORTED_FUNCTION;
+        ret = SEC_E_NO_CREDENTIALS;
         break;
     default:
         ret = schan_QueryCredentialsAttributes(phCredential, ulAttribute,
@@ -394,7 +394,7 @@ static SECURITY_STATUS get_cert(const void *credentials, CERT_CONTEXT const **ce
 
     default:
         FIXME("unhandled version %lu\n", cred->dwVersion);
-        return SEC_E_INTERNAL_ERROR;
+        return SEC_E_UNKNOWN_CREDENTIALS;
     }
 
     if (!cert_count) status = SEC_E_NO_CREDENTIALS;
@@ -570,7 +570,7 @@ static SECURITY_STATUS acquire_credentials_handle(ULONG fCredentialUse,
 
         status = SEC_E_OK;
     }
-    else if (fCredentialUse & SECPKG_CRED_INBOUND)
+    else if (!fCredentialUse || (fCredentialUse & SECPKG_CRED_INBOUND))
     {
         return SEC_E_NO_CREDENTIALS;
     }
