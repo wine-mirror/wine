@@ -27,6 +27,7 @@
 #include "d3d11_4.h"
 #include "winternl.h"
 #include "wine/heap.h"
+#include "wine/wined3d.h"
 #include "wine/test.h"
 
 #define BITS_NNAN 0xffc00000
@@ -38,6 +39,7 @@
 
 #define SWAPCHAIN_FLAG_SHADER_INPUT             0x1
 
+static bool damavand;
 static unsigned int use_adapter_idx;
 static BOOL enable_debug_layer;
 static BOOL use_warp_adapter;
@@ -2828,7 +2830,7 @@ static void test_create_texture2d(void)
     unsigned int i;
     HRESULT hr;
 
-    static const struct
+    const struct
     {
         DXGI_FORMAT format;
         UINT array_size;
@@ -2924,7 +2926,7 @@ static void test_create_texture2d(void)
         {DXGI_FORMAT_D32_FLOAT,               1, D3D11_BIND_RENDER_TARGET,    0, FALSE, FALSE},
         {DXGI_FORMAT_D32_FLOAT,               1, D3D11_BIND_DEPTH_STENCIL,    0, TRUE,  FALSE},
         {DXGI_FORMAT_R9G9B9E5_SHAREDEXP,      1, D3D11_BIND_SHADER_RESOURCE,  0, TRUE,  FALSE},
-        {DXGI_FORMAT_R9G9B9E5_SHAREDEXP,      1, D3D11_BIND_RENDER_TARGET,    0, FALSE, FALSE},
+        {DXGI_FORMAT_R9G9B9E5_SHAREDEXP,      1, D3D11_BIND_RENDER_TARGET,    0, FALSE, damavand},
         {DXGI_FORMAT_R9G9B9E5_SHAREDEXP,      1, D3D11_BIND_DEPTH_STENCIL,    0, FALSE, FALSE},
     };
 
@@ -3230,7 +3232,7 @@ static void test_create_texture3d(void)
     unsigned int i;
     HRESULT hr;
 
-    static const struct
+    const struct
     {
         DXGI_FORMAT format;
         D3D11_BIND_FLAG bind_flags;
@@ -3249,7 +3251,7 @@ static void test_create_texture3d(void)
         {DXGI_FORMAT_D24_UNORM_S8_UINT,     D3D11_BIND_RENDER_TARGET,   FALSE, FALSE},
         {DXGI_FORMAT_D32_FLOAT,             D3D11_BIND_RENDER_TARGET,   FALSE, FALSE},
         {DXGI_FORMAT_R9G9B9E5_SHAREDEXP,    D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
-        {DXGI_FORMAT_R9G9B9E5_SHAREDEXP,    D3D11_BIND_RENDER_TARGET,   FALSE, FALSE},
+        {DXGI_FORMAT_R9G9B9E5_SHAREDEXP,    D3D11_BIND_RENDER_TARGET,   FALSE, damavand},
         {DXGI_FORMAT_R9G9B9E5_SHAREDEXP,    D3D11_BIND_DEPTH_STENCIL,   FALSE, FALSE},
     };
 
@@ -6201,12 +6203,13 @@ static void test_pipeline_statistics_query(void)
         ok(data.IAVertices == 4, "Got unexpected IAVertices count: %u.\n", (unsigned int)data.IAVertices);
         ok(data.IAPrimitives == 2, "Got unexpected IAPrimitives count: %u.\n", (unsigned int)data.IAPrimitives);
         ok(data.VSInvocations == 4, "Got unexpected VSInvocations count: %u.\n", (unsigned int)data.VSInvocations);
-        ok(!data.GSInvocations, "Got unexpected GSInvocations count: %u.\n", (unsigned int)data.GSInvocations);
+        todo_wine_if (damavand)
+            ok(!data.GSInvocations, "Got unexpected GSInvocations count: %u.\n", (unsigned int)data.GSInvocations);
         ok(!data.GSPrimitives, "Got unexpected GSPrimitives count: %u.\n", (unsigned int)data.GSPrimitives);
         ok(data.CInvocations == 2, "Got unexpected CInvocations count: %u.\n", (unsigned int)data.CInvocations);
         ok(data.CPrimitives == 2, "Got unexpected CPrimitives count: %u.\n", (unsigned int)data.CPrimitives);
-        todo_wine
-        ok(!data.PSInvocations, "Got unexpected PSInvocations count: %u.\n", (unsigned int)data.PSInvocations);
+        todo_wine_if (!damavand)
+            ok(!data.PSInvocations, "Got unexpected PSInvocations count: %u.\n", (unsigned int)data.PSInvocations);
         ok(!data.HSInvocations, "Got unexpected HSInvocations count: %u.\n", (unsigned int)data.HSInvocations);
         ok(!data.DSInvocations, "Got unexpected DSInvocations count: %u.\n", (unsigned int)data.DSInvocations);
         ok(!data.CSInvocations, "Got unexpected CSInvocations count: %u.\n", (unsigned int)data.CSInvocations);
@@ -6223,7 +6226,8 @@ static void test_pipeline_statistics_query(void)
     ok(data.IAVertices == 4, "Got unexpected IAVertices count: %u.\n", (unsigned int)data.IAVertices);
     ok(data.IAPrimitives == 2, "Got unexpected IAPrimitives count: %u.\n", (unsigned int)data.IAPrimitives);
     ok(data.VSInvocations == 4, "Got unexpected VSInvocations count: %u.\n", (unsigned int)data.VSInvocations);
-    ok(!data.GSInvocations, "Got unexpected GSInvocations count: %u.\n", (unsigned int)data.GSInvocations);
+    todo_wine_if (damavand)
+        ok(!data.GSInvocations, "Got unexpected GSInvocations count: %u.\n", (unsigned int)data.GSInvocations);
     ok(!data.GSPrimitives, "Got unexpected GSPrimitives count: %u.\n", (unsigned int)data.GSPrimitives);
     ok(data.CInvocations == 2, "Got unexpected CInvocations count: %u.\n", (unsigned int)data.CInvocations);
     ok(data.CPrimitives == 2, "Got unexpected CPrimitives count: %u.\n", (unsigned int)data.CPrimitives);
@@ -6536,7 +6540,7 @@ static void test_so_statistics_query(void)
         get_query_data(context, query, &data, sizeof(data));
         ok(!data.NumPrimitivesWritten, "Got unexpected NumPrimitivesWritten: %u.\n",
                 (unsigned int)data.NumPrimitivesWritten);
-        todo_wine
+        todo_wine_if (!damavand)
         ok(!data.PrimitivesStorageNeeded, "Got unexpected PrimitivesStorageNeeded: %u.\n",
                 (unsigned int)data.PrimitivesStorageNeeded);
 
@@ -6546,7 +6550,7 @@ static void test_so_statistics_query(void)
         get_query_data(context, query, &data, sizeof(data));
         ok(!data.NumPrimitivesWritten, "Got unexpected NumPrimitivesWritten: %u.\n",
                 (unsigned int)data.NumPrimitivesWritten);
-        todo_wine
+        todo_wine_if (!damavand)
         ok(!data.PrimitivesStorageNeeded, "Got unexpected PrimitivesStorageNeeded: %u.\n",
                 (unsigned int)data.PrimitivesStorageNeeded);
 
@@ -16402,7 +16406,7 @@ static void test_clear_depth_stencil_view(void)
     todo_wine check_texture_color(depth_texture, 0x00ffffff, 0);
 
     ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_STENCIL, 0.0f, 0xff);
-    check_texture_color(depth_texture, 0xffffffff, 0);
+    todo_wine_if (damavand) check_texture_color(depth_texture, 0xffffffff, 0);
 
     ID3D11Texture2D_Release(depth_texture);
     ID3D11DepthStencilView_Release(dsv);
@@ -16740,16 +16744,22 @@ static void test_clear_buffer_unordered_access_view(void)
         uvec4 = uvec4_data[i];
         clear_uav(context, uav, &uvec4);
         get_buffer_readback(buffer, &rb);
-        todo_wine check_rgba_sint8(get_readback_color(&rb, 0, 0, 0), &uvec4);
-        todo_wine check_rgba_sint8(get_readback_color(&rb, 7, 0, 0), &uvec4);
-        todo_wine check_rgba_sint8(get_readback_color(&rb, 15, 0, 0), &uvec4);
+        todo_wine_if (!damavand)
+        {
+            check_rgba_sint8(get_readback_color(&rb, 0, 0, 0), &uvec4);
+            check_rgba_sint8(get_readback_color(&rb, 7, 0, 0), &uvec4);
+            check_rgba_sint8(get_readback_color(&rb, 15, 0, 0), &uvec4);
+        }
         release_resource_readback(&rb);
 
         clear_uav(context, uav2, &fe_uvec4);
         get_buffer_readback(buffer, &rb);
-        todo_wine check_rgba_sint8(get_readback_color(&rb, 0, 0, 0), &uvec4);
-        todo_wine check_rgba_sint8(get_readback_color(&rb, U(uav_desc).Buffer.FirstElement - 1, 0, 0), &uvec4);
-        todo_wine check_rgba_sint8(get_readback_color(&rb, U(uav_desc).Buffer.FirstElement, 0, 0), &fe_uvec4);
+        todo_wine_if (!damavand)
+        {
+            check_rgba_sint8(get_readback_color(&rb, 0, 0, 0), &uvec4);
+            check_rgba_sint8(get_readback_color(&rb, U(uav_desc).Buffer.FirstElement - 1, 0, 0), &uvec4);
+            check_rgba_sint8(get_readback_color(&rb, U(uav_desc).Buffer.FirstElement, 0, 0), &fe_uvec4);
+        }
         release_resource_readback(&rb);
     }
 
@@ -20830,7 +20840,7 @@ static void test_index_buffer_offset(void)
     for (i = 0; i < ARRAY_SIZE(expected_data); ++i)
     {
         data = get_readback_vec4(&rb, i, 0);
-        todo_wine_if(i >= 8 && i != 20 && i != 21)
+        todo_wine_if (!damavand && i >= 8 && i != 20 && i != 21)
         ok(compare_vec4(data, &expected_data[i], 0)
                 || broken(is_nvidia_device(device) && !(i % 2) && compare_vec4(data, &broken_result, 0)),
                 "Got unexpected result {%.8e, %.8e, %.8e, %.8e} at %u.\n",
@@ -21385,7 +21395,7 @@ static void test_fl9_draw(const D3D_FEATURE_LEVEL feature_level)
     ID3D11PixelShader_Release(ps);
 
     draw_color_quad(&test_context, &color);
-    todo_wine check_texture_color(test_context.backbuffer, 0xff004c33, 1);
+    todo_wine_if (!damavand) check_texture_color(test_context.backbuffer, 0xff004c33, 1);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_texture_code, sizeof(ps_texture_code), NULL, &ps);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -21855,7 +21865,7 @@ static void test_unbind_shader_resource_view(void)
     ID3D11DeviceContext_PSSetShaderResources(context, 1, 1, &srv2);
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
     draw_quad(&test_context);
-    todo_wine check_texture_color(test_context.backbuffer, 0x00000000, 1);
+    todo_wine_if (!damavand) check_texture_color(test_context.backbuffer, 0x00000000, 1);
 
     ID3D11PixelShader_Release(ps);
     ID3D11ShaderResourceView_Release(srv);
@@ -23204,7 +23214,7 @@ static void test_atomic_instructions(void)
             unsigned int value = get_readback_color(&rb, j, 0, 0);
             unsigned int expected = test->expected_result[j];
 
-            todo_wine_if(expected != test->input[j]
+            todo_wine_if (!damavand && expected != test->input[j]
                     && (!strcmp(instructions[j], "atomic_imax")
                     || !strcmp(instructions[j], "atomic_imin")))
             ok(value == expected, "Test %u: Got %#x (%d), expected %#x (%d) for '%s' "
@@ -23232,7 +23242,7 @@ static void test_atomic_instructions(void)
             unsigned int value = get_readback_color(&rb, j, 0, 0);
             unsigned int expected = test->expected_result[j];
 
-            todo_wine_if(expected != test->input[j] && todo_instruction)
+            todo_wine_if (!damavand && expected != test->input[j] && todo_instruction)
             ok(value == expected, "Test %u: Got %#x (%d), expected %#x (%d) for '%s' "
                     "with inputs (%u, %u), (%d), %#x (%d).\n",
                     i, value, value, expected, expected, imm_instructions[j],
@@ -27618,9 +27628,10 @@ static void test_stream_output_components(void)
         for (j = 0; j < tests[i].expected_data_size; ++j)
         {
             float expected_value = tests[i].expected_data[j];
-            ok(compare_float(result[j], expected_value, 2),
-                    "Test %u: Got %.8e, expected %.8e at %u.\n",
-                    i, result[j], expected_value, j);
+            todo_wine_if (damavand && !compare_float(result[j], expected_value, 2))
+                ok(compare_float(result[j], expected_value, 2),
+                        "Test %u: Got %.8e, expected %.8e at %u.\n",
+                        i, result[j], expected_value, j);
         }
         release_resource_readback(&rb);
     }
@@ -27802,6 +27813,7 @@ static void test_stream_output_vs(void)
         for (j = 0; j < tests[i].expected_data_size; ++j)
         {
             float expected_value = tests[i].expected_data[j];
+            todo_wine_if (damavand && !i && (j % 9) < 2 && j >= 9)
             ok(compare_float(result[j], expected_value, 2),
                     "Test %u: Got %.8e, expected %.8e at %u.\n",
                     i, result[j], expected_value, j);
@@ -28456,6 +28468,8 @@ static void test_depth_bias(void)
 
     for (format_idx = 0; format_idx < ARRAY_SIZE(formats); ++format_idx)
     {
+        winetest_push_context("Format %#x", formats[format_idx]);
+
         format = formats[format_idx];
 
         ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
@@ -28504,6 +28518,8 @@ static void test_depth_bias(void)
 
                 for (k = 0; k < ARRAY_SIZE(bias_clamp_tests); ++k)
                 {
+                    winetest_push_context("z %f, bias %d, clamp %f", quads[i].z, bias_tests[j], bias_clamp_tests[k]);
+
                     rasterizer_desc.DepthBiasClamp = bias_clamp_tests[k];
                     hr = ID3D11Device_CreateRasterizerState(device, &rasterizer_desc, &rs);
                     ok(hr == S_OK, "Format %#x, quad %u, bias %u, clamp %u: Got unexpected hr %#lx.\n",
@@ -28526,7 +28542,8 @@ static void test_depth_bias(void)
                             depth = min(max(0.0f, quads[i].z + bias), 1.0f);
 
                             get_texture_readback(texture, 0, &rb);
-                            check_readback_data_u24(&rb, NULL, shift, depth * 16777215.0f + 0.5f, 1);
+                            todo_wine_if (damavand)
+                                check_readback_data_u24(&rb, NULL, shift, depth * 16777215.0f + 0.5f, 1);
                             release_resource_readback(&rb);
                             break;
                         case DXGI_FORMAT_D16_UNORM:
@@ -28542,6 +28559,8 @@ static void test_depth_bias(void)
                             break;
                     }
                     ID3D11RasterizerState_Release(rs);
+
+                    winetest_pop_context();
                 }
             }
         }
@@ -28550,6 +28569,8 @@ static void test_depth_bias(void)
         rasterizer_desc.DepthBias = 0;
         for (i = 0; i < ARRAY_SIZE(quad_slopes); ++i)
         {
+            winetest_push_context("slope %f", quad_slopes[i]);
+
             for (j = 0; j < ARRAY_SIZE(vertices); ++j)
                 vertices[j].z = j == 1 || j == 3 ? 0.0f : quad_slopes[i];
             ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)test_context.vb,
@@ -28588,6 +28609,9 @@ static void test_depth_bias(void)
                 for (k = 0; k < ARRAY_SIZE(bias_clamp_tests); ++k)
                 {
                     BOOL all_match = TRUE;
+
+                    winetest_push_context("scale %f, clamp %f", slope_scaled_bias_tests[j], bias_clamp_tests[k]);
+
                     rasterizer_desc.DepthBiasClamp = bias_clamp_tests[k];
                     hr = ID3D11Device_CreateRasterizerState(device, &rasterizer_desc, &rs);
                     ok(hr == S_OK, "Format %#x, slope %u, bias %u, clamp %u: Got unexpected hr %#lx.\n",
@@ -28615,10 +28639,10 @@ static void test_depth_bias(void)
                                 u32_value = *u32 >> shift;
                                 expected_value = depth * 16777215.0f + 0.5f;
                                 all_match = compare_uint(u32_value, expected_value, 3);
-                                ok(all_match,
-                                        "Got value %#x (%.8e), expected %#x (%.8e).\n",
-                                        u32_value, u32_value / 16777215.0f,
-                                        expected_value, expected_value / 16777215.0f);
+                                todo_wine_if (damavand && expected_value != 0.0f)
+                                    ok(all_match, "Got value %#x (%.8e), expected %#x (%.8e).\n",
+                                            u32_value, u32_value / 16777215.0f,
+                                            expected_value, expected_value / 16777215.0f);
                                 break;
                             case DXGI_FORMAT_D16_UNORM:
                                 u16 = get_readback_data(&rb, 0, y, 0, sizeof(*u16));
@@ -28634,12 +28658,18 @@ static void test_depth_bias(void)
                     }
                     release_resource_readback(&rb);
                     ID3D11RasterizerState_Release(rs);
+
+                    winetest_pop_context();
                 }
             }
+
+            winetest_pop_context();
         }
 
         ID3D11Texture2D_Release(texture);
         ID3D11DepthStencilView_Release(dsv);
+
+        winetest_pop_context();
     }
 
     heap_free(depth_values);
@@ -30607,8 +30637,9 @@ static void test_generate_mips(void)
 
     get_resource_readback(resource, 1, &rb);
     color = get_readback_color(&rb, 8, 8, 0);
-    ok(compare_color(color, 0x7fbcbcbc, 1) || broken(compare_color(color, 0x7f7f7f7f, 1)), /* AMD */
-            "Got unexpected colour %08lx.\n", color);
+    todo_wine_if (damavand)
+        ok(compare_color(color, 0x7fbcbcbc, 1) || broken(compare_color(color, 0x7f7f7f7f, 1)), /* AMD */
+                "Got unexpected colour %08lx.\n", color);
     release_resource_readback(&rb);
 
     ID3D11ShaderResourceView_Release(srv);
@@ -30757,10 +30788,10 @@ static void test_alpha_to_coverage(void)
         SetRect(&rect, 0, 0, 200, 200);
         check_readback_data_color(&rb, &rect, expected_color, 1);
         SetRect(&rect, 200, 0, 640, 200);
-        todo_wine
+        todo_wine_if (!damavand)
         check_readback_data_color(&rb, &rect, 0xffffffff, 1);
         SetRect(&rect, 0, 200, 640, 480);
-        todo_wine
+        todo_wine_if (!damavand)
         check_readback_data_color(&rb, &rect, 0xffffffff, 1);
         release_resource_readback(&rb);
 
@@ -30784,11 +30815,11 @@ static void test_alpha_to_coverage(void)
     SetRect(&rect, 0, 0, 200, 200);
     check_readback_data_color(&rb, &rect, 0xffff0000, 1);
     SetRect(&rect, 200, 0, 640, 200);
-    todo_wine
-    check_readback_data_color(&rb, &rect, 0xffffffff, 1);
+    todo_wine_if (!damavand)
+        check_readback_data_color(&rb, &rect, 0xffffffff, 1);
     SetRect(&rect, 0, 200, 640, 480);
-    todo_wine
-    check_readback_data_color(&rb, &rect, 0xffffffff, 1);
+    todo_wine_if (!damavand)
+        check_readback_data_color(&rb, &rect, 0xffffffff, 1);
     release_resource_readback(&rb);
 
     ID3D11Texture2D_Release(render_targets[0]);
@@ -31390,7 +31421,7 @@ static void test_multisample_resolve(void)
 
         /* Found broken on AMD Radeon HD 6310 */
         if (!broken(is_amd_device(device) && tests[i].format == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB))
-            todo_wine_if(tests[i].todo) check_texture_color(texture, tests[i].expected_color, 2);
+            todo_wine_if(tests[i].todo && !damavand) check_texture_color(texture, tests[i].expected_color, 2);
 
         ID3D11RenderTargetView_Release(rtv);
         ID3D11Texture2D_Release(ms_texture);
@@ -31693,7 +31724,7 @@ static void test_sample_shading(void)
         0x001020f2, 0x00000000, 0x00100e46, 0x00000000, 0x00107e46, 0x00000000, 0x0020800a, 0x00000000,
         0x00000000, 0x0100003e,
     };
-    static const struct
+    const struct
     {
         const struct shader *ps;
         BOOL sample_shading;
@@ -31706,7 +31737,7 @@ static void test_sample_shading(void)
         {&ps_sample_index, TRUE},
         {&ps_samplepos, FALSE},
         {&ps_samplepos_rasterizer, FALSE},
-        {&ps_samplepos_indexed, TRUE, TRUE},
+        {&ps_samplepos_indexed, !damavand, TRUE},
         {&ps_sampleinfo, FALSE},
         {&ps_sampleinfo_rasterizer, FALSE},
         {&ps_sample, TRUE, TRUE, TRUE /* broken on Intel */},
@@ -32240,8 +32271,10 @@ static void test_standard_pattern(void)
     for (i = 0; i < ARRAY_SIZE(standard_pos4); ++i)
     {
         float data = get_readback_float(&rb, i, 0);
-        /* Wine does not support GetSamplePosition. */
-        todo_wine ok(data == standard_pos4[i], "Got sample position %.8e, expected %.8e.\n", data, standard_pos4[i]);
+
+        /* The GL renderer does not support GetSamplePosition. */
+        todo_wine_if (!damavand)
+            ok(data == standard_pos4[i], "Got sample position %.8e, expected %.8e.\n", data, standard_pos4[i]);
     }
     release_resource_readback(&rb);
 
@@ -34681,8 +34714,9 @@ static void test_rtv_depth_slice(void)
         unsigned int x = 320, y = 60 + i * 480 / 4;
 
         colour = get_readback_color(&rb, x, y, 0);
-        todo_wine ok(colour == colours[i].output, "Got unexpected colour 0x%08x at (%u, %u), expected 0x%08x.\n",
-                colour, x, y, colours[i].output);
+        todo_wine_if (!damavand)
+            ok(colour == colours[i].output, "Got unexpected colour 0x%08x at (%u, %u), expected 0x%08x.\n",
+                    colour, x, y, colours[i].output);
     }
     release_resource_readback(&rb);
 
@@ -34870,7 +34904,8 @@ static void test_vertex_formats(void)
         ID3D11DeviceContext_PSSetShader(context, test_context.ps, NULL, 0);
         ID3D11DeviceContext_Draw(context, 4, 0);
 
-        check_texture_vec4(rt, &tests[i].expect, 1);
+        todo_wine_if (damavand && tests[i].format == DXGI_FORMAT_B8G8R8X8_UNORM)
+            check_texture_vec4(rt, &tests[i].expect, 1);
 
         ID3D11InputLayout_Release(input_layout);
 
@@ -35068,7 +35103,17 @@ test_done:
 START_TEST(d3d11)
 {
     unsigned int argc, i;
+    HMODULE wined3d;
     char **argv;
+
+    if ((wined3d = GetModuleHandleA("wined3d.dll")))
+    {
+        enum wined3d_renderer (CDECL *p_wined3d_get_renderer)(void);
+
+        if ((p_wined3d_get_renderer = (void *)GetProcAddress(wined3d, "wined3d_get_renderer"))
+                && p_wined3d_get_renderer() == WINED3D_RENDERER_VULKAN)
+            damavand = true;
+    }
 
     use_mt = !getenv("WINETEST_NO_MT_D3D");
     /* Some host drivers (MacOS, Mesa radeonsi) never unmap memory even when
