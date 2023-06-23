@@ -788,6 +788,17 @@ static void sys_command_size_move( HWND hwnd, WPARAM wparam )
         {
             NtUserTranslateMessage( &msg, 0 );
             NtUserDispatchMessage( &msg );
+
+            /* It's possible that the window proc that handled the dispatch consumed a
+             * WM_LBUTTONUP. Detect that and terminate the loop as if we'd gotten it. */
+            if (!(NtUserGetKeyState( VK_LBUTTON ) & 0x8000))
+            {
+                DWORD last_pos = NtUserGetThreadInfo()->message_pos;
+                pt.x = ((int)(short)LOWORD( last_pos ));
+                pt.y = ((int)(short)HIWORD( last_pos ));
+                break;
+            }
+
             continue;  /* We are not interested in other messages */
         }
 
