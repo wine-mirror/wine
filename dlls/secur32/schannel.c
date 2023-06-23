@@ -1150,197 +1150,178 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
     struct schan_context *ctx;
     SECURITY_STATUS status;
 
-    TRACE("context_handle %p, attribute %#lx, buffer %p\n",
-            context_handle, attribute, buffer);
+    TRACE("context_handle %p, attribute %#lx, buffer %p\n", context_handle, attribute, buffer);
 
     if (!context_handle || !(ctx = schan_get_object(context_handle->dwLower, SCHAN_HANDLE_CTX)))
         return SEC_E_INVALID_HANDLE;
 
-    switch(attribute)
+    switch (attribute)
     {
-        case SECPKG_ATTR_STREAM_SIZES:
+    case SECPKG_ATTR_STREAM_SIZES:
+    {
+        SecPkgContext_ConnectionInfo info;
+        struct get_connection_info_params params = { ctx->session, &info };
+        status = GNUTLS_CALL( get_connection_info, &params );
+        if (status == SEC_E_OK)
         {
-            SecPkgContext_ConnectionInfo info;
-            struct get_connection_info_params params = { ctx->session, &info };
-            status = GNUTLS_CALL( get_connection_info, &params );
-            if (status == SEC_E_OK)
-            {
-                struct session_params params = { ctx->session };
-                SecPkgContext_StreamSizes *stream_sizes = buffer;
-                SIZE_T mac_size = info.dwHashStrength;
-                unsigned int block_size = GNUTLS_CALL( get_session_cipher_block_size, &params );
-                unsigned int message_size = GNUTLS_CALL( get_max_message_size, &params );
+            struct session_params params = { ctx->session };
+            SecPkgContext_StreamSizes *stream_sizes = buffer;
+            SIZE_T mac_size = info.dwHashStrength;
+            unsigned int block_size = GNUTLS_CALL( get_session_cipher_block_size, &params );
+            unsigned int message_size = GNUTLS_CALL( get_max_message_size, &params );
 
-                TRACE("Using header size %Iu mac bytes %Iu, message size %u, block size %u\n",
-                      ctx->header_size, mac_size, message_size, block_size);
+            TRACE("Using header size %Iu mac bytes %Iu, message size %u, block size %u\n",
+                  ctx->header_size, mac_size, message_size, block_size);
 
-                /* These are defined by the TLS RFC */
-                stream_sizes->cbHeader = ctx->header_size;
-                stream_sizes->cbTrailer = mac_size + 256; /* Max 255 bytes padding + 1 for padding size */
-                stream_sizes->cbMaximumMessage = message_size;
-                stream_sizes->cBuffers = 4;
-                stream_sizes->cbBlockSize = block_size;
-            }
-
-            return status;
-        }
-        case SECPKG_ATTR_KEY_INFO:
-        {
-            SecPkgContext_ConnectionInfo conn_info;
-            struct get_connection_info_params params = { ctx->session, &conn_info };
-            status = GNUTLS_CALL( get_connection_info, &params );
-            if (status == SEC_E_OK)
-            {
-                struct session_params params = { ctx->session };
-                SecPkgContext_KeyInfoW *info = buffer;
-                info->KeySize = conn_info.dwCipherStrength;
-                info->SignatureAlgorithm = GNUTLS_CALL( get_key_signature_algorithm, &params );
-                info->EncryptAlgorithm = conn_info.aiCipher;
-                info->sSignatureAlgorithmName = get_alg_name(info->SignatureAlgorithm, TRUE);
-                info->sEncryptAlgorithmName = get_alg_name(info->EncryptAlgorithm, TRUE);
-            }
-            return status;
-        }
-        case SECPKG_ATTR_REMOTE_CERT_CONTEXT:
-        {
-            PCCERT_CONTEXT *cert = buffer;
-
-            status = ensure_remote_cert(ctx);
-            if(status != SEC_E_OK)
-                return status;
-
-            *cert = CertDuplicateCertificateContext(ctx->cert);
-            return SEC_E_OK;
-        }
-        case SECPKG_ATTR_CONNECTION_INFO:
-        {
-            SecPkgContext_ConnectionInfo *info = buffer;
-            struct get_connection_info_params params = { ctx->session, info };
-            return GNUTLS_CALL( get_connection_info, &params );
-        }
-        case SECPKG_ATTR_ENDPOINT_BINDINGS:
-        {
-            SecPkgContext_Bindings *bindings = buffer;
-            CCRYPT_OID_INFO *info;
-            ALG_ID hash_alg = CALG_SHA_256;
-            BYTE hash[1024];
-            DWORD hash_size;
-            char *p;
-            BOOL r;
-
-            static const char prefix[] = "tls-server-end-point:";
-
-            status = ensure_remote_cert(ctx);
-            if(status != SEC_E_OK)
-                return status;
-
-            /* RFC 5929 */
-            info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, ctx->cert->pCertInfo->SignatureAlgorithm.pszObjId, 0);
-            if(info && info->u.Algid != CALG_SHA1 && info->u.Algid != CALG_MD5)
-                hash_alg = info->u.Algid;
-
-            hash_size = sizeof(hash);
-            r = CryptHashCertificate(0, hash_alg, 0, ctx->cert->pbCertEncoded, ctx->cert->cbCertEncoded, hash, &hash_size);
-            if(!r)
-                return GetLastError();
-
-            bindings->BindingsLength = sizeof(*bindings->Bindings) + sizeof(prefix)-1 + hash_size;
-            /* freed with FreeContextBuffer */
-            bindings->Bindings = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, bindings->BindingsLength);
-            if(!bindings->Bindings)
-                return SEC_E_INSUFFICIENT_MEMORY;
-
-            bindings->Bindings->cbApplicationDataLength = sizeof(prefix)-1 + hash_size;
-            bindings->Bindings->dwApplicationDataOffset = sizeof(*bindings->Bindings);
-
-            p = (char*)(bindings->Bindings+1);
-            memcpy(p, prefix, sizeof(prefix)-1);
-            p += sizeof(prefix)-1;
-            memcpy(p, hash, hash_size);
-            return SEC_E_OK;
-        }
-        case SECPKG_ATTR_UNIQUE_BINDINGS:
-        {
-            static const char prefix[] = "tls-unique:";
-            SecPkgContext_Bindings *bindings = buffer;
-            ULONG size;
-            char *p;
-            struct get_unique_channel_binding_params params = { ctx->session, NULL, &size };
-
-            if (GNUTLS_CALL( get_unique_channel_binding, &params ) != SEC_E_BUFFER_TOO_SMALL)
-                return SEC_E_INTERNAL_ERROR;
-
-            bindings->BindingsLength = sizeof(*bindings->Bindings) + sizeof(prefix)-1 + size;
-            /* freed with FreeContextBuffer */
-            bindings->Bindings = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, bindings->BindingsLength);
-            if(!bindings->Bindings)
-                return SEC_E_INSUFFICIENT_MEMORY;
-
-            bindings->Bindings->cbApplicationDataLength = sizeof(prefix)-1 + size;
-            bindings->Bindings->dwApplicationDataOffset = sizeof(*bindings->Bindings);
-
-            p = (char*)(bindings->Bindings+1);
-            memcpy(p, prefix, sizeof(prefix)-1);
-            p += sizeof(prefix)-1;
-            params.buffer = p;
-            return GNUTLS_CALL( get_unique_channel_binding, &params );
-        }
-        case SECPKG_ATTR_APPLICATION_PROTOCOL:
-        {
-            SecPkgContext_ApplicationProtocol *protocol = buffer;
-            struct get_application_protocol_params params = { ctx->session, protocol };
-            return GNUTLS_CALL( get_application_protocol, &params );
-        }
-        case SECPKG_ATTR_CIPHER_INFO:
-        {
-            SecPkgContext_CipherInfo *info = buffer;
-            struct get_cipher_info_params params = { ctx->session, info };
-            return GNUTLS_CALL( get_cipher_info, &params );
+            /* These are defined by the TLS RFC */
+            stream_sizes->cbHeader = ctx->header_size;
+            stream_sizes->cbTrailer = mac_size + 256; /* Max 255 bytes padding + 1 for padding size */
+            stream_sizes->cbMaximumMessage = message_size;
+            stream_sizes->cBuffers = 4;
+            stream_sizes->cbBlockSize = block_size;
         }
 
-        default:
-            FIXME("Unhandled attribute %#lx\n", attribute);
-            return SEC_E_UNSUPPORTED_FUNCTION;
+        return status;
+    }
+    case SECPKG_ATTR_KEY_INFO:
+    {
+        SecPkgContext_ConnectionInfo conn_info;
+        struct get_connection_info_params params = { ctx->session, &conn_info };
+        status = GNUTLS_CALL( get_connection_info, &params );
+        if (status == SEC_E_OK)
+        {
+            struct session_params params = { ctx->session };
+            SecPkgContext_KeyInfoW *info = buffer;
+            info->KeySize = conn_info.dwCipherStrength;
+            info->SignatureAlgorithm = GNUTLS_CALL( get_key_signature_algorithm, &params );
+            info->EncryptAlgorithm = conn_info.aiCipher;
+            info->sSignatureAlgorithmName = get_alg_name(info->SignatureAlgorithm, TRUE);
+            info->sEncryptAlgorithmName = get_alg_name(info->EncryptAlgorithm, TRUE);
+        }
+        return status;
+    }
+    case SECPKG_ATTR_REMOTE_CERT_CONTEXT:
+    {
+        PCCERT_CONTEXT *cert = buffer;
+
+        if ((status = ensure_remote_cert(ctx)) != SEC_E_OK) return status;
+        *cert = CertDuplicateCertificateContext(ctx->cert);
+        return SEC_E_OK;
+    }
+    case SECPKG_ATTR_CONNECTION_INFO:
+    {
+        SecPkgContext_ConnectionInfo *info = buffer;
+        struct get_connection_info_params params = { ctx->session, info };
+        return GNUTLS_CALL( get_connection_info, &params );
+    }
+    case SECPKG_ATTR_ENDPOINT_BINDINGS:
+    {
+        static const char prefix[] = "tls-server-end-point:";
+        SecPkgContext_Bindings *bindings = buffer;
+        CCRYPT_OID_INFO *info;
+        ALG_ID hash_alg = CALG_SHA_256;
+        BYTE hash[1024];
+        DWORD hash_size;
+        char *p;
+        BOOL ret;
+
+        if ((status = ensure_remote_cert(ctx)) != SEC_E_OK) return status;
+
+        /* RFC 5929 */
+        info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, ctx->cert->pCertInfo->SignatureAlgorithm.pszObjId, 0);
+        if (info && info->u.Algid != CALG_SHA1 && info->u.Algid != CALG_MD5) hash_alg = info->u.Algid;
+
+        hash_size = sizeof(hash);
+        ret = CryptHashCertificate(0, hash_alg, 0, ctx->cert->pbCertEncoded, ctx->cert->cbCertEncoded, hash, &hash_size);
+        if (!ret) return GetLastError();
+
+        bindings->BindingsLength = sizeof(*bindings->Bindings) + sizeof(prefix) - 1 + hash_size;
+        /* freed with FreeContextBuffer */
+        bindings->Bindings = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, bindings->BindingsLength);
+        if (!bindings->Bindings) return SEC_E_INSUFFICIENT_MEMORY;
+
+        bindings->Bindings->cbApplicationDataLength = sizeof(prefix) - 1 + hash_size;
+        bindings->Bindings->dwApplicationDataOffset = sizeof(*bindings->Bindings);
+
+        p = (char *)(bindings->Bindings + 1);
+        memcpy(p, prefix, sizeof(prefix) - 1);
+        p += sizeof(prefix) - 1;
+        memcpy(p, hash, hash_size);
+        return SEC_E_OK;
+    }
+    case SECPKG_ATTR_UNIQUE_BINDINGS:
+    {
+        static const char prefix[] = "tls-unique:";
+        SecPkgContext_Bindings *bindings = buffer;
+        ULONG size;
+        char *p;
+        struct get_unique_channel_binding_params params = { ctx->session, NULL, &size };
+
+        if (GNUTLS_CALL( get_unique_channel_binding, &params ) != SEC_E_BUFFER_TOO_SMALL)
+            return SEC_E_INTERNAL_ERROR;
+
+        bindings->BindingsLength = sizeof(*bindings->Bindings) + sizeof(prefix) - 1 + size;
+        /* freed with FreeContextBuffer */
+        bindings->Bindings = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, bindings->BindingsLength);
+        if (!bindings->Bindings) return SEC_E_INSUFFICIENT_MEMORY;
+
+        bindings->Bindings->cbApplicationDataLength = sizeof(prefix) - 1 + size;
+        bindings->Bindings->dwApplicationDataOffset = sizeof(*bindings->Bindings);
+
+        p = (char *)(bindings->Bindings + 1);
+        memcpy(p, prefix, sizeof(prefix) - 1);
+        p += sizeof(prefix) - 1;
+        params.buffer = p;
+        return GNUTLS_CALL( get_unique_channel_binding, &params );
+    }
+    case SECPKG_ATTR_APPLICATION_PROTOCOL:
+    {
+        SecPkgContext_ApplicationProtocol *protocol = buffer;
+        struct get_application_protocol_params params = { ctx->session, protocol };
+        return GNUTLS_CALL( get_application_protocol, &params );
+    }
+    case SECPKG_ATTR_CIPHER_INFO:
+    {
+        SecPkgContext_CipherInfo *info = buffer;
+        struct get_cipher_info_params params = { ctx->session, info };
+        return GNUTLS_CALL( get_cipher_info, &params );
+    }
+    default:
+        FIXME("Unhandled attribute %#lx\n", attribute);
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 }
 
 static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesA(
         PCtxtHandle context_handle, ULONG attribute, PVOID buffer)
 {
-    TRACE("context_handle %p, attribute %#lx, buffer %p\n",
-            context_handle, attribute, buffer);
+    TRACE("context_handle %p, attribute %#lx, buffer %p\n", context_handle, attribute, buffer);
 
     switch(attribute)
     {
-        case SECPKG_ATTR_STREAM_SIZES:
-            return schan_QueryContextAttributesW(context_handle, attribute, buffer);
-        case SECPKG_ATTR_KEY_INFO:
+    case SECPKG_ATTR_KEY_INFO:
+    {
+        SECURITY_STATUS status = schan_QueryContextAttributesW(context_handle, attribute, buffer);
+        if (status == SEC_E_OK)
         {
-            SECURITY_STATUS status = schan_QueryContextAttributesW(context_handle, attribute, buffer);
-            if (status == SEC_E_OK)
-            {
-                SecPkgContext_KeyInfoA *info = buffer;
-                info->sSignatureAlgorithmName = get_alg_name(info->SignatureAlgorithm, FALSE);
-                info->sEncryptAlgorithmName = get_alg_name(info->EncryptAlgorithm, FALSE);
-            }
-            return status;
+            SecPkgContext_KeyInfoA *info = buffer;
+            info->sSignatureAlgorithmName = get_alg_name(info->SignatureAlgorithm, FALSE);
+            info->sEncryptAlgorithmName = get_alg_name(info->EncryptAlgorithm, FALSE);
         }
-        case SECPKG_ATTR_REMOTE_CERT_CONTEXT:
-            return schan_QueryContextAttributesW(context_handle, attribute, buffer);
-        case SECPKG_ATTR_CONNECTION_INFO:
-            return schan_QueryContextAttributesW(context_handle, attribute, buffer);
-        case SECPKG_ATTR_ENDPOINT_BINDINGS:
-            return schan_QueryContextAttributesW(context_handle, attribute, buffer);
-        case SECPKG_ATTR_UNIQUE_BINDINGS:
-            return schan_QueryContextAttributesW(context_handle, attribute, buffer);
-        case SECPKG_ATTR_APPLICATION_PROTOCOL:
-            return schan_QueryContextAttributesW(context_handle, attribute, buffer);
-        case SECPKG_ATTR_CIPHER_INFO:
-            return schan_QueryContextAttributesW(context_handle, attribute, buffer);
+        return status;
+    }
+    case SECPKG_ATTR_STREAM_SIZES:
+    case SECPKG_ATTR_REMOTE_CERT_CONTEXT:
+    case SECPKG_ATTR_CONNECTION_INFO:
+    case SECPKG_ATTR_ENDPOINT_BINDINGS:
+    case SECPKG_ATTR_UNIQUE_BINDINGS:
+    case SECPKG_ATTR_APPLICATION_PROTOCOL:
+    case SECPKG_ATTR_CIPHER_INFO:
+        return schan_QueryContextAttributesW(context_handle, attribute, buffer);
 
-        default:
-            FIXME("Unhandled attribute %#lx\n", attribute);
-            return SEC_E_UNSUPPORTED_FUNCTION;
+    default:
+        FIXME("Unhandled attribute %#lx\n", attribute);
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 }
 
