@@ -95,7 +95,7 @@ void mdmp_dump(void)
     printf("Version: %#x\n", hdr->Version);
     printf("NumberOfStreams: %u\n", hdr->NumberOfStreams);
     printf("StreamDirectoryRva: %u\n", (UINT)hdr->StreamDirectoryRva);
-    printf("CheckSum: %u\n", hdr->CheckSum);
+    printf("CheckSum: %#x (%u)\n", hdr->CheckSum, hdr->CheckSum);
     printf("TimeDateStamp: %s\n", get_time_str(hdr->TimeDateStamp));
     print_longlong("Flags", hdr->Flags);
 
@@ -145,8 +145,8 @@ void mdmp_dump(void)
             {
                 printf("  Module #%d:\n", i);
                 print_longlong("    BaseOfImage", mm->BaseOfImage);
-                printf("    SizeOfImage: %u\n", mm->SizeOfImage);
-                printf("    CheckSum: %#x\n", mm->CheckSum);
+                printf("    SizeOfImage: %#x (%u)\n", mm->SizeOfImage, mm->SizeOfImage);
+                printf("    CheckSum: %#x (%u)\n", mm->CheckSum, mm->CheckSum);
                 printf("    TimeDateStamp: %s\n", get_time_str(mm->TimeDateStamp));
                 printf("    ModuleName: ");
                 dump_mdmp_string(mm->ModuleNameRva);
@@ -164,7 +164,7 @@ void mdmp_dump(void)
                        LOWORD(mm->VersionInfo.dwProductVersionMS),
                        HIWORD(mm->VersionInfo.dwProductVersionLS),
                        LOWORD(mm->VersionInfo.dwProductVersionLS));
-                printf("      dwFileFlagsMask: %u\n", (UINT)mm->VersionInfo.dwFileFlagsMask);
+                printf("      dwFileFlagsMask: %x\n", (UINT)mm->VersionInfo.dwFileFlagsMask);
                 printf("      dwFileFlags: %s%s%s%s%s%s\n",
                        mm->VersionInfo.dwFileFlags & VS_FF_DEBUG ? "Debug " : "",
                        mm->VersionInfo.dwFileFlags & VS_FF_INFOINFERRED ? "Inferred " : "",
@@ -214,10 +214,8 @@ void mdmp_dump(void)
                 dump_mdmp_data(&mm->CvRecord, "    ");
                 printf("    MiscRecord: <%u>\n", (UINT)mm->MiscRecord.DataSize);
                 dump_mdmp_data(&mm->MiscRecord, "    ");
-                printf("    Reserved0: 0x%x%08x\n",
-		    (UINT)(mm->Reserved0 >> 32), (UINT)mm->Reserved0);
-                printf("    Reserved1: 0x%x%08x\n",
-		    (UINT)(mm->Reserved1 >> 32), (UINT)mm->Reserved1);
+                print_longlong("    Reserved0", mm->Reserved0);
+                print_longlong("    Reserved1", mm->Reserved1);
             }
         }
         break;
