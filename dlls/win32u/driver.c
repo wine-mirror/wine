@@ -775,6 +775,24 @@ static void nulldrv_CleanupIcons( HWND hwnd )
 {
 }
 
+static void nulldrv_SystrayDockInit( HWND hwnd )
+{
+}
+
+static BOOL nulldrv_SystrayDockInsert( HWND hwnd, UINT cx, UINT cy, void *icon )
+{
+    return FALSE;
+}
+
+static void nulldrv_SystrayDockClear( HWND hwnd )
+{
+}
+
+static BOOL nulldrv_SystrayDockRemove( HWND hwnd )
+{
+    return FALSE;
+}
+
 static void nulldrv_UpdateClipboard(void)
 {
 }
@@ -1176,6 +1194,26 @@ static void loaderdrv_CleanupIcons( HWND hwnd )
     load_driver()->pCleanupIcons( hwnd );
 }
 
+static void loaderdrv_SystrayDockInit( HWND hwnd )
+{
+    load_driver()->pSystrayDockInit( hwnd );
+}
+
+static BOOL loaderdrv_SystrayDockInsert( HWND hwnd, UINT cx, UINT cy, void *icon )
+{
+    return load_driver()->pSystrayDockInsert( hwnd, cx, cy, icon );
+}
+
+static void loaderdrv_SystrayDockClear( HWND hwnd )
+{
+    load_driver()->pSystrayDockClear( hwnd );
+}
+
+static BOOL loaderdrv_SystrayDockRemove( HWND hwnd )
+{
+    return load_driver()->pSystrayDockRemove( hwnd );
+}
+
 static LRESULT nulldrv_ClipboardWindowProc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     return 0;
@@ -1265,6 +1303,10 @@ static const struct user_driver_funcs lazy_load_driver =
     /* systray functions */
     loaderdrv_NotifyIcon,
     loaderdrv_CleanupIcons,
+    loaderdrv_SystrayDockInit,
+    loaderdrv_SystrayDockInsert,
+    loaderdrv_SystrayDockClear,
+    loaderdrv_SystrayDockRemove,
     /* clipboard functions */
     nulldrv_ClipboardWindowProc,
     loaderdrv_UpdateClipboard,
@@ -1351,6 +1393,10 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(ClipCursor);
     SET_USER_FUNC(NotifyIcon);
     SET_USER_FUNC(CleanupIcons);
+    SET_USER_FUNC(SystrayDockInit);
+    SET_USER_FUNC(SystrayDockInsert);
+    SET_USER_FUNC(SystrayDockClear);
+    SET_USER_FUNC(SystrayDockRemove);
     SET_USER_FUNC(ClipboardWindowProc);
     SET_USER_FUNC(UpdateClipboard);
     SET_USER_FUNC(ChangeDisplaySettings);

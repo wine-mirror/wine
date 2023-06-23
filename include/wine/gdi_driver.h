@@ -309,6 +309,10 @@ struct user_driver_funcs
     /* notify icon functions */
     LRESULT (*pNotifyIcon)(HWND,UINT,NOTIFYICONDATAW *);
     void    (*pCleanupIcons)(HWND);
+    void    (*pSystrayDockInit)(HWND);
+    BOOL    (*pSystrayDockInsert)(HWND,UINT,UINT,void *);
+    void    (*pSystrayDockClear)(HWND);
+    BOOL    (*pSystrayDockRemove)(HWND);
     /* clipboard functions */
     LRESULT (*pClipboardWindowProc)(HWND,UINT,WPARAM,LPARAM);
     void    (*pUpdateClipboard)(void);

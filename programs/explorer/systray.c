@@ -60,6 +60,7 @@ struct notify_data  /* platform-independent format for NOTIFYICONDATA */
 static int (CDECL *wine_notify_icon)(DWORD,NOTIFYICONDATAW *);
 
 #define ICON_DISPLAY_HIDDEN -1
+#define ICON_DISPLAY_DOCKED -2
 
 /* an individual systray icon, unpacked from the NOTIFYICONDATA and always in unicode */
 struct icon
@@ -472,6 +473,8 @@ static void systray_add_icon( struct icon *icon )
     if (icon->display != ICON_DISPLAY_HIDDEN) return;  /* already added */
 
     icon->display = nb_displayed++;
+    SetWindowLongW( icon->window, GWL_STYLE, GetWindowLongW( icon->window, GWL_STYLE ) | WS_CHILD );
+    SetParent( icon->window, tray_window );
     pos = get_icon_pos( icon );
     SetWindowPos( icon->window, 0, pos.x, pos.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW );
 
@@ -502,6 +505,8 @@ static void systray_remove_icon( struct icon *icon )
     TRACE( "removed %u now %d icons\n", icon->id, nb_displayed );
 
     icon->display = ICON_DISPLAY_HIDDEN;
+    SetParent( icon->window, GetDesktopWindow() );
+    SetWindowLongW( icon->window, GWL_STYLE, GetWindowLongW( icon->window, GWL_STYLE ) & ~WS_CHILD );
 }
 
 /* make an icon visible */
@@ -511,6 +516,9 @@ static BOOL show_icon(struct icon *icon)
 
     if (icon->display != ICON_DISPLAY_HIDDEN) return TRUE;  /* already displayed */
 
+    if (!enable_taskbar && NtUserMessageCall( icon->window, WINE_SYSTRAY_DOCK_INSERT, icon_cx,
+                                              icon_cy, icon, NtUserSystemTrayCall, FALSE ))
+        icon->display = ICON_DISPLAY_DOCKED;
     systray_add_icon( icon );
 
     update_tooltip_position( icon );
@@ -525,6 +533,9 @@ static BOOL hide_icon(struct icon *icon)
 
     if (icon->display == ICON_DISPLAY_HIDDEN) return TRUE;  /* already hidden */
 
+    if (!enable_taskbar && NtUserMessageCall( icon->window, WINE_SYSTRAY_DOCK_REMOVE, 0, 0,
+                                              NULL, NtUserSystemTrayCall, FALSE ))
+        icon->display = ICON_DISPLAY_HIDDEN;
     ShowWindow( icon->window, SW_HIDE );
     systray_remove_icon( icon );
 
@@ -554,7 +565,12 @@ static BOOL modify_icon( struct icon *icon, NOTIFYICONDATAW *nid )
     {
         if (icon->image) DestroyIcon(icon->image);
         icon->image = CopyIcon(nid->hIcon);
-        if (icon->display >= 0) InvalidateRect( icon->window, NULL, TRUE );
+
+        if (icon->display >= 0)
+            InvalidateRect( icon->window, NULL, TRUE );
+        else if (!enable_taskbar)
+            NtUserMessageCall( icon->window, WINE_SYSTRAY_DOCK_CLEAR, 0, 0,
+                               NULL, NtUserSystemTrayCall, FALSE );
     }
 
     if (nid->uFlags & NIF_MESSAGE)
@@ -604,8 +620,8 @@ static BOOL add_icon(NOTIFYICONDATAW *nid)
     icon->owner  = nid->hWnd;
     icon->display = ICON_DISPLAY_HIDDEN;
 
-    CreateWindowW( tray_icon_class.lpszClassName, NULL, WS_CHILD,
-                   0, 0, icon_cx, icon_cy, tray_window, NULL, NULL, icon );
+    CreateWindowExW( 0, tray_icon_class.lpszClassName, NULL, WS_CLIPSIBLINGS | WS_POPUP,
+                     0, 0, icon_cx, icon_cy, 0, NULL, NULL, icon );
     if (!icon->window) ERR( "Failed to create systray icon window\n" );
 
     list_add_tail(&icon_list, &icon->entry);
@@ -1027,6 +1043,7 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enab
         SIZE size = get_window_size();
         tray_window = CreateWindowExW( 0, shell_traywnd_class.lpszClassName, L"", WS_CAPTION | WS_SYSMENU,
                                        CW_USEDEFAULT, CW_USEDEFAULT, size.cx, size.cy, 0, 0, 0, 0 );
+        NtUserMessageCall( tray_window, WINE_SYSTRAY_DOCK_INIT, 0, 0, NULL, NtUserSystemTrayCall, FALSE );
     }
 
     if (!tray_window)
