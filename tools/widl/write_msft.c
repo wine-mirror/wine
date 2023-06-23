@@ -2225,6 +2225,9 @@ static void add_structure_typeinfo(msft_typelib_t *typelib, type_t *structure)
     if (-1 < structure->typelib_idx)
         return;
 
+    if (!structure->name)
+        structure->name = gen_name();
+
     structure->typelib_idx = typelib->typelib_header.nrtypeinfos;
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_RECORD, structure->name, structure->attrs);
     msft_typeinfo->typeinfo->size = 0;
