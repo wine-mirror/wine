@@ -1954,14 +1954,13 @@ static HRESULT d3d12_swapchain_set_sync_interval(struct d3d12_swapchain *swapcha
     return d3d12_swapchain_create_vulkan_resources(swapchain);
 }
 
-static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain, VkQueue vk_queue)
+static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain, VkQueue vk_queue, VkImage vk_src_image)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
     VkPresentInfoKHR present_info;
     VkCommandBuffer vk_cmd_buffer;
     VkSubmitInfo submit_info;
     VkImage vk_dst_image;
-    VkImage vk_src_image;
     VkResult vr;
 
     if (swapchain->vk_image_index == INVALID_VK_IMAGE_INDEX)
@@ -1974,7 +1973,6 @@ static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain,
 
     vk_cmd_buffer = swapchain->vk_cmd_buffers[swapchain->vk_image_index];
     vk_dst_image = swapchain->vk_swapchain_images[swapchain->vk_image_index];
-    vk_src_image = swapchain->vk_images[swapchain->current_buffer_index];
 
     if ((vr = vk_funcs->p_vkResetCommandBuffer(vk_cmd_buffer, 0)) < 0)
     {
@@ -2050,7 +2048,8 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
         return E_FAIL;
     }
 
-    vr = d3d12_swapchain_queue_present(swapchain, vk_queue);
+    vr = d3d12_swapchain_queue_present(swapchain, vk_queue,
+            swapchain->vk_images[swapchain->current_buffer_index]);
     if (vr == VK_ERROR_OUT_OF_DATE_KHR)
     {
         vkd3d_release_vk_queue(swapchain->command_queue);
@@ -2067,7 +2066,8 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
             return E_FAIL;
         }
 
-        if ((vr = d3d12_swapchain_queue_present(swapchain, vk_queue)) < 0)
+        if ((vr = d3d12_swapchain_queue_present(swapchain, vk_queue,
+                swapchain->vk_images[swapchain->current_buffer_index])) < 0)
             ERR("Failed to present after recreating swapchain, vr %d.\n", vr);
     }
 
