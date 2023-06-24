@@ -821,9 +821,12 @@ exist wildcard works
 negate exist wildcard works
 exist wildcard bad subdir broken works
 exist subdir ok
-exist subdir with . ok
+exist subdir with \. ok
 exist subdir with \ ok
 exist subdir with \ and quotes ok
+exist subdir with /. ok
+exist subdir with / ok
+exist subdir with / and quotes ok
 ------ for numbers
 negative numbers handled
 negative numbers handled

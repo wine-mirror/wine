@@ -2844,8 +2844,8 @@ int evaluate_if_condition(WCHAR *p, WCHAR **command, int *test, int *negate)
     int    len = lstrlenW(param);
 
     if (!len) goto syntax_err;
-    /* FindFirstFile does not like a directory path ending in '\', append a '.' */
-    if (param[len-1] == '\\') lstrcatW(param, L".");
+    /* FindFirstFile does not like a directory path ending in '\' or '/', append a '.' */
+    if (param[len-1] == '\\' || param[len-1] == '/') lstrcatW(param, L".");
 
     hff = FindFirstFileW(param, &fd);
     *test = (hff != INVALID_HANDLE_VALUE );

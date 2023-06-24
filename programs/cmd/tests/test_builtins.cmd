@@ -1138,9 +1138,9 @@ if exist subdir (
    echo ERROR exist subdir not working
 )
 if exist subdir\. (
-   echo exist subdir with . ok
+   echo exist subdir with \. ok
 ) else (
-   echo ERROR exist subdir with . not working
+   echo ERROR exist subdir with \. not working
 )
 if exist subdir\ (
    echo exist subdir with \ ok
@@ -1151,6 +1151,21 @@ if exist "subdir\" (
    echo exist subdir with \ and quotes ok
 ) else (
    echo ERROR exist subdir with \ and quotes not working
+)
+if exist subdir/. (
+   echo exist subdir with /. ok
+) else (
+   echo ERROR exist subdir with /. not working
+)
+if exist subdir/ (
+   echo exist subdir with / ok
+) else (
+   echo ERROR exist subdir with / not working
+)
+if exist "subdir/" (
+   echo exist subdir with / and quotes ok
+) else (
+   echo ERROR exist subdir with / and quotes not working
 )
 del foo subdir\bar
 rd subdir
