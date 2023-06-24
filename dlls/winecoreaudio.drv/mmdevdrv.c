@@ -416,7 +416,7 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
             list_remove(&This->entry);
             sessions_unlock();
         }
-        HeapFree(GetProcessHeap(), 0, This->vols);
+        free(This->vols);
         IMMDevice_Release(This->parent);
         IUnknown_Release(This->marshal);
         HeapFree(GetProcessHeap(), 0, This);
@@ -605,7 +605,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         return params.result;
     }
 
-    This->vols = HeapAlloc(GetProcessHeap(), 0, channel_count * sizeof(float));
+    This->vols = malloc(channel_count * sizeof(float));
     if(!This->vols){
         params.result = E_OUTOFMEMORY;
         goto end;
@@ -622,7 +622,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 end:
     if(FAILED(params.result)){
         stream_release(stream, NULL);
-        HeapFree(GetProcessHeap(), 0, This->vols);
+        free(This->vols);
         This->vols = NULL;
     }else{
         This->stream = stream;
