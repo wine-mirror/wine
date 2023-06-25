@@ -1026,8 +1026,71 @@ static void test_foregroundwindow(void)
     ok(timeout == timeout_old, "unexpected timeout %ld\n", timeout);
 }
 
+static void test_invisible_winstation_child(char *expected_info)
+{
+    char buffer[MAX_PATH];
+    HDESK desktop;
+    int ret;
+
+    desktop = GetThreadDesktop(GetCurrentThreadId());
+    ok(!!desktop, "GetThreadDesktop failed, error %lu.\n", GetLastError());
+
+    ret = GetUserObjectInformationA(desktop, UOI_NAME, &buffer, sizeof(buffer), NULL);
+    ok(ret, "GetUserObjectInformationA failed, error %lu.\n", GetLastError());
+    ok(!strcmp(buffer, "invisible_winstation_desktop"), "Got unexpected desktop %s.\n", buffer);
+
+    sprintf(buffer, "%d,%d,%d,%d,%d", GetSystemMetrics(SM_XVIRTUALSCREEN),
+            GetSystemMetrics(SM_YVIRTUALSCREEN), GetSystemMetrics(SM_CXVIRTUALSCREEN),
+            GetSystemMetrics(SM_CYVIRTUALSCREEN), GetSystemMetrics(SM_CMONITORS));
+    todo_wine_if(strcmp(buffer, "0,0,1024,768,1"))
+    ok(!strcmp(buffer, expected_info), "Expected %s, got %s.\n", expected_info, buffer);
+}
+
+static void test_invisible_winstation(char **argv)
+{
+    char buffer[MAX_PATH], desktop_name[MAX_PATH];
+    HWINSTA old_winstation, winstation;
+    PROCESS_INFORMATION pi = {0};
+    STARTUPINFOA si = {0};
+    HDESK desktop;
+    BOOL ret;
+
+    old_winstation = GetProcessWindowStation();
+    ok(!!old_winstation, "GetProcessWindowStation failed, error %lu.\n", GetLastError());
+    winstation = CreateWindowStationW(NULL, 0, GENERIC_READ | WINSTA_CREATEDESKTOP, NULL);
+    ok(!!winstation, "CreateWindowStationW failed, error %lu.\n", GetLastError());
+    ret = SetProcessWindowStation(winstation);
+    ok(ret, "SetProcessWindowStation failed, error %lu.\n", GetLastError());
+    desktop = CreateDesktopA("invisible_winstation_desktop", NULL, NULL, 0, DESKTOP_CREATEWINDOW, NULL);
+    ok(!!desktop, "CreateDesktopA failed, error %lu.\n", GetLastError());
+
+    ret = GetUserObjectInformationA(winstation, UOI_NAME, buffer, sizeof(buffer), NULL);
+    ok(ret, "GetUserObjectInformationA failed, error %lu.\n", GetLastError());
+    strcpy(desktop_name, buffer);
+    strcat(desktop_name, "\\invisible_winstation_desktop");
+
+    si.cb = sizeof(si);
+    si.lpDesktop = desktop_name;
+
+    sprintf(buffer, "\"%s\" %s invisible %d,%d,%d,%d,%d", argv[0], argv[1],
+            GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN),
+            GetSystemMetrics(SM_CXVIRTUALSCREEN), GetSystemMetrics(SM_CYVIRTUALSCREEN),
+            GetSystemMetrics(SM_CMONITORS));
+    ret = CreateProcessA(argv[0], buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcessA failed, error %lu.\n", GetLastError());
+
+    wait_child_process(pi.hProcess);
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+    CloseDesktop(desktop);
+    CloseWindowStation(winstation);
+    SetProcessWindowStation(old_winstation);
+}
+
 START_TEST(winstation)
 {
+    char **argv;
+    int argc;
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
     pNtQueryObject = (void *)GetProcAddress(hntdll, "NtQueryObject");
 
@@ -1041,6 +1104,14 @@ START_TEST(winstation)
         return;
     }
 
+    argc = winetest_get_mainargs(&argv);
+    if (argc > 2)
+    {
+        if (!lstrcmpA(argv[2], "invisible"))
+            test_invisible_winstation_child(argv[3]);
+
+        return;
+    }
     test_inputdesktop();
     test_inputdesktop2();
     test_enumstations();
@@ -1048,4 +1119,5 @@ START_TEST(winstation)
     test_handles();
     test_getuserobjectinformation();
     test_foregroundwindow();
+    test_invisible_winstation(argv);
 }
