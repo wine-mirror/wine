@@ -196,9 +196,9 @@ static GstMemory *wg_allocator_alloc(GstAllocator *gst_allocator, gsize size,
     pthread_mutex_lock(&allocator->mutex);
 
     memory->sample = allocator->next_sample;
-    if (memory->sample && memory->sample->max_size >= size)
-        allocator->next_sample = NULL;
-    else
+    allocator->next_sample = NULL;
+
+    if (memory->sample && memory->sample->max_size < size)
         release_memory_sample(allocator, memory, true);
 
     list_add_tail(&allocator->memory_list, &memory->entry);
