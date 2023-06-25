@@ -71,11 +71,11 @@ HRESULT vkd3d_create_device(const struct vkd3d_device_create_info *create_info,
 
     if (!device)
     {
-        ID3D12Device_Release(&object->ID3D12Device_iface);
+        ID3D12Device_Release(&object->ID3D12Device1_iface);
         return S_FALSE;
     }
 
-    return return_interface(&object->ID3D12Device_iface, &IID_ID3D12Device, iid, device);
+    return return_interface(&object->ID3D12Device1_iface, &IID_ID3D12Device, iid, device);
 }
 
 /* ID3D12RootSignatureDeserializer */

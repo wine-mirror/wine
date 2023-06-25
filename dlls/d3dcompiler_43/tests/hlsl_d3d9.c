@@ -558,26 +558,30 @@ static void test_conditionals(void)
         return;
     device = test_context.device;
 
+    todo_wine
     ps_code = compile_shader(ps_if_source, "ps_2_0", 0);
-    draw_quad(device, ps_code);
-    init_readback(device, &rb);
-
-    for (i = 0; i < 200; i += 40)
+    if (ps_code)
     {
-        v = get_readback_vec4(&rb, i, 0);
-        todo_wine ok(compare_vec4(v, 0.9f, 0.8f, 0.7f, 0.6f, 0),
-                "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v->x, v->y, v->z, v->w);
-    }
+        draw_quad(device, ps_code);
+        init_readback(device, &rb);
 
-    for (i = 240; i < 640; i += 40)
-    {
-        v = get_readback_vec4(&rb, i, 0);
-        todo_wine ok(compare_vec4(v, 0.1f, 0.2f, 0.3f, 0.4f, 0),
-                "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v->x, v->y, v->z, v->w);
-    }
+        for (i = 0; i < 200; i += 40)
+        {
+            v = get_readback_vec4(&rb, i, 0);
+            todo_wine ok(compare_vec4(v, 0.9f, 0.8f, 0.7f, 0.6f, 0),
+                         "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v->x, v->y, v->z, v->w);
+        }
 
-    release_readback(&rb);
-    ID3D10Blob_Release(ps_code);
+        for (i = 240; i < 640; i += 40)
+        {
+            v = get_readback_vec4(&rb, i, 0);
+            todo_wine ok(compare_vec4(v, 0.1f, 0.2f, 0.3f, 0.4f, 0),
+                         "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v->x, v->y, v->z, v->w);
+        }
+
+        release_readback(&rb);
+        ID3D10Blob_Release(ps_code);
+    }
 
     todo_wine ps_code = compile_shader(ps_ternary_source, "ps_2_0", 0);
     if (ps_code)
@@ -588,6 +592,7 @@ static void test_conditionals(void)
         for (i = 0; i < 320; i += 40)
         {
             v = get_readback_vec4(&rb, i, 0);
+            todo_wine
             ok(compare_vec4(v, 0.5f, 0.25f, 0.5f, 0.75f, 0),
                     "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v->x, v->y, v->z, v->w);
         }
@@ -595,6 +600,7 @@ static void test_conditionals(void)
         for (i = 360; i < 640; i += 40)
         {
             v = get_readback_vec4(&rb, i, 0);
+            todo_wine
             ok(compare_vec4(v, 0.6f, 0.8f, 0.1f, 0.2f, 0),
                     "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v->x, v->y, v->z, v->w);
         }
@@ -653,6 +659,7 @@ static void test_float_vectors(void)
         ID3D10Blob_Release(ps_code);
     }
 
+    todo_wine
     ps_code = compile_shader(ps_uniform_indexing_source, "ps_2_0", 0);
     if (ps_code)
     {
@@ -696,6 +703,7 @@ static void test_trig(void)
         return;
     device = test_context.device;
 
+    todo_wine
     ps_code = compile_shader(ps_source, "ps_2_0", 0);
     if (ps_code)
     {
@@ -1168,13 +1176,14 @@ static void test_samplers(void)
     {
         hr = IDirect3DDevice9_Clear(test_context.device, 0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(255, 0, 0), 1.0f, 0);
         ok(hr == D3D_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
+        todo_wine_if (i > 2)
         ps_code = compile_shader(tests[i], "ps_2_0", 0);
         if (ps_code)
         {
             draw_quad(test_context.device, ps_code);
 
             v = get_color_vec4(test_context.device, 0, 0);
-            todo_wine ok(compare_vec4(&v, 1.0f, 0.0f, 1.0f, 0.0f, 0),
+            ok(compare_vec4(&v, 1.0f, 0.0f, 1.0f, 0.0f, 0),
                     "Test %u: Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", i, v.x, v.y, v.z, v.w);
 
             ID3D10Blob_Release(ps_code);

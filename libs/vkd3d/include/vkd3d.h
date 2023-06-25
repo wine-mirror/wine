@@ -76,6 +76,8 @@ enum vkd3d_api_version
     VKD3D_API_VERSION_1_5,
     VKD3D_API_VERSION_1_6,
     VKD3D_API_VERSION_1_7,
+    VKD3D_API_VERSION_1_8,
+    VKD3D_API_VERSION_1_9,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_API_VERSION),
 };
@@ -206,7 +208,42 @@ VKD3D_API VkPhysicalDevice vkd3d_get_vk_physical_device(ID3D12Device *device);
 VKD3D_API struct vkd3d_instance *vkd3d_instance_from_device(ID3D12Device *device);
 
 VKD3D_API uint32_t vkd3d_get_vk_queue_family_index(ID3D12CommandQueue *queue);
+
+/**
+ * Acquire the Vulkan queue backing a command queue.
+ *
+ * While a queue is acquired by the client, it is locked so that
+ * neither the vkd3d library nor other threads can submit work to
+ * it. For that reason it should be released as soon as possible with
+ * vkd3d_release_vk_queue(). The lock is not reentrant, so the same
+ * queue must not be acquired more than once by the same thread.
+ *
+ * Work submitted through the Direct3D 12 API exposed by vkd3d is not
+ * always immediately submitted to the Vulkan queue; sometimes it is
+ * kept in another internal queue, which might not necessarily be
+ * empty at the time vkd3d_acquire_vk_queue() is called. For this
+ * reason, work submitted directly to the Vulkan queue might appear to
+ * the Vulkan driver as being submitted before other work submitted
+ * though the Direct3D 12 API. If this is not desired, it is
+ * recommended to synchronize work submission using an ID3D12Fence
+ * object, by submitting to the queue a signal operation after all the
+ * Direct3D 12 work is submitted and waiting for it before calling
+ * vkd3d_acquire_vk_queue().
+ *
+ * \since 1.0
+ */
 VKD3D_API VkQueue vkd3d_acquire_vk_queue(ID3D12CommandQueue *queue);
+
+/**
+ * Release the Vulkan queue backing a command queue.
+ *
+ * This must be paired to an earlier corresponding
+ * vkd3d_acquire_vk_queue(). After this function is called, the Vulkan
+ * queue returned by vkd3d_acquire_vk_queue() must not be used any
+ * more.
+ *
+ * \since 1.0
+ */
 VKD3D_API void vkd3d_release_vk_queue(ID3D12CommandQueue *queue);
 
 VKD3D_API HRESULT vkd3d_create_image_resource(ID3D12Device *device,

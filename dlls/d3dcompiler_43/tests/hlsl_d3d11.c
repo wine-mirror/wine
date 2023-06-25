@@ -616,8 +616,7 @@ static void test_sampling(void)
         winetest_push_context("Test %u", i);
 
         ID3D11DeviceContext_ClearRenderTargetView(test_context.immediate_context, test_context.rtv, red);
-        todo_wine_if (i < 3)
-            ps_code = compile_shader_flags(tests[i], "ps_4_0", D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY);
+        ps_code = compile_shader_flags(tests[i], "ps_4_0", D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY);
         if (ps_code)
         {
             draw_quad(&test_context, ps_code);
@@ -902,7 +901,6 @@ static void test_reflection(void)
     refcount = reflection->lpVtbl->Release(reflection);
     ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
-    todo_wine
     code = compile_shader_flags(ps_source, "ps_4_0", D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY);
     if (!code)
         return;

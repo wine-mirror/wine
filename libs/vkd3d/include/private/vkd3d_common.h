@@ -20,6 +20,7 @@
 #define __VKD3D_COMMON_H
 
 #include "config.h"
+#define WIN32_LEAN_AND_MEAN
 #include "windows.h"
 #include "vkd3d_types.h"
 
@@ -28,6 +29,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #ifdef _MSC_VER
 #include <intrin.h>
@@ -171,6 +173,11 @@ static inline bool vkd3d_bound_range(size_t start, size_t count, size_t limit)
 #endif
 }
 
+static inline bool vkd3d_object_range_overflow(size_t start, size_t count, size_t size)
+{
+    return (~(size_t)0 - start) / size < count;
+}
+
 static inline uint16_t vkd3d_make_u16(uint8_t low, uint8_t high)
 {
     return low | ((uint16_t)high << 8);
@@ -184,6 +191,21 @@ static inline uint32_t vkd3d_make_u32(uint16_t low, uint16_t high)
 static inline int vkd3d_u32_compare(uint32_t x, uint32_t y)
 {
     return (x > y) - (x < y);
+}
+
+static inline bool bitmap_clear(uint32_t *map, unsigned int idx)
+{
+    return map[idx >> 5] &= ~(1u << (idx & 0x1f));
+}
+
+static inline bool bitmap_set(uint32_t *map, unsigned int idx)
+{
+    return map[idx >> 5] |= (1u << (idx & 0x1f));
+}
+
+static inline bool bitmap_is_set(const uint32_t *map, unsigned int idx)
+{
+    return map[idx >> 5] & (1u << (idx & 0x1f));
 }
 
 static inline int ascii_isupper(int c)
@@ -249,6 +271,7 @@ static inline LONG InterlockedDecrement(LONG volatile *x)
 # else
 #  error "InterlockedDecrement() not implemented for this platform"
 # endif
+
 #endif  /* _WIN32 */
 
 static inline void vkd3d_parse_version(const char *version, int *major, int *minor)

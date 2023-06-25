@@ -37,6 +37,7 @@ static void update_location(struct hlsl_ctx *ctx, YYLTYPE *loc);
 %option bison-locations
 %option extra-type="struct hlsl_ctx *"
 %option never-interactive
+%option nodefault
 %option noinput
 %option nounput
 %option noyywrap
@@ -95,6 +96,7 @@ matrix                  {return KW_MATRIX;              }
 namespace               {return KW_NAMESPACE;           }
 nointerpolation         {return KW_NOINTERPOLATION;     }
 out                     {return KW_OUT;                 }
+packoffset              {return KW_PACKOFFSET;          }
 pass                    {return KW_PASS;                }
 PixelShader             {return KW_PIXELSHADER;         }
 precise                 {return KW_PRECISE;             }
@@ -102,6 +104,8 @@ RasterizerState         {return KW_RASTERIZERSTATE;     }
 RenderTargetView        {return KW_RENDERTARGETVIEW;    }
 return                  {return KW_RETURN;              }
 register                {return KW_REGISTER;            }
+RWBuffer                {return KW_RWBUFFER;            }
+RWStructuredBuffer      {return KW_RWSTRUCTUREDBUFFER;  }
 RWTexture1D             {return KW_RWTEXTURE1D;         }
 RWTexture2D             {return KW_RWTEXTURE2D;         }
 RWTexture3D             {return KW_RWTEXTURE3D;         }
@@ -265,6 +269,10 @@ row_major               {return KW_ROW_MAJOR;           }
                             return STRING;
                         }
 <pp_line>{WS}+          {}
+<pp_line>{ANY}          {
+                            FIXME("Malformed preprocessor line directive?\n");
+                            BEGIN(INITIAL);
+                        }
 <pp_line>{NEWLINE}      {
                             FIXME("Malformed preprocessor line directive?\n");
                             BEGIN(INITIAL);

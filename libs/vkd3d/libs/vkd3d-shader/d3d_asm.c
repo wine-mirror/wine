@@ -109,6 +109,7 @@ static const char * const shader_opcode_names[] =
     [VKD3DSIH_DEQ                             ] = "deq",
     [VKD3DSIH_DFMA                            ] = "dfma",
     [VKD3DSIH_DGE                             ] = "dge",
+    [VKD3DSIH_DISCARD                         ] = "discard",
     [VKD3DSIH_DIV                             ] = "div",
     [VKD3DSIH_DLT                             ] = "dlt",
     [VKD3DSIH_DMAX                            ] = "dmax",
@@ -577,17 +578,17 @@ static void shader_dump_resource_type(struct vkd3d_d3d_asm_compiler *compiler, e
 {
     static const char *const resource_type_names[] =
     {
-        /* VKD3D_SHADER_RESOURCE_NONE                 */ "none",
-        /* VKD3D_SHADER_RESOURCE_BUFFER               */ "buffer",
-        /* VKD3D_SHADER_RESOURCE_TEXTURE_1D           */ "texture1d",
-        /* VKD3D_SHADER_RESOURCE_TEXTURE_2D           */ "texture2d",
-        /* VKD3D_SHADER_RESOURCE_TEXTURE_2DMS         */ "texture2dms",
-        /* VKD3D_SHADER_RESOURCE_TEXTURE_3D           */ "texture3d",
-        /* VKD3D_SHADER_RESOURCE_TEXTURE_CUBE         */ "texturecube",
-        /* VKD3D_SHADER_RESOURCE_TEXTURE_1DARRAY      */ "texture1darray",
-        /* VKD3D_SHADER_RESOURCE_TEXTURE_2DARRAY      */ "texture2darray",
-        /* VKD3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY    */ "texture2dmsarray",
-        /* VKD3D_SHADER_RESOURCE_TEXTURE_CUBEARRAY    */ "texturecubearray",
+        [VKD3D_SHADER_RESOURCE_NONE             ] = "none",
+        [VKD3D_SHADER_RESOURCE_BUFFER           ] = "buffer",
+        [VKD3D_SHADER_RESOURCE_TEXTURE_1D       ] = "texture1d",
+        [VKD3D_SHADER_RESOURCE_TEXTURE_2D       ] = "texture2d",
+        [VKD3D_SHADER_RESOURCE_TEXTURE_2DMS     ] = "texture2dms",
+        [VKD3D_SHADER_RESOURCE_TEXTURE_3D       ] = "texture3d",
+        [VKD3D_SHADER_RESOURCE_TEXTURE_CUBE     ] = "texturecube",
+        [VKD3D_SHADER_RESOURCE_TEXTURE_1DARRAY  ] = "texture1darray",
+        [VKD3D_SHADER_RESOURCE_TEXTURE_2DARRAY  ] = "texture2darray",
+        [VKD3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY] = "texture2dmsarray",
+        [VKD3D_SHADER_RESOURCE_TEXTURE_CUBEARRAY] = "texturecubearray",
     };
 
     if (type < ARRAY_SIZE(resource_type_names))
@@ -600,19 +601,19 @@ static void shader_dump_data_type(struct vkd3d_d3d_asm_compiler *compiler, const
 {
     static const char *const data_type_names[] =
     {
-        /* VKD3D_DATA_FLOAT     */ "float",
-        /* VKD3D_DATA_INT       */ "int",
-        /* VKD3D_DATA_RESOURCE  */ "resource",
-        /* VKD3D_DATA_SAMPLER   */ "sampler",
-        /* VKD3D_DATA_UAV       */ "uav",
-        /* VKD3D_DATA_UINT      */ "uint",
-        /* VKD3D_DATA_UNORM     */ "unorm",
-        /* VKD3D_DATA_SNORM     */ "snorm",
-        /* VKD3D_DATA_OPAQUE    */ "opaque",
-        /* VKD3D_DATA_MIXED     */ "mixed",
-        /* VKD3D_DATA_DOUBLE    */ "double",
-        /* VKD3D_DATA_CONTINUED */ "<continued>",
-        /* VKD3D_DATA_UNUSED    */ "<unused>",
+        [VKD3D_DATA_FLOAT    ] = "float",
+        [VKD3D_DATA_INT      ] = "int",
+        [VKD3D_DATA_RESOURCE ] = "resource",
+        [VKD3D_DATA_SAMPLER  ] = "sampler",
+        [VKD3D_DATA_UAV      ] = "uav",
+        [VKD3D_DATA_UINT     ] = "uint",
+        [VKD3D_DATA_UNORM    ] = "unorm",
+        [VKD3D_DATA_SNORM    ] = "snorm",
+        [VKD3D_DATA_OPAQUE   ] = "opaque",
+        [VKD3D_DATA_MIXED    ] = "mixed",
+        [VKD3D_DATA_DOUBLE   ] = "double",
+        [VKD3D_DATA_CONTINUED] = "<continued>",
+        [VKD3D_DATA_UNUSED   ] = "<unused>",
     };
     const char *name;
     int i;
@@ -645,7 +646,7 @@ static void shader_dump_decl_usage(struct vkd3d_d3d_asm_compiler *compiler,
                 break;
 
             case VKD3D_SHADER_RESOURCE_TEXTURE_3D:
-                shader_addline(buffer, "_3d");
+                shader_addline(buffer, "_volume");
                 break;
 
             case VKD3D_SHADER_RESOURCE_TEXTURE_CUBE:
@@ -660,8 +661,9 @@ static void shader_dump_decl_usage(struct vkd3d_d3d_asm_compiler *compiler,
     else if (semantic->resource.reg.reg.type == VKD3DSPR_RESOURCE || semantic->resource.reg.reg.type == VKD3DSPR_UAV)
     {
         if (semantic->resource.reg.reg.type == VKD3DSPR_RESOURCE)
-            shader_addline(buffer, "_resource_");
+            shader_addline(buffer, "_resource");
 
+        shader_addline(buffer, "_");
         shader_dump_resource_type(compiler, semantic->resource_type);
         if (semantic->resource_type == VKD3D_SHADER_RESOURCE_TEXTURE_2DMS
                 || semantic->resource_type == VKD3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY)
@@ -712,7 +714,7 @@ static void shader_dump_decl_usage(struct vkd3d_d3d_asm_compiler *compiler,
                 break;
 
             case VKD3D_DECL_USAGE_TEXCOORD:
-                shader_addline(buffer, "texture%u", semantic->usage_idx);
+                shader_addline(buffer, "texcoord%u", semantic->usage_idx);
                 break;
 
             case VKD3D_DECL_USAGE_TANGENT:
@@ -1505,9 +1507,9 @@ static void shader_dump_instruction_flags(struct vkd3d_d3d_asm_compiler *compile
     {
         case VKD3DSIH_BREAKP:
         case VKD3DSIH_CONTINUEP:
+        case VKD3DSIH_DISCARD:
         case VKD3DSIH_IF:
         case VKD3DSIH_RETP:
-        case VKD3DSIH_TEXKILL:
             switch (ins->flags)
             {
                 case VKD3D_SHADER_CONDITIONAL_OP_NZ: shader_addline(buffer, "_nz"); break;
@@ -1857,11 +1859,11 @@ static void shader_dump_instruction(struct vkd3d_d3d_asm_compiler *compiler,
     shader_addline(buffer, "\n");
 }
 
-enum vkd3d_result vkd3d_dxbc_binary_to_text(struct vkd3d_shader_parser *parser,
-        const struct vkd3d_shader_compile_info *compile_info, struct vkd3d_shader_code *out)
+enum vkd3d_result vkd3d_dxbc_binary_to_text(const struct vkd3d_shader_instruction_array *instructions,
+        const struct vkd3d_shader_version *shader_version, const struct vkd3d_shader_compile_info *compile_info,
+        struct vkd3d_shader_code *out)
 {
     enum vkd3d_shader_compile_option_formatting_flags formatting;
-    struct vkd3d_shader_version *shader_version;
     struct vkd3d_d3d_asm_compiler compiler;
     enum vkd3d_result result = VKD3D_OK;
     struct vkd3d_string_buffer *buffer;
@@ -1919,16 +1921,16 @@ enum vkd3d_result vkd3d_dxbc_binary_to_text(struct vkd3d_shader_parser *parser,
     buffer = &compiler.buffer;
     vkd3d_string_buffer_init(buffer);
 
+    compiler.shader_version = *shader_version;
     shader_version = &compiler.shader_version;
-    *shader_version = parser->shader_version;
     vkd3d_string_buffer_printf(buffer, "%s%s_%u_%u%s\n", compiler.colours.version,
             shader_get_type_prefix(shader_version->type), shader_version->major,
             shader_version->minor, compiler.colours.reset);
 
     indent = 0;
-    for (i = 0; i < parser->instructions.count; ++i)
+    for (i = 0; i < instructions->count; ++i)
     {
-        struct vkd3d_shader_instruction *ins = &parser->instructions.elements[i];
+        struct vkd3d_shader_instruction *ins = &instructions->elements[i];
 
         switch (ins->handler_idx)
         {
@@ -1981,12 +1983,13 @@ enum vkd3d_result vkd3d_dxbc_binary_to_text(struct vkd3d_shader_parser *parser,
     return result;
 }
 
-void vkd3d_shader_trace(struct vkd3d_shader_parser *parser)
+void vkd3d_shader_trace(const struct vkd3d_shader_instruction_array *instructions,
+        const struct vkd3d_shader_version *shader_version)
 {
     const char *p, *q, *end;
     struct vkd3d_shader_code code;
 
-    if (vkd3d_dxbc_binary_to_text(parser, NULL, &code) != VKD3D_OK)
+    if (vkd3d_dxbc_binary_to_text(instructions, shader_version, NULL, &code) != VKD3D_OK)
         return;
 
     end = (const char *)code.code + code.size;

@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <unistd.h>
 #ifdef HAVE_PTHREAD_H
 #include <pthread.h>
 #endif
@@ -40,15 +41,15 @@
 #define VKD3D_DEBUG_BUFFER_COUNT 64
 #define VKD3D_DEBUG_BUFFER_SIZE 512
 
-extern const char *vkd3d_dbg_env_name;
+extern const char *const vkd3d_dbg_env_name;
 
-static const char *debug_level_names[] =
+static const char *const debug_level_names[] =
 {
-    /* VKD3D_DBG_LEVEL_NONE  */ "none",
-    /* VKD3D_DBG_LEVEL_ERR   */ "err",
-    /* VKD3D_DBG_LEVEL_FIXME */ "fixme",
-    /* VKD3D_DBG_LEVEL_WARN  */ "warn",
-    /* VKD3D_DBG_LEVEL_TRACE */ "trace",
+    [VKD3D_DBG_LEVEL_NONE ] = "none",
+    [VKD3D_DBG_LEVEL_ERR  ] = "err",
+    [VKD3D_DBG_LEVEL_FIXME] = "fixme",
+    [VKD3D_DBG_LEVEL_WARN ] = "warn",
+    [VKD3D_DBG_LEVEL_TRACE] = "trace",
 };
 
 enum vkd3d_dbg_level vkd3d_dbg_get_level(void)
@@ -105,7 +106,13 @@ void vkd3d_dbg_printf(enum vkd3d_dbg_level level, const char *function, const ch
 
     assert(level < ARRAY_SIZE(debug_level_names));
 
+#ifdef _WIN32
+    vkd3d_dbg_output("vkd3d:%04lx:%s:%s ", GetCurrentThreadId(), debug_level_names[level], function);
+#elif HAVE_GETTID
+    vkd3d_dbg_output("vkd3d:%u:%s:%s ", gettid(), debug_level_names[level], function);
+#else
     vkd3d_dbg_output("vkd3d:%s:%s ", debug_level_names[level], function);
+#endif
     va_start(args, fmt);
     vkd3d_dbg_voutput(fmt, args);
     va_end(args);

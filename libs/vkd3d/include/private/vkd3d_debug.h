@@ -91,7 +91,7 @@ const char *debugstr_w(const WCHAR *wstr, size_t wchar_size);
 
 #define FIXME_ONCE VKD3D_DBG_LOG_ONCE(FIXME, WARN)
 
-#define VKD3D_DEBUG_ENV_NAME(name) const char *vkd3d_dbg_env_name = name
+#define VKD3D_DEBUG_ENV_NAME(name) const char *const vkd3d_dbg_env_name = name
 
 static inline const char *debugstr_guid(const GUID *guid)
 {

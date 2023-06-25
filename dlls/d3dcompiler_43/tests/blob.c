@@ -764,7 +764,7 @@ static void test_get_blob_part2(void)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     size = ID3D10Blob_GetBufferSize(blob);
-    todo_wine ok(size == 4735, "Got unexpected size %Iu.\n", size);
+    ok(size == 4735, "Got unexpected size %Iu.\n", size);
 
     dword = ((DWORD*)ID3D10Blob_GetBufferPointer(blob));
     ok(TAG_DXBC == *dword, "DXBC got %#lx, expected %#lx.\n", *dword, TAG_DXBC);
