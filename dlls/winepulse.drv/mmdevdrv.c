@@ -423,15 +423,17 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
     ref = InterlockedDecrement(&This->ref);
     TRACE("(%p) Refcount now %lu\n", This, ref);
     if (!ref) {
-        if (This->stream) {
-            stream_release(This->stream, This->timer_thread);
-            This->stream = 0;
+        IAudioClient3_Stop(iface);
+        IMMDevice_Release(This->parent);
+        IUnknown_Release(This->marshal);
+        if (This->session) {
             sessions_lock();
             list_remove(&This->entry);
             sessions_unlock();
         }
-        IUnknown_Release(This->marshal);
-        IMMDevice_Release(This->parent);
+        free(This->vols);
+        if (This->stream)
+            stream_release(This->stream, This->timer_thread);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
