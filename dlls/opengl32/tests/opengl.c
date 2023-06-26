@@ -406,6 +406,43 @@ static void test_choosepixelformat(void)
     pfd.cDepthBits = 0;
 }
 
+static void test_choosepixelformat_flag_is_ignored_when_unset(DWORD flag)
+{
+    PIXELFORMATDESCRIPTOR pfd = {
+        sizeof(PIXELFORMATDESCRIPTOR),
+        1,                     /* version */
+        flag,
+        PFD_TYPE_RGBA,
+        0,                     /* color depth */
+        0, 0, 0, 0, 0, 0,      /* color bits */
+        0,                     /* alpha buffer */
+        0,                     /* shift bit */
+        0,                     /* accumulation buffer */
+        0, 0, 0, 0,            /* accum bits */
+        0,                     /* z-buffer */
+        0,                     /* stencil buffer */
+        0,                     /* auxiliary buffer */
+        PFD_MAIN_PLANE,        /* main layer */
+        0,                     /* reserved */
+        0, 0, 0                /* layer masks */
+    };
+    PIXELFORMATDESCRIPTOR ret_fmt;
+    int set_idx;
+    int clear_idx;
+
+    set_idx = test_pfd(&pfd, &ret_fmt);
+    if (set_idx > 0)
+    {
+        ok( ret_fmt.dwFlags & flag, "flag 0x%08lu not set\n", flag );
+        /* now search for that pixel format with the flag cleared: */
+        pfd = ret_fmt;
+        pfd.dwFlags &= ~flag;
+        clear_idx = test_pfd(&pfd, &ret_fmt);
+        ok( set_idx == clear_idx, "flag 0x%08lu matched different pixel formats when set vs cleared\n", flag );
+        ok( ret_fmt.dwFlags & flag, "flag 0x%08lu not still set\n", flag );
+    } else skip( "couldn't find a pixel format with flag 0x%08lu\n", flag );
+}
+
 static void WINAPI gl_debug_message_callback(GLenum source, GLenum type, GLuint id, GLenum severity,
                                              GLsizei length, const GLchar *message, const void *userParam)
 {
@@ -2064,6 +2101,10 @@ START_TEST(opengl)
         }
 
         test_choosepixelformat();
+        test_choosepixelformat_flag_is_ignored_when_unset(PFD_DRAW_TO_WINDOW);
+        test_choosepixelformat_flag_is_ignored_when_unset(PFD_DRAW_TO_BITMAP);
+        test_choosepixelformat_flag_is_ignored_when_unset(PFD_SUPPORT_GDI);
+        test_choosepixelformat_flag_is_ignored_when_unset(PFD_SUPPORT_OPENGL);
         test_wglChoosePixelFormatARB(hdc);
         test_debug_message_callback();
         test_setpixelformat(hdc);
