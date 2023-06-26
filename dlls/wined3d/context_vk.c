@@ -3388,6 +3388,59 @@ static VkPipeline wined3d_context_vk_get_graphics_pipeline(struct wined3d_contex
     return pipeline_vk->vk_pipeline;
 }
 
+static void wined3d_context_vk_load_buffers(struct wined3d_context_vk *context_vk,
+        const struct wined3d_state *state, struct wined3d_buffer_vk *indirect_vk, bool indexed)
+{
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    struct wined3d_buffer_vk *buffer_vk;
+    struct wined3d_buffer *buffer;
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(state->streams); ++i)
+    {
+        if (!(buffer = state->streams[i].buffer))
+            continue;
+
+        buffer_vk = wined3d_buffer_vk(buffer);
+        wined3d_buffer_load(&buffer_vk->b, &context_vk->c, state);
+        wined3d_buffer_vk_barrier(buffer_vk, context_vk, WINED3D_BIND_VERTEX_BUFFER);
+        if (!buffer_vk->b.bo_user.valid)
+            context_invalidate_state(&context_vk->c, STATE_STREAMSRC);
+    }
+
+    if (use_transform_feedback(state) && vk_info->supported[WINED3D_VK_EXT_TRANSFORM_FEEDBACK])
+    {
+        for (i = 0; i < ARRAY_SIZE(state->stream_output); ++i)
+        {
+            if (!(buffer = state->stream_output[i].buffer))
+                continue;
+
+            buffer_vk = wined3d_buffer_vk(buffer);
+            wined3d_buffer_load(&buffer_vk->b, &context_vk->c, state);
+            wined3d_buffer_vk_barrier(buffer_vk, context_vk, WINED3D_BIND_STREAM_OUTPUT);
+            wined3d_buffer_invalidate_location(&buffer_vk->b, ~WINED3D_LOCATION_BUFFER);
+            if (!buffer_vk->b.bo_user.valid)
+                context_vk->update_stream_output = 1;
+        }
+        context_vk->c.transform_feedback_active = 1;
+    }
+
+    if (indexed || (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_INDEXBUFFER) && state->index_buffer))
+    {
+        buffer_vk = wined3d_buffer_vk(state->index_buffer);
+        wined3d_buffer_load(&buffer_vk->b, &context_vk->c, state);
+        wined3d_buffer_vk_barrier(buffer_vk, context_vk, WINED3D_BIND_INDEX_BUFFER);
+        if (!buffer_vk->b.bo_user.valid)
+            context_invalidate_state(&context_vk->c, STATE_INDEXBUFFER);
+    }
+
+    if (indirect_vk)
+    {
+        wined3d_buffer_load(&indirect_vk->b, &context_vk->c, state);
+        wined3d_buffer_vk_barrier(indirect_vk, context_vk, WINED3D_BIND_INDIRECT_BUFFER);
+    }
+}
+
 static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *context_vk,
         const struct wined3d_state *state, enum wined3d_pipeline pipeline)
 {
@@ -3520,7 +3573,6 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
     VkSampleCountFlagBits sample_count;
     VkCommandBuffer vk_command_buffer;
     unsigned int i, invalidate_rt = 0;
-    struct wined3d_buffer *buffer;
     uint32_t null_buffer_binding;
     bool invalidate_ds = false;
 
@@ -3608,49 +3660,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
 
     wined3d_context_vk_load_shader_resources(context_vk, state, WINED3D_PIPELINE_GRAPHICS);
 
-    for (i = 0; i < ARRAY_SIZE(state->streams); ++i)
-    {
-        if (!(buffer = state->streams[i].buffer))
-            continue;
-
-        buffer_vk = wined3d_buffer_vk(buffer);
-        wined3d_buffer_load(&buffer_vk->b, &context_vk->c, state);
-        wined3d_buffer_vk_barrier(buffer_vk, context_vk, WINED3D_BIND_VERTEX_BUFFER);
-        if (!buffer_vk->b.bo_user.valid)
-            context_invalidate_state(&context_vk->c, STATE_STREAMSRC);
-    }
-
-    if (use_transform_feedback(state) && vk_info->supported[WINED3D_VK_EXT_TRANSFORM_FEEDBACK])
-    {
-        for (i = 0; i < ARRAY_SIZE(state->stream_output); ++i)
-        {
-            if (!(buffer = state->stream_output[i].buffer))
-                continue;
-
-            buffer_vk = wined3d_buffer_vk(buffer);
-            wined3d_buffer_load(&buffer_vk->b, &context_vk->c, state);
-            wined3d_buffer_vk_barrier(buffer_vk, context_vk, WINED3D_BIND_STREAM_OUTPUT);
-            wined3d_buffer_invalidate_location(&buffer_vk->b, ~WINED3D_LOCATION_BUFFER);
-            if (!buffer_vk->b.bo_user.valid)
-                context_vk->update_stream_output = 1;
-        }
-        context_vk->c.transform_feedback_active = 1;
-    }
-
-    if (indexed || (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_INDEXBUFFER) && state->index_buffer))
-    {
-        buffer_vk = wined3d_buffer_vk(state->index_buffer);
-        wined3d_buffer_load(&buffer_vk->b, &context_vk->c, state);
-        wined3d_buffer_vk_barrier(buffer_vk, context_vk, WINED3D_BIND_INDEX_BUFFER);
-        if (!buffer_vk->b.bo_user.valid)
-            context_invalidate_state(&context_vk->c, STATE_INDEXBUFFER);
-    }
-
-    if (indirect_vk)
-    {
-        wined3d_buffer_load(&indirect_vk->b, &context_vk->c, state);
-        wined3d_buffer_vk_barrier(indirect_vk, context_vk, WINED3D_BIND_INDIRECT_BUFFER);
-    }
+    wined3d_context_vk_load_buffers(context_vk, state, indirect_vk, indexed);
 
     if (!(vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk)))
     {
