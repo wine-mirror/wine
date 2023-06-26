@@ -318,10 +318,17 @@ static unsigned get_module_count(HANDLE proc)
 
 static unsigned get_native_module_count(HANDLE proc)
 {
+    static BOOL (*WINAPI pSymSetExtendedOption)(IMAGEHLP_EXTENDED_OPTIONS option, BOOL value);
     unsigned count = 0;
     BOOL old, ret;
 
-    old = SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
+    if (!pSymSetExtendedOption)
+    {
+        pSymSetExtendedOption = (void*)GetProcAddress(GetModuleHandleA("dbghelp.dll"), "SymSetExtendedOption");
+        ok(pSymSetExtendedOption != NULL, "SymSetExtendedOption should be present on Wine\n");
+    }
+
+    old = pSymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
     ret = SymEnumerateModules64(proc, count_native_module_cb, &count);
     ok(ret, "SymEnumerateModules64 failed: %lu\n", GetLastError());
     SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, old);
