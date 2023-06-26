@@ -13089,11 +13089,11 @@ static void test_IUIAutomationEventHandler(IUIAutomation *uia_iface, IUIAutomati
      */
     hr = IUIAutomation_AddAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, NULL, TreeScope_SubTree, NULL,
             &AutomationEventHandler.IUIAutomationEventHandler_iface);
-    todo_wine ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IUIAutomation_AddAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, elem, TreeScope_SubTree, NULL,
             NULL);
-    todo_wine ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     /*
      * Passing in a NULL element to this method results in an access violation
@@ -13118,21 +13118,21 @@ static void test_IUIAutomationEventHandler(IUIAutomation *uia_iface, IUIAutomati
      */
     hr = IUIAutomation_AddAutomationEventHandler(uia_iface, UIA_AutomationFocusChangedEventId, elem, TreeScope_SubTree, NULL,
             &AutomationEventHandler.IUIAutomationEventHandler_iface);
-    todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     /* Windows 11 queries the HWND for the element when adding a new handler. */
     set_uia_hwnd_expects(3, 2, 2, 3, 0);
     /* All other event IDs are fine, only focus events are blocked. */
     hr = IUIAutomation_AddAutomationEventHandler(uia_iface, 1, elem, TreeScope_SubTree, NULL,
             &AutomationEventHandler.IUIAutomationEventHandler_iface);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(AutomationEventHandler.ref > 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(AutomationEventHandler.ref > 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
     check_uia_hwnd_expects_at_most(3, 2, 2, 3, 0);
 
     hr = IUIAutomation_RemoveAutomationEventHandler(uia_iface, 1, elem,
             &AutomationEventHandler.IUIAutomationEventHandler_iface);
     todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(AutomationEventHandler.ref == 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
+    todo_wine ok(AutomationEventHandler.ref == 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
 
     /*
      * Test event raising behavior.
@@ -13140,8 +13140,8 @@ static void test_IUIAutomationEventHandler(IUIAutomation *uia_iface, IUIAutomati
     set_uia_hwnd_expects(3, 2, 2, 3, 0);
     hr = IUIAutomation_AddAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, elem, TreeScope_SubTree, NULL,
             &AutomationEventHandler.IUIAutomationEventHandler_iface);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(AutomationEventHandler.ref > 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(AutomationEventHandler.ref > 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
     check_uia_hwnd_expects_at_most(3, 2, 2, 3, 0);
 
     /* Same behavior as HUIAEVENTs, events are matched by runtime ID. */
@@ -13184,7 +13184,7 @@ static void test_IUIAutomationEventHandler(IUIAutomation *uia_iface, IUIAutomati
     hr = IUIAutomation_RemoveAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, elem,
             &AutomationEventHandler.IUIAutomationEventHandler_iface);
     todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(AutomationEventHandler.ref == 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
+    todo_wine ok(AutomationEventHandler.ref == 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
 
     VariantInit(&v);
     initialize_provider(&Provider_child, ProviderOptions_ServerSideProvider, NULL, TRUE);
@@ -13207,18 +13207,18 @@ static void test_IUIAutomationEventHandler(IUIAutomation *uia_iface, IUIAutomati
      */
     hr = IUIAutomation_AddAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, elem2, TreeScope_SubTree, NULL,
             &AutomationEventHandler.IUIAutomationEventHandler_iface);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(AutomationEventHandler.ref > 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(AutomationEventHandler.ref > 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
 
     /* No removal will occur due to a lack of a runtime ID to match. */
     hr = IUIAutomation_RemoveAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, elem2,
             &AutomationEventHandler.IUIAutomationEventHandler_iface);
     todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(AutomationEventHandler.ref > 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
+    ok(AutomationEventHandler.ref > 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
 
     hr = IUIAutomation_RemoveAllEventHandlers(uia_iface);
     todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(AutomationEventHandler.ref == 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
+    todo_wine ok(AutomationEventHandler.ref == 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
 
     IUIAutomationElement_Release(elem2);
 }

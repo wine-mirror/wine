@@ -899,6 +899,123 @@ static HRESULT get_uia_cache_request_struct_from_iface(IUIAutomationCacheRequest
 }
 
 /*
+ * COM API UI Automation event related functions.
+ */
+static struct uia_com_event_handlers
+{
+    struct rb_tree handler_map;
+
+    LONG handler_count;
+} com_event_handlers;
+
+static CRITICAL_SECTION com_event_handlers_cs;
+static CRITICAL_SECTION_DEBUG com_event_handlers_cs_debug =
+{
+    0, 0, &com_event_handlers_cs,
+    { &com_event_handlers_cs_debug.ProcessLocksList, &com_event_handlers_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": com_event_handlers_cs") }
+};
+static CRITICAL_SECTION com_event_handlers_cs = { &com_event_handlers_cs_debug, -1, 0, 0, 0, 0 };
+
+struct uia_event_handler_identifier {
+    IUnknown *handler_iface;
+    SAFEARRAY *runtime_id;
+    int event_id;
+};
+
+struct uia_event_handler_map_entry
+{
+    struct rb_entry entry;
+
+    IUnknown *handler_iface;
+    SAFEARRAY *runtime_id;
+    int event_id;
+
+    struct list handlers_list;
+};
+
+static int uia_com_event_handler_id_compare(const void *key, const struct rb_entry *entry)
+{
+    struct uia_event_handler_map_entry *map_entry = RB_ENTRY_VALUE(entry, struct uia_event_handler_map_entry, entry);
+    struct uia_event_handler_identifier *event_id = (struct uia_event_handler_identifier *)key;
+
+    if (event_id->event_id != map_entry->event_id)
+        return (event_id->event_id > map_entry->event_id) - (event_id->event_id < map_entry->event_id);
+    else if (event_id->handler_iface != map_entry->handler_iface)
+        return (event_id->handler_iface > map_entry->handler_iface) - (event_id->handler_iface < map_entry->handler_iface);
+    else if (event_id->runtime_id && map_entry->runtime_id)
+        return uia_compare_safearrays(event_id->runtime_id, map_entry->runtime_id, UIAutomationType_IntArray);
+    else
+        return (event_id->runtime_id > map_entry->runtime_id) - (event_id->runtime_id < map_entry->runtime_id);
+}
+
+struct uia_com_event {
+    IUnknown *handler_iface;
+
+    struct list event_handler_map_list_entry;
+    struct uia_event_handler_map_entry *handler_map;
+};
+
+static HRESULT uia_event_handlers_add_handler(IUnknown *handler_iface, SAFEARRAY *runtime_id, int event_id)
+{
+    struct uia_event_handler_identifier event_ident = { handler_iface, runtime_id, event_id };
+    struct uia_event_handler_map_entry *event_map;
+    struct uia_com_event *event;
+    struct rb_entry *rb_entry;
+    HRESULT hr = S_OK;
+
+    if (!(event = heap_alloc_zero(sizeof(*event))))
+        return E_OUTOFMEMORY;
+
+    event->handler_iface = handler_iface;
+    IUnknown_AddRef(handler_iface);
+
+    EnterCriticalSection(&com_event_handlers_cs);
+
+    if (!com_event_handlers.handler_count)
+        rb_init(&com_event_handlers.handler_map, uia_com_event_handler_id_compare);
+
+    if ((rb_entry = rb_get(&com_event_handlers.handler_map, &event_ident)))
+        event_map = RB_ENTRY_VALUE(rb_entry, struct uia_event_handler_map_entry, entry);
+    else
+    {
+        if (!(event_map = heap_alloc_zero(sizeof(*event_map))))
+        {
+            hr = E_OUTOFMEMORY;
+            goto exit;
+        }
+
+        hr = SafeArrayCopy(runtime_id, &event_map->runtime_id);
+        if (FAILED(hr))
+        {
+            heap_free(event_map);
+            goto exit;
+        }
+
+        event_map->event_id = event_id;
+        event_map->handler_iface = event->handler_iface;
+        IUnknown_AddRef(event_map->handler_iface);
+
+        list_init(&event_map->handlers_list);
+        rb_put(&com_event_handlers.handler_map, &event_ident, &event_map->entry);
+    }
+
+    list_add_tail(&event_map->handlers_list, &event->event_handler_map_list_entry);
+    event->handler_map = event_map;
+    com_event_handlers.handler_count++;
+
+exit:
+    LeaveCriticalSection(&com_event_handlers_cs);
+    if (FAILED(hr))
+    {
+        IUnknown_Release(event->handler_iface);
+        heap_free(event);
+    }
+
+    return hr;
+}
+
+/*
  * IUIAutomationElementArray interface.
  */
 struct uia_element_array {
@@ -3052,8 +3169,35 @@ static HRESULT WINAPI uia_iface_AddAutomationEventHandler(IUIAutomation6 *iface,
         IUIAutomationElement *elem, enum TreeScope scope, IUIAutomationCacheRequest *cache_req,
         IUIAutomationEventHandler *handler)
 {
-    FIXME("%p, %d, %p, %#x, %p, %p: stub\n", iface, event_id, elem, scope, cache_req, handler);
-    return E_NOTIMPL;
+    struct uia_element *element;
+    IUnknown *handler_iface;
+    SAFEARRAY *runtime_id;
+    HRESULT hr;
+
+    TRACE("%p, %d, %p, %#x, %p, %p\n", iface, event_id, elem, scope, cache_req, handler);
+
+    if (!elem || !handler)
+        return E_POINTER;
+
+    if (event_id == UIA_AutomationFocusChangedEventId)
+        return E_INVALIDARG;
+
+    hr = IUIAutomationEventHandler_QueryInterface(handler, &IID_IUnknown, (void **)&handler_iface);
+    if (FAILED(hr))
+        return hr;
+
+    element = impl_from_IUIAutomationElement9((IUIAutomationElement9 *)elem);
+    hr = UiaGetRuntimeId(element->node, &runtime_id);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = uia_event_handlers_add_handler(handler_iface, runtime_id, event_id);
+
+exit:
+    IUnknown_Release(handler_iface);
+    SafeArrayDestroy(runtime_id);
+
+    return hr;
 }
 
 static HRESULT WINAPI uia_iface_RemoveAutomationEventHandler(IUIAutomation6 *iface, EVENTID event_id,
