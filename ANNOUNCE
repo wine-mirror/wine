@@ -1,13 +1,11 @@
-The Wine stable release 8.0.1 is now available.
+The Wine stable release 8.0.2 is now available.
 
 What's new in this release:
-  - Fixes for macOS Ventura 13.3 on Apple Silicon
-  - Tamil and Turkish translation updates
   - Various bug fixes
 
 The source is available at:
 
-  https://dl.winehq.org/wine/source/8.0/wine-8.0.1.tar.xz
+  https://dl.winehq.org/wine/source/8.0/wine-8.0.2.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -23,182 +21,166 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 8.0.1 (total 36):
+Bugs fixed in 8.0.2 (total 27):
 
- - #49615  Device read errors logged in dmesg when running wine commands with empty CD/DVD drive, since 5.5
- - #51345  Regression: Visual Studio 2005 "package load failure"
- - #52506  Setup of game "What's the Secret?" fails to create icon
- - #52878  Free PC Audit 5.1.211.96 fails to show info in 'Brief' tab (needs GetBinaryValue method of the StdRegProv class)
- - #53274  adsldp:ldap - test_ParseDisplayName() sometimes fails to connect to the server
- - #53926  New typelib marshaller depends on IID_IDispatch support from target interface
- - #53981  Chromium broken sandbox due to GetSecurityInfo giving access denied
- - #54030  Snagit needs Win32_Volume class ( 'select deviceid from win32_volume where driveletter =C:')
- - #54215  ListView doesn't refresh when changing between List and Details styles.
- - #54234  vbscript fails to compile when colon follows Else in If...Else
- - #54289  RtlCopyContext buffer overflow
- - #54318  Rich Edit inserts newly composed text at wrong position when system IME composition ends while a selection is active
- - #54337  AviUtl shows Japanese text as garbage after conversion in ExEdit edit box
- - #54353  crypt32:cert - testVerifyRevocation() gets unexpected success in Wine on second run
- - #54357  Spurious fixme message when calling ScrollWindow()
- - #54364  RtlGenRandom fails on systems with more than 128 cores
- - #54371  loader won't launch from PATH unless named "wine"
- - #54376  ws2_32:sock - test_reuseaddr() overflows a sockaddr variable by reading an AF_INET6 peer name into it
- - #54379  since wine 8.0 print doesn't work any more
- - #54432  Missing ntdll.RtlAddressInSectionTable() implementation causes all GraalVM Native Image exes to crash on load
- - #54449  nethack crashes
- - #54456  vbscript memory leak in For Each with SafeArray as group
- - #54457  vbscript memory leaks in interp_redim_preserve
- - #54458  vbscript memory leaks in Global_Split
- - #54489  VarAbs() does not handle BSTR arguments correctly
- - #54490  vbscript fails to compile when statement follows ElseIf
- - #54493  vbscript fails to compile concat when used without space and expression begins with H
- - #54495  Motorola Ready For Assistant does not start, needs ext-ms-win-networking-wlanapi-l1-1-0.dll
- - #54563  The gif is displaying wrongly, with weird backgrounds of various colors
- - #54564  Rich Edit crashes when Ctrl+Right is pressed at past the final paragraph
- - #54570  Saints Row: The Third heavy rain causes heavy fps reductions
- - #54581  SpeedCommander 20 installer crashes on unimplemented function SHELL32.dll.Shell_GetCachedImageIndexW
- - #54617  KakaoTalk IM text edit window leaves artifacts when the text overflows and scroll bar appears
- - #54663  ldp.exe crashes on unimplemented function wldap32.dll.ldap_set_dbg_flags
- - #54690  ldp.exe crashes when attempting to connect to an invalid host
- - #54707  adsldp:ldap - test_DirectorySearch() fails on Windows and Linux
+ - #11436  Pepakura viewer: err:wgl:X11DRV_wglShareLists Could not share display lists, context already created !
+ - #35254  Freemake Video Converter 4.1 installer complains about running Freemake processes (builtin 'findstr' stub app always returns "match")
+ - #49964  32-bit dxdiag doesn't support '/64bit' command line switch (launch 64-bit dxdiag)
+ - #51178  The Bat! v9.3.4.12: Missing content in TTreeViews on Windows versions higher than 8
+ - #52322  wineserver memory leak during HTTPs download (Genshin Impact Launcher, Qt5)
+ - #53073  mfplat: unimplemented function while loading Devil May Cry 1
+ - #53704  Bible Black ~La Noche de Walpurgis~ won't start
+ - #53781  Multiple apps crash on unimplemented function CFGMGR32.dll.CM_MapCrToWin32Err (Matrix Awakens MegaCity Unreal Engine 5.1 demo, Hogwarts Legacy)
+ - #53794  Sins of the Solar Empire Rebellion (Gog 1.975.1) crashes on unimplemented function concrt140.dll.?_CheckTaskCollection@_UnrealizedChore@details@Concurrency@@IAEXXZ
+ - #53826  Attempting to install / update battle.net fails with Qt error
+ - #53983  Chromium broken sandbox, needs NtQueryInformationProcess with ProcessHandleTable
+ - #54110  CubicSDR crashes on unimplemented function msvcp140.dll.?_Rethrow_future_exception@std@@YAXVexception_ptr@1@@Z
+ - #54618  VARA FM crashes on unimplemented function pdh.dll.PdhVbGetDoubleCounterValue
+ - #54640  Treecomp listviews and possibly other widgets are not drawn
+ - #54675  Chocolatey OpenSSH installer fails
+ - #54687  LibreVR Revive fails to run (CertGetNameStringW with dwType=CERT_NAME_ATTR_TYPE and pvTypePara missing additional fallbacks)
+ - #54702  ldp.exe crashes when attempting to add, delete, modify, or compare an entry without a name
+ - #54724  LDAP bind over SSL to a server and port that do not support SSL hangs forever
+ - #54728  Pro Evolution Soccer 2008 demo takes +- 9 minutes to complete extracting 'Pro Evolution Soccer 2008 DEMO.msi' (disabling 'Light' theme works around)
+ - #54733  Notepad3 crashes on unimplemented function SHLWAPI.dll.StrFormatByteSizeEx
+ - #54799  wininet:internet - test_InternetGetConnectedStateExA() fails in the Japanese and Chinese locales in Wine
+ - #54808  Access violation in ntdll when running Adolix Split and Merge PDF with .NET Framework installed
+ - #54819  DnsQuery_A() mishandles CNAME DNS records
+ - #54882  Conemu fails to start (cannot attach to process)
+ - #54939  Dotted files are shown - but "don't show dotted" files is active
+ - #54960  winhttp:winhttp - test_websocket() fails on Windows and Wine
+ - #55008  wininet:http - test_secure_connection() fails on Windows and Wine
 
 ----------------------------------------------------------------
 
-Changes since 8.0:
+Changes since 8.0.1:
 
-Akihiro Sagawa (2):
-      user32/tests: Add DBCS WM_CHAR tests for edit control.
-      user32/edit: Fix WM_CHAR handler for double-byte characters.
+Alex Henrie (12):
+      comctl32/treeview: Ignore the lParam to WM_PRINTCLIENT and add tests.
+      wldap32: Handle null DN or null message in ldap_add* and add tests.
+      wldap32: Handle null DN or null message in ldap_modify* and add tests.
+      wldap32: Handle null DN or null attr in ldap_compare* and add tests.
+      wldap32/tests: Use the same context in test_ldap_(add|modify_compare).
+      wldap32: Handle null DN or null message in ldap_delete* and add tests.
+      winex11: Simplify confusing condition and error messages in wglShareLists.
+      opengl32/tests: Make the wglShareLists tests comprehensive.
+      winex11: Allow replacing either context in wglShareLists.
+      kernel32/tests: Check that lpSectionBase != NULL before dereferencing.
+      ntdll: Increment offset by len in build_clr_surrogate_section.
+      winemenubuilder: Skip desktop integration for certain associations.
 
-Alex Henrie (5):
-      shell32: Add support for Program Manager icons with arguments.
-      wldap32: Add ldap_set_dbg_flags stub.
-      wldap32: Handle null LDAPMessage in ldap_count_entries.
-      wldap32: Handle null LDAPMessage in ldap_parse_result.
-      server: Fix buffer overrun in map_view handler.
-
-Alexandre Julliard (2):
-      gitlab: Add workaround for more strict git ownership check.
-      ntdll: Prefer the ntdll path over argv[0] on platforms without reliable exe information.
+Alexandre Julliard (3):
+      kernelbase: Move to a higher address on 64-bit.
+      ntdll: Fix typo in the check for hidden files.
+      wininet/tests: Update expected WineHQ certificate.
 
 Alistair Leslie-Hughes (1):
-      mountmgr.sys: Don't attempt to read from invalid media.
+      activeds: Free memory on error paths (coverity).
+
+Bernhard Übelacker (1):
+      ntoskrnl: Do not leak memory by setting input buffer to NULL.
+
+Biswapriyo Nath (2):
+      include: Fix c++ compiler error with msxml2.idl.
+      include: Fix IDirectXVideoDecoderService declaration in dxva2api.idl.
 
 Brendan Shanks (7):
-      loader: In macOS preloader, move the top-down allocations area down.
-      loader: In macOS preloader, stop using mincore() to test if a region is empty.
-      server: On macOS, fake debug registers when running under Rosetta.
-      ntdll: Add a WARN when setting debug registers fails under Rosetta.
-      loader: In macOS preloader, fix an environment variable sometimes being lost.
-      taskmgr: Use exit code 1 when terminating processes.
-      taskkill: Use exit code 1 when terminating processes.
+      include/msvcrt: Add __WINE_(DEALLOC|MALLOC) attributes to _strdup and _wcsdup.
+      msvcrt: Fix crash when rethrowing after a non-C++ exception on x86_64.
+      winemac: Fix memory leak in UpdateDisplayDevices.
+      winemac: Refactor constrain_window_frame() to use separate origin and size arguments.
+      winemac: Set the Cocoa window contentMaxSize to the size limits from constrain_window_frame().
+      winemac: Don't constrain surface dimensions to the onscreen part of a window.
+      winemac: Initialize retina_on to avoid incorrect cached display data in high-res/retina mode.
 
-Carlos Rodriguez (1):
-      wined3d: Add GPU information for another Intel UHD 630 GPU.
-
-Dmitry Timoshkov (3):
-      win32u: Give full access rights to the process window station.
-      win32u: Give full access rights to the thread desktop.
-      rpcrt4: Mark the buffer as invalid in NdrProxyFreeBuffer().
+David Kahurani (1):
+      shlwapi: Implement StrFormatByteSizeEx.
 
 Eric Pouech (3):
-      ntdll: Implement RtlAddressInSectionTable.
-      conhost: Only update font when running with a window.
-      winedbg: Use debuggee's bitness for 'examine /a' command.
+      winedbg: Don't crash when no search path has been set.
+      evr: Fix incorrect integral computation.
+      winedump: Fix out of bounds access (spotted by GCC13).
 
-Florian Will (2):
-      gdiplus/tests: Test for GdipPrivateAddFontFile() sharing violation.
-      gdiplus: Use FILE_SHARE_READ in GdipPrivateAddFontFile().
+François Gouget (2):
+      wininet/tests: Dump the state string if it is not as expected.
+      wininet: InternetGetConnectedStateExA() must always null-terminate the state string.
 
-Gabriel Ivăncescu (1):
-      jscript: Fix jsstr leak after changing variant type to BSTR.
+Gabriel Ivăncescu (8):
+      mshtml: Fix nsevent leak in create_document_event.
+      mshtml: Fix nsscript leak in bind_event_scripts.
+      mshtml: Fix nsuri leak if create_channelbsc failed.
+      mshtml: Fix nsparser leak if script_elem_from_nsscript failed.
+      mshtml: Fix factory leak in init_nsio.
+      mshtml: Fix nsIFile dir leak in init_xpcom.
+      mshtml: Fix URI leak in NewURI on failure.
+      mshtml: Store minimum compat mode required for events in the ctor table.
 
-Gijs Vermeulen (1):
-      shell32: Add Shell_GetCachedImageIndexA/W exports.
+Hans Leidekker (3):
+      ldap: Return an error when the server doesn't respond to the SSL handshake.
+      ws2_32: Skip non-address records in dns_only_query().
+      winhttp/tests: Fix a test failure.
 
-Giovanni Mascellani (1):
-      wbemprox: Do not call Release() inside wbemprox_cf_CreateInstance().
+Jactry Zeng (1):
+      wordpad: Resize buttons of toolbar to make them align with height of the font list combox.
 
-Hans Leidekker (8):
-      wbemprox: Implement GetBinaryValue() method.
-      adsldp/tests: Avoid test failures when the server is down.
-      wbemprox: Implement Win32_Volume.
-      advapi32: Bump random buffer size.
-      msi: Install and patch global assemblies in InstallFinalize.
-      msi: Perform late initialization of the assembly caches.
-      adsldp/tests: Skip all remaining tests when the server is down.
-      adsldp/tests: Fix test failures.
+Jinoh Kang (2):
+      kernel32/tests: Test for manifest file open share mode in CreateActCtxW.
+      ntdll: Open application manifest files with FILE_SHARE_DELETE.
 
-Hugh McMaster (2):
-      regedit: Allow export_key() to return TRUE.
-      regedit: Append '.reg' file extension if necessary.
-
-Illia Polishchuk (2):
-      d3d9/tests: Add test for non-indexed instancing drawing.
-      d3d9: Always draw only a single instance for non-indexed draws.
-
-Jacek Caban (2):
-      win32u: Silence spurious FIXME in NtUserScrollWindowEx.
-      oleaut32: Remove overflow check for VT_R4 and VT_R8 in VarAbs.
-
-Jason Millard (7):
-      vbscript: Fix compile when colon follows Else on new line.
-      vbscript: Fix memory leak in owned safearray iterator.
-      vbscript: Fix memory leak in Split().
-      vbscript: Fix memory leak in Split().
-      oleaut32: Fix VarAbs function for BSTR with positive values.
-      vbscript: Fix compile when statement after ElseIf or after separator.
-      vbscript: Fix compile issue with non hex after concat without space.
-
-Jinoh Kang (7):
-      ws2_32/test: Fix sockaddr buffer overflow in test_reuseaddr.
-      riched20: Obtain the composition start index after deleting selection.
-      riched20/tests: Test for word movement across paragraph boundary.
-      riched20: Don't set para unless committing cursor move in ME_MoveCursorWords.
-      riched20/tests: Test for ITextDocument::Freeze and ITextDocument::Unfreeze.
-      riched20: Don't assume that TxDraw preserves the device context's brush selection.
-      riched20: Implement ITextDocument::Freeze and ITextDocument::Unfreeze.
-
-K.B.Dharun Krishna (1):
-      po: Update Tamil translation.
+Louis Lenders (1):
+      wine.inf: Add EditionID to HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion.
 
 Michael Stefaniuc (2):
-      tools: Get the ANNOUNCE bug list from the stable-notes git notes.
-      gitlab: Do not run the build script on each commit.
+      dmsynth: Don't crash when Open() gets a DMUS_PORTPARAMS7.
+      threadpoolwinrt: Forward a Release() to a Release() method.
+
+Mohamad Al-Jaf (4):
+      pdh: Implement PdhVbGetDoubleCounterValue().
+      pdh/tests: Add PdhVbGetDoubleCounterValue() tests.
+      cfgmgr32: Implement CM_MapCrToWin32Err.
+      cfgmgr32/tests: Add CM_MapCrToWin32Err tests.
 
 Nikolay Sivov (1):
-      apisetschema: Add ext-ms-win-networking-wlanapi-l1-1-0.
+      mfplat: Implement MFCreatePathFromURL().
 
-Paul Gofman (5):
-      ntdll: Factor out context_copy_ranges() function.
-      ntdll: Do not use extended context in RtlCopyContext() if extended state is not copied.
-      cryptnet: Cache revocation status in verify_cert_revocation().
-      cryptnet: Use cert data hash as cache id instead of serial number.
-      cryptnet: Also hash issuer cert for cache id.
+Olivier F. R. Dierick (1):
+      dxdiag: Ignore option /64bit on the commandline.
 
-Piotr Caban (7):
-      msvcrt: Don't crash on NULL argument in getenv.
-      msvcrt: Don't crash on NULL argument in _wgetenv.
-      msvcrt: Improve error handling in getenv_s.
-      msvcrt: Improve error handling in _wgetenv_s.
-      winspool: Fix FILE: output handling in StartDocDlgW.
-      localspl: Ignore an empty output string.
-      gdiplus: Use transparency instead of background color if transparent color flag is set in GIF GCE.
+Paul Gofman (2):
+      ntdll: Add stub for NtQueryInformationProcess( ProcessHandleTable ).
+      ntdll: Avoid integer overflow in block_get_subheap().
 
-Rémi Bernon (2):
-      dwrite: Statically init the system_fallback locale list.
-      services: Use a separate allocation for NotifyParamsArray[0].params.
+Piotr Caban (1):
+      localspl: Don't pass original document name to cupsStartDocument.
 
-Serkan Önder (1):
-      po: Update Turkish translation.
+Sven Baars (1):
+      wine.inf: Put the Clients key in the right place.
 
-Tingzhong Luo (1):
-      evr: Fix crash when clearing input type for the mixer.
+Tim Clem (1):
+      winemac.drv: Force a window in front of its peers if its level is decreased.
+
+Torge Matthies (4):
+      ntdll/tests: Add test for file attributes of files with names beginning with a dot.
+      ntdll: Handle hidden file names inside get_file_info instead of after it.
+      ntdll: Only infer hidden attribute from file name if xattr is not present.
+      ntdll: Set xattr in NtCreateFile if inferred and requested attributes don't match.
+
+Tyson Whitehead (2):
+      crypt32: Add some CertGetNameStringW fallback cases.
+      crypt32/tests: Test for CertGetNameStringW fallback cases.
+
+Vijay Kiran Kamuju (2):
+      msvcr100: Add _UnrealizedChore::_CheckTaskCollection stub.
+      msvcp110: Add std::_Rethrow_future_exception implementation.
 
 Zebediah Figura (1):
-      oleaut32: Manually construct a stub buffer for dispinterfaces.
+      ntdll: Make fd_set_file_info() static.
 
-Zhiyi Zhang (3):
-      comctl32/tests: Add WM_STYLECHANGED tests for changing listview view styles.
-      comctl32/listview: Repaint when changing view styles.
-      user32/tests: Test winstation and desktop access rights.
+Zhiyi Zhang (4):
+      light.msstyles: Use border fill background for progress parts.
+      light.msstyles: Don't draw a border for progress fill parts.
+      findstr: Add basic functionality.
+      wined3d: Add GPU information for AMD Raphael.
+
+Ziqing Hui (1):
+      mfreadwrite: Fix an address of operator typo.
