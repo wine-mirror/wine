@@ -131,8 +131,6 @@ extern const IAudioStreamVolumeVtbl AudioStreamVolume_Vtbl;
 extern struct audio_session_wrapper *session_wrapper_create(
     struct audio_client *client) DECLSPEC_HIDDEN;
 
-extern HRESULT stream_release(stream_handle stream, HANDLE timer_thread);
-
 static inline ACImpl *impl_from_IAudioClient3(IAudioClient3 *iface)
 {
     return CONTAINING_RECORD(iface, ACImpl, IAudioClient3_iface);
@@ -407,37 +405,9 @@ static HRESULT WINAPI AudioClient_QueryInterface(IAudioClient3 *iface,
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI AudioClient_AddRef(IAudioClient3 *iface)
-{
-    ACImpl *This = impl_from_IAudioClient3(iface);
-    ULONG ref;
-    ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) Refcount now %lu\n", This, ref);
-    return ref;
-}
+extern ULONG WINAPI client_AddRef(IAudioClient3 *iface);
 
-static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
-{
-    ACImpl *This = impl_from_IAudioClient3(iface);
-    ULONG ref;
-    ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p) Refcount now %lu\n", This, ref);
-    if (!ref) {
-        IAudioClient3_Stop(iface);
-        IMMDevice_Release(This->parent);
-        IUnknown_Release(This->marshal);
-        if (This->session) {
-            sessions_lock();
-            list_remove(&This->entry);
-            sessions_unlock();
-        }
-        free(This->vols);
-        if (This->stream)
-            stream_release(This->stream, This->timer_thread);
-        HeapFree(GetProcessHeap(), 0, This);
-    }
-    return ref;
-}
+extern ULONG WINAPI client_Release(IAudioClient3 *iface);
 
 static void session_init_vols(AudioSession *session, UINT channels)
 {
@@ -578,8 +548,8 @@ extern HRESULT WINAPI client_InitializeSharedAudioStream(IAudioClient3 *iface,
 static const IAudioClient3Vtbl AudioClient3_Vtbl =
 {
     AudioClient_QueryInterface,
-    AudioClient_AddRef,
-    AudioClient_Release,
+    client_AddRef,
+    client_Release,
     client_Initialize,
     client_GetBufferSize,
     client_GetStreamLatency,

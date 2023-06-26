@@ -406,6 +406,42 @@ const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl =
     capture_GetNextPacketSize
 };
 
+ULONG WINAPI client_AddRef(IAudioClient3 *iface)
+{
+    struct audio_client *This = impl_from_IAudioClient3(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p) Refcount now %lu\n", This, ref);
+    return ref;
+}
+
+ULONG WINAPI client_Release(IAudioClient3 *iface)
+{
+    struct audio_client *This = impl_from_IAudioClient3(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+    TRACE("(%p) Refcount now %lu\n", This, ref);
+
+    if (!ref) {
+        IAudioClient3_Stop(iface);
+        IMMDevice_Release(This->parent);
+        IUnknown_Release(This->marshal);
+
+        if (This->session) {
+            sessions_lock();
+            list_remove(&This->entry);
+            sessions_unlock();
+        }
+
+        free(This->vols);
+
+        if (This->stream)
+            stream_release(This->stream, This->timer_thread);
+
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
 HRESULT WINAPI client_Initialize(IAudioClient3 *iface, AUDCLNT_SHAREMODE mode, DWORD flags,
                                  REFERENCE_TIME duration, REFERENCE_TIME period,
                                  const WAVEFORMATEX *fmt, const GUID *sessionguid)
