@@ -37,77 +37,75 @@ const SCARD_IO_REQUEST g_rgSCardT0Pci = { SCARD_PROTOCOL_T0, 8 };
 const SCARD_IO_REQUEST g_rgSCardT1Pci = { SCARD_PROTOCOL_T1, 8 };
 const SCARD_IO_REQUEST g_rgSCardRawPci = { SCARD_PROTOCOL_RAW, 8 };
 
-static inline char *utf16_to_utf8( const WCHAR *src )
+static inline int utf16_to_utf8( const WCHAR *src, char **dst )
 {
-    char *dst = NULL;
-    if (src)
+    int len = WideCharToMultiByte( CP_UTF8, 0, src, -1, NULL, 0, NULL, NULL );
+    if (dst)
     {
-        int len = WideCharToMultiByte( CP_UTF8, 0, src, -1, NULL, 0, NULL, NULL );
-        if ((dst = malloc( len ))) WideCharToMultiByte( CP_UTF8, 0, src, -1, dst, len, NULL, NULL );
+        if (!(*dst = malloc( len ))) return -1;
+        WideCharToMultiByte( CP_UTF8, 0, src, -1, *dst, len, NULL, NULL );
     }
-    return dst;
+    return len;
 }
 
-static inline WCHAR *ansi_to_utf16( const char *src )
+static inline int ansi_to_utf16( const char *src, WCHAR **dst )
 {
-    WCHAR *dst = NULL;
-    if (src)
+    int len = MultiByteToWideChar( CP_ACP, 0, src, -1, NULL, 0 );
+    if (dst)
     {
-        int len = MultiByteToWideChar( CP_ACP, 0, src, -1, NULL, 0 );
-        if ((dst = malloc( len * sizeof(WCHAR) ))) MultiByteToWideChar( CP_ACP, 0, src, -1, dst, len );
+        if (!(*dst = malloc( len * sizeof(WCHAR) ))) return -1;
+        MultiByteToWideChar( CP_ACP, 0, src, -1, *dst, len );
     }
-    return dst;
+    return len;
 }
 
-static inline char *ansi_to_utf8( const char *src )
+static inline int ansi_to_utf8( const char *src, char **dst )
 {
-    char *dst = NULL;
-    if (src)
-    {
-        WCHAR *tmp;
-        if ((tmp = ansi_to_utf16( src ))) dst = utf16_to_utf8( tmp );
-        free( tmp );
-    }
-    return dst;
+    WCHAR *tmp;
+    int len;
+
+    if (ansi_to_utf16( src, &tmp ) < 0) return -1;
+    len = utf16_to_utf8( tmp, dst );
+    free( tmp );
+    return len;
 }
 
-static inline WCHAR *utf8_to_utf16( const char *src )
+static inline int utf8_to_utf16( const char *src, WCHAR **dst )
 {
-    WCHAR *dst = NULL;
-    if (src)
+    int len = MultiByteToWideChar( CP_UTF8, 0, src, -1, NULL, 0 );
+    if (dst)
     {
-        int len = MultiByteToWideChar( CP_UTF8, 0, src, -1, NULL, 0 );
-        if ((dst = malloc( len * sizeof(WCHAR) ))) MultiByteToWideChar( CP_UTF8, 0, src, -1, dst, len );
+        if (!(*dst = malloc( len * sizeof(WCHAR) ))) return -1;
+        MultiByteToWideChar( CP_UTF8, 0, src, -1, *dst, len );
     }
-    return dst;
+    return len;
 }
 
-static inline char *utf16_to_ansi( const WCHAR *src )
+static inline int utf16_to_ansi( const WCHAR *src, char **dst )
 {
-    char *dst = NULL;
-    if (src)
+    int len = WideCharToMultiByte( CP_ACP, WC_NO_BEST_FIT_CHARS, src, -1, NULL, 0, NULL, NULL );
+    if (*src && !len)
     {
-        int len = WideCharToMultiByte( CP_ACP, WC_NO_BEST_FIT_CHARS, src, -1, NULL, 0, NULL, NULL );
-        if (*src && !len)
-        {
-            FIXME( "can't convert %s to ANSI codepage\n", debugstr_w(src) );
-            return NULL;
-        }
-        if ((dst = malloc( len ))) WideCharToMultiByte( CP_ACP, WC_NO_BEST_FIT_CHARS, src, -1, dst, len, NULL, NULL );
+        FIXME( "can't convert %s to ANSI codepage\n", debugstr_w(src) );
+        return -1;
     }
-    return dst;
+    if (dst)
+    {
+        if (!(*dst = malloc( len ))) return -1;
+        WideCharToMultiByte( CP_ACP, WC_NO_BEST_FIT_CHARS, src, -1, *dst, len, NULL, NULL );
+    }
+    return len;
 }
 
-static inline char *utf8_to_ansi( const char *src )
+static inline int utf8_to_ansi( const char *src, char **dst )
 {
-    char *dst = NULL;
-    if (src)
-    {
-        WCHAR *tmp;
-        if ((tmp = utf8_to_utf16( src ))) dst = utf16_to_ansi( tmp );
-        free( tmp );
-    }
-    return dst;
+    WCHAR *tmp;
+    int len;
+
+    if (utf8_to_utf16( src, &tmp ) < 0) return -1;
+    len = utf16_to_ansi( tmp, dst );
+    free( tmp );
+    return len;
 }
 
 HANDLE WINAPI SCardAccessStartedEvent(void)
@@ -123,8 +121,8 @@ LONG WINAPI SCardAddReaderToGroupA( SCARDCONTEXT context, const char *reader, co
 
     TRACE( "%Ix, %s, %s\n", context, debugstr_a(reader), debugstr_a(group) );
 
-    if (reader && !(readerW = ansi_to_utf16( reader ))) return SCARD_E_NO_MEMORY;
-    if (group && !(groupW = ansi_to_utf16( group )))
+    if (reader && ansi_to_utf16( reader, &readerW ) < 0) return SCARD_E_NO_MEMORY;
+    if (group && ansi_to_utf16( group, &groupW ) < 0)
     {
         free( readerW );
         return SCARD_E_NO_MEMORY;
@@ -215,22 +213,58 @@ LONG WINAPI SCardReleaseContext( SCARDCONTEXT context )
 
 static LONG copy_multiszA( const char *src, char *dst, DWORD *dst_len )
 {
-    DWORD len, total_len = 0;
-    const char *ptr = src;
+    int len, total_len = 0;
+    const char *src_ptr = src;
+    char *dst_ptr;
 
-    while (*ptr)
+    if (!dst && !dst_len) return SCARD_S_SUCCESS;
+
+    while (*src_ptr)
+    {
+        if ((len = utf8_to_ansi( src_ptr, NULL )) < 0) return SCARD_E_INVALID_PARAMETER;
+        total_len += len;
+        src_ptr += len;
+    }
+    total_len++; /* double null */
+
+    if (*dst_len == SCARD_AUTOALLOCATE)
+    {
+        if (!(dst_ptr = malloc( total_len ))) return SCARD_E_NO_MEMORY;
+    }
+    else
+    {
+        if (dst && *dst_len < total_len)
+        {
+            *dst_len = total_len;
+            return SCARD_E_INSUFFICIENT_BUFFER;
+        }
+        if (!dst)
+        {
+            *dst_len = total_len;
+            return SCARD_S_SUCCESS;
+        }
+        dst_ptr = dst;
+    }
+
+    src_ptr = src;
+    total_len = 0;
+    while (*src_ptr)
     {
         char *str;
-        if (!(str = utf8_to_ansi( ptr ))) return SCARD_E_NO_MEMORY;
-        len = strlen( str ) + 1;
-        if (dst && dst_len && *dst_len > total_len + len) strcpy( dst + total_len, str );
+        if ((len = utf8_to_ansi( src_ptr, &str )) < 0)
+        {
+            if (dst_ptr != dst) free( dst_ptr );
+            return SCARD_E_NO_MEMORY;
+        }
+        memcpy( dst_ptr + total_len, str, len );
         total_len += len;
-        ptr += strlen( ptr ) + 1;
+        src_ptr += len;
         free( str );
     }
 
-    if (dst && dst_len && *dst_len > total_len + 1) dst[total_len] = 0;
-    if (dst_len) *dst_len = total_len + 1;
+    dst_ptr[total_len] = 0;
+    if (dst_ptr != dst) *(char **)dst = dst_ptr;
+    *dst_len = ++total_len;
     return SCARD_S_SUCCESS;
 }
 
@@ -245,9 +279,9 @@ LONG WINAPI SCardStatusA( SCARDHANDLE connect, char *names, DWORD *names_len, DW
     TRACE( "%Ix, %p, %p, %p, %p, %p, %p\n", connect, names, names_len, state, protocol, atr, atr_len );
 
     if (!handle || handle->magic != CONNECT_MAGIC) return ERROR_INVALID_HANDLE;
-    if ((names_len && *names_len == SCARD_AUTOALLOCATE) || (atr_len && *atr_len == SCARD_AUTOALLOCATE))
+    if (atr_len && *atr_len == SCARD_AUTOALLOCATE)
     {
-        FIXME( "SCARD_AUTOALLOCATE not supported\n" );
+        FIXME( "SCARD_AUTOALLOCATE not supported for attr\n" );
         return SCARD_F_INTERNAL_ERROR;
     }
 
@@ -280,22 +314,58 @@ LONG WINAPI SCardStatusA( SCARDHANDLE connect, char *names, DWORD *names_len, DW
 
 static LONG copy_multiszW( const char *src, WCHAR *dst, DWORD *dst_len )
 {
-    DWORD len, total_len = 0;
-    const char *ptr = src;
+    int len, total_len = 0;
+    const char *src_ptr = src;
+    WCHAR *dst_ptr;
 
-    while (*ptr)
+    if (!dst && !dst_len) return SCARD_S_SUCCESS;
+
+    while (*src_ptr)
+    {
+        if ((len = utf8_to_utf16( src_ptr, NULL )) < 0) return SCARD_E_INVALID_PARAMETER;
+        total_len += len;
+        src_ptr += len;
+    }
+    total_len++; /* double null */
+
+    if (*dst_len == SCARD_AUTOALLOCATE)
+    {
+        if (!(dst_ptr = malloc( total_len * sizeof(WCHAR) ))) return SCARD_E_NO_MEMORY;
+    }
+    else
+    {
+        if (dst && *dst_len < total_len)
+        {
+            *dst_len = total_len;
+            return SCARD_E_INSUFFICIENT_BUFFER;
+        }
+        if (!dst)
+        {
+            *dst_len = total_len;
+            return SCARD_S_SUCCESS;
+        }
+        dst_ptr = dst;
+    }
+
+    src_ptr = src;
+    total_len = 0;
+    while (*src_ptr)
     {
         WCHAR *str;
-        if (!(str = utf8_to_utf16( ptr ))) return SCARD_E_NO_MEMORY;
-        len = wcslen( str ) + 1;
-        if (dst && dst_len && *dst_len > total_len + len) wcscpy( dst + total_len, str );
+        if ((len = utf8_to_utf16( src_ptr, &str )) < 0)
+        {
+            if (dst_ptr != dst) free( dst_ptr );
+            return SCARD_E_NO_MEMORY;
+        }
+        memcpy( dst_ptr + total_len, str, len * sizeof(WCHAR) );
         total_len += len;
-        ptr += strlen( ptr ) + 1;
+        src_ptr += len;
         free( str );
     }
 
-    if (dst && dst_len && *dst_len > total_len + 1) dst[total_len] = 0;
-    if (dst_len) *dst_len = total_len + 1;
+    dst_ptr[total_len] = 0;
+    if (dst_ptr != dst) *(WCHAR **)dst = dst_ptr;
+    *dst_len = ++total_len;
     return SCARD_S_SUCCESS;
 }
 
@@ -310,9 +380,9 @@ LONG WINAPI SCardStatusW( SCARDHANDLE connect, WCHAR *names, DWORD *names_len, D
     TRACE( "%Ix, %p, %p, %p, %p, %p, %p\n", connect, names, names_len, state, protocol, atr, atr_len );
 
     if (!handle || handle->magic != CONNECT_MAGIC) return ERROR_INVALID_HANDLE;
-    if ((names_len && *names_len == SCARD_AUTOALLOCATE) || (atr_len && *atr_len == SCARD_AUTOALLOCATE))
+    if (atr_len && *atr_len == SCARD_AUTOALLOCATE)
     {
-        FIXME( "SCARD_AUTOALLOCATE not supported\n" );
+        FIXME( "SCARD_AUTOALLOCATE not supported for attr\n" );
         return SCARD_F_INTERNAL_ERROR;
     }
 
@@ -359,15 +429,10 @@ LONG WINAPI SCardListReadersA( SCARDCONTEXT context, const char *groups, char *r
 
     if (!handle || handle->magic != CONTEXT_MAGIC) return ERROR_INVALID_HANDLE;
     if (!readers_len) return SCARD_E_INVALID_PARAMETER;
-    if (*readers_len == SCARD_AUTOALLOCATE)
-    {
-        FIXME( "SCARD_AUTOALLOCATE not supported\n" );
-        return SCARD_F_INTERNAL_ERROR;
-    }
 
     params.handle = handle->unix_handle;
     if (!groups) params.groups = NULL;
-    else if (!(params.groups = ansi_to_utf8( groups ))) return SCARD_E_NO_MEMORY;
+    else if (ansi_to_utf8( groups, (char **)&params.groups ) < 0) return SCARD_E_NO_MEMORY;
     params.readers = NULL;
     params.readers_len = &readers_len_utf8;
     if ((ret = UNIX_CALL( scard_list_readers, &params ))) goto done;
@@ -400,15 +465,10 @@ LONG WINAPI SCardListReadersW( SCARDCONTEXT context, const WCHAR *groups, WCHAR 
 
     if (!handle || handle->magic != CONTEXT_MAGIC) return ERROR_INVALID_HANDLE;
     if (!readers_len) return SCARD_E_INVALID_PARAMETER;
-    if (*readers_len == SCARD_AUTOALLOCATE)
-    {
-        FIXME( "SCARD_AUTOALLOCATE not supported\n" );
-        return SCARD_F_INTERNAL_ERROR;
-    }
 
     params.handle = handle->unix_handle;
     if (!groups) params.groups = NULL;
-    else if (!(params.groups = utf16_to_utf8( groups ))) return SCARD_E_NO_MEMORY;
+    else if (utf16_to_utf8( groups, (char **)&params.groups ) < 0) return SCARD_E_NO_MEMORY;
     params.readers = NULL;
     params.readers_len = &readers_len_utf8;
     if ((ret = UNIX_CALL( scard_list_readers, &params ))) goto done;
@@ -458,11 +518,6 @@ LONG WINAPI SCardListReaderGroupsA( SCARDCONTEXT context, char *groups, DWORD *g
 
     if (!handle || handle->magic != CONTEXT_MAGIC) return ERROR_INVALID_HANDLE;
     if (!groups_len) return SCARD_E_INVALID_PARAMETER;
-    if (*groups_len == SCARD_AUTOALLOCATE)
-    {
-        FIXME( "SCARD_AUTOALLOCATE not supported\n" );
-        return SCARD_F_INTERNAL_ERROR;
-    }
 
     params.handle = handle->unix_handle;
     params.groups = NULL;
@@ -493,11 +548,6 @@ LONG WINAPI SCardListReaderGroupsW( SCARDCONTEXT context, WCHAR *groups, DWORD *
 
     if (!handle || handle->magic != CONTEXT_MAGIC) return ERROR_INVALID_HANDLE;
     if (!groups_len) return SCARD_E_INVALID_PARAMETER;
-    if (*groups_len == SCARD_AUTOALLOCATE)
-    {
-        FIXME( "SCARD_AUTOALLOCATE not supported\n" );
-        return SCARD_F_INTERNAL_ERROR;
-    }
 
     params.handle = handle->unix_handle;
     params.groups = NULL;
@@ -521,7 +571,7 @@ static LONG map_states_inA( const SCARD_READERSTATEA *src, struct reader_state *
     DWORD i;
     for (i = 0; i < count; i++)
     {
-        if (src[i].szReader && !(dst[i].reader = (UINT64)(ULONG_PTR)ansi_to_utf8( src[i].szReader )))
+        if (src[i].szReader && ansi_to_utf8( src[i].szReader, (char **)&dst[i].reader ) < 0)
             return SCARD_E_NO_MEMORY;
         dst[i].current_state = src[i].dwCurrentState;
         dst[i].event_state = src[i].dwEventState;
@@ -587,7 +637,7 @@ static LONG map_states_inW( SCARD_READERSTATEW *src, struct reader_state *dst, D
     DWORD i;
     for (i = 0; i < count; i++)
     {
-        if (src[i].szReader && !(dst[i].reader = (UINT64)(ULONG_PTR)utf16_to_utf8( src[i].szReader )))
+        if (src[i].szReader && utf16_to_utf8( src[i].szReader, (char **)&dst[i].reader ) < 0)
             return SCARD_E_NO_MEMORY;
         dst[i].current_state = src[i].dwCurrentState;
         dst[i].event_state = src[i].dwEventState;
@@ -647,7 +697,7 @@ LONG WINAPI SCardConnectA( SCARDCONTEXT context, const char *reader, DWORD share
     if (!(connect_handle = malloc( sizeof(*connect_handle) ))) return SCARD_E_NO_MEMORY;
     connect_handle->magic = CONNECT_MAGIC;
 
-    if (!(reader_utf8 = ansi_to_utf8( reader )))
+    if (ansi_to_utf8( reader, &reader_utf8 ) < 0)
     {
         free( connect_handle );
         return SCARD_E_NO_MEMORY;
@@ -689,7 +739,7 @@ LONG WINAPI SCardConnectW( SCARDCONTEXT context, const WCHAR *reader, DWORD shar
     if (!(connect_handle = malloc( sizeof(*connect_handle) ))) return SCARD_E_NO_MEMORY;
     connect_handle->magic = CONNECT_MAGIC;
 
-    if (!(reader_utf8 = utf16_to_utf8( reader )))
+    if (utf16_to_utf8( reader, &reader_utf8 ) < 0)
     {
         free( connect_handle );
         return SCARD_E_NO_MEMORY;

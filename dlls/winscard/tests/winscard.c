@@ -65,8 +65,21 @@ static void test_SCardEstablishContext(void)
     ret = SCardListReadersA( context, NULL, readers, NULL );
     ok( ret == SCARD_E_INVALID_PARAMETER, "got %lx\n", ret );
 
+    len -= 1;
+    ret = SCardListReadersA( context, NULL, readers, &len );
+    ok( ret == SCARD_E_INSUFFICIENT_BUFFER, "got %lx\n", ret );
+
+    len += 1;
     ret = SCardListReadersA( context, NULL, readers, &len );
     ok( ret == SCARD_S_SUCCESS, "got %lx\n", ret );
+    free( readers );
+
+    readers = NULL;
+    len = SCARD_AUTOALLOCATE;
+    ret = SCardListReadersA( context, NULL, (char *)&readers, &len );
+    ok( ret == SCARD_S_SUCCESS, "got %lx\n", ret );
+    ok( readers != NULL, "got NULL readers" );
+    ok( len != SCARD_AUTOALLOCATE, "got %lu", len );
     ptr = readers;
     while (*ptr)
     {
@@ -107,7 +120,7 @@ static void test_SCardEstablishContext(void)
     if (ret == SCARD_E_READER_UNAVAILABLE)
     {
         skip( "can't connect to reader %s (in use by other application?)\n", wine_dbgstr_a(readers) );
-        free( readers );
+        SCardFreeMemory( context, readers );
         return;
     }
     ok( ret == SCARD_S_SUCCESS, "got %lx\n", ret );
@@ -118,7 +131,7 @@ static void test_SCardEstablishContext(void)
     ok( ret == SCARD_S_SUCCESS, "got %lx\n", ret );
     ok( connect != 0xdeadbeef, "connect not set\n" );
     ok( protocol == SCARD_PROTOCOL_T1, "got %lx\n", protocol );
-    free( readers );
+    SCardFreeMemory( context, readers );
 
     len = atrlen = 0;
     state = 0xdeadbeef;
