@@ -1030,6 +1030,7 @@ static void test_invisible_winstation_child(char *expected_info)
 {
     char buffer[MAX_PATH];
     HDESK desktop;
+    HWND hwnd;
     int ret;
 
     desktop = GetThreadDesktop(GetCurrentThreadId());
@@ -1043,6 +1044,13 @@ static void test_invisible_winstation_child(char *expected_info)
             GetSystemMetrics(SM_YVIRTUALSCREEN), GetSystemMetrics(SM_CXVIRTUALSCREEN),
             GetSystemMetrics(SM_CYVIRTUALSCREEN), GetSystemMetrics(SM_CMONITORS));
     ok(!strcmp(buffer, expected_info), "Expected %s, got %s.\n", expected_info, buffer);
+
+    hwnd = GetDesktopWindow();
+    ok(!!hwnd, "GetDesktopWindow failed, error %lu.\n", GetLastError());
+
+    ret = SendMessageW(hwnd, WM_NCHITTEST, 0, 0);
+    todo_wine
+    ok(ret == HTCLIENT, "SendMessageW failed, error %lu.\n", GetLastError());
 }
 
 static void test_invisible_winstation(char **argv)
