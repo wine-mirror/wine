@@ -359,30 +359,8 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     return S_OK;
 }
 
-static HRESULT WINAPI AudioClient_QueryInterface(IAudioClient3 *iface,
-        REFIID riid, void **ppv)
-{
-    ACImpl *This = impl_from_IAudioClient3(iface);
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
-
-    if(!ppv)
-        return E_POINTER;
-    *ppv = NULL;
-    if(IsEqualIID(riid, &IID_IUnknown) ||
-            IsEqualIID(riid, &IID_IAudioClient) ||
-            IsEqualIID(riid, &IID_IAudioClient2) ||
-            IsEqualIID(riid, &IID_IAudioClient3))
-        *ppv = iface;
-    else if(IsEqualIID(riid, &IID_IMarshal))
-        return IUnknown_QueryInterface(This->marshal, riid, ppv);
-
-    if(*ppv){
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-    WARN("Unknown interface %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
-}
+extern HRESULT WINAPI client_QueryInterface(IAudioClient3 *iface,
+        REFIID riid, void **ppv);
 
 extern ULONG WINAPI client_AddRef(IAudioClient3 *iface);
 
@@ -526,7 +504,7 @@ extern HRESULT WINAPI client_InitializeSharedAudioStream(IAudioClient3 *iface,
 
 static const IAudioClient3Vtbl AudioClient3_Vtbl =
 {
-    AudioClient_QueryInterface,
+    client_QueryInterface,
     client_AddRef,
     client_Release,
     client_Initialize,
