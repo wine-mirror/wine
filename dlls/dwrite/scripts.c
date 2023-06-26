@@ -4,7 +4,7 @@
 
 #include "windef.h"
 
-const unsigned short DECLSPEC_HIDDEN wine_scripts_table[10323] =
+const unsigned short wine_scripts_table[10323] =
 {
     /* level 1 offsets */
     0x0110, 0x0120, 0x0130, 0x0140, 0x0144, 0x0152, 0x0152, 0x0152,

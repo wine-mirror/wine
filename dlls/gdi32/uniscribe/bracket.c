@@ -4,7 +4,7 @@
 
 #include "windef.h"
 
-const unsigned short DECLSPEC_HIDDEN bidi_bracket_table[572] =
+const unsigned short bidi_bracket_table[572] =
 {
     /* level 1 offsets */
     0x0100, 0x0108, 0x0108, 0x0108, 0x0108, 0x0108, 0x0108, 0x0108,

@@ -4,7 +4,7 @@
 
 #include "windef.h"
 
-const unsigned short DECLSPEC_HIDDEN wine_mirror_map[1428] =
+const unsigned short wine_mirror_map[1428] =
 {
     /* level 1 offsets */
     0x0100, 0x010c, 0x010c, 0x010c, 0x010c, 0x010c, 0x010c, 0x010c,

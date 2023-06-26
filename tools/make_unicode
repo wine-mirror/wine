@@ -3115,7 +3115,7 @@ sub dump_shaping($)
 
     dump_two_level_mapping( "wine_shaping_table", 0, 16, @joining_table );
 
-    print OUTPUT "\nconst unsigned short DECLSPEC_HIDDEN wine_shaping_forms[256][4] =\n{\n";
+    print OUTPUT "\nconst unsigned short wine_shaping_forms[256][4] =\n{\n";
     for (my $i = 0x600; $i <= 0x6ff; $i++)
     {
         printf OUTPUT "    { 0x%04x, 0x%04x, 0x%04x, 0x%04x },\n",
@@ -3283,7 +3283,7 @@ sub dump_two_level_mapping($$$@)
 
     for (my $i = 0; $i < @row_data; $i++) { $row_data[$i] += @row_data + 256 - 4096; }
 
-    printf OUTPUT "const %s DECLSPEC_HIDDEN %s[%d] =\n{\n", $type, $name, @array + @row_data + @data;
+    printf OUTPUT "const %s %s[%d] =\n{\n", $type, $name, @array + @row_data + @data;
     printf OUTPUT "    /* level 1 offsets */\n%s,\n", dump_array( $size, 0, @array );
     printf OUTPUT "    /* level 2 offsets */\n%s,\n", dump_array( $size, 0, @row_data );
     printf OUTPUT "    /* values */\n%s\n};\n", dump_array( $size, 0, @data );
@@ -3307,7 +3307,7 @@ sub dump_three_level_mapping($$@)
     for (my $i = $level2; $i < @array2; $i++) { $array2[$i] += @array1 + @array2 - $level2 - $level3; }
     for (my $i = $level1; $i < @array1; $i++) { $array1[$i] += @array1 - $level2; }
 
-    printf OUTPUT "const %s DECLSPEC_HIDDEN %s[%u] =\n{\n", $type, $name, @array1 + (@array2 - $level2) + (@array3 - $level3);
+    printf OUTPUT "const %s %s[%u] =\n{\n", $type, $name, @array1 + (@array2 - $level2) + (@array3 - $level3);
     printf OUTPUT "    /* level 1 offsets */\n%s,\n", dump_array( $size, 0, @array1[0..$level1-1] );
     printf OUTPUT "    /* level 2 offsets */\n%s,\n", dump_array( $size, 0, @array1[$level1..$#array1] );
     printf OUTPUT "    /* level 3 offsets */\n%s,\n", dump_array( $size, 0, @array2[$level2..$#array2] );

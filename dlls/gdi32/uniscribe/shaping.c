@@ -4,7 +4,7 @@
 
 #include "windef.h"
 
-const unsigned short DECLSPEC_HIDDEN wine_shaping_table[2114] =
+const unsigned short wine_shaping_table[2114] =
 {
     /* level 1 offsets */
     0x0100, 0x010b, 0x010b, 0x011b, 0x0123, 0x012c, 0x013b, 0x014b,
@@ -276,7 +276,7 @@ const unsigned short DECLSPEC_HIDDEN wine_shaping_table[2114] =
     0x0006, 0x0000, 0x0000, 0x0000, 0x0000
 };
 
-const unsigned short DECLSPEC_HIDDEN wine_shaping_forms[256][4] =
+const unsigned short wine_shaping_forms[256][4] =
 {
     { 0x0600, 0x0600, 0x0600, 0x0600 },
     { 0x0601, 0x0601, 0x0601, 0x0601 },

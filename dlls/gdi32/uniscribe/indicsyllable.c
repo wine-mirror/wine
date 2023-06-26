@@ -5,7 +5,7 @@
 
 #include "windef.h"
 
-const unsigned short DECLSPEC_HIDDEN indic_syllabic_table[3033] =
+const unsigned short indic_syllabic_table[3033] =
 {
     /* level 1 offsets */
     0x0100, 0x010e, 0x010e, 0x010e, 0x010e, 0x010e, 0x010e, 0x010e,

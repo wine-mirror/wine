@@ -4,7 +4,7 @@
 
 #include "windef.h"
 
-const unsigned short DECLSPEC_HIDDEN wine_linebreak_table[9976] =
+const unsigned short wine_linebreak_table[9976] =
 {
     /* level 1 offsets */
     0x0110, 0x0120, 0x0130, 0x0140, 0x0143, 0x0151, 0x0151, 0x0151,
