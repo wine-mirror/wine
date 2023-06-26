@@ -308,11 +308,14 @@ static void test_chorus_parameters(void)
 
     hr = CoCreateInstance(&GUID_DSFX_STANDARD_CHORUS, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectSoundFXChorus, (void **)&chorus);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr != S_OK)
         return;
 
     hr = IDirectSoundFXChorus_GetAllParameters(chorus, &params);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr != S_OK)
+        return;
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(params.fWetDryMix == 50.0f, "Got wetness %.8e%%.\n", params.fWetDryMix);
     ok(params.fDepth == 10.0f, "Got depth %.8e.\n", params.fDepth);
@@ -544,7 +547,7 @@ START_TEST(dsdmo)
     }
     tests[] =
     {
-        {&GUID_DSFX_STANDARD_CHORUS,        &IID_IDirectSoundFXChorus, TRUE},
+        {&GUID_DSFX_STANDARD_CHORUS,        &IID_IDirectSoundFXChorus},
         {&GUID_DSFX_STANDARD_COMPRESSOR,    &IID_IDirectSoundFXCompressor},
         {&GUID_DSFX_STANDARD_DISTORTION,    &IID_IDirectSoundFXDistortion, TRUE},
         {&GUID_DSFX_STANDARD_ECHO,          &IID_IDirectSoundFXEcho},
