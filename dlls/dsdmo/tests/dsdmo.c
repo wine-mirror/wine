@@ -415,11 +415,14 @@ static void test_flanger_parameters(void)
 
     hr = CoCreateInstance(&GUID_DSFX_STANDARD_FLANGER, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectSoundFXFlanger, (void **)&flanger);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr != S_OK)
         return;
 
     hr = IDirectSoundFXFlanger_GetAllParameters(flanger, &params);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr != S_OK)
+        return;
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(params.fWetDryMix == 50.0f, "Got %.8e%% wetness.\n", params.fWetDryMix);
     ok(params.fDepth == 100.0f, "Got %.8e * 0.01%% depth.\n", params.fDepth);
@@ -551,7 +554,7 @@ START_TEST(dsdmo)
         {&GUID_DSFX_STANDARD_COMPRESSOR,    &IID_IDirectSoundFXCompressor},
         {&GUID_DSFX_STANDARD_DISTORTION,    &IID_IDirectSoundFXDistortion, TRUE},
         {&GUID_DSFX_STANDARD_ECHO,          &IID_IDirectSoundFXEcho},
-        {&GUID_DSFX_STANDARD_FLANGER,       &IID_IDirectSoundFXFlanger, TRUE},
+        {&GUID_DSFX_STANDARD_FLANGER,       &IID_IDirectSoundFXFlanger},
         {&GUID_DSFX_STANDARD_GARGLE,        &IID_IDirectSoundFXGargle, TRUE},
         {&GUID_DSFX_STANDARD_I3DL2REVERB,   &IID_IDirectSoundFXI3DL2Reverb},
         {&GUID_DSFX_STANDARD_PARAMEQ,       &IID_IDirectSoundFXParamEq},
