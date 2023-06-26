@@ -406,6 +406,31 @@ const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl =
     capture_GetNextPacketSize
 };
 
+HRESULT WINAPI client_QueryInterface(IAudioClient3 *iface, REFIID riid, void **ppv)
+{
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IAudioClient) ||
+        IsEqualIID(riid, &IID_IAudioClient2) ||
+        IsEqualIID(riid, &IID_IAudioClient3))
+        *ppv = iface;
+    else if(IsEqualIID(riid, &IID_IMarshal)) {
+        struct audio_client *This = impl_from_IAudioClient3(iface);
+        return IUnknown_QueryInterface(This->marshal, riid, ppv);
+    } else {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*ppv);
+
+    return S_OK;
+}
+
 ULONG WINAPI client_AddRef(IAudioClient3 *iface)
 {
     struct audio_client *This = impl_from_IAudioClient3(iface);
