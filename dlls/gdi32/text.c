@@ -74,7 +74,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(bidi);
 
 #define odd(x) ((x) & 1)
 
-extern const unsigned short bidi_direction_table[] DECLSPEC_HIDDEN;
+extern const unsigned short bidi_direction_table[];
 
 /*------------------------------------------------------------------------
     Bidirectional Character Types
