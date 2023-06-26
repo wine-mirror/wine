@@ -267,13 +267,26 @@ static CRITICAL_SECTION_DEBUG event_thread_cs_debug =
 };
 static CRITICAL_SECTION event_thread_cs = { &event_thread_cs_debug, -1, 0, 0, 0, 0 };
 
+enum uia_queue_event_type {
+    QUEUE_EVENT_TYPE_SERVERSIDE,
+    QUEUE_EVENT_TYPE_CLIENTSIDE,
+};
+
 struct uia_queue_event
 {
     struct list event_queue_entry;
+    int queue_event_type;
 
     struct uia_event_args *args;
     struct uia_event *event;
-    HUIANODE node;
+    union {
+        struct {
+            HUIANODE node;
+        } serverside;
+        struct {
+            LRESULT node;
+        } clientside;
+     } u;
 };
 
 static void uia_event_queue_push(struct uia_queue_event *event)
@@ -303,31 +316,73 @@ static struct uia_queue_event *uia_event_queue_pop(struct list *event_queue)
     return queue_event;
 }
 
+static HRESULT uia_event_invoke(HUIANODE node, struct uia_event_args *args, struct uia_event *event);
+static HRESULT uia_raise_clientside_event(struct uia_queue_event *event)
+{
+    HUIANODE node;
+    HRESULT hr;
+
+    hr = uia_node_from_lresult(event->u.clientside.node, &node);
+    if (SUCCEEDED(hr))
+    {
+        hr = uia_event_invoke(node, event->args, event->event);
+        UiaNodeRelease(node);
+    }
+
+    return hr;
+}
+
+static HRESULT uia_raise_serverside_event(struct uia_queue_event *event)
+{
+    HRESULT hr = S_OK;
+    LRESULT lr;
+
+    /*
+     * uia_lresult_from_node is expected to release the node here upon
+     * failure.
+     */
+    if ((lr = uia_lresult_from_node(event->u.serverside.node)))
+    {
+        VARIANT v;
+
+        V_VT(&v) = VT_I4;
+        V_I4(&v) = lr;
+        hr = IWineUiaEvent_raise_event(event->event->u.serverside.event_iface, v);
+        if (FAILED(hr))
+        {
+            IWineUiaNode *node;
+
+            /*
+             * If the method returned failure, make sure we don't leave a
+             * dangling IWineUiaNode.
+             */
+            if (SUCCEEDED(ObjectFromLresult(lr, &IID_IWineUiaNode, 0, (void **)&node)))
+                IWineUiaNode_Release(node);
+        }
+    }
+    else
+        hr = E_FAIL;
+
+    return hr;
+}
+
 static void uia_event_thread_process_queue(struct list *event_queue)
 {
     while (1)
     {
         struct uia_queue_event *event;
-        LRESULT lr;
         HRESULT hr;
 
         if (!(event = uia_event_queue_pop(event_queue)))
             break;
 
-        /*
-         * uia_lresult_from_node is expected to release the node here upon
-         * failure.
-         */
-        if ((lr = uia_lresult_from_node(event->node)))
-        {
-            VARIANT v;
+        if (event->queue_event_type == QUEUE_EVENT_TYPE_SERVERSIDE)
+            hr = uia_raise_serverside_event(event);
+        else
+            hr = uia_raise_clientside_event(event);
 
-            V_VT(&v) = VT_I4;
-            V_I4(&v) = lr;
-            hr = IWineUiaEvent_raise_event(event->event->u.serverside.event_iface, v);
-            if (FAILED(hr))
-                WARN("IWineUiaEvent_raise_event failed with hr %#lx\n", hr);
-        }
+        if (FAILED(hr))
+            WARN("Failed to raise event type %d with hr %#lx\n", event->queue_event_type, hr);
 
         uia_event_args_release(event->args);
         IWineUiaEvent_Release(&event->event->IWineUiaEvent_iface);
@@ -583,18 +638,30 @@ static HRESULT WINAPI uia_event_set_event_data(IWineUiaEvent *iface, const GUID 
 static HRESULT WINAPI uia_event_raise_event(IWineUiaEvent *iface, VARIANT in_node)
 {
     struct uia_event *event = impl_from_IWineUiaEvent(iface);
-    HUIANODE node;
-    HRESULT hr;
+    struct uia_queue_event *queue_event;
+    struct uia_event_args *args;
 
-    FIXME("%p, %s: stub\n", iface, debugstr_variant(&in_node));
+    TRACE("%p, %s\n", iface, debugstr_variant(&in_node));
 
     assert(event->event_type != EVENT_TYPE_SERVERSIDE);
 
-    hr = uia_node_from_lresult((LRESULT)V_I4(&in_node), &node);
-    if (FAILED(hr))
-        return hr;
+    if (!(queue_event = heap_alloc_zero(sizeof(*queue_event))))
+        return E_OUTOFMEMORY;
 
-    UiaNodeRelease(node);
+    if (!(args = create_uia_event_args(uia_event_info_from_id(event->event_id))))
+    {
+        heap_free(queue_event);
+        return E_OUTOFMEMORY;
+    }
+
+    queue_event->queue_event_type = QUEUE_EVENT_TYPE_CLIENTSIDE;
+    queue_event->args = args;
+    queue_event->event = event;
+    queue_event->u.clientside.node = V_I4(&in_node);
+
+    IWineUiaEvent_AddRef(&event->IWineUiaEvent_iface);
+    uia_event_queue_push(queue_event);
+
     return S_OK;
 }
 
@@ -1159,9 +1226,10 @@ static HRESULT uia_event_invoke(HUIANODE node, struct uia_event_args *args, stru
             return hr;
         }
 
+        queue_event->queue_event_type = QUEUE_EVENT_TYPE_SERVERSIDE;
         queue_event->args = args;
         queue_event->event = event;
-        queue_event->node = node2;
+        queue_event->u.serverside.node = node2;
 
         InterlockedIncrement(&args->ref);
         IWineUiaEvent_AddRef(&event->IWineUiaEvent_iface);

@@ -13974,8 +13974,8 @@ static void test_UiaAddEvent_client_proc(void)
     SET_EXPECT(prov_callback_proxy);
     SET_EXPECT(uia_event_callback);
     post_event_message(hwnd, WM_UIA_TEST_RAISE_EVENT, HandleToUlong(hwnd), PROVIDER_ID, ProviderOptions_ServerSideProvider);
-    todo_wine ok(!WaitForSingleObject(EventData.event_handle, 2000), "Wait for event_handle failed.\n");
-    todo_wine CHECK_CALLED(uia_event_callback);
+    ok(!WaitForSingleObject(EventData.event_handle, 2000), "Wait for event_handle failed.\n");
+    CHECK_CALLED(uia_event_callback);
     CHECK_CALLED(prov_callback_base_hwnd);
     CHECK_CALLED(prov_callback_nonclient);
     todo_wine CHECK_CALLED(prov_callback_proxy);
@@ -13995,8 +13995,8 @@ static void test_UiaAddEvent_client_proc(void)
 
     SET_EXPECT(uia_event_callback);
     post_event_message(hwnd, WM_UIA_TEST_RAISE_EVENT, 0, PROVIDER2_ID, ProviderOptions_ServerSideProvider);
-    todo_wine ok(!WaitForSingleObject(EventData.event_handle, 2000), "Wait for event_handle failed.\n");
-    todo_wine CHECK_CALLED(uia_event_callback);
+    ok(!WaitForSingleObject(EventData.event_handle, 2000), "Wait for event_handle failed.\n");
+    CHECK_CALLED(uia_event_callback);
 
     hr = UiaRemoveEvent(event);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -14109,8 +14109,8 @@ static void test_UiaAddEvent_client_proc(void)
     set_event_data(0, 0, 1, 1, &exp_node_desc, L"P)");
     SET_EXPECT(uia_event_callback);
     post_event_message(hwnd, WM_UIA_TEST_RAISE_EVENT_RT_ID, 0xbeef, PROVIDER2_ID, 0x1337);
-    todo_wine ok(!WaitForSingleObject(EventData.event_handle, 2000), "Wait for event_handle failed.\n");
-    todo_wine CHECK_CALLED(uia_event_callback);
+    ok(!WaitForSingleObject(EventData.event_handle, 2000), "Wait for event_handle failed.\n");
+    CHECK_CALLED(uia_event_callback);
 
     hr = UiaRemoveEvent(event);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
