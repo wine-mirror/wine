@@ -964,4 +964,68 @@ coclass ADSystemInfo
     interface IADsADSystemInfo;
 }
 
+/*****************************************************************************
+ *    IADsDNWithBinary interface
+ */
+[
+    odl,
+    uuid(7e99c0a2-f935-11d2-ba96-00c04fb6d0d1),
+    dual,
+    oleautomation
+]
+interface IADsDNWithBinary : IDispatch
+{
+    [id(0x00000002), propget]
+    HRESULT BinaryValue([out, retval] VARIANT *value);
+    [id(0x00000002), propput]
+    HRESULT BinaryValue([in] VARIANT value);
+    [id(0x00000003), propget]
+    HRESULT DNString([out, retval] BSTR *value);
+    [id(0x00000003), propput]
+    HRESULT DNString([in] BSTR value);
+}
+
+[
+    helpstring("ADs DN With Binary Object"),
+    uuid(7e99c0a3-f935-11d2-ba96-00c04fb6d0d1),
+    progid("DNWithBinary"),
+    version(1.0)
+]
+coclass DNWithBinary
+{
+    interface IADsDNWithBinary;
+}
+
+/*****************************************************************************
+ *    IADsDNWithString interface
+ */
+[
+    odl,
+    uuid(370df02e-f934-11d2-ba96-00c04fb6d0d1),
+    dual,
+    oleautomation
+]
+interface IADsDNWithString : IDispatch
+{
+    [id(0x00000002), propget]
+    HRESULT StringValue([out, retval] BSTR *value);
+    [id(0x00000002), propput]
+    HRESULT StringValue([in] BSTR value);
+    [id(0x00000003), propget]
+    HRESULT DNString([out, retval] BSTR *value);
+    [id(0x00000003), propput]
+    HRESULT DNString([in] BSTR value);
+}
+
+[
+    helpstring("ADs DN With String Object"),
+    uuid(334857cc-f934-11d2-ba96-00c04fb6d0d1),
+    progid("DNWithString"),
+    version(1.0)
+]
+coclass DNWithString
+{
+    interface IADsDNWithString;
+}
+
 } /* library */
