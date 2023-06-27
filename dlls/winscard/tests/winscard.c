@@ -109,12 +109,14 @@ static void test_SCardEstablishContext(void)
     memset( states, 0, sizeof(states) );
     states[0].szReader = "\\\\?PnP?\\Notification";
     states[1].szReader = readers;
+    states[1].cbAtr = sizeof(states[1].rgbAtr) + 1;
     ret = SCardGetStatusChangeA( context, 1000, states, 2 );
     ok( ret == SCARD_S_SUCCESS, "got %lx\n", ret );
+    ok( states[1].cbAtr <= sizeof(states[1].rgbAtr), "got %lu\n", states[1].cbAtr );
 
     states[1].dwCurrentState = states[1].dwEventState & ~SCARD_STATE_CHANGED;
     ret = SCardGetStatusChangeA( context, 1000, states, 2 );
-    todo_wine ok( ret == SCARD_S_SUCCESS, "got %lx\n", ret );
+    ok( ret == SCARD_S_SUCCESS, "got %lx\n", ret );
 
     ret = SCardConnectA( context, readers, SCARD_SHARE_SHARED, SCARD_PROTOCOL_Tx, &connect, NULL );
     if (ret == SCARD_E_READER_UNAVAILABLE)

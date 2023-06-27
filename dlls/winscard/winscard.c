@@ -569,14 +569,11 @@ done:
 static LONG map_states_inA( const SCARD_READERSTATEA *src, struct reader_state *dst, DWORD count )
 {
     DWORD i;
+    memset( dst, 0, sizeof(*dst) * count );
     for (i = 0; i < count; i++)
     {
         if (src[i].szReader && ansi_to_utf8( src[i].szReader, (char **)&dst[i].reader ) < 0)
             return SCARD_E_NO_MEMORY;
-        dst[i].current_state = src[i].dwCurrentState;
-        dst[i].event_state = src[i].dwEventState;
-        dst[i].atr_size = src[i].cbAtr;
-        memcpy( dst[i].atr, src[i].rgbAtr, src[i].cbAtr );
     }
     return SCARD_S_SUCCESS;
 }
@@ -635,14 +632,11 @@ LONG WINAPI SCardGetStatusChangeA( SCARDCONTEXT context, DWORD timeout, SCARD_RE
 static LONG map_states_inW( SCARD_READERSTATEW *src, struct reader_state *dst, DWORD count )
 {
     DWORD i;
+    memset( dst, 0, sizeof(*dst) * count );
     for (i = 0; i < count; i++)
     {
         if (src[i].szReader && utf16_to_utf8( src[i].szReader, (char **)&dst[i].reader ) < 0)
             return SCARD_E_NO_MEMORY;
-        dst[i].current_state = src[i].dwCurrentState;
-        dst[i].event_state = src[i].dwEventState;
-        dst[i].atr_size = src[i].cbAtr;
-        memcpy( dst[i].atr, src[i].rgbAtr, src[i].cbAtr );
     }
     return SCARD_S_SUCCESS;
 }
