@@ -19664,6 +19664,46 @@ static void test_layered_rtv_mismatch(void)
     release_test_context(&test_context);
 }
 
+/* A regression test for a broken clear path in the Vulkan renderer. */
+static void test_clear_after_draw(void)
+{
+    static const struct vec4 black = {0.0f, 0.0f, 0.0f, 1.0f};
+    static const struct vec4 green = {0.0f, 1.0f, 0.0f, 1.0f};
+    static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
+    struct d3d10core_test_context test_context;
+    struct resource_readback rb;
+    ID3D10Device *device;
+    unsigned int colour;
+
+    static const struct vec3 quad[] =
+    {
+        {-1.0f, -1.0f, 0.0f},
+        {-1.0f,  0.0f, 0.0f},
+        { 0.0f, -1.0f, 0.0f},
+        { 0.0f,  0.0f, 0.0f},
+    };
+
+    if (!init_test_context(&test_context))
+        return;
+    device = test_context.device;
+
+    test_context.vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(quad), quad);
+
+    clear_backbuffer_rtv(&test_context, &black);
+    draw_color_quad(&test_context, &green);
+    clear_backbuffer_rtv(&test_context, &red);
+    draw_color_quad(&test_context, &green);
+
+    get_texture_readback(test_context.backbuffer, 0, &rb);
+    colour = get_readback_color(&rb, 160, 120);
+    ok(colour == 0xff0000ff, "Got unexpected colour 0x%08x.\n", colour);
+    colour = get_readback_color(&rb, 160, 360);
+    ok(colour == 0xff00ff00, "Got unexpected colour 0x%08x.\n", colour);
+    release_resource_readback(&rb);
+
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d10core)
 {
     unsigned int argc, i;
@@ -19808,6 +19848,7 @@ START_TEST(d3d10core)
     queue_test(test_stencil_only_write_after_clear);
     queue_test(test_vertex_formats);
     queue_test(test_layered_rtv_mismatch);
+    queue_test(test_clear_after_draw);
 
     run_queued_tests();
 
