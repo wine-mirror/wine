@@ -1316,10 +1316,8 @@ static void test_TransferVideoFrame(void)
     ok(!res, "Unexpected res %#lx.\n", res);
 
     SetRect(&dst_rect, 0, 0, desc.Width, desc.Height);
-    hr = IMFMediaEngineEx_TransferVideoFrame(notify->media_engine, (IUnknown *)texture, NULL, NULL, NULL);
-    ok(hr == S_OK || broken(hr == E_POINTER) /* w1064v1507 */, "Unexpected hr %#lx.\n", hr);
-    if (hr == E_POINTER)
-        goto done;
+    hr = IMFMediaEngineEx_TransferVideoFrame(notify->media_engine, (IUnknown *)texture, NULL, &dst_rect, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     ID3D11Texture2D_GetDesc(texture, &desc);
     desc.Usage = D3D11_USAGE_STAGING;
