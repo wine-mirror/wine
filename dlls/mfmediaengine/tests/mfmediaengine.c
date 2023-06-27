@@ -1136,11 +1136,17 @@ static IMFByteStream *load_resource(const WCHAR *name, const WCHAR *mime)
 struct test_transfer_notify
 {
     IMFMediaEngineNotify IMFMediaEngineNotify_iface;
+    LONG refcount;
 
     IMFMediaEngineEx *media_engine;
     HANDLE ready_event;
     HRESULT error;
 };
+
+static struct test_transfer_notify *impl_from_test_transfer_notify(IMFMediaEngineNotify *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_transfer_notify, IMFMediaEngineNotify_iface);
+}
 
 static HRESULT WINAPI test_transfer_notify_QueryInterface(IMFMediaEngineNotify *iface, REFIID riid, void **obj)
 {
@@ -1158,17 +1164,27 @@ static HRESULT WINAPI test_transfer_notify_QueryInterface(IMFMediaEngineNotify *
 
 static ULONG WINAPI test_transfer_notify_AddRef(IMFMediaEngineNotify *iface)
 {
-    return 2;
+    struct test_transfer_notify *notify = impl_from_test_transfer_notify(iface);
+    return InterlockedIncrement(&notify->refcount);
 }
 
 static ULONG WINAPI test_transfer_notify_Release(IMFMediaEngineNotify *iface)
 {
-    return 1;
+    struct test_transfer_notify *notify = impl_from_test_transfer_notify(iface);
+    ULONG refcount = InterlockedDecrement(&notify->refcount);
+
+    if (!refcount)
+    {
+        CloseHandle(notify->ready_event);
+        free(notify);
+    }
+
+    return refcount;
 }
 
 static HRESULT WINAPI test_transfer_notify_EventNotify(IMFMediaEngineNotify *iface, DWORD event, DWORD_PTR param1, DWORD param2)
 {
-    struct test_transfer_notify *notify = CONTAINING_RECORD(iface, struct test_transfer_notify, IMFMediaEngineNotify_iface);
+    struct test_transfer_notify *notify = impl_from_test_transfer_notify(iface);
     IMFMediaEngineEx *media_engine = notify->media_engine;
     DWORD width, height;
     HRESULT hr;
@@ -1211,13 +1227,26 @@ static IMFMediaEngineNotifyVtbl test_transfer_notify_vtbl =
     test_transfer_notify_EventNotify,
 };
 
+static struct test_transfer_notify *create_transfer_notify(void)
+{
+    struct test_transfer_notify *object;
+
+    object = calloc(1, sizeof(*object));
+    object->IMFMediaEngineNotify_iface.lpVtbl = &test_transfer_notify_vtbl;
+    object->refcount = 1;
+    object->ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(!!object->ready_event, "Failed to create an event, error %lu.\n", GetLastError());
+
+    return object;
+}
+
 static void test_TransferVideoFrame(void)
 {
-    struct test_transfer_notify notify = {{&test_transfer_notify_vtbl}};
+    struct test_transfer_notify *notify;
     WCHAR url[] = {L"i420-64x64.avi"};
-    ID3D11Texture2D *texture, *rb_texture;
+    ID3D11Texture2D *texture = NULL, *rb_texture;
     D3D11_MAPPED_SUBRESOURCE map_desc;
-    IMFMediaEngineEx *media_engine;
+    IMFMediaEngineEx *media_engine = NULL;
     IMFDXGIDeviceManager *manager;
     ID3D11DeviceContext *context;
     D3D11_TEXTURE2D_DESC desc;
@@ -1230,13 +1259,12 @@ static void test_TransferVideoFrame(void)
 
     stream = load_resource(L"i420-64x64.avi", L"video/avi");
 
-    notify.ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-    ok(!!notify.ready_event, "CreateEventW failed, error %lu\n", GetLastError());
+    notify = create_transfer_notify();
 
     if (!(device = create_d3d11_device()))
     {
         skip("Failed to create a D3D11 device, skipping tests.\n");
-        return;
+        goto done;
     }
 
     hr = pMFCreateDXGIDeviceManager(&token, &manager);
@@ -1244,13 +1272,12 @@ static void test_TransferVideoFrame(void)
     hr = IMFDXGIDeviceManager_ResetDevice(manager, (IUnknown *)device, token);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    media_engine = create_media_engine_ex(&notify.IMFMediaEngineNotify_iface,
-            manager, DXGI_FORMAT_B8G8R8X8_UNORM);
+    media_engine = create_media_engine_ex(&notify->IMFMediaEngineNotify_iface, manager, DXGI_FORMAT_B8G8R8X8_UNORM);
 
     IMFDXGIDeviceManager_Release(manager);
 
-    if (!(notify.media_engine = media_engine))
-        return;
+    if (!(notify->media_engine = media_engine))
+        goto done;
 
     memset(&desc, 0, sizeof(desc));
     desc.Width = 64;
@@ -1266,12 +1293,12 @@ static void test_TransferVideoFrame(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IMFByteStream_Release(stream);
 
-    res = WaitForSingleObject(notify.ready_event, 5000);
+    res = WaitForSingleObject(notify->ready_event, 5000);
     ok(!res, "Unexpected res %#lx.\n", res);
 
-    if (FAILED(notify.error))
+    if (FAILED(notify->error))
     {
-        win_skip("Media engine reported error %#lx, skipping tests.\n", notify.error);
+        win_skip("Media engine reported error %#lx, skipping tests.\n", notify->error);
         goto done;
     }
 
@@ -1281,13 +1308,13 @@ static void test_TransferVideoFrame(void)
     ok(res == 1, "Unexpected stream count %lu.\n", res);
 
     /* FIXME: Wine first video frame is often full of garbage, wait for another update */
-    res = WaitForSingleObject(notify.ready_event, 500);
+    res = WaitForSingleObject(notify->ready_event, 500);
     /* It's also missing the MF_MEDIA_ENGINE_EVENT_TIMEUPDATE notifications */
     todo_wine
     ok(!res, "Unexpected res %#lx.\n", res);
 
     SetRect(&dst_rect, 0, 0, desc.Width, desc.Height);
-    hr = IMFMediaEngineEx_TransferVideoFrame(notify.media_engine, (IUnknown *)texture, NULL, NULL, NULL);
+    hr = IMFMediaEngineEx_TransferVideoFrame(notify->media_engine, (IUnknown *)texture, NULL, NULL, NULL);
     ok(hr == S_OK || broken(hr == E_POINTER) /* w1064v1507 */, "Unexpected hr %#lx.\n", hr);
     if (hr == E_POINTER)
         goto done;
@@ -1317,13 +1344,18 @@ static void test_TransferVideoFrame(void)
     ID3D11Texture2D_Release(rb_texture);
 
 done:
-    IMFMediaEngineEx_Shutdown(media_engine);
-    IMFMediaEngineEx_Release(media_engine);
+    if (media_engine)
+    {
+        IMFMediaEngineEx_Shutdown(media_engine);
+        IMFMediaEngineEx_Release(media_engine);
+    }
 
-    ID3D11Texture2D_Release(texture);
-    ID3D11Device_Release(device);
+    if (texture)
+        ID3D11Texture2D_Release(texture);
+    if (device)
+        ID3D11Device_Release(device);
 
-    CloseHandle(notify.ready_event);
+    IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
 }
 
 START_TEST(mfmediaengine)
