@@ -760,13 +760,10 @@ struct builtin_search
 static BOOL search_builtin_pe(void *param, HANDLE handle, const WCHAR *path)
 {
     struct builtin_search *search = param;
-    size_t size;
 
     if (!pe_map_file(handle, &search->fmap, DMT_PE)) return FALSE;
 
-    size = (lstrlenW(path) + 1) * sizeof(WCHAR);
-    if ((search->path = heap_alloc(size)))
-        memcpy(search->path, path, size);
+    search->path = wcsdup(path);
     return TRUE;
 }
 
@@ -818,47 +815,48 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
         }
         if (name) lstrcpyW(loaded_name, name);
     }
-    if (!(modfmt = HeapAlloc(GetProcessHeap(), 0, sizeof(struct module_format) + sizeof(struct pe_module_info))))
-        return NULL;
-    modfmt->u.pe_info = (struct pe_module_info*)(modfmt + 1);
-    if (pe_map_file(hFile, &modfmt->u.pe_info->fmap, DMT_PE))
-    {
-        struct builtin_search builtin = { NULL };
-        if (opened && modfmt->u.pe_info->fmap.u.pe.builtin &&
-            search_dll_path(pcs, loaded_name, modfmt->u.pe_info->fmap.u.pe.file_header.Machine, search_builtin_pe, &builtin))
-        {
-            TRACE("reloaded %s from %s\n", debugstr_w(loaded_name), debugstr_w(builtin.path));
-            image_unmap_file(&modfmt->u.pe_info->fmap);
-            modfmt->u.pe_info->fmap = builtin.fmap;
-            real_path = builtin.path;
-        }
-        if (!base) base = PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, ImageBase);
-        if (!size) size = PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, SizeOfImage);
 
-        module = module_new(pcs, loaded_name, DMT_PE, FALSE, base, size,
-                            modfmt->u.pe_info->fmap.u.pe.file_header.TimeDateStamp,
-                            PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, CheckSum),
-                            modfmt->u.pe_info->fmap.u.pe.file_header.Machine);
-        if (module)
+    if ((modfmt = HeapAlloc(GetProcessHeap(), 0, sizeof(struct module_format) + sizeof(struct pe_module_info))))
+    {
+        modfmt->u.pe_info = (struct pe_module_info*)(modfmt + 1);
+        if (pe_map_file(hFile, &modfmt->u.pe_info->fmap, DMT_PE))
         {
-            module->real_path = real_path;
-            modfmt->module = module;
-            modfmt->remove = pe_module_remove;
-            modfmt->loc_compute = NULL;
-            module->format_info[DFI_PE] = modfmt;
-            module->reloc_delta = base - PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, ImageBase);
+            struct builtin_search builtin = { NULL };
+            if (opened && modfmt->u.pe_info->fmap.u.pe.builtin &&
+                search_dll_path(pcs, loaded_name, modfmt->u.pe_info->fmap.u.pe.file_header.Machine, search_builtin_pe, &builtin))
+            {
+                TRACE("reloaded %s from %s\n", debugstr_w(loaded_name), debugstr_w(builtin.path));
+                image_unmap_file(&modfmt->u.pe_info->fmap);
+                modfmt->u.pe_info->fmap = builtin.fmap;
+                real_path = builtin.path;
+            }
+            if (!base) base = PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, ImageBase);
+            if (!size) size = PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, SizeOfImage);
+
+            module = module_new(pcs, loaded_name, DMT_PE, FALSE, base, size,
+                                modfmt->u.pe_info->fmap.u.pe.file_header.TimeDateStamp,
+                                PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, CheckSum),
+                                modfmt->u.pe_info->fmap.u.pe.file_header.Machine);
+            if (module)
+            {
+                module->real_path = real_path ? pool_wcsdup(&module->pool, real_path) : NULL;
+                modfmt->module = module;
+                modfmt->remove = pe_module_remove;
+                modfmt->loc_compute = NULL;
+                module->format_info[DFI_PE] = modfmt;
+                module->reloc_delta = base - PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, ImageBase);
+            }
+            else
+            {
+                ERR("could not load the module '%s'\n", debugstr_w(loaded_name));
+                image_unmap_file(&modfmt->u.pe_info->fmap);
+            }
         }
-        else
-        {
-            ERR("could not load the module '%s'\n", debugstr_w(loaded_name));
-            heap_free(real_path);
-            image_unmap_file(&modfmt->u.pe_info->fmap);
-        }
+        if (!module) HeapFree(GetProcessHeap(), 0, modfmt);
     }
-    if (!module) HeapFree(GetProcessHeap(), 0, modfmt);
 
     if (opened) CloseHandle(hFile);
-
+    free(real_path);
     return module;
 }
 

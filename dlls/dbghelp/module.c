@@ -1068,7 +1068,6 @@ BOOL module_remove(struct process* pcs, struct module* module)
     hash_table_destroy(&module->ht_types);
     HeapFree(GetProcessHeap(), 0, module->sources);
     HeapFree(GetProcessHeap(), 0, module->addr_sorttab);
-    HeapFree(GetProcessHeap(), 0, module->real_path);
     pool_destroy(&module->pool);
     /* native dbghelp doesn't invoke registered callback(,CBA_SYMBOLS_UNLOADED,) here
      * so do we

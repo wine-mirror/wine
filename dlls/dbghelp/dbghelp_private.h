@@ -44,6 +44,7 @@ void     pool_destroy(struct pool* a) DECLSPEC_HIDDEN;
 void*    pool_alloc(struct pool* a, size_t len) __WINE_ALLOC_SIZE(2) __WINE_MALLOC DECLSPEC_HIDDEN;
 void*    pool_realloc(struct pool* a, void* ptr, size_t len) __WINE_ALLOC_SIZE(3) DECLSPEC_HIDDEN;
 char*    pool_strdup(struct pool* a, const char* str) __WINE_MALLOC DECLSPEC_HIDDEN;
+WCHAR*   pool_wcsdup(struct pool* a, const WCHAR* str) __WINE_MALLOC DECLSPEC_HIDDEN;
 
 struct vector
 {

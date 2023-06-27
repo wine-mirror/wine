@@ -55,6 +55,13 @@ char* pool_strdup(struct pool* pool, const char* str)
     return ret;
 }
 
+WCHAR* pool_wcsdup(struct pool* pool, const WCHAR* str)
+{
+    WCHAR* ret;
+    if ((ret = pool_alloc(pool, (wcslen(str) + 1) * sizeof(WCHAR)))) wcscpy(ret, str);
+    return ret;
+}
+
 void vector_init(struct vector* v, unsigned esz, unsigned bucket_sz)
 {
     v->buckets = NULL;
