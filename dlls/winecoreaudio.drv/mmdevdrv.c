@@ -48,7 +48,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(coreaudio);
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
-static const IAudioClient3Vtbl AudioClient3_Vtbl;
+extern const IAudioClient3Vtbl AudioClient3_Vtbl;
 extern const IAudioRenderClientVtbl AudioRenderClient_Vtbl;
 extern const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl;
 extern const IAudioSessionControl2Vtbl AudioSessionControl2_Vtbl;
@@ -81,11 +81,6 @@ void DECLSPEC_HIDDEN sessions_lock(void)
 void DECLSPEC_HIDDEN sessions_unlock(void)
 {
     LeaveCriticalSection(&g_sessions_lock);
-}
-
-static inline ACImpl *impl_from_IAudioClient3(IAudioClient3 *iface)
-{
-    return CONTAINING_RECORD(iface, ACImpl, IAudioClient3_iface);
 }
 
 BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
@@ -359,13 +354,6 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     return S_OK;
 }
 
-extern HRESULT WINAPI client_QueryInterface(IAudioClient3 *iface,
-        REFIID riid, void **ppv);
-
-extern ULONG WINAPI client_AddRef(IAudioClient3 *iface);
-
-extern ULONG WINAPI client_Release(IAudioClient3 *iface);
-
 static void session_init_vols(AudioSession *session, UINT channels)
 {
     if(session->channel_count < channels){
@@ -444,88 +432,6 @@ HRESULT get_audio_session(const GUID *sessionguid,
 
     return S_OK;
 }
-
-extern HRESULT WINAPI client_Initialize(IAudioClient3 *iface,
-        AUDCLNT_SHAREMODE mode, DWORD flags, REFERENCE_TIME duration,
-        REFERENCE_TIME period, const WAVEFORMATEX *fmt,
-        const GUID *sessionguid);
-
-extern HRESULT WINAPI client_GetBufferSize(IAudioClient3 *iface,
-        UINT32 *frames);
-
-extern HRESULT WINAPI client_GetStreamLatency(IAudioClient3 *iface,
-        REFERENCE_TIME *out);
-
-extern HRESULT WINAPI client_GetCurrentPadding(IAudioClient3 *iface,
-        UINT32 *numpad);
-
-extern HRESULT WINAPI client_IsFormatSupported(IAudioClient3 *iface,
-        AUDCLNT_SHAREMODE mode, const WAVEFORMATEX *pwfx,
-        WAVEFORMATEX **outpwfx);
-
-extern HRESULT WINAPI client_GetMixFormat(IAudioClient3 *iface,
-        WAVEFORMATEX **pwfx);
-
-extern HRESULT WINAPI client_GetDevicePeriod(IAudioClient3 *iface,
-        REFERENCE_TIME *defperiod, REFERENCE_TIME *minperiod);
-
-extern HRESULT WINAPI client_Start(IAudioClient3 *iface);
-
-extern HRESULT WINAPI client_Stop(IAudioClient3 *iface);
-
-extern HRESULT WINAPI client_Reset(IAudioClient3 *iface);
-
-extern HRESULT WINAPI client_SetEventHandle(IAudioClient3 *iface,
-        HANDLE event);
-
-extern HRESULT WINAPI client_GetService(IAudioClient3 *iface, REFIID riid,
-        void **ppv);
-
-extern HRESULT WINAPI client_IsOffloadCapable(IAudioClient3 *iface,
-        AUDIO_STREAM_CATEGORY category, BOOL *offload_capable);
-
-extern HRESULT WINAPI client_SetClientProperties(IAudioClient3 *iface,
-        const AudioClientProperties *prop);
-
-extern HRESULT WINAPI client_GetBufferSizeLimits(IAudioClient3 *iface,
-        const WAVEFORMATEX *format, BOOL event_driven, REFERENCE_TIME *min_duration,
-        REFERENCE_TIME *max_duration);
-
-extern HRESULT WINAPI client_GetSharedModeEnginePeriod(IAudioClient3 *iface,
-        const WAVEFORMATEX *format, UINT32 *default_period_frames, UINT32 *unit_period_frames,
-        UINT32 *min_period_frames, UINT32 *max_period_frames);
-
-extern HRESULT WINAPI client_GetCurrentSharedModeEnginePeriod(IAudioClient3 *iface,
-        WAVEFORMATEX **cur_format, UINT32 *cur_period_frames);
-
-extern HRESULT WINAPI client_InitializeSharedAudioStream(IAudioClient3 *iface,
-        DWORD flags, UINT32 period_frames, const WAVEFORMATEX *format,
-        const GUID *session_guid);
-
-static const IAudioClient3Vtbl AudioClient3_Vtbl =
-{
-    client_QueryInterface,
-    client_AddRef,
-    client_Release,
-    client_Initialize,
-    client_GetBufferSize,
-    client_GetStreamLatency,
-    client_GetCurrentPadding,
-    client_IsFormatSupported,
-    client_GetMixFormat,
-    client_GetDevicePeriod,
-    client_Start,
-    client_Stop,
-    client_Reset,
-    client_SetEventHandle,
-    client_GetService,
-    client_IsOffloadCapable,
-    client_SetClientProperties,
-    client_GetBufferSizeLimits,
-    client_GetSharedModeEnginePeriod,
-    client_GetCurrentSharedModeEnginePeriod,
-    client_InitializeSharedAudioStream,
-};
 
 HRESULT WINAPI AUDDRV_GetAudioSessionWrapper(const GUID *guid, IMMDevice *device,
                                              AudioSessionWrapper **out)
