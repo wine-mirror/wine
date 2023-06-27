@@ -95,6 +95,12 @@ static inline struct uia_provider *impl_from_IWineUiaProvider(IWineUiaProvider *
     return CONTAINING_RECORD(iface, struct uia_provider, IWineUiaProvider_iface);
 }
 
+struct uia_event_args
+{
+    struct UiaEventArgs simple_args;
+    LONG ref;
+};
+
 enum uia_event_type {
     EVENT_TYPE_CLIENTSIDE,
     EVENT_TYPE_SERVERSIDE,
@@ -124,7 +130,8 @@ struct uia_event
     {
         struct {
             struct UiaCacheRequest cache_req;
-            UiaEventCallback *cback;
+            HRESULT (*event_callback)(struct uia_event *, struct uia_event_args *, SAFEARRAY *, BSTR);
+            void *callback_data;
 
             DWORD git_cookie;
         } clientside;
@@ -136,6 +143,8 @@ struct uia_event
         } serverside;
      } u;
 };
+
+typedef HRESULT UiaWineEventCallback(struct uia_event *, struct uia_event_args *, SAFEARRAY *, BSTR);
 
 static inline void variant_init_bool(VARIANT *v, BOOL val)
 {

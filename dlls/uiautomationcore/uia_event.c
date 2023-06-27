@@ -217,12 +217,6 @@ static void uia_event_map_entry_release(struct uia_event_map_entry *entry)
  * as they're raised on a background thread after the event raising
  * function has returned.
  */
-struct uia_event_args
-{
-    struct UiaEventArgs simple_args;
-    LONG ref;
-};
-
 static struct uia_event_args *create_uia_event_args(const struct uia_event_info *event_info)
 {
     struct uia_event_args *args = heap_alloc_zero(sizeof(*args));
@@ -733,8 +727,8 @@ static HRESULT create_uia_event(struct uia_event **out_event, LONG event_cookie,
     return S_OK;
 }
 
-static HRESULT create_clientside_uia_event(struct uia_event **out_event, int event_id, int scope, UiaEventCallback *cback,
-        SAFEARRAY *runtime_id)
+static HRESULT create_clientside_uia_event(struct uia_event **out_event, int event_id, int scope,
+        UiaWineEventCallback *cback, void *cback_data, SAFEARRAY *runtime_id)
 {
     struct uia_event *event = NULL;
     static LONG next_event_cookie;
@@ -748,7 +742,8 @@ static HRESULT create_clientside_uia_event(struct uia_event **out_event, int eve
     event->runtime_id = runtime_id;
     event->event_id = event_id;
     event->scope = scope;
-    event->u.clientside.cback = cback;
+    event->u.clientside.event_callback = cback;
+    event->u.clientside.callback_data = cback_data;
 
     *out_event = event;
     return S_OK;
@@ -1135,38 +1130,29 @@ exit:
     return hr;
 }
 
-/***********************************************************************
- *          UiaAddEvent (uiautomationcore.@)
- */
-HRESULT WINAPI UiaAddEvent(HUIANODE huianode, EVENTID event_id, UiaEventCallback *callback, enum TreeScope scope,
-        PROPERTYID *prop_ids, int prop_ids_count, struct UiaCacheRequest *cache_req, HUIAEVENT *huiaevent)
+static HRESULT uia_clientside_event_callback(struct uia_event *event, struct uia_event_args *args,
+        SAFEARRAY *cache_req, BSTR tree_struct)
 {
-    const struct uia_event_info *event_info = uia_event_info_from_id(event_id);
+    UiaEventCallback *event_callback = (UiaEventCallback *)event->u.clientside.callback_data;
+
+    event_callback(&args->simple_args, cache_req, tree_struct);
+
+    return S_OK;
+}
+
+static HRESULT uia_add_clientside_event(HUIANODE huianode, EVENTID event_id, enum TreeScope scope, PROPERTYID *prop_ids,
+        int prop_ids_count, struct UiaCacheRequest *cache_req, SAFEARRAY *rt_id, UiaWineEventCallback *cback,
+        void *cback_data, HUIAEVENT *huiaevent)
+{
     struct uia_event *event;
     SAFEARRAY *sa;
     HRESULT hr;
 
-    TRACE("(%p, %d, %p, %#x, %p, %d, %p, %p)\n", huianode, event_id, callback, scope, prop_ids, prop_ids_count,
-            cache_req, huiaevent);
-
-    if (!huianode || !callback || !cache_req || !huiaevent)
-        return E_INVALIDARG;
-
-    if (!event_info)
-        WARN("No event information for event ID %d\n", event_id);
-
-    *huiaevent = NULL;
-    if (event_info && (event_info->event_arg_type == EventArgsType_PropertyChanged))
-    {
-        FIXME("Property changed event registration currently unimplemented\n");
-        return E_NOTIMPL;
-    }
-
-    hr = UiaGetRuntimeId(huianode, &sa);
+    hr = SafeArrayCopy(rt_id, &sa);
     if (FAILED(hr))
         return hr;
 
-    hr = create_clientside_uia_event(&event, event_id, scope, callback, sa);
+    hr = create_clientside_uia_event(&event, event_id, scope, cback, cback_data, sa);
     if (FAILED(hr))
     {
         SafeArrayDestroy(sa);
@@ -1194,6 +1180,43 @@ HRESULT WINAPI UiaAddEvent(HUIANODE huianode, EVENTID event_id, UiaEventCallback
 exit:
     if (FAILED(hr))
         IWineUiaEvent_Release(&event->IWineUiaEvent_iface);
+
+    return hr;
+}
+
+/***********************************************************************
+ *          UiaAddEvent (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaAddEvent(HUIANODE huianode, EVENTID event_id, UiaEventCallback *callback, enum TreeScope scope,
+        PROPERTYID *prop_ids, int prop_ids_count, struct UiaCacheRequest *cache_req, HUIAEVENT *huiaevent)
+{
+    const struct uia_event_info *event_info = uia_event_info_from_id(event_id);
+    SAFEARRAY *sa;
+    HRESULT hr;
+
+    TRACE("(%p, %d, %p, %#x, %p, %d, %p, %p)\n", huianode, event_id, callback, scope, prop_ids, prop_ids_count,
+            cache_req, huiaevent);
+
+    if (!huianode || !callback || !cache_req || !huiaevent)
+        return E_INVALIDARG;
+
+    if (!event_info)
+        WARN("No event information for event ID %d\n", event_id);
+
+    *huiaevent = NULL;
+    if (event_info && (event_info->event_arg_type == EventArgsType_PropertyChanged))
+    {
+        FIXME("Property changed event registration currently unimplemented\n");
+        return E_NOTIMPL;
+    }
+
+    hr = UiaGetRuntimeId(huianode, &sa);
+    if (FAILED(hr))
+        return hr;
+
+    hr = uia_add_clientside_event(huianode, event_id, scope, prop_ids, prop_ids_count, cache_req, sa,
+            uia_clientside_event_callback, (void *)callback, huiaevent);
+    SafeArrayDestroy(sa);
 
     return hr;
 }
@@ -1245,7 +1268,9 @@ static HRESULT uia_event_invoke(HUIANODE node, HUIANODE nav_start_node, struct u
                 &tree_struct);
         if (SUCCEEDED(hr))
         {
-            event->u.clientside.cback(&args->simple_args, out_req, tree_struct);
+            hr = event->u.clientside.event_callback(event, args, out_req, tree_struct);
+            if (FAILED(hr))
+                WARN("Event callback failed with hr %#lx\n", hr);
             SafeArrayDestroy(out_req);
             SysFreeString(tree_struct);
         }
