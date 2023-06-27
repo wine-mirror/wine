@@ -939,26 +939,25 @@ static const char *debugstr_devmodew( const DEVMODEW *devmode )
 
 static void initialize_display_settings(void)
 {
-    DISPLAY_DEVICEW ddW;
+    DISPLAY_DEVICEW device = {.cb = sizeof(DISPLAY_DEVICEW)};
     DWORD i = 0;
 
     /* Store current display mode in the registry */
-    ddW.cb = sizeof(ddW);
-    while (EnumDisplayDevicesW( NULL, i++, &ddW, 0 ))
+    while (EnumDisplayDevicesW( NULL, i++, &device, 0 ))
     {
         DEVMODEW devmode = {.dmSize = sizeof(DEVMODEW)};
 
-        if (!EnumDisplaySettingsExW( ddW.DeviceName, ENUM_CURRENT_SETTINGS, &devmode, 0))
+        if (!EnumDisplaySettingsExW( device.DeviceName, ENUM_CURRENT_SETTINGS, &devmode, 0))
         {
-            ERR( "Failed to query current display settings for %s.\n", debugstr_w(ddW.DeviceName) );
+            ERR( "Failed to query current display settings for %s.\n", debugstr_w( device.DeviceName ) );
             continue;
         }
 
-        TRACE( "Device %s current display mode %s.\n", debugstr_w( ddW.DeviceName ), debugstr_devmodew( &devmode ) );
+        TRACE( "Device %s current display mode %s.\n", debugstr_w( device.DeviceName ), debugstr_devmodew( &devmode ) );
 
-        if (ChangeDisplaySettingsExW( ddW.DeviceName, &devmode, 0,
+        if (ChangeDisplaySettingsExW( device.DeviceName, &devmode, 0,
                                       CDS_GLOBAL | CDS_NORESET | CDS_UPDATEREGISTRY, 0 ))
-            ERR( "Failed to initialize registry display settings for %s.\n", debugstr_w(ddW.DeviceName) );
+            ERR( "Failed to initialize registry display settings for %s.\n", debugstr_w( device.DeviceName ) );
     }
 }
 
