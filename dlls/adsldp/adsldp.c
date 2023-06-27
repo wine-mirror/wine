@@ -756,8 +756,38 @@ static HRESULT WINAPI ldapns_Put(IADs *iface, BSTR name, VARIANT prop)
 
 static HRESULT WINAPI ldapns_GetEx(IADs *iface, BSTR name, VARIANT *prop)
 {
-    FIXME("%p,%s,%p: stub\n", iface, debugstr_w(name), prop);
-    return E_NOTIMPL;
+    LDAP_namespace *ldap = impl_from_IADs(iface);
+    HRESULT hr;
+    ULONG i;
+
+    TRACE("%p,%s,%p\n", iface, debugstr_w(name), prop);
+
+    if (!name || !prop) return E_ADS_BAD_PARAMETER;
+
+    if (!ldap->attrs_count)
+    {
+        hr = IADs_GetInfo(iface);
+        if (hr != S_OK) return hr;
+    }
+
+    for (i = 0; i < ldap->attrs_count; i++)
+    {
+        if (!wcsicmp(name, ldap->attrs[i].pszAttrName))
+        {
+            if (!ldap->attrs[i].dwNumValues)
+            {
+                V_BSTR(prop) = NULL;
+                V_VT(prop) = VT_BSTR;
+                return S_OK;
+            }
+
+            TRACE("attr %s has %lu values\n", debugstr_w(ldap->attrs[i].pszAttrName), ldap->attrs[i].dwNumValues);
+
+            return adsvalues_to_array(ldap->attrs[i].pADsValues, ldap->attrs[i].dwNumValues, prop);
+        }
+    }
+
+    return E_ADS_PROPERTY_NOT_FOUND;
 }
 
 static HRESULT WINAPI ldapns_PutEx(IADs *iface, LONG code, BSTR name, VARIANT prop)
