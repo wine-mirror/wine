@@ -64,6 +64,7 @@ struct icon
     struct list    entry;
     HICON          image;    /* the image to render */
     HWND           owner;    /* the HWND passed in to the Shell_NotifyIcon call */
+    HWND           window;   /* the adaptor window */
     HWND           tooltip;  /* Icon tooltip */
     UINT           state;    /* state flags */
     UINT           id;       /* the unique id given by the app */
@@ -114,6 +115,25 @@ static HWND balloon_window;
 #define BALLOON_SHOW_MAX_TIMEOUT 30000
 
 #define WM_POPUPSYSTEMMENU  0x0313
+
+static LRESULT WINAPI shell_traywnd_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
+static LRESULT WINAPI tray_icon_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
+
+static WNDCLASSEXW shell_traywnd_class =
+{
+    .cbSize = sizeof(WNDCLASSEXW),
+    .style = CS_DBLCLKS | CS_HREDRAW,
+    .lpfnWndProc = shell_traywnd_proc,
+    .hbrBackground = (HBRUSH)COLOR_WINDOW,
+    .lpszClassName = L"Shell_TrayWnd",
+};
+static WNDCLASSEXW tray_icon_class =
+{
+    .cbSize = sizeof(WNDCLASSEXW),
+    .style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS,
+    .lpfnWndProc = tray_icon_wndproc,
+    .lpszClassName = L"__wine_tray_icon",
+};
 
 static void do_hide_systray(void);
 static void do_show_systray(void);
@@ -280,6 +300,13 @@ static void update_tooltip_text(struct icon *icon)
     SendMessageW(icon->tooltip, TTM_UPDATETIPTEXTW, 0, (LPARAM)&ti);
 }
 
+/* get the position of an icon in the stand-alone tray */
+static POINT get_icon_pos( struct icon *icon )
+{
+    RECT rect = get_icon_rect( icon );
+    return *(POINT *)&rect;
+}
+
 /* synchronize tooltip position with tooltip window */
 static void update_tooltip_position( struct icon *icon )
 {
@@ -291,6 +318,33 @@ static void update_tooltip_position( struct icon *icon )
     if (icon->display != -1) ti.rect = get_icon_rect( icon );
     SendMessageW( icon->tooltip, TTM_NEWTOOLRECTW, 0, (LPARAM)&ti );
     if (balloon_icon == icon) set_balloon_position( icon );
+}
+
+/* window procedure for the individual tray icon window */
+static LRESULT WINAPI tray_icon_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    struct icon *icon = (struct icon *)GetWindowLongPtrW( hwnd, GWLP_USERDATA );
+
+    TRACE( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
+
+    switch (msg)
+    {
+    case WM_NCCREATE:
+    {
+        /* set the icon data for the window from the data passed into CreateWindow */
+        const CREATESTRUCTW *info = (const CREATESTRUCTW *)lparam;
+        icon = info->lpCreateParams;
+        SetWindowLongPtrW( hwnd, GWLP_USERDATA, (LONG_PTR)icon );
+        break;
+    }
+
+    case WM_CREATE:
+        icon->window = hwnd;
+        create_tooltip( icon );
+        break;
+    }
+
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
 }
 
 /* find the icon located at a certain point in the tray window */
@@ -336,6 +390,7 @@ static void systray_add_icon( struct icon *icon )
 static void systray_remove_icon( struct icon *icon )
 {
     struct icon *ptr;
+    POINT pos;
 
     if (icon->display == -1) return;  /* already removed */
 
@@ -346,6 +401,8 @@ static void systray_remove_icon( struct icon *icon )
         if (ptr->display < icon->display) continue;
         ptr->display--;
         update_tooltip_position( ptr );
+        pos = get_icon_pos( ptr );
+        SetWindowPos( ptr->window, 0, pos.x, pos.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER );
     }
 
     if (!--nb_displayed && !enable_shell) do_hide_systray();
@@ -365,7 +422,6 @@ static BOOL show_icon(struct icon *icon)
     systray_add_icon( icon );
 
     update_tooltip_position( icon );
-    create_tooltip( icon );
     update_balloon( icon );
     return TRUE;
 }
@@ -455,17 +511,23 @@ static BOOL add_icon(NOTIFYICONDATAW *nid)
     icon->owner  = nid->hWnd;
     icon->display = -1;
 
+    CreateWindowW( tray_icon_class.lpszClassName, NULL, WS_CHILD,
+                   0, 0, icon_cx, icon_cy, tray_window, NULL, NULL, icon );
+    if (!icon->window) ERR( "Failed to create systray icon window\n" );
+
     list_add_tail(&icon_list, &icon->entry);
 
     return modify_icon( icon, nid );
 }
 
 /* Deletes tray icon window and icon record */
-static BOOL delete_icon(struct icon *icon)
+static BOOL delete_icon( struct icon *icon )
 {
-    hide_icon(icon);
-    list_remove(&icon->entry);
-    DestroyIcon(icon->image);
+    hide_icon( icon );
+    list_remove( &icon->entry );
+    DestroyWindow( icon->tooltip );
+    DestroyWindow( icon->window );
+    DestroyIcon( icon->image );
     free( icon );
     return TRUE;
 }
@@ -777,7 +839,7 @@ static void do_show_systray(void)
     sync_taskbar_buttons();
 }
 
-static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+static LRESULT WINAPI shell_traywnd_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     switch (msg)
     {
@@ -904,10 +966,14 @@ void handle_parent_notify( HWND hwnd, WPARAM wp )
 /* this function creates the listener window */
 void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enable_shell )
 {
-    WNDCLASSEXW class;
     RECT work_rect, primary_rect, taskbar_rect;
 
     if (using_root && graphics_driver) wine_notify_icon = (void *)GetProcAddress( graphics_driver, "wine_notify_icon" );
+
+    shell_traywnd_class.hIcon = LoadIconW( 0, (const WCHAR *)IDI_WINLOGO );
+    shell_traywnd_class.hCursor = LoadCursorW( 0, (const WCHAR *)IDC_ARROW );
+    tray_icon_class.hIcon = shell_traywnd_class.hIcon;
+    tray_icon_class.hCursor = shell_traywnd_class.hCursor;
 
     icon_cx = GetSystemMetrics( SM_CXSMICON ) + 2*ICON_BORDER;
     icon_cy = GetSystemMetrics( SM_CYSMICON ) + 2*ICON_BORDER;
@@ -915,19 +981,14 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enab
     enable_shell = arg_enable_shell;
 
     /* register the systray listener window class */
-    ZeroMemory(&class, sizeof(class));
-    class.cbSize        = sizeof(class);
-    class.style         = CS_DBLCLKS | CS_HREDRAW;
-    class.lpfnWndProc   = tray_wndproc;
-    class.hInstance     = NULL;
-    class.hIcon         = LoadIconW(0, (LPCWSTR)IDI_WINLOGO);
-    class.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
-    class.hbrBackground = (HBRUSH) COLOR_WINDOW;
-    class.lpszClassName = L"Shell_TrayWnd";
-
-    if (!RegisterClassExW(&class))
+    if (!RegisterClassExW( &shell_traywnd_class ))
     {
         ERR( "Could not register SysTray window class\n" );
+        return;
+    }
+    if (!wine_notify_icon && !RegisterClassExW( &tray_icon_class ))
+    {
+        ERR( "Could not register Wine SysTray window classes\n" );
         return;
     }
 
@@ -935,7 +996,7 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enab
     SetRect( &primary_rect, 0, 0, GetSystemMetrics( SM_CXSCREEN ), GetSystemMetrics( SM_CYSCREEN ) );
     SubtractRect( &taskbar_rect, &primary_rect, &work_rect );
 
-    tray_window = CreateWindowExW( WS_EX_NOACTIVATE, class.lpszClassName, NULL, WS_POPUP, taskbar_rect.left,
+    tray_window = CreateWindowExW( WS_EX_NOACTIVATE, shell_traywnd_class.lpszClassName, NULL, WS_POPUP, taskbar_rect.left,
                                    taskbar_rect.top, taskbar_rect.right - taskbar_rect.left,
                                    taskbar_rect.bottom - taskbar_rect.top, 0, 0, 0, 0 );
     if (!tray_window)
