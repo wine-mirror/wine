@@ -1879,6 +1879,7 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
     context_invalidate_state(&context_vk->c, STATE_INDEXBUFFER);
     context_invalidate_state(&context_vk->c, STATE_BLEND_FACTOR);
     context_invalidate_state(&context_vk->c, STATE_STENCIL_REF);
+    context_invalidate_state(&context_vk->c, STATE_VIEWPORT);
 
     VK_CALL(vkEndCommandBuffer(buffer->vk_command_buffer));
 
@@ -2037,8 +2038,6 @@ static int wined3d_graphics_pipeline_vk_compare(const void *key, const struct wi
     if ((ret = wined3d_uint32_compare(a->ts_desc.patchControlPoints, b->ts_desc.patchControlPoints)))
         return ret;
 
-    if ((ret = memcmp(a->viewports, b->viewports, sizeof(a->viewports))))
-        return ret;
     if ((ret = memcmp(a->scissors, b->scissors, sizeof(a->scissors))))
         return ret;
 
@@ -2093,6 +2092,7 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
     {
         VK_DYNAMIC_STATE_BLEND_CONSTANTS,
         VK_DYNAMIC_STATE_STENCIL_REFERENCE,
+        VK_DYNAMIC_STATE_VIEWPORT,
     };
 
     key = &context_vk->graphics.pipeline_key_vk;
@@ -2117,7 +2117,6 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
     key->ts_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
 
     key->vp_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    key->vp_desc.pViewports = key->viewports;
     key->vp_desc.pScissors = key->scissors;
     key->vp_desc.viewportCount = (context_vk->vk_info->multiple_viewports ? WINED3D_MAX_VIEWPORTS : 1);
     key->vp_desc.scissorCount = key->vp_desc.viewportCount;
@@ -2456,35 +2455,19 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
         update = true;
     }
 
-    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_VIEWPORT)
-            || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_SCISSORRECT)
+    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_SCISSORRECT)
             || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_RASTERIZER))
     {
         for (i = 0; i < key->vp_desc.viewportCount; ++i)
         {
             const struct wined3d_viewport *src_viewport = &state->viewports[i];
-            VkViewport *viewport = &key->viewports[i];
             VkRect2D *scissor = &key->scissors[i];
 
             if (i >= state->viewport_count)
             {
-                viewport->x = 0.0f;
-                viewport->y = 0.0f;
-                viewport->width = 1.0f;
-                viewport->height = 1.0f;
-                viewport->minDepth = 0.0f;
-                viewport->maxDepth = 0.0f;
-
                 memset(scissor, 0, sizeof(*scissor));
                 continue;
             }
-
-            viewport->x = src_viewport->x;
-            viewport->y = src_viewport->y;
-            viewport->width = src_viewport->width;
-            viewport->height = src_viewport->height;
-            viewport->minDepth = src_viewport->min_z;
-            viewport->maxDepth = src_viewport->max_z;
 
             if (state->rasterizer_state && state->rasterizer_state->desc.scissor)
             {
@@ -2503,18 +2486,16 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
             }
             else
             {
-                scissor->offset.x = viewport->x;
-                scissor->offset.y = viewport->y;
-                scissor->extent.width = viewport->width;
-                scissor->extent.height = viewport->height;
+                scissor->offset.x = src_viewport->x;
+                scissor->offset.y = src_viewport->y;
+                scissor->extent.width = src_viewport->width;
+                scissor->extent.height = src_viewport->height;
             }
             /* Scissor offsets need to be non-negative (VUID-VkPipelineViewportStateCreateInfo-x-02821) */
             if (scissor->offset.x < 0)
                 scissor->offset.x = 0;
             if (scissor->offset.y < 0)
                 scissor->offset.y = 0;
-            viewport->y += viewport->height;
-            viewport->height = -viewport->height;
         }
 
         update = true;
@@ -3791,6 +3772,42 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
 
     if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_BLEND_FACTOR))
         VK_CALL(vkCmdSetBlendConstants(vk_command_buffer, &state->blend_factor.r));
+
+    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_VIEWPORT))
+    {
+        unsigned int viewport_count = (context_vk->vk_info->multiple_viewports ? WINED3D_MAX_VIEWPORTS : 1);
+        VkViewport viewports[WINED3D_MAX_VIEWPORTS];
+        unsigned int i;
+
+        for (i = 0; i < viewport_count; ++i)
+        {
+            const struct wined3d_viewport *src_viewport = &state->viewports[i];
+            VkViewport *viewport = &viewports[i];
+
+            if (i >= state->viewport_count)
+            {
+                viewport->x = 0.0f;
+                viewport->y = 0.0f;
+                viewport->width = 1.0f;
+                viewport->height = 1.0f;
+                viewport->minDepth = 0.0f;
+                viewport->maxDepth = 0.0f;
+                continue;
+            }
+
+            viewport->x = src_viewport->x;
+            viewport->y = src_viewport->y;
+            viewport->width = src_viewport->width;
+            viewport->height = src_viewport->height;
+            viewport->minDepth = src_viewport->min_z;
+            viewport->maxDepth = src_viewport->max_z;
+
+            viewport->y += viewport->height;
+            viewport->height = -viewport->height;
+        }
+
+        VK_CALL(vkCmdSetViewport(vk_command_buffer, 0, viewport_count, viewports));
+    }
 
     memset(context_vk->c.dirty_graphics_states, 0, sizeof(context_vk->c.dirty_graphics_states));
     context_vk->c.shader_update_mask &= 1u << WINED3D_SHADER_TYPE_COMPUTE;
