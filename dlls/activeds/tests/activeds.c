@@ -31,8 +31,6 @@
 
 #include "wine/test.h"
 
-DEFINE_GUID(CLSID_Pathname,0x080d0d78,0xf421,0x11d0,0xa3,0x6e,0x00,0xc0,0x4f,0xb9,0x50,0xdc);
-
 static void test_ADsBuildVarArrayStr(void)
 {
     const WCHAR *props[] = { L"prop1", L"prop2" };

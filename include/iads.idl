@@ -903,6 +903,17 @@ interface IADsPathname : IDispatch
     HRESULT put_EscapedMode(long mode);
 }
 
+[
+    helpstring("ADs LDAP Pathname Descriptor Object"),
+    uuid(080d0d78-f421-11d0-a36e-00c04fb950dc),
+    progid("Pathname"),
+    version(1.0)
+]
+coclass Pathname
+{
+    interface IADsPathname;
+}
+
 /*****************************************************************************
  *    IADsADSystemInfo interface
  */
