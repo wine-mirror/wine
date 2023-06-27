@@ -29,7 +29,7 @@
 
 extern HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback,
                                 LPCVOID lpAddress, DWORD dwAddressSize,
-                                LPVOID lpContext ) DECLSPEC_HIDDEN;
+                                LPVOID lpContext );
 
 typedef struct tagEnumSessionAsyncCallbackData
 {
@@ -197,18 +197,18 @@ typedef struct IDirectPlayImpl
 
 HRESULT DP_HandleMessage( IDirectPlayImpl *This, const void *lpMessageBody,
         DWORD  dwMessageBodySize, const void *lpMessageHeader, WORD wCommandId, WORD wVersion,
-        void **lplpReply, DWORD *lpdwMsgSize ) DECLSPEC_HIDDEN;
+        void **lplpReply, DWORD *lpdwMsgSize );
 
 /* DP SP external interfaces into DirectPlay */
-extern HRESULT DP_GetSPPlayerData( IDirectPlayImpl *lpDP, DPID idPlayer, void **lplpData ) DECLSPEC_HIDDEN;
-extern HRESULT DP_SetSPPlayerData( IDirectPlayImpl *lpDP, DPID idPlayer, void *lpData ) DECLSPEC_HIDDEN;
+extern HRESULT DP_GetSPPlayerData( IDirectPlayImpl *lpDP, DPID idPlayer, void **lplpData );
+extern HRESULT DP_SetSPPlayerData( IDirectPlayImpl *lpDP, DPID idPlayer, void *lpData );
 
 /* DP external interfaces to call into DPSP interface */
-extern LPVOID DPSP_CreateSPPlayerData(void) DECLSPEC_HIDDEN;
+extern LPVOID DPSP_CreateSPPlayerData(void);
 
-extern HRESULT dplay_create( REFIID riid, void **ppv ) DECLSPEC_HIDDEN;
-extern HRESULT dplobby_create( REFIID riid, void **ppv ) DECLSPEC_HIDDEN;
-extern HRESULT dplaysp_create( REFIID riid, void **ppv, IDirectPlayImpl *dp ) DECLSPEC_HIDDEN;
-extern HRESULT dplobbysp_create( REFIID riid, void **ppv, IDirectPlayImpl *dp ) DECLSPEC_HIDDEN;
+extern HRESULT dplay_create( REFIID riid, void **ppv );
+extern HRESULT dplobby_create( REFIID riid, void **ppv );
+extern HRESULT dplaysp_create( REFIID riid, void **ppv, IDirectPlayImpl *dp );
+extern HRESULT dplobbysp_create( REFIID riid, void **ppv, IDirectPlayImpl *dp );
 
 #endif /* __WINE_DPLAY_GLOBAL_INCLUDED */

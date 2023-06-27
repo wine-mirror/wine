@@ -29,17 +29,17 @@
 #include "dplay_global.h"
 
 DWORD CreateLobbyMessageReceptionThread( HANDLE hNotifyEvent, HANDLE hStart,
-                                         HANDLE hDeath, HANDLE hConnRead ) DECLSPEC_HIDDEN;
+                                         HANDLE hDeath, HANDLE hConnRead );
 
 HRESULT DP_MSG_SendRequestPlayerId( IDirectPlayImpl *This, DWORD dwFlags,
-                                    LPDPID lpdipidAllocatedId ) DECLSPEC_HIDDEN;
-HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer ) DECLSPEC_HIDDEN;
+                                    LPDPID lpdipidAllocatedId );
+HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer );
 
 void DP_MSG_ReplyReceived( IDirectPlayImpl *This, WORD wCommandId,
-                           LPCVOID lpMsgBody, DWORD dwMsgBodySize ) DECLSPEC_HIDDEN;
+                           LPCVOID lpMsgBody, DWORD dwMsgBodySize );
 void DP_MSG_ErrorReceived( IDirectPlayImpl *This, WORD wCommandId,
-                           LPCVOID lpMsgBody, DWORD dwMsgBodySize ) DECLSPEC_HIDDEN;
-void DP_MSG_ToSelf( IDirectPlayImpl *This, DPID dpidSelf ) DECLSPEC_HIDDEN;
+                           LPCVOID lpMsgBody, DWORD dwMsgBodySize );
+void DP_MSG_ToSelf( IDirectPlayImpl *This, DPID dpidSelf );
 
 /* Timings -> 1000 ticks/sec */
 #define DPMSG_WAIT_5_SECS   5000
