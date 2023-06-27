@@ -373,12 +373,6 @@ static HRESULT ADSystemInfo_create(REFIID riid, void **obj)
     return hr;
 }
 
-struct ldap_attribute
-{
-    WCHAR *name;
-    WCHAR **values;
-};
-
 typedef struct
 {
     IADs IADs_iface;
@@ -391,7 +385,7 @@ typedef struct
     BSTR object;
     ULONG port;
     ULONG attrs_count, attrs_count_allocated;
-    struct ldap_attribute *attrs;
+    ADS_SEARCH_COLUMN *attrs;
     struct attribute_type *at;
     ULONG at_single_count, at_multiple_count;
     struct
@@ -477,10 +471,7 @@ static void free_attributes(LDAP_namespace *ldap)
     if (!ldap->attrs) return;
 
     for (i = 0; i < ldap->attrs_count; i++)
-    {
-        ldap_memfreeW(ldap->attrs[i].name);
-        ldap_value_freeW(ldap->attrs[i].values);
-    }
+        IDirectorySearch_FreeColumn(&ldap->IDirectorySearch_iface, &ldap->attrs[i]);
 
     free(ldap->attrs);
     ldap->attrs = NULL;
@@ -591,6 +582,133 @@ static HRESULT WINAPI ldapns_SetInfo(IADs *iface)
     return E_NOTIMPL;
 }
 
+static HRESULT adsvalue_to_variant(const ADSVALUE *value, VARIANT *var)
+{
+    HRESULT hr = S_OK;
+    void *val;
+
+    switch (value->dwType)
+    {
+    default:
+        FIXME("no special handling for type %d\n", value->dwType);
+        /* fall through */
+    case ADSTYPE_DN_STRING:
+    case ADSTYPE_CASE_EXACT_STRING:
+    case ADSTYPE_CASE_IGNORE_STRING:
+    case ADSTYPE_PRINTABLE_STRING:
+        val = SysAllocString(value->CaseIgnoreString);
+        if (!val) return E_OUTOFMEMORY;
+
+        V_VT(var) = VT_BSTR;
+        V_BSTR(var) = val;
+        break;
+
+    case ADSTYPE_BOOLEAN:
+        V_VT(var) = VT_BOOL;
+        V_BOOL(var) = value->Boolean ? VARIANT_TRUE : VARIANT_FALSE;
+        break;
+
+    case ADSTYPE_INTEGER:
+        V_VT(var) = VT_I4;
+        V_I4(var) = value->Integer;
+        break;
+
+    case ADSTYPE_LARGE_INTEGER:
+        V_VT(var) = VT_I8;
+        V_I8(var) = value->LargeInteger.QuadPart;
+        break;
+
+    case ADSTYPE_OCTET_STRING:
+    case ADSTYPE_NT_SECURITY_DESCRIPTOR:
+    {
+        SAFEARRAY *sa;
+
+        sa = SafeArrayCreateVector(VT_UI1, 0, value->OctetString.dwLength);
+        if (!sa) return E_OUTOFMEMORY;
+
+        memcpy(sa->pvData, value->OctetString.lpValue, value->OctetString.dwLength);
+        V_VT(var) = VT_ARRAY | VT_UI1;
+        V_ARRAY(var) = sa;
+        break;
+    }
+
+    case ADSTYPE_UTC_TIME:
+    {
+        DOUBLE date;
+
+        if (!SystemTimeToVariantTime((SYSTEMTIME *)&value->UTCTime, &date))
+            return E_FAIL;
+
+        V_VT(var) = VT_DATE;
+        V_DATE(var) = date;
+        break;
+    }
+
+    case ADSTYPE_DN_WITH_BINARY:
+    {
+        SAFEARRAY *sa;
+        IADsDNWithBinary *dn = NULL;
+        VARIANT data;
+
+        sa = SafeArrayCreateVector(VT_UI1, 0, value->pDNWithBinary->dwLength);
+        if (!sa) return E_OUTOFMEMORY;
+        memcpy(sa->pvData, value->pDNWithBinary->lpBinaryValue, value->pDNWithBinary->dwLength);
+
+        hr = CoCreateInstance(&CLSID_DNWithBinary, 0, CLSCTX_INPROC_SERVER, &IID_IADsDNWithBinary, (void **)&dn);
+        if (hr != S_OK) goto fail;
+
+        V_VT(&data) = VT_ARRAY | VT_UI1;
+        V_ARRAY(&data) = sa;
+        hr = IADsDNWithBinary_put_BinaryValue(dn, data);
+        if (hr != S_OK) goto fail;
+
+        hr = IADsDNWithBinary_put_DNString(dn, value->pDNWithBinary->pszDNString);
+        if (hr != S_OK) goto fail;
+
+        V_VT(var) = VT_DISPATCH;
+        V_DISPATCH(var) = (IDispatch *)dn;
+        break;
+fail:
+        SafeArrayDestroy(sa);
+        if (dn) IADsDNWithBinary_Release(dn);
+        return hr;
+
+    }
+    }
+
+    TRACE("=> %s\n", wine_dbgstr_variant(var));
+    return hr;
+}
+
+static HRESULT adsvalues_to_array(const ADSVALUE *values, LONG count, VARIANT *var)
+{
+    HRESULT hr;
+    SAFEARRAY *sa;
+    VARIANT item;
+    LONG i;
+
+    sa = SafeArrayCreateVector(VT_VARIANT, 0, count);
+    if (!sa) return E_OUTOFMEMORY;
+
+    for (i = 0; i < count; i++)
+    {
+        hr = adsvalue_to_variant(&values[i], &item);
+        if (hr != S_OK) goto fail;
+
+        hr = SafeArrayPutElement(sa, &i, &item);
+        VariantClear(&item);
+        if (hr != S_OK) goto fail;
+    }
+
+    V_VT(var) = VT_ARRAY | VT_VARIANT;
+    V_ARRAY(var) = sa;
+    return S_OK;
+
+fail:
+    SafeArrayDestroy(sa);
+    return hr;
+}
+
 static HRESULT WINAPI ldapns_Get(IADs *iface, BSTR name, VARIANT *prop)
 {
     LDAP_namespace *ldap = impl_from_IADs(iface);
@@ -609,58 +727,21 @@ static HRESULT WINAPI ldapns_Get(IADs *iface, BSTR name, VARIANT *prop)
 
     for (i = 0; i < ldap->attrs_count; i++)
     {
-        if (!wcsicmp(name, ldap->attrs[i].name))
+        if (!wcsicmp(name, ldap->attrs[i].pszAttrName))
         {
-            LONG count = ldap_count_valuesW(ldap->attrs[i].values);
-            if (!count)
+            if (!ldap->attrs[i].dwNumValues)
             {
                 V_BSTR(prop) = NULL;
                 V_VT(prop) = VT_BSTR;
                 return S_OK;
             }
 
-            if (count > 1)
-            {
-                SAFEARRAY *sa;
-                VARIANT item;
-                LONG idx;
+            TRACE("attr %s has %lu values\n", debugstr_w(ldap->attrs[i].pszAttrName), ldap->attrs[i].dwNumValues);
 
-                TRACE("attr %s has %lu values\n", debugstr_w(ldap->attrs[i].name), count);
-
-                sa = SafeArrayCreateVector(VT_VARIANT, 0, count);
-                if (!sa) return E_OUTOFMEMORY;
-
-                for (idx = 0; idx < count; idx++)
-                {
-                    TRACE("=> %s\n", debugstr_w(ldap->attrs[i].values[idx]));
-                    V_VT(&item) = VT_BSTR;
-                    V_BSTR(&item) = SysAllocString(ldap->attrs[i].values[idx]);
-                    if (!V_BSTR(&item))
-                    {
-                        hr = E_OUTOFMEMORY;
-                        goto fail;
-                    }
-
-                    hr = SafeArrayPutElement(sa, &idx, &item);
-                    SysFreeString(V_BSTR(&item));
-                    if (hr != S_OK) goto fail;
-                }
-
-                V_VT(prop) = VT_ARRAY | VT_VARIANT;
-                V_ARRAY(prop) = sa;
-                return S_OK;
-fail:
-                SafeArrayDestroy(sa);
-                return hr;
-            }
+            if (ldap->attrs[i].dwNumValues > 1)
+                return adsvalues_to_array(ldap->attrs[i].pADsValues, ldap->attrs[i].dwNumValues, prop);
             else
-            {
-                TRACE("=> %s\n", debugstr_w(ldap->attrs[i].values[0]));
-                V_BSTR(prop) = SysAllocString(ldap->attrs[i].values[0]);
-                if (!V_BSTR(prop)) return E_OUTOFMEMORY;
-                V_VT(prop) = VT_BSTR;
-                return S_OK;
-            }
+                return adsvalue_to_variant(&ldap->attrs[i].pADsValues[0], prop);
         }
     }
 
@@ -685,9 +766,9 @@ static HRESULT WINAPI ldapns_PutEx(IADs *iface, LONG code, BSTR name, VARIANT pr
     return E_NOTIMPL;
 }
 
-static HRESULT add_attribute(LDAP_namespace *ldap, WCHAR *name, WCHAR **values)
+static HRESULT add_attribute(LDAP_namespace *ldap, ADS_SEARCH_COLUMN *attr)
 {
-    struct ldap_attribute *new_attrs;
+    ADS_SEARCH_COLUMN *new_attrs;
 
     if (!ldap->attrs)
     {
@@ -704,8 +785,7 @@ static HRESULT add_attribute(LDAP_namespace *ldap, WCHAR *name, WCHAR **values)
         ldap->attrs = new_attrs;
     }
 
-    ldap->attrs[ldap->attrs_count].name = name;
-    ldap->attrs[ldap->attrs_count].values = values;
+    ldap->attrs[ldap->attrs_count] = *attr;
     ldap->attrs_count++;
 
     return S_OK;
@@ -717,10 +797,11 @@ static HRESULT WINAPI ldapns_GetInfoEx(IADs *iface, VARIANT prop, LONG reserved)
     HRESULT hr;
     SAFEARRAY *sa;
     VARIANT *item;
-    WCHAR **props = NULL, *attr, **values;
-    DWORD i, count, err;
-    LDAPMessage *res = NULL, *entry;
-    BerElement *ber;
+    WCHAR **props = NULL;
+    DWORD i, count;
+    ADS_SEARCHPREF_INFO pref[3];
+    ADS_SEARCH_HANDLE sh;
+    ADS_SEARCH_COLUMN col;
 
     TRACE("%p,%s,%ld\n", iface, wine_dbgstr_variant(&prop), reserved);
 
@@ -757,45 +838,49 @@ static HRESULT WINAPI ldapns_GetInfoEx(IADs *iface, VARIANT prop, LONG reserved)
             }
             props[i] = V_BSTR(&item[i]);
         }
-        props[sa->rgsabound[0].cElements] = NULL;
     }
+    else
+        count = ~0;
 
-    err = ldap_search_sW(ldap->ld, NULL, LDAP_SCOPE_BASE, (WCHAR *)L"(objectClass=*)", props, FALSE, &res);
-    if (err != LDAP_SUCCESS)
+    pref[0].dwSearchPref = ADS_SEARCHPREF_SEARCH_SCOPE;
+    pref[0].vValue.dwType = ADSTYPE_INTEGER;
+    pref[0].vValue.Integer = ADS_SCOPE_BASE;
+    pref[0].dwStatus = 0;
+
+    pref[1].dwSearchPref = ADS_SEARCHPREF_ATTRIBTYPES_ONLY;
+    pref[1].vValue.dwType = ADSTYPE_BOOLEAN;
+    pref[1].vValue.Boolean = FALSE;
+    pref[1].dwStatus = 0;
+
+    pref[2].dwSearchPref = ADS_SEARCHPREF_SIZE_LIMIT;
+    pref[2].vValue.dwType = ADSTYPE_INTEGER;
+    pref[2].vValue.Integer = 20;
+    pref[2].dwStatus = 0;
+
+    IDirectorySearch_SetSearchPreference(&ldap->IDirectorySearch_iface, pref, ARRAY_SIZE(pref));
+
+    hr = IDirectorySearch_ExecuteSearch(&ldap->IDirectorySearch_iface, (WCHAR *)L"(objectClass=*)", props, count, &sh);
+    if (hr != S_OK)
     {
-        TRACE("ldap_search_sW error %#lx\n", err);
-        hr = HRESULT_FROM_WIN32(map_ldap_error(err));
+        TRACE("ExecuteSearch error %#lx\n", hr);
         goto exit;
     }
 
-    entry = ldap_first_entry(ldap->ld, res);
-    while (entry)
+    while (IDirectorySearch_GetNextRow(&ldap->IDirectorySearch_iface, sh) != S_ADS_NOMORE_ROWS)
     {
-        attr = ldap_first_attributeW(ldap->ld, entry, &ber);
-        while (attr)
+        WCHAR *name;
+        while (IDirectorySearch_GetNextColumnName(&ldap->IDirectorySearch_iface, sh, &name) != S_ADS_NOMORE_COLUMNS)
         {
-            TRACE("attr: %s\n", debugstr_w(attr));
+            hr = IDirectorySearch_GetColumn(&ldap->IDirectorySearch_iface, sh, name, &col);
+            if (hr == S_OK)
+                add_attribute(ldap, &col);
 
-            values = ldap_get_valuesW(ldap->ld, entry, attr);
-
-            hr = add_attribute(ldap, attr, values);
-            if (hr != S_OK)
-            {
-                ldap_value_freeW(values);
-                ldap_memfreeW(attr);
-                ber_free(ber, 0);
-                goto exit;
-            }
-
-            attr = ldap_next_attributeW(ldap->ld, entry, ber);
+            FreeADsMem(name);
         }
-
-        ber_free(ber, 0);
-        entry = ldap_next_entry(ldap->ld, res);
     }
 
+    IDirectorySearch_CloseSearchHandle(&ldap->IDirectorySearch_iface, sh);
 exit:
-    if (res) ldap_msgfree(res);
     free(props);
     SafeArrayUnaccessData(sa);
     return hr;
