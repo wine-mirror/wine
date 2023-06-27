@@ -1243,7 +1243,6 @@ static struct test_transfer_notify *create_transfer_notify(void)
 static void test_TransferVideoFrame(void)
 {
     struct test_transfer_notify *notify;
-    WCHAR url[] = {L"i420-64x64.avi"};
     ID3D11Texture2D *texture = NULL, *rb_texture;
     D3D11_MAPPED_SUBRESOURCE map_desc;
     IMFMediaEngineEx *media_engine = NULL;
@@ -1256,6 +1255,7 @@ static void test_TransferVideoFrame(void)
     UINT token;
     HRESULT hr;
     DWORD res;
+    BSTR url;
 
     stream = load_resource(L"i420-64x64.avi", L"video/avi");
 
@@ -1289,8 +1289,10 @@ static void test_TransferVideoFrame(void)
     hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    url = SysAllocString(L"i420-64x64.avi");
     hr = IMFMediaEngineEx_SetSourceFromByteStream(media_engine, stream, url);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(url);
     IMFByteStream_Release(stream);
 
     res = WaitForSingleObject(notify->ready_event, 5000);
