@@ -7,4 +7,5 @@ EXTRADLLFLAGS = -Wb,--prefer-native
 SOURCES = \
 	activeds.idl \
 	activeds_main.c \
+	dnwithbinary.c \
 	pathname.c

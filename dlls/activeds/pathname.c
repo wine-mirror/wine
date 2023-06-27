@@ -427,13 +427,16 @@ static HRESULT Pathname_create(REFIID riid, void **obj)
     return hr;
 }
 
+HRESULT ADsDNWithBinary_create(REFIID riid, void **obj);
+
 static const struct class_info
 {
     const CLSID *clsid;
     HRESULT (*constructor)(REFIID, void **);
 } class_info[] =
 {
-    { &CLSID_Pathname, Pathname_create }
+    { &CLSID_Pathname, Pathname_create },
+    { &CLSID_DNWithBinary, ADsDNWithBinary_create }
 };
 
 typedef struct
