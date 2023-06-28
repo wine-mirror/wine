@@ -258,6 +258,10 @@ FUNCTION_OVERRIDES = {
     "vkGetDeviceGroupSurfacePresentModesKHR" : {"dispatch" : True, "driver" : True, "thunk" : ThunkType.PUBLIC},
     "vkGetPhysicalDevicePresentRectanglesKHR" : {"dispatch" : True, "driver" : True, "thunk" : ThunkType.PUBLIC},
 
+    # VK_KHR_deferred_host_operations
+    "vkCreateDeferredOperationKHR" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
+    "vkDestroyDeferredOperationKHR" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
+
     # VK_EXT_calibrated_timestamps
     "vkGetPhysicalDeviceCalibrateableTimeDomainsEXT" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
     "vkGetCalibratedTimestampsEXT" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
@@ -782,6 +786,7 @@ class VkFunction(object):
     def body(self, conv, unwrap, params_prefix=""):
         body = ""
         needs_alloc = False
+        deferred_op = None
 
         # Declare any tmp parameters for conversion.
         for p in self.params:
@@ -796,9 +801,12 @@ class VkFunction(object):
                     body += "    {0} {1}_host;\n".format(p.type, p.name)
             if p.needs_alloc(conv, unwrap):
                 needs_alloc = True
+            if p.type == "VkDeferredOperationKHR" and not p.is_pointer():
+                deferred_op = p.name
 
         if needs_alloc:
-            body += "    struct conversion_context ctx;\n"
+            body += "    struct conversion_context local_ctx;\n"
+            body += "    struct conversion_context *ctx = &local_ctx;\n"
         body += "\n"
 
         if not self.is_perf_critical():
@@ -811,7 +819,13 @@ class VkFunction(object):
             body += "        return STATUS_SUCCESS;\n\n"
 
         if needs_alloc:
-            body += "    init_conversion_context(&ctx);\n"
+            if deferred_op is not None:
+                body += "    if (params->{} == VK_NULL_HANDLE)\n".format(deferred_op)
+                body += "    "
+            body += "    init_conversion_context(ctx);\n"
+            if deferred_op is not None:
+                body += "    else\n"
+                body += "        ctx = &wine_deferred_operation_from_handle(params->{})->ctx;\n".format(deferred_op)
 
         # Call any win_to_host conversion calls.
         unwrap = self.thunk_type == ThunkType.PUBLIC
@@ -819,7 +833,7 @@ class VkFunction(object):
             if p.needs_conversion(conv, unwrap, Direction.INPUT):
                 body += p.copy(Direction.INPUT, conv, unwrap, prefix=params_prefix)
             elif p.is_dynamic_array() and p.needs_conversion(conv, unwrap, Direction.OUTPUT):
-                body += "    {0}_host = ({2}{0} && {1}) ? conversion_context_alloc(&ctx, sizeof(*{0}_host) * {1}) : NULL;\n".format(
+                body += "    {0}_host = ({2}{0} && {1}) ? conversion_context_alloc(ctx, sizeof(*{0}_host) * {1}) : NULL;\n".format(
                     p.name, p.get_dyn_array_len(params_prefix, conv), params_prefix)
 
         # Build list of parameters containing converted and non-converted parameters.
@@ -848,7 +862,10 @@ class VkFunction(object):
                 body += p.copy(Direction.OUTPUT, conv, unwrap, prefix=params_prefix)
 
         if needs_alloc:
-            body += "    free_conversion_context(&ctx);\n"
+            if deferred_op is not None:
+                body += "    if (params->{} == VK_NULL_HANDLE)\n".format(deferred_op)
+                body += "    "
+            body += "    free_conversion_context(ctx);\n"
 
         # Finally return the result. Performance critical functions return void to allow tail calls.
         if not self.is_perf_critical():
@@ -1112,6 +1129,8 @@ class VkHandle(object):
             return "wine_debug_utils_messenger_from_handle({0})->debug_messenger".format(name)
         if self.name == "VkDebugReportCallbackEXT":
             return "wine_debug_report_callback_from_handle({0})->debug_callback".format(name)
+        if self.name == "VkDeferredOperationKHR":
+            return "wine_deferred_operation_from_handle({0})->deferred_operation".format(name)
         if self.name == "VkDevice":
             return "wine_device_from_handle({0})->device".format(name)
         if self.name == "VkInstance":
@@ -1725,7 +1744,7 @@ class VkParam(VkVariable):
         win_type = "win32" if conv else "win64"
         wrap_part = "" if unwrap or not self.needs_unwrapping() else "unwrapped_"
         if direction == Direction.INPUT:
-            ctx_param = "&ctx, " if self.needs_alloc(conv, unwrap) else ""
+            ctx_param = "ctx, " if self.needs_alloc(conv, unwrap) else ""
             if self.is_dynamic_array():
                 return "    {0}_host = convert_{2}_array_{4}_to_{6}host({5}{1}, {3});\n".format(
                     self.name, self.value(prefix, conv), self.type, self.get_dyn_array_len(prefix, conv),
@@ -1733,7 +1752,7 @@ class VkParam(VkVariable):
             elif self.optional:
                 ret  = "    if ({0}{1})\n".format(prefix, self.name)
                 ret += "    {\n"
-                ret += "        {0}_host = conversion_context_alloc(&ctx, sizeof(*{0}_host));\n".format(self.name)
+                ret += "        {0}_host = conversion_context_alloc(ctx, sizeof(*{0}_host));\n".format(self.name)
                 ret += "        convert_{0}_{3}_to_{5}host({4}{1}, {2}_host);\n".format(
                     self.type, self.value(prefix, conv), self.name, win_type, ctx_param, wrap_part)
                 ret += "    }\n"

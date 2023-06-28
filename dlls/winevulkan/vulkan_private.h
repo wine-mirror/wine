@@ -287,6 +287,27 @@ static inline void *conversion_context_alloc(struct conversion_context *pool, si
     }
 }
 
+struct wine_deferred_operation
+{
+    VkDeferredOperationKHR deferred_operation; /* native handle */
+
+    struct conversion_context ctx; /* to keep params alive. */
+
+    struct wine_vk_mapping mapping;
+};
+
+static inline struct wine_deferred_operation *wine_deferred_operation_from_handle(
+        VkDeferredOperationKHR handle)
+{
+    return (struct wine_deferred_operation *)(uintptr_t)handle;
+}
+
+static inline VkDeferredOperationKHR wine_deferred_operation_to_handle(
+        struct wine_deferred_operation *deferred_operation)
+{
+    return (VkDeferredOperationKHR)(uintptr_t)deferred_operation;
+}
+
 typedef UINT32 PTR32;
 
 typedef struct

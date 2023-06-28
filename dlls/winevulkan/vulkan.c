@@ -1894,6 +1894,56 @@ void wine_vkDestroyDebugReportCallbackEXT(VkInstance handle, VkDebugReportCallba
     free(object);
 }
 
+VkResult wine_vkCreateDeferredOperationKHR(VkDevice                     handle,
+                                           const VkAllocationCallbacks* allocator,
+                                           VkDeferredOperationKHR*      deferredOperation)
+{
+    struct wine_device *device = wine_device_from_handle(handle);
+    struct wine_deferred_operation *object;
+    VkResult res;
+
+    if (allocator)
+        FIXME("Support for allocation callbacks not implemented yet\n");
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
+
+    res = device->funcs.p_vkCreateDeferredOperationKHR(device->device, NULL, &object->deferred_operation);
+
+    if (res != VK_SUCCESS)
+    {
+        free(object);
+        return res;
+    }
+
+    init_conversion_context(&object->ctx);
+
+    WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(device->phys_dev->instance, object, object->deferred_operation, object);
+    *deferredOperation = wine_deferred_operation_to_handle(object);
+
+    return VK_SUCCESS;
+}
+
+void wine_vkDestroyDeferredOperationKHR(VkDevice                     handle,
+                                        VkDeferredOperationKHR       operation,
+                                        const VkAllocationCallbacks* allocator)
+{
+    struct wine_device *device = wine_device_from_handle(handle);
+    struct wine_deferred_operation *object;
+
+    object = wine_deferred_operation_from_handle(operation);
+
+    if (!object)
+        return;
+
+    device->funcs.p_vkDestroyDeferredOperationKHR(device->device, object->deferred_operation, NULL);
+
+    WINE_VK_REMOVE_HANDLE_MAPPING(device->phys_dev->instance, object);
+
+    free_conversion_context(&object->ctx);
+    free(object);
+}
+
 #ifdef _WIN64
 
 NTSTATUS vk_is_available_instance_function(void *arg)
