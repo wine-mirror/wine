@@ -985,10 +985,14 @@ static NTSTATUS try_send( int fd, struct async_send_ioctl *async )
     union unix_sockaddr unix_addr;
     struct msghdr hdr;
     int attempt = 0;
+    int sock_type;
+    socklen_t len = sizeof(sock_type);
     ssize_t ret;
 
+    getsockopt(fd, SOL_SOCKET, SO_TYPE, &sock_type, &len);
+
     memset( &hdr, 0, sizeof(hdr) );
-    if (async->addr)
+    if (async->addr && sock_type != SOCK_STREAM)
     {
         hdr.msg_name = &unix_addr;
         hdr.msg_namelen = sockaddr_to_unix( async->addr, async->addr_len, &unix_addr );
