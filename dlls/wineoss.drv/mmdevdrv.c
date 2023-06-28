@@ -306,6 +306,10 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev,
         WARN("Unknown GUID: %s\n", debugstr_guid(guid));
         return AUDCLNT_E_DEVICE_INVALIDATED;
     }
+
+    if(oss_dev->flow != eRender && oss_dev->flow != eCapture)
+        return E_UNEXPECTED;
+
     len = strlen(oss_dev->devnode);
     This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, offsetof(ACImpl, device_name[len + 1]));
     if(!This)
