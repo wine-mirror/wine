@@ -18,4 +18,4 @@
 
 #include "wine/mfinternal.h"
 
-extern HRESULT wave_sink_factory_create(REFIID riid, void **out) DECLSPEC_HIDDEN;
+extern HRESULT wave_sink_factory_create(REFIID riid, void **out);
