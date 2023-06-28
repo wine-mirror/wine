@@ -1780,7 +1780,6 @@ struct create_object_context
 
     IMFByteStream *stream;
     WCHAR *url;
-    DWORD flags;
 };
 
 static struct create_object_context *impl_from_IUnknown(IUnknown *iface)
@@ -1853,6 +1852,9 @@ static HRESULT WINAPI stream_handler_BeginCreateObject(IMFByteStreamHandler *ifa
 
     if (!stream)
         return E_INVALIDARG;
+    if (flags != MF_RESOLUTION_MEDIASOURCE)
+        FIXME("Unimplemented flags %#lx\n", flags);
+
     if (FAILED(hr = MFCreateAsyncResult(NULL, callback, state, &caller)))
         return hr;
 
@@ -1864,7 +1866,6 @@ static HRESULT WINAPI stream_handler_BeginCreateObject(IMFByteStreamHandler *ifa
 
     context->IUnknown_iface.lpVtbl = &create_object_context_vtbl;
     context->refcount = 1;
-    context->flags = flags;
     context->stream = stream;
     IMFByteStream_AddRef(context->stream);
     if (url)
@@ -1978,37 +1979,27 @@ static HRESULT WINAPI stream_handler_callback_GetParameters(IMFAsyncCallback *if
     return E_NOTIMPL;
 }
 
-static HRESULT stream_handler_create_object(struct stream_handler *handler, WCHAR *url, IMFByteStream *stream, DWORD flags,
-                                            IUnknown **out_object, MF_OBJECT_TYPE *out_obj_type)
+static HRESULT stream_handler_create_object(struct stream_handler *handler, WCHAR *url, IMFByteStream *stream,
+                                            IUnknown **out_object)
 {
-    TRACE("%p, %s, %p, %#lx, %p, %p.\n", handler, debugstr_w(url), stream, flags, out_object, out_obj_type);
+    HRESULT hr;
+    struct media_source *new_source;
 
-    if (flags & MF_RESOLUTION_MEDIASOURCE)
-    {
-        HRESULT hr;
-        struct media_source *new_source;
+    TRACE("%p, %s, %p, %p.\n", handler, debugstr_w(url), stream, out_object);
 
-        if (FAILED(hr = media_source_constructor(stream, &new_source)))
-            return hr;
+    if (FAILED(hr = media_source_constructor(stream, &new_source)))
+        return hr;
 
-        TRACE("->(%p)\n", new_source);
+    TRACE("->(%p)\n", new_source);
 
-        *out_object = (IUnknown*)&new_source->IMFMediaSource_iface;
-        *out_obj_type = MF_OBJECT_MEDIASOURCE;
+    *out_object = (IUnknown*)&new_source->IMFMediaSource_iface;
 
-        return S_OK;
-    }
-    else
-    {
-        FIXME("Unhandled flags %#lx.\n", flags);
-        return E_NOTIMPL;
-    }
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_handler_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct stream_handler *handler = impl_from_IMFAsyncCallback(iface);
-    MF_OBJECT_TYPE obj_type = MF_OBJECT_INVALID;
     IUnknown *object = NULL, *context_object;
     struct create_object_context *context;
     struct result_entry *entry;
@@ -2025,12 +2016,11 @@ static HRESULT WINAPI stream_handler_callback_Invoke(IMFAsyncCallback *iface, IM
 
     context = impl_from_IUnknown(context_object);
 
-    if (FAILED(hr = stream_handler_create_object(handler, context->url, context->stream,
-            context->flags, &object, &obj_type)))
+    if (FAILED(hr = stream_handler_create_object(handler, context->url, context->stream, &object)))
         WARN("Failed to create object, hr %#lx\n", hr);
     else
     {
-        if (FAILED(hr = result_entry_create(caller, obj_type, object, &entry)))
+        if (FAILED(hr = result_entry_create(caller, MF_OBJECT_MEDIASOURCE, object, &entry)))
             WARN("Failed to create handler result, hr %#lx\n", hr);
         else
         {
