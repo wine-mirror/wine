@@ -117,6 +117,7 @@ enum alg_id
     /* cipher */
     ALG_ID_3DES,
     ALG_ID_AES,
+    ALG_ID_RC4,
 
     /* hash */
     ALG_ID_SHA256,

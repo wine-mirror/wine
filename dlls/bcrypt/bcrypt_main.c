@@ -104,6 +104,7 @@ builtin_algorithms[] =
 {
     {  BCRYPT_3DES_ALGORITHM,       BCRYPT_CIPHER_INTERFACE,                522,    0,    0 },
     {  BCRYPT_AES_ALGORITHM,        BCRYPT_CIPHER_INTERFACE,                654,    0,    0 },
+    {  BCRYPT_RC4_ALGORITHM,        BCRYPT_CIPHER_INTERFACE,                654,    0,    0 },
     {  BCRYPT_SHA256_ALGORITHM,     BCRYPT_HASH_INTERFACE,                  286,   32,  512 },
     {  BCRYPT_SHA384_ALGORITHM,     BCRYPT_HASH_INTERFACE,                  382,   48, 1024 },
     {  BCRYPT_SHA512_ALGORITHM,     BCRYPT_HASH_INTERFACE,                  382,   64, 1024 },
@@ -202,7 +203,7 @@ static const struct algorithm pseudo_algorithms[] =
     {{ MAGIC_ALG }, ALG_ID_SHA256 },
     {{ MAGIC_ALG }, ALG_ID_SHA384 },
     {{ MAGIC_ALG }, ALG_ID_SHA512 },
-    {{ 0 }}, /* RC4 */
+    {{ MAGIC_ALG }, ALG_ID_RC4 },
     {{ MAGIC_ALG }, ALG_ID_RNG },
     {{ MAGIC_ALG }, ALG_ID_MD5, 0, BCRYPT_ALG_HANDLE_HMAC_FLAG },
     {{ MAGIC_ALG }, ALG_ID_SHA1, 0, BCRYPT_ALG_HANDLE_HMAC_FLAG },
@@ -568,6 +569,7 @@ struct hash
     struct hash_impl  inner;
 };
 
+#define BLOCK_LENGTH_RC4        1
 #define BLOCK_LENGTH_3DES       8
 #define BLOCK_LENGTH_AES        16
 
@@ -708,6 +710,20 @@ static NTSTATUS get_aes_property( enum chain_mode mode, const WCHAR *prop, UCHAR
     return STATUS_NOT_IMPLEMENTED;
 }
 
+static NTSTATUS get_rc4_property( enum chain_mode mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
+{
+    if (!wcscmp( prop, BCRYPT_BLOCK_LENGTH ))
+    {
+        *ret_size = sizeof(ULONG);
+        if (size < sizeof(ULONG)) return STATUS_BUFFER_TOO_SMALL;
+        if (buf) *(ULONG *)buf = BLOCK_LENGTH_RC4;
+        return STATUS_SUCCESS;
+    }
+
+    FIXME( "unsupported property %s\n", debugstr_w(prop) );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 static NTSTATUS get_rsa_property( enum chain_mode mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     if (!wcscmp( prop, BCRYPT_PADDING_SCHEMES ))
@@ -745,6 +761,9 @@ static NTSTATUS get_alg_property( const struct algorithm *alg, const WCHAR *prop
 
     case ALG_ID_AES:
         return get_aes_property( alg->mode, prop, buf, size, ret_size );
+
+    case ALG_ID_RC4:
+        return get_rc4_property( alg->mode, prop, buf, size, ret_size );
 
     case ALG_ID_RSA:
         return get_rsa_property( alg->mode, prop, buf, size, ret_size );
@@ -811,6 +830,17 @@ static NTSTATUS set_alg_property( struct algorithm *alg, const WCHAR *prop, UCHA
             }
         }
         FIXME( "unsupported aes algorithm property %s\n", debugstr_w(prop) );
+        return STATUS_NOT_IMPLEMENTED;
+
+    case ALG_ID_RC4:
+        if (!wcscmp( prop, BCRYPT_CHAINING_MODE ))
+        {
+            if (!wcscmp( (WCHAR *)value, BCRYPT_CHAIN_MODE_NA )) return STATUS_SUCCESS;
+
+            FIXME( "unsupported mode %s\n", debugstr_w((WCHAR *)value) );
+            return STATUS_NOT_IMPLEMENTED;
+        }
+        FIXME( "unsupported rc4 algorithm property %s\n", debugstr_w(prop) );
         return STATUS_NOT_IMPLEMENTED;
 
     default:
