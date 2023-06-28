@@ -1457,6 +1457,7 @@ enable_wimgapi
 enable_win32u
 enable_windows_devices_bluetooth
 enable_windows_devices_enumeration
+enable_windows_devices_geolocation_geolocator
 enable_windows_gaming_input
 enable_windows_gaming_ui_gamebar
 enable_windows_globalization
@@ -21943,6 +21944,8 @@ wine_fn_config_makefile dlls/windows.devices.bluetooth enable_windows_devices_bl
 wine_fn_config_makefile dlls/windows.devices.bluetooth/tests enable_tests
 wine_fn_config_makefile dlls/windows.devices.enumeration enable_windows_devices_enumeration
 wine_fn_config_makefile dlls/windows.devices.enumeration/tests enable_tests
+wine_fn_config_makefile dlls/windows.devices.geolocation.geolocator enable_windows_devices_geolocation_geolocator
+wine_fn_config_makefile dlls/windows.devices.geolocation.geolocator/tests enable_tests
 wine_fn_config_makefile dlls/windows.gaming.input enable_windows_gaming_input
 wine_fn_config_makefile dlls/windows.gaming.input/tests enable_tests
 wine_fn_config_makefile dlls/windows.gaming.ui.gamebar enable_windows_gaming_ui_gamebar
