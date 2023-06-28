@@ -322,7 +322,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
         return AUDCLNT_E_DEVICE_INVALIDATED;
 
     if(dataflow != eRender && dataflow != eCapture)
-        return E_INVALIDARG;
+        return E_UNEXPECTED;
 
     name_len = strlen(name);
     This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, offsetof(ACImpl, device_name[name_len + 1]));
