@@ -72,7 +72,7 @@ typedef enum SPVESACTIONS
 ]
 interface ISpTTSEngineSite : ISpEventSink
 {
-    HRESULT GetActions();
+    DWORD GetActions();
     HRESULT Write([in] const void *pBuff,
                   [in] ULONG cb,
                   [out] ULONG *pcbWritten);
