@@ -1520,7 +1520,7 @@ static void media_source_init_descriptors(struct media_source *source)
     }
 }
 
-static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_source **out_media_source)
+static HRESULT media_source_create(IMFByteStream *bytestream, IMFMediaSource **out)
 {
     unsigned int stream_count = UINT_MAX;
     struct media_source *object;
@@ -1622,10 +1622,11 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
     media_source_init_descriptors(object);
     object->state = SOURCE_STOPPED;
 
-    *out_media_source = object;
+    *out = &object->IMFMediaSource_iface;
+    TRACE("Created IMFMediaSource %p\n", *out);
     return S_OK;
 
-    fail:
+fail:
     WARN("Failed to construct MFMediaSource, hr %#lx.\n", hr);
 
     while (object->streams && object->stream_count--)
@@ -1979,28 +1980,10 @@ static HRESULT WINAPI stream_handler_callback_GetParameters(IMFAsyncCallback *if
     return E_NOTIMPL;
 }
 
-static HRESULT stream_handler_create_object(struct stream_handler *handler, WCHAR *url, IMFByteStream *stream,
-                                            IUnknown **out_object)
-{
-    HRESULT hr;
-    struct media_source *new_source;
-
-    TRACE("%p, %s, %p, %p.\n", handler, debugstr_w(url), stream, out_object);
-
-    if (FAILED(hr = media_source_constructor(stream, &new_source)))
-        return hr;
-
-    TRACE("->(%p)\n", new_source);
-
-    *out_object = (IUnknown*)&new_source->IMFMediaSource_iface;
-
-    return S_OK;
-}
-
 static HRESULT WINAPI stream_handler_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct stream_handler *handler = impl_from_IMFAsyncCallback(iface);
-    IUnknown *object = NULL, *context_object;
+    IUnknown *object, *context_object;
     struct create_object_context *context;
     struct result_entry *entry;
     IMFAsyncResult *caller;
@@ -2016,8 +1999,8 @@ static HRESULT WINAPI stream_handler_callback_Invoke(IMFAsyncCallback *iface, IM
 
     context = impl_from_IUnknown(context_object);
 
-    if (FAILED(hr = stream_handler_create_object(handler, context->url, context->stream, &object)))
-        WARN("Failed to create object, hr %#lx\n", hr);
+    if (FAILED(hr = media_source_create(context->stream, (IMFMediaSource **)&object)))
+        WARN("Failed to create media source, hr %#lx\n", hr);
     else
     {
         if (FAILED(hr = result_entry_create(caller, MF_OBJECT_MEDIASOURCE, object, &entry)))
