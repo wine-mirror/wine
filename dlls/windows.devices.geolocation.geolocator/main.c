@@ -33,6 +33,7 @@ struct geolocator_statics
 struct geolocator
 {
     IGeolocator IGeolocator_iface;
+    IWeakReferenceSource IWeakReferenceSource_iface;
     LONG ref;
 };
 
@@ -53,6 +54,13 @@ static HRESULT WINAPI geolocator_QueryInterface(IGeolocator *iface, REFIID iid, 
         IsEqualGUID(iid, &IID_IGeolocator))
     {
         *out = &impl->IGeolocator_iface;
+        IInspectable_AddRef(*out);
+        return S_OK;
+    }
+
+    if (IsEqualGUID(iid, &IID_IWeakReferenceSource))
+    {
+        *out = &impl->IWeakReferenceSource_iface;
         IInspectable_AddRef(*out);
         return S_OK;
     }
@@ -199,6 +207,44 @@ static const struct IGeolocatorVtbl geolocator_vtbl =
     geolocator_remove_StatusChanged,
 };
 
+static inline struct geolocator *impl_from_IWeakReferenceSource(IWeakReferenceSource *iface)
+{
+    return CONTAINING_RECORD(iface, struct geolocator, IWeakReferenceSource_iface);
+}
+
+static HRESULT WINAPI weak_reference_source_QueryInterface(IWeakReferenceSource *iface, REFIID iid, void **out)
+{
+    struct geolocator *impl = impl_from_IWeakReferenceSource(iface);
+    return geolocator_QueryInterface(&impl->IGeolocator_iface, iid, out);
+}
+
+static ULONG WINAPI weak_reference_source_AddRef(IWeakReferenceSource *iface)
+{
+    struct geolocator *impl = impl_from_IWeakReferenceSource(iface);
+    return geolocator_AddRef(&impl->IGeolocator_iface);
+}
+
+static ULONG WINAPI weak_reference_source_Release(IWeakReferenceSource *iface)
+{
+    struct geolocator *impl = impl_from_IWeakReferenceSource(iface);
+    return geolocator_Release(&impl->IGeolocator_iface);
+}
+
+static HRESULT WINAPI weak_reference_source_GetWeakReference(IWeakReferenceSource *iface, IWeakReference **ref)
+{
+    FIXME("iface %p, ref %p stub.\n", iface, ref);
+    return E_NOTIMPL;
+}
+
+static const struct IWeakReferenceSourceVtbl weak_reference_source_vtbl =
+{
+    weak_reference_source_QueryInterface,
+    weak_reference_source_AddRef,
+    weak_reference_source_Release,
+    /* IWeakReferenceSource methods */
+    weak_reference_source_GetWeakReference,
+};
+
 static inline struct geolocator_statics *impl_from_IActivationFactory(IActivationFactory *iface)
 {
     return CONTAINING_RECORD(iface, struct geolocator_statics, IActivationFactory_iface);
@@ -274,6 +320,7 @@ static HRESULT WINAPI factory_ActivateInstance(IActivationFactory *iface, IInspe
     }
 
     impl->IGeolocator_iface.lpVtbl = &geolocator_vtbl;
+    impl->IWeakReferenceSource_iface.lpVtbl = &weak_reference_source_vtbl;
     impl->ref = 1;
 
     *instance = (IInspectable *)&impl->IGeolocator_iface;

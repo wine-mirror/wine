@@ -26,6 +26,7 @@
 #include "initguid.h"
 #include "roapi.h"
 
+#include "weakreference.h"
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
@@ -53,6 +54,7 @@ void test_basic(void)
     IActivationFactory *factory;
     IInspectable *inspectable;
     IGeolocator *geolocator;
+    IWeakReferenceSource *weak_reference_source;
     HSTRING str;
     HRESULT hr;
 
@@ -86,6 +88,10 @@ void test_basic(void)
 
     IInspectable_Release(inspectable);
     inspectable = 0;
+
+    hr = IGeolocator_QueryInterface(geolocator, &IID_IWeakReferenceSource, (void **)&weak_reference_source);
+    ok(hr == S_OK && weak_reference_source, "got hr %#lx.\n", hr);
+    IWeakReferenceSource_Release(weak_reference_source);
 
     IGeolocator_Release(geolocator);
     IActivationFactory_Release(factory);
