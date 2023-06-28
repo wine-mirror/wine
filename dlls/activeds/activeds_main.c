@@ -47,8 +47,10 @@ HRESULT WINAPI ADsGetObject(LPCWSTR path, REFIID riid, void **obj)
 {
     HRESULT hr;
 
+    TRACE("(%s, %s, %p)\n", debugstr_w(path), wine_dbgstr_guid(riid), obj);
+
     hr = ADsOpenObject(path, NULL, NULL, ADS_SECURE_AUTHENTICATION, riid, obj);
-    if (hr != S_OK)
+    if (hr != S_OK && hr != E_ADS_BAD_PATHNAME)
         hr = ADsOpenObject(path, NULL, NULL, 0, riid, obj);
     return hr;
 }
