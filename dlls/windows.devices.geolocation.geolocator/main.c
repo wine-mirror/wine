@@ -153,7 +153,7 @@ HRESULT WINAPI geolocator_GetGeopositionAsyncWithAgeAndTimeout(IGeolocator *ifac
 HRESULT WINAPI geolocator_add_PositionChanged(IGeolocator *iface, ITypedEventHandler_Geolocator_PositionChangedEventArgs *handler, EventRegistrationToken *token)
 {
     FIXME("iface %p, handler %p, token %p stub.\n", iface, handler, token);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 HRESULT WINAPI geolocator_remove_PositionChanged(IGeolocator *iface, EventRegistrationToken token)
