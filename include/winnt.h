@@ -7184,13 +7184,13 @@ static FORCEINLINE unsigned char InterlockedCompareExchange128( volatile __int64
 
 #endif
 
-#define InterlockedDecrementSizeT(a) InterlockeDecrement64((LONGLONG *)(a))
+#define InterlockedDecrementSizeT(a) InterlockedDecrement64((LONGLONG *)(a))
 #define InterlockedExchangeAddSizeT(a, b) InterlockedExchangeAdd64((LONGLONG *)(a), (b))
 #define InterlockedIncrementSizeT(a) InterlockedIncrement64((LONGLONG *)(a))
 
 #else /* _WIN64 */
 
-#define InterlockedDecrementSizeT(a) InterlockeDecrement((LONG *)(a))
+#define InterlockedDecrementSizeT(a) InterlockedDecrement((LONG *)(a))
 #define InterlockedExchangeAddSizeT(a, b) InterlockedExchangeAdd((LONG *)(a), (b))
 #define InterlockedIncrementSizeT(a) InterlockedIncrement((LONG *)(a))
 
