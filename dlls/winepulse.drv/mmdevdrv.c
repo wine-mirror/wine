@@ -342,6 +342,9 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     if (!get_pulse_name_by_guid(guid, pulse_name, &dataflow))
         return AUDCLNT_E_DEVICE_INVALIDATED;
 
+    if (dataflow != eRender && dataflow != eCapture)
+        return E_UNEXPECTED;
+
     *out = NULL;
 
     len = strlen(pulse_name) + 1;
