@@ -1231,6 +1231,7 @@ static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, B
     if (hr == S_OK)
     {
         LDAP_namespace *ldap = impl_from_IADs(ads);
+
         ldap->ld = ld;
         ldap->host = host;
         ldap->port = port;
@@ -1238,8 +1239,24 @@ static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, B
         ldap->at = at;
         ldap->at_single_count = at_single_count;
         ldap->at_multiple_count = at_multiple_count;
+
+        /* Windows fails to create IADs if it doesn't have an associated schema attribute */
+        if (object && wcsicmp(object, L"rootDSE") != 0)
+        {
+            BSTR schema;
+
+            if (IADs_get_Schema(ads, &schema) != S_OK)
+            {
+                IADs_Release(ads);
+                return E_ADS_BAD_PATHNAME;
+            }
+
+            SysFreeString(schema);
+        }
+
         hr = IADs_QueryInterface(ads, &IID_IDispatch, (void **)obj);
         IADs_Release(ads);
+
         return hr;
     }
 

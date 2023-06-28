@@ -207,7 +207,7 @@ static void test_ParseDisplayName(void)
             server_down = TRUE;
             break;
         }
-        todo_wine_if(i == 0 || i == 1 || i == 11 || i == 12)
+        todo_wine_if(i == 0 || i == 1)
         ok(hr == test[i].hr, "%d: got %#lx, expected %#lx\n", i, hr, test[i].hr);
         if (hr == S_OK)
         {
