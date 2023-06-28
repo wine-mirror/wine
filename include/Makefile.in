@@ -809,6 +809,7 @@ SOURCES = \
 	windot11.h \
 	windows.devices.bluetooth.idl \
 	windows.devices.enumeration.idl \
+	windows.devices.geolocation.idl \
 	windows.devices.haptics.idl \
 	windows.devices.power.idl \
 	windows.devices.radios.idl \
