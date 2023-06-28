@@ -16,5 +16,5 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-HRESULT create_db_session(REFIID riid, IUnknown *datasource, HDBC hdbc, void **unk) DECLSPEC_HIDDEN;
-void dump_sql_diag_records(SQLSMALLINT type, SQLHANDLE handle) DECLSPEC_HIDDEN;
+HRESULT create_db_session(REFIID riid, IUnknown *datasource, HDBC hdbc, void **unk);
+void dump_sql_diag_records(SQLSMALLINT type, SQLHANDLE handle);
