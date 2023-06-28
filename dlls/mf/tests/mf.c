@@ -4951,7 +4951,7 @@ static void test_sample_grabber_orientation(GUID subtype)
     if (!(source = create_media_source(L"test.mp4", L"video/mp4")))
     {
         win_skip("MP4 media source is not supported, skipping tests.\n");
-        return;
+        goto done;
     }
 
     callback = create_test_callback(TRUE);
@@ -5064,10 +5064,11 @@ static void test_sample_grabber_orientation(GUID subtype)
     IMFMediaSession_Release(session);
     IMFMediaSource_Release(source);
 
+    IMFSampleGrabberSinkCallback_Release(&grabber_callback->IMFSampleGrabberSinkCallback_iface);
+
+done:
     hr = MFShutdown();
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-    IMFSampleGrabberSinkCallback_Release(&grabber_callback->IMFSampleGrabberSinkCallback_iface);
 }
 
 static void test_quality_manager(void)
