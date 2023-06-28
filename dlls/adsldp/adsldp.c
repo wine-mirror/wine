@@ -383,6 +383,7 @@ typedef struct
     LDAP *ld;
     BSTR host;
     BSTR object;
+    BSTR schema;
     ULONG port;
     ULONG attrs_count, attrs_count_allocated;
     ADS_SEARCH_COLUMN *attrs;
@@ -556,8 +557,56 @@ static HRESULT WINAPI ldapns_get_Parent(IADs *iface, BSTR *retval)
 
 static HRESULT WINAPI ldapns_get_Schema(IADs *iface, BSTR *retval)
 {
-    FIXME("%p,%p: stub\n", iface, retval);
-    return E_NOTIMPL;
+    LDAP_namespace *ldap = impl_from_IADs(iface);
+    HRESULT hr;
+
+    TRACE("%p,%p\n", iface, retval);
+
+    if (!ldap->schema)
+    {
+        VARIANT var, item;
+        LONG start, end;
+
+        hr = IADs_GetEx(iface, (BSTR)L"objectClass", &var);
+        if (hr != S_OK) return E_ADS_PROPERTY_NOT_SUPPORTED;
+        if (V_VT(&var) != (VT_ARRAY | VT_VARIANT))
+        {
+            VariantClear(&var);
+            return E_ADS_PROPERTY_NOT_SUPPORTED;
+        }
+
+        SafeArrayGetLBound(V_ARRAY(&var), 1, &start);
+        SafeArrayGetUBound(V_ARRAY(&var), 1, &end);
+        VariantInit(&item);
+        hr = SafeArrayGetElement(V_ARRAY(&var), &start, &item);
+        if (hr == S_OK)
+        {
+            if (V_VT(&item) == VT_BSTR)
+            {
+                if (!wcsicmp(V_BSTR(&item), L"top"))
+                {
+                    VariantClear(&item);
+                    hr = SafeArrayGetElement(V_ARRAY(&var), &end, &item);
+                    if (hr == S_OK)
+                        ldap->schema = SysAllocString(V_BSTR(&item));
+                }
+                else
+                    ldap->schema = SysAllocString(V_BSTR(&item));
+            }
+
+            VariantClear(&item);
+        }
+    }
+
+    TRACE("ldap->schema: %s\n", debugstr_w(ldap->schema));
+    if (!ldap->schema) return E_ADS_PROPERTY_NOT_SUPPORTED;
+
+    *retval = SysAllocStringLen(NULL, wcslen(ldap->schema) + sizeof(L"LDAP://schema/") / sizeof(WCHAR));
+    if (!*retval) return E_OUTOFMEMORY;
+
+    wcscpy(*retval, L"LDAP://schema/");
+    wcscat(*retval, ldap->schema);
+    return S_OK;
 }
 
 static HRESULT WINAPI ldapns_GetInfo(IADs *iface)
@@ -2102,6 +2151,7 @@ static HRESULT LDAPNamespace_create(REFIID riid, void **obj)
     ldap->ld = NULL;
     ldap->host = NULL;
     ldap->object = NULL;
+    ldap->schema = NULL;
     ldap->attrs_count = 0;
     ldap->attrs_count_allocated = 0;
     ldap->attrs = NULL;
