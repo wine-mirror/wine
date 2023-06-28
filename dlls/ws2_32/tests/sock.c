@@ -13785,6 +13785,39 @@ static void test_connect_udp(void)
     closesocket(client);
 }
 
+static void test_tcp_sendto_recvfrom(void)
+{
+    SOCKET client, server = 0;
+    SOCKADDR_IN addr = { AF_INET, SERVERPORT };
+    SOCKADDR_IN bad_addr, bad_addr_copy;
+    const char serverMsg[] = "ws2_32/TCP socket test";
+    char clientBuf[sizeof(serverMsg)] = { 0 };
+    int to_len = 0xc0ffee11;
+    int ret;
+
+    inet_pton(AF_INET, SERVERIP, &addr.sin_addr);
+
+    tcp_socketpair(&client, &server);
+
+    memset(&bad_addr, 0xfe, sizeof(bad_addr));
+    memcpy(&bad_addr_copy, &bad_addr, sizeof(bad_addr_copy));
+
+    ret = sendto(server, serverMsg, sizeof(serverMsg), 0, (SOCKADDR *)&bad_addr, sizeof(bad_addr));
+    ok(ret == sizeof(serverMsg), "Incorrect return value from sendto: %d (%d)\n", ret, WSAGetLastError());
+    ok(!memcmp(&bad_addr, &bad_addr_copy, sizeof(bad_addr)), "Provided address modified by sendto\n");
+    ok(to_len == 0xc0ffee11, "Provided size modified by sendto\n");
+
+    ret = recvfrom(client, clientBuf, sizeof(clientBuf), 0, (SOCKADDR *)&bad_addr, &to_len);
+    ok(ret == sizeof(serverMsg), "Incorrect return value from recvfrom: %d (%d)\n", ret, WSAGetLastError());
+    ok(!memcmp(&bad_addr, &bad_addr_copy, sizeof(bad_addr)), "Provided address modified by recvfrom\n");
+    ok(to_len == 0xc0ffee11, "Provided size modified by recvfrom\n");
+
+    ok(!memcmp(serverMsg, clientBuf, sizeof(serverMsg)), "Data mismatch over TCP socket\n");
+
+    closesocket(client);
+    closesocket(server);
+}
+
 START_TEST( sock )
 {
     int i;
@@ -13866,6 +13899,7 @@ START_TEST( sock )
     test_tcp_reset();
     test_icmp();
     test_connect_udp();
+    test_tcp_sendto_recvfrom();
 
     /* this is an io heavy test, do it at the end so the kernel doesn't start dropping packets */
     test_send();
