@@ -51,6 +51,8 @@ void test_basic(void)
 {
     static const WCHAR *geolocator_name = L"Windows.Devices.Geolocation.Geolocator";
     IActivationFactory *factory;
+    IInspectable *inspectable;
+    IGeolocator *geolocator;
     HSTRING str;
     HRESULT hr;
 
@@ -71,6 +73,21 @@ void test_basic(void)
     check_interface(factory, &IID_IInspectable);
     check_interface(factory, &IID_IActivationFactory);
 
+    hr = IActivationFactory_ActivateInstance(factory, &inspectable);
+    ok(hr == S_OK && inspectable, "got hr %#lx.\n", hr);
+
+    check_interface(inspectable, &IID_IUnknown);
+    check_interface(inspectable, &IID_IInspectable);
+    check_interface(inspectable, &IID_IAgileObject);
+
+    hr = IInspectable_QueryInterface(inspectable, &IID_IGeolocator, (void **)&geolocator);
+    ok(hr == S_OK && geolocator, "got hr %#lx.\n", hr);
+    ok((void *)inspectable == (void *)geolocator, "Interfaces are not the same\n");
+
+    IInspectable_Release(inspectable);
+    inspectable = 0;
+
+    IGeolocator_Release(geolocator);
     IActivationFactory_Release(factory);
 }
 
