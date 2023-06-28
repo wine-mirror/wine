@@ -230,6 +230,8 @@ struct smbios_chassis_args
 SYSTEM_CPU_INFORMATION cpu_info = { 0 };
 static SYSTEM_PROCESSOR_FEATURES_INFORMATION cpu_features;
 static char cpu_name[49];
+static ULONG *performance_cores;
+static unsigned int performance_cores_capacity = 0;
 static SYSTEM_LOGICAL_PROCESSOR_INFORMATION *logical_proc_info;
 static unsigned int logical_proc_info_len, logical_proc_info_alloc_len;
 static SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *logical_proc_info_ex;
@@ -642,7 +644,10 @@ static BOOL logical_proc_info_ex_add_by_id( LOGICAL_PROCESSOR_RELATIONSHIP rel, 
         dataex->Processor.Flags = count_bits( mask ) > 1 ? LTP_PC_SMT : 0;
     else
         dataex->Processor.Flags = 0;
-    dataex->Processor.EfficiencyClass = 0;
+    if (rel == RelationProcessorCore && id / 32 < performance_cores_capacity)
+        dataex->Processor.EfficiencyClass = (performance_cores[id / 32] >> (id % 32)) & 1;
+    else
+        dataex->Processor.EfficiencyClass = 0;
     dataex->Processor.GroupCount = 1;
     dataex->Processor.GroupMask[0].Mask = mask;
     dataex->Processor.GroupMask[0].Group = 0;
@@ -845,6 +850,43 @@ static BOOL sysfs_count_list_elements(const char *filename, unsigned int *result
     return TRUE;
 }
 
+static void fill_performance_core_info(void)
+{
+    FILE *fpcore_list;
+    unsigned int beg, end, i;
+    char op = ',';
+    ULONG *p;
+
+    fpcore_list = fopen("/sys/devices/cpu_core/cpus", "r");
+    if (!fpcore_list) return;
+
+    performance_cores = calloc(16, sizeof(ULONG));
+    if (!performance_cores) goto done;
+    performance_cores_capacity = 16;
+
+    while (!feof(fpcore_list) && op == ',')
+    {
+        if (!fscanf(fpcore_list, "%u %c ", &beg, &op)) break;
+        if (op == '-') fscanf(fpcore_list, "%u %c ", &end, &op);
+        else end = beg;
+
+        for(i = beg; i <= end; i++)
+        {
+            if (i / 32 > performance_cores_capacity)
+            {
+                p = realloc(performance_cores, performance_cores_capacity * 2 * sizeof(ULONG));
+                if (!p) goto done;
+                memset(p + performance_cores_capacity, 0, performance_cores_capacity * sizeof(ULONG));
+                performance_cores = p;
+                performance_cores_capacity *= 2;
+            }
+            performance_cores[i / 32] |= 1 << (i % 32);
+        }
+    }
+done:
+    fclose(fpcore_list);
+}
+
 /* for 'data', max_len is the array count. for 'dataex', max_len is in bytes */
 static NTSTATUS create_logical_proc_info(void)
 {
@@ -870,6 +912,8 @@ static NTSTATUS create_logical_proc_info(void)
         FIXME("Improve CPU info reporting: system supports %u logical cores, but only %u supported!\n",
                 max_cpus, MAXIMUM_PROCESSORS);
     }
+
+    fill_performance_core_info();
 
     fcpu_list = fopen("/sys/devices/system/cpu/online", "r");
     if (!fcpu_list) return STATUS_NOT_IMPLEMENTED;
@@ -1033,6 +1077,10 @@ static NTSTATUS create_logical_proc_info(void)
     }
 
     logical_proc_info_add_group( num_cpus, all_cpus_mask );
+
+    performance_cores_capacity = 0;
+    free(performance_cores);
+    performance_cores = NULL;
 
     return STATUS_SUCCESS;
 }
