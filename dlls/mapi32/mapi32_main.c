@@ -33,8 +33,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mapi);
 
-DECLSPEC_HIDDEN LONG MAPI_ObjectCount = 0;
-DECLSPEC_HIDDEN HINSTANCE hInstMAPI32;
+LONG MAPI_ObjectCount = 0;
+HINSTANCE hInstMAPI32;
 
 /***********************************************************************
  *              DllMain (MAPI32.init)
