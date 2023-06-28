@@ -24,9 +24,9 @@ enum firewall_op
     APP_REMOVE
 };
 
-extern BOOL is_firewall_enabled(void) DECLSPEC_HIDDEN;
-extern BOOL is_process_elevated(void) DECLSPEC_HIDDEN;
-extern HRESULT set_firewall( enum firewall_op op ) DECLSPEC_HIDDEN;
-extern BOOL is_stub_dll(const char *filename) DECLSPEC_HIDDEN;
+extern BOOL is_firewall_enabled(void);
+extern BOOL is_process_elevated(void);
+extern HRESULT set_firewall( enum firewall_op op );
+extern BOOL is_stub_dll(const char *filename);
 
 #endif
