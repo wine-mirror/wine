@@ -2810,7 +2810,18 @@ static BOOL CNG_PrepareSignatureECC(BYTE *encoded_sig, DWORD encoded_size, BYTE 
     return TRUE;
 }
 
-static BOOL CNG_PrepareSignature(CERT_PUBLIC_KEY_INFO *pubKeyInfo, const CERT_SIGNED_CONTENT_INFO *signedCert,
+static BOOL cng_prepare_signature(const char *alg_oid, BYTE *encoded_sig, DWORD encoded_sig_len,
+    BYTE **sig_value, DWORD *sig_len)
+{
+    if (!strcmp(alg_oid, szOID_ECC_PUBLIC_KEY))
+        return CNG_PrepareSignatureECC(encoded_sig, encoded_sig_len, sig_value, sig_len);
+
+    FIXME("Unsupported public key type: %s\n", debugstr_a(alg_oid));
+    SetLastError(NTE_BAD_ALGID);
+    return FALSE;
+}
+
+static BOOL CNG_PrepareCertSignature(CERT_PUBLIC_KEY_INFO *pubKeyInfo, const CERT_SIGNED_CONTENT_INFO *signedCert,
     BYTE **sig_value, DWORD *sig_len)
 {
     BYTE *encoded_sig;
@@ -2832,14 +2843,8 @@ static BOOL CNG_PrepareSignature(CERT_PUBLIC_KEY_INFO *pubKeyInfo, const CERT_SI
     for (i = 0; i < signedCert->Signature.cbData; i++)
         encoded_sig[i] = signedCert->Signature.pbData[signedCert->Signature.cbData - i - 1];
 
-    if (!strcmp(pubKeyInfo->Algorithm.pszObjId, szOID_ECC_PUBLIC_KEY))
-        ret = CNG_PrepareSignatureECC(encoded_sig, signedCert->Signature.cbData, sig_value, sig_len);
-    else
-    {
-        FIXME("Unsupported public key type: %s\n", debugstr_a(pubKeyInfo->Algorithm.pszObjId));
-        SetLastError(NTE_BAD_ALGID);
-    }
-
+    ret = cng_prepare_signature(pubKeyInfo->Algorithm.pszObjId, encoded_sig, signedCert->Signature.cbData,
+            sig_value, sig_len);
     CryptMemFree(encoded_sig);
     return ret;
 }
@@ -2859,7 +2864,7 @@ static BOOL CNG_VerifySignature(HCRYPTPROV_LEGACY hCryptProv, DWORD dwCertEncodi
         ret = CNG_CalcHash(info->pwszCNGAlgid, signedCert, &hash_value, &hash_len);
         if (ret)
         {
-            ret = CNG_PrepareSignature(pubKeyInfo, signedCert, &sig_value, &sig_len);
+            ret = CNG_PrepareCertSignature(pubKeyInfo, signedCert, &sig_value, &sig_len);
             if (ret)
             {
                 status = BCryptVerifySignature(key, NULL, hash_value, hash_len, sig_value, sig_len, 0);
