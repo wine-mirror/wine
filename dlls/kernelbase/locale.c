@@ -4390,7 +4390,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumDateFormats( DATEFMT_ENUMPROCW proc,
     INT i, j, ret;
     DWORD pos;
     const struct calendar *cal;
-    const USHORT *calendars = locale_strings + locale->scalendartype;
+    const USHORT *calendars;
     const DWORD *array;
 
     if (!proc || !locale)
@@ -4398,6 +4398,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumDateFormats( DATEFMT_ENUMPROCW proc,
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
+
+    calendars = locale_strings + locale->scalendartype;
 
     switch (flags & ~LOCALE_USE_CP_ACP)
     {

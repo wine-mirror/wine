@@ -8402,6 +8402,36 @@ static void dump_sortkeys( char *argv[] )
     fclose( f );
 }
 
+static BOOL CALLBACK EnumDateFormatsExEx_proc(LPWSTR date_format_string, CALID calendar_id, LPARAM lp)
+{
+    return TRUE;
+}
+
+static void test_EnumDateFormatsExEx(void)
+{
+    DWORD error;
+    BOOL ret;
+
+    /* Invalid locale name */
+    ret = EnumDateFormatsExEx(EnumDateFormatsExEx_proc, L"deadbeef", DATE_SHORTDATE, 0);
+    error = GetLastError();
+    ok(!ret, "EnumDateFormatsExEx succeeded.\n");
+    ok(error == ERROR_INVALID_PARAMETER, "Got unexpected error %#lx.\n", error);
+
+    /* yi-Hebr is missing on versions < Win10 */
+    /* Running the following tests will cause other tests that use LOCALE_CUSTOM_UNSPECIFIED to
+     * report yi-Hebr instead the default locale on Windows 10. So run them at the end */
+    ret = EnumDateFormatsExEx(EnumDateFormatsExEx_proc, L"yi-Hebr", DATE_SHORTDATE, 0);
+    error = GetLastError();
+    ok(ret || (!ret && error == ERROR_INVALID_PARAMETER), /* < Win10 */
+       "EnumDateFormatsExEx failed, error %#lx.\n", error);
+
+    ret = EnumDateFormatsExEx(EnumDateFormatsExEx_proc, L"yi-Hebr", DATE_LONGDATE, 0);
+    error = GetLastError();
+    ok(ret || (!ret && error == ERROR_INVALID_PARAMETER), /* < Win10 */
+       "EnumDateFormatsExEx failed, error %#lx.\n", error);
+}
+
 START_TEST(locale)
 {
   char **argv;
@@ -8473,4 +8503,7 @@ START_TEST(locale)
   test_EnumCalendarInfoW();
   test_EnumCalendarInfoExA();
   test_EnumCalendarInfoExW();
+
+  /* Run this test at the end */
+  test_EnumDateFormatsExEx();
 }
