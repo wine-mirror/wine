@@ -43,6 +43,24 @@ typedef BOOL (*CryptMsgUpdateFunc)(HCRYPTMSG hCryptMsg, const BYTE *pbData,
 typedef BOOL (*CryptMsgControlFunc)(HCRYPTMSG hCryptMsg, DWORD dwFlags,
  DWORD dwCtrlType, const void *pvCtrlPara);
 
+static BOOL extract_hash(HCRYPTHASH hash, BYTE **data, DWORD *size)
+{
+    DWORD sz;
+
+    *data = NULL;
+    sz = sizeof(*size);
+    if (!CryptGetHashParam(hash, HP_HASHSIZE, (BYTE *)size, &sz, 0)) return FALSE;
+    if (!(*data = CryptMemAlloc(*size)))
+    {
+        ERR("No memory.\n");
+        return FALSE;
+    }
+    if (CryptGetHashParam(hash, HP_HASHVAL, *data, size, 0)) return TRUE;
+    CryptMemFree(*data);
+    *data = NULL;
+    return FALSE;
+}
+
 static BOOL CRYPT_DefaultMsgControl(HCRYPTMSG hCryptMsg, DWORD dwFlags,
  DWORD dwCtrlType, const void *pvCtrlPara)
 {
@@ -412,18 +430,7 @@ static BOOL CRYPT_EncodePKCSDigestedData(CHashEncodeMsg *msg, void *pvData,
              &digestedData.ContentInfo.Content.cbData);
         }
         if (msg->base.state == MsgStateFinalized)
-        {
-            size = sizeof(DWORD);
-            ret = CryptGetHashParam(msg->hash, HP_HASHSIZE,
-             (LPBYTE)&digestedData.hash.cbData, &size, 0);
-            if (ret)
-            {
-                digestedData.hash.pbData = CryptMemAlloc(
-                 digestedData.hash.cbData);
-                ret = CryptGetHashParam(msg->hash, HP_HASHVAL,
-                 digestedData.hash.pbData, &digestedData.hash.cbData, 0);
-            }
-        }
+            ret = extract_hash(msg->hash, &digestedData.hash.pbData, &digestedData.hash.cbData);
         if (ret)
             ret = CRYPT_AsnEncodePKCSDigestedData(&digestedData, pvData,
              pcbData);
@@ -1025,35 +1032,23 @@ static BOOL CSignedMsgData_AppendMessageDigestAttribute(
  CSignedMsgData *msg_data, DWORD signerIndex)
 {
     BOOL ret;
-    DWORD size;
     CRYPT_HASH_BLOB hash = { 0, NULL }, encodedHash = { 0, NULL };
     char messageDigest[] = szOID_RSA_messageDigest;
     CRYPT_ATTRIBUTE messageDigestAttr = { messageDigest, 1, &encodedHash };
 
-    size = sizeof(DWORD);
-    ret = CryptGetHashParam(
-     msg_data->signerHandles[signerIndex].contentHash, HP_HASHSIZE,
-     (LPBYTE)&hash.cbData, &size, 0);
+    if (!(ret = extract_hash(msg_data->signerHandles[signerIndex].contentHash, &hash.pbData, &hash.cbData)))
+        return FALSE;
+
+    ret = CRYPT_AsnEncodeOctets(0, NULL, &hash, CRYPT_ENCODE_ALLOC_FLAG, NULL, (LPBYTE)&encodedHash.pbData,
+            &encodedHash.cbData);
     if (ret)
     {
-        hash.pbData = CryptMemAlloc(hash.cbData);
-        ret = CryptGetHashParam(
-         msg_data->signerHandles[signerIndex].contentHash, HP_HASHVAL,
-         hash.pbData, &hash.cbData, 0);
-        if (ret)
-        {
-            ret = CRYPT_AsnEncodeOctets(0, NULL, &hash, CRYPT_ENCODE_ALLOC_FLAG,
-             NULL, (LPBYTE)&encodedHash.pbData, &encodedHash.cbData);
-            if (ret)
-            {
-                ret = CRYPT_AppendAttribute(
-                 &msg_data->info->rgSignerInfo[signerIndex].AuthAttrs,
-                 &messageDigestAttr);
-                LocalFree(encodedHash.pbData);
-            }
-        }
-        CryptMemFree(hash.pbData);
+        ret = CRYPT_AppendAttribute(
+         &msg_data->info->rgSignerInfo[signerIndex].AuthAttrs,
+         &messageDigestAttr);
+        LocalFree(encodedHash.pbData);
     }
+    CryptMemFree(hash.pbData);
     return ret;
 }
 
