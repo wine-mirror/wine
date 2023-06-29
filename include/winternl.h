@@ -2127,6 +2127,23 @@ typedef struct _MEMORY_REGION_INFORMATION
     ULONG_PTR NodePreference;
 } MEMORY_REGION_INFORMATION, *PMEMORY_REGION_INFORMATION;
 
+typedef struct _MEMORY_IMAGE_INFORMATION
+{
+    PVOID ImageBase;
+    SIZE_T SizeOfImage;
+    union
+    {
+        ULONG ImageFlags;
+        struct
+        {
+            ULONG ImagePartialMap : 1;
+            ULONG ImageNotExecutable : 1;
+            ULONG ImageSigningLevel : 4;
+            ULONG Reserved : 26;
+        };
+    };
+} MEMORY_IMAGE_INFORMATION, *PMEMORY_IMAGE_INFORMATION;
+
 typedef enum _MUTANT_INFORMATION_CLASS
 {
     MutantBasicInformation

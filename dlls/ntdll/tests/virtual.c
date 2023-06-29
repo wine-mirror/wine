@@ -2460,6 +2460,216 @@ static void test_query_region_information(void)
     NtClose(mapping);
 }
 
+static void test_query_image_information(void)
+{
+    MEMORY_IMAGE_INFORMATION info;
+    IMAGE_NT_HEADERS *nt;
+    LARGE_INTEGER offset;
+    SIZE_T len, size;
+    NTSTATUS status;
+    HANDLE mapping, file;
+    void *ptr;
+
+    /* virtual allocation */
+
+    size = 0x8000;
+    ptr = NULL;
+    status = NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, 0, &size, MEM_RESERVE, PAGE_READWRITE );
+    ok( status == STATUS_SUCCESS, "Unexpected status %08lx\n", status );
+
+    len = 0xdead;
+    memset( &info, 0xcc, sizeof(info) );
+    status = NtQueryVirtualMemory( NtCurrentProcess(), ptr, MemoryImageInformation,
+                                   &info, sizeof(info), &len );
+    if (status == STATUS_INVALID_INFO_CLASS)
+    {
+        todo_wine
+        win_skip( "MemoryImageInformation not supported\n" );
+        NtUnmapViewOfSection( NtCurrentProcess(), ptr );
+        return;
+    }
+    ok( status == STATUS_SUCCESS, "Unexpected status %08lx\n", status );
+    ok( len == sizeof(info), "wrong len %Ix\n", len );
+    ok( !info.ImageBase, "wrong image base %p/%p\n", info.ImageBase, ptr );
+    ok( !info.SizeOfImage, "wrong size %Ix/%Ix\n", info.SizeOfImage, size );
+    ok( !info.ImageFlags, "wrong flags %lx\n", info.ImageFlags );
+
+    len = 0xdead;
+    status = NtQueryVirtualMemory( NtCurrentProcess(), ptr, MemoryImageInformation,
+                                   &info, sizeof(info) + 2, &len );
+    ok( status == STATUS_SUCCESS, "Unexpected status %08lx\n", status );
+    ok( len == sizeof(info), "wrong len %Ix\n", len );
+
+    len = 0xdead;
+    status = NtQueryVirtualMemory( NtCurrentProcess(), ptr, MemoryImageInformation,
+                                   &info, sizeof(info) - 1, &len );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Unexpected status %08lx\n", status );
+    ok( len == 0xdead, "wrong len %Ix\n", len );
+
+    len = 0xdead;
+    status = NtQueryVirtualMemory( NtCurrentProcess(), (char *)ptr + size, MemoryImageInformation,
+                                   &info, sizeof(info), &len );
+    ok( status == STATUS_INVALID_ADDRESS, "Unexpected status %08lx\n", status );
+    ok( len == 0xdead || broken(len == sizeof(info)), "wrong len %Ix\n", len );
+
+    memset( &info, 0xcc, sizeof(info) );
+    status = NtQueryVirtualMemory( NtCurrentProcess(), (char *)ptr + 0x1234, MemoryImageInformation,
+                                   &info, sizeof(info), &len );
+    ok( status == STATUS_SUCCESS, "Unexpected status %08lx\n", status );
+    ok( !info.ImageBase, "wrong image base %p/%p\n", info.ImageBase, ptr );
+    ok( !info.SizeOfImage, "wrong size %Ix/%Ix\n", info.SizeOfImage, size );
+    ok( !info.ImageFlags, "wrong flags %lx\n", info.ImageFlags );
+
+    size = 0;
+    NtFreeVirtualMemory( NtCurrentProcess(), &ptr, &size, MEM_RELEASE );
+
+    /* mapped dll */
+
+    ptr = GetModuleHandleA( "ntdll.dll" );
+    nt = RtlImageNtHeader( ptr );
+    memset( &info, 0xcc, sizeof(info) );
+    status = NtQueryVirtualMemory( NtCurrentProcess(), (char *)ptr + 0x1234, MemoryImageInformation,
+                                   &info, sizeof(info), &len );
+    ok( status == STATUS_SUCCESS, "Unexpected status %08lx\n", status );
+    ok( info.ImageBase == ptr, "wrong image base %p/%p\n", info.ImageBase, ptr );
+    ok( info.SizeOfImage == nt->OptionalHeader.SizeOfImage, "wrong size %Ix/%x\n",
+        info.SizeOfImage, (UINT)nt->OptionalHeader.SizeOfImage );
+    ok( !info.ImagePartialMap, "wrong partial map\n" );
+    ok( !info.ImageNotExecutable, "wrong not executable\n" );
+    ok( info.ImageSigningLevel == 0 || info.ImageSigningLevel == 12,
+        "wrong signing level %u\n", info.ImageSigningLevel );
+
+    /* image mapping */
+
+    file = CreateFileA( "c:\\windows\\system32\\kernel32.dll", GENERIC_READ, FILE_SHARE_READ, NULL,
+                        OPEN_EXISTING, 0, 0 );
+    mapping = CreateFileMappingA( file, NULL, SEC_IMAGE | PAGE_READONLY, 0, 0, NULL );
+    ok( mapping != 0, "CreateFileMapping failed\n" );
+
+    ptr = NULL;
+    size = 0;
+    offset.QuadPart = 0;
+    status = NtMapViewOfSection( mapping, NtCurrentProcess(), &ptr, 0, 0, &offset, &size, 1, 0, PAGE_READONLY );
+    ok( status == STATUS_IMAGE_NOT_AT_BASE, "Unexpected status %08lx\n", status );
+    NtClose( mapping );
+
+    memset( &info, 0xcc, sizeof(info) );
+    status = NtQueryVirtualMemory( NtCurrentProcess(), (char *)ptr + 0x1234, MemoryImageInformation,
+                                   &info, sizeof(info), &len );
+    ok( status == STATUS_SUCCESS, "Unexpected status %08lx\n", status );
+    ok( info.ImageBase == ptr, "wrong image base %p/%p\n", info.ImageBase, ptr );
+    ok( info.SizeOfImage == size, "wrong size %Ix/%Ix\n", info.SizeOfImage, size );
+    ok( !info.ImagePartialMap, "wrong partial map\n" );
+    ok( !info.ImageNotExecutable, "wrong not executable\n" );
+    ok( info.ImageSigningLevel == 0 || info.ImageSigningLevel == 12,
+        "wrong signing level %u\n", info.ImageSigningLevel );
+
+    NtUnmapViewOfSection( NtCurrentProcess(), ptr );
+
+    /* partial image mapping */
+
+    file = CreateFileA( "c:\\windows\\system32\\kernel32.dll", GENERIC_READ, FILE_SHARE_READ, NULL,
+                        OPEN_EXISTING, 0, 0 );
+    mapping = CreateFileMappingA( file, NULL, SEC_IMAGE | PAGE_READONLY, 0, 0x4000, NULL );
+    ok( mapping != 0, "CreateFileMapping failed\n" );
+
+    ptr = NULL;
+    size = 0;
+    offset.QuadPart = 0;
+    status = NtMapViewOfSection( mapping, NtCurrentProcess(), &ptr, 0, 0, &offset, &size, 1, 0, PAGE_READONLY );
+    ok( status == STATUS_IMAGE_NOT_AT_BASE, "Unexpected status %08lx\n", status );
+    ok( size == 0x4000, "wrong size %Ix\n", size );
+    NtClose( mapping );
+
+    nt = RtlImageNtHeader( ptr );
+    memset( &info, 0xcc, sizeof(info) );
+    status = NtQueryVirtualMemory( NtCurrentProcess(), (char *)ptr + 0x1234, MemoryImageInformation,
+                                   &info, sizeof(info), &len );
+    ok( status == STATUS_SUCCESS, "Unexpected status %08lx\n", status );
+    ok( info.ImageBase == ptr, "wrong image base %p/%p\n", info.ImageBase, ptr );
+    ok( info.SizeOfImage == nt->OptionalHeader.SizeOfImage, "wrong size %Ix/%x\n",
+        info.SizeOfImage, (UINT)nt->OptionalHeader.SizeOfImage );
+    ok( info.ImagePartialMap, "wrong partial map\n" );
+    ok( !info.ImageNotExecutable, "wrong not executable\n" );
+    ok( info.ImageSigningLevel == 0 || info.ImageSigningLevel == 12,
+        "wrong signing level %u\n", info.ImageSigningLevel );
+
+    NtUnmapViewOfSection( NtCurrentProcess(), ptr );
+
+    file = CreateFileA( "c:\\windows\\system32\\kernel32.dll", GENERIC_READ, FILE_SHARE_READ, NULL,
+                        OPEN_EXISTING, 0, 0 );
+    mapping = CreateFileMappingA( file, NULL, SEC_IMAGE | PAGE_READONLY, 0, 0, NULL );
+    ok( mapping != 0, "CreateFileMapping failed\n" );
+
+    ptr = NULL;
+    size = 0x5000;
+    offset.QuadPart = 0;
+    status = NtMapViewOfSection( mapping, NtCurrentProcess(), &ptr, 0, 0, &offset, &size, 1, 0, PAGE_READONLY );
+    ok( status == STATUS_IMAGE_NOT_AT_BASE, "Unexpected status %08lx\n", status );
+    ok( size == 0x5000, "wrong size %Ix\n", size );
+    NtClose( mapping );
+
+    nt = RtlImageNtHeader( ptr );
+    memset( &info, 0xcc, sizeof(info) );
+    status = NtQueryVirtualMemory( NtCurrentProcess(), (char *)ptr + 0x1234, MemoryImageInformation,
+                                   &info, sizeof(info), &len );
+    ok( status == STATUS_SUCCESS, "Unexpected status %08lx\n", status );
+    ok( info.ImageBase == ptr, "wrong image base %p/%p\n", info.ImageBase, ptr );
+    ok( info.SizeOfImage == nt->OptionalHeader.SizeOfImage, "wrong size %Ix/%x\n",
+        info.SizeOfImage, (UINT)nt->OptionalHeader.SizeOfImage );
+    ok( info.ImagePartialMap, "wrong partial map\n" );
+    ok( !info.ImageNotExecutable, "wrong not executable\n" );
+    ok( info.ImageSigningLevel == 0 || info.ImageSigningLevel == 12,
+        "wrong signing level %u\n", info.ImageSigningLevel );
+
+    NtUnmapViewOfSection( NtCurrentProcess(), ptr );
+
+    /* non-image mapping */
+
+    mapping = CreateFileMappingA( file, NULL, PAGE_READONLY, 0, 0x10000, NULL );
+    ok( mapping != 0, "CreateFileMapping failed\n" );
+
+    ptr = NULL;
+    size = 0;
+    offset.QuadPart = 0;
+    status = NtMapViewOfSection( mapping, NtCurrentProcess(), &ptr, 0, 0, &offset, &size, 1, 0, PAGE_READONLY );
+    ok( status == STATUS_SUCCESS, "Unexpected status %08lx\n", status );
+    NtClose( mapping );
+
+    memset( &info, 0xcc, sizeof(info) );
+    status = NtQueryVirtualMemory( NtCurrentProcess(), (char *)ptr + 0x1234, MemoryImageInformation,
+                                   &info, sizeof(info), &len );
+    ok( status == STATUS_SUCCESS, "Unexpected status %08lx\n", status );
+    ok( !info.ImageBase, "wrong image base %p/%p\n", info.ImageBase, ptr );
+    ok( !info.SizeOfImage, "wrong size %Ix/%Ix\n", info.SizeOfImage, size );
+    ok( !info.ImageFlags, "wrong flags %lx\n", info.ImageFlags );
+
+    NtUnmapViewOfSection( NtCurrentProcess(), ptr );
+
+    /* pagefile mapping */
+
+    mapping = CreateFileMappingA( INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 0x10000, NULL );
+    ok( mapping != 0, "CreateFileMapping failed\n" );
+
+    ptr = NULL;
+    size = 0;
+    offset.QuadPart = 0;
+    status = NtMapViewOfSection( mapping, NtCurrentProcess(), &ptr, 0, 0, &offset, &size, 1, 0, PAGE_READONLY );
+    ok( status == STATUS_SUCCESS, "Unexpected status %08lx\n", status );
+    NtClose( mapping );
+
+    memset( &info, 0xcc, sizeof(info) );
+    status = NtQueryVirtualMemory( NtCurrentProcess(), (char *)ptr + 0x1234, MemoryImageInformation,
+                                   &info, sizeof(info), &len );
+    ok( status == STATUS_SUCCESS, "Unexpected status %08lx\n", status );
+    ok( !info.ImageBase, "wrong image base %p/%p\n", info.ImageBase, ptr );
+    ok( !info.SizeOfImage, "wrong size %Ix/%Ix\n", info.SizeOfImage, size );
+    ok( !info.ImageFlags, "wrong flags %lx\n", info.ImageFlags );
+
+    NtUnmapViewOfSection( NtCurrentProcess(), ptr );
+    NtClose( file );
+}
+
 START_TEST(virtual)
 {
     HMODULE mod;
@@ -2509,4 +2719,5 @@ START_TEST(virtual)
     test_user_shared_data();
     test_syscalls();
     test_query_region_information();
+    test_query_image_information();
 }
