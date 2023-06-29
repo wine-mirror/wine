@@ -251,7 +251,7 @@ end:
     return params.result;
 }
 
-static BOOL get_alsa_name_by_guid(GUID *guid, char *name, DWORD name_size, EDataFlow *flow)
+static BOOL get_device_name_from_guid(GUID *guid, char **name, EDataFlow *flow)
 {
     HKEY devices_key;
     UINT i = 0;
@@ -282,6 +282,8 @@ static BOOL get_alsa_name_by_guid(GUID *guid, char *name, DWORD name_size, EData
         if(RegQueryValueExW(key, guidW, 0, &type,
                     (BYTE*)&reg_guid, &size) == ERROR_SUCCESS){
             if(IsEqualGUID(&reg_guid, guid)){
+                INT size;
+
                 RegCloseKey(key);
                 RegCloseKey(devices_key);
 
@@ -296,7 +298,16 @@ static BOOL get_alsa_name_by_guid(GUID *guid, char *name, DWORD name_size, EData
                     return FALSE;
                 }
 
-                WideCharToMultiByte(CP_UNIXCP, 0, key_name + 2, -1, name, name_size, NULL, NULL);
+                if(!(size = WideCharToMultiByte(CP_UNIXCP, 0, key_name + 2, -1, NULL, 0, NULL, NULL)))
+                    return FALSE;
+
+                if(!(*name = malloc(size)))
+                    return FALSE;
+
+                if(!WideCharToMultiByte(CP_UNIXCP, 0, key_name + 2, -1, *name, size, NULL, NULL)){
+                    free(*name);
+                    return FALSE;
+                }
 
                 return TRUE;
             }
@@ -315,23 +326,30 @@ static BOOL get_alsa_name_by_guid(GUID *guid, char *name, DWORD name_size, EData
 HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient **out)
 {
     ACImpl *This;
-    char alsa_name[256];
+    char *alsa_name;
     EDataFlow dataflow;
     HRESULT hr;
     int len;
 
     TRACE("%s %p %p\n", debugstr_guid(guid), dev, out);
 
-    if(!get_alsa_name_by_guid(guid, alsa_name, sizeof(alsa_name), &dataflow))
+    if(!get_device_name_from_guid(guid, &alsa_name, &dataflow))
         return AUDCLNT_E_DEVICE_INVALIDATED;
 
-    if(dataflow != eRender && dataflow != eCapture)
+    if(dataflow != eRender && dataflow != eCapture){
+        free(alsa_name);
         return E_UNEXPECTED;
+    }
 
     len = strlen(alsa_name);
     This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, offsetof(ACImpl, device_name[len + 1]));
-    if(!This)
+    if(!This){
+        free(alsa_name);
         return E_OUTOFMEMORY;
+    }
+
+    memcpy(This->device_name, alsa_name, len + 1);
+    free(alsa_name);
 
     This->IAudioClient3_iface.lpVtbl = &AudioClient3_Vtbl;
     This->IAudioRenderClient_iface.lpVtbl = &AudioRenderClient_Vtbl;
@@ -347,7 +365,6 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     }
 
     This->dataflow = dataflow;
-    memcpy(This->device_name, alsa_name, len + 1);
 
     This->parent = dev;
     IMMDevice_AddRef(This->parent);
@@ -458,13 +475,13 @@ HRESULT WINAPI AUDDRV_GetAudioSessionWrapper(const GUID *guid, IMMDevice *device
 HRESULT WINAPI AUDDRV_GetPropValue(GUID *guid, const PROPERTYKEY *prop, PROPVARIANT *out)
 {
     struct get_prop_value_params params;
-    char name[256];
+    char *name;
     EDataFlow flow;
     unsigned int size = 0;
 
     TRACE("%s, (%s,%lu), %p\n", wine_dbgstr_guid(guid), wine_dbgstr_guid(&prop->fmtid), prop->pid, out);
 
-    if(!get_alsa_name_by_guid(guid, name, sizeof(name), &flow))
+    if(!get_device_name_from_guid(guid, &name, &flow))
     {
         WARN("Unknown interface %s\n", debugstr_guid(guid));
         return E_NOINTERFACE;
@@ -487,10 +504,15 @@ HRESULT WINAPI AUDDRV_GetPropValue(GUID *guid, const PROPERTYKEY *prop, PROPVARI
         CoTaskMemFree(params.buffer);
         params.buffer = CoTaskMemAlloc(*params.buffer_size);
         if(!params.buffer)
+        {
+            free(name);
             return E_OUTOFMEMORY;
+        }
     }
     if(FAILED(params.result))
         CoTaskMemFree(params.buffer);
+
+    free(name);
 
     return params.result;
 }
