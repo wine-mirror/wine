@@ -42,12 +42,12 @@
 /*****************************************************************************
  * ClassFactory
  */
-extern HRESULT create_dswave(REFIID lpcGUID, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dswave(REFIID lpcGUID, void **ret_iface);
 
 /**********************************************************************
  * Dll lifetime tracking declaration for dswave.dll
  */
-extern LONG DSWAVE_refCount DECLSPEC_HIDDEN;
+extern LONG DSWAVE_refCount;
 static inline void DSWAVE_LockModule(void) { InterlockedIncrement( &DSWAVE_refCount ); }
 static inline void DSWAVE_UnlockModule(void) { InterlockedDecrement( &DSWAVE_refCount ); }
 
