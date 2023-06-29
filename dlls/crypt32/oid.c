@@ -1271,6 +1271,8 @@ static const struct OIDInfoConstructor {
  { 3, szOID_INFOSEC_mosaicKMandUpdSig, CALG_DSS_SIGN, L"mosaicKMandUpdSig", &mosaicFlagsBlob },
  { 3, szOID_RSA_SMIMEalgESDH,          CALG_DH_EPHEM, L"ESDH", &noNullBlob },
  { 3, szOID_PKIX_NO_SIGNATURE,         CALG_NO_SIGN,  L"NOSIGN", NULL },
+ { 3, szOID_ECC_PUBLIC_KEY,            CALG_OID_INFO_PARAMETERS, L"ECC", NULL,
+   CRYPT_OID_INFO_ECC_PARAMETERS_ALGORITHM, L"" },
 
  { 4, szOID_RSA_SHA1RSA,               CALG_SHA1,     L"sha1RSA", &rsaSignBlob },
  { 4, szOID_RSA_SHA256RSA,             CALG_SHA_256,  L"sha256RSA", &rsaSignBlob },

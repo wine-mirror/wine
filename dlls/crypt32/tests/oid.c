@@ -72,7 +72,8 @@ static const struct OIDToAlgID oidToAlgID[] = {
  { szOID_INFOSEC_mosaicKMandUpdSig, CALG_DSS_SIGN },
  { szOID_NIST_sha256, CALG_SHA_256, -1 },
  { szOID_NIST_sha384, CALG_SHA_384, -1 },
- { szOID_NIST_sha512, CALG_SHA_512, -1 }
+ { szOID_NIST_sha512, CALG_SHA_512, -1 },
+ { szOID_ECC_PUBLIC_KEY, CALG_OID_INFO_PARAMETERS },
 };
 
 static const struct OIDToAlgID algIDToOID[] = {
@@ -509,6 +510,7 @@ static void test_findOIDInfo(void)
 {
     static CHAR oid_rsa_md5[] = szOID_RSA_MD5, oid_sha256[] = szOID_NIST_sha256;
     static CHAR oid_ecdsa_sha256[] = szOID_ECDSA_SHA256;
+    static CHAR oid_ecc_public_key[] = szOID_ECC_PUBLIC_KEY;
     ALG_ID alg = CALG_SHA1;
     ALG_ID algs[2] = { CALG_MD5, CALG_RSA_SIGN };
     const struct oid_info
@@ -573,6 +575,17 @@ static void test_findOIDInfo(void)
     }
     else
         win_skip("Host does not support ECDSA_SHA256, skipping test\n");
+
+    info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, oid_ecc_public_key, 0);
+    ok(!!info, "got error %#lx.\n", GetLastError());
+    ok(!strcmp(info->pszOID, oid_ecc_public_key), "got %s.\n", info->pszOID);
+    ok(!wcscmp(info->pwszName, L"ECC"), "got %s.\n", wine_dbgstr_w(info->pwszName));
+    ok(info->dwGroupId == CRYPT_PUBKEY_ALG_OID_GROUP_ID, "got %lu.\n", info->dwGroupId);
+    ok(U(*info).Algid == CALG_OID_INFO_PARAMETERS, "got %d.\n", U(*info).Algid);
+    ok(!info->ExtraInfo.cbData, "got %ld.\n", info->ExtraInfo.cbData);
+    ok(!wcscmp(info->pwszCNGAlgid, CRYPT_OID_INFO_ECC_PARAMETERS_ALGORITHM), "got %s.\n", wine_dbgstr_w(info->pwszCNGAlgid));
+    ok(info->pwszCNGExtraAlgid && !wcscmp(info->pwszCNGExtraAlgid, L""), "got %s.\n",
+        wine_dbgstr_w(info->pwszCNGExtraAlgid));
 }
 
 static void test_registerOIDInfo(void)
