@@ -245,7 +245,7 @@ end:
     return params.result;
 }
 
-static BOOL get_pulse_name_by_guid(const GUID *guid, char pulse_name[MAX_PULSE_NAME_LEN], EDataFlow *flow)
+static BOOL get_device_name_from_guid(GUID *guid, char **name, EDataFlow *flow)
 {
     struct device_cache *device;
     WCHAR key_name[MAX_PULSE_NAME_LEN + 2];
@@ -253,13 +253,21 @@ static BOOL get_pulse_name_by_guid(const GUID *guid, char pulse_name[MAX_PULSE_N
     DWORD index = 0;
     HKEY key;
 
+    *name = NULL;
+
     /* Return empty string for default PulseAudio device */
-    pulse_name[0] = 0;
     if (IsEqualGUID(guid, &pulse_render_guid)) {
         *flow = eRender;
-        return TRUE;
+        if (!(*name = malloc(1)))
+            return FALSE;
     } else if (IsEqualGUID(guid, &pulse_capture_guid)) {
         *flow = eCapture;
+        if (!(*name = malloc(1)))
+            return FALSE;
+    }
+
+    if (*name) {
+        *name[0] = '\0';
         return TRUE;
     }
 
@@ -268,8 +276,10 @@ static BOOL get_pulse_name_by_guid(const GUID *guid, char pulse_name[MAX_PULSE_N
         if (!IsEqualGUID(guid, &device->guid))
             continue;
         *flow = device->dataflow;
-        strcpy(pulse_name, device->pulse_name);
-        return TRUE;
+        if ((*name = strdup(device->pulse_name)))
+            return TRUE;
+
+        return FALSE;
     }
 
     if (RegOpenKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, KEY_READ | KEY_WOW64_64KEY, &key) != ERROR_SUCCESS) {
@@ -311,13 +321,21 @@ static BOOL get_pulse_name_by_guid(const GUID *guid, char pulse_name[MAX_PULSE_N
                 return FALSE;
             }
 
-            if (!(len = WideCharToMultiByte(CP_UNIXCP, 0, key_name + 2, -1, pulse_name, MAX_PULSE_NAME_LEN, NULL, NULL)))
+            if (!(len = WideCharToMultiByte(CP_UNIXCP, 0, key_name + 2, -1, NULL, 0, NULL, NULL)))
+                    return FALSE;
+
+            if (!(*name = malloc(len)))
                 return FALSE;
+
+            if (!WideCharToMultiByte(CP_UNIXCP, 0, key_name + 2, -1, *name, len, NULL, NULL)) {
+                free(*name);
+                return FALSE;
+            }
 
             if ((device = malloc(FIELD_OFFSET(struct device_cache, pulse_name[len])))) {
                 device->guid = reg_guid;
                 device->dataflow = *flow;
-                strcpy(device->pulse_name, pulse_name);
+                memcpy(device->pulse_name, *name, len);
                 list_add_tail(&g_devices_cache, &device->entry);
             }
             return TRUE;
@@ -332,25 +350,32 @@ static BOOL get_pulse_name_by_guid(const GUID *guid, char pulse_name[MAX_PULSE_N
 HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient **out)
 {
     ACImpl *This;
-    char pulse_name[MAX_PULSE_NAME_LEN];
+    char *pulse_name;
     EDataFlow dataflow;
     unsigned len;
     HRESULT hr;
 
     TRACE("%s %p %p\n", debugstr_guid(guid), dev, out);
 
-    if (!get_pulse_name_by_guid(guid, pulse_name, &dataflow))
+    if (!get_device_name_from_guid(guid, &pulse_name, &dataflow))
         return AUDCLNT_E_DEVICE_INVALIDATED;
 
-    if (dataflow != eRender && dataflow != eCapture)
+    if (dataflow != eRender && dataflow != eCapture) {
+        free(pulse_name);
         return E_UNEXPECTED;
+    }
 
     *out = NULL;
 
     len = strlen(pulse_name) + 1;
     This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, FIELD_OFFSET(ACImpl, device_name[len]));
-    if (!This)
+    if (!This) {
+        free(pulse_name);
         return E_OUTOFMEMORY;
+    }
+
+    memcpy(This->device_name, pulse_name, len);
+    free(pulse_name);
 
     This->IAudioClient3_iface.lpVtbl = &AudioClient3_Vtbl;
     This->IAudioRenderClient_iface.lpVtbl = &AudioRenderClient_Vtbl;
@@ -360,7 +385,6 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     This->IAudioStreamVolume_iface.lpVtbl = &AudioStreamVolume_Vtbl;
     This->dataflow = dataflow;
     This->parent = dev;
-    memcpy(This->device_name, pulse_name, len);
 
     hr = CoCreateFreeThreadedMarshaler((IUnknown*)&This->IAudioClient3_iface, &This->marshal);
     if (FAILED(hr)) {
@@ -475,12 +499,12 @@ HRESULT WINAPI AUDDRV_GetAudioSessionWrapper(const GUID *guid, IMMDevice *device
 HRESULT WINAPI AUDDRV_GetPropValue(GUID *guid, const PROPERTYKEY *prop, PROPVARIANT *out)
 {
     struct get_prop_value_params params;
-    char pulse_name[MAX_PULSE_NAME_LEN];
+    char *pulse_name;
     unsigned int size = 0;
 
     TRACE("%s, (%s,%lu), %p\n", wine_dbgstr_guid(guid), wine_dbgstr_guid(&prop->fmtid), prop->pid, out);
 
-    if (!get_pulse_name_by_guid(guid, pulse_name, &params.flow))
+    if (!get_device_name_from_guid(guid, &pulse_name, &params.flow))
         return E_FAIL;
 
     params.device = pulse_name;
@@ -498,11 +522,15 @@ HRESULT WINAPI AUDDRV_GetPropValue(GUID *guid, const PROPERTYKEY *prop, PROPVARI
 
         CoTaskMemFree(params.buffer);
         params.buffer = CoTaskMemAlloc(*params.buffer_size);
-        if(!params.buffer)
+        if(!params.buffer) {
+            free(pulse_name);
             return E_OUTOFMEMORY;
+        }
     }
     if(FAILED(params.result))
         CoTaskMemFree(params.buffer);
+
+    free(pulse_name);
 
     return params.result;
 }
