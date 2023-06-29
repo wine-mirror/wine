@@ -666,7 +666,7 @@ ULONG WINAPI OaBuildVersion(void)
 		return MAKELONG(0xffff, 50);
     default:
 		FIXME("Version value not known yet. Please investigate it !\n");
-		return MAKELONG(0xffff, 40);  /* for now return the same value as for w2k */
+		return MAKELONG(0xffff, 50);  /* for now return the same value as for Win10 */
     }
 }
 
