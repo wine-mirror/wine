@@ -661,6 +661,8 @@ ULONG WINAPI OaBuildVersion(void)
     case 0x00000105:  /* WinXP */
     case 0x00000006:  /* Vista */
     case 0x00000106:  /* Win7 */
+    case 0x00000205:  /* W2K3 */
+    case 0x00000206:  /* Win8, Win10, Win11 */
 		return MAKELONG(0xffff, 50);
     default:
 		FIXME("Version value not known yet. Please investigate it !\n");
