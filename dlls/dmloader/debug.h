@@ -36,11 +36,11 @@ typedef struct {
 #define FE(x) { x, #x }	
 
 /* check whether chunkID is valid dmobject form chunk */
-extern BOOL IS_VALID_DMFORM (FOURCC chunkID) DECLSPEC_HIDDEN;
+extern BOOL IS_VALID_DMFORM (FOURCC chunkID);
 /* translate STREAM_SEEK flag to string */
-extern const char *resolve_STREAM_SEEK (DWORD flag) DECLSPEC_HIDDEN;
+extern const char *resolve_STREAM_SEEK (DWORD flag);
 
-extern const char *debugstr_DMUS_IO_CONTAINER_HEADER (LPDMUS_IO_CONTAINER_HEADER pHeader) DECLSPEC_HIDDEN;
-extern const char *debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER (LPDMUS_IO_CONTAINED_OBJECT_HEADER pHeader) DECLSPEC_HIDDEN;
+extern const char *debugstr_DMUS_IO_CONTAINER_HEADER (LPDMUS_IO_CONTAINER_HEADER pHeader);
+extern const char *debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER (LPDMUS_IO_CONTAINED_OBJECT_HEADER pHeader);
 
 #endif /* __WINE_DMLOADER_DEBUG_H */

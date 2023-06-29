@@ -45,7 +45,7 @@
 #define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 
 /* dmloader.dll global (for DllCanUnloadNow) */
-extern LONG module_ref DECLSPEC_HIDDEN;
+extern LONG module_ref;
 static inline void lock_module(void) { InterlockedIncrement( &module_ref ); }
 static inline void unlock_module(void) { InterlockedDecrement( &module_ref ); }
 
@@ -62,11 +62,11 @@ typedef struct IDirectMusicLoaderGenericStream  IDirectMusicLoaderGenericStream;
 /*****************************************************************************
  * Creation helpers
  */
-extern HRESULT create_dmloader(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmcontainer(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT DMUSIC_CreateDirectMusicLoaderFileStream(void **ppobj) DECLSPEC_HIDDEN;
-extern HRESULT DMUSIC_CreateDirectMusicLoaderResourceStream(void **ppobj) DECLSPEC_HIDDEN;
-extern HRESULT DMUSIC_CreateDirectMusicLoaderGenericStream(void **ppobj) DECLSPEC_HIDDEN;
+extern HRESULT create_dmloader(REFIID riid, void **ret_iface);
+extern HRESULT create_dmcontainer(REFIID riid, void **ret_iface);
+extern HRESULT DMUSIC_CreateDirectMusicLoaderFileStream(void **ppobj);
+extern HRESULT DMUSIC_CreateDirectMusicLoaderResourceStream(void **ppobj);
+extern HRESULT DMUSIC_CreateDirectMusicLoaderGenericStream(void **ppobj);
 
 /*****************************************************************************
  * IDirectMusicLoaderFileStream implementation structure
@@ -85,7 +85,7 @@ struct IDirectMusicLoaderFileStream {
 };
 
 /* Custom: */
-extern HRESULT WINAPI IDirectMusicLoaderFileStream_Attach (LPSTREAM iface, LPCWSTR wzFile, LPDIRECTMUSICLOADER8 pLoader) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI IDirectMusicLoaderFileStream_Attach (LPSTREAM iface, LPCWSTR wzFile, LPDIRECTMUSICLOADER8 pLoader);
 
 /*****************************************************************************
  * IDirectMusicLoaderResourceStream implementation structure
@@ -106,7 +106,7 @@ struct IDirectMusicLoaderResourceStream {
 };
 
 /* Custom: */
-extern HRESULT WINAPI IDirectMusicLoaderResourceStream_Attach (LPSTREAM iface, LPBYTE pbMemData, LONGLONG llMemLength, LONGLONG llPos, LPDIRECTMUSICLOADER8 pLoader) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI IDirectMusicLoaderResourceStream_Attach (LPSTREAM iface, LPBYTE pbMemData, LONGLONG llMemLength, LONGLONG llPos, LPDIRECTMUSICLOADER8 pLoader);
 
 /*****************************************************************************
  * IDirectMusicLoaderGenericStream implementation structure
@@ -124,7 +124,7 @@ struct IDirectMusicLoaderGenericStream {
 };
 
 /* Custom: */
-extern HRESULT WINAPI IDirectMusicLoaderGenericStream_Attach (LPSTREAM iface, LPSTREAM pStream, LPDIRECTMUSICLOADER8 pLoader) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI IDirectMusicLoaderGenericStream_Attach (LPSTREAM iface, LPSTREAM pStream, LPDIRECTMUSICLOADER8 pLoader);
 
 #include "debug.h"
 
