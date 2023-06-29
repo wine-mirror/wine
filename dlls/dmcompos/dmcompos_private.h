@@ -44,15 +44,15 @@
 /*****************************************************************************
  * ClassFactory
  */
-extern HRESULT create_dmchordmap(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmcomposer(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmchordmaptrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmsignposttrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmchordmap(REFIID riid, void **ret_iface);
+extern HRESULT create_dmcomposer(REFIID riid, void **ret_iface);
+extern HRESULT create_dmchordmaptrack(REFIID riid, void **ret_iface);
+extern HRESULT create_dmsignposttrack(REFIID riid, void **ret_iface);
 
 /**********************************************************************
  * Dll lifetime tracking declaration for dmcompos.dll
  */
-extern LONG DMCOMPOS_refCount DECLSPEC_HIDDEN;
+extern LONG DMCOMPOS_refCount;
 static inline void DMCOMPOS_LockModule(void) { InterlockedIncrement( &DMCOMPOS_refCount ); }
 static inline void DMCOMPOS_UnlockModule(void) { InterlockedDecrement( &DMCOMPOS_refCount ); }
 
