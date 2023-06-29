@@ -774,10 +774,17 @@ static void test_IADs_GetEx(void)
             hr = IADs_get_Schema(ads2, &bstr);
             ok(hr == S_OK, "got %#lx\n", hr);
             trace("Schema of %s: %s\n", wine_dbgstr_w(path), wine_dbgstr_w(bstr));
-            SysFreeString(bstr);
 
             IADs_Release(ads2);
+
+            hr = ADsOpenObject(bstr, NULL, NULL, ADS_SECURE_AUTHENTICATION, &IID_IADs, (void **)&ads2);
+            ok(hr == S_OK, "got %#lx\n", hr);
+            IADs_Release(ads2);
+
+            SysFreeString(bstr);
         }
+        else
+            trace("ADsOpenObject(%s) error %#lx\n", wine_dbgstr_w(path), hr);
 
         VariantClear(&bin);
         IADsDNWithBinary_Release(dn);
