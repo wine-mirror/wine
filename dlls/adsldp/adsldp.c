@@ -1116,6 +1116,77 @@ static HRESULT parse_path(WCHAR *path, BSTR *host, ULONG *port, BSTR *object)
     return S_OK;
 }
 
+static HRESULT bind_to_host(BSTR host, ULONG port, LONG flags, BSTR user, BSTR password, LDAP **ld_ret)
+{
+    LDAP *ld;
+    ULONG err;
+    int version;
+    HRESULT hr;
+
+    TRACE("binding to host %s, port %lu\n", debugstr_w(host), port);
+
+    ld = ldap_initW(host, port);
+    if (!ld)
+    {
+        hr = HRESULT_FROM_WIN32(ERROR_DS_SERVER_DOWN);
+        goto fail;
+    }
+
+    version = LDAP_VERSION3;
+    err = ldap_set_optionW(ld, LDAP_OPT_PROTOCOL_VERSION, &version);
+    if (err != LDAP_SUCCESS)
+    {
+        hr = HRESULT_FROM_WIN32(map_ldap_error(err));
+        goto fail;
+    }
+
+    err = ldap_connect(ld, NULL);
+    if (err != LDAP_SUCCESS)
+    {
+        hr = HRESULT_FROM_WIN32(map_ldap_error(err));
+        goto fail;
+    }
+
+    if (flags & ADS_SECURE_AUTHENTICATION)
+    {
+        SEC_WINNT_AUTH_IDENTITY_W id;
+
+        id.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+        id.Domain = (unsigned short *)host;
+        id.DomainLength = host ? wcslen(host) : 0;
+        id.User = (unsigned short *)user;
+        id.UserLength = user ? wcslen(user) : 0;
+        id.Password = (unsigned short *)password;
+        id.PasswordLength = password ? wcslen(password) : 0;
+
+        err = ldap_bind_sW(ld, NULL, (WCHAR *)&id, LDAP_AUTH_NEGOTIATE);
+        if (err != LDAP_SUCCESS)
+        {
+            TRACE("ldap_bind_sW error %#lx\n", err);
+            hr = HRESULT_FROM_WIN32(map_ldap_error(err));
+            goto fail;
+        }
+    }
+    else
+    {
+        err = ldap_simple_bind_sW(ld, user, password);
+        if (err != LDAP_SUCCESS)
+        {
+            TRACE("ldap_simple_bind_sW error %#lx\n", err);
+            hr = HRESULT_FROM_WIN32(map_ldap_error(err));
+            goto fail;
+        }
+    }
+
+    *ld_ret = ld;
+    return S_OK;
+
+fail:
+    ldap_unbind(ld);
+    *ld_ret = NULL;
+    return hr;
+}
+
 static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, BSTR user, BSTR password,
                                            LONG flags, IDispatch **obj)
 {
@@ -1124,7 +1195,7 @@ static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, B
     IADs *ads;
     LDAP *ld = NULL;
     HRESULT hr;
-    ULONG err, at_single_count = 0, at_multiple_count = 0;
+    ULONG at_single_count = 0, at_multiple_count = 0;
     struct attribute_type *at = NULL;
 
     TRACE("%p,%s,%s,%p,%08lx,%p\n", iface, debugstr_w(path), debugstr_w(user), password, flags, obj);
@@ -1136,12 +1207,8 @@ static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, B
 
     if (host)
     {
-        int version;
-
         if (!wcsicmp(host, L"rootDSE"))
         {
-            DOMAIN_CONTROLLER_INFOW *dcinfo;
-
             if (object)
             {
                 hr = E_ADS_BAD_PATHNAME;
@@ -1149,81 +1216,33 @@ static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, B
             }
 
             object = host;
+            host = NULL;
+        }
 
-            err = DsGetDcNameW(NULL, NULL, NULL, NULL, DS_RETURN_DNS_NAME, &dcinfo);
-            if (err != ERROR_SUCCESS)
+        hr = bind_to_host(host, port, flags, user, password, &ld);
+        if (hr != S_OK && host)
+        {
+            if (hr != HRESULT_FROM_WIN32(ERROR_DS_SERVER_DOWN)) goto fail;
+
+            SysFreeString(host);
+            if (!object)
             {
-                hr = HRESULT_FROM_WIN32(err);
-                goto fail;
+                host = NULL;
+                object = SysAllocString(path + 7); /* skip LDAP:// */
+
+                TRACE("retrying with host %s, port %lu, object %s\n", debugstr_w(host), port, debugstr_w(object));
+                hr = bind_to_host(host, port, flags, user, password, &ld);
             }
-
-            host = SysAllocString(dcinfo->DomainName);
-            NetApiBufferFree(dcinfo);
-
-            if (!host)
+            else
             {
-                hr = E_OUTOFMEMORY;
-                goto fail;
-            }
-        }
-
-        ld = ldap_initW(host, port);
-        if (!ld)
-        {
-            hr = HRESULT_FROM_WIN32(LdapGetLastError());
-            goto fail;
-        }
-
-        version = LDAP_VERSION3;
-        err = ldap_set_optionW(ld, LDAP_OPT_PROTOCOL_VERSION, &version);
-        if (err != LDAP_SUCCESS)
-        {
-            hr = HRESULT_FROM_WIN32(map_ldap_error(err));
-            ldap_unbind(ld);
-            goto fail;
-        }
-
-        err = ldap_connect(ld, NULL);
-        if (err != LDAP_SUCCESS)
-        {
-            hr = HRESULT_FROM_WIN32(map_ldap_error(err));
-            ldap_unbind(ld);
-            goto fail;
-        }
-
-        if (flags & ADS_SECURE_AUTHENTICATION)
-        {
-            SEC_WINNT_AUTH_IDENTITY_W id;
-
-            id.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
-            id.Domain = (unsigned short *)host;
-            id.DomainLength = wcslen(host);
-            id.User = (unsigned short *)user;
-            id.UserLength = user ? wcslen(user) : 0;
-            id.Password = (unsigned short *)password;
-            id.PasswordLength = password ? wcslen(password) : 0;
-
-            err = ldap_bind_sW(ld, NULL, (WCHAR *)&id, LDAP_AUTH_NEGOTIATE);
-            if (err != LDAP_SUCCESS)
-            {
-                TRACE("ldap_bind_sW error %#lx\n", err);
-                hr = HRESULT_FROM_WIN32(map_ldap_error(err));
-                ldap_unbind(ld);
-                goto fail;
-            }
-        }
-        else
-        {
-            err = ldap_simple_bind_sW(ld, user, password);
-            if (err != LDAP_SUCCESS)
-            {
-                TRACE("ldap_simple_bind_sW error %#lx\n", err);
-                hr = HRESULT_FROM_WIN32(map_ldap_error(err));
-                ldap_unbind(ld);
-                goto fail;
+                SysFreeString(object);
+                object = SysAllocString(path + 7); /* skip LDAP:// */
+                TRACE("Assume that %s is virtual object\n", debugstr_w(object));
+                hr = S_OK;
             }
         }
 
+        if (hr != S_OK) goto fail;
         at = load_schema(ld, &at_single_count, &at_multiple_count);
     }
 
@@ -1241,7 +1260,7 @@ static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, B
         ldap->at_multiple_count = at_multiple_count;
 
         /* Windows fails to create IADs if it doesn't have an associated schema attribute */
-        if (object && wcsicmp(object, L"rootDSE") != 0)
+        if (ld && object && wcsicmp(object, L"rootDSE") != 0)
         {
             BSTR schema;
 
@@ -1982,7 +2001,9 @@ static HRESULT WINAPI search_GetColumn(IDirectorySearch *iface, ADS_SEARCH_HANDL
             goto exit;
         }
 
-        count = sizeof(L"LDAP://") + (wcslen(ldap->host) + 1 /* '/' */) * sizeof(WCHAR);
+        count = sizeof(L"LDAP://");
+        if (ldap->host)
+            count += (wcslen(ldap->host) + 1 /* '/' */) * sizeof(WCHAR);
         if (dn) count += wcslen(dn) * sizeof(WCHAR);
 
         col->pADsValues[0].CaseIgnoreString = malloc(count);
@@ -1993,8 +2014,11 @@ static HRESULT WINAPI search_GetColumn(IDirectorySearch *iface, ADS_SEARCH_HANDL
         }
 
         wcscpy(col->pADsValues[0].CaseIgnoreString, L"LDAP://");
-        wcscat(col->pADsValues[0].CaseIgnoreString, ldap->host);
-        wcscat(col->pADsValues[0].CaseIgnoreString, L"/");
+        if (ldap->host)
+        {
+            wcscat(col->pADsValues[0].CaseIgnoreString, ldap->host);
+            wcscat(col->pADsValues[0].CaseIgnoreString, L"/");
+        }
         if (dn) wcscat(col->pADsValues[0].CaseIgnoreString, dn);
         col->pADsValues[0].dwType = ADSTYPE_CASE_IGNORE_STRING;
         col->dwADsType = ADSTYPE_CASE_IGNORE_STRING;
