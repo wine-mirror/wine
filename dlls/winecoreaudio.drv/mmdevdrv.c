@@ -247,7 +247,7 @@ end:
     return params.result;
 }
 
-static BOOL get_device_name_by_guid(const GUID *guid, char *name, const SIZE_T name_size, EDataFlow *flow)
+static BOOL get_device_name_from_guid(const GUID *guid, char **name, EDataFlow *flow)
 {
     HKEY devices_key;
     UINT i = 0;
@@ -292,7 +292,16 @@ static BOOL get_device_name_by_guid(const GUID *guid, char *name, const SIZE_T n
                     return FALSE;
                 }
 
-                WideCharToMultiByte(CP_UNIXCP, 0, key_name + 2, -1, name, name_size, NULL, NULL);
+                if(!(size = WideCharToMultiByte(CP_UNIXCP, 0, key_name + 2, -1, NULL, 0, NULL, NULL)))
+                    return FALSE;
+
+                if(!(*name = malloc(size)))
+                    return FALSE;
+
+                if(!WideCharToMultiByte(CP_UNIXCP, 0, key_name + 2, -1, *name, size, NULL, NULL)){
+                    free(*name);
+                    return FALSE;
+                }
 
                 return TRUE;
             }
@@ -311,23 +320,30 @@ static BOOL get_device_name_by_guid(const GUID *guid, char *name, const SIZE_T n
 HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient **out)
 {
     ACImpl *This;
-    char name[256];
+    char *name;
     SIZE_T name_len;
     EDataFlow dataflow;
     HRESULT hr;
 
     TRACE("%s %p %p\n", debugstr_guid(guid), dev, out);
 
-    if(!get_device_name_by_guid(guid, name, sizeof(name), &dataflow))
+    if(!get_device_name_from_guid(guid, &name, &dataflow))
         return AUDCLNT_E_DEVICE_INVALIDATED;
 
-    if(dataflow != eRender && dataflow != eCapture)
+    if(dataflow != eRender && dataflow != eCapture){
+        free(name);
         return E_UNEXPECTED;
+    }
 
     name_len = strlen(name);
     This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, offsetof(ACImpl, device_name[name_len + 1]));
-    if(!This)
+    if(!This){
+        free(name);
         return E_OUTOFMEMORY;
+    }
+
+    memcpy(This->device_name, name, name_len + 1);
+    free(name);
 
     This->IAudioClient3_iface.lpVtbl = &AudioClient3_Vtbl;
     This->IAudioRenderClient_iface.lpVtbl = &AudioRenderClient_Vtbl;
@@ -337,7 +353,6 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     This->IAudioStreamVolume_iface.lpVtbl = &AudioStreamVolume_Vtbl;
 
     This->dataflow = dataflow;
-    memcpy(This->device_name, name, name_len + 1);
 
     hr = CoCreateFreeThreadedMarshaler((IUnknown *)&This->IAudioClient3_iface, &This->marshal);
     if (FAILED(hr)) {
