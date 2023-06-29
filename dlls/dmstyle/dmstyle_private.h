@@ -44,13 +44,13 @@
 /*****************************************************************************
  * ClassFactory
  */
-extern HRESULT create_dmstyle(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmauditiontrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmchordtrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmcommandtrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmmotiftrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmmutetrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmstyletrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmstyle(REFIID riid, void **ret_iface);
+extern HRESULT create_dmauditiontrack(REFIID riid, void **ret_iface);
+extern HRESULT create_dmchordtrack(REFIID riid, void **ret_iface);
+extern HRESULT create_dmcommandtrack(REFIID riid, void **ret_iface);
+extern HRESULT create_dmmotiftrack(REFIID riid, void **ret_iface);
+extern HRESULT create_dmmutetrack(REFIID riid, void **ret_iface);
+extern HRESULT create_dmstyletrack(REFIID riid, void **ret_iface);
 
 /*****************************************************************************
  * Auxiliary definitions
@@ -64,7 +64,7 @@ typedef struct _DMUS_PRIVATE_COMMAND {
 /**********************************************************************
  * Dll lifetime tracking declaration for dmstyle.dll
  */
-extern LONG DMSTYLE_refCount DECLSPEC_HIDDEN;
+extern LONG DMSTYLE_refCount;
 static inline void DMSTYLE_LockModule(void) { InterlockedIncrement( &DMSTYLE_refCount ); }
 static inline void DMSTYLE_UnlockModule(void) { InterlockedDecrement( &DMSTYLE_refCount ); }
 
