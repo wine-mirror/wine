@@ -31,16 +31,16 @@ struct chunk_entry {
     const struct chunk_entry *parent;   /* enclosing RIFF or LIST chunk */
 };
 
-HRESULT stream_get_chunk(IStream *stream, struct chunk_entry *chunk) DECLSPEC_HIDDEN;
-HRESULT stream_next_chunk(IStream *stream, struct chunk_entry *chunk) DECLSPEC_HIDDEN;
-HRESULT stream_skip_chunk(IStream *stream, const struct chunk_entry *chunk) DECLSPEC_HIDDEN;
+HRESULT stream_get_chunk(IStream *stream, struct chunk_entry *chunk);
+HRESULT stream_next_chunk(IStream *stream, struct chunk_entry *chunk);
+HRESULT stream_skip_chunk(IStream *stream, const struct chunk_entry *chunk);
 
 HRESULT stream_chunk_get_array(IStream *stream, const struct chunk_entry *chunk, void **array,
-        unsigned int *count, DWORD elem_size) DECLSPEC_HIDDEN;
+        unsigned int *count, DWORD elem_size);
 HRESULT stream_chunk_get_data(IStream *stream, const struct chunk_entry *chunk, void *data,
-        ULONG size) DECLSPEC_HIDDEN;
+        ULONG size);
 HRESULT stream_chunk_get_wstr(IStream *stream, const struct chunk_entry *chunk, WCHAR *str,
-        ULONG size) DECLSPEC_HIDDEN;
+        ULONG size);
 
 static inline HRESULT stream_reset_chunk_data(IStream *stream, const struct chunk_entry *chunk)
 {
@@ -71,21 +71,21 @@ struct dmobject {
     DMUS_OBJECTDESC desc;
 };
 
-void dmobject_init(struct dmobject *dmobj, const GUID *class, IUnknown *outer_unk) DECLSPEC_HIDDEN;
+void dmobject_init(struct dmobject *dmobj, const GUID *class, IUnknown *outer_unk);
 
 /* Generic IDirectMusicObject methods */
 HRESULT WINAPI dmobj_IDirectMusicObject_QueryInterface(IDirectMusicObject *iface, REFIID riid,
-        void **ret_iface) DECLSPEC_HIDDEN;
-ULONG WINAPI dmobj_IDirectMusicObject_AddRef(IDirectMusicObject *iface) DECLSPEC_HIDDEN;
-ULONG WINAPI dmobj_IDirectMusicObject_Release(IDirectMusicObject *iface) DECLSPEC_HIDDEN;
+        void **ret_iface);
+ULONG WINAPI dmobj_IDirectMusicObject_AddRef(IDirectMusicObject *iface);
+ULONG WINAPI dmobj_IDirectMusicObject_Release(IDirectMusicObject *iface);
 HRESULT WINAPI dmobj_IDirectMusicObject_GetDescriptor(IDirectMusicObject *iface,
-        DMUS_OBJECTDESC *desc) DECLSPEC_HIDDEN;
+        DMUS_OBJECTDESC *desc);
 HRESULT WINAPI dmobj_IDirectMusicObject_SetDescriptor(IDirectMusicObject *iface,
-        DMUS_OBJECTDESC *desc) DECLSPEC_HIDDEN;
+        DMUS_OBJECTDESC *desc);
 
 /* Helper for IDirectMusicObject::ParseDescriptor */
 HRESULT dmobj_parsedescriptor(IStream *stream, const struct chunk_entry *riff,
-        DMUS_OBJECTDESC *desc, DWORD supported) DECLSPEC_HIDDEN;
+        DMUS_OBJECTDESC *desc, DWORD supported);
 /* Additional supported flags for dmobj_parsedescriptor.
    DMUS_OBJ_NAME is 'UNAM' chunk in UNFO list */
 #define DMUS_OBJ_NAME_INAM   0x1000     /* 'INAM' chunk in UNFO list */
@@ -93,28 +93,28 @@ HRESULT dmobj_parsedescriptor(IStream *stream, const struct chunk_entry *riff,
 
 /* 'DMRF' (reference list) helper */
 HRESULT dmobj_parsereference(IStream *stream, const struct chunk_entry *list,
-        IDirectMusicObject **dmobj) DECLSPEC_HIDDEN;
+        IDirectMusicObject **dmobj);
 
 /* Generic IPersistStream methods */
 HRESULT WINAPI dmobj_IPersistStream_QueryInterface(IPersistStream *iface, REFIID riid,
-        void **ret_iface) DECLSPEC_HIDDEN;
-ULONG WINAPI dmobj_IPersistStream_AddRef(IPersistStream *iface) DECLSPEC_HIDDEN;
-ULONG WINAPI dmobj_IPersistStream_Release(IPersistStream *iface) DECLSPEC_HIDDEN;
-HRESULT WINAPI dmobj_IPersistStream_GetClassID(IPersistStream *iface, CLSID *class) DECLSPEC_HIDDEN;
+        void **ret_iface);
+ULONG WINAPI dmobj_IPersistStream_AddRef(IPersistStream *iface);
+ULONG WINAPI dmobj_IPersistStream_Release(IPersistStream *iface);
+HRESULT WINAPI dmobj_IPersistStream_GetClassID(IPersistStream *iface, CLSID *class);
 
 /* IPersistStream methods not implemented in native */
 HRESULT WINAPI unimpl_IPersistStream_GetClassID(IPersistStream *iface,
-        CLSID *class) DECLSPEC_HIDDEN;
-HRESULT WINAPI unimpl_IPersistStream_IsDirty(IPersistStream *iface) DECLSPEC_HIDDEN;
+        CLSID *class);
+HRESULT WINAPI unimpl_IPersistStream_IsDirty(IPersistStream *iface);
 HRESULT WINAPI unimpl_IPersistStream_Save(IPersistStream *iface, IStream *stream,
-        BOOL clear_dirty) DECLSPEC_HIDDEN;
+        BOOL clear_dirty);
 HRESULT WINAPI unimpl_IPersistStream_GetSizeMax(IPersistStream *iface,
-        ULARGE_INTEGER *size) DECLSPEC_HIDDEN;
+        ULARGE_INTEGER *size);
 
 /* Debugging helpers */
-const char *debugstr_chunk(const struct chunk_entry *chunk) DECLSPEC_HIDDEN;
-const char *debugstr_dmguid(const GUID *id) DECLSPEC_HIDDEN;
-void dump_DMUS_OBJECTDESC(DMUS_OBJECTDESC *desc) DECLSPEC_HIDDEN;
+const char *debugstr_chunk(const struct chunk_entry *chunk);
+const char *debugstr_dmguid(const GUID *id);
+void dump_DMUS_OBJECTDESC(DMUS_OBJECTDESC *desc);
 
 static inline const char *debugstr_fourcc(DWORD fourcc)
 {
