@@ -41,10 +41,7 @@ static BOOL use_external_memory(void)
     return is_wow64();
 }
 
-static ULONG_PTR zero_bits(void)
-{
-    return is_wow64() ? 0x7fffffff : 0;
-}
+static ULONG_PTR zero_bits = 0;
 
 #define wine_vk_count_struct(s, t) wine_vk_count_struct_((void *)s, VK_STRUCTURE_TYPE_##t)
 static uint32_t wine_vk_count_struct_(void *s, VkStructureType t)
@@ -469,6 +466,14 @@ NTSTATUS init_vulkan(void *args)
     {
         ERR("Failed to load Wine graphics driver supporting Vulkan.\n");
         return STATUS_UNSUCCESSFUL;
+    }
+
+    if (is_wow64())
+    {
+        SYSTEM_BASIC_INFORMATION info;
+
+        NtQuerySystemInformation(SystemEmulationBasicInformation, &info, sizeof(info), NULL);
+        zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
     }
 
     return STATUS_SUCCESS;
@@ -1519,7 +1524,7 @@ VkResult wine_vkAllocateMemory(VkDevice handle, const VkMemoryAllocateInfo *allo
         if (!once++)
             FIXME("Using VK_EXT_external_memory_host\n");
 
-        if (NtAllocateVirtualMemory(GetCurrentProcess(), &mapping, zero_bits(), &alloc_size,
+        if (NtAllocateVirtualMemory(GetCurrentProcess(), &mapping, zero_bits, &alloc_size,
                                     MEM_COMMIT, PAGE_READWRITE))
         {
             ERR("NtAllocateVirtualMemory failed\n");
