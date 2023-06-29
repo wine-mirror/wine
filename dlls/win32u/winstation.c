@@ -248,7 +248,7 @@ HDESK WINAPI NtUserGetThreadDesktop( DWORD thread )
  */
 BOOL WINAPI NtUserSetThreadDesktop( HDESK handle )
 {
-    BOOL ret;
+    BOOL ret, was_virtual_desktop = is_virtual_desktop();
 
     SERVER_START_REQ( set_thread_desktop )
     {
@@ -264,6 +264,7 @@ BOOL WINAPI NtUserSetThreadDesktop( HDESK handle )
         thread_info->client_info.top_window = 0;
         thread_info->client_info.msg_window = 0;
         if (key_state_info) key_state_info->time = 0;
+        if (was_virtual_desktop != is_virtual_desktop()) update_display_cache( TRUE );
     }
     return ret;
 }
