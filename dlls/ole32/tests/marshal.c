@@ -589,7 +589,7 @@ static HRESULT WINAPI RpcProxyBuffer_Connect(IRpcProxyBuffer *iface, IRpcChannel
 
     hr = IRpcChannelBuffer_GetDestCtx(pRpcChannelBuffer, &dest_context, &dest_context_data);
     ok(hr == S_OK, "GetDestCtx failed: %08lx\n", hr);
-    todo_wine ok(dest_context == MSHCTX_INPROC, "desc_context = %lx\n", dest_context);
+    ok(dest_context == MSHCTX_INPROC, "desc_context = %lx\n", dest_context);
     ok(!dest_context_data, "desc_context_data = %p\n", dest_context_data);
 
     return IRpcProxyBuffer_Connect(This->buffer, pRpcChannelBuffer);

@@ -698,7 +698,7 @@ HRESULT WINAPI CoReleaseMarshalData(IStream *stream)
 }
 
 static HRESULT std_unmarshal_interface(MSHCTX dest_context, void *dest_context_data,
-        IStream *stream, REFIID riid, void **ppv)
+        IStream *stream, REFIID riid, void **ppv, BOOL dest_context_known)
 {
     struct stub_manager *stubmgr = NULL;
     struct OR_STANDARD obj;
@@ -757,6 +757,8 @@ static HRESULT std_unmarshal_interface(MSHCTX dest_context, void *dest_context_d
         {
             if (!stub_manager_notify_unmarshal(stubmgr, &obj.std.ipid))
                 hres = CO_E_OBJNOTCONNECTED;
+            if (SUCCEEDED(hres) && !dest_context_known)
+                hres = ipid_get_dest_context(&obj.std.ipid, &dest_context, &dest_context_data);
         }
         else
         {
@@ -803,7 +805,7 @@ HRESULT WINAPI CoUnmarshalInterface(IStream *stream, REFIID riid, void **ppv)
     hr = get_unmarshaler_from_stream(stream, &marshal, &iid);
     if (hr == S_FALSE)
     {
-        hr = std_unmarshal_interface(0, NULL, stream, &iid, (void **)&object);
+        hr = std_unmarshal_interface(0, NULL, stream, &iid, (void **)&object, FALSE);
         if (hr != S_OK)
             ERR("StdMarshal UnmarshalInterface failed, hr %#lx\n", hr);
     }
@@ -2183,7 +2185,7 @@ static HRESULT WINAPI StdMarshalImpl_UnmarshalInterface(IMarshal *iface, IStream
         return E_NOTIMPL;
     }
 
-    return std_unmarshal_interface(marshal->dest_context, marshal->dest_context_data, stream, riid, ppv);
+    return std_unmarshal_interface(marshal->dest_context, marshal->dest_context_data, stream, riid, ppv, TRUE);
 }
 
 static HRESULT WINAPI StdMarshalImpl_ReleaseMarshalData(IMarshal *iface, IStream *stream)

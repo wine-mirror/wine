@@ -554,6 +554,31 @@ HRESULT ipid_get_dispatch_params(const IPID *ipid, struct apartment **stub_apt,
     return S_OK;
 }
 
+HRESULT ipid_get_dest_context(const IPID *ipid, MSHCTX *dest_context, void **dest_context_data)
+{
+    struct stub_manager *stubmgr;
+    struct ifstub *ifstub;
+    struct apartment *apt;
+    void *data;
+    HRESULT hr;
+    DWORD ctx;
+
+    hr = ipid_to_ifstub(ipid, &apt, &stubmgr, &ifstub);
+    if (hr != S_OK) return RPC_E_DISCONNECTED;
+
+    hr = IRpcChannelBuffer_GetDestCtx(ifstub->chan, &ctx, &data);
+    if (SUCCEEDED(hr))
+    {
+        *dest_context = ctx;
+        *dest_context_data = data;
+    }
+
+    stub_manager_int_release(stubmgr);
+    apartment_release(apt);
+
+    return hr;
+}
+
 /* returns TRUE if it is possible to unmarshal, FALSE otherwise. */
 BOOL stub_manager_notify_unmarshal(struct stub_manager *m, const IPID *ipid)
 {

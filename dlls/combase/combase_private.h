@@ -256,4 +256,5 @@ struct ifstub * stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *
 HRESULT ipid_get_dispatch_params(const IPID *ipid, struct apartment **stub_apt,
         struct stub_manager **manager, IRpcStubBuffer **stub, IRpcChannelBuffer **chan,
         IID *iid, IUnknown **iface);
+HRESULT ipid_get_dest_context(const IPID *ipid, MSHCTX *dest_context, void **dest_context_data);
 HRESULT start_apartment_remote_unknown(struct apartment *apt);
