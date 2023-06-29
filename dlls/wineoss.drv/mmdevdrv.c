@@ -204,21 +204,34 @@ static void get_device_guid(EDataFlow flow, const char *device, GUID *guid)
         RegCloseKey(key);
 }
 
-static const OSSDevice *get_ossdevice_from_guid(const GUID *guid)
+static BOOL get_device_name_from_guid(GUID *guid, char **name, EDataFlow *flow)
 {
     OSSDevice *dev_item;
-    LIST_FOR_EACH_ENTRY(dev_item, &g_devices, OSSDevice, entry)
-        if(IsEqualGUID(guid, &dev_item->guid))
-            return dev_item;
-    return NULL;
+    LIST_FOR_EACH_ENTRY(dev_item, &g_devices, OSSDevice, entry){
+        if(!IsEqualGUID(guid, &dev_item->guid))
+            continue;
+
+        if(!(*name = strdup(dev_item->devnode)))
+            return FALSE;
+
+        *flow = dev_item->flow;
+
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 static void device_add(OSSDevice *oss_dev)
 {
-    if(get_ossdevice_from_guid(&oss_dev->guid)) /* already in list */
-        HeapFree(GetProcessHeap(), 0, oss_dev);
-    else
-        list_add_tail(&g_devices, &oss_dev->entry);
+    OSSDevice *dev_item;
+    LIST_FOR_EACH_ENTRY(dev_item, &g_devices, OSSDevice, entry)
+        if(IsEqualGUID(&oss_dev->guid, &dev_item->guid)){ /* already in list */
+            HeapFree(GetProcessHeap(), 0, oss_dev);
+            return;
+        }
+
+    list_add_tail(&g_devices, &oss_dev->entry);
 }
 
 HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **guids_out,
@@ -295,25 +308,32 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev,
         IAudioClient **out)
 {
     ACImpl *This;
-    const OSSDevice *oss_dev;
-    HRESULT hr;
+    char *name;
     int len;
+    EDataFlow dataflow;
+    HRESULT hr;
 
     TRACE("%s %p %p\n", debugstr_guid(guid), dev, out);
 
-    oss_dev = get_ossdevice_from_guid(guid);
-    if(!oss_dev){
+    if(!get_device_name_from_guid(guid, &name, &dataflow)){
         WARN("Unknown GUID: %s\n", debugstr_guid(guid));
         return AUDCLNT_E_DEVICE_INVALIDATED;
     }
 
-    if(oss_dev->flow != eRender && oss_dev->flow != eCapture)
+    if(dataflow != eRender && dataflow != eCapture){
+        free(name);
         return E_UNEXPECTED;
+    }
 
-    len = strlen(oss_dev->devnode);
+    len = strlen(name);
     This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, offsetof(ACImpl, device_name[len + 1]));
-    if(!This)
+    if(!This){
+        free(name);
         return E_OUTOFMEMORY;
+    }
+
+    memcpy(This->device_name, name, len + 1);
+    free(name);
 
     hr = CoCreateFreeThreadedMarshaler((IUnknown *)&This->IAudioClient3_iface, &This->marshal);
     if (FAILED(hr)) {
@@ -321,8 +341,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev,
          return hr;
     }
 
-    This->dataflow = oss_dev->flow;
-    strcpy(This->device_name, oss_dev->devnode);
+    This->dataflow = dataflow;
 
     This->IAudioClient3_iface.lpVtbl = &AudioClient3_Vtbl;
     This->IAudioRenderClient_iface.lpVtbl = &AudioRenderClient_Vtbl;
