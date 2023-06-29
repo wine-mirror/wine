@@ -268,6 +268,7 @@ static int macdrv_get_gpu_info_from_mtldevice(struct macdrv_gpu* gpu, id<MTLDevi
     int ret;
     if ((ret = macdrv_get_gpu_info_from_registry_id(gpu, [device registryID])))
         return ret;
+#if defined(MAC_OS_X_VERSION_10_15) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_15
     /* Apple GPUs aren't PCI devices and therefore have no device ID
      * Use the Metal GPUFamily as the device ID */
     if (!gpu->device_id && [device respondsToSelector:@selector(supportsFamily:)] && [device supportsFamily:MTLGPUFamilyApple1])
@@ -284,6 +285,7 @@ static int macdrv_get_gpu_info_from_mtldevice(struct macdrv_gpu* gpu, id<MTLDevi
         }
         gpu->device_id = highest;
     }
+#endif
     return 0;
 }
 
