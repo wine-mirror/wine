@@ -3608,12 +3608,12 @@ static void test_verify_ecc_signature(void)
     BCryptDestroyKey(bkey);
 
     bret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, cert->pCertInfo);
-    todo_wine ok(bret, "failed, error %#lx.\n", GetLastError());
+    ok(bret, "failed, error %#lx.\n", GetLastError());
 
     verify_para.dwSignerType = CMSG_VERIFY_SIGNER_CERT;
     verify_para.pvSigner = (void *)cert;
     bret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE_EX, &verify_para);
-    todo_wine ok(bret, "failed, error %#lx.\n", GetLastError());
+    ok(bret, "failed, error %#lx.\n", GetLastError());
 
     free(signer_info);
     free(cert_info);

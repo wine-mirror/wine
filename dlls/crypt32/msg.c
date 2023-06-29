@@ -3316,24 +3316,56 @@ static BOOL CDecodeHashMsg_VerifyHash(CDecodeMsg *msg)
     return ret;
 }
 
+static BOOL cng_verify_msg_signature(CMSG_CMS_SIGNER_INFO *signer, HCRYPTHASH hash, CERT_PUBLIC_KEY_INFO *key_info)
+{
+    BYTE *hash_value, *sig_value = NULL;
+    DWORD hash_len, sig_len;
+    BCRYPT_KEY_HANDLE key;
+    BOOL ret = FALSE;
+    NTSTATUS status;
+
+    if (!CryptImportPublicKeyInfoEx2(X509_ASN_ENCODING, key_info, 0, NULL, &key)) return FALSE;
+    if (!extract_hash(hash, &hash_value, &hash_len)) goto done;
+    if (!cng_prepare_signature(key_info->Algorithm.pszObjId, signer->EncryptedHash.pbData,
+            signer->EncryptedHash.cbData, &sig_value, &sig_len)) goto done;
+    status = BCryptVerifySignature(key, NULL, hash_value, hash_len, sig_value, sig_len, 0);
+    if (status)
+    {
+        FIXME("Failed to verify signature: %08lx.\n", status);
+        SetLastError(RtlNtStatusToDosError(status));
+    }
+    ret = !status;
+done:
+    CryptMemFree(sig_value);
+    CryptMemFree(hash_value);
+    BCryptDestroyKey(key);
+    return ret;
+}
+
 static BOOL CDecodeSignedMsg_VerifySignatureWithKey(CDecodeMsg *msg,
  HCRYPTPROV prov, DWORD signerIndex, PCERT_PUBLIC_KEY_INFO keyInfo)
 {
+    HCRYPTHASH hash;
     HCRYPTKEY key;
     BOOL ret;
+    ALG_ID alg_id = 0;
+
+    if (msg->u.signed_data.info->rgSignerInfo[signerIndex].AuthAttrs.cAttr)
+        hash = msg->u.signed_data.signerHandles[signerIndex].authAttrHash;
+    else
+        hash = msg->u.signed_data.signerHandles[signerIndex].contentHash;
+
+    if (keyInfo->Algorithm.pszObjId) alg_id = CertOIDToAlgId(keyInfo->Algorithm.pszObjId);
+    if (alg_id == CALG_OID_INFO_PARAMETERS || alg_id == CALG_OID_INFO_CNG_ONLY)
+        return cng_verify_msg_signature(&msg->u.signed_data.info->rgSignerInfo[signerIndex], hash, keyInfo);
 
     if (!prov)
         prov = msg->crypt_prov;
     ret = CryptImportPublicKeyInfo(prov, X509_ASN_ENCODING, keyInfo, &key);
     if (ret)
     {
-        HCRYPTHASH hash;
         CRYPT_HASH_BLOB reversedHash;
 
-        if (msg->u.signed_data.info->rgSignerInfo[signerIndex].AuthAttrs.cAttr)
-            hash = msg->u.signed_data.signerHandles[signerIndex].authAttrHash;
-        else
-            hash = msg->u.signed_data.signerHandles[signerIndex].contentHash;
         ret = CRYPT_ConstructBlob(&reversedHash,
          &msg->u.signed_data.info->rgSignerInfo[signerIndex].EncryptedHash);
         if (ret)

@@ -2810,7 +2810,7 @@ static BOOL CNG_PrepareSignatureECC(BYTE *encoded_sig, DWORD encoded_size, BYTE 
     return TRUE;
 }
 
-static BOOL cng_prepare_signature(const char *alg_oid, BYTE *encoded_sig, DWORD encoded_sig_len,
+BOOL cng_prepare_signature(const char *alg_oid, BYTE *encoded_sig, DWORD encoded_sig_len,
     BYTE **sig_value, DWORD *sig_len)
 {
     if (!strcmp(alg_oid, szOID_ECC_PUBLIC_KEY))
