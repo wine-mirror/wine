@@ -95,14 +95,14 @@ typedef struct instrument_articulation {
  */
 
 /* CLSID */
-extern HRESULT DMUSIC_CreateDirectMusicImpl(REFIID riid, void **ret_iface, IUnknown *pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT DMUSIC_CreateDirectMusicCollectionImpl(REFIID riid, void **ppobj, IUnknown *pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT DMUSIC_CreateDirectMusicImpl(REFIID riid, void **ret_iface, IUnknown *pUnkOuter);
+extern HRESULT DMUSIC_CreateDirectMusicCollectionImpl(REFIID riid, void **ppobj, IUnknown *pUnkOuter);
 
 /* Internal */
-extern HRESULT DMUSIC_CreateDirectMusicBufferImpl(LPDMUS_BUFFERDESC desc, LPVOID* ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT DMUSIC_CreateDirectMusicDownloadImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT DMUSIC_CreateReferenceClockImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT DMUSIC_CreateDirectMusicInstrumentImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT DMUSIC_CreateDirectMusicBufferImpl(LPDMUS_BUFFERDESC desc, LPVOID* ret_iface);
+extern HRESULT DMUSIC_CreateDirectMusicDownloadImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
+extern HRESULT DMUSIC_CreateReferenceClockImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
+extern HRESULT DMUSIC_CreateDirectMusicInstrumentImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
 
 /*****************************************************************************
  * IDirectMusic8Impl implementation structure
@@ -160,11 +160,11 @@ struct IDirectMusicDownloadImpl {
 
 /** Internal factory */
 extern HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_params,
-        DMUS_PORTCAPS *port_caps, IDirectMusicPort **port) DECLSPEC_HIDDEN;
+        DMUS_PORTCAPS *port_caps, IDirectMusicPort **port);
 extern HRESULT midi_out_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_params,
-        DMUS_PORTCAPS *port_caps, IDirectMusicPort **port) DECLSPEC_HIDDEN;
+        DMUS_PORTCAPS *port_caps, IDirectMusicPort **port);
 extern HRESULT midi_in_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_params,
-        DMUS_PORTCAPS *port_caps, IDirectMusicPort **port) DECLSPEC_HIDDEN;
+        DMUS_PORTCAPS *port_caps, IDirectMusicPort **port);
 
 /*****************************************************************************
  * IReferenceClockImpl implementation structure
@@ -215,12 +215,12 @@ static inline IDirectMusicInstrumentImpl *impl_from_IDirectMusicInstrument(IDire
 }
 
 /* custom :) */
-extern HRESULT IDirectMusicInstrumentImpl_CustomLoad(IDirectMusicInstrument *iface, IStream *stream) DECLSPEC_HIDDEN;
+extern HRESULT IDirectMusicInstrumentImpl_CustomLoad(IDirectMusicInstrument *iface, IStream *stream);
 
 /**********************************************************************
  * Dll lifetime tracking declaration for dmusic.dll
  */
-extern LONG DMUSIC_refCount DECLSPEC_HIDDEN;
+extern LONG DMUSIC_refCount;
 static inline void DMUSIC_LockModule(void) { InterlockedIncrement( &DMUSIC_refCount ); }
 static inline void DMUSIC_UnlockModule(void) { InterlockedDecrement( &DMUSIC_refCount ); }
 
@@ -228,7 +228,7 @@ static inline void DMUSIC_UnlockModule(void) { InterlockedDecrement( &DMUSIC_ref
 /*****************************************************************************
  * Misc.
  */
-void dmusic_remove_port(IDirectMusic8Impl *dmusic, IDirectMusicPort *port) DECLSPEC_HIDDEN;
+void dmusic_remove_port(IDirectMusic8Impl *dmusic, IDirectMusicPort *port);
 
 /* for simpler reading */
 typedef struct _DMUS_PRIVATE_CHUNK {
@@ -245,13 +245,13 @@ typedef struct {
 #define FE(x) { x, #x }	
 
 /* dwPatch from MIDILOCALE */
-extern DWORD MIDILOCALE2Patch (const MIDILOCALE *pLocale) DECLSPEC_HIDDEN;
+extern DWORD MIDILOCALE2Patch (const MIDILOCALE *pLocale);
 /* MIDILOCALE from dwPatch */
-extern void Patch2MIDILOCALE (DWORD dwPatch, LPMIDILOCALE pLocale) DECLSPEC_HIDDEN;
+extern void Patch2MIDILOCALE (DWORD dwPatch, LPMIDILOCALE pLocale);
 
 /* check whether the given DWORD is even (return 0) or odd (return 1) */
-extern int even_or_odd (DWORD number) DECLSPEC_HIDDEN;
+extern int even_or_odd (DWORD number);
 /* Dump whole DMUS_PORTPARAMS struct */
-extern void dump_DMUS_PORTPARAMS(LPDMUS_PORTPARAMS params) DECLSPEC_HIDDEN;
+extern void dump_DMUS_PORTPARAMS(LPDMUS_PORTPARAMS params);
 
 #endif /* __WINE_DMUSIC_PRIVATE_H */
