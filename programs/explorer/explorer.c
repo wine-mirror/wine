@@ -838,49 +838,56 @@ static void parse_command_line(LPWSTR commandline,parameters_struct *parameters)
     static const WCHAR arg_select[] = L"/select,";
     static const WCHAR arg_desktop[] = L"/desktop";
     static const WCHAR arg_desktop_quotes[] = L"\"/desktop";
+    const size_t len_n = wcslen(arg_n);
+    const size_t len_e = wcslen(arg_e);
+    const size_t len_cd = wcslen(arg_cd);
+    const size_t len_root = wcslen(arg_root);
+    const size_t len_select = wcslen(arg_select);
+    const size_t len_desktop = wcslen(arg_desktop);
+    const size_t len_desktop_quotes = wcslen(arg_desktop_quotes);
 
     LPWSTR p = commandline;
 
     while (*p)
     {
         while (iswspace(*p)) p++;
-        if (wcsncmp(p, arg_n, ARRAY_SIZE( arg_n ))==0)
+        if (wcsncmp(p, arg_n, len_n )==0)
         {
             parameters->explorer_mode = FALSE;
-            p += ARRAY_SIZE( arg_n );
+            p += len_n;
         }
-        else if (wcsncmp(p, arg_e, ARRAY_SIZE( arg_e ))==0)
+        else if (wcsncmp(p, arg_e, len_e )==0)
         {
             parameters->explorer_mode = TRUE;
-            p += ARRAY_SIZE( arg_e );
+            p += len_e;
         }
-        else if (wcsncmp(p, arg_cd, ARRAY_SIZE( arg_cd ))==0)
+        else if (wcsncmp(p, arg_cd, len_cd )==0)
         {
-            p += ARRAY_SIZE( arg_cd );
+            p += len_cd;
             p = copy_path_string(parameters->root,p);
         }
-        else if (wcsncmp(p, arg_root, ARRAY_SIZE( arg_root ))==0)
+        else if (wcsncmp(p, arg_root, len_root )==0)
         {
-            p += ARRAY_SIZE( arg_root );
+            p += len_root;
             p = copy_path_string(parameters->root,p);
         }
-        else if (wcsncmp(p, arg_select, ARRAY_SIZE( arg_select ))==0)
+        else if (wcsncmp(p, arg_select, len_select )==0)
         {
-            p += ARRAY_SIZE( arg_select );
+            p += len_select;
             p = copy_path_string(parameters->selection,p);
             if (!parameters->root[0])
                 copy_path_root(parameters->root,
                                parameters->selection);
         }
-        else if (wcsncmp(p, arg_desktop, ARRAY_SIZE( arg_desktop ))==0)
+        else if (wcsncmp(p, arg_desktop, len_desktop )==0)
         {
-            p += ARRAY_SIZE( arg_desktop );
+            p += len_desktop;
             manage_desktop( p );  /* the rest of the command line is handled by desktop mode */
         }
         /* workaround for Worms Armageddon that hardcodes a /desktop option with quotes */
-        else if (wcsncmp(p, arg_desktop_quotes, ARRAY_SIZE( arg_desktop_quotes ))==0)
+        else if (wcsncmp(p, arg_desktop_quotes, len_desktop_quotes )==0)
         {
-            p += ARRAY_SIZE( arg_desktop_quotes );
+            p += len_desktop_quotes;
             manage_desktop( p );  /* the rest of the command line is handled by desktop mode */
         }
         else
