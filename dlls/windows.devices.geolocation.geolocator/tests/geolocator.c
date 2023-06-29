@@ -54,7 +54,11 @@ void test_basic(void)
     IActivationFactory *factory;
     IInspectable *inspectable;
     IGeolocator *geolocator;
+    IGeolocator *geolocator2;
     IWeakReferenceSource *weak_reference_source;
+    IWeakReference *weak_reference;
+    IUnknown* unknown;
+    void *dummy;
     HSTRING str;
     HRESULT hr;
 
@@ -91,9 +95,47 @@ void test_basic(void)
 
     hr = IGeolocator_QueryInterface(geolocator, &IID_IWeakReferenceSource, (void **)&weak_reference_source);
     ok(hr == S_OK && weak_reference_source, "got hr %#lx.\n", hr);
+
+    hr = IWeakReferenceSource_GetWeakReference(weak_reference_source, &weak_reference);
+    ok(hr == S_OK && weak_reference, "got hr %#lx.\n", hr);
     IWeakReferenceSource_Release(weak_reference_source);
 
+    hr = IWeakReference_Resolve(weak_reference, &IID_IUnknown, (IInspectable **)&unknown);
+    ok(hr == S_OK && unknown, "got hr %#lx.\n", hr);
+    hr = IWeakReference_Resolve(weak_reference, &IID_IGeolocator, (IInspectable **)&geolocator2);
+    ok(hr == S_OK && geolocator2, "got hr %#lx.\n", hr);
+    hr = IWeakReference_Resolve(weak_reference, &IID_IInspectable, &inspectable);
+    ok(hr == S_OK && inspectable, "got hr %#lx.\n", hr);
+    ok((void *)inspectable == (void *)geolocator, "Interfaces are not the same\n");
+    ok((void *)unknown == (void *)geolocator, "Interfaces are not the same\n");
+    IUnknown_Release(unknown);
+    IGeolocator_Release(geolocator2);
+    geolocator2 = 0;
+    IInspectable_Release(inspectable);
+    inspectable = 0;
+
+    dummy = (void *)0xdeadbeef;
+    hr = IWeakReference_Resolve(weak_reference, &IID_IWeakReference, (IInspectable **)&dummy);
+    ok(hr == E_NOINTERFACE && !dummy, "got hr %#lx.\n", hr);
+
+    check_interface(weak_reference, &IID_IUnknown);
+    check_interface(weak_reference, &IID_IWeakReference);
+    hr = IWeakReference_QueryInterface(weak_reference, &IID_IGeolocator, &dummy);
+    ok(hr == E_NOINTERFACE && !dummy, "got hr %#lx.\n", hr);
+    hr = IWeakReference_QueryInterface(weak_reference, &IID_IAgileObject, &dummy);
+    ok(hr == E_NOINTERFACE && !dummy, "got hr %#lx.\n", hr);
+    hr = IWeakReference_QueryInterface(weak_reference, &IID_IInspectable, &dummy);
+    ok(hr == E_NOINTERFACE && !dummy, "got hr %#lx.\n", hr);
+
+    /* Free geolocator, weak reference should fail to resolve now */
     IGeolocator_Release(geolocator);
+
+    hr = IWeakReference_Resolve(weak_reference, &IID_IGeolocator, (IInspectable **)&geolocator2);
+    ok(hr == S_OK && !geolocator2, "got hr %#lx.\n", hr);
+    hr = IWeakReference_Resolve(weak_reference, &IID_IWeakReference, (IInspectable **)&dummy);
+    ok(hr == S_OK && !dummy, "got hr %#lx.\n", hr);
+
+    IWeakReference_Release(weak_reference);
     IActivationFactory_Release(factory);
 }
 
