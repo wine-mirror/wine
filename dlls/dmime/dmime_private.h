@@ -51,25 +51,25 @@ typedef struct IDirectMusicAudioPathImpl IDirectMusicAudioPathImpl;
 /*****************************************************************************
  * ClassFactory
  */
-extern HRESULT create_dmperformance(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmsegment(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmsegmentstate(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmgraph(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmaudiopath(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmperformance(REFIID riid, void **ret_iface);
+extern HRESULT create_dmsegment(REFIID riid, void **ret_iface);
+extern HRESULT create_dmsegmentstate(REFIID riid, void **ret_iface);
+extern HRESULT create_dmgraph(REFIID riid, void **ret_iface);
+extern HRESULT create_dmaudiopath(REFIID riid, void **ret_iface);
 
-extern HRESULT create_dmlyricstrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmmarkertrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmparamcontroltrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmsegtriggertrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmseqtrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmsysextrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmtempotrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmtimesigtrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT create_dmwavetrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmlyricstrack(REFIID riid, void **ret_iface);
+extern HRESULT create_dmmarkertrack(REFIID riid, void **ret_iface);
+extern HRESULT create_dmparamcontroltrack(REFIID riid, void **ret_iface);
+extern HRESULT create_dmsegtriggertrack(REFIID riid, void **ret_iface);
+extern HRESULT create_dmseqtrack(REFIID riid, void **ret_iface);
+extern HRESULT create_dmsysextrack(REFIID riid, void **ret_iface);
+extern HRESULT create_dmtempotrack(REFIID riid, void **ret_iface);
+extern HRESULT create_dmtimesigtrack(REFIID riid, void **ret_iface);
+extern HRESULT create_dmwavetrack(REFIID riid, void **ret_iface);
 
-extern void set_audiopath_perf_pointer(IDirectMusicAudioPath*,IDirectMusicPerformance8*) DECLSPEC_HIDDEN;
-extern void set_audiopath_dsound_buffer(IDirectMusicAudioPath*,IDirectSoundBuffer*) DECLSPEC_HIDDEN;
-extern void set_audiopath_primary_dsound_buffer(IDirectMusicAudioPath*,IDirectSoundBuffer*) DECLSPEC_HIDDEN;
+extern void set_audiopath_perf_pointer(IDirectMusicAudioPath*,IDirectMusicPerformance8*);
+extern void set_audiopath_dsound_buffer(IDirectMusicAudioPath*,IDirectSoundBuffer*);
+extern void set_audiopath_primary_dsound_buffer(IDirectMusicAudioPath*,IDirectSoundBuffer*);
 
 /*****************************************************************************
  * Auxiliary definitions
@@ -99,7 +99,7 @@ typedef struct _DMUS_PRIVATE_TEMPO_PLAY_STATE {
 /**********************************************************************
  * Dll lifetime tracking declaration for dmime.dll
  */
-extern LONG DMIME_refCount DECLSPEC_HIDDEN;
+extern LONG DMIME_refCount;
 static inline void DMIME_LockModule(void) { InterlockedIncrement( &DMIME_refCount ); }
 static inline void DMIME_UnlockModule(void) { InterlockedDecrement( &DMIME_refCount ); }
 
