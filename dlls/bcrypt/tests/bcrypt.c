@@ -2583,12 +2583,25 @@ static void test_RSA(void)
     ret = BCryptSetProperty(key, BCRYPT_KEY_LENGTH, (UCHAR *)&keylen, sizeof(keylen), 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
 
+    pad.pszAlgId = BCRYPT_MD5_ALGORITHM;
+    memset(sig, 0, sizeof(sig));
+    len = 0;
+    ret = BCryptSignHash(key, &pad, hash, 16, sig, sizeof(sig), &len, BCRYPT_PAD_PKCS1);
+    ok(!ret, "got %#lx\n", ret);
+    ok(len == 256, "got %lu\n", len);
+    pad.pszAlgId = BCRYPT_MD5_ALGORITHM;
+    ret = BCryptVerifySignature(key, &pad, hash, 16, sig, len, BCRYPT_PAD_PKCS1);
+    ok(!ret, "BCryptVerifySignature failed: %#lx\n", ret);
+
     pad.pszAlgId = BCRYPT_SHA1_ALGORITHM;
     memset(sig, 0, sizeof(sig));
     len = 0;
     ret = BCryptSignHash(key, &pad, hash, sizeof(hash), sig, sizeof(sig), &len, BCRYPT_PAD_PKCS1);
     ok(!ret, "got %#lx\n", ret);
     ok(len == 256, "got %lu\n", len);
+    pad.pszAlgId = BCRYPT_SHA1_ALGORITHM;
+    ret = BCryptVerifySignature(key, &pad, hash, sizeof(hash), sig, len, BCRYPT_PAD_PKCS1);
+    ok(!ret, "BCryptVerifySignature failed: %#lx\n", ret);
 
     pad_pss.pszAlgId = BCRYPT_SHA384_ALGORITHM;
     pad_pss.cbSalt = 48;

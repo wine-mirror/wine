@@ -1714,6 +1714,11 @@ static NTSTATUS pubkey_set_rsa_pss_params( gnutls_pubkey_t key, gnutls_digest_al
 
 static NTSTATUS key_asymmetric_verify( void *args )
 {
+#ifdef GNUTLS_VERIFY_ALLOW_BROKEN
+    static const unsigned int verify_flags = GNUTLS_VERIFY_ALLOW_BROKEN;
+#else
+    static const unsigned int verify_flags = 0;
+#endif
     const struct key_asymmetric_verify_params *params = args;
     struct key *key = params->key;
     unsigned flags = params->flags;
@@ -1806,8 +1811,8 @@ static NTSTATUS key_asymmetric_verify( void *args )
 
     gnutls_hash.data = params->hash;
     gnutls_hash.size = params->hash_len;
-    ret = pgnutls_pubkey_verify_hash2( key_data(key)->a.pubkey, sign_alg, 0, &gnutls_hash, &gnutls_signature );
 
+    ret = pgnutls_pubkey_verify_hash2( key_data(key)->a.pubkey, sign_alg, verify_flags, &gnutls_hash, &gnutls_signature );
     if (gnutls_signature.data != params->signature) free( gnutls_signature.data );
     return (ret < 0) ? STATUS_INVALID_SIGNATURE : STATUS_SUCCESS;
 }
