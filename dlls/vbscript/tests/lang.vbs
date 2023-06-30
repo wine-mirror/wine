@@ -827,6 +827,14 @@ x = false
 Call testsub
 Call ok(x, "x is false, testsub not called?")
 
+if false then
+Sub testsub_one_line() x = true End Sub
+end if
+
+x = false
+Call testsub_one_line
+Call ok(x, "x is false, testsub_one_line not called?")
+
 Sub SubSetTrue(v)
     Call ok(not v, "v is not true")
     v = true
@@ -919,6 +927,14 @@ end if
 x = false
 Call TestFunc
 Call ok(x, "x is false, testfunc not called?")
+
+if false then
+Function testfunc_one_line() x = true End Function
+end if
+
+x = false
+Call testfunc_one_line
+Call ok(x, "x is false, testfunc_one_line not called?")
 
 Function FuncSetTrue(v)
     Call ok(not v, "v is not true")

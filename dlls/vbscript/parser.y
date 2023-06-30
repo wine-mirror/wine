@@ -145,7 +145,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %type <member> MemberExpression
 %type <expression> Arguments ArgumentList ArgumentList_opt Step_opt ExpressionList
 %type <boolean> DoType Preserve_opt
-%type <arg_decl> ArgumentsDecl_opt ArgumentDeclList ArgumentDecl
+%type <arg_decl> ArgumentsDecl ArgumentsDecl_opt ArgumentDeclList ArgumentDecl
 %type <func_decl> FunctionDecl PropertyDecl
 %type <elseif> ElseIfs_opt ElseIfs ElseIf
 %type <class_decl> ClassDeclaration ClassBody
@@ -475,9 +475,13 @@ PropertyDecl
                                     { $$ = new_function_decl(ctx, $4, FUNC_PROPSET, $1, $6, $9); CHECK_ERROR; }
 
 FunctionDecl
-    : Storage_opt tSUB Identifier ArgumentsDecl_opt StSep BodyStatements tEND tSUB
+    : Storage_opt tSUB Identifier StSep BodyStatements tEND tSUB
+                                    { $$ = new_function_decl(ctx, $3, FUNC_SUB, $1, NULL, $5); CHECK_ERROR; }
+    | Storage_opt tSUB Identifier ArgumentsDecl Nl_opt BodyStatements tEND tSUB
                                     { $$ = new_function_decl(ctx, $3, FUNC_SUB, $1, $4, $6); CHECK_ERROR; }
-    | Storage_opt tFUNCTION Identifier ArgumentsDecl_opt StSep BodyStatements tEND tFUNCTION
+    | Storage_opt tFUNCTION Identifier StSep BodyStatements tEND tFUNCTION
+                                    { $$ = new_function_decl(ctx, $3, FUNC_FUNCTION, $1, NULL, $5); CHECK_ERROR; }
+    | Storage_opt tFUNCTION Identifier ArgumentsDecl Nl_opt BodyStatements tEND tFUNCTION
                                     { $$ = new_function_decl(ctx, $3, FUNC_FUNCTION, $1, $4, $6); CHECK_ERROR; }
 
 Storage_opt
@@ -490,7 +494,11 @@ Storage
     | tPRIVATE                      { $$ = STORAGE_IS_PRIVATE; }
 
 ArgumentsDecl_opt
-    : EmptyBrackets_opt                         { $$ = NULL; }
+    : /* empty*/                                { $$ = 0; }
+    | ArgumentsDecl                             { $$ = $1; }
+
+ArgumentsDecl
+    : tEMPTYBRACKETS                            { $$ = NULL; }
     | '(' ArgumentDeclList ')'                  { $$ = $2; }
 
 ArgumentDeclList
@@ -514,6 +522,10 @@ Identifier
 StSep_opt
     : /* empty */
     | StSep
+
+Nl_opt
+    : /* empty */
+    | tNL Nl_opt
 
 /* Most statements accept both new line and ':' as separators */
 StSep
@@ -1162,6 +1174,8 @@ static statement_t *new_const_statement(parser_ctx_t *ctx, unsigned loc, const_d
 static statement_t *link_statements(statement_t *head, statement_t *tail)
 {
     statement_t *iter;
+
+    if (!head) return tail;
 
     for(iter = head; iter->next; iter = iter->next);
     iter->next = tail;
