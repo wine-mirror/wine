@@ -44,6 +44,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(localspl);
 
+/* cups.h before version 1.7.0 doesn't have HTTP_STATUS_CONTINUE */
+#define HTTP_STATUS_CONTINUE 100
+
 #ifdef SONAME_LIBCUPS
 
 static void *libcups_handle;
