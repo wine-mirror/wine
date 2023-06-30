@@ -200,7 +200,7 @@ static void get_device_guid(EDataFlow flow, const char *device, GUID *guid)
         RegCloseKey(key);
 }
 
-static BOOL get_device_name_from_guid(GUID *guid, char **name, EDataFlow *flow)
+BOOL WINAPI get_device_name_from_guid(GUID *guid, char **name, EDataFlow *flow)
 {
     OSSDevice *dev_item;
     LIST_FOR_EACH_ENTRY(dev_item, &g_devices, OSSDevice, entry){
