@@ -66,15 +66,15 @@ struct oletls
 };
 
 /* Global Interface Table Functions */
-extern void release_std_git(void) DECLSPEC_HIDDEN;
-extern HRESULT StdGlobalInterfaceTable_GetFactory(LPVOID *ppv) DECLSPEC_HIDDEN;
+extern void release_std_git(void);
+extern HRESULT StdGlobalInterfaceTable_GetFactory(LPVOID *ppv);
 
-HRESULT COM_OpenKeyForCLSID(REFCLSID clsid, LPCWSTR keyname, REGSAM access, HKEY *key) DECLSPEC_HIDDEN;
-HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv) DECLSPEC_HIDDEN;
-HRESULT FTMarshalCF_Create(REFIID riid, LPVOID *ppv) DECLSPEC_HIDDEN;
+HRESULT COM_OpenKeyForCLSID(REFCLSID clsid, LPCWSTR keyname, REGSAM access, HKEY *key);
+HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv);
+HRESULT FTMarshalCF_Create(REFIID riid, LPVOID *ppv);
 
 /* Drag and drop */
-void OLEDD_UnInitialize(void) DECLSPEC_HIDDEN;
+void OLEDD_UnInitialize(void);
 
 extern HRESULT WINAPI InternalTlsAllocData(struct oletls **tlsdata);
 
@@ -97,49 +97,49 @@ static inline struct apartment * COM_CurrentApt(void)
 #define CHARS_IN_GUID 39 /* including NULL */
 
 /* from dlldata.c */
-extern HINSTANCE hProxyDll DECLSPEC_HIDDEN;
-extern HRESULT WINAPI OLE32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI OLE32_DllRegisterServer(void) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI OLE32_DllUnregisterServer(void) DECLSPEC_HIDDEN;
+extern HINSTANCE hProxyDll;
+extern HRESULT WINAPI OLE32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv);
+extern HRESULT WINAPI OLE32_DllRegisterServer(void);
+extern HRESULT WINAPI OLE32_DllUnregisterServer(void);
 
-extern HRESULT Handler_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv) DECLSPEC_HIDDEN;
-extern HRESULT HandlerCF_Create(REFCLSID rclsid, REFIID riid, LPVOID *ppv) DECLSPEC_HIDDEN;
+extern HRESULT Handler_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv);
+extern HRESULT HandlerCF_Create(REFCLSID rclsid, REFIID riid, LPVOID *ppv);
 
 extern HRESULT WINAPI GlobalOptions_CreateInstance(IClassFactory *iface, IUnknown *pUnk,
-                                                   REFIID riid, void **ppv) DECLSPEC_HIDDEN;
-extern IClassFactory GlobalOptionsCF DECLSPEC_HIDDEN;
+                                                   REFIID riid, void **ppv);
+extern IClassFactory GlobalOptionsCF;
 extern HRESULT WINAPI GlobalInterfaceTable_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid,
-        void **obj) DECLSPEC_HIDDEN;
-extern IClassFactory GlobalInterfaceTableCF DECLSPEC_HIDDEN;
+        void **obj);
+extern IClassFactory GlobalInterfaceTableCF;
 extern HRESULT WINAPI ManualResetEvent_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid,
-        void **obj) DECLSPEC_HIDDEN;
-extern IClassFactory ManualResetEventCF DECLSPEC_HIDDEN;
-extern HRESULT WINAPI Ole32DllGetClassObject(REFCLSID clsid, REFIID riid, void **obj) DECLSPEC_HIDDEN;
+        void **obj);
+extern IClassFactory ManualResetEventCF;
+extern HRESULT WINAPI Ole32DllGetClassObject(REFCLSID clsid, REFIID riid, void **obj);
 
 /* Exported non-interface Data Advise Holder functions */
-HRESULT DataAdviseHolder_OnConnect(IDataAdviseHolder *iface, IDataObject *pDelegate) DECLSPEC_HIDDEN;
-void DataAdviseHolder_OnDisconnect(IDataAdviseHolder *iface) DECLSPEC_HIDDEN;
+HRESULT DataAdviseHolder_OnConnect(IDataAdviseHolder *iface, IDataObject *pDelegate);
+void DataAdviseHolder_OnDisconnect(IDataAdviseHolder *iface);
 
-extern UINT ownerlink_clipboard_format DECLSPEC_HIDDEN;
-extern UINT filename_clipboard_format DECLSPEC_HIDDEN;
-extern UINT filenameW_clipboard_format DECLSPEC_HIDDEN;
-extern UINT dataobject_clipboard_format DECLSPEC_HIDDEN;
-extern UINT embedded_object_clipboard_format DECLSPEC_HIDDEN;
-extern UINT embed_source_clipboard_format DECLSPEC_HIDDEN;
-extern UINT custom_link_source_clipboard_format DECLSPEC_HIDDEN;
-extern UINT link_source_clipboard_format DECLSPEC_HIDDEN;
-extern UINT object_descriptor_clipboard_format DECLSPEC_HIDDEN;
-extern UINT link_source_descriptor_clipboard_format DECLSPEC_HIDDEN;
-extern UINT ole_private_data_clipboard_format DECLSPEC_HIDDEN;
+extern UINT ownerlink_clipboard_format;
+extern UINT filename_clipboard_format;
+extern UINT filenameW_clipboard_format;
+extern UINT dataobject_clipboard_format;
+extern UINT embedded_object_clipboard_format;
+extern UINT embed_source_clipboard_format;
+extern UINT custom_link_source_clipboard_format;
+extern UINT link_source_clipboard_format;
+extern UINT object_descriptor_clipboard_format;
+extern UINT link_source_descriptor_clipboard_format;
+extern UINT ole_private_data_clipboard_format;
 
-void clipbrd_destroy(void) DECLSPEC_HIDDEN;
+void clipbrd_destroy(void);
 
-extern LSTATUS create_classes_key(HKEY, const WCHAR *, REGSAM, HKEY *) DECLSPEC_HIDDEN;
-extern LSTATUS open_classes_key(HKEY, const WCHAR *, REGSAM, HKEY *) DECLSPEC_HIDDEN;
+extern LSTATUS create_classes_key(HKEY, const WCHAR *, REGSAM, HKEY *);
+extern LSTATUS open_classes_key(HKEY, const WCHAR *, REGSAM, HKEY *);
 
-extern BOOL actctx_get_miscstatus(const CLSID*, DWORD, DWORD*) DECLSPEC_HIDDEN;
+extern BOOL actctx_get_miscstatus(const CLSID*, DWORD, DWORD*);
 
-extern const char *debugstr_formatetc(const FORMATETC *formatetc) DECLSPEC_HIDDEN;
+extern const char *debugstr_formatetc(const FORMATETC *formatetc);
 
 static inline HRESULT copy_formatetc(FORMATETC *dst, const FORMATETC *src)
 {
@@ -154,6 +154,6 @@ static inline HRESULT copy_formatetc(FORMATETC *dst, const FORMATETC *src)
 }
 
 extern HRESULT EnumSTATDATA_Construct(IUnknown *holder, ULONG index, DWORD array_len, STATDATA *data,
-                                      BOOL copy, IEnumSTATDATA **ppenum) DECLSPEC_HIDDEN;
+                                      BOOL copy, IEnumSTATDATA **ppenum);
 
 #endif /* __WINE_OLE_COMPOBJ_H */
