@@ -331,7 +331,7 @@ static unsigned get_native_module_count(HANDLE proc)
     old = pSymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
     ret = SymEnumerateModules64(proc, count_native_module_cb, &count);
     ok(ret, "SymEnumerateModules64 failed: %lu\n", GetLastError());
-    SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, old);
+    pSymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, old);
 
     return count;
 }
