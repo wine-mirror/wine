@@ -98,6 +98,7 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
 
 #define LDFC(n) do { driver->p##n = (void*)GetProcAddress(driver->module, #n);\
         if(!driver->p##n) { goto fail; } } while(0)
+    LDFC(get_device_name_from_guid);
     LDFC(GetEndpointIDs);
     LDFC(GetAudioEndpoint);
     LDFC(GetAudioSessionWrapper);

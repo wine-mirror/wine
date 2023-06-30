@@ -40,6 +40,7 @@ typedef struct _DriverFuncs {
      * valid. See enum _DriverPriority. */
     int priority;
 
+    BOOL (WINAPI *pget_device_name_from_guid)(GUID *guid, char **name, EDataFlow *flow);
     /* ids gets an array of human-friendly endpoint names
      * keys gets an array of driver-specific stuff that is used
      *   in GetAudioEndpoint to identify the endpoint
