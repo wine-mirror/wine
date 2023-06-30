@@ -17,13 +17,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-HRESULT create_oledb_convert(IUnknown *outer, void **obj) DECLSPEC_HIDDEN;
-HRESULT create_data_init(IUnknown *outer, void **obj) DECLSPEC_HIDDEN;
-HRESULT create_error_info(IUnknown *outer, void **obj) DECLSPEC_HIDDEN;
-HRESULT create_oledb_rowpos(IUnknown *outer, void **obj) DECLSPEC_HIDDEN;
-HRESULT create_dslocator(IUnknown *outer, void **obj) DECLSPEC_HIDDEN;
+HRESULT create_oledb_convert(IUnknown *outer, void **obj);
+HRESULT create_data_init(IUnknown *outer, void **obj);
+HRESULT create_error_info(IUnknown *outer, void **obj);
+HRESULT create_oledb_rowpos(IUnknown *outer, void **obj);
+HRESULT create_dslocator(IUnknown *outer, void **obj);
 
 HRESULT get_data_source(IUnknown *outer, DWORD clsctx, LPWSTR initstring, REFIID riid,
-    IUnknown **datasource) DECLSPEC_HIDDEN;
+    IUnknown **datasource);
 
 extern HINSTANCE instance;
