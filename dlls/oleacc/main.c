@@ -33,10 +33,10 @@ static const WCHAR lresult_atom_prefix[] = {'w','i','n','e','_','o','l','e','a',
 #define NAVDIR_INTERNAL_HWND 10
 DEFINE_GUID(SID_AccFromDAWrapper, 0x33f139ee, 0xe509, 0x47f7, 0xbf,0x39, 0x83,0x76,0x44,0xf7,0x45,0x76);
 
-extern HRESULT WINAPI OLEACC_DllGetClassObject(REFCLSID, REFIID, void**) DECLSPEC_HIDDEN;
-extern BOOL WINAPI OLEACC_DllMain(HINSTANCE, DWORD, void*) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI OLEACC_DllRegisterServer(void) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI OLEACC_DllUnregisterServer(void) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI OLEACC_DllGetClassObject(REFCLSID, REFIID, void**);
+extern BOOL WINAPI OLEACC_DllMain(HINSTANCE, DWORD, void*);
+extern HRESULT WINAPI OLEACC_DllRegisterServer(void);
+extern HRESULT WINAPI OLEACC_DllUnregisterServer(void);
 
 static HINSTANCE oleacc_handle = 0;
 

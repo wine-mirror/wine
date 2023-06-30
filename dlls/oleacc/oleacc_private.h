@@ -25,10 +25,10 @@ struct win_class_data {
     BOOL stub;
     const void *vtbl;
 };
-const struct win_class_data* find_class_data(HWND, const struct win_class_data*) DECLSPEC_HIDDEN;
+const struct win_class_data* find_class_data(HWND, const struct win_class_data*);
 
-HRESULT create_client_object(HWND, const IID*, void**) DECLSPEC_HIDDEN;
-HRESULT create_window_object(HWND, const IID*, void**) DECLSPEC_HIDDEN;
-HRESULT get_accpropservices_factory(REFIID, void**) DECLSPEC_HIDDEN;
+HRESULT create_client_object(HWND, const IID*, void**);
+HRESULT create_window_object(HWND, const IID*, void**);
+HRESULT get_accpropservices_factory(REFIID, void**);
 
-int convert_child_id(VARIANT *v) DECLSPEC_HIDDEN;
+int convert_child_id(VARIANT *v);
