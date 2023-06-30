@@ -247,7 +247,7 @@ end:
     return params.result;
 }
 
-static BOOL get_device_name_from_guid(GUID *guid, char **name, EDataFlow *flow)
+BOOL WINAPI get_device_name_from_guid(GUID *guid, char **name, EDataFlow *flow)
 {
     HKEY devices_key;
     UINT i = 0;
