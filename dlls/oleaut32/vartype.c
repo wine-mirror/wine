@@ -30,7 +30,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(variant);
 
-extern HMODULE hProxyDll DECLSPEC_HIDDEN;
+extern HMODULE hProxyDll;
 
 #define CY_MULTIPLIER   10000             /* 4 dp of precision */
 #define CY_MULTIPLIER_F 10000.0

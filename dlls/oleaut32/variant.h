@@ -81,7 +81,7 @@
 #define  VAR_BOOLYESNO 0x0800 /* Convert bool to "Yes"/"No" */
 #define  VAR_NEGATIVE  0x1000 /* Number is negative */
 
-unsigned int get_type_size(ULONG*, VARTYPE) DECLSPEC_HIDDEN;
-HRESULT VARIANT_ClearInd(VARIANTARG *) DECLSPEC_HIDDEN;
+unsigned int get_type_size(ULONG*, VARTYPE);
+HRESULT VARIANT_ClearInd(VARIANTARG *);
 BOOL get_date_format(LCID, DWORD, const SYSTEMTIME *,
-        const WCHAR *, WCHAR *, int) DECLSPEC_HIDDEN;
+        const WCHAR *, WCHAR *, int);

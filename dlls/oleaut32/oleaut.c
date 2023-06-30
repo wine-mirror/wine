@@ -760,10 +760,10 @@ HRESULT WINAPI OleTranslateColor(
   return S_OK;
 }
 
-extern HRESULT WINAPI OLEAUTPS_DllGetClassObject(REFCLSID, REFIID, LPVOID *) DECLSPEC_HIDDEN;
-extern BOOL WINAPI OLEAUTPS_DllMain(HINSTANCE, DWORD, LPVOID) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI OLEAUTPS_DllRegisterServer(void) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI OLEAUTPS_DllUnregisterServer(void) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI OLEAUTPS_DllGetClassObject(REFCLSID, REFIID, LPVOID *);
+extern BOOL WINAPI OLEAUTPS_DllMain(HINSTANCE, DWORD, LPVOID);
+extern HRESULT WINAPI OLEAUTPS_DllRegisterServer(void);
+extern HRESULT WINAPI OLEAUTPS_DllUnregisterServer(void);
 
 extern HRESULT WINAPI CreateProxyFromTypeInfo(ITypeInfo *typeinfo,
         IUnknown *outer, REFIID iid, IRpcProxyBuffer **proxy, void **obj);
