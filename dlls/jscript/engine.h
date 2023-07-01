@@ -183,8 +183,8 @@ typedef struct _function_code_t {
     bytecode_t *bytecode;
 } function_code_t;
 
-IDispatch *lookup_global_host(script_ctx_t*) DECLSPEC_HIDDEN;
-local_ref_t *lookup_local(const function_code_t*,const WCHAR*,unsigned int) DECLSPEC_HIDDEN;
+IDispatch *lookup_global_host(script_ctx_t*);
+local_ref_t *lookup_local(const function_code_t*,const WCHAR*,unsigned int);
 
 struct _bytecode_t {
     LONG ref;
@@ -211,10 +211,10 @@ struct _bytecode_t {
     struct list entry;
 };
 
-HRESULT compile_script(script_ctx_t*,const WCHAR*,UINT64,unsigned,const WCHAR*,const WCHAR*,BOOL,BOOL,named_item_t*,bytecode_t**) DECLSPEC_HIDDEN;
-void release_bytecode(bytecode_t*) DECLSPEC_HIDDEN;
+HRESULT compile_script(script_ctx_t*,const WCHAR*,UINT64,unsigned,const WCHAR*,const WCHAR*,BOOL,BOOL,named_item_t*,bytecode_t**);
+void release_bytecode(bytecode_t*);
 
-unsigned get_location_line(bytecode_t *code, unsigned loc, unsigned *char_pos) DECLSPEC_HIDDEN;
+unsigned get_location_line(bytecode_t *code, unsigned loc, unsigned *char_pos);
 
 static inline bytecode_t *bytecode_addref(bytecode_t *code)
 {
@@ -265,10 +265,10 @@ struct _jsexcept_t {
     jsexcept_t *prev;
 };
 
-void enter_script(script_ctx_t*,jsexcept_t*) DECLSPEC_HIDDEN;
-HRESULT leave_script(script_ctx_t*,HRESULT) DECLSPEC_HIDDEN;
-void reset_ei(jsexcept_t*) DECLSPEC_HIDDEN;
-void set_error_location(jsexcept_t*,bytecode_t*,unsigned,unsigned,jsstr_t*) DECLSPEC_HIDDEN;
+void enter_script(script_ctx_t*,jsexcept_t*);
+HRESULT leave_script(script_ctx_t*,HRESULT);
+void reset_ei(jsexcept_t*);
+void set_error_location(jsexcept_t*,bytecode_t*,unsigned,unsigned,jsstr_t*);
 
 typedef struct _except_frame_t except_frame_t;
 struct _parser_ctx_t;
@@ -306,8 +306,8 @@ typedef struct _call_frame_t {
 #define EXEC_EVAL              0x0008
 
 HRESULT exec_source(script_ctx_t*,DWORD,bytecode_t*,function_code_t*,scope_chain_t*,IDispatch*,
-        jsdisp_t*,unsigned,jsval_t*,jsval_t*) DECLSPEC_HIDDEN;
+        jsdisp_t*,unsigned,jsval_t*,jsval_t*);
 
-HRESULT create_source_function(script_ctx_t*,bytecode_t*,function_code_t*,scope_chain_t*,jsdisp_t**) DECLSPEC_HIDDEN;
-HRESULT setup_arguments_object(script_ctx_t*,call_frame_t*) DECLSPEC_HIDDEN;
-void detach_arguments_object(call_frame_t*) DECLSPEC_HIDDEN;
+HRESULT create_source_function(script_ctx_t*,bytecode_t*,function_code_t*,scope_chain_t*,jsdisp_t**);
+HRESULT setup_arguments_object(script_ctx_t*,call_frame_t*);
+void detach_arguments_object(call_frame_t*);

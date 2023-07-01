@@ -50,10 +50,10 @@ typedef struct _parser_ctx_t {
     heap_pool_t heap;
 } parser_ctx_t;
 
-HRESULT script_parse(script_ctx_t*,struct _compiler_ctx_t*,struct _bytecode_t*,const WCHAR*,BOOL,parser_ctx_t**) DECLSPEC_HIDDEN;
-void parser_release(parser_ctx_t*) DECLSPEC_HIDDEN;
+HRESULT script_parse(script_ctx_t*,struct _compiler_ctx_t*,struct _bytecode_t*,const WCHAR*,BOOL,parser_ctx_t**);
+void parser_release(parser_ctx_t*);
 
-int parser_lex(void*,unsigned*,parser_ctx_t*) DECLSPEC_HIDDEN;
+int parser_lex(void*,unsigned*,parser_ctx_t*);
 
 static inline void *parser_alloc(parser_ctx_t *ctx, DWORD size)
 {
@@ -65,9 +65,9 @@ static inline void *parser_alloc_tmp(parser_ctx_t *ctx, DWORD size)
     return heap_pool_alloc(&ctx->script->tmp_heap, size);
 }
 
-BOOL is_identifier_char(WCHAR) DECLSPEC_HIDDEN;
-BOOL unescape(WCHAR*,size_t*) DECLSPEC_HIDDEN;
-HRESULT parse_decimal(const WCHAR**,const WCHAR*,double*) DECLSPEC_HIDDEN;
+BOOL is_identifier_char(WCHAR);
+BOOL unescape(WCHAR*,size_t*);
+HRESULT parse_decimal(const WCHAR**,const WCHAR*,double*);
 
 typedef enum {
     LT_DOUBLE,
@@ -90,8 +90,8 @@ typedef struct {
     } u;
 } literal_t;
 
-literal_t *parse_regexp(parser_ctx_t*) DECLSPEC_HIDDEN;
-literal_t *new_boolean_literal(parser_ctx_t*,BOOL) DECLSPEC_HIDDEN;
+literal_t *parse_regexp(parser_ctx_t*);
+literal_t *new_boolean_literal(parser_ctx_t*,BOOL);
 
 typedef struct _variable_declaration_t {
     const WCHAR *identifier;
@@ -378,8 +378,8 @@ typedef struct {
     property_definition_t *property_list;
 } property_value_expression_t;
 
-BOOL try_parse_ccval(parser_ctx_t*,ccval_t*) DECLSPEC_HIDDEN;
-BOOL parse_cc_expr(parser_ctx_t*) DECLSPEC_HIDDEN;
+BOOL try_parse_ccval(parser_ctx_t*,ccval_t*);
+BOOL parse_cc_expr(parser_ctx_t*);
 
 static inline ccval_t ccval_num(double n)
 {
@@ -407,4 +407,4 @@ static inline double get_ccnum(ccval_t v)
     return v.is_num ? v.u.n : v.u.b;
 }
 
-jsstr_t *compiler_alloc_string_len(struct _compiler_ctx_t*,const WCHAR *,unsigned) DECLSPEC_HIDDEN;
+jsstr_t *compiler_alloc_string_len(struct _compiler_ctx_t*,const WCHAR *,unsigned);

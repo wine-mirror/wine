@@ -250,9 +250,9 @@ static inline BOOL get_bool(jsval_t v)
     return __JSVAL_BOOL(v);
 }
 
-HRESULT variant_to_jsval(script_ctx_t*,VARIANT*,jsval_t*) DECLSPEC_HIDDEN;
-HRESULT jsval_to_variant(jsval_t,VARIANT*) DECLSPEC_HIDDEN;
-void jsval_release(jsval_t) DECLSPEC_HIDDEN;
-HRESULT jsval_copy(jsval_t,jsval_t*) DECLSPEC_HIDDEN;
+HRESULT variant_to_jsval(script_ctx_t*,VARIANT*,jsval_t*);
+HRESULT jsval_to_variant(jsval_t,VARIANT*);
+void jsval_release(jsval_t);
+HRESULT jsval_copy(jsval_t,jsval_t*);
 
 #endif
