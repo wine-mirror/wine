@@ -424,6 +424,8 @@ static HRESULT __thiscall ITextHostImpl_TxGetPropertyBits(ITextHost *iface, DWOR
 
 static int en_vscroll_sent;
 static int en_update_sent;
+static int en_change_sent;
+static int en_selchange_sent;
 static HRESULT __thiscall ITextHostImpl_TxNotify( ITextHost *iface, DWORD code, void *data )
 {
     ITextHostTestImpl *This = impl_from_ITextHost(iface);
@@ -437,6 +439,15 @@ static HRESULT __thiscall ITextHostImpl_TxNotify( ITextHost *iface, DWORD code, 
     case EN_UPDATE:
         en_update_sent++;
         ok( !data, "got %p\n", data );
+        break;
+    case EN_CHANGE:
+        en_change_sent++;
+        todo_wine
+        ok( data != NULL, "got %p\n", data );
+        break;
+    case EN_SELCHANGE:
+        en_selchange_sent++;
+        ok( data != NULL, "got %p\n", data );
         break;
     }
     return S_OK;
@@ -1268,25 +1279,105 @@ static void test_set_selection_message( void )
 {
     ITextServices *txtserv;
     ITextHost *host;
+    CHARRANGE range;
     LRESULT result;
     HRESULT hr;
 
     if (!init_texthost(&txtserv, &host))
         return;
 
-    CLEAR_COUNTER(ITextHostImpl_TxViewChange);
-    hr = ITextServices_TxSendMessage(txtserv, EM_SETSEL, 0, 20, &result);
+    ITextServices_TxSetText(txtserv, L"");
+
+    if (winetest_debug > 1) trace("TxSendMessage EM_SETEVENTMASK");
+
+    hr = ITextServices_TxSendMessage( txtserv, EM_SETEVENTMASK, 0, ENM_CHANGE | ENM_SELCHANGE, &result );
     ok( hr == S_OK, "got %08lx\n", hr );
-    CHECK_CALLED(ITextHostImpl_TxViewChange);
+
+    if (winetest_debug > 1) trace("TxSendMessage EM_SETSEL 0 20");
 
     CLEAR_COUNTER(ITextHostImpl_TxViewChange);
+    en_change_sent = 0;
+    en_selchange_sent = 0;
+
+    hr = ITextServices_TxSendMessage(txtserv, EM_SETSEL, 0, 20, &result);
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    CHECK_CALLED(ITextHostImpl_TxViewChange);
+    todo_wine
+    ok(en_change_sent == 0, "got %d\n", en_change_sent);
+    todo_wine
+    ok(en_selchange_sent == 0, "got %d\n", en_selchange_sent);
+
+    hr = ITextServices_TxSendMessage(txtserv, EM_EXGETSEL, 0, (LPARAM)&range, &result); ok( hr == S_OK, "got %08lx\n", hr ); trace("getsel: %lu, %lu\n", range.cpMin, range.cpMax);
+
+    if (winetest_debug > 1) trace("TxSendMessage EM_SETSELEX 0 20");
+
+    CLEAR_COUNTER(ITextHostImpl_TxViewChange);
+    en_change_sent = 0;
+    en_selchange_sent = 0;
+
+    range.cpMin = 0;
+    range.cpMax = 20;
+    hr = ITextServices_TxSendMessage(txtserv, EM_EXSETSEL, 0, (LPARAM)&range, &result);
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    CHECK_CALLED(ITextHostImpl_TxViewChange);
+    todo_wine
+    ok(en_change_sent == 0, "got %d\n", en_change_sent);
+    ok(en_selchange_sent == 0, "got %d\n", en_selchange_sent);
+
+    if (winetest_debug > 1) trace("TxSetText");
+
+    CLEAR_COUNTER(ITextHostImpl_TxViewChange);
+    en_change_sent = 0;
+    en_selchange_sent = 0;
+
+    hr = ITextServices_TxSendMessage(txtserv, EM_EXGETSEL, 0, (LPARAM)&range, &result); ok( hr == S_OK, "got %08lx\n", hr ); trace("getsel: %lu, %lu\n", range.cpMin, range.cpMax);
+
     ITextServices_TxSetText(txtserv, lorem);
+
+    hr = ITextServices_TxSendMessage(txtserv, EM_EXGETSEL, 0, (LPARAM)&range, &result); ok( hr == S_OK, "got %08lx\n", hr ); trace("getsel: %lu, %lu\n", range.cpMin, range.cpMax);
+
     CHECK_CALLED(ITextHostImpl_TxViewChange);
+    ok(en_change_sent == 1, "got %d\n", en_change_sent);
+    todo_wine
+    ok(en_selchange_sent == 0, "got %d\n", en_selchange_sent);
+
+    if (winetest_debug > 1) trace("TxSendMessage EM_SETSEL 0 20");
 
     CLEAR_COUNTER(ITextHostImpl_TxViewChange);
+    en_change_sent = 0;
+    en_selchange_sent = 0;
+
     hr = ITextServices_TxSendMessage(txtserv, EM_SETSEL, 0, 20, &result);
     ok( hr == S_OK, "got %08lx\n", hr );
+
     CHECK_CALLED(ITextHostImpl_TxViewChange);
+    todo_wine
+    ok(en_change_sent == 0, "got %d\n", en_change_sent);
+    ok(en_selchange_sent == 1, "got %d\n", en_selchange_sent);
+
+    hr = ITextServices_TxSendMessage(txtserv, EM_EXGETSEL, 0, (LPARAM)&range, &result); ok( hr == S_OK, "got %08lx\n", hr ); trace("getsel: %lu, %lu\n", range.cpMin, range.cpMax);
+
+    if (winetest_debug > 1) trace("TxSendMessage EM_SETSELEX 0 20");
+
+    CLEAR_COUNTER(ITextHostImpl_TxViewChange);
+    en_change_sent = 0;
+    en_selchange_sent = 0;
+
+    range.cpMin = 0;
+    range.cpMax = 20;
+    hr = ITextServices_TxSendMessage(txtserv, EM_EXSETSEL, 0, (LPARAM)&range, &result);
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    CHECK_CALLED(ITextHostImpl_TxViewChange);
+    todo_wine
+    ok(en_change_sent == 0, "got %d\n", en_change_sent);
+    ok(en_selchange_sent == 0, "got %d\n", en_selchange_sent);
+
+    hr = ITextServices_TxSendMessage(txtserv, EM_EXGETSEL, 0, (LPARAM)&range, &result); ok( hr == S_OK, "got %08lx\n", hr ); trace("getsel: %lu, %lu\n", range.cpMin, range.cpMax);
+
+    if (winetest_debug > 1) trace("release interfaces");
 
     ITextServices_Release( txtserv );
     ITextHost_Release( host );
