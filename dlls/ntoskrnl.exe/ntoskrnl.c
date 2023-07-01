@@ -3499,7 +3499,15 @@ NTSTATUS WINAPI IoWMIOpenBlock(LPCGUID guid, ULONG desired_access, PVOID *data_b
  */
 NTSTATUS WINAPI PsSetLoadImageNotifyRoutine(PLOAD_IMAGE_NOTIFY_ROUTINE routine)
 {
-    FIXME("routine %p, semi-stub.\n", routine);
+    return PsSetLoadImageNotifyRoutineEx(routine, 0);
+}
+
+/*****************************************************
+ *           PsSetLoadImageNotifyRoutineEx   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI PsSetLoadImageNotifyRoutineEx(PLOAD_IMAGE_NOTIFY_ROUTINE routine, ULONG_PTR flags)
+{
+    FIXME("routine %p, flags %Ix semi-stub.\n", routine, flags);
 
     if (load_image_notify_routine_count == ARRAY_SIZE(load_image_notify_routines))
         return STATUS_INSUFFICIENT_RESOURCES;

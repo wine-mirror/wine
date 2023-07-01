@@ -967,6 +967,7 @@
 @ stub PsSetJobUIRestrictionsClass
 @ stub PsSetLegoNotifyRoutine
 @ stdcall PsSetLoadImageNotifyRoutine(ptr)
+@ stdcall PsSetLoadImageNotifyRoutineEx(ptr long)
 @ stub PsSetProcessPriorityByClass
 @ stub PsSetProcessPriorityClass
 @ stub PsSetProcessSecurityPort
