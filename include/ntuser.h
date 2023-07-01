@@ -669,6 +669,17 @@ struct packed_MDICREATESTRUCTW
     ULONGLONG lParam;
 };
 
+struct packed_COMBOBOXINFO
+{
+    DWORD cbSize;
+    RECT rcItem;
+    RECT rcButton;
+    DWORD stateButton;
+    ULONGLONG hwndCombo;
+    ULONGLONG hwndItem;
+    ULONGLONG hwndList;
+};
+
 
 HKL     WINAPI NtUserActivateKeyboardLayout( HKL layout, UINT flags );
 BOOL    WINAPI NtUserAddClipboardFormatListener( HWND hwnd );

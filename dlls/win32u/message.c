@@ -80,6 +80,7 @@ C_ASSERT( sizeof(struct packed_NCCALCSIZE_PARAMS) >= sizeof(NCCALCSIZE_PARAMS) +
 C_ASSERT( sizeof(struct packed_MSG) >= sizeof(MSG) );
 C_ASSERT( sizeof(struct packed_MDINEXTMENU) >= sizeof(MDINEXTMENU) );
 C_ASSERT( sizeof(struct packed_MDICREATESTRUCTW) >= sizeof(MDICREATESTRUCTW) );
+C_ASSERT( sizeof(struct packed_COMBOBOXINFO) >= sizeof(COMBOBOXINFO) );
 C_ASSERT( sizeof(struct packed_hook_extra_info) >= sizeof(struct hook_extra_info) );
 
 union packed_structs
@@ -96,6 +97,7 @@ union packed_structs
     struct packed_MSG msg;
     struct packed_MDINEXTMENU mnm;
     struct packed_MDICREATESTRUCTW mcs;
+    struct packed_COMBOBOXINFO cbi;
     struct packed_hook_extra_info hook;
 };
 
@@ -161,7 +163,7 @@ static const unsigned int message_pointer_flags[] =
     SET(CB_INSERTSTRING) | SET(CB_FINDSTRING) | SET(CB_SELECTSTRING) |
     SET(CB_GETDROPPEDCONTROLRECT) | SET(CB_FINDSTRINGEXACT),
     /* 0x160 - 0x17f */
-    0,
+    SET(CB_GETCOMBOBOXINFO),
     /* 0x180 - 0x19f */
     SET(LB_ADDSTRING) | SET(LB_INSERTSTRING) | SET(LB_GETTEXT) | SET(LB_SELECTSTRING) |
     SET(LB_DIR) | SET(LB_FINDSTRING) |
@@ -371,6 +373,12 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         h_extra.handle = wine_server_ptr_handle( ps->hook.handle );
         h_extra.lparam = (LPARAM)(&ps->hook + 1);
         memcpy( &ps->hook, &h_extra, sizeof(h_extra) );
+        break;
+    }
+    case CB_GETCOMBOBOXINFO:
+    {
+        COMBOBOXINFO cbi = { sizeof(COMBOBOXINFO) };
+        memcpy( ps, &cbi, sizeof(cbi) );
         break;
     }
     default:
@@ -616,6 +624,8 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     case CB_GETLBTEXT:
         if (!combobox_has_strings( hwnd )) return sizeof(ULONG_PTR);
         return (send_message( hwnd, CB_GETLBTEXTLEN, wparam, 0 ) + 1) * sizeof(WCHAR);
+    case CB_GETCOMBOBOXINFO:
+        return sizeof(data->ps.cbi);
     case LB_ADDSTRING:
     case LB_INSERTSTRING:
     case LB_FINDSTRING:
@@ -763,6 +773,18 @@ static void pack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
     case LB_GETTEXT:
         push_data( data, (WCHAR *)lparam, (res + 1) * sizeof(WCHAR) );
         break;
+    case CB_GETCOMBOBOXINFO:
+    {
+        COMBOBOXINFO *cbi = (COMBOBOXINFO *)lparam;
+        data->ps.cbi.rcItem         = cbi->rcItem;
+        data->ps.cbi.rcButton       = cbi->rcButton;
+        data->ps.cbi.stateButton    = cbi->stateButton;
+        data->ps.cbi.hwndCombo      = wine_server_user_handle( cbi->hwndCombo );
+        data->ps.cbi.hwndItem       = wine_server_user_handle( cbi->hwndItem );
+        data->ps.cbi.hwndList       = wine_server_user_handle( cbi->hwndList );
+        push_data( data, &data->ps.cbi, sizeof(data->ps.cbi) );
+        break;
+    }
     case WM_GETMINMAXINFO:
         push_data( data, (MINMAXINFO *)lparam, sizeof(MINMAXINFO) );
         break;
@@ -981,6 +1003,19 @@ static void unpack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
     case CB_GETLBTEXT:
         memcpy( (WCHAR *)lparam, buffer, size );
         break;
+    case CB_GETCOMBOBOXINFO:
+        if (lparam && size >= sizeof(ps->cbi) &&
+            ((COMBOBOXINFO*)lparam)->cbSize == sizeof(COMBOBOXINFO))
+        {
+            COMBOBOXINFO *cbi = (COMBOBOXINFO *)lparam;
+            cbi->rcItem         = ps->cbi.rcItem;
+            cbi->rcButton       = ps->cbi.rcButton;
+            cbi->stateButton    = ps->cbi.stateButton;
+            cbi->hwndCombo      = wine_server_ptr_handle( ps->cbi.hwndCombo );
+            cbi->hwndItem       = wine_server_ptr_handle( ps->cbi.hwndItem );
+            cbi->hwndList       = wine_server_ptr_handle( ps->cbi.hwndList );
+        }
+        break;
     case WM_NEXTMENU:
         if (size >= sizeof(ps->mnm))
         {
@@ -1087,6 +1122,9 @@ static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, 
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
         copy_size = sizeof(WINDOWPOS);
+        break;
+    case CB_GETCOMBOBOXINFO:
+        copy_size = sizeof(COMBOBOXINFO);
         break;
     case WM_STYLECHANGING:
         copy_size = sizeof(STYLESTRUCT);
