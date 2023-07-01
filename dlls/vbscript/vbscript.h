@@ -42,12 +42,12 @@ typedef struct {
     struct list custom_blocks;
 } heap_pool_t;
 
-void heap_pool_init(heap_pool_t*) DECLSPEC_HIDDEN;
-void *heap_pool_alloc(heap_pool_t*,size_t) __WINE_ALLOC_SIZE(2) DECLSPEC_HIDDEN;
-void *heap_pool_grow(heap_pool_t*,void*,DWORD,DWORD) DECLSPEC_HIDDEN;
-void heap_pool_clear(heap_pool_t*) DECLSPEC_HIDDEN;
-void heap_pool_free(heap_pool_t*) DECLSPEC_HIDDEN;
-heap_pool_t *heap_pool_mark(heap_pool_t*) DECLSPEC_HIDDEN;
+void heap_pool_init(heap_pool_t*);
+void *heap_pool_alloc(heap_pool_t*,size_t) __WINE_ALLOC_SIZE(2);
+void *heap_pool_grow(heap_pool_t*,void*,DWORD,DWORD);
+void heap_pool_clear(heap_pool_t*);
+void heap_pool_free(heap_pool_t*);
+heap_pool_t *heap_pool_mark(heap_pool_t*);
 
 typedef struct _function_t function_t;
 typedef struct _vbscode_t vbscode_t;
@@ -159,16 +159,16 @@ typedef struct named_item_t {
     struct list entry;
 } named_item_t;
 
-HRESULT create_vbdisp(const class_desc_t*,vbdisp_t**) DECLSPEC_HIDDEN;
-HRESULT disp_get_id(IDispatch*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*) DECLSPEC_HIDDEN;
-HRESULT vbdisp_get_id(vbdisp_t*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*) DECLSPEC_HIDDEN;
-HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,DISPPARAMS*,VARIANT*) DECLSPEC_HIDDEN;
-HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,WORD,DISPPARAMS*) DECLSPEC_HIDDEN;
-HRESULT get_disp_value(script_ctx_t*,IDispatch*,VARIANT*) DECLSPEC_HIDDEN;
-void collect_objects(script_ctx_t*) DECLSPEC_HIDDEN;
-HRESULT create_script_disp(script_ctx_t*,ScriptDisp**) DECLSPEC_HIDDEN;
+HRESULT create_vbdisp(const class_desc_t*,vbdisp_t**);
+HRESULT disp_get_id(IDispatch*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*);
+HRESULT vbdisp_get_id(vbdisp_t*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*);
+HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,DISPPARAMS*,VARIANT*);
+HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,WORD,DISPPARAMS*);
+HRESULT get_disp_value(script_ctx_t*,IDispatch*,VARIANT*);
+void collect_objects(script_ctx_t*);
+HRESULT create_script_disp(script_ctx_t*,ScriptDisp**);
 
-HRESULT to_int(VARIANT*,int*) DECLSPEC_HIDDEN;
+HRESULT to_int(VARIANT*,int*);
 
 static inline unsigned arg_cnt(const DISPPARAMS *dp)
 {
@@ -213,10 +213,10 @@ struct _script_ctx_t {
     struct list named_items;
 };
 
-HRESULT init_global(script_ctx_t*) DECLSPEC_HIDDEN;
-HRESULT init_err(script_ctx_t*) DECLSPEC_HIDDEN;
+HRESULT init_global(script_ctx_t*);
+HRESULT init_err(script_ctx_t*);
 
-IUnknown *create_ax_site(script_ctx_t*) DECLSPEC_HIDDEN;
+IUnknown *create_ax_site(script_ctx_t*);
 
 typedef enum {
     ARG_NONE = 0,
@@ -384,21 +384,21 @@ static inline void grab_vbscode(vbscode_t *code)
     code->ref++;
 }
 
-void release_vbscode(vbscode_t*) DECLSPEC_HIDDEN;
-HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,const WCHAR*,DWORD_PTR,unsigned,DWORD,vbscode_t**) DECLSPEC_HIDDEN;
-HRESULT compile_procedure(script_ctx_t*,const WCHAR*,const WCHAR*,const WCHAR*,DWORD_PTR,unsigned,DWORD,class_desc_t**) DECLSPEC_HIDDEN;
-HRESULT exec_script(script_ctx_t*,BOOL,function_t*,vbdisp_t*,DISPPARAMS*,VARIANT*) DECLSPEC_HIDDEN;
-void release_dynamic_var(dynamic_var_t*) DECLSPEC_HIDDEN;
-named_item_t *lookup_named_item(script_ctx_t*,const WCHAR*,unsigned) DECLSPEC_HIDDEN;
-void release_named_item(named_item_t*) DECLSPEC_HIDDEN;
-void clear_ei(EXCEPINFO*) DECLSPEC_HIDDEN;
-HRESULT report_script_error(script_ctx_t*,const vbscode_t*,unsigned) DECLSPEC_HIDDEN;
-void detach_global_objects(script_ctx_t*) DECLSPEC_HIDDEN;
-HRESULT get_builtin_id(BuiltinDisp*,const WCHAR*,DISPID*) DECLSPEC_HIDDEN;
-HRESULT array_access(SAFEARRAY *array, DISPPARAMS *dp, VARIANT **ret) DECLSPEC_HIDDEN;
+void release_vbscode(vbscode_t*);
+HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,const WCHAR*,DWORD_PTR,unsigned,DWORD,vbscode_t**);
+HRESULT compile_procedure(script_ctx_t*,const WCHAR*,const WCHAR*,const WCHAR*,DWORD_PTR,unsigned,DWORD,class_desc_t**);
+HRESULT exec_script(script_ctx_t*,BOOL,function_t*,vbdisp_t*,DISPPARAMS*,VARIANT*);
+void release_dynamic_var(dynamic_var_t*);
+named_item_t *lookup_named_item(script_ctx_t*,const WCHAR*,unsigned);
+void release_named_item(named_item_t*);
+void clear_ei(EXCEPINFO*);
+HRESULT report_script_error(script_ctx_t*,const vbscode_t*,unsigned);
+void detach_global_objects(script_ctx_t*);
+HRESULT get_builtin_id(BuiltinDisp*,const WCHAR*,DISPID*);
+HRESULT array_access(SAFEARRAY *array, DISPPARAMS *dp, VARIANT **ret);
 
-void release_regexp_typelib(void) DECLSPEC_HIDDEN;
-HRESULT get_dispatch_typeinfo(ITypeInfo**) DECLSPEC_HIDDEN;
+void release_regexp_typelib(void);
+HRESULT get_dispatch_typeinfo(ITypeInfo**);
 
 static inline BOOL is_int32(double d)
 {
@@ -410,20 +410,20 @@ static inline BOOL is_digit(WCHAR c)
     return '0' <= c && c <= '9';
 }
 
-HRESULT create_regexp(IDispatch**) DECLSPEC_HIDDEN;
-BSTR string_replace(BSTR,BSTR,BSTR,int,int,int) DECLSPEC_HIDDEN;
+HRESULT create_regexp(IDispatch**);
+BSTR string_replace(BSTR,BSTR,BSTR,int,int,int);
 
-void map_vbs_exception(EXCEPINFO *) DECLSPEC_HIDDEN;
+void map_vbs_exception(EXCEPINFO *);
 
-HRESULT create_safearray_iter(SAFEARRAY *sa, BOOL owned, IEnumVARIANT **ev) DECLSPEC_HIDDEN;
+HRESULT create_safearray_iter(SAFEARRAY *sa, BOOL owned, IEnumVARIANT **ev);
 
 #define FACILITY_VBS 0xa
 #define MAKE_VBSERROR(code) MAKE_HRESULT(SEVERITY_ERROR, FACILITY_VBS, code)
 
-HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
-HRESULT WINAPI VBScriptRegExpFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
+HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
+HRESULT WINAPI VBScriptRegExpFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
 
-BSTR get_vbscript_string(int) DECLSPEC_HIDDEN;
+BSTR get_vbscript_string(int);
 
 #define VBSCRIPT_BUILD_VERSION 16978
 #define VBSCRIPT_MAJOR_VERSION 5

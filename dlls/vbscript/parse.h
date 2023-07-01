@@ -310,7 +310,7 @@ typedef struct {
     heap_pool_t heap;
 } parser_ctx_t;
 
-HRESULT parse_script(parser_ctx_t*,const WCHAR*,const WCHAR*,DWORD) DECLSPEC_HIDDEN;
-void parser_release(parser_ctx_t*) DECLSPEC_HIDDEN;
-int parser_lex(void*,unsigned*,parser_ctx_t*) DECLSPEC_HIDDEN;
-void *parser_alloc(parser_ctx_t*,size_t) DECLSPEC_HIDDEN;
+HRESULT parse_script(parser_ctx_t*,const WCHAR*,const WCHAR*,DWORD);
+void parser_release(parser_ctx_t*);
+int parser_lex(void*,unsigned*,parser_ctx_t*);
+void *parser_alloc(parser_ctx_t*,size_t);
