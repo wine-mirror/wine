@@ -3448,9 +3448,17 @@ BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
         goto done;
 
     if (winpos->flags & SWP_HIDEWINDOW)
+    {
+        NtUserNotifyWinEvent( EVENT_OBJECT_HIDE, winpos->hwnd, 0, 0 );
+
         NtUserHideCaret( winpos->hwnd );
+    }
     else if (winpos->flags & SWP_SHOWWINDOW)
+    {
+        NtUserNotifyWinEvent( EVENT_OBJECT_SHOW, winpos->hwnd, 0, 0 );
+
         NtUserShowCaret( winpos->hwnd );
+    }
 
     if (!(winpos->flags & (SWP_NOACTIVATE|SWP_HIDEWINDOW)))
     {
