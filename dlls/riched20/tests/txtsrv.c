@@ -1303,7 +1303,6 @@ static void test_set_selection_message( void )
     ok( hr == S_OK, "got %08lx\n", hr );
 
     CHECK_CALLED(ITextHostImpl_TxViewChange);
-    todo_wine
     ok(en_change_sent == 0, "got %d\n", en_change_sent);
     todo_wine
     ok(en_selchange_sent == 0, "got %d\n", en_selchange_sent);
@@ -1322,7 +1321,6 @@ static void test_set_selection_message( void )
     ok( hr == S_OK, "got %08lx\n", hr );
 
     CHECK_CALLED(ITextHostImpl_TxViewChange);
-    todo_wine
     ok(en_change_sent == 0, "got %d\n", en_change_sent);
     ok(en_selchange_sent == 0, "got %d\n", en_selchange_sent);
 
@@ -1353,7 +1351,6 @@ static void test_set_selection_message( void )
     ok( hr == S_OK, "got %08lx\n", hr );
 
     CHECK_CALLED(ITextHostImpl_TxViewChange);
-    todo_wine
     ok(en_change_sent == 0, "got %d\n", en_change_sent);
     ok(en_selchange_sent == 1, "got %d\n", en_selchange_sent);
 
@@ -1371,7 +1368,6 @@ static void test_set_selection_message( void )
     ok( hr == S_OK, "got %08lx\n", hr );
 
     CHECK_CALLED(ITextHostImpl_TxViewChange);
-    todo_wine
     ok(en_change_sent == 0, "got %d\n", en_change_sent);
     ok(en_selchange_sent == 0, "got %d\n", en_selchange_sent);
 

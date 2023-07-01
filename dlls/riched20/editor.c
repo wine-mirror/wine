@@ -2148,9 +2148,10 @@ int set_selection( ME_TextEditor *editor, int to, int from )
 
     if (!editor->bHideSelection) ME_InvalidateSelection( editor );
     end = set_selection_cursors( editor, to, from );
-    ME_UpdateRepaint( editor, FALSE );
+    editor_ensure_visible( editor, &editor->pCursors[0] );
     if (!editor->bHideSelection) ME_InvalidateSelection( editor );
     update_caret( editor );
+    ME_Repaint( editor );
     ME_SendSelChange( editor );
 
     return end;
