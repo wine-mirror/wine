@@ -222,6 +222,7 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   wine_rb_init( &editor->marked_paras, para_mark_compare );
   para_mark_add( editor, para );
   ME_DestroyContext(&c);
+  wrap_marked_paras_dc( editor, hdc, FALSE );
   ITextHost_TxReleaseDC( editor->texthost, hdc );
 }
 

@@ -1292,6 +1292,23 @@ static void test_set_selection_message( void )
     ITextHost_Release( host );
 }
 
+static void test_scrollcaret( void )
+{
+    ITextServices *txtserv;
+    ITextHost *host;
+    LRESULT result;
+    HRESULT hr;
+
+    if (!init_texthost(&txtserv, &host))
+        return;
+
+    hr = ITextServices_TxSendMessage(txtserv, EM_SCROLLCARET, 0, 0, &result);
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    ITextServices_Release( txtserv );
+    ITextHost_Release( host );
+}
+
 START_TEST( txtsrv )
 {
     ITextServices *txtserv;
@@ -1326,6 +1343,7 @@ START_TEST( txtsrv )
         test_TxGetScroll();
         test_notifications();
         test_set_selection_message();
+        test_scrollcaret();
     }
     if (wrapperCodeMem) VirtualFree(wrapperCodeMem, 0, MEM_RELEASE);
 }
