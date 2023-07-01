@@ -204,6 +204,12 @@ food2
 food21
 @todo_wine@foo7@space@@space@@or_broken@not supported@space@
 @todo_wine@foo@or_broken@not supported
+--- redirect at beginning of line
+foo
+foo1
+foo2@space@
+foo2@space@
+fooA
 --- redirections within IF statements
 foo1
 foo2

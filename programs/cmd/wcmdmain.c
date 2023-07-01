@@ -2070,9 +2070,9 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
                 /* See if 1>, 2> etc, in which case we have some patching up
                    to do (provided there's a preceding whitespace, and enough
                    chars read so far) */
-                if (curStringLen > 2
-                        && (*(curPos-1)>='1') && (*(curPos-1)<='9')
-                        && ((*(curPos-2)==' ') || (*(curPos-2)=='\t'))) {
+                if (curPos[-1] >= '1' && curPos[-1] <= '9'
+                        && (curStringLen == 1 ||
+                            curPos[-2] == ' ' || curPos[-2] == '\t')) {
                     curStringLen--;
                     curString[curStringLen] = 0x00;
                     curCopyTo[(*curLen)++] = *(curPos-1);
