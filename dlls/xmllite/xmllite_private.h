@@ -53,15 +53,15 @@ typedef enum
     XmlEncoding_Unknown
 } xml_encoding;
 
-xml_encoding parse_encoding_name(const WCHAR*,int) DECLSPEC_HIDDEN;
-HRESULT get_code_page(xml_encoding,UINT*) DECLSPEC_HIDDEN;
-const WCHAR *get_encoding_name(xml_encoding) DECLSPEC_HIDDEN;
-xml_encoding get_encoding_from_codepage(UINT) DECLSPEC_HIDDEN;
+xml_encoding parse_encoding_name(const WCHAR*,int);
+HRESULT get_code_page(xml_encoding,UINT*);
+const WCHAR *get_encoding_name(xml_encoding);
+xml_encoding get_encoding_from_codepage(UINT);
 
-BOOL is_ncnamechar(WCHAR ch) DECLSPEC_HIDDEN;
-BOOL is_pubchar(WCHAR ch) DECLSPEC_HIDDEN;
-BOOL is_namestartchar(WCHAR ch) DECLSPEC_HIDDEN;
-BOOL is_namechar(WCHAR ch) DECLSPEC_HIDDEN;
+BOOL is_ncnamechar(WCHAR ch);
+BOOL is_pubchar(WCHAR ch);
+BOOL is_namestartchar(WCHAR ch);
+BOOL is_namechar(WCHAR ch);
 
 /* [2] Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF] */
 static inline BOOL is_char(WCHAR ch)
