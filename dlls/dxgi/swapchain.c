@@ -2068,13 +2068,14 @@ static HRESULT d3d12_swapchain_set_sync_interval(struct d3d12_swapchain *swapcha
     return d3d12_swapchain_create_vulkan_resources(swapchain);
 }
 
-static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain, VkQueue vk_queue, VkImage vk_src_image)
+static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain, VkImage vk_src_image)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
     VkPresentInfoKHR present_info;
     VkCommandBuffer vk_cmd_buffer;
     VkSubmitInfo submit_info;
     VkImage vk_dst_image;
+    VkQueue vk_queue;
     VkResult vr;
 
     if (swapchain->vk_image_index == INVALID_VK_IMAGE_INDEX)
@@ -2098,6 +2099,8 @@ static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain,
             vk_cmd_buffer, vk_dst_image, vk_src_image)) < 0 )
         return vr;
 
+    vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue);
+
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submit_info.pNext = NULL;
     submit_info.waitSemaphoreCount = 0;
@@ -2111,6 +2114,7 @@ static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain,
     if ((vr = vk_funcs->p_vkQueueSubmit(vk_queue, 1, &submit_info, VK_NULL_HANDLE)) < 0)
     {
         ERR("Failed to blit swapchain buffer, vr %d.\n", vr);
+        vkd3d_release_vk_queue(swapchain->command_queue);
         return vr;
     }
 
@@ -2128,38 +2132,31 @@ static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain,
     if ((vr = vk_funcs->p_vkQueuePresentKHR(vk_queue, &present_info)) >= 0)
         swapchain->vk_image_index = INVALID_VK_IMAGE_INDEX;
 
+    vkd3d_release_vk_queue(swapchain->command_queue);
+
     return vr;
 }
 
 static HRESULT d3d12_swapchain_op_present_execute(struct d3d12_swapchain *swapchain, struct d3d12_swapchain_op *op)
 {
-    VkQueue vk_queue;
     VkResult vr;
     HRESULT hr;
 
     if (FAILED(hr = d3d12_swapchain_set_sync_interval(swapchain, op->present.sync_interval)))
         return hr;
 
-    vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue);
-
-    vr = d3d12_swapchain_queue_present(swapchain, vk_queue, op->present.vk_image);
+    vr = d3d12_swapchain_queue_present(swapchain, op->present.vk_image);
     if (vr == VK_ERROR_OUT_OF_DATE_KHR)
     {
-        vkd3d_release_vk_queue(swapchain->command_queue);
-
         TRACE("Recreating Vulkan swapchain.\n");
 
         d3d12_swapchain_destroy_vulkan_resources(swapchain);
         if (FAILED(hr = d3d12_swapchain_create_vulkan_resources(swapchain)))
             return hr;
 
-        vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue);
-
-        if ((vr = d3d12_swapchain_queue_present(swapchain, vk_queue, op->present.vk_image)) < 0)
+        if ((vr = d3d12_swapchain_queue_present(swapchain, op->present.vk_image)) < 0)
             ERR("Failed to present after recreating swapchain, vr %d.\n", vr);
     }
-
-    vkd3d_release_vk_queue(swapchain->command_queue);
 
     if (vr < 0)
     {
