@@ -87,14 +87,14 @@ static void test_BluetoothAdapterStatics(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
     hr = IBluetoothAdapterStatics_GetDeviceSelector( bluetoothadapter_statics, NULL );
-    todo_wine ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
     hr = IBluetoothAdapterStatics_GetDeviceSelector( bluetoothadapter_statics, &str );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = WindowsCreateString( default_res, wcslen(default_res), &default_str );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = WindowsCompareStringOrdinal( str, default_str, &res );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( !res, "got unexpected string %s.\n", debugstr_hstring(str) );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( !res, "got unexpected string %s.\n", debugstr_hstring(str) );
 
     WindowsDeleteString( str );
     WindowsDeleteString( default_str );

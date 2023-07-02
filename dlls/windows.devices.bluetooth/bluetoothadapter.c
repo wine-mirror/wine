@@ -119,8 +119,13 @@ DEFINE_IINSPECTABLE( bluetoothadapter_statics, IBluetoothAdapterStatics, struct 
 
 static HRESULT WINAPI bluetoothadapter_statics_GetDeviceSelector( IBluetoothAdapterStatics *iface, HSTRING *result )
 {
-    FIXME( "iface %p, result %p stub!\n", iface, result );
-    return E_NOTIMPL;
+    static const WCHAR *default_res = L"System.Devices.InterfaceClassGuid:=\"{92383B0E-F90E-4AC9-8D44-8C2D0D0EBDA2}\" "
+                                      L"AND System.Devices.InterfaceEnabled:=System.StructuredQueryType.Boolean#True";
+
+    TRACE( "iface %p, result %p.\n", iface, result );
+
+    if (!result) return E_POINTER;
+    return WindowsCreateString( default_res, wcslen(default_res), result );
 }
 
 static HRESULT WINAPI bluetoothadapter_statics_FromIdAsync( IBluetoothAdapterStatics *iface, HSTRING id, IAsyncOperation_BluetoothAdapter **operation )
