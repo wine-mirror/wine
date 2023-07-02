@@ -34,6 +34,15 @@
 
 #include "wine/test.h"
 
+const char *debugstr_hstring( HSTRING hstr )
+{
+    const WCHAR *str;
+    UINT32 len;
+    if (hstr && !((ULONG_PTR)hstr >> 16)) return "(invalid)";
+    str = WindowsGetStringRawBuffer( hstr, &len );
+    return wine_dbgstr_wn( str, len );
+}
+
 #define check_interface( obj, iid ) check_interface_( __LINE__, obj, iid )
 static void check_interface_( unsigned int line, void *obj, const IID *iid )
 {
@@ -48,11 +57,14 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid )
 
 static void test_BluetoothAdapterStatics(void)
 {
+    static const WCHAR *default_res = L"System.Devices.InterfaceClassGuid:=\"{92383B0E-F90E-4AC9-8D44-8C2D0D0EBDA2}\" "
+                                      L"AND System.Devices.InterfaceEnabled:=System.StructuredQueryType.Boolean#True";
     static const WCHAR *bluetoothadapter_statics_name = L"Windows.Devices.Bluetooth.BluetoothAdapter";
     IBluetoothAdapterStatics *bluetoothadapter_statics;
     IActivationFactory *factory;
-    HSTRING str;
+    HSTRING str, default_str;
     HRESULT hr;
+    INT32 res;
     LONG ref;
 
     hr = WindowsCreateString( bluetoothadapter_statics_name, wcslen( bluetoothadapter_statics_name ), &str );
@@ -74,6 +86,18 @@ static void test_BluetoothAdapterStatics(void)
     hr = IActivationFactory_QueryInterface( factory, &IID_IBluetoothAdapterStatics, (void **)&bluetoothadapter_statics );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
+    hr = IBluetoothAdapterStatics_GetDeviceSelector( bluetoothadapter_statics, NULL );
+    todo_wine ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    hr = IBluetoothAdapterStatics_GetDeviceSelector( bluetoothadapter_statics, &str );
+    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = WindowsCreateString( default_res, wcslen(default_res), &default_str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = WindowsCompareStringOrdinal( str, default_str, &res );
+    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    todo_wine ok( !res, "got unexpected string %s.\n", debugstr_hstring(str) );
+
+    WindowsDeleteString( str );
+    WindowsDeleteString( default_str );
     ref = IBluetoothAdapterStatics_Release( bluetoothadapter_statics );
     ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
