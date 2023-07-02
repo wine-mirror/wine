@@ -551,6 +551,27 @@ const ISimpleAudioVolumeVtbl SimpleAudioVolume_Vtbl =
     simplevolume_GetMute
 };
 
+void session_init_vols(struct audio_session *session, UINT channels)
+{
+    if (session->channel_count < channels) {
+        UINT i;
+
+        if (session->channel_vols)
+            session->channel_vols = HeapReAlloc(GetProcessHeap(), 0, session->channel_vols,
+                                                sizeof(float) * channels);
+        else
+            session->channel_vols = HeapAlloc(GetProcessHeap(), 0, sizeof(float) * channels);
+
+        if (!session->channel_vols)
+            return;
+
+        for (i = session->channel_count; i < channels; i++)
+            session->channel_vols[i] = 1.f;
+
+        session->channel_count = channels;
+    }
+}
+
 struct audio_session_wrapper *session_wrapper_create(struct audio_client *client)
 {
     struct audio_session_wrapper *ret;
