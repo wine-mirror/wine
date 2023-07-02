@@ -26,8 +26,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 
-static struct list g_sessions = LIST_INIT(g_sessions);
-
 static CRITICAL_SECTION g_sessions_lock;
 static CRITICAL_SECTION_DEBUG g_sessions_lock_debug =
 {
