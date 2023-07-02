@@ -3471,7 +3471,7 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
 
     FIXME("(%p)->(%#lx)\n", This, dispid);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI OleControl_FreezeEvents(IOleControl *iface, BOOL freeze)
