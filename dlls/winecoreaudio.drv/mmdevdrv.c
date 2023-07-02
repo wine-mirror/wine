@@ -68,7 +68,7 @@ static CRITICAL_SECTION_DEBUG g_sessions_lock_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": g_sessions_lock") }
 };
 static CRITICAL_SECTION g_sessions_lock = { &g_sessions_lock_debug, -1, 0, 0, 0, 0 };
-static struct list g_sessions = LIST_INIT(g_sessions);
+extern struct list sessions;
 
 extern struct audio_session_wrapper *session_wrapper_create(
     struct audio_client *client) DECLSPEC_HIDDEN;
@@ -371,30 +371,8 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
 
 extern void session_init_vols(AudioSession *session, UINT channels);
 
-static AudioSession *create_session(const GUID *guid, IMMDevice *device,
-        UINT num_channels)
-{
-    AudioSession *ret;
-
-    ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(AudioSession));
-    if(!ret)
-        return NULL;
-
-    memcpy(&ret->guid, guid, sizeof(GUID));
-
-    ret->device = device;
-
-    list_init(&ret->clients);
-
-    list_add_head(&g_sessions, &ret->entry);
-
-    session_init_vols(ret, num_channels);
-
-    ret->master_vol = 1.f;
-
-    return ret;
-}
-
+extern AudioSession *session_create(const GUID *guid, IMMDevice *device,
+        UINT num_channels);
 /* if channels == 0, then this will return or create a session with
  * matching dataflow and GUID. otherwise, channels must also match */
 HRESULT get_audio_session(const GUID *sessionguid,
@@ -403,7 +381,7 @@ HRESULT get_audio_session(const GUID *sessionguid,
     AudioSession *session;
 
     if(!sessionguid || IsEqualGUID(sessionguid, &GUID_NULL)){
-        *out = create_session(&GUID_NULL, device, channels);
+        *out = session_create(&GUID_NULL, device, channels);
         if(!*out)
             return E_OUTOFMEMORY;
 
@@ -411,7 +389,7 @@ HRESULT get_audio_session(const GUID *sessionguid,
     }
 
     *out = NULL;
-    LIST_FOR_EACH_ENTRY(session, &g_sessions, AudioSession, entry){
+    LIST_FOR_EACH_ENTRY(session, &sessions, AudioSession, entry){
         if(session->device == device &&
                 IsEqualGUID(sessionguid, &session->guid)){
             session_init_vols(session, channels);
@@ -421,7 +399,7 @@ HRESULT get_audio_session(const GUID *sessionguid,
     }
 
     if(!*out){
-        *out = create_session(sessionguid, device, channels);
+        *out = session_create(sessionguid, device, channels);
         if(!*out)
             return E_OUTOFMEMORY;
     }
