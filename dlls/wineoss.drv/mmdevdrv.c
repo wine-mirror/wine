@@ -359,26 +359,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev,
     return S_OK;
 }
 
-static void session_init_vols(AudioSession *session, UINT channels)
-{
-    if(session->channel_count < channels){
-        UINT i;
-
-        if(session->channel_vols)
-            session->channel_vols = HeapReAlloc(GetProcessHeap(), 0,
-                    session->channel_vols, sizeof(float) * channels);
-        else
-            session->channel_vols = HeapAlloc(GetProcessHeap(), 0,
-                    sizeof(float) * channels);
-        if(!session->channel_vols)
-            return;
-
-        for(i = session->channel_count; i < channels; ++i)
-            session->channel_vols[i] = 1.f;
-
-        session->channel_count = channels;
-    }
-}
+extern void session_init_vols(AudioSession *session, UINT channels);
 
 static AudioSession *create_session(const GUID *guid, IMMDevice *device,
         UINT num_channels)
