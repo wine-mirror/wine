@@ -3381,7 +3381,7 @@ static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, IStream 
 
     FIXME("(%p)->(%p)\n", This, stream);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, IStream *stream, BOOL clear_dirty)
