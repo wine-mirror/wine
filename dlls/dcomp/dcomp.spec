@@ -14,7 +14,7 @@
 @ stub DCompositionAttachMouseDragToHwnd
 @ stub DCompositionAttachMouseWheelToHwnd
 @ stdcall DCompositionCreateDevice2(ptr ptr ptr)
-@ stub DCompositionCreateDevice3
+@ stdcall DCompositionCreateDevice3(ptr ptr ptr)
 @ stdcall DCompositionCreateDevice(ptr ptr ptr)
 @ stub DCompositionCreateSurfaceHandle
 @ stub DeserializeEffectDescription

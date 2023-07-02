@@ -38,3 +38,10 @@ HRESULT WINAPI DCompositionCreateDevice2(IUnknown *rendering_device, REFIID iid,
 
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI DCompositionCreateDevice3(IUnknown *rendering_device, REFIID iid, void **device)
+{
+    FIXME("%p, %s, %p.\n", rendering_device, debugstr_guid(iid), device);
+
+    return E_NOTIMPL;
+}
