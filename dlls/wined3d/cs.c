@@ -1328,9 +1328,9 @@ static void wined3d_cs_exec_set_stream_sources(struct wined3d_cs *cs, const void
         struct wined3d_buffer *buffer = op->streams[i].buffer;
 
         if (buffer)
-            InterlockedIncrement(&buffer->resource.bind_count);
+            ++buffer->resource.bind_count;
         if (prev)
-            InterlockedDecrement(&prev->resource.bind_count);
+            --prev->resource.bind_count;
     }
 
     memcpy(&cs->state.streams[op->start_idx], op->streams, op->count * sizeof(*op->streams));
@@ -1363,9 +1363,9 @@ static void wined3d_cs_exec_set_stream_outputs(struct wined3d_cs *cs, const void
         struct wined3d_buffer *buffer = op->outputs[i].buffer;
 
         if (buffer)
-            InterlockedIncrement(&buffer->resource.bind_count);
+            ++buffer->resource.bind_count;
         if (prev)
-            InterlockedDecrement(&prev->resource.bind_count);
+            --prev->resource.bind_count;
     }
 
     memcpy(cs->state.stream_output, op->outputs, sizeof(op->outputs));
@@ -1395,9 +1395,9 @@ static void wined3d_cs_exec_set_index_buffer(struct wined3d_cs *cs, const void *
     cs->state.index_offset = op->offset;
 
     if (op->buffer)
-        InterlockedIncrement(&op->buffer->resource.bind_count);
+        ++op->buffer->resource.bind_count;
     if (prev)
-        InterlockedDecrement(&prev->resource.bind_count);
+        --prev->resource.bind_count;
 
     device_invalidate_state(cs->c.device, STATE_INDEXBUFFER);
 }
@@ -1429,9 +1429,9 @@ static void wined3d_cs_exec_set_constant_buffers(struct wined3d_cs *cs, const vo
         cs->state.cb[op->type][op->start_idx + i] = op->buffers[i];
 
         if (buffer)
-            InterlockedIncrement(&buffer->resource.bind_count);
+            ++buffer->resource.bind_count;
         if (prev)
-            InterlockedDecrement(&prev->resource.bind_count);
+            --prev->resource.bind_count;
     }
 
     device_invalidate_state(cs->c.device, STATE_CONSTANT_BUFFER(op->type));
@@ -1498,7 +1498,7 @@ static void wined3d_cs_exec_set_texture(struct wined3d_cs *cs, const void *data)
 
     if (op->texture)
     {
-        InterlockedIncrement(&op->texture->resource.bind_count);
+        ++op->texture->resource.bind_count;
 
         if (texture_binding_might_invalidate_ps(op->texture, prev, d3d_info))
             device_invalidate_state(cs->c.device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
@@ -1518,7 +1518,7 @@ static void wined3d_cs_exec_set_texture(struct wined3d_cs *cs, const void *data)
 
     if (prev)
     {
-        InterlockedDecrement(&prev->resource.bind_count);
+        --prev->resource.bind_count;
 
         if (!op->texture && op->stage < d3d_info->ffp_fragment_caps.max_blend_stages)
         {
@@ -1565,9 +1565,9 @@ static void wined3d_cs_exec_set_shader_resource_views(struct wined3d_cs *cs, con
         cs->state.shader_resource_view[op->type][op->start_idx + i] = view;
 
         if (view)
-            InterlockedIncrement(&view->resource->bind_count);
+            ++view->resource->bind_count;
         if (prev)
-            InterlockedDecrement(&prev->resource->bind_count);
+            --prev->resource->bind_count;
     }
 
     if (op->type != WINED3D_SHADER_TYPE_COMPUTE)
@@ -1607,9 +1607,9 @@ static void wined3d_cs_exec_set_unordered_access_views(struct wined3d_cs *cs, co
         cs->state.unordered_access_view[op->pipeline][op->start_idx + i] = view;
 
         if (view)
-            InterlockedIncrement(&view->resource->bind_count);
+            ++view->resource->bind_count;
         if (prev)
-            InterlockedDecrement(&prev->resource->bind_count);
+            --prev->resource->bind_count;
 
         if (view && initial_count != ~0u)
             wined3d_unordered_access_view_set_counter(view, initial_count);
