@@ -176,7 +176,7 @@ static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
         }
 
         len = WideCharToMultiByte(CP_ACP, 0, groups_data, -1, NULL, 0, NULL, NULL);
-        groups_dataA = malloc(len * sizeof(WCHAR));
+        groups_dataA = malloc(len);
         if (groups_dataA)
         {
             WideCharToMultiByte(CP_ACP, 0, groups_data, -1, groups_dataA, len, NULL, NULL);
