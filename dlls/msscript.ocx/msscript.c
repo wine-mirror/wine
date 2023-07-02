@@ -3480,7 +3480,7 @@ static HRESULT WINAPI OleControl_FreezeEvents(IOleControl *iface, BOOL freeze)
 
     FIXME("(%p)->(%d)\n", This, freeze);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const IOleControlVtbl OleControlVtbl = {
