@@ -1663,16 +1663,9 @@ static void d3d12_swapchain_destroy_vulkan_resources(struct d3d12_swapchain *swa
 
     if (swapchain->command_queue)
     {
-        if ((vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue)))
-        {
-            vk_funcs->p_vkQueueWaitIdle(vk_queue);
-
-            vkd3d_release_vk_queue(swapchain->command_queue);
-        }
-        else
-        {
-            WARN("Failed to acquire Vulkan queue.\n");
-        }
+        vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue);
+        vk_funcs->p_vkQueueWaitIdle(vk_queue);
+        vkd3d_release_vk_queue(swapchain->command_queue);
     }
 
     if (swapchain->vk_device)
@@ -2147,11 +2140,7 @@ static HRESULT d3d12_swapchain_op_present_execute(struct d3d12_swapchain *swapch
     if (FAILED(hr = d3d12_swapchain_set_sync_interval(swapchain, op->present.sync_interval)))
         return hr;
 
-    if (!(vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue)))
-    {
-        ERR("Failed to acquire Vulkan queue.\n");
-        return E_FAIL;
-    }
+    vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue);
 
     vr = d3d12_swapchain_queue_present(swapchain, vk_queue, op->present.vk_image);
     if (vr == VK_ERROR_OUT_OF_DATE_KHR)
@@ -2164,11 +2153,7 @@ static HRESULT d3d12_swapchain_op_present_execute(struct d3d12_swapchain *swapch
         if (FAILED(hr = d3d12_swapchain_create_vulkan_resources(swapchain)))
             return hr;
 
-        if (!(vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue)))
-        {
-            ERR("Failed to acquire Vulkan queue.\n");
-            return E_FAIL;
-        }
+        vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue);
 
         if ((vr = d3d12_swapchain_queue_present(swapchain, vk_queue, op->present.vk_image)) < 0)
             ERR("Failed to present after recreating swapchain, vr %d.\n", vr);
