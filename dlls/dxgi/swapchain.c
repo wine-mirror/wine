@@ -1056,6 +1056,8 @@ struct d3d12_swapchain
     VkPresentModeKHR present_mode;
     DXGI_SWAP_CHAIN_DESC1 backend_desc;
 
+    ID3D12Fence *present_fence;
+
     uint32_t vk_image_index;
 
     struct dxgi_vk_funcs vk_funcs;
@@ -1930,6 +1932,9 @@ static void d3d12_swapchain_destroy(struct d3d12_swapchain *swapchain)
     d3d12_swapchain_destroy_vulkan_resources(swapchain);
     d3d12_swapchain_destroy_d3d12_resources(swapchain);
 
+    if (swapchain->present_fence)
+        ID3D12Fence_Release(swapchain->present_fence);
+
     if (swapchain->frame_latency_event)
         CloseHandle(swapchain->frame_latency_event);
 
@@ -2068,7 +2073,8 @@ static HRESULT d3d12_swapchain_set_sync_interval(struct d3d12_swapchain *swapcha
     return d3d12_swapchain_create_vulkan_resources(swapchain);
 }
 
-static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain, VkImage vk_src_image)
+static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain, VkImage vk_src_image,
+        uint64_t frame_number)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
     VkPresentInfoKHR present_info;
@@ -2077,6 +2083,7 @@ static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain,
     VkImage vk_dst_image;
     VkQueue vk_queue;
     VkResult vr;
+    HRESULT hr;
 
     if (swapchain->vk_image_index == INVALID_VK_IMAGE_INDEX)
     {
@@ -2098,6 +2105,12 @@ static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain,
     if ((vr = d3d12_swapchain_record_swapchain_blit(swapchain,
             vk_cmd_buffer, vk_dst_image, vk_src_image)) < 0 )
         return vr;
+
+    if (FAILED(hr = ID3D12Fence_SetEventOnCompletion(swapchain->present_fence, frame_number + 1, NULL)))
+    {
+        ERR("Failed to wait for present event, hr %#lx.\n", hr);
+        return VK_ERROR_UNKNOWN;
+    }
 
     vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue);
 
@@ -2145,7 +2158,7 @@ static HRESULT d3d12_swapchain_op_present_execute(struct d3d12_swapchain *swapch
     if (FAILED(hr = d3d12_swapchain_set_sync_interval(swapchain, op->present.sync_interval)))
         return hr;
 
-    vr = d3d12_swapchain_queue_present(swapchain, op->present.vk_image);
+    vr = d3d12_swapchain_queue_present(swapchain, op->present.vk_image, op->present.frame_number);
     if (vr == VK_ERROR_OUT_OF_DATE_KHR)
     {
         TRACE("Recreating Vulkan swapchain.\n");
@@ -2154,7 +2167,7 @@ static HRESULT d3d12_swapchain_op_present_execute(struct d3d12_swapchain *swapch
         if (FAILED(hr = d3d12_swapchain_create_vulkan_resources(swapchain)))
             return hr;
 
-        if ((vr = d3d12_swapchain_queue_present(swapchain, op->present.vk_image)) < 0)
+        if ((vr = d3d12_swapchain_queue_present(swapchain, op->present.vk_image, op->present.frame_number)) < 0)
             ERR("Failed to present after recreating swapchain, vr %d.\n", vr);
     }
 
@@ -2231,6 +2244,13 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
             ERR("Failed to enqueue frame latency event, hr %#lx.\n", hr);
             return hr;
         }
+    }
+
+    if (FAILED(hr = ID3D12CommandQueue_Signal(swapchain->command_queue,
+            swapchain->present_fence, swapchain->frame_number)))
+    {
+        ERR("Failed to signal present fence, hf %#lx.\n", hr);
+        return hr;
     }
 
     swapchain->current_buffer_index = (swapchain->current_buffer_index + 1) % swapchain->desc.BufferCount;
@@ -3234,6 +3254,14 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
             d3d12_swapchain_destroy(swapchain);
             return hr;
         }
+    }
+
+    if (FAILED(hr = ID3D12Device_CreateFence(device, 0, 0,
+            &IID_ID3D12Fence, (void **)&swapchain->present_fence)))
+    {
+        WARN("Failed to create present fence, hr %#lx.\n", hr);
+        d3d12_swapchain_destroy(swapchain);
+        return hr;
     }
 
     IWineDXGIFactory_AddRef(swapchain->factory = factory);
