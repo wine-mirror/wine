@@ -196,6 +196,7 @@ void pop_import( PARSER_LTYPE *yylloc );
 %token tDECLARE
 %token tDECODE tDEFAULT tDEFAULTBIND
 %token tDELEGATE
+%token tDEFAULT_OVERLOAD
 %token tDEFAULTCOLLELEM
 %token tDEFAULTVALUE
 %token tDEFAULTVTABLE
@@ -662,6 +663,7 @@ attribute
                                                 }
         | tDECODE                               { $$ = attr_int( @$, ATTR_DECODE, 0 ); }
         | tDEFAULT                              { $$ = attr_int( @$, ATTR_DEFAULT, 0 ); }
+        | tDEFAULT_OVERLOAD                     { $$ = attr_int( @$, ATTR_DEFAULT_OVERLOAD, 0 ); }
         | tDEFAULTBIND                          { $$ = attr_int( @$, ATTR_DEFAULTBIND, 0 ); }
         | tDEFAULTCOLLELEM                      { $$ = attr_int( @$, ATTR_DEFAULTCOLLELEM, 0 ); }
         | tDEFAULTVALUE '(' expr_const ')'      { $$ = attr_ptr( @$, ATTR_DEFAULTVALUE, $3 ); }

@@ -254,6 +254,7 @@ static void winrt_enable( int ns_prefix )
     control                                     { return tCONTROL; }
     custom                                      { return tCUSTOM; }
     decode                                      { return tDECODE; }
+    default_overload                            { return tDEFAULT_OVERLOAD; }
     defaultbind                                 { return tDEFAULTBIND; }
     defaultcollelem                             { return tDEFAULTCOLLELEM; }
     defaultvalue                                { return tDEFAULTVALUE; }
