@@ -1,0 +1,9 @@
+MODULE = windows.devices.usb.dll
+IMPORTS = combase
+
+C_SRCS = \
+	main.c \
+	usbdevice.c
+
+IDL_SRCS = \
+	classes.idl
