@@ -1,5 +1,6 @@
 /*
  * Copyright 2022 Hans Leidekker for CodeWeavers
+ * Copyright 2023 Dmitry Timoshkov
  *
  * SSPI based replacement for Cyrus SASL
  *
@@ -36,6 +37,7 @@ struct connection
     sasl_interact_t prompts[4];
     unsigned int max_token;
     unsigned int trailer_size;
+    unsigned int flags;
     sasl_ssf_t ssf;
     char *buf;
     unsigned buf_size;
@@ -261,7 +263,7 @@ int sasl_client_start( sasl_conn_t *handle, const char *mechlist, sasl_interact_
         { 0, SECBUFFER_ALERT, NULL }
     };
     SecBufferDesc out_buf_desc = { SECBUFFER_VERSION, ARRAYSIZE(out_bufs), out_bufs };
-    ULONG attrs, flags = ISC_REQ_INTEGRITY | ISC_REQ_CONFIDENTIALITY;
+    ULONG attrs;
     SECURITY_STATUS status;
     int ret;
 
@@ -276,7 +278,9 @@ int sasl_client_start( sasl_conn_t *handle, const char *mechlist, sasl_interact_
                                         (SEC_WINNT_AUTH_IDENTITY_A *)&id, NULL, NULL, &conn->cred_handle, NULL );
     if (status != SEC_E_OK) return SASL_FAIL;
 
-    status = InitializeSecurityContextA( &conn->cred_handle, NULL, conn->target, flags,
+    /* FIXME: flags probably should depend on LDAP_OPT_SSPI_FLAGS */
+    conn->flags = ISC_REQ_INTEGRITY | ISC_REQ_CONFIDENTIALITY | ISC_REQ_MUTUAL_AUTH | ISC_REQ_EXTENDED_ERROR;
+    status = InitializeSecurityContextA( &conn->cred_handle, NULL, conn->target, conn->flags,
                                          0, 0, NULL, 0, &conn->ctxt_handle, &out_buf_desc, &attrs, NULL );
     if (status == SEC_E_OK || status == SEC_I_CONTINUE_NEEDED)
     {
@@ -311,10 +315,10 @@ int sasl_client_step( sasl_conn_t *handle, const char *serverin, unsigned int se
     };
     SecBufferDesc in_buf_desc = { SECBUFFER_VERSION, ARRAYSIZE(in_bufs), in_bufs };
     SecBufferDesc out_buf_desc = { SECBUFFER_VERSION, ARRAYSIZE(out_bufs), out_bufs };
-    ULONG attrs, flags = ISC_REQ_INTEGRITY | ISC_REQ_CONFIDENTIALITY;
+    ULONG attrs;
     SECURITY_STATUS status;
 
-    status = InitializeSecurityContextA( NULL, &conn->ctxt_handle, conn->target, flags, 0, 0,
+    status = InitializeSecurityContextA( NULL, &conn->ctxt_handle, conn->target, conn->flags, 0, 0,
                                          &in_buf_desc, 0, &conn->ctxt_handle, &out_buf_desc, &attrs, NULL );
     if (status == SEC_E_OK || status == SEC_I_CONTINUE_NEEDED)
     {
