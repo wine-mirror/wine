@@ -99,33 +99,33 @@ typedef struct DOMEvent {
     BOOL no_event_obj;
 } DOMEvent;
 
-const WCHAR *get_event_name(eventid_t) DECLSPEC_HIDDEN;
-void check_event_attr(HTMLDocumentNode*,nsIDOMElement*) DECLSPEC_HIDDEN;
-void release_event_target(EventTarget*) DECLSPEC_HIDDEN;
-HRESULT set_event_handler(EventTarget*,eventid_t,VARIANT*) DECLSPEC_HIDDEN;
-HRESULT get_event_handler(EventTarget*,eventid_t,VARIANT*) DECLSPEC_HIDDEN;
-HRESULT attach_event(EventTarget*,BSTR,IDispatch*,VARIANT_BOOL*) DECLSPEC_HIDDEN;
-HRESULT detach_event(EventTarget*,BSTR,IDispatch*) DECLSPEC_HIDDEN;
-HRESULT fire_event(HTMLDOMNode*,const WCHAR*,VARIANT*,VARIANT_BOOL*) DECLSPEC_HIDDEN;
-void update_doc_cp_events(HTMLDocumentNode*,cp_static_data_t*) DECLSPEC_HIDDEN;
-HRESULT doc_init_events(HTMLDocumentNode*) DECLSPEC_HIDDEN;
-void detach_events(HTMLDocumentNode *doc) DECLSPEC_HIDDEN;
-HRESULT create_event_obj(compat_mode_t,IHTMLEventObj**) DECLSPEC_HIDDEN;
-void bind_target_event(HTMLDocumentNode*,EventTarget*,const WCHAR*,IDispatch*) DECLSPEC_HIDDEN;
-HRESULT ensure_doc_nsevent_handler(HTMLDocumentNode*,nsIDOMNode*,eventid_t) DECLSPEC_HIDDEN;
+const WCHAR *get_event_name(eventid_t);
+void check_event_attr(HTMLDocumentNode*,nsIDOMElement*);
+void release_event_target(EventTarget*);
+HRESULT set_event_handler(EventTarget*,eventid_t,VARIANT*);
+HRESULT get_event_handler(EventTarget*,eventid_t,VARIANT*);
+HRESULT attach_event(EventTarget*,BSTR,IDispatch*,VARIANT_BOOL*);
+HRESULT detach_event(EventTarget*,BSTR,IDispatch*);
+HRESULT fire_event(HTMLDOMNode*,const WCHAR*,VARIANT*,VARIANT_BOOL*);
+void update_doc_cp_events(HTMLDocumentNode*,cp_static_data_t*);
+HRESULT doc_init_events(HTMLDocumentNode*);
+void detach_events(HTMLDocumentNode *doc);
+HRESULT create_event_obj(compat_mode_t,IHTMLEventObj**);
+void bind_target_event(HTMLDocumentNode*,EventTarget*,const WCHAR*,IDispatch*);
+HRESULT ensure_doc_nsevent_handler(HTMLDocumentNode*,nsIDOMNode*,eventid_t);
 
-void dispatch_event(EventTarget*,DOMEvent*) DECLSPEC_HIDDEN;
+void dispatch_event(EventTarget*,DOMEvent*);
 
-HRESULT create_document_event(HTMLDocumentNode*,eventid_t,DOMEvent**) DECLSPEC_HIDDEN;
-HRESULT create_document_event_str(HTMLDocumentNode*,const WCHAR*,IDOMEvent**) DECLSPEC_HIDDEN;
-HRESULT create_event_from_nsevent(nsIDOMEvent*,compat_mode_t,DOMEvent**) DECLSPEC_HIDDEN;
-HRESULT create_message_event(HTMLDocumentNode*,VARIANT*,DOMEvent**) DECLSPEC_HIDDEN;
-HRESULT create_storage_event(HTMLDocumentNode*,BSTR,BSTR,BSTR,const WCHAR*,BOOL,DOMEvent**) DECLSPEC_HIDDEN;
+HRESULT create_document_event(HTMLDocumentNode*,eventid_t,DOMEvent**);
+HRESULT create_document_event_str(HTMLDocumentNode*,const WCHAR*,IDOMEvent**);
+HRESULT create_event_from_nsevent(nsIDOMEvent*,compat_mode_t,DOMEvent**);
+HRESULT create_message_event(HTMLDocumentNode*,VARIANT*,DOMEvent**);
+HRESULT create_storage_event(HTMLDocumentNode*,BSTR,BSTR,BSTR,const WCHAR*,BOOL,DOMEvent**);
 
-void init_nsevents(HTMLDocumentNode*) DECLSPEC_HIDDEN;
-void release_nsevents(HTMLDocumentNode*) DECLSPEC_HIDDEN;
-void add_nsevent_listener(HTMLDocumentNode*,nsIDOMNode*,LPCWSTR) DECLSPEC_HIDDEN;
-void detach_nsevent(HTMLDocumentNode*,const WCHAR*) DECLSPEC_HIDDEN;
+void init_nsevents(HTMLDocumentNode*);
+void release_nsevents(HTMLDocumentNode*);
+void add_nsevent_listener(HTMLDocumentNode*,nsIDOMNode*,LPCWSTR);
+void detach_nsevent(HTMLDocumentNode*,const WCHAR*);
 
 /* We extend dispex vtbl for EventTarget functions to avoid separated vtbl. */
 typedef struct {
@@ -138,7 +138,7 @@ typedef struct {
     IHTMLEventObj *(*set_current_event)(DispatchEx*,IHTMLEventObj*);
 } event_target_vtbl_t;
 
-IHTMLEventObj *default_set_current_event(HTMLInnerWindow*,IHTMLEventObj*) DECLSPEC_HIDDEN;
+IHTMLEventObj *default_set_current_event(HTMLInnerWindow*,IHTMLEventObj*);
 
 static inline EventTarget *get_node_event_prop_target(HTMLDOMNode *node, eventid_t eid)
 {

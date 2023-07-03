@@ -60,14 +60,14 @@ struct HTMLPluginContainer {
 
 DEFINE_GUID(IID_HTMLPluginContainer, 0xbd7a6050,0xb373,0x4f6f,0xa4,0x93,0xdd,0x40,0xc5,0x23,0xa8,0x6a);
 
-extern const IID IID_HTMLPluginContainer DECLSPEC_HIDDEN;
+extern const IID IID_HTMLPluginContainer;
 
-HRESULT create_plugin_host(HTMLDocumentNode*,HTMLPluginContainer*) DECLSPEC_HIDDEN;
-void update_plugin_window(PluginHost*,HWND,const RECT*) DECLSPEC_HIDDEN;
-void detach_plugin_host(PluginHost*) DECLSPEC_HIDDEN;
+HRESULT create_plugin_host(HTMLDocumentNode*,HTMLPluginContainer*);
+void update_plugin_window(PluginHost*,HWND,const RECT*);
+void detach_plugin_host(PluginHost*);
 
-HRESULT get_plugin_disp(HTMLPluginContainer*,IDispatch**) DECLSPEC_HIDDEN;
-HRESULT get_plugin_dispid(HTMLPluginContainer*,WCHAR*,DISPID*) DECLSPEC_HIDDEN;
-HRESULT invoke_plugin_prop(HTMLPluginContainer*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*) DECLSPEC_HIDDEN;
-void notif_container_change(HTMLPluginContainer*,DISPID) DECLSPEC_HIDDEN;
-void bind_activex_event(HTMLDocumentNode*,HTMLPluginContainer*,WCHAR*,IDispatch*) DECLSPEC_HIDDEN;
+HRESULT get_plugin_disp(HTMLPluginContainer*,IDispatch**);
+HRESULT get_plugin_dispid(HTMLPluginContainer*,WCHAR*,DISPID*);
+HRESULT invoke_plugin_prop(HTMLPluginContainer*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*);
+void notif_container_change(HTMLPluginContainer*,DISPID);
+void bind_activex_event(HTMLDocumentNode*,HTMLPluginContainer*,WCHAR*,IDispatch*);

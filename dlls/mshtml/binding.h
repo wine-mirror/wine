@@ -137,34 +137,34 @@ typedef struct {
 #define BINDING_SUBMIT       0x0010
 #define BINDING_NOFRAG       0x0020
 
-HRESULT set_http_header(struct list*,const WCHAR*,int,const WCHAR*,int) DECLSPEC_HIDDEN;
-HRESULT create_redirect_nschannel(const WCHAR*,nsChannel*,nsChannel**) DECLSPEC_HIDDEN;
+HRESULT set_http_header(struct list*,const WCHAR*,int,const WCHAR*,int);
+HRESULT create_redirect_nschannel(const WCHAR*,nsChannel*,nsChannel**);
 
-HRESULT hlink_frame_navigate(HTMLDocumentObj*,LPCWSTR,nsChannel*,DWORD,BOOL*) DECLSPEC_HIDDEN;
-HRESULT create_doc_uri(IUri*,nsWineURI**) DECLSPEC_HIDDEN;
-HRESULT load_nsuri(HTMLOuterWindow*,nsWineURI*,nsIInputStream*,nsChannelBSC*,DWORD) DECLSPEC_HIDDEN;
-HRESULT set_moniker(HTMLOuterWindow*,IMoniker*,IUri*,IBindCtx*,nsChannelBSC*,BOOL) DECLSPEC_HIDDEN;
-void prepare_for_binding(HTMLDocumentObj*,IMoniker*,DWORD) DECLSPEC_HIDDEN;
-HRESULT super_navigate(HTMLOuterWindow*,IUri*,DWORD,const WCHAR*,BYTE*,DWORD) DECLSPEC_HIDDEN;
-HRESULT load_uri(HTMLOuterWindow*,IUri*,DWORD) DECLSPEC_HIDDEN;
-HRESULT navigate_new_window(HTMLOuterWindow*,IUri*,const WCHAR*,request_data_t*,IHTMLWindow2**) DECLSPEC_HIDDEN;
-HRESULT navigate_url(HTMLOuterWindow*,const WCHAR*,IUri*,DWORD) DECLSPEC_HIDDEN;
-HRESULT submit_form(HTMLOuterWindow*,const WCHAR*,IUri*,nsIInputStream*) DECLSPEC_HIDDEN;
-void process_document_response_headers(HTMLDocumentNode*,IBinding*) DECLSPEC_HIDDEN;
+HRESULT hlink_frame_navigate(HTMLDocumentObj*,LPCWSTR,nsChannel*,DWORD,BOOL*);
+HRESULT create_doc_uri(IUri*,nsWineURI**);
+HRESULT load_nsuri(HTMLOuterWindow*,nsWineURI*,nsIInputStream*,nsChannelBSC*,DWORD);
+HRESULT set_moniker(HTMLOuterWindow*,IMoniker*,IUri*,IBindCtx*,nsChannelBSC*,BOOL);
+void prepare_for_binding(HTMLDocumentObj*,IMoniker*,DWORD);
+HRESULT super_navigate(HTMLOuterWindow*,IUri*,DWORD,const WCHAR*,BYTE*,DWORD);
+HRESULT load_uri(HTMLOuterWindow*,IUri*,DWORD);
+HRESULT navigate_new_window(HTMLOuterWindow*,IUri*,const WCHAR*,request_data_t*,IHTMLWindow2**);
+HRESULT navigate_url(HTMLOuterWindow*,const WCHAR*,IUri*,DWORD);
+HRESULT submit_form(HTMLOuterWindow*,const WCHAR*,IUri*,nsIInputStream*);
+void process_document_response_headers(HTMLDocumentNode*,IBinding*);
 
-void init_bscallback(BSCallback*,const BSCallbackVtbl*,IMoniker*,DWORD) DECLSPEC_HIDDEN;
-HRESULT create_channelbsc(IMoniker*,const WCHAR*,BYTE*,DWORD,BOOL,nsChannelBSC**) DECLSPEC_HIDDEN;
-HRESULT channelbsc_load_stream(HTMLInnerWindow*,IMoniker*,IStream*) DECLSPEC_HIDDEN;
-void channelbsc_set_channel(nsChannelBSC*,nsChannel*,nsIStreamListener*,nsISupports*) DECLSPEC_HIDDEN;
-IUri *nsuri_get_uri(nsWineURI*) DECLSPEC_HIDDEN;
-nsresult create_onload_blocker_request(nsIRequest**) DECLSPEC_HIDDEN;
+void init_bscallback(BSCallback*,const BSCallbackVtbl*,IMoniker*,DWORD);
+HRESULT create_channelbsc(IMoniker*,const WCHAR*,BYTE*,DWORD,BOOL,nsChannelBSC**);
+HRESULT channelbsc_load_stream(HTMLInnerWindow*,IMoniker*,IStream*);
+void channelbsc_set_channel(nsChannelBSC*,nsChannel*,nsIStreamListener*,nsISupports*);
+IUri *nsuri_get_uri(nsWineURI*);
+nsresult create_onload_blocker_request(nsIRequest**);
 
-HRESULT read_stream(BSCallback*,IStream*,void*,DWORD,DWORD*) DECLSPEC_HIDDEN;
+HRESULT read_stream(BSCallback*,IStream*,void*,DWORD,DWORD*);
 
-HRESULT create_relative_uri(HTMLOuterWindow*,const WCHAR*,IUri**) DECLSPEC_HIDDEN;
-HRESULT create_uri(const WCHAR*,DWORD,IUri**) DECLSPEC_HIDDEN;
-IUri *get_uri_nofrag(IUri*) DECLSPEC_HIDDEN;
-BOOL compare_uri_ignoring_frag(IUri *uri1, IUri *uri2) DECLSPEC_HIDDEN;
+HRESULT create_relative_uri(HTMLOuterWindow*,const WCHAR*,IUri**);
+HRESULT create_uri(const WCHAR*,DWORD,IUri**);
+IUri *get_uri_nofrag(IUri*);
+BOOL compare_uri_ignoring_frag(IUri *uri1, IUri *uri2);
 
-void set_current_mon(HTMLOuterWindow*,IMoniker*,DWORD) DECLSPEC_HIDDEN;
-void set_current_uri(HTMLOuterWindow*,IUri*) DECLSPEC_HIDDEN;
+void set_current_mon(HTMLOuterWindow*,IMoniker*,DWORD);
+void set_current_uri(HTMLOuterWindow*,IUri*);
