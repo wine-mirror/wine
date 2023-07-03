@@ -271,7 +271,7 @@ static void wayland_window_surface_set_region(struct window_surface *window_surf
 /**********************************************************************
  *          get_region_data
  */
-static RGNDATA *get_region_data(HRGN region)
+RGNDATA *get_region_data(HRGN region)
 {
     RGNDATA *data;
     DWORD size;
@@ -446,7 +446,8 @@ static void wayland_window_surface_flush(struct window_surface *window_surface)
     pthread_mutex_lock(&wws->wayland_surface->mutex);
     if (wws->wayland_surface->current_serial)
     {
-        wayland_surface_attach_shm(wws->wayland_surface, shm_buffer);
+        wayland_surface_attach_shm(wws->wayland_surface, shm_buffer,
+                                   surface_damage_region);
         wl_surface_commit(wws->wayland_surface->wl_surface);
         flushed = TRUE;
     }

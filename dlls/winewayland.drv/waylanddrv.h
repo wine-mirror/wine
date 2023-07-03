@@ -146,7 +146,8 @@ void wayland_surface_destroy(struct wayland_surface *surface) DECLSPEC_HIDDEN;
 void wayland_surface_make_toplevel(struct wayland_surface *surface) DECLSPEC_HIDDEN;
 void wayland_surface_clear_role(struct wayland_surface *surface) DECLSPEC_HIDDEN;
 void wayland_surface_attach_shm(struct wayland_surface *surface,
-                                struct wayland_shm_buffer *shm_buffer) DECLSPEC_HIDDEN;
+                                struct wayland_shm_buffer *shm_buffer,
+                                HRGN surface_damage_region) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  *          Wayland SHM buffer
@@ -178,6 +179,8 @@ static inline BOOL intersect_rect(RECT *dst, const RECT *src1, const RECT *src2)
     dst->bottom = min(src1->bottom, src2->bottom);
     return !IsRectEmpty(dst);
 }
+
+RGNDATA *get_region_data(HRGN region) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  *          USER driver functions

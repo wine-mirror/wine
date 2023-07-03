@@ -226,8 +226,11 @@ void wayland_surface_clear_role(struct wayland_surface *surface)
  * released by the compositor.
  */
 void wayland_surface_attach_shm(struct wayland_surface *surface,
-                                struct wayland_shm_buffer *shm_buffer)
+                                struct wayland_shm_buffer *shm_buffer,
+                                HRGN surface_damage_region)
 {
+    RGNDATA *surface_damage;
+
     TRACE("surface=%p shm_buffer=%p (%dx%d)\n",
           surface, shm_buffer, shm_buffer->width, shm_buffer->height);
 
@@ -235,8 +238,25 @@ void wayland_surface_attach_shm(struct wayland_surface *surface,
     wayland_shm_buffer_ref(shm_buffer);
 
     wl_surface_attach(surface->wl_surface, shm_buffer->wl_buffer, 0, 0);
-    wl_surface_damage_buffer(surface->wl_surface, 0, 0,
-                             shm_buffer->width, shm_buffer->height);
+
+    /* Add surface damage, i.e., which parts of the surface have changed since
+     * the last surface commit. Note that this is different from the buffer
+     * damage region. */
+    surface_damage = get_region_data(surface_damage_region);
+    if (surface_damage)
+    {
+        RECT *rgn_rect = (RECT *)surface_damage->Buffer;
+        RECT *rgn_rect_end = rgn_rect + surface_damage->rdh.nCount;
+
+        for (;rgn_rect < rgn_rect_end; rgn_rect++)
+        {
+            wl_surface_damage_buffer(surface->wl_surface,
+                                     rgn_rect->left, rgn_rect->top,
+                                     rgn_rect->right - rgn_rect->left,
+                                     rgn_rect->bottom - rgn_rect->top);
+        }
+        free(surface_damage);
+    }
 }
 
 /**********************************************************************
