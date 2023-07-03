@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(hostname);
 struct hostname_statics
 {
     IActivationFactory IActivationFactory_iface;
+    IHostNameFactory IHostNameFactory_iface;
     LONG ref;
 };
 
@@ -45,6 +46,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
         *out = &impl->IActivationFactory_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IHostNameFactory ))
+    {
+        *out = &impl->IHostNameFactory_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -107,9 +115,31 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( hostname_factory, IHostNameFactory, struct hostname_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI hostname_factory_CreateHostName( IHostNameFactory *iface, HSTRING name, IHostName **value )
+{
+    FIXME( "iface %p, name %s, value %p stub!\n", iface, debugstr_hstring(name), value );
+    return E_NOTIMPL;
+}
+
+static const struct IHostNameFactoryVtbl hostname_factory_vtbl =
+{
+    hostname_factory_QueryInterface,
+    hostname_factory_AddRef,
+    hostname_factory_Release,
+    /* IInspectable methods */
+    hostname_factory_GetIids,
+    hostname_factory_GetRuntimeClassName,
+    hostname_factory_GetTrustLevel,
+    /* IHostNameFactory methods */
+    hostname_factory_CreateHostName,
+};
+
 static struct hostname_statics hostname_statics =
 {
     {&factory_vtbl},
+    {&hostname_factory_vtbl},
     1,
 };
 

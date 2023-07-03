@@ -48,6 +48,7 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid )
 static void test_HostnameStatics(void)
 {
     static const WCHAR *hostname_statics_name = L"Windows.Networking.HostName";
+    IHostNameFactory *hostnamefactory;
     IActivationFactory *factory;
     HSTRING str;
     HRESULT hr;
@@ -69,6 +70,11 @@ static void test_HostnameStatics(void)
     check_interface( factory, &IID_IInspectable );
     check_interface( factory, &IID_IAgileObject );
 
+    hr = IActivationFactory_QueryInterface( factory, &IID_IHostNameFactory, (void **)&hostnamefactory );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IHostNameFactory_Release( hostnamefactory );
+    ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }
