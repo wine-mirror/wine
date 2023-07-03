@@ -38,6 +38,7 @@ struct connection
     unsigned int max_token;
     unsigned int trailer_size;
     unsigned int flags;
+    unsigned short package_id;
     sasl_ssf_t ssf;
     char *buf;
     unsigned buf_size;
@@ -66,28 +67,41 @@ int sasl_decode( sasl_conn_t *handle, const char *input, unsigned int inputlen, 
     unsigned int len;
     SecBuffer bufs[2] =
     {
-        { conn->trailer_size, SECBUFFER_TOKEN, NULL },
-        { inputlen - conn->trailer_size - sizeof(len), SECBUFFER_DATA, NULL }
+        { 0, SECBUFFER_DATA, NULL },
+        { conn->trailer_size, SECBUFFER_TOKEN, NULL }
     };
     SecBufferDesc buf_desc = { SECBUFFER_VERSION, ARRAYSIZE(bufs), bufs };
     SECURITY_STATUS status;
     int ret;
 
     if (inputlen < sizeof(len) + conn->trailer_size) return SASL_FAIL;
+    len = ntohl( *(unsigned int *)input );
+    if (inputlen < sizeof(len) + len) return SASL_FAIL;
 
-    if ((ret = grow_buffer( conn, inputlen - sizeof(len) )) < 0) return ret;
-    memcpy( conn->buf, input + sizeof(len), inputlen - sizeof(len) );
-    bufs[0].pvBuffer = conn->buf;
-    bufs[1].pvBuffer = conn->buf + conn->trailer_size;
+    if ((ret = grow_buffer( conn, len )) < 0) return ret;
+    memcpy( conn->buf, input + sizeof(len), len );
+
+    bufs[0].cbBuffer = len - conn->trailer_size;
+    if (conn->package_id == RPC_C_AUTHN_GSS_KERBEROS)
+    {
+        bufs[0].pvBuffer = conn->buf;
+        bufs[1].pvBuffer = conn->buf + bufs[0].cbBuffer;
+    }
+    else
+    {
+        bufs[0].pvBuffer = conn->buf + conn->trailer_size;
+        bufs[1].pvBuffer = conn->buf;
+    }
 
     status = DecryptMessage( &conn->ctxt_handle, &buf_desc, 0, NULL );
     if (status == SEC_E_OK)
     {
-        *output = bufs[1].pvBuffer;
-        *outputlen = bufs[1].cbBuffer;
+        *output = bufs[0].pvBuffer;
+        *outputlen = bufs[0].cbBuffer;
+        return SASL_OK;
     }
 
-    return (status == SEC_E_OK) ? SASL_OK : SASL_FAIL;
+    return SASL_FAIL;
 }
 
 int sasl_encode( sasl_conn_t *handle, const char *input, unsigned int inputlen, const char **output,
@@ -105,9 +119,18 @@ int sasl_encode( sasl_conn_t *handle, const char *input, unsigned int inputlen, 
     int ret;
 
     if ((ret = grow_buffer( conn, sizeof(len) + inputlen + conn->trailer_size )) < 0) return ret;
-    memcpy( conn->buf + sizeof(len) + conn->trailer_size, input, inputlen );
-    bufs[0].pvBuffer = conn->buf + sizeof(len) + conn->trailer_size;
-    bufs[1].pvBuffer = conn->buf + sizeof(len);
+    if (conn->package_id == RPC_C_AUTHN_GSS_KERBEROS)
+    {
+        memcpy( conn->buf + sizeof(len), input, inputlen );
+        bufs[0].pvBuffer = conn->buf + sizeof(len);
+        bufs[1].pvBuffer = conn->buf + sizeof(len) + inputlen;
+    }
+    else
+    {
+        memcpy( conn->buf + sizeof(len) + conn->trailer_size, input, inputlen );
+        bufs[0].pvBuffer = conn->buf + sizeof(len) + conn->trailer_size;
+        bufs[1].pvBuffer = conn->buf + sizeof(len);
+    }
 
     status = EncryptMessage( &conn->ctxt_handle, 0, &buf_desc, 0 );
     if (status == SEC_E_OK)
@@ -116,9 +139,10 @@ int sasl_encode( sasl_conn_t *handle, const char *input, unsigned int inputlen, 
         memcpy( conn->buf, &len, sizeof(len) );
         *output = conn->buf;
         *outputlen = sizeof(len) + bufs[0].cbBuffer + bufs[1].cbBuffer;
+        return SASL_OK;
     }
 
-    return (status == SEC_E_OK) ? SASL_OK : SASL_FAIL;
+    return SASL_FAIL;
 }
 
 const char *sasl_errstring( int saslerr, const char *langlist, const char **outlang )
@@ -252,6 +276,18 @@ static ULONG get_trailer_size( CtxtHandle *ctx )
     return sizes.cbSecurityTrailer;
 }
 
+static unsigned short get_package_id( CtxtHandle *ctx )
+{
+    SecPkgContext_NegotiationInfoW info;
+    unsigned short id;
+
+    memset( &info, 0, sizeof(info) );
+    if (QueryContextAttributesW( ctx, SECPKG_ATTR_NEGOTIATION_INFO, &info )) return 0;
+    id = info.PackageInfo->wRPCID;
+    FreeContextBuffer( info.PackageInfo );
+    return id;
+}
+
 int sasl_client_start( sasl_conn_t *handle, const char *mechlist, sasl_interact_t **prompts,
                        const char **clientout, unsigned int *clientoutlen, const char **mech )
 {
@@ -292,6 +328,7 @@ int sasl_client_start( sasl_conn_t *handle, const char *mechlist, sasl_interact_
         {
             conn->ssf = get_key_size( &conn->ctxt_handle );
             conn->trailer_size = get_trailer_size( &conn->ctxt_handle );
+            conn->package_id = get_package_id( &conn->ctxt_handle );
             return SASL_OK;
         }
     }
@@ -329,6 +366,7 @@ int sasl_client_step( sasl_conn_t *handle, const char *serverin, unsigned int se
         {
             conn->ssf = get_key_size( &conn->ctxt_handle );
             conn->trailer_size = get_trailer_size( &conn->ctxt_handle );
+            conn->package_id = get_package_id( &conn->ctxt_handle );
             return SASL_OK;
         }
     }
