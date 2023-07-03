@@ -278,6 +278,7 @@ uint32_t FAudio_CreateSourceVoice(
 	(*ppSourceVoice)->filter.Type = FAUDIO_DEFAULT_FILTER_TYPE;
 	(*ppSourceVoice)->filter.Frequency = FAUDIO_DEFAULT_FILTER_FREQUENCY;
 	(*ppSourceVoice)->filter.OneOverQ = FAUDIO_DEFAULT_FILTER_ONEOVERQ;
+	(*ppSourceVoice)->filter.WetDryMix = FAUDIO_DEFAULT_FILTER_WETDRYMIX_EXT;
 	(*ppSourceVoice)->sendLock = FAudio_PlatformCreateMutex();
 	LOG_MUTEX_CREATE(audio, (*ppSourceVoice)->sendLock)
 	(*ppSourceVoice)->effectLock = FAudio_PlatformCreateMutex();
@@ -586,6 +587,7 @@ uint32_t FAudio_CreateSubmixVoice(
 	(*ppSubmixVoice)->filter.Type = FAUDIO_DEFAULT_FILTER_TYPE;
 	(*ppSubmixVoice)->filter.Frequency = FAUDIO_DEFAULT_FILTER_FREQUENCY;
 	(*ppSubmixVoice)->filter.OneOverQ = FAUDIO_DEFAULT_FILTER_ONEOVERQ;
+	(*ppSubmixVoice)->filter.WetDryMix = FAUDIO_DEFAULT_FILTER_WETDRYMIX_EXT;
 	(*ppSubmixVoice)->sendLock = FAudio_PlatformCreateMutex();
 	LOG_MUTEX_CREATE(audio, (*ppSubmixVoice)->sendLock)
 	(*ppSubmixVoice)->effectLock = FAudio_PlatformCreateMutex();
@@ -1296,8 +1298,8 @@ uint32_t FAudioVoice_SetOutputVoices(
 			/* Allocate the whole send filter array if needed... */
 			if (voice->sendFilter == NULL)
 			{
-				voice->sendFilter = (FAudioFilterParameters*) voice->audio->pMalloc(
-					sizeof(FAudioFilterParameters) * pSendList->SendCount
+				voice->sendFilter = (FAudioFilterParametersEXT*) voice->audio->pMalloc(
+					sizeof(FAudioFilterParametersEXT) * pSendList->SendCount
 				);
 			}
 			if (voice->sendFilterState == NULL)
@@ -1315,6 +1317,7 @@ uint32_t FAudioVoice_SetOutputVoices(
 			voice->sendFilter[i].Type = FAUDIO_DEFAULT_FILTER_TYPE;
 			voice->sendFilter[i].Frequency = FAUDIO_DEFAULT_FILTER_FREQUENCY;
 			voice->sendFilter[i].OneOverQ = FAUDIO_DEFAULT_FILTER_ONEOVERQ;
+			voice->sendFilter[i].WetDryMix = FAUDIO_DEFAULT_FILTER_WETDRYMIX_EXT;
 			voice->sendFilterState[i] = (FAudioFilterState*) voice->audio->pMalloc(
 				sizeof(FAudioFilterState) * outChannels
 			);
@@ -1640,9 +1643,9 @@ uint32_t FAudioVoice_GetEffectParameters(
 	return 0;
 }
 
-uint32_t FAudioVoice_SetFilterParameters(
+uint32_t FAudioVoice_SetFilterParametersEXT(
 	FAudioVoice *voice,
-	const FAudioFilterParameters *pParameters,
+	const FAudioFilterParametersEXT *pParameters,
 	uint32_t OperationSet
 ) {
 	LOG_API_ENTER(voice->audio)
@@ -1678,7 +1681,7 @@ uint32_t FAudioVoice_SetFilterParameters(
 	FAudio_memcpy(
 		&voice->filter,
 		pParameters,
-		sizeof(FAudioFilterParameters)
+		sizeof(FAudioFilterParametersEXT)
 	);
 	FAudio_PlatformUnlockMutex(voice->filterLock);
 	LOG_MUTEX_UNLOCK(voice->audio, voice->filterLock)
@@ -1687,9 +1690,23 @@ uint32_t FAudioVoice_SetFilterParameters(
 	return 0;
 }
 
-void FAudioVoice_GetFilterParameters(
+uint32_t FAudioVoice_SetFilterParameters(
+	FAudioVoice* voice,
+	const FAudioFilterParameters* pParameters,
+	uint32_t OperationSet
+) {
+	FAudioFilterParametersEXT ext_parameters;
+	ext_parameters.Type = pParameters->Type;
+	ext_parameters.OneOverQ = pParameters->OneOverQ;
+	ext_parameters.Frequency = pParameters->Frequency;
+	ext_parameters.WetDryMix = FAUDIO_DEFAULT_FILTER_WETDRYMIX_EXT;
+
+	return FAudioVoice_SetFilterParametersEXT(voice, &ext_parameters, OperationSet);
+}
+
+void FAudioVoice_GetFilterParametersEXT(
 	FAudioVoice *voice,
-	FAudioFilterParameters *pParameters
+	FAudioFilterParametersEXT *pParameters
 ) {
 	LOG_API_ENTER(voice->audio)
 
@@ -1713,17 +1730,34 @@ void FAudioVoice_GetFilterParameters(
 	FAudio_memcpy(
 		pParameters,
 		&voice->filter,
-		sizeof(FAudioFilterParameters)
+		sizeof(FAudioFilterParametersEXT)
 	);
 	FAudio_PlatformUnlockMutex(voice->filterLock);
 	LOG_MUTEX_UNLOCK(voice->audio, voice->filterLock)
 	LOG_API_EXIT(voice->audio)
 }
 
-uint32_t FAudioVoice_SetOutputFilterParameters(
+void FAudioVoice_GetFilterParameters(
+	FAudioVoice* voice,
+	FAudioFilterParameters* pParameters
+) {
+	FAudioFilterParametersEXT ext_parameters;
+	ext_parameters.Type = pParameters->Type;
+	ext_parameters.OneOverQ = pParameters->OneOverQ;
+	ext_parameters.Frequency = pParameters->Frequency;
+	ext_parameters.WetDryMix = FAUDIO_DEFAULT_FILTER_WETDRYMIX_EXT;
+
+	FAudioVoice_GetFilterParametersEXT(voice, &ext_parameters);
+
+	pParameters->Type = ext_parameters.Type;
+	pParameters->Frequency = ext_parameters.Frequency;
+	pParameters->OneOverQ = ext_parameters.OneOverQ;
+}
+
+uint32_t FAudioVoice_SetOutputFilterParametersEXT(
 	FAudioVoice *voice,
 	FAudioVoice *pDestinationVoice,
-	const FAudioFilterParameters *pParameters,
+	const FAudioFilterParametersEXT *pParameters,
 	uint32_t OperationSet
 ) {
 	uint32_t i;
@@ -1791,7 +1825,7 @@ uint32_t FAudioVoice_SetOutputFilterParameters(
 	FAudio_memcpy(
 		&voice->sendFilter[i],
 		pParameters,
-		sizeof(FAudioFilterParameters)
+		sizeof(FAudioFilterParametersEXT)
 	);
 
 	FAudio_PlatformUnlockMutex(voice->sendLock);
@@ -1800,10 +1834,25 @@ uint32_t FAudioVoice_SetOutputFilterParameters(
 	return 0;
 }
 
-void FAudioVoice_GetOutputFilterParameters(
+uint32_t FAudioVoice_SetOutputFilterParameters(
+	FAudioVoice* voice,
+	FAudioVoice* pDestinationVoice,
+	const FAudioFilterParameters* pParameters,
+	uint32_t OperationSet
+) {
+	FAudioFilterParametersEXT ext_parameters;
+	ext_parameters.Type = pParameters->Type;
+	ext_parameters.OneOverQ = pParameters->OneOverQ;
+	ext_parameters.Frequency = pParameters->Frequency;
+	ext_parameters.WetDryMix = FAUDIO_DEFAULT_FILTER_WETDRYMIX_EXT;
+
+	return FAudioVoice_SetOutputFilterParametersEXT(voice, pDestinationVoice, &ext_parameters, OperationSet);
+}
+
+void FAudioVoice_GetOutputFilterParametersEXT(
 	FAudioVoice *voice,
 	FAudioVoice *pDestinationVoice,
-	FAudioFilterParameters *pParameters
+	FAudioFilterParametersEXT *pParameters
 ) {
 	uint32_t i;
 
@@ -1859,7 +1908,7 @@ void FAudioVoice_GetOutputFilterParameters(
 	FAudio_memcpy(
 		pParameters,
 		&voice->sendFilter[i],
-		sizeof(FAudioFilterParameters)
+		sizeof(FAudioFilterParametersEXT)
 	);
 
 	FAudio_PlatformUnlockMutex(voice->sendLock);
@@ -1912,6 +1961,24 @@ uint32_t FAudioVoice_SetVolume(
 
 	LOG_API_EXIT(voice->audio)
 	return 0;
+}
+
+void FAudioVoice_GetOutputFilterParameters(
+	FAudioVoice* voice,
+	FAudioVoice* pDestinationVoice,
+	FAudioFilterParameters* pParameters
+) {
+	FAudioFilterParametersEXT ext_parameters;
+	ext_parameters.Type = pParameters->Type;
+	ext_parameters.OneOverQ = pParameters->OneOverQ;
+	ext_parameters.Frequency = pParameters->Frequency;
+	ext_parameters.WetDryMix = FAUDIO_DEFAULT_FILTER_WETDRYMIX_EXT;
+
+	FAudioVoice_GetOutputFilterParametersEXT(voice, pDestinationVoice, &ext_parameters);
+
+	pParameters->Type = ext_parameters.Type;
+	pParameters->Frequency = ext_parameters.Frequency;
+	pParameters->OneOverQ = ext_parameters.OneOverQ;
 }
 
 void FAudioVoice_GetVolume(

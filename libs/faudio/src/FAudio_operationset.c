@@ -70,12 +70,12 @@ struct FAudio_OPERATIONSET_Operation
 		} SetEffectParameters;
 		struct
 		{
-			FAudioFilterParameters Parameters;
+			FAudioFilterParametersEXT Parameters;
 		} SetFilterParameters;
 		struct
 		{
 			FAudioVoice *pDestinationVoice;
-			FAudioFilterParameters Parameters;
+			FAudioFilterParametersEXT Parameters;
 		} SetOutputFilterParameters;
 		struct
 		{
@@ -169,7 +169,7 @@ static inline void ExecuteOperation(FAudio_OPERATIONSET_Operation *op)
 	break;
 
 	case FAUDIOOP_SETFILTERPARAMETERS:
-		FAudioVoice_SetFilterParameters(
+		FAudioVoice_SetFilterParametersEXT(
 			op->Voice,
 			&op->Data.SetFilterParameters.Parameters,
 			FAUDIO_COMMIT_NOW
@@ -177,7 +177,7 @@ static inline void ExecuteOperation(FAudio_OPERATIONSET_Operation *op)
 	break;
 
 	case FAUDIOOP_SETOUTPUTFILTERPARAMETERS:
-		FAudioVoice_SetOutputFilterParameters(
+		FAudioVoice_SetOutputFilterParametersEXT(
 			op->Voice,
 			op->Data.SetOutputFilterParameters.pDestinationVoice,
 			&op->Data.SetOutputFilterParameters.Parameters,
@@ -472,7 +472,7 @@ void FAudio_OPERATIONSET_QueueSetEffectParameters(
 
 void FAudio_OPERATIONSET_QueueSetFilterParameters(
 	FAudioVoice *voice,
-	const FAudioFilterParameters *pParameters,
+	const FAudioFilterParametersEXT *pParameters,
 	uint32_t OperationSet
 ) {
 	FAudio_OPERATIONSET_Operation *op;
@@ -489,7 +489,7 @@ void FAudio_OPERATIONSET_QueueSetFilterParameters(
 	FAudio_memcpy(
 		&op->Data.SetFilterParameters.Parameters,
 		pParameters,
-		sizeof(FAudioFilterParameters)
+		sizeof(FAudioFilterParametersEXT)
 	);
 
 	FAudio_PlatformUnlockMutex(voice->audio->operationLock);
@@ -499,7 +499,7 @@ void FAudio_OPERATIONSET_QueueSetFilterParameters(
 void FAudio_OPERATIONSET_QueueSetOutputFilterParameters(
 	FAudioVoice *voice,
 	FAudioVoice *pDestinationVoice,
-	const FAudioFilterParameters *pParameters,
+	const FAudioFilterParametersEXT *pParameters,
 	uint32_t OperationSet
 ) {
 	FAudio_OPERATIONSET_Operation *op;
@@ -517,7 +517,7 @@ void FAudio_OPERATIONSET_QueueSetOutputFilterParameters(
 	FAudio_memcpy(
 		&op->Data.SetOutputFilterParameters.Parameters,
 		pParameters,
-		sizeof(FAudioFilterParameters)
+		sizeof(FAudioFilterParametersEXT)
 	);
 
 	FAudio_PlatformUnlockMutex(voice->audio->operationLock);

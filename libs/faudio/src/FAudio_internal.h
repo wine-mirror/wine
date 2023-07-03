@@ -325,13 +325,13 @@ void FAudio_OPERATIONSET_QueueSetEffectParameters(
 );
 void FAudio_OPERATIONSET_QueueSetFilterParameters(
 	FAudioVoice *voice,
-	const FAudioFilterParameters *pParameters,
+	const FAudioFilterParametersEXT *pParameters,
 	uint32_t OperationSet
 );
 void FAudio_OPERATIONSET_QueueSetOutputFilterParameters(
 	FAudioVoice *voice,
 	FAudioVoice *pDestinationVoice,
-	const FAudioFilterParameters *pParameters,
+	const FAudioFilterParametersEXT *pParameters,
 	uint32_t OperationSet
 );
 void FAudio_OPERATIONSET_QueueSetVolume(
@@ -435,7 +435,7 @@ struct FAudioVoice
 	float **sendCoefficients;
 	float **mixCoefficients;
 	FAudioMixCallback *sendMix;
-	FAudioFilterParameters *sendFilter;
+	FAudioFilterParametersEXT *sendFilter;
 	FAudioFilterState **sendFilterState;
 	struct
 	{
@@ -447,7 +447,7 @@ struct FAudioVoice
 		uint8_t *parameterUpdates;
 		uint8_t *inPlaceProcessing;
 	} effects;
-	FAudioFilterParameters filter;
+	FAudioFilterParametersEXT filter;
 	FAudioFilterState *filterState;
 	FAudioMutex sendLock;
 	FAudioMutex effectLock;

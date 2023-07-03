@@ -2616,6 +2616,7 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 
 	/* WaveBank Name data */
 	FAudio_assert((ptr - start) == wavebankNameOffset);
+	ptr = start + wavebankNameOffset;
 	sb->wavebankNames = (char**) pEngine->pMalloc(
 		sizeof(char*) *
 		sb->wavebankCount
@@ -2818,45 +2819,55 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 
 	/* Simple Cue data */
 	FAudio_assert(cueSimpleCount == 0 || (ptr - start) == cueSimpleOffset);
-	for (i = 0; i < cueSimpleCount; i += 1, cur += 1)
+	if (cueSimpleCount > 0)
 	{
-		sb->cues[cur].flags = read_u8(&ptr);
-		sb->cues[cur].sbCode = read_u32(&ptr, se);
-		sb->cues[cur].transitionOffset = 0;
-		sb->cues[cur].instanceLimit = 0xFF;
-		sb->cues[cur].fadeInMS = 0;
-		sb->cues[cur].fadeOutMS = 0;
-		sb->cues[cur].maxInstanceBehavior = 0;
-		sb->cues[cur].instanceCount = 0;
+		ptr = start + cueSimpleOffset;
+
+		for (i = 0; i < cueSimpleCount; i += 1, cur += 1)
+		{
+			sb->cues[cur].flags = read_u8(&ptr);
+			sb->cues[cur].sbCode = read_u32(&ptr, se);
+			sb->cues[cur].transitionOffset = 0;
+			sb->cues[cur].instanceLimit = 0xFF;
+			sb->cues[cur].fadeInMS = 0;
+			sb->cues[cur].fadeOutMS = 0;
+			sb->cues[cur].maxInstanceBehavior = 0;
+			sb->cues[cur].instanceCount = 0;
+		}
 	}
 
 	/* Complex Cue data */
 	FAudio_assert(cueComplexCount == 0 || (ptr - start) == cueComplexOffset);
-	for (i = 0; i < cueComplexCount; i += 1, cur += 1)
+	if (cueComplexCount > 0)
 	{
-		sb->cues[cur].flags = read_u8(&ptr);
-		sb->cues[cur].sbCode = read_u32(&ptr, se);
-		sb->cues[cur].transitionOffset = read_u32(&ptr, se);
-		if (sb->cues[cur].transitionOffset == 0xFFFFFFFF)
-		{
-			/* FIXME: Why */
-			sb->cues[cur].transitionOffset = 0;
-		}
-		sb->cues[cur].instanceLimit = read_u8(&ptr);
-		sb->cues[cur].fadeInMS = read_u16(&ptr, se);
-		sb->cues[cur].fadeOutMS = read_u16(&ptr, se);
-		sb->cues[cur].maxInstanceBehavior = read_u8(&ptr) >> 3;
-		sb->cues[cur].instanceCount = 0;
+		ptr = start + cueComplexOffset;
 
-		if (!(sb->cues[cur].flags & 0x04))
+		for (i = 0; i < cueComplexCount; i += 1, cur += 1)
 		{
-			/* FIXME: Is this the only way to get this...? */
-			sb->variationCount += 1;
-		}
-		if (sb->cues[cur].transitionOffset > 0)
-		{
-			/* FIXME: Is this the only way to get this...? */
-			sb->transitionCount += 1;
+			sb->cues[cur].flags = read_u8(&ptr);
+			sb->cues[cur].sbCode = read_u32(&ptr, se);
+			sb->cues[cur].transitionOffset = read_u32(&ptr, se);
+			if (sb->cues[cur].transitionOffset == 0xFFFFFFFF)
+			{
+				/* FIXME: Why */
+				sb->cues[cur].transitionOffset = 0;
+			}
+			sb->cues[cur].instanceLimit = read_u8(&ptr);
+			sb->cues[cur].fadeInMS = read_u16(&ptr, se);
+			sb->cues[cur].fadeOutMS = read_u16(&ptr, se);
+			sb->cues[cur].maxInstanceBehavior = read_u8(&ptr) >> 3;
+			sb->cues[cur].instanceCount = 0;
+
+			if (!(sb->cues[cur].flags & 0x04))
+			{
+				/* FIXME: Is this the only way to get this...? */
+				sb->variationCount += 1;
+			}
+			if (sb->cues[cur].transitionOffset > 0)
+			{
+				/* FIXME: Is this the only way to get this...? */
+				sb->transitionCount += 1;
+			}
 		}
 	}
 
@@ -2864,6 +2875,7 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 	if (sb->variationCount > 0)
 	{
 		FAudio_assert((ptr - start) == variationOffset);
+		ptr = start + variationOffset;
 		sb->variations = (FACTVariationTable*) pEngine->pMalloc(
 			sizeof(FACTVariationTable) *
 			sb->variationCount
@@ -2949,6 +2961,7 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 	if (sb->transitionCount > 0)
 	{
 		FAudio_assert((ptr - start) == transitionOffset);
+		ptr = start + transitionOffset;
 		sb->transitions = (FACTTransitionTable*) pEngine->pMalloc(
 			sizeof(FACTTransitionTable) *
 			sb->transitionCount
@@ -2996,6 +3009,7 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 	if (cueNameIndexOffset != -1)
 	{
 		FAudio_assert((ptr - start) == cueNameIndexOffset);
+		ptr = start + cueNameIndexOffset;
 		ptr += 6 * sb->cueCount; /* FIXME: index as assert value? */
 	}
 
@@ -3003,6 +3017,7 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 	if (cueNameOffset != -1)
 	{
 		FAudio_assert((ptr - start) == cueNameOffset);
+		ptr = start + cueNameOffset;
 		sb->cueNames = (char**) pEngine->pMalloc(
 			sizeof(char*) *
 			sb->cueCount

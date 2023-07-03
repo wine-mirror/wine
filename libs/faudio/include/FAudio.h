@@ -239,6 +239,14 @@ typedef struct FAudioFilterParameters
 	float OneOverQ;		/* [0, FAUDIO_MAX_FILTER_ONEOVERQ] */
 } FAudioFilterParameters;
 
+typedef struct FAudioFilterParametersEXT
+{
+	FAudioFilterType Type;
+	float Frequency;	/* [0, FAUDIO_MAX_FILTER_FREQUENCY] */
+	float OneOverQ;		/* [0, FAUDIO_MAX_FILTER_ONEOVERQ] */
+	float WetDryMix;	/* [0, 1] */
+} FAudioFilterParametersEXT;
+
 typedef struct FAudioBuffer
 {
 	/* Either 0 or FAUDIO_END_OF_STREAM */
@@ -375,6 +383,7 @@ typedef struct FAudioXMA2WaveFormatEx
 #define FAUDIO_DEFAULT_FILTER_TYPE	FAudioLowPassFilter
 #define FAUDIO_DEFAULT_FILTER_FREQUENCY	FAUDIO_MAX_FILTER_FREQUENCY
 #define FAUDIO_DEFAULT_FILTER_ONEOVERQ	1.0f
+#define FAUDIO_DEFAULT_FILTER_WETDRYMIX_EXT	1.0f
 
 #define FAUDIO_LOG_ERRORS		0x0001
 #define FAUDIO_LOG_WARNINGS		0x0002
@@ -485,7 +494,7 @@ extern FAudioGUID DATAFORMAT_SUBTYPE_IEEE_FLOAT;
 
 #define FAUDIO_ABI_VERSION	 0
 #define FAUDIO_MAJOR_VERSION	23
-#define FAUDIO_MINOR_VERSION	 3
+#define FAUDIO_MINOR_VERSION	 7
 #define FAUDIO_PATCH_VERSION	 0
 
 #define FAUDIO_COMPILED_VERSION ( \
@@ -907,6 +916,58 @@ FAUDIOAPI void FAudioVoice_GetOutputFilterParameters(
 	FAudioVoice *voice,
 	FAudioVoice *pDestinationVoice,
 	FAudioFilterParameters *pParameters
+);
+
+/* Sets the filter variables for a voice.
+ * This is only valid on voices with the USEFILTER flag.
+ *
+ * pParameters:		See FAudioFilterParametersEXT for details.
+ * OperationSet:	See CommitChanges. Default is FAUDIO_COMMIT_NOW.
+ *
+ * Returns 0 on success.
+ */
+FAUDIOAPI uint32_t FAudioVoice_SetFilterParametersEXT(
+	FAudioVoice* voice,
+	const FAudioFilterParametersEXT* pParameters,
+	uint32_t OperationSet
+);
+
+/* Requests the filter variables for a voice.
+ * This is only valid on voices with the USEFILTER flag.
+ *
+ * pParameters: See FAudioFilterParametersEXT for details.
+ */
+FAUDIOAPI void FAudioVoice_GetFilterParametersEXT(
+	FAudioVoice* voice,
+	FAudioFilterParametersEXT* pParameters
+);
+
+/* Sets the filter variables for a voice's output voice.
+ * This is only valid on sends with the USEFILTER flag.
+ *
+ * pDestinationVoice:	An output voice from the voice's send list.
+ * pParameters:		See FAudioFilterParametersEXT for details.
+ * OperationSet:	See CommitChanges. Default is FAUDIO_COMMIT_NOW.
+ *
+ * Returns 0 on success.
+ */
+FAUDIOAPI uint32_t FAudioVoice_SetOutputFilterParametersEXT(
+	FAudioVoice* voice,
+	FAudioVoice* pDestinationVoice,
+	const FAudioFilterParametersEXT* pParameters,
+	uint32_t OperationSet
+);
+
+/* Requests the filter variables for a voice's output voice.
+ * This is only valid on sends with the USEFILTER flag.
+ *
+ * pDestinationVoice:	An output voice from the voice's send list.
+ * pParameters:		See FAudioFilterParametersEXT for details.
+ */
+FAUDIOAPI void FAudioVoice_GetOutputFilterParametersEXT(
+	FAudioVoice* voice,
+	FAudioVoice* pDestinationVoice,
+	FAudioFilterParametersEXT* pParameters
 );
 
 /* Sets the global volume of a voice.

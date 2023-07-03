@@ -732,6 +732,7 @@ uint32_t FACTAudioEngine_RegisterNotification(
 	/* WaveBanks */
 	#define PERSIST_ACTION pEngine->wb_context = pNotificationDescription->pvContext;
 	else HANDLE_PERSIST(WAVEBANKPREPARED)
+	else HANDLE_PERSIST(WAVEBANKSTREAMING_INVALIDCONTENT)
 	#undef PERSIST_ACTION
 
 	/* Anything else? */
@@ -855,6 +856,7 @@ uint32_t FACTAudioEngine_UnRegisterNotification(
 	/* WaveBanks */
 	#define PERSIST_ACTION pEngine->wb_context = pNotificationDescription->pvContext;
 	else HANDLE_PERSIST(WAVEBANKPREPARED)
+	else HANDLE_PERSIST(WAVEBANKSTREAMING_INVALIDCONTENT)
 	#undef PERSIST_ACTION
 
 	/* Anything else? */
