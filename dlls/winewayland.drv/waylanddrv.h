@@ -107,6 +107,7 @@ struct wayland_surface
     struct xdg_toplevel *xdg_toplevel;
     pthread_mutex_t mutex;
     uint32_t current_serial;
+    struct wayland_shm_buffer *latest_window_buffer;
 };
 
 struct wayland_shm_buffer

@@ -357,6 +357,16 @@ static void wayland_window_surface_copy_to_buffer(struct wayland_window_surface 
     copy_pixel_region(wws->bits, &wws_rect, buffer->map_data, &buffer_rect, region);
 }
 
+static void wayland_shm_buffer_copy(struct wayland_shm_buffer *src,
+                                    struct wayland_shm_buffer *dst,
+                                    HRGN region)
+{
+    RECT src_rect = {0, 0, src->width, src->height};
+    RECT dst_rect = {0, 0, dst->width, dst->height};
+    TRACE("src=%p dst=%p\n", src, dst);
+    copy_pixel_region(src->map_data, &src_rect, dst->map_data, &dst_rect, region);
+}
+
 /***********************************************************************
  *           wayland_window_surface_flush
  */
@@ -366,7 +376,8 @@ static void wayland_window_surface_flush(struct window_surface *window_surface)
     struct wayland_shm_buffer *shm_buffer = NULL;
     BOOL flushed = FALSE;
     RECT damage_rect;
-    HRGN surface_damage_region;
+    HRGN surface_damage_region = NULL;
+    HRGN copy_from_window_region;
 
     wayland_window_surface_lock(window_surface);
 
@@ -391,7 +402,6 @@ static void wayland_window_surface_flush(struct window_surface *window_surface)
     }
 
     wayland_buffer_queue_add_damage(wws->wayland_buffer_queue, surface_damage_region);
-    NtGdiDeleteObjectApp(surface_damage_region);
 
     shm_buffer = wayland_buffer_queue_get_free_buffer(wws->wayland_buffer_queue);
     if (!shm_buffer)
@@ -400,7 +410,38 @@ static void wayland_window_surface_flush(struct window_surface *window_surface)
         goto done;
     }
 
-    wayland_window_surface_copy_to_buffer(wws, shm_buffer, shm_buffer->damage_region);
+    if (wws->wayland_surface->latest_window_buffer)
+    {
+        TRACE("latest_window_buffer=%p\n", wws->wayland_surface->latest_window_buffer);
+        /* If we have a latest buffer, use it as the source of all pixel
+         * data that are not contained in the bounds of the flush... */
+        if (wws->wayland_surface->latest_window_buffer != shm_buffer)
+        {
+            HRGN copy_from_latest_region = NtGdiCreateRectRgn(0, 0, 0, 0);
+            if (!copy_from_latest_region)
+            {
+                ERR("failed to create copy_from_latest region\n");
+                goto done;
+            }
+            NtGdiCombineRgn(copy_from_latest_region, shm_buffer->damage_region,
+                            surface_damage_region, RGN_DIFF);
+            wayland_shm_buffer_copy(wws->wayland_surface->latest_window_buffer,
+                                    shm_buffer, copy_from_latest_region);
+            NtGdiDeleteObjectApp(copy_from_latest_region);
+        }
+        /* ... and use the window_surface as the source of pixel data contained
+         * in the flush bounds. */
+        copy_from_window_region = surface_damage_region;
+    }
+    else
+    {
+        TRACE("latest_window_buffer=NULL\n");
+        /* If we don't have a latest buffer, use the window_surface as
+         * the source of all pixel data. */
+        copy_from_window_region = shm_buffer->damage_region;
+    }
+
+    wayland_window_surface_copy_to_buffer(wws, shm_buffer, copy_from_window_region);
 
     pthread_mutex_lock(&wws->wayland_surface->mutex);
     if (wws->wayland_surface->current_serial)
@@ -417,9 +458,16 @@ static void wayland_window_surface_flush(struct window_surface *window_surface)
     wl_display_flush(process_wayland.wl_display);
 
     NtGdiSetRectRgn(shm_buffer->damage_region, 0, 0, 0, 0);
+    /* Update the latest window buffer for the wayland surface. Note that we
+     * only care whether the buffer contains the latest window contents,
+     * it's irrelevant if it was actually committed or not. */
+    if (wws->wayland_surface->latest_window_buffer)
+        wayland_shm_buffer_unref(wws->wayland_surface->latest_window_buffer);
+    wayland_shm_buffer_ref((wws->wayland_surface->latest_window_buffer = shm_buffer));
 
 done:
     if (flushed) reset_bounds(&wws->bounds);
+    if (surface_damage_region) NtGdiDeleteObjectApp(surface_damage_region);
     wayland_window_surface_unlock(window_surface);
 }
 
