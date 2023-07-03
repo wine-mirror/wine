@@ -282,9 +282,11 @@ struct uia_queue_event
     union {
         struct {
             HUIANODE node;
+            HUIANODE nav_start_node;
         } serverside;
         struct {
             LRESULT node;
+            LRESULT nav_start_node;
         } clientside;
      } u;
 };
@@ -316,18 +318,44 @@ static struct uia_queue_event *uia_event_queue_pop(struct list *event_queue)
     return queue_event;
 }
 
-static HRESULT uia_event_invoke(HUIANODE node, struct uia_event_args *args, struct uia_event *event);
+static void uia_node_lresult_release(LRESULT lr)
+{
+    IWineUiaNode *node;
+
+    if (lr && SUCCEEDED(ObjectFromLresult(lr, &IID_IWineUiaNode, 0, (void **)&node)))
+        IWineUiaNode_Release(node);
+}
+
+static HRESULT uia_event_invoke(HUIANODE node, HUIANODE nav_start_node, struct uia_event_args *args,
+        struct uia_event *event);
 static HRESULT uia_raise_clientside_event(struct uia_queue_event *event)
 {
-    HUIANODE node;
+    HUIANODE node, nav_start_node;
     HRESULT hr;
 
+    node = nav_start_node = NULL;
     hr = uia_node_from_lresult(event->u.clientside.node, &node);
-    if (SUCCEEDED(hr))
+    if (FAILED(hr))
     {
-        hr = uia_event_invoke(node, event->args, event->event);
-        UiaNodeRelease(node);
+        WARN("Failed to create node from lresult, hr %#lx\n", hr);
+        uia_node_lresult_release(event->u.clientside.nav_start_node);
+        return hr;
     }
+
+    if (event->u.clientside.nav_start_node)
+    {
+        hr = uia_node_from_lresult(event->u.clientside.nav_start_node, &nav_start_node);
+        if (FAILED(hr))
+        {
+            WARN("Failed to create nav_start_node from lresult, hr %#lx\n", hr);
+            UiaNodeRelease(node);
+            return hr;
+        }
+    }
+
+    hr = uia_event_invoke(node, nav_start_node, event->args, event->event);
+    UiaNodeRelease(node);
+    UiaNodeRelease(nav_start_node);
 
     return hr;
 }
@@ -335,33 +363,37 @@ static HRESULT uia_raise_clientside_event(struct uia_queue_event *event)
 static HRESULT uia_raise_serverside_event(struct uia_queue_event *event)
 {
     HRESULT hr = S_OK;
-    LRESULT lr;
+    LRESULT lr, lr2;
+    VARIANT v, v2;
 
     /*
      * uia_lresult_from_node is expected to release the node here upon
      * failure.
      */
-    if ((lr = uia_lresult_from_node(event->u.serverside.node)))
+    lr = lr2 = 0;
+    if (!(lr = uia_lresult_from_node(event->u.serverside.node)))
     {
-        VARIANT v;
-
-        V_VT(&v) = VT_I4;
-        V_I4(&v) = lr;
-        hr = IWineUiaEvent_raise_event(event->event->u.serverside.event_iface, v);
-        if (FAILED(hr))
-        {
-            IWineUiaNode *node;
-
-            /*
-             * If the method returned failure, make sure we don't leave a
-             * dangling IWineUiaNode.
-             */
-            if (SUCCEEDED(ObjectFromLresult(lr, &IID_IWineUiaNode, 0, (void **)&node)))
-                IWineUiaNode_Release(node);
-        }
+        UiaNodeRelease(event->u.serverside.nav_start_node);
+        return E_FAIL;
     }
-    else
-        hr = E_FAIL;
+
+    if (event->u.serverside.nav_start_node && !(lr2 = uia_lresult_from_node(event->u.serverside.nav_start_node)))
+    {
+        uia_node_lresult_release(lr);
+        return E_FAIL;
+    }
+
+    VariantInit(&v2);
+    variant_init_i4(&v, lr);
+    if (lr2)
+        variant_init_i4(&v2, lr2);
+
+    hr = IWineUiaEvent_raise_event(event->event->u.serverside.event_iface, v, v2);
+    if (FAILED(hr))
+    {
+        uia_node_lresult_release(lr);
+        uia_node_lresult_release(lr2);
+    }
 
     return hr;
 }
@@ -635,13 +667,13 @@ static HRESULT WINAPI uia_event_set_event_data(IWineUiaEvent *iface, const GUID 
     return S_OK;
 }
 
-static HRESULT WINAPI uia_event_raise_event(IWineUiaEvent *iface, VARIANT in_node)
+static HRESULT WINAPI uia_event_raise_event(IWineUiaEvent *iface, VARIANT in_node, VARIANT in_nav_start_node)
 {
     struct uia_event *event = impl_from_IWineUiaEvent(iface);
     struct uia_queue_event *queue_event;
     struct uia_event_args *args;
 
-    TRACE("%p, %s\n", iface, debugstr_variant(&in_node));
+    TRACE("%p, %s, %s\n", iface, debugstr_variant(&in_node), debugstr_variant(&in_nav_start_node));
 
     assert(event->event_type != EVENT_TYPE_SERVERSIDE);
 
@@ -658,6 +690,8 @@ static HRESULT WINAPI uia_event_raise_event(IWineUiaEvent *iface, VARIANT in_nod
     queue_event->args = args;
     queue_event->event = event;
     queue_event->u.clientside.node = V_I4(&in_node);
+    if (V_VT(&in_nav_start_node) == VT_I4)
+        queue_event->u.clientside.nav_start_node = V_I4(&in_nav_start_node);
 
     IWineUiaEvent_AddRef(&event->IWineUiaEvent_iface);
     uia_event_queue_push(queue_event);
@@ -1193,7 +1227,9 @@ HRESULT WINAPI UiaRemoveEvent(HUIAEVENT huiaevent)
     return S_OK;
 }
 
-static HRESULT uia_event_invoke(HUIANODE node, struct uia_event_args *args, struct uia_event *event)
+static HRESULT uia_event_check_match(HUIANODE node, HUIANODE nav_start_node, SAFEARRAY *rt_id,
+        struct uia_event_args *args, struct uia_event *event);
+static HRESULT uia_event_invoke(HUIANODE node, HUIANODE nav_start_node, struct uia_event_args *args, struct uia_event *event)
 {
     HRESULT hr = S_OK;
 
@@ -1201,6 +1237,9 @@ static HRESULT uia_event_invoke(HUIANODE node, struct uia_event_args *args, stru
     {
         SAFEARRAY *out_req;
         BSTR tree_struct;
+
+        if (nav_start_node)
+            return uia_event_check_match(node, nav_start_node, NULL, args, event);
 
         hr = UiaGetUpdatedCache(node, &event->u.clientside.cache_req, NormalizeState_View, NULL, &out_req,
                 &tree_struct);
@@ -1214,11 +1253,12 @@ static HRESULT uia_event_invoke(HUIANODE node, struct uia_event_args *args, stru
     else
     {
         struct uia_queue_event *queue_event;
-        HUIANODE node2;
+        HUIANODE node2, nav_start_node2;
 
         if (!(queue_event = heap_alloc_zero(sizeof(*queue_event))))
             return E_OUTOFMEMORY;
 
+        node2 = nav_start_node2 = NULL;
         hr = clone_uia_node(node, &node2);
         if (FAILED(hr))
         {
@@ -1226,10 +1266,22 @@ static HRESULT uia_event_invoke(HUIANODE node, struct uia_event_args *args, stru
             return hr;
         }
 
+        if (nav_start_node)
+        {
+            hr = clone_uia_node(nav_start_node, &nav_start_node2);
+            if (FAILED(hr))
+            {
+                heap_free(queue_event);
+                UiaNodeRelease(node2);
+                return hr;
+            }
+        }
+
         queue_event->queue_event_type = QUEUE_EVENT_TYPE_SERVERSIDE;
         queue_event->args = args;
         queue_event->event = event;
         queue_event->u.serverside.node = node2;
+        queue_event->u.serverside.nav_start_node = nav_start_node2;
 
         InterlockedIncrement(&args->ref);
         IWineUiaEvent_AddRef(&event->IWineUiaEvent_iface);
@@ -1239,14 +1291,21 @@ static HRESULT uia_event_invoke(HUIANODE node, struct uia_event_args *args, stru
     return hr;
 }
 
+static void set_refuse_hwnd_providers(struct uia_node *node, BOOL refuse_hwnd_providers)
+{
+    struct uia_provider *prov_data = impl_from_IWineUiaProvider(node->prov[get_node_provider_type_at_idx(node, 0)]);
+
+    prov_data->refuse_hwnd_node_providers = refuse_hwnd_providers;
+}
+
 /*
  * Check if the provider that raised the event matches this particular event.
  */
-static HRESULT uia_event_check_match(HUIANODE node, SAFEARRAY *rt_id, struct uia_event_args *args,
-        struct uia_event *event)
+static HRESULT uia_event_check_match(HUIANODE node, HUIANODE nav_start_node, SAFEARRAY *rt_id,
+        struct uia_event_args *args, struct uia_event *event)
 {
     struct UiaPropertyCondition prop_cond = { ConditionType_Property, UIA_RuntimeIdPropertyId };
-    struct uia_node *node_data = impl_from_IWineUiaNode((IWineUiaNode *)node);
+    struct uia_node *node_data = impl_from_IWineUiaNode((IWineUiaNode *)nav_start_node);
     HRESULT hr = S_OK;
 
     /* Event is no longer valid. */
@@ -1258,23 +1317,17 @@ static HRESULT uia_event_check_match(HUIANODE node, SAFEARRAY *rt_id, struct uia
         return S_OK;
 
     if (event->desktop_subtree_event)
-        return uia_event_invoke(node, args, event);
+        return uia_event_invoke(node, NULL, args, event);
 
     if (rt_id && !uia_compare_safearrays(rt_id, event->runtime_id, UIAutomationType_IntArray))
     {
         if (event->scope & TreeScope_Element)
-            hr = uia_event_invoke(node, args, event);
+            hr = uia_event_invoke(node, NULL, args, event);
         return hr;
     }
 
     if (!(event->scope & (TreeScope_Descendants | TreeScope_Children)))
         return S_OK;
-
-    if (event->event_type == EVENT_TYPE_SERVERSIDE)
-    {
-        FIXME("Matching serverside events through navigation currently unimplemented\n");
-        return S_OK;
-    }
 
     V_VT(&prop_cond.Value) = VT_I4 | VT_ARRAY;
     V_ARRAY(&prop_cond.Value) = event->runtime_id;
@@ -1283,6 +1336,22 @@ static HRESULT uia_event_check_match(HUIANODE node, SAFEARRAY *rt_id, struct uia
     while (1)
     {
         HUIANODE node2 = NULL;
+
+        /*
+         * When trying to match serverside events through navigation, we
+         * don't want any clientside providers added in the server process.
+         * Once we encounter a provider with an HWND, we pass it off to the
+         * client for any further navigation.
+         */
+        if (event->event_type == EVENT_TYPE_SERVERSIDE)
+        {
+            if (node_data->hwnd)
+            {
+                hr = uia_event_invoke(node, (HUIANODE)&node_data->IWineUiaNode_iface, args, event);
+                break;
+            }
+            set_refuse_hwnd_providers(node_data, TRUE);
+        }
 
         hr = navigate_uia_node(node_data, NavigateDirection_Parent, &node2);
         IWineUiaNode_Release(&node_data->IWineUiaNode_iface);
@@ -1296,7 +1365,7 @@ static HRESULT uia_event_check_match(HUIANODE node, SAFEARRAY *rt_id, struct uia
 
         if (uia_condition_matched(hr))
         {
-            hr = uia_event_invoke(node, args, event);
+            hr = uia_event_invoke(node, NULL, args, event);
             break;
         }
 
@@ -1355,7 +1424,7 @@ static HRESULT uia_raise_event(IRawElementProviderSimple *elprov, struct uia_eve
     {
         struct uia_event *event = LIST_ENTRY(cursor, struct uia_event, event_list_entry);
 
-        hr = uia_event_check_match(node, sa, args, event);
+        hr = uia_event_check_match(node, node, sa, args, event);
         if (FAILED(hr))
             break;
     }
@@ -1366,7 +1435,7 @@ static HRESULT uia_raise_event(IRawElementProviderSimple *elprov, struct uia_eve
         {
             struct uia_event *event = LIST_ENTRY(cursor, struct uia_event, event_list_entry);
 
-            hr = uia_event_check_match(node, sa, args, event);
+            hr = uia_event_check_match(node, node, sa, args, event);
             if (FAILED(hr))
                 break;
         }

@@ -14063,11 +14063,11 @@ static void test_UiaAddEvent_client_proc(void)
     SET_EXPECT(uia_event_callback);
 
     post_event_message(hwnd, WM_UIA_TEST_RAISE_EVENT, 0, PROVIDER_CHILD_ID, ProviderOptions_ServerSideProvider);
-    todo_wine ok(!WaitForSingleObject(EventData.event_handle, 2000), "Wait for event_handle failed.\n");
-    todo_wine CHECK_CALLED(prov_callback_base_hwnd);
-    todo_wine CHECK_CALLED_MULTI(prov_callback_nonclient, 2);
+    ok(!WaitForSingleObject(EventData.event_handle, 2000), "Wait for event_handle failed.\n");
+    CHECK_CALLED(prov_callback_base_hwnd);
+    CHECK_CALLED_MULTI(prov_callback_nonclient, 2);
     todo_wine CHECK_CALLED_MULTI(prov_callback_proxy, 2);
-    todo_wine CHECK_CALLED(uia_event_callback);
+    CHECK_CALLED(uia_event_callback);
 
     hr = UiaRemoveEvent(event);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -14696,7 +14696,7 @@ static void test_UiaAddEvent(const char *name)
         }
     }
 
-    todo_wine CHECK_CALLED_AT_LEAST(winproc_GETOBJECT_UiaRoot, 5);
+    CHECK_CALLED_AT_LEAST(winproc_GETOBJECT_UiaRoot, 5);
     GetExitCodeProcess(proc.hProcess, &exit_code);
     if (exit_code > 255)
         ok(0, "unhandled exception %08x in child process %04x\n", (UINT)exit_code, (UINT)GetProcessId(proc.hProcess));
