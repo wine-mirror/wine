@@ -1,0 +1,66 @@
+/*
+ * Copyright (C) 2023 Mohamad Al-Jaf
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+/* import "windows.networking.idl"; */
+import "windows.storage.streams.idl";
+
+namespace Windows.Networking.Connectivity {
+    interface IIPInformation;
+    interface INetworkAdapter;
+
+    runtimeclass IPInformation;
+    runtimeclass NetworkAdapter;
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.Connectivity.IPInformation),
+        uuid(d85145e0-138f-47d7-9b3a-36bb488cef33)
+    ]
+    interface IIPInformation : IInspectable
+    {
+        [propget] HRESULT NetworkAdapter([out, retval] Windows.Networking.Connectivity.NetworkAdapter **value);
+        [propget] HRESULT PrefixLength([out, retval] Windows.Foundation.IReference<BYTE> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass IPInformation
+    {
+        [default] interface Windows.Networking.Connectivity.IIPInformation;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+    ]
+    runtimeclass NetworkAdapter
+    {
+        [default] interface Windows.Networking.Connectivity.INetworkAdapter;
+    }
+}
