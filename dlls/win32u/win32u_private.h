@@ -271,6 +271,8 @@ extern HKEY hkcu_key DECLSPEC_HIDDEN;
 
 extern const struct user_driver_funcs *user_driver DECLSPEC_HIDDEN;
 
+extern ULONG_PTR zero_bits DECLSPEC_HIDDEN;
+
 static inline BOOL set_ntstatus( NTSTATUS status )
 {
     if (status) RtlSetLastWin32Error( RtlNtStatusToDosError( status ));
@@ -328,15 +330,6 @@ static inline UINT asciiz_to_unicode( WCHAR *dst, const char *src )
 static inline BOOL is_win9x(void)
 {
     return NtCurrentTeb()->Peb->OSPlatformId == VER_PLATFORM_WIN32s;
-}
-
-static inline ULONG_PTR zero_bits(void)
-{
-#ifdef _WIN64
-    return !NtCurrentTeb()->WowTebOffset ? 0 : 0x7fffffff;
-#else
-    return 0;
-#endif
 }
 
 static inline const char *debugstr_us( const UNICODE_STRING *us )

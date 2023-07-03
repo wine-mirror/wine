@@ -33,6 +33,7 @@
 #include "ntuser.h"
 #include "wine/unixlib.h"
 
+ULONG_PTR zero_bits = 0;
 
 static void * const syscalls[] =
 {
@@ -450,6 +451,16 @@ static SYSTEM_SERVICE_TABLE syscall_table =
 
 static NTSTATUS init( void *dispatcher )
 {
+#ifdef _WIN64
+    if (NtCurrentTeb()->WowTebOffset)
+    {
+        SYSTEM_BASIC_INFORMATION info;
+
+        NtQuerySystemInformation(SystemEmulationBasicInformation, &info, sizeof(info), NULL);
+        zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
+    }
+#endif
+
     return ntdll_init_syscalls( 1, &syscall_table, dispatcher );
 }
 
