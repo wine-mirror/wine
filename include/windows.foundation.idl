@@ -86,6 +86,7 @@ namespace Windows.Foundation {
         interface Windows.Foundation.AsyncOperationCompletedHandler<boolean>;
         interface Windows.Foundation.IAsyncOperation<IInspectable *>;
         interface Windows.Foundation.IAsyncOperation<boolean>;
+        interface Windows.Foundation.IReference<BYTE>;
         interface Windows.Foundation.IReference<INT32>;
         interface Windows.Foundation.IReference<DOUBLE>;
         interface Windows.Foundation.TypedEventHandler<IInspectable *, IInspectable *>;
