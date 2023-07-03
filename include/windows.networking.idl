@@ -1,0 +1,173 @@
+/*
+ * Copyright (C) 2023 Mohamad Al-Jaf
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.networking.connectivity.idl";
+
+namespace Windows.Networking {
+    typedef enum DomainNameType DomainNameType;
+    typedef enum HostNameSortOptions HostNameSortOptions;
+    typedef enum HostNameType HostNameType;
+
+    interface IEndpointPair;
+    interface IEndpointPairFactory;
+    interface IHostName;
+    interface IHostNameFactory;
+    interface IHostNameStatics;
+
+    runtimeclass EndpointPair;
+    runtimeclass HostName;
+
+    declare {
+        interface Windows.Foundation.Collections.IIterable<Windows.Networking.EndpointPair *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Networking.HostName *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Networking.EndpointPair *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Networking.HostName *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Networking.EndpointPair *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Networking.HostName *>;
+        interface Windows.Foundation.Collections.IVector<Windows.Networking.HostName *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IVectorView<Windows.Networking.EndpointPair *> *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.Networking.EndpointPair *> *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum DomainNameType
+    {
+        Suffix         = 0,
+        FullyQualified = 1,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        flags
+    ]
+    enum HostNameSortOptions
+    {
+        None                       = 0x0,
+        OptimizeForLongConnections = 0x2,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum HostNameType
+    {
+        DomainName = 0,
+        Ipv4       = 1,
+        Ipv6       = 2,
+        Bluetooth  = 3,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.EndpointPair),
+        uuid(33a0aa36-f8fa-4b30-b856-76517c3bd06d)
+    ]
+    interface IEndpointPair : IInspectable
+    {
+        [propget] HRESULT LocalHostName([out, retval] Windows.Networking.HostName **value);
+        [propput] HRESULT LocalHostName([in] Windows.Networking.HostName *value);
+        [propget] HRESULT LocalServiceName([out, retval] HSTRING *value);
+        [propput] HRESULT LocalServiceName([in] HSTRING value);
+        [propget] HRESULT RemoteHostName([out, retval] Windows.Networking.HostName **value);
+        [propput] HRESULT RemoteHostName([in] Windows.Networking.HostName *value);
+        [propget] HRESULT RemoteServiceName([out, retval] HSTRING *value);
+        [propput] HRESULT RemoteServiceName([in] HSTRING value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.EndpointPair),
+        uuid(b609d971-64e0-442b-aa6f-cc8c8f181f78)
+    ]
+    interface IEndpointPairFactory : IInspectable
+    {
+        HRESULT CreateEndpointPair([in] Windows.Networking.HostName *host, [in] HSTRING service,
+                                   [in] Windows.Networking.HostName *remote_host, [in] HSTRING remote_service,
+                                   [out, retval] Windows.Networking.EndpointPair **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.HostName),
+        uuid(bf8ecaad-ed96-49a7-9084-d416cae88dcb)
+    ]
+    interface IHostName : IInspectable
+    {
+        [propget] HRESULT IPInformation([out, retval] Windows.Networking.Connectivity.IPInformation **value);
+        [propget] HRESULT RawName([out, retval] HSTRING *value);
+        [propget] HRESULT DisplayName([out, retval] HSTRING *value);
+        [propget] HRESULT CanonicalName([out, retval] HSTRING *value);
+        [propget] HRESULT Type([out, retval] Windows.Networking.HostNameType *value);
+        HRESULT IsEqual([in] Windows.Networking.HostName *name, [out, retval] boolean *equal);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.HostName),
+        uuid(458c23ed-712f-4576-adf1-c20b2c643558)
+    ]
+    interface IHostNameFactory : IInspectable
+    {
+        HRESULT CreateHostName([in] HSTRING name, [out, retval] Windows.Networking.HostName **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.HostName),
+        uuid(f68cd4bf-a388-4e8b-91ea-54dd6dd901c0)
+    ]
+    interface IHostNameStatics : IInspectable
+    {
+        HRESULT Compare([in] HSTRING value1, [in] HSTRING value2, [out, retval] INT32 *result);
+    }
+
+    [
+        activatable(Windows.Networking.IEndpointPairFactory, Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass EndpointPair
+    {
+        [default] interface Windows.Networking.IEndpointPair;
+    }
+
+    [
+        activatable(Windows.Networking.IHostNameFactory, Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Networking.IHostNameStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass HostName
+    {
+        [default] interface Windows.Networking.IHostName;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Foundation.IStringable;
+    }
+}
