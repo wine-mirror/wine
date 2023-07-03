@@ -51,8 +51,7 @@ void TIFFCleanup(TIFF *tif)
     (*tif->tif_cleanup)(tif);
     TIFFFreeDirectory(tif);
 
-    TIFFHashSetDestroy(tif->tif_map_dir_offset_to_number);
-    TIFFHashSetDestroy(tif->tif_map_dir_number_to_offset);
+    _TIFFCleanupIFDOffsetAndNumberMaps(tif);
 
     /*
      * Clean up client info links.
@@ -115,6 +114,24 @@ void TIFFCleanup(TIFF *tif)
 }
 
 /************************************************************************/
+/*                    _TIFFCleanupIFDOffsetAndNumberMaps()              */
+/************************************************************************/
+
+void _TIFFCleanupIFDOffsetAndNumberMaps(TIFF *tif)
+{
+    if (tif->tif_map_dir_offset_to_number)
+    {
+        TIFFHashSetDestroy(tif->tif_map_dir_offset_to_number);
+        tif->tif_map_dir_offset_to_number = NULL;
+    }
+    if (tif->tif_map_dir_number_to_offset)
+    {
+        TIFFHashSetDestroy(tif->tif_map_dir_number_to_offset);
+        tif->tif_map_dir_number_to_offset = NULL;
+    }
+}
+
+/************************************************************************/
 /*                            TIFFClose()                               */
 /************************************************************************/
 
@@ -130,9 +147,12 @@ void TIFFCleanup(TIFF *tif)
 
 void TIFFClose(TIFF *tif)
 {
-    TIFFCloseProc closeproc = tif->tif_closeproc;
-    thandle_t fd = tif->tif_clientdata;
+    if (tif != NULL)
+    {
+        TIFFCloseProc closeproc = tif->tif_closeproc;
+        thandle_t fd = tif->tif_clientdata;
 
-    TIFFCleanup(tif);
-    (void)(*closeproc)(fd);
+        TIFFCleanup(tif);
+        (void)(*closeproc)(fd);
+    }
 }
