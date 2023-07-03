@@ -1645,6 +1645,7 @@ enable_notepad
 enable_oleview
 enable_ping
 enable_plugplay
+enable_pnputil
 enable_powershell
 enable_presentationfontcache
 enable_progman
@@ -22203,6 +22204,7 @@ wine_fn_config_makefile programs/notepad enable_notepad
 wine_fn_config_makefile programs/oleview enable_oleview
 wine_fn_config_makefile programs/ping enable_ping
 wine_fn_config_makefile programs/plugplay enable_plugplay
+wine_fn_config_makefile programs/pnputil enable_pnputil
 wine_fn_config_makefile programs/powershell enable_powershell
 wine_fn_config_makefile programs/presentationfontcache enable_presentationfontcache
 wine_fn_config_makefile programs/progman enable_progman
