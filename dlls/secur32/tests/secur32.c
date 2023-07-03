@@ -453,7 +453,7 @@ static void test_kerberos(void)
     ok( (info->fCapabilities & ~optional_mask) == expected_flags, "got %08lx, expected %08lx\n", info->fCapabilities, expected_flags );
     ok( info->wVersion == 1, "got %u\n", info->wVersion );
     ok( info->wRPCID == RPC_C_AUTHN_GSS_KERBEROS, "got %u\n", info->wRPCID );
-    ok( info->cbMaxToken >= 12000, "got %lu\n", info->cbMaxToken );
+    ok( info->cbMaxToken == 48000 || broken(info->cbMaxToken == 12000) /* Win7 */, "got %lu\n", info->cbMaxToken );
     ok( !lstrcmpA( info->Name, "Kerberos" ), "got %s\n", info->Name );
     ok( !lstrcmpA( info->Comment, "Microsoft Kerberos V1.0" ), "got %s\n", info->Comment );
     FreeContextBuffer( info );

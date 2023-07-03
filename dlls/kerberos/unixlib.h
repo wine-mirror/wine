@@ -21,7 +21,7 @@
 
 #include "wine/unixlib.h"
 
-#define KERBEROS_MAX_BUF 12000
+#define KERBEROS_MAX_BUF 48000
 
 struct accept_context_params
 {

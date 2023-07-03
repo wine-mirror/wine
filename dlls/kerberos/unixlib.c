@@ -803,8 +803,8 @@ static NTSTATUS make_signature( void *args )
     return status_gss_to_sspi( ret );
 }
 
-#define KERBEROS_MAX_SIGNATURE        37
-#define KERBEROS_SECURITY_TRAILER     49
+#define KERBEROS_MAX_SIGNATURE        64
+#define KERBEROS_SECURITY_TRAILER     64
 #define KERBEROS_MAX_SIGNATURE_DCE    28
 #define KERBEROS_SECURITY_TRAILER_DCE 76
 
@@ -869,7 +869,7 @@ static NTSTATUS query_context_attributes( void *args )
         }
         sizes->cbMaxToken        = KERBEROS_MAX_BUF;
         sizes->cbMaxSignature    = size_max_signature;
-        sizes->cbBlockSize       = 1;
+        sizes->cbBlockSize       = 8;
         sizes->cbSecurityTrailer = size_security_trailer;
         return SEC_E_OK;
     }
