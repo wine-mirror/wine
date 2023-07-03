@@ -4967,6 +4967,40 @@ static unsigned int get_memory_section_name( HANDLE process, LPCVOID addr,
     return status;
 }
 
+static unsigned int get_memory_image_info( HANDLE process, LPCVOID addr, MEMORY_IMAGE_INFORMATION *info,
+                                           SIZE_T len, SIZE_T *res_len )
+{
+    unsigned int status;
+
+    if (len < sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
+    memset( info, 0, sizeof(*info) );
+
+    SERVER_START_REQ( get_image_view_info )
+    {
+        req->process = wine_server_obj_handle( process );
+        req->addr = wine_server_client_ptr( addr );
+        status = wine_server_call( req );
+        if (!status && reply->base)
+        {
+            info->ImageBase = wine_server_get_ptr( reply->base );
+            info->SizeOfImage = reply->size;
+            info->ImageSigningLevel = 12;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (status == STATUS_NOT_MAPPED_VIEW)
+    {
+        MEMORY_BASIC_INFORMATION basic_info;
+
+        status = get_basic_memory_info( process, addr, &basic_info, sizeof(basic_info), NULL );
+        if (status || basic_info.State == MEM_FREE) status = STATUS_INVALID_ADDRESS;
+    }
+
+    if (!status && res_len) *res_len = sizeof(*info);
+    return status;
+}
+
 
 /***********************************************************************
  *             NtQueryVirtualMemory   (NTDLL.@)
@@ -4994,6 +5028,9 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
 
         case MemoryRegionInformation:
             return get_memory_region_info( process, addr, buffer, len, res_len );
+
+        case MemoryImageInformation:
+            return get_memory_image_info( process, addr, buffer, len, res_len );
 
         case MemoryWineUnixFuncs:
         case MemoryWineUnixWow64Funcs:

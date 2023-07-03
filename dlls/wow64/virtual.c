@@ -493,7 +493,7 @@ NTSTATUS WINAPI wow64_NtQueryVirtualMemory( UINT *args )
     {
         if (len < sizeof(MEMORY_REGION_INFORMATION32))
             status = STATUS_INFO_LENGTH_MISMATCH;
-        if ((ULONG_PTR)addr > highest_user_address)
+        else if ((ULONG_PTR)addr > highest_user_address)
             status = STATUS_INVALID_PARAMETER;
         else
         {
@@ -531,6 +531,27 @@ NTSTATUS WINAPI wow64_NtQueryVirtualMemory( UINT *args )
             for (i = 0; i < count; i++) info32[i].VirtualAttributes.Flags = info[i].VirtualAttributes.Flags;
             res_len = count * sizeof(*info32);
         }
+        break;
+    }
+
+    case MemoryImageInformation: /* MEMORY_IMAEG_INFORMATION */
+    {
+        if (len < sizeof(MEMORY_IMAGE_INFORMATION32)) return STATUS_INFO_LENGTH_MISMATCH;
+
+        if ((ULONG_PTR)addr > highest_user_address) status = STATUS_INVALID_PARAMETER;
+        else
+        {
+            MEMORY_IMAGE_INFORMATION info;
+            MEMORY_IMAGE_INFORMATION32 *info32 = ptr;
+
+            if (!(status = NtQueryVirtualMemory( handle, addr, class, &info, sizeof(info), &res_len )))
+            {
+                info32->ImageBase   = PtrToUlong( info.ImageBase );
+                info32->SizeOfImage = info.SizeOfImage;
+                info32->ImageFlags  = info.ImageFlags;
+            }
+        }
+        res_len = sizeof(MEMORY_IMAGE_INFORMATION32);
         break;
     }
 

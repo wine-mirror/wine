@@ -2210,6 +2210,18 @@ static void dump_map_builtin_view_request( const struct map_builtin_view_request
     dump_varargs_unicode_str( ", name=", cur_size );
 }
 
+static void dump_get_image_view_info_request( const struct get_image_view_info_request *req )
+{
+    fprintf( stderr, " process=%04x", req->process );
+    dump_uint64( ", addr=", &req->addr );
+}
+
+static void dump_get_image_view_info_reply( const struct get_image_view_info_reply *req )
+{
+    dump_uint64( " base=", &req->base );
+    dump_uint64( ", size=", &req->size );
+}
+
 static void dump_unmap_view_request( const struct unmap_view_request *req )
 {
     dump_uint64( " base=", &req->base );
@@ -4622,6 +4634,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_map_view_request,
     (dump_func)dump_map_image_view_request,
     (dump_func)dump_map_builtin_view_request,
+    (dump_func)dump_get_image_view_info_request,
     (dump_func)dump_unmap_view_request,
     (dump_func)dump_get_mapping_committed_range_request,
     (dump_func)dump_add_mapping_committed_range_request,
@@ -4905,6 +4918,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     NULL,
     NULL,
+    (dump_func)dump_get_image_view_info_reply,
     NULL,
     (dump_func)dump_get_mapping_committed_range_reply,
     NULL,
@@ -5188,6 +5202,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "map_view",
     "map_image_view",
     "map_builtin_view",
+    "get_image_view_info",
     "unmap_view",
     "get_mapping_committed_range",
     "add_mapping_committed_range",

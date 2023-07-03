@@ -1325,6 +1325,23 @@ DECL_HANDLER(unmap_view)
     free_memory_view( view );
 }
 
+/* get information about a mapped image view */
+DECL_HANDLER(get_image_view_info)
+{
+    struct process *process;
+    struct memory_view *view;
+
+    if (!(process = get_process_from_handle( req->process, PROCESS_QUERY_INFORMATION ))) return;
+
+    if ((view = find_mapped_addr( process, req->addr )) && (view->flags & SEC_IMAGE))
+    {
+        reply->base = view->base;
+        reply->size = view->size;
+    }
+
+    release_object( process );
+}
+
 /* get a range of committed pages in a file mapping */
 DECL_HANDLER(get_mapping_committed_range)
 {

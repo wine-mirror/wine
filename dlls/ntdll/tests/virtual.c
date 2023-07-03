@@ -2483,7 +2483,6 @@ static void test_query_image_information(void)
                                    &info, sizeof(info), &len );
     if (status == STATUS_INVALID_INFO_CLASS)
     {
-        todo_wine
         win_skip( "MemoryImageInformation not supported\n" );
         NtUnmapViewOfSection( NtCurrentProcess(), ptr );
         return;
@@ -2578,6 +2577,7 @@ static void test_query_image_information(void)
     offset.QuadPart = 0;
     status = NtMapViewOfSection( mapping, NtCurrentProcess(), &ptr, 0, 0, &offset, &size, 1, 0, PAGE_READONLY );
     ok( status == STATUS_IMAGE_NOT_AT_BASE, "Unexpected status %08lx\n", status );
+    todo_wine
     ok( size == 0x4000, "wrong size %Ix\n", size );
     NtClose( mapping );
 
@@ -2589,6 +2589,7 @@ static void test_query_image_information(void)
     ok( info.ImageBase == ptr, "wrong image base %p/%p\n", info.ImageBase, ptr );
     ok( info.SizeOfImage == nt->OptionalHeader.SizeOfImage, "wrong size %Ix/%x\n",
         info.SizeOfImage, (UINT)nt->OptionalHeader.SizeOfImage );
+    todo_wine
     ok( info.ImagePartialMap, "wrong partial map\n" );
     ok( !info.ImageNotExecutable, "wrong not executable\n" );
     ok( info.ImageSigningLevel == 0 || info.ImageSigningLevel == 12,
@@ -2606,6 +2607,7 @@ static void test_query_image_information(void)
     offset.QuadPart = 0;
     status = NtMapViewOfSection( mapping, NtCurrentProcess(), &ptr, 0, 0, &offset, &size, 1, 0, PAGE_READONLY );
     ok( status == STATUS_IMAGE_NOT_AT_BASE, "Unexpected status %08lx\n", status );
+    todo_wine
     ok( size == 0x5000, "wrong size %Ix\n", size );
     NtClose( mapping );
 
@@ -2617,6 +2619,7 @@ static void test_query_image_information(void)
     ok( info.ImageBase == ptr, "wrong image base %p/%p\n", info.ImageBase, ptr );
     ok( info.SizeOfImage == nt->OptionalHeader.SizeOfImage, "wrong size %Ix/%x\n",
         info.SizeOfImage, (UINT)nt->OptionalHeader.SizeOfImage );
+    todo_wine
     ok( info.ImagePartialMap, "wrong partial map\n" );
     ok( !info.ImageNotExecutable, "wrong not executable\n" );
     ok( info.ImageSigningLevel == 0 || info.ImageSigningLevel == 12,

@@ -1628,6 +1628,16 @@ enum server_fd_type
 @END
 
 
+/* Get information about a mapped image view */
+@REQ(get_image_view_info)
+    obj_handle_t process;       /* process handle */
+    client_ptr_t addr;          /* address inside mapped view (in process address space) */
+@REPLY
+    client_ptr_t base;          /* view base address */
+    mem_size_t   size;          /* view size */
+@END
+
+
 /* Unmap a memory view from the current process */
 @REQ(unmap_view)
     client_ptr_t base;          /* view base address */
