@@ -79,14 +79,19 @@ static void test_HostnameStatics(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
     hr = IHostNameFactory_CreateHostName( hostnamefactory, NULL, &hostname );
-    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
     hr = IHostNameFactory_CreateHostName( hostnamefactory, str, NULL );
-    todo_wine ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
     hr = IHostNameFactory_CreateHostName( hostnamefactory, NULL, NULL );
-    todo_wine ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
     hr = IHostNameFactory_CreateHostName( hostnamefactory, str, &hostname );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( hostname != NULL, "got NULL hostname %p.\n", hostname );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( hostname != NULL, "got NULL hostname %p.\n", hostname );
+
+    check_interface( hostname, &IID_IUnknown );
+    check_interface( hostname, &IID_IInspectable );
+    check_interface( hostname, &IID_IAgileObject );
+    check_interface( hostname, &IID_IHostName );
 
     hr = IHostName_get_RawName( hostname, NULL );
     todo_wine ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
@@ -98,6 +103,8 @@ static void test_HostnameStatics(void)
 
     WindowsDeleteString( str );
     WindowsDeleteString( rawname );
+    ref = IHostName_Release( hostname );
+    ok( !ref, "got ref %ld.\n", ref );
     ref = IHostNameFactory_Release( hostnamefactory );
     ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );

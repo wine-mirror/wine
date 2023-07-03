@@ -33,6 +33,7 @@
 #define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
 #define WIDL_using_Windows_Networking
+#define WIDL_using_Windows_Networking_Connectivity
 #include "windows.networking.h"
 
 extern IActivationFactory *hostname_factory;
@@ -74,6 +75,5 @@ extern IActivationFactory *hostname_factory;
     }
 #define DEFINE_IINSPECTABLE( pfx, iface_type, impl_type, base_iface )                              \
     DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from_##iface_type, iface_type##_iface, &impl->base_iface )
-
 
 #endif
