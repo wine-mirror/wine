@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(usb);
 struct usb_device_statics
 {
     IActivationFactory IActivationFactory_iface;
+    IUsbDeviceStatics IUsbDeviceStatics_iface;
     LONG ref;
 };
 
@@ -45,6 +46,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
         *out = &impl->IActivationFactory_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IUsbDeviceStatics ))
+    {
+        *out = &impl->IUsbDeviceStatics_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -107,9 +115,61 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( usb_device_statics, IUsbDeviceStatics, struct usb_device_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI usb_device_statics_GetDeviceSelector( IUsbDeviceStatics *iface, UINT32 vendor,
+                                                            UINT32 product, GUID class, HSTRING *value )
+{
+    FIXME( "iface %p, vendor %d, product %d, class %s, value %p stub!\n", iface, vendor, product, debugstr_guid(&class), value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI usb_device_statics_GetDeviceSelectorGuidOnly( IUsbDeviceStatics *iface, GUID class, HSTRING *value )
+{
+    FIXME( "iface %p, class %s, value %p stub!\n", iface, debugstr_guid(&class), value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI usb_device_statics_GetDeviceSelectorVidPidOnly( IUsbDeviceStatics *iface, UINT32 vendor,
+                                                                      UINT32 product, HSTRING *value )
+{
+    FIXME( "iface %p, vendor %d, product %d, value %p stub!\n", iface, vendor, product, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI usb_device_statics_GetDeviceClassSelector( IUsbDeviceStatics *iface, IUsbDeviceClass *class, HSTRING *value )
+{
+    FIXME( "iface %p, class %p, value %p stub!\n", iface, class, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI usb_device_statics_FromIdAsync( IUsbDeviceStatics *iface, HSTRING id, IAsyncOperation_UsbDevice **operation )
+{
+    FIXME( "iface %p, id %s, operation %p stub!\n", iface, debugstr_hstring(id), operation );
+    return E_NOTIMPL;
+}
+
+static const struct IUsbDeviceStaticsVtbl usb_device_statics_vtbl =
+{
+    usb_device_statics_QueryInterface,
+    usb_device_statics_AddRef,
+    usb_device_statics_Release,
+    /* IInspectable methods */
+    usb_device_statics_GetIids,
+    usb_device_statics_GetRuntimeClassName,
+    usb_device_statics_GetTrustLevel,
+    /* IUsbDeviceStatics methods */
+    usb_device_statics_GetDeviceSelector,
+    usb_device_statics_GetDeviceSelectorGuidOnly,
+    usb_device_statics_GetDeviceSelectorVidPidOnly,
+    usb_device_statics_GetDeviceClassSelector,
+    usb_device_statics_FromIdAsync,
+};
+
 static struct usb_device_statics usb_device_statics =
 {
     {&factory_vtbl},
+    {&usb_device_statics_vtbl},
     1,
 };
 
