@@ -35,6 +35,11 @@ namespace Windows.Storage.Streams {
     interface IRandomAccessStreamWithContentType;
     runtimeclass Buffer;
 
+    declare {
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IBuffer *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IBuffer *>;
+    }
+
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         uuid(905a0fe0-bc53-11df-8c49-001e4fc686da)
