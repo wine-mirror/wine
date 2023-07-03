@@ -49,6 +49,15 @@ PEB * WINAPI RtlGetCurrentPeb(void)
 }
 
 
+/******************************************************************************
+ *              RtlIsCurrentProcess  (NTDLL.@)
+ */
+BOOLEAN WINAPI RtlIsCurrentProcess( HANDLE handle )
+{
+    return handle == NtCurrentProcess() || !NtCompareObjects( handle, NtCurrentProcess() );
+}
+
+
 /******************************************************************
  *		RtlWow64EnableFsRedirection   (NTDLL.@)
  */
