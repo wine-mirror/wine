@@ -191,8 +191,12 @@ static HRESULT WINAPI hostname_get_IPInformation( IHostName *iface, IIPInformati
 
 static HRESULT WINAPI hostname_get_RawName( IHostName *iface, HSTRING *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct hostname *impl = impl_from_IHostName( iface );
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (!value) return E_INVALIDARG;
+    return WindowsDuplicateString( impl->rawname, value );
 }
 
 static HRESULT WINAPI hostname_get_DisplayName( IHostName *iface, HSTRING *value )

@@ -94,12 +94,12 @@ static void test_HostnameStatics(void)
     check_interface( hostname, &IID_IHostName );
 
     hr = IHostName_get_RawName( hostname, NULL );
-    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
     hr = IHostName_get_RawName( hostname, &rawname );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = WindowsCompareStringOrdinal( str, rawname, &res );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( !res, "got unexpected string %s.\n", debugstr_hstring(rawname) );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( !res, "got unexpected string %s.\n", debugstr_hstring(rawname) );
 
     WindowsDeleteString( str );
     WindowsDeleteString( rawname );
