@@ -19,8 +19,6 @@
 #include <stdarg.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
@@ -639,7 +637,7 @@ HRESULT WINAPI GetRecordInfoFromTypeInfo(ITypeInfo* pTI, IRecordInfo** ppRecInfo
     }
 
     if(typeattr->typekind == TKIND_ALIAS) {
-        hres = ITypeInfo_GetRefTypeInfo(pTI, typeattr->tdescAlias.u.hreftype, &pTypeInfo);
+        hres = ITypeInfo_GetRefTypeInfo(pTI, typeattr->tdescAlias.hreftype, &pTypeInfo);
         guid = typeattr->guid;
         ITypeInfo_ReleaseTypeAttr(pTI, typeattr);
         if(FAILED(hres)) {
@@ -695,7 +693,7 @@ HRESULT WINAPI GetRecordInfoFromTypeInfo(ITypeInfo* pTI, IRecordInfo** ppRecInfo
         }
         ret->fields[i].vt = vardesc->elemdescVar.tdesc.vt;
         ret->fields[i].varkind = vardesc->varkind;
-        ret->fields[i].offset = vardesc->u.oInst;
+        ret->fields[i].offset = vardesc->oInst;
         hres = ITypeInfo_GetDocumentation(pTypeInfo, vardesc->memid, &ret->fields[i].name,
                 NULL, NULL, NULL);
         if(FAILED(hres))

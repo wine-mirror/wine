@@ -26,9 +26,6 @@
 #include <string.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
@@ -331,8 +328,8 @@ HRESULT WINAPI OleCreateFontIndirect(
 
     fd.cbSizeofstruct = sizeof(fd);
     fd.lpstrName      = fname;
-    fd.cySize.s.Lo    = 80000;
-    fd.cySize.s.Hi    = 0;
+    fd.cySize.Lo      = 80000;
+    fd.cySize.Hi      = 0;
     fd.sWeight 	      = 0;
     fd.sCharset       = 0;
     fd.fItalic        = FALSE;
@@ -586,7 +583,7 @@ static void realize_font(OLEFontImpl *This)
      * Ratio is applied here relative to the standard.
      */
 
-    fontHeight = MulDiv( This->description.cySize.s.Lo, This->cyLogical*635, This->cyHimetric*18 );
+    fontHeight = MulDiv( This->description.cySize.Lo, This->cyLogical*635, This->cyHimetric*18 );
 
     logFont.lfHeight          = ((fontHeight%10000L)>5000L) ? (-fontHeight/10000L) - 1 :
                                                                   (-fontHeight/10000L);
@@ -685,10 +682,8 @@ static HRESULT WINAPI OLEFontImpl_get_Size(
    * Convert realized font height in pixels to points descaled by current
    * scaling ratio then scaled up by 10000.
    */
-  psize->s.Lo = MulDiv(this->nRealHeight,
-                       this->cyHimetric * 72 * 10000,
-                       this->cyLogical * 2540);
-  psize->s.Hi = 0;
+  psize->Lo = MulDiv(this->nRealHeight, this->cyHimetric * 72 * 10000, this->cyLogical * 2540);
+  psize->Hi = 0;
 
   return S_OK;
 }
@@ -696,9 +691,9 @@ static HRESULT WINAPI OLEFontImpl_get_Size(
 static HRESULT WINAPI OLEFontImpl_put_Size(IFont *iface, CY size)
 {
   OLEFontImpl *this = impl_from_IFont(iface);
-  TRACE("%p, %ld.\n", iface, size.s.Lo);
-  this->description.cySize.s.Hi = 0;
-  this->description.cySize.s.Lo = size.s.Lo;
+  TRACE("%p, %ld.\n", iface, size.Lo);
+  this->description.cySize.Hi = 0;
+  this->description.cySize.Lo = size.Lo;
   OLEFont_SendNotify(this, DISPID_FONT_SIZE);
 
   return S_OK;
@@ -997,9 +992,9 @@ static HRESULT WINAPI OLEFontImpl_IsEqual(
 
   if(pFontOther == NULL)
     return E_POINTER;
-  else if (left->description.cySize.s.Lo != right->description.cySize.s.Lo)
+  else if (left->description.cySize.Lo != right->description.cySize.Lo)
     return S_FALSE;
-  else if (left->description.cySize.s.Hi != right->description.cySize.s.Hi)
+  else if (left->description.cySize.Hi != right->description.cySize.Hi)
     return S_FALSE;
   else if (left->description.sWeight != right->description.sWeight)
     return S_FALSE;
@@ -1600,10 +1595,10 @@ static HRESULT WINAPI OLEFontImpl_Load(
   if (cbRead != sizeof(WORD)) return E_FAIL;
 
   /* Size */
-  IStream_Read(pLoadStream, &this->description.cySize.s.Lo, sizeof(DWORD), &cbRead);
+  IStream_Read(pLoadStream, &this->description.cySize.Lo, sizeof(DWORD), &cbRead);
   if (cbRead != sizeof(DWORD)) return E_FAIL;
 
-  this->description.cySize.s.Hi = 0;
+  this->description.cySize.Hi = 0;
 
   /* Name */
   IStream_Read(pLoadStream, &string_size, sizeof(BYTE), &cbRead);
@@ -1671,7 +1666,7 @@ static HRESULT WINAPI OLEFontImpl_Save(
   if (written != sizeof(WORD)) return E_FAIL;
 
   /* Size */
-  IStream_Write(pOutStream, &this->description.cySize.s.Lo, sizeof(DWORD), &written);
+  IStream_Write(pOutStream, &this->description.cySize.Lo, sizeof(DWORD), &written);
   if (written != sizeof(DWORD)) return E_FAIL;
 
   /* FontName */

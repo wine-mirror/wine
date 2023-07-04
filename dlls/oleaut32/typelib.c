@@ -54,8 +54,6 @@
 #include <ctype.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
@@ -1352,18 +1350,18 @@ static void dump_TypeDesc(const TYPEDESC *pTD,char *szVarType) {
     case VT_VARIANT: sprintf(szVarType, "VT_VARIANT"); break;
     case VT_VOID: sprintf(szVarType, "VT_VOID"); break;
     case VT_HRESULT: sprintf(szVarType, "VT_HRESULT"); break;
-    case VT_USERDEFINED: sprintf(szVarType, "VT_USERDEFINED ref = %lx", pTD->u.hreftype); break;
+    case VT_USERDEFINED: sprintf(szVarType, "VT_USERDEFINED ref = %lx", pTD->hreftype); break;
     case VT_LPSTR: sprintf(szVarType, "VT_LPSTR"); break;
     case VT_LPWSTR: sprintf(szVarType, "VT_LPWSTR"); break;
     case VT_PTR: sprintf(szVarType, "ptr to ");
-      dump_TypeDesc(pTD->u.lptdesc, szVarType + 7);
+      dump_TypeDesc(pTD->lptdesc, szVarType + 7);
       break;
     case VT_SAFEARRAY: sprintf(szVarType, "safearray of ");
-      dump_TypeDesc(pTD->u.lptdesc, szVarType + 13);
+      dump_TypeDesc(pTD->lptdesc, szVarType + 13);
       break;
     case VT_CARRAY: sprintf(szVarType, "%d dim array of ",
-			    pTD->u.lpadesc->cDims); /* FIXME print out sizes */
-      dump_TypeDesc(&pTD->u.lpadesc->tdescElem, szVarType + strlen(szVarType));
+			    pTD->lpadesc->cDims); /* FIXME print out sizes */
+      dump_TypeDesc(&pTD->lpadesc->tdescElem, szVarType + strlen(szVarType));
       break;
 
     default: sprintf(szVarType, "unknown(%d)", pTD->vt & VT_TYPEMASK); break;
@@ -1372,7 +1370,7 @@ static void dump_TypeDesc(const TYPEDESC *pTD,char *szVarType) {
 
 static void dump_ELEMDESC(const ELEMDESC *edesc) {
   char buf[200];
-  USHORT flags = edesc->u.paramdesc.wParamFlags;
+  USHORT flags = edesc->paramdesc.wParamFlags;
   dump_TypeDesc(&edesc->tdesc,buf);
   MESSAGE("\t\ttdesc.vartype %d (%s)\n",edesc->tdesc.vt,buf);
   MESSAGE("\t\tu.paramdesc.wParamFlags");
@@ -1384,7 +1382,7 @@ static void dump_ELEMDESC(const ELEMDESC *edesc) {
   if (flags & PARAMFLAG_FOPT) MESSAGE(" PARAMFLAG_FOPT");
   if (flags & PARAMFLAG_FHASDEFAULT) MESSAGE(" PARAMFLAG_FHASDEFAULT");
   if (flags & PARAMFLAG_FHASCUSTDATA) MESSAGE(" PARAMFLAG_FHASCUSTDATA");
-  MESSAGE("\n\t\tu.paramdesc.lpex %p\n",edesc->u.paramdesc.pparamdescex);
+  MESSAGE("\n\t\tu.paramdesc.lpex %p\n",edesc->paramdesc.pparamdescex);
 }
 static void dump_FUNCDESC(const FUNCDESC *funcdesc) {
   int i;
@@ -1557,7 +1555,7 @@ static void dump_VARDESC(const VARDESC *v)
 {
     MESSAGE("memid %ld\n",v->memid);
     MESSAGE("lpstrSchema %s\n",debugstr_w(v->lpstrSchema));
-    MESSAGE("oInst %ld\n", v->u.oInst);
+    MESSAGE("oInst %ld\n", v->oInst);
     dump_ELEMDESC(&(v->elemdescVar));
     MESSAGE("wVarFlags %x\n",v->wVarFlags);
     MESSAGE("varkind %d\n",v->varkind);
@@ -1594,11 +1592,11 @@ static SIZE_T TLB_SizeTypeDesc( const TYPEDESC *tdesc, BOOL alloc_initial_space 
     {
     case VT_PTR:
     case VT_SAFEARRAY:
-        size += TLB_SizeTypeDesc(tdesc->u.lptdesc, TRUE);
+        size += TLB_SizeTypeDesc(tdesc->lptdesc, TRUE);
         break;
     case VT_CARRAY:
-        size += FIELD_OFFSET(ARRAYDESC, rgbounds[tdesc->u.lpadesc->cDims]);
-        size += TLB_SizeTypeDesc(&tdesc->u.lpadesc->tdescElem, FALSE);
+        size += FIELD_OFFSET(ARRAYDESC, rgbounds[tdesc->lpadesc->cDims]);
+        size += TLB_SizeTypeDesc(&tdesc->lpadesc->tdescElem, FALSE);
         break;
     }
     return size;
@@ -1619,14 +1617,14 @@ static void *TLB_CopyTypeDesc( TYPEDESC *dest, const TYPEDESC *src, void *buffer
     {
     case VT_PTR:
     case VT_SAFEARRAY:
-        dest->u.lptdesc = buffer;
-        buffer = TLB_CopyTypeDesc(NULL, src->u.lptdesc, buffer);
+        dest->lptdesc = buffer;
+        buffer = TLB_CopyTypeDesc(NULL, src->lptdesc, buffer);
         break;
     case VT_CARRAY:
-        dest->u.lpadesc = buffer;
-        memcpy(dest->u.lpadesc, src->u.lpadesc, FIELD_OFFSET(ARRAYDESC, rgbounds[src->u.lpadesc->cDims]));
-        buffer = (char *)buffer + FIELD_OFFSET(ARRAYDESC, rgbounds[src->u.lpadesc->cDims]);
-        buffer = TLB_CopyTypeDesc(&dest->u.lpadesc->tdescElem, &src->u.lpadesc->tdescElem, buffer);
+        dest->lpadesc = buffer;
+        memcpy(dest->lpadesc, src->lpadesc, FIELD_OFFSET(ARRAYDESC, rgbounds[src->lpadesc->cDims]));
+        buffer = (char *)buffer + FIELD_OFFSET(ARRAYDESC, rgbounds[src->lpadesc->cDims]);
+        buffer = TLB_CopyTypeDesc(&dest->lpadesc->tdescElem, &src->lpadesc->tdescElem, buffer);
         break;
     }
     return buffer;
@@ -1994,15 +1992,15 @@ static HRESULT TLB_size_instance(ITypeInfoImpl *info, SYSKIND sys,
         break;
     case VT_CARRAY:
         *size = 0;
-        for(i = 0; i < tdesc->u.lpadesc->cDims; ++i)
-            *size += tdesc->u.lpadesc->rgbounds[i].cElements;
-        hr = TLB_size_instance(info, sys, &tdesc->u.lpadesc->tdescElem, &sub, align);
+        for(i = 0; i < tdesc->lpadesc->cDims; ++i)
+            *size += tdesc->lpadesc->rgbounds[i].cElements;
+        hr = TLB_size_instance(info, sys, &tdesc->lpadesc->tdescElem, &sub, align);
         if(FAILED(hr))
             return hr;
         *size *= sub;
         return S_OK;
     case VT_USERDEFINED:
-        return TLB_get_size_from_hreftype(info, tdesc->u.hreftype, size, align);
+        return TLB_get_size_from_hreftype(info, tdesc->hreftype, size, align);
     default:
         FIXME("Unsized VT: 0x%x\n", tdesc->vt);
         return E_FAIL;
@@ -2474,7 +2472,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
 			      paraminfo.DataType,
 			      &elemdesc->tdesc);
 
-                elemdesc->u.paramdesc.wParamFlags = paraminfo.Flags;
+                elemdesc->paramdesc.wParamFlags = paraminfo.Flags;
 
                 /* name */
                 if (paraminfo.oName != -1)
@@ -2483,14 +2481,14 @@ MSFT_DoFuncs(TLBContext*     pcx,
                 TRACE_(typelib)("param[%d] = %s\n", j, debugstr_w(TLB_get_bstr(ptfd->pParamDesc[j].Name)));
 
                 /* default value */
-                if ( (elemdesc->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT) &&
+                if ( (elemdesc->paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT) &&
                      (pFuncRec->FKCCIC & 0x1000) )
                 {
                     INT* pInt = (INT *)((char *)pFuncRec +
                                    reclength -
                                    (pFuncRec->nrargs * 4) * sizeof(INT) );
 
-                    PARAMDESC* pParamDesc = &elemdesc->u.paramdesc;
+                    PARAMDESC* pParamDesc = &elemdesc->paramdesc;
 
                     pParamDesc->pparamdescex = (PARAMDESCEX*)(ptfd->funcdesc.lprgelemdescParam+pFuncRec->nrargs)+j;
                     pParamDesc->pparamdescex->cBytes = sizeof(PARAMDESCEX);
@@ -2499,7 +2497,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
                         pInt[j], pcx);
                 }
                 else
-                    elemdesc->u.paramdesc.pparamdescex = NULL;
+                    elemdesc->paramdesc.pparamdescex = NULL;
 
                 /* custom info */
                 if (optional > (FIELD_OFFSET(MSFT_FuncRecord, oArgCustData) +
@@ -2582,11 +2580,11 @@ static void MSFT_DoVars(TLBContext *pcx, ITypeInfoImpl *pTI, int cFuncs,
             &ptvd->vardesc.elemdescVar.tdesc);
 /*   ptvd->vardesc.lpstrSchema; is reserved (SDK) FIXME?? */
         if(pVarRec->VarKind == VAR_CONST ){
-            ptvd->vardesc.u.lpvarValue = heap_alloc_zero(sizeof(VARIANT));
-            MSFT_ReadValue(ptvd->vardesc.u.lpvarValue,
+            ptvd->vardesc.lpvarValue = heap_alloc_zero(sizeof(VARIANT));
+            MSFT_ReadValue(ptvd->vardesc.lpvarValue,
                 pVarRec->OffsValue, pcx);
         } else
-            ptvd->vardesc.u.oInst=pVarRec->OffsValue;
+            ptvd->vardesc.oInst=pVarRec->OffsValue;
         recoffset += reclength;
     }
 }
@@ -3539,18 +3537,18 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
 	    {
 	        /* FIXME: check safearray */
                 if(td[3] < 0)
-                    pTypeLibImpl->pTypeDesc[i].u.lptdesc = &std_typedesc[td[2]];
+                    pTypeLibImpl->pTypeDesc[i].lptdesc = &std_typedesc[td[2]];
                 else
-                    pTypeLibImpl->pTypeDesc[i].u.lptdesc = &pTypeLibImpl->pTypeDesc[td[2]/8];
+                    pTypeLibImpl->pTypeDesc[i].lptdesc = &pTypeLibImpl->pTypeDesc[td[2]/8];
             }
 	    else if(td[0] == VT_CARRAY)
             {
 	        /* array descr table here */
-	        pTypeLibImpl->pTypeDesc[i].u.lpadesc = (void *)(INT_PTR)td[2];  /* temp store offset in*/
+	        pTypeLibImpl->pTypeDesc[i].lpadesc = (void *)(INT_PTR)td[2];  /* temp store offset in*/
             }
             else if(td[0] == VT_USERDEFINED)
 	    {
-                pTypeLibImpl->pTypeDesc[i].u.hreftype = MAKELONG(td[2],td[3]);
+                pTypeLibImpl->pTypeDesc[i].hreftype = MAKELONG(td[2],td[3]);
             }
 	    if(++i<cTD) MSFT_ReadLEWords(td, sizeof(td), &cx, DO_NOT_SEEK);
         }
@@ -3561,27 +3559,27 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
             if(pTypeLibImpl->pTypeDesc[i].vt != VT_CARRAY) continue;
             if(tlbSegDir.pArrayDescriptions.offset>0)
 	    {
-                MSFT_ReadLEWords(td, sizeof(td), &cx, tlbSegDir.pArrayDescriptions.offset + (INT_PTR)pTypeLibImpl->pTypeDesc[i].u.lpadesc);
-                pTypeLibImpl->pTypeDesc[i].u.lpadesc = heap_alloc_zero(sizeof(ARRAYDESC)+sizeof(SAFEARRAYBOUND)*(td[3]-1));
+                MSFT_ReadLEWords(td, sizeof(td), &cx, tlbSegDir.pArrayDescriptions.offset + (INT_PTR)pTypeLibImpl->pTypeDesc[i].lpadesc);
+                pTypeLibImpl->pTypeDesc[i].lpadesc = heap_alloc_zero(sizeof(ARRAYDESC)+sizeof(SAFEARRAYBOUND)*(td[3]-1));
 
                 if(td[1]<0)
-                    pTypeLibImpl->pTypeDesc[i].u.lpadesc->tdescElem.vt = td[0] & VT_TYPEMASK;
+                    pTypeLibImpl->pTypeDesc[i].lpadesc->tdescElem.vt = td[0] & VT_TYPEMASK;
                 else
-                    pTypeLibImpl->pTypeDesc[i].u.lpadesc->tdescElem = cx.pLibInfo->pTypeDesc[td[0]/(2*sizeof(INT))];
+                    pTypeLibImpl->pTypeDesc[i].lpadesc->tdescElem = cx.pLibInfo->pTypeDesc[td[0]/(2*sizeof(INT))];
 
-                pTypeLibImpl->pTypeDesc[i].u.lpadesc->cDims = td[2];
+                pTypeLibImpl->pTypeDesc[i].lpadesc->cDims = td[2];
 
                 for(j = 0; j<td[2]; j++)
 		{
-                    MSFT_ReadLEDWords(& pTypeLibImpl->pTypeDesc[i].u.lpadesc->rgbounds[j].cElements,
+                    MSFT_ReadLEDWords(& pTypeLibImpl->pTypeDesc[i].lpadesc->rgbounds[j].cElements,
                                       sizeof(INT), &cx, DO_NOT_SEEK);
-                    MSFT_ReadLEDWords(& pTypeLibImpl->pTypeDesc[i].u.lpadesc->rgbounds[j].lLbound,
+                    MSFT_ReadLEDWords(& pTypeLibImpl->pTypeDesc[i].lpadesc->rgbounds[j].lLbound,
                                       sizeof(INT), &cx, DO_NOT_SEEK);
                 }
             }
 	    else
 	    {
-                pTypeLibImpl->pTypeDesc[i].u.lpadesc = NULL;
+                pTypeLibImpl->pTypeDesc[i].lpadesc = NULL;
                 ERR("didn't find array description data\n");
             }
         }
@@ -3803,19 +3801,19 @@ static WORD *SLTG_DoType(WORD *pType, char *pBlk, TYPEDESC *pTD, const sltg_ref_
     while(!done) {
         if((*pType & 0xe00) == 0xe00) {
 	    pTD->vt = VT_PTR;
-	    pTD->u.lptdesc = heap_alloc_zero(sizeof(TYPEDESC));
-	    pTD = pTD->u.lptdesc;
+	    pTD->lptdesc = heap_alloc_zero(sizeof(TYPEDESC));
+	    pTD = pTD->lptdesc;
 	}
 	switch(*pType & 0x3f) {
 	case VT_PTR:
 	    pTD->vt = VT_PTR;
-	    pTD->u.lptdesc = heap_alloc_zero(sizeof(TYPEDESC));
-	    pTD = pTD->u.lptdesc;
+	    pTD->lptdesc = heap_alloc_zero(sizeof(TYPEDESC));
+	    pTD = pTD->lptdesc;
 	    break;
 
 	case VT_USERDEFINED:
 	    pTD->vt = VT_USERDEFINED;
-            sltg_get_typelib_ref(ref_lookup, *(++pType) / 4, &pTD->u.hreftype);
+            sltg_get_typelib_ref(ref_lookup, *(++pType) / 4, &pTD->hreftype);
 	    done = TRUE;
 	    break;
 
@@ -3827,12 +3825,12 @@ static WORD *SLTG_DoType(WORD *pType, char *pBlk, TYPEDESC *pTD, const sltg_ref_
 	    SAFEARRAY *pSA = (SAFEARRAY *)(pBlk + *(++pType));
 
 	    pTD->vt = VT_CARRAY;
-	    pTD->u.lpadesc = heap_alloc_zero(sizeof(ARRAYDESC) + (pSA->cDims - 1) * sizeof(SAFEARRAYBOUND));
-	    pTD->u.lpadesc->cDims = pSA->cDims;
-	    memcpy(pTD->u.lpadesc->rgbounds, pSA->rgsabound,
+	    pTD->lpadesc = heap_alloc_zero(sizeof(ARRAYDESC) + (pSA->cDims - 1) * sizeof(SAFEARRAYBOUND));
+	    pTD->lpadesc->cDims = pSA->cDims;
+	    memcpy(pTD->lpadesc->rgbounds, pSA->rgsabound,
 		   pSA->cDims * sizeof(SAFEARRAYBOUND));
 
-	    pTD = &pTD->u.lpadesc->tdescElem;
+	    pTD = &pTD->lpadesc->tdescElem;
 	    break;
 	  }
 
@@ -3843,8 +3841,8 @@ static WORD *SLTG_DoType(WORD *pType, char *pBlk, TYPEDESC *pTD, const sltg_ref_
 
 	    pType++;
 	    pTD->vt = VT_SAFEARRAY;
-	    pTD->u.lptdesc = heap_alloc_zero(sizeof(TYPEDESC));
-	    pTD = pTD->u.lptdesc;
+	    pTD->lptdesc = heap_alloc_zero(sizeof(TYPEDESC));
+	    pTD = pTD->lptdesc;
 	    break;
 	  }
 	default:
@@ -3862,19 +3860,19 @@ static WORD *SLTG_DoElem(WORD *pType, char *pBlk,
 {
     /* Handle [in/out] first */
     if((*pType & 0xc000) == 0xc000)
-        pElem->u.paramdesc.wParamFlags = PARAMFLAG_NONE;
+        pElem->paramdesc.wParamFlags = PARAMFLAG_NONE;
     else if(*pType & 0x8000)
-        pElem->u.paramdesc.wParamFlags = PARAMFLAG_FIN | PARAMFLAG_FOUT;
+        pElem->paramdesc.wParamFlags = PARAMFLAG_FIN | PARAMFLAG_FOUT;
     else if(*pType & 0x4000)
-        pElem->u.paramdesc.wParamFlags = PARAMFLAG_FOUT;
+        pElem->paramdesc.wParamFlags = PARAMFLAG_FOUT;
     else
-        pElem->u.paramdesc.wParamFlags = PARAMFLAG_FIN;
+        pElem->paramdesc.wParamFlags = PARAMFLAG_FIN;
 
     if(*pType & 0x2000)
-        pElem->u.paramdesc.wParamFlags |= PARAMFLAG_FLCID;
+        pElem->paramdesc.wParamFlags |= PARAMFLAG_FLCID;
 
     if(*pType & 0x80)
-        pElem->u.paramdesc.wParamFlags |= PARAMFLAG_FRETVAL;
+        pElem->paramdesc.wParamFlags |= PARAMFLAG_FRETVAL;
 
     return SLTG_DoType(pType, pBlk, &pElem->tdesc, ref_lookup);
 }
@@ -4059,10 +4057,10 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
       else if (pItem->flags & 0x10) {
         TRACE_(typelib)("VAR_CONST\n");
         pVarDesc->vardesc.varkind = VAR_CONST;
-        pVarDesc->vardesc.u.lpvarValue = heap_alloc(sizeof(VARIANT));
-        V_VT(pVarDesc->vardesc.u.lpvarValue) = VT_INT;
+        pVarDesc->vardesc.lpvarValue = heap_alloc(sizeof(VARIANT));
+        V_VT(pVarDesc->vardesc.lpvarValue) = VT_INT;
         if (pItem->flags & 0x08)
-          V_INT(pVarDesc->vardesc.u.lpvarValue) = pItem->byte_offs;
+          V_INT(pVarDesc->vardesc.lpvarValue) = pItem->byte_offs;
         else {
           switch (pVarDesc->vardesc.elemdescVar.tdesc.vt)
           {
@@ -4080,8 +4078,8 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
                 str = SysAllocStringLen(NULL, alloc_len);
                 MultiByteToWideChar(CP_ACP, 0, pBlk + pItem->byte_offs + 2, len, str, alloc_len);
               }
-              V_VT(pVarDesc->vardesc.u.lpvarValue) = VT_BSTR;
-              V_BSTR(pVarDesc->vardesc.u.lpvarValue) = str;
+              V_VT(pVarDesc->vardesc.lpvarValue) = VT_BSTR;
+              V_BSTR(pVarDesc->vardesc.lpvarValue) = str;
               break;
             }
             case VT_I2:
@@ -4090,7 +4088,7 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
             case VT_UI4:
             case VT_INT:
             case VT_UINT:
-              V_INT(pVarDesc->vardesc.u.lpvarValue) =
+              V_INT(pVarDesc->vardesc.lpvarValue) =
                 *(INT*)(pBlk + pItem->byte_offs);
               break;
             default:
@@ -4100,7 +4098,7 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
       }
       else {
         TRACE_(typelib)("VAR_PERINSTANCE\n");
-        pVarDesc->vardesc.u.oInst = pItem->byte_offs;
+        pVarDesc->vardesc.oInst = pItem->byte_offs;
         pVarDesc->vardesc.varkind = VAR_PERINSTANCE;
       }
 
@@ -4212,7 +4210,7 @@ static void SLTG_DoFuncs(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI,
 	    /* Are we an optional param ? */
 	    if(pFuncDesc->funcdesc.cParams - param <=
 	       pFuncDesc->funcdesc.cParamsOpt)
-	      pFuncDesc->funcdesc.lprgelemdescParam[param].u.paramdesc.wParamFlags |= PARAMFLAG_FOPT;
+	      pFuncDesc->funcdesc.lprgelemdescParam[param].paramdesc.wParamFlags |= PARAMFLAG_FOPT;
 
 	    if(paramName) {
 	        pFuncDesc->pParamDesc[param].Name = SLTG_ReadName(pNameTable,
@@ -4761,7 +4759,7 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
 
       for (i = 0; i < This->ctTypeDesc; i++)
           if (This->pTypeDesc[i].vt == VT_CARRAY)
-              heap_free(This->pTypeDesc[i].u.lpadesc);
+              heap_free(This->pTypeDesc[i].lpadesc);
 
       heap_free(This->pTypeDesc);
 
@@ -5427,7 +5425,7 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
                     VAR_STATIC  /* varkind */
                 };
 
-                tdesc_appobject.u.hreftype = pTypeInfo->hreftype;
+                tdesc_appobject.hreftype = pTypeInfo->hreftype;
                 tdesc_appobject.vt = VT_USERDEFINED;
 
                 TRACE("found in implicit app object: %s\n", debugstr_w(szName));
@@ -5590,8 +5588,8 @@ static void typeinfo_release_funcdesc(TLBFuncDesc *func)
     for (i = 0; i < func->funcdesc.cParams; ++i)
     {
         ELEMDESC *elemdesc = &func->funcdesc.lprgelemdescParam[i];
-        if (elemdesc->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
-            VariantClear(&elemdesc->u.paramdesc.pparamdescex->varDefaultValue);
+        if (elemdesc->paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
+            VariantClear(&elemdesc->paramdesc.pparamdescex->varDefaultValue);
         TLB_FreeCustData(&func->pParamDesc[i].custdata_list);
     }
     heap_free(func->funcdesc.lprgelemdescParam);
@@ -5617,8 +5615,8 @@ static void ITypeInfoImpl_Destroy(ITypeInfoImpl *This)
         if (pVInfo->vardesc_create) {
             TLB_FreeVarDesc(pVInfo->vardesc_create);
         } else if (pVInfo->vardesc.varkind == VAR_CONST) {
-            VariantClear(pVInfo->vardesc.u.lpvarValue);
-            heap_free(pVInfo->vardesc.u.lpvarValue);
+            VariantClear(pVInfo->vardesc.lpvarValue);
+            heap_free(pVInfo->vardesc.lpvarValue);
         }
         TLB_FreeCustData(&pVInfo->custdata_list);
     }
@@ -5709,8 +5707,8 @@ static HRESULT WINAPI ITypeInfo_fnGetTypeComp( ITypeInfo2 *iface,
 static SIZE_T TLB_SizeElemDesc( const ELEMDESC *elemdesc )
 {
     SIZE_T size = TLB_SizeTypeDesc(&elemdesc->tdesc, FALSE);
-    if (elemdesc->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
-        size += sizeof(*elemdesc->u.paramdesc.pparamdescex);
+    if (elemdesc->paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
+        size += sizeof(*elemdesc->paramdesc.pparamdescex);
     return size;
 }
 
@@ -5718,10 +5716,10 @@ static HRESULT TLB_CopyElemDesc( const ELEMDESC *src, ELEMDESC *dest, char **buf
 {
     *dest = *src;
     *buffer = TLB_CopyTypeDesc(&dest->tdesc, &src->tdesc, *buffer);
-    if (src->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
+    if (src->paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
     {
-        const PARAMDESCEX *pparamdescex_src = src->u.paramdesc.pparamdescex;
-        PARAMDESCEX *pparamdescex_dest = dest->u.paramdesc.pparamdescex = (PARAMDESCEX *)*buffer;
+        const PARAMDESCEX *pparamdescex_src = src->paramdesc.pparamdescex;
+        PARAMDESCEX *pparamdescex_dest = dest->paramdesc.pparamdescex = (PARAMDESCEX *)*buffer;
         *buffer += sizeof(PARAMDESCEX);
         *pparamdescex_dest = *pparamdescex_src;
         pparamdescex_dest->cBytes = sizeof(PARAMDESCEX);
@@ -5730,7 +5728,7 @@ static HRESULT TLB_CopyElemDesc( const ELEMDESC *src, ELEMDESC *dest, char **buf
                            (VARIANTARG *)&pparamdescex_src->varDefaultValue);
     }
     else
-        dest->u.paramdesc.pparamdescex = NULL;
+        dest->paramdesc.pparamdescex = NULL;
     return S_OK;
 }
 
@@ -5746,8 +5744,8 @@ static HRESULT TLB_SanitizeVariant(VARIANT *var)
 
 static void TLB_FreeElemDesc( ELEMDESC *elemdesc )
 {
-    if (elemdesc->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
-        VariantClear(&elemdesc->u.paramdesc.pparamdescex->varDefaultValue);
+    if (elemdesc->paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
+        VariantClear(&elemdesc->paramdesc.pparamdescex->varDefaultValue);
 }
 
 static HRESULT TLB_AllocAndInitFuncDesc( const FUNCDESC *src, FUNCDESC **dest_ptr, BOOL dispinterface )
@@ -5819,7 +5817,7 @@ static HRESULT TLB_AllocAndInitFuncDesc( const FUNCDESC *src, FUNCDESC **dest_pt
         /* functions that have a [retval] parameter return this value into pVarResult.
          * [retval] is always the last parameter (if present) */
         if (dest->cParams &&
-            (dest->lprgelemdescParam[dest->cParams - 1].u.paramdesc.wParamFlags & PARAMFLAG_FRETVAL))
+            (dest->lprgelemdescParam[dest->cParams - 1].paramdesc.wParamFlags & PARAMFLAG_FRETVAL))
         {
             ELEMDESC *elemdesc = &dest->lprgelemdescParam[dest->cParams - 1];
             if (elemdesc->tdesc.vt != VT_PTR)
@@ -5833,7 +5831,7 @@ static HRESULT TLB_AllocAndInitFuncDesc( const FUNCDESC *src, FUNCDESC **dest_pt
             /* the type pointed to by this [retval] becomes elemdescFunc,
              * i.e. the function signature's return type.
              * We are using a flat buffer so there is no danger of leaking memory */
-            dest->elemdescFunc.tdesc = *elemdesc->tdesc.u.lptdesc;
+            dest->elemdescFunc.tdesc = *elemdesc->tdesc.lptdesc;
 
             /* remove the last parameter */
             dest->cParams--;
@@ -5845,7 +5843,7 @@ static HRESULT TLB_AllocAndInitFuncDesc( const FUNCDESC *src, FUNCDESC **dest_pt
 
         /* The now-last (except [retval], removed above) parameter might be labeled [lcid].
          * If so it will be supplied from Invoke(lcid), so also not via DISPPARAMS::rgvarg */
-        if (dest->cParams && (dest->lprgelemdescParam[dest->cParams - 1].u.paramdesc.wParamFlags & PARAMFLAG_FLCID))
+        if (dest->cParams && (dest->lprgelemdescParam[dest->cParams - 1].paramdesc.wParamFlags & PARAMFLAG_FLCID))
             dest->cParams--;
     }
 
@@ -5857,7 +5855,7 @@ static void TLB_FreeVarDesc(VARDESC *var_desc)
 {
     TLB_FreeElemDesc(&var_desc->elemdescVar);
     if (var_desc->varkind == VAR_CONST)
-        VariantClear(var_desc->u.lpvarValue);
+        VariantClear(var_desc->lpvarValue);
     SysFreeString((BSTR)var_desc);
 }
 
@@ -5933,14 +5931,14 @@ static inline void ITypeInfoImpl_ElemDescAddHrefOffset( LPELEMDESC pElemDesc, UI
         switch (pTypeDesc->vt)
         {
         case VT_USERDEFINED:
-            pTypeDesc->u.hreftype += hrefoffset;
+            pTypeDesc->hreftype += hrefoffset;
             return;
         case VT_PTR:
         case VT_SAFEARRAY:
-            pTypeDesc = pTypeDesc->u.lptdesc;
+            pTypeDesc = pTypeDesc->lptdesc;
             break;
         case VT_CARRAY:
-            pTypeDesc = &pTypeDesc->u.lpadesc->tdescElem;
+            pTypeDesc = &pTypeDesc->lpadesc->tdescElem;
             break;
         default:
             return;
@@ -6028,11 +6026,11 @@ static HRESULT TLB_AllocAndInitVarDesc( const VARDESC *src, VARDESC **dest_ptr )
     {
         HRESULT hr;
 
-        dest->u.lpvarValue = (VARIANT *)buffer;
-        *dest->u.lpvarValue = *src->u.lpvarValue;
+        dest->lpvarValue = (VARIANT *)buffer;
+        *dest->lpvarValue = *src->lpvarValue;
         buffer += sizeof(VARIANT);
-        VariantInit(dest->u.lpvarValue);
-        hr = VariantCopy(dest->u.lpvarValue, src->u.lpvarValue);
+        VariantInit(dest->lpvarValue);
+        hr = VariantCopy(dest->lpvarValue, src->lpvarValue);
         if (FAILED(hr))
         {
             SysFreeString((BSTR)dest);
@@ -6043,7 +6041,7 @@ static HRESULT TLB_AllocAndInitVarDesc( const VARDESC *src, VARDESC **dest_ptr )
     if (FAILED(hr))
     {
         if (src->varkind == VAR_CONST)
-            VariantClear(dest->u.lpvarValue);
+            VariantClear(dest->lpvarValue);
         SysFreeString((BSTR)dest);
         return hr;
     }
@@ -6098,9 +6096,9 @@ static HRESULT typeinfo_getnames( ITypeInfo *iface, MEMBERID memid, BSTR *names,
         if (dispinterface && (func_desc->funcdesc.funckind != FUNC_DISPATCH))
         {
             /* match the rewriting of special trailing parameters in TLB_AllocAndInitFuncDesc */
-            if ((params > 0) && (func_desc->funcdesc.lprgelemdescParam[params - 1].u.paramdesc.wParamFlags & PARAMFLAG_FRETVAL))
+            if ((params > 0) && (func_desc->funcdesc.lprgelemdescParam[params - 1].paramdesc.wParamFlags & PARAMFLAG_FRETVAL))
                 --params; /* Invoke(pVarResult) supplies the [retval] parameter, so it's hidden from DISPPARAMS */
-            if ((params > 0) && (func_desc->funcdesc.lprgelemdescParam[params - 1].u.paramdesc.wParamFlags & PARAMFLAG_FLCID))
+            if ((params > 0) && (func_desc->funcdesc.lprgelemdescParam[params - 1].paramdesc.wParamFlags & PARAMFLAG_FLCID))
                 --params; /* Invoke(lcid) supplies the [lcid] parameter, so it's hidden from DISPPARAMS */
         }
 
@@ -6985,10 +6983,10 @@ static HRESULT userdefined_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc,
     ITypeInfo *tinfo2 = NULL;
     TYPEATTR *tattr = NULL;
 
-    hr = ITypeInfo_GetRefTypeInfo(tinfo, tdesc->u.hreftype, &tinfo2);
+    hr = ITypeInfo_GetRefTypeInfo(tinfo, tdesc->hreftype, &tinfo2);
     if (hr)
     {
-        ERR("Could not get typeinfo of hreftype %lx for VT_USERDEFINED, hr %#lx.\n", tdesc->u.hreftype, hr);
+        ERR("Could not get typeinfo of hreftype %lx for VT_USERDEFINED, hr %#lx.\n", tdesc->hreftype, hr);
         return hr;
     }
     hr = ITypeInfo_GetTypeAttr(tinfo2, &tattr);
@@ -7051,20 +7049,20 @@ static HRESULT typedescvt_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc, 
     /* enforce only one level of pointer indirection */
     if (!(*vt & VT_BYREF) && !(*vt & VT_ARRAY) && (tdesc->vt == VT_PTR))
     {
-        tdesc = tdesc->u.lptdesc;
+        tdesc = tdesc->lptdesc;
 
         /* munch VT_PTR -> VT_USERDEFINED(interface) into VT_UNKNOWN or
          * VT_DISPATCH and VT_PTR -> VT_PTR -> VT_USERDEFINED(interface) into 
          * VT_BYREF|VT_DISPATCH or VT_BYREF|VT_UNKNOWN */
         if ((tdesc->vt == VT_USERDEFINED) ||
-            ((tdesc->vt == VT_PTR) && (tdesc->u.lptdesc->vt == VT_USERDEFINED)))
+            ((tdesc->vt == VT_PTR) && (tdesc->lptdesc->vt == VT_USERDEFINED)))
         {
             VARTYPE vt_userdefined = 0;
             const TYPEDESC *tdesc_userdefined = tdesc;
             if (tdesc->vt == VT_PTR)
             {
                 vt_userdefined = VT_BYREF;
-                tdesc_userdefined = tdesc->u.lptdesc;
+                tdesc_userdefined = tdesc->lptdesc;
             }
             hr = userdefined_to_variantvt(tinfo, tdesc_userdefined, &vt_userdefined);
             if ((hr == S_OK) && 
@@ -7096,7 +7094,7 @@ static HRESULT typedescvt_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc, 
         break;
     case VT_SAFEARRAY:
         *vt |= VT_ARRAY;
-        hr = typedescvt_to_variantvt(tinfo, tdesc->u.lptdesc, vt);
+        hr = typedescvt_to_variantvt(tinfo, tdesc->lptdesc, vt);
         break;
     case VT_INT:
         *vt |= VT_I4;
@@ -7130,7 +7128,7 @@ static HRESULT get_iface_guid(ITypeInfo *tinfo, HREFTYPE href, GUID *guid)
 
     switch(tattr->typekind) {
     case TKIND_ALIAS:
-        hres = get_iface_guid(tinfo2, tattr->tdescAlias.u.hreftype, guid);
+        hres = get_iface_guid(tinfo2, tattr->tdescAlias.hreftype, guid);
         break;
 
     case TKIND_INTERFACE:
@@ -7282,7 +7280,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
             TRACE("changing args\n");
             for (i = 0; i < func_desc->cParams; i++)
             {
-                USHORT wParamFlags = func_desc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
+                USHORT wParamFlags = func_desc->lprgelemdescParam[i].paramdesc.wParamFlags;
                 TYPEDESC *tdesc = &func_desc->lprgelemdescParam[i].tdesc;
                 VARIANTARG *src_arg;
 
@@ -7433,16 +7431,16 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                         prgpvarg[i] = src_arg;
                     }
 
-                    if((tdesc->vt == VT_USERDEFINED || (tdesc->vt == VT_PTR && tdesc->u.lptdesc->vt == VT_USERDEFINED))
+                    if((tdesc->vt == VT_USERDEFINED || (tdesc->vt == VT_PTR && tdesc->lptdesc->vt == VT_USERDEFINED))
                        && (V_VT(prgpvarg[i]) == VT_DISPATCH || V_VT(prgpvarg[i]) == VT_UNKNOWN)
                        && V_UNKNOWN(prgpvarg[i])) {
                         IUnknown *userdefined_iface;
                         GUID guid;
 
                         if (tdesc->vt == VT_PTR)
-                            tdesc = tdesc->u.lptdesc;
+                            tdesc = tdesc->lptdesc;
 
-                        hres = get_iface_guid((ITypeInfo*)iface, tdesc->u.hreftype, &guid);
+                        hres = get_iface_guid((ITypeInfo*)iface, tdesc->hreftype, &guid);
                         if(FAILED(hres))
                             break;
 
@@ -7462,7 +7460,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     arg = prgpvarg[i] = &rgvarg[i];
                     if (wParamFlags & PARAMFLAG_FHASDEFAULT)
                     {
-                        hres = VariantCopy(arg, &func_desc->lprgelemdescParam[i].u.paramdesc.pparamdescex->varDefaultValue);
+                        hres = VariantCopy(arg, &func_desc->lprgelemdescParam[i].paramdesc.pparamdescex->varDefaultValue);
                         if (FAILED(hres))
                             break;
                     }
@@ -7513,7 +7511,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 
             for (i = 0; i < func_desc->cParams; i++)
             {
-                USHORT wParamFlags = func_desc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
+                USHORT wParamFlags = func_desc->lprgelemdescParam[i].paramdesc.wParamFlags;
 
                 if (wParamFlags & PARAMFLAG_FLCID)
                     continue;
@@ -7621,7 +7619,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 
             if (SUCCEEDED(hres) && pVarResult && (func_desc->cParams == 1) &&
                 (func_desc->invkind & INVOKE_PROPERTYGET) &&
-                (func_desc->lprgelemdescParam[0].u.paramdesc.wParamFlags & PARAMFLAG_FRETVAL) &&
+                (func_desc->lprgelemdescParam[0].paramdesc.wParamFlags & PARAMFLAG_FRETVAL) &&
                 (pDispParams->cArgs != 0))
             {
                 if (V_VT(pVarResult) == VT_DISPATCH)
@@ -8717,8 +8715,8 @@ HRESULT WINAPI CreateDispTypeInfo(
         pFuncDesc->funcdesc.cScodes = 0;
         pFuncDesc->funcdesc.wFuncFlags = 0;
         pFuncDesc->funcdesc.elemdescFunc.tdesc.vt = md->vtReturn;
-        pFuncDesc->funcdesc.elemdescFunc.u.paramdesc.wParamFlags = PARAMFLAG_NONE;
-        pFuncDesc->funcdesc.elemdescFunc.u.paramdesc.pparamdescex = NULL;
+        pFuncDesc->funcdesc.elemdescFunc.paramdesc.wParamFlags = PARAMFLAG_NONE;
+        pFuncDesc->funcdesc.elemdescFunc.paramdesc.pparamdescex = NULL;
         pFuncDesc->funcdesc.lprgelemdescParam = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                                                               md->cArgs * sizeof(ELEMDESC));
         pFuncDesc->pParamDesc = TLBParDesc_Constructor(md->cArgs);
@@ -9489,17 +9487,17 @@ static DWORD WMSFT_append_typedesc(TYPEDESC *desc, WMSFT_TLBFile *file, DWORD *o
 
     if(vt == VT_PTR || vt == VT_SAFEARRAY){
         DWORD mix;
-        encoded[1] = WMSFT_append_typedesc(desc->u.lptdesc, file, &mix, out_size);
+        encoded[1] = WMSFT_append_typedesc(desc->lptdesc, file, &mix, out_size);
         encoded[0] = desc->vt | ((mix | VT_BYREF) << 16);
         *out_mix = 0x7FFF;
         *out_size += 2 * sizeof(DWORD);
     }else if(vt == VT_CARRAY){
         encoded[0] = desc->vt | (0x7FFE << 16);
-        encoded[1] = WMSFT_append_arraydesc(desc->u.lpadesc, file);
+        encoded[1] = WMSFT_append_arraydesc(desc->lpadesc, file);
         *out_mix = 0x7FFE;
     }else if(vt == VT_USERDEFINED){
         encoded[0] = desc->vt | (0x7FFF << 16);
-        encoded[1] = desc->u.hreftype;
+        encoded[1] = desc->hreftype;
         *out_mix = 0x7FFF; /* FIXME: Should get TYPEKIND of the hreftype, e.g. TKIND_ENUM => VT_I4 */
     }else{
         TRACE("Mixing in-place, VT: 0x%x\n", desc->vt);
@@ -9606,7 +9604,7 @@ static DWORD WMSFT_compile_typeinfo_aux(ITypeInfoImpl *info,
         recorded_size += desc->funcdesc.cParams * sizeof(MSFT_ParameterInfo);
 
         for(j = 0; j < desc->funcdesc.cParams; ++j){
-            if(desc->funcdesc.lprgelemdescParam[j].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT){
+            if(desc->funcdesc.lprgelemdescParam[j].paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT){
                 recorded_size += desc->funcdesc.cParams * sizeof(INT);
                 break;
             }
@@ -9682,7 +9680,7 @@ static DWORD WMSFT_compile_typeinfo_aux(ITypeInfoImpl *info,
             funcrecord->FKCCIC |= 0x2000;
 
         for(j = 0; j < desc->funcdesc.cParams; ++j){
-            if(desc->funcdesc.lprgelemdescParam[j].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT){
+            if(desc->funcdesc.lprgelemdescParam[j].paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT){
                 paramdefault_size = sizeof(INT) * desc->funcdesc.cParams;
                 funcrecord->funcdescsize += sizeof(PARAMDESCEX);
             }
@@ -9761,11 +9759,11 @@ static DWORD WMSFT_compile_typeinfo_aux(ITypeInfoImpl *info,
                 info->oName = desc->pParamDesc[j].Name->offset;
             else
                 info->oName = -1;
-            info->Flags = desc->funcdesc.lprgelemdescParam[j].u.paramdesc.wParamFlags;
+            info->Flags = desc->funcdesc.lprgelemdescParam[j].paramdesc.wParamFlags;
 
             if(paramdefault_size){
-                if(desc->funcdesc.lprgelemdescParam[j].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
-                    *paramdefault = WMSFT_encode_variant(&desc->funcdesc.lprgelemdescParam[j].u.paramdesc.pparamdescex->varDefaultValue, file);
+                if(desc->funcdesc.lprgelemdescParam[j].paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
+                    *paramdefault = WMSFT_encode_variant(&desc->funcdesc.lprgelemdescParam[j].paramdesc.pparamdescex->varDefaultValue, file);
                 else if(paramdefault_size)
                     *paramdefault = -1;
                 ++paramdefault;
@@ -9795,9 +9793,9 @@ static DWORD WMSFT_compile_typeinfo_aux(ITypeInfoImpl *info,
 
         if(desc->vardesc.varkind == VAR_CONST){
             varrecord->vardescsize += sizeof(VARIANT);
-            varrecord->OffsValue = WMSFT_encode_variant(desc->vardesc.u.lpvarValue, file);
+            varrecord->OffsValue = WMSFT_encode_variant(desc->vardesc.lpvarValue, file);
         }else
-            varrecord->OffsValue = desc->vardesc.u.oInst;
+            varrecord->OffsValue = desc->vardesc.oInst;
 
         /* res9? */
         if(desc->HelpStringContext != 0){
@@ -10756,10 +10754,10 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(ICreateTypeInfo2 *iface,
             heap_free(tmp_func_desc.funcdesc.lprgscode);
             return hres;
         }
-        if (tmp_func_desc.funcdesc.lprgelemdescParam[i].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT &&
+        if (tmp_func_desc.funcdesc.lprgelemdescParam[i].paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT &&
                 tmp_func_desc.funcdesc.lprgelemdescParam[i].tdesc.vt != VT_VARIANT &&
                 tmp_func_desc.funcdesc.lprgelemdescParam[i].tdesc.vt != VT_USERDEFINED){
-            hres = TLB_SanitizeVariant(&tmp_func_desc.funcdesc.lprgelemdescParam[i].u.paramdesc.pparamdescex->varDefaultValue);
+            hres = TLB_SanitizeVariant(&tmp_func_desc.funcdesc.lprgelemdescParam[i].paramdesc.pparamdescex->varDefaultValue);
             if (FAILED(hres)) {
                 heap_free(tmp_func_desc.funcdesc.lprgelemdescParam);
                 heap_free(tmp_func_desc.funcdesc.lprgscode);

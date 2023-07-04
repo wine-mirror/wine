@@ -23,8 +23,6 @@
 #include <string.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -1441,12 +1439,12 @@ static void free_embedded_arraydesc(ARRAYDESC *adesc)
     {
     case VT_PTR:
     case VT_SAFEARRAY:
-        free_embedded_typedesc(adesc->tdescElem.u.lptdesc);
-        CoTaskMemFree(adesc->tdescElem.u.lptdesc);
+        free_embedded_typedesc(adesc->tdescElem.lptdesc);
+        CoTaskMemFree(adesc->tdescElem.lptdesc);
         break;
     case VT_CARRAY:
-        free_embedded_arraydesc(adesc->tdescElem.u.lpadesc);
-        CoTaskMemFree(adesc->tdescElem.u.lpadesc);
+        free_embedded_arraydesc(adesc->tdescElem.lpadesc);
+        CoTaskMemFree(adesc->tdescElem.lpadesc);
         break;
     }
 }
@@ -1457,12 +1455,12 @@ static void free_embedded_typedesc(TYPEDESC *tdesc)
     {
     case VT_PTR:
     case VT_SAFEARRAY:
-        free_embedded_typedesc(tdesc->u.lptdesc);
-        CoTaskMemFree(tdesc->u.lptdesc);
+        free_embedded_typedesc(tdesc->lptdesc);
+        CoTaskMemFree(tdesc->lptdesc);
         break;
     case VT_CARRAY:
-        free_embedded_arraydesc(tdesc->u.lpadesc);
-        CoTaskMemFree(tdesc->u.lpadesc);
+        free_embedded_arraydesc(tdesc->lpadesc);
+        CoTaskMemFree(tdesc->lpadesc);
         break;
     }
 }
@@ -1470,8 +1468,8 @@ static void free_embedded_typedesc(TYPEDESC *tdesc)
 static void free_embedded_elemdesc(ELEMDESC *edesc)
 {
     free_embedded_typedesc(&edesc->tdesc);
-    if(edesc->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
-        CoTaskMemFree(edesc->u.paramdesc.pparamdescex);
+    if(edesc->paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
+        CoTaskMemFree(edesc->paramdesc.pparamdescex);
 }
 
 /* ITypeComp */
@@ -1999,7 +1997,7 @@ void CALLBACK ITypeInfo_ReleaseVarDesc_Proxy(
     CoTaskMemFree(pVarDesc->lpstrSchema);
 
     if(pVarDesc->varkind == VAR_CONST)
-        CoTaskMemFree(pVarDesc->u.lpvarValue);
+        CoTaskMemFree(pVarDesc->lpvarValue);
 
     free_embedded_elemdesc(&pVarDesc->elemdescVar);
     CoTaskMemFree(pVarDesc);
