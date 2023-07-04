@@ -3152,11 +3152,46 @@ static HRESULT transform_node_pull_samples(const struct media_session *session, 
 }
 
 static void session_deliver_sample_to_node(struct media_session *session, IMFTopologyNode *node, unsigned int input,
+        IMFSample *sample);
+
+static void transform_node_deliver_samples(struct media_session *session, struct topo_node *topo_node)
+{
+    IMFTopologyNode *up_node = topo_node->node, *down_node;
+    struct sample *sample, *next;
+    DWORD output, input;
+    HRESULT hr;
+
+    /* Push down all available output. */
+    for (output = 0; output < topo_node->u.transform.output_count; ++output)
+    {
+        struct transform_stream *stream = &topo_node->u.transform.outputs[output];
+
+        if (FAILED(hr = IMFTopologyNode_GetOutput(up_node, output, &down_node, &input)))
+        {
+            WARN("Failed to node %p/%lu output, hr %#lx.\n", up_node, output, hr);
+            continue;
+        }
+
+        LIST_FOR_EACH_ENTRY_SAFE(sample, next, &stream->samples, struct sample, entry)
+        {
+            if (!stream->requests)
+                break;
+
+            session_deliver_sample_to_node(session, down_node, input, sample->sample);
+            stream->requests--;
+
+            transform_release_sample(sample);
+        }
+
+        IMFTopologyNode_Release(down_node);
+    }
+}
+
+static void session_deliver_sample_to_node(struct media_session *session, IMFTopologyNode *node, unsigned int input,
         IMFSample *sample)
 {
     struct sample *sample_entry, *sample_entry2;
-    DWORD stream_id, downstream_input;
-    IMFTopologyNode *downstream_node;
+    DWORD stream_id;
     struct topo_node *topo_node;
     MF_TOPOLOGY_TYPE node_type;
     BOOL drain = FALSE;
@@ -3244,32 +3279,7 @@ static void session_deliver_sample_to_node(struct media_session *session, IMFTop
                 }
             }
 
-            /* Push down all available output. */
-            for (i = 0; i < topo_node->u.transform.output_count; ++i)
-            {
-                struct transform_stream *stream = &topo_node->u.transform.outputs[i];
-
-                if (FAILED(IMFTopologyNode_GetOutput(node, i, &downstream_node, &downstream_input)))
-                {
-                    WARN("Failed to get connected node for output %u.\n", i);
-                    continue;
-                }
-
-                LIST_FOR_EACH_ENTRY_SAFE(sample_entry, sample_entry2, &stream->samples,
-                        struct sample, entry)
-                {
-                    if (!stream->requests)
-                        break;
-
-                    session_deliver_sample_to_node(session, downstream_node, downstream_input, sample_entry->sample);
-                    stream->requests--;
-
-                    transform_release_sample(sample_entry);
-                }
-
-                IMFTopologyNode_Release(downstream_node);
-            }
-
+            transform_node_deliver_samples(session, topo_node);
             break;
         }
         case MF_TOPOLOGY_TEE_NODE:
@@ -3282,13 +3292,9 @@ static void session_deliver_sample_to_node(struct media_session *session, IMFTop
 
 static void session_deliver_pending_samples(struct media_session *session, IMFTopologyNode *node)
 {
-    struct sample *sample_entry, *sample_entry2;
-    IMFTopologyNode *downstream_node;
     struct topo_node *topo_node;
     MF_TOPOLOGY_TYPE node_type;
-    DWORD downstream_input;
     TOPOID node_id;
-    unsigned int i;
 
     IMFTopologyNode_GetNodeType(node, &node_type);
     IMFTopologyNode_GetTopoNodeID(node, &node_id);
@@ -3298,34 +3304,8 @@ static void session_deliver_pending_samples(struct media_session *session, IMFTo
     switch (node_type)
     {
         case MF_TOPOLOGY_TRANSFORM_NODE:
-
             transform_node_pull_samples(session, topo_node);
-
-            /* Push down all available output. */
-            for (i = 0; i < topo_node->u.transform.output_count; ++i)
-            {
-                struct transform_stream *stream = &topo_node->u.transform.outputs[i];
-
-                if (FAILED(IMFTopologyNode_GetOutput(node, i, &downstream_node, &downstream_input)))
-                {
-                    WARN("Failed to get connected node for output %u.\n", i);
-                    continue;
-                }
-
-                LIST_FOR_EACH_ENTRY_SAFE(sample_entry, sample_entry2, &stream->samples,
-                        struct sample, entry)
-                {
-                    if (!stream->requests)
-                        break;
-
-                    session_deliver_sample_to_node(session, downstream_node, downstream_input, sample_entry->sample);
-                    stream->requests--;
-
-                    transform_release_sample(sample_entry);
-                }
-
-                IMFTopologyNode_Release(downstream_node);
-            }
+            transform_node_deliver_samples(session, topo_node);
             break;
         default:
             FIXME("Unexpected node type %u.\n", node_type);
