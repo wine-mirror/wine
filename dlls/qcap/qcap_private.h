@@ -31,13 +31,13 @@
 #include "wine/debug.h"
 #include "wine/strmbase.h"
 
-HRESULT audio_record_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
-HRESULT avi_compressor_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
-HRESULT avi_mux_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
-HRESULT capture_graph_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
-HRESULT file_writer_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
-HRESULT smart_tee_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
-HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT audio_record_create(IUnknown *outer, IUnknown **out);
+HRESULT avi_compressor_create(IUnknown *outer, IUnknown **out);
+HRESULT avi_mux_create(IUnknown *outer, IUnknown **out);
+HRESULT capture_graph_create(IUnknown *outer, IUnknown **out);
+HRESULT file_writer_create(IUnknown *outer, IUnknown **out);
+HRESULT smart_tee_create(IUnknown *outer, IUnknown **out);
+HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out);
 
 typedef UINT64 video_capture_device_t;
 
