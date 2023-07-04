@@ -1024,12 +1024,12 @@ static HRESULT add_match(IMatchCollection2 *iface, IMatch2 *add)
     TRACE("(%p)->(%p)\n", This, add);
 
     if(!This->size) {
-        This->matches = malloc(8*sizeof(IMatch*));
+        This->matches = malloc(8 * sizeof(*This->matches));
         if(!This->matches)
             return E_OUTOFMEMORY;
         This->size = 8;
     }else if(This->size == This->count) {
-        IMatch2 **new_matches = realloc(This->matches, 2*This->size*sizeof(IMatch*));
+        IMatch2 **new_matches = realloc(This->matches, 2 * This->size * sizeof(*This->matches));
         if(!new_matches)
             return E_OUTOFMEMORY;
 
