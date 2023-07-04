@@ -29,7 +29,7 @@
 #include "wine/debug.h"
 #include "wine/strmbase.h"
 
-HRESULT asf_reader_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
-HRESULT dmo_wrapper_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT asf_reader_create(IUnknown *outer, IUnknown **out);
+HRESULT dmo_wrapper_create(IUnknown *outer, IUnknown **out);
 
 #endif /* QASF_PRIVATE_H */
