@@ -39,8 +39,6 @@
 
 #include "provider.h"
 
-extern const char *debugstr_hstring( HSTRING hstr );
-
 extern IActivationFactory *credentials_activation_factory;
 
 typedef HRESULT (WINAPI *async_operation_callback)( IUnknown *invoker, IUnknown *param, PROPVARIANT *result );

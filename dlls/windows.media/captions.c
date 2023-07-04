@@ -23,15 +23,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(media);
 
-const char *debugstr_hstring( HSTRING hstr )
-{
-    const WCHAR *str;
-    UINT32 len;
-    if (hstr && !((ULONG_PTR)hstr >> 16)) return "(invalid)";
-    str = WindowsGetStringRawBuffer( hstr, &len );
-    return wine_dbgstr_wn( str, len );
-}
-
 struct captions_statics
 {
     IActivationFactory IActivationFactory_iface;

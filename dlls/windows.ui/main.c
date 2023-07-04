@@ -24,15 +24,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ui);
 
-static const char *debugstr_hstring( HSTRING hstr )
-{
-    const WCHAR *str;
-    UINT32 len;
-    if (hstr && !((ULONG_PTR)hstr >> 16)) return "(invalid)";
-    str = WindowsGetStringRawBuffer( hstr, &len );
-    return wine_dbgstr_wn( str, len );
-}
-
 HRESULT WINAPI DllGetClassObject( REFCLSID clsid, REFIID riid, void **out )
 {
     FIXME( "clsid %s, riid %s, out %p stub!\n", debugstr_guid(clsid), debugstr_guid(riid), out );

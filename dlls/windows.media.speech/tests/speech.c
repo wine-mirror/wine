@@ -91,15 +91,6 @@ static void check_interface_(unsigned int line, void *obj, const IID *iid, BOOL 
         IUnknown_Release(unk);
 }
 
-static const char *debugstr_hstring(HSTRING hstr)
-{
-    const WCHAR *str;
-    UINT32 len;
-    if (hstr && !((ULONG_PTR)hstr >> 16)) return "(invalid)";
-    str = WindowsGetStringRawBuffer(hstr, &len);
-    return wine_dbgstr_wn(str, len);
-}
-
 struct completed_event_handler
 {
     IHandler_RecognitionCompleted IHandler_RecognitionCompleted_iface;

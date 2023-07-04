@@ -35,8 +35,6 @@
 #define WIDL_using_Windows_Devices_Bluetooth
 #include "windows.devices.bluetooth.h"
 
-extern const char *debugstr_hstring( HSTRING hstr );
-
 extern IActivationFactory *bluetoothadapter_factory;
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \

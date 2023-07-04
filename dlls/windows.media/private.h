@@ -37,8 +37,6 @@
 #define WIDL_using_Windows_Media_ClosedCaptioning
 #include "windows.media.closedcaptioning.h"
 
-extern const char *debugstr_hstring( HSTRING hstr );
-
 extern IActivationFactory *captions_factory;
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
