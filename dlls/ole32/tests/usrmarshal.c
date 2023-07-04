@@ -815,7 +815,7 @@ static void marshal_STGMEDIUM(BOOL client, BOOL in, BOOL out)
     expect_buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, umcb.Flags, expect_buffer + 2 * sizeof(DWORD), unk, &IID_IUnknown);
 
     med.tymed = TYMED_NULL;
-    U(med).pstg = NULL;
+    med.pstg = NULL;
     med.pUnkForRelease = unk;
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
@@ -837,7 +837,7 @@ static void marshal_STGMEDIUM(BOOL client, BOOL in, BOOL out)
 
     Test_Unknown2.refs = 1;
     med2.tymed = TYMED_NULL;
-    U(med2).pstm = NULL;
+    med2.pstm = NULL;
     med2.pUnkForRelease = &Test_Unknown2.IUnknown_iface;
 
     STGMEDIUM_UserUnmarshal(&umcb.Flags, buffer, &med2);
@@ -852,7 +852,7 @@ static void marshal_STGMEDIUM(BOOL client, BOOL in, BOOL out)
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, expect_buffer, expect_size, MSHCTX_DIFFERENTMACHINE);
     med2.tymed = TYMED_NULL;
-    U(med2).pstm = NULL;
+    med2.pstm = NULL;
     med2.pUnkForRelease = NULL;
     STGMEDIUM_UserUnmarshal(&umcb.Flags, expect_buffer, &med2);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
@@ -882,7 +882,7 @@ static void marshal_STGMEDIUM(BOOL client, BOOL in, BOOL out)
     expect_buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, umcb.Flags, expect_buffer_end, unk, &IID_IUnknown);
 
     med.tymed = TYMED_ISTREAM;
-    U(med).pstm = stm;
+    med.pstm = stm;
     med.pUnkForRelease = unk;
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
@@ -907,13 +907,13 @@ static void marshal_STGMEDIUM(BOOL client, BOOL in, BOOL out)
     Test_Stream2.refs = 1;
     Test_Unknown2.refs = 1;
     med2.tymed = TYMED_ISTREAM;
-    U(med2).pstm = &Test_Stream2.IStream_iface;
+    med2.pstm = &Test_Stream2.IStream_iface;
     med2.pUnkForRelease = &Test_Unknown2.IUnknown_iface;
 
     STGMEDIUM_UserUnmarshal(&umcb.Flags, buffer, &med2);
 
     ok(med2.tymed == TYMED_ISTREAM, "got tymed %lx\n", med2.tymed);
-    ok(U(med2).pstm != NULL, "Incorrectly unmarshalled\n");
+    ok(med2.pstm != NULL, "Incorrectly unmarshalled\n");
     ok(med2.pUnkForRelease != NULL, "Incorrectly unmarshalled\n");
     ok(Test_Stream2.refs == 0, "got %ld\n", Test_Stream2.refs);
     ok(Test_Unknown2.refs == 0, "got %ld\n", Test_Unknown2.refs);
@@ -924,7 +924,7 @@ static void marshal_STGMEDIUM(BOOL client, BOOL in, BOOL out)
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, expect_buffer, expect_size, MSHCTX_DIFFERENTMACHINE);
     med2.tymed = TYMED_NULL;
-    U(med2).pstm = NULL;
+    med2.pstm = NULL;
     med2.pUnkForRelease = NULL;
     STGMEDIUM_UserUnmarshal(&umcb.Flags, expect_buffer, &med2);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
@@ -941,7 +941,7 @@ static void marshal_STGMEDIUM(BOOL client, BOOL in, BOOL out)
     expect_size = 3 * sizeof(DWORD);
 
     med.tymed = TYMED_ISTREAM;
-    U(med).pstm = NULL;
+    med.pstm = NULL;
     med.pUnkForRelease = NULL;
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
@@ -965,13 +965,13 @@ static void marshal_STGMEDIUM(BOOL client, BOOL in, BOOL out)
     Test_Stream2.refs = 1;
     Test_Unknown2.refs = 1;
     med2.tymed = TYMED_ISTREAM;
-    U(med2).pstm = &Test_Stream2.IStream_iface;
+    med2.pstm = &Test_Stream2.IStream_iface;
     med2.pUnkForRelease = &Test_Unknown2.IUnknown_iface;
 
     STGMEDIUM_UserUnmarshal(&umcb.Flags, buffer, &med2);
 
     ok(med2.tymed == TYMED_ISTREAM, "got tymed %lx\n", med2.tymed);
-    ok(U(med2).pstm == NULL, "Incorrectly unmarshalled\n");
+    ok(med2.pstm == NULL, "Incorrectly unmarshalled\n");
     ok(med2.pUnkForRelease == &Test_Unknown2.IUnknown_iface, "Incorrectly unmarshalled\n");
     ok(Test_Stream2.refs == 0, "got %ld\n", Test_Stream2.refs);
     ok(Test_Unknown2.refs == 1, "got %ld\n", Test_Unknown2.refs);
@@ -1307,8 +1307,8 @@ static HRESULT WINAPI obj_DO_GetDataHere(IDataObject *iface, FORMATETC *fmt,
 
     if (fmt->cfFormat == 2)
     {
-        IStream_Release(U(med)->pstm);
-        U(med)->pstm = &Test_Stream2.IStream_iface;
+        IStream_Release(med->pstm);
+        med->pstm = &Test_Stream2.IStream_iface;
     }
 
     return S_OK;
@@ -1363,7 +1363,7 @@ static void test_GetDataHere_Proxy(void)
     fmt.ptd = NULL;
     fmt.dwAspect = DVASPECT_CONTENT;
     fmt.lindex = -1;
-    U(med).pstm = NULL;
+    med.pstm = NULL;
     med.pUnkForRelease = &Test_Unknown.IUnknown_iface;
 
     fmt.tymed = med.tymed = TYMED_NULL;
@@ -1384,13 +1384,13 @@ static void test_GetDataHere_Proxy(void)
     ok( hr == DV_E_TYMED, "got %08lx\n", hr );
 
     fmt.tymed = med.tymed = TYMED_ISTREAM;
-    U(med).pstm = &Test_Stream.IStream_iface;
+    med.pstm = &Test_Stream.IStream_iface;
     med.pUnkForRelease = &Test_Unknown.IUnknown_iface;
 
     hr = IDataObject_GetDataHere( data, &fmt, &med );
     ok( hr == S_OK, "got %08lx\n", hr );
 
-    ok( U(med).pstm == &Test_Stream.IStream_iface, "stm changed\n" );
+    ok( med.pstm == &Test_Stream.IStream_iface, "stm changed\n" );
     ok( med.pUnkForRelease == &Test_Unknown.IUnknown_iface, "punk changed\n" );
 
     ok( Test_Stream.refs == 1, "got %ld\n", Test_Stream.refs );
@@ -1398,13 +1398,13 @@ static void test_GetDataHere_Proxy(void)
 
     fmt.cfFormat = 2;
     fmt.tymed = med.tymed = TYMED_ISTREAM;
-    U(med).pstm = &Test_Stream.IStream_iface;
+    med.pstm = &Test_Stream.IStream_iface;
     med.pUnkForRelease = &Test_Unknown.IUnknown_iface;
 
     hr = IDataObject_GetDataHere( data, &fmt, &med );
     ok( hr == S_OK, "got %08lx\n", hr );
 
-    ok( U(med).pstm == &Test_Stream.IStream_iface, "stm changed\n" );
+    ok( med.pstm == &Test_Stream.IStream_iface, "stm changed\n" );
     ok( med.pUnkForRelease == &Test_Unknown.IUnknown_iface, "punk changed\n" );
 
     ok( Test_Stream.refs == 1, "got %ld\n", Test_Stream.refs );

@@ -20,7 +20,6 @@
 
 #define COBJMACROS
 #define CONST_VTABLE
-#define NONAMELESSUNION
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -275,7 +274,7 @@ static HRESULT WINAPI DataObjectImpl_GetData(IDataObject* iface, FORMATETC *pfor
     DataObjectImpl_GetData_calls++;
 
     ok(pmedium->tymed == 0, "pmedium->tymed = %lu\n", pmedium->tymed);
-    ok(U(*pmedium).hGlobal == NULL, "pmedium->hGlobal = %p\n", U(*pmedium).hGlobal);
+    ok(pmedium->hGlobal == NULL, "pmedium->hGlobal = %p\n", pmedium->hGlobal);
     ok(pmedium->pUnkForRelease == NULL, "pmedium->pUnkForRelease = %p\n", pmedium->pUnkForRelease);
 
     if(pformatetc->lindex != -1)
@@ -293,24 +292,24 @@ static HRESULT WINAPI DataObjectImpl_GetData(IDataObject* iface, FORMATETC *pfor
                 if(pformatetc->cfFormat == CF_TEXT || pformatetc->cfFormat == cf_global)
                 {
                     pmedium->tymed = TYMED_HGLOBAL;
-                    U(*pmedium).hGlobal = This->text;
+                    pmedium->hGlobal = This->text;
                 }
                 else if(pformatetc->cfFormat == cf_stream)
                 {
                     pmedium->tymed = TYMED_ISTREAM;
                     IStream_AddRef(This->stm);
-                    U(*pmedium).pstm = This->stm;
+                    pmedium->pstm = This->stm;
                 }
                 else if(pformatetc->cfFormat == cf_storage || pformatetc->cfFormat == cf_another)
                 {
                     pmedium->tymed = TYMED_ISTORAGE;
                     IStorage_AddRef(This->stg);
-                    U(*pmedium).pstg = This->stg;
+                    pmedium->pstg = This->stg;
                 }
                 else if(pformatetc->cfFormat == CF_METAFILEPICT)
                 {
                     pmedium->tymed = TYMED_MFPICT;
-                    U(*pmedium).hMetaFilePict = This->hmfp;
+                    pmedium->hMetaFilePict = This->hmfp;
                 }
                 return S_OK;
             }
@@ -1412,7 +1411,7 @@ static void test_flushed_getdata(void)
     ok(hr == S_OK, "got %08lx\n", hr);
     ok(med.tymed == TYMED_ISTORAGE, "got %lx\n", med.tymed);
     if(SUCCEEDED(hr)) {
-        hr = IStorage_Stat(med.u.pstg, &stat, STATFLAG_NONAME);
+        hr = IStorage_Stat(med.pstg, &stat, STATFLAG_NONAME);
         ok(hr == S_OK, "got %08lx\n", hr);
         ok(stat.grfMode == (STGM_SHARE_EXCLUSIVE | STGM_READWRITE), "got %08lx\n", stat.grfMode);
         ReleaseStgMedium(&med);
@@ -1704,7 +1703,7 @@ static void test_nonole_clipboard(void)
     InitFormatEtc(fmt, CF_ENHMETAFILE, TYMED_ENHMF);
     hr = IDataObject_GetData(get, &fmt, &med);
     ok(hr == S_OK, "got %08lx\n", hr);
-    obj_type = GetObjectType(U(med).hEnhMetaFile);
+    obj_type = GetObjectType(med.hEnhMetaFile);
     ok(obj_type == OBJ_ENHMETAFILE, "got %ld\n", obj_type);
     if(SUCCEEDED(hr)) ReleaseStgMedium(&med);
 
@@ -1753,7 +1752,7 @@ static void test_getdatahere(void)
 
     med.pUnkForRelease = NULL;
     med.tymed = TYMED_HGLOBAL;
-    U(med).hGlobal = GlobalAlloc(GMEM_MOVEABLE, 100);
+    med.hGlobal = GlobalAlloc(GMEM_MOVEABLE, 100);
     hr = IDataObject_GetDataHere(get, &fmt, &med);
     ok(hr == S_OK, "got %08lx\n", hr);
     ok(med.tymed == TYMED_HGLOBAL, "got %lx\n", med.tymed);
@@ -1765,7 +1764,7 @@ static void test_getdatahere(void)
 
     med.pUnkForRelease = NULL;
     med.tymed = TYMED_HGLOBAL;
-    U(med).hGlobal = GlobalAlloc(GMEM_MOVEABLE, 100);
+    med.hGlobal = GlobalAlloc(GMEM_MOVEABLE, 100);
     hr = IDataObject_GetDataHere(get, &fmt, &med);
     ok(hr == S_OK, "got %08lx\n", hr);
     ok(med.tymed == TYMED_HGLOBAL, "got %lx\n", med.tymed);
@@ -1775,7 +1774,7 @@ static void test_getdatahere(void)
 
     med.pUnkForRelease = NULL;
     med.tymed = TYMED_HGLOBAL;
-    U(med).hGlobal = GlobalAlloc(GMEM_MOVEABLE, 1);
+    med.hGlobal = GlobalAlloc(GMEM_MOVEABLE, 1);
     hr = IDataObject_GetDataHere(get, &fmt, &med);
     ok(hr == E_FAIL, "got %08lx\n", hr);
     ok(med.tymed == TYMED_HGLOBAL, "got %lx\n", med.tymed);
@@ -1785,7 +1784,7 @@ static void test_getdatahere(void)
 
     med.pUnkForRelease = NULL;
     med.tymed = TYMED_ISTREAM;
-    CreateStreamOnHGlobal(NULL, TRUE, &U(med).pstm);
+    CreateStreamOnHGlobal(NULL, TRUE, &med.pstm);
     hr = IDataObject_GetDataHere(get, &fmt, &med);
     ok(hr == S_OK, "got %08lx\n", hr);
     ok(med.tymed == TYMED_ISTREAM, "got %lx\n", med.tymed);
@@ -1795,7 +1794,7 @@ static void test_getdatahere(void)
 
     med.pUnkForRelease = NULL;
     med.tymed = TYMED_ISTORAGE;
-    StgCreateDocfile(NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_DELETEONRELEASE, 0, &U(med).pstg);
+    StgCreateDocfile(NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_DELETEONRELEASE, 0, &med.pstg);
     hr = IDataObject_GetDataHere(get, &fmt, &med);
     ok(hr == E_FAIL, "got %08lx\n", hr);
     ok(med.tymed == TYMED_ISTORAGE, "got %lx\n", med.tymed);
@@ -1807,7 +1806,7 @@ static void test_getdatahere(void)
 
     med.pUnkForRelease = NULL;
     med.tymed = TYMED_HGLOBAL;
-    U(med).hGlobal = GlobalAlloc(GMEM_MOVEABLE, 100);
+    med.hGlobal = GlobalAlloc(GMEM_MOVEABLE, 100);
     hr = IDataObject_GetDataHere(get, &fmt, &med);
     ok(hr == S_OK, "got %08lx\n", hr);
     ok(med.tymed == TYMED_HGLOBAL, "got %lx\n", med.tymed);
@@ -1817,7 +1816,7 @@ static void test_getdatahere(void)
 
     med.pUnkForRelease = NULL;
     med.tymed = TYMED_ISTREAM;
-    CreateStreamOnHGlobal(NULL, TRUE, &U(med).pstm);
+    CreateStreamOnHGlobal(NULL, TRUE, &med.pstm);
     hr = IDataObject_GetDataHere(get, &fmt, &med);
     ok(hr == S_OK, "got %08lx\n", hr);
     ok(med.tymed == TYMED_ISTREAM, "got %lx\n", med.tymed);
@@ -1827,7 +1826,7 @@ static void test_getdatahere(void)
 
     med.pUnkForRelease = NULL;
     med.tymed = TYMED_ISTORAGE;
-    StgCreateDocfile(NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_DELETEONRELEASE, 0, &U(med).pstg);
+    StgCreateDocfile(NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_DELETEONRELEASE, 0, &med.pstg);
     hr = IDataObject_GetDataHere(get, &fmt, &med);
     ok(hr == E_FAIL, "got %08lx\n", hr);
     ok(med.tymed == TYMED_ISTORAGE, "got %lx\n", med.tymed);
@@ -1839,7 +1838,7 @@ static void test_getdatahere(void)
 
     med.pUnkForRelease = NULL;
     med.tymed = TYMED_HGLOBAL;
-    U(med).hGlobal = GlobalAlloc(GMEM_MOVEABLE, 3000);
+    med.hGlobal = GlobalAlloc(GMEM_MOVEABLE, 3000);
     hr = IDataObject_GetDataHere(get, &fmt, &med);
     ok(hr == S_OK, "got %08lx\n", hr);
     ok(med.tymed == TYMED_HGLOBAL, "got %lx\n", med.tymed);
@@ -1849,7 +1848,7 @@ static void test_getdatahere(void)
 
     med.pUnkForRelease = NULL;
     med.tymed = TYMED_ISTREAM;
-    CreateStreamOnHGlobal(NULL, TRUE, &U(med).pstm);
+    CreateStreamOnHGlobal(NULL, TRUE, &med.pstm);
     hr = IDataObject_GetDataHere(get, &fmt, &med);
     ok(hr == S_OK, "got %08lx\n", hr);
     ok(med.tymed == TYMED_ISTREAM, "got %lx\n", med.tymed);
@@ -1859,7 +1858,7 @@ static void test_getdatahere(void)
 
     med.pUnkForRelease = NULL;
     med.tymed = TYMED_ISTORAGE;
-    StgCreateDocfile(NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_DELETEONRELEASE, 0, &U(med).pstg);
+    StgCreateDocfile(NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_DELETEONRELEASE, 0, &med.pstg);
     hr = IDataObject_GetDataHere(get, &fmt, &med);
     ok(hr == S_OK, "got %08lx\n", hr);
     ok(med.tymed == TYMED_ISTORAGE, "got %lx\n", med.tymed);

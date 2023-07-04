@@ -1414,8 +1414,8 @@ static HRESULT WINAPI CustomMarshal_MarshalInterface(IMarshal *iface, IStream *s
 
     hr = IStream_Stat(stream, &stat, STATFLAG_DEFAULT);
     ok_ole_success(hr, IStream_Stat);
-    ok(U(stat.cbSize).LowPart == 0, "stream is not empty (%ld)\n", U(stat.cbSize).LowPart);
-    ok(U(stat.cbSize).HighPart == 0, "stream is not empty (%ld)\n", U(stat.cbSize).HighPart);
+    ok(stat.cbSize.LowPart == 0, "stream is not empty (%ld)\n", stat.cbSize.LowPart);
+    ok(stat.cbSize.HighPart == 0, "stream is not empty (%ld)\n", stat.cbSize.HighPart);
 
     hr = CoGetStandardMarshal(riid, (IUnknown*)iface,
             dwDestContext, NULL, mshlflags, &std_marshal);
