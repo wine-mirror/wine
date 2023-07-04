@@ -21,8 +21,9 @@
 /* Generated with:
  * gst-launch-1.0 videotestsrc num-buffers=4 pattern=smpte100 ! \
  *       video/x-raw,format=I420,width=64,height=64,framerate=30000/1001 ! \
- *       videoflip method=clockwise ! videoconvert ! \
- *       avimux ! filesink location=dlls/mfmediaengine/tests/i420-64x64.avi
+ *       videoflip method=clockwise ! videoconvert ! queue ! mux. \
+ *       audiotestsrc num-buffers=4 ! audioconvert ! audio/x-raw,rate=44100,channels=2 ! queue ! mux. \
+ *       avimux name=mux ! filesink location=dlls/mfmediaengine/tests/i420-64x64.avi
  */
 /* @makedep: i420-64x64.avi */
 i420-64x64.avi RCDATA i420-64x64.avi

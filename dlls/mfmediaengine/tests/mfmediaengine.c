@@ -1307,7 +1307,7 @@ static void test_TransferVideoFrame(void)
     res = 0;
     hr = IMFMediaEngineEx_GetNumberOfStreams(media_engine, &res);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(res == 1, "Unexpected stream count %lu.\n", res);
+    ok(res == 2, "Unexpected stream count %lu.\n", res);
 
     /* FIXME: Wine first video frame is often full of garbage, wait for another update */
     res = WaitForSingleObject(notify->ready_event, 500);
@@ -1483,7 +1483,7 @@ static HRESULT WINAPI passthrough_mft_AddInputStreams(IMFTransform *iface, DWORD
 static HRESULT WINAPI passthrough_mft_GetInputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
         IMFMediaType **type)
 {
-    static const GUID *types[] = { &MFMediaType_Video };
+    static const GUID *types[] = { &MFMediaType_Video, &MFMediaType_Audio };
     HRESULT hr;
 
     if (id)
@@ -1772,9 +1772,9 @@ HRESULT passthrough_mft_create(UINT32 index, struct passthrough_mft **out)
     return S_OK;
 }
 
-static void test_video_effect(void)
+static void test_effect(void)
 {
-    struct passthrough_mft *video_effect = NULL, *video_effect2 = NULL;
+    struct passthrough_mft *video_effect = NULL, *video_effect2 = NULL, *audio_effect = NULL, *audio_effect2 = NULL;
     struct test_transfer_notify *notify;
     IMFMediaEngineEx *media_engine_ex = NULL;
     ID3D11Texture2D *texture = NULL;
@@ -1782,6 +1782,7 @@ static void test_video_effect(void)
     ID3D11Device *device = NULL;
     D3D11_TEXTURE2D_DESC desc;
     IMFByteStream *stream;
+    IMFMediaSink *sink;
     RECT dst_rect;
     UINT token;
     HRESULT hr;
@@ -1836,6 +1837,20 @@ static void test_video_effect(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     EXPECT_REF(&video_effect2->IMFTransform_iface, 2);
 
+    hr = passthrough_mft_create(0, &audio_effect);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = passthrough_mft_create(1, &audio_effect2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaEngineEx_InsertAudioEffect(media_engine_ex, (IUnknown *)&audio_effect->IMFTransform_iface, FALSE);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine EXPECT_REF(&audio_effect->IMFTransform_iface, 2);
+
+    hr = IMFMediaEngineEx_InsertAudioEffect(media_engine_ex, (IUnknown *)&audio_effect2->IMFTransform_iface, FALSE);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine EXPECT_REF(&audio_effect2->IMFTransform_iface, 2);
+
     url = SysAllocString(L"i420-64x64.avi");
     hr = IMFMediaEngineEx_SetSourceFromByteStream(media_engine_ex, stream, url);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -1858,6 +1873,21 @@ static void test_video_effect(void)
     ok(video_effect->processing_count > 0, "Unexpected processing count %lu.\n", video_effect->processing_count);
     ok(video_effect2->processing_count > 0, "Unexpected processing count %lu.\n", video_effect2->processing_count);
 
+    if (SUCCEEDED(hr = MFCreateAudioRenderer(NULL, &sink)))
+    {
+        todo_wine
+        ok(audio_effect->processing_count > 0, "Unexpected processing count %lu.\n", audio_effect->processing_count);
+        todo_wine
+        ok(audio_effect2->processing_count > 0, "Unexpected processing count %lu.\n", audio_effect2->processing_count);
+
+        IMFMediaSink_Release(sink);
+    }
+    else if (hr == MF_E_NO_AUDIO_PLAYBACK_DEVICE)
+    {
+        ok(!audio_effect->processing_count, "Unexpected processing count %lu.\n", audio_effect->processing_count);
+        ok(!audio_effect2->processing_count, "Unexpected processing count %lu.\n", audio_effect2->processing_count);
+    }
+
 done:
     if (media_engine_ex)
     {
@@ -1871,6 +1901,17 @@ done:
         ID3D11Texture2D_Release(texture);
     if (device)
         ID3D11Device_Release(device);
+
+    if (audio_effect2)
+    {
+        ref = IMFTransform_Release(&audio_effect2->IMFTransform_iface);
+        ok(!ref, "Unexpected ref %lu.\n", ref);
+    }
+    if (audio_effect)
+    {
+        ref = IMFTransform_Release(&audio_effect->IMFTransform_iface);
+        ok(!ref, "Unexpected ref %lu.\n", ref);
+    }
 
     if (video_effect2)
     {
@@ -1917,7 +1958,7 @@ START_TEST(mfmediaengine)
     test_SetSourceFromByteStream();
     test_audio_configuration();
     test_TransferVideoFrame();
-    test_video_effect();
+    test_effect();
 
     IMFMediaEngineClassFactory_Release(factory);
 
