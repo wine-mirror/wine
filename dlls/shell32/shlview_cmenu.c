@@ -22,8 +22,6 @@
 #include <string.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "winerror.h"
 
 #include "windef.h"
@@ -331,7 +329,7 @@ static void DoCopyOrCut(ContextMenu *This, HWND hwnd, BOOL cut)
 static BOOL CALLBACK Properties_AddPropSheetCallback(HPROPSHEETPAGE hpage, LPARAM lparam)
 {
 	LPPROPSHEETHEADERW psh = (LPPROPSHEETHEADERW) lparam;
-	psh->u3.phpage[psh->nPages++] = hpage;
+	psh->phpage[psh->nPages++] = hpage;
 
 	return TRUE;
 }
@@ -595,7 +593,7 @@ static void init_file_properties_pages(IDataObject *dataobject, LPFNADDPROPSHEET
     hr = IDataObject_GetData(dataobject, &format, &stgm);
     if (FAILED(hr)) goto error;
 
-    if (!DragQueryFileW((HDROP)stgm.u.hGlobal, 0, props->path, ARRAY_SIZE(props->path)))
+    if (!DragQueryFileW((HDROP)stgm.hGlobal, 0, props->path, ARRAY_SIZE(props->path)))
     {
         ReleaseStgMedium(&stgm);
         goto error;
@@ -621,9 +619,9 @@ static void init_file_properties_pages(IDataObject *dataobject, LPFNADDPROPSHEET
     propsheet.dwFlags       = PSP_DEFAULT | PSP_USECALLBACK;
     propsheet.hInstance     = shell32_hInstance;
     if (props->attrib & FILE_ATTRIBUTE_DIRECTORY)
-        propsheet.u.pszTemplate = (LPWSTR)MAKEINTRESOURCE(IDD_FOLDER_PROPERTIES);
+        propsheet.pszTemplate = (LPWSTR)MAKEINTRESOURCE(IDD_FOLDER_PROPERTIES);
     else
-        propsheet.u.pszTemplate = (LPWSTR)MAKEINTRESOURCE(IDD_FILE_PROPERTIES);
+        propsheet.pszTemplate = (LPWSTR)MAKEINTRESOURCE(IDD_FILE_PROPERTIES);
     propsheet.pfnDlgProc    = file_properties_proc;
     propsheet.pfnCallback   = file_properties_callback;
     propsheet.lParam        = (LPARAM)props;
@@ -658,8 +656,8 @@ static void DoOpenProperties(ContextMenu *This, HWND hwnd)
 	psh.hwndParent = hwnd;
 	psh.dwFlags = PSH_PROPTITLE;
 	psh.nPages = 0;
-	psh.u3.phpage = hpages;
-	psh.u2.nStartPage = 0;
+	psh.phpage = hpages;
+	psh.nStartPage = 0;
 
 	_ILSimpleGetTextW(This->apidl[0], (LPVOID)wszFilename, MAX_PATH);
 	psh.pszCaption = (LPCWSTR)wszFilename;
@@ -1185,7 +1183,7 @@ static HRESULT DoPaste(ContextMenu *This)
 	    LPITEMIDLIST * apidl;
 	    LPITEMIDLIST pidl;
 
-	    LPIDA lpcida = GlobalLock(medium.u.hGlobal);
+	    LPIDA lpcida = GlobalLock(medium.hGlobal);
 	    TRACE("cida=%p\n", lpcida);
 	    if(lpcida)
 	    {
@@ -1198,7 +1196,7 @@ static HRESULT DoPaste(ContextMenu *This)
 	      }
 	      else
 	        hr = HRESULT_FROM_WIN32(GetLastError());
-	      GlobalUnlock(medium.u.hGlobal);
+	      GlobalUnlock(medium.hGlobal);
 	    }
 	    else
 	      hr = HRESULT_FROM_WIN32(GetLastError());
@@ -1215,14 +1213,14 @@ static HRESULT DoPaste(ContextMenu *This)
 	      UINT i, count;
 	      ITEMIDLIST **pidls;
 
-	      TRACE("CF_HDROP=%p\n", medium.u.hGlobal);
-	      count = DragQueryFileW(medium.u.hGlobal, -1, NULL, 0);
+	      TRACE("CF_HDROP=%p\n", medium.hGlobal);
+	      count = DragQueryFileW(medium.hGlobal, -1, NULL, 0);
 	      pidls = SHAlloc(count*sizeof(ITEMIDLIST*));
 	      if (pidls)
 	      {
 	        for (i = 0; i < count; i++)
 	        {
-	          DragQueryFileW(medium.u.hGlobal, i, path, ARRAY_SIZE(path));
+	          DragQueryFileW(medium.hGlobal, i, path, ARRAY_SIZE(path));
 	          if ((pidls[i] = ILCreateFromPathW(path)) == NULL)
 	          {
 	            hr = E_FAIL;

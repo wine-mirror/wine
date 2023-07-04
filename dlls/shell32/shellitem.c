@@ -22,8 +22,6 @@
 #include <stdarg.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
@@ -827,7 +825,7 @@ HRESULT WINAPI SHGetItemFromDataObject(IDataObject *pdtobj,
     ret = IDataObject_GetData(pdtobj, &fmt, &medium);
     if(SUCCEEDED(ret))
     {
-        LPIDA pida = GlobalLock(medium.u.hGlobal);
+        LPIDA pida = GlobalLock(medium.hGlobal);
 
         if((pida->cidl > 1 && !(dwFlags & DOGIF_ONLY_IF_ONE)) ||
            pida->cidl == 1)
@@ -846,8 +844,8 @@ HRESULT WINAPI SHGetItemFromDataObject(IDataObject *pdtobj,
             ret = E_FAIL;
         }
 
-        GlobalUnlock(medium.u.hGlobal);
-        GlobalFree(medium.u.hGlobal);
+        GlobalUnlock(medium.hGlobal);
+        GlobalFree(medium.hGlobal);
     }
 
     if(FAILED(ret) && !(dwFlags & DOGIF_NO_HDROP))
@@ -863,7 +861,7 @@ HRESULT WINAPI SHGetItemFromDataObject(IDataObject *pdtobj,
         ret = IDataObject_GetData(pdtobj, &fmt, &medium);
         if(SUCCEEDED(ret))
         {
-            DROPFILES *df = GlobalLock(medium.u.hGlobal);
+            DROPFILES *df = GlobalLock(medium.hGlobal);
             LPBYTE files = (LPBYTE)df + df->pFiles;
             BOOL multiple_files = FALSE;
 
@@ -891,8 +889,8 @@ HRESULT WINAPI SHGetItemFromDataObject(IDataObject *pdtobj,
                     ret = SHCreateItemFromParsingName(first_file, NULL, riid, ppv);
             }
 
-            GlobalUnlock(medium.u.hGlobal);
-            GlobalFree(medium.u.hGlobal);
+            GlobalUnlock(medium.hGlobal);
+            GlobalFree(medium.hGlobal);
         }
     }
 
@@ -1405,7 +1403,7 @@ HRESULT WINAPI SHCreateShellItemArrayFromDataObject(IDataObject *pdo, REFIID rii
     ret = IDataObject_GetData(pdo, &fmt, &medium);
     if(SUCCEEDED(ret))
     {
-        LPIDA pida = GlobalLock(medium.u.hGlobal);
+        LPIDA pida = GlobalLock(medium.hGlobal);
         LPCITEMIDLIST parent_pidl;
         LPCITEMIDLIST *children;
         UINT i;
@@ -1421,8 +1419,8 @@ HRESULT WINAPI SHCreateShellItemArrayFromDataObject(IDataObject *pdo, REFIID rii
 
         heap_free(children);
 
-        GlobalUnlock(medium.u.hGlobal);
-        GlobalFree(medium.u.hGlobal);
+        GlobalUnlock(medium.hGlobal);
+        GlobalFree(medium.hGlobal);
     }
 
     if(SUCCEEDED(ret))

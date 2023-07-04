@@ -24,8 +24,6 @@
 #include <stdio.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
@@ -715,7 +713,7 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetDisplayNameOf(IShellFolder2 *iface, 
     }
 
     strRet->uType = STRRET_CSTR;
-    lstrcpynA(strRet->u.cStr, szPath, MAX_PATH);
+    lstrcpynA(strRet->cStr, szPath, MAX_PATH);
 
     TRACE("--(%p)->(%s)\n", This, szPath);
     return S_OK;
@@ -799,7 +797,7 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetDetailsOf(IShellFolder2 *iface, LPCI
     if (!pidl)
         return SHELL32_GetColumnDetails(ControlPanelSFHeader, iColumn, psd);
 
-    psd->str.u.cStr[0] = 0x00;
+    psd->str.cStr[0] = 0x00;
     psd->str.uType = STRRET_CSTR;
     switch(iColumn)
     {
@@ -807,9 +805,9 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetDetailsOf(IShellFolder2 *iface, LPCI
         pcpanel = _ILGetCPanelPointer(pidl);
 
         if (pcpanel)
-            lstrcpyA(psd->str.u.cStr, pcpanel->szName+pcpanel->offsComment);
+            lstrcpyA(psd->str.cStr, pcpanel->szName+pcpanel->offsComment);
         else
-            _ILGetFileType(pidl, psd->str.u.cStr, MAX_PATH);
+            _ILGetFileType(pidl, psd->str.cStr, MAX_PATH);
         break;
 
     default:

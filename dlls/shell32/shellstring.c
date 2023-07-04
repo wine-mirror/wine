@@ -22,8 +22,6 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -67,14 +65,14 @@ BOOL WINAPI StrRetToStrNA(LPSTR dest, DWORD len, LPSTRRET src, const ITEMIDLIST 
     switch (src->uType)
     {
         case STRRET_WSTR:
-            WideCharToMultiByte(CP_ACP, 0, src->u.pOleStr, -1, dest, len, NULL, NULL);
-            CoTaskMemFree(src->u.pOleStr);
+            WideCharToMultiByte(CP_ACP, 0, src->pOleStr, -1, dest, len, NULL, NULL);
+            CoTaskMemFree(src->pOleStr);
             break;
         case STRRET_CSTR:
-            lstrcpynA(dest, src->u.cStr, len);
+            lstrcpynA(dest, src->cStr, len);
             break;
         case STRRET_OFFSET:
-            lstrcpynA(dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
+            lstrcpynA(dest, ((LPCSTR)&pidl->mkid)+src->uOffset, len);
             break;
         default:
             FIXME("unknown type %u!\n", src->uType);
@@ -98,15 +96,15 @@ BOOL WINAPI StrRetToStrNW(LPWSTR dest, DWORD len, LPSTRRET src, const ITEMIDLIST
     switch (src->uType)
     {
         case STRRET_WSTR:
-            lstrcpynW(dest, src->u.pOleStr, len);
-            CoTaskMemFree(src->u.pOleStr);
+            lstrcpynW(dest, src->pOleStr, len);
+            CoTaskMemFree(src->pOleStr);
             break;
         case STRRET_CSTR:
-            if (!MultiByteToWideChar(CP_ACP, 0, src->u.cStr, -1, dest, len) && len)
+            if (!MultiByteToWideChar(CP_ACP, 0, src->cStr, -1, dest, len) && len)
                 dest[len-1] = 0;
             break;
         case STRRET_OFFSET:
-            if (!MultiByteToWideChar(CP_ACP, 0, ((LPCSTR)&pidl->mkid)+src->u.uOffset, -1, dest, len)
+            if (!MultiByteToWideChar(CP_ACP, 0, ((LPCSTR)&pidl->mkid)+src->uOffset, -1, dest, len)
                     && len)
                 dest[len-1] = 0;
             break;

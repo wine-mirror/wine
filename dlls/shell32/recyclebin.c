@@ -21,7 +21,6 @@
  */
 
 #define COBJMACROS
-#define NONAMELESSUNION
 
 #include <stdarg.h>
 
@@ -915,7 +914,7 @@ static HRESULT WINAPI RecycleBin_GetDisplayNameOf(IShellFolder2 *This, LPCITEMID
 
     TRACE("(%p, %p, %lx, %p)\n", This, pidl, uFlags, pName);
     pName->uType = STRRET_WSTR;
-    return SHStrDupW(PathFindFileNameW(data->cFileName), &pName->u.pOleStr);
+    return SHStrDupW(PathFindFileNameW(data->cFileName), &pName->pOleStr);
 }
 
 static HRESULT WINAPI RecycleBin_SetNameOf(IShellFolder2 *This, HWND hwnd, LPCITEMIDLIST pidl, LPCOLESTR pszName,
@@ -1032,7 +1031,7 @@ static HRESULT WINAPI RecycleBin_GetDetailsOf(IShellFolder2 *iface, LPCITEMIDLIS
     }
     
     pDetails->str.uType = STRRET_WSTR;
-    return SHStrDupW(buffer, &pDetails->str.u.pOleStr);
+    return SHStrDupW(buffer, &pDetails->str.pOleStr);
 }
 
 static HRESULT WINAPI RecycleBin_MapColumnToSCID(IShellFolder2 *iface, UINT iColumn, SHCOLUMNID *pscid)

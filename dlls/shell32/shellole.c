@@ -24,8 +24,6 @@
 #include <string.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "shellapi.h"
@@ -699,7 +697,7 @@ HRESULT WINAPI SHPropStgCreate(IPropertySetStorage *psstg, REFFMTID fmtid,
 
         if(puCodePage) {
             prop.ulKind = PRSPEC_PROPID;
-            prop.u.propid = PID_CODEPAGE;
+            prop.propid = PID_CODEPAGE;
             hres = IPropertyStorage_ReadMultiple(*ppstg, 1, &prop, &ret);
             if(FAILED(hres) || ret.vt!=VT_I2)
                 *puCodePage = 0;
@@ -732,7 +730,7 @@ HRESULT WINAPI SHPropStgReadMultiple(IPropertyStorage *pps, UINT uCodePage,
         PROPVARIANT ret;
 
         prop.ulKind = PRSPEC_PROPID;
-        prop.u.propid = PID_CODEPAGE;
+        prop.propid = PID_CODEPAGE;
         hres = IPropertyStorage_ReadMultiple(pps, 1, &prop, &ret);
         if(FAILED(hres) || ret.vt!=VT_I2)
             return S_OK;
@@ -771,7 +769,7 @@ HRESULT WINAPI SHPropStgWriteMultiple(IPropertyStorage *pps, UINT *uCodePage,
         PROPVARIANT ret;
 
         prop.ulKind = PRSPEC_PROPID;
-        prop.u.propid = PID_CODEPAGE;
+        prop.propid = PID_CODEPAGE;
         hres = IPropertyStorage_ReadMultiple(pps, 1, &prop, &ret);
         if(FAILED(hres))
             return hres;

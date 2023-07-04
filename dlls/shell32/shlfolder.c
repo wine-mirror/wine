@@ -27,8 +27,6 @@
 #include <stdio.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
@@ -544,16 +542,16 @@ HRESULT SHELL32_GetColumnDetails(const shvheader *data, int column, SHELLDETAILS
 
     if (SHELL_OsIsUnicode())
     {
-        details->str.u.pOleStr = CoTaskMemAlloc(MAX_PATH * sizeof(WCHAR));
-        if (!details->str.u.pOleStr) return E_OUTOFMEMORY;
+        details->str.pOleStr = CoTaskMemAlloc(MAX_PATH * sizeof(WCHAR));
+        if (!details->str.pOleStr) return E_OUTOFMEMORY;
 
         details->str.uType = STRRET_WSTR;
-        LoadStringW(shell32_hInstance, data[column].colnameid, details->str.u.pOleStr, MAX_PATH);
+        LoadStringW(shell32_hInstance, data[column].colnameid, details->str.pOleStr, MAX_PATH);
     }
     else
     {
         details->str.uType = STRRET_CSTR;
-        LoadStringA(shell32_hInstance, data[column].colnameid, details->str.u.cStr, MAX_PATH);
+        LoadStringA(shell32_hInstance, data[column].colnameid, details->str.cStr, MAX_PATH);
     }
 
     return S_OK;
@@ -583,16 +581,16 @@ HRESULT shellfolder_get_file_details(IShellFolder2 *iface, LPCITEMIDLIST pidl, c
     case PID_STG_NAME:
         return IShellFolder2_GetDisplayNameOf( iface, pidl, SHGDN_NORMAL | SHGDN_INFOLDER, &psd->str );
     case PID_STG_SIZE:
-        _ILGetFileSize( pidl, psd->str.u.cStr, MAX_PATH );
+        _ILGetFileSize( pidl, psd->str.cStr, MAX_PATH );
         break;
     case PID_STG_STORAGETYPE:
-        _ILGetFileType( pidl, psd->str.u.cStr, MAX_PATH );
+        _ILGetFileType( pidl, psd->str.cStr, MAX_PATH );
         break;
     case PID_STG_WRITETIME:
-        _ILGetFileDate( pidl, psd->str.u.cStr, MAX_PATH );
+        _ILGetFileDate( pidl, psd->str.cStr, MAX_PATH );
         break;
     case PID_STG_ATTRIBUTES:
-        _ILGetFileAttributes( pidl, psd->str.u.cStr, MAX_PATH );
+        _ILGetFileAttributes( pidl, psd->str.cStr, MAX_PATH );
         break;
     }
     return S_OK;

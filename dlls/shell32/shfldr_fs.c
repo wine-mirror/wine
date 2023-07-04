@@ -26,8 +26,6 @@
 #include <stdio.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
@@ -891,18 +889,18 @@ IShellFolder_fnGetDisplayNameOf (IShellFolder2 * iface, LPCITEMIDLIST pidl,
         /* Win9x always returns ANSI strings, NT always returns Unicode strings */
         if (GetVersion() & 0x80000000) {
             strRet->uType = STRRET_CSTR;
-            if (!WideCharToMultiByte(CP_ACP, 0, pszPath, -1, strRet->u.cStr, MAX_PATH,
+            if (!WideCharToMultiByte(CP_ACP, 0, pszPath, -1, strRet->cStr, MAX_PATH,
                  NULL, NULL))
-                strRet->u.cStr[0] = '\0';
+                strRet->cStr[0] = '\0';
             CoTaskMemFree(pszPath);
         } else {
             strRet->uType = STRRET_WSTR;
-            strRet->u.pOleStr = pszPath;
+            strRet->pOleStr = pszPath;
         }
     } else
         CoTaskMemFree(pszPath);
 
-    TRACE ("-- (%p)->(%s)\n", This, strRet->uType == STRRET_CSTR ? strRet->u.cStr : debugstr_w(strRet->u.pOleStr));
+    TRACE ("-- (%p)->(%s)\n", This, strRet->uType == STRRET_CSTR ? strRet->cStr : debugstr_w(strRet->pOleStr));
     return hr;
 }
 
@@ -1730,13 +1728,13 @@ ISFDropTarget_DragEnter (IDropTarget * iface, IDataObject * pDataObject,
     if (_ILIsFolder(ILFindLastID(This->pidlRoot)) && /* Only drop to folders, not to files */
         SUCCEEDED(IDataObject_GetData(pDataObject, &format, &medium))) /* Only ShellIDList format */
     {
-        LPIDA pidaShellIDList = GlobalLock(medium.u.hGlobal);
+        LPIDA pidaShellIDList = GlobalLock(medium.hGlobal);
         This->drop_effects_mask |= DROPEFFECT_COPY|DROPEFFECT_LINK;
 
         if (pidaShellIDList) { /* Files can only be moved between two different folders */
             if (!ILIsEqual(HIDA_GetPIDLFolder(pidaShellIDList), This->pidlRoot))
                 This->drop_effects_mask |= DROPEFFECT_MOVE;
-            GlobalUnlock(medium.u.hGlobal);
+            GlobalUnlock(medium.hGlobal);
         }
     }
 
@@ -1790,7 +1788,7 @@ ISFDropTarget_Drop (IDropTarget * iface, IDataObject * pDataObject,
 
     if (medium.tymed == TYMED_HGLOBAL) {
         IShellFolder *psfSourceFolder, *psfDesktopFolder;
-        LPIDA pidaShellIDList = GlobalLock(medium.u.hGlobal);
+        LPIDA pidaShellIDList = GlobalLock(medium.hGlobal);
         STRRET strret;
         UINT i;
 
@@ -1799,7 +1797,7 @@ ISFDropTarget_Drop (IDropTarget * iface, IDataObject * pDataObject,
 
         hr = SHGetDesktopFolder(&psfDesktopFolder);
         if (FAILED(hr)) {
-            GlobalUnlock(medium.u.hGlobal);
+            GlobalUnlock(medium.hGlobal);
             return hr;
         }
 
@@ -1807,7 +1805,7 @@ ISFDropTarget_Drop (IDropTarget * iface, IDataObject * pDataObject,
                                        &IID_IShellFolder, (LPVOID*)&psfSourceFolder);
         IShellFolder_Release(psfDesktopFolder);
         if (FAILED(hr)) {
-            GlobalUnlock(medium.u.hGlobal);
+            GlobalUnlock(medium.hGlobal);
             return hr;
         }
 
@@ -1837,7 +1835,7 @@ ISFDropTarget_Drop (IDropTarget * iface, IDataObject * pDataObject,
         }
 
         IShellFolder_Release(psfSourceFolder);
-        GlobalUnlock(medium.u.hGlobal);
+        GlobalUnlock(medium.hGlobal);
         return hr;
     }
 

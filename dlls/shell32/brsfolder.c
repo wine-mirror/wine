@@ -25,8 +25,6 @@
 #include <string.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "wine/debug.h"
 #include "pidl.h"
 #include "shell32_main.h"
@@ -384,7 +382,7 @@ static HTREEITEM InsertTreeViewItem( browse_info *info, IShellFolder * lpsf,
 	lptvid->pEnumIL = pEnumIL;
 	GetNormalAndSelectedIcons(lptvid->lpifq, &tvi);
 
-	tvins.u.item       = tvi;
+	tvins.item         = tvi;
 	tvins.hInsertAfter = NULL;
 	tvins.hParent      = hParent;
 

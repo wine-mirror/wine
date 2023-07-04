@@ -25,8 +25,6 @@
 #include <stdio.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
@@ -703,21 +701,21 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDisplayNameOf (IShellFolder2 *iface,
         if (GetVersion() & 0x80000000)
         {
             strRet->uType = STRRET_CSTR;
-            if (!WideCharToMultiByte(CP_ACP, 0, pszPath, -1, strRet->u.cStr, MAX_PATH,
+            if (!WideCharToMultiByte(CP_ACP, 0, pszPath, -1, strRet->cStr, MAX_PATH,
                     NULL, NULL))
-                strRet->u.cStr[0] = '\0';
+                strRet->cStr[0] = '\0';
             CoTaskMemFree(pszPath);
         }
         else
         {
             strRet->uType = STRRET_WSTR;
-            strRet->u.pOleStr = pszPath;
+            strRet->pOleStr = pszPath;
         }
     }
     else
         CoTaskMemFree(pszPath);
 
-    TRACE ("-- (%p)->(%s)\n", This, strRet->uType == STRRET_CSTR ? strRet->u.cStr : debugstr_w(strRet->u.pOleStr));
+    TRACE ("-- (%p)->(%s)\n", This, strRet->uType == STRRET_CSTR ? strRet->cStr : debugstr_w(strRet->pOleStr));
     return hr;
 }
 
@@ -806,7 +804,7 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDetailsOf (IShellFolder2 *iface,
     if (!pidl)
         return SHELL32_GetColumnDetails(mycomputer_header, iColumn, psd);
 
-    psd->str.u.cStr[0] = 0;
+    psd->str.cStr[0] = 0;
     psd->str.uType = STRRET_CSTR;
 
     switch (iColumn)
@@ -820,8 +818,8 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDetailsOf (IShellFolder2 *iface,
                 break;
 
             psd->str.uType = STRRET_WSTR;
-            psd->str.u.pOleStr = CoTaskMemAlloc((MAX_PATH + 1) * sizeof(WCHAR));
-            StrFormatByteSizeW(bytes.QuadPart, psd->str.u.pOleStr, MAX_PATH);
+            psd->str.pOleStr = CoTaskMemAlloc((MAX_PATH + 1) * sizeof(WCHAR));
+            StrFormatByteSizeW(bytes.QuadPart, psd->str.pOleStr, MAX_PATH);
             break;
         case 3:        /* free size */
             if (!_ILIsDrive (pidl))
@@ -832,8 +830,8 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDetailsOf (IShellFolder2 *iface,
                 break;
 
             psd->str.uType = STRRET_WSTR;
-            psd->str.u.pOleStr = CoTaskMemAlloc((MAX_PATH + 1) * sizeof(WCHAR));
-            StrFormatByteSizeW(bytes.QuadPart, psd->str.u.pOleStr, MAX_PATH);
+            psd->str.pOleStr = CoTaskMemAlloc((MAX_PATH + 1) * sizeof(WCHAR));
+            StrFormatByteSizeW(bytes.QuadPart, psd->str.pOleStr, MAX_PATH);
             break;
         default:
             return shellfolder_get_file_details( iface, pidl, mycomputer_header, iColumn, psd );

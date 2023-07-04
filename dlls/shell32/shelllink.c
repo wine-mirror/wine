@@ -33,8 +33,6 @@
  */
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "wine/debug.h"
 #include "winerror.h"
 #include "windef.h"
@@ -2369,19 +2367,19 @@ ShellLink_ExtInit_Initialize( IShellExtInit* iface, LPCITEMIDLIST pidlFolder,
     if( FAILED( IDataObject_GetData( pdtobj, &format, &stgm ) ) )
         return r;
 
-    count = DragQueryFileW( stgm.u.hGlobal, -1, NULL, 0 );
+    count = DragQueryFileW( stgm.hGlobal, -1, NULL, 0 );
     if( count == 1 )
     {
         LPWSTR path;
 
-        count = DragQueryFileW( stgm.u.hGlobal, 0, NULL, 0 );
+        count = DragQueryFileW( stgm.hGlobal, 0, NULL, 0 );
         count++;
         path = malloc( count * sizeof(WCHAR) );
         if( path )
         {
             IPersistFile *pf = &This->IPersistFile_iface;
 
-            count = DragQueryFileW( stgm.u.hGlobal, 0, path, count );
+            count = DragQueryFileW( stgm.hGlobal, 0, path, count );
             r = IPersistFile_Load( pf, path, 0 );
             free( path );
         }
