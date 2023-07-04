@@ -379,6 +379,7 @@ typedef struct
     IADsOpenDSObject IADsOpenDSObject_iface;
     IDirectorySearch IDirectorySearch_iface;
     IDirectoryObject IDirectoryObject_iface;
+    IADsObjectOptions IADsObjectOptions_iface;
     LONG ref;
     LDAP *ld;
     BSTR host;
@@ -452,6 +453,13 @@ static HRESULT WINAPI ldapns_QueryInterface(IADs *iface, REFIID riid, void **obj
     {
         IADs_AddRef(iface);
         *obj = &ldap->IDirectoryObject_iface;
+        return S_OK;
+    }
+
+    if (IsEqualGUID(riid, &IID_IADsObjectOptions))
+    {
+        IADs_AddRef(iface);
+        *obj = &ldap->IADsObjectOptions_iface;
         return S_OK;
     }
 
@@ -2176,6 +2184,95 @@ static const IDirectoryObjectVtbl IDirectoryObject_vtbl =
     dirobj_DeleteDSObject
 };
 
+static inline LDAP_namespace *impl_from_IADsObjectOptions(IADsObjectOptions *iface)
+{
+    return CONTAINING_RECORD(iface, LDAP_namespace, IADsObjectOptions_iface);
+}
+
+static HRESULT WINAPI options_QueryInterface(IADsObjectOptions *iface, REFIID riid, void **obj)
+{
+    LDAP_namespace *ldap = impl_from_IADsObjectOptions(iface);
+
+    TRACE("%p,%s,%p\n", iface, debugstr_guid(riid), obj);
+
+    if (!riid || !obj) return E_INVALIDARG;
+
+    if (IsEqualGUID(riid, &IID_IADsObjectOptions) ||
+        IsEqualGUID(riid, &IID_IDispatch) ||
+        IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IADsObjectOptions_AddRef(iface);
+        *obj = iface;
+        return S_OK;
+    }
+
+    return IADs_QueryInterface(&ldap->IADs_iface, riid, obj);
+}
+
+static ULONG WINAPI options_AddRef(IADsObjectOptions *iface)
+{
+    LDAP_namespace *ldap = impl_from_IADsObjectOptions(iface);
+    return IADs_AddRef(&ldap->IADs_iface);
+}
+
+static ULONG WINAPI options_Release(IADsObjectOptions *iface)
+{
+    LDAP_namespace *ldap = impl_from_IADsObjectOptions(iface);
+    return IADs_Release(&ldap->IADs_iface);
+}
+
+static HRESULT WINAPI options_GetTypeInfoCount(IADsObjectOptions *iface, UINT *count)
+{
+    FIXME("%p,%p: stub\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI options_GetTypeInfo(IADsObjectOptions *iface, UINT index, LCID lcid, ITypeInfo **info)
+{
+    FIXME("%p,%u,%#lx,%p: stub\n", iface, index, lcid, info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI options_GetIDsOfNames(IADsObjectOptions *iface, REFIID riid, LPOLESTR *names,
+                                            UINT count, LCID lcid, DISPID *dispid)
+{
+    FIXME("%p,%s,%p,%u,%lu,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI options_Invoke(IADsObjectOptions *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
+                                     DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
+{
+    FIXME("%p,%ld,%s,%04lx,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
+          params, result, excepinfo, argerr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI options_GetOption(IADsObjectOptions *iface, LONG option, VARIANT *var)
+{
+    FIXME("%p,%ld,%p: stub\n", iface, option, var);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI options_SetOption(IADsObjectOptions *iface, LONG option, VARIANT var)
+{
+    FIXME("%p,%ld,%s: stub\n", iface, option, wine_dbgstr_variant(&var));
+    return E_NOTIMPL;
+}
+
+static const IADsObjectOptionsVtbl IADsObjectOptions_vtbl =
+{
+    options_QueryInterface,
+    options_AddRef,
+    options_Release,
+    options_GetTypeInfoCount,
+    options_GetTypeInfo,
+    options_GetIDsOfNames,
+    options_Invoke,
+    options_GetOption,
+    options_SetOption
+};
+
 static HRESULT LDAPNamespace_create(REFIID riid, void **obj)
 {
     LDAP_namespace *ldap;
@@ -2188,6 +2285,7 @@ static HRESULT LDAPNamespace_create(REFIID riid, void **obj)
     ldap->IADsOpenDSObject_iface.lpVtbl = &IADsOpenDSObject_vtbl;
     ldap->IDirectorySearch_iface.lpVtbl = &IDirectorySearch_vtbl;
     ldap->IDirectoryObject_iface.lpVtbl = &IDirectoryObject_vtbl;
+    ldap->IADsObjectOptions_iface.lpVtbl = &IADsObjectOptions_vtbl;
     ldap->ref = 1;
     ldap->ld = NULL;
     ldap->host = NULL;

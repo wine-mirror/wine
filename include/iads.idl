@@ -487,6 +487,23 @@ interface IADs : IDispatch
 }
 
 /*****************************************************************************
+ *    IADsObjectOptions interface
+ */
+[
+    odl,
+    uuid(46F14FDA-232B-11D1-A808-00C04FD8D5A8),
+    dual,
+    oleautomation
+]
+interface IADsObjectOptions : IDispatch
+{
+    [id(0x00000002)]
+    HRESULT GetOption([in] long option, [out, retval] VARIANT *var);
+    [id(0x00000003)]
+    HRESULT SetOption([in] long option, [in] VARIANT var);
+}
+
+/*****************************************************************************
  *    IADsMembers interface
  */
 [
