@@ -3362,13 +3362,13 @@ static void session_deliver_pending_samples(struct media_session *session, IMFTo
 
 static HRESULT session_request_sample_from_node(struct media_session *session, IMFTopologyNode *node, DWORD output)
 {
-    IMFTopologyNode *downstream_node, *upstream_node;
-    DWORD downstream_input, upstream_output;
+    IMFTopologyNode *down_node;
     struct topo_node *topo_node;
     MF_TOPOLOGY_TYPE node_type;
+    HRESULT hr = S_OK;
     IMFSample *sample;
     TOPOID node_id;
-    HRESULT hr;
+    DWORD input;
 
     IMFTopologyNode_GetNodeType(node, &node_type);
     IMFTopologyNode_GetTopoNodeID(node, &node_id);
@@ -3385,27 +3385,29 @@ static HRESULT session_request_sample_from_node(struct media_session *session, I
         {
             struct transform_stream *stream = &topo_node->u.transform.outputs[output];
 
-            if (FAILED(hr = transform_stream_pop_sample(stream, &sample)))
+            if (FAILED(hr = IMFTopologyNode_GetOutput(node, output, &down_node, &input)))
             {
-                /* Forward request to upstream node. */
-                if (SUCCEEDED(hr = IMFTopologyNode_GetInput(node, 0 /* FIXME */, &upstream_node, &upstream_output)))
-                {
-                    if (SUCCEEDED(hr = session_request_sample_from_node(session, upstream_node, upstream_output)))
-                        stream->requests++;
-                    IMFTopologyNode_Release(upstream_node);
-                }
+                WARN("Failed to node %p/%lu output, hr %#lx.\n", node, output, hr);
+                break;
+            }
+
+            if (SUCCEEDED(transform_stream_pop_sample(stream, &sample)))
+            {
+                session_deliver_sample_to_node(session, down_node, input, sample);
+                IMFSample_Release(sample);
+            }
+            else if (transform_node_has_requests(topo_node))
+            {
+                /* there's already requests pending, just increase the counter */
+                stream->requests++;
             }
             else
             {
-                if (SUCCEEDED(hr = IMFTopologyNode_GetOutput(node, output, &downstream_node, &downstream_input)))
-                {
-                    session_deliver_sample_to_node(session, downstream_node, downstream_input, sample);
-                    IMFTopologyNode_Release(downstream_node);
-                }
-
-                IMFSample_Release(sample);
+                stream->requests++;
+                transform_node_deliver_samples(session, topo_node);
             }
 
+            IMFTopologyNode_Release(down_node);
             break;
         }
         case MF_TOPOLOGY_TEE_NODE:
