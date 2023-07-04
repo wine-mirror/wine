@@ -33,10 +33,10 @@
 #include "austream.h"
 #include "amstream.h"
 
-HRESULT multimedia_stream_create(IUnknown *outer, void **out) DECLSPEC_HIDDEN;
-HRESULT AMAudioData_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
-HRESULT filter_create(IUnknown *outer, void **out) DECLSPEC_HIDDEN;
-HRESULT ddraw_stream_create(IUnknown *outer, void **out) DECLSPEC_HIDDEN;
-HRESULT audio_stream_create(IUnknown *outer, void **out) DECLSPEC_HIDDEN;
+HRESULT multimedia_stream_create(IUnknown *outer, void **out);
+HRESULT AMAudioData_create(IUnknown *pUnkOuter, LPVOID *ppObj);
+HRESULT filter_create(IUnknown *outer, void **out);
+HRESULT ddraw_stream_create(IUnknown *outer, void **out);
+HRESULT audio_stream_create(IUnknown *outer, void **out);
 
 #endif /* __AMSTREAM_PRIVATE_INCLUDED__ */
