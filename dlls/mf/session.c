@@ -200,6 +200,7 @@ struct topo_node
             struct transform_stream *inputs;
             DWORD *input_map;
             unsigned int input_count;
+            unsigned int next_input;
 
             struct transform_stream *outputs;
             DWORD *output_map;
@@ -693,7 +694,7 @@ static HRESULT transform_stream_pop_sample(struct transform_stream *stream, IMFS
     struct list *ptr;
 
     if (!(ptr = list_head(&stream->samples)))
-        return E_FAIL;
+        return MF_E_TRANSFORM_NEED_MORE_INPUT;
 
     entry = LIST_ENTRY(ptr, struct sample, entry);
     list_remove(&entry->entry);
@@ -3185,6 +3186,17 @@ static BOOL transform_node_is_drained(struct topo_node *topo_node)
     return TRUE;
 }
 
+static BOOL transform_node_has_requests(struct topo_node *topo_node)
+{
+    UINT i;
+
+    for (i = 0; i < topo_node->u.transform.output_count; i++)
+        if (topo_node->u.transform.outputs[i].requests)
+            return TRUE;
+
+    return FALSE;
+}
+
 static HRESULT transform_node_push_sample(const struct media_session *session, struct topo_node *topo_node,
         UINT input, IMFSample *sample)
 {
@@ -3219,10 +3231,10 @@ static void transform_node_deliver_samples(struct media_session *session, struct
     BOOL drained = transform_node_is_drained(topo_node);
     DWORD output, input;
     IMFSample *sample;
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     /* Push down all available output. */
-    for (output = 0; output < topo_node->u.transform.output_count; ++output)
+    for (output = 0; SUCCEEDED(hr) && output < topo_node->u.transform.output_count; ++output)
     {
         struct transform_stream *stream = &topo_node->u.transform.outputs[output];
 
@@ -3232,8 +3244,17 @@ static void transform_node_deliver_samples(struct media_session *session, struct
             continue;
         }
 
-        while (stream->requests && SUCCEEDED(hr = transform_stream_pop_sample(stream, &sample)))
+        while (stream->requests)
         {
+            if (FAILED(hr = transform_stream_pop_sample(stream, &sample)))
+            {
+                /* try getting more samples by calling IMFTransform_ProcessOutput */
+                if (FAILED(hr = transform_node_pull_samples(session, topo_node)))
+                    break;
+                if (FAILED(hr = transform_stream_pop_sample(stream, &sample)))
+                    break;
+            }
+
             session_deliver_sample_to_node(session, down_node, input, sample);
             stream->requests--;
             IMFSample_Release(sample);
@@ -3246,6 +3267,25 @@ static void transform_node_deliver_samples(struct media_session *session, struct
         }
 
         IMFTopologyNode_Release(down_node);
+    }
+
+    if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT && transform_node_has_requests(topo_node))
+    {
+        struct transform_stream *stream;
+
+        input = topo_node->u.transform.next_input++ % topo_node->u.transform.input_count;
+        stream = &topo_node->u.transform.inputs[input];
+
+        if (SUCCEEDED(transform_stream_pop_sample(stream, &sample)))
+            session_deliver_sample_to_node(session, topo_node->node, input, sample);
+        else if (FAILED(hr = IMFTopologyNode_GetInput(topo_node->node, input, &up_node, &output)))
+            WARN("Failed to get node %p/%lu input, hr %#lx\n", topo_node->node, input, hr);
+        else
+        {
+            if (FAILED(hr = session_request_sample_from_node(session, up_node, output)))
+                WARN("Failed to request sample from upstream node %p/%lu, hr %#lx\n", up_node, output, hr);
+            IMFTopologyNode_Release(up_node);
+        }
     }
 }
 
