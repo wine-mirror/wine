@@ -34,9 +34,9 @@
 #include "qedit.h"
 #include "wine/strmbase.h"
 
-HRESULT timeline_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
-HRESULT media_detector_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
-HRESULT null_renderer_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
-HRESULT sample_grabber_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT timeline_create(IUnknown *outer, IUnknown **out);
+HRESULT media_detector_create(IUnknown *outer, IUnknown **out);
+HRESULT null_renderer_create(IUnknown *outer, IUnknown **out);
+HRESULT sample_grabber_create(IUnknown *outer, IUnknown **out);
 
 #endif /* __QEDIT_PRIVATE_INCLUDED__ */
