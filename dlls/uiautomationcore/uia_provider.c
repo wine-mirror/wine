@@ -1133,7 +1133,7 @@ static const ILegacyIAccessibleProviderVtbl msaa_acc_provider_vtbl = {
     msaa_acc_provider_get_DefaultAction,
 };
 
-HRESULT create_msaa_provider(IAccessible *acc, long child_id, HWND hwnd, BOOL known_root_acc,
+HRESULT create_msaa_provider(IAccessible *acc, LONG child_id, HWND hwnd, BOOL known_root_acc,
         IRawElementProviderSimple **elprov)
 {
     struct msaa_provider *msaa_prov = heap_alloc_zero(sizeof(*msaa_prov));
@@ -1172,7 +1172,7 @@ HRESULT create_msaa_provider(IAccessible *acc, long child_id, HWND hwnd, BOOL kn
 /***********************************************************************
  *          UiaProviderFromIAccessible (uiautomationcore.@)
  */
-HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, long child_id, DWORD flags,
+HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, LONG child_id, DWORD flags,
         IRawElementProviderSimple **elprov)
 {
     IServiceProvider *serv_prov;

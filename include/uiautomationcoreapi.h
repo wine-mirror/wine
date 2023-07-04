@@ -537,7 +537,7 @@ void WINAPI UiaRegisterProviderCallback(UiaProviderCallback *pCallback);
 LRESULT WINAPI UiaReturnRawElementProvider(HWND hwnd, WPARAM wParam, LPARAM lParam, IRawElementProviderSimple *elprov);
 BOOL WINAPI UiaTextRangeRelease(HUIATEXTRANGE hobj);
 HRESULT WINAPI UiaHostProviderFromHwnd(HWND hwnd, IRawElementProviderSimple **elprov);
-HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, long child_id, DWORD flags, IRawElementProviderSimple **elprov);
+HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, LONG child_id, DWORD flags, IRawElementProviderSimple **elprov);
 HRESULT WINAPI UiaGetPropertyValue(HUIANODE huianode, PROPERTYID prop_id, VARIANT *out_val);
 HRESULT WINAPI UiaNodeFromProvider(IRawElementProviderSimple *elprov, HUIANODE *huianode);
 BOOL WINAPI UiaNodeRelease(HUIANODE huianode);

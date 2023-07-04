@@ -29,7 +29,7 @@
 
 #include "wine/test.h"
 
-static HRESULT (WINAPI *pUiaProviderFromIAccessible)(IAccessible *, long, DWORD, IRawElementProviderSimple **);
+static HRESULT (WINAPI *pUiaProviderFromIAccessible)(IAccessible *, LONG, DWORD, IRawElementProviderSimple **);
 static HRESULT (WINAPI *pUiaDisconnectProvider)(IRawElementProviderSimple *);
 
 #define DEFINE_EXPECT(func) \

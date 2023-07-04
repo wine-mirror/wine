@@ -539,7 +539,7 @@ static HRESULT WINAPI uia_node_get_hwnd(IWineUiaNode *iface, ULONG *out_hwnd)
     return S_OK;
 }
 
-static HRESULT WINAPI uia_node_attach_event(IWineUiaNode *iface, long proc_id, long event_cookie,
+static HRESULT WINAPI uia_node_attach_event(IWineUiaNode *iface, LONG proc_id, LONG event_cookie,
         IWineUiaEvent **ret_event)
 {
     struct uia_node *node = impl_from_IWineUiaNode(iface);

@@ -562,7 +562,7 @@ static ULONG WINAPI uia_event_Release(IWineUiaEvent *iface)
     return ref;
 }
 
-static HRESULT WINAPI uia_event_advise_events(IWineUiaEvent *iface, BOOL advise_added, long adviser_start_idx)
+static HRESULT WINAPI uia_event_advise_events(IWineUiaEvent *iface, BOOL advise_added, LONG adviser_start_idx)
 {
     struct uia_event *event = impl_from_IWineUiaEvent(iface);
     HRESULT hr;
@@ -607,7 +607,7 @@ static HRESULT WINAPI uia_event_advise_events(IWineUiaEvent *iface, BOOL advise_
     return S_OK;
 }
 
-static HRESULT WINAPI uia_event_set_event_data(IWineUiaEvent *iface, const GUID *event_guid, long scope,
+static HRESULT WINAPI uia_event_set_event_data(IWineUiaEvent *iface, const GUID *event_guid, LONG scope,
         VARIANT runtime_id, IWineUiaEvent *event_iface)
 {
     struct uia_event *event = impl_from_IWineUiaEvent(iface);
@@ -1042,7 +1042,7 @@ HRESULT uia_event_add_serverside_event_adviser(IWineUiaEvent *serverside_event, 
     return hr;
 }
 
-static HRESULT uia_event_advise(struct uia_event *event, BOOL advise_added, long start_idx)
+static HRESULT uia_event_advise(struct uia_event *event, BOOL advise_added, LONG start_idx)
 {
     IWineUiaEvent *event_iface;
     HRESULT hr;
