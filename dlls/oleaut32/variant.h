@@ -74,26 +74,6 @@
 /* Value of sign for a positive decimal number */
 #define DECIMAL_POS 0
 
-/* Native headers don't change the union ordering for DECIMAL sign/scale (duh).
- * This means that the signscale member is only useful for setting both members to 0.
- * SIGNSCALE creates endian-correct values so that we can properly set both at once
- * to values other than 0.
- */
-#ifdef WORDS_BIGENDIAN
-#define SIGNSCALE(sign,scale) (((scale) << 8) | sign)
-#else
-#define SIGNSCALE(sign,scale) (((sign) << 8) | scale)
-#endif
-
-/* Macros for getting at a DECIMAL's parts */
-#define DEC_SIGN(d)      ((d)->u.s.sign)
-#define DEC_SCALE(d)     ((d)->u.s.scale)
-#define DEC_SIGNSCALE(d) ((d)->u.signscale)
-#define DEC_HI32(d)      ((d)->Hi32)
-#define DEC_MID32(d)     ((d)->u1.s1.Mid32)
-#define DEC_LO32(d)      ((d)->u1.s1.Lo32)
-#define DEC_LO64(d)      ((d)->u1.Lo64)
-
 #define DEC_MAX_SCALE    28 /* Maximum scale for a decimal */
 
 /* Internal flags for low level conversion functions */
