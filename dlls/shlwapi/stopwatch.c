@@ -27,8 +27,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"

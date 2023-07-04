@@ -24,8 +24,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #define NO_SHLWAPI_REG
@@ -220,16 +218,16 @@ HRESULT WINAPI StrRetToBufA (LPSTRRET src, const ITEMIDLIST *pidl, LPSTR dest, U
 	switch (src->uType)
 	{
 	  case STRRET_WSTR:
-	    WideCharToMultiByte(CP_ACP, 0, src->u.pOleStr, -1, dest, len, NULL, NULL);
-	    CoTaskMemFree(src->u.pOleStr);
+	    WideCharToMultiByte(CP_ACP, 0, src->pOleStr, -1, dest, len, NULL, NULL);
+	    CoTaskMemFree(src->pOleStr);
 	    break;
 
 	  case STRRET_CSTR:
-            lstrcpynA(dest, src->u.cStr, len);
+            lstrcpynA(dest, src->cStr, len);
 	    break;
 
 	  case STRRET_OFFSET:
-            lstrcpynA(dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
+            lstrcpynA(dest, ((LPCSTR)&pidl->mkid)+src->uOffset, len);
 	    break;
 
 	  default:
@@ -263,12 +261,12 @@ HRESULT WINAPI StrRetToBufW (LPSTRRET src, const ITEMIDLIST *pidl, LPWSTR dest, 
     switch (src->uType) {
     case STRRET_WSTR: {
         size_t dst_len;
-        if (!src->u.pOleStr)
+        if (!src->pOleStr)
             return E_FAIL;
-        dst_len = lstrlenW(src->u.pOleStr);
-        memcpy(dest, src->u.pOleStr, min(dst_len, len-1) * sizeof(WCHAR));
+        dst_len = lstrlenW(src->pOleStr);
+        memcpy(dest, src->pOleStr, min(dst_len, len-1) * sizeof(WCHAR));
         dest[min(dst_len, len-1)] = 0;
-        CoTaskMemFree(src->u.pOleStr);
+        CoTaskMemFree(src->pOleStr);
         if (len <= dst_len)
         {
             dest[0] = 0;
@@ -278,14 +276,14 @@ HRESULT WINAPI StrRetToBufW (LPSTRRET src, const ITEMIDLIST *pidl, LPWSTR dest, 
     }
 
     case STRRET_CSTR:
-        if (!MultiByteToWideChar( CP_ACP, 0, src->u.cStr, -1, dest, len ))
+        if (!MultiByteToWideChar( CP_ACP, 0, src->cStr, -1, dest, len ))
             dest[len-1] = 0;
         break;
 
     case STRRET_OFFSET:
         if (pidl)
 	{
-            if (!MultiByteToWideChar( CP_ACP, 0, ((LPCSTR)&pidl->mkid)+src->u.uOffset, -1,
+            if (!MultiByteToWideChar( CP_ACP, 0, ((LPCSTR)&pidl->mkid)+src->uOffset, -1,
                                       dest, len ))
                 dest[len-1] = 0;
         }
@@ -320,16 +318,16 @@ HRESULT WINAPI StrRetToStrA(LPSTRRET lpStrRet, const ITEMIDLIST *pidl, LPSTR *pp
   switch (lpStrRet->uType)
   {
   case STRRET_WSTR:
-    hRet = _SHStrDupAW(lpStrRet->u.pOleStr, ppszName);
-    CoTaskMemFree(lpStrRet->u.pOleStr);
+    hRet = _SHStrDupAW(lpStrRet->pOleStr, ppszName);
+    CoTaskMemFree(lpStrRet->pOleStr);
     break;
 
   case STRRET_CSTR:
-    hRet = _SHStrDupAA(lpStrRet->u.cStr, ppszName);
+    hRet = _SHStrDupAA(lpStrRet->cStr, ppszName);
     break;
 
   case STRRET_OFFSET:
-    hRet = _SHStrDupAA(((LPCSTR)&pidl->mkid) + lpStrRet->u.uOffset, ppszName);
+    hRet = _SHStrDupAA(((LPCSTR)&pidl->mkid) + lpStrRet->uOffset, ppszName);
     break;
 
   default:
@@ -351,16 +349,16 @@ HRESULT WINAPI StrRetToStrW(LPSTRRET lpStrRet, const ITEMIDLIST *pidl, LPWSTR *p
   switch (lpStrRet->uType)
   {
   case STRRET_WSTR:
-    hRet = SHStrDupW(lpStrRet->u.pOleStr, ppszName);
-    CoTaskMemFree(lpStrRet->u.pOleStr);
+    hRet = SHStrDupW(lpStrRet->pOleStr, ppszName);
+    CoTaskMemFree(lpStrRet->pOleStr);
     break;
 
   case STRRET_CSTR:
-    hRet = SHStrDupA(lpStrRet->u.cStr, ppszName);
+    hRet = SHStrDupA(lpStrRet->cStr, ppszName);
     break;
 
   case STRRET_OFFSET:
-    hRet = SHStrDupA(((LPCSTR)&pidl->mkid) + lpStrRet->u.uOffset, ppszName);
+    hRet = SHStrDupA(((LPCSTR)&pidl->mkid) + lpStrRet->uOffset, ppszName);
     break;
 
   default:
@@ -414,18 +412,18 @@ HRESULT WINAPI StrRetToBSTR(STRRET *lpStrRet, LPCITEMIDLIST pidl, BSTR* pBstrOut
   switch (lpStrRet->uType)
   {
   case STRRET_WSTR:
-    *pBstrOut = SysAllocString(lpStrRet->u.pOleStr);
+    *pBstrOut = SysAllocString(lpStrRet->pOleStr);
     if (*pBstrOut)
       hRet = S_OK;
-    CoTaskMemFree(lpStrRet->u.pOleStr);
+    CoTaskMemFree(lpStrRet->pOleStr);
     break;
 
   case STRRET_CSTR:
-    hRet = _SHStrDupAToBSTR(lpStrRet->u.cStr, pBstrOut);
+    hRet = _SHStrDupAToBSTR(lpStrRet->cStr, pBstrOut);
     break;
 
   case STRRET_OFFSET:
-    hRet = _SHStrDupAToBSTR(((LPCSTR)&pidl->mkid) + lpStrRet->u.uOffset, pBstrOut);
+    hRet = _SHStrDupAToBSTR(((LPCSTR)&pidl->mkid) + lpStrRet->uOffset, pBstrOut);
     break;
 
   default:
