@@ -101,13 +101,13 @@ static BOOL has_locales;
 
 #define CONVERT_CY(func,val) in.int64 = (LONGLONG)(val * CY_MULTIPLIER); hres = func(in, &out)
 
-#define CONVERT_CY64(func,hi,lo) S(in).Hi = hi; S(in).Lo = lo; in.int64 *= CY_MULTIPLIER; hres = func(in, &out)
+#define CONVERT_CY64(func,hi,lo) in.Hi = hi; in.Lo = lo; in.int64 *= CY_MULTIPLIER; hres = func(in, &out)
 
-#define SETDEC(dec, scl, sgn, hi, lo) S(U(dec)).scale = (BYTE)scl; S(U(dec)).sign = (BYTE)sgn; \
-  dec.Hi32 = (ULONG)hi; U1(dec).Lo64 = (ULONG64)lo
+#define SETDEC(dec, scl, sgn, hi, lo) dec.scale = (BYTE)scl; dec.sign = (BYTE)sgn; \
+  dec.Hi32 = (ULONG)hi; dec.Lo64 = (ULONG64)lo
 
-#define SETDEC64(dec, scl, sgn, hi, mid, lo) S(U(dec)).scale = (BYTE)scl; S(U(dec)).sign = (BYTE)sgn; \
-  dec.Hi32 = (ULONG)hi; S1(U1(dec)).Mid32 = mid; S1(U1(dec)).Lo32 = lo;
+#define SETDEC64(dec, scl, sgn, hi, mid, lo) dec.scale = (BYTE)scl; dec.sign = (BYTE)sgn; \
+  dec.Hi32 = (ULONG)hi; dec.Mid32 = mid; dec.Lo32 = lo;
 
 #define CONVERT_DEC(func,scl,sgn,hi,lo) SETDEC(in,scl,sgn,hi,lo); hres = func(&in, &out)
 
@@ -210,7 +210,7 @@ static BOOL has_locales;
   hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, VT_CY); \
   ok(hres == S_OK && V_VT(&vDst) == VT_CY && V_CY(&vDst).int64 == CY_MULTIPLIER, \
      "->VT_CY hres=0x%lX, type=%d (should be VT_CY), value (%08lx,%08lx) (should be CY_MULTIPLIER)\n", \
-     hres, V_VT(&vDst), S(V_CY(&vDst)).Hi, S(V_CY(&vDst)).Lo); \
+     hres, V_VT(&vDst), V_CY(&vDst).Hi, V_CY(&vDst).Lo); \
   if (V_VT(&vSrc) != VT_DATE) \
   { \
     hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, VT_BSTR); \
@@ -221,11 +221,11 @@ static BOOL has_locales;
   } \
   hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, VT_DECIMAL); \
   ok(hres == S_OK && V_VT(&vDst) == VT_DECIMAL && \
-     S(U(V_DECIMAL(&vDst))).sign == 0 && S(U(V_DECIMAL(&vDst))).scale == 0 && \
-     V_DECIMAL(&vDst).Hi32 == 0 && U1(V_DECIMAL(&vDst)).Lo64 == (ULONGLONG)in, \
+     V_DECIMAL(&vDst).sign == 0 && V_DECIMAL(&vDst).scale == 0 && \
+     V_DECIMAL(&vDst).Hi32 == 0 && V_DECIMAL(&vDst).Lo64 == (ULONGLONG)in, \
      "->VT_DECIMAL hres=0x%lX, type=%d (should be VT_DECIMAL), sign=%d, scale=%d, hi=%lu, lo=(%8lx %8lx),\n", \
-     hres, V_VT(&vDst), S(U(V_DECIMAL(&vDst))).sign, S(U(V_DECIMAL(&vDst))).scale, \
-     V_DECIMAL(&vDst).Hi32, S1(U1(V_DECIMAL(&vDst))).Mid32, S1(U1(V_DECIMAL(&vDst))).Lo32); \
+     hres, V_VT(&vDst), V_DECIMAL(&vDst).sign, V_DECIMAL(&vDst).scale, \
+     V_DECIMAL(&vDst).Hi32, V_DECIMAL(&vDst).Mid32, V_DECIMAL(&vDst).Lo32); \
   hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, VT_EMPTY); \
   ok(hres == S_OK && V_VT(&vDst) == VT_EMPTY, "->VT_EMPTY hres=0x%lX, type=%d (should be VT_EMPTY)\n", hres, V_VT(&vDst)); \
   hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, VT_NULL); \
@@ -3144,12 +3144,12 @@ static void test_VarDateChangeTypeEx(void)
 
 #define EXPECTCY(x) \
   ok((hres == S_OK && out.int64 == (LONGLONG)(x*CY_MULTIPLIER)), \
-     "expected " #x "*CY_MULTIPLIER, got (%8lx %8lx); hres=0x%08lx\n", S(out).Hi, S(out).Lo, hres)
+     "expected " #x "*CY_MULTIPLIER, got (%8lx %8lx); hres=0x%08lx\n", out.Hi, out.Lo, hres)
 
 #define EXPECTCY64(x,y) \
-  ok(hres == S_OK && S(out).Hi == (LONG)x && S(out).Lo == y, \
+  ok(hres == S_OK && out.Hi == (LONG)x && out.Lo == y, \
      "expected " #x " " #y " (%lu,%lu), got (%lu,%lu); hres=0x%08lx\n", \
-      (ULONG)(x), (ULONG)(y), S(out).Hi, S(out).Lo, hres)
+      (ULONG)(x), (ULONG)(y), out.Hi, out.Lo, hres)
 
 static void test_VarCyFromI1(void)
 {
@@ -3618,25 +3618,25 @@ static void test_VarCyInt(void)
 #define CONV_TYPE DECIMAL
 
 #define EXPECTDEC(scl, sgn, hi, lo) ok(hres == S_OK && \
-  S(U(out)).scale == (BYTE)(scl) && S(U(out)).sign == (BYTE)(sgn) && \
-  out.Hi32 == (ULONG)(hi) && U1(out).Lo64 == (ULONG64)(lo), \
+  out.scale == (BYTE)(scl) && out.sign == (BYTE)(sgn) && \
+  out.Hi32 == (ULONG)(hi) && out.Lo64 == (ULONG64)(lo), \
   "expected (%d,%d,%d,%I64x), got (%d,%d,%ld,(%lx %lx)) hres 0x%08lx\n", \
-  scl, sgn, hi, (LONG64)(lo), S(U(out)).scale, \
-  S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres)
+  scl, sgn, hi, (LONG64)(lo), out.scale, \
+  out.sign, out.Hi32, out.Mid32, out.Lo32, hres)
 
 #define EXPECTDEC64(scl, sgn, hi, mid, lo) ok(hres == S_OK && \
-  S(U(out)).scale == (BYTE)(scl) && S(U(out)).sign == (BYTE)(sgn) && \
-  out.Hi32 == (ULONG)(hi) && S1(U1(out)).Mid32 == (ULONG)(mid) && \
-  S1(U1(out)).Lo32 == (ULONG)(lo), \
+  out.scale == (BYTE)(scl) && out.sign == (BYTE)(sgn) && \
+  out.Hi32 == (ULONG)(hi) && out.Mid32 == (ULONG)(mid) && \
+  out.Lo32 == (ULONG)(lo), \
   "expected (%d,%d,%d,(%lx %lx)), got (%d,%d,%ld,(%lx %lx)) hres 0x%08lx\n", \
-  scl, sgn, hi, (LONG)(mid), (LONG)(lo), S(U(out)).scale, \
-  S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres)
+  scl, sgn, hi, (LONG)(mid), (LONG)(lo), out.scale, \
+  out.sign, out.Hi32, out.Mid32, out.Lo32, hres)
 
 /* expect either a positive or negative zero */
-#define EXPECTDECZERO() ok(hres == S_OK && S(U(out)).scale == 0 && \
-  (S(U(out)).sign == 0 || S(U(out)).sign == 0x80) && out.Hi32 == 0 && U1(out).Lo64 == 0, \
+#define EXPECTDECZERO() ok(hres == S_OK && out.scale == 0 && \
+  (out.sign == 0 || out.sign == 0x80) && out.Hi32 == 0 && out.Lo64 == 0, \
   "expected zero, got (%d,%d,%ld,(%lx %lx)) hres 0x%08lx\n", \
-  S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres)
+  out.scale, out.sign, out.Hi32, out.Mid32, out.Lo32, hres)
 
 #define EXPECTDECI if (i < 0) EXPECTDEC(0, 0x80, 0, -i); else EXPECTDEC(0, 0, 0, i)
 
@@ -3890,14 +3890,14 @@ static void test_VarDecAdd(void)
   EXPECTDEC64(0,0,0xffffffff,0xffffffff,0xfffffffe);
   SETDEC64(l,0,0,0xffffffff,0xffffffff,0xffffffff);SETDEC(r,0,0,0,1); MATH2(VarDecAdd);
   ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%ld,(%8lx,%8lx)x) hres 0x%08lx\n",
-     S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
+     out.scale, out.sign, out.Hi32, out.Mid32, out.Lo32, hres);
 
   SETDEC64(l,1,0,0xffffffff,0xffffffff,0xffffffff);SETDEC(r,1,0,0,1); MATH2(VarDecAdd);
   EXPECTDEC64(0,0,0x19999999,0x99999999,0x9999999A);
 
   SETDEC64(l,0,0,0xe22ea493,0xb30310a7,0x70000000);SETDEC64(r,0,0,0xe22ea493,0xb30310a7,0x70000000); MATH2(VarDecAdd);
   ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%ld,(%8lx,%8lx)x) hres 0x%08lx\n",
-     S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
+     out.scale, out.sign, out.Hi32, out.Mid32, out.Lo32, hres);
 
   SETDEC64(l,1,0,0xe22ea493,0xb30310a7,0x70000000);SETDEC64(r,1,0,0xe22ea493,0xb30310a7,0x70000000); MATH2(VarDecAdd);
   EXPECTDEC64(0,0,0x2d3c8750,0xbd670354,0xb0000000);
@@ -3907,15 +3907,15 @@ static void test_VarDecAdd(void)
 
   SETDEC(l,3,0,0,123456); SETDEC64(r,0,0,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF); MATH2(VarDecAdd);
   ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%ld,(%8lx,%8lx)x) hres 0x%08lx\n",
-     S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
+     out.scale, out.sign, out.Hi32, out.Mid32, out.Lo32, hres);
 
   SETDEC(l,4,0,0,123456); SETDEC64(r,0,0,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF); MATH2(VarDecAdd);
   ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%ld,(%8lx,%8lx)x) hres 0x%08lx\n",
-     S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
+     out.scale, out.sign, out.Hi32, out.Mid32, out.Lo32, hres);
 
   SETDEC(l,5,0,0,123456); SETDEC64(r,0,0,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF); MATH2(VarDecAdd);
   ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%ld,(%8lx,%8lx)x) hres 0x%08lx\n",
-     S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
+     out.scale, out.sign, out.Hi32, out.Mid32, out.Lo32, hres);
 
   SETDEC(l,6,0,0,123456); SETDEC64(r,0,0,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF);
   MATH2(VarDecAdd); EXPECTDEC64(0,0,-1,0xFFFFFFFF,0xFFFFFFFF);
@@ -3974,7 +3974,7 @@ static void test_VarDecMul(void)
   /* actual overflow - right operand is 10 times the previous value */
   SETDEC64(l,0,0,0,0xFFFFFFFF,0xFFFFFFFF);    SETDEC64(r,0,0,0,4,0xA817C800);  MATH2(VarDecMul);
   ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%ld,(%8lx,%8lx)x) hres 0x%08lx\n",
-     S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
+     out.scale, out.sign, out.Hi32, out.Mid32, out.Lo32, hres);
   /* here, native oleaut32 has an opportunity to avert the overflow, by reducing the scale of the result  */
   SETDEC64(l,1,0,0,0xFFFFFFFF,0xFFFFFFFF);    SETDEC64(r,0,0,0,4,0xA817C800);  MATH2(VarDecMul);EXPECTDEC64(0,0,1999999999,0xFFFFFFFF,0x88CA6C00);
 
@@ -3983,7 +3983,7 @@ static void test_VarDecMul(void)
   /* actual overflow - right operand is 10 times the previous value */
   SETDEC64(l,0,0,1,0xFFFFFFFF,0xFFFFFFFE);    SETDEC64(r,0,0,0,2,0x540BE400);  MATH2(VarDecMul);
   ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%ld,(%8lx,%8lx)x) hres 0x%08lx\n",
-     S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
+     out.scale, out.sign, out.Hi32, out.Mid32, out.Lo32, hres);
   /* here, native oleaut32 has an opportunity to avert the overflow, by reducing the scale of the result  */
   SETDEC64(l,1,0,1,0xFFFFFFFF,0xFFFFFFFE);    SETDEC64(r,0,0,0,2,0x540BE400);  MATH2(VarDecMul);EXPECTDEC64(0,0,1999999999,0xFFFFFFFF,0x88CA6C00);
   
@@ -4011,7 +4011,7 @@ static void test_VarDecDiv(void)
    */
   SETDEC(l,1,0,0,45);    SETDEC(r,1,0,0,9);  MATH2(VarDecDiv);   EXPECTDEC(0,0,0,5);
   SETDEC(l,2,0,0,450);    SETDEC(r,1,0,0,9);  MATH2(VarDecDiv);
-  if (S(U(out)).scale == 1) EXPECTDEC(1,0,0,50);
+  if (out.scale == 1) EXPECTDEC(1,0,0,50);
   else EXPECTDEC(0,0,0,5);
 
   /* inexact divisions */
@@ -4033,10 +4033,10 @@ static void test_VarDecDiv(void)
   /* oddballs */
   SETDEC(l,0,0,0,0);    SETDEC(r,0,0,0,0);  MATH2(VarDecDiv);/* indeterminate */
   ok(hres == DISP_E_DIVBYZERO,"Expected division-by-zero, got (%d,%d,%ld,(%8lx,%8lx)x) hres 0x%08lx\n",
-     S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
+     out.scale, out.sign, out.Hi32, out.Mid32, out.Lo32, hres);
   SETDEC(l,0,0,0,1);    SETDEC(r,0,0,0,0);  MATH2(VarDecDiv);/* division by zero */
   ok(hres == DISP_E_DIVBYZERO,"Expected division-by-zero, got (%d,%d,%ld,(%8lx,%8lx)x) hres 0x%08lx\n",
-     S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
+     out.scale, out.sign, out.Hi32, out.Mid32, out.Lo32, hres);
   
 }
 
@@ -4613,8 +4613,8 @@ static void _BSTR_CY(LONG a, LONG b, const char *str, LCID lcid, int line)
   char buff[256];
   CY l;
 
-  S(l).Lo = b;
-  S(l).Hi = a;
+  l.Lo = b;
+  l.Hi = a;
   hr = VarBstrFromCy(l, lcid, LOCALE_NOUSEROVERRIDE, &bstr);
   ok(hr == S_OK, "got hr 0x%08lx\n", hr);
 

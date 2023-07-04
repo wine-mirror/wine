@@ -114,7 +114,7 @@ static void test_ifont_size(LONGLONG size, LONG ratio_logical, LONG ratio_himetr
         /* Check returned size - allow for errors due to rounding & font realization. */
 	ok((psize.int64 - size) < 10000 && (psize.int64 - size) > -10000,
 		"%s: IFont_get_Size: Lo=%ld, Hi=%ld; expected Lo=%ld, Hi=%ld.\n",
-		test_name, S(psize).Lo, S(psize).Hi, fd.cySize.Lo, fd.cySize.Hi);
+		test_name, psize.Lo, psize.Hi, fd.cySize.Lo, fd.cySize.Hi);
 
 	/* Check hFont size. */
 	hres = IFont_get_hFont (ifnt, &hfont);
@@ -439,8 +439,8 @@ static void test_font_events_disp(void)
         }
         case DISPID_FONT_SIZE:
             V_VT(&vararg) = VT_CY;
-            S(V_CY(&vararg)).Lo = 25;
-            S(V_CY(&vararg)).Hi = 0;
+            V_CY(&vararg).Lo = 25;
+            V_CY(&vararg).Hi = 0;
             break;
         case DISPID_FONT_BOLD:
             V_VT(&vararg) = VT_BOOL;
@@ -664,8 +664,8 @@ static void test_IsEqual(void)
     /* Basic font description */
     fd.cbSizeofstruct = sizeof(FONTDESC);
     fd.lpstrName      = system_font;
-    S(fd.cySize).Lo   = 100;
-    S(fd.cySize).Hi   = 100;
+    fd.cySize.Lo      = 100;
+    fd.cySize.Hi      = 100;
     fd.sWeight        = 0;
     fd.sCharset       = 0;
     fd.fItalic        = FALSE;
@@ -697,21 +697,21 @@ static void test_IsEqual(void)
     IFont_Release(ifnt2);
 
     /* Test lo font size */
-    S(fd.cySize).Lo = 10000;
+    fd.cySize.Lo = 10000;
     pOleCreateFontIndirect(&fd, &IID_IFont, (void **)&ifnt2);
     hres = IFont_IsEqual(ifnt,ifnt2);
     ok(hres == S_FALSE,
         "IFont_IsEqual: (Lo font size) Expected S_FALSE but got 0x%08lx\n",hres);
-    S(fd.cySize).Lo = 100;
+    fd.cySize.Lo = 100;
     IFont_Release(ifnt2);
 
     /* Test hi font size */
-    S(fd.cySize).Hi = 10000;
+    fd.cySize.Hi = 10000;
     pOleCreateFontIndirect(&fd, &IID_IFont, (void **)&ifnt2);
     hres = IFont_IsEqual(ifnt,ifnt2);
     ok(hres == S_FALSE,
         "IFont_IsEqual: (Hi font size) Expected S_FALSE but got 0x%08lx\n",hres);
-    S(fd.cySize).Hi = 100;
+    fd.cySize.Hi = 100;
     IFont_Release(ifnt2);
 
     /* Test font weight  */
@@ -777,8 +777,8 @@ static void test_ReleaseHfont(void)
     /* Basic font description */
     fd.cbSizeofstruct = sizeof(FONTDESC);
     fd.lpstrName      = system_font;
-    S(fd.cySize).Lo   = 100;
-    S(fd.cySize).Hi   = 100;
+    fd.cySize.Lo      = 100;
+    fd.cySize.Hi      = 100;
     fd.sWeight        = 0;
     fd.sCharset       = 0;
     fd.fItalic        = FALSE;
@@ -847,8 +847,8 @@ static void test_AddRefHfont(void)
     /* Basic font description */
     fd.cbSizeofstruct = sizeof(FONTDESC);
     fd.lpstrName      = system_font;
-    S(fd.cySize).Lo   = 100;
-    S(fd.cySize).Hi   = 100;
+    fd.cySize.Lo      = 100;
+    fd.cySize.Hi      = 100;
     fd.sWeight        = 0;
     fd.sCharset       = 0;
     fd.fItalic        = FALSE;

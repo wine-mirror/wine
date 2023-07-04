@@ -26,7 +26,6 @@
 
 #define COBJMACROS
 #define CONST_VTABLE
-#define NONAMELESSUNION
 
 #include "windef.h"
 #include "winbase.h"
@@ -461,19 +460,19 @@ static void init(void)
 /* Functions to set a DECIMAL */
 static void setdec(DECIMAL* dec, BYTE scl, BYTE sgn, ULONG hi32, ULONG64 lo64)
 {
-    S(U(*dec)).scale = scl;
-    S(U(*dec)).sign = sgn;
+    dec->scale = scl;
+    dec->sign = sgn;
     dec->Hi32 = hi32;
-    U1(*dec).Lo64 = lo64;
+    dec->Lo64 = lo64;
 }
 
 static void setdec64(DECIMAL* dec, BYTE scl, BYTE sgn, ULONG hi32, ULONG mid32, ULONG lo32)
 {
-    S(U(*dec)).scale = scl;
-    S(U(*dec)).sign = sgn;
+    dec->scale = scl;
+    dec->sign = sgn;
     dec->Hi32 = hi32;
-    S1(U1(*dec)).Mid32 = mid32;
-    S1(U1(*dec)).Lo32 = lo32;
+    dec->Mid32 = mid32;
+    dec->Lo32 = lo32;
 }
 
 /* return the string text of a given variant type */
@@ -574,7 +573,7 @@ static const char *variantstr( const VARIANT *var )
     case VT_UINT:
         sprintf( vtstr_buffer[vtstr_current], "VT_UINT(%d)", V_UINT(var) ); break;
     case VT_CY:
-        sprintf( vtstr_buffer[vtstr_current], "VT_CY(%lx%08lx)", S(V_CY(var)).Hi, S(V_CY(var)).Lo ); break;
+        sprintf( vtstr_buffer[vtstr_current], "VT_CY(%lx%08lx)", V_CY(var).Hi, V_CY(var).Lo ); break;
     case VT_DATE:
         sprintf( vtstr_buffer[vtstr_current], "VT_DATE(%g)", V_DATE(var) ); break;
     default:
@@ -2543,10 +2542,10 @@ static const char *szFailOk = "Call failed, hres = %08x\n";
   ok(V_CY(&vOut).int64 == (LONG64)(val * CY_MULTIPLIER), "Expected r8 = %#I64x, got %#I64x\n", \
      (LONG64)val, V_CY(&vOut).int64); }
 #define EXPECT_DECIMAL(valHi, valMid, valLo) EXPECT_OK { EXPECT_TYPE(VT_DECIMAL); \
-      ok((V_DECIMAL(&vOut).Hi32 == valHi) && (S1(U1(V_DECIMAL(&vOut))).Mid32 == valMid) && \
-      (S1(U1(V_DECIMAL(&vOut))).Lo32 == valLo),                      \
+      ok(V_DECIMAL(&vOut).Hi32 == valHi && V_DECIMAL(&vOut).Mid32 == valMid && \
+      V_DECIMAL(&vOut).Lo32 == valLo, \
   "Expected decimal = %x/0x%x%08x, got %lx/0x%lx%08lx\n", valHi, valMid, valLo, \
-      V_DECIMAL(&vOut).Hi32, S1(U1(V_DECIMAL(&vOut))).Mid32, S1(U1(V_DECIMAL(&vOut))).Lo32); }
+      V_DECIMAL(&vOut).Hi32, V_DECIMAL(&vOut).Mid32, V_DECIMAL(&vOut).Lo32); }
 
 static void test_VarNumFromParseNum(void)
 {
@@ -3265,11 +3264,11 @@ static void test_VarNot(void)
     VARNOT(BSTR, (BSTR)szTrue, BOOL, VARIANT_FALSE);
     VARNOT(BSTR, (BSTR)szFalse, BOOL, VARIANT_TRUE);
 
-    S(U(*pdec)).sign = DECIMAL_NEG;
-    S(U(*pdec)).scale = 0;
+    pdec->sign = DECIMAL_NEG;
+    pdec->scale = 0;
     pdec->Hi32 = 0;
-    S1(U1(*pdec)).Mid32 = 0;
-    S1(U1(*pdec)).Lo32 = 1;
+    pdec->Mid32 = 0;
+    pdec->Lo32 = 1;
     VARNOT(DECIMAL,*pdec,I4,0);
 
     pcy->int64 = 10000;
@@ -3856,8 +3855,9 @@ static void test_VarMod(void)
       else if (l == VT_DECIMAL)
       {
 	V_DECIMAL(&v1).Hi32 = 0;
-	U1(V_DECIMAL(&v1)).Lo64 = 100;
-	U(V_DECIMAL(&v1)).signscale = 0;
+	V_DECIMAL(&v1).Lo64 = 100;
+	V_DECIMAL(&v1).sign = 0;
+	V_DECIMAL(&v1).scale = 0;
       }
       else
 	V_I4(&v1) = 10000;
@@ -3877,8 +3877,9 @@ static void test_VarMod(void)
       else if (r == VT_DECIMAL)
       {
 	V_DECIMAL(&v2).Hi32 = 0;
-	U1(V_DECIMAL(&v2)).Lo64 = 100;
-	U(V_DECIMAL(&v2)).signscale = 0;
+	V_DECIMAL(&v2).Lo64 = 100;
+	V_DECIMAL(&v2).sign = 0;
+	V_DECIMAL(&v2).scale = 0;
       }
       else
 	V_I4(&v2) = 10000;
@@ -4108,11 +4109,11 @@ static void test_VarFix(void)
        "VarFix: expected 0x0,%d got 0x%lX,%d\n", VT_NULL, hres, V_VT(&vDst));
 
     V_VT(&v) = VT_DECIMAL;
-    S(U(*pdec)).sign = DECIMAL_NEG;
-    S(U(*pdec)).scale = 0;
+    pdec->sign = DECIMAL_NEG;
+    pdec->scale = 0;
     pdec->Hi32 = 0;
-    S1(U1(*pdec)).Mid32 = 0;
-    S1(U1(*pdec)).Lo32 = 1;
+    pdec->Mid32 = 0;
+    pdec->Lo32 = 1;
     hres = pVarFix(&v,&vDst);
     ok(hres == S_OK && V_VT(&vDst) == VT_DECIMAL && !memcmp(&V_DECIMAL(&v), &V_DECIMAL(&vDst), sizeof(DECIMAL)),
        "VarFix: expected 0x0,%d,identical, got 0x%lX,%d\n", VT_DECIMAL,
@@ -4223,11 +4224,11 @@ static void test_VarInt(void)
        "VarInt: expected 0x0,%d got 0x%lX,%d\n", VT_NULL, hres, V_VT(&vDst));
 
     V_VT(&v) = VT_DECIMAL;
-    S(U(*pdec)).sign = DECIMAL_NEG;
-    S(U(*pdec)).scale = 0;
+    pdec->sign = DECIMAL_NEG;
+    pdec->scale = 0;
     pdec->Hi32 = 0;
-    S1(U1(*pdec)).Mid32 = 0;
-    S1(U1(*pdec)).Lo32 = 1;
+    pdec->Mid32 = 0;
+    pdec->Lo32 = 1;
     hres = pVarInt(&v,&vDst);
     ok(hres == S_OK && V_VT(&vDst) == VT_DECIMAL && !memcmp(&V_DECIMAL(&v), &V_DECIMAL(&vDst), sizeof(DECIMAL)),
        "VarInt: expected 0x0,%d,identical, got 0x%lX,%d\n", VT_DECIMAL,
@@ -4348,23 +4349,23 @@ static void test_VarNeg(void)
        "VarNeg: expected 0x0,%d got 0x%lX,%d\n", VT_NULL, hres, V_VT(&vDst));
 
     V_VT(&v) = VT_DECIMAL;
-    S(U(*pdec)).sign = DECIMAL_NEG;
-    S(U(*pdec)).scale = 0;
+    pdec->sign = DECIMAL_NEG;
+    pdec->scale = 0;
     pdec->Hi32 = 0;
-    S1(U1(*pdec)).Mid32 = 0;
-    S1(U1(*pdec)).Lo32 = 1;
+    pdec->Mid32 = 0;
+    pdec->Lo32 = 1;
     hres = pVarNeg(&v,&vDst);
     ok(hres == S_OK && V_VT(&vDst) == VT_DECIMAL &&
-       S(U(V_DECIMAL(&vDst))).sign == 0,
+       V_DECIMAL(&vDst).sign == 0,
        "VarNeg: expected 0x0,%d,0x00, got 0x%lX,%d,%02x\n", VT_DECIMAL,
-       hres, V_VT(&vDst), S(U(V_DECIMAL(&vDst))).sign);
+       hres, V_VT(&vDst), V_DECIMAL(&vDst).sign);
 
-    S(U(*pdec)).sign = 0;
+    pdec->sign = 0;
     hres = pVarNeg(&v,&vDst);
     ok(hres == S_OK && V_VT(&vDst) == VT_DECIMAL &&
-       S(U(V_DECIMAL(&vDst))).sign == DECIMAL_NEG,
+       V_DECIMAL(&vDst).sign == DECIMAL_NEG,
        "VarNeg: expected 0x0,%d,0x7f, got 0x%lX,%d,%02x\n", VT_DECIMAL,
-       hres, V_VT(&vDst), S(U(V_DECIMAL(&vDst))).sign);
+       hres, V_VT(&vDst), V_DECIMAL(&vDst).sign);
 
     V_VT(&v) = VT_CY;
     pcy->int64 = -10000;
@@ -4512,25 +4513,25 @@ static void test_VarRound(void)
 
         pdec = &V_DECIMAL(&v);
         V_VT(&v) = VT_DECIMAL;
-        S(U(*pdec)).sign = ptr->source.sign;
-        S(U(*pdec)).scale = ptr->source.scale;
+        pdec->sign = ptr->source.sign;
+        pdec->scale = ptr->source.scale;
         pdec->Hi32 = ptr->source.Hi32;
-        S1(U1(*pdec)).Mid32 = ptr->source.Mid32;
-        S1(U1(*pdec)).Lo32 = ptr->source.Lo32;
+        pdec->Mid32 = ptr->source.Mid32;
+        pdec->Lo32 = ptr->source.Lo32;
         VariantInit(&vDst);
         hres = pVarRound(&v, ptr->dec, &vDst);
         ok(hres == S_OK, "%d: got 0x%08lx\n", i, hres);
         if (hres == S_OK)
         {
             ok(V_VT(&vDst) == VT_DECIMAL, "%d: got VT %d, expected VT_DECIMAL\n", i, V_VT(&vDst));
-            ok(S(U(V_DECIMAL(&vDst))).sign == ptr->ret.sign, "%d: got sign 0x%02x, expected 0x%02x\n",
-                i, S(U(V_DECIMAL(&vDst))).sign, ptr->ret.sign);
+            ok(V_DECIMAL(&vDst).sign == ptr->ret.sign, "%d: got sign 0x%02x, expected 0x%02x\n",
+                i, V_DECIMAL(&vDst).sign, ptr->ret.sign);
             ok(V_DECIMAL(&vDst).Hi32 == ptr->ret.Hi32, "%d: got Hi32 %ld, expected %ld\n",
                 i, V_DECIMAL(&vDst).Hi32, ptr->ret.Hi32);
-            ok(S1(U1(V_DECIMAL(&vDst))).Mid32 == ptr->ret.Mid32, "%d: got Mid32 %ld, expected %ld\n",
-               i, S1(U1(V_DECIMAL(&vDst))).Mid32,  ptr->ret.Mid32);
-            ok(S1(U1(V_DECIMAL(&vDst))).Lo32 == ptr->ret.Lo32, "%d: got Lo32 %ld, expected %ld\n",
-                i, S1(U1(V_DECIMAL(&vDst))).Lo32, ptr->ret.Lo32);
+            ok(V_DECIMAL(&vDst).Mid32 == ptr->ret.Mid32, "%d: got Mid32 %ld, expected %ld\n",
+               i, V_DECIMAL(&vDst).Mid32,  ptr->ret.Mid32);
+            ok(V_DECIMAL(&vDst).Lo32 == ptr->ret.Lo32, "%d: got Lo32 %ld, expected %ld\n",
+                i, V_DECIMAL(&vDst).Lo32, ptr->ret.Lo32);
         }
     }
 
