@@ -44,8 +44,6 @@
 #include <string.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -499,7 +497,7 @@ static HRESULT WINAPI IPropertyStorage_fnReadMultiple(
         if (rgpspec[i].ulKind == PRSPEC_LPWSTR)
         {
             PROPVARIANT *prop = PropertyStorage_FindPropertyByName(This,
-             rgpspec[i].u.lpwstr);
+             rgpspec[i].lpwstr);
 
             if (prop)
                 PropertyStorage_PropVariantCopy(&rgpropvar[i], prop, GetACP(),
@@ -507,7 +505,7 @@ static HRESULT WINAPI IPropertyStorage_fnReadMultiple(
         }
         else
         {
-            switch (rgpspec[i].u.propid)
+            switch (rgpspec[i].propid)
             {
                 case PID_CODEPAGE:
                     rgpropvar[i].vt = VT_I2;
@@ -520,7 +518,7 @@ static HRESULT WINAPI IPropertyStorage_fnReadMultiple(
                 default:
                 {
                     PROPVARIANT *prop = PropertyStorage_FindProperty(This,
-                     rgpspec[i].u.propid);
+                     rgpspec[i].propid);
 
                     if (prop)
                         PropertyStorage_PropVariantCopy(&rgpropvar[i], prop,
@@ -765,7 +763,7 @@ static HRESULT WINAPI IPropertyStorage_fnWriteMultiple(
         if (rgpspec[i].ulKind == PRSPEC_LPWSTR)
         {
             PROPVARIANT *prop = PropertyStorage_FindPropertyByName(This,
-             rgpspec[i].u.lpwstr);
+             rgpspec[i].lpwstr);
 
             if (prop)
                 PropVariantCopy(prop, &rgpropvar[i]);
@@ -782,7 +780,7 @@ static HRESULT WINAPI IPropertyStorage_fnWriteMultiple(
                     PROPID nextId = max(propidNameFirst, This->highestProp + 1);
 
                     hr = PropertyStorage_StoreNameWithId(This,
-                     (LPCSTR)rgpspec[i].u.lpwstr, CP_UNICODE, nextId);
+                     (LPCSTR)rgpspec[i].lpwstr, CP_UNICODE, nextId);
                     if (SUCCEEDED(hr))
                         hr = PropertyStorage_StorePropWithId(This, nextId,
                          &rgpropvar[i], GetACP());
@@ -791,7 +789,7 @@ static HRESULT WINAPI IPropertyStorage_fnWriteMultiple(
         }
         else
         {
-            switch (rgpspec[i].u.propid)
+            switch (rgpspec[i].propid)
             {
             case PID_DICTIONARY:
                 /* Can't set the dictionary */
@@ -823,11 +821,11 @@ static HRESULT WINAPI IPropertyStorage_fnWriteMultiple(
                 /* silently ignore like MSDN says */
                 break;
             default:
-                if (rgpspec[i].u.propid >= PID_MIN_READONLY)
+                if (rgpspec[i].propid >= PID_MIN_READONLY)
                     hr = STG_E_INVALIDPARAMETER;
                 else
                     hr = PropertyStorage_StorePropWithId(This,
-                     rgpspec[i].u.propid, &rgpropvar[i], GetACP());
+                     rgpspec[i].propid, &rgpropvar[i], GetACP());
             }
         }
     }
@@ -864,14 +862,14 @@ static HRESULT WINAPI IPropertyStorage_fnDeleteMultiple(
         {
             void *propid;
 
-            if (dictionary_find(This->name_to_propid, rgpspec[i].u.lpwstr, &propid))
+            if (dictionary_find(This->name_to_propid, rgpspec[i].lpwstr, &propid))
                 dictionary_remove(This->propid_to_prop, propid);
         }
         else
         {
-            if (rgpspec[i].u.propid >= PID_FIRST_USABLE &&
-             rgpspec[i].u.propid < PID_MIN_READONLY)
-                dictionary_remove(This->propid_to_prop, UlongToPtr(rgpspec[i].u.propid));
+            if (rgpspec[i].propid >= PID_FIRST_USABLE &&
+             rgpspec[i].propid < PID_MIN_READONLY)
+                dictionary_remove(This->propid_to_prop, UlongToPtr(rgpspec[i].propid));
             else
                 hr = STG_E_INVALIDPARAMETER;
         }
@@ -1746,20 +1744,20 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
     hr = IStream_Stat(This->stm, &stat, STATFLAG_NONAME);
     if (FAILED(hr))
         goto end;
-    if (stat.cbSize.u.HighPart)
+    if (stat.cbSize.HighPart)
     {
         WARN("stream too big\n");
         /* maximum size varies, but it can't be this big */
         hr = STG_E_INVALIDHEADER;
         goto end;
     }
-    if (stat.cbSize.u.LowPart == 0)
+    if (stat.cbSize.LowPart == 0)
     {
         /* empty stream is okay */
         hr = S_OK;
         goto end;
     }
-    else if (stat.cbSize.u.LowPart < sizeof(PROPERTYSETHEADER) +
+    else if (stat.cbSize.LowPart < sizeof(PROPERTYSETHEADER) +
      sizeof(FORMATIDOFFSET))
     {
         WARN("stream too small\n");
@@ -1794,9 +1792,9 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
     hr = PropertyStorage_ReadFmtIdOffsetFromStream(This->stm, &fmtOffset);
     if (FAILED(hr))
         goto end;
-    if (fmtOffset.dwOffset > stat.cbSize.u.LowPart)
+    if (fmtOffset.dwOffset > stat.cbSize.LowPart)
     {
-        WARN("invalid offset %ld (stream length is %ld)\n", fmtOffset.dwOffset, stat.cbSize.u.LowPart);
+        WARN("invalid offset %ld (stream length is %ld)\n", fmtOffset.dwOffset, stat.cbSize.LowPart);
         hr = STG_E_INVALIDHEADER;
         goto end;
     }

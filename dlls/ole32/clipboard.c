@@ -64,8 +64,6 @@
 #include <stdio.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -646,7 +644,7 @@ static HRESULT render_embed_source_hack(IDataObject *data, LPFORMATETC fmt)
         return hr;
     }
 
-    hr = StgCreateDocfileOnILockBytes(ptrILockBytes, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &std.u.pstg);
+    hr = StgCreateDocfileOnILockBytes(ptrILockBytes, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &std.pstg);
     ILockBytes_Release(ptrILockBytes);
 
     if (FAILED(hr = IDataObject_GetDataHere(theOleClipboard->src_data, fmt, &std)))
@@ -675,7 +673,7 @@ static HRESULT render_embed_source_hack(IDataObject *data, LPFORMATETC fmt)
 
         if (SUCCEEDED(hr = IDataObject_GetData(theOleClipboard->src_data, &fmt2, &std2)))
         {
-            mfp = GlobalLock(std2.u.hGlobal);
+            mfp = GlobalLock(std2.hGlobal);
         }
 
         if (mfp)
@@ -704,7 +702,7 @@ static HRESULT render_embed_source_hack(IDataObject *data, LPFORMATETC fmt)
             pdh.dwObjectExtentY = mfp->yExt;
             pdh.dwSize = nSize;
 
-            hr = IStorage_CreateStream(std.u.pstg, L"\2OlePres000",
+            hr = IStorage_CreateStream(std.pstg, L"\2OlePres000",
                     STGM_CREATE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, 0, &pStream);
 
             hr = IStream_Write(pStream, &pdh, sizeof(PresentationDataHeader), NULL);
@@ -718,15 +716,15 @@ static HRESULT render_embed_source_hack(IDataObject *data, LPFORMATETC fmt)
 
             HeapFree(GetProcessHeap(), 0, mfBits);
 
-            GlobalUnlock(std2.u.hGlobal);
+            GlobalUnlock(std2.hGlobal);
             ReleaseStgMedium(&std2);
 
-            ReadClassStg(std.u.pstg, &clsID);
+            ReadClassStg(std.pstg, &clsID);
             ProgIDFromCLSID(&clsID, &strProgID);
 
             WideCharToMultiByte( CP_ACP, 0, strProgID, -1, strOleTypeName, sizeof(strOleTypeName), NULL, NULL );
-            STORAGE_CreateOleStream(std.u.pstg, 0);
-            OLECONVERT_CreateCompObjStream(std.u.pstg, strOleTypeName);
+            STORAGE_CreateOleStream(std.pstg, 0);
+            OLECONVERT_CreateCompObjStream(std.pstg, strOleTypeName);
             CoTaskMemFree(strProgID);
         }
     }
@@ -790,7 +788,7 @@ static HRESULT get_data_from_storage(IDataObject *data, FORMATETC *fmt, HGLOBAL 
 
     stg_fmt = *fmt;
     med.tymed = stg_fmt.tymed = TYMED_ISTORAGE;
-    med.u.pstg = stg;
+    med.pstg = stg;
     med.pUnkForRelease = NULL;
 
     hr = IDataObject_GetDataHere(data, &stg_fmt, &med);
@@ -800,7 +798,7 @@ static HRESULT get_data_from_storage(IDataObject *data, FORMATETC *fmt, HGLOBAL 
         hr = IDataObject_GetData(data, &stg_fmt, &med);
         if(FAILED(hr)) goto end;
 
-        hr = IStorage_CopyTo(med.u.pstg, 0, NULL, NULL, stg);
+        hr = IStorage_CopyTo(med.pstg, 0, NULL, NULL, stg);
         ReleaseStgMedium(&med);
         if(FAILED(hr)) goto end;
     }
@@ -835,7 +833,7 @@ static HRESULT get_data_from_stream(IDataObject *data, FORMATETC *fmt, HGLOBAL *
 
     stm_fmt = *fmt;
     med.tymed = stm_fmt.tymed = TYMED_ISTREAM;
-    med.u.pstm = stm;
+    med.pstm = stm;
     med.pUnkForRelease = NULL;
 
     hr = IDataObject_GetDataHere(data, &stm_fmt, &med);
@@ -849,9 +847,9 @@ static HRESULT get_data_from_stream(IDataObject *data, FORMATETC *fmt, HGLOBAL *
         if(FAILED(hr)) goto error;
 
         offs.QuadPart = 0;
-        IStream_Seek(med.u.pstm, offs, STREAM_SEEK_END, &pos);
-        IStream_Seek(med.u.pstm, offs, STREAM_SEEK_SET, NULL);
-        hr = IStream_CopyTo(med.u.pstm, stm, pos, NULL, NULL);
+        IStream_Seek(med.pstm, offs, STREAM_SEEK_END, &pos);
+        IStream_Seek(med.pstm, offs, STREAM_SEEK_SET, NULL);
+        hr = IStream_CopyTo(med.pstm, stm, pos, NULL, NULL);
         ReleaseStgMedium(&med);
         if(FAILED(hr)) goto error;
     }
@@ -886,7 +884,7 @@ static HRESULT get_data_from_global(IDataObject *data, FORMATETC *fmt, HGLOBAL *
     hr = IDataObject_GetData(data, &mem_fmt, &med);
     if(FAILED(hr)) return hr;
 
-    hr = dup_global_mem(med.u.hGlobal, GMEM_DDESHARE|GMEM_MOVEABLE, &h);
+    hr = dup_global_mem(med.hGlobal, GMEM_DDESHARE|GMEM_MOVEABLE, &h);
 
     if(SUCCEEDED(hr)) *mem = h;
 
@@ -914,7 +912,7 @@ static HRESULT get_data_from_enhmetafile(IDataObject *data, FORMATETC *fmt, HGLO
     hr = IDataObject_GetData(data, &mem_fmt, &med);
     if(FAILED(hr)) return hr;
 
-    copy = CopyEnhMetaFileW(med.u.hEnhMetaFile, NULL);
+    copy = CopyEnhMetaFileW(med.hEnhMetaFile, NULL);
     if(copy) *mem = (HGLOBAL)copy;
     else hr = E_FAIL;
 
@@ -942,7 +940,7 @@ static HRESULT get_data_from_metafilepict(IDataObject *data, FORMATETC *fmt, HGL
     hr = IDataObject_GetData(data, &mem_fmt, &med);
     if(FAILED(hr)) return hr;
 
-    hr = dup_metafilepict(med.u.hMetaFilePict, &copy);
+    hr = dup_metafilepict(med.hMetaFilePict, &copy);
 
     if(SUCCEEDED(hr)) *mem = copy;
 
@@ -972,7 +970,7 @@ static HRESULT get_data_from_bitmap(IDataObject *data, FORMATETC *fmt, HBITMAP *
     hr = IDataObject_GetData(data, &mem_fmt, &med);
     if(FAILED(hr)) return hr;
 
-    hr = dup_bitmap(med.u.hBitmap, &copy);
+    hr = dup_bitmap(med.hBitmap, &copy);
 
     if(SUCCEEDED(hr)) *hbm = copy;
 
@@ -1299,7 +1297,7 @@ static HRESULT get_stgmed_for_global(HGLOBAL h, STGMEDIUM *med)
     med->pUnkForRelease = NULL;
     med->tymed = TYMED_NULL;
 
-    hr = dup_global_mem(h, GMEM_MOVEABLE, &med->u.hGlobal);
+    hr = dup_global_mem(h, GMEM_MOVEABLE, &med->hGlobal);
 
     if(SUCCEEDED(hr)) med->tymed = TYMED_HGLOBAL;
 
@@ -1322,7 +1320,7 @@ static HRESULT get_stgmed_for_stream(HGLOBAL h, STGMEDIUM *med)
     hr = dup_global_mem(h, GMEM_MOVEABLE, &dst);
     if(FAILED(hr)) return hr;
 
-    hr = CreateStreamOnHGlobal(dst, TRUE, &med->u.pstm);
+    hr = CreateStreamOnHGlobal(dst, TRUE, &med->pstm);
     if(FAILED(hr))
     {
         GlobalFree(dst);
@@ -1365,7 +1363,7 @@ static HRESULT get_stgmed_for_storage(HGLOBAL h, STGMEDIUM *med)
         return SUCCEEDED(hr) ? E_FAIL : hr;
     }
 
-    hr = StgOpenStorageOnILockBytes(lbs, NULL,  STGM_SHARE_EXCLUSIVE | STGM_READWRITE, NULL, 0, &med->u.pstg);
+    hr = StgOpenStorageOnILockBytes(lbs, NULL,  STGM_SHARE_EXCLUSIVE | STGM_READWRITE, NULL, 0, &med->pstg);
     ILockBytes_Release(lbs);
     if(FAILED(hr))
     {
@@ -1387,8 +1385,8 @@ static HRESULT get_stgmed_for_emf(HENHMETAFILE hemf, STGMEDIUM *med)
     med->pUnkForRelease = NULL;
     med->tymed = TYMED_NULL;
 
-    med->u.hEnhMetaFile = CopyEnhMetaFileW(hemf, NULL);
-    if(!med->u.hEnhMetaFile) return E_OUTOFMEMORY;
+    med->hEnhMetaFile = CopyEnhMetaFileW(hemf, NULL);
+    if(!med->hEnhMetaFile) return E_OUTOFMEMORY;
     med->tymed = TYMED_ENHMF;
     return S_OK;
 }
@@ -1405,7 +1403,7 @@ static HRESULT get_stgmed_for_bitmap(HBITMAP hbmp, STGMEDIUM *med)
     med->pUnkForRelease = NULL;
     med->tymed = TYMED_NULL;
 
-    hr = dup_bitmap(hbmp, &med->u.hBitmap);
+    hr = dup_bitmap(hbmp, &med->hBitmap);
 
     if (FAILED(hr))
         return hr;
@@ -1603,15 +1601,15 @@ static HRESULT WINAPI snapshot_GetDataHere(IDataObject *iface, FORMATETC *fmt,
     case TYMED_HGLOBAL:
     {
         DWORD src_size = GlobalSize(h);
-        DWORD dst_size = GlobalSize(med->u.hGlobal);
+        DWORD dst_size = GlobalSize(med->hGlobal);
         hr = E_FAIL;
         if(dst_size >= src_size)
         {
             void *src = GlobalLock(h);
-            void *dst = GlobalLock(med->u.hGlobal);
+            void *dst = GlobalLock(med->hGlobal);
 
             memcpy(dst, src, src_size);
-            GlobalUnlock(med->u.hGlobal);
+            GlobalUnlock(med->hGlobal);
             GlobalUnlock(h);
             hr = S_OK;
         }
@@ -1621,7 +1619,7 @@ static HRESULT WINAPI snapshot_GetDataHere(IDataObject *iface, FORMATETC *fmt,
     {
         DWORD src_size = GlobalSize(h);
         void *src = GlobalLock(h);
-        hr = IStream_Write(med->u.pstm, src, src_size, NULL);
+        hr = IStream_Write(med->pstm, src, src_size, NULL);
         GlobalUnlock(h);
         break;
     }
@@ -1636,7 +1634,7 @@ static HRESULT WINAPI snapshot_GetDataHere(IDataObject *iface, FORMATETC *fmt,
         hr = get_stgmed_for_storage(h, &copy);
         if(SUCCEEDED(hr))
         {
-            hr = IStorage_CopyTo(copy.u.pstg, 0, NULL, NULL, med->u.pstg);
+            hr = IStorage_CopyTo(copy.pstg, 0, NULL, NULL, med->pstg);
             ReleaseStgMedium(&copy);
         }
         break;
