@@ -18,7 +18,6 @@
 
 #define COBJMACROS
 #define CONST_VTABLE
-#define NONAMELESSUNION
 
 #include <stdio.h>
 #include <wine/test.h>
@@ -117,7 +116,7 @@ static HRESULT WINAPI PropertyStorage_ReadMultiple(IPropertyStorage *This, ULONG
         ok(rgpropvar != NULL, "rgpropvar = NULL\n");
 
         ok(rgpspec[0].ulKind == PRSPEC_PROPID, "rgpspec[0].ulKind = %ld\n", rgpspec[0].ulKind);
-        ok(rgpspec[0].u.propid == PID_CODEPAGE, "rgpspec[0].propid = %ld\n", rgpspec[0].u.propid);
+        ok(rgpspec[0].propid == PID_CODEPAGE, "rgpspec[0].propid = %ld\n", rgpspec[0].propid);
 
         rgpropvar[0].vt = VT_I2;
         rgpropvar[0].iVal = 1234;

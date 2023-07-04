@@ -19,9 +19,6 @@
  */
 
 #define COBJMACROS
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-
 #include "shldisp.h"
 #include "shlobj.h"
 #include "shlwapi.h"

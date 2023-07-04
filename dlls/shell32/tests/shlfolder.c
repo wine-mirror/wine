@@ -4709,16 +4709,16 @@ static void r_verify_pidl(unsigned l, LPCITEMIDLIST pidl, const WCHAR *path)
         ok_(__FILE__,l)(filename.uType == STRRET_WSTR || filename.uType == STRRET_CSTR,
                 "Got unexpected string type: %d\n", filename.uType);
         if(filename.uType == STRRET_WSTR){
-            ok_(__FILE__,l)(lstrcmpW(path, U(filename).pOleStr) == 0,
+            ok_(__FILE__,l)(lstrcmpW(path, filename.pOleStr) == 0,
                     "didn't get expected path (%s), instead: %s\n",
-                     wine_dbgstr_w(path), wine_dbgstr_w(U(filename).pOleStr));
-            SHFree(U(filename).pOleStr);
+                     wine_dbgstr_w(path), wine_dbgstr_w(filename.pOleStr));
+            SHFree(filename.pOleStr);
         }
         else if(filename.uType == STRRET_CSTR)
         {
-            WCHAR *strW = make_wstr(U(filename).cStr);
+            WCHAR *strW = make_wstr(filename.cStr);
             ok_(__FILE__,l)(!lstrcmpW(path, strW), "didn't get expected path (%s), instead: %s\n",
-                     wine_dbgstr_w(path), U(filename).cStr);
+                     wine_dbgstr_w(path), filename.cStr);
             free(strW);
         }
 
