@@ -796,96 +796,6 @@ static HANDLE create_temp_file(void)
                         NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE, 0 );
 }
 
-static const struct
-{
-    int type;
-    int platform;
-    int major;
-    int minor;
-    const char *str;
-}
-version_table[] =
-{
-    { 0,                   VER_PLATFORM_WIN32s,        2,  0, "2.0" },
-    { 0,                   VER_PLATFORM_WIN32s,        3,  0, "3.0" },
-    { 0,                   VER_PLATFORM_WIN32s,        3, 10, "3.1" },
-    { 0,                   VER_PLATFORM_WIN32_WINDOWS, 4,  0, "95" },
-    { 0,                   VER_PLATFORM_WIN32_WINDOWS, 4, 10, "98" },
-    { 0,                   VER_PLATFORM_WIN32_WINDOWS, 4, 90, "ME" },
-    { VER_NT_WORKSTATION,  VER_PLATFORM_WIN32_NT,      3, 51, "NT 3.51" },
-    { VER_NT_WORKSTATION,  VER_PLATFORM_WIN32_NT,      4,  0, "NT 4.0" },
-    { VER_NT_WORKSTATION,  VER_PLATFORM_WIN32_NT,      5,  0, "2000" },
-    { VER_NT_WORKSTATION,  VER_PLATFORM_WIN32_NT,      5,  1, "XP" },
-    { VER_NT_WORKSTATION,  VER_PLATFORM_WIN32_NT,      5,  2, "XP" },
-    { VER_NT_SERVER,       VER_PLATFORM_WIN32_NT,      5,  2, "Server 2003" },
-    { VER_NT_WORKSTATION,  VER_PLATFORM_WIN32_NT,      6,  0, "Vista" },
-    { VER_NT_SERVER,       VER_PLATFORM_WIN32_NT,      6,  0, "Server 2008" },
-    { VER_NT_WORKSTATION,  VER_PLATFORM_WIN32_NT,      6,  1, "7" },
-    { VER_NT_SERVER,       VER_PLATFORM_WIN32_NT,      6,  1, "Server 2008 R2" },
-    { VER_NT_WORKSTATION,  VER_PLATFORM_WIN32_NT,      6,  2, "8" },
-    { VER_NT_SERVER,       VER_PLATFORM_WIN32_NT,      6,  2, "Server 2012" },
-    { VER_NT_WORKSTATION,  VER_PLATFORM_WIN32_NT,      6,  3, "8.1" },
-    { VER_NT_SERVER,       VER_PLATFORM_WIN32_NT,      6,  3, "Server 2012 R2" },
-    { VER_NT_WORKSTATION,  VER_PLATFORM_WIN32_NT,     10,  0, "10" },
-};
-
-static const char *get_windows_version(void)
-{
-    RTL_OSVERSIONINFOEXW info = { sizeof(RTL_OSVERSIONINFOEXW) };
-    static char str[64];
-    int i;
-
-    RtlGetVersion( &info );
-
-    for (i = 0; i < ARRAY_SIZE(version_table); i++)
-    {
-        if (version_table[i].type == info.wProductType &&
-            version_table[i].platform == info.dwPlatformId &&
-            version_table[i].major == info.dwMajorVersion &&
-            version_table[i].minor == info.dwMinorVersion)
-        {
-            return version_table[i].str;
-        }
-    }
-
-    snprintf( str, sizeof(str), "%ld.%ld (%d)", info.dwMajorVersion,
-              info.dwMinorVersion, info.wProductType );
-    return str;
-}
-
-static void output_system_info(void)
-{
-#ifdef __i386__
-    static const char platform[] = "i386";
-#elif defined(__x86_64__)
-    static const char platform[] = "x86_64";
-#elif defined(__arm__)
-    static const char platform[] = "arm";
-#elif defined(__aarch64__)
-    static const char platform[] = "arm64";
-#else
-# error CPU unknown
-#endif
-
-    const char *(CDECL *wine_get_build_id)(void);
-    void (CDECL *wine_get_host_version)( const char **sysname, const char **release );
-
-    wine_get_build_id = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_build_id");
-    wine_get_host_version = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_host_version");
-
-    dbg_printf( "System information:\n" );
-    if (wine_get_build_id) dbg_printf( "    Wine build: %s\n", wine_get_build_id() );
-    dbg_printf( "    Platform: %s%s\n", platform, dbg_curr_process->is_wow64 ? " (WOW64)" : "" );
-    dbg_printf( "    Version: Windows %s\n", get_windows_version() );
-    if (wine_get_host_version)
-    {
-        const char *sysname, *release;
-        wine_get_host_version( &sysname, &release );
-        dbg_printf( "    Host system: %s\n", sysname );
-        dbg_printf( "    Host version: %s\n", release );
-    }
-}
-
 /******************************************************************
  *		dbg_active_attach
  *
@@ -978,7 +888,10 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
     }
 
     input = parser_generate_command_file("echo Modules:", "info share",
-                                         "echo Threads:", "info threads", NULL);
+                                         "echo Threads:", "info threads",
+                                         "info system",
+                                         "detach",
+                                         NULL);
     if (input == INVALID_HANDLE_VALUE) return start_error_parse;
 
     if (dbg_curr_process->active_debuggee)
@@ -986,7 +899,6 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
 
     dbg_interactiveP = TRUE;
     parser_handle(NULL, input);
-    output_system_info();
 
     if (output != INVALID_HANDLE_VALUE)
     {
@@ -998,7 +910,6 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
     }
 
     CloseHandle( input );
-    dbg_curr_process->process_io->close_process(dbg_curr_process, TRUE);
     return start_ok;
 }
 

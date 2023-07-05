@@ -394,6 +394,7 @@ extern void             info_win32_frame_exceptions(DWORD tid);
 extern void             info_win32_virtual(DWORD pid);
 extern void             info_win32_segments(DWORD start, int length);
 extern void             info_win32_exception(void);
+extern void             info_win32_system(void);
 extern void             info_wine_dbg_channel(BOOL add, const char* chnl, const char* name);
 extern WCHAR*           fetch_thread_description(DWORD tid);
 
