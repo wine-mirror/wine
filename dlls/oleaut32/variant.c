@@ -5871,7 +5871,7 @@ HRESULT WINAPI VarImp(LPVARIANT left, LPVARIANT right, LPVARIANT result)
         case VT_DATE: if (!V_DATE(right)) resvt = VT_NULL; break;
         case VT_CY:   if (!V_CY(right).int64) resvt = VT_NULL; break;
         case VT_DECIMAL:
-            if (!V_DECIMAL(right).Hi32 || V_DECIMAL(right).Lo64)
+            if (!(V_DECIMAL(right).Hi32 || V_DECIMAL(right).Lo64))
                 resvt = VT_NULL;
             break;
         case VT_BSTR:
