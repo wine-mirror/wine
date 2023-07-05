@@ -356,7 +356,7 @@ static void WINAPI getaddrinfo_callback(TP_CALLBACK_INSTANCE *instance, void *co
     if (res)
     {
         *args->result = addrinfo_list_AtoW(res);
-        overlapped->u.Pointer = args->result;
+        overlapped->Pointer = args->result;
         freeaddrinfo(res);
     }
 
@@ -836,7 +836,7 @@ static struct hostent *get_local_ips( char *hostname )
         /* Check if this is a default route (there may be more than one) */
         if (!routes->table[n].dwForwardDest)
             ifdefault = ++default_routes;
-        else if (routes->table[n].u1.ForwardType != MIB_IPROUTE_TYPE_DIRECT)
+        else if (routes->table[n].ForwardType != MIB_IPROUTE_TYPE_DIRECT)
             continue;
         ifindex = routes->table[n].dwForwardIfIndex;
         ifmetric = routes->table[n].dwForwardMetric1;
