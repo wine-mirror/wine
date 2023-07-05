@@ -2296,6 +2296,16 @@ static HRESULT WINAPI options_GetOption(IADsObjectOptions *iface, LONG option, V
 static HRESULT WINAPI options_SetOption(IADsObjectOptions *iface, LONG option, VARIANT var)
 {
     FIXME("%p,%ld,%s: stub\n", iface, option, wine_dbgstr_variant(&var));
+
+    switch (option)
+    {
+    case ADS_OPTION_ACCUMULATIVE_MODIFICATION:
+        return S_OK;
+
+    default:
+        break;
+    }
+
     return E_NOTIMPL;
 }
 
