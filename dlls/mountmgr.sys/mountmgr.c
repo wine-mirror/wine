@@ -21,8 +21,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-#define NONAMELESSUNION
-
 #include "mountmgr.h"
 #include "winreg.h"
 #include "unixlib.h"
@@ -378,20 +376,20 @@ static void WINAPI query_dhcp_request_params( TP_CALLBACK_INSTANCE *instance, vo
     /* sanity checks */
     if (FIELD_OFFSET(struct mountmgr_dhcp_request_params, params[query->count]) > insize)
     {
-        irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+        irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
         goto err;
     }
 
     for (i = 0; i < query->count; i++)
         if (query->params[i].offset + query->params[i].size > insize)
         {
-            irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+            irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
             goto err;
         }
 
     if (!memchr( query->unix_name, 0, sizeof(query->unix_name) ))
     {
-        irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+        irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
         goto err;
     }
 
@@ -407,11 +405,11 @@ static void WINAPI query_dhcp_request_params( TP_CALLBACK_INSTANCE *instance, vo
         {
             if (offset >= sizeof(query->size)) query->size = offset;
             offset = sizeof(query->size);
-            irp->IoStatus.u.Status = STATUS_BUFFER_OVERFLOW;
+            irp->IoStatus.Status = STATUS_BUFFER_OVERFLOW;
             goto err;
         }
     }
-    irp->IoStatus.u.Status = STATUS_SUCCESS;
+    irp->IoStatus.Status = STATUS_SUCCESS;
 
 err:
     irp->IoStatus.Information = offset;
@@ -430,7 +428,7 @@ static void WINAPI query_symbol_file_callback( TP_CALLBACK_INSTANCE *instance, v
     NTSTATUS status = MOUNTMGR_CALL( query_symbol_file, &params );
 
     irp->IoStatus.Information = info;
-    irp->IoStatus.u.Status = status;
+    irp->IoStatus.Status = status;
     IoCompleteRequest( irp, IO_NO_INCREMENT );
 }
 
@@ -528,7 +526,7 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
         }
 
         if (TrySubmitThreadpoolCallback( query_dhcp_request_params, irp, NULL ))
-            return (irp->IoStatus.u.Status = STATUS_PENDING);
+            return (irp->IoStatus.Status = STATUS_PENDING);
         status = STATUS_NO_MEMORY;
         break;
     case IOCTL_MOUNTMGR_QUERY_SYMBOL_FILE:
@@ -538,7 +536,7 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
             break;
         }
         if (TrySubmitThreadpoolCallback( query_symbol_file_callback, irp, NULL ))
-            return (irp->IoStatus.u.Status = STATUS_PENDING);
+            return (irp->IoStatus.Status = STATUS_PENDING);
         status = STATUS_NO_MEMORY;
         break;
     case IOCTL_MOUNTMGR_READ_CREDENTIAL:
@@ -594,7 +592,7 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
         status = STATUS_NOT_SUPPORTED;
         break;
     }
-    irp->IoStatus.u.Status = status;
+    irp->IoStatus.Status = status;
     IoCompleteRequest( irp, IO_NO_INCREMENT );
     return status;
 }

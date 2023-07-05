@@ -24,8 +24,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NONAMELESSUNION
-
 #include "mountmgr.h"
 #include "winreg.h"
 #include "winnls.h"
@@ -1749,7 +1747,7 @@ static NTSTATUS WINAPI harddisk_query_volume( DEVICE_OBJECT *device, IRP *irp )
     }
 
 done:
-    io->u.Status = status;
+    io->Status = status;
     LeaveCriticalSection( &device_section );
     IoCompleteRequest( irp, IO_NO_INCREMENT );
     return status;
@@ -1841,7 +1839,7 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
     }
     }
 
-    irp->IoStatus.u.Status = status;
+    irp->IoStatus.Status = status;
     LeaveCriticalSection( &device_section );
     IoCompleteRequest( irp, IO_NO_INCREMENT );
     return status;

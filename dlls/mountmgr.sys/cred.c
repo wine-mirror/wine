@@ -36,8 +36,6 @@
 #undef GetCurrentThread
 #endif
 
-#define NONAMELESSUNION
-
 #include "mountmgr.h"
 #include "unixlib.h"
 #include "wine/debug.h"
