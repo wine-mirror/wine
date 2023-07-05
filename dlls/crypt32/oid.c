@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#define NONAMELESSUNION
+
 #include "windef.h"
 #include "winbase.h"
 #define CRYPT_OID_INFO_HAS_EXTRA_FIELDS
@@ -778,9 +778,9 @@ BOOL WINAPI CryptRegisterOIDInfo(PCCRYPT_OID_INFO info, DWORD flags)
         if (err != ERROR_SUCCESS) goto done;
     }
 
-    if (info->u.Algid)
+    if (info->Algid)
     {
-        err = RegSetValueExW(key, L"Algid", 0, REG_DWORD, (const BYTE *)&info->u.Algid, sizeof(info->u.Algid));
+        err = RegSetValueExW(key, L"Algid", 0, REG_DWORD, (const BYTE *)&info->Algid, sizeof(info->Algid));
         if (err != ERROR_SUCCESS) goto done;
     }
 
@@ -1532,8 +1532,8 @@ static struct OIDInfo *read_oid_info(HKEY root, char *key_name, DWORD *flags)
 
         info->info.dwGroupId = group_id;
 
-        len = sizeof(info->info.u.Algid);
-        RegQueryValueExW(key, L"Algid", NULL, NULL, (BYTE *)&info->info.u.Algid, &len);
+        len = sizeof(info->info.Algid);
+        RegQueryValueExW(key, L"Algid", NULL, NULL, (BYTE *)&info->info.Algid, &len);
 
         if (extra_len)
         {
@@ -1588,7 +1588,7 @@ static void init_registered_oid_info(void)
             {
                 TRACE("adding oid %s, name %s, groupid %lu, algid %u, extra %lu, CNG algid %s, CNG extra %s\n",
                       debugstr_a(info->info.pszOID), debugstr_w(info->info.pwszName),
-                      info->info.dwGroupId, info->info.u.Algid, info->info.ExtraInfo.cbData,
+                      info->info.dwGroupId, info->info.Algid, info->info.ExtraInfo.cbData,
                       debugstr_w(info->info.pwszCNGAlgid), debugstr_w(info->info.pwszCNGExtraAlgid));
 
                 if (flags & CRYPT_INSTALL_OID_INFO_BEFORE_FLAG)
@@ -1622,7 +1622,7 @@ static void init_oid_info(void)
                 info->info.pszOID = oidInfoConstructors[i].pszOID;
                 info->info.pwszName = oidInfoConstructors[i].pwszName;
                 info->info.dwGroupId = oidInfoConstructors[i].dwGroupId;
-                info->info.u.Algid = oidInfoConstructors[i].Algid;
+                info->info.Algid = oidInfoConstructors[i].Algid;
                 if (oidInfoConstructors[i].blob)
                 {
                     info->info.ExtraInfo.cbData =
@@ -1654,7 +1654,7 @@ static void init_oid_info(void)
                     info->info.pszOID = oidInfoConstructors[i].pszOID;
                     info->info.pwszName = (LPWSTR)(info + 1);
                     info->info.dwGroupId = oidInfoConstructors[i].dwGroupId;
-                    info->info.u.Algid = oidInfoConstructors[i].Algid;
+                    info->info.Algid = oidInfoConstructors[i].Algid;
                     memcpy(info + 1, stringresource, len*sizeof(WCHAR));
                     ((LPWSTR)(info + 1))[len] = 0;
                     if (oidInfoConstructors[i].blob)
@@ -1728,7 +1728,7 @@ PCCRYPT_OID_INFO WINAPI CryptFindOIDInfo(DWORD dwKeyType, void *pvKey,
         EnterCriticalSection(&oidInfoCS);
         LIST_FOR_EACH_ENTRY(info, &oidInfo, struct OIDInfo, entry)
         {
-            if (info->info.u.Algid == *(DWORD *)pvKey &&
+            if (info->info.Algid == *(DWORD *)pvKey &&
              (!dwGroupId || info->info.dwGroupId == dwGroupId))
             {
                 ret = &info->info;
@@ -1783,7 +1783,7 @@ PCCRYPT_OID_INFO WINAPI CryptFindOIDInfo(DWORD dwKeyType, void *pvKey,
         EnterCriticalSection(&oidInfoCS);
         LIST_FOR_EACH_ENTRY(info, &oidInfo, struct OIDInfo, entry)
         {
-            if (info->info.u.Algid == *(DWORD *)pvKey &&
+            if (info->info.Algid == *(DWORD *)pvKey &&
              info->info.ExtraInfo.cbData >= sizeof(DWORD) &&
              *(DWORD *)info->info.ExtraInfo.pbData ==
              *(DWORD *)((LPBYTE)pvKey + sizeof(DWORD)) &&
@@ -1820,7 +1820,7 @@ DWORD WINAPI CertOIDToAlgId(LPCSTR pszObjId)
      (void *)pszObjId, 0);
 
     if (info)
-        ret = info->u.Algid;
+        ret = info->Algid;
     else
         ret = 0;
     return ret;

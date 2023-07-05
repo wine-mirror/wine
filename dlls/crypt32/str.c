@@ -17,8 +17,6 @@
  */
 #include <stdarg.h>
 
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -1036,7 +1034,7 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT cert, DWORD type, DWORD flags, vo
 
         if (entry)
         {
-            ret = copy_output_str(name_string, entry->u.pwszRfc822Name, name_len);
+            ret = copy_output_str(name_string, entry->pwszRfc822Name, name_len);
             break;
         }
         ret = cert_get_name_from_rdn_attr(cert->dwCertEncodingType, name, szOID_RSA_emailAddr,
@@ -1056,7 +1054,7 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT cert, DWORD type, DWORD flags, vo
             entry = cert_find_alt_name_entry(cert, alt_name_issuer, CERT_ALT_NAME_DIRECTORY_NAME, &info);
 
             if (entry)
-                ret = CertNameToStrW(cert->dwCertEncodingType, &entry->u.DirectoryName,
+                ret = CertNameToStrW(cert->dwCertEncodingType, &entry->DirectoryName,
                                      param, name_string, name_len);
         }
         break;
@@ -1069,7 +1067,7 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT cert, DWORD type, DWORD flags, vo
         entry = cert_find_alt_name_entry(cert, alt_name_issuer, CERT_ALT_NAME_DIRECTORY_NAME, &info);
 
         if (entry)
-            ret = cert_name_to_str_with_indent(X509_ASN_ENCODING, 0, &entry->u.DirectoryName,
+            ret = cert_name_to_str_with_indent(X509_ASN_ENCODING, 0, &entry->DirectoryName,
                                                0, name_string, name_len);
         break;
     case CERT_NAME_SIMPLE_DISPLAY_TYPE:
@@ -1097,7 +1095,7 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT cert, DWORD type, DWORD flags, vo
         if (!info) break;
         if (!entry && info->cAltEntry)
             entry = &info->rgAltEntry[0];
-        if (entry) ret = copy_output_str(name_string, entry->u.pwszRfc822Name, name_len);
+        if (entry) ret = copy_output_str(name_string, entry->pwszRfc822Name, name_len);
         break;
     }
     case CERT_NAME_FRIENDLY_DISPLAY_TYPE:
@@ -1123,7 +1121,7 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT cert, DWORD type, DWORD flags, vo
                 do
                 {
                     if (name_string && name_len == 1) break;
-                    ret += len = copy_output_str(name_string, entry->u.pwszDNSName, name_len ? name_len - 1 : 0);
+                    ret += len = copy_output_str(name_string, entry->pwszDNSName, name_len ? name_len - 1 : 0);
                     if (name_string && name_len)
                     {
                         name_string += len;
@@ -1132,7 +1130,7 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT cert, DWORD type, DWORD flags, vo
                 }
                 while ((entry = cert_find_next_alt_name_entry(info, CERT_ALT_NAME_DNS_NAME, &index)));
             }
-            else ret = copy_output_str(name_string, entry->u.pwszDNSName, name_len);
+            else ret = copy_output_str(name_string, entry->pwszDNSName, name_len);
         }
         else
         {
@@ -1155,7 +1153,7 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT cert, DWORD type, DWORD flags, vo
     case CERT_NAME_URL_TYPE:
     {
         if ((entry = cert_find_alt_name_entry(cert, alt_name_issuer, CERT_ALT_NAME_URL, &info)))
-            ret = copy_output_str(name_string, entry->u.pwszURL, name_len);
+            ret = copy_output_str(name_string, entry->pwszURL, name_len);
         break;
     }
     default:

@@ -19,7 +19,7 @@
 
 #include <stdarg.h>
 #include <wchar.h>
-#define NONAMELESSUNION
+
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -292,7 +292,7 @@ DWORD CRYPT_IsCertificateSelfSigned(const CERT_CONTEXT *cert)
                          &info->AuthorityCertIssuer.rgAltEntry[i];
                 if (directoryName)
                 {
-                    if (CertCompareCertificateName(cert->dwCertEncodingType, &directoryName->u.DirectoryName, &cert->pCertInfo->Issuer)
+                    if (CertCompareCertificateName(cert->dwCertEncodingType, &directoryName->DirectoryName, &cert->pCertInfo->Issuer)
                             && CertCompareIntegerBlob(&info->AuthorityCertSerialNumber, &cert->pCertInfo->SerialNumber))
                         status = CERT_TRUST_HAS_NAME_MATCH_ISSUER;
                 }
@@ -891,24 +891,24 @@ static BOOL alt_name_matches(const CERT_ALT_NAME_ENTRY *name,
         switch (constraint->dwAltNameChoice)
         {
         case CERT_ALT_NAME_RFC822_NAME:
-            match = rfc822_name_matches(constraint->u.pwszURL,
-             name->u.pwszURL, trustErrorStatus);
+            match = rfc822_name_matches(constraint->pwszURL,
+             name->pwszURL, trustErrorStatus);
             break;
         case CERT_ALT_NAME_DNS_NAME:
-            match = dns_name_matches(constraint->u.pwszURL,
-             name->u.pwszURL, trustErrorStatus);
+            match = dns_name_matches(constraint->pwszURL,
+             name->pwszURL, trustErrorStatus);
             break;
         case CERT_ALT_NAME_URL:
-            match = url_matches(constraint->u.pwszURL,
-             name->u.pwszURL, trustErrorStatus);
+            match = url_matches(constraint->pwszURL,
+             name->pwszURL, trustErrorStatus);
             break;
         case CERT_ALT_NAME_IP_ADDRESS:
-            match = ip_address_matches(&constraint->u.IPAddress,
-             &name->u.IPAddress, trustErrorStatus);
+            match = ip_address_matches(&constraint->IPAddress,
+             &name->IPAddress, trustErrorStatus);
             break;
         case CERT_ALT_NAME_DIRECTORY_NAME:
-            match = directory_name_matches(&constraint->u.DirectoryName,
-             &name->u.DirectoryName);
+            match = directory_name_matches(&constraint->DirectoryName,
+             &name->DirectoryName);
             break;
         default:
             ERR("name choice %ld unsupported in this context\n",
@@ -1022,7 +1022,7 @@ static BOOL rfc822_attr_matches_excluded_name(const CERT_RDN_ATTR *attr,
          &nameConstraints->rgExcludedSubtree[i].Base;
 
         if (constraint->dwAltNameChoice == CERT_ALT_NAME_RFC822_NAME)
-            match = rfc822_name_matches(constraint->u.pwszRfc822Name,
+            match = rfc822_name_matches(constraint->pwszRfc822Name,
              (LPCWSTR)attr->Value.pbData, trustErrorStatus);
     }
     return match;
@@ -1043,7 +1043,7 @@ static BOOL rfc822_attr_matches_permitted_name(const CERT_RDN_ATTR *attr,
         if (constraint->dwAltNameChoice == CERT_ALT_NAME_RFC822_NAME)
         {
             *present = TRUE;
-            match = rfc822_name_matches(constraint->u.pwszRfc822Name,
+            match = rfc822_name_matches(constraint->pwszRfc822Name,
              (LPCWSTR)attr->Value.pbData, trustErrorStatus);
         }
     }
@@ -1152,7 +1152,7 @@ static void compare_subject_with_constraints(const CERT_NAME_BLOB *subjectName,
          &nameConstraints->rgExcludedSubtree[i].Base;
 
         if (constraint->dwAltNameChoice == CERT_ALT_NAME_DIRECTORY_NAME &&
-         directory_name_matches(&constraint->u.DirectoryName, subjectName))
+         directory_name_matches(&constraint->DirectoryName, subjectName))
         {
             TRACE_(chain)("subject name is excluded\n");
             *trustErrorStatus |=
@@ -1177,7 +1177,7 @@ static void compare_subject_with_constraints(const CERT_NAME_BLOB *subjectName,
             if (constraint->dwAltNameChoice == CERT_ALT_NAME_DIRECTORY_NAME)
             {
                 hasDirectoryConstraint = TRUE;
-                match = directory_name_matches(&constraint->u.DirectoryName,
+                match = directory_name_matches(&constraint->DirectoryName,
                  subjectName);
             }
         }
@@ -1427,31 +1427,31 @@ static void dump_alt_name_entry(const CERT_ALT_NAME_ENTRY *entry)
     {
     case CERT_ALT_NAME_OTHER_NAME:
         TRACE_(chain)("CERT_ALT_NAME_OTHER_NAME, oid = %s\n",
-         debugstr_a(entry->u.pOtherName->pszObjId));
+         debugstr_a(entry->pOtherName->pszObjId));
          break;
     case CERT_ALT_NAME_RFC822_NAME:
         TRACE_(chain)("CERT_ALT_NAME_RFC822_NAME: %s\n",
-         debugstr_w(entry->u.pwszRfc822Name));
+         debugstr_w(entry->pwszRfc822Name));
         break;
     case CERT_ALT_NAME_DNS_NAME:
         TRACE_(chain)("CERT_ALT_NAME_DNS_NAME: %s\n",
-         debugstr_w(entry->u.pwszDNSName));
+         debugstr_w(entry->pwszDNSName));
         break;
     case CERT_ALT_NAME_DIRECTORY_NAME:
-        str = name_value_to_str(&entry->u.DirectoryName);
+        str = name_value_to_str(&entry->DirectoryName);
         TRACE_(chain)("CERT_ALT_NAME_DIRECTORY_NAME: %s\n", debugstr_w(str));
         CryptMemFree(str);
         break;
     case CERT_ALT_NAME_URL:
-        TRACE_(chain)("CERT_ALT_NAME_URL: %s\n", debugstr_w(entry->u.pwszURL));
+        TRACE_(chain)("CERT_ALT_NAME_URL: %s\n", debugstr_w(entry->pwszURL));
         break;
     case CERT_ALT_NAME_IP_ADDRESS:
         TRACE_(chain)("CERT_ALT_NAME_IP_ADDRESS: %ld bytes\n",
-         entry->u.IPAddress.cbData);
+         entry->IPAddress.cbData);
         break;
     case CERT_ALT_NAME_REGISTERED_ID:
         TRACE_(chain)("CERT_ALT_NAME_REGISTERED_ID: %s\n",
-         debugstr_a(entry->u.pszRegisteredID));
+         debugstr_a(entry->pszRegisteredID));
         break;
     default:
         TRACE_(chain)("dwAltNameChoice = %ld\n", entry->dwAltNameChoice);
@@ -2075,9 +2075,9 @@ static PCCERT_CONTEXT CRYPT_GetIssuer(const CertificateChainEngine *engine,
             if (info->CertIssuer.cbData && info->CertSerialNumber.cbData)
             {
                 id.dwIdChoice = CERT_ID_ISSUER_SERIAL_NUMBER;
-                memcpy(&id.u.IssuerSerialNumber.Issuer, &info->CertIssuer,
+                memcpy(&id.IssuerSerialNumber.Issuer, &info->CertIssuer,
                  sizeof(CERT_NAME_BLOB));
-                memcpy(&id.u.IssuerSerialNumber.SerialNumber,
+                memcpy(&id.IssuerSerialNumber.SerialNumber,
                  &info->CertSerialNumber, sizeof(CRYPT_INTEGER_BLOB));
 
                 issuer = CRYPT_FindIssuer(engine, subject, store, CERT_FIND_CERT_ID, &id, flags, prevIssuer);
@@ -2091,7 +2091,7 @@ static PCCERT_CONTEXT CRYPT_GetIssuer(const CertificateChainEngine *engine,
             {
                 id.dwIdChoice = CERT_ID_KEY_IDENTIFIER;
 
-                memcpy(&id.u.KeyId, &info->KeyId, sizeof(CRYPT_HASH_BLOB));
+                memcpy(&id.KeyId, &info->KeyId, sizeof(CRYPT_HASH_BLOB));
                 issuer = CRYPT_FindIssuer(engine, subject, store, CERT_FIND_CERT_ID, &id, flags, prevIssuer);
                 if (issuer)
                 {
@@ -2131,9 +2131,9 @@ static PCCERT_CONTEXT CRYPT_GetIssuer(const CertificateChainEngine *engine,
                 if (directoryName)
                 {
                     id.dwIdChoice = CERT_ID_ISSUER_SERIAL_NUMBER;
-                    memcpy(&id.u.IssuerSerialNumber.Issuer,
-                     &directoryName->u.DirectoryName, sizeof(CERT_NAME_BLOB));
-                    memcpy(&id.u.IssuerSerialNumber.SerialNumber,
+                    memcpy(&id.IssuerSerialNumber.Issuer,
+                     &directoryName->DirectoryName, sizeof(CERT_NAME_BLOB));
+                    memcpy(&id.IssuerSerialNumber.SerialNumber,
                      &info->AuthorityCertSerialNumber,
                      sizeof(CRYPT_INTEGER_BLOB));
 
@@ -2150,7 +2150,7 @@ static PCCERT_CONTEXT CRYPT_GetIssuer(const CertificateChainEngine *engine,
             else if (info->KeyId.cbData)
             {
                 id.dwIdChoice = CERT_ID_KEY_IDENTIFIER;
-                memcpy(&id.u.KeyId, &info->KeyId, sizeof(CRYPT_HASH_BLOB));
+                memcpy(&id.KeyId, &info->KeyId, sizeof(CRYPT_HASH_BLOB));
                 issuer = CRYPT_FindIssuer(engine, subject, store, CERT_FIND_CERT_ID, &id, flags, prevIssuer);
                 if (issuer)
                 {
@@ -3175,8 +3175,8 @@ static BOOL match_dns_to_subject_alt_name(const CERT_EXTENSION *ext,
              CERT_ALT_NAME_DNS_NAME)
             {
                 TRACE_(chain)("dNSName: %s\n", debugstr_w(
-                 subjectName->rgAltEntry[i].u.pwszDNSName));
-                if (subjectName->rgAltEntry[i].u.pwszDNSName[0] == '*')
+                 subjectName->rgAltEntry[i].pwszDNSName));
+                if (subjectName->rgAltEntry[i].pwszDNSName[0] == '*')
                 {
                     LPCWSTR server_name_dot;
 
@@ -3196,12 +3196,12 @@ static BOOL match_dns_to_subject_alt_name(const CERT_EXTENSION *ext,
                     if (server_name_dot)
                     {
                         if (!wcsicmp(server_name_dot,
-                         subjectName->rgAltEntry[i].u.pwszDNSName + 1))
+                         subjectName->rgAltEntry[i].pwszDNSName + 1))
                             matches = TRUE;
                     }
                 }
                 else if (!wcsicmp(server_name,
-                 subjectName->rgAltEntry[i].u.pwszDNSName))
+                 subjectName->rgAltEntry[i].pwszDNSName))
                     matches = TRUE;
             }
         }
@@ -3439,7 +3439,7 @@ static void dump_ssl_extra_chain_policy_para(HTTPSPolicyCallbackData *sslPara)
 {
     if (sslPara)
     {
-        TRACE_(chain)("cbSize = %ld\n", sslPara->u.cbSize);
+        TRACE_(chain)("cbSize = %ld\n", sslPara->cbSize);
         TRACE_(chain)("dwAuthType = %ld\n", sslPara->dwAuthType);
         TRACE_(chain)("fdwChecks = %08lx\n", sslPara->fdwChecks);
         TRACE_(chain)("pwszServerName = %s\n",
@@ -3461,7 +3461,7 @@ static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
     }
     if (TRACE_ON(chain))
         dump_ssl_extra_chain_policy_para(sslPara);
-    if (sslPara && sslPara->u.cbSize >= sizeof(HTTPSPolicyCallbackData))
+    if (sslPara && sslPara->cbSize >= sizeof(HTTPSPolicyCallbackData))
         checks = sslPara->fdwChecks;
     pPolicyStatus->lChainIndex = pPolicyStatus->lElementIndex = -1;
     if (pChainContext->TrustStatus.dwErrorStatus &
@@ -3543,7 +3543,7 @@ static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
     if (!pPolicyStatus->dwError && pPolicyPara &&
      pPolicyPara->cbSize >= sizeof(CERT_CHAIN_POLICY_PARA))
     {
-        if (sslPara && sslPara->u.cbSize >= sizeof(HTTPSPolicyCallbackData))
+        if (sslPara && sslPara->cbSize >= sizeof(HTTPSPolicyCallbackData))
         {
             if (sslPara->dwAuthType == AUTHTYPE_SERVER &&
              sslPara->pwszServerName &&
