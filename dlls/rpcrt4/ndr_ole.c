@@ -26,8 +26,6 @@
 #include <string.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -139,13 +137,13 @@ static HRESULT WINAPI RpcStream_Seek(LPSTREAM iface,
   RpcStreamImpl *This = impl_from_IStream(iface);
   switch (origin) {
   case STREAM_SEEK_SET:
-    This->pos = move.u.LowPart;
+    This->pos = move.LowPart;
     break;
   case STREAM_SEEK_CUR:
-    This->pos = This->pos + move.u.LowPart;
+    This->pos = This->pos + move.LowPart;
     break;
   case STREAM_SEEK_END:
-    This->pos = *This->size + move.u.LowPart;
+    This->pos = *This->size + move.LowPart;
     break;
   default:
     return STG_E_INVALIDFUNCTION;
@@ -161,7 +159,7 @@ static HRESULT WINAPI RpcStream_SetSize(LPSTREAM iface,
                                        ULARGE_INTEGER newSize)
 {
   RpcStreamImpl *This = impl_from_IStream(iface);
-  *This->size = newSize.u.LowPart;
+  *This->size = newSize.LowPart;
   return S_OK;
 }
 
