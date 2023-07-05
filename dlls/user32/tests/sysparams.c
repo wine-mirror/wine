@@ -2502,7 +2502,7 @@ static void test_WM_DISPLAYCHANGE(void)
         {
             todo_wine
             win_skip( "ChangeDisplaySettingsExW returned %ld\n", res );
-            ok( res == DISP_CHANGE_BADMODE || broken( DISP_CHANGE_FAILED && bpp == 8 ),
+            ok( res == DISP_CHANGE_BADMODE || broken( res == DISP_CHANGE_FAILED && bpp == 8 ),
                 "ChangeDisplaySettingsExW returned %ld\n", res );
             ok( last_bpp == -1, "got WM_DISPLAYCHANGE bpp %d\n", last_bpp );
         }
