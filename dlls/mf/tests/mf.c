@@ -2939,7 +2939,7 @@ static HRESULT WINAPI test_grabber_callback_OnProcessSample(IMFSampleGrabberSink
 
     SetEvent(grabber->ready_event);
     res = WaitForSingleObject(grabber->done_event, 1000);
-    ok(!res, "WaitForSingleObject returned %#lx", res);
+    ok(!res, "WaitForSingleObject returned %#lx\n", res);
 
     return S_OK;
 }
