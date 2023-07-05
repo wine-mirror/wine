@@ -869,15 +869,13 @@ static void output_system_info(void)
 
     const char *(CDECL *wine_get_build_id)(void);
     void (CDECL *wine_get_host_version)( const char **sysname, const char **release );
-    BOOL is_wow64;
 
     wine_get_build_id = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_build_id");
     wine_get_host_version = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_host_version");
-    if (!IsWow64Process( dbg_curr_process->handle, &is_wow64 )) is_wow64 = FALSE;
 
     dbg_printf( "System information:\n" );
     if (wine_get_build_id) dbg_printf( "    Wine build: %s\n", wine_get_build_id() );
-    dbg_printf( "    Platform: %s%s\n", platform, is_wow64 ? " (WOW64)" : "" );
+    dbg_printf( "    Platform: %s%s\n", platform, dbg_curr_process->is_wow64 ? " (WOW64)" : "" );
     dbg_printf( "    Version: Windows %s\n", get_windows_version() );
     if (wine_get_host_version)
     {

@@ -266,6 +266,8 @@ struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, 
     if (!h)
         h = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
 
+    if (!IsWow64Process(h, &wow64)) wow64 = FALSE;
+
     if (!(p = malloc(sizeof(struct dbg_process)))) return NULL;
     p->handle = h;
     p->pid = pid;
@@ -276,6 +278,7 @@ struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, 
     list_init(&p->modules);
     p->event_on_first_exception = NULL;
     p->active_debuggee = FALSE;
+    p->is_wow64 = wow64;
     p->next_bp = 1;  /* breakpoint 0 is reserved for step-over */
     memset(p->bp, 0, sizeof(p->bp));
     p->delayed_bp = NULL;
@@ -290,8 +293,6 @@ struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, 
     p->num_synthetized_types = 0;
 
     list_add_head(&dbg_process_list, &p->entry);
-
-    IsWow64Process(h, &wow64);
 
 #ifdef __i386__
     p->be_cpu = &be_i386;

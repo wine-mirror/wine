@@ -1685,7 +1685,6 @@ static BOOL CALLBACK packet_query_libraries_cb(PCSTR mod_name, DWORD64 base, PVO
     IMAGE_NT_HEADERS *nth = NULL;
     IMAGEHLP_MODULE64 mod;
     SIZE_T size, i;
-    BOOL is_wow64;
     char buffer[0x400];
 
     mod.SizeOfStruct = sizeof(mod);
@@ -1709,8 +1708,7 @@ static BOOL CALLBACK packet_query_libraries_cb(PCSTR mod_name, DWORD64 base, PVO
 
         if ((unix_path = wine_get_unix_file_name(nt_name.Buffer)))
         {
-            if (IsWow64Process(gdbctx->process->handle, &is_wow64) &&
-                is_wow64 && (tmp = strstr(unix_path, "system32")))
+            if (gdbctx->process->is_wow64 && (tmp = strstr(unix_path, "system32")))
                 memcpy(tmp, "syswow64", 8);
             reply_buffer_append_xmlstr(reply, unix_path);
         }
@@ -1743,7 +1741,7 @@ static BOOL CALLBACK packet_query_libraries_cb(PCSTR mod_name, DWORD64 base, PVO
      * the following computation valid in all cases. */
     dos = (IMAGE_DOS_HEADER *)buffer;
     nth = (IMAGE_NT_HEADERS *)(buffer + dos->e_lfanew);
-    if (IsWow64Process(gdbctx->process->handle, &is_wow64) && is_wow64)
+    if (gdbctx->process->is_wow64)
         sec = IMAGE_FIRST_SECTION((IMAGE_NT_HEADERS32 *)nth);
     else
         sec = IMAGE_FIRST_SECTION((IMAGE_NT_HEADERS64 *)nth);
@@ -1967,7 +1965,6 @@ static enum packet_return packet_query_exec_file(struct gdb_context* gdbctx)
     struct reply_buffer* reply = &gdbctx->qxfer_buffer;
     struct dbg_process* process = gdbctx->process;
     char *unix_path;
-    BOOL is_wow64;
     char *tmp;
 
     if (!process) return packet_error;
@@ -1978,8 +1975,7 @@ static enum packet_return packet_query_exec_file(struct gdb_context* gdbctx)
     if (!(unix_path = wine_get_unix_file_name(process->imageName)))
         return packet_reply_error(gdbctx, GetLastError() == ERROR_NOT_ENOUGH_MEMORY ? HOST_ENOMEM : HOST_ENOENT);
 
-    if (IsWow64Process(process->handle, &is_wow64) &&
-        is_wow64 && (tmp = strstr(unix_path, "system32")))
+    if (process->is_wow64 && (tmp = strstr(unix_path, "system32")))
         memcpy(tmp, "syswow64", 8);
 
     reply_buffer_append_str(reply, unix_path);

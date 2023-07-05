@@ -280,6 +280,7 @@ struct dbg_process
     struct backend_cpu*         be_cpu;
     HANDLE                      event_on_first_exception;
     BOOL                        active_debuggee;
+    BOOL                        is_wow64;
     struct dbg_breakpoint       bp[MAX_BREAKPOINTS];
     unsigned                    next_bp;
     struct dbg_delayed_bp*      delayed_bp;
