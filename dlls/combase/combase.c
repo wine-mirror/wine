@@ -18,8 +18,6 @@
  */
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #define USE_COM_CONTEXT_DEF

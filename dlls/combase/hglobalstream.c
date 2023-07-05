@@ -20,8 +20,6 @@
  */
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "objbase.h"
 
 #include "wine/debug.h"
@@ -151,8 +149,8 @@ static HRESULT WINAPI stream_Read(IStream *iface, void *pv, ULONG cb, ULONG *rea
     if (!read_len)
         read_len = &dummy;
 
-    if (stream->handle->size >= stream->position.u.LowPart)
-        len = min(stream->handle->size - stream->position.u.LowPart, cb);
+    if (stream->handle->size >= stream->position.LowPart)
+        len = min(stream->handle->size - stream->position.LowPart, cb);
     else
         len = 0;
 
@@ -164,8 +162,8 @@ static HRESULT WINAPI stream_Read(IStream *iface, void *pv, ULONG cb, ULONG *rea
         return S_OK;
     }
 
-    memcpy(pv, buffer + stream->position.u.LowPart, len);
-    stream->position.u.LowPart += len;
+    memcpy(pv, buffer + stream->position.LowPart, len);
+    stream->position.LowPart += len;
 
     *read_len = len;
 
@@ -191,10 +189,10 @@ static HRESULT WINAPI stream_Write(IStream *iface, const void *pv, ULONG cb, ULO
 
     *written = 0;
 
-    size.u.HighPart = 0;
-    size.u.LowPart = stream->position.u.LowPart + cb;
+    size.HighPart = 0;
+    size.LowPart = stream->position.LowPart + cb;
 
-    if (size.u.LowPart > stream->handle->size)
+    if (size.LowPart > stream->handle->size)
     {
         /* grow stream */
         HRESULT hr = IStream_SetSize(iface, size);
@@ -212,8 +210,8 @@ static HRESULT WINAPI stream_Write(IStream *iface, const void *pv, ULONG cb, ULO
         return S_OK;
     }
 
-    memcpy(buffer + stream->position.u.LowPart, pv, cb);
-    stream->position.u.LowPart += cb;
+    memcpy(buffer + stream->position.LowPart, pv, cb);
+    stream->position.LowPart += cb;
 
     GlobalUnlock(stream->handle->hglobal);
 
@@ -247,10 +245,10 @@ static HRESULT WINAPI stream_Seek(IStream *iface, LARGE_INTEGER move, DWORD orig
             goto end;
     }
 
-    position.u.HighPart = 0;
-    position.u.LowPart += move.QuadPart;
+    position.HighPart = 0;
+    position.LowPart += move.QuadPart;
 
-    if (move.u.LowPart >= 0x80000000 && position.u.LowPart >= move.u.LowPart)
+    if (move.LowPart >= 0x80000000 && position.LowPart >= move.LowPart)
     {
         /* We tried to seek backwards and went past the start. */
         hr = STG_E_SEEKERROR;
@@ -272,15 +270,15 @@ static HRESULT WINAPI stream_SetSize(IStream *iface, ULARGE_INTEGER size)
 
     TRACE("%p, %s\n", iface, wine_dbgstr_longlong(size.QuadPart));
 
-    if (stream->handle->size == size.u.LowPart)
+    if (stream->handle->size == size.LowPart)
         return S_OK;
 
-    hglobal = GlobalReAlloc(stream->handle->hglobal, size.u.LowPart, GMEM_MOVEABLE);
+    hglobal = GlobalReAlloc(stream->handle->hglobal, size.LowPart, GMEM_MOVEABLE);
     if (!hglobal)
         return E_OUTOFMEMORY;
 
     stream->handle->hglobal = hglobal;
-    stream->handle->size = size.u.LowPart;
+    stream->handle->size = size.LowPart;
 
     return S_OK;
 }
@@ -292,7 +290,7 @@ static HRESULT WINAPI stream_CopyTo(IStream *iface, IStream *dest, ULARGE_INTEGE
     HRESULT hr = S_OK;
     BYTE buffer[128];
 
-    TRACE("%p, %p, %ld, %p, %p\n", iface, dest, cb.u.LowPart, read_len, written);
+    TRACE("%p, %p, %ld, %p, %p\n", iface, dest, cb.LowPart, read_len, written);
 
     if (!dest)
         return STG_E_INVALIDPOINTER;
@@ -302,7 +300,7 @@ static HRESULT WINAPI stream_CopyTo(IStream *iface, IStream *dest, ULARGE_INTEGE
 
     while (cb.QuadPart > 0)
     {
-        ULONG chunk_size = cb.QuadPart >= sizeof(buffer) ? sizeof(buffer) : cb.u.LowPart;
+        ULONG chunk_size = cb.QuadPart >= sizeof(buffer) ? sizeof(buffer) : cb.LowPart;
         ULONG chunk_read, chunk_written;
 
         hr = IStream_Read(iface, buffer, chunk_size, &chunk_read);

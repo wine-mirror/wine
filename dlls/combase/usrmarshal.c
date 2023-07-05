@@ -20,8 +20,6 @@
  */
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "ole2.h"
 
 #include "wine/debug.h"
