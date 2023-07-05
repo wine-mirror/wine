@@ -458,6 +458,9 @@ static HRESULT WINAPI ldapns_QueryInterface(IADs *iface, REFIID riid, void **obj
 
     if (IsEqualGUID(riid, &IID_IADsObjectOptions))
     {
+        if (!ldap->ld || (ldap->object && wcsicmp(ldap->object, L"rootDSE") != 0))
+            return E_NOINTERFACE;
+
         IADs_AddRef(iface);
         *obj = &ldap->IADsObjectOptions_iface;
         return S_OK;
@@ -2250,8 +2253,39 @@ static HRESULT WINAPI options_Invoke(IADsObjectOptions *iface, DISPID dispid, RE
 
 static HRESULT WINAPI options_GetOption(IADsObjectOptions *iface, LONG option, VARIANT *var)
 {
-    FIXME("%p,%ld,%p: stub\n", iface, option, var);
-    return E_NOTIMPL;
+    LDAP_namespace *ldap = impl_from_IADsObjectOptions(iface);
+    LONG err;
+
+    TRACE("%p,%ld,%p\n", iface, option, var);
+
+    if (!ldap->ld) return E_NOTIMPL;
+
+    switch (option)
+    {
+    case ADS_OPTION_SERVERNAME:
+    {
+        WCHAR *host;
+        BSTR val;
+
+        err = ldap_get_optionW(ldap->ld, LDAP_OPT_HOST_NAME, &host);
+        if (err != LDAP_SUCCESS)
+            return HRESULT_FROM_WIN32(map_ldap_error(err));
+
+        val = SysAllocString(host);
+        ldap_memfreeW(host);
+        if (!val) return E_OUTOFMEMORY;
+
+        V_VT(var) = VT_BSTR;
+        V_BSTR(var) = val;
+        return S_OK;
+    }
+
+    default:
+        FIXME("%p,%ld,%p: stub\n", iface, option, var);
+        break;
+    }
+
+    return E_ADS_BAD_PARAMETER;
 }
 
 static HRESULT WINAPI options_SetOption(IADsObjectOptions *iface, LONG option, VARIANT var)
