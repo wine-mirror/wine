@@ -258,6 +258,7 @@ static void winrt_enable( int ns_prefix )
     defaultcollelem                             { return tDEFAULTCOLLELEM; }
     defaultvalue                                { return tDEFAULTVALUE; }
     defaultvtable                               { return tDEFAULTVTABLE; }
+    deprecated                                  { return token_winrt( tDEPRECATED, yytext, yylval ); }
     disable_consistency_check                   { return tDISABLECONSISTENCYCHECK; }
     displaybind                                 { return tDISPLAYBIND; }
     dllname                                     { return tDLLNAME; }

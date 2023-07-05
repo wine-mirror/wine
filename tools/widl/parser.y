@@ -199,6 +199,7 @@ void pop_import( PARSER_LTYPE *yylloc );
 %token tDEFAULTCOLLELEM
 %token tDEFAULTVALUE
 %token tDEFAULTVTABLE
+%token tDEPRECATED
 %token tDISABLECONSISTENCYCHECK tDISPLAYBIND
 %token tDISPINTERFACE
 %token tDLLNAME tDONTFREE tDOUBLE tDUAL
@@ -298,6 +299,7 @@ void pop_import( PARSER_LTYPE *yylloc );
 %type <expr> static_attr
 %type <expr> activatable_attr
 %type <expr> composable_attr
+%type <expr> deprecated_attr
 %type <type> delegatedef
 %type <stgclass> storage_cls_spec
 %type <type_qualifier> type_qualifier m_type_qual_list
@@ -628,6 +630,11 @@ composable_attr
                                                 }
         ;
 
+deprecated_attr
+        : aSTRING ',' aIDENTIFIER ',' contract_req
+                                                { $$ = make_expr3( EXPR_MEMBER, make_exprs( EXPR_STRLIT, $1 ), make_exprs( EXPR_IDENTIFIER, $3 ), $5 ); }
+        ;
+
 attribute
         : %empty                                { $$ = NULL; }
         | tACTIVATABLE '(' activatable_attr ')' { $$ = attr_ptr( @$, ATTR_ACTIVATABLE, $3 ); }
@@ -659,6 +666,7 @@ attribute
         | tDEFAULTCOLLELEM                      { $$ = attr_int( @$, ATTR_DEFAULTCOLLELEM, 0 ); }
         | tDEFAULTVALUE '(' expr_const ')'      { $$ = attr_ptr( @$, ATTR_DEFAULTVALUE, $3 ); }
         | tDEFAULTVTABLE                        { $$ = attr_int( @$, ATTR_DEFAULTVTABLE, 0 ); }
+        | tDEPRECATED '(' deprecated_attr ')'   { $$ = attr_ptr( @$, ATTR_DEPRECATED, $3 ); }
         | tDISABLECONSISTENCYCHECK              { $$ = attr_int( @$, ATTR_DISABLECONSISTENCYCHECK, 0 ); }
         | tDISPLAYBIND                          { $$ = attr_int( @$, ATTR_DISPLAYBIND, 0 ); }
         | tDLLNAME '(' aSTRING ')'              { $$ = attr_ptr( @$, ATTR_DLLNAME, $3 ); }
