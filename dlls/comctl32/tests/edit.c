@@ -3588,6 +3588,21 @@ static const struct message wm_ime_composition_seq[] =
     {0}
 };
 
+static const struct message wm_ime_composition_korean_seq[] =
+{
+    {WM_IME_ENDCOMPOSITION, sent},
+    {WM_IME_COMPOSITION, sent | wparam, 'W'},
+    {WM_IME_CHAR, sent | wparam | defwinproc, 'W'},
+    {WM_IME_CHAR, sent | wparam | defwinproc, 'i'},
+    {WM_IME_CHAR, sent | wparam | defwinproc, 'n'},
+    {WM_IME_CHAR, sent | wparam | defwinproc, 'e'},
+    {WM_CHAR, sent | wparam, 'W'},
+    {WM_CHAR, sent | wparam, 'i'},
+    {WM_CHAR, sent | wparam, 'n'},
+    {WM_CHAR, sent | wparam, 'e'},
+    {0}
+};
+
 static const struct message wm_ime_char_seq[] =
 {
     {WM_IME_CHAR, sent | wparam, '0'},
@@ -3648,12 +3663,16 @@ static LRESULT CALLBACK edit_ime_subclass_proc(HWND hwnd, UINT message, WPARAM w
 
 static void test_ime(void)
 {
+    static const HKL korean_hkl = (HKL)0x04120412;
     WNDPROC old_proc;
     LRESULT lr;
     HIMC himc;
     HWND hwnd;
     BOOL ret;
+    HKL hkl;
     MSG msg;
+
+    hkl = GetKeyboardLayout(0);
 
     hwnd = create_editcontrol(WS_POPUP | WS_VISIBLE, 0);
 
@@ -3731,7 +3750,11 @@ static void test_ime(void)
     /* Note that the following message loop is necessary to get the WM_CHAR messages because they
      * are posted. Same for the later message loops in this function. */
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
-    ok_sequence(sequences, COMBINED_SEQ_INDEX, wm_ime_composition_seq, "WM_IME_COMPOSITION", TRUE);
+    if (hkl == korean_hkl)
+        ok_sequence(sequences, COMBINED_SEQ_INDEX, wm_ime_composition_korean_seq,
+                    "korean WM_IME_COMPOSITION", TRUE);
+    else
+        ok_sequence(sequences, COMBINED_SEQ_INDEX, wm_ime_composition_seq, "WM_IME_COMPOSITION", TRUE);
 
     /* Test that WM_IME_CHAR is passed to DefWindowProc() to get WM_CHAR */
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -3751,8 +3774,12 @@ static void test_ime(void)
     ret = ImmNotifyIME(himc, NI_COMPOSITIONSTR, CPS_COMPLETE, 0);
     ok(ret, "ImmNotifyIME failed.\n");
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
-    ok_sequence(sequences, COMBINED_SEQ_INDEX, eimes_getcompstratonce_seq,
-                "WM_IME_COMPOSITION with EIMES_GETCOMPSTRATONCE", TRUE);
+    if (hkl == korean_hkl)
+        ok_sequence(sequences, COMBINED_SEQ_INDEX, wm_ime_composition_korean_seq,
+                    "Korean WM_IME_COMPOSITION with EIMES_GETCOMPSTRATONCE", TRUE);
+    else
+        ok_sequence(sequences, COMBINED_SEQ_INDEX, eimes_getcompstratonce_seq,
+                    "WM_IME_COMPOSITION with EIMES_GETCOMPSTRATONCE", TRUE);
 
     /* Test that WM_IME_CHAR is passed to DefWindowProc() to get WM_CHAR with EIMES_GETCOMPSTRATONCE */
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
