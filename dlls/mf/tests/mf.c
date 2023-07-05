@@ -6938,58 +6938,39 @@ static void test_mpeg4_media_sink(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = MFCreateMPEG4MediaSink(NULL, NULL, NULL, NULL);
-    todo_wine
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     sink = (void *)0xdeadbeef;
     hr = MFCreateMPEG4MediaSink(NULL, NULL, NULL, &sink);
-    todo_wine
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
     ok(sink == (void *)0xdeadbeef, "Unexpected pointer %p.\n", sink);
     sink = NULL;
 
     hr = MFCreateMPEG4MediaSink(bytestream_empty, NULL, NULL, &sink_empty);
-    todo_wine
     ok(hr == S_OK || broken(hr == E_INVALIDARG), "Unexpected hr %#lx.\n", hr);
 
     hr = MFCreateMPEG4MediaSink(bytestream_audio, NULL, audio_type, &sink_audio);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = MFCreateMPEG4MediaSink(bytestream_video, video_type, NULL, &sink_video);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = MFCreateMPEG4MediaSink(bytestream, video_type, audio_type, &sink);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-    if (!sink)
-    {
-        if (sink_video)
-            IMFMediaSink_Release(sink_video);
-        if (sink_audio)
-            IMFMediaSink_Release(sink_audio);
-        if (sink_empty)
-            IMFMediaSink_Release(sink_empty);
-        IMFByteStream_Release(bytestream);
-        IMFByteStream_Release(bytestream_empty);
-        IMFByteStream_Release(bytestream_video);
-        IMFByteStream_Release(bytestream_audio);
-        IMFMediaType_Release(video_type);
-        IMFMediaType_Release(audio_type);
-        return;
-    }
 
     /* Test sink. */
+    flags = 0xdeadbeef;
     hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
     ok(flags == MEDIASINK_RATELESS || broken(flags == (MEDIASINK_RATELESS | MEDIASINK_FIXED_STREAMS)),
             "Unexpected flags %#lx.\n", flags);
 
     check_interface(sink, &IID_IMFMediaEventGenerator, TRUE);
     check_interface(sink, &IID_IMFFinalizableMediaSink, TRUE);
     check_interface(sink, &IID_IMFClockStateSink, TRUE);
+    todo_wine
     check_interface(sink, &IID_IMFGetService, TRUE);
 
     /* Test sink stream count. */
@@ -7104,8 +7085,11 @@ static void test_mpeg4_media_sink(void)
     hr = MFCreatePresentationClock(&clock);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaSink_SetPresentationClock(sink, NULL);
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
     hr = IMFMediaSink_SetPresentationClock(sink, clock);
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IMFPresentationClock_Release(clock);
 
@@ -7124,13 +7108,18 @@ static void test_mpeg4_media_sink(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaTypeHandler_GetMajorType(type_handler, NULL);
+    todo_wine
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaTypeHandler_GetMajorType(type_handler, &guid);
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
     ok(IsEqualGUID(&guid, &MFMediaType_Audio), "Unexpected major type.\n");
 
     hr = IMFMediaTypeHandler_GetMediaTypeCount(type_handler, &count);
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
     ok(count == 1, "Unexpected count %lu.\n", count);
 
     hr = IMFMediaTypeHandler_GetCurrentMediaType(type_handler, &media_type);
@@ -7140,8 +7129,10 @@ static void test_mpeg4_media_sink(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaTypeHandler_SetCurrentMediaType(type_handler, NULL);
+    todo_wine
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaTypeHandler_SetCurrentMediaType(type_handler, media_type);
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IMFMediaType_Release(media_type);
@@ -7160,19 +7151,25 @@ static void test_mpeg4_media_sink(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaTypeHandler_GetMajorType(type_handler, NULL);
+    todo_wine
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaTypeHandler_GetMajorType(type_handler, &guid);
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IMFStreamSink_Release(stream_sink);
 
     hr = IMFMediaSink_AddStreamSink(sink, 0, audio_type, &stream_sink);
+    todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaSink_GetStreamSinkByIndex(sink, 0, &stream_sink);
+    todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaSink_GetStreamSinkById(sink, 0, &stream_sink);
+    todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+    todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     IMFMediaTypeHandler_Release(type_handler);

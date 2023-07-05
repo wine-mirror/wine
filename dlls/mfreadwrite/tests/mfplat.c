@@ -1468,44 +1468,35 @@ static void test_sink_writer_mp4(void)
     ok(!writer, "Unexpected pointer %p.\n", writer);
 
     hr = MFCreateSinkWriterFromURL(NULL, stream, attr, &writer);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
         IMFSinkWriter_Release(writer);
 
     hr = MFCreateSinkWriterFromURL(tmp_file, NULL, NULL, &writer);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
         IMFSinkWriter_Release(writer);
 
     hr = MFCreateSinkWriterFromURL(tmp_file, NULL, attr, &writer);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
         IMFSinkWriter_Release(writer);
 
     hr = MFCreateSinkWriterFromURL(tmp_file, stream, NULL, &writer);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
         IMFSinkWriter_Release(writer);
 
     hr = MFCreateSinkWriterFromURL(tmp_file, stream, attr, &writer);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr != S_OK)
-    {
-        IMFByteStream_Release(stream);
-        IMFAttributes_Release(attr);
-        return;
-    }
 
     /* Test GetServiceForStream. */
     sink = (void *)0xdeadbeef;
     hr = IMFSinkWriter_GetServiceForStream(writer, MF_SINK_WRITER_MEDIASINK,
             &GUID_NULL, &IID_IMFMediaSink, (void **)&sink);
+    todo_wine
     ok(hr == MF_E_UNSUPPORTED_SERVICE, "Unexpected hr %#lx.\n", hr);
+    todo_wine
     ok(!sink, "Unexpected pointer %p.\n", sink);
 
     DeleteFileW(tmp_file);

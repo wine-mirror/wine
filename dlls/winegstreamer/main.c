@@ -649,6 +649,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
         factory = &color_convert_cf;
     else if (IsEqualGUID(clsid, &CLSID_MFMP3SinkClassFactory))
         factory = &sink_class_factory_cf;
+    else if (IsEqualGUID(clsid, &CLSID_MFMPEG4SinkClassFactory))
+        factory = &sink_class_factory_cf;
     else
     {
         FIXME("%s not implemented, returning CLASS_E_CLASSNOTAVAILABLE.\n", debugstr_guid(clsid));
