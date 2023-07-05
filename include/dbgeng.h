@@ -1728,6 +1728,8 @@ DECLARE_INTERFACE_(IDebugSymbols3, IUnknown)
 };
 #undef INTERFACE
 
+#ifdef __ms_va_list
+
 #define INTERFACE IDebugControl
 DECLARE_INTERFACE_(IDebugControl, IUnknown)
 {
@@ -2335,6 +2337,8 @@ DECLARE_INTERFACE_(IDebugControl4, IUnknown)
     STDMETHOD(ResetManagedStatus)(THIS_ ULONG flags) PURE;
 };
 #undef INTERFACE
+
+#endif  /* __ms_va_list */
 
 #define INTERFACE IDebugAdvanced
 DECLARE_INTERFACE_(IDebugAdvanced, IUnknown)

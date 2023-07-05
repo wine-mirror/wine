@@ -6271,37 +6271,6 @@ printf "%s\n" "$wine_cv_cc_m32" >&6; }
       export PKG_CONFIG_LIBDIR
       with_unwind=${with_unwind:-no}
     else
-      if test "x${GCC}" = "xyes"
-      then
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports __builtin_ms_va_list" >&5
-printf %s "checking whether $CC supports __builtin_ms_va_list... " >&6; }
-if test ${wine_cv_builtin_ms_va_list+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdarg.h>
-int
-main (void)
-{
-void func(__builtin_ms_va_list *args);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"
-then :
-  wine_cv_builtin_ms_va_list=yes
-else $as_nop
-  wine_cv_builtin_ms_va_list=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_builtin_ms_va_list" >&5
-printf "%s\n" "$wine_cv_builtin_ms_va_list" >&6; }
-        test $wine_cv_builtin_ms_va_list != no || as_fn_error $? "You need gcc >= 4.4 or clang >= 3.8 to build Wine as 64-bit." "$LINENO" 5
-      fi
       CC="$CC -m64"
       CXX="$CXX -m64"
       host_cpu="x86_64"

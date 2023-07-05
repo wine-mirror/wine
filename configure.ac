@@ -134,13 +134,6 @@ case $host in
       export PKG_CONFIG_LIBDIR
       with_unwind=${with_unwind:-no}
     else
-      if test "x${GCC}" = "xyes"
-      then
-        AC_CACHE_CHECK([whether $CC supports __builtin_ms_va_list],wine_cv_builtin_ms_va_list,
-            [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdarg.h>]], [[void func(__builtin_ms_va_list *args);]])],
-                          [wine_cv_builtin_ms_va_list=yes],[wine_cv_builtin_ms_va_list=no])])
-        test $wine_cv_builtin_ms_va_list != no || AC_MSG_ERROR([You need gcc >= 4.4 or clang >= 3.8 to build Wine as 64-bit.])
-      fi
       CC="$CC -m64"
       CXX="$CXX -m64"
       host_cpu="x86_64"

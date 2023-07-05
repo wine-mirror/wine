@@ -2116,9 +2116,11 @@ WINBASEAPI BOOL        WINAPI FlushFileBuffers(HANDLE);
 WINBASEAPI BOOL        WINAPI FlushInstructionCache(HANDLE,LPCVOID,SIZE_T);
 WINBASEAPI VOID        WINAPI FlushProcessWriteBuffers(void);
 WINBASEAPI BOOL        WINAPI FlushViewOfFile(LPCVOID,SIZE_T);
+#ifdef __ms_va_list
 WINBASEAPI DWORD       WINAPI FormatMessageA(DWORD,LPCVOID,DWORD,DWORD,LPSTR,DWORD,__ms_va_list*);
 WINBASEAPI DWORD       WINAPI FormatMessageW(DWORD,LPCVOID,DWORD,DWORD,LPWSTR,DWORD,__ms_va_list*);
 #define                       FormatMessage WINELIB_NAME_AW(FormatMessage)
+#endif
 WINBASEAPI BOOL        WINAPI FreeEnvironmentStringsA(LPSTR);
 WINBASEAPI BOOL        WINAPI FreeEnvironmentStringsW(LPWSTR);
 #define                       FreeEnvironmentStrings WINELIB_NAME_AW(FreeEnvironmentStrings)

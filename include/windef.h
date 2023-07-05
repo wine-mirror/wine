@@ -56,37 +56,38 @@ extern "C" {
 
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
 
+#undef __stdcall
+#undef __cdecl
+#undef __fastcall
+#undef __thiscall
+
 #ifdef WINE_UNIX_LIB
 # define __stdcall
 # define __cdecl
-# undef __fastcall
-#else
-# undef __stdcall
+#elif defined(__GNUC__)
 # ifdef __i386__
-#  ifdef __GNUC__
-#   if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2)) || defined(__APPLE__)
-#    define __stdcall __attribute__((__stdcall__)) __attribute__((__force_align_arg_pointer__))
-#   else
-#    define __stdcall __attribute__((__stdcall__))
-#   endif
+#  if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2)) || defined(__APPLE__)
+#   define __stdcall __attribute__((__stdcall__)) __attribute__((__force_align_arg_pointer__))
 #  else
-#   error You need to define __stdcall for your compiler
+#   define __stdcall __attribute__((__stdcall__))
 #  endif
-# elif defined(__x86_64__) && defined (__GNUC__)
+# elif defined(__x86_64__)
 #  if __has_attribute(__force_align_arg_pointer__)
 #   define __stdcall __attribute__((ms_abi)) __attribute__((__force_align_arg_pointer__))
 #  else
 #   define __stdcall __attribute__((ms_abi))
 #  endif
-# elif defined(__arm__) && defined (__GNUC__) && !defined(__SOFTFP__) && !defined(__CYGWIN__)
-#   define __stdcall __attribute__((pcs("aapcs-vfp")))
-# elif defined(__aarch64__) && defined (__GNUC__) && __has_attribute(ms_abi)
+#  define __ms_va_list __builtin_ms_va_list
+# elif defined(__arm__) && !defined(__SOFTFP__) && !defined(__CYGWIN__)
+#  define __stdcall __attribute__((pcs("aapcs-vfp")))
+#  define WINAPIV __attribute__((pcs("aapcs")))
+# elif defined(__aarch64__) && __has_attribute(ms_abi)
 #  define __stdcall __attribute__((ms_abi))
+#  define __ms_va_list __builtin_ms_va_list
 # else  /* __i386__ */
 #  define __stdcall
 # endif  /* __i386__ */
-# undef __cdecl
-# if defined(__i386__) && defined(__GNUC__)
+# ifdef __i386__
 #  if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2)) || defined(__APPLE__)
 #   define __cdecl __attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))
 #  else
@@ -95,38 +96,16 @@ extern "C" {
 # else
 #  define __cdecl __stdcall
 # endif
-# ifndef __fastcall
-#  define __fastcall __stdcall
-# endif
-# ifndef __thiscall
-#  define __thiscall __stdcall
-# endif
+# define __fastcall __stdcall
+# define __thiscall __stdcall
+#elif !defined(RC_INVOKED)
+# error You need to define __stdcall for your compiler
 #endif  /* WINE_UNIX_LIB */
 
 #endif  /* _MSC_VER || __MINGW32__ */
 
-#ifndef __ms_va_list
-# if (defined(__x86_64__) || (defined(__aarch64__) && __has_attribute(ms_abi))) && defined (__GNUC__)
-#  define __ms_va_list __builtin_ms_va_list
-#  define __ms_va_start(list,arg) __builtin_ms_va_start(list,arg)
-#  define __ms_va_end(list) __builtin_ms_va_end(list)
-#  define __ms_va_copy(dest,src) __builtin_ms_va_copy(dest,src)
-# else
-#  define __ms_va_list va_list
-#  define __ms_va_start(list,arg) va_start(list,arg)
-#  define __ms_va_end(list) va_end(list)
-#  ifdef va_copy
-#   define __ms_va_copy(dest,src) va_copy(dest,src)
-#  else
-#   define __ms_va_copy(dest,src) ((dest) = (src))
-#  endif
-# endif
-#endif
-
-#if defined(__arm__) && defined (__GNUC__) && !defined(__SOFTFP__) && !defined(__MINGW32__) && !defined(__CYGWIN__)
-# define WINAPIV __attribute__((pcs("aapcs")))
-#else
-# define WINAPIV __cdecl
+#if !defined(__ms_va_list) && !defined(WINE_UNIX_LIB)
+# define __ms_va_list va_list
 #endif
 
 #ifdef __WINESRC__
@@ -141,9 +120,6 @@ extern "C" {
 #endif
 #ifndef _fastcall
 #define _fastcall   __ONLY_IN_WINELIB(__stdcall)
-#endif
-#ifndef __fastcall
-#define __fastcall  __ONLY_IN_WINELIB(__stdcall)
 #endif
 #ifndef cdecl
 #define cdecl       __ONLY_IN_WINELIB(__cdecl)
@@ -202,6 +178,9 @@ extern "C" {
 #define _CDECL      __cdecl
 #define APIENTRY    WINAPI
 #define CONST       __ONLY_IN_WINELIB(const)
+#ifndef WINAPIV
+# define WINAPIV CDECL
+#endif
 
 /* Misc. constants. */
 
