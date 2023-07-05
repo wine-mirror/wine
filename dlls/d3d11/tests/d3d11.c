@@ -25,6 +25,7 @@
 #define COBJMACROS
 #include "initguid.h"
 #include "d3d11_4.h"
+#include "winternl.h"
 #include "wine/heap.h"
 #include "wine/test.h"
 
@@ -34881,6 +34882,189 @@ static void test_vertex_formats(void)
     release_test_context(&test_context);
 }
 
+static BOOL is_kmt_handle(HANDLE h)
+{
+    return (ULONG_PTR)h & 0xc0000000;
+}
+
+static void test_shared_resource(D3D_FEATURE_LEVEL feature_level)
+{
+    static const UINT tests[] =
+    {
+        0,
+        D3D11_RESOURCE_MISC_SHARED,
+        D3D11_RESOURCE_MISC_SHARED_NTHANDLE,
+        D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_NTHANDLE,
+        D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
+        D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX | D3D11_RESOURCE_MISC_SHARED_NTHANDLE,
+        D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX | D3D11_RESOURCE_MISC_SHARED,
+        D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX | D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_NTHANDLE,
+    };
+    static const unsigned int sharing_type_flags = D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
+    struct device_desc device_desc = { 0 };
+    ID3D11Texture2D *tex, *tex2;
+    D3D11_TEXTURE2D_DESC desc;
+    ID3D11Device1 *device1;
+    ID3D11Device *device;
+    IDXGIResource1 *res1;
+    IDXGIResource *res;
+    unsigned int test;
+    BOOL flags_valid;
+    HANDLE handle;
+    BOOL nthandle;
+    HANDLE h, h2;
+    HRESULT hr;
+    ULONG ref;
+    BOOL bret;
+
+    device_desc.feature_level = &feature_level;
+    if (!(device = create_device(&device_desc)))
+    {
+        skip("Failed to create device, feature level %#x.\n", feature_level);
+        return;
+    }
+    device1 = NULL;
+    hr = ID3D11Device_QueryInterface(device, &IID_ID3D11Device1, (void **)&device1);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE), "got %#lx.\n", hr);
+    if (hr != S_OK)
+    {
+        win_skip("ID3D11Device1 is not supported, skipping tests.\n");
+        ID3D11Device_Release(device);
+        return;
+    }
+
+    memset(&desc, 0, sizeof(desc));
+    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.Width = 256;
+    desc.Height = 256;
+    desc.MipLevels = 1;
+    desc.ArraySize = 1;
+    desc.SampleDesc.Count = 1;
+    desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+    for (test = 0; test < ARRAY_SIZE(tests); ++test)
+    {
+        handle = NULL;
+        tex = NULL;
+        res = NULL;
+        res1 = NULL;
+
+        desc.MiscFlags = tests[test];
+        nthandle = desc.MiscFlags & D3D11_RESOURCE_MISC_SHARED_NTHANDLE;
+        winetest_push_context("MiscFlags %#x, nthandle %d", tests[test], nthandle);
+
+        if (!desc.MiscFlags)
+            flags_valid = TRUE;
+        else if (feature_level < D3D_FEATURE_LEVEL_10_0)
+            flags_valid = FALSE;
+        else
+            flags_valid = (desc.MiscFlags & sharing_type_flags) == D3D11_RESOURCE_MISC_SHARED
+                    || (desc.MiscFlags & sharing_type_flags) == D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
+
+        hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &tex);
+        if (flags_valid)
+            ok(hr == S_OK
+                    || broken(desc.MiscFlags == (D3D11_RESOURCE_MISC_SHARED
+                    | D3D11_RESOURCE_MISC_SHARED_NTHANDLE) && hr == E_INVALIDARG) /* software device before Win10 */
+                    || broken(hr == E_OUTOFMEMORY) /* software device before Win8 */,
+                    "got %#lx.\n", hr);
+        else
+            todo_wine ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+        if (FAILED(hr))
+            goto test_done;
+
+        hr = ID3D11Texture2D_QueryInterface(tex, &IID_IDXGIResource, (void **)&res);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        hr = ID3D11Texture2D_QueryInterface(tex, &IID_IDXGIResource1, (void **)&res1);
+        todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+        if (FAILED(hr))
+            goto test_done;
+
+        h = (HANDLE)0xdeadbeef;
+        hr = IDXGIResource_GetSharedHandle(res, &h);
+        if (nthandle)
+        {
+            ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+            ok(h == (HANDLE)0xdeadbeef, "got %p.\n", h);
+        }
+        else if (desc.MiscFlags)
+        {
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            ok(is_kmt_handle(h), "wrong handle %p.\n", h);
+            handle = h;
+        }
+        else
+        {
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            ok(!h, "got %p.\n", h);
+        }
+
+        h = (HANDLE)0xdeadbeef;
+        hr = IDXGIResource1_CreateSharedHandle(res1, NULL, GENERIC_ALL | DXGI_SHARED_RESOURCE_READ
+                | DXGI_SHARED_RESOURCE_WRITE, NULL, &h);
+        if (nthandle)
+        {
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            handle = h;
+        }
+        else
+        {
+            ok(hr == E_INVALIDARG || broken(hr == E_NOTIMPL) /* Win7 software device */, "got %#lx.\n", hr);
+            ok(!h || broken(h == (HANDLE)0xdeadbeef) /* Win7 software device */, "got %p.\n", h);
+        }
+
+        if (!desc.MiscFlags)
+            goto test_done;
+
+        bret = DuplicateHandle(GetCurrentProcess(), h, GetCurrentProcess(), &h2, 0, FALSE, DUPLICATE_SAME_ACCESS);
+        if (nthandle)
+        {
+            char buffer[1024];
+            OBJECT_TYPE_INFORMATION *type = (OBJECT_TYPE_INFORMATION *)buffer;
+            NTSTATUS status;
+            ULONG len = 0;
+
+            ok(bret, "failed, err %lu.\n", GetLastError());
+            CloseHandle(h2);
+            status = NtQueryObject(h, ObjectTypeInformation, buffer, sizeof(buffer), &len);
+            ok(!status, "got %#lx.\n", status);
+            ok(!wcscmp(type->TypeName.Buffer, L"DxgkSharedResource"), "got %s.\n", debugstr_w(type->TypeName.Buffer));
+        }
+        else
+        {
+            ok(!bret && GetLastError() == ERROR_INVALID_HANDLE, "got bret %d, err %lu.\n", bret, GetLastError());
+        }
+
+        hr = ID3D11Device_OpenSharedResource(device, handle, &IID_ID3D11Texture2D, (void **)&tex2);
+        ok(hr == (nthandle ? E_INVALIDARG : S_OK), "got %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+            ID3D11Texture2D_Release(tex2);
+        hr = ID3D11Device1_OpenSharedResource1(device1, handle, &IID_ID3D11Texture2D, (void **)&tex2);
+        ok(hr == (nthandle ? S_OK : E_INVALIDARG), "got %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+            ID3D11Texture2D_Release(tex2);
+        bret = CloseHandle(handle);
+        if (nthandle)
+            ok(bret, "failed, err %lu.\n", GetLastError());
+        else
+            ok(!bret && GetLastError() == ERROR_INVALID_HANDLE, "got bret %d, err %lu.\n", bret, GetLastError());
+
+test_done:
+        if (tex)
+            IDXGIResource_Release(res);
+        if (res)
+            ID3D11Texture2D_Release(tex);
+        if (res1)
+            IDXGIResource1_Release(res1);
+        winetest_pop_context();
+    }
+
+    if (device1)
+        ID3D11Device1_Release(device1);
+    ref = ID3D11Device_Release(device);
+    ok(!ref, "got %ld.\n", ref);
+}
+
 START_TEST(d3d11)
 {
     unsigned int argc, i;
@@ -35065,6 +35249,7 @@ START_TEST(d3d11)
     queue_test(test_rtv_depth_slice);
     queue_test(test_vertex_formats);
     queue_test(test_dxgi_resources);
+    queue_for_each_feature_level(test_shared_resource);
 
     run_queued_tests();
 
