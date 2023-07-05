@@ -60,6 +60,7 @@ namespace Windows {
             interface ISpeechRecognizerStatics2;
             interface ISpeechRecognizerTimeouts;
             interface ISpeechRecognizerUIOptions;
+            interface IVoiceCommandSet;
             runtimeclass SpeechContinuousRecognitionCompletedEventArgs;
             runtimeclass SpeechContinuousRecognitionResultGeneratedEventArgs;
             runtimeclass SpeechContinuousRecognitionSession;
@@ -74,6 +75,7 @@ namespace Windows {
             runtimeclass SpeechRecognizerStateChangedEventArgs;
             runtimeclass SpeechRecognizerTimeouts;
             runtimeclass SpeechRecognizerUIOptions;
+            runtimeclass VoiceCommandSet;
         }
     }
 }
@@ -472,6 +474,22 @@ namespace Windows {
             }
 
             [
+                contract(Windows.Phone.PhoneContract, 1.0),
+                deprecated("Use Windows.ApplicationModel.VoiceCommands.VoiceCommandDefinition", deprecate, Windows.Phone.PhoneContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.VoiceCommandSet),
+                uuid(0bedda75-46e6-4b11-a088-5c68632899b5)
+            ]
+            interface IVoiceCommandSet : IInspectable
+            {
+                [deprecated("Use Windows.ApplicationModel.VoiceCommands.VoiceCommandDefinition", deprecate, Windows.Phone.PhoneContract, 1.0)]
+                [propget] HRESULT Language([out, retval] HSTRING *value);
+                [deprecated("Use Windows.ApplicationModel.VoiceCommands.VoiceCommandDefinition", deprecate, Windows.Phone.PhoneContract, 1.0)]
+                [propget] HRESULT Name([out, retval] HSTRING *value);
+                [deprecated("Use Windows.ApplicationModel.VoiceCommands.VoiceCommandDefinition", deprecate, Windows.Phone.PhoneContract, 1.0)]
+                HRESULT SetPhraseListAsync([in] HSTRING phrase_list_name, [in] Windows.Foundation.Collections.IIterable<HSTRING> *phrase_list, [out, retval] Windows.Foundation.IAsyncAction **update_action);
+            }
+
+            [
                 contract(Windows.Foundation.UniversalApiContract, 1.0),
                 marshaling_behavior(agile),
                 threading(both)
@@ -609,6 +627,16 @@ namespace Windows {
             runtimeclass SpeechRecognizerUIOptions
             {
                 [default] interface Windows.Media.SpeechRecognition.ISpeechRecognizerUIOptions;
+            }
+
+            [
+                contract(Windows.Phone.PhoneContract, 1.0),
+                deprecated("Use Windows.ApplicationModel.VoiceCommands.VoiceCommandDefinition", deprecate, Windows.Phone.PhoneContract, 1.0),
+                marshaling_behavior(agile)
+            ]
+            runtimeclass VoiceCommandSet
+            {
+                [default] interface Windows.Media.SpeechRecognition.IVoiceCommandSet;
             }
         }
     }
