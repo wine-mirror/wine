@@ -597,6 +597,26 @@ void     dbg_active_wait_for_first_exception(void)
     wait_exception();
 }
 
+static BOOL dbg_active_wait_for_startup(DEBUG_EVENT* de)
+{
+    dbg_interactiveP = FALSE;
+    while (dbg_num_processes() && WaitForDebugEvent(de, INFINITE))
+    {
+        switch (de->dwDebugEventCode)
+        {
+        case CREATE_PROCESS_DEBUG_EVENT:
+        case CREATE_THREAD_DEBUG_EVENT:
+        case LOAD_DLL_DEBUG_EVENT:
+        case EXCEPTION_DEBUG_EVENT:
+            if (dbg_handle_debug_event(de)) return TRUE;
+            break;
+        default:
+            return FALSE;
+        }
+    }
+    return FALSE;
+}
+
 static BOOL dbg_start_debuggee(LPSTR cmdLine)
 {
     PROCESS_INFORMATION	info;
@@ -862,6 +882,8 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
 {
     HANDLE thread = 0, event = 0, input, output = INVALID_HANDLE_VALUE;
     enum dbg_start      ds = start_error_parse;
+    BOOL first_exception = TRUE;
+    DEBUG_EVENT de;
 
     DBG_IVAR(BreakOnDllLoad) = 0;
 
@@ -894,12 +916,25 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
                                          NULL);
     if (input == INVALID_HANDLE_VALUE) return start_error_parse;
 
-    if (dbg_curr_process->active_debuggee)
-        dbg_active_wait_for_first_exception();
+    /* debuggee can terminate before we get the first exception.
+     * so detect end of attach load sequence, and then print information.
+     */
+    if (dbg_curr_process->active_debuggee && !(first_exception = dbg_active_wait_for_startup(&de)))
+    {
+        dbg_printf("Couldn't get first exception for process %04lx %ls%s.\n"
+                   "No backtrace available\n",
+                   dbg_curr_pid, dbg_curr_process->imageName, dbg_curr_process->is_wow64 ? " (WOW64)" : "");
+    }
 
     dbg_interactiveP = TRUE;
     parser_handle(NULL, input);
 
+    if (!first_exception)
+    {
+        /* continue managing debug events, in case the exception event comes after current debug event */
+        ContinueDebugEvent(de.dwProcessId, de.dwThreadId, DBG_CONTINUE);
+        dbg_active_wait_for_first_exception();
+    }
     if (output != INVALID_HANDLE_VALUE)
     {
         SetEvent( event );
