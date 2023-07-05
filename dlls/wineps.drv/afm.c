@@ -30,7 +30,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
 /* ptr to fonts for which we have afm files */
-DECLSPEC_HIDDEN FONTFAMILY *PSDRV_AFMFontList = NULL;
+FONTFAMILY *PSDRV_AFMFontList = NULL;
 
 
 /***********************************************************

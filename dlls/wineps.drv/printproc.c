@@ -1125,7 +1125,7 @@ static inline INT INTERNAL_YWSTODS(HDC hdc, INT height)
     return pt[1].y - pt[0].y;
 }
 
-extern const unsigned short bidi_direction_table[] DECLSPEC_HIDDEN;
+extern const unsigned short bidi_direction_table[];
 
 /*------------------------------------------------------------------------
     Bidirectional Character Types

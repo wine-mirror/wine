@@ -217,7 +217,7 @@ static void read_afms(FILE *f_c, FILE *f_h)
 	    if (font_family[i] == '-')
 	    	font_family[i] = '_';
 
-	fprintf(f_h, "DECLSPEC_HIDDEN extern const AFM PSDRV_%s;\n", font_family);
+	fprintf(f_h, "extern const AFM PSDRV_%s;\n", font_family);
 	fprintf(f_c, "    &PSDRV_%s,\n", font_family);
 
 	while (1)
