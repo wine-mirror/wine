@@ -25,7 +25,7 @@
 #include "winternl.h"
 #include "wine/unixlib.h"
 
-extern HINSTANCE localspl_instance DECLSPEC_HIDDEN;
+extern HINSTANCE localspl_instance;
 
 /* ## Resource-ID ## */
 #define IDS_FORM_LETTER 200
