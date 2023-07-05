@@ -20,8 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
-
 #include "ntoskrnl_private.h"
 #include "winreg.h"
 #include "winuser.h"
@@ -89,12 +87,12 @@ static NTSTATUS get_device_id( DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WC
     irpsp->MinorFunction = IRP_MN_QUERY_ID;
     irpsp->Parameters.QueryId.IdType = type;
 
-    irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
+    irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
     if (IoCallDriver( device, irp ) == STATUS_PENDING)
         KeWaitForSingleObject( &event, Executive, KernelMode, FALSE, NULL );
 
     *id = (WCHAR *)irp_status.Information;
-    return irp_status.u.Status;
+    return irp_status.Status;
 }
 
 static NTSTATUS send_pnp_irp( DEVICE_OBJECT *device, UCHAR minor )
@@ -116,11 +114,11 @@ static NTSTATUS send_pnp_irp( DEVICE_OBJECT *device, UCHAR minor )
     irpsp->Parameters.StartDevice.AllocatedResources = NULL;
     irpsp->Parameters.StartDevice.AllocatedResourcesTranslated = NULL;
 
-    irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
+    irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
     if (IoCallDriver( device, irp ) == STATUS_PENDING)
         KeWaitForSingleObject( &event, Executive, KernelMode, FALSE, NULL );
 
-    return irp_status.u.Status;
+    return irp_status.Status;
 }
 
 static NTSTATUS get_device_instance_id( DEVICE_OBJECT *device, WCHAR *buffer )
@@ -176,11 +174,11 @@ static NTSTATUS get_device_caps( DEVICE_OBJECT *device, DEVICE_CAPABILITIES *cap
     irpsp->MinorFunction = IRP_MN_QUERY_CAPABILITIES;
     irpsp->Parameters.DeviceCapabilities.Capabilities = caps;
 
-    irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
+    irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
     if (IoCallDriver( device, irp ) == STATUS_PENDING)
         KeWaitForSingleObject( &event, Executive, KernelMode, FALSE, NULL );
 
-    return irp_status.u.Status;
+    return irp_status.Status;
 }
 
 static void load_function_driver( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINFO_DATA *sp_device )
@@ -435,14 +433,14 @@ static void handle_bus_relations( DEVICE_OBJECT *parent )
     irpsp->MinorFunction = IRP_MN_QUERY_DEVICE_RELATIONS;
     irpsp->Parameters.QueryDeviceRelations.Type = BusRelations;
 
-    irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
+    irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
     if (IoCallDriver( parent, irp ) == STATUS_PENDING)
         KeWaitForSingleObject( &event, Executive, KernelMode, FALSE, NULL );
 
     relations = (DEVICE_RELATIONS *)irp_status.Information;
-    if (irp_status.u.Status)
+    if (irp_status.Status)
     {
-        ERR("Failed to enumerate child devices, status %#lx.\n", irp_status.u.Status);
+        ERR("Failed to enumerate child devices, status %#lx.\n", irp_status.Status);
         SetupDiDestroyDeviceInfoList( set );
         return;
     }
@@ -1047,14 +1045,14 @@ static NTSTATUS WINAPI pnp_manager_device_pnp( DEVICE_OBJECT *device, IRP *irp )
     case IRP_MN_START_DEVICE:
     case IRP_MN_SURPRISE_REMOVAL:
         /* Nothing to do. */
-        irp->IoStatus.u.Status = STATUS_SUCCESS;
+        irp->IoStatus.Status = STATUS_SUCCESS;
         break;
     case IRP_MN_REMOVE_DEVICE:
         list_remove( &root_device->entry );
-        irp->IoStatus.u.Status = STATUS_SUCCESS;
+        irp->IoStatus.Status = STATUS_SUCCESS;
         break;
     case IRP_MN_QUERY_CAPABILITIES:
-        irp->IoStatus.u.Status = STATUS_SUCCESS;
+        irp->IoStatus.Status = STATUS_SUCCESS;
         break;
     case IRP_MN_QUERY_ID:
     {
@@ -1072,12 +1070,12 @@ static NTSTATUS WINAPI pnp_manager_device_pnp( DEVICE_OBJECT *device, IRP *irp )
                 memcpy( id, root_device->id, (p - root_device->id) * sizeof(WCHAR) );
                 id[p - root_device->id] = 0;
                 irp->IoStatus.Information = (ULONG_PTR)id;
-                irp->IoStatus.u.Status = STATUS_SUCCESS;
+                irp->IoStatus.Status = STATUS_SUCCESS;
             }
             else
             {
                 irp->IoStatus.Information = 0;
-                irp->IoStatus.u.Status = STATUS_NO_MEMORY;
+                irp->IoStatus.Status = STATUS_NO_MEMORY;
             }
             break;
         case BusQueryInstanceID:
@@ -1086,12 +1084,12 @@ static NTSTATUS WINAPI pnp_manager_device_pnp( DEVICE_OBJECT *device, IRP *irp )
             {
                 wcscpy( id, p + 1 );
                 irp->IoStatus.Information = (ULONG_PTR)id;
-                irp->IoStatus.u.Status = STATUS_SUCCESS;
+                irp->IoStatus.Status = STATUS_SUCCESS;
             }
             else
             {
                 irp->IoStatus.Information = 0;
-                irp->IoStatus.u.Status = STATUS_NO_MEMORY;
+                irp->IoStatus.Status = STATUS_NO_MEMORY;
             }
             break;
         default:
@@ -1103,7 +1101,7 @@ static NTSTATUS WINAPI pnp_manager_device_pnp( DEVICE_OBJECT *device, IRP *irp )
         FIXME("Unhandled PnP request %#x.\n", stack->MinorFunction);
     }
 
-    status = irp->IoStatus.u.Status;
+    status = irp->IoStatus.Status;
     IoCompleteRequest( irp, IO_NO_INCREMENT );
     return status;
 }

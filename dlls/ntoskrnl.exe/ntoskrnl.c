@@ -23,9 +23,6 @@
 
 #include <assert.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-
 #include "ntoskrnl_private.h"
 #include "excpt.h"
 #include "winreg.h"
@@ -466,7 +463,7 @@ static ULONG get_irp_output_size( IRP *irp )
             break;
     }
 
-    if (NT_ERROR(irp->IoStatus.u.Status))
+    if (NT_ERROR(irp->IoStatus.Status))
         return 0;
     return irp->IoStatus.Information;
 }
@@ -493,7 +490,7 @@ static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp,
     SERVER_START_REQ( set_irp_result )
     {
         req->handle   = wine_server_obj_handle( irp_data->handle );
-        req->status   = irp->IoStatus.u.Status;
+        req->status   = irp->IoStatus.Status;
         req->size     = irp->IoStatus.Information;
         if (out_size) wine_server_add_data( req, irp->UserBuffer, out_size );
         status = wine_server_call( req );
@@ -973,7 +970,7 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
 
                     req->prev        = wine_server_obj_handle( context.irp_data->handle );
                     req->pending     = irp->PendingReturned;
-                    req->iosb_status = irp->IoStatus.u.Status;
+                    req->iosb_status = irp->IoStatus.Status;
                     req->result      = irp->IoStatus.Information;
                     if (out_size) wine_server_add_data( req, irp->UserBuffer, out_size );
                 }
@@ -1103,7 +1100,7 @@ void WINAPI IoInitializeIrp( IRP *irp, USHORT size, CCHAR stack_size )
     InitializeListHead( &irp->ThreadListEntry );
     irp->StackCount = stack_size;
     irp->CurrentLocation = stack_size + 1;
-    irp->Tail.Overlay.s.u2.CurrentStackLocation =
+    irp->Tail.Overlay.CurrentStackLocation =
             (PIO_STACK_LOCATION)(irp + 1) + stack_size;
 }
 
@@ -1116,7 +1113,7 @@ void WINAPI IoReuseIrp(IRP *irp, NTSTATUS iostatus)
     AllocationFlags = irp->AllocationFlags;
     IoInitializeIrp(irp, irp->Size, irp->StackCount);
     irp->AllocationFlags = AllocationFlags;
-    irp->IoStatus.u.Status = iostatus;
+    irp->IoStatus.Status = iostatus;
 }
 
 /***********************************************************************
@@ -1508,7 +1505,7 @@ static void build_driver_keypath( const WCHAR *name, UNICODE_STRING *keypath )
 static NTSTATUS WINAPI unhandled_irp( DEVICE_OBJECT *device, IRP *irp )
 {
     TRACE( "(%p, %p)\n", device, irp );
-    irp->IoStatus.u.Status = STATUS_INVALID_DEVICE_REQUEST;
+    irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
     IoCompleteRequest( irp, IO_NO_INCREMENT );
     return STATUS_INVALID_DEVICE_REQUEST;
 }
@@ -1845,7 +1842,7 @@ NTSTATUS WINAPI IoCallDriver( DEVICE_OBJECT *device, IRP *irp )
     NTSTATUS status;
 
     --irp->CurrentLocation;
-    irpsp = --irp->Tail.Overlay.s.u2.CurrentStackLocation;
+    irpsp = --irp->Tail.Overlay.CurrentStackLocation;
     irpsp->DeviceObject = device;
     dispatch = device->DriverObject->MajorFunction[irpsp->MajorFunction];
 
@@ -2057,10 +2054,10 @@ VOID WINAPI IoCompleteRequest( IRP *irp, UCHAR priority_boost )
 
     TRACE( "%p %u\n", irp, priority_boost );
 
-    status = irp->IoStatus.u.Status;
+    status = irp->IoStatus.Status;
     while (irp->CurrentLocation <= irp->StackCount)
     {
-        irpsp = irp->Tail.Overlay.s.u2.CurrentStackLocation;
+        irpsp = irp->Tail.Overlay.CurrentStackLocation;
         routine = irpsp->CompletionRoutine;
         call_flag = 0;
         if (routine)
@@ -2073,7 +2070,7 @@ VOID WINAPI IoCompleteRequest( IRP *irp, UCHAR priority_boost )
                 call_flag = 1;
         }
         ++irp->CurrentLocation;
-        ++irp->Tail.Overlay.s.u2.CurrentStackLocation;
+        ++irp->Tail.Overlay.CurrentStackLocation;
         if (irp->CurrentLocation <= irp->StackCount)
             device = IoGetCurrentIrpStackLocation(irp)->DeviceObject;
         else
@@ -2308,20 +2305,20 @@ static void initialize_lookaside_list( GENERAL_LOOKASIDE *lookaside, PALLOCATE_F
                                        ULONG type, SIZE_T size, ULONG tag )
 {
 
-    RtlInitializeSListHead( &lookaside->u.ListHead );
+    RtlInitializeSListHead( &lookaside->ListHead );
     lookaside->Depth                 = 4;
     lookaside->MaximumDepth          = 256;
     lookaside->TotalAllocates        = 0;
-    lookaside->u2.AllocateMisses     = 0;
+    lookaside->AllocateMisses     = 0;
     lookaside->TotalFrees            = 0;
-    lookaside->u3.FreeMisses         = 0;
+    lookaside->FreeMisses         = 0;
     lookaside->Type                  = type;
     lookaside->Tag                   = tag;
     lookaside->Size                  = size;
-    lookaside->u4.Allocate           = allocate ? allocate : ExAllocatePoolWithTag;
-    lookaside->u5.Free               = free ? free : ExFreePool;
+    lookaside->Allocate           = allocate ? allocate : ExAllocatePoolWithTag;
+    lookaside->Free               = free ? free : ExFreePool;
     lookaside->LastTotalAllocates    = 0;
-    lookaside->u6.LastAllocateMisses = 0;
+    lookaside->LastAllocateMisses = 0;
 
     /* FIXME: insert in global list of lookadside lists */
 }
@@ -2359,8 +2356,8 @@ void WINAPI ExInitializePagedLookasideList(PPAGED_LOOKASIDE_LIST lookaside,
 static void delete_lookaside_list( GENERAL_LOOKASIDE *lookaside )
 {
     void *entry;
-    while ((entry = RtlInterlockedPopEntrySList(&lookaside->u.ListHead)))
-        lookaside->u5.FreeEx(entry, (LOOKASIDE_LIST_EX*)lookaside);
+    while ((entry = RtlInterlockedPopEntrySList(&lookaside->ListHead)))
+        lookaside->FreeEx(entry, (LOOKASIDE_LIST_EX*)lookaside);
 }
 
 /***********************************************************************
@@ -2903,7 +2900,7 @@ PHYSICAL_ADDRESS WINAPI MmGetPhysicalAddress(void *virtual_address)
  */
 PVOID WINAPI MmMapIoSpace( PHYSICAL_ADDRESS PhysicalAddress, DWORD NumberOfBytes, DWORD CacheType )
 {
-    FIXME( "stub: 0x%08lx%08lx, %ld, %ld\n", PhysicalAddress.u.HighPart, PhysicalAddress.u.LowPart, NumberOfBytes, CacheType );
+    FIXME( "stub: 0x%08lx%08lx, %ld, %ld\n", PhysicalAddress.HighPart, PhysicalAddress.LowPart, NumberOfBytes, CacheType );
     return NULL;
 }
 
@@ -3954,8 +3951,8 @@ static HMODULE load_driver( const WCHAR *driver_name, const UNICODE_STRING *keyn
         RtlInitUnicodeString(&module_name, str);
         nt = RtlImageNtHeader(module);
         memset(&info, 0, sizeof(info));
-        info.u.s.ImageAddressingMode = IMAGE_ADDRESSING_MODE_32BIT;
-        info.u.s.SystemModeImage = TRUE;
+        info.ImageAddressingMode = IMAGE_ADDRESSING_MODE_32BIT;
+        info.SystemModeImage = TRUE;
         info.ImageSize = nt->OptionalHeader.SizeOfImage;
         info.ImageBase = module;
 
