@@ -21,8 +21,6 @@
 
 #include <assert.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "dbghelp_private.h"
@@ -270,7 +268,7 @@ static void set_int_reg(CONTEXT *context, int reg, ULONG64 val)
 
 static void set_float_reg(CONTEXT *context, int reg, M128A val)
 {
-    *(&context->u.s.Xmm0 + reg) = val;
+    *(&context->Xmm0 + reg) = val;
 }
 
 static int get_opcode_size(UNWIND_CODE op)
@@ -836,31 +834,31 @@ static void *x86_64_fetch_context_reg(union ctx *pctx, unsigned regno, unsigned 
     case CV_AMD64_R15: *size = sizeof(ctx->R15); return &ctx->R15;
     case CV_AMD64_RIP: *size = sizeof(ctx->Rip); return &ctx->Rip;
 
-    case CV_AMD64_XMM0 + 0: *size = sizeof(ctx->u.s.Xmm0 ); return &ctx->u.s.Xmm0;
-    case CV_AMD64_XMM0 + 1: *size = sizeof(ctx->u.s.Xmm1 ); return &ctx->u.s.Xmm1;
-    case CV_AMD64_XMM0 + 2: *size = sizeof(ctx->u.s.Xmm2 ); return &ctx->u.s.Xmm2;
-    case CV_AMD64_XMM0 + 3: *size = sizeof(ctx->u.s.Xmm3 ); return &ctx->u.s.Xmm3;
-    case CV_AMD64_XMM0 + 4: *size = sizeof(ctx->u.s.Xmm4 ); return &ctx->u.s.Xmm4;
-    case CV_AMD64_XMM0 + 5: *size = sizeof(ctx->u.s.Xmm5 ); return &ctx->u.s.Xmm5;
-    case CV_AMD64_XMM0 + 6: *size = sizeof(ctx->u.s.Xmm6 ); return &ctx->u.s.Xmm6;
-    case CV_AMD64_XMM0 + 7: *size = sizeof(ctx->u.s.Xmm7 ); return &ctx->u.s.Xmm7;
-    case CV_AMD64_XMM8 + 0: *size = sizeof(ctx->u.s.Xmm8 ); return &ctx->u.s.Xmm8;
-    case CV_AMD64_XMM8 + 1: *size = sizeof(ctx->u.s.Xmm9 ); return &ctx->u.s.Xmm9;
-    case CV_AMD64_XMM8 + 2: *size = sizeof(ctx->u.s.Xmm10); return &ctx->u.s.Xmm10;
-    case CV_AMD64_XMM8 + 3: *size = sizeof(ctx->u.s.Xmm11); return &ctx->u.s.Xmm11;
-    case CV_AMD64_XMM8 + 4: *size = sizeof(ctx->u.s.Xmm12); return &ctx->u.s.Xmm12;
-    case CV_AMD64_XMM8 + 5: *size = sizeof(ctx->u.s.Xmm13); return &ctx->u.s.Xmm13;
-    case CV_AMD64_XMM8 + 6: *size = sizeof(ctx->u.s.Xmm14); return &ctx->u.s.Xmm14;
-    case CV_AMD64_XMM8 + 7: *size = sizeof(ctx->u.s.Xmm15); return &ctx->u.s.Xmm15;
+    case CV_AMD64_XMM0 + 0: *size = sizeof(ctx->Xmm0 ); return &ctx->Xmm0;
+    case CV_AMD64_XMM0 + 1: *size = sizeof(ctx->Xmm1 ); return &ctx->Xmm1;
+    case CV_AMD64_XMM0 + 2: *size = sizeof(ctx->Xmm2 ); return &ctx->Xmm2;
+    case CV_AMD64_XMM0 + 3: *size = sizeof(ctx->Xmm3 ); return &ctx->Xmm3;
+    case CV_AMD64_XMM0 + 4: *size = sizeof(ctx->Xmm4 ); return &ctx->Xmm4;
+    case CV_AMD64_XMM0 + 5: *size = sizeof(ctx->Xmm5 ); return &ctx->Xmm5;
+    case CV_AMD64_XMM0 + 6: *size = sizeof(ctx->Xmm6 ); return &ctx->Xmm6;
+    case CV_AMD64_XMM0 + 7: *size = sizeof(ctx->Xmm7 ); return &ctx->Xmm7;
+    case CV_AMD64_XMM8 + 0: *size = sizeof(ctx->Xmm8 ); return &ctx->Xmm8;
+    case CV_AMD64_XMM8 + 1: *size = sizeof(ctx->Xmm9 ); return &ctx->Xmm9;
+    case CV_AMD64_XMM8 + 2: *size = sizeof(ctx->Xmm10); return &ctx->Xmm10;
+    case CV_AMD64_XMM8 + 3: *size = sizeof(ctx->Xmm11); return &ctx->Xmm11;
+    case CV_AMD64_XMM8 + 4: *size = sizeof(ctx->Xmm12); return &ctx->Xmm12;
+    case CV_AMD64_XMM8 + 5: *size = sizeof(ctx->Xmm13); return &ctx->Xmm13;
+    case CV_AMD64_XMM8 + 6: *size = sizeof(ctx->Xmm14); return &ctx->Xmm14;
+    case CV_AMD64_XMM8 + 7: *size = sizeof(ctx->Xmm15); return &ctx->Xmm15;
 
-    case CV_AMD64_ST0 + 0: *size = sizeof(ctx->u.s.Legacy[0]); return &ctx->u.s.Legacy[0];
-    case CV_AMD64_ST0 + 1: *size = sizeof(ctx->u.s.Legacy[1]); return &ctx->u.s.Legacy[1];
-    case CV_AMD64_ST0 + 2: *size = sizeof(ctx->u.s.Legacy[2]); return &ctx->u.s.Legacy[2];
-    case CV_AMD64_ST0 + 3: *size = sizeof(ctx->u.s.Legacy[3]); return &ctx->u.s.Legacy[3];
-    case CV_AMD64_ST0 + 4: *size = sizeof(ctx->u.s.Legacy[4]); return &ctx->u.s.Legacy[4];
-    case CV_AMD64_ST0 + 5: *size = sizeof(ctx->u.s.Legacy[5]); return &ctx->u.s.Legacy[5];
-    case CV_AMD64_ST0 + 6: *size = sizeof(ctx->u.s.Legacy[6]); return &ctx->u.s.Legacy[6];
-    case CV_AMD64_ST0 + 7: *size = sizeof(ctx->u.s.Legacy[7]); return &ctx->u.s.Legacy[7];
+    case CV_AMD64_ST0 + 0: *size = sizeof(ctx->Legacy[0]); return &ctx->Legacy[0];
+    case CV_AMD64_ST0 + 1: *size = sizeof(ctx->Legacy[1]); return &ctx->Legacy[1];
+    case CV_AMD64_ST0 + 2: *size = sizeof(ctx->Legacy[2]); return &ctx->Legacy[2];
+    case CV_AMD64_ST0 + 3: *size = sizeof(ctx->Legacy[3]); return &ctx->Legacy[3];
+    case CV_AMD64_ST0 + 4: *size = sizeof(ctx->Legacy[4]); return &ctx->Legacy[4];
+    case CV_AMD64_ST0 + 5: *size = sizeof(ctx->Legacy[5]); return &ctx->Legacy[5];
+    case CV_AMD64_ST0 + 6: *size = sizeof(ctx->Legacy[6]); return &ctx->Legacy[6];
+    case CV_AMD64_ST0 + 7: *size = sizeof(ctx->Legacy[7]); return &ctx->Legacy[7];
 
     case CV_AMD64_EFLAGS: *size = sizeof(ctx->EFlags); return &ctx->EFlags;
     case CV_AMD64_ES: *size = sizeof(ctx->SegEs); return &ctx->SegEs;

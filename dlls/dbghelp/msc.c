@@ -32,8 +32,6 @@
  *	Add symbol size to internal symbol table.
  */
 
-#define NONAMELESSUNION
-
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>

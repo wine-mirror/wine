@@ -20,9 +20,6 @@
 
 #include <time.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "dbghelp_private.h"
@@ -507,21 +504,21 @@ static  unsigned        dump_modules(struct dump_context* dc, BOOL dump_elf)
             cbin.ProcessHandle = dc->process->handle;
             cbin.CallbackType = ModuleCallback;
 
-            cbin.u.Module.FullPath = ms->Buffer;
-            cbin.u.Module.BaseOfImage = dc->modules[i].base;
-            cbin.u.Module.SizeOfImage = dc->modules[i].size;
-            cbin.u.Module.CheckSum = dc->modules[i].checksum;
-            cbin.u.Module.TimeDateStamp = dc->modules[i].timestamp;
-            memset(&cbin.u.Module.VersionInfo, 0, sizeof(cbin.u.Module.VersionInfo));
-            cbin.u.Module.CvRecord = NULL;
-            cbin.u.Module.SizeOfCvRecord = 0;
-            cbin.u.Module.MiscRecord = NULL;
-            cbin.u.Module.SizeOfMiscRecord = 0;
+            cbin.Module.FullPath = ms->Buffer;
+            cbin.Module.BaseOfImage = dc->modules[i].base;
+            cbin.Module.SizeOfImage = dc->modules[i].size;
+            cbin.Module.CheckSum = dc->modules[i].checksum;
+            cbin.Module.TimeDateStamp = dc->modules[i].timestamp;
+            memset(&cbin.Module.VersionInfo, 0, sizeof(cbin.Module.VersionInfo));
+            cbin.Module.CvRecord = NULL;
+            cbin.Module.SizeOfCvRecord = 0;
+            cbin.Module.MiscRecord = NULL;
+            cbin.Module.SizeOfMiscRecord = 0;
 
-            cbout.u.ModuleWriteFlags = flags_out;
+            cbout.ModuleWriteFlags = flags_out;
             if (!dc->cb->CallbackRoutine(dc->cb->CallbackParam, &cbin, &cbout))
                 continue;
-            flags_out &= cbout.u.ModuleWriteFlags;
+            flags_out &= cbout.ModuleWriteFlags;
         }
         if (flags_out & ModuleWriteModule)
         {
@@ -629,19 +626,19 @@ static  unsigned        dump_system_info(struct dump_context* dc)
         wine_extra += strlen(build_id) + 1 + strlen(sys_name) + 1 + strlen(release_name) + 1;
     }
 
-    mdSysInfo.ProcessorArchitecture = sysInfo.u.s.wProcessorArchitecture;
+    mdSysInfo.ProcessorArchitecture = sysInfo.wProcessorArchitecture;
     mdSysInfo.ProcessorLevel = sysInfo.wProcessorLevel;
     mdSysInfo.ProcessorRevision = sysInfo.wProcessorRevision;
-    mdSysInfo.u.s.NumberOfProcessors = sysInfo.dwNumberOfProcessors;
-    mdSysInfo.u.s.ProductType = VER_NT_WORKSTATION; /* FIXME */
+    mdSysInfo.NumberOfProcessors = sysInfo.dwNumberOfProcessors;
+    mdSysInfo.ProductType = VER_NT_WORKSTATION; /* FIXME */
     mdSysInfo.MajorVersion = osInfo.dwMajorVersion;
     mdSysInfo.MinorVersion = osInfo.dwMinorVersion;
     mdSysInfo.BuildNumber = osInfo.dwBuildNumber;
     mdSysInfo.PlatformId = osInfo.dwPlatformId;
 
     mdSysInfo.CSDVersionRva = dc->rva + sizeof(mdSysInfo) + wine_extra;
-    mdSysInfo.u1.Reserved1 = 0;
-    mdSysInfo.u1.s.SuiteMask = VER_SUITE_TERMINAL;
+    mdSysInfo.Reserved1 = 0;
+    mdSysInfo.SuiteMask = VER_SUITE_TERMINAL;
 
     if (have_x86cpuid())
     {
@@ -752,18 +749,18 @@ static  unsigned        dump_threads(struct dump_context* dc,
             cbin.ProcessId = dc->pid;
             cbin.ProcessHandle = dc->process->handle;
             cbin.CallbackType = ThreadCallback;
-            cbin.u.Thread.ThreadId = dc->threads[i].tid;
-            cbin.u.Thread.ThreadHandle = 0; /* FIXME */
-            cbin.u.Thread.Context = ctx;
-            cbin.u.Thread.SizeOfContext = sizeof(CONTEXT);
-            cbin.u.Thread.StackBase = mdThd.Stack.StartOfMemoryRange;
-            cbin.u.Thread.StackEnd = mdThd.Stack.StartOfMemoryRange +
+            cbin.Thread.ThreadId = dc->threads[i].tid;
+            cbin.Thread.ThreadHandle = 0; /* FIXME */
+            cbin.Thread.Context = ctx;
+            cbin.Thread.SizeOfContext = sizeof(CONTEXT);
+            cbin.Thread.StackBase = mdThd.Stack.StartOfMemoryRange;
+            cbin.Thread.StackEnd = mdThd.Stack.StartOfMemoryRange +
                 mdThd.Stack.Memory.DataSize;
 
-            cbout.u.ThreadWriteFlags = flags_out;
+            cbout.ThreadWriteFlags = flags_out;
             if (!dc->cb->CallbackRoutine(dc->cb->CallbackParam, &cbin, &cbout))
                 continue;
-            flags_out &= cbout.u.ThreadWriteFlags;
+            flags_out &= cbout.ThreadWriteFlags;
         }
         if (flags_out & ThreadWriteThread)
         {
@@ -978,7 +975,7 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
     mdHead.NumberOfStreams = nStreams;
     mdHead.CheckSum = 0;                /* native sets a 0 checksum in its files */
     mdHead.StreamDirectoryRva = sizeof(mdHead);
-    mdHead.u.TimeDateStamp = time(NULL);
+    mdHead.TimeDateStamp = time(NULL);
     mdHead.Flags = DumpType;
     append(&dc, &mdHead, sizeof(mdHead));
 
