@@ -2280,6 +2280,11 @@ static HRESULT WINAPI options_GetOption(IADsObjectOptions *iface, LONG option, V
         return S_OK;
     }
 
+    case ADS_OPTION_ACCUMULATIVE_MODIFICATION:
+        V_VT(var) = VT_BOOL;
+        V_BOOL(var) = VARIANT_FALSE;
+        return S_OK;
+
     default:
         FIXME("%p,%ld,%p: stub\n", iface, option, var);
         break;
