@@ -1241,8 +1241,7 @@ static void test_lookaside_list(void)
     ok(list.L.Type == (NonPagedPool|POOL_NX_ALLOCATION),
        "Expected NonPagedPool|POOL_NX_ALLOCATION got %u\n", list.L.Type);
     ok(list.L.Tag == tag, "Expected %lx got %lx\n", tag, list.L.Tag);
-    ok(list.L.Size == LOOKASIDE_MINIMUM_BLOCK_SIZE,
-       "Expected %Iu got %lu\n", LOOKASIDE_MINIMUM_BLOCK_SIZE, list.L.Size);
+    ok(list.L.Size == LOOKASIDE_MINIMUM_BLOCK_SIZE, "got %lu\n", list.L.Size);
     ok(list.L.LastTotalAllocates == 0,"Expected 0 got %lu\n", list.L.LastTotalAllocates);
     ok(list.L.LastAllocateMisses == 0,"Expected 0 got %lu\n", list.L.LastAllocateMisses);
     ExDeleteNPagedLookasideList(&list);
@@ -1264,8 +1263,7 @@ static void test_lookaside_list(void)
     ok(paged_list.L.Type == (PagedPool|POOL_NX_ALLOCATION),
        "Expected PagedPool|POOL_NX_ALLOCATION got %u\n", paged_list.L.Type);
     ok(paged_list.L.Tag == tag, "Expected %lx got %lx\n", tag, paged_list.L.Tag);
-    ok(paged_list.L.Size == LOOKASIDE_MINIMUM_BLOCK_SIZE,
-       "Expected %Iu got %lu\n", LOOKASIDE_MINIMUM_BLOCK_SIZE, paged_list.L.Size);
+    ok(paged_list.L.Size == LOOKASIDE_MINIMUM_BLOCK_SIZE, "got %lu\n", paged_list.L.Size);
     ok(paged_list.L.LastTotalAllocates == 0,"Expected 0 got %lu\n", paged_list.L.LastTotalAllocates);
     ok(paged_list.L.LastAllocateMisses == 0,"Expected 0 got %lu\n", paged_list.L.LastAllocateMisses);
     ExDeletePagedLookasideList(&paged_list);
