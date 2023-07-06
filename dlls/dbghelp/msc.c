@@ -2582,8 +2582,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                 name = (const struct p_string*)((const char*)&sym->constant_v1.cvalue + vlen);
                 se = codeview_get_type(sym->constant_v1.type, FALSE);
 
-                TRACE("S-Constant-V1 %u %s %x\n",
-                      v.n1.n2.n3.intVal, terminate_string(name), sym->constant_v1.type);
+                TRACE("S-Constant-V1 %u %s %x\n", V_INT(&v), terminate_string(name), sym->constant_v1.type);
                 symt_new_constant(msc_dbg->module, compiland, terminate_string(name),
                                   se, &v);
             }
@@ -2599,8 +2598,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                 name = (const struct p_string*)((const char*)&sym->constant_v2.cvalue + vlen);
                 se = codeview_get_type(sym->constant_v2.type, FALSE);
 
-                TRACE("S-Constant-V2 %u %s %x\n",
-                      v.n1.n2.n3.intVal, terminate_string(name), sym->constant_v2.type);
+                TRACE("S-Constant-V2 %u %s %x\n", V_INT(&v), terminate_string(name), sym->constant_v2.type);
                 symt_new_constant(msc_dbg->module, compiland, terminate_string(name),
                                   se, &v);
             }
@@ -2616,8 +2614,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                 name = (const char*)&sym->constant_v3.cvalue + vlen;
                 se = codeview_get_type(sym->constant_v3.type, FALSE);
 
-                TRACE("S-Constant-V3 %u %s %x\n",
-                      v.n1.n2.n3.intVal, name, sym->constant_v3.type);
+                TRACE("S-Constant-V3 %u %s %x\n", V_INT(&v), name, sym->constant_v3.type);
                 /* FIXME: we should add this as a constant value */
                 symt_new_constant(msc_dbg->module, compiland, name, se, &v);
             }
