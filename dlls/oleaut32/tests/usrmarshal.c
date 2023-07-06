@@ -30,12 +30,6 @@
 
 #include "wine/test.h"
 
-#if (__STDC__ && !defined(_FORCENAMELESSUNION)) || defined(NONAMELESSUNION)
-# define V_U2(A)  ((A)->n1.n2)
-#else
-# define V_U2(A)  (*(A))
-#endif
-
 typedef struct
 {
     IUnknown IUnknown_iface;
@@ -870,9 +864,9 @@ static DWORD *check_variant_header(DWORD *wirev, VARIANT *v, ULONG size)
     ok(header->clSize == (size + 7) >> 3, "wv[0] %08lx, expected %08lx\n", header->clSize, (size + 7) >> 3);
     ok(header->rpcReserved == 0, "wv[1] %08lx\n", header->rpcReserved);
     ok(header->vt == V_VT(v), "vt %04x expected %04x\n", header->vt, V_VT(v));
-    ok(header->wReserved1 == V_U2(v).wReserved1, "res1 %04x expected %04x\n", header->wReserved1, V_U2(v).wReserved1);
-    ok(header->wReserved2 == V_U2(v).wReserved2, "res2 %04x expected %04x\n", header->wReserved2, V_U2(v).wReserved2);
-    ok(header->wReserved3 == V_U2(v).wReserved3, "res3 %04x expected %04x\n", header->wReserved3, V_U2(v).wReserved3);
+    ok(header->wReserved1 == v->wReserved1, "res1 %04x expected %04x\n", header->wReserved1, v->wReserved1);
+    ok(header->wReserved2 == v->wReserved2, "res2 %04x expected %04x\n", header->wReserved2, v->wReserved2);
+    ok(header->wReserved3 == v->wReserved3, "res3 %04x expected %04x\n", header->wReserved3, v->wReserved3);
 
     switch_is = V_VT(v);
     if(switch_is & VT_ARRAY)
@@ -938,9 +932,9 @@ static void test_marshal_VARIANT(void)
     /* check_variant_header tests wReserved[123], so initialize to unique values.
      * (Could probably also do this by setting the variant to a known DECIMAL.)
      */
-    V_U2(&v).wReserved1 = 0x1234;
-    V_U2(&v).wReserved2 = 0x5678;
-    V_U2(&v).wReserved3 = 0x9abc;
+    v.wReserved1 = 0x1234;
+    v.wReserved2 = 0x5678;
+    v.wReserved3 = 0x9abc;
 
     /* Variants have an alignment of 8 */
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 1, &v);
@@ -1306,9 +1300,9 @@ static void test_marshal_VARIANT(void)
     /* check_variant_header tests wReserved[123], so initialize to unique values.
      * (Could probably also do this by setting the variant to a known DECIMAL.)
      */
-    V_U2(&v2).wReserved1 = 0x0123;
-    V_U2(&v2).wReserved2 = 0x4567;
-    V_U2(&v2).wReserved3 = 0x89ab;
+    v2.wReserved1 = 0x0123;
+    v2.wReserved2 = 0x4567;
+    v2.wReserved3 = 0x89ab;
 
     stubMsg.Buffer = buffer;
     next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);

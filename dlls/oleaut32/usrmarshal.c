@@ -400,9 +400,9 @@ unsigned char * WINAPI VARIANT_UserMarshal(ULONG *pFlags, unsigned char *Buffer,
     header->clSize = 0; /* fixed up at the end */
     header->rpcReserved = 0;
     header->vt = V_VT(pvar);
-    header->wReserved1 = pvar->n1.n2.wReserved1;
-    header->wReserved2 = pvar->n1.n2.wReserved2;
-    header->wReserved3 = pvar->n1.n2.wReserved3;
+    header->wReserved1 = pvar->wReserved1;
+    header->wReserved2 = pvar->wReserved2;
+    header->wReserved3 = pvar->wReserved3;
     header->switch_is = V_VT(pvar);
     if(header->switch_is & VT_ARRAY)
         header->switch_is &= ~VT_TYPEMASK;
@@ -566,9 +566,9 @@ unsigned char * WINAPI VARIANT_UserUnmarshal(ULONG *pFlags, unsigned char *Buffe
     }
 
     V_VT(pvar) = header->vt;
-    pvar->n1.n2.wReserved1 = header->wReserved1;
-    pvar->n1.n2.wReserved2 = header->wReserved2;
-    pvar->n1.n2.wReserved3 = header->wReserved3;
+    pvar->wReserved1 = header->wReserved1;
+    pvar->wReserved2 = header->wReserved2;
+    pvar->wReserved3 = header->wReserved3;
 
     if(header->vt & VT_ARRAY)
     {

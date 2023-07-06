@@ -112,7 +112,7 @@ WINOLEAUTAPI HRESULT WINAPI GetRecordInfoFromGuids(REFGUID,ULONG,ULONG,LCID,REFG
  */
 
 /* Macros for accessing the fields of the VARIANT type */
-#if (__STDC__ && !defined(_FORCENAMELESSUNION)) || defined(NONAMELESSUNION)
+#ifdef NONAMELESSUNION
 #define V_VT(A)         ((A)->n1.n2.vt)
 #define V_UNION(A,B)    ((A)->n1.n2.n3.B)
 #define V_RECORD(A)     (V_UNION(A,brecVal).pvRecord)
@@ -140,7 +140,7 @@ WINOLEAUTAPI HRESULT WINAPI GetRecordInfoFromGuids(REFGUID,ULONG,ULONG,LCID,REFG
 #define V_CYREF(A)       V_UNION(A,pcyVal)
 #define V_DATE(A)        V_UNION(A,date)
 #define V_DATEREF(A)     V_UNION(A,pdate)
-#if (__STDC__ && !defined(_FORCENAMELESSUNION)) || defined(NONAMELESSUNION)
+#ifdef NONAMELESSUNION
 #define V_DECIMAL(A)     ((A)->n1.decVal)
 #else
 #define V_DECIMAL(A)     ((A)->decVal)
