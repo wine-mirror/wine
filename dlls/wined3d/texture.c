@@ -3006,8 +3006,7 @@ static BOOL wined3d_texture_gl_load_sysmem(struct wined3d_texture_gl *texture_gl
         return TRUE;
     }
 
-    if (!(texture_gl->t.resource.bind_flags & WINED3D_BIND_DEPTH_STENCIL)
-            && (sub_resource->locations & WINED3D_LOCATION_DRAWABLE))
+    if (sub_resource->locations & WINED3D_LOCATION_DRAWABLE)
     {
         texture2d_read_from_framebuffer(&texture_gl->t, sub_resource_idx, &context_gl->c,
                 texture_gl->t.resource.draw_binding, dst_location);

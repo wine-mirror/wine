@@ -374,8 +374,12 @@ void texture2d_read_from_framebuffer(struct wined3d_texture *texture, unsigned i
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        wined3d_context_gl_apply_fbo_state_explicit(context_gl, GL_READ_FRAMEBUFFER,
-                resource, sub_resource_idx, NULL, 0, src_location);
+        if (resource->format->depth_size || resource->format->stencil_size)
+            wined3d_context_gl_apply_fbo_state_explicit(context_gl, GL_READ_FRAMEBUFFER,
+                    NULL, 0, resource, sub_resource_idx, src_location);
+        else
+            wined3d_context_gl_apply_fbo_state_explicit(context_gl, GL_READ_FRAMEBUFFER,
+                    resource, sub_resource_idx, NULL, 0, src_location);
     }
 
     /* Select the correct read buffer, and give some debug output.
