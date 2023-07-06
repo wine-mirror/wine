@@ -30,6 +30,8 @@
 #define PHCM_DISGUISE_FULL_PLACEHOLDERS ((char)3)
 #define PHCM_MAX                        ((char)3)
 
+#define SYMLINK_FLAG_RELATIVE 0x00000001
+
 typedef struct _EX_PUSH_LOCK EX_PUSH_LOCK, *PEX_PUSH_LOCK;
 
 typedef enum _FS_FILTER_SECTION_SYNC_TYPE
@@ -137,6 +139,54 @@ typedef struct _FS_FILTER_CALLBACKS
     PFS_FILTER_CALLBACK            PreReleaseForModifiedPageWriter;
     PFS_FILTER_COMPLETION_CALLBACK PostReleaseForModifiedPageWriter;
 } FS_FILTER_CALLBACKS, *PFS_FILTER_CALLBACKS;
+
+typedef struct _REPARSE_DATA_BUFFER
+{
+    ULONG  ReparseTag;
+    USHORT ReparseDataLength;
+    USHORT Reserved;
+    union
+    {
+        struct
+        {
+            USHORT SubstituteNameOffset;
+            USHORT SubstituteNameLength;
+            USHORT PrintNameOffset;
+            USHORT PrintNameLength;
+            ULONG  Flags;
+            WCHAR  PathBuffer[1];
+        } SymbolicLinkReparseBuffer;
+
+        struct
+        {
+            USHORT SubstituteNameOffset;
+            USHORT SubstituteNameLength;
+            USHORT PrintNameOffset;
+            USHORT PrintNameLength;
+            WCHAR  PathBuffer[1];
+        } MountPointReparseBuffer;
+
+        struct
+        {
+            UCHAR DataBuffer[1];
+        } GenericReparseBuffer;
+
+    } DUMMYUNIONNAME;
+} REPARSE_DATA_BUFFER, *PREPARSE_DATA_BUFFER;
+
+typedef struct _REPARSE_GUID_DATA_BUFFER
+{
+    DWORD ReparseTag;
+    WORD  ReparseDataLength;
+    WORD  Reserved;
+    GUID  ReparseGuid;
+    struct
+    {
+        BYTE DataBuffer[1];
+    } GenericReparseBuffer;
+} REPARSE_GUID_DATA_BUFFER, *PREPARSE_GUID_DATA_BUFFER;
+
+#define REPARSE_GUID_DATA_BUFFER_HEADER_SIZE FIELD_OFFSET(REPARSE_GUID_DATA_BUFFER, GenericReparseBuffer)
 
 BOOLEAN WINAPI FsRtlIsNameInExpression(PUNICODE_STRING, PUNICODE_STRING, BOOLEAN, PWCH);
 DEVICE_OBJECT * WINAPI IoGetAttachedDevice(DEVICE_OBJECT*);
