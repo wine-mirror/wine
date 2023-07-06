@@ -585,11 +585,11 @@ HRESULT VARIANT_ClearInd(VARIANTARG *pVarg)
     case VT_RECORD:
     case VT_RECORD | VT_BYREF:
     {
-        struct __tagBRECORD* pBr = &V_UNION(pVarg,brecVal);
-        if (pBr->pRecInfo)
+        IRecordInfo *rec_info = V_RECORDINFO(pVarg);
+        if (rec_info)
         {
-            IRecordInfo_RecordClear(pBr->pRecInfo, pBr->pvRecord);
-            IRecordInfo_Release(pBr->pRecInfo);
+            IRecordInfo_RecordClear(rec_info, V_RECORD(pVarg));
+            IRecordInfo_Release(rec_info);
         }
         break;
     }
@@ -645,11 +645,11 @@ HRESULT WINAPI DECLSPEC_HOTPATCH VariantClear(VARIANTARG* pVarg)
       }
       else if (V_VT(pVarg) == VT_RECORD)
       {
-        struct __tagBRECORD* pBr = &V_UNION(pVarg,brecVal);
-        if (pBr->pRecInfo)
+        IRecordInfo *rec_info = V_RECORDINFO(pVarg);
+        if (rec_info)
         {
-          IRecordInfo_RecordClear(pBr->pRecInfo, pBr->pvRecord);
-          IRecordInfo_Release(pBr->pRecInfo);
+          IRecordInfo_RecordClear(rec_info, V_RECORD(pVarg));
+          IRecordInfo_Release(rec_info);
         }
       }
       else if (V_VT(pVarg) == VT_DISPATCH ||
@@ -669,31 +669,28 @@ HRESULT WINAPI DECLSPEC_HOTPATCH VariantClear(VARIANTARG* pVarg)
  */
 static HRESULT VARIANT_CopyIRecordInfo(VARIANT *dest, const VARIANT *src)
 {
-  struct __tagBRECORD *dest_rec = &V_UNION(dest, brecVal);
-  const struct __tagBRECORD *src_rec = &V_UNION(src, brecVal);
+  IRecordInfo *src_info = V_RECORDINFO(src);
   HRESULT hr = S_OK;
   ULONG size;
 
-  if (!src_rec->pRecInfo)
+  if (!src_info)
   {
-    if (src_rec->pvRecord) return E_INVALIDARG;
+    if (V_RECORD(src)) return E_INVALIDARG;
     return S_OK;
   }
 
-  hr = IRecordInfo_GetSize(src_rec->pRecInfo, &size);
+  hr = IRecordInfo_GetSize(src_info, &size);
   if (FAILED(hr)) return hr;
 
   /* Windows does not use RecordCreate() here, memory should be allocated in compatible way so RecordDestroy()
      could free it later. */
-  dest_rec->pvRecord = CoTaskMemAlloc(size);
-  if (!dest_rec->pvRecord) return E_OUTOFMEMORY;
+  V_RECORD(dest) = CoTaskMemAlloc(size);
+  if (!V_RECORD(dest)) return E_OUTOFMEMORY;
   if (size)
-      memset(dest_rec->pvRecord, 0, size);
+      memset(V_RECORD(dest), 0, size);
 
-  dest_rec->pRecInfo = src_rec->pRecInfo;
-  IRecordInfo_AddRef(src_rec->pRecInfo);
-
-  return IRecordInfo_RecordCopy(src_rec->pRecInfo, src_rec->pvRecord, dest_rec->pvRecord);
+  IRecordInfo_AddRef(V_RECORDINFO(dest) = src_info);
+  return IRecordInfo_RecordCopy(src_info, V_RECORD(src), V_RECORD(dest));
 }
 
 /******************************************************************************
