@@ -10690,7 +10690,6 @@ fi
         LDFLAGS=$saved_LDFLAGS
         continue
     fi
-    as_fn_append PE_ARCHS " $wine_arch"
 
     as_wine_cv_crosscc_c99=`printf "%s\n" "ac_cv_${wine_arch}_crosscc_c99" | $as_tr_sh`
 
@@ -10726,17 +10725,23 @@ fi
 fi
 
     eval res=\$$as_wine_cv_crosscc_c99
+
     case "x$res" in
       x) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: none needed" >&5
 printf "%s\n" "none needed" >&6; } ;;
       xno) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: unsupported" >&5
-printf "%s\n" "unsupported" >&6; } ;;
+printf "%s\n" "unsupported" >&6; }
+           CC=$saved_CC
+           CFLAGS=$saved_CFLAGS
+           LDFLAGS=$saved_LDFLAGS
+           continue
+           ;;
       x*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $res" >&5
 printf "%s\n" "$res" >&6; }
           as_fn_append ${wine_arch}_CC " $res" ;;
     esac
 
-
+    as_fn_append PE_ARCHS " $wine_arch"
     { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-fno-strict-aliasing" | $as_tr_sh`
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -fno-strict-aliasing" >&5
 printf %s "checking whether $CC supports -fno-strict-aliasing... " >&6; }

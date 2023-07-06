@@ -902,7 +902,6 @@ do
         LDFLAGS=$saved_LDFLAGS
         continue
     fi
-    AS_VAR_APPEND([PE_ARCHS],[" $wine_arch"])
 
     AS_VAR_PUSHDEF([wine_cv_crosscc_c99],[ac_cv_${wine_arch}_crosscc_c99])
     AC_MSG_CHECKING([for $CC option to enable C99 features])
@@ -918,14 +917,20 @@ do
              AS_VAR_IF([wine_cv_crosscc_c99],[no],[],[break])
          done])
     AS_VAR_COPY([res],[wine_cv_crosscc_c99])
+    AS_VAR_POPDEF([wine_cv_crosscc_c99])
     case "x$res" in
       x) AC_MSG_RESULT([none needed]) ;;
-      xno) AC_MSG_RESULT([unsupported]) ;;
+      xno) AC_MSG_RESULT([unsupported])
+           CC=$saved_CC
+           CFLAGS=$saved_CFLAGS
+           LDFLAGS=$saved_LDFLAGS
+           continue
+           ;;
       x*) AC_MSG_RESULT([$res])
           AS_VAR_APPEND([${wine_arch}_CC],[" $res"]) ;;
     esac
-    AS_VAR_POPDEF([wine_cv_crosscc_c99])
 
+    AS_VAR_APPEND([PE_ARCHS],[" $wine_arch"])
     WINE_TRY_PE_CFLAGS([-fno-strict-aliasing])
     dnl clang needs to be told to fail on unknown options
     WINE_TRY_PE_CFLAGS([-Werror=unknown-warning-option],[CFLAGS="$CFLAGS -Werror=unknown-warning-option"])
