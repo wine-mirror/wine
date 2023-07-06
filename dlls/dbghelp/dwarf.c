@@ -20,8 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
-
 #include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1600,10 +1598,10 @@ static struct symt* dwarf2_parse_array_type(dwarf2_debug_info_t* di)
                     if (pc && symt_check_tag(*pc, SymTagData))
                     {
                         struct symt_data* elt = (struct symt_data*)(*pc);
-                        if (elt->u.value.n1.n2.n3.lVal < min.u.uvalue)
-                            min.u.uvalue = elt->u.value.n1.n2.n3.lVal;
-                        if (elt->u.value.n1.n2.n3.lVal > max.u.uvalue)
-                            max.u.uvalue = elt->u.value.n1.n2.n3.lVal;
+                        if (elt->u.value.lVal < min.u.uvalue)
+                            min.u.uvalue = elt->u.value.lVal;
+                        if (elt->u.value.lVal > max.u.uvalue)
+                            max.u.uvalue = elt->u.value.lVal;
                     }
                 }
             }
