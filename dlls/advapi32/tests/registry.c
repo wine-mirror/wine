@@ -4187,9 +4187,7 @@ static void test_performance_keys(void)
             ok(file_time.l >= systime1.QuadPart - 10000 && file_time.l <= systime2.QuadPart,
                     "got times %I64d, %I64d, %I64d\n", systime1.QuadPart, file_time.l, systime2.QuadPart);
 
-            ok(data->SystemNameLength == (sysname_len + 1) * sizeof(WCHAR),
-                    "expected name len %Iu, got %lu\n",
-                    (sysname_len + 1) * sizeof(WCHAR), data->SystemNameLength);
+            ok(data->SystemNameLength == (sysname_len + 1) * sizeof(WCHAR), "got %lu\n", data->SystemNameLength);
             ok(data->SystemNameOffset == sizeof(PERF_DATA_BLOCK),
                     "got name offset %lu\n", data->SystemNameOffset);
             ok(!wcscmp(sysname, (const WCHAR *)(data + 1)), "expected name %s, got %s\n",
