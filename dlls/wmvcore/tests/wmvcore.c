@@ -1481,8 +1481,7 @@ static void test_stream_media_props(IWMStreamConfig *config,
     hr = IWMMediaProps_GetMediaType(props, mt, &ret_size);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(ret_size == size, "Expected size %lu, got %lu.\n", size, ret_size);
-    ok(size == sizeof(WM_MEDIA_TYPE) + mt->cbFormat, "Expected size %Iu, got %lu.\n",
-            sizeof(WM_MEDIA_TYPE) + mt->cbFormat, size);
+    ok(size == sizeof(WM_MEDIA_TYPE) + mt->cbFormat, "got %lu.\n", size);
     ok(IsEqualGUID(&mt->majortype, majortype), "Expected major type %s, got %s.\n",
             debugstr_guid(majortype), debugstr_guid(&mt->majortype));
     todo_wine_if(todo_subtype)
@@ -1687,8 +1686,7 @@ static void test_sync_reader_types(void)
             hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
             ok(ret_size == size, "Expected size %lu, got %lu.\n", size, ret_size);
-            ok(size == sizeof(WM_MEDIA_TYPE) + mt->cbFormat, "Expected size %Iu, got %lu.\n",
-                    sizeof(WM_MEDIA_TYPE) + mt->cbFormat, size);
+            ok(size == sizeof(WM_MEDIA_TYPE) + mt->cbFormat, "got %lu.\n", size);
 
             ok(IsEqualGUID(&mt->majortype, &majortype), "Got major type %s.\n", debugstr_guid(&mt->majortype));
 
@@ -3587,8 +3585,7 @@ static void test_async_reader_types(void)
             hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
             ok(ret_size == size, "Expected size %lu, got %lu.\n", size, ret_size);
-            ok(size == sizeof(WM_MEDIA_TYPE) + mt->cbFormat, "Expected size %Iu, got %lu.\n",
-                    sizeof(WM_MEDIA_TYPE) + mt->cbFormat, size);
+            ok(size == sizeof(WM_MEDIA_TYPE) + mt->cbFormat, "got %lu.\n", size);
 
             ok(IsEqualGUID(&mt->majortype, &majortype), "Got major type %s.\n", debugstr_guid(&mt->majortype));
 
