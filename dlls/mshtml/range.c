@@ -741,8 +741,10 @@ static LONG find_prev_space(rangepoint_t *iter, BOOL first_space)
 
     init_rangepoint(&prev, iter->node, iter->off);
     c = move_prev_char(&prev);
-    if(!c || (first_space && iswspace(c)))
+    if(!c || (first_space && iswspace(c))) {
+        free_rangepoint(&prev);
         return FALSE;
+    }
 
     do {
         free_rangepoint(iter);
