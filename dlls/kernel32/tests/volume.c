@@ -1565,8 +1565,7 @@ static void test_GetVolumeInformationByHandle(void)
             attr_info->MaximumComponentNameLength, filename_len);
     ok(!wcscmp( fsname, attr_info->FileSystemName ), "expected fsname %s, got %s\n",
             debugstr_w( attr_info->FileSystemName ), debugstr_w( fsname ));
-    ok(wcslen( fsname ) == attr_info->FileSystemNameLength / sizeof(WCHAR),
-            "expected fsname length %Iu, got %Iu\n", attr_info->FileSystemNameLength / sizeof(WCHAR), wcslen( fsname ));
+    ok(wcslen( fsname ) == attr_info->FileSystemNameLength / sizeof(WCHAR), "got %Iu\n", wcslen( fsname ));
 
     SetLastError(0xdeadbeef);
     ret = pGetVolumeInformationByHandleW( file, NULL, 0, NULL, &filename_len, &flags, fsname, 2 );
@@ -1580,8 +1579,7 @@ static void test_GetVolumeInformationByHandle(void)
             volume_info->VolumeSerialNumber, serial);
     ok(!wcscmp( label, volume_info->VolumeLabel ), "expected label %s, got %s\n",
             debugstr_w( volume_info->VolumeLabel ), debugstr_w( label ));
-    ok(wcslen( label ) == volume_info->VolumeLabelLength / sizeof(WCHAR),
-            "expected label length %Iu, got %Iu\n", volume_info->VolumeLabelLength / sizeof(WCHAR), wcslen( label ));
+    ok(wcslen( label ) == volume_info->VolumeLabelLength / sizeof(WCHAR), "got %Iu\n", wcslen( label ));
 
     CloseHandle( file );
 
@@ -1606,8 +1604,7 @@ static void test_GetVolumeInformationByHandle(void)
             volume_info->VolumeSerialNumber, serial);
     ok(!wcscmp( label, volume_info->VolumeLabel ), "expected label %s, got %s\n",
             debugstr_w( volume_info->VolumeLabel ), debugstr_w( label ));
-    ok(wcslen( label ) == volume_info->VolumeLabelLength / sizeof(WCHAR),
-            "expected label length %Iu, got %Iu\n", volume_info->VolumeLabelLength / sizeof(WCHAR), wcslen( label ));
+    ok(wcslen( label ) == volume_info->VolumeLabelLength / sizeof(WCHAR), "got %Iu\n", wcslen( label ));
 
     memset(buffer, 0, sizeof(buffer));
     status = NtQueryVolumeInformationFile( file, &io, buffer, sizeof(buffer), FileFsAttributeInformation );
@@ -1618,8 +1615,7 @@ static void test_GetVolumeInformationByHandle(void)
             attr_info->MaximumComponentNameLength, filename_len);
     ok(!wcscmp( fsname, attr_info->FileSystemName ), "expected fsname %s, got %s\n",
             debugstr_w( attr_info->FileSystemName ), debugstr_w( fsname ));
-    ok(wcslen( fsname ) == attr_info->FileSystemNameLength / sizeof(WCHAR),
-            "expected fsname length %Iu, got %Iu\n", attr_info->FileSystemNameLength / sizeof(WCHAR), wcslen( fsname ));
+    ok(wcslen( fsname ) == attr_info->FileSystemNameLength / sizeof(WCHAR), "got %Iu\n", wcslen( fsname ));
 
     CloseHandle( file );
 }
