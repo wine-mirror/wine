@@ -622,6 +622,9 @@ static WCHAR move_next_char(rangepoint_t *iter)
         }
     }while(rangepoint_next_node(iter));
 
+    if(cspace)
+        free_rangepoint(&last_space);
+
     return cspace;
 }
 
