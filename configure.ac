@@ -818,14 +818,13 @@ AS_VAR_SET_IF([enable_archs],
     [if test "x$with_mingw" != xno
      then
          test $HOST_ARCH = unknown || cross_archs=$HOST_ARCH
-         case "x$with_mingw" in
-           x|xyes) ;;
-           *) AS_VAR_SET(${cross_archs}_CC,$with_mingw) ;;
-         esac
      fi])
 
 for wine_arch in $cross_archs
 do
+    case "x$with_mingw" in
+      xclang|x*/clang) AS_VAR_SET(${wine_arch}_CC,$with_mingw) ;;
+    esac
     AS_VAR_IF([${wine_arch}_CC],[],
         [case $wine_arch in
           aarch64)

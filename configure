@@ -10354,15 +10354,14 @@ else $as_nop
   if test "x$with_mingw" != xno
      then
          test $HOST_ARCH = unknown || cross_archs=$HOST_ARCH
-         case "x$with_mingw" in
-           x|xyes) ;;
-           *) eval "${cross_archs}_CC=\$with_mingw" ;;
-         esac
      fi
 fi
 
 for wine_arch in $cross_archs
 do
+    case "x$with_mingw" in
+      xclang|x*/clang) eval "${wine_arch}_CC=\$with_mingw" ;;
+    esac
     if eval \${${wine_arch}_CC:+false} :
 then :
   case $wine_arch in
