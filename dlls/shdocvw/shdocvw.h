@@ -41,12 +41,12 @@
  * Shell Instance Objects
  */
 extern HRESULT SHDOCVW_GetShellInstanceObjectClassObject(REFCLSID rclsid, 
-    REFIID riid, LPVOID *ppvClassObj) DECLSPEC_HIDDEN;
+    REFIID riid, LPVOID *ppvClassObj);
 
 /**********************************************************************
  * Dll lifetime tracking declaration for shdocvw.dll
  */
-extern LONG SHDOCVW_refCount DECLSPEC_HIDDEN;
+extern LONG SHDOCVW_refCount;
 static inline void SHDOCVW_LockModule(void) { InterlockedIncrement( &SHDOCVW_refCount ); }
 static inline void SHDOCVW_UnlockModule(void) { InterlockedDecrement( &SHDOCVW_refCount ); }
 
