@@ -372,16 +372,10 @@ void texture2d_read_from_framebuffer(struct wined3d_texture *texture, unsigned i
     context_gl = wined3d_context_gl(context);
     gl_info = context_gl->gl_info;
 
-    if (src_location != resource->draw_binding)
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         wined3d_context_gl_apply_fbo_state_blit(context_gl, GL_READ_FRAMEBUFFER,
                 resource, sub_resource_idx, NULL, 0, src_location);
-        wined3d_context_gl_check_fbo_status(context_gl, GL_READ_FRAMEBUFFER);
-        context_invalidate_state(context, STATE_FRAMEBUFFER);
-    }
-    else
-    {
-        wined3d_context_gl_apply_blit_state(context_gl, device);
     }
 
     /* Select the correct read buffer, and give some debug output.
@@ -405,6 +399,8 @@ void texture2d_read_from_framebuffer(struct wined3d_texture *texture, unsigned i
         src_is_upside_down = FALSE;
     }
     checkGLcall("glReadBuffer");
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+        wined3d_context_gl_check_fbo_status(context_gl, GL_READ_FRAMEBUFFER);
 
     if (data.buffer_object)
     {
