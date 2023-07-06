@@ -508,7 +508,7 @@ static HRESULT parse_part_list(DMUS_PRIVATE_CHUNK *pChunk, IStream *pStm)
       IStream_Read (pStm, &dwSize, sizeof(DWORD), NULL);
       cnt = (Chunk.dwSize - sizeof(DWORD));
       TRACE_(dmfile)(" - dwSize: %lu\n", dwSize);
-      TRACE_(dmfile)(" - cnt: %lu (%Iu / %lu)\n", cnt / dwSize, Chunk.dwSize - sizeof(DWORD), dwSize);
+      TRACE_(dmfile)(" - cnt: %lu (%lu / %lu)\n", cnt / dwSize, cnt, dwSize);
       if (cnt % dwSize != 0) {
 	ERR("Invalid Array Size\n");
 	return E_FAIL;
@@ -524,7 +524,7 @@ static HRESULT parse_part_list(DMUS_PRIVATE_CHUNK *pChunk, IStream *pStm)
       IStream_Read (pStm, &dwSize, sizeof(DWORD), NULL);
       cnt = (Chunk.dwSize - sizeof(DWORD));
       TRACE_(dmfile)(" - dwSize: %lu\n", dwSize);
-      TRACE_(dmfile)(" - cnt: %lu (%Iu / %lu)\n", cnt / dwSize, Chunk.dwSize - sizeof(DWORD), dwSize);
+      TRACE_(dmfile)(" - cnt: %lu (%lu / %lu)\n", cnt / dwSize, cnt, dwSize);
       if (cnt % dwSize != 0) {
 	ERR("Invalid Array Size\n");
 	return E_FAIL;
