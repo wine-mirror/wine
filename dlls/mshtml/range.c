@@ -969,6 +969,7 @@ static HRESULT WINAPI HTMLTxtRange_put_text(IHTMLTxtRange *iface, BSTR v)
     if(NS_FAILED(nsres))
         ERR("SetEndAfter failed: %08lx\n", nsres);
 
+    nsIDOMText_Release(text_node);
     return IHTMLTxtRange_collapse(&This->IHTMLTxtRange_iface, VARIANT_FALSE);
 }
 
