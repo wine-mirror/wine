@@ -47,11 +47,18 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid )
 
 static void test_UsbDevicesStatics(void)
 {
+    static const WCHAR *format = L"System.Devices.InterfaceClassGuid:=\"{DEE824EF-729B-4A0E-9C14-B7117D33A817}\""
+                                 L" AND System.Devices.InterfaceEnabled:=System.StructuredQueryType.Boolean#True"
+                                 L" AND System.DeviceInterface.WinUsb.UsbVendorId:=%d"
+                                 L" AND System.DeviceInterface.WinUsb.UsbProductId:=%d";
     static const WCHAR *usb_device_statics_name = L"Windows.Devices.Usb.UsbDevice";
     IUsbDeviceStatics *usb_device_statics;
     IActivationFactory *factory;
-    HSTRING str;
+    UINT32 vendor, product;
+    WCHAR buffer[254 + 20];
+    HSTRING str, wine_str;
     HRESULT hr;
+    INT32 res;
     LONG ref;
 
     hr = WindowsCreateString( usb_device_statics_name, wcslen( usb_device_statics_name ), &str );
@@ -72,6 +79,35 @@ static void test_UsbDevicesStatics(void)
 
     hr = IActivationFactory_QueryInterface( factory, &IID_IUsbDeviceStatics, (void **)&usb_device_statics );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = IUsbDeviceStatics_GetDeviceSelectorVidPidOnly( usb_device_statics, 5, 10, NULL );
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+
+    vendor = 20;
+    product = 23;
+    hr = IUsbDeviceStatics_GetDeviceSelectorVidPidOnly( usb_device_statics, vendor, product, &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    swprintf( buffer, ARRAYSIZE(buffer), format, (INT32)vendor, (INT32)product );
+    hr = WindowsCreateString( buffer, wcslen(buffer), &wine_str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = WindowsCompareStringOrdinal( str, wine_str, &res );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( !res, "got string %s.\n", debugstr_hstring(str) );
+    WindowsDeleteString( str );
+    WindowsDeleteString( wine_str );
+
+    vendor = 4294967195; /* Vendor = -101 */
+    product = -1294967195;
+    hr = IUsbDeviceStatics_GetDeviceSelectorVidPidOnly( usb_device_statics, vendor, product, &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    swprintf( buffer, ARRAYSIZE(buffer), format, (INT32)vendor, (INT32)product );
+    hr = WindowsCreateString( buffer, wcslen(buffer), &wine_str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = WindowsCompareStringOrdinal( str, wine_str, &res );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( !res, "got string %s.\n", debugstr_hstring(str) );
+    WindowsDeleteString( str );
+    WindowsDeleteString( wine_str );
 
     ref = IUsbDeviceStatics_Release( usb_device_statics );
     ok( ref == 2, "got ref %ld.\n", ref );
