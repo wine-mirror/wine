@@ -3254,7 +3254,7 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
         {
             wined3d_texture_load(rt, context, FALSE);
 
-            wined3d_context_gl_apply_fbo_state_blit(context_gl, GL_FRAMEBUFFER, &rt->resource,
+            wined3d_context_gl_apply_fbo_state_blit(context_gl, GL_DRAW_FRAMEBUFFER, &rt->resource,
                     context->current_rt.sub_resource_idx, NULL, 0, rt->resource.draw_binding);
             if (rt->resource.format->id != WINED3DFMT_NULL)
                 rt_mask = 1;
@@ -3264,7 +3264,7 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
         else
         {
             context_gl->current_fbo = NULL;
-            wined3d_context_gl_bind_fbo(context_gl, GL_FRAMEBUFFER, 0);
+            wined3d_context_gl_bind_fbo(context_gl, GL_DRAW_FRAMEBUFFER, 0);
             rt_mask = context_generate_rt_mask_from_resource(&rt->resource);
         }
     }
@@ -3282,7 +3282,7 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
     }
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
-        wined3d_context_gl_check_fbo_status(context_gl, GL_FRAMEBUFFER);
+        wined3d_context_gl_check_fbo_status(context_gl, GL_DRAW_FRAMEBUFFER);
     context_invalidate_state(context, STATE_FRAMEBUFFER);
 
     wined3d_context_gl_get_rt_size(context_gl, &rt_size);
