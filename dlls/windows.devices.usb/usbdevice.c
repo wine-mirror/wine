@@ -133,8 +133,22 @@ static HRESULT WINAPI usb_device_statics_GetDeviceSelectorGuidOnly( IUsbDeviceSt
 static HRESULT WINAPI usb_device_statics_GetDeviceSelectorVidPidOnly( IUsbDeviceStatics *iface, UINT32 vendor,
                                                                       UINT32 product, HSTRING *value )
 {
-    FIXME( "iface %p, vendor %d, product %d, value %p stub!\n", iface, vendor, product, value );
-    return E_NOTIMPL;
+    static const WCHAR *format = L"System.Devices.InterfaceClassGuid:=\"{DEE824EF-729B-4A0E-9C14-B7117D33A817}\""
+                                 L" AND System.Devices.InterfaceEnabled:=System.StructuredQueryType.Boolean#True"
+                                 L" AND System.DeviceInterface.WinUsb.UsbVendorId:=%d"
+                                 L" AND System.DeviceInterface.WinUsb.UsbProductId:=%d";
+    WCHAR buffer[254 + 20];
+    HRESULT hr;
+
+    TRACE( "iface %p, vendor %d, product %d, value %p.\n", iface, vendor, product, value );
+
+    if (!value) return E_INVALIDARG;
+
+    swprintf( buffer, ARRAYSIZE(buffer), format, (INT32)vendor, (INT32)product );
+    hr = WindowsCreateString( buffer, wcslen(buffer), value );
+
+    TRACE( "Returning value = %s\n", debugstr_hstring(*value) );
+    return hr;
 }
 
 static HRESULT WINAPI usb_device_statics_GetDeviceClassSelector( IUsbDeviceStatics *iface, IUsbDeviceClass *class, HSTRING *value )
