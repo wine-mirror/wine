@@ -399,11 +399,11 @@ unsigned char * WINAPI VARIANT_UserMarshal(ULONG *pFlags, unsigned char *Buffer,
 
     header->clSize = 0; /* fixed up at the end */
     header->rpcReserved = 0;
-    header->vt = pvar->n1.n2.vt;
+    header->vt = V_VT(pvar);
     header->wReserved1 = pvar->n1.n2.wReserved1;
     header->wReserved2 = pvar->n1.n2.wReserved2;
     header->wReserved3 = pvar->n1.n2.wReserved3;
-    header->switch_is = pvar->n1.n2.vt;
+    header->switch_is = V_VT(pvar);
     if(header->switch_is & VT_ARRAY)
         header->switch_is &= ~VT_TYPEMASK;
 
@@ -418,7 +418,7 @@ unsigned char * WINAPI VARIANT_UserMarshal(ULONG *pFlags, unsigned char *Buffer,
         Pos += 4;
         if((header->vt & VT_TYPEMASK) != VT_VARIANT)
         {
-            memcpy(Pos, pvar->n1.n2.n3.byref, type_size);
+            memcpy(Pos, V_BYREF(pvar), type_size);
             Pos += type_size;
         }
         else
@@ -432,7 +432,7 @@ unsigned char * WINAPI VARIANT_UserMarshal(ULONG *pFlags, unsigned char *Buffer,
         if((header->vt & VT_TYPEMASK) == VT_DECIMAL)
             memcpy(Pos, pvar, type_size);
         else
-            memcpy(Pos, &pvar->n1.n2.n3, type_size);
+            memcpy(Pos, &V_UI8(pvar), type_size);
         Pos += type_size;
     }
 
@@ -561,11 +561,11 @@ unsigned char * WINAPI VARIANT_UserUnmarshal(ULONG *pFlags, unsigned char *Buffe
         else if((header->vt & VT_TYPEMASK) == VT_DECIMAL)
             memcpy(pvar, Pos, type_size);
         else
-            memcpy(&pvar->n1.n2.n3, Pos, type_size);
+            memcpy(&V_UI8(pvar), Pos, type_size);
         Pos += type_size;
     }
 
-    pvar->n1.n2.vt = header->vt;
+    V_VT(pvar) = header->vt;
     pvar->n1.n2.wReserved1 = header->wReserved1;
     pvar->n1.n2.wReserved2 = header->wReserved2;
     pvar->n1.n2.wReserved3 = header->wReserved3;
@@ -621,7 +621,7 @@ void WINAPI VARIANT_UserFree(ULONG *pFlags, VARIANT *pvar)
   TRACE("%#lx, %p.\n", *pFlags, pvar);
   TRACE("vt=%04x\n", V_VT(pvar));
 
-  if (vt & VT_BYREF) ref = pvar->n1.n2.n3.byref;
+  if (vt & VT_BYREF) ref = V_BYREF(pvar);
 
   VariantClear(pvar);
   if (!ref) return;
