@@ -3252,8 +3252,6 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
     {
         if (context->render_offscreen)
         {
-            wined3d_texture_load(rt, context, FALSE);
-
             wined3d_context_gl_apply_fbo_state_blit(context_gl, GL_DRAW_FRAMEBUFFER, &rt->resource,
                     context->current_rt.sub_resource_idx, NULL, 0, rt->resource.draw_binding);
             if (rt->resource.format->id != WINED3DFMT_NULL)
