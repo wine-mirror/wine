@@ -280,7 +280,7 @@ static BOOL rangepoint_prev_node(rangepoint_t *iter)
 
     off = get_child_index(node, iter->node);
     free_rangepoint(iter);
-    init_rangepoint(iter, node, off);
+    init_rangepoint_no_addref(iter, node, off);
     return TRUE;
 }
 
