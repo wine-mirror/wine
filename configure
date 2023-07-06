@@ -10701,7 +10701,7 @@ then :
   printf %s "(cached) " >&6
 else $as_nop
   eval "$as_wine_cv_crosscc_c99=no"
-         for arg in '' '-std=gnu99'
+         for arg in '' '-std=gnu99' '-D__STDC__'
          do
              test -z "$arg" || CC="$CC $arg"
              cat confdefs.h - <<_ACEOF >conftest.$ac_ext

@@ -908,7 +908,7 @@ do
     AC_MSG_CHECKING([for $CC option to enable C99 features])
     AC_CACHE_VAL([wine_cv_crosscc_c99],
         [AS_VAR_SET([wine_cv_crosscc_c99],[no])
-         for arg in '' '-std=gnu99'
+         for arg in '' '-std=gnu99' '-D__STDC__'
          do
              test -z "$arg" || CC="$CC $arg"
              AC_COMPILE_IFELSE([AC_LANG_SOURCE([$ac_c_conftest_c99_program])],
