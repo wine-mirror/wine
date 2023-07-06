@@ -3255,14 +3255,12 @@ static void session_deliver_sample_to_node(struct media_session *session, IMFTop
                     {
                         transform_stream_drop_samples(stream);
                         drain = TRUE;
+
+                        if (FAILED(hr = IMFTransform_ProcessMessage(topo_node->object.transform,
+                                MFT_MESSAGE_COMMAND_DRAIN, stream_id)))
+                            WARN("Drain command failed for transform, hr %#lx.\n", hr);
                     }
                 }
-            }
-
-            if (drain)
-            {
-                if (FAILED(hr = IMFTransform_ProcessMessage(topo_node->object.transform, MFT_MESSAGE_COMMAND_DRAIN, 0)))
-                    WARN("Drain command failed for transform, hr %#lx.\n", hr);
             }
 
             transform_node_pull_samples(session, topo_node);
