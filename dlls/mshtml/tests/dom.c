@@ -5238,6 +5238,13 @@ static IHTMLDOMNode *_test_node_append_child(unsigned line, IUnknown *node_unk, 
     return new_child;
 }
 
+#define test_node_append_child_discard(n,c) _test_node_append_child_discard(__LINE__,n,c)
+static void _test_node_append_child_discard(unsigned line, IUnknown *node_unk, IUnknown *child_unk)
+{
+    IHTMLDOMNode *node = _test_node_append_child(line, node_unk, child_unk);
+    IHTMLDOMNode_Release(node);
+}
+
 #define test_node_insertbefore(n,c,v) _test_node_insertbefore(__LINE__,n,c,v)
 static IHTMLDOMNode *_test_node_insertbefore(unsigned line, IUnknown *node_unk, IHTMLDOMNode *child, VARIANT *var)
 {
@@ -11046,7 +11053,7 @@ static void test_docfrag(IHTMLDocument2 *doc)
 
     br = test_create_elem(doc, L"BR");
     test_elem_source_index(br, -1);
-    test_node_append_child((IUnknown*)frag, (IUnknown*)br);
+    test_node_append_child_discard((IUnknown*)frag, (IUnknown*)br);
     test_elem_source_index(br, 0);
     IHTMLElement_Release(br);
 
@@ -11054,7 +11061,7 @@ static void test_docfrag(IHTMLDocument2 *doc)
     test_doc_getelembytag(frag, "Br", ET_BR, 1);
 
     div = get_elem_by_id(doc, L"divid", TRUE);
-    test_node_append_child((IUnknown*)div, (IUnknown*)frag);
+    test_node_append_child_discard((IUnknown*)div, (IUnknown*)frag);
     IHTMLElement_Release(div);
 
     hres = IHTMLDocument2_get_all(doc, &col);
@@ -11064,23 +11071,23 @@ static void test_docfrag(IHTMLDocument2 *doc)
 
     html = test_create_elem(doc, L"HTML");
     test_elem_source_index(html, -1);
-    test_node_append_child((IUnknown*)frag, (IUnknown*)html);
+    test_node_append_child_discard((IUnknown*)frag, (IUnknown*)html);
     test_elem_source_index(html, 0);
 
     div = test_create_elem(doc, L"DIV");
     test_elem_source_index(div, -1);
-    test_node_append_child((IUnknown*)html, (IUnknown*)div);
+    test_node_append_child_discard((IUnknown*)html, (IUnknown*)div);
     test_elem_source_index(div, 1);
     IHTMLElement_Release(div);
 
     div = test_create_elem(doc, L"DIV");
     test_elem_source_index(div, -1);
-    test_node_append_child((IUnknown*)html, (IUnknown*)div);
+    test_node_append_child_discard((IUnknown*)html, (IUnknown*)div);
     test_elem_source_index(div, 2);
 
     frag_body = test_create_elem(doc, L"BODY");
     test_elem_source_index(frag_body, -1);
-    test_node_append_child((IUnknown*)div, (IUnknown*)frag_body);
+    test_node_append_child_discard((IUnknown*)div, (IUnknown*)frag_body);
     test_elem_source_index(frag_body, 3);
     IHTMLElement_Release(frag_body);
     IHTMLElement_Release(div);
