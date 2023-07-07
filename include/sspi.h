@@ -69,11 +69,16 @@ typedef SecHandle CtxtHandle;
 typedef PSecHandle PCtxtHandle;
 #endif
 
+#if defined(_NTDEF_) || defined(_WINNT_)
+typedef LARGE_INTEGER _SECURITY_INTEGER, SECURITY_INTEGER,*PSECURITY_INTEGER;
+#else
 typedef struct _SECURITY_INTEGER
 {
     ULONG LowPart;
     LONG  HighPart;
 } SECURITY_INTEGER, *PSECURITY_INTEGER;
+#endif
+
 typedef SECURITY_INTEGER TimeStamp, *PTimeStamp;
 
 #ifndef __UNICODE_STRING_DEFINED__
