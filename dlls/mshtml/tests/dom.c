@@ -3503,6 +3503,7 @@ static void _test_img_alt(unsigned line, IUnknown *unk, const WCHAR *exalt)
         ok_(__FILE__,line) (!lstrcmpW(alt, exalt), "unexpected alt %s\n", wine_dbgstr_w(alt));
     else
         ok_(__FILE__,line) (!alt, "alt != NULL\n");
+    IHTMLImgElement_Release(img);
     SysFreeString(alt);
 }
 
@@ -3516,6 +3517,7 @@ static void _test_img_set_alt(unsigned line, IUnknown *unk, const WCHAR *alt)
     tmp = SysAllocString(alt);
     hres = IHTMLImgElement_put_alt(img, tmp);
     ok_(__FILE__,line) (hres == S_OK, "get_alt failed: %08lx\n", hres);
+    IHTMLImgElement_Release(img);
     SysFreeString(tmp);
 
     _test_img_alt(line, unk, alt);
@@ -3536,6 +3538,7 @@ static void _test_img_align(unsigned line, IUnknown *unk, const WCHAR *align)
     hres = IHTMLImgElement_get_align(img, &tmp);
     ok_(__FILE__,line) (hres == S_OK, "put_align failed: %08lx\n", hres);
     ok_(__FILE__,line) (!lstrcmpW(tmp, align), "Expect %s, got %s\n", wine_dbgstr_w(align), wine_dbgstr_w(tmp));
+    IHTMLImgElement_Release(img);
     SysFreeString(tmp);
 }
 
