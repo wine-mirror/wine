@@ -72,6 +72,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(oss);
 static const REFERENCE_TIME def_period = 100000;
 static const REFERENCE_TIME min_period = 50000;
 
+static ULONG_PTR zero_bits = 0;
+
 static NTSTATUS oss_not_implemented(void *args)
 {
     return STATUS_SUCCESS;
@@ -219,6 +221,20 @@ static void get_default_device(EDataFlow flow, char device[OSS_DEVNODE_SIZE])
     TRACE("Default devnode: %s\n", ai.devnode);
     oss_clean_devnode(device, ai.devnode);
     return;
+}
+
+static NTSTATUS oss_process_attach(void *args)
+{
+#ifdef _WIN64
+    if (NtCurrentTeb()->WowTebOffset)
+    {
+        SYSTEM_BASIC_INFORMATION info;
+
+        NtQuerySystemInformation(SystemEmulationBasicInformation, &info, sizeof(info), NULL);
+        zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
+    }
+#endif
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS oss_main_loop(void *args)
@@ -550,15 +566,6 @@ static HRESULT setup_oss_device(AUDCLNT_SHAREMODE share, int fd,
     return ret;
 }
 
-static ULONG_PTR zero_bits(void)
-{
-#ifdef _WIN64
-    return !NtCurrentTeb()->WowTebOffset ? 0 : 0x7fffffff;
-#else
-    return 0;
-#endif
-}
-
 static NTSTATUS oss_create_stream(void *args)
 {
     struct create_stream_params *params = args;
@@ -653,7 +660,7 @@ static NTSTATUS oss_create_stream(void *args)
     if(params->share == AUDCLNT_SHAREMODE_EXCLUSIVE)
         stream->bufsize_frames -= stream->bufsize_frames % stream->period_frames;
     size = stream->bufsize_frames * params->fmt->nBlockAlign;
-    if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer, zero_bits(),
+    if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer, zero_bits,
                                &size, MEM_COMMIT, PAGE_READWRITE)){
         params->result = E_OUTOFMEMORY;
         goto exit;
@@ -988,7 +995,7 @@ static NTSTATUS oss_get_render_buffer(void *args)
                 stream->tmp_buffer = NULL;
             }
             size = frames * stream->fmt->nBlockAlign;
-            if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, zero_bits(),
+            if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, zero_bits,
                                        &size, MEM_COMMIT, PAGE_READWRITE)){
                 stream->tmp_buffer_frames = 0;
                 return oss_unlock_result(stream, &params->result, E_OUTOFMEMORY);
@@ -1098,7 +1105,7 @@ static NTSTATUS oss_get_capture_buffer(void *args)
                 stream->tmp_buffer = NULL;
             }
             size = *frames * stream->fmt->nBlockAlign;
-            if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, zero_bits(),
+            if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, zero_bits,
                                        &size, MEM_COMMIT, PAGE_READWRITE)){
                 stream->tmp_buffer_frames = 0;
                 return oss_unlock_result(stream, &params->result, E_OUTOFMEMORY);
@@ -1690,7 +1697,7 @@ static NTSTATUS oss_aux_message(void *args)
 
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
-    oss_not_implemented,
+    oss_process_attach,
     oss_not_implemented,
     oss_main_loop,
     oss_get_endpoint_ids,
@@ -2127,7 +2134,7 @@ static NTSTATUS oss_wow64_aux_message(void *args)
 
 unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
-    oss_not_implemented,
+    oss_process_attach,
     oss_not_implemented,
     oss_wow64_main_loop,
     oss_wow64_get_endpoint_ids,
