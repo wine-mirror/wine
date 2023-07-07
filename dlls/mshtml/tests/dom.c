@@ -5782,6 +5782,8 @@ static void test_form_item(IHTMLElement *elem)
     ok(hres == S_FALSE, "Next failed: %08lx\n", hres);
     ok(fetched == 0, "fetched = %lu\n", fetched);
     IEnumVARIANT_Release(enum_var);
+
+    IHTMLFormElement_Release(form);
 }
 
 static void test_create_option_elem(IHTMLDocument2 *doc)
