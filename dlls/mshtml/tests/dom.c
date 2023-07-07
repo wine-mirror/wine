@@ -1761,6 +1761,7 @@ static void _test_area_href(unsigned line, IUnknown *unk, const WCHAR *exhref)
     hres = IHTMLAreaElement_get_href(area, &str);
     ok_(__FILE__,line)(hres == S_OK, "get_href failed: %08lx\n", hres);
     ok_(__FILE__,line)(!lstrcmpW(str, exhref), "href = %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(exhref));
+    IHTMLAreaElement_Release(area);
     SysFreeString(str);
 
     _test_disp_value(line, unk, exhref);
@@ -1776,6 +1777,7 @@ static void _test_area_put_href(unsigned line, IUnknown *unk, const WCHAR *exhre
     str = SysAllocString(exhref);
     hres = IHTMLAreaElement_put_href(area, str);
     ok_(__FILE__,line)(hres == S_OK, "get_href failed: %08lx\n", hres);
+    IHTMLAreaElement_Release(area);
     SysFreeString(str);
 
     _test_disp_value(line, unk, exhref);
