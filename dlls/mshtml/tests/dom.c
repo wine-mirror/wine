@@ -10454,8 +10454,9 @@ static void test_create_elems(IHTMLDocument2 *doc)
     node = test_create_text(doc, L" Test");
     V_VT(&var) = VT_DISPATCH;
     V_DISPATCH(&var) = NULL;
-    test_node_insertbefore((IUnknown*)body, node, &var);
+    node2 = test_node_insertbefore((IUnknown*)body, node, &var);
     test_elem_innertext(body, L"insert test Test");
+    IHTMLDOMNode_Release(node2);
     IHTMLDOMNode_Release(node);
 
     doc5 = get_htmldoc5_iface((IUnknown*)doc);
