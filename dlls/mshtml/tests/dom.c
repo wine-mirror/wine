@@ -11985,6 +11985,8 @@ static void test_document_mode_lock(void)
     hres = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IHTMLPerformance, (void**)&perf2);
     ok(hres == S_OK, "Could not get IHTMLPerformance: %08lx\n", hres);
     ok(perf != perf2, "perf == perf2\n");
+    IHTMLPerformance_Release(perf2);
+    IHTMLPerformance_Release(perf);
     IHTMLWindow7_Release(window7);
     IHTMLWindow2_Release(window);
     VariantClear(&var);
