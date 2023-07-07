@@ -9944,6 +9944,7 @@ static void test_attr(IHTMLDocument2 *doc, IHTMLElement *elem)
     V_BSTR(&v) = SysAllocString(L"newvalue");
     put_attr_node_value(attr, v);
     VariantClear(&v);
+    IHTMLDOMAttribute_Release(attr);
 
     attr = get_elem_attr_node((IUnknown*)elem, L"emptyattr", TRUE);
     get_attr_node_value(attr, &v, VT_BSTR);
