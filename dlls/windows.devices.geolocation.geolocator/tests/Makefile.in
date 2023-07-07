@@ -1,5 +1,0 @@
-TESTDLL = windows.devices.geolocation.geolocator.dll
-IMPORTS = combase uuid
-
-C_SRCS = \
-	geolocator.c

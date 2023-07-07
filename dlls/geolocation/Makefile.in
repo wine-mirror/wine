@@ -1,4 +1,4 @@
-MODULE = windows.devices.geolocation.geolocator.dll
+MODULE = geolocation.dll
 IMPORTS = combase uuid
 
 C_SRCS = \

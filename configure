@@ -1141,6 +1141,7 @@ enable_gameux
 enable_gamingtcui
 enable_gdi32
 enable_gdiplus
+enable_geolocation
 enable_glu32
 enable_gphoto2_ds
 enable_gpkcsp
@@ -1457,7 +1458,6 @@ enable_wimgapi
 enable_win32u
 enable_windows_devices_bluetooth
 enable_windows_devices_enumeration
-enable_windows_devices_geolocation_geolocator
 enable_windows_gaming_input
 enable_windows_gaming_ui_gamebar
 enable_windows_globalization
@@ -21436,6 +21436,8 @@ wine_fn_config_makefile dlls/gdi32 enable_gdi32
 wine_fn_config_makefile dlls/gdi32/tests enable_tests
 wine_fn_config_makefile dlls/gdiplus enable_gdiplus
 wine_fn_config_makefile dlls/gdiplus/tests enable_tests
+wine_fn_config_makefile dlls/geolocation enable_geolocation
+wine_fn_config_makefile dlls/geolocation/tests enable_tests
 wine_fn_config_makefile dlls/glu32 enable_glu32
 wine_fn_config_makefile dlls/gphoto2.ds enable_gphoto2_ds
 wine_fn_config_makefile dlls/gpkcsp enable_gpkcsp
@@ -21945,8 +21947,6 @@ wine_fn_config_makefile dlls/windows.devices.bluetooth enable_windows_devices_bl
 wine_fn_config_makefile dlls/windows.devices.bluetooth/tests enable_tests
 wine_fn_config_makefile dlls/windows.devices.enumeration enable_windows_devices_enumeration
 wine_fn_config_makefile dlls/windows.devices.enumeration/tests enable_tests
-wine_fn_config_makefile dlls/windows.devices.geolocation.geolocator enable_windows_devices_geolocation_geolocator
-wine_fn_config_makefile dlls/windows.devices.geolocation.geolocator/tests enable_tests
 wine_fn_config_makefile dlls/windows.gaming.input enable_windows_gaming_input
 wine_fn_config_makefile dlls/windows.gaming.input/tests enable_tests
 wine_fn_config_makefile dlls/windows.gaming.ui.gamebar enable_windows_gaming_ui_gamebar

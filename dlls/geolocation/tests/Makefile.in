@@ -1,0 +1,5 @@
+TESTDLL = geolocation.dll
+IMPORTS = combase uuid
+
+C_SRCS = \
+	geolocator.c

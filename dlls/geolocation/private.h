@@ -1,4 +1,4 @@
-/* Runtime Classes for windows.devices.geolocation.geolocator.dll
+/* WinRT Windows.Devices.Geolocation.Geolocator Implementation
  *
  * Copyright 2023 Fabian Maurer
  *
@@ -17,10 +17,23 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#pragma makedep register
+#ifndef __WINE_GEOLOCATION_PRIVATE_H
+#define __WINE_GEOLOCATION_PRIVATE_H
 
-#ifdef __WIDL__
-#pragma winrt ns_prefix
+#include <stdarg.h>
+
+#define COBJMACROS
+#include "windef.h"
+#include "winbase.h"
+#include "winstring.h"
+
+#include "activation.h"
+#include "weakreference.h"
+
+#define WIDL_using_Windows_Foundation
+#define WIDL_using_Windows_Foundation_Collections
+#include "windows.foundation.h"
+#define WIDL_using_Windows_Devices_Geolocation
+#include "windows.devices.geolocation.h"
+
 #endif
-
-#include "windows.devices.geolocation.idl"
