@@ -2616,6 +2616,15 @@ HRESULT WINAPI UiaGetRootNode(HUIANODE *huianode)
     return UiaNodeFromHandle(GetDesktopWindow(), huianode);
 }
 
+/***********************************************************************
+ *          UiaHasServerSideProvider (uiautomationcore.@)
+ */
+BOOL WINAPI UiaHasServerSideProvider(HWND hwnd)
+{
+    FIXME("(%p): stub\n", hwnd);
+    return FALSE;
+}
+
 static HRESULT get_focused_uia_node(HUIANODE in_node, HUIANODE *out_node)
 {
     struct uia_node *node = unsafe_impl_from_IWineUiaNode((IWineUiaNode *)in_node);

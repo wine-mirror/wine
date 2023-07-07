@@ -71,7 +71,7 @@
 @ stub UiaHPatternObjectFromVariant
 @ stub UiaHTextRangeFromVariant
 @ stdcall UiaHUiaNodeFromVariant(ptr ptr)
-@ stub UiaHasServerSideProvider
+@ stdcall UiaHasServerSideProvider(long)
 @ stdcall UiaHostProviderFromHwnd(long ptr)
 #@ stub UiaIAccessibleFromProvider
 @ stdcall UiaLookupId(long ptr)
