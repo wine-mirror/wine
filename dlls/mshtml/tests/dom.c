@@ -1550,6 +1550,7 @@ static void _test_anchor_href(unsigned line, IUnknown *unk, const WCHAR *exhref)
     hres = IHTMLAnchorElement_get_href(anchor, &str);
     ok_(__FILE__,line)(hres == S_OK, "get_href failed: %08lx\n", hres);
     ok_(__FILE__,line)(!lstrcmpW(str, exhref), "href = %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(exhref));
+    IHTMLAnchorElement_Release(anchor);
     SysFreeString(str);
 
     _test_disp_value(line, unk, exhref);
@@ -1565,6 +1566,7 @@ static void _test_anchor_put_href(unsigned line, IUnknown *unk, const WCHAR *exh
     str = SysAllocString(exhref);
     hres = IHTMLAnchorElement_put_href(anchor, str);
     ok_(__FILE__,line)(hres == S_OK, "get_href failed: %08lx\n", hres);
+    IHTMLAnchorElement_Release(anchor);
     SysFreeString(str);
 
     _test_disp_value(line, unk, exhref);
@@ -1583,6 +1585,7 @@ static void _test_anchor_rel(unsigned line, IUnknown *unk, const WCHAR *exrel)
         ok_(__FILE__,line)(!lstrcmpW(str, exrel), "rel = %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(exrel));
     else
         ok_(__FILE__,line)(!str, "rel = %s, expected NULL\n", wine_dbgstr_w(str));
+    IHTMLAnchorElement_Release(anchor);
     SysFreeString(str);
 }
 
@@ -1596,6 +1599,7 @@ static void _test_anchor_put_rel(unsigned line, IUnknown *unk, const WCHAR *exre
     str = SysAllocString(exrel);
     hres = IHTMLAnchorElement_put_rel(anchor, str);
     ok_(__FILE__,line)(hres == S_OK, "get_rel failed: %08lx\n", hres);
+    IHTMLAnchorElement_Release(anchor);
     SysFreeString(str);
 }
 
@@ -1612,6 +1616,7 @@ static void _test_anchor_get_target(unsigned line, IUnknown *unk, const WCHAR *t
         ok_(__FILE__,line)(!lstrcmpW(str, target), "target = %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(target));
     else
         ok_(__FILE__,line)(str == NULL, "target = %s, expected NULL\n", wine_dbgstr_w(str));
+    IHTMLAnchorElement_Release(anchor);
     SysFreeString(str);
 }
 
@@ -1625,6 +1630,7 @@ static void _test_anchor_put_target(unsigned line, IUnknown *unk, const WCHAR *t
     str = target ? SysAllocString(target) : NULL;
     hres = IHTMLAnchorElement_put_target(anchor, str);
     ok_(__FILE__,line)(hres == S_OK, "put_target failed: %08lx\n", hres);
+    IHTMLAnchorElement_Release(anchor);
     SysFreeString(str);
 }
 
@@ -1641,6 +1647,7 @@ static void _test_anchor_name(unsigned line, IUnknown *unk, const WCHAR *name)
         ok_(__FILE__,line)(!lstrcmpW(str, name), "name = %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(name));
     else
         ok_(__FILE__,line)(str == NULL, "name = %s, expected NULL\n", wine_dbgstr_w(str));
+    IHTMLAnchorElement_Release(anchor);
     SysFreeString(str);
 }
 
@@ -1654,6 +1661,7 @@ static void _test_anchor_put_name(unsigned line, IUnknown *unk, const WCHAR *nam
     str = name ? SysAllocString(name) : NULL;
     hres = IHTMLAnchorElement_put_name(anchor, str);
     ok_(__FILE__,line)(hres == S_OK, "put_name failed: %08lx\n", hres);
+    IHTMLAnchorElement_Release(anchor);
     SysFreeString(str);
 
     _test_anchor_name(line, unk, name);
@@ -1672,6 +1680,7 @@ static void _test_anchor_hostname(unsigned line, IUnknown *unk, const WCHAR *hos
         ok_(__FILE__,line)(!lstrcmpW(str, hostname), "hostname = %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(hostname));
     else
         ok_(__FILE__,line)(str == NULL, "hostname = %s, expected NULL\n", wine_dbgstr_w(str));
+    IHTMLAnchorElement_Release(anchor);
     SysFreeString(str);
 }
 
@@ -1688,6 +1697,7 @@ static void _test_anchor_port(unsigned line, IUnknown *unk, const WCHAR *port)
         ok_(__FILE__,line)(!lstrcmpW(str, port), "port = %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(port));
     else
         ok_(__FILE__,line)(str == NULL, "port = %s, expected NULL\n", wine_dbgstr_w(str));
+    IHTMLAnchorElement_Release(anchor);
     SysFreeString(str);
 }
 
@@ -1706,6 +1716,7 @@ static void _test_anchor_search(unsigned line, IUnknown *elem, const WCHAR *sear
         ok_(__FILE__,line)(!lstrcmpW(str, search), "search = %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(search));
     else
         ok_(__FILE__,line)(!str, "search = %s, expected NULL\n", wine_dbgstr_w(str));
+    IHTMLAnchorElement_Release(anchor);
     SysFreeString(str);
 }
 
@@ -1719,6 +1730,7 @@ static void _test_anchor_put_search(unsigned line, IUnknown *unk, const WCHAR *s
     str = search ? SysAllocString(search) : NULL;
     hres = IHTMLAnchorElement_put_search(anchor, str);
     ok_(__FILE__,line)(hres == S_OK, "put_search failed: %08lx\n", hres);
+    IHTMLAnchorElement_Release(anchor);
     SysFreeString(str);
 }
 
@@ -1735,6 +1747,7 @@ static void _test_anchor_hash(unsigned line, IHTMLElement *elem, const WCHAR *ex
         ok_(__FILE__,line)(!lstrcmpW(str, exhash), "hash = %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(exhash));
     else
         ok_(__FILE__,line)(!str, "hash = %s, expected NULL\n", wine_dbgstr_w(str));
+    IHTMLAnchorElement_Release(anchor);
     SysFreeString(str);
 }
 
