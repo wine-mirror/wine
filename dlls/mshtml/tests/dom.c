@@ -7376,7 +7376,7 @@ static void test_window(IHTMLDocument2 *doc)
             hres = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IHTMLPerformance,
                                             (void**)&performance);
             ok(hres == S_OK, "Could not get IHTMLPerformance iface: %08lx\n", hres);
-
+            IDispatch_Release(V_DISPATCH(&v));
             IHTMLPerformance_Release(performance);
 
             V_VT(&v) = VT_I2;
