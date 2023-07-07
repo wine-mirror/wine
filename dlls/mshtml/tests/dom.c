@@ -810,7 +810,7 @@ static void _set_dispex_value(unsigned line, IUnknown *unk, const WCHAR *name, V
     memset(&ei, 0, sizeof(ei));
     hres = IDispatchEx_InvokeEx(dispex, id, LOCALE_NEUTRAL, INVOKE_PROPERTYPUT, &dp, NULL, &ei, NULL);
     ok_(__FILE__,line)(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
-
+    IDispatchEx_Release(dispex);
 }
 
 #define get_elem_iface(u) _get_elem_iface(__LINE__,u)
