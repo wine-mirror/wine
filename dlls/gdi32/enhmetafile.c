@@ -1848,7 +1848,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
         /* Need to check if the bitmap is monochrome, and if the
            two colors are really black and white */
-        if (is_dib_monochrome(pbi))
+        if (pCreateMonoBrush->iUsage == DIB_PAL_INDICES || is_dib_monochrome(pbi))
         {
           /* Top-down DIBs have a negative height */
           LONG height = pbi->bmiHeader.biHeight;
