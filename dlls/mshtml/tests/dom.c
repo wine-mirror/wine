@@ -5084,6 +5084,7 @@ static IHTMLDocument2 *_get_elem_doc(unsigned line, IUnknown *unk)
     hres = IHTMLElement_get_document(elem, &disp);
     ok(hres == S_OK, "get_document failed: %08lx\n", hres);
     ok(disp != NULL, "disp == NULL\n");
+    IHTMLElement_Release(elem);
 
     hres = IDispatch_QueryInterface(disp, &IID_IHTMLDocument2, (void**)&doc);
     IDispatch_Release(disp);
