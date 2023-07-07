@@ -10531,6 +10531,7 @@ static void test_replacechild_elems(IHTMLDocument2 *doc)
     IHTMLDOMNode_Release(node2);
     IHTMLDOMNode_Release(node3);
     IHTMLDOMNode_Release(nodeBody);
+    IHTMLDOMNode_Release(nodeNew);
 
     IHTMLElement_Release(body);
 }
