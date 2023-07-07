@@ -131,11 +131,11 @@ extern int dinput_device_object_index_from_id( IDirectInputDevice8W *iface, DWOR
 extern BOOL device_object_matches_semantic( const DIDEVICEINSTANCEW *instance, const DIOBJECTDATAFORMAT *object,
                                             DWORD semantic, BOOL exact );
 
-extern BOOL get_app_key(HKEY*, HKEY*) DECLSPEC_HIDDEN;
-extern DWORD get_config_key( HKEY, HKEY, const WCHAR *, WCHAR *, DWORD ) DECLSPEC_HIDDEN;
-extern BOOL device_instance_is_disabled( DIDEVICEINSTANCEW *instance, BOOL *override ) DECLSPEC_HIDDEN;
-extern void queue_event( IDirectInputDevice8W *iface, int index, DWORD data, DWORD time, DWORD seq ) DECLSPEC_HIDDEN;
+extern BOOL get_app_key(HKEY*, HKEY*);
+extern DWORD get_config_key( HKEY, HKEY, const WCHAR *, WCHAR *, DWORD );
+extern BOOL device_instance_is_disabled( DIDEVICEINSTANCEW *instance, BOOL *override );
+extern void queue_event( IDirectInputDevice8W *iface, int index, DWORD data, DWORD time, DWORD seq );
 
-extern const GUID dinput_pidvid_guid DECLSPEC_HIDDEN;
+extern const GUID dinput_pidvid_guid;
 
 #endif /* __WINE_DLLS_DINPUT_DINPUTDEVICE_PRIVATE_H */
