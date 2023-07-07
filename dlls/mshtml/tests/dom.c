@@ -9441,6 +9441,8 @@ static void test_elems(IHTMLDocument2 *doc)
 
         set_elem_language(elem, L"vbscript");
         set_elem_language(elem, L"xxx");
+
+        IHTMLElement_Release(elem);
     }
 
     elem = get_elem_by_id(doc, L"in", TRUE);
