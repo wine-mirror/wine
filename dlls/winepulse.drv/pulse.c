@@ -119,6 +119,8 @@ static const REFERENCE_TIME DefaultPeriod = 100000;
 static pthread_mutex_t pulse_mutex;
 static pthread_cond_t pulse_cond = PTHREAD_COND_INITIALIZER;
 
+static ULONG_PTR zero_bits = 0;
+
 static NTSTATUS pulse_not_implemented(void *args)
 {
     return STATUS_SUCCESS;
@@ -236,6 +238,16 @@ static NTSTATUS pulse_process_attach(void *args)
 
     if (pthread_mutex_init(&pulse_mutex, &attr) != 0)
         pthread_mutex_init(&pulse_mutex, NULL);
+
+#ifdef _WIN64
+    if (NtCurrentTeb()->WowTebOffset)
+    {
+        SYSTEM_BASIC_INFORMATION info;
+
+        NtQuerySystemInformation(SystemEmulationBasicInformation, &info, sizeof(info), NULL);
+        zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
+    }
+#endif
 
     return STATUS_SUCCESS;
 }
@@ -1077,15 +1089,6 @@ static HRESULT pulse_stream_connect(struct pulse_stream *stream, const char *pul
     return S_OK;
 }
 
-static ULONG_PTR zero_bits(void)
-{
-#ifdef _WIN64
-    return !NtCurrentTeb()->WowTebOffset ? 0 : 0x7fffffff;
-#else
-    return 0;
-#endif
-}
-
 static HRESULT get_device_period_helper(EDataFlow flow, const char *pulse_name, REFERENCE_TIME *def, REFERENCE_TIME *min)
 {
     struct list *list = (flow == eRender) ? &g_phys_speakers : &g_phys_sources;
@@ -1183,7 +1186,7 @@ static NTSTATUS pulse_create_stream(void *args)
             size = stream->real_bufsize_bytes =
                 stream->bufsize_frames * 2 * pa_frame_size(&stream->ss);
             if (NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer,
-                                        zero_bits(), &size, MEM_COMMIT, PAGE_READWRITE))
+                                        zero_bits, &size, MEM_COMMIT, PAGE_READWRITE))
                 hr = E_OUTOFMEMORY;
         } else {
             UINT32 i, capture_packets;
@@ -1197,7 +1200,7 @@ static NTSTATUS pulse_create_stream(void *args)
 
             size = stream->real_bufsize_bytes + capture_packets * sizeof(ACPacket);
             if (NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer,
-                                        zero_bits(), &size, MEM_COMMIT, PAGE_READWRITE))
+                                        zero_bits, &size, MEM_COMMIT, PAGE_READWRITE))
                 hr = E_OUTOFMEMORY;
             else {
                 ACPacket *cur_packet = (ACPacket*)((char*)stream->local_buffer + stream->real_bufsize_bytes);
@@ -1841,7 +1844,7 @@ static BOOL alloc_tmp_buffer(struct pulse_stream *stream, SIZE_T bytes)
         stream->tmp_buffer_bytes = 0;
     }
     if (NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer,
-                                zero_bits(), &bytes, MEM_COMMIT, PAGE_READWRITE))
+                                zero_bits, &bytes, MEM_COMMIT, PAGE_READWRITE))
         return FALSE;
 
     stream->tmp_buffer_bytes = bytes;
