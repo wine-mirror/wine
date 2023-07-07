@@ -871,6 +871,8 @@ typedef struct DECLSPEC_ALIGN(8) MEM_EXTENDED_PARAMETER {
 #define MAXDWORD      0xffffffff
 #define MAXLONGLONG   (((LONGLONG)0x7fffffff << 32) | 0xffffffff)
 
+#define UNICODE_NULL ((WCHAR)0)
+
 #define UNICODE_STRING_MAX_CHARS 32767
 
 #define FIELD_OFFSET(type, field) ((LONG)offsetof(type, field))
