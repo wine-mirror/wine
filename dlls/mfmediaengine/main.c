@@ -1048,7 +1048,7 @@ static HRESULT media_engine_create_effects(struct effect *effects, size_t count,
 
         if (FAILED(hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &node)))
         {
-            WARN("Failed to create transform node, hr %#lx", hr);
+            WARN("Failed to create transform node, hr %#lx.\n", hr);
             break;
         }
 
