@@ -103,6 +103,8 @@ struct coreaudio_stream
 static const REFERENCE_TIME def_period = 100000;
 static const REFERENCE_TIME min_period = 50000;
 
+static ULONG_PTR zero_bits = 0;
+
 static NTSTATUS unix_not_implemented(void *args)
 {
     return STATUS_SUCCESS;
@@ -194,6 +196,20 @@ static BOOL device_has_channels(AudioDeviceID device, EDataFlow flow)
     }
     free(buffers);
     return ret;
+}
+
+static NTSTATUS unix_process_attach(void *args)
+{
+#ifdef _WIN64
+    if (NtCurrentTeb()->WowTebOffset)
+    {
+        SYSTEM_BASIC_INFORMATION info;
+
+        NtQuerySystemInformation(SystemEmulationBasicInformation, &info, sizeof(info), NULL);
+        zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
+    }
+#endif
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS unix_main_loop(void *args)
@@ -639,15 +655,6 @@ static HRESULT ca_setup_audiounit(EDataFlow dataflow, AudioComponentInstance uni
     return S_OK;
 }
 
-static ULONG_PTR zero_bits(void)
-{
-#ifdef _WIN64
-    return !NtCurrentTeb()->WowTebOffset ? 0 : 0x7fffffff;
-#else
-    return 0;
-#endif
-}
-
 static AudioDeviceID dev_id_from_device(const char *device)
 {
     return strtoul(device, NULL, 10);
@@ -757,7 +764,7 @@ static NTSTATUS unix_create_stream(void *args)
     }
 
     size = stream->bufsize_frames * stream->fmt->nBlockAlign;
-    if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer, zero_bits(),
+    if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer, zero_bits,
                                &size, MEM_COMMIT, PAGE_READWRITE)){
         params->result = E_OUTOFMEMORY;
         goto end;
@@ -1497,7 +1504,7 @@ static NTSTATUS unix_get_render_buffer(void *args)
                 stream->tmp_buffer = NULL;
             }
             size = params->frames * stream->fmt->nBlockAlign;
-            if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, zero_bits(),
+            if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, zero_bits,
                                        &size, MEM_COMMIT, PAGE_READWRITE)){
                 stream->tmp_buffer_frames = 0;
                 params->result = E_OUTOFMEMORY;
@@ -1595,7 +1602,7 @@ static NTSTATUS unix_get_capture_buffer(void *args)
         chunk_bytes = chunk_frames * stream->fmt->nBlockAlign;
         if(!stream->tmp_buffer){
             size = stream->period_frames * stream->fmt->nBlockAlign;
-            NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, zero_bits(),
+            NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, zero_bits,
                                     &size, MEM_COMMIT, PAGE_READWRITE);
         }
         *params->data = stream->tmp_buffer;
@@ -1782,7 +1789,7 @@ static NTSTATUS unix_set_event_handle(void *args)
 
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
-    unix_not_implemented,
+    unix_process_attach,
     unix_not_implemented,
     unix_main_loop,
     unix_get_endpoint_ids,
@@ -2177,7 +2184,7 @@ static NTSTATUS unix_wow64_set_event_handle(void *args)
 
 unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
-    unix_not_implemented,
+    unix_process_attach,
     unix_not_implemented,
     unix_wow64_main_loop,
     unix_wow64_get_endpoint_ids,
