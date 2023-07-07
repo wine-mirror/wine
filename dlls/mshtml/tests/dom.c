@@ -10960,6 +10960,7 @@ static void test_frameset(IHTMLDocument2 *doc)
         ok(hres == S_OK, "getElementById failed: %08lx\n", hres);
         ok(elem2 != NULL, "elem2 is NULL\n");
         test_elem_id((IUnknown*)elem2, L"fr1");
+        IHTMLElement2_Release(elem2);
         SysFreeString(str);
 
         IHTMLDocument6_Release(doc6);
