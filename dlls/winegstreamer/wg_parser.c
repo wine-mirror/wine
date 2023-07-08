@@ -1956,3 +1956,252 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     X(wg_transform_drain),
     X(wg_transform_flush),
 };
+
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+static NTSTATUS wow64_wg_parser_push_data(void *args) {
+    struct
+    {
+        wg_parser_t parser;
+        PTR32 data;
+        UINT32 size;
+    } *params32 = args;
+    struct wg_parser_push_data_params params =
+    {
+        .parser = params32->parser,
+        .data = ULongToPtr(params32->data),
+        .size = params32->size,
+    };
+
+    return wg_parser_push_data(&params);
+}
+
+static NTSTATUS wow64_wg_parser_stream_get_preferred_format(void *args)
+{
+    struct
+    {
+        wg_parser_stream_t stream;
+        PTR32 format;
+    } *params32 = args;
+    struct wg_parser_stream_get_preferred_format_params params =
+    {
+        .stream = params32->stream,
+        .format = ULongToPtr(params32->format),
+    };
+
+    return wg_parser_stream_get_preferred_format(&params);
+}
+
+static NTSTATUS wow64_wg_parser_stream_get_codec_format(void *args)
+{
+    struct
+    {
+        wg_parser_stream_t stream;
+        PTR32 format;
+    } *params32 = args;
+    struct wg_parser_stream_get_codec_format_params params =
+    {
+        .stream = params32->stream,
+        .format = ULongToPtr(params32->format),
+    };
+
+    return wg_parser_stream_get_codec_format(&params);
+}
+
+static NTSTATUS wow64_wg_parser_stream_enable(void *args)
+{
+    struct
+    {
+        wg_parser_stream_t stream;
+        PTR32 format;
+    } *params32 = args;
+    struct wg_parser_stream_enable_params params =
+    {
+        .stream = params32->stream,
+        .format = ULongToPtr(params32->format),
+    };
+
+    return wg_parser_stream_enable(&params);
+}
+
+static NTSTATUS wow64_wg_parser_stream_get_buffer(void *args)
+{
+    struct
+    {
+        wg_parser_t parser;
+        wg_parser_stream_t stream;
+        PTR32 buffer;
+    } *params32 = args;
+    struct wg_parser_stream_get_buffer_params params =
+    {
+        .parser = params32->parser,
+        .stream = params32->stream,
+        .buffer = ULongToPtr(params32->buffer),
+    };
+    return wg_parser_stream_get_buffer(&params);
+}
+
+static NTSTATUS wow64_wg_parser_stream_copy_buffer(void *args)
+{
+    struct
+    {
+        wg_parser_stream_t stream;
+        PTR32 data;
+        UINT32 offset;
+        UINT32 size;
+    } *params32 = args;
+    struct wg_parser_stream_copy_buffer_params params =
+    {
+        .stream = params32->stream,
+        .data = ULongToPtr(params32->data),
+        .offset = params32->offset,
+        .size = params32->size,
+    };
+    return wg_parser_stream_copy_buffer(&params);
+}
+
+
+static NTSTATUS wow64_wg_parser_stream_get_tag(void *args)
+{
+    struct
+    {
+        wg_parser_stream_t stream;
+        wg_parser_tag tag;
+        PTR32 buffer;
+        PTR32 size;
+    } *params32 = args;
+    struct wg_parser_stream_get_tag_params params =
+    {
+        .stream = params32->stream,
+        .tag = params32->tag,
+        .buffer = ULongToPtr(params32->buffer),
+        .size = ULongToPtr(params32->size),
+    };
+
+    return wg_parser_stream_get_tag(&params);
+}
+
+NTSTATUS wow64_wg_transform_create(void *args)
+{
+    struct
+    {
+        wg_transform_t transform;
+        PTR32 input_format;
+        PTR32 output_format;
+        PTR32 attrs;
+    } *params32 = args;
+    struct wg_transform_create_params params =
+    {
+        .input_format = ULongToPtr(params32->input_format),
+        .output_format = ULongToPtr(params32->output_format),
+        .attrs = ULongToPtr(params32->attrs),
+    };
+    NTSTATUS ret;
+
+    ret = wg_transform_create(&params);
+    params32->transform = params.transform;
+    return ret;
+}
+
+NTSTATUS wow64_wg_transform_set_output_format(void *args)
+{
+    struct
+    {
+        wg_transform_t transform;
+        PTR32 format;
+    } *params32 = args;
+    struct wg_transform_set_output_format_params params =
+    {
+        .transform = params32->transform,
+        .format = ULongToPtr(params32->format),
+    };
+    return wg_transform_set_output_format(&params);
+}
+
+NTSTATUS wow64_wg_transform_push_data(void *args)
+{
+    struct
+    {
+        wg_transform_t transform;
+        PTR32 sample;
+        HRESULT result;
+    } *params32 = args;
+    struct wg_transform_push_data_params params =
+    {
+        .transform = params32->transform,
+        .sample = ULongToPtr(params32->sample),
+    };
+    NTSTATUS ret;
+
+    ret = wg_transform_push_data(&params);
+    params32->result = params.result;
+    return ret;
+}
+
+NTSTATUS wow64_wg_transform_read_data(void *args)
+{
+    struct
+    {
+        wg_transform_t transform;
+        PTR32 sample;
+        PTR32 format;
+        HRESULT result;
+    } *params32 = args;
+    struct wg_transform_read_data_params params =
+    {
+        .transform = params32->transform,
+        .sample = ULongToPtr(params32->sample),
+        .format = ULongToPtr(params32->format),
+    };
+    NTSTATUS ret;
+
+    ret = wg_transform_read_data(&params);
+    params32->result = params.result;
+    return ret;
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+#define X64(name) [unix_ ## name] = wow64_ ## name
+    X(wg_init_gstreamer),
+
+    X(wg_parser_create),
+    X(wg_parser_destroy),
+
+    X(wg_parser_connect),
+    X(wg_parser_disconnect),
+
+    X(wg_parser_get_next_read_offset),
+    X64(wg_parser_push_data),
+
+    X(wg_parser_get_stream_count),
+    X(wg_parser_get_stream),
+
+    X64(wg_parser_stream_get_preferred_format),
+    X64(wg_parser_stream_get_codec_format),
+    X64(wg_parser_stream_enable),
+    X(wg_parser_stream_disable),
+
+    X64(wg_parser_stream_get_buffer),
+    X64(wg_parser_stream_copy_buffer),
+    X(wg_parser_stream_release_buffer),
+    X(wg_parser_stream_notify_qos),
+
+    X(wg_parser_stream_get_duration),
+    X64(wg_parser_stream_get_tag),
+    X(wg_parser_stream_seek),
+
+    X64(wg_transform_create),
+    X(wg_transform_destroy),
+    X64(wg_transform_set_output_format),
+
+    X64(wg_transform_push_data),
+    X64(wg_transform_read_data),
+    X(wg_transform_get_status),
+    X(wg_transform_drain),
+    X(wg_transform_flush),
+};
+
+#endif  /* _WIN64 */
