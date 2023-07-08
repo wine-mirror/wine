@@ -128,7 +128,7 @@ struct media_stream
     IMFMediaEventQueue *event_queue;
     IMFStreamDescriptor *descriptor;
 
-    struct wg_parser_stream *wg_stream;
+    wg_parser_stream_t wg_stream;
 
     IUnknown **token_queue;
     LONG token_queue_count;
@@ -182,8 +182,8 @@ struct media_source
 
     CRITICAL_SECTION cs;
 
-    struct wg_parser *wg_parser;
     UINT64 file_size;
+    wg_parser_t wg_parser;
     UINT64 duration;
 
     IMFStreamDescriptor **descriptors;
@@ -365,7 +365,7 @@ static HRESULT wg_format_from_stream_descriptor(IMFStreamDescriptor *descriptor,
     return hr;
 }
 
-static HRESULT stream_descriptor_set_tag(IMFStreamDescriptor *descriptor, struct wg_parser_stream *stream,
+static HRESULT stream_descriptor_set_tag(IMFStreamDescriptor *descriptor, wg_parser_stream_t stream,
     const GUID *attr, enum wg_parser_tag tag)
 {
     WCHAR *strW;
@@ -1099,12 +1099,12 @@ static const IMFMediaStreamVtbl media_stream_vtbl =
 };
 
 static HRESULT media_stream_create(IMFMediaSource *source, IMFStreamDescriptor *descriptor,
-        struct wg_parser_stream *wg_stream, struct media_stream **out)
+        wg_parser_stream_t wg_stream, struct media_stream **out)
 {
     struct media_stream *object;
     HRESULT hr;
 
-    TRACE("source %p, descriptor %p, wg_stream %p.\n", source, descriptor, wg_stream);
+    TRACE("source %p, descriptor %p, wg_stream %#I64x.\n", source, descriptor, wg_stream);
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -1617,7 +1617,7 @@ static HRESULT media_source_create(struct object_context *context, IMFMediaSourc
 {
     unsigned int stream_count = UINT_MAX;
     struct media_source *object;
-    struct wg_parser *parser;
+    wg_parser_t parser;
     unsigned int i;
     HRESULT hr;
 
@@ -1674,7 +1674,7 @@ static HRESULT media_source_create(struct object_context *context, IMFMediaSourc
 
     for (i = 0; i < stream_count; ++i)
     {
-        struct wg_parser_stream *wg_stream = wg_parser_get_stream(object->wg_parser, i);
+        wg_parser_stream_t wg_stream = wg_parser_get_stream(object->wg_parser, i);
         IMFStreamDescriptor *descriptor;
         struct media_stream *stream;
         struct wg_format format;

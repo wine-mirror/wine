@@ -49,7 +49,7 @@ struct resampler
     IMFMediaType *output_type;
     MFT_OUTPUT_STREAM_INFO output_info;
 
-    struct wg_transform *wg_transform;
+    wg_transform_t wg_transform;
     struct wg_sample_queue *wg_sample_queue;
 };
 
@@ -60,7 +60,7 @@ static HRESULT try_create_wg_transform(struct resampler *impl)
 
     if (impl->wg_transform)
         wg_transform_destroy(impl->wg_transform);
-    impl->wg_transform = NULL;
+    impl->wg_transform = 0;
 
     mf_media_type_to_wg_format(impl->input_type, &input_format);
     if (input_format.major_type == WG_MAJOR_TYPE_UNKNOWN)
@@ -897,7 +897,7 @@ HRESULT resampler_create(IUnknown *outer, IUnknown **out)
         },
     };
     struct wg_transform_attrs attrs = {0};
-    struct wg_transform *transform;
+    wg_transform_t transform;
     struct resampler *impl;
     HRESULT hr;
 

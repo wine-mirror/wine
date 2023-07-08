@@ -192,9 +192,13 @@ enum wg_parser_type
     WG_PARSER_WAVPARSE,
 };
 
+typedef UINT64 wg_parser_t;
+typedef UINT64 wg_parser_stream_t;
+typedef UINT64 wg_transform_t;
+
 struct wg_parser_create_params
 {
-    struct wg_parser *parser;
+    wg_parser_t parser;
     enum wg_parser_type type;
     bool unlimited_buffering;
     bool err_on;
@@ -203,65 +207,65 @@ struct wg_parser_create_params
 
 struct wg_parser_connect_params
 {
-    struct wg_parser *parser;
+    wg_parser_t parser;
     UINT64 file_size;
 };
 
 struct wg_parser_get_next_read_offset_params
 {
-    struct wg_parser *parser;
+    wg_parser_t parser;
     UINT32 size;
     UINT64 offset;
 };
 
 struct wg_parser_push_data_params
 {
-    struct wg_parser *parser;
+    wg_parser_t parser;
     const void *data;
     UINT32 size;
 };
 
 struct wg_parser_get_stream_count_params
 {
-    struct wg_parser *parser;
+    wg_parser_t parser;
     UINT32 count;
 };
 
 struct wg_parser_get_stream_params
 {
-    struct wg_parser *parser;
+    wg_parser_t parser;
     UINT32 index;
-    struct wg_parser_stream *stream;
+    wg_parser_stream_t stream;
 };
 
 struct wg_parser_stream_get_preferred_format_params
 {
-    struct wg_parser_stream *stream;
+    wg_parser_stream_t stream;
     struct wg_format *format;
 };
 
 struct wg_parser_stream_get_codec_format_params
 {
-    struct wg_parser_stream *stream;
+    wg_parser_stream_t stream;
     struct wg_format *format;
 };
 
 struct wg_parser_stream_enable_params
 {
-    struct wg_parser_stream *stream;
+    wg_parser_stream_t stream;
     const struct wg_format *format;
 };
 
 struct wg_parser_stream_get_buffer_params
 {
-    struct wg_parser *parser;
-    struct wg_parser_stream *stream;
+    wg_parser_t parser;
+    wg_parser_stream_t stream;
     struct wg_parser_buffer *buffer;
 };
 
 struct wg_parser_stream_copy_buffer_params
 {
-    struct wg_parser_stream *stream;
+    wg_parser_stream_t stream;
     void *data;
     UINT32 offset;
     UINT32 size;
@@ -269,7 +273,7 @@ struct wg_parser_stream_copy_buffer_params
 
 struct wg_parser_stream_notify_qos_params
 {
-    struct wg_parser_stream *stream;
+    wg_parser_stream_t stream;
     bool underflow;
     DOUBLE proportion;
     INT64 diff;
@@ -278,7 +282,7 @@ struct wg_parser_stream_notify_qos_params
 
 struct wg_parser_stream_get_duration_params
 {
-    struct wg_parser_stream *stream;
+    wg_parser_stream_t stream;
     UINT64 duration;
 };
 
@@ -291,7 +295,7 @@ enum wg_parser_tag
 
 struct wg_parser_stream_get_tag_params
 {
-    struct wg_parser_stream *stream;
+    wg_parser_stream_t stream;
     enum wg_parser_tag tag;
     char *buffer;
     UINT32 *size;
@@ -299,7 +303,7 @@ struct wg_parser_stream_get_tag_params
 
 struct wg_parser_stream_seek_params
 {
-    struct wg_parser_stream *stream;
+    wg_parser_stream_t stream;
     DOUBLE rate;
     UINT64 start_pos, stop_pos;
     DWORD start_flags, stop_flags;
@@ -314,7 +318,7 @@ struct wg_transform_attrs
 
 struct wg_transform_create_params
 {
-    struct wg_transform *transform;
+    wg_transform_t transform;
     const struct wg_format *input_format;
     const struct wg_format *output_format;
     const struct wg_transform_attrs *attrs;
@@ -322,14 +326,14 @@ struct wg_transform_create_params
 
 struct wg_transform_push_data_params
 {
-    struct wg_transform *transform;
+    wg_transform_t transform;
     struct wg_sample *sample;
     HRESULT result;
 };
 
 struct wg_transform_read_data_params
 {
-    struct wg_transform *transform;
+    wg_transform_t transform;
     struct wg_sample *sample;
     struct wg_format *format;
     HRESULT result;
@@ -337,13 +341,13 @@ struct wg_transform_read_data_params
 
 struct wg_transform_set_output_format_params
 {
-    struct wg_transform *transform;
+    wg_transform_t transform;
     const struct wg_format *format;
 };
 
 struct wg_transform_get_status_params
 {
-    struct wg_transform *transform;
+    wg_transform_t transform;
     UINT32 accepts_input;
 };
 

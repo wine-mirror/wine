@@ -69,45 +69,45 @@ HRESULT wg_sample_queue_create(struct wg_sample_queue **out);
 void wg_sample_queue_destroy(struct wg_sample_queue *queue);
 void wg_sample_queue_flush(struct wg_sample_queue *queue, bool all);
 
-struct wg_parser *wg_parser_create(enum wg_parser_type type, bool unlimited_buffering);
-void wg_parser_destroy(struct wg_parser *parser);
+wg_parser_t wg_parser_create(enum wg_parser_type type, bool unlimited_buffering);
+void wg_parser_destroy(wg_parser_t parser);
 
-HRESULT wg_parser_connect(struct wg_parser *parser, uint64_t file_size);
-void wg_parser_disconnect(struct wg_parser *parser);
+HRESULT wg_parser_connect(wg_parser_t parser, uint64_t file_size);
+void wg_parser_disconnect(wg_parser_t parser);
 
-bool wg_parser_get_next_read_offset(struct wg_parser *parser, uint64_t *offset, uint32_t *size);
-void wg_parser_push_data(struct wg_parser *parser, const void *data, uint32_t size);
+bool wg_parser_get_next_read_offset(wg_parser_t parser, uint64_t *offset, uint32_t *size);
+void wg_parser_push_data(wg_parser_t parser, const void *data, uint32_t size);
 
-uint32_t wg_parser_get_stream_count(struct wg_parser *parser);
-struct wg_parser_stream *wg_parser_get_stream(struct wg_parser *parser, uint32_t index);
+uint32_t wg_parser_get_stream_count(wg_parser_t parser);
+wg_parser_stream_t wg_parser_get_stream(wg_parser_t parser, uint32_t index);
 
-void wg_parser_stream_get_preferred_format(struct wg_parser_stream *stream, struct wg_format *format);
-void wg_parser_stream_get_codec_format(struct wg_parser_stream *stream, struct wg_format *format);
-void wg_parser_stream_enable(struct wg_parser_stream *stream, const struct wg_format *format);
-void wg_parser_stream_disable(struct wg_parser_stream *stream);
+void wg_parser_stream_get_preferred_format(wg_parser_stream_t stream, struct wg_format *format);
+void wg_parser_stream_get_codec_format(wg_parser_stream_t stream, struct wg_format *format);
+void wg_parser_stream_enable(wg_parser_stream_t stream, const struct wg_format *format);
+void wg_parser_stream_disable(wg_parser_stream_t stream);
 
-bool wg_parser_stream_get_buffer(struct wg_parser *parser, struct wg_parser_stream *stream,
+bool wg_parser_stream_get_buffer(wg_parser_t parser, wg_parser_stream_t stream,
         struct wg_parser_buffer *buffer);
-bool wg_parser_stream_copy_buffer(struct wg_parser_stream *stream,
+bool wg_parser_stream_copy_buffer(wg_parser_stream_t stream,
         void *data, uint32_t offset, uint32_t size);
-void wg_parser_stream_release_buffer(struct wg_parser_stream *stream);
-void wg_parser_stream_notify_qos(struct wg_parser_stream *stream,
+void wg_parser_stream_release_buffer(wg_parser_stream_t stream);
+void wg_parser_stream_notify_qos(wg_parser_stream_t stream,
         bool underflow, double proportion, int64_t diff, uint64_t timestamp);
 
 /* Returns the duration in 100-nanosecond units. */
-uint64_t wg_parser_stream_get_duration(struct wg_parser_stream *stream);
-char *wg_parser_stream_get_tag(struct wg_parser_stream *stream, enum wg_parser_tag tag);
+uint64_t wg_parser_stream_get_duration(wg_parser_stream_t stream);
+char *wg_parser_stream_get_tag(wg_parser_stream_t stream, enum wg_parser_tag tag);
 /* start_pos and stop_pos are in 100-nanosecond units. */
-void wg_parser_stream_seek(struct wg_parser_stream *stream, double rate,
+void wg_parser_stream_seek(wg_parser_stream_t stream, double rate,
         uint64_t start_pos, uint64_t stop_pos, DWORD start_flags, DWORD stop_flags);
 
-struct wg_transform *wg_transform_create(const struct wg_format *input_format,
+wg_transform_t wg_transform_create(const struct wg_format *input_format,
         const struct wg_format *output_format, const struct wg_transform_attrs *attrs);
-void wg_transform_destroy(struct wg_transform *transform);
-bool wg_transform_set_output_format(struct wg_transform *transform, struct wg_format *format);
-bool wg_transform_get_status(struct wg_transform *transform, bool *accepts_input);
-HRESULT wg_transform_drain(struct wg_transform *transform);
-HRESULT wg_transform_flush(struct wg_transform *transform);
+void wg_transform_destroy(wg_transform_t transform);
+bool wg_transform_set_output_format(wg_transform_t transform, struct wg_format *format);
+bool wg_transform_get_status(wg_transform_t transform, bool *accepts_input);
+HRESULT wg_transform_drain(wg_transform_t transform);
+HRESULT wg_transform_flush(wg_transform_t transform);
 
 unsigned int wg_format_get_max_size(const struct wg_format *format);
 
@@ -138,16 +138,16 @@ HRESULT wg_sample_create_quartz(IMediaSample *sample, struct wg_sample **out);
 HRESULT wg_sample_create_dmo(IMediaBuffer *media_buffer, struct wg_sample **out);
 void wg_sample_release(struct wg_sample *wg_sample);
 
-HRESULT wg_transform_push_mf(struct wg_transform *transform, IMFSample *sample,
+HRESULT wg_transform_push_mf(wg_transform_t transform, IMFSample *sample,
         struct wg_sample_queue *queue);
-HRESULT wg_transform_push_quartz(struct wg_transform *transform, struct wg_sample *sample,
+HRESULT wg_transform_push_quartz(wg_transform_t transform, struct wg_sample *sample,
         struct wg_sample_queue *queue);
-HRESULT wg_transform_push_dmo(struct wg_transform *transform, IMediaBuffer *media_buffer,
+HRESULT wg_transform_push_dmo(wg_transform_t transform, IMediaBuffer *media_buffer,
         DWORD flags, REFERENCE_TIME time_stamp, REFERENCE_TIME time_length, struct wg_sample_queue *queue);
-HRESULT wg_transform_read_mf(struct wg_transform *transform, IMFSample *sample,
+HRESULT wg_transform_read_mf(wg_transform_t transform, IMFSample *sample,
         DWORD sample_size, struct wg_format *format, DWORD *flags);
-HRESULT wg_transform_read_quartz(struct wg_transform *transform, struct wg_sample *sample);
-HRESULT wg_transform_read_dmo(struct wg_transform *transform, DMO_OUTPUT_DATA_BUFFER *buffer);
+HRESULT wg_transform_read_quartz(wg_transform_t transform, struct wg_sample *sample);
+HRESULT wg_transform_read_dmo(wg_transform_t transform, DMO_OUTPUT_DATA_BUFFER *buffer);
 
 HRESULT gstreamer_byte_stream_handler_create(REFIID riid, void **obj);
 

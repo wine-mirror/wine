@@ -40,7 +40,7 @@ struct transform
     IQualityControl source_IQualityControl_iface;
     IQualityControl *qc_sink;
 
-    struct wg_transform *transform;
+    wg_transform_t transform;
     struct wg_sample_queue *sample_queue;
 
     const struct transform_ops *ops;
@@ -712,7 +712,7 @@ HRESULT mpeg_audio_codec_create(IUnknown *outer, IUnknown **out)
         },
     };
     struct wg_transform_attrs attrs = {0};
-    struct wg_transform *transform;
+    wg_transform_t transform;
     struct transform *object;
     HRESULT hr;
 
@@ -847,7 +847,7 @@ HRESULT mpeg_layer3_decoder_create(IUnknown *outer, IUnknown **out)
         },
     };
     struct wg_transform_attrs attrs = {0};
-    struct wg_transform *transform;
+    wg_transform_t transform;
     struct transform *object;
     HRESULT hr;
 

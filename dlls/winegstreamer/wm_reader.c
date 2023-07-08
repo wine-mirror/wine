@@ -25,7 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wmvcore);
 struct wm_stream
 {
     struct wm_reader *reader;
-    struct wg_parser_stream *wg_stream;
+    wg_parser_stream_t wg_stream;
     struct wg_format format;
     WMT_STREAM_SELECTION selection;
     WORD index;
@@ -60,7 +60,7 @@ struct wm_reader
     HANDLE file;
     HANDLE read_thread;
     bool read_thread_shutdown;
-    struct wg_parser *wg_parser;
+    wg_parser_t wg_parser;
 
     struct wm_stream *streams;
     WORD stream_count;
@@ -1455,7 +1455,7 @@ static const IWMReaderTimecodeVtbl timecode_vtbl =
 
 static HRESULT init_stream(struct wm_reader *reader, QWORD file_size)
 {
-    struct wg_parser *wg_parser;
+    wg_parser_t wg_parser;
     HRESULT hr;
     WORD i;
 
@@ -1538,7 +1538,7 @@ out_shutdown_thread:
 
 out_destroy_parser:
     wg_parser_destroy(reader->wg_parser);
-    reader->wg_parser = NULL;
+    reader->wg_parser = 0;
 
     return hr;
 }
@@ -1799,7 +1799,7 @@ static HRESULT WINAPI reader_Close(IWMSyncReader2 *iface)
     reader->read_thread = NULL;
 
     wg_parser_destroy(reader->wg_parser);
-    reader->wg_parser = NULL;
+    reader->wg_parser = 0;
 
     if (reader->source_stream)
         IStream_Release(reader->source_stream);
@@ -1869,7 +1869,7 @@ static HRESULT WINAPI reader_GetNextSample(IWMSyncReader2 *iface,
     while (hr == S_FALSE)
     {
         struct wg_parser_buffer wg_buffer;
-        if (!wg_parser_stream_get_buffer(reader->wg_parser, stream ? stream->wg_stream : NULL, &wg_buffer))
+        if (!wg_parser_stream_get_buffer(reader->wg_parser, stream ? stream->wg_stream : 0, &wg_buffer))
             hr = NS_E_NO_MORE_SAMPLES;
         else if (SUCCEEDED(hr = wm_reader_read_stream_sample(reader, &wg_buffer, sample, pts, duration, flags)))
             stream_number = wg_buffer.stream + 1;

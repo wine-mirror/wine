@@ -85,7 +85,7 @@ struct wmv_decoder
     struct wg_format output_format;
     GUID output_subtype;
 
-    struct wg_transform *wg_transform;
+    wg_transform_t wg_transform;
     struct wg_sample_queue *wg_sample_queue;
 };
 
@@ -501,7 +501,7 @@ static HRESULT WINAPI media_object_SetInputType(IMediaObject *iface, DWORD index
             if (decoder->wg_transform)
             {
                 wg_transform_destroy(decoder->wg_transform);
-                decoder->wg_transform = NULL;
+                decoder->wg_transform = 0;
             }
             return S_OK;
         }
@@ -530,7 +530,7 @@ static HRESULT WINAPI media_object_SetInputType(IMediaObject *iface, DWORD index
     if (decoder->wg_transform)
     {
         wg_transform_destroy(decoder->wg_transform);
-        decoder->wg_transform = NULL;
+        decoder->wg_transform = 0;
     }
 
     return S_OK;
@@ -557,7 +557,7 @@ static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD inde
             if (decoder->wg_transform)
             {
                 wg_transform_destroy(decoder->wg_transform);
-                decoder->wg_transform = NULL;
+                decoder->wg_transform = 0;
             }
             return S_OK;
         }
@@ -592,7 +592,7 @@ static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD inde
     if (decoder->wg_transform)
     {
         wg_transform_destroy(decoder->wg_transform);
-        decoder->wg_transform = NULL;
+        decoder->wg_transform = 0;
     }
     if (!(decoder->wg_transform = wg_transform_create(&decoder->input_format, &decoder->output_format, &attrs)))
         return E_FAIL;
@@ -896,7 +896,7 @@ HRESULT wmv_decoder_create(IUnknown *outer, IUnknown **out)
         },
     };
     struct wg_transform_attrs attrs = {0};
-    struct wg_transform *transform;
+    wg_transform_t transform;
     struct wmv_decoder *decoder;
     HRESULT hr;
 

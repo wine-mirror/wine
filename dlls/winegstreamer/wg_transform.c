@@ -63,6 +63,11 @@ struct wg_transform
     GstCaps *output_caps;
 };
 
+static struct wg_transform *get_transform(wg_transform_t trans)
+{
+    return (struct wg_transform *)(ULONG_PTR)trans;
+}
+
 static void align_video_info_planes(gsize plane_align, GstVideoInfo *info, GstVideoAlignment *align)
 {
     gst_video_alignment_reset(align);
@@ -253,7 +258,7 @@ static gboolean transform_sink_event_cb(GstPad *pad, GstObject *parent, GstEvent
 
 NTSTATUS wg_transform_destroy(void *args)
 {
-    struct wg_transform *transform = args;
+    struct wg_transform *transform = get_transform(*(wg_transform_t *)args);
     GstSample *sample;
     GstBuffer *buffer;
 
@@ -456,7 +461,7 @@ NTSTATUS wg_transform_create(void *args)
     gst_caps_unref(src_caps);
 
     GST_INFO("Created winegstreamer transform %p.", transform);
-    params->transform = transform;
+    params->transform = (wg_transform_t)(ULONG_PTR)transform;
     return STATUS_SUCCESS;
 
 out:
@@ -489,7 +494,7 @@ out:
 NTSTATUS wg_transform_set_output_format(void *args)
 {
     struct wg_transform_set_output_format_params *params = args;
-    struct wg_transform *transform = params->transform;
+    struct wg_transform *transform = get_transform(params->transform);
     const struct wg_format *format = params->format;
     GstSample *sample;
     GstCaps *caps;
@@ -559,7 +564,7 @@ static void wg_sample_free_notify(void *arg)
 NTSTATUS wg_transform_push_data(void *args)
 {
     struct wg_transform_push_data_params *params = args;
-    struct wg_transform *transform = params->transform;
+    struct wg_transform *transform = get_transform(params->transform);
     struct wg_sample *sample = params->sample;
     GstBuffer *buffer;
     guint length;
@@ -770,7 +775,7 @@ static bool get_transform_output(struct wg_transform *transform, struct wg_sampl
 NTSTATUS wg_transform_read_data(void *args)
 {
     struct wg_transform_read_data_params *params = args;
-    struct wg_transform *transform = params->transform;
+    struct wg_transform *transform = get_transform(params->transform);
     struct wg_sample *sample = params->sample;
     struct wg_format *format = params->format;
     GstBuffer *output_buffer;
@@ -865,7 +870,7 @@ NTSTATUS wg_transform_read_data(void *args)
 NTSTATUS wg_transform_get_status(void *args)
 {
     struct wg_transform_get_status_params *params = args;
-    struct wg_transform *transform = params->transform;
+    struct wg_transform *transform = get_transform(params->transform);
 
     params->accepts_input = gst_atomic_queue_length(transform->input_queue) < transform->attrs.input_queue_length + 1;
     return STATUS_SUCCESS;
@@ -873,7 +878,7 @@ NTSTATUS wg_transform_get_status(void *args)
 
 NTSTATUS wg_transform_drain(void *args)
 {
-    struct wg_transform *transform = args;
+    struct wg_transform *transform = get_transform(*(wg_transform_t *)args);
     GstBuffer *input_buffer;
     GstFlowReturn ret;
     GstEvent *event;
@@ -908,7 +913,7 @@ error:
 
 NTSTATUS wg_transform_flush(void *args)
 {
-    struct wg_transform *transform = args;
+    struct wg_transform *transform = get_transform(*(wg_transform_t *)args);
     GstBuffer *input_buffer;
     GstSample *sample;
     NTSTATUS status;
@@ -918,7 +923,7 @@ NTSTATUS wg_transform_flush(void *args)
     while ((input_buffer = gst_atomic_queue_pop(transform->input_queue)))
         gst_buffer_unref(input_buffer);
 
-    if ((status = wg_transform_drain(transform)))
+    if ((status = wg_transform_drain(args)))
         return status;
 
     while ((sample = gst_atomic_queue_pop(transform->output_queue)))

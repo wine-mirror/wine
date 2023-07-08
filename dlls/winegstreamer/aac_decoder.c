@@ -55,7 +55,7 @@ struct aac_decoder
     IMFMediaType *input_type;
     IMFMediaType *output_type;
 
-    struct wg_transform *wg_transform;
+    wg_transform_t wg_transform;
     struct wg_sample_queue *wg_sample_queue;
 };
 
@@ -71,7 +71,7 @@ static HRESULT try_create_wg_transform(struct aac_decoder *decoder)
 
     if (decoder->wg_transform)
         wg_transform_destroy(decoder->wg_transform);
-    decoder->wg_transform = NULL;
+    decoder->wg_transform = 0;
 
     mf_media_type_to_wg_format(decoder->input_type, &input_format);
     if (input_format.major_type == WG_MAJOR_TYPE_UNKNOWN)
@@ -627,7 +627,7 @@ HRESULT aac_decoder_create(REFIID riid, void **ret)
     };
     static const struct wg_format input_format = {.major_type = WG_MAJOR_TYPE_AUDIO_MPEG4};
     struct wg_transform_attrs attrs = {0};
-    struct wg_transform *transform;
+    wg_transform_t transform;
     struct aac_decoder *decoder;
     HRESULT hr;
 

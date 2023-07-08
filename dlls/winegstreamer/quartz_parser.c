@@ -52,7 +52,7 @@ struct parser
     unsigned int source_count;
     BOOL enum_sink_first;
 
-    struct wg_parser *wg_parser;
+    wg_parser_t wg_parser;
 
     /* This protects the "streaming" and "flushing" fields, accessed by both
      * the application and streaming threads.
@@ -83,7 +83,7 @@ struct parser_source
     struct strmbase_source pin;
     IQualityControl IQualityControl_iface;
 
-    struct wg_parser_stream *wg_stream;
+    wg_parser_stream_t wg_stream;
 
     SourceSeeking seek;
 
@@ -109,7 +109,7 @@ static const IMediaSeekingVtbl GST_Seeking_Vtbl;
 static const IQualityControlVtbl GSTOutPin_QualityControl_Vtbl;
 
 static struct parser_source *create_pin(struct parser *filter,
-        struct wg_parser_stream *stream, const WCHAR *name);
+        wg_parser_stream_t stream, const WCHAR *name);
 static HRESULT GST_RemoveOutputPins(struct parser *This);
 static HRESULT WINAPI GST_ChangeCurrent(IMediaSeeking *iface);
 static HRESULT WINAPI GST_ChangeStop(IMediaSeeking *iface);
@@ -1365,7 +1365,7 @@ static const struct strmbase_sink_ops sink_ops =
 
 static BOOL decodebin_parser_filter_init_gst(struct parser *filter)
 {
-    struct wg_parser *parser = filter->wg_parser;
+    wg_parser_t parser = filter->wg_parser;
     unsigned int i, stream_count;
     WCHAR source_name[20];
 
@@ -1876,7 +1876,7 @@ static const struct strmbase_source_ops source_ops =
 };
 
 static struct parser_source *create_pin(struct parser *filter,
-        struct wg_parser_stream *stream, const WCHAR *name)
+        wg_parser_stream_t stream, const WCHAR *name)
 {
     struct parser_source *pin, **new_array;
 
@@ -1962,9 +1962,7 @@ static const struct strmbase_sink_ops wave_parser_sink_ops =
 
 static BOOL wave_parser_filter_init_gst(struct parser *filter)
 {
-    struct wg_parser *parser = filter->wg_parser;
-
-    if (!create_pin(filter, wg_parser_get_stream(parser, 0), L"output"))
+    if (!create_pin(filter, wg_parser_get_stream(filter->wg_parser, 0), L"output"))
         return FALSE;
 
     return TRUE;
@@ -2033,7 +2031,7 @@ static const struct strmbase_sink_ops avi_splitter_sink_ops =
 
 static BOOL avi_splitter_filter_init_gst(struct parser *filter)
 {
-    struct wg_parser *parser = filter->wg_parser;
+    wg_parser_t parser = filter->wg_parser;
     uint32_t i, stream_count;
     WCHAR source_name[20];
 
@@ -2116,9 +2114,7 @@ static const struct strmbase_sink_ops mpeg_splitter_sink_ops =
 
 static BOOL mpeg_splitter_filter_init_gst(struct parser *filter)
 {
-    struct wg_parser *parser = filter->wg_parser;
-
-    if (!create_pin(filter, wg_parser_get_stream(parser, 0), L"Audio"))
+    if (!create_pin(filter, wg_parser_get_stream(filter->wg_parser, 0), L"Audio"))
         return FALSE;
 
     return TRUE;
