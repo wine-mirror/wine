@@ -101,7 +101,7 @@ static void test_HostnameStatics(void)
     hr = WindowsCompareStringOrdinal( str, rawname, &res );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ok( !res, "got unexpected string %s.\n", debugstr_hstring(rawname) );
-    todo_wine ok( str != rawname, "got same HSTRINGs %p, %p.\n", str, rawname );
+    ok( str != rawname, "got same HSTRINGs %p, %p.\n", str, rawname );
 
     WindowsDeleteString( str );
     WindowsDeleteString( rawname );
