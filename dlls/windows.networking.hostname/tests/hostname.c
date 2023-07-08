@@ -51,6 +51,7 @@ static void test_HostnameStatics(void)
     static const WCHAR *ip = L"192.168.0.0";
     IHostNameFactory *hostnamefactory;
     IActivationFactory *factory;
+    HSTRING_HEADER header;
     HSTRING str, rawname;
     IHostName *hostname;
     HRESULT hr;
@@ -75,7 +76,7 @@ static void test_HostnameStatics(void)
 
     hr = IActivationFactory_QueryInterface( factory, &IID_IHostNameFactory, (void **)&hostnamefactory );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    hr = WindowsCreateString( ip, wcslen( ip ), &str );
+    hr = WindowsCreateStringReference( ip, wcslen( ip ), &header, &str );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
     hr = IHostNameFactory_CreateHostName( hostnamefactory, NULL, &hostname );
@@ -100,6 +101,7 @@ static void test_HostnameStatics(void)
     hr = WindowsCompareStringOrdinal( str, rawname, &res );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ok( !res, "got unexpected string %s.\n", debugstr_hstring(rawname) );
+    todo_wine ok( str != rawname, "got same HSTRINGs %p, %p.\n", str, rawname );
 
     WindowsDeleteString( str );
     WindowsDeleteString( rawname );
