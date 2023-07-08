@@ -23,6 +23,7 @@
 
 #include "unixlib.h"
 
+#include <stdbool.h>
 #include <gst/gst.h>
 
 /* unixlib.c */
