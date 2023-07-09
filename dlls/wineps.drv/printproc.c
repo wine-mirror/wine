@@ -2792,8 +2792,16 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     {
         const EMRSETTEXTJUSTIFICATION *p = (const EMRSETTEXTJUSTIFICATION *)rec;
 
-        data->break_extra = p->break_extra / p->break_count;
-        data->break_rem = p->break_extra - data->break_extra * p->break_count;
+        if (p->break_count)
+        {
+            data->break_extra = p->break_extra / p->break_count;
+            data->break_rem = p->break_extra - data->break_extra * p->break_count;
+        }
+        else
+        {
+            data->break_extra = 0;
+            data->break_rem = 0;
+        }
         return PlayEnhMetaFileRecord(data->ctx->hdc, htable, rec, handle_count);
     }
 
