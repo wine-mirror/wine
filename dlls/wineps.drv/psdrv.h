@@ -352,6 +352,8 @@ typedef struct {
     INT			PageNo;
     BOOL                quiet;          /* Don't actually output anything */
     enum passthrough    passthrough_state;
+    BYTE                data[4096];
+    int                 data_cnt;
 } JOB;
 
 typedef struct
@@ -519,7 +521,8 @@ extern BOOL PSDRV_WriteSetDownloadFont(print_ctx *ctx, BOOL vertical);
 extern BOOL PSDRV_WriteDownloadGlyphShow(print_ctx *ctx, const WORD *glyphs, UINT count);
 extern BOOL PSDRV_EmptyDownloadList(print_ctx *ctx, BOOL write_undef);
 
-extern DWORD write_spool( print_ctx *ctx, const void *data, DWORD num );
+extern BOOL flush_spool(print_ctx *ctx);
+extern DWORD write_spool(print_ctx *ctx, const void *data, DWORD num);
 
 #define MAX_G_NAME 31 /* max length of PS glyph name */
 extern void get_glyph_name(HDC hdc, WORD index, char *name);

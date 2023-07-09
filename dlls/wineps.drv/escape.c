@@ -38,13 +38,41 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
+BOOL flush_spool( print_ctx *ctx )
+{
+    DWORD written;
+
+    if (ctx->job.data_cnt)
+    {
+        if (!WritePrinter(ctx->job.hprinter, ctx->job.data, ctx->job.data_cnt, &written) ||
+                written != ctx->job.data_cnt)
+            return FALSE;
+    }
+    ctx->job.data_cnt = 0;
+    return TRUE;
+}
+
 DWORD write_spool( print_ctx *ctx, const void *data, DWORD num )
 {
     DWORD written;
 
-    if (!WritePrinter(ctx->job.hprinter, (LPBYTE) data, num, &written) || (written != num))
-        return SP_OUTOFDISK;
+    if (ctx->job.data_cnt + num > ARRAY_SIZE(ctx->job.data))
+    {
+        if (!flush_spool(ctx))
+            return SP_OUTOFDISK;
+    }
 
+    if (ctx->job.data_cnt + num > ARRAY_SIZE(ctx->job.data))
+    {
+        if (!WritePrinter(ctx->job.hprinter, (LPBYTE) data, num, &written) ||
+                written != num)
+            return SP_OUTOFDISK;
+    }
+    else
+    {
+        memcpy(ctx->job.data + ctx->job.data_cnt, data, num);
+        ctx->job.data_cnt += num;
+    }
     return num;
 }
 
