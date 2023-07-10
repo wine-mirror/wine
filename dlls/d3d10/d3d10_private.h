@@ -309,7 +309,7 @@ struct d3d10_effect
     struct d3d10_effect_technique *techniques;
 };
 
-HRESULT d3d10_effect_parse(struct d3d10_effect *effect, const void *data, SIZE_T data_size) DECLSPEC_HIDDEN;
+HRESULT d3d10_effect_parse(struct d3d10_effect *effect, const void *data, SIZE_T data_size);
 
 /* D3D10Core */
 HRESULT WINAPI D3D10CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter,
