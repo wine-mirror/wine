@@ -25,13 +25,13 @@
 
 #include "shlobj.h"
 
-extern HINSTANCE explorerframe_hinstance DECLSPEC_HIDDEN;
+extern HINSTANCE explorerframe_hinstance;
 
-extern LONG EFRAME_refCount DECLSPEC_HIDDEN;
+extern LONG EFRAME_refCount;
 static inline void EFRAME_LockModule(void) { InterlockedIncrement( &EFRAME_refCount ); }
 static inline void EFRAME_UnlockModule(void) { InterlockedDecrement( &EFRAME_refCount ); }
 
-HRESULT NamespaceTreeControl_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv) DECLSPEC_HIDDEN;
-HRESULT TaskbarList_Constructor(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
+HRESULT NamespaceTreeControl_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv);
+HRESULT TaskbarList_Constructor(IUnknown*,REFIID,void**);
 
 #endif /* __WINE_EXPLORERFRAME_H */
