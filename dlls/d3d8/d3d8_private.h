@@ -49,10 +49,10 @@
 /* CreateVertexShader can return > 0xFFFF */
 #define VS_HIGHESTFIXEDFXF 0xF0000000
 
-extern const struct wined3d_parent_ops d3d8_null_wined3d_parent_ops DECLSPEC_HIDDEN;
+extern const struct wined3d_parent_ops d3d8_null_wined3d_parent_ops;
 
 void d3dcaps_from_wined3dcaps(D3DCAPS8 *caps, const struct wined3d_caps *wined3d_caps,
-        unsigned int adapter_ordinal) DECLSPEC_HIDDEN;
+        unsigned int adapter_ordinal);
 
 struct d3d8
 {
@@ -63,7 +63,7 @@ struct d3d8
     unsigned int wined3d_output_count;
 };
 
-BOOL d3d8_init(struct d3d8 *d3d8) DECLSPEC_HIDDEN;
+BOOL d3d8_init(struct d3d8 *d3d8);
 
 /*****************************************************************************
  * IDirect3DDevice8 implementation structure
@@ -142,7 +142,7 @@ struct d3d8_device
 };
 
 HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wined3d *wined3d, UINT adapter,
-        D3DDEVTYPE device_type, HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters) DECLSPEC_HIDDEN;
+        D3DDEVTYPE device_type, HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters);
 
 static inline struct d3d8_device *impl_from_IDirect3DDevice8(IDirect3DDevice8 *iface)
 {
@@ -155,13 +155,13 @@ struct d3d8_resource
     struct wined3d_private_store private_store;
 };
 
-void d3d8_resource_cleanup(struct d3d8_resource *resource) DECLSPEC_HIDDEN;
-HRESULT d3d8_resource_free_private_data(struct d3d8_resource *resource, const GUID *guid) DECLSPEC_HIDDEN;
+void d3d8_resource_cleanup(struct d3d8_resource *resource);
+HRESULT d3d8_resource_free_private_data(struct d3d8_resource *resource, const GUID *guid);
 HRESULT d3d8_resource_get_private_data(struct d3d8_resource *resource, const GUID *guid,
-        void *data, DWORD *data_size) DECLSPEC_HIDDEN;
-void d3d8_resource_init(struct d3d8_resource *resource) DECLSPEC_HIDDEN;
+        void *data, DWORD *data_size);
+void d3d8_resource_init(struct d3d8_resource *resource);
 HRESULT d3d8_resource_set_private_data(struct d3d8_resource *resource, const GUID *guid,
-        const void *data, DWORD data_size, DWORD flags) DECLSPEC_HIDDEN;
+        const void *data, DWORD data_size, DWORD flags);
 
 struct d3d8_volume
 {
@@ -173,7 +173,7 @@ struct d3d8_volume
 };
 
 void volume_init(struct d3d8_volume *volume, struct wined3d_texture *wined3d_texture,
-        unsigned int sub_resource_idx, const struct wined3d_parent_ops **parent_ops) DECLSPEC_HIDDEN;
+        unsigned int sub_resource_idx, const struct wined3d_parent_ops **parent_ops);
 
 struct d3d8_swapchain
 {
@@ -186,7 +186,7 @@ struct d3d8_swapchain
 };
 
 HRESULT d3d8_swapchain_create(struct d3d8_device *device, struct wined3d_swapchain_desc *desc,
-        unsigned int swap_interval, struct d3d8_swapchain **swapchain) DECLSPEC_HIDDEN;
+        unsigned int swap_interval, struct d3d8_swapchain **swapchain);
 
 struct d3d8_surface
 {
@@ -202,13 +202,13 @@ struct d3d8_surface
     struct wined3d_swapchain *swapchain;
 };
 
-struct wined3d_rendertarget_view *d3d8_surface_acquire_rendertarget_view(struct d3d8_surface *surface) DECLSPEC_HIDDEN;
+struct wined3d_rendertarget_view *d3d8_surface_acquire_rendertarget_view(struct d3d8_surface *surface);
 struct d3d8_surface *d3d8_surface_create(struct wined3d_texture *wined3d_texture,
-        unsigned int sub_resource_idx, IUnknown *container) DECLSPEC_HIDDEN;
-struct d3d8_device *d3d8_surface_get_device(const struct d3d8_surface *surface) DECLSPEC_HIDDEN;
+        unsigned int sub_resource_idx, IUnknown *container);
+struct d3d8_device *d3d8_surface_get_device(const struct d3d8_surface *surface);
 void d3d8_surface_release_rendertarget_view(struct d3d8_surface *surface,
-        struct wined3d_rendertarget_view *rtv) DECLSPEC_HIDDEN;
-struct d3d8_surface *unsafe_impl_from_IDirect3DSurface8(IDirect3DSurface8 *iface) DECLSPEC_HIDDEN;
+        struct wined3d_rendertarget_view *rtv);
+struct d3d8_surface *unsafe_impl_from_IDirect3DSurface8(IDirect3DSurface8 *iface);
 
 struct d3d8_vertexbuffer
 {
@@ -222,8 +222,8 @@ struct d3d8_vertexbuffer
 };
 
 HRESULT vertexbuffer_init(struct d3d8_vertexbuffer *buffer, struct d3d8_device *device,
-        UINT size, DWORD usage, DWORD fvf, D3DPOOL pool) DECLSPEC_HIDDEN;
-struct d3d8_vertexbuffer *unsafe_impl_from_IDirect3DVertexBuffer8(IDirect3DVertexBuffer8 *iface) DECLSPEC_HIDDEN;
+        UINT size, DWORD usage, DWORD fvf, D3DPOOL pool);
+struct d3d8_vertexbuffer *unsafe_impl_from_IDirect3DVertexBuffer8(IDirect3DVertexBuffer8 *iface);
 
 struct d3d8_indexbuffer
 {
@@ -238,8 +238,8 @@ struct d3d8_indexbuffer
 };
 
 HRESULT indexbuffer_init(struct d3d8_indexbuffer *buffer, struct d3d8_device *device,
-        UINT size, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
-struct d3d8_indexbuffer *unsafe_impl_from_IDirect3DIndexBuffer8(IDirect3DIndexBuffer8 *iface) DECLSPEC_HIDDEN;
+        UINT size, DWORD usage, D3DFORMAT format, D3DPOOL pool);
+struct d3d8_indexbuffer *unsafe_impl_from_IDirect3DIndexBuffer8(IDirect3DIndexBuffer8 *iface);
 
 struct d3d8_texture
 {
@@ -262,7 +262,7 @@ static inline struct wined3d_texture *d3d8_texture_get_draw_texture(struct d3d8_
     return texture->draw_texture ? texture->draw_texture : texture->wined3d_texture;
 }
 
-struct d3d8_texture *unsafe_impl_from_IDirect3DBaseTexture8(IDirect3DBaseTexture8 *iface) DECLSPEC_HIDDEN;
+struct d3d8_texture *unsafe_impl_from_IDirect3DBaseTexture8(IDirect3DBaseTexture8 *iface);
 
 struct d3d8_vertex_declaration
 {
@@ -273,11 +273,11 @@ struct d3d8_vertex_declaration
     DWORD shader_handle;
 };
 
-void d3d8_vertex_declaration_destroy(struct d3d8_vertex_declaration *declaration) DECLSPEC_HIDDEN;
+void d3d8_vertex_declaration_destroy(struct d3d8_vertex_declaration *declaration);
 HRESULT d3d8_vertex_declaration_init(struct d3d8_vertex_declaration *declaration,
-        struct d3d8_device *device, const DWORD *elements, DWORD shader_handle) DECLSPEC_HIDDEN;
+        struct d3d8_device *device, const DWORD *elements, DWORD shader_handle);
 HRESULT d3d8_vertex_declaration_init_fvf(struct d3d8_vertex_declaration *declaration,
-        struct d3d8_device *device, DWORD fvf) DECLSPEC_HIDDEN;
+        struct d3d8_device *device, DWORD fvf);
 
 struct d3d8_vertex_shader
 {
@@ -285,9 +285,9 @@ struct d3d8_vertex_shader
   struct wined3d_shader *wined3d_shader;
 };
 
-void d3d8_vertex_shader_destroy(struct d3d8_vertex_shader *shader) DECLSPEC_HIDDEN;
+void d3d8_vertex_shader_destroy(struct d3d8_vertex_shader *shader);
 HRESULT d3d8_vertex_shader_init(struct d3d8_vertex_shader *shader, struct d3d8_device *device,
-        const DWORD *declaration, const DWORD *byte_code, DWORD shader_handle, DWORD usage) DECLSPEC_HIDDEN;
+        const DWORD *declaration, const DWORD *byte_code, DWORD shader_handle, DWORD usage);
 
 struct d3d8_pixel_shader
 {
@@ -295,15 +295,15 @@ struct d3d8_pixel_shader
     struct wined3d_shader *wined3d_shader;
 };
 
-void d3d8_pixel_shader_destroy(struct d3d8_pixel_shader *shader) DECLSPEC_HIDDEN;
+void d3d8_pixel_shader_destroy(struct d3d8_pixel_shader *shader);
 HRESULT d3d8_pixel_shader_init(struct d3d8_pixel_shader *shader, struct d3d8_device *device,
-        const DWORD *byte_code, DWORD shader_handle) DECLSPEC_HIDDEN;
+        const DWORD *byte_code, DWORD shader_handle);
 
-D3DFORMAT d3dformat_from_wined3dformat(enum wined3d_format_id format) DECLSPEC_HIDDEN;
-enum wined3d_format_id wined3dformat_from_d3dformat(D3DFORMAT format) DECLSPEC_HIDDEN;
-unsigned int wined3dmapflags_from_d3dmapflags(unsigned int flags, unsigned int usage) DECLSPEC_HIDDEN;
-void load_local_constants(const DWORD *d3d8_elements, struct wined3d_shader *wined3d_vertex_shader) DECLSPEC_HIDDEN;
-size_t parse_token(const DWORD *pToken) DECLSPEC_HIDDEN;
+D3DFORMAT d3dformat_from_wined3dformat(enum wined3d_format_id format);
+enum wined3d_format_id wined3dformat_from_d3dformat(D3DFORMAT format);
+unsigned int wined3dmapflags_from_d3dmapflags(unsigned int flags, unsigned int usage);
+void load_local_constants(const DWORD *d3d8_elements, struct wined3d_shader *wined3d_vertex_shader);
+size_t parse_token(const DWORD *pToken);
 
 static inline DWORD d3dusage_from_wined3dusage(unsigned int wined3d_usage, unsigned int bind_flags)
 {
