@@ -20,7 +20,7 @@
 #include "private.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(graphicscapture);
+WINE_DEFAULT_DEBUG_CHANNEL(capture);
 
 struct session
 {

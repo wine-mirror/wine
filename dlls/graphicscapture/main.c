@@ -22,7 +22,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(graphicscapture);
+WINE_DEFAULT_DEBUG_CHANNEL(capture);
 
 HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **factory )
 {
