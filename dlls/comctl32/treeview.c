@@ -47,8 +47,6 @@
 #include <limits.h>
 #include <stdlib.h>
 
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -1229,7 +1227,7 @@ TREEVIEW_DoSetItemT(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item,
 static LRESULT
 TREEVIEW_InsertItemT(TREEVIEW_INFO *infoPtr, const TVINSERTSTRUCTW *ptdi, BOOL isW)
 {
-    const TVITEMEXW *tvItem = &ptdi->u.itemex;
+    const TVITEMEXW *tvItem = &ptdi->itemex;
     HTREEITEM insertAfter;
     TREEVIEW_ITEM *newItem, *parentItem;
     BOOL bTextUpdated = FALSE;

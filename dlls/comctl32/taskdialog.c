@@ -24,8 +24,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -561,11 +559,11 @@ static void taskdialog_check_default_radio_buttons(struct taskdialog_info *dialo
 
 static void taskdialog_add_main_icon(struct taskdialog_info *dialog_info)
 {
-    if (!dialog_info->taskconfig->u.hMainIcon) return;
+    if (!dialog_info->taskconfig->hMainIcon) return;
 
     dialog_info->main_icon =
         CreateWindowW(WC_STATICW, NULL, WS_CHILD | WS_VISIBLE | SS_ICON, 0, 0, 0, 0, dialog_info->hwnd, NULL, 0, NULL);
-    taskdialog_set_icon(dialog_info, TDIE_ICON_MAIN, dialog_info->taskconfig->u.hMainIcon);
+    taskdialog_set_icon(dialog_info, TDIE_ICON_MAIN, dialog_info->taskconfig->hMainIcon);
 }
 
 static HWND taskdialog_create_label(struct taskdialog_info *dialog_info, const WCHAR *text, HFONT font, BOOL syslink)
@@ -790,11 +788,11 @@ static void taskdialog_add_buttons(struct taskdialog_info *dialog_info)
 
 static void taskdialog_add_footer_icon(struct taskdialog_info *dialog_info)
 {
-    if (!dialog_info->taskconfig->u2.hFooterIcon) return;
+    if (!dialog_info->taskconfig->hFooterIcon) return;
 
     dialog_info->footer_icon =
         CreateWindowW(WC_STATICW, NULL, WS_CHILD | WS_VISIBLE | SS_ICON, 0, 0, 0, 0, dialog_info->hwnd, NULL, 0, 0);
-    taskdialog_set_icon(dialog_info, TDIE_ICON_FOOTER, dialog_info->taskconfig->u2.hFooterIcon);
+    taskdialog_set_icon(dialog_info, TDIE_ICON_FOOTER, dialog_info->taskconfig->hFooterIcon);
 }
 
 static void taskdialog_add_footer_text(struct taskdialog_info *dialog_info)
@@ -1414,7 +1412,7 @@ HRESULT WINAPI TaskDialog(HWND owner, HINSTANCE hinst, const WCHAR *title, const
     taskconfig.hInstance = hinst;
     taskconfig.dwCommonButtons = common_buttons;
     taskconfig.pszWindowTitle = title;
-    taskconfig.u.pszMainIcon = icon;
+    taskconfig.pszMainIcon = icon;
     taskconfig.pszMainInstruction = main_instruction;
     taskconfig.pszContent = content;
     return TaskDialogIndirect(&taskconfig, button, NULL, NULL);
