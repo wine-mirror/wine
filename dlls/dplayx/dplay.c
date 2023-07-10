@@ -22,8 +22,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winerror.h"
 #include "winbase.h"
@@ -1345,8 +1343,8 @@ static lpPlayerData DP_CreatePlayer( IDirectPlayImpl *This, DPID *lpid, DPNAME *
 static void
 DP_DeleteDPNameStruct( LPDPNAME lpDPName )
 {
-  HeapFree( GetProcessHeap(), HEAP_ZERO_MEMORY, lpDPName->u1.lpszShortNameA );
-  HeapFree( GetProcessHeap(), HEAP_ZERO_MEMORY, lpDPName->u2.lpszLongNameA );
+  HeapFree( GetProcessHeap(), HEAP_ZERO_MEMORY, lpDPName->lpszShortNameA );
+  HeapFree( GetProcessHeap(), HEAP_ZERO_MEMORY, lpDPName->lpszLongNameA );
 }
 
 /* This method assumes that all links to it are already deleted */
@@ -1411,40 +1409,40 @@ static BOOL DP_CopyDPNAMEStruct( LPDPNAME lpDst, const DPNAME *lpSrc, BOOL bAnsi
   }
 
   /* Delete any existing pointers */
-  HeapFree( GetProcessHeap(), 0, lpDst->u1.lpszShortNameA );
-  HeapFree( GetProcessHeap(), 0, lpDst->u2.lpszLongNameA );
+  HeapFree( GetProcessHeap(), 0, lpDst->lpszShortNameA );
+  HeapFree( GetProcessHeap(), 0, lpDst->lpszLongNameA );
 
   /* Copy as required */
   CopyMemory( lpDst, lpSrc, lpSrc->dwSize );
 
   if( bAnsi )
   {
-    if( lpSrc->u1.lpszShortNameA )
+    if( lpSrc->lpszShortNameA )
     {
-        lpDst->u1.lpszShortNameA = HeapAlloc( GetProcessHeap(), 0,
-                                             strlen(lpSrc->u1.lpszShortNameA)+1 );
-        strcpy( lpDst->u1.lpszShortNameA, lpSrc->u1.lpszShortNameA );
+        lpDst->lpszShortNameA = HeapAlloc( GetProcessHeap(), 0,
+                                             strlen(lpSrc->lpszShortNameA)+1 );
+        strcpy( lpDst->lpszShortNameA, lpSrc->lpszShortNameA );
     }
-    if( lpSrc->u2.lpszLongNameA )
+    if( lpSrc->lpszLongNameA )
     {
-        lpDst->u2.lpszLongNameA = HeapAlloc( GetProcessHeap(), 0,
-                                              strlen(lpSrc->u2.lpszLongNameA)+1 );
-        strcpy( lpDst->u2.lpszLongNameA, lpSrc->u2.lpszLongNameA );
+        lpDst->lpszLongNameA = HeapAlloc( GetProcessHeap(), 0,
+                                              strlen(lpSrc->lpszLongNameA)+1 );
+        strcpy( lpDst->lpszLongNameA, lpSrc->lpszLongNameA );
     }
   }
   else
   {
-    if( lpSrc->u1.lpszShortNameA )
+    if( lpSrc->lpszShortNameA )
     {
-        lpDst->u1.lpszShortName = HeapAlloc( GetProcessHeap(), 0,
-                                              (lstrlenW(lpSrc->u1.lpszShortName)+1)*sizeof(WCHAR) );
-        lstrcpyW( lpDst->u1.lpszShortName, lpSrc->u1.lpszShortName );
+        lpDst->lpszShortName = HeapAlloc( GetProcessHeap(), 0,
+                                              (lstrlenW(lpSrc->lpszShortName)+1)*sizeof(WCHAR) );
+        lstrcpyW( lpDst->lpszShortName, lpSrc->lpszShortName );
     }
-    if( lpSrc->u2.lpszLongNameA )
+    if( lpSrc->lpszLongNameA )
     {
-        lpDst->u2.lpszLongName = HeapAlloc( GetProcessHeap(), 0,
-                                             (lstrlenW(lpSrc->u2.lpszLongName)+1)*sizeof(WCHAR) );
-        lstrcpyW( lpDst->u2.lpszLongName, lpSrc->u2.lpszLongName );
+        lpDst->lpszLongName = HeapAlloc( GetProcessHeap(), 0,
+                                             (lstrlenW(lpSrc->lpszLongName)+1)*sizeof(WCHAR) );
+        lstrcpyW( lpDst->lpszLongName, lpSrc->lpszLongName );
     }
   }
 
@@ -2675,14 +2673,14 @@ static HRESULT DP_IF_GetGroupName( IDirectPlayImpl *This, DPID idGroup, void *lp
 
   dwRequiredDataSize = lpGData->name.dwSize;
 
-  if( lpGData->name.u1.lpszShortNameA )
+  if( lpGData->name.lpszShortNameA )
   {
-    dwRequiredDataSize += strlen( lpGData->name.u1.lpszShortNameA ) + 1;
+    dwRequiredDataSize += strlen( lpGData->name.lpszShortNameA ) + 1;
   }
 
-  if( lpGData->name.u2.lpszLongNameA )
+  if( lpGData->name.lpszLongNameA )
   {
-    dwRequiredDataSize += strlen( lpGData->name.u2.lpszLongNameA ) + 1;
+    dwRequiredDataSize += strlen( lpGData->name.lpszLongNameA ) + 1;
   }
 
   if( ( lpData == NULL ) ||
@@ -2696,24 +2694,24 @@ static HRESULT DP_IF_GetGroupName( IDirectPlayImpl *This, DPID idGroup, void *lp
   /* Copy the structure */
   CopyMemory( lpName, &lpGData->name, lpGData->name.dwSize );
 
-  if( lpGData->name.u1.lpszShortNameA )
+  if( lpGData->name.lpszShortNameA )
   {
     strcpy( ((char*)lpName)+lpGData->name.dwSize,
-            lpGData->name.u1.lpszShortNameA );
+            lpGData->name.lpszShortNameA );
   }
   else
   {
-    lpName->u1.lpszShortNameA = NULL;
+    lpName->lpszShortNameA = NULL;
   }
 
-  if( lpGData->name.u1.lpszShortNameA )
+  if( lpGData->name.lpszShortNameA )
   {
     strcpy( ((char*)lpName)+lpGData->name.dwSize,
-            lpGData->name.u1.lpszShortNameA );
+            lpGData->name.lpszShortNameA );
   }
   else
   {
-    lpName->u2.lpszLongNameA = NULL;
+    lpName->lpszLongNameA = NULL;
   }
 
   return DP_OK;
@@ -3002,14 +3000,14 @@ static HRESULT DP_IF_GetPlayerName( IDirectPlayImpl *This, DPID idPlayer, void *
 
   dwRequiredDataSize = lpPList->lpPData->name.dwSize;
 
-  if( lpPList->lpPData->name.u1.lpszShortNameA )
+  if( lpPList->lpPData->name.lpszShortNameA )
   {
-    dwRequiredDataSize += strlen( lpPList->lpPData->name.u1.lpszShortNameA ) + 1;
+    dwRequiredDataSize += strlen( lpPList->lpPData->name.lpszShortNameA ) + 1;
   }
 
-  if( lpPList->lpPData->name.u2.lpszLongNameA )
+  if( lpPList->lpPData->name.lpszLongNameA )
   {
-    dwRequiredDataSize += strlen( lpPList->lpPData->name.u2.lpszLongNameA ) + 1;
+    dwRequiredDataSize += strlen( lpPList->lpPData->name.lpszLongNameA ) + 1;
   }
 
   if( ( lpData == NULL ) ||
@@ -3023,24 +3021,24 @@ static HRESULT DP_IF_GetPlayerName( IDirectPlayImpl *This, DPID idPlayer, void *
   /* Copy the structure */
   CopyMemory( lpName, &lpPList->lpPData->name, lpPList->lpPData->name.dwSize );
 
-  if( lpPList->lpPData->name.u1.lpszShortNameA )
+  if( lpPList->lpPData->name.lpszShortNameA )
   {
     strcpy( ((char*)lpName)+lpPList->lpPData->name.dwSize,
-            lpPList->lpPData->name.u1.lpszShortNameA );
+            lpPList->lpPData->name.lpszShortNameA );
   }
   else
   {
-    lpName->u1.lpszShortNameA = NULL;
+    lpName->lpszShortNameA = NULL;
   }
 
-  if( lpPList->lpPData->name.u1.lpszShortNameA )
+  if( lpPList->lpPData->name.lpszShortNameA )
   {
     strcpy( ((char*)lpName)+lpPList->lpPData->name.dwSize,
-            lpPList->lpPData->name.u2.lpszLongNameA );
+            lpPList->lpPData->name.lpszLongNameA );
   }
   else
   {
-    lpName->u2.lpszLongNameA = NULL;
+    lpName->lpszLongNameA = NULL;
   }
 
   return DP_OK;
@@ -3878,28 +3876,28 @@ static DWORD DP_CalcSessionDescSize( LPCDPSESSIONDESC2 lpSessDesc, BOOL bAnsi )
 
   if( bAnsi )
   {
-    if( lpSessDesc->u1.lpszSessionNameA )
+    if( lpSessDesc->lpszSessionNameA )
     {
-      dwSize += lstrlenA( lpSessDesc->u1.lpszSessionNameA ) + 1;
+      dwSize += lstrlenA( lpSessDesc->lpszSessionNameA ) + 1;
     }
 
-    if( lpSessDesc->u2.lpszPasswordA )
+    if( lpSessDesc->lpszPasswordA )
     {
-      dwSize += lstrlenA( lpSessDesc->u2.lpszPasswordA ) + 1;
+      dwSize += lstrlenA( lpSessDesc->lpszPasswordA ) + 1;
     }
   }
   else /* UNICODE */
   {
-    if( lpSessDesc->u1.lpszSessionName )
+    if( lpSessDesc->lpszSessionName )
     {
       dwSize += sizeof( WCHAR ) *
-        ( lstrlenW( lpSessDesc->u1.lpszSessionName ) + 1 );
+        ( lstrlenW( lpSessDesc->lpszSessionName ) + 1 );
     }
 
-    if( lpSessDesc->u2.lpszPassword )
+    if( lpSessDesc->lpszPassword )
     {
       dwSize += sizeof( WCHAR ) *
-        ( lstrlenW( lpSessDesc->u2.lpszPassword ) + 1 );
+        ( lstrlenW( lpSessDesc->lpszPassword ) + 1 );
     }
   }
 
@@ -3924,38 +3922,38 @@ static void DP_CopySessionDesc( LPDPSESSIONDESC2 lpSessionDest,
 
   if( bAnsi )
   {
-    if( lpSessionSrc->u1.lpszSessionNameA )
+    if( lpSessionSrc->lpszSessionNameA )
     {
       lstrcpyA( (LPSTR)lpStartOfFreeSpace,
-                lpSessionDest->u1.lpszSessionNameA );
-      lpSessionDest->u1.lpszSessionNameA = (LPSTR)lpStartOfFreeSpace;
+                lpSessionDest->lpszSessionNameA );
+      lpSessionDest->lpszSessionNameA = (LPSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace +=
-        lstrlenA( lpSessionDest->u1.lpszSessionNameA ) + 1;
+        lstrlenA( lpSessionDest->lpszSessionNameA ) + 1;
     }
 
-    if( lpSessionSrc->u2.lpszPasswordA )
+    if( lpSessionSrc->lpszPasswordA )
     {
       lstrcpyA( (LPSTR)lpStartOfFreeSpace,
-                lpSessionDest->u2.lpszPasswordA );
-      lpSessionDest->u2.lpszPasswordA = (LPSTR)lpStartOfFreeSpace;
+                lpSessionDest->lpszPasswordA );
+      lpSessionDest->lpszPasswordA = (LPSTR)lpStartOfFreeSpace;
     }
   }
   else /* UNICODE */
   {
-    if( lpSessionSrc->u1.lpszSessionName )
+    if( lpSessionSrc->lpszSessionName )
     {
       lstrcpyW( (LPWSTR)lpStartOfFreeSpace,
-                lpSessionDest->u1.lpszSessionName );
-      lpSessionDest->u1.lpszSessionName = (LPWSTR)lpStartOfFreeSpace;
+                lpSessionDest->lpszSessionName );
+      lpSessionDest->lpszSessionName = (LPWSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace += sizeof(WCHAR) *
-        ( lstrlenW( lpSessionDest->u1.lpszSessionName ) + 1 );
+        ( lstrlenW( lpSessionDest->lpszSessionName ) + 1 );
     }
 
-    if( lpSessionSrc->u2.lpszPassword )
+    if( lpSessionSrc->lpszPassword )
     {
       lstrcpyW( (LPWSTR)lpStartOfFreeSpace,
-                lpSessionDest->u2.lpszPassword );
-      lpSessionDest->u2.lpszPassword = (LPWSTR)lpStartOfFreeSpace;
+                lpSessionDest->lpszPassword );
+      lpSessionDest->lpszPassword = (LPWSTR)lpStartOfFreeSpace;
     }
   }
 }
@@ -4339,8 +4337,8 @@ static HRESULT WINAPI IDirectPlay4AImpl_EnumConnections( IDirectPlay4A *iface,
       /* Fill in the DPNAME struct for the service provider */
       dpName.dwSize             = sizeof( dpName );
       dpName.dwFlags            = 0;
-      dpName.u1.lpszShortNameA = subKeyName;
-      dpName.u2.lpszLongNameA  = NULL;
+      dpName.lpszShortNameA = subKeyName;
+      dpName.lpszLongNameA  = NULL;
 
       /* Create the compound address for the service provider.
        * NOTE: This is a gruesome architectural scar right now.  DP
@@ -4437,8 +4435,8 @@ static HRESULT WINAPI IDirectPlay4AImpl_EnumConnections( IDirectPlay4A *iface,
       /* Fill in the DPNAME struct for the service provider */
       dpName.dwSize             = sizeof( dpName );
       dpName.dwFlags            = 0;
-      dpName.u1.lpszShortNameA = subKeyName;
-      dpName.u2.lpszLongNameA  = NULL;
+      dpName.lpszShortNameA = subKeyName;
+      dpName.lpszLongNameA  = NULL;
 
       /* Create the compound address for the service provider.
          NOTE: This is a gruesome architectural scar right now. DP uses DPL and DPL uses DP

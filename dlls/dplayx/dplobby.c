@@ -20,8 +20,6 @@
 #include <string.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -954,9 +952,9 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_EnumLocalApplications( IDirectPlayL
     CLSIDFromString( buff, &serviceProviderGUID );
     /* FIXME: Have I got a memory leak on the serviceProviderGUID? */
 
-    dplAppInfo.dwSize               = sizeof( dplAppInfo );
-    dplAppInfo.guidApplication      = serviceProviderGUID;
-    dplAppInfo.u.lpszAppNameA = subKeyName;
+    dplAppInfo.dwSize          = sizeof( dplAppInfo );
+    dplAppInfo.guidApplication = serviceProviderGUID;
+    dplAppInfo.lpszAppNameA    = subKeyName;
 
     EnterCriticalSection( &This->lock );
 

@@ -22,8 +22,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -130,10 +128,10 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                      lpcNSAddrHdr
 
   *lpCacheNode->data = lpcMsg->sd;
   len = WideCharToMultiByte( CP_ACP, 0, (LPCWSTR)(lpcMsg+1), -1, NULL, 0, NULL, NULL );
-  if ((lpCacheNode->data->u1.lpszSessionNameA = HeapAlloc( GetProcessHeap(), 0, len )))
+  if ((lpCacheNode->data->lpszSessionNameA = HeapAlloc( GetProcessHeap(), 0, len )))
   {
       WideCharToMultiByte( CP_ACP, 0, (LPCWSTR)(lpcMsg+1), -1,
-                           lpCacheNode->data->u1.lpszSessionNameA, len, NULL, NULL );
+                           lpCacheNode->data->lpszSessionNameA, len, NULL, NULL );
   }
 
   lpCacheNode->dwTime = timeGetTime();
@@ -367,7 +365,7 @@ void NS_ReplyToEnumSessionsRequest( const void *lpcMsg, void **lplpReplyData, DW
   FIXME( ": few fixed + need to check request for response, might need UNICODE input ability.\n" );
 
   dwVariableLen = MultiByteToWideChar( CP_ACP, 0,
-                                       lpDP->dp2->lpSessionDesc->u1.lpszSessionNameA,
+                                       lpDP->dp2->lpSessionDesc->lpszSessionNameA,
                                        -1, NULL, 0 );
   dwVariableSize = dwVariableLen * sizeof( WCHAR );
 
@@ -386,6 +384,6 @@ void NS_ReplyToEnumSessionsRequest( const void *lpcMsg, void **lplpReplyData, DW
   CopyMemory( &rmsg->sd, lpDP->dp2->lpSessionDesc,
               lpDP->dp2->lpSessionDesc->dwSize );
   rmsg->dwUnknown = 0x0000005c;
-  MultiByteToWideChar( CP_ACP, 0, lpDP->dp2->lpSessionDesc->u1.lpszSessionNameA, -1,
+  MultiByteToWideChar( CP_ACP, 0, lpDP->dp2->lpSessionDesc->lpszSessionNameA, -1,
                        (LPWSTR)(rmsg+1), dwVariableLen );
 }
