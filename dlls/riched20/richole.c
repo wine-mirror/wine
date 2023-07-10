@@ -21,7 +21,6 @@
 
 #include <stdarg.h>
 
-#define NONAMELESSUNION
 #define COBJMACROS
 
 #include "windef.h"
@@ -5762,12 +5761,12 @@ void ME_GetOLEObjectSize(const ME_Context *c, ME_Run *run, SIZE *pSize)
   switch (stgm.tymed)
   {
   case TYMED_GDI:
-    GetObjectW(stgm.u.hBitmap, sizeof(dibsect), &dibsect);
+    GetObjectW(stgm.hBitmap, sizeof(dibsect), &dibsect);
     pSize->cx = dibsect.dsBm.bmWidth;
     pSize->cy = dibsect.dsBm.bmHeight;
     break;
   case TYMED_ENHMF:
-    GetEnhMetaFileHeader(stgm.u.hEnhMetaFile, sizeof(emh), &emh);
+    GetEnhMetaFileHeader(stgm.hEnhMetaFile, sizeof(emh), &emh);
     pSize->cx = emh.rclBounds.right - emh.rclBounds.left;
     pSize->cy = emh.rclBounds.bottom - emh.rclBounds.top;
     break;
@@ -5854,9 +5853,9 @@ void draw_ole( ME_Context *c, int x, int y, ME_Run *run, BOOL selected )
   switch (stgm.tymed)
   {
   case TYMED_GDI:
-    GetObjectW(stgm.u.hBitmap, sizeof(dibsect), &dibsect);
+    GetObjectW(stgm.hBitmap, sizeof(dibsect), &dibsect);
     hMemDC = CreateCompatibleDC(c->hDC);
-    old_bm = SelectObject(hMemDC, stgm.u.hBitmap);
+    old_bm = SelectObject(hMemDC, stgm.hBitmap);
     if (has_size)
     {
       convert_sizel(c, &run->reobj->obj.sizel, &sz);
@@ -5876,7 +5875,7 @@ void draw_ole( ME_Context *c, int x, int y, ME_Run *run, BOOL selected )
     DeleteDC(hMemDC);
     break;
   case TYMED_ENHMF:
-    GetEnhMetaFileHeader(stgm.u.hEnhMetaFile, sizeof(emh), &emh);
+    GetEnhMetaFileHeader(stgm.hEnhMetaFile, sizeof(emh), &emh);
     if (has_size)
     {
       convert_sizel(c, &run->reobj->obj.sizel, &sz);
@@ -5894,7 +5893,7 @@ void draw_ole( ME_Context *c, int x, int y, ME_Run *run, BOOL selected )
     rc.top = y - sz.cy;
     rc.right = x + sz.cx;
     rc.bottom = y;
-    PlayEnhMetaFile(c->hDC, stgm.u.hEnhMetaFile, &rc);
+    PlayEnhMetaFile(c->hDC, stgm.hEnhMetaFile, &rc);
     break;
   default:
     FIXME("Unsupported tymed %ld\n", stgm.tymed);

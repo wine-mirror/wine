@@ -224,8 +224,6 @@
  *
  */
 
-#define NONAMELESSUNION
-
 #include "editor.h"
 #include "commdlg.h"
 #include "winreg.h"
@@ -1129,13 +1127,13 @@ static HRESULT insert_static_object(ME_TextEditor *editor, HENHMETAFILE hemf, HB
   if (hemf)
   {
       stgm.tymed = TYMED_ENHMF;
-      stgm.u.hEnhMetaFile = hemf;
+      stgm.hEnhMetaFile = hemf;
       fm.cfFormat = CF_ENHMETAFILE;
   }
   else if (hbmp)
   {
       stgm.tymed = TYMED_GDI;
-      stgm.u.hBitmap = hbmp;
+      stgm.hBitmap = hbmp;
       fm.cfFormat = CF_BITMAP;
   }
   else return E_FAIL;
@@ -2205,7 +2203,7 @@ static HRESULT paste_rtf(ME_TextEditor *editor, FORMATETC *fmt, STGMEDIUM *med)
     ME_GlobalDestStruct gds;
     HRESULT hr;
 
-    gds.hData = med->u.hGlobal;
+    gds.hData = med->hGlobal;
     gds.nLength = 0;
     es.dwCookie = (DWORD_PTR)&gds;
     es.pfnCallback = ME_ReadFromHGLOBALRTF;
@@ -2220,7 +2218,7 @@ static HRESULT paste_text(ME_TextEditor *editor, FORMATETC *fmt, STGMEDIUM *med)
     ME_GlobalDestStruct gds;
     HRESULT hr;
 
-    gds.hData = med->u.hGlobal;
+    gds.hData = med->hGlobal;
     gds.nLength = 0;
     es.dwCookie = (DWORD_PTR)&gds;
     es.pfnCallback = ME_ReadFromHGLOBALUnicode;
@@ -2234,7 +2232,7 @@ static HRESULT paste_emf(ME_TextEditor *editor, FORMATETC *fmt, STGMEDIUM *med)
     HRESULT hr;
     SIZEL sz = {0, 0};
 
-    hr = insert_static_object( editor, med->u.hEnhMetaFile, NULL, &sz );
+    hr = insert_static_object( editor, med->hEnhMetaFile, NULL, &sz );
     if (SUCCEEDED(hr))
     {
         ME_CommitUndo( editor );

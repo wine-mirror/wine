@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
-
 #include "editor.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
@@ -226,9 +224,9 @@ static HRESULT WINAPI DataObjectImpl_GetData(IDataObject* iface, FORMATETC *pfor
         return DV_E_TYMED;
 
     if(This->unicode && pformatetc->cfFormat == CF_UNICODETEXT)
-        pmedium->u.hGlobal = This->unicode;
+        pmedium->hGlobal = This->unicode;
     else if(This->rtf && pformatetc->cfFormat == cfRTF)
-        pmedium->u.hGlobal = This->rtf;
+        pmedium->hGlobal = This->rtf;
     else
         return DV_E_FORMATETC;
 

@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
-
 #include "editor.h"
 #include "rtf.h"
 
@@ -953,13 +951,13 @@ static BOOL stream_out_graphics( ME_TextEditor *editor, ME_OutStream *stream,
     if (FAILED(hr)) goto done;
     if (med.tymed != TYMED_ENHMF) goto done;
 
-    size = GetEnhMetaFileBits( med.u.hEnhMetaFile, 0, NULL );
+    size = GetEnhMetaFileBits( med.hEnhMetaFile, 0, NULL );
     if (size < FIELD_OFFSET(ENHMETAHEADER, cbPixelFormat)) goto done;
 
     emf_bits = HeapAlloc( GetProcessHeap(), 0, size );
     if (!emf_bits) goto done;
 
-    size = GetEnhMetaFileBits( med.u.hEnhMetaFile, size, (BYTE *)emf_bits );
+    size = GetEnhMetaFileBits( med.hEnhMetaFile, size, (BYTE *)emf_bits );
     if (size < FIELD_OFFSET(ENHMETAHEADER, cbPixelFormat)) goto done;
 
     /* size_in_pixels = (frame_size / 100) * szlDevice / szlMillimeters
