@@ -1157,6 +1157,7 @@ enable_hnetcfg
 enable_hrtfapo
 enable_http_sys
 enable_httpapi
+enable_hvsimanagementapi
 enable_ia2comproxy
 enable_iccvid
 enable_icmp
@@ -21404,6 +21405,8 @@ wine_fn_config_makefile dlls/hrtfapo enable_hrtfapo
 wine_fn_config_makefile dlls/http.sys enable_http_sys
 wine_fn_config_makefile dlls/httpapi enable_httpapi
 wine_fn_config_makefile dlls/httpapi/tests enable_tests
+wine_fn_config_makefile dlls/hvsimanagementapi enable_hvsimanagementapi
+wine_fn_config_makefile dlls/hvsimanagementapi/tests enable_tests
 wine_fn_config_makefile dlls/ia2comproxy enable_ia2comproxy
 wine_fn_config_makefile dlls/iccvid enable_iccvid
 wine_fn_config_makefile dlls/icmp enable_icmp

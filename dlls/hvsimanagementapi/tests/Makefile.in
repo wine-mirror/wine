@@ -1,0 +1,5 @@
+TESTDLL = hvsimanagementapi.dll
+IMPORTS = combase
+
+C_SRCS = \
+	isolation.c
