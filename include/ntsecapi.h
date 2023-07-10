@@ -121,11 +121,19 @@ typedef NTSTATUS *PNTSTATUS;
 
 typedef enum _SECURITY_LOGON_TYPE
 {
+    UndefinedLogonType = 0,
     Interactive = 2,
     Network,
     Batch,
     Service,
-    Proxy
+    Proxy,
+    Unlock,
+    NetworkCleartext,
+    NewCredentials,
+    RemoteInteractive,
+    CachedInteractive,
+    CachedRemoteInteractive,
+    CachedUnlock
 } SECURITY_LOGON_TYPE, *PSECURITY_LOGON_TYPE;
 
 typedef enum _POLICY_AUDIT_EVENT_TYPE
@@ -249,6 +257,12 @@ typedef struct _POLICY_MODIFICATION_INFO
     LARGE_INTEGER DatabaseCreationTime;
 } POLICY_MODIFICATION_INFO, *PPOLICY_MODIFICATION_INFO;
 
+typedef struct _LSA_LAST_INTER_LOGON_INFO {
+    LARGE_INTEGER LastSuccessfulLogon;
+    LARGE_INTEGER LastFailedLogon;
+    ULONG FailedAttemptCountSinceLastSuccessfulLogon;
+} LSA_LAST_INTER_LOGON_INFO, *PLSA_LAST_INTER_LOGON_INFO;
+
 typedef struct _SECURITY_LOGON_SESSION_DATA {
     ULONG Size;
     LUID LogonId;
@@ -262,6 +276,17 @@ typedef struct _SECURITY_LOGON_SESSION_DATA {
     LSA_UNICODE_STRING LogonServer;
     LSA_UNICODE_STRING DnsDomainName;
     LSA_UNICODE_STRING Upn;
+    ULONG UserFlags;
+    LSA_LAST_INTER_LOGON_INFO LastLogonInfo;
+    LSA_UNICODE_STRING LogonScript;
+    LSA_UNICODE_STRING ProfilePath;
+    LSA_UNICODE_STRING HomeDirectory;
+    LSA_UNICODE_STRING HomeDirectoryDrive;
+    LARGE_INTEGER LogoffTime;
+    LARGE_INTEGER KickOffTime;
+    LARGE_INTEGER PasswordLastSet;
+    LARGE_INTEGER PasswordCanChange;
+    LARGE_INTEGER PasswordMustChange;
 } SECURITY_LOGON_SESSION_DATA, *PSECURITY_LOGON_SESSION_DATA;
 
 typedef struct
@@ -635,6 +660,8 @@ typedef struct _KERB_PURGE_TKT_CACHE_REQUEST
 #define RtlGenRandom                    SystemFunction036
 #define RtlEncryptMemory                SystemFunction040
 #define RtlDecryptMemory                SystemFunction041
+
+#define LSA_SUCCESS(Error) ((LONG)(Error) >= 0)
 
 WINADVAPI BOOLEAN  WINAPI AuditQuerySystemPolicy(const GUID*,ULONG,AUDIT_POLICY_INFORMATION**);
 WINADVAPI BOOLEAN  WINAPI RtlGenRandom(PVOID,ULONG);
