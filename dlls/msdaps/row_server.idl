@@ -232,7 +232,7 @@ coclass wine_rowset_proxy
 
 }
 
-cpp_quote("extern HRESULT create_row_server( IUnknown*, LPVOID* ) DECLSPEC_HIDDEN;")
-cpp_quote("extern HRESULT create_row_marshal( IUnknown*, LPVOID* ) DECLSPEC_HIDDEN;")
-cpp_quote("extern HRESULT create_rowset_server( IUnknown*, LPVOID* ) DECLSPEC_HIDDEN;")
-cpp_quote("extern HRESULT create_rowset_marshal( IUnknown*, LPVOID* ) DECLSPEC_HIDDEN;")
+cpp_quote("extern HRESULT create_row_server( IUnknown*, LPVOID* );")
+cpp_quote("extern HRESULT create_row_marshal( IUnknown*, LPVOID* );")
+cpp_quote("extern HRESULT create_rowset_server( IUnknown*, LPVOID* );")
+cpp_quote("extern HRESULT create_rowset_marshal( IUnknown*, LPVOID* );")
