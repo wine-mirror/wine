@@ -23,9 +23,9 @@ typedef enum {
     ADDON_MONO
 } addon_t;
 
-BOOL install_addon(addon_t) DECLSPEC_HIDDEN;
+BOOL install_addon(addon_t);
 
-extern HINSTANCE hInst DECLSPEC_HIDDEN;
+extern HINSTANCE hInst;
 
 static inline WCHAR *strdupAtoW(const char *str)
 {
