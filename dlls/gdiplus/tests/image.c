@@ -3693,39 +3693,42 @@ static void test_image_properties(void)
 
     for (i = 0; i < ARRAY_SIZE(td); i++)
     {
+        winetest_push_context("%u", i);
+
         image = load_image(td[i].image_data, td[i].image_size, TRUE, FALSE);
         if (!image)
         {
-            trace("%u: failed to load image data\n", i);
+            trace("failed to load image data\n");
+            winetest_pop_context();
             continue;
         }
 
         status = GdipGetImageType(image, &image_type);
-        ok(status == Ok, "%u: GdipGetImageType error %d\n", i, status);
-        ok(td[i].image_type == image_type, "%u: expected image_type %d, got %d\n",
-           i, td[i].image_type, image_type);
+        ok(status == Ok, "GdipGetImageType error %d\n", status);
+        ok(td[i].image_type == image_type, "expected image_type %d, got %d\n",
+           td[i].image_type, image_type);
 
         palette_size = -1;
         status = GdipGetImagePaletteSize(image, &palette_size);
         if (td[i].palette_size >= 0)
         {
-            ok(status == Ok, "%u: GdipGetImagePaletteSize error %d\n", i, status);
-            ok(td[i].palette_size == palette_size, "%u: expected palette_size %d, got %d\n",
-               i, td[i].palette_size, palette_size);
+            ok(status == Ok, "GdipGetImagePaletteSize error %d\n", status);
+            ok(td[i].palette_size == palette_size, "expected palette_size %d, got %d\n",
+               td[i].palette_size, palette_size);
         }
         else
         {
-            ok(status == -td[i].palette_size, "%u: GdipGetImagePaletteSize returned %d\n", i, status);
-            ok(palette_size == 0, "%u: expected palette_size 0, got %d\n",
-               i, palette_size);
+            ok(status == -td[i].palette_size, "GdipGetImagePaletteSize returned %d\n", status);
+            ok(palette_size == 0, "expected palette_size 0, got %d\n",
+               palette_size);
         }
 
         status = GdipGetPropertyCount(image, &prop_count);
-        ok(status == Ok, "%u: GdipGetPropertyCount error %d\n", i, status);
+        ok(status == Ok, "GdipGetPropertyCount error %d\n", status);
         todo_wine_if(td[i].image_data == pngimage || td[i].image_data == jpgimage || td[i].image_data == gifimage)
         ok(td[i].prop_count == prop_count || (td[i].prop_count2 != ~0 && td[i].prop_count2 == prop_count),
-           " %u: expected property count %u or %u, got %u\n",
-           i, td[i].prop_count, td[i].prop_count2, prop_count);
+           "expected property count %u or %u, got %u\n",
+           td[i].prop_count, td[i].prop_count2, prop_count);
 
         status = GdipGetPropertyItemSize(NULL, 0, &prop_size);
         expect(InvalidParameter, status);
@@ -3751,6 +3754,7 @@ static void test_image_properties(void)
         if (!(td[i].prop_count == prop_count || (td[i].prop_count2 != ~0 && td[i].prop_count2 == prop_count)))
         {
             GdipDisposeImage(image);
+            winetest_pop_context();
             continue;
         }
 
@@ -3783,8 +3787,8 @@ static void test_image_properties(void)
             expect(Ok, status);
             if (prop_count != 0)
                 ok(td[i].prop_id == prop_id[0] || (td[i].prop_id2 != ~0 && td[i].prop_id2 == prop_id[0]),
-                   " %u: expected property id %#x or %#x, got %#lx\n",
-                   i, td[i].prop_id, td[i].prop_id2, prop_id[0]);
+                   "expected property id %#x or %#x, got %#lx\n",
+                   td[i].prop_id, td[i].prop_id2, prop_id[0]);
         }
 
         if (status == Ok)
@@ -3797,30 +3801,32 @@ static void test_image_properties(void)
                 expect(Ok, status);
 
                 assert(sizeof(item) >= prop_size);
-                ok(prop_size > sizeof(PropertyItem), "%u: got too small prop_size %u\n",
-                   i, prop_size);
+                ok(prop_size > sizeof(PropertyItem), "got too small prop_size %u\n",
+                   prop_size);
                 ok(td[i].prop_size + sizeof(PropertyItem) == prop_size ||
                    (td[i].prop_size2 != ~0 && td[i].prop_size2 + sizeof(PropertyItem) == prop_size),
-                   " %u: expected property size (%u or %u)+%u, got %u\n",
-                   i, td[i].prop_size, td[i].prop_size2, (UINT) sizeof(PropertyItem), prop_size);
+                   "expected property size (%u or %u)+%u, got %u\n",
+                   td[i].prop_size, td[i].prop_size2, (UINT) sizeof(PropertyItem), prop_size);
 
                 status = GdipGetPropertyItem(image, prop_id[0], 0, &item.data);
                 ok(status == InvalidParameter || status == GenericError /* Win7 */,
-                   "%u: expected InvalidParameter, got %d\n", i, status);
+                   "expected InvalidParameter, got %d\n", status);
                 status = GdipGetPropertyItem(image, prop_id[0], prop_size - 1, &item.data);
                 ok(status == InvalidParameter || status == GenericError /* Win7 */,
-                   "%u: expected InvalidParameter, got %d\n", i, status);
+                   "expected InvalidParameter, got %d\n", status);
                 status = GdipGetPropertyItem(image, prop_id[0], prop_size + 1, &item.data);
                 ok(status == InvalidParameter || status == GenericError /* Win7 */,
-                   "%u: expected InvalidParameter, got %d\n", i, status);
+                   "expected InvalidParameter, got %d\n", status);
                 status = GdipGetPropertyItem(image, prop_id[0], prop_size, &item.data);
                 expect(Ok, status);
                 ok(prop_id[0] == item.data.id,
-                   "%u: expected property id %#lx, got %#lx\n", i, prop_id[0], item.data.id);
+                   "expected property id %#lx, got %#lx\n", prop_id[0], item.data.id);
             }
         }
 
         GdipDisposeImage(image);
+
+        winetest_pop_context();
     }
 }
 
