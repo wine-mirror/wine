@@ -168,7 +168,7 @@ static void write_fields(FILE *h, var_list_t *fields, enum name_type name_type)
     if (!fields) return;
 
     LIST_FOR_EACH_ENTRY( v, fields, var_t, entry ) {
-        if (!v || !v->declspec.type) continue;
+        if (!v->declspec.type) continue;
 
         switch(type_get_type_detect_alias(v->declspec.type)) {
         case TYPE_STRUCT:
@@ -185,7 +185,7 @@ static void write_fields(FILE *h, var_list_t *fields, enum name_type name_type)
 
     LIST_FOR_EACH_ENTRY( v, fields, var_t, entry ) {
         expr_t *contract = get_attrp(v->attrs, ATTR_CONTRACT);
-        if (!v || !v->declspec.type) continue;
+        if (!v->declspec.type) continue;
         if (contract) write_apicontract_guard_start(h, contract);
 
         indent(h, 0);
