@@ -54,7 +54,6 @@ struct received_message_info
     UINT  type;
     MSG   msg;
     UINT  flags;  /* InSendMessageEx return flags */
-    LRESULT result;
     struct received_message_info *prev;
 };
 
@@ -1258,7 +1257,6 @@ static BOOL reply_winproc_result( LRESULT result, HWND hwnd, UINT message, WPARA
     if (info->type == MSG_CLIENT_MESSAGE)
     {
         copy_reply( result, hwnd, message, info->msg.wParam, info->msg.lParam, wparam, lparam );
-        info->result = result;
         return TRUE;
     }
 
@@ -2879,16 +2877,12 @@ static BOOL process_packed_message( struct send_message_info *info, LRESULT *res
     receive_info.msg.lParam = info->lparam;
     receive_info.flags = 0;
     receive_info.prev = thread_info->receive_info;
-    receive_info.result = 0;
     thread_info->receive_info = &receive_info;
 
     *res_ptr = call_window_proc( info->hwnd, info->msg, info->wparam, info->lparam,
                                  !ansi, TRUE, info->wm_char, TRUE, buffer, buffer_size );
     if (thread_info->receive_info == &receive_info)
-    {
         thread_info->receive_info = receive_info.prev;
-        *res_ptr = receive_info.result;
-    }
     free( buffer );
     return TRUE;
 }
