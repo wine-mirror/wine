@@ -23,13 +23,12 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
                        libgl1-mesa-dev:amd64 libgl1-mesa-dev:i386 \
                        libgnutls28-dev:amd64 libgnutls28-dev:i386 \
                        libgphoto2-dev:amd64 libgphoto2-dev:i386 \
-                       libgstreamer-plugins-base1.0-dev:amd64 libgstreamer-plugins-base1.0-dev:i386 \
+                       libgstreamer-plugins-base1.0-dev:i386 \
                        libice-dev:amd64 libice-dev:i386 \
                        libkrb5-dev:amd64 libkrb5-dev:i386 \
-                       libldap-dev:amd64 libldap-dev:i386 \
-                       libopenal-dev:amd64 libopenal-dev:i386 \
                        libosmesa6-dev:amd64 libosmesa6-dev:i386 \
                        libpcap-dev:amd64 libpcap-dev:i386 \
+                       libpcsclite-dev:amd64 \
                        libpulse-dev:amd64 libpulse-dev:i386 \
                        libsane-dev:amd64 libsane-dev:i386 \
                        libsdl2-dev:amd64 libsdl2-dev:i386 \

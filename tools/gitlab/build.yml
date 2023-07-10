@@ -2,7 +2,7 @@
 
 .wine-build:
   stage: build
-  image: $CI_REGISTRY/wine/wine:debian-bullseye
+  image: $CI_REGISTRY/wine/wine:debian-bookworm
   interruptible: true
   variables:
     GIT_DEPTH: 0
@@ -64,7 +64,7 @@ build-daily-linux:
 
 build-winetest:
   stage: build
-  image: $CI_REGISTRY/wine/wine:debian-bullseye
+  image: $CI_REGISTRY/wine/wine:debian-bookworm
   rules:
     - if: $CI_PIPELINE_SOURCE == 'trigger' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   needs:

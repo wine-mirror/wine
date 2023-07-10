@@ -11,8 +11,8 @@ build-image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
   variables:
-    IMAGE_SOURCE: "$CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX/debian:bullseye"
-    IMAGE_LOCAL: "$CI_REGISTRY_IMAGE:debian-bullseye"
+    IMAGE_SOURCE: "$CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX/debian:bookworm"
+    IMAGE_LOCAL: "$CI_REGISTRY_IMAGE:debian-bookworm"
     DOCKER_FILE: "$CI_PROJECT_DIR/tools/gitlab/image.docker"
   script:
     - mkdir -p /kaniko/.docker
