@@ -3547,8 +3547,8 @@ NTSTATUS WINAPI wow64_NtUserSetClassLongPtr( UINT *args )
     {
         struct client_menu_name menu_name;
         struct client_menu_name32 *menu_name32 = UlongToPtr( newval );
-        NtUserSetClassLong( hwnd, offset,
-                            (UINT_PTR)client_menu_name_32to64( &menu_name, menu_name32 ), ansi );
+        NtUserSetClassLongPtr( hwnd, offset,
+                               (UINT_PTR)client_menu_name_32to64( &menu_name, menu_name32 ), ansi );
         client_menu_name_64to32( &menu_name, menu_name32 );
         return 0;
     }
