@@ -30,7 +30,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
-DECLSPEC_HIDDEN HINSTANCE shlwapi_hInstance = 0;
+HINSTANCE shlwapi_hInstance = 0;
 
 /*************************************************************************
  * SHLWAPI {SHLWAPI}
