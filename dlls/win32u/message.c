@@ -225,8 +225,7 @@ static BOOL init_win_proc_params( struct win_proc_params *params, HWND hwnd, UIN
 }
 
 static BOOL init_window_call_params( struct win_proc_params *params, HWND hwnd, UINT msg, WPARAM wParam,
-                                     LPARAM lParam, LRESULT *result, BOOL ansi,
-                                     enum wm_char_mapping mapping )
+                                     LPARAM lParam, BOOL ansi, enum wm_char_mapping mapping )
 {
     BOOL is_dialog;
     WND *win;
@@ -249,7 +248,7 @@ static BOOL init_window_call_params( struct win_proc_params *params, HWND hwnd, 
     params->msg = msg;
     params->wparam = wParam;
     params->lparam = lParam;
-    params->result = result;
+    params->result = NULL;
     params->ansi = ansi;
     params->needs_unpack = FALSE;
     params->mapping = mapping;
@@ -258,20 +257,22 @@ static BOOL init_window_call_params( struct win_proc_params *params, HWND hwnd, 
     return TRUE;
 }
 
-static BOOL dispatch_win_proc_params( struct win_proc_params *params, size_t size )
+static LRESULT dispatch_win_proc_params( struct win_proc_params *params, size_t size )
 {
     struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
+    LRESULT result = 0;
     void *ret_ptr;
     ULONG ret_len;
 
-    if (thread_info->recursion_count > MAX_WINPROC_RECURSION) return FALSE;
+    if (thread_info->recursion_count > MAX_WINPROC_RECURSION) return 0;
     thread_info->recursion_count++;
 
+    params->result = &result;
     KeUserModeCallback( NtUserCallWinProc, params, size, &ret_ptr, &ret_len );
-    if (ret_len == sizeof(*params->result)) *params->result = *(LRESULT *)ret_ptr;
+    if (ret_len == sizeof(result)) result = *(LRESULT *)ret_ptr;
 
     thread_info->recursion_count--;
-    return TRUE;
+    return result;
 }
 
 /* add a data field to a packed message */
@@ -1394,7 +1395,7 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     call_hooks( WH_CALLWNDPROC, HC_ACTION, same_thread, (LPARAM)&cwp, sizeof(cwp) );
 
     if (size && !(params = malloc( sizeof(*params) + size ))) return 0;
-    if (!init_window_call_params( params, hwnd, msg, wparam, lparam, &result, !unicode, mapping ))
+    if (!init_window_call_params( params, hwnd, msg, wparam, lparam, !unicode, mapping ))
     {
         if (params != &p) free( params );
         return 0;
@@ -1406,7 +1407,7 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
         params->ansi = FALSE;
         if (size) memcpy( params + 1, buffer, size );
     }
-    dispatch_win_proc_params( params, sizeof(*params) + size );
+    result = dispatch_win_proc_params( params, sizeof(*params) + size );
     if (params != &p) free( params );
 
     /* and finally the WH_CALLWNDPROCRET hook */
@@ -2750,12 +2751,10 @@ LRESULT WINAPI NtUserDispatchMessage( const MSG *msg )
     if (msg->lParam && msg->message == WM_TIMER)
     {
         params.func = (WNDPROC)msg->lParam;
-        params.result = &retval; /* FIXME */
         if (!init_win_proc_params( &params, msg->hwnd, msg->message,
                                    msg->wParam, NtGetTickCount(), FALSE ))
             return 0;
-        dispatch_win_proc_params( &params, sizeof(params) );
-        return retval;
+        return dispatch_win_proc_params( &params, sizeof(params) );
     }
     if (msg->message == WM_SYSTIMER)
     {
@@ -2776,8 +2775,8 @@ LRESULT WINAPI NtUserDispatchMessage( const MSG *msg )
     spy_enter_message( SPY_DISPATCHMESSAGE, msg->hwnd, msg->message, msg->wParam, msg->lParam );
 
     if (init_window_call_params( &params, msg->hwnd, msg->message, msg->wParam, msg->lParam,
-                                 &retval, FALSE, WMCHAR_MAP_DISPATCHMESSAGE ))
-        dispatch_win_proc_params( &params, sizeof(params) );
+                                 FALSE, WMCHAR_MAP_DISPATCHMESSAGE ))
+        retval = dispatch_win_proc_params( &params, sizeof(params) );
     else if (!is_window( msg->hwnd )) RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
     else RtlSetLastWin32Error( ERROR_MESSAGE_SYNC_ONLY );
 
@@ -3184,7 +3183,7 @@ static BOOL process_message( struct send_message_info *info, DWORD_PTR *res_ptr,
         /* if we're called from client side and need just a simple winproc call,
          * just fill dispatch params and let user32 do the rest */
         return init_window_call_params( info->params, info->hwnd, info->msg, info->wparam, info->lparam,
-                                        NULL, ansi, info->wm_char );
+                                        ansi, info->wm_char );
     }
 
     thread_info->msg_source = msg_source_unavailable;
@@ -3545,7 +3544,7 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
     case NtUserGetDispatchParams:
         if (!hwnd) return FALSE;
         if (init_window_call_params( result_info, hwnd, msg, wparam, lparam,
-                                     NULL, ansi, WMCHAR_MAP_DISPATCHMESSAGE ))
+                                     ansi, WMCHAR_MAP_DISPATCHMESSAGE ))
             return TRUE;
         if (!is_window( hwnd )) RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
         else RtlSetLastWin32Error( ERROR_MESSAGE_SYNC_ONLY );
