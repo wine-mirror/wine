@@ -248,7 +248,6 @@ static BOOL init_window_call_params( struct win_proc_params *params, HWND hwnd, 
     params->msg = msg;
     params->wparam = wParam;
     params->lparam = lParam;
-    params->result = NULL;
     params->ansi = ansi;
     params->needs_unpack = FALSE;
     params->mapping = mapping;
@@ -267,7 +266,6 @@ static LRESULT dispatch_win_proc_params( struct win_proc_params *params, size_t 
     if (thread_info->recursion_count > MAX_WINPROC_RECURSION) return 0;
     thread_info->recursion_count++;
 
-    params->result = &result;
     KeUserModeCallback( NtUserCallWinProc, params, size, &ret_ptr, &ret_len );
     if (ret_len == sizeof(result)) result = *(LRESULT *)ret_ptr;
 

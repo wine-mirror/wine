@@ -147,7 +147,6 @@ struct win_proc_params
     UINT msg;
     WPARAM wparam;
     LPARAM lparam;
-    LRESULT *result;
     BOOL ansi;
     BOOL ansi_dst;
     BOOL needs_unpack;

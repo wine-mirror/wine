@@ -1181,8 +1181,7 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
 
 BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
 {
-    LRESULT result, *result_ptr = params->result;
-    params->result = &result;
+    LRESULT result;
 
     if (params->needs_unpack)
     {
@@ -1213,14 +1212,8 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
     else
     {
         result = dispatch_win_proc_params( params );
-        if (result_ptr)
-        {
-            *result_ptr = result;
-            return TRUE;
-        }
-        NtCallbackReturn( &result, sizeof(result), TRUE );
     }
-    return TRUE;
+    return NtCallbackReturn( &result, sizeof(result), TRUE );
 }
 
 BOOL WINAPI User32CallSendAsyncCallback( const struct send_async_params *params, ULONG size )
