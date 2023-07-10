@@ -488,7 +488,7 @@ NTSTATUS WINAPI wow64_NtSetInformationToken( UINT *args )
 
     default:
         FIXME( "unsupported class %u\n", class );
-        return STATUS_INVALID_INFO_CLASS;
+        return STATUS_NOT_IMPLEMENTED;
     }
 }
 
