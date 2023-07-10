@@ -1,6 +1,7 @@
 TESTDLL   = kernelbase.dll
 
 C_SRCS = \
+	file.c \
 	path.c \
 	process.c \
 	sync.c

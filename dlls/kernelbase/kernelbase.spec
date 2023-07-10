@@ -1232,6 +1232,7 @@
 @ stdcall QueryDosDeviceW(wstr ptr long)
 @ stdcall QueryFullProcessImageNameA(ptr long ptr ptr)
 @ stdcall QueryFullProcessImageNameW(ptr long ptr ptr)
+@ stdcall QueryIoRingCapabilities(ptr)
 # @ stub QueryIdleProcessorCycleTime
 # @ stub QueryIdleProcessorCycleTimeEx
 @ stdcall QueryInterruptTime(ptr)
