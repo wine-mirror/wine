@@ -30,6 +30,6 @@ static inline uint32_t read_u32(const char **ptr)
     return r;
 }
 
-void skip_u32_unknown(const char **ptr, unsigned int count) DECLSPEC_HIDDEN;
+void skip_u32_unknown(const char **ptr, unsigned int count);
 
 #endif /* __WINE_UTILS_H */
