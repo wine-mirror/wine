@@ -20,6 +20,7 @@ PO_SRCS = \
 	hu.po \
 	it.po \
 	ja.po \
+	ka.po \
 	ko.po \
 	lt.po \
 	ml.po \
