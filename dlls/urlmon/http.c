@@ -17,8 +17,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
-
 #include "urlmon_main.h"
 #include "wininet.h"
 
@@ -251,7 +249,7 @@ static ULONG send_http_request(HttpProtocol *This)
         switch(This->base.bind_info.stgmedData.tymed) {
         case TYMED_HGLOBAL:
             /* Native does not use GlobalLock/GlobalUnlock, so we won't either */
-            send_buffer.lpvBuffer = This->base.bind_info.stgmedData.u.hGlobal;
+            send_buffer.lpvBuffer = This->base.bind_info.stgmedData.hGlobal;
             send_buffer.dwBufferLength = send_buffer.dwBufferTotal = This->base.bind_info.cbstgmedData;
             break;
         case TYMED_ISTREAM: {
@@ -259,7 +257,7 @@ static ULONG send_http_request(HttpProtocol *This)
 
             send_buffer.dwBufferTotal = This->base.bind_info.cbstgmedData;
             if(!This->base.post_stream) {
-                This->base.post_stream = This->base.bind_info.stgmedData.u.pstm;
+                This->base.post_stream = This->base.bind_info.stgmedData.pstm;
                 IStream_AddRef(This->base.post_stream);
             }
 
@@ -791,7 +789,7 @@ static HRESULT WINAPI HttpProtocol_Seek(IInternetProtocolEx *iface, LARGE_INTEGE
         DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
 {
     HttpProtocol *This = impl_from_IInternetProtocolEx(iface);
-    FIXME("(%p)->(%ld %ld %p)\n", This, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
+    FIXME("(%p)->(%ld %ld %p)\n", This, dlibMove.LowPart, dwOrigin, plibNewPosition);
     return E_NOTIMPL;
 }
 

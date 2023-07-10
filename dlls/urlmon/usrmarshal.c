@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
-
 #include "urlmon_main.h"
 
 #include "wine/debug.h"
@@ -93,7 +91,7 @@ static HRESULT marshal_stgmed(STGMEDIUM *stgmed, RemSTGMEDIUM **ret)
     ULONG size = 0;
     HRESULT hres = S_OK;
 
-    if((stgmed->tymed == TYMED_ISTREAM && stgmed->u.pstm) || stgmed->pUnkForRelease) {
+    if((stgmed->tymed == TYMED_ISTREAM && stgmed->pstm) || stgmed->pUnkForRelease) {
         hres = CreateStreamOnHGlobal(NULL, TRUE, &stream);
         if(FAILED(hres))
             return hres;
@@ -103,8 +101,8 @@ static HRESULT marshal_stgmed(STGMEDIUM *stgmed, RemSTGMEDIUM **ret)
     case TYMED_NULL:
         break;
     case TYMED_ISTREAM:
-        if(stgmed->u.pstm)
-            hres = CoMarshalInterface(stream, &IID_IStream, (IUnknown*)stgmed->u.pstm,
+        if(stgmed->pstm)
+            hres = CoMarshalInterface(stream, &IID_IStream, (IUnknown*)stgmed->pstm,
                                       MSHCTX_LOCAL, NULL, MSHLFLAGS_NORMAL);
         break;
     default:
@@ -140,7 +138,7 @@ static HRESULT marshal_stgmed(STGMEDIUM *stgmed, RemSTGMEDIUM **ret)
 
     rem_stgmed->tymed = stgmed->tymed;
     rem_stgmed->dwHandleType = 0;
-    rem_stgmed->pData = stgmed->u.pstm != NULL;
+    rem_stgmed->pData = stgmed->pstm != NULL;
     rem_stgmed->pUnkForRelease = stgmed->pUnkForRelease != NULL;
     rem_stgmed->cbData = size;
     if(stream) {
@@ -181,7 +179,7 @@ static HRESULT unmarshal_stgmed(RemSTGMEDIUM *rem_stgmed, STGMEDIUM *stgmed)
         break;
     case TYMED_ISTREAM:
         if(rem_stgmed->pData)
-            hres = CoUnmarshalInterface(stream, &IID_IStream, (void**)&stgmed->u.pstm);
+            hres = CoUnmarshalInterface(stream, &IID_IStream, (void**)&stgmed->pstm);
         break;
     default:
         FIXME("unsupported tymed %lu\n", stgmed->tymed);
