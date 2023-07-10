@@ -188,7 +188,6 @@ struct draw_text_params
     HDC hdc;
     int count;
     RECT rect;
-    RECT *ret_rect; /* FIXME: Use NtCallbackReturn instead */
     UINT flags;
     WCHAR str[1];
 };

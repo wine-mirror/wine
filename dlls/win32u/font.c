@@ -7097,7 +7097,6 @@ INT WINAPI DECLSPEC_HIDDEN DrawTextW( HDC hdc, const WCHAR *str, INT count, RECT
     if (!(params = malloc( size ))) return 0;
     params->hdc = hdc;
     params->rect = *rect;
-    params->ret_rect = rect;
     params->flags = flags;
     if (count) memcpy( params->str, str, count * sizeof(WCHAR) );
     ret = KeUserModeCallback( NtUserDrawText, params, size, &ret_ptr, &ret_len );
