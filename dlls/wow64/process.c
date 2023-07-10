@@ -435,6 +435,9 @@ NTSTATUS WINAPI wow64_NtFlushInstructionCache( UINT *args )
     const void *addr = get_ptr( &args );
     SIZE_T size = get_ulong( &args );
 
+    if (pBTCpuNotifyFlushInstructionCache2 && RtlIsCurrentProcess( process ))
+        pBTCpuNotifyFlushInstructionCache2( addr, size );
+
     return NtFlushInstructionCache( process, addr, size );
 }
 
