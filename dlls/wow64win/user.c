@@ -1467,10 +1467,10 @@ NTSTATUS WINAPI wow64_NtUserCreateWindowEx( UINT *args )
     int height = get_ulong( &args );
     HWND parent = get_handle( &args );
     HMENU menu = get_handle( &args );
-    HINSTANCE instance = get_handle( &args );
+    HINSTANCE instance = get_ptr( &args );
     void *params = get_ptr( &args );
     DWORD flags = get_ulong( &args );
-    HINSTANCE client_instance = get_handle( &args );
+    HINSTANCE client_instance = get_ptr( &args );
     DWORD unk = get_ulong( &args );
     BOOL ansi = get_ulong( &args );
 
@@ -1856,7 +1856,7 @@ NTSTATUS WINAPI wow64_NtUserGetClassInfoEx( UINT *args )
     wc32->lpfnWndProc = PtrToUlong( wc.lpfnWndProc );
     wc32->cbClsExtra = wc.cbClsExtra;
     wc32->cbWndExtra = wc.cbWndExtra;
-    wc32->hInstance = HandleToUlong( wc.hInstance );
+    wc32->hInstance = PtrToUlong( wc.hInstance );
     wc32->hIcon = HandleToUlong( wc.hIcon );
     wc32->hCursor = HandleToUlong( wc.hCursor );
     wc32->hbrBackground = HandleToUlong( wc.hbrBackground );
@@ -3810,7 +3810,7 @@ NTSTATUS WINAPI wow64_NtUserSetWinEventHook( UINT *args )
 {
     DWORD event_min = get_ulong( &args );
     DWORD event_max = get_ulong( &args );
-    HMODULE inst = get_handle( &args );
+    HMODULE inst = get_ptr( &args );
     UNICODE_STRING32 *module32 = get_ptr( &args );
     WINEVENTPROC proc = get_ptr(&args );
     DWORD pid = get_ulong( &args );
@@ -3886,7 +3886,7 @@ NTSTATUS WINAPI wow64_NtUserSetWindowWord( UINT *args )
 
 NTSTATUS WINAPI wow64_NtUserSetWindowsHookEx( UINT *args )
 {
-    HINSTANCE inst = get_handle( &args );
+    HINSTANCE inst = get_ptr( &args );
     UNICODE_STRING32 *module32 = get_ptr( &args );
     DWORD tid = get_ulong( &args );
     INT id = get_ulong( &args );
