@@ -56,11 +56,11 @@ struct transform
     cmsHTRANSFORM cmstransform;
 };
 
-extern HANDLE alloc_handle( struct object *obj ) DECLSPEC_HIDDEN;
-extern void free_handle( HANDLE ) DECLSPEC_HIDDEN;
+extern HANDLE alloc_handle( struct object *obj );
+extern void free_handle( HANDLE );
 
-struct object *grab_object( HANDLE, enum object_type ) DECLSPEC_HIDDEN;
-void release_object( struct object * ) DECLSPEC_HIDDEN;
+struct object *grab_object( HANDLE, enum object_type );
+void release_object( struct object * );
 
 struct tag_entry
 {
@@ -69,12 +69,12 @@ struct tag_entry
     DWORD size;
 };
 
-extern DWORD get_tag_count( const struct profile * ) DECLSPEC_HIDDEN;
-extern BOOL get_tag_entry( const struct profile *, DWORD, struct tag_entry * ) DECLSPEC_HIDDEN;
-extern BOOL get_adjusted_tag( const struct profile *, TAGTYPE, struct tag_entry * ) DECLSPEC_HIDDEN;
-extern BOOL get_tag_data( const struct profile *, TAGTYPE, DWORD, void *, DWORD *, BOOL * ) DECLSPEC_HIDDEN;
-extern BOOL set_tag_data( const struct profile *, TAGTYPE, DWORD, const void *, DWORD * ) DECLSPEC_HIDDEN;
-extern void get_profile_header( const struct profile *, PROFILEHEADER * ) DECLSPEC_HIDDEN;
-extern void set_profile_header( const struct profile *, const PROFILEHEADER * ) DECLSPEC_HIDDEN;
+extern DWORD get_tag_count( const struct profile * );
+extern BOOL get_tag_entry( const struct profile *, DWORD, struct tag_entry * );
+extern BOOL get_adjusted_tag( const struct profile *, TAGTYPE, struct tag_entry * );
+extern BOOL get_tag_data( const struct profile *, TAGTYPE, DWORD, void *, DWORD *, BOOL * );
+extern BOOL set_tag_data( const struct profile *, TAGTYPE, DWORD, const void *, DWORD * );
+extern void get_profile_header( const struct profile *, PROFILEHEADER * );
+extern void set_profile_header( const struct profile *, const PROFILEHEADER * );
 
-extern const char *dbgstr_tag(DWORD) DECLSPEC_HIDDEN;
+extern const char *dbgstr_tag(DWORD);
