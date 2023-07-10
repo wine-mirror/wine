@@ -72,7 +72,7 @@ extern LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UIN
 extern INT_PTR WINPROC_CallDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;
 extern INT_PTR WINPROC_CallDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;
 extern void winproc_init(void) DECLSPEC_HIDDEN;
-extern void dispatch_win_proc_params( struct win_proc_params *params ) DECLSPEC_HIDDEN;
+extern LRESULT dispatch_win_proc_params( struct win_proc_params *params ) DECLSPEC_HIDDEN;
 
 extern ATOM get_class_info( HINSTANCE instance, const WCHAR *name, WNDCLASSEXW *info,
                             UNICODE_STRING *name_str, BOOL ansi ) DECLSPEC_HIDDEN;

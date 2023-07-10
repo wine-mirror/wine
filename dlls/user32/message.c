@@ -586,11 +586,10 @@ static LRESULT dispatch_send_message( struct win_proc_params *params, WPARAM wpa
 
     thread_info->recursion_count++;
 
-    params->result = &retval;
     thread_info->msg_source = msg_source_unavailable;
     SPY_EnterMessage( SPY_SENDMESSAGE, params->hwnd, params->msg, params->wparam, params->lparam );
 
-    dispatch_win_proc_params( params );
+    retval = dispatch_win_proc_params( params );
 
     SPY_ExitMessage( SPY_RESULT_OK, params->hwnd, params->msg, retval, params->wparam, params->lparam );
     thread_info->msg_source = prev_source;
@@ -850,10 +849,9 @@ static LRESULT dispatch_message( const MSG *msg, BOOL ansi )
 
     if (!NtUserMessageCall( msg->hwnd, msg->message, msg->wParam, msg->lParam,
                             &params, NtUserGetDispatchParams, ansi )) return 0;
-    params.result = &retval;
 
     SPY_EnterMessage( SPY_DISPATCHMESSAGE, msg->hwnd, msg->message, msg->wParam, msg->lParam );
-    dispatch_win_proc_params( &params );
+    retval = dispatch_win_proc_params( &params );
     SPY_ExitMessage( SPY_RESULT_OK, msg->hwnd, msg->message, retval, msg->wParam, msg->lParam );
     return retval;
 }

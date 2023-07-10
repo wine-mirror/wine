@@ -712,36 +712,38 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
 }
 
 
-void dispatch_win_proc_params( struct win_proc_params *params )
+LRESULT dispatch_win_proc_params( struct win_proc_params *params )
 {
     DPI_AWARENESS_CONTEXT context = SetThreadDpiAwarenessContext( params->dpi_awareness );
+    LRESULT result = 0;
 
     if (!params->ansi)
     {
         if (params->procW == WINPROC_PROC16)
             WINPROC_CallProcWtoA( wow_handlers.call_window_proc, params->hwnd, params->msg, params->wparam,
-                                  params->lparam, params->result, params->func );
+                                  params->lparam, &result, params->func );
         else if (!params->ansi_dst)
             call_window_proc( params->hwnd, params->msg, params->wparam, params->lparam,
-                              params->result, params->procW );
+                              &result, params->procW );
         else
             WINPROC_CallProcWtoA( call_window_proc, params->hwnd, params->msg, params->wparam,
-                                  params->lparam, params->result, params->procA );
+                                  params->lparam, &result, params->procA );
     }
     else
     {
         if (params->procA == WINPROC_PROC16)
             wow_handlers.call_window_proc( params->hwnd, params->msg, params->wparam, params->lparam,
-                                           params->result, params->func );
+                                           &result, params->func );
         else if (!params->ansi_dst)
             WINPROC_CallProcAtoW( call_window_proc, params->hwnd, params->msg, params->wparam,
-                                  params->lparam, params->result, params->procW, params->mapping );
+                                  params->lparam, &result, params->procW, params->mapping );
         else
             call_window_proc( params->hwnd, params->msg, params->wparam, params->lparam,
-                              params->result, params->procA );
+                              &result, params->procA );
     }
 
     SetThreadDpiAwarenessContext( context );
+    return result;
 }
 
 /* make sure that there is space for 'size' bytes in buffer, growing it if needed */
@@ -1201,7 +1203,7 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
                              &params->lparam, &buffer, size ))
             return 0;
 
-        dispatch_win_proc_params( params );
+        result = dispatch_win_proc_params( params );
 
         NtUserMessageCall( params->hwnd, params->msg, params->wparam, params->lparam,
                            (void *)result, NtUserWinProcResult, FALSE );
@@ -1210,7 +1212,7 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
     }
     else
     {
-        dispatch_win_proc_params( params );
+        result = dispatch_win_proc_params( params );
         if (result_ptr)
         {
             *result_ptr = result;
@@ -1254,14 +1256,11 @@ BOOL WINAPI User32CallSendAsyncCallback( const struct send_async_params *params,
 LRESULT WINAPI CallWindowProcA( WNDPROC func, HWND hwnd, UINT msg, WPARAM wParam,  LPARAM lParam )
 {
     struct win_proc_params params;
-    LRESULT result;
 
     params.func = func;
-    params.result = &result;
     if (!NtUserMessageCall( hwnd, msg, wParam, lParam, &params, NtUserCallWindowProc, TRUE ))
         return 0;
-    dispatch_win_proc_params( &params );
-    return result;
+    return dispatch_win_proc_params( &params );
 }
 
 
@@ -1273,14 +1272,11 @@ LRESULT WINAPI CallWindowProcA( WNDPROC func, HWND hwnd, UINT msg, WPARAM wParam
 LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     struct win_proc_params params;
-    LRESULT result;
 
     params.func = func;
-    params.result = &result;
     if (!NtUserMessageCall( hwnd, msg, wParam, lParam, &params, NtUserCallWindowProc, FALSE ))
         return 0;
-    dispatch_win_proc_params( &params );
-    return result;
+    return dispatch_win_proc_params( &params );
 }
 
 
