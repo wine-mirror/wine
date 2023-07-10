@@ -19,8 +19,6 @@
 
 #include <stdarg.h>
 
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -92,7 +90,7 @@ BOOL WINAPI TrustIsCertificateSelfSigned( PCCERT_CONTEXT cert )
                 if (directoryName)
                 {
                     ret = CertCompareCertificateName(cert->dwCertEncodingType,
-                     &directoryName->u.DirectoryName, &cert->pCertInfo->Issuer)
+                     &directoryName->DirectoryName, &cert->pCertInfo->Issuer)
                      && CertCompareIntegerBlob(&info->AuthorityCertSerialNumber,
                      &cert->pCertInfo->SerialNumber);
                 }
@@ -213,10 +211,10 @@ static CRYPT_PROVIDER_DATA *WINTRUST_AllocateProviderData(void)
         goto oom;
     provData->cdwTrustStepErrors = TRUSTERROR_MAX_STEPS;
 
-    provData->u.pPDSip = WINTRUST_Alloc(sizeof(PROVDATA_SIP));
-    if (!provData->u.pPDSip)
+    provData->pPDSip = WINTRUST_Alloc(sizeof(PROVDATA_SIP));
+    if (!provData->pPDSip)
         goto oom;
-    provData->u.pPDSip->cbStruct = sizeof(PROVDATA_SIP);
+    provData->pPDSip->cbStruct = sizeof(PROVDATA_SIP);
 
     provData->psPfns = WINTRUST_Alloc(sizeof(CRYPT_PROVIDER_FUNCTIONS));
     if (!provData->psPfns)
@@ -228,7 +226,7 @@ oom:
     if (provData)
     {
         WINTRUST_Free(provData->padwTrustStepErrors);
-        WINTRUST_Free(provData->u.pPDSip);
+        WINTRUST_Free(provData->pPDSip);
         WINTRUST_Free(provData->psPfns);
         WINTRUST_Free(provData);
     }
@@ -312,7 +310,7 @@ static LONG WINTRUST_DefaultVerify(HWND hwnd, GUID *actionID,
 
 error:
     WINTRUST_Free(provData->padwTrustStepErrors);
-    WINTRUST_Free(provData->u.pPDSip);
+    WINTRUST_Free(provData->pPDSip);
     WINTRUST_Free(provData->psPfns);
     WINTRUST_Free(provData);
 
@@ -335,7 +333,7 @@ static LONG WINTRUST_DefaultClose(HWND hwnd, GUID *actionID,
             err = provData->psPfns->pfnCleanupPolicy(provData);
 
         WINTRUST_Free(provData->padwTrustStepErrors);
-        WINTRUST_Free(provData->u.pPDSip);
+        WINTRUST_Free(provData->pPDSip);
         WINTRUST_Free(provData->psPfns);
         WINTRUST_Free(provData);
         data->hWVTStateData = NULL;
@@ -371,7 +369,7 @@ static LONG WINTRUST_PublishedSoftware(HWND hwnd, GUID *actionID,
     TRACE("subjectFile->lpPath: %s\n", debugstr_w(subjectFile->lpPath));
     fileInfo.pcwszFilePath = subjectFile->lpPath;
     fileInfo.hFile = subjectFile->hFile;
-    wintrust_data.u.pFile = &fileInfo;
+    wintrust_data.pFile = &fileInfo;
     wintrust_data.dwUnionChoice = WTD_CHOICE_FILE;
     wintrust_data.dwUIChoice = WTD_UI_NONE;
 
@@ -395,16 +393,16 @@ static HRESULT WINAPI WINTRUST_CertVerifyObjTrust(CRYPT_PROVIDER_DATA *data)
     switch (data->pWintrustData->dwUnionChoice)
     {
     case WTD_CHOICE_BLOB:
-        if (data->pWintrustData->u.pBlob &&
+        if (data->pWintrustData->pBlob &&
          WVT_IS_CBSTRUCT_GT_MEMBEROFFSET(WINTRUST_BLOB_INFO,
-         data->pWintrustData->u.pBlob->cbStruct, pbMemObject) &&
-         data->pWintrustData->u.pBlob->cbMemObject ==
+         data->pWintrustData->pBlob->cbStruct, pbMemObject) &&
+         data->pWintrustData->pBlob->cbMemObject ==
          sizeof(CERT_VERIFY_CERTIFICATE_TRUST) &&
-         data->pWintrustData->u.pBlob->pbMemObject)
+         data->pWintrustData->pBlob->pbMemObject)
         {
             CERT_VERIFY_CERTIFICATE_TRUST *pCert =
              (CERT_VERIFY_CERTIFICATE_TRUST *)
-             data->pWintrustData->u.pBlob->pbMemObject;
+             data->pWintrustData->pBlob->pbMemObject;
 
             if (pCert->cbSize == sizeof(CERT_VERIFY_CERTIFICATE_TRUST) &&
              pCert->pccert)
@@ -503,7 +501,7 @@ static LONG WINTRUST_CertVerify(HWND hwnd, GUID *actionID,
 
 error:
     WINTRUST_Free(provData->padwTrustStepErrors);
-    WINTRUST_Free(provData->u.pPDSip);
+    WINTRUST_Free(provData->pPDSip);
     WINTRUST_Free(provData->psPfns);
     WINTRUST_Free(provData);
 
@@ -641,19 +639,19 @@ static void dump_wintrust_data(WINTRUST_DATA *data)
         switch (data->dwUnionChoice)
         {
         case WTD_CHOICE_FILE:
-            dump_file_info(data->u.pFile);
+            dump_file_info(data->pFile);
             break;
         case WTD_CHOICE_CATALOG:
-            dump_catalog_info(data->u.pCatalog);
+            dump_catalog_info(data->pCatalog);
             break;
         case WTD_CHOICE_BLOB:
-            dump_blob_info(data->u.pBlob);
+            dump_blob_info(data->pBlob);
             break;
         case WTD_CHOICE_SIGNER:
-            dump_sgnr_info(data->u.pSgnr);
+            dump_sgnr_info(data->pSgnr);
             break;
         case WTD_CHOICE_CERT:
-            dump_cert_info(data->u.pCert);
+            dump_cert_info(data->pCert);
             break;
         }
         TRACE("dwStateAction: %ld\n", data->dwStateAction);
@@ -828,7 +826,7 @@ LPCWSTR WINAPI WTHelperGetFileName(WINTRUST_DATA *data)
 {
     TRACE("%p\n",data);
     if (data->dwUnionChoice == WTD_CHOICE_FILE)
-        return data->u.pFile->pcwszFilePath;
+        return data->pFile->pcwszFilePath;
     else
         return NULL;
 }
@@ -840,7 +838,7 @@ HANDLE WINAPI WTHelperGetFileHandle(WINTRUST_DATA *data)
 {
     TRACE("%p\n",data);
     if (data->dwUnionChoice == WTD_CHOICE_FILE)
-        return data->u.pFile->hFile;
+        return data->pFile->hFile;
     else
         return INVALID_HANDLE_VALUE;
 }

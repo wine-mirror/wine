@@ -21,7 +21,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <assert.h>
-#define NONAMELESSUNION
+
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -147,8 +147,8 @@ BOOL WINAPI WVTAsn1SpcLinkEncode(DWORD dwCertEncodingType,
             DWORD fileNameLen, fileNameLenBytes;
             LPWSTR ptr;
 
-            fileNameLen = link->u.pwszFile ?
-             lstrlenW(link->u.pwszFile) * sizeof(WCHAR) : 0;
+            fileNameLen = link->pwszFile ?
+             lstrlenW(link->pwszFile) * sizeof(WCHAR) : 0;
             CRYPT_EncodeLen(fileNameLen, NULL, &fileNameLenBytes);
             CRYPT_EncodeLen(1 + fileNameLenBytes + fileNameLen, NULL,
              &lenBytes);
@@ -173,7 +173,7 @@ BOOL WINAPI WVTAsn1SpcLinkEncode(DWORD dwCertEncodingType,
                 *pbEncoded++ = ASN_CONTEXT;
                 CRYPT_EncodeLen(fileNameLen, pbEncoded, &fileNameLenBytes);
                 pbEncoded += fileNameLenBytes;
-                for (ptr = link->u.pwszFile; ptr && *ptr; ptr++)
+                for (ptr = link->pwszFile; ptr && *ptr; ptr++)
                 {
                     *(WCHAR *)pbEncoded = hton16(*ptr);
                     pbEncoded += sizeof(WCHAR);
@@ -185,14 +185,14 @@ BOOL WINAPI WVTAsn1SpcLinkEncode(DWORD dwCertEncodingType,
         case SPC_MONIKER_LINK_CHOICE:
         {
             DWORD classIdLenBytes, dataLenBytes, dataLen;
-            CRYPT_DATA_BLOB classId = { sizeof(link->u.Moniker.ClassId),
-             (BYTE *)link->u.Moniker.ClassId };
+            CRYPT_DATA_BLOB classId = { sizeof(link->Moniker.ClassId),
+             (BYTE *)link->Moniker.ClassId };
 
             CRYPT_EncodeLen(classId.cbData, NULL, &classIdLenBytes);
-            CRYPT_EncodeLen(link->u.Moniker.SerializedData.cbData, NULL,
+            CRYPT_EncodeLen(link->Moniker.SerializedData.cbData, NULL,
              &dataLenBytes);
             dataLen = 2 + classIdLenBytes + classId.cbData +
-             dataLenBytes + link->u.Moniker.SerializedData.cbData;
+             dataLenBytes + link->Moniker.SerializedData.cbData;
             CRYPT_EncodeLen(dataLen, NULL, &lenBytes);
             bytesNeeded = 1 + dataLen + lenBytes;
             if (!pbEncoded)
@@ -217,9 +217,9 @@ BOOL WINAPI WVTAsn1SpcLinkEncode(DWORD dwCertEncodingType,
                 CRYPT_AsnEncodeOctets(X509_ASN_ENCODING, NULL, &classId,
                  pbEncoded, &size);
                 pbEncoded += size;
-                size = 1 + dataLenBytes + link->u.Moniker.SerializedData.cbData;
+                size = 1 + dataLenBytes + link->Moniker.SerializedData.cbData;
                 CRYPT_AsnEncodeOctets(X509_ASN_ENCODING, NULL,
-                 &link->u.Moniker.SerializedData, pbEncoded, &size);
+                 &link->Moniker.SerializedData, pbEncoded, &size);
                 pbEncoded += size;
                 ret = TRUE;
             }
@@ -233,7 +233,7 @@ BOOL WINAPI WVTAsn1SpcLinkEncode(DWORD dwCertEncodingType,
             /* Check for invalid characters in URL */
             ret = TRUE;
             urlLen = 0;
-            for (ptr = link->u.pwszUrl; ptr && *ptr && ret; ptr++)
+            for (ptr = link->pwszUrl; ptr && *ptr && ret; ptr++)
                 if (*ptr > 0x7f)
                 {
                     *pcbEncoded = 0;
@@ -260,7 +260,7 @@ BOOL WINAPI WVTAsn1SpcLinkEncode(DWORD dwCertEncodingType,
                     *pbEncoded++ = ASN_CONTEXT;
                     CRYPT_EncodeLen(urlLen, pbEncoded, &lenBytes);
                     pbEncoded += lenBytes;
-                    for (ptr = link->u.pwszUrl; ptr && *ptr; ptr++)
+                    for (ptr = link->pwszUrl; ptr && *ptr; ptr++)
                         *pbEncoded++ = (BYTE)*ptr;
                 }
             }
@@ -1256,10 +1256,10 @@ static BOOL CRYPT_AsnDecodeSPCLinkInternal(DWORD dwCertEncodingType,
 
                 link->dwLinkChoice = SPC_URL_LINK_CHOICE;
                 for (i = 0; i < dataLen; i++)
-                    link->u.pwszUrl[i] =
+                    link->pwszUrl[i] =
                      *(pbEncoded + 1 + lenBytes + i);
-                link->u.pwszUrl[i] = '\0';
-                TRACE("returning url %s\n", debugstr_w(link->u.pwszUrl));
+                link->pwszUrl[i] = '\0';
+                TRACE("returning url %s\n", debugstr_w(link->pwszUrl));
             }
             break;
         case ASN_CONSTRUCTOR | ASN_CONTEXT | 1:
@@ -1306,13 +1306,13 @@ static BOOL CRYPT_AsnDecodeSPCLinkInternal(DWORD dwCertEncodingType,
                             /* pwszFile pointer was set by caller, copy it
                              * before overwriting it
                              */
-                            link->u.Moniker.SerializedData.pbData =
-                             (BYTE *)link->u.pwszFile;
-                            memcpy(link->u.Moniker.ClassId, classId.pbData,
+                            link->Moniker.SerializedData.pbData =
+                             (BYTE *)link->pwszFile;
+                            memcpy(link->Moniker.ClassId, classId.pbData,
                              classId.cbData);
-                            memcpy(link->u.Moniker.SerializedData.pbData,
+                            memcpy(link->Moniker.SerializedData.pbData,
                              data.pbData, data.cbData);
-                            link->u.Moniker.SerializedData.cbData = data.cbData;
+                            link->Moniker.SerializedData.cbData = data.cbData;
                         }
                     }
                 }
@@ -1344,10 +1344,10 @@ static BOOL CRYPT_AsnDecodeSPCLinkInternal(DWORD dwCertEncodingType,
 
                     link->dwLinkChoice = SPC_FILE_LINK_CHOICE;
                     for (i = 0; i < dataLen / sizeof(WCHAR); i++)
-                        link->u.pwszFile[i] =
+                        link->pwszFile[i] =
                          hton16(*(const WORD *)(ptr + i * sizeof(WCHAR)));
-                    link->u.pwszFile[realDataLen / sizeof(WCHAR)] = '\0';
-                    TRACE("returning file %s\n", debugstr_w(link->u.pwszFile));
+                    link->pwszFile[realDataLen / sizeof(WCHAR)] = '\0';
+                    TRACE("returning file %s\n", debugstr_w(link->pwszFile));
                 }
             }
             else
@@ -1366,7 +1366,7 @@ static BOOL CRYPT_AsnDecodeSPCLinkInternal(DWORD dwCertEncodingType,
                     PSPC_LINK link = pvStructInfo;
 
                     link->dwLinkChoice = SPC_FILE_LINK_CHOICE;
-                    link->u.pwszFile[0] = '\0';
+                    link->pwszFile[0] = '\0';
                     ret = TRUE;
                 }
             }
@@ -1408,7 +1408,7 @@ BOOL WINAPI WVTAsn1SpcLinkDecode(DWORD dwCertEncodingType,
             {
                 SPC_LINK *link = pvStructInfo;
 
-                link->u.pwszFile =
+                link->pwszFile =
                  (LPWSTR)((BYTE *)pvStructInfo + sizeof(SPC_LINK));
                 ret = CRYPT_AsnDecodeSPCLinkInternal(dwCertEncodingType,
                  lpszStructType, pbEncoded, cbEncoded, dwFlags, pvStructInfo,
@@ -1773,7 +1773,7 @@ static BOOL WINAPI CRYPT_AsnDecodeSPCLinkPointer(DWORD dwCertEncodingType,
                 /* Set imageData's pointer if necessary */
                 if (size > sizeof(SPC_LINK))
                 {
-                    (*pLink)->u.pwszUrl =
+                    (*pLink)->pwszUrl =
                      (LPWSTR)((BYTE *)*pLink + sizeof(SPC_LINK));
                 }
                 ret = CRYPT_AsnDecodeSPCLinkInternal(dwCertEncodingType,
