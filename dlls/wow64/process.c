@@ -611,10 +611,13 @@ NTSTATUS WINAPI wow64_NtQueryInformationProcess( UINT *args )
                 *(ULONG *)ptr = data;
                 if (retlen) *retlen = sizeof(ULONG);
             }
-            else if (status == STATUS_PORT_NOT_SET) *(ULONG *)ptr = 0;
+            else if (status == STATUS_PORT_NOT_SET)
+            {
+                *(ULONG *)ptr = 0;
+                if (retlen) *retlen = sizeof(ULONG);
+            }
             return status;
         }
-        if (retlen) *retlen = sizeof(ULONG);
         return STATUS_INFO_LENGTH_MISMATCH;
 
     case ProcessImageFileName:

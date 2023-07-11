@@ -1760,7 +1760,7 @@ static void test_query_process_wow64(void)
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
     ok( pbi[0] == dummy, "pbi[0] changed to %Ix\n", pbi[0]);
     ok( pbi[1] == dummy, "pbi[1] changed to %Ix\n", pbi[1]);
-    todo_wine ok( ReturnLength == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", ReturnLength);
+    ok( ReturnLength == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", ReturnLength);
 
     /* Everything is correct except a too large buffer size */
     pbi[0] = pbi[1] = dummy;
@@ -1769,7 +1769,7 @@ static void test_query_process_wow64(void)
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
     ok( pbi[0] == dummy, "pbi[0] changed to %Ix\n", pbi[0]);
     ok( pbi[1] == dummy, "pbi[1] changed to %Ix\n", pbi[1]);
-    todo_wine ok( ReturnLength == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", ReturnLength);
+    ok( ReturnLength == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", ReturnLength);
 }
 
 static void test_query_process_basic(void)
@@ -2041,6 +2041,7 @@ static void test_query_process_debug_port(int argc, char **argv)
     STARTUPINFOA si = { 0 };
     NTSTATUS status;
     BOOL ret;
+    ULONG len;
 
     sprintf(cmdline, "%s %s %s", argv[0], argv[1], "debuggee");
 
@@ -2061,27 +2062,40 @@ static void test_query_process_debug_port(int argc, char **argv)
             NULL, sizeof(debug_port), NULL);
     ok(status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got %#lx.\n", status);
 
+    len = 0xdeadbeef;
     status = NtQueryInformationProcess(NULL, ProcessDebugPort,
-            &debug_port, sizeof(debug_port), NULL);
+            &debug_port, sizeof(debug_port), &len);
     ok(status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %#lx.\n", status);
+    ok(len == 0xdeadbeef || broken(len == 0xfffffffc || len == 0xffc), /* wow64 */
+       "len set to %lx\n", len );
 
+    len = 0xdeadbeef;
     status = NtQueryInformationProcess(GetCurrentProcess(), ProcessDebugPort,
-            &debug_port, sizeof(debug_port) - 1, NULL);
+            &debug_port, sizeof(debug_port) - 1, &len);
     ok(status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %#lx.\n", status);
+    ok(len == 0xdeadbeef || broken(len == 0xfffffffc || len == 0xffc), /* wow64 */
+       "len set to %lx\n", len );
 
+    len = 0xdeadbeef;
     status = NtQueryInformationProcess(GetCurrentProcess(), ProcessDebugPort,
-            &debug_port, sizeof(debug_port) + 1, NULL);
+            &debug_port, sizeof(debug_port) + 1, &len);
     ok(status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %#lx.\n", status);
+    ok(len == 0xdeadbeef || broken(len == 0xfffffffc || len == 0xffc), /* wow64 */
+       "len set to %lx\n", len );
 
+    len = 0xdeadbeef;
     status = NtQueryInformationProcess(GetCurrentProcess(), ProcessDebugPort,
-            &debug_port, sizeof(debug_port), NULL);
+            &debug_port, sizeof(debug_port), &len);
     ok(!status, "NtQueryInformationProcess failed, status %#lx.\n", status);
     ok(debug_port == 0, "Expected port 0, got %#Ix.\n", debug_port);
+    ok(len == sizeof(debug_port), "len set to %lx\n", len );
 
+    len = 0xdeadbeef;
     status = NtQueryInformationProcess(pi.hProcess, ProcessDebugPort,
-            &debug_port, sizeof(debug_port), NULL);
+            &debug_port, sizeof(debug_port), &len);
     ok(!status, "NtQueryInformationProcess failed, status %#lx.\n", status);
     ok(debug_port == ~(DWORD_PTR)0, "Expected port %#Ix, got %#Ix.\n", ~(DWORD_PTR)0, debug_port);
+    ok(len == sizeof(debug_port), "len set to %lx\n", len );
 
     for (;;)
     {
@@ -2398,6 +2412,7 @@ static void test_query_process_debug_object_handle(int argc, char **argv)
     BOOL ret;
     HANDLE debug_object;
     NTSTATUS status;
+    ULONG len;
 
     sprintf(cmdline, "%s %s %s", argv[0], argv[1], "debuggee");
 
@@ -2407,57 +2422,71 @@ static void test_query_process_debug_object_handle(int argc, char **argv)
     ok(ret, "CreateProcess failed with last error %lu\n", GetLastError());
     if (!ret) return;
 
-    status = NtQueryInformationProcess(NULL, ProcessDebugObjectHandle, NULL,
-            0, NULL);
+    len = 0xdeadbeef;
+    status = NtQueryInformationProcess(NULL, ProcessDebugObjectHandle, NULL, 0, &len);
     ok(status == STATUS_INFO_LENGTH_MISMATCH,
        "Expected NtQueryInformationProcess to return STATUS_INFO_LENGTH_MISMATCH, got 0x%08lx\n",
        status);
+    ok(len == 0xdeadbeef || broken(len == 0xfffffffc || len == 0xffc), /* wow64 */
+       "len set to %lx\n", len );
 
-    status = NtQueryInformationProcess(NULL, ProcessDebugObjectHandle, NULL,
-            sizeof(debug_object), NULL);
+    len = 0xdeadbeef;
+    status = NtQueryInformationProcess(NULL, ProcessDebugObjectHandle, NULL, sizeof(debug_object), &len);
     ok(status == STATUS_INVALID_HANDLE ||
        status == STATUS_ACCESS_VIOLATION, /* XP */
        "Expected NtQueryInformationProcess to return STATUS_INVALID_HANDLE, got 0x%08lx\n", status);
+    ok(len == 0xdeadbeef || broken(len == 0xfffffffc || len == 0xffc), /* wow64 */
+       "len set to %lx\n", len );
 
     status = NtQueryInformationProcess(GetCurrentProcess(),
-            ProcessDebugObjectHandle, NULL, sizeof(debug_object), NULL);
+            ProcessDebugObjectHandle, NULL, sizeof(debug_object), &len);
     ok(status == STATUS_ACCESS_VIOLATION,
        "Expected NtQueryInformationProcess to return STATUS_ACCESS_VIOLATION, got 0x%08lx\n", status);
+    ok(len == 0xdeadbeef || broken(len == 0xfffffffc || len == 0xffc), /* wow64 */
+       "len set to %lx\n", len );
 
     status = NtQueryInformationProcess(NULL, ProcessDebugObjectHandle,
             &debug_object, sizeof(debug_object), NULL);
     ok(status == STATUS_INVALID_HANDLE,
        "Expected NtQueryInformationProcess to return STATUS_ACCESS_VIOLATION, got 0x%08lx\n", status);
 
+    len = 0xdeadbeef;
     status = NtQueryInformationProcess(GetCurrentProcess(),
-            ProcessDebugObjectHandle, &debug_object,
-            sizeof(debug_object) - 1, NULL);
+            ProcessDebugObjectHandle, &debug_object, sizeof(debug_object) - 1, &len);
     ok(status == STATUS_INFO_LENGTH_MISMATCH,
        "Expected NtQueryInformationProcess to return STATUS_INFO_LENGTH_MISMATCH, got 0x%08lx\n", status);
+    ok(len == 0xdeadbeef || broken(len == 0xfffffffc || len == 0xffc), /* wow64 */
+       "len set to %lx\n", len );
 
+    len = 0xdeadbeef;
     status = NtQueryInformationProcess(GetCurrentProcess(),
-            ProcessDebugObjectHandle, &debug_object,
-            sizeof(debug_object) + 1, NULL);
+            ProcessDebugObjectHandle, &debug_object, sizeof(debug_object) + 1, &len);
     ok(status == STATUS_INFO_LENGTH_MISMATCH,
        "Expected NtQueryInformationProcess to return STATUS_INFO_LENGTH_MISMATCH, got 0x%08lx\n", status);
+    ok(len == 0xdeadbeef || broken(len == 0xfffffffc || len == 0xffc), /* wow64 */
+       "len set to %lx\n", len );
 
+    len = 0xdeadbeef;
     debug_object = (HANDLE)0xdeadbeef;
     status = NtQueryInformationProcess(GetCurrentProcess(),
             ProcessDebugObjectHandle, &debug_object,
-            sizeof(debug_object), NULL);
+            sizeof(debug_object), &len);
     ok(status == STATUS_PORT_NOT_SET,
        "Expected NtQueryInformationProcess to return STATUS_PORT_NOT_SET, got 0x%08lx\n", status);
     ok(debug_object == NULL ||
        broken(debug_object == (HANDLE)0xdeadbeef), /* Wow64 */
        "Expected debug object handle to be NULL, got %p\n", debug_object);
+    ok(len == sizeof(debug_object), "len set to %lx\n", len );
 
+    len = 0xdeadbeef;
     debug_object = (HANDLE)0xdeadbeef;
     status = NtQueryInformationProcess(pi.hProcess, ProcessDebugObjectHandle,
-            &debug_object, sizeof(debug_object), NULL);
+            &debug_object, sizeof(debug_object), &len);
     ok(status == STATUS_SUCCESS,
        "Expected NtQueryInformationProcess to return STATUS_SUCCESS, got 0x%08lx\n", status);
     ok(debug_object != NULL,
        "Expected debug object handle to be non-NULL, got %p\n", debug_object);
+    ok(len == sizeof(debug_object), "len set to %lx\n", len );
     status = NtClose( debug_object );
     ok( !status, "NtClose failed %lx\n", status );
 
