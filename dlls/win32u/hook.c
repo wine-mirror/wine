@@ -195,7 +195,7 @@ static UINT get_ll_hook_timeout(void)
  * Call hook either in current thread or send message to the destination
  * thread.
  */
-static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module )
+static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, size_t lparam_size )
 {
     DWORD_PTR ret = 0;
 
@@ -233,43 +233,48 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module )
         HHOOK prev = thread_info->hook;
         BOOL prev_unicode = thread_info->hook_unicode;
         struct win_hook_params *params = info;
+        ULONG lparam_ret_size = lparam_size;
         ULONG size = sizeof(*params);
-        ULONG lparam_ret_size = params->lparam_size;
         CREATESTRUCTW *cs = NULL;
         void *ret_ptr;
         ULONG ret_len;
 
-        if (params->lparam_size)
+        size = FIELD_OFFSET( struct win_hook_params, module[module ? lstrlenW( module ) + 1 : 1] );
+
+        if (lparam_size)
         {
-            lparam_ret_size = params->lparam_size;
+            size = (size + 15) & ~15; /* align offset */
+            lparam_ret_size = lparam_size;
 
             if (params->id == WH_CBT && params->code == HCBT_CREATEWND)
             {
                 cs = ((CBT_CREATEWNDW *)params->lparam)->lpcs;
                 params->lparam = 0;
                 lparam_ret_size = 0;
-                params->lparam_size = sizeof(*cs);
+                lparam_size = sizeof(*cs);
                 if (!IS_INTRESOURCE( cs->lpszName ))
-                    params->lparam_size += (wcslen( cs->lpszName ) + 1) * sizeof(WCHAR);
+                    lparam_size += (wcslen( cs->lpszName ) + 1) * sizeof(WCHAR);
                 if (!IS_INTRESOURCE( cs->lpszClass ))
-                    params->lparam_size += (wcslen( cs->lpszClass ) + 1) * sizeof(WCHAR);
+                    lparam_size += (wcslen( cs->lpszClass ) + 1) * sizeof(WCHAR);
             }
-
-            size += params->lparam_size;
         }
 
-        if (module && module[0]) size += (lstrlenW( module ) + 1) * sizeof(WCHAR);
-        if (size != sizeof(*params))
+        if (size + lparam_size > sizeof(*info))
         {
-            if (!(params = malloc( size ))) return 0;
-            *params = *info;
+            if (!(params = malloc( size + lparam_size ))) return 0;
+            memcpy( params, info, FIELD_OFFSET( struct win_hook_params, module ));
         }
+        if (module)
+            wcscpy( params->module, module );
+        else
+            params->module[0] = 0;
 
-        if (params->lparam_size)
+        if (lparam_size)
         {
+            void *lparam_ptr = (char *)params + size;
             if (cs)
             {
-                CREATESTRUCTW *params_cs = (CREATESTRUCTW *)(params + 1);
+                CREATESTRUCTW *params_cs = lparam_ptr;
                 WCHAR *ptr = (WCHAR *)(params_cs + 1);
                 const void *inline_ptr = (void *)0xffffffff;
 
@@ -289,12 +294,9 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module )
             }
             else
             {
-                memcpy( params + 1, (const void *)params->lparam, params->lparam_size );
+                memcpy( lparam_ptr, (const void *)params->lparam, lparam_size );
             }
         }
-
-        if (module && module[0])
-            wcscpy( (WCHAR *)((char *)(params + 1) + params->lparam_size), module );
 
         /*
          * Windows protects from stack overflow in recursive hook calls. Different Windows
@@ -314,7 +316,7 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module )
         thread_info->hook = params->handle;
         thread_info->hook_unicode = params->next_unicode;
         thread_info->hook_call_depth++;
-        ret = KeUserModeCallback( NtUserCallWindowsHook, params, size, &ret_ptr, &ret_len );
+        ret = KeUserModeCallback( NtUserCallWindowsHook, params, size + lparam_size, &ret_ptr, &ret_len );
         if (ret_len && ret_len == lparam_ret_size)
             memcpy( (void *)params->lparam, ret_ptr, lparam_ret_size );
         thread_info->hook = prev;
@@ -363,7 +365,7 @@ LRESULT WINAPI NtUserCallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARA
     info.wparam = wparam;
     info.lparam = lparam;
     info.prev_unicode = thread_info->hook_unicode;
-    return call_hook( &info, module );
+    return call_hook( &info, module, 0 );
 }
 
 LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam )
@@ -396,7 +398,7 @@ LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam )
     info.wparam = wparam;
     info.lparam = lparam;
     info.prev_unicode = TRUE;  /* assume Unicode for this function */
-    return call_hook( &info, module );
+    return call_hook( &info, module, 0 );
 }
 
 LRESULT call_hooks( INT id, INT code, WPARAM wparam, LPARAM lparam, size_t lparam_size )
@@ -440,8 +442,7 @@ LRESULT call_hooks( INT id, INT code, WPARAM wparam, LPARAM lparam, size_t lpara
     info.code   = code;
     info.wparam = wparam;
     info.lparam = lparam;
-    info.lparam_size = lparam_size;
-    ret = call_hook( &info, module );
+    ret = call_hook( &info, module, lparam_size );
 
     SERVER_START_REQ( finish_hook_chain )
     {

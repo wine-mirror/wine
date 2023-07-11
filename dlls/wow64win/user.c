@@ -349,9 +349,9 @@ struct win_hook_params32
     int code;
     ULONG wparam;
     ULONG lparam;
-    UINT lparam_size;
     BOOL prev_unicode;
     BOOL next_unicode;
+    WCHAR module[1];
 };
 
 struct win_event_hook_params32
@@ -754,13 +754,14 @@ static NTSTATUS WINAPI wow64_NtUserCallWindowsHook( void *arg, ULONG size )
 {
     struct win_hook_params *params = arg;
     struct win_hook_params32 params32;
-    UINT lparam64_size, module_size;
+    UINT module_len, size32, offset;
     void *ret_ptr;
     ULONG ret_len;
     NTSTATUS ret;
 
-    module_size = size - params->lparam_size - sizeof(*params);
-    lparam64_size = params->lparam_size;
+    module_len = wcslen( params->module );
+    size32 = FIELD_OFFSET( struct win_hook_params32, module[module_len + 1] );
+    offset = FIELD_OFFSET( struct win_hook_params, module[module_len + 1] );
 
     params32.proc         = PtrToUlong( params->proc );
     params32.handle       = HandleToUlong( params->handle );
@@ -772,16 +773,19 @@ static NTSTATUS WINAPI wow64_NtUserCallWindowsHook( void *arg, ULONG size )
     params32.lparam       = params->lparam;
     params32.prev_unicode = params->prev_unicode;
     params32.next_unicode = params->next_unicode;
-    params32.lparam_size  = hook_lparam_64to32( params32.id, params32.code, params + 1,
-                                                lparam64_size, (char *)arg + sizeof(params32) );
-    memcpy( arg, &params32, sizeof(params32) );
-    if (module_size)
-        memmove( (char *)arg + sizeof(params32) + params32.lparam_size,
-                 (const char *)arg + size - module_size, module_size );
+    memcpy( arg, &params32, FIELD_OFFSET( struct win_hook_params32, module ));
+    memmove( ((struct win_hook_params32 *)arg)->module, params->module,
+             (module_len + 1) * sizeof(WCHAR) );
 
-    ret = Wow64KiUserCallbackDispatcher( NtUserCallWindowsHook, arg,
-                                         sizeof(params32) + params32.lparam_size + module_size,
-                                         &ret_ptr, &ret_len );
+    if (size > offset)
+    {
+        size32 = (size32 + 15) & ~15;
+        offset = (offset + 15) & ~15;
+        size32 += hook_lparam_64to32( params32.id, params32.code, (char *)params + offset,
+                                      size - offset, (char *)arg + size32 );
+    }
+
+    ret = Wow64KiUserCallbackDispatcher( NtUserCallWindowsHook, arg, size32, &ret_ptr, &ret_len );
 
     switch (params32.id)
     {

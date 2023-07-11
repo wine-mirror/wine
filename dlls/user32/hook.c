@@ -455,20 +455,20 @@ BOOL WINAPI User32CallWinEventHook( const struct win_event_hook_params *params, 
 BOOL WINAPI User32CallWindowsHook( struct win_hook_params *params, ULONG size )
 {
     HOOKPROC proc = params->proc;
-    const WCHAR *module = NULL;
     HMODULE free_module = 0;
     void *ret_ptr = NULL;
     CBT_CREATEWNDW cbtc;
     UINT ret_size = 0;
+    size_t lparam_offset;
     LRESULT ret;
 
-    if (size > sizeof(*params) + params->lparam_size)
-        module = (const WCHAR *)((const char *)(params + 1) + params->lparam_size);
+    lparam_offset = FIELD_OFFSET( struct win_hook_params, module[wcslen( params->module ) + 1]);
 
-    if (params->lparam_size)
+    if (lparam_offset < size)
     {
-        ret_size = params->lparam_size;
-        ret_ptr = params + 1;
+        lparam_offset = (lparam_offset + 15) & ~15; /* align */
+        ret_size = size - lparam_offset;
+        ret_ptr = (char *)params + lparam_offset;
         params->lparam = (LPARAM)ret_ptr;
 
         if (params->id == WH_CBT && params->code == HCBT_CREATEWND)
@@ -490,7 +490,8 @@ BOOL WINAPI User32CallWindowsHook( struct win_hook_params *params, ULONG size )
             ret_size = sizeof(*cs);
         }
     }
-    if (module && !(proc = get_hook_proc( proc, module, &free_module ))) return FALSE;
+    if (params->module[0] && !(proc = get_hook_proc( proc, params->module, &free_module )))
+        return FALSE;
 
     ret = call_hook_proc( proc, params->id, params->code, params->wparam, params->lparam,
                           params->prev_unicode, params->next_unicode );
