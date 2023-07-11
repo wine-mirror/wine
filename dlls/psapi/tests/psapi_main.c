@@ -76,7 +76,7 @@ static void test_EnumProcesses(void)
 
 static void test_EnumProcessModules(void)
 {
-    char buffer[200] = "C:\\windows\\system32\\msinfo32.exe";
+    char buffer[MAX_PATH] = "C:\\windows\\system32\\msinfo32.exe";
     PROCESS_INFORMATION pi = {0};
     STARTUPINFOA si = {0};
     void *cookie;
@@ -140,7 +140,7 @@ static void test_EnumProcessModules(void)
     if (sizeof(void *) == 8)
     {
         MODULEINFO info;
-        char name[40];
+        char name[MAX_PATH];
         HMODULE hmods[3];
 
         strcpy(buffer, "C:\\windows\\syswow64\\msinfo32.exe");
@@ -224,8 +224,8 @@ static BOOL test_EnumProcessModulesEx_snapshot(HANDLE proc, struct moduleex_snap
 {
     void* cookie;
     DWORD needed;
-    char buffer[80];
-    char buffer2[80];
+    char buffer[MAX_PATH];
+    char buffer2[MAX_PATH];
     MODULEINFO info;
     int i, j;
     BOOL ret;
@@ -334,7 +334,7 @@ static BOOL snapshot_are_disjoint(const struct moduleex_snapshot* seta, const st
 static void snapshot_check_first_main_module(const struct moduleex_snapshot* snap, HANDLE proc,
                                              const char* filename)
 {
-    char buffer[80];
+    char buffer[MAX_PATH];
     MODULEINFO info;
     const char* modname;
     BOOL ret;
@@ -359,7 +359,7 @@ static void snapshot_check_first_main_module(const struct moduleex_snapshot* sna
 static unsigned int snapshot_count_in_dir(const struct moduleex_snapshot* snap, HANDLE proc, const char* dirname)
 {
     unsigned int count = 0;
-    char buffer[128];
+    char buffer[MAX_PATH];
     size_t dirname_len = strlen(dirname);
     BOOL ret;
     int i;
@@ -375,7 +375,7 @@ static unsigned int snapshot_count_in_dir(const struct moduleex_snapshot* snap, 
 
 static void test_EnumProcessModulesEx(void)
 {
-    char buffer[200] = "C:\\windows\\system32\\msinfo32.exe";
+    char buffer[MAX_PATH] = "C:\\windows\\system32\\msinfo32.exe";
     PROCESS_INFORMATION pi = {0};
     STARTUPINFOA si = {0};
     void *cookie;
