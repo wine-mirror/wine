@@ -667,7 +667,7 @@ static ULONG WINAPI IMILUnknown1Impl_Release(IMILUnknown1 *iface)
 }
 
 DEFINE_THISCALL_WRAPPER(IMILUnknown1Impl_unknown1, 8)
-DECLSPEC_HIDDEN void __thiscall IMILUnknown1Impl_unknown1(IMILUnknown1 *iface, void *arg)
+void __thiscall IMILUnknown1Impl_unknown1(IMILUnknown1 *iface, void *arg)
 {
     FIXME("(%p,%p): stub\n", iface, arg);
 }
@@ -679,7 +679,7 @@ static HRESULT WINAPI IMILUnknown1Impl_unknown2(IMILUnknown1 *iface, void *arg1,
 }
 
 DEFINE_THISCALL_WRAPPER(IMILUnknown1Impl_unknown3, 8)
-DECLSPEC_HIDDEN HRESULT __thiscall IMILUnknown1Impl_unknown3(IMILUnknown1 *iface, void *arg)
+HRESULT __thiscall IMILUnknown1Impl_unknown3(IMILUnknown1 *iface, void *arg)
 {
     FIXME("(%p,%p): stub\n", iface, arg);
     return E_NOTIMPL;
@@ -710,7 +710,7 @@ static HRESULT WINAPI IMILUnknown1Impl_unknown7(IMILUnknown1 *iface, void *arg)
 }
 
 DEFINE_THISCALL_WRAPPER(IMILUnknown1Impl_unknown8, 4)
-DECLSPEC_HIDDEN HRESULT __thiscall IMILUnknown1Impl_unknown8(IMILUnknown1 *iface)
+HRESULT __thiscall IMILUnknown1Impl_unknown8(IMILUnknown1 *iface)
 {
     FIXME("(%p): stub\n", iface);
     return E_NOTIMPL;

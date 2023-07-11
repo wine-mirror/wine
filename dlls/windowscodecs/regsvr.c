@@ -2270,8 +2270,8 @@ static HRESULT unregister_categories(const struct regsvr_category *list)
     return res != ERROR_SUCCESS ? HRESULT_FROM_WIN32(res) : S_OK;
 }
 
-extern HRESULT WINAPI WIC_DllRegisterServer(void) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI WIC_DllUnregisterServer(void) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI WIC_DllRegisterServer(void);
+extern HRESULT WINAPI WIC_DllUnregisterServer(void);
 
 HRESULT WINAPI DllRegisterServer(void)
 {

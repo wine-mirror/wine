@@ -129,70 +129,70 @@ DECLARE_INTERFACE_(IMILUnknown2,IUnknown)
 };
 #undef INTERFACE
 
-HRESULT create_instance(const CLSID *clsid, const IID *iid, void **ppv) DECLSPEC_HIDDEN;
+HRESULT create_instance(const CLSID *clsid, const IID *iid, void **ppv);
 
 typedef HRESULT(*class_constructor)(REFIID,void**);
-extern HRESULT FormatConverter_CreateInstance(REFIID riid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT ImagingFactory_CreateInstance(REFIID riid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT BmpDecoder_CreateInstance(REFIID riid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT PngDecoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT PngEncoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT BmpEncoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT DibDecoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT GifDecoder_CreateInstance(REFIID riid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT GifEncoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT IcoDecoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT JpegDecoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT JpegEncoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT TiffDecoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT TiffEncoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT TgaDecoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT DdsDecoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT DdsEncoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
+extern HRESULT FormatConverter_CreateInstance(REFIID riid, void** ppv);
+extern HRESULT ImagingFactory_CreateInstance(REFIID riid, void** ppv);
+extern HRESULT BmpDecoder_CreateInstance(REFIID riid, void** ppv);
+extern HRESULT PngDecoder_CreateInstance(REFIID iid, void** ppv);
+extern HRESULT PngEncoder_CreateInstance(REFIID iid, void** ppv);
+extern HRESULT BmpEncoder_CreateInstance(REFIID iid, void** ppv);
+extern HRESULT DibDecoder_CreateInstance(REFIID iid, void** ppv);
+extern HRESULT GifDecoder_CreateInstance(REFIID riid, void** ppv);
+extern HRESULT GifEncoder_CreateInstance(REFIID iid, void** ppv);
+extern HRESULT IcoDecoder_CreateInstance(REFIID iid, void** ppv);
+extern HRESULT JpegDecoder_CreateInstance(REFIID iid, void** ppv);
+extern HRESULT JpegEncoder_CreateInstance(REFIID iid, void** ppv);
+extern HRESULT TiffDecoder_CreateInstance(REFIID iid, void** ppv);
+extern HRESULT TiffEncoder_CreateInstance(REFIID iid, void** ppv);
+extern HRESULT TgaDecoder_CreateInstance(REFIID iid, void** ppv);
+extern HRESULT DdsDecoder_CreateInstance(REFIID iid, void** ppv);
+extern HRESULT DdsEncoder_CreateInstance(REFIID iid, void** ppv);
 
 extern HRESULT BitmapImpl_Create(UINT uiWidth, UINT uiHeight,
     UINT stride, UINT datasize, void *view, UINT offset,
     REFWICPixelFormatGUID pixelFormat, WICBitmapCreateCacheOption option,
-    IWICBitmap **ppIBitmap) DECLSPEC_HIDDEN;
-extern HRESULT BitmapScaler_Create(IWICBitmapScaler **scaler) DECLSPEC_HIDDEN;
-extern HRESULT FlipRotator_Create(IWICBitmapFlipRotator **fliprotator) DECLSPEC_HIDDEN;
-extern HRESULT PaletteImpl_Create(IWICPalette **palette) DECLSPEC_HIDDEN;
-extern HRESULT StreamImpl_Create(IWICStream **stream) DECLSPEC_HIDDEN;
-extern HRESULT ColorContext_Create(IWICColorContext **context) DECLSPEC_HIDDEN;
-extern HRESULT ColorTransform_Create(IWICColorTransform **transform) DECLSPEC_HIDDEN;
-extern HRESULT BitmapClipper_Create(IWICBitmapClipper **clipper) DECLSPEC_HIDDEN;
+    IWICBitmap **ppIBitmap);
+extern HRESULT BitmapScaler_Create(IWICBitmapScaler **scaler);
+extern HRESULT FlipRotator_Create(IWICBitmapFlipRotator **fliprotator);
+extern HRESULT PaletteImpl_Create(IWICPalette **palette);
+extern HRESULT StreamImpl_Create(IWICStream **stream);
+extern HRESULT ColorContext_Create(IWICColorContext **context);
+extern HRESULT ColorTransform_Create(IWICColorTransform **transform);
+extern HRESULT BitmapClipper_Create(IWICBitmapClipper **clipper);
 
 extern HRESULT copy_pixels(UINT bpp, const BYTE *srcbuffer,
     UINT srcwidth, UINT srcheight, INT srcstride,
-    const WICRect *rc, UINT dststride, UINT dstbuffersize, BYTE *dstbuffer) DECLSPEC_HIDDEN;
+    const WICRect *rc, UINT dststride, UINT dstbuffersize, BYTE *dstbuffer);
 
 extern HRESULT configure_write_source(IWICBitmapFrameEncode *iface,
     IWICBitmapSource *source, const WICRect *prc,
     const WICPixelFormatGUID *format,
-    INT width, INT height, double xres, double yres) DECLSPEC_HIDDEN;
+    INT width, INT height, double xres, double yres);
 
 extern HRESULT write_source(IWICBitmapFrameEncode *iface,
     IWICBitmapSource *source, const WICRect *prc,
     const WICPixelFormatGUID *format, UINT bpp, BOOL need_palette,
-    INT width, INT height) DECLSPEC_HIDDEN;
+    INT width, INT height);
 
-extern void reverse_bgr8(UINT bytesperpixel, LPBYTE bits, UINT width, UINT height, INT stride) DECLSPEC_HIDDEN;
+extern void reverse_bgr8(UINT bytesperpixel, LPBYTE bits, UINT width, UINT height, INT stride);
 
-extern HRESULT get_pixelformat_bpp(const GUID *pixelformat, UINT *bpp) DECLSPEC_HIDDEN;
+extern HRESULT get_pixelformat_bpp(const GUID *pixelformat, UINT *bpp);
 
 extern HRESULT CreatePropertyBag2(const PROPBAG2 *options, UINT count,
-                                  IPropertyBag2 **property) DECLSPEC_HIDDEN;
+                                  IPropertyBag2 **property);
 
-extern HRESULT CreateComponentInfo(REFCLSID clsid, IWICComponentInfo **ppIInfo) DECLSPEC_HIDDEN;
-extern void ReleaseComponentInfos(void) DECLSPEC_HIDDEN;
-extern HRESULT CreateComponentEnumerator(DWORD componentTypes, DWORD options, IEnumUnknown **ppIEnumUnknown) DECLSPEC_HIDDEN;
-extern HRESULT get_decoder_info(REFCLSID clsid, IWICBitmapDecoderInfo **info) DECLSPEC_HIDDEN;
+extern HRESULT CreateComponentInfo(REFCLSID clsid, IWICComponentInfo **ppIInfo);
+extern void ReleaseComponentInfos(void);
+extern HRESULT CreateComponentEnumerator(DWORD componentTypes, DWORD options, IEnumUnknown **ppIEnumUnknown);
+extern HRESULT get_decoder_info(REFCLSID clsid, IWICBitmapDecoderInfo **info);
 
 typedef struct BmpDecoder BmpDecoder;
 
-extern HRESULT IcoDibDecoder_CreateInstance(BmpDecoder **ppDecoder) DECLSPEC_HIDDEN;
-extern void BmpDecoder_GetWICDecoder(BmpDecoder *This, IWICBitmapDecoder **ppDecoder) DECLSPEC_HIDDEN;
-extern void BmpDecoder_FindIconMask(BmpDecoder *This, ULONG *mask_offset, int *topdown) DECLSPEC_HIDDEN;
+extern HRESULT IcoDibDecoder_CreateInstance(BmpDecoder **ppDecoder);
+extern void BmpDecoder_GetWICDecoder(BmpDecoder *This, IWICBitmapDecoder **ppDecoder);
+extern void BmpDecoder_FindIconMask(BmpDecoder *This, ULONG *mask_offset, int *topdown);
 
 typedef struct _MetadataItem
 {
@@ -213,21 +213,21 @@ typedef struct _MetadataHandlerVtbl
         ULARGE_INTEGER *size);
 } MetadataHandlerVtbl;
 
-extern HRESULT MetadataReader_Create(const MetadataHandlerVtbl *vtable, REFIID iid, void** ppv) DECLSPEC_HIDDEN;
+extern HRESULT MetadataReader_Create(const MetadataHandlerVtbl *vtable, REFIID iid, void** ppv);
 
-extern HRESULT UnknownMetadataReader_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT IfdMetadataReader_CreateInstance(REFIID iid, void **ppv) DECLSPEC_HIDDEN;
-extern HRESULT PngChrmReader_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT PngGamaReader_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT PngTextReader_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT LSDReader_CreateInstance(REFIID iid, void **ppv) DECLSPEC_HIDDEN;
-extern HRESULT IMDReader_CreateInstance(REFIID iid, void **ppv) DECLSPEC_HIDDEN;
-extern HRESULT GCEReader_CreateInstance(REFIID iid, void **ppv) DECLSPEC_HIDDEN;
-extern HRESULT APEReader_CreateInstance(REFIID iid, void **ppv) DECLSPEC_HIDDEN;
-extern HRESULT GifCommentReader_CreateInstance(REFIID iid, void **ppv) DECLSPEC_HIDDEN;
-extern HRESULT MetadataQueryReader_CreateInstance(IWICMetadataBlockReader *, const WCHAR *, IWICMetadataQueryReader **) DECLSPEC_HIDDEN;
-extern HRESULT MetadataQueryWriter_CreateInstance(IWICMetadataBlockWriter *, const WCHAR *, IWICMetadataQueryWriter **) DECLSPEC_HIDDEN;
-extern HRESULT stream_initialize_from_filehandle(IWICStream *iface, HANDLE hfile) DECLSPEC_HIDDEN;
+extern HRESULT UnknownMetadataReader_CreateInstance(REFIID iid, void** ppv);
+extern HRESULT IfdMetadataReader_CreateInstance(REFIID iid, void **ppv);
+extern HRESULT PngChrmReader_CreateInstance(REFIID iid, void** ppv);
+extern HRESULT PngGamaReader_CreateInstance(REFIID iid, void** ppv);
+extern HRESULT PngTextReader_CreateInstance(REFIID iid, void** ppv);
+extern HRESULT LSDReader_CreateInstance(REFIID iid, void **ppv);
+extern HRESULT IMDReader_CreateInstance(REFIID iid, void **ppv);
+extern HRESULT GCEReader_CreateInstance(REFIID iid, void **ppv);
+extern HRESULT APEReader_CreateInstance(REFIID iid, void **ppv);
+extern HRESULT GifCommentReader_CreateInstance(REFIID iid, void **ppv);
+extern HRESULT MetadataQueryReader_CreateInstance(IWICMetadataBlockReader *, const WCHAR *, IWICMetadataQueryReader **);
+extern HRESULT MetadataQueryWriter_CreateInstance(IWICMetadataBlockWriter *, const WCHAR *, IWICMetadataQueryWriter **);
+extern HRESULT stream_initialize_from_filehandle(IWICStream *iface, HANDLE hfile);
 
 static inline const char *debug_wic_rect(const WICRect *rect)
 {
@@ -391,9 +391,9 @@ HRESULT CDECL jpeg_encoder_create(struct encoder_info *info, struct encoder **re
 HRESULT CDECL icns_encoder_create(struct encoder_info *info, struct encoder **result);
 
 extern HRESULT CommonDecoder_CreateInstance(struct decoder *decoder,
-    const struct decoder_info *decoder_info, REFIID iid, void** ppv) DECLSPEC_HIDDEN;
+    const struct decoder_info *decoder_info, REFIID iid, void** ppv);
 
 extern HRESULT CommonEncoder_CreateInstance(struct encoder *encoder,
-    const struct encoder_info *encoder_info, REFIID iid, void** ppv) DECLSPEC_HIDDEN;
+    const struct encoder_info *encoder_info, REFIID iid, void** ppv);
 
 #endif /* WINCODECS_PRIVATE_H */
