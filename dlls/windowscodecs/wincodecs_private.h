@@ -239,7 +239,6 @@ extern HMODULE windowscodecs_module;
 
 HRESULT read_png_chunk(IStream *stream, BYTE *type, BYTE **data, ULONG *data_size);
 
-/* unixlib iface */
 struct decoder_funcs;
 
 struct decoder_info
