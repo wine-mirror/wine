@@ -3681,6 +3681,7 @@ static void test_image_properties(void)
     };
     GpStatus status, expected;
     GpImage *image;
+    PropertyItem *prop_item;
     UINT prop_count, prop_size, i;
     PROPID prop_id[16] = { 0 };
     ImageType image_type;
@@ -3815,6 +3816,31 @@ static void test_image_properties(void)
         expected = (image_type == ImageTypeMetafile) ? NotImplemented : Ok;
         status = GdipGetPropertySize(image, &prop_size, &prop_count);
         expect(expected, status);
+
+        status = GdipGetAllPropertyItems(image, 0, 0, NULL);
+        expect(InvalidParameter, status);
+        status = GdipGetAllPropertyItems(image, prop_size, prop_count, NULL);
+        expect(InvalidParameter, status);
+        prop_item = HeapAlloc(GetProcessHeap(), 0, prop_size);
+        expected = (image_type == ImageTypeMetafile) ? NotImplemented : InvalidParameter;
+        if (prop_count != 1)
+        {
+            status = GdipGetAllPropertyItems(image, prop_size, 1, prop_item);
+            expect(expected, status);
+        }
+        if (prop_size != 0)
+        {
+            status = GdipGetAllPropertyItems(image, 0, prop_count, prop_item);
+            expect(expected, status);
+        }
+        status = GdipGetAllPropertyItems(image, prop_size + 1, prop_count, prop_item);
+        expect(expected, status);
+        if (image_type != ImageTypeMetafile)
+            expected = (prop_count == 0) ? GenericError : Ok;
+        status = GdipGetAllPropertyItems(image, prop_size, prop_count, prop_item);
+        ok(status == expected || broken(status == Ok && prop_count == 0), /* XP */
+           "Expected %d, got %d\n", expected, status);
+        HeapFree(GetProcessHeap(), 0, prop_item);
 
         GdipDisposeImage(image);
 
@@ -4176,19 +4202,6 @@ static void test_GdipGetAllPropertyItems(void)
        "expected total property size %u, got %u\n", prop_size, total_size);
 
     prop_item = HeapAlloc(GetProcessHeap(), 0, prop_size);
-
-    status = GdipGetAllPropertyItems(image, 0, prop_count, prop_item);
-    expect(InvalidParameter, status);
-    status = GdipGetAllPropertyItems(image, prop_size, 1, prop_item);
-    expect(InvalidParameter, status);
-    status = GdipGetAllPropertyItems(image, prop_size, prop_count, NULL);
-    expect(InvalidParameter, status);
-    status = GdipGetAllPropertyItems(image, prop_size, prop_count, NULL);
-    expect(InvalidParameter, status);
-    status = GdipGetAllPropertyItems(image, 0, 0, NULL);
-    expect(InvalidParameter, status);
-    status = GdipGetAllPropertyItems(image, prop_size + 1, prop_count, prop_item);
-    expect(InvalidParameter, status);
     status = GdipGetAllPropertyItems(image, prop_size, prop_count, prop_item);
     expect(Ok, status);
 
@@ -4932,19 +4945,6 @@ static void test_gif_properties(void)
        "expected total property size %u, got %u\n", prop_size, total_size);
 
     prop_item = HeapAlloc(GetProcessHeap(), 0, prop_size);
-
-    status = GdipGetAllPropertyItems(image, 0, prop_count, prop_item);
-    expect(InvalidParameter, status);
-    status = GdipGetAllPropertyItems(image, prop_size, 1, prop_item);
-    expect(InvalidParameter, status);
-    status = GdipGetAllPropertyItems(image, prop_size, prop_count, NULL);
-    expect(InvalidParameter, status);
-    status = GdipGetAllPropertyItems(image, prop_size, prop_count, NULL);
-    expect(InvalidParameter, status);
-    status = GdipGetAllPropertyItems(image, 0, 0, NULL);
-    expect(InvalidParameter, status);
-    status = GdipGetAllPropertyItems(image, prop_size + 1, prop_count, prop_item);
-    expect(InvalidParameter, status);
     status = GdipGetAllPropertyItems(image, prop_size, prop_count, prop_item);
     expect(Ok, status);
 
