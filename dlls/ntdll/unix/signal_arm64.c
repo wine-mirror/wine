@@ -569,7 +569,8 @@ NTSTATUS signal_set_full_context( CONTEXT *context )
 {
     NTSTATUS status = NtSetContextThread( GetCurrentThread(), context );
 
-    if (!status && (context->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER) raise( SIGUSR2 );
+    if (!status && (context->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
+        arm64_thread_data()->syscall_frame->restore_flags |= CONTEXT_INTEGER;
     return status;
 }
 
