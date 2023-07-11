@@ -1430,9 +1430,8 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
     case ProcessWow64Information:
         len = sizeof(ULONG_PTR);
         if (size != len) return STATUS_INFO_LENGTH_MISMATCH;
-        else if (!info) ret = STATUS_ACCESS_VIOLATION;
-        else if (!handle) ret = STATUS_INVALID_HANDLE;
-        else if (handle == GetCurrentProcess()) *(ULONG_PTR *)info = is_wow64();
+        if (handle == GetCurrentProcess())
+            *(ULONG_PTR *)info = is_old_wow64() ? (ULONG_PTR)peb : (ULONG_PTR)wow_peb;
         else
         {
             ULONG_PTR val = 0;
@@ -1440,10 +1439,12 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
             SERVER_START_REQ( get_process_info )
             {
                 req->handle = wine_server_obj_handle( handle );
-                if (!(ret = wine_server_call( req ))) val = (reply->machine != native_machine);
+                ret = wine_server_call( req );
+                if (!ret && !is_machine_64bit( reply->machine ) && is_machine_64bit( native_machine ))
+                    val = reply->peb + 0x1000;
             }
             SERVER_END_REQ;
-            *(ULONG_PTR *)info = val;
+            if (!ret) *(ULONG_PTR *)info = val;
         }
         break;
 

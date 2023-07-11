@@ -1735,7 +1735,8 @@ static void test_query_process_wow64(void)
     status = NtQueryInformationProcess(GetCurrentProcess(), ProcessWow64Information, pbi, sizeof(ULONG_PTR), NULL);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
     ok( is_wow64 == (pbi[0] != 0), "is_wow64 %x, pbi[0] %Ix\n", is_wow64, pbi[0]);
-    ok( pbi[0] != dummy, "pbi[0] %Ix\n", pbi[0]);
+    if (is_wow64)
+        ok( (void *)pbi[0] == NtCurrentTeb()->Peb, "pbi[0] %Ix / %p\n", pbi[0], NtCurrentTeb()->Peb);
     ok( pbi[1] == dummy, "pbi[1] changed to %Ix\n", pbi[1]);
     /* Test written size on 64 bit by checking high 32 bit buffer */
     if (sizeof(ULONG_PTR) > sizeof(DWORD))
@@ -1750,6 +1751,8 @@ static void test_query_process_wow64(void)
     status = NtQueryInformationProcess(GetCurrentProcess(), ProcessWow64Information, pbi, sizeof(ULONG_PTR), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
     ok( is_wow64 == (pbi[0] != 0), "is_wow64 %x, pbi[0] %Ix\n", is_wow64, pbi[0]);
+    if (is_wow64)
+        ok( (void *)pbi[0] == NtCurrentTeb()->Peb, "pbi[0] %Ix / %p\n", pbi[0], NtCurrentTeb()->Peb);
     ok( pbi[1] == dummy, "pbi[1] changed to %Ix\n", pbi[1]);
     ok( ReturnLength == sizeof(ULONG_PTR), "Inconsistent length %ld\n", ReturnLength);
 

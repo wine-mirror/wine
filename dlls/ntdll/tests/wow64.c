@@ -277,6 +277,7 @@ static void test_peb_teb(void)
     PEB32 peb32;
     RTL_USER_PROCESS_PARAMETERS params;
     RTL_USER_PROCESS_PARAMETERS32 params32;
+    ULONG_PTR peb_ptr;
 
     Wow64DisableWow64FsRedirection( &redir );
 
@@ -316,6 +317,12 @@ static void test_peb_teb(void)
                                             &proc_info, sizeof(proc_info), NULL );
         ok( !status, "ProcessBasicInformation failed %lx\n", status );
         ok( proc_info.PebBaseAddress == teb.Peb, "wrong peb %p / %p\n", proc_info.PebBaseAddress, teb.Peb );
+
+        status = NtQueryInformationProcess( pi.hProcess, ProcessWow64Information,
+                                            &peb_ptr, sizeof(peb_ptr), NULL );
+        ok( !status, "ProcessWow64Information failed %lx\n", status );
+        ok( (void *)peb_ptr == (is_wow64 ? teb.Peb : ULongToPtr(teb32.Peb)),
+            "wrong peb %p\n", (void *)peb_ptr );
 
         if (!ReadProcessMemory( pi.hProcess, proc_info.PebBaseAddress, &peb, sizeof(peb), &res )) res = 0;
         ok( res == sizeof(peb), "wrong len %Ix\n", res );
