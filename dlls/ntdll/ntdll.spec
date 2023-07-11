@@ -1104,6 +1104,7 @@
 @ stdcall -arch=win64 RtlWow64GetCurrentCpuArea(ptr ptr ptr)
 @ stdcall RtlWow64GetCurrentMachine()
 @ stdcall RtlWow64GetProcessMachines(long ptr ptr)
+@ stdcall RtlWow64GetSharedInfoProcess(long ptr ptr)
 @ stdcall -arch=win64 RtlWow64GetThreadContext(long ptr)
 @ stdcall -arch=win64 RtlWow64GetThreadSelectorEntry(long ptr long ptr)
 @ stdcall RtlWow64IsWowGuestMachineSupported(long ptr)

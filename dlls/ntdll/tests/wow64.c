@@ -21,6 +21,7 @@
 
 #include "ntdll_test.h"
 #include "winioctl.h"
+#include "winuser.h"
 #include "ddk/wdm.h"
 
 static NTSTATUS (WINAPI *pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
@@ -28,6 +29,7 @@ static NTSTATUS (WINAPI *pNtQuerySystemInformationEx)(SYSTEM_INFORMATION_CLASS,v
 static NTSTATUS (WINAPI *pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
 static USHORT   (WINAPI *pRtlWow64GetCurrentMachine)(void);
 static NTSTATUS (WINAPI *pRtlWow64GetProcessMachines)(HANDLE,WORD*,WORD*);
+static NTSTATUS (WINAPI *pRtlWow64GetSharedInfoProcess)(HANDLE,BOOLEAN*,WOW64INFO*);
 static NTSTATUS (WINAPI *pRtlWow64GetThreadContext)(HANDLE,WOW64_CONTEXT*);
 static NTSTATUS (WINAPI *pRtlWow64IsWowGuestMachineSupported)(USHORT,BOOLEAN*);
 static NTSTATUS (WINAPI *pNtMapViewOfSectionEx)(HANDLE,HANDLE,PVOID*,const LARGE_INTEGER*,SIZE_T*,ULONG,ULONG,MEM_EXTENDED_PARAMETER*,ULONG);
@@ -87,6 +89,7 @@ static void init(void)
     GET_PROC( RtlGetNativeSystemInformation );
     GET_PROC( RtlWow64GetCurrentMachine );
     GET_PROC( RtlWow64GetProcessMachines );
+    GET_PROC( RtlWow64GetSharedInfoProcess );
     GET_PROC( RtlWow64GetThreadContext );
     GET_PROC( RtlWow64IsWowGuestMachineSupported );
 #ifdef _WIN64
@@ -278,6 +281,9 @@ static void test_peb_teb(void)
     RTL_USER_PROCESS_PARAMETERS params;
     RTL_USER_PROCESS_PARAMETERS32 params32;
     ULONG_PTR peb_ptr;
+    ULONG buffer[16];
+    WOW64INFO *wow64info = (WOW64INFO *)buffer;
+    BOOLEAN wow64;
 
     Wow64DisableWow64FsRedirection( &redir );
 
@@ -370,6 +376,47 @@ static void test_peb_teb(void)
                 params32.EnvironmentSize, params.EnvironmentSize );
         }
 
+        ResumeThread( pi.hThread );
+        WaitForInputIdle( pi.hProcess, 1000 );
+
+        if (pRtlWow64GetSharedInfoProcess)
+        {
+            ULONG i, peb_data[0x200];
+
+            wow64 = 0xcc;
+            memset( buffer, 0xcc, sizeof(buffer) );
+            status = pRtlWow64GetSharedInfoProcess( pi.hProcess, &wow64, wow64info );
+            ok( !status, "RtlWow64GetSharedInfoProcess failed %lx\n", status );
+            ok( wow64 == TRUE, "wrong wow64 %u\n", wow64 );
+            todo_wine_if (!wow64info->NativeSystemPageSize) /* not set in old wow64 */
+            {
+            ok( wow64info->NativeSystemPageSize == 0x1000, "wrong page size %lx\n",
+                wow64info->NativeSystemPageSize );
+            ok( wow64info->CpuFlags == (native_machine == IMAGE_FILE_MACHINE_AMD64 ? WOW64_CPUFLAGS_MSFT64 : WOW64_CPUFLAGS_SOFTWARE),
+                "wrong flags %lx\n", wow64info->CpuFlags );
+            ok( wow64info->NativeMachineType == native_machine, "wrong machine %x / %x\n",
+                wow64info->NativeMachineType, native_machine );
+            ok( wow64info->EmulatedMachineType == IMAGE_FILE_MACHINE_I386, "wrong machine %x\n",
+                wow64info->EmulatedMachineType );
+            }
+            ok( buffer[sizeof(*wow64info) / sizeof(ULONG)] == 0xcccccccc, "buffer set %lx\n",
+                buffer[sizeof(*wow64info) / sizeof(ULONG)] );
+            if (ReadProcessMemory( pi.hProcess, (void *)peb_ptr, peb_data, sizeof(peb_data), &res ))
+            {
+                ULONG limit = (sizeof(peb_data) - sizeof(wow64info)) / sizeof(ULONG);
+                for (i = 0; i < limit; i++)
+                {
+                    if (!memcmp( peb_data + i, wow64info, sizeof(*wow64info) ))
+                    {
+                        trace( "wow64info found at %lx\n", i * 4 );
+                        break;
+                    }
+                }
+                ok( i < limit, "wow64info not found in PEB\n" );
+            }
+        }
+        else win_skip( "RtlWow64GetSharedInfoProcess not supported\n" );
+
         ret = DebugActiveProcess( pi.dwProcessId );
         ok( ret, "debugging failed\n" );
         if (!ReadProcessMemory( pi.hProcess, proc_info.PebBaseAddress, &peb, sizeof(peb), &res )) res = 0;
@@ -415,6 +462,19 @@ static void test_peb_teb(void)
         else
             ok( proc_info.PebBaseAddress == teb.Peb, "wrong peb %p / %p\n",
                 proc_info.PebBaseAddress, teb.Peb );
+
+        ResumeThread( pi.hThread );
+        WaitForInputIdle( pi.hProcess, 1000 );
+
+        if (pRtlWow64GetSharedInfoProcess)
+        {
+            wow64 = 0xcc;
+            memset( buffer, 0xcc, sizeof(buffer) );
+            status = pRtlWow64GetSharedInfoProcess( pi.hProcess, &wow64, wow64info );
+            ok( !status, "RtlWow64GetSharedInfoProcess failed %lx\n", status );
+            ok( !wow64, "wrong wow64 %u\n", wow64 );
+            ok( buffer[0] == 0xcccccccc, "buffer set %lx\n", buffer[0] );
+        }
 
         TerminateProcess( pi.hProcess, 0 );
         CloseHandle( pi.hProcess );
