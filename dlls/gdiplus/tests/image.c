@@ -3804,6 +3804,18 @@ static void test_image_properties(void)
                "expected property id %#lx, got %#lx\n", prop_id[0], item.data.id);
         }
 
+        status = GdipGetPropertySize(NULL, &prop_size, &prop_count);
+        expect(InvalidParameter, status);
+        status = GdipGetPropertySize(image, &prop_size, NULL);
+        expect(InvalidParameter, status);
+        status = GdipGetPropertySize(image, NULL, &prop_count);
+        expect(InvalidParameter, status);
+        status = GdipGetPropertySize(image, NULL, NULL);
+        expect(InvalidParameter, status);
+        expected = (image_type == ImageTypeMetafile) ? NotImplemented : Ok;
+        status = GdipGetPropertySize(image, &prop_size, &prop_count);
+        expect(expected, status);
+
         GdipDisposeImage(image);
 
         winetest_pop_context();
@@ -4154,14 +4166,6 @@ static void test_GdipGetAllPropertyItems(void)
 
     HeapFree(GetProcessHeap(), 0, prop_id);
 
-    status = GdipGetPropertySize(NULL, &total_size, &total_count);
-    expect(InvalidParameter, status);
-    status = GdipGetPropertySize(image, &total_size, NULL);
-    expect(InvalidParameter, status);
-    status = GdipGetPropertySize(image, NULL, &total_count);
-    expect(InvalidParameter, status);
-    status = GdipGetPropertySize(image, NULL, NULL);
-    expect(InvalidParameter, status);
     total_size = 0xdeadbeef;
     total_count = 0xdeadbeef;
     status = GdipGetPropertySize(image, &total_size, &total_count);
@@ -4918,14 +4922,6 @@ static void test_gif_properties(void)
 
     HeapFree(GetProcessHeap(), 0, prop_id);
 
-    status = GdipGetPropertySize(NULL, &total_size, &total_count);
-    expect(InvalidParameter, status);
-    status = GdipGetPropertySize(image, &total_size, NULL);
-    expect(InvalidParameter, status);
-    status = GdipGetPropertySize(image, NULL, &total_count);
-    expect(InvalidParameter, status);
-    status = GdipGetPropertySize(image, NULL, NULL);
-    expect(InvalidParameter, status);
     total_size = 0xdeadbeef;
     total_count = 0xdeadbeef;
     status = GdipGetPropertySize(image, &total_size, &total_count);

@@ -2760,7 +2760,12 @@ GpStatus WINGDIPAPI GdipGetPropertySize(GpImage *image, UINT *size, UINT *count)
     }
 
     reader = ((GpBitmap *)image)->metadata_reader;
-    if (!reader) return PropertyNotFound;
+    if (!reader)
+    {
+        *count = 0;
+        *size = 0;
+        return Ok;
+    }
 
     hr = IWICMetadataReader_GetCount(reader, &prop_count);
     if (FAILED(hr)) return hresult_to_status(hr);
