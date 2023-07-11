@@ -1471,7 +1471,7 @@ static GpStatus transform_region_element(region_element* element, GpMatrix *matr
 
 GpStatus WINGDIPAPI GdipTransformRegion(GpRegion *region, GpMatrix *matrix)
 {
-    TRACE("(%p, %p)\n", region, matrix);
+    TRACE("(%p, %s)\n", region, debugstr_matrix(matrix));
 
     if (!region || !matrix)
         return InvalidParameter;
@@ -1595,7 +1595,7 @@ GpStatus WINGDIPAPI GdipGetRegionScansCount(GpRegion *region, UINT *count, GpMat
     GpStatus stat;
     LPRGNDATA data;
 
-    TRACE("(%p, %p, %p)\n", region, count, matrix);
+    TRACE("(%p, %p, %s)\n", region, count, debugstr_matrix(matrix));
 
     if (!region || !count || !matrix)
         return InvalidParameter;

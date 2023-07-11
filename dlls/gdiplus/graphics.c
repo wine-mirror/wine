@@ -5029,7 +5029,7 @@ GpStatus WINGDIPAPI GdipGetVisibleClipBoundsI(GpGraphics *graphics, GpRect *rect
 
 GpStatus WINGDIPAPI GdipGetWorldTransform(GpGraphics *graphics, GpMatrix *matrix)
 {
-    TRACE("(%p, %p)\n", graphics, matrix);
+    TRACE("(%p, %s)\n", graphics, debugstr_matrix(matrix));
 
     if(!graphics || !matrix)
         return InvalidParameter;
@@ -6377,17 +6377,13 @@ GpStatus WINGDIPAPI GdipSetWorldTransform(GpGraphics *graphics, GpMatrix *matrix
 {
     GpStatus stat;
 
-    TRACE("(%p, %p)\n", graphics, matrix);
+    TRACE("(%p, %s)\n", graphics, debugstr_matrix(matrix));
 
     if(!graphics || !matrix)
         return InvalidParameter;
 
     if(graphics->busy)
         return ObjectBusy;
-
-    TRACE("%f,%f,%f,%f,%f,%f\n",
-          matrix->matrix[0], matrix->matrix[1], matrix->matrix[2],
-          matrix->matrix[3], matrix->matrix[4], matrix->matrix[5]);
 
     if (is_metafile_graphics(graphics)) {
         stat = METAFILE_SetWorldTransform((GpMetafile*)graphics->image, matrix);
@@ -6675,7 +6671,7 @@ GpStatus WINGDIPAPI GdipMultiplyWorldTransform(GpGraphics *graphics, GDIPCONST G
     GpMatrix m;
     GpStatus ret;
 
-    TRACE("(%p, %p, %d)\n", graphics, matrix, order);
+    TRACE("(%p, %s, %d)\n", graphics, debugstr_matrix(matrix), order);
 
     if(!graphics || !matrix)
         return InvalidParameter;
@@ -7105,7 +7101,7 @@ GpStatus WINGDIPAPI GdipMeasureDriverString(GpGraphics *graphics, GDIPCONST UINT
     REAL rel_width, rel_height, ascent, descent;
     GpPointF pt[3];
 
-    TRACE("(%p %p %d %p %p %d %p %p)\n", graphics, text, length, font, positions, flags, matrix, boundingBox);
+    TRACE("(%p %p %d %p %p %d %s %p)\n", graphics, text, length, font, positions, flags, debugstr_matrix(matrix), boundingBox);
 
     if (!graphics || !text || !font || !positions || !boundingBox)
         return InvalidParameter;
@@ -7533,7 +7529,7 @@ GpStatus WINGDIPAPI GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT16 
                                          GDIPCONST PointF *positions, INT flags,
                                          GDIPCONST GpMatrix *matrix )
 {
-    TRACE("(%p %s %p %p %p %d %p)\n", graphics, debugstr_wn(text, length), font, brush, positions, flags, matrix);
+    TRACE("(%p %s %p %p %p %d %s)\n", graphics, debugstr_wn(text, length), font, brush, positions, flags, debugstr_matrix(matrix));
 
     if (!graphics || !text || !font || !brush || !positions)
         return InvalidParameter;

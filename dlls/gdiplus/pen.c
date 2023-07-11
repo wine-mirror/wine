@@ -436,7 +436,7 @@ GpStatus WINGDIPAPI GdipSetPenTransform(GpPen *pen, GpMatrix *matrix)
 {
     static int calls;
 
-    TRACE("(%p,%p)\n", pen, matrix);
+    TRACE("(%p,%s)\n", pen, debugstr_matrix(matrix));
 
     if(!pen || !matrix)
         return InvalidParameter;
@@ -451,7 +451,7 @@ GpStatus WINGDIPAPI GdipSetPenTransform(GpPen *pen, GpMatrix *matrix)
 
 GpStatus WINGDIPAPI GdipGetPenTransform(GpPen *pen, GpMatrix *matrix)
 {
-    TRACE("(%p,%p)\n", pen, matrix);
+    TRACE("(%p,%s)\n", pen, debugstr_matrix(matrix));
 
     if(!pen || !matrix)
         return InvalidParameter;
@@ -494,7 +494,7 @@ GpStatus WINGDIPAPI GdipRotatePenTransform(GpPen *pen, REAL angle, GpMatrixOrder
 GpStatus WINGDIPAPI GdipMultiplyPenTransform(GpPen *pen, GDIPCONST GpMatrix *matrix,
     GpMatrixOrder order)
 {
-    TRACE("(%p,%p,%u)\n", pen, matrix, order);
+    TRACE("(%p,%s,%u)\n", pen, debugstr_matrix(matrix), order);
 
     if(!pen)
         return InvalidParameter;

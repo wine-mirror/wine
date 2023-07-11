@@ -1500,7 +1500,7 @@ GpStatus WINGDIPAPI GdipGetPathWorldBounds(GpPath* path, GpRectF* bounds,
     INT count, i;
     REAL path_width = 1.0, width, height, temp, low_x, low_y, high_x, high_y;
 
-    TRACE("(%p, %p, %p, %p)\n", path, bounds, matrix, pen);
+    TRACE("(%p, %p, %s, %p)\n", path, bounds, debugstr_matrix(matrix), pen);
 
     /* Matrix and pen can be null. */
     if(!path || !bounds)
@@ -1582,7 +1582,7 @@ GpStatus WINGDIPAPI GdipGetPathWorldBoundsI(GpPath* path, GpRect* bounds,
     GpStatus ret;
     GpRectF boundsF;
 
-    TRACE("(%p, %p, %p, %p)\n", path, bounds, matrix, pen);
+    TRACE("(%p, %p, %s, %p)\n", path, bounds, debugstr_matrix(matrix), pen);
 
     ret = GdipGetPathWorldBounds(path,&boundsF,matrix,pen);
 
@@ -1796,7 +1796,7 @@ GpStatus WINGDIPAPI GdipSetPathFillMode(GpPath *path, GpFillMode fill)
 
 GpStatus WINGDIPAPI GdipTransformPath(GpPath *path, GpMatrix *matrix)
 {
-    TRACE("(%p, %p)\n", path, matrix);
+    TRACE("(%p, %s)\n", path, debugstr_matrix(matrix));
 
     if(!path)
         return InvalidParameter;
@@ -1812,7 +1812,7 @@ GpStatus WINGDIPAPI GdipWarpPath(GpPath *path, GpMatrix* matrix,
     GDIPCONST GpPointF *points, INT count, REAL x, REAL y, REAL width,
     REAL height, WarpMode warpmode, REAL flatness)
 {
-    FIXME("(%p,%p,%p,%i,%0.2f,%0.2f,%0.2f,%0.2f,%i,%0.2f)\n", path, matrix,
+    FIXME("(%p,%s,%p,%i,%0.2f,%0.2f,%0.2f,%0.2f,%i,%0.2f)\n", path, debugstr_matrix(matrix),
         points, count, x, y, width, height, warpmode, flatness);
 
     return NotImplemented;
@@ -2434,7 +2434,7 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
     path_list_node_t *points=NULL, *last_point=NULL;
     int i, subpath_start=0, new_length;
 
-    TRACE("(%p,%p,%p,%0.2f)\n", path, pen, matrix, flatness);
+    TRACE("(%p,%p,%s,%0.2f)\n", path, pen, debugstr_matrix(matrix), flatness);
 
     if (!path || !pen)
         return InvalidParameter;

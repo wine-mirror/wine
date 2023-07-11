@@ -492,3 +492,10 @@ const char *debugstr_pointf(const PointF* pt)
     if (!pt) return "(null)";
     return wine_dbg_sprintf("(%0.2f,%0.2f)", pt->X, pt->Y);
 }
+
+const char *debugstr_matrix(const GpMatrix *matrix)
+{
+    if (!matrix) return "(null)";
+    return wine_dbg_sprintf("%p(%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f)",matrix, matrix->matrix[0], matrix->matrix[1],
+                            matrix->matrix[2], matrix->matrix[3], matrix->matrix[4], matrix->matrix[5]);
+}

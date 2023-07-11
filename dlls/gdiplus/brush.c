@@ -1296,7 +1296,7 @@ GpStatus WINGDIPAPI GdipGetTextureImage(GpTexture *brush, GpImage **image)
  */
 GpStatus WINGDIPAPI GdipGetTextureTransform(GpTexture *brush, GpMatrix *matrix)
 {
-    TRACE("(%p, %p)\n", brush, matrix);
+    TRACE("(%p, %s)\n", brush, debugstr_matrix(matrix));
 
     if(!brush || !matrix)
         return InvalidParameter;
@@ -1327,7 +1327,7 @@ GpStatus WINGDIPAPI GdipGetTextureWrapMode(GpTexture *brush, GpWrapMode *wrapmod
 GpStatus WINGDIPAPI GdipMultiplyTextureTransform(GpTexture* brush,
     GDIPCONST GpMatrix *matrix, GpMatrixOrder order)
 {
-    TRACE("(%p, %p, %d)\n", brush, matrix, order);
+    TRACE("(%p, %s, %d)\n", brush, debugstr_matrix(matrix), order);
 
     if(!brush || !matrix)
         return InvalidParameter;
@@ -1841,7 +1841,7 @@ GpStatus WINGDIPAPI GdipSetPathGradientWrapMode(GpPathGradient *grad,
 GpStatus WINGDIPAPI GdipSetPathGradientTransform(GpPathGradient *grad,
     GpMatrix *matrix)
 {
-    TRACE("(%p,%p)\n", grad, matrix);
+    TRACE("(%p,%s)\n", grad, debugstr_matrix(matrix));
 
     if (!grad || !matrix || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
@@ -1854,7 +1854,7 @@ GpStatus WINGDIPAPI GdipSetPathGradientTransform(GpPathGradient *grad,
 GpStatus WINGDIPAPI GdipGetPathGradientTransform(GpPathGradient *grad,
     GpMatrix *matrix)
 {
-    TRACE("(%p,%p)\n", grad, matrix);
+    TRACE("(%p,%s)\n", grad, debugstr_matrix(matrix));
 
     if (!grad || !matrix || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
@@ -1867,7 +1867,7 @@ GpStatus WINGDIPAPI GdipGetPathGradientTransform(GpPathGradient *grad,
 GpStatus WINGDIPAPI GdipMultiplyPathGradientTransform(GpPathGradient *grad,
     GDIPCONST GpMatrix *matrix, GpMatrixOrder order)
 {
-    TRACE("(%p,%p,%i)\n", grad, matrix, order);
+    TRACE("(%p,%s,%i)\n", grad, debugstr_matrix(matrix), order);
 
     if (!grad || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
@@ -1935,7 +1935,7 @@ GpStatus WINGDIPAPI GdipSetSolidFillColor(GpSolidFill *sf, ARGB argb)
 GpStatus WINGDIPAPI GdipSetTextureTransform(GpTexture *texture,
     GDIPCONST GpMatrix *matrix)
 {
-    TRACE("(%p, %p)\n", texture, matrix);
+    TRACE("(%p, %s)\n", texture, debugstr_matrix(matrix));
 
     if(!texture || !matrix)
         return InvalidParameter;
@@ -2112,7 +2112,7 @@ GpStatus WINGDIPAPI GdipResetLineTransform(GpLineGradient *brush)
 GpStatus WINGDIPAPI GdipSetLineTransform(GpLineGradient *brush,
     GDIPCONST GpMatrix *matrix)
 {
-    TRACE("(%p,%p)\n", brush,  matrix);
+    TRACE("(%p,%s)\n", brush,  debugstr_matrix(matrix));
 
     if(!brush || !matrix)
         return InvalidParameter;
@@ -2124,7 +2124,7 @@ GpStatus WINGDIPAPI GdipSetLineTransform(GpLineGradient *brush,
 
 GpStatus WINGDIPAPI GdipGetLineTransform(GpLineGradient *brush, GpMatrix *matrix)
 {
-    TRACE("(%p,%p)\n", brush, matrix);
+    TRACE("(%p,%s)\n", brush, debugstr_matrix(matrix));
 
     if(!brush || !matrix)
         return InvalidParameter;
@@ -2148,7 +2148,7 @@ GpStatus WINGDIPAPI GdipScaleLineTransform(GpLineGradient *brush, REAL sx, REAL 
 GpStatus WINGDIPAPI GdipMultiplyLineTransform(GpLineGradient *brush,
     GDIPCONST GpMatrix *matrix, GpMatrixOrder order)
 {
-    TRACE("(%p,%p,%u)\n", brush, matrix, order);
+    TRACE("(%p,%s,%u)\n", brush, debugstr_matrix(matrix), order);
 
     if(!brush)
         return InvalidParameter;

@@ -203,6 +203,8 @@ extern const char *debugstr_rectf(const RectF* rc) DECLSPEC_HIDDEN;
 
 extern const char *debugstr_pointf(const PointF* pt) DECLSPEC_HIDDEN;
 
+extern const char *debugstr_matrix(const GpMatrix* matrix) DECLSPEC_HIDDEN;
+
 extern void convert_32bppARGB_to_32bppPARGB(UINT width, UINT height,
     BYTE *dst_bits, INT dst_stride, const BYTE *src_bits, INT src_stride) DECLSPEC_HIDDEN;
 
