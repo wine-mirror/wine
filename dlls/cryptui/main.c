@@ -20,8 +20,6 @@
 #include <wchar.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -1028,7 +1026,7 @@ static void cert_mgr_do_export(HWND hwnd)
                 info.dwSize = sizeof(info);
                 info.pwszExportFileName = NULL;
                 info.dwSubjectChoice = CRYPTUI_WIZ_EXPORT_CERT_CONTEXT;
-                info.u.pCertContext = cert;
+                info.pCertContext = cert;
                 info.cStores = 0;
                 CryptUIWizExport(0, hwnd, NULL, &info, NULL);
             }
@@ -1048,7 +1046,7 @@ static void cert_mgr_do_export(HWND hwnd)
             info.pwszExportFileName = NULL;
             info.dwSubjectChoice =
              CRYPTUI_WIZ_EXPORT_CERT_STORE_CERTIFICATES_ONLY;
-            info.u.hCertStore = store;
+            info.hCertStore = store;
             info.cStores = 0;
             do {
                 selection = SendMessageW(lv, LVM_GETNEXTITEM, selection,
@@ -1375,7 +1373,7 @@ static BOOL WINAPI enum_store_callback(const void *pvSystemStore,
 
     tvis.hParent = NULL;
     tvis.hInsertAfter = TVI_LAST;
-    tvis.u.item.mask = TVIF_TEXT;
+    tvis.item.mask = TVIF_TEXT;
     if ((localizedName = CryptFindLocalizedName(pvSystemStore)))
     {
         struct StoreInfo *storeInfo = HeapAlloc(GetProcessHeap(), 0,
@@ -1384,13 +1382,13 @@ static BOOL WINAPI enum_store_callback(const void *pvSystemStore,
         if (storeInfo)
         {
             storeInfo->type = SystemStore;
-            storeInfo->u.name = HeapAlloc(GetProcessHeap(), 0,
+            storeInfo->name = HeapAlloc(GetProcessHeap(), 0,
              (lstrlenW(pvSystemStore) + 1) * sizeof(WCHAR));
-            if (storeInfo->u.name)
+            if (storeInfo->name)
             {
-                tvis.u.item.mask |= TVIF_PARAM;
-                tvis.u.item.lParam = (LPARAM)storeInfo;
-                lstrcpyW(storeInfo->u.name, pvSystemStore);
+                tvis.item.mask |= TVIF_PARAM;
+                tvis.item.lParam = (LPARAM)storeInfo;
+                lstrcpyW(storeInfo->name, pvSystemStore);
             }
             else
             {
@@ -1400,10 +1398,10 @@ static BOOL WINAPI enum_store_callback(const void *pvSystemStore,
         }
         else
             ret = FALSE;
-        tvis.u.item.pszText = (LPWSTR)localizedName;
+        tvis.item.pszText = (LPWSTR)localizedName;
     }
     else
-        tvis.u.item.pszText = (LPWSTR)pvSystemStore;
+        tvis.item.pszText = (LPWSTR)pvSystemStore;
     /* FIXME: need a folder icon for the store too */
     if (ret)
         SendMessageW(tree, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
@@ -1441,12 +1439,12 @@ static void enumerate_stores(HWND hwnd, CRYPTUI_ENUM_DATA *pEnumData)
                         TVINSERTSTRUCTW tvis;
 
                         storeInfo->type = StoreHandle;
-                        storeInfo->u.store = pEnumData->rghStore[i];
+                        storeInfo->store = pEnumData->rghStore[i];
                         tvis.hParent = NULL;
                         tvis.hInsertAfter = TVI_LAST;
-                        tvis.u.item.mask = TVIF_TEXT | TVIF_PARAM;
-                        tvis.u.item.pszText = name;
-                        tvis.u.item.lParam = (LPARAM)storeInfo;
+                        tvis.item.mask = TVIF_TEXT | TVIF_PARAM;
+                        tvis.item.pszText = name;
+                        tvis.item.lParam = (LPARAM)storeInfo;
                         SendMessageW(tree, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
                     }
                 }
@@ -1474,7 +1472,7 @@ static void free_store_info(HWND tree)
             struct StoreInfo *storeInfo = (struct StoreInfo *)item.lParam;
 
             if (storeInfo->type == SystemStore)
-                HeapFree(GetProcessHeap(), 0, storeInfo->u.name);
+                HeapFree(GetProcessHeap(), 0, storeInfo->name);
             HeapFree(GetProcessHeap(), 0, storeInfo);
         }
         next = (HTREEITEM)SendMessageW(tree, TVM_GETNEXTITEM, TVGN_NEXT,
@@ -1499,9 +1497,9 @@ static HCERTSTORE selected_item_to_store(HWND tree, HTREEITEM hItem)
         struct StoreInfo *storeInfo = (struct StoreInfo *)item.lParam;
 
         if (storeInfo->type == StoreHandle)
-            store = storeInfo->u.store;
+            store = storeInfo->store;
         else
-            store = CertOpenSystemStoreW(0, storeInfo->u.name);
+            store = CertOpenSystemStoreW(0, storeInfo->name);
     }
     else
     {
@@ -1838,7 +1836,7 @@ static void add_icon_to_control(HWND hwnd, int id)
     if (!bitmap)
         goto end;
     stgm.tymed = TYMED_GDI;
-    stgm.u.hBitmap = bitmap;
+    stgm.hBitmap = bitmap;
     stgm.pUnkForRelease = NULL;
     hr = IDataObject_SetData(dataObject, &formatEtc, &stgm, TRUE);
     if (FAILED(hr))
@@ -2310,7 +2308,7 @@ static void set_cert_info(HWND hwnd,
     HWND icon = GetDlgItem(hwnd, IDC_CERTIFICATE_ICON);
     HWND text = GetDlgItem(hwnd, IDC_CERTIFICATE_INFO);
     CRYPT_PROVIDER_SGNR *provSigner = WTHelperGetProvSignerFromChain(
-     (CRYPT_PROVIDER_DATA *)pCertViewInfo->u.pCryptProviderData,
+     (CRYPT_PROVIDER_DATA *)pCertViewInfo->pCryptProviderData,
      pCertViewInfo->idxSigner, pCertViewInfo->fCounterSigner,
      pCertViewInfo->idxCounterSigner);
     CRYPT_PROVIDER_CERT *root =
@@ -2571,7 +2569,7 @@ static void init_general_page(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
     page->dwFlags = PSP_USECALLBACK;
     page->pfnCallback = general_callback_proc;
     page->hInstance = hInstance;
-    page->u.pszTemplate = MAKEINTRESOURCEW(IDD_GENERAL);
+    page->pszTemplate = MAKEINTRESOURCEW(IDD_GENERAL);
     page->pfnDlgProc = general_dlg_proc;
     page->lParam = (LPARAM)pCertViewInfo;
 }
@@ -3736,7 +3734,7 @@ static void show_edit_cert_properties_dialog(HWND parent,
     page.dwFlags = PSP_USECALLBACK;
     page.pfnCallback = cert_properties_general_callback;
     page.hInstance = hInstance;
-    page.u.pszTemplate = MAKEINTRESOURCEW(IDD_CERT_PROPERTIES_GENERAL);
+    page.pszTemplate = MAKEINTRESOURCEW(IDD_CERT_PROPERTIES_GENERAL);
     page.pfnDlgProc = cert_properties_general_dlg_proc;
     page.lParam = (LPARAM)data;
 
@@ -3746,7 +3744,7 @@ static void show_edit_cert_properties_dialog(HWND parent,
     hdr.dwFlags = PSH_PROPSHEETPAGE;
     hdr.hInstance = hInstance;
     hdr.pszCaption = MAKEINTRESOURCEW(IDS_CERTIFICATE_PROPERTIES);
-    hdr.u3.ppsp = &page;
+    hdr.ppsp = &page;
     hdr.nPages = 1;
     PropertySheetW(&hdr);
 }
@@ -3851,7 +3849,7 @@ static INT_PTR CALLBACK detail_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             info.dwSize = sizeof(info);
             info.pwszExportFileName = NULL;
             info.dwSubjectChoice = CRYPTUI_WIZ_EXPORT_CERT_CONTEXT;
-            info.u.pCertContext = data->pCertViewInfo->pCertContext;
+            info.pCertContext = data->pCertViewInfo->pCertContext;
             info.cStores = 0;
             CryptUIWizExport(0, hwnd, NULL, &info, NULL);
             break;
@@ -3916,7 +3914,7 @@ static BOOL init_detail_page(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
         page->dwFlags = PSP_USECALLBACK;
         page->pfnCallback = detail_callback;
         page->hInstance = hInstance;
-        page->u.pszTemplate = MAKEINTRESOURCEW(IDD_DETAIL);
+        page->pszTemplate = MAKEINTRESOURCEW(IDD_DETAIL);
         page->pfnDlgProc = detail_dlg_proc;
         page->lParam = (LPARAM)data;
         ret = TRUE;
@@ -3936,7 +3934,7 @@ struct hierarchy_data
 static LPARAM index_to_lparam(struct hierarchy_data *data, DWORD index)
 {
     CRYPT_PROVIDER_SGNR *provSigner = WTHelperGetProvSignerFromChain(
-     (CRYPT_PROVIDER_DATA *)data->pCertViewInfo->u.pCryptProviderData,
+     (CRYPT_PROVIDER_DATA *)data->pCertViewInfo->pCryptProviderData,
      data->pCertViewInfo->idxSigner, data->pCertViewInfo->fCounterSigner,
      data->pCertViewInfo->idxCounterSigner);
 
@@ -3951,7 +3949,7 @@ static LPARAM index_to_lparam(struct hierarchy_data *data, DWORD index)
 static inline DWORD lparam_to_index(struct hierarchy_data *data, LPARAM lp)
 {
     CRYPT_PROVIDER_SGNR *provSigner = WTHelperGetProvSignerFromChain(
-     (CRYPT_PROVIDER_DATA *)data->pCertViewInfo->u.pCryptProviderData,
+     (CRYPT_PROVIDER_DATA *)data->pCertViewInfo->pCryptProviderData,
      data->pCertViewInfo->idxSigner, data->pCertViewInfo->fCounterSigner,
      data->pCertViewInfo->idxCounterSigner);
 
@@ -3999,7 +3997,7 @@ static void show_cert_chain(HWND hwnd, struct hierarchy_data *data)
 {
     HWND tree = GetDlgItem(hwnd, IDC_CERTPATH);
     CRYPT_PROVIDER_SGNR *provSigner = WTHelperGetProvSignerFromChain(
-     (CRYPT_PROVIDER_DATA *)data->pCertViewInfo->u.pCryptProviderData,
+     (CRYPT_PROVIDER_DATA *)data->pCertViewInfo->pCryptProviderData,
      data->pCertViewInfo->idxSigner, data->pCertViewInfo->fCounterSigner,
      data->pCertViewInfo->idxCounterSigner);
     DWORD i;
@@ -4017,11 +4015,11 @@ static void show_cert_chain(HWND hwnd, struct hierarchy_data *data)
 
             tvis.hParent = parent;
             tvis.hInsertAfter = TVI_LAST;
-            tvis.u.item.mask = TVIF_TEXT | TVIF_STATE | TVIF_IMAGE |
+            tvis.item.mask = TVIF_TEXT | TVIF_STATE | TVIF_IMAGE |
              TVIF_SELECTEDIMAGE | TVIF_PARAM;
-            tvis.u.item.pszText = name;
-            tvis.u.item.state = TVIS_EXPANDED;
-            tvis.u.item.stateMask = TVIS_EXPANDED;
+            tvis.item.pszText = name;
+            tvis.item.state = TVIS_EXPANDED;
+            tvis.item.stateMask = TVIS_EXPANDED;
             if (i == 1 && (!provSigner->pChainContext ||
              provSigner->pChainContext->TrustStatus.dwErrorStatus &
              CERT_TRUST_IS_PARTIAL_CHAIN))
@@ -4030,15 +4028,15 @@ static void show_cert_chain(HWND hwnd, struct hierarchy_data *data)
                  * a partial chain, the icon is a warning icon rather than an
                  * error icon.
                  */
-                tvis.u.item.iImage = 2;
+                tvis.item.iImage = 2;
             }
             else if (provSigner->pasCertChain[i - 1].pChainElement->TrustStatus.
              dwErrorStatus == 0)
-                tvis.u.item.iImage = 0;
+                tvis.item.iImage = 0;
             else
-                tvis.u.item.iImage = 1;
-            tvis.u.item.iSelectedImage = tvis.u.item.iImage;
-            tvis.u.item.lParam = index_to_lparam(data, i - 1);
+                tvis.item.iImage = 1;
+            tvis.item.iSelectedImage = tvis.item.iImage;
+            tvis.item.lParam = index_to_lparam(data, i - 1);
             parent = (HTREEITEM)SendMessageW(tree, TVM_INSERTITEMW, 0,
              (LPARAM)&tvis);
             HeapFree(GetProcessHeap(), 0, name);
@@ -4068,7 +4066,7 @@ static void set_certificate_status_for_end_cert(HWND hwnd,
 {
     HWND status = GetDlgItem(hwnd, IDC_CERTIFICATESTATUSTEXT);
     CRYPT_PROVIDER_SGNR *provSigner = WTHelperGetProvSignerFromChain(
-     (CRYPT_PROVIDER_DATA *)pCertViewInfo->u.pCryptProviderData,
+     (CRYPT_PROVIDER_DATA *)pCertViewInfo->pCryptProviderData,
      pCertViewInfo->idxSigner, pCertViewInfo->fCounterSigner,
      pCertViewInfo->idxCounterSigner);
     CRYPT_PROVIDER_CERT *provCert = WTHelperGetProvCertFromChain(provSigner,
@@ -4105,7 +4103,7 @@ static void show_dialog_for_selected_cert(HWND hwnd)
         BOOL changed = FALSE;
 
         provSigner = WTHelperGetProvSignerFromChain(
-         (CRYPT_PROVIDER_DATA *)data->pCertViewInfo->u.pCryptProviderData,
+         (CRYPT_PROVIDER_DATA *)data->pCertViewInfo->pCryptProviderData,
          data->pCertViewInfo->idxSigner,
          data->pCertViewInfo->fCounterSigner,
          data->pCertViewInfo->idxCounterSigner);
@@ -4163,7 +4161,7 @@ static INT_PTR CALLBACK hierarchy_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             data = get_hierarchy_data_from_tree_item(tree, nm->itemNew.hItem);
             selection = lparam_to_index(data, nm->itemNew.lParam);
             provSigner = WTHelperGetProvSignerFromChain(
-             (CRYPT_PROVIDER_DATA *)data->pCertViewInfo->u.pCryptProviderData,
+             (CRYPT_PROVIDER_DATA *)data->pCertViewInfo->pCryptProviderData,
              data->pCertViewInfo->idxSigner,
              data->pCertViewInfo->fCounterSigner,
              data->pCertViewInfo->idxCounterSigner);
@@ -4251,7 +4249,7 @@ static BOOL init_hierarchy_page(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
             page->dwSize = sizeof(PROPSHEETPAGEW);
             page->dwFlags = PSP_USECALLBACK;
             page->hInstance = hInstance;
-            page->u.pszTemplate = MAKEINTRESOURCEW(IDD_HIERARCHY);
+            page->pszTemplate = MAKEINTRESOURCEW(IDD_HIERARCHY);
             page->pfnDlgProc = hierarchy_dlg_proc;
             page->lParam = (LPARAM)data;
             page->pfnCallback = hierarchy_callback;
@@ -4349,10 +4347,10 @@ static BOOL show_cert_dialog(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
                     /* Start page index is relative to the number of default
                      * pages
                      */
-                    hdr.u2.nStartPage = pCertViewInfo->nStartPage + hdr.nPages;
+                    hdr.nStartPage = pCertViewInfo->nStartPage + hdr.nPages;
                 }
                 else
-                    hdr.u2.nStartPage = pCertViewInfo->nStartPage;
+                    hdr.nStartPage = pCertViewInfo->nStartPage;
                 hdr.nPages = nPages;
                 ret = TRUE;
             }
@@ -4362,14 +4360,14 @@ static BOOL show_cert_dialog(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
         else
         {
             /* Ignore the relative flag if there aren't any additional pages */
-            hdr.u2.nStartPage = pCertViewInfo->nStartPage & 0x7fff;
+            hdr.nStartPage = pCertViewInfo->nStartPage & 0x7fff;
             ret = TRUE;
         }
         if (ret)
         {
             INT_PTR l;
 
-            hdr.u3.ppsp = pages;
+            hdr.ppsp = pages;
             hdr.pfnCallback = cert_prop_sheet_proc;
             l = PropertySheetW(&hdr);
             if (l == 0)
@@ -4410,7 +4408,7 @@ BOOL WINAPI CryptUIDlgViewCertificateW(
     }
     /* Make a local copy in case we have to call WinVerifyTrust ourselves */
     memcpy(&viewInfo, pCertViewInfo, sizeof(viewInfo));
-    if (!pCertViewInfo->u.hWVTStateData)
+    if (!pCertViewInfo->hWVTStateData)
     {
         memset(&wvt, 0, sizeof(wvt));
         wvt.cbStruct = sizeof(wvt);
@@ -4428,22 +4426,22 @@ BOOL WINAPI CryptUIDlgViewCertificateW(
         cert.psCertContext = (CERT_CONTEXT *)viewInfo.pCertContext;
         cert.chStores = viewInfo.cStores;
         cert.pahStores = viewInfo.rghStores;
-        wvt.u.pCert = &cert;
+        wvt.pCert = &cert;
         wvt.dwStateAction = WTD_STATEACTION_VERIFY;
         WinVerifyTrust(NULL, &generic_cert_verify, &wvt);
-        viewInfo.u.pCryptProviderData =
+        viewInfo.pCryptProviderData =
          WTHelperProvDataFromStateData(wvt.hWVTStateData);
         signer = WTHelperGetProvSignerFromChain(
-         (CRYPT_PROVIDER_DATA *)viewInfo.u.pCryptProviderData, 0, FALSE, 0);
+         (CRYPT_PROVIDER_DATA *)viewInfo.pCryptProviderData, 0, FALSE, 0);
         provCert = WTHelperGetProvCertFromChain(signer, 0);
         ret = TRUE;
     }
     else
     {
-        viewInfo.u.pCryptProviderData =
-         WTHelperProvDataFromStateData(viewInfo.u.hWVTStateData);
+        viewInfo.pCryptProviderData =
+         WTHelperProvDataFromStateData(viewInfo.hWVTStateData);
         signer = WTHelperGetProvSignerFromChain(
-         (CRYPT_PROVIDER_DATA *)viewInfo.u.pCryptProviderData,
+         (CRYPT_PROVIDER_DATA *)viewInfo.pCryptProviderData,
          viewInfo.idxSigner, viewInfo.fCounterSigner,
          viewInfo.idxCounterSigner);
         provCert = WTHelperGetProvCertFromChain(signer, viewInfo.idxCert);
@@ -4452,7 +4450,7 @@ BOOL WINAPI CryptUIDlgViewCertificateW(
     if (ret)
     {
         ret = show_cert_dialog(&viewInfo, provCert, pfPropertiesChanged);
-        if (!pCertViewInfo->u.hWVTStateData)
+        if (!pCertViewInfo->hWVTStateData)
         {
             wvt.dwStateAction = WTD_STATEACTION_CLOSE;
             WinVerifyTrust(NULL, &generic_cert_verify, &wvt);
@@ -4977,7 +4975,7 @@ static BOOL import_validate_filename(HWND hwnd, struct ImportWizData *data,
         {
             data->importSrc.dwSubjectChoice =
              CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_STORE;
-            data->importSrc.u.hCertStore = source;
+            data->importSrc.hCertStore = source;
             data->freeSource = TRUE;
             ret = TRUE;
         }
@@ -5310,29 +5308,29 @@ static BOOL do_import(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardTitle,
     {
     case CRYPTUI_WIZ_IMPORT_SUBJECT_FILE:
         ret = import_file(dwFlags, hwndParent, pwszWizardTitle,
-         pImportSrc->u.pwszFileName, hDestCertStore);
+         pImportSrc->pwszFileName, hDestCertStore);
         break;
     case CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_CONTEXT:
         if ((ret = check_context_type(dwFlags, CERT_QUERY_CONTENT_CERT)))
-            ret = import_cert(pImportSrc->u.pCertContext, hDestCertStore);
+            ret = import_cert(pImportSrc->pCertContext, hDestCertStore);
         else
             import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
         break;
     case CRYPTUI_WIZ_IMPORT_SUBJECT_CRL_CONTEXT:
         if ((ret = check_context_type(dwFlags, CERT_QUERY_CONTENT_CRL)))
-            ret = import_crl(pImportSrc->u.pCRLContext, hDestCertStore);
+            ret = import_crl(pImportSrc->pCRLContext, hDestCertStore);
         else
             import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
         break;
     case CRYPTUI_WIZ_IMPORT_SUBJECT_CTL_CONTEXT:
         if ((ret = check_context_type(dwFlags, CERT_QUERY_CONTENT_CTL)))
-            ret = import_ctl(pImportSrc->u.pCTLContext, hDestCertStore);
+            ret = import_ctl(pImportSrc->pCTLContext, hDestCertStore);
         else
             import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
         break;
     case CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_STORE:
         ret = import_store(dwFlags, hwndParent, pwszWizardTitle,
-         pImportSrc->u.hCertStore, hDestCertStore);
+         pImportSrc->hCertStore, hDestCertStore);
         break;
     default:
         WARN("unknown source type: %lu\n", pImportSrc->dwSubjectChoice);
@@ -5432,7 +5430,7 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
     if (pImportSrc)
     {
         memcpy(&data.importSrc, pImportSrc, sizeof(data.importSrc));
-        data.fileName = (LPWSTR)pImportSrc->u.pwszFileName;
+        data.fileName = (LPWSTR)pImportSrc->pwszFileName;
     }
     else
     {
@@ -5449,7 +5447,7 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
 
     pages[nPages].dwSize = sizeof(pages[0]);
     pages[nPages].hInstance = hInstance;
-    pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_WELCOME);
+    pages[nPages].pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_WELCOME);
     pages[nPages].pfnDlgProc = import_welcome_dlg_proc;
     pages[nPages].dwFlags = PSP_HIDEHEADER;
     pages[nPages].lParam = (LPARAM)&data;
@@ -5460,7 +5458,7 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
     {
         pages[nPages].dwSize = sizeof(pages[0]);
         pages[nPages].hInstance = hInstance;
-        pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_FILE);
+        pages[nPages].pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_FILE);
         pages[nPages].pfnDlgProc = import_file_dlg_proc;
         pages[nPages].dwFlags = PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
         pages[nPages].pszHeaderTitle = MAKEINTRESOURCEW(IDS_IMPORT_FILE_TITLE);
@@ -5490,7 +5488,7 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
 
     pages[nPages].dwSize = sizeof(pages[0]);
     pages[nPages].hInstance = hInstance;
-    pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_STORE);
+    pages[nPages].pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_STORE);
     pages[nPages].pfnDlgProc = import_store_dlg_proc;
     pages[nPages].dwFlags = PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
     pages[nPages].pszHeaderTitle = MAKEINTRESOURCEW(IDS_IMPORT_STORE_TITLE);
@@ -5501,7 +5499,7 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
 
     pages[nPages].dwSize = sizeof(pages[0]);
     pages[nPages].hInstance = hInstance;
-    pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_FINISH);
+    pages[nPages].pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_FINISH);
     pages[nPages].pfnDlgProc = import_finish_dlg_proc;
     pages[nPages].dwFlags = PSP_HIDEHEADER;
     pages[nPages].lParam = (LPARAM)&data;
@@ -5517,16 +5515,16 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
         hdr.pszCaption = pwszWizardTitle;
     else
         hdr.pszCaption = MAKEINTRESOURCEW(IDS_IMPORT_WIZARD);
-    hdr.u3.ppsp = pages;
+    hdr.ppsp = pages;
     hdr.nPages = nPages;
-    hdr.u4.pszbmWatermark = MAKEINTRESOURCEW(IDB_CERT_WATERMARK);
-    hdr.u5.pszbmHeader = MAKEINTRESOURCEW(IDB_CERT_HEADER);
+    hdr.pszbmWatermark = MAKEINTRESOURCEW(IDB_CERT_WATERMARK);
+    hdr.pszbmHeader = MAKEINTRESOURCEW(IDB_CERT_HEADER);
     PropertySheetW(&hdr);
-    if (data.fileName != data.importSrc.u.pwszFileName)
+    if (data.fileName != data.importSrc.pwszFileName)
         HeapFree(GetProcessHeap(), 0, data.fileName);
     if (data.freeSource &&
      data.importSrc.dwSubjectChoice == CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_STORE)
-        CertCloseStore(data.importSrc.u.hCertStore, 0);
+        CertCloseStore(data.importSrc.hCertStore, 0);
     DeleteObject(data.titleFont);
     return data.success;
 }
@@ -5697,7 +5695,7 @@ static INT_PTR CALLBACK export_private_key_dlg_proc(HWND hwnd, UINT msg,
         /* Get enough information about a key to see whether it's exportable.
          */
         if (!(info = export_get_private_key_info(
-         data->exportInfo.u.pCertContext)))
+         data->exportInfo.pCertContext)))
             errorID = IDS_EXPORT_PRIVATE_KEY_UNAVAILABLE;
         else if (!export_acquire_private_key(info, &hProv))
             errorID = IDS_EXPORT_PRIVATE_KEY_UNAVAILABLE;
@@ -5765,7 +5763,7 @@ static BOOL export_info_has_private_key(PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo)
         /* If there's a CRYPT_KEY_PROV_INFO set for this cert, assume the
          * cert has a private key.
          */
-        if (CertGetCertificateContextProperty(pExportInfo->u.pCertContext,
+        if (CertGetCertificateContextProperty(pExportInfo->pCertContext,
          CERT_KEY_PROV_INFO_PROP_ID, NULL, &size))
             ret = TRUE;
     }
@@ -6488,7 +6486,7 @@ static BOOL save_cert_as_cms(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
                     PCCERT_CHAIN_CONTEXT chain;
 
                     ret = CertGetCertificateChain(NULL,
-                     pExportInfo->u.pCertContext, NULL, addlStore, NULL, 0,
+                     pExportInfo->pCertContext, NULL, addlStore, NULL, 0,
                      NULL, &chain);
                     if (ret)
                     {
@@ -6508,7 +6506,7 @@ static BOOL save_cert_as_cms(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
                          * cert to the message.
                          */
                         ret = CertAddCertificateContextToStore(store,
-                         pExportInfo->u.pCertContext, CERT_STORE_ADD_ALWAYS,
+                         pExportInfo->pCertContext, CERT_STORE_ADD_ALWAYS,
                          NULL);
                     }
                 }
@@ -6519,7 +6517,7 @@ static BOOL save_cert_as_cms(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
         }
         else
             ret = CertAddCertificateContextToStore(store,
-             pExportInfo->u.pCertContext, CERT_STORE_ADD_ALWAYS, NULL);
+             pExportInfo->pCertContext, CERT_STORE_ADD_ALWAYS, NULL);
         if (ret)
             ret = save_store_as_cms(file, store);
         CertCloseStore(store, 0);
@@ -6573,7 +6571,7 @@ static BOOL save_pfx(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
                 memset(&chainPara, 0, sizeof(chainPara));
                 chainPara.cbSize = sizeof(chainPara);
                 ret = CertGetCertificateChain(engine,
-                 pExportInfo->u.pCertContext, NULL, NULL, &chainPara, 0, NULL,
+                 pExportInfo->pCertContext, NULL, NULL, &chainPara, 0, NULL,
                  &chain);
                 if (ret)
                 {
@@ -6600,7 +6598,7 @@ static BOOL save_pfx(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
         }
         else
             ret = CertAddCertificateContextToStore(store,
-             pExportInfo->u.pCertContext, CERT_STORE_ADD_ALWAYS, &cert);
+             pExportInfo->pCertContext, CERT_STORE_ADD_ALWAYS, &cert);
         /* Copy private key info to newly created cert, so it'll get exported
          * along with the cert.
          */
@@ -6681,31 +6679,31 @@ static BOOL do_export(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
     {
     case CRYPTUI_WIZ_EXPORT_CRL_CONTEXT:
         ret = save_der(file,
-         pExportInfo->u.pCRLContext->pbCrlEncoded,
-         pExportInfo->u.pCRLContext->cbCrlEncoded);
+         pExportInfo->pCRLContext->pbCrlEncoded,
+         pExportInfo->pCRLContext->cbCrlEncoded);
         break;
     case CRYPTUI_WIZ_EXPORT_CTL_CONTEXT:
         ret = save_der(file,
-         pExportInfo->u.pCTLContext->pbCtlEncoded,
-         pExportInfo->u.pCTLContext->cbCtlEncoded);
+         pExportInfo->pCTLContext->pbCtlEncoded,
+         pExportInfo->pCTLContext->cbCtlEncoded);
         break;
     case CRYPTUI_WIZ_EXPORT_CERT_STORE:
-        ret = save_serialized_store(file, pExportInfo->u.hCertStore);
+        ret = save_serialized_store(file, pExportInfo->hCertStore);
         break;
     case CRYPTUI_WIZ_EXPORT_CERT_STORE_CERTIFICATES_ONLY:
-        ret = save_store_as_cms(file, pExportInfo->u.hCertStore);
+        ret = save_store_as_cms(file, pExportInfo->hCertStore);
         break;
     default:
         switch (pContextInfo->dwExportFormat)
         {
         case CRYPTUI_WIZ_EXPORT_FORMAT_DER:
-            ret = save_der(file, pExportInfo->u.pCertContext->pbCertEncoded,
-             pExportInfo->u.pCertContext->cbCertEncoded);
+            ret = save_der(file, pExportInfo->pCertContext->pbCertEncoded,
+             pExportInfo->pCertContext->cbCertEncoded);
             break;
         case CRYPTUI_WIZ_EXPORT_FORMAT_BASE64:
             ret = save_base64(file,
-             pExportInfo->u.pCertContext->pbCertEncoded,
-             pExportInfo->u.pCertContext->cbCertEncoded);
+             pExportInfo->pCertContext->pbCertEncoded,
+             pExportInfo->pCertContext->cbCertEncoded);
             break;
         case CRYPTUI_WIZ_EXPORT_FORMAT_PKCS7:
             ret = save_cert_as_cms(file, pExportInfo,
@@ -6844,7 +6842,7 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
 
     pages[nPages].dwSize = sizeof(pages[0]);
     pages[nPages].hInstance = hInstance;
-    pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_EXPORT_WELCOME);
+    pages[nPages].pszTemplate = MAKEINTRESOURCEW(IDD_EXPORT_WELCOME);
     pages[nPages].pfnDlgProc = export_welcome_dlg_proc;
     pages[nPages].dwFlags = PSP_HIDEHEADER;
     pages[nPages].lParam = (LPARAM)&data;
@@ -6873,7 +6871,7 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
     {
         pages[nPages].dwSize = sizeof(pages[0]);
         pages[nPages].hInstance = hInstance;
-        pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_EXPORT_PRIVATE_KEY);
+        pages[nPages].pszTemplate = MAKEINTRESOURCEW(IDD_EXPORT_PRIVATE_KEY);
         pages[nPages].pfnDlgProc = export_private_key_dlg_proc;
         pages[nPages].dwFlags = PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
         pages[nPages].pszHeaderTitle =
@@ -6887,7 +6885,7 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
     {
         pages[nPages].dwSize = sizeof(pages[0]);
         pages[nPages].hInstance = hInstance;
-        pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_EXPORT_FORMAT);
+        pages[nPages].pszTemplate = MAKEINTRESOURCEW(IDD_EXPORT_FORMAT);
         pages[nPages].pfnDlgProc = export_format_dlg_proc;
         pages[nPages].dwFlags = PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
         pages[nPages].pszHeaderTitle =
@@ -6901,7 +6899,7 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
     {
         pages[nPages].dwSize = sizeof(pages[0]);
         pages[nPages].hInstance = hInstance;
-        pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_EXPORT_PASSWORD);
+        pages[nPages].pszTemplate = MAKEINTRESOURCEW(IDD_EXPORT_PASSWORD);
         pages[nPages].pfnDlgProc = export_password_dlg_proc;
         pages[nPages].dwFlags = PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
         pages[nPages].pszHeaderTitle =
@@ -6914,7 +6912,7 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
 
     pages[nPages].dwSize = sizeof(pages[0]);
     pages[nPages].hInstance = hInstance;
-    pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_EXPORT_FILE);
+    pages[nPages].pszTemplate = MAKEINTRESOURCEW(IDD_EXPORT_FILE);
     pages[nPages].pfnDlgProc = export_file_dlg_proc;
     pages[nPages].dwFlags = PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
     pages[nPages].pszHeaderTitle = MAKEINTRESOURCEW(IDS_EXPORT_FILE_TITLE);
@@ -6925,7 +6923,7 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
 
     pages[nPages].dwSize = sizeof(pages[0]);
     pages[nPages].hInstance = hInstance;
-    pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_EXPORT_FINISH);
+    pages[nPages].pszTemplate = MAKEINTRESOURCEW(IDD_EXPORT_FINISH);
     pages[nPages].pfnDlgProc = export_finish_dlg_proc;
     pages[nPages].dwFlags = PSP_HIDEHEADER;
     pages[nPages].lParam = (LPARAM)&data;
@@ -6941,10 +6939,10 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
         hdr.pszCaption = pwszWizardTitle;
     else
         hdr.pszCaption = MAKEINTRESOURCEW(IDS_EXPORT_WIZARD);
-    hdr.u3.ppsp = pages;
+    hdr.ppsp = pages;
     hdr.nPages = nPages;
-    hdr.u4.pszbmWatermark = MAKEINTRESOURCEW(IDB_CERT_WATERMARK);
-    hdr.u5.pszbmHeader = MAKEINTRESOURCEW(IDB_CERT_HEADER);
+    hdr.pszbmWatermark = MAKEINTRESOURCEW(IDB_CERT_WATERMARK);
+    hdr.pszbmHeader = MAKEINTRESOURCEW(IDB_CERT_HEADER);
     l = PropertySheetW(&hdr);
     DeleteObject(data.titleFont);
     if (data.freePassword)
@@ -7428,10 +7426,10 @@ static void free_prop_sheet_pages(PROPSHEETPAGEW *pages, DWORD num)
 
     for (i = 0; i < num; i++)
     {
-        if (!(pages[i].dwFlags & PSP_DLGINDIRECT) && !IS_INTRESOURCE(pages[i].u.pszTemplate))
-            HeapFree(GetProcessHeap(), 0, (void *)pages[i].u.pszTemplate);
-        if ((pages[i].dwFlags & PSP_USEICONID) && !IS_INTRESOURCE(pages[i].u2.pszIcon))
-            HeapFree(GetProcessHeap(), 0, (void *)pages[i].u2.pszIcon);
+        if (!(pages[i].dwFlags & PSP_DLGINDIRECT) && !IS_INTRESOURCE(pages[i].pszTemplate))
+            HeapFree(GetProcessHeap(), 0, (void *)pages[i].pszTemplate);
+        if ((pages[i].dwFlags & PSP_USEICONID) && !IS_INTRESOURCE(pages[i].pszIcon))
+            HeapFree(GetProcessHeap(), 0, (void *)pages[i].pszIcon);
         if ((pages[i].dwFlags & PSP_USETITLE) && !IS_INTRESOURCE(pages[i].pszTitle))
             HeapFree(GetProcessHeap(), 0, (void *)pages[i].pszTitle);
         if ((pages[i].dwFlags & PSP_USEHEADERTITLE) && !IS_INTRESOURCE(pages[i].pszHeaderTitle))
@@ -7454,10 +7452,10 @@ static PROPSHEETPAGEW *prop_sheet_pages_AtoW(LPCPROPSHEETPAGEA pages, DWORD num)
     memcpy(psp, pages, size);
     for (i = 0; i < num; i++)
     {
-        if (!(pages[i].dwFlags & PSP_DLGINDIRECT) && !IS_INTRESOURCE(pages[i].u.pszTemplate))
-            psp[i].u.pszTemplate = NULL;
-        if ((pages[i].dwFlags & PSP_USEICONID) && !IS_INTRESOURCE(pages[i].u2.pszIcon))
-            psp[i].u2.pszIcon = NULL;
+        if (!(pages[i].dwFlags & PSP_DLGINDIRECT) && !IS_INTRESOURCE(pages[i].pszTemplate))
+            psp[i].pszTemplate = NULL;
+        if ((pages[i].dwFlags & PSP_USEICONID) && !IS_INTRESOURCE(pages[i].pszIcon))
+            psp[i].pszIcon = NULL;
         if ((pages[i].dwFlags & PSP_USETITLE) && !IS_INTRESOURCE(pages[i].pszTitle))
             psp[i].pszTitle = NULL;
         if (pages[i].dwFlags & PSP_USECALLBACK)
@@ -7470,13 +7468,13 @@ static PROPSHEETPAGEW *prop_sheet_pages_AtoW(LPCPROPSHEETPAGEA pages, DWORD num)
     }
     for (i = 0; i < num; i++)
     {
-        if (!(pages[i].dwFlags & PSP_DLGINDIRECT) && !IS_INTRESOURCE(pages[i].u.pszTemplate))
+        if (!(pages[i].dwFlags & PSP_DLGINDIRECT) && !IS_INTRESOURCE(pages[i].pszTemplate))
         {
-            if (!(psp[i].u.pszTemplate = strdupAtoW( pages[i].u.pszTemplate ))) goto error;
+            if (!(psp[i].pszTemplate = strdupAtoW( pages[i].pszTemplate ))) goto error;
         }
-        if ((pages[i].dwFlags & PSP_USEICONID) && !IS_INTRESOURCE(pages[i].u2.pszIcon))
+        if ((pages[i].dwFlags & PSP_USEICONID) && !IS_INTRESOURCE(pages[i].pszIcon))
         {
-            if (!(psp[i].u2.pszIcon = strdupAtoW( pages[i].u2.pszIcon ))) goto error;
+            if (!(psp[i].pszIcon = strdupAtoW( pages[i].pszIcon ))) goto error;
         }
         if ((pages[i].dwFlags & PSP_USETITLE) && !IS_INTRESOURCE(pages[i].pszTitle))
         {
