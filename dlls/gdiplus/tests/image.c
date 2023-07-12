@@ -3726,7 +3726,7 @@ static void test_image_properties(void)
 
         status = GdipGetPropertyCount(image, &prop_count);
         ok(status == Ok, "GdipGetPropertyCount error %d\n", status);
-        todo_wine_if(td[i].image_data == pngimage || td[i].image_data == jpgimage || td[i].image_data == gifimage)
+        todo_wine_if(td[i].image_data == pngimage || td[i].image_data == jpgimage)
         ok(td[i].prop_count == prop_count || (td[i].prop_count2 != ~0 && td[i].prop_count2 == prop_count),
            "expected property count %u or %u, got %u\n",
            td[i].prop_count, td[i].prop_count2, prop_count);
@@ -4859,6 +4859,12 @@ static const BYTE gif_2frame_no_pal[] = {
 0x02,0x02,0x44,0x01,0x00, 0x3b
 };
 
+static const BYTE gif_no_pal[] = {
+'G','I','F','8','7','a', 0x01,0x00, 0x01,0x00, 0x27, 0x02, 0x00,
+0x2c, 0x00,0x00, 0x00,0x00, 0x01,0x00, 0x01,0x00, 0x01,
+0x02,0x02,0x44,0x01,0x00, 0x3b
+};
+
 static void test_gif_properties(void)
 {
     static const struct property_test_data animatedgif_props[] =
@@ -4882,6 +4888,11 @@ static void test_gif_properties(void)
         { PropertyTagTypeLong, PropertyTagFrameDelay, 8, { 10,0,0,0,20,0,0,0 } },
         { PropertyTagTypeShort, PropertyTagLoopCount, 2, { 1,0 } },
     };
+    static const struct property_test_data gif_no_pal_props[] =
+    {
+        { PropertyTagTypeLong, PropertyTagFrameDelay, 4, { 0,0,0,0 } },
+        { PropertyTagTypeShort, PropertyTagLoopCount, 2, { 1,0 } },
+    };
 
     static const struct test_data {
         const BYTE *image_data;
@@ -4895,6 +4906,7 @@ static void test_gif_properties(void)
         giftest(animatedgif, animatedgif_props, 2),
         giftest(gif_2frame_global_pal, gif_2frame_global_pal_props, 2),
         giftest(gif_2frame_no_pal, gif_2frame_no_pal_props, 2),
+        giftest(gif_no_pal, gif_no_pal_props, 1),
 #undef giftest
     };
 

@@ -3301,29 +3301,25 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
     PropertyItem *transparent_idx = NULL, *loop = NULL, *palette = NULL;
 
     IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
-    if (frame_count > 1)
+    delay = heap_alloc_zero(sizeof(*delay) + frame_count * sizeof(LONG));
+    if (delay)
     {
-        delay = heap_alloc_zero(sizeof(*delay) + frame_count * sizeof(LONG));
-        if (delay)
+        LONG *value;
+
+        delay->type = PropertyTagTypeLong;
+        delay->id = PropertyTagFrameDelay;
+        delay->length = frame_count * sizeof(LONG);
+        delay->value = delay + 1;
+
+        value = delay->value;
+
+        for (i = 0; i < frame_count; i++)
         {
-            LONG *value;
-
-            delay->type = PropertyTagTypeLong;
-            delay->id = PropertyTagFrameDelay;
-            delay->length = frame_count * sizeof(LONG);
-            delay->value = delay + 1;
-
-            value = delay->value;
-
-            for (i = 0; i < frame_count; i++)
+            hr = IWICBitmapDecoder_GetFrame(decoder, i, &frame);
+            if (hr == S_OK)
             {
-                hr = IWICBitmapDecoder_GetFrame(decoder, i, &frame);
-                if (hr == S_OK)
-                {
-                    value[i] = get_gif_frame_property(frame, &GUID_MetadataFormatGCE, L"Delay");
-                    IWICBitmapFrameDecode_Release(frame);
-                }
-                else value[i] = 0;
+                value[i] = get_gif_frame_property(frame, &GUID_MetadataFormatGCE, L"Delay");
+                IWICBitmapFrameDecode_Release(frame);
             }
         }
     }
@@ -3342,7 +3338,7 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
                     if (!comment)
                         comment = get_gif_comment(reader);
 
-                    if (frame_count > 1 && !loop)
+                    if (!loop)
                         loop = get_gif_loopcount(reader);
 
                     if (!background)
@@ -3358,7 +3354,7 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
         IWICMetadataBlockReader_Release(block_reader);
     }
 
-    if (frame_count > 1 && !loop)
+    if (!loop)
     {
         loop = heap_alloc_zero(sizeof(*loop) + sizeof(SHORT));
         if (loop)
