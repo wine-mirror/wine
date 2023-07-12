@@ -264,13 +264,13 @@ static void test_link_id(void)
     g_link_id = 0;
     SendMessageA(hwnd, WM_LBUTTONDOWN, 1, MAKELPARAM(50, 10));
     SendMessageA(hwnd, WM_LBUTTONUP, 0, MAKELPARAM(50, 10));
-    todo_wine ok(g_link_id == 0, "Got unexpected link id %d.\n", g_link_id);
+    ok(g_link_id == 0, "Got unexpected link id %d.\n", g_link_id);
 
     /* test link2 at (25, 25) */
     g_link_id = 0;
     SendMessageA(hwnd, WM_LBUTTONDOWN, 1, MAKELPARAM(25, 25));
     SendMessageA(hwnd, WM_LBUTTONUP, 0, MAKELPARAM(25, 25));
-    todo_wine ok(g_link_id == 1, "Got unexpected link id %d.\n", g_link_id);
+    ok(g_link_id == 1, "Got unexpected link id %d.\n", g_link_id);
 
     DestroyWindow(hwnd);
 }
