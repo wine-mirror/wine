@@ -112,6 +112,24 @@ static BOOL get_encoder_clsid(LPCWSTR mime, GUID *format, CLSID *clsid)
     return ret;
 }
 
+static const char * dbgstr_hexdata(const BYTE *data, UINT len)
+{
+    UINT i, offset = 0;
+    char buffer[770];
+    const UINT max_len = 256;
+    const UINT output_len = (len <= max_len) ? len : max_len - 1;
+
+    if (!len) return "";
+
+    for (i = 0; i < output_len; i++)
+        offset += sprintf(buffer + offset, " %02x", data[i]);
+
+    if (len > output_len)
+        offset += sprintf(buffer + offset, " ...");
+
+    return __wine_dbg_strdup( buffer );
+}
+
 static void test_bufferrawformat(void* buff, int size, REFGUID expected, int line, BOOL todo)
 {
     LPSTREAM stream;
@@ -4043,14 +4061,7 @@ static void test_tiff_properties(void)
             int match = memcmp(td[i].value, prop_item->value, td[i].length) == 0;
             ok(match || broken(td[i].length <= 4 && !match), "%u: data mismatch\n", i);
             if (!match)
-            {
-                UINT j;
-                BYTE *data = prop_item->value;
-                trace("id %#lx:", prop_item->id);
-                for (j = 0; j < prop_item->length; j++)
-                    trace(" %02x", data[j]);
-                trace("\n");
-            }
+                trace("id %#lx:%s\n", prop_item->id, dbgstr_hexdata(prop_item->value, prop_item->length));
         }
         HeapFree(GetProcessHeap(), 0, prop_item);
     }
@@ -4149,14 +4160,7 @@ static void test_GdipGetAllPropertyItems(void)
             int match = memcmp(td[i].value, prop_item->value, td[i].length) == 0;
             ok(match, "%u: data mismatch\n", i);
             if (!match)
-            {
-                UINT j;
-                BYTE *data = prop_item->value;
-                trace("id %#lx:", prop_item->id);
-                for (j = 0; j < prop_item->length; j++)
-                    trace(" %02x", data[j]);
-                trace("\n");
-            }
+                trace("id %#lx:%s\n", prop_item->id, dbgstr_hexdata(prop_item->value, prop_item->length));
         }
         HeapFree(GetProcessHeap(), 0, prop_item);
     }
@@ -4211,14 +4215,7 @@ static void test_GdipGetAllPropertyItems(void)
             int match = memcmp(td[i].value, prop_item[i].value, td[i].length) == 0;
             ok(match, "%u: data mismatch\n", i);
             if (!match)
-            {
-                UINT j;
-                BYTE *data = prop_item[i].value;
-                trace("id %#lx:", prop_item[i].id);
-                for (j = 0; j < prop_item[i].length; j++)
-                    trace(" %02x", data[j]);
-                trace("\n");
-            }
+                trace("id %#lx:%s\n", prop_item[i].id, dbgstr_hexdata(prop_item[i].value, prop_item[i].length));
         }
         item_data += prop_item[i].length;
     }
@@ -4444,13 +4441,8 @@ static void test_bitmapbits(void)
                 ok(match,
                    "%u: data should match\n", i);
                 if (!match)
-                {
-                    BYTE *bits = data.Scan0;
-                    trace("%u: data mismatch for format %#x:", i, td[i].format);
-                    for (j = 0; j < td[i].size; j++)
-                        trace(" %02x", bits[j]);
-                    trace("\n");
-                }
+                    trace("%u: data mismatch for format %#x:%s\n", i, td[i].format,
+                            dbgstr_hexdata(data.Scan0, td[i].size));
             }
             else
                 ok(!match, "%u: data shouldn't match\n", i);
@@ -4474,14 +4466,7 @@ static void test_bitmapbits(void)
             int match = memcmp(data.Scan0, td[i].pixels_unlocked, 48) == 0;
             ok(match, "%u: data should match\n", i);
             if (!match)
-            {
-                UINT j;
-                BYTE *bits = data.Scan0;
-                trace("%u: data mismatch for format %#x:", i, td[i].format);
-                for (j = 0; j < 48; j++)
-                    trace(" %02x", bits[j]);
-                trace("\n");
-            }
+                trace("%u: data mismatch for format %#x:%s\n", i, td[i].format, dbgstr_hexdata(data.Scan0, 48));
         }
 
         status = GdipBitmapUnlockBits(bitmap, &data);
@@ -4528,13 +4513,7 @@ static void test_DrawImage(void)
     match = memcmp(white_2x2, black_2x2, sizeof(black_2x2)) == 0;
     ok(match, "data should match\n");
     if (!match)
-    {
-        UINT i, size = sizeof(white_2x2);
-        BYTE *bits = white_2x2;
-        for (i = 0; i < size; i++)
-            trace(" %02x", bits[i]);
-        trace("\n");
-    }
+        trace("%s\n", dbgstr_hexdata(white_2x2, sizeof(white_2x2)));
 
     status = GdipDeleteGraphics(graphics);
     expect(Ok, status);
@@ -4624,13 +4603,7 @@ static void test_GdipDrawImagePointRect(void)
     match = memcmp(white_2x2, black_2x2, sizeof(black_2x2)) == 0;
     ok(match, "data should match\n");
     if (!match)
-    {
-        UINT i, size = sizeof(white_2x2);
-        BYTE *bits = white_2x2;
-        for (i = 0; i < size; i++)
-            trace(" %02x", bits[i]);
-        trace("\n");
-    }
+        trace("%s\n", dbgstr_hexdata(white_2x2, sizeof(white_2x2)));
 
     status = GdipDeleteGraphics(graphics);
     expect(Ok, status);
@@ -4830,13 +4803,7 @@ static void test_DrawImage_scale(void)
         todo_wine_if (!match && td[i].todo)
             ok(match, "%d: data should match\n", i);
         if (!match)
-        {
-            UINT i, size = sizeof(dst_8x1);
-            const BYTE *bits = dst_8x1;
-            for (i = 0; i < size; i++)
-                trace(" %02x", bits[i]);
-            trace("\n");
-        }
+            trace("%s\n", dbgstr_hexdata(dst_8x1, sizeof(dst_8x1)));
     }
 
     status = GdipDeleteGraphics(graphics);
@@ -4957,14 +4924,7 @@ static void test_gif_properties(void)
             int match = memcmp(td[i].value, prop_item->value, td[i].length) == 0;
             ok(match, "%u: data mismatch\n", i);
             if (!match)
-            {
-                UINT j;
-                BYTE *data = prop_item->value;
-                trace("id %#lx:", prop_item->id);
-                for (j = 0; j < prop_item->length; j++)
-                    trace(" %02x", data[j]);
-                trace("\n");
-            }
+                trace("id %#lx:%s\n", prop_item->id, dbgstr_hexdata(prop_item->value, prop_item->length));
         }
         HeapFree(GetProcessHeap(), 0, prop_item);
     }
@@ -5019,14 +4979,7 @@ static void test_gif_properties(void)
             int match = memcmp(td[i].value, prop_item[i].value, td[i].length) == 0;
             ok(match, "%u: data mismatch\n", i);
             if (!match)
-            {
-                UINT j;
-                BYTE *data = prop_item[i].value;
-                trace("id %#lx:", prop_item[i].id);
-                for (j = 0; j < prop_item[i].length; j++)
-                    trace(" %02x", data[j]);
-                trace("\n");
-            }
+                trace("id %#lx:%s\n", prop_item[i].id, dbgstr_hexdata(prop_item[i].value, prop_item[i].length));
         }
         item_data += prop_item[i].length;
     }
