@@ -22,8 +22,6 @@
 #include <errno.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -518,7 +516,7 @@ static HRESULT WINAPI InstallCallback_OnDataAvailable(IBindStatusCallback *iface
         DWORD dwSize, FORMATETC* pformatetc, STGMEDIUM* pstgmed)
 {
     if(!msi_file) {
-        msi_file = wcsdup(pstgmed->u.lpszFileName);
+        msi_file = wcsdup(pstgmed->lpszFileName);
         TRACE("got file name %s\n", debugstr_w(msi_file));
     }
 

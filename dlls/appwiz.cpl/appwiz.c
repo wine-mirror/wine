@@ -23,8 +23,6 @@
  *
  */
 
-#define NONAMELESSUNION
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -926,8 +924,8 @@ static void StartApplet(HWND hWnd)
     psp.dwSize = sizeof (PROPSHEETPAGEW);
     psp.dwFlags = PSP_USETITLE;
     psp.hInstance = hInst;
-    psp.u.pszTemplate = MAKEINTRESOURCEW (IDD_MAIN);
-    psp.u2.pszIcon = NULL;
+    psp.pszTemplate = MAKEINTRESOURCEW (IDD_MAIN);
+    psp.pszIcon = NULL;
     psp.pfnDlgProc = MainDlgProc;
     psp.pszTitle = tab_title;
     psp.lParam = 0;
@@ -937,12 +935,12 @@ static void StartApplet(HWND hWnd)
     psh.dwFlags = PSH_PROPSHEETPAGE | PSH_USEICONID | PSH_USECALLBACK;
     psh.hwndParent = hWnd;
     psh.hInstance = hInst;
-    psh.u.pszIcon = MAKEINTRESOURCEW(ICO_MAIN);
+    psh.pszIcon = MAKEINTRESOURCEW(ICO_MAIN);
     psh.pszCaption = app_title;
     psh.nPages = 1;
-    psh.u3.ppsp = &psp;
+    psh.ppsp = &psp;
     psh.pfnCallback = propsheet_callback;
-    psh.u2.nStartPage = 0;
+    psh.nStartPage = 0;
 
     /* Display the property sheet */
     PropertySheetW (&psh);
