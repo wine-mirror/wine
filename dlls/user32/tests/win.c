@@ -7293,6 +7293,15 @@ static void test_SetWindowLong(void)
             "SetWindowLongPtr on invalid window proc shouldn't have changed the value returned by GetWindowLongPtr, instead of changing it to 0x%Ix\n", retval);
         ok(IsWindowUnicode(hwndMain), "hwndMain should now be Unicode\n");
 
+        /* Make sure nothing changes if we set the same proc */
+        retval = SetWindowLongPtrW(hwndMain, GWLP_WNDPROC, (LONG_PTR)old_window_procW);
+        todo_wine
+        ok((WNDPROC)retval == main_window_procA, "unexpected proc 0x%Ix\n", retval);
+        retval = GetWindowLongPtrW(hwndMain, GWLP_WNDPROC);
+        ok((WNDPROC)retval == old_window_procW, "unexpected proc 0x%Ix\n", retval);
+        retval = GetWindowLongPtrA(hwndMain, GWLP_WNDPROC);
+        ok((WNDPROC)retval == main_window_procA, "unexpected proc 0x%Ix\n", retval);
+
         /* set it back to ANSI */
         SetWindowLongPtrA(hwndMain, GWLP_WNDPROC, 0);
     }

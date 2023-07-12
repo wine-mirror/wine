@@ -3832,6 +3832,13 @@ NTSTATUS WINAPI wow64_NtUserSetWindowLong( UINT *args )
     LONG newval = get_ulong( &args );
     BOOL ansi = get_ulong( &args );
 
+    switch (offset)
+    {
+    case GWLP_HINSTANCE:
+    case GWLP_WNDPROC:
+        return NtUserSetWindowLongPtr( hwnd, offset, (ULONG)newval, ansi );
+    }
+
     return NtUserSetWindowLong( hwnd, offset, newval, ansi );
 }
 
