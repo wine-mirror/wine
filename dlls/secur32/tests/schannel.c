@@ -1900,6 +1900,7 @@ static void test_dtls(void)
 static void test_connection_shutdown(void)
 {
     static const BYTE message[] = {0x15, 0x03, 0x01, 0x00, 0x02, 0x01, 0x00};
+    static const BYTE message2[] = {0x15, 0x03, 0x01, 0x00, 0x02, 0x02, 0x2a};
     CtxtHandle context, context2;
     SecBufferDesc buffers[2];
     SECURITY_STATUS status;
@@ -1918,7 +1919,7 @@ static void test_connection_shutdown(void)
                                         &cred, NULL, NULL, &cred_handle, NULL );
     ok( status == SEC_E_OK, "got %08lx\n", status );
 
-    init_buffers( &buffers[0], 2, 0 );
+    init_buffers( &buffers[0], 2, 24 );
     init_buffers( &buffers[1], 1, 1000 );
     buffers[0].cBuffers = 1;
     buffers[0].pBuffers[0].BufferType = SECBUFFER_EMPTY;
@@ -2012,13 +2013,12 @@ static void test_connection_shutdown(void)
     status = ApplyControlToken( &context, buffers );
     ok( status == SEC_E_OK, "got %08lx.\n", status );
 
-    buf->cbBuffer = 1000;
+    buffers[1].pBuffers[0].cbBuffer = 1000;
     status = InitializeSecurityContextA( &cred_handle, &context, NULL, 0, 0, 0,
-                                         NULL, 0, NULL, &buffers[0], &attrs, NULL );
+                                         NULL, 0, NULL, &buffers[1], &attrs, NULL );
     ok( status == SEC_E_OK, "got %08lx.\n", status );
-    ok( buf->cbBuffer == sizeof(message), "got cbBuffer %#lx.\n", buf->cbBuffer );
-    ok( !memcmp( buf->pvBuffer, message, sizeof(message) ), "message data mismatch.\n" );
-    free_buffers( &buffers[0] );
+    ok( buffers[1].pBuffers[0].cbBuffer == sizeof(message), "got cbBuffer %#lx.\n", buffers[1].pBuffers[0].cbBuffer );
+    ok( !memcmp( buffers[1].pBuffers[0].pvBuffer, message, sizeof(message) ), "message data mismatch.\n" );
 
     alert.dwTokenType = SCHANNEL_ALERT;
     alert.dwAlertType = TLS1_ALERT_FATAL;
@@ -2028,10 +2028,14 @@ static void test_connection_shutdown(void)
     status = ApplyControlToken( &context, buffers );
     ok( status == SEC_E_OK, "got %08lx.\n", status );
 
+    buffers[1].pBuffers[0].cbBuffer = 1000;
     status = InitializeSecurityContextA( &cred_handle, &context, NULL, 0, 0, 0,
                                          NULL, 0, NULL, &buffers[1], &attrs, NULL );
     ok( status == SEC_E_OK, "got %08lx.\n", status );
+    ok( buffers[1].pBuffers[0].cbBuffer == sizeof(message2), "got cbBuffer %#lx.\n", buffers[1].pBuffers[0].cbBuffer );
+    ok( !memcmp( buffers[1].pBuffers[0].pvBuffer, message2, sizeof(message2) ), "message data mismatch.\n" );
 
+    free_buffers( &buffers[0] );
     free_buffers( &buffers[1] );
     DeleteSecurityContext( &context );
     FreeCredentialsHandle( &cred_handle );
