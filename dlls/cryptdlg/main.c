@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
-
 #include <stdarg.h>
 
 #include "windef.h"
@@ -231,11 +229,11 @@ static CERT_VERIFY_CERTIFICATE_TRUST *CRYPTDLG_GetVerifyData(
      * called directly:
      */
     if (data->pWintrustData->dwUnionChoice == WTD_CHOICE_BLOB &&
-     data->pWintrustData->u.pBlob && data->pWintrustData->u.pBlob->cbMemObject ==
+     data->pWintrustData->pBlob && data->pWintrustData->pBlob->cbMemObject ==
      sizeof(CERT_VERIFY_CERTIFICATE_TRUST) &&
-     data->pWintrustData->u.pBlob->pbMemObject)
+     data->pWintrustData->pBlob->pbMemObject)
          pCert = (CERT_VERIFY_CERTIFICATE_TRUST *)
-          data->pWintrustData->u.pBlob->pbMemObject;
+          data->pWintrustData->pBlob->pbMemObject;
     return pCert;
 }
 
@@ -423,7 +421,7 @@ BOOL WINAPI CertViewPropertiesW(CERT_VIEWPROPERTIES_STRUCT_W *info)
     wtd.cbStruct = sizeof(wtd);
     wtd.dwUIChoice = WTD_UI_NONE;
     wtd.dwUnionChoice = WTD_CHOICE_BLOB;
-    wtd.u.pBlob = &blob;
+    wtd.pBlob = &blob;
     wtd.dwStateAction = WTD_STATEACTION_VERIFY;
     err = WinVerifyTrust(NULL, &cert_action_verify, &wtd);
     if (err == ERROR_SUCCESS)
@@ -440,7 +438,7 @@ BOOL WINAPI CertViewPropertiesW(CERT_VIEWPROPERTIES_STRUCT_W *info)
         uiInfo.pCertContext = info->pCertContext;
         uiInfo.cPurposes = info->cArrayPurposes;
         uiInfo.rgszPurposes = (LPCSTR *)info->arrayPurposes;
-        uiInfo.u.hWVTStateData = wtd.hWVTStateData;
+        uiInfo.hWVTStateData = wtd.hWVTStateData;
         uiInfo.fpCryptProviderDataTrustedUsage = TRUE;
         uiInfo.cPropSheetPages = info->cArrayPropSheetPages;
         uiInfo.rgPropSheetPages = info->arrayPropSheetPages;
