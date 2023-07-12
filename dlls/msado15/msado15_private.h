@@ -21,10 +21,10 @@
 
 #define MAKE_ADO_HRESULT( err ) MAKE_HRESULT( SEVERITY_ERROR, FACILITY_CONTROL, err )
 
-HRESULT Command_create( void ** ) DECLSPEC_HIDDEN;
-HRESULT Connection_create( void ** ) DECLSPEC_HIDDEN;
-HRESULT Recordset_create( void ** ) DECLSPEC_HIDDEN;
-HRESULT Stream_create( void ** ) DECLSPEC_HIDDEN;
+HRESULT Command_create( void ** );
+HRESULT Connection_create( void ** );
+HRESULT Recordset_create( void ** );
+HRESULT Stream_create( void ** );
 
 typedef enum tid_t {
     ADORecordsetConstruction_tid,
@@ -39,6 +39,6 @@ typedef enum tid_t {
     LAST_tid
 } tid_t;
 
-HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo) DECLSPEC_HIDDEN;
+HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo);
 
 #endif /* _WINE_MSADO15_PRIVATE_H_ */
