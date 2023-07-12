@@ -18,7 +18,6 @@
  *
  */
 
-#define NONAMELESSUNION
 #define CERT_REVOCATION_PARA_HAS_EXTRA_FIELDS
 
 #include <share.h>
@@ -136,11 +135,11 @@ static BOOL WINAPI CRYPT_GetUrlFromCertificateIssuer(LPCSTR pszUrlOid,
                     if (aia->rgAccDescr[i].AccessLocation.dwAltNameChoice ==
                      CERT_ALT_NAME_URL)
                     {
-                        if (aia->rgAccDescr[i].AccessLocation.u.pwszURL)
+                        if (aia->rgAccDescr[i].AccessLocation.pwszURL)
                         {
                             cUrl++;
                             bytesNeeded += sizeof(LPWSTR) +
-                             (lstrlenW(aia->rgAccDescr[i].AccessLocation.u.
+                             (lstrlenW(aia->rgAccDescr[i].AccessLocation.
                              pwszURL) + 1) * sizeof(WCHAR);
                         }
                     }
@@ -178,10 +177,10 @@ static BOOL WINAPI CRYPT_GetUrlFromCertificateIssuer(LPCSTR pszUrlOid,
                         if (aia->rgAccDescr[i].AccessLocation.dwAltNameChoice
                          == CERT_ALT_NAME_URL)
                         {
-                            if (aia->rgAccDescr[i].AccessLocation.u.pwszURL)
+                            if (aia->rgAccDescr[i].AccessLocation.pwszURL)
                             {
                                 lstrcpyW(nextUrl,
-                                 aia->rgAccDescr[i].AccessLocation.u.pwszURL);
+                                 aia->rgAccDescr[i].AccessLocation.pwszURL);
                                 pUrlArray->rgwszUrl[pUrlArray->cUrl++] =
                                  nextUrl;
                                 nextUrl += (lstrlenW(nextUrl) + 1);
@@ -237,17 +236,17 @@ static BOOL CRYPT_GetUrlFromCRLDistPointsExt(const CRYPT_DATA_BLOB *value,
             {
                 DWORD j;
                 CERT_ALT_NAME_INFO *name =
-                 &info->rgDistPoint[i].DistPointName.u.FullName;
+                 &info->rgDistPoint[i].DistPointName.FullName;
 
                 for (j = 0; j < name->cAltEntry; j++)
                     if (name->rgAltEntry[j].dwAltNameChoice ==
                      CERT_ALT_NAME_URL)
                     {
-                        if (name->rgAltEntry[j].u.pwszURL)
+                        if (name->rgAltEntry[j].pwszURL)
                         {
                             cUrl++;
                             bytesNeeded += sizeof(LPWSTR) +
-                             (lstrlenW(name->rgAltEntry[j].u.pwszURL) + 1)
+                             (lstrlenW(name->rgAltEntry[j].pwszURL) + 1)
                              * sizeof(WCHAR);
                         }
                     }
@@ -281,20 +280,20 @@ static BOOL CRYPT_GetUrlFromCRLDistPointsExt(const CRYPT_DATA_BLOB *value,
                 {
                     DWORD j;
                     CERT_ALT_NAME_INFO *name =
-                     &info->rgDistPoint[i].DistPointName.u.FullName;
+                     &info->rgDistPoint[i].DistPointName.FullName;
 
                     for (j = 0; j < name->cAltEntry; j++)
                         if (name->rgAltEntry[j].dwAltNameChoice ==
                          CERT_ALT_NAME_URL)
                         {
-                            if (name->rgAltEntry[j].u.pwszURL)
+                            if (name->rgAltEntry[j].pwszURL)
                             {
                                 lstrcpyW(nextUrl,
-                                 name->rgAltEntry[j].u.pwszURL);
+                                 name->rgAltEntry[j].pwszURL);
                                 pUrlArray->rgwszUrl[pUrlArray->cUrl++] =
                                  nextUrl;
                                 nextUrl +=
-                                 (lstrlenW(name->rgAltEntry[j].u.pwszURL) + 1);
+                                 (lstrlenW(name->rgAltEntry[j].pwszURL) + 1);
                             }
                         }
                 }
@@ -449,7 +448,7 @@ static BOOL CRYPT_GetObjectFromFile(HANDLE hFile, PCRYPT_BLOB_ARRAY pObject)
 
     if ((ret = GetFileSizeEx(hFile, &size)))
     {
-        if (size.u.HighPart)
+        if (size.HighPart)
         {
             WARN("file too big\n");
             SetLastError(ERROR_INVALID_DATA);
@@ -459,10 +458,10 @@ static BOOL CRYPT_GetObjectFromFile(HANDLE hFile, PCRYPT_BLOB_ARRAY pObject)
         {
             CRYPT_DATA_BLOB blob;
 
-            blob.pbData = CryptMemAlloc(size.u.LowPart);
+            blob.pbData = CryptMemAlloc(size.LowPart);
             if (blob.pbData)
             {
-                ret = ReadFile(hFile, blob.pbData, size.u.LowPart, &blob.cbData,
+                ret = ReadFile(hFile, blob.pbData, size.LowPart, &blob.cbData,
                  NULL);
                 if (ret)
                 {
@@ -2125,7 +2124,7 @@ static DWORD verify_cert_revocation_from_aia_ext(const CRYPT_DATA_BLOB *value, c
         {
             if (aia->rgAccDescr[i].AccessLocation.dwAltNameChoice == CERT_ALT_NAME_URL)
             {
-                const WCHAR *url = aia->rgAccDescr[i].AccessLocation.u.pwszURL;
+                const WCHAR *url = aia->rgAccDescr[i].AccessLocation.pwszURL;
                 TRACE("OCSP URL = %s\n", debugstr_w(url));
                 error = verify_cert_revocation_with_ocsp(cert, url, pRevPara, next_update);
             }
