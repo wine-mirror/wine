@@ -471,32 +471,20 @@ static BOOL init_category_name(const char *name, int len,
 }
 
 #if _MSVCR_VER >= 110
-static inline BOOL set_lc_locale_name(pthreadlocinfo locinfo, int cat)
+static inline BOOL set_lc_locale_name(pthreadlocinfo locinfo, int cat, WCHAR *sname)
 {
-    LCID lcid = locinfo->lc_handle[cat];
-    WCHAR buf[100];
-    int len;
-
     locinfo->lc_category[cat].wrefcount = malloc(sizeof(int));
     if(!locinfo->lc_category[cat].wrefcount)
         return FALSE;
     *locinfo->lc_category[cat].wrefcount = 1;
 
-    len = GetLocaleInfoW(lcid, LOCALE_SISO639LANGNAME
-            |LOCALE_NOUSEROVERRIDE, buf, 100);
-    if(!len) return FALSE;
-
-    if(LocaleNameToLCID(buf, LOCALE_ALLOW_NEUTRAL_NAMES) != lcid)
-        len = LCIDToLocaleName(lcid, buf, 100, LOCALE_ALLOW_NEUTRAL_NAMES);
-
-    if(!len || !(locinfo->lc_name[cat] = malloc(len*sizeof(wchar_t))))
+    if(!(locinfo->lc_name[cat] = wcsdup(sname)))
         return FALSE;
 
-    memcpy(locinfo->lc_name[cat], buf, len*sizeof(wchar_t));
     return TRUE;
 }
 #else
-static inline BOOL set_lc_locale_name(pthreadlocinfo locinfo, int cat)
+static inline BOOL set_lc_locale_name(pthreadlocinfo locinfo, int cat, WCHAR *sname)
 {
     return TRUE;
 }
@@ -531,7 +519,7 @@ static BOOL update_threadlocinfo_category(WCHAR *sname, unsigned short cp,
 
     locinfo->lc_handle[category] = LocaleNameToLCID(sname, LCID_CONVERSION_FLAGS);
 
-    set_lc_locale_name(locinfo, category);
+    set_lc_locale_name(locinfo, category, sname);
 
     if(!locinfo->lc_category[category].locale) {
         char buf[256];
