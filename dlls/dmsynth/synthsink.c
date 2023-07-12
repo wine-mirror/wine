@@ -19,8 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "dmsynth_private.h"
 #include "initguid.h"
 #include "uuids.h"
@@ -245,25 +243,25 @@ static HRESULT WINAPI DMSynthSinkImpl_IKsControl_KsProperty(IKsControl* iface, P
 {
     TRACE("(%p, %p, %lu, %p, %lu, %p)\n", iface, Property, PropertyLength, PropertyData, DataLength, BytesReturned);
 
-    TRACE("Property = %s - %lu - %lu\n", debugstr_guid(&Property->u.s.Set), Property->u.s.Id, Property->u.s.Flags);
+    TRACE("Property = %s - %lu - %lu\n", debugstr_guid(&Property->Set), Property->Id, Property->Flags);
 
-    if (Property->u.s.Flags != KSPROPERTY_TYPE_GET)
+    if (Property->Flags != KSPROPERTY_TYPE_GET)
     {
-        FIXME("Property flags %lu not yet supported\n", Property->u.s.Flags);
+        FIXME("Property flags %lu not yet supported\n", Property->Flags);
         return S_FALSE;
     }
 
     if (DataLength <  sizeof(DWORD))
         return E_NOT_SUFFICIENT_BUFFER;
 
-    if (IsEqualGUID(&Property->u.s.Set, &GUID_DMUS_PROP_SinkUsesDSound))
+    if (IsEqualGUID(&Property->Set, &GUID_DMUS_PROP_SinkUsesDSound))
     {
         *(DWORD*)PropertyData = TRUE;
         *BytesReturned = sizeof(DWORD);
     }
     else
     {
-        FIXME("Unknown property %s\n", debugstr_guid(&Property->u.s.Set));
+        FIXME("Unknown property %s\n", debugstr_guid(&Property->Set));
         *(DWORD*)PropertyData = FALSE;
         *BytesReturned = sizeof(DWORD);
     }
