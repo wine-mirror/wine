@@ -19,9 +19,9 @@
 #include "mferror.h"
 
 extern HRESULT create_sink_writer_from_url(const WCHAR *url, IMFByteStream *stream,
-        IMFAttributes *attributes, REFIID riid, void **out) DECLSPEC_HIDDEN;
+        IMFAttributes *attributes, REFIID riid, void **out);
 extern HRESULT create_sink_writer_from_sink(IMFMediaSink *sink, IMFAttributes *attributes,
-        REFIID riid, void **out) DECLSPEC_HIDDEN;
+        REFIID riid, void **out);
 
 static inline BOOL mf_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 {
