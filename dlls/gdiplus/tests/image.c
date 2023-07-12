@@ -3679,7 +3679,7 @@ static void test_image_properties(void)
         { gifimage, sizeof(gifimage), ImageTypeBitmap, 1, 4, 4, ~0, 0x5100, ~0, 16 },
         { wmfimage, sizeof(wmfimage), ImageTypeMetafile, 0, ~0, 0, ~0, 0, ~0, -GenericError }
     };
-    GpStatus status;
+    GpStatus status, expected;
     GpImage *image;
     UINT prop_count, prop_size, i;
     PROPID prop_id[16] = { 0 };
@@ -3750,78 +3750,58 @@ static void test_image_properties(void)
         else
             expect(PropertyNotFound, status);
 
-        /* FIXME: remove once Wine is fixed */
-        if (!(td[i].prop_count == prop_count || (td[i].prop_count2 != ~0 && td[i].prop_count2 == prop_count)))
-        {
-            GdipDisposeImage(image);
-            winetest_pop_context();
-            continue;
-        }
-
         status = GdipGetPropertyIdList(NULL, prop_count, prop_id);
         expect(InvalidParameter, status);
         status = GdipGetPropertyIdList(image, prop_count, NULL);
         expect(InvalidParameter, status);
+        expected = (image_type == ImageTypeMetafile) ? NotImplemented : InvalidParameter;
+        status = GdipGetPropertyIdList(image, prop_count - 1, prop_id);
+        expect(expected, status);
+        status = GdipGetPropertyIdList(image, prop_count + 1, prop_id);
+        expect(expected, status);
+        if (image_type != ImageTypeMetafile && prop_count == 0)
+            expected = Ok;
         status = GdipGetPropertyIdList(image, 0, prop_id);
+        expect(expected, status);
+        expected = (image_type == ImageTypeMetafile) ? NotImplemented : Ok;
+        status = GdipGetPropertyIdList(image, prop_count, prop_id);
+        expect(expected, status);
+
+        status = GdipGetPropertyItemSize(image, prop_id[0], &prop_size);
         if (image_type == ImageTypeMetafile)
             expect(NotImplemented, status);
         else if (prop_count == 0)
-            expect(Ok, status);
-        else
-            expect(InvalidParameter, status);
-        status = GdipGetPropertyIdList(image, prop_count - 1, prop_id);
-        if (image_type == ImageTypeMetafile)
-            expect(NotImplemented, status);
-        else
-            expect(InvalidParameter, status);
-        status = GdipGetPropertyIdList(image, prop_count + 1, prop_id);
-        if (image_type == ImageTypeMetafile)
-            expect(NotImplemented, status);
-        else
-            expect(InvalidParameter, status);
-        status = GdipGetPropertyIdList(image, prop_count, prop_id);
-        if (image_type == ImageTypeMetafile)
-            expect(NotImplemented, status);
-        else
+            expect(PropertyNotFound, status);
+        /* FIXME: remove condition once Wine is fixed, i.e. this should just be an else */
+        else if (td[i].prop_count == prop_count || (td[i].prop_count2 != ~0 && td[i].prop_count2 == prop_count))
         {
+            ok(td[i].prop_id == prop_id[0] || (td[i].prop_id2 != ~0 && td[i].prop_id2 == prop_id[0]),
+               "expected property id %#x or %#x, got %#lx\n",
+               td[i].prop_id, td[i].prop_id2, prop_id[0]);
+
             expect(Ok, status);
-            if (prop_count != 0)
-                ok(td[i].prop_id == prop_id[0] || (td[i].prop_id2 != ~0 && td[i].prop_id2 == prop_id[0]),
-                   "expected property id %#x or %#x, got %#lx\n",
-                   td[i].prop_id, td[i].prop_id2, prop_id[0]);
-        }
 
-        if (status == Ok)
-        {
-            status = GdipGetPropertyItemSize(image, prop_id[0], &prop_size);
-            if (prop_count == 0)
-                expect(PropertyNotFound, status);
-            else
-            {
-                expect(Ok, status);
+            assert(sizeof(item) >= prop_size);
+            ok(prop_size > sizeof(PropertyItem), "got too small prop_size %u\n",
+               prop_size);
+            ok(td[i].prop_size + sizeof(PropertyItem) == prop_size ||
+               (td[i].prop_size2 != ~0 && td[i].prop_size2 + sizeof(PropertyItem) == prop_size),
+               "expected property size (%u or %u)+%u, got %u\n",
+               td[i].prop_size, td[i].prop_size2, (UINT) sizeof(PropertyItem), prop_size);
 
-                assert(sizeof(item) >= prop_size);
-                ok(prop_size > sizeof(PropertyItem), "got too small prop_size %u\n",
-                   prop_size);
-                ok(td[i].prop_size + sizeof(PropertyItem) == prop_size ||
-                   (td[i].prop_size2 != ~0 && td[i].prop_size2 + sizeof(PropertyItem) == prop_size),
-                   "expected property size (%u or %u)+%u, got %u\n",
-                   td[i].prop_size, td[i].prop_size2, (UINT) sizeof(PropertyItem), prop_size);
-
-                status = GdipGetPropertyItem(image, prop_id[0], 0, &item.data);
-                ok(status == InvalidParameter || status == GenericError /* Win7 */,
-                   "expected InvalidParameter, got %d\n", status);
-                status = GdipGetPropertyItem(image, prop_id[0], prop_size - 1, &item.data);
-                ok(status == InvalidParameter || status == GenericError /* Win7 */,
-                   "expected InvalidParameter, got %d\n", status);
-                status = GdipGetPropertyItem(image, prop_id[0], prop_size + 1, &item.data);
-                ok(status == InvalidParameter || status == GenericError /* Win7 */,
-                   "expected InvalidParameter, got %d\n", status);
-                status = GdipGetPropertyItem(image, prop_id[0], prop_size, &item.data);
-                expect(Ok, status);
-                ok(prop_id[0] == item.data.id,
-                   "expected property id %#lx, got %#lx\n", prop_id[0], item.data.id);
-            }
+            status = GdipGetPropertyItem(image, prop_id[0], 0, &item.data);
+            ok(status == InvalidParameter || status == GenericError /* Win7 */,
+               "expected InvalidParameter, got %d\n", status);
+            status = GdipGetPropertyItem(image, prop_id[0], prop_size - 1, &item.data);
+            ok(status == InvalidParameter || status == GenericError /* Win7 */,
+               "expected InvalidParameter, got %d\n", status);
+            status = GdipGetPropertyItem(image, prop_id[0], prop_size + 1, &item.data);
+            ok(status == InvalidParameter || status == GenericError /* Win7 */,
+               "expected InvalidParameter, got %d\n", status);
+            status = GdipGetPropertyItem(image, prop_id[0], prop_size, &item.data);
+            expect(Ok, status);
+            ok(prop_id[0] == item.data.id,
+               "expected property id %#lx, got %#lx\n", prop_id[0], item.data.id);
         }
 
         GdipDisposeImage(image);
