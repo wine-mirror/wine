@@ -1502,22 +1502,16 @@ NTSTATUS write_console_input( struct console *console, const INPUT_RECORD *recor
         console->records = new_rec;
         console->record_size = console->record_size * 2 + count;
     }
-    memcpy( console->records + console->record_count, records, count * sizeof(INPUT_RECORD) );
 
     if (console->mode & ENABLE_PROCESSED_INPUT)
     {
-        unsigned int i = 0;
-        while (i < count)
+        unsigned int i;
+        for (i = 0; i < count; i++)
         {
             unsigned int event;
 
-            if (map_to_ctrlevent(console, &records[i], &event))
+            if (map_to_ctrlevent( console, &records[i], &event ))
             {
-                if (i != count - 1)
-                    memcpy( &console->records[console->record_count + i],
-                            &console->records[console->record_count + i + 1],
-                            (count - i - 1) * sizeof(INPUT_RECORD) );
-                count--;
                 if (records[i].Event.KeyEvent.bKeyDown)
                 {
                     struct condrv_ctrl_event ctrl_event;
@@ -1527,13 +1521,17 @@ NTSTATUS write_console_input( struct console *console, const INPUT_RECORD *recor
                     ctrl_event.group_id = 0;
                     NtDeviceIoControlFile( console->server, NULL, NULL, NULL, &io, IOCTL_CONDRV_CTRL_EVENT,
                                            &ctrl_event, sizeof(ctrl_event), NULL, 0 );
-
                 }
             }
-            else i++;
+            else
+                console->records[console->record_count++] = records[i];
         }
     }
-    console->record_count += count;
+    else
+    {
+        memcpy( console->records + console->record_count, records, count * sizeof(INPUT_RECORD) );
+        console->record_count += count;
+    }
     return flush ? process_console_input( console ) : STATUS_SUCCESS;
 }
 
@@ -1768,6 +1766,11 @@ static DWORD WINAPI tty_input( void *param )
             switch (ch)
             {
             case 3: /* end of text */
+                if (console->is_unix && (console->mode & ENABLE_PROCESSED_INPUT))
+                {
+                    key_press( console, ch, 'C', LEFT_CTRL_PRESSED );
+                    break;
+                }
                 LeaveCriticalSection( &console_section );
                 goto done;
             case '\n':
