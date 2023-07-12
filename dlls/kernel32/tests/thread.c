@@ -853,10 +853,20 @@ static VOID test_thread_processor(void)
    HANDLE curthread,curproc;
    DWORD_PTR processMask,systemMask,retMask;
    SYSTEM_INFO sysInfo;
-   BOOL is_wow64;
+   BOOL is_wow64, old_wow64 = FALSE;
    DWORD ret;
 
    if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
+
+    if (is_wow64)
+    {
+        TEB64 *teb64 = ULongToPtr(NtCurrentTeb()->GdiBatchCount);
+        if (teb64)
+        {
+            PEB64 *peb64 = ULongToPtr(teb64->Peb);
+            old_wow64 = !peb64->LdrData;
+        }
+    }
 
    sysInfo.dwNumberOfProcessors=0;
    GetSystemInfo(&sysInfo);
@@ -904,7 +914,7 @@ static VOID test_thread_processor(void)
     {
         SetLastError(0xdeadbeef);
         ret = SetThreadIdealProcessor(GetCurrentThread(), MAXIMUM_PROCESSORS + 1);
-        todo_wine
+        todo_wine_if(old_wow64)
         ok(ret != ~0u, "Unexpected return value %lu.\n", ret);
 
         SetLastError(0xdeadbeef);
