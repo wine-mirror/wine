@@ -31,18 +31,18 @@ struct pseudo_console
     HANDLE process;
 };
 
-extern WCHAR *file_name_AtoW( LPCSTR name, BOOL alloc ) DECLSPEC_HIDDEN;
-extern DWORD file_name_WtoA( LPCWSTR src, INT srclen, LPSTR dest, INT destlen ) DECLSPEC_HIDDEN;
-extern void init_global_data(void) DECLSPEC_HIDDEN;
-extern void init_startup_info( RTL_USER_PROCESS_PARAMETERS *params ) DECLSPEC_HIDDEN;
-extern void init_locale( HMODULE module ) DECLSPEC_HIDDEN;
-extern void init_console(void) DECLSPEC_HIDDEN;
+extern WCHAR *file_name_AtoW( LPCSTR name, BOOL alloc );
+extern DWORD file_name_WtoA( LPCWSTR src, INT srclen, LPSTR dest, INT destlen );
+extern void init_global_data(void);
+extern void init_startup_info( RTL_USER_PROCESS_PARAMETERS *params );
+extern void init_locale( HMODULE module );
+extern void init_console(void);
 
-extern const WCHAR windows_dir[] DECLSPEC_HIDDEN;
-extern const WCHAR system_dir[] DECLSPEC_HIDDEN;
+extern const WCHAR windows_dir[];
+extern const WCHAR system_dir[];
 
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
-extern BOOL is_wow64 DECLSPEC_HIDDEN;
+extern BOOL is_wow64;
 
 static inline BOOL set_ntstatus( NTSTATUS status )
 {
