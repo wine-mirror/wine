@@ -907,6 +907,7 @@ static void test_majority(void)
         { ps_column_source, { 0.1f, 0.5f, 0.1f, 0.5f } },
         { ps_no_modifiers_source, { 0.1f, 0.2f, 0.1f, 0.2f }, D3DCOMPILE_PACK_MATRIX_ROW_MAJOR },
         { ps_no_modifiers_source, { 0.1f, 0.5f, 0.1f, 0.5f }, D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR },
+        { ps_no_modifiers_source, { 0.1f, 0.2f, 0.1f, 0.2f }, D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR | D3DCOMPILE_PACK_MATRIX_ROW_MAJOR },
         { ps_pragmas_source, { 0.1f, 0.2f, 0.1f, 0.5f }, D3DCOMPILE_PACK_MATRIX_ROW_MAJOR },
         { ps_pragmas_source, { 0.1f, 0.2f, 0.1f, 0.5f }, D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR },
     };
@@ -955,7 +956,7 @@ static void test_majority(void)
             draw_quad(test_context.device, ps_code);
 
             v = get_color_vec4(test_context.device, 0, 0);
-            todo_wine_if(i == 4)
+            todo_wine_if(i == 4 || i == 6)
             ok(compare_vec4(&v, c->x, c->y, c->z, c->w, 1),
                 "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
 
