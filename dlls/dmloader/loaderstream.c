@@ -44,8 +44,6 @@
  * - Rok Mandeljc; 24. April, 2004
 */
 
-#define NONAMELESSUNION
-
 #include "dmloader_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmloader);
@@ -149,10 +147,10 @@ static HRESULT WINAPI IDirectMusicLoaderFileStream_IStream_Seek (LPSTREAM iface,
 
     if (This->hFile == INVALID_HANDLE_VALUE) return E_FAIL;
 
-    liNewPos.u.HighPart = dlibMove.u.HighPart;
-    liNewPos.u.LowPart = SetFilePointer (This->hFile, dlibMove.u.LowPart, &liNewPos.u.HighPart, dwOrigin);
+    liNewPos.HighPart = dlibMove.HighPart;
+    liNewPos.LowPart = SetFilePointer (This->hFile, dlibMove.LowPart, &liNewPos.HighPart, dwOrigin);
 
-    if (liNewPos.u.LowPart == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR) return E_FAIL;
+    if (liNewPos.LowPart == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR) return E_FAIL;
     if (plibNewPosition) plibNewPosition->QuadPart = liNewPos.QuadPart;
     
     return S_OK;
