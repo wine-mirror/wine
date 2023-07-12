@@ -43,49 +43,49 @@ struct attributes
     size_t count;
 };
 
-extern HRESULT init_attributes_object(struct attributes *object, UINT32 size) DECLSPEC_HIDDEN;
-extern void clear_attributes_object(struct attributes *object) DECLSPEC_HIDDEN;
-extern const char *debugstr_attr(const GUID *guid) DECLSPEC_HIDDEN;
-extern const char *debugstr_mf_guid(const GUID *guid) DECLSPEC_HIDDEN;
+extern HRESULT init_attributes_object(struct attributes *object, UINT32 size);
+extern void clear_attributes_object(struct attributes *object);
+extern const char *debugstr_attr(const GUID *guid);
+extern const char *debugstr_mf_guid(const GUID *guid);
 
-extern HRESULT attributes_GetItem(struct attributes *object, REFGUID key, PROPVARIANT *value) DECLSPEC_HIDDEN;
-extern HRESULT attributes_GetItemType(struct attributes *object, REFGUID key, MF_ATTRIBUTE_TYPE *type) DECLSPEC_HIDDEN;
+extern HRESULT attributes_GetItem(struct attributes *object, REFGUID key, PROPVARIANT *value);
+extern HRESULT attributes_GetItemType(struct attributes *object, REFGUID key, MF_ATTRIBUTE_TYPE *type);
 extern HRESULT attributes_CompareItem(struct attributes *object, REFGUID key, REFPROPVARIANT value,
-        BOOL *result) DECLSPEC_HIDDEN;
+        BOOL *result);
 extern HRESULT attributes_Compare(struct attributes *object, IMFAttributes *theirs,
-        MF_ATTRIBUTES_MATCH_TYPE match_type, BOOL *ret) DECLSPEC_HIDDEN;
-extern HRESULT attributes_GetUINT32(struct attributes *object, REFGUID key, UINT32 *value) DECLSPEC_HIDDEN;
-extern HRESULT attributes_GetUINT64(struct attributes *object, REFGUID key, UINT64 *value) DECLSPEC_HIDDEN;
-extern HRESULT attributes_GetDouble(struct attributes *object, REFGUID key, double *value) DECLSPEC_HIDDEN;
-extern HRESULT attributes_GetGUID(struct attributes *object, REFGUID key, GUID *value) DECLSPEC_HIDDEN;
-extern HRESULT attributes_GetStringLength(struct attributes *object, REFGUID key, UINT32 *length) DECLSPEC_HIDDEN;
+        MF_ATTRIBUTES_MATCH_TYPE match_type, BOOL *ret);
+extern HRESULT attributes_GetUINT32(struct attributes *object, REFGUID key, UINT32 *value);
+extern HRESULT attributes_GetUINT64(struct attributes *object, REFGUID key, UINT64 *value);
+extern HRESULT attributes_GetDouble(struct attributes *object, REFGUID key, double *value);
+extern HRESULT attributes_GetGUID(struct attributes *object, REFGUID key, GUID *value);
+extern HRESULT attributes_GetStringLength(struct attributes *object, REFGUID key, UINT32 *length);
 extern HRESULT attributes_GetString(struct attributes *object, REFGUID key, WCHAR *value, UINT32 size,
-        UINT32 *length) DECLSPEC_HIDDEN;
+        UINT32 *length);
 extern HRESULT attributes_GetAllocatedString(struct attributes *object, REFGUID key, WCHAR **value,
-        UINT32 *length) DECLSPEC_HIDDEN;
-extern HRESULT attributes_GetBlobSize(struct attributes *object, REFGUID key, UINT32 *size) DECLSPEC_HIDDEN;
+        UINT32 *length);
+extern HRESULT attributes_GetBlobSize(struct attributes *object, REFGUID key, UINT32 *size);
 extern HRESULT attributes_GetBlob(struct attributes *object, REFGUID key, UINT8 *buf, UINT32 bufsize,
-        UINT32 *blobsize) DECLSPEC_HIDDEN;
+        UINT32 *blobsize);
 extern HRESULT attributes_GetAllocatedBlob(struct attributes *object, REFGUID key, UINT8 **buf,
-        UINT32 *size) DECLSPEC_HIDDEN;
-extern HRESULT attributes_GetUnknown(struct attributes *object, REFGUID key, REFIID riid, void **out) DECLSPEC_HIDDEN;
-extern HRESULT attributes_SetItem(struct attributes *object, REFGUID key, REFPROPVARIANT value) DECLSPEC_HIDDEN;
-extern HRESULT attributes_DeleteItem(struct attributes *object, REFGUID key) DECLSPEC_HIDDEN;
-extern HRESULT attributes_DeleteAllItems(struct attributes *object) DECLSPEC_HIDDEN;
-extern HRESULT attributes_SetUINT32(struct attributes *object, REFGUID key, UINT32 value) DECLSPEC_HIDDEN;
-extern HRESULT attributes_SetUINT64(struct attributes *object, REFGUID key, UINT64 value) DECLSPEC_HIDDEN;
-extern HRESULT attributes_SetDouble(struct attributes *object, REFGUID key, double value) DECLSPEC_HIDDEN;
-extern HRESULT attributes_SetGUID(struct attributes *object, REFGUID key, REFGUID value) DECLSPEC_HIDDEN;
-extern HRESULT attributes_SetString(struct attributes *object, REFGUID key, const WCHAR *value) DECLSPEC_HIDDEN;
+        UINT32 *size);
+extern HRESULT attributes_GetUnknown(struct attributes *object, REFGUID key, REFIID riid, void **out);
+extern HRESULT attributes_SetItem(struct attributes *object, REFGUID key, REFPROPVARIANT value);
+extern HRESULT attributes_DeleteItem(struct attributes *object, REFGUID key);
+extern HRESULT attributes_DeleteAllItems(struct attributes *object);
+extern HRESULT attributes_SetUINT32(struct attributes *object, REFGUID key, UINT32 value);
+extern HRESULT attributes_SetUINT64(struct attributes *object, REFGUID key, UINT64 value);
+extern HRESULT attributes_SetDouble(struct attributes *object, REFGUID key, double value);
+extern HRESULT attributes_SetGUID(struct attributes *object, REFGUID key, REFGUID value);
+extern HRESULT attributes_SetString(struct attributes *object, REFGUID key, const WCHAR *value);
 extern HRESULT attributes_SetBlob(struct attributes *object, REFGUID key, const UINT8 *buf,
-        UINT32 size) DECLSPEC_HIDDEN;
-extern HRESULT attributes_SetUnknown(struct attributes *object, REFGUID key, IUnknown *unknown) DECLSPEC_HIDDEN;
-extern HRESULT attributes_LockStore(struct attributes *object) DECLSPEC_HIDDEN;
-extern HRESULT attributes_UnlockStore(struct attributes *object) DECLSPEC_HIDDEN;
-extern HRESULT attributes_GetCount(struct attributes *object, UINT32 *items) DECLSPEC_HIDDEN;
+        UINT32 size);
+extern HRESULT attributes_SetUnknown(struct attributes *object, REFGUID key, IUnknown *unknown);
+extern HRESULT attributes_LockStore(struct attributes *object);
+extern HRESULT attributes_UnlockStore(struct attributes *object);
+extern HRESULT attributes_GetCount(struct attributes *object, UINT32 *items);
 extern HRESULT attributes_GetItemByIndex(struct attributes *object, UINT32 index, GUID *key,
-        PROPVARIANT *value) DECLSPEC_HIDDEN;
-extern HRESULT attributes_CopyAllItems(struct attributes *object, IMFAttributes *dest) DECLSPEC_HIDDEN;
+        PROPVARIANT *value);
+extern HRESULT attributes_CopyAllItems(struct attributes *object, IMFAttributes *dest);
 
 static inline BOOL mf_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 {
@@ -114,7 +114,7 @@ static inline BOOL mf_array_reserve(void **elements, size_t *capacity, size_t co
     return TRUE;
 }
 
-extern unsigned int mf_format_get_stride(const GUID *subtype, unsigned int width, BOOL *is_yuv) DECLSPEC_HIDDEN;
+extern unsigned int mf_format_get_stride(const GUID *subtype, unsigned int width, BOOL *is_yuv);
 
 static inline const char *debugstr_propvar(const PROPVARIANT *v)
 {
