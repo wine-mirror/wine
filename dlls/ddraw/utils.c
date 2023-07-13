@@ -40,130 +40,130 @@ void ddrawformat_from_wined3dformat(DDPIXELFORMAT *DDPixelFormat, enum wined3d_f
         case WINED3DFMT_B8G8R8_UNORM:
             DDPixelFormat->dwFlags = DDPF_RGB;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwRGBBitCount = 24;
-            DDPixelFormat->u2.dwRBitMask = 0x00ff0000;
-            DDPixelFormat->u3.dwGBitMask = 0x0000ff00;
-            DDPixelFormat->u4.dwBBitMask = 0x000000ff;
-            DDPixelFormat->u5.dwRGBAlphaBitMask = 0x0;
+            DDPixelFormat->dwRGBBitCount = 24;
+            DDPixelFormat->dwRBitMask = 0x00ff0000;
+            DDPixelFormat->dwGBitMask = 0x0000ff00;
+            DDPixelFormat->dwBBitMask = 0x000000ff;
+            DDPixelFormat->dwRGBAlphaBitMask = 0x0;
             break;
 
         case WINED3DFMT_B8G8R8A8_UNORM:
             DDPixelFormat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwRGBBitCount = 32;
-            DDPixelFormat->u2.dwRBitMask = 0x00ff0000;
-            DDPixelFormat->u3.dwGBitMask = 0x0000ff00;
-            DDPixelFormat->u4.dwBBitMask = 0x000000ff;
-            DDPixelFormat->u5.dwRGBAlphaBitMask = 0xff000000;
+            DDPixelFormat->dwRGBBitCount = 32;
+            DDPixelFormat->dwRBitMask = 0x00ff0000;
+            DDPixelFormat->dwGBitMask = 0x0000ff00;
+            DDPixelFormat->dwBBitMask = 0x000000ff;
+            DDPixelFormat->dwRGBAlphaBitMask = 0xff000000;
             break;
 
         case WINED3DFMT_B8G8R8X8_UNORM:
             DDPixelFormat->dwFlags = DDPF_RGB;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwRGBBitCount = 32;
-            DDPixelFormat->u2.dwRBitMask = 0x00ff0000;
-            DDPixelFormat->u3.dwGBitMask = 0x0000ff00;
-            DDPixelFormat->u4.dwBBitMask = 0x000000ff;
-            DDPixelFormat->u5.dwRGBAlphaBitMask = 0x0;
+            DDPixelFormat->dwRGBBitCount = 32;
+            DDPixelFormat->dwRBitMask = 0x00ff0000;
+            DDPixelFormat->dwGBitMask = 0x0000ff00;
+            DDPixelFormat->dwBBitMask = 0x000000ff;
+            DDPixelFormat->dwRGBAlphaBitMask = 0x0;
             break;
 
         case WINED3DFMT_R8G8B8X8_UNORM:
             DDPixelFormat->dwFlags = DDPF_RGB;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwRGBBitCount = 32;
-            DDPixelFormat->u2.dwRBitMask = 0x000000ff;
-            DDPixelFormat->u3.dwGBitMask = 0x0000ff00;
-            DDPixelFormat->u4.dwBBitMask = 0x00ff0000;
-            DDPixelFormat->u5.dwRGBAlphaBitMask = 0x0;
+            DDPixelFormat->dwRGBBitCount = 32;
+            DDPixelFormat->dwRBitMask = 0x000000ff;
+            DDPixelFormat->dwGBitMask = 0x0000ff00;
+            DDPixelFormat->dwBBitMask = 0x00ff0000;
+            DDPixelFormat->dwRGBAlphaBitMask = 0x0;
             break;
 
         case WINED3DFMT_B5G6R5_UNORM:
             DDPixelFormat->dwFlags = DDPF_RGB;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwRGBBitCount = 16;
-            DDPixelFormat->u2.dwRBitMask = 0xF800;
-            DDPixelFormat->u3.dwGBitMask = 0x07E0;
-            DDPixelFormat->u4.dwBBitMask = 0x001F;
-            DDPixelFormat->u5.dwRGBAlphaBitMask = 0x0;
+            DDPixelFormat->dwRGBBitCount = 16;
+            DDPixelFormat->dwRBitMask = 0xF800;
+            DDPixelFormat->dwGBitMask = 0x07E0;
+            DDPixelFormat->dwBBitMask = 0x001F;
+            DDPixelFormat->dwRGBAlphaBitMask = 0x0;
             break;
 
         case WINED3DFMT_B5G5R5X1_UNORM:
             DDPixelFormat->dwFlags = DDPF_RGB;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwRGBBitCount = 16;
-            DDPixelFormat->u2.dwRBitMask = 0x7C00;
-            DDPixelFormat->u3.dwGBitMask = 0x03E0;
-            DDPixelFormat->u4.dwBBitMask = 0x001F;
-            DDPixelFormat->u5.dwRGBAlphaBitMask = 0x0;
+            DDPixelFormat->dwRGBBitCount = 16;
+            DDPixelFormat->dwRBitMask = 0x7C00;
+            DDPixelFormat->dwGBitMask = 0x03E0;
+            DDPixelFormat->dwBBitMask = 0x001F;
+            DDPixelFormat->dwRGBAlphaBitMask = 0x0;
             break;
 
         case WINED3DFMT_B5G5R5A1_UNORM:
             DDPixelFormat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwRGBBitCount = 16;
-            DDPixelFormat->u2.dwRBitMask = 0x7C00;
-            DDPixelFormat->u3.dwGBitMask = 0x03E0;
-            DDPixelFormat->u4.dwBBitMask = 0x001F;
-            DDPixelFormat->u5.dwRGBAlphaBitMask = 0x8000;
+            DDPixelFormat->dwRGBBitCount = 16;
+            DDPixelFormat->dwRBitMask = 0x7C00;
+            DDPixelFormat->dwGBitMask = 0x03E0;
+            DDPixelFormat->dwBBitMask = 0x001F;
+            DDPixelFormat->dwRGBAlphaBitMask = 0x8000;
             break;
 
         case WINED3DFMT_B4G4R4A4_UNORM:
             DDPixelFormat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwRGBBitCount = 16;
-            DDPixelFormat->u2.dwRBitMask = 0x0F00;
-            DDPixelFormat->u3.dwGBitMask = 0x00F0;
-            DDPixelFormat->u4.dwBBitMask = 0x000F;
-            DDPixelFormat->u5.dwRGBAlphaBitMask = 0xF000;
+            DDPixelFormat->dwRGBBitCount = 16;
+            DDPixelFormat->dwRBitMask = 0x0F00;
+            DDPixelFormat->dwGBitMask = 0x00F0;
+            DDPixelFormat->dwBBitMask = 0x000F;
+            DDPixelFormat->dwRGBAlphaBitMask = 0xF000;
             break;
 
         case WINED3DFMT_B2G3R3_UNORM:
             DDPixelFormat->dwFlags = DDPF_RGB;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwRGBBitCount = 8;
-            DDPixelFormat->u2.dwRBitMask = 0xE0;
-            DDPixelFormat->u3.dwGBitMask = 0x1C;
-            DDPixelFormat->u4.dwBBitMask = 0x03;
-            DDPixelFormat->u5.dwLuminanceAlphaBitMask = 0x0;
+            DDPixelFormat->dwRGBBitCount = 8;
+            DDPixelFormat->dwRBitMask = 0xE0;
+            DDPixelFormat->dwGBitMask = 0x1C;
+            DDPixelFormat->dwBBitMask = 0x03;
+            DDPixelFormat->dwLuminanceAlphaBitMask = 0x0;
             break;
 
         case WINED3DFMT_P8_UINT:
             DDPixelFormat->dwFlags = DDPF_PALETTEINDEXED8 | DDPF_RGB;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwRGBBitCount = 8;
-            DDPixelFormat->u2.dwRBitMask = 0x00;
-            DDPixelFormat->u3.dwGBitMask = 0x00;
-            DDPixelFormat->u4.dwBBitMask = 0x00;
+            DDPixelFormat->dwRGBBitCount = 8;
+            DDPixelFormat->dwRBitMask = 0x00;
+            DDPixelFormat->dwGBitMask = 0x00;
+            DDPixelFormat->dwBBitMask = 0x00;
             break;
 
         case WINED3DFMT_A8_UNORM:
             DDPixelFormat->dwFlags = DDPF_ALPHA;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwAlphaBitDepth = 8;
-            DDPixelFormat->u2.dwRBitMask = 0x0;
-            DDPixelFormat->u3.dwZBitMask = 0x0;
-            DDPixelFormat->u4.dwStencilBitMask = 0x0;
-            DDPixelFormat->u5.dwLuminanceAlphaBitMask = 0x0;
+            DDPixelFormat->dwAlphaBitDepth = 8;
+            DDPixelFormat->dwRBitMask = 0x0;
+            DDPixelFormat->dwZBitMask = 0x0;
+            DDPixelFormat->dwStencilBitMask = 0x0;
+            DDPixelFormat->dwLuminanceAlphaBitMask = 0x0;
             break;
 
         case WINED3DFMT_B2G3R3A8_UNORM:
             DDPixelFormat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwRGBBitCount = 16;
-            DDPixelFormat->u2.dwRBitMask = 0x00E0;
-            DDPixelFormat->u3.dwGBitMask = 0x001C;
-            DDPixelFormat->u4.dwBBitMask = 0x0003;
-            DDPixelFormat->u5.dwRGBAlphaBitMask = 0xFF00;
+            DDPixelFormat->dwRGBBitCount = 16;
+            DDPixelFormat->dwRBitMask = 0x00E0;
+            DDPixelFormat->dwGBitMask = 0x001C;
+            DDPixelFormat->dwBBitMask = 0x0003;
+            DDPixelFormat->dwRGBAlphaBitMask = 0xFF00;
             break;
 
         case WINED3DFMT_B4G4R4X4_UNORM:
             DDPixelFormat->dwFlags = DDPF_RGB;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwRGBBitCount = 16;
-            DDPixelFormat->u2.dwRBitMask = 0x0F00;
-            DDPixelFormat->u3.dwGBitMask = 0x00F0;
-            DDPixelFormat->u4.dwBBitMask = 0x000F;
-            DDPixelFormat->u5.dwRGBAlphaBitMask = 0x0;
+            DDPixelFormat->dwRGBBitCount = 16;
+            DDPixelFormat->dwRBitMask = 0x0F00;
+            DDPixelFormat->dwGBitMask = 0x00F0;
+            DDPixelFormat->dwBBitMask = 0x000F;
+            DDPixelFormat->dwRGBAlphaBitMask = 0x0;
             break;
 
         /* How are Z buffer bit depth and Stencil buffer bit depth related?
@@ -171,73 +171,73 @@ void ddrawformat_from_wined3dformat(DDPIXELFORMAT *DDPixelFormat, enum wined3d_f
         case WINED3DFMT_D16_UNORM:
             DDPixelFormat->dwFlags = DDPF_ZBUFFER;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwZBufferBitDepth = 16;
-            DDPixelFormat->u2.dwStencilBitDepth = 0;
-            DDPixelFormat->u3.dwZBitMask = 0x0000FFFF;
-            DDPixelFormat->u4.dwStencilBitMask = 0x0;
-            DDPixelFormat->u5.dwRGBZBitMask = 0x00000000;
+            DDPixelFormat->dwZBufferBitDepth = 16;
+            DDPixelFormat->dwStencilBitDepth = 0;
+            DDPixelFormat->dwZBitMask = 0x0000FFFF;
+            DDPixelFormat->dwStencilBitMask = 0x0;
+            DDPixelFormat->dwRGBZBitMask = 0x00000000;
             break;
 
         case WINED3DFMT_D32_UNORM:
             DDPixelFormat->dwFlags = DDPF_ZBUFFER;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwZBufferBitDepth = 32;
-            DDPixelFormat->u2.dwStencilBitDepth = 0;
-            DDPixelFormat->u3.dwZBitMask = 0xFFFFFFFF;
-            DDPixelFormat->u4.dwStencilBitMask = 0x0;
-            DDPixelFormat->u5.dwRGBZBitMask = 0x00000000;
+            DDPixelFormat->dwZBufferBitDepth = 32;
+            DDPixelFormat->dwStencilBitDepth = 0;
+            DDPixelFormat->dwZBitMask = 0xFFFFFFFF;
+            DDPixelFormat->dwStencilBitMask = 0x0;
+            DDPixelFormat->dwRGBZBitMask = 0x00000000;
             break;
 
         case WINED3DFMT_S4X4_UINT_D24_UNORM:
             DDPixelFormat->dwFlags = DDPF_ZBUFFER | DDPF_STENCILBUFFER;
             DDPixelFormat->dwFourCC = 0;
             /* Should I set dwZBufferBitDepth to 32 here? */
-            DDPixelFormat->u1.dwZBufferBitDepth = 32;
-            DDPixelFormat->u2.dwStencilBitDepth = 4;
-            DDPixelFormat->u3.dwZBitMask = 0x00FFFFFF;
-            DDPixelFormat->u4.dwStencilBitMask = 0x0F000000;
-            DDPixelFormat->u5.dwRGBAlphaBitMask = 0x0;
+            DDPixelFormat->dwZBufferBitDepth = 32;
+            DDPixelFormat->dwStencilBitDepth = 4;
+            DDPixelFormat->dwZBitMask = 0x00FFFFFF;
+            DDPixelFormat->dwStencilBitMask = 0x0F000000;
+            DDPixelFormat->dwRGBAlphaBitMask = 0x0;
             break;
 
         case WINED3DFMT_D24_UNORM_S8_UINT:
             DDPixelFormat->dwFlags = DDPF_ZBUFFER | DDPF_STENCILBUFFER;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwZBufferBitDepth = 32;
-            DDPixelFormat->u2.dwStencilBitDepth = 8;
-            DDPixelFormat->u3.dwZBitMask = 0x00FFFFFF;
-            DDPixelFormat->u4.dwStencilBitMask = 0xFF000000;
-            DDPixelFormat->u5.dwRGBAlphaBitMask = 0x0;
+            DDPixelFormat->dwZBufferBitDepth = 32;
+            DDPixelFormat->dwStencilBitDepth = 8;
+            DDPixelFormat->dwZBitMask = 0x00FFFFFF;
+            DDPixelFormat->dwStencilBitMask = 0xFF000000;
+            DDPixelFormat->dwRGBAlphaBitMask = 0x0;
             break;
 
         case WINED3DFMT_X8D24_UNORM:
             DDPixelFormat->dwFlags = DDPF_ZBUFFER;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwZBufferBitDepth = 32;
-            DDPixelFormat->u2.dwStencilBitDepth = 0;
-            DDPixelFormat->u3.dwZBitMask = 0x00FFFFFF;
-            DDPixelFormat->u4.dwStencilBitMask = 0x00000000;
-            DDPixelFormat->u5.dwRGBAlphaBitMask = 0x0;
+            DDPixelFormat->dwZBufferBitDepth = 32;
+            DDPixelFormat->dwStencilBitDepth = 0;
+            DDPixelFormat->dwZBitMask = 0x00FFFFFF;
+            DDPixelFormat->dwStencilBitMask = 0x00000000;
+            DDPixelFormat->dwRGBAlphaBitMask = 0x0;
             break;
 
         case WINED3DFMT_S1_UINT_D15_UNORM:
             DDPixelFormat->dwFlags = DDPF_ZBUFFER | DDPF_STENCILBUFFER;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwZBufferBitDepth = 16;
-            DDPixelFormat->u2.dwStencilBitDepth = 1;
-            DDPixelFormat->u3.dwZBitMask = 0x7fff;
-            DDPixelFormat->u4.dwStencilBitMask = 0x8000;
-            DDPixelFormat->u5.dwRGBAlphaBitMask = 0x0;
+            DDPixelFormat->dwZBufferBitDepth = 16;
+            DDPixelFormat->dwStencilBitDepth = 1;
+            DDPixelFormat->dwZBitMask = 0x7fff;
+            DDPixelFormat->dwStencilBitMask = 0x8000;
+            DDPixelFormat->dwRGBAlphaBitMask = 0x0;
             break;
 
         case WINED3DFMT_UYVY:
         case WINED3DFMT_YUY2:
-            DDPixelFormat->u1.dwYUVBitCount = 16;
+            DDPixelFormat->dwYUVBitCount = 16;
             DDPixelFormat->dwFlags = DDPF_FOURCC;
             DDPixelFormat->dwFourCC = wined3d_format;
             break;
 
         case WINED3DFMT_YV12:
-            DDPixelFormat->u1.dwYUVBitCount = 12;
+            DDPixelFormat->dwYUVBitCount = 12;
             DDPixelFormat->dwFlags = DDPF_FOURCC;
             DDPixelFormat->dwFourCC = wined3d_format;
             break;
@@ -258,62 +258,62 @@ void ddrawformat_from_wined3dformat(DDPIXELFORMAT *DDPixelFormat, enum wined3d_f
         case WINED3DFMT_L8_UNORM:
             DDPixelFormat->dwFlags = DDPF_LUMINANCE;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwLuminanceBitCount = 8;
-            DDPixelFormat->u2.dwLuminanceBitMask = 0xff;
-            DDPixelFormat->u3.dwBumpDvBitMask = 0x0;
-            DDPixelFormat->u4.dwBumpLuminanceBitMask = 0x0;
-            DDPixelFormat->u5.dwLuminanceAlphaBitMask = 0x0;
+            DDPixelFormat->dwLuminanceBitCount = 8;
+            DDPixelFormat->dwLuminanceBitMask = 0xff;
+            DDPixelFormat->dwBumpDvBitMask = 0x0;
+            DDPixelFormat->dwBumpLuminanceBitMask = 0x0;
+            DDPixelFormat->dwLuminanceAlphaBitMask = 0x0;
             break;
 
         case WINED3DFMT_L4A4_UNORM:
             DDPixelFormat->dwFlags = DDPF_ALPHAPIXELS | DDPF_LUMINANCE;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwLuminanceBitCount = 4;
-            DDPixelFormat->u2.dwLuminanceBitMask = 0x0f;
-            DDPixelFormat->u3.dwBumpDvBitMask = 0x0;
-            DDPixelFormat->u4.dwBumpLuminanceBitMask = 0x0;
-            DDPixelFormat->u5.dwLuminanceAlphaBitMask = 0xf0;
+            DDPixelFormat->dwLuminanceBitCount = 4;
+            DDPixelFormat->dwLuminanceBitMask = 0x0f;
+            DDPixelFormat->dwBumpDvBitMask = 0x0;
+            DDPixelFormat->dwBumpLuminanceBitMask = 0x0;
+            DDPixelFormat->dwLuminanceAlphaBitMask = 0xf0;
             break;
 
         case WINED3DFMT_L8A8_UNORM:
             DDPixelFormat->dwFlags = DDPF_ALPHAPIXELS | DDPF_LUMINANCE;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwLuminanceBitCount = 16;
-            DDPixelFormat->u2.dwLuminanceBitMask = 0x00ff;
-            DDPixelFormat->u3.dwBumpDvBitMask = 0x0;
-            DDPixelFormat->u4.dwBumpLuminanceBitMask = 0x0;
-            DDPixelFormat->u5.dwLuminanceAlphaBitMask = 0xff00;
+            DDPixelFormat->dwLuminanceBitCount = 16;
+            DDPixelFormat->dwLuminanceBitMask = 0x00ff;
+            DDPixelFormat->dwBumpDvBitMask = 0x0;
+            DDPixelFormat->dwBumpLuminanceBitMask = 0x0;
+            DDPixelFormat->dwLuminanceAlphaBitMask = 0xff00;
             break;
 
         /* Bump mapping */
         case WINED3DFMT_R8G8_SNORM:
             DDPixelFormat->dwFlags = DDPF_BUMPDUDV;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwBumpBitCount = 16;
-            DDPixelFormat->u2.dwBumpDuBitMask =         0x000000ff;
-            DDPixelFormat->u3.dwBumpDvBitMask =         0x0000ff00;
-            DDPixelFormat->u4.dwBumpLuminanceBitMask =  0x00000000;
-            DDPixelFormat->u5.dwLuminanceAlphaBitMask = 0x00000000;
+            DDPixelFormat->dwBumpBitCount = 16;
+            DDPixelFormat->dwBumpDuBitMask =         0x000000ff;
+            DDPixelFormat->dwBumpDvBitMask =         0x0000ff00;
+            DDPixelFormat->dwBumpLuminanceBitMask =  0x00000000;
+            DDPixelFormat->dwLuminanceAlphaBitMask = 0x00000000;
             break;
 
         case WINED3DFMT_R5G5_SNORM_L6_UNORM:
             DDPixelFormat->dwFlags = DDPF_BUMPDUDV | DDPF_BUMPLUMINANCE;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwBumpBitCount = 16;
-            DDPixelFormat->u2.dwBumpDuBitMask =         0x0000001f;
-            DDPixelFormat->u3.dwBumpDvBitMask =         0x000003e0;
-            DDPixelFormat->u4.dwBumpLuminanceBitMask =  0x0000fc00;
-            DDPixelFormat->u5.dwLuminanceAlphaBitMask = 0x00000000;
+            DDPixelFormat->dwBumpBitCount = 16;
+            DDPixelFormat->dwBumpDuBitMask =         0x0000001f;
+            DDPixelFormat->dwBumpDvBitMask =         0x000003e0;
+            DDPixelFormat->dwBumpLuminanceBitMask =  0x0000fc00;
+            DDPixelFormat->dwLuminanceAlphaBitMask = 0x00000000;
             break;
 
         case WINED3DFMT_R8G8_SNORM_L8X8_UNORM:
             DDPixelFormat->dwFlags = DDPF_BUMPDUDV | DDPF_BUMPLUMINANCE;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwBumpBitCount = 32;
-            DDPixelFormat->u2.dwBumpDuBitMask =         0x000000ff;
-            DDPixelFormat->u3.dwBumpDvBitMask =         0x0000ff00;
-            DDPixelFormat->u4.dwBumpLuminanceBitMask =  0x00ff0000;
-            DDPixelFormat->u5.dwLuminanceAlphaBitMask = 0x00000000;
+            DDPixelFormat->dwBumpBitCount = 32;
+            DDPixelFormat->dwBumpDuBitMask =         0x000000ff;
+            DDPixelFormat->dwBumpDvBitMask =         0x0000ff00;
+            DDPixelFormat->dwBumpLuminanceBitMask =  0x00ff0000;
+            DDPixelFormat->dwLuminanceAlphaBitMask = 0x00000000;
             break;
 
         default:
@@ -346,7 +346,7 @@ enum wined3d_format_id wined3dformat_from_ddrawformat(const DDPIXELFORMAT *DDPix
     }
     else if(DDPixelFormat->dwFlags & DDPF_RGB)
     {
-        switch(DDPixelFormat->u1.dwRGBBitCount)
+        switch(DDPixelFormat->dwRGBBitCount)
         {
             case 8:
                 /* This is the only format that can match here */
@@ -354,40 +354,40 @@ enum wined3d_format_id wined3dformat_from_ddrawformat(const DDPIXELFORMAT *DDPix
 
             case 16:
                 /* Read the Color masks */
-                if( (DDPixelFormat->u2.dwRBitMask == 0xF800) &&
-                    (DDPixelFormat->u3.dwGBitMask == 0x07E0) &&
-                    (DDPixelFormat->u4.dwBBitMask == 0x001F) )
+                if( (DDPixelFormat->dwRBitMask == 0xF800) &&
+                    (DDPixelFormat->dwGBitMask == 0x07E0) &&
+                    (DDPixelFormat->dwBBitMask == 0x001F) )
                 {
                     return WINED3DFMT_B5G6R5_UNORM;
                 }
 
-                if( (DDPixelFormat->u2.dwRBitMask == 0x7C00) &&
-                    (DDPixelFormat->u3.dwGBitMask == 0x03E0) &&
-                    (DDPixelFormat->u4.dwBBitMask == 0x001F) )
+                if( (DDPixelFormat->dwRBitMask == 0x7C00) &&
+                    (DDPixelFormat->dwGBitMask == 0x03E0) &&
+                    (DDPixelFormat->dwBBitMask == 0x001F) )
                 {
                     if( (DDPixelFormat->dwFlags & DDPF_ALPHAPIXELS) &&
-                        (DDPixelFormat->u5.dwRGBAlphaBitMask == 0x8000))
+                        (DDPixelFormat->dwRGBAlphaBitMask == 0x8000))
                         return WINED3DFMT_B5G5R5A1_UNORM;
                     else
                         return WINED3DFMT_B5G5R5X1_UNORM;
                 }
 
-                if( (DDPixelFormat->u2.dwRBitMask == 0x0F00) &&
-                    (DDPixelFormat->u3.dwGBitMask == 0x00F0) &&
-                    (DDPixelFormat->u4.dwBBitMask == 0x000F) )
+                if( (DDPixelFormat->dwRBitMask == 0x0F00) &&
+                    (DDPixelFormat->dwGBitMask == 0x00F0) &&
+                    (DDPixelFormat->dwBBitMask == 0x000F) )
                 {
                     if( (DDPixelFormat->dwFlags & DDPF_ALPHAPIXELS) &&
-                        (DDPixelFormat->u5.dwRGBAlphaBitMask == 0xF000))
+                        (DDPixelFormat->dwRGBAlphaBitMask == 0xF000))
                         return WINED3DFMT_B4G4R4A4_UNORM;
                     else
                         return WINED3DFMT_B4G4R4X4_UNORM;
                 }
 
                 if( (DDPixelFormat->dwFlags & DDPF_ALPHAPIXELS) &&
-                    (DDPixelFormat->u5.dwRGBAlphaBitMask == 0xFF00) &&
-                    (DDPixelFormat->u2.dwRBitMask == 0x00E0) &&
-                    (DDPixelFormat->u3.dwGBitMask == 0x001C) &&
-                    (DDPixelFormat->u4.dwBBitMask == 0x0003) )
+                    (DDPixelFormat->dwRGBAlphaBitMask == 0xFF00) &&
+                    (DDPixelFormat->dwRBitMask == 0x00E0) &&
+                    (DDPixelFormat->dwGBitMask == 0x001C) &&
+                    (DDPixelFormat->dwBBitMask == 0x0003) )
                 {
                     return WINED3DFMT_B2G3R3A8_UNORM;
                 }
@@ -399,12 +399,12 @@ enum wined3d_format_id wined3dformat_from_ddrawformat(const DDPIXELFORMAT *DDPix
 
             case 32:
                 /* Read the Color masks */
-                if( (DDPixelFormat->u2.dwRBitMask == 0x00FF0000) &&
-                    (DDPixelFormat->u3.dwGBitMask == 0x0000FF00) &&
-                    (DDPixelFormat->u4.dwBBitMask == 0x000000FF) )
+                if( (DDPixelFormat->dwRBitMask == 0x00FF0000) &&
+                    (DDPixelFormat->dwGBitMask == 0x0000FF00) &&
+                    (DDPixelFormat->dwBBitMask == 0x000000FF) )
                 {
                     if( (DDPixelFormat->dwFlags & DDPF_ALPHAPIXELS) &&
-                        (DDPixelFormat->u5.dwRGBAlphaBitMask == 0xFF000000))
+                        (DDPixelFormat->dwRGBAlphaBitMask == 0xFF000000))
                         return WINED3DFMT_B8G8R8A8_UNORM;
                     else
                         return WINED3DFMT_B8G8R8X8_UNORM;
@@ -421,7 +421,7 @@ enum wined3d_format_id wined3dformat_from_ddrawformat(const DDPIXELFORMAT *DDPix
     else if( (DDPixelFormat->dwFlags & DDPF_ALPHA) )
     {
         /* Alpha only Pixelformat */
-        switch(DDPixelFormat->u1.dwAlphaBitDepth)
+        switch(DDPixelFormat->dwAlphaBitDepth)
         {
             case 8:
                 return WINED3DFMT_A8_UNORM;
@@ -437,10 +437,10 @@ enum wined3d_format_id wined3dformat_from_ddrawformat(const DDPIXELFORMAT *DDPix
         if(DDPixelFormat->dwFlags & DDPF_ALPHAPIXELS)
         {
             /* Luminance with Alpha */
-            switch(DDPixelFormat->u1.dwLuminanceBitCount)
+            switch(DDPixelFormat->dwLuminanceBitCount)
             {
                 case 4:
-                    if(DDPixelFormat->u1.dwAlphaBitDepth == 4)
+                    if(DDPixelFormat->dwAlphaBitDepth == 4)
                         return WINED3DFMT_L4A4_UNORM;
                     WARN("Unknown Alpha / Luminance bit depth combination.\n");
                     return WINED3DFMT_UNKNOWN;
@@ -450,7 +450,7 @@ enum wined3d_format_id wined3dformat_from_ddrawformat(const DDPIXELFORMAT *DDPix
                     return WINED3DFMT_R5G5_SNORM_L6_UNORM;
 
                 case 8:
-                    if(DDPixelFormat->u1.dwAlphaBitDepth == 8)
+                    if(DDPixelFormat->dwAlphaBitDepth == 8)
                         return WINED3DFMT_L8A8_UNORM;
                     WARN("Unknown Alpha / Lumincase bit depth combination.\n");
                     return WINED3DFMT_UNKNOWN;
@@ -459,7 +459,7 @@ enum wined3d_format_id wined3dformat_from_ddrawformat(const DDPIXELFORMAT *DDPix
         else
         {
             /* Luminance-only */
-            switch(DDPixelFormat->u1.dwLuminanceBitCount)
+            switch(DDPixelFormat->dwLuminanceBitCount)
             {
                 case 6:
                     FIXME("A luminance Pixelformat shouldn't have 6 luminance bits. Returning D3DFMT_L6V5U5 for now.\n");
@@ -469,7 +469,7 @@ enum wined3d_format_id wined3dformat_from_ddrawformat(const DDPIXELFORMAT *DDPix
                     return WINED3DFMT_L8_UNORM;
 
                 default:
-                    WARN("Unknown luminance-only bit depth %lu.\n", DDPixelFormat->u1.dwLuminanceBitCount);
+                    WARN("Unknown luminance-only bit depth %lu.\n", DDPixelFormat->dwLuminanceBitCount);
                     return WINED3DFMT_UNKNOWN;
              }
         }
@@ -479,30 +479,30 @@ enum wined3d_format_id wined3dformat_from_ddrawformat(const DDPIXELFORMAT *DDPix
         /* Z buffer */
         if(DDPixelFormat->dwFlags & DDPF_STENCILBUFFER)
         {
-            switch(DDPixelFormat->u1.dwZBufferBitDepth)
+            switch(DDPixelFormat->dwZBufferBitDepth)
             {
                 case 16:
-                    if (DDPixelFormat->u2.dwStencilBitDepth == 1) return WINED3DFMT_S1_UINT_D15_UNORM;
+                    if (DDPixelFormat->dwStencilBitDepth == 1) return WINED3DFMT_S1_UINT_D15_UNORM;
                     WARN("Unknown depth stencil format: 16 z bits, %lu stencil bits.\n",
-                            DDPixelFormat->u2.dwStencilBitDepth);
+                            DDPixelFormat->dwStencilBitDepth);
                     return WINED3DFMT_UNKNOWN;
 
                 case 32:
-                    if (DDPixelFormat->u2.dwStencilBitDepth == 8) return WINED3DFMT_D24_UNORM_S8_UINT;
-                    else if (DDPixelFormat->u2.dwStencilBitDepth == 4) return WINED3DFMT_S4X4_UINT_D24_UNORM;
+                    if (DDPixelFormat->dwStencilBitDepth == 8) return WINED3DFMT_D24_UNORM_S8_UINT;
+                    else if (DDPixelFormat->dwStencilBitDepth == 4) return WINED3DFMT_S4X4_UINT_D24_UNORM;
                     WARN("Unknown depth stencil format: 32 z bits, %lu stencil bits.\n",
-                            DDPixelFormat->u2.dwStencilBitDepth);
+                            DDPixelFormat->dwStencilBitDepth);
                     return WINED3DFMT_UNKNOWN;
 
                 default:
                     WARN("Unknown depth stencil format: %lu z bits, %lu stencil bits.\n",
-                            DDPixelFormat->u1.dwZBufferBitDepth, DDPixelFormat->u2.dwStencilBitDepth);
+                            DDPixelFormat->dwZBufferBitDepth, DDPixelFormat->dwStencilBitDepth);
                     return WINED3DFMT_UNKNOWN;
             }
         }
         else
         {
-            switch(DDPixelFormat->u1.dwZBufferBitDepth)
+            switch(DDPixelFormat->dwZBufferBitDepth)
             {
                 case 16:
                     return WINED3DFMT_D16_UNORM;
@@ -511,16 +511,16 @@ enum wined3d_format_id wined3dformat_from_ddrawformat(const DDPIXELFORMAT *DDPix
                     return WINED3DFMT_X8D24_UNORM;
 
                 case 32:
-                    if (DDPixelFormat->u3.dwZBitMask == 0x00FFFFFF) return WINED3DFMT_X8D24_UNORM;
-                    else if (DDPixelFormat->u3.dwZBitMask == 0xFFFFFF00) return WINED3DFMT_X8D24_UNORM;
-                    else if (DDPixelFormat->u3.dwZBitMask == 0xFFFFFFFF) return WINED3DFMT_D32_UNORM;
+                    if (DDPixelFormat->dwZBitMask == 0x00FFFFFF) return WINED3DFMT_X8D24_UNORM;
+                    else if (DDPixelFormat->dwZBitMask == 0xFFFFFF00) return WINED3DFMT_X8D24_UNORM;
+                    else if (DDPixelFormat->dwZBitMask == 0xFFFFFFFF) return WINED3DFMT_D32_UNORM;
                     WARN("Unknown depth-only format: 32 z bits, mask 0x%08lx\n",
-                            DDPixelFormat->u3.dwZBitMask);
+                            DDPixelFormat->dwZBitMask);
                     return WINED3DFMT_UNKNOWN;
 
                 default:
                     WARN("Unknown depth-only format: %lu z bits, mask 0x%08lx\n",
-                            DDPixelFormat->u1.dwZBufferBitDepth, DDPixelFormat->u3.dwZBitMask);
+                            DDPixelFormat->dwZBufferBitDepth, DDPixelFormat->dwZBitMask);
                     return WINED3DFMT_UNKNOWN;
             }
         }
@@ -531,24 +531,24 @@ enum wined3d_format_id wined3dformat_from_ddrawformat(const DDPIXELFORMAT *DDPix
     }
     else if(DDPixelFormat->dwFlags & DDPF_BUMPDUDV)
     {
-        if( (DDPixelFormat->u1.dwBumpBitCount         == 16        ) &&
-            (DDPixelFormat->u2.dwBumpDuBitMask        == 0x000000ff) &&
-            (DDPixelFormat->u3.dwBumpDvBitMask        == 0x0000ff00) &&
-            (DDPixelFormat->u4.dwBumpLuminanceBitMask == 0x00000000) )
+        if( (DDPixelFormat->dwBumpBitCount         == 16        ) &&
+            (DDPixelFormat->dwBumpDuBitMask        == 0x000000ff) &&
+            (DDPixelFormat->dwBumpDvBitMask        == 0x0000ff00) &&
+            (DDPixelFormat->dwBumpLuminanceBitMask == 0x00000000) )
         {
             return WINED3DFMT_R8G8_SNORM;
         }
-        else if ( (DDPixelFormat->u1.dwBumpBitCount         == 16        ) &&
-                  (DDPixelFormat->u2.dwBumpDuBitMask        == 0x0000001f) &&
-                  (DDPixelFormat->u3.dwBumpDvBitMask        == 0x000003e0) &&
-                  (DDPixelFormat->u4.dwBumpLuminanceBitMask == 0x0000fc00) )
+        else if ( (DDPixelFormat->dwBumpBitCount         == 16        ) &&
+                  (DDPixelFormat->dwBumpDuBitMask        == 0x0000001f) &&
+                  (DDPixelFormat->dwBumpDvBitMask        == 0x000003e0) &&
+                  (DDPixelFormat->dwBumpLuminanceBitMask == 0x0000fc00) )
         {
             return WINED3DFMT_R5G5_SNORM_L6_UNORM;
         }
-        else if ( (DDPixelFormat->u1.dwBumpBitCount         == 32        ) &&
-                  (DDPixelFormat->u2.dwBumpDuBitMask        == 0x000000ff) &&
-                  (DDPixelFormat->u3.dwBumpDvBitMask        == 0x0000ff00) &&
-                  (DDPixelFormat->u4.dwBumpLuminanceBitMask == 0x00ff0000) )
+        else if ( (DDPixelFormat->dwBumpBitCount         == 32        ) &&
+                  (DDPixelFormat->dwBumpDuBitMask        == 0x000000ff) &&
+                  (DDPixelFormat->dwBumpDvBitMask        == 0x0000ff00) &&
+                  (DDPixelFormat->dwBumpLuminanceBitMask == 0x00ff0000) )
         {
             return WINED3DFMT_R8G8_SNORM_L8X8_UNORM;
         }
@@ -597,7 +597,7 @@ BOOL wined3d_colour_from_ddraw_colour(const DDPIXELFORMAT *pf, const struct ddra
     {
         DWORD size, mask;
 
-        size = pf->u1.dwAlphaBitDepth;
+        size = pf->dwAlphaBitDepth;
         mask = size < 32 ? (1u << size) - 1 : ~0u;
         wined3d_colour->r = 0.0f;
         wined3d_colour->g = 0.0f;
@@ -635,11 +635,11 @@ BOOL wined3d_colour_from_ddraw_colour(const DDPIXELFORMAT *pf, const struct ddra
 
     if (pf->dwFlags & DDPF_RGB)
     {
-        wined3d_colour->r = colour_to_float(colour, pf->u2.dwRBitMask);
-        wined3d_colour->g = colour_to_float(colour, pf->u3.dwGBitMask);
-        wined3d_colour->b = colour_to_float(colour, pf->u4.dwBBitMask);
+        wined3d_colour->r = colour_to_float(colour, pf->dwRBitMask);
+        wined3d_colour->g = colour_to_float(colour, pf->dwGBitMask);
+        wined3d_colour->b = colour_to_float(colour, pf->dwBBitMask);
         if (pf->dwFlags & DDPF_ALPHAPIXELS)
-            wined3d_colour->a = colour_to_float(colour, pf->u5.dwRGBAlphaBitMask);
+            wined3d_colour->a = colour_to_float(colour, pf->dwRGBAlphaBitMask);
         else
             wined3d_colour->a = 0.0f;
         return TRUE;
@@ -647,9 +647,9 @@ BOOL wined3d_colour_from_ddraw_colour(const DDPIXELFORMAT *pf, const struct ddra
 
     if (pf->dwFlags & DDPF_ZBUFFER)
     {
-        wined3d_colour->r = colour_to_float(colour, pf->u3.dwZBitMask);
+        wined3d_colour->r = colour_to_float(colour, pf->dwZBitMask);
         if (pf->dwFlags & DDPF_STENCILBUFFER)
-            wined3d_colour->g = colour_to_float(colour, pf->u4.dwStencilBitMask);
+            wined3d_colour->g = colour_to_float(colour, pf->dwStencilBitMask);
         else
             wined3d_colour->g = 0.0f;
         wined3d_colour->b = 0.0f;
@@ -777,7 +777,7 @@ DDRAW_dump_DDSCAPS(const DDSCAPS *in)
     in_bis.dwCaps = in->dwCaps;
     in_bis.dwCaps2 = 0;
     in_bis.dwCaps3 = 0;
-    in_bis.u1.dwCaps4 = 0;
+    in_bis.dwCaps4 = 0;
 
     DDRAW_dump_DDSCAPS2(&in_bis);
 }
@@ -832,29 +832,29 @@ DDRAW_dump_pixelformat(const DDPIXELFORMAT *pf)
                 (unsigned char)((pf->dwFourCC>>16)&0xff),
                 (unsigned char)((pf->dwFourCC>>24)&0xff),
                 pf->dwFourCC,
-                pf->u1.dwYUVBitCount);
+                pf->dwYUVBitCount);
     if (pf->dwFlags & DDPF_RGB)
     {
         TRACE(", RGB bits: %lu, R 0x%08lx G 0x%08lx B 0x%08lx",
-                pf->u1.dwRGBBitCount,
-                pf->u2.dwRBitMask,
-                pf->u3.dwGBitMask,
-                pf->u4.dwBBitMask);
+                pf->dwRGBBitCount,
+                pf->dwRBitMask,
+                pf->dwGBitMask,
+                pf->dwBBitMask);
         if (pf->dwFlags & DDPF_ALPHAPIXELS)
-            TRACE(" A 0x%08lx", pf->u5.dwRGBAlphaBitMask);
+            TRACE(" A 0x%08lx", pf->dwRGBAlphaBitMask);
         if (pf->dwFlags & DDPF_ZPIXELS)
-            TRACE(" Z 0x%08lx", pf->u5.dwRGBZBitMask);
+            TRACE(" Z 0x%08lx", pf->dwRGBZBitMask);
     }
     if (pf->dwFlags & DDPF_ZBUFFER)
-        TRACE(", Z bits: %lu", pf->u1.dwZBufferBitDepth);
+        TRACE(", Z bits: %lu", pf->dwZBufferBitDepth);
     if (pf->dwFlags & DDPF_ALPHA)
-        TRACE(", Alpha bits: %lu", pf->u1.dwAlphaBitDepth);
+        TRACE(", Alpha bits: %lu", pf->dwAlphaBitDepth);
     if (pf->dwFlags & DDPF_BUMPDUDV)
         TRACE(", Bump bits: %lu, U 0x%08lx V 0x%08lx L 0x%08lx",
-                pf->u1.dwBumpBitCount,
-                pf->u2.dwBumpDuBitMask,
-                pf->u3.dwBumpDvBitMask,
-                pf->u4.dwBumpLuminanceBitMask);
+                pf->dwBumpBitCount,
+                pf->dwBumpDuBitMask,
+                pf->dwBumpDvBitMask,
+                pf->dwBumpLuminanceBitMask);
     TRACE(")\n");
 }
 
@@ -865,19 +865,18 @@ void DDRAW_dump_surface_desc(const DDSURFACEDESC2 *lpddsd)
     {
         ME(DDSD_HEIGHT, DDRAW_dump_DWORD, dwHeight),
         ME(DDSD_WIDTH, DDRAW_dump_DWORD, dwWidth),
-        ME(DDSD_PITCH, DDRAW_dump_DWORD, u1 /* lPitch */),
-        ME(DDSD_LINEARSIZE, DDRAW_dump_DWORD, u1 /* dwLinearSize */),
-        ME(DDSD_BACKBUFFERCOUNT, DDRAW_dump_DWORD, u5.dwBackBufferCount),
-        ME(DDSD_MIPMAPCOUNT, DDRAW_dump_DWORD, u2 /* dwMipMapCount */),
-        ME(DDSD_ZBUFFERBITDEPTH, DDRAW_dump_DWORD, u2 /* dwZBufferBitDepth */), /* This is for 'old-style' D3D */
-        ME(DDSD_REFRESHRATE, DDRAW_dump_DWORD, u2 /* dwRefreshRate */),
+        ME(DDSD_PITCH, DDRAW_dump_DWORD, lPitch),
+        ME(DDSD_LINEARSIZE, DDRAW_dump_DWORD, dwLinearSize),
+        ME(DDSD_BACKBUFFERCOUNT, DDRAW_dump_DWORD, dwBackBufferCount),
+        ME(DDSD_MIPMAPCOUNT, DDRAW_dump_DWORD, dwMipMapCount),
+        ME(DDSD_REFRESHRATE, DDRAW_dump_DWORD, dwRefreshRate),
         ME(DDSD_ALPHABITDEPTH, DDRAW_dump_DWORD, dwAlphaBitDepth),
         ME(DDSD_LPSURFACE, DDRAW_dump_PTR, lpSurface),
-        ME(DDSD_CKDESTOVERLAY, DDRAW_dump_DDCOLORKEY, u3 /* ddckCKDestOverlay */),
+        ME(DDSD_CKDESTOVERLAY, DDRAW_dump_DDCOLORKEY, ddckCKDestOverlay),
         ME(DDSD_CKDESTBLT, DDRAW_dump_DDCOLORKEY, ddckCKDestBlt),
         ME(DDSD_CKSRCOVERLAY, DDRAW_dump_DDCOLORKEY, ddckCKSrcOverlay),
         ME(DDSD_CKSRCBLT, DDRAW_dump_DDCOLORKEY, ddckCKSrcBlt),
-        ME(DDSD_PIXELFORMAT, DDRAW_dump_pixelformat, u4 /* ddpfPixelFormat */)
+        ME(DDSD_PIXELFORMAT, DDRAW_dump_pixelformat, ddpfPixelFormat)
     };
     static const struct member_info members_caps[] =
     {
@@ -952,7 +951,7 @@ void DDRAW_Convert_DDSCAPS_1_To_2(const DDSCAPS* pIn, DDSCAPS2* pOut)
     pOut->dwCaps = pIn->dwCaps;
     pOut->dwCaps2 = 0;
     pOut->dwCaps3 = 0;
-    pOut->u1.dwCaps4 = 0;
+    pOut->dwCaps4 = 0;
 }
 
 void DDRAW_Convert_DDDEVICEIDENTIFIER_2_To_1(const DDDEVICEIDENTIFIER2* pIn, DDDEVICEIDENTIFIER* pOut)
@@ -1210,32 +1209,32 @@ void DDSD_to_DDSD2(const DDSURFACEDESC *in, DDSURFACEDESC2 *out)
     out->dwFlags = in->dwFlags & ~DDSD_ZBUFFERBITDEPTH;
     if (in->dwFlags & DDSD_WIDTH) out->dwWidth = in->dwWidth;
     if (in->dwFlags & DDSD_HEIGHT) out->dwHeight = in->dwHeight;
-    if (in->dwFlags & DDSD_PIXELFORMAT) out->u4.ddpfPixelFormat = in->ddpfPixelFormat;
+    if (in->dwFlags & DDSD_PIXELFORMAT) out->ddpfPixelFormat = in->ddpfPixelFormat;
     else if(in->dwFlags & DDSD_ZBUFFERBITDEPTH)
     {
         out->dwFlags |= DDSD_PIXELFORMAT;
-        memset(&out->u4.ddpfPixelFormat, 0, sizeof(out->u4.ddpfPixelFormat));
-        out->u4.ddpfPixelFormat.dwSize = sizeof(out->u4.ddpfPixelFormat);
-        out->u4.ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
-        out->u4.ddpfPixelFormat.u1.dwZBufferBitDepth = in->u2.dwZBufferBitDepth;
+        memset(&out->ddpfPixelFormat, 0, sizeof(out->ddpfPixelFormat));
+        out->ddpfPixelFormat.dwSize = sizeof(out->ddpfPixelFormat);
+        out->ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+        out->ddpfPixelFormat.dwZBufferBitDepth = in->dwZBufferBitDepth;
         /* 0 is not a valid DDSURFACEDESC / DDPIXELFORMAT on either side of the
          * conversion */
-        out->u4.ddpfPixelFormat.u3.dwZBitMask = ~0U >> (32 - in->u2.dwZBufferBitDepth);
+        out->ddpfPixelFormat.dwZBitMask = ~0U >> (32 - in->dwZBufferBitDepth);
     }
     /* ddsCaps is read even without DDSD_CAPS set. See dsurface:no_ddsd_caps_test */
     out->ddsCaps.dwCaps = in->ddsCaps.dwCaps;
-    if (in->dwFlags & DDSD_PITCH) out->u1.lPitch = in->u1.lPitch;
-    if (in->dwFlags & DDSD_BACKBUFFERCOUNT) out->u5.dwBackBufferCount = in->dwBackBufferCount;
+    if (in->dwFlags & DDSD_PITCH) out->lPitch = in->lPitch;
+    if (in->dwFlags & DDSD_BACKBUFFERCOUNT) out->dwBackBufferCount = in->dwBackBufferCount;
     if (in->dwFlags & DDSD_ALPHABITDEPTH) out->dwAlphaBitDepth = in->dwAlphaBitDepth;
     /* DDraw(native, and wine) does not set the DDSD_LPSURFACE, so always copy */
     out->lpSurface = in->lpSurface;
-    if (in->dwFlags & DDSD_CKDESTOVERLAY) out->u3.ddckCKDestOverlay = in->ddckCKDestOverlay;
+    if (in->dwFlags & DDSD_CKDESTOVERLAY) out->ddckCKDestOverlay = in->ddckCKDestOverlay;
     if (in->dwFlags & DDSD_CKDESTBLT) out->ddckCKDestBlt = in->ddckCKDestBlt;
     if (in->dwFlags & DDSD_CKSRCOVERLAY) out->ddckCKSrcOverlay = in->ddckCKSrcOverlay;
     if (in->dwFlags & DDSD_CKSRCBLT) out->ddckCKSrcBlt = in->ddckCKSrcBlt;
-    if (in->dwFlags & DDSD_MIPMAPCOUNT) out->u2.dwMipMapCount = in->u2.dwMipMapCount;
-    if (in->dwFlags & DDSD_REFRESHRATE) out->u2.dwRefreshRate = in->u2.dwRefreshRate;
-    if (in->dwFlags & DDSD_LINEARSIZE) out->u1.dwLinearSize = in->u1.dwLinearSize;
+    if (in->dwFlags & DDSD_MIPMAPCOUNT) out->dwMipMapCount = in->dwMipMapCount;
+    if (in->dwFlags & DDSD_REFRESHRATE) out->dwRefreshRate = in->dwRefreshRate;
+    if (in->dwFlags & DDSD_LINEARSIZE) out->dwLinearSize = in->dwLinearSize;
     /* Does not exist in DDSURFACEDESC:
      * DDSD_TEXTURESTAGE, DDSD_FVF, DDSD_SRCVBHANDLE,
      */
@@ -1253,31 +1252,31 @@ void DDSD2_to_DDSD(const DDSURFACEDESC2 *in, DDSURFACEDESC *out)
     if (in->dwFlags & DDSD_HEIGHT) out->dwHeight = in->dwHeight;
     if (in->dwFlags & DDSD_PIXELFORMAT)
     {
-        out->ddpfPixelFormat = in->u4.ddpfPixelFormat;
+        out->ddpfPixelFormat = in->ddpfPixelFormat;
         if ((in->dwFlags & DDSD_CAPS) && (in->ddsCaps.dwCaps & DDSCAPS_ZBUFFER))
         {
             /* Z buffers have DDSD_ZBUFFERBITDEPTH set, but not DDSD_PIXELFORMAT. They do
              * have valid data in ddpfPixelFormat though */
             out->dwFlags &= ~DDSD_PIXELFORMAT;
             out->dwFlags |= DDSD_ZBUFFERBITDEPTH;
-            out->u2.dwZBufferBitDepth = in->u4.ddpfPixelFormat.u1.dwZBufferBitDepth;
+            out->dwZBufferBitDepth = in->ddpfPixelFormat.dwZBufferBitDepth;
         }
     }
     /* ddsCaps is read even without DDSD_CAPS set. See dsurface:no_ddsd_caps_test */
     out->ddsCaps.dwCaps = in->ddsCaps.dwCaps;
-    if (in->dwFlags & DDSD_PITCH) out->u1.lPitch = in->u1.lPitch;
-    if (in->dwFlags & DDSD_BACKBUFFERCOUNT) out->dwBackBufferCount = in->u5.dwBackBufferCount;
-    if (in->dwFlags & DDSD_ZBUFFERBITDEPTH) out->u2.dwZBufferBitDepth = in->u2.dwMipMapCount; /* same union */
+    if (in->dwFlags & DDSD_PITCH) out->lPitch = in->lPitch;
+    if (in->dwFlags & DDSD_BACKBUFFERCOUNT) out->dwBackBufferCount = in->dwBackBufferCount;
+    if (in->dwFlags & DDSD_ZBUFFERBITDEPTH) out->dwZBufferBitDepth = in->dwMipMapCount; /* same union */
     if (in->dwFlags & DDSD_ALPHABITDEPTH) out->dwAlphaBitDepth = in->dwAlphaBitDepth;
     /* DDraw(native, and wine) does not set the DDSD_LPSURFACE, so always copy */
     out->lpSurface = in->lpSurface;
-    if (in->dwFlags & DDSD_CKDESTOVERLAY) out->ddckCKDestOverlay = in->u3.ddckCKDestOverlay;
+    if (in->dwFlags & DDSD_CKDESTOVERLAY) out->ddckCKDestOverlay = in->ddckCKDestOverlay;
     if (in->dwFlags & DDSD_CKDESTBLT) out->ddckCKDestBlt = in->ddckCKDestBlt;
     if (in->dwFlags & DDSD_CKSRCOVERLAY) out->ddckCKSrcOverlay = in->ddckCKSrcOverlay;
     if (in->dwFlags & DDSD_CKSRCBLT) out->ddckCKSrcBlt = in->ddckCKSrcBlt;
-    if (in->dwFlags & DDSD_MIPMAPCOUNT) out->u2.dwMipMapCount = in->u2.dwMipMapCount;
-    if (in->dwFlags & DDSD_REFRESHRATE) out->u2.dwRefreshRate = in->u2.dwRefreshRate;
-    if (in->dwFlags & DDSD_LINEARSIZE) out->u1.dwLinearSize = in->u1.dwLinearSize;
+    if (in->dwFlags & DDSD_MIPMAPCOUNT) out->dwMipMapCount = in->dwMipMapCount;
+    if (in->dwFlags & DDSD_REFRESHRATE) out->dwRefreshRate = in->dwRefreshRate;
+    if (in->dwFlags & DDSD_LINEARSIZE) out->dwLinearSize = in->dwLinearSize;
     /* Does not exist in DDSURFACEDESC:
      * DDSD_TEXTURESTAGE, DDSD_FVF, DDSD_SRCVBHANDLE,
      */

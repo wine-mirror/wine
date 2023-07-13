@@ -147,7 +147,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                 for (i = 0; i < count; ++i)
                 {
                     D3DTRIANGLE *ci = (D3DTRIANGLE *)instr;
-                    TRACE("  v1: %d  v2: %d  v3: %d\n",ci->u1.v1, ci->u2.v2, ci->u3.v3);
+                    TRACE("  v1: %d  v2: %d  v3: %d\n",ci->v1, ci->v2, ci->v3);
                     TRACE("  Flags : ");
                     if (TRACE_ON(ddraw))
                     {
@@ -173,11 +173,11 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                     switch (primitive_size)
                     {
                         case 3:
-                            indices[(i * primitive_size) + 2] = ci->u3.v3;
+                            indices[(i * primitive_size) + 2] = ci->v3;
                             /* Drop through. */
                         case 2:
-                            indices[(i * primitive_size) + 1] = ci->u2.v2;
-                            indices[(i * primitive_size)    ] = ci->u1.v1;
+                            indices[(i * primitive_size) + 1] = ci->v2;
+                            indices[(i * primitive_size)    ] = ci->v1;
                     }
                     instr += size;
                 }
@@ -235,21 +235,21 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                     D3DSTATE *ci = (D3DSTATE *)instr;
                     D3DMATRIX *m;
 
-                    m = ddraw_get_object(&device->handle_table, ci->u2.dwArg[0] - 1, DDRAW_HANDLE_MATRIX);
+                    m = ddraw_get_object(&device->handle_table, ci->dwArg[0] - 1, DDRAW_HANDLE_MATRIX);
                     if (!m)
                     {
-                        ERR("Invalid matrix handle %#lx.\n", ci->u2.dwArg[0]);
+                        ERR("Invalid matrix handle %#lx.\n", ci->dwArg[0]);
                     }
                     else
                     {
-                        if (ci->u1.dtstTransformStateType == D3DTRANSFORMSTATE_WORLD)
-                            device->world = ci->u2.dwArg[0];
-                        if (ci->u1.dtstTransformStateType == D3DTRANSFORMSTATE_VIEW)
-                            device->view = ci->u2.dwArg[0];
-                        if (ci->u1.dtstTransformStateType == D3DTRANSFORMSTATE_PROJECTION)
-                            device->proj = ci->u2.dwArg[0];
+                        if (ci->dtstTransformStateType == D3DTRANSFORMSTATE_WORLD)
+                            device->world = ci->dwArg[0];
+                        if (ci->dtstTransformStateType == D3DTRANSFORMSTATE_VIEW)
+                            device->view = ci->dwArg[0];
+                        if (ci->dtstTransformStateType == D3DTRANSFORMSTATE_PROJECTION)
+                            device->proj = ci->dwArg[0];
                         IDirect3DDevice3_SetTransform(&device->IDirect3DDevice3_iface,
-                                ci->u1.dtstTransformStateType, m);
+                                ci->dtstTransformStateType, m);
                     }
 
                     instr += size;
@@ -263,7 +263,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                     D3DSTATE *ci = (D3DSTATE *)instr;
 
                     if (FAILED(IDirect3DDevice3_SetLightState(&device->IDirect3DDevice3_iface,
-                            ci->u1.dlstLightStateType, ci->u2.dwArg[0])))
+                            ci->dlstLightStateType, ci->dwArg[0])))
                         WARN("Failed to set light state.\n");
 
                     instr += size;
@@ -277,7 +277,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                     D3DSTATE *ci = (D3DSTATE *)instr;
 
                     if (FAILED(IDirect3DDevice3_SetRenderState(&device->IDirect3DDevice3_iface,
-                            ci->u1.drstRenderStateType, ci->u2.dwArg[0])))
+                            ci->drstRenderStateType, ci->dwArg[0])))
                         WARN("Failed to set render state.\n");
 
                     instr += size;

@@ -24,8 +24,6 @@
 #include <math.h>
 #include <stdbool.h>
 #define COBJMACROS
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
 #include "wine/debug.h"
 #include "wine/heap.h"
 

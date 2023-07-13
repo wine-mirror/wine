@@ -544,9 +544,9 @@ static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
         {
             /* If clipping is enabled, Windows assumes that outH is
              * a valid pointer. */
-            outH[i].u1.hx = (x - device->legacy_clipspace._41 * w) / device->legacy_clipspace._11;
-            outH[i].u2.hy = (y - device->legacy_clipspace._42 * w) / device->legacy_clipspace._22;
-            outH[i].u3.hz = (z - device->legacy_clipspace._43 * w) / device->legacy_clipspace._33;
+            outH[i].hx = (x - device->legacy_clipspace._41 * w) / device->legacy_clipspace._11;
+            outH[i].hy = (y - device->legacy_clipspace._42 * w) / device->legacy_clipspace._22;
+            outH[i].hz = (z - device->legacy_clipspace._43 * w) / device->legacy_clipspace._33;
 
             outH[i].dwFlags = 0;
             if (x > w)
@@ -635,8 +635,8 @@ static HRESULT WINAPI d3d_viewport_SetBackground(IDirect3DViewport3 *iface, D3DM
     }
 
     TRACE("Setting background color : %.8e %.8e %.8e %.8e.\n",
-            m->mat.u.diffuse.u1.r, m->mat.u.diffuse.u2.g,
-            m->mat.u.diffuse.u3.b, m->mat.u.diffuse.u4.a);
+            m->mat.diffuse.r, m->mat.diffuse.g,
+            m->mat.diffuse.b, m->mat.diffuse.a);
     viewport->background = m;
 
     wined3d_mutex_unlock();
@@ -762,10 +762,10 @@ static HRESULT WINAPI d3d_viewport_Clear(IDirect3DViewport3 *iface,
         if (!This->background)
             WARN("No background material set.\n");
         else
-            color = D3DRGBA(This->background->mat.u.diffuse.u1.r,
-                    This->background->mat.u.diffuse.u2.g,
-                    This->background->mat.u.diffuse.u3.b,
-                    This->background->mat.u.diffuse.u4.a);
+            color = D3DRGBA(This->background->mat.diffuse.r,
+                    This->background->mat.diffuse.g,
+                    This->background->mat.diffuse.b,
+                    This->background->mat.diffuse.a);
     }
 
     /* Need to temporarily activate the viewport to clear it. The previously

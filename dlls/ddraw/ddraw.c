@@ -1156,7 +1156,7 @@ static HRESULT WINAPI ddraw7_SetDisplayMode(IDirectDraw7 *iface, DWORD width, DW
                     surface_desc->dwWidth, surface_desc->dwHeight, mode.format_id, WINED3D_MULTISAMPLE_NONE, 0)))
                 ERR("Failed to resize buffers, hr %#lx.\n", hr);
             else
-                ddrawformat_from_wined3dformat(&ddraw->primary->surface_desc.u4.ddpfPixelFormat, mode.format_id);
+                ddrawformat_from_wined3dformat(&ddraw->primary->surface_desc.ddpfPixelFormat, mode.format_id);
         }
         ddraw->flags |= DDRAW_RESTORE_MODE;
 
@@ -1675,10 +1675,10 @@ static HRESULT WINAPI ddraw7_GetDisplayMode(IDirectDraw7 *iface, DDSURFACEDESC2 
     DDSD->dwFlags = DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_PITCH | DDSD_REFRESHRATE;
     DDSD->dwWidth = mode.width;
     DDSD->dwHeight = mode.height;
-    DDSD->u2.dwRefreshRate = mode.refresh_rate;
-    DDSD->u4.ddpfPixelFormat.dwSize = sizeof(DDSD->u4.ddpfPixelFormat);
-    ddrawformat_from_wined3dformat(&DDSD->u4.ddpfPixelFormat, mode.format_id);
-    DDSD->u1.lPitch = mode.width * DDSD->u4.ddpfPixelFormat.u1.dwRGBBitCount / 8;
+    DDSD->dwRefreshRate = mode.refresh_rate;
+    DDSD->ddpfPixelFormat.dwSize = sizeof(DDSD->ddpfPixelFormat);
+    ddrawformat_from_wined3dformat(&DDSD->ddpfPixelFormat, mode.format_id);
+    DDSD->lPitch = mode.width * DDSD->ddpfPixelFormat.dwRGBBitCount / 8;
 
     if(TRACE_ON(ddraw))
     {
@@ -2463,10 +2463,10 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
                     continue;
                 if (DDSD->dwFlags & DDSD_HEIGHT && mode.height != DDSD->dwHeight)
                     continue;
-                if (DDSD->dwFlags & DDSD_REFRESHRATE && mode.refresh_rate != DDSD->u2.dwRefreshRate)
+                if (DDSD->dwFlags & DDSD_REFRESHRATE && mode.refresh_rate != DDSD->dwRefreshRate)
                     continue;
                 if (DDSD->dwFlags & DDSD_PIXELFORMAT
-                        && pixelformat.u1.dwRGBBitCount != DDSD->u4.ddpfPixelFormat.u1.dwRGBBitCount)
+                        && pixelformat.dwRGBBitCount != DDSD->ddpfPixelFormat.dwRGBBitCount)
                     continue;
             }
 
@@ -2485,23 +2485,23 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
 
             memset(&callback_sd, 0, sizeof(callback_sd));
             callback_sd.dwSize = sizeof(callback_sd);
-            callback_sd.u4.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
+            callback_sd.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
 
             callback_sd.dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT|DDSD_PITCH|DDSD_REFRESHRATE;
             if (Flags & DDEDM_REFRESHRATES)
-                callback_sd.u2.dwRefreshRate = mode.refresh_rate;
+                callback_sd.dwRefreshRate = mode.refresh_rate;
 
             callback_sd.dwWidth = mode.width;
             callback_sd.dwHeight = mode.height;
 
-            callback_sd.u4.ddpfPixelFormat=pixelformat;
+            callback_sd.ddpfPixelFormat=pixelformat;
 
             /* Calc pitch and DWORD align like MSDN says */
-            callback_sd.u1.lPitch = (callback_sd.u4.ddpfPixelFormat.u1.dwRGBBitCount / 8) * mode.width;
-            callback_sd.u1.lPitch = (callback_sd.u1.lPitch + 3) & ~3;
+            callback_sd.lPitch = (callback_sd.ddpfPixelFormat.dwRGBBitCount / 8) * mode.width;
+            callback_sd.lPitch = (callback_sd.lPitch + 3) & ~3;
 
-            TRACE("Enumerating %lux%lux%lu @%lu\n", callback_sd.dwWidth, callback_sd.dwHeight, callback_sd.u4.ddpfPixelFormat.u1.dwRGBBitCount,
-              callback_sd.u2.dwRefreshRate);
+            TRACE("Enumerating %lux%lux%lu @%lu\n", callback_sd.dwWidth, callback_sd.dwHeight, callback_sd.ddpfPixelFormat.dwRGBBitCount,
+              callback_sd.dwRefreshRate);
 
             if(cb(&callback_sd, Context) == DDENUMRET_CANCEL)
             {
@@ -3096,26 +3096,26 @@ Main_DirectDraw_DDPIXELFORMAT_Match(const DDPIXELFORMAT *requested,
 
     if (requested->dwFlags & (DDPF_RGB|DDPF_YUV|DDPF_ZBUFFER|DDPF_ALPHA
                               |DDPF_LUMINANCE|DDPF_BUMPDUDV))
-        if (requested->u1.dwRGBBitCount != provided->u1.dwRGBBitCount)
+        if (requested->dwRGBBitCount != provided->dwRGBBitCount)
             return FALSE;
 
     if (requested->dwFlags & (DDPF_RGB|DDPF_YUV|DDPF_STENCILBUFFER
                               |DDPF_LUMINANCE|DDPF_BUMPDUDV))
-        if (requested->u2.dwRBitMask != provided->u2.dwRBitMask)
+        if (requested->dwRBitMask != provided->dwRBitMask)
             return FALSE;
 
     if (requested->dwFlags & (DDPF_RGB|DDPF_YUV|DDPF_ZBUFFER|DDPF_BUMPDUDV))
-        if (requested->u3.dwGBitMask != provided->u3.dwGBitMask)
+        if (requested->dwGBitMask != provided->dwGBitMask)
             return FALSE;
 
     /* I could be wrong about the bumpmapping. MSDN docs are vague. */
     if (requested->dwFlags & (DDPF_RGB|DDPF_YUV|DDPF_STENCILBUFFER
                               |DDPF_BUMPDUDV))
-        if (requested->u4.dwBBitMask != provided->u4.dwBBitMask)
+        if (requested->dwBBitMask != provided->dwBBitMask)
             return FALSE;
 
     if (requested->dwFlags & (DDPF_ALPHAPIXELS|DDPF_ZPIXELS))
-        if (requested->u5.dwRGBAlphaBitMask != provided->u5.dwRGBAlphaBitMask)
+        if (requested->dwRGBAlphaBitMask != provided->dwRGBAlphaBitMask)
             return FALSE;
 
     return TRUE;
@@ -3137,19 +3137,19 @@ static BOOL ddraw_match_surface_desc(const DDSURFACEDESC2 *requested, const DDSU
     static const struct compare_info compare[] =
     {
         CMP(ALPHABITDEPTH, dwAlphaBitDepth),
-        CMP(BACKBUFFERCOUNT, u5.dwBackBufferCount),
+        CMP(BACKBUFFERCOUNT, dwBackBufferCount),
         CMP(CAPS, ddsCaps),
         CMP(CKDESTBLT, ddckCKDestBlt),
-        CMP(CKDESTOVERLAY, u3 /* ddckCKDestOverlay */),
+        CMP(CKDESTOVERLAY, ddckCKDestOverlay),
         CMP(CKSRCBLT, ddckCKSrcBlt),
         CMP(CKSRCOVERLAY, ddckCKSrcOverlay),
         CMP(HEIGHT, dwHeight),
-        CMP(LINEARSIZE, u1 /* dwLinearSize */),
+        CMP(LINEARSIZE, dwLinearSize),
         CMP(LPSURFACE, lpSurface),
-        CMP(MIPMAPCOUNT, u2 /* dwMipMapCount */),
-        CMP(PITCH, u1 /* lPitch */),
+        CMP(MIPMAPCOUNT, dwMipMapCount),
+        CMP(PITCH, lPitch),
         /* PIXELFORMAT: manual */
-        CMP(REFRESHRATE, u2 /* dwRefreshRate */),
+        CMP(REFRESHRATE, dwRefreshRate),
         CMP(TEXTURESTAGE, dwTextureStage),
         CMP(WIDTH, dwWidth),
         /* ZBUFFERBITDEPTH: "obsolete" */
@@ -3173,8 +3173,8 @@ static BOOL ddraw_match_surface_desc(const DDSURFACEDESC2 *requested, const DDSU
 
     if (requested->dwFlags & DDSD_PIXELFORMAT)
     {
-        if (!Main_DirectDraw_DDPIXELFORMAT_Match(&requested->u4.ddpfPixelFormat,
-                                                &provided->u4.ddpfPixelFormat))
+        if (!Main_DirectDraw_DDPIXELFORMAT_Match(&requested->ddpfPixelFormat,
+                                                &provided->ddpfPixelFormat))
             return FALSE;
     }
 
@@ -3242,8 +3242,8 @@ static HRESULT CALLBACK enum_surface_mode_callback(DDSURFACEDESC2 *surface_desc,
     desc.dwFlags |= DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_PIXELFORMAT;
     desc.dwWidth = surface_desc->dwWidth;
     desc.dwHeight = surface_desc->dwHeight;
-    desc.u1.lPitch = surface_desc->u1.lPitch;
-    desc.u4.ddpfPixelFormat = surface_desc->u4.ddpfPixelFormat;
+    desc.lPitch = surface_desc->lPitch;
+    desc.ddpfPixelFormat = surface_desc->ddpfPixelFormat;
 
     if (SUCCEEDED(ddraw7_CreateSurface(params->ddraw, &desc, &surface, NULL)))
     {
@@ -3308,7 +3308,7 @@ static HRESULT WINAPI ddraw7_EnumSurfaces(IDirectDraw7 *iface, DWORD flags,
             {
                 .dwSize = sizeof(desc),
                 .dwFlags = DDSD_PIXELFORMAT,
-                .u4.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
+                .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
             };
             struct enum_surface_mode_params params =
             {
@@ -3326,7 +3326,7 @@ static HRESULT WINAPI ddraw7_EnumSurfaces(IDirectDraw7 *iface, DWORD flags,
                 return hr_ddraw_from_wined3d(hr);
             }
 
-            ddrawformat_from_wined3dformat(&desc.u4.ddpfPixelFormat, mode.format_id);
+            ddrawformat_from_wined3dformat(&desc.ddpfPixelFormat, mode.format_id);
             hr = ddraw7_EnumDisplayModes(iface, 0, &desc, &params, enum_surface_mode_callback);
         }
 

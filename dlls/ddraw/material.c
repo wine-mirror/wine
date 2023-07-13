@@ -447,11 +447,11 @@ void material_activate(struct d3d_material *material)
 
     TRACE("Activating material %p.\n", material);
 
-    d3d7mat.u.diffuse = material->mat.u.diffuse;
-    d3d7mat.u1.ambient = material->mat.u1.ambient;
-    d3d7mat.u2.specular = material->mat.u2.specular;
-    d3d7mat.u3.emissive = material->mat.u3.emissive;
-    d3d7mat.u4.power = material->mat.u4.power;
+    d3d7mat.diffuse = material->mat.diffuse;
+    d3d7mat.ambient = material->mat.ambient;
+    d3d7mat.specular = material->mat.specular;
+    d3d7mat.emissive = material->mat.emissive;
+    d3d7mat.power = material->mat.power;
 
     IDirect3DDevice7_SetMaterial(&material->active_device->IDirect3DDevice7_iface, &d3d7mat);
 }

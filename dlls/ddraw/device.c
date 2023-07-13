@@ -1840,7 +1840,7 @@ static HRESULT WINAPI d3d_device2_GetCurrentViewport(IDirect3DDevice2 *iface, ID
 
 static BOOL validate_surface_palette(struct ddraw_surface *surface)
 {
-    return !format_is_paletteindexed(&surface->surface_desc.u4.ddpfPixelFormat)
+    return !format_is_paletteindexed(&surface->surface_desc.ddpfPixelFormat)
             || surface->palette;
 }
 
@@ -2712,7 +2712,7 @@ static void fixup_texture_alpha_op(struct d3d_device *device)
         wined3d_resource_get_desc(wined3d_texture_get_resource(tex), &desc);
         ddfmt.dwSize = sizeof(ddfmt);
         ddrawformat_from_wined3dformat(&ddfmt, desc.format);
-        if (!ddfmt.u5.dwRGBAlphaBitMask)
+        if (!ddfmt.dwRGBAlphaBitMask)
             tex_alpha = FALSE;
     }
 
@@ -4375,7 +4375,7 @@ static DWORD in_plane(UINT idx, struct wined3d_vec4 p, D3DVECTOR center, D3DVALU
     float distance, norm;
 
     norm = sqrtf(p.x * p.x + p.y * p.y + p.z * p.z);
-    distance = (p.x * center.u1.x + p.y * center.u2.y + p.z * center.u3.z + p.w) / norm;
+    distance = (p.x * center.x + p.y * center.y + p.z * center.z + p.w) / norm;
 
     if (equality)
     {
