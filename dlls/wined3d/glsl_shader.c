@@ -2110,17 +2110,6 @@ static BOOL glsl_is_color_reg_read(const struct wined3d_shader *shader, unsigned
     return FALSE;
 }
 
-static BOOL glsl_is_shadow_sampler(const struct wined3d_shader *shader,
-        const struct ps_compile_args *ps_args, unsigned int resource_idx, unsigned int sampler_idx)
-{
-    const struct wined3d_shader_version *version = &shader->reg_maps.shader_version;
-
-    if (version->major >= 4)
-        return shader->reg_maps.sampler_comparison_mode & (1u << sampler_idx);
-    else
-        return version->type == WINED3D_SHADER_TYPE_PIXEL && (ps_args->shadow & (1u << resource_idx));
-}
-
 static void shader_glsl_declare_typed_vertex_attribute(struct wined3d_string_buffer *buffer,
         const struct wined3d_gl_info *gl_info, const char *vector_type, const char *scalar_type,
         unsigned int index)
@@ -2345,7 +2334,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context_gl *c
                 break;
         }
 
-        shadow_sampler = glsl_is_shadow_sampler(shader, ps_args, entry->resource_idx, entry->sampler_idx);
+        shadow_sampler = shader_sampler_is_shadow(shader, ps_args, entry->resource_idx, entry->sampler_idx);
         resource_type = version->type == WINED3D_SHADER_TYPE_PIXEL
                 ? pixelshader_get_resource_type(reg_maps, entry->resource_idx, ps_args->tex_types)
                 : reg_maps->resource_info[entry->resource_idx].type;
@@ -3424,7 +3413,7 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
     enum wined3d_shader_resource_type resource_type;
     struct shader_glsl_ctx_priv *priv = ctx->backend_data;
     const struct wined3d_gl_info *gl_info = priv->gl_info;
-    BOOL shadow = glsl_is_shadow_sampler(ctx->shader, priv->cur_ps_args, resource_idx, sampler_idx);
+    BOOL shadow = shader_sampler_is_shadow(ctx->shader, priv->cur_ps_args, resource_idx, sampler_idx);
     BOOL projected = flags & WINED3D_GLSL_SAMPLE_PROJECTED;
     BOOL texrect = ctx->reg_maps->shader_version.type == WINED3D_SHADER_TYPE_PIXEL
             && priv->cur_ps_args->np2_fixup & (1u << resource_idx)

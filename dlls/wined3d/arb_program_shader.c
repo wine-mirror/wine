@@ -1426,6 +1426,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, unsig
     enum wined3d_shader_resource_type resource_type;
     struct color_fixup_masks masks;
     const char *tex_dst = dst_str;
+    bool shadow_sampler, tex_rect;
     BOOL np2_fixup = FALSE;
     const char *tex_type;
     const char *mod;
@@ -1443,18 +1444,35 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, unsig
         sampler_idx += WINED3D_MAX_FRAGMENT_SAMPLERS;
     }
 
+    shadow_sampler = priv->gl_info->supported[ARB_FRAGMENT_PROGRAM_SHADOW]
+            && shader_sampler_is_shadow(ins->ctx->shader, &priv->cur_ps_args->super, sampler_idx, sampler_idx);
+
     switch (resource_type)
     {
         case WINED3D_SHADER_RESOURCE_TEXTURE_1D:
-            tex_type = "1D";
+            if (shadow_sampler)
+                tex_type = "SHADOW1D";
+            else
+                tex_type = "1D";
             break;
 
         case WINED3D_SHADER_RESOURCE_TEXTURE_2D:
-            if (pshader && priv->cur_ps_args->super.np2_fixup & (1u << sampler_idx)
-                    && priv->gl_info->supported[ARB_TEXTURE_RECTANGLE])
-                tex_type = "RECT";
+            tex_rect = pshader && priv->cur_ps_args->super.np2_fixup & (1u << sampler_idx)
+                    && priv->gl_info->supported[ARB_TEXTURE_RECTANGLE];
+            if (shadow_sampler)
+            {
+                if (tex_rect)
+                    tex_type = "SHADOWRECT";
+                else
+                    tex_type = "SHADOW2D";
+            }
             else
-                tex_type = "2D";
+            {
+                if (tex_rect)
+                    tex_type = "RECT";
+                else
+                    tex_type = "2D";
+            }
 
             if (pshader)
             {
@@ -1467,10 +1485,14 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, unsig
             break;
 
         case WINED3D_SHADER_RESOURCE_TEXTURE_3D:
+            if (shadow_sampler)
+                FIXME("Unsupported 3D shadow sampler.\n");
             tex_type = "3D";
             break;
 
         case WINED3D_SHADER_RESOURCE_TEXTURE_CUBE:
+            if (shadow_sampler)
+                FIXME("Unsupported cube shadow sampler.\n");
             tex_type = "CUBE";
             break;
 
@@ -3656,6 +3678,8 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
                 break;
         }
     }
+    if (gl_info->supported[ARB_FRAGMENT_PROGRAM_SHADOW])
+        shader_addline(buffer, "OPTION ARB_fragment_program_shadow;\n");
 
     /* For now always declare the temps. At least the Nvidia assembler optimizes completely
      * unused temps away(but occupies them for the whole shader if they're used once). Always

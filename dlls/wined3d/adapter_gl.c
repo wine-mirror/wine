@@ -84,6 +84,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_fragment_coord_conventions",   ARB_FRAGMENT_COORD_CONVENTIONS},
     {"GL_ARB_fragment_layer_viewport",      ARB_FRAGMENT_LAYER_VIEWPORT   },
     {"GL_ARB_fragment_program",             ARB_FRAGMENT_PROGRAM          },
+    {"GL_ARB_fragment_program_shadow",      ARB_FRAGMENT_PROGRAM_SHADOW   },
     {"GL_ARB_fragment_shader",              ARB_FRAGMENT_SHADER           },
     {"GL_ARB_framebuffer_no_attachments",   ARB_FRAMEBUFFER_NO_ATTACHMENTS},
     {"GL_ARB_framebuffer_object",           ARB_FRAMEBUFFER_OBJECT        },

@@ -4384,6 +4384,17 @@ static inline BOOL shader_constant_is_local(const struct wined3d_shader *shader,
     return FALSE;
 }
 
+static inline BOOL shader_sampler_is_shadow(const struct wined3d_shader *shader,
+        const struct ps_compile_args *ps_args, unsigned int resource_idx, unsigned int sampler_idx)
+{
+    const struct wined3d_shader_version *version = &shader->reg_maps.shader_version;
+
+    if (version->major >= 4)
+        return shader->reg_maps.sampler_comparison_mode & (1u << sampler_idx);
+    else
+        return version->type == WINED3D_SHADER_TYPE_PIXEL && (ps_args->shadow & (1u << resource_idx));
+}
+
 void get_identity_matrix(struct wined3d_matrix *mat) DECLSPEC_HIDDEN;
 void get_modelview_matrix(const struct wined3d_context *context, const struct wined3d_state *state,
         unsigned int index, struct wined3d_matrix *mat) DECLSPEC_HIDDEN;
