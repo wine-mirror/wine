@@ -221,7 +221,6 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor, HDC hdc)
   wine_rb_init( &editor->marked_paras, para_mark_compare );
   para_mark_add( editor, para );
   ME_DestroyContext(&c);
-  wrap_marked_paras_dc( editor, hdc, FALSE );
 }
 
 static void para_mark_rewrap_paras( ME_TextEditor *editor, ME_Paragraph *first, const ME_Paragraph *end )

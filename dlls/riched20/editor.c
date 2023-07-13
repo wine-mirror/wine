@@ -2961,7 +2961,6 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
 
   hdc = ITextHost_TxGetDC( ed->texthost );
   ME_MakeFirstParagraph( ed, hdc );
-  ITextHost_TxReleaseDC( ed->texthost, hdc );
   /* The four cursors are for:
    * 0 - The position where the caret is shown
    * 1 - The anchored end of the selection (for normal selection)
@@ -3060,6 +3059,9 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
 
   list_init( &ed->reobj_list );
   OleInitialize(NULL);
+
+  wrap_marked_paras_dc( ed, hdc, FALSE );
+  ITextHost_TxReleaseDC( ed->texthost, hdc );
 
   return ed;
 }
