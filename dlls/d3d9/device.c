@@ -3176,7 +3176,7 @@ static HRESULT WINAPI d3d9_device_DrawPrimitive(IDirect3DDevice9Ex *iface,
             wined3d_primitive_type_from_d3d(primitive_type), 0);
 
     /* Instancing is ignored for non-indexed draws. */
-    wined3d_device_context_draw(device->immediate_context, start_vertex, vertex_count, 0, 1);
+    wined3d_device_context_draw(device->immediate_context, start_vertex, vertex_count, 0, 0);
 
     d3d9_rts_flag_auto_gen_mipmap(device);
     wined3d_mutex_unlock();
@@ -3274,7 +3274,7 @@ static HRESULT WINAPI d3d9_device_DrawPrimitiveUP(IDirect3DDevice9Ex *iface,
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
 
     /* Instancing is ignored for non-indexed draws. */
-    wined3d_device_context_draw(device->immediate_context, vb_pos / stride, vtx_count, 0, 1);
+    wined3d_device_context_draw(device->immediate_context, vb_pos / stride, vtx_count, 0, 0);
 
     wined3d_stateblock_set_stream_source(device->state, 0, NULL, 0, 0);
     d3d9_rts_flag_auto_gen_mipmap(device);
