@@ -530,6 +530,7 @@ struct msaa_provider {
     IRawElementProviderFragment IRawElementProviderFragment_iface;
     IRawElementProviderFragmentRoot IRawElementProviderFragmentRoot_iface;
     ILegacyIAccessibleProvider ILegacyIAccessibleProvider_iface;
+    IProxyProviderWinEventHandler IProxyProviderWinEventHandler_iface;
     LONG refcount;
 
     IAccessible *acc;
@@ -586,6 +587,8 @@ HRESULT WINAPI msaa_provider_QueryInterface(IRawElementProviderSimple *iface, RE
         *ppv = &msaa_prov->IRawElementProviderFragmentRoot_iface;
     else if (IsEqualIID(riid, &IID_ILegacyIAccessibleProvider))
         *ppv = &msaa_prov->ILegacyIAccessibleProvider_iface;
+    else if (IsEqualIID(riid, &IID_IProxyProviderWinEventHandler))
+        *ppv = &msaa_prov->IProxyProviderWinEventHandler_iface;
     else
         return E_NOINTERFACE;
 
@@ -1369,6 +1372,48 @@ static const ILegacyIAccessibleProviderVtbl msaa_acc_provider_vtbl = {
     msaa_acc_provider_get_DefaultAction,
 };
 
+/*
+ * IProxyProviderWinEventHandler interface for UiaProviderFromIAccessible
+ * providers.
+ */
+static inline struct msaa_provider *impl_from_msaa_winevent_handler(IProxyProviderWinEventHandler *iface)
+{
+    return CONTAINING_RECORD(iface, struct msaa_provider, IProxyProviderWinEventHandler_iface);
+}
+
+static HRESULT WINAPI msaa_winevent_handler_QueryInterface(IProxyProviderWinEventHandler *iface, REFIID riid,
+        void **ppv)
+{
+    struct msaa_provider *msaa_prov = impl_from_msaa_winevent_handler(iface);
+    return IRawElementProviderSimple_QueryInterface(&msaa_prov->IRawElementProviderSimple_iface, riid, ppv);
+}
+
+static ULONG WINAPI msaa_winevent_handler_AddRef(IProxyProviderWinEventHandler *iface)
+{
+    struct msaa_provider *msaa_prov = impl_from_msaa_winevent_handler(iface);
+    return IRawElementProviderSimple_AddRef(&msaa_prov->IRawElementProviderSimple_iface);
+}
+
+static ULONG WINAPI msaa_winevent_handler_Release(IProxyProviderWinEventHandler *iface)
+{
+    struct msaa_provider *msaa_prov = impl_from_msaa_winevent_handler(iface);
+    return IRawElementProviderSimple_Release(&msaa_prov->IRawElementProviderSimple_iface);
+}
+
+static HRESULT WINAPI msaa_winevent_handler_RespondToWinEvent(IProxyProviderWinEventHandler *iface, DWORD event_id,
+        HWND hwnd, LONG objid, LONG cid, IProxyProviderWinEventSink *event_sink)
+{
+    FIXME("%p, %ld, %p, %ld, %ld, %p: stub\n", iface, event_id, hwnd, objid, cid, event_sink);
+    return E_NOTIMPL;
+}
+
+static const IProxyProviderWinEventHandlerVtbl msaa_winevent_handler_vtbl = {
+    msaa_winevent_handler_QueryInterface,
+    msaa_winevent_handler_AddRef,
+    msaa_winevent_handler_Release,
+    msaa_winevent_handler_RespondToWinEvent,
+};
+
 HRESULT create_msaa_provider(IAccessible *acc, LONG child_id, HWND hwnd, BOOL known_root_acc,
         IRawElementProviderSimple **elprov)
 {
@@ -1381,6 +1426,7 @@ HRESULT create_msaa_provider(IAccessible *acc, LONG child_id, HWND hwnd, BOOL kn
     msaa_prov->IRawElementProviderFragment_iface.lpVtbl = &msaa_fragment_vtbl;
     msaa_prov->IRawElementProviderFragmentRoot_iface.lpVtbl = &msaa_fragment_root_vtbl;
     msaa_prov->ILegacyIAccessibleProvider_iface.lpVtbl = &msaa_acc_provider_vtbl;
+    msaa_prov->IProxyProviderWinEventHandler_iface.lpVtbl = &msaa_winevent_handler_vtbl;
     msaa_prov->refcount = 1;
     variant_init_i4(&msaa_prov->cid, child_id);
     msaa_prov->acc = acc;

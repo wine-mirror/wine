@@ -394,6 +394,9 @@ DEFINE_EXPECT(uia_event_callback);
 DEFINE_EXPECT(uia_com_event_callback);
 DEFINE_EXPECT(winproc_GETOBJECT_UiaRoot);
 DEFINE_EXPECT(child_winproc_GETOBJECT_UiaRoot);
+DEFINE_EXPECT(ProxyEventSink_AddAutomationPropertyChangedEvent);
+DEFINE_EXPECT(ProxyEventSink_AddAutomationEvent);
+DEFINE_EXPECT(ProxyEventSink_AddStructureChangedEvent);
 
 static BOOL check_variant_i4(VARIANT *v, int val)
 {
@@ -3389,6 +3392,207 @@ static void test_uia_reserved_value_ifaces(void)
     CoUninitialize();
 }
 
+static struct ProxyEventSink
+{
+    IProxyProviderWinEventSink IProxyProviderWinEventSink_iface;
+    LONG ref;
+
+    IRawElementProviderSimple *event_elprov;
+    int event_id;
+
+    IRawElementProviderSimple *prop_change_elprov;
+    int prop_change_prop_id;
+    VARIANT prop_change_value;
+
+    IRawElementProviderSimple *structure_change_elprov;
+    int structure_change_type;
+    SAFEARRAY *structure_change_rt_id;
+} ProxyEventSink;
+
+static void proxy_event_sink_clear(void)
+{
+    if (ProxyEventSink.event_elprov)
+        IRawElementProviderSimple_Release(ProxyEventSink.event_elprov);
+    ProxyEventSink.event_elprov = NULL;
+    ProxyEventSink.event_id = 0;
+
+    if (ProxyEventSink.prop_change_elprov)
+        IRawElementProviderSimple_Release(ProxyEventSink.prop_change_elprov);
+    ProxyEventSink.prop_change_elprov = NULL;
+    ProxyEventSink.prop_change_prop_id = 0;
+    VariantClear(&ProxyEventSink.prop_change_value);
+
+    if (ProxyEventSink.structure_change_elprov)
+        IRawElementProviderSimple_Release(ProxyEventSink.structure_change_elprov);
+    ProxyEventSink.structure_change_elprov = NULL;
+    ProxyEventSink.structure_change_type = 0;
+    SafeArrayDestroy(ProxyEventSink.structure_change_rt_id);
+}
+
+static inline struct ProxyEventSink *impl_from_ProxyEventSink(IProxyProviderWinEventSink *iface)
+{
+    return CONTAINING_RECORD(iface, struct ProxyEventSink, IProxyProviderWinEventSink_iface);
+}
+
+static HRESULT WINAPI ProxyEventSink_QueryInterface(IProxyProviderWinEventSink *iface, REFIID riid, void **obj)
+{
+    *obj = NULL;
+    if (IsEqualIID(riid, &IID_IProxyProviderWinEventSink) || IsEqualIID(riid, &IID_IUnknown))
+        *obj = iface;
+    else
+        return E_NOINTERFACE;
+
+    IProxyProviderWinEventSink_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI ProxyEventSink_AddRef(IProxyProviderWinEventSink *iface)
+{
+    struct ProxyEventSink *This = impl_from_ProxyEventSink(iface);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI ProxyEventSink_Release(IProxyProviderWinEventSink *iface)
+{
+    struct ProxyEventSink *This = impl_from_ProxyEventSink(iface);
+    return InterlockedDecrement(&This->ref);
+}
+
+static HRESULT WINAPI ProxyEventSink_AddAutomationPropertyChangedEvent(IProxyProviderWinEventSink *iface,
+        IRawElementProviderSimple *elprov, PROPERTYID prop_id, VARIANT new_value)
+{
+    struct ProxyEventSink *This = impl_from_ProxyEventSink(iface);
+
+    CHECK_EXPECT(ProxyEventSink_AddAutomationPropertyChangedEvent);
+    This->prop_change_elprov = elprov;
+    if (elprov)
+        IRawElementProviderSimple_AddRef(elprov);
+
+    This->prop_change_prop_id = prop_id;
+    VariantCopy(&This->prop_change_value, &new_value);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI ProxyEventSink_AddAutomationEvent(IProxyProviderWinEventSink *iface,
+        IRawElementProviderSimple *elprov, EVENTID event_id)
+{
+    struct ProxyEventSink *This = impl_from_ProxyEventSink(iface);
+
+    CHECK_EXPECT(ProxyEventSink_AddAutomationEvent);
+    This->event_elprov = elprov;
+    if (elprov)
+        IRawElementProviderSimple_AddRef(elprov);
+    This->event_id = event_id;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI ProxyEventSink_AddStructureChangedEvent(IProxyProviderWinEventSink *iface,
+        IRawElementProviderSimple *elprov, enum StructureChangeType structure_change_type, SAFEARRAY *runtime_id)
+{
+    struct ProxyEventSink *This = impl_from_ProxyEventSink(iface);
+    HRESULT hr;
+
+    CHECK_EXPECT(ProxyEventSink_AddStructureChangedEvent);
+    This->structure_change_elprov = elprov;
+    if (elprov)
+        IRawElementProviderSimple_AddRef(elprov);
+    This->structure_change_type = structure_change_type;
+
+    hr = SafeArrayCopy(runtime_id, &This->structure_change_rt_id);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    return S_OK;
+}
+
+static const IProxyProviderWinEventSinkVtbl ProxyEventSinkVtbl = {
+    ProxyEventSink_QueryInterface,
+    ProxyEventSink_AddRef,
+    ProxyEventSink_Release,
+    ProxyEventSink_AddAutomationPropertyChangedEvent,
+    ProxyEventSink_AddAutomationEvent,
+    ProxyEventSink_AddStructureChangedEvent,
+};
+
+static struct ProxyEventSink ProxyEventSink =
+{
+    { &ProxyEventSinkVtbl },
+    1,
+};
+
+static void set_accessible_props(struct Accessible *acc, INT role, INT state,
+        LONG child_count, LPCWSTR name, LONG left, LONG top, LONG width, LONG height);
+static void set_accessible_ia2_props(struct Accessible *acc, BOOL enable_ia2, LONG unique_id);
+static void test_uia_prov_from_acc_winevent_handler(HWND hwnd)
+{
+    IProxyProviderWinEventHandler *handler;
+    IRawElementProviderSimple *elprov;
+    HRESULT hr;
+
+    set_accessible_props(&Accessible, ROLE_SYSTEM_DOCUMENT, 0, 0, L"acc_name", 0, 0, 0, 0);
+    Accessible.ow_hwnd = hwnd;
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IRawElementProviderSimple_QueryInterface(elprov, &IID_IProxyProviderWinEventHandler, (void **)&handler);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!handler, "Handler == NULL\n");
+
+    /* EVENT_SYSTEM_ALERT */
+    SET_EXPECT(ProxyEventSink_AddAutomationEvent);
+    hr = IProxyProviderWinEventHandler_RespondToWinEvent(handler, EVENT_SYSTEM_ALERT, hwnd, OBJID_CLIENT, CHILDID_SELF,
+            &ProxyEventSink.IProxyProviderWinEventSink_iface);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine CHECK_CALLED(ProxyEventSink_AddAutomationEvent);
+    todo_wine ok(ProxyEventSink.event_id == UIA_SystemAlertEventId, "Unexpected event_id %d\n", ProxyEventSink.event_id);
+    todo_wine ok(ProxyEventSink.event_elprov == elprov, "Unexpected event_elprov %p\n", ProxyEventSink.event_elprov);
+    proxy_event_sink_clear();
+
+    /* EVENT_OBJECT_FOCUS is not handled. */
+    hr = IProxyProviderWinEventHandler_RespondToWinEvent(handler, EVENT_OBJECT_FOCUS, hwnd, OBJID_CLIENT, CHILDID_SELF,
+            &ProxyEventSink.IProxyProviderWinEventSink_iface);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* EVENT_OBJECT_NAMECHANGE. */
+    SET_EXPECT(ProxyEventSink_AddAutomationPropertyChangedEvent);
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accName);
+    hr = IProxyProviderWinEventHandler_RespondToWinEvent(handler, EVENT_OBJECT_NAMECHANGE, hwnd, OBJID_CLIENT, CHILDID_SELF,
+            &ProxyEventSink.IProxyProviderWinEventSink_iface);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(ProxyEventSink.prop_change_elprov == elprov, "Unexpected prop_change_elprov %p\n", ProxyEventSink.prop_change_elprov);
+    todo_wine ok(ProxyEventSink.prop_change_prop_id == UIA_NamePropertyId, "Unexpected prop_change_prop_id %d\n",
+            ProxyEventSink.prop_change_prop_id);
+    todo_wine ok(V_VT(&ProxyEventSink.prop_change_value) == VT_BSTR, "Unexpected prop_change_value vt %d\n",
+            V_VT(&ProxyEventSink.prop_change_value));
+    if (V_VT(&ProxyEventSink.prop_change_value) == VT_BSTR)
+        ok(!lstrcmpW(V_BSTR(&ProxyEventSink.prop_change_value), Accessible.name), "Unexpected BSTR %s\n",
+                wine_dbgstr_w(V_BSTR(&ProxyEventSink.prop_change_value)));
+    todo_wine CHECK_CALLED(ProxyEventSink_AddAutomationPropertyChangedEvent);
+    todo_wine CHECK_ACC_METHOD_CALLED(&Accessible, get_accName);
+    proxy_event_sink_clear();
+
+    /* EVENT_OBJECT_REORDER. */
+    acc_client = &Accessible.IAccessible_iface;
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    SET_EXPECT(ProxyEventSink_AddStructureChangedEvent);
+    hr = IProxyProviderWinEventHandler_RespondToWinEvent(handler, EVENT_OBJECT_REORDER, hwnd, OBJID_CLIENT, CHILDID_SELF,
+            &ProxyEventSink.IProxyProviderWinEventSink_iface);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(ProxyEventSink.structure_change_elprov == elprov, "Unexpected structure_change_elprov %p\n",
+            ProxyEventSink.structure_change_elprov);
+    todo_wine ok(ProxyEventSink.structure_change_type == StructureChangeType_ChildrenInvalidated, "Unexpected structure_change_type %d\n",
+            ProxyEventSink.structure_change_type);
+    ok(!ProxyEventSink.structure_change_rt_id, "structure_change_rt_id != NULL\n");
+    todo_wine CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    todo_wine CHECK_CALLED(ProxyEventSink_AddStructureChangedEvent);
+    proxy_event_sink_clear();
+
+    acc_client = NULL;
+    IProxyProviderWinEventHandler_Release(handler);
+    IRawElementProviderSimple_Release(elprov);
+}
+
 DEFINE_GUID(SID_AccFromDAWrapper, 0x33f139ee, 0xe509, 0x47f7, 0xbf,0x39, 0x83,0x76,0x44,0xf7,0x45,0x76);
 static IAccessible *msaa_acc_da_unwrap(IAccessible *acc)
 {
@@ -3467,9 +3671,6 @@ static void check_msaa_prov_host_elem_prov_(IUnknown *elem, BOOL exp_host_prov, 
     IRawElementProviderSimple_Release(elprov);
 }
 
-static void set_accessible_props(struct Accessible *acc, INT role, INT state,
-        LONG child_count, LPCWSTR name, LONG left, LONG top, LONG width, LONG height);
-static void set_accessible_ia2_props(struct Accessible *acc, BOOL enable_ia2, LONG unique_id);
 static void test_uia_prov_from_acc_fragment_root(HWND hwnd)
 {
     IRawElementProviderFragmentRoot *elroot, *elroot2;
@@ -5506,6 +5707,7 @@ static void test_UiaProviderFromIAccessible(void)
     test_uia_prov_from_acc_navigation();
     test_uia_prov_from_acc_ia2();
     test_uia_prov_from_acc_fragment_root(hwnd);
+    test_uia_prov_from_acc_winevent_handler(hwnd);
 
     CoUninitialize();
     DestroyWindow(hwnd);
