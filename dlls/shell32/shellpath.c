@@ -2767,10 +2767,7 @@ static void create_link( const WCHAR *path, const char *xdg_name, const char *de
     {
         if (link_folder( mgr, &nt_name, target )) goto done;
     }
-    if (link_folder( mgr, &nt_name, default_name )) goto done;
-
-    /* fall back to HOME */
-    link_folder( mgr, &nt_name, "$HOME" );
+    link_folder( mgr, &nt_name, default_name );
 
 done:
     RtlFreeUnicodeString( &nt_name );
