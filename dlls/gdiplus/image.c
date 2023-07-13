@@ -20,8 +20,6 @@
 #include <stdarg.h>
 #include <assert.h>
 
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
