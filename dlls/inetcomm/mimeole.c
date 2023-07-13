@@ -20,7 +20,6 @@
  */
 
 #define COBJMACROS
-#define NONAMELESSUNION
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -267,7 +266,7 @@ static HRESULT WINAPI sub_stream_Seek(
     sub_stream_t *This = impl_from_IStream(iface);
     LARGE_INTEGER new_pos;
 
-    TRACE("(%08lx.%08lx, %lx, %p)\n", dlibMove.u.HighPart, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
+    TRACE("(%08lx.%08lx, %lx, %p)\n", dlibMove.HighPart, dlibMove.LowPart, dwOrigin, plibNewPosition);
 
     switch(dwOrigin)
     {
@@ -314,7 +313,7 @@ static HRESULT WINAPI sub_stream_CopyTo(
     ULARGE_INTEGER totalBytesRead;
     ULARGE_INTEGER totalBytesWritten;
 
-    TRACE("(%p)->(%p, %ld, %p, %p)\n", iface, pstm, cb.u.LowPart, pcbRead, pcbWritten);
+    TRACE("(%p)->(%p, %ld, %p, %p)\n", iface, pstm, cb.LowPart, pcbRead, pcbWritten);
 
     totalBytesRead.QuadPart = 0;
     totalBytesWritten.QuadPart = 0;
@@ -324,7 +323,7 @@ static HRESULT WINAPI sub_stream_CopyTo(
         if ( cb.QuadPart >= sizeof(tmpBuffer) )
             copySize = sizeof(tmpBuffer);
         else
-            copySize = cb.u.LowPart;
+            copySize = cb.LowPart;
 
         hr = IStream_Read(iface, tmpBuffer, copySize, &bytesRead);
         if (FAILED(hr)) break;
@@ -2063,7 +2062,7 @@ static HRESULT create_body_offset_list(IStream *stm, const char *boundary, struc
 
     zero.QuadPart = 0;
     hr = IStream_Seek(stm, zero, STREAM_SEEK_CUR, &cur);
-    start = cur.u.LowPart;
+    start = cur.LowPart;
 
     do {
         hr = IStream_Read(stm, overlap, PARSER_BUF_SIZE, &read);
@@ -2218,7 +2217,7 @@ static HRESULT WINAPI MimeMessage_Load(IMimeMessage *iface, IStream *pStm)
 
     zero.QuadPart = 0;
     IStream_Seek(pStm, zero, STREAM_SEEK_END, &cur);
-    offsets.cbBodyEnd = cur.u.LowPart;
+    offsets.cbBodyEnd = cur.LowPart;
     MimeBody_set_offsets(root_body->mime_body, &offsets);
 
     list_add_head(&This->body_tree, &root_body->entry);
