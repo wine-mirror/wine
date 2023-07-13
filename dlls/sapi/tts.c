@@ -641,7 +641,6 @@ static HRESULT WINAPI spvoice_SetVoice(ISpVoice *iface, ISpObjectToken *token)
     ISpTTSEngine *engine;
     HRESULT hr;
 
-
     TRACE("(%p, %p).\n", iface, token);
 
     if (!token)
@@ -649,6 +648,8 @@ static HRESULT WINAPI spvoice_SetVoice(ISpVoice *iface, ISpObjectToken *token)
         if (FAILED(hr = create_default_token(SPCAT_VOICES, &token)))
             return hr;
     }
+    else
+        ISpObjectToken_AddRef(token);
 
     hr = ISpObjectToken_CreateInstance(token, NULL, CLSCTX_ALL, &IID_ISpTTSEngine, (void **)&engine);
     ISpObjectToken_Release(token);
