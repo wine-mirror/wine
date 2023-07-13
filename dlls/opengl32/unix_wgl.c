@@ -1827,7 +1827,7 @@ static NTSTATUS wow64_map_buffer( TEB *teb, GLint buffer, GLenum target, void *p
 {
     if (*ret)  /* wow64 pointer provided, map buffer to it */
     {
-        if (access & GL_MAP_READ_BIT)
+        if (!(access & (GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT)))
         {
             TRACE( "Copying %#zx from buffer at %p to wow64 buffer %p\n", size, ptr, UlongToPtr(*ret) );
             memcpy( UlongToPtr(*ret), ptr, size );
