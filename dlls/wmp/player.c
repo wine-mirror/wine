@@ -1509,6 +1509,35 @@ static HRESULT WINAPI WMPControls_play(IWMPControls *iface)
             hres = IGraphBuilder_QueryInterface(This->filter_graph, &IID_IBasicAudio, (void**)&This->basic_audio);
         if (SUCCEEDED(hres))
             hres = IWMPSettings_put_volume(&This->IWMPSettings_iface, This->volume);
+
+        if (FAILED(hres))
+        {
+            if (This->filter_graph)
+            {
+                IGraphBuilder_Release(This->filter_graph);
+                This->filter_graph = NULL;
+            }
+            if (This->media_control)
+            {
+                IMediaControl_Release(This->media_control);
+                This->media_control = NULL;
+            }
+            if (This->media_seeking)
+            {
+                IMediaSeeking_Release(This->media_seeking);
+                This->media_seeking = NULL;
+            }
+            if (This->media_event)
+            {
+                IMediaEvent_Release(This->media_event);
+                This->media_event = NULL;
+            }
+            if (This->basic_audio)
+            {
+                IBasicAudio_Release(This->basic_audio);
+                This->basic_audio = NULL;
+            }
+        }
     }
 
     update_state(This, DISPID_WMPCOREEVENT_PLAYSTATECHANGE, wmppsTransitioning);
