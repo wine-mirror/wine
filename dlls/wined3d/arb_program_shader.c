@@ -6575,28 +6575,6 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
 
     TRACE("context %p, state %p, state_id %#lx.\n", context, state, state_id);
 
-    if (isStateDirty(context, STATE_RENDER(WINED3D_RS_FOGENABLE)))
-    {
-        if (!use_pshader && device->shader_backend == &arb_program_shader_backend && context->last_was_pshader)
-        {
-            /* Reload fixed function constants since they collide with the
-             * pixel shader constants. */
-            for (i = 0; i < WINED3D_MAX_TEXTURES; ++i)
-            {
-                set_bumpmat_arbfp(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_BUMPENV_MAT00));
-                state_tss_constant_arbfp(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_CONSTANT));
-            }
-            state_texfactor_arbfp(context, state, STATE_RENDER(WINED3D_RS_TEXTUREFACTOR));
-            state_arb_specularenable(context, state, STATE_RENDER(WINED3D_RS_SPECULARENABLE));
-            color_key_arbfp(context, state, STATE_COLOR_KEY);
-        }
-        else if (use_pshader)
-        {
-            context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
-        }
-        return;
-    }
-
     if (!use_pshader)
     {
         /* Find or create a shader implementing the fixed function pipeline
