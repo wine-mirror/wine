@@ -1403,8 +1403,34 @@ static ULONG WINAPI msaa_winevent_handler_Release(IProxyProviderWinEventHandler 
 static HRESULT WINAPI msaa_winevent_handler_RespondToWinEvent(IProxyProviderWinEventHandler *iface, DWORD event_id,
         HWND hwnd, LONG objid, LONG cid, IProxyProviderWinEventSink *event_sink)
 {
-    FIXME("%p, %ld, %p, %ld, %ld, %p: stub\n", iface, event_id, hwnd, objid, cid, event_sink);
-    return E_NOTIMPL;
+    struct msaa_provider *msaa_prov = impl_from_msaa_winevent_handler(iface);
+    HRESULT hr;
+
+    TRACE("%p, %ld, %p, %ld, %ld, %p\n", iface, event_id, hwnd, objid, cid, event_sink);
+
+    switch (event_id)
+    {
+    case EVENT_SYSTEM_ALERT:
+        hr = IProxyProviderWinEventSink_AddAutomationEvent(event_sink, &msaa_prov->IRawElementProviderSimple_iface,
+                UIA_SystemAlertEventId);
+        if (FAILED(hr))
+            WARN("AddAutomationEvent failed with hr %#lx\n", hr);
+        break;
+
+    case EVENT_OBJECT_REORDER:
+    case EVENT_OBJECT_SELECTION:
+    case EVENT_OBJECT_NAMECHANGE:
+    case EVENT_OBJECT_VALUECHANGE:
+    case EVENT_OBJECT_HELPCHANGE:
+    case EVENT_OBJECT_INVOKED:
+        FIXME("WinEvent %ld currently unimplemented\n", event_id);
+        return E_NOTIMPL;
+
+    default:
+        break;
+    }
+
+    return S_OK;
 }
 
 static const IProxyProviderWinEventHandlerVtbl msaa_winevent_handler_vtbl = {

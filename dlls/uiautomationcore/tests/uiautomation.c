@@ -3543,16 +3543,16 @@ static void test_uia_prov_from_acc_winevent_handler(HWND hwnd)
     SET_EXPECT(ProxyEventSink_AddAutomationEvent);
     hr = IProxyProviderWinEventHandler_RespondToWinEvent(handler, EVENT_SYSTEM_ALERT, hwnd, OBJID_CLIENT, CHILDID_SELF,
             &ProxyEventSink.IProxyProviderWinEventSink_iface);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine CHECK_CALLED(ProxyEventSink_AddAutomationEvent);
-    todo_wine ok(ProxyEventSink.event_id == UIA_SystemAlertEventId, "Unexpected event_id %d\n", ProxyEventSink.event_id);
-    todo_wine ok(ProxyEventSink.event_elprov == elprov, "Unexpected event_elprov %p\n", ProxyEventSink.event_elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    CHECK_CALLED(ProxyEventSink_AddAutomationEvent);
+    ok(ProxyEventSink.event_id == UIA_SystemAlertEventId, "Unexpected event_id %d\n", ProxyEventSink.event_id);
+    ok(ProxyEventSink.event_elprov == elprov, "Unexpected event_elprov %p\n", ProxyEventSink.event_elprov);
     proxy_event_sink_clear();
 
     /* EVENT_OBJECT_FOCUS is not handled. */
     hr = IProxyProviderWinEventHandler_RespondToWinEvent(handler, EVENT_OBJECT_FOCUS, hwnd, OBJID_CLIENT, CHILDID_SELF,
             &ProxyEventSink.IProxyProviderWinEventSink_iface);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     /* EVENT_OBJECT_NAMECHANGE. */
     SET_EXPECT(ProxyEventSink_AddAutomationPropertyChangedEvent);
