@@ -17175,6 +17175,7 @@ else $as_nop
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
 printf "%s\n" "no" >&6; }
                  ac_glib2_broken=yes
+                 enable_winegstreamer=${enable_winegstreamer:-no}
                  as_fn_append wine_notices "|glib-2.0 pkgconfig configuration is for the wrong architecture, winegstreamer won't be built."
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
