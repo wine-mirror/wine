@@ -1857,6 +1857,19 @@ static NTSTATUS wow64_map_buffer( TEB *teb, GLint buffer, GLenum target, void *p
     return STATUS_INVALID_ADDRESS;
 }
 
+static GLbitfield map_range_flags_from_map_flags( GLenum flags )
+{
+    switch (flags)
+    {
+        case GL_READ_ONLY: return GL_MAP_READ_BIT;
+        case GL_WRITE_ONLY: return GL_MAP_WRITE_BIT;
+        case GL_READ_WRITE: return GL_MAP_READ_BIT | GL_MAP_WRITE_BIT;
+        default:
+            ERR( "invalid map flags %#x\n", flags );
+            return GL_MAP_READ_BIT | GL_MAP_WRITE_BIT;
+    }
+}
+
 static NTSTATUS wow64_unmap_buffer( void *ptr, SIZE_T size, GLbitfield access )
 {
     void *wow_ptr;
@@ -1968,7 +1981,8 @@ static NTSTATUS wow64_gl_map_buffer( void *args, NTSTATUS (*gl_map_buffer64)(voi
     if (params32->ret) params.ret = get_buffer_pointer( params.teb, params.target );
     else if ((status = gl_map_buffer64( &params ))) return status;
 
-    status = wow64_map_buffer( params.teb, 0, params.target, params.ret, 0, params.access, &params32->ret );
+    status = wow64_map_buffer( params.teb, 0, params.target, params.ret, 0,
+                               map_range_flags_from_map_flags( params.access ), &params32->ret );
     if (!status || status == STATUS_INVALID_ADDRESS) return status;
 
     unmap_buffer( params.teb, params.target );
@@ -2038,7 +2052,8 @@ static NTSTATUS wow64_gl_map_named_buffer( void *args, NTSTATUS (*gl_map_named_b
     if (params32->ret) params.ret = get_named_buffer_pointer( params.teb, params.buffer );
     else if ((status = gl_map_named_buffer64( &params ))) return status;
 
-    status = wow64_map_buffer( params.teb, params.buffer, 0, params.ret, 0, params.access, &params32->ret );
+    status = wow64_map_buffer( params.teb, params.buffer, 0, params.ret, 0,
+                               map_range_flags_from_map_flags( params.access ), &params32->ret );
     if (!status || status == STATUS_INVALID_ADDRESS) return status;
 
     unmap_named_buffer( params.teb, params.buffer );
