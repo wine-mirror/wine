@@ -1385,9 +1385,9 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
             }
             else
             {
-                face_normal.u1.x = 0.0f;
-                face_normal.u2.y = 0.0f;
-                face_normal.u3.z = 0.0f;
+                face_normal.x = 0.0f;
+                face_normal.y = 0.0f;
+                face_normal.z = 0.0f;
             }
         }
 
@@ -1588,9 +1588,9 @@ static HRESULT WINAPI d3drm_mesh_builder3_Scale(IDirect3DRMMeshBuilder3 *iface,
 
     for (i = 0; i < mesh_builder->nb_vertices; ++i)
     {
-        mesh_builder->vertices[i].u1.x *= sx;
-        mesh_builder->vertices[i].u2.y *= sy;
-        mesh_builder->vertices[i].u3.z *= sz;
+        mesh_builder->vertices[i].x *= sx;
+        mesh_builder->vertices[i].y *= sy;
+        mesh_builder->vertices[i].z *= sz;
     }
 
     /* Normals are not affected by Scale */
@@ -1862,9 +1862,9 @@ static int WINAPI d3drm_mesh_builder3_AddVertex(IDirect3DRMMeshBuilder3 *iface,
             mesh_builder->nb_vertices + 1, sizeof(*mesh_builder->vertices)))
         return 0;
 
-    mesh_builder->vertices[mesh_builder->nb_vertices].u1.x = x;
-    mesh_builder->vertices[mesh_builder->nb_vertices].u2.y = y;
-    mesh_builder->vertices[mesh_builder->nb_vertices].u3.z = z;
+    mesh_builder->vertices[mesh_builder->nb_vertices].x = x;
+    mesh_builder->vertices[mesh_builder->nb_vertices].y = y;
+    mesh_builder->vertices[mesh_builder->nb_vertices].z = z;
 
     return mesh_builder->nb_vertices++;
 }
@@ -1880,9 +1880,9 @@ static int WINAPI d3drm_mesh_builder3_AddNormal(IDirect3DRMMeshBuilder3 *iface,
             mesh_builder->nb_normals + 1, sizeof(*mesh_builder->normals)))
         return 0;
 
-    mesh_builder->normals[mesh_builder->nb_normals].u1.x = x;
-    mesh_builder->normals[mesh_builder->nb_normals].u2.y = y;
-    mesh_builder->normals[mesh_builder->nb_normals].u3.z = z;
+    mesh_builder->normals[mesh_builder->nb_normals].x = x;
+    mesh_builder->normals[mesh_builder->nb_normals].y = y;
+    mesh_builder->normals[mesh_builder->nb_normals].z = z;
 
     return mesh_builder->nb_normals++;
 }

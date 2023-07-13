@@ -21,8 +21,6 @@
 #ifndef __D3DRM_PRIVATE_INCLUDED__
 #define __D3DRM_PRIVATE_INCLUDED__
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #define COBJMACROS
 #include <assert.h>
 #include <math.h>

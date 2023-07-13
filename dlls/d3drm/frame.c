@@ -132,19 +132,19 @@ static void d3drm_matrix_set_rotation(struct d3drm_matrix *matrix, D3DVECTOR *ax
     cos_theta = cosf(theta);
     vers_theta = 1.0f - cos_theta;
 
-    matrix->_11 = vers_theta * axis->u1.x * axis->u1.x + cos_theta;
-    matrix->_21 = vers_theta * axis->u1.x * axis->u2.y - sin_theta * axis->u3.z;
-    matrix->_31 = vers_theta * axis->u1.x * axis->u3.z + sin_theta * axis->u2.y;
+    matrix->_11 = vers_theta * axis->x * axis->x + cos_theta;
+    matrix->_21 = vers_theta * axis->x * axis->y - sin_theta * axis->z;
+    matrix->_31 = vers_theta * axis->x * axis->z + sin_theta * axis->y;
     matrix->_41 = 0.0f;
 
-    matrix->_12 = vers_theta * axis->u2.y * axis->u1.x + sin_theta * axis->u3.z;
-    matrix->_22 = vers_theta * axis->u2.y * axis->u2.y + cos_theta;
-    matrix->_32 = vers_theta * axis->u2.y * axis->u3.z - sin_theta * axis->u1.x;
+    matrix->_12 = vers_theta * axis->y * axis->x + sin_theta * axis->z;
+    matrix->_22 = vers_theta * axis->y * axis->y + cos_theta;
+    matrix->_32 = vers_theta * axis->y * axis->z - sin_theta * axis->x;
     matrix->_42 = 0.0f;
 
-    matrix->_13 = vers_theta * axis->u3.z * axis->u1.x - sin_theta * axis->u2.y;
-    matrix->_23 = vers_theta * axis->u3.z * axis->u2.y + sin_theta * axis->u1.x;
-    matrix->_33 = vers_theta * axis->u3.z * axis->u3.z + cos_theta;
+    matrix->_13 = vers_theta * axis->z * axis->x - sin_theta * axis->y;
+    matrix->_23 = vers_theta * axis->z * axis->y + sin_theta * axis->x;
+    matrix->_33 = vers_theta * axis->z * axis->z + cos_theta;
     matrix->_43 = 0.0f;
 
     matrix->_14 = 0.0f;
@@ -157,9 +157,9 @@ static void d3drm_vector_transform_affine(D3DVECTOR *dst, const D3DVECTOR *v, co
 {
     D3DVECTOR tmp;
 
-    tmp.u1.x = v->u1.x * m->_11 + v->u2.y * m->_21 + v->u3.z * m->_31 + m->_41;
-    tmp.u2.y = v->u1.x * m->_12 + v->u2.y * m->_22 + v->u3.z * m->_32 + m->_42;
-    tmp.u3.z = v->u1.x * m->_13 + v->u2.y * m->_23 + v->u3.z * m->_33 + m->_43;
+    tmp.x = v->x * m->_11 + v->y * m->_21 + v->z * m->_31 + m->_41;
+    tmp.y = v->x * m->_12 + v->y * m->_22 + v->z * m->_32 + m->_42;
+    tmp.z = v->x * m->_13 + v->y * m->_23 + v->z * m->_33 + m->_43;
 
     *dst = tmp;
 }
@@ -1194,9 +1194,9 @@ static HRESULT WINAPI d3drm_frame3_AddRotation(IDirect3DRMFrame3 *iface,
 
     TRACE("iface %p, type %#x, x %.8e, y %.8e, z %.8e, theta %.8e.\n", iface, type, x, y, z, theta);
 
-    axis.u1.x = x;
-    axis.u2.y = y;
-    axis.u3.z = z;
+    axis.x = x;
+    axis.y = y;
+    axis.z = z;
 
     switch (type)
     {
@@ -3535,13 +3535,13 @@ static HRESULT WINAPI d3drm_animation2_AddKey(IDirect3DRMAnimation2 *iface, D3DR
     switch (key->dwKeyType)
     {
         case D3DRMANIMATION_POSITIONKEY:
-            keys->keys[index].u.position = key->u.dvPositionKey;
+            keys->keys[index].u.position = key->dvPositionKey;
             break;
         case D3DRMANIMATION_SCALEKEY:
-            keys->keys[index].u.scale = key->u.dvScaleKey;
+            keys->keys[index].u.scale = key->dvScaleKey;
             break;
         case D3DRMANIMATION_ROTATEKEY:
-            keys->keys[index].u.rotate = key->u.dqRotateKey;
+            keys->keys[index].u.rotate = key->dqRotateKey;
             break;
     }
     ++keys->count;
@@ -3559,7 +3559,7 @@ static HRESULT WINAPI d3drm_animation2_AddRotateKey(IDirect3DRMAnimation2 *iface
     key.dwKeyType = D3DRMANIMATION_ROTATEKEY;
     key.dvTime = time;
     key.dwID = 0;
-    key.u.dqRotateKey = *q;
+    key.dqRotateKey = *q;
 
     return d3drm_animation2_AddKey(iface, &key);
 }
@@ -3584,9 +3584,9 @@ static HRESULT WINAPI d3drm_animation2_AddPositionKey(IDirect3DRMAnimation2 *ifa
     key.dwKeyType = D3DRMANIMATION_POSITIONKEY;
     key.dvTime = time;
     key.dwID = 0;
-    key.u.dvPositionKey.u1.x = x;
-    key.u.dvPositionKey.u2.y = y;
-    key.u.dvPositionKey.u3.z = z;
+    key.dvPositionKey.x = x;
+    key.dvPositionKey.y = y;
+    key.dvPositionKey.z = z;
 
     return d3drm_animation2_AddKey(iface, &key);
 }
@@ -3612,9 +3612,9 @@ static HRESULT WINAPI d3drm_animation2_AddScaleKey(IDirect3DRMAnimation2 *iface,
     key.dwKeyType = D3DRMANIMATION_SCALEKEY;
     key.dvTime = time;
     key.dwID = 0;
-    key.u.dvScaleKey.u1.x = x;
-    key.u.dvScaleKey.u2.y = y;
-    key.u.dvScaleKey.u3.z = z;
+    key.dvScaleKey.x = x;
+    key.dvScaleKey.y = y;
+    key.dvScaleKey.z = z;
 
     return d3drm_animation2_AddKey(iface, &key);
 }
@@ -3783,7 +3783,7 @@ static HRESULT WINAPI d3drm_animation2_GetKeys(IDirect3DRMAnimation2 *iface, D3D
                 keys[i].dwKeyType = D3DRMANIMATION_ROTATEKEY;
                 keys[i].dvTime = key[i].time;
                 keys[i].dwID = 0; /* FIXME */
-                keys[i].u.dqRotateKey = key[i].u.rotate;
+                keys[i].dqRotateKey = key[i].u.rotate;
             }
             keys += count;
         }
@@ -3800,7 +3800,7 @@ static HRESULT WINAPI d3drm_animation2_GetKeys(IDirect3DRMAnimation2 *iface, D3D
                 keys[i].dwKeyType = D3DRMANIMATION_POSITIONKEY;
                 keys[i].dvTime = key[i].time;
                 keys[i].dwID = 0; /* FIXME */
-                keys[i].u.dvPositionKey = key[i].u.position;
+                keys[i].dvPositionKey = key[i].u.position;
             }
             keys += count;
         }
@@ -3817,7 +3817,7 @@ static HRESULT WINAPI d3drm_animation2_GetKeys(IDirect3DRMAnimation2 *iface, D3D
                 keys[i].dwKeyType = D3DRMANIMATION_SCALEKEY;
                 keys[i].dvTime = key[i].time;
                 keys[i].dwID = 0; /* FIXME */
-                keys[i].u.dvScaleKey = key[i].u.scale;
+                keys[i].dvScaleKey = key[i].u.scale;
             }
             keys += count;
         }

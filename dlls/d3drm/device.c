@@ -158,7 +158,7 @@ HRESULT d3drm_device_init(struct d3drm_device *device, UINT version, IDirectDraw
         surface_desc.dwSize = sizeof(surface_desc);
         surface_desc.dwFlags = DDSD_CAPS | DDSD_ZBUFFERBITDEPTH | DDSD_WIDTH | DDSD_HEIGHT;
         surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-        surface_desc.u2.dwZBufferBitDepth = 16;
+        surface_desc.dwZBufferBitDepth = 16;
         surface_desc.dwWidth = desc.dwWidth;
         surface_desc.dwHeight = desc.dwHeight;
         hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &ds, NULL);

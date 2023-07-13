@@ -34,10 +34,10 @@ static inline struct d3drm_viewport *impl_from_IDirect3DRMViewport2(IDirect3DRMV
 
 static inline void d3drm_normalize_d3d_color(D3DCOLORVALUE *color_value, D3DCOLOR color)
 {
-    color_value->u1.r = RGBA_GETRED(color) / 255.0f;
-    color_value->u2.g = RGBA_GETGREEN(color) / 255.0f;
-    color_value->u3.b = RGBA_GETBLUE(color) / 255.0f;
-    color_value->u4.a = RGBA_GETALPHA(color) / 255.0f;
+    color_value->r = RGBA_GETRED(color) / 255.0f;
+    color_value->g = RGBA_GETGREEN(color) / 255.0f;
+    color_value->b = RGBA_GETBLUE(color) / 255.0f;
+    color_value->a = RGBA_GETALPHA(color) / 255.0f;
 }
 
 static HRESULT d3drm_update_background_material(struct d3drm_viewport *viewport)
@@ -54,7 +54,7 @@ static HRESULT d3drm_update_background_material(struct d3drm_viewport *viewport)
 
     memset(&mat, 0, sizeof(mat));
     mat.dwSize = sizeof(mat);
-    d3drm_normalize_d3d_color(&mat.u.diffuse, color);
+    d3drm_normalize_d3d_color(&mat.diffuse, color);
 
     return IDirect3DMaterial_SetMaterial(viewport->material, &mat);
 }
@@ -434,9 +434,9 @@ static HRESULT WINAPI d3drm_viewport2_Clear(IDirect3DRMViewport2 *iface, DWORD f
 
     TRACE("iface %p, flags %#lx.\n", iface, flags);
 
-    clear_rect.u1.x1 = clear_rect.u2.y1 = 0;
-    clear_rect.u3.x2 = viewport->device->width;
-    clear_rect.u4.y2 = viewport->device->height;
+    clear_rect.x1 = clear_rect.y1 = 0;
+    clear_rect.x2 = viewport->device->width;
+    clear_rect.y2 = viewport->device->height;
 
     if (flags & D3DRMCLEAR_TARGET)
     {
