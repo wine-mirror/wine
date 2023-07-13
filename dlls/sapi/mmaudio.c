@@ -293,6 +293,7 @@ static HRESULT WINAPI objwithtoken_SetObjectToken(ISpObjectWithToken *iface, ISp
     if (This->token)
         return SPERR_ALREADY_INITIALIZED;
 
+    ISpObjectToken_AddRef(token);
     This->token = token;
     return S_OK;
 }
