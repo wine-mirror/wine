@@ -206,11 +206,23 @@ static HRESULT WINAPI test_engine_Speak(ISpTTSEngine *iface, DWORD flags, REFGUI
                                         ISpTTSEngineSite *site)
 {
     struct test_engine *engine = impl_from_ISpTTSEngine(iface);
+    char *buf;
+    int i;
+    HRESULT hr;
 
     engine->flags = flags;
     engine->fmtid = *fmtid;
     copy_frag_list(frag_list, &engine->frag_list);
     engine->speak_called = TRUE;
+
+    buf = calloc(1, 22050 * 2 / 5);
+    for (i = 0; i < 5; i++)
+    {
+        hr = ISpTTSEngineSite_Write(site, buf, 22050 * 2 / 5, NULL);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        Sleep(100);
+    }
+    free(buf);
 
     return S_OK;
 }
@@ -509,7 +521,7 @@ static void test_spvoice(void)
     ok(!wcsncmp(test_text, test_engine.frag_list->pTextStart, wcslen(test_text)),
        "got %s.\n", wine_dbgstr_w(test_engine.frag_list->pTextStart));
     ok(stream_num == 1, "got %lu.\n", stream_num);
-    ok(duration < 500, "took %lu ms.\n", duration);
+    ok(duration > 800 && duration < 3000, "took %lu ms.\n", duration);
 
     reset_engine_params(&test_engine);
     stream_num = 0xdeadbeef;

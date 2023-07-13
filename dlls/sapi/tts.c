@@ -27,6 +27,7 @@
 #include "objbase.h"
 
 #include "sapiddk.h"
+#include "sperror.h"
 
 #include "wine/debug.h"
 
@@ -1211,9 +1212,14 @@ static DWORD WINAPI ttsenginesite_GetActions(ISpTTSEngineSite *iface)
 
 static HRESULT WINAPI ttsenginesite_Write(ISpTTSEngineSite *iface, const void *buf, ULONG cb, ULONG *cb_written)
 {
-    FIXME("(%p, %p, %ld, %p): stub.\n", iface, buf, cb, cb_written);
+    struct tts_engine_site *This = impl_from_ISpTTSEngineSite(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %ld, %p).\n", iface, buf, cb, cb_written);
+
+    if (!This->voice->output)
+        return SPERR_UNINITIALIZED;
+
+    return ISpStreamFormat_Write(This->voice->output, buf, cb, cb_written);
 }
 
 static HRESULT WINAPI ttsenginesite_GetRate(ISpTTSEngineSite *iface, LONG *rate)
