@@ -29,8 +29,6 @@
 
 #include <stdio.h>
 
-#define NONAMELESSUNION
-
 #include "ieframe.h"
 
 #include "shlobj.h"
@@ -507,7 +505,7 @@ static HRESULT WINAPI PersistFile_Load(IPersistFile *pFile, LPCOLESTR pszFileNam
         PROPSPEC ps;
         PROPVARIANT pv;
         ps.ulKind = PRSPEC_PROPID;
-        ps.u.propid = PID_IS_ICONFILE;
+        ps.propid = PID_IS_ICONFILE;
         pv.vt = VT_LPWSTR;
         pv.pwszVal = iconfile;
         hr = IPropertyStorage_WriteMultiple(pPropStg, 1, &ps, &pv, 0);
@@ -523,7 +521,7 @@ static HRESULT WINAPI PersistFile_Load(IPersistFile *pFile, LPCOLESTR pszFileNam
         PROPVARIANT pv;
         iconindex = wcstol(iconindexstring, NULL, 10);
         ps.ulKind = PRSPEC_PROPID;
-        ps.u.propid = PID_IS_ICONINDEX;
+        ps.propid = PID_IS_ICONINDEX;
         pv.vt = VT_I4;
         pv.iVal = iconindex;
         hr = IPropertyStorage_WriteMultiple(pPropStg, 1, &ps, &pv, 0);
@@ -583,9 +581,9 @@ static HRESULT WINAPI PersistFile_Save(IPersistFile *pFile, LPCOLESTR pszFileNam
             PROPSPEC ps[2];
             PROPVARIANT pvread[2];
             ps[0].ulKind = PRSPEC_PROPID;
-            ps[0].u.propid = PID_IS_ICONFILE;
+            ps[0].propid = PID_IS_ICONFILE;
             ps[1].ulKind = PRSPEC_PROPID;
-            ps[1].u.propid = PID_IS_ICONINDEX;
+            ps[1].propid = PID_IS_ICONINDEX;
 
             WriteFile(file, str_header, ARRAY_SIZE(str_header) - 1, &bytesWritten, NULL);
             WriteFile(file, str_eol, ARRAY_SIZE(str_eol) - 1, &bytesWritten, NULL);
