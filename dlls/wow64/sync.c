@@ -944,7 +944,7 @@ NTSTATUS WINAPI wow64_NtQueryObject( UINT *args )
     switch (class)
     {
     case ObjectBasicInformation:   /* OBJECT_BASIC_INFORMATION */
-    case ObjectDataInformation:   /* OBJECT_DATA_INFORMATION */
+    case ObjectHandleFlagInformation:   /* OBJECT_HANDLE_FLAG_INFORMATION */
         return NtQueryObject( handle, class, ptr, len, retlen );
 
     case ObjectNameInformation:   /* OBJECT_NAME_INFORMATION */
@@ -1371,7 +1371,7 @@ NTSTATUS WINAPI wow64_NtSetInformationObject( UINT *args )
 
     switch (class)
     {
-    case ObjectDataInformation:   /* OBJECT_DATA_INFORMATION */
+    case ObjectHandleFlagInformation:   /* OBJECT_HANDLE_FLAG_INFORMATION */
         return NtSetInformationObject( handle, class, ptr, len );
 
     default:

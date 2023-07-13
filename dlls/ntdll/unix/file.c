@@ -7159,9 +7159,9 @@ NTSTATUS WINAPI NtQueryObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_clas
         break;
     }
 
-    case ObjectDataInformation:
+    case ObjectHandleFlagInformation:
     {
-        OBJECT_DATA_INFORMATION* p = ptr;
+        OBJECT_HANDLE_FLAG_INFORMATION* p = ptr;
 
         if (len < sizeof(*p)) return STATUS_INVALID_BUFFER_SIZE;
 
@@ -7173,7 +7173,7 @@ NTSTATUS WINAPI NtQueryObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_clas
             status = wine_server_call( req );
             if (status == STATUS_SUCCESS)
             {
-                p->InheritHandle = (reply->old_flags & HANDLE_FLAG_INHERIT) != 0;
+                p->Inherit = (reply->old_flags & HANDLE_FLAG_INHERIT) != 0;
                 p->ProtectFromClose = (reply->old_flags & HANDLE_FLAG_PROTECT_FROM_CLOSE) != 0;
                 if (used_len) *used_len = sizeof(*p);
             }
@@ -7203,9 +7203,9 @@ NTSTATUS WINAPI NtSetInformationObject( HANDLE handle, OBJECT_INFORMATION_CLASS 
 
     switch (info_class)
     {
-    case ObjectDataInformation:
+    case ObjectHandleFlagInformation:
     {
-        OBJECT_DATA_INFORMATION* p = ptr;
+        OBJECT_HANDLE_FLAG_INFORMATION* p = ptr;
 
         if (len < sizeof(*p)) return STATUS_INVALID_BUFFER_SIZE;
 
@@ -7213,7 +7213,7 @@ NTSTATUS WINAPI NtSetInformationObject( HANDLE handle, OBJECT_INFORMATION_CLASS 
         {
             req->handle = wine_server_obj_handle( handle );
             req->mask   = HANDLE_FLAG_INHERIT | HANDLE_FLAG_PROTECT_FROM_CLOSE;
-            if (p->InheritHandle)    req->flags |= HANDLE_FLAG_INHERIT;
+            if (p->Inherit) req->flags |= HANDLE_FLAG_INHERIT;
             if (p->ProtectFromClose) req->flags |= HANDLE_FLAG_PROTECT_FROM_CLOSE;
             status = wine_server_call( req );
         }

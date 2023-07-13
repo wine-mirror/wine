@@ -1615,6 +1615,12 @@ typedef enum _FSINFOCLASS {
     FileFsControlInformation,
     FileFsFullSizeInformation,
     FileFsObjectIdInformation,
+    FileFsDriverPathInformation,
+    FileFsVolumeFlagsInformation,
+    FileFsSectorSizeInformation,
+    FileFsDataCopyInformation,
+    FileFsMetadataSizeInformation,
+    FileFsFullSizeInformationEx,
     FileFsMaximumInformation
 } FS_INFORMATION_CLASS, *PFS_INFORMATION_CLASS;
 
@@ -1627,6 +1633,8 @@ typedef enum _KEY_INFORMATION_CLASS {
     KeyFlagsInformation,
     KeyVirtualizationInformation,
     KeyHandleTagsInformation,
+    KeyTrustInformation,
+    KeyLayerInformation,
     MaxKeyInfoClass
 } KEY_INFORMATION_CLASS;
 
@@ -1635,7 +1643,8 @@ typedef enum _KEY_VALUE_INFORMATION_CLASS {
     KeyValueFullInformation,
     KeyValuePartialInformation,
     KeyValueFullInformationAlign64,
-    KeyValuePartialInformationAlign64
+    KeyValuePartialInformationAlign64,
+    KeyValueLayerInformation,
 } KEY_VALUE_INFORMATION_CLASS;
 
 typedef enum _OBJECT_INFORMATION_CLASS {
@@ -1643,7 +1652,9 @@ typedef enum _OBJECT_INFORMATION_CLASS {
     ObjectNameInformation,
     ObjectTypeInformation,
     ObjectTypesInformation,
-    ObjectDataInformation
+    ObjectHandleFlagInformation,
+    ObjectSessionInformation,
+    ObjectSessionObjectInformation,
 } OBJECT_INFORMATION_CLASS, *POBJECT_INFORMATION_CLASS;
 
 typedef enum _PROCESSINFOCLASS {
@@ -1699,9 +1710,66 @@ typedef enum _PROCESSINFOCLASS {
     ProcessConsoleHostProcess = 49,
     ProcessWindowInformation = 50,
     ProcessHandleInformation = 51,
+    ProcessMitigationPolicy = 52,
+    ProcessDynamicFunctionTableInformation = 53,
+    ProcessHandleCheckingMode = 54,
+    ProcessKeepAliveCount = 55,
+    ProcessRevokeFileHandles = 56,
+    ProcessWorkingSetControl = 57,
     ProcessHandleTable = 58,
+    ProcessCheckStackExtentsMode = 59,
+    ProcessCommandLineInformation = 60,
+    ProcessProtectionInformation = 61,
+    ProcessMemoryExhaustion = 62,
+    ProcessFaultInformation = 63,
+    ProcessTelemetryIdInformation = 64,
+    ProcessCommitReleaseInformation = 65,
+    ProcessDefaultCpuSetsInformation = 66,
+    ProcessAllowedCpuSetsInformation = 67,
+    ProcessSubsystemProcess = 68,
+    ProcessJobMemoryInformation = 69,
+    ProcessInPrivate = 70,
+    ProcessRaiseUMExceptionOnInvalidHandleClose = 71,
+    ProcessIumChallengeResponse = 72,
+    ProcessChildProcessInformation = 73,
+    ProcessHighGraphicsPriorityInformation = 74,
+    ProcessSubsystemInformation = 75,
+    ProcessEnergyValues = 76,
     ProcessPowerThrottlingState = 77,
+    ProcessReserved3Information = 78,
+    ProcessWin32kSyscallFilterInformation = 79,
+    ProcessDisableSystemAllowedCpuSets = 80,
+    ProcessWakeInformation = 81,
+    ProcessEnergyTrackingState = 82,
+    ProcessManageWritesToExecutableMemory = 83,
+    ProcessCaptureTrustletLiveDump = 84,
+    ProcessTelemetryCoverage = 85,
+    ProcessEnclaveInformation = 86,
+    ProcessEnableReadWriteVmLogging = 87,
+    ProcessUptimeInformation = 88,
+    ProcessImageSection = 89,
+    ProcessDebugAuthInformation = 90,
+    ProcessSystemResourceManagement = 91,
+    ProcessSequenceNumber = 92,
+    ProcessLoaderDetour = 93,
+    ProcessSecurityDomainInformation = 94,
+    ProcessCombineSecurityDomainsInformation = 95,
+    ProcessEnableLogging = 96,
     ProcessLeapSecondInformation = 97,
+    ProcessFiberShadowStackAllocation = 98,
+    ProcessFreeFiberShadowStackAllocation = 99,
+    ProcessAltSystemCallInformation = 100,
+    ProcessDynamicEHContinuationTargets = 101,
+    ProcessDynamicEnforcedCetCompatibleRanges = 102,
+    ProcessCreateStateChange = 103,
+    ProcessApplyStateChange = 104,
+    ProcessEnableOptionalXStateFeatures = 105,
+    ProcessAltPrefetchParam = 106,
+    ProcessAssignCpuPartitions = 107,
+    ProcessPriorityClassEx = 108,
+    ProcessMembershipInformation = 109,
+    ProcessEffectiveIoPriority = 110,
+    ProcessEffectivePagePriority = 111,
     MaxProcessInfoClass,
 #ifdef __WINESRC__
     ProcessWineMakeProcessSystem = 1000,
@@ -1945,6 +2013,22 @@ typedef enum _SYSTEM_INFORMATION_CLASS {
     SystemDifRemovePluginVerificationOnDriver = 220,
     SystemShadowStackInformation = 221,
     SystemBuildVersionInformation = 222,
+    SystemPoolLimitInformation = 223,
+    SystemCodeIntegrityAddDynamicStore = 224,
+    SystemCodeIntegrityClearDynamicStores = 225,
+    SystemDifPoolTrackingInformation = 226,
+    SystemPoolZeroingInformation = 227,
+    SystemDpcWatchdogInformation = 228,
+    SystemDpcWatchdogInformation2 = 229,
+    SystemSupportedProcessorArchitectures2 = 230,
+    SystemSingleProcessorRelationshipInformation = 231,
+    SystemXfgCheckFailureInformation = 232,
+    SystemIommuStateInformation = 233,
+    SystemHypervisorMinrootInformation = 234,
+    SystemHypervisorBootPagesInformation = 235,
+    SystemPointerAuthInformation = 236,
+    SystemSecureKernelDebuggerInformation = 237,
+    SystemOriginalImageFeatureInformation = 238,
 #ifdef __WINESRC__
     SystemWineVersionInformation = 1000,
 #endif
@@ -2023,6 +2107,11 @@ typedef enum _THREADINFOCLASS {
     ThreadManageWritesToExecutableMemory,
     ThreadPowerThrottlingState,
     ThreadWorkloadClass,
+    ThreadCreateStateChange,
+    ThreadApplyStateChange,
+    ThreadStrongerBadHandleChecks,
+    ThreadEffectiveIoPriority,
+    ThreadEffectivePagePriority,
     MaxThreadInfoClass,
 #ifdef __WINESRC__
     ThreadWineNativeThreadName = 1000,
@@ -2074,6 +2163,8 @@ typedef enum _MEMORY_INFORMATION_CLASS {
     MemoryEnclaveImageInformation,
     MemoryBasicInformationCapped,
     MemoryPhysicalContiguityInformation,
+    MemoryBadInformation,
+    MemoryBadInformationAllProcesses,
 #ifdef __WINESRC__
     MemoryWineUnixFuncs = 1000,
     MemoryWineUnixWow64Funcs,
@@ -2170,7 +2261,12 @@ typedef enum
 {
     VmPrefetchInformation,
     VmPagePriorityInformation,
-    VmCfgCallTargetInformation
+    VmCfgCallTargetInformation,
+    VmPageDirtyStateInformation,
+    VmImageHotPatchInformation,
+    VmPhysicalContiguityInformation,
+    VmVirtualMachinePrepopulateInformation,
+    VmRemoveFromWorkingSetInformation,
 } VIRTUAL_MEMORY_INFORMATION_CLASS, *PVIRTUAL_MEMORY_INFORMATION_CLASS;
 
 typedef struct _MEMORY_RANGE_ENTRY
@@ -2331,10 +2427,10 @@ typedef struct _OBJECT_ATTRIBUTES {
 } OBJECT_ATTRIBUTES, *POBJECT_ATTRIBUTES;
 #endif
 
-typedef struct _OBJECT_DATA_INFORMATION {
-    BOOLEAN InheritHandle;
+typedef struct _OBJECT_HANDLE_FLAG_INFORMATION {
+    BOOLEAN Inherit;
     BOOLEAN ProtectFromClose;
-} OBJECT_DATA_INFORMATION, *POBJECT_DATA_INFORMATION;
+} OBJECT_HANDLE_FLAG_INFORMATION, *POBJECT_HANDLE_FLAG_INFORMATION;
 
 typedef struct _OBJECT_BASIC_INFORMATION {
     ULONG  Attributes;

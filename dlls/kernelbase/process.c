@@ -805,15 +805,15 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetExitCodeProcess( HANDLE process, LPDWORD exit_c
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetHandleInformation( HANDLE handle, DWORD *flags )
 {
-    OBJECT_DATA_INFORMATION info;
+    OBJECT_HANDLE_FLAG_INFORMATION info;
 
-    if (!set_ntstatus( NtQueryObject( handle, ObjectDataInformation, &info, sizeof(info), NULL )))
+    if (!set_ntstatus( NtQueryObject( handle, ObjectHandleFlagInformation, &info, sizeof(info), NULL )))
         return FALSE;
 
     if (flags)
     {
         *flags = 0;
-        if (info.InheritHandle) *flags |= HANDLE_FLAG_INHERIT;
+        if (info.Inherit) *flags |= HANDLE_FLAG_INHERIT;
         if (info.ProtectFromClose) *flags |= HANDLE_FLAG_PROTECT_FROM_CLOSE;
     }
     return TRUE;
@@ -1123,21 +1123,21 @@ UINT WINAPI DECLSPEC_HOTPATCH SetHandleCount( UINT count )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH SetHandleInformation( HANDLE handle, DWORD mask, DWORD flags )
 {
-    OBJECT_DATA_INFORMATION info;
+    OBJECT_HANDLE_FLAG_INFORMATION info;
 
     /* if not setting both fields, retrieve current value first */
     if ((mask & (HANDLE_FLAG_INHERIT | HANDLE_FLAG_PROTECT_FROM_CLOSE)) !=
         (HANDLE_FLAG_INHERIT | HANDLE_FLAG_PROTECT_FROM_CLOSE))
     {
-        if (!set_ntstatus( NtQueryObject( handle, ObjectDataInformation, &info, sizeof(info), NULL )))
+        if (!set_ntstatus( NtQueryObject( handle, ObjectHandleFlagInformation, &info, sizeof(info), NULL )))
             return FALSE;
     }
     if (mask & HANDLE_FLAG_INHERIT)
-        info.InheritHandle = (flags & HANDLE_FLAG_INHERIT) != 0;
+        info.Inherit = (flags & HANDLE_FLAG_INHERIT) != 0;
     if (mask & HANDLE_FLAG_PROTECT_FROM_CLOSE)
         info.ProtectFromClose = (flags & HANDLE_FLAG_PROTECT_FROM_CLOSE) != 0;
 
-    return set_ntstatus( NtSetInformationObject( handle, ObjectDataInformation, &info, sizeof(info) ));
+    return set_ntstatus( NtSetInformationObject( handle, ObjectHandleFlagInformation, &info, sizeof(info) ));
 }
 
 
