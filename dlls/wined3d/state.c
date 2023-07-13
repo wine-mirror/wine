@@ -3680,7 +3680,7 @@ void clipplane(struct wined3d_context *context, const struct wined3d_state *stat
     UINT index = state_id - STATE_CLIPPLANE(0);
     GLdouble plane[4];
 
-    if (isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_VIEW)) || index >= gl_info->limits.user_clip_distances)
+    if (index >= gl_info->limits.user_clip_distances)
         return;
 
     gl_info->gl_ops.gl.p_glMatrixMode(GL_MODELVIEW);
