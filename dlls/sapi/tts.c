@@ -45,6 +45,7 @@ struct speech_voice
     ISpStreamFormat *output;
     ISpTTSEngine *engine;
     LONG cur_stream_num;
+    DWORD actions;
     USHORT volume;
     LONG rate;
     struct async_queue queue;
@@ -777,6 +778,13 @@ static void speak_proc(struct async_task *task)
 
     EnterCriticalSection(&This->cs);
 
+    if (This->actions & SPVES_ABORT)
+    {
+        LeaveCriticalSection(&This->cs);
+        hr = S_OK;
+        goto done;
+    }
+
     if (FAILED(hr = set_output_format(This->output, This->engine, &fmtid, &wfx)))
     {
         LeaveCriticalSection(&This->cs);
@@ -788,6 +796,8 @@ static void speak_proc(struct async_task *task)
 
     if (SUCCEEDED(ISpStreamFormat_QueryInterface(This->output, &IID_ISpAudio, (void **)&audio)))
         ISpAudio_SetState(audio, SPAS_RUN, 0);
+
+    This->actions = SPVES_RATE | SPVES_VOLUME;
 
     LeaveCriticalSection(&This->cs);
 
@@ -847,6 +857,7 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
 
         EnterCriticalSection(&This->cs);
 
+        This->actions = SPVES_ABORT;
         if (This->output && SUCCEEDED(ISpStreamFormat_QueryInterface(This->output, &IID_ISpAudio, (void **)&audio)))
         {
             ISpAudio_SetState(audio, SPAS_CLOSED, 0);
@@ -856,6 +867,10 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
         LeaveCriticalSection(&This->cs);
 
         async_empty_queue(&This->queue);
+
+        EnterCriticalSection(&This->cs);
+        This->actions = SPVES_CONTINUE;
+        LeaveCriticalSection(&This->cs);
 
         if (!contents || !*contents)
             return S_OK;
@@ -1007,6 +1022,7 @@ static HRESULT WINAPI spvoice_SetRate(ISpVoice *iface, LONG rate)
 
     EnterCriticalSection(&This->cs);
     This->rate = rate;
+    This->actions |= SPVES_RATE;
     LeaveCriticalSection(&This->cs);
 
     return S_OK;
@@ -1036,6 +1052,7 @@ static HRESULT WINAPI spvoice_SetVolume(ISpVoice *iface, USHORT volume)
 
     EnterCriticalSection(&This->cs);
     This->volume = volume;
+    This->actions |= SPVES_VOLUME;
     LeaveCriticalSection(&This->cs);
 
     return S_OK;
@@ -1205,9 +1222,16 @@ static HRESULT WINAPI ttsenginesite_GetEventInterest(ISpTTSEngineSite *iface, UL
 
 static DWORD WINAPI ttsenginesite_GetActions(ISpTTSEngineSite *iface)
 {
-    FIXME("(%p): stub.\n", iface);
+    struct tts_engine_site *This = impl_from_ISpTTSEngineSite(iface);
+    DWORD actions;
 
-    return SPVES_CONTINUE;
+    TRACE("(%p).\n", iface);
+
+    EnterCriticalSection(&This->voice->cs);
+    actions = This->voice->actions;
+    LeaveCriticalSection(&This->voice->cs);
+
+    return actions;
 }
 
 static HRESULT WINAPI ttsenginesite_Write(ISpTTSEngineSite *iface, const void *buf, ULONG cb, ULONG *cb_written)
@@ -1224,16 +1248,30 @@ static HRESULT WINAPI ttsenginesite_Write(ISpTTSEngineSite *iface, const void *b
 
 static HRESULT WINAPI ttsenginesite_GetRate(ISpTTSEngineSite *iface, LONG *rate)
 {
-    FIXME("(%p, %p): stub.\n", iface, rate);
+    struct tts_engine_site *This = impl_from_ISpTTSEngineSite(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p).\n", iface, rate);
+
+    EnterCriticalSection(&This->voice->cs);
+    *rate = This->voice->rate;
+    This->voice->actions &= ~SPVES_RATE;
+    LeaveCriticalSection(&This->voice->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ttsenginesite_GetVolume(ISpTTSEngineSite *iface, USHORT *volume)
 {
-    FIXME("(%p, %p): stub.\n", iface, volume);
+    struct tts_engine_site *This = impl_from_ISpTTSEngineSite(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p).\n", iface, volume);
+
+    EnterCriticalSection(&This->voice->cs);
+    *volume = This->voice->volume;
+    This->voice->actions &= ~SPVES_VOLUME;
+    LeaveCriticalSection(&This->voice->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ttsenginesite_GetSkipInfo(ISpTTSEngineSite *iface, SPVSKIPTYPE *type, LONG *skip_count)
@@ -1351,6 +1389,7 @@ HRESULT speech_voice_create(IUnknown *outer, REFIID iid, void **obj)
     This->output = NULL;
     This->engine = NULL;
     This->cur_stream_num = 0;
+    This->actions = SPVES_CONTINUE;
     This->volume = 100;
     This->rate = 0;
     memset(&This->queue, 0, sizeof(This->queue));

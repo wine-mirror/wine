@@ -112,6 +112,8 @@ struct test_engine
     DWORD flags;
     GUID fmtid;
     SPVTEXTFRAG *frag_list;
+    LONG rate;
+    USHORT volume;
 };
 
 static void copy_frag_list(const SPVTEXTFRAG *frag_list, SPVTEXTFRAG **ret_frag_list)
@@ -154,6 +156,8 @@ static void reset_engine_params(struct test_engine *engine)
     engine->speak_called = FALSE;
     engine->flags = 0xdeadbeef;
     memset(&engine->fmtid, 0xde, sizeof(engine->fmtid));
+    engine->rate = 0xdeadbeef;
+    engine->volume = 0xbeef;
 
     for (frag = engine->frag_list; frag; frag = next)
     {
@@ -206,6 +210,7 @@ static HRESULT WINAPI test_engine_Speak(ISpTTSEngine *iface, DWORD flags, REFGUI
                                         ISpTTSEngineSite *site)
 {
     struct test_engine *engine = impl_from_ISpTTSEngine(iface);
+    DWORD actions;
     char *buf;
     int i;
     HRESULT hr;
@@ -215,11 +220,26 @@ static HRESULT WINAPI test_engine_Speak(ISpTTSEngine *iface, DWORD flags, REFGUI
     copy_frag_list(frag_list, &engine->frag_list);
     engine->speak_called = TRUE;
 
+    actions = ISpTTSEngineSite_GetActions(site);
+    ok(actions == (SPVES_CONTINUE | SPVES_RATE | SPVES_VOLUME), "got %#lx.\n", actions);
+
+    hr = ISpTTSEngineSite_GetRate(site, &engine->rate);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    actions = ISpTTSEngineSite_GetActions(site);
+    ok(actions == (SPVES_CONTINUE | SPVES_VOLUME), "got %#lx.\n", actions);
+
+    hr = ISpTTSEngineSite_GetVolume(site, &engine->volume);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    actions = ISpTTSEngineSite_GetActions(site);
+    ok(actions == SPVES_CONTINUE, "got %#lx.\n", actions);
+
     buf = calloc(1, 22050 * 2 / 5);
     for (i = 0; i < 5; i++)
     {
+        if (ISpTTSEngineSite_GetActions(site) & SPVES_ABORT)
+            break;
         hr = ISpTTSEngineSite_Write(site, buf, 22050 * 2 / 5, NULL);
-        ok(hr == S_OK, "got %#lx.\n", hr);
+        ok(hr == S_OK || hr == SP_AUDIO_STOPPED, "got %#lx.\n", hr);
         Sleep(100);
     }
     free(buf);
@@ -507,7 +527,10 @@ static void test_spvoice(void)
     ok(hr == S_OK, "got %#lx.\n", hr);
     ok(stream_num == 0xdeadbeef, "got %lu.\n", stream_num);
 
-    test_engine.speak_called = FALSE;
+    ISpVoice_SetRate(voice, 0);
+    ISpVoice_SetVolume(voice, 100);
+
+    reset_engine_params(&test_engine);
     stream_num = 0xdeadbeef;
     start = GetTickCount();
     hr = ISpVoice_Speak(voice, test_text, SPF_DEFAULT, &stream_num);
@@ -520,6 +543,8 @@ static void test_spvoice(void)
     ok(test_engine.frag_list->ulTextLen == wcslen(test_text), "got %lu.\n", test_engine.frag_list->ulTextLen);
     ok(!wcsncmp(test_text, test_engine.frag_list->pTextStart, wcslen(test_text)),
        "got %s.\n", wine_dbgstr_w(test_engine.frag_list->pTextStart));
+    ok(test_engine.rate == 0, "got %ld.\n", test_engine.rate);
+    ok(test_engine.volume == 100, "got %d.\n", test_engine.volume);
     ok(stream_num == 1, "got %lu.\n", stream_num);
     ok(duration > 800 && duration < 3000, "took %lu ms.\n", duration);
 
@@ -540,6 +565,21 @@ static void test_spvoice(void)
     ok(test_engine.frag_list->ulTextLen == wcslen(test_text), "got %lu.\n", test_engine.frag_list->ulTextLen);
     ok(!wcsncmp(test_text, test_engine.frag_list->pTextStart, wcslen(test_text)),
        "got %s.\n", wine_dbgstr_w(test_engine.frag_list->pTextStart));
+    ok(test_engine.rate == 0, "got %ld.\n", test_engine.rate);
+    ok(test_engine.volume == 100, "got %d.\n", test_engine.volume);
+
+    Sleep(2000);
+
+    reset_engine_params(&test_engine);
+    hr = ISpVoice_Speak(voice, test_text, SPF_DEFAULT | SPF_ASYNC, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    Sleep(200);
+    start = GetTickCount();
+    hr = ISpVoice_Speak(voice, NULL, SPF_PURGEBEFORESPEAK, NULL);
+    duration = GetTickCount() - start;
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(duration < 300, "took %lu ms.\n", duration);
 
 done:
     reset_engine_params(&test_engine);
