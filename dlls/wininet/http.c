@@ -1274,7 +1274,7 @@ BOOL WINAPI HttpAddRequestHeadersW(HINTERNET hHttpRequest,
 
     TRACE("%p, %s, %lu, %08lx\n", hHttpRequest, debugstr_wn(lpszHeader, dwHeaderLength), dwHeaderLength, dwModifier);
 
-    if (!lpszHeader) 
+    if (!lpszHeader)
       return TRUE;
 
     request = (http_request_t*) get_handle_object( hHttpRequest );
@@ -4063,13 +4063,13 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 		info_mod &= ~ modifier_flags[i].val;
 	    }
 	}
-	
+
 	if (info_mod) {
 	    TRACE(" Unknown (%08lx)", info_mod);
 	}
 	TRACE("\n");
     }
-    
+
     request = (http_request_t*) get_handle_object( hHttpRequest );
     if (NULL == request ||  request->hdr.htype != WH_HHTTPREQ)
     {
@@ -5043,8 +5043,13 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
     }
 
     /* add the headers the caller supplied */
-    if( lpszHeaders && dwHeaderLength )
+    if (lpszHeaders)
+    {
+        if (dwHeaderLength == 0)
+            dwHeaderLength = lstrlenW(lpszHeaders);
+
         HTTP_HttpAddRequestHeadersW(request, lpszHeaders, dwHeaderLength, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
+    }
 
     do
     {
@@ -5551,6 +5556,12 @@ BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
         BuffersInW.dwStructSize = sizeof(LPINTERNET_BUFFERSW);
         if (lpBuffersIn->lpcszHeader)
         {
+            if (lpBuffersIn->dwHeadersLength == 0 && *lpBuffersIn->lpcszHeader != '\0')
+            {
+                SetLastError(ERROR_INVALID_PARAMETER);
+                return FALSE;
+            }
+
             headerlen = MultiByteToWideChar(CP_ACP,0,lpBuffersIn->lpcszHeader,
                     lpBuffersIn->dwHeadersLength,0,0);
             header = malloc(headerlen * sizeof(WCHAR));
@@ -5773,6 +5784,12 @@ BOOL WINAPI HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
     DWORD nLen=dwHeaderLength;
     if(lpszHeaders!=NULL)
     {
+        if (dwHeaderLength == 0 && *lpszHeaders != '\0')
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
         nLen=MultiByteToWideChar(CP_ACP,0,lpszHeaders,dwHeaderLength,NULL,0);
         szHeaders = malloc(nLen * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP,0,lpszHeaders,dwHeaderLength,szHeaders,nLen);

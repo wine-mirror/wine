@@ -6574,6 +6574,57 @@ static void test_large_content(int port)
     close_connection();
 }
 
+static void test_header_length(int port)
+{
+    test_request_t req;
+    BOOL ret;
+    char buf[1000];
+    char header[] = "Test-Header: winetest";
+    WCHAR wheader[] = L"Test-Header: winetest";
+    INTERNET_BUFFERSA buffer_in;
+    INTERNET_BUFFERSW wbuffer_in;
+
+    open_simple_request(&req, "localhost", port, "GET", "/echo_request");
+
+    ret = HttpSendRequestA(req.request, header, 0, NULL, 0);
+    ok(ret == FALSE, "HttpSendRequestA should have failed\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER\n");
+
+    ret = HttpSendRequestW(req.request, wheader, 0, NULL, 0);
+    ok(ret, "HttpSendRequestW failed: %lu\n", GetLastError());
+    test_status_code(req.request, 200);
+
+    receive_simple_request(req.request, buf, sizeof(buf));
+    ok(strstr(buf, header) != NULL, "custom header was not sent: %s\n", buf);
+
+    close_request(&req);
+
+    open_simple_request(&req, "localhost", port, "GET", "/echo_request");
+
+    ZeroMemory(&buffer_in, sizeof(buffer_in));
+    buffer_in.dwStructSize = sizeof(buffer_in);
+    buffer_in.lpcszHeader = header;
+    ret = HttpSendRequestExA(req.request, &buffer_in, NULL, 0, 0);
+    ok(ret == FALSE, "HttpSendRequestExA should have failed\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER\n");
+
+    ZeroMemory(&wbuffer_in, sizeof(wbuffer_in));
+    wbuffer_in.dwStructSize = sizeof(wbuffer_in);
+    wbuffer_in.lpcszHeader = wheader;
+    ret = HttpSendRequestExW(req.request, &wbuffer_in, NULL, 0, 0);
+    ok(ret, "HttpSendRequestExW failed: %lu\n", GetLastError());
+
+    ret = HttpEndRequestW(req.request, NULL, 0, 0);
+    ok(ret, "HttpEndRequestW failed: %lu\n", GetLastError());
+
+    test_status_code(req.request, 200);
+
+    receive_simple_request(req.request, buf, sizeof(buf));
+    ok(strstr(buf, header) != NULL, "custom header was not sent: %s\n", buf);
+
+    close_request(&req);
+}
+
 static void test_http_connection(void)
 {
     struct server_info si;
@@ -6640,6 +6691,7 @@ static void test_http_connection(void)
     test_persistent_connection(si.port);
     test_remove_dot_segments(si.port);
     test_large_content(si.port);
+    test_header_length(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "GET", "/quit");
