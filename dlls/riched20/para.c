@@ -148,7 +148,7 @@ ME_Row *para_end_row( ME_Paragraph *para )
     return &item->member.row;
 }
 
-void ME_MakeFirstParagraph(ME_TextEditor *editor)
+void ME_MakeFirstParagraph(ME_TextEditor *editor, HDC hdc)
 {
   ME_Context c;
   CHARFORMAT2W cf;
@@ -160,7 +160,6 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   ME_Run *run;
   ME_Style *style;
   int eol_len;
-  HDC hdc = ITextHost_TxGetDC( editor->texthost );
 
   ME_InitContext( &c, editor, hdc );
 
@@ -223,7 +222,6 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   para_mark_add( editor, para );
   ME_DestroyContext(&c);
   wrap_marked_paras_dc( editor, hdc, FALSE );
-  ITextHost_TxReleaseDC( editor->texthost, hdc );
 }
 
 static void para_mark_rewrap_paras( ME_TextEditor *editor, ME_Paragraph *first, const ME_Paragraph *end )

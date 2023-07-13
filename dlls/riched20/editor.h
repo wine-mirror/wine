@@ -209,7 +209,7 @@ void editor_get_selection_para_fmt( ME_TextEditor *editor, PARAFORMAT2 *fmt );
 void editor_mark_rewrap_all( ME_TextEditor *editor );
 void editor_set_default_para_fmt(ME_TextEditor *editor, PARAFORMAT2 *pFmt);
 BOOL editor_set_selection_para_fmt( ME_TextEditor *editor, const PARAFORMAT2 *fmt );
-void ME_MakeFirstParagraph(ME_TextEditor *editor);
+void ME_MakeFirstParagraph(ME_TextEditor *editor, HDC hdc);
 void ME_DumpParaStyle(ME_Paragraph *s);
 void ME_DumpParaStyleToBuf(const PARAFORMAT2 *pFmt, char buf[2048]);
 int get_total_width(ME_TextEditor *editor);

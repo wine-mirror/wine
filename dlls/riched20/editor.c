@@ -2931,6 +2931,7 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   int i;
   LONG selbarwidth;
   HRESULT hr;
+  HDC hdc;
 
   ed->sizeWindow.cx = ed->sizeWindow.cy = 0;
   if (ITextHost_QueryInterface( texthost, &IID_ITextHost2, (void **)&ed->texthost ) == S_OK)
@@ -2957,7 +2958,10 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->nZoomNumerator = ed->nZoomDenominator = 0;
   ed->nAvailWidth = 0; /* wrap to client area */
   list_init( &ed->style_list );
-  ME_MakeFirstParagraph(ed);
+
+  hdc = ITextHost_TxGetDC( ed->texthost );
+  ME_MakeFirstParagraph( ed, hdc );
+  ITextHost_TxReleaseDC( ed->texthost, hdc );
   /* The four cursors are for:
    * 0 - The position where the caret is shown
    * 1 - The anchored end of the selection (for normal selection)
