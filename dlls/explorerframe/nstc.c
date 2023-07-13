@@ -21,8 +21,6 @@
 #include <stdarg.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
@@ -333,7 +331,7 @@ static HTREEITEM insert_shellitem(NSTC2Impl *This, IShellItem *psi,
                                   HTREEITEM hParent, HTREEITEM hInsertAfter)
 {
     TVINSERTSTRUCTW tvins;
-    TVITEMEXW *tvi = &tvins.u.itemex;
+    TVITEMEXW *tvi = &tvins.itemex;
     HTREEITEM hinserted;
     TRACE("%p (%p, %p)\n", psi, hParent, hInsertAfter);
 
