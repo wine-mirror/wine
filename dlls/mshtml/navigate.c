@@ -19,8 +19,6 @@
 #include <stdarg.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -386,7 +384,7 @@ static HRESULT WINAPI BindStatusCallback_GetBindInfo(IBindStatusCallback *iface,
         pbindinfo->dwBindVerb = BINDVERB_POST;
 
         pbindinfo->stgmedData.tymed = TYMED_HGLOBAL;
-        pbindinfo->stgmedData.u.hGlobal = This->request_data.post_data;
+        pbindinfo->stgmedData.hGlobal = This->request_data.post_data;
         pbindinfo->stgmedData.pUnkForRelease = (IUnknown*)&This->IBindStatusCallback_iface;
         IBindStatusCallback_AddRef(&This->IBindStatusCallback_iface);
     }
@@ -401,7 +399,7 @@ static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *if
 
     TRACE("(%p)->(%08lx %ld %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
 
-    return This->vtbl->read_data(This, pstgmed->u.pstm);
+    return This->vtbl->read_data(This, pstgmed->pstm);
 }
 
 static HRESULT WINAPI BindStatusCallback_OnObjectAvailable(IBindStatusCallback *iface,

@@ -19,8 +19,6 @@
 #include <stdarg.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -362,11 +360,11 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
 
         for(i=0; i < info->argc; i++) {
             TYPEDESC *tdesc = &desc->lprgelemdescParam[i].tdesc;
-            if(tdesc->vt == VT_PTR && tdesc->u.lptdesc->vt == VT_USERDEFINED) {
+            if(tdesc->vt == VT_PTR && tdesc->lptdesc->vt == VT_USERDEFINED) {
                 ITypeInfo *ref_type_info;
                 TYPEATTR *attr;
 
-                hres = ITypeInfo_GetRefTypeInfo(dti, tdesc->u.lptdesc->u.hreftype, &ref_type_info);
+                hres = ITypeInfo_GetRefTypeInfo(dti, tdesc->lptdesc->hreftype, &ref_type_info);
                 if(FAILED(hres)) {
                     ERR("Could not get referenced type info: %08lx\n", hres);
                     return;
@@ -389,9 +387,9 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
                 return; /* Fallback to ITypeInfo for unsupported arg types */
             }
 
-            if(desc->lprgelemdescParam[i].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT) {
+            if(desc->lprgelemdescParam[i].paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT) {
                 hres = VariantCopy(&info->arg_info[i].default_value,
-                                   &desc->lprgelemdescParam[i].u.paramdesc.pparamdescex->varDefaultValue);
+                                   &desc->lprgelemdescParam[i].paramdesc.pparamdescex->varDefaultValue);
                 if(FAILED(hres)) {
                     ERR("Could not copy default value: %08lx\n", hres);
                     return;
