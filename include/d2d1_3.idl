@@ -19,6 +19,8 @@
 import "d2d1_2.idl";
 import "d2d1effects_2.idl";
 
+interface IDWriteFontFace;
+
 typedef enum D2D1_INK_NIB_SHAPE
 {
     D2D1_INK_NIB_SHAPE_ROUND = 0x0,
@@ -75,6 +77,13 @@ typedef enum D2D1_SPRITE_OPTIONS
     D2D1_SPRITE_OPTIONS_CLAMP_TO_SOURCE_RECTANGLE = 0x1,
     D2D1_SPRITE_OPTIONS_FORCE_DWORD = 0xffffffff
 } D2D1_SPRITE_OPTIONS;
+
+typedef enum D2D1_COLOR_BITMAP_GLYPH_SNAP_OPTION
+{
+    D2D1_COLOR_BITMAP_GLYPH_SNAP_OPTION_DEFAULT = 0x0,
+    D2D1_COLOR_BITMAP_GLYPH_SNAP_OPTION_DISABLE = 0x1,
+    D2D1_COLOR_BITMAP_GLYPH_SNAP_OPTION_FORCE_DWORD = 0xffffffff
+} D2D1_COLOR_BITMAP_GLYPH_SNAP_OPTION;
 
 typedef struct D2D1_INK_POINT
 {
@@ -421,6 +430,78 @@ interface ID2D1DeviceContext3 : ID2D1DeviceContext2
         [in] ID2D1Bitmap *bitmap,
         [in] D2D1_BITMAP_INTERPOLATION_MODE interpolation_mode,
         [in] D2D1_SPRITE_OPTIONS sprite_options
+    );
+}
+
+[
+    object,
+    uuid(8c427831-3d90-4476-b647-c4fae349e4db),
+    local,
+]
+interface ID2D1DeviceContext4 : ID2D1DeviceContext3
+{
+    HRESULT CreateSvgGlyphStyle(
+        [out] ID2D1SvgGlyphStyle **svg_glyph_style
+    );
+    void DrawText(
+        [in] const WCHAR *string,
+        [in] UINT32 string_length,
+        [in] IDWriteTextFormat *text_format,
+        [in] const D2D1_RECT_F *layout_rect,
+        [in, optional] ID2D1Brush *default_fill_brush,
+        [in, optional] ID2D1SvgGlyphStyle *svg_glyph_style,
+        [in, optional] UINT32 color_palette_index,
+        [in] D2D1_DRAW_TEXT_OPTIONS options,
+        [in] DWRITE_MEASURING_MODE measuring_mode
+    );
+    void DrawTextLayout(
+        [in] D2D1_POINT_2F origin,
+        [in] IDWriteTextLayout *text_layout,
+        [in, optional] ID2D1Brush *default_fill_brush,
+        [in, optional] ID2D1SvgGlyphStyle *svg_glyph_style,
+        [in, optional] UINT32 color_palette_index,
+        [in] D2D1_DRAW_TEXT_OPTIONS options
+    );
+    void DrawColorBitmapGlyphRun(
+        [in] DWRITE_GLYPH_IMAGE_FORMATS glyph_image_format,
+        [in] D2D1_POINT_2F baseline_origin,
+        [in] const DWRITE_GLYPH_RUN *glyph_run,
+        [in] DWRITE_MEASURING_MODE measuring_mode,
+        [in] D2D1_COLOR_BITMAP_GLYPH_SNAP_OPTION bitmap_snap_option
+    );
+    void DrawSvgGlyphRun(
+        [in] D2D1_POINT_2F baseline_origin,
+        [in] const DWRITE_GLYPH_RUN *glyph_run,
+        [in, optional] ID2D1Brush *default_fill_brush,
+        [in, optional] ID2D1SvgGlyphStyle *svg_glyph_style,
+        [in, optional]UINT32 color_palette_index,
+        [in] DWRITE_MEASURING_MODE measuring_mode
+    );
+    HRESULT GetColorBitmapGlyphImage(
+        [in] DWRITE_GLYPH_IMAGE_FORMATS glyph_image_format,
+        [in] D2D1_POINT_2F glyph_origin,
+        [in] IDWriteFontFace *font_face,
+        [in] FLOAT font_em_size,
+        [in] UINT16 glyph_index,
+        [in] BOOL is_sideways,
+        [in, optional] const D2D1_MATRIX_3X2_F *world_transform,
+        [in] FLOAT dpi_x,
+        [in] FLOAT dpi_y,
+        [out] D2D1_MATRIX_3X2_F *glyph_transform,
+        [out] ID2D1Image **glyph_image
+    );
+    HRESULT GetSvgGlyphImage(
+        [in] D2D1_POINT_2F glyph_origin,
+        [in] IDWriteFontFace *font_face,
+        [in] FLOAT font_em_size,
+        [in] UINT16 glyph_index,
+        [in] BOOL is_sideways,
+        [in, optional] const D2D1_MATRIX_3X2_F *world_transform,
+        [in, optional] ID2D1Brush *default_fill_brush,
+        [in, optional] ID2D1SvgGlyphStyle *svg_glyph_style,
+        [in] UINT32 color_palette_index,
+        [out] D2D1_MATRIX_3X2_F *glyph_transform,
+        [out] ID2D1CommandList **glyph_image
     );
 }
 
