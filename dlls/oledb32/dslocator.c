@@ -20,8 +20,6 @@
 #include <string.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
@@ -636,22 +634,22 @@ static HRESULT WINAPI dslocator_PromptNew(IDataSourceLocator *iface, IDispatch *
 
     pages[0].dwSize = sizeof(PROPSHEETPAGEW);
     pages[0].hInstance = instance;
-    pages[0].u.pszTemplate = MAKEINTRESOURCEW(IDD_PROVIDER);
+    pages[0].pszTemplate = MAKEINTRESOURCEW(IDD_PROVIDER);
     pages[0].pfnDlgProc = data_link_properties_dlg_proc;
 
     pages[1].dwSize = sizeof(PROPSHEETPAGEW);
     pages[1].hInstance = instance;
-    pages[1].u.pszTemplate = MAKEINTRESOURCEW(IDD_CONNECTION);
+    pages[1].pszTemplate = MAKEINTRESOURCEW(IDD_CONNECTION);
     pages[1].pfnDlgProc = data_link_connection_dlg_proc;
 
     pages[2].dwSize = sizeof(PROPSHEETPAGEW);
     pages[2].hInstance = instance;
-    pages[2].u.pszTemplate = MAKEINTRESOURCEW(IDD_ADVANCED);
+    pages[2].pszTemplate = MAKEINTRESOURCEW(IDD_ADVANCED);
     pages[2].pfnDlgProc = data_link_advanced_dlg_proc;
 
     pages[3].dwSize = sizeof(pages[0]);
     pages[3].hInstance = instance;
-    pages[3].u.pszTemplate = MAKEINTRESOURCEW(IDD_ALL);
+    pages[3].pszTemplate = MAKEINTRESOURCEW(IDD_ALL);
     pages[3].pfnDlgProc = data_link_all_dlg_proc;
 
     memset(&hdr, 0, sizeof(hdr));
@@ -660,7 +658,7 @@ static HRESULT WINAPI dslocator_PromptNew(IDataSourceLocator *iface, IDispatch *
     hdr.dwFlags = PSH_NOAPPLYNOW | PSH_PROPSHEETPAGE;
     hdr.hInstance = instance;
     hdr.pszCaption = MAKEINTRESOURCEW(IDS_PROPSHEET_TITLE);
-    hdr.u3.ppsp = pages;
+    hdr.ppsp = pages;
     hdr.nPages = ARRAY_SIZE(pages);
     ret = PropertySheetW(&hdr);
 
