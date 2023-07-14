@@ -20,9 +20,6 @@
 
 #include <stdarg.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -155,9 +152,9 @@ static void socket_init(struct wsk_socket_internal *socket)
 
 static void dispatch_irp(IRP *irp, NTSTATUS status)
 {
-    irp->IoStatus.u.Status = status;
+    irp->IoStatus.Status = status;
     --irp->CurrentLocation;
-    --irp->Tail.Overlay.s.u2.CurrentStackLocation;
+    --irp->Tail.Overlay.CurrentStackLocation;
     IoCompleteRequest(irp, IO_NO_INCREMENT);
 }
 
