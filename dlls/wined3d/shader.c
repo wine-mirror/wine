@@ -2858,7 +2858,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
             /* Treat unbound textures as 2D. The dummy texture will provide
              * the proper sample value. The tex_types bitmap defaults to
              * 2D because of the memset. */
-            if (!(texture = state->textures[i]))
+            if (!(texture = wined3d_state_get_ffp_texture(state, i)))
                 continue;
 
             switch (wined3d_texture_gl(texture)->target)
@@ -2900,7 +2900,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
                     break;
             }
 
-            if ((texture = state->textures[i]))
+            if ((texture = wined3d_state_get_ffp_texture(state, i)))
             {
                 /* Star Wars: The Old Republic uses mismatched samplers for rendering water. */
                 if (texture->resource.type == WINED3D_RTYPE_TEXTURE_2D
@@ -2930,8 +2930,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
             if (!shader->reg_maps.resource_info[i].type)
                 continue;
 
-            texture = state->textures[i];
-            if (!texture)
+            if (!(texture = wined3d_state_get_ffp_texture(state, i)))
             {
                 args->color_fixup[i] = COLOR_FIXUP_IDENTITY;
                 continue;

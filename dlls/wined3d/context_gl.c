@@ -4906,7 +4906,7 @@ static void draw_primitive_immediate_mode(struct wined3d_context_gl *context_gl,
             continue;
         }
 
-        if (!ps && !state->textures[texture_idx])
+        if (!ps && !wined3d_state_get_ffp_texture(state, texture_idx))
             continue;
 
         texture_unit = context_gl->tex_unit_map[texture_idx];

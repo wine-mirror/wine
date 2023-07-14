@@ -808,6 +808,7 @@ static void blend_dbb(struct wined3d_context *context, const struct wined3d_stat
 
 void state_alpha_test(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
+    const struct wined3d_texture *texture = wined3d_state_get_ffp_texture(state, 0);
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
     int glParm = 0;
     float ref;
@@ -822,7 +823,7 @@ void state_alpha_test(struct wined3d_context *context, const struct wined3d_stat
      * WINED3D_RS_COLORKEYENABLE state(which is d3d <= 3 only). The texture
      * function will call alpha in case it finds some texture + colorkeyenable
      * combination which needs extra care. */
-    if (state->textures[0] && (state->textures[0]->async.color_key_flags & WINED3D_CKEY_SRC_BLT))
+    if (texture && (texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT))
         enable_ckey = TRUE;
 
     if (enable_ckey || context->last_was_ckey)
@@ -2062,7 +2063,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
         op = WINED3D_TOP_SELECT_ARG1;
     }
 
-    if (isAlpha && !state->textures[Stage] && arg1 == WINED3DTA_TEXTURE)
+    if (isAlpha && !wined3d_state_get_ffp_texture(state, Stage) && arg1 == WINED3DTA_TEXTURE)
     {
         get_src_and_opr(WINED3DTA_DIFFUSE, isAlpha, &src1, &opr1);
     } else {
@@ -3109,7 +3110,7 @@ static void tex_colorop(struct wined3d_context *context, const struct wined3d_st
     /* The sampler will also activate the correct texture dimensions, so no
      * need to do it here if the sampler for this stage is dirty. */
     if (!isStateDirty(context, STATE_SAMPLER(stage)) && tex_used)
-        texture_activate_dimensions(state->textures[stage], gl_info);
+        texture_activate_dimensions(wined3d_state_get_ffp_texture(state, stage), gl_info);
 
     set_tex_op(gl_info, state, FALSE, stage,
             state->texture_states[stage][WINED3D_TSS_COLOR_OP],
@@ -3121,6 +3122,7 @@ static void tex_colorop(struct wined3d_context *context, const struct wined3d_st
 void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     unsigned int stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
+    struct wined3d_texture *texture = wined3d_state_get_ffp_texture(state, 0);
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     BOOL tex_used = context->fixed_function_usage_map & (1u << stage);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
@@ -3144,9 +3146,9 @@ void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *st
     arg2 = state->texture_states[stage][WINED3D_TSS_ALPHA_ARG2];
     arg0 = state->texture_states[stage][WINED3D_TSS_ALPHA_ARG0];
 
-    if (state->render_states[WINED3D_RS_COLORKEYENABLE] && !stage && state->textures[0])
+    if (state->render_states[WINED3D_RS_COLORKEYENABLE] && !stage && texture)
     {
-        struct wined3d_texture_gl *texture_gl = wined3d_texture_gl(state->textures[0]);
+        struct wined3d_texture_gl *texture_gl = wined3d_texture_gl(texture);
         GLenum texture_dimensions = texture_gl->target;
 
         if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
@@ -3424,7 +3426,7 @@ static void tex_coordindex(struct wined3d_context *context, const struct wined3d
 static void sampler_texmatrix(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const DWORD sampler = state_id - STATE_SAMPLER(0);
-    const struct wined3d_texture *texture = state->textures[sampler];
+    const struct wined3d_texture *texture = wined3d_state_get_ffp_texture(state, sampler);
 
     TRACE("context %p, state %p, state_id %#lx.\n", context, state, state_id);
 

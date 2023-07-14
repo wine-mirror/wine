@@ -3936,6 +3936,12 @@ struct wined3d_shader_resource_view
 
 void wined3d_shader_resource_view_cleanup(struct wined3d_shader_resource_view *view) DECLSPEC_HIDDEN;
 
+static inline struct wined3d_texture *wined3d_state_get_ffp_texture(const struct wined3d_state *state, unsigned int idx)
+{
+    assert(idx <= WINED3D_MAX_FFP_TEXTURES);
+    return state->textures[idx];
+}
+
 struct wined3d_unordered_access_view
 {
     LONG refcount;

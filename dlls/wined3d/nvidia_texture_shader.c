@@ -48,7 +48,7 @@ static void nvts_activate_dimensions(const struct wined3d_state *state,
         context_gl->c.texShaderBumpMap &= ~(1u << stage);
     }
 
-    if ((texture = state->textures[stage]))
+    if ((texture = wined3d_state_get_ffp_texture(state, stage)))
     {
         switch (wined3d_texture_gl(texture)->target)
         {
@@ -552,7 +552,7 @@ static void nvrc_colorop(struct wined3d_context *context, const struct wined3d_s
             if (gl_info->supported[NV_TEXTURE_SHADER2])
                 nvts_activate_dimensions(state, stage, context_gl);
             else
-                texture_activate_dimensions(state->textures[stage], gl_info);
+                texture_activate_dimensions(wined3d_state_get_ffp_texture(state, stage), gl_info);
         }
     }
 

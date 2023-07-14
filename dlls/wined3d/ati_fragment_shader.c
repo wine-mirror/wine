@@ -1057,7 +1057,7 @@ static void set_tex_op_atifs(struct wined3d_context *context, const struct wined
         if (mapped_stage != WINED3D_UNMAPPED_STAGE)
         {
             wined3d_context_gl_active_texture(context_gl, gl_info, mapped_stage);
-            texture_activate_dimensions(state->textures[i], gl_info);
+            texture_activate_dimensions(wined3d_state_get_ffp_texture(state, i), gl_info);
         }
     }
 

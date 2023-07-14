@@ -2478,7 +2478,7 @@ static void resolve_depth_buffer(struct wined3d_device *device)
     struct wined3d_resource *dst_resource;
     struct wined3d_texture *dst_texture;
 
-    if (!(dst_texture = state->textures[0]))
+    if (!(dst_texture = wined3d_state_get_ffp_texture(state, 0)))
         return;
     dst_resource = &dst_texture->resource;
     if (!dst_resource->format->depth_size)

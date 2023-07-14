@@ -1912,7 +1912,7 @@ static void wined3d_cs_exec_set_color_key(struct wined3d_cs *cs, const void *dat
                 break;
 
             case WINED3D_CKEY_SRC_BLT:
-                if (texture == cs->state.textures[0])
+                if (texture == wined3d_state_get_ffp_texture(&cs->state, 0))
                 {
                     device_invalidate_state(cs->c.device, STATE_COLOR_KEY);
                     if (!(texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT))
@@ -1942,7 +1942,8 @@ static void wined3d_cs_exec_set_color_key(struct wined3d_cs *cs, const void *dat
                 break;
 
             case WINED3D_CKEY_SRC_BLT:
-                if (texture == cs->state.textures[0] && texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT)
+                if (texture == wined3d_state_get_ffp_texture(&cs->state, 0)
+                        && texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT)
                     device_invalidate_state(cs->c.device, STATE_RENDER(WINED3D_RS_COLORKEYENABLE));
 
                 texture->async.color_key_flags &= ~WINED3D_CKEY_SRC_BLT;

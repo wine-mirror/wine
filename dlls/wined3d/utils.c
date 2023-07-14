@@ -5611,7 +5611,7 @@ BOOL is_invalid_op(const struct wined3d_state *state, int stage,
 {
     if (op == WINED3D_TOP_DISABLE)
         return FALSE;
-    if (state->textures[stage])
+    if (wined3d_state_get_ffp_texture(state, stage))
         return FALSE;
 
     if ((arg1 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
@@ -5847,13 +5847,14 @@ static void compute_texture_matrix(const struct wined3d_matrix *matrix, uint32_t
 }
 
 void get_texture_matrix(const struct wined3d_context *context, const struct wined3d_state *state,
-        unsigned int tex, struct wined3d_matrix *mat)
+        const unsigned int tex, struct wined3d_matrix *mat)
 {
     const struct wined3d_device *device = context->device;
     BOOL generated = (state->texture_states[tex][WINED3D_TSS_TEXCOORD_INDEX] & 0xffff0000)
             != WINED3DTSS_TCI_PASSTHRU;
     unsigned int coord_idx = min(state->texture_states[tex][WINED3D_TSS_TEXCOORD_INDEX & 0x0000ffff],
             WINED3D_MAX_FFP_TEXTURES - 1);
+    struct wined3d_texture *texture = wined3d_state_get_ffp_texture(state, tex);
 
     compute_texture_matrix(&state->transforms[WINED3D_TS_TEXTURE0 + tex],
             state->texture_states[tex][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS],
@@ -5863,7 +5864,7 @@ void get_texture_matrix(const struct wined3d_context *context, const struct wine
             : WINED3DFMT_UNKNOWN,
             device->shader_backend->shader_has_ffp_proj_control(device->shader_priv), mat);
 
-    if ((context->lastWasPow2Texture & (1u << tex)) && state->textures[tex])
+    if ((context->lastWasPow2Texture & (1u << tex)) && texture)
     {
         if (generated)
             FIXME("Non-power-of-two texture being used with generated texture coords.\n");
@@ -5872,7 +5873,7 @@ void get_texture_matrix(const struct wined3d_context *context, const struct wine
         if (!use_ps(state))
         {
             TRACE("Non-power-of-two texture matrix multiply fixup.\n");
-            multiply_matrix(mat, mat, (struct wined3d_matrix *)state->textures[tex]->pow2_matrix);
+            multiply_matrix(mat, mat, (struct wined3d_matrix *)texture->pow2_matrix);
         }
     }
 }
@@ -6408,13 +6409,12 @@ void wined3d_ffp_get_fs_settings(const struct wined3d_context *context, const st
     DWORD ttff;
     DWORD cop, aop, carg0, carg1, carg2, aarg0, aarg1, aarg2;
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
+    struct wined3d_texture *texture;
 
     settings->padding = 0;
 
     for (i = 0; i < d3d_info->ffp_fragment_caps.max_blend_stages; ++i)
     {
-        struct wined3d_texture *texture;
-
         settings->op[i].padding = 0;
         if (state->texture_states[i][WINED3D_TSS_COLOR_OP] == WINED3D_TOP_DISABLE)
         {
@@ -6430,7 +6430,7 @@ void wined3d_ffp_get_fs_settings(const struct wined3d_context *context, const st
             break;
         }
 
-        if ((texture = state->textures[i]))
+        if ((texture = wined3d_state_get_ffp_texture(state, i)))
         {
             if (can_use_texture_swizzle(d3d_info, texture->resource.format))
                 settings->op[i].color_fixup = COLOR_FIXUP_IDENTITY;
@@ -6498,11 +6498,10 @@ void wined3d_ffp_get_fs_settings(const struct wined3d_context *context, const st
             aarg0 = (args[aop] & ARG0) ? state->texture_states[i][WINED3D_TSS_ALPHA_ARG0] : ARG_UNUSED;
         }
 
-        if (!i && state->textures[0] && state->render_states[WINED3D_RS_COLORKEYENABLE])
+        if (!i && texture && state->render_states[WINED3D_RS_COLORKEYENABLE])
         {
             GLenum texture_dimensions;
 
-            texture = state->textures[0];
             texture_dimensions = wined3d_texture_gl(texture)->target;
 
             if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
@@ -6630,8 +6629,9 @@ void wined3d_ffp_get_fs_settings(const struct wined3d_context *context, const st
         settings->emul_clipplanes = 1;
     }
 
-    if (state->render_states[WINED3D_RS_COLORKEYENABLE] && state->textures[0]
-            && state->textures[0]->async.color_key_flags & WINED3D_CKEY_SRC_BLT
+    texture = wined3d_state_get_ffp_texture(state, 0);
+    if (state->render_states[WINED3D_RS_COLORKEYENABLE]
+            && texture && (texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT)
             && settings->op[0].cop != WINED3D_TOP_DISABLE)
         settings->color_key_enabled = 1;
     else
@@ -6811,7 +6811,7 @@ void sampler_texdim(struct wined3d_context *context, const struct wined3d_state 
     if (isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3D_TSS_COLOR_OP)))
         return;
 
-    texture_activate_dimensions(state->textures[sampler], context_gl->gl_info);
+    texture_activate_dimensions(wined3d_state_get_ffp_texture(state, sampler), context_gl->gl_info);
 }
 
 int wined3d_ffp_frag_program_key_compare(const void *key, const struct wine_rb_entry *entry)
