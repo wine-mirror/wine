@@ -19,8 +19,6 @@
 #include <stdarg.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "ole2.h"
@@ -348,7 +346,7 @@ static inline HRESULT report_data(BindStatusCallback *This)
         return hres;
 
     stgmedium.tymed = TYMED_ISTREAM;
-    stgmedium.u.pstm = This->stream;
+    stgmedium.pstm = This->stream;
     stgmedium.pUnkForRelease = NULL;
 
     hres = IBindStatusCallback_OnDataAvailable(This->bsc,
@@ -518,7 +516,7 @@ static HRESULT WINAPI XMLView_BindStatusCallback_OnDataAvailable(
         return E_FAIL;
 
     do {
-        hres = IStream_Read(pstgmed->u.pstm, buf, sizeof(buf), &size);
+        hres = IStream_Read(pstgmed->pstm, buf, sizeof(buf), &size);
         IStream_Write(This->stream, buf, size, &size);
     } while(hres==S_OK && size);
 
