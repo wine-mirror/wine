@@ -406,6 +406,26 @@ interface ID2D1DeviceContext2 : ID2D1DeviceContext1
 
 [
     object,
+    uuid(235a7496-8351-414c-bcd4-6672ab2d8e00),
+    local,
+]
+interface ID2D1DeviceContext3 : ID2D1DeviceContext2
+{
+    HRESULT CreateSpriteBatch(
+        [out] ID2D1SpriteBatch **sprite_batch
+    );
+    void DrawSpriteBatch(
+        [in] ID2D1SpriteBatch *sprite_batch,
+        [in] UINT32 start_index,
+        [in] UINT32 sprite_count,
+        [in] ID2D1Bitmap *bitmap,
+        [in] D2D1_BITMAP_INTERPOLATION_MODE interpolation_mode,
+        [in] D2D1_SPRITE_OPTIONS sprite_options
+    );
+}
+
+[
+    object,
     uuid(a44472e1-8dfb-4e60-8492-6e2861c9ca8b),
     local,
 ]
