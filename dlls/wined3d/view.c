@@ -1266,6 +1266,10 @@ void wined3d_shader_resource_view_gl_bind(struct wined3d_shader_resource_view_gl
     texture_gl = wined3d_texture_gl(wined3d_texture_from_resource(view_gl->v.resource));
     wined3d_texture_gl_bind(texture_gl, context_gl, FALSE);
     wined3d_sampler_gl_bind(sampler_gl, unit, texture_gl, context_gl);
+
+    /* Trigger shader constant reloading (for NP2 texcoord fixup) */
+    if (!(texture_gl->t.flags & WINED3D_TEXTURE_POW2_MAT_IDENT))
+        context_gl->c.constant_update_mask |= WINED3D_SHADER_CONST_PS_NP2_FIXUP;
 }
 
 /* Context activation is done by the caller. */
