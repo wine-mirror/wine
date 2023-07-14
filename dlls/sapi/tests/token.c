@@ -601,7 +601,7 @@ static IClassFactory test_class_cf = { &ClassFactoryVtbl };
 
 static void test_object_token(void)
 {
-    static const WCHAR test_token_id[] = L"HKEY_CURRENT_USER\\Software\\Winetest\\sapi\\TestToken";
+    static const WCHAR test_token_id[] = L"HKEY_LOCAL_MACHINE\\Software\\Wine\\Winetest\\sapi\\TestToken";
 
     ISpObjectToken *token;
     ISpDataKey *sub_key;
@@ -742,7 +742,12 @@ static void test_object_token(void)
     ok( hr == S_OK, "got %08lx\n", hr );
 
     hr = ISpObjectToken_SetId( token, NULL, test_token_id, TRUE );
-    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( hr == S_OK || broken(hr == E_ACCESSDENIED) /* win1064_adm */, "got %08lx\n", hr );
+    if (hr == E_ACCESSDENIED) {
+        win_skip( "token SetId access denied\n" );
+        ISpObjectToken_Release( token );
+        return;
+    }
 
     hr = ISpObjectToken_CreateKey( token, L"Attributes", &sub_key );
     ok( hr == S_OK, "got %08lx\n", hr );
@@ -763,10 +768,6 @@ static void test_object_token(void)
 
     test_class_token = NULL;
     hr = ISpObjectToken_CreateInstance( token, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&obj );
-    if ( hr == E_ACCESSDENIED ) {
-        win_skip( "ISpObjectToken_CreateInstance returned E_ACCESSDENIED\n" );
-        return;
-    }
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( test_class_token != NULL, "test_class_token not set\n" );
 
