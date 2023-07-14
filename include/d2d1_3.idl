@@ -19,8 +19,6 @@
 import "d2d1_2.idl";
 import "d2d1effects_2.idl";
 
-interface ID2D1SpriteBatch;
-
 typedef enum D2D1_INK_NIB_SHAPE
 {
     D2D1_INK_NIB_SHAPE_ROUND = 0x0,
@@ -267,6 +265,48 @@ interface ID2D1TransformedImageSource : ID2D1Image
 ]
 interface ID2D1LookupTable3D : ID2D1Resource
 {
+}
+
+[
+    object,
+    uuid(4dc583bf-3a10-438a-8722-e9765224f1f1),
+    local,
+]
+interface ID2D1SpriteBatch : ID2D1Resource
+{
+    HRESULT AddSprites(
+        [in] UINT32 sprite_count,
+        [in] const D2D1_RECT_F *destination_rectangles,
+        [in] const D2D1_RECT_U *source_rectangles,
+        [in] const D2D1_COLOR_F *colors,
+        [in] const D2D1_MATRIX_3X2_F *transforms,
+        [in] UINT32 destination_rectangles_stride,
+        [in] UINT32 source_rectangles_stride,
+        [in] UINT32 colors_stride,
+        [in] UINT32 transforms_stride
+    );
+    HRESULT SetSprites(
+        [in] UINT32 start_index,
+        [in] UINT32 sprite_count,
+        [in] const D2D1_RECT_F *destination_rectangles,
+        [in] const D2D1_RECT_U *source_rectangles,
+        [in] const D2D1_COLOR_F *colors,
+        [in] const D2D1_MATRIX_3X2_F *transforms,
+        [in] UINT32 destination_rectangles_stride,
+        [in] UINT32 source_rectangles_stride,
+        [in] UINT32 colors_stride,
+        [in] UINT32 transforms_stride
+    );
+    HRESULT GetSprites(
+        [in] UINT32 start_index,
+        [in] UINT32 sprite_count,
+        [out, optional] D2D1_RECT_F *destination_rectangles,
+        [out, optional] D2D1_RECT_U *source_rectangles,
+        [out, optional] D2D1_COLOR_F *colors,
+        [out, optional] D2D1_MATRIX_3X2_F *transforms
+    );
+    UINT32 GetSpriteCount(void);
+    void Clear(void);
 }
 
 [
