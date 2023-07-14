@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
-
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -306,7 +304,7 @@ HRESULT assembly_get_native_entrypoint(ASSEMBLY *assembly, NativeEntryPointFunc 
 {
     if (assembly->corhdr->Flags & COMIMAGE_FLAGS_NATIVE_ENTRYPOINT)
     {
-        *func = assembly_rva_to_va(assembly, assembly->corhdr->u.EntryPointRVA);
+        *func = assembly_rva_to_va(assembly, assembly->corhdr->EntryPointRVA);
         return S_OK;
     }
     else
