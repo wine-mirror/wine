@@ -167,7 +167,7 @@ static void test_audio_out(void)
     UINT devid;
     char *buf = NULL;
     ULONG written;
-    DWORD start, end;
+    DWORD start, duration;
     HANDLE event = NULL;
     HRESULT hr;
 
@@ -256,6 +256,7 @@ static void test_audio_out(void)
     ok(hr == S_OK, "got %#lx.\n", hr);
 
     written = 0xdeadbeef;
+    start = GetTickCount();
     hr = ISpMMSysAudio_Write(mmaudio, buf, wfx->nAvgBytesPerSec * 200 / 1000, &written);
     ok(hr == S_OK, "got %#lx.\n", hr);
     ok(written == wfx->nAvgBytesPerSec * 200 / 1000, "got %lu.\n", written);
@@ -263,7 +264,8 @@ static void test_audio_out(void)
     hr = ISpMMSysAudio_Write(mmaudio, buf, wfx->nAvgBytesPerSec * 200 / 1000, NULL);
     ok(hr == S_OK, "got %#lx.\n", hr);
 
-    start = GetTickCount();
+    hr = ISpMMSysAudio_Commit(mmaudio, STGC_DEFAULT);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
 
     event = ISpMMSysAudio_EventHandle(mmaudio);
     ok(event != NULL, "event == NULL.\n");
@@ -271,8 +273,8 @@ static void test_audio_out(void)
     hr = WaitForSingleObject(event, 1000);
     ok(hr == WAIT_OBJECT_0, "got %#lx.\n", hr);
 
-    end = GetTickCount();
-    ok(end - start <= 500, "waited for %lu ms.\n", end - start);
+    duration = GetTickCount() - start;
+    ok(duration > 200 && duration < 800, "took %lu ms.\n", duration);
 
     hr = ISpMMSysAudio_SetState(mmaudio, SPAS_CLOSED, 0);
     ok(hr == S_OK, "got %#lx.\n", hr);
