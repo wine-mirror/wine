@@ -19,7 +19,6 @@
  */
 
 #define COBJMACROS
-#define NONAMELESSUNION
 
 #include <stdarg.h>
 
@@ -139,7 +138,7 @@ static void get_descriptors(HWND hdlg, ps_struct_t *ps_struct)
     fmtetc.cfFormat = cf_object_descriptor;
     if(IDataObject_GetData(ps_struct->ps->lpSrcDataObj, &fmtetc, &stg) == S_OK)
     {
-        OBJECTDESCRIPTOR *obj_desc = GlobalLock(stg.u.hGlobal);
+        OBJECTDESCRIPTOR *obj_desc = GlobalLock(stg.hGlobal);
         if(obj_desc->dwSrcOfCopy)
             ps_struct->source_name = wcsdup((WCHAR*)((char*)obj_desc + obj_desc->dwSrcOfCopy));
         if(obj_desc->dwFullUserTypeName)
@@ -147,8 +146,8 @@ static void get_descriptors(HWND hdlg, ps_struct_t *ps_struct)
         OleRegGetUserType(&obj_desc->clsid, USERCLASSTYPE_APPNAME, &ps_struct->app_name);
         /* Get the icon here.  If dwDrawAspect & DVASCPECT_ICON call GetData(CF_METAFILEPICT), otherwise
            native calls OleGetIconFromClass(obj_desc->clsid) */
-        GlobalUnlock(stg.u.hGlobal);
-        GlobalFree(stg.u.hGlobal);
+        GlobalUnlock(stg.hGlobal);
+        GlobalFree(stg.hGlobal);
     }
     else
     {
@@ -158,13 +157,13 @@ static void get_descriptors(HWND hdlg, ps_struct_t *ps_struct)
     fmtetc.cfFormat = cf_link_src_descriptor;
     if(IDataObject_GetData(ps_struct->ps->lpSrcDataObj, &fmtetc, &stg) == S_OK)
     {
-        OBJECTDESCRIPTOR *obj_desc = GlobalLock(stg.u.hGlobal);
+        OBJECTDESCRIPTOR *obj_desc = GlobalLock(stg.hGlobal);
         if(obj_desc->dwSrcOfCopy)
             ps_struct->link_source_name = wcsdup((WCHAR*)((char*)obj_desc + obj_desc->dwSrcOfCopy));
         if(obj_desc->dwFullUserTypeName)
             ps_struct->link_type_name = wcsdup((WCHAR*)((char*)obj_desc + obj_desc->dwFullUserTypeName));
-        GlobalUnlock(stg.u.hGlobal);
-        GlobalFree(stg.u.hGlobal);
+        GlobalUnlock(stg.hGlobal);
+        GlobalFree(stg.hGlobal);
     }
 
     if(ps_struct->source_name == NULL && ps_struct->link_source_name == NULL)
