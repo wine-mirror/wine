@@ -431,7 +431,6 @@ void state_unbind_resources(struct wined3d_state *state)
     struct wined3d_blend_state *blend_state;
     struct wined3d_rendertarget_view *rtv;
     struct wined3d_sampler *sampler;
-    struct wined3d_texture *texture;
     struct wined3d_buffer *buffer;
     struct wined3d_shader *shader;
     unsigned int i, j;
@@ -440,15 +439,6 @@ void state_unbind_resources(struct wined3d_state *state)
     {
         state->vertex_declaration = NULL;
         wined3d_vertex_declaration_decref(decl);
-    }
-
-    for (i = 0; i < WINED3D_MAX_COMBINED_SAMPLERS; ++i)
-    {
-        if ((texture = state->textures[i]))
-        {
-            state->textures[i] = NULL;
-            wined3d_texture_decref(texture);
-        }
     }
 
     for (i = 0; i < WINED3D_MAX_STREAM_OUTPUT_BUFFERS; ++i)
@@ -2530,28 +2520,37 @@ static void wined3d_device_set_texture_stage_state(struct wined3d_device *device
 static void wined3d_device_set_texture(struct wined3d_device *device,
         unsigned int stage, struct wined3d_texture *texture)
 {
+    enum wined3d_shader_type shader_type = WINED3D_SHADER_TYPE_PIXEL;
+    struct wined3d_shader_resource_view *srv = NULL, *prev;
     struct wined3d_state *state = device->cs->c.state;
-    struct wined3d_texture *prev;
 
     TRACE("device %p, stage %u, texture %p.\n", device, stage, texture);
 
-    prev = state->textures[stage];
+    if (stage >= WINED3D_VERTEX_SAMPLER_OFFSET)
+    {
+        shader_type = WINED3D_SHADER_TYPE_VERTEX;
+        stage -= WINED3D_VERTEX_SAMPLER_OFFSET;
+    }
+
+    if (texture && !(srv = wined3d_texture_acquire_identity_srv(texture)))
+        return;
+
+    prev = state->shader_resource_view[shader_type][stage];
     TRACE("Previous texture %p.\n", prev);
 
-    if (texture == prev)
+    if (srv == prev)
     {
         TRACE("App is setting the same texture again, nothing to do.\n");
         return;
     }
 
-    TRACE("Setting new texture to %p.\n", texture);
-    state->textures[stage] = texture;
+    state->shader_resource_view[shader_type][stage] = srv;
 
-    if (texture)
-        wined3d_texture_incref(texture);
-    wined3d_device_context_emit_set_texture(&device->cs->c, stage, texture);
+    if (srv)
+        wined3d_shader_resource_view_incref(srv);
+    wined3d_device_context_emit_set_texture(&device->cs->c, shader_type, stage, srv);
     if (prev)
-        wined3d_texture_decref(prev);
+        wined3d_shader_resource_view_decref(prev);
 
     return;
 }

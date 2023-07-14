@@ -2778,6 +2778,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
         BOOL position_transformed, struct ps_compile_args *args, const struct wined3d_context *context)
 {
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
+    struct wined3d_shader_resource_view *view;
     struct wined3d_texture *texture;
     unsigned int i;
 
@@ -2859,8 +2860,9 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
             /* Treat unbound textures as 2D. The dummy texture will provide
              * the proper sample value. The tex_types bitmap defaults to
              * 2D because of the memset. */
-            if (!(texture = state->textures[i]))
+            if (!(view = state->shader_resource_view[WINED3D_SHADER_TYPE_PIXEL][i]))
                 continue;
+            texture = texture_from_resource(view->resource);
 
             switch (wined3d_texture_gl(texture)->target)
             {
@@ -2901,8 +2903,9 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
                     break;
             }
 
-            if ((texture = state->textures[i]))
+            if ((view = state->shader_resource_view[WINED3D_SHADER_TYPE_PIXEL][i]))
             {
+                texture = texture_from_resource(view->resource);
                 /* Star Wars: The Old Republic uses mismatched samplers for rendering water. */
                 if (texture->resource.type == WINED3D_RTYPE_TEXTURE_2D
                         && resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_3D
@@ -2931,11 +2934,13 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
             if (!shader->reg_maps.resource_info[i].type)
                 continue;
 
-            if (!(texture = state->textures[i]))
+            if (!(view = state->shader_resource_view[WINED3D_SHADER_TYPE_PIXEL][i]))
             {
                 args->color_fixup[i] = COLOR_FIXUP_IDENTITY;
                 continue;
             }
+            texture = texture_from_resource(view->resource);
+
             if (can_use_texture_swizzle(d3d_info, texture->resource.format))
                 args->color_fixup[i] = COLOR_FIXUP_IDENTITY;
             else

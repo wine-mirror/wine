@@ -3453,59 +3453,8 @@ static void sampler_texmatrix(struct wined3d_context *context, const struct wine
     }
 }
 
-/* Enabling and disabling texture dimensions is done by texture stage state /
- * pixel shader setup, this function only has to bind textures and set the per
- * texture states. */
 static void sampler(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
-    unsigned int sampler_idx = state_id - STATE_SAMPLER(0);
-    unsigned int mapped_stage = context_gl->tex_unit_map[sampler_idx];
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-
-    TRACE("Sampler %u.\n", sampler_idx);
-
-    if (mapped_stage == WINED3D_UNMAPPED_STAGE)
-    {
-        TRACE("No sampler mapped to stage %u. Returning.\n", sampler_idx);
-        return;
-    }
-
-    if (mapped_stage >= gl_info->limits.graphics_samplers)
-        return;
-    wined3d_context_gl_active_texture(context_gl, gl_info, mapped_stage);
-
-    if (state->textures[sampler_idx])
-    {
-        struct wined3d_texture_gl *texture_gl = wined3d_texture_gl(state->textures[sampler_idx]);
-        enum wined3d_shader_type shader_type = WINED3D_SHADER_TYPE_PIXEL;
-        unsigned int bind_idx = sampler_idx;
-        struct wined3d_sampler *sampler;
-
-        if (sampler_idx >= WINED3D_VERTEX_SAMPLER_OFFSET)
-        {
-            bind_idx -= WINED3D_VERTEX_SAMPLER_OFFSET;
-            shader_type = WINED3D_SHADER_TYPE_VERTEX;
-        }
-
-        sampler = state->sampler[shader_type][bind_idx];
-
-        wined3d_texture_gl_bind(texture_gl, context_gl, sampler->desc.srgb_decode);
-        wined3d_sampler_gl_bind(wined3d_sampler_gl(sampler), mapped_stage, texture_gl, context_gl);
-
-        /* Trigger shader constant reloading (for NP2 texcoord fixup) */
-        if (!(texture_gl->t.flags & WINED3D_TEXTURE_POW2_MAT_IDENT))
-            context->constant_update_mask |= WINED3D_SHADER_CONST_PS_NP2_FIXUP;
-    }
-    else
-    {
-        wined3d_context_gl_bind_texture(context_gl, GL_NONE, 0);
-        if (gl_info->supported[ARB_SAMPLER_OBJECTS])
-        {
-            GL_EXTCALL(glBindSampler(mapped_stage, 0));
-            checkGLcall("glBindSampler");
-        }
-    }
 }
 
 void apply_pixelshader(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -3519,11 +3468,7 @@ void apply_pixelshader(struct wined3d_context *context, const struct wined3d_sta
             /* Former draw without a pixel shader, some samplers may be
              * disabled because of WINED3D_TSS_COLOR_OP = WINED3DTOP_DISABLE
              * make sure to enable them. */
-            for (i = 0; i < WINED3D_MAX_FRAGMENT_SAMPLERS; ++i)
-            {
-                if (!isStateDirty(context, STATE_SAMPLER(i)))
-                    sampler(context, state, STATE_SAMPLER(i));
-            }
+            context->update_shader_resource_bindings = 1;
             context->last_was_pshader = TRUE;
         }
         else

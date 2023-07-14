@@ -1976,7 +1976,6 @@ struct wined3d_context
 
 void wined3d_context_cleanup(struct wined3d_context *context);
 void wined3d_context_init(struct wined3d_context *context, struct wined3d_swapchain *swapchain);
-void context_preload_textures(struct wined3d_context *context, const struct wined3d_state *state);
 void context_update_stream_info(struct wined3d_context *context, const struct wined3d_state *state);
 
 HRESULT wined3d_context_no3d_init(struct wined3d_context *context_no3d,
@@ -2884,7 +2883,6 @@ struct wined3d_state
     struct wined3d_shader_resource_view *shader_resource_view[WINED3D_SHADER_TYPE_COUNT][MAX_SHADER_RESOURCE_VIEWS];
     struct wined3d_unordered_access_view *unordered_access_view[WINED3D_PIPELINE_COUNT][MAX_UNORDERED_ACCESS_VIEWS];
 
-    struct wined3d_texture *textures[WINED3D_MAX_COMBINED_SAMPLERS];
     uint32_t texture_states[WINED3D_MAX_FFP_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
 
     struct wined3d_matrix transforms[WINED3D_HIGHEST_TRANSFORM_STATE + 1];
@@ -3730,8 +3728,9 @@ void wined3d_device_context_emit_set_stream_outputs(struct wined3d_device_contex
         const struct wined3d_stream_output outputs[WINED3D_MAX_STREAM_OUTPUT_BUFFERS]);
 void wined3d_device_context_emit_set_stream_sources(struct wined3d_device_context *context,
         unsigned int start_idx, unsigned int count, const struct wined3d_stream_state *streams);
-void wined3d_device_context_emit_set_texture(struct wined3d_device_context *context, unsigned int stage,
-        struct wined3d_texture *texture);
+void wined3d_device_context_emit_set_texture(struct wined3d_device_context *context,
+        enum wined3d_shader_type shader_type, unsigned int bind_index,
+        struct wined3d_shader_resource_view *view);
 void wined3d_device_context_emit_set_texture_state(struct wined3d_device_context *context, unsigned int stage,
         enum wined3d_texture_stage_state state, unsigned int value);
 void wined3d_device_context_emit_set_transform(struct wined3d_device_context *context,
@@ -3941,8 +3940,10 @@ void wined3d_shader_resource_view_destroy(struct wined3d_shader_resource_view *v
 
 static inline struct wined3d_texture *wined3d_state_get_ffp_texture(const struct wined3d_state *state, unsigned int idx)
 {
+    struct wined3d_shader_resource_view *view = state->shader_resource_view[WINED3D_SHADER_TYPE_PIXEL][idx];
+
     assert(idx <= WINED3D_MAX_FFP_TEXTURES);
-    return state->textures[idx];
+    return view ? texture_from_resource(view->resource) : NULL;
 }
 
 struct wined3d_unordered_access_view

@@ -3808,6 +3808,7 @@ static void wined3d_context_gl_map_fixed_function_samplers(struct wined3d_contex
             {
                 wined3d_context_gl_map_stage(context_gl, i, i);
                 context_invalidate_state(&context_gl->c, STATE_SAMPLER(i));
+                context_invalidate_state(&context_gl->c, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
                 context_invalidate_texture_stage(&context_gl->c, i);
             }
         }
@@ -3823,6 +3824,7 @@ static void wined3d_context_gl_map_fixed_function_samplers(struct wined3d_contex
         {
             wined3d_context_gl_map_stage(context_gl, i, tex);
             context_invalidate_state(&context_gl->c, STATE_SAMPLER(i));
+            context_invalidate_state(&context_gl->c, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
             context_invalidate_texture_stage(&context_gl->c, i);
         }
 
@@ -3843,6 +3845,7 @@ static void wined3d_context_gl_map_psamplers(struct wined3d_context_gl *context_
         {
             wined3d_context_gl_map_stage(context_gl, i, i);
             context_invalidate_state(&context_gl->c, STATE_SAMPLER(i));
+            context_invalidate_state(&context_gl->c, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
             if (i < d3d_info->ffp_fragment_caps.max_blend_stages)
                 context_invalidate_texture_stage(&context_gl->c, i);
         }
@@ -3905,6 +3908,7 @@ static void wined3d_context_gl_map_vsamplers(struct wined3d_context_gl *context_
                     {
                         wined3d_context_gl_map_stage(context_gl, vsampler_idx, start);
                         context_invalidate_state(&context_gl->c, STATE_SAMPLER(vsampler_idx));
+                        context_invalidate_state(&context_gl->c, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
                     }
 
                     --start;
@@ -3976,7 +3980,37 @@ static void wined3d_context_gl_bind_shader_resources(struct wined3d_context_gl *
     struct wined3d_sampler *sampler;
 
     if (!(shader = state->shader[shader_type]))
+    {
+        if (shader_type == WINED3D_SHADER_TYPE_PIXEL)
+        {
+            uint32_t ffu_map = context_gl->c.fixed_function_usage_map;
+
+            while (ffu_map)
+            {
+                i = wined3d_bit_scan(&ffu_map);
+                bind_idx = context_gl->tex_unit_map[i];
+
+                view = state->shader_resource_view[WINED3D_SHADER_TYPE_PIXEL][i];
+                sampler = state->sampler[WINED3D_SHADER_TYPE_PIXEL][i];
+
+                if (view)
+                {
+                    wined3d_shader_resource_view_gl_bind(wined3d_shader_resource_view_gl(view),
+                            bind_idx, wined3d_sampler_gl(sampler), context_gl);
+                }
+                else
+                {
+                    WARN("No resource view bound at index %u.\n", i);
+                    wined3d_context_gl_active_texture(context_gl, gl_info, bind_idx);
+                    wined3d_context_gl_bind_texture(context_gl, GL_NONE, 0);
+                    if (gl_info->supported[ARB_SAMPLER_OBJECTS])
+                        GL_EXTCALL(glBindSampler(bind_idx, 0));
+                }
+            }
+        }
+
         return;
+    }
 
     tex_unit_map = wined3d_context_gl_get_tex_unit_mapping(context_gl,
             &shader->reg_maps.shader_version, &base, &count);
@@ -4067,12 +4101,32 @@ static void wined3d_context_gl_bind_unordered_access_views(struct wined3d_contex
     checkGLcall("Bind unordered access views");
 }
 
+static bool is_resource_rtv_bound(const struct wined3d_state *state, const struct wined3d_resource *resource)
+{
+    unsigned int i;
+
+    if (state->fb.depth_stencil && state->fb.depth_stencil->resource == resource)
+        return true;
+
+    if (!resource->rtv_bind_count_device)
+        return false;
+
+    for (i = 0; i < ARRAY_SIZE(state->fb.render_targets); ++i)
+    {
+        if (state->fb.render_targets[i] && state->fb.render_targets[i]->resource == resource)
+            return true;
+    }
+
+    return false;
+}
+
 static void context_gl_load_shader_resources(struct wined3d_context_gl *context_gl,
         const struct wined3d_state *state, unsigned int shader_mask)
 {
     struct wined3d_shader_sampler_map_entry *entry;
     struct wined3d_shader_resource_view_gl *srv_gl;
     struct wined3d_shader_resource_view *view;
+    struct wined3d_sampler *sampler;
     struct wined3d_shader *shader;
     struct wined3d_buffer *buffer;
     unsigned int i, j;
@@ -4083,7 +4137,26 @@ static void context_gl_load_shader_resources(struct wined3d_context_gl *context_
             continue;
 
         if (!(shader = state->shader[i]))
+        {
+            if (i == WINED3D_SHADER_TYPE_PIXEL)
+            {
+                uint32_t ffu_map = context_gl->c.fixed_function_usage_map;
+
+                while (ffu_map)
+                {
+                    i = wined3d_bit_scan(&ffu_map);
+
+                    view = state->shader_resource_view[WINED3D_SHADER_TYPE_PIXEL][i];
+                    sampler = state->sampler[WINED3D_SHADER_TYPE_PIXEL][i];
+
+                    if (view)
+                        wined3d_texture_load(texture_from_resource(view->resource),
+                                &context_gl->c, sampler->desc.srgb_decode);
+                }
+            }
+
             continue;
+        }
 
         for (j = 0; j < WINED3D_MAX_CBS; ++j)
         {
@@ -4104,6 +4177,9 @@ static void context_gl_load_shader_resources(struct wined3d_context_gl *context_
             if (!(view = state->shader_resource_view[i][entry->resource_idx]))
                 continue;
 
+            if (is_resource_rtv_bound(state, view->resource))
+                context_gl->c.uses_fbo_attached_resources = 1;
+
             if (view->resource->type == WINED3D_RTYPE_BUFFER)
             {
                 buffer = buffer_from_resource(view->resource);
@@ -4116,7 +4192,13 @@ static void context_gl_load_shader_resources(struct wined3d_context_gl *context_
             }
             else
             {
-                wined3d_texture_load(texture_from_resource(view->resource), &context_gl->c, FALSE);
+                BOOL srgb = TRUE;
+
+                if (entry->sampler_idx != WINED3D_SAMPLER_DEFAULT
+                        && (sampler = state->sampler[i][entry->sampler_idx]))
+                    srgb = sampler->desc.srgb_decode;
+
+                wined3d_texture_load(texture_from_resource(view->resource), &context_gl->c, srgb);
             }
         }
     }
@@ -4213,7 +4295,6 @@ static BOOL context_apply_draw_state(struct wined3d_context *context,
      * result in changes to the current FBO, due to using e.g. FBO blits for
      * updating a resource location. */
     wined3d_context_gl_update_tex_unit_map(context_gl, state);
-    context_preload_textures(context, state);
     context_gl_load_shader_resources(context_gl, state, ~(1u << WINED3D_SHADER_TYPE_COMPUTE));
     context_gl_load_unordered_access_resources(context_gl, state->shader[WINED3D_SHADER_TYPE_PIXEL],
             state->unordered_access_view[WINED3D_PIPELINE_GRAPHICS]);

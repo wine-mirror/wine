@@ -5108,19 +5108,6 @@ void device_resource_released(struct wined3d_device *device, struct wined3d_reso
 
     switch (type)
     {
-        case WINED3D_RTYPE_TEXTURE_1D:
-        case WINED3D_RTYPE_TEXTURE_2D:
-        case WINED3D_RTYPE_TEXTURE_3D:
-            for (i = 0; i < WINED3D_MAX_COMBINED_SAMPLERS; ++i)
-            {
-                if (&state->textures[i]->resource == resource)
-                {
-                    ERR("Texture resource %p is still in use, stage %u.\n", resource, i);
-                    state->textures[i] = NULL;
-                }
-            }
-            break;
-
         case WINED3D_RTYPE_BUFFER:
             for (i = 0; i < WINED3D_MAX_STREAMS; ++i)
             {

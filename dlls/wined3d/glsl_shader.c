@@ -1299,15 +1299,10 @@ static void shader_glsl_load_np2fixup_constants(const struct glsl_ps_program *ps
 
     for (i = 0; fixup; fixup >>= 1, ++i)
     {
-        const struct wined3d_texture *tex = state->textures[i];
         unsigned char idx = ps->np2_fixup_info->idx[i];
+        const struct wined3d_texture *tex;
 
-        if (!tex)
-        {
-            ERR("Nonexistent texture is flagged for NP2 texcoord fixup.\n");
-            continue;
-        }
-
+        tex = texture_from_resource(state->shader_resource_view[WINED3D_SHADER_TYPE_PIXEL][i]->resource);
         np2fixup_constants[idx].sx = tex->pow2_matrix[0];
         np2fixup_constants[idx].sy = tex->pow2_matrix[5];
     }

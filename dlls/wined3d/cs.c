@@ -270,8 +270,9 @@ struct wined3d_cs_set_constant_buffers
 struct wined3d_cs_set_texture
 {
     enum wined3d_cs_op opcode;
-    UINT stage;
-    struct wined3d_texture *texture;
+    enum wined3d_shader_type shader_type;
+    unsigned int bind_index;
+    struct wined3d_shader_resource_view *view;
 };
 
 struct wined3d_cs_set_color_key
@@ -1036,11 +1037,6 @@ static void reference_graphics_pipeline_resources(struct wined3d_device_context 
         if (state->stream_output[i].buffer)
             wined3d_device_context_reference_resource(context, &state->stream_output[i].buffer->resource);
     }
-    for (i = 0; i < ARRAY_SIZE(state->textures); ++i)
-    {
-        if (state->textures[i])
-            wined3d_device_context_reference_resource(context, &state->textures[i]->resource);
-    }
     for (i = 0; i < d3d_info->limits.max_rt_count; ++i)
     {
         if (state->fb.render_targets[i])
@@ -1454,8 +1450,8 @@ void wined3d_device_context_emit_set_constant_buffers(struct wined3d_device_cont
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
-static bool texture_binding_might_invalidate_ps(struct wined3d_texture *texture,
-        struct wined3d_texture *prev, const struct wined3d_d3d_info *d3d_info)
+static bool texture_binding_might_invalidate_ps(struct wined3d_shader_resource_view *view,
+        struct wined3d_shader_resource_view *prev, const struct wined3d_d3d_info *d3d_info)
 {
     unsigned int old_usage, new_usage, old_caps, new_caps;
     const struct wined3d_format *old_format, *new_format;
@@ -1464,16 +1460,16 @@ static bool texture_binding_might_invalidate_ps(struct wined3d_texture *texture,
         return true;
 
     /* 1.x pixel shaders need to be recompiled based on the resource type. */
-    old_usage = prev->resource.usage;
-    new_usage = texture->resource.usage;
-    if (texture->resource.type != prev->resource.type
+    old_usage = prev->resource->usage;
+    new_usage = view->resource->usage;
+    if (view->resource->type != prev->resource->type
             || ((old_usage & WINED3DUSAGE_LEGACY_CUBEMAP) != (new_usage & WINED3DUSAGE_LEGACY_CUBEMAP)))
         return true;
 
-    old_format = prev->resource.format;
-    new_format = texture->resource.format;
-    old_caps = prev->resource.format_caps;
-    new_caps = texture->resource.format_caps;
+    old_format = prev->resource->format;
+    new_format = view->resource->format;
+    old_caps = prev->resource->format_caps;
+    new_caps = view->resource->format_caps;
     if ((old_caps & WINED3D_FORMAT_CAP_SHADOW) != (new_caps & WINED3D_FORMAT_CAP_SHADOW))
         return true;
 
@@ -1490,47 +1486,61 @@ static void wined3d_cs_exec_set_texture(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_d3d_info *d3d_info = &cs->c.device->adapter->d3d_info;
     const struct wined3d_cs_set_texture *op = data;
-    struct wined3d_texture *prev;
+    struct wined3d_shader_resource_view *prev;
     BOOL old_use_color_key = FALSE, new_use_color_key = FALSE;
 
-    prev = cs->state.textures[op->stage];
-    cs->state.textures[op->stage] = op->texture;
+    prev = cs->state.shader_resource_view[op->shader_type][op->bind_index];
+    cs->state.shader_resource_view[op->shader_type][op->bind_index] = op->view;
 
-    if (op->texture)
+    if (op->view)
     {
-        ++op->texture->resource.bind_count;
+        struct wined3d_texture *texture = texture_from_resource(op->view->resource);
 
-        if (texture_binding_might_invalidate_ps(op->texture, prev, d3d_info))
-            device_invalidate_state(cs->c.device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
+        ++op->view->resource->bind_count;
 
-        if (!prev && op->stage < d3d_info->ffp_fragment_caps.max_blend_stages)
+        if (op->shader_type == WINED3D_SHADER_TYPE_PIXEL)
         {
-            /* The source arguments for color and alpha ops have different
-             * meanings when a NULL texture is bound, so the COLOR_OP and
-             * ALPHA_OP have to be dirtified. */
-            device_invalidate_state(cs->c.device, STATE_TEXTURESTAGE(op->stage, WINED3D_TSS_COLOR_OP));
-            device_invalidate_state(cs->c.device, STATE_TEXTURESTAGE(op->stage, WINED3D_TSS_ALPHA_OP));
-        }
+            if (texture_binding_might_invalidate_ps(op->view, prev, d3d_info))
+                device_invalidate_state(cs->c.device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
 
-        if (!op->stage && op->texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT)
-            new_use_color_key = TRUE;
+            if (!prev && op->bind_index < d3d_info->ffp_fragment_caps.max_blend_stages)
+            {
+                /* The source arguments for color and alpha ops have different
+                 * meanings when a NULL texture is bound, so the COLOR_OP and
+                 * ALPHA_OP have to be dirtified. */
+                device_invalidate_state(cs->c.device, STATE_TEXTURESTAGE(op->bind_index, WINED3D_TSS_COLOR_OP));
+                device_invalidate_state(cs->c.device, STATE_TEXTURESTAGE(op->bind_index, WINED3D_TSS_ALPHA_OP));
+            }
+
+            if (!op->bind_index && texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT)
+                new_use_color_key = TRUE;
+        }
     }
 
     if (prev)
     {
-        --prev->resource.bind_count;
+        struct wined3d_texture *prev_texture = texture_from_resource(prev->resource);
 
-        if (!op->texture && op->stage < d3d_info->ffp_fragment_caps.max_blend_stages)
+        --prev->resource->bind_count;
+
+        if (op->shader_type == WINED3D_SHADER_TYPE_PIXEL)
         {
-            device_invalidate_state(cs->c.device, STATE_TEXTURESTAGE(op->stage, WINED3D_TSS_COLOR_OP));
-            device_invalidate_state(cs->c.device, STATE_TEXTURESTAGE(op->stage, WINED3D_TSS_ALPHA_OP));
-        }
+            if (!op->view && op->bind_index < d3d_info->ffp_fragment_caps.max_blend_stages)
+            {
+                device_invalidate_state(cs->c.device, STATE_TEXTURESTAGE(op->bind_index, WINED3D_TSS_COLOR_OP));
+                device_invalidate_state(cs->c.device, STATE_TEXTURESTAGE(op->bind_index, WINED3D_TSS_ALPHA_OP));
+            }
 
-        if (!op->stage && prev->async.color_key_flags & WINED3D_CKEY_SRC_BLT)
-            old_use_color_key = TRUE;
+            if (!op->bind_index && prev_texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT)
+                old_use_color_key = TRUE;
+        }
     }
 
-    device_invalidate_state(cs->c.device, STATE_SAMPLER(op->stage));
+    if (op->shader_type == WINED3D_SHADER_TYPE_VERTEX)
+        device_invalidate_state(cs->c.device, STATE_SAMPLER(WINED3D_VERTEX_SAMPLER_OFFSET + op->bind_index));
+    else
+        device_invalidate_state(cs->c.device, STATE_SAMPLER(op->bind_index));
+    device_invalidate_state(cs->c.device, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
 
     if (new_use_color_key != old_use_color_key)
         device_invalidate_state(cs->c.device, STATE_RENDER(WINED3D_RS_COLORKEYENABLE));
@@ -1539,15 +1549,16 @@ static void wined3d_cs_exec_set_texture(struct wined3d_cs *cs, const void *data)
         device_invalidate_state(cs->c.device, STATE_COLOR_KEY);
 }
 
-void wined3d_device_context_emit_set_texture(struct wined3d_device_context *context, unsigned int stage,
-        struct wined3d_texture *texture)
+void wined3d_device_context_emit_set_texture(struct wined3d_device_context *context,
+        enum wined3d_shader_type shader_type, unsigned int bind_index, struct wined3d_shader_resource_view *view)
 {
     struct wined3d_cs_set_texture *op;
 
     op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_SET_TEXTURE;
-    op->stage = stage;
-    op->texture = texture;
+    op->shader_type = shader_type;
+    op->bind_index = bind_index;
+    op->view = view;
 
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }

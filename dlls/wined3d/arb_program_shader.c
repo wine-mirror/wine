@@ -490,11 +490,7 @@ static void shader_arb_load_np2fixup_constants(const struct arb_ps_np2fixup_info
     while (active)
     {
         i = wined3d_bit_scan(&active);
-        if (!(tex = state->textures[i]))
-        {
-            ERR("Nonexistent texture is flagged for NP2 texcoord fixup.\n");
-            continue;
-        }
+        tex = texture_from_resource(state->shader_resource_view[WINED3D_SHADER_TYPE_PIXEL][i]->resource);
 
         idx = fixup->super.idx[i];
         tex_dim = &np2fixup_constants[(idx >> 1) * 4];
