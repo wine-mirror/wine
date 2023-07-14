@@ -26877,6 +26877,7 @@ static void test_sample_attached_rendertarget(void)
     unsigned int color, i;
     IDirect3D9 *d3d;
     ULONG refcount;
+    D3DCAPS9 caps;
     BOOL is_warp;
     HWND window;
     HRESULT hr;
@@ -26921,6 +26922,17 @@ static void test_sample_attached_rendertarget(void)
     if (!(device = create_device(d3d, window, window, TRUE)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    if (caps.PixelShaderVersion < D3DPS_VERSION(2, 0))
+    {
+        skip("No shader model 2 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
         IDirect3D9_Release(d3d);
         DestroyWindow(window);
         return;
