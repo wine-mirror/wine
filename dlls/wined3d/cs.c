@@ -4211,7 +4211,7 @@ static bool wined3d_deferred_context_unmap_upload_bo(struct wined3d_device_conte
         struct wined3d_resource *resource, unsigned int sub_resource_idx, struct wined3d_box *box, struct upload_bo *bo)
 {
     struct wined3d_deferred_context *deferred = wined3d_deferred_context_from_context(context);
-    const struct wined3d_deferred_upload *upload;
+    struct wined3d_deferred_upload *upload;
 
     if ((upload = deferred_context_get_upload(deferred, resource, sub_resource_idx)))
     {
@@ -4219,6 +4219,7 @@ static bool wined3d_deferred_context_unmap_upload_bo(struct wined3d_device_conte
         bo->addr.buffer_object = 0;
         bo->addr.addr = (uint8_t *)align((size_t)upload->sysmem, RESOURCE_ALIGNMENT);
         bo->flags = upload->upload_flags;
+        upload->upload_flags = 0;
         return true;
     }
 
