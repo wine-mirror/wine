@@ -311,6 +311,36 @@ interface ID2D1SpriteBatch : ID2D1Resource
 
 [
     object,
+    uuid(af671749-d241-4db8-8e41-dcc2e5c1a438),
+    local,
+]
+interface ID2D1SvgGlyphStyle : ID2D1Resource
+{
+    HRESULT SetFill(
+        [in, optional] ID2D1Brush *brush
+    );
+    void GetFill(
+        [out] ID2D1Brush **brush
+    );
+    HRESULT SetStroke(
+        [in, optional] ID2D1Brush *brush,
+        [in] FLOAT stroke_width,
+        [in, optional] const FLOAT *dashes,
+        [in, optional] UINT32 dashes_count,
+        [in] FLOAT dash_offset
+    );
+    UINT32 GetStrokeDashesCount(void);
+    void GetStroke(
+        [out, optional] ID2D1Brush **brush,
+        [out, optional] FLOAT *stroke_width,
+        [out, optional] FLOAT *dashes,
+        [in, optional] UINT32 dashes_count,
+        [out, optional] FLOAT *dash_offset
+    );
+}
+
+[
+    object,
     uuid(394ea6a3-0c34-4321-950b-6ca20f0be6c7),
     local,
 ]
