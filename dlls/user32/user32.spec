@@ -612,7 +612,7 @@
 @ stub RegisterNetworkCapabilities
 @ stdcall RegisterPointerDeviceNotifications(long long)
 @ stdcall RegisterPowerSettingNotification(long ptr long)
-@ stdcall RegisterRawInputDevices(ptr long long) NtUserRegisterRawInputDevices
+@ stdcall -import RegisterRawInputDevices(ptr long long) NtUserRegisterRawInputDevices
 @ stdcall RegisterServicesProcess(long)
 @ stdcall RegisterShellHookWindow (long)
 @ stdcall RegisterSuspendResumeNotification(long long)
