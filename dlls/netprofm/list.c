@@ -18,8 +18,6 @@
  */
 
 #define COBJMACROS
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 
 #include <stdarg.h>
 #include "windef.h"
@@ -1769,7 +1767,7 @@ static void init_networks( struct list_manager *mgr )
         struct connection *connection;
         NET_LUID luid;
 
-        ConvertInterfaceIndexToLuid(aa->u.s.IfIndex, &luid);
+        ConvertInterfaceIndexToLuid(aa->IfIndex, &luid);
         ConvertInterfaceLuidToGuid(&luid, &id);
 
         /* assume a one-to-one mapping between networks and connections */
