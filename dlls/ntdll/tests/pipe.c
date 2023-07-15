@@ -131,6 +131,24 @@ static BOOL init_func_ptrs(void)
     return TRUE;
 }
 
+static HANDLE create_process(const char *arg)
+{
+    STARTUPINFOA si = { 0 };
+    PROCESS_INFORMATION pi;
+    char cmdline[MAX_PATH];
+    char **argv;
+    BOOL ret;
+
+    si.cb = sizeof(si);
+    winetest_get_mainargs(&argv);
+    sprintf(cmdline, "%s %s %s", argv[0], argv[1], arg);
+    ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "got %lu.\n", GetLastError());
+    ret = CloseHandle(pi.hThread);
+    ok(ret, "got %lu.\n", GetLastError());
+    return pi.hProcess;
+}
+
 static inline BOOL is_signaled( HANDLE obj )
 {
     return WaitForSingleObject( obj, 0 ) == WAIT_OBJECT_0;
@@ -2971,12 +2989,136 @@ static void test_pipe_names(void)
     }
 }
 
+static void test_async_cancel_on_handle_close(void)
+{
+    static const struct
+    {
+        BOOL event;
+        PIO_APC_ROUTINE apc;
+        BOOL apc_context;
+    }
+    tests[] =
+    {
+        {TRUE, NULL},
+        {FALSE, NULL},
+        {TRUE, ioapc},
+        {FALSE, ioapc},
+        {TRUE, NULL, TRUE},
+        {FALSE, NULL, TRUE},
+        {TRUE, ioapc, TRUE},
+        {FALSE, ioapc, TRUE},
+    };
+
+    FILE_IO_COMPLETION_NOTIFICATION_INFORMATION info;
+    char read_buf[16];
+    HANDLE port, write, read, event, handle2, process_handle;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    unsigned int i, other_process;
+    DWORD ret;
+    BOOL bret;
+
+    create_pipe_pair(&read, &write, FILE_FLAG_OVERLAPPED | PIPE_ACCESS_DUPLEX,
+                    PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, 4096);
+
+    status = pNtQueryInformationFile(read, &io, &info, sizeof(info),
+                                     FileIoCompletionNotificationInformation);
+    ok(status == STATUS_SUCCESS || broken(status == STATUS_INVALID_INFO_CLASS),
+       "status = %lx\n", status);
+    CloseHandle(read);
+    CloseHandle(write);
+    if (status)
+    {
+        win_skip("FileIoCompletionNotificationInformation is not supported.\n");
+        return;
+    }
+
+    process_handle = create_process("sleep");
+    event = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    for (other_process = 0; other_process < 2; ++other_process)
+    {
+        for (i = 0; i < ARRAY_SIZE(tests); ++i)
+        {
+            winetest_push_context("other_process %u, i %u", other_process, i);
+            create_pipe_pair(&read, &write, FILE_FLAG_OVERLAPPED | PIPE_ACCESS_DUPLEX,
+                    PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, 4096);
+            port = CreateIoCompletionPort(read, NULL, 0, 0);
+            ok(!!port, "got %p.\n", port);
+
+            memset(&io, 0xcc, sizeof(io));
+            ResetEvent(event);
+            status = NtReadFile(read, tests[i].event ? event : NULL, tests[i].apc, tests[i].apc_context ? &io : NULL, &io,
+                    read_buf, 16, NULL, NULL);
+            if (tests[i].apc)
+            {
+                ok(status == STATUS_INVALID_PARAMETER, "got %#lx.\n", status);
+                CloseHandle(read);
+                CloseHandle(write);
+                CloseHandle(port);
+                winetest_pop_context();
+                continue;
+            }
+            ok(status == STATUS_PENDING, "got %#lx.\n", status);
+            ok(io.Status == 0xcccccccc, "got %#lx.\n", io.Status);
+
+            bret = DuplicateHandle(GetCurrentProcess(), read, other_process ? process_handle : GetCurrentProcess(),
+                    &handle2, 0, FALSE, DUPLICATE_SAME_ACCESS);
+            ok(bret, "failed, error %lu.\n", GetLastError());
+
+            CloseHandle(read);
+            ok(io.Status == 0xcccccccc, "got %#lx.\n", io.Status);
+            if (other_process && tests[i].apc_context && !tests[i].event)
+                todo_wine test_queued_completion(port, &io, STATUS_CANCELLED, 0);
+            else
+                test_no_queued_completion(port);
+
+            ret = WaitForSingleObject(event, 0);
+            ok(ret == WAIT_TIMEOUT, "got %#lx.\n", ret);
+
+            if (other_process)
+            {
+                bret = DuplicateHandle(process_handle, handle2, GetCurrentProcess(), &read, 0, FALSE,
+                        DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
+                ok(bret, "failed, error %lu.\n", GetLastError());
+            }
+            else
+            {
+                read = handle2;
+            }
+            CloseHandle(read);
+            CloseHandle(write);
+            CloseHandle(port);
+            winetest_pop_context();
+        }
+    }
+
+    CloseHandle(event);
+    TerminateProcess(process_handle, 0);
+    WaitForSingleObject(process_handle, INFINITE);
+    CloseHandle(process_handle);
+}
+
 START_TEST(pipe)
 {
+    char **argv;
+    int argc;
+
     if (!init_func_ptrs())
         return;
 
     if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
+
+    argc = winetest_get_mainargs(&argv);
+    if (argc >= 3)
+    {
+        if (!strcmp(argv[2], "sleep"))
+        {
+            Sleep(5000);
+            return;
+        }
+        return;
+    }
 
     trace("starting invalid create tests\n");
     test_create_invalid();
@@ -3031,6 +3173,7 @@ START_TEST(pipe)
     test_security_info();
     test_empty_name();
     test_pipe_names();
+    test_async_cancel_on_handle_close();
 
     pipe_for_each_state(create_pipe_server, connect_pipe, test_pipe_state);
     pipe_for_each_state(create_pipe_server, connect_and_write_pipe, test_pipe_with_data_state);
