@@ -989,7 +989,8 @@ static const char *build_spec_obj( struct options *opts, const char *spec_file, 
         if (opts->large_address_aware) strarray_add( &spec_args, "--large-address-aware" );
     }
 
-    if (opts->target.platform == PLATFORM_WINDOWS) strarray_add(&spec_args, "--safeseh");
+    if (opts->target.platform == PLATFORM_WINDOWS && opts->target.cpu == CPU_i386)
+        strarray_add(&spec_args, "--safeseh");
 
     if (entry_point)
     {
