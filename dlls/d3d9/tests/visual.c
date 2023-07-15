@@ -26423,6 +26423,7 @@ static void test_desktop_window(void)
     unsigned int color;
     IDirect3D9 *d3d;
     ULONG refcount;
+    D3DCAPS9 caps;
     HWND window;
     HRESULT hr;
 
@@ -26475,9 +26476,18 @@ static void test_desktop_window(void)
     device = create_device(d3d, NULL, NULL, TRUE);
     ok(device != NULL, "Failed to create a D3D device\n");
 
-    hr = IDirect3DDevice9_CreateVertexShader(device, simple_vs, &shader);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#lx.\n", hr);
-    IDirect3DVertexShader9_Release(shader);
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#lx.\n", hr);
+    if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1))
+    {
+        hr = IDirect3DDevice9_CreateVertexShader(device, simple_vs, &shader);
+        ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#lx.\n", hr);
+        IDirect3DVertexShader9_Release(shader);
+    }
+    else
+    {
+        skip("Vertex shaders not supported.\n");
+    }
 
     IDirect3DDevice9_Release(device);
 
