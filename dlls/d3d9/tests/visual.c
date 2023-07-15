@@ -26419,6 +26419,7 @@ static void test_nrm_instruction(void)
 static void test_desktop_window(void)
 {
     IDirect3DVertexShader9 *shader;
+    IDirect3DTexture9 *texture;
     IDirect3DDevice9 *device;
     unsigned int color;
     IDirect3D9 *d3d;
@@ -26475,6 +26476,10 @@ static void test_desktop_window(void)
     /* test device with NULL HWND */
     device = create_device(d3d, NULL, NULL, TRUE);
     ok(device != NULL, "Failed to create a D3D device\n");
+
+    hr = IDirect3DDevice9_CreateTexture(device, 1, 1, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &texture, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    IDirect3DTexture9_Release(texture);
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "Failed to get device caps, hr %#lx.\n", hr);
