@@ -4819,6 +4819,7 @@ static const struct wined3d_state_entry_template ffp_fragmentstate_template[] = 
     { STATE_RENDER(WINED3D_RS_FOGVERTEXMODE),             { STATE_RENDER(WINED3D_RS_FOGENABLE),                 NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_FOGSTART),                  { STATE_RENDER(WINED3D_RS_FOGSTART),                  state_fogstartend   }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_FOGEND),                    { STATE_RENDER(WINED3D_RS_FOGSTART),                  NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),           { STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),           state_srgbwrite     }, ARB_FRAMEBUFFER_SRGB            },
     { STATE_RENDER(WINED3D_RS_SHADEMODE),                 { STATE_RENDER(WINED3D_RS_SHADEMODE),                 state_shademode     }, WINED3D_GL_EXT_NONE             },
     { STATE_SAMPLER(0),                                   { STATE_SAMPLER(0),                                   sampler_texdim      }, WINED3D_GL_EXT_NONE             },
     { STATE_SAMPLER(1),                                   { STATE_SAMPLER(1),                                   sampler_texdim      }, WINED3D_GL_EXT_NONE             },
@@ -4897,6 +4898,7 @@ static void ffp_fragment_get_caps(const struct wined3d_adapter *adapter, struct 
             | WINED3DTEXOPCAPS_SELECTARG1
             | WINED3DTEXOPCAPS_SELECTARG2
             | WINED3DTEXOPCAPS_DISABLE;
+    caps->srgb_write = !!gl_info->supported[ARB_FRAMEBUFFER_SRGB];
 
     if (gl_info->supported[ARB_TEXTURE_ENV_COMBINE]
             || gl_info->supported[EXT_TEXTURE_ENV_COMBINE]
