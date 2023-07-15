@@ -3171,11 +3171,14 @@ static PropertyItem *get_gif_loopcount(IWICMetadataReader *reader)
 
 static PropertyItem *get_gif_background(IWICMetadataReader *reader)
 {
-    PropertyItem *background;
+    PropertyItem *background = NULL;
 
-    background = get_property(reader, &GUID_MetadataFormatLSD, L"BackgroundColorIndex");
-    if (background)
-        background->id = PropertyTagIndexBackground;
+    if (get_bool_property(reader, &GUID_MetadataFormatLSD, L"GlobalColorTableFlag"))
+    {
+        background = get_property(reader, &GUID_MetadataFormatLSD, L"BackgroundColorIndex");
+        if (background)
+            background->id = PropertyTagIndexBackground;
+    }
 
     return background;
 }
