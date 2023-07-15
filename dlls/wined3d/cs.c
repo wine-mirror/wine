@@ -29,6 +29,7 @@ struct wined3d_deferred_upload
 {
     struct wined3d_resource *resource;
     unsigned int sub_resource_idx;
+    struct wined3d_bo *bo;
     uint8_t *sysmem, *map_ptr;
     struct wined3d_box box;
     uint32_t upload_flags;
@@ -4137,7 +4138,9 @@ static bool wined3d_deferred_context_map_upload_bo(struct wined3d_device_context
 {
     struct wined3d_deferred_context *deferred = wined3d_deferred_context_from_context(context);
     const struct wined3d_format *format = resource->format;
+    struct wined3d_device *device = context->device;
     struct wined3d_deferred_upload *upload;
+    struct wined3d_bo_address addr;
     uint8_t *sysmem;
     size_t size;
 
@@ -4174,34 +4177,54 @@ static bool wined3d_deferred_context_map_upload_bo(struct wined3d_device_context
             deferred->upload_count + 1, sizeof(*deferred->uploads)))
         return false;
 
-    if (!deferred->upload_heap)
+    upload = &deferred->uploads[deferred->upload_count++];
+
+    if ((flags & WINED3D_MAP_DISCARD)
+            && device->adapter->adapter_ops->adapter_alloc_bo(device, resource, sub_resource_idx, &addr))
     {
-        if (!(deferred->upload_heap = HeapCreate(0, 0, 0)))
+        upload->bo = addr.buffer_object;
+        upload->sysmem = NULL;
+
+        TRACE("Allocated BO %s.\n", debug_bo_address(&addr));
+
+        wined3d_device_bo_map_lock(device);
+        upload->map_ptr = addr.buffer_object->map_ptr;
+        wined3d_device_bo_map_unlock(device);
+        upload->map_ptr += addr.buffer_object->memory_offset;
+        assert(upload->map_ptr);
+    }
+    else
+    {
+        if (!deferred->upload_heap)
         {
-            ERR("Failed to create upload heap.\n");
-            return false;
+            if (!(deferred->upload_heap = HeapCreate(0, 0, 0)))
+            {
+                ERR("Failed to create upload heap.\n");
+                return false;
+            }
+
+            if (!(deferred->upload_heap_refcount = heap_alloc(sizeof(*deferred->upload_heap_refcount))))
+            {
+                HeapDestroy(deferred->upload_heap);
+                deferred->upload_heap = 0;
+                return false;
+            }
+
+            *deferred->upload_heap_refcount = 1;
         }
 
-        if (!(deferred->upload_heap_refcount = heap_alloc(sizeof(*deferred->upload_heap_refcount))))
-        {
-            HeapDestroy(deferred->upload_heap);
-            deferred->upload_heap = 0;
+        if (!(sysmem = HeapAlloc(deferred->upload_heap, 0, size + RESOURCE_ALIGNMENT - 1)))
             return false;
-        }
 
-        *deferred->upload_heap_refcount = 1;
+        upload->bo = NULL;
+        upload->sysmem = sysmem;
+        upload->map_ptr = (void *)align((size_t)upload->sysmem, RESOURCE_ALIGNMENT);
     }
 
-    if (!(sysmem = HeapAlloc(deferred->upload_heap, 0, size + RESOURCE_ALIGNMENT - 1)))
-        return false;
-
-    upload = &deferred->uploads[deferred->upload_count++];
     upload->upload_flags = UPLOAD_BO_UPLOAD_ON_UNMAP;
     upload->resource = resource;
     wined3d_resource_incref(resource);
     upload->sub_resource_idx = sub_resource_idx;
-    upload->sysmem = sysmem;
-    upload->map_ptr = (void *)align((size_t)upload->sysmem, RESOURCE_ALIGNMENT);
     upload->box = *box;
 
     map_desc->data = upload->map_ptr;
@@ -4217,8 +4240,10 @@ static bool wined3d_deferred_context_unmap_upload_bo(struct wined3d_device_conte
     if ((upload = deferred_context_get_upload(deferred, resource, sub_resource_idx)))
     {
         *box = upload->box;
-        bo->addr.buffer_object = 0;
-        bo->addr.addr = upload->map_ptr;
+        if ((bo->addr.buffer_object = upload->bo))
+            bo->addr.addr = NULL;
+        else
+            bo->addr.addr = upload->map_ptr;
         bo->flags = upload->upload_flags;
         upload->upload_flags = 0;
         return true;
@@ -4456,12 +4481,29 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
 static void wined3d_command_list_destroy_object(void *object)
 {
     struct wined3d_command_list *list = object;
+    struct wined3d_context *context;
     unsigned int i;
 
     TRACE("list %p.\n", list);
 
+    context = context_acquire(list->device, NULL, 0);
+
     for (i = 0; i < list->upload_count; ++i)
-        HeapFree(list->upload_heap, 0, list->uploads[i].sysmem);
+    {
+        struct wined3d_bo *bo;
+
+        if ((bo = list->uploads[i].bo))
+        {
+            wined3d_context_destroy_bo(context, bo);
+            heap_free(bo);
+        }
+        else
+        {
+            HeapFree(list->upload_heap, 0, list->uploads[i].sysmem);
+        }
+    }
+
+    context_release(context);
 
     if (list->upload_heap)
     {
