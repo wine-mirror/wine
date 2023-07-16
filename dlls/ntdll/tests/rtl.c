@@ -27,6 +27,7 @@
 #include "in6addr.h"
 #include "inaddr.h"
 #include "ip2string.h"
+#include "ddk/ntifs.h"
 #include "wine/asm.h"
 
 #ifndef __WINE_WINTERNL_H
