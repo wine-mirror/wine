@@ -399,16 +399,19 @@ static MSG *msg_32to64( MSG *msg, const MSG32 *msg32 )
     return msg;
 }
 
-static MSG32 *msg_64to32( const MSG *msg, MSG32 *msg32 )
+static MSG32 *msg_64to32( const MSG *msg64, MSG32 *msg32 )
 {
+    MSG32 msg;
+
     if (!msg32) return NULL;
 
-    msg32->hwnd    = HandleToUlong( msg->hwnd );
-    msg32->message = msg->message;
-    msg32->wParam  = msg->wParam;
-    msg32->lParam  = msg->lParam;
-    msg32->time    = msg->time;
-    msg32->pt      = msg->pt;
+    msg.hwnd    = HandleToLong( msg64->hwnd );
+    msg.message = msg64->message;
+    msg.wParam  = msg64->wParam;
+    msg.lParam  = msg64->lParam;
+    msg.time    = msg64->time;
+    msg.pt      = msg64->pt;
+    memcpy( msg32, &msg, sizeof(msg) );
     return msg32;
 }
 
@@ -422,32 +425,37 @@ static struct client_menu_name *client_menu_name_32to64( struct client_menu_name
     return name;
 }
 
-static struct client_menu_name32 *client_menu_name_64to32( const struct client_menu_name *name,
+static struct client_menu_name32 *client_menu_name_64to32( const struct client_menu_name *name64,
                                                            struct client_menu_name32 *name32 )
 {
     if (name32)
     {
-        name32->nameA = PtrToUlong( name->nameA );
-        name32->nameW = PtrToUlong( name->nameW );
-        name32->nameUS = PtrToUlong( name->nameUS );
+        struct client_menu_name32 name;
+        name.nameA = PtrToUlong( name64->nameA );
+        name.nameW = PtrToUlong( name64->nameW );
+        name.nameUS = PtrToUlong( name64->nameUS );
+        memcpy( name32, &name, sizeof(name) );
     }
     return name32;
 }
 
 static void win_proc_params_64to32( const struct win_proc_params *src, struct win_proc_params32 *dst )
 {
-    dst->func = PtrToUlong( src->func );
-    dst->hwnd = HandleToUlong( src->hwnd );
-    dst->msg = src->msg;
-    dst->wparam = src->wparam;
-    dst->lparam = src->lparam;
-    dst->ansi = src->ansi;
-    dst->ansi_dst = src->ansi_dst;
-    dst->needs_unpack = src->needs_unpack;
-    dst->mapping = src->mapping;
-    dst->dpi_awareness = HandleToUlong( src->dpi_awareness );
-    dst->procA = PtrToUlong( src->procA );
-    dst->procW = PtrToUlong( src->procW );
+    struct win_proc_params32 params;
+
+    params.func = PtrToUlong( src->func );
+    params.hwnd = HandleToUlong( src->hwnd );
+    params.msg = src->msg;
+    params.wparam = src->wparam;
+    params.lparam = src->lparam;
+    params.ansi = src->ansi;
+    params.ansi_dst = src->ansi_dst;
+    params.needs_unpack = src->needs_unpack;
+    params.mapping = src->mapping;
+    params.dpi_awareness = HandleToUlong( src->dpi_awareness );
+    params.procA = PtrToUlong( src->procA );
+    params.procW = PtrToUlong( src->procW );
+    memcpy( dst, &params, sizeof(params) );
 }
 
 static void createstruct_32to64( const CREATESTRUCT32 *from, CREATESTRUCTW *to )
@@ -469,16 +477,19 @@ static void createstruct_32to64( const CREATESTRUCT32 *from, CREATESTRUCTW *to )
 
 static void createstruct_64to32( const CREATESTRUCTW *from, CREATESTRUCT32 *to )
 {
-    to->lpCreateParams = PtrToUlong( from->lpCreateParams );
-    to->hInstance      = PtrToUlong( from->hInstance );
-    to->hMenu          = HandleToUlong( from->hMenu );
-    to->hwndParent     = HandleToUlong( from->hwndParent );
-    to->cy             = from->cy;
-    to->cx             = from->cx;
-    to->y              = from->y;
-    to->x              = from->x;
-    to->style          = from->style;
-    to->dwExStyle      = from->dwExStyle;
+    CREATESTRUCT32 cs;
+
+    cs.lpCreateParams = PtrToUlong( from->lpCreateParams );
+    cs.hInstance      = PtrToUlong( from->hInstance );
+    cs.hMenu          = HandleToUlong( from->hMenu );
+    cs.hwndParent     = HandleToUlong( from->hwndParent );
+    cs.cy             = from->cy;
+    cs.cx             = from->cx;
+    cs.y              = from->y;
+    cs.x              = from->x;
+    cs.style          = from->style;
+    cs.dwExStyle      = from->dwExStyle;
+    memcpy( to, &cs, sizeof(cs) );
 }
 
 static void winpos_32to64( WINDOWPOS *dst, const WINDOWPOS32 *src )
@@ -494,13 +505,16 @@ static void winpos_32to64( WINDOWPOS *dst, const WINDOWPOS32 *src )
 
 static void winpos_64to32( const WINDOWPOS *src, WINDOWPOS32 *dst )
 {
-    dst->hwnd            = HandleToUlong( src->hwnd );
-    dst->hwndInsertAfter = HandleToUlong( src->hwndInsertAfter );
-    dst->x               = src->x;
-    dst->y               = src->y;
-    dst->cx              = src->cx;
-    dst->cy              = src->cy;
-    dst->flags           = src->flags;
+    WINDOWPOS32 wp;
+
+    wp.hwnd            = HandleToUlong( src->hwnd );
+    wp.hwndInsertAfter = HandleToUlong( src->hwndInsertAfter );
+    wp.x               = src->x;
+    wp.y               = src->y;
+    wp.cx              = src->cx;
+    wp.cy              = src->cy;
+    wp.flags           = src->flags;
+    memcpy( dst, &wp, sizeof(wp) );
 }
 
 static PAINTSTRUCT *paintstruct_32to64( PAINTSTRUCT *ps, const PAINTSTRUCT32 *ps32 )
@@ -514,16 +528,19 @@ static PAINTSTRUCT *paintstruct_32to64( PAINTSTRUCT *ps, const PAINTSTRUCT32 *ps
     return ps;
 }
 
-static MOUSEHOOKSTRUCTEX32 *mousehookstruct_64to32( const MOUSEHOOKSTRUCTEX *hook,
+static MOUSEHOOKSTRUCTEX32 *mousehookstruct_64to32( const MOUSEHOOKSTRUCTEX *hook64,
                                                     MOUSEHOOKSTRUCTEX32 *hook32 )
 {
-    if (!hook) return NULL;
+    MOUSEHOOKSTRUCTEX32 hook;
 
-    hook32->pt           = hook->pt;
-    hook32->hwnd         = HandleToUlong( hook->hwnd );
-    hook32->wHitTestCode = hook->wHitTestCode;
-    hook32->dwExtraInfo  = hook->dwExtraInfo;
-    hook32->mouseData    = hook->mouseData;
+    if (!hook64) return NULL;
+
+    hook.pt           = hook64->pt;
+    hook.hwnd         = HandleToUlong( hook64->hwnd );
+    hook.wHitTestCode = hook64->wHitTestCode;
+    hook.dwExtraInfo  = hook64->dwExtraInfo;
+    hook.mouseData    = hook64->mouseData;
+    memcpy( hook32, &hook, sizeof(hook) );
     return hook32;
 }
 
