@@ -488,6 +488,8 @@ static void createstruct_64to32( const CREATESTRUCTW *from, CREATESTRUCT32 *to )
     cs.y              = from->y;
     cs.x              = from->x;
     cs.style          = from->style;
+    cs.lpszName       = PtrToUlong( from->lpszName );
+    cs.lpszClass      = PtrToUlong( from->lpszClass );
     cs.dwExStyle      = from->dwExStyle;
     memcpy( to, &cs, sizeof(cs) );
 }
@@ -633,11 +635,11 @@ static NTSTATUS WINAPI wow64_NtUserCallWinProc( void *arg, ULONG size )
     return NtCallbackReturn( &result, sizeof(result), status );
 }
 
-static UINT hook_lparam_64to32( struct win_hook_params *params, const void *lp, void *lp32 )
+static UINT hook_lparam_64to32( int id, int code, const void *lp, size_t size, void *lp32 )
 {
-    if (!params->lparam_size) return 0;
+    if (!size) return 0;
 
-    switch (params->id)
+    switch (id)
     {
     case WH_SYSMSGFILTER:
     case WH_MSGFILTER:
@@ -646,28 +648,27 @@ static UINT hook_lparam_64to32( struct win_hook_params *params, const void *lp, 
         return sizeof(MSG32);
 
     case WH_CBT:
-        switch (params->code)
+        switch (code)
         {
         case HCBT_CREATEWND:
-            if (lp)
             {
-                const CREATESTRUCTW *cs = lp;
+                const CREATESTRUCTW *cs64 = lp;
                 CREATESTRUCT32 *cs32 = lp32;
-                createstruct_64to32( cs, cs32 );
-                cs32->lpszName  = PtrToUlong( cs->lpszName );
-                cs32->lpszClass = PtrToUlong( cs->lpszClass );
+                createstruct_64to32( cs64, cs32 );
+                size -= sizeof(*cs64);
+                if (size) memmove( cs32 + 1, cs64 + 1, size );
+                return sizeof(*cs32) + size;
             }
-            return sizeof(CREATESTRUCT32);
 
         case HCBT_ACTIVATE:
-            if (lp)
             {
                 const CBTACTIVATESTRUCT *cbt = lp;
-                CBTACTIVATESTRUCT32 *cbt32 = lp32;
-                cbt32->fMouse     = cbt->fMouse;
-                cbt32->hWndActive = HandleToUlong( cbt->hWndActive );
+                CBTACTIVATESTRUCT32 cbt32;
+                cbt32.fMouse     = cbt->fMouse;
+                cbt32.hWndActive = HandleToUlong( cbt->hWndActive );
+                memcpy( lp32, &cbt32, sizeof(cbt32) );
+                return sizeof(cbt32);
             }
-            return sizeof(CBTACTIVATESTRUCT32);
 
         case HCBT_CLICKSKIPPED:
             mousehookstruct_64to32( lp, lp32 );
@@ -676,120 +677,122 @@ static UINT hook_lparam_64to32( struct win_hook_params *params, const void *lp, 
         break;
 
     case WH_CALLWNDPROC:
-        if (lp)
         {
             const CWPSTRUCT *cwp = lp;
-            CWPSTRUCT32 *cwp32 = lp32;
-            cwp32->lParam  = cwp->lParam;
-            cwp32->wParam  = cwp->wParam;
-            cwp32->message = cwp->message;
-            cwp32->hwnd    = HandleToUlong( cwp->hwnd );
+            CWPSTRUCT32 cwp32;
+            cwp32.lParam  = cwp->lParam;
+            cwp32.wParam  = cwp->wParam;
+            cwp32.message = cwp->message;
+            cwp32.hwnd    = HandleToUlong( cwp->hwnd );
+            memcpy( lp32, &cwp32, sizeof(cwp32) );
+            return sizeof(cwp32);
         }
-        return sizeof(CWPSTRUCT32);
 
     case WH_CALLWNDPROCRET:
-        if (lp)
         {
             const CWPRETSTRUCT *cwpret = lp;
-            CWPRETSTRUCT32 *cwpret32 = lp32;
-            cwpret32->lResult = cwpret->lResult;
-            cwpret32->lParam  = cwpret->lParam;
-            cwpret32->wParam  = cwpret->wParam;
-            cwpret32->message = cwpret->message;
-            cwpret32->hwnd    = HandleToUlong( cwpret->hwnd );
+            CWPRETSTRUCT32 cwpret32;
+            cwpret32.lResult = cwpret->lResult;
+            cwpret32.lParam  = cwpret->lParam;
+            cwpret32.wParam  = cwpret->wParam;
+            cwpret32.message = cwpret->message;
+            cwpret32.hwnd    = HandleToUlong( cwpret->hwnd );
+            memcpy( lp32, &cwpret32, sizeof(cwpret32) );
+            return sizeof(cwpret32);
         }
-        return sizeof(CWPRETSTRUCT32);
 
     case WH_MOUSE:
         mousehookstruct_64to32( lp, lp32 );
         return sizeof(MOUSEHOOKSTRUCTEX32);
 
     case WH_MOUSE_LL:
-        if (lp)
         {
             const MSLLHOOKSTRUCT *hook = lp;
-            MSLLHOOKSTRUCT32 *hook32 = lp32;
-            hook32->pt          = hook->pt;
-            hook32->mouseData   = hook->mouseData;
-            hook32->flags       = hook->flags;
-            hook32->time        = hook->time;
-            hook32->dwExtraInfo = hook->dwExtraInfo;
+            MSLLHOOKSTRUCT32 hook32;
+            hook32.pt          = hook->pt;
+            hook32.mouseData   = hook->mouseData;
+            hook32.flags       = hook->flags;
+            hook32.time        = hook->time;
+            hook32.dwExtraInfo = hook->dwExtraInfo;
+            memcpy( lp32, &hook32, sizeof(hook32) );
+            return sizeof(hook32);
         }
-        return sizeof(MSLLHOOKSTRUCT32);
 
     case WH_KEYBOARD_LL:
-        if (lp)
         {
             const KBDLLHOOKSTRUCT *hook = lp;
-            KBDLLHOOKSTRUCT32 *hook32 = lp32;
-            hook32->vkCode      = hook->vkCode;
-            hook32->scanCode    = hook->scanCode;
-            hook32->flags       = hook->flags;
-            hook32->time        = hook->time;
-            hook32->dwExtraInfo = hook->dwExtraInfo;
+            KBDLLHOOKSTRUCT32 hook32;
+            hook32.vkCode      = hook->vkCode;
+            hook32.scanCode    = hook->scanCode;
+            hook32.flags       = hook->flags;
+            hook32.time        = hook->time;
+            hook32.dwExtraInfo = hook->dwExtraInfo;
+            memcpy( lp32, &hook32, sizeof(hook32) );
+            return sizeof(hook32);
         }
-        return sizeof(KBDLLHOOKSTRUCT32);
 
     case WH_JOURNALRECORD:
-        if (lp)
         {
             const EVENTMSG *event = lp;
-            EVENTMSG32 *event32 = lp32;
+            EVENTMSG32 event32;
 
-            event32->message = event->message;
-            event32->paramL = event->paramL;
-            event32->paramH = event->paramH;
-            event32->time = event->time;
-            event32->hwnd = HandleToUlong( event->hwnd );
+            event32.message = event->message;
+            event32.paramL = event->paramL;
+            event32.paramH = event->paramH;
+            event32.time = event->time;
+            event32.hwnd = HandleToUlong( event->hwnd );
+            memcpy( lp32, &event32, sizeof(event32) );
+            return sizeof(event32);
         }
-        return sizeof(EVENTMSG32);
     }
 
-    if (lp) memcpy( lp32, lp, params->lparam_size );
-    return params->lparam_size;
+    memmove( lp32, lp, size );
+    return size;
 }
 
 static NTSTATUS WINAPI wow64_NtUserCallWindowsHook( void *arg, ULONG size )
 {
     struct win_hook_params *params = arg;
-    struct win_hook_params32 *params32;
-    UINT lparam32_size = 0, module_size, size32;
+    struct win_hook_params32 params32;
+    UINT lparam64_size, module_size;
     void *ret_ptr;
     ULONG ret_len;
     NTSTATUS ret;
 
-    lparam32_size = hook_lparam_64to32( params, NULL, NULL );
     module_size = size - params->lparam_size - sizeof(*params);
+    lparam64_size = params->lparam_size;
 
-    size32 = sizeof(*params32) + lparam32_size + module_size;
-    if (!(params32 = Wow64AllocateTemp( size32 ))) return 0;
-    params32->proc = (UINT_PTR)params->proc;
-    params32->handle = HandleToUlong( params->handle );
-    params32->pid = params->pid;
-    params32->tid = params->tid;
-    params32->id = params->id;
-    params32->code = params->code;
-    params32->wparam = params->wparam;
-    params32->lparam = params->lparam_size ? 0 : params->lparam;
-    params32->lparam_size = lparam32_size;
-    params32->prev_unicode = params->prev_unicode;
-    params32->next_unicode = params->next_unicode;
-    if (lparam32_size) hook_lparam_64to32( params, params + 1, params32 + 1 );
+    params32.proc         = PtrToUlong( params->proc );
+    params32.handle       = HandleToUlong( params->handle );
+    params32.pid          = params->pid;
+    params32.tid          = params->tid;
+    params32.id           = params->id;
+    params32.code         = params->code;
+    params32.wparam       = params->wparam;
+    params32.lparam       = lparam64_size ? 0 : params->lparam;
+    params32.prev_unicode = params->prev_unicode;
+    params32.next_unicode = params->next_unicode;
+    params32.lparam_size  = hook_lparam_64to32( params32.id, params32.code, params + 1,
+                                                lparam64_size, (char *)arg + sizeof(params32) );
+    memcpy( arg, &params32, sizeof(params32) );
     if (module_size)
-        memcpy( (char *)(params32 + 1) + params32->lparam_size,
-                (const char *)params + size - module_size, module_size );
+        memmove( (char *)arg + sizeof(params32) + params32.lparam_size,
+                 (const char *)arg + size - module_size, module_size );
 
-    ret = Wow64KiUserCallbackDispatcher( NtUserCallWindowsHook, params32, size32, &ret_ptr, &ret_len );
+    ret = Wow64KiUserCallbackDispatcher( NtUserCallWindowsHook, arg,
+                                         sizeof(params32) + params32.lparam_size + module_size,
+                                         &ret_ptr, &ret_len );
 
-    switch (params->id)
+    switch (params32.id)
     {
     case WH_SYSMSGFILTER:
     case WH_MSGFILTER:
     case WH_GETMESSAGE:
-        if (params->lparam_size == sizeof(MSG))
+        if (ret_len == sizeof(MSG32))
         {
-            msg_32to64( (MSG *)(params + 1), (const MSG32 *)(params32 + 1) );
-            return NtCallbackReturn( params + 1, params->lparam_size, ret );
+            MSG msg;
+            msg_32to64( &msg, ret_ptr );
+            return NtCallbackReturn( &msg, sizeof(msg), ret );
         }
     }
 
@@ -2907,7 +2910,16 @@ static LRESULT message_call_32to64( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
             createstruct_32to64( cs32, &cs );
             ret = NtUserMessageCall( hwnd, msg, wparam, (LPARAM)&cs, result_info, type, ansi );
-            createstruct_64to32( &cs, cs32 );
+            cs32->lpCreateParams = PtrToUlong( cs.lpCreateParams );
+            cs32->hInstance      = PtrToUlong( cs.hInstance );
+            cs32->hMenu          = HandleToLong( cs.hMenu );
+            cs32->hwndParent     = HandleToLong( cs.hwndParent );
+            cs32->cy             = cs.cy;
+            cs32->cx             = cs.cx;
+            cs32->y              = cs.y;
+            cs32->x              = cs.x;
+            cs32->style          = cs.style;
+            cs32->dwExStyle      = cs.dwExStyle;
             return ret;
         }
 
