@@ -701,14 +701,49 @@ static HRESULT WINAPI GifFrameDecode_GetResolution(IWICBitmapFrameDecode *iface,
     return S_OK;
 }
 
+static void copy_palette(ColorMapObject *cm, Extensions *extensions, int count, WICColor *colors)
+{
+    int i;
+
+    if (cm)
+    {
+        for (i = 0; i < count; i++)
+        {
+            colors[i] = 0xff000000 | /* alpha */
+                        cm->Colors[i].Red << 16 |
+                        cm->Colors[i].Green << 8 |
+                        cm->Colors[i].Blue;
+        }
+    }
+    else
+    {
+        colors[0] = 0xff000000;
+        colors[1] = 0xffffffff;
+        for (i = 2; i < count; i++)
+            colors[i] = 0xff000000;
+    }
+
+    /* look for the transparent color extension */
+    for (i = 0; i < extensions->ExtensionBlockCount; i++)
+    {
+        ExtensionBlock *eb = extensions->ExtensionBlocks + i;
+        if (eb->Function == GRAPHICS_EXT_FUNC_CODE &&
+            eb->ByteCount == 8 && eb->Bytes[3] & 1)
+        {
+            int trans = (unsigned char)eb->Bytes[6];
+            colors[trans] &= 0xffffff; /* set alpha to 0 */
+            break;
+        }
+    }
+}
+
 static HRESULT WINAPI GifFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
     IWICPalette *pIPalette)
 {
     GifFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     WICColor colors[256];
     ColorMapObject *cm = This->frame->ImageDesc.ColorMap;
-    int i, trans;
-    ExtensionBlock *eb;
+
     TRACE("(%p,%p)\n", iface, pIPalette);
 
     if (!cm) cm = This->parent->gif->SColorMap;
@@ -719,24 +754,7 @@ static HRESULT WINAPI GifFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
         return E_FAIL;
     }
 
-    for (i = 0; i < cm->ColorCount; i++) {
-        colors[i] = 0xff000000| /* alpha */
-                    cm->Colors[i].Red << 16|
-                    cm->Colors[i].Green << 8|
-                    cm->Colors[i].Blue;
-    }
-
-    /* look for the transparent color extension */
-    for (i = 0; i < This->frame->Extensions.ExtensionBlockCount; ++i) {
-	eb = This->frame->Extensions.ExtensionBlocks + i;
-	if (eb->Function == GRAPHICS_EXT_FUNC_CODE && eb->ByteCount == 8) {
-	    if (eb->Bytes[3] & 1) {
-	        trans = (unsigned char)eb->Bytes[6];
-	        colors[trans] &= 0xffffff; /* set alpha to 0 */
-	        break;
-	    }
-	}
-    }
+    copy_palette(cm, &This->frame->Extensions, cm->ColorCount, colors);
 
     return IWICPalette_InitializeCustom(pIPalette, colors, cm->ColorCount);
 }
@@ -1170,8 +1188,7 @@ static HRESULT WINAPI GifDecoder_CopyPalette(IWICBitmapDecoder *iface, IWICPalet
     GifDecoder *This = impl_from_IWICBitmapDecoder(iface);
     WICColor colors[256];
     ColorMapObject *cm;
-    int i, trans, count;
-    ExtensionBlock *eb;
+    int count;
 
     TRACE("(%p,%p)\n", iface, palette);
 
@@ -1187,41 +1204,12 @@ static HRESULT WINAPI GifDecoder_CopyPalette(IWICBitmapDecoder *iface, IWICPalet
             return E_FAIL;
         }
 
-        for (i = 0; i < cm->ColorCount; i++)
-        {
-            colors[i] = 0xff000000 | /* alpha */
-                        cm->Colors[i].Red << 16 |
-                        cm->Colors[i].Green << 8 |
-                        cm->Colors[i].Blue;
-        }
-
         count = cm->ColorCount;
     }
     else
-    {
-        colors[0] = 0xff000000;
-        colors[1] = 0xffffffff;
-
-        for (i = 2; i < 256; i++)
-            colors[i] = 0xff000000;
-
         count = 256;
-    }
 
-    /* look for the transparent color extension */
-    for (i = 0; i < This->gif->SavedImages[This->current_frame].Extensions.ExtensionBlockCount; i++)
-    {
-        eb = This->gif->SavedImages[This->current_frame].Extensions.ExtensionBlocks + i;
-        if (eb->Function == GRAPHICS_EXT_FUNC_CODE && eb->ByteCount == 8)
-        {
-            if (eb->Bytes[3] & 1)
-            {
-                trans = (unsigned char)eb->Bytes[6];
-                colors[trans] &= 0xffffff; /* set alpha to 0 */
-                break;
-            }
-        }
-    }
+    copy_palette(cm, &This->gif->SavedImages[This->current_frame].Extensions, count, colors);
 
     return IWICPalette_InitializeCustom(palette, colors, count);
 }
