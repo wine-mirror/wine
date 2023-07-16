@@ -323,6 +323,10 @@ extern "C" {
 #endif
 #endif
 
+#ifndef RC_INVOKED
+#include <specstrings_strict.h>
+#endif /* RC_INVOKED */
+
 #ifndef DECLSPEC_ADDRSAFE
 #if (_MSC_VER >= 1200) && (defined(_M_ALPHA) || defined(_M_AXP64))
 #define DECLSPEC_ADDRSAFE  __declspec(address_safe)

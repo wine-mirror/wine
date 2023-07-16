@@ -710,6 +710,7 @@ SOURCES = \
 	softpub.h \
 	spatialaudioclient.idl \
 	specstrings.h \
+	specstrings_strict.h \
 	sperror.h \
 	sql.h \
 	sqlext.h \
