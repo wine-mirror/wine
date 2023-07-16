@@ -8066,6 +8066,127 @@ static void test_debug_service(DWORD numexc)
     /* not supported */
 }
 
+static void test_continue(void)
+{
+    struct context_pair {
+        CONTEXT before;
+        CONTEXT after;
+    } contexts;
+    unsigned int i;
+    NTSTATUS (*func_ptr)( struct context_pair *, BOOL alertable, void *continue_func, void *capture_func ) = code_mem;
+
+    static const DWORD call_func[] =
+    {
+        0xa9bd7bfd, /* stp x29, x30, [sp, #-0x30]! */
+                    /* stash volatile registers before calling capture */
+        0xa90107e0, /* stp x0, x1, [sp, #0x10] */
+        0xa9020fe2, /* stp x2, x3, [sp, #0x20] */
+        0xd63f0060, /* blr x3 * capture context from before NtContinue to contexts->before */
+        0xa9420fe2, /* ldp x2, x3, [sp, #0x20] */
+        0xa94107e0, /* ldp x0, x1, [sp, #0x10] */
+                    /* overwrite the contents of x4...k28 with a dummy value */
+        0xd297dde4, /* mov x4, #0xbeef */
+        0xf2bbd5a4, /* movk x4, #0xdead, lsl #16 */
+        0xaa048084, /* orr x4, x4, x4, lsl #32 */
+        0xaa0403e5, /* mov x5,  x4 */
+        0xaa0403e6, /* mov x6,  x4 */
+        0xaa0403e7, /* mov x7,  x4 */
+        0xaa0403e8, /* mov x8,  x4 */
+        0xaa0403e9, /* mov x9,  x4 */
+        0xaa0403ea, /* mov x10, x4 */
+        0xaa0403eb, /* mov x11, x4 */
+        0xaa0403ec, /* mov x12, x4 */
+        0xaa0403ed, /* mov x13, x4 */
+        0xaa0403ee, /* mov x14, x4 */
+        0xaa0403ef, /* mov x15, x4 */
+        0xaa0403f0, /* mov x16, x4 */
+        0xaa0403f1, /* mov x17, x4 */
+                    /* avoid overwriting the TEB in x18 */
+        0xaa0403f3, /* mov x19, x4 */
+        0xaa0403f4, /* mov x20, x4 */
+        0xaa0403f5, /* mov x21, x4 */
+        0xaa0403f6, /* mov x22, x4 */
+        0xaa0403f7, /* mov x23, x4 */
+        0xaa0403f8, /* mov x24, x4 */
+        0xaa0403f9, /* mov x25, x4 */
+        0xaa0403fa, /* mov x26, x4 */
+        0xaa0403fb, /* mov x27, x4 */
+        0xaa0403fc, /* mov x28, x4 */
+                    /* overwrite the contents all vector registers a dummy value */
+        0x4e080c80, /* dup v0.2d,  x4 */
+        0x4ea01c01, /* mov v1.2d,  v0.2d */
+        0x4ea01c02, /* mov v2.2d,  v0.2d */
+        0x4ea01c03, /* mov v3.2d,  v0.2d */
+        0x4ea01c04, /* mov v4.2d,  v0.2d */
+        0x4ea01c05, /* mov v5.2d,  v0.2d */
+        0x4ea01c06, /* mov v6.2d,  v0.2d */
+        0x4ea01c07, /* mov v7.2d,  v0.2d */
+        0x4ea01c08, /* mov v8.2d,  v0.2d */
+        0x4ea01c09, /* mov v9.2d,  v0.2d */
+        0x4ea01c0a, /* mov v10.2d, v0.2d */
+        0x4ea01c0b, /* mov v11.2d, v0.2d */
+        0x4ea01c0c, /* mov v12.2d, v0.2d */
+        0x4ea01c0d, /* mov v13.2d, v0.2d */
+        0x4ea01c0e, /* mov v14.2d, v0.2d */
+        0x4ea01c0f, /* mov v15.2d, v0.2d */
+        0x4ea01c10, /* mov v16.2d, v0.2d */
+        0x4ea01c11, /* mov v17.2d, v0.2d */
+        0x4ea01c12, /* mov v18.2d, v0.2d */
+        0x4ea01c13, /* mov v19.2d, v0.2d */
+        0x4ea01c14, /* mov v20.2d, v0.2d */
+        0x4ea01c15, /* mov v21.2d, v0.2d */
+        0x4ea01c16, /* mov v22.2d, v0.2d */
+        0x4ea01c17, /* mov v23.2d, v0.2d */
+        0x4ea01c18, /* mov v24.2d, v0.2d */
+        0x4ea01c19, /* mov v25.2d, v0.2d */
+        0x4ea01c1a, /* mov v26.2d, v0.2d */
+        0x4ea01c1b, /* mov v27.2d, v0.2d */
+        0x4ea01c1c, /* mov v28.2d, v0.2d */
+        0x4ea01c1d, /* mov v29.2d, v0.2d */
+        0x4ea01c1e, /* mov v30.2d, v0.2d */
+        0x4ea01c1f, /* mov v31.2d, v0.2d */
+        0xd51b441f, /* msr fpcr, xzr */
+        0xd51b443f, /* msr fpsr, xzr */
+                    /* setup the control context so execution continues from label 1 */
+        0x10000064, /* adr x4, #0xc */
+        0xf9008404, /* str x4, [x0, #0x108] */
+        0xd63f0040, /* blr x2 * restore the captured integer and floating point context */
+        0xf94017e3, /* 1: ldr x3, [sp, #0x28] */
+        0xf9400be0, /* ldr x0, [sp, #0x10] */
+        0x910e4000, /* add x0, x0, #0x390 * adjust contexts to point to contexts->after */
+        0xd63f0060, /* blr x3 * capture context from after NtContinue to contexts->after */
+        0xa8c37bfd, /* ldp x29, x30, [sp], #0x30 */
+        0xd65f03c0, /* ret */
+     };
+
+    if (!pRtlCaptureContext)
+    {
+        win_skip("RtlCaptureContext is not available.\n");
+        return;
+    }
+
+    memcpy( func_ptr, call_func, sizeof(call_func) );
+    FlushInstructionCache( GetCurrentProcess(), func_ptr, sizeof(call_func) );
+
+#define COMPARE(reg) \
+    ok( contexts.before.reg == contexts.after.reg, "wrong " #reg " %p/%p\n", (void *)(ULONG64)contexts.before.reg, (void *)(ULONG64)contexts.after.reg )
+#define COMPARE_INDEXED(reg) \
+    ok( contexts.before.reg == contexts.after.reg, "wrong " #reg " i: %u, %p/%p\n", i, (void *)(ULONG64)contexts.before.reg, (void *)(ULONG64)contexts.after.reg )
+
+    func_ptr( &contexts, FALSE, NtContinue, pRtlCaptureContext );
+
+    for (i = 1; i < 29; i++) COMPARE_INDEXED( X[i] );
+
+    COMPARE( Fpcr );
+    COMPARE( Fpsr );
+
+    for (i = 0; i < 32; i++)
+    {
+        COMPARE_INDEXED( V[i].Low );
+        COMPARE_INDEXED( V[i].High );
+    }
+#undef COMPARE
+}
 #endif  /* __aarch64__ */
 
 #if defined(__i386__) || defined(__x86_64__)
@@ -11076,6 +11197,7 @@ START_TEST(exception)
 
 #elif defined(__aarch64__)
 
+    test_continue();
     test_virtual_unwind();
 
 #elif defined(__arm__)
