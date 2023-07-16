@@ -46,6 +46,10 @@ typedef ASN1uint16_t ASN1choice_t;
 typedef ASN1uint32_t ASN1magic_t;
 typedef ASN1ztcharstring_t ASN1objectdescriptor_t;
 
+#define ASN1_PUBLIC DECLSPEC_IMPORT
+#define ASN1API     __stdcall
+#define ASN1CALL    __stdcall
+
 #define ASN1_MAKE_VERSION(major,minor) (((major) << 16) | (minor))
 #define ASN1_THIS_VERSION ASN1_MAKE_VERSION(1,0)
 
