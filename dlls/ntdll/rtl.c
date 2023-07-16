@@ -1754,7 +1754,7 @@ NTSTATUS WINAPI RtlGetCompressionWorkSpaceSize(USHORT format, PULONG compress_wo
 {
     FIXME("0x%04x, %p, %p: semi-stub\n", format, compress_workspace, decompress_workspace);
 
-    switch (format & ~COMPRESSION_ENGINE_MAXIMUM)
+    switch (format & COMPRESSION_FORMAT_MASK)
     {
         case COMPRESSION_FORMAT_LZNT1:
             if (compress_workspace)
@@ -1818,7 +1818,7 @@ NTSTATUS WINAPI RtlCompressBuffer(USHORT format, PUCHAR uncompressed, ULONG unco
     FIXME("0x%04x, %p, %lu, %p, %lu, %lu, %p, %p: semi-stub\n", format, uncompressed,
           uncompressed_size, compressed, compressed_size, chunk_size, final_size, workspace);
 
-    switch (format & ~COMPRESSION_ENGINE_MAXIMUM)
+    switch (format & COMPRESSION_FORMAT_MASK)
     {
         case COMPRESSION_FORMAT_LZNT1:
             return lznt1_compress(uncompressed, uncompressed_size, compressed,
@@ -2021,7 +2021,7 @@ NTSTATUS WINAPI RtlDecompressFragment(USHORT format, PUCHAR uncompressed, ULONG 
     TRACE("0x%04x, %p, %lu, %p, %lu, %lu, %p, %p\n", format, uncompressed,
           uncompressed_size, compressed, compressed_size, offset, final_size, workspace);
 
-    switch (format & ~COMPRESSION_ENGINE_MAXIMUM)
+    switch (format & COMPRESSION_FORMAT_MASK)
     {
         case COMPRESSION_FORMAT_LZNT1:
             return lznt1_decompress(uncompressed, uncompressed_size, compressed,
