@@ -743,20 +743,27 @@ static HRESULT WINAPI GifFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
     GifFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     WICColor colors[256];
     ColorMapObject *cm = This->frame->ImageDesc.ColorMap;
+    int count;
 
     TRACE("(%p,%p)\n", iface, pIPalette);
 
-    if (!cm) cm = This->parent->gif->SColorMap;
-
-    if (cm->ColorCount > 256)
+    if (cm)
+        count = cm->ColorCount;
+    else
     {
-        ERR("GIF contains %i colors???\n", cm->ColorCount);
+        cm = This->parent->gif->SColorMap;
+        count = This->parent->gif->SColorTableSize;
+    }
+
+    if (count > 256)
+    {
+        ERR("GIF contains %i colors???\n", count);
         return E_FAIL;
     }
 
-    copy_palette(cm, &This->frame->Extensions, cm->ColorCount, colors);
+    copy_palette(cm, &This->frame->Extensions, count, colors);
 
-    return IWICPalette_InitializeCustom(pIPalette, colors, cm->ColorCount);
+    return IWICPalette_InitializeCustom(pIPalette, colors, count);
 }
 
 static HRESULT copy_interlaced_pixels(const BYTE *srcbuffer,
@@ -1196,18 +1203,13 @@ static HRESULT WINAPI GifDecoder_CopyPalette(IWICBitmapDecoder *iface, IWICPalet
         return WINCODEC_ERR_WRONGSTATE;
 
     cm = This->gif->SColorMap;
-    if (cm)
-    {
-        if (cm->ColorCount > 256)
-        {
-            ERR("GIF contains invalid number of colors: %d\n", cm->ColorCount);
-            return E_FAIL;
-        }
+    count = This->gif->SColorTableSize;
 
-        count = cm->ColorCount;
+    if (count > 256)
+    {
+        ERR("GIF contains invalid number of colors: %d\n", count);
+        return E_FAIL;
     }
-    else
-        count = 256;
 
     copy_palette(cm, &This->gif->SavedImages[This->current_frame].Extensions, count, colors);
 

@@ -114,6 +114,7 @@ typedef struct {
 typedef struct GifFileType {
     GifWord SWidth, SHeight,        /* Screen dimensions. */
       SColorResolution,         /* How many colors can we generate? */
+      SColorTableSize,          /* Calculated color table size, even if not present */
       SBackGroundColor,         /* I hope you understand this one... */
       SAspectRatio;             /* Pixel aspect ratio, in 1/64 units, starting at 1:4. */
     ColorMapObject *SColorMap;  /* NULL if not exists. */
