@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 #include <bcrypt.h>
-/* FIXME: #include <ncrypt.h> */
+#include <ncrypt.h>
 
 #ifndef WINADVAPI
 #ifdef _ADVAPI32_
