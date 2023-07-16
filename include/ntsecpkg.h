@@ -16,8 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef _NTSECPKG_H
-#define _NTSECPKG_H
+#ifndef _NTSECPKG_
+#define _NTSECPKG_
 
 #ifdef __cplusplus
 extern "C" {
@@ -511,4 +511,4 @@ typedef NTSTATUS (WINAPI *SpUserModeInitializeFn)(ULONG, PULONG,
 #ifdef __cplusplus
 }
 #endif
-#endif /* _NTSECPKG_H */
+#endif /* _NTSECPKG_ */

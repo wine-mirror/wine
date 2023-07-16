@@ -16,8 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_NTSECAPI_H
-#define __WINE_NTSECAPI_H
+#ifndef _NTSECAPI_
+#define _NTSECAPI_
 
 #ifndef GUID_DEFINED
 # include <guiddef.h>
@@ -712,4 +712,4 @@ NTSTATUS WINAPI LsaRegisterLogonProcess(PLSA_STRING,PHANDLE,PLSA_OPERATIONAL_MOD
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
-#endif /* !defined(__WINE_NTSECAPI_H) */
+#endif /* !defined(_NTSECAPI_) */
