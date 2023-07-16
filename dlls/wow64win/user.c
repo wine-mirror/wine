@@ -615,19 +615,15 @@ static NTSTATUS WINAPI wow64_NtUserCallWinEventHook( void *arg, ULONG size )
 static NTSTATUS WINAPI wow64_NtUserCallWinProc( void *arg, ULONG size )
 {
     struct win_proc_params *params = arg;
-    struct win_proc_params32 params32_buf, *params32 = &params32_buf;
+    struct win_proc_params32 *params32 = arg;
     LRESULT result = 0;
     void *ret_ptr;
     ULONG ret_len;
     NTSTATUS status;
 
-    if (size > sizeof(*params))
-    {
-        if (!(params32 = Wow64AllocateTemp( size - sizeof(*params) + sizeof(*params32) )))
-            return 0;
-        memcpy( params32 + 1, params + 1, size - sizeof(*params) );
-    }
     win_proc_params_64to32( params, params32 );
+    if (size > sizeof(*params))
+        memmove( params32 + 1, params + 1, size - sizeof(*params) );
 
     status = Wow64KiUserCallbackDispatcher( NtUserCallWinProc, params32,
                                             size - sizeof(*params) + sizeof(*params32),
