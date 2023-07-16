@@ -155,6 +155,26 @@ typedef struct
 
 typedef struct
 {
+    ULONG szClass;
+    ULONG szTitle;
+    ULONG hOwner;
+    INT   x;
+    INT   y;
+    INT   cx;
+    INT   cy;
+    DWORD style;
+    ULONG lParam;
+} MDICREATESTRUCT32;
+
+typedef struct
+{
+    ULONG hmenuIn;
+    ULONG hmenuNext;
+    ULONG hwndNext;
+} MDINEXTMENU32;
+
+typedef struct
+{
     LONG  lResult;
     LONG  lParam;
     LONG  wParam;
@@ -172,6 +192,31 @@ typedef struct
     INT   cy;
     UINT  flags;
 } WINDOWPOS32;
+
+typedef struct
+{
+    RECT  rgrc[3];
+    ULONG lppos;
+} NCCALCSIZE_PARAMS32;
+
+typedef struct
+{
+    UINT  CtlType;
+    UINT  CtlID;
+    ULONG hwndItem;
+    UINT  itemID1;
+    ULONG itemData1;
+    UINT  itemID2;
+    ULONG itemData2;
+    DWORD dwLocaleId;
+} COMPAREITEMSTRUCT32;
+
+typedef struct
+{
+    ULONG dwData;
+    DWORD cbData;
+    ULONG lpData;
+} COPYDATASTRUCT32;
 
 typedef struct
 {
@@ -292,6 +337,21 @@ struct win_proc_params32
     ULONG dpi_awareness;
     ULONG procA;
     ULONG procW;
+};
+
+struct win_hook_params32
+{
+    ULONG proc;
+    ULONG handle;
+    DWORD pid;
+    DWORD tid;
+    int id;
+    int code;
+    ULONG wparam;
+    ULONG lparam;
+    UINT lparam_size;
+    BOOL prev_unicode;
+    BOOL next_unicode;
 };
 
 struct win_event_hook_params32
@@ -679,20 +739,7 @@ static UINT hook_lparam_64to32( struct win_hook_params *params, const void *lp, 
 static NTSTATUS WINAPI wow64_NtUserCallWindowsHook( void *arg, ULONG size )
 {
     struct win_hook_params *params = arg;
-    struct
-    {
-        ULONG proc;
-        ULONG handle;
-        DWORD pid;
-        DWORD tid;
-        int id;
-        int code;
-        ULONG wparam;
-        ULONG lparam;
-        UINT lparam_size;
-        BOOL prev_unicode;
-        BOOL next_unicode;
-    } *params32;
+    struct win_hook_params32 *params32;
     UINT lparam32_size = 0, module_size, size32;
     void *ret_ptr;
     ULONG ret_len;
@@ -2853,18 +2900,7 @@ static LRESULT message_call_32to64( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
     case WM_MDICREATE:
         {
-            struct
-            {
-                ULONG szClass;
-                ULONG szTitle;
-                ULONG hOwner;
-                INT   x;
-                INT   y;
-                INT   cx;
-                INT   cy;
-                DWORD style;
-                ULONG lParam;
-            } *cs32 = (void *)lparam;
+            MDICREATESTRUCT32 *cs32 = (void *)lparam;
             MDICREATESTRUCTW cs;
 
             cs.szClass = UlongToPtr( cs32->szClass );
@@ -2895,11 +2931,7 @@ static LRESULT message_call_32to64( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     case WM_NCCALCSIZE:
         if (wparam)
         {
-            struct
-            {
-                RECT  rgrc[3];
-                ULONG lppos;
-            } *params32 = (void *)lparam;
+            NCCALCSIZE_PARAMS32 *params32 = (void *)lparam;
             NCCALCSIZE_PARAMS params;
             WINDOWPOS winpos;
 
@@ -2919,17 +2951,7 @@ static LRESULT message_call_32to64( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
     case WM_COMPAREITEM:
         {
-            struct
-            {
-                UINT  CtlType;
-                UINT  CtlID;
-                ULONG hwndItem;
-                UINT  itemID1;
-                ULONG itemData1;
-                UINT  itemID2;
-                ULONG itemData2;
-                DWORD dwLocaleId;
-            } *cis32 = (void *)lparam;
+            COMPAREITEMSTRUCT32 *cis32 = (void *)lparam;
             COMPAREITEMSTRUCT cis;
 
             cis.CtlType    = cis32->CtlType;
@@ -2994,12 +3016,7 @@ static LRESULT message_call_32to64( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
     case WM_COPYDATA:
         {
-            struct
-            {
-                ULONG dwData;
-                DWORD cbData;
-                ULONG lpData;
-            } *cds32 = (void *)lparam;
+            COPYDATASTRUCT32 *cds32 = (void *)lparam;
             COPYDATASTRUCT cds;
 
             cds.dwData = cds32->dwData;
@@ -3021,12 +3038,7 @@ static LRESULT message_call_32to64( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
     case WM_NEXTMENU:
         {
-            struct
-            {
-                ULONG hmenuIn;
-                ULONG hmenuNext;
-                ULONG hwndNext;
-            } *next32 = (void *)lparam;
+            MDINEXTMENU32 *next32 = (void *)lparam;
             MDINEXTMENU next;
 
             next.hmenuIn   = LongToHandle( next32->hmenuIn );
