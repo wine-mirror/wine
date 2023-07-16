@@ -6,6 +6,7 @@ SOURCES = \
 	activation.idl \
 	activaut.idl \
 	activdbg.idl \
+	activeds.h \
 	activscp.idl \
 	adserr.h \
 	adshlp.h \
