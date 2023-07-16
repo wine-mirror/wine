@@ -769,7 +769,7 @@ static NTSTATUS WINAPI wow64_NtUserCallWindowsHook( void *arg, ULONG size )
     params32.id           = params->id;
     params32.code         = params->code;
     params32.wparam       = params->wparam;
-    params32.lparam       = lparam64_size ? 0 : params->lparam;
+    params32.lparam       = params->lparam;
     params32.prev_unicode = params->prev_unicode;
     params32.next_unicode = params->next_unicode;
     params32.lparam_size  = hook_lparam_64to32( params32.id, params32.code, params + 1,
