@@ -13217,8 +13217,8 @@ static void test_IUIAutomationEventHandler(IUIAutomation *uia_iface, IUIAutomati
     ok(AutomationEventHandler.ref > 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
 
     hr = IUIAutomation_RemoveAllEventHandlers(uia_iface);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(AutomationEventHandler.ref == 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(AutomationEventHandler.ref == 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
 
     IUIAutomationElement_Release(elem2);
 }

@@ -3261,8 +3261,36 @@ static HRESULT WINAPI uia_iface_RemoveFocusChangedEventHandler(IUIAutomation6 *i
 
 static HRESULT WINAPI uia_iface_RemoveAllEventHandlers(IUIAutomation6 *iface)
 {
-    FIXME("%p: stub\n", iface);
-    return E_NOTIMPL;
+    struct uia_event_handler_map_entry *entry, *cursor;
+
+    TRACE("%p\n", iface);
+
+    EnterCriticalSection(&com_event_handlers_cs);
+    if (!com_event_handlers.handler_count)
+        goto exit;
+
+    RB_FOR_EACH_ENTRY_DESTRUCTOR(entry, cursor, &com_event_handlers.handler_map, struct uia_event_handler_map_entry, entry)
+    {
+        struct uia_com_event *event, *event2;
+
+        LIST_FOR_EACH_ENTRY_SAFE(event, event2, &entry->handlers_list, struct uia_com_event, event_handler_map_list_entry)
+        {
+            list_remove(&event->event_handler_map_list_entry);
+            IUnknown_Release(event->handler_iface);
+            com_event_handlers.handler_count--;
+            heap_free(event);
+        }
+
+        rb_remove(&com_event_handlers.handler_map, &entry->entry);
+        IUnknown_Release(entry->handler_iface);
+        SafeArrayDestroy(entry->runtime_id);
+        heap_free(entry);
+    }
+
+exit:
+    LeaveCriticalSection(&com_event_handlers_cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI uia_iface_IntNativeArrayToSafeArray(IUIAutomation6 *iface, int *arr, int arr_count,
