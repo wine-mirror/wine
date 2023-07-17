@@ -1362,6 +1362,7 @@ struct lparam_hook_test
     const void *change_lparam;
     const void *check_lparam;
     size_t lparam_size;
+    size_t lparam_init_size;
     size_t check_size;
     BOOL poison_lparam;
     BOOL todo;
@@ -1582,7 +1583,9 @@ static void init_hook_test( const struct lparam_hook_test *test )
 
     if (test->lparam_size)
     {
-        if (test->lparam)
+        if (test->lparam_init_size)
+            memcpy( lparam_buffer, test->lparam, test->lparam_init_size );
+        else if (test->lparam)
             memcpy( lparam_buffer, test->lparam, test->lparam_size );
         else
             memset( lparam_buffer, 0xcc, test->lparam_size );
@@ -1689,8 +1692,16 @@ static void test_wndproc_hook(void)
             .lparam_size = sizeof(BOOL), .change_lparam = &false_lparam,
             .todo = TRUE
         },
+        /* messages that don't change lparam */
         { "WM_USER", WM_USER },
         { "WM_NOTIFY", WM_NOTIFY },
+        { "WM_SETTEXT", WM_SETTEXT, .lparam = strbufW, .lparam_init_size = sizeof(strbufW) },
+        { "WM_DEVMODECHANGE", WM_DEVMODECHANGE, .lparam = strbufW, .lparam_init_size = sizeof(strbufW) },
+        { "CB_DIR", CB_DIR, .lparam = strbufW, .lparam_init_size = sizeof(strbufW) },
+        { "LB_DIR", LB_DIR, .lparam = strbufW, .lparam_init_size = sizeof(strbufW) },
+        { "LB_ADDFILE", LB_ADDFILE, .lparam = strbufW, .lparam_init_size = sizeof(strbufW) },
+        { "EM_REPLACESEL", EM_REPLACESEL, .lparam = strbufW, .lparam_init_size = sizeof(strbufW) },
+        { "WM_WININICHANGE", WM_WININICHANGE, .lparam = strbufW, .lparam_init_size = sizeof(strbufW) },
     };
 
     cls.lpfnWndProc = lparam_test_proc;

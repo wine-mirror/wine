@@ -833,17 +833,13 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
         break;
     case WM_GETTEXT:
     case WM_ASKCBFORMATNAME:
-        break;
     case WM_WININICHANGE:
-        if (!*lparam) return TRUE;
-        /* fall through */
     case WM_SETTEXT:
     case WM_DEVMODECHANGE:
     case CB_DIR:
     case LB_DIR:
     case LB_ADDFILE:
     case EM_REPLACESEL:
-        if (!check_string( *buffer, size )) return FALSE;
         break;
     case WM_GETMINMAXINFO:
         minsize = sizeof(MINMAXINFO);
@@ -1184,6 +1180,13 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case WM_NCCALCSIZE:
         case WM_GETTEXT:
         case WM_ASKCBFORMATNAME:
+        case WM_WININICHANGE:
+        case WM_SETTEXT:
+        case WM_DEVMODECHANGE:
+        case CB_DIR:
+        case LB_DIR:
+        case LB_ADDFILE:
+        case EM_REPLACESEL:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;

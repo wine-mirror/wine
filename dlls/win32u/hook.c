@@ -246,7 +246,7 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, siz
             if (params->id == WH_CBT && params->code == HCBT_CREATEWND)
             {
                 CBT_CREATEWNDW *cbtc = (CBT_CREATEWNDW *)params->lparam;
-                message_size = user_message_size( WM_NCCREATE, 0, (LPARAM)cbtc->lpcs, FALSE );
+                message_size = user_message_size( WM_NCCREATE, 0, (LPARAM)cbtc->lpcs, TRUE, FALSE );
                 lparam_size = lparam_ret_size = 0;
             }
 

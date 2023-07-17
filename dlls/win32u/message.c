@@ -420,6 +420,16 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case WM_ASKCBFORMATNAME:
         if (!get_buffer_space( buffer, (*wparam * sizeof(WCHAR)), size )) return FALSE;
         break;
+    case WM_WININICHANGE:
+        if (!*lparam) return TRUE;
+        /* fall through */
+    case WM_SETTEXT:
+    case WM_DEVMODECHANGE:
+    case CB_DIR:
+    case LB_DIR:
+    case LB_ADDFILE:
+    case EM_REPLACESEL:
+        break;
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1172,7 +1182,7 @@ static size_t copy_string( void *ptr, const void *str, BOOL ansi )
  *
  * Calculate size of packed message buffer.
  */
-size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL ansi )
+size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL other_process, BOOL ansi )
 {
     const void *lparam_ptr = (const void *)lparam;
     size_t size = 0;
@@ -1194,6 +1204,15 @@ size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL ansi 
     case WM_GETTEXT:
     case WM_ASKCBFORMATNAME:
         size = wparam * char_size( ansi );
+        break;
+    case WM_WININICHANGE:
+    case WM_SETTEXT:
+    case WM_DEVMODECHANGE:
+    case CB_DIR:
+    case LB_DIR:
+    case LB_ADDFILE:
+    case EM_REPLACESEL:
+        if (other_process && lparam) size = string_size( lparam_ptr, ansi );
         break;
     }
 
@@ -1590,7 +1609,7 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     if (!needs_unpack) size = 0;
     if (!is_current_thread_window( hwnd )) return 0;
 
-    packed_size = user_message_size( msg, wparam, lparam, ansi );
+    packed_size = user_message_size( msg, wparam, lparam, needs_unpack, ansi );
     if (packed_size) size = packed_size;
 
     /* first the WH_CALLWNDPROC hook */
