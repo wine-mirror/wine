@@ -103,7 +103,7 @@ static BOOL buffer_is_fully_dirty(const struct wined3d_buffer *buffer)
             && !buffer->maps->offset && buffer->maps->size == buffer->resource.size;
 }
 
-static void wined3d_buffer_validate_location(struct wined3d_buffer *buffer, DWORD location)
+void wined3d_buffer_validate_location(struct wined3d_buffer *buffer, uint32_t location)
 {
     TRACE("buffer %p, location %s.\n", buffer, wined3d_debug_location(location));
 
