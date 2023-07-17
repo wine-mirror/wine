@@ -20,8 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
-
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "macdrv_dll.h"
@@ -167,9 +165,9 @@ static HRESULT WINAPI dddo_GetData(IDataObject* iface, FORMATETC* formatEtc, STG
     if (SUCCEEDED(hr))
     {
         medium->tymed = TYMED_HGLOBAL;
-        medium->u.hGlobal = get_pasteboard_data(This->pasteboard, formatEtc->cfFormat);
+        medium->hGlobal = get_pasteboard_data(This->pasteboard, formatEtc->cfFormat);
         medium->pUnkForRelease = NULL;
-        hr = medium->u.hGlobal ? S_OK : E_OUTOFMEMORY;
+        hr = medium->hGlobal ? S_OK : E_OUTOFMEMORY;
     }
 
     return hr;
