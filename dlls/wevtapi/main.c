@@ -19,8 +19,6 @@
 
 #include <stdarg.h>
 
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "winevt.h"
@@ -63,8 +61,8 @@ BOOL WINAPI EvtGetChannelConfigProperty(EVT_HANDLE ChannelConfig,
             return FALSE;
         }
 
-        PropertyValueBuffer->u.StringVal = (LPWSTR)(PropertyValueBuffer + 1);
-        wcscpy((LPWSTR)PropertyValueBuffer->u.StringVal, log_pathW);
+        PropertyValueBuffer->StringVal = (LPWSTR)(PropertyValueBuffer + 1);
+        wcscpy((LPWSTR)PropertyValueBuffer->StringVal, log_pathW);
         PropertyValueBuffer->Type = EvtVarTypeString;
         return TRUE;
 
