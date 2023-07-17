@@ -669,6 +669,21 @@ static size_t packed_message_64to32( UINT message, WPARAM wparam,
             memcpy( params32, &dis32, sizeof(dis32) );
             return sizeof(dis32);
         }
+
+    case WM_MEASUREITEM:
+        {
+            MEASUREITEMSTRUCT32 mis32;
+            const MEASUREITEMSTRUCT *mis64 = params64;
+
+            mis32.CtlType    = mis64->CtlType;
+            mis32.CtlID      = mis64->CtlID;
+            mis32.itemID     = mis64->itemID;
+            mis32.itemWidth  = mis64->itemWidth;
+            mis32.itemHeight = mis64->itemHeight;
+            mis32.itemData   = mis64->itemData;
+            memcpy( params32, &mis32, sizeof(mis32) );
+            return sizeof(mis32);
+        }
     }
 
     memmove( params32, params64, size );
@@ -715,6 +730,20 @@ static size_t packed_result_32to64( UINT message, WPARAM wparam, const void *par
             return sizeof(*ncp64) + sizeof(WINDOWPOS);
         }
         break;
+
+    case WM_MEASUREITEM:
+        {
+            const MEASUREITEMSTRUCT32 *mis32 = params32;
+            MEASUREITEMSTRUCT *mis64 = params64;
+
+            mis64->CtlType    = mis32->CtlType;
+            mis64->CtlID      = mis32->CtlID;
+            mis64->itemID     = mis32->itemID;
+            mis64->itemWidth  = mis32->itemWidth;
+            mis64->itemHeight = mis32->itemHeight;
+            mis64->itemData   = mis32->itemData;
+            return sizeof(*mis64);
+        }
 
     case WM_GETTEXT:
     case WM_ASKCBFORMATNAME:
@@ -3155,8 +3184,12 @@ static LRESULT message_call_32to64( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
             mis.itemHeight = mis32->itemHeight;
             mis.itemData   = mis32->itemData;
             ret = NtUserMessageCall( hwnd, msg, wparam, (LPARAM)&mis, result_info, type, ansi );
+            mis32->CtlType    = mis.CtlType;
+            mis32->CtlID      = mis.CtlID;
+            mis32->itemID     = mis.itemID;
             mis32->itemWidth  = mis.itemWidth;
             mis32->itemHeight = mis.itemHeight;
+            mis32->itemData   = mis.itemData;
             return ret;
         }
 

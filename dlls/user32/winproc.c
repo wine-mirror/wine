@@ -842,20 +842,8 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case EM_REPLACESEL:
     case WM_GETMINMAXINFO:
     case WM_DRAWITEM:
-        break;
     case WM_MEASUREITEM:
-    {
-        MEASUREITEMSTRUCT mis;
-        if (size < sizeof(ps->mis)) return FALSE;
-        mis.CtlType    = ps->mis.CtlType;
-        mis.CtlID      = ps->mis.CtlID;
-        mis.itemID     = ps->mis.itemID;
-        mis.itemWidth  = ps->mis.itemWidth;
-        mis.itemHeight = ps->mis.itemHeight;
-        mis.itemData   = (ULONG_PTR)unpack_ptr( ps->mis.itemData );
-        memcpy( *buffer, &mis, sizeof(mis) );
         break;
-    }
     case WM_DELETEITEM:
     {
         DELETEITEMSTRUCT dls;
@@ -1171,6 +1159,7 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case LB_ADDFILE:
         case EM_REPLACESEL:
         case WM_GETMINMAXINFO:
+        case WM_MEASUREITEM:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;

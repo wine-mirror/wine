@@ -449,6 +449,19 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         memcpy( *buffer, &dis, sizeof(dis) );
         break;
     }
+    case WM_MEASUREITEM:
+    {
+        MEASUREITEMSTRUCT mis;
+        if (size < sizeof(ps->mis)) return FALSE;
+        mis.CtlType    = ps->mis.CtlType;
+        mis.CtlID      = ps->mis.CtlID;
+        mis.itemID     = ps->mis.itemID;
+        mis.itemWidth  = ps->mis.itemWidth;
+        mis.itemHeight = ps->mis.itemHeight;
+        mis.itemData   = (ULONG_PTR)unpack_ptr( ps->mis.itemData );
+        memcpy( *buffer, &mis, sizeof(mis) );
+        break;
+    }
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1239,6 +1252,9 @@ size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL other
     case WM_DRAWITEM:
         size = sizeof(DRAWITEMSTRUCT);
         break;
+    case WM_MEASUREITEM:
+        size = sizeof(MEASUREITEMSTRUCT);
+        break;
     }
 
     return size;
@@ -1353,6 +1369,9 @@ static void copy_user_result( void *buffer, size_t size, LRESULT result, UINT me
     case WM_GETMINMAXINFO:
         copy_size = sizeof(MINMAXINFO);
         break;
+    case WM_MEASUREITEM:
+        copy_size = sizeof(MEASUREITEMSTRUCT);
+        break;
     default:
         return;
     }
@@ -1376,9 +1395,6 @@ static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, 
     case CB_GETLBTEXT:
     case LB_GETTEXT:
         copy_size = (result + 1) * sizeof(WCHAR);
-        break;
-    case WM_MEASUREITEM:
-        copy_size = sizeof(MEASUREITEMSTRUCT);
         break;
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:

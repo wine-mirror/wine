@@ -1622,6 +1622,8 @@ static void test_wndproc_hook(void)
     static const MINMAXINFO minmax_in = { .ptMinTrackSize.x = 1 };
     static const MINMAXINFO minmax_out = { .ptMinTrackSize.x = 2 };
     static const DRAWITEMSTRUCT drawitem_in = { .itemID = 1 };
+    static const MEASUREITEMSTRUCT mis_in = { .itemID = 1 };
+    static const MEASUREITEMSTRUCT mis_out = { .itemID = 2, .CtlType = 3, .CtlID = 4, .itemData = 5 };
 
     static const struct lparam_hook_test lparam_hook_tests[] =
     {
@@ -1710,6 +1712,11 @@ static void test_wndproc_hook(void)
             "WM_GETMINMAXINFO", WM_GETMINMAXINFO,
             .lparam_size = sizeof(minmax_in), .lparam = &minmax_in, .change_lparam = &minmax_out,
             .check_size = sizeof(minmax_in)
+        },
+        {
+            "WM_MEASUREITEM", WM_MEASUREITEM, .wparam = 10,
+            .lparam_size = sizeof(mis_in), .lparam = &mis_in, .change_lparam = &mis_out,
+            .check_size = sizeof(mis_in),
         },
         /* messages that don't change lparam */
         { "WM_USER", WM_USER },
