@@ -562,7 +562,7 @@ static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined
     dst.addr = NULL;
     src.buffer_object = NULL;
     src.addr = data;
-    wined3d_context_copy_bo_address(context, &dst, &src, buffer->modified_areas, buffer->maps);
+    wined3d_context_copy_bo_address(context, &dst, &src, buffer->modified_areas, buffer->maps, WINED3D_MAP_WRITE);
 
     heap_free(data);
 }
@@ -629,7 +629,7 @@ BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
                 src.addr = NULL;
                 range.offset = 0;
                 range.size = buffer->resource.size;
-                wined3d_context_copy_bo_address(context, &dst, &src, 1, &range);
+                wined3d_context_copy_bo_address(context, &dst, &src, 1, &range, WINED3D_MAP_WRITE);
             }
             break;
 
@@ -648,9 +648,19 @@ BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
             src.addr = buffer->resource.heap_memory;
 
             if (!buffer->conversion_map)
-                wined3d_context_copy_bo_address(context, &dst, &src, buffer->modified_areas, buffer->maps);
+            {
+                uint32_t map_flags = WINED3D_MAP_WRITE;
+
+                if (buffer->modified_areas == 1 && !buffer->maps[0].offset
+                        && buffer->maps[0].size == buffer->resource.size)
+                    map_flags |= WINED3D_MAP_DISCARD;
+
+                wined3d_context_copy_bo_address(context, &dst, &src, buffer->modified_areas, buffer->maps, map_flags);
+            }
             else
+            {
                 buffer_conversion_upload(buffer, context);
+            }
             break;
 
         default:
@@ -1134,16 +1144,20 @@ static void wined3d_buffer_set_bo(struct wined3d_buffer *buffer, struct wined3d_
 void wined3d_buffer_copy_bo_address(struct wined3d_buffer *dst_buffer, struct wined3d_context *context,
         unsigned int dst_offset, const struct wined3d_const_bo_address *src_addr, unsigned int size)
 {
+    uint32_t map_flags = WINED3D_MAP_WRITE;
     struct wined3d_bo_address dst_addr;
     struct wined3d_range range;
     DWORD dst_location;
+
+    if (!dst_offset && size == dst_buffer->resource.size)
+        map_flags |= WINED3D_MAP_DISCARD;
 
     dst_location = wined3d_buffer_get_memory(dst_buffer, context, &dst_addr);
     dst_addr.addr += dst_offset;
 
     range.offset = 0;
     range.size = size;
-    wined3d_context_copy_bo_address(context, &dst_addr, (const struct wined3d_bo_address *)src_addr, 1, &range);
+    wined3d_context_copy_bo_address(context, &dst_addr, (const struct wined3d_bo_address *)src_addr, 1, &range, map_flags);
     wined3d_buffer_invalidate_range(dst_buffer, ~dst_location, dst_offset, size);
 }
 

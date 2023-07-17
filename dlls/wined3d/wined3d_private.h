@@ -2275,7 +2275,7 @@ void wined3d_context_gl_bind_texture(struct wined3d_context_gl *context_gl,
 void wined3d_context_gl_check_fbo_status(const struct wined3d_context_gl *context_gl, GLenum target) DECLSPEC_HIDDEN;
 void wined3d_context_gl_copy_bo_address(struct wined3d_context_gl *context_gl,
         const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src,
-        unsigned int range_count, const struct wined3d_range *ranges) DECLSPEC_HIDDEN;
+        unsigned int range_count, const struct wined3d_range *ranges, uint32_t map_flags) DECLSPEC_HIDDEN;
 void wined3d_context_gl_destroy(struct wined3d_context_gl *context_gl) DECLSPEC_HIDDEN;
 void wined3d_context_gl_destroy_bo(struct wined3d_context_gl *context_gl, struct wined3d_bo_gl *bo) DECLSPEC_HIDDEN;
 void wined3d_context_gl_draw_shaded_quad(struct wined3d_context_gl *context_gl, struct wined3d_texture_gl *texture_gl,
@@ -2910,7 +2910,7 @@ struct wined3d_adapter_ops
             unsigned int range_count, const struct wined3d_range *ranges);
     void (*adapter_copy_bo_address)(struct wined3d_context *context,
             const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src,
-            unsigned int range_count, const struct wined3d_range *ranges);
+            unsigned int range_count, const struct wined3d_range *ranges, uint32_t map_flags);
     void (*adapter_flush_bo_address)(struct wined3d_context *context,
             const struct wined3d_const_bo_address *data, size_t size);
     bool (*adapter_alloc_bo)(struct wined3d_device *device, struct wined3d_resource *resource,
@@ -5622,9 +5622,9 @@ static inline void wined3d_context_unmap_bo_address(struct wined3d_context *cont
 
 static inline void wined3d_context_copy_bo_address(struct wined3d_context *context,
         const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src,
-        unsigned int range_count, const struct wined3d_range *ranges)
+        unsigned int range_count, const struct wined3d_range *ranges, uint32_t map_flags)
 {
-    context->device->adapter->adapter_ops->adapter_copy_bo_address(context, dst, src, range_count, ranges);
+    context->device->adapter->adapter_ops->adapter_copy_bo_address(context, dst, src, range_count, ranges, map_flags);
 }
 
 static inline void wined3d_context_flush_bo_address(struct wined3d_context *context,

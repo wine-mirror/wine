@@ -1689,7 +1689,7 @@ void wined3d_unordered_access_view_set_counter(struct wined3d_unordered_access_v
 
     range.offset = 0;
     range.size = sizeof(value);
-    wined3d_context_copy_bo_address(context, &dst, &src, 1, &range);
+    wined3d_context_copy_bo_address(context, &dst, &src, 1, &range, WINED3D_MAP_WRITE | WINED3D_MAP_DISCARD);
 
     context_release(context);
 }
@@ -2175,7 +2175,8 @@ void wined3d_unordered_access_view_vk_clear(struct wined3d_unordered_access_view
 
     range.offset = 0;
     range.size = sizeof(constants);
-    adapter_vk_copy_bo_address(&context_vk->c, &cb_destination_address, &cb_source_address, 1, &range);
+    adapter_vk_copy_bo_address(&context_vk->c, &cb_destination_address,
+            &cb_source_address, 1, &range, WINED3D_MAP_WRITE | WINED3D_MAP_DISCARD);
 
     buffer_info.buffer = constants_bo.vk_buffer;
     buffer_info.range = constants_bo.size;

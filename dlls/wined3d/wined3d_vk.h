@@ -704,7 +704,7 @@ static inline struct wined3d_adapter_vk *wined3d_adapter_vk(struct wined3d_adapt
 
 void adapter_vk_copy_bo_address(struct wined3d_context *context, const struct wined3d_bo_address *dst,
         const struct wined3d_bo_address *src,
-        unsigned int range_count, const struct wined3d_range *ranges) DECLSPEC_HIDDEN;
+        unsigned int range_count, const struct wined3d_range *ranges, uint32_t map_flags) DECLSPEC_HIDDEN;
 unsigned int wined3d_adapter_vk_get_memory_type_index(const struct wined3d_adapter_vk *adapter_vk,
         uint32_t memory_type_mask, VkMemoryPropertyFlags flags) DECLSPEC_HIDDEN;
 BOOL wined3d_adapter_vk_init_format_info(struct wined3d_adapter_vk *adapter_vk,

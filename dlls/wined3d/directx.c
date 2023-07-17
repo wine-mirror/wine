@@ -2981,7 +2981,7 @@ static void adapter_no3d_unmap_bo_address(struct wined3d_context *context,
 
 static void adapter_no3d_copy_bo_address(struct wined3d_context *context,
         const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src,
-        unsigned int range_count, const struct wined3d_range *ranges)
+        unsigned int range_count, const struct wined3d_range *ranges, uint32_t map_flags)
 {
     unsigned int i;
 
