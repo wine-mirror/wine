@@ -22,8 +22,6 @@
 #pragma makedep unix
 #endif
 
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
 #include "config.h"
 
 #include <stdarg.h>
@@ -308,11 +306,11 @@ BOOL ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device_manag
  */
 BOOL ANDROID_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, LPDEVMODEW devmode )
 {
-    devmode->u2.dmDisplayFlags = 0;
-    devmode->u1.s2.dmPosition.x = 0;
-    devmode->u1.s2.dmPosition.y = 0;
-    devmode->u1.s2.dmDisplayOrientation = 0;
-    devmode->u1.s2.dmDisplayFixedOutput = 0;
+    devmode->dmDisplayFlags = 0;
+    devmode->dmPosition.x = 0;
+    devmode->dmPosition.y = 0;
+    devmode->dmDisplayOrientation = 0;
+    devmode->dmDisplayFixedOutput = 0;
     devmode->dmPelsWidth = screen_width;
     devmode->dmPelsHeight = screen_height;
     devmode->dmBitsPerPel = screen_bpp;

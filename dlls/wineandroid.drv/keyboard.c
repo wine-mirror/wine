@@ -30,9 +30,6 @@
 #pragma makedep unix
 #endif
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-
 #include "config.h"
 
 #include "android.h"
@@ -676,12 +673,12 @@ static void send_keyboard_input( HWND hwnd, WORD vkey, WORD scan, DWORD flags )
 {
     INPUT input;
 
-    input.type             = INPUT_KEYBOARD;
-    input.u.ki.wVk         = vkey;
-    input.u.ki.wScan       = scan;
-    input.u.ki.dwFlags     = flags;
-    input.u.ki.time        = 0;
-    input.u.ki.dwExtraInfo = 0;
+    input.type           = INPUT_KEYBOARD;
+    input.ki.wVk         = vkey;
+    input.ki.wScan       = scan;
+    input.ki.dwFlags     = flags;
+    input.ki.time        = 0;
+    input.ki.dwExtraInfo = 0;
 
     __wine_send_input( hwnd, &input, NULL );
 }
@@ -736,18 +733,18 @@ jboolean keyboard_event( JNIEnv *env, jobject obj, jint win, jint action, jint k
     }
     data.type = KEYBOARD_EVENT;
     data.kbd.hwnd = LongToHandle( win );
-    data.kbd.lock_state             = state;
-    data.kbd.input.type             = INPUT_KEYBOARD;
-    data.kbd.input.u.ki.wVk         = keycode_to_vkey[keycode];
-    data.kbd.input.u.ki.wScan       = vkey_to_scancode[data.kbd.input.u.ki.wVk];
-    data.kbd.input.u.ki.time        = 0;
-    data.kbd.input.u.ki.dwExtraInfo = 0;
-    data.kbd.input.u.ki.dwFlags     = (data.kbd.input.u.ki.wScan & 0x100) ? KEYEVENTF_EXTENDEDKEY : 0;
-    if (action == AKEY_EVENT_ACTION_UP) data.kbd.input.u.ki.dwFlags |= KEYEVENTF_KEYUP;
+    data.kbd.lock_state           = state;
+    data.kbd.input.type           = INPUT_KEYBOARD;
+    data.kbd.input.ki.wVk         = keycode_to_vkey[keycode];
+    data.kbd.input.ki.wScan       = vkey_to_scancode[data.kbd.input.ki.wVk];
+    data.kbd.input.ki.time        = 0;
+    data.kbd.input.ki.dwExtraInfo = 0;
+    data.kbd.input.ki.dwFlags     = (data.kbd.input.ki.wScan & 0x100) ? KEYEVENTF_EXTENDEDKEY : 0;
+    if (action == AKEY_EVENT_ACTION_UP) data.kbd.input.ki.dwFlags |= KEYEVENTF_KEYUP;
 
     p__android_log_print( ANDROID_LOG_INFO, "wine",
                           "keyboard_event: win %x code %u vkey %x scan %x meta %x",
-                          win, keycode, data.kbd.input.u.ki.wVk, data.kbd.input.u.ki.wScan, state );
+                          win, keycode, data.kbd.input.ki.wVk, data.kbd.input.ki.wScan, state );
     send_event( &data );
     return JNI_TRUE;
 }
