@@ -1608,6 +1608,8 @@ static void test_wndproc_hook(void)
     static const WCHAR strbuf4W[8] = L"abc\0\xcccc\xcccc\xcccc\xcccc";
     static const RECT rect_in = { 1, 2, 100, 200 };
     static const RECT rect_out = { 3, 4, 110, 220 };
+    static const MINMAXINFO minmax_in = { .ptMinTrackSize.x = 1 };
+    static const MINMAXINFO minmax_out = { .ptMinTrackSize.x = 2 };
 
     static const struct lparam_hook_test lparam_hook_tests[] =
     {
@@ -1691,6 +1693,11 @@ static void test_wndproc_hook(void)
             "WM_MDIGETACTIVE", WM_MDIGETACTIVE,
             .lparam_size = sizeof(BOOL), .change_lparam = &false_lparam,
             .todo = TRUE
+        },
+        {
+            "WM_GETMINMAXINFO", WM_GETMINMAXINFO,
+            .lparam_size = sizeof(minmax_in), .lparam = &minmax_in, .change_lparam = &minmax_out,
+            .check_size = sizeof(minmax_in)
         },
         /* messages that don't change lparam */
         { "WM_USER", WM_USER },

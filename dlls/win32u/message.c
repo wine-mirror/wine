@@ -430,6 +430,9 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case LB_ADDFILE:
     case EM_REPLACESEL:
         break;
+    case WM_GETMINMAXINFO:
+        minsize = sizeof(MINMAXINFO);
+        break;
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1214,6 +1217,9 @@ size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL other
     case EM_REPLACESEL:
         if (other_process && lparam) size = string_size( lparam_ptr, ansi );
         break;
+    case WM_GETMINMAXINFO:
+        size = sizeof(MINMAXINFO);
+        break;
     }
 
     return size;
@@ -1325,6 +1331,9 @@ static void copy_user_result( void *buffer, size_t size, LRESULT result, UINT me
     case WM_ASKCBFORMATNAME:
         copy_size = string_size( buffer, ansi );
         break;
+    case WM_GETMINMAXINFO:
+        copy_size = sizeof(MINMAXINFO);
+        break;
     default:
         return;
     }
@@ -1348,9 +1357,6 @@ static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, 
     case CB_GETLBTEXT:
     case LB_GETTEXT:
         copy_size = (result + 1) * sizeof(WCHAR);
-        break;
-    case WM_GETMINMAXINFO:
-        copy_size = sizeof(MINMAXINFO);
         break;
     case WM_MEASUREITEM:
         copy_size = sizeof(MEASUREITEMSTRUCT);
