@@ -18,8 +18,6 @@
 
 #include <stdarg.h>
 
-#define NONAMELESSUNION
-
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -66,7 +64,7 @@ PURB WINAPI USBD_CreateConfigurationRequest(
         }
         urb = USBD_CreateConfigurationRequestEx( ConfigurationDescriptor, interfaceList );
         if (urb)
-            *Siz = urb->u.UrbHeader.Length;
+            *Siz = urb->UrbHeader.Length;
         ExFreePool( interfaceList );
     }
     return urb;
@@ -98,10 +96,10 @@ PURB WINAPI USBD_CreateConfigurationRequestEx(
         USBD_INTERFACE_INFORMATION *interfaceInfo;
 
         RtlZeroMemory( urb, size );
-        urb->u.UrbSelectConfiguration.Hdr.Length = size;
-        urb->u.UrbSelectConfiguration.Hdr.Function = URB_FUNCTION_SELECT_CONFIGURATION;
-        urb->u.UrbSelectConfiguration.ConfigurationDescriptor = ConfigurationDescriptor;
-        interfaceInfo = &urb->u.UrbSelectConfiguration.Interface;
+        urb->UrbSelectConfiguration.Hdr.Length = size;
+        urb->UrbSelectConfiguration.Hdr.Function = URB_FUNCTION_SELECT_CONFIGURATION;
+        urb->UrbSelectConfiguration.ConfigurationDescriptor = ConfigurationDescriptor;
+        interfaceInfo = &urb->UrbSelectConfiguration.Interface;
         for (interfaceEntry = InterfaceList; interfaceEntry->InterfaceDescriptor; interfaceEntry++)
         {
             ULONG i;
