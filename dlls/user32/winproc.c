@@ -789,13 +789,18 @@ static inline BOOL check_string( LPCWSTR str, size_t size )
     return FALSE;
 }
 
+static size_t string_size( const void *str, BOOL ansi )
+{
+    return ansi ? strlen( str ) + 1 : (wcslen( str ) + 1) * sizeof(WCHAR);
+}
+
 /***********************************************************************
  *		unpack_message
  *
  * Unpack a message received from another process.
  */
 static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
-                            void **buffer, size_t size )
+                            void **buffer, size_t size, BOOL ansi )
 {
     size_t minsize = 0, prev_size = size;
     union packed_structs *ps = *buffer;
@@ -805,35 +810,18 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case WM_NCCREATE:
     case WM_CREATE:
     {
-        CREATESTRUCTW cs;
-        WCHAR *str = (WCHAR *)(&ps->cs + 1);
-        if (size < sizeof(ps->cs)) return FALSE;
-        size -= sizeof(ps->cs);
-        cs.lpCreateParams = unpack_ptr( ps->cs.lpCreateParams );
-        cs.hInstance      = unpack_ptr( ps->cs.hInstance );
-        cs.hMenu          = unpack_handle( ps->cs.hMenu );
-        cs.hwndParent     = unpack_handle( ps->cs.hwndParent );
-        cs.cy             = ps->cs.cy;
-        cs.cx             = ps->cs.cx;
-        cs.y              = ps->cs.y;
-        cs.x              = ps->cs.x;
-        cs.style          = ps->cs.style;
-        cs.dwExStyle      = ps->cs.dwExStyle;
-        cs.lpszName       = unpack_ptr( ps->cs.lpszName );
-        cs.lpszClass      = unpack_ptr( ps->cs.lpszClass );
-        if (ps->cs.lpszName >> 16)
+        CREATESTRUCTA *cs = *buffer;
+        char *str = (char *)(cs + 1);
+
+        if (!IS_INTRESOURCE(cs->lpszName))
         {
-            if (!check_string( str, size )) return FALSE;
-            cs.lpszName = str;
-            size -= (lstrlenW(str) + 1) * sizeof(WCHAR);
-            str += lstrlenW(str) + 1;
+            cs->lpszName = str;
+            str += string_size( str, ansi );
         }
-        if (ps->cs.lpszClass >> 16)
+        if (!IS_INTRESOURCE(cs->lpszClass))
         {
-            if (!check_string( str, size )) return FALSE;
-            cs.lpszClass = str;
+            cs->lpszClass = str;
         }
-        memcpy( *buffer, &cs, sizeof(cs) );
         break;
     }
     case WM_GETTEXT:
@@ -1186,6 +1174,7 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
     if (params->needs_unpack)
     {
         char stack_buffer[128];
+        size_t msg_size = size - sizeof(*params);
         void *buffer;
 
         if (size > sizeof(*params))
@@ -1199,10 +1188,21 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
             buffer = stack_buffer;
         }
         if (!unpack_message( params->hwnd, params->msg, &params->wparam,
-                             &params->lparam, &buffer, size ))
+                             &params->lparam, &buffer, size, params->ansi ))
             return 0;
 
         result = dispatch_win_proc_params( params );
+
+        switch (params->msg)
+        {
+        case WM_NCCREATE:
+        case WM_CREATE:
+        {
+            LRESULT *result_ptr = (LRESULT *)buffer - 1;
+            *result_ptr = result;
+            return NtCallbackReturn( result_ptr, sizeof(*result_ptr) + msg_size, TRUE );
+        }
+        }
 
         NtUserMessageCall( params->hwnd, params->msg, params->wparam, params->lparam,
                            (void *)result, NtUserWinProcResult, FALSE );

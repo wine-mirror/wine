@@ -255,7 +255,8 @@ static BOOL init_window_call_params( struct win_proc_params *params, HWND hwnd, 
     return TRUE;
 }
 
-static LRESULT dispatch_win_proc_params( struct win_proc_params *params, size_t size )
+static LRESULT dispatch_win_proc_params( struct win_proc_params *params, size_t size,
+                                         void **client_ret, size_t *client_ret_size )
 {
     struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
     LRESULT result = 0;
@@ -264,11 +265,19 @@ static LRESULT dispatch_win_proc_params( struct win_proc_params *params, size_t 
 
     if (thread_info->recursion_count > MAX_WINPROC_RECURSION) return 0;
     thread_info->recursion_count++;
-
     KeUserModeCallback( NtUserCallWinProc, params, size, &ret_ptr, &ret_len );
-    if (ret_len == sizeof(result)) result = *(LRESULT *)ret_ptr;
-
     thread_info->recursion_count--;
+
+    if (ret_len >= sizeof(result))
+    {
+        result = *(LRESULT *)ret_ptr;
+        if (client_ret)
+        {
+            *client_ret = (LRESULT *)ret_ptr + 1;
+            *client_ret_size = ret_len - sizeof(result);
+        }
+    }
+
     return result;
 }
 
@@ -346,6 +355,38 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
 
     switch(message)
     {
+     case WM_NCCREATE:
+     case WM_CREATE:
+     {
+         CREATESTRUCTW cs;
+         WCHAR *str = (WCHAR *)(&ps->cs + 1);
+         if (size < sizeof(ps->cs)) return FALSE;
+         size -= sizeof(ps->cs);
+         cs.lpCreateParams = unpack_ptr( ps->cs.lpCreateParams );
+         cs.hInstance      = unpack_ptr( ps->cs.hInstance );
+         cs.hMenu          = wine_server_ptr_handle( ps->cs.hMenu );
+         cs.hwndParent     = wine_server_ptr_handle( ps->cs.hwndParent );
+         cs.cy             = ps->cs.cy;
+         cs.cx             = ps->cs.cx;
+         cs.y              = ps->cs.y;
+         cs.x              = ps->cs.x;
+         cs.style          = ps->cs.style;
+         cs.dwExStyle      = ps->cs.dwExStyle;
+         cs.lpszName       = unpack_ptr( ps->cs.lpszName );
+         cs.lpszClass      = unpack_ptr( ps->cs.lpszClass );
+         if (ps->cs.lpszName >> 16)
+         {
+             cs.lpszName = str;
+             size -= (lstrlenW(str) + 1) * sizeof(WCHAR);
+             str += lstrlenW(str) + 1;
+         }
+         if (ps->cs.lpszClass >> 16)
+         {
+             cs.lpszClass = str;
+         }
+         memcpy( *buffer, &cs, sizeof(cs) );
+         break;
+    }
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1076,23 +1117,100 @@ static void unpack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
     }
 }
 
-/***********************************************************************
- *           copy_reply
- *
- * Copy a message reply received from client.
- */
-static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
-                        WPARAM wparam_src, LPARAM lparam_src )
+static size_t string_size( const void *str, BOOL ansi )
 {
-    size_t copy_size = 0;
+    return ansi ? strlen( str ) + 1 : (wcslen( str ) + 1) * sizeof(WCHAR);
+}
 
-    switch(message)
+static size_t copy_string( void *ptr, const void *str, BOOL ansi )
+{
+    size_t size = string_size( str, ansi );
+    memcpy( ptr, str, size );
+    return size;
+}
+
+/***********************************************************************
+ *           user_message_size
+ *
+ * Calculate size of packed message buffer.
+ */
+static size_t user_message_size( UINT message, LPARAM lparam, BOOL ansi )
+{
+    const void *lparam_ptr = (const void *)lparam;
+    size_t size = 0;
+
+    switch (message)
     {
     case WM_NCCREATE:
     case WM_CREATE:
+    {
+        const CREATESTRUCTW *cs = lparam_ptr;
+        size = sizeof(*cs);
+        if (!IS_INTRESOURCE(cs->lpszName))  size += string_size( cs->lpszName, ansi );
+        if (!IS_INTRESOURCE(cs->lpszClass)) size += string_size( cs->lpszClass, ansi );
+        break;
+    }
+    }
+
+    return size;
+}
+
+/***********************************************************************
+ *           pack_user_message
+ *
+ * Copy message to a buffer for passing to client.
+ */
+static void pack_user_message( void *buffer, size_t size, UINT message, LPARAM lparam, BOOL ansi )
+{
+    const void *lparam_ptr = (const void *)lparam;
+    void const *inline_ptr = (void *)0xffffffff;
+
+    if (!size) return;
+
+    switch (message)
+    {
+    case WM_NCCREATE:
+    case WM_CREATE:
+    {
+        CREATESTRUCTW *cs = buffer;
+        char *ptr = (char *)(cs + 1);
+
+        memcpy( cs, lparam_ptr, sizeof(*cs) );
+        if (!IS_INTRESOURCE(cs->lpszName))
         {
-            CREATESTRUCTW *dst = (CREATESTRUCTW *)lparam;
-            CREATESTRUCTW *src = (CREATESTRUCTW *)lparam_src;
+            ptr += copy_string( ptr, cs->lpszName, ansi );
+            cs->lpszName  = inline_ptr;
+        }
+        if (!IS_INTRESOURCE(cs->lpszClass))
+        {
+            copy_string( ptr, cs->lpszClass, ansi );
+            cs->lpszClass = inline_ptr;
+        }
+        return;
+    }
+    }
+
+}
+
+/***********************************************************************
+ *           copy_user_result
+ *
+ * Copy a message result received from client.
+ */
+static void copy_user_result( void *buffer, size_t size, UINT message, WPARAM wparam, LPARAM lparam )
+{
+    void *lparam_ptr = (void *)lparam;
+
+    if (!size) return;
+
+    switch (message)
+    {
+    case WM_NCCREATE:
+    case WM_CREATE:
+        if (size >= sizeof(CREATESTRUCTW))
+        {
+            CREATESTRUCTW *dst = lparam_ptr;
+            const CREATESTRUCTW *src = buffer;
             dst->lpCreateParams = src->lpCreateParams;
             dst->hInstance      = src->hInstance;
             dst->hMenu          = src->hMenu;
@@ -1106,6 +1224,23 @@ static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, 
             /* don't allow changing name and class pointers */
         }
         return;
+    default:
+        return;
+    }
+}
+
+/***********************************************************************
+ *           copy_reply
+ *
+ * Copy a message reply received from client.
+ */
+static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
+                        WPARAM wparam_src, LPARAM lparam_src )
+{
+    size_t copy_size = 0;
+
+    switch(message)
+    {
     case WM_GETTEXT:
     case CB_GETLBTEXT:
     case LB_GETTEXT:
@@ -1373,15 +1508,22 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
                                  BOOL needs_unpack, void *buffer, size_t size )
 {
     struct win_proc_params p, *params = &p;
+    BOOL ansi = !unicode && !needs_unpack;
     LRESULT result = 0;
     CWPSTRUCT cwp;
     CWPRETSTRUCT cwpret;
+    size_t packed_size = 0;
+    void *ret_ptr;
+    size_t ret_len = 0;
 
     if (msg & 0x80000000)
         return handle_internal_message( hwnd, msg, wparam, lparam );
 
     if (!needs_unpack) size = 0;
     if (!is_current_thread_window( hwnd )) return 0;
+
+    packed_size = user_message_size( msg, lparam, ansi );
+    if (packed_size) size = packed_size;
 
     /* first the WH_CALLWNDPROC hook */
     cwp.lParam  = lparam;
@@ -1397,14 +1539,17 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
         return 0;
     }
 
-    if (needs_unpack)
-    {
-        params->needs_unpack = TRUE;
-        params->ansi = FALSE;
-        if (size) memcpy( params + 1, buffer, size );
-    }
-    result = dispatch_win_proc_params( params, sizeof(*params) + size );
+    if (needs_unpack) params->ansi = FALSE;
+    params->needs_unpack = needs_unpack || packed_size;
+    if (packed_size)
+        pack_user_message( params + 1, packed_size, msg, lparam, ansi );
+    else if (size)
+        memcpy( params + 1, buffer, size );
+
+    result = dispatch_win_proc_params( params, sizeof(*params) + size, &ret_ptr, &ret_len );
     if (params != &p) free( params );
+
+    copy_user_result( ret_ptr, min( ret_len, packed_size ), msg, wparam, lparam );
 
     /* and finally the WH_CALLWNDPROCRET hook */
     cwpret.lResult = result;
@@ -2750,7 +2895,7 @@ LRESULT WINAPI NtUserDispatchMessage( const MSG *msg )
         if (!init_win_proc_params( &params, msg->hwnd, msg->message,
                                    msg->wParam, NtGetTickCount(), FALSE ))
             return 0;
-        return dispatch_win_proc_params( &params, sizeof(params) );
+        return dispatch_win_proc_params( &params, sizeof(params), NULL, NULL );
     }
     if (msg->message == WM_SYSTIMER)
     {
@@ -2772,7 +2917,7 @@ LRESULT WINAPI NtUserDispatchMessage( const MSG *msg )
 
     if (init_window_call_params( &params, msg->hwnd, msg->message, msg->wParam, msg->lParam,
                                  FALSE, WMCHAR_MAP_DISPATCHMESSAGE ))
-        retval = dispatch_win_proc_params( &params, sizeof(params) );
+        retval = dispatch_win_proc_params( &params, sizeof(params), NULL, NULL );
     else if (!is_window( msg->hwnd )) RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
     else RtlSetLastWin32Error( ERROR_MESSAGE_SYNC_ONLY );
 

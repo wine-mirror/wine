@@ -614,10 +614,66 @@ static NTSTATUS WINAPI wow64_NtUserCallWinEventHook( void *arg, ULONG size )
                               FIELD_OFFSET( struct win_event_hook_params32, module ) + size);
 }
 
+static size_t packed_message_64to32( UINT message, const void *params64, void *params32, size_t size )
+{
+    if (!size) return 0;
+
+    switch (message)
+    {
+    case WM_NCCREATE:
+    case WM_CREATE:
+        {
+            CREATESTRUCT32 *cs32 = params32;
+            const CREATESTRUCTW *cs64 = params64;
+
+            createstruct_64to32( cs64, cs32 );
+            size -= sizeof(*cs64);
+            if (size) memmove( cs32 + 1, cs64 + 1, size );
+            return sizeof(*cs32) + size;
+        }
+    }
+
+    memmove( params32, params64, size );
+    return size;
+}
+
+static size_t packed_result_32to64( UINT message, const void *params32, size_t size, void *params64 )
+{
+    switch (message)
+    {
+    case WM_NCCREATE:
+    case WM_CREATE:
+        if (size >= sizeof(CREATESTRUCT32))
+        {
+            const CREATESTRUCT32 *cs32 = params32;
+            CREATESTRUCTW *cs64 = params64;
+
+            cs64->lpCreateParams = UlongToPtr( cs32->lpCreateParams );
+            cs64->hInstance      = UlongToPtr( cs32->hInstance );
+            cs64->hMenu          = LongToHandle( cs32->hMenu );
+            cs64->hwndParent     = LongToHandle( cs32->hwndParent );
+            cs64->cy             = cs32->cy;
+            cs64->cx             = cs32->cx;
+            cs64->y              = cs32->y;
+            cs64->x              = cs32->x;
+            cs64->style          = cs32->style;
+            cs64->dwExStyle      = cs32->dwExStyle;
+            return sizeof(*cs64);
+        }
+
+    default:
+        return 0;
+    }
+
+    if (size) memcpy( params64, params32, size );
+    return size;
+}
+
 static NTSTATUS WINAPI wow64_NtUserCallWinProc( void *arg, ULONG size )
 {
     struct win_proc_params *params = arg;
     struct win_proc_params32 *params32 = arg;
+    size_t lparam_size = 0;
     LRESULT result = 0;
     void *ret_ptr;
     ULONG ret_len;
@@ -625,13 +681,23 @@ static NTSTATUS WINAPI wow64_NtUserCallWinProc( void *arg, ULONG size )
 
     win_proc_params_64to32( params, params32 );
     if (size > sizeof(*params))
-        memmove( params32 + 1, params + 1, size - sizeof(*params) );
+        lparam_size = packed_message_64to32( params32->msg, params + 1, params32 + 1,
+                                             size - sizeof(*params) );
 
     status = Wow64KiUserCallbackDispatcher( NtUserCallWinProc, params32,
-                                            size - sizeof(*params) + sizeof(*params32),
+                                            sizeof(*params32) + lparam_size,
                                             &ret_ptr, &ret_len );
 
-    if (ret_len == sizeof(LONG)) result = *(LONG *)ret_ptr;
+    if (ret_len >= sizeof(LONG))
+    {
+        LRESULT *result_ptr = arg;
+        result = *(LONG *)ret_ptr;
+        ret_len = packed_result_32to64( params32->msg, (LONG *)ret_ptr + 1,
+                                        ret_len - sizeof(LONG), result_ptr + 1 );
+        *result_ptr = result;
+        return NtCallbackReturn( result_ptr, sizeof(*result_ptr) + ret_len, status );
+    }
+
     return NtCallbackReturn( &result, sizeof(result), status );
 }
 
