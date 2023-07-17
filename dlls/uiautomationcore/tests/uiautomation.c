@@ -13105,11 +13105,11 @@ static void test_IUIAutomationEventHandler(IUIAutomation *uia_iface, IUIAutomati
     }
 
     hr = IUIAutomation_RemoveAutomationEventHandler(uia_iface, 1, elem, NULL);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IUIAutomation_RemoveAutomationEventHandler(uia_iface, UIA_AutomationFocusChangedEventId, elem,
             &AutomationEventHandler.IUIAutomationEventHandler_iface);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     /*
      * UIA_AutomationFocusChangedEventId can only be listened for with
@@ -13131,8 +13131,8 @@ static void test_IUIAutomationEventHandler(IUIAutomation *uia_iface, IUIAutomati
 
     hr = IUIAutomation_RemoveAutomationEventHandler(uia_iface, 1, elem,
             &AutomationEventHandler.IUIAutomationEventHandler_iface);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(AutomationEventHandler.ref == 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(AutomationEventHandler.ref == 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
 
     /*
      * Test event raising behavior.
@@ -13183,8 +13183,8 @@ static void test_IUIAutomationEventHandler(IUIAutomation *uia_iface, IUIAutomati
 
     hr = IUIAutomation_RemoveAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, elem,
             &AutomationEventHandler.IUIAutomationEventHandler_iface);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(AutomationEventHandler.ref == 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(AutomationEventHandler.ref == 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
 
     VariantInit(&v);
     initialize_provider(&Provider_child, ProviderOptions_ServerSideProvider, NULL, TRUE);
@@ -13213,7 +13213,7 @@ static void test_IUIAutomationEventHandler(IUIAutomation *uia_iface, IUIAutomati
     /* No removal will occur due to a lack of a runtime ID to match. */
     hr = IUIAutomation_RemoveAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, elem2,
             &AutomationEventHandler.IUIAutomationEventHandler_iface);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(AutomationEventHandler.ref > 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
 
     hr = IUIAutomation_RemoveAllEventHandlers(uia_iface);

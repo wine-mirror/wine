@@ -1015,6 +1015,37 @@ exit:
     return hr;
 }
 
+static void uia_event_handler_map_entry_destroy(struct uia_event_handler_map_entry *entry)
+{
+    struct uia_com_event *event, *event2;
+
+    LIST_FOR_EACH_ENTRY_SAFE(event, event2, &entry->handlers_list, struct uia_com_event, event_handler_map_list_entry)
+    {
+        list_remove(&event->event_handler_map_list_entry);
+        IUnknown_Release(event->handler_iface);
+        com_event_handlers.handler_count--;
+        heap_free(event);
+    }
+
+    rb_remove(&com_event_handlers.handler_map, &entry->entry);
+    IUnknown_Release(entry->handler_iface);
+    SafeArrayDestroy(entry->runtime_id);
+    heap_free(entry);
+}
+
+static void uia_event_handlers_remove_handlers(IUnknown *handler_iface, SAFEARRAY *runtime_id, int event_id)
+{
+    struct uia_event_handler_identifier event_ident = { handler_iface, runtime_id, event_id };
+    struct rb_entry *rb_entry;
+
+    EnterCriticalSection(&com_event_handlers_cs);
+
+    if (com_event_handlers.handler_count && (rb_entry = rb_get(&com_event_handlers.handler_map, &event_ident)))
+        uia_event_handler_map_entry_destroy(RB_ENTRY_VALUE(rb_entry, struct uia_event_handler_map_entry, entry));
+
+    LeaveCriticalSection(&com_event_handlers_cs);
+}
+
 /*
  * IUIAutomationElementArray interface.
  */
@@ -3203,8 +3234,33 @@ exit:
 static HRESULT WINAPI uia_iface_RemoveAutomationEventHandler(IUIAutomation6 *iface, EVENTID event_id,
         IUIAutomationElement *elem, IUIAutomationEventHandler *handler)
 {
-    FIXME("%p, %d, %p, %p: stub\n", iface, event_id, elem, handler);
-    return E_NOTIMPL;
+    struct uia_element *element;
+    IUnknown *handler_iface;
+    SAFEARRAY *runtime_id;
+    HRESULT hr;
+
+    TRACE("%p, %d, %p, %p\n", iface, event_id, elem, handler);
+
+    if (!elem || !handler)
+        return S_OK;
+
+    element = impl_from_IUIAutomationElement9((IUIAutomationElement9 *)elem);
+    hr = UiaGetRuntimeId(element->node, &runtime_id);
+    if (FAILED(hr) || !runtime_id)
+        return hr;
+
+    hr = IUIAutomationEventHandler_QueryInterface(handler, &IID_IUnknown, (void **)&handler_iface);
+    if (FAILED(hr))
+    {
+        SafeArrayDestroy(runtime_id);
+        return hr;
+    }
+
+    uia_event_handlers_remove_handlers(handler_iface, runtime_id, event_id);
+    IUnknown_Release(handler_iface);
+    SafeArrayDestroy(runtime_id);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI uia_iface_AddPropertyChangedEventHandlerNativeArray(IUIAutomation6 *iface,
@@ -3271,20 +3327,7 @@ static HRESULT WINAPI uia_iface_RemoveAllEventHandlers(IUIAutomation6 *iface)
 
     RB_FOR_EACH_ENTRY_DESTRUCTOR(entry, cursor, &com_event_handlers.handler_map, struct uia_event_handler_map_entry, entry)
     {
-        struct uia_com_event *event, *event2;
-
-        LIST_FOR_EACH_ENTRY_SAFE(event, event2, &entry->handlers_list, struct uia_com_event, event_handler_map_list_entry)
-        {
-            list_remove(&event->event_handler_map_list_entry);
-            IUnknown_Release(event->handler_iface);
-            com_event_handlers.handler_count--;
-            heap_free(event);
-        }
-
-        rb_remove(&com_event_handlers.handler_map, &entry->entry);
-        IUnknown_Release(entry->handler_iface);
-        SafeArrayDestroy(entry->runtime_id);
-        heap_free(entry);
+        uia_event_handler_map_entry_destroy(entry);
     }
 
 exit:
