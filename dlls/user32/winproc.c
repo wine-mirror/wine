@@ -841,23 +841,8 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case LB_ADDFILE:
     case EM_REPLACESEL:
     case WM_GETMINMAXINFO:
-        break;
     case WM_DRAWITEM:
-    {
-        DRAWITEMSTRUCT dis;
-        if (size < sizeof(ps->dis)) return FALSE;
-        dis.CtlType    = ps->dis.CtlType;
-        dis.CtlID      = ps->dis.CtlID;
-        dis.itemID     = ps->dis.itemID;
-        dis.itemAction = ps->dis.itemAction;
-        dis.itemState  = ps->dis.itemState;
-        dis.hwndItem   = unpack_handle( ps->dis.hwndItem );
-        dis.hDC        = unpack_handle( ps->dis.hDC );
-        dis.rcItem     = ps->dis.rcItem;
-        dis.itemData   = (ULONG_PTR)unpack_ptr( ps->dis.itemData );
-        memcpy( *buffer, &dis, sizeof(dis) );
         break;
-    }
     case WM_MEASUREITEM:
     {
         MEASUREITEMSTRUCT mis;

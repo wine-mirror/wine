@@ -648,6 +648,27 @@ static size_t packed_message_64to32( UINT message, WPARAM wparam,
             return sizeof(ncp32) + sizeof(WINDOWPOS32);
         }
         break;
+
+    case WM_DRAWITEM:
+        {
+            DRAWITEMSTRUCT32 dis32;
+            const DRAWITEMSTRUCT *dis64 = params64;
+
+            dis32.CtlType       = dis64->CtlType;
+            dis32.CtlID         = dis64->CtlID;
+            dis32.itemID        = dis64->itemID;
+            dis32.itemAction    = dis64->itemAction;
+            dis32.itemState     = dis64->itemState;
+            dis32.hwndItem      = HandleToLong( dis64->hwndItem );
+            dis32.hDC           = HandleToUlong( dis64->hDC );
+            dis32.itemData      = dis64->itemData;
+            dis32.rcItem.left   = dis64->rcItem.left;
+            dis32.rcItem.top    = dis64->rcItem.top;
+            dis32.rcItem.right  = dis64->rcItem.right;
+            dis32.rcItem.bottom = dis64->rcItem.bottom;
+            memcpy( params32, &dis32, sizeof(dis32) );
+            return sizeof(dis32);
+        }
     }
 
     memmove( params32, params64, size );

@@ -1365,6 +1365,7 @@ struct lparam_hook_test
     size_t lparam_init_size;
     size_t check_size;
     BOOL poison_lparam;
+    BOOL not_allowed;
     BOOL todo;
 };
 
@@ -1506,6 +1507,16 @@ static void test_msg_output( const struct lparam_hook_test *test, LRESULT result
     const LPARAM orig = (LPARAM)lparam_buffer;
     const void *expected;
 
+    /* Some messages are not allowed with NtUserMessageCall, they seem to be reserved
+     * for system. Unhooked SendMessage still works for them. */
+    if (test->not_allowed)
+    {
+        todo_wine ok( !wndproc_lparam, "wndproc_lparam called\n" );
+        return;
+    }
+
+    ok( wndproc_lparam, "wndproc_lparam not called\n" );
+
     if (test->check_result)
         todo_wine_if(test->todo_result)
         ok( result == test->check_result, "unexpected result %Ix\n", result );
@@ -1610,6 +1621,7 @@ static void test_wndproc_hook(void)
     static const RECT rect_out = { 3, 4, 110, 220 };
     static const MINMAXINFO minmax_in = { .ptMinTrackSize.x = 1 };
     static const MINMAXINFO minmax_out = { .ptMinTrackSize.x = 2 };
+    static const DRAWITEMSTRUCT drawitem_in = { .itemID = 1 };
 
     static const struct lparam_hook_test lparam_hook_tests[] =
     {
@@ -1709,6 +1721,11 @@ static void test_wndproc_hook(void)
         { "LB_ADDFILE", LB_ADDFILE, .lparam = strbufW, .lparam_init_size = sizeof(strbufW) },
         { "EM_REPLACESEL", EM_REPLACESEL, .lparam = strbufW, .lparam_init_size = sizeof(strbufW) },
         { "WM_WININICHANGE", WM_WININICHANGE, .lparam = strbufW, .lparam_init_size = sizeof(strbufW) },
+        /* messages not allowed to be sent by NtUserMessageCall */
+        {
+            "WM_DRAWITEM", WM_DRAWITEM, .wparam = 10,
+            .lparam_size = sizeof(drawitem_in), .lparam = &drawitem_in, .not_allowed = TRUE,
+        },
     };
 
     cls.lpfnWndProc = lparam_test_proc;

@@ -433,6 +433,22 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case WM_GETMINMAXINFO:
         minsize = sizeof(MINMAXINFO);
         break;
+    case WM_DRAWITEM:
+    {
+        DRAWITEMSTRUCT dis;
+        if (size < sizeof(ps->dis)) return FALSE;
+        dis.CtlType    = ps->dis.CtlType;
+        dis.CtlID      = ps->dis.CtlID;
+        dis.itemID     = ps->dis.itemID;
+        dis.itemAction = ps->dis.itemAction;
+        dis.itemState  = ps->dis.itemState;
+        dis.hwndItem   = wine_server_ptr_handle( ps->dis.hwndItem );
+        dis.hDC        = wine_server_ptr_handle( ps->dis.hDC );
+        dis.rcItem     = ps->dis.rcItem;
+        dis.itemData   = (ULONG_PTR)unpack_ptr( ps->dis.itemData );
+        memcpy( *buffer, &dis, sizeof(dis) );
+        break;
+    }
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1219,6 +1235,9 @@ size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL other
         break;
     case WM_GETMINMAXINFO:
         size = sizeof(MINMAXINFO);
+        break;
+    case WM_DRAWITEM:
+        size = sizeof(DRAWITEMSTRUCT);
         break;
     }
 
