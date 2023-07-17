@@ -19,9 +19,6 @@
 #include <stdarg.h>
 
 #define COBJMACROS
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -654,14 +651,14 @@ static void ticket_to_devmode(const struct ticket *ticket, DEVMODEW *dm)
     dm->dmSize = sizeof(*dm);
     dm->dmFields = DM_ORIENTATION | DM_PAPERSIZE | DM_PAPERLENGTH | DM_PAPERWIDTH | DM_SCALE |
                    DM_COPIES | DM_COLOR | DM_PRINTQUALITY | DM_YRESOLUTION | DM_COLLATE;
-    dm->u1.s1.dmOrientation = ticket->page.orientation;
-    dm->u1.s1.dmPaperSize = ticket->page.media.paper;
-    dm->u1.s1.dmPaperWidth = ticket->page.media.size.width / 100;
-    dm->u1.s1.dmPaperLength = ticket->page.media.size.height / 100;
-    dm->u1.s1.dmScale = ticket->page.scaling;
-    dm->u1.s1.dmCopies = ticket->job.copies;
+    dm->dmOrientation = ticket->page.orientation;
+    dm->dmPaperSize = ticket->page.media.paper;
+    dm->dmPaperWidth = ticket->page.media.size.width / 100;
+    dm->dmPaperLength = ticket->page.media.size.height / 100;
+    dm->dmScale = ticket->page.scaling;
+    dm->dmCopies = ticket->job.copies;
     dm->dmColor = ticket->page.color;
-    dm->u1.s1.dmPrintQuality = ticket->page.resolution.x;
+    dm->dmPrintQuality = ticket->page.resolution.x;
     dm->dmYResolution = ticket->page.resolution.y;
     dm->dmCollate = ticket->document.collate;
 }
@@ -669,23 +666,23 @@ static void ticket_to_devmode(const struct ticket *ticket, DEVMODEW *dm)
 static void devmode_to_ticket(const DEVMODEW *dm, struct ticket *ticket)
 {
     if (dm->dmFields & DM_ORIENTATION)
-        ticket->page.orientation = dm->u1.s1.dmOrientation;
+        ticket->page.orientation = dm->dmOrientation;
     if (dm->dmFields & DM_PAPERSIZE)
-        ticket->page.media.paper = dm->u1.s1.dmPaperSize;
+        ticket->page.media.paper = dm->dmPaperSize;
     if (dm->dmFields & DM_PAPERLENGTH)
-        ticket->page.media.size.width = dm->u1.s1.dmPaperWidth * 100;
+        ticket->page.media.size.width = dm->dmPaperWidth * 100;
     if (dm->dmFields & DM_PAPERWIDTH)
-        ticket->page.media.size.height = dm->u1.s1.dmPaperLength * 100;
+        ticket->page.media.size.height = dm->dmPaperLength * 100;
     if (dm->dmFields & DM_SCALE)
-        ticket->page.scaling = dm->u1.s1.dmScale;
+        ticket->page.scaling = dm->dmScale;
     if (dm->dmFields & DM_COPIES)
-        ticket->job.copies = dm->u1.s1.dmCopies;
+        ticket->job.copies = dm->dmCopies;
     if (dm->dmFields & DM_COLOR)
         ticket->page.color = dm->dmColor;
     if (dm->dmFields & DM_PRINTQUALITY)
     {
-        ticket->page.resolution.x = dm->u1.s1.dmPrintQuality;
-        ticket->page.resolution.y = dm->u1.s1.dmPrintQuality;
+        ticket->page.resolution.x = dm->dmPrintQuality;
+        ticket->page.resolution.y = dm->dmPrintQuality;
     }
     if (dm->dmFields & DM_YRESOLUTION)
         ticket->page.resolution.y = dm->dmYResolution;
@@ -1193,14 +1190,14 @@ static void dump_devmode(const DEVMODEW *dm)
     TRACE("dmDriverExtra: 0x%04x\n", dm->dmDriverExtra);
     TRACE("dmFields: 0x%04lx\n", dm->dmFields);
     dump_fields(dm->dmFields);
-    TRACE("dmOrientation: %d\n", dm->u1.s1.dmOrientation);
-    TRACE("dmPaperSize: %d\n", dm->u1.s1.dmPaperSize);
-    TRACE("dmPaperLength: %d\n", dm->u1.s1.dmPaperLength);
-    TRACE("dmPaperWidth: %d\n", dm->u1.s1.dmPaperWidth);
-    TRACE("dmScale: %d\n", dm->u1.s1.dmScale);
-    TRACE("dmCopies: %d\n", dm->u1.s1.dmCopies);
-    TRACE("dmDefaultSource: %d\n", dm->u1.s1.dmDefaultSource);
-    TRACE("dmPrintQuality: %d\n", dm->u1.s1.dmPrintQuality);
+    TRACE("dmOrientation: %d\n", dm->dmOrientation);
+    TRACE("dmPaperSize: %d\n", dm->dmPaperSize);
+    TRACE("dmPaperLength: %d\n", dm->dmPaperLength);
+    TRACE("dmPaperWidth: %d\n", dm->dmPaperWidth);
+    TRACE("dmScale: %d\n", dm->dmScale);
+    TRACE("dmCopies: %d\n", dm->dmCopies);
+    TRACE("dmDefaultSource: %d\n", dm->dmDefaultSource);
+    TRACE("dmPrintQuality: %d\n", dm->dmPrintQuality);
     TRACE("dmColor: %d\n", dm->dmColor);
     TRACE("dmDuplex: %d\n", dm->dmDuplex);
     TRACE("dmYResolution: %d\n", dm->dmYResolution);
