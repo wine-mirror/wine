@@ -23,8 +23,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 
@@ -302,18 +300,18 @@ static PDH_STATUS format_value( struct counter *counter, DWORD format, union val
     factor = counter->scale ? counter->scale : counter->defaultscale;
     if (format & PDH_FMT_LONG)
     {
-        if (format & PDH_FMT_1000) value->u.longValue = raw2->longvalue * 1000;
-        else value->u.longValue = raw2->longvalue * pow( 10, factor );
+        if (format & PDH_FMT_1000) value->longValue = raw2->longvalue * 1000;
+        else value->longValue = raw2->longvalue * pow( 10, factor );
     }
     else if (format & PDH_FMT_LARGE)
     {
-        if (format & PDH_FMT_1000) value->u.largeValue = raw2->largevalue * 1000;
-        else value->u.largeValue = raw2->largevalue * pow( 10, factor );
+        if (format & PDH_FMT_1000) value->largeValue = raw2->largevalue * 1000;
+        else value->largeValue = raw2->largevalue * pow( 10, factor );
     }
     else if (format & PDH_FMT_DOUBLE)
     {
-        if (format & PDH_FMT_1000) value->u.doubleValue = raw2->doublevalue * 1000;
-        else value->u.doubleValue = raw2->doublevalue * pow( 10, factor );
+        if (format & PDH_FMT_1000) value->doubleValue = raw2->doublevalue * 1000;
+        else value->doubleValue = raw2->doublevalue * pow( 10, factor );
     }
     else
     {
@@ -1076,7 +1074,7 @@ double WINAPI PdhVbGetDoubleCounterValue( PDH_HCOUNTER handle, PDH_STATUS *count
     status = PdhGetFormattedCounterValue( handle, PDH_FMT_DOUBLE, NULL, &value );
 
     if (counter_status) *counter_status = status;
-    return value.u.doubleValue;
+    return value.doubleValue;
 }
 
 /***********************************************************************
