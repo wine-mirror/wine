@@ -3974,13 +3974,15 @@ static const struct tiff_data
 };
 #include "poppack.h"
 
+struct property_test_data
+{
+    ULONG type, id, length;
+    const BYTE value[32];
+};
+
 static void test_tiff_properties(void)
 {
-    static const struct test_data
-    {
-        ULONG type, id, length;
-        const BYTE value[24];
-    } td[31] =
+    static const struct property_test_data td[31] =
     {
         { PropertyTagTypeShort, 0xff, 2, { 0 } },
         { PropertyTagTypeLong, 0x100, 4, { 1 } },
@@ -4098,11 +4100,7 @@ static void test_tiff_properties(void)
 
 static void test_GdipGetAllPropertyItems(void)
 {
-    static const struct test_data
-    {
-        ULONG type, id, length;
-        BYTE value[32];
-    } td[16] =
+    static const struct property_test_data td[16] =
     {
         { PropertyTagTypeLong, 0xfe, 4, { 0 } },
         { PropertyTagTypeShort, 0x100, 2, { 1 } },
@@ -4842,11 +4840,7 @@ static const BYTE animatedgif[] = {
 
 static void test_gif_properties(void)
 {
-    static const struct test_data
-    {
-        ULONG type, id, length;
-        const BYTE value[13];
-    } td[] =
+    static const struct property_test_data td[] =
     {
         { PropertyTagTypeLong, PropertyTagFrameDelay, 8, { 10,0,0,0,20,0,0,0 } },
         { PropertyTagTypeASCII, PropertyTagExifUserComment, 13, { 'H','e','l','l','o',' ','W','o','r','l','d','!',0 } },
