@@ -833,7 +833,6 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
         break;
     case WM_GETTEXT:
     case WM_ASKCBFORMATNAME:
-        if (!get_buffer_space( buffer, (*wparam * sizeof(WCHAR)), size )) return FALSE;
         break;
     case WM_WININICHANGE:
         if (!*lparam) return TRUE;
@@ -1183,6 +1182,8 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case WM_NCCREATE:
         case WM_CREATE:
         case WM_NCCALCSIZE:
+        case WM_GETTEXT:
+        case WM_ASKCBFORMATNAME:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;

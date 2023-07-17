@@ -695,6 +695,10 @@ static size_t packed_result_32to64( UINT message, WPARAM wparam, const void *par
         }
         break;
 
+    case WM_GETTEXT:
+    case WM_ASKCBFORMATNAME:
+        break;
+
     default:
         return 0;
     }

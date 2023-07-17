@@ -1533,7 +1533,6 @@ static void test_msg_output( const struct lparam_hook_test *test, LRESULT result
     else
         expected = test->lparam;
     if (expected)
-        todo_wine_if( test->message == WM_GETTEXT && !test->msg_result )
         ok( !memcmp( lparam_buffer, expected, test->lparam_size ), "unexpected lparam content\n" );
 
     todo_wine_if(test->todo)
@@ -1626,32 +1625,26 @@ static void test_wndproc_hook(void)
         {
             "WM_GETTEXT", WM_GETTEXT, .wparam = 8,
             .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbuf2W,
-            .todo = TRUE
         },
         {
             "WM_GETTEXT2", WM_GETTEXT, .wparam = 8, .msg_result = 1,
             .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbufW,
-            .todo = TRUE
         },
         {
             "WM_GETTEXT3", WM_GETTEXT, .wparam = 8, .msg_result = 9,
             .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbufW,
-            .todo = TRUE
         },
         {
             "WM_ASKCBFORMATNAME", WM_ASKCBFORMATNAME, .wparam = 8,
             .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbufW,
-            .todo = TRUE
         },
         {
             "WM_ASKCBFORMATNAME2", WM_ASKCBFORMATNAME, .wparam = 8, .msg_result = 1,
             .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbufW,
-            .todo = TRUE
         },
         {
             "WM_ASKCBFORMATNAME3", WM_ASKCBFORMATNAME, .wparam = 8, .msg_result = 9,
             .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbufW,
-            .todo = TRUE
         },
         {
             "CB_GETLBTEXT", CB_GETLBTEXT, .msg_result = 7, .check_result = 4, .todo_result = TRUE,

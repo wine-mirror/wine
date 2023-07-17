@@ -308,6 +308,13 @@ static inline void push_string( struct packed_message *data, LPCWSTR str )
     push_data( data, str, (lstrlenW(str) + 1) * sizeof(WCHAR) );
 }
 
+/* make sure that there is space for 'size' bytes in buffer, growing it if needed */
+static inline void *get_buffer_space( void **buffer, size_t size, size_t prev_size )
+{
+    if (prev_size < size) *buffer = malloc( size );
+    return *buffer;
+}
+
 /* check whether a combobox expects strings or ids in CB_ADDSTRING/CB_INSERTSTRING */
 static inline BOOL combobox_has_strings( HWND hwnd )
 {
@@ -408,6 +415,10 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
             memcpy( &ps->ncp, &ncp, sizeof(ncp) );
             *ncp.lppos = wp;
         }
+        break;
+    case WM_GETTEXT:
+    case WM_ASKCBFORMATNAME:
+        if (!get_buffer_space( buffer, (*wparam * sizeof(WCHAR)), size )) return FALSE;
         break;
     case WM_WINE_SETWINDOWPOS:
     {
@@ -1139,6 +1150,11 @@ static void unpack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
     }
 }
 
+static size_t char_size( BOOL ansi )
+{
+    return ansi ? sizeof(char) : sizeof(WCHAR);
+}
+
 static size_t string_size( const void *str, BOOL ansi )
 {
     return ansi ? strlen( str ) + 1 : (wcslen( str ) + 1) * sizeof(WCHAR);
@@ -1174,6 +1190,10 @@ size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL ansi 
     }
     case WM_NCCALCSIZE:
         size = wparam ? sizeof(NCCALCSIZE_PARAMS) + sizeof(WINDOWPOS) : sizeof(RECT);
+        break;
+    case WM_GETTEXT:
+    case WM_ASKCBFORMATNAME:
+        size = wparam * char_size( ansi );
         break;
     }
 
@@ -1222,6 +1242,10 @@ void pack_user_message( void *buffer, size_t size, UINT message,
             size = sizeof(*ncp);
         }
         break;
+    case WM_GETTEXT:
+    case WM_ASKCBFORMATNAME:
+        if (wparam) memset( buffer, 0, char_size( ansi ));
+        return;
     }
 
     if (size) memcpy( buffer, lparam_ptr, size );
@@ -1232,7 +1256,8 @@ void pack_user_message( void *buffer, size_t size, UINT message,
  *
  * Copy a message result received from client.
  */
-static void copy_user_result( void *buffer, size_t size, UINT message, WPARAM wparam, LPARAM lparam )
+static void copy_user_result( void *buffer, size_t size, LRESULT result, UINT message,
+                              WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
     void *lparam_ptr = (void *)lparam;
     size_t copy_size = 0;
@@ -1274,6 +1299,13 @@ static void copy_user_result( void *buffer, size_t size, UINT message, WPARAM wp
         }
         copy_size = sizeof(RECT);
         break;
+    case WM_GETTEXT:
+        if (!result) memset( buffer, 0, char_size( ansi ));
+        copy_size = string_size( buffer, ansi );
+        break;
+    case WM_ASKCBFORMATNAME:
+        copy_size = string_size( buffer, ansi );
+        break;
     default:
         return;
     }
@@ -1294,7 +1326,6 @@ static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, 
 
     switch(message)
     {
-    case WM_GETTEXT:
     case CB_GETLBTEXT:
     case LB_GETTEXT:
         copy_size = (result + 1) * sizeof(WCHAR);
@@ -1354,9 +1385,6 @@ static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, 
         break;
     case WM_MDICREATE:
         copy_size = sizeof(MDICREATESTRUCTW);
-        break;
-    case WM_ASKCBFORMATNAME:
-        copy_size = (lstrlenW((WCHAR *)lparam) + 1) * sizeof(WCHAR);
         break;
     default:
         return;
@@ -1590,7 +1618,7 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     result = dispatch_win_proc_params( params, sizeof(*params) + size, &ret_ptr, &ret_len );
     if (params != &p) free( params );
 
-    copy_user_result( ret_ptr, min( ret_len, packed_size ), msg, wparam, lparam );
+    copy_user_result( ret_ptr, min( ret_len, packed_size ), result, msg, wparam, lparam, ansi );
 
     /* and finally the WH_CALLWNDPROCRET hook */
     cwpret.lResult = result;
