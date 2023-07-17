@@ -17,8 +17,6 @@
  */
 
 #define COBJMACROS
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 
 #include <stdarg.h>
 #include <intrin.h>
@@ -1578,7 +1576,7 @@ static UINT get_logical_processor_count( UINT *num_physical, UINT *num_packages 
         if (entry->Relationship == RelationProcessorCore)
         {
             core_relation_count++;
-            if (entry->u.Processor.Flags & LTP_PC_SMT) smt_enabled = TRUE;
+            if (entry->Processor.Flags & LTP_PC_SMT) smt_enabled = TRUE;
         }
         else if (entry->Relationship == RelationProcessorPackage)
         {
@@ -1634,7 +1632,7 @@ static const WCHAR *get_systemtype(void)
 {
     SYSTEM_INFO info;
     GetNativeSystemInfo( &info );
-    if (info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) return L"x64 based PC";
+    if (info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) return L"x64 based PC";
     return L"x86 based PC";
 }
 
@@ -2878,14 +2876,14 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
         if (aa->IfType == IF_TYPE_SOFTWARE_LOOPBACK) continue;
 
         rec = (struct record_networkadapter *)(table->data + offset);
-        swprintf( device_id, ARRAY_SIZE( device_id ), L"%u", aa->u.s.IfIndex );
+        swprintf( device_id, ARRAY_SIZE( device_id ), L"%u", aa->IfIndex );
         rec->adaptertype          = get_adaptertype( aa->IfType, &adaptertypeid, &physical );
         rec->adaptertypeid        = adaptertypeid;
         rec->description          = wcsdup( aa->Description );
         rec->device_id            = wcsdup( device_id );
         rec->guid                 = get_networkadapter_guid( &aa->Luid );
-        rec->index                = aa->u.s.IfIndex;
-        rec->interface_index      = aa->u.s.IfIndex;
+        rec->index                = aa->IfIndex;
+        rec->interface_index      = aa->IfIndex;
         rec->mac_address          = get_mac_address( aa->PhysicalAddress, aa->PhysicalAddressLength );
         rec->manufacturer         = L"The Wine Project";
         rec->name                 = wcsdup( aa->FriendlyName );
@@ -3115,7 +3113,7 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
         rec->dnsdomain            = L"";
         rec->dnshostname          = get_dnshostname( aa->FirstUnicastAddress );
         rec->dnsserversearchorder = get_dnsserversearchorder( aa->FirstDnsServerAddress );
-        rec->index                = aa->u.s.IfIndex;
+        rec->index                = aa->IfIndex;
         rec->ipaddress            = get_ipaddress( aa->FirstUnicastAddress );
         rec->ipconnectionmetric   = 20;
         rec->ipenabled            = -1;
@@ -3243,7 +3241,7 @@ static enum fill_status fill_printer( struct table *table, const struct expr *co
         swprintf( id, ARRAY_SIZE( id ), L"Printer%u", i );
         rec->device_id            = wcsdup( id );
         rec->drivername           = wcsdup( info[i].pDriverName );
-        rec->horizontalresolution = info[i].pDevMode->u1.s1.dmPrintQuality;
+        rec->horizontalresolution = info[i].pDevMode->dmPrintQuality;
         rec->local                = -1;
         rec->location             = wcsdup( info[i].pLocation );
         rec->name                 = wcsdup( info[i].pPrinterName );
@@ -3371,7 +3369,7 @@ static const WCHAR *get_osarchitecture(void)
 {
     SYSTEM_INFO info;
     GetNativeSystemInfo( &info );
-    if (info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) return L"64-bit";
+    if (info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) return L"64-bit";
     return L"32-bit";
 }
 static void get_processor_caption( WCHAR *caption, UINT len )
