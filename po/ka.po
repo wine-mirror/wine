@@ -12556,7 +12556,7 @@ msgstr "რეალმი"
 msgid "Authentication Required"
 msgstr "საჭიროა იდენტიფიკაცია"
 
-#: dlls/wininet/wininet.rc:72
+#: dlls/wininet/wininet.rc:72 programs/klist/klist.rc:35
 msgid "Server"
 msgstr "სერვერი"
 
@@ -14439,6 +14439,55 @@ msgstr "IPv6 მისამართი"
 #: programs/ipconfig/ipconfig.rc:38
 msgid "Primary DNS suffix"
 msgstr "ძირითადი DNS სუფიქსი"
+
+#: programs/klist/klist.rc:28
+msgid "Usage: klist <tickets | tgt | purge | get [service principal name]>\n"
+msgstr ""
+
+#: programs/klist/klist.rc:29
+#, fuzzy
+#| msgid "Unknown error"
+msgid "Unknown error\n"
+msgstr "უცნობი შეცდომა"
+
+#: programs/klist/klist.rc:30
+#, fuzzy
+#| msgid "Start Menu"
+msgid "Start Time"
+msgstr "Start Menu"
+
+#: programs/klist/klist.rc:31
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "FLE Standard Time"
+msgid "End Time"
+msgstr "FLE-ის სტანდარტული დრო"
+
+#: programs/klist/klist.rc:32
+#, fuzzy
+#| msgid "Enter new time: "
+msgid "Renew Time"
+msgstr "შეიყვანეთ ახალი დრო: "
+
+#: programs/klist/klist.rc:33
+msgid "Ticket Flags"
+msgstr ""
+
+#: programs/klist/klist.rc:34
+msgid "Cached Tickets"
+msgstr ""
+
+#: programs/klist/klist.rc:36
+#, fuzzy
+#| msgid "Encryption Type"
+msgid "KerbTicket Encryption Type"
+msgstr "დაშიფვრის ტიპი"
+
+#: programs/klist/klist.rc:37
+#, fuzzy
+#| msgid "Current Connections"
+msgid "Current LogonId is"
+msgstr "მიმდინარე შეერთებები"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"

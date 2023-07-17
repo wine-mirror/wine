@@ -12611,7 +12611,7 @@ msgstr "영역"
 msgid "Authentication Required"
 msgstr "인증 필요"
 
-#: dlls/wininet/wininet.rc:72
+#: dlls/wininet/wininet.rc:72 programs/klist/klist.rc:35
 msgid "Server"
 msgstr "서버"
 
@@ -14807,6 +14807,55 @@ msgstr "IPv6 주소"
 #: programs/ipconfig/ipconfig.rc:38
 msgid "Primary DNS suffix"
 msgstr "주 DNS 접미사"
+
+#: programs/klist/klist.rc:28
+msgid "Usage: klist <tickets | tgt | purge | get [service principal name]>\n"
+msgstr ""
+
+#: programs/klist/klist.rc:29
+#, fuzzy
+#| msgid "Unknown error"
+msgid "Unknown error\n"
+msgstr "알 수 없는 오류"
+
+#: programs/klist/klist.rc:30
+#, fuzzy
+#| msgid "Start Menu"
+msgid "Start Time"
+msgstr "시작 메뉴"
+
+#: programs/klist/klist.rc:31
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "FLE Standard Time"
+msgid "End Time"
+msgstr "FLE 표준시"
+
+#: programs/klist/klist.rc:32
+#, fuzzy
+#| msgid "Enter new time: "
+msgid "Renew Time"
+msgstr "새 시간 입력: "
+
+#: programs/klist/klist.rc:33
+msgid "Ticket Flags"
+msgstr ""
+
+#: programs/klist/klist.rc:34
+msgid "Cached Tickets"
+msgstr ""
+
+#: programs/klist/klist.rc:36
+#, fuzzy
+#| msgid "Encryption Type"
+msgid "KerbTicket Encryption Type"
+msgstr "암호화 유형"
+
+#: programs/klist/klist.rc:37
+#, fuzzy
+#| msgid "Current Connections"
+msgid "Current LogonId is"
+msgstr "현재 연결"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"

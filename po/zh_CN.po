@@ -12557,7 +12557,7 @@ msgstr "Realm"
 msgid "Authentication Required"
 msgstr "需要认证"
 
-#: dlls/wininet/wininet.rc:72
+#: dlls/wininet/wininet.rc:72 programs/klist/klist.rc:35
 msgid "Server"
 msgstr "服务器"
 
@@ -14643,6 +14643,55 @@ msgstr "IPv6 地址"
 #: programs/ipconfig/ipconfig.rc:38
 msgid "Primary DNS suffix"
 msgstr "主 DNS 后缀"
+
+#: programs/klist/klist.rc:28
+msgid "Usage: klist <tickets | tgt | purge | get [service principal name]>\n"
+msgstr ""
+
+#: programs/klist/klist.rc:29
+#, fuzzy
+#| msgid "Unknown error"
+msgid "Unknown error\n"
+msgstr "未知错误"
+
+#: programs/klist/klist.rc:30
+#, fuzzy
+#| msgid "Start Menu"
+msgid "Start Time"
+msgstr "开始菜单"
+
+#: programs/klist/klist.rc:31
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "FLE Standard Time"
+msgid "End Time"
+msgstr "FLE 标准时间"
+
+#: programs/klist/klist.rc:32
+#, fuzzy
+#| msgid "Enter new time: "
+msgid "Renew Time"
+msgstr "输入新的时间: "
+
+#: programs/klist/klist.rc:33
+msgid "Ticket Flags"
+msgstr ""
+
+#: programs/klist/klist.rc:34
+msgid "Cached Tickets"
+msgstr ""
+
+#: programs/klist/klist.rc:36
+#, fuzzy
+#| msgid "Encryption Type"
+msgid "KerbTicket Encryption Type"
+msgstr "加密类型"
+
+#: programs/klist/klist.rc:37
+#, fuzzy
+#| msgid "Current Connections"
+msgid "Current LogonId is"
+msgstr "当前连接数"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"

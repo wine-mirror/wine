@@ -13756,7 +13756,7 @@ msgstr "Csoport"
 msgid "Authentication Required"
 msgstr "Hitelesítés szükséges"
 
-#: dlls/wininet/wininet.rc:72
+#: dlls/wininet/wininet.rc:72 programs/klist/klist.rc:35
 msgid "Server"
 msgstr "Kiszolgáló"
 
@@ -16065,6 +16065,54 @@ msgstr "IP cím"
 #: programs/ipconfig/ipconfig.rc:38
 msgid "Primary DNS suffix"
 msgstr ""
+
+#: programs/klist/klist.rc:28
+msgid "Usage: klist <tickets | tgt | purge | get [service principal name]>\n"
+msgstr ""
+
+#: programs/klist/klist.rc:29
+#, fuzzy
+#| msgid "Unknown error"
+msgid "Unknown error\n"
+msgstr "Ismeretlen hiba"
+
+#: programs/klist/klist.rc:30
+#, fuzzy
+#| msgid "Start Menu"
+msgid "Start Time"
+msgstr "Start menü"
+
+#: programs/klist/klist.rc:31
+#, fuzzy
+#| msgid "&Standard bar"
+msgid "End Time"
+msgstr "&Státusz sor"
+
+#: programs/klist/klist.rc:32
+#, fuzzy
+#| msgid "Enter new time: "
+msgid "Renew Time"
+msgstr "Új idő: "
+
+#: programs/klist/klist.rc:33
+msgid "Ticket Flags"
+msgstr ""
+
+#: programs/klist/klist.rc:34
+msgid "Cached Tickets"
+msgstr ""
+
+#: programs/klist/klist.rc:36
+#, fuzzy
+#| msgid "Encrypting File System"
+msgid "KerbTicket Encryption Type"
+msgstr "Titkosító fájlrendszer"
+
+#: programs/klist/klist.rc:37
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Current LogonId is"
+msgstr "LAN kapcsolat"
 
 #: programs/msinfo32/msinfo32.rc:28
 #, fuzzy

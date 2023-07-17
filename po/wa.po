@@ -12912,7 +12912,7 @@ msgstr ""
 msgid "Authentication Required"
 msgstr ""
 
-#: dlls/wininet/wininet.rc:72
+#: dlls/wininet/wininet.rc:72 programs/klist/klist.rc:35
 msgid "Server"
 msgstr ""
 
@@ -14773,6 +14773,44 @@ msgstr ""
 
 #: programs/ipconfig/ipconfig.rc:38
 msgid "Primary DNS suffix"
+msgstr ""
+
+#: programs/klist/klist.rc:28
+msgid "Usage: klist <tickets | tgt | purge | get [service principal name]>\n"
+msgstr ""
+
+#: programs/klist/klist.rc:29
+msgid "Unknown error\n"
+msgstr ""
+
+#: programs/klist/klist.rc:30
+#, fuzzy
+msgid "Start Time"
+msgstr "&Rafacer\tDel"
+
+#: programs/klist/klist.rc:31
+#, fuzzy
+msgid "End Time"
+msgstr "&Rafacer\tDel"
+
+#: programs/klist/klist.rc:32
+msgid "Renew Time"
+msgstr ""
+
+#: programs/klist/klist.rc:33
+msgid "Ticket Flags"
+msgstr ""
+
+#: programs/klist/klist.rc:34
+msgid "Cached Tickets"
+msgstr ""
+
+#: programs/klist/klist.rc:36
+msgid "KerbTicket Encryption Type"
+msgstr ""
+
+#: programs/klist/klist.rc:37
+msgid "Current LogonId is"
 msgstr ""
 
 #: programs/msinfo32/msinfo32.rc:28

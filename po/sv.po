@@ -13542,7 +13542,7 @@ msgstr "Domän"
 msgid "Authentication Required"
 msgstr "Autentisering krävs"
 
-#: dlls/wininet/wininet.rc:72
+#: dlls/wininet/wininet.rc:72 programs/klist/klist.rc:35
 msgid "Server"
 msgstr "Server"
 
@@ -15773,6 +15773,54 @@ msgstr "IPv6-adress"
 #: programs/ipconfig/ipconfig.rc:38
 msgid "Primary DNS suffix"
 msgstr ""
+
+#: programs/klist/klist.rc:28
+msgid "Usage: klist <tickets | tgt | purge | get [service principal name]>\n"
+msgstr ""
+
+#: programs/klist/klist.rc:29
+#, fuzzy
+#| msgid "Unknown error"
+msgid "Unknown error\n"
+msgstr "Okänt fel"
+
+#: programs/klist/klist.rc:30
+#, fuzzy
+#| msgid "Start Menu"
+msgid "Start Time"
+msgstr "Start-meny"
+
+#: programs/klist/klist.rc:31
+#, fuzzy
+#| msgid "&Standard bar"
+msgid "End Time"
+msgstr "&Standardfält"
+
+#: programs/klist/klist.rc:32
+#, fuzzy
+#| msgid "Enter new time: "
+msgid "Renew Time"
+msgstr "Skriv in den nya tiden: "
+
+#: programs/klist/klist.rc:33
+msgid "Ticket Flags"
+msgstr ""
+
+#: programs/klist/klist.rc:34
+msgid "Cached Tickets"
+msgstr ""
+
+#: programs/klist/klist.rc:36
+#, fuzzy
+#| msgid "Encrypting File System"
+msgid "KerbTicket Encryption Type"
+msgstr "Krypterar filsystem"
+
+#: programs/klist/klist.rc:37
+#, fuzzy
+#| msgid "Current Connections"
+msgid "Current LogonId is"
+msgstr "Aktuella anslutningar"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"

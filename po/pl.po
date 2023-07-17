@@ -12764,7 +12764,7 @@ msgstr "Obszar"
 msgid "Authentication Required"
 msgstr "Wymagane uwierzytelnienie"
 
-#: dlls/wininet/wininet.rc:72
+#: dlls/wininet/wininet.rc:72 programs/klist/klist.rc:35
 msgid "Server"
 msgstr "Serwer"
 
@@ -14995,6 +14995,55 @@ msgstr "Adres IPv6"
 #: programs/ipconfig/ipconfig.rc:38
 msgid "Primary DNS suffix"
 msgstr ""
+
+#: programs/klist/klist.rc:28
+msgid "Usage: klist <tickets | tgt | purge | get [service principal name]>\n"
+msgstr ""
+
+#: programs/klist/klist.rc:29
+#, fuzzy
+#| msgid "Unknown error"
+msgid "Unknown error\n"
+msgstr "Nieznany błąd"
+
+#: programs/klist/klist.rc:30
+#, fuzzy
+#| msgid "Start Menu"
+msgid "Start Time"
+msgstr "Menu Start"
+
+#: programs/klist/klist.rc:31
+#, fuzzy
+#| msgctxt "maximum 31 characters"
+#| msgid "FLE Standard Time"
+msgid "End Time"
+msgstr "Czas urzędowy FLE"
+
+#: programs/klist/klist.rc:32
+#, fuzzy
+#| msgid "Enter new time: "
+msgid "Renew Time"
+msgstr "Wpisz nowy czas: "
+
+#: programs/klist/klist.rc:33
+msgid "Ticket Flags"
+msgstr ""
+
+#: programs/klist/klist.rc:34
+msgid "Cached Tickets"
+msgstr ""
+
+#: programs/klist/klist.rc:36
+#, fuzzy
+#| msgid "Encryption Type"
+msgid "KerbTicket Encryption Type"
+msgstr "Rodzaj szyfrowania"
+
+#: programs/klist/klist.rc:37
+#, fuzzy
+#| msgid "Current Connections"
+msgid "Current LogonId is"
+msgstr "Bieżące połączenia"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"

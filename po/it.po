@@ -13820,7 +13820,7 @@ msgstr "Dominio"
 msgid "Authentication Required"
 msgstr "Autenticazione richiesta"
 
-#: dlls/wininet/wininet.rc:72
+#: dlls/wininet/wininet.rc:72 programs/klist/klist.rc:35
 msgid "Server"
 msgstr "Server"
 
@@ -16143,6 +16143,54 @@ msgstr "Indirizzo IP"
 #: programs/ipconfig/ipconfig.rc:38
 msgid "Primary DNS suffix"
 msgstr ""
+
+#: programs/klist/klist.rc:28
+msgid "Usage: klist <tickets | tgt | purge | get [service principal name]>\n"
+msgstr ""
+
+#: programs/klist/klist.rc:29
+#, fuzzy
+#| msgid "Unknown error"
+msgid "Unknown error\n"
+msgstr "Errore sconosciuto"
+
+#: programs/klist/klist.rc:30
+#, fuzzy
+#| msgid "Start Menu"
+msgid "Start Time"
+msgstr "Menu Start"
+
+#: programs/klist/klist.rc:31
+#, fuzzy
+#| msgid "&Standard bar"
+msgid "End Time"
+msgstr "Barra &predefinita"
+
+#: programs/klist/klist.rc:32
+#, fuzzy
+#| msgid "Enter new time: "
+msgid "Renew Time"
+msgstr "Inserisci una nuova ora: "
+
+#: programs/klist/klist.rc:33
+msgid "Ticket Flags"
+msgstr ""
+
+#: programs/klist/klist.rc:34
+msgid "Cached Tickets"
+msgstr ""
+
+#: programs/klist/klist.rc:36
+#, fuzzy
+#| msgid "Encrypting File System"
+msgid "KerbTicket Encryption Type"
+msgstr "File System con crittografia"
+
+#: programs/klist/klist.rc:37
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Current LogonId is"
+msgstr "Connessione LAN"
 
 #: programs/msinfo32/msinfo32.rc:28
 #, fuzzy

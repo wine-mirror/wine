@@ -13489,7 +13489,7 @@ msgstr ""
 msgid "Authentication Required"
 msgstr ""
 
-#: dlls/wininet/wininet.rc:72
+#: dlls/wininet/wininet.rc:72 programs/klist/klist.rc:35
 msgid "Server"
 msgstr ""
 
@@ -15368,6 +15368,50 @@ msgstr "IP adresa="
 #: programs/ipconfig/ipconfig.rc:38
 msgid "Primary DNS suffix"
 msgstr ""
+
+#: programs/klist/klist.rc:28
+msgid "Usage: klist <tickets | tgt | purge | get [service principal name]>\n"
+msgstr ""
+
+#: programs/klist/klist.rc:29
+#, fuzzy
+#| msgid "Unknown error"
+msgid "Unknown error\n"
+msgstr "Neznáma chyba"
+
+#: programs/klist/klist.rc:30
+#, fuzzy
+#| msgid "Date and time"
+msgid "Start Time"
+msgstr "Dátum a čas"
+
+#: programs/klist/klist.rc:31
+#, fuzzy
+#| msgid "Date and time"
+msgid "End Time"
+msgstr "Dátum a čas"
+
+#: programs/klist/klist.rc:32
+msgid "Renew Time"
+msgstr ""
+
+#: programs/klist/klist.rc:33
+msgid "Ticket Flags"
+msgstr ""
+
+#: programs/klist/klist.rc:34
+msgid "Cached Tickets"
+msgstr ""
+
+#: programs/klist/klist.rc:36
+msgid "KerbTicket Encryption Type"
+msgstr ""
+
+#: programs/klist/klist.rc:37
+#, fuzzy
+#| msgid "Activation"
+msgid "Current LogonId is"
+msgstr "Aktivácia"
 
 #: programs/msinfo32/msinfo32.rc:28
 #, fuzzy

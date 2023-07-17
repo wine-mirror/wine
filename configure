@@ -1635,6 +1635,7 @@ enable_icacls
 enable_icinfo
 enable_iexplore
 enable_ipconfig
+enable_klist
 enable_lodctr
 enable_mofcomp
 enable_mshta
@@ -22098,6 +22099,7 @@ wine_fn_config_makefile programs/icacls enable_icacls
 wine_fn_config_makefile programs/icinfo enable_icinfo
 wine_fn_config_makefile programs/iexplore enable_iexplore
 wine_fn_config_makefile programs/ipconfig enable_ipconfig
+wine_fn_config_makefile programs/klist enable_klist
 wine_fn_config_makefile programs/lodctr enable_lodctr
 wine_fn_config_makefile programs/mofcomp enable_mofcomp
 wine_fn_config_makefile programs/mshta enable_mshta
