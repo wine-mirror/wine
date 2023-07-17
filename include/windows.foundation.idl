@@ -68,16 +68,32 @@ namespace Windows.Foundation {
     interface IMemoryBufferFactory;
     interface IMemoryBufferReference;
     interface IStringable;
+    interface IUriEscapeStatics;
+    interface IUriRuntimeClass;
+    interface IUriRuntimeClassFactory;
+    interface IUriRuntimeClassWithAbsoluteCanonicalUri;
+    interface IWwwFormUrlDecoderEntry;
+    interface IWwwFormUrlDecoderRuntimeClass;
+    interface IWwwFormUrlDecoderRuntimeClassFactory;
+
     runtimeclass Deferral;
     runtimeclass MemoryBuffer;
+    runtimeclass Uri;
+    runtimeclass WwwFormUrlDecoder;
+    runtimeclass WwwFormUrlDecoderEntry;
 
     declare {
         interface Windows.Foundation.Collections.IIterable<HSTRING>;
         interface Windows.Foundation.Collections.IIterable<IInspectable *>;
+        interface Windows.Foundation.Collections.IIterable<IWwwFormUrlDecoderEntry *>;
+        interface Windows.Foundation.Collections.IIterable<Uri *>;
         interface Windows.Foundation.Collections.IIterator<HSTRING>;
         interface Windows.Foundation.Collections.IIterator<IInspectable *>;
+        interface Windows.Foundation.Collections.IIterator<IWwwFormUrlDecoderEntry *>;
+        interface Windows.Foundation.Collections.IIterator<Uri *>;
         interface Windows.Foundation.Collections.IVectorView<HSTRING>;
         interface Windows.Foundation.Collections.IVectorView<IInspectable *>;
+        interface Windows.Foundation.Collections.IVectorView<IWwwFormUrlDecoderEntry *>;
         interface Windows.Foundation.Collections.IVector<HSTRING>;
         interface Windows.Foundation.Collections.IVector<IInspectable *>;
         interface Windows.Foundation.Collections.IMapView<HSTRING, Windows.Foundation.Collections.IVectorView<HSTRING> *>;
@@ -272,6 +288,97 @@ namespace Windows.Foundation {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Foundation.Uri),
+        uuid(c1d432ba-c824-4452-a7fd-512bc3bbe9a1)
+    ]
+    interface IUriEscapeStatics : IInspectable
+    {
+        HRESULT UnescapeComponent([in] HSTRING to_unescape, [out, retval] HSTRING *value);
+        HRESULT EscapeComponent([in] HSTRING to_escape, [out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Foundation.Uri),
+        uuid(9e365e57-48b2-4160-956f-c7385120bbfc)
+    ]
+    interface IUriRuntimeClass : IInspectable
+    {
+        [propget] HRESULT AbsoluteUri([out, retval] HSTRING *value);
+        [propget] HRESULT DisplayUri([out, retval] HSTRING *value);
+        [propget] HRESULT Domain([out, retval] HSTRING *value);
+        [propget] HRESULT Extension([out, retval] HSTRING *value);
+        [propget] HRESULT Fragment([out, retval] HSTRING *value);
+        [propget] HRESULT Host([out, retval] HSTRING *value);
+        [propget] HRESULT Password([out, retval] HSTRING *value);
+        [propget] HRESULT Path([out, retval] HSTRING *value);
+        [propget] HRESULT Query([out, retval] HSTRING *value);
+        [propget] HRESULT QueryParsed([out, retval] Windows.Foundation.WwwFormUrlDecoder **decoder);
+        [propget] HRESULT RawUri([out, retval] HSTRING *value);
+        [propget] HRESULT SchemeName([out, retval] HSTRING *value);
+        [propget] HRESULT UserName([out, retval] HSTRING *value);
+        [propget] HRESULT Port([out, retval] INT32 *value);
+        [propget] HRESULT Suspicious([out, retval] boolean *value);
+        HRESULT Equals([in] Windows.Foundation.Uri *uri, [out, retval] boolean *value);
+        HRESULT CombineUri([in] HSTRING relative_uri, [out, retval] Windows.Foundation.Uri **instance);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Foundation.Uri),
+        uuid(44a9796f-723e-4fdf-a218-033e75b0c084)
+    ]
+    interface IUriRuntimeClassFactory : IInspectable
+    {
+        HRESULT CreateUri([in] HSTRING uri, [out, retval] Windows.Foundation.Uri **instance);
+        HRESULT CreateWithRelativeUri([in] HSTRING base_uri, [in] HSTRING relative_uri, [out, retval] Windows.Foundation.Uri **instance);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Foundation.Uri),
+        uuid(758d9661-221c-480f-a339-50656673f46f)
+    ]
+    interface IUriRuntimeClassWithAbsoluteCanonicalUri : IInspectable
+    {
+        [propget] HRESULT AbsoluteCanonicalUri([out, retval] HSTRING *value);
+        [propget] HRESULT DisplayIri([out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(125e7431-f678-4e8e-b670-20a9b06c512d)
+    ]
+    interface IWwwFormUrlDecoderEntry : IInspectable
+    {
+        [propget] HRESULT Name([out, retval] HSTRING *value);
+        [propget] HRESULT Value([out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Foundation.WwwFormUrlDecoder),
+        uuid(d45a0451-f225-4542-9296-0e1df5d254df)
+    ]
+    interface IWwwFormUrlDecoderRuntimeClass : IInspectable
+        requires Windows.Foundation.Collections.IIterable<Windows.Foundation.IWwwFormUrlDecoderEntry *>,
+                 Windows.Foundation.Collections.IVectorView<Windows.Foundation.IWwwFormUrlDecoderEntry *>
+    {
+        HRESULT GetFirstValueByName([in] HSTRING name, [out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Foundation.WwwFormUrlDecoder),
+        uuid(5b8c6b3d-24ae-41b5-a1bf-f0c3d544845b)
+    ]
+    interface IWwwFormUrlDecoderRuntimeClassFactory : IInspectable
+    {
+        HRESULT CreateWwwFormUrlDecoder([in] HSTRING query, [out, retval] Windows.Foundation.WwwFormUrlDecoder **instance);
+    }
+
+    [
         activatable(Windows.Foundation.IDeferralFactory, Windows.Foundation.FoundationContract, 1.0),
         contract(Windows.Foundation.FoundationContract, 1.0),
         marshaling_behavior(agile)
@@ -292,5 +399,42 @@ namespace Windows.Foundation {
     {
         [default] interface Windows.Foundation.IMemoryBuffer;
         interface Windows.Foundation.IClosable;
+    }
+
+    [
+        activatable(Windows.Foundation.IUriRuntimeClassFactory, Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Foundation.IUriEscapeStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass Uri
+    {
+        [default] interface Windows.Foundation.IUriRuntimeClass;
+        interface Windows.Foundation.IUriRuntimeClassWithAbsoluteCanonicalUri;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Foundation.IStringable;
+    }
+
+    [
+        activatable(Windows.Foundation.IWwwFormUrlDecoderRuntimeClassFactory, Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass WwwFormUrlDecoder
+    {
+        [default] interface Windows.Foundation.IWwwFormUrlDecoderRuntimeClass;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Foundation.IWwwFormUrlDecoderEntry *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Foundation.IWwwFormUrlDecoderEntry *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass WwwFormUrlDecoderEntry
+    {
+        [default] interface Windows.Foundation.IWwwFormUrlDecoderEntry;
     }
 }
