@@ -48,7 +48,6 @@ MAKE_FUNCPTR(XcursorLibraryLoadCursor);
 # undef MAKE_FUNCPTR
 #endif /* SONAME_LIBXCURSOR */
 
-#define NONAMELESSUNION
 #define OEMRESOURCE
 
 #include "x11drv.h"
@@ -476,7 +475,7 @@ static void map_event_coords( HWND hwnd, Window window, Window event_root, int x
 {
     struct x11drv_thread_data *thread_data;
     struct x11drv_win_data *data;
-    POINT pt = { input->u.mi.dx, input->u.mi.dy };
+    POINT pt = { input->mi.dx, input->mi.dy };
 
     TRACE( "hwnd %p, window %lx, event_root %lx, x_root %d, y_root %d, input %p\n", hwnd, window, event_root,
            x_root, y_root, input );
@@ -508,10 +507,10 @@ static void map_event_coords( HWND hwnd, Window window, Window event_root, int x
         release_win_data( data );
     }
 
-    TRACE( "mapped %s to %s\n", wine_dbgstr_point( (POINT *)&input->u.mi.dx ), wine_dbgstr_point( &pt ) );
+    TRACE( "mapped %s to %s\n", wine_dbgstr_point( (POINT *)&input->mi.dx ), wine_dbgstr_point( &pt ) );
 
-    input->u.mi.dx = pt.x;
-    input->u.mi.dy = pt.y;
+    input->mi.dx = pt.x;
+    input->mi.dy = pt.y;
 }
 
 /***********************************************************************
@@ -542,7 +541,7 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
         /* ignore event if a button is pressed, since the mouse is then grabbed too */
         !(state & (Button1Mask|Button2Mask|Button3Mask|Button4Mask|Button5Mask|Button6Mask|Button7Mask)))
     {
-        RECT rect = { input->u.mi.dx, input->u.mi.dy, input->u.mi.dx + 1, input->u.mi.dy + 1 };
+        RECT rect = { input->mi.dx, input->mi.dy, input->mi.dx + 1, input->mi.dy + 1 };
 
         SERVER_START_REQ( update_window_zorder )
         {
@@ -1493,12 +1492,12 @@ void move_resize_window( HWND hwnd, int dir )
             /* fake a button release event */
             pos = root_to_virtual_screen( x, y );
             input.type = INPUT_MOUSE;
-            input.u.mi.dx          = pos.x;
-            input.u.mi.dy          = pos.y;
-            input.u.mi.mouseData   = button_up_data[button - 1];
-            input.u.mi.dwFlags     = button_up_flags[button - 1] | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
-            input.u.mi.time        = NtGetTickCount();
-            input.u.mi.dwExtraInfo = 0;
+            input.mi.dx          = pos.x;
+            input.mi.dy          = pos.y;
+            input.mi.mouseData   = button_up_data[button - 1];
+            input.mi.dwFlags     = button_up_flags[button - 1] | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
+            input.mi.time        = NtGetTickCount();
+            input.mi.dwExtraInfo = 0;
             __wine_send_input( hwnd, &input, NULL );
         }
 
@@ -1533,12 +1532,12 @@ BOOL X11DRV_ButtonPress( HWND hwnd, XEvent *xev )
 
     TRACE( "hwnd %p/%lx button %u pos %d,%d\n", hwnd, event->window, buttonNum, event->x, event->y );
 
-    input.u.mi.dx          = event->x;
-    input.u.mi.dy          = event->y;
-    input.u.mi.mouseData   = button_down_data[buttonNum];
-    input.u.mi.dwFlags     = button_down_flags[buttonNum] | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
-    input.u.mi.time        = EVENT_x11_time_to_win32_time( event->time );
-    input.u.mi.dwExtraInfo = 0;
+    input.mi.dx          = event->x;
+    input.mi.dy          = event->y;
+    input.mi.mouseData   = button_down_data[buttonNum];
+    input.mi.dwFlags     = button_down_flags[buttonNum] | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
+    input.mi.time        = EVENT_x11_time_to_win32_time( event->time );
+    input.mi.dwExtraInfo = 0;
 
     update_user_time( event->time );
     map_event_coords( hwnd, event->window, event->root, event->x_root, event->y_root, &input );
@@ -1560,12 +1559,12 @@ BOOL X11DRV_ButtonRelease( HWND hwnd, XEvent *xev )
 
     TRACE( "hwnd %p/%lx button %u pos %d,%d\n", hwnd, event->window, buttonNum, event->x, event->y );
 
-    input.u.mi.dx          = event->x;
-    input.u.mi.dy          = event->y;
-    input.u.mi.mouseData   = button_up_data[buttonNum];
-    input.u.mi.dwFlags     = button_up_flags[buttonNum] | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
-    input.u.mi.time        = EVENT_x11_time_to_win32_time( event->time );
-    input.u.mi.dwExtraInfo = 0;
+    input.mi.dx          = event->x;
+    input.mi.dy          = event->y;
+    input.mi.mouseData   = button_up_data[buttonNum];
+    input.mi.dwFlags     = button_up_flags[buttonNum] | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
+    input.mi.time        = EVENT_x11_time_to_win32_time( event->time );
+    input.mi.dwExtraInfo = 0;
 
     map_event_coords( hwnd, event->window, event->root, event->x_root, event->y_root, &input );
     send_mouse_input( hwnd, event->window, event->state, &input );
@@ -1584,12 +1583,12 @@ BOOL X11DRV_MotionNotify( HWND hwnd, XEvent *xev )
     TRACE( "hwnd %p/%lx pos %d,%d is_hint %d serial %lu\n",
            hwnd, event->window, event->x, event->y, event->is_hint, event->serial );
 
-    input.u.mi.dx          = event->x;
-    input.u.mi.dy          = event->y;
-    input.u.mi.mouseData   = 0;
-    input.u.mi.dwFlags     = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
-    input.u.mi.time        = EVENT_x11_time_to_win32_time( event->time );
-    input.u.mi.dwExtraInfo = 0;
+    input.mi.dx          = event->x;
+    input.mi.dy          = event->y;
+    input.mi.mouseData   = 0;
+    input.mi.dwFlags     = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+    input.mi.time        = EVENT_x11_time_to_win32_time( event->time );
+    input.mi.dwExtraInfo = 0;
 
     if (!hwnd && is_old_motion_event( event->serial ))
     {
@@ -1615,12 +1614,12 @@ BOOL X11DRV_EnterNotify( HWND hwnd, XEvent *xev )
     if (hwnd == x11drv_thread_data()->grab_hwnd) return FALSE;
 
     /* simulate a mouse motion event */
-    input.u.mi.dx          = event->x;
-    input.u.mi.dy          = event->y;
-    input.u.mi.mouseData   = 0;
-    input.u.mi.dwFlags     = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
-    input.u.mi.time        = EVENT_x11_time_to_win32_time( event->time );
-    input.u.mi.dwExtraInfo = 0;
+    input.mi.dx          = event->x;
+    input.mi.dy          = event->y;
+    input.mi.mouseData   = 0;
+    input.mi.dwFlags     = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+    input.mi.time        = EVENT_x11_time_to_win32_time( event->time );
+    input.mi.dwExtraInfo = 0;
 
     if (is_old_motion_event( event->serial ))
     {
@@ -1705,16 +1704,16 @@ static BOOL map_raw_event_coords( XIRawEvent *event, INPUT *input )
         values++;
     }
 
-    input->u.mi.dx = round( x->value );
-    input->u.mi.dy = round( y->value );
+    input->mi.dx = round( x->value );
+    input->mi.dy = round( y->value );
 
     TRACE( "event %f,%f value %f,%f input %d,%d\n", x_value, y_value, x->value, y->value,
-           (int)input->u.mi.dx, (int)input->u.mi.dy );
+           (int)input->mi.dx, (int)input->mi.dy );
 
-    x->value -= input->u.mi.dx;
-    y->value -= input->u.mi.dy;
+    x->value -= input->mi.dx;
+    y->value -= input->mi.dy;
 
-    if (!input->u.mi.dx && !input->u.mi.dy)
+    if (!input->mi.dx && !input->mi.dy)
     {
         TRACE( "accumulating motion\n" );
         return FALSE;
@@ -1738,12 +1737,12 @@ static BOOL X11DRV_RawMotion( XGenericEventCookie *xev )
     }
 
     input.type = INPUT_MOUSE;
-    input.u.mi.mouseData   = 0;
-    input.u.mi.dwFlags     = MOUSEEVENTF_MOVE;
-    input.u.mi.time        = EVENT_x11_time_to_win32_time( event->time );
-    input.u.mi.dwExtraInfo = 0;
-    input.u.mi.dx          = 0;
-    input.u.mi.dy          = 0;
+    input.mi.mouseData   = 0;
+    input.mi.dwFlags     = MOUSEEVENTF_MOVE;
+    input.mi.time        = EVENT_x11_time_to_win32_time( event->time );
+    input.mi.dwExtraInfo = 0;
+    input.mi.dx          = 0;
+    input.mi.dy          = 0;
     if (!map_raw_event_coords( event, &input )) return FALSE;
 
     __wine_send_input( 0, &input, NULL );

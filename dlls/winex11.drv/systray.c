@@ -20,7 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
 #include "x11drv_dll.h"
 #include "commctrl.h"
 #include "shellapi.h"
@@ -675,7 +674,7 @@ static BOOL modify_icon( struct tray_icon *icon, NOTIFYICONDATAW *nid )
         lstrcpynW( icon->info_text, nid->szInfo, ARRAY_SIZE( icon->info_text ));
         lstrcpynW( icon->info_title, nid->szInfoTitle, ARRAY_SIZE( icon->info_title ));
         icon->info_flags = nid->dwInfoFlags;
-        icon->info_timeout = max(min(nid->u.uTimeout, BALLOON_SHOW_MAX_TIMEOUT), BALLOON_SHOW_MIN_TIMEOUT);
+        icon->info_timeout = max(min(nid->uTimeout, BALLOON_SHOW_MAX_TIMEOUT), BALLOON_SHOW_MIN_TIMEOUT);
         icon->info_icon = nid->hBalloonIcon;
         update_balloon( icon );
     }
@@ -758,7 +757,7 @@ int CDECL wine_notify_icon( DWORD msg, NOTIFYICONDATAW *data )
     case NIM_SETVERSION:
         if ((icon = get_icon( data->hWnd, data->uID )))
         {
-            icon->version = data->u.uVersion;
+            icon->version = data->uVersion;
             ret = TRUE;
         }
         break;

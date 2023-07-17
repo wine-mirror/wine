@@ -40,8 +40,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-#define NONAMELESSUNION
-
 #include "x11drv.h"
 
 #include "wingdi.h"
@@ -1127,12 +1125,12 @@ static void X11DRV_send_keyboard_input( HWND hwnd, WORD vkey, WORD scan, UINT fl
 
     TRACE_(key)( "hwnd %p vkey=%04x scan=%04x flags=%04x\n", hwnd, vkey, scan, flags );
 
-    input.type             = INPUT_KEYBOARD;
-    input.u.ki.wVk         = vkey;
-    input.u.ki.wScan       = scan;
-    input.u.ki.dwFlags     = flags;
-    input.u.ki.time        = time;
-    input.u.ki.dwExtraInfo = 0;
+    input.type           = INPUT_KEYBOARD;
+    input.ki.wVk         = vkey;
+    input.ki.wScan       = scan;
+    input.ki.dwFlags     = flags;
+    input.ki.time        = time;
+    input.ki.dwExtraInfo = 0;
 
     __wine_send_input( hwnd, &input, NULL );
 }

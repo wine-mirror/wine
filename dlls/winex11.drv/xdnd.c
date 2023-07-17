@@ -20,8 +20,6 @@
  */
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "x11drv_dll.h"
 #include "shellapi.h"
 #include "shlobj.h"
@@ -566,11 +564,11 @@ static HRESULT WINAPI XDNDDATAOBJECT_GetData(IDataObject *dataObject,
             if (iter->format == formatEtc->cfFormat)
             {
                 pMedium->tymed = TYMED_HGLOBAL;
-                pMedium->u.hGlobal = GlobalAlloc(GMEM_FIXED | GMEM_ZEROINIT, iter->size);
-                if (pMedium->u.hGlobal == NULL)
+                pMedium->hGlobal = GlobalAlloc(GMEM_FIXED | GMEM_ZEROINIT, iter->size);
+                if (pMedium->hGlobal == NULL)
                     return E_OUTOFMEMORY;
-                memcpy(GlobalLock(pMedium->u.hGlobal), iter->data, iter->size);
-                GlobalUnlock(pMedium->u.hGlobal);
+                memcpy(GlobalLock(pMedium->hGlobal), iter->data, iter->size);
+                GlobalUnlock(pMedium->hGlobal);
                 pMedium->pUnkForRelease = 0;
                 return S_OK;
             }

@@ -27,9 +27,6 @@
 #include <X11/cursorfont.h>
 #include <X11/Xlib.h>
 
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
-
 #include "x11drv.h"
 
 /* avoid conflict with field names in included win32 headers */

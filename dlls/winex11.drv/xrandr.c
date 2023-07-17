@@ -26,8 +26,6 @@
 
 #include "config.h"
 
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
 #include <assert.h>
 #include <X11/Xlib.h>
 #ifdef HAVE_X11_EXTENSIONS_XRANDR_H
@@ -165,11 +163,11 @@ static void add_xrandr10_mode( DEVMODEW *mode, DWORD depth, DWORD width, DWORD h
         mode->dmFields |= DM_DISPLAYFREQUENCY;
         mode->dmDisplayFrequency = frequency;
     }
-    mode->u1.s2.dmDisplayOrientation = DMDO_DEFAULT;
+    mode->dmDisplayOrientation = DMDO_DEFAULT;
     mode->dmBitsPerPel = depth;
     mode->dmPelsWidth = width;
     mode->dmPelsHeight = height;
-    mode->u2.dmDisplayFlags = 0;
+    mode->dmDisplayFlags = 0;
     memcpy( (BYTE *)mode + sizeof(*mode), &size_id, sizeof(size_id) );
 }
 
@@ -246,10 +244,10 @@ static BOOL xrandr10_get_current_mode( x11drv_settings_id id, DEVMODEW *mode )
 
     mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT |
                      DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY | DM_POSITION;
-    mode->u1.s2.dmDisplayOrientation = DMDO_DEFAULT;
-    mode->u2.dmDisplayFlags = 0;
-    mode->u1.s2.dmPosition.x = 0;
-    mode->u1.s2.dmPosition.y = 0;
+    mode->dmDisplayOrientation = DMDO_DEFAULT;
+    mode->dmDisplayFlags = 0;
+    mode->dmPosition.x = 0;
+    mode->dmPosition.y = 0;
 
     if (id.id != 1)
     {
@@ -1305,9 +1303,9 @@ static void add_xrandr14_mode( DEVMODEW *mode, XRRModeInfo *info, DWORD depth, D
         mode->dmPelsWidth = info->height;
         mode->dmPelsHeight = info->width;
     }
-    mode->u1.s2.dmDisplayOrientation = orientation;
+    mode->dmDisplayOrientation = orientation;
     mode->dmBitsPerPel = depth;
-    mode->u2.dmDisplayFlags = 0;
+    mode->dmDisplayFlags = 0;
     memcpy( (BYTE *)mode + sizeof(*mode), &info->id, sizeof(info->id) );
 }
 
@@ -1477,14 +1475,14 @@ static BOOL xrandr14_get_current_mode( x11drv_settings_id id, DEVMODEW *mode )
     {
         mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT |
                          DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY | DM_POSITION;
-        mode->u1.s2.dmDisplayOrientation = DMDO_DEFAULT;
+        mode->dmDisplayOrientation = DMDO_DEFAULT;
         mode->dmBitsPerPel = 0;
         mode->dmPelsWidth = 0;
         mode->dmPelsHeight = 0;
-        mode->u2.dmDisplayFlags = 0;
+        mode->dmDisplayFlags = 0;
         mode->dmDisplayFrequency = 0;
-        mode->u1.s2.dmPosition.x = 0;
-        mode->u1.s2.dmPosition.y = 0;
+        mode->dmPosition.x = 0;
+        mode->dmPosition.y = 0;
         ret = TRUE;
         goto done;
     }
@@ -1504,16 +1502,16 @@ static BOOL xrandr14_get_current_mode( x11drv_settings_id id, DEVMODEW *mode )
 
     mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT |
                      DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY | DM_POSITION;
-    mode->u1.s2.dmDisplayOrientation = get_orientation( crtc_info->rotation );
+    mode->dmDisplayOrientation = get_orientation( crtc_info->rotation );
     mode->dmBitsPerPel = screen_bpp;
     mode->dmPelsWidth = crtc_info->width;
     mode->dmPelsHeight = crtc_info->height;
-    mode->u2.dmDisplayFlags = 0;
+    mode->dmDisplayFlags = 0;
     mode->dmDisplayFrequency = get_frequency( mode_info );
     /* Convert RandR coordinates to virtual screen coordinates */
     primary = get_primary_rect( screen_resources );
-    mode->u1.s2.dmPosition.x = crtc_info->x - primary.left;
-    mode->u1.s2.dmPosition.y = crtc_info->y - primary.top;
+    mode->dmPosition.x = crtc_info->x - primary.left;
+    mode->dmPosition.y = crtc_info->y - primary.top;
     ret = TRUE;
 
 done:
@@ -1612,7 +1610,7 @@ static LONG xrandr14_set_current_mode( x11drv_settings_id id, const DEVMODEW *mo
         outputs = &output;
         output_count = 1;
     }
-    rotation = get_rotation( mode->u1.s2.dmDisplayOrientation );
+    rotation = get_rotation( mode->dmDisplayOrientation );
 
     /* According to the RandR spec, the entire CRTC must fit inside the screen.
      * Since we use the union of all enabled CRTCs to determine the necessary
@@ -1624,12 +1622,12 @@ static LONG xrandr14_set_current_mode( x11drv_settings_id id, const DEVMODEW *mo
         goto done;
 
     get_screen_size( screen_resources, &screen_width, &screen_height );
-    screen_width = max( screen_width, mode->u1.s2.dmPosition.x + mode->dmPelsWidth );
-    screen_height = max( screen_height, mode->u1.s2.dmPosition.y + mode->dmPelsHeight );
+    screen_width = max( screen_width, mode->dmPosition.x + mode->dmPelsWidth );
+    screen_height = max( screen_height, mode->dmPosition.y + mode->dmPelsHeight );
     set_screen_size( screen_width, screen_height );
 
     status = pXRRSetCrtcConfig( gdi_display, screen_resources, crtc, CurrentTime,
-                                mode->u1.s2.dmPosition.x, mode->u1.s2.dmPosition.y, rrmode,
+                                mode->dmPosition.x, mode->dmPosition.y, rrmode,
                                 rotation, outputs, output_count );
     if (status == RRSetConfigSuccess)
         ret = DISP_CHANGE_SUCCESSFUL;

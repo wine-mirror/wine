@@ -31,9 +31,6 @@
 #include <math.h>
 #include <dlfcn.h>
 
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
-
 #include "x11drv.h"
 
 #ifdef HAVE_X11_EXTENSIONS_XF86VMODE_H
@@ -104,11 +101,11 @@ static void add_xf86vm_mode(DEVMODEW *mode, DWORD depth, const XF86VidModeModeIn
         mode->dmFields |= DM_DISPLAYFREQUENCY;
         mode->dmDisplayFrequency = mode_info->dotclock * 1000 / (mode_info->htotal * mode_info->vtotal);
     }
-    mode->u1.s2.dmDisplayOrientation = DMDO_DEFAULT;
+    mode->dmDisplayOrientation = DMDO_DEFAULT;
     mode->dmBitsPerPel = depth;
     mode->dmPelsWidth = mode_info->hdisplay;
     mode->dmPelsHeight = mode_info->vdisplay;
-    mode->u2.dmDisplayFlags = 0;
+    mode->dmDisplayFlags = 0;
     memcpy((BYTE *)mode + sizeof(*mode), &mode_info, sizeof(mode_info));
 }
 
@@ -177,10 +174,10 @@ static BOOL xf86vm_get_current_mode(x11drv_settings_id id, DEVMODEW *mode)
 
     mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT |
                      DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY | DM_POSITION;
-    mode->u1.s2.dmDisplayOrientation = DMDO_DEFAULT;
-    mode->u2.dmDisplayFlags = 0;
-    mode->u1.s2.dmPosition.x = 0;
-    mode->u1.s2.dmPosition.y = 0;
+    mode->dmDisplayOrientation = DMDO_DEFAULT;
+    mode->dmDisplayFlags = 0;
+    mode->dmPosition.x = 0;
+    mode->dmPosition.y = 0;
 
     if (id.id != 1)
     {
