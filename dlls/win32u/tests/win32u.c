@@ -1626,6 +1626,8 @@ static void test_wndproc_hook(void)
     static const MEASUREITEMSTRUCT mis_out = { .itemID = 2, .CtlType = 3, .CtlID = 4, .itemData = 5 };
     static const DELETEITEMSTRUCT dis_in = { .itemID = 1 };
     static const COMPAREITEMSTRUCT cis_in = { .itemID1 = 1 };
+    static const WINDOWPOS winpos_in = { .x = 1, .cy = 2 };
+    static const WINDOWPOS winpos_out = { .x = 10, .cy = 22 };
 
     static const struct lparam_hook_test lparam_hook_tests[] =
     {
@@ -1729,6 +1731,16 @@ static void test_wndproc_hook(void)
             "WM_COMPAREITEM", WM_COMPAREITEM, .wparam = 10,
             .lparam_size = sizeof(cis_in), .lparam = &cis_in, .poison_lparam = TRUE,
             .check_size = sizeof(cis_in),
+        },
+        {
+            "WM_WINDOWPOSCHANGING", WM_WINDOWPOSCHANGING,
+            .lparam_size = sizeof(WINDOWPOS), .lparam = &winpos_in, .change_lparam = &winpos_out,
+            .check_size = sizeof(WINDOWPOS)
+        },
+        {
+            "WM_WINDOWPOSCHANGED", WM_WINDOWPOSCHANGED,
+            .lparam_size = sizeof(WINDOWPOS), .lparam = &winpos_in, .poison_lparam = TRUE,
+            .check_size = sizeof(WINDOWPOS),
         },
         /* messages that don't change lparam */
         { "WM_USER", WM_USER },

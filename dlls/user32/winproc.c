@@ -845,22 +845,9 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case WM_MEASUREITEM:
     case WM_DELETEITEM:
     case WM_COMPAREITEM:
-        break;
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
-    {
-        WINDOWPOS wp;
-        if (size < sizeof(ps->wp)) return FALSE;
-        wp.hwnd            = unpack_handle( ps->wp.hwnd );
-        wp.hwndInsertAfter = unpack_handle( ps->wp.hwndInsertAfter );
-        wp.x               = ps->wp.x;
-        wp.y               = ps->wp.y;
-        wp.cx              = ps->wp.cx;
-        wp.cy              = ps->wp.cy;
-        wp.flags           = ps->wp.flags;
-        memcpy( *buffer, &wp, sizeof(wp) );
         break;
-    }
     case WM_COPYDATA:
     {
         COPYDATASTRUCT cds;
@@ -1137,6 +1124,8 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case WM_MEASUREITEM:
         case WM_DELETEITEM:
         case WM_COMPAREITEM:
+        case WM_WINDOWPOSCHANGING:
+        case WM_WINDOWPOSCHANGED:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;

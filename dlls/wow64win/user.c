@@ -715,6 +715,11 @@ static size_t packed_message_64to32( UINT message, WPARAM wparam,
             memcpy( params32, &cis32, sizeof(cis32) );
             return sizeof(cis32);
         }
+
+    case WM_WINDOWPOSCHANGING:
+    case WM_WINDOWPOSCHANGED:
+        winpos_64to32( params64, params32 );
+        return sizeof(WINDOWPOS32);
     }
 
     memmove( params32, params64, size );
@@ -775,6 +780,11 @@ static size_t packed_result_32to64( UINT message, WPARAM wparam, const void *par
             mis64->itemData   = mis32->itemData;
             return sizeof(*mis64);
         }
+
+    case WM_WINDOWPOSCHANGING:
+    case WM_WINDOWPOSCHANGED:
+        winpos_32to64( params64, params32 );
+        return sizeof(WINDOWPOS);
 
     case WM_GETTEXT:
     case WM_ASKCBFORMATNAME:
