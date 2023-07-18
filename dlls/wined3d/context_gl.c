@@ -4163,6 +4163,7 @@ static void context_gl_load_unordered_access_resources(struct wined3d_context_gl
         if (view->resource->type == WINED3D_RTYPE_BUFFER)
         {
             buffer = buffer_from_resource(view->resource);
+            wined3d_buffer_acquire_bo_for_write(buffer, &context_gl->c);
             wined3d_buffer_load_location(buffer, &context_gl->c, WINED3D_LOCATION_BUFFER);
             wined3d_unordered_access_view_invalidate_location(view, ~WINED3D_LOCATION_BUFFER);
             wined3d_context_gl_reference_buffer(context_gl, buffer);
@@ -4192,6 +4193,8 @@ static void context_gl_load_stream_output_buffers(struct wined3d_context_gl *con
     {
         if (!(buffer = state->stream_output[i].buffer))
             continue;
+
+        wined3d_buffer_acquire_bo_for_write(buffer, &context_gl->c);
 
         wined3d_buffer_load(buffer, &context_gl->c, state);
         wined3d_buffer_invalidate_location(buffer, ~WINED3D_LOCATION_BUFFER);

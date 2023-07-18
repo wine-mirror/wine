@@ -4494,8 +4494,11 @@ static void wined3d_command_list_destroy_object(void *object)
 
         if ((bo = list->uploads[i].bo))
         {
-            wined3d_context_destroy_bo(context, bo);
-            heap_free(bo);
+            if (!--bo->refcount)
+            {
+                wined3d_context_destroy_bo(context, bo);
+                heap_free(bo);
+            }
         }
         else
         {

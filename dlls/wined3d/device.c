@@ -1181,6 +1181,7 @@ bool wined3d_device_gl_create_bo(struct wined3d_device_gl *device_gl, struct win
     bo->b.memory_offset = bo->b.buffer_offset;
     bo->b.map_ptr = NULL;
     bo->b.client_map_count = 0;
+    bo->b.refcount = 1;
 
     return true;
 }

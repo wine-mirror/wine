@@ -1667,9 +1667,14 @@ void wined3d_unordered_access_view_gl_clear(struct wined3d_unordered_access_view
     get_buffer_view_range(buffer, &view_gl->v.desc, &format_gl->f, &offset, &size);
 
     if (!offset && size == buffer->resource.size)
+    {
         wined3d_buffer_prepare_location(buffer, &context_gl->c, WINED3D_LOCATION_BUFFER);
+    }
     else
+    {
+        wined3d_buffer_acquire_bo_for_write(buffer, &context_gl->c);
         wined3d_buffer_load_location(buffer, &context_gl->c, WINED3D_LOCATION_BUFFER);
+    }
     wined3d_unordered_access_view_invalidate_location(&view_gl->v, ~WINED3D_LOCATION_BUFFER);
 
     bo_gl = wined3d_bo_gl(buffer->buffer_object);
@@ -2073,9 +2078,14 @@ void wined3d_unordered_access_view_vk_clear(struct wined3d_unordered_access_view
 
         get_buffer_view_range(buffer, view_desc, view_format, &offset, &size);
         if (!offset && size == buffer->resource.size)
+        {
             wined3d_buffer_prepare_location(buffer, &context_vk->c, WINED3D_LOCATION_BUFFER);
+        }
         else
+        {
+            wined3d_buffer_acquire_bo_for_write(buffer, &context_vk->c);
             wined3d_buffer_load_location(buffer, &context_vk->c, WINED3D_LOCATION_BUFFER);
+        }
         wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_BUFFER);
         wined3d_buffer_invalidate_location(buffer, ~WINED3D_LOCATION_BUFFER);
     }

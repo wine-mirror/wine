@@ -478,6 +478,7 @@ static bool wined3d_context_vk_create_slab_bo(struct wined3d_context_vk *context
     *bo = slab->bo;
     bo->memory = NULL;
     bo->slab = slab;
+    bo->b.refcount = 1;
     bo->b.client_map_count = 0;
     bo->b.map_ptr = NULL;
     bo->b.buffer_offset = idx * object_size;
@@ -557,6 +558,7 @@ BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDevic
         return FALSE;
     }
 
+    bo->b.refcount = 1;
     bo->b.client_map_count = 0;
     bo->b.map_ptr = NULL;
     bo->b.buffer_offset = 0;
@@ -3415,6 +3417,8 @@ static void wined3d_context_vk_load_buffers(struct wined3d_context_vk *context_v
             if (!(buffer = state->stream_output[i].buffer))
                 continue;
 
+            wined3d_buffer_acquire_bo_for_write(buffer, &context_vk->c);
+
             buffer_vk = wined3d_buffer_vk(buffer);
             wined3d_buffer_load(&buffer_vk->b, &context_vk->c, state);
             wined3d_buffer_vk_barrier(buffer_vk, context_vk, WINED3D_BIND_STREAM_OUTPUT);
@@ -3525,6 +3529,7 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
                 uav_vk = wined3d_unordered_access_view_vk(uav);
                 if (uav->resource->type == WINED3D_RTYPE_BUFFER)
                 {
+                    wined3d_buffer_acquire_bo_for_write(buffer_from_resource(uav->resource), &context_vk->c);
                     if (!uav_vk->view_vk.bo_user.valid)
                     {
                         wined3d_unordered_access_view_vk_update(uav_vk, context_vk);

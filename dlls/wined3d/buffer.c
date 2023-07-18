@@ -199,8 +199,11 @@ static void wined3d_buffer_gl_destroy_buffer_object(struct wined3d_buffer_gl *bu
         buffer_gl->b.bo_user.valid = false;
         list_remove(&buffer_gl->b.bo_user.entry);
     }
-    wined3d_context_gl_destroy_bo(context_gl, bo_gl);
-    heap_free(bo_gl);
+    if (!--bo_gl->b.refcount)
+    {
+        wined3d_context_gl_destroy_bo(context_gl, bo_gl);
+        heap_free(bo_gl);
+    }
     buffer_gl->b.buffer_object = NULL;
 }
 
@@ -1015,6 +1018,7 @@ static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resourc
 
         if (flags & WINED3D_MAP_WRITE)
         {
+            wined3d_buffer_acquire_bo_for_write(buffer, context);
             wined3d_buffer_invalidate_location(buffer, ~WINED3D_LOCATION_BUFFER);
             buffer_invalidate_bo_range(buffer, dirty_offset, dirty_size);
         }
@@ -1127,17 +1131,58 @@ static void wined3d_buffer_set_bo(struct wined3d_buffer *buffer, struct wined3d_
     {
         struct wined3d_bo_user *bo_user;
 
+        /* The previous BO might have users in other buffers which were valid,
+         * and should in theory remain valid. The problem is that it's not easy
+         * to tell which users belong to this buffer and which don't. We could
+         * add a field, but for now it's easier and probably fine to just
+         * invalidate every user. */
         LIST_FOR_EACH_ENTRY(bo_user, &prev_bo->users, struct wined3d_bo_user, entry)
             bo_user->valid = false;
         list_init(&prev_bo->users);
 
-        assert(list_empty(&bo->users));
-
-        wined3d_context_destroy_bo(context, prev_bo);
-        heap_free(prev_bo);
+        if (!--prev_bo->refcount)
+        {
+            wined3d_context_destroy_bo(context, prev_bo);
+            heap_free(prev_bo);
+        }
     }
 
     buffer->buffer_object = bo;
+}
+
+void wined3d_buffer_acquire_bo_for_write(struct wined3d_buffer *buffer, struct wined3d_context *context)
+{
+    const struct wined3d_range range = {.size = buffer->resource.size};
+    struct wined3d_bo_address dst, src;
+    struct wined3d_bo *bo;
+
+    if (!(bo = buffer->buffer_object))
+        return;
+
+    /* If we are the only owner of this BO, there is nothing to do. */
+    if (bo->refcount == 1)
+        return;
+
+    TRACE("Performing copy-on-write for BO %p.\n", bo);
+
+    /* Grab a reference to the current BO. It's okay if this overflows, because
+     * the following unload will release it. */
+    ++bo->refcount;
+
+    /* Unload and re-prepare to get a new buffer. This is a bit cheap and not
+     * perfectly idiomatic—we should really just factor out an adapter-agnostic
+     * function to create a BO and then use wined3d_buffer_set_bo()—but it'll
+     * do nonetheless. */
+    wined3d_buffer_unload_location(buffer, context, WINED3D_LOCATION_BUFFER);
+    wined3d_buffer_prepare_location(buffer, context, WINED3D_LOCATION_BUFFER);
+
+    /* And finally, perform the actual copy. */
+    assert(buffer->buffer_object != bo);
+    dst.buffer_object = buffer->buffer_object;
+    dst.addr = NULL;
+    src.buffer_object = bo;
+    src.addr = NULL;
+    wined3d_context_copy_bo_address(context, &dst, &src, 1, &range, WINED3D_MAP_WRITE | WINED3D_MAP_DISCARD);
 }
 
 void wined3d_buffer_copy_bo_address(struct wined3d_buffer *dst_buffer, struct wined3d_context *context,
@@ -1150,6 +1195,9 @@ void wined3d_buffer_copy_bo_address(struct wined3d_buffer *dst_buffer, struct wi
 
     if (!dst_offset && size == dst_buffer->resource.size)
         map_flags |= WINED3D_MAP_DISCARD;
+
+    if (map_flags & WINED3D_MAP_DISCARD)
+        wined3d_buffer_acquire_bo_for_write(dst_buffer, context);
 
     dst_location = wined3d_buffer_get_memory(dst_buffer, context, &dst_addr);
     dst_addr.addr += dst_offset;
@@ -1182,8 +1230,26 @@ void wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_off
 void wined3d_buffer_update_sub_resource(struct wined3d_buffer *buffer, struct wined3d_context *context,
         const struct upload_bo *upload_bo, unsigned int offset, unsigned int size)
 {
-    if (upload_bo->flags & UPLOAD_BO_RENAME_ON_UNMAP)
+    struct wined3d_bo *bo = upload_bo->addr.buffer_object;
+    uint32_t flags = upload_bo->flags;
+
+    /* Try to take this buffer for COW. Don't take it if we've saturated the
+     * refcount. */
+    if (!offset && size == buffer->resource.size
+            && bo && bo->refcount < UINT8_MAX && !(upload_bo->flags & UPLOAD_BO_RENAME_ON_UNMAP))
     {
+        flags |= UPLOAD_BO_RENAME_ON_UNMAP;
+        ++bo->refcount;
+    }
+
+    if (flags & UPLOAD_BO_RENAME_ON_UNMAP)
+    {
+        /* Don't increment the refcount. UPLOAD_BO_RENAME_ON_UNMAP transfers an
+         * existing reference.
+         *
+         * FIXME: We could degenerate RENAME to a copy + free and rely on the
+         * COW logic to detect this case.
+         */
         wined3d_buffer_set_bo(buffer, context, upload_bo->addr.buffer_object);
         wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_BUFFER);
         wined3d_buffer_invalidate_location(buffer, ~WINED3D_LOCATION_BUFFER);
@@ -1572,8 +1638,11 @@ static void wined3d_buffer_vk_unload_location(struct wined3d_buffer *buffer,
                 buffer->bo_user.valid = false;
                 list_remove(&buffer->bo_user.entry);
             }
-            wined3d_context_vk_destroy_bo(context_vk, bo_vk);
-            heap_free(bo_vk);
+            if (!--bo_vk->b.refcount)
+            {
+                wined3d_context_vk_destroy_bo(context_vk, bo_vk);
+                heap_free(bo_vk);
+            }
             buffer->buffer_object = NULL;
             break;
 
