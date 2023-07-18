@@ -838,6 +838,11 @@ static size_t packed_result_32to64( UINT message, WPARAM wparam, const void *par
     case EM_GETSEL:
     case SBM_GETRANGE:
     case CB_GETEDITSEL:
+    case EM_SETRECT:
+    case EM_GETRECT:
+    case EM_SETRECTNP:
+    case LB_GETITEMRECT:
+    case CB_GETDROPPEDCONTROLRECT:
         break;
 
     default:

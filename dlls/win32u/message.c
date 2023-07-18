@@ -574,6 +574,15 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
             if (*lparam) *lparam = (LPARAM)((DWORD *)*buffer + 1);
         }
         return TRUE;
+    case EM_GETRECT:
+    case LB_GETITEMRECT:
+    case CB_GETDROPPEDCONTROLRECT:
+        if (!get_buffer_space( buffer, sizeof(RECT), size )) return FALSE;
+        break;
+    case EM_SETRECT:
+    case EM_SETRECTNP:
+        minsize = sizeof(RECT);
+        break;
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1380,6 +1389,13 @@ size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL other
     case CB_GETEDITSEL:
         size = 2 * sizeof(DWORD);
         break;
+    case EM_GETRECT:
+    case LB_GETITEMRECT:
+    case CB_GETDROPPEDCONTROLRECT:
+    case EM_SETRECT:
+    case EM_SETRECTNP:
+        size = sizeof(RECT);
+        break;
     }
 
     return size;
@@ -1442,6 +1458,8 @@ void pack_user_message( void *buffer, size_t size, UINT message,
     case EM_GETSEL:
     case SBM_GETRANGE:
     case CB_GETEDITSEL:
+    case EM_GETRECT:
+    case CB_GETDROPPEDCONTROLRECT:
         return;
     }
 
@@ -1531,6 +1549,13 @@ static void copy_user_result( void *buffer, size_t size, LRESULT result, UINT me
             if (lparam) *(DWORD *)lparam = ptr[1];
             break;
         }
+    case EM_GETRECT:
+    case EM_SETRECT:
+    case EM_SETRECTNP:
+    case LB_GETITEMRECT:
+    case CB_GETDROPPEDCONTROLRECT:
+        copy_size = sizeof(RECT);
+        break;
     default:
         return;
     }
@@ -1558,9 +1583,6 @@ static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, 
     case CB_GETCOMBOBOXINFO:
         copy_size = sizeof(COMBOBOXINFO);
         break;
-    case EM_GETRECT:
-    case LB_GETITEMRECT:
-    case CB_GETDROPPEDCONTROLRECT:
     case WM_SIZING:
     case WM_MOVING:
         copy_size = sizeof(RECT);

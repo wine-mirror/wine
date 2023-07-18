@@ -869,18 +869,11 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case SBM_SETSCROLLINFO:
     case SBM_GETSCROLLINFO:
     case SBM_GETSCROLLBARINFO:
-        break;
-    case WM_NOTIFY:
-        /* WM_NOTIFY cannot be sent across processes (MSDN) */
-        return FALSE;
     case EM_GETRECT:
     case LB_GETITEMRECT:
     case CB_GETDROPPEDCONTROLRECT:
-        if (!get_buffer_space( buffer, sizeof(RECT), size )) return FALSE;
-        break;
     case EM_SETRECT:
     case EM_SETRECTNP:
-        minsize = sizeof(RECT);
         break;
     case EM_GETLINE:
     {
@@ -982,6 +975,9 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
         if (!(*wparam & 0x8000)) return TRUE;
         minsize = sizeof(DEV_BROADCAST_HDR);
         break;
+    case WM_NOTIFY:
+        /* WM_NOTIFY cannot be sent across processes (MSDN) */
+        return FALSE;
     case WM_NCPAINT:
         if (*wparam <= 1) return TRUE;
         FIXME( "WM_NCPAINT hdc unpacking not supported\n" );
@@ -1089,6 +1085,11 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case EM_GETSEL:
         case SBM_GETRANGE:
         case CB_GETEDITSEL:
+        case EM_GETRECT:
+        case LB_GETITEMRECT:
+        case CB_GETDROPPEDCONTROLRECT:
+        case EM_SETRECT:
+        case EM_SETRECTNP:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;

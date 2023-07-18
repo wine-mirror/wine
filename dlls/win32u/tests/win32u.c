@@ -1686,15 +1686,27 @@ static void test_wndproc_hook(void)
             .todo = TRUE
         },
         {
+            "EM_GETRECT", EM_GETRECT,
+            .lparam = &rect_in, .lparam_size = sizeof(RECT), .change_lparam = &rect_out,
+        },
+        {
+            "EM_SETRECT", EM_SETRECT,
+            .lparam = &rect_in, .lparam_size = sizeof(RECT), .change_lparam = &rect_out,
+            .check_size = sizeof(RECT),
+        },
+        {
+            "EM_SETRECTNP", EM_SETRECTNP,
+            .lparam = &rect_in, .lparam_size = sizeof(RECT), .change_lparam = &rect_out,
+            .check_size = sizeof(RECT),
+        },
+        {
             "LB_GETITEMRECT", LB_GETITEMRECT,
             .lparam = &rect_in, .lparam_size = sizeof(RECT), .change_lparam = &rect_out,
             .check_size = sizeof(RECT),
-            .todo = TRUE
         },
         {
             "CB_GETDROPPEDCONTROLRECT", CB_GETDROPPEDCONTROLRECT,
             .lparam = &rect_in, .lparam_size = sizeof(RECT), .change_lparam = &rect_out,
-            .todo = TRUE
         },
         {
             "WM_GETTEXT", WM_GETTEXT, .wparam = 8,
