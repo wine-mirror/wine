@@ -831,6 +831,12 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
             ncp->lppos = (WINDOWPOS *)((NCCALCSIZE_PARAMS *)ncp + 1);
         }
         break;
+    case WM_COPYDATA:
+    {
+        COPYDATASTRUCT *cds = *buffer;
+        if (cds->lpData) cds->lpData = cds + 1;
+        break;
+    }
     case WM_GETTEXT:
     case WM_ASKCBFORMATNAME:
     case WM_WININICHANGE:
@@ -848,25 +854,6 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
         break;
-    case WM_COPYDATA:
-    {
-        COPYDATASTRUCT cds;
-        if (size < sizeof(ps->cds)) return FALSE;
-        cds.dwData = (ULONG_PTR)unpack_ptr( ps->cds.dwData );
-        if (ps->cds.lpData)
-        {
-            cds.cbData = ps->cds.cbData;
-            cds.lpData = &ps->cds + 1;
-            minsize = sizeof(ps->cds) + cds.cbData;
-        }
-        else
-        {
-            cds.cbData = 0;
-            cds.lpData = 0;
-        }
-        memcpy( &ps->cds, &cds, sizeof(cds) );
-        break;
-    }
     case WM_NOTIFY:
         /* WM_NOTIFY cannot be sent across processes (MSDN) */
         return FALSE;
@@ -1126,6 +1113,7 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case WM_COMPAREITEM:
         case WM_WINDOWPOSCHANGING:
         case WM_WINDOWPOSCHANGED:
+        case WM_COPYDATA:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;

@@ -1386,9 +1386,31 @@ static void check_params( const struct lparam_hook_test *test, UINT message,
     ok ((LPARAM)&message < lparam && lparam < (LPARAM)NtCurrentTeb()->Tib.StackBase,
         "lparam is not on the stack\n");
 
-    if (test->check_size) {
-        const void *expected = is_ret && test->change_lparam ? test->change_lparam : test->lparam;
-        ok( !memcmp( (const void *)lparam, expected, test->check_size ), "unexpected lparam content\n");
+    switch (test->message)
+    {
+    case WM_COPYDATA:
+        {
+            const COPYDATASTRUCT *cds = (const COPYDATASTRUCT *)lparam;
+            const COPYDATASTRUCT *cds_in = (const COPYDATASTRUCT *)lparam_buffer;
+            ok( cds->dwData == cds_in->dwData, "cds->dwData != cds_in->dwData\n");
+            ok( cds->cbData == cds_in->cbData, "cds->dwData != cds_in->dwData\n");
+            if (cds_in->lpData)
+            {
+                ok( cds->lpData != cds_in->lpData, "cds->lpData == cds_in->lpData\n" );
+                if (cds->cbData)
+                    ok( !memcmp( cds->lpData, cds_in->lpData, cds->cbData ), "unexpected pvData %s\n",
+                        wine_dbgstr_an( cds->lpData, cds->cbData ));
+            }
+            else
+                ok( !cds->lpData, "cds->lpData = %p\n", cds->lpData );
+        }
+        break;
+
+    default:
+        if (test->check_size) {
+            const void *expected = is_ret && test->change_lparam ? test->change_lparam : test->lparam;
+            ok( !memcmp( (const void *)lparam, expected, test->check_size ), "unexpected lparam content\n" );
+        }
     }
 }
 
@@ -1628,6 +1650,12 @@ static void test_wndproc_hook(void)
     static const COMPAREITEMSTRUCT cis_in = { .itemID1 = 1 };
     static const WINDOWPOS winpos_in = { .x = 1, .cy = 2 };
     static const WINDOWPOS winpos_out = { .x = 10, .cy = 22 };
+    static const COPYDATASTRUCT cds_in = { .dwData = 1 };
+    static WORD data_word = 3;
+    static const COPYDATASTRUCT cds2_in = { .cbData = 2, .lpData = &data_word };
+    static const COPYDATASTRUCT cds3_in = { .dwData = 2, .lpData = (void *)0xdeadbeef };
+    static const COPYDATASTRUCT cds4_in = { .cbData = 2 };
+    static const COPYDATASTRUCT cds5_in = { .lpData = (void *)0xdeadbeef };
 
     static const struct lparam_hook_test lparam_hook_tests[] =
     {
@@ -1741,6 +1769,31 @@ static void test_wndproc_hook(void)
             "WM_WINDOWPOSCHANGED", WM_WINDOWPOSCHANGED,
             .lparam_size = sizeof(WINDOWPOS), .lparam = &winpos_in, .poison_lparam = TRUE,
             .check_size = sizeof(WINDOWPOS),
+        },
+        {
+            "WM_COPYDATA", WM_COPYDATA, .wparam = 0xdeadbeef,
+            .lparam_size = sizeof(cds_in), .lparam = &cds_in, .poison_lparam = TRUE,
+            .check_size = sizeof(cds_in),
+        },
+        {
+            "WM_COPYDATA-2", WM_COPYDATA, .wparam = 0xdeadbeef,
+            .lparam_size = sizeof(cds2_in), .lparam = &cds2_in, .poison_lparam = TRUE,
+            .check_size = sizeof(cds2_in),
+        },
+        {
+            "WM_COPYDATA-3", WM_COPYDATA, .wparam = 0xdeadbeef,
+            .lparam_size = sizeof(cds3_in), .lparam = &cds3_in, .poison_lparam = TRUE,
+            .check_size = sizeof(cds3_in),
+        },
+        {
+            "WM_COPYDATA-4", WM_COPYDATA, .wparam = 0xdeadbeef,
+            .lparam_size = sizeof(cds4_in), .lparam = &cds4_in, .poison_lparam = TRUE,
+            .check_size = sizeof(cds4_in),
+        },
+        {
+            "WM_COPYDATA-5", WM_COPYDATA, .wparam = 0xdeadbeef,
+            .lparam_size = sizeof(cds5_in), .lparam = &cds5_in, .poison_lparam = TRUE,
+            .check_size = sizeof(cds5_in),
         },
         /* messages that don't change lparam */
         { "WM_USER", WM_USER },

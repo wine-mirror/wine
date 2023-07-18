@@ -720,6 +720,20 @@ static size_t packed_message_64to32( UINT message, WPARAM wparam,
     case WM_WINDOWPOSCHANGED:
         winpos_64to32( params64, params32 );
         return sizeof(WINDOWPOS32);
+
+    case WM_COPYDATA:
+        {
+            COPYDATASTRUCT32 cds32;
+            const COPYDATASTRUCT *cds64 = params64;
+
+            cds32.dwData = cds64->dwData;
+            cds32.cbData = cds64->cbData;
+            cds32.lpData = PtrToUlong( cds64->lpData );
+            memcpy( params32, &cds32, sizeof(cds32) );
+            size -= sizeof(cds32);
+            if (size) memmove( (char *)params32 + sizeof(cds32), cds64 + 1, size );
+            return sizeof(cds32) + size;
+        }
     }
 
     memmove( params32, params64, size );

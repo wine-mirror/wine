@@ -504,6 +504,25 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         memcpy( *buffer, &wp, sizeof(wp) );
         break;
     }
+    case WM_COPYDATA:
+    {
+        COPYDATASTRUCT cds;
+        if (size < sizeof(ps->cds)) return FALSE;
+        cds.dwData = (ULONG_PTR)unpack_ptr( ps->cds.dwData );
+        if (ps->cds.lpData)
+        {
+            cds.cbData = ps->cds.cbData;
+            cds.lpData = &ps->cds + 1;
+            minsize = sizeof(ps->cds) + cds.cbData;
+        }
+        else
+        {
+            cds.cbData = 0;
+            cds.lpData = 0;
+        }
+        memcpy( &ps->cds, &cds, sizeof(cds) );
+        break;
+    }
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1307,6 +1326,12 @@ size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL other
     case WM_WINDOWPOSCHANGED:
         size = sizeof(WINDOWPOS);
         break;
+    case WM_COPYDATA:
+    {
+        const COPYDATASTRUCT *cds = lparam_ptr;
+        size = sizeof(*cds) + cds->cbData;
+        break;
+    }
     }
 
     return size;
@@ -1358,6 +1383,14 @@ void pack_user_message( void *buffer, size_t size, UINT message,
     case WM_ASKCBFORMATNAME:
         if (wparam) memset( buffer, 0, char_size( ansi ));
         return;
+    case WM_COPYDATA:
+    {
+        const COPYDATASTRUCT *cds = lparam_ptr;
+        if (cds->lpData && cds->cbData)
+            memcpy( (char *)buffer + sizeof(*cds), cds->lpData, cds->cbData );
+        size = sizeof(*cds);
+        break;
+    }
     }
 
     if (size) memcpy( buffer, lparam_ptr, size );
