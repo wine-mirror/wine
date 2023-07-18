@@ -530,14 +530,14 @@ static HRESULT WINAPI ISF_Desktop_fnGetUIObjectOf (IShellFolder2 * iface,
     {
         pidl = ILCombine (This->pidlRoot, apidl[0]);
         pObj = (LPUNKNOWN) IExtractIconA_Constructor (pidl);
-        SHFree (pidl);
+        ILFree(pidl);
         hr = S_OK;
     }
     else if (IsEqualIID (riid, &IID_IExtractIconW) && (cidl == 1))
     {
         pidl = ILCombine (This->pidlRoot, apidl[0]);
         pObj = (LPUNKNOWN) IExtractIconW_Constructor (pidl);
-        SHFree (pidl);
+        ILFree(pidl);
         hr = S_OK;
     }
     else if (IsEqualIID (riid, &IID_IDropTarget) && (cidl >= 1))
@@ -550,7 +550,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetUIObjectOf (IShellFolder2 * iface,
     {
         pidl = ILCombine (This->pidlRoot, apidl[0]);
         hr = IShellLink_ConstructFromFile(NULL, riid, pidl, &pObj);
-        SHFree (pidl);
+        ILFree(pidl);
     }
     else
         hr = E_NOINTERFACE;

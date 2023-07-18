@@ -710,12 +710,12 @@ IShellFolder_fnGetUIObjectOf (IShellFolder2 * iface,
         } else if (IsEqualIID (riid, &IID_IExtractIconA) && (cidl == 1)) {
             pidl = ILCombine (This->pidlRoot, apidl[0]);
             pObj = (LPUNKNOWN) IExtractIconA_Constructor (pidl);
-            SHFree (pidl);
+            ILFree(pidl);
             hr = S_OK;
         } else if (IsEqualIID (riid, &IID_IExtractIconW) && (cidl == 1)) {
             pidl = ILCombine (This->pidlRoot, apidl[0]);
             pObj = (LPUNKNOWN) IExtractIconW_Constructor (pidl);
-            SHFree (pidl);
+            ILFree(pidl);
             hr = S_OK;
         } else if (IsEqualIID (riid, &IID_IDropTarget) && (cidl >= 1)) {
             hr = IShellFolder2_QueryInterface (iface, &IID_IDropTarget,
@@ -724,7 +724,7 @@ IShellFolder_fnGetUIObjectOf (IShellFolder2 * iface,
          IsEqualIID(riid,&IID_IShellLinkA)) && (cidl == 1)) {
             pidl = ILCombine (This->pidlRoot, apidl[0]);
             hr = IShellLink_ConstructFromFile(NULL, riid, pidl, &pObj);
-            SHFree (pidl);
+            ILFree(pidl);
         } else {
             hr = E_NOINTERFACE;
         }
@@ -1305,7 +1305,7 @@ ISFHelper_fnDeleteItems (ISFHelper * iface, UINT cidl, LPCITEMIDLIST * apidl)
         {
             LPITEMIDLIST pidl = ILCombine(This->pidlRoot, apidl[i]);
             SHChangeNotify(wEventId, SHCNF_IDLIST, pidl, NULL);
-            SHFree(pidl);
+            ILFree(pidl);
         }
 
         wszCurrentPath += lstrlenW(wszCurrentPath)+1;

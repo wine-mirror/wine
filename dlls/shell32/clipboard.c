@@ -165,7 +165,7 @@ HGLOBAL RenderFILENAMEA (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 		return 0;
 
 	bSuccess = SHGetPathFromIDListA(pidl, szTemp);
-	SHFree(pidl);
+	ILFree(pidl);
 	if (!bSuccess)
 		return 0;
 
@@ -197,7 +197,7 @@ HGLOBAL RenderFILENAMEW (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 		return 0;
 
 	bSuccess = SHGetPathFromIDListW(pidl, szTemp);
-	SHFree(pidl);
+	ILFree(pidl);
 	if (!bSuccess)
 		return 0;
 

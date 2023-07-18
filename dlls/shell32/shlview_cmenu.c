@@ -282,7 +282,7 @@ static void DoOpenExplore(ContextMenu *This, HWND hwnd, LPCSTR verb)
 	sei.nShow = SW_SHOWNORMAL;
 	sei.lpVerb = verb;
 	ShellExecuteExA(&sei);
-	SHFree(pidlFQ);
+	ILFree(pidlFQ);
 }
 
 /**************************************************************************
@@ -1150,7 +1150,7 @@ static HRESULT paste_pidls(ContextMenu *This, ITEMIDLIST **pidls, UINT count)
             if(psfhlpsrc) ISFHelper_Release(psfhlpsrc);
             IShellFolder_Release(psfFrom);
         }
-        SHFree(pidl_dir);
+        ILFree(pidl_dir);
     }
 
     IShellFolder_Release(psfDesktop);

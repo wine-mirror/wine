@@ -1328,7 +1328,7 @@ HRESULT WINAPI SHBindToFolderIDListParent(IShellFolder *psf, LPCITEMIDLIST pidl,
         LPITEMIDLIST pidlParent = ILClone(pidl);
         ILRemoveLastID(pidlParent);
         hr = IShellFolder_BindToObject(psf, pidlParent, NULL, riid, ppv);
-        SHFree (pidlParent);
+        ILFree(pidlParent);
     }
 
     if (psfDesktop)
