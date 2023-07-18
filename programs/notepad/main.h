@@ -76,7 +76,6 @@ extern NOTEPAD_GLOBALS Globals;
 
 VOID SetFileNameAndEncoding(LPCWSTR szFileName, ENCODING enc);
 void NOTEPAD_DoFind(FINDREPLACEW *fr);
-DWORD get_dpi(void);
 void UpdateStatusBar(void);
 void updateWindowSize(int width, int height);
 LRESULT CALLBACK EDIT_CallBackProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);

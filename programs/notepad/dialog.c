@@ -958,7 +958,7 @@ VOID DIALOG_FilePrint(VOID)
 
         /* Create a font for the printer resolution */
         lfFont = Globals.lfFont;
-        lfFont.lfHeight = MulDiv(lfFont.lfHeight, GetDeviceCaps(printer.hDC, LOGPIXELSY), get_dpi());
+        lfFont.lfHeight = MulDiv(lfFont.lfHeight, GetDeviceCaps(printer.hDC, LOGPIXELSY), GetDpiForWindow(Globals.hMainWnd));
         /* Make the font a bit lighter */
         lfFont.lfWeight -= 100;
         hTextFont = CreateFontIndirectW(&lfFont);
