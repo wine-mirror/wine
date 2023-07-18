@@ -22,8 +22,6 @@
 #define __WINE_STRMBASE_PRIVATE_H
 
 #include <assert.h>
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #define COBJMACROS
 #include "dshow.h"
 #include "uuids.h"
