@@ -448,7 +448,8 @@ static HRESULT open_listener( struct listener *listener, const WS_STRING *url )
 /**************************************************************************
  *          WsOpenListener		[webservices.@]
  */
-HRESULT WINAPI WsOpenListener( WS_LISTENER *handle, WS_STRING *url, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
+HRESULT WINAPI WsOpenListener( WS_LISTENER *handle, const WS_STRING *url, const WS_ASYNC_CONTEXT *ctx,
+                               WS_ERROR *error )
 {
     struct listener *listener = (struct listener *)handle;
     HRESULT hr;
