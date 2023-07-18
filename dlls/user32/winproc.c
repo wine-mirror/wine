@@ -851,10 +851,7 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case WM_MOVING:
     case CB_GETCOMBOBOXINFO:
     case WM_MDIGETACTIVE:
-        break;
     case WM_DEVICECHANGE:
-        if (!(*wparam & 0x8000)) return TRUE;
-        minsize = sizeof(DEV_BROADCAST_HDR);
         break;
     case WM_NOTIFY:
         /* WM_NOTIFY cannot be sent across processes (MSDN) */

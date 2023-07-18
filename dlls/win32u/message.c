@@ -876,6 +876,10 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         if (!*lparam) return TRUE;
         if (!get_buffer_space( buffer, sizeof(BOOL), size )) return FALSE;
         break;
+    case WM_DEVICECHANGE:
+        if (!(*wparam & 0x8000)) return TRUE;
+        minsize = sizeof(DEV_BROADCAST_HDR);
+        break;
     default:
         return TRUE;  /* message doesn't need any unpacking */
     }
@@ -1703,6 +1707,13 @@ size_t user_message_size( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
         break;
     case WM_MDIGETACTIVE:
         if (lparam) size = sizeof(BOOL);
+        break;
+    case WM_DEVICECHANGE:
+        if ((wparam & 0x8000) && lparam)
+        {
+            const DEV_BROADCAST_HDR *header = lparam_ptr;
+            size = header->dbch_size;
+        }
         break;
     }
 
