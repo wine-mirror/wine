@@ -832,6 +832,9 @@ static size_t packed_result_32to64( UINT message, WPARAM wparam, const void *par
     case WM_ASKCBFORMATNAME:
     case WM_GETMINMAXINFO:
     case WM_STYLECHANGING:
+    case SBM_SETSCROLLINFO:
+    case SBM_GETSCROLLINFO:
+    case SBM_GETSCROLLBARINFO:
         break;
 
     default:

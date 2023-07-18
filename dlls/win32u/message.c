@@ -555,6 +555,15 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
             break;
         }
         return TRUE;
+    case SBM_SETSCROLLINFO:
+        minsize = sizeof(SCROLLINFO);
+        break;
+    case SBM_GETSCROLLINFO:
+        if (!get_buffer_space( buffer, sizeof(SCROLLINFO), size )) return FALSE;
+        break;
+    case SBM_GETSCROLLBARINFO:
+        if (!get_buffer_space( buffer, sizeof(SCROLLBARINFO), size )) return FALSE;
+        break;
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1349,6 +1358,13 @@ size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL other
     case WM_GETDLGCODE:
         size = sizeof(MSG);
         break;
+    case SBM_SETSCROLLINFO:
+    case SBM_GETSCROLLINFO:
+        size = sizeof(SCROLLINFO);
+        break;
+    case SBM_GETSCROLLBARINFO:
+        size = sizeof(SCROLLBARINFO);
+        break;
     }
 
     return size;
@@ -1480,6 +1496,13 @@ static void copy_user_result( void *buffer, size_t size, LRESULT result, UINT me
     case WM_STYLECHANGING:
         copy_size = sizeof(STYLESTRUCT);
         break;
+    case SBM_SETSCROLLINFO:
+    case SBM_GETSCROLLINFO:
+        copy_size = sizeof(SCROLLINFO);
+        break;
+    case SBM_GETSCROLLBARINFO:
+        copy_size = sizeof(SCROLLBARINFO);
+        break;
     default:
         return;
     }
@@ -1506,12 +1529,6 @@ static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, 
         break;
     case CB_GETCOMBOBOXINFO:
         copy_size = sizeof(COMBOBOXINFO);
-        break;
-    case SBM_GETSCROLLINFO:
-        copy_size = sizeof(SCROLLINFO);
-        break;
-    case SBM_GETSCROLLBARINFO:
-        copy_size = sizeof(SCROLLBARINFO);
         break;
     case EM_GETRECT:
     case LB_GETITEMRECT:

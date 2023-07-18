@@ -857,19 +857,13 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case WM_STYLECHANGING:
     case WM_STYLECHANGED:
     case WM_GETDLGCODE:
+    case SBM_SETSCROLLINFO:
+    case SBM_GETSCROLLINFO:
+    case SBM_GETSCROLLBARINFO:
         break;
     case WM_NOTIFY:
         /* WM_NOTIFY cannot be sent across processes (MSDN) */
         return FALSE;
-    case SBM_SETSCROLLINFO:
-        minsize = sizeof(SCROLLINFO);
-        break;
-    case SBM_GETSCROLLINFO:
-        if (!get_buffer_space( buffer, sizeof(SCROLLINFO), size )) return FALSE;
-        break;
-    case SBM_GETSCROLLBARINFO:
-        if (!get_buffer_space( buffer, sizeof(SCROLLBARINFO), size )) return FALSE;
-        break;
     case EM_GETSEL:
     case SBM_GETRANGE:
     case CB_GETEDITSEL:
@@ -1090,6 +1084,9 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case WM_STYLECHANGING:
         case WM_STYLECHANGED:
         case WM_GETDLGCODE:
+        case SBM_SETSCROLLINFO:
+        case SBM_GETSCROLLINFO:
+        case SBM_GETSCROLLBARINFO:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;

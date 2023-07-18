@@ -1659,6 +1659,10 @@ static void test_wndproc_hook(void)
     static const STYLESTRUCT style_in = { .styleOld = 1, .styleNew = 2 };
     static const STYLESTRUCT style_out = { .styleOld = 10, .styleNew = 20 };
     static const MSG msg_in = { .wParam = 1, .lParam = 2 };
+    static const SCROLLINFO si_in = { .cbSize = sizeof(si_in), .nPos = 6 };
+    static const SCROLLINFO si_out = { .cbSize = sizeof(si_in), .nPos = 60 };
+    static const SCROLLBARINFO sbi_in = { .xyThumbTop = 6 };
+    static const SCROLLBARINFO sbi_out = { .xyThumbTop = 60 };
 
     static const struct lparam_hook_test lparam_hook_tests[] =
     {
@@ -1812,6 +1816,21 @@ static void test_wndproc_hook(void)
             "WM_GETDLGCODE", WM_GETDLGCODE,
             .lparam_size = sizeof(msg_in), .lparam = &msg_in, .poison_lparam = TRUE,
             .check_size = sizeof(msg_in),
+        },
+        {
+            "SBM_SETSCROLLINFO", SBM_SETSCROLLINFO,
+            .lparam_size = sizeof(si_in), .lparam = &si_in, .change_lparam = &si_out,
+            .check_size = sizeof(si_in),
+        },
+        {
+            "SBM_GETSCROLLINFO", SBM_GETSCROLLINFO,
+            .lparam_size = sizeof(si_in), .lparam = &si_in, .change_lparam = &si_out,
+            .check_size = sizeof(si_in),
+        },
+        {
+            "SBM_GETSCROLLBARINFO", SBM_GETSCROLLBARINFO,
+            .lparam_size = sizeof(sbi_in), .lparam = &sbi_in, .change_lparam = &sbi_out,
+            .check_size = sizeof(sbi_in),
         },
         /* messages that don't change lparam */
         { "WM_USER", WM_USER },
