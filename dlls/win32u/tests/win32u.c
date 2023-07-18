@@ -1745,32 +1745,26 @@ static void test_wndproc_hook(void)
         {
             "CB_GETLBTEXT", CB_GETLBTEXT, .msg_result = 7, .check_result = 4, .todo_result = TRUE,
             .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbuf4W,
-            .todo = TRUE
         },
         {
             "CB_GETLBTEXT2", CB_GETLBTEXT, .msg_result = 9, .check_result = 8, .todo_result = TRUE,
             .lparam_size = sizeof(strbufW), .change_lparam = strbuf3W, .check_lparam = strbuf3W,
-            .todo = TRUE
         },
         {
             "CB_GETLBTEXT3", CB_GETLBTEXT,
             .lparam_size = sizeof(strbufW), .change_lparam = strbuf3W, .check_lparam = strbuf3W,
-            .todo = TRUE
         },
         {
             "LB_GETTEXT", LB_GETTEXT, .msg_result = 7, .check_result = 4, .todo_result = TRUE,
             .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbuf4W,
-            .todo = TRUE
         },
         {
             "LB_GETTEXT2", LB_GETTEXT, .msg_result = 9, .check_result = 8, .todo_result = TRUE,
             .lparam_size = sizeof(strbufW), .change_lparam = strbuf3W, .check_lparam = strbuf3W,
-            .todo = TRUE
         },
         {
             "LB_GETTEXT3", LB_GETTEXT,
             .lparam_size = sizeof(strbufW), .change_lparam = strbuf3W, .check_lparam = strbuf3W,
-            .todo = TRUE
         },
         {
             "WM_MDIGETACTIVE", WM_MDIGETACTIVE, .no_wparam_check = TRUE,

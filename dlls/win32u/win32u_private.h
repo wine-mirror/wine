@@ -140,7 +140,7 @@ extern LRESULT send_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 extern BOOL send_notify_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi ) DECLSPEC_HIDDEN;
 extern LRESULT send_message_timeout( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                      UINT flags, UINT timeout, BOOL ansi ) DECLSPEC_HIDDEN;
-extern size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam,
+extern size_t user_message_size( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
                                  BOOL other_process, BOOL ansi ) DECLSPEC_HIDDEN;
 extern void pack_user_message( void *buffer, size_t size, UINT message,
                                WPARAM wparam, LPARAM lparam, BOOL ansi ) DECLSPEC_HIDDEN;

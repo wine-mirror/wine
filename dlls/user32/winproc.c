@@ -754,20 +754,6 @@ static inline void *get_buffer_space( void **buffer, size_t size, size_t prev_si
     return *buffer;
 }
 
-/* check whether a combobox expects strings or ids in CB_ADDSTRING/CB_INSERTSTRING */
-static inline BOOL combobox_has_strings( HWND hwnd )
-{
-    DWORD style = GetWindowLongA( hwnd, GWL_STYLE );
-    return (!(style & (CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE)) || (style & CBS_HASSTRINGS));
-}
-
-/* check whether a listbox expects strings or ids in LB_ADDSTRING/LB_INSERTSTRING */
-static inline BOOL listbox_has_strings( HWND hwnd )
-{
-    DWORD style = GetWindowLongA( hwnd, GWL_STYLE );
-    return (!(style & (LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE)) || (style & LBS_HASSTRINGS));
-}
-
 /* unpack a potentially 64-bit pointer, returning 0 when truncated */
 static inline void *unpack_ptr( ULONGLONG ptr64 )
 {
@@ -802,7 +788,7 @@ static size_t string_size( const void *str, BOOL ansi )
 BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
                      void **buffer, size_t size, BOOL ansi )
 {
-    size_t minsize = 0, prev_size = size;
+    size_t minsize = 0;
     union packed_structs *ps = *buffer;
 
     switch(message)
@@ -887,23 +873,9 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case LB_FINDSTRING:
     case LB_FINDSTRINGEXACT:
     case LB_SELECTSTRING:
-        break;
     case CB_GETLBTEXT:
-    {
-        size = sizeof(ULONG_PTR);
-        if (combobox_has_strings( hwnd ))
-            size = (SendMessageW( hwnd, CB_GETLBTEXTLEN, *wparam, 0 ) + 1) * sizeof(WCHAR);
-        if (!get_buffer_space( buffer, size, prev_size )) return FALSE;
-        break;
-    }
     case LB_GETTEXT:
-    {
-        size = sizeof(ULONG_PTR);
-        if (listbox_has_strings( hwnd ))
-            size = (SendMessageW( hwnd, LB_GETTEXTLEN, *wparam, 0 ) + 1) * sizeof(WCHAR);
-        if (!get_buffer_space( buffer, size, prev_size )) return FALSE;
         break;
-    }
     case LB_GETSELITEMS:
         if (!get_buffer_space( buffer, *wparam * sizeof(UINT), size )) return FALSE;
         break;
@@ -1089,6 +1061,8 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case LB_FINDSTRING:
         case LB_FINDSTRINGEXACT:
         case LB_SELECTSTRING:
+        case CB_GETLBTEXT:
+        case LB_GETTEXT:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;

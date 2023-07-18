@@ -611,6 +611,26 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case LB_SELECTSTRING:
         if (!*buffer) return TRUE;
         break;
+    case CB_GETLBTEXT:
+    {
+        size_t prev_size = size;
+        if (combobox_has_strings( hwnd ))
+            size = (send_message( hwnd, CB_GETLBTEXTLEN, *wparam, 0 ) + 1) * sizeof(WCHAR);
+        else
+            size = sizeof(ULONG_PTR);
+        if (!get_buffer_space( buffer, size, prev_size )) return FALSE;
+        break;
+    }
+    case LB_GETTEXT:
+    {
+        size_t prev_size = size;
+        if (listbox_has_strings( hwnd ))
+            size = (send_message( hwnd, LB_GETTEXTLEN, *wparam, 0 ) + 1) * sizeof(WCHAR);
+        else
+            size = sizeof(ULONG_PTR);
+        if (!get_buffer_space( buffer, size, prev_size )) return FALSE;
+        break;
+    }
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1338,7 +1358,8 @@ static size_t copy_string( void *ptr, const void *str, BOOL ansi )
  *
  * Calculate size of packed message buffer.
  */
-size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL other_process, BOOL ansi )
+size_t user_message_size( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
+                          BOOL other_process, BOOL ansi )
 {
     const void *lparam_ptr = (const void *)lparam;
     size_t size = 0;
@@ -1440,6 +1461,14 @@ size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL other
     case EM_SETTABSTOPS:
     case LB_SETTABSTOPS:
         size = wparam * sizeof(UINT);
+        break;
+    case CB_GETLBTEXT:
+        size = send_message_timeout( hwnd, CB_GETLBTEXTLEN, wparam, 0, SMTO_NORMAL, 0, ansi );
+        size = (size + 1) * char_size( ansi );
+        break;
+    case LB_GETTEXT:
+        size = send_message_timeout( hwnd, LB_GETTEXTLEN, wparam, 0, SMTO_NORMAL, 0, ansi );
+        size = (size + 1) * char_size( ansi );
         break;
     }
 
@@ -1566,6 +1595,10 @@ static void copy_user_result( void *buffer, size_t size, LRESULT result, UINT me
         if (!result) memset( buffer, 0, char_size( ansi ));
         copy_size = string_size( buffer, ansi );
         break;
+    case CB_GETLBTEXT:
+    case LB_GETTEXT:
+        copy_size = size;
+        break;
     case WM_ASKCBFORMATNAME:
         copy_size = string_size( buffer, ansi );
         break;
@@ -1627,10 +1660,6 @@ static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, 
 
     switch(message)
     {
-    case CB_GETLBTEXT:
-    case LB_GETTEXT:
-        copy_size = (result + 1) * sizeof(WCHAR);
-        break;
     case CB_GETCOMBOBOXINFO:
         copy_size = sizeof(COMBOBOXINFO);
         break;
@@ -1854,7 +1883,7 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     if (!needs_unpack) size = 0;
     if (!is_current_thread_window( hwnd )) return 0;
 
-    packed_size = user_message_size( msg, wparam, lparam, needs_unpack, ansi );
+    packed_size = user_message_size( hwnd, msg, wparam, lparam, needs_unpack, ansi );
     if (packed_size) size = packed_size;
 
     /* first the WH_CALLWNDPROC hook */
