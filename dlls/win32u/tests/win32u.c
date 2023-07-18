@@ -1384,8 +1384,9 @@ static void check_params( const struct lparam_hook_test *test, UINT message,
     if (lparam == (LPARAM)lparam_buffer)
         return;
 
-    ok ((LPARAM)&message < lparam && lparam < (LPARAM)NtCurrentTeb()->Tib.StackBase,
-        "lparam is not on the stack\n");
+    if (sizeof(void *) != 4 || (test->message != EM_SETTABSTOPS && test->message != LB_SETTABSTOPS))
+        ok( (LPARAM)&message < lparam && lparam < (LPARAM)NtCurrentTeb()->Tib.StackBase,
+            "lparam is not on the stack\n");
 
     switch (test->message)
     {
@@ -1679,6 +1680,7 @@ static void test_wndproc_hook(void)
     static const SCROLLBARINFO sbi_in = { .xyThumbTop = 6 };
     static const SCROLLBARINFO sbi_out = { .xyThumbTop = 60 };
     static const DWORD dw_in = 1, dw_out = 2;
+    static const UINT32 tabstops_in[2] = { 3, 4 };
 
     static const struct lparam_hook_test lparam_hook_tests[] =
     {
@@ -1884,6 +1886,16 @@ static void test_wndproc_hook(void)
             "EM_GETLINE-2", EM_GETLINE, .msg_result = 1,
             .lparam = L"\x8""2345678", .lparam_size = sizeof(strbufW), .change_lparam = L"abc\0defg",
             .check_size = sizeof(WCHAR), .check_lparam = L"abc\0""5678",
+        },
+        {
+            "EM_SETTABSTOPS", EM_SETTABSTOPS, .wparam = ARRAYSIZE(tabstops_in),
+            .lparam_size = sizeof(tabstops_in), .lparam = &tabstops_in, .poison_lparam = TRUE,
+            .check_size = sizeof(tabstops_in),
+        },
+        {
+            "LB_SETTABSTOPS", LB_SETTABSTOPS, .wparam = ARRAYSIZE(tabstops_in),
+            .lparam_size = sizeof(tabstops_in), .lparam = &tabstops_in, .poison_lparam = TRUE,
+            .check_size = sizeof(tabstops_in),
         },
         /* messages that don't change lparam */
         { "WM_USER", WM_USER },

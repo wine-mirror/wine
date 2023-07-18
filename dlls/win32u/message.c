@@ -594,6 +594,11 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         *lparam = (LPARAM)(len_ptr + 1);
         return TRUE;
     }
+    case EM_SETTABSTOPS:
+    case LB_SETTABSTOPS:
+        if (!*wparam) return TRUE;
+        minsize = *wparam * sizeof(UINT);
+        break;
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1409,6 +1414,10 @@ size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL other
         break;
     case EM_GETLINE:
         size = max( *(WORD *)lparam * char_size( ansi ), sizeof(WORD) );
+        break;
+    case EM_SETTABSTOPS:
+    case LB_SETTABSTOPS:
+        size = wparam * sizeof(UINT);
         break;
     }
 

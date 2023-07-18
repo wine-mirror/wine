@@ -875,11 +875,8 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case EM_SETRECT:
     case EM_SETRECTNP:
     case EM_GETLINE:
-        break;
     case EM_SETTABSTOPS:
     case LB_SETTABSTOPS:
-        if (!*wparam) return TRUE;
-        minsize = *wparam * sizeof(UINT);
         break;
     case CB_ADDSTRING:
     case CB_INSERTSTRING:
@@ -1083,6 +1080,8 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case EM_SETRECT:
         case EM_SETRECTNP:
         case EM_GETLINE:
+        case EM_SETTABSTOPS:
+        case LB_SETTABSTOPS:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;
