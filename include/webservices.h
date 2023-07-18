@@ -1879,6 +1879,9 @@ HRESULT WINAPI WsXmlStringEquals(const WS_XML_STRING*, const WS_XML_STRING*, WS_
 #define WS_E_SECURITY_TOKEN_EXPIRED         0x803d0022
 #define WS_E_SECURITY_SYSTEM_FAILURE        0x803d0023
 
+#define WS_STRING_VALUE(s) { sizeof(s) / sizeof((s)[0]) - 1, (WCHAR *)(s) }
+#define WS_XML_STRING_VALUE(s) { sizeof(s) - 1, (BYTE *)(s) }
+
 #ifdef __cplusplus
 }
 #endif  /* __cplusplus */
