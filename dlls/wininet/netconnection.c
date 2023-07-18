@@ -21,8 +21,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
-
 #include "ws2tcpip.h"
 
 #include <time.h>
@@ -162,7 +160,7 @@ static DWORD netconn_verify_cert(netconn_t *conn, PCCERT_CONTEXT cert, HCERTSTOR
          */
         memcpy(&chainCopy, chain, sizeof(chainCopy));
         chainCopy.TrustStatus.dwErrorStatus = 0;
-        sslExtraPolicyPara.u.cbSize = sizeof(sslExtraPolicyPara);
+        sslExtraPolicyPara.cbSize = sizeof(sslExtraPolicyPara);
         sslExtraPolicyPara.dwAuthType = AUTHTYPE_SERVER;
         sslExtraPolicyPara.pwszServerName = conn->server->name;
         sslExtraPolicyPara.fdwChecks = conn->security_flags;
