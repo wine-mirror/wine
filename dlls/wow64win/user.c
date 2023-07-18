@@ -698,6 +698,23 @@ static size_t packed_message_64to32( UINT message, WPARAM wparam,
             memcpy( params32, &dis32, sizeof(dis32) );
             return sizeof(dis32);
         }
+
+    case WM_COMPAREITEM:
+        {
+            COMPAREITEMSTRUCT32 cis32;
+            const COMPAREITEMSTRUCT *cis64 = params64;
+
+            cis32.CtlType    = cis64->CtlType;
+            cis32.CtlID      = cis64->CtlID;
+            cis32.hwndItem   = HandleToLong( cis64->hwndItem );
+            cis32.itemID1    = cis64->itemID1;
+            cis32.itemData1  = cis64->itemData1;
+            cis32.itemID2    = cis64->itemID2;
+            cis32.itemData2  = cis64->itemData2;
+            cis32.dwLocaleId = cis64->dwLocaleId;
+            memcpy( params32, &cis32, sizeof(cis32) );
+            return sizeof(cis32);
+        }
     }
 
     memmove( params32, params64, size );

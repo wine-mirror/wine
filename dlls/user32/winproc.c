@@ -844,22 +844,8 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case WM_DRAWITEM:
     case WM_MEASUREITEM:
     case WM_DELETEITEM:
-        break;
     case WM_COMPAREITEM:
-    {
-        COMPAREITEMSTRUCT cis;
-        if (size < sizeof(ps->cis)) return FALSE;
-        cis.CtlType    = ps->cis.CtlType;
-        cis.CtlID      = ps->cis.CtlID;
-        cis.hwndItem   = unpack_handle( ps->cis.hwndItem );
-        cis.itemID1    = ps->cis.itemID1;
-        cis.itemData1  = (ULONG_PTR)unpack_ptr( ps->cis.itemData1 );
-        cis.itemID2    = ps->cis.itemID2;
-        cis.itemData2  = (ULONG_PTR)unpack_ptr( ps->cis.itemData2 );
-        cis.dwLocaleId = ps->cis.dwLocaleId;
-        memcpy( *buffer, &cis, sizeof(cis) );
         break;
-    }
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
     {
@@ -1150,6 +1136,7 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case WM_GETMINMAXINFO:
         case WM_MEASUREITEM:
         case WM_DELETEITEM:
+        case WM_COMPAREITEM:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;

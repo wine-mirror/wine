@@ -474,6 +474,21 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         memcpy( *buffer, &dls, sizeof(dls) );
         break;
     }
+    case WM_COMPAREITEM:
+    {
+        COMPAREITEMSTRUCT cis;
+        if (size < sizeof(ps->cis)) return FALSE;
+        cis.CtlType    = ps->cis.CtlType;
+        cis.CtlID      = ps->cis.CtlID;
+        cis.hwndItem   = wine_server_ptr_handle( ps->cis.hwndItem );
+        cis.itemID1    = ps->cis.itemID1;
+        cis.itemData1  = (ULONG_PTR)unpack_ptr( ps->cis.itemData1 );
+        cis.itemID2    = ps->cis.itemID2;
+        cis.itemData2  = (ULONG_PTR)unpack_ptr( ps->cis.itemData2 );
+        cis.dwLocaleId = ps->cis.dwLocaleId;
+        memcpy( *buffer, &cis, sizeof(cis) );
+        break;
+    }
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1269,6 +1284,9 @@ size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL other
         break;
     case WM_DELETEITEM:
         size = sizeof(DELETEITEMSTRUCT);
+        break;
+    case WM_COMPAREITEM:
+        size = sizeof(COMPAREITEMSTRUCT);
         break;
     }
 

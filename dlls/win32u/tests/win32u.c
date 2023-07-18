@@ -1625,6 +1625,7 @@ static void test_wndproc_hook(void)
     static const MEASUREITEMSTRUCT mis_in = { .itemID = 1 };
     static const MEASUREITEMSTRUCT mis_out = { .itemID = 2, .CtlType = 3, .CtlID = 4, .itemData = 5 };
     static const DELETEITEMSTRUCT dis_in = { .itemID = 1 };
+    static const COMPAREITEMSTRUCT cis_in = { .itemID1 = 1 };
 
     static const struct lparam_hook_test lparam_hook_tests[] =
     {
@@ -1723,6 +1724,11 @@ static void test_wndproc_hook(void)
             "WM_DELETEITEM", WM_DELETEITEM, .wparam = 10,
             .lparam_size = sizeof(dis_in), .lparam = &dis_in, .poison_lparam = TRUE,
             .check_size = sizeof(dis_in),
+        },
+        {
+            "WM_COMPAREITEM", WM_COMPAREITEM, .wparam = 10,
+            .lparam_size = sizeof(cis_in), .lparam = &cis_in, .poison_lparam = TRUE,
+            .check_size = sizeof(cis_in),
         },
         /* messages that don't change lparam */
         { "WM_USER", WM_USER },
