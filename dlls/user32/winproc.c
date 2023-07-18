@@ -875,9 +875,7 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case LB_SELECTSTRING:
     case CB_GETLBTEXT:
     case LB_GETTEXT:
-        break;
     case LB_GETSELITEMS:
-        if (!get_buffer_space( buffer, *wparam * sizeof(UINT), size )) return FALSE;
         break;
     case WM_NEXTMENU:
     {
@@ -1063,6 +1061,7 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case LB_SELECTSTRING:
         case CB_GETLBTEXT:
         case LB_GETTEXT:
+        case LB_GETSELITEMS:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;

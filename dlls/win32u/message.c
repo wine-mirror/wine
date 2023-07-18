@@ -631,6 +631,9 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         if (!get_buffer_space( buffer, size, prev_size )) return FALSE;
         break;
     }
+    case LB_GETSELITEMS:
+        if (!get_buffer_space( buffer, *wparam * sizeof(UINT), size )) return FALSE;
+        break;
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1470,6 +1473,9 @@ size_t user_message_size( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
         size = send_message_timeout( hwnd, LB_GETTEXTLEN, wparam, 0, SMTO_NORMAL, 0, ansi );
         size = (size + 1) * char_size( ansi );
         break;
+    case LB_GETSELITEMS:
+        size = wparam * sizeof(UINT);
+        break;
     }
 
     return size;
@@ -1640,6 +1646,9 @@ static void copy_user_result( void *buffer, size_t size, LRESULT result, UINT me
     case EM_GETLINE:
         copy_size = string_size( buffer, ansi );
         break;
+    case LB_GETSELITEMS:
+        copy_size = wparam * sizeof(UINT);
+        break;
     default:
         return;
     }
@@ -1666,9 +1675,6 @@ static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, 
     case WM_SIZING:
     case WM_MOVING:
         copy_size = sizeof(RECT);
-        break;
-    case LB_GETSELITEMS:
-        copy_size = wparam * sizeof(UINT);
         break;
     case WM_MDIGETACTIVE:
         if (lparam) copy_size = sizeof(BOOL);
