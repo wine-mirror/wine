@@ -220,6 +220,16 @@ typedef struct
 
 typedef struct
 {
+    UINT   cbSize;
+    INT    iContextType;
+    INT    iCtrlId;
+    ULONG  hItemHandle;
+    DWORD  dwContextId;
+    POINT  MousePos;
+} HELPINFO32;
+
+typedef struct
+{
     UINT  CtlType;
     UINT  CtlID;
     UINT  itemID;
@@ -733,6 +743,20 @@ static size_t packed_message_64to32( UINT message, WPARAM wparam,
             size -= sizeof(cds32);
             if (size) memmove( (char *)params32 + sizeof(cds32), cds64 + 1, size );
             return sizeof(cds32) + size;
+        }
+    case WM_HELP:
+        {
+            HELPINFO32 hi32;
+            const HELPINFO *hi64 = params64;
+
+            hi32.cbSize       = sizeof(hi32);
+            hi32.iContextType = hi64->iContextType;
+            hi32.iCtrlId      = hi64->iCtrlId;
+            hi32.hItemHandle  = HandleToLong( hi64->hItemHandle );
+            hi32.dwContextId  = hi64->dwContextId;
+            hi32.MousePos     = hi64->MousePos;
+            memcpy( params32, &hi32, sizeof(hi32) );
+            return sizeof(hi32);
         }
     }
 
@@ -3278,6 +3302,20 @@ static LRESULT message_call_32to64( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
             cds.cbData = cds32->cbData;
             cds.lpData = UlongToPtr( cds32->lpData );
             return NtUserMessageCall( hwnd, msg, wparam, (LPARAM)&cds, result_info, type, ansi );
+        }
+
+    case WM_HELP:
+        {
+            HELPINFO32 *hi32 = (void *)lparam;
+            HELPINFO hi64;
+
+            hi64.cbSize       = sizeof(hi64);
+            hi64.iContextType = hi32->iContextType;
+            hi64.iCtrlId      = hi32->iCtrlId;
+            hi64.hItemHandle  = LongToHandle( hi32->hItemHandle );
+            hi64.dwContextId  = hi32->dwContextId;
+            hi64.MousePos     = hi32->MousePos;
+            return NtUserMessageCall( hwnd, msg, wparam, (LPARAM)&hi64, result_info, type, ansi );
         }
 
     case WM_GETDLGCODE:

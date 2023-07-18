@@ -853,23 +853,11 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case WM_COMPAREITEM:
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
+    case WM_HELP:
         break;
     case WM_NOTIFY:
         /* WM_NOTIFY cannot be sent across processes (MSDN) */
         return FALSE;
-    case WM_HELP:
-    {
-        HELPINFO hi;
-        if (size < sizeof(ps->hi)) return FALSE;
-        hi.cbSize       = sizeof(hi);
-        hi.iContextType = ps->hi.iContextType;
-        hi.iCtrlId      = ps->hi.iCtrlId;
-        hi.hItemHandle  = unpack_handle( ps->hi.hItemHandle );
-        hi.dwContextId  = (ULONG_PTR)unpack_ptr( ps->hi.dwContextId );
-        hi.MousePos     = ps->hi.MousePos;
-        memcpy( &ps->hi, &hi, sizeof(hi) );
-        break;
-    }
     case WM_STYLECHANGING:
     case WM_STYLECHANGED:
         minsize = sizeof(STYLESTRUCT);
@@ -1114,6 +1102,7 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case WM_WINDOWPOSCHANGING:
         case WM_WINDOWPOSCHANGED:
         case WM_COPYDATA:
+        case WM_HELP:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;

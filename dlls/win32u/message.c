@@ -523,6 +523,19 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         memcpy( &ps->cds, &cds, sizeof(cds) );
         break;
     }
+    case WM_HELP:
+    {
+        HELPINFO hi;
+        if (size < sizeof(ps->hi)) return FALSE;
+        hi.cbSize       = sizeof(hi);
+        hi.iContextType = ps->hi.iContextType;
+        hi.iCtrlId      = ps->hi.iCtrlId;
+        hi.hItemHandle  = wine_server_ptr_handle( ps->hi.hItemHandle );
+        hi.dwContextId  = (ULONG_PTR)unpack_ptr( ps->hi.dwContextId );
+        hi.MousePos     = ps->hi.MousePos;
+        memcpy( &ps->hi, &hi, sizeof(hi) );
+        break;
+    }
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1332,6 +1345,9 @@ size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL other
         size = sizeof(*cds) + cds->cbData;
         break;
     }
+    case WM_HELP:
+        size = sizeof(HELPINFO);
+        break;
     }
 
     return size;
