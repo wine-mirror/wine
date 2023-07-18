@@ -13293,8 +13293,8 @@ then :
 else $as_nop
   :
 fi
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for vkd3d_shader_serialize_dxbc in MinGW -lvkd3d-shader" >&5
-printf %s "checking for vkd3d_shader_serialize_dxbc in MinGW -lvkd3d-shader... " >&6; }
+            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for vkd3d_shader_build_varying_map in MinGW -lvkd3d-shader" >&5
+printf %s "checking for vkd3d_shader_build_varying_map in MinGW -lvkd3d-shader... " >&6; }
 if test ${ac_cv_mingw_lib_vkd3d_shader+y}
 then :
   printf %s "(cached) " >&6
@@ -13311,11 +13311,11 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* Override any GCC internal prototype to avoid an error.
    Use char because int might match the return type of a GCC
    builtin and then its argument prototype would still apply.  */
-char vkd3d_shader_serialize_dxbc ();
+char vkd3d_shader_build_varying_map ();
 int
 main (void)
 {
-return vkd3d_shader_serialize_dxbc ();
+return vkd3d_shader_build_varying_map ();
   ;
   return 0;
 }

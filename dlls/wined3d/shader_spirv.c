@@ -53,10 +53,17 @@ struct shader_spirv_priv
     struct shader_spirv_resource_bindings bindings;
 };
 
+#define MAX_SM1_INTER_STAGE_VARYINGS 12
+
 struct shader_spirv_compile_arguments
 {
     union
     {
+        struct
+        {
+            struct vkd3d_shader_varying_map varying_map[MAX_SM1_INTER_STAGE_VARYINGS];
+            unsigned int varying_count;
+        } vs;
         struct
         {
             uint32_t alpha_swizzle;
@@ -81,6 +88,7 @@ struct shader_spirv_graphics_program_vk
     SIZE_T variants_size, variant_count;
 
     struct vkd3d_shader_scan_descriptor_info descriptor_info;
+    struct vkd3d_shader_scan_signature_info signature_info;
 };
 
 struct shader_spirv_compute_program_vk
@@ -95,6 +103,7 @@ struct shader_spirv_compute_program_vk
 
 struct wined3d_shader_spirv_compile_args
 {
+    struct vkd3d_shader_varying_map_info varying_map;
     struct vkd3d_shader_spirv_target_info spirv_target;
     struct vkd3d_shader_parameter sample_count;
     unsigned int ps_alpha_swizzle[WINED3D_MAX_RENDER_TARGETS];
@@ -155,6 +164,24 @@ static void shader_spirv_compile_arguments_init(struct shader_spirv_compile_argu
             args->u.fs.dual_source_blending = state->blend_state && state->blend_state->dual_source;
             break;
 
+        case WINED3D_SHADER_TYPE_VERTEX:
+        {
+            struct wined3d_shader *ps = state->shader[WINED3D_SHADER_TYPE_PIXEL];
+
+            if (ps)
+            {
+                struct shader_spirv_graphics_program_vk *vs_program = shader->backend_data;
+                struct shader_spirv_graphics_program_vk *ps_program = ps->backend_data;
+
+                if (ps_program->signature_info.input.element_count > ARRAY_SIZE(args->u.vs.varying_map))
+                    ERR("Unexpected inter-stage varying count %u.\n", ps_program->signature_info.input.element_count);
+                if (shader->reg_maps.shader_version.major < 4)
+                    vkd3d_shader_build_varying_map(&vs_program->signature_info.output,
+                            &ps_program->signature_info.input, &args->u.vs.varying_count, args->u.vs.varying_map);
+            }
+            break;
+        }
+
         default:
             break;
     }
@@ -162,7 +189,8 @@ static void shader_spirv_compile_arguments_init(struct shader_spirv_compile_argu
 
 static void shader_spirv_init_compile_args(struct wined3d_shader_spirv_compile_args *args,
         struct vkd3d_shader_interface_info *vkd3d_interface, enum vkd3d_shader_spirv_environment environment,
-        enum wined3d_shader_type shader_type, const struct shader_spirv_compile_arguments *compile_args)
+        enum wined3d_shader_type shader_type, enum vkd3d_shader_source_type source_type,
+        const struct shader_spirv_compile_arguments *compile_args)
 {
     unsigned int i;
 
@@ -198,6 +226,18 @@ static void shader_spirv_init_compile_args(struct wined3d_shader_spirv_compile_a
 
         args->spirv_target.output_swizzles = args->ps_alpha_swizzle;
         args->spirv_target.output_swizzle_count = ARRAY_SIZE(args->ps_alpha_swizzle);
+    }
+    else if (shader_type == WINED3D_SHADER_TYPE_VERTEX)
+    {
+        if (source_type == VKD3D_SHADER_SOURCE_D3D_BYTECODE)
+        {
+            args->spirv_target.next = &args->varying_map;
+
+            args->varying_map.type = VKD3D_SHADER_STRUCTURE_TYPE_VARYING_MAP_INFO;
+            args->varying_map.next = vkd3d_interface;
+            args->varying_map.varying_map = compile_args->u.vs.varying_map;
+            args->varying_map.varying_count = compile_args->u.vs.varying_count;
+        }
     }
 }
 
@@ -246,7 +286,7 @@ static VkShaderModule shader_spirv_compile_shader(struct wined3d_context_vk *con
 
     shader_spirv_init_shader_interface_vk(&iface, bindings, so_desc);
     shader_spirv_init_compile_args(&compile_args, &iface.vkd3d_interface,
-            VKD3D_SHADER_SPIRV_ENVIRONMENT_VULKAN_1_0, shader_type, args);
+            VKD3D_SHADER_SPIRV_ENVIRONMENT_VULKAN_1_0, shader_type, source_type, args);
 
     info.type = VKD3D_SHADER_STRUCTURE_TYPE_COMPILE_INFO;
     info.next = &compile_args.spirv_target;
@@ -687,7 +727,8 @@ static bool shader_spirv_resource_bindings_init(struct shader_spirv_resource_bin
 }
 
 static void shader_spirv_scan_shader(struct wined3d_shader *shader,
-        struct vkd3d_shader_scan_descriptor_info *descriptor_info)
+        struct vkd3d_shader_scan_descriptor_info *descriptor_info,
+        struct vkd3d_shader_scan_signature_info *signature_info)
 {
     struct vkd3d_shader_compile_info info;
     char *messages;
@@ -695,6 +736,13 @@ static void shader_spirv_scan_shader(struct wined3d_shader *shader,
 
     memset(descriptor_info, 0, sizeof(*descriptor_info));
     descriptor_info->type = VKD3D_SHADER_STRUCTURE_TYPE_SCAN_DESCRIPTOR_INFO;
+
+    if (signature_info)
+    {
+        memset(signature_info, 0, sizeof(*signature_info));
+        signature_info->type = VKD3D_SHADER_STRUCTURE_TYPE_SCAN_SIGNATURE_INFO;
+        descriptor_info->next = signature_info;
+    }
 
     info.type = VKD3D_SHADER_STRUCTURE_TYPE_COMPILE_INFO;
     info.next = descriptor_info;
@@ -736,7 +784,7 @@ static void shader_spirv_precompile_compute(struct wined3d_shader *shader)
         shader->backend_data = program_vk;
     }
 
-    shader_spirv_scan_shader(shader, &program_vk->descriptor_info);
+    shader_spirv_scan_shader(shader, &program_vk->descriptor_info, NULL);
 }
 
 static void shader_spirv_precompile(void *shader_priv, struct wined3d_shader *shader)
@@ -758,7 +806,7 @@ static void shader_spirv_precompile(void *shader_priv, struct wined3d_shader *sh
         shader->backend_data = program_vk;
     }
 
-    shader_spirv_scan_shader(shader, &program_vk->descriptor_info);
+    shader_spirv_scan_shader(shader, &program_vk->descriptor_info, &program_vk->signature_info);
 }
 
 static void shader_spirv_select(void *shader_priv, struct wined3d_context *context,
@@ -967,6 +1015,7 @@ static void shader_spirv_destroy(struct wined3d_shader *shader)
     }
     heap_free(program_vk->variants);
     vkd3d_shader_free_scan_descriptor_info(&program_vk->descriptor_info);
+    vkd3d_shader_free_scan_signature_info(&program_vk->signature_info);
 
     shader->backend_data = NULL;
     heap_free(program_vk);
