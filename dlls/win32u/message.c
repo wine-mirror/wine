@@ -2150,11 +2150,11 @@ BOOL WINAPI NtUserGetGUIThreadInfo( DWORD id, GUITHREADINFO *info )
  * Call a window procedure and the corresponding hooks.
  */
 static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
-                                 BOOL unicode, BOOL same_thread, enum wm_char_mapping mapping,
-                                 BOOL needs_unpack, void *buffer, size_t size )
+                                 enum message_type type, BOOL same_thread,
+                                 enum wm_char_mapping mapping, BOOL ansi_dst )
 {
     struct win_proc_params p, *params = &p;
-    BOOL ansi = !unicode && !needs_unpack;
+    BOOL ansi = ansi_dst && type == MSG_ASCII;
     LRESULT result = 0;
     CWPSTRUCT cwp;
     CWPRETSTRUCT cwpret;
@@ -2165,11 +2165,9 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     if (msg & 0x80000000)
         return handle_internal_message( hwnd, msg, wparam, lparam );
 
-    if (!needs_unpack) size = 0;
     if (!is_current_thread_window( hwnd )) return 0;
 
-    packed_size = user_message_size( hwnd, msg, wparam, lparam, needs_unpack, ansi );
-    if (packed_size) size = packed_size;
+    packed_size = user_message_size( hwnd, msg, wparam, lparam, type == MSG_OTHER_PROCESS, ansi );
 
     /* first the WH_CALLWNDPROC hook */
     cwp.lParam  = lparam;
@@ -2179,21 +2177,19 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     call_message_hooks( WH_CALLWNDPROC, HC_ACTION, same_thread, (LPARAM)&cwp, sizeof(cwp),
                         packed_size, ansi );
 
-    if (size && !(params = malloc( sizeof(*params) + size ))) return 0;
-    if (!init_window_call_params( params, hwnd, msg, wparam, lparam, !unicode, mapping ))
+    if (packed_size && !(params = malloc( sizeof(*params) + packed_size ))) return 0;
+    if (!init_window_call_params( params, hwnd, msg, wparam, lparam, ansi_dst, mapping ))
     {
         if (params != &p) free( params );
         return 0;
     }
 
-    if (needs_unpack) params->ansi = FALSE;
-    params->needs_unpack = needs_unpack || packed_size;
+    if (type == MSG_OTHER_PROCESS) params->ansi = FALSE;
+    params->needs_unpack = packed_size != 0;
     if (packed_size)
         pack_user_message( params + 1, packed_size, msg, wparam, lparam, ansi );
-    else if (size)
-        memcpy( params + 1, buffer, size );
 
-    result = dispatch_win_proc_params( params, sizeof(*params) + size, &ret_ptr, &ret_len );
+    result = dispatch_win_proc_params( params, sizeof(*params) + packed_size, &ret_ptr, &ret_len );
     if (params != &p) free( params );
 
     copy_user_result( ret_ptr, min( ret_len, packed_size ), result, msg, wparam, lparam, ansi );
@@ -2637,7 +2633,6 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
         NTSTATUS res;
         size_t size = 0;
         const message_data_t *msg_data = buffer;
-        BOOL needs_unpack = FALSE;
 
         thread_info->client_info.msg_source = prev_source;
 
@@ -2703,7 +2698,6 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
             if (!unpack_message( info.msg.hwnd, info.msg.message, &info.msg.wParam,
                                  &info.msg.lParam, &buffer, size ))
                 continue;
-            needs_unpack = TRUE;
             break;
         case MSG_CALLBACK:
             info.flags = ISMEX_CALLBACK;
@@ -2786,7 +2780,6 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
                 reply_message( &info, 0, &info.msg );
                 continue;
             }
-            needs_unpack = TRUE;
             break;
         case MSG_HARDWARE:
             if (size >= sizeof(msg_data->hardware))
@@ -2867,8 +2860,8 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
         thread_info->client_info.msg_source = msg_source_unavailable;
         thread_info->client_info.receive_flags = info.flags;
         result = call_window_proc( info.msg.hwnd, info.msg.message, info.msg.wParam,
-                                   info.msg.lParam, (info.type != MSG_ASCII), FALSE,
-                                   WMCHAR_MAP_RECVMESSAGE, needs_unpack, buffer, size );
+                                   info.msg.lParam, info.type, FALSE, WMCHAR_MAP_RECVMESSAGE,
+                                   info.type == MSG_ASCII );
         if (thread_info->receive_info == &info)
             reply_winproc_result( result, info.msg.hwnd, info.msg.message,
                                   info.msg.wParam, info.msg.lParam );
@@ -3643,31 +3636,6 @@ static BOOL broadcast_message( struct send_message_info *info, DWORD_PTR *res_pt
     return TRUE;
 }
 
-static BOOL process_packed_message( struct send_message_info *info, LRESULT *res_ptr, BOOL ansi )
-{
-    struct packed_message data;
-    size_t buffer_size = 0, i;
-    void *buffer = NULL;
-    char *ptr;
-
-    pack_message( info->hwnd, info->msg, info->wparam, info->lparam, &data );
-    if (data.count == -1) return FALSE;
-
-    for (i = 0; i < data.count; i++) buffer_size += data.size[i];
-    if (!(buffer = malloc( buffer_size ))) return FALSE;
-    for (ptr = buffer, i = 0; i < data.count; i++)
-    {
-        memcpy( ptr, data.data[i], data.size[i] );
-        ptr += data.size[i];
-    }
-
-    *res_ptr = call_window_proc( info->hwnd, info->msg, info->wparam, info->lparam,
-                                 !ansi, TRUE, info->wm_char, TRUE, buffer, buffer_size );
-
-    free( buffer );
-    return TRUE;
-}
-
 static inline void *get_buffer( void *static_buffer, size_t size, size_t need )
 {
     if (size >= need) return static_buffer;
@@ -3974,17 +3942,13 @@ static BOOL process_message( struct send_message_info *info, DWORD_PTR *res_ptr,
         else
             ret = send_inter_thread_message( info, &result );
     }
-    else if (info->type != MSG_OTHER_PROCESS)
+    else
     {
         result = call_window_proc( info->hwnd, info->msg, info->wparam, info->lparam,
-                                   !ansi, TRUE, info->wm_char, FALSE, NULL, 0 );
+                                   info->type, TRUE, info->wm_char, ansi );
         if (info->type == MSG_CALLBACK)
             call_sendmsg_callback( info->callback, info->hwnd, info->msg, info->data, result );
         ret = TRUE;
-    }
-    else
-    {
-        ret = process_packed_message( info, &result, ansi );
     }
 
     spy_exit_message( SPY_RESULT_OK, info->hwnd, info->msg, result, info->wparam, info->lparam );
