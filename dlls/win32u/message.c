@@ -634,6 +634,16 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case LB_GETSELITEMS:
         if (!get_buffer_space( buffer, *wparam * sizeof(UINT), size )) return FALSE;
         break;
+    case WM_NEXTMENU:
+    {
+        MDINEXTMENU mnm;
+        if (size < sizeof(ps->mnm)) return FALSE;
+        mnm.hmenuIn   = wine_server_ptr_handle( ps->mnm.hmenuIn );
+        mnm.hmenuNext = wine_server_ptr_handle( ps->mnm.hmenuNext );
+        mnm.hwndNext  = wine_server_ptr_handle( ps->mnm.hwndNext );
+        memcpy( *buffer, &mnm, sizeof(mnm) );
+        break;
+    }
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1476,6 +1486,9 @@ size_t user_message_size( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
     case LB_GETSELITEMS:
         size = wparam * sizeof(UINT);
         break;
+    case WM_NEXTMENU:
+        size = sizeof(MDINEXTMENU);
+        break;
     }
 
     return size;
@@ -1649,6 +1662,9 @@ static void copy_user_result( void *buffer, size_t size, LRESULT result, UINT me
     case LB_GETSELITEMS:
         copy_size = wparam * sizeof(UINT);
         break;
+    case WM_NEXTMENU:
+        copy_size = sizeof(MDINEXTMENU);
+        break;
     default:
         return;
     }
@@ -1678,9 +1694,6 @@ static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, 
         break;
     case WM_MDIGETACTIVE:
         if (lparam) copy_size = sizeof(BOOL);
-        break;
-    case WM_NEXTMENU:
-        copy_size = sizeof(MDINEXTMENU);
         break;
     case WM_MDICREATE:
         copy_size = sizeof(MDICREATESTRUCTW);

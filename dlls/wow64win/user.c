@@ -762,6 +762,17 @@ static size_t packed_message_64to32( UINT message, WPARAM wparam,
     case WM_GETDLGCODE:
         msg_64to32( params64, params32 );
         return sizeof(MSG32);
+
+    case WM_NEXTMENU:
+        {
+            MDINEXTMENU32 *next32 = params32;
+            const MDINEXTMENU *next64 = params64;
+
+            next32->hmenuIn   = HandleToLong( next64->hmenuIn );
+            next32->hmenuNext = HandleToLong( next64->hmenuNext );
+            next32->hwndNext  = HandleToLong( next64->hwndNext );
+            return sizeof(*next32);
+        }
     }
 
     memmove( params32, params64, size );
@@ -827,6 +838,17 @@ static size_t packed_result_32to64( UINT message, WPARAM wparam, const void *par
     case WM_WINDOWPOSCHANGED:
         winpos_32to64( params64, params32 );
         return sizeof(WINDOWPOS);
+
+    case WM_NEXTMENU:
+        {
+            const MDINEXTMENU32 *next32 = params32;
+            MDINEXTMENU *next64 = params64;
+
+            next64->hmenuIn   = LongToHandle( next32->hmenuIn );
+            next64->hmenuNext = LongToHandle( next32->hmenuNext );
+            next64->hwndNext  = LongToHandle( next32->hwndNext );
+            return sizeof(*next64);
+        }
 
     case WM_GETTEXT:
     case WM_ASKCBFORMATNAME:
@@ -3357,7 +3379,11 @@ static LRESULT message_call_32to64( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
             next.hmenuIn   = LongToHandle( next32->hmenuIn );
             next.hmenuNext = LongToHandle( next32->hmenuNext );
             next.hwndNext  = LongToHandle( next32->hwndNext );
-            return NtUserMessageCall( hwnd, msg, wparam, (LPARAM)&next, result_info, type, ansi );
+            ret = NtUserMessageCall( hwnd, msg, wparam, (LPARAM)&next, result_info, type, ansi );
+            next32->hmenuIn   = HandleToLong( next.hmenuIn );
+            next32->hmenuNext = HandleToLong( next.hmenuNext );
+            next32->hwndNext  = HandleToLong( next.hwndNext );
+            return ret;
         }
 
     case WM_PAINTCLIPBOARD:

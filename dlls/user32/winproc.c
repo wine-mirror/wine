@@ -761,12 +761,6 @@ static inline void *unpack_ptr( ULONGLONG ptr64 )
     return (void *)(ULONG_PTR)ptr64;
 }
 
-/* convert a server handle to a generic handle */
-static inline HANDLE unpack_handle( UINT handle )
-{
-    return (HANDLE)(INT_PTR)(int)handle;
-}
-
 /* make sure that the buffer contains a valid null-terminated Unicode string */
 static inline BOOL check_string( LPCWSTR str, size_t size )
 {
@@ -876,17 +870,8 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case CB_GETLBTEXT:
     case LB_GETTEXT:
     case LB_GETSELITEMS:
-        break;
     case WM_NEXTMENU:
-    {
-        MDINEXTMENU mnm;
-        if (size < sizeof(ps->mnm)) return FALSE;
-        mnm.hmenuIn   = unpack_handle( ps->mnm.hmenuIn );
-        mnm.hmenuNext = unpack_handle( ps->mnm.hmenuNext );
-        mnm.hwndNext  = unpack_handle( ps->mnm.hwndNext );
-        memcpy( *buffer, &mnm, sizeof(mnm) );
         break;
-    }
     case WM_SIZING:
     case WM_MOVING:
         minsize = sizeof(RECT);
@@ -1062,6 +1047,7 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case CB_GETLBTEXT:
         case LB_GETTEXT:
         case LB_GETSELITEMS:
+        case WM_NEXTMENU:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;

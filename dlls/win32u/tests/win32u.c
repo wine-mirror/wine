@@ -1682,6 +1682,8 @@ static void test_wndproc_hook(void)
     static const DWORD dw_in = 1, dw_out = 2;
     static const UINT32 tabstops_in[2] = { 3, 4 };
     static const UINT32 items_out[2] = { 1, 2 };
+    static const MDINEXTMENU nm_in = { .hmenuIn = (HMENU)0xdeadbeef };
+    static const MDINEXTMENU nm_out = { .hmenuIn = (HMENU)1 };
 
     static const struct lparam_hook_test lparam_hook_tests[] =
     {
@@ -1896,6 +1898,11 @@ static void test_wndproc_hook(void)
             "LB_GETSELITEMS", LB_GETSELITEMS,
             .wparam = ARRAYSIZE(items_out), .msg_result = ARRAYSIZE(items_out),
             .lparam_size = sizeof(items_out), .change_lparam = items_out,
+        },
+        {
+            "WM_NEXTMENU", WM_NEXTMENU,
+            .lparam_size = sizeof(nm_in), .lparam = &nm_in, .change_lparam = &nm_out,
+            .check_size = sizeof(nm_in)
         },
         /* messages that don't change lparam */
         { "WM_USER", WM_USER },
