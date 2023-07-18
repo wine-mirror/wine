@@ -4394,6 +4394,14 @@ static inline struct wined3d_buffer *buffer_from_resource(struct wined3d_resourc
     return CONTAINING_RECORD(resource, struct wined3d_buffer, resource);
 }
 
+static inline void wined3d_buffer_validate_user(struct wined3d_buffer *buffer)
+{
+    if (buffer->bo_user.valid)
+        return;
+    buffer->bo_user.valid = true;
+    list_add_head(&buffer->buffer_object->users, &buffer->bo_user.entry);
+}
+
 void wined3d_buffer_cleanup(struct wined3d_buffer *buffer) DECLSPEC_HIDDEN;
 void wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_offset,
         struct wined3d_buffer *src_buffer, unsigned int src_offset, unsigned int size) DECLSPEC_HIDDEN;

@@ -4649,8 +4649,9 @@ static void wined3d_texture_set_bo(struct wined3d_texture *texture,
 
         LIST_FOR_EACH_ENTRY(bo_user, &prev_bo->users, struct wined3d_bo_user, entry)
             bo_user->valid = false;
+        list_init(&prev_bo->users);
+
         assert(list_empty(&bo->users));
-        list_move_head(&bo->users, &prev_bo->users);
 
         wined3d_context_destroy_bo(context, prev_bo);
         heap_free(prev_bo);

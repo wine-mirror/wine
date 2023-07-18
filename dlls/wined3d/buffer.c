@@ -194,8 +194,11 @@ static void wined3d_buffer_gl_destroy_buffer_object(struct wined3d_buffer_gl *bu
         wined3d_context_gl_end_transform_feedback(context_gl);
     }
 
-    buffer_gl->b.bo_user.valid = false;
-    list_remove(&buffer_gl->b.bo_user.entry);
+    if (buffer_gl->b.bo_user.valid)
+    {
+        buffer_gl->b.bo_user.valid = false;
+        list_remove(&buffer_gl->b.bo_user.entry);
+    }
     wined3d_context_gl_destroy_bo(context_gl, bo_gl);
     heap_free(bo_gl);
     buffer_gl->b.buffer_object = NULL;
@@ -237,7 +240,6 @@ static BOOL wined3d_buffer_gl_create_buffer_object(struct wined3d_buffer_gl *buf
         return FALSE;
     }
 
-    list_add_head(&bo->b.users, &buffer_gl->b.bo_user.entry);
     buffer_gl->b.buffer_object = &bo->b;
     buffer_invalidate_bo_range(&buffer_gl->b, 0, 0);
 
@@ -1127,15 +1129,12 @@ static void wined3d_buffer_set_bo(struct wined3d_buffer *buffer, struct wined3d_
 
         LIST_FOR_EACH_ENTRY(bo_user, &prev_bo->users, struct wined3d_bo_user, entry)
             bo_user->valid = false;
+        list_init(&prev_bo->users);
+
         assert(list_empty(&bo->users));
-        list_move_head(&bo->users, &prev_bo->users);
 
         wined3d_context_destroy_bo(context, prev_bo);
         heap_free(prev_bo);
-    }
-    else
-    {
-        list_add_head(&bo->users, &buffer->bo_user.entry);
     }
 
     buffer->buffer_object = bo;
@@ -1516,8 +1515,6 @@ static BOOL wined3d_buffer_vk_create_buffer_object(struct wined3d_buffer_vk *buf
         return FALSE;
     }
 
-    list_init(&buffer_vk->b.bo_user.entry);
-    list_add_head(&bo_vk->b.users, &buffer_vk->b.bo_user.entry);
     buffer_vk->b.buffer_object = &bo_vk->b;
     buffer_invalidate_bo_range(&buffer_vk->b, 0, 0);
 
@@ -1534,7 +1531,7 @@ const VkDescriptorBufferInfo *wined3d_buffer_vk_get_buffer_info(struct wined3d_b
     buffer_vk->buffer_info.buffer = bo->vk_buffer;
     buffer_vk->buffer_info.offset = bo->b.buffer_offset;
     buffer_vk->buffer_info.range = buffer_vk->b.resource.size;
-    buffer_vk->b.bo_user.valid = true;
+    wined3d_buffer_validate_user(&buffer_vk->b);
 
     return &buffer_vk->buffer_info;
 }
@@ -1570,8 +1567,11 @@ static void wined3d_buffer_vk_unload_location(struct wined3d_buffer *buffer,
     switch (location)
     {
         case WINED3D_LOCATION_BUFFER:
-            buffer->bo_user.valid = false;
-            list_remove(&buffer->bo_user.entry);
+            if (buffer->bo_user.valid)
+            {
+                buffer->bo_user.valid = false;
+                list_remove(&buffer->bo_user.entry);
+            }
             wined3d_context_vk_destroy_bo(context_vk, bo_vk);
             heap_free(bo_vk);
             buffer->buffer_object = NULL;

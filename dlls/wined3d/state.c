@@ -4264,7 +4264,7 @@ static void indexbuffer(struct wined3d_context *context, const struct wined3d_st
     if (buffer->buffer_object)
     {
         GL_EXTCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, wined3d_bo_gl(buffer->buffer_object)->id));
-        buffer->bo_user.valid = true;
+        wined3d_buffer_validate_user(buffer);
     }
     else
     {
@@ -4394,7 +4394,7 @@ static void state_cb(struct wined3d_context *context, const struct wined3d_state
                 bo_gl->id, bo_gl->b.buffer_offset + buffer_state->offset,
                 min(buffer_state->size, buffer->resource.size - buffer_state->offset)));
 
-        buffer->bo_user.valid = true;
+        wined3d_buffer_validate_user(buffer);
     }
     checkGLcall("bind constant buffers");
 }
@@ -4471,7 +4471,7 @@ static void state_so(struct wined3d_context *context, const struct wined3d_state
         size = buffer->resource.size - offset;
         GL_EXTCALL(glBindBufferRange(GL_TRANSFORM_FEEDBACK_BUFFER, i,
                 bo_gl->id, bo_gl->b.buffer_offset + offset, size));
-        buffer->bo_user.valid = true;
+        wined3d_buffer_validate_user(buffer);
     }
     checkGLcall("bind transform feedback buffers");
 }

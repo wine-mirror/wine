@@ -2859,15 +2859,13 @@ static void *wined3d_bo_gl_map(struct wined3d_bo_gl *bo, struct wined3d_context_
         if (wined3d_device_gl_create_bo(device_gl, context_gl, bo->size,
                 bo->binding, bo->usage, bo->b.coherent, bo->flags, &tmp))
         {
-            list_move_head(&tmp.b.users, &bo->b.users);
+            LIST_FOR_EACH_ENTRY(bo_user, &bo->b.users, struct wined3d_bo_user, entry)
+                bo_user->valid = false;
+            list_init(&bo->b.users);
+
             wined3d_context_gl_destroy_bo(context_gl, bo);
             *bo = tmp;
             list_init(&bo->b.users);
-            list_move_head(&bo->b.users, &tmp.b.users);
-            LIST_FOR_EACH_ENTRY(bo_user, &bo->b.users, struct wined3d_bo_user, entry)
-            {
-                bo_user->valid = false;
-            }
 
             goto map;
         }
@@ -3152,6 +3150,8 @@ void wined3d_context_gl_destroy_bo(struct wined3d_context_gl *context_gl, struct
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
 
     TRACE("context_gl %p, bo %p.\n", context_gl, bo);
+
+    assert(list_empty(&bo->b.users));
 
     if (bo->memory)
     {
@@ -5421,7 +5421,7 @@ void wined3d_context_gl_load_tex_coords(const struct wined3d_context_gl *context
             gl_info->gl_ops.gl.p_glTexCoordPointer(format_gl->vtx_format, format_gl->vtx_type, e->stride,
                     get_vertex_attrib_pointer(e, state));
             gl_info->gl_ops.gl.p_glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            state->streams[e->stream_idx].buffer->bo_user.valid = true;
+            wined3d_buffer_validate_user(state->streams[e->stream_idx].buffer);
         }
         else
         {
@@ -5508,7 +5508,7 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
         checkGLcall("glVertexPointer(...)");
         gl_info->gl_ops.gl.p_glEnableClientState(GL_VERTEX_ARRAY);
         checkGLcall("glEnableClientState(GL_VERTEX_ARRAY)");
-        state->streams[e->stream_idx].buffer->bo_user.valid = true;
+        wined3d_buffer_validate_user(state->streams[e->stream_idx].buffer);
     }
 
     /* Normals */
@@ -5531,7 +5531,7 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
         checkGLcall("glNormalPointer(...)");
         gl_info->gl_ops.gl.p_glEnableClientState(GL_NORMAL_ARRAY);
         checkGLcall("glEnableClientState(GL_NORMAL_ARRAY)");
-        state->streams[e->stream_idx].buffer->bo_user.valid = true;
+        wined3d_buffer_validate_user(state->streams[e->stream_idx].buffer);
     }
     else
     {
@@ -5560,7 +5560,7 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
         checkGLcall("glColorPointer(4, GL_UNSIGNED_BYTE, ...)");
         gl_info->gl_ops.gl.p_glEnableClientState(GL_COLOR_ARRAY);
         checkGLcall("glEnableClientState(GL_COLOR_ARRAY)");
-        state->streams[e->stream_idx].buffer->bo_user.valid = true;
+        wined3d_buffer_validate_user(state->streams[e->stream_idx].buffer);
     }
     else
     {
@@ -5624,7 +5624,7 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
             }
             gl_info->gl_ops.gl.p_glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
             checkGLcall("glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT)");
-            state->streams[e->stream_idx].buffer->bo_user.valid = true;
+            wined3d_buffer_validate_user(state->streams[e->stream_idx].buffer);
         }
         else
         {
@@ -5725,7 +5725,7 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
 
         format_gl = wined3d_format_gl(element->format);
         stream = &state->streams[element->stream_idx];
-        stream->buffer->bo_user.valid = true;
+        wined3d_buffer_validate_user(stream->buffer);
 
 
         if (gl_info->supported[ARB_INSTANCED_ARRAYS])

@@ -997,9 +997,13 @@ void * CDECL wined3d_shader_resource_view_get_parent(const struct wined3d_shader
 void wined3d_shader_resource_view_gl_update(struct wined3d_shader_resource_view_gl *srv_gl,
         struct wined3d_context_gl *context_gl)
 {
-    create_buffer_view(&srv_gl->gl_view, &context_gl->c, &srv_gl->v.desc,
-            buffer_from_resource(srv_gl->v.resource), srv_gl->v.format);
+    struct wined3d_buffer *buffer = buffer_from_resource(srv_gl->v.resource);
+
+    assert(!srv_gl->bo_user.valid);
+
+    create_buffer_view(&srv_gl->gl_view, &context_gl->c, &srv_gl->v.desc, buffer, srv_gl->v.format);
     srv_gl->bo_user.valid = true;
+    list_add_head(&buffer->buffer_object->users, &srv_gl->bo_user.entry);
 }
 
 static void wined3d_shader_resource_view_gl_cs_init(void *object)
@@ -1112,12 +1116,15 @@ void wined3d_shader_resource_view_vk_update_buffer(struct wined3d_shader_resourc
     struct wined3d_buffer_vk *buffer_vk;
     VkBufferView vk_buffer_view;
 
+    assert(!view_vk->bo_user.valid);
+
     buffer_vk = wined3d_buffer_vk(buffer_from_resource(resource));
     wined3d_context_vk_destroy_vk_buffer_view(context_vk, view_vk->u.vk_buffer_view, view_vk->command_buffer_id);
     if ((vk_buffer_view = wined3d_view_vk_create_vk_buffer_view(context_vk, desc, buffer_vk, view_format_vk)))
     {
         view_vk->u.vk_buffer_view = vk_buffer_view;
         view_vk->bo_user.valid = true;
+        list_add_head(&buffer_vk->b.buffer_object->users, &view_vk->bo_user.entry);
     }
 }
 
@@ -1715,9 +1722,12 @@ void wined3d_unordered_access_view_copy_counter(struct wined3d_unordered_access_
 void wined3d_unordered_access_view_gl_update(struct wined3d_unordered_access_view_gl *uav_gl,
         struct wined3d_context_gl *context_gl)
 {
-    create_buffer_view(&uav_gl->gl_view, &context_gl->c, &uav_gl->v.desc,
-            buffer_from_resource(uav_gl->v.resource), uav_gl->v.format);
+    struct wined3d_buffer *buffer = buffer_from_resource(uav_gl->v.resource);
+
+    assert(!uav_gl->bo_user.valid);
+    create_buffer_view(&uav_gl->gl_view, &context_gl->c, &uav_gl->v.desc, buffer, uav_gl->v.format);
     uav_gl->bo_user.valid = true;
+    list_add_head(&buffer->buffer_object->users, &uav_gl->bo_user.entry);
 }
 
 static void wined3d_unordered_access_view_gl_cs_init(void *object)
@@ -2280,12 +2290,15 @@ void wined3d_unordered_access_view_vk_update(struct wined3d_unordered_access_vie
     struct wined3d_buffer_vk *buffer_vk;
     VkBufferView vk_buffer_view;
 
+    assert(!view_vk->bo_user.valid);
+
     buffer_vk = wined3d_buffer_vk(buffer_from_resource(resource));
     wined3d_context_vk_destroy_vk_buffer_view(context_vk, view_vk->u.vk_buffer_view, view_vk->command_buffer_id);
     if ((vk_buffer_view = wined3d_view_vk_create_vk_buffer_view(context_vk, desc, buffer_vk, view_format_vk)))
     {
         view_vk->u.vk_buffer_view = vk_buffer_view;
         view_vk->bo_user.valid = true;
+        list_add_head(&buffer_vk->b.buffer_object->users, &view_vk->bo_user.entry);
     }
 }
 

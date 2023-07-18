@@ -1080,6 +1080,8 @@ void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk, const 
 
     TRACE("context_vk %p, bo %p.\n", context_vk, bo);
 
+    assert(list_empty(&bo->b.users));
+
     if (bo->command_buffer_id == context_vk->current_command_buffer.id)
         context_vk->retired_bo_size += bo->size;
 
