@@ -857,6 +857,7 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case WM_NEXTMENU:
     case WM_SIZING:
     case WM_MOVING:
+    case CB_GETCOMBOBOXINFO:
         break;
     case WM_MDIGETACTIVE:
         if (!*lparam) return TRUE;
@@ -1001,6 +1002,7 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case WM_SIZING:
         case WM_MOVING:
         case WM_MDICREATE:
+        case CB_GETCOMBOBOXINFO:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;

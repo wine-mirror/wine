@@ -1362,6 +1362,7 @@ struct lparam_hook_test
     const void *lparam;
     const void *change_lparam;
     const void *check_lparam;
+    const void *default_lparam;
     size_t lparam_size;
     size_t lparam_init_size;
     size_t check_size;
@@ -1424,7 +1425,13 @@ static void check_params( const struct lparam_hook_test *test, UINT message,
 
     default:
         if (test->check_size) {
-            const void *expected = is_ret && test->change_lparam ? test->change_lparam : test->lparam;
+            const void *expected;
+            if (is_ret && test->change_lparam)
+                expected = test->change_lparam;
+            else if (test->default_lparam)
+                expected = test->default_lparam;
+            else
+                expected = test->lparam;
             ok( !memcmp( (const void *)lparam, expected, test->check_size ), "unexpected lparam content\n" );
         }
     }
@@ -1685,6 +1692,10 @@ static void test_wndproc_hook(void)
     static const MDINEXTMENU nm_in = { .hmenuIn = (HMENU)0xdeadbeef };
     static const MDINEXTMENU nm_out = { .hmenuIn = (HMENU)1 };
     static const MDICREATESTRUCTW mcs_in = { .x = 1, .y = 2 };
+    static const COMBOBOXINFO cbi_in = {};
+    static const COMBOBOXINFO cbi_out = { .hwndList = (HWND)2 };
+    static const COMBOBOXINFO cbi_ret = { .hwndList = (HWND)2,
+        .cbSize = sizeof(void *) == 4 ? sizeof(cbi_in) : 0 };
 
     static const struct lparam_hook_test lparam_hook_tests[] =
     {
@@ -1913,6 +1924,11 @@ static void test_wndproc_hook(void)
             "WM_MDICREATE", WM_MDICREATE,
             .lparam_size = sizeof(mcs_in), .lparam = &mcs_in, .poison_lparam = TRUE,
             .check_size = sizeof(mcs_in),
+        },
+        {
+            "CB_GETCOMBOBOXINFO", CB_GETCOMBOBOXINFO,
+            .lparam_size = sizeof(cbi_in), .change_lparam = &cbi_out, .default_lparam = &cbi_in,
+            .check_lparam = &cbi_ret,
         },
         /* messages that don't change lparam */
         { "WM_USER", WM_USER },

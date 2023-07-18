@@ -253,6 +253,17 @@ typedef struct
 
 typedef struct
 {
+    DWORD cbSize;
+    RECT  rcItem;
+    RECT  rcButton;
+    DWORD stateButton;
+    ULONG hwndCombo;
+    ULONG hwndItem;
+    ULONG hwndList;
+} COMBOBOXINFO32;
+
+typedef struct
+{
     ULONG lParam;
     ULONG wParam;
     UINT  message;
@@ -868,6 +879,21 @@ static size_t packed_result_32to64( UINT message, WPARAM wparam, const void *par
             next64->hmenuNext = LongToHandle( next32->hmenuNext );
             next64->hwndNext  = LongToHandle( next32->hwndNext );
             return sizeof(*next64);
+        }
+
+    case CB_GETCOMBOBOXINFO:
+        {
+            const COMBOBOXINFO32 *ci32 = params32;
+            COMBOBOXINFO *ci64 = params64;
+
+            ci64->cbSize      = sizeof(*ci32);
+            ci64->rcItem      = ci32->rcItem;
+            ci64->rcButton    = ci32->rcButton;
+            ci64->stateButton = ci32->stateButton;
+            ci64->hwndCombo   = LongToHandle( ci32->hwndCombo );
+            ci64->hwndItem    = LongToHandle( ci32->hwndItem );
+            ci64->hwndList    = LongToHandle( ci32->hwndList );
+            return sizeof(*ci64);
         }
 
     case WM_GETTEXT:
@@ -3414,6 +3440,29 @@ static LRESULT message_call_32to64( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
             paintstruct_32to64( &ps, (PAINTSTRUCT32 *)lparam );
             return NtUserMessageCall( hwnd, msg, wparam, (LPARAM)&ps, result_info, type, ansi );
+        }
+
+    case CB_GETCOMBOBOXINFO:
+        {
+            COMBOBOXINFO32 *ci32 = (COMBOBOXINFO32 *)lparam;
+            COMBOBOXINFO ci;
+
+            ci.cbSize      = ci32->cbSize;
+            ci.rcItem      = ci32->rcItem;
+            ci.rcButton    = ci32->rcButton;
+            ci.stateButton = ci32->stateButton;
+            ci.hwndCombo   = LongToHandle( ci32->hwndCombo );
+            ci.hwndItem    = LongToHandle( ci32->hwndItem );
+            ci.hwndList    = LongToHandle( ci32->hwndList );
+            ret = NtUserMessageCall( hwnd, msg, wparam, (LPARAM)&ci, result_info, type, ansi );
+            ci32->cbSize      = ci.cbSize;
+            ci32->rcItem      = ci.rcItem;
+            ci32->rcButton    = ci.rcButton;
+            ci32->stateButton = ci.stateButton;
+            ci32->hwndCombo   = HandleToLong( ci.hwndCombo );
+            ci32->hwndItem    = HandleToLong( ci.hwndItem );
+            ci32->hwndList    = HandleToLong( ci.hwndList );
+            return ret;
         }
 
     default:

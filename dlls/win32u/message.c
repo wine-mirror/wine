@@ -1696,6 +1696,9 @@ size_t user_message_size( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
         if (!IS_INTRESOURCE(mcs->szTitle)) size += string_size( mcs->szTitle, ansi );
         break;
     }
+    case CB_GETCOMBOBOXINFO:
+        size = sizeof(COMBOBOXINFO);
+        break;
     }
 
     return size;
@@ -1782,6 +1785,9 @@ void pack_user_message( void *buffer, size_t size, UINT message,
         }
         return;
     }
+    case CB_GETCOMBOBOXINFO:
+        memset( buffer, 0, size );
+        return;
     }
 
     if (size) memcpy( buffer, lparam_ptr, size );
@@ -1892,6 +1898,16 @@ static void copy_user_result( void *buffer, size_t size, LRESULT result, UINT me
     case WM_NEXTMENU:
         copy_size = sizeof(MDINEXTMENU);
         break;
+    case CB_GETCOMBOBOXINFO:
+        if (sizeof(void *) == 4)
+        {
+            COMBOBOXINFO *cbi = lparam_ptr;
+            memcpy( cbi, buffer, size );
+            cbi->cbSize = sizeof(*cbi);
+            return;
+        }
+        copy_size = sizeof(COMBOBOXINFO);
+        break;
     default:
         return;
     }
@@ -1912,9 +1928,6 @@ static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, 
 
     switch(message)
     {
-    case CB_GETCOMBOBOXINFO:
-        copy_size = sizeof(COMBOBOXINFO);
-        break;
     case WM_MDIGETACTIVE:
         if (lparam) copy_size = sizeof(BOOL);
         break;
