@@ -1368,7 +1368,6 @@ struct lparam_hook_test
     size_t check_size;
     BOOL poison_lparam;
     BOOL not_allowed;
-    BOOL todo;
 };
 
 static const struct lparam_hook_test *current_hook_test;
@@ -1594,7 +1593,6 @@ static void test_msg_output( const struct lparam_hook_test *test, LRESULT result
                      (test->message == LB_GETTEXT && test->msg_result == 7))
         ok( !memcmp( lparam_buffer, expected, test->lparam_size ), "unexpected lparam content\n" );
 
-    todo_wine_if(test->todo)
     ok( wndproc_lparam != orig, "wndproc_lparam unmodified\n" );
     if (!hooks_called)
         return;
@@ -1604,13 +1602,9 @@ static void test_msg_output( const struct lparam_hook_test *test, LRESULT result
     ok( retwnd_hook_lparam, "retwnd_hook_lparam not called\n" );
     ok( retwnd_hook_lparam2, "retwnd_hook_lparam2 not called\n" );
 
-    todo_wine_if(test->todo)
     ok( orig != callwnd_hook_lparam, "callwnd_hook_lparam not modified\n" );
-    todo_wine_if(test->todo)
     ok( orig != callwnd_hook_lparam2, "callwnd_hook_lparam2 not modified\n" );
-    todo_wine_if(test->todo)
     ok( orig != retwnd_hook_lparam, "retwnd_hook_lparam not modified\n" );
-    todo_wine_if(test->todo)
     ok( orig != retwnd_hook_lparam2, "retwnd_hook_lparam2 not modified\n" );
 
     /*
@@ -1788,7 +1782,6 @@ static void test_wndproc_hook(void)
         {
             "WM_MDIGETACTIVE", WM_MDIGETACTIVE, .no_wparam_check = TRUE,
             .lparam_size = sizeof(BOOL), .change_lparam = &false_lparam,
-            .todo = TRUE
         },
         {
             "WM_GETMINMAXINFO", WM_GETMINMAXINFO,

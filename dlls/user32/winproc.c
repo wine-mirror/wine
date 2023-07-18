@@ -730,14 +730,6 @@ LRESULT dispatch_win_proc_params( struct win_proc_params *params )
     return result;
 }
 
-/* make sure that there is space for 'size' bytes in buffer, growing it if needed */
-static inline void *get_buffer_space( void **buffer, size_t size, size_t prev_size )
-{
-    if (prev_size < size)
-        *buffer = HeapAlloc( GetProcessHeap(), 0, size );
-    return *buffer;
-}
-
 static size_t string_size( const void *str, BOOL ansi )
 {
     return ansi ? strlen( str ) + 1 : (wcslen( str ) + 1) * sizeof(WCHAR);
@@ -749,7 +741,7 @@ static size_t string_size( const void *str, BOOL ansi )
  * Unpack a message received from another process.
  */
 BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
-                     void **buffer, size_t size, BOOL ansi )
+                     void *buffer, size_t size, BOOL ansi )
 {
     size_t minsize = 0;
 
@@ -758,7 +750,7 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case WM_NCCREATE:
     case WM_CREATE:
     {
-        CREATESTRUCTA *cs = *buffer;
+        CREATESTRUCTA *cs = buffer;
         char *str = (char *)(cs + 1);
 
         if (!IS_INTRESOURCE(cs->lpszName))
@@ -775,13 +767,13 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case WM_NCCALCSIZE:
         if (*wparam)
         {
-            NCCALCSIZE_PARAMS *ncp = *buffer;
+            NCCALCSIZE_PARAMS *ncp = buffer;
             ncp->lppos = (WINDOWPOS *)((NCCALCSIZE_PARAMS *)ncp + 1);
         }
         break;
     case WM_COPYDATA:
     {
-        COPYDATASTRUCT *cds = *buffer;
+        COPYDATASTRUCT *cds = buffer;
         if (cds->lpData) cds->lpData = cds + 1;
         break;
     }
@@ -789,14 +781,14 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case SBM_GETRANGE:
     case CB_GETEDITSEL:
     {
-        DWORD *ptr = *buffer;
+        DWORD *ptr = buffer;
         *wparam = (WPARAM)ptr++;
         *lparam = (LPARAM)ptr;
         return TRUE;
     }
     case WM_MDICREATE:
     {
-        MDICREATESTRUCTA *mcs = *buffer;
+        MDICREATESTRUCTA *mcs = buffer;
         char *str = (char *)(mcs + 1);
 
         if (!IS_INTRESOURCE(mcs->szClass))
@@ -858,10 +850,7 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case WM_SIZING:
     case WM_MOVING:
     case CB_GETCOMBOBOXINFO:
-        break;
     case WM_MDIGETACTIVE:
-        if (!*lparam) return TRUE;
-        if (!get_buffer_space( buffer, sizeof(BOOL), size )) return FALSE;
         break;
     case WM_DEVICECHANGE:
         if (!(*wparam & 0x8000)) return TRUE;
@@ -916,7 +905,7 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
 
     /* default exit for most messages: check minsize and store buffer in lparam */
     if (size < minsize) return FALSE;
-    *lparam = (LPARAM)*buffer;
+    *lparam = (LPARAM)buffer;
     return TRUE;
 }
 
@@ -926,22 +915,13 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
 
     if (params->needs_unpack)
     {
-        char stack_buffer[128];
-        size_t msg_size = size - sizeof(*params);
         void *buffer;
 
-        if (size > sizeof(*params))
-        {
-            size -= sizeof(*params);
-            buffer = params + 1;
-        }
-        else
-        {
-            size = sizeof(stack_buffer);
-            buffer = stack_buffer;
-        }
+        size -= sizeof(*params);
+        buffer = params + 1;
+
         if (!unpack_message( params->hwnd, params->msg, &params->wparam,
-                             &params->lparam, &buffer, size, params->ansi ))
+                             &params->lparam, buffer, size, params->ansi ))
             return 0;
 
         result = dispatch_win_proc_params( params );
@@ -1003,17 +983,16 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case WM_MOVING:
         case WM_MDICREATE:
         case CB_GETCOMBOBOXINFO:
+        case WM_MDIGETACTIVE:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;
-            return NtCallbackReturn( result_ptr, sizeof(*result_ptr) + msg_size, TRUE );
+            return NtCallbackReturn( result_ptr, sizeof(*result_ptr) + size, TRUE );
         }
         }
 
         NtUserMessageCall( params->hwnd, params->msg, params->wparam, params->lparam,
                            (void *)result, NtUserWinProcResult, FALSE );
-        if (buffer != stack_buffer && buffer != params + 1)
-            HeapFree( GetProcessHeap(), 0, buffer );
     }
     else
     {

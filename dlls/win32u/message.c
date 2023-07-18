@@ -874,6 +874,10 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         memcpy( ps, &cbi, sizeof(cbi) );
         break;
     }
+    case WM_MDIGETACTIVE:
+        if (!*lparam) return TRUE;
+        if (!get_buffer_space( buffer, sizeof(BOOL), size )) return FALSE;
+        break;
     default:
         return TRUE;  /* message doesn't need any unpacking */
     }
@@ -1699,6 +1703,9 @@ size_t user_message_size( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
     case CB_GETCOMBOBOXINFO:
         size = sizeof(COMBOBOXINFO);
         break;
+    case WM_MDIGETACTIVE:
+        if (lparam) size = sizeof(BOOL);
+        break;
     }
 
     return size;
@@ -1908,26 +1915,6 @@ static void copy_user_result( void *buffer, size_t size, LRESULT result, UINT me
         }
         copy_size = sizeof(COMBOBOXINFO);
         break;
-    default:
-        return;
-    }
-
-    if (copy_size > size) copy_size = size;
-    if (copy_size) memcpy( lparam_ptr, buffer, copy_size );
-}
-
-/***********************************************************************
- *           copy_reply
- *
- * Copy a message reply received from client.
- */
-static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
-                        WPARAM wparam_src, LPARAM lparam_src )
-{
-    size_t copy_size = 0;
-
-    switch(message)
-    {
     case WM_MDIGETACTIVE:
         if (lparam) copy_size = sizeof(BOOL);
         break;
@@ -1935,7 +1922,8 @@ static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, 
         return;
     }
 
-    if (copy_size) memcpy( (void *)lparam, (void *)lparam_src, copy_size );
+    if (copy_size > size) copy_size = size;
+    if (copy_size) memcpy( lparam_ptr, buffer, copy_size );
 }
 
 /***********************************************************************
@@ -2001,12 +1989,7 @@ static BOOL reply_winproc_result( LRESULT result, HWND hwnd, UINT message, WPARA
     MSG msg;
 
     if (!info) return FALSE;
-
-    if (info->type == MSG_CLIENT_MESSAGE)
-    {
-        copy_reply( result, hwnd, message, info->msg.wParam, info->msg.lParam, wparam, lparam );
-        return TRUE;
-    }
+    if (info->type == MSG_CLIENT_MESSAGE) return TRUE;
 
     msg.hwnd = hwnd;
     msg.message = message;
