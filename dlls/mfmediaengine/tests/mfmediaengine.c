@@ -1828,6 +1828,9 @@ static void test_effect(void)
     hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    hr = IMFMediaEngineEx_RemoveAllEffects(media_engine_ex);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
     hr = passthrough_mft_create(0, &video_effect);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -1841,6 +1844,22 @@ static void test_effect(void)
     hr = IMFMediaEngineEx_InsertVideoEffect(media_engine_ex, (IUnknown *)&video_effect2->IMFTransform_iface, FALSE);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     EXPECT_REF(&video_effect2->IMFTransform_iface, 2);
+
+    hr = IMFMediaEngineEx_RemoveAllEffects(media_engine_ex);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine EXPECT_REF(&video_effect->IMFTransform_iface, 1);
+    todo_wine EXPECT_REF(&video_effect2->IMFTransform_iface, 1);
+
+    if (FAILED(hr)) /* Temporary skip */
+        goto done;
+
+    hr = IMFMediaEngineEx_InsertVideoEffect(media_engine_ex, (IUnknown *)&video_effect->IMFTransform_iface, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine EXPECT_REF(&video_effect->IMFTransform_iface, 2);
+
+    hr = IMFMediaEngineEx_InsertVideoEffect(media_engine_ex, (IUnknown *)&video_effect2->IMFTransform_iface, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine EXPECT_REF(&video_effect2->IMFTransform_iface, 2);
 
     hr = passthrough_mft_create(0, &audio_effect);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -1890,6 +1909,10 @@ done:
     if (media_engine_ex)
     {
         IMFMediaEngineEx_Shutdown(media_engine_ex);
+
+        hr = IMFMediaEngineEx_RemoveAllEffects(media_engine_ex);
+        todo_wine ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
         IMFMediaEngineEx_Release(media_engine_ex);
     }
 
