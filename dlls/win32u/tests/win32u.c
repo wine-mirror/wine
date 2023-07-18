@@ -1694,9 +1694,13 @@ static void test_wndproc_hook(void)
         },
         {
             "WM_MOVING", WM_MOVING,
-            .lparam = &rect_in, .lparam_size = sizeof(RECT),
+            .lparam = &rect_in, .lparam_size = sizeof(RECT), .change_lparam = &rect_out,
             .check_size = sizeof(RECT),
-            .todo = TRUE
+        },
+        {
+            "WM_SIZING", WM_SIZING,
+            .lparam = &rect_in, .lparam_size = sizeof(RECT), .change_lparam = &rect_out,
+            .check_size = sizeof(RECT),
         },
         {
             "EM_GETRECT", EM_GETRECT,

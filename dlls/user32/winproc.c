@@ -871,11 +871,8 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case LB_GETTEXT:
     case LB_GETSELITEMS:
     case WM_NEXTMENU:
-        break;
     case WM_SIZING:
     case WM_MOVING:
-        minsize = sizeof(RECT);
-        if (!get_buffer_space( buffer, sizeof(RECT), size )) return FALSE;
         break;
     case WM_MDICREATE:
     {
@@ -1048,6 +1045,8 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case LB_GETTEXT:
         case LB_GETSELITEMS:
         case WM_NEXTMENU:
+        case WM_SIZING:
+        case WM_MOVING:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;

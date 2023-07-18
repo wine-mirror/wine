@@ -869,6 +869,8 @@ static size_t packed_result_32to64( UINT message, WPARAM wparam, const void *par
     case CB_GETLBTEXT:
     case LB_GETTEXT:
     case LB_GETSELITEMS:
+    case WM_SIZING:
+    case WM_MOVING:
         break;
 
     default:
