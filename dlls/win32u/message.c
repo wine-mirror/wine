@@ -564,6 +564,16 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case SBM_GETSCROLLBARINFO:
         if (!get_buffer_space( buffer, sizeof(SCROLLBARINFO), size )) return FALSE;
         break;
+    case EM_GETSEL:
+    case SBM_GETRANGE:
+    case CB_GETEDITSEL:
+        if (*wparam || *lparam)
+        {
+            if (!get_buffer_space( buffer, 2 * sizeof(DWORD), size )) return FALSE;
+            if (*wparam) *wparam = (WPARAM)*buffer;
+            if (*lparam) *lparam = (LPARAM)((DWORD *)*buffer + 1);
+        }
+        return TRUE;
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1365,6 +1375,11 @@ size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL other
     case SBM_GETSCROLLBARINFO:
         size = sizeof(SCROLLBARINFO);
         break;
+    case EM_GETSEL:
+    case SBM_GETRANGE:
+    case CB_GETEDITSEL:
+        size = 2 * sizeof(DWORD);
+        break;
     }
 
     return size;
@@ -1424,6 +1439,10 @@ void pack_user_message( void *buffer, size_t size, UINT message,
         size = sizeof(*cds);
         break;
     }
+    case EM_GETSEL:
+    case SBM_GETRANGE:
+    case CB_GETEDITSEL:
+        return;
     }
 
     if (size) memcpy( buffer, lparam_ptr, size );
@@ -1503,6 +1522,15 @@ static void copy_user_result( void *buffer, size_t size, LRESULT result, UINT me
     case SBM_GETSCROLLBARINFO:
         copy_size = sizeof(SCROLLBARINFO);
         break;
+    case EM_GETSEL:
+    case SBM_GETRANGE:
+    case CB_GETEDITSEL:
+        {
+            DWORD *ptr = buffer;
+            if (wparam) *(DWORD *)wparam = ptr[0];
+            if (lparam) *(DWORD *)lparam = ptr[1];
+            break;
+        }
     default:
         return;
     }
@@ -1548,12 +1576,6 @@ static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, 
         break;
     case WM_MDIGETACTIVE:
         if (lparam) copy_size = sizeof(BOOL);
-        break;
-    case EM_GETSEL:
-    case SBM_GETRANGE:
-    case CB_GETEDITSEL:
-        if (wparam) *(DWORD *)wparam = *(DWORD *)wparam_src;
-        if (lparam) copy_size = sizeof(DWORD);
         break;
     case WM_NEXTMENU:
         copy_size = sizeof(MDINEXTMENU);

@@ -837,6 +837,15 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
         if (cds->lpData) cds->lpData = cds + 1;
         break;
     }
+    case EM_GETSEL:
+    case SBM_GETRANGE:
+    case CB_GETEDITSEL:
+    {
+        DWORD *ptr = *buffer;
+        *wparam = (WPARAM)ptr++;
+        *lparam = (LPARAM)ptr;
+        return TRUE;
+    }
     case WM_GETTEXT:
     case WM_ASKCBFORMATNAME:
     case WM_WININICHANGE:
@@ -864,16 +873,6 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case WM_NOTIFY:
         /* WM_NOTIFY cannot be sent across processes (MSDN) */
         return FALSE;
-    case EM_GETSEL:
-    case SBM_GETRANGE:
-    case CB_GETEDITSEL:
-        if (*wparam || *lparam)
-        {
-            if (!get_buffer_space( buffer, 2*sizeof(DWORD), size )) return FALSE;
-            if (*wparam) *wparam = (WPARAM)*buffer;
-            if (*lparam) *lparam = (LPARAM)((DWORD *)*buffer + 1);
-        }
-        return TRUE;
     case EM_GETRECT:
     case LB_GETITEMRECT:
     case CB_GETDROPPEDCONTROLRECT:
@@ -1087,6 +1086,9 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case SBM_SETSCROLLINFO:
         case SBM_GETSCROLLINFO:
         case SBM_GETSCROLLBARINFO:
+        case EM_GETSEL:
+        case SBM_GETRANGE:
+        case CB_GETEDITSEL:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;

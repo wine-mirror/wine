@@ -835,6 +835,9 @@ static size_t packed_result_32to64( UINT message, WPARAM wparam, const void *par
     case SBM_SETSCROLLINFO:
     case SBM_GETSCROLLINFO:
     case SBM_GETSCROLLBARINFO:
+    case EM_GETSEL:
+    case SBM_GETRANGE:
+    case CB_GETEDITSEL:
         break;
 
     default:

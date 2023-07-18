@@ -1355,6 +1355,7 @@ struct lparam_hook_test
     const char *name;
     UINT message;
     WPARAM wparam;
+    BOOL no_wparam_check;
     LRESULT msg_result;
     LRESULT check_result;
     BOOL todo_result;
@@ -1378,7 +1379,7 @@ static char lparam_buffer[521];
 static void check_params( const struct lparam_hook_test *test, UINT message,
                          WPARAM wparam, LPARAM lparam, BOOL is_ret )
 {
-    if (test->message != WM_MDIGETACTIVE)
+    if (!test->no_wparam_check)
         ok( wparam == test->wparam, "got wparam %Ix, expected %Ix\n", wparam, test->wparam );
     if (lparam == (LPARAM)lparam_buffer)
         return;
@@ -1404,6 +1405,12 @@ static void check_params( const struct lparam_hook_test *test, UINT message,
             else
                 ok( !cds->lpData, "cds->lpData = %p\n", cds->lpData );
         }
+        break;
+
+    case EM_GETSEL:
+    case SBM_GETRANGE:
+    case CB_GETEDITSEL:
+        ok( wparam, "wparam = 0\n" );
         break;
 
     default:
@@ -1663,6 +1670,7 @@ static void test_wndproc_hook(void)
     static const SCROLLINFO si_out = { .cbSize = sizeof(si_in), .nPos = 60 };
     static const SCROLLBARINFO sbi_in = { .xyThumbTop = 6 };
     static const SCROLLBARINFO sbi_out = { .xyThumbTop = 60 };
+    static const DWORD dw_in = 1, dw_out = 2;
 
     static const struct lparam_hook_test lparam_hook_tests[] =
     {
@@ -1743,7 +1751,7 @@ static void test_wndproc_hook(void)
             .todo = TRUE
         },
         {
-            "WM_MDIGETACTIVE", WM_MDIGETACTIVE,
+            "WM_MDIGETACTIVE", WM_MDIGETACTIVE, .no_wparam_check = TRUE,
             .lparam_size = sizeof(BOOL), .change_lparam = &false_lparam,
             .todo = TRUE
         },
@@ -1831,6 +1839,21 @@ static void test_wndproc_hook(void)
             "SBM_GETSCROLLBARINFO", SBM_GETSCROLLBARINFO,
             .lparam_size = sizeof(sbi_in), .lparam = &sbi_in, .change_lparam = &sbi_out,
             .check_size = sizeof(sbi_in),
+        },
+        {
+            "EM_GETSEL", EM_GETSEL, .no_wparam_check = TRUE,
+            .lparam_size = sizeof(DWORD), .lparam = &dw_in, .change_lparam = &dw_out,
+            .check_size = sizeof(DWORD),
+        },
+        {
+            "SBM_GETRANGE", SBM_GETRANGE, .no_wparam_check = TRUE,
+            .lparam_size = sizeof(DWORD), .lparam = &dw_in, .change_lparam = &dw_out,
+            .check_size = sizeof(DWORD),
+        },
+        {
+            "CB_GETEDITSEL", CB_GETEDITSEL, .no_wparam_check = TRUE,
+            .lparam_size = sizeof(DWORD), .lparam = &dw_in, .change_lparam = &dw_out,
+            .check_size = sizeof(DWORD),
         },
         /* messages that don't change lparam */
         { "WM_USER", WM_USER },
