@@ -599,6 +599,18 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         if (!*wparam) return TRUE;
         minsize = *wparam * sizeof(UINT);
         break;
+    case CB_ADDSTRING:
+    case CB_INSERTSTRING:
+    case CB_FINDSTRING:
+    case CB_FINDSTRINGEXACT:
+    case CB_SELECTSTRING:
+    case LB_ADDSTRING:
+    case LB_INSERTSTRING:
+    case LB_FINDSTRING:
+    case LB_FINDSTRINGEXACT:
+    case LB_SELECTSTRING:
+        if (!*buffer) return TRUE;
+        break;
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1356,6 +1368,16 @@ size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL other
     case LB_DIR:
     case LB_ADDFILE:
     case EM_REPLACESEL:
+    case CB_ADDSTRING:
+    case CB_INSERTSTRING:
+    case CB_FINDSTRING:
+    case CB_FINDSTRINGEXACT:
+    case CB_SELECTSTRING:
+    case LB_ADDSTRING:
+    case LB_INSERTSTRING:
+    case LB_FINDSTRING:
+    case LB_FINDSTRINGEXACT:
+    case LB_SELECTSTRING:
         if (other_process && lparam) size = string_size( lparam_ptr, ansi );
         break;
     case WM_GETMINMAXINFO:

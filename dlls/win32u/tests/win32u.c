@@ -1907,6 +1907,9 @@ static void test_wndproc_hook(void)
         { "LB_ADDFILE", LB_ADDFILE, .lparam = strbufW, .lparam_init_size = sizeof(strbufW) },
         { "EM_REPLACESEL", EM_REPLACESEL, .lparam = strbufW, .lparam_init_size = sizeof(strbufW) },
         { "WM_WININICHANGE", WM_WININICHANGE, .lparam = strbufW, .lparam_init_size = sizeof(strbufW) },
+        { "CB_ADDSTRING", CB_ADDSTRING },
+        { "CB_INSERTSTRING", CB_INSERTSTRING },
+        { "LB_ADDSTRING", LB_ADDSTRING },
         /* messages not allowed to be sent by NtUserMessageCall */
         {
             "WM_DRAWITEM", WM_DRAWITEM, .wparam = 10,

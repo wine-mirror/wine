@@ -877,7 +877,6 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case EM_GETLINE:
     case EM_SETTABSTOPS:
     case LB_SETTABSTOPS:
-        break;
     case CB_ADDSTRING:
     case CB_INSERTSTRING:
     case CB_FINDSTRING:
@@ -888,8 +887,6 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case LB_FINDSTRING:
     case LB_FINDSTRINGEXACT:
     case LB_SELECTSTRING:
-        if (!*buffer) return TRUE;
-        if (!check_string( *buffer, size )) return FALSE;
         break;
     case CB_GETLBTEXT:
     {
@@ -1082,6 +1079,16 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case EM_GETLINE:
         case EM_SETTABSTOPS:
         case LB_SETTABSTOPS:
+        case CB_ADDSTRING:
+        case CB_INSERTSTRING:
+        case CB_FINDSTRING:
+        case CB_FINDSTRINGEXACT:
+        case CB_SELECTSTRING:
+        case LB_ADDSTRING:
+        case LB_INSERTSTRING:
+        case LB_FINDSTRING:
+        case LB_FINDSTRINGEXACT:
+        case LB_SELECTSTRING:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;
