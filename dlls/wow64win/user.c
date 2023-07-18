@@ -614,7 +614,8 @@ static NTSTATUS WINAPI wow64_NtUserCallWinEventHook( void *arg, ULONG size )
                               FIELD_OFFSET( struct win_event_hook_params32, module ) + size);
 }
 
-static size_t packed_message_64to32( UINT message, const void *params64, void *params32, size_t size )
+static size_t packed_message_64to32( UINT message, WPARAM wparam,
+                                     const void *params64, void *params32, size_t size )
 {
     if (!size) return 0;
 
@@ -631,14 +632,33 @@ static size_t packed_message_64to32( UINT message, const void *params64, void *p
             if (size) memmove( cs32 + 1, cs64 + 1, size );
             return sizeof(*cs32) + size;
         }
+
+    case WM_NCCALCSIZE:
+        if (wparam)
+        {
+            NCCALCSIZE_PARAMS32 ncp32;
+            const NCCALCSIZE_PARAMS *ncp64 = params64;
+
+            ncp32.rgrc[0] = ncp64->rgrc[0];
+            ncp32.rgrc[1] = ncp64->rgrc[1];
+            ncp32.rgrc[2] = ncp64->rgrc[2];
+            winpos_64to32( (const WINDOWPOS *)(ncp64 + 1),
+                           (WINDOWPOS32 *)((const char *)params32 + sizeof(ncp32)) );
+            memcpy( params32, &ncp32, sizeof(ncp32) );
+            return sizeof(ncp32) + sizeof(WINDOWPOS32);
+        }
+        break;
     }
 
     memmove( params32, params64, size );
     return size;
 }
 
-static size_t packed_result_32to64( UINT message, const void *params32, size_t size, void *params64 )
+static size_t packed_result_32to64( UINT message, WPARAM wparam, const void *params32,
+                                    size_t size, void *params64 )
 {
+    if (!size) return 0;
+
     switch (message)
     {
     case WM_NCCREATE:
@@ -661,6 +681,20 @@ static size_t packed_result_32to64( UINT message, const void *params32, size_t s
             return sizeof(*cs64);
         }
 
+    case WM_NCCALCSIZE:
+        if (wparam)
+        {
+            const NCCALCSIZE_PARAMS32 *ncp32 = params32;
+            NCCALCSIZE_PARAMS *ncp64 = params64;
+
+            ncp64->rgrc[0] = ncp32->rgrc[0];
+            ncp64->rgrc[1] = ncp32->rgrc[1];
+            ncp64->rgrc[2] = ncp32->rgrc[2];
+            winpos_32to64( (WINDOWPOS *)(ncp64 + 1), (const WINDOWPOS32 *)(ncp32 + 1) );
+            return sizeof(*ncp64) + sizeof(WINDOWPOS);
+        }
+        break;
+
     default:
         return 0;
     }
@@ -681,7 +715,7 @@ static NTSTATUS WINAPI wow64_NtUserCallWinProc( void *arg, ULONG size )
 
     win_proc_params_64to32( params, params32 );
     if (size > sizeof(*params))
-        lparam_size = packed_message_64to32( params32->msg, params + 1, params32 + 1,
+        lparam_size = packed_message_64to32( params32->msg, params32->wparam, params + 1, params32 + 1,
                                              size - sizeof(*params) );
 
     status = Wow64KiUserCallbackDispatcher( NtUserCallWinProc, params32,
@@ -692,7 +726,7 @@ static NTSTATUS WINAPI wow64_NtUserCallWinProc( void *arg, ULONG size )
     {
         LRESULT *result_ptr = arg;
         result = *(LONG *)ret_ptr;
-        ret_len = packed_result_32to64( params32->msg, (LONG *)ret_ptr + 1,
+        ret_len = packed_result_32to64( params32->msg, params32->wparam, (LONG *)ret_ptr + 1,
                                         ret_len - sizeof(LONG), result_ptr + 1 );
         *result_ptr = result;
         return NtCallbackReturn( result_ptr, sizeof(*result_ptr) + ret_len, status );
@@ -717,7 +751,7 @@ static UINT hook_lparam_64to32( int id, int code, const void *lp, size_t size, v
         switch (code)
         {
         case HCBT_CREATEWND:
-            return packed_message_64to32( WM_CREATE, lp, lp32, size );
+            return packed_message_64to32( WM_CREATE, 0, lp, lp32, size );
 
         case HCBT_ACTIVATE:
             {
@@ -748,7 +782,7 @@ static UINT hook_lparam_64to32( int id, int code, const void *lp, size_t size, v
             {
                 const size_t offset64 = (sizeof(*cwp) + 15) & ~15;
                 const size_t offset32 = (sizeof(cwp32) + 15) & ~15;
-                size = packed_message_64to32( cwp32.message,
+                size = packed_message_64to32( cwp32.message, cwp32.wParam,
                                               (const char *)lp + offset64,
                                               (char *)lp32 + offset32, size - offset64 );
                 return offset32 + size;
@@ -770,7 +804,7 @@ static UINT hook_lparam_64to32( int id, int code, const void *lp, size_t size, v
             {
                 const size_t offset64 = (sizeof(*cwpret) + 15) & ~15;
                 const size_t offset32 = (sizeof(cwpret32) + 15) & ~15;
-                size = packed_message_64to32( cwpret32.message,
+                size = packed_message_64to32( cwpret32.message, cwpret32.wParam,
                                               (const char *)lp + offset64,
                                               (char *)lp32 + offset32, size - offset64 );
                 return offset32 + size;

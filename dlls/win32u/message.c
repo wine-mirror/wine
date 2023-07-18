@@ -387,6 +387,28 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
          memcpy( *buffer, &cs, sizeof(cs) );
          break;
     }
+    case WM_NCCALCSIZE:
+        if (!*wparam) minsize = sizeof(RECT);
+        else
+        {
+            NCCALCSIZE_PARAMS ncp;
+            WINDOWPOS wp;
+            if (size < sizeof(ps->ncp)) return FALSE;
+            ncp.rgrc[0]        = ps->ncp.rgrc[0];
+            ncp.rgrc[1]        = ps->ncp.rgrc[1];
+            ncp.rgrc[2]        = ps->ncp.rgrc[2];
+            wp.hwnd            = wine_server_ptr_handle( ps->ncp.hwnd );
+            wp.hwndInsertAfter = wine_server_ptr_handle( ps->ncp.hwndInsertAfter );
+            wp.x               = ps->ncp.x;
+            wp.y               = ps->ncp.y;
+            wp.cx              = ps->ncp.cx;
+            wp.cy              = ps->ncp.cy;
+            wp.flags           = ps->ncp.flags;
+            ncp.lppos = (WINDOWPOS *)((NCCALCSIZE_PARAMS *)&ps->ncp + 1);
+            memcpy( &ps->ncp, &ncp, sizeof(ncp) );
+            *ncp.lppos = wp;
+        }
+        break;
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1134,7 +1156,7 @@ static size_t copy_string( void *ptr, const void *str, BOOL ansi )
  *
  * Calculate size of packed message buffer.
  */
-size_t user_message_size( UINT message, LPARAM lparam, BOOL ansi )
+size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
     const void *lparam_ptr = (const void *)lparam;
     size_t size = 0;
@@ -1150,6 +1172,9 @@ size_t user_message_size( UINT message, LPARAM lparam, BOOL ansi )
         if (!IS_INTRESOURCE(cs->lpszClass)) size += string_size( cs->lpszClass, ansi );
         break;
     }
+    case WM_NCCALCSIZE:
+        size = wparam ? sizeof(NCCALCSIZE_PARAMS) + sizeof(WINDOWPOS) : sizeof(RECT);
+        break;
     }
 
     return size;
@@ -1160,7 +1185,8 @@ size_t user_message_size( UINT message, LPARAM lparam, BOOL ansi )
  *
  * Copy message to a buffer for passing to client.
  */
-void pack_user_message( void *buffer, size_t size, UINT message, LPARAM lparam, BOOL ansi )
+void pack_user_message( void *buffer, size_t size, UINT message,
+                        WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
     const void *lparam_ptr = (const void *)lparam;
     void const *inline_ptr = (void *)0xffffffff;
@@ -1188,8 +1214,17 @@ void pack_user_message( void *buffer, size_t size, UINT message, LPARAM lparam, 
         }
         return;
     }
+    case WM_NCCALCSIZE:
+        if (wparam)
+        {
+            const NCCALCSIZE_PARAMS *ncp = lparam_ptr;
+            memcpy( (char *)buffer + sizeof(*ncp), ncp->lppos, sizeof(*ncp->lppos) );
+            size = sizeof(*ncp);
+        }
+        break;
     }
 
+    if (size) memcpy( buffer, lparam_ptr, size );
 }
 
 /***********************************************************************
@@ -1200,6 +1235,7 @@ void pack_user_message( void *buffer, size_t size, UINT message, LPARAM lparam, 
 static void copy_user_result( void *buffer, size_t size, UINT message, WPARAM wparam, LPARAM lparam )
 {
     void *lparam_ptr = (void *)lparam;
+    size_t copy_size = 0;
 
     if (!size) return;
 
@@ -1224,9 +1260,26 @@ static void copy_user_result( void *buffer, size_t size, UINT message, WPARAM wp
             /* don't allow changing name and class pointers */
         }
         return;
+    case WM_NCCALCSIZE:
+        if (wparam)
+        {
+            NCCALCSIZE_PARAMS *dst = lparam_ptr;
+            const NCCALCSIZE_PARAMS *src = buffer;
+            const WINDOWPOS *winpos = (const WINDOWPOS *)(src + 1);
+            dst->rgrc[0] = src->rgrc[0];
+            dst->rgrc[1] = src->rgrc[1];
+            dst->rgrc[2] = src->rgrc[2];
+            *dst->lppos = *winpos;
+            return;
+        }
+        copy_size = sizeof(RECT);
+        break;
     default:
         return;
     }
+
+    if (copy_size > size) copy_size = size;
+    if (copy_size) memcpy( lparam_ptr, buffer, copy_size );
 }
 
 /***********************************************************************
@@ -1289,19 +1342,6 @@ static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, 
         break;
     case WM_MDIGETACTIVE:
         if (lparam) copy_size = sizeof(BOOL);
-        break;
-    case WM_NCCALCSIZE:
-        if (wparam)
-        {
-            NCCALCSIZE_PARAMS *dst = (NCCALCSIZE_PARAMS *)lparam;
-            NCCALCSIZE_PARAMS *src = (NCCALCSIZE_PARAMS *)lparam_src;
-            dst->rgrc[0] = src->rgrc[0];
-            dst->rgrc[1] = src->rgrc[1];
-            dst->rgrc[2] = src->rgrc[2];
-            *dst->lppos = *src->lppos;
-            return;
-        }
-        copy_size = sizeof(RECT);
         break;
     case EM_GETSEL:
     case SBM_GETRANGE:
@@ -1522,7 +1562,7 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     if (!needs_unpack) size = 0;
     if (!is_current_thread_window( hwnd )) return 0;
 
-    packed_size = user_message_size( msg, lparam, ansi );
+    packed_size = user_message_size( msg, wparam, lparam, ansi );
     if (packed_size) size = packed_size;
 
     /* first the WH_CALLWNDPROC hook */
@@ -1543,7 +1583,7 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     if (needs_unpack) params->ansi = FALSE;
     params->needs_unpack = needs_unpack || packed_size;
     if (packed_size)
-        pack_user_message( params + 1, packed_size, msg, lparam, ansi );
+        pack_user_message( params + 1, packed_size, msg, wparam, lparam, ansi );
     else if (size)
         memcpy( params + 1, buffer, size );
 

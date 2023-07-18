@@ -246,7 +246,7 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, siz
             if (params->id == WH_CBT && params->code == HCBT_CREATEWND)
             {
                 CBT_CREATEWNDW *cbtc = (CBT_CREATEWNDW *)params->lparam;
-                message_size = user_message_size( WM_NCCREATE, (LPARAM)cbtc->lpcs, FALSE );
+                message_size = user_message_size( WM_NCCREATE, 0, (LPARAM)cbtc->lpcs, FALSE );
                 lparam_size = lparam_ret_size = 0;
             }
 
@@ -285,21 +285,21 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, siz
                     CBT_CREATEWNDW *cbtc = (CBT_CREATEWNDW *)params->lparam;
                     LPARAM lp = (LPARAM)cbtc->lpcs;
                     pack_user_message( (char *)params + message_offset, message_size,
-                                       WM_CREATE, lp, FALSE );
+                                       WM_CREATE, 0, lp, FALSE );
                 }
                 break;
             case WH_CALLWNDPROC:
                 {
                     CWPSTRUCT *cwp = (CWPSTRUCT *)((char *)params + lparam_offset);
                     pack_user_message( (char *)params + message_offset, message_size,
-                                       cwp->message, cwp->lParam, ansi );
+                                       cwp->message, cwp->wParam, cwp->lParam, ansi );
                 }
                 break;
             case WH_CALLWNDPROCRET:
                 {
                     CWPRETSTRUCT *cwpret = (CWPRETSTRUCT *)((char *)params + lparam_offset);
                     pack_user_message( (char *)params + message_offset, message_size,
-                                       cwpret->message, cwpret->lParam, ansi );
+                                       cwpret->message, cwpret->wParam, cwpret->lParam, ansi );
                 }
                 break;
             }

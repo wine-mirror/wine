@@ -1364,6 +1364,7 @@ struct lparam_hook_test
     size_t lparam_size;
     size_t check_size;
     BOOL poison_lparam;
+    BOOL todo;
 };
 
 static const struct lparam_hook_test *current_hook_test;
@@ -1535,7 +1536,7 @@ static void test_msg_output( const struct lparam_hook_test *test, LRESULT result
         todo_wine_if( test->message == WM_GETTEXT && !test->msg_result )
         ok( !memcmp( lparam_buffer, expected, test->lparam_size ), "unexpected lparam content\n" );
 
-    todo_wine
+    todo_wine_if(test->todo)
     ok( wndproc_lparam != orig, "wndproc_lparam unmodified\n" );
     if (!hooks_called)
         return;
@@ -1545,13 +1546,13 @@ static void test_msg_output( const struct lparam_hook_test *test, LRESULT result
     ok( retwnd_hook_lparam, "retwnd_hook_lparam not called\n" );
     ok( retwnd_hook_lparam2, "retwnd_hook_lparam2 not called\n" );
 
-    todo_wine
+    todo_wine_if(test->todo)
     ok( orig != callwnd_hook_lparam, "callwnd_hook_lparam not modified\n" );
-    todo_wine
+    todo_wine_if(test->todo)
     ok( orig != callwnd_hook_lparam2, "callwnd_hook_lparam2 not modified\n" );
-    todo_wine
+    todo_wine_if(test->todo)
     ok( orig != retwnd_hook_lparam, "retwnd_hook_lparam not modified\n" );
-    todo_wine
+    todo_wine_if(test->todo)
     ok( orig != retwnd_hook_lparam2, "retwnd_hook_lparam2 not modified\n" );
 
     /*
@@ -1609,67 +1610,83 @@ static void test_wndproc_hook(void)
             "WM_MOVING", WM_MOVING,
             .lparam = &rect_in, .lparam_size = sizeof(RECT),
             .check_size = sizeof(RECT),
+            .todo = TRUE
         },
         {
             "LB_GETITEMRECT", LB_GETITEMRECT,
             .lparam = &rect_in, .lparam_size = sizeof(RECT), .change_lparam = &rect_out,
             .check_size = sizeof(RECT),
+            .todo = TRUE
         },
         {
             "CB_GETDROPPEDCONTROLRECT", CB_GETDROPPEDCONTROLRECT,
-            .lparam = &rect_in, .lparam_size = sizeof(RECT), .change_lparam = &rect_out
+            .lparam = &rect_in, .lparam_size = sizeof(RECT), .change_lparam = &rect_out,
+            .todo = TRUE
         },
         {
             "WM_GETTEXT", WM_GETTEXT, .wparam = 8,
             .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbuf2W,
+            .todo = TRUE
         },
         {
             "WM_GETTEXT2", WM_GETTEXT, .wparam = 8, .msg_result = 1,
             .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbufW,
+            .todo = TRUE
         },
         {
             "WM_GETTEXT3", WM_GETTEXT, .wparam = 8, .msg_result = 9,
             .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbufW,
+            .todo = TRUE
         },
         {
             "WM_ASKCBFORMATNAME", WM_ASKCBFORMATNAME, .wparam = 8,
             .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbufW,
+            .todo = TRUE
         },
         {
             "WM_ASKCBFORMATNAME2", WM_ASKCBFORMATNAME, .wparam = 8, .msg_result = 1,
             .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbufW,
+            .todo = TRUE
         },
         {
             "WM_ASKCBFORMATNAME3", WM_ASKCBFORMATNAME, .wparam = 8, .msg_result = 9,
             .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbufW,
+            .todo = TRUE
         },
         {
             "CB_GETLBTEXT", CB_GETLBTEXT, .msg_result = 7, .check_result = 4, .todo_result = TRUE,
             .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbufW,
+            .todo = TRUE
         },
         {
             "CB_GETLBTEXT2", CB_GETLBTEXT, .msg_result = 9, .check_result = 8, .todo_result = TRUE,
             .lparam_size = sizeof(strbufW), .change_lparam = strbuf3W, .check_lparam = strbuf3W,
+            .todo = TRUE
         },
         {
             "CB_GETLBTEXT3", CB_GETLBTEXT,
             .lparam_size = sizeof(strbufW), .change_lparam = strbuf3W, .check_lparam = strbuf3W,
+            .todo = TRUE
         },
         {
             "LB_GETTEXT", LB_GETTEXT, .msg_result = 7, .check_result = 4, .todo_result = TRUE,
             .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbufW,
+            .todo = TRUE
         },
         {
             "LB_GETTEXT2", LB_GETTEXT, .msg_result = 9, .check_result = 8, .todo_result = TRUE,
             .lparam_size = sizeof(strbufW), .change_lparam = strbuf3W, .check_lparam = strbuf3W,
+            .todo = TRUE
         },
         {
             "LB_GETTEXT3", LB_GETTEXT,
             .lparam_size = sizeof(strbufW), .change_lparam = strbuf3W, .check_lparam = strbuf3W,
+            .todo = TRUE
         },
         {
             "WM_MDIGETACTIVE", WM_MDIGETACTIVE,
             .lparam_size = sizeof(BOOL), .change_lparam = &false_lparam,
+            .todo = TRUE
         },
         { "WM_USER", WM_USER },
         { "WM_NOTIFY", WM_NOTIFY },

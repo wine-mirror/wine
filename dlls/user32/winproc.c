@@ -824,6 +824,13 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
         }
         break;
     }
+    case WM_NCCALCSIZE:
+        if (*wparam)
+        {
+            NCCALCSIZE_PARAMS *ncp = *buffer;
+            ncp->lppos = (WINDOWPOS *)((NCCALCSIZE_PARAMS *)ncp + 1);
+        }
+        break;
     case WM_GETTEXT:
     case WM_ASKCBFORMATNAME:
         if (!get_buffer_space( buffer, (*wparam * sizeof(WCHAR)), size )) return FALSE;
@@ -951,28 +958,6 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case WM_STYLECHANGING:
     case WM_STYLECHANGED:
         minsize = sizeof(STYLESTRUCT);
-        break;
-    case WM_NCCALCSIZE:
-        if (!*wparam) minsize = sizeof(RECT);
-        else
-        {
-            NCCALCSIZE_PARAMS ncp;
-            WINDOWPOS wp;
-            if (size < sizeof(ps->ncp)) return FALSE;
-            ncp.rgrc[0]        = ps->ncp.rgrc[0];
-            ncp.rgrc[1]        = ps->ncp.rgrc[1];
-            ncp.rgrc[2]        = ps->ncp.rgrc[2];
-            wp.hwnd            = unpack_handle( ps->ncp.hwnd );
-            wp.hwndInsertAfter = unpack_handle( ps->ncp.hwndInsertAfter );
-            wp.x               = ps->ncp.x;
-            wp.y               = ps->ncp.y;
-            wp.cx              = ps->ncp.cx;
-            wp.cy              = ps->ncp.cy;
-            wp.flags           = ps->ncp.flags;
-            ncp.lppos = (WINDOWPOS *)((NCCALCSIZE_PARAMS *)&ps->ncp + 1);
-            memcpy( &ps->ncp, &ncp, sizeof(ncp) );
-            *ncp.lppos = wp;
-        }
         break;
     case WM_GETDLGCODE:
         if (*lparam)
@@ -1197,6 +1182,7 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         {
         case WM_NCCREATE:
         case WM_CREATE:
+        case WM_NCCALCSIZE:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;
