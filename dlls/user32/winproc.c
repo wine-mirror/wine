@@ -176,8 +176,7 @@ LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, 
 {
     LRESULT ret = 0;
 
-    TRACE_(msg)("(hwnd=%p,msg=%s,wp=%08Ix,lp=%08Ix)\n",
-                hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
+    TRACE( "(hwnd=%p,msg=%s,wp=%08Ix,lp=%08Ix)\n", hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam );
 
     switch(msg)
     {
@@ -415,8 +414,8 @@ LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, 
 
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
-        FIXME_(msg)( "message %s (0x%x) needs translation, please report\n",
-                     SPY_GetMsgName(msg, hwnd), msg );
+        FIXME( "message %s (0x%x) needs translation, please report\n",
+               SPY_GetMsgName(msg, hwnd), msg );
         break;
 
     default:
@@ -437,8 +436,7 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
 {
     LRESULT ret = 0;
 
-    TRACE_(msg)("(hwnd=%p,msg=%s,wp=%08Ix,lp=%08Ix)\n",
-                hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
+    TRACE( "(hwnd=%p,msg=%s,wp=%08Ix,lp=%08Ix)\n", hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam );
 
     switch(msg)
     {
@@ -683,8 +681,8 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
 
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
-        FIXME_(msg)( "message %s (%04x) needs translation, please report\n",
-                     SPY_GetMsgName(msg, hwnd), msg );
+        FIXME( "message %s (%04x) needs translation, please report\n",
+               SPY_GetMsgName(msg, hwnd), msg );
         break;
 
     default:
@@ -738,13 +736,11 @@ static size_t string_size( const void *str, BOOL ansi )
 /***********************************************************************
  *		unpack_message
  *
- * Unpack a message received from another process.
+ * Unpack a message received from win32u.
  */
-BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
+void unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
                      void *buffer, size_t size, BOOL ansi )
 {
-    size_t minsize = 0;
-
     switch(message)
     {
     case WM_NCCREATE:
@@ -784,7 +780,7 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
         DWORD *ptr = buffer;
         *wparam = (WPARAM)ptr++;
         *lparam = (LPARAM)ptr;
-        return TRUE;
+        return;
     }
     case WM_MDICREATE:
     {
@@ -802,108 +798,9 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
         }
         break;
     }
-    case WM_GETTEXT:
-    case WM_ASKCBFORMATNAME:
-    case WM_WININICHANGE:
-    case WM_SETTEXT:
-    case WM_DEVMODECHANGE:
-    case CB_DIR:
-    case LB_DIR:
-    case LB_ADDFILE:
-    case EM_REPLACESEL:
-    case WM_GETMINMAXINFO:
-    case WM_DRAWITEM:
-    case WM_MEASUREITEM:
-    case WM_DELETEITEM:
-    case WM_COMPAREITEM:
-    case WM_WINDOWPOSCHANGING:
-    case WM_WINDOWPOSCHANGED:
-    case WM_HELP:
-    case WM_STYLECHANGING:
-    case WM_STYLECHANGED:
-    case WM_GETDLGCODE:
-    case SBM_SETSCROLLINFO:
-    case SBM_GETSCROLLINFO:
-    case SBM_GETSCROLLBARINFO:
-    case EM_GETRECT:
-    case LB_GETITEMRECT:
-    case CB_GETDROPPEDCONTROLRECT:
-    case EM_SETRECT:
-    case EM_SETRECTNP:
-    case EM_GETLINE:
-    case EM_SETTABSTOPS:
-    case LB_SETTABSTOPS:
-    case CB_ADDSTRING:
-    case CB_INSERTSTRING:
-    case CB_FINDSTRING:
-    case CB_FINDSTRINGEXACT:
-    case CB_SELECTSTRING:
-    case LB_ADDSTRING:
-    case LB_INSERTSTRING:
-    case LB_FINDSTRING:
-    case LB_FINDSTRINGEXACT:
-    case LB_SELECTSTRING:
-    case CB_GETLBTEXT:
-    case LB_GETTEXT:
-    case LB_GETSELITEMS:
-    case WM_NEXTMENU:
-    case WM_SIZING:
-    case WM_MOVING:
-    case CB_GETCOMBOBOXINFO:
-    case WM_MDIGETACTIVE:
-    case WM_DEVICECHANGE:
-        break;
-    case WM_NOTIFY:
-        /* WM_NOTIFY cannot be sent across processes (MSDN) */
-        return FALSE;
-    case WM_NCPAINT:
-        if (*wparam <= 1) return TRUE;
-        FIXME( "WM_NCPAINT hdc unpacking not supported\n" );
-        return FALSE;
-    case WM_PAINT:
-        if (!*wparam) return TRUE;
-        /* fall through */
-
-    /* these contain an HFONT */
-    case WM_SETFONT:
-    case WM_GETFONT:
-    /* these contain an HDC */
-    case WM_ERASEBKGND:
-    case WM_ICONERASEBKGND:
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLOREDIT:
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSCROLLBAR:
-    case WM_CTLCOLORSTATIC:
-    case WM_PRINT:
-    case WM_PRINTCLIENT:
-    /* these contain an HGLOBAL */
-    case WM_PAINTCLIPBOARD:
-    case WM_SIZECLIPBOARD:
-    /* these contain HICON */
-    case WM_GETICON:
-    case WM_SETICON:
-    case WM_QUERYDRAGICON:
-    case WM_QUERYPARKICON:
-    /* these contain pointers */
-    case WM_DROPOBJECT:
-    case WM_QUERYDROPOBJECT:
-    case WM_DRAGLOOP:
-    case WM_DRAGSELECT:
-    case WM_DRAGMOVE:
-        FIXME( "msg %x (%s) not supported yet\n", message, SPY_GetMsgName(message, hwnd) );
-        return FALSE;
-
-    default:
-        return TRUE; /* message doesn't need any unpacking */
     }
 
-    /* default exit for most messages: check minsize and store buffer in lparam */
-    if (size < minsize) return FALSE;
     *lparam = (LPARAM)buffer;
-    return TRUE;
 }
 
 BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
@@ -917,9 +814,9 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         size -= sizeof(*params);
         buffer = params + 1;
 
-        if (!unpack_message( params->hwnd, params->msg, &params->wparam,
-                             &params->lparam, buffer, size, params->ansi ))
-            return 0;
+        if (size)
+            unpack_message( params->hwnd, params->msg, &params->wparam,
+                            &params->lparam, buffer, size, params->ansi );
 
         result = dispatch_win_proc_params( params );
 

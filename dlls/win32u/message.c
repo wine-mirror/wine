@@ -880,6 +880,49 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         if (!(*wparam & 0x8000)) return TRUE;
         minsize = sizeof(DEV_BROADCAST_HDR);
         break;
+    case WM_NOTIFY:
+        /* WM_NOTIFY cannot be sent across processes (MSDN) */
+        return FALSE;
+    case WM_NCPAINT:
+        if (*wparam <= 1) return TRUE;
+        FIXME( "WM_NCPAINT hdc unpacking not supported\n" );
+        return FALSE;
+    case WM_PAINT:
+        if (!*wparam) return TRUE;
+        /* fall through */
+
+    /* these contain an HFONT */
+    case WM_SETFONT:
+    case WM_GETFONT:
+    /* these contain an HDC */
+    case WM_ERASEBKGND:
+    case WM_ICONERASEBKGND:
+    case WM_CTLCOLORMSGBOX:
+    case WM_CTLCOLOREDIT:
+    case WM_CTLCOLORLISTBOX:
+    case WM_CTLCOLORBTN:
+    case WM_CTLCOLORDLG:
+    case WM_CTLCOLORSCROLLBAR:
+    case WM_CTLCOLORSTATIC:
+    case WM_PRINT:
+    case WM_PRINTCLIENT:
+    /* these contain an HGLOBAL */
+    case WM_PAINTCLIPBOARD:
+    case WM_SIZECLIPBOARD:
+    /* these contain HICON */
+    case WM_GETICON:
+    case WM_SETICON:
+    case WM_QUERYDRAGICON:
+    case WM_QUERYPARKICON:
+    /* these contain pointers */
+    case WM_DROPOBJECT:
+    case WM_QUERYDROPOBJECT:
+    case WM_DRAGLOOP:
+    case WM_DRAGSELECT:
+    case WM_DRAGMOVE:
+        FIXME( "msg %x (%s) not supported yet\n", message, debugstr_msg_name( message, hwnd ));
+        return FALSE;
+
     default:
         return TRUE;  /* message doesn't need any unpacking */
     }
