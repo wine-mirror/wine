@@ -649,6 +649,35 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         minsize = sizeof(RECT);
         if (!get_buffer_space( buffer, sizeof(RECT), size )) return FALSE;
         break;
+    case WM_MDICREATE:
+    {
+        MDICREATESTRUCTW mcs;
+        WCHAR *str = (WCHAR *)(&ps->mcs + 1);
+        if (size < sizeof(ps->mcs)) return FALSE;
+        size -= sizeof(ps->mcs);
+
+        mcs.szClass = unpack_ptr( ps->mcs.szClass );
+        mcs.szTitle = unpack_ptr( ps->mcs.szTitle );
+        mcs.hOwner  = unpack_ptr( ps->mcs.hOwner );
+        mcs.x       = ps->mcs.x;
+        mcs.y       = ps->mcs.y;
+        mcs.cx      = ps->mcs.cx;
+        mcs.cy      = ps->mcs.cy;
+        mcs.style   = ps->mcs.style;
+        mcs.lParam  = (LPARAM)unpack_ptr( ps->mcs.lParam );
+        if (ps->mcs.szClass >> 16)
+        {
+            mcs.szClass = str;
+            size -= (lstrlenW(str) + 1) * sizeof(WCHAR);
+            str += lstrlenW(str) + 1;
+        }
+        if (ps->mcs.szTitle >> 16)
+        {
+            mcs.szTitle = str;
+        }
+        memcpy( *buffer, &mcs, sizeof(mcs) );
+        break;
+    }
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1496,6 +1525,14 @@ size_t user_message_size( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
     case WM_NEXTMENU:
         size = sizeof(MDINEXTMENU);
         break;
+    case WM_MDICREATE:
+    {
+        const MDICREATESTRUCTW *mcs = lparam_ptr;
+        size = sizeof(*mcs);
+        if (!IS_INTRESOURCE(mcs->szClass)) size += string_size( mcs->szClass, ansi );
+        if (!IS_INTRESOURCE(mcs->szTitle)) size += string_size( mcs->szTitle, ansi );
+        break;
+    }
     }
 
     return size;
@@ -1564,6 +1601,24 @@ void pack_user_message( void *buffer, size_t size, UINT message,
     case EM_GETLINE:
         size = sizeof(WORD);
         break;
+    case WM_MDICREATE:
+    {
+        MDICREATESTRUCTW *mcs = buffer;
+        char *ptr = (char *)(mcs + 1);
+
+        memcpy( buffer, lparam_ptr, sizeof(*mcs) );
+        if (!IS_INTRESOURCE(mcs->szClass))
+        {
+            ptr += copy_string( ptr, mcs->szClass, ansi );
+            mcs->szClass = inline_ptr;
+        }
+        if (!IS_INTRESOURCE(mcs->szTitle))
+        {
+            copy_string( ptr, mcs->szTitle, ansi );
+            mcs->szTitle = inline_ptr;
+        }
+        return;
+    }
     }
 
     if (size) memcpy( buffer, lparam_ptr, size );
@@ -1699,9 +1754,6 @@ static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, 
         break;
     case WM_MDIGETACTIVE:
         if (lparam) copy_size = sizeof(BOOL);
-        break;
-    case WM_MDICREATE:
-        copy_size = sizeof(MDICREATESTRUCTW);
         break;
     default:
         return;

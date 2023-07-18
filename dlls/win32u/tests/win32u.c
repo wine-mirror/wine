@@ -1684,6 +1684,7 @@ static void test_wndproc_hook(void)
     static const UINT32 items_out[2] = { 1, 2 };
     static const MDINEXTMENU nm_in = { .hmenuIn = (HMENU)0xdeadbeef };
     static const MDINEXTMENU nm_out = { .hmenuIn = (HMENU)1 };
+    static const MDICREATESTRUCTW mcs_in = { .x = 1, .y = 2 };
 
     static const struct lparam_hook_test lparam_hook_tests[] =
     {
@@ -1907,6 +1908,11 @@ static void test_wndproc_hook(void)
             "WM_NEXTMENU", WM_NEXTMENU,
             .lparam_size = sizeof(nm_in), .lparam = &nm_in, .change_lparam = &nm_out,
             .check_size = sizeof(nm_in)
+        },
+        {
+            "WM_MDICREATE", WM_MDICREATE,
+            .lparam_size = sizeof(mcs_in), .lparam = &mcs_in, .poison_lparam = TRUE,
+            .check_size = sizeof(mcs_in),
         },
         /* messages that don't change lparam */
         { "WM_USER", WM_USER },

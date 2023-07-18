@@ -28,22 +28,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msg);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
-union packed_structs
-{
-    struct packed_CREATESTRUCTW cs;
-    struct packed_DRAWITEMSTRUCT dis;
-    struct packed_MEASUREITEMSTRUCT mis;
-    struct packed_DELETEITEMSTRUCT dls;
-    struct packed_COMPAREITEMSTRUCT cis;
-    struct packed_WINDOWPOS wp;
-    struct packed_COPYDATASTRUCT cds;
-    struct packed_HELPINFO hi;
-    struct packed_NCCALCSIZE_PARAMS ncp;
-    struct packed_MSG msg;
-    struct packed_MDINEXTMENU mnm;
-    struct packed_MDICREATESTRUCTW mcs;
-};
-
 static inline void *get_buffer( void *static_buffer, size_t size, size_t need )
 {
     if (size >= need) return static_buffer;
@@ -754,21 +738,6 @@ static inline void *get_buffer_space( void **buffer, size_t size, size_t prev_si
     return *buffer;
 }
 
-/* unpack a potentially 64-bit pointer, returning 0 when truncated */
-static inline void *unpack_ptr( ULONGLONG ptr64 )
-{
-    if ((ULONG_PTR)ptr64 != ptr64) return 0;
-    return (void *)(ULONG_PTR)ptr64;
-}
-
-/* make sure that the buffer contains a valid null-terminated Unicode string */
-static inline BOOL check_string( LPCWSTR str, size_t size )
-{
-    for (size /= sizeof(WCHAR); size; size--, str++)
-        if (!*str) return TRUE;
-    return FALSE;
-}
-
 static size_t string_size( const void *str, BOOL ansi )
 {
     return ansi ? strlen( str ) + 1 : (wcslen( str ) + 1) * sizeof(WCHAR);
@@ -783,7 +752,6 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
                      void **buffer, size_t size, BOOL ansi )
 {
     size_t minsize = 0;
-    union packed_structs *ps = *buffer;
 
     switch(message)
     {
@@ -825,6 +793,22 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
         *wparam = (WPARAM)ptr++;
         *lparam = (LPARAM)ptr;
         return TRUE;
+    }
+    case WM_MDICREATE:
+    {
+        MDICREATESTRUCTA *mcs = *buffer;
+        char *str = (char *)(mcs + 1);
+
+        if (!IS_INTRESOURCE(mcs->szClass))
+        {
+            mcs->szClass = str;
+            str += string_size( mcs->szClass, ansi );
+        }
+        if (!IS_INTRESOURCE(mcs->szTitle))
+        {
+            mcs->szTitle = str;
+        }
+        break;
     }
     case WM_GETTEXT:
     case WM_ASKCBFORMATNAME:
@@ -874,37 +858,6 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case WM_SIZING:
     case WM_MOVING:
         break;
-    case WM_MDICREATE:
-    {
-        MDICREATESTRUCTW mcs;
-        WCHAR *str = (WCHAR *)(&ps->mcs + 1);
-        if (size < sizeof(ps->mcs)) return FALSE;
-        size -= sizeof(ps->mcs);
-
-        mcs.szClass = unpack_ptr( ps->mcs.szClass );
-        mcs.szTitle = unpack_ptr( ps->mcs.szTitle );
-        mcs.hOwner  = unpack_ptr( ps->mcs.hOwner );
-        mcs.x       = ps->mcs.x;
-        mcs.y       = ps->mcs.y;
-        mcs.cx      = ps->mcs.cx;
-        mcs.cy      = ps->mcs.cy;
-        mcs.style   = ps->mcs.style;
-        mcs.lParam  = (LPARAM)unpack_ptr( ps->mcs.lParam );
-        if (ps->mcs.szClass >> 16)
-        {
-            if (!check_string( str, size )) return FALSE;
-            mcs.szClass = str;
-            size -= (lstrlenW(str) + 1) * sizeof(WCHAR);
-            str += lstrlenW(str) + 1;
-        }
-        if (ps->mcs.szTitle >> 16)
-        {
-            if (!check_string( str, size )) return FALSE;
-            mcs.szTitle = str;
-        }
-        memcpy( *buffer, &mcs, sizeof(mcs) );
-        break;
-    }
     case WM_MDIGETACTIVE:
         if (!*lparam) return TRUE;
         if (!get_buffer_space( buffer, sizeof(BOOL), size )) return FALSE;
@@ -1047,6 +1000,7 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case WM_NEXTMENU:
         case WM_SIZING:
         case WM_MOVING:
+        case WM_MDICREATE:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;

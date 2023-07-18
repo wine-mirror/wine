@@ -773,6 +773,26 @@ static size_t packed_message_64to32( UINT message, WPARAM wparam,
             next32->hwndNext  = HandleToLong( next64->hwndNext );
             return sizeof(*next32);
         }
+
+    case WM_MDICREATE:
+        {
+            MDICREATESTRUCT32 mcs32;
+            const MDICREATESTRUCTW *mcs64 = params64;
+
+            mcs32.szClass = PtrToUlong( mcs64->szClass );
+            mcs32.szTitle = PtrToUlong( mcs64->szTitle );
+            mcs32.hOwner  = HandleToLong( mcs64->hOwner );
+            mcs32.x       = mcs64->x;
+            mcs32.y       = mcs64->y;
+            mcs32.cx      = mcs64->cx;
+            mcs32.cy      = mcs64->cy;
+            mcs32.style   = mcs64->style;
+            mcs32.lParam  = mcs64->lParam;
+            size -= sizeof(*mcs64);
+            if (size) memmove( (char *)params32 + sizeof(mcs32), mcs64 + 1, size );
+            memcpy( params32, &mcs32, sizeof(mcs32) );
+            return sizeof(mcs32) + size;
+        }
     }
 
     memmove( params32, params64, size );
