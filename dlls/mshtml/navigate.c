@@ -1993,10 +1993,16 @@ void abort_window_bindings(HTMLInnerWindow *window)
 
         IBindStatusCallback_AddRef(&iter->IBindStatusCallback_iface);
 
-        if(iter->binding)
-            IBinding_Abort(iter->binding);
-        else
+        if(iter->binding) {
+            IBinding *binding = iter->binding;
+
+            /* Abort can end up calling our OnStopBinding, which releases the binding. */
+            IBinding_AddRef(binding);
+            IBinding_Abort(binding);
+            IBinding_Release(binding);
+        }else {
             iter->vtbl->stop_binding(iter, E_ABORT);
+        }
 
         iter->window = NULL;
         list_remove(&iter->entry);
