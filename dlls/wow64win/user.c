@@ -843,6 +843,7 @@ static size_t packed_result_32to64( UINT message, WPARAM wparam, const void *par
     case EM_SETRECTNP:
     case LB_GETITEMRECT:
     case CB_GETDROPPEDCONTROLRECT:
+    case EM_GETLINE:
         break;
 
     default:

@@ -874,16 +874,8 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case CB_GETDROPPEDCONTROLRECT:
     case EM_SETRECT:
     case EM_SETRECTNP:
-        break;
     case EM_GETLINE:
-    {
-        WORD len;
-        if (size < sizeof(WORD)) return FALSE;
-        len = *(WORD *)*buffer;
-        if (!get_buffer_space( buffer, (len + 1) * sizeof(WCHAR), size )) return FALSE;
-        *lparam = (LPARAM)*buffer + sizeof(WORD);  /* don't erase WORD at start of buffer */
-        return TRUE;
-    }
+        break;
     case EM_SETTABSTOPS:
     case LB_SETTABSTOPS:
         if (!*wparam) return TRUE;
@@ -1090,6 +1082,7 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case CB_GETDROPPEDCONTROLRECT:
         case EM_SETRECT:
         case EM_SETRECTNP:
+        case EM_GETLINE:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;

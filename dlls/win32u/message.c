@@ -583,6 +583,17 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case EM_SETRECTNP:
         minsize = sizeof(RECT);
         break;
+    case EM_GETLINE:
+    {
+        WORD *len_ptr, len;
+        if (size < sizeof(WORD)) return FALSE;
+        len = *(WORD *)*buffer;
+        if (!get_buffer_space( buffer, (len + 1) * sizeof(WCHAR), size )) return FALSE;
+        len_ptr = *buffer;
+        len_ptr[0] = len_ptr[1] = len;
+        *lparam = (LPARAM)(len_ptr + 1);
+        return TRUE;
+    }
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1396,6 +1407,9 @@ size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL other
     case EM_SETRECTNP:
         size = sizeof(RECT);
         break;
+    case EM_GETLINE:
+        size = max( *(WORD *)lparam * char_size( ansi ), sizeof(WORD) );
+        break;
     }
 
     return size;
@@ -1461,6 +1475,9 @@ void pack_user_message( void *buffer, size_t size, UINT message,
     case EM_GETRECT:
     case CB_GETDROPPEDCONTROLRECT:
         return;
+    case EM_GETLINE:
+        size = sizeof(WORD);
+        break;
     }
 
     if (size) memcpy( buffer, lparam_ptr, size );
@@ -1556,6 +1573,9 @@ static void copy_user_result( void *buffer, size_t size, LRESULT result, UINT me
     case CB_GETDROPPEDCONTROLRECT:
         copy_size = sizeof(RECT);
         break;
+    case EM_GETLINE:
+        copy_size = string_size( buffer, ansi );
+        break;
     default:
         return;
     }
@@ -1587,12 +1607,6 @@ static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, 
     case WM_MOVING:
         copy_size = sizeof(RECT);
         break;
-    case EM_GETLINE:
-    {
-        WORD *ptr = (WORD *)lparam;
-        copy_size = ptr[-1] * sizeof(WCHAR);
-        break;
-    }
     case LB_GETSELITEMS:
         copy_size = wparam * sizeof(UINT);
         break;

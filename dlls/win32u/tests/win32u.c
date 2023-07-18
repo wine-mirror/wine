@@ -1413,6 +1413,14 @@ static void check_params( const struct lparam_hook_test *test, UINT message,
         ok( wparam, "wparam = 0\n" );
         break;
 
+    case EM_GETLINE:
+        if (!is_ret)
+        {
+            WCHAR *buf = (WCHAR *)lparam;
+            ok(buf[0] == 8, "buf[0] = %x\n", buf[0]);
+        }
+        break;
+
     default:
         if (test->check_size) {
             const void *expected = is_ret && test->change_lparam ? test->change_lparam : test->lparam;
@@ -1866,6 +1874,16 @@ static void test_wndproc_hook(void)
             "CB_GETEDITSEL", CB_GETEDITSEL, .no_wparam_check = TRUE,
             .lparam_size = sizeof(DWORD), .lparam = &dw_in, .change_lparam = &dw_out,
             .check_size = sizeof(DWORD),
+        },
+        {
+            "EM_GETLINE", EM_GETLINE, .msg_result = 5,
+            .lparam = L"\x8""2345678", .lparam_size = sizeof(strbufW), .change_lparam = L"abc\0defg",
+            .check_size = sizeof(WCHAR), .check_lparam = L"abc\0""5678",
+        },
+        {
+            "EM_GETLINE-2", EM_GETLINE, .msg_result = 1,
+            .lparam = L"\x8""2345678", .lparam_size = sizeof(strbufW), .change_lparam = L"abc\0defg",
+            .check_size = sizeof(WCHAR), .check_lparam = L"abc\0""5678",
         },
         /* messages that don't change lparam */
         { "WM_USER", WM_USER },
