@@ -22,8 +22,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
@@ -3921,8 +3919,8 @@ UINT WINAPI mixerGetControlDetailsA(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdA
 	    int size = max(1, lpmcdA->cChannels) * sizeof(MIXERCONTROLDETAILS_LISTTEXTW);
             unsigned int i;
 
-	    if (lpmcdA->u.cMultipleItems != 0) {
-		size *= lpmcdA->u.cMultipleItems;
+	    if (lpmcdA->cMultipleItems != 0) {
+		size *= lpmcdA->cMultipleItems;
 	    }
 	    pDetailsW = HeapAlloc(GetProcessHeap(), 0, size);
             lpmcdA->paDetails = pDetailsW;
@@ -3931,7 +3929,7 @@ UINT WINAPI mixerGetControlDetailsA(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdA
 	    ret = mixerGetControlDetailsW(hmix, lpmcdA, fdwDetails);
 	    /* copy from lpmcd->paDetails back to paDetailsW; */
             if (ret == MMSYSERR_NOERROR) {
-                for (i = 0; i < lpmcdA->u.cMultipleItems * lpmcdA->cChannels; i++) {
+                for (i = 0; i < lpmcdA->cMultipleItems * lpmcdA->cChannels; i++) {
                     pDetailsA->dwParam1 = pDetailsW->dwParam1;
                     pDetailsA->dwParam2 = pDetailsW->dwParam2;
                     WideCharToMultiByte( CP_ACP, 0, pDetailsW->szName, -1,
@@ -3940,8 +3938,8 @@ UINT WINAPI mixerGetControlDetailsA(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdA
                     pDetailsA++;
                     pDetailsW++;
                 }
-                pDetailsA -= lpmcdA->u.cMultipleItems * lpmcdA->cChannels;
-                pDetailsW -= lpmcdA->u.cMultipleItems * lpmcdA->cChannels;
+                pDetailsA -= lpmcdA->cMultipleItems * lpmcdA->cChannels;
+                pDetailsW -= lpmcdA->cMultipleItems * lpmcdA->cChannels;
             }
 	    HeapFree(GetProcessHeap(), 0, pDetailsW);
 	    lpmcdA->paDetails = pDetailsA;
@@ -3973,8 +3971,8 @@ UINT WINAPI mixerGetLineControlsA(HMIXEROBJ hmix, LPMIXERLINECONTROLSA lpmlcA,
 
     mlcW.cbStruct = sizeof(mlcW);
     mlcW.dwLineID = lpmlcA->dwLineID;
-    mlcW.u.dwControlID = lpmlcA->u.dwControlID;
-    mlcW.u.dwControlType = lpmlcA->u.dwControlType;
+    mlcW.dwControlID = lpmlcA->dwControlID;
+    mlcW.dwControlType = lpmlcA->dwControlType;
 
     /* Debugging on Windows shows for MIXER_GETLINECONTROLSF_ONEBYTYPE only,
        the control count is assumed to be 1 - This is relied upon by a game,
@@ -3992,8 +3990,8 @@ UINT WINAPI mixerGetLineControlsA(HMIXEROBJ hmix, LPMIXERLINECONTROLSA lpmlcA,
 
     if (ret == MMSYSERR_NOERROR) {
 	lpmlcA->dwLineID = mlcW.dwLineID;
-	lpmlcA->u.dwControlID = mlcW.u.dwControlID;
-	lpmlcA->u.dwControlType = mlcW.u.dwControlType;
+	lpmlcA->dwControlID = mlcW.dwControlID;
+	lpmlcA->dwControlType = mlcW.dwControlType;
 
 	for (i = 0; i < mlcW.cControls; i++) {
 	    lpmlcA->pamxctrl[i].cbStruct = sizeof(MIXERCONTROLA);
@@ -4032,8 +4030,8 @@ static UINT WINMM_GetVolumeLineControl(WINMM_MMDevice *mmdevice, DWORD line,
     ctl->cMultipleItems = 0;
     LoadStringW(hWinMM32Instance, IDS_VOLUME, ctl->szShortName, MIXER_SHORT_NAME_CHARS);
     LoadStringW(hWinMM32Instance, IDS_VOLUME, ctl->szName, MIXER_LONG_NAME_CHARS);
-    ctl->Bounds.s1.dwMinimum = 0;
-    ctl->Bounds.s1.dwMaximum = 0xFFFF;
+    ctl->Bounds.dwMinimum = 0;
+    ctl->Bounds.dwMaximum = 0xFFFF;
     ctl->Metrics.cSteps = 192;
 
     return MMSYSERR_NOERROR;
@@ -4048,8 +4046,8 @@ static UINT WINMM_GetMuteLineControl(WINMM_MMDevice *mmdevice, DWORD line,
     ctl->cMultipleItems = 0;
     LoadStringW(hWinMM32Instance, IDS_MUTE, ctl->szShortName, MIXER_SHORT_NAME_CHARS);
     LoadStringW(hWinMM32Instance, IDS_MUTE, ctl->szName, MIXER_LONG_NAME_CHARS);
-    ctl->Bounds.s1.dwMinimum = 0;
-    ctl->Bounds.s1.dwMaximum = 1;
+    ctl->Bounds.dwMinimum = 0;
+    ctl->Bounds.dwMaximum = 1;
     ctl->Metrics.cSteps = 0;
 
     return MMSYSERR_NOERROR;
@@ -4083,7 +4081,7 @@ UINT WINAPI mixerGetLineControlsW(HMIXEROBJ hmix, LPMIXERLINECONTROLSW lpmlcW,
         return MMSYSERR_INVALPARAM;
 
     TRACE("dwLineID: %lu\n", lpmlcW->dwLineID);
-    TRACE("dwControl: %lx\n", lpmlcW->u.dwControlID);
+    TRACE("dwControl: %lx\n", lpmlcW->dwControlID);
     TRACE("cControls: %lu\n", lpmlcW->cControls);
 
     mmdevice = WINMM_GetMixerMMDevice(hmix, fdwControls, NULL);
@@ -4110,10 +4108,10 @@ UINT WINAPI mixerGetLineControlsW(HMIXEROBJ hmix, LPMIXERLINECONTROLSW lpmlcW,
             return MMSYSERR_INVALPARAM;
         if(lpmlcW->dwLineID != 0 && lpmlcW->dwLineID != 0xFFFF0000)
             return MIXERR_INVALLINE;
-        if(lpmlcW->u.dwControlID == 0)
+        if(lpmlcW->dwControlID == 0)
             return WINMM_GetVolumeLineControl(mmdevice, lpmlcW->dwLineID,
                     lpmlcW->pamxctrl, fdwControls);
-        if(lpmlcW->u.dwControlID == 1)
+        if(lpmlcW->dwControlID == 1)
             return WINMM_GetMuteLineControl(mmdevice, lpmlcW->dwLineID,
                     lpmlcW->pamxctrl, fdwControls);
         return MMSYSERR_NOTSUPPORTED;
@@ -4124,10 +4122,10 @@ UINT WINAPI mixerGetLineControlsW(HMIXEROBJ hmix, LPMIXERLINECONTROLSW lpmlcW,
             return MMSYSERR_INVALPARAM;
         if(lpmlcW->dwLineID != 0 && lpmlcW->dwLineID != 0xFFFF0000)
             return MIXERR_INVALLINE;
-        if(lpmlcW->u.dwControlType == MIXERCONTROL_CONTROLTYPE_VOLUME)
+        if(lpmlcW->dwControlType == MIXERCONTROL_CONTROLTYPE_VOLUME)
             return WINMM_GetVolumeLineControl(mmdevice, lpmlcW->dwLineID,
                     lpmlcW->pamxctrl, fdwControls);
-        if(lpmlcW->u.dwControlType == MIXERCONTROL_CONTROLTYPE_MUTE)
+        if(lpmlcW->dwControlType == MIXERCONTROL_CONTROLTYPE_MUTE)
             return WINMM_GetMuteLineControl(mmdevice, lpmlcW->dwLineID,
                     lpmlcW->pamxctrl, fdwControls);
         return MMSYSERR_NOTSUPPORTED;
