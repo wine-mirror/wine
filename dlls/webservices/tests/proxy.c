@@ -812,17 +812,17 @@ static const char resp_test5[] =
 
 static void test_fault_response( int port )
 {
-    WS_XML_STRING faultcode = {6, (BYTE *)"Client"};
-    WS_STRING faultstring = {13, (WCHAR *)L"OLS Exception"};
-    WS_XML_STRING req = {3, (BYTE *)"req"};
-    WS_XML_STRING resp = {4, (BYTE *)"resp"};
-    WS_XML_STRING req_action = {9, (BYTE *)"req_test5"};
-    WS_XML_STRING resp_action = {10, (BYTE *)"resp_test5"};
-    WS_XML_STRING req_elem = {9, (BYTE *)"req_test5"};
-    WS_XML_STRING resp_elem = {10, (BYTE *)"resp_test5"};
-    WS_XML_STRING ns = {2, (BYTE *)"ns"};
-    WS_XML_STRING ns2 = {0, (BYTE *)""};
-    WS_XML_STRING val = {3, (BYTE *)"val"};
+    static const WS_XML_STRING faultcode = WS_XML_STRING_VALUE( "Client" );
+    static const WS_STRING faultstring = WS_STRING_VALUE( L"OLS Exception" );
+    WS_XML_STRING req = WS_XML_STRING_VALUE( "req" );
+    WS_XML_STRING resp = WS_XML_STRING_VALUE( "resp" );
+    WS_XML_STRING req_action = WS_XML_STRING_VALUE( "req_test5" );
+    WS_XML_STRING resp_action = WS_XML_STRING_VALUE( "resp_test5" );
+    WS_XML_STRING req_elem = WS_XML_STRING_VALUE( "req_test5" );
+    WS_XML_STRING resp_elem = WS_XML_STRING_VALUE( "resp_test5" );
+    WS_XML_STRING ns = WS_XML_STRING_VALUE( "ns" );
+    WS_XML_STRING ns2 = WS_XML_STRING_VALUE( "" );
+    WS_XML_STRING val = WS_XML_STRING_VALUE( "val" );
     HRESULT hr;
     WS_SERVICE_PROXY *proxy;
     WS_FIELD_DESCRIPTION f, *fields[1];

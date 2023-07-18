@@ -403,7 +403,7 @@ static void test_WsCreateChannelForListener(void)
 
 static void test_WsResetListener(void)
 {
-    WS_STRING url = { ARRAY_SIZE( L"net.tcp://+:2017/path" ) - 1, (WCHAR *)L"net.tcp://+:2017/path" };
+    static const WS_STRING url = WS_STRING_VALUE( L"net.tcp://+:2017/path" );
     WS_LISTENER *listener;
     WS_LISTENER_STATE state;
     WS_LISTENER_PROPERTY prop;

@@ -7144,11 +7144,11 @@ static void test_description_type(void)
 
 static void test_WsAddErrorString(void)
 {
+    static const WS_STRING emptystr = { 0 };
+    static const WS_STRING str1 = WS_STRING_VALUE( L"str1" );
+    static const WS_STRING str2 = WS_STRING_VALUE( L"str2" );
     ULONG count;
     WS_ERROR *error;
-    WS_STRING emptystr = { 0 };
-    WS_STRING str1 = { 4, (WCHAR *) L"str1" };
-    WS_STRING str2 = { 4, (WCHAR *) L"str2" };
     WS_STRING out;
     HRESULT hr;
 

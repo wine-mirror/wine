@@ -1206,8 +1206,8 @@ static void test_WsReadBody(void)
         "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body>"
         "<s:Fault><faultcode>s:Client</faultcode><faultstring>OLS Exception</faultstring></s:Fault>"
         "</s:Body></s:Envelope>";
-    static const WS_XML_STRING faultcode = { 6, (BYTE *)"Client" };
-    static const WS_STRING faultstring = { 13, (WCHAR *)L"OLS Exception" };
+    static const WS_XML_STRING faultcode = WS_XML_STRING_VALUE( "Client" );
+    static const WS_STRING faultstring = WS_STRING_VALUE( L"OLS Exception" );
     WS_HEAP *heap;
     WS_MESSAGE *msg, *msg2, *msg3;
     WS_XML_READER *reader;
