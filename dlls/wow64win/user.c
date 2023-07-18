@@ -3552,13 +3552,6 @@ NTSTATUS WINAPI wow64_NtUserMessageCall( UINT *args )
         /* no argument conversion */
         return NtUserMessageCall( hwnd, msg, wparam, lparam, result_info, type, ansi );
 
-    case NtUserWinProcResult:
-        {
-            LONG result32 = PtrToLong( result_info );
-            return message_call_32to64( hwnd, msg, wparam, lparam,
-                                        LongToPtr( result32 ), type, ansi );
-        }
-
     case NtUserImeDriverCall:
         {
             struct

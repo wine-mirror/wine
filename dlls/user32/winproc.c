@@ -926,73 +926,12 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
 
         result = dispatch_win_proc_params( params );
 
-        switch (params->msg)
-        {
-        case WM_NCCREATE:
-        case WM_CREATE:
-        case WM_NCCALCSIZE:
-        case WM_GETTEXT:
-        case WM_ASKCBFORMATNAME:
-        case WM_WININICHANGE:
-        case WM_SETTEXT:
-        case WM_DEVMODECHANGE:
-        case CB_DIR:
-        case LB_DIR:
-        case LB_ADDFILE:
-        case EM_REPLACESEL:
-        case WM_GETMINMAXINFO:
-        case WM_MEASUREITEM:
-        case WM_DELETEITEM:
-        case WM_COMPAREITEM:
-        case WM_WINDOWPOSCHANGING:
-        case WM_WINDOWPOSCHANGED:
-        case WM_COPYDATA:
-        case WM_HELP:
-        case WM_STYLECHANGING:
-        case WM_STYLECHANGED:
-        case WM_GETDLGCODE:
-        case SBM_SETSCROLLINFO:
-        case SBM_GETSCROLLINFO:
-        case SBM_GETSCROLLBARINFO:
-        case EM_GETSEL:
-        case SBM_GETRANGE:
-        case CB_GETEDITSEL:
-        case EM_GETRECT:
-        case LB_GETITEMRECT:
-        case CB_GETDROPPEDCONTROLRECT:
-        case EM_SETRECT:
-        case EM_SETRECTNP:
-        case EM_GETLINE:
-        case EM_SETTABSTOPS:
-        case LB_SETTABSTOPS:
-        case CB_ADDSTRING:
-        case CB_INSERTSTRING:
-        case CB_FINDSTRING:
-        case CB_FINDSTRINGEXACT:
-        case CB_SELECTSTRING:
-        case LB_ADDSTRING:
-        case LB_INSERTSTRING:
-        case LB_FINDSTRING:
-        case LB_FINDSTRINGEXACT:
-        case LB_SELECTSTRING:
-        case CB_GETLBTEXT:
-        case LB_GETTEXT:
-        case LB_GETSELITEMS:
-        case WM_NEXTMENU:
-        case WM_SIZING:
-        case WM_MOVING:
-        case WM_MDICREATE:
-        case CB_GETCOMBOBOXINFO:
-        case WM_MDIGETACTIVE:
+        if (size)
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;
             return NtCallbackReturn( result_ptr, sizeof(*result_ptr) + size, TRUE );
         }
-        }
-
-        NtUserMessageCall( params->hwnd, params->msg, params->wparam, params->lparam,
-                           (void *)result, NtUserWinProcResult, FALSE );
     }
     else
     {

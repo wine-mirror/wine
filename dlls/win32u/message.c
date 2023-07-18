@@ -57,8 +57,6 @@ struct received_message_info
     struct received_message_info *prev;
 };
 
-#define MSG_CLIENT_MESSAGE 0xff
-
 struct packed_hook_extra_info
 {
     user_handle_t handle;
@@ -1971,7 +1969,6 @@ BOOL reply_message_result( LRESULT result )
     struct user_thread_info *thread_info = get_user_thread_info();
     struct received_message_info *info = thread_info->receive_info;
 
-    while (info && info->type == MSG_CLIENT_MESSAGE) info = info->prev;
     if (!info) return FALSE;
     reply_message( info, result, NULL );
     return TRUE;
@@ -1989,7 +1986,6 @@ static BOOL reply_winproc_result( LRESULT result, HWND hwnd, UINT message, WPARA
     MSG msg;
 
     if (!info) return FALSE;
-    if (info->type == MSG_CLIENT_MESSAGE) return TRUE;
 
     msg.hwnd = hwnd;
     msg.message = message;
@@ -3595,8 +3591,6 @@ static BOOL broadcast_message( struct send_message_info *info, DWORD_PTR *res_pt
 
 static BOOL process_packed_message( struct send_message_info *info, LRESULT *res_ptr, BOOL ansi )
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
-    struct received_message_info receive_info;
     struct packed_message data;
     size_t buffer_size = 0, i;
     void *buffer = NULL;
@@ -3613,19 +3607,9 @@ static BOOL process_packed_message( struct send_message_info *info, LRESULT *res
         ptr += data.size[i];
     }
 
-    receive_info.type = MSG_CLIENT_MESSAGE;
-    receive_info.msg.hwnd = info->hwnd;
-    receive_info.msg.message = info->msg;
-    receive_info.msg.wParam = info->wparam;
-    receive_info.msg.lParam = info->lparam;
-    receive_info.flags = 0;
-    receive_info.prev = thread_info->receive_info;
-    thread_info->receive_info = &receive_info;
-
     *res_ptr = call_window_proc( info->hwnd, info->msg, info->wparam, info->lparam,
                                  !ansi, TRUE, info->wm_char, TRUE, buffer, buffer_size );
-    if (thread_info->receive_info == &receive_info)
-        thread_info->receive_info = receive_info.prev;
+
     free( buffer );
     return TRUE;
 }
@@ -4272,9 +4256,6 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 
     case NtUserClipboardWindowProc:
         return user_driver->pClipboardWindowProc( hwnd, msg, wparam, lparam );
-
-    case NtUserWinProcResult:
-        return reply_winproc_result( (LRESULT)result_info, hwnd, msg, wparam, lparam );
 
     case NtUserGetDispatchParams:
         if (!hwnd) return FALSE;

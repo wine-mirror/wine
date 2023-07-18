@@ -306,8 +306,7 @@ enum
     NtUserSpyGetMsgName       = 0x3003,
     NtUserSpyEnter            = 0x0304,
     NtUserSpyExit             = 0x0305,
-    NtUserWinProcResult       = 0x0306,
-    NtUserImeDriverCall       = 0x0307,
+    NtUserImeDriverCall       = 0x0306,
 };
 
 /* NtUserThunkedMenuItemInfo codes */
