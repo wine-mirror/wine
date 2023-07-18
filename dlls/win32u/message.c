@@ -540,6 +540,21 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case WM_STYLECHANGED:
         minsize = sizeof(STYLESTRUCT);
         break;
+    case WM_GETDLGCODE:
+        if (*lparam)
+        {
+            MSG msg;
+            if (size < sizeof(ps->msg)) return FALSE;
+            msg.hwnd    = wine_server_ptr_handle( ps->msg.hwnd );
+            msg.message = ps->msg.message;
+            msg.wParam  = (ULONG_PTR)unpack_ptr( ps->msg.wParam );
+            msg.lParam  = (ULONG_PTR)unpack_ptr( ps->msg.lParam );
+            msg.time    = ps->msg.time;
+            msg.pt      = ps->msg.pt;
+            memcpy( &ps->msg, &msg, sizeof(msg) );
+            break;
+        }
+        return TRUE;
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1006,19 +1021,6 @@ static void pack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
         push_data( data, &data->ps.wp, sizeof(data->ps.wp) );
         break;
     }
-    case WM_GETDLGCODE:
-        if (lparam)
-        {
-            MSG *msg = (MSG *)lparam;
-            data->ps.msg.hwnd    = wine_server_user_handle( msg->hwnd );
-            data->ps.msg.message = msg->message;
-            data->ps.msg.wParam  = msg->wParam;
-            data->ps.msg.lParam  = msg->lParam;
-            data->ps.msg.time    = msg->time;
-            data->ps.msg.pt      = msg->pt;
-            push_data( data, &data->ps.msg, sizeof(data->ps.msg) );
-        }
-        break;
     case SBM_GETSCROLLINFO:
         push_data( data, (SCROLLINFO *)lparam, sizeof(SCROLLINFO) );
         break;
@@ -1157,18 +1159,6 @@ static void unpack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
             wp->cx              = ps->wp.cx;
             wp->cy              = ps->wp.cy;
             wp->flags           = ps->wp.flags;
-        }
-        break;
-    case WM_GETDLGCODE:
-        if (lparam && size >= sizeof(ps->msg))
-        {
-            MSG *msg = (MSG *)lparam;
-            msg->hwnd    = wine_server_ptr_handle( ps->msg.hwnd );
-            msg->message = ps->msg.message;
-            msg->wParam  = (ULONG_PTR)unpack_ptr( ps->msg.wParam );
-            msg->lParam  = (ULONG_PTR)unpack_ptr( ps->msg.lParam );
-            msg->time    = ps->msg.time;
-            msg->pt      = ps->msg.pt;
         }
         break;
     case SBM_GETSCROLLINFO:
@@ -1356,6 +1346,9 @@ size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL other
     case WM_STYLECHANGED:
         size = sizeof(STYLESTRUCT);
         break;
+    case WM_GETDLGCODE:
+        size = sizeof(MSG);
+        break;
     }
 
     return size;
@@ -1513,9 +1506,6 @@ static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, 
         break;
     case CB_GETCOMBOBOXINFO:
         copy_size = sizeof(COMBOBOXINFO);
-        break;
-    case WM_GETDLGCODE:
-        if (lparam) copy_size = sizeof(MSG);
         break;
     case SBM_GETSCROLLINFO:
         copy_size = sizeof(SCROLLINFO);

@@ -1658,6 +1658,7 @@ static void test_wndproc_hook(void)
     static const COPYDATASTRUCT cds5_in = { .lpData = (void *)0xdeadbeef };
     static const STYLESTRUCT style_in = { .styleOld = 1, .styleNew = 2 };
     static const STYLESTRUCT style_out = { .styleOld = 10, .styleNew = 20 };
+    static const MSG msg_in = { .wParam = 1, .lParam = 2 };
 
     static const struct lparam_hook_test lparam_hook_tests[] =
     {
@@ -1806,6 +1807,11 @@ static void test_wndproc_hook(void)
             "WM_STYLECHANGED", WM_STYLECHANGED,
             .lparam_size = sizeof(style_in), .lparam = &style_in, .poison_lparam = TRUE,
             .check_size = sizeof(style_in),
+        },
+        {
+            "WM_GETDLGCODE", WM_GETDLGCODE,
+            .lparam_size = sizeof(msg_in), .lparam = &msg_in, .poison_lparam = TRUE,
+            .check_size = sizeof(msg_in),
         },
         /* messages that don't change lparam */
         { "WM_USER", WM_USER },

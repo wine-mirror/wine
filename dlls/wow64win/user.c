@@ -758,6 +758,10 @@ static size_t packed_message_64to32( UINT message, WPARAM wparam,
             memcpy( params32, &hi32, sizeof(hi32) );
             return sizeof(hi32);
         }
+
+    case WM_GETDLGCODE:
+        msg_64to32( params64, params32 );
+        return sizeof(MSG32);
     }
 
     memmove( params32, params64, size );
