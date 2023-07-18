@@ -462,6 +462,18 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         memcpy( *buffer, &mis, sizeof(mis) );
         break;
     }
+    case WM_DELETEITEM:
+    {
+        DELETEITEMSTRUCT dls;
+        if (size < sizeof(ps->dls)) return FALSE;
+        dls.CtlType    = ps->dls.CtlType;
+        dls.CtlID      = ps->dls.CtlID;
+        dls.itemID     = ps->dls.itemID;
+        dls.hwndItem   = wine_server_ptr_handle( ps->dls.hwndItem );
+        dls.itemData   = (ULONG_PTR)unpack_ptr( ps->dls.itemData );
+        memcpy( *buffer, &dls, sizeof(dls) );
+        break;
+    }
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1254,6 +1266,9 @@ size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL other
         break;
     case WM_MEASUREITEM:
         size = sizeof(MEASUREITEMSTRUCT);
+        break;
+    case WM_DELETEITEM:
+        size = sizeof(DELETEITEMSTRUCT);
         break;
     }
 

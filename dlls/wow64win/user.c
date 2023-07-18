@@ -684,6 +684,20 @@ static size_t packed_message_64to32( UINT message, WPARAM wparam,
             memcpy( params32, &mis32, sizeof(mis32) );
             return sizeof(mis32);
         }
+
+    case WM_DELETEITEM:
+        {
+            DELETEITEMSTRUCT32 dis32;
+            const DELETEITEMSTRUCT *dis64 = params64;
+
+            dis32.CtlType  = dis64->CtlType;
+            dis32.CtlID    = dis64->CtlID;
+            dis32.itemID   = dis64->itemID;
+            dis32.hwndItem = HandleToLong( dis64->hwndItem );
+            dis32.itemData = dis64->itemData;
+            memcpy( params32, &dis32, sizeof(dis32) );
+            return sizeof(dis32);
+        }
     }
 
     memmove( params32, params64, size );
@@ -3167,6 +3181,7 @@ static LRESULT message_call_32to64( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
             dis.CtlType  = dis32->CtlType;
             dis.CtlID    = dis32->CtlID;
+            dis.itemID   = dis32->itemID;
             dis.hwndItem = LongToHandle( dis32->hwndItem );
             dis.itemData = dis32->itemData;
             return NtUserMessageCall( hwnd, msg, wparam, (LPARAM)&dis, result_info, type, ansi );
