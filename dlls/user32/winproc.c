@@ -854,14 +854,12 @@ BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
     case WM_HELP:
+    case WM_STYLECHANGING:
+    case WM_STYLECHANGED:
         break;
     case WM_NOTIFY:
         /* WM_NOTIFY cannot be sent across processes (MSDN) */
         return FALSE;
-    case WM_STYLECHANGING:
-    case WM_STYLECHANGED:
-        minsize = sizeof(STYLESTRUCT);
-        break;
     case WM_GETDLGCODE:
         if (*lparam)
         {
@@ -1103,6 +1101,8 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         case WM_WINDOWPOSCHANGED:
         case WM_COPYDATA:
         case WM_HELP:
+        case WM_STYLECHANGING:
+        case WM_STYLECHANGED:
         {
             LRESULT *result_ptr = (LRESULT *)buffer - 1;
             *result_ptr = result;

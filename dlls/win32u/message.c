@@ -536,6 +536,10 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         memcpy( &ps->hi, &hi, sizeof(hi) );
         break;
     }
+    case WM_STYLECHANGING:
+    case WM_STYLECHANGED:
+        minsize = sizeof(STYLESTRUCT);
+        break;
     case WM_WINE_SETWINDOWPOS:
     {
         WINDOWPOS wp;
@@ -1348,6 +1352,10 @@ size_t user_message_size( UINT message, WPARAM wparam, LPARAM lparam, BOOL other
     case WM_HELP:
         size = sizeof(HELPINFO);
         break;
+    case WM_STYLECHANGING:
+    case WM_STYLECHANGED:
+        size = sizeof(STYLESTRUCT);
+        break;
     }
 
     return size;
@@ -1476,6 +1484,9 @@ static void copy_user_result( void *buffer, size_t size, LRESULT result, UINT me
     case WM_WINDOWPOSCHANGING:
         copy_size = sizeof(WINDOWPOS);
         break;
+    case WM_STYLECHANGING:
+        copy_size = sizeof(STYLESTRUCT);
+        break;
     default:
         return;
     }
@@ -1502,9 +1513,6 @@ static void copy_reply( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, 
         break;
     case CB_GETCOMBOBOXINFO:
         copy_size = sizeof(COMBOBOXINFO);
-        break;
-    case WM_STYLECHANGING:
-        copy_size = sizeof(STYLESTRUCT);
         break;
     case WM_GETDLGCODE:
         if (lparam) copy_size = sizeof(MSG);
