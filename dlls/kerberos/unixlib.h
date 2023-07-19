@@ -89,7 +89,7 @@ struct query_context_attributes_params
 
 struct query_ticket_cache_params
 {
-    KERB_QUERY_TKT_CACHE_RESPONSE *resp;
+    KERB_QUERY_TKT_CACHE_EX_RESPONSE *resp;
     ULONG *out_size;
 };
 
