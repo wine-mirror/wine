@@ -38,6 +38,7 @@ static void test_interfaces(void)
 {
     ISpeechVoice *speech_voice, *speech_voice2;
     IConnectionPointContainer *container;
+    ISpTTSEngineSite *site;
     ISpVoice *spvoice, *spvoice2;
     IDispatch *dispatch;
     IUnknown *unk;
@@ -89,6 +90,10 @@ static void test_interfaces(void)
     EXPECT_REF(speech_voice, 2);
     EXPECT_REF(container, 2);
     IConnectionPointContainer_Release(container);
+
+    hr = ISpeechVoice_QueryInterface(speech_voice, &IID_ISpTTSEngineSite,
+                                     (void **)&site);
+    ok(hr == E_NOINTERFACE, "ISpeechVoice_QueryInterface for ISpTTSEngineSite returned: %#lx.\n", hr);
 
     ISpeechVoice_Release(speech_voice);
 }

@@ -43,6 +43,7 @@ struct speech_voice
 
     ISpStreamFormat *output;
     ISpTTSEngine *engine;
+    LONG cur_stream_num;
     USHORT volume;
     LONG rate;
     struct async_queue queue;
@@ -62,6 +63,20 @@ static inline struct speech_voice *impl_from_ISpVoice(ISpVoice *iface)
 static inline struct speech_voice *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
 {
     return CONTAINING_RECORD(iface, struct speech_voice, IConnectionPointContainer_iface);
+}
+
+struct tts_engine_site
+{
+    ISpTTSEngineSite ISpTTSEngineSite_iface;
+    LONG ref;
+
+    struct speech_voice *voice;
+    ULONG stream_num;
+};
+
+static inline struct tts_engine_site *impl_from_ISpTTSEngineSite(ISpTTSEngineSite *iface)
+{
+    return CONTAINING_RECORD(iface, struct tts_engine_site, ISpTTSEngineSite_iface);
 }
 
 static HRESULT create_default_token(const WCHAR *cat_id, ISpObjectToken **token)
@@ -712,6 +727,7 @@ struct speak_task
 
     struct speech_voice *voice;
     SPVTEXTFRAG *frag_list;
+    ISpTTSEngineSite *site;
     DWORD flags;
 };
 
@@ -728,13 +744,17 @@ static void speak_proc(struct async_task *task)
     }
 }
 
+static HRESULT ttsenginesite_create(struct speech_voice *voice, ULONG stream_num, ISpTTSEngineSite **site);
+
 static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWORD flags, ULONG *stream_num_out)
 {
     struct speech_voice *This = impl_from_ISpVoice(iface);
+    ISpTTSEngineSite *site = NULL;
     SPVTEXTFRAG *frag;
     struct speak_task *speak_task = NULL;
     struct async_result *result = NULL;
     size_t contents_len, contents_size;
+    ULONG stream_num;
     HRESULT hr;
 
     FIXME("(%p, %p, %#lx, %p): semi-stub.\n", iface, contents, flags, stream_num_out);
@@ -794,12 +814,21 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
     frag->pTextStart    = (WCHAR *)(frag + 1);
     frag->ulTextLen     = contents_len;
     frag->ulTextSrcOffset = 0;
+
+    stream_num = InterlockedIncrement(&This->cur_stream_num);
+    if (FAILED(hr = ttsenginesite_create(This, stream_num, &site)))
+    {
+        FIXME("Failed to create ttsenginesite: %#lx.\n", hr);
+        goto fail;
+    }
+
     speak_task = heap_alloc(sizeof(*speak_task));
 
     speak_task->task.proc = speak_proc;
     speak_task->result    = NULL;
     speak_task->voice     = This;
     speak_task->frag_list = frag;
+    speak_task->site      = site;
     speak_task->flags     = flags & SPF_NLP_SPEAK_PUNC;
 
     if (!(flags & SPF_ASYNC))
@@ -820,6 +849,9 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
         goto fail;
     }
 
+    if (stream_num_out)
+        *stream_num_out = stream_num;
+
     if (flags & SPF_ASYNC)
         return S_OK;
     else
@@ -832,6 +864,7 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
     }
 
 fail:
+    if (site) ISpTTSEngineSite_Release(site);
     heap_free(frag);
     heap_free(speak_task);
     if (result)
@@ -1032,6 +1065,145 @@ static const ISpVoiceVtbl spvoice_vtbl =
     spvoice_DisplayUI
 };
 
+/* ISpTTSEngineSite interface */
+static HRESULT WINAPI ttsenginesite_QueryInterface(ISpTTSEngineSite *iface, REFIID iid, void **obj)
+{
+    struct tts_engine_site *This = impl_from_ISpTTSEngineSite(iface);
+
+    TRACE("(%p, %s %p).\n", iface, debugstr_guid(iid), obj);
+
+    if (IsEqualIID(iid, &IID_IUnknown) ||
+        IsEqualIID(iid, &IID_ISpTTSEngineSite))
+        *obj = &This->ISpTTSEngineSite_iface;
+    else
+    {
+        *obj = NULL;
+        FIXME("interface %s not implemented.\n", debugstr_guid(iid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*obj);
+    return S_OK;
+}
+
+static ULONG WINAPI ttsenginesite_AddRef(ISpTTSEngineSite *iface)
+{
+    struct tts_engine_site *This = impl_from_ISpTTSEngineSite(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p): ref=%lu.\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI ttsenginesite_Release(ISpTTSEngineSite *iface)
+{
+    struct tts_engine_site *This = impl_from_ISpTTSEngineSite(iface);
+
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p): ref=%lu.\n", iface, ref);
+
+    if (!ref)
+    {
+        if (This->voice)
+            ISpeechVoice_Release(&This->voice->ISpeechVoice_iface);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI ttsenginesite_AddEvents(ISpTTSEngineSite *iface, const SPEVENT *events, ULONG count)
+{
+    FIXME("(%p, %p, %ld): stub.\n", iface, events, count);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI ttsenginesite_GetEventInterest(ISpTTSEngineSite *iface, ULONGLONG *interest)
+{
+    FIXME("(%p, %p): stub.\n", iface, interest);
+
+    return E_NOTIMPL;
+}
+
+static DWORD WINAPI ttsenginesite_GetActions(ISpTTSEngineSite *iface)
+{
+    FIXME("(%p): stub.\n", iface);
+
+    return SPVES_CONTINUE;
+}
+
+static HRESULT WINAPI ttsenginesite_Write(ISpTTSEngineSite *iface, const void *buf, ULONG cb, ULONG *cb_written)
+{
+    FIXME("(%p, %p, %ld, %p): stub.\n", iface, buf, cb, cb_written);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ttsenginesite_GetRate(ISpTTSEngineSite *iface, LONG *rate)
+{
+    FIXME("(%p, %p): stub.\n", iface, rate);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ttsenginesite_GetVolume(ISpTTSEngineSite *iface, USHORT *volume)
+{
+    FIXME("(%p, %p): stub.\n", iface, volume);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ttsenginesite_GetSkipInfo(ISpTTSEngineSite *iface, SPVSKIPTYPE *type, LONG *skip_count)
+{
+    FIXME("(%p, %p, %p): stub.\n", iface, type, skip_count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ttsenginesite_CompleteSkip(ISpTTSEngineSite *iface, LONG num_skipped)
+{
+    FIXME("(%p, %ld): stub.\n", iface, num_skipped);
+
+    return E_NOTIMPL;
+}
+
+const static ISpTTSEngineSiteVtbl ttsenginesite_vtbl =
+{
+    ttsenginesite_QueryInterface,
+    ttsenginesite_AddRef,
+    ttsenginesite_Release,
+    ttsenginesite_AddEvents,
+    ttsenginesite_GetEventInterest,
+    ttsenginesite_GetActions,
+    ttsenginesite_Write,
+    ttsenginesite_GetRate,
+    ttsenginesite_GetVolume,
+    ttsenginesite_GetSkipInfo,
+    ttsenginesite_CompleteSkip
+};
+
+static HRESULT ttsenginesite_create(struct speech_voice *voice, ULONG stream_num, ISpTTSEngineSite **site)
+{
+    struct tts_engine_site *This = heap_alloc(sizeof(*This));
+
+    if (!This) return E_OUTOFMEMORY;
+
+    This->ISpTTSEngineSite_iface.lpVtbl = &ttsenginesite_vtbl;
+
+    This->ref = 1;
+    This->voice = voice;
+    This->stream_num = stream_num;
+
+    ISpeechVoice_AddRef(&This->voice->ISpeechVoice_iface);
+
+    *site = &This->ISpTTSEngineSite_iface;
+
+    return S_OK;
+}
+
 /* IConnectionPointContainer interface */
 static HRESULT WINAPI container_QueryInterface(IConnectionPointContainer *iface, REFIID iid, void **obj)
 {
@@ -1098,6 +1270,7 @@ HRESULT speech_voice_create(IUnknown *outer, REFIID iid, void **obj)
 
     This->output = NULL;
     This->engine = NULL;
+    This->cur_stream_num = 0;
     This->volume = 100;
     This->rate = 0;
     memset(&This->queue, 0, sizeof(This->queue));
