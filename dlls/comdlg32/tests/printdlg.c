@@ -248,8 +248,8 @@ static void test_PrintDlgA(void)
         ok(pDlg->hDevMode != 0, "hDevMode should not be 0\n");
         dm = GlobalLock(pDlg->hDevMode);
         /* some broken drivers use always PD_USEDEVMODECOPIES */
-        ok((S1(U1(*dm)).dmCopies == 1) || broken(S1(U1(*dm)).dmCopies == 123),
-            "expected dm->dmCopies 1, got %d\n", S1(U1(*dm)).dmCopies);
+        ok((dm->dmCopies == 1) || broken(dm->dmCopies == 123),
+            "expected dm->dmCopies 1, got %d\n", dm->dmCopies);
         GlobalUnlock(pDlg->hDevMode);
         GlobalFree(pDlg->hDevMode);
         GlobalFree(pDlg->hDevNames);
@@ -263,7 +263,7 @@ static void test_PrintDlgA(void)
         ok(pDlg->nCopies == 1, "expected nCopies 1, got %d\n", pDlg->nCopies);
         ok(pDlg->hDevMode != 0, "hDevMode should not be 0\n");
         dm = GlobalLock(pDlg->hDevMode);
-        ok(S1(U1(*dm)).dmCopies == 123, "expected dm->dmCopies 123, got %d\n", S1(U1(*dm)).dmCopies);
+        ok(dm->dmCopies == 123, "expected dm->dmCopies 123, got %d\n", dm->dmCopies);
         GlobalUnlock(pDlg->hDevMode);
         GlobalFree(pDlg->hDevMode);
         GlobalFree(pDlg->hDevNames);
