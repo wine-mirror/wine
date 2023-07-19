@@ -471,23 +471,18 @@ BOOL WINAPI User32CallWindowsHook( struct win_hook_params *params, ULONG size )
         ret_ptr = (char *)params + lparam_offset;
         params->lparam = (LPARAM)ret_ptr;
 
-        if (params->id == WH_CBT && params->code == HCBT_CREATEWND)
+        switch (params->id)
         {
-            CREATESTRUCTW *cs = (CREATESTRUCTW *)params->lparam;
-            const WCHAR *ptr = (const WCHAR *)(cs + 1);
-
-            if (!IS_INTRESOURCE(cs->lpszName))
+        case WH_CBT:
+            if (params->code == HCBT_CREATEWND)
             {
-                cs->lpszName = ptr;
-                ptr += wcslen( ptr ) + 1;
+                cbtc.hwndInsertAfter = HWND_TOP;
+                unpack_message( (HWND)params->wparam, WM_CREATE, NULL, (LPARAM *)&cbtc.lpcs,
+                                &ret_ptr, ret_size, FALSE );
+                params->lparam = (LPARAM)&cbtc;
+                ret_size = sizeof(*cbtc.lpcs);
             }
-            if (!IS_INTRESOURCE(cs->lpszClass))
-                cs->lpszClass = ptr;
-
-            cbtc.hwndInsertAfter = HWND_TOP;
-            cbtc.lpcs = cs;
-            params->lparam = (LPARAM)&cbtc;
-            ret_size = sizeof(*cs);
+            break;
         }
     }
     if (params->module[0] && !(proc = get_hook_proc( proc, params->module, &free_module )))

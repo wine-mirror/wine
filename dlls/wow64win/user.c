@@ -717,14 +717,7 @@ static UINT hook_lparam_64to32( int id, int code, const void *lp, size_t size, v
         switch (code)
         {
         case HCBT_CREATEWND:
-            {
-                const CREATESTRUCTW *cs64 = lp;
-                CREATESTRUCT32 *cs32 = lp32;
-                createstruct_64to32( cs64, cs32 );
-                size -= sizeof(*cs64);
-                if (size) memmove( cs32 + 1, cs64 + 1, size );
-                return sizeof(*cs32) + size;
-            }
+            return packed_message_64to32( WM_CREATE, lp, lp32, size );
 
         case HCBT_ACTIVATE:
             {

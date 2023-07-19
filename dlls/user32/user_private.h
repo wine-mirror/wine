@@ -51,6 +51,8 @@ extern BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
                                 const void *buffer, size_t size ) DECLSPEC_HIDDEN;
 extern void free_cached_data( UINT format, HANDLE handle ) DECLSPEC_HIDDEN;
 extern HANDLE render_synthesized_format( UINT format, UINT from ) DECLSPEC_HIDDEN;
+extern BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
+                            void **buffer, size_t size, BOOL ansi );
 
 extern void CLIPBOARD_ReleaseOwner( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HDC get_display_dc(void) DECLSPEC_HIDDEN;

@@ -1134,7 +1134,7 @@ static size_t copy_string( void *ptr, const void *str, BOOL ansi )
  *
  * Calculate size of packed message buffer.
  */
-static size_t user_message_size( UINT message, LPARAM lparam, BOOL ansi )
+size_t user_message_size( UINT message, LPARAM lparam, BOOL ansi )
 {
     const void *lparam_ptr = (const void *)lparam;
     size_t size = 0;
@@ -1160,7 +1160,7 @@ static size_t user_message_size( UINT message, LPARAM lparam, BOOL ansi )
  *
  * Copy message to a buffer for passing to client.
  */
-static void pack_user_message( void *buffer, size_t size, UINT message, LPARAM lparam, BOOL ansi )
+void pack_user_message( void *buffer, size_t size, UINT message, LPARAM lparam, BOOL ansi )
 {
     const void *lparam_ptr = (const void *)lparam;
     void const *inline_ptr = (void *)0xffffffff;

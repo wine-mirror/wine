@@ -230,12 +230,11 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, siz
     else if (info->proc)
     {
         struct user_thread_info *thread_info = get_user_thread_info();
+        size_t size, lparam_offset = 0, message_offset = 0, message_size = 0;
+        size_t lparam_ret_size = lparam_size;
         HHOOK prev = thread_info->hook;
         BOOL prev_unicode = thread_info->hook_unicode;
         struct win_hook_params *params = info;
-        ULONG lparam_ret_size = lparam_size;
-        ULONG size = sizeof(*params);
-        CREATESTRUCTW *cs = NULL;
         void *ret_ptr;
         ULONG ret_len;
 
@@ -243,25 +242,29 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, siz
 
         if (lparam_size)
         {
-            size = (size + 15) & ~15; /* align offset */
-            lparam_ret_size = lparam_size;
-
             if (params->id == WH_CBT && params->code == HCBT_CREATEWND)
             {
-                cs = ((CBT_CREATEWNDW *)params->lparam)->lpcs;
-                params->lparam = 0;
-                lparam_ret_size = 0;
-                lparam_size = sizeof(*cs);
-                if (!IS_INTRESOURCE( cs->lpszName ))
-                    lparam_size += (wcslen( cs->lpszName ) + 1) * sizeof(WCHAR);
-                if (!IS_INTRESOURCE( cs->lpszClass ))
-                    lparam_size += (wcslen( cs->lpszClass ) + 1) * sizeof(WCHAR);
+                CBT_CREATEWNDW *cbtc = (CBT_CREATEWNDW *)params->lparam;
+                message_size = user_message_size( WM_NCCREATE, (LPARAM)cbtc->lpcs, FALSE );
+                lparam_size = lparam_ret_size = 0;
+            }
+
+            if (lparam_size)
+            {
+                lparam_offset = (size + 15) & ~15; /* align offset */
+                size = lparam_offset + lparam_size;
+            }
+
+            if (message_size)
+            {
+                message_offset = (size + 15) & ~15; /* align offset */
+                size = message_offset + message_size;
             }
         }
 
-        if (size + lparam_size > sizeof(*info))
+        if (size > sizeof(*info))
         {
-            if (!(params = malloc( size + lparam_size ))) return 0;
+            if (!(params = malloc( size ))) return 0;
             memcpy( params, info, FIELD_OFFSET( struct win_hook_params, module ));
         }
         if (module)
@@ -270,31 +273,20 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, siz
             params->module[0] = 0;
 
         if (lparam_size)
-        {
-            void *lparam_ptr = (char *)params + size;
-            if (cs)
-            {
-                CREATESTRUCTW *params_cs = lparam_ptr;
-                WCHAR *ptr = (WCHAR *)(params_cs + 1);
-                const void *inline_ptr = (void *)0xffffffff;
+            memcpy( (char *)params + lparam_offset, (const void *)params->lparam, lparam_size );
 
-                *params_cs = *cs;
-                if (!IS_INTRESOURCE( cs->lpszName ))
-                {
-                    UINT len = wcslen( cs->lpszName ) + 1;
-                    memcpy( ptr, cs->lpszName, len * sizeof(WCHAR) );
-                    ptr += len;
-                    params_cs->lpszName = inline_ptr;
-                }
-                if (!IS_INTRESOURCE( cs->lpszClass ))
-                {
-                    wcscpy( ptr, cs->lpszClass );
-                    params_cs->lpszClass = inline_ptr;
-                }
-            }
-            else
+        if (message_size)
+        {
+            switch (params->id)
             {
-                memcpy( lparam_ptr, (const void *)params->lparam, lparam_size );
+            case WH_CBT:
+                {
+                    CBT_CREATEWNDW *cbtc = (CBT_CREATEWNDW *)params->lparam;
+                    LPARAM lp = (LPARAM)cbtc->lpcs;
+                    pack_user_message( (char *)params + message_offset, message_size,
+                                       WM_CREATE, lp, FALSE );
+                }
+                break;
             }
         }
 
@@ -316,9 +308,9 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, siz
         thread_info->hook = params->handle;
         thread_info->hook_unicode = params->next_unicode;
         thread_info->hook_call_depth++;
-        ret = KeUserModeCallback( NtUserCallWindowsHook, params, size + lparam_size, &ret_ptr, &ret_len );
+        ret = KeUserModeCallback( NtUserCallWindowsHook, params, size, &ret_ptr, &ret_len );
         if (ret_len && ret_len == lparam_ret_size)
-            memcpy( (void *)params->lparam, ret_ptr, lparam_ret_size );
+            memcpy( (void *)params->lparam, ret_ptr, ret_len );
         thread_info->hook = prev;
         thread_info->hook_unicode = prev_unicode;
         thread_info->hook_call_depth--;

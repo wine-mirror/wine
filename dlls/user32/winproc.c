@@ -799,8 +799,8 @@ static size_t string_size( const void *str, BOOL ansi )
  *
  * Unpack a message received from another process.
  */
-static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
-                            void **buffer, size_t size, BOOL ansi )
+BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
+                     void **buffer, size_t size, BOOL ansi )
 {
     size_t minsize = 0, prev_size = size;
     union packed_structs *ps = *buffer;
