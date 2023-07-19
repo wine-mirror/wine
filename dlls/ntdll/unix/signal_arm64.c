@@ -185,6 +185,7 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame, CONTEXT *conte
     struct frame_state state_stack[MAX_SAVED_STATES];
     int aug_z_format = 0;
     unsigned char lsda_encoding = DW_EH_PE_omit;
+    DWORD64 prev_x28 = context->X28;
 
     memset( &info, 0, sizeof(info) );
     info.state_stack = state_stack;
@@ -274,13 +275,13 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame, CONTEXT *conte
     context->Pc = context->Lr;
 
     if (bases->func == (void *)raise_func_trampoline) {
-        /* raise_func_trampoline has a full CONTEXT stored on the stack;
-         * restore the original Lr value from there. The function we unwind
-         * to might be a leaf function that hasn't backed up its own original
-         * Lr value on the stack.
+        /* raise_func_trampoline has a pointer to a full CONTEXT stored in x28;
+         * restore the original Lr value from there. The function we unwind to
+         * might be a leaf function that hasn't backed up its own original Lr
+         * value on the stack.
          * We could also just restore the full context here without doing
          * unw_step at all. */
-        const CONTEXT *next_ctx = (const CONTEXT *) *frame;
+        const CONTEXT *next_ctx = (const CONTEXT *)prev_x28;
         context->Lr = next_ctx->Lr;
     }
 
@@ -314,6 +315,7 @@ static NTSTATUS libunwind_virtual_unwind( ULONG_PTR ip, ULONG_PTR *frame, CONTEX
     unw_cursor_t cursor;
     unw_proc_info_t info;
     int rc;
+    DWORD64 prev_x28 = context->X28;
 
 #ifdef __APPLE__
     rc = unw_getcontext( &unw_context );
@@ -420,13 +422,13 @@ static NTSTATUS libunwind_virtual_unwind( ULONG_PTR ip, ULONG_PTR *frame, CONTEX
     context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
 
     if (info.start_ip == (unw_word_t)raise_func_trampoline) {
-        /* raise_func_trampoline has a full CONTEXT stored on the stack;
-         * restore the original Lr value from there. The function we unwind
-         * to might be a leaf function that hasn't backed up its own original
-         * Lr value on the stack.
+        /* raise_func_trampoline has a pointer to a full CONTEXT stored in x28;
+         * restore the original Lr value from there. The function we unwind to
+         * might be a leaf function that hasn't backed up its own original Lr
+         * value on the stack.
          * We could also just restore the full context here without doing
          * unw_step at all. */
-        const CONTEXT *next_ctx = (const CONTEXT *) *frame;
+        const CONTEXT *next_ctx = (const CONTEXT *)prev_x28;
         context->Lr = next_ctx->Lr;
     }
 
@@ -950,48 +952,40 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
 
 
 /* Note, unwind_builtin_dll above has hardcoded assumptions on how this
- * function stores things on the stack; if modified, modify that one in
+ * function stores a CONTEXT pointer in x28; if modified, modify that one in
  * sync as well. */
 __ASM_GLOBAL_FUNC( raise_func_trampoline,
-                   "stp x29, x30, [sp, #-0x30]!\n\t"
-                   __ASM_CFI(".cfi_def_cfa_offset 48\n\t")
-                   __ASM_CFI(".cfi_offset 29, -48\n\t")
-                   __ASM_CFI(".cfi_offset 30, -40\n\t")
-                   "stp x0,  x1,  [sp, #0x10]\n\t"
-                   "str x2,       [sp, #0x20]\n\t"
+                   "stp x29, x30, [sp, #-0x20]!\n\t"
+                   "str x28, [sp, #0x10]\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 32\n\t")
+                   __ASM_CFI(".cfi_offset 29, -32\n\t")
+                   __ASM_CFI(".cfi_offset 30, -24\n\t")
+                   __ASM_CFI(".cfi_offset 28, -16\n\t")
                    "mov x29, sp\n\t"
                    __ASM_CFI(".cfi_def_cfa_register 29\n\t")
                    __ASM_CFI(".cfi_remember_state\n\t")
-
-                   /* Memcpy the context onto the stack */
-                   "sub sp, sp, #0x390\n\t"
-                   "mov x0,  sp\n\t"
-                   "mov x2,  #0x390\n\t"
-                   "bl " __ASM_NAME("memcpy") "\n\t"
-                   __ASM_CFI(".cfi_def_cfa 31, 0\n\t")
-                   __ASM_CFI(".cfi_escape 0x0f,0x04,0x8f,0x80,0x02,0x06\n\t") /* CFA, DW_OP_breg31 + 0x100, DW_OP_deref */
-                   __ASM_CFI(".cfi_escape 0x10,0x13,0x03,0x8f,0xa0,0x01\n\t") /* x19, DW_OP_breg31 + 0xA0 */
-                   __ASM_CFI(".cfi_escape 0x10,0x14,0x03,0x8f,0xa8,0x01\n\t") /* x20 */
-                   __ASM_CFI(".cfi_escape 0x10,0x15,0x03,0x8f,0xb0,0x01\n\t") /* x21 */
-                   __ASM_CFI(".cfi_escape 0x10,0x16,0x03,0x8f,0xb8,0x01\n\t") /* x22 */
-                   __ASM_CFI(".cfi_escape 0x10,0x17,0x03,0x8f,0xc0,0x01\n\t") /* x23 */
-                   __ASM_CFI(".cfi_escape 0x10,0x18,0x03,0x8f,0xc8,0x01\n\t") /* x24 */
-                   __ASM_CFI(".cfi_escape 0x10,0x19,0x03,0x8f,0xd0,0x01\n\t") /* x25 */
-                   __ASM_CFI(".cfi_escape 0x10,0x1a,0x03,0x8f,0xd8,0x01\n\t") /* x26 */
-                   __ASM_CFI(".cfi_escape 0x10,0x1b,0x03,0x8f,0xe0,0x01\n\t") /* x27 */
-                   __ASM_CFI(".cfi_escape 0x10,0x1c,0x03,0x8f,0xe8,0x01\n\t") /* x28 */
-                   __ASM_CFI(".cfi_escape 0x10,0x1d,0x03,0x8f,0xf0,0x01\n\t") /* x29 */
-                   __ASM_CFI(".cfi_escape 0x10,0x1e,0x03,0x8f,0x88,0x02\n\t") /* x30 = pc */
-                   __ASM_CFI(".cfi_escape 0x10,0x48,0x03,0x8f,0x90,0x03\n\t") /* d8  */
-                   __ASM_CFI(".cfi_escape 0x10,0x49,0x03,0x8f,0x98,0x03\n\t") /* d9  */
-                   __ASM_CFI(".cfi_escape 0x10,0x4a,0x03,0x8f,0xa0,0x03\n\t") /* d10 */
-                   __ASM_CFI(".cfi_escape 0x10,0x4b,0x03,0x8f,0xa8,0x03\n\t") /* d11 */
-                   __ASM_CFI(".cfi_escape 0x10,0x4c,0x03,0x8f,0xb0,0x03\n\t") /* d12 */
-                   __ASM_CFI(".cfi_escape 0x10,0x4d,0x03,0x8f,0xb8,0x03\n\t") /* d13 */
-                   __ASM_CFI(".cfi_escape 0x10,0x4e,0x03,0x8f,0xc0,0x03\n\t") /* d14 */
-                   __ASM_CFI(".cfi_escape 0x10,0x4f,0x03,0x8f,0xc8,0x03\n\t") /* d15 */
-                   "ldp x0,  x1,  [x29, #0x10]\n\t"
-                   "ldr x2,       [x29, #0x20]\n\t"
+                   "mov x28, x1\n\t"
+                   __ASM_CFI_REG_IS_AT2(x19, x28, 0xa0, 0x01)
+                   __ASM_CFI_REG_IS_AT2(x20, x28, 0xa8, 0x01)
+                   __ASM_CFI_REG_IS_AT2(x21, x28, 0xb0, 0x01)
+                   __ASM_CFI_REG_IS_AT2(x22, x28, 0xb8, 0x01)
+                   __ASM_CFI_REG_IS_AT2(x23, x28, 0xc0, 0x01)
+                   __ASM_CFI_REG_IS_AT2(x24, x28, 0xc8, 0x01)
+                   __ASM_CFI_REG_IS_AT2(x25, x28, 0xd0, 0x01)
+                   __ASM_CFI_REG_IS_AT2(x26, x28, 0xd8, 0x01)
+                   __ASM_CFI_REG_IS_AT2(x27, x28, 0xe0, 0x01)
+                   __ASM_CFI_REG_IS_AT2(x28, x28, 0xe8, 0x01)
+                   __ASM_CFI_REG_IS_AT2(x29, x28, 0xf0, 0x01)
+                   __ASM_CFI_CFA_IS_AT2(x28, 0x80, 0x02)
+                   __ASM_CFI_REG_IS_AT2(x30, x28, 0x88, 0x02)
+                   __ASM_CFI_REG_IS_AT2(v8, x28, 0x90, 0x03)
+                   __ASM_CFI_REG_IS_AT2(v9, x28, 0x98, 0x03)
+                   __ASM_CFI_REG_IS_AT2(v10, x28, 0xa0, 0x03)
+                   __ASM_CFI_REG_IS_AT2(v11, x28, 0xa8, 0x03)
+                   __ASM_CFI_REG_IS_AT2(v12, x28, 0xb0, 0x03)
+                   __ASM_CFI_REG_IS_AT2(v13, x28, 0xb8, 0x03)
+                   __ASM_CFI_REG_IS_AT2(v14, x28, 0xc8, 0x03)
+                   __ASM_CFI_REG_IS_AT2(v15, x28, 0xc8, 0x03)
                    "blr x2\n\t"
                    __ASM_CFI(".cfi_restore_state\n\t")
                    "brk #1")
