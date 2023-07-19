@@ -495,6 +495,18 @@ BOOL WINAPI User32CallWindowsHook( struct win_hook_params *params, ULONG size )
                 ret_size = 0;
                 break;
             }
+        case WH_CALLWNDPROCRET:
+            if (ret_size > sizeof(CWPRETSTRUCT))
+            {
+                CWPRETSTRUCT *cwpret = (CWPRETSTRUCT *)params->lparam;
+                size_t offset = (lparam_offset + sizeof(*cwpret) + 15) & ~15;
+                void *buffer = (char *)params + offset;
+
+                unpack_message( cwpret->hwnd, cwpret->message, &cwpret->wParam, &cwpret->lParam,
+                                &buffer, size - offset, !params->prev_unicode );
+                ret_size = 0;
+                break;
+            }
         }
     }
     if (params->module[0] && !(proc = get_hook_proc( proc, params->module, &free_module )))

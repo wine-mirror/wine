@@ -295,6 +295,13 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, siz
                                        cwp->message, cwp->lParam, ansi );
                 }
                 break;
+            case WH_CALLWNDPROCRET:
+                {
+                    CWPRETSTRUCT *cwpret = (CWPRETSTRUCT *)((char *)params + lparam_offset);
+                    pack_user_message( (char *)params + message_offset, message_size,
+                                       cwpret->message, cwpret->lParam, ansi );
+                }
+                break;
             }
         }
 

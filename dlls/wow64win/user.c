@@ -766,6 +766,15 @@ static UINT hook_lparam_64to32( int id, int code, const void *lp, size_t size, v
             cwpret32.message = cwpret->message;
             cwpret32.hwnd    = HandleToUlong( cwpret->hwnd );
             memcpy( lp32, &cwpret32, sizeof(cwpret32) );
+            if (size > sizeof(*cwpret))
+            {
+                const size_t offset64 = (sizeof(*cwpret) + 15) & ~15;
+                const size_t offset32 = (sizeof(cwpret32) + 15) & ~15;
+                size = packed_message_64to32( cwpret32.message,
+                                              (const char *)lp + offset64,
+                                              (char *)lp32 + offset32, size - offset64 );
+                return offset32 + size;
+            }
             return sizeof(cwpret32);
         }
 
