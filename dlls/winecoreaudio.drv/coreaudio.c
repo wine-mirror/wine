@@ -2112,6 +2112,7 @@ static NTSTATUS unix_wow64_get_position(void *args)
     struct
     {
         stream_handle stream;
+        BOOL device;
         HRESULT result;
         PTR32 pos;
         PTR32 qpctime;
@@ -2119,6 +2120,7 @@ static NTSTATUS unix_wow64_get_position(void *args)
     struct get_position_params params =
     {
         .stream = params32->stream,
+        .device = params32->device,
         .pos = ULongToPtr(params32->pos),
         .qpctime = ULongToPtr(params32->qpctime)
     };
