@@ -1512,9 +1512,22 @@ Window get_dummy_parent(void)
         attrib.override_redirect = True;
         attrib.border_pixel = 0;
         attrib.colormap = default_colormap;
+
+#ifdef HAVE_LIBXSHAPE
+        {
+            static XRectangle empty_rect;
+            dummy_parent = XCreateWindow( gdi_display, root_window, 0, 0, 1, 1, 0,
+                                          default_visual.depth, InputOutput, default_visual.visual,
+                                          CWColormap | CWBorderPixel | CWOverrideRedirect, &attrib );
+            XShapeCombineRectangles( gdi_display, dummy_parent, ShapeBounding, 0, 0, &empty_rect, 1,
+                                     ShapeSet, YXBanded );
+        }
+#else
         dummy_parent = XCreateWindow( gdi_display, root_window, -1, -1, 1, 1, 0, default_visual.depth,
                                       InputOutput, default_visual.visual,
                                       CWColormap | CWBorderPixel | CWOverrideRedirect, &attrib );
+        WARN("Xshape support is not compiled in. Applications under XWayland may have poor performance.");
+#endif
         XMapWindow( gdi_display, dummy_parent );
     }
     return dummy_parent;
