@@ -699,9 +699,16 @@ static HRESULT WINAPI spvoice_GetVoice(ISpVoice *iface, ISpObjectToken **token)
     return hr;
 }
 
+struct async_result
+{
+    HANDLE done;
+    HRESULT hr;
+};
+
 struct speak_task
 {
     struct async_task task;
+    struct async_result *result;
 
     struct speech_voice *voice;
     SPVTEXTFRAG *frag_list;
@@ -710,7 +717,15 @@ struct speak_task
 
 static void speak_proc(struct async_task *task)
 {
+    struct speak_task *speak_task = (struct speak_task *)task;
+
     FIXME("(%p): stub.\n", task);
+
+    if (speak_task->result)
+    {
+        speak_task->result->hr = E_NOTIMPL;
+        SetEvent(speak_task->result->done);
+    }
 }
 
 static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWORD flags, ULONG *stream_num_out)
@@ -718,6 +733,7 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
     struct speech_voice *This = impl_from_ISpVoice(iface);
     SPVTEXTFRAG *frag;
     struct speak_task *speak_task = NULL;
+    struct async_result *result = NULL;
     size_t contents_len, contents_size;
     HRESULT hr;
 
@@ -752,12 +768,6 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
     else if (!contents)
         return E_POINTER;
 
-    if (!(flags & SPF_ASYNC))
-    {
-        FIXME("Synchronous Speak not implemented.\n");
-        return E_NOTIMPL;
-    }
-
     contents_len = wcslen(contents);
     contents_size = sizeof(WCHAR) * (contents_len + 1);
 
@@ -787,9 +797,22 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
     speak_task = heap_alloc(sizeof(*speak_task));
 
     speak_task->task.proc = speak_proc;
+    speak_task->result    = NULL;
     speak_task->voice     = This;
     speak_task->frag_list = frag;
     speak_task->flags     = flags & SPF_NLP_SPEAK_PUNC;
+
+    if (!(flags & SPF_ASYNC))
+    {
+        if (!(result = heap_alloc(sizeof(*result))))
+        {
+            hr = E_OUTOFMEMORY;
+            goto fail;
+        }
+        result->hr = E_FAIL;
+        result->done = CreateEventW(NULL, FALSE, FALSE, NULL);
+        speak_task->result = result;
+    }
 
     if (FAILED(hr = async_queue_task(&This->queue, (struct async_task *)speak_task)))
     {
@@ -799,9 +822,23 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
 
     if (flags & SPF_ASYNC)
         return S_OK;
+    else
+    {
+        WaitForSingleObject(result->done, INFINITE);
+        hr = result->hr;
+        CloseHandle(result->done);
+        heap_free(result);
+        return hr;
+    }
+
 fail:
     heap_free(frag);
     heap_free(speak_task);
+    if (result)
+    {
+        CloseHandle(result->done);
+        heap_free(result);
+    }
     return hr;
 }
 
