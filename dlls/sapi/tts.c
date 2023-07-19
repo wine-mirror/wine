@@ -731,15 +731,89 @@ struct speak_task
     DWORD flags;
 };
 
+static HRESULT set_output_format(ISpStreamFormat *output, ISpTTSEngine *engine, GUID *fmtid, WAVEFORMATEX **wfx)
+{
+    GUID output_fmtid;
+    WAVEFORMATEX *output_wfx = NULL;
+    ISpAudio *audio = NULL;
+    HRESULT hr;
+
+    if (FAILED(hr = ISpStreamFormat_GetFormat(output, &output_fmtid, &output_wfx)))
+        return hr;
+    if (FAILED(hr = ISpTTSEngine_GetOutputFormat(engine, &output_fmtid, output_wfx, fmtid, wfx)))
+        goto done;
+    if (!IsEqualGUID(fmtid, &SPDFID_WaveFormatEx))
+    {
+        hr = E_INVALIDARG;
+        goto done;
+    }
+
+    if (memcmp(output_wfx, *wfx, sizeof(WAVEFORMATEX)) ||
+        memcmp(output_wfx + 1, *wfx + 1, output_wfx->cbSize))
+    {
+        if (FAILED(hr = ISpStreamFormat_QueryInterface(output, &IID_ISpAudio, (void **)&audio)) ||
+            FAILED(hr = ISpAudio_SetFormat(audio, &SPDFID_WaveFormatEx, *wfx)))
+            goto done;
+    }
+
+done:
+    CoTaskMemFree(output_wfx);
+    if (audio) ISpAudio_Release(audio);
+    return hr;
+}
+
 static void speak_proc(struct async_task *task)
 {
     struct speak_task *speak_task = (struct speak_task *)task;
+    struct speech_voice *This = speak_task->voice;
+    GUID fmtid;
+    WAVEFORMATEX *wfx = NULL;
+    ISpTTSEngine *engine = NULL;
+    ISpAudio *audio = NULL;
+    HRESULT hr;
 
-    FIXME("(%p): stub.\n", task);
+    TRACE("(%p).\n", task);
+
+    EnterCriticalSection(&This->cs);
+
+    if (FAILED(hr = set_output_format(This->output, This->engine, &fmtid, &wfx)))
+    {
+        LeaveCriticalSection(&This->cs);
+        ERR("failed setting output format: %#lx.\n", hr);
+        goto done;
+    }
+    engine = This->engine;
+    ISpTTSEngine_AddRef(engine);
+
+    if (SUCCEEDED(ISpStreamFormat_QueryInterface(This->output, &IID_ISpAudio, (void **)&audio)))
+        ISpAudio_SetState(audio, SPAS_RUN, 0);
+
+    LeaveCriticalSection(&This->cs);
+
+    hr = ISpTTSEngine_Speak(engine, speak_task->flags, &fmtid, wfx, speak_task->frag_list, speak_task->site);
+    if (SUCCEEDED(hr))
+    {
+        ISpStreamFormat_Commit(This->output, STGC_DEFAULT);
+        if (audio)
+            WaitForSingleObject(ISpAudio_EventHandle(audio), INFINITE);
+    }
+    else
+        WARN("ISpTTSEngine_Speak failed: %#lx.\n", hr);
+
+done:
+    if (audio)
+    {
+        ISpAudio_SetState(audio, SPAS_CLOSED, 0);
+        ISpAudio_Release(audio);
+    }
+    CoTaskMemFree(wfx);
+    if (engine) ISpTTSEngine_Release(engine);
+    heap_free(speak_task->frag_list);
+    ISpTTSEngineSite_Release(speak_task->site);
 
     if (speak_task->result)
     {
-        speak_task->result->hr = E_NOTIMPL;
+        speak_task->result->hr = hr;
         SetEvent(speak_task->result->done);
     }
 }
@@ -757,7 +831,7 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
     ULONG stream_num;
     HRESULT hr;
 
-    FIXME("(%p, %p, %#lx, %p): semi-stub.\n", iface, contents, flags, stream_num_out);
+    TRACE("(%p, %p, %#lx, %p).\n", iface, contents, flags, stream_num_out);
 
     flags &= ~SPF_IS_NOT_XML;
     if (flags & ~(SPF_ASYNC | SPF_PURGEBEFORESPEAK | SPF_NLP_SPEAK_PUNC))
