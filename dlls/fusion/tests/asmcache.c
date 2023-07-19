@@ -820,12 +820,12 @@ static void create_assembly(LPCSTR file)
     assembly.tableshdr.MaskValid.u.LowPart = 0x00000005;
     assembly.tableshdr.MaskSorted.u.HighPart = 0x1600;
     assembly.tableshdr.MaskSorted.u.LowPart = 0x3301FA00;
-    U(assembly.labelres).Name = 0x10;
-    U2(assembly.labelres).OffsetToData = 0x80000018;
-    U(assembly.label11res).Name = 0x1;
-    U2(assembly.label11res).OffsetToData = 0x80000030;
-    U(assembly.label10res).Name = 0x0;
-    U2(assembly.label10res).OffsetToData = 0x48;
+    assembly.labelres.Name = 0x10;
+    assembly.labelres.OffsetToData = 0x80000018;
+    assembly.label11res.Name = 0x1;
+    assembly.label11res.OffsetToData = 0x80000030;
+    assembly.label10res.Name = 0x0;
+    assembly.label10res.OffsetToData = 0x48;
 
     hfile = CreateFileA(file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
 
