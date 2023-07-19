@@ -52,6 +52,8 @@ void async_empty_queue(struct async_queue *queue)
 {
     struct async_task *task, *next;
 
+    if (!queue->init) return;
+
     EnterCriticalSection(&queue->cs);
     LIST_FOR_EACH_ENTRY_SAFE(task, next, &queue->tasks, struct async_task, entry)
     {
