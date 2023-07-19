@@ -543,8 +543,8 @@ static void test_findOIDInfo(void)
         if (info)
         {
             ok(!strcmp(info->pszOID, test->oid), "Unexpected OID %s, expected %s\n", info->pszOID, test->oid);
-            ok(U(*info).Algid == test->algid || broken(U(*info).Algid == test->broken_algid),
-                "Unexpected Algid %d, expected %d\n", U(*info).Algid, test->algid);
+            ok(info->Algid == test->algid || broken(info->Algid == test->broken_algid),
+                "Unexpected Algid %d, expected %d\n", info->Algid, test->algid);
         }
     }
 
@@ -559,8 +559,8 @@ static void test_findOIDInfo(void)
             wine_dbgstr_w(L"sha256ECDSA"), wine_dbgstr_w(info->pwszName));
         ok(info->dwGroupId == CRYPT_SIGN_ALG_OID_GROUP_ID,
            "Expected CRYPT_SIGN_ALG_OID_GROUP_ID, got %lu\n", info->dwGroupId);
-        ok(U(*info).Algid == CALG_OID_INFO_CNG_ONLY,
-           "Expected CALG_OID_INFO_CNG_ONLY, got %d\n", U(*info).Algid);
+        ok(info->Algid == CALG_OID_INFO_CNG_ONLY,
+           "Expected CALG_OID_INFO_CNG_ONLY, got %d\n", info->Algid);
 
         data = (DWORD *)info->ExtraInfo.pbData;
         ok(info->ExtraInfo.cbData == 8, "Expected 8, got %ld\n", info->ExtraInfo.cbData);
@@ -581,7 +581,7 @@ static void test_findOIDInfo(void)
     ok(!strcmp(info->pszOID, oid_ecc_public_key), "got %s.\n", info->pszOID);
     ok(!wcscmp(info->pwszName, L"ECC"), "got %s.\n", wine_dbgstr_w(info->pwszName));
     ok(info->dwGroupId == CRYPT_PUBKEY_ALG_OID_GROUP_ID, "got %lu.\n", info->dwGroupId);
-    ok(U(*info).Algid == CALG_OID_INFO_PARAMETERS, "got %d.\n", U(*info).Algid);
+    ok(info->Algid == CALG_OID_INFO_PARAMETERS, "got %d.\n", info->Algid);
     ok(!info->ExtraInfo.cbData, "got %ld.\n", info->ExtraInfo.cbData);
     ok(!wcscmp(info->pwszCNGAlgid, CRYPT_OID_INFO_ECC_PARAMETERS_ALGORITHM), "got %s.\n", wine_dbgstr_w(info->pwszCNGAlgid));
     ok(info->pwszCNGExtraAlgid && !wcscmp(info->pwszCNGExtraAlgid, L""), "got %s.\n",

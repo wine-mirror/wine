@@ -5154,7 +5154,7 @@ static void check_ssl_policy(void)
     /* And again authenticating a client, but specify the size of the policy
      * parameter.
      */
-    U(sslPolicyPara).cbSize = sizeof(sslPolicyCheck);
+    sslPolicyPara.cbSize = sizeof(sslPolicyCheck);
     sslPolicyPara.dwAuthType = AUTHTYPE_CLIENT;
     CHECK_CHAIN_POLICY_STATUS_ARRAY(CERT_CHAIN_POLICY_SSL, NULL, sslPolicyCheck,
      &oct2007, &policyPara);
