@@ -1226,7 +1226,7 @@ static __lc_time_data* create_time_data(WCHAR *sname)
     int i, ret, size;
     LCID lcid = LocaleNameToLCID(sname, LCID_CONVERSION_FLAGS);
 
-    size = sizeof(__lc_time_data);
+    size = 0;
     for(i=0; i<ARRAY_SIZE(time_data); i++) {
         ret = GetLocaleInfoA(lcid, time_data[i], NULL, 0);
         if(!ret)
@@ -1241,10 +1241,10 @@ static __lc_time_data* create_time_data(WCHAR *sname)
 #endif
     }
 #if _MSVCR_VER >= 110
-    size += wcslen(sname)*sizeof(wchar_t);
+    size += (wcslen(sname) + 1) * sizeof(wchar_t);
 #endif
 
-    cur = malloc(size);
+    cur = malloc(FIELD_OFFSET(__lc_time_data, data[size]));
     if(!cur)
         return NULL;
 
@@ -1256,13 +1256,13 @@ static __lc_time_data* create_time_data(WCHAR *sname)
 #if _MSVCR_VER == 0 || _MSVCR_VER >= 100
     for(i=0; i<ARRAY_SIZE(time_data); i++) {
         cur->wstr.wstr[i] = (wchar_t*)&cur->data[ret];
-        ret += GetLocaleInfoEx(sname, time_data[i],
-                (wchar_t*)&cur->data[ret], size-ret)*sizeof(wchar_t);
+        ret += GetLocaleInfoEx(sname, time_data[i], (wchar_t*)&cur->data[ret],
+                (size - ret) / sizeof(wchar_t)) * sizeof(wchar_t);
     }
 #endif
 #if _MSVCR_VER >= 110
     cur->locname = (wchar_t*)&cur->data[ret];
-    wcsncpy((wchar_t *) &cur->data[ret], sname, size-ret);
+    wcscpy((wchar_t*)&cur->data[ret], sname);
 #else
     cur->lcid = lcid;
 #endif
