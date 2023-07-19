@@ -29,6 +29,7 @@ import "windows.foundation.idl";
 namespace Windows.System
 {
     typedef enum DispatcherQueuePriority DispatcherQueuePriority;
+    typedef enum ProcessorArchitecture ProcessorArchitecture;
 
     interface IDispatcherQueue;
     interface IDispatcherQueue2;
@@ -64,6 +65,22 @@ namespace Windows.System
         Low    = -10,
         Normal = 0,
         High   = 10,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum ProcessorArchitecture
+    {
+        X86        = 0,
+        Arm        = 5,
+        X64        = 9,
+        Neutral    = 11,
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)]
+        Arm64      = 12,
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)]
+        X86OnArm64 = 14,
+        Unknown    = 65535
     };
 
     [
