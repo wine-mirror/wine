@@ -353,7 +353,6 @@ struct win_proc_params32
     ULONG lparam;
     BOOL ansi;
     BOOL ansi_dst;
-    BOOL needs_unpack;
     enum wm_char_mapping mapping;
     ULONG dpi_awareness;
     ULONG procA;
@@ -471,7 +470,6 @@ static void win_proc_params_64to32( const struct win_proc_params *src, struct wi
     params.lparam = src->lparam;
     params.ansi = src->ansi;
     params.ansi_dst = src->ansi_dst;
-    params.needs_unpack = src->needs_unpack;
     params.mapping = src->mapping;
     params.dpi_awareness = HandleToUlong( src->dpi_awareness );
     params.procA = PtrToUlong( src->procA );
@@ -932,7 +930,7 @@ static NTSTATUS WINAPI wow64_NtUserCallWinProc( void *arg, ULONG size )
 {
     struct win_proc_params *params = arg;
     struct win_proc_params32 *params32 = arg;
-    size_t lparam_size = 0;
+    size_t lparam_size = 0, offset32 = sizeof(*params32);
     LRESULT result = 0;
     void *ret_ptr;
     ULONG ret_len;
@@ -940,11 +938,17 @@ static NTSTATUS WINAPI wow64_NtUserCallWinProc( void *arg, ULONG size )
 
     win_proc_params_64to32( params, params32 );
     if (size > sizeof(*params))
-        lparam_size = packed_message_64to32( params32->msg, params32->wparam, params + 1, params32 + 1,
-                                             size - sizeof(*params) );
+    {
+        const size_t offset64 = (sizeof(*params) + 15) & ~15;
+        offset32 = (offset32 + 15) & ~15;
+        lparam_size = packed_message_64to32( params32->msg, params32->wparam,
+                                             (char *)params + offset64,
+                                             (char *)params32 + offset32,
+                                             size - offset64 );
+    }
 
     status = Wow64KiUserCallbackDispatcher( NtUserCallWinProc, params32,
-                                            sizeof(*params32) + lparam_size,
+                                            offset32 + lparam_size,
                                             &ret_ptr, &ret_len );
 
     if (ret_len >= sizeof(LONG))

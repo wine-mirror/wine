@@ -377,7 +377,6 @@ static BOOL init_win_proc_params( struct win_proc_params *params, HWND hwnd, UIN
     params->wparam = wparam;
     params->lparam = lparam;
     params->ansi = params->ansi_dst = ansi;
-    params->needs_unpack = FALSE;
     params->mapping = WMCHAR_MAP_CALLWINDOWPROC;
     params->dpi_awareness = get_window_dpi_awareness_context( params->hwnd );
     get_winproc_params( params, TRUE );
@@ -409,7 +408,6 @@ static BOOL init_window_call_params( struct win_proc_params *params, HWND hwnd, 
     params->wparam = wParam;
     params->lparam = lParam;
     params->ansi = ansi;
-    params->needs_unpack = FALSE;
     params->mapping = mapping;
     params->dpi_awareness = get_window_dpi_awareness_context( params->hwnd );
     get_winproc_params( params, !is_dialog );
@@ -2155,10 +2153,10 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 {
     struct win_proc_params p, *params = &p;
     BOOL ansi = ansi_dst && type == MSG_ASCII;
+    size_t packed_size = 0, offset = sizeof(*params);
     LRESULT result = 0;
     CWPSTRUCT cwp;
     CWPRETSTRUCT cwpret;
-    size_t packed_size = 0;
     void *ret_ptr;
     size_t ret_len = 0;
 
@@ -2177,7 +2175,12 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     call_message_hooks( WH_CALLWNDPROC, HC_ACTION, same_thread, (LPARAM)&cwp, sizeof(cwp),
                         packed_size, ansi );
 
-    if (packed_size && !(params = malloc( sizeof(*params) + packed_size ))) return 0;
+    if (packed_size)
+    {
+        offset = (offset + 15) & ~15;
+        if (!(params = malloc( offset + packed_size ))) return 0;
+    }
+
     if (!init_window_call_params( params, hwnd, msg, wparam, lparam, ansi_dst, mapping ))
     {
         if (params != &p) free( params );
@@ -2185,11 +2188,10 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     }
 
     if (type == MSG_OTHER_PROCESS) params->ansi = FALSE;
-    params->needs_unpack = packed_size != 0;
     if (packed_size)
-        pack_user_message( params + 1, packed_size, msg, wparam, lparam, ansi );
+        pack_user_message( (char *)params + offset, packed_size, msg, wparam, lparam, ansi );
 
-    result = dispatch_win_proc_params( params, sizeof(*params) + packed_size, &ret_ptr, &ret_len );
+    result = dispatch_win_proc_params( params, offset + packed_size, &ret_ptr, &ret_len );
     if (params != &p) free( params );
 
     copy_user_result( ret_ptr, min( ret_len, packed_size ), result, msg, wparam, lparam, ansi );
