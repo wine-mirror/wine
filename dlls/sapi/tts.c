@@ -699,15 +699,34 @@ static HRESULT WINAPI spvoice_GetVoice(ISpVoice *iface, ISpObjectToken **token)
     return hr;
 }
 
+struct speak_task
+{
+    struct async_task task;
+
+    struct speech_voice *voice;
+    SPVTEXTFRAG *frag_list;
+    DWORD flags;
+};
+
+static void speak_proc(struct async_task *task)
+{
+    FIXME("(%p): stub.\n", task);
+}
+
 static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWORD flags, ULONG *stream_num_out)
 {
     struct speech_voice *This = impl_from_ISpVoice(iface);
+    SPVTEXTFRAG *frag;
+    struct speak_task *speak_task = NULL;
+    size_t contents_len, contents_size;
+    HRESULT hr;
 
     FIXME("(%p, %p, %#lx, %p): semi-stub.\n", iface, contents, flags, stream_num_out);
 
-    if (flags & ~SPF_PURGEBEFORESPEAK)
+    flags &= ~SPF_IS_NOT_XML;
+    if (flags & ~(SPF_ASYNC | SPF_PURGEBEFORESPEAK | SPF_NLP_SPEAK_PUNC))
     {
-        FIXME("flags %#lx not implemented.\n", flags & ~SPF_PURGEBEFORESPEAK);
+        FIXME("flags %#lx not implemented.\n", flags & ~(SPF_ASYNC | SPF_PURGEBEFORESPEAK | SPF_NLP_SPEAK_PUNC));
         return E_NOTIMPL;
     }
 
@@ -733,7 +752,57 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
     else if (!contents)
         return E_POINTER;
 
-    return E_NOTIMPL;
+    if (!(flags & SPF_ASYNC))
+    {
+        FIXME("Synchronous Speak not implemented.\n");
+        return E_NOTIMPL;
+    }
+
+    contents_len = wcslen(contents);
+    contents_size = sizeof(WCHAR) * (contents_len + 1);
+
+    if (!This->output)
+    {
+        /* Create a new output stream with the default output. */
+        if (FAILED(hr = ISpVoice_SetOutput(iface, NULL, TRUE)))
+            return hr;
+    }
+
+    if (!This->engine)
+    {
+        /* Create a new engine with the default voice. */
+        if (FAILED(hr = ISpVoice_SetVoice(iface, NULL)))
+            return hr;
+    }
+
+    if (!(frag = heap_alloc(sizeof(*frag) + contents_size)))
+        return E_OUTOFMEMORY;
+    memset(frag, 0, sizeof(*frag));
+    memcpy(frag + 1, contents, contents_size);
+    frag->State.eAction = SPVA_Speak;
+    frag->State.Volume  = 100;
+    frag->pTextStart    = (WCHAR *)(frag + 1);
+    frag->ulTextLen     = contents_len;
+    frag->ulTextSrcOffset = 0;
+    speak_task = heap_alloc(sizeof(*speak_task));
+
+    speak_task->task.proc = speak_proc;
+    speak_task->voice     = This;
+    speak_task->frag_list = frag;
+    speak_task->flags     = flags & SPF_NLP_SPEAK_PUNC;
+
+    if (FAILED(hr = async_queue_task(&This->queue, (struct async_task *)speak_task)))
+    {
+        WARN("Failed to queue task: %#lx.\n", hr);
+        goto fail;
+    }
+
+    if (flags & SPF_ASYNC)
+        return S_OK;
+fail:
+    heap_free(frag);
+    heap_free(speak_task);
+    return hr;
 }
 
 static HRESULT WINAPI spvoice_SpeakStream(ISpVoice *iface, IStream *stream, DWORD flags, ULONG *number)
