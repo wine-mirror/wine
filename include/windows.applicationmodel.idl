@@ -1,0 +1,116 @@
+/*
+ * Copyright 2023 Hans Leidekker for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "windows.foundation.idl";
+import "windows.storage.idl";
+import "windows.system.idl";
+
+namespace Windows.ApplicationModel {
+    typedef struct PackageVersion PackageVersion;
+
+    interface IPackage;
+    interface IPackageId;
+    interface IPackageIdWithMetadata;
+    interface IPackageStatics;
+
+    runtimeclass Package;
+    runtimeclass PackageId;
+
+    declare {
+        interface Windows.Foundation.Collections.IIterable<Windows.ApplicationModel.Package *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.ApplicationModel.Package *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.ApplicationModel.Package *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    struct PackageVersion
+    {
+        UINT16 Major;
+        UINT16 Minor;
+        UINT16 Build;
+        UINT16 Revision;
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.Package),
+        uuid(163c792f-bd75-413c-bf23-b1fe7b95d825)
+    ]
+    interface IPackage : IInspectable
+    {
+        [propget] HRESULT Id([out, retval] Windows.ApplicationModel.PackageId **value);
+        [propget] HRESULT InstalledLocation([out, retval] Windows.Storage.StorageFolder **value);
+        [propget] HRESULT IsFramework([out, retval] boolean *value);
+        [propget] HRESULT Dependencies([out, retval] Windows.Foundation.Collections.IVectorView<Windows.ApplicationModel.Package *> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.PackageId),
+        uuid(1adb665e-37c7-4790-9980-dd7ae74e8bb2)
+    ]
+    interface IPackageId : IInspectable
+    {
+        [propget] HRESULT Name([out, retval] HSTRING *value);
+        [propget] HRESULT Version([out, retval] Windows.ApplicationModel.PackageVersion *value);
+        [propget] HRESULT Architecture([out, retval] Windows.System.ProcessorArchitecture *value);
+        [propget] HRESULT ResourceId([out, retval] HSTRING *value);
+        [propget] HRESULT Publisher([out, retval] HSTRING *value);
+        [propget] HRESULT PublisherId([out, retval] HSTRING *value);
+        [propget] HRESULT FullName([out, retval] HSTRING *value);
+        [propget] HRESULT FamilyName([out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.PackageId),
+        uuid(40577a7c-0c9e-443d-9074-855f5ce0a08d)
+    ]
+    interface IPackageIdWithMetadata : IInspectable
+    {
+        [propget] HRESULT ProductId([out, retval] HSTRING *value);
+        [propget] HRESULT Author([out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.ApplicationModel.IPackageStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass Package
+    {
+        [default] interface Windows.ApplicationModel.IPackage;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass PackageId
+    {
+        [default] interface Windows.ApplicationModel.IPackageId;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.IPackageIdWithMetadata;
+    }
+}
