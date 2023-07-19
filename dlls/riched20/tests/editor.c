@@ -5606,16 +5606,12 @@ static void test_WM_PASTE(void)
     send_ctrl_key(hwndRichEdit, 'V');   /* Paste */
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
     /* Pasted text should be visible at this step */
-    result = strcmp(text1_step1, buffer);
-    ok(result == 0,
-        "test paste: strcmp = %i, text='%s'\n", result, buffer);
+    ok(strcmp(text1_step1, buffer) == 0, "1:Ctrl-V %s\n", wine_dbgstr_a(buffer));
 
     send_ctrl_key(hwndRichEdit, 'Z');   /* Undo */
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
     /* Text should be the same as before (except for \r -> \r\n conversion) */
-    result = strcmp(text1_after, buffer);
-    ok(result == 0,
-        "test paste: strcmp = %i, text='%s'\n", result, buffer);
+    ok(strcmp(text1_after, buffer) == 0, "1:Ctrl-Z %s\n", wine_dbgstr_a(buffer));
 
     SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text2);
     SendMessageA(hwndRichEdit, EM_SETSEL, 8, 13);
@@ -5624,21 +5620,15 @@ static void test_WM_PASTE(void)
     send_ctrl_key(hwndRichEdit, 'V');   /* Paste */
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
     /* Pasted text should be visible at this step */
-    result = strcmp(text3, buffer);
-    ok(result == 0,
-        "test paste: strcmp = %i\n", result);
+    ok(strcmp(text3, buffer) == 0, "2:Ctrl-V %s\n", wine_dbgstr_a(buffer));
     send_ctrl_key(hwndRichEdit, 'Z');   /* Undo */
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
     /* Text should be the same as before (except for \r -> \r\n conversion) */
-    result = strcmp(text2_after, buffer);
-    ok(result == 0,
-        "test paste: strcmp = %i\n", result);
+    ok(strcmp(text2_after, buffer) == 0, "2:Ctrl-Z %s\n", wine_dbgstr_a(buffer));
     send_ctrl_key(hwndRichEdit, 'Y');   /* Redo */
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
     /* Text should revert to post-paste state */
-    result = strcmp(buffer,text3);
-    ok(result == 0,
-        "test paste: strcmp = %i\n", result);
+    ok(strcmp(buffer,text3) == 0, "2:Ctrl-Y %s\n", wine_dbgstr_a(buffer));
 
     SendMessageA(hwndRichEdit, WM_SETTEXT, 0, 0);
     /* Send WM_CHAR to simulate Ctrl-V */
@@ -5646,9 +5636,7 @@ static void test_WM_PASTE(void)
                 (MapVirtualKeyA('V', MAPVK_VK_TO_VSC) << 16) | 1);
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
     /* Shouldn't paste because pasting is handled by WM_KEYDOWN */
-    result = strcmp(buffer,"");
-    ok(result == 0,
-        "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
+    ok(strcmp(buffer, "") == 0, "3:Ctrl-V %s\n", wine_dbgstr_a(buffer));
 
     /* Send keystrokes with WM_KEYDOWN after setting the modifiers
      * with SetKeyboard state. */
@@ -5660,9 +5648,7 @@ static void test_WM_PASTE(void)
                 (MapVirtualKeyA('V', MAPVK_VK_TO_VSC) << 16) | 1);
     release_key(VK_CONTROL);
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
-    result = strcmp(buffer,"paste");
-    ok(result == 0,
-        "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
+    ok(strcmp(buffer, "paste") == 0, "VK:Ctrl-V %s\n", wine_dbgstr_a(buffer));
 
     SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text1);
     SendMessageA(hwndRichEdit, EM_SETSEL, 0, 7);
@@ -5674,9 +5660,7 @@ static void test_WM_PASTE(void)
     SendMessageA(hwndRichEdit, WM_SETTEXT, 0, 0);
     send_paste(hwndRichEdit);
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
-    result = strcmp(buffer,"testing");
-    ok(result == 0,
-        "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
+    ok(strcmp(buffer, "testing") == 0, "VK:Ctrl-C %s\n", wine_dbgstr_a(buffer));
 
     /* Cut with WM_KEYDOWN to simulate Ctrl-X */
     SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"cut");
@@ -5689,30 +5673,22 @@ static void test_WM_PASTE(void)
                 (MapVirtualKeyA('X', MAPVK_VK_TO_VSC) << 16) | 1);
     release_key(VK_CONTROL);
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
-    result = strcmp(buffer,"");
-    ok(result == 0,
-        "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
+    ok(strcmp(buffer, "") == 0, "VK:Ctrl-A,X %s\n", wine_dbgstr_a(buffer));
     SendMessageA(hwndRichEdit, WM_SETTEXT, 0, 0);
     send_paste(hwndRichEdit);
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
-    result = strcmp(buffer,"cut\r\n");
-    ok(result == 0,
-        "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
+    ok(strcmp(buffer, "cut\r\n") == 0, "VK:paste %s\n", wine_dbgstr_a(buffer));
     /* Simulates undo (Ctrl-Z) */
     hold_key(VK_CONTROL);
     SendMessageA(hwndRichEdit, WM_KEYDOWN, 'Z',
                 (MapVirtualKeyA('Z', MAPVK_VK_TO_VSC) << 16) | 1);
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
-    result = strcmp(buffer,"");
-    ok(result == 0,
-        "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
+    ok(strcmp(buffer, "") == 0, "VK:Ctrl-Z %s\n", wine_dbgstr_a(buffer));
     /* Simulates redo (Ctrl-Y) */
     SendMessageA(hwndRichEdit, WM_KEYDOWN, 'Y',
                 (MapVirtualKeyA('Y', MAPVK_VK_TO_VSC) << 16) | 1);
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
-    result = strcmp(buffer,"cut\r\n");
-    ok(result == 0,
-        "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
+    ok(strcmp(buffer, "cut\r\n") == 0, "VK:Ctrl-Y %s\n", wine_dbgstr_a(buffer));
     release_key(VK_CONTROL);
 
     /* Copy multiline text to clipboard for future use */
@@ -5723,19 +5699,16 @@ static void test_WM_PASTE(void)
 
     /* Paste into read-only control */
     result = SendMessageA(hwndRichEdit, EM_SETREADONLY, TRUE, 0);
+    ok(result, "ro:set failed\n");
     SendMessageA(hwndRichEdit, WM_PASTE, 0, 0);
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
-    result = strcmp(buffer, text3);
-    ok(result == 0,
-        "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
+    ok(strcmp(buffer, text3) == 0, "ro:paste %s\n", wine_dbgstr_a(buffer));
 
     /* Cut from read-only control */
     SendMessageA(hwndRichEdit, EM_SETSEL, 0, -1);
     SendMessageA(hwndRichEdit, WM_CUT, 0, 0);
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
-    result = strcmp(buffer, text3);
-    ok(result == 0,
-        "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
+    ok(strcmp(buffer, text3) == 0, "ro:cut %s\n", wine_dbgstr_a(buffer));
 
     /* FIXME: Wine doesn't flush Ole clipboard when window is destroyed so do it manually */
     OleFlushClipboard();
@@ -5745,9 +5718,7 @@ static void test_WM_PASTE(void)
     hwndRichEdit = new_richedit_with_style(NULL, 0);
     send_paste(hwndRichEdit);
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
-    result = strcmp(buffer, "testing paste");
-    ok(result == 0,
-        "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
+    ok(strcmp(buffer, "testing paste") == 0, "multi:paste %s\n", wine_dbgstr_a(buffer));
     DestroyWindow(hwndRichEdit);
 }
 
