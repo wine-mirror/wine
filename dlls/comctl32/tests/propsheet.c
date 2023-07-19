@@ -161,8 +161,8 @@ static void test_title(void)
     psp.dwFlags = PSP_USETITLE;
     psp.hInstance = GetModuleHandleA(NULL);
     psp.pszTitle = "page title";
-    U(psp).pszTemplate = "prop_page1";
-    U2(psp).pszIcon = NULL;
+    psp.pszTemplate = "prop_page1";
+    psp.pszIcon = NULL;
     psp.pfnDlgProc = page_dlg_proc;
     psp.lParam = 0;
 
@@ -174,7 +174,7 @@ static void test_title(void)
     psh.pszCaption = "test caption";
     psh.nPages = 1;
     psh.hwndParent = GetDesktopWindow();
-    U3(psh).phpage = hpsp;
+    psh.phpage = hpsp;
     psh.pfnCallback = sheet_callback;
 
     hdlg = (HWND)pPropertySheetA(&psh);
@@ -200,8 +200,8 @@ static void test_nopage(void)
     psp.dwSize = sizeof(psp);
     psp.dwFlags = 0;
     psp.hInstance = GetModuleHandleA(NULL);
-    U(psp).pszTemplate = "prop_page1";
-    U2(psp).pszIcon = NULL;
+    psp.pszTemplate = "prop_page1";
+    psp.pszIcon = NULL;
     psp.pfnDlgProc = page_dlg_proc;
     psp.lParam = 0;
 
@@ -213,7 +213,7 @@ static void test_nopage(void)
     psh.pszCaption = "test caption";
     psh.nPages = 1;
     psh.hwndParent = GetDesktopWindow();
-    U3(psh).phpage = hpsp;
+    psh.phpage = hpsp;
     psh.pfnCallback = sheet_callback;
 
     hdlg = (HWND)pPropertySheetA(&psh);
@@ -280,8 +280,8 @@ static void test_disableowner(void)
     psp.dwSize = sizeof(psp);
     psp.dwFlags = 0;
     psp.hInstance = GetModuleHandleA(NULL);
-    U(psp).pszTemplate = "prop_page1";
-    U2(psp).pszIcon = NULL;
+    psp.pszTemplate = "prop_page1";
+    psp.pszIcon = NULL;
     psp.pfnDlgProc = NULL;
     psp.lParam = 0;
 
@@ -293,7 +293,7 @@ static void test_disableowner(void)
     psh.pszCaption = "test caption";
     psh.nPages = 1;
     psh.hwndParent = parenthwnd;
-    U3(psh).phpage = hpsp;
+    psh.phpage = hpsp;
     psh.pfnCallback = disableowner_callback;
 
     p = pPropertySheetA(&psh);
@@ -379,25 +379,25 @@ static void test_wiznavigation(void)
 
     psp[0].dwSize = sizeof(PROPSHEETPAGEA);
     psp[0].hInstance = GetModuleHandleA(NULL);
-    U(psp[0]).pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_INTRO);
+    psp[0].pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_INTRO);
     psp[0].pfnDlgProc = nav_page_proc;
     hpsp[0] = pCreatePropertySheetPageA(&psp[0]);
 
     psp[1].dwSize = sizeof(PROPSHEETPAGEA);
     psp[1].hInstance = GetModuleHandleA(NULL);
-    U(psp[1]).pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_EDIT);
+    psp[1].pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_EDIT);
     psp[1].pfnDlgProc = nav_page_proc;
     hpsp[1] = pCreatePropertySheetPageA(&psp[1]);
 
     psp[2].dwSize = sizeof(PROPSHEETPAGEA);
     psp[2].hInstance = GetModuleHandleA(NULL);
-    U(psp[2]).pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_RADIO);
+    psp[2].pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_RADIO);
     psp[2].pfnDlgProc = nav_page_proc;
     hpsp[2] = pCreatePropertySheetPageA(&psp[2]);
 
     psp[3].dwSize = sizeof(PROPSHEETPAGEA);
     psp[3].hInstance = GetModuleHandleA(NULL);
-    U(psp[3]).pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_EXIT);
+    psp[3].pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_EXIT);
     psp[3].pfnDlgProc = nav_page_proc;
     hpsp[3] = pCreatePropertySheetPageA(&psp[3]);
 
@@ -408,7 +408,7 @@ static void test_wiznavigation(void)
     psh.pszCaption = "A Wizard";
     psh.nPages = 4;
     psh.hwndParent = GetDesktopWindow();
-    U3(psh).phpage = hpsp;
+    psh.phpage = hpsp;
     hdlg = (HWND)pPropertySheetA(&psh);
     ok(hdlg != INVALID_HANDLE_VALUE, "got invalid handle %p\n", hdlg);
 
@@ -499,8 +499,8 @@ static void test_buttons(void)
     psp.dwSize = sizeof(psp);
     psp.dwFlags = 0;
     psp.hInstance = GetModuleHandleA(NULL);
-    U(psp).pszTemplate = "prop_page1";
-    U2(psp).pszIcon = NULL;
+    psp.pszTemplate = "prop_page1";
+    psp.pszIcon = NULL;
     psp.pfnDlgProc = page_dlg_proc;
     psp.lParam = 0;
 
@@ -512,7 +512,7 @@ static void test_buttons(void)
     psh.pszCaption = "test caption";
     psh.nPages = 1;
     psh.hwndParent = GetDesktopWindow();
-    U3(psh).phpage = hpsp;
+    psh.phpage = hpsp;
     psh.pfnCallback = sheet_callback;
 
     hdlg = (HWND)pPropertySheetA(&psh);
@@ -589,8 +589,8 @@ static void test_custom_default_button(void)
     psp[0].dwSize = sizeof (PROPSHEETPAGEA);
     psp[0].dwFlags = PSP_USETITLE;
     psp[0].hInstance = GetModuleHandleA(NULL);
-    U(psp[0]).pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_WITH_CUSTOM_DEFAULT_BUTTON);
-    U2(psp[0]).pszIcon = NULL;
+    psp[0].pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_WITH_CUSTOM_DEFAULT_BUTTON);
+    psp[0].pszIcon = NULL;
     psp[0].pfnDlgProc = page_with_custom_default_button_dlg_proc;
     psp[0].pszTitle = "Page1";
     psp[0].lParam = 0;
@@ -599,11 +599,11 @@ static void test_custom_default_button(void)
     psh.dwFlags = PSH_PROPSHEETPAGE | PSH_MODELESS;
     psh.hwndParent = GetDesktopWindow();
     psh.hInstance = GetModuleHandleA(NULL);
-    U(psh).pszIcon = NULL;
+    psh.pszIcon = NULL;
     psh.pszCaption =  "PropertySheet1";
     psh.nPages = 1;
-    U3(psh).ppsp = psp;
-    U2(psh).nStartPage = 0;
+    psh.ppsp = psp;
+    psh.nStartPage = 0;
 
     /* The goal of the test is to make sure that the Add button is pressed
      * when the ENTER key is pressed and a different control, a combobox,
@@ -818,8 +818,8 @@ static void test_messages(void)
     psp.dwSize = sizeof(psp);
     psp.dwFlags = 0;
     psp.hInstance = GetModuleHandleA(NULL);
-    U(psp).pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_MESSAGE_TEST);
-    U2(psp).pszIcon = NULL;
+    psp.pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_MESSAGE_TEST);
+    psp.pszIcon = NULL;
     psp.pfnDlgProc = page_dlg_proc_messages;
     psp.lParam = 0;
 
@@ -832,7 +832,7 @@ static void test_messages(void)
     psh.pszCaption = "test caption";
     psh.nPages = 1;
     psh.hwndParent = GetDesktopWindow();
-    U3(psh).phpage = hpsp;
+    psh.phpage = hpsp;
     psh.pfnCallback = sheet_callback_messages;
 
     hdlg = (HWND)pPropertySheetA(&psh);
@@ -858,8 +858,8 @@ static void test_PSM_ADDPAGE(void)
     psp.dwSize = sizeof(psp);
     psp.dwFlags = 0;
     psp.hInstance = GetModuleHandleA(NULL);
-    U(psp).pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_MESSAGE_TEST);
-    U2(psp).pszIcon = NULL;
+    psp.pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_MESSAGE_TEST);
+    psp.pszIcon = NULL;
     psp.pfnDlgProc = page_dlg_proc_messages;
     psp.lParam = 0;
 
@@ -868,7 +868,7 @@ static void test_PSM_ADDPAGE(void)
     hpsp[1] = pCreatePropertySheetPageA(&psp);
     hpsp[2] = pCreatePropertySheetPageA(&psp);
 
-    U(psp).pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_ERROR);
+    psp.pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_ERROR);
     hpsp[3] = pCreatePropertySheetPageA(&psp);
 
     psp.dwFlags = PSP_PREMATURE;
@@ -880,7 +880,7 @@ static void test_PSM_ADDPAGE(void)
     psh.pszCaption = "test caption";
     psh.nPages = 1;
     psh.hwndParent = GetDesktopWindow();
-    U3(psh).phpage = hpsp;
+    psh.phpage = hpsp;
 
     hdlg = (HWND)pPropertySheetA(&psh);
     ok(hdlg != INVALID_HANDLE_VALUE, "got invalid handle %p\n", hdlg);
@@ -948,8 +948,8 @@ static void test_PSM_INSERTPAGE(void)
     psp.dwSize = sizeof(psp);
     psp.dwFlags = 0;
     psp.hInstance = GetModuleHandleA(NULL);
-    U(psp).pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_MESSAGE_TEST);
-    U2(psp).pszIcon = NULL;
+    psp.pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_MESSAGE_TEST);
+    psp.pszIcon = NULL;
     psp.pfnDlgProc = page_dlg_proc_messages;
     psp.lParam = 0;
 
@@ -958,7 +958,7 @@ static void test_PSM_INSERTPAGE(void)
     hpsp[1] = pCreatePropertySheetPageA(&psp);
     hpsp[2] = pCreatePropertySheetPageA(&psp);
 
-    U(psp).pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_ERROR);
+    psp.pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_ERROR);
     hpsp[3] = pCreatePropertySheetPageA(&psp);
 
     psp.dwFlags = PSP_PREMATURE;
@@ -970,7 +970,7 @@ static void test_PSM_INSERTPAGE(void)
     psh.pszCaption = "test caption";
     psh.nPages = 1;
     psh.hwndParent = GetDesktopWindow();
-    U3(psh).phpage = hpsp;
+    psh.phpage = hpsp;
 
     hdlg = (HWND)pPropertySheetA(&psh);
     ok(hdlg != INVALID_HANDLE_VALUE, "got invalid handle %p\n", hdlg);
@@ -1206,7 +1206,7 @@ static void test_bad_control_class(void)
     memset(&psp, 0, sizeof(psp));
     psp.dwSize = sizeof(psp);
     psp.hInstance = GetModuleHandleA(NULL);
-    U(psp).pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_BAD_CONTROL);
+    psp.pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_BAD_CONTROL);
     psp.pfnDlgProc = page_dlg_proc;
 
     hpsp = pCreatePropertySheetPageA(&psp);
@@ -1216,7 +1216,7 @@ static void test_bad_control_class(void)
     psh.dwSize = PROPSHEETHEADERA_V1_SIZE;
     psh.nPages = 1;
     psh.hwndParent = GetDesktopWindow();
-    U3(psh).phpage = &hpsp;
+    psh.phpage = &hpsp;
 
     ret = pPropertySheetA(&psh);
     ok(ret == 0, "got %Id\n", ret);
@@ -1224,7 +1224,7 @@ static void test_bad_control_class(void)
     /* Need to recreate hpsp otherwise the test fails under Windows */
     hpsp = pCreatePropertySheetPageA(&psp);
     ok(hpsp != 0, "CreatePropertySheetPage failed\n");
-    U3(psh).phpage = &hpsp;
+    psh.phpage = &hpsp;
 
     psh.dwFlags = PSH_MODELESS;
     ret = pPropertySheetA(&psh);
@@ -1261,7 +1261,7 @@ static void test_page_dialog_texture(void)
     memset(&psp, 0, sizeof(psp));
     psp.dwSize = sizeof(psp);
     psp.hInstance = GetModuleHandleA(NULL);
-    U(psp).pszTemplate = "prop_page1";
+    psp.pszTemplate = "prop_page1";
     psp.pfnDlgProc = test_WM_CTLCOLORSTATIC_proc;
     hpsp[0] = pCreatePropertySheetPageA(&psp);
 
@@ -1271,7 +1271,7 @@ static void test_page_dialog_texture(void)
     psh.pszCaption = "caption";
     psh.nPages = 1;
     psh.hwndParent = GetDesktopWindow();
-    U3(psh).phpage = hpsp;
+    psh.phpage = hpsp;
 
     hdlg = (HWND)pPropertySheetA(&psh);
     ok(hdlg != INVALID_HANDLE_VALUE, "Got invalid handle value %p.\n", hdlg);
@@ -1321,8 +1321,8 @@ static void test_invalid_hpropsheetpage(void)
     memset(psp, 0, sizeof(*psp));
     psp->dwSize = sizeof(*psp);
     psp->hInstance = GetModuleHandleA(NULL);
-    U(psp)->pszTemplate = "prop_page1";
-    U2(psp)->pszIcon = NULL;
+    psp->pszTemplate = "prop_page1";
+    psp->pszIcon = NULL;
     psp->pfnDlgProc = page_dlg_proc;
     psp->lParam = 0;
 
@@ -1335,7 +1335,7 @@ static void test_invalid_hpropsheetpage(void)
     psh.pszCaption = "test caption";
     psh.nPages = 1;
     psh.hwndParent = GetDesktopWindow();
-    U3(psh).phpage = hpsp;
+    psh.phpage = hpsp;
     psh.pfnCallback = sheet_callback;
 
     hdlg = (HWND)pPropertySheetA(&psh);
@@ -1349,8 +1349,8 @@ static void test_invalid_hpropsheetpage(void)
     memset(pspW, 0, sizeof(*pspW));
     pspW->dwSize = sizeof(*pspW);
     pspW->hInstance = GetModuleHandleA(NULL);
-    U(pspW)->pszTemplate = L"prop_page1";
-    U2(pspW)->pszIcon = NULL;
+    pspW->pszTemplate = L"prop_page1";
+    pspW->pszIcon = NULL;
     pspW->pfnDlgProc = page_dlg_proc;
     pspW->lParam = 0;
 
@@ -1376,7 +1376,7 @@ static void test_invalid_hpropsheetpage(void)
     pshW.pszCaption = L"test caption";
     pshW.nPages = 1;
     pshW.hwndParent = GetDesktopWindow();
-    U3(pshW).phpage = hpsp;
+    pshW.phpage = hpsp;
     pshW.pfnCallback = sheet_callback;
 
     hdlg = (HWND)pPropertySheetW(&pshW);
