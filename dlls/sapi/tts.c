@@ -45,6 +45,7 @@ struct speech_voice
     ISpTTSEngine *engine;
     USHORT volume;
     LONG rate;
+    struct async_queue queue;
     CRITICAL_SECTION cs;
 };
 
@@ -143,6 +144,7 @@ static ULONG WINAPI speech_voice_Release(ISpeechVoice *iface)
 
     if (!ref)
     {
+        async_cancel_queue(&This->queue);
         if (This->output) ISpStreamFormat_Release(This->output);
         if (This->engine) ISpTTSEngine_Release(This->engine);
         DeleteCriticalSection(&This->cs);
@@ -697,9 +699,39 @@ static HRESULT WINAPI spvoice_GetVoice(ISpVoice *iface, ISpObjectToken **token)
     return hr;
 }
 
-static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWORD flags, ULONG *number)
+static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWORD flags, ULONG *stream_num_out)
 {
-    FIXME("(%p, %p, %#lx, %p): stub.\n", iface, contents, flags, number);
+    struct speech_voice *This = impl_from_ISpVoice(iface);
+
+    FIXME("(%p, %p, %#lx, %p): semi-stub.\n", iface, contents, flags, stream_num_out);
+
+    if (flags & ~SPF_PURGEBEFORESPEAK)
+    {
+        FIXME("flags %#lx not implemented.\n", flags & ~SPF_PURGEBEFORESPEAK);
+        return E_NOTIMPL;
+    }
+
+    if (flags & SPF_PURGEBEFORESPEAK)
+    {
+        ISpAudio *audio;
+
+        EnterCriticalSection(&This->cs);
+
+        if (This->output && SUCCEEDED(ISpStreamFormat_QueryInterface(This->output, &IID_ISpAudio, (void **)&audio)))
+        {
+            ISpAudio_SetState(audio, SPAS_CLOSED, 0);
+            ISpAudio_Release(audio);
+        }
+
+        LeaveCriticalSection(&This->cs);
+
+        async_empty_queue(&This->queue);
+
+        if (!contents || !*contents)
+            return S_OK;
+    }
+    else if (!contents)
+        return E_POINTER;
 
     return E_NOTIMPL;
 }
@@ -962,6 +994,7 @@ HRESULT speech_voice_create(IUnknown *outer, REFIID iid, void **obj)
     This->engine = NULL;
     This->volume = 100;
     This->rate = 0;
+    memset(&This->queue, 0, sizeof(This->queue));
 
     InitializeCriticalSection(&This->cs);
 

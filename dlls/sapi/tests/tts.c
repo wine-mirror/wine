@@ -102,6 +102,7 @@ static void test_spvoice(void)
     WCHAR *token_id = NULL, *default_token_id = NULL;
     LONG rate;
     USHORT volume;
+    ULONG stream_num;
     HRESULT hr;
 
     if (waveOutGetNumDevs() == 0) {
@@ -203,6 +204,14 @@ static void test_spvoice(void)
 
     hr = ISpVoice_SetVolume(voice, 101);
     ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+
+    hr = ISpVoice_Speak(voice, NULL, SPF_PURGEBEFORESPEAK, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    stream_num = 0xdeadbeef;
+    hr = ISpVoice_Speak(voice, NULL, SPF_PURGEBEFORESPEAK, &stream_num);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(stream_num == 0xdeadbeef, "got %lu.\n", stream_num);
 
     ISpVoice_Release(voice);
     ISpMMSysAudio_Release(audio_out);
