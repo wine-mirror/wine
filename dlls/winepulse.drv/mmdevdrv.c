@@ -56,7 +56,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(pulse);
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
-extern struct list sessions;
 static struct list g_devices_cache = LIST_INIT(g_devices_cache);
 
 struct device_cache {
@@ -121,9 +120,6 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
 extern const IAudioClient3Vtbl AudioClient3_Vtbl;
 extern const IAudioRenderClientVtbl AudioRenderClient_Vtbl;
 extern const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl;
-extern const IAudioSessionControl2Vtbl AudioSessionControl2_Vtbl;
-extern const ISimpleAudioVolumeVtbl SimpleAudioVolume_Vtbl;
-extern const IChannelAudioVolumeVtbl ChannelAudioVolume_Vtbl;
 extern const IAudioClockVtbl AudioClock_Vtbl;
 extern const IAudioClock2Vtbl AudioClock2_Vtbl;
 extern const IAudioStreamVolumeVtbl AudioStreamVolume_Vtbl;
@@ -399,43 +395,10 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     return S_OK;
 }
 
-extern void session_init_vols(AudioSession *session, UINT channels);
-
-extern AudioSession *session_create(const GUID *guid, IMMDevice *device,
-        UINT num_channels);
 /* if channels == 0, then this will return or create a session with
  * matching dataflow and GUID. otherwise, channels must also match */
-HRESULT get_audio_session(const GUID *sessionguid,
-        IMMDevice *device, UINT channels, AudioSession **out)
-{
-    AudioSession *session;
-
-    if (!sessionguid || IsEqualGUID(sessionguid, &GUID_NULL)) {
-        *out = session_create(&GUID_NULL, device, channels);
-        if (!*out)
-            return E_OUTOFMEMORY;
-
-        return S_OK;
-    }
-
-    *out = NULL;
-    LIST_FOR_EACH_ENTRY(session, &sessions, AudioSession, entry) {
-        if (session->device == device &&
-            IsEqualGUID(sessionguid, &session->guid)) {
-            session_init_vols(session, channels);
-            *out = session;
-            break;
-        }
-    }
-
-    if (!*out) {
-        *out = session_create(sessionguid, device, channels);
-        if (!*out)
-            return E_OUTOFMEMORY;
-    }
-
-    return S_OK;
-}
+extern HRESULT get_audio_session(const GUID *sessionguid,
+        IMMDevice *device, UINT channels, AudioSession **out);
 
 HRESULT WINAPI AUDDRV_GetAudioSessionWrapper(const GUID *guid, IMMDevice *device,
                                              AudioSessionWrapper **out)

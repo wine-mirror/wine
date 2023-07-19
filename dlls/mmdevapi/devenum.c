@@ -42,6 +42,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+
 static HKEY key_render;
 static HKEY key_capture;
 
