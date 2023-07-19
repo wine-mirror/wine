@@ -1530,7 +1530,8 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     cwp.wParam  = wparam;
     cwp.message = msg;
     cwp.hwnd    = hwnd = get_full_window_handle( hwnd );
-    call_hooks( WH_CALLWNDPROC, HC_ACTION, same_thread, (LPARAM)&cwp, sizeof(cwp) );
+    call_message_hooks( WH_CALLWNDPROC, HC_ACTION, same_thread, (LPARAM)&cwp, sizeof(cwp),
+                        packed_size, ansi );
 
     if (size && !(params = malloc( sizeof(*params) + size ))) return 0;
     if (!init_window_call_params( params, hwnd, msg, wparam, lparam, !unicode, mapping ))
@@ -1557,7 +1558,8 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     cwpret.wParam  = wparam;
     cwpret.message = msg;
     cwpret.hwnd    = hwnd;
-    call_hooks( WH_CALLWNDPROCRET, HC_ACTION, same_thread, (LPARAM)&cwpret, sizeof(cwpret) );
+    call_message_hooks( WH_CALLWNDPROCRET, HC_ACTION, same_thread, (LPARAM)&cwpret, sizeof(cwpret),
+                        packed_size, ansi );
     return result;
 }
 

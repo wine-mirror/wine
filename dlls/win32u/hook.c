@@ -195,7 +195,8 @@ static UINT get_ll_hook_timeout(void)
  * Call hook either in current thread or send message to the destination
  * thread.
  */
-static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, size_t lparam_size )
+static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, size_t lparam_size,
+                          size_t message_size, BOOL ansi )
 {
     DWORD_PTR ret = 0;
 
@@ -230,7 +231,7 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, siz
     else if (info->proc)
     {
         struct user_thread_info *thread_info = get_user_thread_info();
-        size_t size, lparam_offset = 0, message_offset = 0, message_size = 0;
+        size_t size, lparam_offset = 0, message_offset = 0;
         size_t lparam_ret_size = lparam_size;
         HHOOK prev = thread_info->hook;
         BOOL prev_unicode = thread_info->hook_unicode;
@@ -285,6 +286,13 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, siz
                     LPARAM lp = (LPARAM)cbtc->lpcs;
                     pack_user_message( (char *)params + message_offset, message_size,
                                        WM_CREATE, lp, FALSE );
+                }
+                break;
+            case WH_CALLWNDPROC:
+                {
+                    CWPSTRUCT *cwp = (CWPSTRUCT *)((char *)params + lparam_offset);
+                    pack_user_message( (char *)params + message_offset, message_size,
+                                       cwp->message, cwp->lParam, ansi );
                 }
                 break;
             }
@@ -357,7 +365,7 @@ LRESULT WINAPI NtUserCallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARA
     info.wparam = wparam;
     info.lparam = lparam;
     info.prev_unicode = thread_info->hook_unicode;
-    return call_hook( &info, module, 0 );
+    return call_hook( &info, module, 0, 0, FALSE );
 }
 
 LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam )
@@ -390,10 +398,11 @@ LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam )
     info.wparam = wparam;
     info.lparam = lparam;
     info.prev_unicode = TRUE;  /* assume Unicode for this function */
-    return call_hook( &info, module, 0 );
+    return call_hook( &info, module, 0, 0, FALSE );
 }
 
-LRESULT call_hooks( INT id, INT code, WPARAM wparam, LPARAM lparam, size_t lparam_size )
+LRESULT call_message_hooks( INT id, INT code, WPARAM wparam, LPARAM lparam, size_t lparam_size,
+                            size_t message_size, BOOL ansi )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
     struct win_hook_params info;
@@ -434,7 +443,7 @@ LRESULT call_hooks( INT id, INT code, WPARAM wparam, LPARAM lparam, size_t lpara
     info.code   = code;
     info.wparam = wparam;
     info.lparam = lparam;
-    ret = call_hook( &info, module, lparam_size );
+    ret = call_hook( &info, module, lparam_size, message_size, ansi );
 
     SERVER_START_REQ( finish_hook_chain )
     {
@@ -443,6 +452,11 @@ LRESULT call_hooks( INT id, INT code, WPARAM wparam, LPARAM lparam, size_t lpara
     }
     SERVER_END_REQ;
     return ret;
+}
+
+LRESULT call_hooks( INT id, INT code, WPARAM wparam, LPARAM lparam, size_t lparam_size )
+{
+    return call_message_hooks( id, code, wparam, lparam, lparam_size, 0, FALSE );
 }
 
 /***********************************************************************
