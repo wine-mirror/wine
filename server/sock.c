@@ -1655,8 +1655,7 @@ static int sock_close_handle( struct object *obj, struct process *process, obj_h
             if (signaled) complete_async_poll( poll_req, STATUS_SUCCESS );
         }
     }
-
-    return 1;
+    return async_close_obj_handle( obj, process, handle );
 }
 
 static void sock_destroy( struct object *obj )

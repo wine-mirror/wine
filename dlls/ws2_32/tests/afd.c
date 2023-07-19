@@ -2858,17 +2858,20 @@ static void test_async_cancel_on_handle_close(void)
 
             closesocket(listener);
 
+            /* Canceled asyncs with completion port and no event do not update IOSB before removing completion. */
+            todo_wine_if(other_process && tests[i].apc_context && !tests[i].event)
             ok(io.Status == 0xcccccccc, "got %#lx\n", io.Status);
+
             memset(&io, 0xcc, sizeof(io));
             key = 0xcc;
             value = 0;
             ret = NtRemoveIoCompletion(port, &key, &value, &io, &zero);
             if (other_process && tests[i].apc_context && !tests[i].event)
             {
-                todo_wine ok(!ret, "got %#lx\n", ret);
-                todo_wine ok(!key, "got key %#Ix\n", key);
-                todo_wine ok(value == 0xdeadbeef, "got value %#Ix\n", value);
-                todo_wine ok(io.Status == STATUS_CANCELLED, "got %#lx\n", io.Status);
+                ok(!ret, "got %#lx\n", ret);
+                ok(!key, "got key %#Ix\n", key);
+                ok(value == 0xdeadbeef, "got value %#Ix\n", value);
+                ok(io.Status == STATUS_CANCELLED, "got %#lx\n", io.Status);
             }
             else
             {

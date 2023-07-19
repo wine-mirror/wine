@@ -614,6 +614,28 @@ void cancel_process_asyncs( struct process *process )
     cancel_async( process, NULL, NULL, 0 );
 }
 
+int async_close_obj_handle( struct object *obj, struct process *process, obj_handle_t handle )
+{
+    /* Handle a special case when the last object handle in the given process is closed.
+     * If this is the last object handle overall that is handled in object's close_handle and
+     * destruction. */
+    struct async *async;
+
+    if (obj->handle_count == 1 || get_obj_handle_count( process, obj ) != 1) return 1;
+
+restart:
+    LIST_FOR_EACH_ENTRY( async, &process->asyncs, struct async, process_entry )
+    {
+        if (async->terminated || async->canceled || get_fd_user( async->fd ) != obj) continue;
+        if (!async->completion || !async->data.apc_context || async->event) continue;
+
+        async->canceled = 1;
+        fd_cancel_async( async->fd, async );
+        goto restart;
+    }
+    return 1;
+}
+
 void cancel_terminating_thread_asyncs( struct thread *thread )
 {
     struct async *async;

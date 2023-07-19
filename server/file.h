@@ -246,6 +246,7 @@ extern struct thread *async_get_thread( struct async *async );
 extern struct async *find_pending_async( struct async_queue *queue );
 extern void cancel_process_asyncs( struct process *process );
 extern void cancel_terminating_thread_asyncs( struct thread *thread );
+extern int async_close_obj_handle( struct object *obj, struct process *process, obj_handle_t handle );
 
 static inline void init_async_queue( struct async_queue *queue )
 {

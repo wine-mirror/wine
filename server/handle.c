@@ -520,6 +520,21 @@ obj_handle_t find_inherited_handle( struct process *process, const struct object
     return 0;
 }
 
+/* return number of open handles to the object in the process */
+unsigned int get_obj_handle_count( struct process *process, const struct object *obj )
+{
+    struct handle_table *table = process->handles;
+    struct handle_entry *ptr;
+    unsigned int count = 0;
+    int i;
+
+    if (!table) return 0;
+
+    for (i = 0, ptr = table->entries; i <= table->last; i++, ptr++)
+        if (ptr->ptr == obj) ++count;
+    return count;
+}
+
 /* get/set the handle reserved flags */
 /* return the old flags (or -1 on error) */
 static int set_handle_flags( struct process *process, obj_handle_t handle, int mask, int flags )
