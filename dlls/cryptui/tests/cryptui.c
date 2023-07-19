@@ -19,7 +19,6 @@
  */
 #include <stdarg.h>
 #include <stdio.h>
-#define NONAMELESSUNION
 #include <windef.h>
 #include <winbase.h>
 #include <winerror.h>
@@ -307,9 +306,9 @@ static BOOL find_and_delete_cert_in_store(HCERTSTORE store, PCCERT_CONTEXT cert)
     PCCERT_CONTEXT found;
 
     id.dwIdChoice = CERT_ID_ISSUER_SERIAL_NUMBER;
-    memcpy(&id.u.IssuerSerialNumber.Issuer,
+    memcpy(&id.IssuerSerialNumber.Issuer,
      &cert->pCertInfo->Issuer, sizeof(CERT_NAME_BLOB));
-    memcpy(&id.u.IssuerSerialNumber.SerialNumber,
+    memcpy(&id.IssuerSerialNumber.SerialNumber,
      &cert->pCertInfo->SerialNumber, sizeof(CRYPT_INTEGER_BLOB));
     found = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
      CERT_FIND_CERT_ID, &id, NULL);
@@ -371,28 +370,28 @@ static void test_crypt_ui_wiz_import(void)
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08lx\n", GetLastError());
     /* Check allowed vs. given type mismatches */
-    info.u.pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING,
+    info.pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING,
      v1CertWithValidPubKey, sizeof(v1CertWithValidPubKey));
     SetLastError(0xdeadbeef);
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CRL,
      0, NULL, &info, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08lx\n", GetLastError());
-    CertFreeCertificateContext(info.u.pCertContext);
+    CertFreeCertificateContext(info.pCertContext);
     info.dwSubjectChoice = CRYPTUI_WIZ_IMPORT_SUBJECT_CRL_CONTEXT;
-    info.u.pCRLContext = CertCreateCRLContext(X509_ASN_ENCODING,
+    info.pCRLContext = CertCreateCRLContext(X509_ASN_ENCODING,
      signedCRL, sizeof(signedCRL));
     SetLastError(0xdeadbeef);
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CERT,
      0, NULL, &info, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08lx\n", GetLastError());
-    CertFreeCRLContext(info.u.pCRLContext);
+    CertFreeCRLContext(info.pCRLContext);
     /* Imports the following cert--self-signed, with no basic constraints set--
      * to the CA store.  Puts up a dialog at the end if it succeeds or fails.
      */
     info.dwSubjectChoice = CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_CONTEXT;
-    info.u.pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING,
+    info.pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING,
      v1CertWithValidPubKey, sizeof(v1CertWithValidPubKey));
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI, 0, NULL, &info, NULL);
     ok(ret, "CryptUIWizImport failed: %08lx\n", GetLastError());
@@ -403,19 +402,19 @@ static void test_crypt_ui_wiz_import(void)
 
         if (ca)
         {
-            ret = find_and_delete_cert_in_store(ca, info.u.pCertContext);
+            ret = find_and_delete_cert_in_store(ca, info.pCertContext);
             ok(ret ||
              broken(!ret) /* Win9x/NT4 */,
              "expected to find v1CertWithValidPubKey in CA store\n");
             CertCloseStore(ca, 0);
         }
     }
-    CertFreeCertificateContext(info.u.pCertContext);
+    CertFreeCertificateContext(info.pCertContext);
     /* Imports the following cert--not self-signed, with a basic constraints2
      * extensions--to the "AddressBook" store.  Puts up a dialog at the end if
      * it succeeds or fails.
      */
-    info.u.pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING,
+    info.pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING,
      iTunesCert3, sizeof(iTunesCert3));
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI, 0, NULL, &info, NULL);
     ok(ret, "CryptUIWizImport failed: %08lx\n", GetLastError());
@@ -427,7 +426,7 @@ static void test_crypt_ui_wiz_import(void)
         if (addressBook)
         {
             ret = find_and_delete_cert_in_store(addressBook,
-             info.u.pCertContext);
+             info.pCertContext);
             ok(ret ||
              broken(!ret),  /* Windows 2000 and earlier */
              "expected to find iTunesCert3 in AddressBook store\n");
@@ -460,14 +459,14 @@ static void test_crypt_ui_wiz_import(void)
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI |
      CRYPTUI_WIZ_IMPORT_NO_CHANGE_DEST_STORE, 0, NULL, &info, store);
     ok(ret, "CryptUIWizImport failed: %08lx\n", GetLastError());
-    ret = find_and_delete_cert_in_store(store, info.u.pCertContext);
+    ret = find_and_delete_cert_in_store(store, info.pCertContext);
     ok(ret ||
      broken(!ret) /* Win9x/NT4 */,
      "expected to find iTunesCert3 in memory store\n");
-    CertFreeCertificateContext(info.u.pCertContext);
+    CertFreeCertificateContext(info.pCertContext);
     CertCloseStore(store, 0);
 
-    info.u.pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING,
+    info.pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING,
      iTunesCert1, sizeof(iTunesCert1));
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI, 0, NULL, &info, NULL);
     ok(ret, "CryptUIWizImport failed: %08lx\n", GetLastError());
@@ -479,16 +478,16 @@ static void test_crypt_ui_wiz_import(void)
         if (addressBook)
         {
             ret = find_and_delete_cert_in_store(addressBook,
-             info.u.pCertContext);
+             info.pCertContext);
             ok(ret ||
              broken(!ret),  /* Windows 2000 and earlier */
              "expected to find iTunesCert1 in AddressBook store\n");
             CertCloseStore(addressBook, 0);
         }
     }
-    CertFreeCertificateContext(info.u.pCertContext);
+    CertFreeCertificateContext(info.pCertContext);
 
-    info.u.pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING,
+    info.pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING,
      iTunesCert2, sizeof(iTunesCert2));
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI, 0, NULL, &info, NULL);
     ok(ret, "CryptUIWizImport failed: %08lx\n", GetLastError());
@@ -499,21 +498,21 @@ static void test_crypt_ui_wiz_import(void)
 
         if (ca)
         {
-            ret = find_and_delete_cert_in_store(ca, info.u.pCertContext);
+            ret = find_and_delete_cert_in_store(ca, info.pCertContext);
             ok(ret ||
              broken(!ret) /* Win9x/NT4 */,
              "expected to find iTunesCert2 in CA store\n");
             CertCloseStore(ca, 0);
         }
     }
-    CertFreeCertificateContext(info.u.pCertContext);
+    CertFreeCertificateContext(info.pCertContext);
 
-    info.u.hCertStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+    info.hCertStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
-    CertAddEncodedCertificateToStore(info.u.hCertStore, X509_ASN_ENCODING,
+    CertAddEncodedCertificateToStore(info.hCertStore, X509_ASN_ENCODING,
      v1CertWithValidPubKey, sizeof(v1CertWithValidPubKey),
      CERT_STORE_ADD_ALWAYS, NULL);
-    CertAddEncodedCRLToStore(info.u.hCertStore, X509_ASN_ENCODING, signedCRL,
+    CertAddEncodedCRLToStore(info.hCertStore, X509_ASN_ENCODING, signedCRL,
      sizeof(signedCRL), CERT_STORE_ADD_ALWAYS, NULL);
     info.dwSubjectChoice = CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_STORE;
     /* The ALLOW flags aren't allowed with a store as the source if the source
@@ -557,14 +556,14 @@ static void test_crypt_ui_wiz_import(void)
         ok(count == 1, "expected 1 CRL, got %ld\n", count);
     }
     CertCloseStore(store, 0);
-    CertCloseStore(info.u.hCertStore, 0);
+    CertCloseStore(info.hCertStore, 0);
 
     /* If the ALLOW flags match the content of the store, the store can be
      * imported.
      */
-    info.u.hCertStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+    info.hCertStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
-    CertAddEncodedCertificateToStore(info.u.hCertStore, X509_ASN_ENCODING,
+    CertAddEncodedCertificateToStore(info.hCertStore, X509_ASN_ENCODING,
      v1CertWithValidPubKey, sizeof(v1CertWithValidPubKey),
      CERT_STORE_ADD_ALWAYS, NULL);
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
@@ -598,14 +597,14 @@ static void test_crypt_ui_wiz_import(void)
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08lx\n", GetLastError());
     CertCloseStore(store, 0);
-    CertCloseStore(info.u.hCertStore, 0);
+    CertCloseStore(info.hCertStore, 0);
 
     /* Again, if the ALLOW flags match the content of the store, the store can
      * be imported.
      */
-    info.u.hCertStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+    info.hCertStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
-    CertAddEncodedCRLToStore(info.u.hCertStore, X509_ASN_ENCODING, signedCRL,
+    CertAddEncodedCRLToStore(info.hCertStore, X509_ASN_ENCODING, signedCRL,
      sizeof(signedCRL), CERT_STORE_ADD_ALWAYS, NULL);
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
@@ -638,7 +637,7 @@ static void test_crypt_ui_wiz_import(void)
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08lx\n", GetLastError());
     CertCloseStore(store, 0);
-    CertCloseStore(info.u.hCertStore, 0);
+    CertCloseStore(info.hCertStore, 0);
 
     UnhookWindowsHookEx(hook);
 }
