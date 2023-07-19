@@ -165,6 +165,7 @@ HRESULT async_queue_task(struct async_queue *queue, struct async_task *task)
     list_add_tail(&queue->tasks, &task->entry);
     LeaveCriticalSection(&queue->cs);
 
+    ResetEvent(queue->empty);
     SetEvent(queue->wait);
 
     return S_OK;
