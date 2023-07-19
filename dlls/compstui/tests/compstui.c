@@ -198,7 +198,7 @@ static LONG WINAPI propsheetui_callback(PROPSHEETUI_INFO *info, LPARAM lparam)
 
             memset(&psp, 0, sizeof(psp));
             psp.dwSize = sizeof(psp);
-            U(psp).pszTemplate = L"prop_page1";
+            psp.pszTemplate = L"prop_page1";
             psp.pfnDlgProc = prop_page_proc2;
             ret = info->pfnComPropSheet(info->hComPropSheet, CPSFUNC_ADD_PROPSHEETPAGEW, (LPARAM)&psp, 0);
             ok(ret, "ret = 0\n");
