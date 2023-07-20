@@ -3974,15 +3974,15 @@ msgstr "Avhengig kompilering er skrudd av"
 msgid "Expected '@'"
 msgstr "Forventet '@'"
 
-#: dlls/jscript/jscript.rc:83
+#: dlls/jscript/jscript.rc:84
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript kompileringsfeil"
 
-#: dlls/jscript/jscript.rc:84
+#: dlls/jscript/jscript.rc:85
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:85 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:86 dlls/vbscript/vbscript.rc:64
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
@@ -4111,6 +4111,12 @@ msgid "'this' is not a | object"
 msgstr "'[object]' er ikke et dataobjekt"
 
 #: dlls/jscript/jscript.rc:81
+#, fuzzy
+#| msgid "'[object]' is not a date object"
+msgid "'key' is not an object"
+msgstr "'[object]' er ikke et dataobjekt"
+
+#: dlls/jscript/jscript.rc:82
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 

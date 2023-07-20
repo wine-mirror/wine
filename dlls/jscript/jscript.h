@@ -32,6 +32,7 @@
 #include "resource.h"
 
 #include "wine/list.h"
+#include "wine/rbtree.h"
 
 /*
  * This is Wine jscript extension for ES5 compatible mode. Native IE9+ implements
@@ -179,6 +180,7 @@ struct jsdisp_t {
 
     LONG ref;
 
+    BOOLEAN has_weak_refs;
     BOOLEAN extensible;
     BOOLEAN gc_marked;
 
@@ -362,6 +364,11 @@ typedef struct {
     unsigned length;
 } match_result_t;
 
+struct weak_refs_entry {
+    struct rb_entry entry;
+    struct list list;
+};
+
 struct _script_ctx_t {
     LONG ref;
 
@@ -371,6 +378,7 @@ struct _script_ctx_t {
     struct _call_frame_t *call_ctx;
     struct list named_items;
     struct list objects;
+    struct rb_tree weak_refs;
     IActiveScriptSite *site;
     IInternetHostSecurityManager *secmgr;
     DWORD safeopt;
@@ -425,6 +433,15 @@ struct _script_ctx_t {
     };
 };
 C_ASSERT(RTL_SIZEOF_THROUGH_FIELD(script_ctx_t, weakmap_prototype) == RTL_SIZEOF_THROUGH_FIELD(script_ctx_t, global_objects));
+
+struct weakmap_entry {
+    struct rb_entry entry;
+    jsdisp_t *key;
+    jsval_t value;
+    jsdisp_t *weakmap;
+    struct list weak_refs_entry;
+};
+void remove_weakmap_entry(struct weakmap_entry*);
 
 void script_release(script_ctx_t*);
 
@@ -550,6 +567,7 @@ static inline HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, jsval_
 #define JS_E_NONCONFIGURABLE_REDEFINED MAKE_JSERROR(IDS_NONCONFIGURABLE_REDEFINED)
 #define JS_E_NONWRITABLE_MODIFIED    MAKE_JSERROR(IDS_NONWRITABLE_MODIFIED)
 #define JS_E_WRONG_THIS              MAKE_JSERROR(IDS_WRONG_THIS)
+#define JS_E_KEY_NOT_OBJECT          MAKE_JSERROR(IDS_KEY_NOT_OBJECT)
 #define JS_E_PROP_DESC_MISMATCH      MAKE_JSERROR(IDS_PROP_DESC_MISMATCH)
 #define JS_E_INVALID_WRITABLE_PROP_DESC MAKE_JSERROR(IDS_INVALID_WRITABLE_PROP_DESC)
 

@@ -715,6 +715,13 @@ static ULONG WINAPI JScript_Release(IActiveScript *iface)
     return ref;
 }
 
+static int weak_refs_compare(const void *key, const struct rb_entry *entry)
+{
+    const struct weak_refs_entry *weak_refs_entry = RB_ENTRY_VALUE(entry, const struct weak_refs_entry, entry);
+    ULONG_PTR a = (ULONG_PTR)key, b = (ULONG_PTR)LIST_ENTRY(weak_refs_entry->list.next, struct weakmap_entry, weak_refs_entry)->key;
+    return (a > b) - (a < b);
+}
+
 static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
                                             IActiveScriptSite *pass)
 {
@@ -748,6 +755,7 @@ static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
         ctx->acc = jsval_undefined();
         list_init(&ctx->named_items);
         list_init(&ctx->objects);
+        rb_init(&ctx->weak_refs, weak_refs_compare);
         heap_pool_init(&ctx->tmp_heap);
 
         hres = create_jscaller(ctx);

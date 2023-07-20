@@ -616,7 +616,55 @@ static HRESULT Set_constructor(script_ctx_t *ctx, jsval_t vthis, WORD flags, uns
 
 typedef struct {
     jsdisp_t dispex;
+    struct rb_tree map;
 } WeakMapInstance;
+
+static int weakmap_compare(const void *k, const struct rb_entry *e)
+{
+    ULONG_PTR a = (ULONG_PTR)k, b = (ULONG_PTR)RB_ENTRY_VALUE(e, const struct weakmap_entry, entry)->key;
+    return (a > b) - (a < b);
+}
+
+static HRESULT get_weakmap_this(script_ctx_t *ctx, jsval_t vthis, WeakMapInstance **ret)
+{
+    jsdisp_t *jsdisp;
+
+    if(!is_object_instance(vthis))
+        return JS_E_OBJECT_EXPECTED;
+    if(!(jsdisp = to_jsdisp(get_object(vthis))) || !is_class(jsdisp, JSCLASS_WEAKMAP)) {
+        WARN("not a WeakMap object passed as 'this'\n");
+        throw_error(ctx, JS_E_WRONG_THIS, L"WeakMap");
+        return DISP_E_EXCEPTION;
+    }
+
+    *ret = CONTAINING_RECORD(jsdisp, WeakMapInstance, dispex);
+    return S_OK;
+}
+
+static struct weakmap_entry *get_weakmap_entry(WeakMapInstance *weakmap, jsdisp_t *key)
+{
+    struct rb_entry *entry;
+    if(!(entry = rb_get(&weakmap->map, key))) return NULL;
+    return CONTAINING_RECORD(entry, struct weakmap_entry, entry);
+}
+
+void remove_weakmap_entry(struct weakmap_entry *entry)
+{
+    WeakMapInstance *weakmap = (WeakMapInstance*)entry->weakmap;
+    struct list *next = entry->weak_refs_entry.next;
+
+    if(next->next != &entry->weak_refs_entry)
+        list_remove(&entry->weak_refs_entry);
+    else {
+        struct weak_refs_entry *weak_refs_entry = LIST_ENTRY(next, struct weak_refs_entry, list);
+        entry->key->has_weak_refs = FALSE;
+        rb_remove(&entry->key->ctx->weak_refs, &weak_refs_entry->entry);
+        free(weak_refs_entry);
+    }
+    rb_remove(&weakmap->map, &entry->entry);
+    jsval_release(entry->value);
+    free(entry);
+}
 
 static HRESULT WeakMap_clear(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
@@ -642,8 +690,67 @@ static HRESULT WeakMap_get(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigne
 static HRESULT WeakMap_set(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    jsdisp_t *key = (argc >= 1 && is_object_instance(argv[0])) ? to_jsdisp(get_object(argv[0])) : NULL;
+    jsval_t value = argc >= 2 ? argv[1] : jsval_undefined();
+    struct weakmap_entry *entry;
+    WeakMapInstance *weakmap;
+    HRESULT hres;
+
+    hres = get_weakmap_this(ctx, vthis, &weakmap);
+    if(FAILED(hres))
+        return hres;
+
+    TRACE("%p (%p %s)\n", weakmap, key, debugstr_jsval(value));
+
+    if(!key)
+        return JS_E_KEY_NOT_OBJECT;
+
+    if(key->ctx != ctx) {
+        FIXME("different ctx not supported\n");
+        return JS_E_KEY_NOT_OBJECT;
+    }
+
+    if((entry = get_weakmap_entry(weakmap, key))) {
+        jsval_t val;
+        hres = jsval_copy(value, &val);
+        if(FAILED(hres))
+            return hres;
+
+        jsval_release(entry->value);
+        entry->value = val;
+    }else {
+        struct weak_refs_entry *weak_refs_entry;
+
+        if(!(entry = malloc(sizeof(*entry))))
+            return E_OUTOFMEMORY;
+
+        hres = jsval_copy(value, &entry->value);
+        if(FAILED(hres)) {
+            free(entry);
+            return hres;
+        }
+
+        if(key->has_weak_refs)
+            weak_refs_entry = RB_ENTRY_VALUE(rb_get(&ctx->weak_refs, key), struct weak_refs_entry, entry);
+        else {
+            if(!(weak_refs_entry = malloc(sizeof(*weak_refs_entry)))) {
+                jsval_release(entry->value);
+                free(entry);
+                return E_OUTOFMEMORY;
+            }
+            rb_put(&ctx->weak_refs, key, &weak_refs_entry->entry);
+            list_init(&weak_refs_entry->list);
+            key->has_weak_refs = TRUE;
+        }
+        list_add_tail(&weak_refs_entry->list, &entry->weak_refs_entry);
+
+        entry->key = key;
+        entry->weakmap = &weakmap->dispex;
+        rb_put(&weakmap->map, key, &entry->entry);
+    }
+
+    if(r) *r = jsval_undefined();
+    return S_OK;
 }
 
 static HRESULT WeakMap_has(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
@@ -664,11 +771,35 @@ static void WeakMap_destructor(jsdisp_t *dispex)
 {
     WeakMapInstance *weakmap = (WeakMapInstance*)dispex;
 
+    while(weakmap->map.root)
+        remove_weakmap_entry(RB_ENTRY_VALUE(weakmap->map.root, struct weakmap_entry, entry));
+
     free(weakmap);
 }
 
 static HRESULT WeakMap_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op op, jsdisp_t *dispex)
 {
+    WeakMapInstance *weakmap = (WeakMapInstance*)dispex;
+    struct weakmap_entry *entry;
+    HRESULT hres;
+
+    if(op == GC_TRAVERSE_UNLINK) {
+        while(weakmap->map.root)
+            remove_weakmap_entry(RB_ENTRY_VALUE(weakmap->map.root, struct weakmap_entry, entry));
+        return S_OK;
+    }
+
+    RB_FOR_EACH_ENTRY(entry, &weakmap->map, struct weakmap_entry, entry) {
+        /* Only traverse the values if the key turned out to be alive, which means it might not have traversed
+           the associated values with it from this WeakMap yet (because it wasn't considered alive back then).
+           We need both the key and the WeakMap for the entry to actually be accessible (and thus traversed). */
+        if(op == GC_TRAVERSE && entry->key->gc_marked)
+            continue;
+
+        hres = gc_process_linked_val(gc_ctx, op, dispex, &entry->value);
+        if(FAILED(hres))
+            return hres;
+    }
     return S_OK;
 }
 
@@ -721,6 +852,7 @@ static HRESULT WeakMap_constructor(script_ctx_t *ctx, jsval_t vthis, WORD flags,
         if(FAILED(hres))
             return hres;
 
+        rb_init(&weakmap->map, weakmap_compare);
         *r = jsval_obj(&weakmap->dispex);
         return S_OK;
 

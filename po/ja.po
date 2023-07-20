@@ -3948,15 +3948,15 @@ msgstr "条件コンパイルはオフにされています"
 msgid "Expected '@'"
 msgstr "'@'を期待していました"
 
-#: dlls/jscript/jscript.rc:83
+#: dlls/jscript/jscript.rc:84
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript コンパイル エラー"
 
-#: dlls/jscript/jscript.rc:84
+#: dlls/jscript/jscript.rc:85
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript 実行時エラー"
 
-#: dlls/jscript/jscript.rc:85 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:86 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "未知の実行時エラー"
 
@@ -4079,6 +4079,12 @@ msgid "'this' is not a | object"
 msgstr "'this' は | オブジェクトではありません"
 
 #: dlls/jscript/jscript.rc:81
+#, fuzzy
+#| msgid "'this' is not a | object"
+msgid "'key' is not an object"
+msgstr "'this' は | オブジェクトではありません"
+
+#: dlls/jscript/jscript.rc:82
 msgid "Property cannot have both accessors and a value"
 msgstr "プロパティはアクセサーと値の両方になることはできません"
 

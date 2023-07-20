@@ -896,6 +896,24 @@ HRESULT gc_run(script_ctx_t *ctx)
                     break;
             }
 
+            /* For weak refs, traverse paths accessible from it via the WeakMaps, if the WeakMaps are alive at this point.
+               We need both the key and the WeakMap for the entry to actually be accessible (and thus traversed). */
+            if(obj2->has_weak_refs) {
+                struct list *list = &RB_ENTRY_VALUE(rb_get(&ctx->weak_refs, obj2), struct weak_refs_entry, entry)->list;
+                struct weakmap_entry *entry;
+
+                LIST_FOR_EACH_ENTRY(entry, list, struct weakmap_entry, weak_refs_entry) {
+                    if(!entry->weakmap->gc_marked && is_object_instance(entry->value) && (link = to_jsdisp(get_object(entry->value)))) {
+                        hres = gc_stack_push(&gc_ctx, link);
+                        if(FAILED(hres))
+                            break;
+                    }
+                }
+
+                if(FAILED(hres))
+                    break;
+            }
+
             do obj2 = gc_stack_pop(&gc_ctx); while(obj2 && !obj2->gc_marked);
         } while(obj2);
 
@@ -2221,6 +2239,13 @@ void jsdisp_free(jsdisp_t *obj)
     list_remove(&obj->entry);
 
     TRACE("(%p)\n", obj);
+
+    if(obj->has_weak_refs) {
+        struct list *list = &RB_ENTRY_VALUE(rb_get(&obj->ctx->weak_refs, obj), struct weak_refs_entry, entry)->list;
+        do {
+            remove_weakmap_entry(LIST_ENTRY(list->next, struct weakmap_entry, weak_refs_entry));
+        } while(obj->has_weak_refs);
+    }
 
     for(prop = obj->props; prop < obj->props+obj->prop_cnt; prop++) {
         switch(prop->type) {

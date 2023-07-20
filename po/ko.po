@@ -3938,15 +3938,15 @@ msgstr "조건부 컴파일이 해제되었습니다"
 msgid "Expected '@'"
 msgstr "'@'가 필요합니다"
 
-#: dlls/jscript/jscript.rc:83
+#: dlls/jscript/jscript.rc:84
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript 컴파일 오류"
 
-#: dlls/jscript/jscript.rc:84
+#: dlls/jscript/jscript.rc:85
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript 런타임 오류"
 
-#: dlls/jscript/jscript.rc:85 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:86 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "알 수 없는 런타임 오류"
 
@@ -4068,6 +4068,12 @@ msgid "'this' is not a | object"
 msgstr "'this'는 '|' 개체가 아닙니다"
 
 #: dlls/jscript/jscript.rc:81
+#, fuzzy
+#| msgid "'this' is not a | object"
+msgid "'key' is not an object"
+msgstr "'this'는 '|' 개체가 아닙니다"
+
+#: dlls/jscript/jscript.rc:82
 msgid "Property cannot have both accessors and a value"
 msgstr "속성에 접근자와 값을 둘 다 지정할 수는 없습니다"
 
