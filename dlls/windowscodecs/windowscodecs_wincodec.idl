@@ -175,9 +175,17 @@ coclass WICPngChrmMetadataReader { interface IWICMetadataReader; }
 coclass WICPngGamaMetadataReader { interface IWICMetadataReader; }
 
 [
+    helpstring("WIC Png hIST Metadata Reader"),
+    threading(both),
+    uuid(877a0bb7-a313-4491-87b5-2e6d0594f520)
+]
+coclass WICPngHistMetadataReader { interface IWICMetadataReader; }
+
+[
     helpstring("WIC Png tEXt Metadata Reader"),
     threading(both),
     uuid(4b59afcc-b8c3-408a-b670-89e5fab6fda7)
+
 ]
 coclass WICPngTextMetadataReader { interface IWICMetadataReader; }
 

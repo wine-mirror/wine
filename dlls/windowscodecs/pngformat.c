@@ -31,6 +31,11 @@
 
 #include "wine/debug.h"
 
+static inline USHORT read_ushort_be(BYTE* data)
+{
+    return data[0] << 8 | data[1];
+}
+
 static inline ULONG read_ulong_be(BYTE* data)
 {
     return data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
@@ -241,6 +246,69 @@ static const MetadataHandlerVtbl ChrmReader_Vtbl = {
 HRESULT PngChrmReader_CreateInstance(REFIID iid, void** ppv)
 {
     return MetadataReader_Create(&ChrmReader_Vtbl, iid, ppv);
+}
+
+static HRESULT LoadHistMetadata(IStream *stream, const GUID *preferred_vendor,
+    DWORD persist_options, MetadataItem **items, DWORD *item_count)
+{
+    HRESULT hr;
+    BYTE type[4];
+    BYTE *data;
+    ULONG data_size, element_count, i;
+    LPWSTR name;
+    MetadataItem *result;
+    USHORT *elements;
+
+    hr = read_png_chunk(stream, type, &data, &data_size);
+    if (FAILED(hr)) return hr;
+
+    element_count = data_size / 2;
+    elements = CoTaskMemAlloc(element_count * sizeof(USHORT));
+    if (!elements)
+    {
+        HeapFree(GetProcessHeap(), 0, data);
+        return E_OUTOFMEMORY;
+    }
+    for (i = 0; i < element_count; i++)
+        elements[i] = read_ushort_be(data + i * 2);
+
+    HeapFree(GetProcessHeap(), 0, data);
+
+    result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem));
+    SHStrDupW(L"Frequencies", &name);
+    if (!result || !name) {
+        HeapFree(GetProcessHeap(), 0, result);
+        CoTaskMemFree(name);
+        CoTaskMemFree(elements);
+        return E_OUTOFMEMORY;
+    }
+
+    PropVariantInit(&result[0].schema);
+    PropVariantInit(&result[0].id);
+    PropVariantInit(&result[0].value);
+
+    result[0].id.vt = VT_LPWSTR;
+    result[0].id.pwszVal = name;
+
+    result[0].value.vt = VT_UI2|VT_VECTOR;
+    result[0].value.caui.cElems = element_count;
+    result[0].value.caui.pElems = elements;
+
+    *items = result;
+    *item_count = 1;
+
+    return S_OK;
+}
+
+static const MetadataHandlerVtbl HistReader_Vtbl = {
+    0,
+    &CLSID_WICPngHistMetadataReader,
+    LoadHistMetadata
+};
+
+HRESULT PngHistReader_CreateInstance(REFIID iid, void** ppv)
+{
+    return MetadataReader_Create(&HistReader_Vtbl, iid, ppv);
 }
 
 HRESULT PngDecoder_CreateInstance(REFIID iid, void** ppv)
