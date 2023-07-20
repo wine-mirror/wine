@@ -483,6 +483,7 @@ jsdisp_t *create_builtin_error(script_ctx_t *ctx)
         case JS_E_OBJECT_NONEXTENSIBLE:
         case JS_E_NONCONFIGURABLE_REDEFINED:
         case JS_E_NONWRITABLE_MODIFIED:
+        case JS_E_WRONG_THIS:
         case JS_E_KEY_NOT_OBJECT:
         case JS_E_PROP_DESC_MISMATCH:
         case JS_E_INVALID_WRITABLE_PROP_DESC:
