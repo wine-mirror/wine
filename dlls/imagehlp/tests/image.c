@@ -19,7 +19,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#define NONAMELESSUNION
 #include <windef.h>
 #include <winbase.h>
 #include <winver.h>
@@ -234,8 +233,8 @@ static const struct expected_blob b1[] = {
     {sizeof(bin.nt_headers), &bin.nt_headers},
     {sizeof(bin.sections),  &bin.sections},
     {FILE_IDATA-FILE_TEXT, &bin.text_section},
-    {sizeof(bin.idata_section.descriptors[0].u.OriginalFirstThunk),
-        &bin.idata_section.descriptors[0].u.OriginalFirstThunk},
+    {sizeof(bin.idata_section.descriptors[0].OriginalFirstThunk),
+        &bin.idata_section.descriptors[0].OriginalFirstThunk},
     {FIELD_OFFSET(struct Imports, thunks)-
         (FIELD_OFFSET(struct Imports, descriptors)+FIELD_OFFSET(IMAGE_IMPORT_DESCRIPTOR, Name)),
         &bin.idata_section.descriptors[0].Name},
