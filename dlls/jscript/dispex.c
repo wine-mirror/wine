@@ -665,14 +665,13 @@ static HRESULT fill_protrefs(jsdisp_t *This)
     return S_OK;
 }
 
-static void unlink_props(jsdisp_t *jsdisp)
+static void unlink_jsdisp(jsdisp_t *jsdisp)
 {
     dispex_prop_t *prop = jsdisp->props, *end;
 
     for(end = prop + jsdisp->prop_cnt; prop < end; prop++) {
         switch(prop->type) {
         case PROP_DELETED:
-        case PROP_PROTREF:
             continue;
         case PROP_JSVAL:
             jsval_release(prop->u.val);
@@ -688,6 +687,14 @@ static void unlink_props(jsdisp_t *jsdisp)
         }
         prop->type = PROP_DELETED;
     }
+
+    if(jsdisp->prototype) {
+        jsdisp_release(jsdisp->prototype);
+        jsdisp->prototype = NULL;
+    }
+
+    if(jsdisp->builtin_info->gc_traverse)
+        jsdisp->builtin_info->gc_traverse(NULL, GC_TRAVERSE_UNLINK, jsdisp);
 }
 
 
@@ -927,15 +934,7 @@ HRESULT gc_run(script_ctx_t *ctx)
 
         /* Grab it since it gets removed when unlinked */
         jsdisp_addref(obj);
-        unlink_props(obj);
-
-        if(obj->prototype) {
-            jsdisp_release(obj->prototype);
-            obj->prototype = NULL;
-        }
-
-        if(obj->builtin_info->gc_traverse)
-            obj->builtin_info->gc_traverse(&gc_ctx, GC_TRAVERSE_UNLINK, obj);
+        unlink_jsdisp(obj);
 
         /* Releasing unlinked object should not delete any other object,
            so we can safely obtain the next pointer now */
