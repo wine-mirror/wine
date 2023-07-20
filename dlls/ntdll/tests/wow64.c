@@ -1406,16 +1406,16 @@ static void test_iosb(void)
     args[0] = (LONG_PTR)server;
     status = call_func64( func, ARRAY_SIZE(args), args );
     ok( status == STATUS_PENDING, "NtFsControlFile returned %lx\n", status );
-    ok( U(iosb32).Status == 0x55555555, "status changed to %lx\n", U(iosb32).Status );
-    ok( U(iosb64).Pointer == PtrToUlong(&iosb32), "status changed to %lx\n", U(iosb64).Status );
+    ok( iosb32.Status == 0x55555555, "status changed to %lx\n", iosb32.Status );
+    ok( iosb64.Pointer == PtrToUlong(&iosb32), "status changed to %lx\n", iosb64.Status );
     ok( iosb64.Information == 0xdeadbeef, "info changed to %Ix\n", (ULONG_PTR)iosb64.Information );
 
     client = CreateFileA( pipe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
                           FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL );
     ok( client != INVALID_HANDLE_VALUE, "CreateFile failed: %lu\n", GetLastError() );
 
-    ok( U(iosb32).Status == 0, "Wrong iostatus %lx\n", U(iosb32).Status );
-    ok( U(iosb64).Pointer == PtrToUlong(&iosb32), "status changed to %lx\n", U(iosb64).Status );
+    ok( iosb32.Status == 0, "Wrong iostatus %lx\n", iosb32.Status );
+    ok( iosb64.Pointer == PtrToUlong(&iosb32), "status changed to %lx\n", iosb64.Status );
     ok( iosb64.Information == 0xdeadbeef, "info changed to %Ix\n", (ULONG_PTR)iosb64.Information );
 
     memset( &iosb32, 0x55, sizeof(iosb32) );
@@ -1433,9 +1433,9 @@ static void test_iosb(void)
     ok( status == STATUS_PENDING || status == STATUS_SUCCESS, "NtFsControlFile returned %lx\n", status );
     todo_wine
     {
-    ok( U(iosb32).Status == STATUS_SUCCESS, "status changed to %lx\n", U(iosb32).Status );
+    ok( iosb32.Status == STATUS_SUCCESS, "status changed to %lx\n", iosb32.Status );
     ok( iosb32.Information == sizeof(id), "info changed to %Ix\n", iosb32.Information );
-    ok( U(iosb64).Pointer == PtrToUlong(&iosb32), "status changed to %lx\n", U(iosb64).Status );
+    ok( iosb64.Pointer == PtrToUlong(&iosb32), "status changed to %lx\n", iosb64.Status );
     ok( iosb64.Information == 0xdeadbeef, "info changed to %Ix\n", (ULONG_PTR)iosb64.Information );
     }
     ok( id == GetCurrentProcessId(), "wrong id %lx / %lx\n", id, GetCurrentProcessId() );
@@ -1461,9 +1461,9 @@ static void test_iosb(void)
     args[0] = (LONG_PTR)server;
     status = call_func64( func, ARRAY_SIZE(args), args );
     ok( status == STATUS_SUCCESS, "NtFsControlFile returned %lx\n", status );
-    ok( U(iosb32).Status == 0x55555555, "status changed to %lx\n", U(iosb32).Status );
+    ok( iosb32.Status == 0x55555555, "status changed to %lx\n", iosb32.Status );
     ok( iosb32.Information == 0x55555555, "info changed to %Ix\n", iosb32.Information );
-    ok( U(iosb64).Pointer == STATUS_SUCCESS, "status changed to %lx\n", U(iosb64).Status );
+    ok( iosb64.Pointer == STATUS_SUCCESS, "status changed to %lx\n", iosb64.Status );
     ok( iosb64.Information == sizeof(id), "info changed to %Ix\n", (ULONG_PTR)iosb64.Information );
     ok( id == GetCurrentProcessId(), "wrong id %lx / %lx\n", id, GetCurrentProcessId() );
     CloseHandle( client );
