@@ -802,7 +802,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         ok(bindinfo.dwBindVerb == BINDVERB_POST, "bindinfo.dwBindVerb=%ld\n", bindinfo.dwBindVerb);
         ok(bindinfo.cbstgmedData == 8, "bindinfo.cbstgmedData=%ld\n", bindinfo.cbstgmedData);
         ok(bindinfo.stgmedData.tymed == TYMED_HGLOBAL, "bindinfo.stgmedData.tymed=%ld\n", bindinfo.stgmedData.tymed);
-        ok(!memcmp(U(bindinfo.stgmedData).hGlobal, "cmd=TEST", 8), "unexpected hGlobal\n");
+        ok(!memcmp(bindinfo.stgmedData.hGlobal, "cmd=TEST", 8), "unexpected hGlobal\n");
     }
     ok(bindinfo.szCustomVerb == 0, "bindinfo.szCustomVerb=%p\n", bindinfo.szCustomVerb);
     if(is_mhtml)
@@ -1632,7 +1632,7 @@ static void continue_binding(IBindStatusCallback *callback)
 
     SET_EXPECT(Read);
     stgmedium.tymed = TYMED_ISTREAM;
-    U(stgmedium).pstm = &Stream;
+    stgmedium.pstm = &Stream;
     stgmedium.pUnkForRelease = (IUnknown*)&Moniker;
     hres = IBindStatusCallback_OnDataAvailable(callback,
             BSCF_FIRSTDATANOTIFICATION|BSCF_LASTDATANOTIFICATION,

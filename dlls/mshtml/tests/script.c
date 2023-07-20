@@ -3864,7 +3864,7 @@ static void stream_write(const WCHAR *name, const WCHAR *data)
     hres = IStream_Write(protocol_handler->stream, data, lstrlenW(data)*sizeof(WCHAR), NULL);
     ok(hres == S_OK, "Write failed: %08lx\n", hres);
 
-    U(large_zero).QuadPart = 0;
+    large_zero.QuadPart = 0;
     hres = IStream_Seek(protocol_handler->stream, large_zero, STREAM_SEEK_SET, NULL);
     ok(hres == S_OK, "Seek failed: %08lx\n", hres);
 
@@ -4042,10 +4042,10 @@ static HRESULT WINAPI ProtocolEx_StartEx(IInternetProtocolEx *iface, IUri *uri, 
         switch(This->bind_info.stgmedData.tymed) {
         case TYMED_HGLOBAL:
             This->size = This->bind_info.cbstgmedData;
-            This->data = U(This->bind_info.stgmedData).hGlobal;
+            This->data = This->bind_info.stgmedData.hGlobal;
             break;
         case TYMED_ISTREAM:
-            This->stream = U(This->bind_info.stgmedData).pstm;
+            This->stream = This->bind_info.stgmedData.pstm;
             IStream_AddRef(This->stream);
             break;
         default:
