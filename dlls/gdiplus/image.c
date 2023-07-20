@@ -3302,6 +3302,7 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
     if (delay)
     {
         LONG *value;
+        LONG frame_delay = 0;
 
         delay->type = PropertyTagTypeLong;
         delay->id = PropertyTagFrameDelay;
@@ -3315,9 +3316,10 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
             hr = IWICBitmapDecoder_GetFrame(decoder, i, &frame);
             if (hr == S_OK)
             {
-                get_gif_frame_property(frame, &GUID_MetadataFormatGCE, L"Delay", &value[i]);
+                get_gif_frame_property(frame, &GUID_MetadataFormatGCE, L"Delay", &frame_delay);
                 IWICBitmapFrameDecode_Release(frame);
             }
+            value[i] = frame_delay;
         }
     }
 
