@@ -3250,14 +3250,13 @@ static PropertyItem *get_gif_transparent_idx(IWICMetadataReader *reader)
     return index;
 }
 
-static LONG get_gif_frame_property(IWICBitmapFrameDecode *frame, const GUID *format, const WCHAR *property)
+static void get_gif_frame_property(IWICBitmapFrameDecode *frame, const GUID *format, const WCHAR *property, LONG *value)
 {
     HRESULT hr;
     IWICMetadataBlockReader *block_reader;
     IWICMetadataReader *reader;
     UINT block_count, i;
     PropertyItem *prop;
-    LONG value = 0;
 
     hr = IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICMetadataBlockReader, (void **)&block_reader);
     if (hr == S_OK)
@@ -3274,9 +3273,9 @@ static LONG get_gif_frame_property(IWICBitmapFrameDecode *frame, const GUID *for
                     if (prop)
                     {
                         if (prop->type == PropertyTagTypeByte && prop->length == 1)
-                            value = *(BYTE *)prop->value;
+                            *value = *(BYTE *)prop->value;
                         else if (prop->type == PropertyTagTypeShort && prop->length == 2)
-                            value = *(SHORT *)prop->value;
+                            *value = *(SHORT *)prop->value;
 
                         heap_free(prop);
                     }
@@ -3286,8 +3285,6 @@ static LONG get_gif_frame_property(IWICBitmapFrameDecode *frame, const GUID *for
         }
         IWICMetadataBlockReader_Release(block_reader);
     }
-
-    return value;
 }
 
 static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UINT active_frame)
@@ -3318,7 +3315,7 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
             hr = IWICBitmapDecoder_GetFrame(decoder, i, &frame);
             if (hr == S_OK)
             {
-                value[i] = get_gif_frame_property(frame, &GUID_MetadataFormatGCE, L"Delay");
+                get_gif_frame_property(frame, &GUID_MetadataFormatGCE, L"Delay", &value[i]);
                 IWICBitmapFrameDecode_Release(frame);
             }
         }
@@ -3832,8 +3829,11 @@ static GpStatus select_frame_wic(GpImage *image, UINT active_frame)
 static HRESULT get_gif_frame_rect(IWICBitmapFrameDecode *frame,
         UINT *left, UINT *top, UINT *width, UINT *height)
 {
-    *left = get_gif_frame_property(frame, &GUID_MetadataFormatIMD, L"Left");
-    *top = get_gif_frame_property(frame, &GUID_MetadataFormatIMD, L"Top");
+    LONG frame_left = 0, frame_top = 0;
+    get_gif_frame_property(frame, &GUID_MetadataFormatIMD, L"Left", &frame_left);
+    get_gif_frame_property(frame, &GUID_MetadataFormatIMD, L"Top", &frame_top);
+    *left = frame_left;
+    *top = frame_top;
 
     return IWICBitmapFrameDecode_GetSize(frame, width, height);
 }
@@ -3907,7 +3907,8 @@ static GpStatus select_frame_gif(GpImage* image, UINT active_frame)
 {
     GpBitmap *bitmap = (GpBitmap*)image;
     IWICBitmapFrameDecode *frame;
-    int cur_frame=0, disposal;
+    int cur_frame=0;
+    LONG disposal;
     BOOL bgcolor_set = FALSE;
     DWORD bgcolor = 0;
     HRESULT hr;
@@ -3916,7 +3917,8 @@ static GpStatus select_frame_gif(GpImage* image, UINT active_frame)
         hr = IWICBitmapDecoder_GetFrame(bitmap->image.decoder, image->current_frame, &frame);
         if(FAILED(hr))
             return hresult_to_status(hr);
-        disposal = get_gif_frame_property(frame, &GUID_MetadataFormatGCE, L"Disposal");
+        disposal = 0;
+        get_gif_frame_property(frame, &GUID_MetadataFormatGCE, L"Disposal", &disposal);
         IWICBitmapFrameDecode_Release(frame);
 
         if(disposal == GIF_DISPOSE_RESTORE_TO_BKGND)
@@ -3929,7 +3931,8 @@ static GpStatus select_frame_gif(GpImage* image, UINT active_frame)
         hr = IWICBitmapDecoder_GetFrame(bitmap->image.decoder, cur_frame, &frame);
         if(FAILED(hr))
             return hresult_to_status(hr);
-        disposal = get_gif_frame_property(frame, &GUID_MetadataFormatGCE, L"Disposal");
+        disposal = 0;
+        get_gif_frame_property(frame, &GUID_MetadataFormatGCE, L"Disposal", &disposal);
 
         if(disposal==GIF_DISPOSE_UNSPECIFIED || disposal==GIF_DISPOSE_DO_NOT_DISPOSE) {
             hr = blit_gif_frame(bitmap, frame, cur_frame==0);
