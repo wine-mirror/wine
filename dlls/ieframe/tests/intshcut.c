@@ -176,14 +176,14 @@ static void test_ReadAndWriteProperties(void)
     PROPVARIANT pv[2], pvread[2];
 
     ps[0].ulKind = PRSPEC_PROPID;
-    U(ps[0]).propid = PID_IS_ICONFILE;
+    ps[0].propid = PID_IS_ICONFILE;
     ps[1].ulKind = PRSPEC_PROPID;
-    U(ps[1]).propid = PID_IS_ICONINDEX;
+    ps[1].propid = PID_IS_ICONINDEX;
 
     pv[0].vt = VT_LPWSTR;
-    U(pv[0]).pwszVal = iconPath;
+    pv[0].pwszVal = iconPath;
     pv[1].vt = VT_I4;
-    U(pv[1]).lVal = iconIndex;
+    pv[1].lVal = iconIndex;
 
     /* Make sure we have a valid temporary directory */
     GetTempPathW(MAX_PATH, fileNameW);
@@ -223,9 +223,9 @@ static void test_ReadAndWriteProperties(void)
         hr = IPropertyStorage_ReadMultiple(pPropStgWrite, 2, ps, pvread);
         ok(hr == S_OK, "Unable to read properties, hr=0x%lx\n", hr);
         ok(pvread[1].vt == VT_I4, "got %d\n", pvread[1].vt);
-        ok(U(pvread[1]).lVal == iconIndex, "Read wrong icon index: %d\n", U(pvread[1]).iVal);
+        ok(pvread[1].lVal == iconIndex, "Read wrong icon index: %d\n", pvread[1].iVal);
         ok(pvread[0].vt == VT_LPWSTR, "got %d\n", pvread[0].vt);
-        ok(lstrcmpW(U(pvread[0]).pwszVal, iconPath) == 0, "Wrong icon path read: %s\n", wine_dbgstr_w(U(pvread[0]).pwszVal));
+        ok(lstrcmpW(pvread[0].pwszVal, iconPath) == 0, "Wrong icon path read: %s\n", wine_dbgstr_w(pvread[0].pwszVal));
         PropVariantClear(&pvread[0]);
         PropVariantClear(&pvread[1]);
 
@@ -244,9 +244,9 @@ static void test_ReadAndWriteProperties(void)
             hr = IPropertyStorage_ReadMultiple(pPropStgWrite, 2, ps, pvread);
             ok(hr == S_OK, "Unable to read properties, hr=0x%lx\n", hr);
             ok(pvread[1].vt == VT_I4, "got %d\n", pvread[1].vt);
-            ok(U(pvread[1]).lVal == iconIndex, "Read wrong icon index: %d\n", U(pvread[1]).iVal);
+            ok(pvread[1].lVal == iconIndex, "Read wrong icon index: %d\n", pvread[1].iVal);
             ok(pvread[0].vt == VT_LPWSTR, "got %d\n", pvread[0].vt);
-            ok(lstrcmpW(U(pvread[0]).pwszVal, iconPath) == 0, "Wrong icon path read: %s\n", wine_dbgstr_w(U(pvread[0]).pwszVal));
+            ok(lstrcmpW(pvread[0].pwszVal, iconPath) == 0, "Wrong icon path read: %s\n", wine_dbgstr_w(pvread[0].pwszVal));
             PropVariantClear(&pvread[0]);
             PropVariantClear(&pvread[1]);
 
@@ -292,9 +292,9 @@ static void test_ReadAndWriteProperties(void)
     {
         ok(hr == S_OK, "Unable to read properties, hr=0x%lx\n", hr);
         ok(pvread[1].vt == VT_I4, "got %d\n", pvread[1].vt);
-        ok(U(pvread[1]).lVal == iconIndex, "Read wrong icon index: %d\n", U(pvread[1]).iVal);
+        ok(pvread[1].lVal == iconIndex, "Read wrong icon index: %d\n", pvread[1].iVal);
         ok(pvread[0].vt == VT_LPWSTR, "got %d\n", pvread[0].vt);
-        ok(lstrcmpW(U(pvread[0]).pwszVal, iconPath) == 0, "Wrong icon path read: %s\n", wine_dbgstr_w(U(pvread[0]).pwszVal));
+        ok(lstrcmpW(pvread[0].pwszVal, iconPath) == 0, "Wrong icon path read: %s\n", wine_dbgstr_w(pvread[0].pwszVal));
     }
         PropVariantClear(&pvread[0]);
         PropVariantClear(&pvread[1]);
@@ -390,14 +390,14 @@ static void test_Load(void)
         ok(hres == S_OK, "Unable to get an IPropertyStorage for reading, hr=0x%lx\n", hres);
 
         ps.ulKind = PRSPEC_PROPID;
-        U(ps).propid = PID_IS_ICONFILE;
+        ps.propid = PID_IS_ICONFILE;
         v.vt = VT_NULL;
         hres = IPropertyStorage_ReadMultiple(propstorage, 1, &ps, &v);
         ok(hres == S_FALSE, "got 0x%08lx\n", hres);
         ok(v.vt == VT_EMPTY, "got %d\n", v.vt);
 
         ps.ulKind = PRSPEC_PROPID;
-        U(ps).propid = PID_IS_ICONINDEX;
+        ps.propid = PID_IS_ICONINDEX;
         v.vt = VT_EMPTY;
         hres = IPropertyStorage_ReadMultiple(propstorage, 1, &ps, &v);
         ok(hres == S_FALSE, "got 0x%08lx\n", hres);
