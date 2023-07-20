@@ -155,6 +155,8 @@ DEFINE_EXPECT(GetTypeInfo);
 
 #define DISPID_SCRIPT_TESTPROP   0x100000
 #define DISPID_SCRIPT_TESTPROP2  0x100001
+#define DISPID_REFTEST_GET       0x100000
+#define DISPID_REFTEST_REF       0x100001
 
 #define DISPID_EXTERNAL_OK             0x300000
 #define DISPID_EXTERNAL_TRACE          0x300001
@@ -171,6 +173,7 @@ DEFINE_EXPECT(GetTypeInfo);
 #define DISPID_EXTERNAL_TESTHOSTCTX    0x30000C
 #define DISPID_EXTERNAL_GETMIMETYPE    0x30000D
 #define DISPID_EXTERNAL_SETVIEWSIZE    0x30000E
+#define DISPID_EXTERNAL_NEWREFTEST     0x30000F
 
 static const GUID CLSID_TestScript[] = {
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x07,0x46}},
@@ -641,6 +644,13 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT WINAPI funcDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
@@ -840,6 +850,181 @@ static IDispatchExVtbl testHostContextDisp_no_this_vtbl = {
 
 static IDispatchEx testHostContextDisp_no_this = { &testHostContextDisp_no_this_vtbl };
 
+struct refTestObj
+{
+    IDispatchEx IDispatchEx_iface;
+    LONG ref;
+};
+
+struct refTest
+{
+    IDispatchEx IDispatchEx_iface;
+    LONG ref;
+    struct refTestObj *obj;
+};
+
+static inline struct refTestObj *refTestObj_from_IDispatchEx(IDispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, struct refTestObj, IDispatchEx_iface);
+}
+
+static inline struct refTest *refTest_from_IDispatchEx(IDispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, struct refTest, IDispatchEx_iface);
+}
+
+static HRESULT WINAPI refTestObj_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
+{
+    struct refTestObj *This = refTestObj_from_IDispatchEx(iface);
+
+    if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDispatch) || IsEqualGUID(riid, &IID_IDispatchEx))
+        *ppv = &This->IDispatchEx_iface;
+    else {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IDispatchEx_AddRef(&This->IDispatchEx_iface);
+    return S_OK;
+}
+
+static ULONG WINAPI refTestObj_AddRef(IDispatchEx *iface)
+{
+    struct refTestObj *This = refTestObj_from_IDispatchEx(iface);
+
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI refTestObj_Release(IDispatchEx *iface)
+{
+    struct refTestObj *This = refTestObj_from_IDispatchEx(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    if(!ref)
+        free(This);
+
+    return ref;
+}
+
+static IDispatchExVtbl refTestObj_vtbl = {
+    refTestObj_QueryInterface,
+    refTestObj_AddRef,
+    refTestObj_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke,
+    DispatchEx_GetDispID,
+    DispatchEx_InvokeEx,
+    DispatchEx_DeleteMemberByName,
+    DispatchEx_DeleteMemberByDispID,
+    DispatchEx_GetMemberProperties,
+    DispatchEx_GetMemberName,
+    DispatchEx_GetNextDispID,
+    DispatchEx_GetNameSpaceParent
+};
+
+static HRESULT WINAPI refTest_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
+{
+    struct refTest *This = refTest_from_IDispatchEx(iface);
+
+    if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDispatch) || IsEqualGUID(riid, &IID_IDispatchEx))
+        *ppv = &This->IDispatchEx_iface;
+    else {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IDispatchEx_AddRef(&This->IDispatchEx_iface);
+    return S_OK;
+}
+
+static ULONG WINAPI refTest_AddRef(IDispatchEx *iface)
+{
+    struct refTest *This = refTest_from_IDispatchEx(iface);
+
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI refTest_Release(IDispatchEx *iface)
+{
+    struct refTest *This = refTest_from_IDispatchEx(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    if(!ref) {
+        IDispatchEx_Release(&This->obj->IDispatchEx_iface);
+        free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI refTest_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
+{
+    if(!wcscmp(bstrName, L"get")) {
+        *pid = DISPID_REFTEST_GET;
+        return S_OK;
+    }
+    if(!wcscmp(bstrName, L"ref")) {
+        *pid = DISPID_REFTEST_REF;
+        return S_OK;
+    }
+    ok(0, "unexpected call %s\n", wine_dbgstr_w(bstrName));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI refTest_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    struct refTest *This = refTest_from_IDispatchEx(iface);
+
+    ok(pdp != NULL, "pdp == NULL\n");
+    ok(!pdp->cArgs, "pdp->cArgs = %d\n", pdp->cArgs);
+    ok(pvarRes != NULL, "pvarRes == NULL\n");
+    ok(pei != NULL, "pei == NULL\n");
+    ok(pspCaller != NULL, "pspCaller == NULL\n");
+
+    switch(id) {
+    case DISPID_REFTEST_GET: {
+        ok(wFlags == DISPATCH_METHOD, "DISPID_REFTEST_GET wFlags = %x\n", wFlags);
+        V_VT(pvarRes) = VT_DISPATCH;
+        V_DISPATCH(pvarRes) = (IDispatch*)&This->obj->IDispatchEx_iface;
+        IDispatchEx_AddRef(&This->obj->IDispatchEx_iface);
+        break;
+    }
+    case DISPID_REFTEST_REF:
+        ok(wFlags == DISPATCH_PROPERTYGET, "DISPID_REFTEST_REF wFlags = %x\n", wFlags);
+        V_VT(pvarRes) = VT_I4;
+        V_I4(pvarRes) = This->obj->ref;
+        break;
+
+    default:
+        ok(0, "id = %ld", id);
+        V_VT(pvarRes) = VT_EMPTY;
+        break;
+    }
+
+    return S_OK;
+}
+
+static IDispatchExVtbl refTest_vtbl = {
+    refTest_QueryInterface,
+    refTest_AddRef,
+    refTest_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke,
+    refTest_GetDispID,
+    refTest_InvokeEx,
+    DispatchEx_DeleteMemberByName,
+    DispatchEx_DeleteMemberByDispID,
+    DispatchEx_GetMemberProperties,
+    DispatchEx_GetMemberName,
+    DispatchEx_GetNextDispID,
+    DispatchEx_GetNameSpaceParent
+};
+
 static HRESULT WINAPI externalDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     if(!lstrcmpW(bstrName, L"ok")) {
@@ -900,6 +1085,10 @@ static HRESULT WINAPI externalDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, 
     }
     if(!lstrcmpW(bstrName, L"setViewSize")) {
         *pid = DISPID_EXTERNAL_SETVIEWSIZE;
+        return S_OK;
+    }
+    if(!lstrcmpW(bstrName, L"newRefTest")) {
+        *pid = DISPID_EXTERNAL_NEWREFTEST;
         return S_OK;
     }
 
@@ -1178,6 +1367,27 @@ static HRESULT WINAPI externalDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID 
         rect.right = V_I4(&pdp->rgvarg[1]);
         rect.bottom = V_I4(&pdp->rgvarg[0]);
         return IOleDocumentView_SetRect(view, &rect);
+    }
+
+    case DISPID_EXTERNAL_NEWREFTEST: {
+        struct refTest *obj = malloc(sizeof(*obj));
+
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pei != NULL, "pei == NULL\n");
+
+        obj->IDispatchEx_iface.lpVtbl = &refTest_vtbl;
+        obj->ref = 1;
+        obj->obj = malloc(sizeof(*obj->obj));
+        obj->obj->IDispatchEx_iface.lpVtbl = &refTestObj_vtbl;
+        obj->obj->ref = 1;
+
+        V_VT(pvarRes) = VT_DISPATCH;
+        V_DISPATCH(pvarRes) = (IDispatch*)&obj->IDispatchEx_iface;
+        return S_OK;
     }
 
     default:

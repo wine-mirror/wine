@@ -470,6 +470,8 @@ sync_test("window_props", function() {
     test_exposed("requestAnimationFrame", v >= 10);
     test_exposed("Map", v >= 11);
     test_exposed("Set", v >= 11);
+    test_exposed("WeakMap", v >= 11);
+    test_exposed("WeakSet", false);
     test_exposed("performance", true);
     test_exposed("console", v >= 10);
     test_exposed("matchMedia", v >= 10);
@@ -1606,6 +1608,134 @@ sync_test("map_obj", function() {
         ok(this.valueOf() === 42, "this.valueOf() = " + this.valueOf());
     }, 42);
     ok(r === 1, "r = " + r);
+});
+
+async_test("weakmap_obj", function() {
+    if(!("WeakMap" in window)) { next_test(); return; }
+
+    try {
+        var s = WeakMap();
+        ok(false, "expected exception calling constructor as method");
+    }catch(e) {
+        ok(e.number === 0xa13fc - 0x80000000, "calling constructor as method threw " + e.number);
+    }
+
+    var s = new WeakMap, r, o, o2;
+    ok(Object.getPrototypeOf(s) === WeakMap.prototype, "unexpected WeakMap prototype");
+
+    function test_length(name, len) {
+        ok(WeakMap.prototype[name].length === len, "WeakMap.prototype." + name + " = " + WeakMap.prototype[name].length);
+    }
+    test_length("clear", 0);
+    test_length("delete", 1);
+    test_length("get", 1);
+    test_length("has", 1);
+    test_length("set", 2);
+    ok(!("entries" in s), "entries is in WeakMap");
+    ok(!("forEach" in s), "forEach is in WeakMap");
+    ok(!("keys" in s), "keys is in WeakMap");
+    ok(!("size" in s), "size is in WeakMap");
+    ok(!("values" in s), "values is in WeakMap");
+
+    r = Object.prototype.toString.call(s);
+    ok(r === "[object Object]", "toString returned " + r);
+
+    r = s.get("test");
+    ok(r === undefined, "get('test') returned " + r);
+    r = s.has("test");
+    ok(r === false, "has('test') returned " + r);
+
+    try {
+        r = s.set("test", 1);
+        ok(false, "set('test') did not throw");
+    }catch(e) {
+        ok(e.number === 0xa13fd - 0x80000000, "set('test') threw " + e.number);
+    }
+    try {
+        r = s.set(external.testHostContext(true), 1);
+        ok(false, "set(host_obj) did not throw");
+    }catch(e) {
+        ok(e.number === 0xa13fd - 0x80000000, "set(host_obj) threw " + e.number);
+    }
+
+    r = s.set({}, 1);
+    ok(r === undefined, "set({}, 1) returned " + r);
+
+    o = {}, o2 = {};
+    r = s.get({});
+    ok(r === undefined, "get({}) returned " + r);
+    r = s.has({});
+    ok(r === false, "has({}) returned " + r);
+
+    r = s.set(o, 2);
+    ok(r === undefined, "set(o, 2) returned " + r);
+    r = s.get(o);
+    ok(r === 2, "get(o) returned " + r);
+    r = s.has(o);
+    ok(r === true, "has(o) returned " + r);
+    r = s.get(o2);
+    ok(r === undefined, "get(o2) before set returned " + r);
+    r = s.has(o2);
+    ok(r === false, "has(o2) before set returned " + r);
+    r = s.set(o2, "test");
+    ok(r === undefined, "set(o2, 'test') returned " + r);
+    r = s.get(o2);
+    ok(r === "test", "get(o2) returned " + r);
+    r = s.has(o2);
+    ok(r === true, "has(o2) returned " + r);
+
+    r = s["delete"]("test"); /* using s.delete() would break parsing in quirks mode */
+    ok(r === false, "delete('test') returned " + r);
+    r = s["delete"]({});
+    ok(r === false, "delete({}) returned " + r);
+    r = s["delete"](o);
+    ok(r === true, "delete(o) returned " + r);
+
+    r = s.get(o);
+    ok(r === undefined, "get(o) after delete returned " + r);
+    r = s.has(o);
+    ok(r === false, "has(o) after delete returned " + r);
+    r = s.get(o2);
+    ok(r === "test", "get(o2) after delete returned " + r);
+    r = s.has(o2);
+    ok(r === true, "has(o2) after delete returned " + r);
+
+    r = s.set(o, undefined);
+    ok(r === undefined, "set(o, undefined) returned " + r);
+    r = s.get(o);
+    ok(r === undefined, "get(o) after re-set returned " + r);
+    r = s.has(o);
+    ok(r === true, "has(o) after re-set returned " + r);
+
+    r = s.clear();
+    ok(r === undefined, "clear() returned " + r);
+    r = s.get(o);
+    ok(r === undefined, "get(o) after clear returned " + r);
+    r = s.has(o);
+    ok(r === false, "has(o) after clear returned " + r);
+    r = s.get(o2);
+    ok(r === undefined, "get(o2) after clear returned " + r);
+    r = s.has(o2);
+    ok(r === false, "has(o2) after clear returned " + r);
+
+    r = external.newRefTest();
+    ok(r.ref === 1, "wrong ref after newRefTest: " + r.ref);
+    o = { val: r.get(), map: s };
+    s.set(o, o);
+    ok(r.ref > 1, "map entry released");
+
+    o = Date.now();
+    CollectGarbage();
+    function retry() {
+        if(r.ref > 1 && Date.now() - o < 5000) {
+            CollectGarbage();
+            window.setTimeout(retry);
+            return;
+        }
+        ok(r.ref === 1, "map entry not released");
+        next_test();
+    }
+    window.setTimeout(retry);
 });
 
 sync_test("storage", function() {
