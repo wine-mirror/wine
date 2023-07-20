@@ -13392,8 +13392,8 @@ static void test_IUIAutomationFocusChangedEventHandler(IUIAutomation *uia_iface)
     set_uia_hwnd_expects(6, 6, 6, 3, 0);
     hr = IUIAutomation_AddFocusChangedEventHandler(uia_iface, NULL,
             &FocusChangedHandler.IUIAutomationFocusChangedEventHandler_iface);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(FocusChangedHandler.ref > 1, "Unexpected refcnt %ld\n", FocusChangedHandler.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(FocusChangedHandler.ref > 1, "Unexpected refcnt %ld\n", FocusChangedHandler.ref);
     check_uia_hwnd_expects_at_most(6, 6, 6, 3, 0);
     FocusChangedHandler.event_handler_added = TRUE;
 
@@ -13407,7 +13407,7 @@ static void test_IUIAutomationFocusChangedEventHandler(IUIAutomation *uia_iface)
     set_com_event_data(&exp_node_desc);
     hr = UiaRaiseAutomationEvent(&Provider2.IRawElementProviderSimple_iface, UIA_AutomationFocusChangedEventId);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine CHECK_CALLED(uia_com_event_callback);
+    CHECK_CALLED(uia_com_event_callback);
 
     /*
      * Removing the focus changed event handler creates a desktop node -
@@ -13416,10 +13416,10 @@ static void test_IUIAutomationFocusChangedEventHandler(IUIAutomation *uia_iface)
     set_uia_hwnd_expects(1, 1, 1, 0, 0);
     hr = IUIAutomation_RemoveFocusChangedEventHandler(uia_iface,
             &FocusChangedHandler.IUIAutomationFocusChangedEventHandler_iface);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(FocusChangedHandler.ref == 1, "Unexpected refcnt %ld\n", FocusChangedHandler.ref);
     FocusChangedHandler.event_handler_added = FALSE;
-    check_uia_hwnd_expects(1, TRUE, 1, TRUE, 1, TRUE, 0, FALSE, 0, FALSE);
+    check_uia_hwnd_expects(1, FALSE, 1, FALSE, 1, FALSE, 0, FALSE, 0, FALSE);
 
     /*
      * The focus changed event handler can also be removed by called
@@ -13428,8 +13428,8 @@ static void test_IUIAutomationFocusChangedEventHandler(IUIAutomation *uia_iface)
     set_uia_hwnd_expects(6, 6, 6, 3, 0);
     hr = IUIAutomation_AddFocusChangedEventHandler(uia_iface, NULL,
             &FocusChangedHandler.IUIAutomationFocusChangedEventHandler_iface);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(FocusChangedHandler.ref > 1, "Unexpected refcnt %ld\n", FocusChangedHandler.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(FocusChangedHandler.ref > 1, "Unexpected refcnt %ld\n", FocusChangedHandler.ref);
     check_uia_hwnd_expects_at_most(6, 6, 6, 3, 0);
     FocusChangedHandler.event_handler_added = TRUE;
 
