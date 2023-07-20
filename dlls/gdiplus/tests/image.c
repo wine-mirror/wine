@@ -1787,7 +1787,7 @@ static void test_loadwmf(void)
         expect(0, header.Y);
         expect(320, header.Width);
         expect(320, header.Height);
-        expect(1, U(header).WmfHeader.mtType);
+        expect(1, header.WmfHeader.mtType);
         expect(0, header.EmfPlusHeaderSize);
         expect(0, header.LogicalDpiX);
         expect(0, header.LogicalDpiY);
@@ -1845,7 +1845,7 @@ static void test_createfromwmf(void)
         expect(0, header.Y);
         expect(320, header.Width);
         expect(320, header.Height);
-        expect(1, U(header).WmfHeader.mtType);
+        expect(1, header.WmfHeader.mtType);
         expect(0, header.EmfPlusHeaderSize);
         expect(0, header.LogicalDpiX);
         expect(0, header.LogicalDpiY);
