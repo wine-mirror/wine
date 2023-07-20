@@ -19,9 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
-
 #include <assert.h>
 #include <stdio.h>
 
@@ -616,7 +613,7 @@ static void test_CreateCompatibleDC(void)
     dm.dmSize = sizeof(dm);
     bRet = EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dm);
     ok(bRet, "EnumDisplaySettingsEx failed\n");
-    dm.u1.s1.dmScale = 200;
+    dm.dmScale = 200;
     dm.dmFields |= DM_SCALE;
     hdc = CreateDCA( "DISPLAY", NULL, NULL, &dm );
 
@@ -1353,7 +1350,7 @@ static HDC create_printer_dc(int scale, BOOL reset)
     dbuf = HeapAlloc( GetProcessHeap(), 0, len );
     if (!pGetPrinterDriverA( hprn, NULL, 3, (LPBYTE)dbuf, len, &len )) goto done;
 
-    pbuf->pDevMode->u1.s1.dmScale = scale;
+    pbuf->pDevMode->dmScale = scale;
     pbuf->pDevMode->dmFields |= DM_SCALE;
 
     hdc = CreateDCA( dbuf->pDriverPath, pbuf->pPrinterName, pbuf->pPortName, pbuf->pDevMode );
@@ -1600,7 +1597,7 @@ static void test_clip_box(void)
 
     EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &scale_mode);
     scale_mode.dmFields |= DM_SCALE;
-    scale_mode.u1.s1.dmScale = 200;
+    scale_mode.dmScale = 200;
 
     SetRect(&screen_rect, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN),
             GetSystemMetrics(SM_XVIRTUALSCREEN) + GetSystemMetrics(SM_CXVIRTUALSCREEN),
