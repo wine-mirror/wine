@@ -548,6 +548,12 @@ static void test_spvoice(void)
     ok(stream_num == 1, "got %lu.\n", stream_num);
     ok(duration > 800 && duration < 3000, "took %lu ms.\n", duration);
 
+    start = GetTickCount();
+    hr = ISpVoice_WaitUntilDone(voice, INFINITE);
+    duration = GetTickCount() - start;
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(duration < 200, "took %lu ms.\n", duration);
+
     reset_engine_params(&test_engine);
     stream_num = 0xdeadbeef;
     start = GetTickCount();
@@ -557,7 +563,14 @@ static void test_spvoice(void)
     todo_wine ok(stream_num == 1, "got %lu.\n", stream_num);
     ok(duration < 500, "took %lu ms.\n", duration);
 
-    Sleep(200);
+    hr = ISpVoice_WaitUntilDone(voice, 100);
+    ok(hr == S_FALSE, "got %#lx.\n", hr);
+
+    hr = ISpVoice_WaitUntilDone(voice, INFINITE);
+    duration = GetTickCount() - start;
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(duration > 800 && duration < 3000, "took %lu ms.\n", duration);
+
     ok(test_engine.speak_called, "ISpTTSEngine::Speak was not called.\n");
     ok(test_engine.flags == SPF_NLP_SPEAK_PUNC, "got %#lx.\n", test_engine.flags);
     ok(test_engine.frag_list != NULL, "frag_list is NULL.\n");
@@ -567,8 +580,6 @@ static void test_spvoice(void)
        "got %s.\n", wine_dbgstr_w(test_engine.frag_list->pTextStart));
     ok(test_engine.rate == 0, "got %ld.\n", test_engine.rate);
     ok(test_engine.volume == 100, "got %d.\n", test_engine.volume);
-
-    Sleep(2000);
 
     reset_engine_params(&test_engine);
     hr = ISpVoice_Speak(voice, test_text, SPF_DEFAULT | SPF_ASYNC, NULL);

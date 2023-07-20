@@ -1073,9 +1073,16 @@ static HRESULT WINAPI spvoice_GetVolume(ISpVoice *iface, USHORT *volume)
 
 static HRESULT WINAPI spvoice_WaitUntilDone(ISpVoice *iface, ULONG timeout)
 {
-    FIXME("(%p, %ld): stub.\n", iface, timeout);
+    struct speech_voice *This = impl_from_ISpVoice(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("(%p, %ld).\n", iface, timeout);
+
+    hr = async_wait_queue_empty(&This->queue, timeout);
+
+    if (hr == WAIT_OBJECT_0) return S_OK;
+    else if (hr == WAIT_TIMEOUT) return S_FALSE;
+    return hr;
 }
 
 static HRESULT WINAPI spvoice_SetSyncSpeakTimeout(ISpVoice *iface, ULONG timeout)
