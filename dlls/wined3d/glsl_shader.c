@@ -9090,6 +9090,11 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
         declare_out_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
     }
 
+    shader_addline(buffer, "\nvec3 ffp_normalize(vec3 n)\n{\n");
+    shader_addline(buffer, "    float lensq = dot(n, n);\n");
+    shader_addline(buffer, "    return lensq == 0.0 ? n : (n * inversesqrt(lensq));\n");
+    shader_addline(buffer, "}\n");
+
     shader_addline(buffer, "\nvoid main()\n{\n");
     shader_addline(buffer, "float m;\n");
     shader_addline(buffer, "vec3 r;\n");
@@ -9151,7 +9156,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
         }
 
         if (settings->normalize)
-            shader_addline(buffer, "normal = normalize(normal);\n");
+            shader_addline(buffer, "normal = ffp_normalize(normal);\n");
     }
 
     shader_glsl_ffp_vertex_lighting(buffer, settings, legacy_lighting);
@@ -9192,11 +9197,11 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
 
             case WINED3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR:
                 shader_addline(buffer, "ffp_varying_texcoord[%u] = ffp_texture_matrix[%u]"
-                        " * vec4(reflect(normalize(ec_pos.xyz), normal), 1.0);\n", i, i);
+                        " * vec4(reflect(ffp_normalize(ec_pos.xyz), normal), 1.0);\n", i, i);
                 break;
 
             case WINED3DTSS_TCI_SPHEREMAP:
-                shader_addline(buffer, "r = reflect(normalize(ec_pos.xyz), normal);\n");
+                shader_addline(buffer, "r = reflect(ffp_normalize(ec_pos.xyz), normal);\n");
                 shader_addline(buffer, "m = 2.0 * length(vec3(r.x, r.y, r.z + 1.0));\n");
                 shader_addline(buffer, "ffp_varying_texcoord[%u] = ffp_texture_matrix[%u]"
                         " * vec4(r.x / m + 0.5, r.y / m + 0.5, 0.0, 1.0);\n", i, i);
