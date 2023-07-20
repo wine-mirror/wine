@@ -1682,12 +1682,12 @@ static void test_attributes(void)
 
     PropVariantInit(&propvar);
     propvar.vt = MF_ATTRIBUTE_UINT32;
-    U(propvar).ulVal = 123;
+    propvar.ulVal = 123;
     hr = IMFAttributes_SetItem(attributes, &DUMMY_GUID1, &propvar);
     ok(hr == S_OK, "Failed to set item, hr %#lx.\n", hr);
     PropVariantInit(&ret_propvar);
     ret_propvar.vt = MF_ATTRIBUTE_UINT32;
-    U(ret_propvar).ulVal = 0xdeadbeef;
+    ret_propvar.ulVal = 0xdeadbeef;
     hr = IMFAttributes_GetItem(attributes, &DUMMY_GUID1, &ret_propvar);
     ok(hr == S_OK, "Failed to get item, hr %#lx.\n", hr);
     ok(!PropVariantCompareEx(&propvar, &ret_propvar, 0, 0), "Unexpected item value.\n");
@@ -1702,7 +1702,7 @@ static void test_attributes(void)
 
     PropVariantInit(&ret_propvar);
     ret_propvar.vt = MF_ATTRIBUTE_STRING;
-    U(ret_propvar).pwszVal = NULL;
+    ret_propvar.pwszVal = NULL;
     hr = IMFAttributes_GetItem(attributes, &DUMMY_GUID1, &ret_propvar);
     ok(hr == S_OK, "Failed to get item, hr %#lx.\n", hr);
     ok(!PropVariantCompareEx(&propvar, &ret_propvar, 0, 0), "Unexpected item value.\n");
@@ -1712,12 +1712,12 @@ static void test_attributes(void)
 
     PropVariantInit(&propvar);
     propvar.vt = MF_ATTRIBUTE_UINT64;
-    U(propvar).uhVal.QuadPart = 65536;
+    propvar.uhVal.QuadPart = 65536;
     hr = IMFAttributes_SetItem(attributes, &DUMMY_GUID1, &propvar);
     ok(hr == S_OK, "Failed to set item, hr %#lx.\n", hr);
     PropVariantInit(&ret_propvar);
     ret_propvar.vt = MF_ATTRIBUTE_UINT32;
-    U(ret_propvar).ulVal = 0xdeadbeef;
+    ret_propvar.ulVal = 0xdeadbeef;
     hr = IMFAttributes_GetItem(attributes, &DUMMY_GUID1, &ret_propvar);
     ok(hr == S_OK, "Failed to get item, hr %#lx.\n", hr);
     ok(!PropVariantCompareEx(&propvar, &ret_propvar, 0, 0), "Unexpected item value.\n");
@@ -1727,12 +1727,12 @@ static void test_attributes(void)
 
     PropVariantInit(&propvar);
     propvar.vt = VT_I4;
-    U(propvar).lVal = 123;
+    propvar.lVal = 123;
     hr = IMFAttributes_SetItem(attributes, &DUMMY_GUID2, &propvar);
     ok(hr == MF_E_INVALIDTYPE, "Failed to set item, hr %#lx.\n", hr);
     PropVariantInit(&ret_propvar);
     ret_propvar.vt = MF_ATTRIBUTE_UINT32;
-    U(ret_propvar).lVal = 0xdeadbeef;
+    ret_propvar.lVal = 0xdeadbeef;
     hr = IMFAttributes_GetItem(attributes, &DUMMY_GUID2, &ret_propvar);
     ok(hr == S_OK, "Failed to get item, hr %#lx.\n", hr);
     PropVariantClear(&propvar);
@@ -1741,7 +1741,7 @@ static void test_attributes(void)
 
     PropVariantInit(&propvar);
     propvar.vt = MF_ATTRIBUTE_UINT32;
-    U(propvar).ulVal = 123;
+    propvar.ulVal = 123;
     hr = IMFAttributes_SetItem(attributes, &DUMMY_GUID3, &propvar);
     ok(hr == S_OK, "Failed to set item, hr %#lx.\n", hr);
 
@@ -1760,7 +1760,7 @@ static void test_attributes(void)
     PropVariantClear(&propvar);
 
     propvar.vt = MF_ATTRIBUTE_UINT64;
-    U(propvar).uhVal.QuadPart = 65536;
+    propvar.uhVal.QuadPart = 65536;
 
     hr = IMFAttributes_GetItem(attributes, &DUMMY_GUID1, &ret_propvar);
     ok(hr == S_OK, "Failed to get item, hr %#lx.\n", hr);
@@ -1788,13 +1788,13 @@ static void test_attributes(void)
     ok(double_value == 22.0, "Unexpected value: %f, expected: 22.0.\n", double_value);
 
     propvar.vt = MF_ATTRIBUTE_UINT64;
-    U(propvar).uhVal.QuadPart = 22;
+    propvar.uhVal.QuadPart = 22;
     hr = IMFAttributes_CompareItem(attributes, &GUID_NULL, &propvar, &result);
     ok(hr == S_OK, "Failed to compare items, hr %#lx.\n", hr);
     ok(!result, "Unexpected result.\n");
 
     propvar.vt = MF_ATTRIBUTE_DOUBLE;
-    U(propvar).dblVal = 22.0;
+    propvar.dblVal = 22.0;
     hr = IMFAttributes_CompareItem(attributes, &GUID_NULL, &propvar, &result);
     ok(hr == S_OK, "Failed to compare items, hr %#lx.\n", hr);
     ok(result, "Unexpected result.\n");
@@ -1881,7 +1881,7 @@ static void test_attributes(void)
     CHECK_ATTR_COUNT(attributes1, 0);
 
     propvar.vt = MF_ATTRIBUTE_UINT64;
-    U(propvar).uhVal.QuadPart = 22;
+    propvar.uhVal.QuadPart = 22;
     hr = IMFAttributes_CompareItem(attributes, &GUID_NULL, &propvar, &result);
     ok(hr == S_OK, "Failed to compare items, hr %#lx.\n", hr);
     ok(!result, "Unexpected result.\n");
