@@ -466,7 +466,7 @@ static void testGetIpNetTable(void)
             for (i = 0; i < buf->dwNumEntries; i++)
             {
                 trace( "%lu: idx %lu type %lu addr %s phys",
-                       i, buf->table[i].dwIndex, U(buf->table[i]).dwType, ntoa( buf->table[i].dwAddr ));
+                       i, buf->table[i].dwIndex, buf->table[i].dwType, ntoa( buf->table[i].dwAddr ));
                 for (j = 0; j < buf->table[i].dwPhysAddrLen; j++)
                     printf( " %02x", buf->table[i].bPhysAddr[j] );
                 printf( "\n" );
@@ -537,7 +537,7 @@ static void testGetIpStatistics(void)
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
         trace( "IP stats:\n" );
-        trace( "    dwForwarding:      %lu\n", U(stats).dwForwarding );
+        trace( "    dwForwarding:      %lu\n", stats.dwForwarding );
         trace( "    dwDefaultTTL:      %lu\n", stats.dwDefaultTTL );
         trace( "    dwInReceives:      %lu\n", stats.dwInReceives );
         trace( "    dwInHdrErrors:     %lu\n", stats.dwInHdrErrors );
@@ -582,7 +582,7 @@ static void testGetTcpStatistics(void)
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
         trace( "TCP stats:\n" );
-        trace( "    dwRtoAlgorithm: %lu\n", U(stats).dwRtoAlgorithm );
+        trace( "    dwRtoAlgorithm: %lu\n", stats.dwRtoAlgorithm );
         trace( "    dwRtoMin:       %lu\n", stats.dwRtoMin );
         trace( "    dwRtoMax:       %lu\n", stats.dwRtoMax );
         trace( "    dwMaxConn:      %lu\n", stats.dwMaxConn );
@@ -687,7 +687,7 @@ static void testGetIpStatisticsEx(void)
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
         trace( "IP IPv4 Ex stats:\n" );
-        trace( "    dwForwarding:      %lu\n", U(stats).dwForwarding );
+        trace( "    dwForwarding:      %lu\n", stats.dwForwarding );
         trace( "    dwDefaultTTL:      %lu\n", stats.dwDefaultTTL );
         trace( "    dwInReceives:      %lu\n", stats.dwInReceives );
         trace( "    dwInHdrErrors:     %lu\n", stats.dwInHdrErrors );
@@ -718,7 +718,7 @@ static void testGetIpStatisticsEx(void)
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
         trace( "IP IPv6 Ex stats:\n" );
-        trace( "    dwForwarding:      %lu\n", U(stats).dwForwarding );
+        trace( "    dwForwarding:      %lu\n", stats.dwForwarding );
         trace( "    dwDefaultTTL:      %lu\n", stats.dwDefaultTTL );
         trace( "    dwInReceives:      %lu\n", stats.dwInReceives );
         trace( "    dwInHdrErrors:     %lu\n", stats.dwInHdrErrors );
@@ -762,7 +762,7 @@ static void testGetTcpStatisticsEx(void)
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
         trace( "TCP IPv4 Ex stats:\n" );
-        trace( "    dwRtoAlgorithm: %lu\n", U(stats).dwRtoAlgorithm );
+        trace( "    dwRtoAlgorithm: %lu\n", stats.dwRtoAlgorithm );
         trace( "    dwRtoMin:       %lu\n", stats.dwRtoMin );
         trace( "    dwRtoMax:       %lu\n", stats.dwRtoMax );
         trace( "    dwMaxConn:      %lu\n", stats.dwMaxConn );
@@ -785,7 +785,7 @@ static void testGetTcpStatisticsEx(void)
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
         trace( "TCP IPv6 Ex stats:\n" );
-        trace( "    dwRtoAlgorithm: %lu\n", U(stats).dwRtoAlgorithm );
+        trace( "    dwRtoAlgorithm: %lu\n", stats.dwRtoAlgorithm );
         trace( "    dwRtoMin:       %lu\n", stats.dwRtoMin );
         trace( "    dwRtoMax:       %lu\n", stats.dwRtoMax );
         trace( "    dwMaxConn:      %lu\n", stats.dwMaxConn );
@@ -872,7 +872,7 @@ static void testGetTcpTable(void)
                 trace( "%lu: local %s:%u remote %s:%u state %lu\n", i,
                        ntoa(buf->table[i].dwLocalAddr), ntohs(buf->table[i].dwLocalPort),
                        ntoa(buf->table[i].dwRemoteAddr), ntohs(buf->table[i].dwRemotePort),
-                       U(buf->table[i]).dwState );
+                       buf->table[i].dwState );
             }
         }
         HeapFree(GetProcessHeap(), 0, buf);
@@ -932,7 +932,7 @@ static void testSetTcpEntry(void)
     }
     todo_wine ok( ret == ERROR_INVALID_PARAMETER, "got %lu, expected %u\n", ret, ERROR_INVALID_PARAMETER);
 
-    U(row).dwState = MIB_TCP_STATE_DELETE_TCB;
+    row.dwState = MIB_TCP_STATE_DELETE_TCB;
     ret = SetTcpEntry(&row);
     todo_wine ok( ret == ERROR_MR_MID_NOT_FOUND || broken(ret == ERROR_INVALID_PARAMETER),
        "got %lu, expected %u\n", ret, ERROR_MR_MID_NOT_FOUND);
@@ -1775,9 +1775,9 @@ static void test_GetAdaptersAddresses(void)
         DWORD status;
         GUID guid;
 
-        ok(S(U(*aa)).Length == sizeof(IP_ADAPTER_ADDRESSES_LH) ||
-           S(U(*aa)).Length == sizeof(IP_ADAPTER_ADDRESSES_XP),
-           "Unknown structure size of %lu bytes\n", S(U(*aa)).Length);
+        ok(aa->Length == sizeof(IP_ADAPTER_ADDRESSES_LH) ||
+           aa->Length == sizeof(IP_ADAPTER_ADDRESSES_XP),
+           "Unknown structure size of %lu bytes\n", aa->Length);
         ok(aa->DnsSuffix != NULL, "DnsSuffix is not a valid pointer\n");
         ok(aa->Description != NULL, "Description is not a valid pointer\n");
         ok(aa->FriendlyName != NULL, "FriendlyName is not a valid pointer\n");
@@ -1786,15 +1786,15 @@ static void test_GetAdaptersAddresses(void)
             sprintf(temp + i * 3, "%02X-", aa->PhysicalAddress[i]);
         temp[i ? i * 3 - 1 : 0] = '\0';
         trace("idx %lu name %s %s dns %s descr %s phys %s mtu %lu flags %08lx type %lu\n",
-              S(U(*aa)).IfIndex, aa->AdapterName,
+              aa->IfIndex, aa->AdapterName,
               wine_dbgstr_w(aa->FriendlyName), wine_dbgstr_w(aa->DnsSuffix),
               wine_dbgstr_w(aa->Description), temp, aa->Mtu, aa->Flags, aa->IfType );
         ua = aa->FirstUnicastAddress;
         while (ua)
         {
-            ok(S(U(*ua)).Length == sizeof(IP_ADAPTER_UNICAST_ADDRESS_LH) ||
-               S(U(*ua)).Length == sizeof(IP_ADAPTER_UNICAST_ADDRESS_XP),
-               "Unknown structure size of %lu bytes\n", S(U(*ua)).Length);
+            ok(ua->Length == sizeof(IP_ADAPTER_UNICAST_ADDRESS_LH) ||
+               ua->Length == sizeof(IP_ADAPTER_UNICAST_ADDRESS_XP),
+               "Unknown structure size of %lu bytes\n", ua->Length);
             ok(ua->PrefixOrigin != IpPrefixOriginOther,
                "bad address config value %d\n", ua->PrefixOrigin);
             ok(ua->SuffixOrigin != IpSuffixOriginOther,
@@ -1811,9 +1811,9 @@ static void test_GetAdaptersAddresses(void)
             ok(ua->DadState != IpDadStateInvalid && ua->DadState != IpDadStateDuplicate,
                "bad address duplication value %d\n", ua->DadState);
             trace("  flags %08lx origin %u/%u state %u lifetime %lu/%lu/%lu prefix %u\n",
-                  S(U(*ua)).Flags, ua->PrefixOrigin, ua->SuffixOrigin, ua->DadState,
+                  ua->Flags, ua->PrefixOrigin, ua->SuffixOrigin, ua->DadState,
                   ua->ValidLifetime, ua->PreferredLifetime, ua->LeaseLifetime,
-                  S(U(*ua)).Length < sizeof(IP_ADAPTER_UNICAST_ADDRESS_LH) ? 0 : ua->OnLinkPrefixLength);
+                  ua->Length < sizeof(IP_ADAPTER_UNICAST_ADDRESS_LH) ? 0 : ua->OnLinkPrefixLength);
 
             if (ua->Flags & IP_ADAPTER_ADDRESS_DNS_ELIGIBLE)
                 dns_eligible_found = TRUE;
@@ -1832,11 +1832,11 @@ static void test_GetAdaptersAddresses(void)
         while (prefix)
         {
             trace( "  prefix %u/%lu flags %08lx\n", prefix->Address.iSockaddrLength,
-                   prefix->PrefixLength, S(U(*prefix)).Flags );
+                   prefix->PrefixLength, prefix->Flags );
             prefix = prefix->Next;
         }
 
-        if (S(U(*aa)).Length < sizeof(IP_ADAPTER_ADDRESSES_LH)) continue;
+        if (aa->Length < sizeof(IP_ADAPTER_ADDRESSES_LH)) continue;
         trace("speed %s/%s metrics %lu/%lu guid %s type %u/%u\n",
               wine_dbgstr_longlong(aa->TransmitLinkSpeed),
               wine_dbgstr_longlong(aa->ReceiveLinkSpeed),
@@ -1965,7 +1965,7 @@ static void test_AllocateAndGetTcpExTableFromStack(void)
           trace( "%lu: local %s:%u remote %s:%u state %lu pid %lu\n", i,
                  ntoa(table_ex->table[i].dwLocalAddr), ntohs(table_ex->table[i].dwLocalPort),
                  remote_ip, ntohs(table_ex->table[i].dwRemotePort),
-                 U(table_ex->table[i]).dwState, table_ex->table[i].dwOwningPid );
+                 table_ex->table[i].dwState, table_ex->table[i].dwOwningPid );
         }
     }
     HeapFree(GetProcessHeap(), 0, table_ex);
@@ -2518,7 +2518,7 @@ static void test_GetUnicastIpAddressEntry(void)
 
             /* test with index */
             memset( &row, 0, sizeof(row) );
-            row.InterfaceIndex = S(U(*aa)).IfIndex;
+            row.InterfaceIndex = aa->IfIndex;
             memcpy(&row.Address, ua->Address.lpSockaddr, ua->Address.iSockaddrLength);
             ret = pGetUnicastIpAddressEntry( &row );
             ok( ret == NO_ERROR, "got %lu\n", ret );
@@ -2530,8 +2530,8 @@ static void test_GetUnicastIpAddressEntry(void)
                     aa->Luid.Info.NetLuidIndex, row.InterfaceLuid.Info.NetLuidIndex);
                 ok(row.InterfaceLuid.Info.IfType == aa->Luid.Info.IfType, "Expected %d, got %d\n",
                     aa->Luid.Info.IfType, row.InterfaceLuid.Info.IfType);
-                ok(row.InterfaceIndex == S(U(*aa)).IfIndex, "Expected %ld, got %ld\n",
-                    S(U(*aa)).IfIndex, row.InterfaceIndex);
+                ok(row.InterfaceIndex == aa->IfIndex, "Expected %ld, got %ld\n",
+                    aa->IfIndex, row.InterfaceIndex);
                 ok(row.PrefixOrigin == ua->PrefixOrigin, "Expected %d, got %d\n",
                     ua->PrefixOrigin, row.PrefixOrigin);
                 ok(row.SuffixOrigin == ua->SuffixOrigin, "Expected %d, got %d\n",
