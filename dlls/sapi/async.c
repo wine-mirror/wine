@@ -171,8 +171,8 @@ HRESULT async_queue_task(struct async_queue *queue, struct async_task *task)
     return S_OK;
 }
 
-void async_wait_queue_empty(struct async_queue *queue, DWORD timeout)
+HRESULT async_wait_queue_empty(struct async_queue *queue, DWORD timeout)
 {
-    if (!queue->init) return;
-    WaitForSingleObject(queue->empty, timeout);
+    if (!queue->init) return WAIT_OBJECT_0;
+    return WaitForSingleObject(queue->empty, timeout);
 }
