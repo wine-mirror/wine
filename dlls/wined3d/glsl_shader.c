@@ -8913,7 +8913,7 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
             shader_addline(buffer, "}\n");
             continue;
         }
-        shader_addline(buffer, "dir = normalize(dir);\n");
+        shader_addline(buffer, "dir = ffp_normalize(dir);\n");
         shader_glsl_ffp_vertex_lighting_footer(buffer, settings, idx, legacy_lighting);
         shader_addline(buffer, "}\n");
     }
@@ -8934,8 +8934,8 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
         {
             shader_addline(buffer, "if (dst.y <= ffp_light[%u].range)\n{\n", idx);
         }
-        shader_addline(buffer, "dir = normalize(dir);\n");
-        shader_addline(buffer, "t = dot(-dir, normalize(ffp_light[%u].direction));\n", idx);
+        shader_addline(buffer, "dir = ffp_normalize(dir);\n");
+        shader_addline(buffer, "t = dot(-dir, ffp_normalize(ffp_light[%u].direction));\n", idx);
         shader_addline(buffer, "if (t > ffp_light[%u].cos_htheta) att = 1.0;\n", idx);
         shader_addline(buffer, "else if (t <= ffp_light[%u].cos_hphi) att = 0.0;\n", idx);
         shader_addline(buffer, "else att = pow((t - ffp_light[%u].cos_hphi)"
@@ -8965,7 +8965,7 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
         if (!settings->normal)
             continue;
         shader_addline(buffer, "att = 1.0;\n");
-        shader_addline(buffer, "dir = normalize(ffp_light[%u].direction.xyz);\n", idx);
+        shader_addline(buffer, "dir = ffp_normalize(ffp_light[%u].direction.xyz);\n", idx);
         shader_glsl_ffp_vertex_lighting_footer(buffer, settings, idx, legacy_lighting);
     }
 
@@ -8975,7 +8975,7 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
         if (!settings->normal)
             continue;
         shader_addline(buffer, "att = 1.0;\n");
-        shader_addline(buffer, "dir = normalize(ffp_light[%u].position.xyz);\n", idx);
+        shader_addline(buffer, "dir = ffp_normalize(ffp_light[%u].position.xyz);\n", idx);
         shader_glsl_ffp_vertex_lighting_footer(buffer, settings, idx, legacy_lighting);
     }
 
