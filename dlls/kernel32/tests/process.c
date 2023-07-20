@@ -2293,11 +2293,11 @@ static void test_SystemInfo(void)
     pGetNativeSystemInfo(&nsi);
     if (is_wow64)
     {
-        if (S(U(si)).wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
+        if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
         {
-            ok(S(U(nsi)).wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64,
+            ok(nsi.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64,
                "Expected PROCESSOR_ARCHITECTURE_AMD64, got %d\n",
-               S(U(nsi)).wProcessorArchitecture);
+               nsi.wProcessorArchitecture);
             if (pIsWow64Process2 && pIsWow64Process2(GetCurrentProcess(), &machine, &native_machine) &&
                 native_machine == IMAGE_FILE_MACHINE_ARM64)
             {
@@ -2310,9 +2310,9 @@ static void test_SystemInfo(void)
     }
     else
     {
-        ok(S(U(si)).wProcessorArchitecture == S(U(nsi)).wProcessorArchitecture,
+        ok(si.wProcessorArchitecture == nsi.wProcessorArchitecture,
            "Expected no difference for wProcessorArchitecture, got %d and %d\n",
-           S(U(si)).wProcessorArchitecture, S(U(nsi)).wProcessorArchitecture);
+           si.wProcessorArchitecture, nsi.wProcessorArchitecture);
         ok(si.dwProcessorType == nsi.dwProcessorType,
            "Expected no difference for dwProcessorType, got %ld and %ld\n",
            si.dwProcessorType, nsi.dwProcessorType);

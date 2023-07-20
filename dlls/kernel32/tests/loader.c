@@ -396,7 +396,7 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
             cor_header = section_data;
     }
     ok( (char *)image.TransferAddress == (char *)entry_point ||
-        (S(U(image)).ImageDynamicallyRelocated && LOWORD(image.TransferAddress) == LOWORD(entry_point)),
+        (image.ImageDynamicallyRelocated && LOWORD(image.TransferAddress) == LOWORD(entry_point)),
         "%u: TransferAddress wrong %p / %p (%08lx)\n", id,
         image.TransferAddress, entry_point, nt_header->OptionalHeader.AddressOfEntryPoint );
     ok( image.ZeroBits == 0, "%u: ZeroBits wrong %08lx\n", id, image.ZeroBits );
@@ -455,48 +455,48 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
         (cor_header->MajorRuntimeVersion > 2 ||
          (cor_header->MajorRuntimeVersion == 2 && cor_header->MinorRuntimeVersion >= 5)))
     {
-        ok( S(U(image)).ComPlusILOnly || broken(is_winxp),
-            "%u: wrong ComPlusILOnly flags %02x\n", id, U(image).ImageFlags );
+        ok( image.ComPlusILOnly || broken(is_winxp),
+            "%u: wrong ComPlusILOnly flags %02x\n", id, image.ImageFlags );
         if (nt_header->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC &&
             !(cor_header->Flags & COMIMAGE_FLAGS_32BITREQUIRED))
-            ok( S(U(image)).ComPlusNativeReady || broken(is_winxp),
-                "%u: wrong ComPlusNativeReady flags %02x\n", id, U(image).ImageFlags );
+            ok( image.ComPlusNativeReady || broken(is_winxp),
+                "%u: wrong ComPlusNativeReady flags %02x\n", id, image.ImageFlags );
         else
-            ok( !S(U(image)).ComPlusNativeReady,
-                "%u: wrong ComPlusNativeReady flags %02x\n", id, U(image).ImageFlags );
+            ok( !image.ComPlusNativeReady,
+                "%u: wrong ComPlusNativeReady flags %02x\n", id, image.ImageFlags );
         if (nt_header->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC &&
             (cor_header->Flags & COMIMAGE_FLAGS_32BITPREFERRED))
-            ok( S(U(image)).ComPlusPrefer32bit ||
+            ok( image.ComPlusPrefer32bit ||
                 broken( !image.MajorOperatingSystemVersion ), /* before win10 */
-                "%u: wrong ComPlusPrefer32bit flags %02x\n", id, U(image).ImageFlags );
+                "%u: wrong ComPlusPrefer32bit flags %02x\n", id, image.ImageFlags );
         else
-            ok( !S(U(image)).ComPlusPrefer32bit, "%u: wrong ComPlusPrefer32bit flags %02x\n", id, U(image).ImageFlags );
+            ok( !image.ComPlusPrefer32bit, "%u: wrong ComPlusPrefer32bit flags %02x\n", id, image.ImageFlags );
     }
     else
     {
-        ok( !S(U(image)).ComPlusILOnly, "%u: wrong ComPlusILOnly flags %02x\n", id, U(image).ImageFlags );
-        ok( !S(U(image)).ComPlusNativeReady, "%u: wrong ComPlusNativeReady flags %02x\n", id, U(image).ImageFlags );
-        ok( !S(U(image)).ComPlusPrefer32bit, "%u: wrong ComPlusPrefer32bit flags %02x\n", id, U(image).ImageFlags );
+        ok( !image.ComPlusILOnly, "%u: wrong ComPlusILOnly flags %02x\n", id, image.ImageFlags );
+        ok( !image.ComPlusNativeReady, "%u: wrong ComPlusNativeReady flags %02x\n", id, image.ImageFlags );
+        ok( !image.ComPlusPrefer32bit, "%u: wrong ComPlusPrefer32bit flags %02x\n", id, image.ImageFlags );
     }
     if (!(nt_header->OptionalHeader.SectionAlignment % page_size))
-        ok( !S(U(image)).ImageMappedFlat, "%u: wrong ImageMappedFlat flags %02x\n", id, U(image).ImageFlags );
+        ok( !image.ImageMappedFlat, "%u: wrong ImageMappedFlat flags %02x\n", id, image.ImageFlags );
     else
     {
         /* winxp doesn't support any of the loader flags */
-        if (!S(U(image)).ImageMappedFlat) is_winxp = TRUE;
-        ok( S(U(image)).ImageMappedFlat || broken(is_winxp),
-        "%u: wrong ImageMappedFlat flags %02x\n", id, U(image).ImageFlags );
+        if (!image.ImageMappedFlat) is_winxp = TRUE;
+        ok( image.ImageMappedFlat || broken(is_winxp),
+        "%u: wrong ImageMappedFlat flags %02x\n", id, image.ImageFlags );
     }
     if (!(nt_header->OptionalHeader.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE))
-        ok( !S(U(image)).ImageDynamicallyRelocated || broken( S(U(image)).ComPlusILOnly ), /* <= win7 */
-            "%u: wrong ImageDynamicallyRelocated flags %02x\n", id, U(image).ImageFlags );
+        ok( !image.ImageDynamicallyRelocated || broken( image.ComPlusILOnly ), /* <= win7 */
+            "%u: wrong ImageDynamicallyRelocated flags %02x\n", id, image.ImageFlags );
     else if (image.ImageContainsCode && !cor_header)
-        ok( S(U(image)).ImageDynamicallyRelocated || broken(is_winxp),
-            "%u: wrong ImageDynamicallyRelocated flags %02x\n", id, U(image).ImageFlags );
+        ok( image.ImageDynamicallyRelocated || broken(is_winxp),
+            "%u: wrong ImageDynamicallyRelocated flags %02x\n", id, image.ImageFlags );
     else
-        ok( !S(U(image)).ImageDynamicallyRelocated || broken(TRUE), /* <= win8 */
-            "%u: wrong ImageDynamicallyRelocated flags %02x\n", id, U(image).ImageFlags );
-    ok( !S(U(image)).BaseBelow4gb, "%u: wrong BaseBelow4gb flags %02x\n", id, U(image).ImageFlags );
+        ok( !image.ImageDynamicallyRelocated || broken(TRUE), /* <= win8 */
+            "%u: wrong ImageDynamicallyRelocated flags %02x\n", id, image.ImageFlags );
+    ok( !image.BaseBelow4gb, "%u: wrong BaseBelow4gb flags %02x\n", id, image.ImageFlags );
 
     map_size.QuadPart = (nt_header->OptionalHeader.SizeOfImage + page_size - 1) & ~(page_size - 1);
     status = pNtQuerySection( mapping, SectionBasicInformation, &info, sizeof(info), NULL );
@@ -1256,7 +1256,7 @@ static void test_Loader(void)
     cor_header.MajorRuntimeVersion = 2;
     cor_header.MinorRuntimeVersion = 4;
     cor_header.Flags = COMIMAGE_FLAGS_ILONLY;
-    U(cor_header).EntryPointToken = 0xbeef;
+    cor_header.EntryPointToken = 0xbeef;
     status = map_image_section( &nt_header, &section, &cor_header, __LINE__ );
     ok( status == STATUS_SUCCESS, "NtCreateSection error %08lx\n", status );
 
@@ -1630,7 +1630,7 @@ static void test_ImportDescriptors(void)
     {
         LPCSTR module_name = RVAToAddr(import_chunk->Name, kernel32_module);
         PIMAGE_THUNK_DATA name_table = RVAToAddr(
-                U(*import_chunk).OriginalFirstThunk, kernel32_module);
+                import_chunk->OriginalFirstThunk, kernel32_module);
         PIMAGE_THUNK_DATA iat = RVAToAddr(
                 import_chunk->FirstThunk, kernel32_module);
         ok(module_name != NULL, "Imported module name should not be NULL\n");
@@ -2236,7 +2236,7 @@ static void test_import_resolution(void)
         nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress = DATA_RVA(&data.tls);
 
         memset( &data, 0, sizeof(data) );
-        U(data.descr[0]).OriginalFirstThunk = DATA_RVA( data.original_thunks );
+        data.descr[0].OriginalFirstThunk = DATA_RVA( data.original_thunks );
         data.descr[0].FirstThunk = DATA_RVA( data.thunks );
         data.descr[0].Name = DATA_RVA( data.module );
         strcpy( data.module, "kernel32.dll" );

@@ -831,8 +831,8 @@ static void test_waittxempty(void)
     ok(!res, "WriteFile on an overlapped handle without ovl structure should fail\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
 
-    S(U(ovl_write)).Offset = 0;
-    S(U(ovl_write)).OffsetHigh = 0;
+    ovl_write.Offset = 0;
+    ovl_write.OffsetHigh = 0;
     ovl_write.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
     before = GetTickCount();
     SetLastError(0xdeadbeef);
@@ -845,8 +845,8 @@ static void test_waittxempty(void)
        after - before, bytes, baud);
     /* don't wait for WriteFile completion */
 
-    S(U(ovl_wait)).Offset = 0;
-    S(U(ovl_wait)).OffsetHigh = 0;
+    ovl_wait.Offset = 0;
+    ovl_wait.OffsetHigh = 0;
     ovl_wait.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
     evtmask = 0;
     before = GetTickCount();
@@ -904,8 +904,8 @@ static void test_waittxempty(void)
 
         if (i == 0)
         {
-            S(U(ovl_write)).Offset = 0;
-            S(U(ovl_write)).OffsetHigh = 0;
+            ovl_write.Offset = 0;
+            ovl_write.OffsetHigh = 0;
             ovl_write.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
             SetLastError(0xdeadbeef);
             res = WriteFile(hcom, tbuf, sizeof(tbuf), &bytes, &ovl_write);
@@ -932,8 +932,8 @@ static void test_waittxempty(void)
         ok(stat.cbOutQue == 0, "OutQueue should be empty, got %ld bytes\n", stat.cbOutQue);
         ok(errors == 0, "ClearCommErrors: Unexpected error 0x%08lx\n", errors);
 
-        S(U(ovl_wait)).Offset = 0;
-        S(U(ovl_wait)).OffsetHigh = 0;
+        ovl_wait.Offset = 0;
+        ovl_wait.OffsetHigh = 0;
         ovl_wait.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
         evtmask = 0;
         SetLastError(0xdeadbeef);
@@ -958,8 +958,8 @@ static void test_waittxempty(void)
         {
             ok(!evtmask, "WaitCommEvent: expected 0, got %#lx\n", evtmask);
 
-            S(U(ovl_wait2)).Offset = 0;
-            S(U(ovl_wait2)).OffsetHigh = 0;
+            ovl_wait2.Offset = 0;
+            ovl_wait2.OffsetHigh = 0;
             ovl_wait2.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
             SetLastError(0xdeadbeef);
             res = WaitCommEvent(hcom, &evtmask, &ovl_wait2);
@@ -1949,8 +1949,8 @@ static void test_WaitCommEvent(void)
     ret = SetCommMask(hcom, 0x1fff);
     ok(ret, "SetCommMask error %ld\n", GetLastError());
 
-    S(U(ovl_wait)).Offset = 0;
-    S(U(ovl_wait)).OffsetHigh = 0;
+    ovl_wait.Offset = 0;
+    ovl_wait.OffsetHigh = 0;
     ovl_wait.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
 
     trace("waiting 10 secs for com port events (turn on/off the device)...\n");
@@ -2062,34 +2062,34 @@ static void test_read_write(void)
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
     ok(bytes == 0, "bytes %lu\n", bytes);
 
-    U(iob).Status = -1;
+    iob.Status = -1;
     iob.Information = -1;
     status = pNtWriteFile(hcom, 0, NULL, NULL, &iob, atz, 0, NULL, NULL);
     ok(status == STATUS_INVALID_PARAMETER, "expected STATUS_INVALID_PARAMETER, got %#lx\n", status);
-    ok(U(iob).Status == -1, "expected -1, got %#lx\n", U(iob).Status);
+    ok(iob.Status == -1, "expected -1, got %#lx\n", iob.Status);
     ok(iob.Information == -1, "expected -1, got %Id\n", iob.Information);
 
     for (i = -20; i < 20; i++)
     {
-        U(iob).Status = -1;
+        iob.Status = -1;
         iob.Information = -1;
         offset.QuadPart = (LONGLONG)i;
         status = pNtWriteFile(hcom, 0, NULL, NULL, &iob, atz, 0, &offset, NULL);
         if (i >= 0 || i == -1)
         {
             ok(status == STATUS_SUCCESS, "%ld: expected STATUS_SUCCESS, got %#lx\n", i, status);
-            ok(U(iob).Status == STATUS_SUCCESS, "%ld: expected STATUS_SUCCESS, got %#lx\n", i, U(iob).Status);
+            ok(iob.Status == STATUS_SUCCESS, "%ld: expected STATUS_SUCCESS, got %#lx\n", i, iob.Status);
             ok(iob.Information == 0, "%ld: expected 0, got %Iu\n", i, iob.Information);
         }
         else
         {
             ok(status == STATUS_INVALID_PARAMETER, "%ld: expected STATUS_INVALID_PARAMETER, got %#lx\n", i, status);
-            ok(U(iob).Status == -1, "%ld: expected -1, got %#lx\n", i, U(iob).Status);
+            ok(iob.Status == -1, "%ld: expected -1, got %#lx\n", i, iob.Status);
             ok(iob.Information == -1, "%ld: expected -1, got %Id\n", i, iob.Information);
         }
     }
 
-    U(iob).Status = -1;
+    iob.Status = -1;
     iob.Information = -1;
     offset.QuadPart = 0;
     status = pNtWriteFile(hcom, 0, NULL, NULL, &iob, atz, sizeof(atz), &offset, NULL);
@@ -2106,14 +2106,14 @@ static void test_read_write(void)
         return;
     }
     ok(ret == WAIT_OBJECT_0, "WaitForSingleObject error %ld\n", ret);
-    ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", U(iob).Status);
+    ok(iob.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", iob.Status);
     ok(iob.Information == sizeof(atz), "expected sizeof(atz), got %Iu\n", iob.Information);
 
     ret = SetCommMask(hcom, EV_RXCHAR);
     ok(ret, "SetCommMask error %ld\n", GetLastError());
 
-    S(U(ovl_wait)).Offset = 0;
-    S(U(ovl_wait)).OffsetHigh = 0;
+    ovl_wait.Offset = 0;
+    ovl_wait.OffsetHigh = 0;
     ovl_wait.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
 
     trace("waiting 3 secs for modem response...\n");
@@ -2147,39 +2147,39 @@ static void test_read_write(void)
                 ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
                 ok(bytes == 0, "bytes %lu\n", bytes);
 
-                U(iob).Status = -1;
+                iob.Status = -1;
                 iob.Information = -1;
                 status = pNtReadFile(hcom, 0, NULL, NULL, &iob, buf, 0, NULL, NULL);
                 ok(status == STATUS_INVALID_PARAMETER, "expected STATUS_INVALID_PARAMETER, got %#lx\n", status);
-                ok(U(iob).Status == -1, "expected -1, got %#lx\n", U(iob).Status);
+                ok(iob.Status == -1, "expected -1, got %#lx\n", iob.Status);
                 ok(iob.Information == -1, "expected -1, got %Id\n", iob.Information);
 
                 for (i = -20; i < 20; i++)
                 {
-                    U(iob).Status = -1;
+                    iob.Status = -1;
                     iob.Information = -1;
                     offset.QuadPart = (LONGLONG)i;
                     status = pNtReadFile(hcom, 0, NULL, NULL, &iob, buf, 0, &offset, NULL);
                     if (i >= 0)
                     {
                         ok(status == STATUS_SUCCESS, "%ld: expected STATUS_SUCCESS, got %#lx\n", i, status);
-                        ok(U(iob).Status == STATUS_SUCCESS, "%ld: expected STATUS_SUCCESS, got %#lx\n", i, U(iob).Status);
+                        ok(iob.Status == STATUS_SUCCESS, "%ld: expected STATUS_SUCCESS, got %#lx\n", i, iob.Status);
                         ok(iob.Information == 0, "%ld: expected 0, got %Iu\n", i, iob.Information);
                     }
                     else
                     {
                         ok(status == STATUS_INVALID_PARAMETER, "%ld: expected STATUS_INVALID_PARAMETER, got %#lx\n", i, status);
-                        ok(U(iob).Status == -1, "%ld: expected -1, got %#lx\n", i, U(iob).Status);
+                        ok(iob.Status == -1, "%ld: expected -1, got %#lx\n", i, iob.Status);
                         ok(iob.Information == -1, "%ld: expected -1, got %Id\n", i, iob.Information);
                     }
                 }
 
-                U(iob).Status = -1;
+                iob.Status = -1;
                 iob.Information = -1;
                 offset.QuadPart = 0;
                 status = pNtReadFile(hcom, 0, NULL, NULL, &iob, buf, 1, &offset, NULL);
                 ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", status);
-                ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", U(iob).Status);
+                ok(iob.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", iob.Status);
                 ok(iob.Information == 1, "expected 1, got %Iu\n", iob.Information);
                 goto done;
             }

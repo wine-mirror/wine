@@ -2696,8 +2696,8 @@ static void test_readfileex_pending(void)
     ok(GetLastError() == ERROR_INVALID_HANDLE, "wrong error %lu\n", GetLastError());
     ok(num_bytes == 0, "expected 0, got %lu\n", num_bytes);
 
-    S(U(overlapped)).Offset = 0;
-    S(U(overlapped)).OffsetHigh = 0;
+    overlapped.Offset = 0;
+    overlapped.OffsetHigh = 0;
     overlapped.Internal = -1;
     overlapped.InternalHigh = -1;
     overlapped.hEvent = event;

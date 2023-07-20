@@ -507,8 +507,8 @@ static void test_readdirectorychanges(void)
     SetEvent(ov.hEvent);
     ov.Internal = 1;
     ov.InternalHigh = 1;
-    S(U(ov)).Offset = 0;
-    S(U(ov)).OffsetHigh = 0;
+    ov.Offset = 0;
+    ov.OffsetHigh = 0;
     memset( buffer, 0, sizeof buffer );
     r = ReadDirectoryChangesW(hdir,buffer,sizeof buffer,FALSE,filter,NULL,&ov,NULL);
     ok(r==TRUE, "should return true\n");
@@ -692,8 +692,8 @@ static void test_readdirectorychanges_null(void)
 
     ov.Internal = 0;
     ov.InternalHigh = 0;
-    S(U(ov)).Offset = 0;
-    S(U(ov)).OffsetHigh = 0;
+    ov.Offset = 0;
+    ov.OffsetHigh = 0;
     memset( buffer, 0, sizeof buffer );
 
     r = ReadDirectoryChangesW(hdir,buffer,sizeof buffer,FALSE,filter,NULL,&ov,NULL);
