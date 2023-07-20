@@ -796,8 +796,18 @@ static HRESULT WeakMap_set(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigne
 static HRESULT WeakMap_has(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    jsdisp_t *key = (argc >= 1 && is_object_instance(argv[0])) ? to_jsdisp(get_object(argv[0])) : NULL;
+    WeakMapInstance *weakmap;
+    HRESULT hres;
+
+    hres = get_weakmap_this(ctx, vthis, &weakmap);
+    if(FAILED(hres))
+        return hres;
+
+    TRACE("%p (%p)\n", weakmap, key);
+
+    if(r) *r = jsval_bool(!!get_weakmap_entry(weakmap, key));
+    return S_OK;
 }
 
 static HRESULT WeakMap_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
