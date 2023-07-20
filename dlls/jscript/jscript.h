@@ -117,6 +117,7 @@ typedef enum {
     JSCLASS_JSON,
     JSCLASS_MAP,
     JSCLASS_SET,
+    JSCLASS_WEAKMAP,
 } jsclass_t;
 
 jsdisp_t *iface_to_jsdisp(IDispatch*);
@@ -418,11 +419,12 @@ struct _script_ctx_t {
             jsdisp_t *vbarray_constr;
             jsdisp_t *map_prototype;
             jsdisp_t *set_prototype;
+            jsdisp_t *weakmap_prototype;
         };
-        jsdisp_t *global_objects[22];
+        jsdisp_t *global_objects[23];
     };
 };
-C_ASSERT(RTL_SIZEOF_THROUGH_FIELD(script_ctx_t, set_prototype) == RTL_SIZEOF_THROUGH_FIELD(script_ctx_t, global_objects));
+C_ASSERT(RTL_SIZEOF_THROUGH_FIELD(script_ctx_t, weakmap_prototype) == RTL_SIZEOF_THROUGH_FIELD(script_ctx_t, global_objects));
 
 void script_release(script_ctx_t*);
 
