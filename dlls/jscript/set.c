@@ -676,8 +676,21 @@ static HRESULT WeakMap_clear(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsig
 static HRESULT WeakMap_delete(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    jsdisp_t *key = (argc >= 1 && is_object_instance(argv[0])) ? to_jsdisp(get_object(argv[0])) : NULL;
+    struct weakmap_entry *entry;
+    WeakMapInstance *weakmap;
+    HRESULT hres;
+
+    hres = get_weakmap_this(ctx, vthis, &weakmap);
+    if(FAILED(hres))
+        return hres;
+
+    TRACE("%p (%p)\n", weakmap, key);
+
+    if((entry = get_weakmap_entry(weakmap, key)))
+        remove_weakmap_entry(entry);
+    if(r) *r = jsval_bool(!!entry);
+    return S_OK;
 }
 
 static HRESULT WeakMap_get(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
