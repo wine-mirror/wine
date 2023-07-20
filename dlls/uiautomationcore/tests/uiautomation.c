@@ -13132,8 +13132,8 @@ static DWORD WINAPI uia_com_event_handler_test_thread(LPVOID param)
     set_com_event_data(&exp_node_desc);
     hr = UiaRaiseAutomationEvent(&Provider2.IRawElementProviderSimple_iface, UIA_LiveRegionChangedEventId);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine CHECK_CALLED(uia_com_event_callback);
-    todo_wine ok(ComEventData.last_call_tid == GetCurrentThreadId(), "Event handler called on unexpected thread %ld\n",
+    CHECK_CALLED(uia_com_event_callback);
+    ok(ComEventData.last_call_tid == GetCurrentThreadId(), "Event handler called on unexpected thread %ld\n",
             ComEventData.last_call_tid);
     CoUninitialize();
 
@@ -13146,7 +13146,7 @@ static DWORD WINAPI uia_com_event_handler_test_thread(LPVOID param)
     set_com_event_data(&exp_node_desc);
     hr = UiaRaiseAutomationEvent(&Provider2.IRawElementProviderSimple_iface, UIA_LiveRegionChangedEventId);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine CHECK_CALLED(uia_com_event_callback);
+    CHECK_CALLED(uia_com_event_callback);
     ok(ComEventData.last_call_tid != GetCurrentThreadId(), "Event handler called on unexpected thread %ld\n",
             ComEventData.last_call_tid);
     CoUninitialize();
@@ -13233,7 +13233,7 @@ static void test_IUIAutomationEventHandler(IUIAutomation *uia_iface, IUIAutomati
     set_com_event_data(&exp_node_desc);
     hr = UiaRaiseAutomationEvent(&Provider2.IRawElementProviderSimple_iface, UIA_LiveRegionChangedEventId);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine CHECK_CALLED(uia_com_event_callback);
+    CHECK_CALLED(uia_com_event_callback);
 
     /*
      * If no cache request is provided by the user in

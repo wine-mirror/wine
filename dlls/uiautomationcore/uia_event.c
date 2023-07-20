@@ -1140,7 +1140,7 @@ static HRESULT uia_clientside_event_callback(struct uia_event *event, struct uia
     return S_OK;
 }
 
-static HRESULT uia_add_clientside_event(HUIANODE huianode, EVENTID event_id, enum TreeScope scope, PROPERTYID *prop_ids,
+HRESULT uia_add_clientside_event(HUIANODE huianode, EVENTID event_id, enum TreeScope scope, PROPERTYID *prop_ids,
         int prop_ids_count, struct UiaCacheRequest *cache_req, SAFEARRAY *rt_id, UiaWineEventCallback *cback,
         void *cback_data, HUIAEVENT *huiaevent)
 {
