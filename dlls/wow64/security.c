@@ -155,6 +155,42 @@ NTSTATUS WINAPI wow64_NtCreateLowBoxToken( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtCreateToken
+ */
+NTSTATUS WINAPI wow64_NtCreateToken( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    TOKEN_TYPE type = get_ulong( &args );
+    LUID *luid = get_ptr( &args );
+    LARGE_INTEGER *expire = get_ptr( &args );
+    TOKEN_USER32 *user32 = get_ptr( &args );
+    TOKEN_GROUPS32 *groups32 = get_ptr( &args );
+    TOKEN_PRIVILEGES *privs = get_ptr( &args );
+    TOKEN_OWNER32 *owner32 = get_ptr( &args );
+    TOKEN_PRIMARY_GROUP32 *group32 = get_ptr( &args );
+    TOKEN_DEFAULT_DACL32 *dacl32 = get_ptr( &args );
+    TOKEN_SOURCE *source = get_ptr( &args );
+
+    struct object_attr64 attr;
+    TOKEN_USER user;
+    TOKEN_OWNER owner;
+    TOKEN_PRIMARY_GROUP group;
+    TOKEN_DEFAULT_DACL dacl;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    status = NtCreateToken( &handle, access, objattr_32to64( &attr, attr32 ), type, luid, expire,
+                            token_user_32to64( &user, user32 ), token_groups_32to64( groups32 ), privs,
+                            token_owner_32to64( &owner, owner32 ), token_primary_group_32to64( &group, group32 ),
+                            token_default_dacl_32to64( &dacl, dacl32 ), source );
+    put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtDuplicateToken
  */
 NTSTATUS WINAPI wow64_NtDuplicateToken( UINT *args )

@@ -3187,6 +3187,26 @@ enum caret_state
 @END
 
 
+/* Create a security token */
+@REQ(create_token)
+    struct luid    token_id;
+    unsigned int   access;         /* access rights to the new token */
+    int            primary;        /* is the new token to be a primary one? */
+    int            impersonation_level; /* impersonation level of the new token */
+    abstime_t      expire;         /* expiration time */
+    int            group_count;
+    int            primary_group;
+    int            priv_count;
+    /* VARARG(objattr,object_attributes);  */
+    /* VARARG(user,sid); */
+    /* VARARG(groups,sid); */
+    /* VARARG(privs,luid_attr); */
+    /* VARARG(dacl,acl); */
+@REPLY
+    obj_handle_t   token;    /* handle to the token */
+@END
+
+
 /* Open a security token */
 @REQ(open_token)
     obj_handle_t   handle;    /* handle to the thread or process */

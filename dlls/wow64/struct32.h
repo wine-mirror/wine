@@ -374,6 +374,11 @@ typedef struct
 
 typedef struct
 {
+    ULONG PrimaryGroup;
+} TOKEN_PRIMARY_GROUP32;
+
+typedef struct
+{
     SID_AND_ATTRIBUTES32 User;
 } TOKEN_USER32;
 

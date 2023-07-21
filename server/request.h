@@ -331,6 +331,7 @@ DECL_HANDLER(get_clipboard_info);
 DECL_HANDLER(set_clipboard_viewer);
 DECL_HANDLER(add_clipboard_listener);
 DECL_HANDLER(remove_clipboard_listener);
+DECL_HANDLER(create_token);
 DECL_HANDLER(open_token);
 DECL_HANDLER(set_global_windows);
 DECL_HANDLER(adjust_token_privileges);
@@ -619,6 +620,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_clipboard_viewer,
     (req_handler)req_add_clipboard_listener,
     (req_handler)req_remove_clipboard_listener,
+    (req_handler)req_create_token,
     (req_handler)req_open_token,
     (req_handler)req_set_global_windows,
     (req_handler)req_adjust_token_privileges,
@@ -1970,6 +1972,17 @@ C_ASSERT( FIELD_OFFSET(struct add_clipboard_listener_request, window) == 12 );
 C_ASSERT( sizeof(struct add_clipboard_listener_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct remove_clipboard_listener_request, window) == 12 );
 C_ASSERT( sizeof(struct remove_clipboard_listener_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct create_token_request, token_id) == 12 );
+C_ASSERT( FIELD_OFFSET(struct create_token_request, access) == 20 );
+C_ASSERT( FIELD_OFFSET(struct create_token_request, primary) == 24 );
+C_ASSERT( FIELD_OFFSET(struct create_token_request, impersonation_level) == 28 );
+C_ASSERT( FIELD_OFFSET(struct create_token_request, expire) == 32 );
+C_ASSERT( FIELD_OFFSET(struct create_token_request, group_count) == 40 );
+C_ASSERT( FIELD_OFFSET(struct create_token_request, primary_group) == 44 );
+C_ASSERT( FIELD_OFFSET(struct create_token_request, priv_count) == 48 );
+C_ASSERT( sizeof(struct create_token_request) == 56 );
+C_ASSERT( FIELD_OFFSET(struct create_token_reply, token) == 8 );
+C_ASSERT( sizeof(struct create_token_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct open_token_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct open_token_request, access) == 16 );
 C_ASSERT( FIELD_OFFSET(struct open_token_request, attributes) == 20 );

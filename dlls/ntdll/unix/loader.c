@@ -166,6 +166,7 @@ static void * const syscalls[] =
     NtCreateThread,
     NtCreateThreadEx,
     NtCreateTimer,
+    NtCreateToken,
     NtCreateTransaction,
     NtCreateUserProcess,
     NtDebugActiveProcess,

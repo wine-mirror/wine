@@ -70,6 +70,7 @@
     SYSCALL_ENTRY( NtCreateThread ) \
     SYSCALL_ENTRY( NtCreateThreadEx ) \
     SYSCALL_ENTRY( NtCreateTimer ) \
+    SYSCALL_ENTRY( NtCreateToken ) \
     SYSCALL_ENTRY( NtCreateTransaction ) \
     SYSCALL_ENTRY( NtCreateUserProcess ) \
     SYSCALL_ENTRY( NtDebugActiveProcess ) \
