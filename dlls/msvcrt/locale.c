@@ -341,8 +341,9 @@ BOOL locale_to_sname(const char *locale, unsigned short *codepage, BOOL *sname_m
     if (!strcmp(locale, data->cached_locale)) {
         if (codepage)
             *codepage = data->cached_cp;
-        if (sname)
-            wcsncpy(sname, data->cached_sname, sname_size);
+        if (sname_match)
+            *sname_match = data->cached_sname_match;
+        wcsncpy(sname, data->cached_sname, sname_size);
         return TRUE;
     }
 
@@ -441,6 +442,7 @@ BOOL locale_to_sname(const char *locale, unsigned short *codepage, BOOL *sname_m
     if (strlen(locale) < sizeof(data->cached_locale)) {
         strcpy(data->cached_locale, locale);
         data->cached_cp = locale_cp;
+        data->cached_sname_match = is_sname;
         wcscpy(data->cached_sname, sname);
     }
 

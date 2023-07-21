@@ -170,6 +170,7 @@ struct __thread_data {
     int                             processing_throw;
     frame_info                     *frame_info_head;
     void                           *unk8[6];
+    BOOL                            cached_sname_match;
     WCHAR                           cached_sname[LOCALE_NAME_MAX_LENGTH];
     int                             unk9[2];
     DWORD                           cached_cp;
