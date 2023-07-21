@@ -20,9 +20,6 @@
 #include <stdarg.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-
 #include "windef.h"
 #include "winbase.h"
 #include "ole2.h"
@@ -464,7 +461,7 @@ static void test_converttoi1(void)
 
     dst_len = dst = 0x12;
     memset(src, 0, sizeof(DECIMAL));
-    ((DECIMAL*)src)->u1.Lo64 = 0x43;
+    ((DECIMAL*)src)->Lo64 = 0x43;
     hr = IDataConvert_DataConvert(convert, DBTYPE_DECIMAL, DBTYPE_I1, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == S_OK, "got %08lx\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08lx\n", dst_status);
@@ -775,7 +772,7 @@ static void test_converttoi2(void)
 
     dst_len = dst = 0x1234;
     memset(src, 0, sizeof(DECIMAL));
-    ((DECIMAL*)src)->u1.Lo64 = 0x4321;
+    ((DECIMAL*)src)->Lo64 = 0x4321;
     hr = IDataConvert_DataConvert(convert, DBTYPE_DECIMAL, DBTYPE_I2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == S_OK, "got %08lx\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08lx\n", dst_status);
@@ -1091,7 +1088,7 @@ static void test_converttoi4(void)
 
     i4 = 0x12345678;
     memset(src, 0, sizeof(DECIMAL));
-    ((DECIMAL*)src)->u1.Lo64 = 0x1234;
+    ((DECIMAL*)src)->Lo64 = 0x1234;
     dst_len = 0x1234;
     hr = IDataConvert_DataConvert(convert, DBTYPE_DECIMAL, DBTYPE_I4, 0, &dst_len, src, &i4, sizeof(i4), 0, &dst_status, 0, 0, 0);
     ok(hr == S_OK, "got %08lx\n", hr);
@@ -3016,7 +3013,7 @@ static void test_converttocy(void)
     ok(hr == S_OK, "got %08lx\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08lx\n", dst_status);
     ok(dst_len == sizeof(CY), "got %Id\n", dst_len);
-    ok(dst.int64 == 12340000, "got %ld\n", dst.s.Lo);
+    ok(dst.int64 == 12340000, "got %ld\n", dst.Lo);
 
     dst.int64 = 0xcc;
     ((CY*)src)->int64 = 1234;
@@ -3025,7 +3022,7 @@ static void test_converttocy(void)
     ok(hr == S_OK, "got %08lx\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08lx\n", dst_status);
     ok(dst_len == sizeof(CY), "got %Id\n", dst_len);
-    ok(dst.int64 == 1234, "got %ld\n", dst.s.Lo);
+    ok(dst.int64 == 1234, "got %ld\n", dst.Lo);
 
     dst_len = 44;
     V_VT(&v) = VT_NULL;
@@ -3784,8 +3781,8 @@ static void test_converttovar(void)
     ok(dst_status == DBSTATUS_S_OK, "got %08lx\n", dst_status);
     ok(dst_len == sizeof(dst), "got %Id\n", dst_len);
     ok(V_VT(&dst) == VT_DECIMAL, "got %d\n", V_VT(&dst));
-    ok(S(U(V_DECIMAL(&dst))).scale == 0 && S(U(V_DECIMAL(&dst))).sign == 0 &&
-       V_DECIMAL(&dst).Hi32 == 0 && U1(V_DECIMAL(&dst)).Lo64 == 12345, "Not Equal\n");
+    ok(V_DECIMAL(&dst).scale == 0 && V_DECIMAL(&dst).sign == 0 &&
+       V_DECIMAL(&dst).Hi32 == 0 && V_DECIMAL(&dst).Lo64 == 12345, "Not Equal\n");
 
     V_VT(&dst) = VT_EMPTY;
     dst_len = 0;
@@ -3853,8 +3850,8 @@ static void test_converttovar(void)
     V_VT(&dst) = VT_EMPTY;
     dst_len = 0;
     dst_status = DBSTATUS_S_DEFAULT;
-    S(cy).Lo = 1;
-    S(cy).Hi = 2;
+    cy.Lo = 1;
+    cy.Hi = 2;
     hr = IDataConvert_DataConvert(convert, DBTYPE_CY, DBTYPE_VARIANT, sizeof(cy), &dst_len, &cy, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == S_OK, "got %08lx\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08lx\n", dst_status);
@@ -3862,7 +3859,7 @@ static void test_converttovar(void)
     ok(V_VT(&dst) == VT_CY, "got %d\n", V_VT(&dst));
 
     cy2 = V_CY(&dst);
-    ok(S(cy2).Lo == S(cy).Lo && S(cy2).Hi == S(cy).Hi, "got %ld,%ld\n", S(cy2).Lo, S(cy2).Hi);
+    ok(cy2.Lo == cy.Lo && cy2.Hi == cy.Hi, "got %ld,%ld\n", cy2.Lo, cy2.Hi);
 
     dst_len = 0x1234;
     hr = IDataConvert_DataConvert(convert, DBTYPE_BYTES, DBTYPE_VARIANT, sizeof(byte_src), &dst_len, &byte_src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
