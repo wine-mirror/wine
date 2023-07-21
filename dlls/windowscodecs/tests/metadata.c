@@ -37,9 +37,9 @@ DEFINE_GUID(IID_MdbrUnknown, 0x00240e6f,0x3f23,0x4432,0xb0,0xcc,0x48,0xd5,0xbb,0
 #define expect_blob(propvar, data, length) do { \
     ok((propvar).vt == VT_BLOB, "unexpected vt: %i\n", (propvar).vt); \
     if ((propvar).vt == VT_BLOB) { \
-        ok(U(propvar).blob.cbSize == (length), "expected size %lu, got %lu\n", (ULONG)(length), U(propvar).blob.cbSize); \
-        if (U(propvar).blob.cbSize == (length)) { \
-            ok(!memcmp(U(propvar).blob.pBlobData, (data), (length)), "unexpected data\n"); \
+        ok(propvar.blob.cbSize == (length), "expected size %lu, got %lu\n", (ULONG)(length), propvar.blob.cbSize); \
+        if (propvar.blob.cbSize == (length)) { \
+            ok(!memcmp(propvar.blob.pBlobData, (data), (length)), "unexpected data\n"); \
         } \
     } \
 } while (0)
@@ -378,9 +378,9 @@ static void test_metadata_tEXt(void)
         {
             ok(schema.vt == VT_EMPTY, "unexpected vt: %i\n", schema.vt);
             ok(id.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
-            ok(!strcmp(U(id).pszVal, "winetest"), "unexpected id: %s\n", U(id).pszVal);
+            ok(!strcmp(id.pszVal, "winetest"), "unexpected id: %s\n", id.pszVal);
             ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", value.vt);
-            ok(!strcmp(U(value).pszVal, "value"), "unexpected value: %s\n", U(value).pszVal);
+            ok(!strcmp(value.pszVal, "value"), "unexpected value: %s\n", value.pszVal);
 
             PropVariantClear(&schema);
             PropVariantClear(&id);
@@ -402,8 +402,8 @@ static void test_metadata_tEXt(void)
     ok(hr == E_INVALIDARG, "GetMetadataFormat failed, hr=%lx\n", hr);
 
     id.vt = VT_LPSTR;
-    U(id).pszVal = CoTaskMemAlloc(strlen("winetest") + 1);
-    strcpy(U(id).pszVal, "winetest");
+    id.pszVal = CoTaskMemAlloc(strlen("winetest") + 1);
+    strcpy(id.pszVal, "winetest");
 
     hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
     ok(hr == S_OK, "GetValue failed, hr=%lx\n", hr);
@@ -414,10 +414,10 @@ static void test_metadata_tEXt(void)
     hr = IWICMetadataReader_GetValue(reader, &schema, &id, &value);
     ok(hr == S_OK, "GetValue failed, hr=%lx\n", hr);
     ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
-    ok(!strcmp(U(value).pszVal, "value"), "unexpected value: %s\n", U(value).pszVal);
+    ok(!strcmp(value.pszVal, "value"), "unexpected value: %s\n", value.pszVal);
     PropVariantClear(&value);
 
-    strcpy(U(id).pszVal, "test");
+    strcpy(id.pszVal, "test");
 
     hr = IWICMetadataReader_GetValue(reader, &schema, &id, &value);
     ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "GetValue failed, hr=%lx\n", hr);
@@ -434,13 +434,13 @@ static void test_metadata_tEXt(void)
     hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, &id, NULL);
     ok(hr == S_OK, "GetValueByIndex failed, hr=%lx\n", hr);
     ok(id.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
-    ok(!strcmp(U(id).pszVal, "winetest"), "unexpected id: %s\n", U(id).pszVal);
+    ok(!strcmp(id.pszVal, "winetest"), "unexpected id: %s\n", id.pszVal);
     PropVariantClear(&id);
 
     hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, NULL, &value);
     ok(hr == S_OK, "GetValueByIndex failed, hr=%lx\n", hr);
     ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", value.vt);
-    ok(!strcmp(U(value).pszVal, "value"), "unexpected value: %s\n", U(value).pszVal);
+    ok(!strcmp(value.pszVal, "value"), "unexpected value: %s\n", value.pszVal);
     PropVariantClear(&value);
 
     hr = IWICMetadataReader_GetValueByIndex(reader, 1, NULL, NULL, NULL);
@@ -484,11 +484,11 @@ static void test_metadata_gAMA(void)
     PropVariantClear(&schema);
 
     ok(id.vt == VT_LPWSTR, "unexpected vt: %i\n", id.vt);
-    ok(!lstrcmpW(U(id).pwszVal, ImageGamma), "unexpected value: %s\n", wine_dbgstr_w(U(id).pwszVal));
+    ok(!lstrcmpW(id.pwszVal, ImageGamma), "unexpected value: %s\n", wine_dbgstr_w(id.pwszVal));
     PropVariantClear(&id);
 
     ok(value.vt == VT_UI4, "unexpected vt: %i\n", value.vt);
-    ok(U(value).ulVal == 33333, "unexpected value: %lu\n", U(value).ulVal);
+    ok(value.ulVal == 33333, "unexpected value: %lu\n", value.ulVal);
     PropVariantClear(&value);
 
     IWICMetadataReader_Release(reader);
@@ -544,11 +544,11 @@ static void test_metadata_cHRM(void)
         PropVariantClear(&schema);
 
         ok(id.vt == VT_LPWSTR, "unexpected vt: %i\n", id.vt);
-        ok(!lstrcmpW(U(id).pwszVal, expected_names[i]), "got %s, expected %s\n", wine_dbgstr_w(U(id).pwszVal), wine_dbgstr_w(expected_names[i]));
+        ok(!lstrcmpW(id.pwszVal, expected_names[i]), "got %s, expected %s\n", wine_dbgstr_w(id.pwszVal), wine_dbgstr_w(expected_names[i]));
         PropVariantClear(&id);
 
         ok(value.vt == VT_UI4, "unexpected vt: %i\n", value.vt);
-        ok(U(value).ulVal == expected_vals[i], "got %lu, expected %lu\n", U(value).ulVal, expected_vals[i]);
+        ok(value.ulVal == expected_vals[i], "got %lu, expected %lu\n", value.ulVal, expected_vals[i]);
         PropVariantClear(&value);
     }
 
@@ -698,10 +698,10 @@ static void compare_metadata(IWICMetadataReader *reader, const struct test_data 
         ok(schema.vt == VT_EMPTY, "%lu: unexpected vt: %u\n", i, schema.vt);
         ok(id.vt == VT_UI2 || id.vt == VT_LPWSTR || id.vt == VT_EMPTY, "%lu: unexpected vt: %u\n", i, id.vt);
         if (id.vt == VT_UI2)
-            ok(U(id).uiVal == td[i].id, "%lu: expected id %#lx, got %#x\n", i, td[i].id, U(id).uiVal);
+            ok(id.uiVal == td[i].id, "%lu: expected id %#lx, got %#x\n", i, td[i].id, id.uiVal);
         else if (id.vt == VT_LPWSTR)
-            ok(!lstrcmpW(td[i].id_string, U(id).pwszVal),
-               "%lu: expected %s, got %s\n", i, wine_dbgstr_w(td[i].id_string), wine_dbgstr_w(U(id).pwszVal));
+            ok(!lstrcmpW(td[i].id_string, id.pwszVal),
+               "%lu: expected %s, got %s\n", i, wine_dbgstr_w(td[i].id_string), wine_dbgstr_w(id.pwszVal));
 
         ok(value.vt == td[i].type, "%lu: expected vt %#lx, got %#x\n", i, td[i].type, value.vt);
         if (value.vt & VT_VECTOR)
@@ -711,34 +711,34 @@ static void compare_metadata(IWICMetadataReader *reader, const struct test_data 
             {
             case VT_I1:
             case VT_UI1:
-                ok(td[i].count == U(value).caub.cElems, "%lu: expected cElems %d, got %ld\n", i, td[i].count, U(value).caub.cElems);
-                for (j = 0; j < U(value).caub.cElems; j++)
-                    ok(td[i].value[j] == U(value).caub.pElems[j], "%lu: expected value[%ld] %#I64x, got %#x\n", i, j, td[i].value[j], U(value).caub.pElems[j]);
+                ok(td[i].count == value.caub.cElems, "%lu: expected cElems %d, got %ld\n", i, td[i].count, value.caub.cElems);
+                for (j = 0; j < value.caub.cElems; j++)
+                    ok(td[i].value[j] == value.caub.pElems[j], "%lu: expected value[%ld] %#I64x, got %#x\n", i, j, td[i].value[j], value.caub.pElems[j]);
                 break;
             case VT_I2:
             case VT_UI2:
-                ok(td[i].count == U(value).caui.cElems, "%lu: expected cElems %d, got %ld\n", i, td[i].count, U(value).caui.cElems);
-                for (j = 0; j < U(value).caui.cElems; j++)
-                    ok(td[i].value[j] == U(value).caui.pElems[j], "%lu: expected value[%ld] %#I64x, got %#x\n", i, j, td[i].value[j], U(value).caui.pElems[j]);
+                ok(td[i].count == value.caui.cElems, "%lu: expected cElems %d, got %ld\n", i, td[i].count, value.caui.cElems);
+                for (j = 0; j < value.caui.cElems; j++)
+                    ok(td[i].value[j] == value.caui.pElems[j], "%lu: expected value[%ld] %#I64x, got %#x\n", i, j, td[i].value[j], value.caui.pElems[j]);
                 break;
             case VT_I4:
             case VT_UI4:
             case VT_R4:
-                ok(td[i].count == U(value).caul.cElems, "%lu: expected cElems %d, got %ld\n", i, td[i].count, U(value).caul.cElems);
-                for (j = 0; j < U(value).caul.cElems; j++)
-                    ok(td[i].value[j] == U(value).caul.pElems[j], "%lu: expected value[%ld] %#I64x, got %#lx\n", i, j, td[i].value[j], U(value).caul.pElems[j]);
+                ok(td[i].count == value.caul.cElems, "%lu: expected cElems %d, got %ld\n", i, td[i].count, value.caul.cElems);
+                for (j = 0; j < value.caul.cElems; j++)
+                    ok(td[i].value[j] == value.caul.pElems[j], "%lu: expected value[%ld] %#I64x, got %#lx\n", i, j, td[i].value[j], value.caul.pElems[j]);
                 break;
             case VT_I8:
             case VT_UI8:
             case VT_R8:
-                ok(td[i].count == U(value).cauh.cElems, "%lu: expected cElems %d, got %ld\n", i, td[i].count, U(value).cauh.cElems);
-                for (j = 0; j < U(value).cauh.cElems; j++)
-                    ok(td[i].value[j] == U(value).cauh.pElems[j].QuadPart, "%lu: expected value[%ld] %I64x, got %08lx/%08lx\n", i, j, td[i].value[j], U(value).cauh.pElems[j].u.LowPart, U(value).cauh.pElems[j].u.HighPart);
+                ok(td[i].count == value.cauh.cElems, "%lu: expected cElems %d, got %ld\n", i, td[i].count, value.cauh.cElems);
+                for (j = 0; j < value.cauh.cElems; j++)
+                    ok(td[i].value[j] == value.cauh.pElems[j].QuadPart, "%lu: expected value[%ld] %I64x, got %08lx/%08lx\n", i, j, td[i].value[j], value.cauh.pElems[j].u.LowPart, value.cauh.pElems[j].u.HighPart);
                 break;
             case VT_LPSTR:
-                ok(td[i].count == U(value).calpstr.cElems, "%lu: expected cElems %d, got %ld\n", i, td[i].count, U(value).caub.cElems);
-                for (j = 0; j < U(value).calpstr.cElems; j++)
-                    trace("%lu: %s\n", j, U(value).calpstr.pElems[j]);
+                ok(td[i].count == value.calpstr.cElems, "%lu: expected cElems %d, got %ld\n", i, td[i].count, value.caub.cElems);
+                for (j = 0; j < value.calpstr.cElems; j++)
+                    trace("%lu: %s\n", j, value.calpstr.pElems[j]);
                 /* fall through to not handled message */
             default:
                 ok(0, "%lu: array of type %d is not handled\n", i, value.vt & ~VT_VECTOR);
@@ -747,21 +747,21 @@ static void compare_metadata(IWICMetadataReader *reader, const struct test_data 
         }
         else if (value.vt == VT_LPSTR)
         {
-            ok(td[i].count == strlen(U(value).pszVal) ||
-               broken(td[i].count == strlen(U(value).pszVal) + 1), /* before Win7 */
-               "%lu: expected count %d, got %d\n", i, td[i].count, lstrlenA(U(value).pszVal));
-            if (td[i].count == strlen(U(value).pszVal))
-                ok(!strcmp(td[i].string, U(value).pszVal),
-                   "%lu: expected %s, got %s\n", i, td[i].string, U(value).pszVal);
+            ok(td[i].count == strlen(value.pszVal) ||
+               broken(td[i].count == strlen(value.pszVal) + 1), /* before Win7 */
+               "%lu: expected count %d, got %d\n", i, td[i].count, lstrlenA(value.pszVal));
+            if (td[i].count == strlen(value.pszVal))
+                ok(!strcmp(td[i].string, value.pszVal),
+                   "%lu: expected %s, got %s\n", i, td[i].string, value.pszVal);
         }
         else if (value.vt == VT_BLOB)
         {
-            ok(td[i].count == U(value).blob.cbSize, "%lu: expected count %d, got %ld\n", i, td[i].count, U(value).blob.cbSize);
-            ok(!memcmp(td[i].string, U(value).blob.pBlobData, td[i].count), "%lu: expected %s, got %s\n", i, td[i].string, U(value).blob.pBlobData);
+            ok(td[i].count == value.blob.cbSize, "%lu: expected count %d, got %ld\n", i, td[i].count, value.blob.cbSize);
+            ok(!memcmp(td[i].string, value.blob.pBlobData, td[i].count), "%lu: expected %s, got %s\n", i, td[i].string, value.blob.pBlobData);
         }
         else
-            ok(U(value).uhVal.QuadPart == td[i].value[0], "%lu: expected value %#I64x got %#lx/%#lx\n",
-               i, td[i].value[0], U(value).uhVal.u.LowPart, U(value).uhVal.u.HighPart);
+            ok(value.uhVal.QuadPart == td[i].value[0], "%lu: expected value %#I64x got %#lx/%#lx\n",
+               i, td[i].value[0], value.uhVal.u.LowPart, value.uhVal.u.HighPart);
 
         PropVariantClear(&schema);
         PropVariantClear(&id);
@@ -887,13 +887,13 @@ static void test_metadata_IFD(void)
     hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, &id, NULL);
     ok(hr == S_OK, "GetValueByIndex error %#lx\n", hr);
     ok(id.vt == VT_UI2, "unexpected vt: %u\n", id.vt);
-    ok(U(id).uiVal == 0xfe, "unexpected id: %#x\n", U(id).uiVal);
+    ok(id.uiVal == 0xfe, "unexpected id: %#x\n", id.uiVal);
     PropVariantClear(&id);
 
     hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, NULL, &value);
     ok(hr == S_OK, "GetValueByIndex error %#lx\n", hr);
     ok(value.vt == VT_UI2, "unexpected vt: %u\n", value.vt);
-    ok(U(value).uiVal == 1, "unexpected id: %#x\n", U(value).uiVal);
+    ok(value.uiVal == 1, "unexpected id: %#x\n", value.uiVal);
     PropVariantClear(&value);
 
     hr = IWICMetadataReader_GetValueByIndex(reader, count, &schema, NULL, NULL);
@@ -919,23 +919,23 @@ static void test_metadata_IFD(void)
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#lx\n", hr);
 
     id.vt = VT_UI2;
-    U(id).uiVal = 0xf00e;
+    id.uiVal = 0xf00e;
     hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
     ok(hr == S_OK, "GetValue error %#lx\n", hr);
 
     /* schema is ignored by Ifd metadata reader */
     schema.vt = VT_UI4;
-    U(schema).ulVal = 0xdeadbeef;
+    schema.ulVal = 0xdeadbeef;
     hr = IWICMetadataReader_GetValue(reader, &schema, &id, &value);
     ok(hr == S_OK, "GetValue error %#lx\n", hr);
     ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
-    ok(!strcmp(U(value).pszVal, "Hello World!"), "unexpected value: %s\n", U(value).pszVal);
+    ok(!strcmp(value.pszVal, "Hello World!"), "unexpected value: %s\n", value.pszVal);
     PropVariantClear(&value);
 
     hr = IWICMetadataReader_GetValue(reader, NULL, &id, &value);
     ok(hr == S_OK, "GetValue error %#lx\n", hr);
     ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
-    ok(!strcmp(U(value).pszVal, "Hello World!"), "unexpected value: %s\n", U(value).pszVal);
+    ok(!strcmp(value.pszVal, "Hello World!"), "unexpected value: %s\n", value.pszVal);
     PropVariantClear(&value);
 
     hr = IWICMetadataReader_QueryInterface(reader, &IID_IWICMetadataBlockReader, (void**)&blockreader);
@@ -2075,14 +2075,14 @@ static void test_metadata_APE(void)
 
         PropVariantInit(&value);
         id.vt = VT_LPWSTR;
-        U(id).pwszVal = dataW;
+        id.pwszVal = dataW;
 
         hr = IWICMetadataReader_GetValue(reader, NULL, &id, &value);
         ok(hr == S_OK, "GetValue error %#lx\n", hr);
         ok(value.vt == (VT_UI1|VT_VECTOR), "unexpected vt: %i\n", id.vt);
-        ok(td[1].count == U(value).caub.cElems, "expected cElems %d, got %ld\n", td[1].count, U(value).caub.cElems);
-        for (i = 0; i < U(value).caub.cElems; i++)
-            ok(td[1].value[i] == U(value).caub.pElems[i], "%u: expected value %#I64x, got %#x\n", i, td[1].value[i], U(value).caub.pElems[i]);
+        ok(td[1].count == value.caub.cElems, "expected cElems %d, got %ld\n", td[1].count, value.caub.cElems);
+        for (i = 0; i < value.caub.cElems; i++)
+            ok(td[1].value[i] == value.caub.pElems[i], "%u: expected value %#I64x, got %#x\n", i, td[1].value[i], value.caub.pElems[i]);
         PropVariantClear(&value);
 
         hr = IWICMetadataReader_GetMetadataHandlerInfo(reader, &info);
@@ -2159,12 +2159,12 @@ static void test_metadata_GIF_comment(void)
 
         PropVariantInit(&value);
         id.vt = VT_LPWSTR;
-        U(id).pwszVal = text_entryW;
+        id.pwszVal = text_entryW;
 
         hr = IWICMetadataReader_GetValue(reader, NULL, &id, &value);
         ok(hr == S_OK, "GetValue error %#lx\n", hr);
         ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
-        ok(!strcmp(U(value).pszVal, "Hello World!"), "unexpected value: %s\n", U(value).pszVal);
+        ok(!strcmp(value.pszVal, "Hello World!"), "unexpected value: %s\n", value.pszVal);
         PropVariantClear(&value);
 
         hr = IWICMetadataReader_GetMetadataHandlerInfo(reader, &info);
@@ -2581,13 +2581,13 @@ static const char *wine_dbgstr_propvariant(const PROPVARIANT *var)
     switch (var->vt)
     {
     case VT_LPWSTR:
-        ret = get_temp_buffer(lstrlenW(U(*var).pwszVal) + 16);
-        sprintf(ret, "(VT_LPWSTR:%s)", wine_dbgstr_w(U(*var).pwszVal));
+        ret = get_temp_buffer(lstrlenW(var->pwszVal) + 16);
+        sprintf(ret, "(VT_LPWSTR:%s)", wine_dbgstr_w(var->pwszVal));
         break;
 
     case VT_LPSTR:
-        ret = get_temp_buffer(lstrlenA(U(*var).pszVal) + 16);
-        sprintf(ret, "(VT_LPSTR:%s)", U(*var).pszVal);
+        ret = get_temp_buffer(lstrlenA(var->pszVal) + 16);
+        sprintf(ret, "(VT_LPSTR:%s)", var->pszVal);
         break;
 
     default:
@@ -2631,14 +2631,14 @@ static HRESULT WINAPI mdr_GetValue(IWICMetadataReader *iface, const PROPVARIANT 
             switch (schema->vt)
             {
             case VT_LPSTR:
-                if (lstrcmpA(U(*schema).pszVal, current_metadata_block->item[i].schema) != 0)
+                if (lstrcmpA(schema->pszVal, current_metadata_block->item[i].schema) != 0)
                     continue;
                 break;
 
             case VT_LPWSTR:
             {
                 char schemaA[256];
-                WideCharToMultiByte(CP_ACP, 0, U(*schema).pwszVal, -1, schemaA, sizeof(schemaA), NULL, NULL);
+                WideCharToMultiByte(CP_ACP, 0, schema->pwszVal, -1, schemaA, sizeof(schemaA), NULL, NULL);
                 if (lstrcmpA(schemaA, current_metadata_block->item[i].schema) != 0)
                     continue;
                 break;
@@ -2657,10 +2657,10 @@ static HRESULT WINAPI mdr_GetValue(IWICMetadataReader *iface, const PROPVARIANT 
         case VT_LPSTR:
             if (current_metadata_block->item[i].id_str)
             {
-                if (!lstrcmpA(U(*id).pszVal, current_metadata_block->item[i].id_str))
+                if (!lstrcmpA(id->pszVal, current_metadata_block->item[i].id_str))
                 {
                     value->vt = VT_LPSTR;
-                    U(*value).pszVal = the_best;
+                    value->pszVal = the_best;
                     return S_OK;
                 }
                 break;
@@ -2671,11 +2671,11 @@ static HRESULT WINAPI mdr_GetValue(IWICMetadataReader *iface, const PROPVARIANT 
             if (current_metadata_block->item[i].id_str)
             {
                 char idA[256];
-                WideCharToMultiByte(CP_ACP, 0, U(*id).pwszVal, -1, idA, sizeof(idA), NULL, NULL);
+                WideCharToMultiByte(CP_ACP, 0, id->pwszVal, -1, idA, sizeof(idA), NULL, NULL);
                 if (!lstrcmpA(idA, current_metadata_block->item[i].id_str))
                 {
                     value->vt = VT_LPSTR;
-                    U(*value).pszVal = the_worst;
+                    value->pszVal = the_worst;
                     return S_OK;
                 }
                 break;
@@ -2683,8 +2683,8 @@ static HRESULT WINAPI mdr_GetValue(IWICMetadataReader *iface, const PROPVARIANT 
             break;
 
         case VT_CLSID:
-            if (IsEqualGUID(U(*id).puuid, &GUID_MetadataFormatXMP) ||
-                IsEqualGUID(U(*id).puuid, &GUID_ContainerFormatTiff))
+            if (IsEqualGUID(id->puuid, &GUID_MetadataFormatXMP) ||
+                IsEqualGUID(id->puuid, &GUID_ContainerFormatTiff))
             {
                 value->vt = VT_UNKNOWN;
                 value->punkVal = (IUnknown *)iface;
@@ -2696,7 +2696,7 @@ static HRESULT WINAPI mdr_GetValue(IWICMetadataReader *iface, const PROPVARIANT 
             if (!propvar_cmp(id, current_metadata_block->item[i].id))
             {
                 value->vt = current_metadata_block->item[i].type;
-                U(*value).uiVal = current_metadata_block->item[i].value;
+                value->uiVal = current_metadata_block->item[i].value;
                 return S_OK;
             }
             break;
@@ -3055,11 +3055,11 @@ static void test_queryreader(void)
                     PropVariantClear(&value);
                 }
                 else if (value.vt == VT_LPSTR)
-                    ok(!lstrcmpA(U(value).pszVal, test_data[i].str_value), "%u: expected %s, got %s\n",
-                       i, test_data[i].str_value, U(value).pszVal);
+                    ok(!lstrcmpA(value.pszVal, test_data[i].str_value), "%u: expected %s, got %s\n",
+                       i, test_data[i].str_value, value.pszVal);
                 else
-                    ok(U(value).uiVal == test_data[i].value, "%u: expected %u, got %u\n",
-                       i, test_data[i].value, U(value).uiVal);
+                    ok(value.uiVal == test_data[i].value, "%u: expected %u, got %u\n",
+                       i, test_data[i].value, value.uiVal);
             }
 
             /*

@@ -993,14 +993,14 @@ static void check_tiff_format(IStream *stream, const WICPixelFormatGUID *format)
         PropVariantInit(&value);
 
         id.vt = VT_UI2;
-        U(id).uiVal = tag[i].id;
+        id.uiVal = tag[i].id;
         hr = IWICMetadataReader_GetValue(reader, NULL, &id, &value);
         ok(hr == S_OK || (tag[i].id == 0x140 && hr == WINCODEC_ERR_PROPERTYNOTFOUND),
            "GetValue(%04x) error %#lx\n", tag[i].id, hr);
         if (hr == S_OK)
         {
             ok(value.vt == VT_UI2 || value.vt == VT_UI4 || value.vt == (VT_UI2 | VT_VECTOR), "wrong vt: %d\n", value.vt);
-            tag[i].value[0] = U(value).uiVal;
+            tag[i].value[0] = value.uiVal;
         }
         else
             tag[i].value[0] = -1;
