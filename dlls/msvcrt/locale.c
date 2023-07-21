@@ -1959,6 +1959,9 @@ static pthreadlocinfo create_locinfo(int category,
         InterlockedIncrement(&locinfo->lc_time_curr->refcount);
     }
 
+    for (i = 0; i < LC_MAX; i++)
+        free(locale_sname[i]);
+
     return locinfo;
 
 fail:
