@@ -1048,7 +1048,31 @@ static void apply_frame_state( CONTEXT *context, struct frame_state *state,
 #define DW_REG_r15 0x0f
 #define DW_REG_rip 0x10
 
-#endif /* defined(__x86_64__) */
+#elif defined(__aarch64__)
+
+#define DW_REG_x19 19
+#define DW_REG_x20 20
+#define DW_REG_x21 21
+#define DW_REG_x22 22
+#define DW_REG_x23 23
+#define DW_REG_x24 24
+#define DW_REG_x25 25
+#define DW_REG_x26 26
+#define DW_REG_x27 27
+#define DW_REG_x28 28
+#define DW_REG_x29 29
+#define DW_REG_x30 30
+#define DW_REG_sp 31
+#define DW_REG_v8 72
+#define DW_REG_v9 73
+#define DW_REG_v10 74
+#define DW_REG_v11 75
+#define DW_REG_v12 76
+#define DW_REG_v13 77
+#define DW_REG_v14 78
+#define DW_REG_v15 79
+
+#endif /* defined(__aarch64__) */
 
 #define __ASM_CFI_STR(...) #__VA_ARGS__
 #define __ASM_CFI_ESC(...) \
