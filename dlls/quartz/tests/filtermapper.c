@@ -139,8 +139,8 @@ static void test_fm2_enummatchingfilters(void)
     /* Test that a test renderer filter is returned when enumerating filters with bRender=FALSE */
     rgf2.dwVersion = 2;
     rgf2.dwMerit = MERIT_UNLIKELY;
-    S2(U(rgf2)).cPins2 = 1;
-    S2(U(rgf2)).rgPins2 = rgPins2;
+    rgf2.cPins2 = 1;
+    rgf2.rgPins2 = rgPins2;
 
     rgPins2[0].dwFlags = REG_PINFLAG_B_RENDERER;
     rgPins2[0].cInstances = 1;
@@ -174,7 +174,7 @@ static void test_fm2_enummatchingfilters(void)
         rgPins2[1].lpMedium = NULL;
         rgPins2[1].clsPinCategory = NULL;
 
-        S2(U(rgf2)).cPins2 = 2;
+        rgf2.cPins2 = 2;
 
         hr = IFilterMapper2_RegisterFilter(pMapper, &clsidFilter2, L"Testfilter2", NULL,
                     &CLSID_LegacyAmFilterCategory, NULL, &rgf2);
@@ -398,8 +398,8 @@ static void test_register_filter_with_null_clsMinorType(void)
     ZeroMemory(&rgf2, sizeof(rgf2));
     rgf2.dwVersion = 1;
     rgf2.dwMerit = MERIT_UNLIKELY;
-    S1(U(rgf2)).cPins = 1;
-    S1(U(rgf2)).rgPins = &rgPins;
+    rgf2.cPins = 1;
+    rgf2.rgPins = &rgPins;
 
     rgPins.strName = wszPinName;
     rgPins.bRendered = 1;
@@ -427,8 +427,8 @@ static void test_register_filter_with_null_clsMinorType(void)
     ZeroMemory(&rgf2, sizeof(rgf2));
     rgf2.dwVersion = 2;
     rgf2.dwMerit = MERIT_UNLIKELY;
-    S2(U(rgf2)).cPins2 = 1;
-    S2(U(rgf2)).rgPins2 = &rgPins2;
+    rgf2.cPins2 = 1;
+    rgf2.rgPins2 = &rgPins2;
 
     rgPins2.dwFlags = REG_PINFLAG_B_RENDERER;
     rgPins2.cInstances = 1;
