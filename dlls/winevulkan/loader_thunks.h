@@ -270,7 +270,10 @@ enum unix_call
     unix_vkCompileDeferredNV,
     unix_vkCopyAccelerationStructureKHR,
     unix_vkCopyAccelerationStructureToMemoryKHR,
+    unix_vkCopyImageToImageEXT,
+    unix_vkCopyImageToMemoryEXT,
     unix_vkCopyMemoryToAccelerationStructureKHR,
+    unix_vkCopyMemoryToImageEXT,
     unix_vkCopyMemoryToMicromapEXT,
     unix_vkCopyMicromapEXT,
     unix_vkCopyMicromapToMemoryEXT,
@@ -441,6 +444,7 @@ enum unix_call
     unix_vkGetMicromapBuildSizesEXT,
     unix_vkGetPerformanceParameterINTEL,
     unix_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT,
+    unix_vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR,
     unix_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV,
     unix_vkGetPhysicalDeviceExternalBufferProperties,
     unix_vkGetPhysicalDeviceExternalBufferPropertiesKHR,
@@ -544,6 +548,7 @@ enum unix_call
     unix_vkSignalSemaphore,
     unix_vkSignalSemaphoreKHR,
     unix_vkSubmitDebugUtilsMessageEXT,
+    unix_vkTransitionImageLayoutEXT,
     unix_vkTrimCommandPool,
     unix_vkTrimCommandPoolKHR,
     unix_vkUninitializePerformanceApiINTEL,
@@ -2496,11 +2501,32 @@ struct vkCopyAccelerationStructureToMemoryKHR_params
     VkResult result;
 };
 
+struct vkCopyImageToImageEXT_params
+{
+    VkDevice device;
+    const VkCopyImageToImageInfoEXT *pCopyImageToImageInfo;
+    VkResult result;
+};
+
+struct vkCopyImageToMemoryEXT_params
+{
+    VkDevice device;
+    const VkCopyImageToMemoryInfoEXT *pCopyImageToMemoryInfo;
+    VkResult result;
+};
+
 struct vkCopyMemoryToAccelerationStructureKHR_params
 {
     VkDevice device;
     VkDeferredOperationKHR DECLSPEC_ALIGN(8) deferredOperation;
     const VkCopyMemoryToAccelerationStructureInfoKHR *pInfo;
+    VkResult result;
+};
+
+struct vkCopyMemoryToImageEXT_params
+{
+    VkDevice device;
+    const VkCopyMemoryToImageInfoEXT *pCopyMemoryToImageInfo;
     VkResult result;
 };
 
@@ -3849,6 +3875,14 @@ struct vkGetPhysicalDeviceCalibrateableTimeDomainsEXT_params
     VkResult result;
 };
 
+struct vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR_params
+{
+    VkPhysicalDevice physicalDevice;
+    uint32_t *pPropertyCount;
+    VkCooperativeMatrixPropertiesKHR *pProperties;
+    VkResult result;
+};
+
 struct vkGetPhysicalDeviceCooperativeMatrixPropertiesNV_params
 {
     VkPhysicalDevice physicalDevice;
@@ -4662,6 +4696,14 @@ struct vkSubmitDebugUtilsMessageEXT_params
     VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity;
     VkDebugUtilsMessageTypeFlagsEXT messageTypes;
     const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData;
+};
+
+struct vkTransitionImageLayoutEXT_params
+{
+    VkDevice device;
+    uint32_t transitionCount;
+    const VkHostImageLayoutTransitionInfoEXT *pTransitions;
+    VkResult result;
 };
 
 struct vkTrimCommandPool_params
