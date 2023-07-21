@@ -254,7 +254,7 @@ threadmbcinfo* create_mbcinfo(int cp, LCID lcid, threadmbcinfo *old_mbcinfo)
   if(lcid == -1) {
     WCHAR wbuf[LOCALE_NAME_MAX_LENGTH];
     sprintf(bufA, ".%d", newcp);
-    mbcinfo->mblcid = locale_to_sname(bufA, NULL, NULL, wbuf, LOCALE_NAME_MAX_LENGTH) ? LocaleNameToLCID(wbuf, LOCALE_ALLOW_NEUTRAL_NAMES) : -1;
+    mbcinfo->mblcid = locale_to_sname(bufA, NULL, NULL, wbuf) ? LocaleNameToLCID(wbuf, LOCALE_ALLOW_NEUTRAL_NAMES) : -1;
   } else {
     mbcinfo->mblcid = lcid;
   }

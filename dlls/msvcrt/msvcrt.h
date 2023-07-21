@@ -186,7 +186,7 @@ typedef struct __thread_data thread_data_t;
 
 extern thread_data_t *CDECL msvcrt_get_thread_data(void) DECLSPEC_HIDDEN;
 
-BOOL locale_to_sname(const char*, unsigned short*, BOOL*, WCHAR*, int) DECLSPEC_HIDDEN;
+BOOL locale_to_sname(const char*, unsigned short*, BOOL*, WCHAR*) DECLSPEC_HIDDEN;
 extern _locale_t MSVCRT_locale DECLSPEC_HIDDEN;
 extern __lc_time_data cloc_time_data DECLSPEC_HIDDEN;
 extern unsigned int MSVCRT___lc_codepage;
