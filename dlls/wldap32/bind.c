@@ -142,6 +142,8 @@ static int interact_callback( LDAP *ld, unsigned flags, void *defaults, void *sa
 
     TRACE( "%p, %08xlx, %p, %p\n", ld, flags, defaults, sasl_interact );
 
+    if (!defaults) return 0;
+
     while (ptr && ptr->id != SASL_CB_LIST_END)
     {
         switch (ptr->id)
