@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
-
 #include <stdarg.h>
 
 #include "windef.h"
@@ -59,8 +57,8 @@ static void test_EvtGetChannelConfigProperty(void)
     ok(ret, "EvtGetChannelConfigProperty error %lu\n", GetLastError());
     ok(path.var.Count == 0xdeadbeef, "got %lu\n", path.var.Count);
     ok(path.var.Type == EvtVarTypeString, "got %lu\n", path.var.Type);
-    ok(size == sizeof(EVT_VARIANT) + (wcslen(path.var.u.StringVal) + 1) * sizeof(WCHAR), "got %lu\n", size);
-    ok(path.var.u.StringVal == path.buf, "path.var.u.StringVal = %p, path.buf = %p\n", path.var.u.StringVal, path.buf);
+    ok(size == sizeof(EVT_VARIANT) + (wcslen(path.var.StringVal) + 1) * sizeof(WCHAR), "got %lu\n", size);
+    ok(path.var.StringVal == path.buf, "path.var.StringVal = %p, path.buf = %p\n", path.var.StringVal, path.buf);
 
     EvtClose(config);
 
