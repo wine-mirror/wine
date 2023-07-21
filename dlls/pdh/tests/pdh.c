@@ -884,7 +884,7 @@ static void test_PdhCollectQueryDataEx(void)
             status = PdhGetFormattedCounterValue( counter, PDH_FMT_LARGE, NULL, &value );
             ok(status == ERROR_SUCCESS, "PdhGetFormattedCounterValue failed 0x%08lx\n", status);
 
-            trace( "uptime %s\n", wine_dbgstr_longlong(U(value).largeValue) );
+            trace( "uptime %s\n", wine_dbgstr_longlong(value.largeValue) );
         }
     }
 
