@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -409,8 +406,8 @@ static void test_urlcacheA(void)
        broken(lpCacheEntryInfo->CacheEntryType == NORMAL_CACHE_ENTRY /* NT4/W2k */),
        "expected type NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY, got %08lx\n",
        lpCacheEntryInfo->CacheEntryType);
-    ok(!U(*lpCacheEntryInfo).dwExemptDelta, "expected dwExemptDelta 0, got %ld\n",
-       U(*lpCacheEntryInfo).dwExemptDelta);
+    ok(!lpCacheEntryInfo->dwExemptDelta, "expected dwExemptDelta 0, got %ld\n",
+       lpCacheEntryInfo->dwExemptDelta);
 
     /* Make sure there is a notable change in timestamps */
     Sleep(1000);
@@ -699,9 +696,9 @@ static void test_urlcacheA(void)
     ok(lpCacheEntryInfo->CacheEntryType & (NORMAL_CACHE_ENTRY|STICKY_CACHE_ENTRY),
        "expected cache entry type NORMAL_CACHE_ENTRY | STICKY_CACHE_ENTRY, got %ld (0x%08lx)\n",
        lpCacheEntryInfo->CacheEntryType, lpCacheEntryInfo->CacheEntryType);
-    ok(U(*lpCacheEntryInfo).dwExemptDelta == 86400,
+    ok(lpCacheEntryInfo->dwExemptDelta == 86400,
        "expected dwExemptDelta 86400, got %ld\n",
-       U(*lpCacheEntryInfo).dwExemptDelta);
+       lpCacheEntryInfo->dwExemptDelta);
     HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
     if (pDeleteUrlCacheEntryA)
     {
@@ -730,17 +727,17 @@ static void test_urlcacheA(void)
     ok(lpCacheEntryInfo->CacheEntryType & (NORMAL_CACHE_ENTRY|STICKY_CACHE_ENTRY),
        "expected cache entry type NORMAL_CACHE_ENTRY | STICKY_CACHE_ENTRY, got %ld (0x%08lx)\n",
        lpCacheEntryInfo->CacheEntryType, lpCacheEntryInfo->CacheEntryType);
-    ok(U(*lpCacheEntryInfo).dwExemptDelta == 86400,
+    ok(lpCacheEntryInfo->dwExemptDelta == 86400,
        "expected dwExemptDelta 86400, got %ld\n",
-       U(*lpCacheEntryInfo).dwExemptDelta);
-    U(*lpCacheEntryInfo).dwExemptDelta = 0;
+       lpCacheEntryInfo->dwExemptDelta);
+    lpCacheEntryInfo->dwExemptDelta = 0;
     ret = SetUrlCacheEntryInfoA(test_url, lpCacheEntryInfo,
             CACHE_ENTRY_EXEMPT_DELTA_FC);
     ok(ret, "SetUrlCacheEntryInfo failed: %ld\n", GetLastError());
     ret = GetUrlCacheEntryInfoA(test_url, lpCacheEntryInfo, &cbCacheEntryInfo);
     ok(ret, "GetUrlCacheEntryInfo failed with error %ld\n", GetLastError());
-    ok(!U(*lpCacheEntryInfo).dwExemptDelta, "expected dwExemptDelta 0, got %ld\n",
-       U(*lpCacheEntryInfo).dwExemptDelta);
+    ok(!lpCacheEntryInfo->dwExemptDelta, "expected dwExemptDelta 0, got %ld\n",
+       lpCacheEntryInfo->dwExemptDelta);
     /* See whether a sticky cache entry has the flag cleared once the exempt
      * delta is meaningless.
      */
@@ -749,7 +746,7 @@ static void test_urlcacheA(void)
        lpCacheEntryInfo->CacheEntryType, lpCacheEntryInfo->CacheEntryType);
 
     /* Recommit of Url entry keeps dwExemptDelta */
-    U(*lpCacheEntryInfo).dwExemptDelta = 8600;
+    lpCacheEntryInfo->dwExemptDelta = 8600;
     ret = SetUrlCacheEntryInfoA(test_url, lpCacheEntryInfo,
             CACHE_ENTRY_EXEMPT_DELTA_FC);
     ok(ret, "SetUrlCacheEntryInfo failed: %ld\n", GetLastError());
@@ -765,8 +762,8 @@ static void test_urlcacheA(void)
 
     ret = GetUrlCacheEntryInfoA(test_url, lpCacheEntryInfo, &cbCacheEntryInfo);
     ok(ret, "GetUrlCacheEntryInfo failed with error %ld\n", GetLastError());
-    ok(U(*lpCacheEntryInfo).dwExemptDelta == 8600 || (ie10_cache && U(*lpCacheEntryInfo).dwExemptDelta == 86400),
-       "expected dwExemptDelta 8600, got %ld\n", U(*lpCacheEntryInfo).dwExemptDelta);
+    ok(lpCacheEntryInfo->dwExemptDelta == 8600 || (ie10_cache && lpCacheEntryInfo->dwExemptDelta == 86400),
+       "expected dwExemptDelta 8600, got %ld\n", lpCacheEntryInfo->dwExemptDelta);
 
     HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
 
