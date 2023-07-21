@@ -2760,21 +2760,21 @@ static void test_NdrGetUserMarshalInfo(void)
     ok( umi.InformationLevel == 1,
        "umi.InformationLevel was %lu instead of 1\n",
         umi.InformationLevel);
-    ok( U1(umi).Level1.Buffer == buffer + 15,
+    ok( umi.Level1.Buffer == buffer + 15,
        "umi.Level1.Buffer was %p instead of %p\n",
-        U1(umi).Level1.Buffer, buffer);
-    ok( U1(umi).Level1.BufferSize == 1,
+        umi.Level1.Buffer, buffer);
+    ok( umi.Level1.BufferSize == 1,
        "umi.Level1.BufferSize was %lu instead of 1\n",
-        U1(umi).Level1.BufferSize);
-    ok( U1(umi).Level1.pfnAllocate == my_alloc,
+        umi.Level1.BufferSize);
+    ok( umi.Level1.pfnAllocate == my_alloc,
        "umi.Level1.pfnAllocate was %p instead of %p\n",
-        U1(umi).Level1.pfnAllocate, my_alloc);
-    ok( U1(umi).Level1.pfnFree == my_free,
+        umi.Level1.pfnAllocate, my_alloc);
+    ok( umi.Level1.pfnFree == my_free,
        "umi.Level1.pfnFree was %p instead of %p\n",
-        U1(umi).Level1.pfnFree, my_free);
-    ok( U1(umi).Level1.pRpcChannelBuffer == rpc_channel_buffer,
+        umi.Level1.pfnFree, my_free);
+    ok( umi.Level1.pRpcChannelBuffer == rpc_channel_buffer,
        "umi.Level1.pRpcChannelBuffer was %p instead of %p\n",
-        U1(umi).Level1.pRpcChannelBuffer, rpc_channel_buffer);
+        umi.Level1.pRpcChannelBuffer, rpc_channel_buffer);
 
     /* buffer size */
 
@@ -2794,21 +2794,21 @@ static void test_NdrGetUserMarshalInfo(void)
     ok( umi.InformationLevel == 1,
        "umi.InformationLevel was %lu instead of 1\n",
         umi.InformationLevel);
-    ok( U1(umi).Level1.Buffer == NULL,
+    ok( umi.Level1.Buffer == NULL,
        "umi.Level1.Buffer was %p instead of NULL\n",
-        U1(umi).Level1.Buffer);
-    ok( U1(umi).Level1.BufferSize == 0,
+        umi.Level1.Buffer);
+    ok( umi.Level1.BufferSize == 0,
        "umi.Level1.BufferSize was %lu instead of 0\n",
-        U1(umi).Level1.BufferSize);
-    ok( U1(umi).Level1.pfnAllocate == my_alloc,
+        umi.Level1.BufferSize);
+    ok( umi.Level1.pfnAllocate == my_alloc,
        "umi.Level1.pfnAllocate was %p instead of %p\n",
-        U1(umi).Level1.pfnAllocate, my_alloc);
-    ok( U1(umi).Level1.pfnFree == my_free,
+        umi.Level1.pfnAllocate, my_alloc);
+    ok( umi.Level1.pfnFree == my_free,
        "umi.Level1.pfnFree was %p instead of %p\n",
-        U1(umi).Level1.pfnFree, my_free);
-    ok( U1(umi).Level1.pRpcChannelBuffer == rpc_channel_buffer,
+        umi.Level1.pfnFree, my_free);
+    ok( umi.Level1.pRpcChannelBuffer == rpc_channel_buffer,
        "umi.Level1.pRpcChannelBuffer was %p instead of %p\n",
-        U1(umi).Level1.pRpcChannelBuffer, rpc_channel_buffer);
+        umi.Level1.pRpcChannelBuffer, rpc_channel_buffer);
 
     /* marshall */
 
@@ -2828,21 +2828,21 @@ static void test_NdrGetUserMarshalInfo(void)
     ok( umi.InformationLevel == 1,
        "umi.InformationLevel was %lu instead of 1\n",
         umi.InformationLevel);
-    ok( U1(umi).Level1.Buffer == buffer + 15,
+    ok( umi.Level1.Buffer == buffer + 15,
        "umi.Level1.Buffer was %p instead of %p\n",
-        U1(umi).Level1.Buffer, buffer);
-    ok( U1(umi).Level1.BufferSize == 1,
+        umi.Level1.Buffer, buffer);
+    ok( umi.Level1.BufferSize == 1,
        "umi.Level1.BufferSize was %lu instead of 1\n",
-        U1(umi).Level1.BufferSize);
-    ok( U1(umi).Level1.pfnAllocate == my_alloc,
+        umi.Level1.BufferSize);
+    ok( umi.Level1.pfnAllocate == my_alloc,
        "umi.Level1.pfnAllocate was %p instead of %p\n",
-        U1(umi).Level1.pfnAllocate, my_alloc);
-    ok( U1(umi).Level1.pfnFree == my_free,
+        umi.Level1.pfnAllocate, my_alloc);
+    ok( umi.Level1.pfnFree == my_free,
        "umi.Level1.pfnFree was %p instead of %p\n",
-        U1(umi).Level1.pfnFree, my_free);
-    ok( U1(umi).Level1.pRpcChannelBuffer == rpc_channel_buffer,
+        umi.Level1.pfnFree, my_free);
+    ok( umi.Level1.pRpcChannelBuffer == rpc_channel_buffer,
        "umi.Level1.pRpcChannelBuffer was %p instead of %p\n",
-        U1(umi).Level1.pRpcChannelBuffer, rpc_channel_buffer);
+        umi.Level1.pRpcChannelBuffer, rpc_channel_buffer);
 
     /* free */
 
@@ -2862,21 +2862,21 @@ static void test_NdrGetUserMarshalInfo(void)
     ok( umi.InformationLevel == 1,
        "umi.InformationLevel was %lu instead of 1\n",
         umi.InformationLevel);
-    ok( U1(umi).Level1.Buffer == NULL,
+    ok( umi.Level1.Buffer == NULL,
        "umi.Level1.Buffer was %p instead of NULL\n",
-        U1(umi).Level1.Buffer);
-    ok( U1(umi).Level1.BufferSize == 0,
+        umi.Level1.Buffer);
+    ok( umi.Level1.BufferSize == 0,
        "umi.Level1.BufferSize was %lu instead of 0\n",
-        U1(umi).Level1.BufferSize);
-    ok( U1(umi).Level1.pfnAllocate == my_alloc,
+        umi.Level1.BufferSize);
+    ok( umi.Level1.pfnAllocate == my_alloc,
        "umi.Level1.pfnAllocate was %p instead of %p\n",
-        U1(umi).Level1.pfnAllocate, my_alloc);
-    ok( U1(umi).Level1.pfnFree == my_free,
+        umi.Level1.pfnAllocate, my_alloc);
+    ok( umi.Level1.pfnFree == my_free,
        "umi.Level1.pfnFree was %p instead of %p\n",
-        U1(umi).Level1.pfnFree, my_free);
-    ok( U1(umi).Level1.pRpcChannelBuffer == rpc_channel_buffer,
+        umi.Level1.pfnFree, my_free);
+    ok( umi.Level1.pRpcChannelBuffer == rpc_channel_buffer,
        "umi.Level1.pRpcChannelBuffer was %p instead of %p\n",
-        U1(umi).Level1.pRpcChannelBuffer, rpc_channel_buffer);
+        umi.Level1.pRpcChannelBuffer, rpc_channel_buffer);
 
     /* boundary test */
 
@@ -2891,9 +2891,9 @@ static void test_NdrGetUserMarshalInfo(void)
 
     status = NdrGetUserMarshalInfo(&umcb.Flags, 1, &umi);
     ok(status == RPC_S_OK, "NdrGetUserMarshalInfo failed with error %ld\n", status);
-    ok( U1(umi).Level1.BufferSize == 0,
+    ok( umi.Level1.BufferSize == 0,
        "umi.Level1.BufferSize was %lu instead of 0\n",
-        U1(umi).Level1.BufferSize);
+        umi.Level1.BufferSize);
 
     /* error conditions */
 
