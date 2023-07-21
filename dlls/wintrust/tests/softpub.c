@@ -338,7 +338,7 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
          ERROR_INVALID_PARAMETER,
          "Expected ERROR_INVALID_PARAMETER, got %08lx\n",
          data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
-        U(wintrust_data).pCert = &certInfo;
+        wintrust_data.pCert = &certInfo;
         wintrust_data.dwUnionChoice = WTD_CHOICE_CERT;
         ret = funcs->pfnObjectTrust(&data);
         ok(ret == S_OK, "Expected S_OK, got %08lx\n", ret);
@@ -349,21 +349,21 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
         CertFreeCertificateContext(certInfo.psCertContext);
         certInfo.psCertContext = NULL;
         wintrust_data.dwUnionChoice = WTD_CHOICE_FILE;
-        U(wintrust_data).pFile = NULL;
+        wintrust_data.pFile = NULL;
         ret = funcs->pfnObjectTrust(&data);
         ok(ret == S_FALSE, "Expected S_FALSE, got %08lx\n", ret);
         ok(data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
          ERROR_INVALID_PARAMETER,
          "Expected ERROR_INVALID_PARAMETER, got %08lx\n",
          data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
-        U(wintrust_data).pFile = &fileInfo;
+        wintrust_data.pFile = &fileInfo;
         /* Crashes
         ret = funcs->pfnObjectTrust(&data);
          */
         /* Create and test with an empty file */
         fileInfo.hFile = create_temp_file(pathW);
         /* pfnObjectTrust now crashes unless both pPDSip and psPfns are set */
-        U(data).pPDSip = &provDataSIP;
+        data.pPDSip = &provDataSIP;
         data.psPfns = (CRYPT_PROVIDER_FUNCTIONS *)funcs;
         ret = funcs->pfnObjectTrust(&data);
         ok(ret == S_FALSE, "Expected S_FALSE, got %08lx\n", ret);
@@ -838,7 +838,7 @@ static void test_wintrust(void)
     wtd.dwUIChoice = WTD_UI_NONE;
     wtd.fdwRevocationChecks = WTD_REVOKE_WHOLECHAIN;
     wtd.dwUnionChoice = WTD_CHOICE_FILE;
-    U(wtd).pFile = &file;
+    wtd.pFile = &file;
     wtd.dwStateAction = WTD_STATEACTION_VERIFY;
     memset(&file, 0, sizeof(file));
     file.cbStruct = sizeof(file);
