@@ -1333,22 +1333,16 @@ static pthreadlocinfo create_locinfo(int category,
                     memcpy(buf, locale, p-locale);
                     buf[p-locale] = '\0';
                     locale_found = locale_to_sname(buf, &cp[i], &sname_match, wbuf, LOCALE_NAME_MAX_LENGTH);
-                    locale_sname[i] = wcsdup(wbuf);
-                    if(sname_match) {
-                        locale_name[i] = locale;
-                        locale_len[i] = p-locale;
-                    }
                 } else {
                     locale_found = locale_to_sname(locale, &cp[i], &sname_match, wbuf, LOCALE_NAME_MAX_LENGTH);
-                    locale_sname[i] = wcsdup(wbuf);
-                    if(sname_match) {
-                        locale_name[i] = locale;
-                        locale_len[i] = strlen(locale);
-                    }
                 }
 
-                if(!locale_found || !locale_sname[i])
+                if(!locale_found || !(locale_sname[i] = wcsdup(wbuf)))
                     goto fail;
+                if(sname_match) {
+                    locale_name[i] = locale;
+                    locale_len[i] = p ? p-locale : strlen(locale);
+                }
             }
 
             if(!p || *(p+1)!='L' || *(p+2)!='C' || *(p+3)!='_')
