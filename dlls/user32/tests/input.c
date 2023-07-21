@@ -3713,13 +3713,13 @@ static void simulate_click(BOOL left, int x, int y)
     SetCursorPos(x, y);
     memset(input, 0, sizeof(input));
     input[0].type = INPUT_MOUSE;
-    U(input[0]).mi.dx = x;
-    U(input[0]).mi.dy = y;
-    U(input[0]).mi.dwFlags = left ? MOUSEEVENTF_LEFTDOWN : MOUSEEVENTF_RIGHTDOWN;
+    input[0].mi.dx = x;
+    input[0].mi.dy = y;
+    input[0].mi.dwFlags = left ? MOUSEEVENTF_LEFTDOWN : MOUSEEVENTF_RIGHTDOWN;
     input[1].type = INPUT_MOUSE;
-    U(input[1]).mi.dx = x;
-    U(input[1]).mi.dy = y;
-    U(input[1]).mi.dwFlags = left ? MOUSEEVENTF_LEFTUP : MOUSEEVENTF_RIGHTUP;
+    input[1].mi.dx = x;
+    input[1].mi.dy = y;
+    input[1].mi.dwFlags = left ? MOUSEEVENTF_LEFTUP : MOUSEEVENTF_RIGHTUP;
     events_no = SendInput(2, input, sizeof(input[0]));
     ok(events_no == 2, "SendInput returned %d\n", events_no);
 }

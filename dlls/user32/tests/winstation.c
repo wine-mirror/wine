@@ -595,9 +595,9 @@ static void test_inputdesktop(void)
     INPUT inputs[1];
 
     inputs[0].type = INPUT_KEYBOARD;
-    U(inputs[0]).ki.wVk = 0;
-    U(inputs[0]).ki.wScan = 0x3c0;
-    U(inputs[0]).ki.dwFlags = KEYEVENTF_UNICODE;
+    inputs[0].ki.wVk = 0;
+    inputs[0].ki.wScan = 0x3c0;
+    inputs[0].ki.dwFlags = KEYEVENTF_UNICODE;
 
     /* OpenInputDesktop creates new handles for each calls */
     old_input_desk = OpenInputDesktop(0, FALSE, DESKTOP_ALL_ACCESS);
