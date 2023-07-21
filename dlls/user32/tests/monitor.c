@@ -1710,7 +1710,7 @@ static void check_preferred_mode(const DISPLAYCONFIG_TARGET_PREFERRED_MODE *mode
     dm2.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
     dm2.dmPelsWidth = 1024;
     dm2.dmPelsHeight = 768;
-    lret = ChangeDisplaySettingsW(&dm2, 0);
+    lret = ChangeDisplaySettingsExW(gdi_device_name, &dm2, NULL, 0, 0);
     if (lret != DISP_CHANGE_SUCCESSFUL)
     {
         skip("Can't change display settings, skipping test.\n");
@@ -1725,7 +1725,7 @@ static void check_preferred_mode(const DISPLAYCONFIG_TARGET_PREFERRED_MODE *mode
     ok(mode2.width == mode->width, "got %u, expected %u.\n", mode2.width, mode->width);
     ok(mode2.height == mode->height, "got %u, expected %u.\n", mode2.height, mode->height);
 
-    lret = ChangeDisplaySettingsW(&dm, 0);
+    lret = ChangeDisplaySettingsExW(gdi_device_name, &dm, NULL, 0, 0);
     ok(lret == DISP_CHANGE_SUCCESSFUL, "got %ld.\n", lret);
 }
 
