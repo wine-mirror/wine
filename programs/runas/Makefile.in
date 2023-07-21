@@ -1,0 +1,7 @@
+MODULE    = runas.exe
+IMPORTS   = kernel32 advapi32
+
+EXTRADLLFLAGS = -mconsole -municode
+
+SOURCES = \
+	runas.c

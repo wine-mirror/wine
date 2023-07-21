@@ -1728,6 +1728,7 @@ enable_regsvcs
 enable_regsvr32
 enable_robocopy
 enable_rpcss
+enable_runas
 enable_rundll32
 enable_sc
 enable_schtasks
@@ -23299,6 +23300,7 @@ wine_fn_config_makefile programs/regsvcs enable_regsvcs
 wine_fn_config_makefile programs/regsvr32 enable_regsvr32
 wine_fn_config_makefile programs/robocopy enable_robocopy
 wine_fn_config_makefile programs/rpcss enable_rpcss
+wine_fn_config_makefile programs/runas enable_runas
 wine_fn_config_makefile programs/rundll.exe16 enable_win16
 wine_fn_config_makefile programs/rundll32 enable_rundll32
 wine_fn_config_makefile programs/sc enable_sc
