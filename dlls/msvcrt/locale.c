@@ -1339,7 +1339,7 @@ static pthreadlocinfo create_locinfo(int category,
                         locale_len[i] = p-locale;
                     }
                 } else {
-                    locale_found = locale_to_sname(buf, &cp[i], &sname_match, wbuf, LOCALE_NAME_MAX_LENGTH);
+                    locale_found = locale_to_sname(locale, &cp[i], &sname_match, wbuf, LOCALE_NAME_MAX_LENGTH);
                     locale_sname[i] = wcsdup(wbuf);
                     if(sname_match) {
                         locale_name[i] = locale;
