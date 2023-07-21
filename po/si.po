@@ -15093,6 +15093,12 @@ msgstr "සංකේතනය කරන ගොනු පද්ධතිය"
 msgid "Current LogonId is"
 msgstr "දැනට තියෙන අයිකනය (&I):"
 
+#: programs/klist/klist.rc:38
+#, fuzzy
+#| msgid "client"
+msgid "Client"
+msgstr "සේවාලාභීයා"
+
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
 msgstr "පද්ධති තොරතුරු"

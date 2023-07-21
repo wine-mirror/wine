@@ -14946,6 +14946,12 @@ msgstr "KerbTicketin salauksen tyyppi"
 msgid "Current LogonId is"
 msgstr "Nykyinen LogonId on"
 
+#: programs/klist/klist.rc:38
+#, fuzzy
+#| msgid "client"
+msgid "Client"
+msgstr "asiakas"
+
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
 msgstr "Järjestelmätiedot"

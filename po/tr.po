@@ -15025,6 +15025,12 @@ msgstr "Şifreleme Türü"
 msgid "Current LogonId is"
 msgstr "Şimdiki Bağlantılar"
 
+#: programs/klist/klist.rc:38
+#, fuzzy
+#| msgid "client"
+msgid "Client"
+msgstr "istemci"
+
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
 msgstr "Sistem Bilgisi"

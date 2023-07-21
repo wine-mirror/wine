@@ -14981,6 +14981,12 @@ msgstr "Kerberos チケットの暗号化の種類"
 msgid "Current LogonId is"
 msgstr "現在のログオン ID は"
 
+#: programs/klist/klist.rc:38
+#, fuzzy
+#| msgid "client"
+msgid "Client"
+msgstr "クライアント"
+
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
 msgstr "システム情報"

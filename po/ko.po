@@ -14934,6 +14934,12 @@ msgstr "KerbTicket 암호화 유형"
 msgid "Current LogonId is"
 msgstr "현재 로그온 아이디"
 
+#: programs/klist/klist.rc:38
+#, fuzzy
+#| msgid "client"
+msgid "Client"
+msgstr "클라이언트"
+
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
 msgstr "시스템 정보"

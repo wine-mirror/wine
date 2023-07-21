@@ -14956,6 +14956,10 @@ msgstr "KerbTicket Encryption Type"
 msgid "Current LogonId is"
 msgstr "Current LogonId is"
 
+#: programs/klist/klist.rc:38
+msgid "Client"
+msgstr "Client"
+
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
 msgstr "System Information"

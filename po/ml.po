@@ -14443,6 +14443,10 @@ msgstr ""
 msgid "Current LogonId is"
 msgstr ""
 
+#: programs/klist/klist.rc:38
+msgid "Client"
+msgstr ""
+
 #: programs/msinfo32/msinfo32.rc:28
 #, fuzzy
 msgid "System Information"

@@ -16050,6 +16050,12 @@ msgstr "Sistem de fișiere criptat"
 msgid "Current LogonId is"
 msgstr "Conexiuni curente"
 
+#: programs/klist/klist.rc:38
+#, fuzzy
+#| msgid "client"
+msgid "Client"
+msgstr "client"
+
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
 msgstr "Informații despre sistem"

@@ -15091,6 +15091,12 @@ msgstr "Tipus de xifratge de KerbTicket"
 msgid "Current LogonId is"
 msgstr "El LogonId actual és"
 
+#: programs/klist/klist.rc:38
+#, fuzzy
+#| msgid "client"
+msgid "Client"
+msgstr "client"
+
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
 msgstr "Informació de sistema"

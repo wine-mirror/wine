@@ -15072,6 +15072,12 @@ msgstr "KerbTicket Verschlüsselungszeit"
 msgid "Current LogonId is"
 msgstr "Aktuelle LogonId ist"
 
+#: programs/klist/klist.rc:38
+#, fuzzy
+#| msgid "client"
+msgid "Client"
+msgstr "Client"
+
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
 msgstr "Systeminformationen"

@@ -15037,6 +15037,12 @@ msgstr "KerbTicket Encryptie Type"
 msgid "Current LogonId is"
 msgstr "Huidige LoginId is"
 
+#: programs/klist/klist.rc:38
+#, fuzzy
+#| msgid "client"
+msgid "Client"
+msgstr "cliënt"
+
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
 msgstr "Systeeminformatie"

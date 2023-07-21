@@ -16251,6 +16251,12 @@ msgstr "Šifriranje datotečnega sistema"
 msgid "Current LogonId is"
 msgstr "Povezava LAN"
 
+#: programs/klist/klist.rc:38
+#, fuzzy
+#| msgid "client"
+msgid "Client"
+msgstr "odjemalec"
+
 #: programs/msinfo32/msinfo32.rc:28
 #, fuzzy
 #| msgid "System Configuration"

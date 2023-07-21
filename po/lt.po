@@ -14966,6 +14966,12 @@ msgstr "Kerberos leidimo šifravimo tipas"
 msgid "Current LogonId is"
 msgstr "Dabartinis prisijungimo ID yra"
 
+#: programs/klist/klist.rc:38
+#, fuzzy
+#| msgid "client"
+msgid "Client"
+msgstr "klientas"
+
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
 msgstr "Sistemos informacija"

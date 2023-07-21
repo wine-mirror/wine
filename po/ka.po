@@ -14597,6 +14597,12 @@ msgstr "დაშიფვრის ტიპი"
 msgid "Current LogonId is"
 msgstr "მიმდინარე შეერთებები"
 
+#: programs/klist/klist.rc:38
+#, fuzzy
+#| msgid "client"
+msgid "Client"
+msgstr "კლიენტი"
+
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
 msgstr "ინფორმაცის სისტემის შესახებ"

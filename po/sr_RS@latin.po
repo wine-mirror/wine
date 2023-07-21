@@ -15701,6 +15701,12 @@ msgstr ""
 msgid "Current LogonId is"
 msgstr "LAN veza"
 
+#: programs/klist/klist.rc:38
+#, fuzzy
+#| msgid "client"
+msgid "Client"
+msgstr "klijent"
+
 #: programs/msinfo32/msinfo32.rc:28
 #, fuzzy
 msgid "System Information"

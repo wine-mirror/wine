@@ -14861,6 +14861,12 @@ msgstr "加密類型"
 msgid "Current LogonId is"
 msgstr "目前的連線"
 
+#: programs/klist/klist.rc:38
+#, fuzzy
+#| msgid "client"
+msgid "Client"
+msgstr "用戶端"
+
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
 msgstr "系統資訊"

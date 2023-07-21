@@ -15678,6 +15678,12 @@ msgstr "Tipo de cifrado"
 msgid "Current LogonId is"
 msgstr "Conexiones Actuales"
 
+#: programs/klist/klist.rc:38
+#, fuzzy
+#| msgid "client"
+msgid "Client"
+msgstr "cliente"
+
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
 msgstr "Información del Sistema"

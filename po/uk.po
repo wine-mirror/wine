@@ -15299,6 +15299,12 @@ msgstr "Тип шифрування"
 msgid "Current LogonId is"
 msgstr "Поточних Підключень"
 
+#: programs/klist/klist.rc:38
+#, fuzzy
+#| msgid "client"
+msgid "Client"
+msgstr "клієнт"
+
 #: programs/msinfo32/msinfo32.rc:28
 #, fuzzy
 #| msgid "System Configuration"
