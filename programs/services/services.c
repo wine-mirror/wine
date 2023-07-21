@@ -1153,7 +1153,7 @@ static DWORD process_send_start_message(struct process_entry *process, BOOL shar
             handles[1] = process->process;
             if (WaitForMultipleObjects( 2, handles, FALSE, service_pipe_timeout ) != WAIT_OBJECT_0)
                 CancelIo(process->control_pipe);
-            if (!HasOverlappedIoCompleted( &overlapped ))
+            if (!GetOverlappedResult(process->control_pipe, &overlapped, &len, FALSE))
             {
                 WINE_ERR("service %s failed to start\n", wine_dbgstr_w(name));
                 return ERROR_SERVICE_REQUEST_TIMEOUT;
