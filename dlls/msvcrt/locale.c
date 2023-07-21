@@ -244,7 +244,6 @@ typedef struct {
   WCHAR search_language[MAX_ELEM_LEN];
   WCHAR search_country[MAX_ELEM_LEN];
   WCHAR found_lang_sname[LOCALE_NAME_MAX_LENGTH];
-  DWORD found_codepage;
   unsigned int match_flags;
   BOOL allow_sname;
 } locale_search_t;
