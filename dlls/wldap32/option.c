@@ -611,6 +611,14 @@ ULONG CDECL ldap_set_optionW( LDAP *ld, int option, void *value )
         return map_error( ret );
     }
 
+    case WLDAP32_LDAP_OPT_GETDSNAME_FLAGS:
+    {
+        ULONG *flags = value;
+        if (!flags) return WLDAP32_LDAP_PARAM_ERROR;
+        FIXME( "LDAP_OPT_GETDSNAME_FLAGS: %08lx\n", *flags );
+        return WLDAP32_LDAP_SUCCESS;
+    }
+
     case WLDAP32_LDAP_OPT_CACHE_ENABLE:
     case WLDAP32_LDAP_OPT_CACHE_FN_PTRS:
     case WLDAP32_LDAP_OPT_CACHE_STRATEGY:
@@ -635,7 +643,6 @@ ULONG CDECL ldap_set_optionW( LDAP *ld, int option, void *value )
     case WLDAP32_LDAP_OPT_DNSDOMAIN_NAME:
     case WLDAP32_LDAP_OPT_ERROR_STRING:
     case WLDAP32_LDAP_OPT_FAST_CONCURRENT_BIND:
-    case WLDAP32_LDAP_OPT_GETDSNAME_FLAGS:
     case WLDAP32_LDAP_OPT_HOST_REACHABLE:
     case WLDAP32_LDAP_OPT_PING_KEEP_ALIVE:
     case WLDAP32_LDAP_OPT_PING_LIMIT:
