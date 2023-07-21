@@ -619,6 +619,14 @@ ULONG CDECL ldap_set_optionW( LDAP *ld, int option, void *value )
         return WLDAP32_LDAP_SUCCESS;
     }
 
+    case WLDAP32_LDAP_OPT_PROMPT_CREDENTIALS:
+    {
+        ULONG *flags = value;
+        if (!flags) return WLDAP32_LDAP_PARAM_ERROR;
+        FIXME( "LDAP_OPT_PROMPT_CREDENTIALS: %08lx\n", *flags );
+        return WLDAP32_LDAP_SUCCESS;
+    }
+
     case WLDAP32_LDAP_OPT_CACHE_ENABLE:
     case WLDAP32_LDAP_OPT_CACHE_FN_PTRS:
     case WLDAP32_LDAP_OPT_CACHE_STRATEGY:
@@ -647,7 +655,6 @@ ULONG CDECL ldap_set_optionW( LDAP *ld, int option, void *value )
     case WLDAP32_LDAP_OPT_PING_KEEP_ALIVE:
     case WLDAP32_LDAP_OPT_PING_LIMIT:
     case WLDAP32_LDAP_OPT_PING_WAIT_TIME:
-    case WLDAP32_LDAP_OPT_PROMPT_CREDENTIALS:
     case WLDAP32_LDAP_OPT_REF_DEREF_CONN_PER_MSG:
     case WLDAP32_LDAP_OPT_REFERRAL_CALLBACK:
     case WLDAP32_LDAP_OPT_SASL_METHOD:
