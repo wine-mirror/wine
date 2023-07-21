@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2023-07-21 00:09+0300\n"
+"PO-Revision-Date: 2023-07-22 00:47+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -14853,51 +14853,40 @@ msgstr "Pirminis DNS sufiksas"
 #: programs/klist/klist.rc:28
 msgid "Usage: klist <tickets | tgt | purge | get [service principal name]>\n"
 msgstr ""
+"Naudojimas: klist <tickets | tgt | purge | get [tarnybos pagrindinis "
+"pavadinimas]>\n"
 
 #: programs/klist/klist.rc:29
-#, fuzzy
-#| msgid "Unknown error"
 msgid "Unknown error\n"
-msgstr "Nežinoma klaida"
+msgstr "Nežinoma klaida\n"
 
 #: programs/klist/klist.rc:30
-#, fuzzy
-#| msgid "Start Menu"
 msgid "Start Time"
-msgstr "Pradžios meniu"
+msgstr "Pradžios laikas"
 
 #: programs/klist/klist.rc:31
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "FLE Standard Time"
 msgid "End Time"
-msgstr "SLE juostinis laikas"
+msgstr "Pabaigos laikas"
 
 #: programs/klist/klist.rc:32
-#, fuzzy
-#| msgid "Enter new time: "
 msgid "Renew Time"
-msgstr "Įveskite naują laiką: "
+msgstr "Atnaujinimo laikas"
 
 #: programs/klist/klist.rc:33
 msgid "Ticket Flags"
-msgstr ""
+msgstr "Leidimo žymos"
 
 #: programs/klist/klist.rc:34
 msgid "Cached Tickets"
-msgstr ""
+msgstr "Leidimai podėlyje"
 
 #: programs/klist/klist.rc:36
-#, fuzzy
-#| msgid "Encryption Type"
 msgid "KerbTicket Encryption Type"
-msgstr "Šifravimo tipas"
+msgstr "Kerberos leidimo šifravimo tipas"
 
 #: programs/klist/klist.rc:37
-#, fuzzy
-#| msgid "Current Connections"
 msgid "Current LogonId is"
-msgstr "Dabartiniai ryšiai"
+msgstr "Dabartinis prisijungimo ID yra"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
