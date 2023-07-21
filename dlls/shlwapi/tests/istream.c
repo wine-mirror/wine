@@ -39,12 +39,12 @@ static void test_IStream_invalid_operations(IStream * stream, DWORD mode)
     ULONG count;
     char data[256];
 
-    U(uzero).HighPart = 0;
-    U(uzero).LowPart = 0;
-    U(uret).HighPart = 0;
-    U(uret).LowPart = 0;
-    U(zero).HighPart = 0;
-    U(zero).LowPart = 0;
+    uzero.HighPart = 0;
+    uzero.LowPart = 0;
+    uret.HighPart = 0;
+    uret.LowPart = 0;
+    zero.HighPart = 0;
+    zero.LowPart = 0;
 
     /* IStream::Read */
 
@@ -707,7 +707,7 @@ static void test_SHCreateStreamOnFileEx_CopyTo(void)
     ok(SUCCEEDED(ret), "SHCreateStreamOnFileEx failed with ret=0x%08lx\n", ret);
 
     written.QuadPart = 0;
-    ret = IStream_Write(src, srcContents, sizeof(srcContents), &U(written).LowPart);
+    ret = IStream_Write(src, srcContents, sizeof(srcContents), &written.LowPart);
     ok(SUCCEEDED(ret), "ISequentialStream_Write failed with ret=0x%08lx\n", ret);
 
     distance.QuadPart = 0;
@@ -723,8 +723,8 @@ static void test_SHCreateStreamOnFileEx_CopyTo(void)
     ret = IStream_CopyTo(src, dst, count, &read, &written);
     ok(SUCCEEDED(ret), "CopyTo failed with ret=0x%08lx\n", ret);
 
-    ok(read.QuadPart == 1, "read does not match size: %ld != 1\n", U(read).LowPart);
-    ok(written.QuadPart == 1, "written does not match size: %ld != 1\n", U(written).LowPart);
+    ok(read.QuadPart == 1, "read does not match size: %ld != 1\n", read.LowPart);
+    ok(written.QuadPart == 1, "written does not match size: %ld != 1\n", written.LowPart);
 
     IStream_Release(dst);
     IStream_Release(src);

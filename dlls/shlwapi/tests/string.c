@@ -896,7 +896,7 @@ static void test_StrRetToBSTR(void)
     }
 
     strret.uType = STRRET_WSTR;
-    U(strret).pOleStr = CoDupStrW("Test");
+    strret.pOleStr = CoDupStrW("Test");
     bstr = 0;
     ret = pStrRetToBSTR(&strret, NULL, &bstr);
     ok(ret == S_OK && bstr && !wcscmp(bstr, szTestW),
@@ -904,14 +904,14 @@ static void test_StrRetToBSTR(void)
     SysFreeString(bstr);
 
     strret.uType = STRRET_CSTR;
-    lstrcpyA(U(strret).cStr, "Test");
+    lstrcpyA(strret.cStr, "Test");
     ret = pStrRetToBSTR(&strret, NULL, &bstr);
     ok(ret == S_OK && bstr && !wcscmp(bstr, szTestW),
        "STRRET_CSTR: dup failed, ret=0x%08lx, bstr %p\n", ret, bstr);
     SysFreeString(bstr);
 
     strret.uType = STRRET_OFFSET;
-    U(strret).uOffset = 1;
+    strret.uOffset = 1;
     strcpy((char*)&iidl, " Test");
     ret = pStrRetToBSTR(&strret, iidl, &bstr);
     ok(ret == S_OK && bstr && !wcscmp(bstr, szTestW),
@@ -1128,7 +1128,7 @@ if (0)
     {
         memset(wbuf, 0xbf, sizeof(wbuf));
         strret.uType = STRRET_WSTR;
-        U(strret).pOleStr = StrDupW(wstr1);
+        strret.pOleStr = StrDupW(wstr1);
         hres = pStrRetToBufW(&strret, NULL, wbuf, 10);
         ok(hres == E_NOT_SUFFICIENT_BUFFER || broken(hres == S_OK) /* winxp */,
            "StrRetToBufW returned %08lx\n", hres);
@@ -1139,14 +1139,14 @@ if (0)
 
         memset(wbuf, 0xbf, sizeof(wbuf));
         strret.uType = STRRET_CSTR;
-        StrCpyNA(U(strret).cStr, str1, MAX_PATH);
+        StrCpyNA(strret.cStr, str1, MAX_PATH);
         hres = pStrRetToBufW(&strret, NULL, wbuf, 10);
         ok(hres == S_OK, "StrRetToBufW returned %08lx\n", hres);
         ok(!memcmp(wbuf, wstr1, 9*sizeof(WCHAR)) && !wbuf[9], "StrRetToBuf returned %s\n", wine_dbgstr_w(wbuf));
 
         memset(wbuf, 0xbf, sizeof(wbuf));
         strret.uType = STRRET_WSTR;
-        U(strret).pOleStr = NULL;
+        strret.pOleStr = NULL;
         hres = pStrRetToBufW(&strret, NULL, wbuf, 10);
         ok(hres == E_FAIL, "StrRetToBufW returned %08lx\n", hres);
         ok(!wbuf[0], "StrRetToBuf returned %s\n", wine_dbgstr_w(wbuf));
@@ -1158,7 +1158,7 @@ if (0)
     {
         memset(buf, 0xbf, sizeof(buf));
         strret.uType = STRRET_CSTR;
-        StrCpyNA(U(strret).cStr, str1, MAX_PATH);
+        StrCpyNA(strret.cStr, str1, MAX_PATH);
         expect_eq2(pStrRetToBufA(&strret, NULL, buf, 10), S_OK, E_NOT_SUFFICIENT_BUFFER /* Vista */, HRESULT, "%lx");
         expect_eq(buf[9], 0, CHAR, "%x");
         expect_eq(buf[10], (CHAR)0xbf, CHAR, "%x");
