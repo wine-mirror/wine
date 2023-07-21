@@ -18,7 +18,6 @@
 
 #define COBJMACROS
 #define CONST_VTABLE
-#define NONAMELESSUNION
 
 #include <wine/test.h>
 #include <stdarg.h>
@@ -1238,28 +1237,28 @@ static void test_CopyStgMedium(void)
     hres = pCopyStgMedium(&src, &dst);
     ok(hres == S_OK, "CopyStgMedium failed: %08lx\n", hres);
     ok(dst.tymed == TYMED_NULL, "tymed=%ld\n", dst.tymed);
-    ok(dst.u.hGlobal == empty, "u=%p\n", dst.u.hGlobal);
+    ok(dst.hGlobal == empty, "u=%p\n", dst.hGlobal);
     ok(!dst.pUnkForRelease, "pUnkForRelease=%p, expected NULL\n", dst.pUnkForRelease);
 
     memset(&dst, 0xe0, sizeof(dst));
     src.tymed = TYMED_ISTREAM;
-    src.u.pstm = NULL;
+    src.pstm = NULL;
     src.pUnkForRelease = NULL;
     hres = pCopyStgMedium(&src, &dst);
     ok(hres == S_OK, "CopyStgMedium failed: %08lx\n", hres);
     ok(dst.tymed == TYMED_ISTREAM, "tymed=%ld\n", dst.tymed);
-    ok(!dst.u.pstm, "pstm=%p\n", dst.u.pstm);
+    ok(!dst.pstm, "pstm=%p\n", dst.pstm);
     ok(!dst.pUnkForRelease, "pUnkForRelease=%p, expected NULL\n", dst.pUnkForRelease);
 
     memset(&dst, 0xe0, sizeof(dst));
     src.tymed = TYMED_FILE;
-    src.u.lpszFileName = fileW;
+    src.lpszFileName = fileW;
     src.pUnkForRelease = NULL;
     hres = pCopyStgMedium(&src, &dst);
     ok(hres == S_OK, "CopyStgMedium failed: %08lx\n", hres);
     ok(dst.tymed == TYMED_FILE, "tymed=%ld\n", dst.tymed);
-    ok(dst.u.lpszFileName && dst.u.lpszFileName != fileW, "lpszFileName=%p\n", dst.u.lpszFileName);
-    ok(!lstrcmpW(dst.u.lpszFileName, fileW), "wrong file name\n");
+    ok(dst.lpszFileName && dst.lpszFileName != fileW, "lpszFileName=%p\n", dst.lpszFileName);
+    ok(!lstrcmpW(dst.lpszFileName, fileW), "wrong file name\n");
     ok(!dst.pUnkForRelease, "pUnkForRelease=%p, expected NULL\n", dst.pUnkForRelease);
     ReleaseStgMedium(&dst);
 
@@ -1269,28 +1268,28 @@ static void test_CopyStgMedium(void)
     memset(ptr1, 0xfa, 10);
     memset(&dst, 0xe0, sizeof(dst));
     src.tymed = TYMED_HGLOBAL;
-    src.u.hGlobal = hg;
+    src.hGlobal = hg;
     hres = pCopyStgMedium(&src, &dst);
     ok(hres == S_OK, "CopyStgMedium failed: %08lx\n", hres);
     ok(dst.tymed == TYMED_HGLOBAL, "tymed=%ld\n", dst.tymed);
-    ok(dst.u.hGlobal != hg, "got %p, %p\n", dst.u.hGlobal, hg);
-    size = GlobalSize(dst.u.hGlobal);
+    ok(dst.hGlobal != hg, "got %p, %p\n", dst.hGlobal, hg);
+    size = GlobalSize(dst.hGlobal);
     ok(size == 10, "got size %d\n", size);
     /* compare contents */
-    ptr2 = GlobalLock(dst.u.hGlobal);
+    ptr2 = GlobalLock(dst.hGlobal);
     ok(!memcmp(ptr1, ptr2, 10), "got wrong data\n");
     GlobalUnlock(ptr2);
     GlobalUnlock(ptr1);
-    ok(GlobalFlags(dst.u.hGlobal) == 0, "got 0x%08x\n", GlobalFlags(dst.u.hGlobal));
+    ok(GlobalFlags(dst.hGlobal) == 0, "got 0x%08x\n", GlobalFlags(dst.hGlobal));
     GlobalFree(hg);
     ReleaseStgMedium(&dst);
 
     memset(&dst, 0xe0, sizeof(dst));
     src.tymed = TYMED_HGLOBAL;
-    src.u.hGlobal = NULL;
+    src.hGlobal = NULL;
     hres = pCopyStgMedium(&src, &dst);
     ok(hres == S_OK, "CopyStgMedium failed: %08lx\n", hres);
-    ok(dst.u.hGlobal == NULL, "got %p\n", dst.u.hGlobal);
+    ok(dst.hGlobal == NULL, "got %p\n", dst.hGlobal);
 
     hres = pCopyStgMedium(&src, NULL);
     ok(hres == E_POINTER, "CopyStgMedium failed: %08lx, expected E_POINTER\n", hres);
@@ -2358,7 +2357,7 @@ static void test_bsc_marshaling(void)
     rem_bindinfo.cbSize = sizeof(rem_bindinfo);
 
     rem_bindinfo.stgmedData.tymed = TYMED_ISTREAM;
-    rem_bindinfo.stgmedData.u.pstm = binding_stream;
+    rem_bindinfo.stgmedData.pstm = binding_stream;
     rem_bindinfo.cbstgmedData = 3;
     IStream_AddRef(binding_stream);
 
@@ -2375,8 +2374,8 @@ static void test_bsc_marshaling(void)
     ok(!bindinfo.pUnk, "pUnk = %p\n", bindinfo.pUnk);
     ok(bindinfo.stgmedData.tymed == TYMED_NULL, "tymed = %lu\n",
        bindinfo.stgmedData.tymed);
-    ok(!bindinfo.stgmedData.u.pstm, "stm = %p\n",
-       bindinfo.stgmedData.u.pstm);
+    ok(!bindinfo.stgmedData.pstm, "stm = %p\n",
+       bindinfo.stgmedData.pstm);
     ok(!bindinfo.stgmedData.pUnkForRelease, "pUnkForRelease = %p\n",
        bindinfo.stgmedData.pUnkForRelease);
     ok(bindinfo.cbstgmedData == 3, "cbstgmedData = %lu\n", bindinfo.cbstgmedData);
@@ -2394,7 +2393,7 @@ static void test_bsc_marshaling(void)
     rem_bindinfo.cbSize = sizeof(rem_bindinfo);
 
     rem_bindinfo.stgmedData.tymed = TYMED_ISTREAM;
-    rem_bindinfo.stgmedData.u.pstm = binding_stream;
+    rem_bindinfo.stgmedData.pstm = binding_stream;
     rem_bindinfo.stgmedData.pUnkForRelease = &unk_out.IUnknown_iface;
     unk_out.ref = 1;
     rem_bindinfo.cbstgmedData = 3;
@@ -2413,8 +2412,8 @@ static void test_bsc_marshaling(void)
     ok(!bindinfo.pUnk, "pUnk = %p\n", bindinfo.pUnk);
     ok(bindinfo.stgmedData.tymed == TYMED_NULL, "tymed = %lu\n",
        bindinfo.stgmedData.tymed);
-    ok(!bindinfo.stgmedData.u.pstm, "stm = %p\n",
-       bindinfo.stgmedData.u.pstm);
+    ok(!bindinfo.stgmedData.pstm, "stm = %p\n",
+       bindinfo.stgmedData.pstm);
     ok(!bindinfo.stgmedData.pUnkForRelease, "pUnkForRelease = %p\n",
        bindinfo.stgmedData.pUnkForRelease);
     ok(bindinfo.cbstgmedData == 3, "cbstgmedData = %lu\n", bindinfo.cbstgmedData);
@@ -2435,7 +2434,7 @@ static void test_bsc_marshaling(void)
 
     buf = GlobalAlloc(0, 5);
     strcpy(buf, "test");
-    rem_bindinfo.stgmedData.u.hGlobal = buf;
+    rem_bindinfo.stgmedData.hGlobal = buf;
     rem_bindinfo.cbstgmedData = 5;
 
     hres = IBindStatusCallback_GetBindInfo(bsc, &bindf, &bindinfo);
@@ -2451,8 +2450,8 @@ static void test_bsc_marshaling(void)
     ok(!bindinfo.pUnk, "pUnk = %p\n", bindinfo.pUnk);
     ok(bindinfo.stgmedData.tymed == TYMED_NULL, "tymed = %lu\n",
        bindinfo.stgmedData.tymed);
-    ok(!bindinfo.stgmedData.u.pstm, "stm = %p\n",
-       bindinfo.stgmedData.u.pstm);
+    ok(!bindinfo.stgmedData.pstm, "stm = %p\n",
+       bindinfo.stgmedData.pstm);
     ok(!bindinfo.stgmedData.pUnkForRelease, "pUnkForRelease = %p\n",
        bindinfo.stgmedData.pUnkForRelease);
     ok(bindinfo.cbstgmedData == 5, "cbstgmedData = %lu\n", bindinfo.cbstgmedData);
@@ -2574,7 +2573,7 @@ static void test_bsc_marshaling(void)
         rem_bindinfo.cbSize = sizeof(rem_bindinfo);
 
         rem_bindinfo.stgmedData.tymed = TYMED_ISTREAM;
-        rem_bindinfo.stgmedData.u.pstm = binding_stream;
+        rem_bindinfo.stgmedData.pstm = binding_stream;
         rem_bindinfo.cbstgmedData = 3;
         IStream_AddRef(binding_stream);
 
@@ -2591,8 +2590,8 @@ static void test_bsc_marshaling(void)
         ok(!bindinfo.pUnk, "pUnk = %p\n", bindinfo.pUnk);
         ok(bindinfo.stgmedData.tymed == TYMED_NULL, "tymed = %lu\n",
            bindinfo.stgmedData.tymed);
-        ok(!bindinfo.stgmedData.u.pstm, "stm = %p\n",
-           bindinfo.stgmedData.u.pstm);
+        ok(!bindinfo.stgmedData.pstm, "stm = %p\n",
+           bindinfo.stgmedData.pstm);
         ok(!bindinfo.stgmedData.pUnkForRelease, "pUnkForRelease = %p\n",
            bindinfo.stgmedData.pUnkForRelease);
         ok(bindinfo.cbstgmedData == 3, "cbstgmedData = %lu\n", bindinfo.cbstgmedData);
@@ -2610,7 +2609,7 @@ static void test_bsc_marshaling(void)
         rem_bindinfo.cbSize = sizeof(rem_bindinfo);
 
         rem_bindinfo.stgmedData.tymed = TYMED_ISTREAM;
-        rem_bindinfo.stgmedData.u.pstm = binding_stream;
+        rem_bindinfo.stgmedData.pstm = binding_stream;
         rem_bindinfo.stgmedData.pUnkForRelease = &unk_out.IUnknown_iface;
         unk_out.ref = 1;
         rem_bindinfo.cbstgmedData = 3;
@@ -2629,8 +2628,8 @@ static void test_bsc_marshaling(void)
         ok(!bindinfo.pUnk, "pUnk = %p\n", bindinfo.pUnk);
         ok(bindinfo.stgmedData.tymed == TYMED_NULL, "tymed = %lu\n",
            bindinfo.stgmedData.tymed);
-        ok(!bindinfo.stgmedData.u.pstm, "stm = %p\n",
-           bindinfo.stgmedData.u.pstm);
+        ok(!bindinfo.stgmedData.pstm, "stm = %p\n",
+           bindinfo.stgmedData.pstm);
         ok(!bindinfo.stgmedData.pUnkForRelease, "pUnkForRelease = %p\n",
            bindinfo.stgmedData.pUnkForRelease);
         ok(bindinfo.cbstgmedData == 3, "cbstgmedData = %lu\n", bindinfo.cbstgmedData);
@@ -2651,7 +2650,7 @@ static void test_bsc_marshaling(void)
 
         buf = GlobalAlloc(0, 5);
         strcpy(buf, "test");
-        rem_bindinfo.stgmedData.u.hGlobal = buf;
+        rem_bindinfo.stgmedData.hGlobal = buf;
         rem_bindinfo.cbstgmedData = 5;
 
         hres = IBindStatusCallbackEx_GetBindInfoEx(callbackex, &bindf, &bindinfo, &bindf2, &reserved);
@@ -2667,8 +2666,8 @@ static void test_bsc_marshaling(void)
         ok(!bindinfo.pUnk, "pUnk = %p\n", bindinfo.pUnk);
         ok(bindinfo.stgmedData.tymed == TYMED_NULL, "tymed = %lu\n",
            bindinfo.stgmedData.tymed);
-        ok(!bindinfo.stgmedData.u.pstm, "stm = %p\n",
-           bindinfo.stgmedData.u.pstm);
+        ok(!bindinfo.stgmedData.pstm, "stm = %p\n",
+           bindinfo.stgmedData.pstm);
         ok(!bindinfo.stgmedData.pUnkForRelease, "pUnkForRelease = %p\n",
            bindinfo.stgmedData.pUnkForRelease);
         ok(bindinfo.cbstgmedData == 5, "cbstgmedData = %lu\n", bindinfo.cbstgmedData);
@@ -2683,20 +2682,20 @@ static void test_bsc_marshaling(void)
     /* Test marshaling stgmed from OnDataAvailable */
     memset(&in_stgmed, 0xcc, sizeof(in_stgmed));
     stgmed.tymed = TYMED_ISTREAM;
-    stgmed.u.pstm = binding_stream;
+    stgmed.pstm = binding_stream;
     stgmed.pUnkForRelease = NULL;
 
     hres = IBindStatusCallback_OnDataAvailable(bsc, 1, 10, &formatetc, &stgmed);
     ok(hres == S_OK, "OnDataAvailable failed: %08lx\n", hres);
 
     ok(in_stgmed.tymed == TYMED_ISTREAM, "tymed = %lu\n", in_stgmed.tymed);
-    ok(in_stgmed.u.pstm != NULL, "pstm = NULL\n");
+    ok(in_stgmed.pstm != NULL, "pstm = NULL\n");
     ok(!in_stgmed.pUnkForRelease, "pUnkForRelease = %p\n", in_stgmed.pUnkForRelease);
 
     /* OnDataAvailable with both IStream and pUnkForRelease */
     memset(&in_stgmed, 0xcc, sizeof(in_stgmed));
     stgmed.tymed = TYMED_ISTREAM;
-    stgmed.u.pstm = binding_stream;
+    stgmed.pstm = binding_stream;
     stgmed.pUnkForRelease = &unk_in.IUnknown_iface;
     unk_in.ref = 1;
 
@@ -2704,27 +2703,27 @@ static void test_bsc_marshaling(void)
     ok(hres == S_OK, "OnDataAvailable failed: %08lx\n", hres);
 
     ok(in_stgmed.tymed == TYMED_ISTREAM, "tymed = %lu\n", in_stgmed.tymed);
-    ok(in_stgmed.u.pstm != NULL, "pstm = NULL\n");
+    ok(in_stgmed.pstm != NULL, "pstm = NULL\n");
     ok(in_stgmed.pUnkForRelease != NULL, "pUnkForRelease = %p\n", in_stgmed.pUnkForRelease);
     ok(unk_in.ref > 1, "ref = %lu\n", unk_in.ref);
 
     /* OnDataAvailable with TYMED_ISTREAM, but NULL stream */
     memset(&in_stgmed, 0xcc, sizeof(in_stgmed));
     stgmed.tymed = TYMED_ISTREAM;
-    stgmed.u.pstm = binding_stream;
+    stgmed.pstm = binding_stream;
     stgmed.pUnkForRelease = NULL;
 
     hres = IBindStatusCallback_OnDataAvailable(bsc, 1, 10, &formatetc, &stgmed);
     ok(hres == S_OK, "OnDataAvailable failed: %08lx\n", hres);
 
     ok(in_stgmed.tymed == TYMED_ISTREAM, "tymed = %lu\n", in_stgmed.tymed);
-    ok(in_stgmed.u.pstm != NULL, "pstm = NULL\n");
+    ok(in_stgmed.pstm != NULL, "pstm = NULL\n");
     ok(!in_stgmed.pUnkForRelease, "pUnkForRelease = %p\n", in_stgmed.pUnkForRelease);
 
     /* OnDataAvailable with TYMED_NULL and pUnkForRelease */
     memset(&in_stgmed, 0xcc, sizeof(in_stgmed));
     stgmed.tymed = TYMED_NULL;
-    stgmed.u.pstm = binding_stream;
+    stgmed.pstm = binding_stream;
     stgmed.pUnkForRelease = &unk_in.IUnknown_iface;
     unk_in.ref = 1;
 
@@ -2732,7 +2731,7 @@ static void test_bsc_marshaling(void)
     ok(hres == S_OK, "OnDataAvailable failed: %08lx\n", hres);
 
     ok(in_stgmed.tymed == TYMED_NULL, "tymed = %lu\n", in_stgmed.tymed);
-    ok(!in_stgmed.u.pstm, "pstm != NULL\n");
+    ok(!in_stgmed.pstm, "pstm != NULL\n");
     ok(in_stgmed.pUnkForRelease != NULL, "pUnkForRelease = %p\n", in_stgmed.pUnkForRelease);
     ok(unk_in.ref == 1, "ref = %lu\n", unk_in.ref);
 

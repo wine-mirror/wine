@@ -224,13 +224,13 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWOR
         ok(pstgmed != NULL, "stgmeg == NULL\n");
         if(pstgmed) {
             ok(pstgmed->tymed == TYMED_ISTREAM, "tymed=%lu\n", pstgmed->tymed);
-            ok(U(*pstgmed).pstm != NULL, "pstm == NULL\n");
+            ok(pstgmed->pstm != NULL, "pstm == NULL\n");
             ok(pstgmed->pUnkForRelease != NULL, "pUnkForRelease == NULL\n");
         }
     }
 
-    if(U(*pstgmed).pstm) {
-        do hres = IStream_Read(U(*pstgmed).pstm, buf, 512, &read);
+    if(pstgmed->pstm) {
+        do hres = IStream_Read(pstgmed->pstm, buf, 512, &read);
         while(hres == S_OK);
         ok(hres == S_FALSE || hres == E_PENDING, "IStream_Read returned %08lx\n", hres);
     }

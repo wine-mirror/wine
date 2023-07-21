@@ -1448,9 +1448,9 @@ static HRESULT WINAPI BindInfo_GetBindInfo(IInternetBindInfo *iface, DWORD *grfB
             /* Must be GMEM_FIXED, GMEM_MOVABLE does not work properly */
             data = GlobalAlloc(GPTR, sizeof(post_data));
             memcpy(data, post_data, sizeof(post_data));
-            U(pbindinfo->stgmedData).hGlobal = data;
+            pbindinfo->stgmedData.hGlobal = data;
         }else {
-            U(pbindinfo->stgmedData).pstm = &Stream;
+            pbindinfo->stgmedData.pstm = &Stream;
         }
     }
 

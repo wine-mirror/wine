@@ -11433,14 +11433,14 @@ static void test_IPersistStream(void)
         ok(hr == S_OK, "%d) Seek failed 0x%08lx, expected S_OK.\n", i, hr);
         hr = IPersistStream_GetSizeMax(persist_stream, &max_size);
         ok(hr == S_OK, "%d) GetSizeMax failed 0x%08lx, expected S_OK.\n", i, hr);
-        ok(U(size).LowPart+2 == U(max_size).LowPart,
+        ok(size.LowPart+2 == max_size.LowPart,
                 "%d) Written data size is %ld, max_size %ld.\n",
-                i, U(size).LowPart, U(max_size).LowPart);
+                i, size.LowPart, max_size.LowPart);
 
         hr = IStream_Read(stream, (void*)dw_data, sizeof(DWORD), NULL);
         ok(hr == S_OK, "%d) Read failed 0x%08lx, expected S_OK.\n", i, hr);
-        ok(dw_data[0]-2 == U(size).LowPart, "%d) Structure size is %ld, expected %ld\n",
-                i, dw_data[0]-2, U(size).LowPart);
+        ok(dw_data[0]-2 == size.LowPart, "%d) Structure size is %ld, expected %ld\n",
+                i, dw_data[0]-2, size.LowPart);
         hr = IStream_Read(stream, (void*)dw_data, 6*sizeof(DWORD), NULL);
         ok(hr == S_OK, "%d) Read failed 0x%08lx, expected S_OK.\n", i, hr);
         ok(dw_data[0] == 0, "%d) Incorrect value %lx, expected 0 (unknown).\n", i, dw_data[0]);
@@ -11568,8 +11568,8 @@ static void test_IPersistStream(void)
         ok(hr == S_OK, "%d) Seek failed 0x%08lx, expected S_OK.\n", i, hr);
         hr = IStream_Read(stream, (void*)dw_data, 3*sizeof(DWORD), NULL);
         ok(hr == S_OK, "%d) Read failed 0x%08lx, expected S_OK.\n", i, hr);
-        ok(dw_data[0]-2 == U(size).LowPart, "%d) Structure size is %ld, expected %ld\n",
-                i, dw_data[0]-2, U(size).LowPart);
+        ok(dw_data[0]-2 == size.LowPart, "%d) Structure size is %ld, expected %ld\n",
+                i, dw_data[0]-2, size.LowPart);
         ok(dw_data[1] == MSHCTX_LOCAL, "%d) Incorrect value %ld, expected MSHCTX_LOCAL.\n",
                 i, dw_data[1]);
         ok(dw_data[2] == dw_data[0]-8, "%d) Incorrect value %ld, expected %ld (PersistStream size).\n",
@@ -11578,9 +11578,9 @@ static void test_IPersistStream(void)
                 (test->dword_props[Uri_PROPERTY_SCHEME-Uri_PROPERTY_DWORD_START].value == URL_SCHEME_HTTP
                  || test->dword_props[Uri_PROPERTY_SCHEME-Uri_PROPERTY_DWORD_START].value == URL_SCHEME_FTP
                  || test->dword_props[Uri_PROPERTY_SCHEME-Uri_PROPERTY_DWORD_START].value == URL_SCHEME_HTTPS))
-            U(max_size).LowPart += 3*sizeof(DWORD);
-        ok(dw_data[2] == U(max_size).LowPart, "%d) Incorrect value %ld, expected %ld (PersistStream size).\n",
-                i, dw_data[2], U(max_size).LowPart);
+            max_size.LowPart += 3*sizeof(DWORD);
+        ok(dw_data[2] == max_size.LowPart, "%d) Incorrect value %ld, expected %ld (PersistStream size).\n",
+                i, dw_data[2], max_size.LowPart);
         IMarshal_Release(marshal);
         IUri_Release(uri);
 
