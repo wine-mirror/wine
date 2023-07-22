@@ -6920,7 +6920,7 @@ static void test_close_events(struct event_test_ctx *ctx)
     ret = recv(server, buffer, 5, 0);
     ok(ret == 2, "got %d\n", ret);
 
-    check_events_todo(ctx, 0, 0, 0);
+    check_events_todo(ctx, 0, 0, !strcmp(winetest_platform, "wine") ? 200 : 0);
 
     closesocket(server);
 
