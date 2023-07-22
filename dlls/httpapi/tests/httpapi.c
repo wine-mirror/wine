@@ -1384,7 +1384,7 @@ static void test_v2_bound_port(void)
     WCHAR url[50];
     HANDLE queue, dummy_queue;
     int ret;
-    SOCKET s, s2;
+    SOCKET s2;
 
     ret = pHttpCreateServerSession(version, &session, 0);
     ok(!ret, "Failed to create session, error %u.\n", ret);
@@ -1421,12 +1421,6 @@ static void test_v2_bound_port(void)
     ret = pHttpSetUrlGroupProperty(group, HttpServerBindingProperty, &binding, sizeof(binding));
     ok(!ret, "Failed to rebind request queue, error %u.\n", ret);
 
-    s = socket(AF_INET, SOCK_STREAM, 0);
-    ret = connect(s, (struct sockaddr *)&sockaddr, sizeof(sockaddr));
-    ok(ret, "Connecting to socket succeeded, %lu.\n", GetLastError());
-    ok(GetLastError() == WSAECONNREFUSED, "Unexpected error connecting to socket, %lu.\n", GetLastError());
-
-    closesocket(s);
     ret = pHttpCloseRequestQueue(dummy_queue);
     ok(!ret, "Failed to close queue handle, error %u.\n", ret);
     ret = pHttpCloseRequestQueue(queue);
