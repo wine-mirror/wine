@@ -13877,7 +13877,6 @@ START_TEST( sock )
     test_WSARecv();
     test_WSAPoll();
     test_write_watch();
-    test_iocp();
 
     test_events();
 
@@ -13902,6 +13901,31 @@ START_TEST( sock )
     test_icmp();
     test_connect_udp();
     test_tcp_sendto_recvfrom();
+
+    /* There is apparently an obscure interaction between this test and
+     * test_WSAGetOverlappedResult().
+     *
+     * One thing this test does is to close socket handles through CloseHandle()
+     * and NtClose(), to prove that that is sufficient to cancel I/O on the
+     * socket. This has the obscure side effect that ws2_32.dll's internal
+     * per-process list of sockets never has that socket removed.
+     *
+     * test_WSAGetOverlappedResult() effectively proves that the per-process
+     * list of sockets exists, by calling DuplicateHandle() on a socket and then
+     * passing it to a function which cares about socket handle validity, which
+     * checks that handle against the internal list, finds it invalid, and
+     * returns WSAENOTSOCK.
+     *
+     * The problem is that if we close an NT handle without removing it from the
+     * ws2_32 list, then duplicate another handle, it *may* end up allocated to
+     * the same handle value, and thus re-validate that handle right under the
+     * nose of ws2_32. This causes the test_WSAGetOverlappedResult() test to
+     * sometimes succeed where it's expected to fail with ENOTSOCK.
+     *
+     * In order to avoid this, make sure that this test—which is evidently
+     * destructive to ws2_32 internal state in obscure ways—is executed last.
+     */
+    test_iocp();
 
     /* this is an io heavy test, do it at the end so the kernel doesn't start dropping packets */
     test_send();
