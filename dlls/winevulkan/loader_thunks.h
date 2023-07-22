@@ -256,6 +256,7 @@ enum unix_call
     unix_vkCmdTraceRaysKHR,
     unix_vkCmdTraceRaysNV,
     unix_vkCmdUpdateBuffer,
+    unix_vkCmdUpdatePipelineIndirectBufferNV,
     unix_vkCmdWaitEvents,
     unix_vkCmdWaitEvents2,
     unix_vkCmdWaitEvents2KHR,
@@ -492,6 +493,8 @@ enum unix_call
     unix_vkGetPipelineExecutableInternalRepresentationsKHR,
     unix_vkGetPipelineExecutablePropertiesKHR,
     unix_vkGetPipelineExecutableStatisticsKHR,
+    unix_vkGetPipelineIndirectDeviceAddressNV,
+    unix_vkGetPipelineIndirectMemoryRequirementsNV,
     unix_vkGetPipelinePropertiesEXT,
     unix_vkGetPrivateData,
     unix_vkGetPrivateDataEXT,
@@ -2374,6 +2377,13 @@ struct vkCmdUpdateBuffer_params
     const void *pData;
 };
 
+struct vkCmdUpdatePipelineIndirectBufferNV_params
+{
+    VkCommandBuffer commandBuffer;
+    VkPipelineBindPoint pipelineBindPoint;
+    VkPipeline DECLSPEC_ALIGN(8) pipeline;
+};
+
 struct vkCmdWaitEvents_params
 {
     VkCommandBuffer commandBuffer;
@@ -4242,6 +4252,20 @@ struct vkGetPipelineExecutableStatisticsKHR_params
     uint32_t *pStatisticCount;
     VkPipelineExecutableStatisticKHR *pStatistics;
     VkResult result;
+};
+
+struct vkGetPipelineIndirectDeviceAddressNV_params
+{
+    VkDevice device;
+    const VkPipelineIndirectDeviceAddressInfoNV *pInfo;
+    VkDeviceAddress result;
+};
+
+struct vkGetPipelineIndirectMemoryRequirementsNV_params
+{
+    VkDevice device;
+    const VkComputePipelineCreateInfo *pCreateInfo;
+    VkMemoryRequirements2 *pMemoryRequirements;
 };
 
 struct vkGetPipelinePropertiesEXT_params

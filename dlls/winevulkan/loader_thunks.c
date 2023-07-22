@@ -2329,6 +2329,15 @@ void WINAPI vkCmdUpdateBuffer(VkCommandBuffer commandBuffer, VkBuffer dstBuffer,
     UNIX_CALL(vkCmdUpdateBuffer, &params);
 }
 
+void WINAPI vkCmdUpdatePipelineIndirectBufferNV(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, VkPipeline pipeline)
+{
+    struct vkCmdUpdatePipelineIndirectBufferNV_params params;
+    params.commandBuffer = commandBuffer;
+    params.pipelineBindPoint = pipelineBindPoint;
+    params.pipeline = pipeline;
+    UNIX_CALL(vkCmdUpdatePipelineIndirectBufferNV, &params);
+}
+
 void WINAPI vkCmdWaitEvents(VkCommandBuffer commandBuffer, uint32_t eventCount, const VkEvent *pEvents, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, uint32_t memoryBarrierCount, const VkMemoryBarrier *pMemoryBarriers, uint32_t bufferMemoryBarrierCount, const VkBufferMemoryBarrier *pBufferMemoryBarriers, uint32_t imageMemoryBarrierCount, const VkImageMemoryBarrier *pImageMemoryBarriers)
 {
     struct vkCmdWaitEvents_params params;
@@ -4993,6 +5002,28 @@ VkResult WINAPI vkGetPipelineExecutableStatisticsKHR(VkDevice device, const VkPi
     return params.result;
 }
 
+VkDeviceAddress WINAPI vkGetPipelineIndirectDeviceAddressNV(VkDevice device, const VkPipelineIndirectDeviceAddressInfoNV *pInfo)
+{
+    struct vkGetPipelineIndirectDeviceAddressNV_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pInfo = pInfo;
+    status = UNIX_CALL(vkGetPipelineIndirectDeviceAddressNV, &params);
+    assert(!status && "vkGetPipelineIndirectDeviceAddressNV");
+    return params.result;
+}
+
+void WINAPI vkGetPipelineIndirectMemoryRequirementsNV(VkDevice device, const VkComputePipelineCreateInfo *pCreateInfo, VkMemoryRequirements2 *pMemoryRequirements)
+{
+    struct vkGetPipelineIndirectMemoryRequirementsNV_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pCreateInfo = pCreateInfo;
+    params.pMemoryRequirements = pMemoryRequirements;
+    status = UNIX_CALL(vkGetPipelineIndirectMemoryRequirementsNV, &params);
+    assert(!status && "vkGetPipelineIndirectMemoryRequirementsNV");
+}
+
 VkResult WINAPI vkGetPipelinePropertiesEXT(VkDevice device, const VkPipelineInfoEXT *pPipelineInfo, VkBaseOutStructure *pPipelineProperties)
 {
     struct vkGetPipelinePropertiesEXT_params params;
@@ -6092,6 +6123,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdTraceRaysKHR", vkCmdTraceRaysKHR},
     {"vkCmdTraceRaysNV", vkCmdTraceRaysNV},
     {"vkCmdUpdateBuffer", vkCmdUpdateBuffer},
+    {"vkCmdUpdatePipelineIndirectBufferNV", vkCmdUpdatePipelineIndirectBufferNV},
     {"vkCmdWaitEvents", vkCmdWaitEvents},
     {"vkCmdWaitEvents2", vkCmdWaitEvents2},
     {"vkCmdWaitEvents2KHR", vkCmdWaitEvents2KHR},
@@ -6266,6 +6298,8 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetPipelineExecutableInternalRepresentationsKHR", vkGetPipelineExecutableInternalRepresentationsKHR},
     {"vkGetPipelineExecutablePropertiesKHR", vkGetPipelineExecutablePropertiesKHR},
     {"vkGetPipelineExecutableStatisticsKHR", vkGetPipelineExecutableStatisticsKHR},
+    {"vkGetPipelineIndirectDeviceAddressNV", vkGetPipelineIndirectDeviceAddressNV},
+    {"vkGetPipelineIndirectMemoryRequirementsNV", vkGetPipelineIndirectMemoryRequirementsNV},
     {"vkGetPipelinePropertiesEXT", vkGetPipelinePropertiesEXT},
     {"vkGetPrivateData", vkGetPrivateData},
     {"vkGetPrivateDataEXT", vkGetPrivateDataEXT},

@@ -1584,6 +1584,15 @@ typedef struct VkPhysicalDeviceDeviceGeneratedCommandsFeaturesNV32
     VkBool32 deviceGeneratedCommands;
 } VkPhysicalDeviceDeviceGeneratedCommandsFeaturesNV32;
 
+typedef struct VkPhysicalDeviceDeviceGeneratedCommandsComputeFeaturesNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 deviceGeneratedCompute;
+    VkBool32 deviceGeneratedComputePipelines;
+    VkBool32 deviceGeneratedComputeCaptureReplay;
+} VkPhysicalDeviceDeviceGeneratedCommandsComputeFeaturesNV32;
+
 typedef struct VkDevicePrivateDataCreateInfo32
 {
     VkStructureType sType;
@@ -6073,6 +6082,14 @@ typedef struct VkPipelineExecutableStatisticKHR32
     VkPipelineExecutableStatisticValueKHR32 DECLSPEC_ALIGN(8) value;
 } VkPipelineExecutableStatisticKHR32;
 
+typedef struct VkPipelineIndirectDeviceAddressInfoNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkPipelineBindPoint pipelineBindPoint;
+    VkPipeline DECLSPEC_ALIGN(8) pipeline;
+} VkPipelineIndirectDeviceAddressInfoNV32;
+
 
 typedef struct VkCheckpointData2NV32
 {
@@ -10218,6 +10235,19 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_COMPUTE_FEATURES_NV:
+        {
+            VkPhysicalDeviceDeviceGeneratedCommandsComputeFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceDeviceGeneratedCommandsComputeFeaturesNV *in_ext = (const VkPhysicalDeviceDeviceGeneratedCommandsComputeFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_COMPUTE_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->deviceGeneratedCompute = in_ext->deviceGeneratedCompute;
+            out_ext->deviceGeneratedComputePipelines = in_ext->deviceGeneratedComputePipelines;
+            out_ext->deviceGeneratedComputeCaptureReplay = in_ext->deviceGeneratedComputeCaptureReplay;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_DEVICE_PRIVATE_DATA_CREATE_INFO:
         {
             VkDevicePrivateDataCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -12214,6 +12244,19 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_FEATURES_NV;
             out_ext->pNext = NULL;
             out_ext->deviceGeneratedCommands = in_ext->deviceGeneratedCommands;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_COMPUTE_FEATURES_NV:
+        {
+            VkPhysicalDeviceDeviceGeneratedCommandsComputeFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceDeviceGeneratedCommandsComputeFeaturesNV32 *in_ext = (const VkPhysicalDeviceDeviceGeneratedCommandsComputeFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_COMPUTE_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->deviceGeneratedCompute = in_ext->deviceGeneratedCompute;
+            out_ext->deviceGeneratedComputePipelines = in_ext->deviceGeneratedComputePipelines;
+            out_ext->deviceGeneratedComputeCaptureReplay = in_ext->deviceGeneratedComputeCaptureReplay;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -18961,6 +19004,19 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_COMPUTE_FEATURES_NV:
+        {
+            VkPhysicalDeviceDeviceGeneratedCommandsComputeFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceDeviceGeneratedCommandsComputeFeaturesNV32 *in_ext = (const VkPhysicalDeviceDeviceGeneratedCommandsComputeFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_COMPUTE_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->deviceGeneratedCompute = in_ext->deviceGeneratedCompute;
+            out_ext->deviceGeneratedComputePipelines = in_ext->deviceGeneratedComputePipelines;
+            out_ext->deviceGeneratedComputeCaptureReplay = in_ext->deviceGeneratedComputeCaptureReplay;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIVATE_DATA_FEATURES:
         {
             VkPhysicalDevicePrivateDataFeatures *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -20877,6 +20933,17 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             const VkPhysicalDeviceDeviceGeneratedCommandsFeaturesNV *in_ext = (const VkPhysicalDeviceDeviceGeneratedCommandsFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_FEATURES_NV;
             out_ext->deviceGeneratedCommands = in_ext->deviceGeneratedCommands;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_COMPUTE_FEATURES_NV:
+        {
+            VkPhysicalDeviceDeviceGeneratedCommandsComputeFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_COMPUTE_FEATURES_NV);
+            const VkPhysicalDeviceDeviceGeneratedCommandsComputeFeaturesNV *in_ext = (const VkPhysicalDeviceDeviceGeneratedCommandsComputeFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_COMPUTE_FEATURES_NV;
+            out_ext->deviceGeneratedCompute = in_ext->deviceGeneratedCompute;
+            out_ext->deviceGeneratedComputePipelines = in_ext->deviceGeneratedComputePipelines;
+            out_ext->deviceGeneratedComputeCaptureReplay = in_ext->deviceGeneratedComputeCaptureReplay;
             out_header = (void *)out_ext;
             break;
         }
@@ -25647,6 +25714,18 @@ static inline void convert_VkPipelineExecutableStatisticKHR_array_host_to_win32(
     {
         convert_VkPipelineExecutableStatisticKHR_host_to_win32(&in[i], &out[i]);
     }
+}
+
+static inline void convert_VkPipelineIndirectDeviceAddressInfoNV_win32_to_host(const VkPipelineIndirectDeviceAddressInfoNV32 *in, VkPipelineIndirectDeviceAddressInfoNV *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->pipelineBindPoint = in->pipelineBindPoint;
+    out->pipeline = in->pipeline;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkPipelineInfoEXT_win32_to_host(const VkPipelineInfoEXT32 *in, VkPipelineInfoEXT *out)
@@ -32655,6 +32734,27 @@ static void thunk32_vkCmdUpdateBuffer(void *args)
     } *params = args;
 
     wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->funcs.p_vkCmdUpdateBuffer(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->command_buffer, params->dstBuffer, params->dstOffset, params->dataSize, (const void *)UlongToPtr(params->pData));
+}
+
+#ifdef _WIN64
+static void thunk64_vkCmdUpdatePipelineIndirectBufferNV(void *args)
+{
+    struct vkCmdUpdatePipelineIndirectBufferNV_params *params = args;
+
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdUpdatePipelineIndirectBufferNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pipelineBindPoint, params->pipeline);
+}
+#endif /* _WIN64 */
+
+static void thunk32_vkCmdUpdatePipelineIndirectBufferNV(void *args)
+{
+    struct
+    {
+        PTR32 commandBuffer;
+        VkPipelineBindPoint pipelineBindPoint;
+        VkPipeline DECLSPEC_ALIGN(8) pipeline;
+    } *params = args;
+
+    wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->funcs.p_vkCmdUpdatePipelineIndirectBufferNV(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->command_buffer, params->pipelineBindPoint, params->pipeline);
 }
 
 #ifdef _WIN64
@@ -40090,6 +40190,78 @@ static NTSTATUS thunk32_vkGetPipelineExecutableStatisticsKHR(void *args)
 }
 
 #ifdef _WIN64
+static NTSTATUS thunk64_vkGetPipelineIndirectDeviceAddressNV(void *args)
+{
+    struct vkGetPipelineIndirectDeviceAddressNV_params *params = args;
+
+    TRACE("%p, %p\n", params->device, params->pInfo);
+
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkGetPipelineIndirectDeviceAddressNV(wine_device_from_handle(params->device)->device, params->pInfo);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkGetPipelineIndirectDeviceAddressNV(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        PTR32 pInfo;
+        VkDeviceAddress result;
+    } *params = args;
+    VkPipelineIndirectDeviceAddressInfoNV pInfo_host;
+
+    TRACE("%#x, %#x\n", params->device, params->pInfo);
+
+    convert_VkPipelineIndirectDeviceAddressInfoNV_win32_to_host((const VkPipelineIndirectDeviceAddressInfoNV32 *)UlongToPtr(params->pInfo), &pInfo_host);
+    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetPipelineIndirectDeviceAddressNV(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, &pInfo_host);
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
+static NTSTATUS thunk64_vkGetPipelineIndirectMemoryRequirementsNV(void *args)
+{
+    struct vkGetPipelineIndirectMemoryRequirementsNV_params *params = args;
+    VkComputePipelineCreateInfo pCreateInfo_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
+
+    TRACE("%p, %p, %p\n", params->device, params->pCreateInfo, params->pMemoryRequirements);
+
+    init_conversion_context(ctx);
+    convert_VkComputePipelineCreateInfo_win64_to_host(ctx, params->pCreateInfo, &pCreateInfo_host);
+    wine_device_from_handle(params->device)->funcs.p_vkGetPipelineIndirectMemoryRequirementsNV(wine_device_from_handle(params->device)->device, &pCreateInfo_host, params->pMemoryRequirements);
+    free_conversion_context(ctx);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkGetPipelineIndirectMemoryRequirementsNV(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        PTR32 pCreateInfo;
+        PTR32 pMemoryRequirements;
+    } *params = args;
+    VkComputePipelineCreateInfo pCreateInfo_host;
+    VkMemoryRequirements2 pMemoryRequirements_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
+
+    TRACE("%#x, %#x, %#x\n", params->device, params->pCreateInfo, params->pMemoryRequirements);
+
+    init_conversion_context(ctx);
+    convert_VkComputePipelineCreateInfo_win32_to_host(ctx, (const VkComputePipelineCreateInfo32 *)UlongToPtr(params->pCreateInfo), &pCreateInfo_host);
+    convert_VkMemoryRequirements2_win32_to_host(ctx, (VkMemoryRequirements232 *)UlongToPtr(params->pMemoryRequirements), &pMemoryRequirements_host);
+    wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetPipelineIndirectMemoryRequirementsNV(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, &pCreateInfo_host, &pMemoryRequirements_host);
+    convert_VkComputePipelineCreateInfo_host_to_win32(&pCreateInfo_host, (const VkComputePipelineCreateInfo32 *)UlongToPtr(params->pCreateInfo));
+    convert_VkMemoryRequirements2_host_to_win32(&pMemoryRequirements_host, (VkMemoryRequirements232 *)UlongToPtr(params->pMemoryRequirements));
+    free_conversion_context(ctx);
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
 static NTSTATUS thunk64_vkGetPipelinePropertiesEXT(void *args)
 {
     struct vkGetPipelinePropertiesEXT_params *params = args;
@@ -42459,6 +42631,7 @@ static const char * const vk_device_extensions[] =
     "VK_NV_device_diagnostic_checkpoints",
     "VK_NV_device_diagnostics_config",
     "VK_NV_device_generated_commands",
+    "VK_NV_device_generated_commands_compute",
     "VK_NV_fill_rectangle",
     "VK_NV_fragment_coverage_to_color",
     "VK_NV_fragment_shader_barycentric",
@@ -42801,6 +42974,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     (void *)thunk64_vkCmdTraceRaysKHR,
     (void *)thunk64_vkCmdTraceRaysNV,
     (void *)thunk64_vkCmdUpdateBuffer,
+    (void *)thunk64_vkCmdUpdatePipelineIndirectBufferNV,
     (void *)thunk64_vkCmdWaitEvents,
     (void *)thunk64_vkCmdWaitEvents2,
     (void *)thunk64_vkCmdWaitEvents2KHR,
@@ -43037,6 +43211,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkGetPipelineExecutableInternalRepresentationsKHR,
     thunk64_vkGetPipelineExecutablePropertiesKHR,
     thunk64_vkGetPipelineExecutableStatisticsKHR,
+    thunk64_vkGetPipelineIndirectDeviceAddressNV,
+    thunk64_vkGetPipelineIndirectMemoryRequirementsNV,
     thunk64_vkGetPipelinePropertiesEXT,
     thunk64_vkGetPrivateData,
     thunk64_vkGetPrivateDataEXT,
@@ -43361,6 +43537,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     (void *)thunk32_vkCmdTraceRaysKHR,
     (void *)thunk32_vkCmdTraceRaysNV,
     (void *)thunk32_vkCmdUpdateBuffer,
+    (void *)thunk32_vkCmdUpdatePipelineIndirectBufferNV,
     (void *)thunk32_vkCmdWaitEvents,
     (void *)thunk32_vkCmdWaitEvents2,
     (void *)thunk32_vkCmdWaitEvents2KHR,
@@ -43597,6 +43774,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkGetPipelineExecutableInternalRepresentationsKHR,
     thunk32_vkGetPipelineExecutablePropertiesKHR,
     thunk32_vkGetPipelineExecutableStatisticsKHR,
+    thunk32_vkGetPipelineIndirectDeviceAddressNV,
+    thunk32_vkGetPipelineIndirectMemoryRequirementsNV,
     thunk32_vkGetPipelinePropertiesEXT,
     thunk32_vkGetPrivateData,
     thunk32_vkGetPrivateDataEXT,
