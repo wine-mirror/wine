@@ -54,8 +54,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(pulse);
 
 #define MAX_PULSE_NAME_LEN 256
 
-#define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
-
 static struct list g_devices_cache = LIST_INIT(g_devices_cache);
 
 struct device_cache {
@@ -71,25 +69,6 @@ static GUID pulse_capture_guid =
 { 0x25da76d0, 0x033c, 0x4235, { 0x90, 0x02, 0x19, 0xf4, 0x88, 0x94, 0xac, 0x6f } };
 
 static WCHAR drv_key_devicesW[256];
-
-static CRITICAL_SECTION session_cs;
-static CRITICAL_SECTION_DEBUG session_cs_debug = {
-    0, 0, &session_cs,
-    { &session_cs_debug.ProcessLocksList,
-      &session_cs_debug.ProcessLocksList },
-    0, 0, { (DWORD_PTR)(__FILE__ ": session_cs") }
-};
-static CRITICAL_SECTION session_cs = { &session_cs_debug, -1, 0, 0, 0, 0 };
-
-void DECLSPEC_HIDDEN sessions_lock(void)
-{
-    EnterCriticalSection(&session_cs);
-}
-
-void DECLSPEC_HIDDEN sessions_unlock(void)
-{
-    LeaveCriticalSection(&session_cs);
-}
 
 BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
 {
@@ -116,9 +95,6 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
     }
     return TRUE;
 }
-
-extern struct audio_session_wrapper *session_wrapper_create(
-    struct audio_client *client) DECLSPEC_HIDDEN;
 
 static void pulse_call(enum unix_funcs code, void *params)
 {
@@ -334,17 +310,6 @@ BOOL WINAPI get_device_name_from_guid(GUID *guid, char **name, EDataFlow *flow)
     RegCloseKey(key);
     WARN("No matching device in registry for GUID %s\n", debugstr_guid(guid));
     return FALSE;
-}
-
-/* if channels == 0, then this will return or create a session with
- * matching dataflow and GUID. otherwise, channels must also match */
-extern HRESULT get_audio_session(const GUID *sessionguid,
-        IMMDevice *device, UINT channels, AudioSession **out);
-
-HRESULT WINAPI AUDDRV_GetAudioSessionWrapper(const GUID *guid, IMMDevice *device,
-                                             AudioSessionWrapper **out)
-{
-    return E_NOTIMPL;
 }
 
 HRESULT WINAPI AUDDRV_GetPropValue(GUID *guid, const PROPERTYKEY *prop, PROPVARIANT *out)
