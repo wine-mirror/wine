@@ -6,5 +6,4 @@
 # MMDevAPI driver functions
 @ stdcall -private get_device_name_from_guid(ptr ptr ptr) get_device_name_from_guid
 @ stdcall -private GetEndpointIDs(long ptr ptr ptr ptr) AUDDRV_GetEndpointIDs
-@ stdcall -private GetAudioSessionWrapper(ptr ptr ptr) AUDDRV_GetAudioSessionWrapper
 @ stdcall -private GetPropValue(ptr ptr ptr) AUDDRV_GetPropValue
