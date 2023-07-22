@@ -4904,9 +4904,9 @@ static void test_accept_inheritance(void)
     ok(linger.l_onoff == 1, "got on/off %u\n", linger.l_onoff);
     ok(linger.l_linger == 555, "got linger %u\n", linger.l_onoff);
 
-    close(server);
-    close(client);
-    close(listener);
+    closesocket(server);
+    closesocket(client);
+    closesocket(listener);
 }
 
 static void test_extendedSocketOptions(void)
