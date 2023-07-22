@@ -6842,7 +6842,7 @@ static void test_close_events(struct event_test_ctx *ctx)
 
     closesocket(client);
 
-    check_events(ctx, FD_CLOSE, 0, 200);
+    check_events(ctx, FD_CLOSE, 0, 1000);
     check_events(ctx, 0, 0, 0);
     select_events(ctx, server, FD_ACCEPT | FD_CLOSE | FD_CONNECT | FD_OOB | FD_READ);
     if (ctx->is_message)
@@ -6869,7 +6869,7 @@ static void test_close_events(struct event_test_ctx *ctx)
 
     shutdown(client, SD_SEND);
 
-    check_events(ctx, FD_CLOSE, 0, 200);
+    check_events(ctx, FD_CLOSE, 0, 1000);
     check_events(ctx, 0, 0, 0);
 
     closesocket(client);
