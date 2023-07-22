@@ -1514,6 +1514,16 @@ enum server_fd_type
 @END
 
 
+/* Get socket event flags */
+@REQ(socket_get_events)
+    obj_handle_t handle;        /* socket handle */
+    obj_handle_t event;         /* event to reset */
+@REPLY
+    unsigned int flags;         /* event mask */
+    VARARG(status,uints);       /* array of status codes */
+@END
+
+
 /* Store ICMP id for ICMP over datagram fixup */
 @REQ(socket_send_icmp_id)
     obj_handle_t   handle;        /* socket handle */

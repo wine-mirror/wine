@@ -1552,10 +1552,32 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
         }
 
         case IOCTL_AFD_GET_EVENTS:
+        {
+            struct afd_get_events_params *params = out_buffer;
+            HANDLE reset_event = in_buffer; /* sic */
+
+            TRACE( "reset_event %p\n", reset_event );
             if (in_size) FIXME( "unexpected input size %u\n", in_size );
 
-            status = STATUS_BAD_DEVICE_TYPE;
-            break;
+            if (out_size < sizeof(*params))
+            {
+                status = STATUS_INVALID_PARAMETER;
+                break;
+            }
+
+            SERVER_START_REQ( socket_get_events )
+            {
+                req->handle = wine_server_obj_handle( handle );
+                req->event = wine_server_obj_handle( reset_event );
+                wine_server_set_reply( req, params->status, sizeof(params->status) );
+                if (!(status = wine_server_call( req )))
+                    params->flags = reply->flags;
+            }
+            SERVER_END_REQ;
+
+            complete_async( handle, event, apc, apc_user, io, status, 0 );
+            return status;
+        }
 
         case IOCTL_AFD_POLL:
             status = STATUS_BAD_DEVICE_TYPE;

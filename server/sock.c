@@ -2762,28 +2762,6 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         }
         return;
 
-    case IOCTL_AFD_GET_EVENTS:
-    {
-        struct afd_get_events_params params = {0};
-        unsigned int i;
-
-        if (get_reply_max_size() < sizeof(params))
-        {
-            set_error( STATUS_INVALID_PARAMETER );
-            return;
-        }
-
-        params.flags = sock->pending_events & sock->mask;
-        for (i = 0; i < ARRAY_SIZE( params.status ); ++i)
-            params.status[i] = sock_get_ntstatus( sock->errors[i] );
-
-        sock->pending_events &= ~sock->mask;
-        sock_reselect( sock );
-
-        set_reply_data( &params, sizeof(params) );
-        return;
-    }
-
     case IOCTL_AFD_EVENT_SELECT:
     {
         struct event *event = NULL;
@@ -3934,6 +3912,32 @@ DECL_HANDLER(send_socket)
         reply->nonblocking = sock->nonblocking;
         release_object( async );
     }
+    release_object( sock );
+}
+
+DECL_HANDLER(socket_get_events)
+{
+    struct sock *sock = (struct sock *)get_handle_obj( current->process, req->handle, 0, &sock_ops );
+    unsigned int status[13];
+    unsigned int i;
+
+    if (get_reply_max_size() < sizeof(status))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    if (!sock) return;
+
+    reply->flags = sock->pending_events & sock->mask;
+    for (i = 0; i < ARRAY_SIZE( status ); ++i)
+        status[i] = sock_get_ntstatus( sock->errors[i] );
+
+    sock->pending_events &= ~sock->mask;
+    sock_reselect( sock );
+
+    set_reply_data( status, sizeof(status) );
+
     release_object( sock );
 }
 

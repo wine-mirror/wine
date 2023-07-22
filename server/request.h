@@ -175,6 +175,7 @@ DECL_HANDLER(lock_file);
 DECL_HANDLER(unlock_file);
 DECL_HANDLER(recv_socket);
 DECL_HANDLER(send_socket);
+DECL_HANDLER(socket_get_events);
 DECL_HANDLER(socket_send_icmp_id);
 DECL_HANDLER(socket_get_icmp_id);
 DECL_HANDLER(get_next_console_request);
@@ -462,6 +463,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_unlock_file,
     (req_handler)req_recv_socket,
     (req_handler)req_send_socket,
+    (req_handler)req_socket_get_events,
     (req_handler)req_socket_send_icmp_id,
     (req_handler)req_socket_get_icmp_id,
     (req_handler)req_get_next_console_request,
@@ -1085,6 +1087,11 @@ C_ASSERT( FIELD_OFFSET(struct send_socket_reply, wait) == 8 );
 C_ASSERT( FIELD_OFFSET(struct send_socket_reply, options) == 12 );
 C_ASSERT( FIELD_OFFSET(struct send_socket_reply, nonblocking) == 16 );
 C_ASSERT( sizeof(struct send_socket_reply) == 24 );
+C_ASSERT( FIELD_OFFSET(struct socket_get_events_request, handle) == 12 );
+C_ASSERT( FIELD_OFFSET(struct socket_get_events_request, event) == 16 );
+C_ASSERT( sizeof(struct socket_get_events_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct socket_get_events_reply, flags) == 8 );
+C_ASSERT( sizeof(struct socket_get_events_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct socket_send_icmp_id_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct socket_send_icmp_id_request, icmp_id) == 16 );
 C_ASSERT( FIELD_OFFSET(struct socket_send_icmp_id_request, icmp_seq) == 18 );
