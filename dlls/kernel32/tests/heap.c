@@ -3270,6 +3270,35 @@ static void test_heap_checks( DWORD flags )
     ret = HeapFree( GetProcessHeap(), 0, p );
     ok( ret, "HeapFree failed\n" );
 
+    if (flags & HEAP_FREE_CHECKING_ENABLED)
+    {
+        UINT *p32, tmp = 0;
+
+        size = 4 + 3;
+        p = pHeapAlloc( GetProcessHeap(), 0, size );
+        ok( !!p, "HeapAlloc failed\n" );
+        p32 = (UINT *)p;
+
+        ok( p32[0] == 0xbaadf00d, "got %#x\n", p32[0] );
+        memcpy( &tmp, p + size - 3, 3 );
+        ok( tmp != 0xadf00d, "got %#x\n", tmp );
+        memset( p, 0xcc, size );
+
+        size += 2 * 4;
+        p = pHeapReAlloc( GetProcessHeap(), 0, p, size );
+        ok( !!p, "HeapReAlloc failed\n" );
+        p32 = (UINT *)p;
+
+        ok( p32[0] == 0xcccccccc, "got %#x\n", p32[0] );
+        ok( p32[1] << 8 == 0xcccccc00, "got %#x\n", p32[1] );
+        ok( p32[2] == 0xbaadf00d, "got %#x\n", p32[2] );
+        memcpy( &tmp, p + size - 3, 3 );
+        ok( tmp != 0xadf00d, "got %#x\n", tmp );
+
+        ret = pHeapFree( GetProcessHeap(), 0, p );
+        ok( ret, "failed.\n" );
+    }
+
     p = HeapAlloc( GetProcessHeap(), 0, 37 );
     ok( p != NULL, "HeapAlloc failed\n" );
     memset( p, 0xcc, 37 );

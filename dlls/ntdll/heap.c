@@ -139,7 +139,7 @@ C_ASSERT( sizeof(ARENA_LARGE) == 4 * BLOCK_ALIGN );
 #define BLOCK_TYPE_FREE        'F'
 #define BLOCK_TYPE_LARGE       'L'
 
-#define BLOCK_FILL_USED        0x55
+#define BLOCK_FILL_USED        0xbaadf00d
 #define BLOCK_FILL_TAIL        0xab
 #define BLOCK_FILL_FREE        0xfeeefeee
 
@@ -513,6 +513,7 @@ static inline void mark_block_tail( struct block *block, DWORD flags )
 static inline void initialize_block( struct block *block, SIZE_T old_size, SIZE_T size, DWORD flags )
 {
     char *data = (char *)(block + 1);
+    SIZE_T i;
 
     if (size <= old_size) return;
 
@@ -524,7 +525,8 @@ static inline void initialize_block( struct block *block, SIZE_T old_size, SIZE_
     else if (flags & HEAP_FREE_CHECKING_ENABLED)
     {
         valgrind_make_writable( data + old_size, size - old_size );
-        memset( data + old_size, BLOCK_FILL_USED, size - old_size );
+        i = ROUND_SIZE( old_size, sizeof(DWORD) - 1 ) / sizeof(DWORD);
+        for (; i < size / sizeof(DWORD); ++i) ((DWORD *)data)[i] = BLOCK_FILL_USED;
     }
 }
 
