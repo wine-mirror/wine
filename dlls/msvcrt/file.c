@@ -42,7 +42,7 @@
 #include "winnls.h"
 #include "msvcrt.h"
 #include "mtdll.h"
-
+#include "wine/asm.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -1657,6 +1657,19 @@ int CDECL clearerr_s(FILE* file)
   _unlock_file(file);
   return 0;
 }
+
+#if defined(__i386__)
+/* Stack preserving thunk for rewind
+ * needed for the UIO mod for Fallout: New Vegas
+ */
+__ASM_GLOBAL_FUNC(rewind_preserve_stack,
+                  "pushl 4(%esp)\n\t"
+                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                  "call "__ASM_NAME("rewind") "\n\t"
+                  "addl $4,%esp\n\t"
+                  __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
+                  "ret")
+#endif
 
 /*********************************************************************
  *		rewind (MSVCRT.@)

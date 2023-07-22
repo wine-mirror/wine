@@ -1591,6 +1591,47 @@ static void test_fopen_exclusive( void )
     unlink(path);
 }
 
+#if defined(__i386__)
+#include "pshpack1.h"
+struct rewind_thunk {
+    BYTE push_esp[4]; /* push [esp+0x4] */
+    BYTE call_rewind; /* call */
+    DWORD rewind_addr; /* relative addr of rewind */
+    BYTE pop_eax; /* pop eax */
+    BYTE ret; /* ret */
+};
+#include "poppack.h"
+
+static FILE * (CDECL *test_rewind_wrapper)(FILE *fp);
+
+static void test_rewind_i386_abi(void)
+{
+    FILE *fp_in, *fp_out;
+
+    struct rewind_thunk *thunk = VirtualAlloc(NULL, sizeof(*thunk), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+
+    thunk->push_esp[0] = 0xff;
+    thunk->push_esp[1] = 0x74;
+    thunk->push_esp[2] = 0x24;
+    thunk->push_esp[3] = 0x04;
+
+    thunk->call_rewind = 0xe8;
+    thunk->rewind_addr = (BYTE *) rewind - (BYTE *) (&thunk->rewind_addr + 1);
+
+    thunk->pop_eax = 0x58;
+    thunk->ret = 0xc3;
+
+    test_rewind_wrapper = (void *) thunk;
+
+    fp_in = fopen("rewind_abi.tst", "wb");
+    fp_out = test_rewind_wrapper(fp_in);
+    ok(fp_in == fp_out, "rewind modified the first argument in the stack\n");
+
+    fclose(fp_in);
+    unlink("rewind_abi.tst");
+}
+#endif
+
 START_TEST(misc)
 {
     int arg_c;
@@ -1633,4 +1674,7 @@ START_TEST(misc)
     test_thread_storage();
     test_fenv();
     test_fopen_exclusive();
+#if defined(__i386__)
+    test_rewind_i386_abi();
+#endif
 }

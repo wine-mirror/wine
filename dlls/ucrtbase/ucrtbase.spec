@@ -2470,7 +2470,8 @@
 @ cdecl remquof(float float ptr)
 @ cdecl remquol(double double ptr) remquo
 @ cdecl rename(str str)
-@ cdecl rewind(ptr)
+@ cdecl -arch=i386 rewind(ptr) rewind_preserve_stack
+@ cdecl -arch=!i386 rewind(ptr)
 @ cdecl rint(double) MSVCRT_rint
 @ cdecl rintf(float)
 @ cdecl rintl(double) MSVCRT_rint
