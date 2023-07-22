@@ -1969,6 +1969,20 @@ static void test_get_events(void)
     for (i = 0; i < ARRAY_SIZE(params.status); ++i)
         ok(!params.status[i], "got status[%u] %#x\n", i, params.status[i]);
 
+    SetEvent(event);
+
+    memset(&params, 0xcc, sizeof(params));
+    memset(&io, 0xcc, sizeof(io));
+    ret = NtDeviceIoControlFile((HANDLE)client, NULL, NULL, NULL, &io,
+            IOCTL_AFD_GET_EVENTS, event, 0, &params, sizeof(params));
+    ok(!ret, "got %#x\n", ret);
+    ok(!params.flags, "got flags %#x\n", params.flags);
+    for (i = 0; i < ARRAY_SIZE(params.status); ++i)
+        ok(!params.status[i], "got status[%u] %#x\n", i, params.status[i]);
+
+    ret = WaitForSingleObject(event, 0);
+    ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
+
     closesocket(client);
     closesocket(server);
 

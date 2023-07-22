@@ -3604,10 +3604,8 @@ int WINAPI WSAEnumNetworkEvents( SOCKET s, WSAEVENT event, WSANETWORKEVENTS *ret
 
     TRACE( "socket %#Ix, event %p, events %p\n", s, event, ret_events );
 
-    ResetEvent( event );
-
     status = NtDeviceIoControlFile( (HANDLE)s, NULL, NULL, NULL, &io, IOCTL_AFD_GET_EVENTS,
-                                    NULL, 0, &params, sizeof(params) );
+                                    event, 0, &params, sizeof(params) );
     if (!status)
     {
         ret_events->lNetworkEvents = afd_poll_flag_to_win32( params.flags );

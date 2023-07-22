@@ -3919,6 +3919,7 @@ DECL_HANDLER(socket_get_events)
 {
     struct sock *sock = (struct sock *)get_handle_obj( current->process, req->handle, 0, &sock_ops );
     unsigned int status[13];
+    struct event *event = NULL;
     unsigned int i;
 
     if (get_reply_max_size() < sizeof(status))
@@ -3929,12 +3930,27 @@ DECL_HANDLER(socket_get_events)
 
     if (!sock) return;
 
+    if (req->event)
+    {
+        if (!(event = get_event_obj( current->process, req->event, EVENT_MODIFY_STATE )))
+        {
+            release_object( sock );
+            return;
+        }
+    }
+
     reply->flags = sock->pending_events & sock->mask;
     for (i = 0; i < ARRAY_SIZE( status ); ++i)
         status[i] = sock_get_ntstatus( sock->errors[i] );
 
     sock->pending_events &= ~sock->mask;
     sock_reselect( sock );
+
+    if (event)
+    {
+        reset_event( event );
+        release_object( event );
+    }
 
     set_reply_data( status, sizeof(status) );
 
