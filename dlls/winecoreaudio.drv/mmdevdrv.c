@@ -46,31 +46,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(coreaudio);
 
-#define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
-
 static WCHAR drv_key_devicesW[256];
-
-static CRITICAL_SECTION g_sessions_lock;
-static CRITICAL_SECTION_DEBUG g_sessions_lock_debug =
-{
-    0, 0, &g_sessions_lock,
-    { &g_sessions_lock_debug.ProcessLocksList, &g_sessions_lock_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": g_sessions_lock") }
-};
-static CRITICAL_SECTION g_sessions_lock = { &g_sessions_lock_debug, -1, 0, 0, 0, 0 };
-
-extern struct audio_session_wrapper *session_wrapper_create(
-    struct audio_client *client) DECLSPEC_HIDDEN;
-
-void DECLSPEC_HIDDEN sessions_lock(void)
-{
-    EnterCriticalSection(&g_sessions_lock);
-}
-
-void DECLSPEC_HIDDEN sessions_unlock(void)
-{
-    LeaveCriticalSection(&g_sessions_lock);
-}
 
 BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
 {
@@ -97,7 +73,6 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
     }
     case DLL_PROCESS_DETACH:
         if (reserved) break;
-        DeleteCriticalSection(&g_sessions_lock);
         break;
     }
     return TRUE;
@@ -304,15 +279,4 @@ BOOL WINAPI get_device_name_from_guid(const GUID *guid, char **name, EDataFlow *
     WARN("No matching device in registry for GUID %s\n", debugstr_guid(guid));
 
     return FALSE;
-}
-
-/* if channels == 0, then this will return or create a session with
- * matching dataflow and GUID. otherwise, channels must also match */
-extern HRESULT get_audio_session(const GUID *sessionguid,
-        IMMDevice *device, UINT channels, AudioSession **out);
-
-HRESULT WINAPI AUDDRV_GetAudioSessionWrapper(const GUID *guid, IMMDevice *device,
-                                             AudioSessionWrapper **out)
-{
-    return E_NOTIMPL;
 }
