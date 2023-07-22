@@ -48,8 +48,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(oss);
 
-#define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
-
 typedef struct _OSSDevice {
     struct list entry;
     EDataFlow flow;
@@ -61,28 +59,6 @@ static struct list g_devices = LIST_INIT(g_devices);
 
 static WCHAR drv_key_devicesW[256];
 static const WCHAR guidW[] = {'g','u','i','d',0};
-
-static CRITICAL_SECTION g_sessions_lock;
-static CRITICAL_SECTION_DEBUG g_sessions_lock_debug =
-{
-    0, 0, &g_sessions_lock,
-    { &g_sessions_lock_debug.ProcessLocksList, &g_sessions_lock_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": g_sessions_lock") }
-};
-static CRITICAL_SECTION g_sessions_lock = { &g_sessions_lock_debug, -1, 0, 0, 0, 0 };
-
-extern struct audio_session_wrapper *session_wrapper_create(
-    struct audio_client *client) DECLSPEC_HIDDEN;
-
-void DECLSPEC_HIDDEN sessions_lock(void)
-{
-    EnterCriticalSection(&g_sessions_lock);
-}
-
-void DECLSPEC_HIDDEN sessions_unlock(void)
-{
-    LeaveCriticalSection(&g_sessions_lock);
-}
 
 BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
 {
@@ -109,8 +85,6 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
         if (!reserved)
         {
             OSSDevice *iter, *iter2;
-
-            DeleteCriticalSection(&g_sessions_lock);
 
             LIST_FOR_EACH_ENTRY_SAFE(iter, iter2, &g_devices, OSSDevice, entry){
                 HeapFree(GetProcessHeap(), 0, iter);
@@ -291,15 +265,4 @@ end:
     }
 
     return params.result;
-}
-
-/* if channels == 0, then this will return or create a session with
- * matching dataflow and GUID. otherwise, channels must also match */
-extern HRESULT get_audio_session(const GUID *sessionguid,
-        IMMDevice *device, UINT channels, AudioSession **out);
-
-HRESULT WINAPI AUDDRV_GetAudioSessionWrapper(const GUID *guid, IMMDevice *device,
-                                             AudioSessionWrapper **out)
-{
-    return E_NOTIMPL;
 }
