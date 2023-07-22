@@ -7700,6 +7700,8 @@ static void test_write_watch(void)
         return;
     }
 
+    /* Windows 11 no longer triggers write watches anymore. */
+
     tcp_socketpair(&src, &dest);
 
     memset(&ov, 0, sizeof(ov));
@@ -7730,7 +7732,7 @@ static void test_write_watch(void)
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-    ok( count == 9, "wrong count %Iu\n", count );
+    ok( count == 9 || !count /* Win 11 */, "wrong count %Iu\n", count );
     ok( !base[0], "data set\n" );
 
     send(src, "test message", sizeof("test message"), 0);
@@ -7761,7 +7763,7 @@ static void test_write_watch(void)
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-    ok( count == 5, "wrong count %Iu\n", count );
+    ok( count == 5 || !count /* Win 11 */, "wrong count %Iu\n", count );
     ok( !base[0], "data set\n" );
 
     send(src, "test message", sizeof("test message"), 0);
@@ -7795,7 +7797,7 @@ static void test_write_watch(void)
         count = 64;
         ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
         ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-        ok( count == 8, "wrong count %Iu\n", count );
+        ok( count == 8 || !count /* Win 11 */, "wrong count %Iu\n", count );
 
         send(src, "test message", sizeof("test message"), 0);
         WaitForSingleObject( thread, 10000 );
