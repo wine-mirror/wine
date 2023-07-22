@@ -1533,6 +1533,8 @@ static void test_msg_output( const struct lparam_hook_test *test, LRESULT result
     else
         expected = test->lparam;
     if (expected)
+        todo_wine_if((test->message == CB_GETLBTEXT && test->msg_result == 7) ||
+                     (test->message == LB_GETTEXT && test->msg_result == 7))
         ok( !memcmp( lparam_buffer, expected, test->lparam_size ), "unexpected lparam content\n" );
 
     todo_wine_if(test->todo)
@@ -1578,8 +1580,13 @@ static void init_hook_test( const struct lparam_hook_test *test )
     retwnd_hook_lparam = 0;
     retwnd_hook_lparam2 = 0;
 
-    if (test->lparam_size && test->lparam)
-        memcpy( lparam_buffer, test->lparam, test->lparam_size );
+    if (test->lparam_size)
+    {
+        if (test->lparam)
+            memcpy( lparam_buffer, test->lparam, test->lparam_size );
+        else
+            memset( lparam_buffer, 0xcc, test->lparam_size );
+    }
 }
 
 static void test_wndproc_hook(void)
@@ -1593,8 +1600,9 @@ static void test_wndproc_hook(void)
 
     static const BOOL false_lparam = FALSE;
     static const WCHAR strbufW[8] = L"abc\0defg";
-    static const WCHAR strbuf2W[8] = L"\0bc\0defg";
+    static const WCHAR strbuf2W[8] = L"\0\xcccc\xcccc\xcccc\xcccc\xcccc\xcccc\xcccc";
     static const WCHAR strbuf3W[8] = L"abcdefgh";
+    static const WCHAR strbuf4W[8] = L"abc\0\xcccc\xcccc\xcccc\xcccc";
     static const RECT rect_in = { 1, 2, 100, 200 };
     static const RECT rect_out = { 3, 4, 110, 220 };
 
@@ -1628,27 +1636,27 @@ static void test_wndproc_hook(void)
         },
         {
             "WM_GETTEXT2", WM_GETTEXT, .wparam = 8, .msg_result = 1,
-            .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbufW,
+            .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbuf4W,
         },
         {
             "WM_GETTEXT3", WM_GETTEXT, .wparam = 8, .msg_result = 9,
-            .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbufW,
+            .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbuf4W,
         },
         {
             "WM_ASKCBFORMATNAME", WM_ASKCBFORMATNAME, .wparam = 8,
-            .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbufW,
+            .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbuf4W,
         },
         {
             "WM_ASKCBFORMATNAME2", WM_ASKCBFORMATNAME, .wparam = 8, .msg_result = 1,
-            .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbufW,
+            .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbuf4W,
         },
         {
             "WM_ASKCBFORMATNAME3", WM_ASKCBFORMATNAME, .wparam = 8, .msg_result = 9,
-            .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbufW,
+            .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbuf4W,
         },
         {
             "CB_GETLBTEXT", CB_GETLBTEXT, .msg_result = 7, .check_result = 4, .todo_result = TRUE,
-            .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbufW,
+            .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbuf4W,
             .todo = TRUE
         },
         {
@@ -1663,7 +1671,7 @@ static void test_wndproc_hook(void)
         },
         {
             "LB_GETTEXT", LB_GETTEXT, .msg_result = 7, .check_result = 4, .todo_result = TRUE,
-            .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbufW,
+            .lparam_size = sizeof(strbufW), .change_lparam = strbufW, .check_lparam = strbuf4W,
             .todo = TRUE
         },
         {
