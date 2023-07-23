@@ -1239,6 +1239,20 @@ static void test_font_transform(void)
     todo_wine
     expectf_(1532.984985, bounds.Height, 0.05);
 
+    GdipDeleteGraphics(graphics);
+
+    SetMapMode( hdc, MM_ISOTROPIC);
+    SetWindowExtEx(hdc, 200, 200, NULL);
+    SetViewportExtEx(hdc, 100, 100, NULL);
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    status = GdipGetLogFontA(font, graphics, &lf);
+    expect(Ok, status);
+    expect(-50, lf.lfHeight);
+    expect(0, lf.lfWidth);
+    expect(0, lf.lfEscapement);
+    expect(0, lf.lfOrientation);
+
     GdipDeleteMatrix(matrix);
     GdipDeleteFont(font);
     GdipDeleteGraphics(graphics);
