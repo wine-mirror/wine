@@ -2058,17 +2058,20 @@ static void test_get_events_reset(void)
 
     tcp_socketpair(&client, &server);
 
-    ret = WSAEventSelect(client, event, FD_ACCEPT | FD_CONNECT | FD_CLOSE | FD_OOB | FD_READ | FD_WRITE);
+    ret = WSAEventSelect(client, event, FD_ACCEPT | FD_CLOSE | FD_OOB | FD_READ);
     ok(!ret, "got error %lu\n", GetLastError());
 
     close_with_rst(server);
+
+    ret = WaitForSingleObject(event, 1000);
+    ok(!ret, "got %d\n", ret);
 
     memset(&params, 0xcc, sizeof(params));
     memset(&io, 0xcc, sizeof(io));
     ret = NtDeviceIoControlFile((HANDLE)client, NULL, NULL, NULL, &io,
             IOCTL_AFD_GET_EVENTS, NULL, 0, &params, sizeof(params));
     ok(!ret, "got %#x\n", ret);
-    ok(params.flags == (AFD_POLL_RESET | AFD_POLL_CONNECT | AFD_POLL_WRITE), "got flags %#x\n", params.flags);
+    ok(params.flags == AFD_POLL_RESET, "got flags %#x\n", params.flags);
     for (i = 0; i < ARRAY_SIZE(params.status); ++i)
         ok(!params.status[i], "got status[%u] %#x\n", i, params.status[i]);
 
@@ -2076,17 +2079,21 @@ static void test_get_events_reset(void)
 
     tcp_socketpair(&client, &server);
 
-    ret = WSAEventSelect(server, event, FD_ACCEPT | FD_CONNECT | FD_CLOSE | FD_OOB | FD_READ | FD_WRITE);
+    ResetEvent(event);
+    ret = WSAEventSelect(server, event, FD_ACCEPT | FD_CLOSE | FD_OOB | FD_READ);
     ok(!ret, "got error %lu\n", GetLastError());
 
     close_with_rst(client);
+
+    ret = WaitForSingleObject(event, 1000);
+    ok(!ret, "got %d\n", ret);
 
     memset(&params, 0xcc, sizeof(params));
     memset(&io, 0xcc, sizeof(io));
     ret = NtDeviceIoControlFile((HANDLE)server, NULL, NULL, NULL, &io,
             IOCTL_AFD_GET_EVENTS, NULL, 0, &params, sizeof(params));
     ok(!ret, "got %#x\n", ret);
-    ok(params.flags == (AFD_POLL_RESET | AFD_POLL_WRITE), "got flags %#x\n", params.flags);
+    ok(params.flags == AFD_POLL_RESET, "got flags %#x\n", params.flags);
     for (i = 0; i < ARRAY_SIZE(params.status); ++i)
         ok(!params.status[i], "got status[%u] %#x\n", i, params.status[i]);
 
