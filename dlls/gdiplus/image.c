@@ -3577,6 +3577,55 @@ static HRESULT png_read_chromaticity(IWICMetadataReader *reader, GpBitmap *bitma
     return S_OK;
 }
 
+static HRESULT png_add_unit_properties(IWICBitmapFrameDecode *frame, GpBitmap *bitmap)
+{
+    HRESULT hr;
+    double dpiX, dpiY;
+    PropertyItem *unit, *unitX, *unitY;
+
+    hr = IWICBitmapFrameDecode_GetResolution(frame, &dpiX, &dpiY);
+    if (FAILED(hr))
+        return hr;
+
+    unit = heap_alloc_zero(sizeof(*unit) + 1);
+    unitX = heap_alloc_zero(sizeof(*unitX) + 4);
+    unitY = heap_alloc_zero(sizeof(*unitY) + 4);
+
+    if (!unit || !unitX || !unitY)
+    {
+        heap_free(unit);
+        heap_free(unitX);
+        heap_free(unitY);
+        return E_OUTOFMEMORY;
+    }
+
+    unit->type = PropertyTagTypeByte;
+    unit->id = PropertyTagPixelUnit;
+    unit->length = 1;
+    unit->value = unit + 1;
+    *(BYTE *)unit->value = 1;
+    add_property(bitmap, unit);
+    heap_free(unit);
+
+    unitX->type = PropertyTagTypeLong;
+    unitX->id = PropertyTagPixelPerUnitX;
+    unitX->length = 4;
+    unitX->value = unitX + 1;
+    *(ULONG *)unitX->value = (dpiX == 96.0) ? 0 : gdip_round(dpiX / 0.0254);
+    add_property(bitmap, unitX);
+    heap_free(unitX);
+
+    unitY->type = PropertyTagTypeLong;
+    unitY->id = PropertyTagPixelPerUnitY;
+    unitY->length = 4;
+    unitY->value = unitY + 1;
+    *(ULONG *)unitY->value = (dpiY == 96.0) ? 0 : gdip_round(dpiY / 0.0254);
+    add_property(bitmap, unitY);
+    heap_free(unitY);
+
+    return S_OK;
+}
+
 static void png_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UINT active_frame)
 {
     HRESULT hr;
@@ -3650,6 +3699,8 @@ static void png_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
 
     if (seen_text)
         heap_free(seen_text);
+
+    png_add_unit_properties(frame, bitmap);
 
     IWICMetadataBlockReader_Release(block_reader);
 

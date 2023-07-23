@@ -3768,7 +3768,7 @@ static void check_properties_get_all(GpImage *image, const struct property_test_
     total_count = 0xdeadbeef;
     status = GdipGetPropertySize(image, &total_size, &total_count);
     expect(Ok, status);
-    ok(prop_size == total_size,
+    ok(prop_size == total_size || prop_size == ~0,
        "expected total property size %u, got %u\n", prop_size, total_size);
     ok(count == total_count || broken(count_broken != ~0 && count_broken == total_count),
        "expected total property count %u, got %u\n", count, total_count);
@@ -5790,6 +5790,99 @@ static void test_png_save_palette(void)
     GlobalFree(hglob);
 }
 
+static const BYTE png_minimal[] = {
+  0x89,'P','N','G',0x0d,0x0a,0x1a,0x0a,
+  0x00,0x00,0x00,0x0d,'I','H','D','R',0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x02,0x00,0x00,0x00,0xff,0xff,0xff,0xff,
+  0x00,0x00,0x00,0x0c,'I','D','A','T',0x08,0xd7,0x63,0xf8,0xff,0xff,0x3f,0x00,0x05,0xfe,0x02,0xfe,0xdc,0xcc,0x59,0xe7,
+  0x00,0x00,0x00,0x00,'I','E','N','D',0xae,0x42,0x60,0x82
+};
+
+static const BYTE png_phys[] = {
+  0x89,'P','N','G',0x0d,0x0a,0x1a,0x0a,
+  0x00,0x00,0x00,0x0d,'I','H','D','R',0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,0xde,
+  0x00,0x00,0x00,0x09,'p','H','Y','s',0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,
+  0x00,0x00,0x00,0x0c,'I','D','A','T',0x08,0xd7,0x63,0xf8,0xff,0xff,0x3f,0x00,0x05,0xfe,0x02,0xfe,0xdc,0xcc,0x59,0xe7,
+  0x00,0x00,0x00,0x00,'I','E','N','D',0xae,0x42,0x60,0x82
+};
+
+static void test_png_unit_properties(void)
+{
+    GpImage *image;
+    UINT pHYs_off = 0, i;
+    static const struct {
+        BYTE unit;
+        ULONG unitX;
+        ULONG unitY;
+    } td[] =
+    {
+        {},
+        {1, 0, 0},
+        {0, 1000, 1000},
+        {1, 1000, 1000},
+        {1, 3780, 3780},
+    };
+    struct property_test_data prop_td[][3] =
+    {
+       {{ PropertyTagTypeByte, PropertyTagPixelUnit, 1, { 1 } },
+        { PropertyTagTypeLong, PropertyTagPixelPerUnitX, 4, { 0,0,0,0 } },
+        { PropertyTagTypeLong, PropertyTagPixelPerUnitY, 4, { 0,0,0,0 } }},
+       {{ PropertyTagTypeByte, PropertyTagPixelUnit, 1, { 1 } },
+        { PropertyTagTypeLong, PropertyTagPixelPerUnitX, 4, { 0,0,0,0 } },
+        { PropertyTagTypeLong, PropertyTagPixelPerUnitY, 4, { 0,0,0,0 } }},
+       {{ PropertyTagTypeByte, PropertyTagPixelUnit, 1, { 1 }, FALSE, TRUE },
+        { PropertyTagTypeLong, PropertyTagPixelPerUnitX, 4, { 0,0,0,0 }, FALSE, TRUE },
+        { PropertyTagTypeLong, PropertyTagPixelPerUnitY, 4, { 0,0,0,0 }, FALSE, TRUE }},
+       {{ PropertyTagTypeByte, PropertyTagPixelUnit, 1, { 1 } },
+        { PropertyTagTypeLong, PropertyTagPixelPerUnitX, 4, { 0xe8,0x03,0,0 } },
+        { PropertyTagTypeLong, PropertyTagPixelPerUnitY, 4, { 0xe8,0x03,0,0 } }},
+       {{ PropertyTagTypeByte, PropertyTagPixelUnit, 1, { 1 } },
+        { PropertyTagTypeLong, PropertyTagPixelPerUnitX, 4, { 0xc4,0x0e,0,0 } },
+        { PropertyTagTypeLong, PropertyTagPixelPerUnitY, 4, { 0xc4,0x0e,0,0 } }},
+    };
+    BYTE buf[sizeof(png_phys)];
+
+
+    for (i = 0; i < sizeof(png_phys) - 4; i++)
+    {
+        if (!memcmp(png_phys + i, "pHYs", 4))
+            pHYs_off = i;
+    }
+
+    ok(pHYs_off, "pHYs offset %d\n", pHYs_off);
+    if (!pHYs_off)
+        return;
+
+    for (i = 0; i < ARRAY_SIZE(td); i++)
+    {
+        if (i == 0)
+            image = load_image(png_minimal, sizeof(png_minimal), TRUE, FALSE);
+        else
+        {
+            memcpy(buf, png_phys, sizeof(png_phys));
+            buf[pHYs_off + 4] = (td[i].unitX >> 24) & 0xff;
+            buf[pHYs_off + 5] = (td[i].unitX >> 16) & 0xff;
+            buf[pHYs_off + 6] = (td[i].unitX >> 8) & 0xff;
+            buf[pHYs_off + 7] = td[i].unitX & 0xff;
+            buf[pHYs_off + 8] = (td[i].unitY >> 24) & 0xff;
+            buf[pHYs_off + 9] = (td[i].unitY >> 16) & 0xff;
+            buf[pHYs_off + 10] = (td[i].unitY >> 8) & 0xff;
+            buf[pHYs_off + 11] = td[i].unitY & 0xff;
+            buf[pHYs_off + 12] = td[i].unit;
+            image = load_image(buf, sizeof(buf), TRUE, FALSE);
+        }
+
+        ok(image != NULL, "%u: Failed to load PNG image data\n", i);
+        if (!image)
+            continue;
+
+        winetest_push_context("%s test %u", __FUNCTION__, i);
+        check_properties_get_all(image, prop_td[i], 3, NULL, 0, ~0);
+        winetest_pop_context();
+
+        GdipDisposeImage(image);
+    }
+}
+
 static void test_GdipLoadImageFromStream(void)
 {
     IStream *stream;
@@ -6034,6 +6127,7 @@ START_TEST(image)
     test_GdipInitializePalette();
     test_png_color_formats();
     test_png_save_palette();
+    test_png_unit_properties();
     test_supported_encoders();
     test_CloneBitmapArea();
     test_ARGB_conversion();
