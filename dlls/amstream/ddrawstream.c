@@ -324,6 +324,10 @@ static HRESULT WINAPI ddraw_IAMMediaStream_Initialize(IAMMediaStream *iface, IUn
     stream->purpose_id = *purpose_id;
     stream->stream_type = stream_type;
 
+    if (stream->ddraw)
+        IDirectDraw_Release(stream->ddraw);
+    stream->ddraw = NULL;
+
     if (source_object
             && FAILED(hr = IUnknown_QueryInterface(source_object, &IID_IDirectDraw, (void **)&stream->ddraw)))
         FIXME("Stream object doesn't implement IDirectDraw interface, hr %#lx.\n", hr);
