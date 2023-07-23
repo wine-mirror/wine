@@ -3451,17 +3451,15 @@ static ULONG get_ulong_by_index(IWICMetadataReader* reader, ULONG index)
     return result;
 }
 
-static void png_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UINT active_frame)
+static HRESULT png_read_text(IWICMetadataReader *reader, GpBitmap *bitmap, BOOL **seen_text)
 {
     HRESULT hr;
-    IWICBitmapFrameDecode *frame;
-    IWICMetadataBlockReader *block_reader;
-    IWICMetadataReader *reader;
-    UINT block_count, i, j;
-    struct keyword_info {
+    UINT i;
+    PROPVARIANT name, value;
+    PropertyItem* item;
+    static const struct keyword_info {
         const char* name;
         PROPID propid;
-        BOOL seen;
     } keywords[] = {
         { "Title", PropertyTagImageTitle },
         { "Author", PropertyTagArtist },
@@ -3471,133 +3469,189 @@ static void png_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
         { "Source", PropertyTagEquipModel },
         { "Comment", PropertyTagExifUserComment },
     };
+
+    if (*seen_text == NULL)
+        *seen_text = heap_alloc_zero(sizeof(BOOL) * ARRAY_SIZE(keywords));
+    if (*seen_text == NULL)
+        return E_OUTOFMEMORY;
+
+    hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, &name, &value);
+    if (FAILED(hr))
+        return hr;
+
+    if (name.vt == VT_LPSTR)
+    {
+        for (i = 0; i < ARRAY_SIZE(keywords); i++)
+        {
+            if (!strcmp(keywords[i].name, name.pszVal))
+                break;
+        }
+        if (i < ARRAY_SIZE(keywords) && !(*seen_text)[i])
+        {
+            (*seen_text)[i] = TRUE;
+            item = create_prop(keywords[i].propid, &value);
+            if (item)
+                add_property(bitmap, item);
+            heap_free(item);
+        }
+    }
+
+    PropVariantClear(&name);
+    PropVariantClear(&value);
+
+    return S_OK;
+}
+
+static HRESULT png_read_gamma(IWICMetadataReader *reader, GpBitmap *bitmap)
+{
+    PropertyItem* item;
+    ULONG *rational;
+
+    item = heap_alloc_zero(sizeof(*item) + sizeof(ULONG) * 2);
+    if (!item)
+        return E_OUTOFMEMORY;
+
+    item->length = sizeof(ULONG) * 2;
+    item->type = PropertyTagTypeRational;
+    item->id = PropertyTagGamma;
+    rational = item->value = item + 1;
+    rational[0] = 100000;
+    rational[1] = get_ulong_by_index(reader, 0);
+    add_property(bitmap, item);
+    heap_free(item);
+
+    return S_OK;
+}
+
+static HRESULT png_read_whitepoint(IWICMetadataReader *reader, GpBitmap *bitmap)
+{
+    PropertyItem* item;
+    ULONG *rational;
+
+    item = heap_alloc_zero(sizeof(*item) + sizeof(ULONG) * 4);
+    if (!item)
+        return E_OUTOFMEMORY;
+
+    item->length = sizeof(ULONG) * 4;
+    item->type = PropertyTagTypeRational;
+    item->id = PropertyTagWhitePoint;
+    rational = item->value = item + 1;
+    rational[0] = get_ulong_by_index(reader, 0);
+    rational[1] = 100000;
+    rational[2] = get_ulong_by_index(reader, 1);
+    rational[3] = 100000;
+    add_property(bitmap, item);
+    heap_free(item);
+
+    return S_OK;
+}
+
+static HRESULT png_read_chromaticity(IWICMetadataReader *reader, GpBitmap *bitmap)
+{
+    PropertyItem* item;
+    ULONG *rational;
+
+    item = heap_alloc_zero(sizeof(*item) + sizeof(ULONG) * 12);
+    if (!item)
+        return E_OUTOFMEMORY;
+
+    item->length = sizeof(ULONG) * 12;
+    item->type = PropertyTagTypeRational;
+    item->id = PropertyTagPrimaryChromaticities;
+    rational = item->value = item + 1;
+    rational[0] = get_ulong_by_index(reader, 2);
+    rational[1] = 100000;
+    rational[2] = get_ulong_by_index(reader, 3);
+    rational[3] = 100000;
+    rational[4] = get_ulong_by_index(reader, 4);
+    rational[5] = 100000;
+    rational[6] = get_ulong_by_index(reader, 5);
+    rational[7] = 100000;
+    rational[8] = get_ulong_by_index(reader, 6);
+    rational[9] = 100000;
+    rational[10] = get_ulong_by_index(reader, 7);
+    rational[11] = 100000;
+    add_property(bitmap, item);
+    heap_free(item);
+
+    return S_OK;
+}
+
+static void png_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UINT active_frame)
+{
+    HRESULT hr;
+    IWICBitmapFrameDecode *frame;
+    IWICMetadataBlockReader *block_reader;
+    UINT block_count, i;
     BOOL seen_gamma=FALSE, seen_whitepoint=FALSE, seen_chrm=FALSE;
+    BOOL *seen_text = NULL;
 
     hr = IWICBitmapDecoder_GetFrame(decoder, active_frame, &frame);
-    if (hr != S_OK) return;
+    if (hr != S_OK)
+        return;
 
     hr = IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICMetadataBlockReader, (void **)&block_reader);
-    if (hr == S_OK)
+    if (hr != S_OK)
     {
-        hr = IWICMetadataBlockReader_GetCount(block_reader, &block_count);
-        if (hr == S_OK)
+        IWICBitmapFrameDecode_Release(frame);
+        return;
+    }
+
+    hr = IWICMetadataBlockReader_GetCount(block_reader, &block_count);
+    if (hr != S_OK)
+    {
+        IWICMetadataBlockReader_Release(block_reader);
+        IWICBitmapFrameDecode_Release(frame);
+        return;
+    }
+
+    for (i = 0; i < block_count; i++)
+    {
+        IWICMetadataReader *reader;
+        GUID format;
+
+        hr = IWICMetadataBlockReader_GetReaderByIndex(block_reader, i, &reader);
+        if (hr != S_OK)
+            continue;
+
+        hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+        if (FAILED(hr))
         {
-            for (i = 0; i < block_count; i++)
+            IWICMetadataReader_Release(reader);
+            continue;
+        }
+
+        if (IsEqualGUID(&GUID_MetadataFormatChunktEXt, &format))
+            png_read_text(reader, bitmap, &seen_text);
+        else if (IsEqualGUID(&GUID_MetadataFormatChunkgAMA, &format))
+        {
+            if (!seen_gamma)
             {
-                hr = IWICMetadataBlockReader_GetReaderByIndex(block_reader, i, &reader);
-                if (hr == S_OK)
-                {
-                    GUID format;
-
-                    hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
-                    if (SUCCEEDED(hr) && IsEqualGUID(&GUID_MetadataFormatChunktEXt, &format))
-                    {
-                        PROPVARIANT name, value;
-                        PropertyItem* item;
-
-                        hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, &name, &value);
-
-                        if (SUCCEEDED(hr))
-                        {
-                            if (name.vt == VT_LPSTR)
-                            {
-                                for (j = 0; j < ARRAY_SIZE(keywords); j++)
-                                    if (!strcmp(keywords[j].name, name.pszVal))
-                                        break;
-                                if (j < ARRAY_SIZE(keywords) && !keywords[j].seen)
-                                {
-                                    keywords[j].seen = TRUE;
-                                    item = create_prop(keywords[j].propid, &value);
-                                    if (item)
-                                        add_property(bitmap, item);
-                                    heap_free(item);
-                                }
-                            }
-
-                            PropVariantClear(&name);
-                            PropVariantClear(&value);
-                        }
-                    }
-                    else if (SUCCEEDED(hr) && IsEqualGUID(&GUID_MetadataFormatChunkgAMA, &format))
-                    {
-                        PropertyItem* item;
-
-                        if (!seen_gamma)
-                        {
-                            item = heap_alloc_zero(sizeof(PropertyItem) + sizeof(ULONG) * 2);
-                            if (item)
-                            {
-                                ULONG *rational;
-                                item->length = sizeof(ULONG) * 2;
-                                item->type = PropertyTagTypeRational;
-                                item->id = PropertyTagGamma;
-                                rational = item->value = item + 1;
-                                rational[0] = 100000;
-                                rational[1] = get_ulong_by_index(reader, 0);
-                                add_property(bitmap, item);
-                                seen_gamma = TRUE;
-                                heap_free(item);
-                            }
-                        }
-                    }
-                    else if (SUCCEEDED(hr) && IsEqualGUID(&GUID_MetadataFormatChunkcHRM, &format))
-                    {
-                        PropertyItem* item;
-
-                        if (!seen_whitepoint)
-                        {
-                            item = GdipAlloc(sizeof(PropertyItem) + sizeof(ULONG) * 4);
-                            if (item)
-                            {
-                                ULONG *rational;
-                                item->length = sizeof(ULONG) * 4;
-                                item->type = PropertyTagTypeRational;
-                                item->id = PropertyTagWhitePoint;
-                                rational = item->value = item + 1;
-                                rational[0] = get_ulong_by_index(reader, 0);
-                                rational[1] = 100000;
-                                rational[2] = get_ulong_by_index(reader, 1);
-                                rational[3] = 100000;
-                                add_property(bitmap, item);
-                                seen_whitepoint = TRUE;
-                                GdipFree(item);
-                            }
-                        }
-                        if (!seen_chrm)
-                        {
-                            item = GdipAlloc(sizeof(PropertyItem) + sizeof(ULONG) * 12);
-                            if (item)
-                            {
-                                ULONG *rational;
-                                item->length = sizeof(ULONG) * 12;
-                                item->type = PropertyTagTypeRational;
-                                item->id = PropertyTagPrimaryChromaticities;
-                                rational = item->value = item + 1;
-                                rational[0] = get_ulong_by_index(reader, 2);
-                                rational[1] = 100000;
-                                rational[2] = get_ulong_by_index(reader, 3);
-                                rational[3] = 100000;
-                                rational[4] = get_ulong_by_index(reader, 4);
-                                rational[5] = 100000;
-                                rational[6] = get_ulong_by_index(reader, 5);
-                                rational[7] = 100000;
-                                rational[8] = get_ulong_by_index(reader, 6);
-                                rational[9] = 100000;
-                                rational[10] = get_ulong_by_index(reader, 7);
-                                rational[11] = 100000;
-                                add_property(bitmap, item);
-                                seen_chrm = TRUE;
-                                GdipFree(item);
-                            }
-                        }
-                    }
-
-                    IWICMetadataReader_Release(reader);
-                }
+                hr = png_read_gamma(reader, bitmap);
+                seen_gamma = SUCCEEDED(hr);
             }
         }
-        IWICMetadataBlockReader_Release(block_reader);
+        else if (IsEqualGUID(&GUID_MetadataFormatChunkcHRM, &format))
+        {
+            if (!seen_whitepoint)
+            {
+                hr = png_read_whitepoint(reader, bitmap);
+                seen_whitepoint = SUCCEEDED(hr);
+            }
+            if (!seen_chrm)
+            {
+                hr = png_read_chromaticity(reader, bitmap);
+                seen_chrm = SUCCEEDED(hr);
+            }
+        }
+
+        IWICMetadataReader_Release(reader);
     }
+
+    if (seen_text)
+        heap_free(seen_text);
+
+    IWICMetadataBlockReader_Release(block_reader);
 
     IWICBitmapFrameDecode_Release(frame);
 }
