@@ -3620,6 +3620,26 @@ static HRESULT png_read_time(IWICMetadataReader *reader, GpBitmap *bitmap)
     return S_OK;
 }
 
+static HRESULT png_read_histogram(IWICMetadataReader *reader, GpBitmap *bitmap)
+{
+    HRESULT hr;
+    PropertyItem* item;
+    PROPVARIANT value;
+
+    hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, NULL, &value);
+    if (FAILED(hr))
+        return hr;
+
+    item = create_prop(PropertyTagPaletteHistogram, &value);
+    if (item)
+        add_property(bitmap, item);
+    heap_free(item);
+
+    PropVariantClear(&value);
+
+    return S_OK;
+}
+
 static HRESULT png_add_unit_properties(IWICBitmapFrameDecode *frame, GpBitmap *bitmap)
 {
     HRESULT hr;
@@ -3675,7 +3695,7 @@ static void png_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
     IWICBitmapFrameDecode *frame;
     IWICMetadataBlockReader *block_reader;
     UINT block_count, i;
-    BOOL seen_gamma=FALSE, seen_whitepoint=FALSE, seen_chrm=FALSE, seen_time=FALSE;
+    BOOL seen_gamma=FALSE, seen_whitepoint=FALSE, seen_chrm=FALSE, seen_time=FALSE, seen_histogram=FALSE;
     BOOL *seen_text = NULL;
 
     hr = IWICBitmapDecoder_GetFrame(decoder, active_frame, &frame);
@@ -3742,6 +3762,14 @@ static void png_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
             {
                 hr = png_read_time(reader, bitmap);
                 seen_time = SUCCEEDED(hr);
+            }
+        }
+        else if (IsEqualGUID(&GUID_MetadataFormatChunkhIST, &format))
+        {
+            if (!seen_histogram)
+            {
+                hr = png_read_histogram(reader, bitmap);
+                seen_histogram = SUCCEEDED(hr);
             }
         }
 

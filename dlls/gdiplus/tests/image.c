@@ -5813,6 +5813,14 @@ static const BYTE png_time[] = {
   0x00,0x00,0x00,0x00,'I','E','N','D',0xae,0x42,0x60,0x82
 };
 
+static const BYTE png_hist[] = {
+  0x89,'P','N','G',0x0d,0x0a,0x1a,0x0a,
+  0x00,0x00,0x00,0x0d,'I','H','D','R',0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,0xde,
+  0x00,0x00,0x00,0x08,'h','I','S','T',0x00,0x01,0x00,0x02,0x00,0x03,0x00,0x04,0xff,0xff,0xff,0xff,
+  0x00,0x00,0x00,0x0c,'I','D','A','T',0x08,0xd7,0x63,0xf8,0xff,0xff,0x3f,0x00,0x05,0xfe,0x02,0xfe,0xdc,0xcc,0x59,0xe7,
+  0x00,0x00,0x00,0x00,'I','E','N','D',0xae,0x42,0x60,0x82
+};
+
 static void test_png_unit_properties(void)
 {
     GpImage *image;
@@ -5908,6 +5916,30 @@ static void test_png_datetime_property(void)
 
     winetest_push_context("%s", __FUNCTION__);
     check_properties_get_all(image, td, ARRAY_SIZE(td), td, 1, ~0);
+    winetest_pop_context();
+
+    GdipDisposeImage(image);
+}
+
+static void test_png_histogram_property(void)
+{
+    struct property_test_data td[] =
+    {
+        { PropertyTagTypeShort, PropertyTagPaletteHistogram, 8, { 1,0,2,0,3,0,4,0 } },
+        { PropertyTagTypeByte, PropertyTagPixelUnit, 1, { 1 } },
+        { PropertyTagTypeLong, PropertyTagPixelPerUnitX, 4, { 0,0,0,0 } },
+        { PropertyTagTypeLong, PropertyTagPixelPerUnitY, 4, { 0,0,0,0 } },
+    };
+
+    GpImage *image = load_image(png_hist, sizeof(png_hist), TRUE, FALSE);
+    if (!image)
+    {
+        win_skip("broken PNG histogram support\n");
+        return;
+    }
+
+    winetest_push_context("%s", __FUNCTION__);
+    check_properties_get_all(image, td, ARRAY_SIZE(td), NULL, 0, ~0);
     winetest_pop_context();
 
     GdipDisposeImage(image);
@@ -6159,6 +6191,7 @@ START_TEST(image)
     test_png_save_palette();
     test_png_unit_properties();
     test_png_datetime_property();
+    test_png_histogram_property();
     test_supported_encoders();
     test_CloneBitmapArea();
     test_ARGB_conversion();
