@@ -5991,6 +5991,9 @@ static void test_ddrawstream_begin_flush_end_flush(void)
     IDirectDrawMediaStream_Release(ddraw_stream);
     ref = IMediaStream_Release(stream);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    IPin_Release(pin2);
+    ref = IAMMediaStream_Release(stream2);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
 static void test_ddrawstream_new_segment(void)
