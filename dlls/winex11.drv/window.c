@@ -1526,7 +1526,7 @@ Window get_dummy_parent(void)
         dummy_parent = XCreateWindow( gdi_display, root_window, -1, -1, 1, 1, 0, default_visual.depth,
                                       InputOutput, default_visual.visual,
                                       CWColormap | CWBorderPixel | CWOverrideRedirect, &attrib );
-        WARN("Xshape support is not compiled in. Applications under XWayland may have poor performance.");
+        WARN("Xshape support is not compiled in. Applications under XWayland may have poor performance.\n");
 #endif
         XMapWindow( gdi_display, dummy_parent );
     }
