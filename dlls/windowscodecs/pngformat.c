@@ -25,6 +25,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
+#include "shlwapi.h"
 
 #include "wincodecs_private.h"
 
@@ -63,14 +64,14 @@ static HRESULT LoadTextMetadata(IStream *stream, const GUID *preferred_vendor,
     value_len = data_size - name_len - 1;
 
     result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem));
-    name = HeapAlloc(GetProcessHeap(), 0, name_len + 1);
-    value = HeapAlloc(GetProcessHeap(), 0, value_len + 1);
+    name = CoTaskMemAlloc(name_len + 1);
+    value = CoTaskMemAlloc(value_len + 1);
     if (!result || !name || !value)
     {
         HeapFree(GetProcessHeap(), 0, data);
         HeapFree(GetProcessHeap(), 0, result);
-        HeapFree(GetProcessHeap(), 0, name);
-        HeapFree(GetProcessHeap(), 0, value);
+        CoTaskMemFree(name);
+        CoTaskMemFree(value);
         return E_OUTOFMEMORY;
     }
 
@@ -131,19 +132,17 @@ static HRESULT LoadGamaMetadata(IStream *stream, const GUID *preferred_vendor,
     HeapFree(GetProcessHeap(), 0, data);
 
     result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem));
-    name = HeapAlloc(GetProcessHeap(), 0, sizeof(L"ImageGamma"));
+    SHStrDupW(L"ImageGamma", &name);
     if (!result || !name)
     {
         HeapFree(GetProcessHeap(), 0, result);
-        HeapFree(GetProcessHeap(), 0, name);
+        CoTaskMemFree(name);
         return E_OUTOFMEMORY;
     }
 
     PropVariantInit(&result[0].schema);
     PropVariantInit(&result[0].id);
     PropVariantInit(&result[0].value);
-
-    memcpy(name, L"ImageGamma", sizeof(L"ImageGamma"));
 
     result[0].id.vt = VT_LPWSTR;
     result[0].id.pwszVal = name;
@@ -200,14 +199,14 @@ static HRESULT LoadChrmMetadata(IStream *stream, const GUID *preferred_vendor,
     result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem)*8);
     for (i=0; i<8; i++)
     {
-        dyn_names[i] = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*(lstrlenW(names[i])+1));
+        SHStrDupW(names[i], &dyn_names[i]);
         if (!dyn_names[i]) break;
     }
     if (!result || i < 8)
     {
         HeapFree(GetProcessHeap(), 0, result);
         for (i=0; i<8; i++)
-            HeapFree(GetProcessHeap(), 0, dyn_names[i]);
+            CoTaskMemFree(dyn_names[i]);
         HeapFree(GetProcessHeap(), 0, data);
         return E_OUTOFMEMORY;
     }
@@ -219,7 +218,6 @@ static HRESULT LoadChrmMetadata(IStream *stream, const GUID *preferred_vendor,
         PropVariantInit(&result[i].id);
         result[i].id.vt = VT_LPWSTR;
         result[i].id.pwszVal = dyn_names[i];
-        lstrcpyW(dyn_names[i], names[i]);
 
         PropVariantInit(&result[i].value);
         result[i].value.vt = VT_UI4;

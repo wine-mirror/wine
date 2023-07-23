@@ -25,6 +25,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
+#include "shlwapi.h"
 
 #include "ungif.h"
 
@@ -68,14 +69,6 @@ struct image_descriptor
 
 #include "poppack.h"
 
-static LPWSTR strdupAtoW(const char *src)
-{
-    int len = MultiByteToWideChar(CP_ACP, 0, src, -1, NULL, 0);
-    LPWSTR dst = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    if (dst) MultiByteToWideChar(CP_ACP, 0, src, -1, dst, len);
-    return dst;
-}
-
 static HRESULT load_LSD_metadata(IStream *stream, const GUID *vendor, DWORD options,
                                  MetadataItem **items, DWORD *count)
 {
@@ -101,49 +94,49 @@ static HRESULT load_LSD_metadata(IStream *stream, const GUID *vendor, DWORD opti
     }
 
     result[0].id.vt = VT_LPWSTR;
-    result[0].id.pwszVal = strdupAtoW("Signature");
+    SHStrDupW(L"Signature", &result[0].id.pwszVal);
     result[0].value.vt = VT_UI1|VT_VECTOR;
     result[0].value.caub.cElems = sizeof(lsd_data.signature);
-    result[0].value.caub.pElems = HeapAlloc(GetProcessHeap(), 0, sizeof(lsd_data.signature));
+    result[0].value.caub.pElems = CoTaskMemAlloc(sizeof(lsd_data.signature));
     memcpy(result[0].value.caub.pElems, lsd_data.signature, sizeof(lsd_data.signature));
 
     result[1].id.vt = VT_LPWSTR;
-    result[1].id.pwszVal = strdupAtoW("Width");
+    SHStrDupW(L"Width", &result[1].id.pwszVal);
     result[1].value.vt = VT_UI2;
     result[1].value.uiVal = lsd_data.width;
 
     result[2].id.vt = VT_LPWSTR;
-    result[2].id.pwszVal = strdupAtoW("Height");
+    SHStrDupW(L"Height", &result[2].id.pwszVal);
     result[2].value.vt = VT_UI2;
     result[2].value.uiVal = lsd_data.height;
 
     result[3].id.vt = VT_LPWSTR;
-    result[3].id.pwszVal = strdupAtoW("GlobalColorTableFlag");
+    SHStrDupW(L"GlobalColorTableFlag", &result[3].id.pwszVal);
     result[3].value.vt = VT_BOOL;
     result[3].value.boolVal = (lsd_data.packed >> 7) & 1;
 
     result[4].id.vt = VT_LPWSTR;
-    result[4].id.pwszVal = strdupAtoW("ColorResolution");
+    SHStrDupW(L"ColorResolution", &result[4].id.pwszVal);
     result[4].value.vt = VT_UI1;
     result[4].value.bVal = (lsd_data.packed >> 4) & 7;
 
     result[5].id.vt = VT_LPWSTR;
-    result[5].id.pwszVal = strdupAtoW("SortFlag");
+    SHStrDupW(L"SortFlag", &result[5].id.pwszVal);
     result[5].value.vt = VT_BOOL;
     result[5].value.boolVal = (lsd_data.packed >> 3) & 1;
 
     result[6].id.vt = VT_LPWSTR;
-    result[6].id.pwszVal = strdupAtoW("GlobalColorTableSize");
+    SHStrDupW(L"GlobalColorTableSize", &result[6].id.pwszVal);
     result[6].value.vt = VT_UI1;
     result[6].value.bVal = lsd_data.packed & 7;
 
     result[7].id.vt = VT_LPWSTR;
-    result[7].id.pwszVal = strdupAtoW("BackgroundColorIndex");
+    SHStrDupW(L"BackgroundColorIndex", &result[7].id.pwszVal);
     result[7].value.vt = VT_UI1;
     result[7].value.bVal = lsd_data.background_color_index;
 
     result[8].id.vt = VT_LPWSTR;
-    result[8].id.pwszVal = strdupAtoW("PixelAspectRatio");
+    SHStrDupW(L"PixelAspectRatio", &result[8].id.pwszVal);
     result[8].value.vt = VT_UI1;
     result[8].value.bVal = lsd_data.pixel_aspect_ratio;
 
@@ -189,42 +182,42 @@ static HRESULT load_IMD_metadata(IStream *stream, const GUID *vendor, DWORD opti
     }
 
     result[0].id.vt = VT_LPWSTR;
-    result[0].id.pwszVal = strdupAtoW("Left");
+    SHStrDupW(L"Left", &result[0].id.pwszVal);
     result[0].value.vt = VT_UI2;
     result[0].value.uiVal = imd_data.left;
 
     result[1].id.vt = VT_LPWSTR;
-    result[1].id.pwszVal = strdupAtoW("Top");
+    SHStrDupW(L"Top", &result[1].id.pwszVal);
     result[1].value.vt = VT_UI2;
     result[1].value.uiVal = imd_data.top;
 
     result[2].id.vt = VT_LPWSTR;
-    result[2].id.pwszVal = strdupAtoW("Width");
+    SHStrDupW(L"Width", &result[2].id.pwszVal);
     result[2].value.vt = VT_UI2;
     result[2].value.uiVal = imd_data.width;
 
     result[3].id.vt = VT_LPWSTR;
-    result[3].id.pwszVal = strdupAtoW("Height");
+    SHStrDupW(L"Height", &result[3].id.pwszVal);
     result[3].value.vt = VT_UI2;
     result[3].value.uiVal = imd_data.height;
 
     result[4].id.vt = VT_LPWSTR;
-    result[4].id.pwszVal = strdupAtoW("LocalColorTableFlag");
+    SHStrDupW(L"LocalColorTableFlag", &result[4].id.pwszVal);
     result[4].value.vt = VT_BOOL;
     result[4].value.boolVal = (imd_data.packed >> 7) & 1;
 
     result[5].id.vt = VT_LPWSTR;
-    result[5].id.pwszVal = strdupAtoW("InterlaceFlag");
+    SHStrDupW(L"InterlaceFlag", &result[5].id.pwszVal);
     result[5].value.vt = VT_BOOL;
     result[5].value.boolVal = (imd_data.packed >> 6) & 1;
 
     result[6].id.vt = VT_LPWSTR;
-    result[6].id.pwszVal = strdupAtoW("SortFlag");
+    SHStrDupW(L"SortFlag", &result[6].id.pwszVal);
     result[6].value.vt = VT_BOOL;
     result[6].value.boolVal = (imd_data.packed >> 5) & 1;
 
     result[7].id.vt = VT_LPWSTR;
-    result[7].id.pwszVal = strdupAtoW("LocalColorTableSize");
+    SHStrDupW(L"LocalColorTableSize", &result[7].id.pwszVal);
     result[7].value.vt = VT_UI1;
     result[7].value.bVal = imd_data.packed & 7;
 
@@ -282,27 +275,27 @@ static HRESULT load_GCE_metadata(IStream *stream, const GUID *vendor, DWORD opti
     }
 
     result[0].id.vt = VT_LPWSTR;
-    result[0].id.pwszVal = strdupAtoW("Disposal");
+    SHStrDupW(L"Disposal", &result[0].id.pwszVal);
     result[0].value.vt = VT_UI1;
     result[0].value.bVal = (gce_data.packed >> 2) & 7;
 
     result[1].id.vt = VT_LPWSTR;
-    result[1].id.pwszVal = strdupAtoW("UserInputFlag");
+    SHStrDupW(L"UserInputFlag", &result[1].id.pwszVal);
     result[1].value.vt = VT_BOOL;
     result[1].value.boolVal = (gce_data.packed >> 1) & 1;
 
     result[2].id.vt = VT_LPWSTR;
-    result[2].id.pwszVal = strdupAtoW("TransparencyFlag");
+    SHStrDupW(L"TransparencyFlag", &result[2].id.pwszVal);
     result[2].value.vt = VT_BOOL;
     result[2].value.boolVal = gce_data.packed & 1;
 
     result[3].id.vt = VT_LPWSTR;
-    result[3].id.pwszVal = strdupAtoW("Delay");
+    SHStrDupW(L"Delay", &result[3].id.pwszVal);
     result[3].value.vt = VT_UI2;
     result[3].value.uiVal = gce_data.delay;
 
     result[4].id.vt = VT_LPWSTR;
-    result[4].id.pwszVal = strdupAtoW("TransparentColorIndex");
+    SHStrDupW(L"TransparentColorIndex", &result[4].id.pwszVal);
     result[4].value.vt = VT_UI1;
     result[4].value.bVal = gce_data.transparent_color_index;
 
@@ -359,19 +352,19 @@ static HRESULT load_APE_metadata(IStream *stream, const GUID *vendor, DWORD opti
         hr = IStream_Read(stream, &subblock_size, sizeof(subblock_size), &bytesread);
         if (FAILED(hr) || bytesread != sizeof(subblock_size))
         {
-            HeapFree(GetProcessHeap(), 0, data);
+            CoTaskMemFree(data);
             return S_OK;
         }
         if (!subblock_size) break;
 
         if (!data)
-            data = HeapAlloc(GetProcessHeap(), 0, subblock_size + 1);
+            data = CoTaskMemAlloc(subblock_size + 1);
         else
         {
-            BYTE *new_data = HeapReAlloc(GetProcessHeap(), 0, data, data_size + subblock_size + 1);
+            BYTE *new_data = CoTaskMemRealloc(data, data_size + subblock_size + 1);
             if (!new_data)
             {
-                HeapFree(GetProcessHeap(), 0, data);
+                CoTaskMemFree(data);
                 return S_OK;
             }
             data = new_data;
@@ -380,7 +373,7 @@ static HRESULT load_APE_metadata(IStream *stream, const GUID *vendor, DWORD opti
         hr = IStream_Read(stream, data + data_size + 1, subblock_size, &bytesread);
         if (FAILED(hr) || bytesread != subblock_size)
         {
-            HeapFree(GetProcessHeap(), 0, data);
+            CoTaskMemFree(data);
             return S_OK;
         }
         data_size += subblock_size + 1;
@@ -389,7 +382,7 @@ static HRESULT load_APE_metadata(IStream *stream, const GUID *vendor, DWORD opti
     result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem) * 2);
     if (!result)
     {
-        HeapFree(GetProcessHeap(), 0, data);
+        CoTaskMemFree(data);
         return E_OUTOFMEMORY;
     }
 
@@ -401,14 +394,14 @@ static HRESULT load_APE_metadata(IStream *stream, const GUID *vendor, DWORD opti
     }
 
     result[0].id.vt = VT_LPWSTR;
-    result[0].id.pwszVal = strdupAtoW("Application");
+    SHStrDupW(L"Application", &result[0].id.pwszVal);
     result[0].value.vt = VT_UI1|VT_VECTOR;
     result[0].value.caub.cElems = sizeof(ape_data.application);
-    result[0].value.caub.pElems = HeapAlloc(GetProcessHeap(), 0, sizeof(ape_data.application));
+    result[0].value.caub.pElems = CoTaskMemAlloc(sizeof(ape_data.application));
     memcpy(result[0].value.caub.pElems, ape_data.application, sizeof(ape_data.application));
 
     result[1].id.vt = VT_LPWSTR;
-    result[1].id.pwszVal = strdupAtoW("Data");
+    SHStrDupW(L"Data", &result[1].id.pwszVal);
     result[1].value.vt = VT_UI1|VT_VECTOR;
     result[1].value.caub.cElems = data_size;
     result[1].value.caub.pElems = data;
@@ -463,19 +456,19 @@ static HRESULT load_GifComment_metadata(IStream *stream, const GUID *vendor, DWO
         hr = IStream_Read(stream, &subblock_size, sizeof(subblock_size), &bytesread);
         if (FAILED(hr) || bytesread != sizeof(subblock_size))
         {
-            HeapFree(GetProcessHeap(), 0, data);
+            CoTaskMemFree(data);
             return S_OK;
         }
         if (!subblock_size) break;
 
         if (!data)
-            data = HeapAlloc(GetProcessHeap(), 0, subblock_size + 1);
+            data = CoTaskMemAlloc(subblock_size + 1);
         else
         {
-            char *new_data = HeapReAlloc(GetProcessHeap(), 0, data, data_size + subblock_size + 1);
+            char *new_data = CoTaskMemRealloc(data, data_size + subblock_size + 1);
             if (!new_data)
             {
-                HeapFree(GetProcessHeap(), 0, data);
+                CoTaskMemFree(data);
                 return S_OK;
             }
             data = new_data;
@@ -483,7 +476,7 @@ static HRESULT load_GifComment_metadata(IStream *stream, const GUID *vendor, DWO
         hr = IStream_Read(stream, data + data_size, subblock_size, &bytesread);
         if (FAILED(hr) || bytesread != subblock_size)
         {
-            HeapFree(GetProcessHeap(), 0, data);
+            CoTaskMemFree(data);
             return S_OK;
         }
         data_size += subblock_size;
@@ -494,7 +487,7 @@ static HRESULT load_GifComment_metadata(IStream *stream, const GUID *vendor, DWO
     result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem));
     if (!result)
     {
-        HeapFree(GetProcessHeap(), 0, data);
+        CoTaskMemFree(data);
         return E_OUTOFMEMORY;
     }
 
@@ -503,7 +496,7 @@ static HRESULT load_GifComment_metadata(IStream *stream, const GUID *vendor, DWO
     PropVariantInit(&result->value);
 
     result->id.vt = VT_LPWSTR;
-    result->id.pwszVal = strdupAtoW("TextEntry");
+    SHStrDupW(L"TextEntry", &result->id.pwszVal);
     result->value.vt = VT_LPSTR;
     result->value.pszVal = data;
 
