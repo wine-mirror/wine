@@ -5344,7 +5344,7 @@ static void test_autoplug_uyvy(void)
      * failure to decode up to missing audio hardware, even though we're not
      * trying to render audio. */
     hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
-    todo_wine ok(hr == S_OK || hr == VFW_E_NO_AUDIO_HARDWARE, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK || hr == VFW_E_NO_AUDIO_HARDWARE, "Got hr %#lx.\n", hr);
 
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
