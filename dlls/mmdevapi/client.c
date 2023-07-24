@@ -30,8 +30,7 @@
 #include <wine/debug.h>
 #include <wine/unixlib.h>
 
-#include "unixlib.h"
-#include "mmdevdrv.h"
+#include "mmdevapi_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 
@@ -1383,3 +1382,57 @@ const IAudioStreamVolumeVtbl AudioStreamVolume_Vtbl =
     streamvolume_SetAllVolumes,
     streamvolume_GetAllVolumes
 };
+
+HRESULT AudioClient_Create(GUID *guid, IMMDevice *device, IAudioClient **out)
+{
+    struct audio_client *This;
+    char *name;
+    EDataFlow dataflow;
+    size_t size;
+    HRESULT hr;
+
+    TRACE("%s %p %p\n", debugstr_guid(guid), device, out);
+
+    *out = NULL;
+
+    if (!drvs.pget_device_name_from_guid(guid, &name, &dataflow))
+        return AUDCLNT_E_DEVICE_INVALIDATED;
+
+    if (dataflow != eRender && dataflow != eCapture) {
+        free(name);
+        return E_UNEXPECTED;
+    }
+
+    size = strlen(name) + 1;
+    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, FIELD_OFFSET(struct audio_client, device_name[size]));
+    if (!This) {
+        free(name);
+        return E_OUTOFMEMORY;
+    }
+
+    memcpy(This->device_name, name, size);
+    free(name);
+
+    This->IAudioCaptureClient_iface.lpVtbl = &AudioCaptureClient_Vtbl;
+    This->IAudioClient3_iface.lpVtbl       = &AudioClient3_Vtbl;
+    This->IAudioClock_iface.lpVtbl         = &AudioClock_Vtbl;
+    This->IAudioClock2_iface.lpVtbl        = &AudioClock2_Vtbl;
+    This->IAudioRenderClient_iface.lpVtbl  = &AudioRenderClient_Vtbl;
+    This->IAudioStreamVolume_iface.lpVtbl  = &AudioStreamVolume_Vtbl;
+
+    This->dataflow = dataflow;
+    This->parent   = device;
+
+    hr = CoCreateFreeThreadedMarshaler((IUnknown *)&This->IAudioClient3_iface, &This->marshal);
+    if (FAILED(hr)) {
+        HeapFree(GetProcessHeap(), 0, This);
+        return hr;
+    }
+
+    IMMDevice_AddRef(This->parent);
+
+    *out = (IAudioClient *)&This->IAudioClient3_iface;
+    IAudioClient3_AddRef(&This->IAudioClient3_iface);
+
+    return S_OK;
+}

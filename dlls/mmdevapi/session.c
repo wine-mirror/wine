@@ -28,8 +28,7 @@
 #include <wine/debug.h>
 #include <wine/unixlib.h>
 
-#include "unixlib.h"
-#include "mmdevdrv.h"
+#include "mmdevapi_private.h"
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
@@ -650,6 +649,24 @@ HRESULT get_audio_session(const GUID *guid, IMMDevice *device, UINT channels,
         if (!*out)
             return E_OUTOFMEMORY;
     }
+
+    return S_OK;
+}
+
+HRESULT get_audio_session_wrapper(const GUID *guid, IMMDevice *device,
+                                  struct audio_session_wrapper **out)
+{
+    struct audio_session *session;
+
+    const HRESULT hr = get_audio_session(guid, device, 0, &session);
+    if (FAILED(hr))
+        return hr;
+
+    *out = session_wrapper_create(NULL);
+    if (!*out)
+        return E_OUTOFMEMORY;
+
+    (*out)->session = session;
 
     return S_OK;
 }

@@ -1,14 +1,11 @@
 MODULE    = winecoreaudio.drv
 UNIXLIB   = winecoreaudio.so
 IMPORTS   = uuid ole32 user32 advapi32 version
-PARENTSRC = ../mmdevapi
 DELAYIMPORTS = winmm
 UNIX_LIBS    = $(COREAUDIO_LIBS)
 
 C_SRCS = \
-	client.c \
 	coreaudio.c \
 	coremidi.c \
 	midi.c \
-	mmdevdrv.c \
-	session.c
+	mmdevdrv.c
