@@ -104,7 +104,7 @@ HRESULT wg_sample_create_mf(IMFSample *mf_sample, struct wg_sample **out)
         goto fail;
 
     IMFSample_AddRef((sample->u.mf.sample = mf_sample));
-    sample->wg_sample.data = buffer;
+    sample->wg_sample.data = (UINT_PTR)buffer;
     sample->wg_sample.size = current_length;
     sample->wg_sample.max_size = max_length;
     sample->ops = &mf_sample_ops;
@@ -159,7 +159,7 @@ HRESULT wg_sample_create_quartz(IMediaSample *media_sample, struct wg_sample **o
         return E_OUTOFMEMORY;
 
     IMediaSample_AddRef((sample->u.quartz.sample = media_sample));
-    sample->wg_sample.data = buffer;
+    sample->wg_sample.data = (UINT_PTR)buffer;
     sample->wg_sample.size = current_length;
     sample->wg_sample.max_size = max_length;
     sample->ops = &quartz_sample_ops;
@@ -207,7 +207,7 @@ HRESULT wg_sample_create_dmo(IMediaBuffer *media_buffer, struct wg_sample **out)
         goto fail;
 
     IMediaBuffer_AddRef((sample->u.dmo.buffer = media_buffer));
-    sample->wg_sample.data = buffer;
+    sample->wg_sample.data = (UINT_PTR)buffer;
     sample->wg_sample.size = length;
     sample->wg_sample.max_size = max_length;
     sample->ops = &dmo_sample_ops;

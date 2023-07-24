@@ -96,7 +96,7 @@ static void release_memory_sample(WgAllocator *allocator, WgMemory *memory, bool
     if (memory->written && !discard_data)
     {
         GST_WARNING("Copying %#zx bytes from sample %p, back to memory %p", memory->written, sample, memory);
-        memcpy(get_unix_memory_data(memory), memory->sample->data, memory->written);
+        memcpy(get_unix_memory_data(memory), wg_sample_data(memory->sample), memory->written);
     }
 
     memory->sample = NULL;
@@ -120,7 +120,7 @@ static gpointer wg_allocator_map(GstMemory *gst_memory, GstMapInfo *info, gsize 
     else
     {
         InterlockedIncrement(&memory->sample->refcount);
-        info->data = memory->sample->data;
+        info->data = wg_sample_data(memory->sample);
     }
     if (info->flags & GST_MAP_WRITE)
         memory->written = max(memory->written, maxsize);
@@ -143,7 +143,7 @@ static void wg_allocator_unmap(GstMemory *gst_memory, GstMapInfo *info)
 
     pthread_mutex_lock(&allocator->mutex);
 
-    if (memory->sample && info->data == memory->sample->data)
+    if (memory->sample && info->data == wg_sample_data(memory->sample))
     {
         InterlockedDecrement(&memory->sample->refcount);
         pthread_cond_signal(&allocator->release_cond);

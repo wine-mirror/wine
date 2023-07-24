@@ -577,7 +577,7 @@ NTSTATUS wg_transform_push_data(void *args)
         return STATUS_SUCCESS;
     }
 
-    if (!(buffer = gst_buffer_new_wrapped_full(GST_MEMORY_FLAG_READONLY, sample->data, sample->max_size,
+    if (!(buffer = gst_buffer_new_wrapped_full(GST_MEMORY_FLAG_READONLY, wg_sample_data(sample), sample->max_size,
             0, sample->size, sample, wg_sample_free_notify)))
     {
         GST_ERROR("Failed to allocate input buffer");
@@ -627,7 +627,7 @@ static NTSTATUS copy_video_buffer(GstBuffer *buffer, GstCaps *caps, gsize plane_
         return STATUS_BUFFER_TOO_SMALL;
     }
 
-    if (!(dst_buffer = gst_buffer_new_wrapped_full(0, sample->data, sample->max_size,
+    if (!(dst_buffer = gst_buffer_new_wrapped_full(0, wg_sample_data(sample), sample->max_size,
             0, sample->max_size, 0, NULL)))
     {
         GST_ERROR("Failed to wrap wg_sample into GstBuffer");
@@ -673,7 +673,7 @@ static NTSTATUS copy_buffer(GstBuffer *buffer, GstCaps *caps, struct wg_sample *
         sample->size = sample->max_size;
     }
 
-    memcpy(sample->data, info.data, sample->size);
+    memcpy(wg_sample_data(sample), info.data, sample->size);
     gst_buffer_unmap(buffer, &info);
 
     if (sample->flags & WG_SAMPLE_FLAG_INCOMPLETE)
@@ -697,7 +697,7 @@ static NTSTATUS read_transform_output_data(GstBuffer *buffer, GstCaps *caps, gsi
         sample->size = 0;
         return STATUS_UNSUCCESSFUL;
     }
-    needs_copy = info.data != sample->data;
+    needs_copy = info.data != wg_sample_data(sample);
     total_size = sample->size = info.size;
     gst_buffer_unmap(buffer, &info);
 
