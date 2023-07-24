@@ -14,10 +14,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
+
 #include <audiopolicy.h>
 #include <mmdeviceapi.h>
 
 #include <wine/list.h>
+#include <wine/unixlib.h>
 
 typedef struct audio_client ACImpl;
 
@@ -82,3 +85,9 @@ struct audio_client {
     /* Keep at end */
     char device_name[0];
 };
+
+static inline void wine_unix_call(const unsigned int code, void *args)
+{
+    const NTSTATUS status = WINE_UNIX_CALL(code, args);
+    assert(!status);
+}

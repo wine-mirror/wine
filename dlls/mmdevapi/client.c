@@ -67,7 +67,7 @@ void set_stream_volumes(struct audio_client *This)
     params.volumes         = This->vols;
     params.session_volumes = This->session->channel_vols;
 
-    WINE_UNIX_CALL(set_volumes, &params);
+    wine_unix_call(set_volumes, &params);
 }
 
 static inline struct audio_client *impl_from_IAudioCaptureClient(IAudioCaptureClient *iface)
@@ -142,7 +142,7 @@ static DWORD CALLBACK main_loop_func(void *event)
 
     params.event = event;
 
-    WINE_UNIX_CALL(main_loop, &params);
+    wine_unix_call(main_loop, &params);
 
     return 0;
 }
@@ -174,7 +174,7 @@ static DWORD CALLBACK timer_loop_func(void *user)
 
     params.stream = This->stream;
 
-    WINE_UNIX_CALL(timer_loop, &params);
+    wine_unix_call(timer_loop, &params);
 
     return 0;
 }
@@ -186,7 +186,7 @@ HRESULT stream_release(stream_handle stream, HANDLE timer_thread)
     params.stream       = stream;
     params.timer_thread = timer_thread;
 
-    WINE_UNIX_CALL(release_stream, &params);
+    wine_unix_call(release_stream, &params);
 
     return params.result;
 }
@@ -352,7 +352,7 @@ static HRESULT WINAPI capture_GetBuffer(IAudioCaptureClient *iface, BYTE **data,
     params.devpos = devpos;
     params.qpcpos = qpcpos;
 
-    WINE_UNIX_CALL(get_capture_buffer, &params);
+    wine_unix_call(get_capture_buffer, &params);
 
     return params.result;
 }
@@ -370,7 +370,7 @@ static HRESULT WINAPI capture_ReleaseBuffer(IAudioCaptureClient *iface, UINT32 d
     params.stream = This->stream;
     params.done   = done;
 
-    WINE_UNIX_CALL(release_capture_buffer, &params);
+    wine_unix_call(release_capture_buffer, &params);
 
     return params.result;
 }
@@ -391,7 +391,7 @@ static HRESULT WINAPI capture_GetNextPacketSize(IAudioCaptureClient *iface, UINT
     params.stream = This->stream;
     params.frames = frames;
 
-    WINE_UNIX_CALL(get_next_packet_size, &params);
+    wine_unix_call(get_next_packet_size, &params);
 
     return params.result;
 }
@@ -526,7 +526,7 @@ static HRESULT WINAPI client_Initialize(IAudioClient3 *iface, AUDCLNT_SHAREMODE 
     params.channel_count = &channel_count;
     params.stream        = &stream;
 
-    WINE_UNIX_CALL(create_stream, &params);
+    wine_unix_call(create_stream, &params);
 
     free(name);
 
@@ -578,7 +578,7 @@ static HRESULT WINAPI client_GetBufferSize(IAudioClient3 *iface, UINT32 *out)
     params.stream = This->stream;
     params.frames = out;
 
-    WINE_UNIX_CALL(get_buffer_size, &params);
+    wine_unix_call(get_buffer_size, &params);
 
     return params.result;
 }
@@ -599,7 +599,7 @@ static HRESULT WINAPI client_GetStreamLatency(IAudioClient3 *iface, REFERENCE_TI
     params.stream  = This->stream;
     params.latency = latency;
 
-    WINE_UNIX_CALL(get_latency, &params);
+    wine_unix_call(get_latency, &params);
 
     return params.result;
 }
@@ -620,7 +620,7 @@ static HRESULT WINAPI client_GetCurrentPadding(IAudioClient3 *iface, UINT32 *out
     params.stream  = This->stream;
     params.padding = out;
 
-    WINE_UNIX_CALL(get_current_padding, &params);
+    wine_unix_call(get_current_padding, &params);
 
     return params.result;
 }
@@ -648,7 +648,7 @@ static HRESULT WINAPI client_IsFormatSupported(IAudioClient3 *iface, AUDCLNT_SHA
             params.fmt_out = CoTaskMemAlloc(sizeof(*params.fmt_out));
     }
 
-    WINE_UNIX_CALL(is_format_supported, &params);
+    wine_unix_call(is_format_supported, &params);
 
     if (params.result == S_FALSE)
         *out = &params.fmt_out->Format;
@@ -676,7 +676,7 @@ static HRESULT WINAPI client_GetMixFormat(IAudioClient3 *iface, WAVEFORMATEX **p
     if (!params.fmt)
         return E_OUTOFMEMORY;
 
-    WINE_UNIX_CALL(get_mix_format, &params);
+    wine_unix_call(get_mix_format, &params);
 
     if (SUCCEEDED(params.result)) {
         *pwfx = &params.fmt->Format;
@@ -703,7 +703,7 @@ static HRESULT WINAPI client_GetDevicePeriod(IAudioClient3 *iface, REFERENCE_TIM
     params.def_period = defperiod;
     params.min_period = minperiod;
 
-    WINE_UNIX_CALL(get_device_period, &params);
+    wine_unix_call(get_device_period, &params);
 
     return params.result;
 }
@@ -723,7 +723,7 @@ static HRESULT WINAPI client_Start(IAudioClient3 *iface)
     }
 
     params.stream = This->stream;
-    WINE_UNIX_CALL(start, &params);
+    wine_unix_call(start, &params);
 
     if (SUCCEEDED(params.result) && !This->timer_thread) {
         if ((This->timer_thread = CreateThread(NULL, 0, timer_loop_func, This, 0, NULL)))
@@ -751,7 +751,7 @@ static HRESULT WINAPI client_Stop(IAudioClient3 *iface)
 
     params.stream = This->stream;
 
-    WINE_UNIX_CALL(stop, &params);
+    wine_unix_call(stop, &params);
 
     return params.result;
 }
@@ -768,7 +768,7 @@ static HRESULT WINAPI client_Reset(IAudioClient3 *iface)
 
     params.stream = This->stream;
 
-    WINE_UNIX_CALL(reset, &params);
+    wine_unix_call(reset, &params);
 
     return params.result;
 }
@@ -789,7 +789,7 @@ static HRESULT WINAPI client_SetEventHandle(IAudioClient3 *iface, HANDLE event)
     params.stream = This->stream;
     params.event  = event;
 
-    WINE_UNIX_CALL(set_event_handle, &params);
+    wine_unix_call(set_event_handle, &params);
 
     return params.result;
 }
@@ -1031,7 +1031,7 @@ static HRESULT WINAPI clock_GetFrequency(IAudioClock *iface, UINT64 *freq)
     params.stream = This->stream;
     params.freq   = freq;
 
-    WINE_UNIX_CALL(get_frequency, &params);
+    wine_unix_call(get_frequency, &params);
 
     return params.result;
 }
@@ -1054,7 +1054,7 @@ static HRESULT WINAPI clock_GetPosition(IAudioClock *iface, UINT64 *pos, UINT64 
     params.pos     = pos;
     params.qpctime = qpctime;
 
-    WINE_UNIX_CALL(get_position, &params);
+    wine_unix_call(get_position, &params);
 
     return params.result;
 }
@@ -1119,7 +1119,7 @@ static HRESULT WINAPI clock2_GetDevicePosition(IAudioClock2 *iface, UINT64 *pos,
     params.pos     = pos;
     params.qpctime = qpctime;
 
-    WINE_UNIX_CALL(get_position, &params);
+    wine_unix_call(get_position, &params);
 
     return params.result;
 }
@@ -1187,7 +1187,7 @@ static HRESULT WINAPI render_GetBuffer(IAudioRenderClient *iface, UINT32 frames,
     params.frames = frames;
     params.data   = data;
 
-    WINE_UNIX_CALL(get_render_buffer, &params);
+    wine_unix_call(get_render_buffer, &params);
 
     return params.result;
 }
@@ -1207,7 +1207,7 @@ static HRESULT WINAPI render_ReleaseBuffer(IAudioRenderClient *iface, UINT32 wri
     params.written_frames = written_frames;
     params.flags          = flags;
 
-    WINE_UNIX_CALL(release_render_buffer, &params);
+    wine_unix_call(release_render_buffer, &params);
 
     return params.result;
 }

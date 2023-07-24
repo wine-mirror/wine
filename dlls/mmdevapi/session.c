@@ -127,7 +127,7 @@ static HRESULT WINAPI control_GetState(IAudioSessionControl2 *iface, AudioSessio
 
     LIST_FOR_EACH_ENTRY(client, &This->session->clients, struct audio_client, entry) {
         params.stream = client->stream;
-        WINE_UNIX_CALL(is_started, &params);
+        wine_unix_call(is_started, &params);
         if (params.result == S_OK) {
             *state = AudioSessionStateActive;
             sessions_unlock();
