@@ -1635,6 +1635,21 @@ static const struct reader_containers pnghist_containers[] = {
     { NULL } /* list terminator */
 };
 
+static const BYTE tIME[] = "tIME";
+
+static const struct metadata_pattern pngtime_metadata_pattern[] = {
+    { 4, 4, tIME, mask_all, 4 },
+    { 0 }
+};
+
+static const struct reader_containers pngtime_containers[] = {
+    {
+        &GUID_ContainerFormatPng,
+        pngtime_metadata_pattern
+    },
+    { NULL } /* list terminator */
+};
+
 static const struct metadata_pattern lsd_metadata_patterns[] = {
     { 0, 6, gif87a_magic, mask_all, 0 },
     { 0, 6, gif89a_magic, mask_all, 0 },
@@ -1769,6 +1784,16 @@ static struct regsvr_metadatareader const metadatareader_list[] = {
         &GUID_MetadataFormatChunktEXt,
         0, 0, 0,
         pngtext_containers
+    },
+    {   &CLSID_WICPngTimeMetadataReader,
+        "The Wine Project",
+        "Chunk tIME Reader",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatChunktIME,
+        0, 0, 0,
+        pngtime_containers
     },
     {   &CLSID_WICLSDMetadataReader,
         "The Wine Project",

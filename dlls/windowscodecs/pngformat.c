@@ -311,6 +311,92 @@ HRESULT PngHistReader_CreateInstance(REFIID iid, void** ppv)
     return MetadataReader_Create(&HistReader_Vtbl, iid, ppv);
 }
 
+static HRESULT LoadTimeMetadata(IStream *stream, const GUID *preferred_vendor,
+    DWORD persist_options, MetadataItem **items, DWORD *item_count)
+{
+    HRESULT hr;
+    BYTE type[4];
+    BYTE *data;
+    ULONG data_size, i;
+    MetadataItem *result;
+    static const WCHAR *names[6] =
+    {
+        L"Year",
+        L"Month",
+        L"Day",
+        L"Hour",
+        L"Minute",
+        L"Second",
+    };
+    LPWSTR id_values[6] = {0};
+
+
+    hr = read_png_chunk(stream, type, &data, &data_size);
+    if (FAILED(hr)) return hr;
+
+    if (data_size != 7)
+    {
+        HeapFree(GetProcessHeap(), 0, data);
+        return E_FAIL;
+    }
+
+    result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem) * 6);
+    for (i = 0; i < 6; i++)
+    {
+        SHStrDupW(names[i], &id_values[i]);
+        if (!id_values[i]) break;
+    }
+    if (!result || i < 6)
+    {
+        HeapFree(GetProcessHeap(), 0, result);
+        for (i = 0; i < 6; i++)
+            CoTaskMemFree(id_values[i]);
+        HeapFree(GetProcessHeap(), 0, data);
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < 6; i++)
+    {
+        PropVariantInit(&result[i].schema);
+        PropVariantInit(&result[i].id);
+        PropVariantInit(&result[i].value);
+
+        result[i].id.vt = VT_LPWSTR;
+        result[i].id.pwszVal = id_values[i];
+    }
+
+    result[0].value.vt = VT_UI2;
+    result[0].value.uiVal = read_ushort_be(data);
+    result[1].value.vt = VT_UI1;
+    result[1].value.bVal = data[2];
+    result[2].value.vt = VT_UI1;
+    result[2].value.bVal = data[3];
+    result[3].value.vt = VT_UI1;
+    result[3].value.bVal = data[4];
+    result[4].value.vt = VT_UI1;
+    result[4].value.bVal = data[5];
+    result[5].value.vt = VT_UI1;
+    result[5].value.bVal = data[6];
+
+    *items = result;
+    *item_count = 6;
+
+    HeapFree(GetProcessHeap(), 0, data);
+
+    return S_OK;
+}
+
+static const MetadataHandlerVtbl TimeReader_Vtbl = {
+    0,
+    &CLSID_WICPngTimeMetadataReader,
+    LoadTimeMetadata
+};
+
+HRESULT PngTimeReader_CreateInstance(REFIID iid, void** ppv)
+{
+    return MetadataReader_Create(&TimeReader_Vtbl, iid, ppv);
+}
+
 HRESULT PngDecoder_CreateInstance(REFIID iid, void** ppv)
 {
     HRESULT hr;

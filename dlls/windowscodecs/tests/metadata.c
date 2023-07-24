@@ -169,6 +169,14 @@ static const char metadata_hIST[] = {
     0xff,0xff,0xff,0xff
 };
 
+static const char metadata_tIME[] = {
+    0,0,0,7, /* chunk length */
+    't','I','M','E', /* chunk type */
+    0x07,0xd0,0x01,0x02, /* year (2 bytes), month, day */
+    0x0c,0x22,0x38, /* hour, minute, second */
+    0xff,0xff,0xff,0xff
+};
+
 static const char pngimage[285] = {
 0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a,0x00,0x00,0x00,0x0d,0x49,0x48,0x44,0x52,
 0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,
@@ -725,6 +733,42 @@ static void test_metadata_hIST(void)
     IWICMetadataReader_Release(reader);
 }
 
+static void test_metadata_tIME(void)
+{
+    HRESULT hr;
+    IWICMetadataReader *reader;
+    UINT count;
+    GUID format;
+    static const struct test_data td[] =
+    {
+        { VT_UI2, 0, 0, { 2000 }, NULL, L"Year" },
+        { VT_UI1, 0, 0, { 1 }, NULL, L"Month" },
+        { VT_UI1, 0, 0, { 2 }, NULL, L"Day" },
+        { VT_UI1, 0, 0, { 12 }, NULL, L"Hour" },
+        { VT_UI1, 0, 0, { 34 }, NULL, L"Minute" },
+        { VT_UI1, 0, 0, { 56 }, NULL, L"Second" },
+    };
+
+    hr = CoCreateInstance(&CLSID_WICPngTimeMetadataReader, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICMetadataReader, (void**)&reader);
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG) /*winxp*/, "CoCreateInstance failed, hr=%lx\n", hr);
+    if (FAILED(hr)) return;
+
+    load_stream((IUnknown*)reader, metadata_tIME, sizeof(metadata_tIME), WICPersistOptionDefault);
+
+    hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+    ok(hr == S_OK, "GetMetadataFormat failed, hr=%lx\n", hr);
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatChunktIME), "unexpected format %s\n", wine_dbgstr_guid(&format));
+
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "GetCount failed, hr=%lx\n", hr);
+    ok(count == ARRAY_SIZE(td), "unexpected count %i\n", count);
+
+    compare_metadata(reader, td, count);
+
+    IWICMetadataReader_Release(reader);
+}
+
 static inline USHORT ushort_bswap(USHORT s)
 {
     return (s >> 8) | (s << 8);
@@ -1108,12 +1152,12 @@ static void test_metadata_png(void)
 {
     static const struct test_data td[6] =
     {
-        { VT_UI2, 0, 0, { 2005 }, NULL, { 'Y','e','a','r',0 } },
-        { VT_UI1, 0, 0, { 6 }, NULL, { 'M','o','n','t','h',0 } },
-        { VT_UI1, 0, 0, { 3 }, NULL, { 'D','a','y',0 } },
-        { VT_UI1, 0, 0, { 15 }, NULL, { 'H','o','u','r',0 } },
-        { VT_UI1, 0, 0, { 7 }, NULL, { 'M','i','n','u','t','e',0 } },
-        { VT_UI1, 0, 0, { 45 }, NULL, { 'S','e','c','o','n','d',0 } }
+        { VT_UI2, 0, 0, { 2005 }, NULL, L"Year" },
+        { VT_UI1, 0, 0, { 6 }, NULL, L"Month" },
+        { VT_UI1, 0, 0, { 3 }, NULL, L"Day" },
+        { VT_UI1, 0, 0, { 15 }, NULL, L"Hour" },
+        { VT_UI1, 0, 0, { 7 }, NULL, L"Minute" },
+        { VT_UI1, 0, 0, { 45 }, NULL, L"Second" }
     };
     IStream *stream;
     IWICBitmapDecoder *decoder;
@@ -1176,13 +1220,13 @@ static void test_metadata_png(void)
         {
             hr = IWICMetadataReader_GetMetadataFormat(reader, &containerformat);
             ok(hr == S_OK, "GetMetadataFormat failed, hr=%#lx\n", hr);
-            todo_wine ok(IsEqualGUID(&containerformat, &GUID_MetadataFormatChunktIME) ||
+            ok(IsEqualGUID(&containerformat, &GUID_MetadataFormatChunktIME) ||
                broken(IsEqualGUID(&containerformat, &GUID_MetadataFormatUnknown)) /* Windows XP */,
                "unexpected container format\n");
 
             hr = IWICMetadataReader_GetCount(reader, &count);
             ok(hr == S_OK, "GetCount error %#lx\n", hr);
-            todo_wine ok(count == 6 || broken(count == 1) /* XP */, "expected 6, got %u\n", count);
+            ok(count == 6 || broken(count == 1) /* XP */, "expected 6, got %u\n", count);
             if (count == 6)
                 compare_metadata(reader, td, count);
 
@@ -3272,6 +3316,7 @@ START_TEST(metadata)
     test_metadata_gAMA();
     test_metadata_cHRM();
     test_metadata_hIST();
+    test_metadata_tIME();
     test_metadata_IFD();
     test_metadata_Exif();
     test_create_reader();

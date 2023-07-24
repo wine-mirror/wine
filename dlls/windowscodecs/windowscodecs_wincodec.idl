@@ -190,6 +190,13 @@ coclass WICPngHistMetadataReader { interface IWICMetadataReader; }
 coclass WICPngTextMetadataReader { interface IWICMetadataReader; }
 
 [
+    helpstring("WIC Png tIME Metadata Reader"),
+    threading(both),
+    uuid(d94edf02-efe5-4f0d-85c8-f5a68b3000b1)
+]
+coclass WICPngTimeMetadataReader { interface IWICMetadataReader; }
+
+[
     helpstring("WIC LSD Metadata Reader"),
     threading(both),
     uuid(41070793-59e4-479a-a1f7-954adc2ef5fc)
