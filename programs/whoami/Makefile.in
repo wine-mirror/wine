@@ -1,5 +1,5 @@
 MODULE    = whoami.exe
-IMPORTS   = secur32
+IMPORTS   = secur32 advapi32
 
 EXTRADLLFLAGS = -mconsole -municode
 
