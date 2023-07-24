@@ -343,6 +343,9 @@ sync_test("builtin_toString", function() {
         test("console", window.console, "Console");
         test("mediaQueryList", window.matchMedia("(hover:hover)"), "MediaQueryList");
     }
+    if(v >= 11) {
+        test("MutationObserver", new window.MutationObserver(function() {}), "MutationObserver");
+    }
     if(v >= 9) {
         document.body.innerHTML = "<!--...-->";
         test("comment", document.body.firstChild, "Comment");
@@ -475,6 +478,7 @@ sync_test("window_props", function() {
     test_exposed("performance", true);
     test_exposed("console", v >= 10);
     test_exposed("matchMedia", v >= 10);
+    test_exposed("MutationObserver", v >= 11);
 });
 
 sync_test("domimpl_props", function() {
@@ -2852,6 +2856,60 @@ sync_test("__defineSetter__", function() {
     ok(x.bar === undefined, "x.bar with setter = " + x.bar);
     ok(x.setterVal === 9, "x.setterVal after setting bar = " + x.setterVal);
 });
+
+sync_test("MutationObserver", function() {
+    if (!window.MutationObserver) {
+        return;
+    }
+
+    try {
+        window.MutationObserver();
+        ok(false, "MutationObserver without args should fail");
+    } catch(e) {
+        ok(e.number == 0xffff - 0x80000000, "MutationObserver without new threw exception " + e.number);
+    }
+
+    try {
+        window.MutationObserver(42);
+        ok(false, "MutationObserver with non-function should fail");
+    } catch(e) {
+        todo_wine.
+        ok(e.name == "TypeMismatchError", "MutationObserver with non-function arg threw exception " + e.name);
+    }
+
+    try {
+        window.MutationObserver(function() {});
+    } catch(e) {
+        ok(false, "MutationObserver without new threw exception " + e.number);
+    }
+
+    try {
+        new window.MutationObserver();
+        ok(false, "MutationObserver with no args should fail");
+    } catch(e) {
+        ok(e.number == 0xffff - 0x80000000, "MutationObserver with no args threw exception " + e.number);
+    }
+
+    try {
+        new window.MutationObserver(1);
+        ok(false, "MutationObserver with non-function arg should fail");
+    } catch(e) {
+        todo_wine.
+        ok(e.name == "TypeMismatchError", "MutationObserver with non-function arg threw exception " + e.name);
+    }
+
+    try {
+        new window.MutationObserver(function() {});
+    } catch(e) {
+        ok(false, "MutationObserver threw exception " + e.number);
+    }
+
+    try {
+        new window.MutationObserver(function() {}, 1);
+    } catch(e) {
+        ok(false, "MutationObserver with extra args threw exception " + e.number);
+    }
+})
 
 async_test("postMessage", function() {
     var v = document.documentMode;

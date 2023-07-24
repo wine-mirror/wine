@@ -309,6 +309,9 @@ static void release_inner_window(HTMLInnerWindow *This)
     if(This->mon)
         IMoniker_Release(This->mon);
 
+    if(This->mutation_observer_ctor)
+        IDispatch_Release(This->mutation_observer_ctor);
+
     free(This);
 }
 
@@ -3330,6 +3333,26 @@ static HRESULT WINAPI window_private_get_console(IWineHTMLWindowPrivate *iface, 
     return S_OK;
 }
 
+static HRESULT WINAPI window_private_get_MutationObserver(IWineHTMLWindowPrivate *iface,
+                                                          IDispatch **mutation_observer)
+{
+    HTMLWindow *This = impl_from_IWineHTMLWindowPrivateVtbl(iface);
+    HRESULT hres;
+
+    TRACE("iface %p, mutation_observer %p.\n", iface, mutation_observer);
+
+    if (!This->inner_window->mutation_observer_ctor) {
+        hres = create_mutation_observer_ctor(dispex_compat_mode(&This->inner_window->event_target.dispex),
+                                             &This->inner_window->mutation_observer_ctor);
+        if (FAILED(hres))
+            return hres;
+    }
+
+    IDispatch_AddRef(This->inner_window->mutation_observer_ctor);
+    *mutation_observer = This->inner_window->mutation_observer_ctor;
+    return S_OK;
+}
+
 static const IWineHTMLWindowPrivateVtbl WineHTMLWindowPrivateVtbl = {
     window_private_QueryInterface,
     window_private_AddRef,
@@ -3343,6 +3366,7 @@ static const IWineHTMLWindowPrivateVtbl WineHTMLWindowPrivateVtbl = {
     window_private_get_console,
     window_private_matchMedia,
     window_private_postMessage,
+    window_private_get_MutationObserver
 };
 
 static inline HTMLWindow *impl_from_IWineHTMLWindowCompatPrivateVtbl(IWineHTMLWindowCompatPrivate *iface)
@@ -3975,12 +3999,19 @@ static void HTMLWindow_init_dispex_info(dispex_data_t *info, compat_mode_t compa
         {DISPID_UNKNOWN}
     };
 
+    /* Hide props not available in IE10 */
+    static const dispex_hook_t private_ie10_hooks[] = {
+        {DISPID_IWINEHTMLWINDOWPRIVATE_MUTATIONOBSERVER},
+        {DISPID_UNKNOWN}
+    };
+
     if(compat_mode >= COMPAT_MODE_IE9)
         dispex_info_add_interface(info, IHTMLWindow7_tid, NULL);
     else
         dispex_info_add_interface(info, IWineHTMLWindowCompatPrivate_tid, NULL);
     if(compat_mode >= COMPAT_MODE_IE10)
-        dispex_info_add_interface(info, IWineHTMLWindowPrivate_tid, NULL);
+        dispex_info_add_interface(info, IWineHTMLWindowPrivate_tid,
+                                  compat_mode >= COMPAT_MODE_IE11 ? NULL : private_ie10_hooks);
 
     dispex_info_add_interface(info, IHTMLWindow5_tid, NULL);
     dispex_info_add_interface(info, IHTMLWindow4_tid, compat_mode >= COMPAT_MODE_IE11 ? window4_ie11_hooks : NULL);

@@ -294,7 +294,8 @@ typedef struct EventTarget EventTarget;
     XIID(IWinePageTransitionEvent) \
     XIID(IWineXMLHttpRequestPrivate) \
     XIID(IWineMSHTMLConsole) \
-    XIID(IWineMSHTMLMediaQueryList)
+    XIID(IWineMSHTMLMediaQueryList) \
+    XIID(IWineMSHTMLMutationObserver)
 
 typedef enum {
 #define XIID(iface) iface ## _tid,
@@ -636,6 +637,7 @@ struct HTMLInnerWindow {
     LONG task_magic;
 
     IMoniker *mon;
+    IDispatch *mutation_observer_ctor;
     nsChannelBSC *bscallback;
     struct list bindings;
 };
@@ -1496,3 +1498,5 @@ IInternetSecurityManager *get_security_manager(void);
 extern HINSTANCE hInst;
 void create_console(compat_mode_t compat_mode, IWineMSHTMLConsole **ret);
 HRESULT create_media_query_list(HTMLWindow *window, BSTR media_query, IDispatch **ret);
+
+HRESULT create_mutation_observer_ctor(compat_mode_t compat_mode, IDispatch **ret);
