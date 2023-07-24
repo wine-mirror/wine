@@ -3577,6 +3577,49 @@ static HRESULT png_read_chromaticity(IWICMetadataReader *reader, GpBitmap *bitma
     return S_OK;
 }
 
+static HRESULT png_read_time(IWICMetadataReader *reader, GpBitmap *bitmap)
+{
+    HRESULT hr;
+    UINT item_size, i;
+    PropertyItem* item;
+    PROPVARIANT value;
+    USHORT datetime[6];
+
+    for (i = 0; i < 6; i++)
+    {
+        hr = IWICMetadataReader_GetValueByIndex(reader, i, NULL, NULL, &value);
+        if (FAILED(hr))
+            return hr;
+        if (i == 0 && value.vt == VT_UI2)
+            datetime[0] = value.uiVal;
+        else if (i > 0 && value.vt == VT_UI1)
+            datetime[i] = value.bVal;
+        else
+        {
+            PropVariantClear(&value);
+            return E_FAIL;
+        }
+        PropVariantClear(&value);
+    }
+
+    item_size = 20;
+    item = heap_alloc_zero(sizeof(*item) + item_size);
+    if (!item)
+        return E_OUTOFMEMORY;
+
+    item->id = PropertyTagDateTime;
+    item->type = PropertyTagTypeASCII;
+    item->length = item_size;
+    item->value = item + 1;
+    snprintf(item->value, item_size, "%04u:%02u:%02u %02u:%02u:%02u",
+        datetime[0], datetime[1], datetime[2], datetime[3], datetime[4], datetime[5]);
+
+    add_property(bitmap, item);
+    heap_free(item);
+
+    return S_OK;
+}
+
 static HRESULT png_add_unit_properties(IWICBitmapFrameDecode *frame, GpBitmap *bitmap)
 {
     HRESULT hr;
@@ -3632,7 +3675,7 @@ static void png_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
     IWICBitmapFrameDecode *frame;
     IWICMetadataBlockReader *block_reader;
     UINT block_count, i;
-    BOOL seen_gamma=FALSE, seen_whitepoint=FALSE, seen_chrm=FALSE;
+    BOOL seen_gamma=FALSE, seen_whitepoint=FALSE, seen_chrm=FALSE, seen_time=FALSE;
     BOOL *seen_text = NULL;
 
     hr = IWICBitmapDecoder_GetFrame(decoder, active_frame, &frame);
@@ -3691,6 +3734,14 @@ static void png_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
             {
                 hr = png_read_chromaticity(reader, bitmap);
                 seen_chrm = SUCCEEDED(hr);
+            }
+        }
+        else if (IsEqualGUID(&GUID_MetadataFormatChunktIME, &format))
+        {
+            if (!seen_time)
+            {
+                hr = png_read_time(reader, bitmap);
+                seen_time = SUCCEEDED(hr);
             }
         }
 

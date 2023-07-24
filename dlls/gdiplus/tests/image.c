@@ -3880,7 +3880,7 @@ static void test_image_properties(void)
 
         status = GdipGetPropertyCount(image, &prop_count);
         ok(status == Ok, "GdipGetPropertyCount error %d\n", status);
-        todo_wine_if(td[i].image_data == pngimage || td[i].image_data == jpgimage)
+        todo_wine_if(td[i].image_data == jpgimage)
         ok(td[i].prop_count == prop_count || (td[i].prop_count2 != ~0 && td[i].prop_count2 == prop_count),
            "expected property count %u or %u, got %u\n",
            td[i].prop_count, td[i].prop_count2, prop_count);
@@ -5805,6 +5805,14 @@ static const BYTE png_phys[] = {
   0x00,0x00,0x00,0x00,'I','E','N','D',0xae,0x42,0x60,0x82
 };
 
+static const BYTE png_time[] = {
+  0x89,'P','N','G',0x0d,0x0a,0x1a,0x0a,
+  0x00,0x00,0x00,0x0d,'I','H','D','R',0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,0xde,
+  0x00,0x00,0x00,0x07,'t','I','M','E',0x07,0xb2,0x01,0x01,0x00,0x00,0x00,0xff,0xff,0xff,0xff,
+  0x00,0x00,0x00,0x0c,'I','D','A','T',0x08,0xd7,0x63,0xf8,0xff,0xff,0x3f,0x00,0x05,0xfe,0x02,0xfe,0xdc,0xcc,0x59,0xe7,
+  0x00,0x00,0x00,0x00,'I','E','N','D',0xae,0x42,0x60,0x82
+};
+
 static void test_png_unit_properties(void)
 {
     GpImage *image;
@@ -5881,6 +5889,28 @@ static void test_png_unit_properties(void)
 
         GdipDisposeImage(image);
     }
+}
+
+static void test_png_datetime_property(void)
+{
+    struct property_test_data td[] =
+    {
+        { PropertyTagTypeASCII, PropertyTagDateTime, 20, { "1970:01:01 00:00:00" } },
+        { PropertyTagTypeByte, PropertyTagPixelUnit, 1, { 1 } },
+        { PropertyTagTypeLong, PropertyTagPixelPerUnitX, 4, { 0,0,0,0 } },
+        { PropertyTagTypeLong, PropertyTagPixelPerUnitY, 4, { 0,0,0,0 } },
+    };
+
+    GpImage *image = load_image(png_time, sizeof(png_time), TRUE, FALSE);
+    ok(image != NULL, "Failed to load PNG image data\n");
+    if (!image)
+        return;
+
+    winetest_push_context("%s", __FUNCTION__);
+    check_properties_get_all(image, td, ARRAY_SIZE(td), td, 1, ~0);
+    winetest_pop_context();
+
+    GdipDisposeImage(image);
 }
 
 static void test_GdipLoadImageFromStream(void)
@@ -6128,6 +6158,7 @@ START_TEST(image)
     test_png_color_formats();
     test_png_save_palette();
     test_png_unit_properties();
+    test_png_datetime_property();
     test_supported_encoders();
     test_CloneBitmapArea();
     test_ARGB_conversion();
