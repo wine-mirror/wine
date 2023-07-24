@@ -1253,6 +1253,42 @@ static void test_flatten(void)
     GdipDeletePath(path);
 }
 
+static void test_flatten2(void)
+{
+    GpStatus status;
+    GpPath *path;
+
+    status = GdipCreatePath(0, &path);
+    expect(Ok, status);
+    status = GdipStartPathFigure(path);
+    expect(Ok, status);
+
+    /* path seen in the wild that caused a stack overflow */
+    status = GdipAddPathArc(path, -136.33, 20.00, 786.00, 786.00, -105.00, 30.00);
+    expect(Ok, status);
+    status = GdipAddPathArc(path, 256.67, 413.00, 0.00, 0.00, -75.00, -30.00);
+    expect(Ok, status);
+    status = GdipClosePathFigure(path);
+    expect(Ok, status);
+
+    status = GdipFlattenPath(path, NULL, 1.0);
+    expect(Ok, status);
+
+    /* path seen in the wild that caused a stack overflow */
+    /* same path but redo with the manual points that caused a crash */
+    status = GdipResetPath(path);
+    expect(Ok, status);
+    status = GdipAddPathBezier(path, 154.950806, 33.391144, 221.586075, 15.536285, 291.747314, 15.536285, 358.382568, 33.391144);
+    expect(Ok, status);
+    status = GdipAddPathBezier(path, 256.666809, 412.999512, 256.666718, 412.999481, 256.666656, 412.999481, 256.666565, 412.999512);
+    expect(Ok, status);
+    status = GdipClosePathFigure(path);
+    expect(Ok, status);
+    status = GdipFlattenPath(path, NULL, 1.0);
+
+    GdipDeletePath(path);
+}
+
 static path_test_t widenline_path[] = {
     {5.0, 5.0,   PathPointTypeStart, 0, 0}, /*0*/
     {50.0, 5.0,  PathPointTypeLine,  0, 0}, /*1*/
@@ -1935,6 +1971,7 @@ START_TEST(graphicspath)
     test_widen_cap();
     test_isvisible();
     test_empty_rect();
+    test_flatten2();
 
     GdiplusShutdown(gdiplusToken);
 }
