@@ -34937,6 +34937,7 @@ static void test_shared_resource(D3D_FEATURE_LEVEL feature_level)
     };
     static const unsigned int sharing_type_flags = D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
     struct device_desc device_desc = { 0 };
+    IDXGIKeyedMutex *keyed_mutex;
     ID3D11Texture2D *tex, *tex2;
     D3D11_TEXTURE2D_DESC desc;
     ID3D11Device1 *device1;
@@ -34983,6 +34984,7 @@ static void test_shared_resource(D3D_FEATURE_LEVEL feature_level)
         tex = NULL;
         res = NULL;
         res1 = NULL;
+        keyed_mutex = NULL;
 
         desc.MiscFlags = tests[test];
         nthandle = desc.MiscFlags & D3D11_RESOURCE_MISC_SHARED_NTHANDLE;
@@ -35007,6 +35009,13 @@ static void test_shared_resource(D3D_FEATURE_LEVEL feature_level)
             todo_wine ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
         if (FAILED(hr))
             goto test_done;
+
+        keyed_mutex = NULL;
+        hr = ID3D11Texture2D_QueryInterface(tex, &IID_IDXGIKeyedMutex, (void **)&keyed_mutex);
+        if (desc.MiscFlags & D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX)
+            todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+        else
+            ok(hr == E_NOINTERFACE, "got %#lx.\n", hr);
 
         hr = ID3D11Texture2D_QueryInterface(tex, &IID_IDXGIResource, (void **)&res);
         ok(hr == S_OK, "got %#lx.\n", hr);
@@ -35085,6 +35094,8 @@ static void test_shared_resource(D3D_FEATURE_LEVEL feature_level)
             ok(!bret && GetLastError() == ERROR_INVALID_HANDLE, "got bret %d, err %lu.\n", bret, GetLastError());
 
 test_done:
+        if (keyed_mutex)
+            IDXGIKeyedMutex_Release(keyed_mutex);
         if (tex)
             IDXGIResource_Release(res);
         if (res)
@@ -35097,6 +35108,164 @@ test_done:
     if (device1)
         ID3D11Device1_Release(device1);
     ref = ID3D11Device_Release(device);
+    ok(!ref, "got %ld.\n", ref);
+}
+
+static void test_keyed_mutex(void)
+{
+    IDXGIKeyedMutex *keyed_mutex, *keyed_mutex2;
+    ID3D11Device *device, *device2;
+    ID3D11Texture2D *tex, *tex2;
+    D3D11_TEXTURE2D_DESC desc;
+    IDXGIObject *obj1, *obj2;
+    IDXGIResource *res;
+    HANDLE handle;
+    HRESULT hr;
+    ULONG ref;
+
+    if (!(device = create_device(NULL)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    memset(&desc, 0, sizeof(desc));
+    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.Width = 256;
+    desc.Height = 256;
+    desc.MipLevels = 1;
+    desc.ArraySize = 1;
+    desc.SampleDesc.Count = 1;
+    desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
+    hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &tex);
+    ok(hr == S_OK || broken(hr == E_OUTOFMEMORY) /* software device before Win8 */, "got %#lx.\n", hr);
+    if (FAILED(hr))
+    {
+        skip("Shared resources are not supported.\n");
+        ID3D11Device_Release(device);
+        return;
+    }
+
+    hr = ID3D11Texture2D_QueryInterface(tex, &IID_IDXGIKeyedMutex, (void **)&keyed_mutex);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    if (FAILED(hr))
+    {
+        ID3D11Texture2D_Release(tex);
+        ID3D11Device_Release(device);
+        return;
+    }
+    hr = IDXGIKeyedMutex_QueryInterface(keyed_mutex, &IID_IDXGIObject, (void **)&obj1);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = ID3D11Texture2D_QueryInterface(tex, &IID_IDXGIResource, (void **)&res);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IDXGIResource_QueryInterface(res, &IID_IDXGIObject, (void **)&obj2);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    ok(obj1 == obj2, "got %p, %p.\n", obj1, obj2);
+
+    IDXGIObject_Release(obj1);
+    IDXGIObject_Release(obj2);
+    IDXGIResource_Release(res);
+
+    /* Releasing not aquired mutex. */
+    hr = IDXGIKeyedMutex_ReleaseSync(keyed_mutex, 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "got %#lx.\n", hr);
+    hr = IDXGIKeyedMutex_ReleaseSync(keyed_mutex, 1);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "got %#lx.\n", hr);
+
+    /* Initial key which mutex can be acquired with is 0. */
+    hr = IDXGIKeyedMutex_AcquireSync(keyed_mutex, 1, 0);
+    ok(hr == WAIT_TIMEOUT, "got %#lx.\n", hr);
+    hr = IDXGIKeyedMutex_AcquireSync(keyed_mutex, 0, 0);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    /* Attempt to acquire a mutex once again on the same device fails. */
+    hr = IDXGIKeyedMutex_AcquireSync(keyed_mutex, 0, 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "got %#lx.\n", hr);
+    hr = IDXGIKeyedMutex_AcquireSync(keyed_mutex, 1, 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "got %#lx.\n", hr);
+
+    /* May release to any value. */
+    hr = IDXGIKeyedMutex_ReleaseSync(keyed_mutex, 0);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IDXGIKeyedMutex_AcquireSync(keyed_mutex, 0, 0);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IDXGIKeyedMutex_ReleaseSync(keyed_mutex, 1);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    /* Acquire with the last release value succeeds. */
+    hr = IDXGIKeyedMutex_AcquireSync(keyed_mutex, 0, 0);
+    ok(hr == WAIT_TIMEOUT, "got %#lx.\n", hr);
+    hr = IDXGIKeyedMutex_AcquireSync(keyed_mutex, 2, 0);
+    ok(hr == WAIT_TIMEOUT, "got %#lx.\n", hr);
+    hr = IDXGIKeyedMutex_AcquireSync(keyed_mutex, 1, 0);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IDXGIKeyedMutex_ReleaseSync(keyed_mutex, 0);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IDXGIKeyedMutex_AcquireSync(keyed_mutex, 0, 0);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    device2 = create_device(NULL);
+    ok(!!device2, "got NULL.\n");
+
+    hr = ID3D11Texture2D_QueryInterface(tex, &IID_IDXGIResource, (void **)&res);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IDXGIResource_GetSharedHandle(res, &handle);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    IDXGIResource_Release(res);
+
+    hr = ID3D11Device_OpenSharedResource(device2, handle, &IID_ID3D11Texture2D, (void **)&tex2);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = ID3D11Texture2D_QueryInterface(tex2, &IID_IDXGIKeyedMutex, (void **)&keyed_mutex2);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = IDXGIKeyedMutex_AcquireSync(keyed_mutex, 0, 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "got %#lx.\n", hr);
+    /* Trying to acquire locked mutex on the other device. */
+    hr = IDXGIKeyedMutex_AcquireSync(keyed_mutex2, 0, 0);
+    ok(hr == WAIT_TIMEOUT, "got %#lx.\n", hr);
+    hr = IDXGIKeyedMutex_AcquireSync(keyed_mutex2, 1, 0);
+    ok(hr == WAIT_TIMEOUT, "got %#lx.\n", hr);
+
+    /* Trying to release locked on the other device. */
+    hr = IDXGIKeyedMutex_ReleaseSync(keyed_mutex2, 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "got %#lx.\n", hr);
+    hr = IDXGIKeyedMutex_ReleaseSync(keyed_mutex2, 1);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "got %#lx.\n", hr);
+
+    /* Almost supposed usage (but using the same key to release and acquire). */
+    hr = IDXGIKeyedMutex_ReleaseSync(keyed_mutex, 0);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IDXGIKeyedMutex_AcquireSync(keyed_mutex2, 0, 0);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IDXGIKeyedMutex_ReleaseSync(keyed_mutex2, 0);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IDXGIKeyedMutex_AcquireSync(keyed_mutex, 0, 0);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    IDXGIKeyedMutex_Release(keyed_mutex);
+    ID3D11Texture2D_Release(tex);
+    ref = ID3D11Device_Release(device);
+    ok(!ref, "got %ld.\n", ref);
+
+    /* Device closed while holding mutex. Now keyed mutex is broken and acquire will only return
+     * WAIT_ABANDONED, as the docs suggest, the only way out is recreating the shared resource. */
+    hr = IDXGIKeyedMutex_AcquireSync(keyed_mutex2, 0, 0);
+    ok(hr == WAIT_ABANDONED, "got %#lx.\n", hr);
+    /* Try twice, just in case. */
+    hr = IDXGIKeyedMutex_AcquireSync(keyed_mutex2, 0, 0);
+    ok(hr == WAIT_ABANDONED, "got %#lx.\n", hr);
+    hr = IDXGIKeyedMutex_ReleaseSync(keyed_mutex2, 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "got %#lx.\n", hr);
+    hr = IDXGIKeyedMutex_ReleaseSync(keyed_mutex2, 1);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "got %#lx.\n", hr);
+    hr = IDXGIKeyedMutex_AcquireSync(keyed_mutex2, 0, 0);
+    ok(hr == WAIT_ABANDONED, "got %#lx.\n", hr);
+
+    IDXGIKeyedMutex_Release(keyed_mutex2);
+    ID3D11Texture2D_Release(tex2);
+    ref = ID3D11Device_Release(device2);
     ok(!ref, "got %ld.\n", ref);
 }
 
@@ -35295,6 +35464,7 @@ START_TEST(d3d11)
     queue_test(test_vertex_formats);
     queue_test(test_dxgi_resources);
     queue_for_each_feature_level(test_shared_resource);
+    queue_test(test_keyed_mutex);
 
     run_queued_tests();
 
