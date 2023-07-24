@@ -3654,6 +3654,160 @@ static GpImage *load_image(const BYTE *image_data, UINT image_size, BOOL valid_d
     return image;
 }
 
+struct property_test_data
+{
+    ULONG type, id, length;
+    const BYTE value[32];
+    BOOL broken_length;
+    BOOL broken_data;
+};
+
+#ifndef PropertyTagTypeSByte
+#define PropertyTagTypeSByte  6
+#define PropertyTagTypeSShort 8
+#define PropertyTagTypeFloat  11
+#define PropertyTagTypeDouble 12
+#endif
+
+static UINT documented_type(UINT type)
+{
+    /* Win7 stopped using proper but not documented types, and it
+       looks broken since TypeFloat and TypeDouble now reported as
+       TypeUndefined, and signed types reported as unsigned. */
+    switch (type)
+    {
+    case PropertyTagTypeSByte: return PropertyTagTypeByte;
+    case PropertyTagTypeSShort: return PropertyTagTypeShort;
+    case PropertyTagTypeFloat: return PropertyTagTypeUndefined;
+    case PropertyTagTypeDouble: return PropertyTagTypeUndefined;
+    default: return type;
+    }
+}
+
+static void check_properties_id_list(GpImage *image, const struct property_test_data *td, UINT count,
+    const struct property_test_data *td_broken, UINT count_broken, UINT *prop_size)
+{
+    GpStatus status;
+    UINT prop_count, size, i;
+    PROPID *prop_id;
+    PropertyItem *prop_item;
+
+    prop_count = 0xdeadbeef;
+    status = GdipGetPropertyCount(image, &prop_count);
+    expect(Ok, status);
+    ok(count == prop_count || broken(count_broken != ~0 && count_broken == prop_count),
+       "expected property count %u, got %u\n", count, prop_count);
+    if (count_broken != ~0 && count_broken == prop_count)
+        td = td_broken;
+
+    prop_id = HeapAlloc(GetProcessHeap(), 0, prop_count * sizeof(*prop_id));
+
+    status = GdipGetPropertyIdList(image, prop_count, prop_id);
+    expect(Ok, status);
+
+    if (prop_size)
+        *prop_size = 0;
+
+    for (i = 0; i < prop_count; i++)
+    {
+        winetest_push_context("prop %u", i);
+
+        status = GdipGetPropertyItemSize(image, prop_id[i], &size);
+        expect(Ok, status);
+        if (status != Ok)
+        {
+            winetest_pop_context();
+            break;
+        }
+        ok(size > sizeof(*prop_item), "too small item length %u\n", size);
+
+        if (prop_size)
+            *prop_size += size;
+
+        prop_item = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+        status = GdipGetPropertyItem(image, prop_id[i], size, prop_item);
+        size -= sizeof(*prop_item);
+        expect(Ok, status);
+
+        ok(prop_item->value == prop_item + 1, "expected item->value %p, got %p\n",
+           prop_item + 1, prop_item->value);
+        ok(td[i].type == prop_item->type ||
+           broken(documented_type(td[i].type) == prop_item->type),
+           "expected type %lu, got %u\n", td[i].type, prop_item->type);
+        ok(td[i].id == prop_item->id, "expected id %#lx, got %#lx\n", td[i].id, prop_item->id);
+        ok(prop_item->length == size, "expected length %u, got %lu\n", size, prop_item->length);
+        ok(td[i].length == prop_item->length || broken(td[i].broken_length),
+           "expected length %lu, got %lu\n", td[i].length, prop_item->length);
+        ok(td[i].length == size || broken(td[i].broken_length),
+           "expected length %lu, got %u\n", td[i].length, size);
+        if (td[i].length == prop_item->length)
+        {
+            int match = !memcmp(td[i].value, prop_item->value, td[i].length);
+            ok(match || broken(td[i].broken_data), "data mismatch\n");
+            if (!match)
+                trace("(id %#lx) %s\n", prop_item->id, dbgstr_hexdata(prop_item->value, prop_item->length));
+        }
+
+        HeapFree(GetProcessHeap(), 0, prop_item);
+
+        winetest_pop_context();
+    }
+
+    HeapFree(GetProcessHeap(), 0, prop_id);
+}
+
+static void check_properties_get_all(GpImage *image, const struct property_test_data *td, UINT count,
+    const struct property_test_data *td_broken, UINT count_broken, UINT prop_size)
+{
+    GpStatus status;
+    UINT total_count, total_size, i;
+    PropertyItem *prop_item;
+    const BYTE *item_data;
+
+    total_size = 0xdeadbeef;
+    total_count = 0xdeadbeef;
+    status = GdipGetPropertySize(image, &total_size, &total_count);
+    expect(Ok, status);
+    ok(prop_size == total_size,
+       "expected total property size %u, got %u\n", prop_size, total_size);
+    ok(count == total_count || broken(count_broken != ~0 && count_broken == total_count),
+       "expected total property count %u, got %u\n", count, total_count);
+    if (count_broken != ~0 && count_broken == total_count)
+        td = td_broken;
+
+    prop_item = HeapAlloc(GetProcessHeap(), 0, total_size);
+    status = GdipGetAllPropertyItems(image, total_size, total_count, prop_item);
+    expect(Ok, status);
+
+    item_data = (const BYTE *)(prop_item + total_count);
+    for (i = 0; i < total_count && i < count; i++)
+    {
+        winetest_push_context("prop %u", i);
+
+        ok(prop_item[i].value == item_data,
+           "expected value %p, got %p\n", item_data, prop_item[i].value);
+        ok(td[i].type == prop_item[i].type ||
+           broken(documented_type(td[i].type) == prop_item[i].type),
+           "expected type %lu, got %u\n", td[i].type, prop_item[i].type);
+        ok(td[i].id == prop_item[i].id,
+           "expected id %#lx, got %#lx\n", td[i].id, prop_item[i].id);
+        ok(td[i].length == prop_item[i].length || broken(td[i].broken_length),
+           "expected length %lu, got %lu\n", td[i].length, prop_item[i].length);
+        if (td[i].length == prop_item[i].length)
+        {
+            int match = !memcmp(td[i].value, prop_item[i].value, td[i].length);
+            ok(match || broken(td[i].broken_data), "data mismatch\n");
+            if (!match)
+                trace("(id %#lx) %s\n", prop_item[i].id, dbgstr_hexdata(prop_item[i].value, prop_item[i].length));
+        }
+        item_data += prop_item[i].length;
+
+        winetest_pop_context();
+    }
+
+    HeapFree(GetProcessHeap(), 0, prop_item);
+}
+
 static void test_image_properties(void)
 {
     static const struct test_data
@@ -3861,25 +4015,6 @@ static void test_image_properties(void)
 #define IFD_FLOAT     11
 #define IFD_DOUBLE    12
 
-#ifndef PropertyTagTypeSByte
-#define PropertyTagTypeSByte  6
-#define PropertyTagTypeSShort 8
-#define PropertyTagTypeFloat  11
-#define PropertyTagTypeDouble 12
-#endif
-
-static UINT documented_type(UINT type)
-{
-    switch (type)
-    {
-    case PropertyTagTypeSByte: return PropertyTagTypeByte;
-    case PropertyTagTypeSShort: return PropertyTagTypeShort;
-    case PropertyTagTypeFloat: return PropertyTagTypeUndefined;
-    case PropertyTagTypeDouble: return PropertyTagTypeUndefined;
-    default: return type;
-    }
-}
-
 #include "pshpack2.h"
 struct IFD_entry
 {
@@ -3974,12 +4109,6 @@ static const struct tiff_data
 };
 #include "poppack.h"
 
-struct property_test_data
-{
-    ULONG type, id, length;
-    const BYTE value[32];
-};
-
 static void test_tiff_properties(void)
 {
     static const struct property_test_data td[31] =
@@ -3999,20 +4128,20 @@ static void test_tiff_properties(void)
         { PropertyTagTypeShort, 0x128, 2, { 2 } },
         { PropertyTagTypeByte, 0xf001, 1, { 0x44 } },
         { PropertyTagTypeByte, 0xf002, 4, { 0x44,0x33,0x22,0x11 } },
-        { PropertyTagTypeSByte, 0xf003, 1, { 0x44 } },
-        { PropertyTagTypeSShort, 0xf004, 2, { 0x44,0x33 } },
-        { PropertyTagTypeSShort, 0xf005, 4, { 0x44,0x33,0x22,0x11 } },
-        { PropertyTagTypeSLONG, 0xf006, 4, { 0x44,0x33,0x22,0x11 } },
-        { PropertyTagTypeFloat, 0xf007, 4, { 0x44,0x33,0x22,0x11 } },
+        { PropertyTagTypeSByte, 0xf003, 1, { 0x44 }, FALSE, TRUE },
+        { PropertyTagTypeSShort, 0xf004, 2, { 0x44,0x33 }, FALSE, TRUE },
+        { PropertyTagTypeSShort, 0xf005, 4, { 0x44,0x33,0x22,0x11 }, FALSE, TRUE },
+        { PropertyTagTypeSLONG, 0xf006, 4, { 0x44,0x33,0x22,0x11 }, FALSE, TRUE },
+        { PropertyTagTypeFloat, 0xf007, 4, { 0x44,0x33,0x22,0x11 }, FALSE, TRUE },
         { PropertyTagTypeDouble, 0xf008, 8, { 0x2c,0x52,0x86,0xb4,0x80,0x65,0xd2,0x41 } },
         { PropertyTagTypeSRational, 0xf009, 8, { 0x4d, 0x3c, 0x2b, 0x1a, 0x8d, 0x7c, 0x6b, 0x5a } },
-        { PropertyTagTypeByte, 0xf00a, 13, { 'H','e','l','l','o',' ','W','o','r','l','d','!',0 } },
+        { PropertyTagTypeByte, 0xf00a, 13, "Hello World!" },
         { PropertyTagTypeSShort, 0xf00b, 8, { 0x01,0x01,0x02,0x02,0x03,0x03,0x04,0x04 } },
         { PropertyTagTypeSLONG, 0xf00c, 8, { 0x44,0x33,0x22,0x11,0x88,0x77,0x66,0x55 } },
-        { PropertyTagTypeASCII, 0xf00e, 13, { 'H','e','l','l','o',' ','W','o','r','l','d','!',0 } },
-        { PropertyTagTypeASCII, 0xf00f, 5, { 'a','b','c','d' } },
-        { PropertyTagTypeUndefined, 0xf010, 13, { 'H','e','l','l','o',' ','W','o','r','l','d','!',0 } },
-        { PropertyTagTypeUndefined, 0xf011, 4, { 'a','b','c','d' } },
+        { PropertyTagTypeASCII, 0xf00e, 13, "Hello World!" },
+        { PropertyTagTypeASCII, 0xf00f, 5, "abcd", TRUE },
+        { PropertyTagTypeUndefined, 0xf010, 13, "Hello World!" },
+        { PropertyTagTypeUndefined, 0xf011, 4, { 'a','b','c','d' }, FALSE, TRUE },
         { PropertyTagTypeSRational, 0xf016, 24,
           { 0x04,0x03,0x02,0x01,0x08,0x07,0x06,0x05,
             0x40,0x30,0x20,0x10,0x80,0x70,0x60,0x50,
@@ -4023,9 +4152,7 @@ static void test_tiff_properties(void)
     GpStatus status;
     GpImage *image;
     GUID guid;
-    UINT dim_count, frame_count, prop_count, prop_size, i;
-    PROPID *prop_id;
-    PropertyItem *prop_item;
+    UINT dim_count, frame_count;
 
     image = load_image((const BYTE *)&TIFF_data, sizeof(TIFF_data), TRUE, FALSE);
     if (!image)
@@ -4047,53 +4174,9 @@ static void test_tiff_properties(void)
     expect(Ok, status);
     expect(1, frame_count);
 
-    prop_count = 0xdeadbeef;
-    status = GdipGetPropertyCount(image, &prop_count);
-    expect(Ok, status);
-    ok(prop_count == ARRAY_SIZE(td) ||
-       broken(prop_count == ARRAY_SIZE(td) - 1) /* Win7 SP0 */,
-       "expected property count %u, got %u\n", (UINT) ARRAY_SIZE(td), prop_count);
-
-    prop_id = HeapAlloc(GetProcessHeap(), 0, prop_count * sizeof(*prop_id));
-
-    status = GdipGetPropertyIdList(image, prop_count, prop_id);
-    expect(Ok, status);
-
-    for (i = 0; i < prop_count; i++)
-    {
-        status = GdipGetPropertyItemSize(image, prop_id[i], &prop_size);
-        expect(Ok, status);
-        if (status != Ok) break;
-        ok(prop_size > sizeof(*prop_item), "%u: too small item length %u\n", i, prop_size);
-
-        prop_item = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, prop_size);
-        status = GdipGetPropertyItem(image, prop_id[i], prop_size, prop_item);
-        expect(Ok, status);
-        ok(prop_item->value == prop_item + 1, "expected item->value %p, got %p\n", prop_item + 1, prop_item->value);
-        ok(td[i].type == prop_item->type ||
-           /* Win7 stopped using proper but not documented types, and it
-              looks broken since TypeFloat and TypeDouble now reported as
-              TypeUndefined, and signed types reported as unsigned. */
-           broken(prop_item->type == documented_type(td[i].type)),
-            "%u: expected type %lu, got %u\n", i, td[i].type, prop_item->type);
-        ok(td[i].id == prop_item->id, "%u: expected id %#lx, got %#lx\n", i, td[i].id, prop_item->id);
-        prop_size -= sizeof(*prop_item);
-        ok(prop_item->length == prop_size, "%u: expected length %u, got %lu\n", i, prop_size, prop_item->length);
-        ok(td[i].length == prop_item->length || broken(td[i].id == 0xf00f && td[i].length == prop_item->length+1) /* XP */,
-           "%u: expected length %lu, got %lu\n", i, td[i].length, prop_item->length);
-        ok(td[i].length == prop_size || broken(td[i].id == 0xf00f && td[i].length == prop_size+1) /* XP */,
-           "%u: expected length %lu, got %u\n", i, td[i].length, prop_size);
-        if (td[i].length == prop_item->length)
-        {
-            int match = memcmp(td[i].value, prop_item->value, td[i].length) == 0;
-            ok(match || broken(td[i].length <= 4 && !match), "%u: data mismatch\n", i);
-            if (!match)
-                trace("id %#lx:%s\n", prop_item->id, dbgstr_hexdata(prop_item->value, prop_item->length));
-        }
-        HeapFree(GetProcessHeap(), 0, prop_item);
-    }
-
-    HeapFree(GetProcessHeap(), 0, prop_id);
+    winetest_push_context("%s", __FUNCTION__);
+    check_properties_id_list(image, td, ARRAY_SIZE(td), td, ARRAY_SIZE(td) - 1 /* Win7 SP0 */, NULL);
+    winetest_pop_context();
 
     GdipDisposeImage(image);
 }
@@ -4122,11 +4205,7 @@ static void test_GdipGetAllPropertyItems(void)
     GpStatus status;
     GpImage *image;
     GUID guid;
-    UINT dim_count, frame_count, prop_count, prop_size, i;
-    UINT total_size, total_count;
-    PROPID *prop_id;
-    PropertyItem *prop_item;
-    const char *item_data;
+    UINT dim_count, frame_count, prop_size;
 
     image = load_image(tiffimage, sizeof(tiffimage), TRUE, FALSE);
     ok(image != 0, "Failed to load TIFF image data\n");
@@ -4146,83 +4225,10 @@ static void test_GdipGetAllPropertyItems(void)
     expect(Ok, status);
     expect(1, frame_count);
 
-    prop_count = 0xdeadbeef;
-    status = GdipGetPropertyCount(image, &prop_count);
-    expect(Ok, status);
-    ok(prop_count == ARRAY_SIZE(td),
-       "expected property count %u, got %u\n", (UINT) ARRAY_SIZE(td), prop_count);
-
-    prop_id = HeapAlloc(GetProcessHeap(), 0, prop_count * sizeof(*prop_id));
-
-    status = GdipGetPropertyIdList(image, prop_count, prop_id);
-    expect(Ok, status);
-
-    prop_size = 0;
-    for (i = 0; i < prop_count; i++)
-    {
-        UINT size;
-        status = GdipGetPropertyItemSize(image, prop_id[i], &size);
-        expect(Ok, status);
-        if (status != Ok) break;
-        ok(size > sizeof(*prop_item), "%u: too small item length %u\n", i, size);
-
-        prop_size += size;
-
-        prop_item = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-        status = GdipGetPropertyItem(image, prop_id[i], size, prop_item);
-        expect(Ok, status);
-        ok(prop_item->value == prop_item + 1, "expected item->value %p, got %p\n", prop_item + 1, prop_item->value);
-        ok(td[i].type == prop_item->type,
-            "%u: expected type %lu, got %u\n", i, td[i].type, prop_item->type);
-        ok(td[i].id == prop_item->id, "%u: expected id %#lx, got %#lx\n", i, td[i].id, prop_item->id);
-        size -= sizeof(*prop_item);
-        ok(prop_item->length == size, "%u: expected length %u, got %lu\n", i, size, prop_item->length);
-        ok(td[i].length == prop_item->length, "%u: expected length %lu, got %lu\n", i, td[i].length, prop_item->length);
-        if (td[i].length == prop_item->length)
-        {
-            int match = memcmp(td[i].value, prop_item->value, td[i].length) == 0;
-            ok(match, "%u: data mismatch\n", i);
-            if (!match)
-                trace("id %#lx:%s\n", prop_item->id, dbgstr_hexdata(prop_item->value, prop_item->length));
-        }
-        HeapFree(GetProcessHeap(), 0, prop_item);
-    }
-
-    HeapFree(GetProcessHeap(), 0, prop_id);
-
-    total_size = 0xdeadbeef;
-    total_count = 0xdeadbeef;
-    status = GdipGetPropertySize(image, &total_size, &total_count);
-    expect(Ok, status);
-    ok(prop_count == total_count,
-       "expected total property count %u, got %u\n", prop_count, total_count);
-    ok(prop_size == total_size,
-       "expected total property size %u, got %u\n", prop_size, total_size);
-
-    prop_item = HeapAlloc(GetProcessHeap(), 0, prop_size);
-    status = GdipGetAllPropertyItems(image, prop_size, prop_count, prop_item);
-    expect(Ok, status);
-
-    item_data = (const char *)(prop_item + prop_count);
-    for (i = 0; i < prop_count; i++)
-    {
-        ok(prop_item[i].value == item_data, "%u: expected value %p, got %p\n",
-           i, item_data, prop_item[i].value);
-        ok(td[i].type == prop_item[i].type,
-            "%u: expected type %lu, got %u\n", i, td[i].type, prop_item[i].type);
-        ok(td[i].id == prop_item[i].id, "%u: expected id %#lx, got %#lx\n", i, td[i].id, prop_item[i].id);
-        ok(td[i].length == prop_item[i].length, "%u: expected length %lu, got %lu\n", i, td[i].length, prop_item[i].length);
-        if (td[i].length == prop_item[i].length)
-        {
-            int match = memcmp(td[i].value, prop_item[i].value, td[i].length) == 0;
-            ok(match, "%u: data mismatch\n", i);
-            if (!match)
-                trace("id %#lx:%s\n", prop_item[i].id, dbgstr_hexdata(prop_item[i].value, prop_item[i].length));
-        }
-        item_data += prop_item[i].length;
-    }
-
-    HeapFree(GetProcessHeap(), 0, prop_item);
+    winetest_push_context("%s", __FUNCTION__);
+    check_properties_id_list(image, td, ARRAY_SIZE(td), NULL, ~0, &prop_size);
+    check_properties_get_all(image, td, ARRAY_SIZE(td), NULL, ~0, prop_size);
+    winetest_pop_context();
 
     GdipDisposeImage(image);
 }
@@ -4943,18 +4949,14 @@ static void test_gif_properties(void)
     GpStatus status;
     GpImage *image;
     GUID guid;
-    UINT dim_count, frame_count, prop_count, prop_size, i, j;
-    UINT total_size, total_count;
-    PROPID *prop_id;
-    PropertyItem *prop_item;
-    const char *item_data;
+    UINT dim_count, frame_count, prop_size, i;
 
     for (i = 0; i < ARRAY_SIZE(td); i++)
     {
         winetest_push_context("test %u", i);
 
         image = load_image(td[i].image_data, td[i].image_size, TRUE, FALSE);
-        if (!image) /* XP fails to load this GIF image */
+        if (!image) /* XP fails to load most of these GIF images */
         {
             trace("Failed to load GIF image data\n");
             winetest_pop_context();
@@ -4976,104 +4978,14 @@ static void test_gif_properties(void)
         status = GdipImageSelectActiveFrame(image, &guid, td[i].frame_count - 1);
         expect(Ok, status);
 
-        status = GdipGetPropertyCount(image, &prop_count);
-        expect(Ok, status);
-        ok(prop_count == td[i].prop_count || broken(prop_count == 1) /* before win7 */,
-           "expected property count %u, got %u\n", (UINT) td[i].prop_count, prop_count);
+        winetest_pop_context();
 
-        if (prop_count != td[i].prop_count)
-        {
-            win_skip("Property count mismatch.\n");
-            GdipDisposeImage(image);
-            winetest_pop_context();
-            continue;
-        }
-
-        prop_id = HeapAlloc(GetProcessHeap(), 0, prop_count * sizeof(*prop_id));
-
-        status = GdipGetPropertyIdList(image, prop_count, prop_id);
-        expect(Ok, status);
-
-        prop_size = 0;
-        for (j = 0; j < prop_count; j++)
-        {
-            UINT size;
-
-            winetest_push_context("property %u", j);
-
-            status = GdipGetPropertyItemSize(image, prop_id[j], &size);
-            expect(Ok, status);
-            if (status != Ok) break;
-            ok(size > sizeof(*prop_item), "too small item length %u\n", size);
-
-            prop_size += size;
-
-            prop_item = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-            status = GdipGetPropertyItem(image, prop_id[j], size, prop_item);
-            expect(Ok, status);
-            ok(prop_item->value == prop_item + 1, "expected item->value %p, got %p\n", prop_item + 1, prop_item->value);
-            ok(td[i].prop_item[j].type == prop_item->type,
-                "expected type %lu, got %u\n", td[i].prop_item[j].type, prop_item->type);
-            ok(td[i].prop_item[j].id == prop_item->id, "expected id %#lx, got %#lx\n", td[i].prop_item[j].id, prop_item->id);
-            size -= sizeof(*prop_item);
-            ok(prop_item->length == size, "expected length %u, got %lu\n", size, prop_item->length);
-            ok(td[i].prop_item[j].length == prop_item->length, "expected length %lu, got %lu\n", td[i].prop_item[j].length, prop_item->length);
-            if (td[i].prop_item[j].length == prop_item->length)
-            {
-                int match = memcmp(td[i].prop_item[j].value, prop_item->value, td[i].prop_item[j].length) == 0;
-                ok(match, "data mismatch\n");
-                if (!match)
-                    trace("id %#lx:%s\n", prop_item->id, dbgstr_hexdata(prop_item->value, prop_item->length));
-            }
-            HeapFree(GetProcessHeap(), 0, prop_item);
-
-            winetest_pop_context();
-        }
-
-        HeapFree(GetProcessHeap(), 0, prop_id);
-
-        total_size = 0xdeadbeef;
-        total_count = 0xdeadbeef;
-        status = GdipGetPropertySize(image, &total_size, &total_count);
-        expect(Ok, status);
-        ok(prop_count == total_count,
-           "expected total property count %u, got %u\n", prop_count, total_count);
-        ok(prop_size == total_size,
-           "expected total property size %u, got %u\n", prop_size, total_size);
-
-        prop_item = HeapAlloc(GetProcessHeap(), 0, prop_size);
-
-        status = GdipGetAllPropertyItems(image, prop_size, prop_count, prop_item);
-        expect(Ok, status);
-
-        item_data = (const char *)(prop_item + prop_count);
-        for (j = 0; j < prop_count; j++)
-        {
-            winetest_push_context("property %u", j);
-
-            ok(prop_item[j].value == item_data, "expected value %p, got %p\n",
-               item_data, prop_item[j].value);
-            ok(td[i].prop_item[j].type == prop_item[j].type,
-                "expected type %lu, got %u\n", td[i].prop_item[j].type, prop_item[j].type);
-            ok(td[i].prop_item[j].id == prop_item[j].id, "expected id %#lx, got %#lx\n", td[i].prop_item[j].id, prop_item[j].id);
-            ok(td[i].prop_item[j].length == prop_item[j].length, "expected length %lu, got %lu\n", td[i].prop_item[j].length, prop_item[j].length);
-            if (td[i].prop_item[j].length == prop_item[j].length)
-            {
-                int match = memcmp(td[i].prop_item[j].value, prop_item[j].value, td[i].prop_item[j].length) == 0;
-                ok(match, "data mismatch\n");
-                if (!match)
-                    trace("id %#lx:%s\n", prop_item[j].id, dbgstr_hexdata(prop_item[j].value, prop_item[j].length));
-            }
-            item_data += prop_item[j].length;
-
-            winetest_pop_context();
-        }
-
-        HeapFree(GetProcessHeap(), 0, prop_item);
+        winetest_push_context("%s test %u", __FUNCTION__, i);
+        check_properties_id_list(image, td[i].prop_item, td[i].prop_count, td[i].prop_item, 1, &prop_size);
+        check_properties_get_all(image, td[i].prop_item, td[i].prop_count, td[i].prop_item, 1, prop_size);
+        winetest_pop_context();
 
         GdipDisposeImage(image);
-
-        winetest_pop_context();
     }
 }
 
