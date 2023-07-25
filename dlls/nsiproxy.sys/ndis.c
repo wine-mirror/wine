@@ -62,6 +62,10 @@
 #include <net/if_types.h>
 #endif
 
+#ifdef HAVE_LINUX_WIRELESS_H
+#include <linux/wireless.h>
+#endif
+
 #include <pthread.h>
 
 #define NONAMELESSUNION
@@ -172,6 +176,21 @@ static NTSTATUS if_get_physical( const char *name, UINT *type, IF_PHYSICAL_ADDRE
 
     if (*type == MIB_IF_TYPE_OTHER && !ioctl( fd, SIOCGIFFLAGS, &ifr ) && ifr.ifr_flags & IFF_POINTOPOINT)
         *type = MIB_IF_TYPE_PPP;
+
+#ifdef HAVE_LINUX_WIRELESS_H
+    if (*type == MIB_IF_TYPE_ETHERNET)
+    {
+        struct iwreq pwrq;
+
+        memset( &pwrq, 0, sizeof(pwrq) );
+        memcpy( pwrq.ifr_name, name, size );
+        if (ioctl( fd, SIOCGIWNAME, &pwrq ) != -1)
+        {
+            TRACE( "iface %s, wireless protocol %s.\n", debugstr_a(name), debugstr_a(pwrq.u.name) );
+            *type = IF_TYPE_IEEE80211;
+        }
+    }
+#endif
 
 err:
     close( fd );

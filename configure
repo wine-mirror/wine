@@ -7975,6 +7975,12 @@ then :
   printf "%s\n" "#define HAVE_LINUX_UCDROM_H 1" >>confdefs.h
 
 fi
+ac_fn_c_check_header_compile "$LINENO" "linux/wireless.h" "ac_cv_header_linux_wireless_h" "$ac_includes_default"
+if test "x$ac_cv_header_linux_wireless_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_LINUX_WIRELESS_H 1" >>confdefs.h
+
+fi
 ac_fn_c_check_header_compile "$LINENO" "lwp.h" "ac_cv_header_lwp_h" "$ac_includes_default"
 if test "x$ac_cv_header_lwp_h" = xyes
 then :
