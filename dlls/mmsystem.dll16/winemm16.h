@@ -24,7 +24,7 @@
 
 /* mmsystem (16 bit files) only functions */
 void            MMDRV_Init16(void);
-void 		MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, const MMTIME* mmt32) DECLSPEC_HIDDEN;
+void 		MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, const MMTIME* mmt32);
 
 typedef LONG			(*MCIPROC16)(DWORD, HDRVR16, WORD, DWORD, DWORD);
 
@@ -61,7 +61,7 @@ typedef enum {
     MMSYSTEM_MAP_OKMEM, 	/* ok, some memory allocated, need to call UnMapMsg. to be sent to the proc. */
 } MMSYSTEM_MapType;
 
-extern  CRITICAL_SECTION        mmdrv_cs DECLSPEC_HIDDEN;
+extern  CRITICAL_SECTION        mmdrv_cs;
 
 enum MMSYSTEM_DriverType
 {
@@ -73,11 +73,11 @@ enum MMSYSTEM_DriverType
     MMSYSTDRV_MAX
 };
 
-extern  struct mmsystdrv_thunk* MMSYSTDRV_AddThunk(DWORD callback, DWORD flags, enum MMSYSTEM_DriverType kind) DECLSPEC_HIDDEN;
-extern  void                    MMSYSTDRV_DeleteThunk(struct mmsystdrv_thunk* thunk) DECLSPEC_HIDDEN;
-extern  void                    MMSYSTDRV_SetHandle(struct mmsystdrv_thunk* thunk, void* h) DECLSPEC_HIDDEN;
-extern  void                    MMSYSTDRV_CloseHandle(void* h) DECLSPEC_HIDDEN;
-extern  DWORD                   MMSYSTDRV_Message(void* h, UINT msg, DWORD_PTR param1, DWORD_PTR param2) DECLSPEC_HIDDEN;
+extern  struct mmsystdrv_thunk* MMSYSTDRV_AddThunk(DWORD callback, DWORD flags, enum MMSYSTEM_DriverType kind);
+extern  void                    MMSYSTDRV_DeleteThunk(struct mmsystdrv_thunk* thunk);
+extern  void                    MMSYSTDRV_SetHandle(struct mmsystdrv_thunk* thunk, void* h);
+extern  void                    MMSYSTDRV_CloseHandle(void* h);
+extern  DWORD                   MMSYSTDRV_Message(void* h, UINT msg, DWORD_PTR param1, DWORD_PTR param2);
 
 #define WINE_MMTHREAD_CREATED	0x4153494C	/* "BSIL" */
 #define WINE_MMTHREAD_DELETED	0xDEADDEAD
