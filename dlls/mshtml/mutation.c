@@ -1172,6 +1172,34 @@ static HRESULT WINAPI MutationObserver_Invoke(IWineMSHTMLMutationObserver *iface
             pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
+static HRESULT WINAPI MutationObserver_disconnect(IWineMSHTMLMutationObserver *iface)
+{
+    struct mutation_observer *This = impl_from_IWineMSHTMLMutationObserver(iface);
+
+    FIXME("(%p), stub\n", This);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI MutationObserver_observe(IWineMSHTMLMutationObserver *iface, IHTMLDOMNode *target,
+                                               IDispatch *options)
+{
+    struct mutation_observer *This = impl_from_IWineMSHTMLMutationObserver(iface);
+
+    FIXME("(%p)->(%p %p), stub\n", This, target, options);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI MutationObserver_takeRecords(IWineMSHTMLMutationObserver *iface, IDispatch **ret)
+{
+    struct mutation_observer *This = impl_from_IWineMSHTMLMutationObserver(iface);
+
+    FIXME("(%p)->(%p), stub\n", This, ret);
+
+    return E_NOTIMPL;
+}
+
 static const IWineMSHTMLMutationObserverVtbl WineMSHTMLMutationObserverVtbl = {
     MutationObserver_QueryInterface,
     MutationObserver_AddRef,
@@ -1180,6 +1208,9 @@ static const IWineMSHTMLMutationObserverVtbl WineMSHTMLMutationObserverVtbl = {
     MutationObserver_GetTypeInfo,
     MutationObserver_GetIDsOfNames,
     MutationObserver_Invoke,
+    MutationObserver_disconnect,
+    MutationObserver_observe,
+    MutationObserver_takeRecords
 };
 
 static const tid_t mutation_observer_iface_tids[] = {

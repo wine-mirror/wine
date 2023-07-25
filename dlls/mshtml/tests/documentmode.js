@@ -2909,7 +2909,15 @@ sync_test("MutationObserver", function() {
     } catch(e) {
         ok(false, "MutationObserver with extra args threw exception " + e.number);
     }
-})
+
+    var mutation_observer = new MutationObserver(function() {});
+    function test_exposed(prop) {
+        ok(prop in mutation_observer, prop + " not found in MutationObserver.");
+    }
+    test_exposed("observe");
+    test_exposed("disconnect");
+    test_exposed("takeRecords");
+});
 
 async_test("postMessage", function() {
     var v = document.documentMode;
