@@ -3138,7 +3138,9 @@ static void test_file_disposition_information(void)
     ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
     fdie.Flags = FILE_DISPOSITION_DELETE | FILE_DISPOSITION_IGNORE_READONLY_ATTRIBUTE;
     res = pNtSetInformationFile( handle, &io, &fdie, sizeof fdie, FileDispositionInformationEx );
-    ok( res == STATUS_SUCCESS || broken(res == STATUS_INVALID_INFO_CLASS),
+    ok( res == STATUS_SUCCESS
+        || broken(res == STATUS_INVALID_INFO_CLASS) /* win10 1507 & 32-bit 1607 */
+        || broken(res == STATUS_NOT_SUPPORTED), /* win10 1709 & 64-bit 1607 */
         "unexpected FileDispositionInformationEx result (expected STATUS_SUCCESS or SSTATUS_INVALID_INFO_CLASS, got %lx)\n", res );
     CloseHandle( handle );
     if ( res == STATUS_SUCCESS )
