@@ -492,6 +492,15 @@ struct nsi_get_parameter_ex
     UINT data_offset;
 };
 
+struct nsi_request_change_notification_ex
+{
+    DWORD unk;
+    const NPI_MODULEID *module;
+    UINT_PTR table;
+    OVERLAPPED *ovr;
+    HANDLE *handle;
+};
+
 DWORD WINAPI NsiAllocateAndGetTable( DWORD unk, const NPI_MODULEID *module, DWORD table, void **key_data, DWORD key_size,
                                      void **rw_data, DWORD rw_size, void **dynamic_data, DWORD dynamic_size,
                                      void **static_data, DWORD static_size, DWORD *count, DWORD unk2 );
@@ -508,5 +517,8 @@ DWORD WINAPI NsiGetAllParametersEx( struct nsi_get_all_parameters_ex *params );
 DWORD WINAPI NsiGetParameter( DWORD unk, const NPI_MODULEID *module, DWORD table, const void *key, DWORD key_size,
                               DWORD param_type, void *data, DWORD data_size, DWORD data_offset );
 DWORD WINAPI NsiGetParameterEx( struct nsi_get_parameter_ex *params );
+DWORD WINAPI NsiRequestChangeNotification( DWORD unk, const NPI_MODULEID *module, DWORD table, OVERLAPPED *ovr,
+                                           HANDLE *handle );
+DWORD WINAPI NsiRequestChangeNotificationEx( struct nsi_request_change_notification_ex *params );
 
 #endif /* __WINE_NSI_H */

@@ -307,3 +307,25 @@ err:
     CloseHandle( device );
     return err;
 }
+
+DWORD WINAPI NsiRequestChangeNotification( DWORD unk, const NPI_MODULEID *module, DWORD table, OVERLAPPED *ovr,
+                                           HANDLE *handle )
+{
+    struct nsi_request_change_notification_ex params;
+
+    TRACE( "%lu %p %lu %p %p stub.\n", unk, module, table, ovr, handle );
+
+    params.unk = unk;
+    params.module = module;
+    params.table = table;
+    params.ovr = ovr;
+    params.handle = handle;
+    return NsiRequestChangeNotificationEx( &params );
+}
+
+DWORD WINAPI NsiRequestChangeNotificationEx( struct nsi_request_change_notification_ex *params )
+{
+    FIXME( "%p stub.\n", params );
+
+    return ERROR_NOT_SUPPORTED;
+}
