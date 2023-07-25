@@ -30,9 +30,34 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(nsi);
 
+static HANDLE nsi_device = INVALID_HANDLE_VALUE;
+
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
+{
+    switch (reason)
+    {
+        case DLL_PROCESS_ATTACH:
+            DisableThreadLibraryCalls( hinst );
+            break;
+        case DLL_PROCESS_DETACH:
+            if (nsi_device != INVALID_HANDLE_VALUE) CloseHandle( nsi_device );
+            break;
+    }
+    return TRUE;
+}
+
 static inline HANDLE get_nsi_device( void )
 {
-    return CreateFileW( L"\\\\.\\Nsi", 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
+    HANDLE device;
+
+    if (nsi_device == INVALID_HANDLE_VALUE)
+    {
+        device = CreateFileW( L"\\\\.\\Nsi", 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
+        if (device != INVALID_HANDLE_VALUE
+            && InterlockedCompareExchangePointer( &nsi_device, device, INVALID_HANDLE_VALUE ) != INVALID_HANDLE_VALUE)
+            CloseHandle( device );
+    }
+    return nsi_device;
 }
 
 DWORD WINAPI NsiAllocateAndGetTable( DWORD unk, const NPI_MODULEID *module, DWORD table, void **key_data, DWORD key_size,
@@ -140,11 +165,7 @@ DWORD WINAPI NsiEnumerateObjectsAllParametersEx( struct nsi_enumerate_all_ex *pa
         (params->key_size + params->rw_size + params->dynamic_size + params->static_size) * params->count;
 
     out = heap_alloc( out_size );
-    if (!out)
-    {
-        CloseHandle( device );
-        return ERROR_OUTOFMEMORY;
-    }
+    if (!out) return ERROR_OUTOFMEMORY;
 
     in.module = *params->module;
     in.first_arg = params->first_arg;
@@ -172,7 +193,6 @@ DWORD WINAPI NsiEnumerateObjectsAllParametersEx( struct nsi_enumerate_all_ex *pa
     }
 
     heap_free( out );
-    CloseHandle( device );
 
     return err;
 }
@@ -256,7 +276,6 @@ DWORD WINAPI NsiGetAllParametersEx( struct nsi_get_all_parameters_ex *params )
 err:
     heap_free( out );
     heap_free( in );
-    CloseHandle( device );
     return err;
 }
 
@@ -293,11 +312,7 @@ DWORD WINAPI NsiGetParameterEx( struct nsi_get_parameter_ex *params )
     if (device == INVALID_HANDLE_VALUE) return GetLastError();
 
     in = heap_alloc( in_size );
-    if (!in)
-    {
-        err = ERROR_OUTOFMEMORY;
-        goto err;
-    }
+    if (!in) return ERROR_OUTOFMEMORY;
     in->module = *params->module;
     in->first_arg = params->first_arg;
     in->table = params->table;
@@ -309,9 +324,7 @@ DWORD WINAPI NsiGetParameterEx( struct nsi_get_parameter_ex *params )
     if (!DeviceIoControl( device, IOCTL_NSIPROXY_WINE_GET_PARAMETER, in, in_size, params->data, params->data_size, &received, NULL ))
         err = GetLastError();
 
-err:
     heap_free( in );
-    CloseHandle( device );
     return err;
 }
 
