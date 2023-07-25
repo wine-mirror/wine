@@ -62,11 +62,11 @@ struct wow_handlers32
     INT     (*dialog_box_loop)(HWND,HWND);
 };
 
-extern struct wow_handlers32 wow_handlers32 DECLSPEC_HIDDEN;
+extern struct wow_handlers32 wow_handlers32;
 
-extern HWND create_window16(CREATESTRUCTW*,LPCWSTR,HINSTANCE,BOOL) DECLSPEC_HIDDEN;
-extern void free_module_classes(HINSTANCE16) DECLSPEC_HIDDEN;
-extern void register_wow_handlers(void) DECLSPEC_HIDDEN;
+extern HWND create_window16(CREATESTRUCTW*,LPCWSTR,HINSTANCE,BOOL);
+extern void free_module_classes(HINSTANCE16);
+extern void register_wow_handlers(void);
 extern void WINAPI UserRegisterWowHandlers( const struct wow_handlers16 *new,
                                             struct wow_handlers32 *orig );
 
@@ -80,14 +80,14 @@ typedef LRESULT (*winproc_callback_t)( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
 typedef LRESULT (*winproc_callback16_t)( HWND16 hwnd, UINT16 msg, WPARAM16 wp, LPARAM lp,
                                          LRESULT *result, void *arg );
 
-extern WNDPROC16 WINPROC_GetProc16( WNDPROC proc, BOOL unicode ) DECLSPEC_HIDDEN;
-extern WNDPROC WINPROC_AllocProc16( WNDPROC16 func ) DECLSPEC_HIDDEN;
+extern WNDPROC16 WINPROC_GetProc16( WNDPROC proc, BOOL unicode );
+extern WNDPROC WINPROC_AllocProc16( WNDPROC16 func );
 extern LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT16 msg,
-                                        WPARAM16 wParam, LPARAM lParam, LRESULT *result, void *arg ) DECLSPEC_HIDDEN;
+                                        WPARAM16 wParam, LPARAM lParam, LRESULT *result, void *arg );
 extern LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT msg,
-                                        WPARAM wParam, LPARAM lParam, LRESULT *result, void *arg ) DECLSPEC_HIDDEN;
+                                        WPARAM wParam, LPARAM lParam, LRESULT *result, void *arg );
 
-extern void call_WH_CALLWNDPROC_hook( HWND16 hwnd, UINT16 msg, WPARAM16 wp, LPARAM lp ) DECLSPEC_HIDDEN;
+extern void call_WH_CALLWNDPROC_hook( HWND16 hwnd, UINT16 msg, WPARAM16 wp, LPARAM lp );
 
 #define GET_BYTE(ptr)  (*(const BYTE *)(ptr))
 #define GET_WORD(ptr)  (*(const WORD *)(ptr))
@@ -116,10 +116,10 @@ typedef struct tagDIALOGINFO
 #define HINSTANCE_16(h32)  (LOWORD(h32))
 #define HINSTANCE_32(h16)  ((HINSTANCE)(ULONG_PTR)(h16))
 
-extern HICON16 get_icon_16( HICON icon ) DECLSPEC_HIDDEN;
-extern HICON get_icon_32( HICON16 icon16 ) DECLSPEC_HIDDEN;
+extern HICON16 get_icon_16( HICON icon );
+extern HICON get_icon_32( HICON16 icon16 );
 
-extern DWORD USER16_AlertableWait DECLSPEC_HIDDEN;
-extern WORD USER_HeapSel DECLSPEC_HIDDEN;
+extern DWORD USER16_AlertableWait;
+extern WORD USER_HeapSel;
 
 #endif /* __WINE_USER_PRIVATE_H */
