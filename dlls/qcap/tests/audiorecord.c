@@ -1118,6 +1118,19 @@ static void test_stream_config(IBaseFilter *filter)
         ok(compare_media_types(mt, mt2), "Media types didn't match.\n");
         DeleteMediaType(mt2);
 
+        /* The first entry in the list is always the same as the format set. */
+        IPin_EnumMediaTypes(source, &enummt);
+        hr = IEnumMediaTypes_Next(enummt, 1, &mt2, NULL);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        todo_wine_if (i > 0) ok(compare_media_types(mt, mt2), "Media types didn't match.\n");
+        DeleteMediaType(mt2);
+        IEnumMediaTypes_Release(enummt);
+
+        hr = IAMStreamConfig_GetStreamCaps(config, 0, &mt2, (BYTE *)&caps);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        todo_wine_if (i > 0) ok(compare_media_types(mt, mt2), "Media types didn't match.\n");
+        DeleteMediaType(mt2);
+
         DeleteMediaType(mt);
 
         winetest_pop_context();
@@ -1134,6 +1147,9 @@ static void test_stream_config(IBaseFilter *filter)
         hr = IEnumMediaTypes_Next(enummt, 1, &mt2, NULL);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(compare_media_types(mt, mt2), "Media types didn't match.\n");
+
+        hr = IPin_QueryAccept(source, mt);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         DeleteMediaType(mt2);
         DeleteMediaType(mt);
