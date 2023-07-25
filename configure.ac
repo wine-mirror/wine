@@ -403,6 +403,7 @@ AC_CHECK_HEADERS(\
 	CL/cl.h \
 	EGL/egl.h \
 	OpenCL/opencl.h \
+	PCSC/pcsclite.h \
 	arpa/inet.h \
 	arpa/nameser.h \
 	asm/types.h \
@@ -1393,6 +1394,11 @@ dnl **** Check for libpcsclite ****
 if test "x$with_pcsclite" != "xno"
 then
     AC_CHECK_LIB(pcsclite,SCardEstablishContext,[AC_SUBST(PCSCLITE_LIBS,["-lpcsclite"])])
+    if test "x$ac_cv_lib_pcsclite_SCardEstablishContext" != xyes && test "$ac_cv_header_PCSC_pcsclite_h" = "yes"
+    then
+        AC_SUBST(PCSCLITE_LIBS,"-framework PCSC")
+        ac_cv_lib_pcsclite_SCardEstablishContext=yes
+    fi
 fi
 WINE_NOTICE_WITH(pcsclite,[test "x$ac_cv_lib_pcsclite_SCardEstablishContext" != xyes],
                  [libpcsclite not found, smart cards won't be supported.],

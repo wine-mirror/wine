@@ -7855,6 +7855,12 @@ then :
   printf "%s\n" "#define HAVE_OPENCL_OPENCL_H 1" >>confdefs.h
 
 fi
+ac_fn_c_check_header_compile "$LINENO" "PCSC/pcsclite.h" "ac_cv_header_PCSC_pcsclite_h" "$ac_includes_default"
+if test "x$ac_cv_header_PCSC_pcsclite_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_PCSC_PCSCLITE_H 1" >>confdefs.h
+
+fi
 ac_fn_c_check_header_compile "$LINENO" "arpa/inet.h" "ac_cv_header_arpa_inet_h" "$ac_includes_default"
 if test "x$ac_cv_header_arpa_inet_h" = xyes
 then :
@@ -15843,6 +15849,12 @@ then :
 
 fi
 
+    if test "x$ac_cv_lib_pcsclite_SCardEstablishContext" != xyes && test "$ac_cv_header_PCSC_pcsclite_h" = "yes"
+    then
+        PCSCLITE_LIBS="-framework PCSC"
+
+        ac_cv_lib_pcsclite_SCardEstablishContext=yes
+    fi
 fi
 if test "x$ac_cv_lib_pcsclite_SCardEstablishContext" != xyes
 then :
