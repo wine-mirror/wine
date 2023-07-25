@@ -114,12 +114,16 @@ audio_formats[] =
     {96000, 16, 1},
 };
 
-static HRESULT fill_media_type(unsigned int index, AM_MEDIA_TYPE *mt)
+static HRESULT fill_media_type(struct audio_record *filter, unsigned int index, AM_MEDIA_TYPE *mt)
 {
     WAVEFORMATEX *format;
 
-    if (index >= ARRAY_SIZE(audio_formats))
+    if (index >= 1 + ARRAY_SIZE(audio_formats))
         return VFW_S_NO_MORE_ITEMS;
+
+    if (!index)
+        return CopyMediaType(mt, &filter->format);
+    --index;
 
     if (!(format = CoTaskMemAlloc(sizeof(*format))))
         return E_OUTOFMEMORY;
@@ -147,7 +151,9 @@ static HRESULT fill_media_type(unsigned int index, AM_MEDIA_TYPE *mt)
 static HRESULT audio_record_source_get_media_type(struct strmbase_pin *iface,
         unsigned int index, AM_MEDIA_TYPE *mt)
 {
-    return fill_media_type(index, mt);
+    struct audio_record *filter = impl_from_strmbase_filter(iface->filter);
+
+    return fill_media_type(filter, index, mt);
 }
 
 static HRESULT WINAPI audio_record_source_DecideBufferSize(struct strmbase_source *iface,
@@ -283,7 +289,7 @@ static HRESULT WINAPI stream_config_GetNumberOfCapabilities(IAMStreamConfig *ifa
 
     TRACE("filter %p, count %p, size %p.\n", filter, count, size);
 
-    *count = ARRAY_SIZE(audio_formats);
+    *count = 1 + ARRAY_SIZE(audio_formats);
     *size = sizeof(AUDIO_STREAM_CONFIG_CAPS);
     return S_OK;
 }
@@ -298,13 +304,13 @@ static HRESULT WINAPI stream_config_GetStreamCaps(IAMStreamConfig *iface,
 
     TRACE("filter %p, index %d, ret_mt %p, caps %p.\n", filter, index, ret_mt, caps);
 
-    if (index >= ARRAY_SIZE(audio_formats))
+    if (index >= 1 + ARRAY_SIZE(audio_formats))
         return S_FALSE;
 
     if (!(mt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE))))
         return E_OUTOFMEMORY;
 
-    if ((hr = fill_media_type(index, mt)) != S_OK)
+    if ((hr = fill_media_type(filter, index, mt)) != S_OK)
     {
         CoTaskMemFree(mt);
         return hr;
@@ -795,7 +801,7 @@ HRESULT audio_record_create(IUnknown *outer, IUnknown **out)
         return E_OUTOFMEMORY;
     }
 
-    if ((hr = fill_media_type(0, &object->format)))
+    if ((hr = fill_media_type(object, 1, &object->format)))
     {
         CloseHandle(object->event);
         free(object);
