@@ -78,7 +78,7 @@ static void test_create_env(void)
     BOOL r, is_wow64 = FALSE;
     HANDLE htok;
     WCHAR * env[4];
-    char * st, systemroot[100], programdata[100];
+    char * st, systemroot[100], programdata[100], allusersprofile[100];
     int i, j;
 
     static const struct profile_item common_vars[] = {
@@ -186,7 +186,7 @@ static void test_create_env(void)
     }
 
     /* Test for common environment variables (post NT4) */
-    if (!GetEnvironmentVariableA("ALLUSERSPROFILE", NULL, 0))
+    if (!GetEnvironmentVariableA("ALLUSERSPROFILE", allusersprofile, sizeof(allusersprofile)))
     {
         win_skip("Some environment variables are not present on NT4\n");
     }
@@ -198,6 +198,9 @@ static void test_create_env(void)
             {
                 r = get_env(env[j], common_post_nt4_vars[i].name, &st);
                 expect_env(TRUE, r, common_post_nt4_vars[i].name);
+                if (!strcmp(common_post_nt4_vars[i].name, "ALLUSERSPROFILE") ||
+                        !strcmp(common_post_nt4_vars[i].name, "ProgramData"))
+                    ok(!strcmp(st + strlen(common_post_nt4_vars[i].name) + 1, allusersprofile), "%s\n", st);
                 if (r) HeapFree(GetProcessHeap(), 0, st);
             }
         }
