@@ -1139,7 +1139,7 @@ struct test_transfer_notify
     LONG refcount;
 
     IMFMediaEngineEx *media_engine;
-    HANDLE ready_event;
+    HANDLE ready_event, frame_ready_event;
     HRESULT error;
 };
 
@@ -1175,6 +1175,7 @@ static ULONG WINAPI test_transfer_notify_Release(IMFMediaEngineNotify *iface)
 
     if (!refcount)
     {
+        CloseHandle(notify->frame_ready_event);
         CloseHandle(notify->ready_event);
         free(notify);
     }
@@ -1211,6 +1212,8 @@ static HRESULT WINAPI test_transfer_notify_EventNotify(IMFMediaEngineNotify *ifa
         notify->error = param2;
         /* fallthrough */
     case MF_MEDIA_ENGINE_EVENT_FIRSTFRAMEREADY:
+        SetEvent(notify->frame_ready_event);
+        break;
     case MF_MEDIA_ENGINE_EVENT_TIMEUPDATE:
         SetEvent(notify->ready_event);
         break;
@@ -1236,6 +1239,9 @@ static struct test_transfer_notify *create_transfer_notify(void)
     object->refcount = 1;
     object->ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     ok(!!object->ready_event, "Failed to create an event, error %lu.\n", GetLastError());
+
+    object->frame_ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(!!object->frame_ready_event, "Failed to create an event, error %lu.\n", GetLastError());
 
     return object;
 }
@@ -1295,7 +1301,7 @@ static void test_TransferVideoFrame(void)
     SysFreeString(url);
     IMFByteStream_Release(stream);
 
-    res = WaitForSingleObject(notify->ready_event, 5000);
+    res = WaitForSingleObject(notify->frame_ready_event, 5000);
     ok(!res, "Unexpected res %#lx.\n", res);
 
     if (FAILED(notify->error))
@@ -1787,7 +1793,6 @@ static void test_effect(void)
     UINT token;
     HRESULT hr;
     DWORD res;
-    ULONG ref;
     BSTR url;
 
     stream = load_resource(L"i420-64x64.avi", L"video/avi");
@@ -1858,13 +1863,8 @@ static void test_effect(void)
     IMFByteStream_Release(stream);
 
     /* Wait for MediaEngine to be ready. */
-    res = WaitForSingleObject(notify->ready_event, 5000);
+    res = WaitForSingleObject(notify->frame_ready_event, 5000);
     ok(!res, "Unexpected res %#lx.\n", res);
-
-    /* Wait for another update. This makes MediaEngine shutdown more consistent on Windows. */
-    res = WaitForSingleObject(notify->ready_event, 500);
-    /* Timeupdates are missing in Wine. */
-    todo_wine ok(!res, "Unexpected res %#lx.\n", res);
 
     SetRect(&dst_rect, 0, 0, desc.Width, desc.Height);
     hr = IMFMediaEngineEx_TransferVideoFrame(notify->media_engine, (IUnknown *)texture, NULL, &dst_rect, NULL);
@@ -1890,9 +1890,7 @@ done:
     if (media_engine_ex)
     {
         IMFMediaEngineEx_Shutdown(media_engine_ex);
-
-        ref = IMFMediaEngineEx_Release(media_engine_ex);
-        todo_wine ok(!ref, "Unexpected ref %lu.\n", ref);
+        IMFMediaEngineEx_Release(media_engine_ex);
     }
 
     if (texture)
@@ -1901,26 +1899,14 @@ done:
         ID3D11Device_Release(device);
 
     if (audio_effect2)
-    {
-        ref = IMFTransform_Release(&audio_effect2->IMFTransform_iface);
-        todo_wine ok(!ref, "Unexpected ref %lu.\n", ref);
-    }
+        IMFTransform_Release(&audio_effect2->IMFTransform_iface);
     if (audio_effect)
-    {
-        ref = IMFTransform_Release(&audio_effect->IMFTransform_iface);
-        todo_wine ok(!ref, "Unexpected ref %lu.\n", ref);
-    }
+        IMFTransform_Release(&audio_effect->IMFTransform_iface);
 
     if (video_effect2)
-    {
-        ref = IMFTransform_Release(&video_effect2->IMFTransform_iface);
-        todo_wine ok(!ref, "Unexpected ref %lu.\n", ref);
-    }
+        IMFTransform_Release(&video_effect2->IMFTransform_iface);
     if (video_effect)
-    {
-        ref = IMFTransform_Release(&video_effect->IMFTransform_iface);
-        todo_wine ok(!ref, "Unexpected ref %lu.\n", ref);
-    }
+        IMFTransform_Release(&video_effect->IMFTransform_iface);
 
     IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
 }
