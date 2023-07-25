@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "winsock2.h"
 #include "winternl.h"
 #include "ws2ipdef.h"
@@ -1023,6 +1025,66 @@ static void test_udp_tables( int family )
     winetest_pop_context();
 }
 
+void test_change_notifications(void)
+{
+    struct nsi_request_change_notification_ex params;
+    HANDLE handle, handle2;
+    OVERLAPPED ovr, ovr2;
+    DWORD bytes;
+    DWORD ret;
+    BOOL bret;
+
+    memset( &ovr, 0, sizeof(ovr) );
+    ovr.hEvent = CreateEventW( NULL, FALSE, FALSE, NULL );
+
+    handle = (HANDLE)0xdeadbeef;
+    ret = NsiRequestChangeNotification( 0, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, &ovr, &handle );
+    todo_wine ok( ret == ERROR_IO_PENDING, "got %lu.\n", ret );
+
+    memset( &params, 0, sizeof(params) );
+    handle2 = (HANDLE)0xdeadbeef;
+    memset( &ovr2, 0, sizeof(ovr2) );
+    params.module = &NPI_MS_NDIS_MODULEID;
+    params.table = NSI_NDIS_IFINFO_TABLE;
+    params.ovr = &ovr2;
+    params.handle = &handle2;
+    ret = NsiRequestChangeNotificationEx( &params );
+    todo_wine ok( ret == ERROR_IO_PENDING, "got %lu.\n", ret );
+
+    ok( handle2 == handle, "got %p, %p.\n", handle, handle2 );
+    bret = GetOverlappedResult( handle, &ovr, &bytes, FALSE );
+    todo_wine ok( !bret && GetLastError() == ERROR_IO_INCOMPLETE, "got bret %d, err %lu.\n", bret, GetLastError() );
+
+    ret = NsiCancelChangeNotification( NULL );
+    todo_wine ok( ret == ERROR_NOT_FOUND, "got %lu.\n", ret );
+
+    ret = NsiCancelChangeNotification( &ovr );
+    todo_wine ok( !ret, "got %lu.\n", ret );
+
+    bytes = 0xdeadbeef;
+    bret = GetOverlappedResult( handle, &ovr, &bytes, FALSE );
+    todo_wine ok( !bret && GetLastError() == ERROR_OPERATION_ABORTED, "got bret %d, err %lu.\n", bret, GetLastError() );
+    todo_wine ok( ovr.Internal == (ULONG)STATUS_CANCELLED, "got %Ix.\n", ovr.Internal );
+    ok( !bytes, "got %lu.\n", bytes );
+
+    bret = GetOverlappedResult( handle2, &ovr2, &bytes, FALSE );
+    todo_wine ok( !bret && GetLastError() == ERROR_IO_INCOMPLETE, "got bret %d, err %lu.\n", bret, GetLastError() );
+    ret = NsiCancelChangeNotification( &ovr2 );
+    todo_wine ok( !ret, "got %lu.\n", ret );
+    bret = GetOverlappedResult( handle, &ovr, &bytes, FALSE );
+    todo_wine ok( !bret && GetLastError() == ERROR_OPERATION_ABORTED, "got bret %d, err %lu.\n", bret, GetLastError() );
+
+    ret = NsiRequestChangeNotification( 0, &NPI_MS_NDIS_MODULEID, NSI_NDIS_INDEX_LUID_TABLE, &ovr, &handle );
+    todo_wine ok( ret == ERROR_INVALID_PARAMETER, "got %lu.\n", ret );
+
+    ret = NsiRequestChangeNotification( 0, &NPI_MS_IPV4_MODULEID, NSI_IP_FORWARD_TABLE, &ovr, &handle );
+    todo_wine ok( ret == ERROR_IO_PENDING, "got %lu.\n", ret );
+    ret = NsiCancelChangeNotification( &ovr );
+    todo_wine ok( !ret, "got %lu.\n", ret );
+    bret = GetOverlappedResult( handle, &ovr, &bytes, FALSE );
+    todo_wine ok( !bret && GetLastError() == ERROR_OPERATION_ABORTED, "got bret %d, err %lu.\n", bret, GetLastError() );
+}
+
 START_TEST( nsi )
 {
     test_nsi_api();
@@ -1056,4 +1118,6 @@ START_TEST( nsi )
     test_udp_stats( AF_INET6 );
     test_udp_tables( AF_INET );
     test_udp_tables( AF_INET6 );
+
+    test_change_notifications();
 }
