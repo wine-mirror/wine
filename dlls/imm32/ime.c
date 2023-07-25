@@ -98,6 +98,8 @@ static void input_context_set_comp_str( INPUTCONTEXT *ctx, const WCHAR *str, UIN
     UINT size;
     BYTE *dst;
 
+    TRACE( "ctx %p, str %s\n", ctx, debugstr_wn( str, len ) );
+
     size = sizeof(*compstr);
     size += len * sizeof(WCHAR); /* GCS_COMPSTR */
     size += len; /* GCS_COMPSTRATTR */
@@ -310,20 +312,17 @@ static void ime_ui_paint( HIMC himc, HWND hwnd )
 
 static void ime_ui_update_window( INPUTCONTEXT *ctx, HWND hwnd )
 {
-    COMPOSITIONSTRING *string;
+    WCHAR *str;
+    UINT len;
 
-    if (ctx->hCompStr) string = ImmLockIMCC( ctx->hCompStr );
-    else string = NULL;
-
-    if (!string || string->dwCompStrLen == 0)
+    if (!(str = input_context_get_comp_str( ctx, FALSE, &len )) || !*str)
         ShowWindow( hwnd, SW_HIDE );
     else
     {
         ShowWindow( hwnd, SW_SHOWNOACTIVATE );
         RedrawWindow( hwnd, NULL, NULL, RDW_ERASENOW | RDW_INVALIDATE );
     }
-
-    if (string) ImmUnlockIMCC( ctx->hCompStr );
+    free( str );
 
     ctx->hWnd = GetFocus();
 }
