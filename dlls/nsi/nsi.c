@@ -88,6 +88,13 @@ err:
     return err;
 }
 
+DWORD WINAPI NsiCancelChangeNotification( OVERLAPPED *ovr )
+{
+    FIXME( "%p stub.\n", ovr );
+
+    return ERROR_NOT_SUPPORTED;
+}
+
 DWORD WINAPI NsiEnumerateObjectsAllParameters( DWORD unk, DWORD unk2, const NPI_MODULEID *module, DWORD table,
                                                void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
                                                void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size,

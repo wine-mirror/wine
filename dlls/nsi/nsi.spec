@@ -1,6 +1,6 @@
 @ stub NsiAllocateAndGetPersistentDataWithMaskTable
 @ stdcall NsiAllocateAndGetTable(long ptr long ptr long ptr long ptr long ptr long ptr long)
-@ stub NsiCancelChangeNotification
+@ stdcall NsiCancelChangeNotification(ptr)
 @ stub NsiDeregisterChangeNotification
 @ stub NsiDeregisterChangeNotificationEx
 @ stdcall NsiEnumerateObjectsAllParameters(long long ptr long ptr long ptr long ptr long ptr long ptr)

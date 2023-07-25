@@ -504,6 +504,7 @@ struct nsi_request_change_notification_ex
 DWORD WINAPI NsiAllocateAndGetTable( DWORD unk, const NPI_MODULEID *module, DWORD table, void **key_data, DWORD key_size,
                                      void **rw_data, DWORD rw_size, void **dynamic_data, DWORD dynamic_size,
                                      void **static_data, DWORD static_size, DWORD *count, DWORD unk2 );
+DWORD WINAPI NsiCancelChangeNotification( OVERLAPPED *ovr );
 DWORD WINAPI NsiEnumerateObjectsAllParameters( DWORD unk, DWORD unk2, const NPI_MODULEID *module, DWORD table,
                                                void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
                                                void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size,
