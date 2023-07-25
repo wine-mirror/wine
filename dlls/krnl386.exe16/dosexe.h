@@ -38,8 +38,8 @@
 typedef void (*DOSRELAY)(CONTEXT*,void*);
 typedef void (WINAPI *INTPROC)(CONTEXT*);
 
-extern WORD DOSVM_psp DECLSPEC_HIDDEN;     /* psp of current DOS task */
-extern WORD int16_sel DECLSPEC_HIDDEN;
+extern WORD DOSVM_psp;     /* psp of current DOS task */
+extern WORD int16_sel;
 
 #define ADD_LOWORD(dw,val)  ((dw) = ((dw) & 0xffff0000) | LOWORD((DWORD)(dw)+(val)))
 
@@ -195,53 +195,53 @@ typedef struct
 #include <poppack.h>
 
 /* dosvm.c */
-extern void DOSVM_Exit( WORD retval ) DECLSPEC_HIDDEN;
+extern void DOSVM_Exit( WORD retval );
 
 /* dosmem.c */
-extern BIOSDATA *DOSVM_BiosData( void ) DECLSPEC_HIDDEN;
-extern void DOSVM_start_bios_timer(void) DECLSPEC_HIDDEN;
+extern BIOSDATA *DOSVM_BiosData( void );
+extern void DOSVM_start_bios_timer(void);
 
 /* fpu.c */
-extern void WINAPI DOSVM_Int34Handler(CONTEXT*) DECLSPEC_HIDDEN;
-extern void WINAPI DOSVM_Int35Handler(CONTEXT*) DECLSPEC_HIDDEN;
-extern void WINAPI DOSVM_Int36Handler(CONTEXT*) DECLSPEC_HIDDEN;
-extern void WINAPI DOSVM_Int37Handler(CONTEXT*) DECLSPEC_HIDDEN;
-extern void WINAPI DOSVM_Int38Handler(CONTEXT*) DECLSPEC_HIDDEN;
-extern void WINAPI DOSVM_Int39Handler(CONTEXT*) DECLSPEC_HIDDEN;
-extern void WINAPI DOSVM_Int3aHandler(CONTEXT*) DECLSPEC_HIDDEN;
-extern void WINAPI DOSVM_Int3bHandler(CONTEXT*) DECLSPEC_HIDDEN;
-extern void WINAPI DOSVM_Int3cHandler(CONTEXT*) DECLSPEC_HIDDEN;
-extern void WINAPI DOSVM_Int3dHandler(CONTEXT*) DECLSPEC_HIDDEN;
-extern void WINAPI DOSVM_Int3eHandler(CONTEXT*) DECLSPEC_HIDDEN;
+extern void WINAPI DOSVM_Int34Handler(CONTEXT*);
+extern void WINAPI DOSVM_Int35Handler(CONTEXT*);
+extern void WINAPI DOSVM_Int36Handler(CONTEXT*);
+extern void WINAPI DOSVM_Int37Handler(CONTEXT*);
+extern void WINAPI DOSVM_Int38Handler(CONTEXT*);
+extern void WINAPI DOSVM_Int39Handler(CONTEXT*);
+extern void WINAPI DOSVM_Int3aHandler(CONTEXT*);
+extern void WINAPI DOSVM_Int3bHandler(CONTEXT*);
+extern void WINAPI DOSVM_Int3cHandler(CONTEXT*);
+extern void WINAPI DOSVM_Int3dHandler(CONTEXT*);
+extern void WINAPI DOSVM_Int3eHandler(CONTEXT*);
 
 /* int15.c */
-extern void WINAPI DOSVM_Int15Handler(CONTEXT*) DECLSPEC_HIDDEN;
+extern void WINAPI DOSVM_Int15Handler(CONTEXT*);
 
 /* int21.c */
-extern void WINAPI DOSVM_Int21Handler(CONTEXT*) DECLSPEC_HIDDEN;
+extern void WINAPI DOSVM_Int21Handler(CONTEXT*);
 
 /* int25.c */
-BOOL DOSVM_RawRead( BYTE, DWORD, DWORD, BYTE *, BOOL ) DECLSPEC_HIDDEN;
-void WINAPI DOSVM_Int25Handler( CONTEXT * ) DECLSPEC_HIDDEN;
+BOOL DOSVM_RawRead( BYTE, DWORD, DWORD, BYTE *, BOOL );
+void WINAPI DOSVM_Int25Handler( CONTEXT * );
 
 /* int26.c */
-BOOL DOSVM_RawWrite( BYTE, DWORD, DWORD, BYTE *, BOOL ) DECLSPEC_HIDDEN;
-void WINAPI DOSVM_Int26Handler( CONTEXT * ) DECLSPEC_HIDDEN;
+BOOL DOSVM_RawWrite( BYTE, DWORD, DWORD, BYTE *, BOOL );
+void WINAPI DOSVM_Int26Handler( CONTEXT * );
 
 /* int2f.c */
-extern void WINAPI DOSVM_Int2fHandler(CONTEXT*) DECLSPEC_HIDDEN;
+extern void WINAPI DOSVM_Int2fHandler(CONTEXT*);
 
 /* int31.c */
-extern void WINAPI DOSVM_Int31Handler(CONTEXT*) DECLSPEC_HIDDEN;
+extern void WINAPI DOSVM_Int31Handler(CONTEXT*);
 
 /* interrupts.c */
-extern void WINAPI __wine_call_int_handler16( BYTE, CONTEXT * ) DECLSPEC_HIDDEN;
-extern BOOL        DOSVM_EmulateInterruptPM( CONTEXT *, BYTE ) DECLSPEC_HIDDEN;
-extern FARPROC16   DOSVM_GetPMHandler16( BYTE ) DECLSPEC_HIDDEN;
-extern void        DOSVM_SetPMHandler16( BYTE, FARPROC16 ) DECLSPEC_HIDDEN;
+extern void WINAPI __wine_call_int_handler16( BYTE, CONTEXT * );
+extern BOOL        DOSVM_EmulateInterruptPM( CONTEXT *, BYTE );
+extern FARPROC16   DOSVM_GetPMHandler16( BYTE );
+extern void        DOSVM_SetPMHandler16( BYTE, FARPROC16 );
 
 /* ioports.c */
-extern DWORD DOSVM_inport( int port, int size ) DECLSPEC_HIDDEN;
-extern void DOSVM_outport( int port, int size, DWORD value ) DECLSPEC_HIDDEN;
+extern DWORD DOSVM_inport( int port, int size );
+extern void DOSVM_outport( int port, int size, DWORD value );
 
 #endif /* __WINE_DOSEXE_H */

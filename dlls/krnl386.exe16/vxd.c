@@ -233,7 +233,7 @@ done:
  *		VxDCall7 (KERNEL32.8)
  *		VxDCall8 (KERNEL32.9)
  */
-void WINAPI DECLSPEC_HIDDEN __regs_VxDCall( CONTEXT *context )
+void WINAPI __regs_VxDCall( CONTEXT *context )
 {
     unsigned int i;
     VxDCallProc proc = NULL;
