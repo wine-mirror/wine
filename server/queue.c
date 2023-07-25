@@ -1679,9 +1679,9 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
         break;
     case QS_MOUSEMOVE:
         prepend_cursor_history( msg->x, msg->y, msg->time, msg_data->info );
-        if (update_desktop_cursor_pos( desktop, msg->win, msg->x, msg->y )) always_queue = 1;
         /* fallthrough */
     case QS_MOUSEBUTTON:
+        if (update_desktop_cursor_pos( desktop, msg->win, msg->x, msg->y )) always_queue = 1;
         if (desktop->keystate[VK_LBUTTON] & 0x80)  msg->wparam |= MK_LBUTTON;
         if (desktop->keystate[VK_MBUTTON] & 0x80)  msg->wparam |= MK_MBUTTON;
         if (desktop->keystate[VK_RBUTTON] & 0x80)  msg->wparam |= MK_RBUTTON;
