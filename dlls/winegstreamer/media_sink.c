@@ -26,6 +26,21 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
+enum async_op
+{
+    ASYNC_START,
+    ASYNC_STOP,
+    ASYNC_PAUSE,
+};
+
+struct async_command
+{
+    IUnknown IUnknown_iface;
+    LONG refcount;
+
+    enum async_op op;
+};
+
 struct stream_sink
 {
     IMFStreamSink IMFStreamSink_iface;
@@ -45,9 +60,18 @@ struct media_sink
     IMFFinalizableMediaSink IMFFinalizableMediaSink_iface;
     IMFMediaEventGenerator IMFMediaEventGenerator_iface;
     IMFClockStateSink IMFClockStateSink_iface;
+    IMFAsyncCallback async_callback;
     LONG refcount;
     CRITICAL_SECTION cs;
-    bool shutdown;
+
+    enum
+    {
+        STATE_OPENED,
+        STATE_STARTED,
+        STATE_STOPPED,
+        STATE_PAUSED,
+        STATE_SHUTDOWN,
+    } state;
 
     IMFByteStream *bytestream;
     IMFMediaEventQueue *event_queue;
@@ -78,6 +102,71 @@ static struct media_sink *impl_from_IMFMediaEventGenerator(IMFMediaEventGenerato
 static struct media_sink *impl_from_IMFClockStateSink(IMFClockStateSink *iface)
 {
     return CONTAINING_RECORD(iface, struct media_sink, IMFClockStateSink_iface);
+}
+
+static struct media_sink *impl_from_async_callback(IMFAsyncCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_sink, async_callback);
+}
+
+static struct async_command *impl_from_async_command_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct async_command, IUnknown_iface);
+}
+
+static HRESULT WINAPI async_command_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI async_command_AddRef(IUnknown *iface)
+{
+    struct async_command *command = impl_from_async_command_IUnknown(iface);
+    return InterlockedIncrement(&command->refcount);
+}
+
+static ULONG WINAPI async_command_Release(IUnknown *iface)
+{
+    struct async_command *command = impl_from_async_command_IUnknown(iface);
+    ULONG refcount = InterlockedDecrement(&command->refcount);
+
+    if (!refcount)
+        free(command);
+
+    return refcount;
+}
+
+static const IUnknownVtbl async_command_vtbl =
+{
+    async_command_QueryInterface,
+    async_command_AddRef,
+    async_command_Release,
+};
+
+static HRESULT async_command_create(enum async_op op, struct async_command **out)
+{
+    struct async_command *command;
+
+    if (!(command = calloc(1, sizeof(*command))))
+        return E_OUTOFMEMORY;
+
+    command->IUnknown_iface.lpVtbl = &async_command_vtbl;
+    command->refcount = 1;
+    command->op = op;
+
+    TRACE("Created async command %p.\n", command);
+    *out = command;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_sink_QueryInterface(IMFStreamSink *iface, REFIID riid, void **obj)
@@ -377,6 +466,53 @@ static struct stream_sink *media_sink_get_stream_sink_by_id(struct media_sink *m
     return NULL;
 }
 
+static HRESULT media_sink_queue_command(struct media_sink *media_sink, enum async_op op)
+{
+    struct async_command *command;
+    HRESULT hr;
+
+    if (media_sink->state == STATE_SHUTDOWN)
+        return MF_E_SHUTDOWN;
+
+    if (FAILED(hr = async_command_create(op, &command)))
+        return hr;
+
+    return MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &media_sink->async_callback, &command->IUnknown_iface);
+}
+
+static HRESULT media_sink_queue_stream_event(struct media_sink *media_sink, MediaEventType type)
+{
+    struct stream_sink *stream_sink;
+    HRESULT hr;
+
+    LIST_FOR_EACH_ENTRY(stream_sink, &media_sink->stream_sinks, struct stream_sink, entry)
+    {
+        if (FAILED(hr = IMFMediaEventQueue_QueueEventParamVar(stream_sink->event_queue, type, &GUID_NULL, S_OK, NULL)))
+            return hr;
+    }
+
+    return S_OK;
+}
+
+static HRESULT media_sink_start(struct media_sink *media_sink)
+{
+    media_sink->state = STATE_STARTED;
+    return media_sink_queue_stream_event(media_sink, MEStreamSinkStarted);
+}
+
+static HRESULT media_sink_stop(struct media_sink *media_sink)
+{
+    media_sink->state = STATE_STOPPED;
+    return media_sink_queue_stream_event(media_sink, MEStreamSinkStopped);
+
+}
+
+static HRESULT media_sink_pause(struct media_sink *media_sink)
+{
+    media_sink->state = STATE_PAUSED;
+    return media_sink_queue_stream_event(media_sink, MEStreamSinkPaused);
+}
+
 static HRESULT WINAPI media_sink_QueryInterface(IMFFinalizableMediaSink *iface, REFIID riid, void **obj)
 {
     struct media_sink *media_sink = impl_from_IMFFinalizableMediaSink(iface);
@@ -532,7 +668,7 @@ static HRESULT WINAPI media_sink_Shutdown(IMFFinalizableMediaSink *iface)
 
     EnterCriticalSection(&media_sink->cs);
 
-    if (media_sink->shutdown)
+    if (media_sink->state == STATE_SHUTDOWN)
     {
         LeaveCriticalSection(&media_sink->cs);
         return MF_E_SHUTDOWN;
@@ -548,7 +684,7 @@ static HRESULT WINAPI media_sink_Shutdown(IMFFinalizableMediaSink *iface)
     IMFMediaEventQueue_Shutdown(media_sink->event_queue);
     IMFByteStream_Close(media_sink->bytestream);
 
-    media_sink->shutdown = TRUE;
+    media_sink->state = STATE_SHUTDOWN;
 
     LeaveCriticalSection(&media_sink->cs);
 
@@ -676,30 +812,62 @@ static ULONG WINAPI media_sink_clock_sink_Release(IMFClockStateSink *iface)
 
 static HRESULT WINAPI media_sink_clock_sink_OnClockStart(IMFClockStateSink *iface, MFTIME systime, LONGLONG offset)
 {
-    FIXME("iface %p, systime %s, offset %s stub!\n", iface, debugstr_time(systime), debugstr_time(offset));
+    struct media_sink *media_sink = impl_from_IMFClockStateSink(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, systime %s, offset %s.\n", iface, debugstr_time(systime), debugstr_time(offset));
+
+    EnterCriticalSection(&media_sink->cs);
+
+    hr = media_sink_queue_command(media_sink, ASYNC_START);
+
+    LeaveCriticalSection(&media_sink->cs);
+    return hr;
 }
 
 static HRESULT WINAPI media_sink_clock_sink_OnClockStop(IMFClockStateSink *iface, MFTIME systime)
 {
-    FIXME("iface %p, systime %s stub!\n", iface, debugstr_time(systime));
+    struct media_sink *media_sink = impl_from_IMFClockStateSink(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, systime %s.\n", iface, debugstr_time(systime));
+
+    EnterCriticalSection(&media_sink->cs);
+
+    hr = media_sink_queue_command(media_sink, ASYNC_STOP);
+
+    LeaveCriticalSection(&media_sink->cs);
+    return hr;
 }
 
 static HRESULT WINAPI media_sink_clock_sink_OnClockPause(IMFClockStateSink *iface, MFTIME systime)
 {
-    FIXME("%p, %s stub!\n", iface, debugstr_time(systime));
+    struct media_sink *media_sink = impl_from_IMFClockStateSink(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, systime %s.\n", iface, debugstr_time(systime));
+
+    EnterCriticalSection(&media_sink->cs);
+
+    hr = media_sink_queue_command(media_sink, ASYNC_PAUSE);
+
+    LeaveCriticalSection(&media_sink->cs);
+    return hr;
 }
 
 static HRESULT WINAPI media_sink_clock_sink_OnClockRestart(IMFClockStateSink *iface, MFTIME systime)
 {
-    FIXME("iface %p, systime %s stub!\n", iface, debugstr_time(systime));
+    struct media_sink *media_sink = impl_from_IMFClockStateSink(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, systime %s.\n", iface, debugstr_time(systime));
+
+    EnterCriticalSection(&media_sink->cs);
+
+    hr = media_sink_queue_command(media_sink, ASYNC_START);
+
+    LeaveCriticalSection(&media_sink->cs);
+    return hr;
 }
 
 static HRESULT WINAPI media_sink_clock_sink_OnClockSetRate(IMFClockStateSink *iface, MFTIME systime, float rate)
@@ -719,6 +887,90 @@ static const IMFClockStateSinkVtbl media_sink_clock_sink_vtbl =
     media_sink_clock_sink_OnClockPause,
     media_sink_clock_sink_OnClockRestart,
     media_sink_clock_sink_OnClockSetRate,
+};
+
+static HRESULT WINAPI media_sink_callback_QueryInterface(IMFAsyncCallback *iface, REFIID riid, void **obj)
+{
+    TRACE("iface %p, riid %s, obj %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IMFAsyncCallback) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFAsyncCallback_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI media_sink_callback_AddRef(IMFAsyncCallback *iface)
+{
+    struct media_sink *sink = impl_from_async_callback(iface);
+    return IMFFinalizableMediaSink_AddRef(&sink->IMFFinalizableMediaSink_iface);
+}
+
+static ULONG WINAPI media_sink_callback_Release(IMFAsyncCallback *iface)
+{
+    struct media_sink *sink = impl_from_async_callback(iface);
+    return IMFFinalizableMediaSink_Release(&sink->IMFFinalizableMediaSink_iface);
+}
+
+static HRESULT WINAPI media_sink_callback_GetParameters(IMFAsyncCallback *iface, DWORD *flags, DWORD *queue)
+{
+    TRACE("iface %p, flags %p, queue %p.\n", iface, flags, queue);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_sink_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *async_result)
+{
+    struct media_sink *media_sink = impl_from_async_callback(iface);
+    struct async_command *command;
+    HRESULT hr = E_FAIL;
+    IUnknown *state;
+
+    TRACE("iface %p, async_result %p.\n", iface, async_result);
+
+    EnterCriticalSection(&media_sink->cs);
+
+    if (!(state = IMFAsyncResult_GetStateNoAddRef(async_result)))
+    {
+        LeaveCriticalSection(&media_sink->cs);
+        return hr;
+    }
+
+    command = impl_from_async_command_IUnknown(state);
+    switch (command->op)
+    {
+        case ASYNC_START:
+            hr = media_sink_start(media_sink);
+            break;
+        case ASYNC_STOP:
+            hr = media_sink_stop(media_sink);
+            break;
+        case ASYNC_PAUSE:
+            hr = media_sink_pause(media_sink);
+            break;
+        default:
+            WARN("Unsupported op %u.\n", command->op);
+            break;
+    }
+
+    LeaveCriticalSection(&media_sink->cs);
+
+    return hr;
+}
+
+static const IMFAsyncCallbackVtbl media_sink_callback_vtbl =
+{
+    media_sink_callback_QueryInterface,
+    media_sink_callback_AddRef,
+    media_sink_callback_Release,
+    media_sink_callback_GetParameters,
+    media_sink_callback_Invoke,
 };
 
 static HRESULT media_sink_create(IMFByteStream *bytestream, struct media_sink **out)
@@ -743,7 +995,9 @@ static HRESULT media_sink_create(IMFByteStream *bytestream, struct media_sink **
     media_sink->IMFFinalizableMediaSink_iface.lpVtbl = &media_sink_vtbl;
     media_sink->IMFMediaEventGenerator_iface.lpVtbl = &media_sink_event_vtbl;
     media_sink->IMFClockStateSink_iface.lpVtbl = &media_sink_clock_sink_vtbl;
+    media_sink->async_callback.lpVtbl = &media_sink_callback_vtbl;
     media_sink->refcount = 1;
+    media_sink->state = STATE_OPENED;
     InitializeCriticalSection(&media_sink->cs);
     media_sink->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
     IMFByteStream_AddRef((media_sink->bytestream = bytestream));
