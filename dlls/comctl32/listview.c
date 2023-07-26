@@ -5590,6 +5590,7 @@ static BOOL LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr, BOOL destroy)
         LISTVIEW_UpdateScroll(infoPtr);
     }
     LISTVIEW_InvalidateList(infoPtr);
+    infoPtr->bNoItemMetrics = TRUE;
     
     return TRUE;
 }
