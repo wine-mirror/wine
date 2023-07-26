@@ -2180,7 +2180,7 @@ static HRESULT d3d12_swapchain_op_present_execute(struct d3d12_swapchain *swapch
     if (swapchain->frame_latency_fence)
     {
         /* Use the same bias as d3d12_swapchain_present(). Add one to
-         * account for the "++swapchain->frame_numer" there. */
+         * account for the "++swapchain->frame_number" there. */
         uint64_t number = op->present.frame_number + DXGI_MAX_SWAP_CHAIN_BUFFERS + 1;
 
         if (FAILED(hr = ID3D12CommandQueue_Signal(swapchain->command_queue,
