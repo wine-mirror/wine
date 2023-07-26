@@ -44,6 +44,7 @@ struct media_sink
 {
     IMFFinalizableMediaSink IMFFinalizableMediaSink_iface;
     IMFMediaEventGenerator IMFMediaEventGenerator_iface;
+    IMFClockStateSink IMFClockStateSink_iface;
     LONG refcount;
     CRITICAL_SECTION cs;
     bool shutdown;
@@ -72,6 +73,11 @@ static struct media_sink *impl_from_IMFFinalizableMediaSink(IMFFinalizableMediaS
 static struct media_sink *impl_from_IMFMediaEventGenerator(IMFMediaEventGenerator *iface)
 {
     return CONTAINING_RECORD(iface, struct media_sink, IMFMediaEventGenerator_iface);
+}
+
+static struct media_sink *impl_from_IMFClockStateSink(IMFClockStateSink *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_sink, IMFClockStateSink_iface);
 }
 
 static HRESULT WINAPI stream_sink_QueryInterface(IMFStreamSink *iface, REFIID riid, void **obj)
@@ -387,6 +393,10 @@ static HRESULT WINAPI media_sink_QueryInterface(IMFFinalizableMediaSink *iface, 
     {
         *obj = &media_sink->IMFMediaEventGenerator_iface;
     }
+    else if (IsEqualIID(riid, &IID_IMFClockStateSink))
+    {
+        *obj = &media_sink->IMFClockStateSink_iface;
+    }
     else
     {
         WARN("Unsupported interface %s.\n", debugstr_guid(riid));
@@ -646,6 +656,71 @@ static const IMFMediaEventGeneratorVtbl media_sink_event_vtbl =
     media_sink_event_QueueEvent,
 };
 
+static HRESULT WINAPI media_sink_clock_sink_QueryInterface(IMFClockStateSink *iface, REFIID riid, void **obj)
+{
+    struct media_sink *media_sink = impl_from_IMFClockStateSink(iface);
+    return IMFFinalizableMediaSink_QueryInterface(&media_sink->IMFFinalizableMediaSink_iface, riid, obj);
+}
+
+static ULONG WINAPI media_sink_clock_sink_AddRef(IMFClockStateSink *iface)
+{
+    struct media_sink *media_sink = impl_from_IMFClockStateSink(iface);
+    return IMFFinalizableMediaSink_AddRef(&media_sink->IMFFinalizableMediaSink_iface);
+}
+
+static ULONG WINAPI media_sink_clock_sink_Release(IMFClockStateSink *iface)
+{
+    struct media_sink *media_sink = impl_from_IMFClockStateSink(iface);
+    return IMFFinalizableMediaSink_Release(&media_sink->IMFFinalizableMediaSink_iface);
+}
+
+static HRESULT WINAPI media_sink_clock_sink_OnClockStart(IMFClockStateSink *iface, MFTIME systime, LONGLONG offset)
+{
+    FIXME("iface %p, systime %s, offset %s stub!\n", iface, debugstr_time(systime), debugstr_time(offset));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_sink_clock_sink_OnClockStop(IMFClockStateSink *iface, MFTIME systime)
+{
+    FIXME("iface %p, systime %s stub!\n", iface, debugstr_time(systime));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_sink_clock_sink_OnClockPause(IMFClockStateSink *iface, MFTIME systime)
+{
+    FIXME("%p, %s stub!\n", iface, debugstr_time(systime));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_sink_clock_sink_OnClockRestart(IMFClockStateSink *iface, MFTIME systime)
+{
+    FIXME("iface %p, systime %s stub!\n", iface, debugstr_time(systime));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_sink_clock_sink_OnClockSetRate(IMFClockStateSink *iface, MFTIME systime, float rate)
+{
+    FIXME("iface %p, systime %s, rate %f stub!\n", iface, debugstr_time(systime), rate);
+
+    return E_NOTIMPL;
+}
+
+static const IMFClockStateSinkVtbl media_sink_clock_sink_vtbl =
+{
+    media_sink_clock_sink_QueryInterface,
+    media_sink_clock_sink_AddRef,
+    media_sink_clock_sink_Release,
+    media_sink_clock_sink_OnClockStart,
+    media_sink_clock_sink_OnClockStop,
+    media_sink_clock_sink_OnClockPause,
+    media_sink_clock_sink_OnClockRestart,
+    media_sink_clock_sink_OnClockSetRate,
+};
+
 static HRESULT media_sink_create(IMFByteStream *bytestream, struct media_sink **out)
 {
     struct media_sink *media_sink;
@@ -667,6 +742,7 @@ static HRESULT media_sink_create(IMFByteStream *bytestream, struct media_sink **
 
     media_sink->IMFFinalizableMediaSink_iface.lpVtbl = &media_sink_vtbl;
     media_sink->IMFMediaEventGenerator_iface.lpVtbl = &media_sink_event_vtbl;
+    media_sink->IMFClockStateSink_iface.lpVtbl = &media_sink_clock_sink_vtbl;
     media_sink->refcount = 1;
     InitializeCriticalSection(&media_sink->cs);
     media_sink->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
