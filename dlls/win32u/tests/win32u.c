@@ -1394,7 +1394,7 @@ static void check_params( const struct lparam_hook_test *test, UINT message,
 
 static void poison_lparam( const struct lparam_hook_test *test, LPARAM lparam )
 {
-    /* message copy is never transfered back in hooks */
+    /* message copy is never transferred back in hooks */
     if (test->lparam_size && lparam != (LPARAM)lparam_buffer)
         memset( (void *)lparam, 0xc0, test->lparam_size );
 }
