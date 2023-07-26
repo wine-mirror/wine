@@ -43,11 +43,13 @@ struct stream_sink
 struct media_sink
 {
     IMFFinalizableMediaSink IMFFinalizableMediaSink_iface;
+    IMFMediaEventGenerator IMFMediaEventGenerator_iface;
     LONG refcount;
     CRITICAL_SECTION cs;
     bool shutdown;
 
     IMFByteStream *bytestream;
+    IMFMediaEventQueue *event_queue;
 
     struct list stream_sinks;
 };
@@ -65,6 +67,11 @@ static struct stream_sink *impl_from_IMFMediaTypeHandler(IMFMediaTypeHandler *if
 static struct media_sink *impl_from_IMFFinalizableMediaSink(IMFFinalizableMediaSink *iface)
 {
     return CONTAINING_RECORD(iface, struct media_sink, IMFFinalizableMediaSink_iface);
+}
+
+static struct media_sink *impl_from_IMFMediaEventGenerator(IMFMediaEventGenerator *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_sink, IMFMediaEventGenerator_iface);
 }
 
 static HRESULT WINAPI stream_sink_QueryInterface(IMFStreamSink *iface, REFIID riid, void **obj)
@@ -186,9 +193,13 @@ static HRESULT WINAPI stream_sink_GetIdentifier(IMFStreamSink *iface, DWORD *ide
 
 static HRESULT WINAPI stream_sink_GetMediaTypeHandler(IMFStreamSink *iface, IMFMediaTypeHandler **handler)
 {
-    FIXME("iface %p, handler %p stub!\n", iface, handler);
+    struct stream_sink *stream_sink = impl_from_IMFStreamSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, handler %p.\n", iface, handler);
+
+    IMFMediaTypeHandler_AddRef((*handler = &stream_sink->IMFMediaTypeHandler_iface));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_sink_ProcessSample(IMFStreamSink *iface, IMFSample *sample)
@@ -362,6 +373,8 @@ static struct stream_sink *media_sink_get_stream_sink_by_id(struct media_sink *m
 
 static HRESULT WINAPI media_sink_QueryInterface(IMFFinalizableMediaSink *iface, REFIID riid, void **obj)
 {
+    struct media_sink *media_sink = impl_from_IMFFinalizableMediaSink(iface);
+
     TRACE("iface %p, riid %s, obj %p.\n", iface, debugstr_guid(riid), obj);
 
     if (IsEqualIID(riid, &IID_IMFFinalizableMediaSink) ||
@@ -369,6 +382,10 @@ static HRESULT WINAPI media_sink_QueryInterface(IMFFinalizableMediaSink *iface, 
             IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = iface;
+    }
+    else if (IsEqualGUID(riid, &IID_IMFMediaEventGenerator))
+    {
+        *obj = &media_sink->IMFMediaEventGenerator_iface;
     }
     else
     {
@@ -400,6 +417,7 @@ static ULONG WINAPI media_sink_Release(IMFFinalizableMediaSink *iface)
     if (!refcount)
     {
         IMFFinalizableMediaSink_Shutdown(iface);
+        IMFMediaEventQueue_Release(media_sink->event_queue);
         IMFByteStream_Release(media_sink->bytestream);
         media_sink->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&media_sink->cs);
@@ -517,6 +535,7 @@ static HRESULT WINAPI media_sink_Shutdown(IMFFinalizableMediaSink *iface)
         IMFStreamSink_Release(&stream_sink->IMFStreamSink_iface);
     }
 
+    IMFMediaEventQueue_Shutdown(media_sink->event_queue);
     IMFByteStream_Close(media_sink->bytestream);
 
     media_sink->shutdown = TRUE;
@@ -558,9 +577,79 @@ static const IMFFinalizableMediaSinkVtbl media_sink_vtbl =
     media_sink_EndFinalize,
 };
 
+static HRESULT WINAPI media_sink_event_QueryInterface(IMFMediaEventGenerator *iface, REFIID riid, void **obj)
+{
+    struct media_sink *media_sink = impl_from_IMFMediaEventGenerator(iface);
+    return IMFFinalizableMediaSink_QueryInterface(&media_sink->IMFFinalizableMediaSink_iface, riid, obj);
+}
+
+static ULONG WINAPI media_sink_event_AddRef(IMFMediaEventGenerator *iface)
+{
+    struct media_sink *media_sink = impl_from_IMFMediaEventGenerator(iface);
+    return IMFFinalizableMediaSink_AddRef(&media_sink->IMFFinalizableMediaSink_iface);
+}
+
+static ULONG WINAPI media_sink_event_Release(IMFMediaEventGenerator *iface)
+{
+    struct media_sink *media_sink = impl_from_IMFMediaEventGenerator(iface);
+    return IMFFinalizableMediaSink_Release(&media_sink->IMFFinalizableMediaSink_iface);
+}
+
+static HRESULT WINAPI media_sink_event_GetEvent(IMFMediaEventGenerator *iface, DWORD flags, IMFMediaEvent **event)
+{
+    struct media_sink *media_sink = impl_from_IMFMediaEventGenerator(iface);
+
+    TRACE("iface %p, flags %#lx, event %p.\n", iface, flags, event);
+
+    return IMFMediaEventQueue_GetEvent(media_sink->event_queue, flags, event);
+}
+
+static HRESULT WINAPI media_sink_event_BeginGetEvent(IMFMediaEventGenerator *iface, IMFAsyncCallback *callback,
+        IUnknown *state)
+{
+    struct media_sink *media_sink = impl_from_IMFMediaEventGenerator(iface);
+
+    TRACE("iface %p, callback %p, state %p.\n", iface, callback, state);
+
+    return IMFMediaEventQueue_BeginGetEvent(media_sink->event_queue, callback, state);
+}
+
+static HRESULT WINAPI media_sink_event_EndGetEvent(IMFMediaEventGenerator *iface, IMFAsyncResult *result,
+        IMFMediaEvent **event)
+{
+    struct media_sink *media_sink = impl_from_IMFMediaEventGenerator(iface);
+
+    TRACE("iface %p, result %p, event %p.\n", iface, result, event);
+
+    return IMFMediaEventQueue_EndGetEvent(media_sink->event_queue, result, event);
+}
+
+static HRESULT WINAPI media_sink_event_QueueEvent(IMFMediaEventGenerator *iface, MediaEventType event_type,
+        REFGUID ext_type, HRESULT hr, const PROPVARIANT *value)
+{
+    struct media_sink *media_sink = impl_from_IMFMediaEventGenerator(iface);
+
+    TRACE("iface %p, event_type %lu, ext_type %s, hr %#lx, value %p.\n",
+            iface, event_type, debugstr_guid(ext_type), hr, value);
+
+    return IMFMediaEventQueue_QueueEventParamVar(media_sink->event_queue, event_type, ext_type, hr, value);
+}
+
+static const IMFMediaEventGeneratorVtbl media_sink_event_vtbl =
+{
+    media_sink_event_QueryInterface,
+    media_sink_event_AddRef,
+    media_sink_event_Release,
+    media_sink_event_GetEvent,
+    media_sink_event_BeginGetEvent,
+    media_sink_event_EndGetEvent,
+    media_sink_event_QueueEvent,
+};
+
 static HRESULT media_sink_create(IMFByteStream *bytestream, struct media_sink **out)
 {
     struct media_sink *media_sink;
+    HRESULT hr;
 
     TRACE("bytestream %p, out %p.\n", bytestream, out);
 
@@ -570,7 +659,14 @@ static HRESULT media_sink_create(IMFByteStream *bytestream, struct media_sink **
     if (!(media_sink = calloc(1, sizeof(*media_sink))))
         return E_OUTOFMEMORY;
 
+    if (FAILED(hr = MFCreateEventQueue(&media_sink->event_queue)))
+    {
+        free(media_sink);
+        return hr;
+    }
+
     media_sink->IMFFinalizableMediaSink_iface.lpVtbl = &media_sink_vtbl;
+    media_sink->IMFMediaEventGenerator_iface.lpVtbl = &media_sink_event_vtbl;
     media_sink->refcount = 1;
     InitializeCriticalSection(&media_sink->cs);
     media_sink->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
