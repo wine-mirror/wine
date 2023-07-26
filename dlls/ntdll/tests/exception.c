@@ -9628,7 +9628,7 @@ static void wait_for_thread_next_suspend(HANDLE thread)
     DWORD result;
 
     result = ResumeThread(thread);
-    ok(result == 1, "Got unexpexted suspend count %lu.\n", result);
+    ok(result == 1, "Got unexpected suspend count %lu.\n", result);
 
     /* NtQueryInformationThread(ThreadSuspendCount, ...) is not supported on older Windows. */
     while (!(result = SuspendThread(thread)))
@@ -9636,9 +9636,9 @@ static void wait_for_thread_next_suspend(HANDLE thread)
         ResumeThread(thread);
         Sleep(1);
     }
-    ok(result == 1, "Got unexpexted suspend count %lu.\n", result);
+    ok(result == 1, "Got unexpected suspend count %lu.\n", result);
     result = ResumeThread(thread);
-    ok(result == 2, "Got unexpexted suspend count %lu.\n", result);
+    ok(result == 2, "Got unexpected suspend count %lu.\n", result);
 }
 
 #define CONTEXT_NATIVE (CONTEXT_XSTATE & CONTEXT_CONTROL)
@@ -9808,7 +9808,7 @@ static void test_extended_context(void)
             bret = pInitializeContext(context_buffer, flags, &context, &length2);
             ok(bret && GetLastError() == 0xdeadbeef,
                     "Got unexpected bret %#x, GetLastError() %lu, flags %#lx.\n", bret, GetLastError(), flags);
-            ok(length2 == expected_length, "Got unexpexted length %#lx.\n", length);
+            ok(length2 == expected_length, "Got unexpected length %#lx.\n", length);
             ok((BYTE *)context == context_buffer, "Got unexpected context %p, flags %#lx.\n", context, flags);
 
             context_flags = *(DWORD *)(context_buffer + context_arch[test].flags_offset);
@@ -9938,7 +9938,7 @@ static void test_extended_context(void)
             bret = pInitializeContext(context_buffer2 + 2, flags, &context, &length2);
             ok(bret && GetLastError() == 0xdeadbeef,
                     "Got unexpected bret %#x, GetLastError() %lu, flags %#lx.\n", bret, GetLastError(), flags);
-            ok(length2 == expected_length, "Got unexpexted length %#lx.\n", length);
+            ok(length2 == expected_length, "Got unexpected length %#lx.\n", length);
             ok(!memcmp(context_buffer2 + align, context_buffer,
                     sizeof(context_buffer2) - align),
                     "Context data do not match, flags %#lx.\n", flags);
@@ -9984,7 +9984,7 @@ static void test_extended_context(void)
             bret = pInitializeContext2(context_buffer2 + 2, flags, &context, &length2, 0);
             ok(bret && GetLastError() == 0xdeadbeef,
                     "Got unexpected bret %#x, GetLastError() %lu, flags %#lx.\n", bret, GetLastError(), flags);
-            ok(length2 == expected_length, "Got unexpexted length %#lx.\n", length);
+            ok(length2 == expected_length, "Got unexpected length %#lx.\n", length);
             ok(!memcmp(context_buffer2 + align, context_buffer,
                     sizeof(context_buffer2) - align),
                     "Context data do not match, flags %#lx.\n", flags);
@@ -10095,7 +10095,7 @@ static void test_extended_context(void)
         bret = pInitializeContext(context_buffer, flags, &context, &length2);
         ok(bret && GetLastError() == 0xdeadbeef,
                 "Got unexpected bret %#x, GetLastError() %lu, flags %#lx.\n", bret, GetLastError(), flags);
-        ok(length2 == length, "Got unexpexted length %#lx.\n", length);
+        ok(length2 == length, "Got unexpected length %#lx.\n", length);
         ok((BYTE *)context == context_buffer, "Got unexpected context %p.\n", context);
 
         context_flags = *(DWORD *)(context_buffer + context_arch[test].flags_offset);
@@ -10233,7 +10233,7 @@ static void test_extended_context(void)
             bret = pInitializeContext2(context_buffer, flags, &context, &length2, 0);
             ok(bret && GetLastError() == 0xdeadbeef,
                     "Got unexpected bret %#x, GetLastError() %lu, flags %#lx.\n", bret, GetLastError(), flags);
-            ok(length2 == length, "Got unexpexted length %#lx.\n", length);
+            ok(length2 == length, "Got unexpected length %#lx.\n", length);
             ok((BYTE *)context == context_buffer, "Got unexpected context %p.\n", context);
 
             length2 = 0xdeadbeef;
