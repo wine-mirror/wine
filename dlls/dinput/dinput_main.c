@@ -142,7 +142,7 @@ static LRESULT CALLBACK input_thread_ll_hook_proc( int code, WPARAM wparam, LPAR
     return skip ? 1 : CallNextHookEx( 0, code, wparam, lparam );
 }
 
-static void dinput_unacquire_window_devices( HWND window )
+static void handle_foreground_lost( HWND window )
 {
     struct dinput_device *impl, *next;
 
@@ -150,7 +150,7 @@ static void dinput_unacquire_window_devices( HWND window )
 
     LIST_FOR_EACH_ENTRY_SAFE( impl, next, &acquired_device_list, struct dinput_device, entry )
     {
-        if (window != impl->win) continue;
+        if (!(impl->dwCoopLevel & DISCL_FOREGROUND) || window != impl->win) continue;
         TRACE( "%p window is not foreground - unacquiring %p\n", impl->win, impl );
         dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
     }
@@ -325,7 +325,7 @@ static LRESULT WINAPI di_em_win_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
             input_thread_update_device_list( state );
             break;
         case NOTIFY_FOREGROUND_LOST:
-            dinput_unacquire_window_devices( (HWND)lparam );
+            handle_foreground_lost( (HWND)lparam );
             break;
         }
 
