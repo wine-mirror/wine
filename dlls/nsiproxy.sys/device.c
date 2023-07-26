@@ -49,6 +49,7 @@ DECLARE_CRITICAL_SECTION( nsiproxy_cs );
 
 #define LIST_ENTRY_INIT( list )  { .Flink = &(list), .Blink = &(list) }
 static LIST_ENTRY request_queue = LIST_ENTRY_INIT( request_queue );
+static LIST_ENTRY notification_queue = LIST_ENTRY_INIT( notification_queue );
 
 static NTSTATUS nsiproxy_call( unsigned int code, void *args )
 {
@@ -261,6 +262,47 @@ static NTSTATUS nsiproxy_icmp_echo( IRP *irp )
     return STATUS_PENDING;
 }
 
+static void WINAPI change_notification_cancel( DEVICE_OBJECT *device, IRP *irp )
+{
+    TRACE( "device %p, irp %p.\n", device, irp );
+
+    IoReleaseCancelSpinLock( irp->CancelIrql );
+
+    EnterCriticalSection( &nsiproxy_cs );
+    RemoveEntryList( &irp->Tail.Overlay.ListEntry );
+    LeaveCriticalSection( &nsiproxy_cs );
+
+    irp->IoStatus.Status = STATUS_CANCELLED;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+}
+
+static NTSTATUS nsiproxy_change_notification( IRP *irp )
+{
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    struct nsiproxy_request_notification *in = (struct nsiproxy_request_notification *)irp->AssociatedIrp.SystemBuffer;
+    DWORD in_len = irpsp->Parameters.DeviceIoControl.InputBufferLength;
+
+    FIXME( "\n" );
+
+    if (in_len < sizeof(*in)) return STATUS_INVALID_PARAMETER;
+    /* FIXME: validate module and table. */
+
+    EnterCriticalSection( &nsiproxy_cs );
+    IoSetCancelRoutine( irp, change_notification_cancel );
+    if (irp->Cancel && !IoSetCancelRoutine( irp, NULL ))
+    {
+        /* IRP was canceled before we set cancel routine */
+        InitializeListHead( &irp->Tail.Overlay.ListEntry );
+        LeaveCriticalSection( &nsiproxy_cs );
+        return STATUS_CANCELLED;
+    }
+    InsertTailList( &notification_queue, &irp->Tail.Overlay.ListEntry );
+    IoMarkIrpPending( irp );
+    LeaveCriticalSection( &nsiproxy_cs );
+
+    return STATUS_PENDING;
+}
+
 static NTSTATUS WINAPI nsi_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
@@ -287,6 +329,10 @@ static NTSTATUS WINAPI nsi_ioctl( DEVICE_OBJECT *device, IRP *irp )
 
     case IOCTL_NSIPROXY_WINE_ICMP_ECHO:
         status = nsiproxy_icmp_echo( irp );
+        break;
+
+    case IOCTL_NSIPROXY_WINE_CHANGE_NOTIFICATION:
+        status = nsiproxy_change_notification( irp );
         break;
 
     default:

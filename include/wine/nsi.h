@@ -380,6 +380,7 @@ struct nsi_udp_endpoint_static
 #define IOCTL_NSIPROXY_WINE_GET_ALL_PARAMETERS    CTL_CODE(FILE_DEVICE_NETWORK, 0x401, METHOD_BUFFERED, 0)
 #define IOCTL_NSIPROXY_WINE_GET_PARAMETER         CTL_CODE(FILE_DEVICE_NETWORK, 0x402, METHOD_BUFFERED, 0)
 #define IOCTL_NSIPROXY_WINE_ICMP_ECHO             CTL_CODE(FILE_DEVICE_NETWORK, 0x403, METHOD_BUFFERED, 0)
+#define IOCTL_NSIPROXY_WINE_CHANGE_NOTIFICATION   CTL_CODE(FILE_DEVICE_NETWORK, 0x404, METHOD_BUFFERED, 0)
 
 /* input for IOCTL_NSIPROXY_WINE_ENUMERATE_ALL */
 struct nsiproxy_enumerate_all
@@ -434,6 +435,13 @@ struct nsiproxy_icmp_echo
     UINT req_size;
     UINT timeout;
     BYTE data[1]; /* ((opt_size + 3) & ~3) + req_size */
+};
+
+/* input for IOCTL_NSIPROXY_WINE_CHANGE_NOTIFICATION */
+struct nsiproxy_request_notification
+{
+    NPI_MODULEID module;
+    UINT table;
 };
 
 /* Undocumented Nsi api */
