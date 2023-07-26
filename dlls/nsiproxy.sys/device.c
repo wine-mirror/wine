@@ -51,6 +51,12 @@ DECLARE_CRITICAL_SECTION( nsiproxy_cs );
 static LIST_ENTRY request_queue = LIST_ENTRY_INIT( request_queue );
 static LIST_ENTRY notification_queue = LIST_ENTRY_INIT( notification_queue );
 
+struct notification_data
+{
+    NPI_MODULEID module;
+    UINT table;
+};
+
 static NTSTATUS nsiproxy_call( unsigned int code, void *args )
 {
     return WINE_UNIX_CALL( code, args );
@@ -65,6 +71,7 @@ enum unix_calls
     nsi_enumerate_all_ex,
     nsi_get_all_parameters_ex,
     nsi_get_parameter_ex,
+    nsi_get_notification,
 };
 
 static NTSTATUS nsiproxy_enumerate_all( IRP *irp )
@@ -270,6 +277,7 @@ static void WINAPI change_notification_cancel( DEVICE_OBJECT *device, IRP *irp )
 
     EnterCriticalSection( &nsiproxy_cs );
     RemoveEntryList( &irp->Tail.Overlay.ListEntry );
+    free( irp->Tail.Overlay.DriverContext[0] );
     LeaveCriticalSection( &nsiproxy_cs );
 
     irp->IoStatus.Status = STATUS_CANCELLED;
@@ -281,10 +289,12 @@ static NTSTATUS nsiproxy_change_notification( IRP *irp )
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     struct nsiproxy_request_notification *in = (struct nsiproxy_request_notification *)irp->AssociatedIrp.SystemBuffer;
     DWORD in_len = irpsp->Parameters.DeviceIoControl.InputBufferLength;
+    struct notification_data *data;
 
-    FIXME( "\n" );
+    TRACE( "irp %p.\n", irp );
 
     if (in_len < sizeof(*in)) return STATUS_INVALID_PARAMETER;
+    if (!(data = calloc( 1, sizeof(*data) ))) return STATUS_NO_MEMORY;
     /* FIXME: validate module and table. */
 
     EnterCriticalSection( &nsiproxy_cs );
@@ -294,10 +304,14 @@ static NTSTATUS nsiproxy_change_notification( IRP *irp )
         /* IRP was canceled before we set cancel routine */
         InitializeListHead( &irp->Tail.Overlay.ListEntry );
         LeaveCriticalSection( &nsiproxy_cs );
+        free( data );
         return STATUS_CANCELLED;
     }
     InsertTailList( &notification_queue, &irp->Tail.Overlay.ListEntry );
     IoMarkIrpPending( irp );
+    data->module = in->module;
+    data->table = in->table;
+    irp->Tail.Overlay.DriverContext[0] = data;
     LeaveCriticalSection( &nsiproxy_cs );
 
     return STATUS_PENDING;
@@ -466,6 +480,44 @@ static DWORD WINAPI request_thread_proc( void *arg )
     return 0;
 }
 
+static DWORD WINAPI notification_thread_proc( void *arg )
+{
+    struct nsi_get_notification_params params;
+    LIST_ENTRY *entry, *next;
+    NTSTATUS status;
+
+    while (!(status = nsiproxy_call( nsi_get_notification, &params )))
+    {
+        EnterCriticalSection( &nsiproxy_cs );
+        for (entry = notification_queue.Flink; entry != &notification_queue; entry = next)
+        {
+            IRP *irp = CONTAINING_RECORD( entry, IRP, Tail.Overlay.ListEntry );
+            struct notification_data *data = irp->Tail.Overlay.DriverContext[0];
+
+            next = entry->Flink;
+            if(irp->Cancel)
+            {
+                /* Cancel routine should care of freeing data and completing IRP. */
+                TRACE( "irp %p canceled.\n", irp );
+                continue;
+            }
+            if (!NmrIsEqualNpiModuleId( &data->module, &params.module ) || data->table != params.table)
+                continue;
+
+            irp->IoStatus.Status = 0;
+            RemoveEntryList( entry );
+            irp->Tail.Overlay.DriverContext[0] = NULL;
+            free( data );
+            TRACE("completing irp %p.\n", irp);
+            IoCompleteRequest( irp, IO_NO_INCREMENT );
+        }
+        LeaveCriticalSection( &nsiproxy_cs );
+    }
+
+    WARN( "nsi_get_notification failed, status %#lx.\n", status );
+    return 0;
+}
+
 NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
     NTSTATUS status;
@@ -482,6 +534,8 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 
     request_event = CreateEventW( NULL, FALSE, FALSE, NULL );
     thread = CreateThread( NULL, 0, request_thread_proc, NULL, 0, NULL );
+    CloseHandle( thread );
+    thread = CreateThread( NULL, 0, notification_thread_proc, NULL, 0, NULL );
     CloseHandle( thread );
 
     return STATUS_SUCCESS;

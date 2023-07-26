@@ -84,3 +84,10 @@ struct icmp_echo_reply_64
         ULONGLONG options_ptr;
     } opts;
 };
+
+struct nsi_get_notification_params
+{
+    /* output parameters */
+    NPI_MODULEID module;
+    UINT32 table;
+};
