@@ -119,9 +119,15 @@ err:
 
 DWORD WINAPI NsiCancelChangeNotification( OVERLAPPED *ovr )
 {
-    FIXME( "%p stub.\n", ovr );
+    DWORD err = ERROR_SUCCESS;
 
-    return ERROR_NOT_SUPPORTED;
+    TRACE( "%p.\n", ovr );
+
+    if (!ovr) return ERROR_NOT_FOUND;
+    if (!CancelIoEx(  get_nsi_device( TRUE ), ovr ))
+        err = GetLastError();
+
+    return err;
 }
 
 DWORD WINAPI NsiEnumerateObjectsAllParameters( DWORD unk, DWORD unk2, const NPI_MODULEID *module, DWORD table,
