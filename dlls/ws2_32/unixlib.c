@@ -75,7 +75,9 @@
 #  include <linux/types.h>
 # endif
 # include <linux/ipx.h>
-# define HAS_IPX
+# ifdef SOL_IPX
+#  define HAS_IPX
+# endif
 #endif
 
 #ifdef HAVE_LINUX_IRDA_H
