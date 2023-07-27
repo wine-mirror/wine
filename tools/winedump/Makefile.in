@@ -23,6 +23,7 @@ C_SRCS = \
 	output.c \
 	pdb.c \
 	pe.c \
+	reg.c \
 	search.c \
 	symbol.c \
 	tlb.c

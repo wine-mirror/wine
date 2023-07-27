@@ -261,6 +261,7 @@ dumpers[] =
     {SIG_FNT,           get_kind_fnt,   fnt_dump},
     {SIG_TLB,           get_kind_tlb,   tlb_dump},
     {SIG_NLS,           get_kind_nls,   nls_dump},
+    {SIG_REG,           get_kind_reg,   reg_dump},
     {SIG_UNKNOWN,       NULL,           NULL} /* sentinel */
 };
 
