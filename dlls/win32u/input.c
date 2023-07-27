@@ -2461,6 +2461,13 @@ BOOL WINAPI NtUserIsMouseInPointerEnabled(void)
     return FALSE;
 }
 
+static BOOL is_captured_by_system(void)
+{
+    GUITHREADINFO info;
+    info.cbSize = sizeof(info);
+    return NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info ) && info.hwndCapture && (info.flags & (GUI_INMOVESIZE | GUI_INMENUMODE));
+}
+
 /***********************************************************************
  *      clip_fullscreen_window
  *
@@ -2486,7 +2493,7 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
 
     if (!NtUserGetWindowRect( hwnd, &rect )) return FALSE;
     if (!NtUserIsWindowRectFullScreen( &rect )) return FALSE;
-    if (get_capture()) return FALSE;
+    if (is_captured_by_system()) return FALSE;
     if (NtGetTickCount() - thread_info->clipping_reset < 1000) return FALSE;
     if (!reset && clipping_cursor && thread_info->clipping_cursor) return FALSE;  /* already clipping */
 
