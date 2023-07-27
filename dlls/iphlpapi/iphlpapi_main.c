@@ -127,14 +127,15 @@ DWORD WINAPI AddIPAddress(IPAddr Address, IPMask IpMask, DWORD IfIndex, PULONG N
  * RETURNS
  *  Success: TRUE
  *  Failure: FALSE
- *
- * FIXME
- *  Stub, returns FALSE.
  */
 BOOL WINAPI CancelIPChangeNotify(LPOVERLAPPED overlapped)
 {
-  FIXME("(overlapped %p): stub\n", overlapped);
-  return FALSE;
+    DWORD err;
+
+    TRACE("overlapped %p.\n", overlapped);
+
+    if ((err = NsiCancelChangeNotification( overlapped ))) SetLastError( err );
+    return !err;
 }
 
 
@@ -3786,16 +3787,12 @@ DWORD WINAPI IpRenewAddress(PIP_ADAPTER_INDEX_MAP AdapterInfo)
  * RETURNS
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
- *
- * FIXME
- *  Stub, returns ERROR_NOT_SUPPORTED.
  */
 DWORD WINAPI NotifyAddrChange(PHANDLE Handle, LPOVERLAPPED overlapped)
 {
-  FIXME("(Handle %p, overlapped %p): stub\n", Handle, overlapped);
-  if (Handle) *Handle = INVALID_HANDLE_VALUE;
-  if (overlapped) ((IO_STATUS_BLOCK *) overlapped)->Status = STATUS_PENDING;
-  return ERROR_IO_PENDING;
+    TRACE("Handle %p, overlapped %p.\n", Handle, overlapped);
+
+    return NsiRequestChangeNotification(0, &NPI_MS_IPV4_MODULEID, NSI_IP_UNICAST_TABLE, overlapped, Handle);
 }
 
 

@@ -1670,9 +1670,11 @@ static void testNotifyAddrChange(void)
     ret = NotifyAddrChange(&handle, &overlapped);
     ok(ret == ERROR_IO_PENDING, "NotifyAddrChange returned %ld, expected ERROR_IO_PENDING\n", ret);
     ret = GetLastError();
-    todo_wine ok(ret == ERROR_IO_PENDING, "GetLastError returned %ld, expected ERROR_IO_PENDING\n", ret);
+    ok(ret == ERROR_IO_PENDING, "GetLastError returned %ld, expected ERROR_IO_PENDING\n", ret);
     success = CancelIPChangeNotify(&overlapped);
-    todo_wine ok(success == TRUE, "CancelIPChangeNotify returned FALSE, expected TRUE\n");
+    ok(success == TRUE, "CancelIPChangeNotify returned FALSE, expected TRUE\n");
+    success = GetOverlappedResult( handle, &overlapped, &bytes, TRUE );
+    ok( !success && GetLastError() == ERROR_OPERATION_ABORTED, "got bret %d, err %lu.\n", success, GetLastError() );
 
     ZeroMemory(&overlapped, sizeof(overlapped));
     success = CancelIPChangeNotify(&overlapped);
@@ -1683,13 +1685,15 @@ static void testNotifyAddrChange(void)
     overlapped.hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     ret = NotifyAddrChange(&handle, &overlapped);
     ok(ret == ERROR_IO_PENDING, "NotifyAddrChange returned %ld, expected ERROR_IO_PENDING\n", ret);
-    todo_wine ok(handle != INVALID_HANDLE_VALUE, "NotifyAddrChange returned invalid file handle\n");
+    ok(handle != INVALID_HANDLE_VALUE, "NotifyAddrChange returned invalid file handle\n");
     success = GetOverlappedResult(handle, &overlapped, &bytes, FALSE);
     ok(success == FALSE, "GetOverlappedResult returned TRUE, expected FALSE\n");
     ret = GetLastError();
     ok(ret == ERROR_IO_INCOMPLETE, "GetLastError returned %ld, expected ERROR_IO_INCOMPLETE\n", ret);
     success = CancelIPChangeNotify(&overlapped);
-    todo_wine ok(success == TRUE, "CancelIPChangeNotify returned FALSE, expected TRUE\n");
+    ok(success == TRUE, "CancelIPChangeNotify returned FALSE, expected TRUE\n");
+    success = GetOverlappedResult( handle, &overlapped, &bytes, TRUE );
+    ok( !success && GetLastError() == ERROR_OPERATION_ABORTED, "got bret %d, err %lu.\n", success, GetLastError() );
 
     if (winetest_interactive)
     {
@@ -1710,7 +1714,7 @@ static void testNotifyAddrChange(void)
         trace("Testing synchronous ipv4 address change notification. Please "
               "change the ipv4 address of one of your network interfaces\n");
         ret = NotifyAddrChange(NULL, NULL);
-        todo_wine ok(ret == NO_ERROR, "NotifyAddrChange returned %ld, expected NO_ERROR\n", ret);
+        ok(ret == NO_ERROR, "NotifyAddrChange returned %ld, expected NO_ERROR\n", ret);
     }
 }
 
