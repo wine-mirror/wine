@@ -35361,7 +35361,6 @@ static void test_clear_during_render(void)
     ID3D11DeviceContext_Draw(context, 4, 0);
     get_texture_readback(tex, 0, &rb);
     color = get_readback_color(&rb, 0, 0, 0);
-    todo_wine_if(damavand)
     ok(color == 0xff0000ff, "Got unexpected color 0x%08lx instead of 0xff0000ff.\n", color);
     color = get_readback_color(&rb, 1, 0, 0);
     ok(color == 0xff000000, "Got unexpected color 0x%08lx instead of 0xff000000.\n", color);
@@ -35384,7 +35383,6 @@ static void test_clear_during_render(void)
     ID3D11DeviceContext_Draw(context, 4, 0);
     get_texture_readback(tex, 0, &rb);
     color = get_readback_color(&rb, 0, 0, 0);
-    todo_wine_if(damavand)
     ok(color == 0xff000000, "Got unexpected color 0x%08lx instead of 0xff000000.\n", color);
     color = get_readback_color(&rb, 1, 0, 0);
     ok(color == 0xff000000, "Got unexpected color 0x%08lx instead of 0xff000000.\n", color);
@@ -35414,10 +35412,8 @@ static void test_clear_during_render(void)
     release_resource_readback(&rb);
     get_texture_readback(dstex, 0, &rb);
     depth = get_readback_float(&rb, 0, 0);
-    todo_wine_if(damavand)
     ok(depth == 0.25f, "Got unexpected depth %.8e instead of 0.25.\n", depth);
     depth = get_readback_float(&rb, 1, 0);
-    todo_wine_if(damavand)
     ok(depth == 0.0f, "Got unexpected depth %.8e instead of 0.0.\n", depth);
     release_resource_readback(&rb);
 
@@ -35433,7 +35429,6 @@ static void test_clear_during_render(void)
     color = get_readback_color(&rb, 0, 0, 0);
     ok(color == 0xff0000ff, "Got unexpected color 0x%08lx instead of 0xff0000ff.\n", color);
     color = get_readback_color(&rb, 1, 0, 0);
-    todo_wine_if(damavand)
     ok(color == 0xff00ff00, "Got unexpected color 0x%08lx instead of 0xff00ff00.\n", color);
     release_resource_readback(&rb);
 

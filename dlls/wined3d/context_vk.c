@@ -3565,6 +3565,20 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
     }
 }
 
+static void wined3d_context_vk_prepare_used_rtv(struct wined3d_context_vk *context_vk, struct wined3d_rendertarget_view *rtv)
+{
+    if (wined3d_rendertarget_view_get_locations(rtv) & WINED3D_LOCATION_CLEARED)
+    {
+        /* Need to restart render pass or the clear won't happen. */
+        wined3d_context_vk_end_current_render_pass(context_vk);
+        wined3d_rendertarget_view_prepare_location(rtv, &context_vk->c, rtv->resource->draw_binding);
+    }
+    else
+    {
+        wined3d_rendertarget_view_load_location(rtv, &context_vk->c, rtv->resource->draw_binding);
+    }
+}
+
 VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *context_vk,
         const struct wined3d_state *state, struct wined3d_buffer_vk *indirect_vk, bool indexed)
 {
@@ -3607,10 +3621,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
         {
             /* We handle clears at the beginning of the render pass, no need for an explicit clear
              * first. */
-            if (wined3d_rendertarget_view_get_locations(rtv) & WINED3D_LOCATION_CLEARED)
-                wined3d_rendertarget_view_prepare_location(rtv, &context_vk->c, rtv->resource->draw_binding);
-            else
-                wined3d_rendertarget_view_load_location(rtv, &context_vk->c, rtv->resource->draw_binding);
+            wined3d_context_vk_prepare_used_rtv(context_vk, rtv);
             invalidate_rt |= (1 << i);
         }
         else
@@ -3628,16 +3639,9 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
     if ((dsv = state->fb.depth_stencil))
     {
         if (wined3d_state_uses_depth_buffer(state))
-        {
-            if (wined3d_rendertarget_view_get_locations(dsv) & WINED3D_LOCATION_CLEARED)
-                wined3d_rendertarget_view_prepare_location(dsv, &context_vk->c, dsv->resource->draw_binding);
-            else
-                wined3d_rendertarget_view_load_location(dsv, &context_vk->c, dsv->resource->draw_binding);
-        }
+            wined3d_context_vk_prepare_used_rtv(context_vk, dsv);
         else
-        {
             wined3d_rendertarget_view_prepare_location(dsv, &context_vk->c, dsv->resource->draw_binding);
-        }
 
         if (!state->depth_stencil_state || state->depth_stencil_state->writes_ds)
             invalidate_ds = true;
