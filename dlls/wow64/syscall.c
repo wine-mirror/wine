@@ -119,6 +119,7 @@ void (WINAPI *pBTCpuNotifyMemoryFree)( void *, SIZE_T ) = NULL;
 void (WINAPI *pBTCpuNotifyMemoryProtect)( void *, SIZE_T, ULONG ) = NULL;
 void (WINAPI *pBTCpuNotifyUnmapViewOfSection)( void * ) = NULL;
 void (WINAPI *pBTCpuUpdateProcessorInformation)( SYSTEM_CPU_INFORMATION * ) = NULL;
+void (WINAPI *pBTCpuThreadTerm)( HANDLE ) = NULL;
 
 void *dummy = RtlUnwind;
 
@@ -913,6 +914,7 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
     GET_PTR( BTCpuNotifyMemoryProtect );
     GET_PTR( BTCpuNotifyUnmapViewOfSection );
     GET_PTR( BTCpuUpdateProcessorInformation );
+    GET_PTR( BTCpuThreadTerm );
     GET_PTR( __wine_get_unix_opcode );
 
     module = load_64bit_module( L"wow64win.dll" );
