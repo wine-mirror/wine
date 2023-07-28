@@ -25,6 +25,7 @@
 #include "ws2tcpip.h"
 #include "winhttp.h"
 #include "schannel.h"
+#include "winternl.h"
 
 #include "wine/debug.h"
 #include "winhttp_private.h"
@@ -223,6 +224,8 @@ DWORD netconn_create( struct hostdata *host, const struct sockaddr_storage *sock
         free( conn );
         return ret;
     }
+    if (!SetFileCompletionNotificationModes( (HANDLE)(UINT_PTR)conn->socket, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS ))
+        ERR( "SetFileCompletionNotificationModes failed.\n" );
 
     switch (conn->sockaddr.ss_family)
     {
