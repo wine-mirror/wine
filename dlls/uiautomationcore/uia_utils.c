@@ -169,7 +169,7 @@ static HRESULT uia_condition_clone(struct UiaCondition **dst, struct UiaConditio
     {
     case ConditionType_True:
     case ConditionType_False:
-        if (!(*dst = heap_alloc_zero(sizeof(*dst))))
+        if (!(*dst = heap_alloc_zero(sizeof(**dst))))
             return E_OUTOFMEMORY;
 
         (*dst)->ConditionType = src->ConditionType;
