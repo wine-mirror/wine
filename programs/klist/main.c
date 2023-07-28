@@ -37,43 +37,42 @@ static const WCHAR *load_resource(UINT id)
 
 static const WCHAR *get_etype_text(LONG encryption_type)
 {
-    switch (encryption_type) {
-#define EXPAND_ETYPE(x) case KERB_ETYPE_##x: return L ## #x
-    EXPAND_ETYPE(NULL);
-    EXPAND_ETYPE(DES_CBC_CRC);
-    EXPAND_ETYPE(DES_CBC_MD4);
-    EXPAND_ETYPE(DES_CBC_MD5);
-    EXPAND_ETYPE(AES128_CTS_HMAC_SHA1_96);
-    EXPAND_ETYPE(AES256_CTS_HMAC_SHA1_96);
-    EXPAND_ETYPE(RC4_MD4);
-    EXPAND_ETYPE(RC4_PLAIN2);
-    EXPAND_ETYPE(RC4_LM);
-    EXPAND_ETYPE(RC4_SHA);
-    EXPAND_ETYPE(DES_PLAIN);
-    EXPAND_ETYPE(RC4_HMAC_OLD);
-    EXPAND_ETYPE(RC4_PLAIN_OLD);
-    EXPAND_ETYPE(RC4_HMAC_OLD_EXP);
-    EXPAND_ETYPE(RC4_PLAIN_OLD_EXP);
-    EXPAND_ETYPE(RC4_PLAIN);
-    EXPAND_ETYPE(RC4_PLAIN_EXP);
-    EXPAND_ETYPE(AES128_CTS_HMAC_SHA1_96_PLAIN);
-    EXPAND_ETYPE(AES256_CTS_HMAC_SHA1_96_PLAIN);
-    EXPAND_ETYPE(DSA_SHA1_CMS);
-    EXPAND_ETYPE(RSA_MD5_CMS);
-    EXPAND_ETYPE(RSA_SHA1_CMS);
-    EXPAND_ETYPE(RC2_CBC_ENV);
-    EXPAND_ETYPE(RSA_ENV);
-    EXPAND_ETYPE(RSA_ES_OEAP_ENV);
-    EXPAND_ETYPE(DES_EDE3_CBC_ENV);
-    EXPAND_ETYPE(DSA_SIGN);
-    EXPAND_ETYPE(DES3_CBC_MD5);
-    EXPAND_ETYPE(DES3_CBC_SHA1);
-    EXPAND_ETYPE(DES3_CBC_SHA1_KD);
-    EXPAND_ETYPE(DES_CBC_MD5_NT);
-    EXPAND_ETYPE(RC4_HMAC_NT);
-    EXPAND_ETYPE(RC4_HMAC_NT_EXP);
-#undef EXPAND_ETYPE
-    default: return NULL;
+    switch (encryption_type)
+    {
+    case KERB_ETYPE_NULL: return L"NULL";
+    case KERB_ETYPE_DES_CBC_CRC: return L"DES-CBC-CRC";
+    case KERB_ETYPE_DES_CBC_MD4: return L"DES-CBC-MD4";
+    case KERB_ETYPE_DES_CBC_MD5: return L"DES-CBC-MD5";
+    case KERB_ETYPE_AES128_CTS_HMAC_SHA1_96: return L"AES-128-CTS-HMAC-SHA1-96";
+    case KERB_ETYPE_AES256_CTS_HMAC_SHA1_96: return L"AES-256-CTS-HMAC-SHA1-96";
+    case KERB_ETYPE_RC4_MD4: return L"RC4-MD4";
+    case KERB_ETYPE_RC4_PLAIN2: return L"RC4-PLAIN2";
+    case KERB_ETYPE_RC4_LM: return L"RC4-LM";
+    case KERB_ETYPE_RC4_SHA: return L"RC4-SHA";
+    case KERB_ETYPE_DES_PLAIN: return L"DES-PLAIN";
+    case KERB_ETYPE_RC4_HMAC_OLD: return L"RC4-HMAC-OLD";
+    case KERB_ETYPE_RC4_PLAIN_OLD: return L"RC4-PLAIN-OLD";
+    case KERB_ETYPE_RC4_HMAC_OLD_EXP: return L"RC4-HMAC-OLD-EXP";
+    case KERB_ETYPE_RC4_PLAIN_OLD_EXP: return L"RC4-PLAIN-OLD-EXP";
+    case KERB_ETYPE_RC4_PLAIN: return L"RC4-PLAIN";
+    case KERB_ETYPE_RC4_PLAIN_EXP: return L"RC4-PLAIN-EXP";
+    case KERB_ETYPE_AES128_CTS_HMAC_SHA1_96_PLAIN: return L"AES-128-CTS-HMAC-SHA1-96-PLAIN";
+    case KERB_ETYPE_AES256_CTS_HMAC_SHA1_96_PLAIN: return L"AES-256-CTS-HMAC-SHA1-96-PLAIN";
+    case KERB_ETYPE_DSA_SHA1_CMS: return L"DSA-SHA1-CMS";
+    case KERB_ETYPE_RSA_MD5_CMS: return L"RSA-MD5-CMS";
+    case KERB_ETYPE_RSA_SHA1_CMS: return L"RSA-SHA1-CMS";
+    case KERB_ETYPE_RC2_CBC_ENV: return L"RC2-CBC-ENV";
+    case KERB_ETYPE_RSA_ENV: return L"RSA-ENV";
+    case KERB_ETYPE_RSA_ES_OEAP_ENV: return L"RSA-ES-OEAP-ENV";
+    case KERB_ETYPE_DES_EDE3_CBC_ENV: return L"DES-EDE3-CBC-ENV";
+    case KERB_ETYPE_DSA_SIGN: return L"DSA-SIGN";
+    case KERB_ETYPE_DES3_CBC_MD5: return L"DES3-CBC-MD5";
+    case KERB_ETYPE_DES3_CBC_SHA1: return L"DES3-CBC-SHA1";
+    case KERB_ETYPE_DES3_CBC_SHA1_KD: return L"DES3-CBC-SHA1-KD";
+    case KERB_ETYPE_DES_CBC_MD5_NT: return L"DES-CBC-MD5-NT";
+    case KERB_ETYPE_RC4_HMAC_NT: return L"RC4-HMAC-NT";
+    case KERB_ETYPE_RC4_HMAC_NT_EXP: return L"RC4-HMAC-NT-EXP";
+    default: return L"unknown";
     }
 }
 
@@ -200,7 +199,6 @@ static int tickets(void)
         const FILETIME *const filetimes[] = { (FILETIME*)&ticket.StartTime,
             (FILETIME*)&ticket.EndTime, (FILETIME*)&ticket.RenewTime };
         const WCHAR *dates[3];
-        const WCHAR *etype_text;
 
         format_dates_and_times(filetimes, dates, 3);
 
@@ -211,16 +209,8 @@ static int tickets(void)
                 ticket.ServerName.Length / sizeof(WCHAR), ticket.ServerName.Buffer,
                 ticket.RealmName.Length / sizeof(WCHAR), ticket.RealmName.Buffer);
 
-        etype_text = get_etype_text(ticket.EncryptionType);
         wprintf(L"        %ls: ", load_resource(STRING_ENCRYPTION_TYPE));
-        if (etype_text)
-        {
-            wprintf(L"%s\n", etype_text);
-        }
-        else
-        {
-            wprintf(L"%ld\n", ticket.EncryptionType);
-        }
+        wprintf(L"%s\n", get_etype_text(ticket.EncryptionType));
 
         wprintf(L"        %ls: 0x%lx ->", load_resource(STRING_TICKET_FLAGS), ticket.TicketFlags);
 #define EXPAND_TICKET_FLAG(x) if (ticket.TicketFlags & KERB_TICKET_FLAGS_##x) wprintf(L" %ls", L ## #x)
