@@ -94,6 +94,7 @@ enum media_engine_flags
     FLAGS_ENGINE_NEW_FRAME = 0x8000,
     FLAGS_ENGINE_SOURCE_PENDING = 0x10000,
     FLAGS_ENGINE_PLAY_PENDING = 0x20000,
+    FLAGS_ENGINE_SEEKING = 0x40000,
 };
 
 struct vec3
@@ -164,6 +165,7 @@ struct media_engine
     {
         IMFMediaSource *source;
         IMFPresentationDescriptor *pd;
+        PROPVARIANT start_position;
     } presentation;
     struct effects video_effects;
     struct effects audio_effects;
@@ -978,7 +980,14 @@ static HRESULT WINAPI media_engine_session_events_Invoke(IMFAsyncCallback *iface
             break;
         }
         case MESessionStarted:
-
+            EnterCriticalSection(&engine->cs);
+            if (engine->flags & FLAGS_ENGINE_SEEKING)
+            {
+                media_engine_set_flag(engine, FLAGS_ENGINE_SEEKING | FLAGS_ENGINE_IS_ENDED, FALSE);
+                IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_SEEKED, 0, 0);
+                IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_TIMEUPDATE, 0, 0);
+            }
+            LeaveCriticalSection(&engine->cs);
             IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PLAYING, 0, 0);
             break;
         case MESessionEnded:
@@ -1339,10 +1348,9 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
 
 static void media_engine_start_playback(struct media_engine *engine)
 {
-    PROPVARIANT var;
-
-    var.vt = VT_EMPTY;
-    IMFMediaSession_Start(engine->session, &GUID_NULL, &var);
+    IMFMediaSession_Start(engine->session, &GUID_NULL, &engine->presentation.start_position);
+    /* Reset the playback position to the current position */
+    engine->presentation.start_position.vt = VT_EMPTY;
 }
 
 static HRESULT WINAPI media_engine_load_handler_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
@@ -1770,6 +1778,10 @@ static double WINAPI media_engine_GetCurrentTime(IMFMediaEngineEx *iface)
     {
         ret = engine->duration;
     }
+    else if (engine->flags & FLAGS_ENGINE_PAUSED && engine->presentation.start_position.vt == VT_I8)
+    {
+        ret = (double)engine->presentation.start_position.hVal.QuadPart / 10000000;
+    }
     else if (SUCCEEDED(IMFPresentationClock_GetTime(engine->clock, &clocktime)))
     {
         ret = mftime_to_seconds(clocktime);
@@ -1779,17 +1791,50 @@ static double WINAPI media_engine_GetCurrentTime(IMFMediaEngineEx *iface)
     return ret;
 }
 
+static HRESULT media_engine_set_current_time(struct media_engine *engine, double seektime)
+{
+    PROPVARIANT position;
+    DWORD caps;
+    HRESULT hr;
+
+    hr = IMFMediaSession_GetSessionCapabilities(engine->session, &caps);
+    if (FAILED(hr) || !(caps & MFSESSIONCAP_SEEK))
+        return hr;
+
+    position.vt = VT_I8;
+    position.hVal.QuadPart = min(max(0, seektime), engine->duration) * 10000000;
+
+    if (IMFMediaEngineEx_IsPaused(&engine->IMFMediaEngineEx_iface))
+    {
+        engine->presentation.start_position = position;
+        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_SEEKING, 0, 0);
+        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_SEEKED, 0, 0);
+        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_TIMEUPDATE, 0, 0);
+        return S_OK;
+    }
+
+    if (SUCCEEDED(hr = IMFMediaSession_Start(engine->session, &GUID_NULL, &position)))
+    {
+        media_engine_set_flag(engine, FLAGS_ENGINE_SEEKING, TRUE);
+        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_SEEKING, 0, 0);
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI media_engine_SetCurrentTime(IMFMediaEngineEx *iface, double time)
 {
     struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
-    HRESULT hr = E_NOTIMPL;
+    HRESULT hr;
 
-    FIXME("(%p, %f): stub.\n", iface, time);
+    TRACE("%p, %f.\n", iface, time);
 
     EnterCriticalSection(&engine->cs);
 
     if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
         hr = MF_E_SHUTDOWN;
+    else
+        hr = media_engine_set_current_time(engine, time);
 
     LeaveCriticalSection(&engine->cs);
 
