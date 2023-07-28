@@ -1,0 +1,347 @@
+/*
+ * Copyright (C) 2023 Biswapriyo Nath
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "oaidl.idl";
+import "ocidl.idl";
+import "inspectable.idl";
+import "dxgi1_2.idl";
+
+cpp_quote("#ifndef E_NOTFOUND")
+cpp_quote("#define E_NOTFOUND HRESULT_FROM_WIN32(ERROR_NOT_FOUND)")
+cpp_quote("#endif")
+cpp_quote("#define E_UNKNOWNTYPE _HRESULT_TYPEDEF_(0x802b0028)")
+cpp_quote("HRESULT WINAPI InitializeXamlDiagnostic(PCWSTR, DWORD, PCWSTR, PCWSTR, CLSID);")
+cpp_quote("HRESULT WINAPI InitializeXamlDiagnosticsEx(PCWSTR, DWORD, PCWSTR, PCWSTR, CLSID, PCWSTR);")
+
+typedef unsigned hyper InstanceHandle;
+
+typedef enum VisualMutationType
+{
+    Add,
+    Remove
+} VisualMutationType;
+
+typedef enum BaseValueSource
+{
+    BaseValueSourceUnknown,
+    BaseValueSourceDefault,
+    BaseValueSourceBuiltInStyle,
+    BaseValueSourceStyle,
+    BaseValueSourceLocal,
+    Inherited,
+    DefaultStyleTrigger,
+    TemplateTrigger,
+    StyleTrigger,
+    ImplicitStyleReference,
+    ParentTemplate,
+    ParentTemplateTrigger,
+    Animation,
+    Coercion,
+    BaseValueSourceVisualState
+} BaseValueSource;
+
+typedef struct SourceInfo
+{
+    BSTR FileName;
+    unsigned int LineNumber;
+    unsigned int ColumnNumber;
+    unsigned int CharPosition;
+    BSTR Hash;
+} SourceInfo;
+
+typedef struct ParentChildRelation
+{
+    InstanceHandle Parent;
+    InstanceHandle Child;
+    unsigned int ChildIndex;
+} ParentChildRelation;
+
+typedef struct VisualElement
+{
+    InstanceHandle Handle;
+    SourceInfo SrcInfo;
+    BSTR Type;
+    BSTR Name;
+    unsigned int NumChildren;
+} VisualElement;
+
+typedef struct PropertyChainSource
+{
+    InstanceHandle Handle;
+    BSTR TargetType;
+    BSTR Name;
+    BaseValueSource Source;
+    SourceInfo SrcInfo;
+} PropertyChainSource;
+
+typedef enum MetadataBit
+{
+    None                           = 0x0,
+    IsValueHandle                  = 0x1,
+    IsPropertyReadOnly             = 0x2,
+    IsValueCollection              = 0x4,
+    IsValueCollectionReadOnly      = 0x8,
+    IsValueBindingExpression       = 0x10,
+    IsValueNull                    = 0x20,
+    IsValueHandleAndEvaluatedValue = 0x40,
+} MetadataBit;
+
+typedef struct PropertyChainValue
+{
+    unsigned int Index;
+    BSTR Type;
+    BSTR DeclaringType;
+    BSTR ValueType;
+    BSTR ItemType;
+    BSTR Value;
+    BOOL Overridden;
+    hyper MetadataBits;
+    BSTR PropertyName;
+    unsigned int PropertyChainIndex;
+} PropertyChainValue;
+
+typedef struct EnumType
+{
+    BSTR Name;
+    SAFEARRAY(int) ValueInts;
+    SAFEARRAY(BSTR) ValueStrings;
+} EnumType;
+
+typedef struct CollectionElementValue
+{
+    unsigned int Index;
+    BSTR ValueType;
+    BSTR Value;
+    hyper MetadataBits;
+} CollectionElementValue;
+
+typedef enum RenderTargetBitmapOptions
+{
+    RenderTarget,
+    RenderTargetAndChildren
+} RenderTargetBitmapOptions;
+
+typedef struct BitmapDescription
+{
+    unsigned int Width;
+    unsigned int Height;
+    DXGI_FORMAT Format;
+    DXGI_ALPHA_MODE AlphaMode;
+} BitmapDescription;
+
+typedef enum ResourceType
+{
+    ResourceTypeStatic,
+    ResourceTypeTheme
+} ResourceType;
+
+typedef enum VisualElementState
+{
+    ErrorResolved,
+    ErrorResourceNotFound,
+    ErrorInvalidResource,
+} VisualElementState;
+
+[
+    object,
+    uuid(aa7a8931-80e4-4fec-8f3b-553f87b4966e)
+]
+interface IVisualTreeServiceCallback : IUnknown
+{
+    HRESULT OnVisualTreeChange(
+            [in] ParentChildRelation relation,
+            [in] VisualElement element,
+            [in] VisualMutationType mutation_type);
+}
+
+[
+    object,
+    uuid(bad9eb88-ae77-4397-b948-5fa2db0a19ea)
+]
+interface IVisualTreeServiceCallback2 : IVisualTreeServiceCallback
+{
+    HRESULT OnElementStateChanged(
+            [in] InstanceHandle element,
+            [in] VisualElementState element_state,
+            [in] LPCWSTR context);
+}
+
+[
+    object,
+    uuid(a593b11a-d17f-48bb-8f66-83910731c8a5)
+]
+interface IVisualTreeService : IUnknown
+{
+    HRESULT AdviseVisualTreeChange([in] IVisualTreeServiceCallback *callback);
+
+    HRESULT UnadviseVisualTreeChange([in] IVisualTreeServiceCallback *callback);
+
+    HRESULT GetEnums(
+            [out] unsigned int *count,
+            [out, size_is(, *count)] EnumType **enums);
+
+    HRESULT CreateInstance(
+            [in] BSTR type_name,
+            [in] BSTR value,
+            [out, retval] InstanceHandle *instance_handle);
+
+    HRESULT GetPropertyValuesChain(
+            [in] InstanceHandle instance_handle,
+            [out] unsigned int *source_count,
+            [out, size_is(, *source_count)] PropertyChainSource **property_sources,
+            [out] unsigned int *property_count,
+            [out, size_is(, *property_count)] PropertyChainValue **property_values);
+
+    HRESULT SetProperty(
+            [in] InstanceHandle instance_handle,
+            [in] InstanceHandle value,
+            [in] unsigned int property_index);
+
+    HRESULT ClearProperty(
+            [in] InstanceHandle instance_handle,
+            [in] unsigned int property_index);
+
+    HRESULT GetCollectionCount(
+            [in] InstanceHandle instance_handle,
+            [out] unsigned int *collection_size);
+
+    HRESULT GetCollectionElements(
+            [in] InstanceHandle instance_handle,
+            [in] unsigned int start_index,
+            [in, out] unsigned int *element_count,
+            [out, size_is(, *element_count)] CollectionElementValue **element_values);
+
+    HRESULT AddChild(
+            [in] InstanceHandle parent,
+            [in] InstanceHandle child,
+            [in] unsigned int index);
+
+    HRESULT RemoveChild(
+            [in] InstanceHandle parent,
+            [in] unsigned int index);
+
+    HRESULT ClearChildren([in] InstanceHandle parent);
+}
+
+[
+    object,
+    uuid(18c9e2b6-3f43-4116-9f2b-ff935d7770d2)
+]
+interface IXamlDiagnostics : IUnknown
+{
+    HRESULT GetDispatcher([out, retval] IInspectable **dispatcher);
+
+    HRESULT GetUiLayer([out, retval] IInspectable **layer);
+
+    HRESULT GetApplication([out, retval] IInspectable **application);
+
+    HRESULT GetIInspectableFromHandle(
+            [in] InstanceHandle instance_handle,
+            [out, retval] IInspectable **instance);
+
+    HRESULT GetHandleFromIInspectable(
+            [in] IInspectable *instance,
+            [out, retval] InstanceHandle *handle);
+
+    HRESULT HitTest(
+            [in] RECT rect,
+            [out] unsigned int *count,
+            [out, size_is(, *count)] InstanceHandle **instance_handles);
+
+    HRESULT RegisterInstance(
+            [in] IInspectable *instance,
+            [out, retval] InstanceHandle *instance_handle);
+
+    HRESULT GetInitializationData([out, retval] BSTR *initialization_data);
+}
+
+[
+    object,
+    uuid(d1a34ef2-cad8-4635-a3d2-fcda8d3f3caf)
+]
+interface IBitmapData : IUnknown
+{
+    HRESULT CopyBytesTo(
+            [in] unsigned int source_offset_in_bytes,
+            [in] unsigned int max_bytes_to_copy,
+            [out, size_is(max_bytes_to_copy)] byte *bytes,
+            [out] unsigned int *number_of_bytes_copied);
+
+     HRESULT GetStride([out] unsigned int *stride);
+
+     HRESULT GetBitmapDescription([out] BitmapDescription *bitmap_description);
+
+     HRESULT GetSourceBitmapDescription([out] BitmapDescription *bitmap_description);
+}
+
+[
+    object,
+    uuid(130f5136-ec43-4f61-89c7-9801a36d2e95)
+]
+interface IVisualTreeService2 : IVisualTreeService
+{
+    HRESULT GetPropertyIndex(
+            [in] InstanceHandle object,
+            [in] LPCWSTR property_name,
+            [out] unsigned int *property_index);
+
+    HRESULT GetProperty(
+            [in] InstanceHandle object,
+            [in] unsigned int property_index,
+            [out] InstanceHandle *value);
+
+    HRESULT ReplaceResource(
+            [in] InstanceHandle resource_dictionary,
+            [in] InstanceHandle key,
+            [in] InstanceHandle new_value);
+
+    HRESULT RenderTargetBitmap(
+            [in] InstanceHandle handle,
+            [in] RenderTargetBitmapOptions options,
+            [in] unsigned int max_pixel_width,
+            [in] unsigned int max_pixel_height,
+            [out] IBitmapData **bitmap_data);
+}
+
+[
+    object,
+    uuid(0e79c6e0-85a0-4be8-b41a-655cf1fd19bd)
+]
+interface IVisualTreeService3 : IVisualTreeService2
+{
+    HRESULT ResolveResource(
+            [in] InstanceHandle resource_context,
+            [in] LPCWSTR resource_name,
+            [in] ResourceType resource_type,
+            [in] unsigned int property_index);
+
+    HRESULT GetDictionaryItem(
+            [in] InstanceHandle dictionary_handle,
+            [in] LPCWSTR resource_name,
+            [in] BOOL resource_is_implicit_style,
+            [out] InstanceHandle *resource_handle);
+
+    HRESULT AddDictionaryItem(
+            [in] InstanceHandle dictionary_handle,
+            [in] InstanceHandle resource_key,
+            [in] InstanceHandle resource_handle);
+
+    HRESULT RemoveDictionaryItem(
+            [in] InstanceHandle dictionary_handle,
+            [in] InstanceHandle resource_key);
+}
