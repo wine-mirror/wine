@@ -56,15 +56,16 @@ BOOL netconn_wait_overlapped_result( struct netconn *conn, WSAOVERLAPPED *ovr, D
     OVERLAPPED *completion_ovr;
     ULONG_PTR key;
 
-    if (!GetQueuedCompletionStatus( conn->port, len, &key, &completion_ovr, INFINITE ))
+    while (1)
     {
-        WARN( "GetQueuedCompletionStatus failed, err %lu.\n", GetLastError() );
-        return FALSE;
-    }
-    if ((key != conn->socket && conn->socket != -1) || completion_ovr != (OVERLAPPED *)ovr)
-    {
-        ERR( "Unexpected completion key %Ix, overlapped %p.\n", key, completion_ovr );
-        return FALSE;
+        if (!GetQueuedCompletionStatus( conn->port, len, &key, &completion_ovr, INFINITE ))
+        {
+            WARN( "GetQueuedCompletionStatus failed, err %lu.\n", GetLastError() );
+            return FALSE;
+        }
+        if (completion_ovr == (OVERLAPPED *)ovr && (key == conn->socket || conn->socket == -1))
+            break;
+        ERR( "Unexpected completion key %Ix, completion ovr %p, ovr %p.\n", key, completion_ovr, ovr );
     }
     return TRUE;
 }
