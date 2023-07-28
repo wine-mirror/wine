@@ -1,0 +1,9 @@
+MODULE  = windows.storage.applicationdata.dll
+IMPORTS = combase
+
+C_SRCS = \
+	applicationdata.c \
+	main.c
+
+IDL_SRCS = \
+	classes.idl

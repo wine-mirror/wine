@@ -1,0 +1,5 @@
+TESTDLL = windows.storage.applicationdata.dll
+IMPORTS = combase
+
+C_SRCS = \
+	data.c
