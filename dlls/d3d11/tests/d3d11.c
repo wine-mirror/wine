@@ -35266,6 +35266,190 @@ static void test_keyed_mutex(void)
     ok(!ref, "got %ld.\n", ref);
 }
 
+static void test_clear_during_render(void)
+{
+    /* Quads only cover left half so we can see both drawn color on the left and clear color on the right. */
+    static const struct vec3 depth_quarter_quad_data[] =
+    {
+        {-1.0f, -1.0f, 0.25f},
+        {-1.0f,  1.0f, 0.25f},
+        { 0.0f, -1.0f, 0.25f},
+        { 0.0f,  1.0f, 0.25f},
+    };
+    static const struct vec3 depth_three_quarter_quad_data[] =
+    {
+        {-1.0f, -1.0f, 0.75f},
+        {-1.0f,  1.0f, 0.75f},
+        { 0.0f, -1.0f, 0.75f},
+        { 0.0f,  1.0f, 0.75f},
+    };
+    static const struct vec4 draw_color_data = {1, 0, 0, 1};
+    static const UINT vertex_stride = sizeof(depth_quarter_quad_data[0]);
+    static const UINT vertex_offset = 0;
+    static const struct vec4 initial_color = {0, 0, 0, 1};
+    static const float clear_color[] = {0, 1, 0, 1};
+    D3D11_VIEWPORT viewport = {0, 0, 0, 0, 0, 1};
+    struct d3d11_test_context test_context;
+    struct resource_readback rb;
+    ID3D11DeviceContext *context;
+    ID3D11Device *device;
+    ID3D11Texture2D *tex, *dstex;
+    ID3D11DepthStencilView *dsv;
+    ID3D11RenderTargetView *rtv;
+    ID3D11DepthStencilState *depth_none, *depth_ge, *depth_write_ge;
+    ID3D11Buffer *depth_quarter_quad, *depth_three_quarter_quad, *draw_color;
+    D3D11_DEPTH_STENCIL_DESC depth_stencil_desc;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    HRESULT hr;
+    DWORD color;
+    float depth;
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+    depth_quarter_quad = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(depth_quarter_quad_data), &depth_quarter_quad_data);
+    depth_three_quarter_quad = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(depth_three_quarter_quad_data), &depth_three_quarter_quad_data);
+    draw_color = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(draw_color_data), &draw_color_data);
+
+    memset(&depth_stencil_desc, 0, sizeof(depth_stencil_desc));
+    hr = ID3D11Device_CreateDepthStencilState(device, &depth_stencil_desc, &depth_none);
+    ok(hr == S_OK, "Failed to create depth none dss: %#lx.\n", hr);
+    depth_stencil_desc.DepthEnable = TRUE;
+    depth_stencil_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+    depth_stencil_desc.DepthFunc = D3D11_COMPARISON_ALWAYS;
+    depth_stencil_desc.DepthFunc = D3D11_COMPARISON_GREATER_EQUAL;
+    hr = ID3D11Device_CreateDepthStencilState(device, &depth_stencil_desc, &depth_write_ge);
+    ok(hr == S_OK, "Failed to create depth write ge dss: %#lx.\n", hr);
+    depth_stencil_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+    hr = ID3D11Device_CreateDepthStencilState(device, &depth_stencil_desc, &depth_ge);
+    ok(hr == S_OK, "Failed to create depth ge dss: %#lx.\n", hr);
+
+    memset(&texture_desc, 0, sizeof(texture_desc));
+    texture_desc.Width = 2;
+    texture_desc.Height = 1;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &tex);
+    ok(hr == S_OK, "Failed to create color texture: %#lx.\n", hr);
+    texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    texture_desc.Format = DXGI_FORMAT_D32_FLOAT;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &dstex);
+    ok(hr == S_OK, "Failed to create depth texture: %#lx.\n", hr);
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource*)tex, NULL, &rtv);
+    ok(hr == S_OK, "Failed to create rtv: %#lx.\n", hr);
+    hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource*)dstex, NULL, &dsv);
+    ok(hr == S_OK, "Failed to create dsv: %#lx.\n", hr);
+    viewport.Width = (float)texture_desc.Width;
+    viewport.Height = (float)texture_desc.Height;
+    ID3D11DeviceContext_RSSetViewports(context, 1, &viewport);
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, dsv);
+
+    /* Draw with succeeding depth compare. */
+    ID3D11DeviceContext_OMSetDepthStencilState(context, depth_none, 0);
+    ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 0.5f, 0);
+    draw_color_quad(&test_context, &initial_color);
+    ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 0.0f, 0);
+    ID3D11DeviceContext_OMSetDepthStencilState(context, depth_ge, 0);
+    ID3D11DeviceContext_IASetVertexBuffers(context, 0, 1, &depth_quarter_quad, &vertex_stride, &vertex_offset);
+    ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &draw_color);
+    ID3D11DeviceContext_Draw(context, 4, 0);
+    get_texture_readback(tex, 0, &rb);
+    color = get_readback_color(&rb, 0, 0, 0);
+    todo_wine_if(damavand)
+    ok(color == 0xff0000ff, "Got unexpected color 0x%08lx instead of 0xff0000ff.\n", color);
+    color = get_readback_color(&rb, 1, 0, 0);
+    ok(color == 0xff000000, "Got unexpected color 0x%08lx instead of 0xff000000.\n", color);
+    release_resource_readback(&rb);
+    get_texture_readback(dstex, 0, &rb);
+    depth = get_readback_float(&rb, 0, 0);
+    ok(depth == 0.0f, "Got unexpected depth %.8e instead of 0.0.\n", depth);
+    depth = get_readback_float(&rb, 1, 0);
+    ok(depth == 0.0f, "Got unexpected depth %.8e instead of 0.0.\n", depth);
+    release_resource_readback(&rb);
+
+    /* Draw with failing depth compare. */
+    ID3D11DeviceContext_OMSetDepthStencilState(context, depth_none, 0);
+    ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 0.5f, 0);
+    draw_color_quad(&test_context, &initial_color);
+    ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 1.0f, 0);
+    ID3D11DeviceContext_OMSetDepthStencilState(context, depth_ge, 0);
+    ID3D11DeviceContext_IASetVertexBuffers(context, 0, 1, &depth_three_quarter_quad, &vertex_stride, &vertex_offset);
+    ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &draw_color);
+    ID3D11DeviceContext_Draw(context, 4, 0);
+    get_texture_readback(tex, 0, &rb);
+    color = get_readback_color(&rb, 0, 0, 0);
+    todo_wine_if(damavand)
+    ok(color == 0xff000000, "Got unexpected color 0x%08lx instead of 0xff000000.\n", color);
+    color = get_readback_color(&rb, 1, 0, 0);
+    ok(color == 0xff000000, "Got unexpected color 0x%08lx instead of 0xff000000.\n", color);
+    release_resource_readback(&rb);
+    get_texture_readback(dstex, 0, &rb);
+    depth = get_readback_float(&rb, 0, 0);
+    ok(depth == 1.0f, "Got unexpected depth %.8e instead of 1.0.\n", depth);
+    depth = get_readback_float(&rb, 1, 0);
+    ok(depth == 1.0f, "Got unexpected depth %.8e instead of 1.0.\n", depth);
+    release_resource_readback(&rb);
+
+    /* Draw with depth write. */
+    ID3D11DeviceContext_OMSetDepthStencilState(context, depth_none, 0);
+    ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 0.5f, 0);
+    draw_color_quad(&test_context, &initial_color);
+    ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 0.0f, 0);
+    ID3D11DeviceContext_OMSetDepthStencilState(context, depth_write_ge, 0);
+    ID3D11DeviceContext_IASetVertexBuffers(context, 0, 1, &depth_quarter_quad, &vertex_stride, &vertex_offset);
+    ID3D11DeviceContext_PSSetShader(context, NULL, NULL, 0);
+    ID3D11DeviceContext_Draw(context, 4, 0);
+    get_texture_readback(tex, 0, &rb);
+    color = get_readback_color(&rb, 0, 0, 0);
+    todo_wine_if(!damavand) /* Draw with no PS doesn't write color on D3D11 but does on OpenGL. */
+    ok(color == 0xff000000, "Got unexpected color 0x%08lx instead of 0xff000000.\n", color);
+    color = get_readback_color(&rb, 1, 0, 0);
+    ok(color == 0xff000000, "Got unexpected color 0x%08lx instead of 0xff000000.\n", color);
+    release_resource_readback(&rb);
+    get_texture_readback(dstex, 0, &rb);
+    depth = get_readback_float(&rb, 0, 0);
+    todo_wine_if(damavand)
+    ok(depth == 0.25f, "Got unexpected depth %.8e instead of 0.25.\n", depth);
+    depth = get_readback_float(&rb, 1, 0);
+    todo_wine_if(damavand)
+    ok(depth == 0.0f, "Got unexpected depth %.8e instead of 0.0.\n", depth);
+    release_resource_readback(&rb);
+
+    /* Draw with color write. */
+    ID3D11DeviceContext_OMSetDepthStencilState(context, depth_none, 0);
+    ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 0.5f, 0);
+    draw_color_quad(&test_context, &initial_color);
+    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, clear_color);
+    ID3D11DeviceContext_IASetVertexBuffers(context, 0, 1, &depth_quarter_quad, &vertex_stride, &vertex_offset);
+    ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &draw_color);
+    ID3D11DeviceContext_Draw(context, 4, 0);
+    get_texture_readback(tex, 0, &rb);
+    color = get_readback_color(&rb, 0, 0, 0);
+    ok(color == 0xff0000ff, "Got unexpected color 0x%08lx instead of 0xff0000ff.\n", color);
+    color = get_readback_color(&rb, 1, 0, 0);
+    todo_wine_if(damavand)
+    ok(color == 0xff00ff00, "Got unexpected color 0x%08lx instead of 0xff00ff00.\n", color);
+    release_resource_readback(&rb);
+
+    ID3D11Buffer_Release(depth_quarter_quad);
+    ID3D11Buffer_Release(depth_three_quarter_quad);
+    ID3D11Buffer_Release(draw_color);
+    ID3D11RenderTargetView_Release(rtv);
+    ID3D11DepthStencilView_Release(dsv);
+    ID3D11Texture2D_Release(tex);
+    ID3D11Texture2D_Release(dstex);
+    ID3D11DepthStencilState_Release(depth_none);
+    ID3D11DepthStencilState_Release(depth_ge);
+    ID3D11DepthStencilState_Release(depth_write_ge);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     unsigned int argc, i;
@@ -35462,6 +35646,7 @@ START_TEST(d3d11)
     queue_test(test_dxgi_resources);
     queue_for_each_feature_level(test_shared_resource);
     queue_test(test_keyed_mutex);
+    queue_test(test_clear_during_render);
 
     run_queued_tests();
 
