@@ -18,7 +18,7 @@
 
 #include "ws2tcpip.h"
 
-void winsock_init(void) DECLSPEC_HIDDEN;
-HRESULT resolve_hostname( const WCHAR *, USHORT, struct sockaddr *, int *, int ) DECLSPEC_HIDDEN;
-HRESULT channel_accept_tcp( SOCKET, HANDLE, HANDLE, WS_CHANNEL * ) DECLSPEC_HIDDEN;
-HRESULT channel_accept_udp( SOCKET, HANDLE, HANDLE, WS_CHANNEL * ) DECLSPEC_HIDDEN;
+void winsock_init(void);
+HRESULT resolve_hostname( const WCHAR *, USHORT, struct sockaddr *, int *, int );
+HRESULT channel_accept_tcp( SOCKET, HANDLE, HANDLE, WS_CHANNEL * );
+HRESULT channel_accept_udp( SOCKET, HANDLE, HANDLE, WS_CHANNEL * );

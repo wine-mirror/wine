@@ -18,7 +18,7 @@
 
 #include "winhttp.h"
 
-extern _locale_t c_locale DECLSPEC_HIDDEN;
+extern _locale_t c_locale;
 
 #define STREAM_BUFSIZE 4096
 
@@ -33,14 +33,14 @@ struct xmlbuf
     WS_XML_DICTIONARY           *dict;
 };
 
-void *ws_alloc( WS_HEAP *, SIZE_T ) DECLSPEC_HIDDEN;
-void *ws_alloc_zero( WS_HEAP *, SIZE_T ) DECLSPEC_HIDDEN;
-void *ws_realloc( WS_HEAP *, void *, SIZE_T, SIZE_T ) DECLSPEC_HIDDEN;
-void *ws_realloc_zero( WS_HEAP *, void *, SIZE_T, SIZE_T ) DECLSPEC_HIDDEN;
-void ws_free( WS_HEAP *, void *, SIZE_T ) DECLSPEC_HIDDEN;
+void *ws_alloc( WS_HEAP *, SIZE_T );
+void *ws_alloc_zero( WS_HEAP *, SIZE_T );
+void *ws_realloc( WS_HEAP *, void *, SIZE_T, SIZE_T );
+void *ws_realloc_zero( WS_HEAP *, void *, SIZE_T, SIZE_T );
+void ws_free( WS_HEAP *, void *, SIZE_T );
 struct xmlbuf *alloc_xmlbuf( WS_HEAP *, SIZE_T, WS_XML_WRITER_ENCODING_TYPE, WS_CHARSET,
-                             const WS_XML_DICTIONARY *, WS_XML_DICTIONARY * ) DECLSPEC_HIDDEN;
-void free_xmlbuf( struct xmlbuf * ) DECLSPEC_HIDDEN;
+                             const WS_XML_DICTIONARY *, WS_XML_DICTIONARY * );
+void free_xmlbuf( struct xmlbuf * );
 
 struct dictionary
 {
@@ -52,49 +52,49 @@ struct dictionary
     ULONG              str_bytes;
     ULONG              str_bytes_max;
 };
-extern struct dictionary dict_builtin DECLSPEC_HIDDEN;
-extern const struct dictionary dict_builtin_static DECLSPEC_HIDDEN;
+extern struct dictionary dict_builtin;
+extern const struct dictionary dict_builtin_static;
 
-int find_string( const struct dictionary *, const unsigned char *, ULONG, ULONG * ) DECLSPEC_HIDDEN;
-HRESULT insert_string( struct dictionary *, unsigned char *, ULONG, int, ULONG * ) DECLSPEC_HIDDEN;
-void init_dict( struct dictionary *, ULONG ) DECLSPEC_HIDDEN;
-HRESULT writer_set_lookup( WS_XML_WRITER *, BOOL ) DECLSPEC_HIDDEN;
-HRESULT writer_set_dict_callback( WS_XML_WRITER *, WS_DYNAMIC_STRING_CALLBACK, void * ) DECLSPEC_HIDDEN;
+int find_string( const struct dictionary *, const unsigned char *, ULONG, ULONG * );
+HRESULT insert_string( struct dictionary *, unsigned char *, ULONG, int, ULONG * );
+void init_dict( struct dictionary *, ULONG );
+HRESULT writer_set_lookup( WS_XML_WRITER *, BOOL );
+HRESULT writer_set_dict_callback( WS_XML_WRITER *, WS_DYNAMIC_STRING_CALLBACK, void * );
 
-const char *debugstr_xmlstr( const WS_XML_STRING * ) DECLSPEC_HIDDEN;
-WS_XML_STRING *alloc_xml_string( const unsigned char *, ULONG ) DECLSPEC_HIDDEN;
-WS_XML_STRING *dup_xml_string( const WS_XML_STRING *, BOOL ) DECLSPEC_HIDDEN;
-HRESULT add_xml_string( WS_XML_STRING * ) DECLSPEC_HIDDEN;
-void free_xml_string( WS_XML_STRING * ) DECLSPEC_HIDDEN;
-HRESULT append_attribute( WS_XML_ELEMENT_NODE *, WS_XML_ATTRIBUTE * ) DECLSPEC_HIDDEN;
-void free_attribute( WS_XML_ATTRIBUTE * ) DECLSPEC_HIDDEN;
-WS_TYPE map_value_type( WS_VALUE_TYPE ) DECLSPEC_HIDDEN;
-ULONG get_type_size( WS_TYPE, const void * ) DECLSPEC_HIDDEN;
+const char *debugstr_xmlstr( const WS_XML_STRING * );
+WS_XML_STRING *alloc_xml_string( const unsigned char *, ULONG );
+WS_XML_STRING *dup_xml_string( const WS_XML_STRING *, BOOL );
+HRESULT add_xml_string( WS_XML_STRING * );
+void free_xml_string( WS_XML_STRING * );
+HRESULT append_attribute( WS_XML_ELEMENT_NODE *, WS_XML_ATTRIBUTE * );
+void free_attribute( WS_XML_ATTRIBUTE * );
+WS_TYPE map_value_type( WS_VALUE_TYPE );
+ULONG get_type_size( WS_TYPE, const void * );
 HRESULT read_header( WS_XML_READER *, const WS_XML_STRING *, const WS_XML_STRING *, WS_TYPE,
-                     const void *, WS_READ_OPTION, WS_HEAP *, void *, ULONG ) DECLSPEC_HIDDEN;
-HRESULT create_header_buffer( WS_XML_READER *, WS_HEAP *, WS_XML_BUFFER ** ) DECLSPEC_HIDDEN;
-HRESULT text_to_text( const WS_XML_TEXT *, const WS_XML_TEXT *, ULONG *, WS_XML_TEXT ** ) DECLSPEC_HIDDEN;
-HRESULT text_to_utf8text( const WS_XML_TEXT *, const WS_XML_UTF8_TEXT *, ULONG *, WS_XML_UTF8_TEXT ** ) DECLSPEC_HIDDEN;
-HRESULT str_to_guid( const unsigned char *, ULONG, GUID * ) DECLSPEC_HIDDEN;
-WS_XML_UTF8_TEXT *alloc_utf8_text( const BYTE *, ULONG ) DECLSPEC_HIDDEN;
-WS_XML_UTF16_TEXT *alloc_utf16_text( const BYTE *, ULONG ) DECLSPEC_HIDDEN;
-WS_XML_BASE64_TEXT *alloc_base64_text( const BYTE *, ULONG ) DECLSPEC_HIDDEN;
-WS_XML_BOOL_TEXT *alloc_bool_text( BOOL ) DECLSPEC_HIDDEN;
-WS_XML_INT32_TEXT *alloc_int32_text( INT32 ) DECLSPEC_HIDDEN;
-WS_XML_INT64_TEXT *alloc_int64_text( INT64 ) DECLSPEC_HIDDEN;
-WS_XML_UINT64_TEXT *alloc_uint64_text( UINT64 ) DECLSPEC_HIDDEN;
-WS_XML_FLOAT_TEXT *alloc_float_text( float ) DECLSPEC_HIDDEN;
-WS_XML_DOUBLE_TEXT *alloc_double_text( double ) DECLSPEC_HIDDEN;
-WS_XML_GUID_TEXT *alloc_guid_text( const GUID * ) DECLSPEC_HIDDEN;
-WS_XML_UNIQUE_ID_TEXT *alloc_unique_id_text( const GUID * ) DECLSPEC_HIDDEN;
-WS_XML_DATETIME_TEXT *alloc_datetime_text( const WS_DATETIME * ) DECLSPEC_HIDDEN;
+                     const void *, WS_READ_OPTION, WS_HEAP *, void *, ULONG );
+HRESULT create_header_buffer( WS_XML_READER *, WS_HEAP *, WS_XML_BUFFER ** );
+HRESULT text_to_text( const WS_XML_TEXT *, const WS_XML_TEXT *, ULONG *, WS_XML_TEXT ** );
+HRESULT text_to_utf8text( const WS_XML_TEXT *, const WS_XML_UTF8_TEXT *, ULONG *, WS_XML_UTF8_TEXT ** );
+HRESULT str_to_guid( const unsigned char *, ULONG, GUID * );
+WS_XML_UTF8_TEXT *alloc_utf8_text( const BYTE *, ULONG );
+WS_XML_UTF16_TEXT *alloc_utf16_text( const BYTE *, ULONG );
+WS_XML_BASE64_TEXT *alloc_base64_text( const BYTE *, ULONG );
+WS_XML_BOOL_TEXT *alloc_bool_text( BOOL );
+WS_XML_INT32_TEXT *alloc_int32_text( INT32 );
+WS_XML_INT64_TEXT *alloc_int64_text( INT64 );
+WS_XML_UINT64_TEXT *alloc_uint64_text( UINT64 );
+WS_XML_FLOAT_TEXT *alloc_float_text( float );
+WS_XML_DOUBLE_TEXT *alloc_double_text( double );
+WS_XML_GUID_TEXT *alloc_guid_text( const GUID * );
+WS_XML_UNIQUE_ID_TEXT *alloc_unique_id_text( const GUID * );
+WS_XML_DATETIME_TEXT *alloc_datetime_text( const WS_DATETIME * );
 
 #define INVALID_PARAMETER_INDEX 0xffff
-HRESULT get_param_desc( const WS_STRUCT_DESCRIPTION *, USHORT, const WS_FIELD_DESCRIPTION ** ) DECLSPEC_HIDDEN;
+HRESULT get_param_desc( const WS_STRUCT_DESCRIPTION *, USHORT, const WS_FIELD_DESCRIPTION ** );
 HRESULT write_input_params( WS_XML_WRITER *, const WS_ELEMENT_DESCRIPTION *,
-                            const WS_PARAMETER_DESCRIPTION *, ULONG, const void ** ) DECLSPEC_HIDDEN;
+                            const WS_PARAMETER_DESCRIPTION *, ULONG, const void ** );
 HRESULT read_output_params( WS_XML_READER *, WS_HEAP *, const WS_ELEMENT_DESCRIPTION *,
-                            const WS_PARAMETER_DESCRIPTION *, ULONG, const void ** ) DECLSPEC_HIDDEN;
+                            const WS_PARAMETER_DESCRIPTION *, ULONG, const void ** );
 
 enum node_flag
 {
@@ -111,29 +111,29 @@ struct node
     ULONG               flags;
 };
 
-struct node *alloc_node( WS_XML_NODE_TYPE ) DECLSPEC_HIDDEN;
-void free_node( struct node * ) DECLSPEC_HIDDEN;
-void destroy_nodes( struct node * ) DECLSPEC_HIDDEN;
-HRESULT copy_node( WS_XML_READER *, WS_XML_WRITER_ENCODING_TYPE, struct node ** ) DECLSPEC_HIDDEN;
+struct node *alloc_node( WS_XML_NODE_TYPE );
+void free_node( struct node * );
+void destroy_nodes( struct node * );
+HRESULT copy_node( WS_XML_READER *, WS_XML_WRITER_ENCODING_TYPE, struct node ** );
 
 static inline WS_XML_NODE_TYPE node_type( const struct node *node )
 {
     return node->hdr.node.nodeType;
 }
 
-BOOL move_to_root_element( struct node *, struct node ** ) DECLSPEC_HIDDEN;
-BOOL move_to_next_element( struct node ** ) DECLSPEC_HIDDEN;
-BOOL move_to_prev_element( struct node ** ) DECLSPEC_HIDDEN;
-BOOL move_to_child_element( struct node ** ) DECLSPEC_HIDDEN;
-BOOL move_to_end_element( struct node ** ) DECLSPEC_HIDDEN;
-BOOL move_to_parent_element( struct node ** ) DECLSPEC_HIDDEN;
-BOOL move_to_first_node( struct node ** ) DECLSPEC_HIDDEN;
-BOOL move_to_next_node( struct node ** ) DECLSPEC_HIDDEN;
-BOOL move_to_prev_node( struct node ** ) DECLSPEC_HIDDEN;
-BOOL move_to_bof( struct node *, struct node ** ) DECLSPEC_HIDDEN;
-BOOL move_to_eof( struct node *, struct node ** ) DECLSPEC_HIDDEN;
-BOOL move_to_child_node( struct node ** ) DECLSPEC_HIDDEN;
-BOOL move_to_parent_node( struct node ** ) DECLSPEC_HIDDEN;
+BOOL move_to_root_element( struct node *, struct node ** );
+BOOL move_to_next_element( struct node ** );
+BOOL move_to_prev_element( struct node ** );
+BOOL move_to_child_element( struct node ** );
+BOOL move_to_end_element( struct node ** );
+BOOL move_to_parent_element( struct node ** );
+BOOL move_to_first_node( struct node ** );
+BOOL move_to_next_node( struct node ** );
+BOOL move_to_prev_node( struct node ** );
+BOOL move_to_bof( struct node *, struct node ** );
+BOOL move_to_eof( struct node *, struct node ** );
+BOOL move_to_child_node( struct node ** );
+BOOL move_to_parent_node( struct node ** );
 
 struct prop_desc
 {
@@ -150,30 +150,30 @@ struct prop
     BOOL   writeonly;
 };
 
-ULONG prop_size( const struct prop_desc *, ULONG ) DECLSPEC_HIDDEN;
-void prop_init( const struct prop_desc *, ULONG, struct prop *, void * ) DECLSPEC_HIDDEN;
-HRESULT prop_set( const struct prop *, ULONG, ULONG, const void *, ULONG ) DECLSPEC_HIDDEN;
-HRESULT prop_get( const struct prop *, ULONG, ULONG, void *, ULONG ) DECLSPEC_HIDDEN;
+ULONG prop_size( const struct prop_desc *, ULONG );
+void prop_init( const struct prop_desc *, ULONG, struct prop *, void * );
+HRESULT prop_set( const struct prop *, ULONG, ULONG, const void *, ULONG );
+HRESULT prop_get( const struct prop *, ULONG, ULONG, void *, ULONG );
 
-HRESULT message_set_action( WS_MESSAGE *, const WS_XML_STRING * ) DECLSPEC_HIDDEN;
-HRESULT message_get_id( WS_MESSAGE *, GUID * ) DECLSPEC_HIDDEN;
-HRESULT message_set_request_id( WS_MESSAGE *, const GUID * ) DECLSPEC_HIDDEN;
-void message_set_send_context( WS_MESSAGE *, const WS_PROXY_MESSAGE_CALLBACK_CONTEXT * ) DECLSPEC_HIDDEN;
-void message_set_receive_context( WS_MESSAGE *, const WS_PROXY_MESSAGE_CALLBACK_CONTEXT * ) DECLSPEC_HIDDEN;
-void message_do_send_callback( WS_MESSAGE * ) DECLSPEC_HIDDEN;
-void message_do_receive_callback( WS_MESSAGE * ) DECLSPEC_HIDDEN;
-HRESULT message_insert_http_headers( WS_MESSAGE *, HINTERNET ) DECLSPEC_HIDDEN;
-HRESULT message_map_http_response_headers( WS_MESSAGE *, HINTERNET, const WS_HTTP_MESSAGE_MAPPING * ) DECLSPEC_HIDDEN;
-HRESULT message_read_fault( WS_MESSAGE *, WS_HEAP *, WS_ERROR * ) DECLSPEC_HIDDEN;
+HRESULT message_set_action( WS_MESSAGE *, const WS_XML_STRING * );
+HRESULT message_get_id( WS_MESSAGE *, GUID * );
+HRESULT message_set_request_id( WS_MESSAGE *, const GUID * );
+void message_set_send_context( WS_MESSAGE *, const WS_PROXY_MESSAGE_CALLBACK_CONTEXT * );
+void message_set_receive_context( WS_MESSAGE *, const WS_PROXY_MESSAGE_CALLBACK_CONTEXT * );
+void message_do_send_callback( WS_MESSAGE * );
+void message_do_receive_callback( WS_MESSAGE * );
+HRESULT message_insert_http_headers( WS_MESSAGE *, HINTERNET );
+HRESULT message_map_http_response_headers( WS_MESSAGE *, HINTERNET, const WS_HTTP_MESSAGE_MAPPING * );
+HRESULT message_read_fault( WS_MESSAGE *, WS_HEAP *, WS_ERROR * );
 
-HRESULT channel_send_message( WS_CHANNEL *, WS_MESSAGE * ) DECLSPEC_HIDDEN;
-HRESULT channel_receive_message( WS_CHANNEL *, WS_MESSAGE * ) DECLSPEC_HIDDEN;
-HRESULT channel_get_reader( WS_CHANNEL *, WS_XML_READER ** ) DECLSPEC_HIDDEN;
-HRESULT channel_address_message( WS_CHANNEL *, WS_MESSAGE * ) DECLSPEC_HIDDEN;
+HRESULT channel_send_message( WS_CHANNEL *, WS_MESSAGE * );
+HRESULT channel_receive_message( WS_CHANNEL *, WS_MESSAGE * );
+HRESULT channel_get_reader( WS_CHANNEL *, WS_XML_READER ** );
+HRESULT channel_address_message( WS_CHANNEL *, WS_MESSAGE * );
 
-HRESULT parse_url( const WS_STRING *, WS_URL_SCHEME_TYPE *, WCHAR **, USHORT * ) DECLSPEC_HIDDEN;
+HRESULT parse_url( const WS_STRING *, WS_URL_SCHEME_TYPE *, WCHAR **, USHORT * );
 
-void free_fault_fields( WS_HEAP *, WS_FAULT * ) DECLSPEC_HIDDEN;
+void free_fault_fields( WS_HEAP *, WS_FAULT * );
 
 enum record_type
 {
