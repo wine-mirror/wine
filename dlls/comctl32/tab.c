@@ -271,6 +271,7 @@ static inline LRESULT TAB_SetCurSel (TAB_INFO *infoPtr, INT iItem)
 
       TAB_EnsureSelectionVisible(infoPtr);
       TAB_InvalidateTabArea(infoPtr);
+      NotifyWinEvent(EVENT_OBJECT_SELECTION, infoPtr->hwnd, OBJID_CLIENT, infoPtr->iSelected + 1);
   }
 
   return prevItem;
@@ -286,6 +287,8 @@ static LRESULT TAB_SetCurFocus (TAB_INFO *infoPtr, INT iItem)
           infoPtr->iSelected = -1;
           TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGE);
           TAB_InvalidateTabArea(infoPtr);
+          if (!(infoPtr->dwStyle & TCS_BUTTONS))
+            NotifyWinEvent(EVENT_OBJECT_SELECTION, infoPtr->hwnd, OBJID_CLIENT, 0);
       }
   }
   else if (iItem < infoPtr->uNumItem) {
@@ -306,6 +309,7 @@ static LRESULT TAB_SetCurFocus (TAB_INFO *infoPtr, INT iItem)
             InvalidateRect(infoPtr->hwnd, &r, FALSE);
 
         TAB_SendSimpleNotify(infoPtr, TCN_FOCUSCHANGE);
+        NotifyWinEvent(EVENT_OBJECT_FOCUS, infoPtr->hwnd, OBJID_CLIENT, iItem + 1);
       }
     } else {
       INT oldFocus = infoPtr->uFocus;
@@ -320,6 +324,7 @@ static LRESULT TAB_SetCurFocus (TAB_INFO *infoPtr, INT iItem)
             infoPtr->iSelected = iItem;
           TAB_EnsureSelectionVisible(infoPtr);
           TAB_InvalidateTabArea(infoPtr);
+          NotifyWinEvent(EVENT_OBJECT_SELECTION, infoPtr->hwnd, OBJID_CLIENT, iItem + 1);
         }
       }
     }
@@ -2635,6 +2640,9 @@ TAB_InsertItemT (TAB_INFO *infoPtr, INT iItem, const TCITEMW *pti, BOOL bUnicode
   else
     InvalidateRect(infoPtr->hwnd, NULL, TRUE);
 
+  /* The last item is always the "new" MSAA object. */
+  NotifyWinEvent(EVENT_OBJECT_CREATE, infoPtr->hwnd, OBJID_CLIENT, infoPtr->uNumItem);
+
   TRACE("[%p]: added item %d %s\n",
         infoPtr->hwnd, iItem, debugstr_w(item->pszText));
 
@@ -2860,6 +2868,9 @@ static LRESULT TAB_DeleteItem (TAB_INFO *infoPtr, INT iItem)
 
     /* reposition and repaint tabs */
     TAB_SetItemBounds(infoPtr);
+
+    /* The last item is always the destroyed MSAA object */
+    NotifyWinEvent(EVENT_OBJECT_DESTROY, infoPtr->hwnd, OBJID_CLIENT, infoPtr->uNumItem + 1);
 
     return TRUE;
 }
