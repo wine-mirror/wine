@@ -44,8 +44,8 @@ struct dinput
     struct list device_players; /* device instance guid to player name */
 };
 
-extern const IDirectInput7AVtbl dinput7_a_vtbl DECLSPEC_HIDDEN;
-extern const IDirectInput8AVtbl dinput8_a_vtbl DECLSPEC_HIDDEN;
+extern const IDirectInput7AVtbl dinput7_a_vtbl;
+extern const IDirectInput8AVtbl dinput8_a_vtbl;
 
 extern void dinput_internal_addref( struct dinput *dinput );
 extern void dinput_internal_release( struct dinput *dinput );
@@ -75,12 +75,12 @@ extern void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wpar
 extern void dinput_keyboard_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam,
                                            RAWINPUT *raw );
 
-extern void check_dinput_events(void) DECLSPEC_HIDDEN;
+extern void check_dinput_events(void);
 
-extern HRESULT _configure_devices(IDirectInput8W *iface, LPDICONFIGUREDEVICESCALLBACK lpdiCallback, LPDICONFIGUREDEVICESPARAMSW lpdiCDParams, DWORD dwFlags, LPVOID pvRefData) DECLSPEC_HIDDEN;
+extern HRESULT _configure_devices(IDirectInput8W *iface, LPDICONFIGUREDEVICESCALLBACK lpdiCallback, LPDICONFIGUREDEVICESPARAMSW lpdiCDParams, DWORD dwFlags, LPVOID pvRefData);
 
-extern WCHAR* get_mapping_path(const WCHAR *device, const WCHAR *username) DECLSPEC_HIDDEN;
-extern DWORD get_device_type(DWORD version, BOOL is_joystick) DECLSPEC_HIDDEN;
+extern WCHAR* get_mapping_path(const WCHAR *device, const WCHAR *username);
+extern DWORD get_device_type(DWORD version, BOOL is_joystick);
 
 #define IS_DIPROP(x)    (((ULONG_PTR)(x) >> 16) == 0)
 
