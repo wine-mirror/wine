@@ -29,7 +29,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
-extern HINSTANCE hwldap32 DECLSPEC_HIDDEN;
+extern HINSTANCE hwldap32;
 
 ULONG map_error( int error )
 {

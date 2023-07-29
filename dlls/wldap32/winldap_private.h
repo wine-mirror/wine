@@ -560,7 +560,7 @@ struct WLDAP32_berval ** CDECL ldap_get_values_lenA( LDAP *, LDAPMessage *,
 struct WLDAP32_berval ** CDECL ldap_get_values_lenW( LDAP *, LDAPMessage *,
                                                      WCHAR * ) __WINE_DEALLOC(WLDAP32_ldap_value_free_len);
 
-ULONG map_error( int ) DECLSPEC_HIDDEN;
+ULONG map_error( int );
 
 static inline char *strWtoU( const WCHAR *str )
 {
