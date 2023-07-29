@@ -26,7 +26,7 @@ typedef struct
     IClassFactory IClassFactory_iface;
 } ClassFactoryImpl;
 
-extern ClassFactoryImpl WIASERVC_ClassFactory DECLSPEC_HIDDEN;
+extern ClassFactoryImpl WIASERVC_ClassFactory;
 
 typedef struct
 {
@@ -34,6 +34,6 @@ typedef struct
     LONG ref;
 } wiadevmgr;
 
-HRESULT wiadevmgr_Constructor(IWiaDevMgr **ppObj) DECLSPEC_HIDDEN;
+HRESULT wiadevmgr_Constructor(IWiaDevMgr **ppObj);
 
 #endif /* __WIASERVC_PRIVATE__ */
