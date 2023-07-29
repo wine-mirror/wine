@@ -118,15 +118,15 @@ typedef struct _minidriver
 } minidriver;
 
 void call_minidriver( ULONG code, DEVICE_OBJECT *device, void *in_buff, ULONG in_size,
-                      void *out_buff, ULONG out_size, IO_STATUS_BLOCK *io ) DECLSPEC_HIDDEN;
+                      void *out_buff, ULONG out_size, IO_STATUS_BLOCK *io );
 
 /* Internal device functions */
-void HID_StartDeviceThread(DEVICE_OBJECT *device) DECLSPEC_HIDDEN;
+void HID_StartDeviceThread( DEVICE_OBJECT *device );
 void hid_queue_remove_pending_irps( struct hid_queue *queue );
 void hid_queue_destroy( struct hid_queue *queue );
 
-NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
-NTSTATUS WINAPI pdo_read(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
-NTSTATUS WINAPI pdo_write(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
-NTSTATUS WINAPI pdo_create(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
-NTSTATUS WINAPI pdo_close(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
+NTSTATUS WINAPI pdo_ioctl( DEVICE_OBJECT *device, IRP *irp );
+NTSTATUS WINAPI pdo_read( DEVICE_OBJECT *device, IRP *irp );
+NTSTATUS WINAPI pdo_write( DEVICE_OBJECT *device, IRP *irp );
+NTSTATUS WINAPI pdo_create( DEVICE_OBJECT *device, IRP *irp );
+NTSTATUS WINAPI pdo_close( DEVICE_OBJECT *device, IRP *irp );
