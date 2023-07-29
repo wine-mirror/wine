@@ -35,7 +35,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
-extern HRESULT WINAPI WIC_DllGetClassObject(REFCLSID, REFIID, LPVOID *) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI WIC_DllGetClassObject(REFCLSID, REFIID, LPVOID *);
 
 typedef struct {
     REFCLSID classid;
