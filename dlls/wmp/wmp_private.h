@@ -36,7 +36,7 @@ TID_LIST
     LAST_tid
 } typeinfo_id;
 
-HRESULT get_typeinfo(typeinfo_id tid, ITypeInfo **typeinfo) DECLSPEC_HIDDEN;
+HRESULT get_typeinfo(typeinfo_id tid, ITypeInfo **typeinfo);
 
 typedef struct {
     IConnectionPoint IConnectionPoint_iface;
@@ -111,22 +111,22 @@ struct WindowsMediaPlayer {
     HWND msg_window;
 };
 
-BOOL init_player(WindowsMediaPlayer*) DECLSPEC_HIDDEN;
-void destroy_player(WindowsMediaPlayer*) DECLSPEC_HIDDEN;
-WMPMedia *unsafe_impl_from_IWMPMedia(IWMPMedia *iface) DECLSPEC_HIDDEN;
-WMPPlaylist *unsafe_impl_from_IWMPPlaylist(IWMPPlaylist *iface) DECLSPEC_HIDDEN;
-HRESULT create_media_from_url(BSTR url, double duration, IWMPMedia **ppMedia) DECLSPEC_HIDDEN;
-HRESULT create_playlist(BSTR name, BSTR url, LONG count, IWMPPlaylist **ppPlaylist) DECLSPEC_HIDDEN;
-void ConnectionPointContainer_Init(WindowsMediaPlayer *wmp) DECLSPEC_HIDDEN;
-void ConnectionPointContainer_Destroy(WindowsMediaPlayer *wmp) DECLSPEC_HIDDEN;
-void call_sink(ConnectionPoint *This, DISPID dispid, DISPPARAMS *dispparams) DECLSPEC_HIDDEN;
+BOOL init_player(WindowsMediaPlayer*);
+void destroy_player(WindowsMediaPlayer*);
+WMPMedia *unsafe_impl_from_IWMPMedia(IWMPMedia *iface);
+WMPPlaylist *unsafe_impl_from_IWMPPlaylist(IWMPPlaylist *iface);
+HRESULT create_media_from_url(BSTR url, double duration, IWMPMedia **ppMedia);
+HRESULT create_playlist(BSTR name, BSTR url, LONG count, IWMPPlaylist **ppPlaylist);
+void ConnectionPointContainer_Init(WindowsMediaPlayer *wmp);
+void ConnectionPointContainer_Destroy(WindowsMediaPlayer *wmp);
+void call_sink(ConnectionPoint *This, DISPID dispid, DISPPARAMS *dispparams);
 
-HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
+HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
 
-void unregister_wmp_class(void) DECLSPEC_HIDDEN;
-void unregister_player_msg_class(void) DECLSPEC_HIDDEN;
+void unregister_wmp_class(void);
+void unregister_player_msg_class(void);
 
-extern HINSTANCE wmp_instance DECLSPEC_HIDDEN;
+extern HINSTANCE wmp_instance;
 
 static inline HRESULT return_bstr(const WCHAR *value, BSTR *p)
 {
