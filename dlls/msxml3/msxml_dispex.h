@@ -80,8 +80,8 @@ typedef enum tid_t
     LAST_tid
 } tid_t;
 
-extern HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo) DECLSPEC_HIDDEN;
-extern void release_typelib(void) DECLSPEC_HIDDEN;
+extern HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo);
+extern void release_typelib(void);
 
 typedef struct dispex_data_t dispex_data_t;
 
@@ -108,10 +108,10 @@ typedef struct
     dispex_static_data_t *data;
 } DispatchEx;
 
-void init_dispex(DispatchEx*,IUnknown*,dispex_static_data_t*) DECLSPEC_HIDDEN;
-void release_dispex(DispatchEx*) DECLSPEC_HIDDEN;
-BOOL dispex_query_interface(DispatchEx*,REFIID,void**) DECLSPEC_HIDDEN;
-const IID *get_riid_from_tid(enum tid_t tid) DECLSPEC_HIDDEN;
+void init_dispex(DispatchEx*,IUnknown*,dispex_static_data_t*);
+void release_dispex(DispatchEx*);
+BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
+const IID *get_riid_from_tid(enum tid_t tid);
 
 static inline HRESULT return_bstr(const WCHAR *value, BSTR *p)
 {
@@ -144,14 +144,14 @@ static inline HRESULT return_bstrn(const WCHAR *value, int len, BSTR *p)
     return S_OK;
 }
 
-extern HRESULT dom_document_create(MSXML_VERSION class_version, void **document) DECLSPEC_HIDDEN;
+extern HRESULT dom_document_create(MSXML_VERSION class_version, void **document);
 
 typedef struct bsc_t bsc_t;
 
-HRESULT create_moniker_from_url(LPCWSTR, IMoniker**) DECLSPEC_HIDDEN;
-HRESULT create_uri(IUri *base, const WCHAR *, IUri **) DECLSPEC_HIDDEN;
-HRESULT bind_url(IMoniker*, HRESULT (*onDataAvailable)(void*,char*,DWORD), void*, bsc_t**) DECLSPEC_HIDDEN;
-HRESULT detach_bsc(bsc_t*) DECLSPEC_HIDDEN;
-IUri *get_base_uri(IUnknown *site) DECLSPEC_HIDDEN;
+HRESULT create_moniker_from_url(LPCWSTR, IMoniker**);
+HRESULT create_uri(IUri *base, const WCHAR *, IUri **);
+HRESULT bind_url(IMoniker*, HRESULT (*onDataAvailable)(void*,char*,DWORD), void*, bsc_t**);
+HRESULT detach_bsc(bsc_t*);
+IUri *get_base_uri(IUnknown *site);
 
 #endif /* __MSXML_DISPEX__ */
