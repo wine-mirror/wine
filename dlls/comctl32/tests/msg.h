@@ -61,6 +61,8 @@ struct msg_sequence
     struct message *sequence;
 };
 
+static HWINEVENTHOOK hwineventhook;
+
 static void add_message(struct msg_sequence **seq, int sequence_index,
     const struct message *msg)
 {
@@ -120,7 +122,7 @@ static void dump_sequence( struct msg_sequence **seq, int sequence_index,
 	if (expected->message == actual->message)
 	{
 	    if ((expected->flags & defwinproc) != (actual->flags & defwinproc) &&
-                (expected->flags & optional))
+                ((expected->flags & optional) || ((expected->flags & winevent_hook) && !hwineventhook)))
             {
                 /* don't match messages if their defwinproc status differs */
                 expected++;
@@ -140,7 +142,8 @@ static void dump_sequence( struct msg_sequence **seq, int sequence_index,
     }
 
     /* optional trailing messages */
-    while (expected->message && expected->flags & optional)
+    while (expected->message && (expected->flags & optional ||
+                                 ((expected->flags & winevent_hook) && !hwineventhook)))
     {
         trace_(file, line)( "  %u: expected: msg %04x - actual: nothing\n", count, expected->message );
 	expected++;
@@ -249,7 +252,7 @@ static void ok_sequence_(struct msg_sequence **seq, int sequence_index,
 
             if (expected->flags & id)
             {
-                if (expected->id != actual->id && expected->flags & optional)
+                if (expected->id != actual->id && ((expected->flags & optional) || ((expected->flags & winevent_hook) && !hwineventhook)))
                 {
                     expected++;
                     continue;
@@ -321,7 +324,7 @@ static void ok_sequence_(struct msg_sequence **seq, int sequence_index,
             expected++;
             actual++;
         }
-        else if (expected->flags & optional)
+        else if ((expected->flags & optional) || ((expected->flags & winevent_hook) && !hwineventhook))
             expected++;
         else if (todo)
         {
@@ -345,7 +348,7 @@ static void ok_sequence_(struct msg_sequence **seq, int sequence_index,
     }
 
     /* skip all optional trailing messages */
-    while (expected->message && ((expected->flags & optional)))
+    while (expected->message && ((expected->flags & optional) || ((expected->flags & winevent_hook) && !hwineventhook)))
         expected++;
 
     if (todo)

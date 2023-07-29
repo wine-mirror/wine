@@ -85,8 +85,53 @@ static HFONT hFont;
 static DRAWITEMSTRUCT g_drawitem;
 static HWND parent_wnd;
 static LRESULT tcn_selchanging_result;
+static DWORD winevent_hook_thread_id;
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
+
+static void CALLBACK msg_winevent_proc(HWINEVENTHOOK hevent,
+				    DWORD event,
+				    HWND hwnd,
+				    LONG object_id,
+				    LONG child_id,
+				    DWORD thread_id,
+				    DWORD event_time)
+{
+    struct message msg = {0};
+    char class_name[256];
+
+    ok(thread_id == winevent_hook_thread_id, "we didn't ask for events from other threads\n");
+
+    /* ignore window and other system events */
+    if (object_id != OBJID_CLIENT) return;
+
+    /* ignore events not from a tab control */
+    if (!GetClassNameA(hwnd, class_name, ARRAY_SIZE(class_name)) ||
+        strcmp(class_name, WC_TABCONTROLA) != 0)
+        return;
+
+    msg.message = event;
+    msg.flags = winevent_hook|wparam|lparam;
+    msg.wParam = object_id;
+    msg.lParam = child_id;
+    add_message(sequences, TAB_SEQ_INDEX, &msg);
+}
+
+static void init_winevent_hook(void) {
+    hwineventhook = SetWinEventHook(EVENT_MIN, EVENT_MAX, GetModuleHandleA(0), msg_winevent_proc,
+        0, GetCurrentThreadId(), WINEVENT_INCONTEXT);
+    winevent_hook_thread_id = GetCurrentThreadId();
+    if (!hwineventhook)
+        win_skip( "no win event hook support\n" );
+}
+
+static void uninit_winevent_hook(void) {
+    if (!hwineventhook)
+        return;
+
+    UnhookWinEvent(hwineventhook);
+    hwineventhook = 0;
+}
 
 static const struct message empty_sequence[] = {
     { 0 }
@@ -99,10 +144,28 @@ static const struct message get_row_count_seq[] = {
 
 static const struct message getset_cur_focus_seq[] = {
     { TCM_SETCURFOCUS, sent|lparam, 0 },
+    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam, OBJID_CLIENT, 5 },
+    { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
+    { TCM_SETCURFOCUS, sent|lparam, 0 },
+    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
+    { TCM_SETCURSEL, sent|lparam, 0 },
+    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam, OBJID_CLIENT, 2 },
+    { TCM_SETCURFOCUS, sent|lparam, 0 },
+    { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
+    { 0 }
+};
+
+static const struct message getset_cur_focus_buttons_seq[] = {
+    { TCM_SETCURFOCUS, sent|lparam, 0 },
+    { TCM_GETITEMCOUNT, sent|defwinproc|optional },
+    { TCM_GETITEMCOUNT, sent|defwinproc|optional },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 5 },
     { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
     { TCM_SETCURFOCUS, sent|lparam, 0 },
     { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
     { TCM_SETCURSEL, sent|lparam, 0 },
+    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam, OBJID_CLIENT, 2 },
     { TCM_SETCURFOCUS, sent|lparam, 0 },
     { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
     { 0 }
@@ -110,11 +173,14 @@ static const struct message getset_cur_focus_seq[] = {
 
 static const struct message getset_cur_sel_seq[] = {
     { TCM_SETCURSEL, sent|lparam, 0 },
+    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam, OBJID_CLIENT, 5 },
     { TCM_GETCURSEL, sent|wparam|lparam, 0, 0 },
     { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
     { TCM_SETCURSEL, sent|lparam, 0 },
+    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { TCM_GETCURSEL, sent|wparam|lparam, 0, 0 },
     { TCM_SETCURSEL, sent|lparam, 0 },
+    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam, OBJID_CLIENT, 2 },
     { TCM_SETCURSEL, sent|lparam, 0 },
     { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
     { 0 }
@@ -166,6 +232,7 @@ static const struct message insert_focus_seq[] = {
     { TCM_GETITEMCOUNT, sent|wparam|lparam, 0, 0 },
     { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
     { TCM_INSERTITEMA, sent|wparam, 1 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
     { WM_NOTIFYFORMAT, sent|defwinproc|optional },
     { WM_QUERYUISTATE, sent|defwinproc|optional },
     { WM_PARENTNOTIFY, sent|defwinproc|optional },
@@ -175,11 +242,14 @@ static const struct message insert_focus_seq[] = {
     { WM_NOTIFYFORMAT, sent|defwinproc|optional },
     { WM_QUERYUISTATE, sent|defwinproc|optional, },
     { WM_PARENTNOTIFY, sent|defwinproc|optional },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 2 },
     { TCM_GETITEMCOUNT, sent|wparam|lparam, 0, 0 },
     { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
     { TCM_SETCURFOCUS, sent|wparam|lparam, -1, 0 },
+    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
     { TCM_INSERTITEMA, sent|wparam, 3 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 3 },
     { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
     { 0 }
 };
@@ -188,11 +258,14 @@ static const struct message delete_focus_seq[] = {
     { TCM_GETITEMCOUNT, sent|wparam|lparam, 0, 0 },
     { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
     { TCM_DELETEITEM, sent|wparam|lparam, 1, 0 },
+    { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam, OBJID_CLIENT, 2 },
     { TCM_GETITEMCOUNT, sent|wparam|lparam, 0, 0 },
     { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
     { TCM_SETCURFOCUS, sent|wparam|lparam, -1, 0 },
+    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
     { TCM_DELETEITEM, sent|wparam|lparam, 0, 0 },
+    { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
     { TCM_GETITEMCOUNT, sent|wparam|lparam, 0, 0 },
     { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
     { 0 }
@@ -347,7 +420,8 @@ static LRESULT WINAPI tab_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, 
         message != WM_NCHITTEST &&
         message != WM_GETTEXT &&
         message != WM_GETICON &&
-        message != WM_DEVICECHANGE)
+        message != WM_DEVICECHANGE &&
+        message != WM_GETOBJECT)
     {
         msg.message = message;
         msg.flags = sent|wparam|lparam;
@@ -667,7 +741,7 @@ static void test_curfocus(void)
     todo_wine
     ok(ret == nTabs - 1, "Unexpected focus index %d.\n", ret);
 
-    ok_sequence(sequences, TAB_SEQ_INDEX, getset_cur_focus_seq, "TCS_BUTTONS: set focused tab sequence", FALSE);
+    ok_sequence(sequences, TAB_SEQ_INDEX, getset_cur_focus_buttons_seq, "TCS_BUTTONS: set focused tab sequence", FALSE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, setfocus_parent_seq, "TCS_BUTTONS: set focused tab parent sequence", TRUE);
 
     DestroyWindow(hTab);
@@ -1501,6 +1575,8 @@ START_TEST(tab)
 
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
+    init_winevent_hook();
+
     parent_wnd = createParentWindow();
     ok(parent_wnd != NULL, "Failed to create parent window!\n");
 
@@ -1522,6 +1598,8 @@ START_TEST(tab)
     test_create();
     test_TCN_SELCHANGING();
     test_TCM_GETROWCOUNT();
+
+    uninit_winevent_hook();
 
     DestroyWindow(parent_wnd);
 }
