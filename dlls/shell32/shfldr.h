@@ -33,31 +33,31 @@ typedef struct {
     int cxChar;
 } shvheader;
 
-HRESULT SHELL32_GetColumnDetails(const shvheader *data, int column, SHELLDETAILS *details) DECLSPEC_HIDDEN;
-HRESULT shellfolder_map_column_to_scid(const shvheader *data, UINT column, SHCOLUMNID *scid) DECLSPEC_HIDDEN;
+HRESULT SHELL32_GetColumnDetails(const shvheader *data, int column, SHELLDETAILS *details);
+HRESULT shellfolder_map_column_to_scid(const shvheader *data, UINT column, SHCOLUMNID *scid);
 HRESULT shellfolder_get_file_details(IShellFolder2 *iface, LPCITEMIDLIST pidl, const shvheader *header,
-                                     int column, SHELLDETAILS *psd) DECLSPEC_HIDDEN;
+                                     int column, SHELLDETAILS *psd);
 
 #define GET_SHGDN_FOR(dwFlags)         ((DWORD)dwFlags & (DWORD)0x0000FF00)
 #define GET_SHGDN_RELATION(dwFlags)    ((DWORD)dwFlags & (DWORD)0x000000FF)
 
-BOOL SHELL32_GetCustomFolderAttribute (LPCITEMIDLIST pidl, LPCWSTR pwszHeading, LPCWSTR pwszAttribute, LPWSTR pwszValue, DWORD cchValue) DECLSPEC_HIDDEN;
+BOOL SHELL32_GetCustomFolderAttribute (LPCITEMIDLIST pidl, LPCWSTR pwszHeading, LPCWSTR pwszAttribute, LPWSTR pwszValue, DWORD cchValue);
 
-LPCWSTR GetNextElementW (LPCWSTR pszNext, LPWSTR pszOut, DWORD dwOut) DECLSPEC_HIDDEN;
+LPCWSTR GetNextElementW (LPCWSTR pszNext, LPWSTR pszOut, DWORD dwOut);
 HRESULT SHELL32_ParseNextElement (IShellFolder2 * psf, HWND hwndOwner, LPBC pbc, LPITEMIDLIST * pidlInOut,
-				  LPOLESTR szNext, DWORD * pEaten, DWORD * pdwAttributes) DECLSPEC_HIDDEN;
-HRESULT SHELL32_GetItemAttributes (IShellFolder2 *folder, LPCITEMIDLIST pidl, DWORD *attributes) DECLSPEC_HIDDEN;
+				  LPOLESTR szNext, DWORD * pEaten, DWORD * pdwAttributes);
+HRESULT SHELL32_GetItemAttributes (IShellFolder2 *folder, LPCITEMIDLIST pidl, DWORD *attributes);
 HRESULT SHELL32_GetDisplayNameOfChild (IShellFolder2 * psf, LPCITEMIDLIST pidl, DWORD dwFlags, LPWSTR szOut,
-				       DWORD dwOutLen) DECLSPEC_HIDDEN;
+				       DWORD dwOutLen);
 
 HRESULT SHELL32_BindToChild (LPCITEMIDLIST pidlRoot, const CLSID *clsidChild,
-			     LPCWSTR pathRoot, LPCITEMIDLIST pidlComplete, REFIID riid, LPVOID * ppvOut) DECLSPEC_HIDDEN;
+			     LPCWSTR pathRoot, LPCITEMIDLIST pidlComplete, REFIID riid, LPVOID * ppvOut);
 
-HRESULT SHELL32_CompareIDs(IShellFolder2 *iface, LPARAM lParam, LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2) DECLSPEC_HIDDEN;
-LPITEMIDLIST SHELL32_CreatePidlFromBindCtx(IBindCtx *pbc, LPCWSTR path) DECLSPEC_HIDDEN;
+HRESULT SHELL32_CompareIDs(IShellFolder2 *iface, LPARAM lParam, LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2);
+LPITEMIDLIST SHELL32_CreatePidlFromBindCtx(IBindCtx *pbc, LPCWSTR path);
 
-BOOL is_trash_available(void) DECLSPEC_HIDDEN;
-BOOL trash_file( const WCHAR *path ) DECLSPEC_HIDDEN;
+BOOL is_trash_available(void);
+BOOL trash_file( const WCHAR *path );
 
 static inline int SHELL32_GUIDToStringA (REFGUID guid, LPSTR str)
 {
@@ -80,7 +80,7 @@ static inline int SHELL32_GUIDToStringW (REFGUID guid, LPWSTR str)
             guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
 }
 
-void SHELL_FS_ProcessDisplayFilename(LPWSTR szPath, DWORD dwFlags) DECLSPEC_HIDDEN;
+void SHELL_FS_ProcessDisplayFilename(LPWSTR szPath, DWORD dwFlags);
 
 DEFINE_GUID( CLSID_UnixFolder, 0xcc702eb2, 0x7dc5, 0x11d9, 0xc6, 0x87, 0x00, 0x04, 0x23, 0x8a, 0x01, 0xcd );
 DEFINE_GUID( CLSID_UnixDosFolder, 0x9d20aae8, 0x0625, 0x44b0, 0x9c, 0xa7, 0x71, 0x88, 0x9c, 0x22, 0x54, 0xd9 );

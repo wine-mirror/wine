@@ -28,8 +28,8 @@
 #include "winuser.h"
 #include "shlobj.h"
 
-extern void pdump (LPCITEMIDLIST pidl) DECLSPEC_HIDDEN;
-extern BOOL pcheck (LPCITEMIDLIST pidl) DECLSPEC_HIDDEN;
-extern const char * shdebugstr_guid( const struct _GUID *id ) DECLSPEC_HIDDEN;
+extern void pdump (LPCITEMIDLIST pidl);
+extern BOOL pcheck (LPCITEMIDLIST pidl);
+extern const char * shdebugstr_guid( const struct _GUID *id );
 
 #endif /* __WINE_SHELL32_DEBUGHLP_H */

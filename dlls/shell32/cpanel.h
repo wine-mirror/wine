@@ -63,7 +63,7 @@ typedef struct CPlItem {
     unsigned id;
 } CPlItem;
 
-CPlApplet* Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel) DECLSPEC_HIDDEN;
-void Control_UnloadApplet(CPlApplet* applet) DECLSPEC_HIDDEN;
+CPlApplet* Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel);
+void Control_UnloadApplet(CPlApplet* applet);
 
 #endif /* __WINE_SHELL_CPANEL_H */
