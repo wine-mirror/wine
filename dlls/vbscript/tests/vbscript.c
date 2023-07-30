@@ -109,18 +109,6 @@ DEFINE_EXPECT(testCall);
 DEFINE_GUID(CLSID_VBScript, 0xb54f3741, 0x5b07, 0x11cf, 0xa4,0xb0, 0x00,0xaa,0x00,0x4a,0x55,0xe8);
 DEFINE_GUID(CLSID_VBScriptRegExp, 0x3f4daca4, 0x160d, 0x11d2, 0xa8,0xe9, 0x00,0x10,0x4b,0x36,0x5c,0x9f);
 
-static BSTR a2bstr(const char *str)
-{
-    BSTR ret;
-    int len;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = SysAllocStringLen(NULL, len-1);
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-
-    return ret;
-}
-
 #define test_state(s,ss) _test_state(__LINE__,s,ss)
 static void _test_state(unsigned line, IActiveScript *script, SCRIPTSTATE exstate)
 {
@@ -2634,22 +2622,22 @@ static void test_RegExp_Replace(void)
 {
     static const struct
     {
-        const char *pattern;
-        const char *replace;
-        const char *source;
-        const char *result;
+        const WCHAR *pattern;
+        const WCHAR *replace;
+        const WCHAR *source;
+        const WCHAR *result;
         BOOL global;
     } test[] =
     {
-        { "abc", "", "123abc456", "123456", FALSE },
-        { "abc", "dcba", "123abc456", "123dcba456", FALSE },
-        { "[\r\n\t\f]+", " ", "\nHello\rNew\fWorld\t!", " Hello\rNew\fWorld\t!", FALSE },
-        { "[\r\n\t\f]+", " ", "\nHello\rNew\fWorld\t!", " Hello New World !", TRUE },
+        { L"abc", L"", L"123abc456", L"123456", FALSE },
+        { L"abc", L"dcba", L"123abc456", L"123dcba456", FALSE },
+        { L"[\r\n\t\f]+", L" ", L"\nHello\rNew\fWorld\t!", L" Hello\rNew\fWorld\t!", FALSE },
+        { L"[\r\n\t\f]+", L" ", L"\nHello\rNew\fWorld\t!", L" Hello New World !", TRUE },
     };
     HRESULT hr;
     IRegExp2 *regexp;
     VARIANT var;
-    BSTR str, ret, result;
+    BSTR str, ret;
     int i;
 
     hr = CoCreateInstance(&CLSID_VBScriptRegExp, NULL,
@@ -2667,19 +2655,18 @@ static void test_RegExp_Replace(void)
         hr = IRegExp2_put_Global(regexp, test[i].global ? VARIANT_TRUE : VARIANT_FALSE);
         ok(hr == S_OK, "got %#lx\n", hr);
 
-        str = a2bstr(test[i].pattern);
+        str = SysAllocString(test[i].pattern);
         hr = IRegExp2_put_Pattern(regexp, str);
         ok(hr == S_OK, "got %#lx\n", hr);
         SysFreeString(str);
 
-        str = a2bstr(test[i].source);
+        str = SysAllocString(test[i].source);
         V_VT(&var) = VT_BSTR;
-        V_BSTR(&var) = a2bstr(test[i].replace);
+        V_BSTR(&var) = SysAllocString(test[i].replace);
         hr = IRegExp2_Replace(regexp, str, var, &ret);
         ok(hr == S_OK, "got %#lx\n", hr);
-        result = a2bstr(test[i].result);
-        ok(!wcscmp(ret, result), "got %s, expected %s\n", wine_dbgstr_w(ret), wine_dbgstr_w(result));
-        SysFreeString(result);
+        ok(!wcscmp(ret, test[i].result), "got %s, expected %s\n", wine_dbgstr_w(ret),
+                wine_dbgstr_w(test[i].result));
         SysFreeString(ret);
         SysFreeString(V_BSTR(&var));
         SysFreeString(str);
