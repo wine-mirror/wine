@@ -228,7 +228,9 @@ tlsw_session_connect( LDAP *ld, tls_session *session, const char *name_in )
 			expected -= size;
 		}
 
-		out_bufs[0].cbBuffer = max_token;
+		FreeContextBuffer( out_bufs[0].pvBuffer );
+		out_bufs[0].pvBuffer = NULL;
+
 		status = InitializeSecurityContextA( &s->cred_handle, &s->ctxt_handle, (SEC_CHAR *)name_in,
 			flags, 0, 0, &in_buf_desc, 0, NULL, &out_buf_desc, &attrs, NULL );
 		if ( status == SEC_E_INCOMPLETE_MESSAGE ) {
