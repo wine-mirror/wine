@@ -868,6 +868,7 @@ static inline void modfreeU( LDAPMod *mod )
         bvarrayfreeU( mod->mod_vals.modv_bvals );
     else
         strarrayfreeU( mod->mod_vals.modv_strvals );
+    free( mod->mod_type );
     free( mod );
 }
 
@@ -1010,6 +1011,7 @@ static inline void modfreeW( LDAPModW *mod )
         bvarrayfreeW( mod->mod_vals.modv_bvals );
     else
         strarrayfreeW( mod->mod_vals.modv_strvals );
+    free( mod->mod_type );
     free( mod );
 }
 
