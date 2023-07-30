@@ -188,6 +188,7 @@ ULONG CDECL ldap_parse_resultW( LDAP *ld, WLDAP32_LDAPMessage *result, ULONG *re
     if (referrals) *referrals = strarrayUtoW( referralsU );
     if (serverctrls) *serverctrls = controlarrayUtoW( serverctrlsU );
 
+    if (free) ldap_msgfree( result );
     ldap_memfree( matchedU );
     ldap_memfree( errorU );
     ldap_memfree( referralsU );
