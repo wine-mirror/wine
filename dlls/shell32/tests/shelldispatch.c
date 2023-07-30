@@ -47,22 +47,10 @@ static HRESULT (WINAPI *pSHGetNameFromIDList)(PCIDLIST_ABSOLUTE,SIGDN,PWSTR*);
 /* Updated Windows 7 has a new IShellDispatch6 in its typelib */
 DEFINE_GUID(IID_IWin7ShellDispatch6, 0x34936ba1, 0x67ad, 0x4c41, 0x99,0xb8, 0x8c,0x12,0xdf,0xf1,0xe9,0x74);
 
-static BSTR a2bstr(const char *str)
-{
-    BSTR ret;
-    int len;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = SysAllocStringLen(NULL, len);
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-
-    return ret;
-}
-
-static void variant_set_string(VARIANT *v, const char *s)
+static void variant_set_string(VARIANT *v, const WCHAR *s)
 {
     V_VT(v) = VT_BSTR;
-    V_BSTR(v) = a2bstr(s);
+    V_BSTR(v) = SysAllocString(s);
 }
 
 static void init_function_pointers(void)
@@ -356,7 +344,7 @@ static void test_items(void)
 {
     static const struct
     {
-        char name[32];
+        WCHAR name[32];
         enum
         {
             DIRECTORY,
@@ -366,8 +354,8 @@ static void test_items(void)
     }
     file_defs[] =
     {
-        { "00-Myfolder",        DIRECTORY  },
-        { "01-empty.bin",       EMPTY_FILE },
+        { L"00-Myfolder",        DIRECTORY  },
+        { L"01-empty.bin",       EMPTY_FILE },
     };
     WCHAR path[MAX_PATH], cur_dir[MAX_PATH], orig_dir[MAX_PATH];
     HRESULT r;
@@ -384,7 +372,7 @@ static void test_items(void)
     IUnknown *unk;
     HANDLE file;
     BSTR bstr;
-    char cstr[64];
+    WCHAR cstr[64];
     BOOL ret;
     int i;
 
@@ -475,16 +463,16 @@ static void test_items(void)
         switch (file_defs[i].type)
         {
             case DIRECTORY:
-                r = CreateDirectoryA(file_defs[i].name, NULL);
+                r = CreateDirectoryW(file_defs[i].name, NULL);
                 ok(r, "CreateDirectory failed: %08lx\n", GetLastError());
-                PathCombineA(cstr, file_defs[i].name, "foo.txt");
-                file = CreateFileA(cstr, 0, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+                PathCombineW(cstr, file_defs[i].name, L"foo.txt");
+                file = CreateFileW(cstr, 0, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
                 ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %08lx\n", GetLastError());
                 CloseHandle(file);
                 break;
 
             case EMPTY_FILE:
-                file = CreateFileA(file_defs[i].name, 0, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+                file = CreateFileW(file_defs[i].name, 0, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
                 ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %08lx\n", GetLastError());
                 CloseHandle(file);
                 break;
@@ -644,7 +632,7 @@ static void test_items(void)
            "file_defs[%d]: expected %s, got %s\n", i, wine_dbgstr_w(path), wine_dbgstr_w(bstr));
         SysFreeString(bstr);
 
-        bstr = a2bstr(file_defs[i].name);
+        bstr = SysAllocString(file_defs[i].name);
         r = FolderItem_get_Name(item, &name);
         ok(r == S_OK, "Failed to get item name, hr %#lx.\n", r);
         /* Returned display name does not have to strictly match file name, e.g. extension could be omitted. */
@@ -678,7 +666,7 @@ static void test_items(void)
         if (file_defs[i].type == DIRECTORY)
         {
             /* test that getting an item object for a file in a subdirectory succeeds */
-            PathCombineA(cstr, file_defs[i].name, "foo.txt");
+            PathCombineW(cstr, file_defs[i].name, L"foo.txt");
             variant_set_string(&str_index2, cstr);
             item2 = NULL;
             r = FolderItems_Item(items, str_index2, &item2);
@@ -688,13 +676,13 @@ static void test_items(void)
             VariantClear(&str_index2);
 
             /* delete the file in the subdirectory */
-            ret = DeleteFileA(cstr);
+            ret = DeleteFileW(cstr);
             ok(ret, "file_defs[%d]: DeleteFile failed: %08lx\n", i, GetLastError());
 
             /* test that getting an item object via a relative path fails */
-            strcpy(cstr, file_defs[i].name);
-            strcat(cstr, "\\..\\");
-            strcat(cstr, file_defs[i].name);
+            wcscpy(cstr, file_defs[i].name);
+            wcscat(cstr, L"\\..\\");
+            wcscat(cstr, file_defs[i].name);
             variant_set_string(&str_index2, cstr);
             item2 = (FolderItem*)0xdeadbeef;
             r = FolderItems_Item(items, str_index2, &item2);
@@ -703,12 +691,12 @@ static void test_items(void)
             VariantClear(&str_index2);
 
             /* remove the directory */
-            ret = RemoveDirectoryA(file_defs[i].name);
+            ret = RemoveDirectoryW(file_defs[i].name);
             ok(ret, "file_defs[%d]: RemoveDirectory failed: %08lx\n", i, GetLastError());
         }
         else
         {
-            ret = DeleteFileA(file_defs[i].name);
+            ret = DeleteFileW(file_defs[i].name);
             ok(ret, "file_defs[%d]: DeleteFile failed: %08lx\n", i, GetLastError());
         }
 
