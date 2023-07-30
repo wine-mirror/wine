@@ -117,18 +117,6 @@ const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
 
 #define VB_E_CANNOT_CREATE_OBJ 0x800a01ad
 
-static BSTR a2bstr(const char *str)
-{
-    BSTR ret;
-    int len;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = SysAllocStringLen(NULL, len-1);
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-
-    return ret;
-}
-
 static HRESULT WINAPI ObjectWithSite_QueryInterface(IObjectWithSite *iface, REFIID riid, void **ppv)
 {
     ok(0, "unexpected call\n");
@@ -693,24 +681,24 @@ static void set_safety_options(IUnknown *unk, BOOL use_sec_mgr)
     IObjectSafety_Release(safety);
 }
 
-#define parse_script_a(p,s) _parse_script_a(__LINE__,p,s)
-static void _parse_script_a(unsigned line, IActiveScriptParse *parser, const char *script)
+#define parse_script(p,s) _parse_script(__LINE__,p,s)
+static void _parse_script(unsigned line, IActiveScriptParse *parser, const WCHAR *script)
 {
     BSTR str;
     HRESULT hres;
 
-    str = a2bstr(script);
+    str = SysAllocString(script);
     hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     SysFreeString(str);
     ok_(__FILE__,line)(hres == S_OK, "ParseScriptText failed: %08lx\n", hres);
 }
 
-static HRESULT parse_script_ae(IActiveScriptParse *parser, const char *script)
+static HRESULT parse_script_e(IActiveScriptParse *parser, const WCHAR *script)
 {
     BSTR str;
     HRESULT hres;
 
-    str = a2bstr(script);
+    str = SysAllocString(script);
     hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     SysFreeString(str);
 
@@ -776,7 +764,7 @@ static void test_CreateObject(void)
     SET_EXPECT(QueryCustomPolicy);
     SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(reportSuccess);
-    parse_script_a(parser, "Call CreateObject(\"Wine.Test\").reportSuccess()");
+    parse_script(parser, L"Call CreateObject(\"Wine.Test\").reportSuccess()");
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
@@ -788,7 +776,7 @@ static void test_CreateObject(void)
 
     parser = create_script(TRUE);
 
-    hres = parse_script_ae(parser, "Call CreateObject(\"Wine.TestABC\")");
+    hres = parse_script_e(parser, L"Call CreateObject(\"Wine.TestABC\")");
     ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
 
     IActiveScriptParse_Release(parser);
@@ -797,7 +785,7 @@ static void test_CreateObject(void)
     QS_SecMgr_hres = E_NOINTERFACE;
 
     SET_EXPECT(Host_QS_SecMgr);
-    hres = parse_script_ae(parser, "Call CreateObject(\"Wine.Test\")");
+    hres = parse_script_e(parser, L"Call CreateObject(\"Wine.Test\")");
     ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
     CHECK_CALLED(Host_QS_SecMgr);
 
@@ -808,7 +796,7 @@ static void test_CreateObject(void)
 
     SET_EXPECT(Host_QS_SecMgr);
     SET_EXPECT(ProcessUrlAction);
-    hres = parse_script_ae(parser, "Call CreateObject(\"Wine.Test\")");
+    hres = parse_script_e(parser, L"Call CreateObject(\"Wine.Test\")");
     ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
@@ -820,7 +808,7 @@ static void test_CreateObject(void)
 
     SET_EXPECT(Host_QS_SecMgr);
     SET_EXPECT(ProcessUrlAction);
-    hres = parse_script_ae(parser, "Call CreateObject(\"Wine.Test\")");
+    hres = parse_script_e(parser, L"Call CreateObject(\"Wine.Test\")");
     ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
@@ -833,7 +821,7 @@ static void test_CreateObject(void)
     SET_EXPECT(Host_QS_SecMgr);
     SET_EXPECT(ProcessUrlAction);
     SET_EXPECT(CreateInstance);
-    hres = parse_script_ae(parser, "Call CreateObject(\"Wine.Test\")");
+    hres = parse_script_e(parser, L"Call CreateObject(\"Wine.Test\")");
     ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
@@ -848,7 +836,7 @@ static void test_CreateObject(void)
     SET_EXPECT(ProcessUrlAction);
     SET_EXPECT(CreateInstance);
     SET_EXPECT(QueryCustomPolicy);
-    hres = parse_script_ae(parser, "Call CreateObject(\"Wine.Test\")");
+    hres = parse_script_e(parser, L"Call CreateObject(\"Wine.Test\")");
     ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
@@ -866,7 +854,7 @@ static void test_CreateObject(void)
     SET_EXPECT(QueryCustomPolicy);
     SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(reportSuccess);
-    parse_script_a(parser, "Call CreateObject(\"Wine.Test\").reportSuccess()");
+    parse_script(parser, L"Call CreateObject(\"Wine.Test\").reportSuccess()");
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
@@ -883,7 +871,7 @@ static void test_CreateObject(void)
     SET_EXPECT(ProcessUrlAction);
     SET_EXPECT(CreateInstance);
     SET_EXPECT(QueryCustomPolicy);
-    hres = parse_script_ae(parser, "Call CreateObject(\"Wine.Test\")");
+    hres = parse_script_e(parser, L"Call CreateObject(\"Wine.Test\")");
     ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
@@ -895,7 +883,7 @@ static void test_CreateObject(void)
     SET_EXPECT(ProcessUrlAction);
     SET_EXPECT(CreateInstance);
     SET_EXPECT(QueryCustomPolicy);
-    hres = parse_script_ae(parser, "Call CreateObject(\"Wine.Test\")");
+    hres = parse_script_e(parser, L"Call CreateObject(\"Wine.Test\")");
     ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
@@ -907,7 +895,7 @@ static void test_CreateObject(void)
     SET_EXPECT(ProcessUrlAction);
     SET_EXPECT(CreateInstance);
     SET_EXPECT(QueryCustomPolicy);
-    hres = parse_script_ae(parser, "Call CreateObject(\"Wine.Test\")");
+    hres = parse_script_e(parser, L"Call CreateObject(\"Wine.Test\")");
     ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
@@ -920,7 +908,7 @@ static void test_CreateObject(void)
     SET_EXPECT(CreateInstance);
     SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(reportSuccess);
-    parse_script_a(parser, "Call CreateObject(\"Wine.Test\").reportSuccess()");
+    parse_script(parser, L"Call CreateObject(\"Wine.Test\").reportSuccess()");
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(QI_IObjectWithSite);
     CHECK_CALLED(reportSuccess);
@@ -937,7 +925,7 @@ static void test_CreateObject(void)
     SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(SetSite);
     SET_EXPECT(reportSuccess);
-    parse_script_a(parser, "Call CreateObject(\"Wine.Test\").reportSuccess()");
+    parse_script(parser, L"Call CreateObject(\"Wine.Test\").reportSuccess()");
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
@@ -952,7 +940,7 @@ static void test_CreateObject(void)
     SET_EXPECT(QueryCustomPolicy);
     SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(SetSite);
-    hres = parse_script_ae(parser, "Call CreateObject(\"Wine.Test\")");
+    hres = parse_script_e(parser, L"Call CreateObject(\"Wine.Test\")");
     ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
@@ -970,7 +958,7 @@ static void test_GetObject(void)
 
     /* Never allowed with security manager */
     parser = create_script(TRUE);
-    hres = parse_script_ae(parser, "Call GetObject(\"clsid:" TESTOBJINST_CLSID "\").reportSuccess()");
+    hres = parse_script_e(parser, L"Call GetObject(\"clsid:" TESTOBJINST_CLSID "\").reportSuccess()");
     ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08lx\n", hres);
     IActiveScriptParse_Release(parser);
 
@@ -979,9 +967,9 @@ static void test_GetObject(void)
     SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(SetSite);
     SET_EXPECT(reportSuccess);
-    hres = parse_script_ae(parser, "Call GetObject(\"clsid:" TESTOBJINST_CLSID "\").reportSuccess()");
+    hres = parse_script_e(parser, L"Call GetObject(\"clsid:" TESTOBJINST_CLSID "\").reportSuccess()");
     if(broken(hres == VB_E_ACCESS_DENIED)) /* 64-bit win8 fails on the first try */
-        hres = parse_script_ae(parser, "Call GetObject(\"clsid:" TESTOBJINST_CLSID "\").reportSuccess()");
+        hres = parse_script_e(parser, L"Call GetObject(\"clsid:" TESTOBJINST_CLSID "\").reportSuccess()");
     if(hres == HRESULT_FROM_WIN32(ERROR_MOD_NOT_FOUND)) { /* Workaround for broken win2k */
         win_skip("got unexpected error %08lx\n", hres);
         CLEAR_CALLED(QI_IObjectWithSite);
@@ -998,7 +986,7 @@ static void test_GetObject(void)
     SetSite_hres = E_FAIL;
     SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(SetSite);
-    hres = parse_script_ae(parser, "Call GetObject(\"clsid:" TESTOBJINST_CLSID "\").reportSuccess()");
+    hres = parse_script_e(parser, L"Call GetObject(\"clsid:" TESTOBJINST_CLSID "\").reportSuccess()");
     ok(hres == E_FAIL, "hres = %08lx\n", hres);
     CHECK_CALLED(QI_IObjectWithSite);
     CHECK_CALLED(SetSite);
@@ -1006,7 +994,7 @@ static void test_GetObject(void)
     QI_IObjectWithSite_hres = E_NOINTERFACE;
     SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(reportSuccess);
-    parse_script_a(parser, "Call GetObject(\"clsid:" TESTOBJINST_CLSID "\").reportSuccess()");
+    parse_script(parser, L"Call GetObject(\"clsid:" TESTOBJINST_CLSID "\").reportSuccess()");
     CHECK_CALLED(QI_IObjectWithSite);
     CHECK_CALLED(reportSuccess);
 
@@ -1014,7 +1002,7 @@ static void test_GetObject(void)
 
     /* Invalid moniker */
     parser = create_script(FALSE);
-    hres = parse_script_ae(parser, "Call GetObject(\"nonexistent:test\").reportSuccess()");
+    hres = parse_script_e(parser, L"Call GetObject(\"nonexistent:test\").reportSuccess()");
     ok(hres == MK_E_SYNTAX, "hres = %08lx\n", hres);
     IActiveScriptParse_Release(parser);
 }
