@@ -1263,16 +1263,7 @@ static void test_flatten(void)
     expect(Ok, status);
     ok_path(path, flattenquater_path, ARRAY_SIZE(flattenquater_path), FALSE);
 
-    GdipDeleteMatrix(m);
-    GdipDeletePath(path);
-}
-
-static void test_flatten2(void)
-{
-    GpStatus status;
-    GpPath *path;
-
-    status = GdipCreatePath(0, &path);
+    status = GdipResetPath(path);
     expect(Ok, status);
     status = GdipStartPathFigure(path);
     expect(Ok, status);
@@ -1286,7 +1277,9 @@ static void test_flatten2(void)
     status = GdipClosePathFigure(path);
     expect(Ok, status);
     status = GdipFlattenPath(path, NULL, 1.0);
+    expect(Ok, status);
 
+    GdipDeleteMatrix(m);
     GdipDeletePath(path);
 }
 
@@ -1972,7 +1965,6 @@ START_TEST(graphicspath)
     test_widen_cap();
     test_isvisible();
     test_empty_rect();
-    test_flatten2();
 
     GdiplusShutdown(gdiplusToken);
 }
