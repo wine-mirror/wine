@@ -467,6 +467,18 @@ static BOOL video_presenter_sample_queue_pop(struct video_presenter *presenter, 
     return *sample != NULL;
 }
 
+
+static void video_presenter_sample_queue_free(struct video_presenter *presenter)
+{
+    struct sample_queue *queue = &presenter->thread.queue;
+    IMFSample *sample;
+
+    while (video_presenter_sample_queue_pop(presenter, &sample))
+        IMFSample_Release(sample);
+
+    free(queue->samples);
+}
+
 static HRESULT video_presenter_get_sample_surface(IMFSample *sample, IDirect3DSurface9 **surface)
 {
     IMFMediaBuffer *buffer;
@@ -754,6 +766,7 @@ static HRESULT video_presenter_end_streaming(struct video_presenter *presenter)
 
     if (presenter->thread.queue.last_presented)
         IMFSample_Release(presenter->thread.queue.last_presented);
+    video_presenter_sample_queue_free(presenter);
     memset(&presenter->thread, 0, sizeof(presenter->thread));
     video_presenter_set_allocator_callback(presenter, NULL);
 
