@@ -1350,36 +1350,42 @@ static void test_file_basic_information(void)
     fbi2.LastWriteTime.QuadPart = -1;
     io.Status = 0xdeadbeef;
     res = pNtSetInformationFile(h, &io, &fbi2, sizeof fbi2, FileBasicInformation);
-    ok ( res == STATUS_SUCCESS, "can't set system attribute, NtSetInformationFile returned %x\n", res );
-    ok ( io.Status == STATUS_SUCCESS, "can't set system attribute, io.Status is %lx\n", io.Status );
+    ok ( res == STATUS_SUCCESS, "can't set -1 write time, NtSetInformationFile returned %x\n", res );
+    ok ( io.Status == STATUS_SUCCESS, "can't set -1 write time, io.Status is %lx\n", io.Status );
 
     memset(&fbi2, 0, sizeof(fbi2));
     fbi2.LastAccessTime.QuadPart = 0x200deadcafebeef;
     io.Status = 0xdeadbeef;
     res = pNtSetInformationFile(h, &io, &fbi2, sizeof(fbi2), FileBasicInformation);
-    ok ( res == STATUS_SUCCESS, "can't set system attribute, NtSetInformationFile returned %x\n", res );
-    ok ( io.Status == STATUS_SUCCESS, "can't set system attribute, io.Status is %lx\n", io.Status );
+    ok ( res == STATUS_SUCCESS, "can't set access time, NtSetInformationFile returned %x\n", res );
+    ok ( io.Status == STATUS_SUCCESS, "can't set access time, io.Status is %lx\n", io.Status );
     res = pNtQueryInformationFile(h, &io, &fbi, sizeof(fbi), FileBasicInformation);
-    ok ( res == STATUS_SUCCESS, "can't get system attribute, NtQueryInformationFile returned %x\n", res );
-    ok ( io.Status == STATUS_SUCCESS, "can't get system attribute, io.Status is %lx\n", io.Status );
+    ok ( res == STATUS_SUCCESS, "can't get access time, NtQueryInformationFile returned %x\n", res );
+    ok ( io.Status == STATUS_SUCCESS, "can't get access time, io.Status is %lx\n", io.Status );
     ok ( fbi2.LastAccessTime.QuadPart == fbi.LastAccessTime.QuadPart,
-         "large access time set/get does not match.\n" );
+         "access time mismatch, set: %s get: %s\n",
+         wine_dbgstr_longlong(fbi2.LastAccessTime.QuadPart),
+         wine_dbgstr_longlong(fbi.LastAccessTime.QuadPart) );
 
     memset(&fbi2, 0, sizeof(fbi2));
     res = pNtQueryInformationFile(h, &io, &fbi2, sizeof fbi2, FileBasicInformation);
-    ok ( res == STATUS_SUCCESS, "can't get attributes, res %x\n", res);
-    ok ( fbi2.LastWriteTime.QuadPart == fbi.LastWriteTime.QuadPart, "unexpected write time.\n");
+    ok ( res == STATUS_SUCCESS, "can't get write time 1, res %x\n", res);
+    ok ( fbi2.LastWriteTime.QuadPart == fbi.LastWriteTime.QuadPart, "write time mismatch, %s != %s\n",
+         wine_dbgstr_longlong(fbi2.LastWriteTime.QuadPart),
+         wine_dbgstr_longlong(fbi.LastWriteTime.QuadPart) );
 
     memset(&fbi2, 0, sizeof(fbi2));
     io.Status = 0xdeadbeef;
     res = pNtSetInformationFile(h, &io, &fbi2, sizeof fbi2, FileBasicInformation);
-    ok ( res == STATUS_SUCCESS, "can't set system attribute, NtSetInformationFile returned %x\n", res );
-    ok ( io.Status == STATUS_SUCCESS, "can't set system attribute, io.Status is %lx\n", io.Status );
+    ok ( res == STATUS_SUCCESS, "can't set nothing, NtSetInformationFile returned %x\n", res );
+    ok ( io.Status == STATUS_SUCCESS, "can't set nothing, io.Status is %lx\n", io.Status );
 
     memset(&fbi2, 0, sizeof(fbi2));
     res = pNtQueryInformationFile(h, &io, &fbi2, sizeof fbi2, FileBasicInformation);
-    ok ( res == STATUS_SUCCESS, "can't get attributes, res %x\n", res);
-    ok ( fbi2.LastWriteTime.QuadPart == fbi.LastWriteTime.QuadPart, "unexpected write time.\n");
+    ok ( res == STATUS_SUCCESS, "can't get write time 2, res %x\n", res);
+    ok ( fbi2.LastWriteTime.QuadPart == fbi.LastWriteTime.QuadPart, "write time changed, %s != %s\n",
+         wine_dbgstr_longlong(fbi2.LastWriteTime.QuadPart),
+         wine_dbgstr_longlong(fbi.LastWriteTime.QuadPart) );
 
     /* Then SYSTEM */
     /* Clear fbi to avoid setting times */
@@ -1392,7 +1398,7 @@ static void test_file_basic_information(void)
 
     memset(&fbi, 0, sizeof(fbi));
     res = pNtQueryInformationFile(h, &io, &fbi, sizeof fbi, FileBasicInformation);
-    ok ( res == STATUS_SUCCESS, "can't get attributes\n");
+    ok ( res == STATUS_SUCCESS, "can't get system attribute\n");
     ok ( (fbi.FileAttributes & attrib_mask) == FILE_ATTRIBUTE_SYSTEM, "attribute %lx not FILE_ATTRIBUTE_SYSTEM\n", fbi.FileAttributes );
 
     /* Then HIDDEN */
@@ -1400,12 +1406,12 @@ static void test_file_basic_information(void)
     fbi.FileAttributes = FILE_ATTRIBUTE_HIDDEN;
     io.Status = 0xdeadbeef;
     res = pNtSetInformationFile(h, &io, &fbi, sizeof fbi, FileBasicInformation);
-    ok ( res == STATUS_SUCCESS, "can't set system attribute, NtSetInformationFile returned %x\n", res );
-    ok ( io.Status == STATUS_SUCCESS, "can't set system attribute, io.Status is %lx\n", io.Status );
+    ok ( res == STATUS_SUCCESS, "can't set hidden attribute, NtSetInformationFile returned %x\n", res );
+    ok ( io.Status == STATUS_SUCCESS, "can't set hidden attribute, io.Status is %lx\n", io.Status );
 
     memset(&fbi, 0, sizeof(fbi));
     res = pNtQueryInformationFile(h, &io, &fbi, sizeof fbi, FileBasicInformation);
-    ok ( res == STATUS_SUCCESS, "can't get attributes\n");
+    ok ( res == STATUS_SUCCESS, "can't get hidden attribute\n");
     ok ( (fbi.FileAttributes & attrib_mask) == FILE_ATTRIBUTE_HIDDEN, "attribute %lx not FILE_ATTRIBUTE_HIDDEN\n", fbi.FileAttributes );
 
     /* Check NORMAL last of all (to make sure we can clear attributes) */
@@ -1418,7 +1424,7 @@ static void test_file_basic_information(void)
 
     memset(&fbi, 0, sizeof(fbi));
     res = pNtQueryInformationFile(h, &io, &fbi, sizeof fbi, FileBasicInformation);
-    ok ( res == STATUS_SUCCESS, "can't get attributes\n");
+    ok ( res == STATUS_SUCCESS, "can't get normal attribute\n");
     todo_wine ok ( (fbi.FileAttributes & attrib_mask) == FILE_ATTRIBUTE_NORMAL, "attribute %lx not 0\n", fbi.FileAttributes );
 
     CloseHandle( h );
