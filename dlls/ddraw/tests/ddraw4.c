@@ -57,6 +57,13 @@ struct create_window_thread_param
     HANDLE thread;
 };
 
+static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
+{
+    unsigned int diff = x > y ? x - y : y - x;
+
+    return diff <= max_diff;
+}
+
 static BOOL compare_float(float f, float g, unsigned int ulps)
 {
     int x = *(int *)&f;
@@ -67,10 +74,7 @@ static BOOL compare_float(float f, float g, unsigned int ulps)
     if (y < 0)
         y = INT_MIN - y;
 
-    if (abs(x - y) > ulps)
-        return FALSE;
-
-    return TRUE;
+    return compare_uint(x, y, ulps);
 }
 
 static BOOL compare_vec4(const struct vec4 *vec, float x, float y, float z, float w, unsigned int ulps)
@@ -79,13 +83,6 @@ static BOOL compare_vec4(const struct vec4 *vec, float x, float y, float z, floa
             && compare_float(vec->y, y, ulps)
             && compare_float(vec->z, z, ulps)
             && compare_float(vec->w, w, ulps);
-}
-
-static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
-{
-    unsigned int diff = x > y ? x - y : y - x;
-
-    return diff <= max_diff;
 }
 
 static BOOL compare_color(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
