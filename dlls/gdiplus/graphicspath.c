@@ -283,10 +283,10 @@ static GpStatus extend_current_figure(GpPath *path, GDIPCONST PointF *points, IN
  *
  * PARAMS
  *  path       [I/O] Path that the arc is appended to
- *  x1         [I]   X coordinate of the boundary box
- *  y1         [I]   Y coordinate of the boundary box
- *  x2         [I]   Width of the boundary box
- *  y2         [I]   Height of the boundary box
+ *  x          [I]   X coordinate of the boundary rectangle
+ *  y          [I]   Y coordinate of the boundary rectangle
+ *  width      [I]   Width of the boundary rectangle
+ *  height     [I]   Height of the boundary rectangle
  *  startAngle [I]   Starting angle of the arc, clockwise
  *  sweepAngle [I]   Angle of the arc, clockwise
  *
@@ -302,20 +302,20 @@ static GpStatus extend_current_figure(GpPath *path, GDIPCONST PointF *points, IN
  *  In both cases, the value of newfigure of the given path is FALSE
  *  afterwards.
  */
-GpStatus WINGDIPAPI GdipAddPathArc(GpPath *path, REAL x1, REAL y1, REAL x2,
-    REAL y2, REAL startAngle, REAL sweepAngle)
+GpStatus WINGDIPAPI GdipAddPathArc(GpPath *path, REAL x, REAL y, REAL width,
+    REAL height, REAL startAngle, REAL sweepAngle)
 {
     GpPointF *points;
     GpStatus status;
     INT count;
 
     TRACE("(%p, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f)\n",
-          path, x1, y1, x2, y2, startAngle, sweepAngle);
+          path, x, y, width, height, startAngle, sweepAngle);
 
-    if(!path)
+    if(!path || width <= 0.0f || height <= 0.0f)
         return InvalidParameter;
 
-    count = arc2polybezier(NULL, x1, y1, x2, y2, startAngle, sweepAngle);
+    count = arc2polybezier(NULL, x, y, width, height, startAngle, sweepAngle);
     if(count == 0)
         return Ok;
 
@@ -323,7 +323,7 @@ GpStatus WINGDIPAPI GdipAddPathArc(GpPath *path, REAL x1, REAL y1, REAL x2,
     if(!points)
         return OutOfMemory;
 
-    arc2polybezier(points, x1, y1, x2, y2, startAngle, sweepAngle);
+    arc2polybezier(points, x, y, width, height, startAngle, sweepAngle);
 
     status = extend_current_figure(path, points, count, PathPointTypeBezier);
 
