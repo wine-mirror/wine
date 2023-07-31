@@ -66,6 +66,169 @@ struct packed_hook_extra_info
     ULONGLONG     lparam;
 };
 
+/* the various structures that can be sent in messages, in platform-independent layout */
+struct packed_CREATESTRUCTW
+{
+    ULONGLONG     lpCreateParams;
+    ULONGLONG     hInstance;
+    user_handle_t hMenu;
+    DWORD         __pad1;
+    user_handle_t hwndParent;
+    DWORD         __pad2;
+    INT           cy;
+    INT           cx;
+    INT           y;
+    INT           x;
+    LONG          style;
+    ULONGLONG     lpszName;
+    ULONGLONG     lpszClass;
+    DWORD         dwExStyle;
+    DWORD         __pad3;
+};
+
+struct packed_DRAWITEMSTRUCT
+{
+    UINT          CtlType;
+    UINT          CtlID;
+    UINT          itemID;
+    UINT          itemAction;
+    UINT          itemState;
+    user_handle_t hwndItem;
+    DWORD         __pad1;
+    user_handle_t hDC;
+    DWORD         __pad2;
+    RECT          rcItem;
+    ULONGLONG     itemData;
+};
+
+struct packed_MEASUREITEMSTRUCT
+{
+    UINT          CtlType;
+    UINT          CtlID;
+    UINT          itemID;
+    UINT          itemWidth;
+    UINT          itemHeight;
+    ULONGLONG     itemData;
+};
+
+struct packed_DELETEITEMSTRUCT
+{
+    UINT          CtlType;
+    UINT          CtlID;
+    UINT          itemID;
+    user_handle_t hwndItem;
+    DWORD         __pad;
+    ULONGLONG     itemData;
+};
+
+struct packed_COMPAREITEMSTRUCT
+{
+    UINT          CtlType;
+    UINT          CtlID;
+    user_handle_t hwndItem;
+    DWORD         __pad1;
+    UINT          itemID1;
+    ULONGLONG     itemData1;
+    UINT          itemID2;
+    ULONGLONG     itemData2;
+    DWORD         dwLocaleId;
+    DWORD         __pad2;
+};
+
+struct packed_WINDOWPOS
+{
+    UINT          hwnd;
+    DWORD         __pad1;
+    user_handle_t hwndInsertAfter;
+    DWORD         __pad2;
+    INT           x;
+    INT           y;
+    INT           cx;
+    INT           cy;
+    UINT          flags;
+    DWORD         __pad3;
+};
+
+struct packed_COPYDATASTRUCT
+{
+    ULONGLONG     dwData;
+    DWORD         cbData;
+    ULONGLONG     lpData;
+};
+
+struct packed_HELPINFO
+{
+    UINT          cbSize;
+    INT           iContextType;
+    INT           iCtrlId;
+    user_handle_t hItemHandle;
+    DWORD         __pad;
+    ULONGLONG     dwContextId;
+    POINT         MousePos;
+};
+
+struct packed_NCCALCSIZE_PARAMS
+{
+    RECT          rgrc[3];
+    ULONGLONG     __pad1;
+    user_handle_t hwnd;
+    DWORD         __pad2;
+    user_handle_t hwndInsertAfter;
+    DWORD         __pad3;
+    INT           x;
+    INT           y;
+    INT           cx;
+    INT           cy;
+    UINT          flags;
+    DWORD         __pad4;
+};
+
+struct packed_MSG
+{
+    user_handle_t hwnd;
+    DWORD         __pad1;
+    UINT          message;
+    ULONGLONG     wParam;
+    ULONGLONG     lParam;
+    DWORD         time;
+    POINT         pt;
+    DWORD         __pad2;
+};
+
+struct packed_MDINEXTMENU
+{
+    user_handle_t hmenuIn;
+    DWORD         __pad1;
+    user_handle_t hmenuNext;
+    DWORD         __pad2;
+    user_handle_t hwndNext;
+    DWORD         __pad3;
+};
+
+struct packed_MDICREATESTRUCTW
+{
+    ULONGLONG     szClass;
+    ULONGLONG     szTitle;
+    ULONGLONG     hOwner;
+    INT           x;
+    INT           y;
+    INT           cx;
+    INT           cy;
+    DWORD         style;
+    ULONGLONG     lParam;
+};
+
+struct packed_COMBOBOXINFO
+{
+    DWORD cbSize;
+    RECT rcItem;
+    RECT rcButton;
+    DWORD stateButton;
+    ULONGLONG hwndCombo;
+    ULONGLONG hwndItem;
+    ULONGLONG hwndList;
+};
+
 /* the structures are unpacked on top of the packed ones, so make sure they fit */
 C_ASSERT( sizeof(struct packed_CREATESTRUCTW) >= sizeof(CREATESTRUCTW) );
 C_ASSERT( sizeof(struct packed_DRAWITEMSTRUCT) >= sizeof(DRAWITEMSTRUCT) );
