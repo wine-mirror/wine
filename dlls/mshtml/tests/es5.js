@@ -1720,6 +1720,9 @@ sync_test("builtin_context", function() {
     ok(obj === window, "obj = " + obj);
     obj = (function() { return this; }).call(42);
     ok(obj.valueOf() === 42, "obj = " + obj);
+
+    obj = Object.create([100]);
+    ok(obj.length === 1, "obj.length = " + obj.length);
 });
 
 sync_test("host this", function() {

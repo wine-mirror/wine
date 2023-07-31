@@ -454,7 +454,7 @@ static HRESULT prop_get(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t *prop, 
 
     switch(prop->type) {
     case PROP_BUILTIN:
-        hres = prop->u.p->getter(This->ctx, This, r);
+        hres = prop->u.p->getter(This->ctx, prop_obj, r);
         break;
     case PROP_JSVAL:
         hres = jsval_copy(prop->u.val, r);
