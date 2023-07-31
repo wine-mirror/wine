@@ -442,7 +442,7 @@ static HRESULT convert_params(script_ctx_t *ctx, const DISPPARAMS *dp, jsval_t *
     return S_OK;
 }
 
-static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop,  jsval_t *r)
+static HRESULT prop_get(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t *prop, jsval_t *r)
 {
     jsdisp_t *prop_obj = This;
     HRESULT hres;
@@ -461,7 +461,7 @@ static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop,  jsval_t *r)
         break;
     case PROP_ACCESSOR:
         if(prop->u.accessor.getter) {
-            hres = jsdisp_call_value(prop->u.accessor.getter, jsval_obj(This),
+            hres = jsdisp_call_value(prop->u.accessor.getter, jsval_disp(jsthis),
                                      DISPATCH_METHOD, 0, NULL, r);
         }else {
             *r = jsval_undefined();
@@ -579,7 +579,7 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
     case PROP_IDX: {
         jsval_t val;
 
-        hres = prop_get(This, prop, &val);
+        hres = prop_get(This, jsthis ? jsthis : (IDispatch *)&This->IDispatchEx_iface, prop, &val);
         if(FAILED(hres))
             return hres;
 
@@ -1973,7 +1973,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         jsval_t r;
 
         if(prop)
-            hres = prop_get(This, prop, &r);
+            hres = prop_get(This, to_disp(This), prop, &r);
         else {
             hres = to_primitive(This->ctx, jsval_obj(This), &r, NO_HINT);
             if(hres == JS_E_TO_PRIMITIVE)
@@ -2305,7 +2305,7 @@ HRESULT init_dispex_from_constr(jsdisp_t *dispex, script_ctx_t *ctx, const built
     if(SUCCEEDED(hres) && prop && prop->type!=PROP_DELETED) {
         jsval_t val;
 
-        hres = prop_get(constr, prop, &val);
+        hres = prop_get(constr, to_disp(constr), prop, &val);
         if(FAILED(hres)) {
             ERR("Could not get prototype\n");
             return hres;
@@ -2754,7 +2754,7 @@ HRESULT jsdisp_propget_name(jsdisp_t *obj, const WCHAR *name, jsval_t *val)
         return S_OK;
     }
 
-    return prop_get(obj, prop, val);
+    return prop_get(obj, to_disp(obj), prop, val);
 }
 
 HRESULT jsdisp_get_idx(jsdisp_t *obj, DWORD idx, jsval_t *r)
@@ -2774,7 +2774,7 @@ HRESULT jsdisp_get_idx(jsdisp_t *obj, DWORD idx, jsval_t *r)
         return DISP_E_UNKNOWNNAME;
     }
 
-    return prop_get(obj, prop, r);
+    return prop_get(obj, to_disp(obj), prop, r);
 }
 
 HRESULT jsdisp_propget(jsdisp_t *jsdisp, DISPID id, jsval_t *val)
@@ -2785,7 +2785,7 @@ HRESULT jsdisp_propget(jsdisp_t *jsdisp, DISPID id, jsval_t *val)
     if(!prop)
         return DISP_E_MEMBERNOTFOUND;
 
-    return prop_get(jsdisp, prop, val);
+    return prop_get(jsdisp, to_disp(jsdisp), prop, val);
 }
 
 HRESULT disp_propget(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t *val)
@@ -2981,7 +2981,7 @@ HRESULT jsdisp_get_own_property(jsdisp_t *obj, const WCHAR *name, BOOL flags_onl
         desc->mask |= PROPF_WRITABLE;
         desc->explicit_value = TRUE;
         if(!flags_only) {
-            hres = prop_get(obj, prop, &desc->value);
+            hres = prop_get(obj, to_disp(obj), prop, &desc->value);
             if(FAILED(hres))
                 return hres;
         }
