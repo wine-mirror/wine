@@ -502,7 +502,7 @@ INT PSDRV_WriteFooter( print_ctx *ctx )
 
     sprintf(buf, psfooter, ctx->job.PageNo);
 
-    if( write_spool( ctx, buf, strlen(buf) ) != strlen(buf) || !flush_spool(ctx) ) {
+    if( write_spool( ctx, buf, strlen(buf) ) != strlen(buf) ) {
         WARN("WriteSpool error\n");
         ret = 0;
     }

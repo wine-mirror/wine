@@ -3140,6 +3140,7 @@ BOOL WINAPI PrintDocumentOnPrintProcessor(HANDLE pp, WCHAR *doc_name)
 cleanup:
     if (data->ctx->job.PageNo)
         PSDRV_WriteFooter(data->ctx);
+    flush_spool(data->ctx);
 
     HeapFree(GetProcessHeap(), 0, data->ctx->job.doc_name);
     ClosePrinter(spool_data);
