@@ -501,10 +501,6 @@ static void SECUR32_initializeProviders(void)
     SECUR32_initSchannelSP();
     /* Load SSP/AP packages (Kerberos and others) */
     load_auth_packages();
-    /* Load the Negotiate provider last so apps stumble over the working NTLM
-     * provider first. Attempting to fix bug #16905 while keeping the
-     * application reported on wine-users on 2006-09-12 working. */
-    SECUR32_initNegotiateSP();
     /* Now load providers from registry */
     apiRet = RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Control\\SecurityProviders", 0,
                            KEY_READ, &key);

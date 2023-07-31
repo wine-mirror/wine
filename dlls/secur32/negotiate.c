@@ -19,615 +19,41 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "sspi.h"
 #include "rpc.h"
 #include "wincred.h"
+#include "ntsecapi.h"
+#include "ntsecpkg.h"
+#include "winternl.h"
 
 #include "wine/debug.h"
 #include "secur32_priv.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
-/***********************************************************************
- *              QueryCredentialsAttributesA
- */
-static SECURITY_STATUS SEC_ENTRY nego_QueryCredentialsAttributesA(
-    PCredHandle phCredential, ULONG ulAttribute, PVOID pBuffer)
-{
-    FIXME("%p, %lu, %p\n", phCredential, ulAttribute, pBuffer);
-    return SEC_E_UNSUPPORTED_FUNCTION;
-}
-
-/***********************************************************************
- *              QueryCredentialsAttributesW
- */
-static SECURITY_STATUS SEC_ENTRY nego_QueryCredentialsAttributesW(
-    PCredHandle phCredential, ULONG ulAttribute, PVOID pBuffer)
-{
-    FIXME("%p, %lu, %p\n", phCredential, ulAttribute, pBuffer);
-    return SEC_E_UNSUPPORTED_FUNCTION;
-}
-
 struct sec_handle
 {
-    SecureProvider *krb;
-    SecureProvider *ntlm;
-    SecHandle       handle_krb;
-    SecHandle       handle_ntlm;
+    SECPKG_FUNCTION_TABLE      *krb;
+    SECPKG_FUNCTION_TABLE      *ntlm;
+    SECPKG_USER_FUNCTION_TABLE *user_krb;
+    SECPKG_USER_FUNCTION_TABLE *user_ntlm;
+    LSA_SEC_HANDLE              handle_krb;
+    LSA_SEC_HANDLE              handle_ntlm;
 };
 
 #define WINE_NO_CACHED_CREDENTIALS 0x10000000
-
-/***********************************************************************
- *              AcquireCredentialsHandleW
- */
-static SECURITY_STATUS SEC_ENTRY nego_AcquireCredentialsHandleW(
-    SEC_WCHAR *pszPrincipal, SEC_WCHAR *pszPackage, ULONG fCredentialUse,
-    PLUID pLogonID, PVOID pAuthData, SEC_GET_KEY_FN pGetKeyFn,
-    PVOID pGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry )
-{
-    static SEC_WCHAR ntlmW[] = {'N','T','L','M',0};
-    static SEC_WCHAR kerberosW[] = {'K','e','r','b','e','r','o','s',0};
-    SECURITY_STATUS ret = SEC_E_NO_CREDENTIALS;
-    struct sec_handle *cred;
-    SecurePackage *package;
-
-    TRACE("%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p\n",
-          debugstr_w(pszPrincipal), debugstr_w(pszPackage), fCredentialUse,
-          pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
-
-    if (!pszPackage) return SEC_E_SECPKG_NOT_FOUND;
-    if (!(cred = calloc( 1, sizeof(*cred) ))) return SEC_E_INSUFFICIENT_MEMORY;
-
-    if ((package = SECUR32_findPackageW( kerberosW )))
-    {
-        ret = package->provider->fnTableW.AcquireCredentialsHandleW( pszPrincipal, kerberosW,
-                fCredentialUse, pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, &cred->handle_krb, ptsExpiry );
-        if (ret == SEC_E_OK) cred->krb = package->provider;
-    }
-
-    if ((package = SECUR32_findPackageW( ntlmW )))
-    {
-        ULONG cred_use = pAuthData ? fCredentialUse : fCredentialUse | WINE_NO_CACHED_CREDENTIALS;
-
-        ret = package->provider->fnTableW.AcquireCredentialsHandleW( pszPrincipal, ntlmW,
-                cred_use, pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, &cred->handle_ntlm, ptsExpiry );
-        if (ret == SEC_E_OK) cred->ntlm = package->provider;
-    }
-
-    if (cred->krb || cred->ntlm)
-    {
-        phCredential->dwLower = (ULONG_PTR)cred;
-        phCredential->dwUpper = 0;
-        return SEC_E_OK;
-    }
-
-    free( cred );
-    return ret;
-}
-
-/***********************************************************************
- *              AcquireCredentialsHandleA
- */
-static SECURITY_STATUS SEC_ENTRY nego_AcquireCredentialsHandleA(
-    SEC_CHAR *pszPrincipal, SEC_CHAR *pszPackage, ULONG fCredentialUse,
-    PLUID pLogonID, PVOID pAuthData, SEC_GET_KEY_FN pGetKeyFn,
-    PVOID pGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry )
-{
-    SECURITY_STATUS ret = SEC_E_INSUFFICIENT_MEMORY;
-    SEC_WCHAR *package = NULL;
-    SEC_WINNT_AUTH_IDENTITY_A *id = pAuthData;
-    SEC_WINNT_AUTH_IDENTITY_W idW = {};
-
-    TRACE("%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p\n",
-          debugstr_a(pszPrincipal), debugstr_a(pszPackage), fCredentialUse,
-          pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
-
-    if (pszPackage)
-    {
-        int package_len = MultiByteToWideChar( CP_ACP, 0, pszPackage, -1, NULL, 0 );
-        if (!(package = malloc( package_len * sizeof(SEC_WCHAR) ))) return SEC_E_INSUFFICIENT_MEMORY;
-        MultiByteToWideChar( CP_ACP, 0, pszPackage, -1, package, package_len );
-    }
-    if (id && id->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
-    {
-        idW.UserLength = MultiByteToWideChar( CP_ACP, 0, (const char *)id->User, id->UserLength, NULL, 0 );
-        if (!(idW.User = malloc( idW.UserLength * sizeof(SEC_WCHAR) ))) goto done;
-        MultiByteToWideChar( CP_ACP, 0, (const char *)id->User, id->UserLength, idW.User, idW.UserLength );
-
-        idW.DomainLength = MultiByteToWideChar( CP_ACP, 0, (const char *)id->Domain, id->DomainLength, NULL, 0 );
-        if (!(idW.Domain = malloc( idW.DomainLength * sizeof(SEC_WCHAR) ))) goto done;
-        MultiByteToWideChar( CP_ACP, 0, (const char *)id->Domain, id->DomainLength, idW.Domain, idW.DomainLength );
-
-        idW.PasswordLength = MultiByteToWideChar( CP_ACP, 0, (const char *)id->Password, id->PasswordLength, NULL, 0 );
-        if (!(idW.Password = malloc( idW.PasswordLength * sizeof(SEC_WCHAR) ))) goto done;
-        MultiByteToWideChar( CP_ACP, 0, (const char *)id->Password, id->PasswordLength, idW.Password, idW.PasswordLength );
-
-        idW.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
-        pAuthData = &idW;
-    }
-
-    ret = nego_AcquireCredentialsHandleW( NULL, package, fCredentialUse, pLogonID, pAuthData,
-                                          pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry );
-done:
-    free( package );
-    return ret;
-}
-
-/***********************************************************************
- *              InitializeSecurityContextW
- */
-static SECURITY_STATUS SEC_ENTRY nego_InitializeSecurityContextW(
-    PCredHandle phCredential, PCtxtHandle phContext, SEC_WCHAR *pszTargetName,
-    ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
-    PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
-    PSecBufferDesc pOutput, ULONG *pfContextAttr, PTimeStamp ptsExpiry )
-{
-    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
-    struct sec_handle *handle = NULL, *ctxt, *new_ctxt = NULL, *cred = NULL;
-
-    TRACE("%p, %p, %s, 0x%08lx, %lu, %lu, %p, %lu, %p, %p, %p, %p\n",
-          phCredential, phContext, debugstr_w(pszTargetName), fContextReq,
-          Reserved1, TargetDataRep, pInput, Reserved1, phNewContext, pOutput,
-          pfContextAttr, ptsExpiry);
-
-    if (phContext)
-    {
-        handle = ctxt = (struct sec_handle *)phContext->dwLower;
-    }
-    else if (phCredential)
-    {
-        handle = cred = (struct sec_handle *)phCredential->dwLower;
-        if (!(new_ctxt = ctxt = calloc( 1, sizeof(*ctxt) ))) return SEC_E_INSUFFICIENT_MEMORY;
-        ctxt->krb  = cred->krb;
-        ctxt->ntlm = cred->ntlm;
-    }
-    if (!handle) return SEC_E_INVALID_HANDLE;
-
-    if (handle->krb)
-    {
-        ret = handle->krb->fnTableW.InitializeSecurityContextW( phCredential ? &cred->handle_krb : NULL,
-                phContext ? &ctxt->handle_krb : NULL, pszTargetName, fContextReq, Reserved1, TargetDataRep, pInput,
-                Reserved2, phNewContext ? &ctxt->handle_krb : NULL, pOutput, pfContextAttr, ptsExpiry );
-        if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && phNewContext)
-        {
-            ctxt->ntlm = NULL;
-            phNewContext->dwLower = (ULONG_PTR)ctxt;
-            phNewContext->dwUpper = 0;
-            if (new_ctxt == ctxt) new_ctxt = NULL;
-        }
-    }
-
-    if (ret != SEC_E_OK && ret != SEC_I_CONTINUE_NEEDED && handle->ntlm)
-    {
-        ret = handle->ntlm->fnTableW.InitializeSecurityContextW( phCredential ? &cred->handle_ntlm : NULL,
-                phContext ? &ctxt->handle_ntlm : NULL, pszTargetName, fContextReq, Reserved1, TargetDataRep, pInput,
-                Reserved2, phNewContext ? &ctxt->handle_ntlm : NULL, pOutput, pfContextAttr, ptsExpiry );
-        if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && phNewContext)
-        {
-            ctxt->krb = NULL;
-            phNewContext->dwLower = (ULONG_PTR)ctxt;
-            phNewContext->dwUpper = 0;
-            if (new_ctxt == ctxt) new_ctxt = NULL;
-        }
-    }
-
-    free( new_ctxt );
-    return ret;
-}
-
-/***********************************************************************
- *              InitializeSecurityContextA
- */
-static SECURITY_STATUS SEC_ENTRY nego_InitializeSecurityContextA(
-    PCredHandle phCredential, PCtxtHandle phContext, SEC_CHAR *pszTargetName,
-    ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
-    PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
-    PSecBufferDesc pOutput, ULONG *pfContextAttr, PTimeStamp ptsExpiry )
-{
-    SECURITY_STATUS ret;
-    SEC_WCHAR *target = NULL;
-
-    TRACE("%p, %p, %s, 0x%08lx, %lu, %lu, %p, %lu, %p, %p, %p, %p\n",
-          phCredential, phContext, debugstr_a(pszTargetName), fContextReq,
-          Reserved1, TargetDataRep, pInput, Reserved1, phNewContext, pOutput,
-          pfContextAttr, ptsExpiry);
-
-    if (pszTargetName)
-    {
-        int target_len = MultiByteToWideChar( CP_ACP, 0, pszTargetName, -1, NULL, 0 );
-        if (!(target = malloc( target_len * sizeof(SEC_WCHAR) ))) return SEC_E_INSUFFICIENT_MEMORY;
-        MultiByteToWideChar( CP_ACP, 0, pszTargetName, -1, target, target_len );
-    }
-    ret = nego_InitializeSecurityContextW( phCredential, phContext, target, fContextReq,
-                                           Reserved1, TargetDataRep, pInput, Reserved2,
-                                           phNewContext, pOutput, pfContextAttr, ptsExpiry );
-    free( target );
-    return ret;
-}
-
-/***********************************************************************
- *              AcceptSecurityContext
- */
-static SECURITY_STATUS SEC_ENTRY nego_AcceptSecurityContext(
-    PCredHandle phCredential, PCtxtHandle phContext, PSecBufferDesc pInput,
-    ULONG fContextReq, ULONG TargetDataRep, PCtxtHandle phNewContext,
-    PSecBufferDesc pOutput, ULONG *pfContextAttr, PTimeStamp ptsExpiry)
-{
-    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
-    struct sec_handle *handle = NULL, *ctxt, *new_ctxt = NULL, *cred = NULL;
-
-    TRACE("%p, %p, %p, 0x%08lx, %lu, %p, %p, %p, %p\n", phCredential, phContext,
-          pInput, fContextReq, TargetDataRep, phNewContext, pOutput, pfContextAttr,
-          ptsExpiry);
-
-    if (phContext)
-    {
-        handle = ctxt = (struct sec_handle *)phContext->dwLower;
-    }
-    else if (phCredential)
-    {
-        handle = cred = (struct sec_handle *)phCredential->dwLower;
-        if (!(new_ctxt = ctxt = calloc( 1, sizeof(*ctxt) ))) return SEC_E_INSUFFICIENT_MEMORY;
-        ctxt->krb  = cred->krb;
-        ctxt->ntlm = cred->ntlm;
-    }
-    if (!handle) return SEC_E_INVALID_HANDLE;
-
-    if (handle->krb)
-    {
-        ret = handle->krb->fnTableW.AcceptSecurityContext( phCredential ? &cred->handle_krb : NULL,
-            phContext ? &ctxt->handle_krb : NULL, pInput, fContextReq, TargetDataRep,
-            phNewContext ? &ctxt->handle_krb : NULL, pOutput, pfContextAttr, ptsExpiry );
-        if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && phNewContext)
-        {
-            ctxt->ntlm = NULL;
-            phNewContext->dwLower = (ULONG_PTR)ctxt;
-            phNewContext->dwUpper = 0;
-            if (new_ctxt == ctxt) new_ctxt = NULL;
-        }
-    }
-
-    if (ret != SEC_E_OK && ret != SEC_I_CONTINUE_NEEDED && handle->ntlm)
-    {
-        ret = handle->ntlm->fnTableW.AcceptSecurityContext( phCredential ? &cred->handle_ntlm : NULL,
-            phContext ? &ctxt->handle_ntlm : NULL, pInput, fContextReq, TargetDataRep,
-            phNewContext ? &ctxt->handle_ntlm : NULL, pOutput, pfContextAttr, ptsExpiry );
-        if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && phNewContext)
-        {
-            ctxt->krb = NULL;
-            phNewContext->dwLower = (ULONG_PTR)ctxt;
-            phNewContext->dwUpper = 0;
-            if (new_ctxt == ctxt) new_ctxt = NULL;
-        }
-    }
-
-    free( new_ctxt );
-    return ret;
-}
-
-/***********************************************************************
- *              CompleteAuthToken
- */
-static SECURITY_STATUS SEC_ENTRY nego_CompleteAuthToken(PCtxtHandle phContext,
- PSecBufferDesc pToken)
-{
-    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
-
-    TRACE("%p %p\n", phContext, pToken);
-
-    if (phContext) ret = SEC_E_UNSUPPORTED_FUNCTION;
-    return ret;
-}
-
-/***********************************************************************
- *              DeleteSecurityContext
- */
-static SECURITY_STATUS SEC_ENTRY nego_DeleteSecurityContext(PCtxtHandle phContext)
-{
-    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
-    struct sec_handle *ctxt;
-
-    TRACE("%p\n", phContext);
-
-    if (!phContext) return SEC_E_INVALID_HANDLE;
-
-    ctxt = (struct sec_handle *)phContext->dwLower;
-    if (ctxt->krb)
-    {
-        ret = ctxt->krb->fnTableW.DeleteSecurityContext( &ctxt->handle_krb );
-    }
-    else if (ctxt->ntlm)
-    {
-        ret = ctxt->ntlm->fnTableW.DeleteSecurityContext( &ctxt->handle_ntlm );
-    }
-    TRACE( "freeing %p\n", ctxt );
-    free( ctxt );
-    return ret;
-}
-
-/***********************************************************************
- *              ApplyControlToken
- */
-static SECURITY_STATUS SEC_ENTRY nego_ApplyControlToken(PCtxtHandle phContext,
- PSecBufferDesc pInput)
-{
-    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
-
-    TRACE("%p %p\n", phContext, pInput);
-
-    if (phContext) ret = SEC_E_UNSUPPORTED_FUNCTION;
-    return ret;
-}
-
-/***********************************************************************
- *              QueryContextAttributesW
- */
-static SECURITY_STATUS SEC_ENTRY nego_QueryContextAttributesW(
-    PCtxtHandle phContext, ULONG ulAttribute, void *pBuffer)
-{
-    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
-    struct sec_handle *ctxt;
-
-    TRACE("%p, %lu, %p\n", phContext, ulAttribute, pBuffer);
-
-    if (!phContext) return SEC_E_INVALID_HANDLE;
-
-    ctxt = (struct sec_handle *)phContext->dwLower;
-    if (ctxt->krb)
-    {
-        ret = ctxt->krb->fnTableW.QueryContextAttributesW( &ctxt->handle_krb, ulAttribute, pBuffer );
-    }
-    else if (ctxt->ntlm)
-    {
-        ret = ctxt->ntlm->fnTableW.QueryContextAttributesW( &ctxt->handle_ntlm, ulAttribute, pBuffer );
-    }
-    return ret;
-}
-
-/***********************************************************************
- *              QueryContextAttributesA
- */
-static SECURITY_STATUS SEC_ENTRY nego_QueryContextAttributesA(PCtxtHandle phContext,
-    ULONG ulAttribute, void *pBuffer)
-{
-    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
-    struct sec_handle *ctxt;
-
-    TRACE("%p, %lu, %p\n", phContext, ulAttribute, pBuffer);
-
-    if (!phContext) return SEC_E_INVALID_HANDLE;
-
-    ctxt = (struct sec_handle *)phContext->dwLower;
-    if (ctxt->krb)
-    {
-        ret = ctxt->krb->fnTableA.QueryContextAttributesA( &ctxt->handle_krb, ulAttribute, pBuffer );
-    }
-    else if (ctxt->ntlm)
-    {
-        ret = ctxt->ntlm->fnTableA.QueryContextAttributesA( &ctxt->handle_ntlm, ulAttribute, pBuffer );
-    }
-    return ret;
-}
-
-/***********************************************************************
- *              ImpersonateSecurityContext
- */
-static SECURITY_STATUS SEC_ENTRY nego_ImpersonateSecurityContext(PCtxtHandle phContext)
-{
-    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
-
-    TRACE("%p\n", phContext);
-
-    if (phContext) ret = SEC_E_UNSUPPORTED_FUNCTION;
-    return ret;
-}
-
-/***********************************************************************
- *              RevertSecurityContext
- */
-static SECURITY_STATUS SEC_ENTRY nego_RevertSecurityContext(PCtxtHandle phContext)
-{
-    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
-
-    TRACE("%p\n", phContext);
-
-    if (phContext) ret = SEC_E_UNSUPPORTED_FUNCTION;
-    return ret;
-}
-
-/***********************************************************************
- *              MakeSignature
- */
-static SECURITY_STATUS SEC_ENTRY nego_MakeSignature(PCtxtHandle phContext,
-    ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
-{
-    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
-    struct sec_handle *ctxt;
-
-    TRACE("%p, 0x%08lx, %p, %lu\n", phContext, fQOP, pMessage, MessageSeqNo);
-
-    if (!phContext) return SEC_E_INVALID_HANDLE;
-
-    ctxt = (struct sec_handle *)phContext->dwLower;
-    if (ctxt->krb)
-    {
-        ret = ctxt->krb->fnTableW.MakeSignature( &ctxt->handle_krb, fQOP, pMessage, MessageSeqNo );
-    }
-    else if (ctxt->ntlm)
-    {
-        ret = ctxt->ntlm->fnTableW.MakeSignature( &ctxt->handle_ntlm, fQOP, pMessage, MessageSeqNo );
-    }
-    return ret;
-}
-
-/***********************************************************************
- *              VerifySignature
- */
-static SECURITY_STATUS SEC_ENTRY nego_VerifySignature(PCtxtHandle phContext,
-    PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
-{
-    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
-    struct sec_handle *ctxt;
-
-    TRACE("%p, %p, %lu, %p\n", phContext, pMessage, MessageSeqNo, pfQOP);
-
-    if (!phContext) return SEC_E_INVALID_HANDLE;
-
-    ctxt = (struct sec_handle *)phContext->dwLower;
-    if (ctxt->krb)
-    {
-        ret = ctxt->krb->fnTableW.VerifySignature( &ctxt->handle_krb, pMessage, MessageSeqNo, pfQOP );
-    }
-    else if (ctxt->ntlm)
-    {
-        ret = ctxt->ntlm->fnTableW.VerifySignature( &ctxt->handle_ntlm, pMessage, MessageSeqNo, pfQOP );
-    }
-    return ret;
-}
-
-/***********************************************************************
- *             FreeCredentialsHandle
- */
-static SECURITY_STATUS SEC_ENTRY nego_FreeCredentialsHandle(PCredHandle phCredential)
-{
-    struct sec_handle *cred;
-
-    TRACE("%p\n", phCredential);
-
-    if (!phCredential) return SEC_E_INVALID_HANDLE;
-
-    cred = (struct sec_handle *)phCredential->dwLower;
-    if (cred->krb) cred->krb->fnTableW.FreeCredentialsHandle( &cred->handle_krb );
-    if (cred->ntlm) cred->ntlm->fnTableW.FreeCredentialsHandle( &cred->handle_ntlm );
-
-    free( cred );
-    return SEC_E_OK;
-}
-
-/***********************************************************************
- *             EncryptMessage
- */
-static SECURITY_STATUS SEC_ENTRY nego_EncryptMessage(PCtxtHandle phContext,
-    ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
-{
-    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
-    struct sec_handle *ctxt;
-
-    TRACE("%p, 0x%08lx, %p, %lu\n", phContext, fQOP, pMessage, MessageSeqNo);
-
-    if (!phContext) return SEC_E_INVALID_HANDLE;
-
-    ctxt = (struct sec_handle *)phContext->dwLower;
-    if (ctxt->krb)
-    {
-        ret = ctxt->krb->fnTableW.EncryptMessage( &ctxt->handle_krb, fQOP, pMessage, MessageSeqNo );
-    }
-    else if (ctxt->ntlm)
-    {
-        ret = ctxt->ntlm->fnTableW.EncryptMessage( &ctxt->handle_ntlm, fQOP, pMessage, MessageSeqNo );
-    }
-    return ret;
-}
-
-/***********************************************************************
- *             DecryptMessage
- */
-static SECURITY_STATUS SEC_ENTRY nego_DecryptMessage(PCtxtHandle phContext,
-    PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
-{
-    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
-    struct sec_handle *ctxt;
-
-    TRACE("%p, %p, %lu, %p\n", phContext, pMessage, MessageSeqNo, pfQOP);
-
-    if (!phContext) return SEC_E_INVALID_HANDLE;
-
-    ctxt = (struct sec_handle *)phContext->dwLower;
-    if (ctxt->krb)
-    {
-        ret = ctxt->krb->fnTableW.DecryptMessage( &ctxt->handle_krb, pMessage, MessageSeqNo, pfQOP );
-    }
-    else if (ctxt->ntlm)
-    {
-        ret = ctxt->ntlm->fnTableW.DecryptMessage( &ctxt->handle_ntlm, pMessage, MessageSeqNo, pfQOP );
-    }
-    return ret;
-}
-
-static const SecurityFunctionTableA negoTableA = {
-    1,
-    NULL,                               /* EnumerateSecurityPackagesA */
-    nego_QueryCredentialsAttributesA,   /* QueryCredentialsAttributesA */
-    nego_AcquireCredentialsHandleA,     /* AcquireCredentialsHandleA */
-    nego_FreeCredentialsHandle,         /* FreeCredentialsHandle */
-    NULL,                               /* Reserved2 */
-    nego_InitializeSecurityContextA,    /* InitializeSecurityContextA */
-    nego_AcceptSecurityContext,         /* AcceptSecurityContext */
-    nego_CompleteAuthToken,             /* CompleteAuthToken */
-    nego_DeleteSecurityContext,         /* DeleteSecurityContext */
-    nego_ApplyControlToken,             /* ApplyControlToken */
-    nego_QueryContextAttributesA,       /* QueryContextAttributesA */
-    nego_ImpersonateSecurityContext,    /* ImpersonateSecurityContext */
-    nego_RevertSecurityContext,         /* RevertSecurityContext */
-    nego_MakeSignature,                 /* MakeSignature */
-    nego_VerifySignature,               /* VerifySignature */
-    FreeContextBuffer,                  /* FreeContextBuffer */
-    NULL,   /* QuerySecurityPackageInfoA */
-    NULL,   /* Reserved3 */
-    NULL,   /* Reserved4 */
-    NULL,   /* ExportSecurityContext */
-    NULL,   /* ImportSecurityContextA */
-    NULL,   /* AddCredentialsA */
-    NULL,   /* Reserved8 */
-    NULL,   /* QuerySecurityContextToken */
-    nego_EncryptMessage,                /* EncryptMessage */
-    nego_DecryptMessage,                /* DecryptMessage */
-    NULL,   /* SetContextAttributesA */
-};
-
-static const SecurityFunctionTableW negoTableW = {
-    1,
-    NULL,                               /* EnumerateSecurityPackagesW */
-    nego_QueryCredentialsAttributesW,   /* QueryCredentialsAttributesW */
-    nego_AcquireCredentialsHandleW,     /* AcquireCredentialsHandleW */
-    nego_FreeCredentialsHandle,         /* FreeCredentialsHandle */
-    NULL,                               /* Reserved2 */
-    nego_InitializeSecurityContextW,    /* InitializeSecurityContextW */
-    nego_AcceptSecurityContext,         /* AcceptSecurityContext */
-    nego_CompleteAuthToken,             /* CompleteAuthToken */
-    nego_DeleteSecurityContext,         /* DeleteSecurityContext */
-    nego_ApplyControlToken,             /* ApplyControlToken */
-    nego_QueryContextAttributesW,       /* QueryContextAttributesW */
-    nego_ImpersonateSecurityContext,    /* ImpersonateSecurityContext */
-    nego_RevertSecurityContext,         /* RevertSecurityContext */
-    nego_MakeSignature,                 /* MakeSignature */
-    nego_VerifySignature,               /* VerifySignature */
-    FreeContextBuffer,                  /* FreeContextBuffer */
-    NULL,   /* QuerySecurityPackageInfoW */
-    NULL,   /* Reserved3 */
-    NULL,   /* Reserved4 */
-    NULL,   /* ExportSecurityContext */
-    NULL,   /* ImportSecurityContextW */
-    NULL,   /* AddCredentialsW */
-    NULL,   /* Reserved8 */
-    NULL,   /* QuerySecurityContextToken */
-    nego_EncryptMessage,                /* EncryptMessage */
-    nego_DecryptMessage,                /* DecryptMessage */
-    NULL,   /* SetContextAttributesW */
-};
-
 #define NEGO_MAX_TOKEN 12000
 
 static WCHAR nego_name_W[] = {'N','e','g','o','t','i','a','t','e',0};
 static char nego_name_A[] = "Negotiate";
-
 static WCHAR negotiate_comment_W[] =
     {'M','i','c','r','o','s','o','f','t',' ','P','a','c','k','a','g','e',' ',
      'N','e','g','o','t','i','a','t','o','r',0};
-static CHAR negotiate_comment_A[] = "Microsoft Package Negotiator";
 
 #define CAPS ( \
     SECPKG_FLAG_INTEGRITY  | \
@@ -642,13 +68,451 @@ static CHAR negotiate_comment_A[] = "Microsoft Package Negotiator";
     SECPKG_FLAG_LOGON             | \
     SECPKG_FLAG_RESTRICTED_TOKENS )
 
-void SECUR32_initNegotiateSP(void)
+static NTSTATUS NTAPI nego_LsaApCallPackageUntrusted( PLSA_CLIENT_REQUEST req, void *in_buf,
+    void *client_buf_base, ULONG in_buf_len, void **out_buf, ULONG *out_buf_len, NTSTATUS *ret_status )
 {
-    SecureProvider *provider = SECUR32_addProvider(&negoTableA, &negoTableW, NULL);
+    FIXME("%p, %p, %p, %lu, %p, %p, %p: stub\n", req, in_buf, client_buf_base, in_buf_len, out_buf, out_buf_len, ret_status);
 
+    return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
+static NTSTATUS NTAPI nego_LsaApInitializePackage( ULONG package_id, PLSA_DISPATCH_TABLE dispatch,
+    PLSA_STRING database, PLSA_STRING confidentiality, PLSA_STRING *package_name )
+{
+    char *name;
+
+    name = dispatch->AllocateLsaHeap( sizeof(nego_name_A) );
+    if (!name) return STATUS_NO_MEMORY;
+
+    memcpy(name, nego_name_A, sizeof(nego_name_A));
+
+    *package_name = dispatch->AllocateLsaHeap( sizeof(**package_name) );
+    if (!*package_name)
+    {
+        dispatch->FreeLsaHeap( name );
+        return STATUS_NO_MEMORY;
+    }
+
+    RtlInitString( *package_name, name );
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS NTAPI nego_SpInitialize( ULONG_PTR package_id, SECPKG_PARAMETERS *params,
+    LSA_SECPKG_FUNCTION_TABLE *lsa_function_table )
+{
+    TRACE( "%Iu, %p, %p\n", package_id, params, lsa_function_table );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS NTAPI nego_SpShutdown( void )
+{
+    TRACE( "\n" );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS NTAPI nego_SpGetInfo( SecPkgInfoW *info )
+{
     const SecPkgInfoW infoW = {CAPS, 1, RPC_C_AUTHN_GSS_NEGOTIATE, NEGO_MAX_TOKEN,
                                nego_name_W, negotiate_comment_W};
-    const SecPkgInfoA infoA = {CAPS, 1, RPC_C_AUTHN_GSS_NEGOTIATE, NEGO_MAX_TOKEN,
-                               nego_name_A, negotiate_comment_A};
-    SECUR32_addPackages(provider, 1L, &infoA, &infoW);
+
+    TRACE( "%p\n", info );
+
+    /* LSA will make a copy before forwarding the structure, so
+     * it's safe to put pointers to dynamic or constant data there.
+     */
+    *info = infoW;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS NTAPI nego_SpAcquireCredentialsHandle(
+    UNICODE_STRING *principal_us, ULONG credential_use, LUID *logon_id, void *auth_data,
+    void *get_key_fn, void *get_key_arg, LSA_SEC_HANDLE *credential, TimeStamp *expiry )
+{
+    NTSTATUS ret = SEC_E_NO_CREDENTIALS;
+    struct sec_handle *cred;
+    SECPKG_FUNCTION_TABLE *package;
+    SECPKG_USER_FUNCTION_TABLE *user;
+
+    TRACE( "%p, %#lx, %p, %p, %p, %p, %p, %p\n", principal_us, credential_use,
+           logon_id, auth_data, get_key_fn, get_key_arg, credential, expiry );
+
+    if (!(cred = calloc( 1, sizeof(*cred) ))) return SEC_E_INSUFFICIENT_MEMORY;
+
+    if ((package = lsa_find_package( "Kerberos", &user )))
+    {
+        ret = package->SpAcquireCredentialsHandle( principal_us, credential_use, logon_id, auth_data,
+                                                   get_key_fn, get_key_arg, &cred->handle_krb, expiry );
+        if (ret == SEC_E_OK)
+        {
+            cred->krb = package;
+            cred->user_krb = user;
+        }
+    }
+
+    if ((package = lsa_find_package( "NTLM", &user )))
+    {
+        ULONG cred_use = auth_data ? credential_use : credential_use | WINE_NO_CACHED_CREDENTIALS;
+
+        ret = package->SpAcquireCredentialsHandle( principal_us, cred_use, logon_id, auth_data,
+                                                   get_key_fn, get_key_arg, &cred->handle_ntlm, expiry );
+        if (ret == SEC_E_OK)
+        {
+            cred->ntlm = package;
+            cred->user_ntlm = user;
+        }
+    }
+
+    if (cred->krb || cred->ntlm)
+    {
+        *credential = (LSA_SEC_HANDLE)cred;
+        return SEC_E_OK;
+    }
+
+    free( cred );
+    return ret;
+}
+
+static NTSTATUS NTAPI nego_SpFreeCredentialsHandle( LSA_SEC_HANDLE credential )
+{
+    struct sec_handle *cred;
+
+    TRACE( "%Ix\n", credential );
+
+    if (!credential) return SEC_E_INVALID_HANDLE;
+
+    cred = (struct sec_handle *)credential;
+    if (cred->krb) cred->krb->FreeCredentialsHandle( cred->handle_krb );
+    if (cred->ntlm) cred->ntlm->FreeCredentialsHandle( cred->handle_ntlm );
+
+    free( cred );
+    return SEC_E_OK;
+}
+
+static NTSTATUS NTAPI nego_SpInitLsaModeContext( LSA_SEC_HANDLE credential, LSA_SEC_HANDLE context,
+    UNICODE_STRING *target_name, ULONG context_req, ULONG target_data_rep, SecBufferDesc *input,
+    LSA_SEC_HANDLE *new_context, SecBufferDesc *output, ULONG *context_attr, TimeStamp *expiry,
+    BOOLEAN *mapped_context, SecBuffer *context_data )
+{
+    NTSTATUS ret = SEC_E_INVALID_HANDLE;
+    struct sec_handle *handle = NULL, *ctxt, *new_ctxt = NULL, *cred = NULL;
+
+    TRACE( "%Ix, %Ix, %p, %#lx, %lu, %p, %p, %p, %p, %p, %p, %p\n", credential, context, target_name,
+           context_req, target_data_rep, input, new_context, output, context_attr, expiry,
+           mapped_context, context_data );
+
+    if (context)
+    {
+        handle = ctxt = (struct sec_handle *)context;
+    }
+    else if (credential)
+    {
+        handle = cred = (struct sec_handle *)credential;
+        if (!(new_ctxt = ctxt = calloc( 1, sizeof(*ctxt) ))) return SEC_E_INSUFFICIENT_MEMORY;
+        ctxt->krb  = cred->krb;
+        ctxt->ntlm = cred->ntlm;
+    }
+    if (!handle) return SEC_E_INVALID_HANDLE;
+
+    if (handle->krb)
+    {
+        ret = handle->krb->InitLsaModeContext( credential ? cred->handle_krb : 0,
+                context ? ctxt->handle_krb : 0, target_name, context_req, target_data_rep, input,
+                new_context ? &ctxt->handle_krb : NULL, output, context_attr, expiry, mapped_context, context_data );
+        if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && new_context)
+        {
+            ctxt->ntlm = NULL;
+            *new_context = (LSA_SEC_HANDLE)ctxt;
+            if (new_ctxt == ctxt) new_ctxt = NULL;
+        }
+    }
+
+    if (ret != SEC_E_OK && ret != SEC_I_CONTINUE_NEEDED && handle->ntlm)
+    {
+        ret = handle->ntlm->InitLsaModeContext( credential ? cred->handle_ntlm : 0,
+                context ? ctxt->handle_ntlm : 0, target_name, context_req, target_data_rep, input,
+                new_context ? &ctxt->handle_ntlm : NULL, output, context_attr, expiry, mapped_context, context_data );
+        if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && new_context)
+        {
+            ctxt->krb = NULL;
+            *new_context = (LSA_SEC_HANDLE)ctxt;
+            if (new_ctxt == ctxt) new_ctxt = NULL;
+        }
+    }
+
+    free( new_ctxt );
+    return ret;
+}
+
+static NTSTATUS NTAPI nego_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential, LSA_SEC_HANDLE context,
+    SecBufferDesc *input, ULONG context_req, ULONG target_data_rep, LSA_SEC_HANDLE *new_context,
+    SecBufferDesc *output, ULONG *context_attr, TimeStamp *expiry, BOOLEAN *mapped_context, SecBuffer *context_data )
+{
+    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
+    struct sec_handle *handle = NULL, *ctxt, *new_ctxt = NULL, *cred = NULL;
+
+    TRACE( "%Ix, %Ix, %#lx, %lu, %p, %p, %p, %p, %p, %p, %p\n", credential, context, context_req, target_data_rep,
+           input, new_context, output, context_attr, expiry, mapped_context, context_data );
+
+    if (context)
+    {
+        handle = ctxt = (struct sec_handle *)context;
+    }
+    else if (credential)
+    {
+        handle = cred = (struct sec_handle *)credential;
+        if (!(new_ctxt = ctxt = calloc( 1, sizeof(*ctxt) ))) return SEC_E_INSUFFICIENT_MEMORY;
+        ctxt->krb  = cred->krb;
+        ctxt->ntlm = cred->ntlm;
+    }
+    if (!handle) return SEC_E_INVALID_HANDLE;
+
+    if (handle->krb)
+    {
+        ret = handle->krb->AcceptLsaModeContext( credential ? cred->handle_krb : 0,
+                context ? ctxt->handle_krb : 0, input, context_req, target_data_rep,
+                new_context ? &ctxt->handle_krb : NULL,
+                output, context_attr, expiry, mapped_context, context_data );
+        if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && new_context)
+        {
+            ctxt->ntlm = NULL;
+            *new_context = (LSA_SEC_HANDLE)ctxt;
+            if (new_ctxt == ctxt) new_ctxt = NULL;
+        }
+    }
+
+    if (ret != SEC_E_OK && ret != SEC_I_CONTINUE_NEEDED && handle->ntlm)
+    {
+        ret = handle->ntlm->AcceptLsaModeContext( credential ? cred->handle_ntlm : 0,
+                context ? ctxt->handle_ntlm : 0, input, context_req, target_data_rep,
+                new_context ? &ctxt->handle_ntlm : NULL,
+                output, context_attr, expiry, mapped_context, context_data );
+        if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && new_context)
+        {
+            ctxt->krb = NULL;
+            *new_context = (LSA_SEC_HANDLE)ctxt;
+            if (new_ctxt == ctxt) new_ctxt = NULL;
+        }
+    }
+
+    free( new_ctxt );
+    return ret;
+}
+
+static NTSTATUS NTAPI nego_SpDeleteContext( LSA_SEC_HANDLE context )
+{
+    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
+    struct sec_handle *ctxt;
+
+    TRACE( "%Ix\n", context );
+
+    if (!context) return SEC_E_INVALID_HANDLE;
+
+    ctxt = (struct sec_handle *)context;
+    if (ctxt->krb)
+    {
+        ret = ctxt->krb->DeleteContext( ctxt->handle_krb );
+    }
+    else if (ctxt->ntlm)
+    {
+        ret = ctxt->ntlm->DeleteContext( ctxt->handle_ntlm );
+    }
+    TRACE( "freeing %p\n", ctxt );
+    free( ctxt );
+    return ret;
+}
+
+static NTSTATUS NTAPI nego_SpQueryContextAttributes( LSA_SEC_HANDLE context, ULONG attribute, void *buffer )
+{
+    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
+    struct sec_handle *ctxt;
+
+    TRACE( "%Ix, %lu, %p\n", context, attribute, buffer );
+
+    if (!context) return SEC_E_INVALID_HANDLE;
+
+    ctxt = (struct sec_handle *)context;
+    if (ctxt->krb)
+    {
+        ret = ctxt->krb->SpQueryContextAttributes( ctxt->handle_krb, attribute, buffer );
+    }
+    else if (ctxt->ntlm)
+    {
+        ret = ctxt->ntlm->SpQueryContextAttributes( ctxt->handle_ntlm, attribute, buffer );
+    }
+    return ret;
+}
+
+static SECPKG_FUNCTION_TABLE nego_lsa_table =
+{
+    nego_LsaApInitializePackage,
+    NULL, /* LsaLogonUser */
+    NULL, /* CallPackage */
+    NULL, /* LogonTerminated */
+    nego_LsaApCallPackageUntrusted,
+    NULL, /* CallPackagePassthrough */
+    NULL, /* LogonUserEx */
+    NULL, /* LogonUserEx2 */
+    nego_SpInitialize,
+    nego_SpShutdown,
+    nego_SpGetInfo,
+    NULL, /* AcceptCredentials */
+    nego_SpAcquireCredentialsHandle,
+    NULL, /* SpQueryCredentialsAttributes */
+    nego_SpFreeCredentialsHandle,
+    NULL, /* SaveCredentials */
+    NULL, /* GetCredentials */
+    NULL, /* DeleteCredentials */
+    nego_SpInitLsaModeContext,
+    nego_SpAcceptLsaModeContext,
+    nego_SpDeleteContext,
+    NULL, /* ApplyControlToken */
+    NULL, /* GetUserInfo */
+    NULL, /* GetExtendedInformation */
+    nego_SpQueryContextAttributes,
+    NULL, /* SpAddCredentials */
+    NULL, /* SetExtendedInformation */
+    NULL, /* SetContextAttributes */
+    NULL, /* SetCredentialsAttributes */
+    NULL, /* ChangeAccountPassword */
+    NULL, /* QueryMetaData */
+    NULL, /* ExchangeMetaData */
+    NULL, /* GetCredUIContext */
+    NULL, /* UpdateCredentials */
+    NULL, /* ValidateTargetInfo */
+    NULL, /* PostLogonUser */
+};
+
+NTSTATUS NTAPI nego_SpLsaModeInitialize(ULONG lsa_version, PULONG package_version,
+    PSECPKG_FUNCTION_TABLE *table, PULONG table_count)
+{
+    TRACE("%#lx, %p, %p, %p\n", lsa_version, package_version, table, table_count);
+
+    *package_version = SECPKG_INTERFACE_VERSION;
+    *table = &nego_lsa_table;
+    *table_count = 1;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS NTAPI nego_SpInstanceInit(ULONG version, SECPKG_DLL_FUNCTIONS *dll_function_table, void **user_functions)
+{
+    TRACE("%#lx, %p, %p\n", version, dll_function_table, user_functions);
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS NTAPI nego_SpMakeSignature( LSA_SEC_HANDLE context, ULONG quality_of_protection,
+    SecBufferDesc *message, ULONG message_seq_no )
+{
+    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
+    struct sec_handle *ctxt;
+
+    TRACE( "%Ix, %#lx, %p, %lu\n", context, quality_of_protection, message, message_seq_no );
+
+    if (!context) return SEC_E_INVALID_HANDLE;
+
+    ctxt = (struct sec_handle *)context;
+    if (ctxt->user_krb)
+    {
+        ret = ctxt->user_krb->MakeSignature( ctxt->handle_krb, quality_of_protection, message, message_seq_no );
+    }
+    else if (ctxt->user_ntlm)
+    {
+        ret = ctxt->user_ntlm->MakeSignature( ctxt->handle_ntlm, quality_of_protection, message, message_seq_no );
+    }
+    return ret;
+}
+
+static NTSTATUS NTAPI nego_SpVerifySignature( LSA_SEC_HANDLE context, SecBufferDesc *message,
+    ULONG message_seq_no, ULONG *quality_of_protection )
+{
+    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
+    struct sec_handle *ctxt;
+
+    TRACE( "%Ix, %p, %lu, %p\n", context, message, message_seq_no, quality_of_protection );
+
+    if (!context) return SEC_E_INVALID_HANDLE;
+
+    ctxt = (struct sec_handle *)context;
+    if (ctxt->user_krb)
+    {
+        ret = ctxt->user_krb->VerifySignature( ctxt->handle_krb, message, message_seq_no, quality_of_protection );
+    }
+    else if (ctxt->user_ntlm)
+    {
+        ret = ctxt->user_ntlm->VerifySignature( ctxt->handle_ntlm, message, message_seq_no, quality_of_protection );
+    }
+    return ret;
+}
+
+static NTSTATUS NTAPI nego_SpSealMessage( LSA_SEC_HANDLE context, ULONG quality_of_protection,
+    SecBufferDesc *message, ULONG message_seq_no )
+{
+    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
+    struct sec_handle *ctxt;
+
+    TRACE( "%Ix, %#lx, %p, %lu\n", context, quality_of_protection, message, message_seq_no );
+
+    if (!context) return SEC_E_INVALID_HANDLE;
+
+    ctxt = (struct sec_handle *)context;
+    if (ctxt->user_krb)
+    {
+        ret = ctxt->user_krb->SealMessage( ctxt->handle_krb, quality_of_protection, message, message_seq_no );
+    }
+    else if (ctxt->user_ntlm)
+    {
+        ret = ctxt->user_ntlm->SealMessage( ctxt->handle_ntlm, quality_of_protection, message, message_seq_no );
+    }
+    return ret;
+}
+
+static NTSTATUS NTAPI nego_SpUnsealMessage( LSA_SEC_HANDLE context, SecBufferDesc *message,
+    ULONG message_seq_no, ULONG *quality_of_protection )
+{
+    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
+    struct sec_handle *ctxt;
+
+    TRACE( "%Ix, %p, %lu, %p\n", context, message, message_seq_no, quality_of_protection );
+
+    if (!context) return SEC_E_INVALID_HANDLE;
+
+    ctxt = (struct sec_handle *)context;
+    if (ctxt->user_krb)
+    {
+        ret = ctxt->user_krb->UnsealMessage( ctxt->handle_krb, message, message_seq_no, quality_of_protection );
+    }
+    else if (ctxt->user_ntlm)
+    {
+        ret = ctxt->user_ntlm->UnsealMessage( ctxt->handle_ntlm, message, message_seq_no, quality_of_protection );
+    }
+    return ret;
+}
+
+static SECPKG_USER_FUNCTION_TABLE nego_user_table =
+{
+    nego_SpInstanceInit,
+    NULL, /* SpInitUserModeContext */
+    nego_SpMakeSignature,
+    nego_SpVerifySignature,
+    nego_SpSealMessage,
+    nego_SpUnsealMessage,
+    NULL, /* SpGetContextToken */
+    NULL, /* SpQueryContextAttributes */
+    NULL, /* SpCompleteAuthToken */
+    NULL, /* SpDeleteContext */
+    NULL, /* SpFormatCredentialsFn */
+    NULL, /* SpMarshallSupplementalCreds */
+    NULL, /* SpExportSecurityContext */
+    NULL  /* SpImportSecurityContext */
+};
+
+NTSTATUS NTAPI nego_SpUserModeInitialize(ULONG lsa_version, PULONG package_version,
+    PSECPKG_USER_FUNCTION_TABLE *table, PULONG table_count)
+{
+    TRACE("%#lx, %p, %p, %p\n", lsa_version, package_version, table, table_count);
+
+    *package_version = SECPKG_INTERFACE_VERSION;
+    *table = &nego_user_table;
+    *table_count = 1;
+    return STATUS_SUCCESS;
 }

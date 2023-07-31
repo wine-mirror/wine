@@ -71,6 +71,24 @@ static const char *debugstr_as(const LSA_STRING *str)
     return debugstr_an(str->Buffer, str->Length);
 }
 
+SECPKG_FUNCTION_TABLE *lsa_find_package(const char *name, SECPKG_USER_FUNCTION_TABLE **user_api)
+{
+    LSA_STRING package_name;
+    ULONG i;
+
+    RtlInitString(&package_name, name);
+
+    for (i = 0; i < loaded_packages_count; i++)
+    {
+        if (!RtlCompareString(loaded_packages[i].name, &package_name, FALSE))
+        {
+            *user_api = loaded_packages[i].user_api;
+            return loaded_packages[i].lsa_api;
+        }
+    }
+    return NULL;
+}
+
 NTSTATUS WINAPI LsaCallAuthenticationPackage(HANDLE lsa_handle, ULONG package_id,
         PVOID in_buffer, ULONG in_buffer_length,
         PVOID *out_buffer, PULONG out_buffer_length, PNTSTATUS status)
@@ -860,6 +878,39 @@ static void add_package(struct lsa_package *package)
     }
 }
 
+static BOOL initialize_package(struct lsa_package *package,
+                               NTSTATUS (NTAPI *pSpLsaModeInitialize)(ULONG, PULONG, PSECPKG_FUNCTION_TABLE *, PULONG),
+                               NTSTATUS (NTAPI *pSpUserModeInitialize)(ULONG, PULONG, PSECPKG_USER_FUNCTION_TABLE *, PULONG))
+{
+    NTSTATUS status;
+
+    if (!pSpLsaModeInitialize || !pSpUserModeInitialize)
+        return FALSE;
+
+    status = pSpLsaModeInitialize(SECPKG_INTERFACE_VERSION, &package->lsa_api_version, &package->lsa_api, &package->lsa_table_count);
+    if (status == STATUS_SUCCESS)
+    {
+        status = package->lsa_api->InitializePackage(package->package_id, &lsa_dispatch, NULL, NULL, &package->name);
+        if (status == STATUS_SUCCESS)
+        {
+            TRACE("name %s, version %#lx, api table %p, table count %lu\n",
+                  debugstr_an(package->name->Buffer, package->name->Length),
+                  package->lsa_api_version, package->lsa_api, package->lsa_table_count);
+
+            status = package->lsa_api->Initialize(package->package_id, NULL /* FIXME: params */, NULL);
+            if (status == STATUS_SUCCESS)
+            {
+                status = pSpUserModeInitialize(SECPKG_INTERFACE_VERSION, &package->user_api_version, &package->user_api, &package->user_table_count);
+                if (status == STATUS_SUCCESS)
+                    package->user_api->InstanceInit(SECPKG_INTERFACE_VERSION, &lsa_dll_dispatch, NULL);
+            }
+        }
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 static BOOL load_package(const WCHAR *name, struct lsa_package *package, ULONG package_id)
 {
     NTSTATUS (NTAPI *pSpLsaModeInitialize)(ULONG, PULONG, PSECPKG_FUNCTION_TABLE *, PULONG);
@@ -867,40 +918,15 @@ static BOOL load_package(const WCHAR *name, struct lsa_package *package, ULONG p
 
     memset(package, 0, sizeof(*package));
 
+    package->package_id = package_id;
     package->mod = LoadLibraryW(name);
     if (!package->mod) return FALSE;
 
     pSpLsaModeInitialize = (void *)GetProcAddress(package->mod, "SpLsaModeInitialize");
-    if (pSpLsaModeInitialize)
-    {
-        NTSTATUS status;
+    pSpUserModeInitialize = (void *)GetProcAddress(package->mod, "SpUserModeInitialize");
 
-        status = pSpLsaModeInitialize(SECPKG_INTERFACE_VERSION, &package->lsa_api_version, &package->lsa_api, &package->lsa_table_count);
-        if (status == STATUS_SUCCESS)
-        {
-            status = package->lsa_api->InitializePackage(package_id, &lsa_dispatch, NULL, NULL, &package->name);
-            if (status == STATUS_SUCCESS)
-            {
-                TRACE("%s => %p, name %s, version %#lx, api table %p, table count %lu\n",
-                    debugstr_w(name), package->mod, debugstr_an(package->name->Buffer, package->name->Length),
-                    package->lsa_api_version, package->lsa_api, package->lsa_table_count);
-                package->package_id = package_id;
-
-                status = package->lsa_api->Initialize(package_id, NULL /* FIXME: params */, NULL);
-                if (status == STATUS_SUCCESS)
-                {
-                    pSpUserModeInitialize = (void *)GetProcAddress(package->mod, "SpUserModeInitialize");
-                    if (pSpUserModeInitialize)
-                    {
-                        status = pSpUserModeInitialize(SECPKG_INTERFACE_VERSION, &package->user_api_version, &package->user_api, &package->user_table_count);
-                        if (status == STATUS_SUCCESS)
-                            package->user_api->InstanceInit(SECPKG_INTERFACE_VERSION, &lsa_dll_dispatch, NULL);
-                    }
-                }
-                return TRUE;
-            }
-        }
-    }
+    if (initialize_package(package, pSpLsaModeInitialize, pSpUserModeInitialize))
+        return TRUE;
 
     FreeLibrary(package->mod);
     return FALSE;
@@ -913,6 +939,14 @@ void load_auth_packages(void)
     DWORD err, i;
     HKEY root;
     SecureProvider *provider;
+    struct lsa_package package;
+
+    memset(&package, 0, sizeof(package));
+
+    /* "Negotiate" has package id 0, .Net depends on this. */
+    package.package_id = 0;
+    if (initialize_package(&package, nego_SpLsaModeInitialize, nego_SpUserModeInitialize))
+        add_package(&package);
 
     err = RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Lsa", 0, KEY_READ, &root);
     if (err != ERROR_SUCCESS) return;
@@ -921,19 +955,19 @@ void load_auth_packages(void)
     for (;;)
     {
         WCHAR name[MAX_SERVICE_NAME];
-        struct lsa_package package;
 
-        err = RegEnumKeyW(root, i++, name, MAX_SERVICE_NAME);
+        err = RegEnumKeyW(root, i, name, MAX_SERVICE_NAME);
         if (err == ERROR_NO_MORE_ITEMS)
             break;
 
         if (err != ERROR_SUCCESS)
             continue;
 
-        if (!load_package(name, &package, i))
+        if (!load_package(name, &package, i + 1))
             continue;
 
         add_package(&package);
+        i++;
     }
 
     RegCloseKey(root);
