@@ -66,6 +66,7 @@ struct sample_queue
     unsigned int front;
     unsigned int back;
     IMFSample *last_presented;
+    CRITICAL_SECTION cs;
 };
 
 struct streaming_thread
@@ -425,6 +426,7 @@ static HRESULT video_presenter_sample_queue_init(struct video_presenter *present
 
     queue->size = presenter->allocator_capacity;
     queue->back = queue->size - 1;
+    InitializeCriticalSection(&queue->cs);
 
     return S_OK;
 }
@@ -435,7 +437,7 @@ static void video_presenter_sample_queue_push(struct video_presenter *presenter,
     struct sample_queue *queue = &presenter->thread.queue;
     unsigned int idx;
 
-    EnterCriticalSection(&presenter->cs);
+    EnterCriticalSection(&queue->cs);
     if (queue->used != queue->size)
     {
         if (at_front)
@@ -446,14 +448,14 @@ static void video_presenter_sample_queue_push(struct video_presenter *presenter,
         queue->used++;
         IMFSample_AddRef(sample);
     }
-    LeaveCriticalSection(&presenter->cs);
+    LeaveCriticalSection(&queue->cs);
 }
 
 static BOOL video_presenter_sample_queue_pop(struct video_presenter *presenter, IMFSample **sample)
 {
     struct sample_queue *queue = &presenter->thread.queue;
 
-    EnterCriticalSection(&presenter->cs);
+    EnterCriticalSection(&queue->cs);
     if (queue->used)
     {
         *sample = queue->samples[queue->front];
@@ -462,7 +464,7 @@ static BOOL video_presenter_sample_queue_pop(struct video_presenter *presenter, 
     }
     else
         *sample = NULL;
-    LeaveCriticalSection(&presenter->cs);
+    LeaveCriticalSection(&queue->cs);
 
     return *sample != NULL;
 }
@@ -477,6 +479,7 @@ static void video_presenter_sample_queue_free(struct video_presenter *presenter)
         IMFSample_Release(sample);
 
     free(queue->samples);
+    DeleteCriticalSection(&queue->cs);
 }
 
 static HRESULT video_presenter_get_sample_surface(IMFSample *sample, IDirect3DSurface9 **surface)
@@ -502,6 +505,7 @@ static void video_presenter_sample_present(struct video_presenter *presenter, IM
 {
     IDirect3DSurface9 *surface, *backbuffer;
     IDirect3DDevice9 *device;
+    struct sample_queue *queue = &presenter->thread.queue;
     HRESULT hr;
 
     if (FAILED(hr = video_presenter_get_sample_surface(sample, &surface)))
@@ -527,12 +531,12 @@ static void video_presenter_sample_present(struct video_presenter *presenter, IM
             WARN("Failed to get a backbuffer, hr %#lx.\n", hr);
     }
 
-    EnterCriticalSection(&presenter->cs);
-    if (presenter->thread.queue.last_presented)
-        IMFSample_Release(presenter->thread.queue.last_presented);
-    presenter->thread.queue.last_presented = sample;
-    IMFSample_AddRef(presenter->thread.queue.last_presented);
-    LeaveCriticalSection(&presenter->cs);
+    EnterCriticalSection(&queue->cs);
+    if (queue->last_presented)
+        IMFSample_Release(queue->last_presented);
+    queue->last_presented = sample;
+    IMFSample_AddRef(queue->last_presented);
+    LeaveCriticalSection(&queue->cs);
 
     IDirect3DSurface9_Release(surface);
 }
