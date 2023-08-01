@@ -486,8 +486,9 @@ static ULONG WINAPI FilterGraphInner_Release(IUnknown *iface)
         }
         LeaveCriticalSection(&message_cs);
 
-        This->cs.DebugInfo->Spare[0] = 0;
+        This->event_cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->event_cs);
+        This->cs.DebugInfo->Spare[0] = 0;
 	DeleteCriticalSection(&This->cs);
         free(This);
     }

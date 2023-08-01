@@ -333,13 +333,14 @@ static void async_reader_destroy(struct strmbase_filter *iface)
             free(filter->requests);
         }
         CloseHandle(filter->file);
-        filter->sample_cs.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection(&filter->sample_cs);
         strmbase_source_cleanup(&filter->source);
 
         free(filter->pszFileName);
         FreeMediaType(&filter->mt);
     }
+
+    filter->sample_cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&filter->sample_cs);
 
     PostQueuedCompletionStatus(filter->port, 0, 1, NULL);
     WaitForSingleObject(filter->io_thread, INFINITE);
