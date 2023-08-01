@@ -1525,6 +1525,8 @@ static void test_connect_pin(void)
     ok(testsource.source.pin.peer == sink, "Got peer %p.\n", testsource.source.pin.peer);
     IFilterGraph2_Disconnect(graph, &testsource.source.pin.IPin_iface);
 
+    FreeMediaType(&source_mt);
+    FreeMediaType(&req_mt);
     IMemInputPin_Release(meminput);
     IPin_Release(sink);
     IPin_Release(source);
