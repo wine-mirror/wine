@@ -235,6 +235,9 @@ static BOOL dump_value(unsigned int hive_off, unsigned int off)
 
     switch (val->data_type)
     {
+    case REG_EXPAND_SZ:
+        printf("str(2):");
+        /* fall through */
     case REG_SZ:
         printf("%s", !data ? "\"\"" :
                 get_unicode_str((const WCHAR *)data, data_size / sizeof(WCHAR)));
