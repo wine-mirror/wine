@@ -65,7 +65,7 @@ void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix 
 
 static char* dump_want_n(unsigned sz)
 {
-    static char         buffer[4 * 1024];
+    static char         buffer[64 * 1024];
     static unsigned     idx;
     char*               ret;
 
