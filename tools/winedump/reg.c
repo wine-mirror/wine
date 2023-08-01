@@ -258,9 +258,10 @@ static BOOL dump_value(unsigned int hive_off, unsigned int off)
         printf("%s", !data ? "\"\"" :
                 get_unicode_str((const WCHAR *)data, data_size / sizeof(WCHAR)));
         break;
+    case REG_QWORD:
     case REG_BINARY:
-        printf("hex:");
-        len += 4; /* strlen("hex:") */
+        printf("hex%s:", val->data_type == REG_QWORD ? "(b)" : "");
+        len += 4 + (val->data_type == REG_QWORD ? 3 : 0);
         for (i = 0; i < data_size; i++)
         {
             if (i)
