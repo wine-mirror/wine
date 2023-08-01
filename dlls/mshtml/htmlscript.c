@@ -423,13 +423,7 @@ static void HTMLScriptElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTrav
 static void HTMLScriptElement_unlink(HTMLDOMNode *iface)
 {
     HTMLScriptElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nsscript) {
-        nsIDOMHTMLScriptElement *nsscript = This->nsscript;
-
-        This->nsscript = NULL;
-        nsIDOMHTMLScriptElement_Release(nsscript);
-    }
+    unlink_ref(&This->nsscript);
 }
 
 static const NodeImplVtbl HTMLScriptElementImplVtbl = {

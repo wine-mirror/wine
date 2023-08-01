@@ -485,13 +485,7 @@ static void HTMLTableCell_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversa
 static void HTMLTableCell_unlink(HTMLDOMNode *iface)
 {
     HTMLTableCell *This = HTMLTableCell_from_HTMLDOMNode(iface);
-
-    if(This->nscell) {
-        nsIDOMHTMLTableCellElement *nscell = This->nscell;
-
-        This->nscell = NULL;
-        nsIDOMHTMLTableCellElement_Release(nscell);
-    }
+    unlink_ref(&This->nscell);
 }
 
 static const NodeImplVtbl HTMLTableCellImplVtbl = {
@@ -931,13 +925,7 @@ static void HTMLTableRow_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversal
 static void HTMLTableRow_unlink(HTMLDOMNode *iface)
 {
     HTMLTableRow *This = HTMLTableRow_from_HTMLDOMNode(iface);
-
-    if(This->nsrow) {
-        nsIDOMHTMLTableRowElement *nsrow = This->nsrow;
-
-        This->nsrow = NULL;
-        nsIDOMHTMLTableRowElement_Release(nsrow);
-    }
+    unlink_ref(&This->nsrow);
 }
 
 static const NodeImplVtbl HTMLTableRowImplVtbl = {
@@ -1957,13 +1945,7 @@ static void HTMLTable_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCal
 static void HTMLTable_unlink(HTMLDOMNode *iface)
 {
     HTMLTable *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nstable) {
-        nsIDOMHTMLTableElement *nstable = This->nstable;
-
-        This->nstable = NULL;
-        nsIDOMHTMLTableElement_Release(nstable);
-    }
+    unlink_ref(&This->nstable);
 }
 
 static const cpc_entry_t HTMLTable_cpc[] = {

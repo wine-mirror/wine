@@ -929,12 +929,7 @@ static void HTMLBodyElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraver
 static void HTMLBodyElement_unlink(HTMLDOMNode *iface)
 {
     HTMLBodyElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nsbody) {
-        nsIDOMHTMLBodyElement *nsbody = This->nsbody;
-        This->nsbody = NULL;
-        nsIDOMHTMLBodyElement_Release(nsbody);
-    }
+    unlink_ref(&This->nsbody);
 }
 
 static EventTarget *HTMLBodyElement_get_event_prop_target(HTMLDOMNode *iface, int event_id)

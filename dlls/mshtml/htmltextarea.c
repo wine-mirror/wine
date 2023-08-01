@@ -443,13 +443,7 @@ static void HTMLTextAreaElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTr
 static void HTMLTextAreaElement_unlink(HTMLDOMNode *iface)
 {
     HTMLTextAreaElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nstextarea) {
-        nsIDOMHTMLTextAreaElement *nstextarea = This->nstextarea;
-
-        This->nstextarea = NULL;
-        nsIDOMHTMLTextAreaElement_Release(nstextarea);
-    }
+    unlink_ref(&This->nstextarea);
 }
 
 static const NodeImplVtbl HTMLTextAreaElementImplVtbl = {

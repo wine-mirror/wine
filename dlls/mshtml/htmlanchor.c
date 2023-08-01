@@ -864,13 +864,7 @@ static void HTMLAnchorElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTrav
 static void HTMLAnchorElement_unlink(HTMLDOMNode *iface)
 {
     HTMLAnchorElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nsanchor) {
-        nsIDOMHTMLAnchorElement *nsanchor = This->nsanchor;
-
-        This->nsanchor = NULL;
-        nsIDOMHTMLAnchorElement_Release(nsanchor);
-    }
+    unlink_ref(&This->nsanchor);
 }
 
 static const NodeImplVtbl HTMLAnchorElementImplVtbl = {

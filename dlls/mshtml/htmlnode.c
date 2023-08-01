@@ -1597,12 +1597,7 @@ static nsresult NSAPI HTMLDOMNode_unlink(void *p)
         This->vtbl->unlink(This);
 
     dispex_unlink(&This->event_target.dispex);
-
-    if(This->nsnode) {
-        nsIDOMNode *nsnode = This->nsnode;
-        This->nsnode = NULL;
-        nsIDOMNode_Release(nsnode);
-    }
+    unlink_ref(&This->nsnode);
 
     if(This->doc && &This->doc->node != This) {
         HTMLDocumentNode *doc = This->doc;

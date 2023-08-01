@@ -448,41 +448,17 @@ static HRESULT WINAPI DocObjOleObject_SetClientSite(IOleObject *iface, IOleClien
     if(pClientSite == This->client)
         return S_OK;
 
-    if(This->client) {
-        IOleClientSite_Release(This->client);
-        This->client = NULL;
+    if(This->client)
         This->nscontainer->usermode = UNKNOWN_USERMODE;
-    }
 
-    if(This->client_cmdtrg) {
-        IOleCommandTarget_Release(This->client_cmdtrg);
-        This->client_cmdtrg = NULL;
-    }
-
-    if(This->hostui && !This->custom_hostui) {
-        IDocHostUIHandler_Release(This->hostui);
-        This->hostui = NULL;
-    }
-
-    if(This->doc_object_service) {
-        IDocObjectService_Release(This->doc_object_service);
-        This->doc_object_service = NULL;
-    }
-
-    if(This->webbrowser) {
-        IUnknown_Release(This->webbrowser);
-        This->webbrowser = NULL;
-    }
-
-    if(This->browser_service) {
-        IUnknown_Release(This->browser_service);
-        This->browser_service = NULL;
-    }
-
-    if(This->travel_log) {
-        ITravelLog_Release(This->travel_log);
-        This->travel_log = NULL;
-    }
+    unlink_ref(&This->client);
+    unlink_ref(&This->client_cmdtrg);
+    if(!This->custom_hostui)
+        unlink_ref(&This->hostui);
+    unlink_ref(&This->doc_object_service);
+    unlink_ref(&This->webbrowser);
+    unlink_ref(&This->browser_service);
+    unlink_ref(&This->travel_log);
 
     memset(&This->hostinfo, 0, sizeof(DOCHOSTUIINFO));
 
@@ -1617,11 +1593,7 @@ static HRESULT WINAPI DocObjOleInPlaceObjectWindowless_InPlaceDeactivate(IOleInP
     if(!This->in_place_active)
         return S_OK;
 
-    if(This->frame) {
-        IOleInPlaceFrame_Release(This->frame);
-        This->frame = NULL;
-    }
-
+    unlink_ref(&This->frame);
     if(This->hwnd) {
         ShowWindow(This->hwnd, SW_HIDE);
         SetWindowPos(This->hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);

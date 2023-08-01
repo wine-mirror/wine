@@ -740,13 +740,7 @@ static void HTMLObjectElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTrav
 static void HTMLObjectElement_unlink(HTMLDOMNode *iface)
 {
     HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nsobject) {
-        nsIDOMHTMLObjectElement *nsobject = This->nsobject;
-
-        This->nsobject = NULL;
-        nsIDOMHTMLObjectElement_Release(nsobject);
-    }
+    unlink_ref(&This->nsobject);
 }
 
 static const NodeImplVtbl HTMLObjectElementImplVtbl = {

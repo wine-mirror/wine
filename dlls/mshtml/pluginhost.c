@@ -1515,15 +1515,8 @@ static ULONG WINAPI PHClientSite_AddRef(IOleClientSite *iface)
 
 static void release_plugin_ifaces(PluginHost *This)
 {
-    if(This->disp) {
-        IDispatch_Release(This->disp);
-        This->disp = NULL;
-    }
-
-    if(This->ip_object) {
-        IOleInPlaceObject_Release(This->ip_object);
-        This->ip_object = NULL;
-    }
+    unlink_ref(&This->disp);
+    unlink_ref(&This->ip_object);
 
     if(This->plugin_unk) {
         IUnknown *unk = This->plugin_unk;
@@ -1970,11 +1963,7 @@ static HRESULT WINAPI PHInPlaceSite_OnInPlaceDeactivate(IOleInPlaceSiteEx *iface
 
     TRACE("(%p)\n", This);
 
-    if(This->ip_object) {
-        IOleInPlaceObject_Release(This->ip_object);
-        This->ip_object = NULL;
-    }
-
+    unlink_ref(&This->ip_object);
     return S_OK;
 }
 

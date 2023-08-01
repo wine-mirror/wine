@@ -1246,10 +1246,7 @@ static nsresult NSAPI nsChannel_SetReferrerWithPolicy(nsIHttpChannel *iface, nsI
     if(aReferrerPolicy)
         FIXME("refferer policy %d not implemented\n", aReferrerPolicy);
 
-    if(This->referrer) {
-        nsIURI_Release(This->referrer);
-        This->referrer = NULL;
-    }
+    unlink_ref(&This->referrer);
     if(!aReferrer)
         return NS_OK;
 
@@ -2283,42 +2280,13 @@ static nsresult NSAPI nsChannel_unlink(void *p)
 
     TRACE("%p\n", This);
 
-    if(This->owner) {
-        nsISupports *owner = This->owner;
-        This->owner = NULL;
-        nsISupports_Release(owner);
-    }
-    if(This->post_data_stream) {
-        nsIInputStream *post_data_stream = This->post_data_stream;
-        This->post_data_stream = NULL;
-        nsIInputStream_Release(post_data_stream);
-    }
-    if(This->load_info) {
-        nsISupports *load_info = This->load_info;
-        This->load_info = NULL;
-        nsISupports_Release(load_info);
-    }
-    if(This->load_group) {
-        nsILoadGroup *load_group = This->load_group;
-        This->load_group = NULL;
-        nsILoadGroup_Release(load_group);
-    }
-    if(This->notif_callback) {
-        nsIInterfaceRequestor *notif_callback = This->notif_callback;
-        This->notif_callback = NULL;
-        nsIInterfaceRequestor_Release(notif_callback);
-    }
-    if(This->original_uri) {
-        nsIURI *original_uri = This->original_uri;
-        This->original_uri = NULL;
-        nsIURI_Release(original_uri);
-    }
-    if(This->referrer) {
-        nsIURI *referrer = This->referrer;
-        This->referrer = NULL;
-        nsIURI_Release(referrer);
-    }
-
+    unlink_ref(&This->owner);
+    unlink_ref(&This->post_data_stream);
+    unlink_ref(&This->load_info);
+    unlink_ref(&This->load_group);
+    unlink_ref(&This->notif_callback);
+    unlink_ref(&This->original_uri);
+    unlink_ref(&This->referrer);
     return NS_OK;
 }
 
@@ -2336,14 +2304,6 @@ static void NSAPI nsChannel_delete_cycle_collectable(void *p)
     free(This->content_type);
     free(This->charset);
     free(This);
-}
-
-static void invalidate_uri(nsWineURI *This)
-{
-    if(This->uri) {
-        IUri_Release(This->uri);
-        This->uri = NULL;
-    }
 }
 
 static BOOL ensure_uri_builder(nsWineURI *This)
@@ -2366,7 +2326,7 @@ static BOOL ensure_uri_builder(nsWineURI *This)
         }
     }
 
-    invalidate_uri(This);
+    unlink_ref(&This->uri);
     return TRUE;
 }
 
@@ -2501,11 +2461,8 @@ static nsresult NSAPI nsURI_SetSpec(nsIFileURL *iface, const nsACString *aSpec)
         return NS_ERROR_FAILURE;
     }
 
-    invalidate_uri(This);
-    if(This->uri_builder) {
-        IUriBuilder_Release(This->uri_builder);
-        This->uri_builder = NULL;
-    }
+    unlink_ref(&This->uri);
+    unlink_ref(&This->uri_builder);
 
     This->uri = uri;
     return NS_OK;

@@ -393,11 +393,7 @@ static void HTMLStyleElement_destructor(HTMLDOMNode *iface)
 {
     HTMLStyleElement *This = impl_from_HTMLDOMNode(iface);
 
-    if(This->style_sheet) {
-        IHTMLStyleSheet_Release(This->style_sheet);
-        This->style_sheet = NULL;
-    }
-
+    unlink_ref(&This->style_sheet);
     HTMLElement_destructor(iface);
 }
 
@@ -412,13 +408,7 @@ static void HTMLStyleElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTrave
 static void HTMLStyleElement_unlink(HTMLDOMNode *iface)
 {
     HTMLStyleElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nsstyle) {
-        nsIDOMHTMLStyleElement *nsstyle = This->nsstyle;
-
-        This->nsstyle = NULL;
-        nsIDOMHTMLStyleElement_Release(nsstyle);
-    }
+    unlink_ref(&This->nsstyle);
 }
 
 static void HTMLStyleElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)

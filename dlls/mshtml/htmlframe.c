@@ -1003,13 +1003,7 @@ static void HTMLFrameElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTrave
 static void HTMLFrameElement_unlink(HTMLDOMNode *iface)
 {
     HTMLFrameElement *This = frame_from_HTMLDOMNode(iface);
-
-    if(This->framebase.nsframe) {
-        nsIDOMHTMLFrameElement *nsframe = This->framebase.nsframe;
-
-        This->framebase.nsframe = NULL;
-        nsIDOMHTMLFrameElement_Release(nsframe);
-    }
+    unlink_ref(&This->framebase.nsframe);
 }
 
 static const NodeImplVtbl HTMLFrameElementImplVtbl = {
@@ -1596,13 +1590,7 @@ static void HTMLIFrame_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCa
 static void HTMLIFrame_unlink(HTMLDOMNode *iface)
 {
     HTMLIFrame *This = iframe_from_HTMLDOMNode(iface);
-
-    if(This->framebase.nsiframe) {
-        nsIDOMHTMLIFrameElement *nsiframe = This->framebase.nsiframe;
-
-        This->framebase.nsiframe = NULL;
-        nsIDOMHTMLIFrameElement_Release(nsiframe);
-    }
+    unlink_ref(&This->framebase.nsiframe);
 }
 
 static const NodeImplVtbl HTMLIFrameImplVtbl = {

@@ -75,16 +75,8 @@ static void notify_travellog_update(HTMLDocumentObj *doc)
 
 void set_current_uri(HTMLOuterWindow *window, IUri *uri)
 {
-    if(window->uri) {
-        IUri_Release(window->uri);
-        window->uri = NULL;
-    }
-
-    if(window->uri_nofrag) {
-        IUri_Release(window->uri_nofrag);
-        window->uri_nofrag = NULL;
-    }
-
+    unlink_ref(&window->uri);
+    unlink_ref(&window->uri_nofrag);
     SysFreeString(window->url);
     window->url = NULL;
 

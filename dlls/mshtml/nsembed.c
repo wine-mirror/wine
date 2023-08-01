@@ -1217,15 +1217,8 @@ void setup_editor_controller(GeckoBrowser *This)
     nsIControllerContext *ctrlctx;
     nsresult nsres;
 
-    if(This->editor) {
-        nsIEditor_Release(This->editor);
-        This->editor = NULL;
-    }
-
-    if(This->editor_controller) {
-        nsIController_Release(This->editor_controller);
-        This->editor_controller = NULL;
-    }
+    unlink_ref(&This->editor);
+    unlink_ref(&This->editor_controller);
 
     nsres = get_nsinterface((nsISupports*)This->webbrowser, &IID_nsIEditingSession,
             (void**)&editing_session);

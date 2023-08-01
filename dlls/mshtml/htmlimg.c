@@ -693,13 +693,7 @@ static void HTMLImgElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTravers
 static void HTMLImgElement_unlink(HTMLDOMNode *iface)
 {
     HTMLImg *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nsimg) {
-        nsIDOMHTMLImageElement *nsimg = This->nsimg;
-
-        This->nsimg = NULL;
-        nsIDOMHTMLImageElement_Release(nsimg);
-    }
+    unlink_ref(&This->nsimg);
 }
 
 static const NodeImplVtbl HTMLImgElementImplVtbl = {

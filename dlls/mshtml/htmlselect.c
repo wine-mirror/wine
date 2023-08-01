@@ -382,13 +382,7 @@ static void HTMLOptionElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTrav
 static void HTMLOptionElement_unlink(HTMLDOMNode *iface)
 {
     HTMLOptionElement *This = HTMLOptionElement_from_HTMLDOMNode(iface);
-
-    if(This->nsoption) {
-        nsIDOMHTMLOptionElement *nsoption = This->nsoption;
-
-        This->nsoption = NULL;
-        nsIDOMHTMLOptionElement_Release(nsoption);
-    }
+    unlink_ref(&This->nsoption);
 }
 
 static const NodeImplVtbl HTMLOptionElementImplVtbl = {
@@ -1458,13 +1452,7 @@ static void HTMLSelectElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTrav
 static void HTMLSelectElement_unlink(HTMLDOMNode *iface)
 {
     HTMLSelectElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nsselect) {
-        nsIDOMHTMLSelectElement *nsselect = This->nsselect;
-
-        This->nsselect = NULL;
-        nsIDOMHTMLSelectElement_Release(nsselect);
-    }
+    unlink_ref(&This->nsselect);
 }
 
 static const NodeImplVtbl HTMLSelectElementImplVtbl = {

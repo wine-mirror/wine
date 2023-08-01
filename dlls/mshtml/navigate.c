@@ -335,15 +335,8 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
 
     hres = This->vtbl->stop_binding(This, hresult);
 
-    if(This->binding) {
-        IBinding_Release(This->binding);
-        This->binding = NULL;
-    }
-
-    if(This->mon) {
-        IMoniker_Release(This->mon);
-        This->mon = NULL;
-    }
+    unlink_ref(&This->binding);
+    unlink_ref(&This->mon);
 
     list_remove(&This->entry);
     list_init(&This->entry);
@@ -2016,10 +2009,7 @@ void abort_window_bindings(HTMLInnerWindow *window)
         window->bscallback = NULL;
     }
 
-    if(window->mon) {
-        IMoniker_Release(window->mon);
-        window->mon = NULL;
-    }
+    unlink_ref(&window->mon);
 }
 
 HRESULT channelbsc_load_stream(HTMLInnerWindow *pending_window, IMoniker *mon, IStream *stream)

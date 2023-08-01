@@ -257,15 +257,8 @@ static void release_script_engine(ScriptHost *This)
         IActiveScript_Close(This->script);
 
     default:
-        if(This->parse_proc) {
-            IActiveScriptParseProcedure2_Release(This->parse_proc);
-            This->parse_proc = NULL;
-        }
-
-        if(This->parse) {
-            IActiveScriptParse_Release(This->parse);
-            This->parse = NULL;
-        }
+        unlink_ref(&This->parse_proc);
+        unlink_ref(&This->parse);
     }
 
     IActiveScript_Release(This->script);

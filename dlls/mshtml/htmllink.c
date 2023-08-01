@@ -412,13 +412,7 @@ static void HTMLLinkElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraver
 static void HTMLLinkElement_unlink(HTMLDOMNode *iface)
 {
     HTMLLinkElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nslink) {
-        nsIDOMHTMLLinkElement *nslink = This->nslink;
-
-        This->nslink = NULL;
-        nsIDOMHTMLLinkElement_Release(nslink);
-    }
+    unlink_ref(&This->nslink);
 }
 static const NodeImplVtbl HTMLLinkElementImplVtbl = {
     &CLSID_HTMLLinkElement,

@@ -293,10 +293,7 @@ static void handle_docobj_load(HTMLDocumentObj *doc)
     IOleCommandTarget *olecmd = NULL;
     HRESULT hres;
 
-    if(doc->nscontainer->editor_controller) {
-        nsIController_Release(doc->nscontainer->editor_controller);
-        doc->nscontainer->editor_controller = NULL;
-    }
+    unlink_ref(&doc->nscontainer->editor_controller);
 
     if(doc->nscontainer->usermode == EDITMODE)
         setup_editor_controller(doc->nscontainer);

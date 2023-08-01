@@ -969,13 +969,7 @@ static void HTMLFormElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraver
 static void HTMLFormElement_unlink(HTMLDOMNode *iface)
 {
     HTMLFormElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nsform) {
-        nsIDOMHTMLFormElement *nsform = This->nsform;
-
-        This->nsform = NULL;
-        nsIDOMHTMLFormElement_Release(nsform);
-    }
+    unlink_ref(&This->nsform);
 }
 
 static const NodeImplVtbl HTMLFormElementImplVtbl = {

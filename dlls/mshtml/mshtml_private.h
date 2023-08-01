@@ -1483,6 +1483,16 @@ static inline BOOL is_power_of_2(unsigned x)
     return !(x & (x - 1));
 }
 
+static inline void unlink_ref(void *p)
+{
+    IUnknown **ref = p;
+    if(*ref) {
+        IUnknown *unk = *ref;
+        *ref = NULL;
+        IUnknown_Release(unk);
+    }
+}
+
 #ifdef __i386__
 extern void *call_thiscall_func;
 #endif
