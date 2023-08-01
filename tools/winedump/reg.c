@@ -193,6 +193,7 @@ static BOOL dump_subkeys(unsigned int hive_off, unsigned int off)
 static BOOL dump_value(unsigned int hive_off, unsigned int off)
 {
     const void *data = NULL;
+    unsigned int data_size;
     const value_key *val;
     const char *name;
 
@@ -219,9 +220,15 @@ static BOOL dump_value(unsigned int hive_off, unsigned int off)
         printf("@=");
     }
 
-    if (val->data_size)
+    data_size = val->data_size;
+    if (data_size & 0x80000000)
     {
-        data = PRD(hive_off + val->data_off + sizeof(unsigned int), val->data_size);
+        data = &val->data_off;
+        data_size &= ~0x80000000;
+    }
+    else if (data_size)
+    {
+        data = PRD(hive_off + val->data_off + sizeof(unsigned int), data_size);
         if (!data)
             return FALSE;
     }
@@ -230,7 +237,7 @@ static BOOL dump_value(unsigned int hive_off, unsigned int off)
     {
     case REG_SZ:
         printf("%s", !data ? "" :
-                get_unicode_str((const WCHAR *)data, val->data_size / sizeof(WCHAR)));
+                get_unicode_str((const WCHAR *)data, data_size / sizeof(WCHAR)));
         break;
     default:
         printf("unhandled data type %d", val->data_type);
