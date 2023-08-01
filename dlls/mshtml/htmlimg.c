@@ -808,10 +808,8 @@ static ULONG WINAPI HTMLImageElementFactory_Release(IHTMLImageElementFactory *if
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
+    if(!ref)
         release_dispex(&This->dispex);
-        free(This);
-    }
 
     return ref;
 }
@@ -941,6 +939,12 @@ static inline HTMLImageElementFactory *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLImageElementFactory, dispex);
 }
 
+static void HTMLImageElementFactory_destructor(DispatchEx *dispex)
+{
+    HTMLImageElementFactory *This = impl_from_DispatchEx(dispex);
+    free(This);
+}
+
 static HRESULT HTMLImageElementFactory_value(DispatchEx *dispex, LCID lcid,
         WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei,
         IServiceProvider *caller)
@@ -975,7 +979,7 @@ static const tid_t HTMLImageElementFactory_iface_tids[] = {
 };
 
 static const dispex_static_data_vtbl_t HTMLImageElementFactory_dispex_vtbl = {
-    NULL,
+    HTMLImageElementFactory_destructor,
     NULL,
     HTMLImageElementFactory_value,
     NULL,
