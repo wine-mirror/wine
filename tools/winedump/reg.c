@@ -239,6 +239,10 @@ static BOOL dump_value(unsigned int hive_off, unsigned int off)
         printf("%s", !data ? "" :
                 get_unicode_str((const WCHAR *)data, data_size / sizeof(WCHAR)));
         break;
+    case REG_DWORD:
+        assert(data_size == sizeof(DWORD));
+        printf("dword:%08x", *(unsigned int *)data);
+        break;
     default:
         printf("unhandled data type %d", val->data_type);
     }
