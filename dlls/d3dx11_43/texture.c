@@ -89,3 +89,12 @@ HRESULT WINAPI D3DX11SaveTextureToMemory(ID3D11DeviceContext *context, ID3D11Res
 
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI D3DX11LoadTextureFromTexture(ID3D11DeviceContext *context, ID3D11Resource *src_texture,
+        D3DX11_TEXTURE_LOAD_INFO *info, ID3D11Resource *dst_texture)
+{
+    FIXME("context %p, src_texture %p, info %p, dst_texture %p stub!\n",
+            context, src_texture, info, dst_texture);
+
+    return E_NOTIMPL;
+}

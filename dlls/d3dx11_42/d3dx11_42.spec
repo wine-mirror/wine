@@ -32,7 +32,7 @@
 @ stdcall D3DX11GetImageInfoFromMemory(ptr long ptr ptr ptr)
 @ stub D3DX11GetImageInfoFromResourceA
 @ stub D3DX11GetImageInfoFromResourceW
-@ stub D3DX11LoadTextureFromTexture
+@ stdcall D3DX11LoadTextureFromTexture(ptr ptr ptr ptr)
 @ stub D3DX11PreprocessShaderFromFileA
 @ stub D3DX11PreprocessShaderFromFileW
 @ stub D3DX11PreprocessShaderFromMemory
