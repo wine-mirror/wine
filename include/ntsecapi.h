@@ -356,6 +356,27 @@ typedef struct _AUDIT_POLICY_INFORMATION
     GUID    AuditCategoryGuid;
 } AUDIT_POLICY_INFORMATION, *PAUDIT_POLICY_INFORMATION;
 
+enum NEGOTIATE_MESSAGES
+{
+    NegEnumPackagePrefixes,
+    NegGetCallerName,
+    NegTransferCredentials,
+    NegMsgReserved1,
+    NegCallPackageMax
+};
+
+typedef struct _NEGOTIATE_CALLER_NAME_REQUEST
+{
+    ULONG MessageType;
+    LUID LogonId;
+} NEGOTIATE_CALLER_NAME_REQUEST, *PNEGOTIATE_CALLER_NAME_REQUEST;
+
+typedef struct _NEGOTIATE_CALLER_NAME_RESPONSE
+{
+    ULONG MessageType;
+    PWSTR CallerName;
+} NEGOTIATE_CALLER_NAME_RESPONSE, *PNEGOTIATE_CALLER_NAME_RESPONSE;
+
 #define MICROSOFT_KERBEROS_NAME_A "Kerberos"
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #define MICROSOFT_KERBEROS_NAME_W L"Kerberos"

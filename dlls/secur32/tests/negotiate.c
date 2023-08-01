@@ -21,6 +21,9 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+
+#include <ntstatus.h>
+#define WIN32_NO_STATUS
 #include <windef.h>
 #include <winbase.h>
 #define SECURITY_WIN32
@@ -28,6 +31,9 @@
 #include <rpc.h>
 #include <rpcdce.h>
 #include <secext.h>
+#include <security.h>
+#include <ntsecapi.h>
+#include <winternl.h>
 
 #include "wine/test.h"
 
@@ -346,6 +352,77 @@ done:
     }
 }
 
+static void test_Negotiate(void)
+{
+    HANDLE lsa;
+    NTSTATUS status, call_status;
+    LSA_STRING name;
+    ULONG size, id;
+    NEGOTIATE_CALLER_NAME_REQUEST req;
+    NEGOTIATE_CALLER_NAME_RESPONSE *resp;
+
+    status = LsaConnectUntrusted(&lsa);
+    ok(!status, "got %08lx\n", status);
+
+    RtlInitAnsiString(&name, "Negotiate");
+    id = 0xdeadbeef;
+    status = LsaLookupAuthenticationPackage(lsa, &name, &id);
+    ok(!status, "got %08lx\n", status);
+    ok(id == 0, "got %lu\n", id);
+
+    req.MessageType = NegGetCallerName;
+    req.LogonId.LowPart = 0;
+    req.LogonId.HighPart = 0;
+    resp = (void *)(ULONG_PTR)0xdeadbeef;
+    size = 0xdeadbeef;
+    call_status = 0xdeadbeef;
+    status = LsaCallAuthenticationPackage(lsa, 0, &req, sizeof(req), (void **)&resp, &size, &call_status);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    ok(call_status == STATUS_NO_SUCH_LOGON_SESSION || call_status == STATUS_SUCCESS, "got %08lx\n", call_status);
+    if (call_status == STATUS_NO_SUCH_LOGON_SESSION)
+    {
+        ok(size == 0, "got %lu\n", size);
+        ok(resp == NULL, "got %p\n", resp);
+    }
+    else /* STATUS_SUCCESS */
+    {
+        if (resp && resp->CallerName)
+            trace("resp->CallerName = %s\n", debugstr_w(resp->CallerName));
+        ok(resp != NULL, "got NULL\n");
+        ok(resp->MessageType == NegGetCallerName, "got %lu\n", resp->MessageType);
+        ok((char *)resp->CallerName >= (char *)(resp + 1), "got %p/%p\n", resp, resp->CallerName);
+        ok(size >= sizeof(*resp) + (wcslen(resp->CallerName) + 1) * sizeof(WCHAR), "got %lu\n", size);
+    }
+
+    size = 0xdeadbeef;
+    call_status = 0xdeadbeef;
+    status = LsaCallAuthenticationPackage(lsa, 0, NULL, 0, NULL, &size, &call_status);
+    ok(status == STATUS_INVALID_PARAMETER, "got %08lx\n", status);
+    ok(call_status == STATUS_SUCCESS, "got %08lx\n", call_status);
+    ok(size == 0, "got %08lx\n", size);
+
+    size = 0xdeadbeef;
+    status = LsaCallAuthenticationPackage(lsa, 0, NULL, 0, NULL, &size, NULL);
+    ok(status == STATUS_INVALID_PARAMETER, "got %08lx\n", status);
+    ok(size == 0, "got %08lx\n", size);
+
+    call_status = 0xdeadbeef;
+    status = LsaCallAuthenticationPackage(lsa, 0, NULL, 0, NULL, NULL, &call_status);
+    ok(status == STATUS_INVALID_PARAMETER, "got %08lx\n", status);
+    ok(call_status == STATUS_SUCCESS, "got %08lx\n", call_status);
+
+    resp = (void *)(ULONG_PTR)0xdeadbeef;
+    size = 0xdeadbeef;
+    call_status = 0xdeadbeef;
+    status = LsaCallAuthenticationPackage(lsa, 0xdeadbeef, NULL, 0, (void **)&resp, &size, &call_status);
+    ok(status == STATUS_NO_SUCH_PACKAGE, "got %08lx\n", status);
+    ok(call_status == STATUS_SUCCESS, "got %08lx\n", call_status);
+    ok(size == 0, "got %08lx\n", size);
+    ok(resp == NULL, "got %p\n", resp);
+
+    LsaDeregisterLogonProcess(lsa);
+}
+
 START_TEST(negotiate)
 {
     SecPkgInfoA *info;
@@ -367,4 +444,5 @@ START_TEST(negotiate)
     FreeContextBuffer( info );
 
     test_authentication();
+    test_Negotiate();
 }
