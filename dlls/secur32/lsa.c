@@ -685,6 +685,7 @@ static SECURITY_STATUS WINAPI lsa_QueryContextAttributesA(CtxtHandle *context, U
     switch (attribute)
     {
     case SECPKG_ATTR_SIZES:
+    case SECPKG_ATTR_SESSION_KEY:
         return lsa_QueryContextAttributesW( context, attribute, buffer );
 
     case SECPKG_ATTR_NEGOTIATION_INFO:
@@ -721,7 +722,6 @@ static SECURITY_STATUS WINAPI lsa_QueryContextAttributesA(CtxtHandle *context, U
     X(SECPKG_ATTR_NATIVE_NAMES);
     X(SECPKG_ATTR_PACKAGE_INFO);
     X(SECPKG_ATTR_PASSWORD_EXPIRY);
-    X(SECPKG_ATTR_SESSION_KEY);
     X(SECPKG_ATTR_STREAM_SIZES);
     X(SECPKG_ATTR_TARGET_INFORMATION);
 #undef X
