@@ -555,7 +555,7 @@ interface IXAudio2 : IUnknown
 #endif
         [in, defaultvalue(NULL)] const XAUDIO2_EFFECT_CHAIN* pEffectChain
 #if XAUDIO2_VER >= 8
-        , AUDIO_STREAM_CATEGORY category
+        , [in, defaultvalue(AudioCategory_GameEffects)] AUDIO_STREAM_CATEGORY category
 #endif
         );
 
