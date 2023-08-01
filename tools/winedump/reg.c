@@ -194,8 +194,8 @@ static BOOL dump_value(unsigned int hive_off, unsigned int off)
 {
     unsigned int i, len, data_size;
     const void *data = NULL;
+    const char *name, *str;
     const value_key *val;
-    const char *name;
 
     val = PRD(hive_off + off, sizeof(*val));
     if (!val || memcmp(&val->signature, "vk", 2))
@@ -268,6 +268,22 @@ static BOOL dump_value(unsigned int hive_off, unsigned int off)
     case REG_DWORD:
         assert(data_size == sizeof(DWORD));
         printf("dword:%08x", *(unsigned int *)data);
+        break;
+    case REG_MULTI_SZ:
+        printf("str(7):\"");
+
+        while(data_size > sizeof(WCHAR))
+        {
+            for (len = 0; len < data_size / sizeof(WCHAR); len++)
+                if (!((WCHAR *)data)[len])
+                    break;
+            str = get_unicode_str(data, len);
+
+            printf("%.*s\\0", (unsigned int)strlen(str + 1) - 1, str + 1);
+            data = ((WCHAR *)data) + len + 1;
+            data_size -= (len + 1) * sizeof(WCHAR);
+        }
+        printf("\"");
         break;
     default:
         printf("unhandled data type %d", val->data_type);
