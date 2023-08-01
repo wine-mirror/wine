@@ -1270,6 +1270,8 @@ static HRESULT HTMLRectCollection_invoke(DispatchEx *dispex, DISPID id, LCID lci
 
 static const dispex_static_data_vtbl_t HTMLRectCollection_dispex_vtbl = {
     NULL,
+    NULL,
+    NULL,
     HTMLRectCollection_get_dispid,
     HTMLRectCollection_get_name,
     HTMLRectCollection_invoke,
@@ -7329,6 +7331,8 @@ static const tid_t HTMLElement_iface_tids[] = {
 const event_target_vtbl_t HTMLElement_event_target_vtbl = {
     {
         NULL,
+        NULL,
+        NULL,
         HTMLElement_get_dispid,
         HTMLElement_get_name,
         HTMLElement_invoke,
@@ -7795,6 +7799,8 @@ static HRESULT token_list_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
 }
 
 static const dispex_static_data_vtbl_t token_list_dispex_vtbl = {
+    NULL,
+    NULL,
     token_list_value,
     token_list_get_dispid,
     token_list_get_name,
@@ -8211,6 +8217,8 @@ static HRESULT HTMLFiltersCollection_invoke(DispatchEx *dispex, DISPID id, LCID 
 }
 
 static const dispex_static_data_vtbl_t HTMLFiltersCollection_dispex_vtbl = {
+    NULL,
+    NULL,
     NULL,
     HTMLFiltersCollection_get_dispid,
     HTMLFiltersCollection_get_name,
@@ -8967,6 +8975,8 @@ static HRESULT HTMLAttributeCollection_invoke(DispatchEx *dispex, DISPID id, LCI
 }
 
 static const dispex_static_data_vtbl_t HTMLAttributeCollection_dispex_vtbl = {
+    NULL,
+    NULL,
     NULL,
     HTMLAttributeCollection_get_dispid,
     HTMLAttributeCollection_get_name,

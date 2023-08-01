@@ -347,6 +347,10 @@ typedef struct DispatchEx DispatchEx;
    - dynamic props: These props are generally allocated by external code (e.g. 'document.wine = 42' creates 'wine' dynamic prop on document)
 */
 typedef struct {
+    /* Unlike delete_cycle_collectable, unlink is called before the destructor (if available). */
+    void (*destructor)(DispatchEx*);
+    void (*unlink)(DispatchEx*);
+
     /* Called when the object wants to handle DISPID_VALUE invocations */
     HRESULT (*value)(DispatchEx*,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
 

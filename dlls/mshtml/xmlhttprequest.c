@@ -1790,6 +1790,8 @@ static HRESULT HTMLXMLHttpRequestFactory_value(DispatchEx *iface, LCID lcid, WOR
 }
 
 static const dispex_static_data_vtbl_t HTMLXMLHttpRequestFactory_dispex_vtbl = {
+    NULL,
+    NULL,
     HTMLXMLHttpRequestFactory_value
 };
 

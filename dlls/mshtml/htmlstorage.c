@@ -1309,6 +1309,8 @@ static HRESULT HTMLStorage_next_dispid(DispatchEx *dispex, DISPID id, DISPID *pi
 
 static const dispex_static_data_vtbl_t HTMLStorage_dispex_vtbl = {
     NULL,
+    NULL,
+    NULL,
     HTMLStorage_get_dispid,
     HTMLStorage_get_name,
     HTMLStorage_invoke,

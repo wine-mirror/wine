@@ -826,11 +826,8 @@ static ULONG WINAPI Function_Release(IUnknown *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
-        assert(!This->obj);
+    if(!ref)
         release_dispex(&This->dispex);
-        free(This);
-    }
 
     return ref;
 }
@@ -844,6 +841,13 @@ static const IUnknownVtbl FunctionUnkVtbl = {
 static inline func_disp_t *impl_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, func_disp_t, dispex);
+}
+
+static void function_destructor(DispatchEx *dispex)
+{
+    func_disp_t *This = impl_from_DispatchEx(dispex);
+    assert(!This->obj);
+    free(This);
 }
 
 static HRESULT function_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *params,
@@ -902,6 +906,8 @@ static HRESULT function_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
 }
 
 static const dispex_static_data_vtbl_t function_dispex_vtbl = {
+    function_destructor,
+    NULL,
     function_value,
     NULL,
     NULL,
@@ -2053,8 +2059,11 @@ void release_dispex(DispatchEx *This)
 {
     dynamic_prop_t *prop;
 
+    if(This->info->desc->vtbl && This->info->desc->vtbl->unlink)
+        This->info->desc->vtbl->unlink(This);
+
     if(!This->dynamic_data)
-        return;
+        goto destructor;
 
     for(prop = This->dynamic_data->props; prop < This->dynamic_data->props + This->dynamic_data->prop_cnt; prop++) {
         VariantClear(&prop->var);
@@ -2078,6 +2087,10 @@ void release_dispex(DispatchEx *This)
     }
 
     free(This->dynamic_data);
+
+destructor:
+    if(This->info->desc->vtbl && This->info->desc->vtbl->destructor)
+        This->info->desc->vtbl->destructor(This);
 }
 
 void init_dispatch(DispatchEx *dispex, IUnknown *outer, dispex_static_data_t *data, compat_mode_t compat_mode)

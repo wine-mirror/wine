@@ -9998,6 +9998,8 @@ void CSSStyle_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 
 const dispex_static_data_vtbl_t CSSStyle_dispex_vtbl = {
     NULL,
+    NULL,
+    NULL,
     CSSStyle_get_dispid,
     NULL,
     NULL

@@ -467,6 +467,8 @@ static HRESULT HTMLStyleSheetRulesCollection_invoke(DispatchEx *dispex, DISPID i
 
 static const dispex_static_data_vtbl_t HTMLStyleSheetRulesCollection_dispex_vtbl = {
     NULL,
+    NULL,
+    NULL,
     HTMLStyleSheetRulesCollection_get_dispid,
     HTMLStyleSheetRulesCollection_get_name,
     HTMLStyleSheetRulesCollection_invoke
@@ -893,6 +895,8 @@ static HRESULT HTMLStyleSheetsCollection_invoke(DispatchEx *dispex, DISPID id, L
 }
 
 static const dispex_static_data_vtbl_t HTMLStyleSheetsCollection_dispex_vtbl = {
+    NULL,
+    NULL,
     NULL,
     HTMLStyleSheetsCollection_get_dispid,
     HTMLStyleSheetsCollection_get_name,
