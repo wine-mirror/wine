@@ -49,9 +49,9 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
         IUnknown_Release(unk);
 }
 
-static const CHAR xdr_schema1_uri[] = "x-schema:test1.xdr";
-static const CHAR xdr_schema1_xml[] =
-"<?xml version='1.0'?>"
+static const WCHAR xdr_schema1_uri[] = L"x-schema:test1.xdr";
+static const WCHAR xdr_schema1_xml[] =
+L"<?xml version='1.0'?>"
 "<Schema xmlns='urn:schemas-microsoft-com:xml-data'"
 "        xmlns:dt='urn:schemas-microsoft-com:datatypes'"
 "        name='test1.xdr'>"
@@ -67,9 +67,9 @@ static const CHAR xdr_schema1_xml[] =
 "   </ElementType>"
 "</Schema>";
 
-static const CHAR xdr_schema2_uri[] = "x-schema:test2.xdr";
-static const CHAR xdr_schema2_xml[] =
-"<?xml version='1.0'?>"
+static const WCHAR xdr_schema2_uri[] = L"x-schema:test2.xdr";
+static const WCHAR xdr_schema2_xml[] =
+L"<?xml version='1.0'?>"
 "<Schema xmlns='urn:schemas-microsoft-com:xml-data'"
 "        xmlns:dt='urn:schemas-microsoft-com:datatypes'"
 "        name='test2.xdr'>"
@@ -83,9 +83,9 @@ static const CHAR xdr_schema2_xml[] =
 "   </ElementType>"
 "</Schema>";
 
-static const CHAR xdr_schema3_uri[] = "x-schema:test3.xdr";
-static const CHAR xdr_schema3_xml[] =
-"<?xml version='1.0'?>"
+static const WCHAR xdr_schema3_uri[] = L"x-schema:test3.xdr";
+static const WCHAR xdr_schema3_xml[] =
+L"<?xml version='1.0'?>"
 "<Schema xmlns='urn:schemas-microsoft-com:xml-data'"
 "        xmlns:dt='urn:schemas-microsoft-com:datatypes'"
 "        name='test3.xdr'>"
@@ -99,9 +99,9 @@ static const CHAR xdr_schema3_xml[] =
 "   </ElementType>"
 "</Schema>";
 
-static const CHAR xsd_schema1_uri[] = "x-schema:test1.xsd";
-static const CHAR xsd_schema1_xml[] =
-"<?xml version='1.0'?>"
+static const WCHAR xsd_schema1_uri[] = L"x-schema:test1.xsd";
+static const WCHAR xsd_schema1_xml[] =
+L"<?xml version='1.0'?>"
 "<schema xmlns='http://www.w3.org/2001/XMLSchema'"
 "            targetNamespace='x-schema:test1.xsd'>"
 "   <element name='root'>"
@@ -113,9 +113,9 @@ static const CHAR xsd_schema1_xml[] =
 "   </element>"
 "</schema>";
 
-static const CHAR xsd_schema2_uri[] = "x-schema:test2.xsd";
-static const CHAR xsd_schema2_xml[] =
-"<?xml version='1.0'?>"
+static const WCHAR xsd_schema2_uri[] = L"x-schema:test2.xsd";
+static const WCHAR xsd_schema2_xml[] =
+L"<?xml version='1.0'?>"
 "<schema xmlns='http://www.w3.org/2001/XMLSchema'"
 "            targetNamespace='x-schema:test2.xsd'>"
 "   <element name='root'>"
@@ -127,9 +127,9 @@ static const CHAR xsd_schema2_xml[] =
 "   </element>"
 "</schema>";
 
-static const CHAR xsd_schema3_uri[] = "x-schema:test3.xsd";
-static const CHAR xsd_schema3_xml[] =
-"<?xml version='1.0'?>"
+static const WCHAR xsd_schema3_uri[] = L"x-schema:test3.xsd";
+static const WCHAR xsd_schema3_xml[] =
+L"<?xml version='1.0'?>"
 "<schema xmlns='http://www.w3.org/2001/XMLSchema'"
 "            targetNamespace='x-schema:test3.xsd'>"
 "   <element name='root'>"
@@ -141,8 +141,8 @@ static const CHAR xsd_schema3_xml[] =
 "   </element>"
 "</schema>";
 
-static const CHAR szDatatypeXDR[] =
-"<Schema xmlns='urn:schemas-microsoft-com:xml-data'\n"
+static const WCHAR szDatatypeXDR[] =
+L"<Schema xmlns='urn:schemas-microsoft-com:xml-data'\n"
 "        xmlns:dt='urn:schemas-microsoft-com:datatypes'>\n"
 "   <ElementType name='base64Data' content='textOnly' dt:type='bin.base64'/>\n"
 "   <ElementType name='hexData' content='textOnly' dt:type='bin.hex'/>\n"
@@ -217,8 +217,8 @@ static const CHAR szDatatypeXDR[] =
 "   </ElementType>\n"
 "</Schema>";
 
-static const CHAR szDatatypeXML[] =
-"<?xml version='1.0'?>\n"
+static const WCHAR szDatatypeXML[] =
+L"<?xml version='1.0'?>\n"
 "<Properties xmlns='urn:x-schema:datatype-test-xdr'>\n"
 "   <Property>\n"
 "       <Name>testBase64</Name>\n"
@@ -390,8 +390,8 @@ static const CHAR szDatatypeXML[] =
 "   </Property>\n"
 "</Properties>";
 
-static const CHAR szOpenSeqXDR[] =
-"<Schema xmlns='urn:schemas-microsoft-com:xml-data'>\n"
+static const WCHAR szOpenSeqXDR[] =
+L"<Schema xmlns='urn:schemas-microsoft-com:xml-data'>\n"
 "   <ElementType name='w' content='empty' model='closed'/>\n"
 "   <ElementType name='x' content='empty' model='closed'/>\n"
 "   <ElementType name='y' content='empty' model='closed'/>\n"
@@ -407,10 +407,10 @@ static const CHAR szOpenSeqXDR[] =
 "   </ElementType>\n"
 "</Schema>";
 
-static const CHAR szOpenSeqXML1[] = "<test><x/><x/><y/><z/><z/></test>";
-static const CHAR szOpenSeqXML2[] = "<test><x/><x/><y/><z/><z/><w/></test>";
-static const CHAR szOpenSeqXML3[] = "<test><w/><x/><x/><y/><z/><z/></test>";
-static const CHAR szOpenSeqXML4[] = "<test><x/><x/><y/><z/><z/><v/></test>";
+static const WCHAR szOpenSeqXML1[] = L"<test><x/><x/><y/><z/><z/></test>";
+static const WCHAR szOpenSeqXML2[] = L"<test><x/><x/><y/><z/><z/><w/></test>";
+static const WCHAR szOpenSeqXML3[] = L"<test><w/><x/><x/><y/><z/><z/></test>";
+static const WCHAR szOpenSeqXML4[] = L"<test><x/><x/><y/><z/><z/><v/></test>";
 
 static ULONG get_refcount(void *iface)
 {
@@ -431,18 +431,10 @@ static ULONG get_refcount(void *iface)
 static BSTR alloced_bstrs[256];
 static int alloced_bstrs_count;
 
-static BSTR alloc_str_from_narrow(const char *str)
-{
-    int len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    BSTR ret = SysAllocStringLen(NULL, len - 1);  /* NUL character added automatically */
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-    return ret;
-}
-
-static BSTR _bstr_(const char *str)
+static BSTR _bstr_(const WCHAR *str)
 {
     assert(alloced_bstrs_count < ARRAY_SIZE(alloced_bstrs));
-    alloced_bstrs[alloced_bstrs_count] = alloc_str_from_narrow(str);
+    alloced_bstrs[alloced_bstrs_count] = SysAllocString(str);
     return alloced_bstrs[alloced_bstrs_count++];
 }
 
@@ -1217,7 +1209,7 @@ L"<?xml version='1.0'?>"
     hr = IXMLDOMDocument2_QueryInterface(schema, &IID_IDispatch, (void**)&V_DISPATCH(&v));
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(V_DISPATCH(&v) != NULL, "failed to get IDispatch interface\n");
-    namespace = alloc_str_from_narrow("urn:test");
+    namespace = SysAllocString(L"urn:test");
     hr = IXMLDOMSchemaCollection_add(cache, namespace, v);
     SysFreeString(namespace);
     VariantClear(&v);
@@ -1362,7 +1354,7 @@ static void test_XDR_schemas(void)
     hr = IXMLDOMDocument2_QueryInterface(schema, &IID_IDispatch, (void**)&V_DISPATCH(&v));
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(V_DISPATCH(&v) != NULL, "failed to get IDispatch interface\n");
-    hr = IXMLDOMSchemaCollection_add(cache, _bstr_(""), v);
+    hr = IXMLDOMSchemaCollection_add(cache, _bstr_(L""), v);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     VariantClear(&v);
 
@@ -1485,41 +1477,41 @@ static void test_XDR_schemas(void)
 }
 
 typedef struct {
-    const char *query;
+    const WCHAR *query;
     enum VARENUM type_schema;
-    const char *typename;
+    const WCHAR *typename;
     BOOL todo;
 } xdr_datatypes;
 
 static const xdr_datatypes xdr_datatypes_data[] = {
-    { "//Property[Name!text()='testBase64']/Value/base64Data",         VT_ARRAY|VT_UI1, "bin.base64" },
-    { "//Property[Name!text()='testHex']/Value/hexData",               VT_ARRAY|VT_UI1, "bin.hex" },
-    { "//Property[Name!text()='testBool']/Value/boolData",             VT_BOOL, "boolean" },
-    { "//Property[Name!text()='testChar']/Value/charData",             VT_I4,   "char", TRUE },
-    { "//Property[Name!text()='testDate']/Value/dateData",             VT_DATE, "date" },
-    { "//Property[Name!text()='testDateTime']/Value/dateTimeData",     VT_DATE, "dateTime" },
-    { "//Property[Name!text()='testDateTimeTz']/Value/dateTimeTzData", VT_DATE, "dateTime.tz" },
-    { "//Property[Name!text()='testFixed']/Value/fixedData",           VT_CY,   "fixed.14.4" },
-    { "//Property[Name!text()='testFloat']/Value/floatData",           VT_R8,   "float" },
-    { "//Property[Name!text()='testI1']/Value/i1Data",                 VT_I1,   "i1" },
-    { "//Property[Name!text()='testI2']/Value/i2Data",                 VT_I2,   "i2" },
-    { "//Property[Name!text()='testI4']/Value/i4Data",                 VT_I4,   "i4" },
-    { "//Property[Name!text()='testI8']/Value/i8Data",                 VT_NULL, "i8", TRUE },
-    { "//Property[Name!text()='testInt']/Value/intData",               VT_I4,   "int" },
-    { "//Property[Name!text()='testNmtoken']/Value/nmtokData",         VT_BSTR, NULL },
-    { "//Property[Name!text()='testNmtokens']/Value/nmtoksData",       VT_BSTR, NULL },
-    { "//Property[Name!text()='testNumber']/Value/numData",            VT_BSTR, "number" },
-    { "//Property[Name!text()='testR4']/Value/r4Data",                 VT_R4,   "r4" },
-    { "//Property[Name!text()='testR8']/Value/r8Data",                 VT_R8,   "r8" },
-    { "//Property[Name!text()='testString']/Value/stringData",         VT_BSTR, NULL },
-    { "//Property[Name!text()='testTime']/Value/timeData",             VT_DATE, "time" },
-    { "//Property[Name!text()='testTimeTz']/Value/timeTzData",         VT_DATE, "time.tz" },
-    { "//Property[Name!text()='testU1']/Value/u1Data",                 VT_UI1,  "ui1" },
-    { "//Property[Name!text()='testU2']/Value/u2Data",                 VT_UI2,  "ui2" },
-    { "//Property[Name!text()='testU4']/Value/u4Data",                 VT_UI4,  "ui4" },
-    { "//Property[Name!text()='testU8']/Value/u8Data",                 VT_NULL, "ui8", TRUE },
-    { "//Property[Name!text()='testURI']/Value/uriData",               VT_BSTR, "uri" },
-    { "//Property[Name!text()='testUUID']/Value/uuidData",             VT_BSTR, "uuid" },
+    { L"//Property[Name!text()='testBase64']/Value/base64Data",         VT_ARRAY|VT_UI1, L"bin.base64" },
+    { L"//Property[Name!text()='testHex']/Value/hexData",               VT_ARRAY|VT_UI1, L"bin.hex" },
+    { L"//Property[Name!text()='testBool']/Value/boolData",             VT_BOOL, L"boolean" },
+    { L"//Property[Name!text()='testChar']/Value/charData",             VT_I4,   L"char", TRUE },
+    { L"//Property[Name!text()='testDate']/Value/dateData",             VT_DATE, L"date" },
+    { L"//Property[Name!text()='testDateTime']/Value/dateTimeData",     VT_DATE, L"dateTime" },
+    { L"//Property[Name!text()='testDateTimeTz']/Value/dateTimeTzData", VT_DATE, L"dateTime.tz" },
+    { L"//Property[Name!text()='testFixed']/Value/fixedData",           VT_CY,   L"fixed.14.4" },
+    { L"//Property[Name!text()='testFloat']/Value/floatData",           VT_R8,   L"float" },
+    { L"//Property[Name!text()='testI1']/Value/i1Data",                 VT_I1,   L"i1" },
+    { L"//Property[Name!text()='testI2']/Value/i2Data",                 VT_I2,   L"i2" },
+    { L"//Property[Name!text()='testI4']/Value/i4Data",                 VT_I4,   L"i4" },
+    { L"//Property[Name!text()='testI8']/Value/i8Data",                 VT_NULL, L"i8", TRUE },
+    { L"//Property[Name!text()='testInt']/Value/intData",               VT_I4,   L"int" },
+    { L"//Property[Name!text()='testNmtoken']/Value/nmtokData",         VT_BSTR, NULL },
+    { L"//Property[Name!text()='testNmtokens']/Value/nmtoksData",       VT_BSTR, NULL },
+    { L"//Property[Name!text()='testNumber']/Value/numData",            VT_BSTR, L"number" },
+    { L"//Property[Name!text()='testR4']/Value/r4Data",                 VT_R4,   L"r4" },
+    { L"//Property[Name!text()='testR8']/Value/r8Data",                 VT_R8,   L"r8" },
+    { L"//Property[Name!text()='testString']/Value/stringData",         VT_BSTR, NULL },
+    { L"//Property[Name!text()='testTime']/Value/timeData",             VT_DATE, L"time" },
+    { L"//Property[Name!text()='testTimeTz']/Value/timeTzData",         VT_DATE, L"time.tz" },
+    { L"//Property[Name!text()='testU1']/Value/u1Data",                 VT_UI1,  L"ui1" },
+    { L"//Property[Name!text()='testU2']/Value/u2Data",                 VT_UI2,  L"ui2" },
+    { L"//Property[Name!text()='testU4']/Value/u4Data",                 VT_UI4,  L"ui4" },
+    { L"//Property[Name!text()='testU8']/Value/u8Data",                 VT_NULL, L"ui8", TRUE },
+    { L"//Property[Name!text()='testURI']/Value/uriData",               VT_BSTR, L"uri" },
+    { L"//Property[Name!text()='testUUID']/Value/uuidData",             VT_BSTR, L"uuid" },
     { NULL }
 };
 
@@ -1587,7 +1579,7 @@ static void test_XDR_datatypes(void)
     hr = IXMLDOMDocument2_QueryInterface(schema, &IID_IDispatch, (void**)&V_DISPATCH(&v));
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(V_DISPATCH(&v) != NULL, "failed to get IDispatch interface\n");
-    hr = IXMLDOMSchemaCollection_add(cache, _bstr_("urn:x-schema:datatype-test-xdr"), v);
+    hr = IXMLDOMSchemaCollection_add(cache, _bstr_(L"urn:x-schema:datatype-test-xdr"), v);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     VariantClear(&v);
 
@@ -1659,7 +1651,7 @@ static void test_XDR_datatypes(void)
         else
         {
             ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
-            ok(V_VT(&type) == VT_NULL, "%s: got type %i\n", ptr->query, V_VT(&type));
+            ok(V_VT(&type) == VT_NULL, "%s: got type %i\n", wine_dbgstr_w(ptr->query), V_VT(&type));
         }
         VariantClear(&type);
 
@@ -1668,7 +1660,7 @@ static void test_XDR_datatypes(void)
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         todo_wine_if(ptr->todo)
-            ok(V_VT(&v) == ptr->type_schema, "%s: got variant type %i\n", ptr->query, V_VT(&v));
+            ok(V_VT(&v) == ptr->type_schema, "%s: got variant type %i\n", wine_dbgstr_w(ptr->query), V_VT(&v));
 
         switch (ptr->type_schema)
         {
@@ -1682,9 +1674,9 @@ static void test_XDR_datatypes(void)
             ok(V_I2(&v) == 420, "got %i\n", V_I2(&v));
             break;
         case VT_I4:
-            if (!strcmp(ptr->typename, "int"))
+            if (!wcscmp(ptr->typename, L"int"))
                 ok(V_I4(&v) == 42, "got %ld\n", V_I4(&v));
-            else if (!strcmp(ptr->typename, "char"))
+            else if (!wcscmp(ptr->typename, L"char"))
             todo_wine
                 ok(V_I4(&v) == 'u', "got %lx\n", V_I4(&v));
             else
@@ -1697,7 +1689,7 @@ static void test_XDR_datatypes(void)
             ok(V_R4(&v) == (float)3.14159265, "got %f\n", V_R4(&v));
             break;
         case VT_R8:
-            if (!strcmp(ptr->typename, "float"))
+            if (!wcscmp(ptr->typename, L"float"))
                 ok(V_R8(&v) == 3.14159, "got %f\n", V_R8(&v));
             else
             todo_wine
@@ -1863,7 +1855,7 @@ static void test_get(void)
     hr = IXMLDOMSchemaCollection2_get(cache, NULL, NULL);
     ok(hr == E_NOTIMPL || hr == E_POINTER /* win8 */, "Unexpected hr %#lx.\n", hr);
 
-    hr = IXMLDOMSchemaCollection2_get(cache, _bstr_("uri"), &node);
+    hr = IXMLDOMSchemaCollection2_get(cache, _bstr_(L"uri"), &node);
     ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
 
     IXMLDOMSchemaCollection2_Release(cache);
@@ -1874,7 +1866,7 @@ static void test_get(void)
     hr = IXMLDOMSchemaCollection2_get(cache, NULL, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
-    hr = IXMLDOMSchemaCollection2_get(cache, _bstr_("uri"), &node);
+    hr = IXMLDOMSchemaCollection2_get(cache, _bstr_(L"uri"), &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IXMLDOMSchemaCollection2_Release(cache);
@@ -1913,7 +1905,7 @@ static void test_remove(void)
     hr = IXMLDOMSchemaCollection2_remove(cache, NULL);
     ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
 
-    hr = IXMLDOMSchemaCollection2_remove(cache, _bstr_("invaliduri"));
+    hr = IXMLDOMSchemaCollection2_remove(cache, _bstr_(L"invaliduri"));
     ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
 
     hr = IXMLDOMSchemaCollection2_remove(cache, _bstr_(xsd_schema1_uri));
@@ -1951,7 +1943,7 @@ static void test_remove(void)
     hr = IXMLDOMSchemaCollection2_remove(cache, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    hr = IXMLDOMSchemaCollection2_remove(cache, _bstr_("invaliduri"));
+    hr = IXMLDOMSchemaCollection2_remove(cache, _bstr_(L"invaliduri"));
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     len = -1;
