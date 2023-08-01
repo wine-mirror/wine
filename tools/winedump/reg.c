@@ -212,7 +212,7 @@ static BOOL dump_value(unsigned int hive_off, unsigned int off)
         if (!name)
             return FALSE;
 
-        printf("\"%*s\"=", val->name_size, name);
+        printf("\"%.*s\"=", val->name_size, name);
     }
     else
     {
@@ -315,7 +315,7 @@ void reg_dump(void)
         return;
 
     printf("File Header\n");
-    printf("  %-20s %4s\n", "signature:", (char*)&hdr->signature);
+    printf("  %-20s %.4s\n", "signature:", (char*)&hdr->signature);
     printf("  %-20s %u\n", "primary sequence:", hdr->seq_prim);
     printf("  %-20s %u\n", "secondary sequence:", hdr->seq_sec);
     printf("  %-20s %s\n", "modification time:", filetime_str(hdr->modif_time));
