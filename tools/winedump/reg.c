@@ -235,6 +235,10 @@ static BOOL dump_value(unsigned int hive_off, unsigned int off)
 
     switch (val->data_type)
     {
+    case REG_NONE:
+        /* TODO: dump as REG_NONE value. */
+        printf("hex:");
+        break;
     case REG_EXPAND_SZ:
         printf("str(2):");
         /* fall through */
