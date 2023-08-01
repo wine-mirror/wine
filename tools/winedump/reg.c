@@ -236,7 +236,7 @@ static BOOL dump_value(unsigned int hive_off, unsigned int off)
     switch (val->data_type)
     {
     case REG_SZ:
-        printf("%s", !data ? "" :
+        printf("%s", !data ? "\"\"" :
                 get_unicode_str((const WCHAR *)data, data_size / sizeof(WCHAR)));
         break;
     case REG_DWORD:
@@ -299,7 +299,7 @@ static BOOL dump_key(unsigned int hive_off, unsigned int off)
         }
         else
         {
-            printf("@=""\n");
+            printf("@=\"\"\n");
         }
         if (!ret)
             return FALSE;
