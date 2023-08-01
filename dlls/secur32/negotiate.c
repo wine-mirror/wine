@@ -71,9 +71,23 @@ static WCHAR negotiate_comment_W[] =
 static NTSTATUS NTAPI nego_LsaApCallPackageUntrusted( PLSA_CLIENT_REQUEST req, void *in_buf,
     void *client_buf_base, ULONG in_buf_len, void **out_buf, ULONG *out_buf_len, NTSTATUS *ret_status )
 {
+    ULONG *MessageType;
+
     FIXME("%p, %p, %p, %lu, %p, %p, %p: stub\n", req, in_buf, client_buf_base, in_buf_len, out_buf, out_buf_len, ret_status);
 
-    return SEC_E_UNSUPPORTED_FUNCTION;
+    if (!in_buf || in_buf_len < sizeof(*MessageType) || !out_buf || !out_buf_len || !ret_status)
+        return STATUS_INVALID_PARAMETER;
+
+    MessageType = in_buf;
+    switch (*MessageType)
+    {
+    case 1: /* NegGetCallerName */
+        *ret_status = STATUS_NO_SUCH_LOGON_SESSION;
+        return STATUS_SUCCESS;
+
+    default:
+        return SEC_E_UNSUPPORTED_FUNCTION;
+    }
 }
 
 static NTSTATUS NTAPI nego_LsaApInitializePackage( ULONG package_id, PLSA_DISPATCH_TABLE dispatch,

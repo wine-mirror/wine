@@ -98,6 +98,10 @@ NTSTATUS WINAPI LsaCallAuthenticationPackage(HANDLE lsa_handle, ULONG package_id
     TRACE("%p,%lu,%p,%lu,%p,%p,%p\n", lsa_handle, package_id, in_buffer,
         in_buffer_length, out_buffer, out_buffer_length, status);
 
+    if (out_buffer) *out_buffer = NULL;
+    if (out_buffer_length) *out_buffer_length = 0;
+    if (status) *status = STATUS_SUCCESS;
+
     for (i = 0; i < loaded_packages_count; i++)
     {
         if (loaded_packages[i].package_id == package_id)
@@ -110,7 +114,7 @@ NTSTATUS WINAPI LsaCallAuthenticationPackage(HANDLE lsa_handle, ULONG package_id
         }
     }
 
-    return STATUS_INVALID_PARAMETER;
+    return STATUS_NO_SUCH_PACKAGE;
 }
 
 static struct lsa_handle *alloc_lsa_handle(ULONG magic)
