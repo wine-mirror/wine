@@ -356,8 +356,6 @@ static BOOL dump_key(unsigned int hive_off, unsigned int off)
 
     if (key->sub_keys)
         ret = dump_subkeys(hive_off, key->sub_keys_list_off);
-    if (ret && key->volatile_sub_keys)
-        ret = dump_subkeys(hive_off, key->volatile_sub_keys_list_off);
 
     path_len -= key->name_size + 1;
     path[path_len] = 0;
