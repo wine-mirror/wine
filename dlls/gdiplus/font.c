@@ -456,7 +456,6 @@ GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics, LOGFONTW
 {
     REAL angle, rel_height, height;
     GpMatrix matrix;
-    GpPointF pt[3];
 
     TRACE("(%p, %p, %p)\n", font, graphics, lf);
 
@@ -479,19 +478,8 @@ GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics, LOGFONTW
             height = units_to_pixels(font->emSize, font->unit, graphics->yres, graphics->printer_display);
     }
 
-    pt[0].X = 0.0;
-    pt[0].Y = 0.0;
-    pt[1].X = 1.0;
-    pt[1].Y = 0.0;
-    pt[2].X = 0.0;
-    pt[2].Y = 1.0;
-
     GdipMultiplyMatrix(&matrix, &graphics->gdi_transform, MatrixOrderAppend);
-    GdipTransformMatrixPoints(&matrix, pt, 3);
-    angle = -gdiplus_atan2((pt[1].Y - pt[0].Y), (pt[1].X - pt[0].X));
-    rel_height = sqrt((pt[2].Y - pt[0].Y) * (pt[2].Y - pt[0].Y)+
-                      (pt[2].X - pt[0].X) * (pt[2].X - pt[0].X));
-
+    transform_properties(graphics, &matrix, FALSE, NULL, &rel_height, &angle);
     lf->lfHeight = -gdip_round(height * rel_height);
     lf->lfWidth = 0;
     lf->lfEscapement = lf->lfOrientation = gdip_round((angle / M_PI) * 1800.0);

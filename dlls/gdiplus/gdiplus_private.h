@@ -69,6 +69,7 @@ extern GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace d
         GpCoordinateSpace src_space, GpMatrix *matrix);
 extern GpStatus gdip_transform_points(GpGraphics *graphics, GpCoordinateSpace dst_space,
         GpCoordinateSpace src_space, GpPointF *points, INT count);
+void transform_properties(GpGraphics *, GDIPCONST GpMatrix *, BOOL, REAL *, REAL *, REAL *);
 
 extern GpStatus graphics_from_image(GpImage *image, GpGraphics **graphics);
 extern GpStatus encode_image_png(GpImage *image, IStream* stream, GDIPCONST EncoderParameters* params);

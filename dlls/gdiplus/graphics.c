@@ -2303,7 +2303,6 @@ static void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font,
                            LOGFONTW *lfw_return, GDIPCONST GpMatrix *matrix)
 {
     HDC hdc = CreateCompatibleDC(0);
-    GpPointF pt[3];
     REAL angle, rel_width, rel_height, font_height;
     LOGFONTW lfw;
     HFONT unscaled_font;
@@ -2321,24 +2320,7 @@ static void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font,
         font_height = font->emSize * unit_scale;
     }
 
-    pt[0].X = 0.0;
-    pt[0].Y = 0.0;
-    pt[1].X = 1.0;
-    pt[1].Y = 0.0;
-    pt[2].X = 0.0;
-    pt[2].Y = 1.0;
-    if (matrix)
-    {
-        GpMatrix xform = *matrix;
-        GdipTransformMatrixPoints(&xform, pt, 3);
-    }
-
-    gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, pt, 3);
-    angle = -gdiplus_atan2((pt[1].Y - pt[0].Y), (pt[1].X - pt[0].X));
-    rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
-                     (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
-    rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
-                      (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
+    transform_properties(graphics, matrix, TRUE, &rel_width, &rel_height, &angle);
     /* If the font unit is not pixels scaling should not be applied */
     if (font->unit != UnitPixel && font->unit != UnitWorld)
     {
@@ -5373,6 +5355,31 @@ GpStatus gdip_format_string(HDC hdc,
     return stat;
 }
 
+void transform_properties(GpGraphics *graphics, GDIPCONST GpMatrix *matrix, BOOL graphics_transform,
+                          REAL *rel_width, REAL *rel_height, REAL *angle)
+{
+    GpPointF pt[3] = {{0.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 1.0f}};
+    GpMatrix xform;
+
+    if (matrix)
+    {
+        xform = *matrix;
+        GdipTransformMatrixPoints(&xform, pt, 3);
+    }
+
+    if (graphics_transform)
+        gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, pt, 3);
+
+    if (rel_width)
+        *rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
+                         (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
+    if (rel_height)
+        *rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
+                          (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
+    if (angle)
+        *angle = -gdiplus_atan2((pt[1].Y - pt[0].Y), (pt[1].X - pt[0].X));
+}
+
 struct measure_ranges_args {
     GpRegion **regions;
     REAL rel_width, rel_height;
@@ -5427,7 +5434,6 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
     HFONT gdifont, oldfont;
     struct measure_ranges_args args;
     HDC hdc, temp_hdc=NULL;
-    GpPointF pt[3];
     RectF scaled_rect;
     REAL margin_x;
 
@@ -5451,21 +5457,10 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
     if (stringFormat->attr)
         TRACE("may be ignoring some format flags: attr %x\n", stringFormat->attr);
 
-    pt[0].X = 0.0;
-    pt[0].Y = 0.0;
-    pt[1].X = 1.0;
-    pt[1].Y = 0.0;
-    pt[2].X = 0.0;
-    pt[2].Y = 1.0;
-    gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, pt, 3);
-    args.rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
-                     (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
-    args.rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
-                      (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
 
     margin_x = stringFormat->generic_typographic ? 0.0 : font->emSize / 6.0;
     margin_x *= units_scale(font->unit, graphics->unit, graphics->xres, graphics->printer_display);
-
+    transform_properties(graphics, NULL, TRUE, &args.rel_width, &args.rel_height, NULL);
     scaled_rect.X = (layoutRect->X + margin_x) * args.rel_width;
     scaled_rect.Y = layoutRect->Y * args.rel_height;
     scaled_rect.Width = layoutRect->Width * args.rel_width;
@@ -5554,7 +5549,6 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     HFONT oldfont, gdifont;
     struct measure_string_args args;
     HDC temp_hdc=NULL, hdc;
-    GpPointF pt[3];
     RectF scaled_rect;
     REAL margin_x;
     INT lines, glyphs;
@@ -5580,18 +5574,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     if(format)
         TRACE("may be ignoring some format flags: attr %x\n", format->attr);
 
-    pt[0].X = 0.0;
-    pt[0].Y = 0.0;
-    pt[1].X = 1.0;
-    pt[1].Y = 0.0;
-    pt[2].X = 0.0;
-    pt[2].Y = 1.0;
-    gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, pt, 3);
-    args.rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
-                     (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
-    args.rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
-                      (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
-
+    transform_properties(graphics, NULL, TRUE, &args.rel_width, &args.rel_height, NULL);
     margin_x = (format && format->generic_typographic) ? 0.0 : font->emSize / 6.0;
     margin_x *= units_scale(font->unit, graphics->unit, graphics->xres, graphics->printer_display);
 
@@ -5699,7 +5682,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
 {
     HRGN rgn = NULL;
     HFONT gdifont;
-    GpPointF pt[3], rectcpy[4];
+    GpPointF rectcpy[4];
     POINT corners[4];
     REAL rel_width, rel_height, margin_x;
     INT save_state, format_flags = 0;
@@ -5748,18 +5731,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
 
     save_state = SaveDC(hdc);
 
-    pt[0].X = 0.0;
-    pt[0].Y = 0.0;
-    pt[1].X = 1.0;
-    pt[1].Y = 0.0;
-    pt[2].X = 0.0;
-    pt[2].Y = 1.0;
-    gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, pt, 3);
-    rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
-                     (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
-    rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
-                      (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
-
+    transform_properties(graphics, NULL, TRUE, &rel_width, &rel_height, NULL);
     rectcpy[3].X = rectcpy[0].X = rect->X;
     rectcpy[1].Y = rectcpy[0].Y = rect->Y;
     rectcpy[2].X = rectcpy[1].X = rect->X + rect->Width;
