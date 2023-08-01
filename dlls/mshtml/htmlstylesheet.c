@@ -703,12 +703,8 @@ static ULONG WINAPI HTMLStyleSheetsCollection_Release(IHTMLStyleSheetsCollection
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
+    if(!ref)
         release_dispex(&This->dispex);
-        if(This->nslist)
-            nsIDOMStyleSheetList_Release(This->nslist);
-        free(This);
-    }
 
     return ref;
 }
@@ -844,6 +840,18 @@ static inline HTMLStyleSheetsCollection *HTMLStyleSheetsCollection_from_Dispatch
     return CONTAINING_RECORD(iface, HTMLStyleSheetsCollection, dispex);
 }
 
+static void HTMLStyleSheetsCollection_unlink(DispatchEx *dispex)
+{
+    HTMLStyleSheetsCollection *This = HTMLStyleSheetsCollection_from_DispatchEx(dispex);
+    unlink_ref(&This->nslist);
+}
+
+static void HTMLStyleSheetsCollection_destructor(DispatchEx *dispex)
+{
+    HTMLStyleSheetsCollection *This = HTMLStyleSheetsCollection_from_DispatchEx(dispex);
+    free(This);
+}
+
 static HRESULT HTMLStyleSheetsCollection_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
 {
     HTMLStyleSheetsCollection *This = HTMLStyleSheetsCollection_from_DispatchEx(dispex);
@@ -921,8 +929,8 @@ static HRESULT HTMLStyleSheetsCollection_invoke(DispatchEx *dispex, DISPID id, L
 }
 
 static const dispex_static_data_vtbl_t HTMLStyleSheetsCollection_dispex_vtbl = {
-    NULL,
-    NULL,
+    HTMLStyleSheetsCollection_destructor,
+    HTMLStyleSheetsCollection_unlink,
     NULL,
     HTMLStyleSheetsCollection_get_dispid,
     HTMLStyleSheetsCollection_get_name,
