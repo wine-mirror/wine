@@ -770,50 +770,50 @@ static void test_D3DX11GetImageInfoFromMemory(void)
     }
 
     hr = D3DX11GetImageInfoFromMemory(bmp_1bpp, sizeof(bmp_1bpp), NULL, &info, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#lx.", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11GetImageInfoFromMemory(bmp_1bpp, sizeof(bmp_1bpp) + 5, NULL, &info, NULL); /* too large size */
-    ok(hr == S_OK, "Got unexpected hr %#lx.", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11GetImageInfoFromMemory(noimage, sizeof(noimage), NULL, NULL, NULL);
-    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11GetImageInfoFromMemory(noimage, sizeof(noimage), NULL, &info, NULL);
-    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11GetImageInfoFromMemory(bmp_1bpp, sizeof(bmp_1bpp) - 1, NULL, &info, NULL);
-    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11GetImageInfoFromMemory(bmp_1bpp + 1, sizeof(bmp_1bpp) - 1, NULL, &info, NULL);
-    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11GetImageInfoFromMemory(bmp_1bpp, 0, NULL, &info, NULL);
-    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11GetImageInfoFromMemory(bmp_1bpp, 0, NULL, NULL, NULL);
-    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11GetImageInfoFromMemory(noimage, 0, NULL, &info, NULL);
-    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11GetImageInfoFromMemory(noimage, 0, NULL, NULL, NULL);
-    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11GetImageInfoFromMemory(noimage, 0, NULL, &info, NULL);
-    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11GetImageInfoFromMemory(NULL, 4, NULL, NULL, NULL);
-    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11GetImageInfoFromMemory(NULL, 4, NULL, &info, NULL);
-    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11GetImageInfoFromMemory(NULL, 0, NULL, NULL, NULL);
-    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     /* test BMP support */
     hr = D3DX11GetImageInfoFromMemory(bmp_1bpp, sizeof(bmp_1bpp), NULL, &info, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#lx.", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(info.Width == 1, "Unexpected width %u.\n", info.Width);
     ok(info.Height == 1, "Unexpected height %u.\n", info.Height);
     ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
@@ -825,7 +825,7 @@ static void test_D3DX11GetImageInfoFromMemory(void)
     ok(info.ImageFileFormat == D3DX11_IFF_BMP, "Unexpected image file format %#x.\n", info.ImageFileFormat);
 
     hr = D3DX11GetImageInfoFromMemory(bmp_2bpp, sizeof(bmp_2bpp), NULL, &info, NULL);
-    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11GetImageInfoFromMemory(bmp_4bpp, sizeof(bmp_4bpp), NULL, &info, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
