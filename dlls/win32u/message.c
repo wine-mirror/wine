@@ -4286,10 +4286,6 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
         else RtlSetLastWin32Error( ERROR_MESSAGE_SYNC_ONLY );
         return FALSE;
 
-    case NtUserSendDriverMessage:
-        /* used by driver to send packed messages */
-        return send_message( hwnd, msg, wparam, lparam );
-
     case NtUserSpyEnter:
         spy_enter_message( ansi, hwnd, msg, wparam, lparam );
         return 0;
