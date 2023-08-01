@@ -123,12 +123,8 @@ static ULONG WINAPI HTMLStyleSheetRule_Release(IHTMLStyleSheetRule *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
+    if(!ref)
         release_dispex(&This->dispex);
-        if(This->nsstylesheetrule)
-            nsIDOMCSSRule_Release(This->nsstylesheetrule);
-        free(This);
-    }
 
     return ref;
 }
@@ -206,13 +202,35 @@ static const IHTMLStyleSheetRuleVtbl HTMLStyleSheetRuleVtbl = {
     HTMLStyleSheetRule_get_readOnly
 };
 
+static inline HTMLStyleSheetRule *HTMLStyleSheetRule_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLStyleSheetRule, dispex);
+}
+
+static void HTMLStyleSheetRule_unlink(DispatchEx *dispex)
+{
+    HTMLStyleSheetRule *This = HTMLStyleSheetRule_from_DispatchEx(dispex);
+    unlink_ref(&This->nsstylesheetrule);
+}
+
+static void HTMLStyleSheetRule_destructor(DispatchEx *dispex)
+{
+    HTMLStyleSheetRule *This = HTMLStyleSheetRule_from_DispatchEx(dispex);
+    free(This);
+}
+
+static const dispex_static_data_vtbl_t HTMLStyleSheetRule_dispex_vtbl = {
+    HTMLStyleSheetRule_destructor,
+    HTMLStyleSheetRule_unlink
+};
+
 static const tid_t HTMLStyleSheetRule_iface_tids[] = {
     IHTMLStyleSheetRule_tid,
     0
 };
 static dispex_static_data_t HTMLStyleSheetRule_dispex = {
     L"CSSStyleRule",
-    NULL,
+    &HTMLStyleSheetRule_dispex_vtbl,
     DispHTMLStyleSheetRule_tid,
     HTMLStyleSheetRule_iface_tids
 };
