@@ -192,8 +192,8 @@ static BOOL dump_subkeys(unsigned int hive_off, unsigned int off)
 
 static BOOL dump_value(unsigned int hive_off, unsigned int off)
 {
+    unsigned int i, len, data_size;
     const void *data = NULL;
-    unsigned int data_size;
     const value_key *val;
     const char *name;
 
@@ -245,6 +245,25 @@ static BOOL dump_value(unsigned int hive_off, unsigned int off)
     case REG_SZ:
         printf("%s", !data ? "\"\"" :
                 get_unicode_str((const WCHAR *)data, data_size / sizeof(WCHAR)));
+        break;
+    case REG_BINARY:
+        printf("hex:");
+        len = val->name_size + 7; /* strlen("\"\"=hex:") */
+        for (i = 0; i < data_size; i++)
+        {
+            if (i)
+            {
+                printf(",");
+                len += 1;
+            }
+            if (len > 76)
+            {
+                printf("\\\n  ");
+                len = 2;
+            }
+            printf("%02x", ((BYTE *)data)[i]);
+            len += 2;
+        }
         break;
     case REG_DWORD:
         assert(data_size == sizeof(DWORD));
