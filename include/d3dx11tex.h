@@ -103,6 +103,36 @@ typedef struct D3DX11_IMAGE_LOAD_INFO
 #endif
 } D3DX11_IMAGE_LOAD_INFO;
 
+typedef struct _D3DX11_TEXTURE_LOAD_INFO
+{
+    D3D11_BOX *pSrcBox;
+    D3D11_BOX *pDstBox;
+    UINT SrcFirstMip;
+    UINT DstFirstMip;
+    UINT NumMips;
+    UINT SrcFirstElement;
+    UINT DstFirstElement;
+    UINT NumElements;
+    UINT Filter;
+    UINT MipFilter;
+
+#ifdef __cplusplus
+    _D3DX11_TEXTURE_LOAD_INFO()
+    {
+        pSrcBox         = NULL;
+        pDstBox         = NULL;
+        SrcFirstMip     = 0;
+        DstFirstMip     = 0;
+        NumMips         = D3DX11_DEFAULT;
+        SrcFirstElement = 0;
+        DstFirstElement = 0;
+        NumElements     = D3DX11_DEFAULT;
+        Filter          = D3DX11_DEFAULT;
+        MipFilter       = D3DX11_DEFAULT;
+    }
+#endif
+} D3DX11_TEXTURE_LOAD_INFO;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
