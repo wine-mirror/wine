@@ -27,6 +27,7 @@
 #include "ole2.h"
 
 #include "mshtml_private.h"
+#include "htmlevent.h"
 
 #include "wine/debug.h"
 
@@ -200,7 +201,7 @@ static const tid_t HTMLCommentElement_iface_tids[] = {
 };
 static dispex_static_data_t HTMLCommentElement_dispex = {
     L"Comment",
-    NULL,
+    &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLCommentElement_tid,
     HTMLCommentElement_iface_tids,
     HTMLElement_init_dispex_info

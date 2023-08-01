@@ -7326,7 +7326,7 @@ static const tid_t HTMLElement_iface_tids[] = {
     0
 };
 
-static event_target_vtbl_t HTMLElement_event_target_vtbl = {
+const event_target_vtbl_t HTMLElement_event_target_vtbl = {
     {
         NULL,
         HTMLElement_get_dispid,
@@ -7945,9 +7945,6 @@ void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMElement *n
     This->IElementTraversal_iface.lpVtbl = &ElementTraversalVtbl;
     This->IProvideMultipleClassInfo_iface.lpVtbl = &ProvideMultipleClassInfoVtbl;
     This->IWineHTMLElementPrivate_iface.lpVtbl = &WineHTMLElementPrivateVtbl;
-
-    if(dispex_data && !dispex_data->vtbl)
-        dispex_data->vtbl = &HTMLElement_event_target_vtbl.dispex_vtbl;
 
     if(nselem) {
         nsIDOMHTMLElement *html_element;

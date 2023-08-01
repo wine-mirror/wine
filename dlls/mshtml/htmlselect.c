@@ -419,7 +419,7 @@ static const tid_t HTMLOptionElement_iface_tids[] = {
 };
 static dispex_static_data_t HTMLOptionElement_dispex = {
     L"HTMLOptionElement",
-    NULL,
+    &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLOptionElement_tid,
     HTMLOptionElement_iface_tids,
     HTMLElement_init_dispex_info
@@ -1496,7 +1496,7 @@ static const tid_t HTMLSelectElement_tids[] = {
 
 static dispex_static_data_t HTMLSelectElement_dispex = {
     L"HTMLSelectElement",
-    NULL,
+    &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLSelectElement_tid,
     HTMLSelectElement_tids,
     HTMLElement_init_dispex_info

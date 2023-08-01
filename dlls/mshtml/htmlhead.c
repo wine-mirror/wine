@@ -29,6 +29,7 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "htmlevent.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -184,7 +185,7 @@ static const tid_t HTMLTitleElement_iface_tids[] = {
 };
 static dispex_static_data_t HTMLTitleElement_dispex = {
     L"HTMLTitleElement",
-    NULL,
+    &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLTitleElement_tid,
     HTMLTitleElement_iface_tids,
     HTMLElement_init_dispex_info
@@ -369,7 +370,7 @@ static const tid_t HTMLHtmlElement_iface_tids[] = {
 };
 static dispex_static_data_t HTMLHtmlElement_dispex = {
     L"HTMLHtmlElement",
-    NULL,
+    &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLHtmlElement_tid,
     HTMLHtmlElement_iface_tids,
     HTMLElement_init_dispex_info
@@ -606,7 +607,7 @@ static const tid_t HTMLMetaElement_iface_tids[] = {
 
 static dispex_static_data_t HTMLMetaElement_dispex = {
     L"HTMLMetaElement",
-    NULL,
+    &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLMetaElement_tid,
     HTMLMetaElement_iface_tids,
     HTMLElement_init_dispex_info
@@ -770,7 +771,7 @@ static const tid_t HTMLHeadElement_iface_tids[] = {
 };
 static dispex_static_data_t HTMLHeadElement_dispex = {
     L"HTMLHeadElement",
-    NULL,
+    &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLHeadElement_tid,
     HTMLHeadElement_iface_tids,
     HTMLElement_init_dispex_info

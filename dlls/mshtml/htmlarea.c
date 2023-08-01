@@ -509,7 +509,7 @@ static const tid_t HTMLAreaElement_iface_tids[] = {
 };
 static dispex_static_data_t HTMLAreaElement_dispex = {
     L"HTMLAreaElement",
-    NULL,
+    &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLAreaElement_tid,
     HTMLAreaElement_iface_tids,
     HTMLElement_init_dispex_info

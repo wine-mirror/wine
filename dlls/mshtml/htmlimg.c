@@ -742,7 +742,7 @@ static void HTMLImgElement_init_dispex_info(dispex_data_t *info, compat_mode_t m
 
 static dispex_static_data_t HTMLImgElement_dispex = {
     L"HTMLImageElement",
-    NULL,
+    &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLImg_tid,
     HTMLImgElement_iface_tids,
     HTMLImgElement_init_dispex_info

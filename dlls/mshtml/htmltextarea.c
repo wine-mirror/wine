@@ -28,6 +28,7 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "htmlevent.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -481,7 +482,7 @@ static const tid_t HTMLTextAreaElement_iface_tids[] = {
 
 static dispex_static_data_t HTMLTextAreaElement_dispex = {
     L"HTMLTextAreaElement",
-    NULL,
+    &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLTextAreaElement_tid,
     HTMLTextAreaElement_iface_tids,
     HTMLElement_init_dispex_info
