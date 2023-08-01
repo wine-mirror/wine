@@ -78,7 +78,6 @@ typedef struct DOMEvent {
 
     LONG ref;
     void *(*query_interface)(struct DOMEvent*,REFIID);
-    void (*destroy)(struct DOMEvent*);
 
     nsIDOMEvent *nsevent;
 
