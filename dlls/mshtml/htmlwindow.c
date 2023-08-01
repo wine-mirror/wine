@@ -249,72 +249,6 @@ static void release_outer_window(HTMLOuterWindow *This)
     free(This);
 }
 
-static void release_inner_window(HTMLInnerWindow *This)
-{
-    unsigned i;
-
-    TRACE("%p\n", This);
-
-    detach_inner_window(This);
-
-    if(This->doc) {
-        This->doc->window = NULL;
-        IHTMLDOMNode_Release(&This->doc->node.IHTMLDOMNode_iface);
-    }
-
-    release_event_target(&This->event_target);
-    release_dispex(&This->event_target.dispex);
-
-    for(i=0; i < This->global_prop_cnt; i++)
-        free(This->global_props[i].name);
-    free(This->global_props);
-
-    if(This->image_factory) {
-        This->image_factory->window = NULL;
-        IHTMLImageElementFactory_Release(&This->image_factory->IHTMLImageElementFactory_iface);
-    }
-
-    if(This->option_factory) {
-        This->option_factory->window = NULL;
-        IHTMLOptionElementFactory_Release(&This->option_factory->IHTMLOptionElementFactory_iface);
-    }
-
-    if(This->xhr_factory) {
-        This->xhr_factory->window = NULL;
-        IHTMLXMLHttpRequestFactory_Release(&This->xhr_factory->IHTMLXMLHttpRequestFactory_iface);
-    }
-
-    if(This->screen)
-        IHTMLScreen_Release(This->screen);
-
-    if(This->history) {
-        This->history->window = NULL;
-        IOmHistory_Release(&This->history->IOmHistory_iface);
-    }
-
-    if(This->navigator)
-        IOmNavigator_Release(This->navigator);
-    if(This->session_storage) {
-        detach_html_storage(This->session_storage);
-        IHTMLStorage_Release(This->session_storage);
-    }
-    if(This->local_storage) {
-        detach_html_storage(This->local_storage);
-        IHTMLStorage_Release(This->local_storage);
-    }
-
-    IHTMLPerformanceTiming_Release(&This->performance_timing->IHTMLPerformanceTiming_iface);
-    VariantClear(&This->performance);
-
-    if(This->mon)
-        IMoniker_Release(This->mon);
-
-    if(This->mutation_observer_ctor)
-        IDispatch_Release(This->mutation_observer_ctor);
-
-    free(This);
-}
-
 static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
@@ -329,7 +263,7 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
         if(is_outer_window(This))
             release_outer_window(This->outer_window);
         else
-            release_inner_window(This->inner_window);
+            release_dispex(&This->inner_window->event_target.dispex);
     }
 
     return ref;
@@ -3785,6 +3719,82 @@ static inline HTMLInnerWindow *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLInnerWindow, event_target.dispex);
 }
 
+static void HTMLWindow_unlink(DispatchEx *dispex)
+{
+    HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
+
+    TRACE("%p\n", This);
+
+    unlink_ref(&This->base.console);
+    detach_inner_window(This);
+
+    if(This->doc) {
+        HTMLDocumentNode *doc = This->doc;
+        This->doc->window = NULL;
+        This->doc = NULL;
+        IHTMLDOMNode_Release(&doc->node.IHTMLDOMNode_iface);
+    }
+
+    release_event_target(&This->event_target);
+
+    if(This->image_factory) {
+        HTMLImageElementFactory *image_factory = This->image_factory;
+        This->image_factory->window = NULL;
+        This->image_factory = NULL;
+        IHTMLImageElementFactory_Release(&image_factory->IHTMLImageElementFactory_iface);
+    }
+    if(This->option_factory) {
+        HTMLOptionElementFactory *option_factory = This->option_factory;
+        This->option_factory->window = NULL;
+        This->option_factory = NULL;
+        IHTMLOptionElementFactory_Release(&option_factory->IHTMLOptionElementFactory_iface);
+    }
+    if(This->xhr_factory) {
+        HTMLXMLHttpRequestFactory *xhr_factory = This->xhr_factory;
+        This->xhr_factory->window = NULL;
+        This->xhr_factory = NULL;
+        IHTMLXMLHttpRequestFactory_Release(&xhr_factory->IHTMLXMLHttpRequestFactory_iface);
+    }
+    unlink_ref(&This->mutation_observer_ctor);
+    unlink_ref(&This->screen);
+    if(This->history) {
+        OmHistory *history = This->history;
+        This->history->window = NULL;
+        This->history = NULL;
+        IOmHistory_Release(&history->IOmHistory_iface);
+    }
+    unlink_ref(&This->navigator);
+    if(This->session_storage) {
+        IHTMLStorage *session_storage = This->session_storage;
+        detach_html_storage(session_storage);
+        This->session_storage = NULL;
+        IHTMLStorage_Release(session_storage);
+    }
+    if(This->local_storage) {
+        IHTMLStorage *local_storage = This->local_storage;
+        detach_html_storage(local_storage);
+        This->local_storage = NULL;
+        IHTMLStorage_Release(local_storage);
+    }
+    IHTMLPerformanceTiming_Release(&This->performance_timing->IHTMLPerformanceTiming_iface);
+    VariantClear(&This->performance);
+}
+
+static void HTMLWindow_destructor(DispatchEx *dispex)
+{
+    HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
+    unsigned i;
+
+    for(i = 0; i < This->global_prop_cnt; i++)
+        free(This->global_props[i].name);
+    free(This->global_props);
+
+    if(This->mon)
+        IMoniker_Release(This->mon);
+
+    free(This);
+}
+
 static HRESULT HTMLWindow_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
@@ -4028,8 +4038,8 @@ static IHTMLEventObj *HTMLWindow_set_current_event(DispatchEx *dispex, IHTMLEven
 
 static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
     {
-        NULL,
-        NULL,
+        HTMLWindow_destructor,
+        HTMLWindow_unlink,
         NULL,
         NULL,
         HTMLWindow_get_name,
