@@ -4772,12 +4772,8 @@ static ULONG WINAPI HTMLCSSStyleDeclaration_Release(IHTMLCSSStyleDeclaration *if
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
-        if(This->nsstyle)
-            nsIDOMCSSStyleDeclaration_Release(This->nsstyle);
+    if(!ref)
         release_dispex(&This->dispex);
-        free(This);
-    }
 
     return ref;
 }
@@ -9969,6 +9965,18 @@ static inline CSSStyle *impl_from_DispatchEx(DispatchEx *dispex)
     return CONTAINING_RECORD(dispex, CSSStyle, dispex);
 }
 
+static void CSSStyle_unlink(DispatchEx *dispex)
+{
+    CSSStyle *This = impl_from_DispatchEx(dispex);
+    unlink_ref(&This->nsstyle);
+}
+
+static void CSSStyle_destructor(DispatchEx *dispex)
+{
+    CSSStyle *This = impl_from_DispatchEx(dispex);
+    free(This);
+}
+
 static HRESULT CSSStyle_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
 {
     CSSStyle *This = impl_from_DispatchEx(dispex);
@@ -9997,8 +10005,8 @@ void CSSStyle_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 }
 
 const dispex_static_data_vtbl_t CSSStyle_dispex_vtbl = {
-    NULL,
-    NULL,
+    CSSStyle_destructor,
+    CSSStyle_unlink,
     NULL,
     CSSStyle_get_dispid,
     NULL,
