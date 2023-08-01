@@ -1017,12 +1017,8 @@ static ULONG WINAPI HTMLStyleSheet_Release(IHTMLStyleSheet *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
+    if(!ref)
         release_dispex(&This->dispex);
-        if(This->nsstylesheet)
-            nsIDOMCSSStyleSheet_Release(This->nsstylesheet);
-        free(This);
-    }
 
     return ref;
 }
@@ -1500,11 +1496,33 @@ static const IHTMLStyleSheet4Vtbl HTMLStyleSheet4Vtbl = {
     HTMLStyleSheet4_deleteRule,
 };
 
+static inline HTMLStyleSheet *HTMLStyleSheet_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLStyleSheet, dispex);
+}
+
+static void HTMLStyleSheet_unlink(DispatchEx *dispex)
+{
+    HTMLStyleSheet *This = HTMLStyleSheet_from_DispatchEx(dispex);
+    unlink_ref(&This->nsstylesheet);
+}
+
+static void HTMLStyleSheet_destructor(DispatchEx *dispex)
+{
+    HTMLStyleSheet *This = HTMLStyleSheet_from_DispatchEx(dispex);
+    free(This);
+}
+
 static void HTMLStyleSheet_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
     if(mode >= COMPAT_MODE_IE9)
         dispex_info_add_interface(info, IHTMLStyleSheet4_tid, NULL);
 }
+
+static const dispex_static_data_vtbl_t HTMLStyleSheet_dispex_vtbl = {
+    HTMLStyleSheet_destructor,
+    HTMLStyleSheet_unlink
+};
 
 static const tid_t HTMLStyleSheet_iface_tids[] = {
     IHTMLStyleSheet_tid,
@@ -1512,7 +1530,7 @@ static const tid_t HTMLStyleSheet_iface_tids[] = {
 };
 static dispex_static_data_t HTMLStyleSheet_dispex = {
     L"CSSStyleSheet",
-    NULL,
+    &HTMLStyleSheet_dispex_vtbl,
     DispHTMLStyleSheet_tid,
     HTMLStyleSheet_iface_tids,
     HTMLStyleSheet_init_dispex_info
