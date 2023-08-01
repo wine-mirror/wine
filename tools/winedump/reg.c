@@ -201,27 +201,34 @@ static BOOL dump_value(unsigned int hive_off, unsigned int off)
     if (!val || memcmp(&val->signature, "vk", 2))
         return FALSE;
 
-    if (!(val->flags & VAL_COMP_NAME) && val->name_size)
-    {
-        printf("unsupported value flags: %x\n", val->flags);
-        return FALSE;
-    }
     if (!(val->data_size & 0x80000000) && val->data_size > 4 * BLOCK_SIZE)
     {
         printf("Warning: data blocks not supported\n");
         return TRUE;
     }
 
-    if (val->name_size)
+    if (val->name_size && !(val->flags & VAL_COMP_NAME))
     {
         name = PRD(hive_off + off + sizeof(*val), val->name_size);
         if (!name)
             return FALSE;
+        name = get_unicode_str((WCHAR *)name, val->name_size / sizeof(WCHAR));
+        len = strlen(name) + 1;
+
+        printf("%s=", name);
+    }
+    else if (val->name_size)
+    {
+        name = PRD(hive_off + off + sizeof(*val), val->name_size);
+        if (!name)
+            return FALSE;
+        len = val->name_size + 3;
 
         printf("\"%.*s\"=", val->name_size, name);
     }
     else
     {
+        len = 2;
         printf("@=");
     }
 
@@ -253,7 +260,7 @@ static BOOL dump_value(unsigned int hive_off, unsigned int off)
         break;
     case REG_BINARY:
         printf("hex:");
-        len = val->name_size + 7; /* strlen("\"\"=hex:") */
+        len += 4; /* strlen("hex:") */
         for (i = 0; i < data_size; i++)
         {
             if (i)
