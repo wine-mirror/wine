@@ -201,7 +201,7 @@ static BOOL dump_value(unsigned int hive_off, unsigned int off)
     if (!val || memcmp(&val->signature, "vk", 2))
         return FALSE;
 
-    if (!(val->flags & VAL_COMP_NAME))
+    if (!(val->flags & VAL_COMP_NAME) && val->name_size)
     {
         printf("unsupported value flags: %x\n", val->flags);
         return FALSE;
