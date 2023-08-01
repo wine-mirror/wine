@@ -385,12 +385,8 @@ static ULONG WINAPI HTMLEventObj_Release(IHTMLEventObj *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
-        if(This->event)
-            IDOMEvent_Release(&This->event->IDOMEvent_iface);
+    if(!ref)
         release_dispex(&This->dispex);
-        free(This);
-    }
 
     return ref;
 }
@@ -872,6 +868,32 @@ static inline HTMLEventObj *unsafe_impl_from_IHTMLEventObj(IHTMLEventObj *iface)
     return iface->lpVtbl == &HTMLEventObjVtbl ? impl_from_IHTMLEventObj(iface) : NULL;
 }
 
+static inline HTMLEventObj *HTMLEventObj_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLEventObj, dispex);
+}
+
+static void HTMLEventObj_unlink(DispatchEx *dispex)
+{
+    HTMLEventObj *This = HTMLEventObj_from_DispatchEx(dispex);
+    if(This->event) {
+        DOMEvent *event = This->event;
+        This->event = NULL;
+        IDOMEvent_Release(&event->IDOMEvent_iface);
+    }
+}
+
+static void HTMLEventObj_destructor(DispatchEx *dispex)
+{
+    HTMLEventObj *This = HTMLEventObj_from_DispatchEx(dispex);
+    free(This);
+}
+
+static const dispex_static_data_vtbl_t HTMLEventObj_dispex_vtbl = {
+    HTMLEventObj_destructor,
+    HTMLEventObj_unlink
+};
+
 static const tid_t HTMLEventObj_iface_tids[] = {
     IHTMLEventObj_tid,
     0
@@ -879,7 +901,7 @@ static const tid_t HTMLEventObj_iface_tids[] = {
 
 static dispex_static_data_t HTMLEventObj_dispex = {
     L"MSEventObj",
-    NULL,
+    &HTMLEventObj_dispex_vtbl,
     DispCEventObj_tid,
     HTMLEventObj_iface_tids
 };
