@@ -1138,7 +1138,6 @@ static NTSTATUS NTAPI ntlm_SpQueryContextAttributes( LSA_SEC_HANDLE handle, ULON
     X(SECPKG_ATTR_NATIVE_NAMES);
     X(SECPKG_ATTR_PACKAGE_INFO);
     X(SECPKG_ATTR_PASSWORD_EXPIRY);
-    X(SECPKG_ATTR_SESSION_KEY);
     X(SECPKG_ATTR_STREAM_SIZES);
     X(SECPKG_ATTR_TARGET_INFORMATION);
     case SECPKG_ATTR_FLAGS:
@@ -1165,6 +1164,19 @@ static NTSTATUS NTAPI ntlm_SpQueryContextAttributes( LSA_SEC_HANDLE handle, ULON
         SecPkgContext_NegotiationInfoW *info = (SecPkgContext_NegotiationInfoW *)buf;
         if (!(info->PackageInfo = build_package_info( &ntlm_package_info ))) return SEC_E_INSUFFICIENT_MEMORY;
         info->NegotiationState = SECPKG_NEGOTIATION_COMPLETE;
+        return SEC_E_OK;
+    }
+    case SECPKG_ATTR_SESSION_KEY:
+    {
+        struct ntlm_ctx *ctx = (struct ntlm_ctx *)handle;
+        SecPkgContext_SessionKey *key = (SecPkgContext_SessionKey *)buf;
+        unsigned char *session_key;
+
+        if (!(session_key = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(ctx->session_key) )))
+            return SEC_E_INSUFFICIENT_MEMORY;
+        memcpy( session_key, ctx->session_key, sizeof(ctx->session_key) );
+        key->SessionKey = session_key;
+        key->SessionKeyLength = sizeof(ctx->session_key);
         return SEC_E_OK;
     }
     case SECPKG_ATTR_KEY_INFO:

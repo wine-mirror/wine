@@ -824,6 +824,7 @@ static void testAuth(ULONG data_rep, BOOL fake)
     SecPkgContext_StreamSizes stream_sizes;
     SecPkgContext_NegotiationInfoA info;
     SecPkgContext_KeyInfoA key;
+    SecPkgContext_SessionKey session_key;
     SecPkgInfoA *pi;
 
     if(pQuerySecurityPackageInfoA( sec_pkg_name, &pkg_info)!= SEC_E_OK)
@@ -927,6 +928,15 @@ static void testAuth(ULONG data_rep, BOOL fake)
     }
     ok( key.KeySize == 128, "got %lu\n", key.KeySize );
     ok( key.EncryptAlgorithm == CALG_RC4, "got %#lx\n", key.EncryptAlgorithm );
+    FreeContextBuffer( key.sSignatureAlgorithmName );
+    FreeContextBuffer( key.sEncryptAlgorithmName );
+
+    memset( &session_key, 0, sizeof(session_key) );
+    sec_status = QueryContextAttributesA( &client.ctxt, SECPKG_ATTR_SESSION_KEY, &session_key );
+    ok( sec_status == SEC_E_OK, "pQueryContextAttributesA returned %08lx\n", sec_status );
+    ok( session_key.SessionKeyLength, "got 0 key length\n" );
+    ok( session_key.SessionKey != NULL, "got NULL session key\n" );
+    FreeContextBuffer( session_key.SessionKey );
 
     memset(&info, 0, sizeof(info));
     sec_status = QueryContextAttributesA(&client.ctxt, SECPKG_ATTR_NEGOTIATION_INFO, &info);
