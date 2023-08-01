@@ -1640,10 +1640,8 @@ static ULONG WINAPI HTMLXMLHttpRequestFactory_Release(IHTMLXMLHttpRequestFactory
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
+    if(!ref)
         release_dispex(&This->dispex);
-        free(This);
-    }
 
     return ref;
 }
@@ -1766,6 +1764,12 @@ static inline HTMLXMLHttpRequestFactory *factory_from_DispatchEx(DispatchEx *ifa
     return CONTAINING_RECORD(iface, HTMLXMLHttpRequestFactory, dispex);
 }
 
+static void HTMLXMLHttpRequestFactory_destructor(DispatchEx *dispex)
+{
+    HTMLXMLHttpRequestFactory *This = factory_from_DispatchEx(dispex);
+    free(This);
+}
+
 static HRESULT HTMLXMLHttpRequestFactory_value(DispatchEx *iface, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -1790,7 +1794,7 @@ static HRESULT HTMLXMLHttpRequestFactory_value(DispatchEx *iface, LCID lcid, WOR
 }
 
 static const dispex_static_data_vtbl_t HTMLXMLHttpRequestFactory_dispex_vtbl = {
-    NULL,
+    HTMLXMLHttpRequestFactory_destructor,
     NULL,
     HTMLXMLHttpRequestFactory_value
 };
