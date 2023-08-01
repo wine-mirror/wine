@@ -1303,10 +1303,8 @@ static ULONG WINAPI mutation_observer_ctor_Release(IUnknown *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
+    if(!ref)
         release_dispex(&This->dispex);
-        free(This);
-    }
 
     return ref;
 }
@@ -1316,6 +1314,12 @@ static const IUnknownVtbl mutation_observer_ctor_vtbl = {
     mutation_observer_ctor_AddRef,
     mutation_observer_ctor_Release,
 };
+
+static void mutation_observer_ctor_destructor(DispatchEx *dispex)
+{
+    struct mutation_observer_ctor *This = mutation_observer_ctor_from_DispatchEx(dispex);
+    free(This);
+}
 
 static HRESULT mutation_observer_ctor_value(DispatchEx *dispex, LCID lcid,
         WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei,
@@ -1365,7 +1369,9 @@ static HRESULT mutation_observer_ctor_value(DispatchEx *dispex, LCID lcid,
 }
 
 static dispex_static_data_vtbl_t mutation_observer_ctor_dispex_vtbl = {
-    .value = mutation_observer_ctor_value
+    mutation_observer_ctor_destructor,
+    NULL,
+    mutation_observer_ctor_value
 };
 
 static const tid_t mutation_observer_ctor_iface_tids[] = {
