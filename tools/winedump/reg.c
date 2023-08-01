@@ -206,6 +206,11 @@ static BOOL dump_value(unsigned int hive_off, unsigned int off)
         printf("unsupported value flags: %x\n", val->flags);
         return FALSE;
     }
+    if (!(val->data_size & 0x80000000) && val->data_size > 4 * BLOCK_SIZE)
+    {
+        printf("Warning: data blocks not supported\n");
+        return TRUE;
+    }
 
     if (val->name_size)
     {
