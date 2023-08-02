@@ -1140,6 +1140,7 @@ BOOLEAN WINAPI GetUserNameExW(
     case NameCanonicalEx:
     case NameServicePrincipal:
     case NameDnsDomain:
+        FIXME("NameFormat %d not implemented\n", NameFormat);
         SetLastError(ERROR_NONE_MAPPED);
         return FALSE;
 
