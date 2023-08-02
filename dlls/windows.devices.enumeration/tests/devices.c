@@ -232,6 +232,47 @@ static void test_DeviceInformation( void )
         goto skip_device_statics;
     }
 
+    IDeviceInformationStatics_CreateWatcherAqsFilter( device_info_statics, NULL, &device_watcher );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+
+    check_interface( device_watcher, &IID_IUnknown, TRUE );
+    check_interface( device_watcher, &IID_IInspectable, TRUE );
+    check_interface( device_watcher, &IID_IAgileObject, TRUE );
+    check_interface( device_watcher, &IID_IDeviceWatcher, TRUE );
+
+    hr = IDeviceWatcher_add_Added(
+            device_watcher,
+            (ITypedEventHandler_DeviceWatcher_DeviceInformation *)&added_handler.ITypedEventHandler_DeviceWatcher_IInspectable_iface,
+            &added_token );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    hr = IDeviceWatcher_add_Stopped(
+            device_watcher, &stopped_handler.ITypedEventHandler_DeviceWatcher_IInspectable_iface,
+            &stopped_token );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+
+    hr = IDeviceWatcher_get_Status( device_watcher, &status );
+    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    todo_wine ok( status == DeviceWatcherStatus_Created, "got status %u\n", status );
+
+    hr = IDeviceWatcher_Start( device_watcher );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    hr = IDeviceWatcher_get_Status( device_watcher, &status );
+    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    todo_wine ok( status == DeviceWatcherStatus_Started, "got status %u\n", status );
+
+    ref = IDeviceWatcher_AddRef( device_watcher );
+    ok( ref == 2, "got ref %lu\n", ref );
+    hr = IDeviceWatcher_Stop( device_watcher );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( !WaitForSingleObject( stopped_handler.event, 1000 ), "wait for stopped_handler.event failed\n" );
+
+    hr = IDeviceWatcher_get_Status( device_watcher, &status );
+    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    todo_wine ok( status == DeviceWatcherStatus_Stopped, "got status %u\n", status );
+    ok( stopped_handler.invoked, "stopped_handler not invoked\n" );
+    ok( stopped_handler.args == NULL, "stopped_handler not invoked\n" );
+
+    IDeviceWatcher_Release( device_watcher );
     IDeviceInformationStatics_Release( device_info_statics );
 skip_device_statics:
     IInspectable_Release( inspectable );
