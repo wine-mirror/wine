@@ -2693,6 +2693,17 @@ static BOOL messages_equal(const struct message *expected, const struct recvd_me
     return TRUE;
 }
 
+static BOOL sequence_contains_message(const struct message *expected, const struct recvd_message *actual)
+{
+    while (expected->message)
+    {
+        if (messages_equal(expected, actual, FALSE, __FILE__, __LINE__))
+            return TRUE;
+        expected++;
+    }
+    return FALSE;
+}
+
 static void dump_sequence(const struct message *expected, const char *context, const char *file, int line)
 {
     const struct recvd_message *actual = sequence;
@@ -2707,17 +2718,21 @@ static void dump_sequence(const struct message *expected, const char *context, c
                                 count, message_type_name(expected->flags), expected->message, actual->output );
         }
 
-        if (!messages_equal(expected, actual, FALSE, file, line) &&
-            can_skip_message(expected))
-	{
-            expected++;
-        }
-        else
+        if (messages_equal(expected, actual, FALSE, file, line))
         {
             expected++;
             actual++;
+            count++;
         }
-        count++;
+        else if (can_skip_message(expected) || sequence_contains_message(expected, actual))
+	{
+            expected++;
+            count++;
+        }
+        else
+        {
+            actual++;
+        }
     }
 
     /* optional trailing messages */
@@ -2844,6 +2859,7 @@ static void ok_sequence_(const struct message *expected_list, const char *contex
             if ((expected->flags & parent) != (actual->flags & parent)) dump++;
 
 	    expected++;
+            count++;
 	    actual++;
 	}
 	/*
@@ -2852,6 +2868,7 @@ static void ok_sequence_(const struct message *expected_list, const char *contex
 	else if (can_skip_message(expected))
         {
 	    expected++;
+            count++;
         }
 	else if (todo)
 	{
@@ -2860,13 +2877,17 @@ static void ok_sequence_(const struct message *expected_list, const char *contex
             dump++;
             goto done;
         }
-        else
+        else if (sequence_contains_message(expected, actual))
         {
             dump++;
             expected++;
+            count++;
+        }
+        else
+        {
+            dump++;
             actual++;
         }
-        count++;
 
         winetest_pop_context();
         winetest_push_context("%s: %u", context, count);
