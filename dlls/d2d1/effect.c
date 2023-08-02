@@ -624,37 +624,6 @@ static inline struct d2d_effect_context *impl_from_ID2D1EffectContext(ID2D1Effec
     return CONTAINING_RECORD(iface, struct d2d_effect_context, ID2D1EffectContext_iface);
 }
 
-static void d2d_effect_context_cleanup(struct d2d_effect_context *effect_context)
-{
-    size_t i;
-
-    for (i = 0; i < effect_context->shader_count; ++i)
-        IUnknown_Release(effect_context->shaders[i].shader);
-    free(effect_context->shaders);
-
-    ID2D1DeviceContext1_Release(&effect_context->device_context->ID2D1DeviceContext1_iface);
-}
-
-static HRESULT d2d_effect_context_add_shader(struct d2d_effect_context *effect_context,
-        REFGUID shader_id, void *shader)
-{
-    struct d2d_shader *entry;
-
-    if (!d2d_array_reserve((void **)&effect_context->shaders, &effect_context->shaders_size,
-            effect_context->shader_count + 1, sizeof(*effect_context->shaders)))
-    {
-        WARN("Failed to resize shaders array.\n");
-        return E_OUTOFMEMORY;
-    }
-
-    entry = &effect_context->shaders[effect_context->shader_count++];
-    entry->id = *shader_id;
-    entry->shader = shader;
-    IUnknown_AddRef(entry->shader);
-
-    return S_OK;
-}
-
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_QueryInterface(ID2D1EffectContext *iface, REFIID iid, void **out)
 {
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
@@ -692,7 +661,7 @@ static ULONG STDMETHODCALLTYPE d2d_effect_context_Release(ID2D1EffectContext *if
 
     if (!refcount)
     {
-        d2d_effect_context_cleanup(effect_context);
+        ID2D1DeviceContext1_Release(&effect_context->device_context->ID2D1DeviceContext1_iface);
         free(effect_context);
     }
 
@@ -787,7 +756,7 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_LoadPixelShader(ID2D1EffectC
         return hr;
     }
 
-    hr = d2d_effect_context_add_shader(effect_context, shader_id, shader);
+    hr = d2d_device_add_shader(effect_context->device_context->device, shader_id, (IUnknown *)shader);
     ID3D11PixelShader_Release(shader);
 
     return hr;
@@ -797,7 +766,7 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_LoadVertexShader(ID2D1Effect
         REFGUID shader_id, const BYTE *buffer, UINT32 buffer_size)
 {
     struct d2d_effect_context *effect_context = impl_from_ID2D1EffectContext(iface);
-    ID3D11VertexShader *vertex_shader;
+    ID3D11VertexShader *shader;
     HRESULT hr;
 
     TRACE("iface %p, shader_id %s, buffer %p, buffer_size %u.\n",
@@ -807,14 +776,14 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_LoadVertexShader(ID2D1Effect
         return S_OK;
 
     if (FAILED(hr = ID3D11Device1_CreateVertexShader(effect_context->device_context->d3d_device,
-            buffer, buffer_size, NULL, &vertex_shader)))
+            buffer, buffer_size, NULL, &shader)))
     {
         WARN("Failed to create vertex shader, hr %#lx.\n", hr);
         return hr;
     }
 
-    hr = d2d_effect_context_add_shader(effect_context, shader_id, vertex_shader);
-    ID3D11VertexShader_Release(vertex_shader);
+    hr = d2d_device_add_shader(effect_context->device_context->device, shader_id, (IUnknown *)shader);
+    ID3D11VertexShader_Release(shader);
 
     return hr;
 }
@@ -839,7 +808,7 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_LoadComputeShader(ID2D1Effec
         return hr;
     }
 
-    hr = d2d_effect_context_add_shader(effect_context, shader_id, shader);
+    hr = d2d_device_add_shader(effect_context->device_context->device, shader_id, (IUnknown *)shader);
     ID3D11ComputeShader_Release(shader);
 
     return hr;
@@ -848,17 +817,10 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_LoadComputeShader(ID2D1Effec
 static BOOL STDMETHODCALLTYPE d2d_effect_context_IsShaderLoaded(ID2D1EffectContext *iface, REFGUID shader_id)
 {
     struct d2d_effect_context *effect_context = impl_from_ID2D1EffectContext(iface);
-    size_t i;
 
     TRACE("iface %p, shader_id %s.\n", iface, debugstr_guid(shader_id));
 
-    for (i = 0; i < effect_context->shader_count; ++i)
-    {
-        if (IsEqualGUID(shader_id, &effect_context->shaders[i].id))
-            return TRUE;
-    }
-
-    return FALSE;
+    return d2d_device_is_shader_loaded(effect_context->device_context->device, shader_id);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateResourceTexture(ID2D1EffectContext *iface,

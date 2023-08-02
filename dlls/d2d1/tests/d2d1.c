@@ -11483,7 +11483,6 @@ static void test_effect_context(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     loaded = ID2D1EffectContext_IsShaderLoaded(effect_context2, &GUID_TestPixelShader);
-    todo_wine
     ok(loaded, "Unexpected shader loaded state.\n");
 
     ID2D1Effect_Release(effect2);
@@ -11524,7 +11523,6 @@ static void test_effect_context(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     loaded = ID2D1EffectContext_IsShaderLoaded(effect_context, &GUID_TestPixelShader);
-    todo_wine
     ok(loaded, "Unexpected shader loaded state.\n");
 
     ID2D1Effect_Release(effect);

@@ -4528,6 +4528,7 @@ static ULONG WINAPI d2d_device_Release(ID2D1Device1 *iface)
 {
     struct d2d_device *device = impl_from_ID2D1Device(iface);
     ULONG refcount = InterlockedDecrement(&device->refcount);
+    size_t i;
 
     TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
@@ -4535,6 +4536,9 @@ static ULONG WINAPI d2d_device_Release(ID2D1Device1 *iface)
     {
         IDXGIDevice_Release(device->dxgi_device);
         ID2D1Factory1_Release(device->factory);
+        for (i = 0; i < device->shaders.count; ++i)
+            IUnknown_Release(device->shaders.objects[i].shader);
+        free(device->shaders.objects);
         free(device);
     }
 
@@ -4669,4 +4673,36 @@ void d2d_device_init(struct d2d_device *device, ID2D1Factory1 *iface, IDXGIDevic
     ID2D1Factory1_AddRef(device->factory);
     device->dxgi_device = dxgi_device;
     IDXGIDevice_AddRef(device->dxgi_device);
+}
+
+HRESULT d2d_device_add_shader(struct d2d_device *device, REFGUID shader_id, IUnknown *shader)
+{
+    struct d2d_shader *entry;
+
+    if (!d2d_array_reserve((void **)&device->shaders.objects, &device->shaders.size,
+            device->shaders.count + 1, sizeof(*device->shaders.objects)))
+    {
+        WARN("Failed to resize shaders array.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    entry = &device->shaders.objects[device->shaders.count++];
+    entry->id = *shader_id;
+    entry->shader = shader;
+    IUnknown_AddRef(entry->shader);
+
+    return S_OK;
+}
+
+BOOL d2d_device_is_shader_loaded(struct d2d_device *device, REFGUID shader_id)
+{
+     size_t i;
+
+     for (i = 0; i < device->shaders.count; ++i)
+     {
+         if (IsEqualGUID(shader_id, &device->shaders.objects[i].id))
+             return TRUE;
+     }
+
+     return FALSE;
 }

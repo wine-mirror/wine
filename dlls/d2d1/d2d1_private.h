@@ -592,22 +592,31 @@ HRESULT d2d_geometry_group_init(struct d2d_geometry *geometry, ID2D1Factory *fac
         D2D1_FILL_MODE fill_mode, ID2D1Geometry **src_geometries, unsigned int geometry_count);
 struct d2d_geometry *unsafe_impl_from_ID2D1Geometry(ID2D1Geometry *iface);
 
+struct d2d_shader
+{
+    GUID id;
+    IUnknown *shader;
+};
+
 struct d2d_device
 {
     ID2D1Device1 ID2D1Device1_iface;
     LONG refcount;
     ID2D1Factory1 *factory;
     IDXGIDevice *dxgi_device;
+
+    struct
+    {
+        struct d2d_shader *objects;
+        size_t size;
+        size_t count;
+    } shaders;
 };
 
 void d2d_device_init(struct d2d_device *device, ID2D1Factory1 *factory, IDXGIDevice *dxgi_device);
 struct d2d_device *unsafe_impl_from_ID2D1Device(ID2D1Device1 *iface);
-
-struct d2d_shader
-{
-    GUID id;
-    IUnknown *shader;
-};
+HRESULT d2d_device_add_shader(struct d2d_device *device, REFGUID shader_id, IUnknown *shader);
+BOOL d2d_device_is_shader_loaded(struct d2d_device *device, REFGUID shader_id);
 
 struct d2d_effect_context
 {
@@ -615,10 +624,6 @@ struct d2d_effect_context
     LONG refcount;
 
     struct d2d_device_context *device_context;
-
-    struct d2d_shader *shaders;
-    size_t shaders_size;
-    size_t shader_count;
 };
 
 void d2d_effect_context_init(struct d2d_effect_context *effect_context,
