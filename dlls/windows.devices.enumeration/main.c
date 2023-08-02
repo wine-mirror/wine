@@ -31,6 +31,7 @@ struct device_watcher
     LONG ref;
 
     struct list stopped_handlers;
+    HSTRING filter;
 };
 
 static inline struct device_watcher *impl_from_IDeviceWatcher( IDeviceWatcher *iface )
@@ -75,6 +76,7 @@ static ULONG WINAPI device_watcher_Release( IDeviceWatcher *iface )
     if (!ref)
     {
         typed_event_handlers_clear( &impl->stopped_handlers );
+        WindowsDeleteString( impl->filter );
         free( impl );
     }
 
@@ -374,8 +376,20 @@ static HRESULT WINAPI device_statics_CreateWatcherDeviceClass( IDeviceInformatio
 
 static HRESULT WINAPI device_statics_CreateWatcherAqsFilter( IDeviceInformationStatics *iface, HSTRING filter, IDeviceWatcher **watcher )
 {
-    FIXME( "iface %p, filter %s, watcher %p stub!\n", iface, debugstr_hstring(filter), watcher );
-    return E_NOTIMPL;
+    struct device_watcher *this;
+
+    TRACE( "iface %p, filter %s, watcher %p\n", iface, debugstr_hstring(filter), watcher );
+
+    if (!(this = calloc( 1, sizeof(*this) ))) return E_OUTOFMEMORY;
+
+    this->IDeviceWatcher_iface.lpVtbl = &device_watcher_vtbl;
+    this->ref = 1;
+    WindowsDuplicateString( filter, &this->filter );
+
+    list_init( &this->stopped_handlers );
+
+    *watcher = &this->IDeviceWatcher_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI device_statics_CreateWatcherAqsFilterAndAdditionalProperties( IDeviceInformationStatics *iface, HSTRING filter,
@@ -448,6 +462,7 @@ static HRESULT WINAPI device_statics2_CreateWatcher( IDeviceInformationStatics2 
 
     this->IDeviceWatcher_iface.lpVtbl = &device_watcher_vtbl;
     this->ref = 1;
+    WindowsDuplicateString( filter, &this->filter );
 
     list_init( &this->stopped_handlers );
 
