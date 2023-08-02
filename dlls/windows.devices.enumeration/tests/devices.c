@@ -144,6 +144,7 @@ static void test_DeviceInformation( void )
     IInspectable *inspectable, *inspectable2;
     IActivationFactory *factory;
     IDeviceInformationStatics2 *device_info_statics2;
+    IDeviceInformationStatics *device_info_statics;
     IDeviceWatcher *device_watcher;
     DeviceWatcherStatus status = 0xdeadbeef;
     ULONG ref;
@@ -174,7 +175,7 @@ static void test_DeviceInformation( void )
     if (FAILED( hr ))
     {
         win_skip( "IDeviceInformationStatics2 not supported.\n" );
-        goto skip_device_statics2;
+        goto skip_device_statics;
     }
 
     hr = IDeviceInformationStatics2_QueryInterface( device_info_statics2, &IID_IInspectable, (void **)&inspectable2 );
@@ -223,7 +224,16 @@ static void test_DeviceInformation( void )
     IInspectable_Release( inspectable2 );
     IDeviceInformationStatics2_Release( device_info_statics2 );
 
-skip_device_statics2:
+    hr = IActivationFactory_QueryInterface( factory, &IID_IDeviceInformationStatics, (void **)&device_info_statics );
+    ok( hr == S_OK || broken( hr == E_NOINTERFACE ), "got hr %#lx\n", hr );
+    if (FAILED( hr ))
+    {
+        win_skip( "IDeviceInformationStatics not supported.\n" );
+        goto skip_device_statics;
+    }
+
+    IDeviceInformationStatics_Release( device_info_statics );
+skip_device_statics:
     IInspectable_Release( inspectable );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %lu\n", ref );
