@@ -176,8 +176,8 @@ NTSTATUS WINAPI NtOpenKey( HANDLE *key, ACCESS_MASK access, const OBJECT_ATTRIBU
 NTSTATUS WINAPI NtOpenKeyTransactedEx( HANDLE *key, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
                                        ULONG options, HANDLE transaction )
 {
-    FIXME( "(%p %x %p %x %p)\n", key, (int)access, attr, (int)options, transaction );
-    return STATUS_NOT_IMPLEMENTED;
+    FIXME( "(%p %x %p %x %p) semi-stub\n", key, (int)access, attr, (int)options, transaction );
+    return NtOpenKeyEx( key, access, attr, options );
 }
 
 
