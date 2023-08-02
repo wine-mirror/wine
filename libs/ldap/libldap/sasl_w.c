@@ -261,7 +261,12 @@ int sasl_client_start( sasl_conn_t *handle, const char *mechlist, sasl_interact_
         *clientout = out_bufs[0].pvBuffer;
         *clientoutlen = out_bufs[0].cbBuffer;
         *mech = "GSS-SPNEGO";
-        return (status == SEC_I_CONTINUE_NEEDED) ? SASL_CONTINUE : SASL_OK;
+        if (status == SEC_I_CONTINUE_NEEDED) return SASL_CONTINUE;
+        else
+        {
+            conn->ssf = get_key_size( &conn->ctxt_handle );
+            return SASL_OK;
+        }
     }
 
     return SASL_FAIL;
