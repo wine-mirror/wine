@@ -1570,9 +1570,9 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
     free(source->descriptors);
     free(source->streams);
 
-    MFUnlockWorkQueue(source->async_commands_queue);
-
     LeaveCriticalSection(&source->cs);
+
+    MFUnlockWorkQueue(source->async_commands_queue);
 
     return S_OK;
 }
