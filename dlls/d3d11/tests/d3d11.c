@@ -35093,9 +35093,9 @@ static void test_shared_resource(D3D_FEATURE_LEVEL feature_level)
 test_done:
         if (keyed_mutex)
             IDXGIKeyedMutex_Release(keyed_mutex);
-        if (tex)
-            IDXGIResource_Release(res);
         if (res)
+            IDXGIResource_Release(res);
+        if (tex)
             ID3D11Texture2D_Release(tex);
         if (res1)
             IDXGIResource1_Release(res1);
