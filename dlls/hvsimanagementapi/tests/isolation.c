@@ -76,8 +76,8 @@ static void test_IsolatedWindowsEnvironmentHostStatics(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
     hr = IIsolatedWindowsEnvironmentHostStatics_get_IsReady( isolated_host_statics, &value );
-    todo_wine ok( hr == S_OK || broken( hr == E_NOTIMPL /* Win10 2004 */ ), "got hr %#lx.\n", hr );
-    todo_wine ok( !value, "got %d.\n", value );
+    ok( hr == S_OK || broken( hr == E_NOTIMPL /* Win10 2004 */ ), "got hr %#lx.\n", hr );
+    ok( !value, "got %d.\n", value );
 
     ref = IIsolatedWindowsEnvironmentHostStatics_Release( isolated_host_statics );
     ok( ref == 2, "got ref %ld.\n", ref );
