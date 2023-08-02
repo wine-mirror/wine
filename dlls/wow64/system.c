@@ -393,7 +393,7 @@ NTSTATUS WINAPI wow64_NtQuerySystemInformation( UINT *args )
                     info32->Modules[i].InitOrderIndex    = info->Modules[i].InitOrderIndex;
                     info32->Modules[i].LoadCount         = info->Modules[i].LoadCount;
                     info32->Modules[i].NameOffset        = info->Modules[i].NameOffset;
-                    strcpy( (char *)info->Modules[i].Name, (char *)info32->Modules[i].Name );
+                    strcpy( (char *)info32->Modules[i].Name, (char *)info->Modules[i].Name );
                 }
             }
         }
