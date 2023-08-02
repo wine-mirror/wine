@@ -228,6 +228,13 @@ static ULONG get_key_size( CtxtHandle *ctx )
     return key.SessionKeyLength * 8;
 }
 
+static ULONG get_trailer_size( CtxtHandle *ctx )
+{
+    SecPkgContext_Sizes sizes;
+    if (QueryContextAttributesA( ctx, SECPKG_ATTR_SIZES, &sizes )) return 0;
+    return sizes.cbSecurityTrailer;
+}
+
 int sasl_client_start( sasl_conn_t *handle, const char *mechlist, sasl_interact_t **prompts,
                        const char **clientout, unsigned int *clientoutlen, const char **mech )
 {
@@ -265,6 +272,7 @@ int sasl_client_start( sasl_conn_t *handle, const char *mechlist, sasl_interact_
         else
         {
             conn->ssf = get_key_size( &conn->ctxt_handle );
+            conn->trailer_size = get_trailer_size( &conn->ctxt_handle );
             return SASL_OK;
         }
     }
@@ -300,13 +308,8 @@ int sasl_client_step( sasl_conn_t *handle, const char *serverin, unsigned int se
         if (status == SEC_I_CONTINUE_NEEDED) return SASL_CONTINUE;
         else
         {
-            SecPkgContext_Sizes sizes;
-
             conn->ssf = get_key_size( &conn->ctxt_handle );
-
-            status = QueryContextAttributesA( &conn->ctxt_handle, SECPKG_ATTR_SIZES, &sizes );
-            if (status != SEC_E_OK) return SASL_FAIL;
-            conn->trailer_size = sizes.cbSecurityTrailer;
+            conn->trailer_size = get_trailer_size( &conn->ctxt_handle );
             return SASL_OK;
         }
     }
