@@ -1835,7 +1835,7 @@ static HRESULT WINAPI uia_provider_attach_event(IWineUiaProvider *iface, LONG_PT
 {
     struct uia_provider *prov = impl_from_IWineUiaProvider(iface);
     struct uia_event *event = (struct uia_event *)huiaevent;
-    IRawElementProviderFragmentRoot *elroot;
+    IRawElementProviderFragmentRoot *elroot = NULL;
     IRawElementProviderFragment *elfrag;
     SAFEARRAY *embedded_roots = NULL;
     HRESULT hr;
@@ -1863,12 +1863,17 @@ static HRESULT WINAPI uia_provider_attach_event(IWineUiaProvider *iface, LONG_PT
 
     if (elroot)
     {
+        IProxyProviderWinEventHandler *winevent_handler;
         IRawElementProviderAdviseEvents *advise_events;
 
-        hr = IRawElementProviderFragmentRoot_QueryInterface(elroot, &IID_IRawElementProviderAdviseEvents,
-                (void **)&advise_events);
-        IRawElementProviderFragmentRoot_Release(elroot);
-        if (SUCCEEDED(hr))
+        if (!prov->return_nested_node && SUCCEEDED(IRawElementProviderFragmentRoot_QueryInterface(elroot,
+                        &IID_IProxyProviderWinEventHandler, (void **)&winevent_handler)))
+        {
+            FIXME("MSAA to UIA event bridge currently unimplemented\n");
+            IProxyProviderWinEventHandler_Release(winevent_handler);
+        }
+        else if (SUCCEEDED(IRawElementProviderFragmentRoot_QueryInterface(elroot, &IID_IRawElementProviderAdviseEvents,
+                        (void **)&advise_events)))
         {
             hr = uia_event_add_provider_event_adviser(advise_events, event);
             IRawElementProviderAdviseEvents_Release(advise_events);
@@ -1918,6 +1923,8 @@ static HRESULT WINAPI uia_provider_attach_event(IWineUiaProvider *iface, LONG_PT
     }
 
 exit:
+    if (elroot)
+        IRawElementProviderFragmentRoot_Release(elroot);
     IRawElementProviderFragment_Release(elfrag);
     SafeArrayDestroy(embedded_roots);
 

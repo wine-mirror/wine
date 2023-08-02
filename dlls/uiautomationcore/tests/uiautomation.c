@@ -16812,8 +16812,8 @@ static DWORD WINAPI uia_proxy_provider_win_event_handler_test_thread(LPVOID para
     set_uia_hwnd_expects(1, 1, 1, 2, 0);
     hr = UiaEventAddWindow(event, hwnd[0]);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    test_provider_event_advise_added(&Provider_hwnd2, 0, TRUE);
-    test_provider_event_advise_added(&Provider_nc2, 0, TRUE);
+    test_provider_event_advise_added(&Provider_hwnd2, 0, FALSE);
+    test_provider_event_advise_added(&Provider_nc2, 0, FALSE);
     check_uia_hwnd_expects_at_least(1, TRUE, 1, FALSE, 1, FALSE, 1, FALSE, 0, FALSE);
 
     /*
@@ -16982,9 +16982,9 @@ static DWORD WINAPI uia_proxy_provider_win_event_handler_test_thread(LPVOID para
     hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Element, NULL, 0, &cache_req,
             &event);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    test_provider_event_advise_added(&Provider_proxy, 0, TRUE);
-    test_provider_event_advise_added(&Provider_hwnd, 0, TRUE);
-    test_provider_event_advise_added(&Provider_nc, 0, TRUE);
+    test_provider_event_advise_added(&Provider_proxy, 0, FALSE);
+    test_provider_event_advise_added(&Provider_hwnd, 0, FALSE);
+    test_provider_event_advise_added(&Provider_nc, 0, FALSE);
 
     /* Raise WinEvent on the desktop HWND. */
     set_provider_runtime_id(&Provider_child, UIA_RUNTIME_ID_PREFIX, HandleToUlong(GetDesktopWindow()));
@@ -17026,9 +17026,9 @@ static DWORD WINAPI uia_proxy_provider_win_event_handler_test_thread(LPVOID para
     hr = UiaAddEvent(node, UIA_AutomationFocusChangedEventId, uia_event_callback, TreeScope_Element, NULL, 0, &cache_req,
             &event);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    test_provider_event_advise_added(&Provider_hwnd, 0, TRUE);
-    test_provider_event_advise_added(&Provider_nc, 0, TRUE);
-    test_provider_event_advise_added(&Provider_proxy, 0, TRUE);
+    test_provider_event_advise_added(&Provider_hwnd, 0, FALSE);
+    test_provider_event_advise_added(&Provider_nc, 0, FALSE);
+    test_provider_event_advise_added(&Provider_proxy, 0, FALSE);
 
     /* WinEvent handled. */
     set_uia_hwnd_expects(1, 1, 1, 2, 1);
