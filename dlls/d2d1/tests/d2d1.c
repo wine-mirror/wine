@@ -11405,11 +11405,14 @@ static void test_effect_register(BOOL d3d11)
 
 static void test_effect_context(BOOL d3d11)
 {
-    ID2D1EffectContext *effect_context;
+    ID2D1EffectContext *effect_context, *effect_context2;
+    ID2D1Effect *effect = NULL, *effect2 = NULL;
+    ID2D1DeviceContext *device_context;
     D2D1_PROPERTY_BINDING binding;
     struct d2d1_test_context ctx;
-    ID2D1Effect *effect = NULL;
     ID2D1Factory1 *factory;
+    ID2D1Device *device;
+    ULONG refcount;
     BOOL loaded;
     HRESULT hr;
 
@@ -11441,9 +11444,9 @@ static void test_effect_context(BOOL d3d11)
 
     /* Test shader loading */
     loaded = ID2D1EffectContext_IsShaderLoaded(effect_context, &GUID_TestVertexShader);
-    ok(!loaded, "Shader is loaded.\n");
+    ok(!loaded, "Unexpected shader loaded state.\n");
     loaded = ID2D1EffectContext_IsShaderLoaded(effect_context, &GUID_TestPixelShader);
-    ok(!loaded, "Shader is loaded.\n");
+    ok(!loaded, "Unexpected shader loaded state.\n");
 
     hr = ID2D1EffectContext_LoadVertexShader(effect_context,
             &GUID_TestVertexShader, (const BYTE *)test_ps, sizeof(test_ps));
@@ -11452,7 +11455,7 @@ static void test_effect_context(BOOL d3d11)
             &GUID_TestVertexShader, (const BYTE *)test_vs, sizeof(test_vs));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     loaded = ID2D1EffectContext_IsShaderLoaded(effect_context, &GUID_TestVertexShader);
-    ok(loaded, "Shader is not loaded.\n");
+    ok(loaded, "Unexpected shader loaded state.\n");
 
     hr = ID2D1EffectContext_LoadVertexShader(effect_context,
             &GUID_TestVertexShader, (const BYTE *)test_ps, sizeof(test_ps));
@@ -11468,9 +11471,64 @@ static void test_effect_context(BOOL d3d11)
             &GUID_TestPixelShader, (const BYTE *)test_ps, sizeof(test_ps));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     loaded = ID2D1EffectContext_IsShaderLoaded(effect_context, &GUID_TestPixelShader);
-    ok(loaded, "Shader is not loaded.\n");
+    ok(loaded, "Unexpected shader loaded state.\n");
+
+    /* Same shader id, using different context. */
+    hr = ID2D1DeviceContext_CreateEffect(ctx.context, &CLSID_TestEffect, &effect2);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    effect_context2 = NULL;
+    hr = ID2D1Effect_GetValueByName(effect2, L"Context",
+            D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context2, sizeof(effect_context2));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    loaded = ID2D1EffectContext_IsShaderLoaded(effect_context2, &GUID_TestPixelShader);
+    todo_wine
+    ok(loaded, "Unexpected shader loaded state.\n");
+
+    ID2D1Effect_Release(effect2);
+
+    /* Same shader id, using different device. */
+    hr = ID2D1Factory1_CreateDevice(factory, ctx.device, &device);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Device_CreateDeviceContext(device, D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &device_context);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1DeviceContext_CreateEffect(device_context, &CLSID_TestEffect, &effect2);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    effect_context = NULL;
+    hr = ID2D1Effect_GetValueByName(effect2, L"Context",
+            D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    loaded = ID2D1EffectContext_IsShaderLoaded(effect_context, &GUID_TestPixelShader);
+    ok(!loaded, "Unexpected shader loaded state.\n");
+
+    ID2D1Effect_Release(effect2);
+
+    ID2D1DeviceContext_Release(device_context);
+    ID2D1Device_Release(device);
+
+    /* Release all created effects, check shader map. */
+    refcount = ID2D1Effect_Release(effect);
+    ok(!refcount, "Unexpected refcount %lu.\n", refcount);
+
+    hr = ID2D1DeviceContext_CreateEffect(ctx.context, &CLSID_TestEffect, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    effect_context = NULL;
+    hr = ID2D1Effect_GetValueByName(effect, L"Context",
+            D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    loaded = ID2D1EffectContext_IsShaderLoaded(effect_context, &GUID_TestPixelShader);
+    todo_wine
+    ok(loaded, "Unexpected shader loaded state.\n");
 
     ID2D1Effect_Release(effect);
+
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     release_test_context(&ctx);
