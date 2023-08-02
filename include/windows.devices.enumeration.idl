@@ -195,6 +195,44 @@ namespace Windows.Devices.Enumeration {
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.Devices.Enumeration.DeviceInformation),
+        uuid(c17f100e-3a46-4a78-8013-769dc9b97390)
+    ]
+    interface IDeviceInformationStatics : IInspectable
+    {
+        [overload("CreateFromIdAsync")]
+        HRESULT CreateFromIdAsync([in] HSTRING id,
+                [out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.DeviceInformation *> **op);
+        [overload("CreateFromIdAsync")]
+        HRESULT CreateFromIdAsyncAdditionalProperties([in] HSTRING id,
+                [in] Windows.Foundation.Collections.IIterable<HSTRING> *additional_properties,
+                [out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.DeviceInformation *> **op);
+        [overload("FindAllAsync")]
+        HRESULT FindAllAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.DeviceInformationCollection *> **op);
+        [overload("FindAllAsync"), default_overload]
+        HRESULT FindAllAsyncDeviceClass([in] Windows.Devices.Enumeration.DeviceClass device_class,
+                [out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.DeviceInformationCollection *> **op);
+        [overload("FindAllAsync")]
+        HRESULT FindAllAsyncAqsFilter([in] HSTRING filter,
+                [out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.DeviceInformationCollection *> **op);
+        [overload("FindAllAsync")]
+        HRESULT FindAllAsyncAqsFilterAndAdditionalProperties([in] HSTRING filter,
+                [in] Windows.Foundation.Collections.IIterable<HSTRING> *additional_properties,
+                [out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.DeviceInformationCollection *> **op);
+        [overload("CreateWatcher")]
+        HRESULT CreateWatcher([out, retval] Windows.Devices.Enumeration.DeviceWatcher **watcher);
+        [overload("CreateWatcher"), default_overload]
+        HRESULT CreateWatcherDeviceClass([in] Windows.Devices.Enumeration.DeviceClass device_class,
+                [out, retval] Windows.Devices.Enumeration.DeviceWatcher **watcher);
+        [overload("CreateWatcher")]
+        HRESULT CreateWatcherAqsFilter([in] HSTRING filter, [out, retval] Windows.Devices.Enumeration.DeviceWatcher **watcher);
+        [overload("CreateWatcher")]
+        HRESULT CreateWatcherAqsFilterAndAdditionalProperties([in] HSTRING filter,
+                [in] Windows.Foundation.Collections.IIterable<HSTRING> *additional_properties, [out, retval] Windows.Devices.Enumeration.DeviceWatcher **watcher);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Enumeration.DeviceInformation),
         uuid(493b4f34-a84f-45fd-9167-15d1cb1bd1f9)
     ]
     interface IDeviceInformationStatics2 : IInspectable
