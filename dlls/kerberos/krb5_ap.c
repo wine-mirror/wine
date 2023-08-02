@@ -633,9 +633,26 @@ static NTSTATUS NTAPI kerberos_SpQueryContextAttributes( LSA_SEC_HANDLE context,
     X(SECPKG_ATTR_NATIVE_NAMES);
     X(SECPKG_ATTR_PACKAGE_INFO);
     X(SECPKG_ATTR_PASSWORD_EXPIRY);
-    X(SECPKG_ATTR_SESSION_KEY);
     X(SECPKG_ATTR_STREAM_SIZES);
     X(SECPKG_ATTR_TARGET_INFORMATION);
+#undef X
+    case SECPKG_ATTR_SESSION_KEY:
+    {
+        SecPkgContext_SessionKey key = { 128 };
+        struct query_context_attributes_params params = { context_handle->handle, attribute, &key };
+        NTSTATUS status;
+
+        if (!(key.SessionKey = RtlAllocateHeap( GetProcessHeap(), 0, key.SessionKeyLength ))) return STATUS_NO_MEMORY;
+
+        if ((status = KRB5_CALL( query_context_attributes, &params )))
+        {
+            RtlFreeHeap( GetProcessHeap(), 0, key.SessionKey );
+            return status;
+        }
+
+        *(SecPkgContext_SessionKey *)buffer = key;
+        return SEC_E_OK;
+    }
     case SECPKG_ATTR_SIZES:
     {
         struct query_context_attributes_params params = { context_handle->handle, attribute, buffer };
@@ -648,7 +665,6 @@ static NTSTATUS NTAPI kerberos_SpQueryContextAttributes( LSA_SEC_HANDLE context,
         info->NegotiationState = SECPKG_NEGOTIATION_COMPLETE;
         return SEC_E_OK;
     }
-#undef X
     default:
         FIXME( "unknown attribute %lu\n", attribute );
         break;

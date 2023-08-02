@@ -403,7 +403,9 @@ MAKE_FUNCPTR( gss_get_mic );
 MAKE_FUNCPTR( gss_import_name );
 MAKE_FUNCPTR( gss_init_sec_context );
 MAKE_FUNCPTR( gss_inquire_context );
+MAKE_FUNCPTR( gss_inquire_sec_context_by_oid );
 MAKE_FUNCPTR( gss_release_buffer );
+MAKE_FUNCPTR( gss_release_buffer_set );
 MAKE_FUNCPTR( gss_release_cred );
 MAKE_FUNCPTR( gss_release_iov_buffer );
 MAKE_FUNCPTR( gss_release_name );
@@ -429,21 +431,23 @@ static BOOL load_gssapi_krb5(void)
         goto fail; \
     }
 
-    LOAD_FUNCPTR( gss_accept_sec_context)
-    LOAD_FUNCPTR( gss_acquire_cred)
-    LOAD_FUNCPTR( gss_delete_sec_context)
-    LOAD_FUNCPTR( gss_display_status)
-    LOAD_FUNCPTR( gss_get_mic)
-    LOAD_FUNCPTR( gss_import_name)
-    LOAD_FUNCPTR( gss_init_sec_context)
-    LOAD_FUNCPTR( gss_inquire_context)
-    LOAD_FUNCPTR( gss_release_buffer)
-    LOAD_FUNCPTR( gss_release_cred)
-    LOAD_FUNCPTR( gss_release_iov_buffer)
-    LOAD_FUNCPTR( gss_release_name)
-    LOAD_FUNCPTR( gss_unwrap)
-    LOAD_FUNCPTR( gss_unwrap_iov)
-    LOAD_FUNCPTR( gss_verify_mic)
+    LOAD_FUNCPTR( gss_accept_sec_context )
+    LOAD_FUNCPTR( gss_acquire_cred )
+    LOAD_FUNCPTR( gss_delete_sec_context )
+    LOAD_FUNCPTR( gss_display_status )
+    LOAD_FUNCPTR( gss_get_mic )
+    LOAD_FUNCPTR( gss_import_name )
+    LOAD_FUNCPTR( gss_init_sec_context )
+    LOAD_FUNCPTR( gss_inquire_context )
+    LOAD_FUNCPTR( gss_inquire_sec_context_by_oid )
+    LOAD_FUNCPTR( gss_release_buffer )
+    LOAD_FUNCPTR( gss_release_buffer_set )
+    LOAD_FUNCPTR( gss_release_cred )
+    LOAD_FUNCPTR( gss_release_iov_buffer )
+    LOAD_FUNCPTR( gss_release_name )
+    LOAD_FUNCPTR( gss_unwrap )
+    LOAD_FUNCPTR( gss_unwrap_iov )
+    LOAD_FUNCPTR( gss_verify_mic )
     LOAD_FUNCPTR( gss_wrap )
     LOAD_FUNCPTR( gss_wrap_iov )
 #undef LOAD_FUNCPTR
@@ -804,11 +808,49 @@ static NTSTATUS make_signature( void *args )
 #define KERBEROS_MAX_SIGNATURE_DCE    28
 #define KERBEROS_SECURITY_TRAILER_DCE 76
 
+static NTSTATUS get_session_key( gss_ctx_id_t ctx, SecPkgContext_SessionKey *key )
+{
+    gss_OID_desc GSS_C_INQ_SSPI_SESSION_KEY =
+        { 11, (void *)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x02\x05\x05" }; /* 1.2.840.113554.1.2.2.5.5 */
+    OM_uint32 ret, minor_status;
+    gss_buffer_set_t buffer_set = GSS_C_NO_BUFFER_SET;
+
+    ret = pgss_inquire_sec_context_by_oid( &minor_status, ctx, &GSS_C_INQ_SSPI_SESSION_KEY, &buffer_set );
+    if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
+    if (ret != GSS_S_COMPLETE) return STATUS_INTERNAL_ERROR;
+
+    if (buffer_set == GSS_C_NO_BUFFER_SET || buffer_set->count != 2)
+    {
+        pgss_release_buffer_set( &minor_status, &buffer_set );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if (key->SessionKeyLength < buffer_set->elements[0].length )
+    {
+        key->SessionKeyLength = buffer_set->elements[0].length;
+        pgss_release_buffer_set( &minor_status, &buffer_set );
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+
+    memcpy( key->SessionKey, buffer_set->elements[0].value, buffer_set->elements[0].length );
+    key->SessionKeyLength = buffer_set->elements[0].length;
+
+    pgss_release_buffer_set( &minor_status, &buffer_set );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS query_context_attributes( void *args )
 {
     struct query_context_attributes_params *params = args;
     switch (params->attr)
     {
+    case SECPKG_ATTR_SESSION_KEY:
+    {
+        SecPkgContext_SessionKey *key = (SecPkgContext_SessionKey *)params->buf;
+        gss_ctx_id_t ctx  = ctxhandle_sspi_to_gss( params->context );
+
+        return get_session_key( ctx, key );
+    }
     case SECPKG_ATTR_SIZES:
     {
         SecPkgContext_Sizes *sizes = (SecPkgContext_Sizes *)params->buf;
