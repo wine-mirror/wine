@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(hvsi);
 struct isolated_host_statics
 {
     IActivationFactory IActivationFactory_iface;
+    IIsolatedWindowsEnvironmentHostStatics IIsolatedWindowsEnvironmentHostStatics_iface;
     LONG ref;
 };
 
@@ -45,6 +46,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
         *out = &impl->IActivationFactory_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IIsolatedWindowsEnvironmentHostStatics ))
+    {
+        *out = &impl->IIsolatedWindowsEnvironmentHostStatics_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -107,9 +115,39 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( isolated_host_statics, IIsolatedWindowsEnvironmentHostStatics, struct isolated_host_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI isolated_host_statics_get_IsReady( IIsolatedWindowsEnvironmentHostStatics *iface, boolean *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isolated_host_statics_get_HostErrors( IIsolatedWindowsEnvironmentHostStatics *iface,
+                                                            IVectorView_IsolatedWindowsEnvironmentHostError **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static const struct IIsolatedWindowsEnvironmentHostStaticsVtbl isolated_host_statics_vtbl =
+{
+    isolated_host_statics_QueryInterface,
+    isolated_host_statics_AddRef,
+    isolated_host_statics_Release,
+    /* IInspectable methods */
+    isolated_host_statics_GetIids,
+    isolated_host_statics_GetRuntimeClassName,
+    isolated_host_statics_GetTrustLevel,
+    /* IIsolatedWindowsEnvironmentHostStatics methods */
+    isolated_host_statics_get_IsReady,
+    isolated_host_statics_get_HostErrors,
+};
+
 static struct isolated_host_statics isolated_host_statics =
 {
     {&factory_vtbl},
+    {&isolated_host_statics_vtbl},
     1,
 };
 

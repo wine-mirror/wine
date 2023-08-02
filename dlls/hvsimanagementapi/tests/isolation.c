@@ -49,6 +49,7 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid )
 static void test_IsolatedWindowsEnvironmentHostStatics(void)
 {
     static const WCHAR *isolated_host_statics_name = L"Windows.Security.Isolation.IsolatedWindowsEnvironmentHost";
+    IIsolatedWindowsEnvironmentHostStatics *isolated_host_statics;
     IActivationFactory *factory;
     HSTRING str;
     HRESULT hr;
@@ -70,6 +71,11 @@ static void test_IsolatedWindowsEnvironmentHostStatics(void)
     check_interface( factory, &IID_IInspectable );
     check_interface( factory, &IID_IAgileObject );
 
+    hr = IActivationFactory_QueryInterface( factory, &IID_IIsolatedWindowsEnvironmentHostStatics, (void **)&isolated_host_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IIsolatedWindowsEnvironmentHostStatics_Release( isolated_host_statics );
+    ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }
