@@ -255,7 +255,8 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
         return hr;
     }
 
-    hr = d2d_d3d_create_render_target(device, render_target->dxgi_surface, &render_target->IUnknown_iface,
+    hr = d2d_d3d_create_render_target(unsafe_impl_from_ID2D1Device((ID2D1Device1 *)device),
+            render_target->dxgi_surface, &render_target->IUnknown_iface,
             &d2d_wic_render_target_ops, desc, (void **)&render_target->dxgi_inner);
     ID2D1Device_Release(device);
     if (FAILED(hr))

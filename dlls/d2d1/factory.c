@@ -495,7 +495,8 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDxgiSurfaceRenderTarget(ID2D1
         return hr;
     }
 
-    hr = d2d_d3d_create_render_target(device, surface, NULL, NULL, desc, (void **)render_target);
+    hr = d2d_d3d_create_render_target(unsafe_impl_from_ID2D1Device((ID2D1Device1 *)device), surface,
+            NULL, NULL, desc, (void **)render_target);
     ID2D1Device_Release(device);
     return hr;
 }

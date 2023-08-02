@@ -928,7 +928,7 @@ HRESULT d2d_hwnd_render_target_init(struct d2d_hwnd_render_target *render_target
         return hr;
     }
 
-    hr = d2d_d3d_create_render_target(device, dxgi_surface,
+    hr = d2d_d3d_create_render_target(unsafe_impl_from_ID2D1Device((ID2D1Device1 *)device), dxgi_surface,
             (IUnknown *)&render_target->ID2D1HwndRenderTarget_iface, &d2d_hwnd_render_target_ops,
             &dxgi_rt_desc, (void **)&render_target->dxgi_inner);
     IDXGISurface_Release(dxgi_surface);

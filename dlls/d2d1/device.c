@@ -40,8 +40,6 @@ static inline struct d2d_device *impl_from_ID2D1Device(ID2D1Device1 *iface)
     return CONTAINING_RECORD(iface, struct d2d_device, ID2D1Device1_iface);
 }
 
-static struct d2d_device *unsafe_impl_from_ID2D1Device(ID2D1Device1 *iface);
-
 static ID2D1Brush *d2d_draw_get_text_brush(struct d2d_draw_text_layout_ctx *context, IUnknown *effect)
 {
     ID2D1Brush *brush = NULL;
@@ -293,7 +291,7 @@ static ULONG STDMETHODCALLTYPE d2d_device_context_inner_Release(IUnknown *iface)
             IUnknown_Release(context->target.object);
         ID3D11Device1_Release(context->d3d_device);
         ID2D1Factory_Release(context->factory);
-        ID2D1Device_Release(context->device);
+        ID2D1Device1_Release(&context->device->ID2D1Device1_iface);
         free(context);
     }
 
@@ -2338,7 +2336,7 @@ static void STDMETHODCALLTYPE d2d_device_context_GetDevice(ID2D1DeviceContext1 *
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    *device = context->device;
+    *device = (ID2D1Device *)&context->device->ID2D1Device1_iface;
     ID2D1Device_AddRef(*device);
 }
 
@@ -3184,8 +3182,8 @@ static const struct ID2D1GdiInteropRenderTargetVtbl d2d_gdi_interop_render_targe
     d2d_gdi_interop_render_target_ReleaseDC,
 };
 
-static HRESULT d2d_device_context_init(struct d2d_device_context *render_target, ID2D1Device *device,
-        IUnknown *outer_unknown, const struct d2d_device_context_ops *ops)
+static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
+        struct d2d_device *device, IUnknown *outer_unknown, const struct d2d_device_context_ops *ops)
 {
     D3D11_SUBRESOURCE_DATA buffer_data;
     struct d2d_device *device_impl;
@@ -4248,9 +4246,9 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     render_target->IDWriteTextRenderer_iface.lpVtbl = &d2d_text_renderer_vtbl;
     render_target->IUnknown_iface.lpVtbl = &d2d_device_context_inner_unknown_vtbl;
     render_target->refcount = 1;
-    ID2D1Device_GetFactory(device, &render_target->factory);
+    ID2D1Device1_GetFactory(&device->ID2D1Device1_iface, &render_target->factory);
     render_target->device = device;
-    ID2D1Device_AddRef(render_target->device);
+    ID2D1Device1_AddRef(&render_target->device->ID2D1Device1_iface);
 
     render_target->outer_unknown = outer_unknown ? outer_unknown : &render_target->IUnknown_iface;
     render_target->ops = ops;
@@ -4424,12 +4422,12 @@ err:
         ID3DDeviceContextState_Release(render_target->d3d_state);
     if (render_target->d3d_device)
         ID3D11Device1_Release(render_target->d3d_device);
-    ID2D1Device_Release(render_target->device);
+    ID2D1Device1_Release(&render_target->device->ID2D1Device1_iface);
     ID2D1Factory_Release(render_target->factory);
     return hr;
 }
 
-HRESULT d2d_d3d_create_render_target(ID2D1Device *device, IDXGISurface *surface, IUnknown *outer_unknown,
+HRESULT d2d_d3d_create_render_target(struct d2d_device *device, IDXGISurface *surface, IUnknown *outer_unknown,
         const struct d2d_device_context_ops *ops, const D2D1_RENDER_TARGET_PROPERTIES *desc, void **render_target)
 {
     D2D1_BITMAP_PROPERTIES1 bitmap_desc;
@@ -4553,8 +4551,9 @@ static void WINAPI d2d_device_GetFactory(ID2D1Device1 *iface, ID2D1Factory **fac
     ID2D1Factory1_AddRef(device->factory);
 }
 
-static HRESULT d2d_device_create_device_context(ID2D1Device1 *iface, D2D1_DEVICE_CONTEXT_OPTIONS options,
-        ID2D1DeviceContext1 **context) {
+static HRESULT d2d_device_create_device_context(struct d2d_device *device,
+        D2D1_DEVICE_CONTEXT_OPTIONS options, ID2D1DeviceContext1 **context)
+{
     struct d2d_device_context *object;
     HRESULT hr;
 
@@ -4564,7 +4563,7 @@ static HRESULT d2d_device_create_device_context(ID2D1Device1 *iface, D2D1_DEVICE
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d2d_device_context_init(object, (ID2D1Device *)iface, NULL, NULL)))
+    if (FAILED(hr = d2d_device_context_init(object, device, NULL, NULL)))
     {
         WARN("Failed to initialise device context, hr %#lx.\n", hr);
         free(object);
@@ -4580,9 +4579,11 @@ static HRESULT d2d_device_create_device_context(ID2D1Device1 *iface, D2D1_DEVICE
 static HRESULT WINAPI d2d_device_CreateDeviceContext(ID2D1Device1 *iface, D2D1_DEVICE_CONTEXT_OPTIONS options,
         ID2D1DeviceContext **context)
 {
+    struct d2d_device *device = impl_from_ID2D1Device(iface);
+
     TRACE("iface %p, options %#x, context %p.\n", iface, options, context);
 
-    return d2d_device_create_device_context(iface, options, (ID2D1DeviceContext1 **)context);
+    return d2d_device_create_device_context(device, options, (ID2D1DeviceContext1 **)context);
 }
 
 static HRESULT WINAPI d2d_device_CreatePrintControl(ID2D1Device1 *iface, IWICImagingFactory *wic_factory,
@@ -4629,9 +4630,11 @@ static void WINAPI d2d_device_SetRenderingPriority(ID2D1Device1 *iface, D2D1_REN
 static HRESULT WINAPI d2d_device_CreateDeviceContext1(ID2D1Device1 *iface, D2D1_DEVICE_CONTEXT_OPTIONS options,
         ID2D1DeviceContext1 **context)
 {
+    struct d2d_device *device = impl_from_ID2D1Device(iface);
+
     TRACE("iface %p, options %#x, context %p.\n", iface, options, context);
 
-    return d2d_device_create_device_context(iface, options, context);
+    return d2d_device_create_device_context(device, options, context);
 }
 
 static const struct ID2D1Device1Vtbl d2d_device_vtbl =
@@ -4650,7 +4653,7 @@ static const struct ID2D1Device1Vtbl d2d_device_vtbl =
     d2d_device_CreateDeviceContext1,
 };
 
-static struct d2d_device *unsafe_impl_from_ID2D1Device(ID2D1Device1 *iface)
+struct d2d_device *unsafe_impl_from_ID2D1Device(ID2D1Device1 *iface)
 {
     if (!iface)
         return NULL;

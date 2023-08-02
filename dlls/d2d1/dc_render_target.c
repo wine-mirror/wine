@@ -864,8 +864,9 @@ HRESULT d2d_dc_render_target_init(struct d2d_dc_render_target *render_target, ID
         return hr;
     }
 
-    hr = d2d_d3d_create_render_target(device, NULL, (IUnknown *)&render_target->ID2D1DCRenderTarget_iface,
-            &d2d_dc_render_target_ops, desc, (void **)&render_target->dxgi_inner);
+    hr = d2d_d3d_create_render_target(unsafe_impl_from_ID2D1Device((ID2D1Device1* )device), NULL,
+            (IUnknown *)&render_target->ID2D1DCRenderTarget_iface, &d2d_dc_render_target_ops,
+            desc, (void **)&render_target->dxgi_inner);
     ID2D1Device_Release(device);
     if (FAILED(hr))
     {

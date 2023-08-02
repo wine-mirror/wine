@@ -171,7 +171,7 @@ struct d2d_device_context
     const struct d2d_device_context_ops *ops;
 
     ID2D1Factory *factory;
-    ID2D1Device *device;
+    struct d2d_device *device;
     ID3D11Device1 *d3d_device;
     ID3DDeviceContextState *d3d_state;
     struct
@@ -209,7 +209,7 @@ struct d2d_device_context
     struct d2d_clip_stack clip_stack;
 };
 
-HRESULT d2d_d3d_create_render_target(ID2D1Device *device, IDXGISurface *surface, IUnknown *outer_unknown,
+HRESULT d2d_d3d_create_render_target(struct d2d_device *device, IDXGISurface *surface, IUnknown *outer_unknown,
         const struct d2d_device_context_ops *ops, const D2D1_RENDER_TARGET_PROPERTIES *desc,
         void **render_target);
 
@@ -601,6 +601,7 @@ struct d2d_device
 };
 
 void d2d_device_init(struct d2d_device *device, ID2D1Factory1 *factory, IDXGIDevice *dxgi_device);
+struct d2d_device *unsafe_impl_from_ID2D1Device(ID2D1Device1 *iface);
 
 struct d2d_shader
 {
