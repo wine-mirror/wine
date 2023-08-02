@@ -51,6 +51,7 @@ static void test_IsolatedWindowsEnvironmentHostStatics(void)
     static const WCHAR *isolated_host_statics_name = L"Windows.Security.Isolation.IsolatedWindowsEnvironmentHost";
     IIsolatedWindowsEnvironmentHostStatics *isolated_host_statics;
     IActivationFactory *factory;
+    BOOLEAN value = 0;
     HSTRING str;
     HRESULT hr;
     LONG ref;
@@ -73,6 +74,10 @@ static void test_IsolatedWindowsEnvironmentHostStatics(void)
 
     hr = IActivationFactory_QueryInterface( factory, &IID_IIsolatedWindowsEnvironmentHostStatics, (void **)&isolated_host_statics );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = IIsolatedWindowsEnvironmentHostStatics_get_IsReady( isolated_host_statics, &value );
+    todo_wine ok( hr == S_OK || broken( hr == E_NOTIMPL /* Win10 2004 */ ), "got hr %#lx.\n", hr );
+    todo_wine ok( !value, "got %d.\n", value );
 
     ref = IIsolatedWindowsEnvironmentHostStatics_Release( isolated_host_statics );
     ok( ref == 2, "got ref %ld.\n", ref );
