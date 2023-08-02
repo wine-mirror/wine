@@ -2505,6 +2505,10 @@ static void add_message_(int line, const struct recvd_message *msg)
                 }
                 else
                 {
+                    RECT *rect = (RECT*)msg->lParam;
+
+                    sprintf(seq->output, "%s: %p WM_NCCALCSIZE: %s",
+                            msg->descr, msg->hwnd, wine_dbgstr_rect(rect));
                     seq->lParam = 0;
                 }
                 break;
