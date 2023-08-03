@@ -446,18 +446,42 @@ static void set_max_limit( int limit )
     if (!getrlimit( limit, &rlimit ))
     {
         rlimit.rlim_cur = rlimit.rlim_max;
-        if (setrlimit( limit, &rlimit ) != 0)
-        {
+
+        if (!setrlimit( limit, &rlimit ))
+            return;
+
 #if defined(__APPLE__) && defined(RLIMIT_NOFILE) && defined(OPEN_MAX)
+        if (limit == RLIMIT_NOFILE)
+        {
+            unsigned int nlimit = 0;
+            size_t size;
+
             /* On Leopard, setrlimit(RLIMIT_NOFILE, ...) fails on attempts to set
-             * rlim_cur above OPEN_MAX (even if rlim_max > OPEN_MAX). */
-            if (limit == RLIMIT_NOFILE && rlimit.rlim_cur > OPEN_MAX)
-            {
+             * rlim_cur above OPEN_MAX (even if rlim_max > OPEN_MAX).
+             *
+             * In later versions it can be set to kern.maxfilesperproc (from
+             * sysctl). In Big Sur and later it can be set to rlim_max. */
+            size = sizeof(nlimit);
+            if (sysctlbyname("kern.maxfilesperproc", &nlimit, &size, NULL, 0) != 0 || nlimit < OPEN_MAX)
                 rlimit.rlim_cur = OPEN_MAX;
-                setrlimit( limit, &rlimit );
+            else
+                rlimit.rlim_cur = nlimit;
+
+            if (!setrlimit( limit, &rlimit ))
+            {
+                TRACE("Fallback 1: RLIMIT_NOFILE to kern.maxfilesperproc\n");
+                return;
             }
-#endif
+
+            rlimit.rlim_cur = OPEN_MAX;
+            if (!setrlimit( limit, &rlimit ))
+            {
+                TRACE("Fallback 2: RLIMIT_NOFILE to OPEN_MAX(%d)\n", OPEN_MAX);
+                return;
+            }
         }
+#endif
+        WARN("Failed to raise limit %d\n", limit);
     }
 }
 
