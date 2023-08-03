@@ -845,12 +845,8 @@ static ULONG WINAPI HTMLPluginsCollection_Release(IHTMLPluginsCollection *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
-        if(This->navigator)
-            This->navigator->plugins = NULL;
+    if(!ref)
         release_dispex(&This->dispex);
-        free(This);
-    }
 
     return ref;
 }
@@ -918,13 +914,38 @@ static const IHTMLPluginsCollectionVtbl HTMLPluginsCollectionVtbl = {
     HTMLPluginsCollection_refresh
 };
 
+static inline HTMLPluginsCollection *HTMLPluginsCollection_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLPluginsCollection, dispex);
+}
+
+static void HTMLPluginsCollection_unlink(DispatchEx *dispex)
+{
+    HTMLPluginsCollection *This = HTMLPluginsCollection_from_DispatchEx(dispex);
+    if(This->navigator) {
+        This->navigator->plugins = NULL;
+        This->navigator = NULL;
+    }
+}
+
+static void HTMLPluginsCollection_destructor(DispatchEx *dispex)
+{
+    HTMLPluginsCollection *This = HTMLPluginsCollection_from_DispatchEx(dispex);
+    free(This);
+}
+
+static const dispex_static_data_vtbl_t HTMLPluginsCollection_dispex_vtbl = {
+    HTMLPluginsCollection_destructor,
+    HTMLPluginsCollection_unlink
+};
+
 static const tid_t HTMLPluginsCollection_iface_tids[] = {
     IHTMLPluginsCollection_tid,
     0
 };
 static dispex_static_data_t HTMLPluginsCollection_dispex = {
     L"PluginArray",
-    NULL,
+    &HTMLPluginsCollection_dispex_vtbl,
     DispCPlugins_tid,
     HTMLPluginsCollection_iface_tids
 };
