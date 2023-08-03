@@ -1799,12 +1799,8 @@ static ULONG WINAPI HTMLDOMRange_Release(IHTMLDOMRange *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
-        if(This->nsrange)
-            nsIDOMRange_Release(This->nsrange);
+    if(!ref)
         release_dispex(&This->dispex);
-        free(This);
-    }
 
     return ref;
 }
@@ -2063,6 +2059,28 @@ static const IHTMLDOMRangeVtbl HTMLDOMRangeVtbl = {
     HTMLDOMRange_getBoundingClientRect,
 };
 
+static inline HTMLDOMRange *HTMLDOMRange_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDOMRange, dispex);
+}
+
+static void HTMLDOMRange_unlink(DispatchEx *dispex)
+{
+    HTMLDOMRange *This = HTMLDOMRange_from_DispatchEx(dispex);
+    unlink_ref(&This->nsrange);
+}
+
+static void HTMLDOMRange_destructor(DispatchEx *dispex)
+{
+    HTMLDOMRange *This = HTMLDOMRange_from_DispatchEx(dispex);
+    free(This);
+}
+
+static const dispex_static_data_vtbl_t HTMLDOMRange_dispex_vtbl = {
+    HTMLDOMRange_destructor,
+    HTMLDOMRange_unlink
+};
+
 static const tid_t HTMLDOMRange_iface_tids[] = {
     IHTMLDOMRange_tid,
     0
@@ -2070,7 +2088,7 @@ static const tid_t HTMLDOMRange_iface_tids[] = {
 
 static dispex_static_data_t HTMLDOMRange_dispex = {
     L"Range",
-    NULL,
+    &HTMLDOMRange_dispex_vtbl,
     DispHTMLDOMRange_tid,
     HTMLDOMRange_iface_tids
 };
