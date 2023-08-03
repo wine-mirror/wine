@@ -397,14 +397,8 @@ static ULONG WINAPI HTMLStorage_Release(IHTMLStorage *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
-        release_session_map_entry(This->session_storage);
+    if(!ref)
         release_dispex(&This->dispex);
-        free(This->filename);
-        CloseHandle(This->mutex);
-        release_props(This);
-        free(This);
-    }
 
     return ref;
 }
@@ -1063,6 +1057,16 @@ static inline HTMLStorage *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLStorage, dispex);
 }
 
+static void HTMLStorage_destructor(DispatchEx *dispex)
+{
+    HTMLStorage *This = impl_from_DispatchEx(dispex);
+    release_session_map_entry(This->session_storage);
+    free(This->filename);
+    CloseHandle(This->mutex);
+    release_props(This);
+    free(This);
+}
+
 static HRESULT check_item(HTMLStorage *This, const WCHAR *key)
 {
     struct session_entry *session_entry;
@@ -1308,7 +1312,7 @@ static HRESULT HTMLStorage_next_dispid(DispatchEx *dispex, DISPID id, DISPID *pi
 }
 
 static const dispex_static_data_vtbl_t HTMLStorage_dispex_vtbl = {
-    NULL,
+    HTMLStorage_destructor,
     NULL,
     NULL,
     HTMLStorage_get_dispid,
